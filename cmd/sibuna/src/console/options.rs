@@ -14,14 +14,10 @@ use std::path::PathBuf;
 
 use sibuna_console::Config;
 use sibuna_console::config::{MAX_PROBES, MAX_PROXIES, PeerTarget, Probe, peers::MAX_PEERS};
+pub use sibuna_console::config::{MAX_QUERY_STEPS, MIN_QUERY_STEPS};
 use sibuna_console_protocol::Location;
 use sibuna_console_protocol::valid_username;
 use sibuna_core::incident_heads::{Extra, ExtraError};
-
-/// The fewest SQLite steps one console aggregate may take (`--console-query-steps`).
-pub const MIN_QUERY_STEPS: u64 = 100_000;
-/// The most SQLite steps one console aggregate may take.
-pub const MAX_QUERY_STEPS: u64 = 50_000_000;
 
 /// The console options of one command line.
 #[derive(Clone, Debug, Default)]
@@ -30,7 +26,7 @@ pub struct Parsed {
     pub config: Config,
     /// `--console` was given.
     pub enabled: bool,
-    /// `--console-query-steps`, when given.
+    /// `--console-query-steps`, when given; also in `config.query_steps`.
     pub query_steps: Option<u64>,
     /// `--console-capture-heads` was given.
     pub capture_heads: bool,
@@ -206,7 +202,9 @@ fn option(parsed: &mut Parsed, flag: &str, value: &str) -> Result<(), OptionErro
             if parsed.query_steps.is_some() {
                 return Err(OptionError::DuplicateQuerySteps);
             }
-            parsed.query_steps = Some(parse_query_steps(value)?);
+            let steps = parse_query_steps(value)?;
+            parsed.query_steps = Some(steps);
+            parsed.config.query_steps = steps;
         }
         "--console-capture-header" => {
             parsed.capture_headers.add(value).map_err(|error| match error {
@@ -443,6 +441,7 @@ mod tests {
             let words = ["--console", "127.0.0.1:9443", "--console-query-steps", value, "--gate"];
             let parsed = parse_words(&words).unwrap();
             assert_eq!(parsed.query_steps, Some(value.parse().unwrap()));
+            assert_eq!(parsed.config.query_steps, value.parse::<u64>().unwrap());
             assert_eq!(parsed.data_args, args(&["--gate"]));
         }
         for value in ["99999", "50000001", "-1", "+100000", "4M", "", "18446744073709551616"] {

@@ -17,7 +17,14 @@
 //!   `CONSOLE001` with Zig's hint.
 //! - Rule-hit counters are allocated with each published engine instead of being reset in
 //!   a spare slot, and the console's collector reads them through the `Node` (Zig sampled
-//!   and journaled them on the storage owner's tick).
+//!   and journaled them on the storage owner's tick). The engine slot keeps the counters of
+//!   the generation the collector last read until its next sample has read their final
+//!   values, so a publication loses no hit counted before it.
+//! - The embedded GeoIP snapshot is the file the environment variable `SIBUNA_GEOIP_DATA`
+//!   names at build time (Zig's `-Dgeoip-data` option), decoded by `build.rs` (decision 7);
+//!   a build without the console refuses it, as Zig did.
+//! - The console's node id is `--cluster-node`, or 1 without it, as the storage thread
+//!   numbers the node (Zig's owner did the same).
 //! - The ban gauge is the ban table's lock-free approximate count (decision 5); Zig counted
 //!   under the writer lock.
 //! - The temporary `init-admin` password is printed on standard error, as Zig did, and its

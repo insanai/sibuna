@@ -159,7 +159,7 @@ fn validate_console(console: &sibuna_console::Config, config: &Config) -> Result
     let name = if config.storage_backend() == sibuna_core::StorageBackend::InMemory {
         String::from("StorageRequired")
     } else {
-        match console.validate(config.node_id()) {
+        match console.validate(crate::console::start::node_id(config)) {
             Ok(()) => return Ok(()),
             Err(ConfigError::Peers(error)) => format!("{error:?}"),
             Err(ConfigError::Budget(_)) => String::from("InvalidBudget"),
@@ -173,11 +173,13 @@ fn validate_console(console: &sibuna_console::Config, config: &Config) -> Result
     Err(())
 }
 
-/// Runs `sibuna console <args>` against a running console and renders a failure.
+/// Runs `sibuna console <args>` against a running console and renders a failure. Progress
+/// lines (GeoIP status changes) and a sign-out warning go to standard error.
 #[cfg(feature = "console")]
 fn console_command(args: &[String]) -> ExitCode {
     let mut stdout = io::stdout().lock();
-    match sibuna_console::command::run(args, &mut stdout) {
+    let mut stderr = io::stderr().lock();
+    match sibuna_console::command::run_with(args, &mut stdout, &mut stderr) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             let mut text = String::new();

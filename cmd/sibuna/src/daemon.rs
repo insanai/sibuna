@@ -138,8 +138,9 @@ impl Daemon {
         let engine = recipe.base_engine(&mut Diagnostic::default()).map_err(StartError::Engine)?;
         let slot = Arc::new(EngineSlot::new(engine));
         let metrics = Arc::new(Metrics::default());
+        let policy = start::policy_base(&config, &recipe);
         let publisher = Publisher::new(recipe, Arc::clone(&slot))
-            .observed(seams.generations(config.node_id()));
+            .observed(seams.generations(start::node_id(&config)));
         let extend =
             |storage_hooks: &mut sibuna_storage::Hooks| seams.extend_storage(storage_hooks);
         let storage = start_storage(&config, publisher, &metrics, &mut hooks, extend)?;
@@ -147,7 +148,8 @@ impl Daemon {
         hooks.telemetry = Some(Arc::clone(&seams.telemetry));
         let core = config.clone();
         let server = Arc::new(Server::new(Options { config, slot, seed, metrics, hooks }));
-        let console = match start::start(console, &core, &seams, Arc::clone(&storage), &server) {
+        let started = start::start(console, &core, policy, &seams, Arc::clone(&storage), &server);
+        let console = match started {
             Ok(console) => console,
             Err(error) => {
                 // The server's incident hook holds storage; it goes first.

@@ -7,7 +7,8 @@
 //!   -> Seams::extend_storage      console migrations, sidecars, committed feed, page reads
 //!   -> Publisher::observed        rule-hit counters with every published engine
 //!   -> Hooks::telemetry           the request path's seams
-//!   -> start                      keys, Node, assets -> sibuna_console::Console::start
+//!   -> start                      keys, Node, policy base, assets, embedded GeoIP
+//!                                  -> sibuna_console::Console::start
 //! ```
 
 use std::fmt;
@@ -16,8 +17,8 @@ use std::sync::Arc;
 
 use sibuna_console::config::Config as ConsoleConfig;
 use sibuna_console::{
-    AssetBytes, Console, GeoSlot, Inputs, KeyError, Keys, SystemClock, committed_hook, load_key,
-    snapshot_hook,
+    AssetBytes, Console, GeoSlot, Inputs, KeyError, Keys, PolicyBase, SystemClock, committed_hook,
+    load_key, snapshot_hook,
 };
 use sibuna_console_protocol::ProxyMode;
 use sibuna_console_protocol::challenges::{Algorithm, Defaults};
@@ -31,6 +32,7 @@ use sibuna_store::telemetry::ConsoleTelemetry;
 
 use super::hits::Generations;
 use super::node::DaemonNode;
+use crate::recipe::Recipe;
 use crate::server::{Server, VERSION};
 
 /// The interface's files, embedded at build time (`build.rs` builds the module).
@@ -47,6 +49,10 @@ const ASSETS: AssetBytes = AssetBytes {
         "/../console-ui/web/assets/world-110m.bin"
     )),
 };
+
+/// The GeoIP snapshot the build embedded from `SIBUNA_GEOIP_DATA` (decision 7); empty
+/// when the build embedded none. `build.rs` validated it.
+const GEOIP: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/geoip.bin"));
 
 /// Why the console did not start.
 #[derive(Debug)]
@@ -156,13 +162,35 @@ impl Seams {
     }
 }
 
+/// Returns the console's node id: `--cluster-node`, or 1 without it, as the storage
+/// thread numbers this node (Zig's owner did the same); the console refuses node 0.
+pub fn node_id(core: &Config) -> u32 {
+    core.node_id().max(1)
+}
+
+/// Returns the policy settings the console's candidates and policy page start from: the
+/// WAF switch and policy file of `recipe`, the global limiter and the honeypot ban of
+/// `core`, and the daemon's challenge interstitial as the built-in challenge page.
+pub fn policy_base(core: &Config, recipe: &Recipe) -> PolicyBase {
+    PolicyBase {
+        waf: recipe.waf,
+        file: recipe.policy_file.as_deref().map(Arc::from),
+        rate_limit: Some(core.rate_limit),
+        rate_window_seconds: Some(core.rate_window_seconds),
+        ban_seconds: Some(core.ban_seconds),
+        challenge_page: Some(Arc::from(crate::assets::challenge_page().template.as_str())),
+    }
+}
+
 /// Starts the console of `server` with `config`, over `storage`, fed by `seams`. `core` is
-/// the daemon's configuration (node id, mode, secret files).
+/// the daemon's configuration (node id, mode, secret files); `policy` comes from
+/// [`policy_base`].
 ///
 /// Fails with a [`ConsoleError`]; nothing keeps running after a failure.
 pub fn start(
     config: ConsoleConfig,
     core: &Config,
+    policy: PolicyBase,
     seams: &Seams,
     storage: Arc<Storage>,
     server: &Arc<Server>,
@@ -176,16 +204,18 @@ pub fn start(
         incidents: Arc::clone(&seams.incidents),
         metrics: Arc::clone(&server.metrics),
         geo: Arc::clone(&seams.geo),
-        node_id: core.node_id(),
+        node_id: node_id(core),
         version: VERSION.to_owned(),
         proxy_mode: match core.mode {
             Mode::ReverseProxy => ProxyMode::ReverseProxy,
             Mode::ForwardAuth => ProxyMode::ForwardAuth,
         },
         challenge_defaults: challenge_defaults(server),
+        policy,
         keys,
         assets: ASSETS,
         clock: Arc::clone(&seams.clock) as Arc<dyn sibuna_console::Clock>,
+        geoip_embedded: Some(GEOIP).filter(|bytes| !bytes.is_empty()),
         ..Inputs::new(storage, Arc::new(DaemonNode::new(Arc::clone(server))), seams.boot)
     };
     Console::start(config, inputs).map_err(ConsoleError::Start)
