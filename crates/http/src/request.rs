@@ -91,7 +91,8 @@ pub struct Request<'a> {
     pub method: Method,
     /// The method token as sent.
     pub method_text: &'a [u8],
-    /// The request-target up to its first `?`.
+    /// The request-target up to its first `?`, as sent: `/` and a path, or `*` for
+    /// `OPTIONS`. Decisions must read its normal form ([`crate::normalize_path`]).
     pub path: &'a [u8],
     /// The request-target after its first `?`, without the `?`; empty when there is none.
     pub query: &'a [u8],
@@ -249,6 +250,9 @@ pub enum ParseError {
     InvalidTransferEncoding,
     /// `Content-Length` is not a decimal number that fits a `usize`.
     InvalidContentLength,
+    /// The request-target is neither origin-form (`/...`) nor `*` in an `OPTIONS` request.
+    /// Sibuna is a reverse proxy: absolute-form and authority-form address a forward proxy.
+    UnsupportedTargetForm,
 }
 
 impl fmt::Display for ParseError {
@@ -266,6 +270,7 @@ impl fmt::Display for ParseError {
             ParseError::UnsupportedTransferEncoding => "unsupported transfer coding",
             ParseError::InvalidTransferEncoding => "invalid Transfer-Encoding",
             ParseError::InvalidContentLength => "invalid Content-Length",
+            ParseError::UnsupportedTargetForm => "request target is not in origin form",
         })
     }
 }
@@ -322,7 +327,10 @@ pub fn split_target(target: &[u8]) -> Target<'_> {
 /// parser: the request line, then each header line in turn (NUL byte, colon, whitespace
 /// before the colon, name, value, conflicting `Content-Length`, field count), then the
 /// framing rules of SID 0009 (`Transfer-Encoding` with `Content-Length`, repeated or
-/// HTTP/1.0 `Transfer-Encoding`, the coding list) and finally the `Content-Length` syntax.
+/// HTTP/1.0 `Transfer-Encoding`, the coding list), the `Content-Length` syntax, and finally
+/// the target form: only origin-form, and `*` in an `OPTIONS` request, are accepted
+/// ([`ParseError::UnsupportedTargetForm`]). The path is returned as sent; the daemon
+/// normalises it with [`crate::normalize_path`] before any decision.
 pub fn parse_request(data: &[u8]) -> Result<Request<'_>, ParseError> {
     let line = request_line(data)?;
     let mut request = Request {
@@ -353,6 +361,9 @@ pub fn parse_request(data: &[u8]) -> Result<Request<'_>, ParseError> {
         next = field.length.map(|length| at + length);
     }
     framing.finish(&mut request)?;
+    if !line.form.is_accepted(request.method) {
+        return Err(ParseError::UnsupportedTargetForm);
+    }
     Ok(request)
 }
 
@@ -360,8 +371,42 @@ pub fn parse_request(data: &[u8]) -> Result<Request<'_>, ParseError> {
 struct RequestLine<'a> {
     method_text: &'a [u8],
     target: Target<'a>,
+    form: TargetForm,
     version: Version,
     next: Option<usize>,
+}
+
+/// The form of a request-target (RFC 9112 section 3.2).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum TargetForm {
+    /// `/` followed by the path and an optional query.
+    Origin,
+    /// Exactly `*`.
+    Asterisk,
+    /// Anything else: absolute-form (`http://host/path`), authority-form (`host:port`) or
+    /// text that is no target at all.
+    Other,
+}
+
+impl TargetForm {
+    #[inline]
+    fn of(target: &[u8]) -> TargetForm {
+        match target {
+            [b'/', ..] => TargetForm::Origin,
+            b"*" => TargetForm::Asterisk,
+            _ => TargetForm::Other,
+        }
+    }
+
+    /// Origin-form always; asterisk-form only for `OPTIONS` (RFC 9112 section 3.2.4).
+    #[inline]
+    fn is_accepted(self, method: Method) -> bool {
+        match self {
+            TargetForm::Origin => true,
+            TargetForm::Asterisk => method == Method::Options,
+            TargetForm::Other => false,
+        }
+    }
 }
 
 fn request_line(data: &[u8]) -> Result<RequestLine<'_>, ParseError> {
@@ -390,7 +435,8 @@ fn request_line_fast(data: &[u8]) -> Option<RequestLine<'_>> {
         [b'\r', b'\n', ..] => Some(data.len() - after.len() + 2),
         _ => return None,
     };
-    Some(RequestLine { method_text, target: split_target(target), version, next })
+    let form = TargetForm::of(target);
+    Some(RequestLine { method_text, target: split_target(target), form, version, next })
 }
 
 /// The Zig rules for a request line, applied literally: the line ends at the first CRLF and
@@ -416,7 +462,8 @@ fn request_line_exact(data: &[u8]) -> Result<RequestLine<'_>, ParseError> {
         b"HTTP/1.0" => Version::Http10,
         _ => return Err(ParseError::UnsupportedVersion),
     };
-    Ok(RequestLine { method_text, target: split_target(target), version, next })
+    let form = TargetForm::of(target);
+    Ok(RequestLine { method_text, target: split_target(target), form, version, next })
 }
 
 /// The line at the start of `bytes` and the length of the line with its CRLF, or the whole

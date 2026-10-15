@@ -5,6 +5,8 @@
 //! - [`chunked`] decodes the chunked transfer coding in place under the strict grammar of
 //!   SID 0009, and re-frames a body canonically for the origin.
 //! - [`response`] writes complete length-delimited responses into any `io::Write`.
+//! - [`normalize_path`] writes the one normal form of a request path that policy evaluates
+//!   and the origin receives.
 //! - [`forwarded`] reads authorization metadata from a trusted ingress.
 //! - [`websocket`] encodes and decodes RFC 6455 frames and checks the opening handshake.
 //!
@@ -40,26 +42,38 @@
 //!   formatting them into 512- and 768-byte stack buffers, so a long location no longer
 //!   fails.
 //! - Writers take any `std::io::Write` and flush it at the end, as Zig did.
+//! - A security fix (SID 0009, revision of 2026-10-15): [`parse_request`] refuses a
+//!   request-target that is not origin-form, or `*` in an `OPTIONS` request, with
+//!   [`ParseError::UnsupportedTargetForm`]; Zig accepted absolute-form and authority-form,
+//!   and policy then matched the whole URL while the origin routed on its path. The check
+//!   runs after every Zig check, so a head Zig refused keeps its Zig error.
+//! - [`normalize_path`] is new (SID 0003 and SID 0009, revisions of 2026-10-15). Zig
+//!   matched policy against the path as sent and forwarded it verbatim, so `//admin`,
+//!   `/%61dmin`, `/x/../admin` and `/admin;x/y` passed a rule on `/admin/*` and reached
+//!   the origin. [`forwarded::target`] normalises the original URI the same way.
 //!
 //! # Performance
 //!
 //! The Zig benchmark `http_parser/zero_copy_request_and_cookie` (a 400-byte browser request,
 //! then a cookie lookup) measured 1,119 to 1,145 ns per operation; this parser takes about
-//! 135 to 170 ns on the same machine (`tests/timing.rs`). Parsing is deterministic, so a
-//! daemon that moves a head inside its buffer re-parses it for the same cost and gets the
-//! same verdict.
+//! 135 to 180 ns on the same machine (`tests/timing.rs`). Normalising the path adds about
+//! 35 ns for that request's path and about 90 ns for one that needs every rewrite. Parsing
+//! is deterministic, so a daemon that moves a head inside its buffer re-parses it for the
+//! same cost and gets the same verdict.
 
 #![warn(missing_docs)]
 
 mod bytes;
 pub mod chunked;
 pub mod forwarded;
+mod path;
 mod request;
 pub mod response;
 #[cfg(test)]
 mod test_util;
 pub mod websocket;
 
+pub use path::{PathError, is_normal_path, normalize_path};
 pub use request::{
     Header, MAX_HEADERS, Method, ParseError, Request, Target, Version, is_token_char,
     is_valid_token, parse_request, split_target,

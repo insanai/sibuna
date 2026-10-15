@@ -225,3 +225,32 @@ fn default_request_matches_the_zig_defaults() {
     let overfull = Request { header_count: 99, ..Request::default() };
     assert_eq!(overfull.headers().len(), MAX_HEADERS);
 }
+
+#[test]
+fn only_origin_form_and_options_asterisk_targets_are_accepted() {
+    let refused: [&[u8]; 8] = [
+        b"GET http://a/admin/x HTTP/1.1\r\nHost: a\r\n\r\n",
+        b"GET HTTP://a/admin/x?q HTTP/1.1\r\n\r\n",
+        b"GET a:80/admin/x HTTP/1.1\r\nHost: a\r\n\r\n",
+        b"CONNECT a:443 HTTP/1.1\r\nHost: a:443\r\n\r\n",
+        b"GET * HTTP/1.1\r\n\r\n",
+        b"options * HTTP/1.1\r\n\r\n",
+        b"OPTIONS *?x HTTP/1.1\r\n\r\n",
+        b"GET ?/admin HTTP/1.1\r\n\r\n",
+    ];
+    for raw in refused {
+        let error = Err(ParseError::UnsupportedTargetForm);
+        assert_eq!(parse_request(raw), error, "{:?}", String::from_utf8_lossy(raw));
+        assert_eq!(reference::parse(raw), error, "{:?}", String::from_utf8_lossy(raw));
+    }
+    let options = parse_request(b"OPTIONS * HTTP/1.1\r\nHost: a\r\n\r\n").unwrap();
+    assert_eq!(
+        (options.method, options.path, options.query),
+        (Method::Options, &b"*"[..], &b""[..])
+    );
+    // The target form is checked last, so earlier faults keep their Zig error.
+    let both = b"GET http://a/ HTTP/1.1\r\nBad Name: x\r\n\r\n";
+    assert_eq!(parse_request(both), Err(ParseError::InvalidHeader));
+    // The path is returned as sent; normalisation is a separate step.
+    assert_eq!(parse_request(b"GET //a/../b HTTP/1.1\r\n\r\n").unwrap().path, b"//a/../b");
+}

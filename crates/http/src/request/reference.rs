@@ -3,7 +3,8 @@
 //! It follows `libs/net/src/http.zig` statement by statement with the plainest operations
 //! available (splitting into vectors, naive substring search), so that it can be checked
 //! against the Zig source by reading, and the fast parser can be checked against it by
-//! fuzzing.
+//! fuzzing. The one rule the port adds, the target form, is checked last, as the fast
+//! parser does.
 
 use super::{Header, MAX_HEADERS, Method, ParseError, Request, Version};
 
@@ -72,8 +73,8 @@ fn chunked_only(value: &[u8]) -> Result<(), ParseError> {
     Ok(())
 }
 
-/// The request line part of the Zig `parseRequest`, transcribed.
-fn request_line<'a>(req_line: &'a [u8], req: &mut Request<'a>) -> Result<(), ParseError> {
+/// The request line part of the Zig `parseRequest`, transcribed. Returns the target.
+fn request_line<'a>(req_line: &'a [u8], req: &mut Request<'a>) -> Result<&'a [u8], ParseError> {
     if req_line.is_empty() {
         return Err(ParseError::EmptyRequest);
     }
@@ -105,7 +106,7 @@ fn request_line<'a>(req_line: &'a [u8], req: &mut Request<'a>) -> Result<(), Par
             req.query = &uri_str[uri_str.len()..];
         }
     }
-    Ok(())
+    Ok(uri_str)
 }
 
 /// One header line of the Zig `parseRequest` loop, transcribed.
@@ -132,7 +133,7 @@ fn header_line(line: &[u8]) -> Result<Header<'_>, ParseError> {
 pub(crate) fn parse(data: &[u8]) -> Result<Request<'_>, ParseError> {
     let mut req = Request { body: &data[data.len()..], ..Request::default() };
     let lines = split_crlf(data);
-    request_line(lines[0], &mut req)?;
+    let target = request_line(lines[0], &mut req)?;
     let mut content_length: Option<&[u8]> = None;
     let mut transfer_encoding: Option<&[u8]> = None;
     let mut transfer_fields = 0;
@@ -168,6 +169,10 @@ pub(crate) fn parse(data: &[u8]) -> Result<Request<'_>, ParseError> {
     }
     if let Some(value) = content_length {
         validate_content_length(value)?;
+    }
+    let asterisk = target == b"*" && req.method == Method::Options;
+    if !target.starts_with(b"/") && !asterisk {
+        return Err(ParseError::UnsupportedTargetForm);
     }
     if let Some(end) = index_of(data, b"\r\n\r\n") {
         req.body = &data[end + 4..];

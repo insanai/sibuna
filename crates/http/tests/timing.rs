@@ -76,3 +76,24 @@ fn chunked_decode_60k_in_place() {
     let rate = raw.len() as f64 / median;
     println!("chunked decode 60 KiB: {median:.0} ns/op ({rate:.2} GB/s, input copy included)");
 }
+
+/// Not in the Zig benchmark: the normal form of the benchmark request's path, and of a path
+/// that exercises every rewrite, as the daemon computes it once per request.
+#[test]
+#[ignore = "timing run; use --release -- --ignored --nocapture"]
+fn path_normalisation() {
+    let paths: [&[u8]; 2] = [b"/api/v1/data", b"//static/./js/../css/%7euser/a%2cb/app.css"];
+    for path in paths {
+        let mut out = [0u8; 64];
+        let median = measure(1_000_000, |iterations| {
+            let mut total = 0u64;
+            for _ in 0..iterations {
+                let normal = sibuna_http::normalize_path(black_box(path), &mut out);
+                total = total.wrapping_add(normal.map_or(0, str::len) as u64);
+            }
+            total
+        });
+        let text = String::from_utf8_lossy(path);
+        println!("normalize_path {text}: {median:.1} ns/op");
+    }
+}

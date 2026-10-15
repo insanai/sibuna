@@ -1,5 +1,6 @@
 //! The Rust parser must reach the verdict of the Zig 0.16 parser on every vector of
-//! `data/zig_parser_vectors.txt`, and parse the same fields from the requests both accept.
+//! `data/zig_parser_vectors.txt`, and parse the same fields from the requests both accept,
+//! except for the request-targets the port refuses on purpose ([`ALLOWED_REFUSALS`]).
 
 use std::fmt::Write;
 
@@ -70,18 +71,66 @@ fn verdict(data: &[u8]) -> String {
     )
 }
 
+/// The kinds of request-target the Zig parser accepted and the port refuses on purpose with
+/// `UnsupportedTargetForm`: Sibuna is a reverse proxy, so it accepts only origin-form, and
+/// `*` for `OPTIONS` (SID 0009, revision of 2026-10-15). Each kind carries the number of
+/// vectors of that kind, so the allow-list cannot grow unnoticed.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum RefusedForm {
+    /// `scheme://authority/path`: addresses a forward proxy, and policy would otherwise
+    /// match the whole URL while the origin routes on its path.
+    Absolute,
+    /// `*` with a method other than exactly `OPTIONS` (methods are case-sensitive): RFC 9112
+    /// section 3.2.4 allows asterisk-form for `OPTIONS` only.
+    Asterisk,
+    /// Any other target that does not start with `/` (authority-form such as `a:80`, or a
+    /// bare word): it names no origin path at all.
+    Other,
+}
+
+const ALLOWED_REFUSALS: [(RefusedForm, usize); 3] =
+    [(RefusedForm::Absolute, 64), (RefusedForm::Asterisk, 4), (RefusedForm::Other, 7)];
+
+/// Classifies a vector the Zig parser accepted, from its verdict fields: the method and the
+/// escaped path.
+fn refusal(zig_verdict: &str) -> Option<RefusedForm> {
+    let fields: Vec<&str> = zig_verdict.split('\t').collect();
+    let (method, path) = (fields[1], fields[2]);
+    if path.starts_with('/') || (path == "*" && method == "OPTIONS") {
+        return None;
+    }
+    Some(if path.contains("://") {
+        RefusedForm::Absolute
+    } else if path == "*" {
+        RefusedForm::Asterisk
+    } else {
+        RefusedForm::Other
+    })
+}
+
 #[test]
 fn rust_and_zig_parsers_agree_on_every_vector() {
     let mut count = 0;
     let mut accepted = 0;
+    let mut refused = [0usize; 3];
     for line in VECTORS.lines().filter(|line| !line.starts_with('#')) {
         let (input, expected) = line.split_once('\t').unwrap();
         let data = unescape(input);
         assert_eq!(escape(&data), input, "the escaping round-trips");
-        assert_eq!(verdict(&data), expected, "request {input}");
+        let actual = verdict(&data);
         count += 1;
         accepted += usize::from(expected.starts_with("ok"));
+        if actual == expected {
+            continue;
+        }
+        let kind = expected.starts_with("ok").then(|| refusal(expected)).flatten();
+        assert_eq!(actual, "err\tUnsupportedTargetForm", "request {input}");
+        let kind = kind.unwrap_or_else(|| panic!("not an allowed refusal: {input} {expected}"));
+        refused[ALLOWED_REFUSALS.iter().position(|(allowed, _)| *allowed == kind).unwrap()] += 1;
     }
     assert_eq!(count, 3821);
     assert!(accepted > 700);
+    for ((kind, expected), seen) in ALLOWED_REFUSALS.iter().zip(refused) {
+        assert_eq!(seen, *expected, "{kind:?}");
+    }
 }
