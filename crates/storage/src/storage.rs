@@ -2,8 +2,9 @@
 //!
 //! One OS thread owns a current-thread tokio runtime and the connection pool. Request
 //! threads only copy incidents into a bounded ring and never wait. Other callers (the daemon,
-//! the console) send jobs to the thread and wait for the answer. The job queue is bounded
-//! ([`JOB_QUEUE`]) and refuses at once when full, and the thread runs at most
+//! the console) submit jobs to the thread: [`Storage::submit`] queues a job and returns a
+//! [`Ticket`] at once, and [`Storage::with_database`] submits and waits. The job queue is
+//! bounded ([`JOB_QUEUE`]) and refuses at once when full, and the thread runs at most
 //! [`JOBS_PER_TICK`] jobs before it checks whether its tick is due, so a burst of console
 //! requests can neither grow memory nor starve incident batches and policy publication.
 
@@ -12,7 +13,7 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
-use std::sync::mpsc::{self, TrySendError};
+use std::sync::mpsc::{self, RecvTimeoutError, TryRecvError, TrySendError};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
@@ -22,7 +23,7 @@ use crate::campaigns::Embedding;
 use crate::database::{Database, Target, Transaction};
 use crate::error::StorageError;
 use crate::incidents::{BatchIncident, IncidentHit};
-use crate::policy::PolicySnapshot;
+use crate::policy::{PageTemplate, PolicySnapshot};
 use crate::schema::MigrationSet;
 use crate::worker::{Settings, Shared, Worker};
 
@@ -67,6 +68,32 @@ pub type EmbedFn = Box<dyn Fn(&[u8]) -> Embedding + Send>;
 pub type PublishFn = Box<dyn FnMut(PolicySnapshot) -> bool + Send>;
 /// Receives errors the storage thread recovers from, for logging.
 pub type ErrorFn = Box<dyn FnMut(&StorageError) + Send>;
+/// Hears about each incident batch once its transaction is confirmed committed (the
+/// console publishes the incidents to its live feed). It runs on the storage thread, must
+/// not block, and is called exactly once per batch: a batch whose first commit was not
+/// acknowledged is announced when the retry confirms it, never twice.
+pub type CommittedHook = Box<dyn FnMut(&[Committed<'_>]) + Send>;
+/// Reads the page templates of a policy snapshot in a read transaction of its own (SID 0013,
+/// "the rebuild also reads console_pages"). An error fails the rebuild: the old engine stays
+/// live and the next tick tries again.
+pub type SnapshotHook = Box<
+    dyn for<'a> FnMut(
+            &'a mut Transaction,
+        ) -> BorrowedFuture<'a, Result<Vec<PageTemplate>, StorageError>>
+        + Send,
+>;
+
+/// One incident of a committed batch, as [`Hooks::on_committed`] sees it. It borrows the
+/// batch.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Committed<'a> {
+    /// The incident id, `(node << 40) | sequence`.
+    pub id: i64,
+    /// The client address as stored.
+    pub client_ip: &'a str,
+    /// The time of the incident in Unix seconds.
+    pub recorded_at: u64,
+}
 
 type Job = Box<dyn FnOnce(Database) -> LocalFuture<()> + Send>;
 
@@ -81,6 +108,12 @@ pub struct Hooks {
     /// Writes the console's sidecars of each incident batch in the batch's transaction;
     /// registered only when the console is enabled.
     pub on_incidents: Option<IncidentHook>,
+    /// Hears about each incident batch once it is confirmed committed; registered only
+    /// when the console is enabled.
+    pub on_committed: Option<CommittedHook>,
+    /// Reads the page templates into each snapshot ([`PolicySnapshot::pages`]); registered
+    /// only when the console is enabled. Without it a snapshot carries no templates.
+    pub on_snapshot: Option<SnapshotHook>,
     /// Hears about errors the thread recovers from (a failed write, an unreachable
     /// database); the thread itself never prints.
     pub on_error: Option<ErrorFn>,
@@ -97,6 +130,8 @@ impl Default for Hooks {
             publish: Box::new(|_| true),
             on_tick: None,
             on_incidents: None,
+            on_committed: None,
+            on_snapshot: None,
             on_error: None,
             metrics: Arc::default(),
             migrations: Vec::new(),
@@ -109,6 +144,8 @@ impl fmt::Debug for Hooks {
         f.debug_struct("Hooks")
             .field("on_tick", &self.on_tick.is_some())
             .field("on_incidents", &self.on_incidents.is_some())
+            .field("on_committed", &self.on_committed.is_some())
+            .field("on_snapshot", &self.on_snapshot.is_some())
             .field("on_error", &self.on_error.is_some())
             .field("migrations", &self.migrations)
             .finish_non_exhaustive()
@@ -185,14 +222,17 @@ impl Storage {
         self.shared.record(incident);
     }
 
-    /// Runs `job` on the storage thread with the database handle and returns its result.
-    /// The calling thread waits for the job to run, so request threads must not call this;
-    /// it never waits for room in the queue.
+    /// Queues `job` for the storage thread and returns a [`Ticket`] for its result at once;
+    /// the job runs with the database handle in the order it was queued. It never waits for
+    /// room in the queue, so any thread may call it.
+    ///
+    /// Dropping the ticket abandons only the reply: a job already queued still runs, and its
+    /// transaction commits or rolls back whole (SID 0013). Jobs still queued when the thread
+    /// stops are dropped unrun, and their tickets report [`StorageError::Stopped`].
     ///
     /// Fails with [`StorageError::Busy`] at once when [`JOB_QUEUE`] jobs are already waiting
-    /// (a console answers 503), with [`StorageError::Stopped`] when the thread is gone, or
-    /// with the job's error.
-    pub fn with_database<T, F, Fut>(&self, job: F) -> Result<T, StorageError>
+    /// (a console answers 503), and with [`StorageError::Stopped`] when the thread is gone.
+    pub fn submit<T, F, Fut>(&self, job: F) -> Result<Ticket<T>, StorageError>
     where
         T: Send + 'static,
         F: FnOnce(Database) -> Fut + Send + 'static,
@@ -201,6 +241,7 @@ impl Storage {
         let (reply_tx, reply_rx) = mpsc::sync_channel(1);
         let boxed: Job = Box::new(move |db| {
             Box::pin(async move {
+                // A caller that dropped its ticket no longer listens; that is not an error.
                 let _ = reply_tx.send(job(db).await);
             })
         });
@@ -209,7 +250,23 @@ impl Storage {
             TrySendError::Disconnected(_) => StorageError::Stopped,
         })?;
         self.shared.wake.notify_one();
-        reply_rx.recv().map_err(|_| StorageError::Stopped)?
+        Ok(Ticket { reply: reply_rx, taken: false })
+    }
+
+    /// Runs `job` on the storage thread with the database handle and returns its result:
+    /// [`Storage::submit`] followed by [`Ticket::wait`]. The calling thread waits for the job
+    /// to run, so request threads must not call this; it never waits for room in the queue.
+    ///
+    /// Fails with [`StorageError::Busy`] at once when [`JOB_QUEUE`] jobs are already waiting
+    /// (a console answers 503), with [`StorageError::Stopped`] when the thread is gone or
+    /// stops before the job runs, or with the job's error.
+    pub fn with_database<T, F, Fut>(&self, job: F) -> Result<T, StorageError>
+    where
+        T: Send + 'static,
+        F: FnOnce(Database) -> Fut + Send + 'static,
+        Fut: Future<Output = Result<T, StorageError>> + 'static,
+    {
+        self.submit(job)?.wait()
     }
 
     /// Bans `ip` (an address or CIDR prefix) until `until`, Unix seconds, for `trigger`,
@@ -260,6 +317,67 @@ impl Drop for Storage {
     }
 }
 
+/// The claim on the result of one job queued with [`Storage::submit`].
+///
+/// The result can be taken once, by [`Ticket::try_take`], [`Ticket::wait_timeout`] or
+/// [`Ticket::wait`]. Dropping the ticket abandons the result, not the job.
+#[derive(Debug)]
+pub struct Ticket<T> {
+    reply: mpsc::Receiver<Result<T, StorageError>>,
+    taken: bool,
+}
+
+impl<T> Ticket<T> {
+    /// Returns the job's result if it has finished, without waiting; `None` while it is
+    /// queued or running, and after the result was taken. A job dropped unrun because the
+    /// storage thread stopped yields `Some(Err(StorageError::Stopped))`.
+    pub fn try_take(&mut self) -> Option<Result<T, StorageError>> {
+        if self.taken {
+            return None;
+        }
+        let result = match self.reply.try_recv() {
+            Ok(result) => result,
+            Err(TryRecvError::Empty) => return None,
+            Err(TryRecvError::Disconnected) => Err(StorageError::Stopped),
+        };
+        self.taken = true;
+        Some(result)
+    }
+
+    /// Waits at most `timeout` for the job's result. Returns `None` when the time passed
+    /// first (the ticket stays valid, the job keeps its place) or the result was already
+    /// taken; otherwise as [`Ticket::try_take`].
+    pub fn wait_timeout(&mut self, timeout: Duration) -> Option<Result<T, StorageError>> {
+        if self.taken {
+            return None;
+        }
+        let result = match self.reply.recv_timeout(timeout) {
+            Ok(result) => result,
+            Err(RecvTimeoutError::Timeout) => return None,
+            Err(RecvTimeoutError::Disconnected) => Err(StorageError::Stopped),
+        };
+        self.taken = true;
+        Some(result)
+    }
+
+    /// Waits for the job's result however long it takes.
+    ///
+    /// Fails with [`StorageError::Stopped`] when the storage thread stopped before the job
+    /// ran or the result was already taken, or with the job's error.
+    pub fn wait(mut self) -> Result<T, StorageError> {
+        if self.taken {
+            return Err(StorageError::Stopped);
+        }
+        self.taken = true;
+        self.reply.recv().map_err(|_| StorageError::Stopped)?
+    }
+
+    /// Returns true once the result has been taken.
+    pub fn is_taken(&self) -> bool {
+        self.taken
+    }
+}
+
 fn runtime() -> std::io::Result<tokio::runtime::Runtime> {
     tokio::runtime::Builder::new_current_thread().enable_all().build()
 }
@@ -307,7 +425,7 @@ async fn serve(mut worker: Worker, jobs: mpsc::Receiver<Job>, poll: Duration) ->
     let mut failures = 0u32;
     let mut next_tick = tokio::time::Instant::now() + poll;
     while !worker.is_stopping() {
-        let backlog = run_jobs(&jobs, &worker.db).await;
+        let backlog = run_jobs(&jobs, &worker).await;
         let notified = shared.policy_notified.swap(false, Ordering::Relaxed);
         if notified || tokio::time::Instant::now() >= next_tick {
             let healthy = match worker.tick().await {
@@ -337,11 +455,16 @@ async fn serve(mut worker: Worker, jobs: mpsc::Receiver<Job>, poll: Duration) ->
 }
 
 /// Runs at most [`JOBS_PER_TICK`] queued jobs in order. Returns true when it stopped at the
-/// cap, so more jobs may be waiting.
-async fn run_jobs(jobs: &mpsc::Receiver<Job>, db: &Database) -> bool {
+/// cap, so more jobs may be waiting. Once shutdown is requested it starts no further job;
+/// the jobs left in the queue are dropped with it and their tickets report
+/// [`StorageError::Stopped`].
+async fn run_jobs(jobs: &mpsc::Receiver<Job>, worker: &Worker) -> bool {
     for _ in 0..JOBS_PER_TICK {
+        if worker.is_stopping() {
+            return false;
+        }
         let Ok(job) = jobs.try_recv() else { return false };
-        job(db.clone()).await;
+        job(worker.db.clone()).await;
     }
     true
 }

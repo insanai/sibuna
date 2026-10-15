@@ -390,7 +390,7 @@ pub(crate) async fn write_batch(
     tx.commit().await
 }
 
-fn view(incident: &PreparedIncident) -> BatchIncident<'_> {
+pub(crate) fn view(incident: &PreparedIncident) -> BatchIncident<'_> {
     let capture = &incident.capture;
     BatchIncident {
         id: incident.id,

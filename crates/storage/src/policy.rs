@@ -144,6 +144,24 @@ pub struct PolicySnapshot {
     pub reputation: Vec<ReputationRow>,
     /// The earliest `banned_until` among `reputation`; the storage thread rebuilds then.
     pub next_expiry: Option<u64>,
+    /// The operator's page templates, read by [`Hooks::on_snapshot`](crate::Hooks) in the
+    /// same rebuild; empty without that hook. A kind without a template keeps the built-in
+    /// page.
+    pub pages: Vec<PageTemplate>,
+}
+
+/// One stored page template (the console's `console_pages` row) as the rebuild hands it to
+/// the daemon, which compiles it and keeps the built-in page when it does not compile. The
+/// storage layer does not validate templates; the policy crate does.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct PageTemplate {
+    /// The page kind's stored name: `challenge`, `denied`, `rate_limited`, `banned` or
+    /// `overloaded`.
+    pub kind: String,
+    /// The template text.
+    pub html: String,
+    /// The template's revision, from 1.
+    pub revision: u64,
 }
 
 /// A rule's request quota: the columns `limit_rate`, `limit_window_seconds` and
@@ -404,7 +422,14 @@ impl Database {
         let inspection = self.load_inspection().await?;
         let reputation = self.load_reputation(now).await?;
         let next_expiry = reputation.iter().filter_map(|row| row.banned_until).min();
-        Ok(PolicySnapshot { revision, rules, inspection, reputation, next_expiry })
+        Ok(PolicySnapshot {
+            revision,
+            rules,
+            inspection,
+            reputation,
+            next_expiry,
+            pages: Vec::new(),
+        })
     }
 
     async fn load_rules(&self) -> Result<Vec<PolicyRow>, StorageError> {

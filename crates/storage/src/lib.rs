@@ -20,9 +20,9 @@
 //!   [`schema`] migrations, loads the incident receipt and the campaign window, publishes
 //!   the first [`PolicySnapshot`] and starts the thread. [`Storage::shutdown`] flushes and
 //!   stops it.
-//! - [`Storage::with_database`] runs other work (bans, searches, the console's queries) on
-//!   the storage thread; [`Storage::ban_address`] and [`Storage::search_incidents`] are the
-//!   common cases.
+//! - [`Storage::submit`] queues other work (bans, searches, the console's queries) for the
+//!   storage thread and returns a [`Ticket`] at once; [`Storage::with_database`] submits and
+//!   waits. [`Storage::ban_address`] and [`Storage::search_incidents`] are the common cases.
 //! - [`Database`] is a dialect-neutral handle: statements take [`Param`]s bound to `$1`,
 //!   `$2`, ... and return rows of owned [`Cell`]s, so every query is written once and only
 //!   SQL text that differs between dialects is written twice ([`Sql`]). Each table the
@@ -38,8 +38,11 @@
 //! - [`search`] is the search language of SID 0013: canonical tokens, which the incident
 //!   writer indexes, and queries translated for both backends, which
 //!   [`Database::search_incidents`] and the console's Events page evaluate.
-//! - For the console (SID 0013, "Changes to the core storage"): [`Hooks::on_incidents`]
-//!   writes the incident sidecars in the batch's transaction, [`Database::delete_incidents`]
+//! - For the console (SID 0013, "Changes to the core storage"; SID 0011, revision of
+//!   2026-10-15): [`Hooks::on_incidents`] writes the incident sidecars in the batch's
+//!   transaction, [`Hooks::on_committed`] hears about each batch once it is confirmed
+//!   committed, [`Hooks::on_snapshot`] reads the page templates into
+//!   [`PolicySnapshot::pages`], [`Database::delete_incidents`]
 //!   is retention's deletion, [`Transaction::bound_work`] bounds the work of aggregate reads,
 //!   and [`testing::for_each_backend`] (feature `testing`) runs a test on every backend.
 //!
@@ -134,10 +137,13 @@
 //!   the thread, which bounds its own flush and close with `tokio::time::timeout`.
 //! - The console mailbox (32 fixed slots with tickets, states, abandonment and completion
 //!   events): a bounded channel of [`JOB_QUEUE`] boxed jobs, each answering through a
-//!   one-shot channel of its own, so a caller that gives up simply drops its receiver. A
-//!   full queue refuses at once with [`StorageError::Busy`], and the storage thread runs at
-//!   most [`JOBS_PER_TICK`] jobs before it checks its tick, as Zig's tick took at most 16.
-//!   The mailbox's urgent and background priorities are not kept: jobs run in order.
+//!   one-shot channel of its own that a [`Ticket`] owns, so a caller that gives up simply
+//!   drops its ticket, and a slot can never be recycled under a running job or hand one
+//!   caller's result to another. A full queue refuses at once with [`StorageError::Busy`],
+//!   and the storage thread runs at most [`JOBS_PER_TICK`] jobs before it checks its tick,
+//!   as Zig's tick took at most 16. Jobs still queued at shutdown are dropped unrun and
+//!   their tickets report [`StorageError::Stopped`], as Zig's stop cancelled them. The
+//!   mailbox's urgent and background priorities are not kept: jobs run in order.
 //! - `Db` as a tagged union with `unreachable` arms for builds without a cluster: the
 //!   [`Database`] enum has exactly the variants of the enabled cargo features.
 
@@ -172,13 +178,13 @@ pub use incidents::{
 };
 pub use listen::POLICY_CHANNEL;
 pub use policy::{
-    ChallengeAlgorithm, InspectionMode, InspectionRow, PolicyAction, PolicyRow, PolicySnapshot,
-    ReputationRow, RuleLimits,
+    ChallengeAlgorithm, InspectionMode, InspectionRow, PageTemplate, PolicyAction, PolicyRow,
+    PolicySnapshot, ReputationRow, RuleLimits,
 };
 pub use schema::{Migration, MigrationSet};
 pub use storage::{
-    BorrowedFuture, EmbedFn, ErrorFn, Hooks, IncidentHook, JOB_QUEUE, JOBS_PER_TICK, LocalFuture,
-    MAX_BACKOFF, MAX_NODE_ID, MIN_POLL, PublishFn, SHUTDOWN_TIMEOUT, STARTUP_TIMEOUT, Storage,
-    TickHook,
+    BorrowedFuture, Committed, CommittedHook, EmbedFn, ErrorFn, Hooks, IncidentHook, JOB_QUEUE,
+    JOBS_PER_TICK, LocalFuture, MAX_BACKOFF, MAX_NODE_ID, MIN_POLL, PublishFn, SHUTDOWN_TIMEOUT,
+    STARTUP_TIMEOUT, SnapshotHook, Storage, TickHook, Ticket,
 };
 pub use url_file::{MAX_URL_FILE, read_database_url_file};

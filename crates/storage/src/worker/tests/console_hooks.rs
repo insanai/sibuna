@@ -1,16 +1,20 @@
 //! The core changes SID 0013 makes for the console: the incident hook writes sidecars in the
 //! batch's transaction, `Database::delete_incidents` removes incidents with their index rows
-//! and sidecars (S36), and `Transaction::bound_work` stops reads at their work bound.
+//! and sidecars (S36), and `Transaction::bound_work` stops reads at their work bound. Also the
+//! hooks of SID 0011's console revision: committed batches are announced exactly once, and
+//! the rebuild reads page templates.
 
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 
 use sibuna_core::incident_heads::ResponseState;
 use sibuna_core::{Evidence, Incident};
 
-use crate::database::{Database, Dialect, Param, Sql, Target, WorkBound};
+use crate::database::{Columns, Database, Dialect, Param, Sql, Target, WorkBound};
 use crate::error::StorageError;
-use crate::storage::IncidentHook;
+use crate::incidents::write_batch;
+use crate::policy::PageTemplate;
+use crate::storage::{CommittedHook, IncidentHook, SnapshotHook};
 use crate::testing::{Fixture, for_each_backend};
 
 const SIDECAR_TABLE: &str = "CREATE TABLE sidecar (\
@@ -185,5 +189,129 @@ async fn work_bound(target: Target) {
         let mut tx = p.worker.db.begin().await.unwrap();
         assert_eq!(tx.fetch_all(HEAVY, &[]).await.unwrap()[0][0].as_i64(), Some(5_000_000));
     }
+    p.close().await;
+}
+
+/// A hook that writes nothing and fails while `fail` is set, as Zig's injected trigger did.
+fn failing_hook(fail: Arc<AtomicBool>) -> IncidentHook {
+    Box::new(move |_tx, _incidents| {
+        let fail = fail.load(Ordering::Relaxed);
+        Box::pin(async move {
+            if fail {
+                return Err(StorageError::InvalidMigrations("injected failure"));
+            }
+            Ok(())
+        })
+    })
+}
+
+/// A committed hook that records (second, address) of every announced incident.
+fn recording_hook(seen: Arc<Mutex<Vec<(u64, String)>>>) -> CommittedHook {
+    Box::new(move |batch| {
+        let mut seen = seen.lock().unwrap();
+        seen.extend(
+            batch.iter().map(|incident| (incident.recorded_at, incident.client_ip.into())),
+        );
+    })
+}
+
+fn trap(now: u64) -> Incident<'static> {
+    Incident {
+        client_ip: "8.8.8.8",
+        user_agent: b"test",
+        method: "GET",
+        path: b"/trap",
+        category: "honeypot",
+        payload: b"",
+        now,
+        ..Incident::default()
+    }
+}
+
+// console_incidents_test.zig: "incident geography publishes acknowledged local batches
+// exactly once across SQL retry" (the storage half: the core announces, the daemon publishes).
+#[test]
+fn committed_batches_are_announced_exactly_once_across_a_retry() {
+    for_each_backend("committed_once", |target| Box::pin(committed_once(target)));
+}
+
+async fn committed_once(target: Target) {
+    let mut p = Fixture::open(&target).await;
+    let fail = Arc::new(AtomicBool::new(true));
+    let seen = Arc::new(Mutex::new(Vec::new()));
+    p.worker.hooks.on_incidents = Some(failing_hook(Arc::clone(&fail)));
+    p.worker.hooks.on_committed = Some(recording_hook(Arc::clone(&seen)));
+    for index in 0..40 {
+        p.record(&trap(100 + index));
+    }
+    assert!(p.worker.drain().await.is_err());
+    assert_eq!(p.worker.pending.len(), 32);
+    assert!(seen.lock().unwrap().is_empty());
+    fail.store(false, Ordering::Relaxed);
+    // A commit whose acknowledgement was lost is not announced until a retry confirms it.
+    let batch = p.worker.prepared.clone().expect("the failed batch is kept");
+    write_batch(&p.worker.db, 1, &batch, None).await.unwrap();
+    assert!(seen.lock().unwrap().is_empty());
+    assert_eq!(p.worker.drain().await.unwrap(), 32);
+    assert_eq!(p.worker.drain().await.unwrap(), 8);
+    let seen_now = seen.lock().unwrap().clone();
+    let expected: Vec<(u64, String)> = (0..40).map(|i| (100 + i, "8.8.8.8".into())).collect();
+    assert_eq!(seen_now, expected);
+    assert_eq!(p.worker.drain().await.unwrap(), 0);
+    assert_eq!(seen.lock().unwrap().len(), 40);
+    // The replayed batch wrote nothing twice.
+    assert_eq!(p.ints("SELECT COUNT(*) FROM security_incidents").await, [40]);
+    p.close().await;
+}
+
+const PAGES_TABLE: &str = "CREATE TABLE test_pages (kind TEXT NOT NULL, html TEXT NOT NULL, \
+    revision BIGINT NOT NULL)";
+const PAGES: Sql = Sql::both("SELECT kind, html, revision FROM test_pages ORDER BY kind");
+
+/// A snapshot hook over `test_pages`, which fails while the table is missing.
+fn page_hook() -> SnapshotHook {
+    Box::new(|tx| {
+        Box::pin(async move {
+            let rows = tx.fetch_all(PAGES, &[]).await?;
+            let decode = |row| {
+                let mut columns = Columns::new(row, "test_pages");
+                Ok(PageTemplate {
+                    kind: columns.text("kind")?,
+                    html: columns.text("html")?,
+                    revision: columns.integer("revision")?,
+                })
+            };
+            rows.into_iter().map(decode).collect()
+        })
+    })
+}
+
+// console_pages_test.zig #2, the snapshot side: "expiry-driven rebuild retries after a later
+// page load fails without a revision change".
+#[test]
+fn a_failed_page_load_keeps_the_old_snapshot_and_is_retried() {
+    for_each_backend("page_load", |target| Box::pin(page_load(target)));
+}
+
+async fn page_load(target: Target) {
+    let mut p = Fixture::open(&target).await;
+    p.worker.hooks.on_snapshot = Some(page_hook());
+    let published = p.published();
+    let applied = p.worker.applied_revision;
+    // The page table is missing: an expiry-driven rebuild fails and changes nothing.
+    p.worker.reputation_expires = Some(0);
+    assert!(p.worker.tick().await.is_err());
+    assert_eq!(p.published(), published);
+    assert_eq!(p.worker.applied_revision, applied);
+    assert_eq!(p.worker.reputation_expires, Some(0));
+    p.exec(PAGES_TABLE).await;
+    p.exec("INSERT INTO test_pages VALUES ('denied', '<p>{{ reason }}</p>', 1)").await;
+    p.worker.tick().await.unwrap();
+    assert_eq!(p.published(), published + 1);
+    assert_eq!(p.worker.applied_revision, applied);
+    assert_eq!(p.worker.reputation_expires, None);
+    let page =
+        PageTemplate { kind: "denied".into(), html: "<p>{{ reason }}</p>".into(), revision: 1 };
+    assert_eq!(p.latest().pages, [page]);
     p.close().await;
 }

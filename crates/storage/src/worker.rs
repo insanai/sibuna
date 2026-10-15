@@ -1,5 +1,6 @@
-//! The storage thread's state and its tick: persist queued incidents, then rebuild the
-//! policy snapshot when the revision changed or a ban expired.
+//! The storage thread's state and its tick: persist queued incidents (announcing each batch
+//! once it is confirmed committed), then rebuild the policy snapshot, with its page
+//! templates, when the revision changed or a ban expired.
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -14,10 +15,10 @@ use crate::database::Target;
 use crate::error::StorageError;
 use crate::incidents::{
     BatchContext, INCIDENT_BATCH, INCIDENT_QUEUE, IncidentRecord, PreparedBatch,
-    load_next_sequence, prepare, write_batch,
+    load_next_sequence, prepare, view, write_batch,
 };
 use crate::schema::{CORE, MigrationSet, migrate};
-use crate::storage::Hooks;
+use crate::storage::{Committed, Hooks};
 
 /// The state request threads share with the storage thread.
 pub(crate) struct Shared {
@@ -214,6 +215,7 @@ impl Worker {
             self.prepared = Some(batch);
             return Err(error);
         }
+        self.announce(&batch);
         let written = batch.incidents.len();
         let metrics = &self.shared.metrics;
         metrics.incidents_persisted.add(u64::try_from(written).unwrap_or(u64::MAX));
@@ -231,12 +233,39 @@ impl Worker {
         Ok(written)
     }
 
-    /// Loads a snapshot, checks that no writer committed meanwhile, and hands it to the
-    /// publish hook. On any failure the applied revision and the expiry stay as they were,
-    /// so the next tick tries again and the old engine stays live.
+    /// Tells the committed hook about `batch`, whose write was just confirmed. A batch is
+    /// confirmed once: `drain` clears it from `pending` right after, and a batch whose
+    /// commit was not acknowledged stays pending until a retry confirms it.
+    fn announce(&mut self, batch: &PreparedBatch) {
+        let Some(on_committed) = self.hooks.on_committed.as_mut() else { return };
+        let committed: Vec<Committed<'_>> = batch
+            .incidents
+            .iter()
+            .map(|incident| {
+                let incident = view(incident);
+                Committed {
+                    id: incident.id,
+                    client_ip: incident.client_ip,
+                    recorded_at: incident.recorded_at,
+                }
+            })
+            .collect();
+        on_committed(&committed);
+    }
+
+    /// Loads a snapshot and its page templates, checks that no writer committed meanwhile,
+    /// and hands it to the publish hook. On any failure (the page hook's included) the
+    /// applied revision and the expiry stay as they were, so the next tick tries again and
+    /// the old engine stays live.
     pub(crate) async fn rebuild(&mut self) -> Result<(), StorageError> {
         let revision = self.db.policy_revision().await?;
-        let snapshot = self.db.load_policy_snapshot(revision, (self.clock)()).await?;
+        let mut snapshot = self.db.load_policy_snapshot(revision, (self.clock)()).await?;
+        if let Some(on_snapshot) = self.hooks.on_snapshot.as_mut() {
+            let mut tx = self.db.begin().await?;
+            snapshot.pages = on_snapshot(&mut tx).await?;
+            tx.commit().await?;
+        }
+        // A page change advances the revision too, so this check also covers the templates.
         if self.db.policy_revision().await? != revision {
             return Err(StorageError::PolicyRevisionChanged);
         }
