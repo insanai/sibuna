@@ -1,0 +1,16 @@
+[package]
+name = "sibuna-http"
+description = "Zero-copy HTTP/1.1 parsing, chunked decoding, responses and WebSocket frames"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+sibuna-crypto = { workspace = true }
+sibuna-encoding = { workspace = true }
+
+[lints]
+workspace = true

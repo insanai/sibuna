@@ -1,0 +1,18 @@
+[package]
+name = "sibuna-policy"
+description = "Sibuna declarative policy engine and semantic WAF"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+sibuna-patterns = { workspace = true }
+sibuna-cidr = { workspace = true }
+sibuna-json = { workspace = true }
+sibuna-crypto = { workspace = true }
+
+[lints]
+workspace = true

@@ -1,0 +1,15 @@
+[package]
+name = "sibuna-store"
+description = "Lock-light fixed-capacity stores: MPSC ring, spent set, GCRA limiter, ban list"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+sibuna-crypto = { workspace = true }
+
+[lints]
+workspace = true

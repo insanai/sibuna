@@ -1,0 +1,23 @@
+[package]
+name = "sibuna"
+description = "Sibuna web firewall and anti-crawler daemon"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+sibuna-crypto = { workspace = true }
+sibuna-encoding = { workspace = true }
+sibuna-http = { workspace = true }
+sibuna-store = { workspace = true }
+sibuna-core = { workspace = true }
+sibuna-policy = { workspace = true }
+sibuna-challenge = { workspace = true }
+sibuna-net = { workspace = true }
+sibuna-pow = { workspace = true }
+
+[lints]
+workspace = true

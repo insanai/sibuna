@@ -1,0 +1,58 @@
+[workspace]
+resolver = "3"
+members = ["crates/*", "cmd/*", "tools/*"]
+default-members = ["crates/*", "cmd/sibuna", "tools/*"]
+
+[workspace.package]
+version = "0.2.0"
+edition = "2024"
+rust-version = "1.88"
+license = "Apache-2.0"
+repository = "https://github.com/insanai/sibuna"
+authors = ["Vikrant Rathore <vikrant@vyomtech.com>"]
+
+# Every dependency is declared once here. The data plane has no external crates: each
+# entry below is a workspace crate.
+[workspace.dependencies]
+sibuna-crypto = { path = "crates/crypto", version = "0.2.0" }
+sibuna-encoding = { path = "crates/encoding", version = "0.2.0" }
+sibuna-json = { path = "crates/json", version = "0.2.0" }
+sibuna-pow = { path = "crates/pow", version = "0.2.0" }
+sibuna-http = { path = "crates/http", version = "0.2.0" }
+sibuna-patterns = { path = "crates/patterns", version = "0.2.0" }
+sibuna-cidr = { path = "crates/cidr", version = "0.2.0" }
+sibuna-store = { path = "crates/store", version = "0.2.0" }
+sibuna-inflate = { path = "crates/inflate", version = "0.2.0" }
+sibuna-geoip = { path = "crates/geoip", version = "0.2.0" }
+sibuna-core = { path = "crates/core", version = "0.2.0" }
+sibuna-policy = { path = "crates/policy", version = "0.2.0" }
+sibuna-challenge = { path = "crates/challenge", version = "0.2.0" }
+sibuna-net = { path = "crates/net", version = "0.2.0" }
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+unused_qualifications = "warn"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+too_many_lines = "warn"
+undocumented_unsafe_blocks = "deny"
+unwrap_used = "warn"
+dbg_macro = "warn"
+print_stdout = "warn"
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+debug = "line-tables-only"
+
+# The browser solver is downloaded by every challenged visitor: optimise it for size.
+[profile.release.package.sibuna-pow-wasm]
+opt-level = "z"
+debug = false
+strip = true
+
+[profile.bench]
+inherits = "release"
+debug = true

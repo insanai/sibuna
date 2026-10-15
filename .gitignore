@@ -1,0 +1,16 @@
+/target/
+**/*.rs.bk
+.DS_Store
+*.log
+__pycache__/
+/tmp/
+/output/
+/benchmarks/vendor/
+/benchmarks/tmp/
+
+# AI agent files are never committed.
+CLAUDE.md
+CLAUDE.local.md
+AGENT.md
+AGENTS.md
+.claude/

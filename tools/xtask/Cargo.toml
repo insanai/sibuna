@@ -1,0 +1,15 @@
+[package]
+name = "xtask"
+description = "Repository tasks: size-limit checks, WebAssembly builds and release helpers"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+
+[lints]
+workspace = true

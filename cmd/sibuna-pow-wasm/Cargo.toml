@@ -1,0 +1,19 @@
+[package]
+name = "sibuna-pow-wasm"
+description = "Browser proof-of-work solver compiled to WebAssembly"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+sibuna-crypto = { workspace = true }
+sibuna-pow = { workspace = true }
+
+[lints]
+workspace = true
