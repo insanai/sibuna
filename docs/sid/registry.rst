@@ -39,5 +39,11 @@ Discussion registry
    * - 0009
      - :doc:`records/0009-chunked-request-bodies`
      - discussion
+   * - 0010
+     - :doc:`records/0010-rust-port`
+     - discussion
+   * - 0011
+     - :doc:`records/0011-sqlx-storage`
+     - discussion
 
 .. sid-generated-end

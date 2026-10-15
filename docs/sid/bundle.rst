@@ -15,5 +15,7 @@ Discussion reading order
    records/0007-console-management-interface
    records/0008-ai-bot-traffic-monitoring
    records/0009-chunked-request-bodies
+   records/0010-rust-port
+   records/0011-sqlx-storage
 
 .. sid-generated-end
