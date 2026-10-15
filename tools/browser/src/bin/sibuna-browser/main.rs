@@ -4,12 +4,23 @@
 //!   challenge interstitial, waits until the browser has solved it and reached the origin,
 //!   and reports which solver ran and how long it took.
 //! - `screenshot --url <url> --out <file>` saves a screenshot, for ad-hoc checks.
+//! - `console --url <console origin> --username <name> --password-file <file> --out <dir>`
+//!   walks through the management console: signed-out shell, sign-in and forced password
+//!   change, live tiles under generated traffic, every page, a wall display, sign-out.
+//! - `dashboards --url ... --traffic <data-plane URL> --out <dir>` keeps several Traffic
+//!   dashboards open under sustained traffic and reports their updates, the traffic's
+//!   latency and the daemon's memory.
+//! - `origin --listen <address>` serves a small origin to put behind the daemon.
 //!
 //! Run it with `cargo xtask browser <command> ...`.
 
 mod arguments;
 mod challenge;
+mod console;
+mod dashboards;
+mod origin;
 mod screenshot;
+mod traffic;
 
 use std::ffi::OsString;
 use std::io::{self, Write};
@@ -28,6 +39,9 @@ Usage: sibuna-browser <COMMAND> [OPTIONS]
 Commands:
   challenge   Solve the challenge interstitial in Chromium and reach the origin
   screenshot  Save a screenshot of a page
+  console     Walk through the management console and judge every step
+  dashboards  Keep several Traffic dashboards open under sustained traffic
+  origin      Serve a small origin for the daemon to protect
   help        Print this help
 
 challenge options:
@@ -46,6 +60,30 @@ screenshot options:
   --mobile             Emulate a phone
   --no-wasm            Disable WebAssembly
 
+console options:
+  --url <ORIGIN>             The console's origin, such as http://127.0.0.1:9443 (required)
+  --username <NAME>          The administrator to sign in as (required)
+  --password-file <FILE>     Its password, on the first line (required)
+  --new-password-file <FILE> The password to set when a change is demanded; the walk
+                             then requires the forced change
+  --traffic <URL>            The daemon's data-plane URL: check that the tiles follow
+                             generated requests
+  --out <DIR>                Where screenshots and report.txt go (required)
+  --timeout <SECONDS>        How long each wait may take (default: 30)
+
+dashboards options:
+  --url, --username, --password-file, --new-password-file, --out, --timeout as for console
+  --traffic <URL>      The daemon's data-plane URL (required)
+  --count <N>          Dashboards, each in its own Chromium (default: 8, at most 16)
+  --duration <SECONDS> How long the traffic runs (default: 30)
+  --rate <N>           Requests per second (default: 200)
+  --threads <N>        Generator threads (default: 4)
+  --pid <PID>          The daemon's process, whose memory is reported
+
+origin options:
+  --listen <ADDRESS>   The address to serve on, such as 127.0.0.1:3000 (required)
+  --for <SECONDS>      Stop after this long (default: serve until killed)
+
 Chromium is found as `chromium` on PATH, or at $SIBUNA_CHROMIUM.
 $SIBUNA_BROWSER_PROTOCOL_LOG names a file that receives every DevTools message.
 ";
@@ -62,6 +100,15 @@ fn main() -> ExitCode {
         Some("screenshot") => Flags::parse(rest, screenshot::FLAGS)
             .and_then(|flags| screenshot::Settings::read(&flags))
             .map(|settings| screenshot::run(&settings)),
+        Some("console") => Flags::parse(rest, console::FLAGS)
+            .and_then(|flags| console::Settings::read(&flags))
+            .map(|settings| console::run(&settings)),
+        Some("dashboards") => Flags::parse(rest, dashboards::FLAGS)
+            .and_then(|flags| dashboards::Settings::read(&flags))
+            .map(|settings| dashboards::run(&settings)),
+        Some("origin") => Flags::parse(rest, origin::FLAGS)
+            .and_then(|flags| origin::Settings::read(&flags))
+            .map(|settings| origin::run(&settings)),
         Some("help" | "-h" | "--help") => return print_help(),
         _ => Err(UsageError::new(
             format!("There is no command named `{}`.", command.to_string_lossy()),
