@@ -1,0 +1,16 @@
+[package]
+name = "sibuna-tls"
+description = "Blocking outbound TLS for the Sibuna console through rustls (SID 0012)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+rustls = { workspace = true }
+rustls-native-certs = { workspace = true }
+
+[lints]
+workspace = true

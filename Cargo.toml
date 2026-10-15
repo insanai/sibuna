@@ -29,6 +29,9 @@ sibuna-challenge = { path = "crates/challenge", version = "0.2.0" }
 sibuna-net = { path = "crates/net", version = "0.2.0" }
 sibuna-storage = { path = "crates/storage", version = "0.2.0" }
 sibuna-html = { path = "crates/html", version = "0.2.0" }
+sibuna-console-protocol = { path = "crates/console-protocol", version = "0.2.0" }
+sibuna-serve = { path = "crates/serve", version = "0.2.0" }
+sibuna-tls = { path = "crates/tls", version = "0.2.0" }
 
 # External crates. Each one is admitted by a design record and confined to one crate.
 # sqlx: SQL storage for SQLite (single node) and PostgreSQL (clusters); SID 0011. Used without
@@ -36,6 +39,10 @@ sibuna-html = { path = "crates/html", version = "0.2.0" }
 sqlx = { version = "=0.9.0", default-features = false, features = ["runtime-tokio"] }
 # tokio: the runtime sqlx requires; a current-thread runtime on the storage thread only. SID 0011.
 tokio = { version = "1.53", default-features = false, features = ["rt", "time", "sync"] }
+# rustls with ring and the system trust store: outbound TLS for the console only, confined to
+# sibuna-tls; an in-house TLS client was rejected as too large and security-critical. SID 0012.
+rustls = { version = "0.23.46", default-features = false, features = ["std", "tls12", "ring"] }
+rustls-native-certs = { version = "0.8.5" }
 
 [workspace.lints.rust]
 unsafe_code = "deny"
