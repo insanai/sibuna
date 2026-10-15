@@ -1,18 +1,14 @@
-//! Management-only outbound connections: webhooks and probes, never the request path.
+//! The address policy of management-only outbound connections (webhooks, GeoIP downloads,
+//! management peers and probes), never the request path.
 //!
 //! DNS answers are bounded and every one is validated against a [`Policy`] before any
-//! connection, so a name cannot smuggle a private address past the check. The connection is
-//! then pinned to one validated address while HTTPS still authenticates the original host
-//! name. Plain HTTP is spoken directly; HTTPS goes through the installed `curl` tool with the
-//! address pinned (`--resolve`), because the workspace carries no TLS implementation.
+//! connection, so a name cannot smuggle a private address past the check. The caller then
+//! pins its connection to one validated address while TLS still authenticates the original
+//! host name. The connections themselves belong to the console (`sibuna-console`'s HTTP
+//! client over `sibuna-tls`, SID 0012); this module opens none.
 
 use std::fmt;
-use std::io::Write;
 use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
-use std::process::{Command, Stdio};
-use std::time::{Duration, Instant};
-
-use crate::connect::{connect_deadline, read_bounded, write_bounded};
 
 /// Which destinations a caller may reach.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -43,10 +39,6 @@ pub enum OutboundError {
     HostUnresolved,
     /// The name resolved to more than [`MAX_ADDRESSES`] distinct addresses.
     TooManyAddresses,
-    /// The HTTP exchange failed or timed out.
-    HttpUnavailable,
-    /// The HTTPS exchange could not be made (no `curl`, or a TLS failure).
-    TlsUnavailable,
 }
 
 impl fmt::Display for OutboundError {
@@ -56,8 +48,6 @@ impl fmt::Display for OutboundError {
             OutboundError::TargetRejected => "target address not allowed",
             OutboundError::HostUnresolved => "host did not resolve",
             OutboundError::TooManyAddresses => "host resolved to too many addresses",
-            OutboundError::HttpUnavailable => "HTTP request failed",
-            OutboundError::TlsUnavailable => "HTTPS request failed",
         })
     }
 }
@@ -146,19 +136,6 @@ impl Addresses {
     }
 }
 
-/// One validated destination: the address to connect to and the name to authenticate.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Pinned {
-    /// The validated address.
-    pub address: SocketAddr,
-    /// The original host name, for `Host`, SNI and the certificate check.
-    pub host: Host,
-    /// HTTPS rather than HTTP.
-    pub secure: bool,
-    /// The policy the address was checked against.
-    pub policy: Policy,
-}
-
 /// Validates a host name per RFC 1123 as Zig's `HostName.validate` does: labels of 1 to 63
 /// letters, digits and inner hyphens, at most 255 bytes without a trailing dot.
 pub fn is_valid_host_name(name: &str) -> bool {
@@ -238,142 +215,8 @@ pub fn is_allowed(ip: IpAddr, policy: Policy) -> bool {
     }
 }
 
-/// A POST to a pinned destination.
-#[derive(Clone, Copy, Debug)]
-pub struct Post<'a> {
-    /// Where to connect.
-    pub pinned: Pinned,
-    /// The request target (path and query), starting with `/`.
-    pub target: &'a str,
-    /// The JSON body.
-    pub payload: &'a [u8],
-    /// Extra header fields, as name and value.
-    pub headers: &'a [(&'a str, &'a str)],
-    /// The whole exchange's bound.
-    pub timeout: Duration,
-}
-
-/// Sends `input` and returns the response status. Only the bounded response head is read: a
-/// large or streaming error body can neither turn its status into success nor use unbounded
-/// memory. The one-shot connection always closes; no redirect is followed.
-///
-/// # Errors
-///
-/// [`OutboundError::TargetRejected`] when the pinned address breaks its policy,
-/// [`OutboundError::InvalidHost`] for a target or header with control bytes, otherwise
-/// [`OutboundError::HttpUnavailable`] or [`OutboundError::TlsUnavailable`].
-pub fn post(input: &Post<'_>) -> Result<u16, OutboundError> {
-    if !is_allowed(input.pinned.address.ip(), input.pinned.policy) {
-        return Err(OutboundError::TargetRejected);
-    }
-    let fields = input.headers.iter().flat_map(|(name, value)| [*name, *value]);
-    if [input.target]
-        .into_iter()
-        .chain(fields)
-        .any(|text| text.bytes().any(|b| b < 32 || b == 127))
-    {
-        return Err(OutboundError::InvalidHost);
-    }
-    if input.pinned.secure { post_with_curl(input) } else { post_plain(input) }
-}
-
-fn post_plain(input: &Post<'_>) -> Result<u16, OutboundError> {
-    let failed = |_| OutboundError::HttpUnavailable;
-    let deadline = Instant::now() + input.timeout;
-    let stream = connect_deadline(input.pinned.address, deadline).map_err(failed)?;
-    let mut head = Vec::with_capacity(256);
-    let host = input.pinned.host.as_str();
-    let port = input.pinned.address.port();
-    let _ = write!(head, "POST {} HTTP/1.1\r\nHost: {host}", input.target);
-    if port != 80 {
-        let _ = write!(head, ":{port}");
-    }
-    let _ = write!(
-        head,
-        "\r\nContent-Type: application/json\r\nContent-Length: {}\r\n",
-        input.payload.len()
-    );
-    for (name, value) in input.headers {
-        let _ = write!(head, "{name}: {value}\r\n");
-    }
-    head.extend_from_slice(b"Connection: close\r\n\r\n");
-    write_bounded(&stream, &head, deadline).map_err(failed)?;
-    write_bounded(&stream, input.payload, deadline).map_err(failed)?;
-    let mut reply = [0u8; 64];
-    let length = read_status_line(&stream, &mut reply, deadline)?;
-    status_of(reply.get(..length).unwrap_or_default()).ok_or(OutboundError::HttpUnavailable)
-}
-
-/// Reads at least the 12 bytes of a status line, then stops.
-fn read_status_line(
-    stream: &std::net::TcpStream,
-    out: &mut [u8; 64],
-    deadline: Instant,
-) -> Result<usize, OutboundError> {
-    let mut length = 0;
-    while length < 12 {
-        let space = out.get_mut(length..).unwrap_or_default();
-        let count = read_bounded(stream, space.get_mut(..1).unwrap_or_default(), deadline)
-            .map_err(|_| OutboundError::HttpUnavailable)?;
-        if count == 0 {
-            break;
-        }
-        length += count;
-    }
-    Ok(length)
-}
-
-/// The status code of `HTTP/1.x NNN`.
-fn status_of(line: &[u8]) -> Option<u16> {
-    if !line.starts_with(b"HTTP/1.") || line.get(8) != Some(&b' ') {
-        return None;
-    }
-    let digits = line.get(9..12)?;
-    if !digits.iter().all(u8::is_ascii_digit) {
-        return None;
-    }
-    std::str::from_utf8(digits).ok()?.parse().ok()
-}
-
-fn post_with_curl(input: &Post<'_>) -> Result<u16, OutboundError> {
-    let failed = |_| OutboundError::TlsUnavailable;
-    let host = input.pinned.host.as_str();
-    let port = input.pinned.address.port();
-    let ip = match input.pinned.address.ip() {
-        IpAddr::V4(v4) => v4.to_string(),
-        IpAddr::V6(v6) => format!("[{v6}]"),
-    };
-    let mut command = Command::new("curl");
-    command
-        .args(["--silent", "--show-error", "--proto", "=https", "--max-redirs", "0"])
-        .args(["--noproxy", "*", "--output", "/dev/null", "--write-out", "%{http_code}"])
-        .arg("--max-time")
-        .arg(input.timeout.as_secs().max(1).to_string())
-        .arg("--resolve")
-        .arg(format!("{host}:{port}:{ip}"))
-        .args(["--header", "Content-Type: application/json", "--data-binary", "@-"]);
-    for (name, value) in input.headers {
-        command.arg("--header").arg(format!("{name}: {value}"));
-    }
-    command.arg(format!("https://{host}:{port}{}", input.target));
-    command.stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::null());
-    let mut child = command.spawn().map_err(failed)?;
-    if let Some(mut stdin) = child.stdin.take() {
-        stdin.write_all(input.payload).map_err(failed)?;
-    }
-    let output = child.wait_with_output().map_err(failed)?;
-    let code = std::str::from_utf8(&output.stdout).ok().and_then(|text| text.trim().parse().ok());
-    match code {
-        Some(status) if output.status.success() && status != 0 => Ok(status),
-        _ => Err(OutboundError::TlsUnavailable),
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use std::io::Read;
-    use std::net::TcpListener;
-
     use super::*;
 
     fn addr(text: &str) -> SocketAddr {
@@ -440,40 +283,5 @@ mod tests {
             Err(OutboundError::TargetRejected)
         );
         assert_eq!(resolve("127.0.0.1", 80, Policy::LoopbackAllowed).unwrap().len(), 1);
-    }
-
-    #[test]
-    fn plain_posts_read_only_the_status() {
-        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-        let address = listener.local_addr().unwrap();
-        let server = std::thread::spawn(move || {
-            let (mut stream, _) = listener.accept().unwrap();
-            let mut request = vec![0u8; 4096];
-            let mut length = 0;
-            while !request[..length].ends_with(b"{\"a\":1}") {
-                length += stream.read(&mut request[length..]).unwrap();
-            }
-            stream.write_all(b"HTTP/1.1 204 No Content\r\nX-Big: ").unwrap();
-            String::from_utf8(request[..length].to_vec()).unwrap()
-        });
-        let input = Post {
-            pinned: Pinned {
-                address,
-                host: Host::new("hooks.example").unwrap(),
-                secure: false,
-                policy: Policy::LoopbackAllowed,
-            },
-            target: "/notify",
-            payload: b"{\"a\":1}",
-            headers: &[("X-Signature", "abc")],
-            timeout: Duration::from_secs(5),
-        };
-        assert_eq!(post(&input), Ok(204));
-        let request = server.join().unwrap();
-        assert!(request.starts_with("POST /notify HTTP/1.1\r\nHost: hooks.example:"));
-        assert!(request.contains("X-Signature: abc\r\n"));
-        let public =
-            Post { pinned: Pinned { policy: Policy::PublicOnly, ..input.pinned }, ..input };
-        assert_eq!(post(&public), Err(OutboundError::TargetRejected));
     }
 }

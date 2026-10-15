@@ -13,8 +13,8 @@
 //!   give activity-based deadlines on the client and origin sockets.
 //! - [`buffered`] holds the fixed-buffer [`buffered::Reader`] and [`buffered::Writer`] the
 //!   connection loop uses.
-//! - [`connect`] bounds connects, reads and writes for probes; [`outbound`] validates and pins
-//!   management destinations.
+//! - [`connect`] bounds connects, reads and writes for probes; [`outbound`] is the address
+//!   policy of management destinations.
 //!
 //! # Deadlines
 //!
@@ -90,9 +90,10 @@
 //! - **Connect helpers.** `std::net::TcpStream::connect_timeout` and socket timeouts replace
 //!   the hand-driven non-blocking connect and `poll(2)` loop; [`connect::wake_listener`] is
 //!   the daemon's `requestStop` wake-up.
-//! - **Outbound HTTPS** goes through the installed `curl` with the address pinned, since the
-//!   workspace has no TLS implementation; plain HTTP is spoken directly. Resolution cannot be
-//!   cancelled, so the Zig `Canceled` error is gone.
+//! - **Outbound requests** are not made here: Zig's `outbound.post` (webhooks) moved to the
+//!   console's HTTP client over `sibuna-tls` (SID 0012), and only the address policy and
+//!   bounded resolution remain. Resolution cannot be cancelled, so the Zig `Canceled` error
+//!   is gone.
 //! - **Clock.** Stamps are milliseconds of a monotonic clock that starts at the first use in
 //!   the process ([`idle::now_ms`]) instead of Zig's awake clock.
 //!
