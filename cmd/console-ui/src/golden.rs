@@ -20,37 +20,43 @@ use crate::state::Phase;
 pub const FIXTURE_TIME: u64 = 172_800;
 
 /// Fixtures compared by a test.
-pub const CHECKED: &[&str] =
-    &["loading", "login", "password", "setup", "required-password", "security", "required-totp"];
+pub const CHECKED: &[&str] = &[
+    "policies",
+    "rule-hit-history",
+    "rule-hit-history-partial",
+    "users",
+    "tokens",
+    "audit",
+    "audit-detail",
+    "settings",
+    "nodes",
+    "geoip",
+    "events",
+    "similarity",
+    "challenges",
+    "dashboard",
+    "traffic-live",
+    "traffic-stale",
+    "traffic-comparison",
+    "traffic-period",
+    "traffic-period-partial",
+    "ranking-history",
+    "loading",
+    "login",
+    "password",
+    "setup",
+    "required-password",
+    "security",
+    "required-totp",
+    "security_overview",
+    "security-recorded",
+    "kiosk-traffic",
+    "kiosk-security",
+    "kiosk-security-recorded",
+];
 
 /// Fixtures waiting for a page module, with the module (group) that produces them.
-pub const PENDING: &[(&str, &str)] = &[
-    ("dashboard", "dashboard (traffic page, tiles, globe, timeline, rankings)"),
-    ("traffic-live", "dashboard"),
-    ("traffic-stale", "dashboard"),
-    ("traffic-comparison", "dashboard: comparison panel"),
-    ("traffic-period", "dashboard: traffic period panel"),
-    ("traffic-period-partial", "dashboard: traffic period panel"),
-    ("ranking-history", "dashboard: ranking history panel"),
-    ("kiosk-traffic", "kiosk (with the dashboard panels)"),
-    ("kiosk-security", "kiosk (with the security overview panels)"),
-    ("kiosk-security-recorded", "kiosk (with the security overview panels)"),
-    ("security_overview", "security overview"),
-    ("security-recorded", "security overview"),
-    ("events", "events"),
-    ("similarity", "similarity"),
-    ("challenges", "challenges"),
-    ("policies", "policies"),
-    ("rule-hit-history", "policies: rule hit history panel"),
-    ("rule-hit-history-partial", "policies: rule hit history panel"),
-    ("geoip", "geoip"),
-    ("users", "users"),
-    ("tokens", "tokens"),
-    ("audit", "audit"),
-    ("audit-detail", "audit"),
-    ("nodes", "nodes"),
-    ("settings", "settings"),
-];
+pub const PENDING: &[(&str, &str)] = &[];
 
 /// Resets `app` to `phase` at the fixture time, signed in as an administrator of console
 /// node 1 for every phase but the four authentication phases (Zig's `configure`).

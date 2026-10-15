@@ -16,6 +16,9 @@ crate-type = ["cdylib", "rlib"]
 sibuna-console-protocol = { workspace = true }
 sibuna-json = { workspace = true }
 sibuna-html = { workspace = true, default-features = false, features = ["alloc"] }
+# SHA-256 of retained ranking archives, checked against their cursors (and of QR
+# matrices in the tests).
+sibuna-crypto = { workspace = true }
 
 [build-dependencies]
 sibuna-html = { workspace = true }
@@ -23,6 +26,3 @@ sibuna-html = { workspace = true }
 [lints]
 workspace = true
 
-[dev-dependencies]
-# SHA-256 digests of QR matrices, as in the Zig test vectors.
-sibuna-crypto = { workspace = true }
