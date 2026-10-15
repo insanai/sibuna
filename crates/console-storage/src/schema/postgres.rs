@@ -98,7 +98,7 @@ CREATE TABLE console_audit (
         'notification.create', 'notification.change', 'notification.remove',
         'notification.delivery', 'notification.test', 'notification.test_result',
         'node.command.intent', 'node.command.applied', 'node.command.rejected',
-        'events.export_prepared', 'audit.export')),
+        'events.export_prepared', 'audit.export', 'peer.rejected')),
     subject BIGINT CHECK (subject >= 0),
     target TEXT CHECK (octet_length(target) BETWEEN 1 AND 128),
     client_ip TEXT CHECK (length(client_ip) BETWEEN 1 AND 48),

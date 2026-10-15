@@ -15,7 +15,7 @@ use crate::access::{self, Credential, Need};
 use crate::error::ConsoleStorageError;
 use crate::row::{self, Fields};
 
-/// An audited action: the 38 names the `CHECK` of `console_audit.action` lists.
+/// An audited action: the 39 names the `CHECK` of `console_audit.action` lists.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[allow(missing_docs)] // Each variant is its stored name, which `as_str` spells out.
 pub enum AuditAction {
@@ -57,11 +57,12 @@ pub enum AuditAction {
     NodeCommandRejected,
     EventsExportPrepared,
     AuditExport,
+    PeerRejected,
 }
 
 impl AuditAction {
     /// Every action, in the order of the schema's `CHECK`.
-    pub const ALL: [AuditAction; 38] = [
+    pub const ALL: [AuditAction; 39] = [
         AuditAction::UserCreate,
         AuditAction::UserDisable,
         AuditAction::UserEnable,
@@ -100,6 +101,7 @@ impl AuditAction {
         AuditAction::NodeCommandRejected,
         AuditAction::EventsExportPrepared,
         AuditAction::AuditExport,
+        AuditAction::PeerRejected,
     ];
 
     /// Returns the stored name, such as `policy.edit`.
@@ -143,6 +145,7 @@ impl AuditAction {
             AuditAction::NodeCommandRejected => "node.command.rejected",
             AuditAction::EventsExportPrepared => "events.export_prepared",
             AuditAction::AuditExport => "audit.export",
+            AuditAction::PeerRejected => "peer.rejected",
         }
     }
 
@@ -454,7 +457,7 @@ mod tests {
         let mut names: Vec<&str> = AuditAction::ALL.iter().map(|a| a.as_str()).collect();
         names.sort_unstable();
         names.dedup();
-        assert_eq!(names.len(), 38);
+        assert_eq!(names.len(), 39);
     }
 
     #[test]
