@@ -8,8 +8,26 @@
 //! which suffices, with structural detectors that need co-occurring evidence.
 //!
 //! A field is inspected as received and then, when the byte classes show it could change,
-//! canonicalised (see `normalizer::canonicalize`) and inspected again.
+//! canonicalised (see `normalizer::canonicalize`) and inspected again. Every field the
+//! daemon hands over is canonicalised whole: header values up to the 16 KiB head bound,
+//! body fields within the 8 KiB body prefix. On the way, the decoded form (before
+//! whitespace folding) is searched for a line feed that separates shell commands and for a
+//! `javascript:` scheme split by tabs or line breaks.
+//!
+//! Deliberate changes from Zig, each with a regression test:
+//!
+//! - Zig canonicalised into an 8 KiB stack buffer and inspected a longer field raw only, so
+//!   a header, query or cookie padded beyond 8 KiB could hide a percent-encoded payload.
+//!   Fields longer than 2 KiB are now canonicalised in a 16 KiB buffer that each thread
+//!   allocates once and reuses.
+//! - Zig folded a decoded `%0a` into a space before the command-injection detector saw it.
+//! - Canonicalisation also decodes JSON string escapes and HTML character references, and
+//!   keeps the text of MySQL executable comments (`/*!50000select*/`).
+//! - The detectors also find `onerror =` (white space before `=`), an event handler on a
+//!   tag of any name, tautologies with `<`, `>`, `<>` and `!=` (`or 2>1`), and `union` and
+//!   `select` joined by parentheses (`union(select`).
 
+mod canonical;
 mod classes;
 mod structure;
 mod tables;
@@ -19,15 +37,17 @@ use std::fmt;
 use sibuna_patterns::{Automaton, Options};
 
 use crate::body_fields::{self, Fields};
-use crate::normalizer::canonicalize;
 use crate::request::RequestView;
+use canonical::{Canonical, Decoded, with_canonical};
 use classes::{Classes, scan};
 
 pub use body_fields::MAX_PREFIX as MAX_BODY_INSPECT;
 
-/// Longest field that is canonicalised before the second pass; longer fields are inspected
-/// raw only. Equal to the body inspection prefix.
-pub const MAX_CANONICAL: usize = MAX_BODY_INSPECT;
+/// Longest field whose canonical form is inspected whole: the daemon's request head bound
+/// (16 KiB), so no path, query or header value escapes the second pass. Body fields come
+/// from the `MAX_BODY_INSPECT` prefix and are shorter. Of a longer field, which only other
+/// callers can pass, the first `MAX_CANONICAL` bytes of the canonical form are inspected.
+pub const MAX_CANONICAL: usize = 16 * 1024;
 
 /// The attack categories, in the order mixed-mode inspection visits them.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -226,29 +246,6 @@ pub fn check_rce(text: &[u8]) -> Option<Violation> {
     structure::rce(text, scan(text))
 }
 
-/// Runs `inspect` on the canonical form of `text`, when canonicalisation changes it.
-///
-/// The buffer is on the stack and sized to the text, so a short field does not pay for
-/// clearing the full 8 KiB; every tier holds the whole canonical form, which is never
-/// longer than its input.
-fn with_canonical<R>(text: &[u8], inspect: impl FnOnce(&[u8]) -> Option<R>) -> Option<R> {
-    fn run<R>(
-        buffer: &mut [u8],
-        text: &[u8],
-        inspect: impl FnOnce(&[u8]) -> Option<R>,
-    ) -> Option<R> {
-        let normalized = canonicalize(text, buffer);
-        if normalized.is_empty() || normalized == text { None } else { inspect(normalized) }
-    }
-    if text.len() <= 256 {
-        run(&mut [0u8; 256], text, inspect)
-    } else if text.len() <= 2048 {
-        run(&mut [0u8; 2048], text, inspect)
-    } else {
-        run(&mut [0u8; MAX_CANONICAL], text, inspect)
-    }
-}
-
 fn inspect_sequential(text: &[u8]) -> Option<Violation> {
     check_path_traversal(text)
         .or_else(|| check_sqli(text))
@@ -264,12 +261,16 @@ pub fn inspect_text(text: &[u8]) -> Option<Violation> {
     if let Some(violation) = inspect_sequential(text) {
         return Some(violation);
     }
-    if text.len() > MAX_CANONICAL || !scan(text).needs_canonical() {
+    if !scan(text).needs_canonical() {
         return None;
     }
-    with_canonical(text, inspect_sequential)
+    with_canonical(text, |canonical: Canonical<'_>| {
+        let decoded = canonical.decoded;
+        inspect_sequential(canonical.text).or(decoded.xss).or(decoded.rce)
+    })
 }
 
+/// The first signature in `text`, else the first structural finding in category order.
 fn inspect_raw(signatures: &Signatures, text: &[u8], classes: Classes) -> Option<Violation> {
     if let Some(violation) = signatures.find_first(text) {
         return Some(violation);
@@ -282,7 +283,8 @@ fn inspect_raw(signatures: &Signatures, text: &[u8], classes: Classes) -> Option
 
 /// Inspects one field for every category: the first signature in the text, else the
 /// structural detectors in category order; then the same on the canonical form when the
-/// byte classes show canonicalisation can change the field (and it is at most 8 KiB).
+/// byte classes show canonicalisation can change the field (see `MAX_CANONICAL` for fields
+/// longer than 16 KiB).
 pub fn inspect_text_with(signatures: &Signatures, text: &[u8]) -> Option<Violation> {
     if text.is_empty() {
         return None;
@@ -291,14 +293,28 @@ pub fn inspect_text_with(signatures: &Signatures, text: &[u8]) -> Option<Violati
     if let Some(violation) = inspect_raw(signatures, text, classes) {
         return Some(violation);
     }
-    if text.len() > MAX_CANONICAL || !classes.needs_canonical() {
+    if !classes.needs_canonical() {
         return None;
     }
-    with_canonical(text, |normalized| inspect_raw(signatures, normalized, scan(normalized)))
+    // The decoded form's findings come last: they matter only when the canonical form
+    // shows nothing. Keeping them out of `inspect_raw` keeps the raw pass, which every
+    // field takes, as lean as it was.
+    with_canonical(text, |canonical| {
+        let decoded = canonical.decoded;
+        inspect_raw(signatures, canonical.text, scan(canonical.text))
+            .or(decoded.xss)
+            .or(decoded.rce)
+    })
 }
 
-/// The raw findings of one field for the categories in `wanted` (bits `1 << index`).
-fn raw_findings(signatures: &Signatures, text: &[u8], wanted: u8) -> [Option<Violation>; 4] {
+/// The findings of one field for the categories in `wanted` (bits `1 << index`); `decoded`
+/// adds what the decoded form showed (nothing for a raw field).
+fn raw_findings(
+    signatures: &Signatures,
+    text: &[u8],
+    wanted: u8,
+    decoded: Decoded,
+) -> [Option<Violation>; 4] {
     let classes = scan(text);
     let found = signatures.categories(text);
     let mut findings = [None; 4];
@@ -310,19 +326,26 @@ fn raw_findings(signatures: &Signatures, text: &[u8], wanted: u8) -> [Option<Vio
         findings[category.index()] = if found & bit != 0 {
             signatures.find_first_in(text, category)
         } else {
-            structural(category, text, classes)
+            structural(category, text, classes, decoded)
         };
     }
     findings
 }
 
-fn structural(category: AttackCategory, text: &[u8], classes: Classes) -> Option<Violation> {
-    match category {
+/// The structural finding of `category` in `text`, else the one the decoded form showed.
+fn structural(
+    category: AttackCategory,
+    text: &[u8],
+    classes: Classes,
+    decoded: Decoded,
+) -> Option<Violation> {
+    let found = match category {
         AttackCategory::PathTraversal => structure::null_byte(text, classes),
         AttackCategory::Sqli => structure::sqli(text, classes),
         AttackCategory::Xss => structure::xss(text, classes),
         AttackCategory::Rce => structure::rce(text, classes),
-    }
+    };
+    found.or(decoded.finding(category))
 }
 
 /// Inspects one field for the categories in `wanted` (bits `1 << index`) separately, each
@@ -336,16 +359,19 @@ pub(crate) fn inspect_categories(
     if text.is_empty() || wanted == 0 {
         return [None; 4];
     }
-    let mut findings = raw_findings(signatures, text, wanted);
+    let mut findings = raw_findings(signatures, text, wanted, Decoded::default());
     let missing = AttackCategory::ALL
         .iter()
         .filter(|c| findings[c.index()].is_none())
         .fold(0u8, |bits, c| bits | (1 << c.index()))
         & wanted;
-    if missing == 0 || text.len() > MAX_CANONICAL || !scan(text).needs_canonical() {
+    if missing == 0 || !scan(text).needs_canonical() {
         return findings;
     }
-    if let Some(canonical) = with_canonical(text, |n| Some(raw_findings(signatures, n, missing))) {
+    let canonical = with_canonical(text, |canonical| {
+        Some(raw_findings(signatures, canonical.text, missing, canonical.decoded))
+    });
+    if let Some(canonical) = canonical {
         for category in AttackCategory::ALL {
             if missing & (1 << category.index()) != 0 {
                 findings[category.index()] = canonical[category.index()];

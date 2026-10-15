@@ -2,10 +2,17 @@
 //!
 //! A multipart body yields each part's header block and the contents of each ordinary
 //! field; file contents stay opaque (this is not a malware scanner, and the origin must
-//! enforce its declared types). A declared binary type yields nothing. Anything unknown or
-//! ambiguous (duplicate `Content-Type`, malformed parameters, a part that does not parse)
-//! falls back to inspecting the remaining bytes as text: inspection is never skipped
-//! silently.
+//! enforce its declared types). A part whose `filename` is empty is an ordinary field: a
+//! browser sends it for a file input left empty, so its contents are not a file. A
+//! declared binary type yields nothing when the prefix also looks binary (see
+//! [`looks_binary`]), and is inspected as text otherwise. Anything unknown or ambiguous
+//! (duplicate `Content-Type`, malformed parameters, a part that does not parse) falls back
+//! to inspecting the remaining bytes as text: inspection is never skipped silently.
+//!
+//! Deliberate changes from Zig: Zig skipped every body of a declared binary type, so a form
+//! labelled `image/png` went uninspected; it required CRLF right after a delimiter, where
+//! RFC 2046 allows transport padding (spaces and tabs) before it, so `--b ` CRLF hid the
+//! fields after it; and it kept the contents of a part with `filename=""` opaque.
 
 use crate::bytes::{find, trim_spaces};
 use crate::mime::{self, InvalidMime, Value};
@@ -60,17 +67,20 @@ impl<'a> Fields<'a> {
             }
         }
         if !multipart {
-            fields.finished = mime::binary(value.media);
+            fields.finished = mime::binary(value.media) && looks_binary(body);
             return fields;
         }
         let Some(delimiter) = boundary.filter(|delimiter| valid_boundary(delimiter)) else {
             return fields;
         };
-        // The body must open with `--boundary` CRLF.
+        // The body must open with `--boundary`, transport padding and CRLF.
         let opening = body.strip_prefix(b"--").and_then(|rest| rest.strip_prefix(delimiter));
-        if opening.is_some_and(|rest| rest.starts_with(b"\r\n")) {
-            fields.boundary = delimiter;
-            fields.offset = delimiter.len() + 4;
+        if let Some(rest) = opening {
+            let padding = transport_padding(rest);
+            if rest[padding..].starts_with(b"\r\n") {
+                fields.boundary = delimiter;
+                fields.offset = 2 + delimiter.len() + padding + 2;
+            }
         }
         fields
     }
@@ -81,8 +91,9 @@ impl<'a> Fields<'a> {
         self.body.get(self.offset..).unwrap_or_default()
     }
 
-    /// Finds the next delimiter line at or after `start`: CRLF `--boundary` then CRLF, or
-    /// `--` at the end of the prefix or before CRLF (the closing delimiter).
+    /// Finds the next delimiter line at or after `start`: CRLF `--boundary`, transport
+    /// padding, then CRLF; or with `--` after the boundary, the closing delimiter, which may
+    /// also end the prefix.
     fn find_boundary(&self, start: usize) -> Option<Boundary> {
         let mut delimiter = [0u8; 4 + MAX_BOUNDARY];
         let text = &mut delimiter[..4 + self.boundary.len()];
@@ -91,13 +102,16 @@ impl<'a> Fields<'a> {
         let mut position = start;
         while let Some(at) = find(self.body, position, text) {
             let end = at + text.len();
-            let suffix = self.body.get(end..end + 2)?;
-            if suffix == b"\r\n" {
-                return Some(Boundary { start: at, end: end + 2, closing: false });
+            let rest = &self.body[end..];
+            let closing = rest.starts_with(b"--");
+            let dashes = if closing { 2 } else { 0 };
+            let line_end = end + dashes + transport_padding(&rest[dashes..]);
+            let tail = &self.body[line_end..];
+            if tail.starts_with(b"\r\n") {
+                return Some(Boundary { start: at, end: line_end + 2, closing });
             }
-            let after = &self.body[end + 2..];
-            if suffix == b"--" && (after.is_empty() || after.starts_with(b"\r\n")) {
-                return Some(Boundary { start: at, end: end + 2, closing: true });
+            if closing && tail.is_empty() {
+                return Some(Boundary { start: at, end: line_end, closing });
             }
             // A boundary prefix inside a file is still file data.
             position = at + 1;
@@ -154,6 +168,30 @@ impl<'a> Iterator for Fields<'a> {
     }
 }
 
+/// The length of the transport padding (RFC 2046: spaces and tabs) at the start of `text`.
+fn transport_padding(text: &[u8]) -> usize {
+    let padding = text.iter().take_while(|&&b| b == b' ' || b == b'\t').count();
+    crate::steps::count(padding as u64);
+    padding
+}
+
+/// True when `prefix` looks binary: at least one byte in sixteen is a control byte other
+/// than tab, line feed, vertical tab, form feed or carriage return.
+///
+/// Compressed and encoded media (PNG, JPEG, gzip, protobuf) exceed this by far (random bytes
+/// hold about one control byte in ten), while text in any ASCII-compatible encoding holds
+/// almost none, so a text payload under a binary label is inspected. Binary bodies stay
+/// uninspected because the detectors would misread their bytes (a NUL, `;id`). A client can
+/// still hide text behind enough control bytes; an origin that parses a body of a declared
+/// binary type as a form must enforce its own types.
+fn looks_binary(prefix: &[u8]) -> bool {
+    let control = prefix
+        .iter()
+        .filter(|&&b| (b < 0x20 && !matches!(b, b'\t' | b'\n' | 0x0b | 0x0c | b'\r')) || b == 0x7f)
+        .count();
+    control > 0 && control * 16 >= prefix.len()
+}
+
 fn valid_boundary(text: &[u8]) -> bool {
     !text.is_empty()
         && text.len() <= MAX_BOUNDARY
@@ -177,7 +215,7 @@ fn unique<'h>(headers: &[Header<'h>], name: &[u8]) -> Result<Option<&'h [u8]>, I
 
 /// Reads a part's header block: every line must be `token: value` without control bytes,
 /// with exactly one `Content-Disposition: form-data` that names the field. Returns whether
-/// the part is a file (has a `filename`).
+/// the part is a file (has a non-empty `filename`).
 ///
 /// Fails with `InvalidMime` otherwise.
 fn file_part(head: &[u8]) -> Result<bool, InvalidMime> {
@@ -208,20 +246,22 @@ fn file_part(head: &[u8]) -> Result<bool, InvalidMime> {
     if !value.media.eq_ignore_ascii_case(b"form-data") {
         return Err(InvalidMime);
     }
-    let (mut name, mut file) = (false, false);
+    let (mut name, mut filename) = (false, None);
     while let Some(parameter) = value.next_parameter()? {
-        let seen = if parameter.name.eq_ignore_ascii_case(b"name") {
-            &mut name
+        if parameter.name.eq_ignore_ascii_case(b"name") {
+            if name {
+                return Err(InvalidMime);
+            }
+            name = true;
         } else if parameter.name.eq_ignore_ascii_case(b"filename") {
-            &mut file
-        } else {
-            continue;
-        };
-        if *seen {
-            return Err(InvalidMime);
+            if filename.is_some() {
+                return Err(InvalidMime);
+            }
+            filename = Some(parameter.value);
         }
-        *seen = true;
     }
+    // An empty filename is a file input left empty, whose contents are no file.
+    let file = filename.is_some_and(|filename| !filename.is_empty());
     if name { Ok(file) } else { Err(InvalidMime) }
 }
 
@@ -291,8 +331,51 @@ mod tests {
     #[test]
     fn declared_binary_bodies_yield_nothing_and_plain_bodies_yield_themselves() {
         let headers = [Header { name: b"content-type", value: b"image/png" }];
-        assert_eq!(Fields::new(&headers, b"\x89PNG").next(), None);
+        let png = b"\x89PNG\r\n\x1a\n\0\0\0\rIHDR\0\0\x01\0\0\0\x01\0\x08\x06\0\0\0";
+        assert_eq!(Fields::new(&headers, png).next(), None);
         assert_eq!(Fields::new(&[], b"a=1").collect::<Vec<_>>(), vec![&b"a=1"[..]]);
         assert_eq!(Fields::new(&[], b"").collect::<Vec<_>>(), vec![&b""[..]]);
+    }
+
+    #[test]
+    fn a_text_body_under_a_binary_label_is_inspected() {
+        let headers = [Header { name: b"Content-Type", value: b"image/png" }];
+        let body = b"{\"q\":\"1' UNION SELECT password FROM users--\"}";
+        assert_eq!(Fields::new(&headers, body).collect::<Vec<_>>(), vec![&body[..]]);
+        let headers = [Header { name: b"Content-Type", value: b"application/octet-stream" }];
+        let mut noise = vec![b'a'; 144];
+        noise[..9].copy_from_slice(b"\x01\x02\x03\x04\x05\x06\x07\x08\x0e");
+        assert_eq!(Fields::new(&headers, &noise).next(), None);
+        noise[..9].copy_from_slice(b"\t\n\r\x0c\x0b aaa");
+        assert_eq!(Fields::new(&headers, &noise).next(), Some(&noise[..]));
+    }
+
+    #[test]
+    fn transport_padding_after_a_delimiter_does_not_hide_the_next_fields() {
+        let content_type = multipart("b");
+        let headers = [Header { name: b"Content-Type", value: &content_type }];
+        let body =
+            b"--b \t\r\nContent-Disposition: form-data; name=\"f\"; filename=\"a.txt\"\r\n\r\n\
+            hello\r\n--b \r\nContent-Disposition: form-data; name=\"q\"\r\n\r\n1' UNION \
+            SELECT--\r\n--b-- \r\n";
+        let fields: Vec<&[u8]> = Fields::new(&headers, body).collect();
+        assert_eq!(fields.len(), 3, "{fields:?}");
+        assert_eq!(fields[2], b"1' UNION SELECT--");
+        let unclosed = b"--b\r\nContent-Disposition: form-data; name=\"q\"\r\n\r\nv\r\n--b--  ";
+        let fields: Vec<&[u8]> = Fields::new(&headers, unclosed).collect();
+        assert_eq!(fields[1], b"v");
+    }
+
+    #[test]
+    fn a_part_with_an_empty_filename_is_an_ordinary_field() {
+        let content_type = multipart("b");
+        let headers = [Header { name: b"Content-Type", value: &content_type }];
+        let body = b"--b\r\nContent-Disposition: form-data; name=\"q\"; filename=\"\"\r\n\r\n\
+            1' UNION SELECT--\r\n--b--\r\n";
+        let fields: Vec<&[u8]> = Fields::new(&headers, body).collect();
+        assert_eq!(fields[1], b"1' UNION SELECT--");
+        let duplicate = b"--b\r\nContent-Disposition: form-data; name=\"q\"; filename=\"\"; \
+            filename=\"x\"\r\n\r\nv\r\n--b--\r\n";
+        assert_eq!(Fields::new(&headers, duplicate).count(), 1, "falls back to text");
     }
 }

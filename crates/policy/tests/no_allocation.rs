@@ -1,6 +1,8 @@
 //! The request path allocates nothing: a counting global allocator observes evaluations of
 //! browser requests, attacks that need canonicalisation, multipart bodies, mixed inspection
-//! modes and observed rule matches.
+//! modes, observed rule matches, a header padded beyond 8 KiB, and the content encodings and
+//! decoded-form detectors. Canonicalising a field longer than 2 KiB uses a buffer each
+//! thread allocates once, so one warm-up evaluation runs before counting.
 //!
 //! Counting allocations needs a `GlobalAlloc` shim, which is `unsafe` to implement; it lives
 //! only in this test binary and forwards every call to the system allocator.
@@ -51,11 +53,15 @@ fn evaluation_allocates_nothing() {
         filename=\"x\"\r\n\r\nbinary\x00\r\n--b\r\nContent-Disposition: form-data; \
         name=\"t\"\r\n\r\n1%27/**/UnIoN SeLeCt+1\r\n--b--\r\n";
     let long = vec![b'a'; 3000];
+    let mut padded = vec![b'x'; 12_000];
+    let attack = b"%3Cscript%3Ealert(1)%3E";
+    padded[9000..9000 + attack.len()].copy_from_slice(attack);
     let headers = [
         Header { name: b"Content-Type", value: b"multipart/form-data; boundary=b" },
         Header { name: b"Cookie", value: b"session=abc--def; theme=dark" },
         Header { name: b"X-Q", value: &long },
     ];
+    let padded_headers = [Header { name: b"X-Pad", value: &padded }];
     let requests = [
         RequestView::new(b"/index.html", b"203.0.113.7", b"Mozilla/5.0 (X11)"),
         RequestView { query: b"q=%3Cscript%3E+x", ..RequestView::new(b"/s", b"::1", b"curl/8") },
@@ -64,8 +70,18 @@ fn evaluation_allocates_nothing() {
             body,
             ..RequestView::new(b"/upload", b"10.1.2.3", b"GPTBot")
         },
+        RequestView {
+            headers: &padded_headers,
+            ..RequestView::new(b"/p", b"198.51.100.4", b"Mozilla/5.0")
+        },
+        RequestView {
+            query: b"q=%26lt%3Bb%26gt%3B&h=x%0aid&r=1%20union(select%201",
+            body: br#"{"c":"\u0027\n\/*!1*/<x onclick =1>"}"#,
+            ..RequestView::new(b"/q", b"198.51.100.5", b"Mozilla/5.0")
+        },
     ];
     let mut matches = RuleMatches::new();
+    assert!(waf::inspect_request(engine.signatures(), &requests[3]).is_some());
     let before = ALLOCATIONS.load(Ordering::Relaxed);
     let mut denied = 0;
     for _ in 0..1000 {

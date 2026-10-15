@@ -4,9 +4,12 @@
 //!
 //! The classes are those of the Zig engine: quotes (`'`, `"`, backtick), `=`, `<`, shell
 //! separators (`;`, `|`, `&`, `$`, backtick, LF), `%`, NUL, and the canonicalisation
-//! triggers (`%`, `+`, HT, CR, LF, VT, FF, the pair `/*`, and two adjacent spaces).
+//! triggers (`%`, `+`, HT, CR, LF, VT, FF, the pair `/*`, and two adjacent spaces). The
+//! Rust engine adds `>`, `(` and `u` for the structural SQL detector, and the triggers of the
+//! content encodings: a backslash (JSON escapes), and an `&` together with a `;` or a `#`
+//! (HTML character references). An `&` alone, as in `a=1&b=2`, does not trigger.
 //!
-//! Single bytes go through a 256-entry table OR-ed over the field. The two pairs are found
+//! Single bytes go through a 256-entry table OR-ed over the field. The pairs are found
 //! eight bytes at a time with SWAR masks, and only when they can still matter: when the
 //! single bytes already demand canonicalisation, the pairs cannot change the outcome.
 
@@ -23,6 +26,15 @@ const CANONICAL: u16 = 64;
 const SPACE: u16 = 128;
 const SLASH: u16 = 256;
 const STAR: u16 = 512;
+const GREATER: u16 = 1024;
+const PAREN: u16 = 2048;
+/// Helpers for the character reference trigger: the field holds `&`, `;`, `#`.
+const AMPERSAND: u16 = 4096;
+const SEMICOLON: u16 = 8192;
+const HASH: u16 = 16384;
+/// The letter `u` in either case: `union` needs it, so most browser User-Agents, which
+/// carry a `(` but no `u`, skip the parenthesised-union check.
+const LETTER_U: u16 = 32768;
 
 const TABLE: [u16; 256] = build_table();
 
@@ -33,9 +45,9 @@ const fn build_table() -> [u16; 256] {
     table[b'`' as usize] = QUOTE | SHELL;
     table[b'=' as usize] = EQUALS;
     table[b'<' as usize] = LESS;
-    table[b';' as usize] = SHELL;
+    table[b';' as usize] = SHELL | SEMICOLON;
     table[b'|' as usize] = SHELL;
-    table[b'&' as usize] = SHELL;
+    table[b'&' as usize] = SHELL | AMPERSAND;
     table[b'$' as usize] = SHELL;
     table[b'\n' as usize] = SHELL | CANONICAL;
     table[b'%' as usize] = PERCENT | CANONICAL;
@@ -48,6 +60,12 @@ const fn build_table() -> [u16; 256] {
     table[b' ' as usize] = SPACE;
     table[b'/' as usize] = SLASH;
     table[b'*' as usize] = STAR;
+    table[b'>' as usize] = GREATER;
+    table[b'(' as usize] = PAREN;
+    table[b'#' as usize] = HASH;
+    table[b'u' as usize] = LETTER_U;
+    table[b'U' as usize] = LETTER_U;
+    table[b'\\' as usize] = CANONICAL;
     table
 }
 
@@ -73,6 +91,16 @@ impl Classes {
     pub(crate) fn less(self) -> bool {
         self.bits & LESS != 0
     }
+    /// A `>` occurs.
+    #[inline]
+    pub(crate) fn greater(self) -> bool {
+        self.bits & GREATER != 0
+    }
+    /// A `(` and the letter `u` occur, as `union(` needs.
+    #[inline]
+    pub(crate) fn paren_and_u(self) -> bool {
+        self.bits & (PAREN | LETTER_U) == PAREN | LETTER_U
+    }
     /// A shell separator byte occurs.
     #[inline]
     pub(crate) fn shell(self) -> bool {
@@ -88,8 +116,9 @@ impl Classes {
     pub(crate) fn nul(self) -> bool {
         self.bits & NUL != 0
     }
-    /// Canonicalisation can change the field: it holds a trigger byte, `/*` or two
-    /// adjacent spaces. Case alone never matters, because every detector folds it.
+    /// Canonicalisation can change the field: it holds a trigger byte, `/*`, two adjacent
+    /// spaces, or what may be a character reference (`&` with `;` or `#`). Case alone never
+    /// matters, because every detector folds it.
     #[inline]
     pub(crate) fn needs_canonical(self) -> bool {
         self.bits & CANONICAL != 0
@@ -112,8 +141,12 @@ pub(crate) fn scan(text: &[u8]) -> Classes {
         bits |= TABLE[usize::from(byte)];
     }
     // The pairs matter only while no single byte has demanded canonicalisation yet.
+    // A character reference needs an `&` and a `;` or a `#`; their positions are not
+    // checked, which costs a canonical pass on rare fields like `a=1&b=2#x`.
+    let reference = bits & AMPERSAND != 0 && bits & (SEMICOLON | HASH) != 0;
     if bits & CANONICAL == 0
-        && ((bits & SPACE != 0 && has_pair(text, b' ', b' '))
+        && (reference
+            || (bits & SPACE != 0 && has_pair(text, b' ', b' '))
             || (bits & (SLASH | STAR) == SLASH | STAR && has_pair(text, b'/', b'*')))
     {
         bits |= CANONICAL;
@@ -159,12 +192,13 @@ mod tests {
             pair |= (byte == b' ' && previous == b' ') || (byte == b'*' && previous == b'/');
             previous = byte;
         }
+        pair |= text.contains(&b'&') && (text.contains(&b';') || text.contains(&b'#'));
         (bits, pair)
     }
 
     #[test]
     fn scan_agrees_with_the_byte_by_byte_reference() {
-        let alphabet = b" /*a=\"'<;%\x00+\t\n|&$`b";
+        let alphabet = b" /*a=\"'<;%\x00+\t\n|&$`b#\\>(";
         let mut state = 0x853c_49e6_748f_ea9bu64;
         for _ in 0..50_000 {
             state ^= state << 13;
@@ -192,5 +226,9 @@ mod tests {
         assert!(scan(b"abcdefgh/*").needs_canonical());
         assert!(!scan(b"abcdefg *hijk/ x").needs_canonical());
         assert!(!scan(b"a b c d e f g h i j").needs_canonical());
+        assert!(scan(b"abcdefg&#60").needs_canonical());
+        assert!(scan(b"x&lt;y").needs_canonical());
+        assert!(scan(b"a\\u0027").needs_canonical());
+        assert!(!scan(b"a=1&b=2").needs_canonical());
     }
 }

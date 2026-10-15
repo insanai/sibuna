@@ -2,8 +2,10 @@
 //!
 //! Strong signatures alone cannot catch `id=5' or 1=1` without also catching prose, so each
 //! category has a small deterministic recogniser that fires only on structure: a quote next
-//! to SQL keywords or a `literal = literal` tautology, a script-capable tag together with an
-//! event-handler attribute, a shell separator followed by a command name, or a NUL byte.
+//! to SQL keywords, a `literal = literal` or `literal > literal` tautology, `union` and
+//! `select` joined by parentheses, a script-capable tag together with an event-handler
+//! attribute or any tag carrying one, a shell separator followed by a command name, or a
+//! NUL byte.
 //!
 //! Every loop here does work proportional to its input: each literal search starts just
 //! after an opening quote and stops at the next quote of the same kind, so no stretch of
@@ -87,19 +89,74 @@ fn skip_literal(text: &[u8], start: usize) -> Option<usize> {
     None
 }
 
-/// A boolean tautology is `or`/`and`, a space, then `literal = literal`, as in `or 1=1` or
-/// `and 'a'='a'`. Identifiers on either side (`or b=2`) are ordinary filter syntax.
+/// Returns the index just past a comparison operator at `start`: `=`, `==`, `<`, `>`,
+/// `<=`, `>=`, `<>` or `!=`.
+fn skip_comparison(text: &[u8], start: usize) -> Option<usize> {
+    let first = *text.get(start)?;
+    let second = text.get(start + 1).copied();
+    match (first, second) {
+        (b'=' | b'<' | b'>' | b'!', Some(b'=')) | (b'<', Some(b'>')) => Some(start + 2),
+        (b'=' | b'<' | b'>', _) => Some(start + 1),
+        _ => None,
+    }
+}
+
+/// A boolean tautology is `or`/`and`, a space, then `literal op literal` for a comparison
+/// operator, as in `or 1=1`, `and 'a'='a'` or `or 2>1`. Identifiers on either side
+/// (`or b=2`) are ordinary filter syntax.
 fn tautology_after(text: &[u8], word_end: usize) -> bool {
     let left_start = skip_spaces(text, word_end);
     if left_start == word_end {
         return false;
     }
     let Some(left_end) = skip_literal(text, left_start) else { return false };
-    let equals = skip_spaces(text, left_end);
-    if text.get(equals) != Some(&b'=') {
+    let Some(operator_end) = skip_comparison(text, skip_spaces(text, left_end)) else {
         return false;
+    };
+    skip_literal(text, skip_spaces(text, operator_end)).is_some()
+}
+
+/// The word that ends at `end` once spaces and tabs before `end` are skipped, with the
+/// index where it starts. The word is empty when none ends there.
+fn previous_word(text: &[u8], end: usize) -> (usize, &[u8]) {
+    let head = text.get(..end).unwrap_or_default();
+    let spaces = head.iter().rev().take_while(|&&b| b == b' ' || b == b'\t').count();
+    let word_end = head.len() - spaces;
+    let len = head[..word_end].iter().rev().take_while(|&&b| is_word_byte(b)).count();
+    crate::steps::count((spaces + len) as u64);
+    (word_end - len, &head[word_end - len..word_end])
+}
+
+/// True when the word before `end` is `union`, or `all` or `distinct` after `union`.
+fn union_before(text: &[u8], end: usize) -> bool {
+    let (start, word) = previous_word(text, end);
+    if word.eq_ignore_ascii_case(b"all") || word.eq_ignore_ascii_case(b"distinct") {
+        return previous_word(text, start).1.eq_ignore_ascii_case(b"union");
     }
-    skip_literal(text, skip_spaces(text, equals + 1)).is_some()
+    word.eq_ignore_ascii_case(b"union")
+}
+
+/// `union` and `select` joined by parentheses, as in `union(select` or
+/// `union all ((select`, which the signature `union select` misses. Each `(` that follows
+/// `union` is examined once, and the scan resumes after the parentheses it skipped.
+fn union_select(text: &[u8]) -> bool {
+    let mut position = 0;
+    while let Some(paren) = find_byte(text, position, b'(') {
+        position = paren + 1;
+        if !union_before(text, paren) {
+            continue;
+        }
+        let skipped =
+            text[position..].iter().take_while(|&&b| matches!(b, b'(' | b' ' | b'\t')).count();
+        crate::steps::count(skipped as u64);
+        position += skipped;
+        if starts_with_ignore_case(&text[position..], b"select")
+            && text.get(position + 6).is_none_or(|&b| !is_word_byte(b))
+        {
+            return true;
+        }
+    }
+    false
 }
 
 #[derive(Default)]
@@ -151,9 +208,12 @@ fn has_sql_comment(text: &[u8]) -> bool {
 /// evidence must reach four points: the quote, up to two keywords, a comment marker and an
 /// `=` each add one. `it's a group order from the shop` scores three and passes.
 pub(crate) fn sqli(text: &[u8], classes: Classes) -> Option<Violation> {
+    if classes.paren_and_u() && union_select(text) {
+        return Some(Violation::new(AttackCategory::Sqli, "union(select"));
+    }
     let (quote, equals) = (classes.quote(), classes.equals());
-    // Without a quote or an equals sign no structure can exist.
-    if !quote && !equals {
+    // Without a quote or a comparison no structure can exist.
+    if !quote && !equals && !classes.less() && !classes.greater() {
         return None;
     }
     let scan = scan_sql(text);
@@ -197,30 +257,94 @@ fn has_html_tag(text: &[u8]) -> bool {
     false
 }
 
-/// True when an `on<event>=` attribute appears in attribute position: preceded by a space,
-/// a tab, a slash or a quote. `onboarding=1` in a query string does not count.
+/// HTML white space, which may separate an attribute name from its `=`.
+fn is_html_space(byte: u8) -> bool {
+    matches!(byte, b' ' | b'\t' | b'\n' | b'\r' | 0x0c)
+}
+
+/// True when an `on<event>=` attribute appears in attribute position: preceded by white
+/// space, a slash or a quote, with optional white space before the `=` (`onerror =`).
+/// `onboarding=1` in a query string does not count.
 fn has_event_handler(text: &[u8]) -> bool {
     // `window[1..3]` is `on` in any case; `window[0]` is the byte before it. A byte `b` has
     // `b | 0x20 == b'o'` exactly when it is `o` or `O` (and likewise for `n`).
     for (index, window) in text.windows(3).enumerate() {
         let is_on = window[1] | 0x20 == b'o' && window[2] | 0x20 == b'n';
-        if !is_on || !matches!(window[0], b' ' | b'/' | b'"' | b'\'' | b'\t') {
+        if !is_on || !(is_html_space(window[0]) || matches!(window[0], b'/' | b'"' | b'\'')) {
             continue;
         }
         let rest = &text[index + 3..];
         let letters = rest.iter().take_while(|b| b.is_ascii_alphabetic()).count();
-        crate::steps::count(letters as u64);
-        if letters > 0 && rest.get(letters) == Some(&b'=') {
+        let spaces = rest[letters..].iter().take_while(|&&b| is_html_space(b)).count();
+        crate::steps::count((letters + spaces) as u64);
+        if letters > 0 && rest.get(letters + spaces) == Some(&b'=') {
             return true;
         }
     }
     false
 }
 
-/// XSS: a tag that can host script together with an event-handler attribute.
+/// True when a tag of any name (`<` and a letter) carries an event-handler attribute before
+/// its `>` (or the end of the text). Custom and unlisted elements run handlers too. The
+/// scan resumes after each tag, so no text is searched twice.
+fn tag_with_event_handler(text: &[u8]) -> bool {
+    let mut position = 0;
+    while let Some(less) = find_byte(text, position, b'<') {
+        if !text.get(less + 1).is_some_and(u8::is_ascii_alphabetic) {
+            position = less + 1;
+            continue;
+        }
+        let end = find_byte(text, less + 1, b'>').unwrap_or(text.len());
+        if has_event_handler(&text[less..end]) {
+            return true;
+        }
+        position = end;
+    }
+    false
+}
+
+/// XSS: a tag that can host script together with an event-handler attribute anywhere in the
+/// field (the Zig rule), or a tag of any name with an event-handler attribute inside it.
 pub(crate) fn xss(text: &[u8], classes: Classes) -> Option<Violation> {
-    let found = classes.less() && has_html_tag(text) && has_event_handler(text);
+    let found = classes.less()
+        && ((has_html_tag(text) && has_event_handler(text)) || tag_with_event_handler(text));
     found.then_some(Violation::new(AttackCategory::Xss, "on*="))
+}
+
+/// True when the letters of `scheme` end just before `end`, ignoring case and any tabs and
+/// line breaks among them.
+fn scheme_ends_at(text: &[u8], end: usize, scheme: &[u8]) -> bool {
+    let mut index = end;
+    for &letter in scheme.iter().rev() {
+        loop {
+            let Some(previous) = index.checked_sub(1) else { return false };
+            index = previous;
+            crate::steps::count(1);
+            match text[index] {
+                b'\t' | b'\n' | b'\r' => continue,
+                byte if byte.to_ascii_lowercase() == letter => break,
+                _ => return false,
+            }
+        }
+    }
+    true
+}
+
+/// XSS: a `javascript:` or `vbscript:` scheme with tabs or line breaks among its letters
+/// (`jav&#x09;ascript:`), which browsers remove from a URL. Meant for the decoded form,
+/// before folding turns them into spaces; the plain schemes are strong signatures.
+pub(crate) fn split_script_scheme(text: &[u8]) -> Option<Violation> {
+    let mut position = 0;
+    while let Some(colon) = find_byte(text, position, b':') {
+        position = colon + 1;
+        if scheme_ends_at(text, colon, b"javascript") {
+            return Some(Violation::new(AttackCategory::Xss, "javascript:"));
+        }
+        if scheme_ends_at(text, colon, b"vbscript") {
+            return Some(Violation::new(AttackCategory::Xss, "vbscript:"));
+        }
+    }
+    None
 }
 
 /// True when `text`, after spaces and tabs, starts with a shell command name that is not
@@ -289,5 +413,44 @@ mod tests {
         assert!(!has_event_handler(b"onX=1"));
         assert!(has_event_handler(b"'onX="));
         assert!(!has_event_handler(b"'onX"));
+        assert!(has_event_handler(b"<img src=1 onerror =alert(1)>"));
+        assert!(has_event_handler(b"<img\nonerror\t\n=alert(1)>"));
+        assert!(!has_event_handler(b"x onerror alert"));
+    }
+
+    #[test]
+    fn any_tag_with_an_event_handler_inside_it_is_xss() {
+        let found = |text: &[u8]| xss(text, scan(text)).is_some();
+        assert!(found(b"<x onclick=alert(1)>"));
+        assert!(found(b"<custom-el onfocus = alert(1) autofocus>"));
+        assert!(found(b"<x title='<' onclick=alert(1)>"));
+        assert!(!found(b"<b>bold</b> onboarding=1"));
+        assert!(!found(b"a < b onclick"));
+        assert!(!found(b"if a<3 then x onclick=1"));
+    }
+
+    #[test]
+    fn split_script_schemes_are_found_in_decoded_text() {
+        assert!(split_script_scheme(b"<a href=jav\tascript:alert(1)>").is_some());
+        assert!(split_script_scheme(b"j\na\rv\tascript:x").is_some());
+        assert!(split_script_scheme(b"VB\tScript:msgbox").is_some());
+        assert!(split_script_scheme(b"java script:x").is_none());
+        assert!(split_script_scheme(b"https://example.com:443/script:").is_none());
+    }
+
+    #[test]
+    fn comparison_tautologies_and_parenthesised_union_select_are_sqli() {
+        let found = |text: &[u8]| sqli(text, scan(text)).is_some();
+        assert!(found(b"id=1 or 2>1"));
+        assert!(found(b"1 or 2 > 1"));
+        assert!(found(b"x' or 'b'<>'a'"));
+        assert!(found(b"id=1 or 1 != 2"));
+        assert!(!found(b"x or y>1"));
+        assert!(found(b"1 union(select password from users)"));
+        assert!(found(b"1 UNION ALL ((SELECT 1"));
+        assert!(found(b"1 union distinct (select 1"));
+        assert!(!found(b"European Union (selected members)"));
+        assert!(!found(b"labour union (see select committee)"));
+        assert!(!found(b"Mozilla/5.0 (X11; Linux x86_64)"));
     }
 }

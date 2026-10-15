@@ -7,7 +7,8 @@
 //! files loaded with their diagnostics; mutated management documents parsed. This test
 //! generates the same inputs, prints the same lines and requires them to be equal. Each
 //! line carries a digest of its input, so a generator mismatch is told apart from an
-//! engine mismatch.
+//! engine mismatch. The lines in [`DELIBERATE`] differ on purpose and must keep differing;
+//! every other line must be equal.
 // Test helpers outside `#[test]` functions: a malformed data file should panic loudly.
 #![allow(clippy::unwrap_used)]
 
@@ -56,6 +57,52 @@ const TOKENS: [&str; 26] = [
     "true",
     "\"posw\"",
 ];
+
+/// Lines where the Rust engine deliberately differs from the Zig reference, by reason (the
+/// `waf` and `body_fields` module docs and SID 0004 record each change). Every other change
+/// of the WAF since the reference keeps these inputs' lines equal.
+const DELIBERATE: [(&str, &[&str]); 2] = [
+    (
+        "a text body under a binary Content-Type is inspected; Zig skipped every body of a \
+         declared binary type",
+        &[
+            "R5", "R7", "R9", "R58", "R70", "R150", "R176", "R200", "R231", "R251", "R300",
+            "R455", "R473", "R477", "R489", "R552", "R558", "R576", "R635", "R683", "R687",
+            "R689", "R692", "R707", "R726", "R745", "R759", "R775", "R828", "R829", "R858",
+            "R862", "R863", "R895", "R948", "R982", "R997", "R1053", "R1084", "R1154", "R1185",
+            "R1192", "R1196", "R1207", "R1226", "R1240", "R1249", "R1255", "R1304", "R1323",
+            "R1328", "R1329", "R1346", "R1389", "R1412", "R1424", "R1437", "R1448", "R1477",
+            "R1506", "R1508", "R1528", "R1609", "R1638", "R1649", "R1654", "R1680", "R1697",
+            "R1708", "R1731", "R1749", "R1792", "R1836", "R1844", "R1912", "R1914", "R1931",
+            "R1944", "R1947", "R1987", "R1990",
+        ],
+    ),
+    (
+        "a decoded line feed (%0a, %250a) before a command is command injection; Zig folded \
+         it into a space before the detector saw it",
+        &["R321", "R945", "R1581", "P42.2", "P42.3"],
+    ),
+];
+
+/// True when `line` starts with the identifier of a [`DELIBERATE`] line.
+fn is_deliberate(line: &str) -> bool {
+    let id = line.split_once(' ').map_or(line, |(id, _)| id);
+    DELIBERATE.iter().any(|(_, ids)| ids.contains(&id))
+}
+
+/// Removes the [`DELIBERATE`] lines from both outputs after checking that each still
+/// differs from its reference, so a stale entry is noticed.
+fn remove_deliberate(expected_text: &str, actual: &mut Vec<String>) -> String {
+    let expected: Vec<&str> = expected_text.lines().filter(|line| is_deliberate(line)).collect();
+    let deliberate: Vec<&String> = actual.iter().filter(|line| is_deliberate(line)).collect();
+    let count: usize = DELIBERATE.iter().map(|(_, ids)| ids.len()).sum();
+    assert_eq!((expected.len(), deliberate.len()), (count, count), "a listed line is missing");
+    for (zig, rust) in expected.iter().zip(&deliberate) {
+        assert_ne!(zig, rust, "a deliberate difference no longer occurs; remove it from the list");
+    }
+    actual.retain(|line| !is_deliberate(line));
+    expected_text.split_inclusive('\n').filter(|line| !is_deliberate(line)).collect()
+}
 
 fn read(name: &str) -> Vec<u8> {
     std::fs::read(format!("{DATA}{name}")).unwrap()
@@ -513,6 +560,7 @@ fn rust_engine_prints_the_zig_reference_lines() {
     payload_lines(&f, &mut actual);
     loader_lines(policies, &mut actual);
     document_lines(documents, &mut actual);
+    let expected_text = remove_deliberate(&expected_text, &mut actual);
     // Diagnostic values may hold a decoded newline, so the texts are compared whole; the
     // line view only locates a difference.
     let mut actual_text = actual.join("\n");
