@@ -9,7 +9,8 @@
 //! clicks, types, takes screenshots, sets the viewport, reads cookies, records screencast
 //! frames, holds chosen requests, and removes WebAssembly on demand. It collects console
 //! messages, exceptions (its workers' too), network failures and document responses so a
-//! check can assert that nothing went wrong.
+//! check can assert that nothing went wrong, and every request and WebSocket (with its
+//! frames and its close) so a check can assert what the page did and did not fetch.
 //!
 //! ```no_run
 //! use std::path::Path;
@@ -72,5 +73,6 @@ pub use browser::{Browser, Options};
 pub use error::Error;
 pub use page::{
     BindingCall, ConsoleMessage, Cookie, DocumentResponse, Evaluated, Exception, HeldRequest,
-    NetworkFailure, Page, Recording, RecordingOptions,
+    MAX_FRAME_TEXT, NetworkFailure, Page, Recording, RecordingOptions, SentRequest,
+    WebSocketFrame, WebSocketRecord,
 };

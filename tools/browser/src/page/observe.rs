@@ -1,11 +1,13 @@
 //! What a page reports through events: console output, exceptions, network failures,
-//! document responses, binding calls and load events.
+//! document responses, binding calls and load events; requests and WebSockets are kept by
+//! the [`NetworkLog`] inside.
 
 use std::collections::{HashMap, VecDeque};
 use std::time::Instant;
 
 use sibuna_json::Value;
 
+use super::network::NetworkLog;
 use crate::cdp::{field, string_at};
 
 /// The most records of each kind a page keeps; later ones are counted and dropped.
@@ -96,6 +98,7 @@ pub(crate) struct Observations {
     pub(crate) bindings: Vec<BindingCall>,
     /// Held requests not yet taken by `Page::wait_for_held_request`.
     pub(crate) held: VecDeque<HeldRequest>,
+    pub(crate) network: NetworkLog,
     pub(crate) load_count: u64,
     pub(crate) dropped: u64,
     /// The URLs of requests in flight, by request id, to name the URL of a failure.
@@ -149,6 +152,7 @@ impl Observations {
     }
 
     fn record_network(&mut self, method: &str, params: &Value<'_>) {
+        self.network.record(method, params, &mut self.dropped);
         let request_id = string_at(params, &["requestId"]);
         match method {
             "Network.requestWillBeSent" if self.requests.len() < MAX_RECORDS => {
@@ -178,13 +182,14 @@ impl Observations {
         }
     }
 
-    /// Forgets every record, keeping the load count.
+    /// Forgets every record, keeping the load count and the WebSockets.
     pub(crate) fn clear(&mut self) {
         self.console.clear();
         self.exceptions.clear();
         self.network_failures.clear();
         self.documents.clear();
         self.bindings.clear();
+        self.network.clear();
         self.dropped = 0;
     }
 }

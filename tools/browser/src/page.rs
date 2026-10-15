@@ -1,6 +1,7 @@
 //! One browser tab, attached as a flattened DevTools session.
 
 mod evaluated;
+mod network;
 mod observe;
 mod recorder;
 mod workers;
@@ -17,6 +18,7 @@ use crate::cdp::{Message, MessageKind, Params, field, string_at};
 use crate::error::Error;
 
 pub use evaluated::Evaluated;
+pub use network::{MAX_FRAME_TEXT, SentRequest, WebSocketFrame, WebSocketRecord};
 pub use observe::{
     BindingCall, ConsoleMessage, DocumentResponse, Exception, HeldRequest, NetworkFailure,
 };
@@ -204,6 +206,30 @@ impl<'b> Page<'b> {
         }
     }
 
+    /// Processes the page's events until `condition`, given the page, holds; for waiting
+    /// on what the page reports (a request, a WebSocket closing) rather than on its DOM.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Timeout`] naming `what` after `timeout`; connection errors.
+    pub fn wait_for_observation(
+        &mut self,
+        what: &str,
+        timeout: Duration,
+        condition: impl Fn(&Page<'_>) -> bool,
+    ) -> Result<(), Error> {
+        let started = Instant::now();
+        let deadline = started + timeout;
+        while !condition(self) {
+            let Some(event) = self.browser.connection.next_event(deadline)? else {
+                let what = what.to_owned();
+                return Err(Error::Timeout { what, waited: started.elapsed(), last_error: None });
+            };
+            self.handle(&event)?;
+        }
+        Ok(())
+    }
+
     /// Lets the page run for `duration`, collecting its events.
     ///
     /// # Errors
@@ -276,7 +302,43 @@ impl<'b> Page<'b> {
     /// [`Error::Protocol`] for invalid image data, [`Error::Io`] when writing fails, and
     /// the errors of [`Page::call`].
     pub fn screenshot(&mut self, path: &Path) -> Result<(), Error> {
-        let reply = self.call("Page.captureScreenshot", &Params::new().string("format", "png"))?;
+        self.capture(path, &Params::new().string("format", "png"))
+    }
+
+    /// Captures the whole document, not only the viewport, as PNG and writes it to `path`.
+    /// The height is cut at `max_height` CSS pixels, which bounds the image's size.
+    ///
+    /// # Errors
+    ///
+    /// As [`Page::screenshot`].
+    pub fn screenshot_full_page(&mut self, path: &Path, max_height: u32) -> Result<(), Error> {
+        let reply = self.call("Page.getLayoutMetrics", &Params::new())?;
+        let body = reply.body()?;
+        let size = |key| {
+            field(&body, &["result", "cssContentSize", key])
+                .and_then(Value::as_number)
+                .and_then(|number| number.as_f64().ok())
+                .unwrap_or(0.0)
+        };
+        let (width, height) = (size("width"), size("height").min(f64::from(max_height)));
+        if width < 1.0 || height < 1.0 {
+            return self.screenshot(path);
+        }
+        let clip = Params::new()
+            .float("x", 0.0)
+            .float("y", 0.0)
+            .float("width", width)
+            .float("height", height)
+            .float("scale", 1.0);
+        let params = Params::new()
+            .string("format", "png")
+            .bool("captureBeyondViewport", true)
+            .object("clip", &clip);
+        self.capture(path, &params)
+    }
+
+    fn capture(&mut self, path: &Path, params: &Params) -> Result<(), Error> {
+        let reply = self.call("Page.captureScreenshot", params)?;
         let body = reply.body()?;
         let data = string_at(&body, &["result", "data"]);
         let png = base64::decode(base64::STANDARD, data.as_bytes())
@@ -461,6 +523,22 @@ impl<'b> Page<'b> {
         &self.observations.bindings
     }
 
+    /// Every request the page sent (WebSocket handshakes excepted), in order.
+    pub fn requests(&self) -> &[SentRequest] {
+        &self.observations.network.requests
+    }
+
+    /// The WebSockets the page created, in order, with their state. Unlike the other
+    /// records they survive [`Page::clear_observations`].
+    pub fn websockets(&self) -> &[WebSocketRecord] {
+        &self.observations.network.sockets
+    }
+
+    /// The WebSocket frames the page sent and received, in order.
+    pub fn websocket_frames(&self) -> &[WebSocketFrame] {
+        &self.observations.network.frames
+    }
+
     /// The number of load events of the main frame so far.
     pub fn load_count(&self) -> u64 {
         self.observations.load_count
@@ -471,8 +549,8 @@ impl<'b> Page<'b> {
         self.observations.dropped + self.browser.connection.dropped_event_count()
     }
 
-    /// Forgets the console messages, exceptions, failures, responses and binding calls
-    /// collected so far.
+    /// Forgets the console messages, exceptions, failures, responses, binding calls,
+    /// requests and WebSocket frames collected so far.
     pub fn clear_observations(&mut self) {
         self.observations.clear();
     }

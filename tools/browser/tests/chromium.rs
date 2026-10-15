@@ -46,8 +46,17 @@ document.body.dataset.page = typeof WebAssembly;
 const WORKER_SCRIPT: &str = "console.log('worker sees ' + typeof WebAssembly); \
     postMessage(typeof WebAssembly); setTimeout(() => { throw new Error('worker failure'); }, 0);";
 
-/// Serves `PAGE` at `/` (with a cookie), a worker page and its script, and `STATUS_PAGE`
-/// elsewhere, until dropped.
+const SOCKET_PAGE: &str = r#"<!DOCTYPE html><html><body><script>
+fetch('/data.json').catch(() => {});
+const socket = new WebSocket('ws://' + location.host + '/ws');
+socket.onmessage = (event) => { document.body.dataset.got = event.data; socket.send('back'); };
+</script></body></html>"#;
+
+const TALL_PAGE: &str = r#"<!DOCTYPE html><html><body style="margin:0">
+<div style="height:3000px;background:linear-gradient(#fff,#36c)">tall</div></body></html>"#;
+
+/// Serves `PAGE` at `/` (with a cookie), a worker page and its script, a page with a
+/// WebSocket that says "hello" and closes, and `STATUS_PAGE` elsewhere, until dropped.
 struct Server {
     port: u16,
     stop: Arc<AtomicBool>,
@@ -102,10 +111,15 @@ fn respond(mut stream: TcpStream) {
     }
     let head = String::from_utf8_lossy(&head);
     let path = head.split(' ').nth(1).unwrap_or("/");
+    if path == "/ws" {
+        return greet_and_close(stream, &head);
+    }
     let (status, body, cookie) = match path {
         "/" => ("200 OK", PAGE, "Set-Cookie: fixture=1; Path=/; HttpOnly\r\n"),
         "/worker.html" => ("200 OK", WORKER_PAGE, ""),
         "/worker.js" => ("200 OK", WORKER_SCRIPT, "Content-Type: text/javascript\r\n"),
+        "/socket.html" => ("200 OK", SOCKET_PAGE, ""),
+        "/tall.html" => ("200 OK", TALL_PAGE, ""),
         "/favicon.ico" => ("404 Not Found", "", ""),
         _ => ("200 OK", STATUS_PAGE, ""),
     };
@@ -120,6 +134,29 @@ fn respond(mut stream: TcpStream) {
         body.len()
     );
     let _ = stream.write_all(response.as_bytes());
+}
+
+/// Accepts a WebSocket upgrade, sends the text frame "hello", waits for the page's reply
+/// and closes with 1000.
+fn greet_and_close(mut stream: TcpStream, head: &str) {
+    let key = head
+        .lines()
+        .find_map(|line| line.strip_prefix("Sec-WebSocket-Key: "))
+        .unwrap_or_default()
+        .trim();
+    let Ok(accept) = sibuna_http::websocket::accept_key(key.as_bytes()) else { return };
+    let accept = String::from_utf8_lossy(&accept);
+    let response = format!(
+        "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\
+         Sec-WebSocket-Accept: {accept}\r\n\r\n"
+    );
+    let _ = stream.write_all(response.as_bytes());
+    // An unmasked server text frame of five bytes.
+    let _ = stream.write_all(b"\x81\x05hello");
+    let mut reply = [0u8; 64];
+    let _ = stream.read(&mut reply);
+    let _ = stream.write_all(b"\x88\x02\x03\xe8");
+    let _ = stream.read(&mut reply);
 }
 
 fn options() -> Options {
@@ -264,4 +301,62 @@ fn observes_workers_and_removes_webassembly() {
             page.exceptions()
         );
     }
+}
+
+#[test]
+#[ignore = "needs chromium"]
+fn observes_requests_and_websockets() {
+    let server = Server::start();
+    let mut browser = Browser::launch(options()).unwrap();
+    let mut page = browser.new_page().unwrap();
+    page.navigate(&server.url("/socket.html")).unwrap();
+    page.wait_for_observation("the WebSocket to close", Duration::from_secs(5), |page| {
+        page.websockets().first().is_some_and(|socket| socket.closed)
+    })
+    .unwrap();
+    let got = page.evaluate("document.body.dataset.got").unwrap();
+    assert_eq!(got.as_string().as_deref(), Some("hello"));
+    let socket = &page.websockets()[0];
+    assert!(socket.url.ends_with("/ws"), "{socket:?}");
+    assert_eq!((socket.status, socket.frames_received, socket.frames_sent), (101, 1, 1));
+    let frames: Vec<(bool, &str)> =
+        page.websocket_frames().iter().map(|frame| (frame.sent, frame.payload.as_str())).collect();
+    assert_eq!(frames, [(false, "hello"), (true, "back")]);
+    let requests: Vec<(&str, &str)> = page
+        .requests()
+        .iter()
+        .map(|request| (request.resource_type.as_str(), request.url.as_str()))
+        .collect();
+    assert!(requests.contains(&("Document", server.url("/socket.html").as_str())), "{requests:?}");
+    assert!(requests.contains(&("Fetch", server.url("/data.json").as_str())), "{requests:?}");
+    assert!(!requests.iter().any(|(_, url)| url.ends_with("/ws")), "handshakes are not requests");
+    let timeout = page.wait_for_observation("nothing", Duration::from_millis(100), |_| false);
+    assert!(matches!(timeout, Err(Error::Timeout { .. })));
+}
+
+/// The height of a PNG image, from its header.
+fn png_height(path: &std::path::Path) -> u32 {
+    let png = std::fs::read(path).expect("the screenshot");
+    assert!(png.starts_with(b"\x89PNG\r\n\x1a\n"));
+    u32::from_be_bytes([png[20], png[21], png[22], png[23]])
+}
+
+#[test]
+#[ignore = "needs chromium"]
+fn captures_the_whole_page_within_a_bound() {
+    let server = Server::start();
+    let directory = scratch("full");
+    let mut browser = Browser::launch(options()).unwrap();
+    let mut page = browser.new_page().unwrap();
+    page.set_viewport(800, 600, false).unwrap();
+    page.navigate(&server.url("/tall.html")).unwrap();
+    let (viewport, whole, bounded) =
+        (directory.join("viewport.png"), directory.join("whole.png"), directory.join("cut.png"));
+    page.screenshot(&viewport).unwrap();
+    page.screenshot_full_page(&whole, 10_000).unwrap();
+    page.screenshot_full_page(&bounded, 2000).unwrap();
+    assert_eq!(png_height(&viewport), 600);
+    assert_eq!(png_height(&whole), 3000);
+    assert_eq!(png_height(&bounded), 2000);
+    std::fs::remove_dir_all(&directory).unwrap();
 }
