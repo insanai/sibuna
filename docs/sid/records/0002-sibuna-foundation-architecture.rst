@@ -28,6 +28,8 @@ Revision note
 
 2026-10-15 (Rust port): the origin receives ``X-Forwarded-For`` as a reverse proxy passes it on: the received chain when forwarded identity is trusted, followed by ``, `` and the socket peer; without trust, the socket peer alone, never a client-written entry. ``X-Real-IP`` is the client the request was judged by. Zig wrote the judged client into both fields. Origins behind Sibuna must read the client from ``X-Real-IP`` or from the right of ``X-Forwarded-For``, never from its leftmost entry.
 
+2026-10-15 (Rust port, security fix): ``--max-connections-per-ip`` counts an IPv6 socket peer with its ``--ipv6-prefix`` network (a /64 by default), as limits and bans do, so a client holding a /64 can no longer open the allowed connections from each of its addresses. IPv4 addresses are counted one by one, as before.
+
 Abstract
 --------
 
