@@ -72,6 +72,8 @@ Revision note
 
 2026-10-15 (Rust port, notifications, GeoIP and probes): the notifier runs on its own thread with background storage jobs inside the console's allowance of four, waiting at most 10 s for each; it renews the lease before every claim, and an attempt's 20 s budget is measured from before the renewal. Webhooks use the console HTTP client over ``sibuna-tls``; the checked address is pinned, plain HTTP is allowed only to loopback literals, and the reply body is read up to 64 KiB (a larger body fails the attempt). GeoIP downloads resolve publisher hosts under the public-only policy and pin the connection; one HTTPS redirect is allowed, to the provider's asset host. The embedded snapshot reaches the console as ``Inputs::geoip_embedded`` and is decoded once at start when storage has no generation. Restore reads 64 chunks per transaction. An operator checksum must be hex, and oversized import fields answer 400.
 
+2026-10-15 (Rust port, prompt stop): the console's outbound I/O for webhooks, syslog over TCP, GeoIP downloads and data-plane probes never blocks in one socket operation for more than 250 ms. After each slice it checks the deadline and the console's stop flag (for an import, the importer's cancel flag). The TLS handshake follows the same rule through ``Connector::connect_cancellable``. Connection attempts start at 250 ms and double up to 1 s, so a distant server can still answer. Stopping therefore ends a delivery, download or probe in flight within about a second, instead of waiting for the 10-second delivery deadline or the 120-second download deadline. Zig cancelled the I/O task directly. Name resolution is the exception: it waits for the system resolver, which its own configuration bounds.
+
 Abstract
 --------
 
