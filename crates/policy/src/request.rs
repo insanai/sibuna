@@ -1,5 +1,7 @@
 //! The borrowed request that policy evaluation and both inspection paths read.
 
+use std::net::IpAddr;
+
 use crate::rule::Header;
 
 /// Everything the engine looks at for one request. Every slice borrows the connection
@@ -19,9 +21,14 @@ pub struct RequestView<'a> {
     pub path: &'a [u8],
     /// The query string without the `?`.
     pub query: &'a [u8],
-    /// The client address as text (IPv4 or IPv6); text that is not an address matches no
-    /// address criterion.
+    /// The client address as text (IPv4 or IPv6), as received. Policy reads
+    /// `client_address`; the text serves incidents and logs.
     pub client_ip: &'a [u8],
+    /// The client address, parsed once by whoever built the view (`RequestView::new` parses
+    /// `client_ip`). Reputation and CIDR criteria read it; `None` matches no address
+    /// criterion. When it is `None` while `client_ip` holds text, the engine parses the text
+    /// itself, so a view built field by field without it is still judged by its address.
+    pub client_address: Option<IpAddr>,
     /// The User-Agent header value.
     pub user_agent: &'a [u8],
     /// The request headers in order.
@@ -31,9 +38,20 @@ pub struct RequestView<'a> {
 }
 
 impl<'a> RequestView<'a> {
-    /// Returns a view of a request with a path, a client address and a User-Agent, and no
-    /// query, headers or body.
+    /// Returns a view of a request with a path, a client address (parsed here) and a
+    /// User-Agent, and no query, headers or body.
     pub fn new(path: &'a [u8], client_ip: &'a [u8], user_agent: &'a [u8]) -> RequestView<'a> {
-        RequestView { path, client_ip, user_agent, ..RequestView::default() }
+        let client_address = sibuna_cidr::parse_ip(client_ip).ok();
+        RequestView { path, client_ip, client_address, user_agent, ..RequestView::default() }
+    }
+
+    /// Returns the client address policy judges: `client_address`, or else `client_ip`
+    /// parsed now (`None` when it is not an address).
+    #[inline]
+    pub fn address(&self) -> Option<IpAddr> {
+        if self.client_address.is_some() || self.client_ip.is_empty() {
+            return self.client_address;
+        }
+        sibuna_cidr::parse_ip(self.client_ip).ok()
     }
 }

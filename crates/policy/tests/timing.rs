@@ -54,6 +54,7 @@ fn browser_request() -> RequestView<'static> {
         path: b"/api/v1/data",
         query: b"page=2",
         client_ip: b"203.0.113.7",
+        client_address: Some(std::net::IpAddr::V4(std::net::Ipv4Addr::new(203, 0, 113, 7))),
         user_agent: UA,
         headers: &HEADERS,
         body: b"",

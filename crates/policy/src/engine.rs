@@ -473,7 +473,7 @@ impl Engine {
         request: &RequestView<'_>,
         observer: &mut impl Observer,
     ) -> Decision<'e> {
-        let address = sibuna_cidr::parse_ip(request.client_ip).ok();
+        let address = request.address();
         let verdict = address.and_then(|address| self.reputation.lookup(address).copied());
         if let Some(action @ (Action::Deny | Action::Allow)) = verdict {
             return self.reputation_decision(action, 0);

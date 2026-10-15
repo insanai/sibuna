@@ -245,3 +245,36 @@ fn compiled_rules_agree_with_direct_rule_matching() {
         }
     }
 }
+
+/// The parsed address decides reputation and CIDR rules: every spelling of one address
+/// gets one decision, and a view that carries the address is not re-read from its text.
+#[test]
+fn the_parsed_client_address_decides_reputation_and_cidr_rules() {
+    let mut engine = Engine::new(16);
+    engine.clear_rules();
+    let cidr = sibuna_cidr::parse_cidr(b"1.2.3.0/24").unwrap();
+    engine
+        .add_rule(PolicyRule { cidrs: vec![cidr], ..PolicyRule::new("net", Action::Deny) })
+        .unwrap();
+    engine.insert_reputation(b"5.6.7.8/32", Action::Deny).unwrap();
+    for spelling in [&b"1.2.3.4"[..], b"::ffff:1.2.3.4", b"001.2.3.4", b"::FFFF:1.2.3.4"] {
+        let decision = engine.evaluate(&view(b"/", spelling, b"x"));
+        assert_eq!((decision.action, decision.rule_name), (Action::Deny, "net"), "{spelling:?}");
+    }
+    for spelling in [&b"5.6.7.8"[..], b"::ffff:5.6.7.8"] {
+        assert_eq!(engine.evaluate(&view(b"/", spelling, b"x")).rule_name, "ip/cidr-trie");
+    }
+    // The carried address wins over the text, which then serves only logs.
+    let carried = RequestView {
+        client_address: Some([1, 2, 3, 9].into()),
+        ..view(b"/", b"203.0.113.1", b"x")
+    };
+    assert_eq!(engine.evaluate(&carried).rule_name, "net");
+    // A view built field by field without the address is judged by its text.
+    let fields = RequestView { path: b"/", client_ip: b"1.2.3.4", ..RequestView::default() };
+    assert_eq!(fields.address(), Some([1, 2, 3, 4].into()));
+    assert_eq!(engine.evaluate(&fields).rule_name, "net");
+    let unparsed = view(b"/", b"not an address", b"x");
+    assert_eq!(unparsed.address(), None);
+    assert_ne!(engine.evaluate(&unparsed).action, Action::Deny);
+}
