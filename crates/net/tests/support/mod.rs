@@ -20,6 +20,13 @@ use sibuna_net::{Audit, Client, Exchange, IdleTable, Lease, Pool, ProxyError, Up
 const BUFFER: usize = 64 * 1024;
 const MAX_HEAD: usize = 16 * 1024;
 
+impl Daemon {
+    /// The connections being served now.
+    pub fn connection_count(&self) -> usize {
+        self.connections.load(Ordering::SeqCst)
+    }
+}
+
 pub struct Daemon {
     pub port: u16,
     pub max_connections: AtomicUsize,
@@ -358,6 +365,26 @@ fn route(conn: &mut Conn, head: &[u8], seq: u32) -> bool {
         "/close-after" => {
             conn.send(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok");
             false
+        }
+        "/headbody" => {
+            // A faulty origin: the HEAD response is followed, late, by bytes shaped as a
+            // second response (review reproduction `origin.py`).
+            let evil = b"HTTP/1.1 200 OK\r\nContent-Length: 9\r\nX-Poison: 1\r\n\r\nPOISONED!";
+            conn.send(
+                format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n", evil.len()).as_bytes(),
+            );
+            thread::sleep(Duration::from_millis(50));
+            conn.send(evil)
+        }
+        "/trailing-junk" => conn.send(
+            b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n\
+              okHTTP/1.1 200 OK\r\nContent-Length: 9\r\nX-Poison: 1\r\n\r\nPOISONED!",
+        ),
+        "/large" => {
+            // 64 MiB as fast as the socket takes it.
+            conn.send(b"HTTP/1.1 200 OK\r\nContent-Length: 67108864\r\n\r\n");
+            let block = vec![b'L'; 1 << 20];
+            (0..64).all(|_| conn.send(&block))
         }
         "/ws" => websocket(conn, head, true),
         "/ws-silent" => websocket(conn, head, false),

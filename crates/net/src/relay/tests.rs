@@ -60,6 +60,21 @@ fn framed_origin_responses_are_relayed_exactly_and_keep_the_client_open() {
     assert_eq!(relay_fixed(b"", true).err(), Some(ProxyError::UpstreamClosed));
     let bad_chunk = b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\nzz\r\n";
     assert_eq!(relay_fixed(bad_chunk, true).err(), Some(ProxyError::UpstreamTruncated));
+    // Framing a lenient parser reads differently is not relayed: a signed or underscored
+    // size, data not followed by CRLF, a bare LF, a malformed trailer.
+    for body in [
+        &b"+3\r\nabc\r\n0\r\n\r\n"[..],
+        b"1_0\r\n0123456789abcdef\r\n0\r\n\r\n",
+        b"3\r\nabcXY0\r\n\r\n",
+        b"3\nabc\r\n0\r\n\r\n",
+        b"3\r\nabc\r\n0\r\nBad Trailer\r\n\r\n",
+        b"3\r\nabc\r\n0\r\n\n",
+    ] {
+        let mut origin = b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n".to_vec();
+        origin.extend_from_slice(body);
+        let result = relay_fixed(&origin, true).err();
+        assert_eq!(result, Some(ProxyError::UpstreamTruncated), "{}", text(body));
+    }
     // A body shorter than its length is cut after the head: an abort, not a second reply.
     let short = b"HTTP/1.1 200 OK\r\nContent-Length: 9\r\n\r\nshort";
     assert_eq!(relay_fixed(short, true).err(), Some(ProxyError::UpstreamTruncated));
@@ -247,62 +262,71 @@ fn mutate(rng: &mut Rng, seeds: &[&[u8]]) -> Vec<u8> {
 
 /// A naive reading of a chunked body as `relay_chunked` relays it: the number of bytes
 /// relayed when the body is complete, or `None` when the relay must fail. Lines (through LF)
-/// must fit `capacity`.
+/// must fit `capacity`, end in CRLF and hold no other control byte than HTAB; a size is
+/// hexadecimal digits followed by nothing or by optional blanks and a `;`; chunk data ends
+/// in CRLF; a trailer line is a token, a colon and a value.
 fn reference_chunked(input: &[u8], capacity: usize) -> Option<usize> {
     let mut at = 0;
-    let line_end = |at: usize| -> Option<usize> {
+    let line_at = |at: usize| -> Option<(usize, String)> {
         let rest = &input[at..];
         let newline = rest.iter().position(|&byte| byte == b'\n')?;
-        (newline < capacity).then_some(at + newline + 1)
+        if newline >= capacity {
+            return None;
+        }
+        let line = &rest[..=newline];
+        let text = line.strip_suffix(b"\r\n")?;
+        if text.iter().any(|&b| (b < 32 && b != b'\t') || b == 127) {
+            return None;
+        }
+        Some((at + newline + 1, String::from_utf8_lossy(text).into_owned()))
     };
     loop {
-        let end = line_end(at)?;
-        let line = &input[at..end];
-        let cut = line.iter().position(|b| b";\r\n".contains(b)).unwrap_or(line.len());
-        let digits: Vec<u8> = line[..cut].to_vec();
-        let digits = std::str::from_utf8(&digits).ok()?.trim_matches([' ', '\t']);
-        let size = naive_zig_hex(digits)?;
+        let (end, line) = line_at(at)?;
+        let digits: String = line.chars().take_while(char::is_ascii_hexdigit).collect();
+        let rest = &line[digits.len()..];
+        if !rest.is_empty() && !rest.trim_start_matches([' ', '\t']).starts_with(';') {
+            return None;
+        }
+        let size = naive_digits(&digits, 16)?;
         at = end;
         if size == 0 {
             break;
         }
-        let data = size.saturating_add(2);
-        if data > (input.len() - at) as u64 {
+        if size > (input.len() - at) as u64 {
             return None;
         }
-        at += data as usize;
+        at += size as usize;
+        let (end, line) = line_at(at)?;
+        if !line.is_empty() {
+            return None;
+        }
+        at = end;
     }
     loop {
-        let end = line_end(at)?;
-        let line = &input[at..end];
+        let (end, line) = line_at(at)?;
         at = end;
-        if line == b"\r\n" || line == b"\n" {
+        if line.is_empty() {
             return Some(at);
+        }
+        let (name, _) = line.split_once(':')?;
+        let token = |c: char| c.is_ascii_alphanumeric() || "!#$%&'*+-.^_`|~".contains(c);
+        if name.is_empty() || !name.chars().all(token) {
+            return None;
         }
     }
 }
 
-/// Zig's `parseInt(u64, text, 16)`, written with 128-bit arithmetic.
-fn naive_zig_hex(text: &str) -> Option<u64> {
-    let (negative, digits) = if let Some(rest) = text.strip_prefix('+') {
-        (false, rest)
-    } else if let Some(rest) = text.strip_prefix('-') {
-        (true, rest)
-    } else {
-        (false, text)
-    };
-    if digits.is_empty() || digits.starts_with('_') || digits.ends_with('_') {
+/// One or more hexadecimal or decimal digits and nothing else, with 128-bit arithmetic.
+fn naive_digits(text: &str, radix: u32) -> Option<u64> {
+    if text.is_empty() {
         return None;
     }
     let mut value: u128 = 0;
-    for character in digits.chars().filter(|&c| c != '_') {
-        value = value * 16 + u128::from(character.to_digit(16)?);
+    for character in text.chars() {
+        value = value * u128::from(radix) + u128::from(character.to_digit(radix)?);
         if value > u128::from(u64::MAX) {
             return None;
         }
-    }
-    if negative && value != 0 {
-        return None;
     }
     Some(value as u64)
 }

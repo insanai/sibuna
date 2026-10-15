@@ -6,6 +6,13 @@
 //! how the daemon buffered the body, and what Zig's `streamProxy` produced: its result, the
 //! origin status, the captured head, the bytes the origin received and the bytes the client
 //! received. This test drives `stream_proxy` through the same steps over real sockets.
+//!
+//! Two recorded scenarios are deliberately answered differently since the security review of
+//! 2026-10-15 (see [`deviation`]): Zig accepted an origin `Content-Length: +3` and the chunk
+//! sizes `+3`, `1_0 ` and ` -0 ` through its lenient `parseInt`, and relayed them as sent.
+//! The Rust proxy parses them strictly, so the length is a malformed head (502) and the chunk
+//! size aborts the relay after the head, exactly like the recorded `resp_cl_conflict` and
+//! `resp_chunked_bad` scenarios.
 
 // Test scaffolding: a failed setup step should stop the test at once.
 #![allow(clippy::unwrap_used)]
@@ -224,6 +231,16 @@ fn run(scenario: &Scenario, pool: &Pool, workspace: &mut Workspace) -> Outcome {
     Outcome { result: result_text(result), status, head, origin_received, client_received }
 }
 
+/// The outcome the Rust proxy gives where it deliberately differs from the recorded Zig one:
+/// the result, the reported status, whether the head was captured, and the client bytes.
+fn deviation(name: &str) -> Option<(&'static str, u16, bool, &'static [u8])> {
+    match name {
+        "resp_cl_plus" => Some(("err UpstreamReadFailed", 0, false, b"")),
+        "resp_chunked_zig_integers" => Some(("err UpstreamTruncated", 200, true, b"")),
+        _ => None,
+    }
+}
+
 fn show(bytes: &[u8]) -> String {
     String::from_utf8_lossy(bytes).into_owned()
 }
@@ -237,6 +254,14 @@ fn proxy_wire_bytes_match_zig() {
     for scenario in &scenarios {
         let outcome = run(scenario, &pool, &mut workspace);
         let name = &scenario.name;
+        if let Some((result, status, captured, client)) = deviation(name) {
+            assert_eq!(outcome.result, result, "{name}: result");
+            assert_eq!(outcome.status, status, "{name}: status");
+            assert_eq!(outcome.head.is_some(), captured, "{name}: captured head");
+            assert_eq!(show(&outcome.origin_received), show(&scenario.origin_received), "{name}");
+            assert_eq!(show(&outcome.client_received), show(client), "{name}: client received");
+            continue;
+        }
         assert_eq!(outcome.result, scenario.result, "{name}: result");
         assert_eq!(outcome.status, scenario.status, "{name}: status");
         assert_eq!(

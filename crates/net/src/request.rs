@@ -36,8 +36,30 @@ const HOP_BY_HOP: [&[u8]; 19] = [
     b"expect",
 ];
 
+/// True when `name` is one of [`HOP_BY_HOP`] in any case, with any `-` written as `_`.
+///
+/// CGI, WSGI and Rack map both `X-Forwarded-For` and `X_Forwarded_For` to the variable
+/// `HTTP_X_FORWARDED_FOR`, so a client could otherwise spoof a field Sibuna sets or strips
+/// by spelling it with underscores.
 fn is_hop_by_hop(name: &[u8]) -> bool {
-    HOP_BY_HOP.iter().any(|hop| name.eq_ignore_ascii_case(hop))
+    HOP_BY_HOP.iter().any(|hop| same_field_name(name, hop))
+}
+
+/// Compares a field name with a lower-case `wanted` name, ignoring case and reading `_` as
+/// `-`.
+fn same_field_name(name: &[u8], wanted: &[u8]) -> bool {
+    name.len() == wanted.len()
+        && name.iter().zip(wanted).all(|(&byte, &want)| {
+            let byte = if byte == b'_' { b'-' } else { byte.to_ascii_lowercase() };
+            byte == want
+        })
+}
+
+/// True when a request field is not forwarded: a hop-by-hop or Sibuna field (see
+/// [`is_hop_by_hop`]), or one the client's `Connection` field nominates. `Host` is always
+/// forwarded: a client cannot nominate it away and deliver a request without one.
+fn is_dropped(request: &Request<'_>, name: &[u8]) -> bool {
+    is_hop_by_hop(name) || (nominated(request, name) && !name.eq_ignore_ascii_case(b"host"))
 }
 
 /// Writes the origin request head for `request`: the request line in HTTP/1.1, the
@@ -54,6 +76,11 @@ pub(crate) fn write_request_head<W: Write + ?Sized>(
     audit: &Audit<'_>,
     switching: bool,
 ) -> io::Result<()> {
+    // The origin must route on the path policy judged, so only a normal path (or `*`) is
+    // written; a caller that skipped `sibuna_http::normalize_path` fails closed here.
+    if !sibuna_http::is_normal_path(request.path) {
+        return Err(io::Error::new(io::ErrorKind::InvalidInput, "request path is not normal"));
+    }
     out.write_all(request.method_text)?;
     out.write_all(b" ")?;
     out.write_all(request.path)?;
@@ -63,7 +90,7 @@ pub(crate) fn write_request_head<W: Write + ?Sized>(
     }
     out.write_all(b" HTTP/1.1\r\n")?;
     for header in request.headers() {
-        if is_hop_by_hop(header.name) || nominated(request, header.name) {
+        if is_dropped(request, header.name) {
             continue;
         }
         out.write_all(header.name)?;
@@ -174,6 +201,49 @@ mod tests {
             .unwrap();
         assert!(contains(&out, b"Content-Length: 1234567890\r\nConnection: Upgrade\r\n"));
         assert!(contains(&out, b"Upgrade: websocket\r\n"));
+    }
+
+    #[test]
+    fn underscore_spellings_of_dropped_fields_are_dropped_too() {
+        let raw = b"GET / HTTP/1.1\r\nHost: h\r\nX_Forwarded_For: 6.6.6.6\r\n\
+            x_sibuna_status: PASS\r\nX-Real_IP: 6.6.6.7\r\nCONTENT_LENGTH: 5\r\n\
+            Transfer_Encoding: chunked\r\nX_Keep: yes\r\nX-Forwarded_Proto: https\r\n\r\n";
+        let request = parse_request(raw).unwrap();
+        let mut out = Vec::new();
+        write_request_head(&mut out, &request, &Upload::None, &audit(), false).unwrap();
+        let text = String::from_utf8(out).unwrap();
+        assert!(!text.contains("6.6.6"), "{text}");
+        assert!(!text.to_ascii_lowercase().contains("sibuna_status"), "{text}");
+        assert!(!text.contains("CONTENT_LENGTH") && !text.contains("Transfer_Encoding"));
+        assert!(!text.contains("https"), "{text}");
+        assert!(text.contains("X_Keep: yes\r\n"), "{text}");
+        assert!(same_field_name(b"X_FORWARDED_FOR", b"x-forwarded-for"));
+        assert!(!same_field_name(b"X-Forwarded-Fo", b"x-forwarded-for"));
+        assert!(!same_field_name(b"x-forwarded_for", b"x_forwarded_for"));
+    }
+
+    #[test]
+    fn a_connection_field_cannot_nominate_host_away() {
+        let raw = b"GET / HTTP/1.1\r\nHost: h\r\nConnection: host, X-Drop\r\nX-Drop: 1\r\n\r\n";
+        let request = parse_request(raw).unwrap();
+        let mut out = Vec::new();
+        write_request_head(&mut out, &request, &Upload::None, &audit(), false).unwrap();
+        assert!(contains(&out, b"\r\nHost: h\r\n"));
+        assert!(!contains(&out, b"X-Drop"));
+    }
+
+    #[test]
+    fn only_a_normal_path_is_written_to_the_origin() {
+        let mut out = Vec::new();
+        for raw in [&b"GET //admin/x HTTP/1.1\r\n\r\n"[..], b"GET /%61dmin HTTP/1.1\r\n\r\n"] {
+            let request = parse_request(raw).unwrap();
+            let written = write_request_head(&mut out, &request, &Upload::None, &audit(), false);
+            assert_eq!(written.map_err(|error| error.kind()), Err(io::ErrorKind::InvalidInput));
+            assert!(out.is_empty());
+        }
+        let request = parse_request(b"OPTIONS * HTTP/1.1\r\n\r\n").unwrap();
+        write_request_head(&mut out, &request, &Upload::None, &audit(), false).unwrap();
+        assert!(out.starts_with(b"OPTIONS * HTTP/1.1\r\n"));
     }
 
     #[test]

@@ -145,6 +145,65 @@ fn a_silent_origin_is_cut_at_the_idle_timeout_and_releases_its_connection_slot()
     assert!(started.elapsed() < Duration::from_millis(3500));
 }
 
+/// The review's H2 reproduction: an origin that ignores a request body reads it as a request
+/// of its own (CL.0) and answers it later on the same socket. That socket must never serve
+/// another client, or the next client receives the smuggled request's response.
+#[test]
+fn a_body_the_origin_ignores_cannot_poison_the_origin_pool() {
+    let daemon = start(300);
+    let smuggled = b"GET /admin/secret HTTP/1.1\r\nHost: t\r\n\r\n";
+    let mut request = format!(
+        "POST /ignorebody HTTP/1.1\r\nHost: t\r\nContent-Length: {}\r\n\r\n",
+        smuggled.len()
+    )
+    .into_bytes();
+    request.extend_from_slice(smuggled);
+    let first = round_trip(daemon.port, &request);
+    assert!(contains(&first, b"ORIGIN|POST /ignorebody"));
+    thread::sleep(Duration::from_millis(100));
+    for path in ["/victim", "/victim-2"] {
+        let raw = format!("GET {path} HTTP/1.1\r\nHost: t\r\n\r\n");
+        let response = round_trip(daemon.port, raw.as_bytes());
+        assert!(contains(&response, format!("ORIGIN|GET {path}").as_bytes()), "{path}");
+        assert!(!contains(&response, b"/admin/secret"), "{path}");
+    }
+}
+
+/// The review's H2 reproduction: an origin that sends a body after a HEAD response, or bytes
+/// after a framed response, leaves a stray response on the socket.
+#[test]
+fn stray_bytes_after_a_response_cannot_poison_the_origin_pool() {
+    let daemon = start(300);
+    let head = round_trip(daemon.port, b"HEAD /headbody HTTP/1.1\r\nHost: t\r\n\r\n");
+    assert_eq!(status(&head), 200);
+    assert!(!contains(&head, b"POISONED"));
+    let junk = round_trip(daemon.port, b"GET /trailing-junk HTTP/1.1\r\nHost: t\r\n\r\n");
+    assert_eq!(body(&junk), b"ok");
+    thread::sleep(Duration::from_millis(150));
+    for path in ["/victim", "/victim-2", "/victim-3"] {
+        let raw = format!("GET {path} HTTP/1.1\r\nHost: t\r\n\r\n");
+        let response = round_trip(daemon.port, raw.as_bytes());
+        assert!(contains(&response, format!("ORIGIN|GET {path}").as_bytes()), "{path}");
+        assert!(!contains(&response, b"POISONED"), "{path}");
+    }
+}
+
+/// A client that asks for a large response and never reads it holds its connection only
+/// until the idle timeout after the socket buffers fill.
+#[test]
+fn a_client_that_never_reads_is_cut() {
+    let daemon = start(300);
+    let mut stream = TcpStream::connect(support::address(daemon.port)).unwrap();
+    stream.write_all(b"GET /large HTTP/1.1\r\nHost: t\r\n\r\n").unwrap();
+    let started = Instant::now();
+    while daemon.connection_count() > 0 && started.elapsed() < Duration::from_secs(10) {
+        thread::sleep(Duration::from_millis(50));
+    }
+    assert_eq!(daemon.connection_count(), 0);
+    assert!(started.elapsed() < Duration::from_secs(5), "{:?}", started.elapsed());
+    drop(stream);
+}
+
 #[test]
 fn an_idle_connection_is_closed_after_the_socket_timeout() {
     let daemon = start(300);

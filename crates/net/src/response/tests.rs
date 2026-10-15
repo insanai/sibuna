@@ -38,20 +38,45 @@ fn response_head_parsing_decides_the_body_framing() {
 }
 
 #[test]
-fn zig_integer_syntax_and_status_bounds() {
-    let plus = parse_response_head(b"HTTP/1.1 200 OK\r\nContent-Length: +3\r\n\r\n", false);
-    assert_eq!(plus.unwrap().framing, Framing::Length(3));
-    let underscore = parse_response_head(b"HTTP/1.1 200 OK\r\nContent-Length: 1_0\r\n\r\n", false);
-    assert_eq!(underscore.unwrap().framing, Framing::Length(10));
+fn origin_lengths_and_chunk_sizes_are_plain_digits_and_status_bounds_follow_zig() {
+    let head = |length: &str| format!("HTTP/1.1 200 OK\r\nContent-Length:{length}\r\n\r\n");
+    let framing = |length: &str| parse_response_head(head(length).as_bytes(), false);
+    assert_eq!(framing(" 12 ").unwrap().framing, Framing::Length(12));
+    assert_eq!(framing("007").unwrap().framing, Framing::Length(7));
+    // Zig's `parseInt` read these as 3, 10 and 0; a strict recipient refuses them.
+    for lenient in [" +3", " 1_0", " -0", " 1 2", " 0x1", "", " 18446744073709551616"] {
+        assert!(framing(lenient).is_none(), "{lenient:?}");
+    }
     assert!(parse_response_head(b"HTTP/1.1 099 Low\r\n\r\n", false).is_none());
     assert!(parse_response_head(b"HTTP/1.1 +99 Low\r\n\r\n", false).is_none());
     assert_eq!(parse_response_head(b"HTTP/1.1 999 \r\n\r\n", false).unwrap().status, 999);
     assert!(parse_response_head(b"HTTP/1.2 200 OK\r\n\r\n", false).is_none());
     assert!(parse_response_head(b"HTTP/1.1 200OK\r\n\r\n", false).is_none());
     assert!(parse_response_head(b"HTTP/1.1 200 ", false).is_some());
-    assert_eq!(chunk_size(b"1_0 ;x\r\n"), Some(16));
-    assert_eq!(chunk_size(b" -0 \r\n"), Some(0));
-    assert_eq!(chunk_size(b"\r\n"), None);
+    assert_eq!(chunk_size(b"10\r\n"), Some(16));
+    assert_eq!(chunk_size(b"aF;x=1\r\n"), Some(0xaf));
+    assert_eq!(chunk_size(b"10 \t;x\r\n"), Some(16));
+    assert_eq!(chunk_size(b"0000000000000000001\r\n"), Some(1));
+    assert_eq!(chunk_size(b"ffffffffffffffff\r\n"), Some(u64::MAX));
+    for lenient in [
+        &b"1_0 ;x\r\n"[..],
+        b" -0 \r\n",
+        b"+3\r\n",
+        b"a \r\n",
+        b"a\n",
+        b"a\r\r\n",
+        b"a;x\x00\r\n",
+        b"0x1\r\n",
+        b"\r\n",
+        b"10000000000000000\r\n",
+    ] {
+        assert_eq!(chunk_size(lenient), None, "{:?}", String::from_utf8_lossy(lenient));
+    }
+    assert!(is_trailer_line(b"X-Sum: 1\r\n"));
+    assert!(!is_trailer_line(b"X Sum: 1\r\n"));
+    assert!(!is_trailer_line(b"X-Sum: 1\n"));
+    assert!(!is_trailer_line(b"X-Sum: 1\r\r\n"));
+    assert!(!is_trailer_line(b"no colon\r\n"));
 }
 
 #[test]
@@ -112,7 +137,7 @@ fn reference(head: &[u8], head_request: bool) -> Option<ResponseHead> {
                 }
             }
             "content-length" => {
-                let n = naive_zig_decimal(&value)?;
+                let n = naive_digits(&value, 10)?;
                 if length.is_some_and(|previous| previous != n) {
                     return None;
                 }
@@ -168,7 +193,22 @@ fn naive_lines(head: &[u8]) -> Vec<Vec<u8>> {
     lines
 }
 
-/// Zig's `parseInt(u64, text, 10)` with 128-bit arithmetic.
+/// One or more digits of `radix` and nothing else, with 128-bit arithmetic.
+pub(super) fn naive_digits(text: &str, radix: u32) -> Option<u64> {
+    if text.is_empty() {
+        return None;
+    }
+    let mut value: u128 = 0;
+    for character in text.chars() {
+        value = value * u128::from(radix) + u128::from(character.to_digit(radix)?);
+        if value > u128::from(u64::MAX) {
+            return None;
+        }
+    }
+    Some(value as u64)
+}
+
+/// Zig's `parseInt(u64, text, 10)` with 128-bit arithmetic, as the status code is read.
 fn naive_zig_decimal(text: &str) -> Option<u64> {
     let (negative, digits) = match text.as_bytes().first() {
         Some(b'+') => (false, &text[1..]),

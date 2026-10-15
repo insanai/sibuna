@@ -8,11 +8,15 @@
 //! per WebSocket, which the connection limit already bounds.
 //!
 //! The idle deadline is shared by both directions: bytes moving either way refresh one stamp
-//! (and the connection's [`Activity`]). Each socket wait carries a timeout equal to the time
-//! left before the deadline; a wait that times out re-reads the shared stamp and either waits
-//! again for the rest or ends the relay. When one direction reaches end of stream, the other
-//! socket's sending side is shut down (a half close); when a direction fails, both sockets are
-//! shut down so the other direction ends too.
+//! (and the connection's [`Activity`]). Each read carries a timeout equal to the time left
+//! before the deadline; a read that times out re-reads the shared stamp and either waits
+//! again for the rest or ends the relay. A write needs progress of its own: a peer that does
+//! not accept a byte for the whole idle timeout ends the relay, however busy the other
+//! direction is, so a client that keeps sending but never reads cannot hold the connection.
+//!
+//! When one direction reaches end of stream, the other socket's sending side is shut down (a
+//! half close); when a direction fails, both sockets are shut down so the other direction
+//! ends too.
 
 use std::fmt;
 use std::io::{self, Read, Write};
@@ -72,11 +76,16 @@ impl Clock<'_> {
         }
     }
 
-    /// The time left before the deadline, or the idle error once it has passed.
+    /// The time left before the shared deadline, or the idle error once it has passed.
     fn remaining(&self) -> Result<Option<Duration>, DuplexError> {
+        self.remaining_since(self.last_ms.load(Ordering::Relaxed))
+    }
+
+    /// The time left of an idle timeout that started at `since_ms`, or the idle error once
+    /// it has passed; `None` without a timeout.
+    fn remaining_since(&self, since_ms: u64) -> Result<Option<Duration>, DuplexError> {
         let Some(timeout) = self.timeout_ms else { return Ok(None) };
-        let deadline = self.last_ms.load(Ordering::Relaxed).saturating_add(timeout);
-        match deadline.checked_sub(now_ms()) {
+        match since_ms.saturating_add(timeout).checked_sub(now_ms()) {
             Some(left) if left > 0 => Ok(Some(Duration::from_millis(left))),
             _ => Err(DuplexError::IdleTimeout),
         }
@@ -169,19 +178,22 @@ fn at_least_a_millisecond(limit: Duration) -> Duration {
     limit.max(Duration::from_millis(1))
 }
 
-/// Sends all of `bytes`, refreshing the clock on every write.
+/// Sends all of `bytes`, refreshing the clock on every write. The sink must accept at least
+/// one byte per idle timeout; the other direction's traffic does not extend that bound.
 fn send_all<W: Write + Waits>(
     mut sink: W,
     bytes: &[u8],
     clock: &Clock<'_>,
 ) -> Result<(), DuplexError> {
     let mut sent = 0;
+    let mut progressed_ms = now_ms();
     while let Some(rest) = bytes.get(sent..).filter(|rest| !rest.is_empty()) {
-        sink.wait_writes(clock.remaining()?);
+        sink.wait_writes(clock.remaining_since(progressed_ms)?);
         match sink.write(rest) {
             Ok(0) => return Err(DuplexError::ConnectionFailed),
             Ok(count) => {
                 sent += count;
+                progressed_ms = now_ms();
                 clock.moved();
             }
             Err(error) if error.kind() == io::ErrorKind::Interrupted => {}
@@ -279,6 +291,47 @@ mod tests {
         assert!(output[..CAPACITY].iter().all(|&byte| byte == 1));
         assert!(output[CAPACITY..CAPACITY + 17].iter().all(|&byte| byte == 2));
         assert!(output[CAPACITY + 17..].iter().all(|&byte| byte == 3));
+    }
+
+    #[test]
+    fn a_client_that_sends_but_never_reads_is_cut_at_the_idle_timeout() {
+        use std::net::TcpListener;
+        use std::sync::atomic::AtomicBool;
+        use std::time::Instant;
+        let pair = || {
+            let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+            let near = TcpStream::connect(listener.local_addr().unwrap()).unwrap();
+            (near, listener.accept().unwrap().0)
+        };
+        let (client_peer, client) = pair();
+        let (origin_peer, origin) = pair();
+        let done = AtomicBool::new(false);
+        let started = Instant::now();
+        let result = std::thread::scope(|scope| {
+            // The client keeps sending a little and never reads.
+            scope.spawn(|| {
+                while !done.load(Ordering::Relaxed) && (&client_peer).write_all(b"ping").is_ok() {
+                    std::thread::sleep(Duration::from_millis(20));
+                }
+            });
+            // The origin floods the client and drains what reaches it.
+            scope.spawn(|| while (&origin_peer).write_all(&[b'x'; 65536]).is_ok() {});
+            scope.spawn(|| {
+                let mut sink = [0u8; 4096];
+                while matches!((&origin_peer).read(&mut sink), Ok(count) if count > 0) {}
+            });
+            let mut storage = vec![0u8; 16 * 1024];
+            let mut upload = vec![0u8; 16 * 1024];
+            let reader = Reader::new(&origin, &mut storage);
+            let options = RelayOptions { idle_timeout_seconds: 1, activity: None };
+            let result = relay(&client, b"", &origin, reader, &mut upload, options);
+            done.store(true, Ordering::Relaxed);
+            let _ = client_peer.shutdown(Shutdown::Both);
+            let _ = origin_peer.shutdown(Shutdown::Both);
+            result
+        });
+        assert_eq!(result, Err(DuplexError::IdleTimeout));
+        assert!(started.elapsed() < Duration::from_secs(5), "{:?}", started.elapsed());
     }
 
     #[test]

@@ -102,6 +102,16 @@ impl Upload {
         request.content_length().map_or(Upload::None, |length| Upload::Length(length as u64))
     }
 
+    /// True when the request sends body bytes to the origin: a non-zero length or a chunked
+    /// body.
+    pub fn carries_body(&self) -> bool {
+        match self {
+            Upload::None => false,
+            Upload::Length(length) => *length > 0,
+            Upload::Chunked(_) => true,
+        }
+    }
+
     /// True when the whole body is in the `body_len` buffered bytes, so the request can be
     /// sent again.
     pub fn is_buffered(&self, body_len: usize) -> bool {
@@ -229,6 +239,13 @@ impl Workspace {
 /// connection, only for a safe (`GET`, `HEAD`, `OPTIONS`), fully buffered request: a missing
 /// reply is no evidence that an origin did not commit a mutation.
 ///
+/// The origin socket returns to the pool only at a clean message boundary (see
+/// `relay::relay_response`) and never after a request that carried a body. An origin that
+/// ignores a body it was not expecting reads that body as a request of its own and answers
+/// it later on the same socket (a CL.0 desynchronisation); pooled, the socket would hand that
+/// answer to the next client. Whether an origin consumed a body cannot be observed, so such a
+/// socket is closed after its exchange.
+///
 /// # Errors
 ///
 /// A [`ProxyError`]; see its variants for what the daemon answers. The origin socket is
@@ -243,6 +260,7 @@ pub fn stream_proxy<W: Write>(
     let safe = matches!(request.method, Method::Get | Method::Head | Method::Options);
     let buffered = exchange.upload.is_buffered(request.body.len());
     let retryable = safe && buffered;
+    let poolable = !exchange.upload.carries_body();
     let activity = exchange.client.activity;
     for attempt in 0..2 {
         // A retry always connects afresh: after an idle period every pooled socket may be
@@ -264,7 +282,7 @@ pub fn stream_proxy<W: Write>(
         }
         match outcome {
             Ok(relayed) => {
-                if relayed.origin_reusable {
+                if relayed.origin_reusable && poolable {
                     pool.give(origin);
                 }
                 return Ok(relayed.client_keep && buffered);

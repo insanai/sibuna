@@ -20,7 +20,8 @@ use crate::fields::find_blank_line;
 use crate::idle::Activity;
 use crate::proxy::{Audit, ProxyError};
 use crate::response::{
-    Framing, MAX_RESPONSE_HEAD, chunk_size, parse_response_head, write_client_head,
+    Framing, MAX_RESPONSE_HEAD, chunk_size, is_trailer_line, parse_response_head,
+    write_client_head,
 };
 
 /// Upload bytes per activity refresh.
@@ -131,7 +132,9 @@ fn buffer_line<R: Read, W: Write + ?Sized>(
 }
 
 /// Copies a chunked body verbatim: size lines, chunk data with its CRLF, the last chunk and
-/// any trailer section.
+/// any trailer section. The framing is checked strictly (RFC 9112 section 7.1) because it is
+/// relayed as sent: a size line that is not plain hexadecimal, chunk data not followed by
+/// CRLF, or a trailer line that is not a clean field line aborts the exchange.
 pub(crate) fn relay_chunked<R: Read, W: Write + ?Sized>(
     origin: &mut Reader<'_, R>,
     client: &mut W,
@@ -146,19 +149,31 @@ pub(crate) fn relay_chunked<R: Read, W: Write + ?Sized>(
         if size == 0 {
             break;
         }
-        // Zig computed `size + 2` unchecked; a size near 2^64 is never delivered anyway.
-        copy_exact(origin, client, size.saturating_add(2), progress)?;
+        copy_exact(origin, client, size, progress)?;
+        relay_line(origin, client, progress, |line| line == b"\r\n")?;
     }
-    loop {
-        let length = buffer_line(origin, client, progress)?;
-        let line = origin.buffered().get(..length).unwrap_or_default();
-        let last = line == b"\r\n" || line == b"\n";
-        client.write_all(line).map_err(|_| ProxyError::ClientFailed)?;
-        origin.consume(length);
-        if last {
-            return Ok(());
-        }
+    while !relay_line(origin, client, progress, |line| line == b"\r\n" || is_trailer_line(line))? {
     }
+    Ok(())
+}
+
+/// Relays the next origin line when `valid` accepts it; returns whether it was the blank
+/// line. An invalid line aborts the exchange.
+fn relay_line<R: Read, W: Write + ?Sized>(
+    origin: &mut Reader<'_, R>,
+    client: &mut W,
+    progress: Progress<'_>,
+    valid: impl Fn(&[u8]) -> bool,
+) -> Result<bool, ProxyError> {
+    let length = buffer_line(origin, client, progress)?;
+    let line = origin.buffered().get(..length).unwrap_or_default();
+    if !valid(line) {
+        return Err(ProxyError::UpstreamTruncated);
+    }
+    let blank = line == b"\r\n";
+    client.write_all(line).map_err(|_| ProxyError::ClientFailed)?;
+    origin.consume(length);
+    Ok(blank)
 }
 
 /// Relays `rest` further body bytes from the client to the origin: first from `pending`
@@ -236,7 +251,8 @@ pub(crate) fn relay_chunked_body<R: Read, W: Write + ?Sized>(
 pub(crate) struct Relayed {
     /// The client connection may serve another request.
     pub(crate) client_keep: bool,
-    /// The origin socket may be pooled for another request.
+    /// The origin socket is at a clean message boundary and may be pooled for another
+    /// request (see [`relay_response`]).
     pub(crate) origin_reusable: bool,
 }
 
@@ -304,6 +320,13 @@ pub(crate) fn client_head_error(error: std::io::Error) -> ProxyError {
 /// Streams the origin response to the client: the head with Sibuna's connection semantics,
 /// then the body by its framing. The origin status and the raw head go to the audit sinks
 /// before the head is relayed.
+///
+/// The origin socket is reusable only when the origin keeps it, the body was delimited by a
+/// length or chunked framing and fully read, and the reader holds no byte beyond it. Bytes
+/// after the end of a response belong to no request of ours: a socket that holds them would
+/// hand them to the next user of the pool as its response. Bodyless responses (HEAD, 204,
+/// 304) are never pooled, because an origin that wrongly sends a body after them does so
+/// after an unknown delay, which no check at this point can see.
 pub(crate) fn relay_response<R: Read, W: Write + ?Sized>(
     origin: &mut Reader<'_, R>,
     client: &mut W,
@@ -329,7 +352,9 @@ pub(crate) fn relay_response<R: Read, W: Write + ?Sized>(
         Framing::UntilClose => copy_remaining(origin, client, progress)?,
     }
     client.flush().map_err(|_| ProxyError::ClientFailed)?;
-    Ok(Relayed { client_keep: keep, origin_reusable: parsed.keep_alive })
+    let framed = matches!(parsed.framing, Framing::Length(_) | Framing::Chunked);
+    let origin_reusable = parsed.keep_alive && framed && origin.buffered_len() == 0;
+    Ok(Relayed { client_keep: keep, origin_reusable })
 }
 
 #[cfg(test)]

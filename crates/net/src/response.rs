@@ -10,6 +10,13 @@ use sibuna_http::is_valid_token;
 
 use crate::fields::{crlf_lines, find_byte, has_token, header_value, parse_zig_unsigned, trim_ws};
 
+/// True for a byte a field value or a chunk-size line may not hold: a control byte other
+/// than HTAB, or DEL.
+#[inline]
+fn is_control(byte: u8) -> bool {
+    (byte < 32 && byte != b'\t') || byte == 127
+}
+
 /// The largest origin response head accepted, blank line included, before answering 502.
 pub const MAX_RESPONSE_HEAD: usize = 16 * 1024;
 
@@ -45,7 +52,8 @@ pub struct ResponseHead {
 /// `keep-alive`; a close-delimited body never persists.
 ///
 /// Returns `None` for a head the proxy must not relay: a bad status line, a field name that
-/// is not a token, a control byte in a value, conflicting lengths, a repeated or non-final
+/// is not a token, a control byte in a value, a `Content-Length` that is not plain decimal
+/// digits (no sign, underscore or inner space), conflicting lengths, a repeated or non-final
 /// `chunked` coding, an empty coding, or a `Connection` field that nominates
 /// `Content-Length` or `Transfer-Encoding`. Never panics; the work is linear in the head.
 pub fn parse_response_head(head: &[u8], head_request: bool) -> Option<ResponseHead> {
@@ -106,7 +114,7 @@ impl FramingFields {
             return None;
         }
         let value_bytes = rest.get(1..).unwrap_or_default();
-        if value_bytes.iter().any(|&byte| (byte < 32 && byte != b'\t') || byte == 127) {
+        if value_bytes.iter().any(|&byte| is_control(byte)) {
             return None;
         }
         // The name is a token, so it has no whitespace to trim; Zig's `headerLine` trimmed it.
@@ -114,7 +122,7 @@ impl FramingFields {
         if name.eq_ignore_ascii_case(b"transfer-encoding") {
             self.read_codings(value)?;
         } else if name.eq_ignore_ascii_case(b"content-length") {
-            let length = parse_zig_unsigned(value, 10)?;
+            let length = parse_digits(value, 10)?;
             if self.length.is_some_and(|previous| previous != length) {
                 return None;
             }
@@ -234,13 +242,50 @@ pub(crate) fn write_client_head<W: Write + ?Sized>(
     })
 }
 
-/// The size on an origin chunk-size line, read as Zig did: up to the first `;`, CR or LF,
-/// trimmed of SP and HTAB, in hexadecimal with Zig's integer syntax. `None` when it does not
-/// parse.
+/// Parses `text` strictly as one or more digits of `radix` (10 or 16) and nothing else: no
+/// sign, underscore, space or prefix. `None` for anything else or on overflow of `u64`.
+///
+/// The origin's `Content-Length` and chunk sizes are relayed as sent, so they must mean the
+/// same number to every recipient after Sibuna: a value that a lenient parser (Zig's
+/// `parseInt` accepted `+3` and `1_0`) and a strict one read differently is refused.
+#[inline]
+pub(crate) fn parse_digits(text: &[u8], radix: u32) -> Option<u64> {
+    if text.is_empty() {
+        return None;
+    }
+    text.iter().try_fold(0u64, |value, &byte| {
+        // `to_digit` accepts only ASCII digits and letters, never a Latin-1 lookalike.
+        let digit = char::from(byte).to_digit(radix)?;
+        value.checked_mul(u64::from(radix))?.checked_add(u64::from(digit))
+    })
+}
+
+/// The size on an origin chunk-size line (`line` runs through its LF), read strictly by RFC
+/// 9112 section 7.1: hexadecimal digits from the first byte, then either the CRLF or
+/// optional SP or HTAB and a `;` that starts the extensions. The line must end in CRLF and
+/// hold no other control byte than HTAB. `None` otherwise or on overflow.
 pub(crate) fn chunk_size(line: &[u8]) -> Option<u64> {
-    let end = line.iter().position(|&byte| matches!(byte, b';' | b'\r' | b'\n'));
-    let digits = trim_ws(line.get(..end.unwrap_or(line.len())).unwrap_or_default());
-    parse_zig_unsigned(digits, 16)
+    let text = line.strip_suffix(b"\r\n")?;
+    if text.iter().any(|&byte| is_control(byte)) {
+        return None;
+    }
+    let digits_end = text.iter().position(|byte| !byte.is_ascii_hexdigit()).unwrap_or(text.len());
+    let (digits, extensions) = text.split_at_checked(digits_end)?;
+    if !extensions.is_empty() && trim_ws(extensions).first() != Some(&b';') {
+        return None;
+    }
+    parse_digits(digits, 16)
+}
+
+/// True for a trailer line (`line` runs through its LF) the relay may pass on: a field line
+/// whose name is a token and whose value holds no control byte but HTAB, ending in CRLF.
+pub(crate) fn is_trailer_line(line: &[u8]) -> bool {
+    let Some(text) = line.strip_suffix(b"\r\n") else { return false };
+    let Some((name, value)) = find_byte(text, b':').and_then(|at| text.split_at_checked(at))
+    else {
+        return false;
+    };
+    is_valid_token(name) && !value.iter().any(|&byte| is_control(byte))
 }
 
 #[cfg(test)]

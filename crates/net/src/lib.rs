@@ -6,8 +6,9 @@
 //!   chunked uploads re-framed (SID 0009), the origin head parsed only for its framing
 //!   ([`parse_response_head`]) and the body relayed exactly. WebSocket upgrades are relayed
 //!   both ways after a validated 101.
-//! - [`Pool`] is the origin pool: idle keep-alive origin sockets, reused only after a fully
-//!   framed response.
+//! - [`Pool`] is the origin pool: idle keep-alive origin sockets, pooled only at a clean
+//!   message boundary and checked for stray bytes when taken.
+//! - [`peers`] counts open connections per client address for `--max-connections-per-ip`.
 //! - [`idle`] is the registry of the idle reaper: [`IdleTable`], [`Lease`] and [`Activity`]
 //!   give activity-based deadlines on the client and origin sockets.
 //! - [`buffered`] holds the fixed-buffer [`buffered::Reader`] and [`buffered::Writer`] the
@@ -20,8 +21,15 @@
 //! `--idle-timeout` is the longest silence on a connection. A request head must arrive
 //! within it (the daemon touches its [`Lease`] after each request). An origin response
 //! refreshes it on every read, and a silent origin is cut on both sockets. A proxied upload
-//! must deliver 16 KiB per period. `--websocket-idle-timeout` bounds an upgraded connection;
-//! traffic either way refreshes it.
+//! must deliver 16 KiB per period. Progress is required in both directions: the relay is one
+//! thread, so while a write to the client blocks nothing refreshes the deadline, and the
+//! daemon also gives the client socket a write timeout of the idle timeout, so a client that
+//! accepts no byte for that long fails the write. What a client that never reads can still
+//! hold is the slack of the socket buffers (the kernel's send and receive buffers and the
+//! 16 KiB client writer), which a trickling origin fills slowly; the standard library exposes
+//! no way to shrink it. `--websocket-idle-timeout` bounds an upgraded connection; traffic
+//! either way refreshes its shared deadline, but each direction must also deliver a byte per
+//! period on its own, so a client that keeps sending and never reads is cut.
 //!
 //! # Changes from the Zig version
 //!
@@ -60,6 +68,20 @@
 //! - **Defensive bounds.** An origin chunk size near 2^64 no longer overflows `size + 2`; a
 //!   request body longer than its declared length is cut to the length; a head trickled byte
 //!   by byte is searched incrementally.
+//! - **Security fixes after review (2026-10-15).** These change bytes on the wire on purpose;
+//!   `tests/zig_vectors.rs` lists the two recorded scenarios they alter.
+//!   - The origin pool keeps a socket only when the response was framed by a length or
+//!     chunks, read to its end, and the reader holds no byte beyond it; never after HEAD, 204
+//!     or 304; never after a request that carried a body (an origin that ignores the body
+//!     answers it later as a smuggled request, CL.0). [`Pool::take`] closes a pooled socket
+//!     that has bytes waiting or has reached end of stream. Zig pooled on the origin's
+//!     keep-alive alone, so stray bytes reached the next client as its response.
+//!   - The origin's `Content-Length` and chunk sizes are parsed strictly (digits only), chunk
+//!     data must end in CRLF and trailer lines must be clean field lines, because they are
+//!     relayed as sent. Zig's `parseInt` accepted `+3` and `1_0`.
+//!   - A request field whose name equals a dropped field with `_` for `-` (`X_Forwarded_For`)
+//!     is dropped too, and a `Connection` field can no longer nominate `Host` away.
+//!   - Each direction of an upgrade relay must deliver a byte per idle period on its own.
 //! - **Connect helpers.** `std::net::TcpStream::connect_timeout` and socket timeouts replace
 //!   the hand-driven non-blocking connect and `poll(2)` loop; [`connect::wake_listener`] is
 //!   the daemon's `requestStop` wake-up.
@@ -81,7 +103,9 @@
 //! Measured on the development machine with `--release` (Zig with `-OReleaseFast`, same
 //! inputs): parsing an eight-field origin head takes 322 ns against Zig's 1,674 ns, and a
 //! keep-alive `GET` with a 1 KiB response proxied over loopback takes 29.8 us against Zig's
-//! 31.9 us. The Zig benchmark suite measures no primitive of this crate.
+//! 31.9 us. The Zig benchmark suite measures no primitive of this crate. The idle check of a
+//! pooled socket ([`Pool::take`]: two mode changes and a peek) costs about 1 us of that
+//! exchange (31.2 us against 30.1 us before it, measured side by side on a loaded machine).
 
 pub mod buffered;
 pub mod connect;
@@ -89,6 +113,7 @@ mod duplex;
 mod fields;
 pub mod idle;
 pub mod outbound;
+pub mod peers;
 mod pool;
 mod proxy;
 mod relay;
