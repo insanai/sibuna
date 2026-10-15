@@ -48,5 +48,8 @@ Discussion registry
    * - 0012
      - :doc:`records/0012-console-tls`
      - accepted
+   * - 0013
+     - :doc:`records/0013-console-storage`
+     - discussion
 
 .. sid-generated-end

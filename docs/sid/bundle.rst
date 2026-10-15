@@ -18,5 +18,6 @@ Discussion reading order
    records/0010-rust-port
    records/0011-sqlx-storage
    records/0012-console-tls
+   records/0013-console-storage
 
 .. sid-generated-end
