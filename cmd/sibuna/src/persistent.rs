@@ -269,6 +269,42 @@ pub fn start_storage(
     Storage::start(config, hooks)
 }
 
+/// Returns the startup lines about the PostgreSQL connection's protection: one line when it
+/// is encrypted and verified (or local), and a warning with a hint otherwise. Returns `None`
+/// for SQLite, and when the URL cannot be read (storage has then already refused it). The
+/// lines never contain the URL.
+#[cfg(feature = "postgres")]
+pub fn database_banner(config: &Config) -> Option<String> {
+    let Ok(sibuna_storage::Target::Postgres(url)) = sibuna_storage::Target::from_config(config)
+    else {
+        return None;
+    };
+    sibuna_storage::PostgresTls::from_url(&url).ok().map(describe_database)
+}
+
+/// The text of [`database_banner`] for `tls` in this build.
+#[cfg(feature = "postgres")]
+fn describe_database(tls: sibuna_storage::PostgresTls) -> String {
+    use sibuna_storage::{POSTGRES_TLS, SslMode};
+    let protection = tls.protection();
+    let mut mode = format!("sslmode={}", tls.mode);
+    if tls.effective_mode() != tls.mode {
+        mode.push_str(" with sslrootcert, verified as verify-ca");
+    }
+    if tls.mode == SslMode::Prefer && !POSTGRES_TLS {
+        mode.push_str("; this build lacks the postgres-tls feature");
+    }
+    if protection.is_secure() {
+        return format!("Database: {} ({mode}).\n", protection.summary());
+    }
+    let build = if POSTGRES_TLS { "" } else { "build with the postgres-tls feature and " };
+    format!(
+        "WARNING: {} ({mode}).\nHint: {build}put sslmode=verify-full&sslrootcert=<CA file> in \
+         the database URL.\n",
+        protection.summary()
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use sibuna_policy::RequestView;
@@ -503,5 +539,41 @@ mod tests {
         assert_eq!(replaced.generation().rules[0].name.as_str(), "Renamed");
         replaced.sample(&mut sample);
         assert_eq!(sample.counts.values[0], 0);
+    }
+
+    #[cfg(feature = "postgres")]
+    #[test]
+    fn the_database_banner_warns_unless_the_connection_is_verified() {
+        use sibuna_storage::{POSTGRES_TLS, PostgresTls, SslMode};
+        let tcp = |mode| PostgresTls { mode, ..PostgresTls::default() };
+        let verified = describe_database(tcp(SslMode::VerifyFull));
+        assert!(verified.starts_with("Database: ") && verified.contains("host name are verified"));
+        assert!(!verified.contains("WARNING"));
+        for mode in [SslMode::Disable, SslMode::Prefer, SslMode::Require, SslMode::VerifyCa] {
+            let text = describe_database(tcp(mode));
+            assert!(text.starts_with("WARNING: "), "{text}");
+            assert!(text.contains(&format!("(sslmode={mode}")), "{text}");
+            assert!(text.contains("Hint: ") && text.contains("sslmode=verify-full"), "{text}");
+            assert_eq!(text.contains("postgres-tls"), !POSTGRES_TLS, "{text}");
+        }
+        assert!(describe_database(tcp(SslMode::Disable)).contains("not encrypted"));
+        let upgraded = PostgresTls { mode: SslMode::Require, root_cert: true, unix_socket: false };
+        assert!(describe_database(upgraded).contains("verified as verify-ca"));
+        let local = PostgresTls { unix_socket: true, ..tcp(SslMode::Prefer) };
+        assert!(describe_database(local).starts_with("Database: "));
+    }
+
+    #[cfg(feature = "postgres")]
+    #[test]
+    fn the_database_banner_reads_the_configured_url_and_never_shows_it() {
+        let config = Config {
+            database_url: Some("postgres://sibuna:hunter2@db.internal/x?sslmode=disable".into()),
+            cluster_node: Some(1),
+            ..Config::default()
+        };
+        let text = database_banner(&config).unwrap();
+        assert!(text.contains("not encrypted"), "{text}");
+        assert!(!text.contains("hunter2") && !text.contains("db.internal"), "{text}");
+        assert!(database_banner(&Config::default()).is_none());
     }
 }

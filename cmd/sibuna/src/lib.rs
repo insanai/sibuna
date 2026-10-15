@@ -33,11 +33,14 @@
 //!   private `telemetry` seams.
 //!
 //! Cargo features: `sqlite` and `postgres` select the storage backends of
-//! `sibuna-storage`; `console` adds the console server (SID 0007), which needs storage.
-//! The default is `sqlite` and `console`. Without features (`--no-default-features`) the
-//! daemon is the in-memory firewall and depends on no crate outside the workspace; with
-//! them it adds exactly sqlx and tokio (storage) and rustls, ring and the system trust
-//! store (the console's outbound TLS, SID 0012).
+//! `sibuna-storage`; `postgres-tls` adds TLS to the PostgreSQL connections (`sslmode` and
+//! `sslrootcert` in the URL); `console` adds the console server (SID 0007), which needs
+//! storage. The default is `sqlite` and `console`. Without features
+//! (`--no-default-features`) the daemon is the in-memory firewall and depends on no crate
+//! outside the workspace; with them it adds exactly sqlx and tokio (storage) and rustls,
+//! ring and the system trust store (the console's outbound TLS and PostgreSQL TLS, SID
+//! 0012). A build without `postgres-tls` refuses a URL whose `sslmode` needs TLS, and the
+//! startup lines warn when the database connection is not encrypted and verified.
 //!
 //! # Changes from the Zig version
 //!

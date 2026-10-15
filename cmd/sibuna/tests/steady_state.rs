@@ -191,6 +191,8 @@ fn daemon_and_requests(console: bool) -> (support::Fixture, Vec<Vec<u8>>) {
         ..Config::default()
     };
     config.idle_timeout_seconds = 30;
+    // Only the console's hooks change it.
+    #[cfg_attr(not(feature = "console"), allow(unused_mut))]
     let mut hooks = Hooks::default();
     #[cfg(feature = "console")]
     let publish = console.then(|| enable_console(&mut config, &mut hooks));

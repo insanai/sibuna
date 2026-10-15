@@ -23,6 +23,10 @@ default = ["sqlite", "console"]
 # firewall and depends on no external crate.
 sqlite = ["storage", "sibuna-storage/sqlite", "sibuna-console?/sqlite"]
 postgres = ["storage", "sibuna-storage/postgres", "sibuna-console?/postgres"]
+# TLS for the PostgreSQL connections (`sslmode=verify-full&sslrootcert=...` in the URL).
+# Without it a URL whose `sslmode` needs TLS is refused at startup; production clusters
+# build with it.
+postgres-tls = ["postgres", "sibuna-storage/postgres-tls"]
 # Internal: set by `sqlite` and `postgres`; enables the storage wiring.
 storage = ["dep:sibuna-storage"]
 # The console server (SID 0007): `--console*` options, `sibuna console ...` commands and

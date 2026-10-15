@@ -442,7 +442,9 @@ Client identity and state tables:
 
 Storage (SID 0011):
   --data-dir, -D <path>        One node: persist to the SQLite file <path>/sibuna.db
-  --database-url <url>         Cluster: shared PostgreSQL database (postgres://...)
+  --database-url <url>         Cluster: shared PostgreSQL database (postgres://...); use
+                               ?sslmode=verify-full&sslrootcert=<ca.pem> with a build
+                               that has the postgres-tls feature
   --database-url-file <path>   Read the database URL from an owner-only file
   --cluster-node <id>          This node's id, 1-8388607 (required with a database URL)
   --storage-poll-ms <ms>       Storage tick interval (default: 500)

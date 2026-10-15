@@ -227,6 +227,10 @@ fn start(
     };
     #[cfg(feature = "console")]
     print_console_banner(&daemon);
+    #[cfg(feature = "postgres")]
+    if let Some(lines) = crate::persistent::database_banner(config) {
+        eprint!("{lines}");
+    }
     let mut banner = String::new();
     let _ = config.write_banner(&mut banner, VERSION);
     eprint!("{banner}");
@@ -244,9 +248,7 @@ fn report_start_error(error: &StartError) {
              storage; build with the sqlite or postgres feature, or omit the storage options.",
         ),
         #[cfg(feature = "storage")]
-        StartError::Storage(error) => {
-            report(&format!("Failed to start persistent storage: {error}"));
-        }
+        StartError::Storage(error) => report_storage_error(error),
         StartError::Engine(error) => {
             report(&format!("Failed to build the policy engine: {error}"))
         }
@@ -255,6 +257,21 @@ fn report_start_error(error: &StartError) {
         StartError::Console(error) => {
             report(&format!("Failed to start the console: {error}. Hint: {}", error.hint()));
         }
+    }
+}
+
+/// Reports a storage failure at startup: an Elm-style diagnostic when the error carries a
+/// hint (a refused TLS mode or certificate, for example), one line otherwise.
+#[cfg(feature = "storage")]
+fn report_storage_error(error: &sibuna_storage::StorageError) {
+    let message = format!("Failed to start persistent storage: {error}.");
+    match error.hint() {
+        Some(hint) => {
+            let mut text = String::new();
+            let _ = diagnostic::render(&mut text, "persistent storage", &message, hint);
+            eprint!("{text}");
+        }
+        None => report(&message),
     }
 }
 

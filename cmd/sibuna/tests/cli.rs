@@ -291,6 +291,59 @@ fn a_listener_that_cannot_bind_is_reported() {
     assert!(stderr(&output).contains("Failed to parse listen address localhost:8080"));
 }
 
+/// A build without `postgres-tls` refuses a URL whose `sslmode` needs TLS before it
+/// connects, with a diagnostic that names the feature and not the URL. Nothing listens on
+/// port 1, so a connection attempt would have reported something else.
+#[cfg(all(feature = "postgres", not(feature = "postgres-tls")))]
+#[test]
+fn a_database_url_that_needs_tls_needs_a_postgres_tls_build() {
+    for mode in ["require", "verify-ca", "verify-full"] {
+        let url = format!("postgres://sibuna:hunter2@127.0.0.1:1/sibuna?sslmode={mode}");
+        let port = free_port().to_string();
+        let args = ["--host", "127.0.0.1", "--port", &port, "--cluster-node", "1"];
+        let output = Command::new(SIBUNA)
+            .args(args)
+            .args(["--database-url", &url])
+            .env_remove("SIBUNA_SECRET")
+            .env_remove("PGSSLMODE")
+            .output()
+            .unwrap();
+        assert_eq!(output.status.code(), Some(1));
+        let text = stderr(&output);
+        assert!(text.starts_with("-- PERSISTENT STORAGE ---"), "{text}");
+        assert!(text.contains(&format!("sslmode={mode} (from the database URL")), "{text}");
+        assert!(text.contains("Hint: Build Sibuna with the `postgres-tls` cargo feature"));
+        assert!(!text.contains("hunter2"), "{text}");
+    }
+}
+
+/// With `SIBUNA_TEST_DATABASE_TLS_URL` naming a database by a `verify-full` URL, the daemon
+/// boots over TLS and its banner says the connection is verified.
+#[cfg(feature = "postgres-tls")]
+#[test]
+fn the_banner_says_a_verify_full_database_connection_is_verified() {
+    let Some(url) = std::env::var("SIBUNA_TEST_DATABASE_TLS_URL").ok().filter(|u| !u.is_empty())
+    else {
+        return;
+    };
+    let port = free_port().to_string();
+    let node = (std::process::id() % 100_000 + 200_000).to_string();
+    let args =
+        ["--host", "127.0.0.1", "--port", &port, "--database-url", &url, "--cluster-node", &node];
+    let mut daemon = Daemon::spawn(SIBUNA, &args);
+    let banner = daemon.read_banner();
+    assert!(
+        banner.contains(
+            "Database: the PostgreSQL connection is encrypted; the server certificate and host \
+             name are verified (sslmode=verify-full).\n"
+        ),
+        "{banner}"
+    );
+    assert!(!banner.contains("WARNING"), "{banner}");
+    assert!(banner.contains("Storage:     postgresql cluster"), "{banner}");
+    assert_eq!(daemon.terminate(), Some(0));
+}
+
 #[cfg(not(feature = "storage"))]
 #[test]
 fn storage_options_need_a_storage_build() {
