@@ -141,7 +141,7 @@ impl Shared {
         let commands = nodes::Commands::new(&setup);
         let live = collector::Live::new(&setup);
         let hub = hub::Hub::new(&setup);
-        let importer = Importer::new(&setup);
+        let importer = Importer::with_embedded(&setup, inputs.geoip_embedded);
         let notifier = notify::Notifier::new(&setup);
         let probes = probe::Probes::new(&setup);
         let peers = peer::Peers::new(&setup);

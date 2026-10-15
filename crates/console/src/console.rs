@@ -70,12 +70,15 @@ pub struct Inputs {
     pub assets: AssetBytes,
     /// Time; tests inject a manual clock.
     pub clock: Arc<dyn Clock>,
+    /// The GeoIP snapshot the build embedded (`SIBUNA_GEOIP_DATA`, decision 7), served at
+    /// revision 0 while storage holds no generation; `None` (or empty) when there is none.
+    pub geoip_embedded: Option<&'static [u8]>,
 }
 
 impl Inputs {
     /// Returns inputs over `storage`, `node` and `boot` with empty telemetry, feed, metrics
-    /// and GeoIP slot, no keys or assets, node id 0 and the system clock; fill the rest with
-    /// struct update syntax.
+    /// and GeoIP slot, no keys, assets or embedded GeoIP snapshot, node id 0 and the system
+    /// clock; fill the rest with struct update syntax.
     pub fn new(storage: Arc<Storage>, node: Arc<dyn Node>, boot: [u8; 16]) -> Inputs {
         Inputs {
             storage,
@@ -93,6 +96,7 @@ impl Inputs {
             keys: Keys::default(),
             assets: AssetBytes::default(),
             clock: Arc::new(SystemClock::new()),
+            geoip_embedded: None,
         }
     }
 }
