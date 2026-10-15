@@ -317,8 +317,12 @@ fn the_adaptive_bump_enters_the_identifier_as_in_zig() {
         ..Default::default()
     };
     let coord = Coordinator::new(&Seed::new(SEED), options);
+    // Zig counted these 500 issuances; the port counts verified solutions instead, so we
+    // record 500 of those at the same instant. The issuances still advance the nonce
+    // counter that enters the identifier.
     for _ in 0..500 {
         coord.create_challenge(IP, UA, NOW);
+        coord.adaptive().observe(NOW * 1000);
     }
     let ch = coord.create_challenge(IP, UA, NOW + 1);
     assert_eq!(coord.adaptive().bump(), 2);

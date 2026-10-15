@@ -79,11 +79,14 @@ pub struct Options {
     pub node: Option<NonZeroU32>,
     /// Tuning of the load-adaptive difficulty.
     pub adaptive: AdaptiveConfig,
+    /// Tags the spent set holds (see [`SpentSet::with_capacity`]): at least the challenge
+    /// lifetime times the peak rate of verified solutions.
+    pub spent_capacity: usize,
 }
 
 impl Default for Options {
     /// The daemon's defaults: 16-bit Hashcash, five-minute challenges, one-day MAC tokens,
-    /// no cluster binding.
+    /// no cluster binding, a spent set of 1,048,576 tags.
     fn default() -> Self {
         Options {
             default_spec: ChallengeSpec::default(),
@@ -92,6 +95,7 @@ impl Default for Options {
             token_scheme: TokenScheme::Mac,
             node: None,
             adaptive: AdaptiveConfig::default(),
+            spent_capacity: sibuna_store::spent::DEFAULT_CAPACITY,
         }
     }
 }
@@ -260,7 +264,7 @@ pub struct Coordinator {
 impl Coordinator {
     /// Builds a coordinator from `seed`: derives the key schedule, binds the challenge key to
     /// `options.node` when given, derives the Ed25519 key pair, and allocates the spent set
-    /// (2 MiB, once). Never fails.
+    /// (24 bytes per tag of `options.spent_capacity`, once). Never fails.
     pub fn new(seed: &Seed, options: Options) -> Coordinator {
         let mut keys = Keys::derive(seed);
         if let Some(node) = options.node {
@@ -273,7 +277,7 @@ impl Coordinator {
             signing_key,
             verifying_key,
             token_scheme: options.token_scheme,
-            spent: SpentSet::new(),
+            spent: SpentSet::with_capacity(options.spent_capacity),
             default_spec: options.default_spec,
             challenge_ttl: options.challenge_ttl,
             token_ttl: options.token_ttl,
@@ -350,9 +354,10 @@ impl Coordinator {
     /// Issues a challenge for `spec` to a client at time `now` (seconds), on behalf of the
     /// rule whose hash is `rule_hash`.
     ///
-    /// Records the issue in the adaptive controller and adds its current bump to the
-    /// difficulty before mapping it to the tier's parameter. Writes no state besides the
-    /// controller's counters; never allocates.
+    /// Advances the adaptive controller's clock and adds its current bump to the
+    /// difficulty before mapping it to the tier's parameter. Issuance is not counted: the
+    /// controller follows verified solutions. Writes no state besides the controller's
+    /// clock; never allocates.
     pub fn create_challenge_with_spec(
         &self,
         client_ip: &[u8],
@@ -361,7 +366,7 @@ impl Coordinator {
         spec: ChallengeSpec,
         rule_hash: u64,
     ) -> Challenge {
-        self.adaptive.observe(now.saturating_mul(1000));
+        self.adaptive.advance(now.saturating_mul(1000));
         let effective = ChallengeSpec {
             difficulty: spec.difficulty.saturating_add(self.adaptive.bump()),
             ..spec
@@ -428,7 +433,8 @@ impl Coordinator {
     /// Borrows the identifier and the solution for the call; never allocates. The order is
     /// deliberate: the cheap checks (identifier format and tag, then age, then client
     /// binding) run before the proof is examined, and the challenge is marked spent only
-    /// once the proof is known to be valid, so a wrong proof never consumes it. Fails with
+    /// once the proof is known to be valid, so a wrong proof never consumes it. Only a
+    /// solution that is spent here counts toward the adaptive difficulty. Fails with
     /// the first [`VerifyError`] met in that order; [`VerifyError::DoubleSpendAttempt`] when
     /// the challenge was already solved, here or by a concurrent submission that won the
     /// spent set's shard lock.
@@ -453,6 +459,7 @@ impl Coordinator {
             SpendError::DoubleSpend => VerifyError::DoubleSpendAttempt,
             SpendError::Full => VerifyError::StoreFull,
         })?;
+        self.adaptive.observe(now.saturating_mul(1000));
         let work = WorkLevel {
             algorithm: record.algorithm.to_byte(),
             bits: record.algorithm.work_bits(record.difficulty),

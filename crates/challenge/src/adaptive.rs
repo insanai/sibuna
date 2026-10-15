@@ -1,18 +1,25 @@
 //! Load-adaptive difficulty (SID 0006, Part H).
 //!
-//! Difficulty rises with the challenge issue rate, so a flood pays exponentially more per
-//! request while ordinary traffic keeps the base cost. The bump is
+//! Difficulty rises with the rate of verified solutions, so a flood of solving clients pays
+//! exponentially more per request while ordinary traffic keeps the base cost. The bump is
 //! `ceil(log2(1 + rate / baseline))` bits, capped at `max_bump`: doubling the observed rate
 //! above the baseline adds one bit, which doubles each client's expected work. The rate is an
 //! exponentially weighted moving average over one-second buckets, held in three atomics so
 //! the request path never takes a lock.
+//!
+//! The Zig controller counted challenge *issuances*. Issuing costs a client nothing, so
+//! anyone could raise every visitor's difficulty to the cap by requesting challenges
+//! without solving them. A verified solution costs the work it proves, so counting those
+//! makes the bump track load the server actually pays for. Issuance still advances the
+//! clock ([`Adaptive::advance`]), so the average decays during quiet periods.
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
 /// The tuning of an [`Adaptive`] controller.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct AdaptiveConfig {
-    /// Challenges per second considered normal; no bump at or below it. Zero counts as one.
+    /// Verified solutions per second considered normal; no bump at or below it. Zero counts
+    /// as one.
     pub baseline_per_second: u32,
     /// Upper bound on added bits, so a flood can never lock humans out.
     pub max_bump: u32,
@@ -32,9 +39,9 @@ pub struct Adaptive {
     config: AdaptiveConfig,
     /// Start of the current one-second bucket, in milliseconds.
     bucket_start_ms: AtomicU64,
-    /// Challenges counted in the current bucket.
+    /// Verified solutions counted in the current bucket.
     bucket_count: AtomicU64,
-    /// Smoothed rate in 1/256 challenges per second.
+    /// Smoothed rate in 1/256 verified solutions per second.
     rate_256: AtomicU64,
 }
 
@@ -49,15 +56,22 @@ impl Adaptive {
         self.config
     }
 
-    /// Records one issued challenge at `now_ms` and rolls the average when the one-second
+    /// Records one verified solution at `now_ms` and rolls the average when the one-second
     /// bucket has elapsed. Safe to call from every worker; never blocks.
+    pub fn observe(&self, now_ms: u64) {
+        self.advance(now_ms);
+        self.bucket_count.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// Rolls the average when the one-second bucket has elapsed at `now_ms`, counting
+    /// nothing. Called on issuance, so the rate decays while nothing is solved.
     ///
     /// Orderings, as in the Zig controller: the bucket start is read relaxed, and one worker
     /// wins the roll with an acquire-release compare-and-swap; the others keep counting. The
     /// winner takes the count with an acquire-release swap and publishes the new rate with a
     /// release store, which [`Adaptive::bump`] reads with acquire. A count that lands in the
     /// old bucket while it rolls moves into the next one; the average tolerates that.
-    pub fn observe(&self, now_ms: u64) {
+    pub fn advance(&self, now_ms: u64) {
         let start = self.bucket_start_ms.load(Ordering::Relaxed);
         if now_ms >= start.saturating_add(1000)
             && self
@@ -75,7 +89,6 @@ impl Adaptive {
                     / 256;
             self.rate_256.store(blended, Ordering::Release);
         }
-        self.bucket_count.fetch_add(1, Ordering::Relaxed);
     }
 
     /// Returns the extra difficulty bits implied by the current smoothed rate.
@@ -91,7 +104,7 @@ impl Adaptive {
         log2_ceil(ratio).min(self.config.max_bump)
     }
 
-    /// Returns the smoothed issue rate in 1/256 challenges per second, for telemetry.
+    /// Returns the smoothed rate in 1/256 verified solutions per second, for telemetry.
     pub fn rate_256(&self) -> u64 {
         self.rate_256.load(Ordering::Relaxed)
     }
@@ -153,7 +166,7 @@ mod tests {
     }
 
     #[test]
-    fn concurrent_observers_count_every_challenge() {
+    fn concurrent_observers_count_every_solution() {
         let ctl =
             Adaptive::new(AdaptiveConfig { baseline_per_second: 1, max_bump: 64, alpha_256: 256 });
         std::thread::scope(|scope| {
@@ -166,7 +179,24 @@ mod tests {
             }
         });
         ctl.observe(1500);
-        // 4,000 challenges in one second with alpha 1: the rate is exactly 4,000/s.
+        // 4,000 solutions in one second with alpha 1: the rate is exactly 4,000/s.
         assert_eq!(ctl.rate_256(), 4000 * 256);
+    }
+
+    #[test]
+    fn advancing_rolls_the_average_without_counting() {
+        let ctl =
+            Adaptive::new(AdaptiveConfig { baseline_per_second: 10, max_bump: 4, alpha_256: 128 });
+        for _ in 0..40 {
+            ctl.observe(0);
+        }
+        ctl.advance(1000);
+        assert_eq!(ctl.rate_256(), 20 * 256, "half of the 40/s sample");
+        for _ in 0..1000 {
+            ctl.advance(1500);
+        }
+        assert_eq!(ctl.rate_256(), 20 * 256, "advancing alone counts nothing");
+        ctl.advance(2000);
+        assert_eq!(ctl.rate_256(), 10 * 256, "a quiet second decays the average");
     }
 }

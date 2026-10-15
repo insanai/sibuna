@@ -12,7 +12,7 @@
 //!   proof, spent set, and mints session tokens.
 //! - [`spec`]: what a challenge asks for ([`ChallengeSpec`]) and what a route demands of a
 //!   session ([`required_work`]).
-//! - [`adaptive`]: the difficulty bump from the challenge issue rate.
+//! - [`adaptive`]: the difficulty bump from the rate of verified solutions.
 //!
 //! Every format is bit for bit the Zig daemon's, so a Zig node and a Rust node that share a
 //! seed verify each other's session tokens and requirement tickets, and, with the same node
@@ -60,6 +60,10 @@
 //!   been "unexpected").
 //! - Ed25519 key decoding happens once, in [`Coordinator::new`]; Zig decoded the public key
 //!   on every verification. Accepted signatures are the same.
+//! - Security fixes (2026-10-15): the adaptive controller counts verified solutions, not
+//!   issued challenges, which cost a flooder nothing; issuance only advances its clock.
+//!   The spent set's capacity is an option ([`Options::spent_capacity`], 1,048,576 tags by
+//!   default) instead of Zig's fixed 65,536, which about 220 solutions per second filled.
 //!
 //! Zig machinery that Rust made unnecessary, and what replaced it:
 //!

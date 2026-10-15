@@ -288,21 +288,31 @@ fn verify_errors_map_to_explanations_name_for_name() {
 }
 
 #[test]
-fn the_adaptive_bump_raises_issued_difficulty() {
+fn the_adaptive_bump_follows_verified_solutions_not_issuance() {
     let options = Options {
-        default_spec: hashcash(10),
+        default_spec: hashcash(4),
         adaptive: AdaptiveConfig { baseline_per_second: 10, max_bump: 3, alpha_256: 256 },
         ..Default::default()
     };
     let coord = Coordinator::new(&Seed::new([1; 32]), options);
-    for _ in 0..100 {
-        assert_eq!(coord.create_challenge(b"ip", b"ua", 50).difficulty, 10);
+    // A flood of issuances costs nothing and raises nothing.
+    for _ in 0..1000 {
+        assert_eq!(coord.create_challenge(b"ip", b"ua", 50).difficulty, 4);
     }
-    // 100/s over a 10/s baseline: ceil(log2(11)) = 4 bits, capped at 3.
-    assert_eq!(coord.create_challenge(b"ip", b"ua", 51).difficulty, 13);
+    assert_eq!(coord.create_challenge(b"ip", b"ua", 51).difficulty, 4);
+    assert_eq!(coord.adaptive().bump(), 0);
+    // 100 verified solutions in one second over a 10/s baseline: ceil(log2(11)) = 4 bits,
+    // capped at 3.
+    for _ in 0..100 {
+        let ch = coord.create_challenge(b"ip", b"ua", 52);
+        let nonce = hashcash::solve_bits(ch.id.as_bytes(), 4, 1_000_000).unwrap();
+        let solution = Solution::Nonce(nonce);
+        assert!(coord.verify_and_mint(ch.id.as_bytes(), solution, b"ip", b"ua", 52).is_ok());
+    }
+    assert_eq!(coord.create_challenge(b"ip", b"ua", 53).difficulty, 7);
     assert_eq!(coord.adaptive().bump(), 3);
     // The route's requirement ignores the bump, so the stronger token still satisfies it.
-    assert!(
-        WorkLevel { algorithm: 0, bits: 13 }.satisfies(required_work(Algorithm::Hashcash, 10))
-    );
+    assert!(WorkLevel { algorithm: 0, bits: 7 }.satisfies(required_work(Algorithm::Hashcash, 4)));
+    // A second without solutions brings the bump back down.
+    assert_eq!(coord.create_challenge(b"ip", b"ua", 54).difficulty, 4);
 }

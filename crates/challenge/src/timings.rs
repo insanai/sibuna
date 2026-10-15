@@ -79,7 +79,7 @@ fn options() -> Options {
     Options { default_spec, challenge_ttl: 600, token_ttl: 3600, ..Default::default() }
 }
 
-/// Issues 200,000 challenges per batch at one instant; the adaptive controller counts them.
+/// Issues 200,000 challenges per batch at one instant; each advances the adaptive clock.
 fn issue_row() {
     let coord = Coordinator::new(&Seed::new([0x42; 32]), options());
     let spec = coord.default_spec();
