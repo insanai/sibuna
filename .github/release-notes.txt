@@ -35,7 +35,7 @@ Every archive and package carries LICENSE, NOTICE, LICENSES/ (with the third-par
 list THIRD-PARTY-RUST.txt), README.md, SECURITY.md and sibuna.build.json, which records
 the commit, Rust target, compiler and the SHA-256 of the executable. Each executable was
 started and checked on its own platform before publication, and the packages were
-installed, upgraded and removed on Debian, Fedora, Arch, FreeBSD and OpenBSD.
+installed, reinstalled and removed on Debian, Fedora, Arch, FreeBSD and OpenBSD.
 
 Linux packages install the account `sibuna` and a stopped systemd unit. Set the origin
 (an IP literal) in /etc/sibuna/service.env, then start the service; it listens on
