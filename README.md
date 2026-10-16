@@ -43,7 +43,7 @@ Use access rules and local rate limits to control what those clients can request
 
 ## Quickstart
 
-[Download a release](https://github.com/insanai/sibuna/releases/tag/v1.0.0-beta.1) for your
+[Download a release](https://github.com/insanai/sibuna/releases/tag/v1.0.0-beta.2) for your
 platform. The default package includes storage and console support. The console starts with
 `--console`.
 
@@ -54,8 +54,8 @@ platform. The default package includes storage and console support. The console 
 | macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 15 or later |
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 15 or later |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2019 or later; native `sibuna.exe` |
-| FreeBSD x86-64 | `sibuna-1.0.0-beta.1-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI package |
-| OpenBSD x86-64 | `sibuna-1.0.0-beta.1.tgz` | OpenBSD 7.9; CLI package |
+| FreeBSD x86-64 | `sibuna-1.0.0-beta.2-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI package |
+| OpenBSD x86-64 | `sibuna-1.0.0-beta.2.tgz` | OpenBSD 7.9; CLI package |
 
 This is a beta release. macOS builds are unsigned. Each package includes licenses, source
 links and a build manifest. Verify the archive against `SHA256SUMS` before using it.
@@ -83,8 +83,8 @@ sibuna --version
 For Linux x86-64, with your app listening on port 3000:
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.1/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.1/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.2/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.2/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)

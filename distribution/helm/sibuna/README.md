@@ -10,7 +10,7 @@ Create an admission seed of 64 hexadecimal digits (32 random bytes) in a private
 umask 077; od -An -tx1 -N32 /dev/urandom | tr -d ' \n' > admission.seed
 kubectl create namespace sibuna
 kubectl -n sibuna create secret generic sibuna-admission --from-file=admission.seed=admission.seed
-helm install gateway ./helm-sibuna-1.0.0-beta.1.tgz --namespace sibuna \
+helm install gateway ./helm-sibuna-1.0.0-beta.2.tgz --namespace sibuna \
   --set secret.existingSecret=sibuna-admission -f operator-values.yaml
 ```
 

@@ -8,8 +8,8 @@
 project = "Sibuna: Architecture, Algorithms, and Empirical Foundations of Work-Bound Web Defense"
 copyright = "2026, Vikrant Rathore and Sibuna contributors"
 author = "Vikrant Rathore"
-version = "1.0.0-beta.1"
-release = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
+release = "1.0.0-beta.2"
 # The date on the title block and in the running header.
 today = "October 2026"
 

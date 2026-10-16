@@ -1,4 +1,4 @@
-<!-- English source SHA-256: affb8e32937c45cebfeaef63d295c01e72c02dca601df0615f05ec9d6c9d294c -->
+<!-- English source SHA-256: ba66ed3032a86cb4bc8f8d7ce341a92c86824be07ae3dad2f77a18ebb42e21c3 -->
 <h1 align="center">sibuna</h1>
 <p align="center">ब्राउज़र Proof of Work और वैकल्पिक कंसोल के साथ वेब सुरक्षा।</p>
 <p align="center">
@@ -41,7 +41,7 @@
 
 ## त्वरित शुरुआत (Quickstart)
 
-अपने प्लेटफ़ॉर्म के लिए [रिलीज़ डाउनलोड करें](https://github.com/insanai/sibuna/releases/tag/v1.0.0-beta.1)। डिफ़ॉल्ट पैकेज में स्टोरेज और कंसोल समर्थन शामिल है। कंसोल `--console` के साथ शुरू होता है।
+अपने प्लेटफ़ॉर्म के लिए [रिलीज़ डाउनलोड करें](https://github.com/insanai/sibuna/releases/tag/v1.0.0-beta.2)। डिफ़ॉल्ट पैकेज में स्टोरेज और कंसोल समर्थन शामिल है। कंसोल `--console` के साथ शुरू होता है।
 
 | प्लेटफ़ॉर्म | पैकेज | आवश्यकताएँ |
 | --- | --- | --- |
@@ -50,8 +50,8 @@
 | macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 15 या बाद का |
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 15 या बाद का |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2019 या बाद का; नेटिव `sibuna.exe` |
-| FreeBSD x86-64 | `sibuna-1.0.0-beta.1-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI पैकेज |
-| OpenBSD x86-64 | `sibuna-1.0.0-beta.1.tgz` | OpenBSD 7.9; CLI पैकेज |
+| FreeBSD x86-64 | `sibuna-1.0.0-beta.2-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI पैकेज |
+| OpenBSD x86-64 | `sibuna-1.0.0-beta.2.tgz` | OpenBSD 7.9; CLI पैकेज |
 
 यह एक बीटा रिलीज़ है। macOS बिल्ड बिना हस्ताक्षर वाले (Unsigned) हैं। प्रत्येक पैकेज में लाइसेंस, सोर्स लिंक और बिल्ड मैनिफ़ेस्ट शामिल हैं। उपयोग करने से पहले `SHA256SUMS` के विरुद्ध आर्काइव को सत्यापित (Verify) करें।
 
@@ -68,8 +68,8 @@ sibuna --version
 Linux x86-64 के लिए, यदि आपका ऐप पोर्ट 3000 पर सुन रहा है:
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.1/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.1/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.2/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.2/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)

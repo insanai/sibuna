@@ -3,7 +3,7 @@ Sibuna: Architecture, Algorithms, and Empirical Foundations of Work-Bound Web De
 
 .. only:: html
 
-   **Vikrant Rathore**, with assistance from Ronak Rathore and Kanak Rathore. Insan AI. Whitepaper, October 2026, for Sibuna 1.0.0-beta.1.
+   **Vikrant Rathore**, with assistance from Ronak Rathore and Kanak Rathore. Insan AI. Whitepaper, October 2026, for Sibuna 1.0.0-beta.2.
 
 .. topic:: Abstract
 

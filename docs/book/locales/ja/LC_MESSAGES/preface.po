@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 07:43+0000\n"
+"POT-Creation-Date: 2026-10-16 08:16+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -118,8 +118,8 @@ msgstr ""
 "本書は実装の本です。計算パズルが自動化されたトラフィックをなくすと主張するものではありません。クライアントは計算資源を買えますし、アドレスは共有され得ますし、アプリケーションの構文は上限のある検出器よりも豊かです。有用な成果は、コストと限界をスローガンの陰に隠さず、調べ、試験し、変更できるシステムです。"
 
 #: ../../preface.rst:20
-msgid "Edition for Sibuna 1.0.0-beta.1, October 2026"
-msgstr "Sibuna 1.0.0-beta.1対応版、2026年10月"
+msgid "Edition for Sibuna 1.0.0-beta.2, October 2026"
+msgstr "Sibuna 1.0.0-beta.2対応版、2026年10月"
 
 #: ../../preface.rst:22
 msgid ""

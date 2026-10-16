@@ -726,7 +726,7 @@ The assets are not signed. We check a download against ``SHA256SUMS`` from the s
 
    sha256sum --ignore-missing -c SHA256SUMS          # Linux
    shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD
-   sha256 -C SHA256SUMS sibuna-1.0.0-beta.1.tgz      # OpenBSD
+   sha256 -C SHA256SUMS sibuna-1.0.0-beta.2.tgz      # OpenBSD
 
 On macOS a browser download carries a quarantine attribute that stops an unsigned executable; ``xattr -d com.apple.quarantine sibuna`` removes it after the check.
 
@@ -769,7 +769,7 @@ The image ``ghcr.io/insanai/sibuna:<version>`` holds the static executable on a 
 
    docker run -d --read-only --cap-drop=ALL --security-opt=no-new-privileges \
      -v "$PWD/admission.seed:/run/admission.seed:ro" -v sibuna-state:/var/lib/sibuna \
-     -p 8080:8080 ghcr.io/insanai/sibuna:1.0.0-beta.1 \
+     -p 8080:8080 ghcr.io/insanai/sibuna:1.0.0-beta.2 \
      --host 0.0.0.0 --secret-file /run/admission.seed --data-dir /var/lib/sibuna/data \
      --upstream-host 10.0.0.5 --upstream-port 3000
 
@@ -778,7 +778,7 @@ The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. It requ
 .. code-block:: sh
 
    kubectl -n sibuna create secret generic sibuna-admission --from-file=admission.seed
-   helm install gateway ./helm-sibuna-1.0.0-beta.1.tgz --namespace sibuna \
+   helm install gateway ./helm-sibuna-1.0.0-beta.2.tgz --namespace sibuna \
      --set secret.existingSecret=sibuna-admission \
      --set upstream.host=10.0.0.5 --set upstream.port=3000
 

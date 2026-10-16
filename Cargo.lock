@@ -947,7 +947,7 @@ checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
 
 [[package]]
 name = "sibuna"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "sibuna-challenge",
  "sibuna-cidr",
@@ -969,7 +969,7 @@ dependencies = [
 
 [[package]]
 name = "sibuna-bench"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "sibuna-challenge",
  "sibuna-cidr",
@@ -985,7 +985,7 @@ dependencies = [
 
 [[package]]
 name = "sibuna-browser"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "sibuna-encoding",
  "sibuna-http",
@@ -994,7 +994,7 @@ dependencies = [
 
 [[package]]
 name = "sibuna-challenge"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "sibuna-core",
  "sibuna-crypto",
@@ -1005,11 +1005,11 @@ dependencies = [
 
 [[package]]
 name = "sibuna-cidr"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 
 [[package]]
 name = "sibuna-console"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "sibuna-cidr",
  "sibuna-console-protocol",
@@ -1030,14 +1030,14 @@ dependencies = [
 
 [[package]]
 name = "sibuna-console-protocol"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "sibuna-json",
 ]
 
 [[package]]
 name = "sibuna-console-storage"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "sibuna-cidr",
  "sibuna-console-protocol",
@@ -1052,7 +1052,7 @@ dependencies = [
 
 [[package]]
 name = "sibuna-console-ui"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "sibuna-console-protocol",
  "sibuna-crypto",
@@ -1062,19 +1062,19 @@ dependencies = [
 
 [[package]]
 name = "sibuna-core"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 
 [[package]]
 name = "sibuna-crypto"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 
 [[package]]
 name = "sibuna-encoding"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 
 [[package]]
 name = "sibuna-geoip"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "sibuna-cidr",
  "sibuna-crypto",
@@ -1083,11 +1083,11 @@ dependencies = [
 
 [[package]]
 name = "sibuna-html"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 
 [[package]]
 name = "sibuna-http"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "sibuna-crypto",
  "sibuna-encoding",
@@ -1095,15 +1095,15 @@ dependencies = [
 
 [[package]]
 name = "sibuna-inflate"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 
 [[package]]
 name = "sibuna-json"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 
 [[package]]
 name = "sibuna-net"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "sibuna-core",
  "sibuna-http",
@@ -1111,11 +1111,11 @@ dependencies = [
 
 [[package]]
 name = "sibuna-patterns"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 
 [[package]]
 name = "sibuna-policy"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "sibuna-cidr",
  "sibuna-crypto",
@@ -1125,14 +1125,14 @@ dependencies = [
 
 [[package]]
 name = "sibuna-pow"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "sibuna-crypto",
 ]
 
 [[package]]
 name = "sibuna-pow-wasm"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "sibuna-crypto",
  "sibuna-pow",
@@ -1140,14 +1140,14 @@ dependencies = [
 
 [[package]]
 name = "sibuna-serve"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "sibuna-http",
 ]
 
 [[package]]
 name = "sibuna-storage"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "sibuna-core",
  "sibuna-crypto",
@@ -1159,14 +1159,14 @@ dependencies = [
 
 [[package]]
 name = "sibuna-store"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "sibuna-crypto",
 ]
 
 [[package]]
 name = "sibuna-tls"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "rustls",
  "rustls-native-certs",
@@ -1676,7 +1676,7 @@ checksum = "3ad82d2a33cdc9674dc7465672f271e096168fcdbe0f799d9e6db8c5892679dc"
 
 [[package]]
 name = "xtask"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 dependencies = [
  "sibuna-json",
 ]

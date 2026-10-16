@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 07:43+0000\n"
+"POT-Creation-Date: 2026-10-16 08:16+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -134,8 +134,8 @@ msgstr ""
 "한계를 구호 뒤에 숨기지 않고 살펴보고, 시험하고, 바꿀 수 있는 시스템입니다."
 
 #: ../../preface.rst:20
-msgid "Edition for Sibuna 1.0.0-beta.1, October 2026"
-msgstr "Sibuna 1.0.0-beta.1판, 2026년 10월"
+msgid "Edition for Sibuna 1.0.0-beta.2, October 2026"
+msgstr "Sibuna 1.0.0-beta.2판, 2026년 10월"
 
 #: ../../preface.rst:22
 msgid ""

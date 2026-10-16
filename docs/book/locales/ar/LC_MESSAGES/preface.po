@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 07:43+0000\n"
+"POT-Creation-Date: 2026-10-16 08:16+0000\n"
 "PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -148,8 +148,8 @@ msgstr ""
 "وحدوده واختبارها وتغييرها دون إخفائها وراء شعار."
 
 #: ../../preface.rst:20
-msgid "Edition for Sibuna 1.0.0-beta.1, October 2026"
-msgstr "طبعة Sibuna 1.0.0-beta.1، أكتوبر 2026"
+msgid "Edition for Sibuna 1.0.0-beta.2, October 2026"
+msgstr "طبعة Sibuna 1.0.0-beta.2، أكتوبر 2026"
 
 #: ../../preface.rst:22
 msgid ""
