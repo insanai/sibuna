@@ -478,6 +478,9 @@ fn capture_cookie(session: &mut Session, reply: &Response) -> Result<(), Command
 /// Fails with [`CommandError::CredentialFile`] when the file is missing, not a regular file
 /// or too large, [`CommandError::CredentialPermissions`] when others may access it, and
 /// [`CommandError::InvalidCredential`] when it is empty, too long or not UTF-8.
+///
+/// The permission check needs Unix mode bits. On Windows the file's ACL is not inspected:
+/// keeping credential files readable only by their user is the operator's job there.
 fn read_secret(path: &str, capacity: usize) -> Result<String, CommandError> {
     check_file(&std::fs::metadata(path).map_err(|_| CommandError::CredentialFile)?, capacity)?;
     let mut file = File::open(path).map_err(|_| CommandError::CredentialFile)?;

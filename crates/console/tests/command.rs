@@ -4,6 +4,8 @@
 //! `console_token_cli_test.py` and the factor part of `console_totp_test.py`). The
 //! commands never open storage; they speak HTTP to the console like any client.
 
+// The scenarios check private credential files by their Unix mode bits.
+#![cfg(unix)]
 // Test code: a panic is how a failure is reported.
 #![allow(clippy::unwrap_used)]
 
