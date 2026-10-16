@@ -33,12 +33,12 @@
   "load_cpus": "8,9,10,11,12,13,14,15",
   "daemons": {
     "rust": {
-      "path": "/home/insan/projects/sibuna2/target/main/release/sibuna",
+      "path": "sibuna",
       "bytes": 49113856,
       "sha256": "e4d819b2fae7e6e17ac23cf640c62d3e40c620108bdcc62f4896ab0e6479722c"
     },
     "zig": {
-      "path": "/tmp/claude-1000/-home-insan-projects-sibuna2/7eb5843a-dcb8-4e49-b872-04e7f4d823b5/scratchpad/zig-baseline/bin/sibuna",
+      "path": "sibuna",
       "bytes": 34576440,
       "sha256": "36fc050035555ed6b6239b710c0ea5e37c73fd157db6f7e667758e02580b4a42"
     }

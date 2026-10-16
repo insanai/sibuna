@@ -23,13 +23,13 @@
     "binary_bytes": 49077336,
     "idle_rss_kb": 6052,
     "rust_daemon": {
-      "path": "/home/insan/projects/sibuna2/target/main/release/sibuna",
+      "path": "sibuna",
       "bytes": 49077336,
       "sha256": "edb1fb0d720f117941ee6bebb88967aa3a61c9e9092b2fcb4a5bf429cbf732a7",
       "idle_rss_kb": 6052
     },
     "zig_daemon": {
-      "path": "/tmp/claude-1000/-home-insan-projects-sibuna2/7eb5843a-dcb8-4e49-b872-04e7f4d823b5/scratchpad/zig-baseline/bin/sibuna",
+      "path": "sibuna",
       "bytes": 34576440,
       "sha256": "36fc050035555ed6b6239b710c0ea5e37c73fd157db6f7e667758e02580b4a42",
       "idle_rss_kb": 11392

@@ -18,12 +18,12 @@
   "client_cpus": "8,9,10,11,12,13,14,15",
   "daemons": {
     "rust": {
-      "path": "/home/insan/projects/sibuna2/target/agent-anubis/release/sibuna",
+      "path": "sibuna",
       "bytes": 37450232,
       "sha256": "edfd7d68e5466e007d898ce6a7994afae430afae9246ad45ad399352443be6ad"
     },
     "anubis": {
-      "path": "/home/insan/anubis/anubis-1.27.0-linux-amd64/bin/anubis",
+      "path": "anubis",
       "bytes": 40001698,
       "sha256": "43a02b1d3908d3d775fe9454140f91ac36843320bc3d3712b33b638f38e801ac"
     }
@@ -34,7 +34,7 @@
       "implementation": "rust",
       "token_scheme": "blake3",
       "binary": {
-        "path": "/home/insan/projects/sibuna2/target/agent-anubis/release/sibuna",
+        "path": "sibuna",
         "bytes": 37450232,
         "sha256": "edfd7d68e5466e007d898ce6a7994afae430afae9246ad45ad399352443be6ad"
       },
@@ -123,7 +123,7 @@
       "implementation": "anubis",
       "token_scheme": "ed25519",
       "binary": {
-        "path": "/home/insan/anubis/anubis-1.27.0-linux-amd64/bin/anubis",
+        "path": "anubis",
         "bytes": 40001698,
         "sha256": "43a02b1d3908d3d775fe9454140f91ac36843320bc3d3712b33b638f38e801ac"
       },
@@ -211,7 +211,7 @@
       "implementation": "anubis",
       "token_scheme": "hs512",
       "binary": {
-        "path": "/home/insan/anubis/anubis-1.27.0-linux-amd64/bin/anubis",
+        "path": "anubis",
         "bytes": 40001698,
         "sha256": "43a02b1d3908d3d775fe9454140f91ac36843320bc3d3712b33b638f38e801ac"
       },
