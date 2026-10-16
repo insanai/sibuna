@@ -103,6 +103,10 @@ impl std::error::Error for KeyError {
 /// Fails with [`KeyError::Read`] when the file cannot be read, [`KeyError::Permissions`]
 /// when its mode grants the group or others any access, and [`KeyError::Invalid`] for any
 /// other content.
+///
+/// Only Unix has the mode bits checked. On Windows a file's access is governed by its ACL,
+/// which this function does not inspect: restricting the key file to the account that
+/// runs Sibuna is the operator's job there.
 pub fn load_key(path: &Path) -> Result<ConsoleKey, KeyError> {
     let mut file = File::open(path).map_err(KeyError::Read)?;
     check_permissions(&file)?;
@@ -124,6 +128,8 @@ fn check_permissions(file: &File) -> Result<(), KeyError> {
     Ok(())
 }
 
+/// Windows has no mode bits; the file's ACL is the operator's to restrict (see
+/// [`load_key`]).
 #[cfg(not(unix))]
 fn check_permissions(_file: &File) -> Result<(), KeyError> {
     Ok(())
@@ -170,6 +176,8 @@ mod tests {
             use std::os::unix::fs::PermissionsExt;
             std::fs::set_permissions(&path, std::fs::Permissions::from_mode(mode)).unwrap();
         }
+        #[cfg(not(unix))]
+        let _ = mode;
         path
     }
 

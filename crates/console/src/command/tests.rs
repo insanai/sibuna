@@ -103,6 +103,8 @@ fn private(name: &str, value: &str, mode: u32) -> PathBuf {
         use std::os::unix::fs::PermissionsExt;
         std::fs::set_permissions(&path, std::fs::Permissions::from_mode(mode)).unwrap();
     }
+    #[cfg(not(unix))]
+    let _ = mode;
     path
 }
 

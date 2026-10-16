@@ -160,7 +160,7 @@
 //!   (`limits::Limiter`), `query_budget` (`limits::QueryBudget`), every service, and
 //!   `sleep(Duration) -> bool` (wakes when the console stops), `is_stopping`,
 //!   `needs_totp`, `is_restricted`.
-//! - [`random::fill`] and [`random::array`] (`/dev/urandom`).
+//! - [`random::fill`] and [`random::array`] (`/dev/urandom`; `BCryptGenRandom` on Windows).
 //!
 //! # Changes from the Zig version
 //!

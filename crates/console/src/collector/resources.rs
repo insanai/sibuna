@@ -6,14 +6,20 @@
 //! Zig read CPU time and the peak with `getrusage`. This crate has no `unsafe` and no libc
 //! binding, so on Linux it reads `/proc/self/status` (`VmRSS`, `VmHWM`) and
 //! `/proc/self/stat` (user and system time in clock ticks of 1/100 s, the fixed `USER_HZ`
-//! of the Linux ABI); CPU time therefore has a resolution of 10 ms.
+//! of the Linux ABI); CPU time therefore has a resolution of 10 ms. Other systems (macOS,
+//! Windows, the BSDs) have no such files, or files in another format, so there every gauge
+//! is unavailable.
 
+#[cfg(target_os = "linux")]
 use std::fs::File;
+#[cfg(target_os = "linux")]
 use std::io::Read;
 
 /// The longest proc file read, in bytes.
+#[cfg(target_os = "linux")]
 const READ_LIMIT: usize = 4096;
 /// Milliseconds per clock tick of `/proc/self/stat` (`USER_HZ` = 100).
+#[cfg(any(target_os = "linux", test))]
 const TICK_MS: u64 = 10;
 
 /// One reading of the gauges.
@@ -28,6 +34,7 @@ pub(crate) struct Sample {
 }
 
 /// Reads the gauges of this process; fields without a source are `None`.
+#[cfg(target_os = "linux")]
 pub(crate) fn sample() -> Sample {
     let mut buffer = [0u8; READ_LIMIT];
     let (rss_kib, rss_max_kib) = match read("/proc/self/status", &mut buffer) {
@@ -38,8 +45,15 @@ pub(crate) fn sample() -> Sample {
     Sample { rss_kib, rss_max_kib, cpu_ms }
 }
 
+/// Reads the gauges of this process: none has a source outside Linux.
+#[cfg(not(target_os = "linux"))]
+pub(crate) fn sample() -> Sample {
+    Sample::default()
+}
+
 /// Reads at most [`READ_LIMIT`] bytes of `path` into `buffer`; `None` when the file cannot
 /// be read or is not UTF-8.
+#[cfg(target_os = "linux")]
 fn read<'b>(path: &str, buffer: &'b mut [u8; READ_LIMIT]) -> Option<&'b str> {
     let mut file = File::open(path).ok()?;
     let mut length = 0;
@@ -54,6 +68,7 @@ fn read<'b>(path: &str, buffer: &'b mut [u8; READ_LIMIT]) -> Option<&'b str> {
 }
 
 /// Returns the value of the line starting with `label`, which must be a number of `kB`.
+#[cfg(any(target_os = "linux", test))]
 fn parse_kib(text: &str, label: &str) -> Option<u64> {
     let line = text.lines().find_map(|line| line.strip_prefix(label))?;
     let mut words = line.split_ascii_whitespace();
@@ -67,6 +82,7 @@ fn parse_kib(text: &str, label: &str) -> Option<u64> {
 /// Returns user plus system time of a `/proc/<pid>/stat` line in milliseconds. The command
 /// name in parentheses may contain spaces, so fields are counted after its closing one:
 /// `utime` and `stime` are the 12th and 13th fields there (fields 14 and 15 of the line).
+#[cfg(any(target_os = "linux", test))]
 fn parse_cpu_ms(text: &str) -> Option<u64> {
     let (_, rest) = text.rsplit_once(')')?;
     let mut fields = rest.split_ascii_whitespace().skip(11);
@@ -88,6 +104,8 @@ mod tests {
             assert!(first.rss_max_kib.unwrap() > 0);
             assert!(first.rss_kib.unwrap() > 0);
             assert!(sample().cpu_ms.unwrap() >= first.cpu_ms.unwrap());
+        } else {
+            assert_eq!(first, Sample::default());
         }
         let status = "VmPeak:\t9000 kB\nVmRSS:\t   5120 kB\n";
         assert_eq!(parse_kib(status, "VmRSS:"), Some(5120));

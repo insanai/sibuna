@@ -73,6 +73,7 @@ impl ConsoleError {
     /// Returns a sentence that tells the operator how to fix the problem.
     pub fn hint(&self) -> &'static str {
         match self {
+            ConsoleError::Random if cfg!(windows) => "Check that BCryptGenRandom is available.",
             ConsoleError::Random => "Check that /dev/urandom is readable.",
             ConsoleError::ConsoleKeyRequired => {
                 "Give `--console-key-file` with `--console-behind-proxy`."
@@ -301,15 +302,12 @@ mod tests {
     use super::*;
 
     fn key_file(dir: &Path, name: &str, byte: u8) -> PathBuf {
-        use std::os::unix::fs::OpenOptionsExt;
         let path = dir.join(name);
-        let mut file = std::fs::OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .mode(0o600)
-            .open(&path)
-            .unwrap();
+        let mut options = std::fs::OpenOptions::new();
+        options.write(true).create(true).truncate(true);
+        #[cfg(unix)]
+        std::os::unix::fs::OpenOptionsExt::mode(&mut options, 0o600);
+        let mut file = options.open(&path).unwrap();
         writeln!(file, "{}", format!("{byte:02x}").repeat(32)).unwrap();
         path
     }
