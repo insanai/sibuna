@@ -70,6 +70,7 @@ console options:
                              generated requests
   --out <DIR>                Where screenshots and report.txt go (required)
   --timeout <SECONDS>        How long each wait may take (default: 30)
+  --viewport-only            Capture only the 1440 x 960 viewport, not the whole page
 
 dashboards options:
   --url, --username, --password-file, --new-password-file, --out, --timeout as for console

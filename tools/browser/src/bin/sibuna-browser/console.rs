@@ -43,6 +43,7 @@ pub const FLAGS: &[Flag] = &[
     Flag { name: "--traffic", takes_value: true },
     Flag { name: "--out", takes_value: true },
     Flag { name: "--timeout", takes_value: true },
+    Flag { name: "--viewport-only", takes_value: false },
 ];
 
 /// The tallest screenshot taken, in CSS pixels.
@@ -65,6 +66,8 @@ pub struct Settings {
     pub out: PathBuf,
     /// How long each wait may take.
     pub timeout: Duration,
+    /// Whether screenshots show only the viewport instead of the whole page.
+    pub viewport_only: bool,
 }
 
 impl Settings {
@@ -96,6 +99,7 @@ impl Settings {
             traffic,
             out: flags.required_path("--out")?,
             timeout: flags.seconds("--timeout", 30)?,
+            viewport_only: flags.is_set("--viewport-only"),
         })
     }
 }
@@ -145,14 +149,20 @@ pub struct Walk<'s> {
 
 impl<'s> Walk<'s> {
     /// Takes a numbered screenshot `NN-<name>.png` of the whole page (at most
-    /// [`MAX_SHOT_HEIGHT`] pixels high); a failure becomes a note of `step`.
+    /// [`MAX_SHOT_HEIGHT`] pixels high), or of the viewport only with `--viewport-only`;
+    /// a failure becomes a note of `step`.
     pub fn screenshot(&mut self, page: &mut Page<'_>, name: &str, step: &mut Step) {
         self.shots += 1;
         let path = self.settings.out.join(format!("{:02}-{name}.png", self.shots));
         // A whole-page capture of a scrolled page paints fixed elements (the hidden skip
         // link) at the scroll offset; the page steps note the scroll position instead.
         let _ = page.evaluate("window.scrollTo(0, 0)");
-        match page.screenshot_full_page(&path, MAX_SHOT_HEIGHT) {
+        let shot = if self.settings.viewport_only {
+            page.screenshot(&path)
+        } else {
+            page.screenshot_full_page(&path, MAX_SHOT_HEIGHT)
+        };
+        match shot {
             Ok(()) => step.screenshots.push(path),
             Err(error) => step.notes.push(format!("no screenshot {}: {error}", path.display())),
         }
@@ -274,6 +284,7 @@ mod tests {
             traffic: None,
             out: PathBuf::from("/tmp/out"),
             timeout: Duration::from_secs(1),
+            viewport_only: false,
         };
         let mut walk = Walk {
             settings: &settings,
