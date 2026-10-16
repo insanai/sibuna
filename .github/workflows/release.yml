@@ -1,0 +1,440 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Platform to build and check without publishing (a tag always builds all)
+        type: choice
+        default: all
+        options: [all, linux-amd64, linux-arm64, macos-arm64, macos-amd64, windows-amd64, freebsd, openbsd]
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}-${{ inputs.platform || 'all' }}
+  cancel-in-progress: false
+env:
+  RUST_TOOLCHAIN: 1.99.0
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+defaults:
+  run:
+    shell: bash
+jobs:
+  prepare:
+    name: Version check and WebAssembly modules
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+      matrix: ${{ steps.plan.outputs.matrix }}
+      linux: ${{ steps.plan.outputs.linux }}
+      platform: ${{ steps.plan.outputs.platform }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Tag, Cargo.toml and chart name one version
+        run: python distribution/scripts/release_version.py --check
+      - name: Package contact is configured for a tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          CONTACT: ${{ vars.SIBUNA_PACKAGE_CONTACT }}
+        run: |
+          if [ -z "$CONTACT" ]; then
+            echo "Set the repository variable SIBUNA_PACKAGE_CONTACT (the packages' maintainer address)." >&2
+            exit 1
+          fi
+      - id: plan
+        env:
+          PLATFORM: ${{ startsWith(github.ref, 'refs/tags/v') && 'all' || inputs.platform || 'all' }}
+        run: |
+          python - <<'PYTHON' >> "$GITHUB_OUTPUT"
+          import json, os, subprocess
+          platform = os.environ['PLATFORM']
+          builds = [
+              {'package': 'linux-amd64', 'runner': 'ubuntu-24.04', 'target': 'x86_64-unknown-linux-musl', 'binary': 'sibuna'},
+              {'package': 'linux-arm64', 'runner': 'ubuntu-24.04-arm', 'target': 'aarch64-unknown-linux-musl', 'binary': 'sibuna'},
+              {'package': 'macos-arm64', 'runner': 'macos-15', 'target': 'aarch64-apple-darwin', 'binary': 'sibuna'},
+              {'package': 'macos-amd64', 'runner': 'macos-15-intel', 'target': 'x86_64-apple-darwin', 'binary': 'sibuna'},
+              {'package': 'windows-amd64', 'runner': 'windows-2025', 'target': 'x86_64-pc-windows-msvc', 'binary': 'sibuna.exe'},
+          ]
+          selected = [b for b in builds if platform in ('all', b['package'])]
+          version = subprocess.check_output(['python', 'distribution/scripts/release_version.py', '--print'], text=True).strip()
+          print('version=' + version)
+          print('platform=' + platform)
+          print('matrix=' + json.dumps(selected))
+          print('linux=' + json.dumps([b['package'].removeprefix('linux-') for b in selected if b['package'].startswith('linux-')]))
+          PYTHON
+      - name: Install Rust
+        run: |
+          rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal --target wasm32-unknown-unknown
+          rustup default "$RUST_TOOLCHAIN"
+      - name: Build the WebAssembly modules once for every platform
+        run: |
+          # The daemon's build script builds both modules with the `wasm` profile.
+          cargo check --locked -p sibuna
+          mkdir wasm
+          cp target/wasm32-unknown-unknown/wasm/sibuna_pow_wasm.wasm wasm/
+          cp target/wasm32-unknown-unknown/wasm/sibuna_console_ui.wasm wasm/
+          sha256sum wasm/*
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: wasm-modules
+          path: wasm/*.wasm
+          if-no-files-found: error
+  build:
+    name: Build ${{ matrix.package }}
+    needs: prepare
+    if: needs.prepare.outputs.matrix != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    env:
+      TARGET: ${{ matrix.target }}
+      BINARY: target/${{ matrix.target }}/release/${{ matrix.binary }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: wasm-modules
+          path: wasm
+      - name: Install Rust
+        run: |
+          if ! command -v rustup > /dev/null; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain none
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+            export PATH="$HOME/.cargo/bin:$PATH"
+          fi
+          rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal --target "$TARGET"
+          rustup default "$RUST_TOOLCHAIN"
+      - name: Install the musl C compiler
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq musl-tools
+      - name: Build the release executable
+        run: |
+          export SIBUNA_POW_WASM="$PWD/wasm/sibuna_pow_wasm.wasm"
+          export SIBUNA_CONSOLE_WASM="$PWD/wasm/sibuna_console_ui.wasm"
+          case "$TARGET" in
+            *-linux-musl)
+              # ring and the bundled SQLite are C; musl-gcc compiles them for the static link.
+              variable="CC_$(echo "$TARGET" | tr - _)"
+              export "$variable=musl-gcc"
+              ;;
+            *-apple-darwin) export MACOSX_DEPLOYMENT_TARGET=12.0 ;;
+            *-windows-msvc) export RUSTFLAGS="-C target-feature=+crt-static" ;;
+          esac
+          cargo build --release --locked -p sibuna --target "$TARGET"
+      - name: Check that the Linux executable is static
+        if: runner.os == 'Linux'
+        run: |
+          file "$BINARY"
+          file "$BINARY" | grep -Eq 'statically linked|static-pie linked'
+      - name: Verify the release executable
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: |
+          python distribution/scripts/release_version.py --check --binary "$BINARY"
+          python distribution/scripts/smoke_test.py "$BINARY"
+      - name: Package the executable, licenses and build manifest
+        env:
+          SIBUNA_POW_WASM: wasm/sibuna_pow_wasm.wasm
+          SIBUNA_CONSOLE_WASM: wasm/sibuna_console_ui.wasm
+        run: python distribution/scripts/package_release.py --binary "$BINARY" --package ${{ matrix.package }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sibuna-${{ matrix.package }}
+          path: dist/*
+          if-no-files-found: error
+  linux-packages:
+    name: Linux packages ${{ matrix.arch }}
+    needs: [prepare, build]
+    if: needs.prepare.outputs.linux != '[]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: ${{ fromJSON(needs.prepare.outputs.linux) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: sibuna-linux-${{ matrix.arch }}
+          path: input
+      - run: python distribution/scripts/install_distribution_tools.py "$RUNNER_TEMP/tools" nfpm
+      - name: Build deb, rpm and (amd64) Arch packages
+        env:
+          ARCH: ${{ matrix.arch }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          CONTACT: ${{ vars.SIBUNA_PACKAGE_CONTACT || 'packages@example.invalid' }}
+        run: |
+          python distribution/scripts/package_linux.py --archive "input/sibuna-linux-$ARCH.tar.gz" \
+            --arch "$ARCH" --version "$VERSION" --commit "$GITHUB_SHA" --contact "$CONTACT"
+          ls -l dist
+      - name: Install, upgrade and remove in Debian, Fedora and Arch containers
+        if: matrix.arch == 'amd64'
+        run: python distribution/scripts/check_linux_packages.py dist
+      - name: Start, restart, reinstall and remove the systemd service
+        if: matrix.arch == 'amd64'
+        run: python distribution/scripts/check_systemd_package.py dist
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sibuna-packages-${{ matrix.arch }}
+          path: dist/*
+          if-no-files-found: error
+  source-and-chart:
+    name: Source bundle and Helm chart
+    needs: prepare
+    if: needs.prepare.outputs.platform == 'all'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - run: python distribution/scripts/package_source.py
+      - run: python distribution/scripts/install_distribution_tools.py "$RUNNER_TEMP/tools" helm
+      - run: python -m pip install PyYAML==6.0.2
+      - name: Validate, lint and package the chart
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          python distribution/scripts/check_helm.py
+          chart="$RUNNER_TEMP/chart/sibuna"
+          mkdir -p "$(dirname "$chart")"
+          cp -R distribution/helm/sibuna "$chart"
+          cp LICENSE "$chart/LICENSE"
+          cp LICENSES/LGPL-3.0.txt LICENSES/GPL-3.0.txt "$chart/"
+          helm package "$chart" --version "$VERSION" --app-version "$VERSION" --destination dist
+          mv "dist/sibuna-$VERSION.tgz" "dist/helm-sibuna-$VERSION.tgz"
+          tar -tzf "dist/helm-sibuna-$VERSION.tgz"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sibuna-source-and-chart
+          path: dist/*
+          if-no-files-found: error
+  homebrew:
+    name: Homebrew formula
+    needs: [prepare, build]
+    if: needs.prepare.outputs.platform == 'all'
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: sibuna-{macos,linux}-*
+          path: input
+          merge-multiple: true
+      - name: Write the release formula
+        run: python3 distribution/scripts/homebrew_formula.py input --output dist/sibuna.rb
+      - name: Install and test the formula from the archives in a scratch tap
+        run: |
+          python3 distribution/scripts/homebrew_formula.py input --local --output "$RUNNER_TEMP/sibuna.rb"
+          brew tap-new --no-git sibuna/qualification
+          tap="$(brew --repository)/Library/Taps/sibuna/homebrew-qualification"
+          cp "$RUNNER_TEMP/sibuna.rb" "$tap/Formula/sibuna.rb"
+          HOMEBREW_NO_INSTALL_FROM_API=1 brew install sibuna/qualification/sibuna
+          brew test sibuna/qualification/sibuna
+          brew uninstall sibuna/qualification/sibuna
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sibuna-homebrew
+          path: dist/sibuna.rb
+          if-no-files-found: error
+  freebsd:
+    name: FreeBSD 15.1 package
+    needs: prepare
+    if: contains(fromJSON('["all","freebsd"]'), needs.prepare.outputs.platform)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: wasm-modules
+          path: wasm
+      - name: Build, test and package in a FreeBSD guest
+        uses: vmactions/freebsd-vm@c46abacb49f09938ca4e1702d15d836285d694cc # v1, pinned 2026-10-09
+        env:
+          CONTACT: ${{ vars.SIBUNA_PACKAGE_CONTACT }}
+          SIBUNA_POW_WASM: ${{ github.workspace }}/wasm/sibuna_pow_wasm.wasm
+          SIBUNA_CONSOLE_WASM: ${{ github.workspace }}/wasm/sibuna_console_ui.wasm
+        with:
+          release: '15.1'
+          arch: x86_64
+          mem: 8192
+          cpu: 4
+          envs: CONTACT SIBUNA_POW_WASM SIBUNA_CONSOLE_WASM RUST_TOOLCHAIN
+          sync: rsync
+          prepare: |
+            set -eu
+            env ASSUME_ALWAYS_YES=yes pkg install -y python3 git
+            pw useradd qualification -m -s /bin/sh
+          run: |
+            set -eu
+            python3 distribution/scripts/qualify_bsd.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sibuna-freebsd
+          path: dist/*.pkg
+          if-no-files-found: error
+  openbsd:
+    name: OpenBSD 7.9 package
+    needs: prepare
+    if: contains(fromJSON('["all","openbsd"]'), needs.prepare.outputs.platform)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: wasm-modules
+          path: wasm
+      - name: Build, test and package in an OpenBSD guest
+        uses: vmactions/openbsd-vm@5f7b2c933b8846a138361d6843c52af4bef5d945 # v1, pinned 2026-10-09
+        env:
+          CONTACT: ${{ vars.SIBUNA_PACKAGE_CONTACT }}
+          SIBUNA_POW_WASM: ${{ github.workspace }}/wasm/sibuna_pow_wasm.wasm
+          SIBUNA_CONSOLE_WASM: ${{ github.workspace }}/wasm/sibuna_console_ui.wasm
+        with:
+          release: '7.9'
+          arch: x86_64
+          mem: 8192
+          cpu: 4
+          envs: CONTACT SIBUNA_POW_WASM SIBUNA_CONSOLE_WASM
+          sync: rsync
+          prepare: |
+            set -eu
+            pkg_add python3 git
+            useradd -m -s /bin/sh qualification
+          run: |
+            set -eu
+            ulimit -d "$(ulimit -H -d)"
+            python3 distribution/scripts/qualify_bsd.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sibuna-openbsd
+          path: dist/*.tgz
+          if-no-files-found: error
+  container:
+    name: Container image
+    needs: [prepare, build, source-and-chart]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: sibuna-linux-*
+          path: input
+          merge-multiple: true
+      - name: Prepare the context from both verified Linux archives
+        run: python distribution/scripts/prepare_container.py input image-context
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        with:
+          version: v0.38.0
+          driver-opts: image=moby/buildkit@sha256:cec9f139f45e93c5c69c60f8b07cfad9f43f4ef6b6a6cd917527fea5ff2e3dea
+      - run: |
+          python distribution/scripts/install_distribution_tools.py "$RUNNER_TEMP/tools" helm kind kubectl
+          python -m pip install PyYAML==6.0.2
+      - name: Run the image unprivileged, and deploy the chart in kind
+        run: |
+          docker buildx build --platform linux/amd64 --load -t sibuna:qualification image-context
+          python distribution/scripts/check_container.py sibuna:qualification
+          python distribution/scripts/check_helm.py --image sibuna:qualification
+      - name: Export the two-architecture image without publishing it
+        run: docker buildx build --platform linux/amd64,linux/arm64 --output type=oci,dest=sibuna-image.tar image-context
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: qualified-container
+          path: sibuna-image.tar
+          if-no-files-found: error
+  publish:
+    name: Publish the release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [prepare, build, linux-packages, source-and-chart, homebrew, freebsd, openbsd, container]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      packages: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ github.ref_name }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: sibuna-*
+          merge-multiple: true
+          path: dist
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: qualified-container
+          path: image
+      - name: Refuse to replace a published release
+        run: |
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft > "$RUNNER_TEMP/release.json"; then
+            python3 -c 'import json,sys; sys.exit(0 if json.load(open(sys.argv[1]))["isDraft"] else "already published: assets are never replaced")' "$RUNNER_TEMP/release.json"
+          fi
+      - name: Publish the verified image to GHCR
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          sudo apt-get update -qq && sudo apt-get install -y -qq skopeo
+          # skopeo copies the image the container job verified; nothing is rebuilt.
+          skopeo inspect --raw "oci-archive:image/sibuna-image.tar" > "$RUNNER_TEMP/local-index.json"
+          if skopeo inspect --raw --authfile "$HOME/.docker/config.json" "docker://$image:$VERSION" > "$RUNNER_TEMP/remote-index.json" 2> "$RUNNER_TEMP/remote.err"; then
+            # A rerun may resume only with a byte-identical image.
+            cmp "$RUNNER_TEMP/local-index.json" "$RUNNER_TEMP/remote-index.json" || {
+              echo "Image $VERSION already exists with other content; refusing to replace it" >&2
+              exit 1
+            }
+          else
+            if ! grep -Eq 'manifest unknown|name unknown' "$RUNNER_TEMP/remote.err"; then
+              cat "$RUNNER_TEMP/remote.err" >&2
+              echo "Cannot tell whether image $VERSION exists; refusing to publish" >&2
+              exit 1
+            fi
+            skopeo copy --all --preserve-digests --authfile "$HOME/.docker/config.json" \
+              "oci-archive:image/sibuna-image.tar" "docker://$image:$VERSION"
+          fi
+          # The release names the image only once anyone can pull it.
+          if ! skopeo inspect --no-creds "docker://$image:$VERSION" --format '{{.Digest}}' > dist/IMAGE-DIGEST.txt; then
+            echo "Make the GHCR package public, then rerun this job." >&2
+            exit 1
+          fi
+          cat dist/IMAGE-DIGEST.txt
+      - name: Publish the release after every platform passed
+        run: |
+          cd dist
+          python3 ../distribution/scripts/release_checksums.py .
+          if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --draft \
+              --title "Sibuna $VERSION" --notes-file ../.github/release-notes.txt
+          fi
+          gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber \
+            ./*.tar.gz ./*.zip ./*.deb ./*.rpm ./*.pkg.tar.zst ./*.pkg ./*.tgz sibuna.rb \
+            IMAGE-DIGEST.txt SHA256SUMS
+          case "$VERSION" in
+            *-*) gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease ;;
+            *) gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest ;;
+          esac
