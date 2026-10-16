@@ -27,6 +27,32 @@ impl Response {
     pub fn header_values<'r>(&'r self, name: &'r str) -> impl Iterator<Item = &'r str> + 'r {
         self.headers.iter().filter(move |(n, _)| n.eq_ignore_ascii_case(name)).map(|(_, v)| &**v)
     }
+
+    /// Returns the `Cookie` header a browser would send back, as `compare.py` built it: the
+    /// `name=value` pair of every `Set-Cookie` field with its attributes dropped, a later
+    /// field replacing an earlier one of the same name, and pairs with an empty value (which
+    /// delete a cookie) left out, joined by `; `. Returns an empty string when none is left.
+    pub fn cookie_header(&self) -> String {
+        let mut jar: Vec<(&str, &str)> = Vec::new();
+        for field in self.header_values("set-cookie") {
+            let pair = field.split(';').next().unwrap_or_default().trim();
+            let (name, value) = pair.split_once('=').unwrap_or((pair, ""));
+            let (name, value) = (name.trim(), value.trim());
+            if name.is_empty() {
+                continue;
+            }
+            match jar.iter_mut().find(|(known, _)| *known == name) {
+                Some(entry) => entry.1 = value,
+                None => jar.push((name, value)),
+            }
+        }
+        let pairs: Vec<String> = jar
+            .iter()
+            .filter(|(_, value)| !value.is_empty())
+            .map(|(name, value)| format!("{name}={value}"))
+            .collect();
+        pairs.join("; ")
+    }
 }
 
 /// Sends one request to `127.0.0.1:port` on a fresh connection and reads the whole response.
@@ -303,5 +329,20 @@ mod tests {
         assert_eq!(response.body, b"hello");
         let cookies: Vec<&str> = response.header_values("set-cookie").collect();
         assert_eq!(cookies, ["a=b; Path=/", "c=d"]);
+        assert_eq!(response.cookie_header(), "a=b; c=d");
+    }
+
+    #[test]
+    fn cookie_header_keeps_the_last_value_and_drops_deletions() {
+        let data = b"HTTP/1.1 200 OK\r\n\
+            Set-Cookie: auth=; Path=/; Max-Age=0; SameSite=Lax; Partitioned\r\n\
+            Set-Cookie: verify=01a1; Path=/; Partitioned\r\n\
+            set-cookie: auth=jwt.token; Path=/\r\n\
+            Set-Cookie: =orphan\r\n\
+            Content-Length: 0\r\n\r\n";
+        let response = parse_response(data).unwrap();
+        assert_eq!(response.cookie_header(), "auth=jwt.token; verify=01a1");
+        let none = parse_response(b"HTTP/1.1 200 OK\r\nSet-Cookie: a=\r\n\r\n").unwrap();
+        assert_eq!(none.cookie_header(), "");
     }
 }

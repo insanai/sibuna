@@ -53,7 +53,7 @@ const COMMANDS: [Command; 5] = [
     Command {
         name: "bench",
         synopsis: "<COMMAND> [OPTIONS]",
-        summary: "Run the benchmarks (primitives, product, latency) in release mode",
+        summary: "Run the benchmarks (primitives, product, latency, admission) in release mode",
     },
     Command {
         name: "parity",

@@ -16,6 +16,11 @@ impl Args {
         Args { items }
     }
 
+    /// Returns the arguments that have not been taken yet, in order.
+    pub fn remaining(&self) -> &[String] {
+        &self.items
+    }
+
     /// Takes the flag `name` and returns whether it was present.
     pub fn flag(&mut self, name: &str) -> bool {
         let before = self.items.len();

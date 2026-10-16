@@ -47,7 +47,7 @@ struct Options {
 }
 
 fn parse_options(mut args: Args) -> Result<Options> {
-    let (daemons, cpus, load_cpus) = parse_daemons(&mut args)?;
+    let (daemons, cpus, load_cpus) = parse_daemons(&mut args, "0-3")?;
     let rates = args.parsed("--rates", "10000,25000,50000,100000,150000".to_owned())?;
     let surface = args.parsed("--surface", "shield".to_owned())?;
     let modes = args.parsed("--modes", "forward_auth,reverse_proxy".to_owned())?;

@@ -19,6 +19,7 @@ sibuna-policy = { workspace = true }
 sibuna-challenge = { workspace = true }
 sibuna-store = { workspace = true }
 sibuna-http = { workspace = true }
+sibuna-inflate = { workspace = true }
 
 [lints]
 workspace = true

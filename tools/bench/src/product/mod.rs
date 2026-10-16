@@ -7,7 +7,15 @@
 //! injection with a session. Each workload runs `--repetitions` times; we report the median
 //! with the min-max spread, the daemon's CPU time per request (`/proc/<pid>/stat`) and its
 //! peak resident set (`VmHWM`, reset before each run).
+//!
+//! With `--anubis <path>`, Anubis is a third product after the Sibuna surfaces of each mode,
+//! as in `tools.py`: started with its flags and `GOMAXPROCS` equal to the worker count,
+//! pinned to the same CPUs, with a session obtained by solving its challenge (see
+//! [`crate::anubis`]). The origin is then `caddy respond` unless `--origin` says otherwise,
+//! every run waits until fewer than 3,000 sockets are in `TIME_WAIT`, as `tools.py` did, and
+//! the results go to `comparison-latest` instead of `product-latest`.
 
+mod summary;
 mod wrk;
 
 use std::fs;
@@ -15,14 +23,18 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
+use crate::anubis::{self, TokenScheme};
 use crate::args::Args;
 use crate::daemon::{self, Config, Daemon, Implementation, Mode, Surface};
 use crate::error::{Error, Result};
 use crate::json::Json;
 use crate::process::{self, CpuSet, Process, TempDir};
-use crate::report::{Table, fmt_count, write_results};
+use crate::report::write_results;
+use crate::server::Server;
 use crate::stats::Spread;
 use crate::{meta, origin, paths};
+
+use summary::{product_document, product_markdown};
 
 pub use wrk::Load;
 
@@ -34,6 +46,83 @@ type Metric<'f> = &'f dyn Fn(&Sample) -> f64;
 
 /// The SQL injection query of the attack workload.
 const ATTACK: &str = "/search?q=%27%20OR%201%3D1--";
+
+/// Sockets in `TIME_WAIT` below which a comparison run may start, as in `tools.py`.
+const TIME_WAIT_LIMIT: usize = 3000;
+
+/// The longest wait for sockets in `TIME_WAIT` to drain before a comparison run.
+const TIME_WAIT_TIMEOUT: Duration = Duration::from_secs(90);
+
+/// One product under test: a Sibuna daemon on one surface, or Anubis.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Subject {
+    /// A Sibuna daemon, Rust or Zig, as Gate or Shield.
+    Sibuna(Implementation, Surface),
+    /// Anubis, given with `--anubis`.
+    Anubis,
+}
+
+impl Subject {
+    /// Returns the product name of the result files (`sibuna-gate`, `sibuna-shield`,
+    /// `anubis`).
+    fn product(self) -> &'static str {
+        match self {
+            Subject::Sibuna(_, surface) => surface.product(),
+            Subject::Anubis => "anubis",
+        }
+    }
+
+    /// Returns a short column name: `rust gate`, `zig shield`, `anubis`.
+    fn label(self) -> String {
+        match self {
+            Subject::Sibuna(implementation, surface) => {
+                let surface = surface.product().trim_start_matches("sibuna-");
+                format!("{} {surface}", implementation.name())
+            }
+            Subject::Anubis => "anubis".to_owned(),
+        }
+    }
+
+    /// Returns the implementation name of the result files (`rust`, `zig`, `anubis`).
+    fn implementation(self) -> &'static str {
+        match self {
+            Subject::Sibuna(implementation, _) => implementation.name(),
+            Subject::Anubis => "anubis",
+        }
+    }
+}
+
+/// A product under test while it runs.
+enum Running {
+    /// A Sibuna daemon.
+    Sibuna(Daemon),
+    /// An Anubis server.
+    Anubis(Server),
+}
+
+impl Running {
+    fn pid(&self) -> u32 {
+        match self {
+            Running::Sibuna(daemon) => daemon.pid(),
+            Running::Anubis(server) => server.pid(),
+        }
+    }
+
+    fn port(&self) -> u16 {
+        match self {
+            Running::Sibuna(daemon) => daemon.port,
+            Running::Anubis(server) => server.port,
+        }
+    }
+
+    /// Obtains a session by solving the product's challenge, as a browser would.
+    fn session_cookie(&self) -> Result<String> {
+        match self {
+            Running::Sibuna(daemon) => daemon.session_cookie(),
+            Running::Anubis(server) => anubis::session_cookie(server.port),
+        }
+    }
+}
 
 /// What the origin is.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -89,6 +178,7 @@ impl Origin {
 /// The options of `bench product`.
 struct Options {
     daemons: Daemons,
+    anubis: Option<PathBuf>,
     cpus: CpuSet,
     load_cpus: CpuSet,
     load: Load,
@@ -99,8 +189,9 @@ struct Options {
     out: PathBuf,
 }
 
-/// Parses the options shared by `product` and `latency`: the daemons and the CPU sets.
-pub fn parse_daemons(args: &mut Args) -> Result<(Daemons, CpuSet, CpuSet)> {
+/// Parses the options shared by `product`, `latency` and `admission`: the daemons and the
+/// CPU sets, with `default_cpus` for the daemons when `--cpus` is absent.
+pub fn parse_daemons(args: &mut Args, default_cpus: &str) -> Result<(Daemons, CpuSet, CpuSet)> {
     let rust = args.value("--rust")?.map_or_else(paths::rust_daemon, PathBuf::from);
     let mut daemons = vec![(Implementation::Rust, rust)];
     if let Some(zig) = args.value("--zig")? {
@@ -118,7 +209,7 @@ pub fn parse_daemons(args: &mut Args) -> Result<(Daemons, CpuSet, CpuSet)> {
             .hint("Build it with `cargo build --release -p sibuna`, or pass `--rust <path>`."));
         }
     }
-    let cpus = CpuSet::parse(&args.parsed("--cpus", "0-3".to_owned())?)?;
+    let cpus = CpuSet::parse(&args.parsed("--cpus", default_cpus.to_owned())?)?;
     let load_cpus = CpuSet::parse(&args.parsed("--load-cpus", "8-15".to_owned())?)?;
     Ok((daemons, cpus, load_cpus))
 }
@@ -139,15 +230,34 @@ pub fn parse_list<T>(
         .collect()
 }
 
+/// Takes `--anubis <path>` and checks that the file exists.
+///
+/// # Errors
+///
+/// Fails when the option names no file.
+pub fn parse_anubis(args: &mut Args) -> Result<Option<PathBuf>> {
+    let Some(path) = args.value("--anubis")?.map(PathBuf::from) else {
+        return Ok(None);
+    };
+    if !path.is_file() {
+        return Err(Error::new("NO ANUBIS", format!("There is no file at {}.", path.display()))
+            .hint("Download a release from github.com/TecharoHQ/anubis and pass its `anubis`."));
+    }
+    Ok(Some(path))
+}
+
 fn parse_options(mut args: Args) -> Result<Options> {
-    let (daemons, cpus, load_cpus) = parse_daemons(&mut args)?;
+    let (daemons, cpus, load_cpus) = parse_daemons(&mut args, "0-3")?;
+    let anubis = parse_anubis(&mut args)?;
     let defaults = Load::default();
     let load = Load {
         threads: args.parsed("--threads", defaults.threads)?,
         connections: args.parsed("--connections", defaults.connections)?,
         seconds: args.parsed("--seconds", defaults.seconds)?,
     };
-    let origin = match args.parsed("--origin", "stub".to_owned())?.as_str() {
+    // tools.py measured Anubis behind `caddy respond`; keep that origin for the comparison.
+    let default_origin = if anubis.is_some() { "caddy" } else { "stub" };
+    let origin = match args.parsed("--origin", default_origin.to_owned())?.as_str() {
         "stub" => OriginKind::Stub,
         "caddy" => OriginKind::Caddy,
         other => {
@@ -157,6 +267,7 @@ fn parse_options(mut args: Args) -> Result<Options> {
     };
     let options = Options {
         daemons,
+        anubis,
         cpus,
         load_cpus,
         load,
@@ -178,6 +289,7 @@ fn parse_options(mut args: Args) -> Result<Options> {
         "--rust",
         "--zig",
         "--zig-only",
+        "--anubis",
         "--cpus",
         "--load-cpus",
         "--threads",
@@ -201,8 +313,14 @@ struct Workload {
     description: &'static str,
 }
 
-/// The four workloads of `tools.py`, with the statuses it expected.
-fn workloads(surface: Surface, mode: Mode, cookie: &str) -> [Workload; 4] {
+/// The four workloads of `tools.py`, with the statuses it expected. Anubis in forward-auth
+/// mode is asked at its check endpoint instead of `/private`.
+fn workloads(subject: Subject, mode: Mode, cookie: &str) -> [Workload; 4] {
+    let check = match (subject, mode) {
+        (Subject::Anubis, Mode::ForwardAuth) => anubis::CHECK,
+        _ => "/private",
+    };
+    let shield = matches!(subject, Subject::Sibuna(_, Surface::Shield));
     let browser = daemon::browser_headers();
     let mut with_cookie = browser.clone();
     with_cookie.push(("Cookie".to_owned(), cookie.to_owned()));
@@ -211,14 +329,14 @@ fn workloads(surface: Surface, mode: Mode, cookie: &str) -> [Workload; 4] {
     [
         Workload {
             name: "admitted",
-            path: "/private",
+            path: check,
             headers: with_cookie.clone(),
             expected: 200,
             description: "Valid session cookie; the request is admitted (and proxied).",
         },
         Workload {
             name: "challenged",
-            path: "/private",
+            path: check,
             headers: browser,
             expected: if mode == Mode::ForwardAuth { 401 } else { 200 },
             description: "No cookie, browser User-Agent; the daemon answers with its challenge.",
@@ -234,7 +352,7 @@ fn workloads(surface: Surface, mode: Mode, cookie: &str) -> [Workload; 4] {
             name: "attack",
             path: ATTACK,
             headers: with_cookie,
-            expected: if surface == Surface::Shield { 403 } else { 200 },
+            expected: if shield { 403 } else { 200 },
             description: "Valid session plus an SQL injection query; only Shield refuses it.",
         },
     ]
@@ -335,10 +453,11 @@ impl WorkloadResult {
     }
 }
 
-/// One daemon, one surface, one mode: four workloads.
+/// One product (a daemon on one surface, or Anubis), one mode: four workloads.
 struct CaseResult {
-    implementation: Implementation,
-    config: Config,
+    subject: Subject,
+    mode: Mode,
+    workers: usize,
     cpus: CpuSet,
     binary_bytes: Option<u64>,
     idle_rss_kib: u64,
@@ -353,10 +472,10 @@ impl CaseResult {
             workloads.set(result.workload.name, result.to_json());
         }
         Json::object()
-            .with("product", self.config.surface.product())
-            .with("implementation", self.implementation.name())
-            .with("mode", self.config.mode.name())
-            .with("workers", self.config.workers)
+            .with("product", self.subject.product())
+            .with("implementation", self.subject.implementation())
+            .with("mode", self.mode.name())
+            .with("workers", self.workers)
             .with(
                 "cpu_affinity",
                 self.cpus.cpus.iter().map(|&c| Json::from(c)).collect::<Vec<_>>(),
@@ -392,18 +511,15 @@ pub fn command(args: Args, stdout: &mut dyn Write) -> Result<()> {
     let bench = Bench { options: &options, origin_port: origin.port, script, temp: temp.path() };
     let mut cases = Vec::new();
     for &mode in &options.modes {
-        for &surface in &options.surfaces {
-            for (implementation, binary) in &options.daemons {
-                let line = format!(
-                    "Measuring {} {} {}\n",
-                    implementation.name(),
-                    surface.product(),
-                    mode.name()
-                );
-                stdout.write_all(line.as_bytes()).map_err(|e| Error::io("stdout", e))?;
-                let case = run_case(&bench, *implementation, binary, surface, mode, stdout)?;
-                cases.push(case);
-            }
+        for (subject, binary) in subjects(&options) {
+            let line = format!(
+                "Measuring {} {} {}\n",
+                subject.implementation(),
+                subject.product(),
+                mode.name()
+            );
+            stdout.write_all(line.as_bytes()).map_err(|e| Error::io("stdout", e))?;
+            cases.push(run_case(&bench, subject, binary, mode, stdout)?);
         }
     }
     let description = origin.description;
@@ -411,62 +527,113 @@ pub fn command(args: Args, stdout: &mut dyn Write) -> Result<()> {
     let mut document = product_document(&options, description, &cases);
     document.set("load_average_before", load_before);
     let markdown = product_markdown(&options, &cases);
-    write_results(&options.out, "product-latest", &document, &markdown)?;
-    let text =
-        format!("\n{markdown}\nResults: {}\n", options.out.join("product-latest.json").display());
+    let name = if options.anubis.is_some() { "comparison-latest" } else { "product-latest" };
+    write_results(&options.out, name, &document, &markdown)?;
+    let path = options.out.join(format!("{name}.json"));
+    let text = format!("\n{markdown}\nResults: {}\n", path.display());
     stdout.write_all(text.as_bytes()).map_err(|e| Error::io("stdout", e))
+}
+
+/// Returns the products of one mode in the order of measurement: each surface with each
+/// daemon, then Anubis, as `tools.py` ordered them.
+fn subjects(options: &Options) -> Vec<(Subject, &Path)> {
+    let mut subjects = Vec::new();
+    for &surface in &options.surfaces {
+        for (implementation, binary) in &options.daemons {
+            subjects.push((Subject::Sibuna(*implementation, surface), binary.as_path()));
+        }
+    }
+    if let Some(binary) = &options.anubis {
+        subjects.push((Subject::Anubis, binary.as_path()));
+    }
+    subjects
+}
+
+/// Starts `subject` from `binary` in `mode`, pinned to the daemon CPUs.
+fn start_subject(
+    bench: &Bench<'_>,
+    subject: Subject,
+    binary: &Path,
+    mode: Mode,
+) -> Result<Running> {
+    let options = bench.options;
+    let workers = options.cpus.count();
+    let label = format!("{}-{}-{}", subject.implementation(), subject.product(), mode.name());
+    match subject {
+        Subject::Sibuna(_, surface) => {
+            let config = Config { surface, mode, workers, origin_port: bench.origin_port };
+            let daemon = Daemon::start(&label, binary, Some(&options.cpus), &config, bench.temp)?;
+            Ok(Running::Sibuna(daemon))
+        }
+        Subject::Anubis => {
+            let origin_port = (mode == Mode::ReverseProxy).then_some(bench.origin_port);
+            let setup = anubis::Setup { origin_port, workers, scheme: TokenScheme::Ed25519 };
+            let server = anubis::start(&label, binary, &setup, &options.cpus, bench.temp)?;
+            Ok(Running::Anubis(server))
+        }
+    }
 }
 
 fn run_case(
     bench: &Bench<'_>,
-    implementation: Implementation,
+    subject: Subject,
     binary: &Path,
-    surface: Surface,
     mode: Mode,
     stdout: &mut dyn Write,
 ) -> Result<CaseResult> {
     let options = bench.options;
-    let config =
-        Config { surface, mode, workers: options.cpus.count(), origin_port: bench.origin_port };
-    let label = format!("{}-{}-{}", implementation.name(), surface.product(), mode.name());
-    let daemon = Daemon::start(&label, binary, Some(&options.cpus), &config, bench.temp)?;
+    if options.anubis.is_some() {
+        process::drain_time_wait(TIME_WAIT_LIMIT, TIME_WAIT_TIMEOUT);
+    }
+    let running = start_subject(bench, subject, binary, mode)?;
     std::thread::sleep(Duration::from_millis(500));
-    let idle_rss_kib = process::status_kib(daemon.pid(), "VmRSS")?;
-    let cookie = daemon.session_cookie()?;
+    let idle_rss_kib = process::status_kib(running.pid(), "VmRSS")?;
+    let cookie = running.session_cookie()?;
     let mut results = Vec::new();
-    for workload in workloads(surface, mode, &cookie) {
-        let result = measure_workload(bench, &daemon, workload);
-        let line = progress_line(implementation, surface, mode, &result);
+    for workload in workloads(subject, mode, &cookie) {
+        let result = measure_workload(bench, &running, workload);
+        let line = progress_line(subject, mode, &result);
         stdout.write_all(line.as_bytes()).map_err(|e| Error::io("stdout", e))?;
         results.push(result);
     }
     Ok(CaseResult {
-        implementation,
-        config,
+        subject,
+        mode,
+        workers: options.cpus.count(),
         cpus: options.cpus.clone(),
         binary_bytes: fs::metadata(binary).ok().map(|m| m.len()),
         idle_rss_kib,
-        rss_kib_after_workload: process::status_kib(daemon.pid(), "VmRSS")?,
+        rss_kib_after_workload: process::status_kib(running.pid(), "VmRSS")?,
         workloads: results,
     })
 }
 
-fn measure_workload(bench: &Bench<'_>, daemon: &Daemon, workload: Workload) -> WorkloadResult {
-    let status = crate::http::request(daemon.port, "GET", workload.path, &workload.headers, b"")
+fn measure_workload(bench: &Bench<'_>, running: &Running, workload: Workload) -> WorkloadResult {
+    let options = bench.options;
+    // Only a comparison with Anubis waits for TIME_WAIT, as tools.py did; Rust against Zig
+    // runs as before.
+    let drain = || {
+        if options.anubis.is_some() {
+            process::drain_time_wait(TIME_WAIT_LIMIT, TIME_WAIT_TIMEOUT);
+        }
+    };
+    drain();
+    let port = running.port();
+    let status = crate::http::request(port, "GET", workload.path, &workload.headers, b"")
         .map(|r| r.status)
         .map_err(|e| e.message);
-    let options = bench.options;
-    let pid = daemon.pid();
+    let pid = running.pid();
     let mut result =
         WorkloadResult { workload, status, samples: Vec::new(), failures: Vec::new() };
     for _ in 0..options.repetitions {
+        drain();
         process::reset_peak_rss(pid);
         let before = process::cpu_seconds(pid);
         let summary = wrk::run(
             options.load,
             &options.load_cpus,
             &bench.script,
-            daemon.port,
+            port,
             result.workload.path,
             &result.workload.headers,
         );
@@ -484,18 +651,13 @@ fn measure_workload(bench: &Bench<'_>, daemon: &Daemon, workload: Workload) -> W
     result
 }
 
-fn progress_line(
-    implementation: Implementation,
-    surface: Surface,
-    mode: Mode,
-    result: &WorkloadResult,
-) -> String {
+fn progress_line(subject: Subject, mode: Mode, result: &WorkloadResult) -> String {
     let status =
         result.status.as_ref().map_or_else(|e| format!("probe failed ({e})"), u16::to_string);
     let prefix = format!(
         "  {:<4} {:<13} {:<13} {:<15} {status:>3}",
-        implementation.name(),
-        surface.product(),
+        subject.implementation(),
+        subject.product(),
         mode.name(),
         result.workload.name
     );
@@ -512,160 +674,39 @@ fn progress_line(
     }
 }
 
-fn product_document(options: &Options, origin: &str, cases: &[CaseResult]) -> Json {
-    let mut daemons = Json::object();
-    for (implementation, path) in &options.daemons {
-        daemons.set(implementation.name(), meta::binary(path));
-    }
-    let load = Json::object()
-        .with("threads", options.load.threads)
-        .with("connections", options.load.connections)
-        .with("seconds", options.load.seconds)
-        .with("repetitions", options.repetitions);
-    Json::object()
-        .with("meta", meta::machine(&paths::workspace_root(), &options.cpus))
-        .with("load", load)
-        .with("wrk", wrk::version())
-        .with("origin", origin)
-        .with("daemon_cpus", options.cpus.to_list())
-        .with("load_cpus", options.load_cpus.to_list())
-        .with("daemons", daemons)
-        .with("runs", cases.iter().map(CaseResult::to_json).collect::<Vec<_>>())
-        .with("limitations", LIMITATIONS.iter().map(|&l| Json::from(l)).collect::<Vec<_>>())
-}
-
-/// What these runs do not show, recorded with every result.
-const LIMITATIONS: [&str; 6] = [
-    "One host, loopback; wrk and the origin run on the load CPU set, the daemon on its own set.",
-    "wrk is a closed-loop generator: its latency percentiles suffer coordinated omission under \
-     saturation. `bench latency` measures latency at equal offered load instead.",
-    "CPU time is user+system time of the daemon process from /proc/<pid>/stat (10 ms ticks), \
-     read before and after each run; the origin's CPU is not included.",
-    "Peak RSS is VmHWM after resetting it through /proc/<pid>/clear_refs before each run.",
-    "Hashcash at 8 bits with a session solved once per case; browser solve time is not measured.",
-    "No TLS, no WAN, no real browsers; a ranking on this host is not a ranking on yours.",
-];
-
-fn product_markdown(options: &Options, cases: &[CaseResult]) -> String {
-    let mut out = format!(
-        "# Whole-product runs\n\nGenerated by `cargo xtask bench product` on {}. wrk {} threads, \
-         {} connections, {} s x {} repetitions (median, with the min-max of req/s beside \
-         it); daemon CPUs {}, load CPUs {}.\n",
-        meta::utc_now(),
-        options.load.threads,
-        options.load.connections,
-        options.load.seconds,
-        options.repetitions,
-        options.cpus.to_list(),
-        options.load_cpus.to_list()
-    );
-    for mode in &options.modes {
-        let mut table = Table::new(&[
-            "Impl",
-            "Product",
-            "Workload",
-            "Status",
-            "req/s",
-            "req/s min-max",
-            "p50 us",
-            "p90 us",
-            "p99 us",
-            "CPU us/req",
-            "Peak RSS KiB",
-        ]);
-        for case in cases.iter().filter(|c| c.config.mode == *mode) {
-            for w in &case.workloads {
-                table.row(markdown_row(case, w));
-            }
-        }
-        out.push_str(&format!("\n## {}\n\n{}", mode.name(), table.markdown()));
-    }
-    if options.daemons.len() == 2 {
-        out.push_str("\n## Rust against Zig\n\nRatios of medians; req/s above 1 and p99 below 1 ");
-        out.push_str("favour Rust.\n\n");
-        out.push_str(&ratio_table(cases).markdown());
-    }
-    out
-}
-
-fn markdown_row(case: &CaseResult, w: &WorkloadResult) -> Vec<String> {
-    let status = w.status.as_ref().map_or_else(|_| "failed".to_owned(), u16::to_string);
-    let rate = w.spread(Sample::requests_per_second);
-    let value = |f: &dyn Fn(&Sample) -> f64| {
-        w.spread(f).map_or_else(|| "-".to_owned(), |s| format!("{:.0}", s.median))
-    };
-    vec![
-        case.implementation.name().to_owned(),
-        case.config.surface.product().to_owned(),
-        w.workload.name.to_owned(),
-        status,
-        rate.map_or_else(|| "failed".to_owned(), |s| fmt_count(s.median)),
-        rate.map_or_else(
-            || "-".to_owned(),
-            |s| format!("{}-{}", fmt_count(s.min), fmt_count(s.max)),
-        ),
-        value(&|s| s.summary.latency.p50),
-        value(&|s| s.summary.latency.p90),
-        value(&|s| s.summary.latency.p99),
-        w.spread(Sample::cpu_us_per_request)
-            .map_or_else(|| "-".to_owned(), |s| format!("{:.2}", s.median)),
-        w.samples
-            .iter()
-            .map(|s| s.peak_rss_kib)
-            .max()
-            .map_or_else(|| "-".to_owned(), |k| k.to_string()),
-    ]
-}
-
-fn ratio_table(cases: &[CaseResult]) -> Table {
-    let mut table = Table::new(&[
-        "Mode",
-        "Product",
-        "Workload",
-        "req/s Rust/Zig",
-        "p99 Rust/Zig",
-        "CPU/req Rust/Zig",
-    ]);
-    for rust in cases.iter().filter(|c| c.implementation == Implementation::Rust) {
-        let zig = cases.iter().find(|c| {
-            c.implementation == Implementation::Zig
-                && c.config.surface == rust.config.surface
-                && c.config.mode == rust.config.mode
-        });
-        let Some(zig) = zig else { continue };
-        for (r, z) in rust.workloads.iter().zip(&zig.workloads) {
-            let ratio = |f: &dyn Fn(&Sample) -> f64| match (r.spread(f), z.spread(f)) {
-                (Some(a), Some(b)) if b.median > 0.0 => format!("{:.2}", a.median / b.median),
-                _ => "-".to_owned(),
-            };
-            table.row(vec![
-                rust.config.mode.name().to_owned(),
-                rust.config.surface.product().to_owned(),
-                r.workload.name.to_owned(),
-                ratio(&Sample::requests_per_second),
-                ratio(&|s| s.summary.latency.p99),
-                ratio(&Sample::cpu_us_per_request),
-            ]);
-        }
-    }
-    table
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn workloads_expect_the_tools_py_statuses() {
-        let shield = workloads(Surface::Shield, Mode::ForwardAuth, "t=1");
+        let shield = Subject::Sibuna(Implementation::Rust, Surface::Shield);
+        let shield = workloads(shield, Mode::ForwardAuth, "t=1");
         let statuses: Vec<u16> = shield.iter().map(|w| w.expected).collect();
         assert_eq!(statuses, [200, 401, 200, 403]);
-        let gate = workloads(Surface::Gate, Mode::ReverseProxy, "t=1");
+        assert_eq!(shield[0].path, "/private");
+        let gate = Subject::Sibuna(Implementation::Zig, Surface::Gate);
+        let gate = workloads(gate, Mode::ReverseProxy, "t=1");
         let statuses: Vec<u16> = gate.iter().map(|w| w.expected).collect();
         assert_eq!(statuses, [200, 200, 200, 200]);
         assert!(gate[0].headers.iter().any(|(n, v)| n == "Cookie" && v == "t=1"));
         assert!(!gate[1].headers.iter().any(|(n, _)| n == "Cookie"));
         assert_eq!(gate[2].headers[0], ("User-Agent".to_owned(), "curl/8.0".to_owned()));
+    }
+
+    #[test]
+    fn anubis_is_asked_at_its_check_endpoint_in_forward_auth_mode() {
+        let forward = workloads(Subject::Anubis, Mode::ForwardAuth, "a=1");
+        let paths: Vec<&str> = forward.iter().map(|w| w.path).collect();
+        assert_eq!(paths, [anubis::CHECK, anubis::CHECK, "/robots.txt", ATTACK]);
+        let statuses: Vec<u16> = forward.iter().map(|w| w.expected).collect();
+        assert_eq!(statuses, [200, 401, 200, 200]);
+        let proxy = workloads(Subject::Anubis, Mode::ReverseProxy, "a=1");
+        assert_eq!(proxy[0].path, "/private");
+        assert_eq!(Subject::Anubis.product(), "anubis");
+        let zig_gate = Subject::Sibuna(Implementation::Zig, Surface::Gate);
+        assert_eq!((zig_gate.implementation(), zig_gate.label().as_str()), ("zig", "zig gate"));
+        assert_eq!(Subject::Anubis.label(), "anubis");
     }
 
     #[test]

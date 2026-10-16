@@ -86,6 +86,23 @@ impl Process {
         cpus: Option<&CpuSet>,
         log: Option<&Path>,
     ) -> Result<Process> {
+        Process::spawn_with_env(name, program, args, &[], cpus, log)
+    }
+
+    /// Starts `program` like [`Process::spawn`], with the variables `env` added to the
+    /// environment it inherits (Anubis reads `GOMAXPROCS` from there).
+    ///
+    /// # Errors
+    ///
+    /// Fails when the program (or `taskset`) cannot be started.
+    pub fn spawn_with_env(
+        name: &str,
+        program: &Path,
+        args: &[String],
+        env: &[(&str, String)],
+        cpus: Option<&CpuSet>,
+        log: Option<&Path>,
+    ) -> Result<Process> {
         let mut command = match cpus {
             Some(set) => {
                 let mut command = Command::new("taskset");
@@ -95,6 +112,9 @@ impl Process {
             None => Command::new(program),
         };
         command.args(args).stdin(Stdio::null());
+        for (key, value) in env {
+            command.env(key, value);
+        }
         match log {
             Some(path) => {
                 let file = File::create(path).map_err(|e| Error::io(path.display(), e))?;
@@ -232,6 +252,44 @@ pub fn reset_peak_rss(pid: u32) -> bool {
     fs::write(format!("/proc/{pid}/clear_refs"), b"5").is_ok()
 }
 
+/// The TCP state number of `TIME_WAIT` in `/proc/net/tcp` (`include/net/tcp_states.h`).
+const TIME_WAIT_STATE: &str = "06";
+
+/// Returns the number of IPv4 and IPv6 sockets of this network namespace in `TIME_WAIT`,
+/// from `/proc/net/tcp` and `/proc/net/tcp6`. A file that cannot be read counts as empty.
+pub fn time_wait_count() -> usize {
+    ["/proc/net/tcp", "/proc/net/tcp6"]
+        .iter()
+        .map(|path| fs::read_to_string(path).map_or(0, |text| count_time_wait(&text)))
+        .sum()
+}
+
+/// Counts the rows of a `/proc/net/tcp` table whose state (the fourth column) is
+/// `TIME_WAIT`. The first line is the header.
+fn count_time_wait(text: &str) -> usize {
+    text.lines()
+        .skip(1)
+        .filter(|line| line.split_whitespace().nth(3) == Some(TIME_WAIT_STATE))
+        .count()
+}
+
+/// Waits, for at most `timeout`, until fewer than `limit` sockets are in `TIME_WAIT`.
+///
+/// A product that opens an origin connection per request leaves one socket in `TIME_WAIT`
+/// per request for a minute; a run that starts while tens of thousands remain can exhaust
+/// the ephemeral ports. `tools.py` waited the same way before every run (limit 3,000, 90
+/// seconds). Returns the count when the wait ended.
+pub fn drain_time_wait(limit: usize, timeout: Duration) -> usize {
+    let deadline = Instant::now() + timeout;
+    loop {
+        let count = time_wait_count();
+        if count < limit || Instant::now() >= deadline {
+            return count;
+        }
+        std::thread::sleep(Duration::from_secs(1));
+    }
+}
+
 /// A private temporary directory, removed when dropped.
 #[derive(Debug)]
 pub struct TempDir {
@@ -289,6 +347,18 @@ mod tests {
         let text = "1234 (a b) c) S 1 2 3 4 5 6 7 8 9 10 250 50 0 0 20 0";
         assert_eq!(stat_cpu_ticks(text), Some(300));
         assert_eq!(stat_cpu_ticks("1 (x) S"), None);
+    }
+
+    #[test]
+    fn counts_time_wait_rows() {
+        let text = "  sl  local_address rem_address   st tx_queue rx_queue\n\
+            0: 0100007F:1F90 00000000:0000 0A 00000000:00000000\n\
+            1: 0100007F:9C40 0100007F:1F90 06 00000000:00000000\n\
+            2: 0100007F:9C41 0100007F:1F90 06 00000000:00000000\n\
+            3: 0100007F:9C42 0100007F:1F90 01 00000000:00000000\n";
+        assert_eq!(count_time_wait(text), 2);
+        assert_eq!(count_time_wait(""), 0);
+        assert!(drain_time_wait(usize::MAX, Duration::ZERO) < usize::MAX);
     }
 
     #[test]

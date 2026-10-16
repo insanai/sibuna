@@ -975,6 +975,7 @@ dependencies = [
  "sibuna-cidr",
  "sibuna-crypto",
  "sibuna-http",
+ "sibuna-inflate",
  "sibuna-json",
  "sibuna-patterns",
  "sibuna-policy",
