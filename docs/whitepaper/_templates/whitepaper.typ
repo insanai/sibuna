@@ -45,6 +45,15 @@
 #let wp-serif = ("New Computer Modern", "Libertinus Serif")
 #let wp-mono = ("DejaVu Sans Mono",)
 
+// Chinese, Japanese and Korean code needs a monospace font whose Han, kana and Hangul are
+// exactly two of its Latin columns wide, so translated ASCII diagrams stay aligned; that
+// font goes first, so its own Latin glyphs set the column. Other languages keep DejaVu.
+#let wp-cjk-mono = (zh: "Noto Sans Mono CJK SC", ja: "Noto Sans Mono CJK JP",
+  ko: "Noto Sans Mono CJK KR")
+#let wp-mono-for(code) = if code in wp-cjk-mono {
+  (wp-cjk-mono.at(code),) + wp-mono
+} else { wp-mono }
+
 // The fonts for the scripts that New Computer Modern lacks, by language code. Typst
 // takes each character from the first font in the list that has it, so Latin text keeps
 // the paper's font and the other characters come from these. English needs none. The
@@ -136,21 +145,77 @@
 // are the voice boxes; "Theorem ..." and "Lemma ..." the framed theorem box;
 // "Invariant ..." the slate box of the first paper's invariants; "Pending ..." and
 // loud kinds the amber box; every other title a sky callout.
-#let wp-box(kind, title, body) = {
+// The opening words of the translated box titles, by language: a translation starts every
+// title of a kind with the same words, so its boxes get the English boxes' design.
+#let wp-box-words = (
+  zh: (
+    feynman: ("费曼",),
+    knuth: ("高德纳",),
+    lamport: ("兰波特",),
+    theorem: ("定理", "引理"),
+    invariant: ("不变量",),
+  ),
+  ko: (
+    feynman: ("Feynman의",),
+    knuth: ("Knuth의",),
+    lamport: ("Lamport의",),
+    theorem: ("정리", "보조정리"),
+    invariant: ("불변식",),
+  ),
+  ja: (
+    feynman: ("Feynman",),
+    knuth: ("Knuth",),
+    lamport: ("Lamport",),
+    theorem: ("定理", "補題"),
+    invariant: ("不変条件",),
+  ),
+  es: (
+    feynman: ("Feynman",),
+    knuth: ("Knuth",),
+    lamport: ("Lamport",),
+    theorem: ("Teorema", "Lema"),
+    invariant: ("Invariante",),
+  ),
+  de: (
+    feynman: ("Feynman",),
+    knuth: ("Knuth",),
+    lamport: ("Lamport",),
+    theorem: ("Satz", "Lemma"),
+    invariant: ("Invariante",),
+  ),
+  hi: (
+    feynman: ("Feynman",),
+    knuth: ("Knuth",),
+    lamport: ("Lamport",),
+    theorem: ("प्रमेय", "लेम्मा"),
+    invariant: ("अपरिवर्तनीय नियम",),
+  ),
+  ar: (
+    feynman: ("فاينمان",),
+    knuth: ("كنوث",),
+    lamport: ("لامبورت",),
+    theorem: ("مبرهنة", "تمهيدية"),
+    invariant: ("اللامتغير",),
+  ),
+)
+
+#let wp-box(kind, title, body) = context {
   let name = wp-clean(wp-plain(title))
-  if name.starts-with("Feynman") {
+  let words = wp-box-words.at(text.lang, default: (:))
+  let opens(role) = words.at(role, default: ()).any(w => name.starts-with(w))
+  if name.starts-with("Feynman") or opens("feynman") {
     return wp-voice(wp-gold, wp-gold-light, wp-gold-text, true, title, body)
   }
-  if name.starts-with("Knuth") {
+  if name.starts-with("Knuth") or opens("knuth") {
     return wp-voice(wp-purple, wp-purple-light, wp-purple-text, false, title, body)
   }
-  if name.starts-with("Lamport") {
+  if name.starts-with("Lamport") or opens("lamport") {
     return wp-voice(wp-primary, wp-primary-light, wp-primary-text, false, title, body)
   }
-  if name.starts-with("Theorem") or name.starts-with("Lemma") {
+  if name.starts-with("Theorem") or name.starts-with("Lemma") or opens("theorem") {
     return wp-theorem(title, body)
   }
-  if name.starts-with("Invariant") {
+  if name.starts-with("Invariant") or opens("invariant") {
     // Invariants are read as one statement, so they are kept on one page.
     return wp-callout(wp-primary, wp-panel, title, body, breakable: false)
   }
@@ -400,11 +465,13 @@
   let (code, region) = wp-language(lang)
   let authors = if author == "" { () } else { author.split(" and ") }
   set document(title: title, author: authors, keywords: keywords)
+  // The text rule comes before the page rule, so the header and footer get the script
+  // fonts too; without them a script's characters fall back to any font that has them.
+  set text(font: wp-serif + wp-script-fonts.at(code, default: ()), size: 9.6pt,
+    fill: wp-ink, lang: code, region: region, hyphenate: true)
   set page(paper: paper, margin: (x: 18mm, top: 20mm, bottom: 20mm),
     header: wp-header(running-title, date-line),
     footer: wp-footer(footer-left, page-count))
-  set text(font: wp-serif + wp-script-fonts.at(code, default: ()), size: 9.6pt,
-    fill: wp-ink, lang: code, region: region, hyphenate: true)
   set par(justify: true, leading: 0.60em, spacing: 0.70em, first-line-indent: 0em)
   set math.equation(numbering: none)
   state("gd-page-ref").update(_ => page-ref)
@@ -417,6 +484,7 @@
     set text(dir: ltr)
     box(it)
   }
+  show raw: set text(font: wp-mono-for(code))
 
   wp-title-block(headline: if headline != none { headline } else { upper(title) },
     subtitle: subtitle, tagline: tagline, author: author, affiliation: affiliation)
