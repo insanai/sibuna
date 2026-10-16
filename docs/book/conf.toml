@@ -20,6 +20,11 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 language = "en"
 # Translation catalogs: the book's own, then the theme's interface words for ar, hi and ko.
 locale_dirs = ["locales", "_templates/locales"]
+# Literal blocks are messages too, so diagram labels and code comments can be translated;
+# a translator copies the code itself unchanged. Image and graphviz alt text (image) and
+# raw blocks (raw) are visible text too; a translator changes only the display strings
+# of a raw block.
+gettext_additional_targets = ["literal-block", "image", "raw"]
 source_suffix = [".rst"]
 root_doc = "index"
 
