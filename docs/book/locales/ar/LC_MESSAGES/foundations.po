@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"POT-Creation-Date: 2026-10-16 05:22+0000\n"
+"PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: ../../foundations.rst:1
 msgid "Part I: The Cost of a Request"
-msgstr ""
+msgstr "الجزء الأول: تكلفة الطلب"
 
 #: ../../foundations.rst:4
 msgid ""
@@ -29,10 +29,14 @@ msgid ""
 "decision is measured against: origin work, puzzle work, session "
 "amortisation, and the memory an untrusted client can make a server hold."
 msgstr ""
+"قبل اختيار خوارزمية، نحدد المورد الذي يُراد لها أن تحميه. يبني هذا الفصل "
+"النماذج الصغيرة التي يُقاس عليها كل قرار تصميم لاحق: عمل الخادم الأصلي، "
+"وعمل اللغز، وتوزيع تكلفة العمل على الجلسة، والذاكرة التي يستطيع عميل غير "
+"موثوق أن يجبر الخادم على الاحتفاظ بها."
 
 #: ../../foundations.rst:6
 msgid "Objectives"
-msgstr ""
+msgstr "الأهداف"
 
 #: ../../foundations.rst:8
 msgid ""
@@ -42,10 +46,14 @@ msgid ""
 "search, explain how sessions amortise work, and list the five invariants "
 "the rest of the book maintains."
 msgstr ""
+"بنهاية هذا الفصل، ينبغي أن نستطيع كتابة المتباينة التي تقرر هل تسترد "
+"البوابة تكلفتها، وبيان ما يثبته إثبات العمل وما لا يثبته، واشتقاق القيمة "
+"المتوقعة للبحث عن التجزئة وذيله، وشرح كيف توزع الجلسات تكلفة العمل، وسرد "
+"الثوابت الخمسة التي يحافظ عليها بقية الكتاب."
 
 #: ../../foundations.rst:10
 msgid "Admission Is an Economic Decision"
-msgstr ""
+msgstr "الدخول قرار اقتصادي"
 
 #: ../../foundations.rst:13
 msgid ""
@@ -58,11 +66,19 @@ msgid ""
 "origin work exceeds its own cost and the cost it imposes on legitimate "
 "visitors."
 msgstr ""
+"لنفترض أن الخادم الأصلي يجري بحثًا في قاعدة البيانات وينشئ صفحة لكل طلب "
+"مقبول. ليكن :math:`c_o` ذلك العمل، و\\ :math:`c_g` عمل البوابة لكل طلب، "
+"و\\ :math:`r` معدل الوصول. من دون بوابة، يجب أن يتحمل الخادم الأصلي "
+":math:`r c_o` وحدة عمل في الثانية. والبوابة التي تقبل نسبة :math:`a` من "
+"الطلبات تغير ذلك الطلب على العمل إلى :math:`r a c_o`، بينما تنفق هي نفسها "
+":math:`r c_g`. ولا تكون البوابة مفيدة إلا عندما يزيد عمل الخادم الأصلي "
+"الذي توفره على تكلفتها هي وعلى التكلفة التي تفرضها على الزوار الشرعيين."
 
 #: ../../foundations.rst:15
 msgid ""
 "r c_g + r a c_o < r c_o \\quad \\Leftrightarrow \\quad c_g < (1-a) c_o."
 msgstr ""
+"r c_g + r a c_o < r c_o \\quad \\Leftrightarrow \\quad c_g < (1-a) c_o."
 
 #: ../../foundations.rst:19
 msgid ""
@@ -72,10 +88,14 @@ msgid ""
 "query may make it large. There is no universal requester-to-server cost "
 "ratio."
 msgstr ""
+"هذا نموذج للسعة، وليس قياسًا. فهو يُغفل عرض النطاق، وحالة الاتصالات، "
+"والتخزين، وتأخير العميل. وقيمته أن كل حد مفقود ظاهر. قد تجعل إصابة ذاكرة "
+"التخزين المؤقت :math:`c_o` صغيرة، وقد يجعلها استعلام مكلف كبيرة. ولا توجد "
+"نسبة عامة بين تكلفة صاحب الطلب وتكلفة الخادم."
 
 #: ../../foundations.rst:21
 msgid "Worked example: when a gate pays for itself"
-msgstr ""
+msgstr "مثال محلول: متى تسترد البوابة تكلفتها"
 
 #: ../../foundations.rst:23
 msgid ""
@@ -86,10 +106,16 @@ msgid ""
 "this model. These selected numbers are not timings. They show why the "
 "workload belongs in every performance claim."
 msgstr ""
+"لنختر :math:`c_o = 100` وحدة عمل و\\ :math:`c_g = 1`. إذا رُفض نصف "
+"الطلبات، ينفق النظام ذو البوابة :math:`1 + 0.5 \\times 100 = 51` وحدة لكل "
+"وصول بدل 100. وإذا لم يُرفض إلا طلب واحد من كل ألف، فإنه ينفق "
+":math:`100.9`: تكلف البوابة في هذا النموذج أكثر مما توفر. هذه الأرقام "
+"المختارة ليست أزمنة مقيسة. إنها تبين لماذا يجب ذكر عبء العمل في كل ادعاء "
+"عن الأداء."
 
 #: ../../foundations.rst:25
 msgid "What a Proof of Work Establishes"
-msgstr ""
+msgstr "ما يثبته إثبات العمل"
 
 #: ../../foundations.rst:28
 msgid ""
@@ -100,6 +126,11 @@ msgid ""
 "admission cost; policy and inspection still decide what admitted requests "
 "may do."
 msgstr ""
+"يثبت لغز العميل أن أحدًا ما وجد مدخلًا يحقق قاعدة تحقق علنية. ولا يثبت أن "
+"صاحبه إنسان، ولا يثبت هويته، ولا حسن نيته. يستطيع صاحب الطلب استئجار قدرة "
+"حسابية، أو إعادة استخدام جلسة صالحة خلال عمرها، أو توزيع العمل على عدة "
+"أجهزة. يغير اللغز تكلفة الدخول؛ أما ما يجوز للطلبات المقبولة أن تفعله "
+"فتقرره السياسة والفحص."
 
 #: ../../foundations.rst:30
 msgid ""
@@ -109,10 +140,14 @@ msgid ""
 "therefore keeps admission, inspection, and reputation as distinct "
 "decisions."
 msgstr ""
+"الحدود المبنية على العناوين مكملة لذلك. فهي تقيد عنوانًا واحدًا، لكن "
+"العناوين المشتركة قد تمثل أناسًا كثيرين، وقد يستخدم صاحب طلب واحد عناوين "
+"كثيرة. لا اللغز ولا العنوان مصدر موثوق للهوية. لذلك يبقي Sibuna الدخول "
+"والفحص والسمعة قرارات منفصلة."
 
 #: ../../foundations.rst:32
 msgid "Hash Search as a Random Variable"
-msgstr ""
+msgstr "البحث عن التجزئة متغيرًا عشوائيًا"
 
 #: ../../foundations.rst:35
 msgid ""
@@ -120,20 +155,25 @@ msgid ""
 "success probability :math:`p = 2^{-b}` for each independent trial. Let "
 ":math:`K` count trials through the first success. Then"
 msgstr ""
+"في خلاصة مثالية من 256 بت، يعطي اشتراط :math:`b` بتًا صفريًا في البداية "
+"احتمال نجاح :math:`p = 2^{-b}` لكل محاولة مستقلة. ليكن :math:`K` عدد "
+"المحاولات حتى أول نجاح، بما فيها تلك المحاولة. عندئذ"
 
 #: ../../foundations.rst:37
 msgid ""
 "P(K=k) = (1-p)^{k-1} p, \\quad P(K>k) = (1-p)^k, \\quad E[K] = 1/p = 2^b."
 msgstr ""
+"P(K=k) = (1-p)^{k-1} p, \\quad P(K>k) = (1-p)^k, \\quad E[K] = 1/p = 2^b."
 
 #: ../../foundations.rst:41
 msgid "The expectation follows from the tail sum:"
-msgstr ""
+msgstr "تنتج القيمة المتوقعة من مجموع الذيل:"
 
 #: ../../foundations.rst:43
 msgid ""
 "E[K] = \\sum_{k=0}^{\\infty} P(K>k) = \\sum_{k=0}^{\\infty} (1-p)^k = 1/p."
 msgstr ""
+"E[K] = \\sum_{k=0}^{\\infty} P(K>k) = \\sum_{k=0}^{\\infty} (1-p)^k = 1/p."
 
 #: ../../foundations.rst:47
 msgid ""
@@ -142,6 +182,10 @@ msgid ""
 "far longer than the mean. A client that measures only one solve has "
 "mostly measured this randomness."
 msgstr ""
+"تضاعف كل خطوة في الصعوبة العدد المتوقع للمحاولات. لكنها لا تعد بأن كل لغز "
+"سيستغرق ضعف الوقت. فبعض الألغاز ينجح من المحاولة الأولى، وبعضها يستغرق "
+"أطول من المتوسط بكثير. والعميل الذي يقيس حلًا واحدًا فقط قد قاس في الغالب "
+"هذه العشوائية."
 
 #: ../../foundations.rst:50
 msgid ""
@@ -150,10 +194,14 @@ msgid ""
 "P(K > x/p) ~ e^(-x). The point o marks x = 1, where the probability of "
 "still searching is e^(-1) = 0.368."
 msgstr ""
+"احتمال البقاء في البحث عن التجزئة. المحور الأفقي هو عدد المحاولات مقسومًا "
+"على العدد المتوقع للمحاولات؛ ويستخدم المنحنى تقريب العمل الكبير P(K > "
+"x/p) ~ e^(-x). وتحدد النقطة o الموضع x = 1، حيث احتمال استمرار البحث "
+"e^(-1) = 0.368."
 
 #: ../../foundations.rst:68
 msgid "Worked example: expectation is not a deadline"
-msgstr ""
+msgstr "مثال محلول: القيمة المتوقعة ليست موعدًا نهائيًا"
 
 #: ../../foundations.rst:70
 msgid ""
@@ -164,10 +212,15 @@ msgid ""
 "A user interface should tolerate that spread rather than announcing "
 "failure at the expected completion time."
 msgstr ""
+"عند :math:`b = 16`، العمل المتوقع 65,536 تجزئة. واحتمال استمرار البحث بعد "
+"هذا العدد من المحاولات يساوي تقريبًا :math:`e^{-1} = 0.368`. وعدد "
+"المحاولات عند المئين 95 هو :math:`\\lceil \\ln(0.05) / \\ln(1 - 2^{-16}) "
+"\\rceil \\approx 196327`، أي نحو ثلاثة أضعاف المتوسط. ينبغي لواجهة "
+"المستخدم أن تتحمل هذا التفاوت بدل أن تعلن الفشل عند وقت الإكمال المتوقع."
 
 #: ../../foundations.rst:72
 msgid "Sessions Amortise Work"
-msgstr ""
+msgstr "الجلسات توزع تكلفة العمل"
 
 #: ../../foundations.rst:75
 msgid ""
@@ -179,10 +232,16 @@ msgid ""
 "automated clients alike. Choosing it is a policy decision, not a "
 "cryptographic optimization."
 msgstr ""
+"لنفترض أن الجلسة تسمح بـ :math:`m` طلبًا قبل انتهائها، وأن اللغز يكلف "
+":math:`c_p`، والتحقق يكلف :math:`c_v`، وفحص الجلسة يكلف :math:`c_s`. إذا "
+"أهملنا المحاولات غير الناجحة، فتكلفة البوابة الموزعة لكل طلب هي "
+":math:`c_v/m + c_s`، بينما تكلفة اللغز على العميل :math:`c_p/m`. وإطالة "
+"عمر الجلسة تفيد الناس والعملاء الآليين على حد سواء. واختيار هذا العمر "
+"قرار سياسة، لا تحسين تشفيري."
 
 #: ../../foundations.rst:77
 msgid "Exercise 1.1"
-msgstr ""
+msgstr "التمرين 1.1"
 
 #: ../../foundations.rst:79
 msgid ""
@@ -190,15 +249,17 @@ msgid ""
 "million trials. What is the amortized work per request? What changes if "
 "it shares the session with a second process?"
 msgstr ""
+"يحصل عميل على 100 طلب لكل جلسة، ويحل لغزًا يكلف مليون محاولة. ما العمل "
+"الموزع لكل طلب؟ وما الذي يتغير إذا شارك الجلسة مع عملية ثانية؟"
 
 #: ../../foundations.rst:81
 msgid ""
 "Hint: Distinguish the accounting model from the token's actual bindings."
-msgstr ""
+msgstr "تلميح: ميّز نموذج المحاسبة من الروابط الفعلية للرمز."
 
 #: ../../foundations.rst:83
 msgid "Bounded State Is a Second Budget"
-msgstr ""
+msgstr "الحالة المحدودة ميزانية ثانية"
 
 #: ../../foundations.rst:86
 msgid ""
@@ -207,10 +268,14 @@ msgid ""
 "them at average rate :math:`\\mu`, and let the queue hold :math:`Q` "
 "records. When :math:`\\lambda > \\mu`, a fluid approximation gives"
 msgstr ""
+"نقل العمل خارج مسار الطلب لا يجعله يختفي. لنفترض أن الحوادث تصل بمعدل "
+":math:`\\lambda`، وأن خيط التخزين يحفظها بمعدل متوسط :math:`\\mu`، وأن "
+"الطابور يتسع لـ :math:`Q` سجلًا. عندما يكون :math:`\\lambda > \\mu`، يعطي "
+"تقريب السوائل"
 
 #: ../../foundations.rst:88
 msgid "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
-msgstr ""
+msgstr "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
 
 #: ../../foundations.rst:92
 msgid ""
@@ -221,10 +286,15 @@ msgid ""
 "The operator must monitor the lost evidence as well as the HTTP success "
 "rate."
 msgstr ""
+"الطابور الأكبر يشتري وقتًا، لكنه لا يصنع إنتاجية. يوزع التجميع في دفعات "
+"تكلفة المعاملات، لكن السجلات المحتجزة لا تزال تحتاج إلى ذاكرة وإلى معالجة "
+"في النهاية. تحت الحمل الزائد، يُسقط Sibuna سجلات الحوادث الجديدة ويعدها. "
+"ويستمر في اتخاذ قرارات الطلبات من الحالة التي في الذاكرة. ويجب أن يراقب "
+"المشغل الأدلة المفقودة إلى جانب معدل نجاح HTTP."
 
 #: ../../foundations.rst:94
 msgid "Exercise 1.2"
-msgstr ""
+msgstr "التمرين 1.2"
 
 #: ../../foundations.rst:96
 msgid ""
@@ -232,38 +302,44 @@ msgid ""
 "600/s. How long can an initially empty queue absorb the excess? Why is "
 "the answer only an approximation?"
 msgstr ""
+"يتسع طابور لـ 512 سجلًا. معدل الوصول 1,000/s ومعدل التصريف 600/s. كم من "
+"الوقت يستطيع طابور فارغ في البداية أن يمتص الفائض؟ ولماذا ليست الإجابة "
+"إلا تقريبًا؟"
 
 #: ../../foundations.rst:98
 msgid ""
 "Hint: Use the difference of rates, then consider bursts and batch commits."
 msgstr ""
+"تلميح: استخدم الفرق بين المعدلين، ثم انظر في الدفعات المفاجئة والإيداعات "
+"المجمعة."
 
 #: ../../foundations.rst:100
 msgid "The Invariants We Will Carry Forward"
-msgstr ""
+msgstr "الثوابت التي سنحملها معنا"
 
 #: ../../foundations.rst:103
 msgid "Untrusted requests cannot create unbounded server state."
-msgstr ""
+msgstr "لا تستطيع الطلبات غير الموثوقة إنشاء حالة غير محدودة على الخادم."
 
 #: ../../foundations.rst:104
 msgid "A valid admission token does not bypass an application denial."
-msgstr ""
+msgstr "رمز الدخول الصالح لا يتجاوز رفضًا صادرًا عن التطبيق."
 
 #: ../../foundations.rst:105
 msgid "A buffer remains alive for every slice borrowed from it."
-msgstr ""
+msgstr "يبقى المخزن المؤقت حيًّا ما دامت أي شريحة مستعارة منه موجودة."
 
 #: ../../foundations.rst:106
 msgid ""
 "A durable retry cannot multiply an incident or its reputation effect."
-msgstr ""
+msgstr "لا تستطيع إعادة المحاولة الدائمة أن تضاعف حادثًا أو أثره في السمعة."
 
 #: ../../foundations.rst:107
 msgid ""
 "A published policy snapshot is immutable until its last reader releases "
 "it."
 msgstr ""
+"لقطة السياسة المنشورة غير قابلة للتغيير حتى يتخلى عنها آخر قارئ لها."
 
 #: ../../foundations.rst:109
 msgid ""
@@ -271,10 +347,13 @@ msgid ""
 "true, and the tests that would reveal a violation. A fast path is useful "
 "only while those statements remain true."
 msgstr ""
+"يشتق بقية الكتاب الآليات التي تجعل هذه العبارات صحيحة، والاختبارات التي "
+"تكشف أي خرق لها. ولا يكون المسار السريع مفيدًا إلا ما دامت هذه العبارات "
+"صحيحة."
 
 #: ../../foundations.rst:111
 msgid "Explain the invariant"
-msgstr ""
+msgstr "اشرح الثابت"
 
 #: ../../foundations.rst:113
 msgid ""
@@ -282,3 +361,6 @@ msgid ""
 "why a measured verification latency alone cannot tell an operator whether "
 "the gate is worth running."
 msgstr ""
+"صُغ متباينة البوابة :math:`c_g < (1-a) c_o` بالكلمات، ثم اشرح لماذا لا "
+"يستطيع زمن استجابة التحقق المقيس وحده أن يخبر المشغل هل تستحق البوابة "
+"التشغيل."

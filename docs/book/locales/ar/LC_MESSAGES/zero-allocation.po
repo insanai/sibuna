@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"POT-Creation-Date: 2026-10-16 05:22+0000\n"
+"PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: ../../zero-allocation.rst:1
 msgid "Part V: Zero-Allocation Engineering in Rust"
-msgstr ""
+msgstr "الجزء الخامس: هندسة بلا تخصيص للذاكرة في Rust"
 
 #: ../../zero-allocation.rst:4
 msgid ""
@@ -31,14 +31,19 @@ msgid ""
 "arenas, descriptor tables, teardown chains), we show how Rust ownership "
 "provides it instead."
 msgstr ""
+"نتتبع اتصالًا من قبوله إلى الاستجابة عبر مخزن ثابت واحد، وندرس هياكل "
+"البيانات المتزامنة التي تتيح لكثير من خيوط الاتصالات مشاركة الحالة دون "
+"تخصيص في الكومة على مسار الطلب. وحيث تحتاج سلامة الذاكرة في العادة إلى "
+"آليات خاصة بها (عدادات القراء، والساحات، وجداول الواصفات، وسلاسل "
+"التفكيك)، نبين كيف توفرها ملكية Rust بدلًا منها."
 
 #: ../../zero-allocation.rst:6
 msgid "The Connection Loop"
-msgstr ""
+msgstr "حلقة الاتصال"
 
 #: ../../zero-allocation.rst:9 ../../zero-allocation.rst:388
 msgid "Objectives"
-msgstr ""
+msgstr "الأهداف"
 
 #: ../../zero-allocation.rst:11
 msgid ""
@@ -49,10 +54,15 @@ msgid ""
 "connection can stay open, and which of these guarantees the borrow "
 "checker proves for us."
 msgstr ""
+"بنهاية هذا الفصل، ينبغي أن نتمكن من شرح كيف يخدم مخزن واحد من 64 KiB "
+"اتصال keep-alive كاملًا، وكيف يُحدَّد موقع الرأس والجسم دون نسخ، ولماذا "
+"يحصل كل اتصال على خيط محدود خاص به، وكيف يعرف الوكيل تأطير الخادم الأصلي "
+"حتى يبقى اتصال العميل المُمرَّر مفتوحًا، وأي هذه الضمانات يثبتها لنا مدقق "
+"الاستعارة."
 
 #: ../../zero-allocation.rst:13
 msgid "One Thread per Connection, Bounded"
-msgstr ""
+msgstr "خيط لكل اتصال، بحد أعلى"
 
 #: ../../zero-allocation.rst:16
 msgid ""
@@ -70,6 +80,17 @@ msgid ""
 "workload, from 305 us to 857 us "
 "(``benchmarks/results/product-latest.md``; Part VIII)."
 msgstr ""
+"يتشارك عمال القبول (``--workers``، واحد لكل وحدة معالجة افتراضيًا، و64 "
+"على الأكثر) مقبس الاستماع. يُسلَّم كل اتصال مقبول إلى خيط خاص به مع مكدس "
+"من ميغابايت واحد، وتعود حلقة القبول مباشرة إلى ``accept``. الخيط الذي "
+"ينهي اتصاله يتوقف وينتظر ثم يأخذ الاتصال التالي، لأن إنشاء خيط وإنهاءه "
+"لكل اتصال كان يعطل الخيوط الأخرى (الجزء الثامن، SID 0002). أما البديل، أي "
+"خدمة الاتصال حتى نهايته على خيط القبول، فكان التصميم الأول: قيس جيدًا مع "
+"عميل واحد وسيئًا مع أربعة وستين، لأن ستين منهم انتظروا عاملًا حتى ينهي "
+"حصته من 256 طلبًا، ونما ذيل زمن الاستجابة مع كل عميل منتظر. مع خيط لكل "
+"اتصال، يبقى p99 عند 64 اتصالًا تحت ميلي ثانية واحدة في كل عبء عمل للمنتج "
+"الكامل، من 305 us إلى 857 us (``benchmarks/results/product-latest.md``؛ "
+"الجزء الثامن)."
 
 #: ../../zero-allocation.rst:18
 msgid ""
@@ -78,10 +99,14 @@ msgid ""
 "``503 Service Unavailable`` on the new socket and closes it without "
 "spawning anything, and counts the event in ``sibuna_overloaded_total``."
 msgstr ""
+"عدد خيوط الاتصالات محدود بـ ``--max-connections`` (1,024 افتراضيًا، "
+"و8,192 على الأكثر). بعد هذا الحد، تجيب حلقة القبول بـ ``503 Service "
+"Unavailable`` على المقبس الجديد وتغلقه دون إطلاق أي شيء، وتعد الحدث في "
+"``sibuna_overloaded_total``."
 
 #: ../../zero-allocation.rst:20
 msgid "Implementation: ``accept_loop``"
-msgstr ""
+msgstr "التنفيذ: ``accept_loop``"
 
 #: ../../zero-allocation.rst:22
 msgid ""
@@ -89,6 +114,8 @@ msgid ""
 "launches it on a thread of its own from the task pool. In "
 "``cmd/sibuna/src/server.rs`` (crate ``sibuna``)."
 msgstr ""
+"تقبل الاتصالات، وتفحص كلًّا منها مقابل حد الاتصالات، وتطلقه على خيط خاص "
+"به من مجمع المهام. في ``cmd/sibuna/src/server.rs`` (الحزمة ``sibuna``)."
 
 #: ../../zero-allocation.rst:50
 msgid ""
@@ -98,6 +125,10 @@ msgid ""
 "side of the socket: closing a socket over unread bytes answers with a "
 "reset, and the reset would discard the ``503``."
 msgstr ""
+"``Counted`` حارس يعيد ``Drop`` الخاص به مكان الاتصال ضمن الحد أيًّا كانت "
+"طريقة انتهاء الخيط، بالعودة أو بالذعر. يستنزف مسار ``503`` ما أرسله "
+"العميل قبل أن يغلق جانبه من المقبس: إغلاق مقبس فيه بايتات غير مقروءة "
+"يُجاب بإعادة ضبط (reset)، وإعادة الضبط تُسقط ``503``."
 
 #: ../../zero-allocation.rst:52
 msgid ""
@@ -111,6 +142,14 @@ msgid ""
 "``Finished``, marks the slot free when the task ends, so a panicking "
 "connection frees its slot too."
 msgstr ""
+"تأتي الخيوط من ``TaskPool`` (``cmd/sibuna/src/tasks.rs``)، وهو جدول ثابت "
+"من مواضع قابلة للضم (join). يحتفظ الخيط المنتهي بمكدسه حتى يُضَم، لذلك "
+"يُضَم الموضع عندما يؤخذ مرة أخرى، وتأخذ المهمة الجديدة *أدنى* موضع منتهٍ "
+"بدل تقديم مؤشر دوار. فالمؤشر الدوار لن يبلغ موضعًا منتهيًا مرة أخرى إلا "
+"بعد لفة كاملة على الجدول، تاركًا آلاف الخيوط المنتهية مقيمة في الذاكرة، "
+"فتنمو الذاكرة مع عدد الاتصالات المخدومة بدل عدد الاتصالات المفتوحة. يحدد "
+"حارس ثانٍ، ``Finished``، الموضع حرًّا عند انتهاء المهمة، فيحرر الاتصال "
+"الذي يذعر موضعه أيضًا."
 
 #: ../../zero-allocation.rst:54
 msgid ""
@@ -121,10 +160,16 @@ msgid ""
 "client can open. The idle reaper (below) closes connections that stop "
 "sending, so a slow client cannot pin a thread past ``--idle-timeout``."
 msgstr ""
+"تُحَد الذاكرة بالطريقة نفسها. يحمل خيط الاتصال مخزن القراءة من 64 KiB "
+"ومخزن الكتابة من 16 KiB على مكدسه، ومساحة عمل للوكيل من 40 KiB في الكومة، "
+"تُخصَّص مرة واحدة عند بدء الاتصال. وبذلك تكون أسوأ حالة عددًا معروفًا لا "
+"دالة في عدد المقابس التي يستطيع عميل فتحها. ويغلق جامع الاتصالات الخاملة "
+"(أدناه) الاتصالات التي تتوقف عن الإرسال، فلا يستطيع عميل بطيء احتجاز خيط "
+"بعد ``--idle-timeout``."
 
 #: ../../zero-allocation.rst:56
 msgid "One Buffer per Connection"
-msgstr ""
+msgstr "مخزن واحد لكل اتصال"
 
 #: ../../zero-allocation.rst:59
 msgid ""
@@ -136,10 +181,15 @@ msgid ""
 "KiB read buffer and a 16 KiB write buffer for the life of the socket; "
 "everything else is a slice into them."
 msgstr ""
+"كل تخصيص ديناميكي على مسار الطلب رافعة لحجب الخدمة: تجزؤ على مدى أيام، "
+"وتنافس على قفل المُخصِّص بين الخيوط، وتضخيم من مهاجمين يصوغون طلبات تزيد "
+"التخصيص إلى أقصاه. قاعدة Sibuna مطلقة: التصنيف والتحقق والتسليم إلى "
+"الوكيل تجري بلا أي تخصيص في الكومة. يملك معالج الاتصال مخزن قراءة من 64 "
+"KiB ومخزن كتابة من 16 KiB طوال عمر المقبس؛ وكل ما عدا ذلك شرائح منهما."
 
 #: ../../zero-allocation.rst:61
 msgid "Implementation: ``connection::serve``"
-msgstr ""
+msgstr "التنفيذ: ``connection::serve``"
 
 #: ../../zero-allocation.rst:63
 msgid ""
@@ -147,6 +197,9 @@ msgid ""
 "proxy workspace and the engine cache once, and serves up to 4,096 "
 "requests. In ``cmd/sibuna/src/connection.rs`` (crate ``sibuna``)."
 msgstr ""
+"تسجل الاتصال لدى جامع الاتصالات الخاملة، وتهيئ المخازن ومساحة عمل الوكيل "
+"وذاكرة المحرك المؤقتة مرة واحدة، وتخدم حتى 4,096 طلبًا. في "
+"``cmd/sibuna/src/connection.rs`` (الحزمة ``sibuna``)."
 
 #: ../../zero-allocation.rst:93
 msgid ""
@@ -165,16 +218,30 @@ msgid ""
 "response is framed and the body was fully buffered; the next sections "
 "show how the proxy decides."
 msgstr ""
+"تملأ ``read_head`` المخزن حتى يظهر السطر الفارغ، باحثةً فقط في البايتات "
+"التي وصلت منذ البحث الأخير، وترفض الرؤوس التي تزيد على 16 KiB بـ ``431``. "
+"تنتج ``parse_request`` (الحزمة ``sibuna-http``) قيمة ``Request<'a>`` تكون "
+"طريقتها ومسارها واستعلامها وترويساتها وملفات تعريف الارتباط فيها شرائح من "
+"المخزن. يُملأ الجسم المُعلَن بقدر ما يتسع ويُقتطَع بعد الرأس. ثم تُقدِّم "
+"``reader.consume(head_len + body_len)`` القارئ، فيبدأ طلب keep-alive "
+"التالي بداية نظيفة؛ ولا ينقل القارئ البايتات غير المقروءة إلى المقدمة إلا "
+"عند حاجته إلى مساحة. يُفك ترميز الجسم المجزأ (chunked) في مكانه خلف الرأس "
+"(SID 0009): يُقتطَع تأطير كل خطوة من المخزن، فتبقى البادئة المفكوكة متصلة "
+"للفحص. المسارات الداخلية محددة الطول وتُبقي الاتصال مفتوحًا. والطلبات "
+"المُمرَّرة عبر الوكيل تُبقيه مفتوحًا أيضًا، بشرط أن تكون استجابة الخادم "
+"الأصلي مؤطَّرة وأن يكون الجسم قد خُزِّن بالكامل؛ وتبين الأقسام التالية "
+"كيف يقرر الوكيل ذلك."
 
 #: ../../zero-allocation.rst:96
 msgid ""
 "The connection's read buffer while one request is served. Every field of "
 "the request is a slice of it."
 msgstr ""
+"مخزن القراءة للاتصال أثناء خدمة طلب واحد. كل حقل من حقول الطلب شريحة منه."
 
 #: ../../zero-allocation.rst:143
 msgid "What the borrow checker proves"
-msgstr ""
+msgstr "ما يثبته مدقق الاستعارة"
 
 #: ../../zero-allocation.rst:145
 msgid ""
@@ -187,6 +254,13 @@ msgid ""
 "call returns may ``reader.consume`` run; writing them the other way round "
 "does not compile."
 msgstr ""
+"تبقى شرائح الطلب صالحة فقط حتى الملء التالي للمخزن. يعبر Sibuna عن هذه "
+"القاعدة بنوع لا بتعليق: الطلب من النوع ``Request<'a>``، و\\ ``'a`` "
+"استعارة مشتركة لمخزن القارئ. يحتاج ملء المخزن أو استهلاكه إلى ``&mut "
+"reader``، وهو ما يرفضه المترجم ما دام ``Request`` مستعار منه قيد "
+"الاستخدام. في ``serve_one`` يُنقل الطلب إلى ``dispatch``، ولا يجوز تشغيل "
+"``reader.consume`` إلا بعد عودة ذلك الاستدعاء؛ وكتابتهما بالترتيب المعاكس "
+"لا تُترجَم."
 
 #: ../../zero-allocation.rst:147
 msgid ""
@@ -203,10 +277,20 @@ msgid ""
 "Because it cannot hand back what it read, the client connection is kept "
 "only when the body was fully buffered."
 msgstr ""
+"تفسر القاعدة نفسها خيارين يبدوان غريبين أول الأمر. الأول أن "
+"``serve_with_body`` تحلل الرأس مرة ثانية. يجب أن ينهي التحليل الأول "
+"استعارته قبل تخزين الجسم، لأن تخزين جسم مجزأ ينقل بايتات داخل المخزن؛ "
+"ويستعير التحليل الثاني المخزن بعد استقراره. التحليل حتمي ويستغرق نحو 133 "
+"ns لطلب متصفح مع ملف تعريف ارتباط (``zero_copy_request_and_cookie``، "
+"132.5 ns، في ``benchmarks/results/primitives-latest.md``)، لذلك يكلف "
+"التحليل الثاني قليلًا ويعطي الحكم نفسه. والثاني أن الوكيل يستعير الطلب "
+"المحلَّل والبايتات المعلقة ويجب ألا يعيد ملء مخزن الاتصال، فيقرأ بايتات "
+"العميل الإضافية في مخزن رفع خاص به. ولأنه لا يستطيع إعادة ما قرأه، لا "
+"يُحتفَظ باتصال العميل إلا عندما يكون الجسم قد خُزِّن بالكامل."
 
 #: ../../zero-allocation.rst:149
 msgid "The Proxy Head Rewrite"
-msgstr ""
+msgstr "إعادة كتابة رأس الوكيل"
 
 #: ../../zero-allocation.rst:152
 msgid ""
@@ -222,6 +306,17 @@ msgid ""
 "and every field the request's ``Connection`` header nominates. It then "
 "appends the audit set. Body framing is generated, never copied:"
 msgstr ""
+"لا يُمرَّر الرأس حرفيًا. تعيد ``write_request_head`` "
+"(``crates/net/src/request.rs``، الحزمة ``sibuna-net``) إصدار سطر الطلب "
+"وكل ترويسة إلى كاتب الخادم الأصلي، مُسقطةً الحقول الخاصة بكل قفزة "
+"(``Connection`` و\\ ``Keep-Alive`` و\\ ``Proxy-Connection`` و\\ "
+"``Transfer-Encoding`` و\\ ``TE`` و\\ ``Trailer`` و\\ ``Upgrade`` وحقول "
+"تفويض الوكيل)، وأي حقل تمرير أو تدقيق وارد (``X-Forwarded-For`` و\\ "
+"``X-Real-IP`` و\\ ``Forwarded`` و\\ ``X-Forwarded-Proto`` و\\ "
+"``X-Forwarded-Host`` و\\ ``X-Forwarded-Port`` و\\ ``X-Sibuna-Status`` و\\ "
+"``X-Sibuna-Rule``)، و\\ ``Expect``، و\\ ``Content-Length``، وكل حقل تسميه "
+"ترويسة ``Connection`` في الطلب. ثم تضيف مجموعة التدقيق. يُولَّد تأطير "
+"الجسم ولا يُنسخ أبدًا:"
 
 #: ../../zero-allocation.rst:175
 msgid ""
@@ -233,6 +328,12 @@ msgid ""
 "so the origin never sees the client's chunk sizes, extensions or "
 "trailers. The audit set:"
 msgstr ""
+"يُعاد إصدار ``Content-Length``. والجسم المجزأ الذي انتهى داخل مخزن "
+"الاتصال يُفك ترميزه في مكانه ويُرسل مع طوله. أما الأطول منه فيُعلَن بـ "
+"``Transfer-Encoding: chunked`` ويُعاد تجزيئه قراءةً بقراءة (SID 0009): "
+"تصل كل قراءة إلى مخزن الرفع للوكيل من 16 KiB، ويُفك ترميزها هناك في "
+"مكانها، وتخرج جزءًا قانونيًا واحدًا، فلا يرى الخادم الأصلي أبدًا أحجام "
+"أجزاء العميل ولا امتداداته ولا ذيوله. مجموعة التدقيق:"
 
 #: ../../zero-allocation.rst:186
 msgid ""
@@ -243,6 +344,12 @@ msgid ""
 "in ``crates/net/src/request.rs`` asserts that the rewrite drops a spoofed "
 "``X-Forwarded-For`` and injects the audit fields."
 msgstr ""
+"تُرحَّل الأجسام الأكبر من المخزن على قطع من 16 KiB من العميل إلى كاتب "
+"الخادم الأصلي (``relay_body``) قبل بث الاستجابة عائدةً. يؤكد اختبار "
+"الوحدة "
+"``proxy_head_rewrite_drops_hop_by_hop_headers_and_injects_audit_fields`` "
+"في ``crates/net/src/request.rs`` أن إعادة الكتابة تُسقط "
+"``X-Forwarded-For`` المزيف وتحقن حقول التدقيق."
 
 #: ../../zero-allocation.rst:188
 msgid ""
@@ -253,10 +360,15 @@ msgid ""
 "the exchange's, and the origin reader and writer borrow them for one "
 "exchange at a time."
 msgstr ""
+"تعيش مخازن الوكيل الثلاثة، أي مخزن القراءة من الخادم الأصلي (رأس استجابة "
+"واحد، 16 KiB)، ومخزن الكتابة إلى الخادم الأصلي (8 KiB)، ومخزن الرفع (16 "
+"KiB)، في ``Workspace`` يخصصها الاتصال مرة واحدة ويعيد استخدامها لكل طلب. "
+"تجعل مساحة العمل عمر هذه المخازن عمر الاتصال لا عمر التبادل، ويستعيرها "
+"قارئ الخادم الأصلي وكاتبه لتبادل واحد في كل مرة."
 
 #: ../../zero-allocation.rst:190
 msgid "Relaying the Origin Response"
-msgstr ""
+msgstr "ترحيل استجابة الخادم الأصلي"
 
 #: ../../zero-allocation.rst:193
 msgid ""
@@ -267,10 +379,16 @@ msgid ""
 "on loopback, exhausted ephemeral ports. The proxy now reads the origin's "
 "head (at most 16 KiB) and classifies the body by RFC 9112's rules:"
 msgstr ""
+"كان الوكيل الأول يبث بايتات الخادم الأصلي حتى يغلق الخادم الأصلي ثم يغلق "
+"العميل: تأطير صحيح بلا تحليل، لكن بثمن اتصال TCP جديد لكل طلب مُمرَّر. "
+"وتحت مولد حمل، ظهر هذا الثمن في صورة عشرات الآلاف من المقابس في "
+"``TIME_WAIT``، وفي واجهة الاسترجاع (loopback) في صورة منافذ مؤقتة "
+"مستنفدة. يقرأ الوكيل الآن رأس الخادم الأصلي (16 KiB على الأكثر) ويصنف "
+"الجسم وفق قواعد RFC 9112:"
 
 #: ../../zero-allocation.rst:195
 msgid "Implementation: ``parse_response_head``"
-msgstr ""
+msgstr "التنفيذ: ``parse_response_head``"
 
 #: ../../zero-allocation.rst:197
 msgid ""
@@ -279,6 +397,10 @@ msgid ""
 "and whether the origin keeps the connection. In "
 "``crates/net/src/response.rs`` (crate ``sibuna-net``)."
 msgstr ""
+"تعيد الحالة، وواحدًا من أربعة أنواع من التأطير (بلا جسم في HEAD و1xx و204 "
+"و304؛ أو ``Content-Length``؛ أو ترميز نقل مجزأ؛ أو جسم ينتهي بالإغلاق)، "
+"وما إذا كان الخادم الأصلي يُبقي الاتصال. في "
+"``crates/net/src/response.rs`` (الحزمة ``sibuna-net``)."
 
 #: ../../zero-allocation.rst:235
 msgid ""
@@ -288,6 +410,10 @@ msgid ""
 "field that nominates ``Content-Length`` or ``Transfer-Encoding``. Its "
 "work is linear in the head, and it never panics."
 msgstr ""
+"يرفض المحلل ما يجب ألا يرحِّله الوكيل: سطر حالة سيئًا، واسم حقل ليس رمزًا "
+"لغويًا (token)، وبايت تحكم في قيمة، وأطوالًا متعارضة، وترميز ``chunked`` "
+"مكررًا أو غير أخير، وحقل ``Connection`` يسمي ``Content-Length`` أو "
+"``Transfer-Encoding``. عمله خطي في طول الرأس، ولا يذعر أبدًا."
 
 #: ../../zero-allocation.rst:237
 msgid ""
@@ -301,6 +427,14 @@ msgid ""
 "writes is therefore delivered as it is produced, while a bulk transfer "
 "still moves a full buffer per read and write."
 msgstr ""
+"يُعاد إصدار الرأس إلى العميل مع استبدال ترويسات ``Connection`` الخاصة "
+"بالخادم الأصلي بقرار Sibuna نفسه، ويُرحَّل الجسم بدقة: ``copy_exact`` "
+"للطول، وجزءًا بجزء (سطر الحجم، والبيانات، والذيول) للترميز المجزأ، و\\ "
+"``copy_remaining`` للحالة القديمة. الحالة القديمة وحدها تغلق العميل. "
+"يُبنى كل ترحيل على خطوة نسخ واحدة: مرِّر كل ما يحمله المصدر بالفعل، ولا "
+"تفرِّغ الوجهة ثم تقرأ مرة واحدة إلا عندما لا يحمل شيئًا. وبذلك يُسلَّم "
+"تيار من الكتابات الصغيرة كما يُنتَج، بينما يظل النقل الكبير ينقل مخزنًا "
+"كاملًا في كل قراءة وكتابة."
 
 #: ../../zero-allocation.rst:253
 msgid ""
@@ -308,10 +442,13 @@ msgid ""
 "with a 1 KiB response proxied over loopback takes 29.8 us (measured in "
 "October 2026; ``crates/net/src/lib.rs`` documents the measurement)."
 msgstr ""
+"يستغرق تحليل رأس خادم أصلي من ثمانية حقول 322 ns، ويستغرق طلب ``GET`` "
+"بنمط keep-alive مع استجابة من 1 KiB مُمرَّرة عبر واجهة الاسترجاع 29.8 us "
+"(قيس في أكتوبر 2026؛ يوثق ``crates/net/src/lib.rs`` هذا القياس)."
 
 #: ../../zero-allocation.rst:255
 msgid "The Origin Pool"
-msgstr ""
+msgstr "مجمع الخادم الأصلي"
 
 #: ../../zero-allocation.rst:258
 msgid ""
@@ -325,6 +462,14 @@ msgid ""
 "in ``TIME_WAIT``; under load a proxy on loopback soon runs out of "
 "ephemeral ports, and its throughput collapses."
 msgstr ""
+"يخبر تحليل التأطير الوكيل أيضًا ما إذا كان مقبس *الخادم الأصلي* قابلًا "
+"للاستخدام مرة أخرى: استجابة HTTP/1.1 بلا ``Connection: close`` (أو "
+"استجابة HTTP/1.0 مع ``keep-alive``) استُهلك جسمها بالكامل تترك المقبس عند "
+"حد طلب نظيف. تدخل هذه المقابس مجمعًا ثابتًا من 256 اتصالًا خاملًا بالخادم "
+"الأصلي، ويأخذ الطلب المُمرَّر التالي واحدًا منها بدل الاتصال من جديد. من "
+"دون المجمع، يفتح كل طلب مُمرَّر اتصالًا جديدًا بالخادم الأصلي، ويحتجز كل "
+"اتصال مغلق منفذه المحلي في ``TIME_WAIT``؛ وتحت الحمل، تنفد المنافذ "
+"المؤقتة سريعًا لدى وكيل على واجهة الاسترجاع، وتنهار إنتاجيته."
 
 #: ../../zero-allocation.rst:260
 msgid ""
@@ -335,6 +480,12 @@ msgid ""
 "gives to and takes from it first, and looks into the other stripes, "
 "without waiting on a held lock, before it connects afresh."
 msgstr ""
+"المجمع تحت قفل واحد يجعل كل طلب مُمرَّر يتنافس على ذلك القفل. لذلك "
+"يُقسَّم المجمع (``crates/net/src/pool.rs``) إلى شرائط: 16 شريطًا في كل "
+"منها 16 مقبسًا، وكل شريط ``Mutex<Vec<Arc<TcpStream>>>`` على سطر ذاكرة "
+"مؤقتة خاص به. يُسنَد إلى الخيط شريط أصلي بالتناوب الدوري عند أول استخدام، "
+"فيعطي إليه ويأخذ منه أولًا، ثم ينظر في الشرائط الأخرى، دون انتظار قفل "
+"محجوز، قبل أن يتصل من جديد."
 
 #: ../../zero-allocation.rst:280
 msgid ""
@@ -351,6 +502,16 @@ msgid ""
 "relayed in pieces cannot be sent again; in both cases the client gets "
 "``502``."
 msgstr ""
+"قد يكون الخادم الأصلي قد أغلق المقبس المُجمَّع أثناء خموله. يلاحظ الوكيل "
+"ذلك بإحدى طريقتين، كتابة فاشلة أو نهاية تيار قبل أول بايت من الاستجابة، "
+"وفي الحالتين لم يصل شيء إلى العميل بعد، فيغلق المقبس ويعيد المحاولة مرة "
+"واحدة على اتصال جديد، لا على مقبس مُجمَّع آخر أبدًا: بعد فترة خمول قد "
+"يكون كل مقبس مُجمَّع قديمًا، والنسخة الأولى من إعادة المحاولة هذه، التي "
+"كانت تأخذ مقبسًا مُجمَّعًا ثانيًا، أجابت بـ ``502`` على أول طلب بعد كل "
+"فترة هدوء. لا تُسمح إعادة المحاولة إلا لطريقة آمنة (``GET`` و\\ ``HEAD`` "
+"و\\ ``OPTIONS``) خُزِّن جسمها بالكامل. فغياب الرد ليس دليلًا على أن "
+"الخادم الأصلي لم ينفذ تعديلًا، والجسم الذي رُحِّل على قطع لا يمكن إرساله "
+"مرة أخرى؛ وفي الحالتين يحصل العميل على ``502``."
 
 #: ../../zero-allocation.rst:312
 msgid ""
@@ -363,10 +524,18 @@ msgid ""
 "recorded proxy scenarios (a raw client request and a canned origin "
 "response) and compares every byte the origin and the client receive."
 msgstr ""
+"ترحِّل اختبارات الوحدة سلاسل بايتات ثابتة عبر الدوال نفسها وتؤكد أن الخرج "
+"مطابق بايتًا ببايت باستثناء ترويسة الاتصال "
+"(``crates/net/src/relay/tests.rs``). ويرسل اختبار شامل للبرنامج الخدمي "
+"طلبين مُمرَّرين على مقبس عميل واحد ويتحقق، عبر ترويسة تسلسل يضيفها الخادم "
+"الأصلي البديل، من أن الطلب الثاني أعاد استخدام اتصال الخادم الأصلي "
+"المُجمَّع. ويعيد اختبار متجهات في ``crates/net/tests/`` تشغيل سيناريوهات "
+"وكيل مسجلة (طلب عميل خام واستجابة خادم أصلي جاهزة) ويقارن كل بايت يتلقاه "
+"الخادم الأصلي والعميل."
 
 #: ../../zero-allocation.rst:314
 msgid "Why the origin socket is an ``Arc``"
-msgstr ""
+msgstr "لماذا مقبس الخادم الأصلي ``Arc``"
 
 #: ../../zero-allocation.rst:316
 msgid ""
@@ -381,10 +550,18 @@ msgid ""
 "last handle is dropped, so it cannot close, or be reused, while anyone "
 "can still reach it."
 msgstr ""
+"واصف المقبس عدد صحيح صغير تعيد النواة استخدامه فور إغلاقه. يجب أن يقاطع "
+"الإيقاف تبادلًا جاريًا، لكن يجب ألا يمس أبدًا واصفًا أُعيد استخدامه في "
+"الأثناء لاتصال آخر. يمكن لجدول من الواصفات النشطة تحت قفل أن يحمي من ذلك، "
+"بثمن قفل في كل تبادل. لا يحتاج Sibuna إلى جدول كهذا: مقبس الخادم الأصلي "
+"``Arc<TcpStream>``. يحمل المجمع مقبضًا، ويحمل التبادل مقبضًا، ويحمل "
+"``Activity`` الخاص بالاتصال نسخة منه أثناء جريان التبادل. يُغلق الواصف "
+"عند إسقاط آخر مقبض، فلا يمكن أن يُغلق، أو يُعاد استخدامه، ما دام أي أحد "
+"يستطيع الوصول إليه."
 
 #: ../../zero-allocation.rst:318
 msgid "Idle Deadlines"
-msgstr ""
+msgstr "مهل الخمول"
 
 #: ../../zero-allocation.rst:321
 msgid ""
@@ -399,6 +576,14 @@ msgid ""
 "attached origin socket, so the thread blocked on either side sees end of "
 "stream and releases its slot."
 msgstr ""
+"يسجل كل اتصال عميل مقبسه في ``IdleTable`` (``crates/net/src/idle.rs``) "
+"ويتلقى ``Lease``. يحمل ``Activity`` الخاص بالعقد الوقت الذي تحركت فيه "
+"البايتات آخر مرة على الاتصال. يحدِّثه البرنامج الخدمي بعد كل طلب مخدوم؛ "
+"ويحدِّثه الوكيل في كل قراءة من الخادم الأصلي ولكل 16 KiB من الرفع، ويُلحق "
+"به مقبس الخادم الأصلي للتبادل الجاري. يستيقظ خيط الجامع كل ربع أقصر مهلة "
+"(بين 200 ms وثانية واحدة) ويغلق كل اتصال صامت لمدة أطول من مهلته، مع مقبس "
+"الخادم الأصلي الملحق به، فيرى الخيط المحجوز على أي من الجانبين نهاية "
+"التيار ويحرر موضعه."
 
 #: ../../zero-allocation.rst:323
 msgid ""
@@ -408,6 +593,11 @@ msgid ""
 "for at least 16 KiB per idle period, the slow-body defence of "
 "minimum-rate request timeouts."
 msgstr ""
+"لذلك تقيس المهل الصمت، لا طول الاستجابة أبدًا: التنزيل الكبير الذي يظل "
+"يتحرك لا يُقطع أبدًا. أما بايتات الرفع فتأتي من الجانب غير الموثوق ولا "
+"تحدِّث الطابع الزمني إلا لكل 16 KiB، وهذا يطلب من العميل 16 KiB على الأقل "
+"في كل فترة خمول، وهو دفاع مهل الطلبات ذات الحد الأدنى للمعدل ضد الأجسام "
+"البطيئة."
 
 #: ../../zero-allocation.rst:325
 msgid ""
@@ -417,10 +607,15 @@ msgid ""
 "connection in ``Drop``, and a reaped slot stays owned by its lease until "
 "then, so an old connection can never release a slot that a new one took."
 msgstr ""
+"للجدول قفل صغير لكل موضع، ولا قفل على مستوى الجدول كله. يحمل نسخة "
+"``try_clone`` من كل مقبس عميل و\\ ``Arc`` لكل مقبس خادم أصلي ملحق، للسبب "
+"المذكور أعلاه. يلغي ``Lease`` تسجيل اتصاله في ``Drop``، ويبقى الموضع "
+"المحصود مملوكًا لعقده حتى ذلك الحين، فلا يستطيع اتصال قديم أبدًا تحرير "
+"موضع أخذه اتصال جديد."
 
 #: ../../zero-allocation.rst:327
 msgid "Upgraded Connections"
-msgstr ""
+msgstr "الاتصالات المُرقّاة"
 
 #: ../../zero-allocation.rst:330
 msgid ""
@@ -434,6 +629,14 @@ msgid ""
 "threads, so the number of connection threads can reach twice "
 "``--max-connections`` when every connection is upgraded."
 msgstr ""
+"بعد ``101`` مُتحقَّق منها، يُرحَّل ترقية WebSocket في الاتجاهين. يجري كل "
+"اتجاه على خيط خاص به مع مخزن ثابت واحد: يحمل خيط الاتصال نفسه البايتات من "
+"الخادم الأصلي إلى العميل، ويحمل خيط محدود النطاق (scoped) بمكدس من 128 "
+"KiB البايتات من العميل إلى الخادم الأصلي. كان يمكن لخيط واحد أن يخدم "
+"الاتجاهين باستخدام ``poll(2)``، لكن المكتبة القياسية لـ Rust لا تكشفها؛ "
+"وخيطان مع مهل للمقابس يُبقيان الترحيل خاليًا من ``unsafe``. لذلك يحمل "
+"الاتصال المُرقّى خيطين، فقد يبلغ عدد خيوط الاتصالات ضعف "
+"``--max-connections`` عندما تكون كل الاتصالات مُرقّاة."
 
 #: ../../zero-allocation.rst:332
 msgid ""
@@ -447,10 +650,19 @@ msgid ""
 "is proxied, the connection releases its cached policy engine, so a "
 "connection that may live for hours does not keep an old engine alive."
 msgstr ""
+"يتشارك الاتجاهان مهلة خمول واحدة (``--websocket-idle-timeout``، 300 ثانية "
+"افتراضيًا): البايتات المتحركة في أي اتجاه تحدِّث طابعًا زمنيًا واحدًا. "
+"يحمل كل انتظار على مقبس مهلة تساوي الوقت المتبقي؛ والانتظار الذي تنتهي "
+"مهلته يعيد قراءة الطابع المشترك ثم إما ينتظر مرة أخرى للمدة الباقية أو "
+"ينهي الترحيل. عندما يبلغ أحد الاتجاهين نهاية التيار، يُغلق جانب الإرسال "
+"في المقبس الآخر (إغلاق نصفي)؛ وعندما يفشل اتجاه، يُغلق المقبسان كلاهما "
+"فينتهي الاتجاه الآخر أيضًا. قبل تمرير الترقية عبر الوكيل، يحرر الاتصال "
+"محرك السياسة المخزَّن لديه مؤقتًا، فلا يُبقي اتصال قد يعيش ساعات محركًا "
+"قديمًا حيًّا."
 
 #: ../../zero-allocation.rst:334
 msgid "Stopping"
-msgstr ""
+msgstr "الإيقاف"
 
 #: ../../zero-allocation.rst:337
 msgid ""
@@ -461,6 +673,11 @@ msgid ""
 "(``IdleTable::shutdown``), stops the origin pool, joins every connection "
 "thread, joins the reaper, and closes the pooled sockets."
 msgstr ""
+"يوقف ``Running::stop``، وكذلك ``Drop`` لـ ``Running``، البرنامج الخدمي "
+"بترتيب ثابت. يرفع علم الإيقاف ويوقظ كل عامل قبول بالاتصال بالمستمع، ويضم "
+"العمال، ويغلق كل مقبس عميل مسجل ومقبس الخادم الأصلي الملحق به "
+"(``IdleTable::shutdown``)، ويوقف مجمع الخادم الأصلي، ويضم كل خيط اتصال، "
+"ويضم الجامع، ويغلق المقابس المُجمَّعة."
 
 #: ../../zero-allocation.rst:339
 msgid ""
@@ -473,10 +690,16 @@ msgid ""
 "the declarations of the few C library functions that ``std`` does not "
 "wrap."
 msgstr ""
+"تصل SIGINT وSIGTERM إلى هذا التسلسل عبر Rust العادية. قبل أن يطلق "
+"البرنامج الخدمي أي خيط، يحجب الإشارتين كلتيهما (ويرث كل خيط لاحق القناع) "
+"ويخصص خيطًا واحدًا لـ ``sigwait``، الذي يسجل الطلب ويوقظ الخيط الرئيسي "
+"فورًا. لا تجري أي شيفرة في معالج إشارة، ولا يستطلع أي خيط علمًا. تحمل "
+"وحدة الإشارات (``cmd/sibuna/src/signals.rs``) شيفرة ``unsafe`` الوحيدة في "
+"البرنامج الخدمي: تصريحات الدوال القليلة من مكتبة C التي لا تغلفها ``std``."
 
 #: ../../zero-allocation.rst:341
 msgid "Release by ``Drop``"
-msgstr ""
+msgstr "التحرير عبر ``Drop``"
 
 #: ../../zero-allocation.rst:343
 msgid ""
@@ -488,10 +711,16 @@ msgid ""
 "inserts each release on every path out of the scope, including a panic "
 "unwinding through it, so no path can forget one."
 msgstr ""
+"يجب أن تُكتب استدعاءات التنظيف الصريحة بعكس ترتيب الإعداد، ويجب أن تُقرأ "
+"كل عودة مبكرة في ضوئها. في Sibuna يحرر كل مورد نفسه في ``Drop``: يوقف "
+"``Daemon`` و\\ ``Running`` الخادم، ويلغي ``Lease`` تسجيل اتصاله، ويعيد "
+"``Counted`` مكانًا في حد الاتصالات، ويحرر ``Finished`` موضع مهمة. يُدرج "
+"المترجم كل تحرير على كل مسار خارج من النطاق، بما في ذلك الذعر الذي يفك "
+"المكدس عبره، فلا يستطيع أي مسار أن ينسى تحريرًا."
 
 #: ../../zero-allocation.rst:345
 msgid "What We Measured"
-msgstr ""
+msgstr "ما قسناه"
 
 #: ../../zero-allocation.rst:348
 msgid ""
@@ -501,105 +730,111 @@ msgid ""
 "copied from ``benchmarks/results/product-latest.md``; Part VIII holds the "
 "full record."
 msgstr ""
+"يعرض الجدول Shield في وضع الوكيل العكسي على معالج Ryzen 9 5950X واحد: "
+"البرنامج الخدمي مثبت على أربع وحدات معالجة، و\\ ``wrk`` بخيطين و64 "
+"اتصالًا على ثماني وحدات معالجة أخرى، وتشغيلات من خمس ثوانٍ، والوسيط من "
+"ثلاثة. الصفوف منسوخة من ``benchmarks/results/product-latest.md``؛ ويضم "
+"الجزء الثامن السجل الكامل."
 
 #: ../../zero-allocation.rst:350
 msgid ""
 "Shield in reverse-proxy mode, from "
 "``benchmarks/results/product-latest.md``"
 msgstr ""
+"Shield في وضع الوكيل العكسي، من ``benchmarks/results/product-latest.md``"
 
 #: ../../zero-allocation.rst:353 ../../zero-allocation.rst:404
 msgid "Workload"
-msgstr ""
+msgstr "عبء العمل"
 
 #: ../../zero-allocation.rst:354
 msgid "Status"
-msgstr ""
+msgstr "الحالة"
 
 #: ../../zero-allocation.rst:355
 msgid "req/s"
-msgstr ""
+msgstr "req/s"
 
 #: ../../zero-allocation.rst:356
 msgid "p50 / p99 (us)"
-msgstr ""
+msgstr "p50 / p99 (us)"
 
 #: ../../zero-allocation.rst:357
 msgid "CPU per request (us)"
-msgstr ""
+msgstr "زمن المعالج لكل طلب (us)"
 
 #: ../../zero-allocation.rst:358
 msgid "admitted with session, proxied"
-msgstr ""
+msgstr "مقبول بجلسة، مُمرَّر عبر الوكيل"
 
 #: ../../zero-allocation.rst:359 ../../zero-allocation.rst:364
 #: ../../zero-allocation.rst:369
 msgid "200"
-msgstr ""
+msgstr "200"
 
 #: ../../zero-allocation.rst:360
 msgid "138,965"
-msgstr ""
+msgstr "138,965"
 
 #: ../../zero-allocation.rst:361
 msgid "438 / 857"
-msgstr ""
+msgstr "438 / 857"
 
 #: ../../zero-allocation.rst:362
 msgid "28.57"
-msgstr ""
+msgstr "28.57"
 
 #: ../../zero-allocation.rst:363
 msgid "challenged (interstitial)"
-msgstr ""
+msgstr "مطلوب منه تحدٍّ (الصفحة الوسيطة)"
 
 #: ../../zero-allocation.rst:365
 msgid "195,188"
-msgstr ""
+msgstr "195,188"
 
 #: ../../zero-allocation.rst:366
 msgid "162 / 328"
-msgstr ""
+msgstr "162 / 328"
 
 #: ../../zero-allocation.rst:367
 msgid "13.73"
-msgstr ""
+msgstr "13.73"
 
 #: ../../zero-allocation.rst:368
 msgid "static allowed, proxied"
-msgstr ""
+msgstr "مسار ثابت مسموح، مُمرَّر عبر الوكيل"
 
 #: ../../zero-allocation.rst:370
 msgid "145,673"
-msgstr ""
+msgstr "145,673"
 
 #: ../../zero-allocation.rst:371
 msgid "415 / 746"
-msgstr ""
+msgstr "415 / 746"
 
 #: ../../zero-allocation.rst:372
 msgid "27.27"
-msgstr ""
+msgstr "27.27"
 
 #: ../../zero-allocation.rst:373
 msgid "WAF denied (with session)"
-msgstr ""
+msgstr "مرفوض من WAF (مع جلسة)"
 
 #: ../../zero-allocation.rst:374
 msgid "403"
-msgstr ""
+msgstr "403"
 
 #: ../../zero-allocation.rst:375
 msgid "209,507"
-msgstr ""
+msgstr "209,507"
 
 #: ../../zero-allocation.rst:376
 msgid "151 / 306"
-msgstr ""
+msgstr "151 / 306"
 
 #: ../../zero-allocation.rst:377
 msgid "12.17"
-msgstr ""
+msgstr "12.17"
 
 #: ../../zero-allocation.rst:379
 msgid ""
@@ -617,10 +852,22 @@ msgid ""
 "daemon, and ``crates/net/tests/steady_state.rs`` finds none over 500 "
 "proxied keep-alive requests."
 msgstr ""
+"يُبقي ``wrk`` 64 طلبًا قيد التنفيذ، لذلك تصطف الطلبات على المسارات "
+"المُمرَّرة المحدودة بالمعالج في انتظار وحدات المعالجة الأربع، ويكون p99 "
+"هناك ذيل المُجدوِل لا تكلفة طلب واحد. أما المولد ذو الحلقة المفتوحة، الذي "
+"يرسل بمعدل ثابت ويقيس زمن كل طلب من موعد إرساله المقصود، فيقيس زمن "
+"الاستجابة عند حمل معروض متساوٍ. للطلبات المقبولة في وضع الوكيل العكسي، "
+"يبلغ p99 قيمة 65 us عند 10,000 طلب في الثانية و100 us عند 100,000؛ وعند "
+"حمل معروض قدره 150,000 تتشبع وحدات المعالجة الأربع، فيتحقق 134,344 طلبًا "
+"في الثانية، وينمو الطابور إلى ثوانٍ "
+"(``benchmarks/results/latency-latest.md``). يخدم اتصال keep-alive دافئ كل "
+"قرار دون تخصيص في الكومة: يعد ``cmd/sibuna/tests/steady_state.rs`` "
+"تخصيصات البرنامج الخدمي، ولا يجد ``crates/net/tests/steady_state.rs`` أي "
+"تخصيص على مدى 500 طلب keep-alive مُمرَّر."
 
 #: ../../zero-allocation.rst:381
 msgid "Exercise 5.1"
-msgstr ""
+msgstr "تمرين 5.1"
 
 #: ../../zero-allocation.rst:383
 msgid ""
@@ -628,10 +875,13 @@ msgid ""
 "buffer, which are relayed by ``relay_body`` through the upload buffer, "
 "and why the proxy must write the head to the origin *before* relaying."
 msgstr ""
+"يرسل عميل رفعًا من 200 KB. تتبَّع البايتات التي تعيش في المخزن ذي 64 KiB، "
+"والبايتات التي ترحِّلها ``relay_body`` عبر مخزن الرفع، ولماذا يجب أن يكتب "
+"الوكيل الرأس إلى الخادم الأصلي *قبل* الترحيل."
 
 #: ../../zero-allocation.rst:385
 msgid "Concurrent State Without Allocation"
-msgstr ""
+msgstr "حالة متزامنة بلا تخصيص"
 
 #: ../../zero-allocation.rst:390
 msgid ""
@@ -640,6 +890,10 @@ msgid ""
 "publication of the policy engine with ``Arc`` and a generation-checked "
 "cache."
 msgstr ""
+"نحلل أقفال الأجزاء، ومجموعة المستهلك Robin Hood، ومحدِّد GCRA، وجدول "
+"الحظر ذا الإصدارات، وحلقة الحوادث MPSC، والنشر بأسلوب القراءة والنسخ "
+"والتحديث (read-copy-update) لمحرك السياسة باستخدام ``Arc`` وذاكرة مؤقتة "
+"تُفحَص بالجيل."
 
 #: ../../zero-allocation.rst:392
 msgid ""
@@ -647,10 +901,13 @@ msgid ""
 "it is built, and never allocates or blocks on a global lock afterwards. "
 "None needs a background sweeper: expired state is reclaimed in place."
 msgstr ""
+"يخصص كل مخزن في ``sibuna-store`` سعته الثابتة مرة واحدة عند بنائه، ولا "
+"يخصص بعد ذلك أبدًا ولا يُحجب على قفل عام. ولا يحتاج أي منها إلى منظف في "
+"الخلفية: تُستعاد الحالة المنتهية في مكانها."
 
 #: ../../zero-allocation.rst:394
 msgid "Locks and Sharding"
-msgstr ""
+msgstr "الأقفال والتجزيء"
 
 #: ../../zero-allocation.rst:397
 msgid ""
@@ -660,6 +917,11 @@ msgid ""
 ":math:`1/16`, and each shard sits on a cache line of its own, so "
 "neighbouring locks do not false-share."
 msgstr ""
+"الأقسام الحرجة في جداول Sibuna بطول عشرات التعليمات، أقصر بكثير من رحلة "
+"ذهاب وإياب إلى futex في النواة. تُقسَم الجداول إلى 16 جزءًا وفق تجزئة "
+"المفتاح، فتتنافس عمليتان باحتمال :math:`1/16`، ويقع كل جزء على سطر ذاكرة "
+"مؤقتة خاص به، فلا تتشارك الأقفال المتجاورة السطر نفسه زيفًا (false "
+"sharing)."
 
 #: ../../zero-allocation.rst:399
 msgid ""
@@ -670,66 +932,71 @@ msgid ""
 "spin lock saves about a nanosecond per uncontended operation, but it "
 "loses under contention:"
 msgstr ""
+"تستخدم الجداول ``std::sync::Mutex``: عملية مقارنة وتبديل واحدة عند غياب "
+"التنافس، ودوران قصير أثناء عمل الحامل، ثم انتظار futex. البديل قفل دوار "
+"ذري ذو حالتين مع تلميح حلقة الدوران في حلقة الانتظار. طلبت منا SID 0010 "
+"أن نختار بينهما بالقياس. يوفر القفل الدوار نحو نانوثانية لكل عملية بلا "
+"تنافس، لكنه يخسر تحت التنافس:"
 
 #: ../../zero-allocation.rst:401
 msgid "Shard lock throughput on a Ryzen 9 5950X (October 2026)"
-msgstr ""
+msgstr "إنتاجية أقفال الأجزاء على Ryzen 9 5950X (أكتوبر 2026)"
 
 #: ../../zero-allocation.rst:405
 msgid "``Mutex``"
-msgstr ""
+msgstr "``Mutex``"
 
 #: ../../zero-allocation.rst:406
 msgid "Spin lock"
-msgstr ""
+msgstr "قفل دوار"
 
 #: ../../zero-allocation.rst:407
 msgid "spent set, 16 threads"
-msgstr ""
+msgstr "مجموعة المستهلك، 16 خيطًا"
 
 #: ../../zero-allocation.rst:408
 msgid "10.8 M/s"
-msgstr ""
+msgstr "10.8 M/s"
 
 #: ../../zero-allocation.rst:409
 msgid "8.6 M/s"
-msgstr ""
+msgstr "8.6 M/s"
 
 #: ../../zero-allocation.rst:410
 msgid "spent set, 64 threads (more than the CPUs)"
-msgstr ""
+msgstr "مجموعة المستهلك، 64 خيطًا (أكثر من وحدات المعالجة)"
 
 #: ../../zero-allocation.rst:411
 msgid "11.2 M/s"
-msgstr ""
+msgstr "11.2 M/s"
 
 #: ../../zero-allocation.rst:412
 msgid "6.9 M/s"
-msgstr ""
+msgstr "6.9 M/s"
 
 #: ../../zero-allocation.rst:413
 msgid "GCRA on six hot addresses, 16 threads"
-msgstr ""
+msgstr "GCRA على ستة عناوين ساخنة، 16 خيطًا"
 
 #: ../../zero-allocation.rst:414
 msgid "44.9 M/s"
-msgstr ""
+msgstr "44.9 M/s"
 
 #: ../../zero-allocation.rst:415
 msgid "19.3 M/s"
-msgstr ""
+msgstr "19.3 M/s"
 
 #: ../../zero-allocation.rst:416
 msgid "GCRA on six hot addresses, 64 threads"
-msgstr ""
+msgstr "GCRA على ستة عناوين ساخنة، 64 خيطًا"
 
 #: ../../zero-allocation.rst:417
 msgid "37.4 M/s"
-msgstr ""
+msgstr "37.4 M/s"
 
 #: ../../zero-allocation.rst:418
 msgid "6.5 M/s"
-msgstr ""
+msgstr "6.5 M/s"
 
 #: ../../zero-allocation.rst:420
 msgid ""
@@ -739,10 +1006,14 @@ msgid ""
 "operation panics while it holds a shard, and the shard stays structurally "
 "valid even if one did."
 msgstr ""
+"يشغِّل خادم الحافة خيوط اتصالات أكثر من وحدات المعالجة، والقفل الدوار "
+"الذي يُستبَق حامله يجعل كل منتظر يحرق شريحته الزمنية، لذلك نبقي على القفل "
+"(mutex). يُدخَل القفل المسموم بدل نشر التسميم: لا تذعر أي عملية وهي تحمل "
+"جزءًا، ويبقى الجزء صالحًا بنيويًا حتى لو ذعرت إحداها."
 
 #: ../../zero-allocation.rst:422
 msgid "The Robin Hood Spent Set"
-msgstr ""
+msgstr "مجموعة المستهلك Robin Hood"
 
 #: ../../zero-allocation.rst:425
 msgid ""
@@ -754,16 +1025,24 @@ msgid ""
 "stop as soon as they meet an entry nearer its home than they are to "
 "theirs."
 msgstr ""
+"لا يدخل مجموعة المستهلك إلا الإثباتات المقبولة (الجزء الثالث). لها 16 "
+"جزءًا، كل منها مصفوفة بعنونة مفتوحة من 4,096 موضعًا من النوع "
+"``Option<Entry>``، حيث المُدخل ``{ tag: [u8; 16], expires_at: u64, dist: "
+"u8 }``. يزيح الإدراج بأسلوب Robin Hood (Celis، 1986) أي شاغل أقرب إلى "
+"موضعه الأصلي من المفتاح الوارد، وهذا يُبقي أطوال السبر متقاربة بإحكام؛ "
+"ويتوقف البحث حالما يصادف مُدخلًا أقرب إلى موضعه الأصلي مما هو إلى موضعه."
 
 #: ../../zero-allocation.rst:427
 msgid "Implementation: ``Table::insert``"
-msgstr ""
+msgstr "التنفيذ: ``Table::insert``"
 
 #: ../../zero-allocation.rst:429
 msgid ""
 "Inserts a spent tag with its expiry, reclaiming expired slots on the way. "
 "In ``crates/store/src/spent.rs`` (crate ``sibuna-store``)."
 msgstr ""
+"تُدرج وسمًا مستهلكًا مع وقت انتهائه، مستعيدةً المواضع المنتهية في طريقها. "
+"في ``crates/store/src/spent.rs`` (الحزمة ``sibuna-store``)."
 
 #: ../../zero-allocation.rst:470
 msgid ""
@@ -775,10 +1054,16 @@ msgid ""
 "changing anything (``can_insert``) and checks that bounded displacement "
 "can succeed without losing a live tag."
 msgstr ""
+"قاعدة الموضع المنتهي هي الجزء الدقيق: لا يجوز الكتابة فوق مُدخل منتهٍ في "
+"مكانه إلا بمفتاح يبعد عن موضعه الأصلي بقدر بعده على الأقل، وإلا فإن "
+"مفتاحًا لاحقًا يسبر متجاوزًا الموضع سيتوقف مبكرًا ويضيع. أما المُدخلات "
+"المنتهية التي تُزاح فتُسقط ببساطة. ولا حاجة إلى خيط منظف. يحاكي الإدراج "
+"أولًا مسار الإزاحة دون تغيير أي شيء (``can_insert``) ويتحقق من أن الإزاحة "
+"المحدودة يمكن أن تنجح دون فقد وسم حي."
 
 #: ../../zero-allocation.rst:472 ../../zero-allocation.rst:701
 msgid "Invariant"
-msgstr ""
+msgstr "الثابت"
 
 #: ../../zero-allocation.rst:474
 msgid ""
@@ -786,6 +1071,9 @@ msgid ""
 "not expired is therefore always found, and the refusal "
 "(``SpendError::Full``) can deny service but never enable a replay."
 msgstr ""
+"الإدراج المرفوض لا يطرد وسمًا حيًّا أبدًا. لذلك يُعثَر دائمًا على وسم "
+"استُهلك ولم تنتهِ صلاحيته، ويمكن للرفض (``SpendError::Full``) أن يحجب "
+"الخدمة، لكنه لا يمكّن إعادة التشغيل أبدًا."
 
 #: ../../zero-allocation.rst:476
 msgid ""
@@ -795,10 +1083,15 @@ msgid ""
 "is equally exact: the spent set can fail in two ways (``DoubleSpend`` and "
 "``Full``), and ``SpendError`` names exactly those."
 msgstr ""
+"الموضع من النوع ``Option<Entry>``. الموضع الفارغ لا يحوي وسمًا يُقرأ، فلا "
+"يوجد علم ``occupied`` قد ينسى قارئ فحصه، ولن تُترجَم ``match`` حتى "
+"تُعالَج الحالتان كلتاهما. ونوع الخطأ دقيق بالقدر نفسه: يمكن أن تفشل "
+"مجموعة المستهلك بطريقتين (``DoubleSpend`` و\\ ``Full``)، و\\ "
+"``SpendError`` يسميهما بالضبط."
 
 #: ../../zero-allocation.rst:478
 msgid "GCRA: Rate Limiting in One Integer"
-msgstr ""
+msgstr "GCRA: تحديد المعدل بعدد صحيح واحد"
 
 #: ../../zero-allocation.rst:481
 msgid ""
@@ -808,6 +1101,10 @@ msgid ""
 "\\max(1, \\lceil W / N \\rceil)` for a positive limit :math:`N` per "
 "window :math:`W`, and burst tolerance :math:`\\tau = (N - 1) T`:"
 msgstr ""
+"خوارزمية Generic Cell Rate Algorithm (ATM Forum، 1996) هي صيغة الجدولة "
+"الافتراضية للدلو المثقوب. تخزن لكل عميل *وقت وصول نظريًا* واحدًا (TAT). "
+"مع فاصل الإصدار :math:`T = \\max(1, \\lceil W / N \\rceil)` لحد موجب "
+":math:`N` في كل نافذة :math:`W`، وسماحية الدفعة :math:`\\tau = (N - 1) T`:"
 
 #: ../../zero-allocation.rst:483
 msgid ""
@@ -815,10 +1112,13 @@ msgid ""
 "\\tau, \\quad \\text{then } \\mathrm{TAT} \\leftarrow "
 "\\max(\\mathrm{TAT}, t) + T."
 msgstr ""
+"\\text{arrival at } t \\text{ conforms} \\iff \\mathrm{TAT} \\le t + "
+"\\tau, \\quad \\text{then } \\mathrm{TAT} \\leftarrow "
+"\\max(\\mathrm{TAT}, t) + T."
 
 #: ../../zero-allocation.rst:487
 msgid "Theorem (token-bucket bound)"
-msgstr ""
+msgstr "مبرهنة (حد دلو الرموز)"
 
 #: ../../zero-allocation.rst:489
 msgid ""
@@ -829,16 +1129,23 @@ msgid ""
 "one per :math:`T`. There is no fixed-window boundary artefact beyond the "
 "defined burst, and no per-request history."
 msgstr ""
+"بعد أول وصول مطابق عند :math:`t_1`، يحقق الوصول المطابق رقم :math:`k` "
+"المتباينة :math:`t_k - t_1 \\ge (k - 1) T - \\tau`. ومن ثم تحتوي أي فترة "
+"طولها :math:`L` على :math:`N + \\lfloor L / T \\rfloor` وصولًا مطابقًا "
+"على الأكثر: دفعة من :math:`N`، ثم وصول واحد لكل :math:`T`. لا يوجد أثر "
+"لحدود نافذة ثابتة يتجاوز الدفعة المحددة، ولا سجل لكل طلب."
 
 #: ../../zero-allocation.rst:492
 msgid ""
 "GCRA admission for a limit of 5 per second: a burst of five, then one "
 "every 200 ms."
 msgstr ""
+"السماح بالدخول في GCRA لحد قدره 5 في الثانية: دفعة من خمسة، ثم طلب كل 200 "
+"ms."
 
 #: ../../zero-allocation.rst:505
 msgid "Worked example: five per second by hand"
-msgstr ""
+msgstr "مثال محلول: خمسة في الثانية باليد"
 
 #: ../../zero-allocation.rst:507
 msgid ""
@@ -855,10 +1162,21 @@ msgid ""
 "``gcra_admits_exactly_the_burst_then_drains_at_the_emission_rate`` in "
 "``crates/store/src/limiter.rs`` checks exactly these numbers."
 msgstr ""
+"لنأخذ :math:`N = 5` و\\ :math:`W = 1000` ms، فيكون :math:`T = 200` ms و\\ "
+":math:`\\tau = 800` ms، ولنفترض أن عميلًا كان خاملًا يرسل ستة طلبات عند "
+":math:`t = 0`. يجد الأول خلية فارغة: :math:`\\mathrm{TAT} = \\max(0, 0) = "
+"0 \\le 800`، فهو مطابق و\\ :math:`\\mathrm{TAT} \\leftarrow 200`. تطابق "
+"الأربعة التالية بالطريقة نفسها وتترك :math:`\\mathrm{TAT} = 1000`. يجد "
+"السادس :math:`1000 > 0 + 800` فيُرفض مع ``Retry-After`` قدره "
+":math:`\\mathrm{TAT} - \\tau - t = 200` ms. عند :math:`t = 199` يظل الطلب "
+"يجد :math:`1000 > 999` فيُرفض؛ وعند :math:`t = 200` يجد :math:`1000 \\le "
+"1000`، فيطابق، ويترك :math:`\\mathrm{TAT} = 1200`. يتحقق اختبار الوحدة "
+"``gcra_admits_exactly_the_burst_then_drains_at_the_emission_rate`` في "
+"``crates/store/src/limiter.rs`` من هذه الأعداد بالضبط."
 
 #: ../../zero-allocation.rst:509
 msgid "Implementation: ``arrive``"
-msgstr ""
+msgstr "التنفيذ: ``arrive``"
 
 #: ../../zero-allocation.rst:511
 msgid ""
@@ -866,6 +1184,9 @@ msgid ""
 "decision, the retry delay and the remaining budget. In "
 "``crates/store/src/limiter.rs`` (crate ``sibuna-store``)."
 msgstr ""
+"تطبق وصولًا واحدًا على خلايا جزء مقفول وتعيد القرار وتأخير إعادة المحاولة "
+"والميزانية المتبقية. في ``crates/store/src/limiter.rs`` (الحزمة "
+"``sibuna-store``)."
 
 #: ../../zero-allocation.rst:545
 msgid ""
@@ -882,10 +1203,20 @@ msgid ""
 "address seeded with the rule's scope, so the same client in different "
 "scopes has independent budgets."
 msgstr ""
+"تأخذ ``check`` الخاصة بالجزء القفل وتستدعي ``arrive`` مع الخلايا "
+"المقفولة؛ ويحرر الحارس القفل عند عودة ``check``. حجم الخلية 16 بايت "
+"(مفتاح وTAT) في 16 جزءًا من 512 موضعًا مع نافذة سبر من 16 موضعًا، أي نحو "
+"128 KiB إجمالًا. الخلية التي يكون TAT فيها أقدم من :math:`t - \\tau` قد "
+"استُنزفت وتُستعاد في الحال. وتُحسب ترويسة ``Retry-After`` من الحساب نفسه. "
+"نوافذ السبر المشبعة ترفض العملاء الجدد بدل طرد حالة حصص نشطة، والقرار "
+"يذكر ذلك (``capacity_exhausted``)، فلا يصعِّد المستدعي رفض التشبع إلى "
+"حظر. والمعدل المضبوط على صفر يرفض الطلبات. يخدم محدِّد واحد عدة قواعد: "
+"مفتاح الخلية تجزئة Wyhash لعنوان العميل مع بذرة هي نطاق القاعدة، فيكون "
+"للعميل نفسه في نطاقات مختلفة ميزانيات مستقلة."
 
 #: ../../zero-allocation.rst:547
 msgid "The Versioned Ban Table"
-msgstr ""
+msgstr "جدول الحظر ذو الإصدارات"
 
 #: ../../zero-allocation.rst:550
 msgid ""
@@ -895,16 +1226,23 @@ msgid ""
 "each update with version increments; readers take no lock, accept only a "
 "stable even version, and retry concurrent changes."
 msgstr ""
+"يستخدم الحظر 4,096 موضعًا بحقول ذرية للإصدار والمفتاح ووقت الانتهاء، "
+"بعنونة مفتوحة وفق تجزئة ذات مفتاح للعنوان المحظور، مع نافذة سبر من 8 "
+"مواضع. يحيط الكاتب، الذي يُسلسَل مع الكتاب الآخرين بقفل (mutex)، كل تحديث "
+"بزيادتين في الإصدار؛ ولا يأخذ القراء أي قفل، ولا يقبلون إلا إصدارًا "
+"زوجيًا مستقرًا، ويعيدون المحاولة عند التغييرات المتزامنة."
 
 #: ../../zero-allocation.rst:552
 msgid "Implementation: ``BanTable::ban`` and ``BanTable::read_slot``"
-msgstr ""
+msgstr "التنفيذ: ``BanTable::ban`` و\\ ``BanTable::read_slot``"
 
 #: ../../zero-allocation.rst:554
 msgid ""
 "The writer's bracket and the reader's consistent snapshot. In "
 "``crates/store/src/ban_table.rs`` (crate ``sibuna-store``)."
 msgstr ""
+"إحاطة الكاتب ولقطة القارئ المتسقة. في ``crates/store/src/ban_table.rs`` "
+"(الحزمة ``sibuna-store``)."
 
 #: ../../zero-allocation.rst:586
 msgid ""
@@ -917,10 +1255,17 @@ msgid ""
 "lifts every ban but leaves the keys in place, because an emptied slot "
 "could hide a colliding key later in a probe chain."
 msgstr ""
+"يمنع الاتساق التسلسلي خلط هوية قديمة بوقت انتهاء بديل: ينتمي كل وصول إلى "
+"ترتيب كلي واحد، وهذا يُبقي الحجة بسيطة. لا يأخذ القراء قفلًا، لكنهم قد "
+"ينتظرون كاتبًا وليسوا خالين من الانتظار (wait-free). لهذه العمليات الذرية "
+"تكلفة حقيقية، تُقاس بصورة غير مباشرة في أداة اختبار HTTP بدل افتراض أنها "
+"مجانية. عندما تمتلئ نافذة السبر، يُكتب فوق موضع منتهٍ، وإلا فوق الموضع "
+"الذي ينتهي أولًا. ترفع ``clear`` كل حظر لكنها تترك المفاتيح في أماكنها، "
+"لأن موضعًا مُفرَّغًا قد يخفي مفتاحًا متصادمًا يقع لاحقًا في سلسلة سبر."
 
 #: ../../zero-allocation.rst:588
 msgid "The MPSC Incident Ring"
-msgstr ""
+msgstr "حلقة الحوادث MPSC"
 
 #: ../../zero-allocation.rst:591
 msgid ""
@@ -934,6 +1279,14 @@ msgid ""
 "response, an explicit loss policy rather than a durability guarantee. The "
 "drop counter makes that loss observable."
 msgstr ""
+"عندما يرفض وضع Shield طلبًا أو تنطلق المصيدة، يُنسخ الحادث إلى سجل ثابت "
+"من نحو 1.3 KB (عنوان العميل، وUser-Agent، والطريقة، والمسار، والفئة، "
+"والحمولة، وكل منها مقطوع عند سعته) ويُدفع إلى حلقة محدودة متعددة المنتجين "
+"وحيدة المستهلك (تصميم Vyukov الموسوم بالتسلسل، 512 موضعًا، "
+"``BoundedQueue<IncidentRecord, 512>``). المنتجون خيوط الاتصالات؛ "
+"والمستهلك خيط التخزين. الحلقة الممتلئة تُسقط أحدث سجل بدل حجب استجابة، "
+"وهي سياسة فقد صريحة لا ضمان ديمومة. ويجعل عداد الإسقاط هذا الفقد قابلًا "
+"للملاحظة."
 
 #: ../../zero-allocation.rst:602
 msgid ""
@@ -942,6 +1295,9 @@ msgid ""
 "does not silently discard it on a database error, and a retry writes the "
 "identical batch."
 msgstr ""
+"بعد نقل سجل إلى دفعة معلقة، يحتفظ به خيط التخزين، مع الصفوف المُعدَّة، "
+"حتى يُؤكَّد الإيداع (commit)؛ ولا يتخلص منه بصمت عند خطأ في قاعدة "
+"البيانات، وإعادة المحاولة تكتب الدفعة نفسها."
 
 #: ../../zero-allocation.rst:604
 msgid ""
@@ -954,6 +1310,14 @@ msgid ""
 "values in ``UnsafeCell<MaybeUninit<T>>`` slots, and each ``unsafe`` block "
 "names the step of the protocol that justifies it:"
 msgstr ""
+"يحمل كل موضع رقم تسلسل يخبر المنتجين ما إذا كان الموضع حرًّا ويخبر "
+"المستهلك ما إذا كان ممتلئًا، فلا يأخذ أي من الجانبين قفلًا. لا يمكن كتابة "
+"حلقة كهذه بلغة Rust الآمنة: يلمس المنتجون والمستهلك مواضع مختلفة من "
+"مصفوفة واحدة في الوقت نفسه، وبروتوكول التسلسل وحده، لا نظام الأنواع، هو "
+"الذي يثبت أي خيط يجوز له لمس أي موضع. لذلك تحفظ الوحدة "
+"``crates/store/src/ring.rs`` قيمها في مواضع "
+"``UnsafeCell<MaybeUninit<T>>``، وتسمي كل كتلة ``unsafe`` خطوة البروتوكول "
+"التي تسوِّغها:"
 
 #: ../../zero-allocation.rst:629
 msgid ""
@@ -964,10 +1328,15 @@ msgid ""
 "code must claim the unique ``Consumer`` first, so a second consumer does "
 "not compile or is refused at run time."
 msgstr ""
+"اصطلاحان من اصطلاحات الحلقة نوعان لا تعليقان. على الحلقة الممتلئة تعيد "
+"``push`` القيمة ``Err(value)``، فتعيد السجل إلى المستدعي ليقرر أيعده أم "
+"يُسقطه؛ أما ``false`` المجردة فكانت ستضيعه. للحلقة مستهلك واحد، و\\ "
+"``pop`` تأخذ ``&mut self``، ويجب على الشيفرة المشتركة أن تطالب أولًا بـ "
+"``Consumer`` الفريد، فالمستهلك الثاني لا يُترجَم أو يُرفض في وقت التشغيل."
 
 #: ../../zero-allocation.rst:631
 msgid "Read-Copy-Update Engine Publication"
-msgstr ""
+msgstr "نشر المحرك بأسلوب القراءة والنسخ والتحديث"
 
 #: ../../zero-allocation.rst:634
 msgid ""
@@ -977,6 +1346,10 @@ msgid ""
 "engine as an ``Arc<Engine>`` in an ``EngineSlot``, and each connection "
 "reads it through an ``EngineCache``:"
 msgstr ""
+"يُعاد بناء محرك السياسة خارج المسار الساخن عند تغير السياسات. يجب ألا ترى "
+"الطلبات أبدًا محركًا نصف مبني، ويجب ألا يُحرَّر محرك أبدًا ما دام طلب ما "
+"يقرؤه. ينشر Sibuna كل محرك بوصفه ``Arc<Engine>`` في ``EngineSlot``، "
+"ويقرؤه كل اتصال عبر ``EngineCache``:"
 
 #: ../../zero-allocation.rst:637
 msgid ""
@@ -985,16 +1358,21 @@ msgid ""
 "acquire load and clones the published Arc only after a publication. An "
 "old engine is freed when the last cache holding it lets go."
 msgstr ""
+"نشر المحرك. ينشر خيط التخزين محركًا كاملًا ويقدِّم الجيل؛ ويفحص كل اتصال "
+"الجيل بتحميل acquire واحد، ولا ينسخ Arc المنشور إلا بعد نشر جديد. يُحرَّر "
+"المحرك القديم عندما تتخلى عنه آخر ذاكرة مؤقتة تحمله."
 
 #: ../../zero-allocation.rst:660
 msgid "Implementation: ``EngineSlot::publish`` and ``EngineCache::refresh``"
-msgstr ""
+msgstr "التنفيذ: ``EngineSlot::publish`` و\\ ``EngineCache::refresh``"
 
 #: ../../zero-allocation.rst:662
 msgid ""
 "Publication of a complete engine, and one connection's view of it. In "
 "``cmd/sibuna/src/slot.rs`` (crate ``sibuna``)."
 msgstr ""
+"نشر محرك كامل، ورؤية اتصال واحد له. في ``cmd/sibuna/src/slot.rs`` (الحزمة "
+"``sibuna``)."
 
 #: ../../zero-allocation.rst:699
 msgid ""
@@ -1008,6 +1386,13 @@ msgid ""
 "a half-built engine, because only complete engines are ever stored in the "
 "slot."
 msgstr ""
+"يُخزَّن الجيل بترتيب release بعد أن يستقر المحرك في مكانه، ويُحمَّل "
+"بترتيب acquire: القارئ الذي يرى جيلًا جديدًا يرى أيضًا المحرك المخزَّن "
+"قبله. السباق المذكور في التعليق غير ضار. إذا وقع نشر بين تحميل القارئ "
+"للجيل ونسخه، يخزن القارئ المحرك الأحدث مؤقتًا تحت رقم الجيل الأقدم، "
+"ويلاحظ تحديثه التالي عدم التطابق فيحمِّل مرة أخرى. قد يتأخر القارئ محركًا "
+"واحدًا لطلب واحد؛ لكنه لا يستطيع أبدًا أن يرى محركًا نصف مبني، لأن الموضع "
+"لا يُخزَّن فيه إلا محركات كاملة."
 
 #: ../../zero-allocation.rst:703
 msgid ""
@@ -1017,6 +1402,10 @@ msgid ""
 "every reader holds an ``Arc``, and the engine is dropped only with its "
 "last ``Arc``."
 msgstr ""
+"كل محرك يقرؤه طلب كامل، ولا يُحرَّر أي محرك ما دام أي طلب أو ذاكرة مؤقتة "
+"لاتصال تحمله. يصح الأول لأن المحرك يُبنى بالكامل قبل أن تخزنه "
+"``publish``؛ ويصح الثاني لأن كل قارئ يحمل ``Arc``، ولا يُسقط المحرك إلا "
+"مع آخر ``Arc`` له."
 
 #: ../../zero-allocation.rst:705
 msgid ""
@@ -1027,60 +1416,67 @@ msgid ""
 "writes. The generation, by contrast, is written once per publication and "
 "otherwise only read, so each core keeps its copy:"
 msgstr ""
+"لماذا ذاكرة مؤقتة وليس قفلًا ببساطة؟ طلبت منا SID 0010 أن نقيس تكلفة "
+"القراءة مع 16 خيطًا ونختار بين ``RwLock<Arc<Engine>>`` وبديل بلا قفل بلغة "
+"Rust الآمنة. القراءة عبر القفل تأخذ كلمة القفل وعداد المراجع، وهما سطران "
+"من الذاكرة المؤقتة تكتب فيهما كل نواة. أما الجيل فيُكتب مرة واحدة لكل نشر "
+"ويُقرأ فقط في غير ذلك، فتحتفظ كل نواة بنسختها منه:"
 
 #: ../../zero-allocation.rst:707
 msgid ""
 "Cost of one engine read, Ryzen 9 5950X, 16 threads reading in a loop "
 "(October 2026)"
 msgstr ""
+"تكلفة قراءة محرك واحدة، Ryzen 9 5950X، و16 خيطًا تقرأ في حلقة (أكتوبر "
+"2026)"
 
 #: ../../zero-allocation.rst:710
 msgid "Reader"
-msgstr ""
+msgstr "القارئ"
 
 #: ../../zero-allocation.rst:711
 msgid "1 thread"
-msgstr ""
+msgstr "1 خيط"
 
 #: ../../zero-allocation.rst:712
 msgid "16 threads"
-msgstr ""
+msgstr "16 خيطًا"
 
 #: ../../zero-allocation.rst:713
 msgid "``RwLock`` read guard only"
-msgstr ""
+msgstr "حارس القراءة لـ ``RwLock`` فقط"
 
 #: ../../zero-allocation.rst:714
 msgid "4.2 ns"
-msgstr ""
+msgstr "4.2 ns"
 
 #: ../../zero-allocation.rst:715
 msgid "752 ns"
-msgstr ""
+msgstr "752 ns"
 
 #: ../../zero-allocation.rst:716
 msgid "``RwLock`` read and ``Arc`` clone"
-msgstr ""
+msgstr "قراءة ``RwLock`` ونسخ ``Arc``"
 
 #: ../../zero-allocation.rst:717
 msgid "7.6 ns"
-msgstr ""
+msgstr "7.6 ns"
 
 #: ../../zero-allocation.rst:718
 msgid "833 ns"
-msgstr ""
+msgstr "833 ns"
 
 #: ../../zero-allocation.rst:719
 msgid "generation check with a cached ``Arc``"
-msgstr ""
+msgstr "فحص الجيل مع ``Arc`` مخزَّن مؤقتًا"
 
 #: ../../zero-allocation.rst:720
 msgid "0.8 ns"
-msgstr ""
+msgstr "0.8 ns"
 
 #: ../../zero-allocation.rst:721
 msgid "1.8 ns"
-msgstr ""
+msgstr "1.8 ns"
 
 #: ../../zero-allocation.rst:723
 msgid ""
@@ -1094,10 +1490,18 @@ msgid ""
 "``benchmarks/results/primitives-latest.json``), with capacity for 128 "
 "rules, 128-byte rule names and 8,192 trie nodes."
 msgstr ""
+"تحت التنافس تكون القراءة المخزَّنة مؤقتًا أرخص من القفل بأكثر من 400 مرة، "
+"لذلك يستخدم مسار الطلب الذاكرة المؤقتة، ولا يستخدم ``RwLock`` إلا على "
+"المسار البطيء للتحديث. القياس هو الاختبار المُتجاهَل "
+"``read_cost_under_contention`` في ``cmd/sibuna/src/slot.rs``. كل استخدام "
+"على مسار الطلب يحدِّث، فيرى الطلب المحرك الحالي عند تلك الخطوة. والمحرك "
+"نفسه صغير: 209,052 بايت، أي نحو 204 KiB، من جداول مضغوطة في الكومة "
+"(``engine_bytes`` في ``benchmarks/results/primitives-latest.json``)، مع "
+"سعة لـ 128 قاعدة، وأسماء قواعد من 128 بايت، و8,192 عقدة في الشجرة."
 
 #: ../../zero-allocation.rst:725
 msgid "Why ``Arc`` and not reader counts"
-msgstr ""
+msgstr "لماذا ``Arc`` وليس عدادات القراء"
 
 #: ../../zero-allocation.rst:727
 msgid ""
@@ -1112,6 +1516,14 @@ msgid ""
 "next publication unless every request released its slot before proxy I/O "
 "began."
 msgstr ""
+"يحتفظ البديل ذو الذاكرة الثابتة بموضعين للمحرك، لكل منهما عداد قراء وساحة "
+"تخصيص خاصة به. يثبِّت الطلب موضعًا بزيادة عداده ثم إعادة فحص مؤشر الموضع، "
+"ويجب أن تكون العمليتان الذريتان كلتاهما متسقتين تسلسليًا لسد السباق الذي "
+"يبدِّل فيه كاتب بين تحميل القارئ وزيادته. يبدِّل الباني المؤشر ثم يدور "
+"حتى ينصرف قراء الموضع القديم، قبل أن يعيد ضبط ساحة ذلك الموضع ويبني فيها "
+"من جديد. لذلك يحجب القارئ الذي يحمل موضعًا عبر إعادة بناء الباني، وكان "
+"الخادم الأصلي البطيء سيعطل النشر التالي ما لم يحرر كل طلب موضعه قبل بدء "
+"إدخال الوكيل وإخراجه."
 
 #: ../../zero-allocation.rst:729
 msgid ""
@@ -1126,10 +1538,19 @@ msgid ""
 "context mutably. An upgraded connection, which may live for hours, "
 "releases its cached engine before it is proxied."
 msgstr ""
+"عد المراجع في ``Arc`` لا يحتاج إلى شيء من هذا. يبني خيط التخزين "
+"``Engine`` جديدًا من كل لقطة وينشره؛ لا يُعاد استخدام أي شيء، فلا موضع "
+"احتياطيًا، ولا إعادة ضبط لساحة، ولا دوران: ``publish`` لا تنتظر القراء "
+"أبدًا. يعيش المحرك القديم ببساطة حتى يتخلى عنه آخر حامل له، والخادم "
+"الأصلي البطيء لا يستطيع أن يؤخر إلا تلك اللحظة، لا النشر التالي أبدًا. "
+"ينسخ الحكم اسم القاعدة المطابقة إلى مخزن من 128 بايت لينهي استعارة: "
+"يستعير القرار المحرك عبر الذاكرة المؤقتة للاتصال، ويحتاج مسار الاستجابة "
+"سياق الاتصال كاملًا قابلًا للتعديل. والاتصال المُرقّى، الذي قد يعيش "
+"ساعات، يحرر محركه المخزَّن مؤقتًا قبل تمريره عبر الوكيل."
 
 #: ../../zero-allocation.rst:731
 msgid "Exercise 5.2"
-msgstr ""
+msgstr "تمرين 5.2"
 
 #: ../../zero-allocation.rst:733
 msgid ""
@@ -1138,13 +1559,18 @@ msgid ""
 "``--rate-limit 100 --rate-window 10``. Compare with a fixed 10-second "
 "window counter and with a true sliding-window log."
 msgstr ""
+"باستخدام مبرهنة GCRA، احسب أكبر عدد من الطلبات يستطيع عميل واحد تمريره في "
+"أول 3 ثوانٍ بعد خموله، مع ``--rate-limit 100 --rate-window 10``. قارن ذلك "
+"بعداد نافذة ثابتة من 10 ثوانٍ وبسجل نافذة منزلقة حقيقي."
 
 #: ../../zero-allocation.rst:735
 msgid "Explain the invariant"
-msgstr ""
+msgstr "اشرح الثابت"
 
 #: ../../zero-allocation.rst:737
 msgid ""
 "Explain why an expired Robin Hood entry can be overwritten only by a key "
 "with a distance at least as large, using a three-slot example."
 msgstr ""
+"اشرح، بمثال من ثلاثة مواضع، لماذا لا يجوز الكتابة فوق مُدخل Robin Hood "
+"منتهٍ إلا بمفتاح مسافته كبيرة بالقدر نفسه على الأقل."

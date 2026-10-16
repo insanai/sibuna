@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"POT-Creation-Date: 2026-10-16 05:22+0000\n"
+"PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: ../../cryptography.rst:1
 msgid "Part III: Foundations from Cryptography Research"
-msgstr ""
+msgstr "الجزء الثالث: أسس من أبحاث التشفير"
 
 #: ../../cryptography.rst:4
 msgid ""
@@ -29,15 +29,18 @@ msgid ""
 "argument, and justify keyed-hash authentication for challenges and "
 "sessions. SID 0006 records the assumptions and references."
 msgstr ""
+"نشتق نماذج التكلفة لمستويَي إثبات العمل في Sibuna، ونعرض إثبات العمل "
+"المتسلسل لـ Cohen-Pietrzak مع حجته الأمنية، ونبرر مصادقة التحديات "
+"والجلسات بتجزئة ذات مفتاح. يسجل SID 0006 الافتراضات والمراجع."
 
 #: ../../cryptography.rst:6
 msgid "Hashcash: The Mathematics of Tier One"
-msgstr ""
+msgstr "Hashcash: رياضيات المستوى الأول"
 
 #: ../../cryptography.rst:9 ../../cryptography.rst:36
 #: ../../cryptography.rst:167
 msgid "Objectives"
-msgstr ""
+msgstr "الأهداف"
 
 #: ../../cryptography.rst:11
 msgid ""
@@ -46,10 +49,13 @@ msgid ""
 "why the server's verification cost bounds the attacker's advantage, and "
 "describe the two limits that motivate a second tier."
 msgstr ""
+"بنهاية هذا الفصل، ينبغي أن نتمكن من تحديد العمل المتوقع والتباين واحتمال "
+"الذيل للغز Hashcash على مستوى البتات، وأن نشرح لماذا تحد تكلفة تحقق "
+"الخادم من أفضلية المهاجم، وأن نصف الحدين اللذين يدفعان إلى مستوى ثانٍ."
 
 #: ../../cryptography.rst:13
 msgid "Definition and Cost"
-msgstr ""
+msgstr "التعريف والتكلفة"
 
 #: ../../cryptography.rst:16
 msgid ""
@@ -61,6 +67,12 @@ msgid ""
 "the WebAssembly solver, the JavaScript fallback, and the native verifier "
 "without a binary encoding step."
 msgstr ""
+"لغز المستوى الأول في Sibuna لسلسلة التحدي :math:`C` والصعوبة :math:`b` بت "
+"هو: أوجد :math:`N \\in \\mathbb{N}` بحيث تبدأ :math:`\\text{SHA-256}(C "
+"\\parallel \\text{\":\"} \\parallel \\mathrm{dec}(N))` بـ :math:`b` بتات "
+"صفرية. كتابة القيمة المؤقتة بالنظام العشري مقصودة؛ فهي تبقي تنسيق النقل "
+"متطابقًا بين برنامج الحل بـ WebAssembly، وبديل JavaScript، والمتحقق "
+"الأصلي، من دون خطوة ترميز ثنائي."
 
 #: ../../cryptography.rst:18
 msgid ""
@@ -70,6 +82,10 @@ msgid ""
 "the digest predicate; implementations must agree on the statement and "
 "nonce encoding, not on an estimated CPU cost."
 msgstr ""
+"وحدة الصعوبة هي *محاولة تجزئة* متوقعة، وليست استدعاءً لدالة الضغط. قد "
+"يشغل المدخل عدة كتل SHA-256. وقد تغير الحوسبة المسبقة للبادئة العمل لكل "
+"قيمة مؤقتة. تظل قاعدة النقل هي شرط الملخص؛ ويجب أن تتفق التنفيذات على "
+"المسألة وترميز القيمة المؤقتة، لا على تكلفة CPU تقديرية."
 
 #: ../../cryptography.rst:20
 msgid ""
@@ -82,10 +98,17 @@ msgid ""
 "response are additional work. A primitive timing cannot be inverted into "
 "a server's flood capacity."
 msgstr ""
+"للملخصات المثالية المستقلة، يتبع عدد المحاولات :math:`X` توزيعًا هندسيًا "
+"مع :math:`p = 2^{-b}`. وسيطه :math:`\\left\\lceil \\ln(1/2) / \\ln(1-p) "
+"\\right\\rceil`، ويقارب :math:`2^b \\ln 2` عندما تكون :math:`p` صغيرة، "
+"وتباينه :math:`(1-p)/p^2`. يفحص المتحقق ملخصًا مرشحًا واحدًا بدل إجراء "
+"البحث. التحليل، ومصادقة التحدي، وفحص البصمة، وإدراج حالة الاستهلاك، "
+"والاستجابة عمل إضافي. لا يمكن عكس توقيت عملية أولية لاستنتاج قدرة الخادم "
+"على تحمل الفيضان."
 
 #: ../../cryptography.rst:22
 msgid "Two Limits of Search"
-msgstr ""
+msgstr "حدان للبحث"
 
 #: ../../cryptography.rst:25
 msgid ""
@@ -96,10 +119,15 @@ msgid ""
 "the admission policy. Neither a claimed hash rate nor a single benchmark "
 "can bound every requester's advantage."
 msgstr ""
+"الحد الأول هو التباين: البحث الطويل لا يعني بالضرورة تعطل العامل. والثاني "
+"هو التوازي: يمكن إجراء محاولات مستقلة لقيم مؤقتة بالتزامن. تقلل النوى "
+"الإضافية زمن البحث المنقضي حتى عندما يظل العدد الإجمالي المتوقع للمحاولات "
+"ثابتًا. لذا تهم إنتاجية العتاد سياسة الدخول. لا يستطيع معدل تجزئة معلن "
+"ولا قياس أداء واحد أن يحد أفضلية كل صاحب طلب."
 
 #: ../../cryptography.rst:27
 msgid "Exercise 3.0"
-msgstr ""
+msgstr "التمرين 3.0"
 
 #: ../../cryptography.rst:29
 msgid ""
@@ -107,14 +135,17 @@ msgid ""
 ":math:`4.6 \\times 2^b` trials. Why is the expected trial count unchanged "
 "by dividing the nonce space among several workers?"
 msgstr ""
+"باستخدام ذيل التوزيع الهندسي، قدّر احتمال الحاجة إلى أكثر من :math:`4.6 "
+"\\times 2^b` محاولة. لماذا لا يتغير العدد المتوقع للمحاولات عند تقسيم "
+"فضاء القيم المؤقتة بين عدة عمال؟"
 
 #: ../../cryptography.rst:31
 msgid "*Hint:* Count aggregate trials, not elapsed seconds."
-msgstr ""
+msgstr "*تلميح:* احسب مجموع المحاولات، لا الثواني المنقضية."
 
 #: ../../cryptography.rst:33
 msgid "Proof of Sequential Work: Tier Two"
-msgstr ""
+msgstr "إثبات العمل المتسلسل: المستوى الثاني"
 
 #: ../../cryptography.rst:38
 msgid ""
@@ -124,10 +155,14 @@ msgid ""
 "prover's memory bound, and the calibration data behind the work-bit "
 "mapping."
 msgstr ""
+"نفهم إسناد التسميات في Cohen-Pietrzak، ولماذا يفرض الحساب المتسلسل، وما "
+"يفحصه المتحقق، وحد أخذ العينات المشروط :math:`(1 - \\alpha)^t` وحدوده، "
+"والنتيجة بعد الكمومية، وحد ذاكرة المُبرهِن، وبيانات المعايرة التي تستند "
+"إليها خريطة بتات العمل."
 
 #: ../../cryptography.rst:40
 msgid "Why Sequential Work"
-msgstr ""
+msgstr "لماذا العمل المتسلسل"
 
 #: ../../cryptography.rst:43
 msgid ""
@@ -137,6 +172,10 @@ msgid ""
 "the computation. Independent puzzles can still run in parallel, and "
 "hardware hash latency still matters."
 msgstr ""
+"يُدخل بناء العمل المتسلسل اعتماديات بين الحسابات: تحتاج تسمية لاحقة إلى "
+"قيمة نُتجت سابقًا. يعالج ذلك كمية مختلفة عن مجموع العمل، وهي عمق الحساب. "
+"تظل الألغاز المستقلة قابلة للتنفيذ بالتوازي، ويظل زمن التجزئة في العتاد "
+"مهمًا."
 
 #: ../../cryptography.rst:45
 msgid ""
@@ -148,10 +187,16 @@ msgid ""
 "must not be turned into an unqualified claim about every concrete "
 "implementation or adversary."
 msgstr ""
+"يتبع Sibuna البناء القائم على التجزئة الذي وصفه Cohen وPietrzak. يحتوي "
+"رسمه على :math:`2^{n+1}-1` تسمية عند العمق :math:`n`، لكن عددًا ثابتًا من "
+"التسميات ليس زمن استجابة محددًا في المتصفح: قد تمتد التسميات على عدة كتل "
+"ضغط، وقد تعيد الفتحات حساب أشجار فرعية، وتضيف الجدولة تفاوتًا. يجب ألا "
+"تتحول العبارات الأمنية من تحليلات نموذج الأوراكل إلى ادعاء غير مقيد بشأن "
+"كل تنفيذ ملموس أو كل خصم."
 
 #: ../../cryptography.rst:47
 msgid "The Construction"
-msgstr ""
+msgstr "البناء"
 
 #: ../../cryptography.rst:50
 msgid ""
@@ -163,12 +208,21 @@ msgid ""
 "is the challenge statement and :math:`H` is SHA-256 with :math:`\\chi` "
 "absorbed once (the same prefix trick as the Hashcash solver):"
 msgstr ""
+"ليكن :math:`n` هو العمق، ولننظر إلى الشجرة الثنائية الكاملة التي تُسمى "
+"عقدها بسلاسل ثنائية لا يتجاوز طولها :math:`n` (الجذر "
+":math:`\\varepsilon`، والابنان :math:`v0` و\\ :math:`v1`، والأوراق بطول "
+":math:`n`). تحمل كل عقدة :math:`v` تسمية من 32 بايت :math:`\\ell_v = "
+"H(\\chi, v, \\mathrm{parents}(v))`، حيث :math:`\\chi` هي مسألة التحدي و\\ "
+":math:`H` هي SHA-256 بعد استيعاب :math:`\\chi` مرة واحدة (حيلة البادئة "
+"نفسها في برنامج حل Hashcash):"
 
 #: ../../cryptography.rst:52
 msgid ""
 "an internal node hashes its two children: :math:`\\ell_v = H(\\chi, v, "
 "\\ell_{v0}, \\ell_{v1})`;"
 msgstr ""
+"تجزئ العقدة الداخلية ابنيها: :math:`\\ell_v = H(\\chi, v, \\ell_{v0}, "
+"\\ell_{v1})`؛"
 
 #: ../../cryptography.rst:53
 msgid ""
@@ -176,6 +230,9 @@ msgid ""
 "ancestors* wherever the root path turned right: :math:`\\ell_u = H(\\chi, "
 "u, \\{\\ell_{u_1 \\dots u_{i-1} 0} : u_i = 1\\})`."
 msgstr ""
+"تجزئ الورقة :math:`u = u_1 \\dots u_n` *الأشقاء اليساريين لأسلافها* حيثما "
+"اتجه مسار الجذر إلى اليمين: :math:`\\ell_u = H(\\chi, u, \\{\\ell_{u_1 "
+"\\dots u_{i-1} 0} : u_i = 1\\})`."
 
 #: ../../cryptography.rst:56
 msgid ""
@@ -185,6 +242,11 @@ msgid ""
 "green nodes are the siblings sent in the opening, and the dashed red "
 "edges are the left-sibling edges hashed into the leaf."
 msgstr ""
+"الشجرة بعمق 3: ترسل فتحة الورقة 3.5 تسمية الورقة وتسميات الأشقاء الثلاثة؛ "
+"والحواف المتقطعة هي اعتماديات الأشقاء اليساريين التي تجعل إسناد التسميات "
+"متسلسلًا. تشكل العقد الكهرمانية مسار الورقة 3.5، والعقد الخضراء هي "
+"الأشقاء المرسلون في الفتحة، والحواف الحمراء المتقطعة هي حواف الأشقاء "
+"اليساريين المجزأة في الورقة."
 
 #: ../../cryptography.rst:81
 msgid ""
@@ -194,6 +256,10 @@ msgid ""
 ":math:`\\varphi = \\ell_\\varepsilon` depends on all :math:`2^{n+1} - 1` "
 "labels in sequence."
 msgstr ""
+"حواف الأشقاء اليساريين هي ما يجعل الحساب متسلسلًا: لا يمكن إسناد تسمية "
+"للورقة :math:`u` حتى تكتمل كل شجرة فرعية على يسارها، لذا يُفرض اجتياز "
+"بعدي بالعمق أولًا، وتعتمد تسمية الجذر :math:`\\varphi = "
+"\\ell_\\varepsilon` على جميع التسميات :math:`2^{n+1} - 1` بالتسلسل."
 
 #: ../../cryptography.rst:83
 msgid ""
@@ -207,20 +273,30 @@ msgid ""
 "computation may span multiple hash blocks; counting labels is not "
 "counting compression calls."
 msgstr ""
+"**الفتحات.** بعد حساب :math:`\\varphi`، يشتق المُبرهِن :math:`t` ورقة "
+"بطريقة Fiat-Shamir، :math:`\\gamma_i = H(\\chi \\parallel \\varphi "
+"\\parallel i) \\bmod 2^n`، ويرسل لكل منها تسمية الورقة وتسميات الأشقاء "
+":math:`n` على مسارها إلى الجذر. يعيد المتحقق حساب الورقة من الأشقاء الذين "
+"هم آباؤها، ويجزئ صعودًا عبر المسار، ويتحقق من أنه يصل إلى "
+":math:`\\varphi`. تكلفة المتحقق :math:`O(tn)` حساب تسمية بمساحة عمل "
+"محدودة. قد يمتد حساب تسمية على عدة كتل تجزئة؛ فعدّ التسميات ليس عدًّا "
+"لاستدعاءات الضغط."
 
 #: ../../cryptography.rst:85
 msgid "Implementation: ``posw::verify_opening``"
-msgstr ""
+msgstr "التنفيذ: ``posw::verify_opening``"
 
 #: ../../cryptography.rst:87
 msgid ""
 "Recomputes one opened leaf from its sibling labels and walks the path to "
 "the root. In ``crates/pow/src/posw.rs`` (crate ``sibuna-pow``)."
 msgstr ""
+"يعيد حساب ورقة مفتوحة من تسميات أشقائها ويتبع المسار حتى الجذر. في "
+"``crates/pow/src/posw.rs`` (الحزمة ``sibuna-pow``)."
 
 #: ../../cryptography.rst:120
 msgid "Sampling, Soundness, and Their Limits"
-msgstr ""
+msgstr "أخذ العينات والسلامة وحدودهما"
 
 #: ../../cryptography.rst:123
 msgid ""
@@ -231,10 +307,14 @@ msgid ""
 "openings help. It is not, by itself, a security proof for a "
 "sequential-work protocol."
 msgstr ""
+"لننظر إلى التزام ثابت فيه نسبة سيئة :math:`\\alpha` قابلة للكشف بصورة "
+"مستقلة. إذا أخذت كل فتحة عينة موحدة ومستقلة، فإن احتمال تفويت كل موضع سيئ "
+"في :math:`t` فتحة هو :math:`(1-\\alpha)^t`. يوضح هذا الحساب البسيط لماذا "
+"تفيد زيادة الفتحات. لكنه ليس وحده برهانًا أمنيًا لبروتوكول عمل متسلسل."
 
 #: ../../cryptography.rst:125
 msgid "Worked example: a conditional sampling bound"
-msgstr ""
+msgstr "مثال محلول: حد مشروط لأخذ العينات"
 
 #: ../../cryptography.rst:127
 msgid ""
@@ -245,6 +325,11 @@ msgid ""
 "can grind many roots, choose which commitment to reveal, or correlate "
 "failures, this calculation does not account for that strategy."
 msgstr ""
+"مع نسبة سيئة ثابتة :math:`\\alpha = 0.1` و\\ :math:`t = 16` فتحة مستقلة، "
+"يكون احتمال تفويت كل موضع سيئ :math:`0.9^{16} \\approx 0.185`. ومع 32 "
+"فتحة يبلغ نحو 0.034. تفترض المقدمة تثبيت الالتزام قبل اختيار العينات. إذا "
+"استطاع المُبرهِن تجربة جذور كثيرة، أو اختيار الالتزام الذي يكشفه، أو ربط "
+"حالات الفشل، فإن هذا الحساب لا يأخذ تلك الاستراتيجية في الحسبان."
 
 #: ../../cryptography.rst:129
 msgid ""
@@ -255,10 +340,15 @@ msgid ""
 "commitment; reproducibility alone does not prove resistance to grinding. "
 "We make no unconditional claim that cheating is never cheaper."
 msgstr ""
+"لبناء العمل المتسلسل المرجعي تحليل أمني في نموذج أوراكل. ومع ذلك يجب فحص "
+"فصل المجالات في Sibuna، وخريطة المعلمات، والاقتطاع، والتنفيذ مقابل "
+"افتراضات البناء. تجعل عينات Fiat-Shamir الفتحات قابلة لإعادة الإنتاج من "
+"التزام؛ وقابلية إعادة الإنتاج وحدها لا تثبت مقاومة التجربة المتكررة. لا "
+"ندعي دون قيد أن الغش لا يكون أرخص أبدًا."
 
 #: ../../cryptography.rst:131
 msgid "Exercise 3.1"
-msgstr ""
+msgstr "التمرين 3.1"
 
 #: ../../cryptography.rst:133
 msgid ""
@@ -266,14 +356,17 @@ msgid ""
 "with probability :math:`q`, derive the probability that at least one is "
 "accepted. Which costs are missing from that expression?"
 msgstr ""
+"إذا جرب مهاجم :math:`g` التزامًا مستقلًا، يُقبل كل منها باحتمال "
+":math:`q`، فاشتق احتمال قبول واحد منها على الأقل. ما التكاليف الغائبة عن "
+"هذا التعبير؟"
 
 #: ../../cryptography.rst:135
 msgid "*Hint:* First calculate the probability that all :math:`g` fail."
-msgstr ""
+msgstr "*تلميح:* احسب أولًا احتمال فشل الالتزامات :math:`g` كلها."
 
 #: ../../cryptography.rst:137
 msgid "Prover Memory"
-msgstr ""
+msgstr "ذاكرة المُبرهِن"
 
 #: ../../cryptography.rst:140
 msgid ""
@@ -288,10 +381,19 @@ msgid ""
 "browser tab and a native test share the same ``Workspace`` type "
 "(``sibuna_pow::posw::Workspace``)."
 msgstr ""
+"يخزن مُبرهِن ساذج كل تسمية (وعددها :math:`2^{n+1} - 1`). يحتفظ مُبرهِن "
+"Sibuna في المرور الأول بمكدس لتسميات الأشقاء اليساريين للمسار الحالي "
+"(:math:`n + 1` تسمية)، ولا يبقي إلا أعلى :math:`m = \\min(n, 10)` مستوى "
+"(:math:`2^{m+1} - 1` تسمية، وبحد أقصى 64 KB). لفتح ورقة، يعيد حساب الشجرة "
+"الفرعية لسلف الورقة عند العمق :math:`m`، أي :math:`2^{n-m+1} - 1` تجزئة، "
+"مع تهيئة المكدس من المستويات المحفوظة. التكلفة الإجمالية للمُبرهِن "
+":math:`2^{n+1} - 1 + t\\,(2^{n-m+1} - 1)` تجزئة، ومساحة العمل كلها، بما "
+"فيها الإثبات الناتج، أقل من 100 KB: يشترك تبويب المتصفح والاختبار الأصلي "
+"في النوع ``Workspace`` نفسه (``sibuna_pow::posw::Workspace``)."
 
 #: ../../cryptography.rst:142
 msgid "Parameters Are Not Timings"
-msgstr ""
+msgstr "المعلمات ليست أزمنة"
 
 #: ../../cryptography.rst:145
 msgid ""
@@ -303,6 +405,12 @@ msgid ""
 "costs. The committed primitive benchmark measures verification; it does "
 "not establish browser solve latency."
 msgstr ""
+"يربط Sibuna بتات العمل بالعمق باستخدام :math:`n = b - 3`، مع حصره في "
+"المجال المدعوم :math:`[4, 24]`. هذا اصطلاح لمقياس العمل، وليس ضمانًا "
+"لتساوي الزمن الفعلي بين الخوارزميات. قد تجزئ الورقة عدة تسميات آباء، "
+"بينما يختبر Hashcash قيمة مؤقتة مرارًا. تؤثر خيارات المترجم والمتصفح "
+"والمعالج والمعلمات كلها في تكاليفها النسبية. يقيس قياس أداء العمليات "
+"الأولية الملتزم به التحقق؛ ولا يثبت زمن الحل في المتصفح."
 
 #: ../../cryptography.rst:147
 msgid ""
@@ -311,20 +419,26 @@ msgid ""
 "opening count increases both the proof and the verifier's work, even if "
 "the dominant cost of constructing the tree stays the same."
 msgstr ""
+"حجم الإثبات :math:`32(1 + t(n+1))` بايت. عند العمق 13 مع ست عشرة فتحة، "
+"يبلغ :math:`32(1 + 16 \\times 14) = 7200` بايت. تزيد زيادة عدد الفتحات "
+"حجم الإثبات وعمل المتحقق معًا، حتى إذا ظلت التكلفة الغالبة لبناء الشجرة "
+"ثابتة."
 
 #: ../../cryptography.rst:149
 msgid "Exercise 3.2"
-msgstr ""
+msgstr "التمرين 3.2"
 
 #: ../../cryptography.rst:151
 msgid ""
 "Compute the proof size at depth 17 with 16 openings. Then double the "
 "opening count. Which term doubles and which term remains fixed?"
 msgstr ""
+"احسب حجم الإثبات عند العمق 17 مع 16 فتحة. ثم ضاعف عدد الفتحات. أي حد "
+"يتضاعف وأي حد يظل ثابتًا؟"
 
 #: ../../cryptography.rst:153
 msgid "Choosing a Construction"
-msgstr ""
+msgstr "اختيار بناء"
 
 #: ../../cryptography.rst:156
 msgid ""
@@ -336,6 +450,11 @@ msgid ""
 "resources. Publicly verifiable delay constructions serve a different "
 "trust model from a shared-secret gate."
 msgstr ""
+"المقارنة المناسبة هي ميزانية الموارد، لا سمعة الخوارزمية. سجّل ذاكرة "
+"المُبرهِن، وأسوأ عمل للمتحقق، وبايتات الإثبات، والافتراضات اللازمة "
+"للخاصية المعلنة. قد يفيد البحث المكثف للذاكرة، لكن المتحقق الذي يجب أن "
+"يكرر عملًا مكلفًا يمنح المهاجم موضعًا آخر لاستهلاك موارد الخادم. تخدم "
+"بناءات التأخير القابلة للتحقق علنًا نموذج ثقة مختلفًا عن بوابة بسر مشترك."
 
 #: ../../cryptography.rst:158
 msgid ""
@@ -344,10 +463,13 @@ msgid ""
 "analysis. Neither choice removes the need to reject malformed proofs "
 "before entering expensive verification."
 msgstr ""
+"يحتفظ Sibuna بتحقق تجزئة قليل التكلفة، وبخيار عمل متسلسل قائم على "
+"التجزئة. يحتاج الأخير إلى بايتات إثبات أكثر وتحليل أدق للمعلمات. لا يلغي "
+"أي من الخيارين ضرورة رفض الإثباتات المشوهة قبل الدخول في تحقق مكلف."
 
 #: ../../cryptography.rst:160 ../../cryptography.rst:245
 msgid "Explain the invariant"
-msgstr ""
+msgstr "اشرح الثابت"
 
 #: ../../cryptography.rst:162
 msgid ""
@@ -355,10 +477,12 @@ msgid ""
 "a label belongs to a commitment, and dependency edges, which constrain "
 "how labels are computed."
 msgstr ""
+"اشرح الفرق بين شجرة المصادقة، التي تثبت انتماء تسمية إلى التزام، وحواف "
+"الاعتماد، التي تقيد طريقة حساب التسميات."
 
 #: ../../cryptography.rst:164
 msgid "Symmetric Authentication: Challenges and Sessions"
-msgstr ""
+msgstr "المصادقة المتماثلة: التحديات والجلسات"
 
 #: ../../cryptography.rst:169
 msgid ""
@@ -367,10 +491,14 @@ msgid ""
 "for a 128-bit tag, describe the stateless challenge record and the "
 "spent-set bound, and read the key schedule."
 msgstr ""
+"نشرح لماذا تكون الدالة شبه العشوائية ذات المفتاح هي الأداة الأولية "
+"الصحيحة عندما ينتمي المُصدر والمتحقق إلى مجال الثقة نفسه، ونذكر حد "
+"التزوير لوسم من 128 بت، ونصف سجل التحدي عديم الحالة وحد مجموعة المستهلك، "
+"ونقرأ جدول اشتقاق المفاتيح."
 
 #: ../../cryptography.rst:171
 msgid "Issuer Equals Verifier"
-msgstr ""
+msgstr "المُصدر هو المتحقق"
 
 #: ../../cryptography.rst:174
 msgid ""
@@ -382,10 +510,16 @@ msgid ""
 "the MAC key can also mint tokens. The benchmark chapter compares the "
 "implemented token operations."
 msgstr ""
+"يتيح التوقيع الرقمي *لأي أحد* يحمل المفتاح العام أن يتحقق، وهو الأداة "
+"المناسبة عندما يجب ألا يتمكن المتحققون من إصدار الرموز. متحقق Sibuna *هو* "
+"المُصدر (أو عنقود يتشارك بذرة واحدة). يوفر رمز مصادقة الرسالة المبني من "
+"دالة شبه عشوائية المصادقة داخل مجال الثقة هذا. ولا يوفر التحقق العلني: كل "
+"من يحمل مفتاح MAC يستطيع أيضًا إصدار الرموز. يقارن فصل قياسات الأداء "
+"عمليات الرموز المنفذة."
 
 #: ../../cryptography.rst:176
 msgid "Lemma 3 (Forgery bound)"
-msgstr ""
+msgstr "اللمّة 3 (حد التزوير)"
 
 #: ../../cryptography.rst:178
 msgid ""
@@ -395,6 +529,10 @@ msgid ""
 "\\varepsilon_{\\mathrm{PRF}}`. At a million queries per second that is "
 ":math:`2^{-108}` per second."
 msgstr ""
+"عند نمذجة BLAKE3 في الوضع ذي المفتاح بوصفه PRF مع وسم من 16 بايت، يزور "
+"خصم يجري :math:`q` استعلام تحقق رمزًا صالحًا باحتمال لا يتجاوز :math:`q "
+"\\cdot 2^{-128} + \\varepsilon_{\\mathrm{PRF}}`. عند مليون استعلام في "
+"الثانية يكون ذلك :math:`2^{-108}` في الثانية."
 
 #: ../../cryptography.rst:180
 msgid ""
@@ -405,10 +543,15 @@ msgid ""
 "option (``--token-scheme ed25519``) for deployments that need non-minting "
 "verifiers."
 msgstr ""
+"ولنتيجة ثانية أهمية على المدى البعيد: يعتمد Ed25519 على اللوغاريتمات "
+"المتقطعة في زمرة منحنى إهليلجي، وتكسرها خوارزمية Shor؛ أما التجزئة ذات "
+"المفتاح فتعتمد على دالة التجزئة وحدها، ولا تعطي الخوارزميات الكمومية ضدها "
+"أكثر من تسارع تربيعي. يحتفظ Sibuna بـ Ed25519 خيارًا (``--token-scheme "
+"ed25519``) لعمليات النشر التي تحتاج إلى متحققين لا يستطيعون إصدار الرموز."
 
 #: ../../cryptography.rst:182
 msgid "The Key Schedule"
-msgstr ""
+msgstr "جدول اشتقاق المفاتيح"
 
 #: ../../cryptography.rst:185
 msgid ""
@@ -417,10 +560,14 @@ msgid ""
 "domain string: the token, challenge, Ed25519 and fingerprint keys, and "
 "the requirement key that seals requirement tickets (Part IV)."
 msgstr ""
+"تشتق بذرة رئيسية واحدة من 32 بايت (من ``--secret-file`` أو "
+"``SIBUNA_SECRET`` أو قيمة عشوائية جديدة) كل مفتاح غرض باستخدام BLAKE3 ذي "
+"مفتاح وسلسلة مجال: مفاتيح الرمز، والتحدي، وEd25519، والبصمة، ومفتاح "
+"المتطلبات الذي يختم تذاكر المتطلبات (الجزء الرابع)."
 
 #: ../../cryptography.rst:187
 msgid "Implementation: ``Keys::derive``"
-msgstr ""
+msgstr "التنفيذ: ``Keys::derive``"
 
 #: ../../cryptography.rst:189
 msgid ""
@@ -429,6 +576,9 @@ msgid ""
 "and ``Seed`` zero their bytes when dropped, and their ``Debug`` output is "
 "redacted."
 msgstr ""
+"يشتق مفاتيح الأغراض الخمسة من البذرة. في ``crates/challenge/src/keys.rs`` "
+"(الحزمة ``sibuna-challenge``). يصفّر ``Keys`` و\\ ``Seed`` بايتاتهما عند "
+"إسقاطهما، ويُحجب خرج ``Debug`` الخاص بهما."
 
 #: ../../cryptography.rst:207
 msgid ""
@@ -437,6 +587,10 @@ msgid ""
 "challenge must return to the node that issued it, while session tokens "
 "and requirement tickets stay valid on every member."
 msgstr ""
+"في العنقود، يستبدل ``Keys::bind_node`` مفتاح التحدي بقيمة BLAKE3 ذي "
+"مفتاح، بذلك المفتاح نفسه، على ``sibuna/challenge-node/v1`` ومعرف العقدة، "
+"فيجب أن يعود التحدي إلى العقدة التي أصدرته، بينما تظل رموز الجلسة وتذاكر "
+"المتطلبات صالحة على كل عضو."
 
 #: ../../cryptography.rst:209
 msgid ""
@@ -444,16 +598,19 @@ msgid ""
 "of the master seed compromises every derived key. A cluster only has to "
 "agree on one seed."
 msgstr ""
+"يمنع فصل المجالات إعادة الاستخدام العرضية بين الأغراض؛ واختراق البذرة "
+"الرئيسية يخترق كل مفتاح مشتق. لا يحتاج العنقود إلا إلى الاتفاق على بذرة "
+"واحدة."
 
 #: ../../cryptography.rst:211
 msgid "Stateless Challenges"
-msgstr ""
+msgstr "تحديات عديمة الحالة"
 
 #: ../../cryptography.rst:215
 msgid ""
 "Wire formats of the challenge identifier and the session token (field "
 "widths in bytes)."
-msgstr ""
+msgstr "تنسيقات النقل لمعرف التحدي ورمز الجلسة (عروض الحقول بالبايت)."
 
 #: ../../cryptography.rst:233
 msgid ""
@@ -466,10 +623,16 @@ msgid ""
 "checks the fingerprint against the submitting client, and only then "
 "examines the proof."
 msgstr ""
+"معرف التحدي سجل ذاتي المصادقة: الإصدار، والخوارزمية، والصعوبة، وعدد "
+"الفتحات، ووقت الإصدار، وبصمة العميل ذات المفتاح، وقيمة مؤقتة مشتقة من "
+"PRF، وتجزئة قاعدة السياسة التي طلبت التحدي، يتبعها وسم من 16 بايت بمفتاح "
+"التحدي. إصداره لا يكتب شيئًا. يفك التحقق ترميز السجل، ويفحص الوسم في زمن "
+"ثابت، ويفحص العمر مقابل مدة صلاحية التحدي، ويفحص البصمة مقابل العميل "
+"المرسل، وعندئذ فقط يفحص الإثبات."
 
 #: ../../cryptography.rst:235
 msgid "Lemma 4 (State grows only with paid work)"
-msgstr ""
+msgstr "اللمّة 4 (تنمو الحالة فقط مع العمل المدفوع)"
 
 #: ../../cryptography.rst:237
 msgid ""
@@ -482,6 +645,12 @@ msgid ""
 "valid solution when saturated. This is a state bound, not a lower bound "
 "on every adversary's computational strategy."
 msgstr ""
+"لتكن :math:`S` مجموعة وسوم التحديات التي يتذكرها البرنامج الخدمي. لا يدخل "
+"وسم إلى :math:`S` إلا بعد قبول إثبات صالح له، ويخرج منها بعد مدة صلاحية "
+"التحدي. لذا :math:`|S| \\le r \\cdot \\mathrm{TTL}` عندما تحد :math:`r` "
+"معدل الحلول المميزة المقبولة خلال تلك الفترة. لا يُخصص وسم عند جلب تحدٍّ "
+"مجاني. وللتنفيذ أيضًا سعة ثابتة، وقد يرفض حلًا صالحًا عند التشبع. هذا حد "
+"للحالة، وليس حدًا أدنى لاستراتيجية الحساب لدى كل خصم."
 
 #: ../../cryptography.rst:239
 msgid ""
@@ -490,10 +659,14 @@ msgid ""
 "User-Agent, length-separated so no two inputs collide by concatenation, "
 "and keyed so fingerprints of other clients cannot be computed offline."
 msgstr ""
+"مجموعة المستهلك 16 جزءًا من عنونة Robin Hood المفتوحة على الوسوم ذات 16 "
+"بايت (الجزء الخامس). البصمة تجزئة ذات مفتاح لعنوان العميل وUser-Agent، مع "
+"فصل الأطوال كي لا يتصادم مدخلان بالتسلسل، ومع مفتاح كي لا يمكن حساب بصمات "
+"عملاء آخرين خارج الاتصال."
 
 #: ../../cryptography.rst:241
 msgid "Exercise 3.3"
-msgstr ""
+msgstr "التمرين 3.3"
 
 #: ../../cryptography.rst:243
 msgid ""
@@ -501,6 +674,9 @@ msgid ""
 "``rule_hash``, and ``fingerprint``. Explain what each field prevents if "
 "it were removed, and why the tag must cover all five."
 msgstr ""
+"تحمل حمولة الرمز مستوى العمل، و\\ ``timestamp``، و\\ ``expiry``، و\\ "
+"``rule_hash``، و\\ ``fingerprint``. اشرح ما يمنعه كل حقل لو حُذف، ولماذا "
+"يجب أن يغطي الوسم الحقول الخمسة كلها."
 
 #: ../../cryptography.rst:247
 msgid ""
@@ -508,3 +684,5 @@ msgid ""
 "stronger\". Explain the trust-domain argument, the cost difference, and "
 "the post-quantum consideration."
 msgstr ""
+"يقترح زميل تحويل جميع الرموز إلى Ed25519 \"لأنه أقوى\". اشرح حجة مجال "
+"الثقة، وفرق التكلفة، والاعتبار بعد الكمومي."

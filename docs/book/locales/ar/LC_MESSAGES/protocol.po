@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"POT-Creation-Date: 2026-10-16 05:22+0000\n"
+"PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: ../../protocol.rst:1
 msgid "Part IV: The Sibuna Protocol"
-msgstr ""
+msgstr "الجزء الرابع: بروتوكول Sibuna"
 
 #: ../../protocol.rst:4
 msgid ""
@@ -28,15 +28,18 @@ msgid ""
 "the stateless challenge record, both solution formats, verification "
 "order, single-use enforcement, and the session cookie."
 msgstr ""
+"نحدد بروتوكول النقل كما نُفذ: دورة الصفحة الوسيطة، وسجل التحدي عديم "
+"الحالة، وتنسيقي الحل، وترتيب التحقق، وفرض الاستخدام الواحد، وملف تعريف "
+"ارتباط الجلسة."
 
 #: ../../protocol.rst:6
 msgid "The Challenge Round Trip"
-msgstr ""
+msgstr "دورة التحدي"
 
 #: ../../protocol.rst:9 ../../protocol.rst:72 ../../protocol.rst:135
 #: ../../protocol.rst:186
 msgid "Objectives"
-msgstr ""
+msgstr "الأهداف"
 
 #: ../../protocol.rst:11
 msgid ""
@@ -45,10 +48,13 @@ msgid ""
 "involved, and explain why the challenge carries the protected path's "
 "policy decision."
 msgstr ""
+"بنهاية هذا الفصل، سنستطيع تتبع المتصفح من أول طلب إلى إنشاء جلسة، وتسمية "
+"كل نقطة نهاية وكل حقل JSON مشارك، وشرح سبب حمل التحدي لقرار السياسة الخاص "
+"بالمسار المحمي."
 
 #: ../../protocol.rst:14
 msgid "The challenge round trip."
-msgstr ""
+msgstr "دورة التحدي."
 
 #: ../../protocol.rst:41
 msgid ""
@@ -62,6 +68,14 @@ msgid ""
 "rule's hash, sealed for this client with a keyed BLAKE3 tag under its own "
 "derived key and valid for one challenge lifetime."
 msgstr ""
+"يصل تنقل بلا جلسة صالحة إلى محرك السياسة، فيُصنف ``CHALLENGE``. ولأن "
+"الطلب يقبل ``text/html``، يجيب البرنامج الخدمي بالحالة ``200`` مع الصفحة "
+"الوسيطة والترويسة ``X-Sibuna-Status: CHALLENGE``؛ أما عميل API الذي لا "
+"يقبل HTML فيتلقى ``401`` مع جسم JSON يحمل عنوان ``challenge`` جاهزًا "
+"للجلب. وفي الحالتين تحمل الاستجابة *تذكرة متطلبات*: التحدي الذي يفرضه هذا "
+"القرار (الخوارزمية، وبتات العمل، والفتحات) وتجزئة القاعدة، مختومة لهذا "
+"العميل بوسم BLAKE3 ذي مفتاح تحت مفتاحها المشتق الخاص، وصالحة مدة عمر "
+"تحدٍّ واحد."
 
 #: ../../protocol.rst:42
 msgid ""
@@ -78,30 +92,45 @@ msgid ""
 "advisory: admission still checks the session's work level, so a replayed "
 "or forged ticket can only cost its holder work."
 msgstr ""
+"تجلب الصفحة الوسيطة ``GET /__sibuna/challenge.json?path=<original "
+"URL>&need=<ticket>``. تحدد التذكرة الصالحة التحدي: يثبت العمل بالقرار "
+"الذي طلبه، ولا يُعاد حسابه من عنوان URL مُبلغ عنه ومن ترويسات الجلب نفسه، "
+"وهي تختلف عن ترويسات التنقل (``Accept``، و\\ ``Sec-Fetch-*``). من دون "
+"تذكرة صالحة (عميل API يتجاهل العنوان، أو صفحة تُركت مفتوحة بعد انتهاء "
+"العمر) يقيّم الخادم عنوان URL المُبلغ عنه، مقسومًا إلى مسار واستعلام "
+"بالدالة نفسها التي تقرأ سطر الطلب، مع وضع المسار في الصيغة القياسية التي "
+"يستخدمها الدخول (SID 0009)؛ ويُرفض العنوان الأطول من 8 KiB بالحالة "
+"``414`` ولا يُقتطع أبدًا، ويُرفض المسار الذي ليست له صيغة قياسية بالحالة "
+"``400``. التذكرة استشارية: يظل الدخول يفحص مستوى عمل الجلسة، فلا تكلف "
+"التذكرة المعادة أو المزورة إلا عملًا إضافيًا على حاملها."
 
 #: ../../protocol.rst:43
 msgid "The response is the challenge record:"
-msgstr ""
+msgstr "الاستجابة هي سجل التحدي:"
 
 #: ../../protocol.rst:49
 msgid ""
 "For ``hashcash``, ``difficulty`` is the bit count and ``challenges`` is "
 "``0``."
 msgstr ""
+"بالنسبة إلى ``hashcash``، يمثل ``difficulty`` عدد البتات، ويساوي "
+"``challenges`` القيمة ``0``."
 
 #: ../../protocol.rst:50
 msgid ""
 "A Web Worker solves it with the WebAssembly module, or the JavaScript "
 "prover if WebAssembly is unavailable (Part VII), and posts either"
 msgstr ""
+"يحله Web Worker بوحدة WebAssembly، أو بمُبرهِن JavaScript إذا لم تتوفر "
+"WebAssembly (الجزء السابع)، ويرسل إما"
 
 #: ../../protocol.rst:56
 msgid "or"
-msgstr ""
+msgstr "أو"
 
 #: ../../protocol.rst:62
 msgid "to ``POST /__sibuna/verify``."
-msgstr ""
+msgstr "إلى ``POST /__sibuna/verify``."
 
 #: ../../protocol.rst:63
 msgid ""
@@ -109,10 +138,13 @@ msgid ""
 "``Set-Cookie`` header, and the page reloads its original location. Every "
 "later request carries the cookie and is admitted before policy evaluation."
 msgstr ""
+"عند النجاح يجيب الخادم بـ ``200 {\"status\":\"ok\"}`` مع ترويسة "
+"``Set-Cookie``، وتعيد الصفحة تحميل موقعها الأصلي. يحمل كل طلب لاحق ملف "
+"تعريف الارتباط، ويُقبل قبل تقييم السياسة."
 
 #: ../../protocol.rst:65
 msgid "Why the path travels with the challenge"
-msgstr ""
+msgstr "لماذا يرافق المسار التحدي"
 
 #: ../../protocol.rst:67
 msgid ""
@@ -123,10 +155,15 @@ msgid ""
 "rule hash into the token, where ``X-Sibuna-Rule-Hash`` reports it "
 "upstream."
 msgstr ""
+"تُقدم الصفحة الوسيطة عند العنوان المحمي، فيعرف المتصفح موقعه. يتيح إرسال "
+"المسار للخادم اختيار الصعوبة والخوارزمية *الخاصتين بكل قاعدة* (قد يتطلب "
+"مسار الدفع 20 بت عمل من العمل المتسلسل، بينما تتطلب مدونة 16 بت من "
+"Hashcash)، ويربط تجزئة القاعدة بالرمز، حيث يبلغ عنها "
+"``X-Sibuna-Rule-Hash`` إلى الخادم الخلفي."
 
 #: ../../protocol.rst:69
 msgid "The Stateless Challenge Record"
-msgstr ""
+msgstr "سجل التحدي عديم الحالة"
 
 #: ../../protocol.rst:74
 msgid ""
@@ -134,10 +171,12 @@ msgid ""
 "the per-challenge nonce is derived without an entropy syscall on the hot "
 "path."
 msgstr ""
+"اقرأ مرمز التحدي، وافهم غرض كل حقل، وانظر كيف تُشتق القيمة المؤقتة لكل "
+"تحدٍّ من دون استدعاء نظام للعشوائية في المسار الساخن."
 
 #: ../../protocol.rst:76
 msgid "Implementation: ``Coordinator::create_challenge_with_spec``"
-msgstr ""
+msgstr "التنفيذ: ``Coordinator::create_challenge_with_spec``"
 
 #: ../../protocol.rst:78
 msgid ""
@@ -145,6 +184,9 @@ msgid ""
 "base64url-encodes the 52 bytes into a 70-character identifier. In "
 "``crates/challenge/src/coordinator.rs`` (crate ``sibuna-challenge``)."
 msgstr ""
+"ينشئ حمولة من 36 بايت، ويضع لها وسمًا بمفتاح التحدي، ويرمز البايتات الـ "
+"52 بترميز base64url إلى معرف من 70 محرفًا. في "
+"``crates/challenge/src/coordinator.rs`` (الحزمة ``sibuna-challenge``)."
 
 #: ../../protocol.rst:124
 msgid ""
@@ -154,10 +196,14 @@ msgid ""
 "Hashcash bits (at most 64) or PoSW depth (``difficulty - 3``, clamped to "
 "4 through 24)."
 msgstr ""
+"المعرف من النوع ``Encoded<70>``: يعيش النص في مصفوفة بطوله تمامًا، فلا "
+"يخصص إصدار التحدي أي ذاكرة. تحول ``ChallengeSpec::parameter`` بتات العمل "
+"إلى وحدة المستوى نفسه: بتات Hashcash (64 على الأكثر)، أو عمق PoSW "
+"(``difficulty - 3``، محصورًا بين 4 و24)."
 
 #: ../../protocol.rst:126
 msgid "Three details deserve attention:"
-msgstr ""
+msgstr "تستحق ثلاثة تفاصيل الانتباه:"
 
 #: ../../protocol.rst:128
 msgid ""
@@ -167,6 +213,10 @@ msgid ""
 "work bit, capped at six. A flood pays exponentially more while quiet "
 "traffic keeps the base cost."
 msgstr ""
+"*الصعوبة التكيفية.* يحتفظ المنسق بمتوسط متحرك مرجح أسيًا لمعدل إصدار "
+"التحديات في ثلاث قيم ذرية. فوق خط أساس قدره 50 تحديًا في الثانية، تضيف كل "
+"مضاعفة للمعدل بت عمل واحدًا، بحد أقصى ستة. يدفع الإغراق تكلفة تزداد "
+"أسيًا، بينما تحتفظ الحركة الهادئة بالتكلفة الأساسية."
 
 #: ../../protocol.rst:129
 msgid ""
@@ -176,16 +226,22 @@ msgid ""
 "not been issued, and the hot path never calls into the operating system "
 "for entropy."
 msgstr ""
+"*القيمة المؤقتة خرج دالة PRF*، بمفتاح التحدي على عداد والساعة والبصمة. "
+"وهي فريدة (بفضل العداد) وغير قابلة للتنبؤ (بفضل المفتاح)، فلا يستطيع "
+"الخصم حساب حلول مسبقًا لمعرفات لم تُصدر له، ولا يستدعي المسار الساخن نظام "
+"التشغيل أبدًا للحصول على العشوائية."
 
 #: ../../protocol.rst:130
 msgid ""
 "*Difficulty travels inside the tag.* A client cannot lower the difficulty "
 "by editing the record: the tag would fail before any proof is examined."
 msgstr ""
+"*الصعوبة تنتقل داخل الوسم.* لا يستطيع العميل خفض الصعوبة بتعديل السجل: "
+"سيفشل الوسم قبل فحص أي إثبات."
 
 #: ../../protocol.rst:132
 msgid "Verification Order and Single Use"
-msgstr ""
+msgstr "ترتيب التحقق والاستخدام الواحد"
 
 #: ../../protocol.rst:137
 msgid ""
@@ -193,10 +249,12 @@ msgid ""
 "is marked spent only after the proof is valid, and how two concurrent "
 "submissions of one solution are resolved."
 msgstr ""
+"افهم لماذا تسبق الفحوص الرخيصة الإثبات، ولماذا لا يُسجل التحدي مستهلكًا "
+"إلا بعد صلاحية الإثبات، وكيف يُحسم تقديمان متزامنان للحل نفسه."
 
 #: ../../protocol.rst:139
 msgid "Implementation: ``Coordinator::verify_and_mint``"
-msgstr ""
+msgstr "التنفيذ: ``Coordinator::verify_and_mint``"
 
 #: ../../protocol.rst:141
 msgid ""
@@ -205,6 +263,9 @@ msgid ""
 "mints the session token. In ``crates/challenge/src/coordinator.rs`` "
 "(crate ``sibuna-challenge``)."
 msgstr ""
+"يفك ترميز المعرف ويصادقه، ويفحص العمر والارتباط بالعميل، ويتحقق من "
+"الإثبات للمستوى المسجل، ويسجل الوسم مستهلكًا، وينشئ رمز الجلسة. في "
+"``crates/challenge/src/coordinator.rs`` (الحزمة ``sibuna-challenge``)."
 
 #: ../../protocol.rst:179
 msgid ""
@@ -218,6 +279,14 @@ msgid ""
 "minted by a node whose clock runs ahead by more than a minute, which "
 "would otherwise extend a challenge's life."
 msgstr ""
+"الترتيب مقصود. الوسم والعمر والارتباط فحوص ثابتة الزمن ترفض المدخلات "
+"العشوائية قبل أي تجزئة. يجب ألا يستهلك الإثبات الخاطئ التحدي، لذا لا "
+"تُكتب مجموعة المستهلك إلا بعد نجاح ``check_solution``. إذا تحقق خيطان من "
+"الحل الصالح نفسه، يتسابقان على ``mark_spent``؛ يرتبهما قفل الجزء، فيفوز "
+"أحدهما تمامًا، ويتلقى الآخر ``VerifyError::DoubleSpendAttempt``. يرفض "
+"الشرط ``issued_at > now + 60`` (قيمة ``CLOCK_SKEW_SECONDS`` هي 60) "
+"السجلات الصادرة عن عقدة تتقدم ساعتها بأكثر من دقيقة، وإلا لأطالت هذه "
+"السجلات عمر التحدي."
 
 #: ../../protocol.rst:181
 msgid ""
@@ -228,20 +297,27 @@ msgid ""
 "MISMATCH``, ``WRONG SOLUTION TYPE``, and ``MALFORMED CHALLENGE`` in the "
 "response body."
 msgstr ""
+"تظهر الأخطاء للعميل بالحالة ``400`` مع تشخيص بأسلوب Elm (الجزء العاشر): "
+"يتحول كل ``VerifyError`` إلى ``sibuna_core::errors::ErrorKind``، ويكون "
+"شرحه جسم الاستجابة. تتحقق اختبارات الطرف إلى الطرف من وجود ``DOUBLE "
+"SPEND`` و\\ ``FINGERPRINT MISMATCH`` و\\ ``WRONG SOLUTION TYPE`` و\\ "
+"``MALFORMED CHALLENGE`` في جسم الاستجابة."
 
 #: ../../protocol.rst:183
 msgid "The Session Cookie"
-msgstr ""
+msgstr "ملف تعريف ارتباط الجلسة"
 
 #: ../../protocol.rst:188
 msgid ""
 "Read the keyed-hash token, understand the cookie attributes, and explain "
 "the client binding."
 msgstr ""
+"اقرأ رمز التجزئة ذات المفتاح، وافهم خصائص ملف تعريف الارتباط، واشرح "
+"الارتباط بالعميل."
 
 #: ../../protocol.rst:190
 msgid "Implementation: ``token::mac::mint`` and ``token::mac::verify``"
-msgstr ""
+msgstr "التنفيذ: ``token::mac::mint`` و\\ ``token::mac::verify``"
 
 #: ../../protocol.rst:192
 msgid ""
@@ -250,6 +326,10 @@ msgid ""
 "``crates/challenge/src/token/mac.rs`` (crate ``sibuna-challenge``). "
 "``Coordinator::verify_cookie`` calls it with the client's fingerprint."
 msgstr ""
+"يسلسل الحمولة ذات 40 بايت، ويلحق بها أول 16 بايت من BLAKE3 ذي المفتاح "
+"محسوبًا عليها، ويتحقق بمقارنة ثابتة الزمن. في "
+"``crates/challenge/src/token/mac.rs`` (الحزمة ``sibuna-challenge``). "
+"تستدعيه ``Coordinator::verify_cookie`` ببصمة العميل."
 
 #: ../../protocol.rst:219
 msgid ""
@@ -257,10 +337,13 @@ msgid ""
 "version is refused with ``TokenError::InvalidEncoding`` only once it is "
 "known to be authentic, and a forged one never reaches the parser."
 msgstr ""
+"يُفحص الوسم قبل تحليل الحمولة: لا تُرفض حمولة من إصدار آخر بالخطأ "
+"``TokenError::InvalidEncoding`` إلا بعد التأكد من أصالتها، ولا تصل "
+"الحمولة المزورة إلى المحلل أبدًا."
 
 #: ../../protocol.rst:221
 msgid "The cookie is emitted as"
-msgstr ""
+msgstr "يُصدر ملف تعريف الارتباط على النحو التالي"
 
 #: ../../protocol.rst:228
 msgid ""
@@ -272,6 +355,13 @@ msgid ""
 "``TokenError::TokenBoundAddressMismatch``; the end-to-end test \"the "
 "cookie is bound to the client identity\" exercises exactly that path."
 msgstr ""
+"تبقيه ``HttpOnly`` بعيدًا عن نصوص الصفحة البرمجية، وتمنع ``SameSite=Lax`` "
+"إعادة الإرسال عبر المواقع مع السماح بالتنقل في المستوى الأعلى، وتُضاف "
+"``Secure`` مع ``--secure-cookie`` عندما يُنهى TLS أمام البرنامج الخدمي. "
+"ولأن الحمولة تحمل البصمة ذات المفتاح للعنوان وUser-Agent، يفشل ملف تعريف "
+"الارتباط المنسوخ إلى جهاز آخر مع "
+"``TokenError::TokenBoundAddressMismatch``؛ ويختبر اختبار الطرف إلى الطرف "
+"\"the cookie is bound to the client identity\" هذا المسار تحديدًا."
 
 #: ../../protocol.rst:230
 msgid ""
@@ -289,10 +379,21 @@ msgid ""
 "end-to-end test \"a session earned on a cheaper route does not admit a "
 "route that demands more work\" exercises both directions."
 msgstr ""
+"تبدأ الحمولة ببايت إصدار، ثم *مستوى العمل* الذي دفعه حاملها: الآلية "
+"(Hashcash أو PoSW) وبتات العمل المحلولة فعلًا، بما فيها أي زيادة تكيفية "
+"مع الحمل. لا تستوفي الجلسة تحديًا إلا عندما يبلغ مستواها ما يتطلبه "
+"المسار، محسوبًا من صعوبة القاعدة بالحصر نفسه الذي يطبقه التحدي ذاته. "
+"المستويات مرتبة لا مسماة: يغطي ملف تعريف ارتباط حُصل عليه عند 24 بت كل "
+"مسار من 16 بت أيضًا، أما ملف 16 بت المقدم إلى مسار من 24 بت فيمر إلى "
+"الصفحة الوسيطة الأقوى، ويحل الملف الجديد محل القديم. يبقى ``rule_hash`` "
+"هوية التدقيق للقاعدة التي أصدرت التحدي؛ يُبلغ عنه إلى الخادم الخلفي، ولا "
+"يُستخدم أبدًا للدخول. لا تُسقط الجلسة أبدًا نتائج WAF ولا الرفض الصريح. "
+"يختبر اختبار الطرف إلى الطرف \"a session earned on a cheaper route does "
+"not admit a route that demands more work\" الاتجاهين كليهما."
 
 #: ../../protocol.rst:232
 msgid "Forwarded addresses"
-msgstr ""
+msgstr "العناوين الممررة"
 
 #: ../../protocol.rst:235
 msgid ""
@@ -302,10 +403,14 @@ msgid ""
 "leave it off, or any client could pick its own binding and its own "
 "rate-limit bucket."
 msgstr ""
+"خلف وكيل الدخول، يصل عنوان العميل في ``X-Forwarded-For``. لا يثق Sibuna "
+"بهذه الترويسة إلا مع ``--trust-forwarded`` (وهو ضمني في وضع "
+"forward-auth). يجب أن يبقيه الوكيل العكسي المكشوف مباشرة للإنترنت معطلًا، "
+"وإلا استطاع أي عميل اختيار ارتباطه ودلو حد المعدل الخاص به."
 
 #: ../../protocol.rst:237
 msgid "Exercise 4.1"
-msgstr ""
+msgstr "التمرين 4.1"
 
 #: ../../protocol.rst:239
 msgid ""
@@ -313,13 +418,18 @@ msgid ""
 "User-Agents. Which checks do they share, which do they not, and what "
 "would an attacker on that NAT need to reuse the other browser's cookie?"
 msgstr ""
+"ارسم تسلسل متصفحين خلف عنوان NAT واحد بقيم User-Agent متطابقة. ما الفحوص "
+"التي يشتركان فيها، وما التي لا يشتركان فيها، وماذا يحتاج مهاجم على ذلك "
+"NAT لإعادة استخدام ملف تعريف ارتباط المتصفح الآخر؟"
 
 #: ../../protocol.rst:241
 msgid "Explain the invariant"
-msgstr ""
+msgstr "اشرح الثابت"
 
 #: ../../protocol.rst:243
 msgid ""
 "Explain to an operator why the daemon does not \"remember\" outstanding "
 "challenges and why that is a security feature rather than a shortcut."
 msgstr ""
+"اشرح لمشغل لماذا لا \"يتذكر\" البرنامج الخدمي التحديات المعلقة، ولماذا "
+"يعد ذلك خاصية أمنية لا اختصارًا."

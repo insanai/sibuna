@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"POT-Creation-Date: 2026-10-16 05:22+0000\n"
+"PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -20,11 +20,11 @@ msgstr ""
 
 #: ../../glossary.rst:1
 msgid "Glossary"
-msgstr ""
+msgstr "مسرد المصطلحات"
 
 #: ../../glossary.rst:6
 msgid "Admission"
-msgstr ""
+msgstr "الدخول (Admission)"
 
 #: ../../glossary.rst:7
 msgid ""
@@ -32,10 +32,13 @@ msgid ""
 "a valid session, an ``ALLOW`` rule, a static bypass path, or a reputation "
 "``allow`` prefix, and it never overrides a WAF denial."
 msgstr ""
+"قرار تمرير طلب إلى الخادم الأصلي. في Sibuna، يصدر هذا القرار عن جلسة "
+"صالحة، أو قاعدة ``ALLOW``، أو مسار تجاوز ثابت، أو بادئة سمعة ``allow``، "
+"ولا يتجاوز أبدًا رفضًا صادرًا عن WAF."
 
 #: ../../glossary.rst:9
 msgid "Aho-Corasick automaton"
-msgstr ""
+msgstr "آلة Aho-Corasick"
 
 #: ../../glossary.rst:10
 msgid ""
@@ -43,10 +46,13 @@ msgid ""
 "over the input. Sibuna folds failure links into a dense transition table "
 "so each byte costs one table load."
 msgstr ""
+"آلة حالات منتهية تجد أي نمط من مجموعة ثابتة من الأنماط بمرور واحد على "
+"المدخل. يدمج Sibuna روابط الفشل في جدول انتقال كثيف، فيكلف كل بايت "
+"تحميلًا واحدًا من الجدول."
 
 #: ../../glossary.rst:12
 msgid "Ban table"
-msgstr ""
+msgstr "جدول الحظر"
 
 #: ../../glossary.rst:13
 msgid ""
@@ -54,10 +60,12 @@ msgid ""
 "the honeypot and by reputation shared across a cluster, read on every "
 "request."
 msgstr ""
+"4,096 موضعًا بلا قفل لعناوين العملاء المحظورين مع وقت انتهاء الحظر. تكتب "
+"فيه المصيدة والسمعة المشتركة عبر العنقود، ويُقرأ في كل طلب."
 
 #: ../../glossary.rst:15
 msgid "Campaign"
-msgstr ""
+msgstr "الحملة"
 
 #: ../../glossary.rst:16
 msgid ""
@@ -65,10 +73,12 @@ msgid ""
 "cosine distance 0.35 of one another; a heuristic grouping, not a proof of "
 "common origin."
 msgstr ""
+"مجموعة من الحوادث الأمنية تقع تضمينات حمولاتها ضمن مسافة جيب تمام 0.35 "
+"بعضها من بعض؛ وهي تجميع استدلالي، لا برهان على مصدر مشترك."
 
 #: ../../glossary.rst:18
 msgid "Challenge record"
-msgstr ""
+msgstr "سجل التحدي"
 
 #: ../../glossary.rst:19
 msgid ""
@@ -77,20 +87,25 @@ msgid ""
 "nonce, rule hash, and a 16-byte keyed BLAKE3 tag. Issuing one writes "
 "nothing on the server."
 msgstr ""
+"معرّف عديم الحالة من 70 محرفًا يجب أن يحله العميل: الإصدار، والخوارزمية، "
+"والصعوبة، والفتحات، ووقت الإصدار، وبصمة العميل، وقيمة PRF مؤقتة، وتجزئة "
+"القاعدة، ووسم BLAKE3 ذو مفتاح من 16 بايت. لا يكتب إصداره شيئًا على الخادم."
 
 #: ../../glossary.rst:21
 msgid "Difficulty, work bits"
-msgstr ""
+msgstr "الصعوبة، بتات العمل"
 
 #: ../../glossary.rst:22
 msgid ""
 "The single integer that scales both tiers: the number of leading zero "
 "bits for Hashcash, or three more than the tree depth for sequential work."
 msgstr ""
+"العدد الصحيح الواحد الذي يضبط المستويين كليهما: عدد البتات الصفرية "
+"البادئة في Hashcash، أو عمق الشجرة مضافًا إليه ثلاثة في العمل المتسلسل."
 
 #: ../../glossary.rst:24
 msgid "Edge"
-msgstr ""
+msgstr "Edge"
 
 #: ../../glossary.rst:25
 msgid ""
@@ -99,10 +114,14 @@ msgid ""
 "shared by a cluster), giving persistent policies, shared reputation, and "
 "incident forensics to either surface."
 msgstr ""
+"نشر لـ Sibuna مع ``--data-dir`` (ملف SQLite على عقدة واحدة)، أو مع "
+"``--database-url`` و\\ ``--cluster-node`` (قاعدة بيانات PostgreSQL واحدة "
+"يتشاركها العنقود)، يمنح أيًّا من الوضعين سياسات دائمة، وسمعة مشتركة، "
+"وأدلة جنائية عن الحوادث."
 
 #: ../../glossary.rst:27
 msgid "Engine slot"
-msgstr ""
+msgstr "موضع المحرك"
 
 #: ../../glossary.rst:28
 msgid ""
@@ -111,20 +130,26 @@ msgid ""
 "builds a new engine off the request path and publishes it by pointer "
 "swap, and the old engine is freed when its last reader releases it."
 msgstr ""
+"المكان الذي يقيم فيه محرك السياسة المنشور، على هيئة مؤشر بعدّ المراجع. "
+"يمسك العمال مرجعًا أثناء التصنيف؛ ويبني خيط التخزين محركًا جديدًا خارج "
+"مسار الطلب وينشره بتبديل المؤشر، ويُحرر المحرك القديم عندما يتخلى عنه آخر "
+"قارئ له."
 
 #: ../../glossary.rst:30
 msgid "Fingerprint"
-msgstr ""
+msgstr "البصمة"
 
 #: ../../glossary.rst:31
 msgid ""
 "A keyed hash of client address and User-Agent, bound into challenges and "
 "tokens so neither can be replayed from another client."
 msgstr ""
+"تجزئة ذات مفتاح لعنوان العميل وUser-Agent، تُربط في التحديات والرموز كي "
+"لا يمكن إعادة تشغيل أي منهما من عميل آخر."
 
 #: ../../glossary.rst:33
 msgid "Forward auth"
-msgstr ""
+msgstr "Forward auth"
 
 #: ../../glossary.rst:34
 msgid ""
@@ -132,20 +157,25 @@ msgid ""
 "request (``200``) or challenge, deny, or limit it (``401``, ``403``, "
 "``429``), and proxies the origin itself."
 msgstr ""
+"وضع نشر يسأل فيه وكيل الدخول Sibuna هل يقبل الطلب (``200``) أو يتحداه أو "
+"يرفضه أو يحد معدله (``401`` و\\ ``403`` و\\ ``429``)، ويمرر الطلب إلى "
+"الخادم الأصلي بنفسه."
 
 #: ../../glossary.rst:36
 msgid "Gate"
-msgstr ""
+msgstr "Gate"
 
 #: ../../glossary.rst:37
 msgid ""
 "The surface with proof-of-work admission, sessions, rules, reputation, "
 "GCRA limits and bans, but no application inspection (``--gate``)."
 msgstr ""
+"الوضع الذي يقدم الدخول بإثبات العمل، والجلسات، والقواعد، والسمعة، وحدود "
+"GCRA، والحظر، دون فحص للتطبيق (``--gate``)."
 
 #: ../../glossary.rst:39
 msgid "GCRA"
-msgstr ""
+msgstr "GCRA"
 
 #: ../../glossary.rst:40
 msgid ""
@@ -153,10 +183,12 @@ msgid ""
 "that admits a burst of :math:`N` then one request per emission interval, "
 "with no window boundaries."
 msgstr ""
+"خوارزمية Generic Cell Rate Algorithm: وقت وصول نظري واحد لكل عميل، يسمح "
+"بدفعة من :math:`N` طلبًا ثم بطلب واحد لكل فاصل إصدار، دون حدود نوافذ."
 
 #: ../../glossary.rst:42
 msgid "Hashcash"
-msgstr ""
+msgstr "Hashcash"
 
 #: ../../glossary.rst:43
 msgid ""
@@ -164,50 +196,61 @@ msgid ""
 "the decimal nonce has :math:`b` leading zero bits. Expected :math:`2^b` "
 "trials, verified with one hash."
 msgstr ""
+"المستوى الأول: أوجد قيمة مؤقتة (nonce) تبدأ معها قيمة SHA-256 للتحدي "
+"ونقطتين رأسيتين والقيمة المؤقتة العشرية بـ :math:`b` بتًا صفريًا. العدد "
+"المتوقع للمحاولات :math:`2^b`، والتحقق بتجزئة واحدة."
 
 #: ../../glossary.rst:45
 msgid "Honeypot"
-msgstr ""
+msgstr "المصيدة"
 
 #: ../../glossary.rst:46
 msgid ""
 "An invisible link to ``/__sibuna/honeypot``; a client that follows it is "
 "banned and an incident with reputation :math:`-100` is recorded."
 msgstr ""
+"رابط غير مرئي إلى ``/__sibuna/honeypot``؛ يُحظر العميل الذي يتبعه، ويُسجل "
+"حادث بسمعة :math:`-100`."
 
 #: ../../glossary.rst:48
 msgid "Idle reaper"
-msgstr ""
+msgstr "جامع الاتصالات الخاملة"
 
 #: ../../glossary.rst:49
 msgid ""
 "A thread that closes connections that have been silent longer than "
 "``--idle-timeout``, so a slow client cannot pin a connection thread."
 msgstr ""
+"خيط يغلق الاتصالات التي بقيت صامتة أطول من ``--idle-timeout``، كي لا "
+"يستطيع عميل بطيء أن يحتجز خيط اتصال."
 
 #: ../../glossary.rst:51
 msgid "Interstitial"
-msgstr ""
+msgstr "الصفحة الوسيطة"
 
 #: ../../glossary.rst:52
 msgid ""
 "The embedded HTML page served in place of a protected page; it fetches a "
 "challenge, solves it in a Web Worker, posts the solution, and reloads."
 msgstr ""
+"صفحة HTML مدمجة تُقدَّم بدل الصفحة المحمية؛ تجلب تحديًا، وتحله في Web "
+"Worker، وترسل الحل، ثم تعيد التحميل."
 
 #: ../../glossary.rst:54
 msgid "Keyed BLAKE3"
-msgstr ""
+msgstr "BLAKE3 ذو مفتاح"
 
 #: ../../glossary.rst:55
 msgid ""
 "The pseudorandom function behind Sibuna's key schedule, challenge tags, "
 "session tags, fingerprints, and challenge nonces."
 msgstr ""
+"الدالة شبه العشوائية التي يقوم عليها جدول مفاتيح Sibuna، ووسوم التحديات، "
+"ووسوم الجلسات، والبصمات، والقيم المؤقتة للتحديات."
 
 #: ../../glossary.rst:57
 msgid "MAC token"
-msgstr ""
+msgstr "رمز MAC"
 
 #: ../../glossary.rst:58
 msgid ""
@@ -215,10 +258,13 @@ msgid ""
 "timestamp, expiry, rule hash, fingerprint) and a 16-byte keyed BLAKE3 "
 "tag, verified in constant time."
 msgstr ""
+"ملف تعريف الارتباط الافتراضي للجلسة: حمولة من 40 بايت (الإصدار، ومستوى "
+"العمل، والطابع الزمني، والانتهاء، وتجزئة القاعدة، والبصمة) ووسم BLAKE3 ذو "
+"مفتاح من 16 بايت، يُتحقق منه في زمن ثابت."
 
 #: ../../glossary.rst:60
 msgid "Work level"
-msgstr ""
+msgstr "مستوى العمل"
 
 #: ../../glossary.rst:61
 msgid ""
@@ -226,10 +272,12 @@ msgid ""
 "in the token; a route admits a session only when its level reaches the "
 "route's requirement."
 msgstr ""
+"الآلية وبتات العمل التي حلها حامل الجلسة فعلًا، ويحملها الرمز؛ ولا يقبل "
+"المسار جلسة إلا إذا بلغ مستواها متطلب المسار."
 
 #: ../../glossary.rst:63
 msgid "Opening"
-msgstr ""
+msgstr "الفتحة"
 
 #: ../../glossary.rst:64
 msgid ""
@@ -237,10 +285,12 @@ msgid ""
 "its path to the root; the verifier recomputes the path and compares with "
 "the commitment."
 msgstr ""
+"في برهان العمل المتسلسل، تسمية ورقة واحدة مع تسميات أشقائها على طول "
+"مسارها إلى الجذر؛ يعيد المتحقق حساب المسار ويقارنه بالالتزام."
 
 #: ../../glossary.rst:66
 msgid "Proof of Sequential Work (PoSW)"
-msgstr ""
+msgstr "إثبات العمل المتسلسل (PoSW)"
 
 #: ../../glossary.rst:67
 msgid ""
@@ -248,48 +298,58 @@ msgid ""
 "earlier labels, forcing :math:`2^{n+1}-1` sequential hashes however many "
 "cores the prover has. Verified with :math:`t(n+1)` hashes."
 msgstr ""
+"المستوى الثاني: رسم التجزئة لـ Cohen-Pietrzak الذي تعتمد تسمياته على كل "
+"التسميات السابقة، فيفرض :math:`2^{n+1}-1` تجزئة متسلسلة مهما بلغ عدد "
+"أنوية المُبرهِن. يُتحقق منه بـ :math:`t(n+1)` تجزئة."
 
 #: ../../glossary.rst:69
 msgid "Reputation trie"
-msgstr ""
+msgstr "شجرة السمعة"
 
 #: ../../glossary.rst:70
 msgid ""
 "The 128-bit radix trie holding ``allow``, ``deny``, and ``challenge`` "
 "prefixes from the policy file and from the ``ip_reputation`` table."
 msgstr ""
+"شجرة radix من 128 بت تحمل بادئات ``allow`` و\\ ``deny`` و\\ ``challenge`` "
+"من ملف السياسة ومن جدول ``ip_reputation``."
 
 #: ../../glossary.rst:72
 msgid "Robin Hood spent set"
-msgstr ""
+msgstr "مجموعة المستهلك Robin Hood"
 
 #: ../../glossary.rst:73
 msgid ""
 "The fixed-capacity open-addressed table of solved challenge tags, which "
 "prevents a valid solution from being submitted twice."
 msgstr ""
+"جدول ثابت السعة بعنونة مفتوحة لوسوم التحديات المحلولة، يمنع تقديم حل صالح "
+"مرتين."
 
 #: ../../glossary.rst:75
 msgid "Rule hash"
-msgstr ""
+msgstr "تجزئة القاعدة"
 
 #: ../../glossary.rst:76
 msgid ""
 "A 64-bit hash of the rule name that demanded a challenge, carried in the "
 "challenge, the token, and the ``X-Sibuna-Rule-Hash`` header."
 msgstr ""
+"تجزئة من 64 بت لاسم القاعدة التي طلبت تحديًا، يحملها التحدي والرمز "
+"وترويسة ``X-Sibuna-Rule-Hash``."
 
 #: ../../glossary.rst:78
 msgid "Shield"
-msgstr ""
+msgstr "Shield"
 
 #: ../../glossary.rst:79
 msgid "The default surface: Gate plus the semantic firewall (``--shield``)."
 msgstr ""
+"الوضع الافتراضي: Gate مضافًا إليه الجدار الناري الدلالي (``--shield``)."
 
 #: ../../glossary.rst:81
 msgid "SID"
-msgstr ""
+msgstr "SID"
 
 #: ../../glossary.rst:82
 msgid ""
@@ -297,20 +357,24 @@ msgid ""
 "``docs/sid/records`` with the assumptions, proofs, and measurements "
 "behind one part of the system."
 msgstr ""
+"سجل Sibuna Discussion: وثيقة تصميم بأسلوب الورقة البحثية تحت "
+"``docs/sid/records``، تضم الافتراضات والبراهين والقياسات التي يقوم عليها "
+"جزء واحد من النظام."
 
 #: ../../glossary.rst:84
 msgid "Surface"
-msgstr ""
+msgstr "الوضع (Surface)"
 
 #: ../../glossary.rst:85
 msgid ""
 "One of the two product shapes, Gate or Shield; storage and clustering are "
 "options for either."
 msgstr ""
+"أحد شكلي المنتج، Gate أو Shield؛ والتخزين والعنقدة خياران لكل منهما."
 
 #: ../../glossary.rst:87
 msgid "WEIGH"
-msgstr ""
+msgstr "WEIGH"
 
 #: ../../glossary.rst:88
 msgid ""
@@ -318,10 +382,13 @@ msgid ""
 "deciding; totals at or above the thresholds challenge with extra work "
 "bits or deny."
 msgstr ""
+"إجراء قاعدة يضيف وزنًا ذا إشارة إلى درجة الطلب بدل أن يتخذ قرارًا؛ "
+"والمجاميع التي تبلغ العتبات أو تتجاوزها تؤدي إلى تحدٍّ ببتات عمل إضافية "
+"أو إلى الرفض."
 
 #: ../../glossary.rst:90
 msgid "Zaxonlite"
-msgstr ""
+msgstr "Zaxonlite"
 
 #: ../../glossary.rst:91
 msgid ""
@@ -329,28 +396,37 @@ msgid ""
 "replaced by SQLite and PostgreSQL storage in SID 0011; its cluster "
 "options now stop startup with ``RemovedOption``."
 msgstr ""
+"محرك تكرار SQLite المدمج (Multi-Paxos) في SID 0005، الذي حل محله التخزين "
+"في SQLite وPostgreSQL في SID 0011؛ وخيارات العنقود الخاصة به توقف الآن "
+"بدء التشغيل بالخطأ ``RemovedOption``."
 
 #: ../../glossary.rst:93
 msgid "Bibliography"
-msgstr ""
+msgstr "المراجع"
 
 #: ../../glossary.rst:96
 msgid ""
 "Aho, A. V., and Corasick, M. J. \"Efficient string matching: an aid to "
 "bibliographic search.\" *Communications of the ACM* 18(6), 1975."
 msgstr ""
+"Aho, A. V., and Corasick, M. J. \"Efficient string matching: an aid to "
+"bibliographic search.\" *Communications of the ACM* 18(6), 1975."
 
 #: ../../glossary.rst:97
 msgid ""
 "ATM Forum. *Traffic Management Specification Version 4.0*, "
 "af-tm-0056.000, 1996 (the Generic Cell Rate Algorithm)."
 msgstr ""
+"ATM Forum. *Traffic Management Specification Version 4.0*, "
+"af-tm-0056.000, 1996 (خوارزمية Generic Cell Rate Algorithm)."
 
 #: ../../glossary.rst:98
 msgid ""
 "Back, A. \"Hashcash: a denial of service counter-measure.\" Technical "
 "report, 2002."
 msgstr ""
+"Back, A. \"Hashcash: a denial of service counter-measure.\" تقرير تقني، "
+"2002."
 
 #: ../../glossary.rst:99
 msgid ""
@@ -358,47 +434,64 @@ msgid ""
 "sequential work in a post-quantum world.\" *Information-Theoretic "
 "Cryptography (ITC)*, 2021."
 msgstr ""
+"Blocki, J., Lee, S., and Zhou, S. \"On the security of proofs of "
+"sequential work in a post-quantum world.\" *Information-Theoretic "
+"Cryptography (ITC)*, 2021."
 
 #: ../../glossary.rst:100
 msgid ""
 "Celis, P. *Robin Hood Hashing*. PhD thesis, University of Waterloo, 1986."
 msgstr ""
+"Celis, P. *Robin Hood Hashing*. أطروحة دكتوراه، University of Waterloo، "
+"1986."
 
 #: ../../glossary.rst:101
 msgid ""
 "Cohen, B., and Pietrzak, K. \"Simple proofs of sequential work.\" "
 "*EUROCRYPT*, 2018."
 msgstr ""
+"Cohen, B., and Pietrzak, K. \"Simple proofs of sequential work.\" "
+"*EUROCRYPT*, 2018."
 
 #: ../../glossary.rst:102
 msgid ""
 "Dwork, C., and Naor, M. \"Pricing via processing or combatting junk "
 "mail.\" *CRYPTO*, 1992."
 msgstr ""
+"Dwork, C., and Naor, M. \"Pricing via processing or combatting junk "
+"mail.\" *CRYPTO*, 1992."
 
 #: ../../glossary.rst:103
 msgid ""
 "Fiat, A., and Shamir, A. \"How to prove yourself: practical solutions to "
 "identification and signature problems.\" *CRYPTO*, 1986."
 msgstr ""
+"Fiat, A., and Shamir, A. \"How to prove yourself: practical solutions to "
+"identification and signature problems.\" *CRYPTO*, 1986."
 
 #: ../../glossary.rst:104
 msgid ""
 "Fielding, R., Nottingham, M., and Reschke, J. *HTTP Semantics*, RFC 9110, "
 "and *HTTP/1.1*, RFC 9112. IETF, 2022."
 msgstr ""
+"Fielding, R., Nottingham, M., and Reschke, J. *HTTP Semantics*, RFC 9110, "
+"and *HTTP/1.1*, RFC 9112. IETF, 2022."
 
 #: ../../glossary.rst:105
 msgid ""
 "Hanson, N. \"libinjection: SQL injection detection by tokenization.\" "
 "Black Hat USA, 2012."
 msgstr ""
+"Hanson, N. \"libinjection: SQL injection detection by tokenization.\" "
+"Black Hat USA, 2012."
 
 #: ../../glossary.rst:106
 msgid ""
 "Juels, A., and Brainard, J. \"Client puzzles: a cryptographic "
 "countermeasure against connection depletion attacks.\" *NDSS*, 1999."
 msgstr ""
+"Juels, A., and Brainard, J. \"Client puzzles: a cryptographic "
+"countermeasure against connection depletion attacks.\" *NDSS*, 1999."
 
 #: ../../glossary.rst:107
 msgid ""
@@ -406,6 +499,9 @@ msgid ""
 "Systems* 16(2), 1998; and \"Paxos made simple.\" *ACM SIGACT News* 32(4), "
 "2001."
 msgstr ""
+"Lamport, L. \"The part-time parliament.\" *ACM Transactions on Computer "
+"Systems* 16(2), 1998; and \"Paxos made simple.\" *ACM SIGACT News* 32(4), "
+"2001."
 
 #: ../../glossary.rst:108
 msgid ""
@@ -413,18 +509,25 @@ msgid ""
 "sequential work.\" *Innovations in Theoretical Computer Science (ITCS)*, "
 "2013."
 msgstr ""
+"Mahmoody, M., Moran, T., and Vadhan, S. \"Publicly verifiable proofs of "
+"sequential work.\" *Innovations in Theoretical Computer Science (ITCS)*, "
+"2013."
 
 #: ../../glossary.rst:109
 msgid ""
 "O'Connor, J., Aumasson, J.-P., Neves, S., and Wilcox-O'Hearn, Z. *BLAKE3: "
 "one function, fast everywhere*. Specification, 2020."
 msgstr ""
+"O'Connor, J., Aumasson, J.-P., Neves, S., and Wilcox-O'Hearn, Z. *BLAKE3: "
+"one function, fast everywhere*. مواصفة، 2020."
 
 #: ../../glossary.rst:110
 msgid ""
 "Vyukov, D. \"Bounded MPMC queue.\" 1024cores.net, 2011 (the "
 "sequence-stamped ring used for the incident queue)."
 msgstr ""
+"Vyukov, D. \"Bounded MPMC queue.\" 1024cores.net, 2011 (الحلقة الموسومة "
+"بأرقام التسلسل المستخدمة لطابور الحوادث)."
 
 #: ../../glossary.rst:111
 msgid ""
@@ -432,6 +535,9 @@ msgid ""
 "H. \"Hyperscan: a fast multi-pattern regex matcher for modern CPUs.\" "
 "*NSDI*, 2019."
 msgstr ""
+"Wang, X., Hong, Y., Chang, H., Park, K., Langdale, G., Hu, J., and Zhu, "
+"H. \"Hyperscan: a fast multi-pattern regex matcher for modern CPUs.\" "
+"*NSDI*, 2019."
 
 #: ../../glossary.rst:112
 msgid ""
@@ -441,3 +547,8 @@ msgid ""
 "management interface, AI bot traffic monitoring, chunked request bodies, "
 "the Rust port, and storage through sqlx."
 msgstr ""
+"Sibuna Discussions من 0001 إلى 0011، ``docs/sid/records``، 2026: العملية، "
+"والمعمارية الأساسية، ومحرك السياسات التصريحي، والفحص الدلالي، ومعمارية "
+"تخزين Zaxonlite، والأسس الرياضية، وواجهة إدارة وحدة التحكم، ومراقبة حركة "
+"روبوتات الذكاء الاصطناعي، وأجسام الطلبات المجزأة، والنقل إلى Rust، "
+"والتخزين عبر sqlx."

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"POT-Creation-Date: 2026-10-16 05:22+0000\n"
+"PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: ../../solutions.rst:1
 msgid "Selected Solutions"
-msgstr ""
+msgstr "حلول مختارة"
 
 #: ../../solutions.rst:4
 msgid ""
@@ -29,10 +29,13 @@ msgid ""
 "of time intervals, what is counted as work, and whether a write has "
 "committed are common sources of disagreement."
 msgstr ""
+"هذه الحلول وسائل لفحص الاستدلال، وليست بديلًا عن التمارين. إذا اختلفت "
+"نتيجة ما، نقارن الافتراضات أولًا: نهايات الفترات الزمنية، وما يُحسب "
+"عملًا، وهل أُودعت عملية كتابة أم لا، مصادر شائعة للاختلاف."
 
 #: ../../solutions.rst:6
 msgid "Part I: Cost and Probability"
-msgstr ""
+msgstr "الجزء الأول: التكلفة والاحتمال"
 
 #: ../../solutions.rst:9
 msgid ""
@@ -42,6 +45,10 @@ msgid ""
 "a second process can satisfy the fingerprint and routing bindings; those "
 "conditions are outside the amortization equation."
 msgstr ""
+"**1.1.** مليون محاولة مقسومة على 100 طلب تساوي 10,000 محاولة لكل طلب. ولا "
+"تغير مشاركة الجلسة هذا الحساب إذا بقي العدد الكلي للطلبات 100. أما النظام "
+"الفعلي فعليه أن يقرر هل تستطيع عملية ثانية تحقيق روابط البصمة والتوجيه؛ "
+"وهذه الشروط خارج معادلة توزيع التكلفة."
 
 #: ../../solutions.rst:11
 msgid ""
@@ -50,10 +57,14 @@ msgid ""
 "Real producers arrive in bursts and the consumer commits batches, so the "
 "exact first drop depends on arrival and commit times."
 msgstr ""
+"**1.2.** الفائض :math:`1000 - 600 = 400` سجل في الثانية. ويشتري طابور "
+"فارغ يتسع لـ 512 سجلًا :math:`512/400 = 1.28` ثانية في نموذج السوائل. أما "
+"المنتجون الحقيقيون فيصلون في دفعات، والمستهلك يودع دفعات مجمعة، لذا يعتمد "
+"موعد أول إسقاط بالضبط على أوقات الوصول والإيداع."
 
 #: ../../solutions.rst:13
 msgid "Part II: Prior Art"
-msgstr ""
+msgstr "الجزء الثاني: الأعمال السابقة"
 
 #: ../../solutions.rst:16
 msgid ""
@@ -65,6 +76,12 @@ msgid ""
 "WebAssembly and JavaScript provers covers that), or whether the "
 "parameters are calibrated (measurement)."
 msgstr ""
+"**2.1.** مصدر واحد يُترجم مرتين لا يمكن أن يختلف مع نفسه في العبارة، أو "
+"ترميز القيمة المؤقتة، أو شكل الشجرة، أو تخطيط الفتحات؛ فالانحراف يتطلب "
+"علة في المترجم. لكنه لا يقول شيئًا عن سلامة البناء (وهذه مهمة المراجعة "
+"التشفيرية)، ولا عن صحة تنفيذه في بيئة تشغيل المتصفح (وتغطي ذلك مقارنة "
+"متطابقة بايتًا ببايت بين مُبرهِني WebAssembly وJavaScript)، ولا عن معايرة "
+"المعاملات (وهذه مهمة القياس)."
 
 #: ../../solutions.rst:18
 msgid ""
@@ -77,10 +94,17 @@ msgid ""
 "(``--database-url`` and ``--cluster-node``); the \"runs as\", "
 "\"inspection\", and \"multi-node\" rows decide it."
 msgstr ""
+"**2.2.** (أ) Sibuna Gate أو Anubis، ملف تنفيذي واحد؛ (ب) Sibuna Shield أو "
+"SafeLine أو Cloudflare (خطة Pro أو أعلى)؛ (ج) Sibuna Edge مع قاعدة بيانات "
+"PostgreSQL مشتركة (``--database-url``)، أو Anubis مع مخزن Valkey مشترك "
+"(للحالة، لا للحظر)، أو Cloudflare. والمنتج الوحيد الذي يحقق الشروط "
+"الثلاثة دون مضيف Docker أو اشتراك هو Sibuna Shield مع عقد تتشارك قاعدة "
+"بيانات PostgreSQL واحدة (``--database-url`` و\\ ``--cluster-node``)؛ "
+"والصفوف \"طريقة التشغيل\" و\"الفحص\" و\"العقد المتعددة\" هي التي تحسم ذلك."
 
 #: ../../solutions.rst:20
 msgid "Part III: Cryptography"
-msgstr ""
+msgstr "الجزء الثالث: التشفير"
 
 #: ../../solutions.rst:23
 msgid ""
@@ -89,6 +113,10 @@ msgid ""
 "success probability of each independent trial. Duplicate trials or "
 "coordination work can make a real parallel implementation less efficient."
 msgstr ""
+"**3.0.** تقدير الذيل :math:`e^{-4.6} \\approx 0.010`. تقسيم فضاء القيم "
+"المؤقتة يغير المعدل الذي تكتمل به المحاولات، لا احتمال نجاح كل محاولة "
+"مستقلة. وقد تجعل المحاولات المكررة أو عمل التنسيق التنفيذ المتوازي "
+"الحقيقي أقل كفاءة."
 
 #: ../../solutions.rst:25
 msgid ""
@@ -98,6 +126,11 @@ msgid ""
 "construction, query budgets, dependencies between trials, or the work "
 "needed to find a commitment with a particular acceptance probability."
 msgstr ""
+"**3.1.** إذا نجح كل التزام باحتمال :math:`q`، تفشل الالتزامات :math:`g` "
+"كلها باحتمال :math:`(1-q)^g`. وينجح واحد منها على الأقل باحتمال "
+":math:`1-(1-q)^g`. لا تحسب الصيغة تكلفة بناء الالتزامات، ولا ميزانيات "
+"الاستعلام، ولا الاعتماديات بين المحاولات، ولا العمل اللازم لإيجاد التزام "
+"باحتمال قبول معين."
 
 #: ../../solutions.rst:27
 msgid ""
@@ -106,6 +139,10 @@ msgid ""
 "18) = 18464` bytes. The opening bytes double; the 32-byte root is still "
 "sent once."
 msgstr ""
+"**3.2.** عند العمق 17 و16 فتحة، يبلغ حجم البرهان :math:`32(1 + 16 \\times "
+"18) = 9248` بايت. وعند 32 فتحة يبلغ :math:`32(1 + 32 \\times 18) = 18464` "
+"بايت. تتضاعف بايتات الفتحات؛ أما الجذر ذو 32 بايت فيُرسل مرة واحدة كما "
+"كان."
 
 #: ../../solutions.rst:29
 msgid ""
@@ -118,10 +155,17 @@ msgid ""
 "tag must cover all five because any field left outside it could be edited "
 "freely, and the verifier could not tell."
 msgstr ""
+"**3.3.** من دون مستوى العمل، كانت الجلسة المكتسبة على مسار رخيص ستقبل "
+"طلبًا إلى مسار مكلف يتطلب عملًا أكثر؛ ومن دون ``timestamp`` كان يمكن سك "
+"رمز \"في المستقبل\" فيعيش بعد سياسته؛ ومن دون ``expiry`` لن ينتهي أبدًا؛ "
+"ومن دون ``rule_hash`` لن يعرف الخادم الخلفي أي قاعدة قبلت العميل؛ ومن دون "
+"``fingerprint`` سيُقبل ملف تعريف ارتباط منسوخ إلى جهاز آخر. ويجب أن يغطي "
+"الوسم الحقول الخمسة كلها، لأن أي حقل يبقى خارجه يمكن تعديله بحرية دون أن "
+"يلاحظ المتحقق."
 
 #: ../../solutions.rst:31
 msgid "Part IV: Protocol"
-msgstr ""
+msgstr "الجزء الرابع: البروتوكول"
 
 #: ../../solutions.rst:34
 msgid ""
@@ -133,10 +177,16 @@ msgid ""
 "fingerprint would then match, which is why ``HttpOnly`` and ``SameSite`` "
 "matter more than the binding on a shared address."
 msgstr ""
+"**4.1.** يتشارك المتصفحان العنوان وUser-Agent، فيتشاركان البصمة، وخلية حد "
+"المعدل، وموضع الحظر. ولا يتشاركان التحدي (إذ يجلب كل منهما سجله الخاص "
+"بقيمته المؤقتة الخاصة)، ولا مدخل مجموعة المستهلك، ولا ملف تعريف الارتباط. "
+"ولكي يعيد مهاجم خلف NAT نفسه استخدام ملف تعريف الارتباط الخاص بالمتصفح "
+"الآخر، عليه أن يقرأه من الجهاز الآخر: عندئذ ستتطابق البصمة، ولهذا يهم "
+"``HttpOnly`` و\\ ``SameSite`` أكثر من الربط عند العنوان المشترك."
 
 #: ../../solutions.rst:36
 msgid "Part V: State and Ordering"
-msgstr ""
+msgstr "الجزء الخامس: الحالة والترتيب"
 
 #: ../../solutions.rst:39
 msgid ""
@@ -148,6 +198,12 @@ msgid ""
 "needs ``Content-Length`` before the body, and because the audit headers "
 "are part of the head."
 msgstr ""
+"**5.1.** الرأس والجزء الأول من الجسم (حتى ما يتسع بعد الرأس في 64 KB) "
+"موجودان في مخزن الاتصال المؤقت ويُرسلان بـ ``write_all(request.body)``. "
+"أما البايتات المتبقية فلا تدخل المخزن المؤقت كاملة أبدًا: يقرؤها "
+"``relay_body`` في قطع من 16 KB من قارئ العميل ويكتب كلًّا منها إلى الخادم "
+"الأصلي. ويجب أن يُرسل الرأس أولًا لأن الخادم الأصلي يحتاج إلى "
+"``Content-Length`` قبل الجسم، ولأن ترويسات التدقيق جزء من الرأس."
 
 #: ../../solutions.rst:41
 msgid ""
@@ -158,10 +214,16 @@ msgid ""
 "instant the window rolls over; a sliding log would allow exactly 100 in "
 "any 10 seconds but must store 100 timestamps per client."
 msgstr ""
+"**5.2.** فاصل الإصدار 100 ms، والتسامح مع الدفعات 9,900 ms. يستطيع عميل "
+"خامل أن يرسل 100 طلب فورًا، ثم طلبًا واحدًا كل 100 ms. وحتى نقطة النهاية "
+"الشاملة عند 3,000 ms، يكون الحد 130. أما العداد الثابت لمدة 10 ثوانٍ "
+"فسيسمح بـ 100 طلب في النافذة الأولى و100 أخرى لحظة انتقال النافذة؛ والسجل "
+"المنزلق سيسمح بـ 100 طلب بالضبط في أي 10 ثوانٍ، لكن عليه تخزين 100 طابع "
+"زمني لكل عميل."
 
 #: ../../solutions.rst:43
 msgid "Part VI: Algorithms"
-msgstr ""
+msgstr "الجزء السادس: الخوارزميات"
 
 #: ../../solutions.rst:46
 msgid ""
@@ -171,6 +233,10 @@ msgid ""
 "evidence, including operators and literal relations. It remains bounded "
 "inspection, not a parser for every application language."
 msgstr ""
+"**6.1.** الفاصلة العليا في اسم ما، ومعامل عادي اسمه ``order``، لا يشكلان "
+"تعبير SQL. وقد يخطئ كاشف السلاسل الفرعية فيعد أيًّا منهما صياغة. أما "
+"الكاشف البنيوي فيبحث عن أدلة إضافية، منها المؤثرات والعلاقات بين القيم "
+"الحرفية. ويبقى فحصًا محدودًا، لا محللًا لكل لغة تطبيقات."
 
 #: ../../solutions.rst:48
 msgid ""
@@ -181,10 +247,15 @@ msgid ""
 "single parenthesis, for the same reason the SQL detector requires a quote "
 "or a tautology."
 msgstr ""
+"**6.2.** تُبنى مرشحات LDAP من الأقواس و\\ ``|`` و\\ ``&`` و\\ ``!`` و\\ "
+"``=``. يحتاج الكاشف إلى فئة بايت لـ ``(`` و\\ ``)`` (جديدة)، ويستطيع "
+"إعادة استخدام الفئتين الموجودتين لـ ``=`` ولفواصل الصدفة من أجل ``|`` و\\ "
+"``&``. وينبغي أن ينطلق عند *تتابع* مثل ``)(`` أو ``(|(``، لا عند قوس "
+"واحد، للسبب نفسه الذي يجعل كاشف SQL يشترط علامة اقتباس أو تحصيل حاصل."
 
 #: ../../solutions.rst:50
 msgid "Part VII: Browser Engine"
-msgstr ""
+msgstr "الجزء السابع: محرك المتصفح"
 
 #: ../../solutions.rst:53
 msgid ""
@@ -197,10 +268,16 @@ msgid ""
 "difficulty for a rule that matches clients known to block WebAssembly "
 "rather than for everyone."
 msgstr ""
+"**7.1.** عند 16 بت عمل الافتراضية (العمق 13 مع 16 فتحة)، تصبح الـ 20 ms "
+"المفترضة في WebAssembly :math:`50 \\times 20 = 1000` ms، أي ثانية واحدة، "
+"في JavaScript على الحاسوب المحمول، وأربع ثوانٍ على الهاتف الأبطأ. هذه "
+"الأرقام مفترضة؛ ونقيس أجهزة عملائنا قبل أن نضع سياسة. والسياسة المعقولة: "
+"أن ندع الصفحة تمرر الرسالة ``fallback``، ونسجلها في الخادم مقياسًا، ونخفض "
+"الصعوبة لقاعدة تطابق العملاء المعروفين بحجب WebAssembly، لا للجميع."
 
 #: ../../solutions.rst:55
 msgid "Part VIII: Evaluation"
-msgstr ""
+msgstr "الجزء الثامن: التقييم"
 
 #: ../../solutions.rst:58
 msgid ""
@@ -212,10 +289,16 @@ msgid ""
 "the scheduler's hand-off between the load generator and the connection "
 "thread. The primitive suite times none of those."
 msgstr ""
+"**8.2.** ميكروثواني المعالج لكل طلب مقسومة على عدد الأنوية المشغولة تعطي "
+"الزمن الفعلي الذي أنفقه المنتج على كل طلب؛ وهو أعلى بكثير من تكلفة "
+"التصنيف التي تقل عن ميكروثانية، لأن صف المنتج يتضمن أيضًا قراءة النواة من "
+"المقبس والكتابة إليه، والمحلل، وفحص وسم الجلسة، وزيادات المقاييس، وتنسيق "
+"الاستجابة، وتفريغ الكاتب، وتسليم المجدول بين مولد الحمل وخيط الاتصال. ولا "
+"تقيس مجموعة اختبارات الأدوات الأولية أيًّا من ذلك."
 
 #: ../../solutions.rst:60
 msgid "Part IX: Operations"
-msgstr ""
+msgstr "الجزء التاسع: التشغيل"
 
 #: ../../solutions.rst:63
 msgid ""
@@ -226,6 +309,11 @@ msgid ""
 "removes both gaps. Losing the transaction's acknowledgement still "
 "requires the retained retry."
 msgstr ""
+"**9.1.** إذا أُودعت البيانات قبل تحديث منفصل للإيصال، فإن انهيارًا بينهما "
+"يترك الإيصال القديم، وقد تطبق إعادة المحاولة الأثر مرة أخرى. وإذا أُودع "
+"الإيصال أولًا، فقد يجعل انهيار قبل كتابة البيانات إعادة المحاولة تتخطى "
+"بيانات لم توجد قط. والمعاملة الذرية الواحدة تزيل الفجوتين كلتيهما. أما "
+"فقدان إقرار المعاملة فلا يزال يتطلب إعادة المحاولة المحتفظ بها."
 
 #: ../../solutions.rst:65
 msgid ""
@@ -240,10 +328,19 @@ msgid ""
 "(``--rate-limit``, ``--rate-window``), which must therefore be at least "
 "as generous."
 msgstr ""
+"**9.2.** ``ip_rules: {\"10.20.0.0/16\": \"ALLOW\"}`` (أو صف "
+"``ip_reputation`` بدرجة 100) يقبل بيئة الاختبار؛ والقاعدة ``{\"name\": "
+"\"admin\", \"path\": \"/admin/*\", \"action\": \"CHALLENGE\", "
+"\"challenge\": {\"difficulty\": 20, \"algorithm\": \"posw\"}}`` تطلب "
+"العمل؛ والقاعدة التي تطابق ``headers: {\"X-Partner-Key\": \".*\"}`` مع "
+"``ALLOW`` و\\ ``\"limits\": {\"rate\": 30, \"window_seconds\": 10}`` تقبل "
+"الشريك بمعدل 30 طلبًا لكل 10 ثوانٍ. وتُفحص حصة القاعدة لكل طلب تطابقه، "
+"بعد حد البرنامج الخدمي لكل عميل (``--rate-limit`` و\\ ``--rate-window``)، "
+"الذي يجب لذلك أن يكون سخيًّا بالقدر نفسه على الأقل."
 
 #: ../../solutions.rst:67
 msgid "Part X: Reference"
-msgstr ""
+msgstr "الجزء العاشر: المرجع"
 
 #: ../../solutions.rst:70
 msgid ""
@@ -255,10 +352,15 @@ msgid ""
 "solve again instead of showing the error, since the work already done "
 "cannot be transferred."
 msgstr ""
+"**10.1.** يحمل سجل التحدي البصمة ذات المفتاح للعنوان الذي جلبه؛ والحل يصل "
+"من عنوان جديد، لذا يعيد ``verify_and_mint`` الخطأ ``FingerprintMismatch`` "
+"قبل أن ينظر في البرهان. وأصغر إصلاح يكون في الصفحة الوسيطة: عند استجابة "
+"``400`` عنوانها ``CLIENT FINGERPRINT MISMATCH``، تجلب الصفحة تحديًا "
+"جديدًا وتحله مرة أخرى بدل عرض الخطأ، لأن العمل المنجز لا يمكن نقله."
 
 #: ../../solutions.rst:72
 msgid "Continue the Investigation"
-msgstr ""
+msgstr "واصل البحث"
 
 #: ../../solutions.rst:75
 msgid ""
@@ -268,3 +370,7 @@ msgid ""
 "does more than assert the happy-path output: it demonstrates why the "
 "omitted condition is necessary."
 msgstr ""
+"نغيّر ثابتًا واحدًا في كل مرة في اختبار مؤقت. نزيل إعادة فحص اللقطة، أو "
+"نحذف إيصال الحادث، أو نقرّب فاصل المعدل إلى الأسفل. ونتوقع جدولًا زمنيًا "
+"للفشل قبل أن نشغل الاختبار. والاختبار المفيد لكشف التراجع يفعل أكثر من "
+"التحقق من مخرجات المسار السعيد: إنه يبين لماذا كان الشرط المحذوف ضروريًا."
