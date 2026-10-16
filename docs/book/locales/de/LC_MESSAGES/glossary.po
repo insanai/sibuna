@@ -60,7 +60,7 @@ msgid ""
 "the honeypot and by reputation shared across a cluster, read on every "
 "request."
 msgstr ""
-"4,096 sperrfreie Slots gesperrter Clientadressen mit Ablaufzeit, "
+"4.096 sperrfreie Slots gesperrter Clientadressen mit Ablaufzeit, "
 "geschrieben vom Honeypot und von der im Cluster geteilten Reputation, "
 "gelesen bei jeder Anfrage."
 
@@ -75,7 +75,7 @@ msgid ""
 "common origin."
 msgstr ""
 "Eine Gruppe von Sicherheitsvorfällen, deren Nutzlast-Embeddings höchstens "
-"den Cosinus-Abstand 0.35 voneinander haben; eine heuristische "
+"den Cosinus-Abstand 0,35 voneinander haben; eine heuristische "
 "Gruppierung, kein Beweis gemeinsamer Herkunft."
 
 #: ../../glossary.rst:18

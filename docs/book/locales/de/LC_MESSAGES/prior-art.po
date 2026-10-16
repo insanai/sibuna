@@ -491,15 +491,15 @@ msgid ""
 "idle RSS (``benchmarks/results/primitives-latest.json``); at most 16.0 "
 "MiB peak RSS under load (``benchmarks/results/product-latest.md``)"
 msgstr ""
-"35.7 MiB Binärprogramm (``benchmarks/results/comparison-latest.json``); "
-"5.9 MiB RSS im Leerlauf (``benchmarks/results/primitives-latest.json``); "
-"höchstens 16.0 MiB Spitzen-RSS unter Last "
+"35,7 MiB Binärprogramm (``benchmarks/results/comparison-latest.json``); "
+"5,9 MiB RSS im Leerlauf (``benchmarks/results/primitives-latest.json``); "
+"höchstens 16,0 MiB Spitzen-RSS unter Last "
 "(``benchmarks/results/product-latest.md``)"
 
 #: ../../prior-art.rst:152
 msgid "38.1 MiB binary; 21 MiB idle RSS; Linux fixture, console off"
 msgstr ""
-"38.1 MiB Binärprogramm; 21 MiB RSS im Leerlauf; Linux-Testaufbau, Konsole "
+"38,1 MiB Binärprogramm; 21 MiB RSS im Leerlauf; Linux-Testaufbau, Konsole "
 "aus"
 
 #: ../../prior-art.rst:153

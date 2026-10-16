@@ -116,7 +116,7 @@ msgid ""
 "The solver module, 14,744 bytes (``wasm_bytes`` in "
 "``benchmarks/results/primitives-latest.json``), cacheable for one hour"
 msgstr ""
-"Das Löser-Modul, 14,744 Bytes (``wasm_bytes`` in "
+"Das Löser-Modul, 14.744 Bytes (``wasm_bytes`` in "
 "``benchmarks/results/primitives-latest.json``), eine Stunde lang cachebar"
 
 #: ../../reference.rst:32
@@ -919,10 +919,10 @@ msgstr ""
 "``deny_at`` mindestens gleich ``challenge_at``, und ``bits_step`` "
 "zwischen 1 und 1000. Ein ``challenge``-Block gehört nur zu "
 "``CHALLENGE``-Regeln, mit 1 bis 64 Arbeitsbits. ``limits`` gibt einer "
-"Regel ein eigenes Kontingent: ``rate`` 1 bis 1,000,000 und "
-"``window_seconds`` 1 bis 86,400 sind Pflicht, ``ban_seconds`` (höchstens "
-"86,400) ist optional, und ``WEIGH``-Regeln können keine Limits tragen. "
-"Der Reputations-Trie von ``ip_rules`` fasst höchstens 8,192 Knoten. Jede "
+"Regel ein eigenes Kontingent: ``rate`` 1 bis 1.000.000 und "
+"``window_seconds`` 1 bis 86.400 sind Pflicht, ``ban_seconds`` (höchstens "
+"86.400) ist optional, und ``WEIGH``-Regeln können keine Limits tragen. "
+"Der Reputations-Trie von ``ip_rules`` fasst höchstens 8.192 Knoten. Jede "
 "Regel darf von jedem Kriterium eine Schreibweise verwenden."
 
 #: ../../reference.rst:242
@@ -970,7 +970,7 @@ msgstr ""
 "33 ``console_*``-Tabellen hinzu. Gespeicherte Namen von Aktionen, "
 "Algorithmen und Modi sind kleingeschrieben. Vorfalls-IDs sind ``node_id "
 "<< 40 | sequence``, im ganzen Cluster ohne Koordination eindeutig; "
-"Knoten-IDs reichen von 1 bis 8,388,607."
+"Knoten-IDs reichen von 1 bis 8.388.607."
 
 #: ../../reference.rst:249
 msgid "Build Targets"
@@ -1047,7 +1047,7 @@ msgid ""
 "The 70-line function, 1,408-line file and 99/108-column line limits; no "
 "tabs"
 msgstr ""
-"Die Grenzen von 70 Zeilen pro Funktion, 1,408 Zeilen pro Datei und 99/108 "
+"Die Grenzen von 70 Zeilen pro Funktion, 1.408 Zeilen pro Datei und 99/108 "
 "Spalten pro Zeile; keine Tabulatoren"
 
 #: ../../reference.rst:270

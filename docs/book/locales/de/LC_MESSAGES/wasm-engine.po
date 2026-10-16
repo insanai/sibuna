@@ -108,7 +108,7 @@ msgstr ""
 "Daemon liefert das Modul unter ``/__sibuna/wasm/sibuna-pow.wasm`` mit "
 "einem Cache-Header für eine Stunde aus (``Cache-Control: public, "
 "max-age=3600``). Mit dem obigen Profil gebaut, misst das Modul mit beiden "
-"Stufen 14,744 Bytes (``wasm_bytes`` in "
+"Stufen 14.744 Bytes (``wasm_bytes`` in "
 "``benchmarks/results/primitives-latest.json``)."
 
 #: ../../wasm-engine.rst:46

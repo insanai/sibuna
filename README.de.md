@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 342260624e34417ad0bcee1369881276f974107bab8737fc59b4097880871a03 -->
+<!-- English source SHA-256: 5527cc911d01ff51c8a8c4597bd60d964251822588fc2868fa7479da621f9af6 -->
 <h1 align="center">sibuna</h1>
 <p align="center">Webschutz mit Proof of Work im Browser und optionaler Konsole.</p>
 <p align="center">
@@ -76,10 +76,10 @@ Die [Paket-Betriebsanleitung](https://insanai.github.io/sibuna/book/operations.h
 beschreibt Installation, Verifikation, privaten Zustand, Upgrades und die Einrichtung unter
 Kubernetes.
 
-Der [Sibuna-Homebrew-Tap](https://github.com/insanai/homebrew-sibuna) bietet eine aus
-Quellcode gebaute CLI-Formel. Die Installation startet keinen Dienst. Der Tap folgt
-veröffentlichten Releases, daher kann ein Vorab-Release wie diese Beta ihn später erreichen
-als die Downloads oben:
+Der [Sibuna-Homebrew-Tap](https://github.com/insanai/homebrew-sibuna) bietet eine CLI-Formel,
+die das geprüfte Release-Archiv für macOS und Linux (Apple Silicon, ARM64 und x86-64)
+installiert. Der Tap folgt dem neuesten veröffentlichten Release, daher bietet er diese Beta
+bereits an. Die Installation startet keinen Dienst:
 
 ```sh
 brew tap insanai/sibuna
@@ -251,11 +251,11 @@ Arbeitsspeicher; Lastgenerator und ein Stub-Ursprung liefen auf acht anderen CPU
 nutzte 64 Verbindungen über Loopback.
 Die Werte sind Mediane aus drei Läufen.
 
-- Im Forward-Auth-Modus lief jede Last mit 197,532 bis 211,636 Anfragen pro Sekunde, mit einem
-  p99 von 305 bis 327 us und 11.7 bis 13.8 us CPU pro Anfrage. Die Grenze war der Lastgenerator.
-- Weitergeleitete Anfragen liefen mit 138,965 bis 147,303 pro Sekunde. Der Spitzenspeicher lag
+- Im Forward-Auth-Modus lief jede Last mit 197.532 bis 211.636 Anfragen pro Sekunde, mit einem
+  p99 von 305 bis 327 us und 11,7 bis 13,8 us CPU pro Anfrage. Die Grenze war der Lastgenerator.
+- Weitergeleitete Anfragen liefen mit 138.965 bis 147.303 pro Sekunde. Der Spitzenspeicher lag
   bei etwa 16 MiB.
-- Bei gleicher angebotener Last von 100,000 zugelassenen Anfragen pro Sekunde betrug die
+- Bei gleicher angebotener Last von 100.000 zugelassenen Anfragen pro Sekunde betrug die
   p99.9-Latenz 62 us im Forward-Auth-Modus und 150 us im Reverse-Proxy-Modus.
 
 <a id="beside-anubis"></a>
@@ -269,21 +269,21 @@ zugelassene Anfragen mit Sitzung.
 
 | Zugelassene Anfragen | Sibuna Gate | Sibuna Shield | Anubis 1.27.0 |
 | --- | ---: | ---: | ---: |
-| Forward Auth, req/s | 210,682 | 208,635 | 36,509 |
-| Forward Auth, p99 | 305 us | 308 us | 7,477 us |
-| Forward Auth, CPU pro Anfrage | 12.1 us | 13.2 us | 106.3 us |
-| Reverse Proxy, req/s | 106,376 | 103,298 | 19,398 |
-| Reverse Proxy, p99 | 3,331 us | 3,321 us | 11,062 us |
+| Forward Auth, req/s | 210.682 | 208.635 | 36.509 |
+| Forward Auth, p99 | 305 us | 308 us | 7.477 us |
+| Forward Auth, CPU pro Anfrage | 12,1 us | 13,2 us | 106,3 us |
+| Reverse Proxy, req/s | 106.376 | 103.298 | 19.398 |
+| Reverse Proxy, p99 | 3.331 us | 3.321 us | 11.062 us |
 
 Der zweite Lauf maß die Dauer von Zulassungsoperationen, jedes Produkt auf zwei CPUs. Anubis
 lief einmal mit seinen standardmäßigen Ed25519-Tokens und einmal mit HS512-Tokens.
 
 | Operationen pro Sekunde | Sibuna (BLAKE3 mit Schlüssel) | Anubis (Ed25519) | Anubis (HS512) |
 | --- | ---: | ---: | ---: |
-| Prüfung einer gültigen Sitzung | 88,104 | 10,951 | 16,976 |
-| Prüfung ohne Authentifizierung | 78,997 | 28,619 | 27,785 |
-| Start einer Challenge | 42,664 | 7,893 | 7,952 |
-| Prüfung des Nachweises | 57,924 | 12,668 | 19,261 |
+| Prüfung einer gültigen Sitzung | 88.104 | 10.951 | 16.976 |
+| Prüfung ohne Authentifizierung | 78.997 | 28.619 | 27.785 |
+| Start einer Challenge | 42.664 | 7.893 | 7.952 |
+| Prüfung des Nachweises | 57.924 | 12.668 | 19.261 |
 
 Sibunas Spitzenspeicher blieb nahe 16 MiB. Anubis nutzte etwa 33 MiB im Forward-Auth-Modus und
 bis zu etwa 600 MiB im Reverse-Proxy-Modus. Anubis ist ein weit verbreitetes und

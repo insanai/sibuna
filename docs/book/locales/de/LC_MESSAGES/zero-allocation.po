@@ -106,7 +106,7 @@ msgid ""
 "spawning anything, and counts the event in ``sibuna_overloaded_total``."
 msgstr ""
 "Die Zahl der Verbindungsthreads ist durch ``--max-connections`` begrenzt "
-"(standardmäßig 1,024, höchstens 8,192). Jenseits der Grenze antwortet die "
+"(standardmäßig 1.024, höchstens 8.192). Jenseits der Grenze antwortet die "
 "Accept-Schleife auf dem neuen Socket mit ``503 Service Unavailable`` und "
 "schließt ihn, ohne etwas zu starten, und zählt das Ereignis in "
 "``sibuna_overloaded_total``."
@@ -217,7 +217,7 @@ msgid ""
 msgstr ""
 "Meldet die Verbindung beim Idle-Reaper an, richtet die Puffer, den "
 "Proxy-Arbeitsbereich und den Engine-Cache einmal ein und bedient bis zu "
-"4,096 Anfragen. In ``cmd/sibuna/src/connection.rs`` (Crate ``sibuna``)."
+"4.096 Anfragen. In ``cmd/sibuna/src/connection.rs`` (Crate ``sibuna``)."
 
 #: ../../zero-allocation.rst:93
 msgid ""
@@ -307,7 +307,7 @@ msgstr ""
 "weil das Puffern eines Chunked-Bodys Bytes innerhalb des Puffers "
 "verschiebt; der zweite Parse leiht den zur Ruhe gekommenen Puffer. Das "
 "Parsen ist deterministisch und dauert für eine Browseranfrage mit Cookie "
-"etwa 133 ns (``zero_copy_request_and_cookie``, 132.5 ns, in "
+"etwa 133 ns (``zero_copy_request_and_cookie``, 132,5 ns, in "
 "``benchmarks/results/primitives-latest.md``), daher kostet der zweite "
 "Parse wenig und liefert dasselbe Urteil. Zweitens leiht der Proxy die "
 "geparste Anfrage und die ausstehenden Bytes und darf den "
@@ -483,7 +483,7 @@ msgid ""
 msgstr ""
 "Das Parsen eines Ursprungskopfs mit acht Feldern dauert 322 ns, und ein "
 "Keep-alive-``GET`` mit einer 1-KiB-Antwort, über Loopback weitergeleitet, "
-"dauert 29.8 us (gemessen im Oktober 2026; ``crates/net/src/lib.rs`` "
+"dauert 29,8 us (gemessen im Oktober 2026; ``crates/net/src/lib.rs`` "
 "dokumentiert die Messung)."
 
 #: ../../zero-allocation.rst:255
@@ -851,7 +851,7 @@ msgstr "200"
 
 #: ../../zero-allocation.rst:360
 msgid "138,965"
-msgstr "138,965"
+msgstr "138.965"
 
 #: ../../zero-allocation.rst:361
 msgid "438 / 857"
@@ -859,7 +859,7 @@ msgstr "438 / 857"
 
 #: ../../zero-allocation.rst:362
 msgid "28.57"
-msgstr "28.57"
+msgstr "28,57"
 
 #: ../../zero-allocation.rst:363
 msgid "challenged (interstitial)"
@@ -867,7 +867,7 @@ msgstr "mit Challenge belegt (Zwischenseite)"
 
 #: ../../zero-allocation.rst:365
 msgid "195,188"
-msgstr "195,188"
+msgstr "195.188"
 
 #: ../../zero-allocation.rst:366
 msgid "162 / 328"
@@ -875,7 +875,7 @@ msgstr "162 / 328"
 
 #: ../../zero-allocation.rst:367
 msgid "13.73"
-msgstr "13.73"
+msgstr "13,73"
 
 #: ../../zero-allocation.rst:368
 msgid "static allowed, proxied"
@@ -883,7 +883,7 @@ msgstr "statisch erlaubt, weitergeleitet"
 
 #: ../../zero-allocation.rst:370
 msgid "145,673"
-msgstr "145,673"
+msgstr "145.673"
 
 #: ../../zero-allocation.rst:371
 msgid "415 / 746"
@@ -891,7 +891,7 @@ msgstr "415 / 746"
 
 #: ../../zero-allocation.rst:372
 msgid "27.27"
-msgstr "27.27"
+msgstr "27,27"
 
 #: ../../zero-allocation.rst:373
 msgid "WAF denied (with session)"
@@ -903,7 +903,7 @@ msgstr "403"
 
 #: ../../zero-allocation.rst:375
 msgid "209,507"
-msgstr "209,507"
+msgstr "209.507"
 
 #: ../../zero-allocation.rst:376
 msgid "151 / 306"
@@ -911,7 +911,7 @@ msgstr "151 / 306"
 
 #: ../../zero-allocation.rst:377
 msgid "12.17"
-msgstr "12.17"
+msgstr "12,17"
 
 #: ../../zero-allocation.rst:379
 msgid ""
@@ -936,8 +936,8 @@ msgstr ""
 "Rate sendet und jede Anfrage ab ihrem vorgesehenen Sendezeitpunkt misst, "
 "misst stattdessen die Latenz bei gleicher angebotener Last. Für "
 "zugelassene Anfragen im Reverse-Proxy-Modus beträgt das p99 65 us bei "
-"10,000 Anfragen pro Sekunde und 100 us bei 100,000; bei 150,000 "
-"angebotenen Anfragen sind die vier CPUs gesättigt, 134,344 Anfragen pro "
+"10.000 Anfragen pro Sekunde und 100 us bei 100.000; bei 150.000 "
+"angebotenen Anfragen sind die vier CPUs gesättigt, 134.344 Anfragen pro "
 "Sekunde werden erreicht, und die Warteschlange wächst auf Sekunden "
 "(``benchmarks/results/latency-latest.md``). Eine warme "
 "Keep-alive-Verbindung bedient jede Entscheidung ohne Heap-Allokation: "
@@ -1041,11 +1041,11 @@ msgstr "Verbrauchsmenge, 16 Threads"
 
 #: ../../zero-allocation.rst:408
 msgid "10.8 M/s"
-msgstr "10.8 M/s"
+msgstr "10,8 M/s"
 
 #: ../../zero-allocation.rst:409
 msgid "8.6 M/s"
-msgstr "8.6 M/s"
+msgstr "8,6 M/s"
 
 #: ../../zero-allocation.rst:410
 msgid "spent set, 64 threads (more than the CPUs)"
@@ -1053,11 +1053,11 @@ msgstr "Verbrauchsmenge, 64 Threads (mehr als CPUs)"
 
 #: ../../zero-allocation.rst:411
 msgid "11.2 M/s"
-msgstr "11.2 M/s"
+msgstr "11,2 M/s"
 
 #: ../../zero-allocation.rst:412
 msgid "6.9 M/s"
-msgstr "6.9 M/s"
+msgstr "6,9 M/s"
 
 #: ../../zero-allocation.rst:413
 msgid "GCRA on six hot addresses, 16 threads"
@@ -1065,11 +1065,11 @@ msgstr "GCRA auf sechs heißen Adressen, 16 Threads"
 
 #: ../../zero-allocation.rst:414
 msgid "44.9 M/s"
-msgstr "44.9 M/s"
+msgstr "44,9 M/s"
 
 #: ../../zero-allocation.rst:415
 msgid "19.3 M/s"
-msgstr "19.3 M/s"
+msgstr "19,3 M/s"
 
 #: ../../zero-allocation.rst:416
 msgid "GCRA on six hot addresses, 64 threads"
@@ -1077,11 +1077,11 @@ msgstr "GCRA auf sechs heißen Adressen, 64 Threads"
 
 #: ../../zero-allocation.rst:417
 msgid "37.4 M/s"
-msgstr "37.4 M/s"
+msgstr "37,4 M/s"
 
 #: ../../zero-allocation.rst:418
 msgid "6.5 M/s"
-msgstr "6.5 M/s"
+msgstr "6,5 M/s"
 
 #: ../../zero-allocation.rst:420
 msgid ""
@@ -1113,7 +1113,7 @@ msgid ""
 "theirs."
 msgstr ""
 "Nur angenommene Beweise gelangen in die Verbrauchsmenge (Teil III). Sie "
-"hat 16 Shards, jeder ein Array mit offener Adressierung aus 4,096 Slots "
+"hat 16 Shards, jeder ein Array mit offener Adressierung aus 4.096 Slots "
 "vom Typ ``Option<Entry>``, wobei ein Eintrag ``{ tag: [u8; 16], "
 "expires_at: u64, dist: u8 }`` ist. Robin-Hood-Einfügen (Celis, 1986) "
 "verdrängt jeden Bewohner, der seiner Heimatposition näher ist als der "
@@ -1331,7 +1331,7 @@ msgid ""
 "each update with version increments; readers take no lock, accept only a "
 "stable even version, and retry concurrent changes."
 msgstr ""
-"Sperren verwenden 4,096 Slots mit atomaren Feldern für Version, Schlüssel "
+"Sperren verwenden 4.096 Slots mit atomaren Feldern für Version, Schlüssel "
 "und Ablauf, offen adressiert über einen schlüsselbasierten Hash der "
 "gesperrten Adresse mit einem Sondierungsfenster von 8 Slots. Ein "
 "Schreiber, durch einen Mutex mit den anderen Schreibern serialisiert, "
@@ -1391,7 +1391,7 @@ msgid ""
 "drop counter makes that loss observable."
 msgstr ""
 "Wenn die Betriebsform Shield eine Anfrage ablehnt oder der Honeypot "
-"auslöst, wird der Vorfall in einen festen Datensatz von etwa 1.3 KB "
+"auslöst, wird der Vorfall in einen festen Datensatz von etwa 1,3 KB "
 "kopiert (Clientadresse, User-Agent, Methode, Pfad, Kategorie und "
 "Nutzlast, jeweils auf ihre Kapazität gekürzt) und in einen beschränkten "
 "Ring mit mehreren Produzenten und einem Konsumenten geschoben (Vyukovs "
@@ -1577,7 +1577,7 @@ msgstr "nur ``RwLock``-Lese-Guard"
 
 #: ../../zero-allocation.rst:714
 msgid "4.2 ns"
-msgstr "4.2 ns"
+msgstr "4,2 ns"
 
 #: ../../zero-allocation.rst:715
 msgid "752 ns"
@@ -1589,7 +1589,7 @@ msgstr "``RwLock``-Lesen und ``Arc``-Klon"
 
 #: ../../zero-allocation.rst:717
 msgid "7.6 ns"
-msgstr "7.6 ns"
+msgstr "7,6 ns"
 
 #: ../../zero-allocation.rst:718
 msgid "833 ns"
@@ -1601,11 +1601,11 @@ msgstr "Generationsprüfung mit zwischengespeichertem ``Arc``"
 
 #: ../../zero-allocation.rst:720
 msgid "0.8 ns"
-msgstr "0.8 ns"
+msgstr "0,8 ns"
 
 #: ../../zero-allocation.rst:721
 msgid "1.8 ns"
-msgstr "1.8 ns"
+msgstr "1,8 ns"
 
 #: ../../zero-allocation.rst:723
 msgid ""
@@ -1625,10 +1625,10 @@ msgstr ""
 "ist der ignorierte Test ``read_cost_under_contention`` in "
 "``cmd/sibuna/src/slot.rs``. Jede Verwendung auf dem Anfragepfad "
 "aktualisiert, sodass eine Anfrage die zu diesem Schritt aktuelle Engine "
-"sieht. Die Engine selbst ist klein: 209,052 Bytes, etwa 204 KiB, kompakte "
+"sieht. Die Engine selbst ist klein: 209.052 Bytes, etwa 204 KiB, kompakte "
 "Heap-Tabellen (``engine_bytes`` in "
 "``benchmarks/results/primitives-latest.json``), mit Kapazität für 128 "
-"Regeln, Regelnamen von 128 Bytes und 8,192 Trie-Knoten."
+"Regeln, Regelnamen von 128 Bytes und 8.192 Trie-Knoten."
 
 #: ../../zero-allocation.rst:725
 msgid "Why ``Arc`` and not reader counts"

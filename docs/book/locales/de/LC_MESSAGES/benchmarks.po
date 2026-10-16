@@ -228,7 +228,7 @@ msgid ""
 "it."
 msgstr ""
 "Jede Arbeitslast läuft in sieben zeitgemessenen Batches nach einem nicht "
-"gemessenen Aufwärmen von höchstens 1,000 Operationen. Veränderlicher "
+"gemessenen Aufwärmen von höchstens 1.000 Operationen. Veränderlicher "
 "Zustand (die Verbrauchsmenge, der Ratenbegrenzer) wird vor jedem Batch "
 "außerhalb der Zeitmessung neu aufgebaut. Die Zeitmessung umschließt ganze "
 "Batches, nie einzelne Operationen: Eine Uhrabfrage pro Operation würde so "
@@ -409,8 +409,8 @@ msgid ""
 "three runs, with the min-max of p99 beside it."
 msgstr ""
 "Das Messprogramm betreibt die Betriebsform Shield und die Arbeitslast mit "
-"zugelassenen Anfragen bei fünf angebotenen Raten: 10,000, 25,000, 50,000, "
-"100,000 und 150,000 Anfragen pro Sekunde, jeweils mit 2 Sekunden "
+"zugelassenen Anfragen bei fünf angebotenen Raten: 10.000, 25.000, 50.000, "
+"100.000 und 150.000 Anfragen pro Sekunde, jeweils mit 2 Sekunden "
 "Aufwärmen, 10 gemessenen Sekunden und 3 Läufen. Das Messprogramm kann "
 "zwei Daemon-Builds in einem Lauf messen: Es startet dann beide auf "
 "derselben CPU-Menge und wechselt bei jeder Rate und Wiederholung zwischen "
@@ -492,7 +492,7 @@ msgstr ""
 "aufgezeichnet, der Vergleich mit Anubis am 16. Oktober 2026. Der Daemon "
 "ist ``cargo build --release -p sibuna``, der Standard-Build mit "
 "SQLite-Speicher und eingebauter Konsole (SID 0010); die Produkt- und "
-"Latenzdateien nennen ein Binärprogramm von 49,113,856 Bytes. Jede Datei "
+"Latenzdateien nennen ein Binärprogramm von 49.113.856 Bytes. Jede Datei "
 "verzeichnet ihre Revision (``efce14d`` für die Primitiven, ``249d913`` "
 "für die Produkt- und Latenzläufe) mit ``dirty: true``; der Arbeitsbaum "
 "der letzteren enthielt bereits die wiederverwendeten Verbindungsthreads, "
@@ -500,8 +500,8 @@ msgstr ""
 "ihre Wirkung. Die Vergleichs- und Zulassungsdateien nennen die Revision "
 "``54e4ec5`` mit ``dirty: true``, weil der Arbeitsbaum die Ergänzungen des "
 "Messprogramms in ``tools/bench`` enthielt; ihr Daemon ist ein "
-"Release-Build dieser Revision (37,450,232 Bytes). Ihre Lastmittel über "
-"eine Minute betrugen 3.53 vor dem Vergleichslauf und 0.56 am Ende des "
+"Release-Build dieser Revision (37.450.232 Bytes). Ihre Lastmittel über "
+"eine Minute betrugen 3,53 vor dem Vergleichslauf und 0,56 am Ende des "
 "Zulassungslaufs."
 
 #: ../../benchmarks.rst:104
@@ -511,9 +511,9 @@ msgid ""
 "after the product run. The high figures are the latency generator's 64 "
 "threads, which the product run followed directly."
 msgstr ""
-"Die Dateien verzeichnen Lastmittel über eine Minute von 2.46 beim "
-"Primitive-Lauf, 1.30 vor und 52.31 nach dem Latenzlauf sowie 52.31 vor "
-"und 33.39 nach dem Produktlauf. Die hohen Werte stammen von den 64 "
+"Die Dateien verzeichnen Lastmittel über eine Minute von 2,46 beim "
+"Primitive-Lauf, 1,30 vor und 52,31 nach dem Latenzlauf sowie 52,31 vor "
+"und 33,39 nach dem Produktlauf. Die hohen Werte stammen von den 64 "
 "Threads des Latenzgenerators, auf die der Produktlauf direkt folgte."
 
 #: ../../benchmarks.rst:106
@@ -616,11 +616,11 @@ msgstr "Hashcash-Verifikation (16 Bits)"
 
 #: ../../benchmarks.rst:137
 msgid "70.2"
-msgstr "70.2"
+msgstr "70,2"
 
 #: ../../benchmarks.rst:138
 msgid "69.9-71.0"
-msgstr "69.9-71.0"
+msgstr "69,9-71,0"
 
 #: ../../benchmarks.rst:139
 msgid "PoSW verify (depth 13, t = 16)"
@@ -628,11 +628,11 @@ msgstr "PoSW-Verifikation (Tiefe 13, t = 16)"
 
 #: ../../benchmarks.rst:140
 msgid "22272.4"
-msgstr "22272.4"
+msgstr "22272,4"
 
 #: ../../benchmarks.rst:141
 msgid "22257.0-22316.4"
-msgstr "22257.0-22316.4"
+msgstr "22257,0-22316,4"
 
 #: ../../benchmarks.rst:142
 msgid "Bot signatures (40, Aho-Corasick)"
@@ -640,11 +640,11 @@ msgstr "Bot-Signaturen (40, Aho-Corasick)"
 
 #: ../../benchmarks.rst:143
 msgid "55.7"
-msgstr "55.7"
+msgstr "55,7"
 
 #: ../../benchmarks.rst:144
 msgid "55.3-57.2"
-msgstr "55.3-57.2"
+msgstr "55,3-57,2"
 
 #: ../../benchmarks.rst:145
 msgid "Bot signatures (40, sequential search)"
@@ -652,11 +652,11 @@ msgstr "Bot-Signaturen (40, sequenzielle Suche)"
 
 #: ../../benchmarks.rst:146
 msgid "763.0"
-msgstr "763.0"
+msgstr "763,0"
 
 #: ../../benchmarks.rst:147
 msgid "762.2-763.5"
-msgstr "762.2-763.5"
+msgstr "762,2-763,5"
 
 #: ../../benchmarks.rst:148
 msgid "IPv4 CIDR lookup"
@@ -664,11 +664,11 @@ msgstr "IPv4-CIDR-Suche"
 
 #: ../../benchmarks.rst:149
 msgid "32.0"
-msgstr "32.0"
+msgstr "32,0"
 
 #: ../../benchmarks.rst:150
 msgid "31.8-32.2"
-msgstr "31.8-32.2"
+msgstr "31,8-32,2"
 
 #: ../../benchmarks.rst:151
 msgid "IPv6 CIDR lookup"
@@ -676,11 +676,11 @@ msgstr "IPv6-CIDR-Suche"
 
 #: ../../benchmarks.rst:152
 msgid "79.3"
-msgstr "79.3"
+msgstr "79,3"
 
 #: ../../benchmarks.rst:153
 msgid "78.5-79.6"
-msgstr "78.5-79.6"
+msgstr "78,5-79,6"
 
 #: ../../benchmarks.rst:154
 msgid "Session token (keyed BLAKE3)"
@@ -688,11 +688,11 @@ msgstr "Sitzungstoken (BLAKE3 mit Schlüssel)"
 
 #: ../../benchmarks.rst:155
 msgid "155.8"
-msgstr "155.8"
+msgstr "155,8"
 
 #: ../../benchmarks.rst:156
 msgid "155.3-156.4"
-msgstr "155.3-156.4"
+msgstr "155,3-156,4"
 
 #: ../../benchmarks.rst:157
 msgid "Session token (Ed25519)"
@@ -700,11 +700,11 @@ msgstr "Sitzungstoken (Ed25519)"
 
 #: ../../benchmarks.rst:158
 msgid "40587.5"
-msgstr "40587.5"
+msgstr "40587,5"
 
 #: ../../benchmarks.rst:159
 msgid "40544.6-40631.1"
-msgstr "40544.6-40631.1"
+msgstr "40544,6-40631,1"
 
 #: ../../benchmarks.rst:160
 msgid "Spent set (Robin Hood), spend and look up"
@@ -712,11 +712,11 @@ msgstr "Verbrauchsmenge (Robin Hood), verbrauchen und nachschlagen"
 
 #: ../../benchmarks.rst:161
 msgid "21.0"
-msgstr "21.0"
+msgstr "21,0"
 
 #: ../../benchmarks.rst:162
 msgid "20.8-21.3"
-msgstr "20.8-21.3"
+msgstr "20,8-21,3"
 
 #: ../../benchmarks.rst:163
 msgid "Rate limiter (GCRA), client bytes"
@@ -724,11 +724,11 @@ msgstr "Ratenbegrenzer (GCRA), Client-Bytes"
 
 #: ../../benchmarks.rst:164
 msgid "12.8"
-msgstr "12.8"
+msgstr "12,8"
 
 #: ../../benchmarks.rst:165
 msgid "12.7-12.8"
-msgstr "12.7-12.8"
+msgstr "12,7-12,8"
 
 #: ../../benchmarks.rst:166
 msgid "Rate limiter, four rule scopes, client bytes"
@@ -736,11 +736,11 @@ msgstr "Ratenbegrenzer, vier Regelbereiche, Client-Bytes"
 
 #: ../../benchmarks.rst:167
 msgid "13.1"
-msgstr "13.1"
+msgstr "13,1"
 
 #: ../../benchmarks.rst:168
 msgid "13.0-13.2"
-msgstr "13.0-13.2"
+msgstr "13,0-13,2"
 
 #: ../../benchmarks.rst:169
 msgid "Rate limiter (GCRA), hashed client"
@@ -748,11 +748,11 @@ msgstr "Ratenbegrenzer (GCRA), gehashter Client"
 
 #: ../../benchmarks.rst:170
 msgid "6.2"
-msgstr "6.2"
+msgstr "6,2"
 
 #: ../../benchmarks.rst:171
 msgid "6.1-6.3"
-msgstr "6.1-6.3"
+msgstr "6,1-6,3"
 
 #: ../../benchmarks.rst:172
 msgid "Rate limiter, four rule scopes, hashed client"
@@ -760,11 +760,11 @@ msgstr "Ratenbegrenzer, vier Regelbereiche, gehashter Client"
 
 #: ../../benchmarks.rst:173
 msgid "6.3"
-msgstr "6.3"
+msgstr "6,3"
 
 #: ../../benchmarks.rst:174
 msgid "6.2-6.4"
-msgstr "6.2-6.4"
+msgstr "6,2-6,4"
 
 #: ../../benchmarks.rst:175
 msgid "HTTP parse and cookie"
@@ -772,11 +772,11 @@ msgstr "HTTP-Parsen und Cookie"
 
 #: ../../benchmarks.rst:176
 msgid "132.5"
-msgstr "132.5"
+msgstr "132,5"
 
 #: ../../benchmarks.rst:177
 msgid "132.3-133.2"
-msgstr "132.3-133.2"
+msgstr "132,3-133,2"
 
 #: ../../benchmarks.rst:178
 msgid "Classification, Shield profile"
@@ -784,11 +784,11 @@ msgstr "Klassifikation, Shield-Profil"
 
 #: ../../benchmarks.rst:179
 msgid "790.8"
-msgstr "790.8"
+msgstr "790,8"
 
 #: ../../benchmarks.rst:180
 msgid "787.2-793.1"
-msgstr "787.2-793.1"
+msgstr "787,2-793,1"
 
 #: ../../benchmarks.rst:181
 msgid "Classification, Gate profile"
@@ -796,11 +796,11 @@ msgstr "Klassifikation, Gate-Profil"
 
 #: ../../benchmarks.rst:182
 msgid "75.9"
-msgstr "75.9"
+msgstr "75,9"
 
 #: ../../benchmarks.rst:183
 msgid "75.6-76.1"
-msgstr "75.6-76.1"
+msgstr "75,6-76,1"
 
 #: ../../benchmarks.rst:184
 msgid "WAF body scan (8 KiB)"
@@ -808,11 +808,11 @@ msgstr "WAF-Body-Scan (8 KiB)"
 
 #: ../../benchmarks.rst:185
 msgid "12784.3"
-msgstr "12784.3"
+msgstr "12784,3"
 
 #: ../../benchmarks.rst:186
 msgid "12771.5-12809.2"
-msgstr "12771.5-12809.2"
+msgstr "12771,5-12809,2"
 
 #: ../../benchmarks.rst:187
 msgid "WAF body scan (8 KiB), SQL injection audited"
@@ -820,11 +820,11 @@ msgstr "WAF-Body-Scan (8 KiB), SQL-Injection im Audit-Modus"
 
 #: ../../benchmarks.rst:188
 msgid "15485.4"
-msgstr "15485.4"
+msgstr "15485,4"
 
 #: ../../benchmarks.rst:189
 msgid "15460.9-15530.1"
-msgstr "15460.9-15530.1"
+msgstr "15460,9-15530,1"
 
 #: ../../benchmarks.rst:191
 msgid ""
@@ -832,7 +832,7 @@ msgid ""
 "row's median."
 msgstr ""
 "Die Streuungen sind schmal: Kein Batch irgendeiner Zeile liegt mehr als "
-"2.8% vom Median seiner Zeile entfernt."
+"2,8% vom Median seiner Zeile entfernt."
 
 #: ../../benchmarks.rst:193
 msgid "Proof-of-Work Verification"
@@ -848,8 +848,8 @@ msgid ""
 "CPU has them, detected at run time (SID 0010)."
 msgstr ""
 "Die Hashcash-Verifikation hasht eine Challenge, ein Trennzeichen und eine "
-"dezimale Nonce: 70.2 ns. Der Verifizierer für sequenzielle Arbeit prüft "
-"Graphöffnungen: 22,272.4 ns. Seine Hash-Aufrufe und die Zahl der "
+"dezimale Nonce: 70,2 ns. Der Verifizierer für sequenzielle Arbeit prüft "
+"Graphöffnungen: 22.272,4 ns. Seine Hash-Aufrufe und die Zahl der "
 "SHA-256-Kompressionen unterscheiden sich von denen bei Hashcash, weil die "
 "Eingaben unterschiedlich lang sind. Beide Zeilen sind durch SHA-256 "
 "begrenzt, und ``sibuna-crypto`` nutzt die SHA-NI-Instruktionen, wenn die "
@@ -872,11 +872,11 @@ msgstr ""
 "Der dichte Aho-Corasick-Automat und die sequenzielle "
 "Teilzeichenkettensuche nutzen identische Muster und dieselbe Semantik "
 "\"irgendein Treffer\". Der Automat ist auf denselben 40 Signaturen "
-"13.7-mal schneller als die sequenzielle Suche (55.7 gegenüber 763.0 ns). "
+"13,7-mal schneller als die sequenzielle Suche (55,7 gegenüber 763,0 ns). "
 "Seine Tabellen nutzen Byteklassen statt 256 Spalten pro Zustand (SID "
-"0006, Teil F), was die Tabelle der Bot-Signaturen bei 42,244 Bytes hält "
+"0006, Teil F), was die Tabelle der Bot-Signaturen bei 42.244 Bytes hält "
 "(siehe die Tabelle zum Speicherbedarf unten). Die CIDR-Klassifikatoren "
-"brauchen 32.0 ns (IPv4) und 79.3 ns (IPv6)."
+"brauchen 32,0 ns (IPv4) und 79,3 ns (IPv6)."
 
 #: ../../benchmarks.rst:203
 msgid "Tokens"
@@ -892,11 +892,11 @@ msgid ""
 "Ed25519 verification costs about as much as 260 MAC verifications; the "
 "MAC is Sibuna's default token scheme."
 msgstr ""
-"Das BLAKE3-MAC-Token wird in 155.8 ns verifiziert. ``sibuna-crypto`` "
+"Das BLAKE3-MAC-Token wird in 155,8 ns verifiziert. ``sibuna-crypto`` "
 "implementiert BLAKE3 portabel, ohne SIMD-Pfade; diese gewinnen bei großen "
 "Eingaben, aber Sibuna hasht mit BLAKE3 Eingaben unter 100 Bytes, bei "
 "denen der portable Code schnell ist. Kompakte Ed25519-Tokens werden in "
-"40,587.5 ns verifiziert: Der Verifizierer nutzt NAF-Ziffern der Breiten 5 "
+"40.587,5 ns verifiziert: Der Verifizierer nutzt NAF-Ziffern der Breiten 5 "
 "und 8 und behält den dekodierten öffentlichen Schlüssel. Eine "
 "Ed25519-Verifikation kostet etwa so viel wie 260 MAC-Verifikationen; der "
 "MAC ist Sibunas Standard-Tokenverfahren."
@@ -917,8 +917,8 @@ msgid ""
 "the row we report."
 msgstr ""
 "Die Zeile der Verbrauchsmenge fügt einen frischen Tag ein und schlägt ihn "
-"erneut nach: 21.0 ns. Die Tabelle in dieser Zeile hat 16 Shards zu 4,096 "
-"Slots (65,536 Tags; der Standardwert des Daemons ist 1,048,576), und sie "
+"erneut nach: 21,0 ns. Die Tabelle in dieser Zeile hat 16 Shards zu 4.096 "
+"Slots (65.536 Tags; der Standardwert des Daemons ist 1.048.576), und sie "
 "wird vor jedem Batch an Ort und Stelle geleert, außerhalb der "
 "Zeitmessung. Jeder Batch greift daher auf residenten Speicher zu. Eine "
 "frühere Version der Suite baute für jeden Batch eine frische, genullte "
@@ -944,7 +944,7 @@ msgstr ""
 "Geheimnis aus der Zufallsquelle des Betriebssystems. Der geheime "
 "Schlüssel hindert jeden daran, Adressen zu berechnen, die das "
 "Sondierungsfenster eines Opfers teilen (SID 0010 und die Dokumentation "
-"von ``sibuna-store``). Diese Zeilen brauchen 12.8 und 13.1 ns."
+"von ``sibuna-store``). Diese Zeilen brauchen 12,8 und 13,1 ns."
 
 #: ../../benchmarks.rst:215
 msgid ""
@@ -962,8 +962,8 @@ msgstr ""
 "jede Tabelle, die er befragt. Die beiden Zeilen für einen gehashten "
 "Client (``gcra_check_hashed`` und ``gcra_four_rule_scopes_hashed``) "
 "messen diesen Pfad, wobei die Hashes vor der Schleife berechnet werden: "
-"6.2 und 6.3 ns pro Prüfung. Der Abstand zwischen den Medianen der Byte- "
-"und der gehashten Zeilen, 6.6 ns, entspricht etwa dem Preis des Hashs mit "
+"6,2 und 6,3 ns pro Prüfung. Der Abstand zwischen den Medianen der Byte- "
+"und der gehashten Zeilen, 6,6 ns, entspricht etwa dem Preis des Hashs mit "
 "Schlüssel für diese Eingaben, den der Daemon einmal pro Anfrage statt "
 "einmal pro Tabelle bezahlt."
 
@@ -979,7 +979,7 @@ msgid ""
 "slice of the connection's buffer."
 msgstr ""
 "Die Parser-Zeile parst eine 400-Byte-Browseranfrage und schlägt ein "
-"Cookie nach: 132.5 ns. Der eigene Zeitmessungstest des Crates stimmt "
+"Cookie nach: 132,5 ns. Der eigene Zeitmessungstest des Crates stimmt "
 "damit überein (``crates/http``: etwa 135 bis 180 ns auf derselben "
 "Maschine). Der Parser arbeitet ohne Kopien; jedes Feld ist ein Slice des "
 "Verbindungspuffers."
@@ -997,13 +997,13 @@ msgid ""
 "these rows include a small cost that the daemon pays outside the engine. "
 "The engine's heap tables total 209,052 bytes (SID 0002)."
 msgstr ""
-"Eine vollständige Klassifikation einer Browseranfrage dauert 790.8 ns, "
-"das Gate-Profil 75.9 ns. Die Zeilen lassen die geparste Clientadresse der "
+"Eine vollständige Klassifikation einer Browseranfrage dauert 790,8 ns, "
+"das Gate-Profil 75,9 ns. Die Zeilen lassen die geparste Clientadresse der "
 "Anfrage leer, sodass die Engine den Adresstext des Clients während der "
 "Auswertung parst. Der Daemon parst die Adresse einmal pro Anfrage vor der "
 "Auswertung, daher enthalten diese Zeilen kleine Kosten, die der Daemon "
 "außerhalb der Engine bezahlt. Die Heap-Tabellen der Engine umfassen "
-"insgesamt 209,052 Bytes (SID 0002)."
+"insgesamt 209.052 Bytes (SID 0002)."
 
 #: ../../benchmarks.rst:227
 msgid "WAF Inspection"
@@ -1021,10 +1021,10 @@ msgid ""
 "them, so auditing one category costs about a fifth more than enforcing "
 "all of them, not a scan per category."
 msgstr ""
-"Der semantische Scan eines 8-KiB-Bodys dauert 12,784.3 ns, also "
+"Der semantische Scan eines 8-KiB-Bodys dauert 12.784,3 ns, also "
 ":math:`12784.3 / 8192 \\approx 1.56` ns pro Byte. Die zweite Zeile scannt "
 "denselben Body, wobei die Kategorie SQL-Injection im Audit-Modus und die "
-"anderen im Durchsetzungsmodus laufen: 15,485.4 ns. Wenn eine Kategorie "
+"anderen im Durchsetzungsmodus laufen: 15.485,4 ns. Wenn eine Kategorie "
 "nur auditiert statt durchgesetzt wird, wird jedes Feld pro Kategorie "
 "geprüft (SID 0004, \"inspection modes\"). Die Engine scannt das Feld "
 "einmal mit dem Signaturautomaten, um die Menge der Kategorien zu "
@@ -1136,7 +1136,7 @@ msgstr "``admitted`` (200)"
 
 #: ../../benchmarks.rst:260
 msgid "211,345"
-msgstr "211,345"
+msgstr "211.345"
 
 #: ../../benchmarks.rst:261 ../../benchmarks.rst:285
 #: ../../benchmarks.rst:309 ../../benchmarks.rst:401
@@ -1156,7 +1156,7 @@ msgstr "305"
 
 #: ../../benchmarks.rst:264 ../../benchmarks.rst:288
 msgid "11.84"
-msgstr "11.84"
+msgstr "11,84"
 
 #: ../../benchmarks.rst:265
 msgid "15912"
@@ -1168,7 +1168,7 @@ msgstr "``challenged`` (401)"
 
 #: ../../benchmarks.rst:268
 msgid "198,315"
-msgstr "198,315"
+msgstr "198.315"
 
 #: ../../benchmarks.rst:269 ../../benchmarks.rst:353
 msgid "160"
@@ -1184,7 +1184,7 @@ msgstr "326"
 
 #: ../../benchmarks.rst:272
 msgid "13.15"
-msgstr "13.15"
+msgstr "13,15"
 
 #: ../../benchmarks.rst:273 ../../benchmarks.rst:281
 #: ../../benchmarks.rst:289
@@ -1198,7 +1198,7 @@ msgstr "``allowed_static`` (200)"
 
 #: ../../benchmarks.rst:276
 msgid "211,053"
-msgstr "211,053"
+msgstr "211.053"
 
 #: ../../benchmarks.rst:277 ../../benchmarks.rst:293
 #: ../../benchmarks.rst:317
@@ -1207,7 +1207,7 @@ msgstr "152"
 
 #: ../../benchmarks.rst:280 ../../benchmarks.rst:671
 msgid "11.73"
-msgstr "11.73"
+msgstr "11,73"
 
 #: ../../benchmarks.rst:283 ../../benchmarks.rst:367
 msgid "``attack`` (200)"
@@ -1215,7 +1215,7 @@ msgstr "``attack`` (200)"
 
 #: ../../benchmarks.rst:284
 msgid "211,618"
-msgstr "211,618"
+msgstr "211.618"
 
 #: ../../benchmarks.rst:286
 msgid "176"
@@ -1230,7 +1230,7 @@ msgstr "Shield"
 
 #: ../../benchmarks.rst:292
 msgid "208,101"
-msgstr "208,101"
+msgstr "208.101"
 
 #: ../../benchmarks.rst:294
 msgid "178"
@@ -1242,7 +1242,7 @@ msgstr "308"
 
 #: ../../benchmarks.rst:296
 msgid "12.87"
-msgstr "12.87"
+msgstr "12,87"
 
 #: ../../benchmarks.rst:297
 msgid "15928"
@@ -1250,7 +1250,7 @@ msgstr "15928"
 
 #: ../../benchmarks.rst:300
 msgid "197,532"
-msgstr "197,532"
+msgstr "197.532"
 
 #: ../../benchmarks.rst:301
 msgid "161"
@@ -1266,7 +1266,7 @@ msgstr "327"
 
 #: ../../benchmarks.rst:304
 msgid "13.77"
-msgstr "13.77"
+msgstr "13,77"
 
 #: ../../benchmarks.rst:305 ../../benchmarks.rst:313
 #: ../../benchmarks.rst:321
@@ -1275,11 +1275,11 @@ msgstr "16192"
 
 #: ../../benchmarks.rst:308
 msgid "211,636"
-msgstr "211,636"
+msgstr "211.636"
 
 #: ../../benchmarks.rst:312
 msgid "11.78"
-msgstr "11.78"
+msgstr "11,78"
 
 #: ../../benchmarks.rst:315 ../../benchmarks.rst:399
 msgid "``attack`` (403)"
@@ -1287,7 +1287,7 @@ msgstr "``attack`` (403)"
 
 #: ../../benchmarks.rst:316
 msgid "210,549"
-msgstr "210,549"
+msgstr "210.549"
 
 #: ../../benchmarks.rst:319
 msgid "307"
@@ -1295,7 +1295,7 @@ msgstr "307"
 
 #: ../../benchmarks.rst:320
 msgid "12.32"
-msgstr "12.32"
+msgstr "12,32"
 
 #: ../../benchmarks.rst:323
 msgid ""
@@ -1312,13 +1312,13 @@ msgid ""
 msgstr ""
 "Im Forward-Auth-Modus ist der Daemon nicht der Engpass. Seine belegten "
 "Kerne (CPU-Zeit über Echtzeit, ``cores_busy_median`` in der JSON-Datei) "
-"bleiben zwischen 2.47 und 2.72 der vier Daemon-CPUs, und jede Zeile liegt "
-"zwischen 197,532 und 211,636 Anfragen pro Sekunde. Das deutet auf den "
+"bleiben zwischen 2,47 und 2,72 der vier Daemon-CPUs, und jede Zeile liegt "
+"zwischen 197.532 und 211.636 Anfragen pro Sekunde. Das deutet auf den "
 "Lastgenerator als Obergrenze hin. Nahe dieser Obergrenze schwankt ein "
 "Unterschied von wenigen Prozent zwischen den Zeilen von Lauf zu Lauf: "
 "Allein die Gate-Zeile ``admitted`` reicht über ihre drei Läufe von "
-"205,151 bis 211,513 Anfragen pro Sekunde. Der nützlichere Wert in diesem "
-"Modus ist die CPU-Zeit pro Anfrage: 11.73 bis 13.77 us, etwas mehr für "
+"205.151 bis 211.513 Anfragen pro Sekunde. Der nützlichere Wert in diesem "
+"Modus ist die CPU-Zeit pro Anfrage: 11,73 bis 13,77 us, etwas mehr für "
 "Shield als für Gate und am meisten für die ``challenged``-Zeilen, die die "
 "Challenge-Antwort rendern."
 
@@ -1347,7 +1347,7 @@ msgstr ""
 
 #: ../../benchmarks.rst:344
 msgid "142,498"
-msgstr "142,498"
+msgstr "142.498"
 
 #: ../../benchmarks.rst:345
 msgid "427"
@@ -1363,7 +1363,7 @@ msgstr "768"
 
 #: ../../benchmarks.rst:348
 msgid "27.68"
-msgstr "27.68"
+msgstr "27,68"
 
 #: ../../benchmarks.rst:349
 msgid "15896"
@@ -1375,7 +1375,7 @@ msgstr "``challenged`` (200)"
 
 #: ../../benchmarks.rst:352
 msgid "199,465"
-msgstr "199,465"
+msgstr "199.465"
 
 #: ../../benchmarks.rst:354
 msgid "181"
@@ -1387,7 +1387,7 @@ msgstr "324"
 
 #: ../../benchmarks.rst:356
 msgid "12.98"
-msgstr "12.98"
+msgstr "12,98"
 
 #: ../../benchmarks.rst:357
 msgid "16160"
@@ -1395,7 +1395,7 @@ msgstr "16160"
 
 #: ../../benchmarks.rst:360
 msgid "147,303"
-msgstr "147,303"
+msgstr "147.303"
 
 #: ../../benchmarks.rst:361
 msgid "411"
@@ -1411,7 +1411,7 @@ msgstr "759"
 
 #: ../../benchmarks.rst:364
 msgid "26.88"
-msgstr "26.88"
+msgstr "26,88"
 
 #: ../../benchmarks.rst:365
 msgid "16324"
@@ -1419,7 +1419,7 @@ msgstr "16324"
 
 #: ../../benchmarks.rst:368
 msgid "143,900"
-msgstr "143,900"
+msgstr "143.900"
 
 #: ../../benchmarks.rst:369
 msgid "422"
@@ -1435,7 +1435,7 @@ msgstr "745"
 
 #: ../../benchmarks.rst:372
 msgid "27.67"
-msgstr "27.67"
+msgstr "27,67"
 
 #: ../../benchmarks.rst:373
 msgid "16348"
@@ -1443,7 +1443,7 @@ msgstr "16348"
 
 #: ../../benchmarks.rst:376
 msgid "138,965"
-msgstr "138,965"
+msgstr "138.965"
 
 #: ../../benchmarks.rst:377
 msgid "438"
@@ -1459,7 +1459,7 @@ msgstr "857"
 
 #: ../../benchmarks.rst:380
 msgid "28.57"
-msgstr "28.57"
+msgstr "28,57"
 
 #: ../../benchmarks.rst:381
 msgid "16064"
@@ -1467,7 +1467,7 @@ msgstr "16064"
 
 #: ../../benchmarks.rst:384
 msgid "195,188"
-msgstr "195,188"
+msgstr "195.188"
 
 #: ../../benchmarks.rst:385
 msgid "162"
@@ -1483,7 +1483,7 @@ msgstr "328"
 
 #: ../../benchmarks.rst:388
 msgid "13.73"
-msgstr "13.73"
+msgstr "13,73"
 
 #: ../../benchmarks.rst:389 ../../benchmarks.rst:397
 #: ../../benchmarks.rst:405
@@ -1492,7 +1492,7 @@ msgstr "16328"
 
 #: ../../benchmarks.rst:392
 msgid "145,673"
-msgstr "145,673"
+msgstr "145.673"
 
 #: ../../benchmarks.rst:393
 msgid "415"
@@ -1508,11 +1508,11 @@ msgstr "746"
 
 #: ../../benchmarks.rst:396
 msgid "27.27"
-msgstr "27.27"
+msgstr "27,27"
 
 #: ../../benchmarks.rst:400
 msgid "209,507"
-msgstr "209,507"
+msgstr "209.507"
 
 #: ../../benchmarks.rst:402
 msgid "177"
@@ -1525,7 +1525,7 @@ msgstr "306"
 
 #: ../../benchmarks.rst:404
 msgid "12.17"
-msgstr "12.17"
+msgstr "12,17"
 
 #: ../../benchmarks.rst:407
 msgid ""
@@ -1540,8 +1540,8 @@ msgid ""
 msgstr ""
 "Hier sind die weitergeleiteten Zeilen (``admitted``, ``allowed_static`` "
 "und Gates ``attack``, die Gate weiterleitet) CPU-gebunden: Die belegten "
-"Kerne liegen bei 3.96 bis 3.98 von vier. Sie bedienen 138,965 bis 147,303 "
-"Anfragen pro Sekunde bei 26.88 bis 28.57 us CPU pro Anfrage, etwa doppelt "
+"Kerne liegen bei 3,96 bis 3,98 von vier. Sie bedienen 138.965 bis 147.303 "
+"Anfragen pro Sekunde bei 26,88 bis 28,57 us CPU pro Anfrage, etwa doppelt "
 "so viel wie eine Antwort, die der Daemon selbst gibt. Die "
 "``challenged``-Zeilen und Shields ``attack``-Zeile beantwortet der Daemon "
 "selbst, und sie sehen aus wie Forward-Auth-Zeilen. Unter Sättigung ist "
@@ -1564,14 +1564,14 @@ msgid ""
 "closing response (SID 0002, \"bug fix\"); the tables predate that fix."
 msgstr ""
 "In drei Reverse-Proxy-Zeilen zählte ``wrk`` Antworten außerhalb der "
-"Klassen 2xx und 3xx, wo keine erwartet wurden: 3 von 2,162,579 Anfragen "
-"(Gate ``attack``), 1 von 2,082,640 (Shield ``admitted``) und 1 von "
-"2,204,358 (Shield ``allowed_static``), summiert über die drei Läufe. Die "
+"Klassen 2xx und 3xx, wo keine erwartet wurden: 3 von 2.162.579 Anfragen "
+"(Gate ``attack``), 1 von 2.082.640 (Shield ``admitted``) und 1 von "
+"2.204.358 (Shield ``allowed_static``), summiert über die drei Läufe. Die "
 "Dateien verzeichnen nicht, welcher Status das war. Eine Wiederholung des "
 "Laufs mit den Metriken des Daemons zeigte ``503``-Antworten, gezählt in "
 "``sibuna_overloaded_total``: ``wrk`` öffnet seine 64 Verbindungen von "
 "einer Adresse, genau dem Standardwert von ``--max-connections-per-ip``, "
-"und wenn eine Verbindung nach ihrer 4,096. Anfrage geschlossen wurde, "
+"und wenn eine Verbindung nach ihrer 4.096. Anfrage geschlossen wurde, "
 "verband sich ``wrk`` neu, bevor die alte Verbindung ihren Platz "
 "zurückgegeben hatte. Der Daemon gibt den Platz jetzt zurück, bevor er die "
 "abschließende Antwort schreibt (SID 0002, \"bug fix\"); die Tabellen sind "
@@ -1607,7 +1607,7 @@ msgstr "Daemon-Binärprogramm"
 
 #: ../../benchmarks.rst:421
 msgid "49,113,856 bytes"
-msgstr "49,113,856 Bytes"
+msgstr "49.113.856 Bytes"
 
 #: ../../benchmarks.rst:422
 msgid "Idle resident memory, product runs"
@@ -1615,7 +1615,7 @@ msgstr "Residenter Speicher im Leerlauf, Produktläufe"
 
 #: ../../benchmarks.rst:423
 msgid "5,592 to 5,788 KiB"
-msgstr "5,592 bis 5,788 KiB"
+msgstr "5.592 bis 5.788 KiB"
 
 #: ../../benchmarks.rst:424
 msgid "Peak resident memory during a workload"
@@ -1623,7 +1623,7 @@ msgstr "Maximaler residenter Speicher während einer Arbeitslast"
 
 #: ../../benchmarks.rst:425
 msgid "15,896 to 16,348 KiB"
-msgstr "15,896 bis 16,348 KiB"
+msgstr "15.896 bis 16.348 KiB"
 
 #: ../../benchmarks.rst:426
 msgid "Resident memory after the workloads"
@@ -1631,7 +1631,7 @@ msgstr "Residenter Speicher nach den Arbeitslasten"
 
 #: ../../benchmarks.rst:427
 msgid "16,176 to 16,348 KiB"
-msgstr "16,176 bis 16,348 KiB"
+msgstr "16.176 bis 16.348 KiB"
 
 #: ../../benchmarks.rst:428
 msgid "Idle resident memory, primitive run"
@@ -1639,7 +1639,7 @@ msgstr "Residenter Speicher im Leerlauf, Primitive-Lauf"
 
 #: ../../benchmarks.rst:429
 msgid "6,052 KiB"
-msgstr "6,052 KiB"
+msgstr "6.052 KiB"
 
 #: ../../benchmarks.rst:430
 msgid "Policy engine tables"
@@ -1647,7 +1647,7 @@ msgstr "Tabellen der Richtlinien-Engine"
 
 #: ../../benchmarks.rst:431
 msgid "209,052 bytes (heap)"
-msgstr "209,052 Bytes (Heap)"
+msgstr "209.052 Bytes (Heap)"
 
 #: ../../benchmarks.rst:432
 msgid "Bot signature table"
@@ -1655,7 +1655,7 @@ msgstr "Tabelle der Bot-Signaturen"
 
 #: ../../benchmarks.rst:433
 msgid "42,244 bytes (heap)"
-msgstr "42,244 Bytes (Heap)"
+msgstr "42.244 Bytes (Heap)"
 
 #: ../../benchmarks.rst:434
 msgid "WAF table"
@@ -1663,7 +1663,7 @@ msgstr "WAF-Tabelle"
 
 #: ../../benchmarks.rst:435
 msgid "164,908 bytes (heap)"
-msgstr "164,908 Bytes (Heap)"
+msgstr "164.908 Bytes (Heap)"
 
 #: ../../benchmarks.rst:436
 msgid "Browser solver module (WebAssembly)"
@@ -1671,7 +1671,7 @@ msgstr "Browser-Löser-Modul (WebAssembly)"
 
 #: ../../benchmarks.rst:437
 msgid "14,744 bytes"
-msgstr "14,744 Bytes"
+msgstr "14.744 Bytes"
 
 #: ../../benchmarks.rst:439
 msgid ""
@@ -1744,7 +1744,7 @@ msgstr "Fehler"
 #: ../../benchmarks.rst:463 ../../benchmarks.rst:464
 #: ../../benchmarks.rst:522 ../../benchmarks.rst:523
 msgid "10,000"
-msgstr "10,000"
+msgstr "10.000"
 
 #: ../../benchmarks.rst:465
 msgid "30"
@@ -1776,12 +1776,12 @@ msgstr "0"
 
 #: ../../benchmarks.rst:471
 msgid "16.92"
-msgstr "16.92"
+msgstr "16,92"
 
 #: ../../benchmarks.rst:472 ../../benchmarks.rst:473
 #: ../../benchmarks.rst:531 ../../benchmarks.rst:532
 msgid "25,000"
-msgstr "25,000"
+msgstr "25.000"
 
 #: ../../benchmarks.rst:474
 msgid "28"
@@ -1805,12 +1805,12 @@ msgstr "1035"
 
 #: ../../benchmarks.rst:480
 msgid "15.83"
-msgstr "15.83"
+msgstr "15,83"
 
 #: ../../benchmarks.rst:481 ../../benchmarks.rst:482
 #: ../../benchmarks.rst:540 ../../benchmarks.rst:541
 msgid "50,000"
-msgstr "50,000"
+msgstr "50.000"
 
 #: ../../benchmarks.rst:483 ../../benchmarks.rst:501
 msgid "25"
@@ -1834,15 +1834,15 @@ msgstr "3029"
 
 #: ../../benchmarks.rst:489
 msgid "13.83"
-msgstr "13.83"
+msgstr "13,83"
 
 #: ../../benchmarks.rst:490 ../../benchmarks.rst:549
 msgid "100,000"
-msgstr "100,000"
+msgstr "100.000"
 
 #: ../../benchmarks.rst:491
 msgid "99,998"
-msgstr "99,998"
+msgstr "99.998"
 
 #: ../../benchmarks.rst:492
 msgid "24"
@@ -1866,15 +1866,15 @@ msgstr "2358"
 
 #: ../../benchmarks.rst:498
 msgid "13.48"
-msgstr "13.48"
+msgstr "13,48"
 
 #: ../../benchmarks.rst:499 ../../benchmarks.rst:558
 msgid "150,000"
-msgstr "150,000"
+msgstr "150.000"
 
 #: ../../benchmarks.rst:500
 msgid "149,996"
-msgstr "149,996"
+msgstr "149.996"
 
 #: ../../benchmarks.rst:502
 msgid "36"
@@ -1894,7 +1894,7 @@ msgstr "1753"
 
 #: ../../benchmarks.rst:507
 msgid "14.16"
-msgstr "14.16"
+msgstr "14,16"
 
 #: ../../benchmarks.rst:509
 msgid ""
@@ -1924,7 +1924,7 @@ msgstr "76"
 
 #: ../../benchmarks.rst:530
 msgid "32.25"
-msgstr "32.25"
+msgstr "32,25"
 
 #: ../../benchmarks.rst:533
 msgid "51"
@@ -1948,7 +1948,7 @@ msgstr "1105"
 
 #: ../../benchmarks.rst:539
 msgid "28.63"
-msgstr "28.63"
+msgstr "28,63"
 
 #: ../../benchmarks.rst:542
 msgid "47"
@@ -1968,11 +1968,11 @@ msgstr "3066"
 
 #: ../../benchmarks.rst:548
 msgid "27.45"
-msgstr "27.45"
+msgstr "27,45"
 
 #: ../../benchmarks.rst:550
 msgid "99,996"
-msgstr "99,996"
+msgstr "99.996"
 
 #: ../../benchmarks.rst:551
 msgid "55"
@@ -1996,11 +1996,11 @@ msgstr "2239"
 
 #: ../../benchmarks.rst:557
 msgid "28.42"
-msgstr "28.42"
+msgstr "28,42"
 
 #: ../../benchmarks.rst:559
 msgid "134,344"
-msgstr "134,344"
+msgstr "134.344"
 
 #: ../../benchmarks.rst:560
 msgid "583934"
@@ -2028,7 +2028,7 @@ msgstr "4"
 
 #: ../../benchmarks.rst:566
 msgid "29.22"
-msgstr "29.22"
+msgstr "29,22"
 
 #: ../../benchmarks.rst:568
 msgid ""
@@ -2038,8 +2038,8 @@ msgid ""
 "per request."
 msgstr ""
 "Im Forward-Auth-Modus bleibt das p50 bei jeder Rate zwischen 24 und 30 "
-"us. Das p99 bleibt bis 150,000 Anfragen pro Sekunde bei höchstens 51 us "
-"und das p99.9 bei höchstens 74 us. Der Daemon wendet 13.48 bis 16.92 us "
+"us. Das p99 bleibt bis 150.000 Anfragen pro Sekunde bei höchstens 51 us "
+"und das p99.9 bei höchstens 74 us. Der Daemon wendet 13,48 bis 16,92 us "
 "CPU pro Anfrage auf."
 
 #: ../../benchmarks.rst:570
@@ -2053,13 +2053,13 @@ msgid ""
 "Shield ``admitted``). The four errors of that row occurred in the "
 "overload."
 msgstr ""
-"Im Reverse-Proxy-Modus beträgt das p50 bis 100,000 Anfragen pro Sekunde "
-"47 bis 56 us, das p99 bei 100,000 liegt bei 100 us und das p99.9 bei 150 "
-"us. Bei 150,000 Anfragen pro Sekunde ist der Daemon gesättigt: Er schafft "
-"134,344 Anfragen pro Sekunde, und die Latenz wächst auf Sekunden, wie es "
+"Im Reverse-Proxy-Modus beträgt das p50 bis 100.000 Anfragen pro Sekunde "
+"47 bis 56 us, das p99 bei 100.000 liegt bei 100 us und das p99.9 bei 150 "
+"us. Bei 150.000 Anfragen pro Sekunde ist der Daemon gesättigt: Er schafft "
+"134.344 Anfragen pro Sekunde, und die Latenz wächst auf Sekunden, wie es "
 "ein Test mit offener Schleife oberhalb der Kapazität zeigen sollte. Diese "
 "Rate liegt nahe am weitergeleiteten Durchsatz mit geschlossener Schleife "
-"aus dem vorigen Kapitel (138,965 Anfragen pro Sekunde für Shield "
+"aus dem vorigen Kapitel (138.965 Anfragen pro Sekunde für Shield "
 "``admitted``). Die vier Fehler dieser Zeile traten in der Überlast auf."
 
 #: ../../benchmarks.rst:572
@@ -2070,8 +2070,8 @@ msgid ""
 "we read it as the host's worst moment, not as a property of the daemon."
 msgstr ""
 "Unterhalb der Sättigung sind die Streuungen des p99 schmal; die breiteste "
-"ist das Reverse-Proxy-p99 bei 50,000 Anfragen pro Sekunde, 58 bis 66 us. "
-"Die Spalte max ist eine einzige Anfrage von bis zu 1.5 Millionen in einem "
+"ist das Reverse-Proxy-p99 bei 50.000 Anfragen pro Sekunde, 58 bis 66 us. "
+"Die Spalte max ist eine einzige Anfrage von bis zu 1,5 Millionen in einem "
 "Lauf. Auf einem geteilten Host lesen wir sie als schlechtesten Moment des "
 "Hosts, nicht als Eigenschaft des Daemons."
 
@@ -2090,9 +2090,9 @@ msgstr ""
 "Externe Last hat Sibunas Entwurf verändert. Der Daemon bedient jede "
 "Verbindung auf einem eigenen Thread (SID 0002, SID 0010), und seine "
 "ersten Latenzläufe fanden ein Verteilungsende, das ``wrk`` nicht gezeigt "
-"hatte. Mit 64 Verbindungen, die der Daemon jeweils nach 4,096 Anfragen "
-"schloss, lag das 99.9. Perzentil bei 100,000 zugelassenen Anfragen pro "
-"Sekunde bei 0.3 bis 2 ms."
+"hatte. Mit 64 Verbindungen, die der Daemon jeweils nach 4.096 Anfragen "
+"schloss, lag das 99,9. Perzentil bei 100.000 zugelassenen Anfragen pro "
+"Sekunde bei 0,3 bis 2 ms."
 
 #: ../../benchmarks.rst:579
 msgid ""
@@ -2134,7 +2134,7 @@ msgid ""
 "which is why their figures appear only in SID 0002 and in this section."
 msgstr ""
 "Die Tabellen oben stammen aus dem Lauf nach der Korrektur: ein p99.9 von "
-"62 us im Forward-Auth-Modus und 150 us im Reverse-Proxy-Modus bei 100,000 "
+"62 us im Forward-Auth-Modus und 150 us im Reverse-Proxy-Modus bei 100.000 "
 "Anfragen pro Sekunde. Die Läufe vor der Korrektur sind nicht als "
 "Ergebnisdateien erhalten; deshalb erscheinen ihre Werte nur in SID 0002 "
 "und in diesem Abschnitt."
@@ -2155,9 +2155,9 @@ msgid ""
 "second. With a thread per connection, that is about 24 thread starts and "
 "24 thread exits every second."
 msgstr ""
-"Bei 100,000 Anfragen pro Sekunde über 64 Verbindungen trägt jede "
+"Bei 100.000 Anfragen pro Sekunde über 64 Verbindungen trägt jede "
 "Verbindung :math:`100000 / 64 = 1562.5` Anfragen pro Sekunde. Der Daemon "
-"schließt eine Keep-alive-Verbindung nach 4,096 Anfragen "
+"schließt eine Keep-alive-Verbindung nach 4.096 Anfragen "
 "(``MAX_REQUESTS_PER_CONNECTION`` in ``cmd/sibuna/src/connection.rs``), "
 "also hält eine Verbindung :math:`4096 / 1562.5 \\approx 2.62` s, und der "
 "Generator öffnet etwa :math:`64 / 2.62 \\approx 24.4` neue Verbindungen "
@@ -2175,12 +2175,12 @@ msgid ""
 "it moves p99. This is why such a defect needs p99.9 and a timer on every "
 "request to be seen."
 msgstr ""
-"Ein 10-Sekunden-Lauf bei dieser Rate misst 1,000,000 Anfragen. Sein p99.9 "
-"wird von 1,000 davon überschritten, 100 pro Sekunde; sein p99 von 1,000 "
+"Ein 10-Sekunden-Lauf bei dieser Rate misst 1.000.000 Anfragen. Sein p99.9 "
+"wird von 1.000 davon überschritten, 100 pro Sekunde; sein p99 von 1.000 "
 "pro Sekunde. Verzögert jeder Thread-Wechsel etwa :math:`100 / 24.4 "
 "\\approx 4` laufende Anfragen auf anderen Threads um einen Bruchteil "
 "einer Millisekunde, so füllen allein die verzögerten Anfragen die "
-"obersten 0.1%, während das oberste 1% noch aus gewöhnlichem Warten in "
+"obersten 0,1%, während das oberste 1% noch aus gewöhnlichem Warten in "
 "Warteschlangen besteht. Ein seltener, periodischer Stillstand verschiebt "
 "das äußerste Verteilungsende lange bevor er p99 verschiebt. Deshalb "
 "braucht ein solcher Defekt p99.9 und eine Zeitmessung an jeder Anfrage, "
@@ -2211,7 +2211,7 @@ msgstr ""
 "Anubis von Techaro ist ein weit verbreitetes Proof-of-Work-Gate, das vor "
 "Websites sitzt, ähnlich wie Sibunas Gate. Wir haben das offizielle "
 "Release-Binärprogramm von Anubis v1.27.0 (``anubis-1.27.0-linux-amd64``, "
-"40,001,698 Bytes) neben Sibuna auf demselben Host, auf denselben CPUs und "
+"40.001.698 Bytes) neben Sibuna auf demselben Host, auf denselben CPUs und "
 "mit denselben Arbeitslasten gemessen. Die beiden Ergebnisdateien wurden "
 "aufgezeichnet mit:"
 
@@ -2267,7 +2267,7 @@ msgstr ""
 "Messprogramms für ganze Produkte, mit einer Änderung: Der Ursprungsserver "
 "ist ``caddy respond``, gebunden an die Last-CPUs, wie es die früheren "
 "Treiber nutzten. Vor jedem Lauf wartet das Messprogramm, bis weniger als "
-"3,000 Sockets in ``TIME_WAIT`` verbleiben, weil die Reverse-Proxy-Läufe "
+"3.000 Sockets in ``TIME_WAIT`` verbleiben, weil die Reverse-Proxy-Läufe "
 "von Anubis Zehntausende zurücklassen."
 
 #: ../../benchmarks.rst:610
@@ -2309,15 +2309,15 @@ msgstr "Anfr./s (Status)"
 
 #: ../../benchmarks.rst:621
 msgid "210,682 (200)"
-msgstr "210,682 (200)"
+msgstr "210.682 (200)"
 
 #: ../../benchmarks.rst:622
 msgid "208,635 (200)"
-msgstr "208,635 (200)"
+msgstr "208.635 (200)"
 
 #: ../../benchmarks.rst:623
 msgid "36,509 (200)"
-msgstr "36,509 (200)"
+msgstr "36.509 (200)"
 
 #: ../../benchmarks.rst:625 ../../benchmarks.rst:645
 #: ../../benchmarks.rst:665 ../../benchmarks.rst:685
@@ -2328,31 +2328,31 @@ msgstr "p99 us"
 
 #: ../../benchmarks.rst:628
 msgid "7,477"
-msgstr "7,477"
+msgstr "7.477"
 
 #: ../../benchmarks.rst:631
 msgid "12.09"
-msgstr "12.09"
+msgstr "12,09"
 
 #: ../../benchmarks.rst:632
 msgid "13.21"
-msgstr "13.21"
+msgstr "13,21"
 
 #: ../../benchmarks.rst:633
 msgid "106.30"
-msgstr "106.30"
+msgstr "106,30"
 
 #: ../../benchmarks.rst:636
 msgid "16,228"
-msgstr "16,228"
+msgstr "16.228"
 
 #: ../../benchmarks.rst:637
 msgid "16,316"
-msgstr "16,316"
+msgstr "16.316"
 
 #: ../../benchmarks.rst:638
 msgid "32,624"
-msgstr "32,624"
+msgstr "32.624"
 
 #: ../../benchmarks.rst:639 ../../benchmarks.rst:729
 msgid "``challenged``"
@@ -2360,15 +2360,15 @@ msgstr "``challenged``"
 
 #: ../../benchmarks.rst:641
 msgid "198,251 (401)"
-msgstr "198,251 (401)"
+msgstr "198.251 (401)"
 
 #: ../../benchmarks.rst:642
 msgid "193,087 (401)"
-msgstr "193,087 (401)"
+msgstr "193.087 (401)"
 
 #: ../../benchmarks.rst:643
 msgid "113,170 (401)"
-msgstr "113,170 (401)"
+msgstr "113.170 (401)"
 
 #: ../../benchmarks.rst:647
 msgid "342"
@@ -2376,33 +2376,33 @@ msgstr "342"
 
 #: ../../benchmarks.rst:648
 msgid "3,781"
-msgstr "3,781"
+msgstr "3.781"
 
 #: ../../benchmarks.rst:651
 msgid "13.49"
-msgstr "13.49"
+msgstr "13,49"
 
 #: ../../benchmarks.rst:652
 msgid "15.02"
-msgstr "15.02"
+msgstr "15,02"
 
 #: ../../benchmarks.rst:653
 msgid "32.96"
-msgstr "32.96"
+msgstr "32,96"
 
 #: ../../benchmarks.rst:656 ../../benchmarks.rst:676
 #: ../../benchmarks.rst:696
 msgid "16,240"
-msgstr "16,240"
+msgstr "16.240"
 
 #: ../../benchmarks.rst:657 ../../benchmarks.rst:677
 #: ../../benchmarks.rst:697
 msgid "16,328"
-msgstr "16,328"
+msgstr "16.328"
 
 #: ../../benchmarks.rst:658
 msgid "32,696"
-msgstr "32,696"
+msgstr "32.696"
 
 #: ../../benchmarks.rst:659 ../../benchmarks.rst:749
 msgid "``allowed_static``"
@@ -2410,15 +2410,15 @@ msgstr "``allowed_static``"
 
 #: ../../benchmarks.rst:661
 msgid "212,569 (200)"
-msgstr "212,569 (200)"
+msgstr "212.569 (200)"
 
 #: ../../benchmarks.rst:662
 msgid "212,444 (200)"
-msgstr "212,444 (200)"
+msgstr "212.444 (200)"
 
 #: ../../benchmarks.rst:663
 msgid "89,904 (200)"
-msgstr "89,904 (200)"
+msgstr "89.904 (200)"
 
 #: ../../benchmarks.rst:666 ../../benchmarks.rst:667
 msgid "304"
@@ -2426,19 +2426,19 @@ msgstr "304"
 
 #: ../../benchmarks.rst:668
 msgid "4,547"
-msgstr "4,547"
+msgstr "4.547"
 
 #: ../../benchmarks.rst:672
 msgid "11.95"
-msgstr "11.95"
+msgstr "11,95"
 
 #: ../../benchmarks.rst:673
 msgid "41.63"
-msgstr "41.63"
+msgstr "41,63"
 
 #: ../../benchmarks.rst:678
 msgid "33,396"
-msgstr "33,396"
+msgstr "33.396"
 
 #: ../../benchmarks.rst:679 ../../benchmarks.rst:769
 msgid "``attack``"
@@ -2446,35 +2446,35 @@ msgstr "``attack``"
 
 #: ../../benchmarks.rst:681
 msgid "212,086 (200)"
-msgstr "212,086 (200)"
+msgstr "212.086 (200)"
 
 #: ../../benchmarks.rst:682
 msgid "211,347 (403)"
-msgstr "211,347 (403)"
+msgstr "211.347 (403)"
 
 #: ../../benchmarks.rst:683
 msgid "36,853 (200)"
-msgstr "36,853 (200)"
+msgstr "36.853 (200)"
 
 #: ../../benchmarks.rst:688
 msgid "7,283"
-msgstr "7,283"
+msgstr "7.283"
 
 #: ../../benchmarks.rst:691
 msgid "12.07"
-msgstr "12.07"
+msgstr "12,07"
 
 #: ../../benchmarks.rst:692
 msgid "12.56"
-msgstr "12.56"
+msgstr "12,56"
 
 #: ../../benchmarks.rst:693
 msgid "104.88"
-msgstr "104.88"
+msgstr "104,88"
 
 #: ../../benchmarks.rst:698
 msgid "33,764"
-msgstr "33,764"
+msgstr "33.764"
 
 #: ../../benchmarks.rst:700
 msgid ""
@@ -2489,63 +2489,63 @@ msgstr ""
 
 #: ../../benchmarks.rst:711
 msgid "106,376 (200)"
-msgstr "106,376 (200)"
+msgstr "106.376 (200)"
 
 #: ../../benchmarks.rst:712
 msgid "103,298 (200)"
-msgstr "103,298 (200)"
+msgstr "103.298 (200)"
 
 #: ../../benchmarks.rst:713
 msgid "19,398 (200)"
-msgstr "19,398 (200)"
+msgstr "19.398 (200)"
 
 #: ../../benchmarks.rst:716
 msgid "3,331"
-msgstr "3,331"
+msgstr "3.331"
 
 #: ../../benchmarks.rst:717
 msgid "3,321"
-msgstr "3,321"
+msgstr "3.321"
 
 #: ../../benchmarks.rst:718
 msgid "11,062"
-msgstr "11,062"
+msgstr "11.062"
 
 #: ../../benchmarks.rst:721
 msgid "27.02"
-msgstr "27.02"
+msgstr "27,02"
 
 #: ../../benchmarks.rst:722
 msgid "27.92"
-msgstr "27.92"
+msgstr "27,92"
 
 #: ../../benchmarks.rst:723
 msgid "190.40"
-msgstr "190.40"
+msgstr "190,40"
 
 #: ../../benchmarks.rst:726
 msgid "16,528"
-msgstr "16,528"
+msgstr "16.528"
 
 #: ../../benchmarks.rst:727
 msgid "16,444"
-msgstr "16,444"
+msgstr "16.444"
 
 #: ../../benchmarks.rst:728
 msgid "39,980"
-msgstr "39,980"
+msgstr "39.980"
 
 #: ../../benchmarks.rst:731
 msgid "198,402 (200)"
-msgstr "198,402 (200)"
+msgstr "198.402 (200)"
 
 #: ../../benchmarks.rst:732
 msgid "197,327 (200)"
-msgstr "197,327 (200)"
+msgstr "197.327 (200)"
 
 #: ../../benchmarks.rst:733
 msgid "28,842 (200)"
-msgstr "28,842 (200)"
+msgstr "28.842 (200)"
 
 #: ../../benchmarks.rst:736
 msgid "325"
@@ -2553,109 +2553,109 @@ msgstr "325"
 
 #: ../../benchmarks.rst:738
 msgid "9,546"
-msgstr "9,546"
+msgstr "9.546"
 
 #: ../../benchmarks.rst:741
 msgid "13.05"
-msgstr "13.05"
+msgstr "13,05"
 
 #: ../../benchmarks.rst:742
 msgid "13.78"
-msgstr "13.78"
+msgstr "13,78"
 
 #: ../../benchmarks.rst:743
 msgid "137.73"
-msgstr "137.73"
+msgstr "137,73"
 
 #: ../../benchmarks.rst:746 ../../benchmarks.rst:766
 #: ../../benchmarks.rst:786
 msgid "16,544"
-msgstr "16,544"
+msgstr "16.544"
 
 #: ../../benchmarks.rst:747 ../../benchmarks.rst:767
 #: ../../benchmarks.rst:787
 msgid "16,464"
-msgstr "16,464"
+msgstr "16.464"
 
 #: ../../benchmarks.rst:748
 msgid "516,872"
-msgstr "516,872"
+msgstr "516.872"
 
 #: ../../benchmarks.rst:751
 msgid "105,427 (200)"
-msgstr "105,427 (200)"
+msgstr "105.427 (200)"
 
 #: ../../benchmarks.rst:752
 msgid "106,819 (200)"
-msgstr "106,819 (200)"
+msgstr "106.819 (200)"
 
 #: ../../benchmarks.rst:753
 msgid "28,862 (200)"
-msgstr "28,862 (200)"
+msgstr "28.862 (200)"
 
 #: ../../benchmarks.rst:756
 msgid "3,320"
-msgstr "3,320"
+msgstr "3.320"
 
 #: ../../benchmarks.rst:757
 msgid "3,316"
-msgstr "3,316"
+msgstr "3.316"
 
 #: ../../benchmarks.rst:758
 msgid "30,124"
-msgstr "30,124"
+msgstr "30.124"
 
 #: ../../benchmarks.rst:761
 msgid "26.24"
-msgstr "26.24"
+msgstr "26,24"
 
 #: ../../benchmarks.rst:762
 msgid "26.52"
-msgstr "26.52"
+msgstr "26,52"
 
 #: ../../benchmarks.rst:763
 msgid "135.41"
-msgstr "135.41"
+msgstr "135,41"
 
 #: ../../benchmarks.rst:768
 msgid "616,548"
-msgstr "616,548"
+msgstr "616.548"
 
 #: ../../benchmarks.rst:771
 msgid "105,616 (200)"
-msgstr "105,616 (200)"
+msgstr "105.616 (200)"
 
 #: ../../benchmarks.rst:772
 msgid "210,483 (403)"
-msgstr "210,483 (403)"
+msgstr "210.483 (403)"
 
 #: ../../benchmarks.rst:773
 msgid "23,399 (200)"
-msgstr "23,399 (200)"
+msgstr "23.399 (200)"
 
 #: ../../benchmarks.rst:776
 msgid "3,327"
-msgstr "3,327"
+msgstr "3.327"
 
 #: ../../benchmarks.rst:778
 msgid "14,124"
-msgstr "14,124"
+msgstr "14.124"
 
 #: ../../benchmarks.rst:781
 msgid "26.98"
-msgstr "26.98"
+msgstr "26,98"
 
 #: ../../benchmarks.rst:782
 msgid "12.28"
-msgstr "12.28"
+msgstr "12,28"
 
 #: ../../benchmarks.rst:783
 msgid "169.04"
-msgstr "169.04"
+msgstr "169,04"
 
 #: ../../benchmarks.rst:788
 msgid "599,516"
-msgstr "599,516"
+msgstr "599.516"
 
 #: ../../benchmarks.rst:790
 msgid ""
@@ -2671,16 +2671,16 @@ msgid ""
 "admission measurements below, where HS512 tokens raise Anubis's session "
 "checks by more than half, support that reading."
 msgstr ""
-"Im Forward-Auth-Modus bediente Sibuna 193,087 bis 212,569 Anfragen pro "
-"Sekunde bei einem p99 von 304 bis 342 us, und Anubis 36,509 "
-"(``admitted``) bis 113,170 (``challenged``) bei einem p99 von 3,781 bis "
-"7,477 us. Sibunas belegte Kerne blieben zwischen 2.49 und 2.90 von vier, "
-"also setzte der Lastgenerator seine Grenze; bei Anubis waren es 3.73 bis "
-"3.88, also war Anubis CPU-gebunden. Der klarste Wert ist die CPU-Zeit pro "
-"Anfrage: Eine zugelassene Anfrage kostete Sibuna Gate 12.09 us und Anubis "
-"106.30 us. Ein wahrscheinlicher Teil dieses Unterschieds ist das "
+"Im Forward-Auth-Modus bediente Sibuna 193.087 bis 212.569 Anfragen pro "
+"Sekunde bei einem p99 von 304 bis 342 us, und Anubis 36.509 "
+"(``admitted``) bis 113.170 (``challenged``) bei einem p99 von 3.781 bis "
+"7.477 us. Sibunas belegte Kerne blieben zwischen 2,49 und 2,90 von vier, "
+"also setzte der Lastgenerator seine Grenze; bei Anubis waren es 3,73 bis "
+"3,88, also war Anubis CPU-gebunden. Der klarste Wert ist die CPU-Zeit pro "
+"Anfrage: Eine zugelassene Anfrage kostete Sibuna Gate 12,09 us und Anubis "
+"106,30 us. Ein wahrscheinlicher Teil dieses Unterschieds ist das "
 "Sitzungstoken. Anubis signiert Sitzungen standardmäßig mit Ed25519, und "
-"Sibuna prüft einen BLAKE3-MAC mit Schlüssel (155.8 ns in der "
+"Sibuna prüft einen BLAKE3-MAC mit Schlüssel (155,8 ns in der "
 "Primitive-Tabelle); die Zulassungsmessungen unten, bei denen HS512-Tokens "
 "die Sitzungsprüfungen von Anubis um mehr als die Hälfte steigern, stützen "
 "diese Lesart."
@@ -2702,22 +2702,22 @@ msgid ""
 "challenge, but the harness did not confirm the cause. Sibuna's peak "
 "stayed between 16,228 and 16,544 KiB in every row of both modes."
 msgstr ""
-"Im Reverse-Proxy-Modus bedienten Sibunas weitergeleitete Zeilen 103,298 "
-"bis 106,819 Anfragen pro Sekunde bei 2.77 bis 2.98 belegten Kernen. Sie "
-"liegen unter den 138,965 bis 147,303 des Stub-Ursprungsservers in "
+"Im Reverse-Proxy-Modus bedienten Sibunas weitergeleitete Zeilen 103.298 "
+"bis 106.819 Anfragen pro Sekunde bei 2,77 bis 2,98 belegten Kernen. Sie "
+"liegen unter den 138.965 bis 147.303 des Stub-Ursprungsservers in "
 "``product-latest.json``, und der Daemon ist nicht CPU-gebunden, also "
 "liegt die Grenze außerhalb von ihm: Der Ursprungsserver, ``caddy "
 "respond``, teilt die Last-CPUs mit ``wrk``. Sein Verteilungsende zeigt "
-"sich im p90 von 2.1 bis 2.4 ms. Anubis bediente 19,398 bis 28,862 "
-"Anfragen pro Sekunde bei 3.68 bis 3.97 belegten Kernen und 135 bis 190 us "
-"CPU pro Anfrage. Sein residenter Speicher stieg von 39,980 KiB in der "
-"Arbeitslast ``admitted`` auf 516,872 KiB in ``challenged`` und 616,548 "
-"KiB in ``allowed_static``, und nach den Arbeitslasten hielt es 589,276 "
-"KiB gegenüber 21,552 KiB im Leerlauf. Der Anstieg begann in "
+"sich im p90 von 2,1 bis 2,4 ms. Anubis bediente 19.398 bis 28.862 "
+"Anfragen pro Sekunde bei 3,68 bis 3,97 belegten Kernen und 135 bis 190 us "
+"CPU pro Anfrage. Sein residenter Speicher stieg von 39.980 KiB in der "
+"Arbeitslast ``admitted`` auf 516.872 KiB in ``challenged`` und 616.548 "
+"KiB in ``allowed_static``, und nach den Arbeitslasten hielt es 589.276 "
+"KiB gegenüber 21.552 KiB im Leerlauf. Der Anstieg begann in "
 "``challenged``, wo jede Anfrage eine frische Challenge mit eigener ID "
 "erhält; das deutet auf einen Datensatz pro ausgestellter Challenge hin, "
 "aber das Messprogramm hat die Ursache nicht bestätigt. Sibunas Spitze "
-"blieb in jeder Zeile beider Modi zwischen 16,228 und 16,544 KiB."
+"blieb in jeder Zeile beider Modi zwischen 16.228 und 16.544 KiB."
 
 #: ../../benchmarks.rst:794
 msgid "Several rows are not like for like either:"
@@ -2854,23 +2854,23 @@ msgstr "Sibuna (BLAKE3 mit Schlüssel)"
 
 #: ../../benchmarks.rst:823
 msgid "88,104"
-msgstr "88,104"
+msgstr "88.104"
 
 #: ../../benchmarks.rst:824
 msgid "78,997"
-msgstr "78,997"
+msgstr "78.997"
 
 #: ../../benchmarks.rst:825
 msgid "42,664"
-msgstr "42,664"
+msgstr "42.664"
 
 #: ../../benchmarks.rst:826
 msgid "57,924"
-msgstr "57,924"
+msgstr "57.924"
 
 #: ../../benchmarks.rst:827
 msgid "7,792"
-msgstr "7,792"
+msgstr "7.792"
 
 #: ../../benchmarks.rst:828
 msgid "Anubis 1.27.0 (Ed25519)"
@@ -2878,23 +2878,23 @@ msgstr "Anubis 1.27.0 (Ed25519)"
 
 #: ../../benchmarks.rst:829
 msgid "10,951"
-msgstr "10,951"
+msgstr "10.951"
 
 #: ../../benchmarks.rst:830
 msgid "28,619"
-msgstr "28,619"
+msgstr "28.619"
 
 #: ../../benchmarks.rst:831
 msgid "7,893"
-msgstr "7,893"
+msgstr "7.893"
 
 #: ../../benchmarks.rst:832
 msgid "12,668"
-msgstr "12,668"
+msgstr "12.668"
 
 #: ../../benchmarks.rst:833
 msgid "33,400"
-msgstr "33,400"
+msgstr "33.400"
 
 #: ../../benchmarks.rst:834
 msgid "Anubis 1.27.0 (HS512)"
@@ -2902,23 +2902,23 @@ msgstr "Anubis 1.27.0 (HS512)"
 
 #: ../../benchmarks.rst:835
 msgid "16,976"
-msgstr "16,976"
+msgstr "16.976"
 
 #: ../../benchmarks.rst:836
 msgid "27,785"
-msgstr "27,785"
+msgstr "27.785"
 
 #: ../../benchmarks.rst:837
 msgid "7,952"
-msgstr "7,952"
+msgstr "7.952"
 
 #: ../../benchmarks.rst:838
 msgid "19,261"
-msgstr "19,261"
+msgstr "19.261"
 
 #: ../../benchmarks.rst:839
 msgid "29,840"
-msgstr "29,840"
+msgstr "29.840"
 
 #: ../../benchmarks.rst:841
 msgid ""
@@ -2933,11 +2933,11 @@ msgstr ""
 "Die Bereiche der sieben Batches stehen in der Datei. Die von Sibuna "
 "liegen innerhalb von 11% um seine Mediane; die von Anubis sind breiter "
 "(seine nicht authentifizierten Prüfungen mit Ed25519-Tokens reichen von "
-"25,394 bis 32,741), und ein Batch von 200 Operationen dauert nur 2 bis 25 "
+"25.394 bis 32.741), und ein Batch von 200 Operationen dauert nur 2 bis 25 "
 "ms, daher lesen wir diese Werte auf etwa ein Zehntel genau. Die Zeit pro "
-"Operation des langsameren Clients ergibt die Umlaufzeit: 22.7 us für eine "
-"Sitzungsprüfung bei Sibuna, 182.5 us für eine Prüfung bei Anubis mit "
-"Ed25519-Tokens und 117.7 us mit HS512."
+"Operation des langsameren Clients ergibt die Umlaufzeit: 22,7 us für eine "
+"Sitzungsprüfung bei Sibuna, 182,5 us für eine Prüfung bei Anubis mit "
+"Ed25519-Tokens und 117,7 us mit HS512."
 
 #: ../../benchmarks.rst:843
 msgid ""
@@ -3061,7 +3061,7 @@ msgstr "Anfragen der Datenebene"
 msgid ""
 "6,000 in 30.0 s (200 per second, 4 threads, one connection per request)"
 msgstr ""
-"6,000 in 30.0 s (200 pro Sekunde, 4 Threads, eine Verbindung pro Anfrage)"
+"6.000 in 30,0 s (200 pro Sekunde, 4 Threads, eine Verbindung pro Anfrage)"
 
 #: ../../benchmarks.rst:867
 msgid "Answered"
@@ -3069,7 +3069,7 @@ msgstr "Beantwortet"
 
 #: ../../benchmarks.rst:868
 msgid "6,000: 200 x 1,200, 401 x 3,000, 403 x 600, 404 x 600, 500 x 600"
-msgstr "6,000: 200 x 1,200, 401 x 3,000, 403 x 600, 404 x 600, 500 x 600"
+msgstr "6.000: 200 x 1.200, 401 x 3.000, 403 x 600, 404 x 600, 500 x 600"
 
 #: ../../benchmarks.rst:869
 msgid "Errors (no reply)"
@@ -3089,7 +3089,7 @@ msgstr "VmRSS des Daemons beim Start"
 
 #: ../../benchmarks.rst:874
 msgid "36,152 KiB"
-msgstr "36,152 KiB"
+msgstr "36.152 KiB"
 
 #: ../../benchmarks.rst:875
 msgid "Daemon VmRSS with 8 dashboards open"
@@ -3097,7 +3097,7 @@ msgstr "VmRSS des Daemons mit 8 offenen Dashboards"
 
 #: ../../benchmarks.rst:876
 msgid "38,028 KiB"
-msgstr "38,028 KiB"
+msgstr "38.028 KiB"
 
 #: ../../benchmarks.rst:877
 msgid "Daemon VmRSS after the traffic"
@@ -3105,7 +3105,7 @@ msgstr "VmRSS des Daemons nach dem Verkehr"
 
 #: ../../benchmarks.rst:878
 msgid "41,496 KiB (VmHWM 41,496 KiB)"
-msgstr "41,496 KiB (VmHWM 41,496 KiB)"
+msgstr "41.496 KiB (VmHWM 41.496 KiB)"
 
 #: ../../benchmarks.rst:880
 msgid ""
@@ -3121,7 +3121,7 @@ msgid ""
 msgstr ""
 "Die Kacheln wurden während des Verkehrs alle zwei Sekunden und 3 Sekunden "
 "danach gelesen. Jedes Dashboard endete mit denselben Summen (Requests "
-"6,000, Admitted 2,400, Challenged 3,000, Policy denied 600, Origin 4xx "
+"6.000, Admitted 2.400, Challenged 3.000, Policy denied 600, Origin 4xx "
 "600, Origin 5xx 600), erhielt 134 bis 139 ``stats``-Deltas, hielt seinen "
 "WebSocket offen und meldete keine Ausnahme, keinen Konsolenfehler und "
 "keinen Verstoß gegen die Content-Security-Policy. Acht Browser-Abonnenten "
@@ -3173,8 +3173,8 @@ msgid ""
 "core, 1 GB RAM, 5 GB disk, Docker 20.10.14+ and Compose 2.0+"
 msgstr ""
 "Veröffentlichte, vom Hersteller gemeldete Angaben (geprüft September "
-"2026): Erkennungsrate 71.65% (balance) und 76.17% (strict), Fehlalarme "
-"0.07% (balance) und 0.22% (strict); Mindest-Host Linux x86_64 oder arm64 "
+"2026): Erkennungsrate 71,65% (balance) und 76,17% (strict), Fehlalarme "
+"0,07% (balance) und 0,22% (strict); Mindest-Host Linux x86_64 oder arm64 "
 "mit SSSE3, 1 CPU-Kern, 1 GB RAM, 5 GB Festplatte, Docker 20.10.14+ und "
 "Compose 2.0+"
 

@@ -306,7 +306,7 @@ msgstr "``wasm/sibuna-pow.wasm``"
 
 #: ../../quick-reference.rst:125
 msgid "15,181-byte solver"
-msgstr "Löser mit 15,181 Bytes"
+msgstr "Löser mit 15.181 Bytes"
 
 #: ../../quick-reference.rst:126
 msgid "``worker.js``"
@@ -534,7 +534,7 @@ msgstr ""
 "Bewertung :math:`\\le -50` -> deny-Präfix; :math:`\\ge 50` -> allow. "
 "Cluster: dasselbe Geheimnis auf jedem Knoten, eine PostgreSQL-Datenbank, "
 "``--features postgres``, ``--database-url-file <file> --cluster-node N`` "
-"mit einem eindeutigen N von 1 bis 8,388,607; keine Mitgliederliste, kein "
+"mit einem eindeutigen N von 1 bis 8.388.607; keine Mitgliederliste, kein "
 "Leader und kein Cluster-TLS (SID 0011)."
 
 #: ../../quick-reference.rst:216
@@ -663,12 +663,12 @@ msgstr ""
 "Challenge-Kennung 70 Zeichen (36-Byte-Nutzlast + 16-Byte-Tag); Token 75 "
 "Zeichen (40 + 16), 139 mit Ed25519; Beweisbytes :math:`32(1 + t(n+1))`; "
 "PoSW-Tiefe = Bits - 3, Bereich 4 bis 24; Anfragepuffer 64 KB; Kopflimit "
-"16 KB; geprüfter Body 8 KB; Verbrauchsmenge 1,048,576 Tags "
-"(``--spent-tags``); Ratenzellen 262,144 pro Tabelle "
-"(``--rate-table-cells``); Sperren 65,536 Slots (``--ban-table-slots``); "
+"16 KB; geprüfter Body 8 KB; Verbrauchsmenge 1.048.576 Tags "
+"(``--spent-tags``); Ratenzellen 262.144 pro Tabelle "
+"(``--rate-table-cells``); Sperren 65.536 Slots (``--ban-table-slots``); "
 "64 Verbindungen pro Clientadresse; Vorfallsring 512; Batch 32; "
-"Kampagnenabstand 0.35 über die 16,384 jüngsten Embeddings; Keep-Alive "
-"4,096 Anfragen pro Verbindung; Pool zum Ursprungsserver 256 Sockets; "
+"Kampagnenabstand 0,35 über die 16.384 jüngsten Embeddings; Keep-Alive "
+"4.096 Anfragen pro Verbindung; Pool zum Ursprungsserver 256 Sockets; "
 "Speicher-Job-Warteschlange 32."
 
 #: ../../quick-reference.rst:255
