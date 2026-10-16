@@ -15,13 +15,13 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 sibuna-console-protocol = { workspace = true }
 sibuna-json = { workspace = true }
-sibuna-html = { workspace = true, default-features = false, features = ["alloc"] }
+sibuna-html = { workspace = true, features = ["alloc"] }
 # SHA-256 of retained ranking archives, checked against their cursors (and of QR
 # matrices in the tests).
 sibuna-crypto = { workspace = true }
 
 [build-dependencies]
-sibuna-html = { workspace = true }
+sibuna-html = { workspace = true, features = ["compiler"] }
 
 [lints]
 workspace = true
