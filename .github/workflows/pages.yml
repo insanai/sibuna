@@ -1,0 +1,64 @@
+name: Documentation
+on:
+  push:
+    branches: [main]
+    paths: ['docs/**', 'Cargo.toml', '.github/workflows/pages.yml']
+  pull_request:
+    paths: ['docs/**', 'Cargo.toml', '.github/workflows/pages.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  GUIDEDOG_VERSION: 1.0.0-beta.2
+  # SHA-256 of guidedog-linux-amd64.tar.gz, from the release's SHA256SUMS.
+  GUIDEDOG_SHA256: 8c81732a76b803266a1afc5d20e32611b43bff23076bb39275aa66e7a7f0c3f1
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install guidedog
+        run: |
+          mkdir -p "$RUNNER_TEMP/guidedog"
+          cd "$RUNNER_TEMP/guidedog"
+          curl -fsSLO "https://github.com/insanai/guidedog/releases/download/v${GUIDEDOG_VERSION}/guidedog-linux-amd64.tar.gz"
+          echo "${GUIDEDOG_SHA256}  guidedog-linux-amd64.tar.gz" | sha256sum -c -
+          tar -xzf guidedog-linux-amd64.tar.gz
+          echo "$RUNNER_TEMP/guidedog/guidedog-linux-amd64" >> "$GITHUB_PATH"
+      - name: Show tool versions
+        run: guidedog --version && python3 --version
+      - name: Build the book, whitepaper, SIDs and landing page
+        run: python3 docs/site/build.py --out site
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: github.event_name == 'pull_request'
+        with:
+          name: documentation-preview
+          path: site
+          retention-days: 7
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        with:
+          path: site
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages-production
+      cancel-in-progress: false
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
