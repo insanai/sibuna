@@ -18,7 +18,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install guidedog
@@ -29,9 +29,15 @@ jobs:
           echo "${GUIDEDOG_SHA256}  guidedog-linux-amd64.tar.gz" | sha256sum -c -
           tar -xzf guidedog-linux-amd64.tar.gz
           echo "$RUNNER_TEMP/guidedog/guidedog-linux-amd64" >> "$GITHUB_PATH"
+      - name: Install fonts for the translated PDF books
+        # Chinese, Japanese and Korean (fonts-noto-cjk); Hindi and Arabic (fonts-noto-core).
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends fonts-noto-cjk fonts-noto-core
+          fc-list : family | grep -E 'Noto (Serif|Sans) CJK SC|Noto Serif Devanagari|Noto Naskh Arabic'
       - name: Show tool versions
         run: guidedog --version && python3 --version
-      - name: Build the book, whitepaper, SIDs and landing page
+      - name: Build the book in eight languages, whitepaper, SIDs and landing pages
         run: python3 docs/site/build.py --out site
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: github.event_name == 'pull_request'
