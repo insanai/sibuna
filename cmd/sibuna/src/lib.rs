@@ -24,7 +24,9 @@
 //!   request threads read with one acquire load ([`EngineCache`]).
 //! - [`daemon`]: the engine, the optional storage layer and the server together.
 //! - [`cli`]: the command line, the master secret, the policy file, the banner.
-//! - [`signals`]: SIGINT and SIGTERM through a `sigwait` thread (the only `unsafe` code).
+//! - [`signals`]: SIGINT and SIGTERM through a `sigwait` thread, or a console control
+//!   handler on Windows (`unsafe` FFI, as is `random` on Windows).
+//! - `random`: the operating system's random bytes for a master seed nobody named.
 //! - [`assets`]: the embedded WebAssembly solver, worker script and interstitial.
 //! - `recipe` and, with storage, `persistent`: how engines are built, from the policy file
 //!   and from stored policy rows.
@@ -153,6 +155,7 @@ mod incidents;
 mod pages;
 #[cfg(feature = "storage")]
 pub mod persistent;
+mod random;
 pub mod recipe;
 mod routes;
 pub mod server;
