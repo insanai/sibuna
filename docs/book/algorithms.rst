@@ -163,7 +163,7 @@ The Declarative Policy Engine
 
    Read the rule model, the evaluation order, WEIGH scoring with thresholds, and the JSON policy grammar.
 
-A rule is a conjunction of optional criteria (path pattern, User-Agent pattern, up to four headers, up to eight IPv4/IPv6 CIDR blocks) with an action ``ALLOW``, ``DENY``, ``CHALLENGE``, or ``WEIGH``, optional per-rule difficulty in work bits and algorithm, and a signed ``weight``. Evaluation order:
+A rule is a conjunction of optional criteria (path pattern, User-Agent pattern, up to four headers, up to eight IPv4/IPv6 CIDR blocks, one JA4 fingerprint or prefix) with an action ``ALLOW``, ``DENY``, ``CHALLENGE``, or ``WEIGH``, optional per-rule difficulty in work bits and algorithm, and a signed ``weight``. Evaluation order:
 
 1. Semantic WAF (Shield only): violation is a terminal ``deny``.
 2. Reputation trie: ``deny`` or ``allow`` prefixes are terminal.

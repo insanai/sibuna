@@ -68,6 +68,9 @@ The table lists every option of ``sibuna --help``. Ranges are those the parser e
    * - ``--trusted-hops``
      - ``1``
      - With forwarded identity trusted, the client is the ``X-Forwarded-For`` entry this many positions from the right, 1 to 8
+   * - ``--ja4-header``
+     - off
+     - The request header in which a trusted ingress sends the client's JA4 TLS fingerprint, such as ``cf-ja4``; 1 to 64 token characters, not ``X-Forwarded-*``, ``X-Real-IP``, ``X-Sibuna-*`` or ``Forwarded``. It is read only when forwarded identity is trusted (see "JA4 Fingerprints From the Ingress")
    * - ``--ipv6-prefix``
      - ``64``
      - IPv6 prefix length, 32 to 128, that rate limits, bans and the per-client connection bound apply to
@@ -440,6 +443,85 @@ In ``--mode forward_auth`` the daemon answers the ingress's subrequest with ``20
 
 The ``/__sibuna/*`` namespace (interstitial, challenge, verify, solver assets) must reach the daemon directly in both recipes. The nginx error page passes the original URI and method so the interstitial carries the requirement the authorization decided; without them the page still works, and issuance falls back to evaluating the URL the browser reports. Caddy supplies original URI/method metadata itself. The exclusive ``handle`` blocks ensure that challenge and verification routes do not enter the forward-auth precheck. Nginx requires the explicit Upgrade/Connection headers shown above for application WebSockets. The Nginx error handler renders the internal challenge route without making a second authorization decision or consuming the upload body. Its auth module accepts only 2xx, 401 and 403 directly, so the example translates a rate-limited auth error back to 429 with Retry-After; other authorization failures remain closed with 503. Nginx supplies its own 403 body, whereas Caddy forwards Sibuna's denial page. Both recipes replace incoming Sibuna audit headers with the actual authorization response. Configure normal TLS certificates and application upload/deadline limits at the ingress; the examples show the routing logic. The repository does not yet test these recipes against live ingresses; the forwarded-metadata rules they rely on are covered by unit tests in ``sibuna-http``.
 
+JA4 Fingerprints From the Ingress
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A JA4 fingerprint summarises how a client opens a TLS connection. It is computed from the client's first handshake message, the ClientHello. The client's TLS library fixes that message before any HTTP byte is sent, so a client cannot change its fingerprint from inside its HTTP requests. Browsers, libraries and bots differ in it. This makes JA4 a stronger signal than a ``User-Agent`` value, which any client may write as it likes (SID 0014). JA4 was defined by FoxIO. A fingerprint has 36 characters in three parts joined by ``_``:
+
+.. code-block:: text
+
+   t13d1516h2_8daaf6152771_02713d6af862
+   ^^^^^^^^^^ ^^^^^^^^^^^^ ^^^^^^^^^^^^
+   a          b            c
+
+   a  protocol (t TCP, q QUIC, d DTLS), TLS version (13 is TLS 1.3),
+      d with SNI or i without, cipher count (two digits),
+      extension count (two digits), ALPN code (h2 is HTTP/2)
+   b  a 12-digit lowercase hexadecimal hash of the sorted cipher suites
+   c  a 12-digit lowercase hexadecimal hash of the sorted extensions
+      and signature algorithms
+
+Only the component that terminates TLS sees the ClientHello, so only it can compute JA4. Sibuna does not terminate TLS: it serves plain HTTP/1.1 behind an ingress, and the ingress speaks TLS, HTTP/2 and HTTP/3 with browsers. Several ingresses compute JA4 already. We therefore let the ingress compute the fingerprint and send it in a request header, and Sibuna reads it from there.
+
+``--ja4-header <name>`` names that header. It is off by default and has no default name; we always name the header the ingress uses. Sibuna stores the name in lower case and matches it without regard to case. It refuses the names of fields it writes or strips itself (``X-Forwarded-*``, ``X-Real-IP``, ``X-Sibuna-*`` and ``Forwarded``, also with ``_`` for ``-``). When the option is set, the startup banner prints a line such as ``JA4: from cf-ja4 (trusted)``.
+
+The header is read only when forwarded fields are trusted. This is the decision that governs ``X-Forwarded-For``: ``--trust-forwarded``, or forward-auth mode without ``--no-trust-forwarded``. From an untrusted peer the header is ignored. With trust, a request carries a fingerprint when exactly one field of that name is present and its value has the JA4 form. A malformed value, or a repeated field, gives the request no fingerprint. Two counters observe this: ``sibuna_ja4_present_total`` counts requests with a fingerprint, and ``sibuna_ja4_invalid_total`` counts requests whose header was malformed or repeated. A request from an untrusted peer bumps neither counter.
+
+In reverse-proxy mode, the origin sees the header only when Sibuna trusts it. Without trust, Sibuna removes every field of that name from the request it sends to the origin, also when a client spells the name with ``_`` for ``-``. A client therefore cannot hand the origin a forged fingerprint under that name. With trust, the field passes unchanged in its exact spelling, and an alias with ``_`` is still removed. Without ``--ja4-header``, a field of that name is an ordinary field.
+
+.. admonition:: The ingress must own the header
+
+   A fingerprint is only as trustworthy as the ingress that wrote it. Sibuna cannot tell a value the ingress computed from a value the client sent. The ingress must therefore overwrite, or remove, any copy of the header that the client supplies, on every route that reaches Sibuna. Sibuna's listener must accept connections from the ingress alone, as for ``X-Forwarded-For``.
+
+**Cloudflare.** The managed transform "Add bot protection headers" adds ``cf-ja4`` to the request sent to the origin, beside ``cf-bot-score``, ``cf-verified-bot`` and ``cf-ja3-hash``. It requires an Enterprise plan with Bot Management. An ingress between Cloudflare and Sibuna must pass the field on unchanged. We start Sibuna with:
+
+.. code-block:: sh
+
+   sibuna --ja4-header cf-ja4 --trust-forwarded -s /etc/sibuna/secret
+
+The ingress in front of Sibuna must accept connections from Cloudflare's addresses alone; otherwise a client can bypass Cloudflare and send its own ``cf-ja4``.
+
+**nginx.** FoxIO's ``ja4-nginx-module`` computes JA4 inside nginx and exposes it as ``$http_ssl_ja4``. It needs nginx 1.26 or later with the module's ClientHello capture patch, built with ``--with-http_ssl_module``. ``proxy_set_header`` replaces a client's field of the same name, so each location that reaches Sibuna sets the header itself:
+
+.. code-block:: nginx
+
+   # Reverse proxy: Sibuna runs with --ja4-header x-ja4 --trust-forwarded
+   location / {
+       proxy_set_header X-JA4 $http_ssl_ja4;
+       proxy_set_header X-Forwarded-For $remote_addr;
+       proxy_pass http://127.0.0.1:8080;
+   }
+
+   # Forward auth: Sibuna runs with --mode forward_auth --ja4-header x-ja4
+   location = /__sibuna_auth {
+       internal;
+       proxy_pass http://127.0.0.1:8080/;
+       proxy_set_header X-JA4 $http_ssl_ja4;
+       # ... the other fields of the forward-auth recipe above
+   }
+
+In the forward-auth recipe, the same ``proxy_set_header X-JA4 $http_ssl_ja4;`` line belongs in ``@sibuna_challenge`` and in ``location /__sibuna/`` as well. A location that omits it passes the client's own ``X-JA4`` to Sibuna, which trusts it.
+
+**Apache Traffic Server.** The ``ja4_fingerprint`` plugin is enabled by the line ``ja4_fingerprint.so`` in ``plugin.config``. It has no options. It adds a ``ja4`` field with the fingerprint, and an ``x-ja4-via`` field with the proxy's name, to the requests of each TLS connection. We start Sibuna with ``--ja4-header ja4 --trust-forwarded``. The plugin's documentation does not say whether it replaces a ``ja4`` field that the client sent. We must establish this for our version, or remove the client's field before the plugin adds its own, before we trust the value.
+
+A rule matches a fingerprint with the ``ja4`` field (Part X, Policy Schema). The value is either a whole fingerprint, which must be equal, or a prefix followed by ``*``, which the fingerprint must start with. ``"*"`` alone matches any fingerprint. A request without a fingerprint never matches a ``ja4`` rule. The loader refuses a pattern that no fingerprint could match, such as ``T13D*`` in upper case, with ``INVALID POLICY JA4``. Matching compares bytes and allocates nothing.
+
+.. code-block:: json
+
+   { "rules": [
+       { "name": "deny-known-scanner", "action": "DENY",
+         "ja4": "t13i010400_0f2cb44170f4_5c4c70b73fa0" },
+       { "name": "weigh-no-sni", "ja4": "t13i*", "action": "WEIGH", "weight": 15 },
+       { "name": "weigh-headless", "user_agent": "Headless", "action": "WEIGH",
+         "weight": 30 },
+       { "name": "challenge-tls12-checkout", "path": "/checkout/*", "ja4": "t12*",
+         "action": "CHALLENGE" }
+   ] }
+
+The first rule denies one fingerprint exactly; the value is an example, not a known scanner. The next two add weight to the request's score instead of deciding: a TLS 1.3 client that sent no server name, and a headless browser by its ``User-Agent``. When no later rule decides first, a request that shows both signals scores 45 and reaches the default deny threshold of 40, while a request that shows one is challenged. The last rule challenges, by prefix, every client that negotiated TLS 1.2 over TCP on the checkout path. It challenges rather than denies, because many legitimate older clients still use TLS 1.2. Rules should combine JA4 with other signals in this way. A JA4 value names a TLS library and its configuration, not a person or a device. Many clients share one library, and specialised libraries can imitate a browser's ClientHello. JA4 raises the cost of automation; it does not prove identity. For the same reason Sibuna keeps bans and reputation keyed by address and never by fingerprint.
+
+Incidents (WAF denials, honeypot hits and audit findings) record the fingerprint of their request when it carried one, in the column ``security_incidents.ja4``. The console shows it in the incident evidence as "JA4 fingerprint", with the value or "Not recorded". The Events filters accept a fingerprint or a prefix. The managed-rule editor has a JA4 field, stored in ``policies.ja4_pattern``, and the policy test form takes a fingerprint.
+
 Declarative Policy
 ------------------
 
@@ -467,7 +549,7 @@ Declarative Policy
      ]
    }
 
-The loader fails closed: an unknown key, a misspelled action, a malformed address or an out-of-range number rejects the whole file, the diagnostic names the rule and field, and the daemon does not start. A command line with an unknown option or an out-of-range value is refused the same way. ``rules`` replaces the built-in table when present; ``ip_rules`` feeds the reputation trie, which scales to thousands of prefixes; ``waf: false`` selects the Gate surface from the file. Two further keys are part of the schema (Part X): ``inspection`` sets each WAF category to ``disabled``, ``audit`` or ``enforce``, and a rule's ``limits`` object gives it a quota of its own. Path patterns match the request path in normal form (SID 0003), so a pattern must be written in that form.
+The loader fails closed: an unknown key, a misspelled action, a malformed address or an out-of-range number rejects the whole file, the diagnostic names the rule and field, and the daemon does not start. A command line with an unknown option or an out-of-range value is refused the same way. ``rules`` replaces the built-in table when present; ``ip_rules`` feeds the reputation trie, which scales to thousands of prefixes; ``waf: false`` selects the Gate surface from the file. Two further keys are part of the schema (Part X): ``inspection`` sets each WAF category to ``disabled``, ``audit`` or ``enforce``, and a rule's ``limits`` object gives it a quota of its own. A rule's ``ja4`` field matches the JA4 fingerprint that a trusted ingress forwarded, exactly or by a prefix followed by ``*``; it needs ``--ja4-header`` (see "JA4 Fingerprints From the Ingress"). Path patterns match the request path in normal form (SID 0003), so a pattern must be written in that form.
 
 Persistent Storage and Clustering
 ---------------------------------
@@ -523,7 +605,7 @@ Schema
    * - ``policy_revision``
      - The policy revision, one row; triggers on the three policy tables advance it.
    * - ``policies``
-     - Ordered dynamic rules, keyed by ``id``.
+     - Ordered dynamic rules, keyed by ``id``. The nullable ``ja4_pattern`` holds a rule's JA4 criterion, at most 37 bytes.
    * - ``policy_inspection``
      - The stored WAF mode per category, one row.
    * - ``ip_reputation``
@@ -531,13 +613,13 @@ Schema
    * - ``incident_receipts``
      - Each node's durable incident receipt (the next sequence after its last committed batch), keyed by node.
    * - ``security_incidents``
-     - One bounded event record with its 64-component embedding (256 bytes), keyed by ``node_id << 40 | sequence``.
+     - One bounded event record with its 64-component embedding (256 bytes), keyed by ``node_id << 40 | sequence``. The nullable ``ja4`` holds the request's JA4 fingerprint, exactly 36 bytes.
    * - ``incidents_fts``
      - On SQLite: an FTS5 table over the canonical tokens of paths and payloads. On PostgreSQL the same tokens are the ``tsvector`` column ``search`` of ``security_incidents`` with a GIN index.
    * - ``sibuna_schema``
      - Every applied migration, keyed by component and version.
 
-The core schema is ``crates/storage/src/schema.rs``, written once per dialect. With the console the component ``console`` adds 33 tables whose names start with ``console_`` (SID 0013; ``crates/console-storage/src/schema/``). Migrations are numbered per component and compiled into the binary; all pending migrations run in one transaction, and a node refuses a database whose version of a component is newer than it knows. An abbreviated printed schema is not an upgrade script. SQLite tables are ``STRICT``, and ``CHECK`` constraints mirror the Rust types, so the database refuses a row the daemon could not represent. Enumerated values are stored in lowercase: a direct write of ``'DENY'`` is refused.
+The core schema is ``crates/storage/src/schema.rs``, written once per dialect. With the console the component ``console`` adds 33 tables whose names start with ``console_`` (SID 0013; ``crates/console-storage/src/schema/``). Migrations are numbered per component and compiled into the binary. Core migration 2 adds the two JA4 columns; a database created before it is migrated on start. All pending migrations run in one transaction, and a node refuses a database whose version of a component is newer than it knows. An abbreviated printed schema is not an upgrade script. SQLite tables are ``STRICT``, and ``CHECK`` constraints mirror the Rust types, so the database refuses a row the daemon could not represent. Enumerated values are stored in lowercase: a direct write of ``'DENY'`` is refused.
 
 Operating It
 ~~~~~~~~~~~~

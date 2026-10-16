@@ -32,6 +32,8 @@ Run
    sibuna -m forward_auth --host 127.0.0.1 -p 8080 -s /etc/sibuna/secret
    # Edge: persistent policies, reputation, forensics in <dir>/sibuna.db
    sibuna -D /var/lib/sibuna -s /etc/sibuna/secret
+   # JA4 from a trusted ingress (Cloudflare's header; nginx module: x-ja4; ATS: ja4)
+   sibuna --ja4-header cf-ja4 --trust-forwarded -p 8080 -u 3000 -s /etc/sibuna/secret
    # Cluster member: shared PostgreSQL, unique node id
    sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 -s /etc/sibuna/secret
    head -c 32 /dev/urandom | xxd -p -c 64 > /etc/sibuna/secret
@@ -93,6 +95,9 @@ Flags That Matter First
    * - ``--trusted-hops``
      - 1
      - client = n-th ``X-Forwarded-For`` entry from the right
+   * - ``--ja4-header``
+     - off
+     - header with the ingress's JA4 fingerprint; read only when trusted
    * - ``--idle-timeout``
      - 15
      - reaper seconds
@@ -192,9 +197,10 @@ Policy File Skeleton
         "challenge": {"difficulty": 20, "algorithm": "posw"}},
        {"name": "login", "path": "^/login$", "action": "CHALLENGE",
         "limits": {"rate": 10, "window_seconds": 60, "ban_seconds": 600}},
+       {"name": "old-tls", "ja4": "t12*", "action": "CHALLENGE"},
        {"name": "headless", "user_agent": "Headless", "action": "WEIGH", "weight": 30} ] }
 
-Patterns: ``*`` or ``.*`` any; ``^...$`` exact; trailing ``*`` prefix; leading ``/`` exact path; else case-insensitive substring. Paths are matched in normal form. Order: WAF -> trie deny/allow -> rules -> score -> bypass -> trie challenge -> bots -> default.
+JA4: a whole fingerprint, or a prefix and ``*``; no fingerprint, no match. Patterns: ``*`` or ``.*`` any; ``^...$`` exact; trailing ``*`` prefix; leading ``/`` exact path; else case-insensitive substring. Paths are matched in normal form. Order: WAF -> trie deny/allow -> rules -> score -> bypass -> trie challenge -> bots -> default.
 
 Storage (Edge) in SQL
 ---------------------

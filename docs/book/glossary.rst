@@ -51,6 +51,9 @@ Glossary
    Interstitial
       The embedded HTML page served in place of a protected page; it fetches a challenge, solves it in a Web Worker, posts the solution, and reloads.
 
+   JA4
+      A 36-character fingerprint, defined by FoxIO, of how a client opens a TLS connection: protocol, TLS version, server name, cipher and extension counts, ALPN, and hashes of the sorted cipher suites and extensions. Sibuna does not compute it; it reads the value a trusted ingress forwards in the header named by ``--ja4-header``, and rules match it with the ``ja4`` field (SID 0014). It is unrelated to the client fingerprint bound into challenges and tokens.
+
    Keyed BLAKE3
       The pseudorandom function behind Sibuna's key schedule, challenge tags, session tags, fingerprints, and challenge nonces.
 
@@ -102,6 +105,7 @@ Bibliography
 - Dwork, C., and Naor, M. "Pricing via processing or combatting junk mail." *CRYPTO*, 1992.
 - Fiat, A., and Shamir, A. "How to prove yourself: practical solutions to identification and signature problems." *CRYPTO*, 1986.
 - Fielding, R., Nottingham, M., and Reschke, J. *HTTP Semantics*, RFC 9110, and *HTTP/1.1*, RFC 9112. IETF, 2022.
+- FoxIO. *JA4+ Network Fingerprinting*. https://github.com/FoxIO-LLC/ja4, 2023 (the JA4 TLS client fingerprint).
 - Hanson, N. "libinjection: SQL injection detection by tokenization." Black Hat USA, 2012.
 - Juels, A., and Brainard, J. "Client puzzles: a cryptographic countermeasure against connection depletion attacks." *NDSS*, 1999.
 - Lamport, L. "The part-time parliament." *ACM Transactions on Computer Systems* 16(2), 1998; and "Paxos made simple." *ACM SIGACT News* 32(4), 2001.
@@ -109,4 +113,4 @@ Bibliography
 - O'Connor, J., Aumasson, J.-P., Neves, S., and Wilcox-O'Hearn, Z. *BLAKE3: one function, fast everywhere*. Specification, 2020.
 - Vyukov, D. "Bounded MPMC queue." 1024cores.net, 2011 (the sequence-stamped ring used for the incident queue).
 - Wang, X., Hong, Y., Chang, H., Park, K., Langdale, G., Hu, J., and Zhu, H. "Hyperscan: a fast multi-pattern regex matcher for modern CPUs." *NSDI*, 2019.
-- Sibuna Discussions 0001 to 0011, ``docs/sid/records``, 2026: process, foundation architecture, declarative policy engine, semantic inspection, Zaxonlite storage architecture, mathematical foundations, console management interface, AI bot traffic monitoring, chunked request bodies, the Rust port, and storage through sqlx.
+- Sibuna Discussions 0001 to 0014, ``docs/sid/records``, 2026: process, foundation architecture, declarative policy engine, semantic inspection, Zaxonlite storage architecture, mathematical foundations, console management interface, AI bot traffic monitoring, chunked request bodies, the Rust port, storage through sqlx, outbound TLS for the console through rustls, console storage, and trusted JA4 fingerprints from the ingress.

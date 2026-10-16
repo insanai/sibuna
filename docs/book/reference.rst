@@ -89,6 +89,10 @@ Counters exposed as ``sibuna_<name>_total`` in Prometheus text format, in this o
      - A honeypot hit banned nobody because a page, not a person, requested it
    * - ``rate_evictions``
      - A limiter arrival evicted another active client's cell
+   * - ``ja4_present``
+     - With ``--ja4-header`` and trusted forwarding, the request carried exactly one header of that name with a JA4 fingerprint
+   * - ``ja4_invalid``
+     - With ``--ja4-header`` and trusted forwarding, the header was malformed or repeated; the request was judged without a fingerprint
 
 A retry can increment ``incident_write_failures`` without losing records, because the pending batch is retained. Monitor increments over an interval; totals alone are not a queue depth.
 
@@ -133,7 +137,7 @@ Status Codes
 Error Catalog
 -------------
 
-``INVALID COMMAND LINE`` stops startup for any option the daemon does not recognise, any value outside its documented range, and an invalid, missing or duplicate mode selection. The block names the option, the value given, the range expected and the error (``UnknownOption``, ``MissingValue``, ``InvalidValue``, ``InvalidMode``, ``MissingMode``, ``DuplicateMode``, ``RemovedOption`` for a Zaxonlite cluster option, ``ConflictingOptions`` for two storage options that exclude each other, ``MissingOption`` for a database URL without ``--cluster-node``), and ends with a hint. A database URL is shown as ``[redacted]``. Supply ``--mode reverse_proxy`` or ``--mode forward_auth`` once; ``-m`` is the equivalent short option. A rejected policy file prints a block titled for its error (for example ``INVALID POLICY ACTION``) with the file, the error name, the rule, the field and the value. Console options are checked separately: ``CONSOLE002`` names a malformed or repeated console option, and ``CONSOLE001`` a console configuration that breaks a rule (``StorageRequired`` without storage).
+``INVALID COMMAND LINE`` stops startup for any option the daemon does not recognise, any value outside its documented range, and an invalid, missing or duplicate mode selection. The block names the option, the value given, the range expected and the error (``UnknownOption``, ``MissingValue``, ``InvalidValue``, ``InvalidMode``, ``MissingMode``, ``DuplicateMode``, ``RemovedOption`` for a Zaxonlite cluster option, ``ConflictingOptions`` for two storage options that exclude each other, ``MissingOption`` for a database URL without ``--cluster-node``), and ends with a hint. A database URL is shown as ``[redacted]``. Supply ``--mode reverse_proxy`` or ``--mode forward_auth`` once; ``-m`` is the equivalent short option. A rejected policy file prints a block titled for its error (for example ``INVALID POLICY ACTION``) with the file, the error name, the rule, the field and the value. A ``ja4`` pattern that no fingerprint could match prints ``INVALID POLICY JA4`` (``InvalidJa4``); a console management document with such a pattern is refused with the same error name. Console options are checked separately: ``CONSOLE002`` names a malformed or repeated console option, and ``CONSOLE001`` a console configuration that breaks a rule (``StorageRequired`` without storage).
 
 .. admonition:: Implementation: ``ErrorKind::explain``
 
@@ -232,19 +236,20 @@ Policy Schema
          "action": "ALLOW" | "DENY" | "CHALLENGE" | "WEIGH",
          "weight": int,                                            // WEIGH only, -1000..1000
          "challenge": { "difficulty": <work bits>, "algorithm": "hashcash" | "posw" },
-         "limits": { "rate": int, "window_seconds": int, "ban_seconds": int }
+         "limits": { "rate": int, "window_seconds": int, "ban_seconds": int },
+         "ja4": "<fingerprint>" | "<prefix>*"                      // 36 bytes, or a prefix and *
        }
      ]
    }
 
-``challenge_at`` and ``deny_at`` lie in -1000 to 1000 with ``deny_at`` at or above ``challenge_at``, and ``bits_step`` in 1 to 1000. A ``challenge`` block belongs only to ``CHALLENGE`` rules, with 1 to 64 work bits. ``limits`` gives a rule its own quota: ``rate`` 1 to 1,000,000 and ``window_seconds`` 1 to 86,400 are required, ``ban_seconds`` (at most 86,400) is optional, and ``WEIGH`` rules cannot carry limits. The reputation trie of ``ip_rules`` holds at most 8,192 nodes. Each rule may use one spelling of each criterion.
+``challenge_at`` and ``deny_at`` lie in -1000 to 1000 with ``deny_at`` at or above ``challenge_at``, and ``bits_step`` in 1 to 1000. A ``challenge`` block belongs only to ``CHALLENGE`` rules, with 1 to 64 work bits. ``limits`` gives a rule its own quota: ``rate`` 1 to 1,000,000 and ``window_seconds`` 1 to 86,400 are required, ``ban_seconds`` (at most 86,400) is optional, and ``WEIGH`` rules cannot carry limits. ``ja4`` is a whole JA4 fingerprint, which must be equal, or a prefix followed by ``*``, which the fingerprint must start with; ``*`` alone matches any fingerprint, and a request without one matches no ``ja4`` rule. A pattern that no fingerprint could match is refused with ``InvalidJa4`` (Part IX, JA4 Fingerprints From the Ingress). The reputation trie of ``ip_rules`` holds at most 8,192 nodes. Each rule may use one spelling of each criterion.
 
 Pattern grammar: ``.*`` or ``*`` match anything; ``^...$`` anchors an exact path; a trailing ``*``, ``/*``, or ``.*`` is a prefix; a pattern starting with ``/`` is an exact path; anything else is a case-insensitive substring. Path patterns match the path in normal form (one slash between segments, no dot segments, unreserved characters unescaped, other escapes with upper-case hexadecimal digits), so a pattern holding ``;``, ``%2F``, ``%5C`` or ``\`` matches nothing, and path matching is case-sensitive (SID 0003).
 
 Storage Tables
 --------------
 
-``policy_revision``, ``policies``, ``policy_inspection``, ``ip_reputation``, ``incident_receipts``, ``security_incidents`` (with the 256-byte embedding), the full-text index (``incidents_fts``, FTS5 over canonical tokens, on SQLite; the ``tsvector`` column ``search`` with a GIN index on PostgreSQL) and ``sibuna_schema``; the console adds 33 ``console_*`` tables. Stored action, algorithm and mode names are lowercase. Incident ids are ``node_id << 40 | sequence``, unique across a cluster without coordination; node ids run from 1 to 8,388,607.
+``policy_revision``, ``policies`` (with the nullable ``ja4_pattern`` criterion of at most 37 bytes), ``policy_inspection``, ``ip_reputation``, ``incident_receipts``, ``security_incidents`` (with the 256-byte embedding and the nullable 36-byte ``ja4`` fingerprint), the full-text index (``incidents_fts``, FTS5 over canonical tokens, on SQLite; the ``tsvector`` column ``search`` with a GIN index on PostgreSQL) and ``sibuna_schema``; the console adds 33 ``console_*`` tables. Stored action, algorithm and mode names are lowercase. Incident ids are ``node_id << 40 | sequence``, unique across a cluster without coordination; node ids run from 1 to 8,388,607.
 
 Build Targets
 -------------
