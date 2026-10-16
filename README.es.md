@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 342260624e34417ad0bcee1369881276f974107bab8737fc59b4097880871a03 -->
+<!-- English source SHA-256: 5527cc911d01ff51c8a8c4597bd60d964251822588fc2868fa7479da621f9af6 -->
 <h1 align="center">sibuna</h1>
 <p align="center">Protección web con prueba de trabajo en el navegador y una consola opcional.</p>
 <p align="center">
@@ -76,9 +76,9 @@ Consulta la [guía de operaciones de paquetes](https://insanai.github.io/sibuna/
 para instalación, verificación, estado privado, actualizaciones y configuración de Kubernetes.
 
 El [tap Homebrew de Sibuna](https://github.com/insanai/homebrew-sibuna) ofrece una fórmula CLI
-compilada desde las fuentes. La instalación no inicia ningún servicio. El tap sigue las
-versiones publicadas, así que una versión preliminar como esta beta puede llegar a él más tarde
-que las descargas anteriores:
+que instala el archivo verificado de la versión para macOS y Linux (Apple Silicon, ARM64 y
+x86-64). El tap sigue la versión publicada más reciente, así que ya ofrece esta beta. La
+instalación no inicia ningún servicio:
 
 ```sh
 brew tap insanai/sibuna
@@ -250,12 +250,12 @@ memoria; el generador de carga y un origen simulado se ejecutaban en otras ocho 
 64 conexiones por loopback.
 Las cifras son medianas de tres ejecuciones.
 
-- En modo forward-auth, todas las cargas alcanzaron de 197,532 a 211,636 peticiones por
-  segundo, con un p99 de 305 a 327 us y de 11.7 a 13.8 us de CPU por petición. El límite fue el
+- En modo forward-auth, todas las cargas alcanzaron de 197.532 a 211.636 peticiones por
+  segundo, con un p99 de 305 a 327 us y de 11,7 a 13,8 us de CPU por petición. El límite fue el
   generador de carga.
-- Las peticiones a través del proxy alcanzaron de 138,965 a 147,303 por segundo. La memoria
+- Las peticiones a través del proxy alcanzaron de 138.965 a 147.303 por segundo. La memoria
   máxima fue de unos 16 MiB.
-- Con una misma carga ofrecida de 100,000 peticiones admitidas por segundo, la latencia p99.9
+- Con una misma carga ofrecida de 100.000 peticiones admitidas por segundo, la latencia p99.9
   fue de 62 us en modo forward-auth y de 150 us en modo proxy inverso.
 
 <a id="beside-anubis"></a>
@@ -269,21 +269,21 @@ admitidas con una sesión.
 
 | Peticiones admitidas | Sibuna Gate | Sibuna Shield | Anubis 1.27.0 |
 | --- | ---: | ---: | ---: |
-| Forward auth, req/s | 210,682 | 208,635 | 36,509 |
-| Forward auth, p99 | 305 us | 308 us | 7,477 us |
-| Forward auth, CPU por petición | 12.1 us | 13.2 us | 106.3 us |
-| Proxy inverso, req/s | 106,376 | 103,298 | 19,398 |
-| Proxy inverso, p99 | 3,331 us | 3,321 us | 11,062 us |
+| Forward auth, req/s | 210.682 | 208.635 | 36.509 |
+| Forward auth, p99 | 305 us | 308 us | 7.477 us |
+| Forward auth, CPU por petición | 12,1 us | 13,2 us | 106,3 us |
+| Proxy inverso, req/s | 106.376 | 103.298 | 19.398 |
+| Proxy inverso, p99 | 3.331 us | 3.321 us | 11.062 us |
 
 La segunda ejecución midió el tiempo de las operaciones de admisión, cada producto en dos CPU.
 Anubis se ejecutó una vez con sus tokens Ed25519 por defecto y otra con tokens HS512.
 
 | Operaciones por segundo | Sibuna (BLAKE3 con clave) | Anubis (Ed25519) | Anubis (HS512) |
 | --- | ---: | ---: | ---: |
-| Comprobación de sesión válida | 88,104 | 10,951 | 16,976 |
-| Comprobación sin autenticar | 78,997 | 28,619 | 27,785 |
-| Arranque del desafío | 42,664 | 7,893 | 7,952 |
-| Verificación de la prueba | 57,924 | 12,668 | 19,261 |
+| Comprobación de sesión válida | 88.104 | 10.951 | 16.976 |
+| Comprobación sin autenticar | 78.997 | 28.619 | 27.785 |
+| Arranque del desafío | 42.664 | 7.893 | 7.952 |
+| Verificación de la prueba | 57.924 | 12.668 | 19.261 |
 
 La memoria máxima de Sibuna se mantuvo cerca de 16 MiB. Anubis usó unos 33 MiB en modo
 forward-auth y hasta unos 600 MiB en modo proxy inverso. Anubis es una herramienta capaz y muy

@@ -60,7 +60,7 @@ msgid ""
 "the honeypot and by reputation shared across a cluster, read on every "
 "request."
 msgstr ""
-"4,096 posiciones sin bloqueos (lock-free) de direcciones de clientes "
+"4.096 posiciones sin bloqueos (lock-free) de direcciones de clientes "
 "bloqueadas, con caducidad; las escriben el honeypot y la reputación "
 "compartida en un clúster, y se leen en cada petición."
 
@@ -75,7 +75,7 @@ msgid ""
 "common origin."
 msgstr ""
 "Un grupo de incidentes de seguridad cuyos embeddings de carga útil están "
-"a una distancia coseno de 0.35 o menos entre sí; una agrupación "
+"a una distancia coseno de 0,35 o menos entre sí; una agrupación "
 "heurística, no una prueba de origen común."
 
 #: ../../glossary.rst:18

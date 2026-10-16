@@ -308,7 +308,7 @@ msgstr "``wasm/sibuna-pow.wasm``"
 
 #: ../../quick-reference.rst:125
 msgid "15,181-byte solver"
-msgstr "solucionador de 15,181 bytes"
+msgstr "solucionador de 15.181 bytes"
 
 #: ../../quick-reference.rst:126
 msgid "``worker.js``"
@@ -536,7 +536,7 @@ msgstr ""
 "Puntuación :math:`\\le -50` -> prefijo deny; :math:`\\ge 50` -> allow. "
 "Clúster: el mismo secreto en cada nodo, una base de datos PostgreSQL, "
 "``--features postgres``, ``--database-url-file <file> --cluster-node N`` "
-"con un N único de 1 a 8,388,607; sin lista de miembros, líder ni TLS de "
+"con un N único de 1 a 8.388.607; sin lista de miembros, líder ni TLS de "
 "clúster (SID 0011)."
 
 #: ../../quick-reference.rst:216
@@ -668,12 +668,12 @@ msgstr ""
 "bytes); token de 75 caracteres (40 + 16), 139 con Ed25519; bytes de la "
 "prueba :math:`32(1 + t(n+1))`; profundidad PoSW = bits - 3, de 4 a 24; "
 "búfer de petición de 64 KB; límite de encabezado de 16 KB; 8 KB de cuerpo "
-"inspeccionados; conjunto de desafíos gastados de 1,048,576 etiquetas "
-"(``--spent-tags``); 262,144 celdas de tasa por tabla "
-"(``--rate-table-cells``); 65,536 posiciones de bloqueo "
+"inspeccionados; conjunto de desafíos gastados de 1.048.576 etiquetas "
+"(``--spent-tags``); 262.144 celdas de tasa por tabla "
+"(``--rate-table-cells``); 65.536 posiciones de bloqueo "
 "(``--ban-table-slots``); 64 conexiones por dirección de cliente; anillo "
-"de incidentes de 512; lote de 32; distancia de campaña de 0.35 sobre los "
-"16,384 embeddings más recientes; keep-alive de 4,096 peticiones por "
+"de incidentes de 512; lote de 32; distancia de campaña de 0,35 sobre los "
+"16.384 embeddings más recientes; keep-alive de 4.096 peticiones por "
 "conexión; pool de 256 sockets hacia el origen; cola de tareas de "
 "almacenamiento de 32."
 
