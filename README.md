@@ -51,9 +51,9 @@ platform. The default package includes storage and console support. The console 
 | --- | --- | --- |
 | Linux x86-64 | `sibuna-linux-amd64.tar.gz` | Linux 5.10 or later; statically linked musl |
 | Linux ARM64 | `sibuna-linux-arm64.tar.gz` | Linux 5.10 or later; statically linked musl |
-| macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 15 or later |
-| macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 15 or later |
-| Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2019 or later; native `sibuna.exe` |
+| macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 12 or later |
+| macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 12 or later |
+| Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2016 or later; native `sibuna.exe` |
 | FreeBSD x86-64 | `sibuna-1.0.0-beta.2-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI package |
 | OpenBSD x86-64 | `sibuna-1.0.0-beta.2.tgz` | OpenBSD 7.9; CLI package |
 

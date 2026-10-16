@@ -1,4 +1,4 @@
-<!-- English source SHA-256: ba66ed3032a86cb4bc8f8d7ce341a92c86824be07ae3dad2f77a18ebb42e21c3 -->
+<!-- English source SHA-256: 331b33dcfa1187045c4d09efe004a4c272482ff10db48816f67090e01a0a80f8 -->
 <h1 align="center">sibuna</h1>
 <p align="center">通过浏览器工作量证明保护网站，并提供可选的管理控制台。</p>
 <p align="center">
@@ -47,9 +47,9 @@
 | --- | --- | --- |
 | Linux x86-64 | `sibuna-linux-amd64.tar.gz` | Linux 5.10 或更高版本；静态链接 musl |
 | Linux ARM64 | `sibuna-linux-arm64.tar.gz` | Linux 5.10 或更高版本；静态链接 musl |
-| macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 15 或更高版本 |
-| macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 15 或更高版本 |
-| Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2019 或更高版本；原生 `sibuna.exe` |
+| macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 12 或更高版本 |
+| macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 12 或更高版本 |
+| Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2016 或更高版本；原生 `sibuna.exe` |
 | FreeBSD x86-64 | `sibuna-1.0.0-beta.2-freebsd-15.1-amd64.pkg` | FreeBSD 15.1；CLI 软件包 |
 | OpenBSD x86-64 | `sibuna-1.0.0-beta.2.tgz` | OpenBSD 7.9；CLI 软件包 |
 
