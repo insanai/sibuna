@@ -38,7 +38,7 @@ The harnesses are commands of one Rust tool, ``tools/bench`` (the binary ``sibun
      - A functional console run: eight live dashboards in headless Chromium while a generator sends traffic
      - ``console-8-dashboards-2026-10-15.md``
 
-The ``.md`` files are summaries. The ``.json`` files hold every repetition, the machine, the revision, and the path, size and SHA-256 of every binary measured. Git keeps the history, so the directory keeps only the latest files. Some files also hold rows of a second daemon build that was measured in the same run; this part reports Sibuna's rows.
+The ``.md`` files are summaries. The ``.json`` files hold every repetition, the machine, the revision, and the path, size and SHA-256 of every binary measured. Git keeps the history, so the directory keeps only the latest files. Some files were recorded by an earlier version of the harness and also hold rows of a second daemon build measured in the same run; this part reports Sibuna's rows.
 
 Primitives
 ~~~~~~~~~~
