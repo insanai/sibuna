@@ -15,6 +15,7 @@
   return without a new puzzle on every request. Hardware and difficulty affect the cost.</p></article>
   <article><span class="label">02 / Protect applications</span><h2>Keep requests flowing.</h2>
   <p>Use Sibuna as a reverse proxy or an admission service for your existing ingress.
+  Rules can match the JA4 TLS fingerprint that a trusted ingress forwards.
   Shield checks requests for SQL injection, XSS, path traversal and command injection.</p></article>
   <article><span class="label">03 / Operate with evidence</span><h2>See the decisions.</h2>
   <p>The optional console shows traffic, recorded incidents and policy changes.
@@ -49,8 +50,8 @@ tar -xzf sibuna-linux-amd64.tar.gz
 <section class="section start"><div><p class="eyebrow">Know the deployment boundary</p>
   <h2>Application protection.<br>Explicit limits.</h2>
   <p>Terminate public HTTPS at a trusted ingress and keep Sibuna's listener private.
-  Linux requires kernel 5.10 or later; macOS requires 15 or later; Windows requires
-  Windows 10 or Server 2019 or later.</p>
+  Linux requires kernel 5.10 or later; macOS requires 12 or later; Windows requires
+  Windows 10 or Server 2016 or later.</p>
   <a href="/sibuna/book/reference.html">CLI and protocol reference</a></div>
   <div class="limits"><p>The built-in inspector checks the first 8 KiB of supported bodies.
   WebSocket messages are relayed without inspection. Forward-auth sees the metadata
