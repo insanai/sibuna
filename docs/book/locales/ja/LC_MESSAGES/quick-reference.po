@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../quick-reference.rst:1
 msgid "Part XI: Quick Reference Card"
-msgstr ""
+msgstr "第XI部：早見表"
 
 #: ../../quick-reference.rst:4
 msgid ""
@@ -27,18 +27,20 @@ msgid ""
 "diagnose. Part X holds the full tables; this card holds what an operator "
 "types."
 msgstr ""
+"ターミナルのそばに置いてください。ビルド、実行、設定、ルーティング、観測、診断を扱います。完全な表は第X部にあります。この早見表には、"
+"運用者が入力するものをまとめています。"
 
 #: ../../quick-reference.rst:6
 msgid "Build"
-msgstr ""
+msgstr "ビルド"
 
 #: ../../quick-reference.rst:22
 msgid "Run"
-msgstr ""
+msgstr "実行"
 
 #: ../../quick-reference.rst:39
 msgid "Console (opt-in preview)"
-msgstr ""
+msgstr "コンソール（オプトインのプレビュー）"
 
 #: ../../quick-reference.rst:48
 msgid ""
@@ -49,408 +51,415 @@ msgid ""
 "passes its browser workflows in headless Chromium (SID 0010, criterion "
 "5); its formal performance isolation gate remains open (Part VIII)."
 msgstr ""
+"``http://127.0.0.1:19446/console/``\\ を開き、一時パスワードを変更します。\\ "
+"``--console-location 1.3521,103.8198``\\ を加えると、ノードを地球儀上に配置します。"
+"リモートからのアクセスには、HTTPSプロキシ、明示的なオリジン、信頼するプロキシのCIDRが必要です。第IX部に従ってください。SID "
+"0007はCommittedです。コンソールはヘッドレスChromiumでのブラウザーのワークフローに合格しています（SID 0010、"
+"基準5）。正式な性能分離の基準は未達のままです（第VIII部）。"
 
 #: ../../quick-reference.rst:50
 msgid "Flags That Matter First"
-msgstr ""
+msgstr "最初に重要なフラグ"
 
 #: ../../quick-reference.rst:57
 msgid "Flag"
-msgstr ""
+msgstr "フラグ"
 
 #: ../../quick-reference.rst:58
 msgid "Default"
-msgstr ""
+msgstr "既定値"
 
 #: ../../quick-reference.rst:59 ../../quick-reference.rst:224
 msgid "Meaning"
-msgstr ""
+msgstr "意味"
 
 #: ../../quick-reference.rst:60
 msgid "``-d, --difficulty``"
-msgstr ""
+msgstr "``-d, --difficulty``"
 
 #: ../../quick-reference.rst:61 ../../quick-reference.rst:67
 msgid "16"
-msgstr ""
+msgstr "16"
 
 #: ../../quick-reference.rst:62
 msgid "work bits (PoSW depth = bits - 3)"
-msgstr ""
+msgstr "作業ビット（PoSWの深さ = ビット - 3）"
 
 #: ../../quick-reference.rst:63
 msgid "``-a, --algorithm``"
-msgstr ""
+msgstr "``-a, --algorithm``"
 
 #: ../../quick-reference.rst:64
 msgid "posw"
-msgstr ""
+msgstr "posw"
 
 #: ../../quick-reference.rst:65
 msgid "``posw`` or ``hashcash``"
-msgstr ""
+msgstr "``posw``\\ または\\ ``hashcash``"
 
 #: ../../quick-reference.rst:66
 msgid "``--posw-challenges``"
-msgstr ""
+msgstr "``--posw-challenges``"
 
 #: ../../quick-reference.rst:68
 msgid "openings per proof"
-msgstr ""
+msgstr "証明あたりの開示数"
 
 #: ../../quick-reference.rst:69
 msgid "``--token-ttl``"
-msgstr ""
+msgstr "``--token-ttl``"
 
 #: ../../quick-reference.rst:70
 msgid "86400"
-msgstr ""
+msgstr "86400"
 
 #: ../../quick-reference.rst:71
 msgid "session seconds"
-msgstr ""
+msgstr "セッションの秒数"
 
 #: ../../quick-reference.rst:72
 msgid "``--challenge-ttl``"
-msgstr ""
+msgstr "``--challenge-ttl``"
 
 #: ../../quick-reference.rst:73
 msgid "300"
-msgstr ""
+msgstr "300"
 
 #: ../../quick-reference.rst:74
 msgid "challenge seconds"
-msgstr ""
+msgstr "チャレンジの秒数"
 
 #: ../../quick-reference.rst:75
 msgid "``--token-scheme``"
-msgstr ""
+msgstr "``--token-scheme``"
 
 #: ../../quick-reference.rst:76
 msgid "mac"
-msgstr ""
+msgstr "mac"
 
 #: ../../quick-reference.rst:77
 msgid "``mac`` or ``ed25519``"
-msgstr ""
+msgstr "``mac``\\ または\\ ``ed25519``"
 
 #: ../../quick-reference.rst:78
 msgid "``--rate-limit / --rate-window``"
-msgstr ""
+msgstr "``--rate-limit / --rate-window``"
 
 #: ../../quick-reference.rst:79
 msgid "100 / 10"
-msgstr ""
+msgstr "100 / 10"
 
 #: ../../quick-reference.rst:80
 msgid "GCRA burst per window"
-msgstr ""
+msgstr "窓あたりのGCRAのバースト"
 
 #: ../../quick-reference.rst:81
 msgid "``--ban-seconds``"
-msgstr ""
+msgstr "``--ban-seconds``"
 
 #: ../../quick-reference.rst:82
 msgid "3600"
-msgstr ""
+msgstr "3600"
 
 #: ../../quick-reference.rst:83
 msgid "honeypot ban"
-msgstr ""
+msgstr "ハニーポットによる禁止"
 
 #: ../../quick-reference.rst:84
 msgid "``-w, --workers``"
-msgstr ""
+msgstr "``-w, --workers``"
 
 #: ../../quick-reference.rst:85
 msgid "CPUs"
-msgstr ""
+msgstr "CPU数"
 
 #: ../../quick-reference.rst:86
 msgid "accept threads"
-msgstr ""
+msgstr "受付スレッド"
 
 #: ../../quick-reference.rst:87
 msgid "``--max-connections``"
-msgstr ""
+msgstr "``--max-connections``"
 
 #: ../../quick-reference.rst:88
 msgid "1024"
-msgstr ""
+msgstr "1024"
 
 #: ../../quick-reference.rst:89
 msgid "then ``503``"
-msgstr ""
+msgstr "超えると\\ ``503``"
 
 #: ../../quick-reference.rst:90
 msgid "``--max-connections-per-ip``"
-msgstr ""
+msgstr "``--max-connections-per-ip``"
 
 #: ../../quick-reference.rst:91
 msgid "64"
-msgstr ""
+msgstr "64"
 
 #: ../../quick-reference.rst:92
 msgid "per peer address (IPv6: per ``--ipv6-prefix``), then ``503``"
-msgstr ""
+msgstr "相手アドレスごと（IPv6では\\ ``--ipv6-prefix``\\ ごと）、超えると\\ ``503``"
 
 #: ../../quick-reference.rst:93
 msgid "``--trusted-hops``"
-msgstr ""
+msgstr "``--trusted-hops``"
 
 #: ../../quick-reference.rst:94
 msgid "1"
-msgstr ""
+msgstr "1"
 
 #: ../../quick-reference.rst:95
 msgid "client = n-th ``X-Forwarded-For`` entry from the right"
-msgstr ""
+msgstr "クライアント = 右からn番目の\\ ``X-Forwarded-For``\\ の項目"
 
 #: ../../quick-reference.rst:96
 msgid "``--idle-timeout``"
-msgstr ""
+msgstr "``--idle-timeout``"
 
 #: ../../quick-reference.rst:97
 msgid "15"
-msgstr ""
+msgstr "15"
 
 #: ../../quick-reference.rst:98
 msgid "reaper seconds"
-msgstr ""
+msgstr "回収の秒数"
 
 #: ../../quick-reference.rst:99
 msgid "``-P, --policy-file``"
-msgstr ""
+msgstr "``-P, --policy-file``"
 
 #: ../../quick-reference.rst:100
 msgid "none"
-msgstr ""
+msgstr "なし"
 
 #: ../../quick-reference.rst:101
 msgid "JSON policy"
-msgstr ""
+msgstr "JSONのポリシー"
 
 #: ../../quick-reference.rst:102
 msgid "``--trust-forwarded``"
-msgstr ""
+msgstr "``--trust-forwarded``"
 
 #: ../../quick-reference.rst:103 ../../quick-reference.rst:106
 msgid "off"
-msgstr ""
+msgstr "無効"
 
 #: ../../quick-reference.rst:104
 msgid "on in forward auth"
-msgstr ""
+msgstr "forward authでは有効"
 
 #: ../../quick-reference.rst:105
 msgid "``--secure-cookie``"
-msgstr ""
+msgstr "``--secure-cookie``"
 
 #: ../../quick-reference.rst:107
 msgid "add ``Secure``"
-msgstr ""
+msgstr "``Secure``\\ を付加"
 
 #: ../../quick-reference.rst:109
 msgid "Endpoints Under ``/__sibuna/``"
-msgstr ""
+msgstr "``/__sibuna/``\\ 配下のエンドポイント"
 
 #: ../../quick-reference.rst:116
 msgid "Route"
-msgstr ""
+msgstr "経路"
 
 #: ../../quick-reference.rst:117
 msgid "Answer"
-msgstr ""
+msgstr "応答"
 
 #: ../../quick-reference.rst:118
 msgid "``challenge``"
-msgstr ""
+msgstr "``challenge``"
 
 #: ../../quick-reference.rst:119
 msgid "interstitial HTML"
-msgstr ""
+msgstr "中間ページのHTML"
 
 #: ../../quick-reference.rst:120
 msgid "``challenge.json?need=&path=``"
-msgstr ""
+msgstr "``challenge.json?need=&path=``"
 
 #: ../../quick-reference.rst:121
 msgid "``{id, algorithm, difficulty, challenges, expires_at}``"
-msgstr ""
+msgstr "``{id, algorithm, difficulty, challenges, expires_at}``"
 
 #: ../../quick-reference.rst:122
 msgid "``verify`` (POST)"
-msgstr ""
+msgstr "``verify``\\ （POST）"
 
 #: ../../quick-reference.rst:123
 msgid ""
 "``{challenge_id, nonce | proof}`` -> ``200`` + ``Set-Cookie``, else "
 "``400``"
 msgstr ""
+"``{challenge_id, nonce | proof}`` -> ``200`` + ``Set-Cookie``、それ以外は\\ "
+"``400``"
 
 #: ../../quick-reference.rst:124
 msgid "``wasm/sibuna-pow.wasm``"
-msgstr ""
+msgstr "``wasm/sibuna-pow.wasm``"
 
 #: ../../quick-reference.rst:125
 msgid "15,181-byte solver"
-msgstr ""
+msgstr "15,181バイトのソルバー"
 
 #: ../../quick-reference.rst:126
 msgid "``worker.js``"
-msgstr ""
+msgstr "``worker.js``"
 
 #: ../../quick-reference.rst:127
 msgid "worker with WASM and JS provers"
-msgstr ""
+msgstr "WASMとJSの証明器を持つワーカー"
 
 #: ../../quick-reference.rst:128
 msgid "``honeypot``"
-msgstr ""
+msgstr "``honeypot``"
 
 #: ../../quick-reference.rst:129
 msgid "bans caller, ``403``; ``404`` for a subresource or cross-site fetch"
-msgstr ""
+msgstr "呼び出し元を禁止して\\ ``403``\\ 。サブリソースやクロスサイトの取得には\\ ``404``"
 
 #: ../../quick-reference.rst:130
 msgid "``health``"
-msgstr ""
+msgstr "``health``"
 
 #: ../../quick-reference.rst:131
 msgid "``{\"status\":\"ok\",...}``"
-msgstr ""
+msgstr "``{\"status\":\"ok\",...}``"
 
 #: ../../quick-reference.rst:132
 msgid "``metrics``"
-msgstr ""
+msgstr "``metrics``"
 
 #: ../../quick-reference.rst:133
 msgid "Prometheus text"
-msgstr ""
+msgstr "Prometheusのテキスト"
 
 #: ../../quick-reference.rst:135
 msgid "Route all of them to the daemon, never to the origin."
-msgstr ""
+msgstr "これらはすべてオリジンではなく、デーモンにルーティングしてください。"
 
 #: ../../quick-reference.rst:137
 msgid "Status Codes"
-msgstr ""
+msgstr "ステータスコード"
 
 #: ../../quick-reference.rst:144
 msgid "Code"
-msgstr ""
+msgstr "コード"
 
 #: ../../quick-reference.rst:145
 msgid "When"
-msgstr ""
+msgstr "発生条件"
 
 #: ../../quick-reference.rst:146
 msgid "200"
-msgstr ""
+msgstr "200"
 
 #: ../../quick-reference.rst:147
 msgid "admitted (forward auth), interstitial, internal routes"
-msgstr ""
+msgstr "許可（forward auth）、中間ページ、内部の経路"
 
 #: ../../quick-reference.rst:148
 msgid "400"
-msgstr ""
+msgstr "400"
 
 #: ../../quick-reference.rst:149
 msgid "malformed request or target, rejected solution (diagnostic body)"
-msgstr ""
+msgstr "不正な形式のリクエストや対象、拒否された解答（診断のボディー）"
 
 #: ../../quick-reference.rst:150
 msgid "401"
-msgstr ""
+msgstr "401"
 
 #: ../../quick-reference.rst:151
 msgid "challenge required: non-HTML client or forward auth"
-msgstr ""
+msgstr "チャレンジが必要：HTML以外のクライアント、またはforward auth"
 
 #: ../../quick-reference.rst:152
 msgid "403"
-msgstr ""
+msgstr "403"
 
 #: ../../quick-reference.rst:153
 msgid "policy or WAF denial, ban, honeypot"
-msgstr ""
+msgstr "ポリシーまたはWAFによる拒否、禁止、ハニーポット"
 
 #: ../../quick-reference.rst:154
 msgid "404"
-msgstr ""
+msgstr "404"
 
 #: ../../quick-reference.rst:155
 msgid "unknown ``/__sibuna/`` route, refused honeypot hit"
-msgstr ""
+msgstr "不明な\\ ``/__sibuna/``\\ の経路、拒否されたハニーポットへのアクセス"
 
 #: ../../quick-reference.rst:156
 msgid "413"
-msgstr ""
+msgstr "413"
 
 #: ../../quick-reference.rst:157
 msgid "solution body over the 64 KB buffer"
-msgstr ""
+msgstr "64 KBのバッファーを超える解答のボディー"
 
 #: ../../quick-reference.rst:158
 msgid "414"
-msgstr ""
+msgstr "414"
 
 #: ../../quick-reference.rst:159
 msgid "reported challenge URL over 8 KiB"
-msgstr ""
+msgstr "8 KiBを超える、報告されたチャレンジのURL"
 
 #: ../../quick-reference.rst:160
 msgid "417"
-msgstr ""
+msgstr "417"
 
 #: ../../quick-reference.rst:161
 msgid "unsupported request expectation"
-msgstr ""
+msgstr "サポートしないリクエストのexpectation"
 
 #: ../../quick-reference.rst:162
 msgid "429"
-msgstr ""
+msgstr "429"
 
 #: ../../quick-reference.rst:163
 msgid "GCRA limit, ``Retry-After`` seconds"
-msgstr ""
+msgstr "GCRAの制限、\\ ``Retry-After``\\ 秒"
 
 #: ../../quick-reference.rst:164
 msgid "431"
-msgstr ""
+msgstr "431"
 
 #: ../../quick-reference.rst:165
 msgid "head over 16 KB"
-msgstr ""
+msgstr "16 KBを超えるヘッダー部"
 
 #: ../../quick-reference.rst:166
 msgid "501"
-msgstr ""
+msgstr "501"
 
 #: ../../quick-reference.rst:167
 msgid "transfer coding other than chunked"
-msgstr ""
+msgstr "chunked以外の転送コーディング"
 
 #: ../../quick-reference.rst:168
 msgid "502"
-msgstr ""
+msgstr "502"
 
 #: ../../quick-reference.rst:169
 msgid "origin unreachable or malformed"
-msgstr ""
+msgstr "オリジンに到達できない、または不正な形式"
 
 #: ../../quick-reference.rst:170
 msgid "503"
-msgstr ""
+msgstr "503"
 
 #: ../../quick-reference.rst:171
 msgid "connection limits reached, or node draining"
-msgstr ""
+msgstr "接続数の上限に到達、またはノードが排出中"
 
 #: ../../quick-reference.rst:173
 msgid "Headers"
-msgstr ""
+msgstr "ヘッダー"
 
 #: ../../quick-reference.rst:176
 msgid ""
@@ -459,26 +468,34 @@ msgid ""
 "client), ``X-Sibuna-Status: PASS``, ``X-Sibuna-Rule: <rule>``; hop-by-hop "
 "and alternative forwarding fields dropped, underscore spellings too."
 msgstr ""
+"*上流（プロキシ）*\\ ：\\ ``X-Forwarded-For``\\ （ソケットの相手。信頼する場合は受信した連鎖の後ろに追加）、\\ "
+"``X-Forwarded-Proto``\\ 、\\ ``X-Real-IP``\\ （判定したクライアント）、\\ "
+"``X-Sibuna-Status: PASS``\\ 、\\ ``X-Sibuna-Rule: <rule>``\\ 。"
+"ホップごとのフィールドと別形式の転送フィールドは、アンダースコアの綴りも含めて取り除きます。"
 
 #: ../../quick-reference.rst:177
 msgid ""
 "*Forward-auth reply*: ``X-Sibuna-Status``, ``X-Sibuna-Rule``, "
 "``X-Sibuna-Rule-Hash``."
 msgstr ""
+"*forward-authの応答*\\ ：\\ ``X-Sibuna-Status``\\ 、\\ ``X-Sibuna-Rule``\\ 、\\ "
+"``X-Sibuna-Rule-Hash``\\ 。"
 
 #: ../../quick-reference.rst:178
 msgid "*Challenge reply*: ``X-Sibuna-Status: CHALLENGE``."
-msgstr ""
+msgstr "*チャレンジの応答*\\ ：\\ ``X-Sibuna-Status: CHALLENGE``\\ 。"
 
 #: ../../quick-reference.rst:179
 msgid ""
 "*Cookie*: ``__sibuna_token=<75 chars, 139 with ed25519>; Path=/; "
 "Max-Age=<ttl>; HttpOnly; SameSite=Lax[; Secure]``"
 msgstr ""
+"*Cookie*\\ ：\\ ``__sibuna_token=<75 chars, 139 with ed25519>; Path=/; "
+"Max-Age=<ttl>; HttpOnly; SameSite=Lax[; Secure]``"
 
 #: ../../quick-reference.rst:181
 msgid "Policy File Skeleton"
-msgstr ""
+msgstr "ポリシーファイルの骨組み"
 
 #: ../../quick-reference.rst:197
 msgid ""
@@ -487,10 +504,13 @@ msgid ""
 "matched in normal form. Order: WAF -> trie deny/allow -> rules -> score "
 "-> bypass -> trie challenge -> bots -> default."
 msgstr ""
+"パターン：\\ ``*``\\ または\\ ``.*``\\ は任意、\\ ``^...$``\\ は完全一致、末尾の\\ ``*``\\ は接頭辞、"
+"先頭の\\ ``/``\\ はパスの完全一致、それ以外は大文字小文字を区別しない部分文字列です。パスは正規形で照合します。順序：WAF -> "
+"トライのdeny/allow -> ルール -> スコア -> バイパス -> トライのchallenge -> bots -> 既定。"
 
 #: ../../quick-reference.rst:199
 msgid "Storage (Edge) in SQL"
-msgstr ""
+msgstr "SQLで見るストレージ（Edge）"
 
 #: ../../quick-reference.rst:214
 msgid ""
@@ -500,102 +520,107 @@ msgid ""
 "``--database-url-file <file> --cluster-node N`` with a unique N from 1 to "
 "8,388,607; no member list, leader or cluster TLS (SID 0011)."
 msgstr ""
+"SQLite（\\ ``sqlite3 <dir>/sibuna.db``\\ ）。動作は小文字です。スコア\\ :math:`\\le "
+"-50`\\ -> 拒否の接頭辞、\\ :math:`\\ge 50`\\ -> 許可。クラスター：全ノードで同じ秘密、"
+"一つのPostgreSQLデータベース、\\ ``--features postgres``\\ 、1から8,388,607の一意なNを持つ\\ "
+"``--database-url-file <file> --cluster-node N``\\ 。メンバーリスト、リーダー、"
+"クラスターのTLSはありません（SID 0011）。"
 
 #: ../../quick-reference.rst:216
 msgid "Diagnostics"
-msgstr ""
+msgstr "診断"
 
 #: ../../quick-reference.rst:223
 msgid "Title"
-msgstr ""
+msgstr "タイトル"
 
 #: ../../quick-reference.rst:225
 msgid "``MALFORMED CHALLENGE``"
-msgstr ""
+msgstr "``MALFORMED CHALLENGE``"
 
 #: ../../quick-reference.rst:226
 msgid "id edited or truncated; fetch a new one"
-msgstr ""
+msgstr "IDが編集されたか切り詰められた。新しいものを取得する"
 
 #: ../../quick-reference.rst:227
 msgid "``INVALID CHALLENGE TAG``"
-msgstr ""
+msgstr "``INVALID CHALLENGE TAG``"
 
 #: ../../quick-reference.rst:228
 msgid "not minted by this seed or node"
-msgstr ""
+msgstr "このシードまたはノードが発行したものではない"
 
 #: ../../quick-reference.rst:229
 msgid "``CHALLENGE EXPIRED``"
-msgstr ""
+msgstr "``CHALLENGE EXPIRED``"
 
 #: ../../quick-reference.rst:230
 msgid "older than TTL or clock skew > 60 s"
-msgstr ""
+msgstr "TTLより古い、または時計のずれが60秒超"
 
 #: ../../quick-reference.rst:231
 msgid "``CLIENT FINGERPRINT MISMATCH``"
-msgstr ""
+msgstr "``CLIENT FINGERPRINT MISMATCH``"
 
 #: ../../quick-reference.rst:232
 msgid "address or User-Agent changed"
-msgstr ""
+msgstr "アドレスまたはUser-Agentが変わった"
 
 #: ../../quick-reference.rst:233
 msgid "``DIFFICULTY NOT MET``"
-msgstr ""
+msgstr "``DIFFICULTY NOT MET``"
 
 #: ../../quick-reference.rst:234
 msgid "nonce lacks zero bits"
-msgstr ""
+msgstr "nonceのゼロビットが足りない"
 
 #: ../../quick-reference.rst:235
 msgid "``INVALID PROOF OF SEQUENTIAL WORK``"
-msgstr ""
+msgstr "``INVALID PROOF OF SEQUENTIAL WORK``"
 
 #: ../../quick-reference.rst:236
 msgid "openings do not reach the root"
-msgstr ""
+msgstr "開示が根に到達しない"
 
 #: ../../quick-reference.rst:237
 msgid "``WRONG SOLUTION TYPE``"
-msgstr ""
+msgstr "``WRONG SOLUTION TYPE``"
 
 #: ../../quick-reference.rst:238
 msgid "nonce for PoSW or proof for Hashcash"
-msgstr ""
+msgstr "PoSWにnonce、またはHashcashに証明"
 
 #: ../../quick-reference.rst:239
 msgid "``DOUBLE SPEND PREVENTED``"
-msgstr ""
+msgstr "``DOUBLE SPEND PREVENTED``"
 
 #: ../../quick-reference.rst:240
 msgid "challenge already used"
-msgstr ""
+msgstr "チャレンジはすでに使用済み"
 
 #: ../../quick-reference.rst:241
 msgid "``STORE FULL``"
-msgstr ""
+msgstr "``STORE FULL``"
 
 #: ../../quick-reference.rst:242
 msgid "spent set saturated; lower TTL or raise ``--spent-tags``"
-msgstr ""
+msgstr "使用済み集合が飽和。TTLを下げるか\\ ``--spent-tags``\\ を上げる"
 
 #: ../../quick-reference.rst:243
 msgid "``NETWORK BINDING MISMATCH``"
-msgstr ""
+msgstr "``NETWORK BINDING MISMATCH``"
 
 #: ../../quick-reference.rst:244
 msgid "cookie copied to another client"
-msgstr ""
+msgstr "Cookieが別のクライアントにコピーされた"
 
 #: ../../quick-reference.rst:245
 msgid "``INVALID COMMAND LINE``"
-msgstr ""
+msgstr "``INVALID COMMAND LINE``"
 
 #: ../../quick-reference.rst:246
 msgid "unknown option, bad value, or a removed Zaxonlite option"
-msgstr ""
+msgstr "不明なオプション、不正な値、または削除されたZaxonliteのオプション"
 
 #: ../../quick-reference.rst:248
 msgid ""
@@ -603,10 +628,14 @@ msgid ""
 "``upstream_errors``, ``incidents_dropped``, ``incident_write_failures``, "
 "``bans_refused``, ``forwarded_invalid`` (all ``sibuna_*_total``)."
 msgstr ""
+"警告を出すべきメトリクス：\\ ``denied``\\ 、\\ ``rate_limited``\\ 、\\ ``overloaded``\\ 、\\ "
+"``upstream_errors``\\ 、\\ ``incidents_dropped``\\ 、\\ "
+"``incident_write_failures``\\ 、\\ ``bans_refused``\\ 、\\ "
+"``forwarded_invalid``\\ （すべて\\ ``sibuna_*_total``\\ ）。"
 
 #: ../../quick-reference.rst:250
 msgid "Numbers to Remember"
-msgstr ""
+msgstr "覚えておく数値"
 
 #: ../../quick-reference.rst:253
 msgid ""
@@ -620,10 +649,18 @@ msgid ""
 "embeddings; keep-alive 4,096 requests per connection; origin pool 256 "
 "sockets; storage job queue 32."
 msgstr ""
+"チャレンジIDは70文字（36バイトのペイロード + 16バイトのタグ）。トークンは75文字（40 + 16）、"
+"Ed25519では139文字。証明のバイト数は\\ :math:`32(1 + t(n+1))`\\ 。PoSWの深さ = ビット - 3、"
+"範囲は4から24。リクエストバッファーは64 KB。ヘッダー部の上限は16 KB。検査するボディーは8 KB。"
+"使用済み集合は1,048,576タグ（\\ ``--spent-tags``\\ ）。レートのセルは表あたり262,144（\\ "
+"``--rate-table-cells``\\ ）。禁止は65,536スロット（\\ ``--ban-table-slots``\\ ）。"
+"クライアントアドレスあたり64接続。インシデントリングは512。バッチは32。"
+"活動の距離は最新16,384個の埋め込みベクトルに対して0.35。keep-aliveは接続あたり4,096リクエスト。"
+"オリジンのプールは256ソケット。ストレージのジョブキューは32。"
 
 #: ../../quick-reference.rst:255
 msgid "Ingress Routing"
-msgstr ""
+msgstr "入口のルーティング"
 
 #: ../../quick-reference.rst:258
 msgid ""
@@ -633,6 +670,10 @@ msgid ""
 "audit headers with the authorization result. Nginx needs explicit "
 "challenge, 429 and unavailable-auth handling."
 msgstr ""
+"第IX部「入口の背後でのforward auth」のNginxまたはCaddyのレシピを使ってください。\\ "
+"``/__sibuna/*``\\ は直接ルーティングします。アプリケーションのリクエストは、元のURI、メソッド、"
+"信頼できるクライアントアドレスで認可します。受信したSibunaの監査用ヘッダーは、認可の結果で置き換えます。Nginxでは、チャレンジ、"
+"429、認可が利用できない場合を明示的に扱う必要があります。"
 
 #: ../../quick-reference.rst:260
 msgid ""
@@ -643,3 +684,8 @@ msgid ""
 "use Content-Length or chunked coding; inspection sees at most an 8 KiB "
 "prefix, with file bytes opaque."
 msgstr ""
+"``reverse_proxy``\\ は、許可したHTTP/1.1のボディーとWebSocketを運びます。\\ "
+"``forward_auth``\\ は許可を与え、それらは入口が運びます。認可で省かれたボディーとオリジンの応答は、"
+"Sibunaが検査することも数えることもできません。TLSは入口で終端します。ネイティブのHTTP/2は先送りしています。"
+"アップロードはContent-Lengthかchunkedコーディングを使います。検査が見るのは最大8 KiBの先頭部分で、"
+"ファイルのバイトは中身を見ません。"

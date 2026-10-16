@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../algorithms.rst:1
 msgid "Part VI: Automata, Tries, and the Semantic Firewall"
-msgstr ""
+msgstr "第VI部：オートマトン、トライ、意味解析ファイアウォール"
 
 #: ../../algorithms.rst:4
 msgid ""
@@ -28,15 +28,17 @@ msgid ""
 "tokenizers of the semantic WAF, and the declarative policy engine with "
 "WEIGH scoring."
 msgstr ""
+"1マイクロ秒未満の分類を支えるアルゴリズムを調べます。タグ付きのAho-Corasickオートマトン、IPv4/IPv6の基数トライ、"
+"意味解析WAFのバイトクラスによるトークナイザー、WEIGHによるスコア付けを持つ宣言的ポリシーエンジンです。"
 
 #: ../../algorithms.rst:6
 msgid "Single-Pass Multi-Pattern Matching"
-msgstr ""
+msgstr "一回の走査による複数パターンの照合"
 
 #: ../../algorithms.rst:9 ../../algorithms.rst:80 ../../algorithms.rst:103
 #: ../../algorithms.rst:162
 msgid "Objectives"
-msgstr ""
+msgstr "この章の学習目標"
 
 #: ../../algorithms.rst:11
 msgid ""
@@ -45,10 +47,13 @@ msgid ""
 "case folding through byte classes, and argue why a SIMD literal engine "
 "was not adopted."
 msgstr ""
+"この章を読み終えると、Aho-Corasickオートマトンの線形時間の保証を導き、"
+"密なテーブルの配置とバイトクラスによる大文字小文字の同一視を説明し、SIMDによるリテラル照合エンジンを採用しなかった理由を論じられるように"
+"なります。"
 
 #: ../../algorithms.rst:13
 msgid "Aho-Corasick as a Dense DFA"
-msgstr ""
+msgstr "密なDFAとしてのAho-Corasick"
 
 #: ../../algorithms.rst:16
 msgid ""
@@ -60,6 +65,11 @@ msgid ""
 "so scanning is one table load per input byte with no branches on the "
 "pattern set. The automaton lives in the ``sibuna-patterns`` crate:"
 msgstr ""
+"Sibunaには二つのリテラルパターンの集合があります。約40個のボットのシグネチャと、約100個の攻撃のシグネチャです。"
+"一つのフィールドを\\ :math:`N`\\ 個のパターンと一つずつ照合すると\\ :math:`O(NM)`\\ です。"
+"AhoとCorasick（1975）のオートマトンは、失敗リンク付きのトライを構築した後、フィールドを一度だけ\\ :math:`O(M)"
+"`\\ で走査します。Sibunaは構築時に失敗リンクを遷移表に組み込むので、走査は入力1バイトあたり表の読み込み一回で、"
+"パターン集合に関する分岐はありません。オートマトンは\\ ``sibuna-patterns``\\ クレートにあります。"
 
 #: ../../algorithms.rst:37
 msgid ""
@@ -68,10 +78,13 @@ msgid ""
 "after every other state; detecting a match is then one comparison against "
 "``first_match``, with no second table to load in the inner loop."
 msgstr ""
+"状態は一つの平坦な表の中の行オフセットとして保存するので、1ステップは加算一回と読み込み一回です。状態には、"
+"すべての一致状態が他のすべての状態の後に来るように番号を付けます。そのため一致の検出は\\ ``first_match``\\ "
+"との比較一回で済み、内側のループで二つ目の表を読み込む必要はありません。"
 
 #: ../../algorithms.rst:40
 msgid "Trie states and failure edges for two signatures"
-msgstr ""
+msgstr "二つのシグネチャのトライの状態と失敗辺"
 
 #: ../../algorithms.rst:64
 msgid ""
@@ -87,14 +100,21 @@ msgid ""
 "the comparison with sequential substring search are recorded in Part "
 "VIII. The latter uses the same patterns and any-match semantics."
 msgstr ""
+"オートマトンの状態数の予算は実行時のオプションです。ポリシーエンジンは、根一つとすべてのシグネチャの長さの合計を上限として確保します。"
+"これはトライの状態数の安全な上限です。これにより、かつての大きすぎる固定サイズの表を避けつつ、"
+"すべてのバイトクラスについて密な遷移を保てます。各パターンは小さなカテゴリータグ（0から63なので、タグの集合は64ビットの語一つ）"
+"を持ちます。大文字小文字の同一視には、オートマトンとともに構築する256項目のバイトクラス表を使います。"
+"ある文字の大文字と小文字は同じクラスを共有し、どのパターンにも現れないバイトは一つのクラスを共有します。"
+"そのため表の1行の幅は256ではなく、パターン中の異なるバイトの数に1を足した値です。エンジンの正確なサイズと、"
+"逐次的な部分文字列探索との比較は第VIII部に記録しています。後者は同じパターンと、いずれかに一致すればよいという意味論を使います。"
 
 #: ../../algorithms.rst:66
 msgid "Regular Expressions, SIMD Engines, and the Choice"
-msgstr ""
+msgstr "正規表現、SIMDエンジン、そして選択"
 
 #: ../../algorithms.rst:69
 msgid "Three families were weighed for the signature stage:"
-msgstr ""
+msgstr "シグネチャの段階には、三つの系統を比較検討しました。"
 
 #: ../../algorithms.rst:71
 msgid ""
@@ -102,6 +122,8 @@ msgid ""
 "hundreds of patterns per request and allocate per match; they are the "
 "slowest option and the most prone to false positives."
 msgstr ""
+"*バックトラックする正規表現*\\ （バックトラック型ルールセットの方式）は、リクエストごとに数百のパターンを実行し、"
+"一致ごとにメモリを確保します。最も遅く、最も誤検知を起こしやすい選択肢です。"
 
 #: ../../algorithms.rst:72
 msgid ""
@@ -113,6 +135,10 @@ msgid ""
 "bytes, no advantage: the whole field scans in less time than one cache "
 "miss."
 msgstr ""
+"*SIMDリテラルエンジン*\\ （Hyperscan、Vectorscan）は、シャッフルに基づくニブルマスク（「Teddy」アルゴリズム）"
+"で16から32バイトのブロックを事前に絞り込み、候補をオートマトンで検証します。長い入力と大きなリテラル集合で真価を発揮します。代償は、"
+"数メガバイトのC++依存、コンパイル時のパターンデータベース、WebAssemblyターゲットがないこと、"
+"そして100バイト程度の入力では利点がないことです。フィールド全体の走査は、キャッシュミス一回より短い時間で終わります。"
 
 #: ../../algorithms.rst:73
 msgid ""
@@ -120,6 +146,8 @@ msgid ""
 "lineage, gives exact linear-time behaviour in a fixed table and needs "
 "nothing outside the binary."
 msgstr ""
+"*密なAho-Corasickと小さな構造トークナイザーの組み合わせ*\\ はlibinjectionの系譜で、"
+"固定した表で正確に線形時間で動作し、バイナリの外に何も必要としません。"
 
 #: ../../algorithms.rst:75
 msgid ""
@@ -129,10 +157,15 @@ msgid ""
 "``benchmarks/results/primitives-latest.md``). That is the one workload "
 "where a SIMD prefilter would pay, and SID 0006 keeps it as an open item."
 msgstr ""
+"Sibunaのフィールドは短いので、メモリと速度の両面で三つ目の系統が勝ります。第VIII部では、8 "
+"KiBのボディーで1バイトあたり約1.56 nsを記録しています（意味解析の走査は12,784.3 nsで、\\ "
+"``benchmarks/results/primitives-latest.md``\\ の\\ "
+"``8kb_body_semantic_scan``\\ です）。SIMDによる事前絞り込みが元を取るのはこのワークロードだけで、SID "
+"0006はこれを未解決の項目として残しています。"
 
 #: ../../algorithms.rst:77
 msgid "The Radix Trie for IPv4 and IPv6"
-msgstr ""
+msgstr "IPv4とIPv6の基数トライ"
 
 #: ../../algorithms.rst:82
 msgid ""
@@ -140,6 +173,8 @@ msgid ""
 "root shortcut, and see how the trie doubles as the reputation store fed "
 "by the cluster."
 msgstr ""
+"128ビットのトライで最長接頭辞の検索をたどり、IPv4の根の近道を説明し、"
+"トライがクラスターから供給される評判の格納場所を兼ねる仕組みを確かめます。"
 
 #: ../../algorithms.rst:84
 msgid ""
@@ -150,6 +185,11 @@ msgid ""
 "at most 128 dependent loads with no pointer chasing. The trie is the "
 "``PrefixTrie`` of the ``sibuna-cidr`` crate."
 msgstr ""
+"128ビットのキーに対する一つの二分トライが両方のアドレス族に使われます。IPv6の接頭辞はそのまま挿入し、IPv4の接頭辞は\\ "
+"``::ffff:0:0/96``\\ に対応付けるので、\\ ``/24``\\ は深さ120の経路になります。ノードは\\ ``u32``\\ "
+"で添字付けた一つの平坦な\\ ``Vec``\\ に置き、添字0は根と「子なし」の両方を表します。"
+"そのため検索は高々128回の依存した読み込みで、ポインターをたどることはありません。このトライは\\ ``sibuna-cidr``\\ "
+"クレートの\\ ``PrefixTrie``\\ です。"
 
 #: ../../algorithms.rst:86
 msgid ""
@@ -158,6 +198,8 @@ msgid ""
 "the trie records the node at depth 96 at initialisation and starts IPv4 "
 "lookups there:"
 msgstr ""
+"IPv4の検索のたびに対応付けた接頭辞の96段をたどると、IPv4アドレスの最初のビットに達するまでに96回の依存した読み込みがかかります。"
+"そこでトライは初期化時に深さ96のノードを記録し、IPv4の検索をそこから始めます。"
 
 #: ../../algorithms.rst:98
 msgid ""
@@ -168,10 +210,15 @@ msgid ""
 "so a cluster-wide ban beats every rule, and ``challenge`` verdicts after "
 "it."
 msgstr ""
+"IPv4アドレスの分類には32.0 ns、IPv6アドレスには79.3 nsかかります（\\ "
+"``benchmarks/results/primitives-latest.md``\\ の\\ "
+"``ipv4_cidr_classification``\\ と\\ ``ipv6_cidr_classification``\\ ）。"
+"エンジンはトライを二回参照します。終端の\\ ``allow``\\ /\\ ``deny``\\ の判定はルール表の前に行うので、"
+"クラスター全体の禁止はどのルールにも優先します。\\ ``challenge``\\ の判定はルール表の後に行います。"
 
 #: ../../algorithms.rst:100
 msgid "The Semantic Firewall"
-msgstr ""
+msgstr "意味解析ファイアウォール"
 
 #: ../../algorithms.rst:105
 msgid ""
@@ -180,10 +227,12 @@ msgid ""
 "checks, canonicalisation, and the false-positive discipline that a real "
 "browser request must pass untouched."
 msgstr ""
+"バイトクラスによる事前走査、タグ付きのシグネチャのオートマトン、恒真式を検出するSQLトークナイザー、HTMLとシェルの構造の確認、正規化、"
+"そして本物のブラウザーのリクエストを無傷で通さなければならないという誤検知の規律を理解します。"
 
 #: ../../algorithms.rst:107
 msgid "A Lesson in False Positives"
-msgstr ""
+msgstr "誤検知の教訓"
 
 #: ../../algorithms.rst:110
 msgid ""
@@ -195,10 +244,15 @@ msgid ""
 "Chrome request, including a comment body containing ``select``, ``--``, "
 "and an apostrophe, through the engine and asserts it comes out clean."
 msgstr ""
+"WAFの最初の版は、平坦な部分文字列のリストをすべてのヘッダーと照合していました。リストには\\ ``/*``\\ が含まれており、"
+"どのブラウザーも\\ ``Accept: text/html,...,*/*;q=0.8``\\ を送ります。"
+"本物のブラウザーはすべてSQLインジェクションに分類され、\\ ``403``\\ を受け取りました。この教訓が設計を形作りました。"
+"検出器が反応してよいのは\\ *構造*\\ に対してだけです。テストスイートは現在、\\ ``select``\\ 、\\ ``--``\\ 、"
+"アポストロフィーを含むコメント本文も含めた完全なChromeのリクエストをエンジンに通し、問題なしと判定されることを確認しています。"
 
 #: ../../algorithms.rst:112
 msgid "Byte Classes in One Pass"
-msgstr ""
+msgstr "一回の走査でのバイトクラス"
 
 #: ../../algorithms.rst:115
 msgid ""
@@ -211,10 +265,15 @@ msgid ""
 "and the two byte pairs (``/*`` and two adjacent spaces) are searched for "
 "only when no single byte has already demanded canonicalisation:"
 msgstr ""
+"検査する各フィールドを一度走査し、どのバイトクラスが現れるかを集めます。引用符、\\ ``=``\\ 、\\ ``<``\\ 、シェルの区切り文字、"
+"\\ ``%``\\ 、NUL、正規化のきっかけ、連続した空白です。各検出器は再走査せずにこのクラスを参照し、正規化した二回目の走査は、"
+"きっかけが見つかったときだけ行います。走査は1バイトあたり256項目の表の参照一回で、\\ ``sibuna-policy``\\ "
+"のWAFモジュールにあります。四つのアキュムレーターでORの連鎖を短く保ち、二つのバイトの組（\\ ``/*``\\ と、隣り合う二つの空白）"
+"は、単独のバイトがまだ正規化を要求していないときだけ探します。"
 
 #: ../../algorithms.rst:143
 msgid "Detectors"
-msgstr ""
+msgstr "検出器"
 
 #: ../../algorithms.rst:146
 msgid ""
@@ -222,6 +281,9 @@ msgid ""
 "automaton; a hit is a terminal ``deny`` named ``waf:sqli``, ``waf:xss``, "
 "``waf:path-traversal``, or ``waf:rce``."
 msgstr ""
+"*シグネチャ。*\\ すべてのカテゴリーの強いシグネチャは、一つのタグ付きオートマトンにあります。ヒットは、\\ ``waf:sqli``\\ 、"
+"\\ ``waf:xss``\\ 、\\ ``waf:path-traversal``\\ 、\\ ``waf:rce``\\ という名前の終端の\\ "
+"``deny``\\ です。"
 
 #: ../../algorithms.rst:147
 msgid ""
@@ -233,6 +295,11 @@ msgid ""
 "(1), an ``=`` (1). ``admin'--`` is terminal by itself. \"it's a group "
 "order from the shop\" scores 3 and passes."
 msgstr ""
+"*SQLインジェクション。*\\ 一回の走査で語を読むスキャナーが、英数字の各語（最大7バイト）をキーワード表で引き、\\ ``or``\\ "
+"/\\ ``and``\\ では\\ ``literal = literal``\\ という恒真式を確認します。\\ ``id=1 or "
+"1=1``\\ は終端です。それ以外の場合は引用符のバイトが必須で、証拠のスコアは次のうち4以上でなければなりません。引用符（1）、"
+"最大二つのキーワード（2）、コメント記号（1）、\\ ``=``\\ （1）です。\\ ``admin'--``\\ はそれだけで終端です。"
+"\"it's a group order from the shop\"のスコアは3で、通過します。"
 
 #: ../../algorithms.rst:148
 msgid ""
@@ -240,6 +307,8 @@ msgid ""
 "script co-occurs with an ``on<event>=`` attribute in attribute position. "
 "``onboarding=1`` does not count."
 msgstr ""
+"*クロスサイトスクリプティング。*\\ ``<``\\ が必須です。スクリプトを載せられるタグが、属性の位置にある\\ "
+"``on<event>=``\\ 属性と同時に現れたときに反応します。\\ ``onboarding=1``\\ は数えません。"
 
 #: ../../algorithms.rst:149
 msgid ""
@@ -247,12 +316,16 @@ msgid ""
 "``&&``, ``$(``, a backtick, or a newline is followed by a known command "
 "name. ``status ok; done | next`` passes."
 msgstr ""
+"*コマンドインジェクション。*\\ 区切り文字が必須です。\\ ``;``\\ 、\\ ``|``\\ 、\\ ``&&``\\ 、\\ ``$(``\\ 、"
+"バッククォート、改行の後に既知のコマンド名が続くときに反応します。\\ ``status ok; done | next``\\ は通過します。"
 
 #: ../../algorithms.rst:150
 msgid ""
 "*Path traversal.* Signatures (``../``, ``..%2f``, ``/etc/passwd``, "
 "``id_rsa``, ...) plus NUL and ``%00``."
 msgstr ""
+"*パストラバーサル。*\\ シグネチャ（\\ ``../``\\ 、\\ ``..%2f``\\ 、\\ ``/etc/passwd``\\ 、\\ "
+"``id_rsa``\\ など）に加えて、NULと\\ ``%00``\\ 。"
 
 #: ../../algorithms.rst:152
 msgid ""
@@ -264,10 +337,15 @@ msgid ""
 "buffer and inspected again, so ``1%27/**/UnIoN/**/SeLeCt`` and "
 "``%252e%252e/`` collapse onto the raw signatures."
 msgstr ""
+"文法上正当に引用符やアスタリスクを含む構造的なヘッダー（\\ ``Accept*``\\ 、\\ ``Content-Type``\\ 、\\ "
+"``Sec-*``\\ 、\\ ``If-*``\\ など）は飛ばします。パス、クエリ、User-Agent、その他のヘッダー、ボディーの先頭8 "
+"KBを検査します。パーセントエスケープ、プラス記号、コメントの開始記号、まとめられる空白を含むフィールドは、8 "
+"KBのスタック上のバッファーに正規化してもう一度検査します。そのため\\ ``1%27/**/UnIoN/**/SeLeCt``\\ や\\ "
+"``%252e%252e/``\\ は、元のシグネチャに帰着します。"
 
 #: ../../algorithms.rst:154
 msgid "Cost"
-msgstr ""
+msgstr "コスト"
 
 #: ../../algorithms.rst:157
 msgid ""
@@ -278,16 +356,20 @@ msgid ""
 "ingress using forward-auth must pass the relevant request information; "
 "omitted bytes cannot be inspected by this process."
 msgstr ""
+"検査のコストは、リクエストの数だけでなく、エンジンに渡されるフィールドとバイトによって決まります。ベンチマークの章では、Gate、"
+"Shield、8 KBのボディーの場合を別々に報告します。8 KBという上限は検査の制限であり、"
+"アップロードの残りが安全だという主張ではありません。forward-authを使う入口は、関係するリクエストの情報を渡さなければなりません。"
+"渡されなかったバイトを、このプロセスは検査できません。"
 
 #: ../../algorithms.rst:159
 msgid "The Declarative Policy Engine"
-msgstr ""
+msgstr "宣言的ポリシーエンジン"
 
 #: ../../algorithms.rst:164
 msgid ""
 "Read the rule model, the evaluation order, WEIGH scoring with thresholds, "
 "and the JSON policy grammar."
-msgstr ""
+msgstr "ルールのモデル、評価の順序、しきい値付きのWEIGHによるスコア付け、JSONによるポリシーの文法を読みます。"
 
 #: ../../algorithms.rst:166
 msgid ""
@@ -297,20 +379,24 @@ msgid ""
 "per-rule difficulty in work bits and algorithm, and a signed ``weight``. "
 "Evaluation order:"
 msgstr ""
+"ルールは任意の条件（パスのパターン、User-Agentのパターン、最大四つのヘッダー、最大八つのIPv4/IPv6 CIDRブロック）"
+"の論理積で、動作\\ ``ALLOW``\\ 、\\ ``DENY``\\ 、\\ ``CHALLENGE``\\ 、\\ ``WEIGH``\\ "
+"のいずれか、任意のルールごとの難易度（作業ビット）とアルゴリズム、符号付きの\\ ``weight``\\ を持ちます。"
+"評価の順序は次のとおりです。"
 
 #: ../../algorithms.rst:168
 msgid "Semantic WAF (Shield only): violation is a terminal ``deny``."
-msgstr ""
+msgstr "意味解析WAF（Shieldのみ）：違反は終端の\\ ``deny``\\ です。"
 
 #: ../../algorithms.rst:169
 msgid "Reputation trie: ``deny`` or ``allow`` prefixes are terminal."
-msgstr ""
+msgstr "評判トライ：\\ ``deny``\\ または\\ ``allow``\\ の接頭辞は終端です。"
 
 #: ../../algorithms.rst:170
 msgid ""
 "Rules in order: the first terminal match returns; ``WEIGH`` matches "
 "accumulate."
-msgstr ""
+msgstr "ルールを順に：最初の終端の一致で返ります。\\ ``WEIGH``\\ の一致は累積します。"
 
 #: ../../algorithms.rst:171
 msgid ""
@@ -318,16 +404,19 @@ msgid ""
 "totals :math:`\\geq 10` ``challenge`` with one extra work bit per 5 "
 "points above the threshold, capped at six."
 msgstr ""
+"スコア：合計が負なら\\ ``allow``\\ 。合計が\\ :math:`\\geq 40`\\ なら\\ ``deny``\\ 。合計が\\ "
+":math:`\\geq 10`\\ なら\\ ``challenge``\\ で、しきい値を5点超えるごとに作業ビットを一つ加え、"
+"最大で六つまで加えます。"
 
 #: ../../algorithms.rst:172
 msgid ""
 "Static bypass paths, then trie ``challenge`` verdicts, then the bot "
 "automaton."
-msgstr ""
+msgstr "静的なバイパス経路、次にトライの\\ ``challenge``\\ の判定、次にボットのオートマトン。"
 
 #: ../../algorithms.rst:173
 msgid "Default action, ``challenge`` unless the policy file says otherwise."
-msgstr ""
+msgstr "既定の動作。ポリシーファイルで別に指定しない限り\\ ``challenge``\\ です。"
 
 #: ../../algorithms.rst:175
 msgid ""
@@ -336,10 +425,14 @@ msgid ""
 "``Amazonbot``, and challenge every ``Mozilla`` User-Agent: a browser "
 "string is free to forge, so admitting it would make the gate decorative."
 msgstr ""
+"組み込みのルールは、\\ ``/.well-known/*``\\ 、\\ ``/favicon.ico``\\ 、\\ "
+"``/robots.txt``\\ 、\\ ``/__sibuna/*``\\ を許可し、\\ ``CF-Worker``\\ のクライアントと\\ "
+"``Amazonbot``\\ を拒否し、\\ ``Mozilla``\\ を含むすべてのUser-Agentにチャレンジします。"
+"ブラウザーの文字列は自由に偽造できるので、それだけで許可すればゲートは飾りになってしまいます。"
 
 #: ../../algorithms.rst:195
 msgid "Worked Trace: an Encoded Attack with a Valid Session"
-msgstr ""
+msgstr "実行トレースの例：有効なセッションを持つエンコードされた攻撃"
 
 #: ../../algorithms.rst:198
 msgid ""
@@ -349,6 +442,10 @@ msgid ""
 "request. The percent sign marks the field for canonicalization. One "
 "decoding pass exposes ``%27%20OR%201%3D1``; a second exposes ``' OR 1=1``."
 msgstr ""
+"有効なセッションを持つクライアントからの\\ ``GET /search?q=%2527%2520OR%25201%253D1``\\ "
+"を考えます。まずHTTPパーサーが、バイトをコピーせずにパスとクエリを分けます。ローカルの制限が実行され、"
+"次にShieldがリクエストを検査します。パーセント記号があるので、このフィールドは正規化の対象になります。一回のデコードで\\ "
+"``%27%20OR%201%3D1``\\ が現れ、二回目で\\ ``' OR 1=1``\\ が現れます。"
 
 #: ../../algorithms.rst:200
 msgid ""
@@ -359,10 +456,14 @@ msgid ""
 "later. The response path need not hold the engine snapshot while an "
 "origin connection is idle."
 msgstr ""
+"トークナイザーは引用符、キーワード\\ ``OR``\\ 、等しいリテラルのオペランドを見つけます。拒否はポリシーの終端の結果です。"
+"有効なセッションがあっても許可には変わりません。セッションの確認が解決するのはチャレンジの判断だけです。"
+"ストレージのフックは上限のあるインシデントレコードをコピーし、SQLは後で実行されます。オリジンへの接続がアイドルの間、"
+"応答の経路がエンジンのスナップショットを保持し続ける必要はありません。"
 
 #: ../../algorithms.rst:202
 msgid "Exercise 6.1"
-msgstr ""
+msgstr "演習6.1"
 
 #: ../../algorithms.rst:204
 msgid ""
@@ -370,10 +471,13 @@ msgid ""
 "should neither alone establish SQL injection? Give an example of a false "
 "positive a substring-only detector could produce."
 msgstr ""
+"ペイロードを\\ ``O'Reilly``\\ に、次に\\ ``order=1``\\ に置き換えてください。"
+"どちらも単独ではSQLインジェクションの根拠にならないのはなぜでしょうか。"
+"部分文字列だけで判定する検出器が生みかねない誤検知の例を挙げてください。"
 
 #: ../../algorithms.rst:206
 msgid "Exercise 6.2"
-msgstr ""
+msgstr "演習6.2"
 
 #: ../../algorithms.rst:208
 msgid ""
@@ -381,10 +485,12 @@ msgid ""
 "injection (patterns such as ``)(|(``), and explain which existing class "
 "bits it can reuse."
 msgstr ""
+"LDAPインジェクション（\\ ``)(|(``\\ のようなパターン）の検出器を追加するのに必要なバイトクラス表の項目を書き、"
+"既存のどのクラスのビットを再利用できるかを説明してください。"
 
 #: ../../algorithms.rst:210
 msgid "Explain the invariant"
-msgstr ""
+msgstr "不変条件を説明してください"
 
 #: ../../algorithms.rst:212
 msgid ""
@@ -392,3 +498,5 @@ msgid ""
 "structural property the new SQL detector requires, and how the automaton "
 "and the tokenizer divide the work."
 msgstr ""
+"``Accept: */*``\\ が誤検知になった理由、新しいSQL検出器が必要とする構造上の性質、"
+"オートマトンとトークナイザーの作業の分担を、レビュー担当者に説明してください。"

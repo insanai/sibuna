@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../foundations.rst:1
 msgid "Part I: The Cost of a Request"
-msgstr ""
+msgstr "第I部：リクエストのコスト"
 
 #: ../../foundations.rst:4
 msgid ""
@@ -28,10 +28,12 @@ msgid ""
 "decision is measured against: origin work, puzzle work, session "
 "amortisation, and the memory an untrusted client can make a server hold."
 msgstr ""
+"アルゴリズムを選ぶ前に、それが守るべき資源を特定します。この章では、後のすべての設計判断を測る基準となる小さなモデルを作ります。"
+"オリジンの作業、パズルの作業、セッションによる償却、そして信頼できないクライアントがサーバーに保持させ得るメモリです。"
 
 #: ../../foundations.rst:6
 msgid "Objectives"
-msgstr ""
+msgstr "この章の学習目標"
 
 #: ../../foundations.rst:8
 msgid ""
@@ -41,10 +43,12 @@ msgid ""
 "search, explain how sessions amortise work, and list the five invariants "
 "the rest of the book maintains."
 msgstr ""
+"この章を読み終えると、ゲートが元を取るかどうかを決める不等式を書き、作業証明が何を示し何を示さないかを述べ、ハッシュ探索の期待値と裾を導き、"
+"セッションが作業を償却する仕組みを説明し、本書の残りで保つ五つの不変条件を挙げられるようになります。"
 
 #: ../../foundations.rst:10
 msgid "Admission Is an Economic Decision"
-msgstr ""
+msgstr "許可は経済的な判断です"
 
 #: ../../foundations.rst:13
 msgid ""
@@ -57,11 +61,17 @@ msgid ""
 "origin work exceeds its own cost and the cost it imposes on legitimate "
 "visitors."
 msgstr ""
+"オリジンが、許可したリクエストごとにデータベースを検索し、ページを描画するとします。その作業を\\ :math:`c_o`\\ 、"
+"リクエストあたりのゲートの作業を\\ :math:`c_g`\\ 、到着率を\\ :math:`r`\\ とします。ゲートがなければ、"
+"オリジンは毎秒\\ :math:`r c_o`\\ 単位の作業をこなさなければなりません。割合\\ :math:`a`\\ だけを許可するゲートは、"
+"この需要を\\ :math:`r a c_o`\\ に変え、自身は\\ :math:`r c_g`\\ を費やします。ゲートが役に立つのは、"
+"節約したオリジンの作業が、ゲート自身のコストと正当な訪問者に課すコストを上回るときだけです。"
 
 #: ../../foundations.rst:15
 msgid ""
 "r c_g + r a c_o < r c_o \\quad \\Leftrightarrow \\quad c_g < (1-a) c_o."
 msgstr ""
+"r c_g + r a c_o < r c_o \\quad \\Leftrightarrow \\quad c_g < (1-a) c_o."
 
 #: ../../foundations.rst:19
 msgid ""
@@ -71,10 +81,13 @@ msgid ""
 "query may make it large. There is no universal requester-to-server cost "
 "ratio."
 msgstr ""
+"これは容量のモデルであり、測定ではありません。帯域幅、接続の状態、ストレージ、クライアントの待ち時間を省いています。このモデルの価値は、"
+"欠けている項がすべて目に見えることです。キャッシュにヒットすれば\\ :math:`c_o`\\ は小さくなり、高価なクエリなら大きくなります。"
+"要求側とサーバー側のコスト比に普遍的な値はありません。"
 
 #: ../../foundations.rst:21
 msgid "Worked example: when a gate pays for itself"
-msgstr ""
+msgstr "例題：ゲートが元を取るとき"
 
 #: ../../foundations.rst:23
 msgid ""
@@ -85,10 +98,15 @@ msgid ""
 "this model. These selected numbers are not timings. They show why the "
 "workload belongs in every performance claim."
 msgstr ""
+":math:`c_o = 100`\\ 作業単位、\\ :math:`c_g = 1`\\ とします。リクエストの半分を拒否すれば、"
+"ゲート付きのシステムは到着一件あたり100単位ではなく\\ :math:`1 + 0.5 \\times 100 = 51`\\ "
+"単位を費やします。千件に一件しか拒否しなければ\\ :math:`100.9`\\ 単位を費やします。このモデルでは、"
+"ゲートは節約する以上のコストがかかります。ここで選んだ数値は時間の測定値ではありません。"
+"性能に関するどの主張にもワークロードを添えるべき理由を示しています。"
 
 #: ../../foundations.rst:25
 msgid "What a Proof of Work Establishes"
-msgstr ""
+msgstr "作業証明が示すもの"
 
 #: ../../foundations.rst:28
 msgid ""
@@ -99,6 +117,9 @@ msgid ""
 "admission cost; policy and inspection still decide what admitted requests "
 "may do."
 msgstr ""
+"クライアントパズルが示すのは、誰かが公開された検証規則を満たす入力を見つけたということです。人間であること、身元、善意は示しません。"
+"要求側は計算資源を借りることも、有効期間内の有効なセッションを再利用することも、作業を複数のマシンに分散することもできます。"
+"パズルは許可のコストを変えます。許可されたリクエストに何を許すかは、引き続きポリシーと検査が決めます。"
 
 #: ../../foundations.rst:30
 msgid ""
@@ -108,10 +129,13 @@ msgid ""
 "therefore keeps admission, inspection, and reputation as distinct "
 "decisions."
 msgstr ""
+"アドレスに基づく制限はこれを補います。制限は一つのアドレスを縛りますが、共有アドレスの背後には多くの人がいることがあり、"
+"一人の要求者が多くのアドレスを使うこともあります。パズルもアドレスも、身元を教えてくれる託宣ではありません。そのためSibunaは、許可、"
+"検査、評判を別々の判断として扱います。"
 
 #: ../../foundations.rst:32
 msgid "Hash Search as a Random Variable"
-msgstr ""
+msgstr "確率変数としてのハッシュ探索"
 
 #: ../../foundations.rst:35
 msgid ""
@@ -119,20 +143,25 @@ msgid ""
 "success probability :math:`p = 2^{-b}` for each independent trial. Let "
 ":math:`K` count trials through the first success. Then"
 msgstr ""
+"理想的な256ビットのダイジェストでは、先頭に\\ :math:`b`\\ 個のゼロビットを要求すると、独立な試行ごとの成功確率は\\ "
+":math:`p = 2^{-b}`\\ になります。最初の成功までの試行回数を\\ :math:`K`\\ とします。このとき"
 
 #: ../../foundations.rst:37
 msgid ""
 "P(K=k) = (1-p)^{k-1} p, \\quad P(K>k) = (1-p)^k, \\quad E[K] = 1/p = 2^b."
 msgstr ""
+"P(K=k) = (1-p)^{k-1} p, \\quad P(K>k) = (1-p)^k, \\quad E[K] = 1/p = "
+"2^b."
 
 #: ../../foundations.rst:41
 msgid "The expectation follows from the tail sum:"
-msgstr ""
+msgstr "期待値は裾の和から導かれます。"
 
 #: ../../foundations.rst:43
 msgid ""
 "E[K] = \\sum_{k=0}^{\\infty} P(K>k) = \\sum_{k=0}^{\\infty} (1-p)^k = 1/p."
 msgstr ""
+"E[K] = \\sum_{k=0}^{\\infty} P(K>k) = \\sum_{k=0}^{\\infty} (1-p)^k = 1/p."
 
 #: ../../foundations.rst:47
 msgid ""
@@ -141,6 +170,9 @@ msgid ""
 "far longer than the mean. A client that measures only one solve has "
 "mostly measured this randomness."
 msgstr ""
+"難易度を1段上げると、期待試行回数は2倍になります。どのパズルも2倍の時間がかかると約束するものではありません。"
+"最初の試行で成功するものもあれば、平均よりはるかに長くかかるものもあります。解答を一度だけ測ったクライアントが測ったのは、"
+"主にこのランダム性です。"
 
 #: ../../foundations.rst:50
 msgid ""
@@ -149,10 +181,12 @@ msgid ""
 "P(K > x/p) ~ e^(-x). The point o marks x = 1, where the probability of "
 "still searching is e^(-1) = 0.368."
 msgstr ""
+"ハッシュ探索の生存確率。横軸は試行回数を期待試行回数で割った値です。曲線は作業量が大きいときの近似P(K > x/p) ~ e^(-x)"
+"を使います。点oはx = 1を示し、そこでまだ探索を続けている確率はe^(-1) = 0.368です。"
 
 #: ../../foundations.rst:68
 msgid "Worked example: expectation is not a deadline"
-msgstr ""
+msgstr "例題：期待値は締め切りではありません"
 
 #: ../../foundations.rst:70
 msgid ""
@@ -163,10 +197,14 @@ msgid ""
 "A user interface should tolerate that spread rather than announcing "
 "failure at the expected completion time."
 msgstr ""
+":math:`b = 16`\\ では、期待作業量は65,536回のハッシュです。それだけ試行した後もまだ探索を続けている確率は、およそ\\ "
+":math:`e^{-1} = 0.368`\\ です。試行回数の95パーセンタイルは\\ :math:`\\lceil \\ln(0.05) / "
+"\\ln(1 - 2^{-16}) \\rceil \\approx 196327`\\ で、平均のほぼ3倍です。ユーザーインターフェースは、"
+"期待完了時刻に失敗を告げるのではなく、このばらつきを許容すべきです。"
 
 #: ../../foundations.rst:72
 msgid "Sessions Amortise Work"
-msgstr ""
+msgstr "セッションは作業を償却します"
 
 #: ../../foundations.rst:75
 msgid ""
@@ -178,10 +216,15 @@ msgid ""
 "automated clients alike. Choosing it is a policy decision, not a "
 "cryptographic optimization."
 msgstr ""
+"セッションが期限までに\\ :math:`m`\\ 件のリクエストを許し、パズルのコストが\\ :math:`c_p`\\ 、検証のコストが\\ "
+":math:`c_v`\\ 、セッションの確認のコストが\\ :math:`c_s`\\ だとします。失敗した試みを無視すると、"
+"リクエストあたりの償却したゲートのコストは\\ :math:`c_v/m + c_s`\\ 、クライアントのパズルのコストは\\ "
+":math:`c_p/m`\\ です。セッションの有効期間を延ばすと、人にも自動化されたクライアントにも同じように有利になります。"
+"有効期間の選択はポリシーの判断であり、暗号上の最適化ではありません。"
 
 #: ../../foundations.rst:77
 msgid "Exercise 1.1"
-msgstr ""
+msgstr "演習1.1"
 
 #: ../../foundations.rst:79
 msgid ""
@@ -189,15 +232,17 @@ msgid ""
 "million trials. What is the amortized work per request? What changes if "
 "it shares the session with a second process?"
 msgstr ""
+"クライアントはセッションごとに100件のリクエストを送り、100万回の試行を要するパズルを解きます。"
+"リクエストあたりの償却した作業量はいくつでしょうか。そのセッションを二つ目のプロセスと共有すると、何が変わるでしょうか。"
 
 #: ../../foundations.rst:81
 msgid ""
 "Hint: Distinguish the accounting model from the token's actual bindings."
-msgstr ""
+msgstr "ヒント：会計上のモデルと、トークンが実際に結び付けるものとを区別してください。"
 
 #: ../../foundations.rst:83
 msgid "Bounded State Is a Second Budget"
-msgstr ""
+msgstr "有界な状態は第二の予算です"
 
 #: ../../foundations.rst:86
 msgid ""
@@ -206,10 +251,13 @@ msgid ""
 "them at average rate :math:`\\mu`, and let the queue hold :math:`Q` "
 "records. When :math:`\\lambda > \\mu`, a fluid approximation gives"
 msgstr ""
+"作業をリクエストの経路から移しても、作業は消えません。インシデントが到着率\\ :math:`\\lambda`\\ で届き、"
+"ストレージスレッドが平均速度\\ :math:`\\mu`\\ で永続化し、キューが\\ :math:`Q`\\ 件のレコードを保持するとします。\\ "
+":math:`\\lambda > \\mu`\\ のとき、流体近似から次が得られます。"
 
 #: ../../foundations.rst:88
 msgid "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
-msgstr ""
+msgstr "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
 
 #: ../../foundations.rst:92
 msgid ""
@@ -220,10 +268,14 @@ msgid ""
 "The operator must monitor the lost evidence as well as the HTTP success "
 "rate."
 msgstr ""
+"大きなキューは時間を稼ぎますが、スループットを生み出しはしません。バッチ処理はトランザクションのコストを償却しますが、"
+"保持したレコードには依然としてメモリと、いずれ行う処理が必要です。過負荷のとき、Sibunaは新しいインシデントのレコードを破棄し、"
+"その件数を数えます。リクエストの判断はメモリ上の状態から引き続き行います。運用者は、HTTPの成功率だけでなく、"
+"失われた証跡も監視しなければなりません。"
 
 #: ../../foundations.rst:94
 msgid "Exercise 1.2"
-msgstr ""
+msgstr "演習1.2"
 
 #: ../../foundations.rst:96
 msgid ""
@@ -231,38 +283,40 @@ msgid ""
 "600/s. How long can an initially empty queue absorb the excess? Why is "
 "the answer only an approximation?"
 msgstr ""
+"キューは512件のレコードを保持します。到着率は1,000/s、排出率は600/sです。最初に空のキューは、"
+"超過分をどれだけの時間吸収できるでしょうか。この答えが近似にすぎないのはなぜでしょうか。"
 
 #: ../../foundations.rst:98
 msgid ""
 "Hint: Use the difference of rates, then consider bursts and batch commits."
-msgstr ""
+msgstr "ヒント：速度の差を使い、次にバーストとバッチコミットを考えてください。"
 
 #: ../../foundations.rst:100
 msgid "The Invariants We Will Carry Forward"
-msgstr ""
+msgstr "本書で保ち続ける不変条件"
 
 #: ../../foundations.rst:103
 msgid "Untrusted requests cannot create unbounded server state."
-msgstr ""
+msgstr "信頼できないリクエストは、上限のないサーバー状態を作れません。"
 
 #: ../../foundations.rst:104
 msgid "A valid admission token does not bypass an application denial."
-msgstr ""
+msgstr "有効な許可トークンがあっても、アプリケーションによる拒否は回避されません。"
 
 #: ../../foundations.rst:105
 msgid "A buffer remains alive for every slice borrowed from it."
-msgstr ""
+msgstr "バッファーは、そこから借用したどのスライスよりも長く生存します。"
 
 #: ../../foundations.rst:106
 msgid ""
 "A durable retry cannot multiply an incident or its reputation effect."
-msgstr ""
+msgstr "永続的な再試行によって、インシデントやその評判への効果が重複することはありません。"
 
 #: ../../foundations.rst:107
 msgid ""
 "A published policy snapshot is immutable until its last reader releases "
 "it."
-msgstr ""
+msgstr "公開したポリシーのスナップショットは、最後の読み手が手放すまで変更されません。"
 
 #: ../../foundations.rst:109
 msgid ""
@@ -270,10 +324,12 @@ msgid ""
 "true, and the tests that would reveal a violation. A fast path is useful "
 "only while those statements remain true."
 msgstr ""
+"本書の残りでは、これらの主張を真にする仕組みと、違反を明らかにするテストを導きます。高速な経路が役に立つのは、"
+"これらの主張が真であり続ける間だけです。"
 
 #: ../../foundations.rst:111
 msgid "Explain the invariant"
-msgstr ""
+msgstr "不変条件を説明してください"
 
 #: ../../foundations.rst:113
 msgid ""
@@ -281,3 +337,5 @@ msgid ""
 "why a measured verification latency alone cannot tell an operator whether "
 "the gate is worth running."
 msgstr ""
+"ゲートの不等式\\ :math:`c_g < (1-a) c_o`\\ を言葉で述べてください。次に、測定した検証の遅延だけでは、"
+"ゲートを運用する価値があるかどうかを運用者が判断できない理由を説明してください。"

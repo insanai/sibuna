@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../solutions.rst:1
 msgid "Selected Solutions"
-msgstr ""
+msgstr "選んだ解答"
 
 #: ../../solutions.rst:4
 msgid ""
@@ -28,10 +28,12 @@ msgid ""
 "of time intervals, what is counted as work, and whether a write has "
 "committed are common sources of disagreement."
 msgstr ""
+"これらの解答は議論を確かめるためのものであり、演習の代わりではありません。結果が異なるときは、まず前提を比べます。時間区間の端点、"
+"何を作業として数えるか、書き込みがコミットされたかどうかは、食い違いのよくある原因です。"
 
 #: ../../solutions.rst:6
 msgid "Part I: Cost and Probability"
-msgstr ""
+msgstr "第I部：コストと確率"
 
 #: ../../solutions.rst:9
 msgid ""
@@ -41,6 +43,9 @@ msgid ""
 "a second process can satisfy the fingerprint and routing bindings; those "
 "conditions are outside the amortization equation."
 msgstr ""
+"**1.1.**\\ 100万回の試行を100件のリクエストで割ると、リクエストあたり10,000回の試行です。"
+"総リクエスト数が100のままなら、セッションを共有してもこの計算は変わりません。実際のシステムでは、"
+"二つ目のプロセスがフィンガープリントとルーティングの結び付きを満たせるかどうかを判断しなければなりません。その条件は償却の式の外にあります。"
 
 #: ../../solutions.rst:11
 msgid ""
@@ -49,10 +54,13 @@ msgid ""
 "Real producers arrive in bursts and the consumer commits batches, so the "
 "exact first drop depends on arrival and commit times."
 msgstr ""
+"**1.2.**\\ 超過分は\\ :math:`1000 - 600 = 400`\\ レコード/sです。512レコードの空のキューは、"
+"流体モデルでは\\ :math:`512/400 = 1.28`\\ 秒を稼ぎます。実際の生産者はバーストで到着し、"
+"消費者はバッチでコミットするので、最初に破棄が起きる正確な時刻は到着とコミットの時刻に依存します。"
 
 #: ../../solutions.rst:13
 msgid "Part II: Prior Art"
-msgstr ""
+msgstr "第II部：先行事例"
 
 #: ../../solutions.rst:16
 msgid ""
@@ -64,6 +72,10 @@ msgid ""
 "WebAssembly and JavaScript provers covers that), or whether the "
 "parameters are calibrated (measurement)."
 msgstr ""
+"**2.1.**\\ 一つのソースを二回コンパイルしたものは、ステートメント、nonceのエンコーディング、木の形、"
+"開示の配置について自分自身と食い違うことはありません。食い違うにはコンパイラーのバグが必要です。ただし、構成が健全かどうか（暗号のレビュー）"
+"、ブラウザーのランタイムがそれを正しく実行するかどうか（WebAssemblyとJavaScriptの証明器をバイト単位で比較することで確か"
+"めます）、パラメーターが較正されているかどうか（測定）については、何も教えてくれません。"
 
 #: ../../solutions.rst:18
 msgid ""
@@ -76,10 +88,16 @@ msgid ""
 "(``--database-url`` and ``--cluster-node``); the \"runs as\", "
 "\"inspection\", and \"multi-node\" rows decide it."
 msgstr ""
+"**2.2.**\\ (a) Sibuna GateまたはAnubisで、バイナリ一つ。(b) Sibuna Shield、SafeLine、"
+"Cloudflare（Proプラン以上）。(c) 共有PostgreSQLデータベース（\\ ``--database-url``\\ ）"
+"を使うSibuna Edge、共有Valkeyストアを使うAnubis（状態のためであり、禁止のためではありません）、"
+"またはCloudflare。Dockerホストもサブスクリプションも使わずに三つすべてを満たす単一の製品は、"
+"ノードが一つのPostgreSQLデータベースを共有するSibuna Shield（\\ ``--database-url``\\ と\\ "
+"``--cluster-node``\\ ）だけです。決め手になるのは「実行形態」「検査」「複数ノード」の行です。"
 
 #: ../../solutions.rst:20
 msgid "Part III: Cryptography"
-msgstr ""
+msgstr "第III部：暗号"
 
 #: ../../solutions.rst:23
 msgid ""
@@ -88,6 +106,9 @@ msgid ""
 "success probability of each independent trial. Duplicate trials or "
 "coordination work can make a real parallel implementation less efficient."
 msgstr ""
+"**3.0.**\\ 裾の見積もりは\\ :math:`e^{-4.6} \\approx 0.010`\\ です。nonce空間を分割すると、"
+"試行が完了する速さは変わりますが、独立な各試行の成功確率は変わりません。重複した試行や調整のための作業によって、"
+"実際の並列実装の効率は下がることがあります。"
 
 #: ../../solutions.rst:25
 msgid ""
@@ -97,6 +118,9 @@ msgid ""
 "construction, query budgets, dependencies between trials, or the work "
 "needed to find a commitment with a particular acceptance probability."
 msgstr ""
+"**3.1.**\\ 各コミットメントが確率\\ :math:`q`\\ で成功するなら、\\ :math:`g`\\ 個すべてが失敗する確率は\\ "
+":math:`(1-q)^g`\\ です。少なくとも一つが成功する確率は\\ :math:`1-(1-q)^g`\\ です。この式は、"
+"コミットメントの構築、クエリの予算、試行間の依存、特定の受理確率を持つコミットメントを見つけるのに必要な作業を数えていません。"
 
 #: ../../solutions.rst:27
 msgid ""
@@ -105,6 +129,9 @@ msgid ""
 "18) = 18464` bytes. The opening bytes double; the 32-byte root is still "
 "sent once."
 msgstr ""
+"**3.2.**\\ 深さ17で開示が16回なら、証明は\\ :math:`32(1 + 16 \\times 18) = 9248`\\ "
+"バイトです。開示が32回なら\\ :math:`32(1 + 32 \\times 18) = 18464`\\ バイトです。"
+"開示のバイト数は2倍になりますが、32バイトの根は相変わらず一回だけ送られます。"
 
 #: ../../solutions.rst:29
 msgid ""
@@ -117,10 +144,16 @@ msgid ""
 "tag must cover all five because any field left outside it could be edited "
 "freely, and the verifier could not tell."
 msgstr ""
+"**3.3.**\\ 作業レベルがなければ、安い経路で得たセッションで、より多くの作業を要求する高価な経路へのリクエストが許可されてしまいます"
+"。\\ ``timestamp``\\ がなければ、トークンを「未来の時刻で」発行して、ポリシーより長く生き延びさせることができます。\\ "
+"``expiry``\\ がなければ、トークンは決して失効しません。\\ ``rule_hash``\\ がなければ、"
+"上流はどのルールがクライアントを許可したかを知れません。\\ ``fingerprint``\\ がなければ、"
+"別のマシンにコピーしたCookieが受理されてしまいます。タグが五つすべてを覆わなければならないのは、"
+"タグの外に残したフィールドは自由に書き換えられ、検証者にはそれが分からないからです。"
 
 #: ../../solutions.rst:31
 msgid "Part IV: Protocol"
-msgstr ""
+msgstr "第IV部：プロトコル"
 
 #: ../../solutions.rst:34
 msgid ""
@@ -132,10 +165,15 @@ msgid ""
 "fingerprint would then match, which is why ``HttpOnly`` and ``SameSite`` "
 "matter more than the binding on a shared address."
 msgstr ""
+"**4.1.**\\ 二つのブラウザーはアドレスとUser-Agentを共有するので、フィンガープリント、レート制限のセル、"
+"禁止のスロットを共有します。チャレンジ（それぞれが自分のnonceを持つ自分のレコードを取得します）、使用済み集合の項目、"
+"Cookieは共有しません。もう一方のブラウザーのCookieを再利用するには、"
+"NATの背後の攻撃者はそれをもう一方のマシンから読み取る必要があります。そうすればフィンガープリントは一致してしまいます。だからこそ、"
+"共有アドレスでは結び付きよりも\\ ``HttpOnly``\\ と\\ ``SameSite``\\ が重要になります。"
 
 #: ../../solutions.rst:36
 msgid "Part V: State and Ordering"
-msgstr ""
+msgstr "第V部：状態と順序"
 
 #: ../../solutions.rst:39
 msgid ""
@@ -147,6 +185,11 @@ msgid ""
 "needs ``Content-Length`` before the body, and because the audit headers "
 "are part of the head."
 msgstr ""
+"**5.1.**\\ ヘッダー部とボディーの最初の部分（64 KBのうちヘッダー部の後に収まる分まで）は接続バッファーにあり、\\ "
+"``write_all(request.body)``\\ で送られます。残りのバイトがまとめてバッファーに入ることはありません。\\ "
+"``relay_body``\\ がクライアント側のリーダーから16 KBずつ読み、それぞれをオリジンに書き込みます。"
+"ヘッダー部を先に送らなければならないのは、オリジンがボディーの前に\\ ``Content-Length``\\ を必要とするからであり、"
+"また監査用のヘッダーがヘッダー部に含まれるからです。"
 
 #: ../../solutions.rst:41
 msgid ""
@@ -157,10 +200,14 @@ msgid ""
 "instant the window rolls over; a sliding log would allow exactly 100 in "
 "any 10 seconds but must store 100 timestamps per client."
 msgstr ""
+"**5.2.**\\ 送出間隔は100 ms、バースト許容量は9,900 msです。"
+"アイドル状態のクライアントは100件のリクエストをすぐに送れ、その後は100 msごとに1件です。端点を含む3,000 "
+"msまでの上限は130です。10秒の固定カウンターなら、最初の窓で100件、窓が切り替わった瞬間にさらに100件を許します。"
+"スライディングログなら任意の10秒でちょうど100件を許しますが、クライアントごとに100個のタイムスタンプを保存しなければなりません。"
 
 #: ../../solutions.rst:43
 msgid "Part VI: Algorithms"
-msgstr ""
+msgstr "第VI部：アルゴリズム"
 
 #: ../../solutions.rst:46
 msgid ""
@@ -170,6 +217,9 @@ msgid ""
 "evidence, including operators and literal relations. It remains bounded "
 "inspection, not a parser for every application language."
 msgstr ""
+"**6.1.**\\ 名前に含まれるアポストロフィーや、\\ ``order``\\ という名前の普通のパラメーターは、"
+"SQLの式であることを示しません。部分文字列による検出器は、どちらも構文と取り違えかねません。構造による検出器は、"
+"演算子やリテラル同士の関係など、追加の証拠を探します。それでも上限のある検査であり、あらゆるアプリケーション言語のパーサーではありません。"
 
 #: ../../solutions.rst:48
 msgid ""
@@ -180,10 +230,14 @@ msgid ""
 "single parenthesis, for the same reason the SQL detector requires a quote "
 "or a tautology."
 msgstr ""
+"**6.2.**\\ LDAPのフィルターは、括弧、\\ ``|``\\ 、\\ ``&``\\ 、\\ ``!``\\ 、\\ ``=``\\ "
+"から作られます。検出器には\\ ``(``\\ と\\ ``)``\\ のためのバイトクラス（新規）が必要で、\\ ``|``\\ と\\ ``&``\\ "
+"には既存の\\ ``=``\\ とシェルの区切り文字のクラスを再利用できます。SQL検出器が引用符か恒真式を要求するのと同じ理由で、"
+"括弧一つではなく、\\ ``)(``\\ や\\ ``(|(``\\ のような\\ *並び*\\ に反応すべきです。"
 
 #: ../../solutions.rst:50
 msgid "Part VII: Browser Engine"
-msgstr ""
+msgstr "第VII部：ブラウザーエンジン"
 
 #: ../../solutions.rst:53
 msgid ""
@@ -196,10 +250,15 @@ msgid ""
 "difficulty for a rule that matches clients known to block WebAssembly "
 "rather than for everyone."
 msgstr ""
+"**7.1.**\\ 既定の16作業ビット（深さ13、開示16回）では、WebAssemblyで20 msと仮定した時間が、"
+"ノートPCのJavaScriptでは\\ :math:`50 \\times 20 = 1000`\\ ms、つまり1秒になり、"
+"遅いスマートフォンでは4秒になります。これらの数値は仮定です。ポリシーを設定する前に、自分たちのクライアントの端末で測定します。"
+"妥当なポリシーは次のとおりです。ページに\\ ``fallback``\\ メッセージを転送させ、それをサーバー側でメトリクスとして記録し、"
+"全員ではなく、WebAssemblyを遮断することが分かっているクライアントに一致するルールについてだけ難易度を下げます。"
 
 #: ../../solutions.rst:55
 msgid "Part VIII: Evaluation"
-msgstr ""
+msgstr "第VIII部：評価"
 
 #: ../../solutions.rst:58
 msgid ""
@@ -211,10 +270,14 @@ msgid ""
 "the scheduler's hand-off between the load generator and the connection "
 "thread. The primitive suite times none of those."
 msgstr ""
+"**8.2.**\\ リクエストあたりのCPUマイクロ秒を稼働中のコア数で割ると、製品がリクエストあたりに費やした実時間が得られます。"
+"この値は1マイクロ秒未満の分類コストをはるかに上回ります。製品の行には、カーネルによるソケットの読み書き、パーサー、セッションタグの確認、"
+"メトリクスの加算、応答の整形、ライターのフラッシュ、負荷生成器と接続スレッドの間のスケジューラーによる受け渡しも含まれるからです。"
+"プリミティブのスイートはそのどれも計時しません。"
 
 #: ../../solutions.rst:60
 msgid "Part IX: Operations"
-msgstr ""
+msgstr "第IX部：運用"
 
 #: ../../solutions.rst:63
 msgid ""
@@ -225,6 +288,10 @@ msgid ""
 "removes both gaps. Losing the transaction's acknowledgement still "
 "requires the retained retry."
 msgstr ""
+"**9.1.**\\ 受領記録の別の更新より先にデータがコミットされると、その間にクラッシュしたときに古い受領記録が残り、"
+"再試行で効果がもう一度適用され得ます。受領記録が先にコミットされると、データの書き込みの前にクラッシュしたとき、"
+"再試行は存在しなかったデータを飛ばしてしまい得ます。一つのアトミックなトランザクションで、両方の隙間がなくなります。"
+"トランザクションの確認応答が失われた場合には、保持した再試行が引き続き必要です。"
 
 #: ../../solutions.rst:65
 msgid ""
@@ -239,10 +306,18 @@ msgid ""
 "(``--rate-limit``, ``--rate-window``), which must therefore be at least "
 "as generous."
 msgstr ""
+"**9.2.**\\ ``ip_rules: {\"10.20.0.0/16\": \"ALLOW\"}``\\ （またはスコア100の\\ "
+"``ip_reputation``\\ 行）でステージング環境を許可します。ルール\\ ``{\"name\": \"admin\", \"path\": "
+"\"/admin/*\", \"action\": \"CHALLENGE\", \"challenge\": {\"difficulty\": 20, "
+"\"algorithm\": \"posw\"}}``\\ で作業を要求します。\\ ``headers: {\"X-Partner-Key\": "
+"\".*\"}``\\ に一致し、\\ ``ALLOW``\\ と\\ ``\"limits\": {\"rate\": 30, "
+"\"window_seconds\": 10}``\\ を持つルールで、パートナーを10秒あたり30リクエストで許可します。ルールの割り当て量は、"
+"そのルールに一致するすべてのリクエストについて、クライアントごとのデーモンの制限（\\ ``--rate-limit``\\ 、\\ "
+"``--rate-window``\\ ）の後に確認します。したがって、デーモンの制限は少なくともそれと同じだけ緩くなければなりません。"
 
 #: ../../solutions.rst:67
 msgid "Part X: Reference"
-msgstr ""
+msgstr "第X部：リファレンス"
 
 #: ../../solutions.rst:70
 msgid ""
@@ -254,10 +329,14 @@ msgid ""
 "solve again instead of showing the error, since the work already done "
 "cannot be transferred."
 msgstr ""
+"**10.1.**\\ チャレンジレコードは、それを取得したアドレスの鍵付きフィンガープリントを運びます。解答は新しいアドレスから届くので、"
+"\\ ``verify_and_mint``\\ は証明を見る前に\\ ``FingerprintMismatch``\\ を返します。"
+"最小限の回復策は中間ページにあります。タイトルが\\ ``CLIENT FINGERPRINT MISMATCH``\\ の\\ "
+"``400``\\ を受け取ったら、エラーを表示する代わりに新しいチャレンジを取得して解き直します。すでに行った作業は移せないからです。"
 
 #: ../../solutions.rst:72
 msgid "Continue the Investigation"
-msgstr ""
+msgstr "さらに調べるために"
 
 #: ../../solutions.rst:75
 msgid ""
@@ -267,3 +346,6 @@ msgid ""
 "does more than assert the happy-path output: it demonstrates why the "
 "omitted condition is necessary."
 msgstr ""
+"使い捨てのテストで、不変条件を一度に一つずつ変えてみてください。スナップショットの再確認を取り除く、インシデントの受領記録を省く、"
+"レートの間隔を切り捨てる、といった変更です。テストを実行する前に、失敗の起き方を予測します。有用な回帰テストは、"
+"正常系の出力を確認するだけではありません。省いた条件がなぜ必要なのかを実証します。"

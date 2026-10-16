@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../prior-art.rst:1
 msgid "Part II: Prior Art and the Design Space"
-msgstr ""
+msgstr "第II部：先行事例と設計空間"
 
 #: ../../prior-art.rst:4
 msgid ""
@@ -30,14 +30,17 @@ msgid ""
 "weigh against each other, feature by feature, and record which facts were "
 "checked."
 msgstr ""
+"Sibunaが学んだシステムの中にSibunaを位置付けます。暗号の文献に由来するクライアントパズルと逐次作業、"
+"シグネチャ型と意味解析型のアプリケーションファイアウォール、作業証明の中間ページ、ホスティング型のエッジネットワークです。次に、"
+"運用者が比較検討する可能性の最も高い四つのツールを機能ごとに比べ、どの事実を確認したかを記録します。"
 
 #: ../../prior-art.rst:6
 msgid "Where Sibuna Comes From"
-msgstr ""
+msgstr "Sibunaの由来"
 
 #: ../../prior-art.rst:9
 msgid "Objectives"
-msgstr ""
+msgstr "この章の学習目標"
 
 #: ../../prior-art.rst:11
 msgid ""
@@ -48,10 +51,13 @@ msgid ""
 "comparison claims were verified and which were only read from "
 "documentation."
 msgstr ""
+"この章を読み終えると、1992年から2018年の逐次作業の構成に至るクライアントパズルの系譜をたどり、"
+"Sibunaが組み合わせる三つのアーキテクチャ上の考え方を挙げ、Sibuna、Anubis、SafeLine、Cloudflare "
+"WAFを一つの設計空間に位置付け、比較の主張のうちどれを検証し、どれを文書から読んだだけかを述べられるようになります。"
 
 #: ../../prior-art.rst:13
 msgid "Client Puzzles and Sequential Work"
-msgstr ""
+msgstr "クライアントパズルと逐次作業"
 
 #: ../../prior-art.rst:16
 msgid ""
@@ -65,6 +71,11 @@ msgid ""
 "statement, a solution whose cost is tunable, and verification that is "
 "orders of magnitude cheaper than solving."
 msgstr ""
+"DworkとNaorの「Pricing via Processing」（CRYPTO 1992）は、サービスが要求者のために作業をする前に、"
+"ほどほどに難しく容易に確認できる計算を求めることを提案しました。BackのHashcash（1997年、2002年に論文化）は、"
+"パズルを難易度が一つの整数で決まるハッシュの部分逆算にしました。JuelsとBrainardのクライアントパズル（NDSS 1999）は、"
+"この考え方を接続の大量アクセスに適用しました。そこではサーバーは未解決のパズルについて何も記憶してはなりません。三つはいずれも、"
+"Sibunaが受け継ぐ形を共有しています。サーバーが選ぶステートメント、コストを調整できる解答、そして解くより桁違いに安い検証です。"
 
 #: ../../prior-art.rst:18
 msgid ""
@@ -78,6 +89,12 @@ msgid ""
 "random-oracle model. Part III derives Sibuna's Tier Two from that line of "
 "work; SID 0006 records the assumptions."
 msgstr ""
+"ハッシュ探索は自明に並列化できるので、コアの多い要求者ほど早く終わります。Mahmoody、Moran、Vadhan（CRYPTO "
+"2013）は\\ *逐次*\\ 作業の証明を定義しました。そこでは証明者は、コア数にかかわらず、"
+"依存するステップの長い連鎖を実行しなければなりません。CohenとPietrzak（EUROCRYPT 2018）は、検証者に\\ "
+":math:`O(t \\log N)`\\ の作業しか必要としない単純なハッシュグラフの構成を示しました。Blocki、Lee、"
+"Zhou（ITC 2021）は、同じ構成が量子ランダムオラクルモデルにおいて量子の証明者に対しても健全であることを証明しました。"
+"第III部では、この研究の流れからSibunaの第二層を導きます。前提はSID 0006に記録しています。"
 
 #: ../../prior-art.rst:21
 msgid ""
@@ -88,10 +105,13 @@ msgid ""
 "Multi-Paxos (Lamport 1998; SID 0005); Sibuna now stores its state in "
 "SQLite or PostgreSQL (SID 0011)."
 msgstr ""
+"Sibunaが組み合わせる考え方の系譜。上段はクライアントパズルと逐次作業の暗号、中段はSibunaが土台とするアルゴリズムとシステム、"
+"三段目は同じ領域の製品です。矢印は直接の継承を表します。以前のストレージ設計はMulti-Paxos（Lamport 1998、SID "
+"0005）に基づいていました。現在のSibunaは状態をSQLiteまたはPostgreSQLに保存します（SID 0011）。"
 
 #: ../../prior-art.rst:70
 msgid "Application Firewalls"
-msgstr ""
+msgstr "アプリケーションファイアウォール"
 
 #: ../../prior-art.rst:73
 msgid ""
@@ -109,10 +129,18 @@ msgid ""
 "either regular expressions or a SIMD engine for the short fields it "
 "inspects."
 msgstr ""
+"第一世代のWebアプリケーションファイアウォールは、リクエストのバイトを正規表現と照合していました。ModSecurity（2002）"
+"とOWASP Core Rule Setはこの方式を公開し広く配備させ、同時にそのコストも周知のものにしました。"
+"リクエストごとに数百のバックトラックするパターン、手で調整する異常スコア、普通の入力での誤検知の長い裾です。"
+"libinjection（Hanson、2012）は、パターンのリストを、文字列がSQLとして\\ *パースできる*\\ "
+"かを問うトークナイザーに置き換え、コストと誤検知の両方を減らしました。ChaitinのSafeLineはこの意味解析の考え方を完全な製品に持"
+"ち込み、Hyperscan（Wangら、NSDI 2019）は入力が長い場合にベクトル化したリテラル照合をどこまで推し進められるかを示しまし"
+"た。第VI部では、Sibunaが検査する短いフィールドに対して、正規表現でもSIMDエンジンでもなく、"
+"密なオートマトンと小さな構造トークナイザーを選んだ理由を説明します。"
 
 #: ../../prior-art.rst:75
 msgid "Interstitials and Edges"
-msgstr ""
+msgstr "中間ページとエッジ"
 
 #: ../../prior-art.rst:78
 msgid ""
@@ -125,6 +153,11 @@ msgid ""
 "token, and a second work tier; the comparison below records where the two "
 "differ."
 msgstr ""
+"Webサイトの前に置く作業証明の中間ページは2025年に一般的になりました。言語モデルの学習に供するスクレイパーのトラフィックによって、"
+"普通のオリジンの運用費用がまかなえなくなったからです。Anubis（Techaro）は最もよく知られたオープンな実装です。"
+"JavaScriptのパズルを配信し、セッショントークンに署名し、それ以外はトラフィックを通過させるGoのリバースプロキシです。"
+"SibunaのGate運用構成は同じ問題を、状態を持たないチャレンジ、対称鍵のトークン、第二の作業の層で解きます。"
+"両者の違いは以下の比較に記録しています。"
 
 #: ../../prior-art.rst:80
 msgid ""
@@ -137,10 +170,15 @@ msgid ""
 "database shared by a cluster) read by a storage thread off the request "
 "path, rather than a service call."
 msgstr ""
+"規模の反対の端では、Cloudflareのようなホスティング型のエッジが、検査、レート制限、ボットのスコア付けを、"
+"グローバルなコントロールプレーンを持つ数百の拠点に配置しています。SibunaのEdge配備はその形（ローカルで不変のスナップショットを供給"
+"する、共有のポリシーと評判のプレーン）を借りつつ、セルフホストのままです。そのためストレージ層はサービス呼び出しではなく、"
+"運用者が運用するデータベース（一つのノード上のSQLiteファイル、またはクラスターで共有する一つのPostgreSQLデータベース）で、"
+"ストレージスレッドがリクエストの経路の外で読み込みます。"
 
 #: ../../prior-art.rst:82
 msgid "Three Ideas in One Binary"
-msgstr ""
+msgstr "一つのバイナリに三つの考え方"
 
 #: ../../prior-art.rst:85
 msgid ""
@@ -149,70 +187,73 @@ msgid ""
 "local policy snapshots. Gate and Shield are the two product surfaces; "
 "storage and distributed deployment are options for either."
 msgstr ""
+"Sibunaは、許可のためのブラウザーでの作業チャレンジ、上限のあるアプリケーションペイロードの検査、"
+"ローカルのポリシースナップショットを公開する共有のコントロールプレーンを組み合わせます。GateとShieldが二つの製品の運用構成で、"
+"ストレージと分散配備はどちらでも選択できます。"
 
 #: ../../prior-art.rst:91
 msgid "**Property**"
-msgstr ""
+msgstr "**特性**"
 
 #: ../../prior-art.rst:92
 msgid "**Gate**"
-msgstr ""
+msgstr "**Gate**"
 
 #: ../../prior-art.rst:93
 msgid "**Shield**"
-msgstr ""
+msgstr "**Shield**"
 
 #: ../../prior-art.rst:94
 msgid "Admission"
-msgstr ""
+msgstr "許可"
 
 #: ../../prior-art.rst:95
 msgid "Native Hashcash or sequential-work verification"
-msgstr ""
+msgstr "ネイティブのHashcashまたは逐次作業の検証"
 
 #: ../../prior-art.rst:96 ../../prior-art.rst:99 ../../prior-art.rst:102
 msgid "Same"
-msgstr ""
+msgstr "同じ"
 
 #: ../../prior-art.rst:97
 msgid "Session"
-msgstr ""
+msgstr "セッション"
 
 #: ../../prior-art.rst:98
 msgid "Keyed BLAKE3; optional Ed25519"
-msgstr ""
+msgstr "鍵付きBLAKE3、任意でEd25519"
 
 #: ../../prior-art.rst:100
 msgid "Local controls"
-msgstr ""
+msgstr "ローカルの制御"
 
 #: ../../prior-art.rst:101
 msgid "Rules, CIDRs, GCRA, bans"
-msgstr ""
+msgstr "ルール、CIDR、GCRA、禁止"
 
 #: ../../prior-art.rst:103
 msgid "Inspection"
-msgstr ""
+msgstr "検査"
 
 #: ../../prior-art.rst:104
 msgid "Disabled"
-msgstr ""
+msgstr "無効"
 
 #: ../../prior-art.rst:105
 msgid "Bounded signatures and structural tokenizers"
-msgstr ""
+msgstr "上限のあるシグネチャと構造トークナイザー"
 
 #: ../../prior-art.rst:106
 msgid "State"
-msgstr ""
+msgstr "状態"
 
 #: ../../prior-art.rst:107
 msgid "Optional persistent policy and reputation, shared across a cluster"
-msgstr ""
+msgstr "任意の永続的なポリシーと評判、クラスターで共有"
 
 #: ../../prior-art.rst:108
 msgid "Also inspection forensics"
-msgstr ""
+msgstr "検査のフォレンジックも"
 
 #: ../../prior-art.rst:110
 msgid ""
@@ -224,44 +265,48 @@ msgid ""
 "headers, long bodies, pattern diversity, core count and cache size change "
 "the tradeoffs."
 msgstr ""
+"ブラウザーのソルバーは、ネイティブの検証器と同じ証明のソースからコンパイルされます。密なリテラル照合はバックトラックを避け、"
+"走査の作業量を入力の長さに比例させます。不変のポリシースナップショットは、リクエストの処理をSQLとデータベースの可用性から切り離します。"
+"これらの選択のどれも、アルゴリズムとして普遍的に最適であることを示すものではありません。短いヘッダー、長いボディー、パターンの多様さ、"
+"コア数、キャッシュサイズによって、トレードオフは変わります。"
 
 #: ../../prior-art.rst:112
 msgid "Design constraints adopted"
-msgstr ""
+msgstr "採用した設計上の制約"
 
 #: ../../prior-art.rst:114
 msgid ""
 "No heap allocation on the request path; every table has a fixed capacity "
 "and a stated saturation behaviour."
-msgstr ""
+msgstr "リクエストの経路でヒープ割り当てをしません。どの表も固定の容量と、明示した飽和時の振る舞いを持ちます。"
 
 #: ../../prior-art.rst:115
 msgid ""
 "Issuing a challenge writes nothing; only a paid-for solution occupies "
 "memory."
-msgstr ""
+msgstr "チャレンジの発行では何も書き込みません。メモリを占めるのは、対価を支払った解答だけです。"
 
 #: ../../prior-art.rst:116
 msgid ""
 "A session admits; it never exempts a request from inspection or an "
 "explicit denial."
-msgstr ""
+msgstr "セッションは許可を与えますが、リクエストを検査や明示的な拒否から免除することはありません。"
 
 #: ../../prior-art.rst:117
 msgid ""
 "Every claimed number is either measured by a committed harness or "
 "labelled as a model."
-msgstr ""
+msgstr "主張するすべての数値は、コミット済みのハーネスで測定したものか、モデルであると明記したもののいずれかです。"
 
 #: ../../prior-art.rst:118
 msgid ""
 "Cryptographic choices cite a venue and a proof, and state their quantum "
 "posture."
-msgstr ""
+msgstr "暗号の選択は、発表の場と証明を引用し、量子計算への姿勢を述べます。"
 
 #: ../../prior-art.rst:120
 msgid "Feature Comparison"
-msgstr ""
+msgstr "機能比較"
 
 #: ../../prior-art.rst:123
 msgid ""
@@ -276,103 +321,109 @@ msgid ""
 "means the feature exists but only on that plan. Each Sibuna measurement "
 "names the committed result file it comes from."
 msgstr ""
+"以下の四つの表で、Sibunaと、最もよく並べて挙げられる三つのツールを比較します。他の製品に関する事実は、"
+"2026年9月に公開文書とリリース成果物から読み取りました。Anubis 1.27.0（MITライセンス、Go）、"
+"SafeLineコミュニティ版9.x（クローズドな検出器のイメージを囲むGPL-3.0の管理コード、Docker Compose）、"
+"Cloudflare WAFの開発者向け文書です。Anubisはベンチマーク用のホストでも実行しました。"
+"SafeLineとCloudflareは実行していません（理由は第VIII部で説明します）。ダッシュはその製品が機能を提供しないことを、"
+"プラン名は機能がそのプランでだけ存在することを意味します。Sibunaの各測定には、値の出所であるコミット済みの結果ファイルを示しています。"
 
 #: ../../prior-art.rst:125
 msgid "Feature comparison, part 1: deployment"
-msgstr ""
+msgstr "機能比較、その1：配備"
 
 #: ../../prior-art.rst:130 ../../prior-art.rst:161 ../../prior-art.rst:197
 #: ../../prior-art.rst:233
 msgid "Feature"
-msgstr ""
+msgstr "機能"
 
 #: ../../prior-art.rst:131 ../../prior-art.rst:162 ../../prior-art.rst:198
 #: ../../prior-art.rst:234
 msgid "Sibuna"
-msgstr ""
+msgstr "Sibuna"
 
 #: ../../prior-art.rst:132 ../../prior-art.rst:163 ../../prior-art.rst:199
 #: ../../prior-art.rst:235
 msgid "Anubis 1.27"
-msgstr ""
+msgstr "Anubis 1.27"
 
 #: ../../prior-art.rst:133 ../../prior-art.rst:164 ../../prior-art.rst:200
 #: ../../prior-art.rst:236
 msgid "SafeLine CE 9"
-msgstr ""
+msgstr "SafeLine CE 9"
 
 #: ../../prior-art.rst:134 ../../prior-art.rst:165 ../../prior-art.rst:201
 #: ../../prior-art.rst:237
 msgid "Cloudflare WAF"
-msgstr ""
+msgstr "Cloudflare WAF"
 
 #: ../../prior-art.rst:135
 msgid "Runs as"
-msgstr ""
+msgstr "実行形態"
 
 #: ../../prior-art.rst:136
 msgid ""
 "One binary; reverse proxy or forward auth; optional SQLite file or shared "
 "PostgreSQL database"
-msgstr ""
+msgstr "一つのバイナリ。リバースプロキシまたはforward auth。任意でSQLiteファイルまたは共有PostgreSQLデータベース"
 
 #: ../../prior-art.rst:137
 msgid "One Go binary; reverse proxy or forward auth"
-msgstr ""
+msgstr "一つのGoバイナリ。リバースプロキシまたはforward auth"
 
 #: ../../prior-art.rst:138
 msgid ""
 "Seven Docker containers (tengine, detector, mgt, luigi, fvm, chaos, "
 "PostgreSQL)"
-msgstr ""
+msgstr "七つのDockerコンテナー（tengine、detector、mgt、luigi、fvm、chaos、PostgreSQL）"
 
 #: ../../prior-art.rst:139
 msgid "Hosted network; DNS points at Cloudflare"
-msgstr ""
+msgstr "ホスティング型のネットワーク。DNSをCloudflareに向けます"
 
 #: ../../prior-art.rst:140
 msgid "Language, runtime"
-msgstr ""
+msgstr "言語、ランタイム"
 
 #: ../../prior-art.rst:141
 msgid "Rust, no garbage collector; no external crate when storage is off"
-msgstr ""
+msgstr "Rust、ガベージコレクターなし。ストレージを無効にすると外部クレートなし"
 
 #: ../../prior-art.rst:142
 msgid "Go, garbage collected"
-msgstr ""
+msgstr "Go、ガベージコレクションあり"
 
 #: ../../prior-art.rst:143
 msgid "C/C++ proxy and detector, Go management, PostgreSQL"
-msgstr ""
+msgstr "C/C++のプロキシと検出器、Goの管理部、PostgreSQL"
 
 #: ../../prior-art.rst:144
 msgid "Proprietary edge software"
-msgstr ""
+msgstr "独自のエッジソフトウェア"
 
 #: ../../prior-art.rst:145
 msgid "Licence"
-msgstr ""
+msgstr "ライセンス"
 
 #: ../../prior-art.rst:146
 msgid "Source in the repository"
-msgstr ""
+msgstr "リポジトリにソースあり"
 
 #: ../../prior-art.rst:147
 msgid "MIT"
-msgstr ""
+msgstr "MIT"
 
 #: ../../prior-art.rst:148
 msgid "GPL-3.0 management code; closed detector images"
-msgstr ""
+msgstr "GPL-3.0の管理コード。検出器のイメージはクローズド"
 
 #: ../../prior-art.rst:149
 msgid "Proprietary service"
-msgstr ""
+msgstr "独自のサービス"
 
 #: ../../prior-art.rst:150
 msgid "Host footprint"
-msgstr ""
+msgstr "ホストでの占有量"
 
 #: ../../prior-art.rst:151
 msgid ""
@@ -380,309 +431,320 @@ msgid ""
 "idle RSS (``benchmarks/results/primitives-latest.json``); at most 16.0 "
 "MiB peak RSS under load (``benchmarks/results/product-latest.md``)"
 msgstr ""
+"35.7 MiBのバイナリ（\\ ``benchmarks/results/comparison-latest.json``\\ ）。"
+"アイドル時のRSSは5.9 MiB（\\ ``benchmarks/results/primitives-latest.json``\\ ）。"
+"負荷時のピークRSSは最大16.0 MiB（\\ ``benchmarks/results/product-latest.md``\\ ）"
 
 #: ../../prior-art.rst:152
 msgid "38.1 MiB binary; 21 MiB idle RSS; Linux fixture, console off"
-msgstr ""
+msgstr "38.1 MiBのバイナリ。アイドル時のRSSは21 MiB。Linuxでの検証環境、コンソールは無効"
 
 #: ../../prior-art.rst:153
 msgid "1 CPU core, 1 GB RAM, 5 GB disk minimum, Docker 20.10+"
-msgstr ""
+msgstr "最小でCPUコア1つ、RAM 1 GB、ディスク5 GB、Docker 20.10以降"
 
 #: ../../prior-art.rst:154
 msgid "None on premises"
-msgstr ""
+msgstr "オンプレミスには不要"
 
 #: ../../prior-art.rst:156
 msgid "Feature comparison, part 2: admission and sessions"
-msgstr ""
+msgstr "機能比較、その2：許可とセッション"
 
 #: ../../prior-art.rst:166
 msgid "Proof-of-work admission"
-msgstr ""
+msgstr "作業証明による許可"
 
 #: ../../prior-art.rst:167
 msgid ""
 "Hashcash (bit-level) and Cohen-Pietrzak sequential work, chosen per rule; "
 "WebAssembly with JavaScript fallback"
 msgstr ""
+"Hashcash（ビット単位）とCohen-Pietrzakの逐次作業をルールごとに選択。"
+"WebAssemblyとJavaScriptによる代替手段"
 
 #: ../../prior-art.rst:168
 msgid ""
 "SHA-256 Hashcash in hex nibbles (``fast``, ``slow``); non-work "
 "``metarefresh`` and ``preact`` challenges"
 msgstr ""
+"16進ニブル単位のSHA-256 Hashcash（\\ ``fast``\\ 、\\ ``slow``\\ ）。作業を伴わない\\ "
+"``metarefresh``\\ と\\ ``preact``\\ のチャレンジ"
 
 #: ../../prior-art.rst:169
 msgid "JavaScript anti-bot challenge and CAPTCHA; not work-bound"
-msgstr ""
+msgstr "JavaScriptによるボット対策チャレンジとCAPTCHA。作業量の裏付けなし"
 
 #: ../../prior-art.rst:170
 msgid ""
 "Managed challenge, JS challenge, Turnstile; Bot Fight Mode issues a "
 "compute challenge"
-msgstr ""
+msgstr "マネージドチャレンジ、JSチャレンジ、Turnstile。Bot Fight Modeは計算チャレンジを発行"
 
 #: ../../prior-art.rst:171
 msgid "Challenge state on the server"
-msgstr ""
+msgstr "サーバー上のチャレンジの状態"
 
 #: ../../prior-art.rst:172
 msgid "None until solved; solved tags in a fixed Robin Hood table"
-msgstr ""
+msgstr "解かれるまでなし。解かれたタグは固定のRobin Hood表に"
 
 #: ../../prior-art.rst:173
 msgid "Store backend: memory, bbolt, Valkey, or S3"
-msgstr ""
+msgstr "ストアのバックエンド：メモリ、bbolt、Valkey、S3"
 
 #: ../../prior-art.rst:174
 msgid "Managed by the stack"
-msgstr ""
+msgstr "スタックが管理"
 
 #: ../../prior-art.rst:175
 msgid "Managed by Cloudflare"
-msgstr ""
+msgstr "Cloudflareが管理"
 
 #: ../../prior-art.rst:176
 msgid "Session token"
-msgstr ""
+msgstr "セッショントークン"
 
 #: ../../prior-art.rst:177
 msgid ""
 "Keyed BLAKE3 tag, 75-character cookie bound to the work paid; Ed25519 "
 "optional"
-msgstr ""
+msgstr "鍵付きBLAKE3タグ、支払った作業に結び付いた75文字のCookie。任意でEd25519"
 
 #: ../../prior-art.rst:178
 msgid "JSON Web Token signed with Ed25519; HS512 optional"
-msgstr ""
+msgstr "Ed25519で署名したJSON Web Token。任意でHS512"
 
 #: ../../prior-art.rst:179
 msgid "Cookie issued by the stack"
-msgstr ""
+msgstr "スタックが発行するCookie"
 
 #: ../../prior-art.rst:180
 msgid "``cf_clearance`` cookie"
-msgstr ""
+msgstr "``cf_clearance``\\ Cookie"
 
 #: ../../prior-art.rst:181
 msgid "Post-quantum posture of the default token"
-msgstr ""
+msgstr "標準のトークンの耐量子性"
 
 #: ../../prior-art.rst:182
 msgid "Symmetric: only Grover's quadratic speedup applies"
-msgstr ""
+msgstr "対称鍵：適用されるのはGroverによる二次の高速化だけ"
 
 #: ../../prior-art.rst:183
 msgid "Ed25519: broken by Shor's algorithm"
-msgstr ""
+msgstr "Ed25519：Shorのアルゴリズムで破られる"
 
 #: ../../prior-art.rst:184 ../../prior-art.rst:185
 msgid "Not documented"
-msgstr ""
+msgstr "記載なし"
 
 #: ../../prior-art.rst:186
 msgid "Policy language"
-msgstr ""
+msgstr "ポリシー言語"
 
 #: ../../prior-art.rst:187
 msgid ""
 "JSON rules: path, User-Agent, headers, IPv4/IPv6 CIDR; ALLOW, DENY, "
 "CHALLENGE, WEIGH with thresholds; dynamic rules from the database"
 msgstr ""
+"JSONのルール：パス、User-Agent、ヘッダー、IPv4/IPv6 CIDR。ALLOW、DENY、CHALLENGE、"
+"しきい値付きのWEIGH。データベースからの動的なルール"
 
 #: ../../prior-art.rst:188
 msgid ""
 "YAML/JSON bots: regex on UA, path, headers; CIDR; CEL expressions; WEIGH "
 "with thresholds"
-msgstr ""
+msgstr "YAML/JSONのbots：UA、パス、ヘッダーへの正規表現。CIDR。CEL式。しきい値付きのWEIGH"
 
 #: ../../prior-art.rst:189
 msgid "Console-defined custom rules, ACLs, IP groups"
-msgstr ""
+msgstr "コンソールで定義するカスタムルール、ACL、IPグループ"
 
 #: ../../prior-art.rst:190
 msgid ""
 "Rules language expressions; *5 / 20 / 100 / 1000 custom rules by plan*"
-msgstr ""
+msgstr "Rules language式。\\ *プランにより5 / 20 / 100 / 1000個のカスタムルール*"
 
 #: ../../prior-art.rst:192
 msgid "Feature comparison, part 3: inspection and state"
-msgstr ""
+msgstr "機能比較、その3：検査と状態"
 
 #: ../../prior-art.rst:202
 msgid "SQLi, XSS, RCE, traversal inspection"
-msgstr ""
+msgstr "SQLi、XSS、RCE、トラバーサルの検査"
 
 #: ../../prior-art.rst:203
 msgid ""
 "Shield: tagged automaton plus structural tokenizers, first 8 KB of body"
-msgstr ""
+msgstr "Shield：タグ付きオートマトンと構造トークナイザー、ボディーの先頭8 KB"
 
 #: ../../prior-art.rst:204 ../../prior-art.rst:250
 msgid "\\-"
-msgstr ""
+msgstr "\\-"
 
 #: ../../prior-art.rst:205
 msgid "Semantic analysis engine over OWASP categories, also SSRF, XXE, CRLF"
-msgstr ""
+msgstr "OWASPのカテゴリーに対する意味解析エンジン。SSRF、XXE、CRLFも"
 
 #: ../../prior-art.rst:206
 msgid ""
 "Managed rulesets *(Pro and above)*; OWASP Core Ruleset; attack score "
 "*(Business and above)*"
 msgstr ""
+"マネージドルールセット\\ *（Pro以上）*\\ 。OWASP Core Ruleset。攻撃スコア\\ *（Business以上）*"
 
 #: ../../prior-art.rst:207
 msgid "Rate limiting"
-msgstr ""
+msgstr "レート制限"
 
 #: ../../prior-art.rst:208
 msgid "GCRA per client, local to a node"
-msgstr ""
+msgstr "クライアントごとのGCRA、ノードにローカル"
 
 #: ../../prior-art.rst:209
 msgid "\\- (system load is exposed to CEL rules)"
-msgstr ""
+msgstr "\\-（システムの負荷をCELルールに公開）"
 
 #: ../../prior-art.rst:210
 msgid "Per IP, path, session"
-msgstr ""
+msgstr "IP、パス、セッションごと"
 
 #: ../../prior-art.rst:211
 msgid "*1 / 2 / 5 / 100 rules by plan*; IP-only keys below Enterprise"
-msgstr ""
+msgstr "*プランにより1 / 2 / 5 / 100個のルール*\\ 。Enterprise未満ではIPのみのキー"
 
 #: ../../prior-art.rst:212
 msgid "Bans and reputation"
-msgstr ""
+msgstr "禁止と評判"
 
 #: ../../prior-art.rst:213
 msgid ""
 "Honeypot bans; reputation trie loaded from the reputation table shared "
 "across the cluster"
-msgstr ""
+msgstr "ハニーポットによる禁止。クラスターで共有する評判テーブルから読み込む評判トライ"
 
 #: ../../prior-art.rst:214
 msgid "DNSBL; ASN and GeoIP through Thoth *(paid, closed)*"
-msgstr ""
+msgstr "DNSBL。ThothによるASNとGeoIP\\ *（有償、クローズド）*"
 
 #: ../../prior-art.rst:215
 msgid "IP groups and blacklists; threat intelligence *(Pro)*"
-msgstr ""
+msgstr "IPグループとブラックリスト。脅威インテリジェンス\\ *（Pro）*"
 
 #: ../../prior-art.rst:216
 msgid "IP lists; managed lists and bot score *(Enterprise)*"
-msgstr ""
+msgstr "IPリスト。マネージドリストとボットスコア\\ *（Enterprise）*"
 
 #: ../../prior-art.rst:217
 msgid "Forensics"
-msgstr ""
+msgstr "フォレンジック"
 
 #: ../../prior-art.rst:218
 msgid ""
 "SQLite or PostgreSQL: full-text search over incidents, vector campaign "
 "clustering"
-msgstr ""
+msgstr "SQLiteまたはPostgreSQL：インシデントの全文検索、ベクトルによる活動のクラスタリング"
 
 #: ../../prior-art.rst:219
 msgid "Prometheus metrics only"
-msgstr ""
+msgstr "Prometheusのメトリクスのみ"
 
 #: ../../prior-art.rst:220
 msgid "PostgreSQL attack log with console"
-msgstr ""
+msgstr "コンソール付きのPostgreSQLの攻撃ログ"
 
 #: ../../prior-art.rst:221
 msgid "Security Events; sampled on Free"
-msgstr ""
+msgstr "Security Events。Freeではサンプリング"
 
 #: ../../prior-art.rst:222
 msgid "Multi-node"
-msgstr ""
+msgstr "複数ノード"
 
 #: ../../prior-art.rst:223
 msgid ""
 "One PostgreSQL database shared by every node for policy and reputation; "
 "shared seed; sticky challenge verification"
 msgstr ""
+"すべてのノードがポリシーと評判のために共有する一つのPostgreSQLデータベース。共有のシード。発行ノードに固定したチャレンジの検証"
 
 #: ../../prior-art.rst:224
 msgid "Shared signing key; shared Valkey store"
-msgstr ""
+msgstr "共有の署名鍵。共有のValkeyストア"
 
 #: ../../prior-art.rst:225
 msgid "One stack per host"
-msgstr ""
+msgstr "ホストごとに一つのスタック"
 
 #: ../../prior-art.rst:226
 msgid "Global anycast"
-msgstr ""
+msgstr "グローバルなエニーキャスト"
 
 #: ../../prior-art.rst:228
 msgid "Feature comparison, part 4: operations"
-msgstr ""
+msgstr "機能比較、その4：運用"
 
 #: ../../prior-art.rst:238
 msgid "Metrics"
-msgstr ""
+msgstr "メトリクス"
 
 #: ../../prior-art.rst:239
 msgid "Prometheus at ``/__sibuna/metrics``"
-msgstr ""
+msgstr "``/__sibuna/metrics``\\ でPrometheus"
 
 #: ../../prior-art.rst:240
 msgid "Prometheus on a separate port"
-msgstr ""
+msgstr "別のポートでPrometheus"
 
 #: ../../prior-art.rst:241
 msgid "Console dashboards"
-msgstr ""
+msgstr "コンソールのダッシュボード"
 
 #: ../../prior-art.rst:242
 msgid "Dashboard and analytics"
-msgstr ""
+msgstr "ダッシュボードと分析"
 
 #: ../../prior-art.rst:243
 msgid "TLS termination"
-msgstr ""
+msgstr "TLSの終端"
 
 #: ../../prior-art.rst:244 ../../prior-art.rst:245
 msgid "\\- (ingress)"
-msgstr ""
+msgstr "\\-（入口）"
 
 #: ../../prior-art.rst:246 ../../prior-art.rst:247 ../../prior-art.rst:251
 #: ../../prior-art.rst:252 ../../prior-art.rst:255
 msgid "**Yes**"
-msgstr ""
+msgstr "**あり**"
 
 #: ../../prior-art.rst:248
 msgid "Management console"
-msgstr ""
+msgstr "管理コンソール"
 
 #: ../../prior-art.rst:249
 msgid "Opt-in; SID 0007 Committed"
-msgstr ""
+msgstr "オプトイン。SID 0007はCommitted"
 
 #: ../../prior-art.rst:253
 msgid "Measured on the benchmark host"
-msgstr ""
+msgstr "ベンチマーク用ホストで測定"
 
 #: ../../prior-art.rst:254
 msgid "**Yes** (Part VIII)"
-msgstr ""
+msgstr "**あり**\\ （第VIII部）"
 
 #: ../../prior-art.rst:256
 msgid "\\- (Docker only)"
-msgstr ""
+msgstr "\\-（Dockerのみ）"
 
 #: ../../prior-art.rst:257
 msgid "\\- (hosted)"
-msgstr ""
+msgstr "\\-（ホスティング型）"
 
 #: ../../prior-art.rst:259
 msgid "Three differences carry most of the weight in a selection decision."
-msgstr ""
+msgstr "製品を選ぶ判断では、三つの違いが大部分の重みを持ちます。"
 
 #: ../../prior-art.rst:261
 msgid ""
@@ -692,6 +754,9 @@ msgid ""
 "Sibuna Shield does both, in that order: inspection can deny a request "
 "that already holds a valid session."
 msgstr ""
+"*作業がどこに行くか。*\\ AnubisとSibuna Gateは、オリジンが何かをする前に\\ *クライアント*\\ に支払わせます。"
+"SafeLineとCloudflareは先に検査し、選択的にチャレンジします。既定の姿勢は、許可してからふるいにかけることです。"
+"Sibuna Shieldはその両方をこの順序で行います。検査は、すでに有効なセッションを持つリクエストも拒否できます。"
 
 #: ../../prior-art.rst:262
 msgid ""
@@ -701,6 +766,10 @@ msgid ""
 "in a fixed table. SafeLine keeps attack logs in PostgreSQL; Cloudflare "
 "keeps everything, with sampled visibility on the Free plan."
 msgstr ""
+"*サーバーが何を記憶するか。*\\ Anubisはチャレンジの状態をストア（メモリ、bbolt、Valkey、S3）に保持し、"
+"Ed25519でJSON Web Tokenに署名します。Sibunaは自己認証するレコードを発行し、"
+"解かれたタグだけを固定の表に記憶します。SafeLineは攻撃ログをPostgreSQLに保持します。Cloudflareはすべてを保持し、"
+"Freeプランではサンプリングした範囲だけが見えます。"
 
 #: ../../prior-art.rst:263
 msgid ""
@@ -710,10 +779,14 @@ msgid ""
 "host with at least one core, one gigabyte of memory, and five gigabytes "
 "of disk; Cloudflare is a DNS change and a subscription."
 msgstr ""
+"*運用者が何を動かさなければならないか。*\\ Sibunaは一つのバイナリで、任意でSQLiteファイル、"
+"またはクラスターで共有するPostgreSQLデータベースを使います。Anubisは一つのGoバイナリです。SafeLineは、"
+"少なくとも1コア、1ギガバイトのメモリ、5ギガバイトのディスクを持つLinuxホスト上で、"
+"Dockerデーモンの背後で動く七つのコンテナーです。Cloudflareは、DNSの変更とサブスクリプションです。"
 
 #: ../../prior-art.rst:265
 msgid "Current product boundary"
-msgstr ""
+msgstr "現在の製品の範囲"
 
 #: ../../prior-art.rst:268
 msgid ""
@@ -726,10 +799,15 @@ msgid ""
 "performance isolation gate, with eight active dashboards under load, is "
 "not yet measured; Part VIII records what is."
 msgstr ""
+"Sibunaは入口でのTLSの終端を配備のプロキシに任せ、学習済みモデルによるボットのスコア付けや有償のシグネチャの公開は行いません。"
+"オプトインのコンソールは、認証付きのダッシュボード、国情報の付加、ポリシーの編集、調査、クラスターの管理を提供します。"
+"国の検索とストレージの作業は、リクエストの分類の外で実行します。SID 0007はCommittedで、"
+"コンソールはブラウザーでのワークフローに合格しています（SID 0010）。"
+"負荷の下で八つのダッシュボードを動かす正式な性能分離の基準はまだ測定していません。測定済みのものは第VIII部に記録しています。"
 
 #: ../../prior-art.rst:270
 msgid "Exercise 2.1"
-msgstr ""
+msgstr "演習2.1"
 
 #: ../../prior-art.rst:272
 msgid ""
@@ -737,10 +815,12 @@ msgid ""
 "reduces protocol drift. Which properties still require independent "
 "testing or cryptographic review?"
 msgstr ""
+"一つの検証器のソースをネイティブコードとWebAssemblyにコンパイルすると、プロトコルの食い違いが減る理由を説明してください。"
+"それでも独立したテストや暗号のレビューが必要な性質はどれでしょうか。"
 
 #: ../../prior-art.rst:274
 msgid "Exercise 2.2"
-msgstr ""
+msgstr "演習2.2"
 
 #: ../../prior-art.rst:276
 msgid ""
@@ -748,14 +828,16 @@ msgid ""
 "gives a static site (a) a proof-of-work gate, (b) SQL-injection "
 "inspection, and (c) a cluster-wide ban. Which rows forced each choice?"
 msgstr ""
+"比較表だけを使って、静的サイトに (a) 作業証明のゲート、(b) SQLインジェクションの検査、(c) "
+"クラスター全体での禁止を与える最小の配備を書き出してください。それぞれの選択を決めたのはどの行でしょうか。"
 
 #: ../../prior-art.rst:278
 msgid "Hint: Start from the \"runs as\" and \"multi-node\" rows."
-msgstr ""
+msgstr "ヒント：「実行形態」と「複数ノード」の行から始めてください。"
 
 #: ../../prior-art.rst:280
 msgid "Explain the invariant"
-msgstr ""
+msgstr "不変条件を説明してください"
 
 #: ../../prior-art.rst:282
 msgid ""
@@ -764,3 +846,5 @@ msgid ""
 "tables we would want to re-verify before quoting it to a customer, and "
 "say how we would verify it."
 msgstr ""
+"Gate、Shield、任意の共有ストレージが、許可、検査、ポリシーの配布をどのように分担するかを説明してください。次に、"
+"顧客に引用する前に再検証したい比較表の行を一つ挙げ、どのように検証するかを述べてください。"

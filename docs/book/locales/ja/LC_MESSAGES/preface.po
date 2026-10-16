@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../preface.rst:1
 msgid "Preface"
-msgstr ""
+msgstr "序文"
 
 #: ../../preface.rst:4
 msgid ""
@@ -29,6 +29,9 @@ msgid ""
 "admit it, refuse it, or ask its sender to do verifiable work. This book "
 "follows that decision from its mathematical model to the bytes in memory."
 msgstr ""
+"リクエストは、メソッド、パス、いくつかのヘッダー、そしてサーバーの処理を求める要求を携えて届きます。これらのバイトのどれも、"
+"そのリクエストに応える価値があることを示しません。Sibunaはリクエストとオリジンの間に一つの判断を置きます。許可するか、拒否するか、"
+"送信者に検証可能な作業を求めるかです。本書はこの判断を、数学的なモデルからメモリ上のバイトまで追います。"
 
 #: ../../preface.rst:6
 msgid ""
@@ -41,6 +44,11 @@ msgid ""
 "cluster distributes it; it does not turn a local rate counter into a "
 "global quota."
 msgstr ""
+"このシステムには二つの運用構成があります。\\ *Gate*\\ は作業証明による許可と、ローカルの大量アクセス対策を提供します。\\ "
+"*Shield*\\ はアプリケーションの検査とポリシーによる判断を加えます。どちらも、ポリシー、評判、"
+"インシデント履歴のために永続ストレージを使えます。ストレージは一つのノードに置くことも、クラスターで共有することもできます。この配備を\\ "
+"*Edge*\\ と呼びます。有効なセッションは許可を確立しますが、リクエストを検査から免除するわけではありません。"
+"永続的な状態をクラスターで共有すれば状態は分散されますが、ローカルのレートカウンターが全体の割り当て量に変わるわけではありません。"
 
 #: ../../preface.rst:8
 msgid ""
@@ -52,6 +60,10 @@ msgid ""
 "database disappears? Each answer must name both an invariant and its "
 "boundary."
 msgstr ""
+"工学上の中心的な問いは、ハッシュが速いかどうかではありません。信頼できないクライアントが入力を選ぶときに、"
+"処理経路全体が有界であり続けるかどうかです。パーサーは何バイトまで検査できるでしょうか。チャレンジはどれだけのメモリを消費し得るでしょうか。"
+"クライアントはいくつの接続を開いたままにできるでしょうか。どの書き込みなら再試行してよいでしょうか。ノードやデータベースが消えた後に、"
+"何が利用できるでしょうか。どの答えも、不変条件とその境界の両方を示さなければなりません。"
 
 #: ../../preface.rst:10
 msgid ""
@@ -62,6 +74,9 @@ msgid ""
 "work examples by hand, and then ask where the implementation departs from "
 "them."
 msgstr ""
+"数学も同じ目的に役立ちます。期待コストは遅延の保証ではありません。固定したコミットメントに対するサンプリングの議論は、"
+"あらゆる適応的な証明者に対する証明ではありません。キューはバーストを吸収しますが、恒常的に遅い消費側を補うことはできません。"
+"本書では小さなモデルを導き、例題を手で解き、そのうえで実装がモデルからどこで離れるかを問います。"
 
 #: ../../preface.rst:12
 msgid ""
@@ -74,6 +89,10 @@ msgid ""
 "table. Part XI is a two-page card for the terminal. A glossary and a "
 "bibliography close the book."
 msgstr ""
+"本書は三通りに使えるように書いています。順に読めば、第I部から第VII部は一つの課程です。各章は、"
+"読み終えたときにできるようになることを最初に示し、例題を手で解き、演習と、自分の言葉で説明する不変条件で締めくくります。"
+"選んだ解答は巻末にあります。第VIII部から第X部はリファレンスです。出所を明記した測定、すべてのフラグと構成、すべてのエンドポイント、"
+"ステータス、エラー、テーブルを扱います。第XI部はターミナルのそばに置く2ページの早見表です。最後に用語集と参考文献があります。"
 
 #: ../../preface.rst:14
 msgid ""
@@ -84,6 +103,9 @@ msgid ""
 "so the reader can check the claims: the comparison names its sources, and "
 "every measurement names the committed result file it is copied from."
 msgstr ""
+"第II部では、SibunaをAnubis、SafeLine、Cloudflare WAFと機能ごとに比較します。第VIII部では、"
+"単一のプリミティブから製品全体の実行までSibuna自身の測定を示し、同じ負荷生成器の下で製品全体としてSibunaとAnubisを比較しま"
+"す。どちらも読者が主張を確かめられるように書いています。比較はその出典を示し、どの測定も、値を写したコミット済みの結果ファイルを示します。"
 
 #: ../../preface.rst:16
 msgid ""
@@ -94,6 +116,9 @@ msgid ""
 "determines the concurrency and storage design. Later chapters turn those "
 "invariants into measurements and operating procedures."
 msgstr ""
+"読者には、プログラミングの基礎、対数、条件付き確率の知識を想定しています。Rustは、言語の概観ではなく、"
+"所有権とデータ配置を通して紹介します。各章は順に読めます。コストモデルがプロトコルの動機となり、プロトコルが状態を決め、"
+"状態が並行処理とストレージの設計を決めます。後の章では、これらの不変条件を測定と運用手順に落とし込みます。"
 
 #: ../../preface.rst:18
 msgid ""
@@ -103,13 +128,16 @@ msgid ""
 "useful result is a system whose costs and limitations can be examined, "
 "tested, and changed without hiding them behind a slogan."
 msgstr ""
+"本書は実装の本です。計算パズルが自動化されたトラフィックをなくすと主張するものではありません。クライアントは計算資源を買えますし、"
+"アドレスは共有され得ますし、アプリケーションの構文は上限のある検出器よりも豊かです。有用な成果は、コストと限界をスローガンの陰に隠さず、"
+"調べ、試験し、変更できるシステムです。"
 
 #: ../../preface.rst:20
 msgid "Edition for Sibuna 1.0.0-beta.1, October 2026"
-msgstr ""
+msgstr "Sibuna 1.0.0-beta.1対応版、2026年10月"
 
 #: ../../preface.rst:22
 msgid ""
 "Sources, exercises, and reproducible measurements accompany the Sibuna "
 "repository."
-msgstr ""
+msgstr "ソース、演習、再現可能な測定はSibunaリポジトリにあります。"
