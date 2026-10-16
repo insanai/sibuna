@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 05:39+0000\n"
+"POT-Creation-Date: 2026-10-16 07:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:37+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -35,8 +35,8 @@ msgstr ""
 msgid "Surfaces and Configuration"
 msgstr "सतहें और कॉन्फ़िगरेशन"
 
-#: ../../operations.rst:9 ../../operations.rst:310 ../../operations.rst:446
-#: ../../operations.rst:475 ../../operations.rst:614
+#: ../../operations.rst:9 ../../operations.rst:313 ../../operations.rst:528
+#: ../../operations.rst:557 ../../operations.rst:696
 msgid "Objectives"
 msgstr "उद्देश्य"
 
@@ -98,7 +98,7 @@ msgstr ""
 msgid "Daemon options"
 msgstr "डेमन के विकल्प"
 
-#: ../../operations.rst:29 ../../operations.rst:172
+#: ../../operations.rst:29 ../../operations.rst:175
 msgid "Flag"
 msgstr "फ़्लैग"
 
@@ -106,7 +106,7 @@ msgstr "फ़्लैग"
 msgid "Default"
 msgstr "डिफ़ॉल्ट"
 
-#: ../../operations.rst:31 ../../operations.rst:173
+#: ../../operations.rst:31 ../../operations.rst:176
 msgid "Meaning"
 msgstr "अर्थ"
 
@@ -210,7 +210,7 @@ msgstr ""
 msgid "``--max-connections-per-ip``"
 msgstr "``--max-connections-per-ip``"
 
-#: ../../operations.rst:54 ../../operations.rst:72
+#: ../../operations.rst:54 ../../operations.rst:75
 msgid "``64``"
 msgstr "``64``"
 
@@ -254,7 +254,7 @@ msgstr ""
 msgid "``--websocket-idle-timeout``"
 msgstr "``--websocket-idle-timeout``"
 
-#: ../../operations.rst:60 ../../operations.rst:90
+#: ../../operations.rst:60 ../../operations.rst:93
 msgid "``300``"
 msgstr "``300``"
 
@@ -279,7 +279,8 @@ msgstr "पीयर से आए ``X-Forwarded-For`` / ``X-Real-IP`` को �
 msgid "``--no-trust-forwarded``"
 msgstr "``--no-trust-forwarded``"
 
-#: ../../operations.rst:66 ../../operations.rst:99 ../../operations.rst:144
+#: ../../operations.rst:66 ../../operations.rst:72 ../../operations.rst:102
+#: ../../operations.rst:147
 msgid "off"
 msgstr "बंद"
 
@@ -304,10 +305,28 @@ msgstr ""
 "प्रविष्टि है जो दाईं ओर से इतने स्थान पर है, 1 से 8"
 
 #: ../../operations.rst:71
+msgid "``--ja4-header``"
+msgstr "``--ja4-header``"
+
+#: ../../operations.rst:73
+msgid ""
+"The request header in which a trusted ingress sends the client's JA4 TLS "
+"fingerprint, such as ``cf-ja4``; 1 to 64 token characters, not "
+"``X-Forwarded-*``, ``X-Real-IP``, ``X-Sibuna-*`` or ``Forwarded``. It is "
+"read only when forwarded identity is trusted (see \"JA4 Fingerprints From "
+"the Ingress\")"
+msgstr ""
+"वह अनुरोध हेडर जिसमें एक विश्वसनीय इनग्रेस क्लाइंट का JA4 TLS "
+"फ़िंगरप्रिंट भेजता है, जैसे ``cf-ja4``; 1 से 64 token अक्षर, "
+"``X-Forwarded-*``, ``X-Real-IP``, ``X-Sibuna-*`` या ``Forwarded`` नहीं। "
+"इसे केवल तभी पढ़ा जाता है जब फ़ॉरवर्ड की गई पहचान पर भरोसा हो (देखें "
+"\"इनग्रेस से JA4 फ़िंगरप्रिंट\")"
+
+#: ../../operations.rst:74
 msgid "``--ipv6-prefix``"
 msgstr "``--ipv6-prefix``"
 
-#: ../../operations.rst:73
+#: ../../operations.rst:76
 msgid ""
 "IPv6 prefix length, 32 to 128, that rate limits, bans and the per-client "
 "connection bound apply to"
@@ -315,79 +334,79 @@ msgstr ""
 "IPv6 प्रीफ़िक्स की लंबाई, 32 से 128, जिस पर रेट लिमिट, प्रतिबंध और "
 "प्रति-क्लाइंट कनेक्शन सीमा लागू होती हैं"
 
-#: ../../operations.rst:74
+#: ../../operations.rst:77
 msgid "``--algorithm, -a``"
 msgstr "``--algorithm, -a``"
 
-#: ../../operations.rst:75
+#: ../../operations.rst:78
 msgid "``posw``"
 msgstr "``posw``"
 
-#: ../../operations.rst:76
+#: ../../operations.rst:79
 msgid "``posw`` or ``hashcash``"
 msgstr "``posw`` या ``hashcash``"
 
-#: ../../operations.rst:77
+#: ../../operations.rst:80
 msgid "``--difficulty, -d``"
 msgstr "``--difficulty, -d``"
 
-#: ../../operations.rst:78 ../../operations.rst:81
+#: ../../operations.rst:81 ../../operations.rst:84
 msgid "``16``"
 msgstr "``16``"
 
-#: ../../operations.rst:79
+#: ../../operations.rst:82
 msgid "Work bits, 1 to 64: Hashcash zero bits, or PoSW depth plus three"
 msgstr "वर्क बिट्स, 1 से 64: Hashcash के शून्य बिट, या PoSW गहराई जमा तीन"
 
-#: ../../operations.rst:80
+#: ../../operations.rst:83
 msgid "``--posw-challenges``"
 msgstr "``--posw-challenges``"
 
-#: ../../operations.rst:82
+#: ../../operations.rst:85
 msgid "Openings per sequential-work proof, 1 to 32"
 msgstr "प्रति अनुक्रमिक-कार्य प्रमाण ओपनिंग, 1 से 32"
 
-#: ../../operations.rst:83
+#: ../../operations.rst:86
 msgid "``--token-scheme``"
 msgstr "``--token-scheme``"
 
-#: ../../operations.rst:84
+#: ../../operations.rst:87
 msgid "``mac``"
 msgstr "``mac``"
 
-#: ../../operations.rst:85
+#: ../../operations.rst:88
 msgid "``mac`` (keyed BLAKE3) or ``ed25519``"
 msgstr "``mac`` (कुंजी-युक्त BLAKE3) या ``ed25519``"
 
-#: ../../operations.rst:86
+#: ../../operations.rst:89
 msgid "``--token-ttl``"
 msgstr "``--token-ttl``"
 
-#: ../../operations.rst:87
+#: ../../operations.rst:90
 msgid "``86400``"
 msgstr "``86400``"
 
-#: ../../operations.rst:88
+#: ../../operations.rst:91
 msgid "Session lifetime, seconds (1 to 31,536,000)"
 msgstr "सत्र की अवधि, सेकंड (1 से 31,536,000)"
 
-#: ../../operations.rst:89
+#: ../../operations.rst:92
 msgid "``--challenge-ttl``"
 msgstr "``--challenge-ttl``"
 
-#: ../../operations.rst:91
+#: ../../operations.rst:94
 msgid "Challenge lifetime, seconds (1 to 86,400)"
 msgstr "चैलेंज की अवधि, सेकंड (1 से 86,400)"
 
-#: ../../operations.rst:92
+#: ../../operations.rst:95
 msgid "``--secret-file, -s``"
 msgstr "``--secret-file, -s``"
 
-#: ../../operations.rst:93
+#: ../../operations.rst:96
 msgid "random"
 msgstr "यादृच्छिक"
 
-#: ../../operations.rst:94
+#: ../../operations.rst:97
 msgid ""
 "64 hex characters or 32 raw bytes; ``SIBUNA_SECRET`` (64 hex characters) "
 "is also accepted"
@@ -395,112 +414,112 @@ msgstr ""
 "64 हेक्स अक्षर या 32 कच्चे बाइट; ``SIBUNA_SECRET`` (64 हेक्स अक्षर) भी "
 "स्वीकार है"
 
-#: ../../operations.rst:95
+#: ../../operations.rst:98
 msgid "``--cookie-name``"
 msgstr "``--cookie-name``"
 
-#: ../../operations.rst:96
+#: ../../operations.rst:99
 msgid "``__sibuna_token``"
 msgstr "``__sibuna_token``"
 
-#: ../../operations.rst:97
+#: ../../operations.rst:100
 msgid "Session cookie name, 1 to 64 token characters"
 msgstr "सत्र कुकी का नाम, 1 से 64 टोकन अक्षर"
 
-#: ../../operations.rst:98
+#: ../../operations.rst:101
 msgid "``--secure-cookie``"
 msgstr "``--secure-cookie``"
 
-#: ../../operations.rst:100
+#: ../../operations.rst:103
 msgid "Add the ``Secure`` attribute"
 msgstr "``Secure`` एट्रिब्यूट जोड़ें"
 
-#: ../../operations.rst:101
+#: ../../operations.rst:104
 msgid "``--gate`` / ``--shield``"
 msgstr "``--gate`` / ``--shield``"
 
-#: ../../operations.rst:102
+#: ../../operations.rst:105
 msgid "shield"
 msgstr "shield"
 
-#: ../../operations.rst:103
+#: ../../operations.rst:106
 msgid "Surface selection"
 msgstr "सतह का चयन"
 
-#: ../../operations.rst:104
+#: ../../operations.rst:107
 msgid "``--rate-limit``"
 msgstr "``--rate-limit``"
 
-#: ../../operations.rst:105
+#: ../../operations.rst:108
 msgid "``100``"
 msgstr "``100``"
 
-#: ../../operations.rst:106
+#: ../../operations.rst:109
 msgid "Requests per window per client (GCRA burst)"
 msgstr "प्रति क्लाइंट प्रति विंडो अनुरोध (GCRA बर्स्ट)"
 
-#: ../../operations.rst:107
+#: ../../operations.rst:110
 msgid "``--rate-window``"
 msgstr "``--rate-window``"
 
-#: ../../operations.rst:108
+#: ../../operations.rst:111
 msgid "``10``"
 msgstr "``10``"
 
-#: ../../operations.rst:109
+#: ../../operations.rst:112
 msgid "Window in seconds, 1 to 86400"
 msgstr "सेकंड में विंडो, 1 से 86400"
 
-#: ../../operations.rst:110
+#: ../../operations.rst:113
 msgid "``--challenge-rate-limit``"
 msgstr "``--challenge-rate-limit``"
 
-#: ../../operations.rst:111
+#: ../../operations.rst:114
 msgid "``30``"
 msgstr "``30``"
 
-#: ../../operations.rst:112
+#: ../../operations.rst:115
 msgid ""
 "Challenge issuances and verifications per window per client, separate "
 "from the request budget"
 msgstr ""
 "प्रति क्लाइंट प्रति विंडो चैलेंज जारी करना और सत्यापन, अनुरोध बजट से अलग"
 
-#: ../../operations.rst:113
+#: ../../operations.rst:116
 msgid "``--ban-seconds``"
 msgstr "``--ban-seconds``"
 
-#: ../../operations.rst:114
+#: ../../operations.rst:117
 msgid "``3600``"
 msgstr "``3600``"
 
-#: ../../operations.rst:115
+#: ../../operations.rst:118
 msgid "Honeypot ban duration, 0 to 31,536,000"
 msgstr "हनीपॉट प्रतिबंध की अवधि, 0 से 31,536,000"
 
-#: ../../operations.rst:116
+#: ../../operations.rst:119
 msgid "``--policy-file, -P``"
 msgstr "``--policy-file, -P``"
 
-#: ../../operations.rst:117 ../../operations.rst:129
-#: ../../operations.rst:132 ../../operations.rst:135
-#: ../../operations.rst:138
+#: ../../operations.rst:120 ../../operations.rst:132
+#: ../../operations.rst:135 ../../operations.rst:138
+#: ../../operations.rst:141
 msgid "none"
 msgstr "कोई नहीं"
 
-#: ../../operations.rst:118
+#: ../../operations.rst:121
 msgid "Declarative JSON policy"
 msgstr "घोषणात्मक JSON नीति"
 
-#: ../../operations.rst:119
+#: ../../operations.rst:122
 msgid "``--rate-table-cells``"
 msgstr "``--rate-table-cells``"
 
-#: ../../operations.rst:120
+#: ../../operations.rst:123
 msgid "``262144``"
 msgstr "``262144``"
 
-#: ../../operations.rst:121
+#: ../../operations.rst:124
 msgid ""
 "Cells per rate limiter table, 16 bytes each, 4,096 to 16,777,216, rounded "
 "up to a power of two"
@@ -508,15 +527,15 @@ msgstr ""
 "प्रति रेट लिमिटर टेबल सेल, हर एक 16 बाइट, 4,096 से 16,777,216, दो की अगली "
 "घात तक पूर्णांकित"
 
-#: ../../operations.rst:122
+#: ../../operations.rst:125
 msgid "``--ban-table-slots``"
 msgstr "``--ban-table-slots``"
 
-#: ../../operations.rst:123
+#: ../../operations.rst:126
 msgid "``65536``"
 msgstr "``65536``"
 
-#: ../../operations.rst:124
+#: ../../operations.rst:127
 msgid ""
 "Ban table slots, 24 bytes each, 1,024 to 16,777,216, rounded up to a "
 "power of two"
@@ -524,15 +543,15 @@ msgstr ""
 "बैन टेबल के स्लॉट, हर एक 24 बाइट, 1,024 से 16,777,216, दो की अगली घात तक "
 "पूर्णांकित"
 
-#: ../../operations.rst:125
+#: ../../operations.rst:128
 msgid "``--spent-tags``"
 msgstr "``--spent-tags``"
 
-#: ../../operations.rst:126
+#: ../../operations.rst:129
 msgid "``1048576``"
 msgstr "``1048576``"
 
-#: ../../operations.rst:127
+#: ../../operations.rst:130
 msgid ""
 "Solved challenges remembered against replay, 24 bytes each, 65,536 to "
 "16,777,216"
@@ -540,38 +559,38 @@ msgstr ""
 "रीप्ले के विरुद्ध याद रखे गए हल किए गए चैलेंज, हर एक 24 बाइट, 65,536 से "
 "16,777,216"
 
-#: ../../operations.rst:128
+#: ../../operations.rst:131
 msgid "``--data-dir, -D``"
 msgstr "``--data-dir, -D``"
 
-#: ../../operations.rst:130
+#: ../../operations.rst:133
 msgid "One node: persist to the SQLite file ``<path>/sibuna.db``"
 msgstr "एक नोड: SQLite फ़ाइल ``<path>/sibuna.db`` में सहेजें"
 
-#: ../../operations.rst:131
+#: ../../operations.rst:134
 msgid "``--database-url``"
 msgstr "``--database-url``"
 
-#: ../../operations.rst:133
+#: ../../operations.rst:136
 msgid ""
 "A cluster: the shared PostgreSQL database (``postgres://`` or "
 "``postgresql://``)"
 msgstr ""
 "एक क्लस्टर: साझा PostgreSQL डेटाबेस (``postgres://`` या ``postgresql://``)"
 
-#: ../../operations.rst:134
+#: ../../operations.rst:137
 msgid "``--database-url-file``"
 msgstr "``--database-url-file``"
 
-#: ../../operations.rst:136
+#: ../../operations.rst:139
 msgid "Read the database URL from an owner-only file"
 msgstr "डेटाबेस URL को केवल स्वामी द्वारा पठनीय फ़ाइल से पढ़ें"
 
-#: ../../operations.rst:137
+#: ../../operations.rst:140
 msgid "``--cluster-node``"
 msgstr "``--cluster-node``"
 
-#: ../../operations.rst:139
+#: ../../operations.rst:142
 msgid ""
 "This node's id; binds challenge keys and the top bits of incident "
 "identifiers; required with a database URL"
@@ -579,31 +598,31 @@ msgstr ""
 "इस नोड का id; चैलेंज कुंजियों और घटना पहचानकर्ताओं के ऊपरी बिट को बाँधता "
 "है; डेटाबेस URL के साथ आवश्यक"
 
-#: ../../operations.rst:140
+#: ../../operations.rst:143
 msgid "``--storage-poll-ms``"
 msgstr "``--storage-poll-ms``"
 
-#: ../../operations.rst:141
+#: ../../operations.rst:144
 msgid "``500``"
 msgstr "``500``"
 
-#: ../../operations.rst:142
+#: ../../operations.rst:145
 msgid "Storage tick interval, 1 to 60,000 ms"
 msgstr "स्टोरेज tick का अंतराल, 1 से 60,000 ms"
 
-#: ../../operations.rst:143
+#: ../../operations.rst:146
 msgid "``--verbose, -v``"
 msgstr "``--verbose, -v``"
 
-#: ../../operations.rst:145
+#: ../../operations.rst:148
 msgid "Verbose logging"
 msgstr "विस्तृत लॉगिंग"
 
-#: ../../operations.rst:146
+#: ../../operations.rst:149
 msgid "``--help`` / ``--version``"
 msgstr "``--help`` / ``--version``"
 
-#: ../../operations.rst:148
+#: ../../operations.rst:151
 msgid ""
 "Print the help (console options first, when the console is compiled in) "
 "or the version, and exit"
@@ -611,7 +630,7 @@ msgstr ""
 "सहायता (कंसोल कंपाइल होने पर कंसोल विकल्प पहले) या संस्करण छापें, और बाहर "
 "निकलें"
 
-#: ../../operations.rst:150
+#: ../../operations.rst:153
 msgid ""
 "``--data-dir`` and a database URL exclude each other, and "
 "``--database-url`` and ``--database-url-file`` exclude each other. A "
@@ -631,11 +650,11 @@ msgstr ""
 "कोई देने पर स्टार्टअप ``RemovedOption`` और SID 0011 का नाम देने वाले "
 "संकेत के साथ रुक जाता है। कंसोल के विकल्प अगले अध्याय में सूचीबद्ध हैं।"
 
-#: ../../operations.rst:152
+#: ../../operations.rst:155
 msgid "The master secret"
 msgstr "मास्टर सीक्रेट"
 
-#: ../../operations.rst:154
+#: ../../operations.rst:157
 msgid ""
 "Without ``--secret-file`` or ``SIBUNA_SECRET`` the daemon draws a random "
 "seed, and the banner prints \"random (set --secret-file)\". Tokens and "
@@ -650,11 +669,11 @@ msgstr ""
 "हैं वे एक-दूसरे की कुकी अस्वीकार करेंगे। ``head -c 32 /dev/urandom | xxd "
 "-p -c 64 > /etc/sibuna/secret`` से एक सीड बनाएँ और mode 0600 रखें।"
 
-#: ../../operations.rst:156
+#: ../../operations.rst:159
 msgid "Console Preview"
 msgstr "कंसोल प्रीव्यू"
 
-#: ../../operations.rst:159
+#: ../../operations.rst:162
 msgid ""
 "The console is compiled into the daemon by the default ``console`` "
 "feature, but starts only with ``--console``. It needs storage: "
@@ -673,7 +692,7 @@ msgstr ""
 "बिल्ड में न स्टोरेज होता है न कंसोल। डेमन बंद रहते समय स्थानीय रूप से "
 "बूटस्ट्रैप करें:"
 
-#: ../../operations.rst:166
+#: ../../operations.rst:169
 msgid ""
 "``sibuna console init-admin`` is the same command. Open "
 "``http://127.0.0.1:19446/console/`` and replace the generated temporary "
@@ -697,15 +716,15 @@ msgstr ""
 "``sibuna-console-ui``) से बना एक WebAssembly मॉड्यूल है; यह और कमिट की गई "
 "stylesheet साधारण बिल्ड के साथ आते हैं।"
 
-#: ../../operations.rst:168
+#: ../../operations.rst:171
 msgid "Console options"
 msgstr "कंसोल के विकल्प"
 
-#: ../../operations.rst:174
+#: ../../operations.rst:177
 msgid "``--console <ip:port>``"
 msgstr "``--console <ip:port>``"
 
-#: ../../operations.rst:175
+#: ../../operations.rst:178
 msgid ""
 "Start the console on this listener (IPv6 in brackets, nonzero port); "
 "requires ``--data-dir`` or ``--database-url``"
@@ -713,11 +732,11 @@ msgstr ""
 "इस listener पर कंसोल शुरू करें (IPv6 कोष्ठकों में, शून्य से भिन्न पोर्ट); "
 "``--data-dir`` या ``--database-url`` आवश्यक"
 
-#: ../../operations.rst:176
+#: ../../operations.rst:179
 msgid "``--console-key-file <path>``"
 msgstr "``--console-key-file <path>``"
 
-#: ../../operations.rst:177
+#: ../../operations.rst:180
 msgid ""
 "64 hex characters, owner-only permissions; protects stored second-factor "
 "and webhook secrets"
@@ -725,27 +744,27 @@ msgstr ""
 "64 हेक्स अक्षर, केवल स्वामी की अनुमतियाँ; संग्रहीत second-factor और "
 "webhook सीक्रेट की रक्षा करता है"
 
-#: ../../operations.rst:178
+#: ../../operations.rst:181
 msgid "``--console-origin <https-origin>``"
 msgstr "``--console-origin <https-origin>``"
 
-#: ../../operations.rst:179
+#: ../../operations.rst:182
 msgid "The canonical HTTPS origin behind a proxy"
 msgstr "प्रॉक्सी के पीछे canonical HTTPS ऑरिजिन"
 
-#: ../../operations.rst:180
+#: ../../operations.rst:183
 msgid "``--console-behind-proxy``"
 msgstr "``--console-behind-proxy``"
 
-#: ../../operations.rst:181
+#: ../../operations.rst:184
 msgid "A TLS-terminating proxy delivers every request"
 msgstr "TLS समाप्त करने वाला एक प्रॉक्सी हर अनुरोध पहुँचाता है"
 
-#: ../../operations.rst:182
+#: ../../operations.rst:185
 msgid "``--console-trusted-proxy <cidr>``"
 msgstr "``--console-trusted-proxy <cidr>``"
 
-#: ../../operations.rst:183
+#: ../../operations.rst:186
 msgid ""
 "A network whose connections may carry forwarded fields; repeatable, at "
 "most 16"
@@ -753,75 +772,75 @@ msgstr ""
 "ऐसा नेटवर्क जिसके कनेक्शन फ़ॉरवर्ड किए गए फ़ील्ड ले जा सकते हैं; दोहराया "
 "जा सकता है, अधिकतम 16"
 
-#: ../../operations.rst:184
+#: ../../operations.rst:187
 msgid "``--console-advertise <origin>``"
 msgstr "``--console-advertise <origin>``"
 
-#: ../../operations.rst:185
+#: ../../operations.rst:188
 msgid "The link other consoles show for this one"
 msgstr "वह लिंक जो दूसरे कंसोल इस कंसोल के लिए दिखाते हैं"
 
-#: ../../operations.rst:186
+#: ../../operations.rst:189
 msgid "``--console-location <latitude,longitude>``"
 msgstr "``--console-location <latitude,longitude>``"
 
-#: ../../operations.rst:187
+#: ../../operations.rst:190
 msgid "This node's declared position on the globe"
 msgstr "ग्लोब पर इस नोड की घोषित स्थिति"
 
-#: ../../operations.rst:188
+#: ../../operations.rst:191
 msgid "``--console-probe <node-id>=<http://ip:port>``"
 msgstr "``--console-probe <node-id>=<http://ip:port>``"
 
-#: ../../operations.rst:189
+#: ../../operations.rst:192
 msgid ""
 "A peer data-plane listener to health-check; repeatable, at most eight"
 msgstr ""
 "health-check करने के लिए एक पीयर का data-plane listener; दोहराया जा सकता "
 "है, अधिकतम आठ"
 
-#: ../../operations.rst:190
+#: ../../operations.rst:193
 msgid "``--console-peer <node-id>=<https://origin>``"
 msgstr "``--console-peer <node-id>=<https://origin>``"
 
-#: ../../operations.rst:191
+#: ../../operations.rst:194
 msgid "A management peer; repeatable, at most eight"
 msgstr "एक प्रबंधन पीयर; दोहराया जा सकता है, अधिकतम आठ"
 
-#: ../../operations.rst:192
+#: ../../operations.rst:195
 msgid "``--console-peer-key-file <path>``"
 msgstr "``--console-peer-key-file <path>``"
 
-#: ../../operations.rst:193
+#: ../../operations.rst:196
 msgid ""
 "The peer key: owner-only, 64 hex characters, independent of the console "
 "key"
 msgstr "पीयर कुंजी: केवल स्वामी, 64 हेक्स अक्षर, कंसोल कुंजी से स्वतंत्र"
 
-#: ../../operations.rst:194
+#: ../../operations.rst:197
 msgid "``--console-peer-ca-file <path>``"
 msgstr "``--console-peer-ca-file <path>``"
 
-#: ../../operations.rst:195
+#: ../../operations.rst:198
 msgid "Optional PEM trust anchors for peers, replacing the system roots"
 msgstr ""
 "पीयर के लिए वैकल्पिक PEM trust anchor, जो सिस्टम roots की जगह लेते हैं"
 
-#: ../../operations.rst:196
+#: ../../operations.rst:199
 msgid "``--console-query-steps <n>``"
 msgstr "``--console-query-steps <n>``"
 
-#: ../../operations.rst:197
+#: ../../operations.rst:200
 msgid ""
 "SQLite steps per aggregate read, 100,000 to 50,000,000, default 4,000,000"
 msgstr ""
 "प्रति aggregate रीड SQLite कदम, 100,000 से 50,000,000, डिफ़ॉल्ट 4,000,000"
 
-#: ../../operations.rst:198
+#: ../../operations.rst:201
 msgid "``--console-capture-heads``"
 msgstr "``--console-capture-heads``"
 
-#: ../../operations.rst:199
+#: ../../operations.rst:202
 msgid ""
 "Store redacted request and origin response heads per incident; off by "
 "default"
@@ -829,11 +848,11 @@ msgstr ""
 "प्रति घटना redact किए गए अनुरोध और ऑरिजिन रिस्पॉन्स हेड संग्रहीत करें; "
 "डिफ़ॉल्ट रूप से बंद"
 
-#: ../../operations.rst:200
+#: ../../operations.rst:203
 msgid "``--console-capture-header <name>``"
 msgstr "``--console-capture-header <name>``"
 
-#: ../../operations.rst:201
+#: ../../operations.rst:204
 msgid ""
 "Keep this header's value in stored heads; repeatable, at most 16; "
 "requires ``--console-capture-heads``"
@@ -841,11 +860,11 @@ msgstr ""
 "संग्रहीत हेड में इस हेडर का मान रखें; दोहराया जा सकता है, अधिकतम 16; "
 "``--console-capture-heads`` आवश्यक"
 
-#: ../../operations.rst:202
+#: ../../operations.rst:205
 msgid "``--console-cookie-secure``"
 msgstr "``--console-cookie-secure``"
 
-#: ../../operations.rst:203
+#: ../../operations.rst:206
 msgid ""
 "Give console cookies the ``Secure`` attribute without a proxy (accepted "
 "by the parser, not listed in ``--help``)"
@@ -853,7 +872,7 @@ msgstr ""
 "प्रॉक्सी के बिना कंसोल कुकी को ``Secure`` एट्रिब्यूट दें (पार्सर स्वीकार "
 "करता है, ``--help`` में सूचीबद्ध नहीं)"
 
-#: ../../operations.rst:205
+#: ../../operations.rst:208
 msgid ""
 "A console option without ``--console``, a repeated option or a malformed "
 "value stops startup with ``CONSOLE002`` and the option's error name. A "
@@ -867,11 +886,11 @@ msgstr ""
 "विश्वसनीय प्रॉक्सी के बिना loopback से बाहर का listener) इसे "
 "``CONSOLE001`` के साथ रोक देता है।"
 
-#: ../../operations.rst:207
+#: ../../operations.rst:210
 msgid "A Tour of the Console"
 msgstr "कंसोल की एक सैर"
 
-#: ../../operations.rst:210
+#: ../../operations.rst:213
 msgid ""
 "The screenshots below come from a release build on one loopback node with "
 "SQLite storage and a policy of four ``ALLOW`` rules over a default "
@@ -895,7 +914,7 @@ msgstr ""
 "और उत्पाद, सर्व करने वाला नोड, पेज और वापसी का रास्ता एक ही स्थान पर रखता "
 "है।"
 
-#: ../../operations.rst:215
+#: ../../operations.rst:218
 msgid ""
 "Sign-in. The public shell loads no globe geometry, GeoIP data or "
 "telemetry; the second form exchanges a wall-display code for a read-only "
@@ -905,7 +924,7 @@ msgstr ""
 "नहीं करता; दूसरा फ़ॉर्म wall-display कोड के बदले केवल-पढ़ने वाला आँकड़ों "
 "का सत्र देता है।"
 
-#: ../../operations.rst:220
+#: ../../operations.rst:223
 msgid ""
 "Statistics, Traffic, over the last 24 hours. The note under the period "
 "control states the coverage: only four of 1,440 expected minute records "
@@ -932,7 +951,7 @@ msgstr ""
 "देते हैं और क्लाइंट ऑपरेटिंग सिस्टम, ब्राउज़र और रिस्पॉन्स स्टेटस गिनते "
 "हैं।"
 
-#: ../../operations.rst:225
+#: ../../operations.rst:228
 msgid ""
 "Statistics, Security. One tile per module over the selected period, live "
 "outcome trends, and the live event feed with its newest findings (here "
@@ -948,7 +967,7 @@ msgstr ""
 "और नीचे साठ बराबर बकेट पर निष्कर्ष, आक्रमण श्रेणियाँ और आक्रमण वाले पाथ "
 "हैं।"
 
-#: ../../operations.rst:230
+#: ../../operations.rst:233
 msgid ""
 "Events. The filter form above the recorded incidents, newest first. Each "
 "incident opens inline with its evidence: the selected local response, "
@@ -976,7 +995,7 @@ msgstr ""
 "है। अन्यथा हेड \"not recorded\" के रूप में दिखते हैं। Deny और allow एक्शन "
 "IP समूह फ़ॉर्म को पते के साथ पहले से भरकर खोलते हैं।"
 
-#: ../../operations.rst:235
+#: ../../operations.rst:238
 msgid ""
 "Challenges. A retained window (one hour, one day or seven days) sums "
 "durable per-minute records and states how many minutes were recorded and "
@@ -995,7 +1014,7 @@ msgstr ""
 "हिस्टोग्राम, अनुकूली कठिनाई के बदलाव, और deny तथा allow शॉर्टकट वाले "
 "प्रति-पता रिकॉर्ड हैं, जो सात दिन रखे जाते हैं।"
 
-#: ../../operations.rst:240
+#: ../../operations.rst:243
 msgid ""
 "Policies. The applied engine names its surface, revisions, default "
 "algorithm and difficulty and its node-local limits, then lists rules in "
@@ -1013,7 +1032,7 @@ msgstr ""
 "दिखती है, और पुष्टि करने पर पूरे उम्मीदवार का सत्यापन होता है और एक नया "
 "revision बनता है।"
 
-#: ../../operations.rst:245
+#: ../../operations.rst:248
 msgid ""
 "Nodes. The serving node's status and commands, with resident memory and "
 "CPU of the last second and their sixty-second sparklines; below them "
@@ -1026,7 +1045,7 @@ msgstr ""
 "सदस्य, कमिट किए गए revision के सामने उसका लागू नीति revision, उसका "
 "प्रबंधन पता और उसका probe परिणाम (SID 0007, SID 0013)।"
 
-#: ../../operations.rst:250
+#: ../../operations.rst:253
 msgid ""
 "GeoIP. Provider, licence, active generation digest, load time and the "
 "import form; here no generation has been loaded yet. A failed import "
@@ -1036,7 +1055,7 @@ msgstr ""
 "फ़ॉर्म; यहाँ अभी कोई generation लोड नहीं हुई है। विफल आयात कभी सक्रिय "
 "generation की जगह नहीं लेता।"
 
-#: ../../operations.rst:255
+#: ../../operations.rst:258
 msgid ""
 "Settings, with no notification destination yet and the form for a new "
 "one. Further down the page are denial-spike thresholds, retention with an "
@@ -1046,7 +1065,7 @@ msgstr ""
 "है। पेज में और नीचे अस्वीकृति-उछाल की सीमाएँ, प्रति विंडो स्पष्ट स्वीकृति "
 "के साथ प्रतिधारण (retention), रिस्पॉन्स-पेज टेम्पलेट और About हैं।"
 
-#: ../../operations.rst:260
+#: ../../operations.rst:263
 msgid ""
 "Audit. Append-only history with actor and role, action, subject and a "
 "detail view with redacted before and after summaries; refused sign-ins "
@@ -1066,7 +1085,7 @@ msgstr ""
 "दस्तावेज़ को एक नए, ऑडिट किए गए revision के रूप में बहाल करता है, और यदि "
 "नियम समुच्चय आगे बढ़ चुका हो तो अस्वीकार हो जाता है।"
 
-#: ../../operations.rst:265
+#: ../../operations.rst:268
 msgid ""
 "A wall display. A kiosk session shows the Traffic and Security views "
 "only, without navigation, and states when it expires."
@@ -1074,7 +1093,7 @@ msgstr ""
 "एक wall display। kiosk सत्र केवल Traffic और Security दृश्य दिखाता है, "
 "बिना नेविगेशन के, और बताता है कि वह कब समाप्त होगा।"
 
-#: ../../operations.rst:267
+#: ../../operations.rst:270
 msgid ""
 "The optional ``--console-location <latitude,longitude>`` declares this "
 "node's position, for example ``1.3521,103.8198`` for a deployment in "
@@ -1098,7 +1117,7 @@ msgstr ""
 "किया गया मार्कर टेलीमेट्री रुकने पर भी दिखता रहता है; पुराना ट्रैफ़िक "
 "एनिमेट नहीं होता।"
 
-#: ../../operations.rst:269
+#: ../../operations.rst:272
 msgid ""
 "Policy previews build a private candidate including configured file "
 "rules. Saves compare the expected revision and require confirmation of a "
@@ -1126,7 +1145,7 @@ msgstr ""
 "स्थायी रसीद (receipt) जाँचें; केवल कमिट हुआ इरादा यह स्थापित नहीं करता कि "
 "रनटाइम प्रभाव पूरा हो गया।"
 
-#: ../../operations.rst:271
+#: ../../operations.rst:274
 msgid ""
 "For remote operation, use an HTTPS proxy and configure "
 "``--console-origin``, ``--console-behind-proxy``, explicit "
@@ -1149,7 +1168,7 @@ msgstr ""
 "करता; कंसोल TLS का उपयोग केवल अपने बाहर जाने वाले कनेक्शनों के लिए, "
 "rustls के ज़रिए, करता है (SID 0012)।"
 
-#: ../../operations.rst:273
+#: ../../operations.rst:276
 msgid ""
 "The native CLI accesses the running console through the same "
 "authorization and storage contracts. It reads credentials from private "
@@ -1158,7 +1177,7 @@ msgstr ""
 "नेटिव CLI चल रहे कंसोल तक उन्हीं प्राधिकरण और स्टोरेज अनुबंधों से पहुँचता "
 "है। यह credential निजी फ़ाइलों से पढ़ता है, कमांड-लाइन मानों से नहीं:"
 
-#: ../../operations.rst:281
+#: ../../operations.rst:284
 msgid ""
 "Use an owner-only password file, complete password setup first, and add "
 "``--factor-file`` for an authenticator or recovery code when required; "
@@ -1203,7 +1222,7 @@ msgstr ""
 "पते, सैंपल की हानि और पुराना डेटा दिखते रहते हैं; देश डेटा आयात करने से न "
 "ट्रैफ़िक बनता है और न पहले ही समाप्त हो चुके सैंपल समृद्ध होते हैं।"
 
-#: ../../operations.rst:283
+#: ../../operations.rst:286
 msgid ""
 "Cluster members announce themselves through the membership table of the "
 "shared database (``console_nodes``) at start, every minute, and within "
@@ -1292,7 +1311,7 @@ msgstr ""
 "स्वतंत्र रूप से सर्व करने वाले कंसोल नोड की पहचान बताते हैं। स्थानीय "
 "कमांड प्रति नोड रहती हैं।"
 
-#: ../../operations.rst:285
+#: ../../operations.rst:288
 msgid ""
 "Traffic tiles open on the last 24 hours of retained closed-minute records "
 "for the selected nodes. The period control also offers an hour, seven or "
@@ -1311,7 +1330,7 @@ msgstr ""
 "बदले जाने तक अपने पिछले मान और आयु दिखाता रहता है; स्रोत या अवधि बदलने पर "
 "पुराना दायरा हटा दिया जाता है। अनुपस्थित इतिहास कभी शून्य नहीं बनता।"
 
-#: ../../operations.rst:287
+#: ../../operations.rst:290
 msgid ""
 "*Compare retained traffic* displays two closed minute windows beside each "
 "other: the same window yesterday, the preceding period, or a second node. "
@@ -1340,7 +1359,7 @@ msgstr ""
 "नहीं करता, इसलिए forward-auth के शून्य को देखे गए रिस्पॉन्स मानने के बजाय "
 "ऑरिजिन-रिस्पॉन्स की तुलनाएँ अनुपलब्ध रहती हैं।"
 
-#: ../../operations.rst:289
+#: ../../operations.rst:292
 msgid ""
 "*Compare retained path rankings* selects two closed windows or nodes. "
 "Node 0 includes all retained nodes, including retired members. An action "
@@ -1364,7 +1383,7 @@ msgstr ""
 "की गई कतार-हानि दिखाता है; अनुपस्थित archive न शून्य ट्रैफ़िक स्थापित कर "
 "सकते हैं न पूरा कवरेज।"
 
-#: ../../operations.rst:291
+#: ../../operations.rst:294
 msgid ""
 "Security opens on the last 24 hours and uses sixty equal time buckets "
 "over the selected period. Its aggregates run on the storage thread under "
@@ -1391,7 +1410,7 @@ msgstr ""
 "शुरुआत और समूहित सटीक गिनती के लिए Trend values खोलें। ये रखे गए निष्कर्ष "
 "हैं, इसलिए घटना कवरेज के अभाव को आक्रमणों का अभाव नहीं समझा जा सकता।"
 
-#: ../../operations.rst:293
+#: ../../operations.rst:296
 msgid ""
 "Wall displays use kiosk sessions. Under Account, an operator names the "
 "display and selects Create display code. The display pastes the one-time "
@@ -1416,7 +1435,7 @@ msgstr ""
 "वैकल्पिक है, शुरू में बंद रहता है, और reduced motion, पुराने डेटा या "
 "Pause पर रुक जाता है।"
 
-#: ../../operations.rst:295
+#: ../../operations.rst:298
 msgid ""
 "Notification destinations (signed webhooks and syslog for denial spikes, "
 "bans, unreachable members and leader changes) live under Settings; "
@@ -1450,7 +1469,7 @@ msgstr ""
 "ताज़ा करते हैं; ऑपरेटर के रीट्राई करने से पहले अपुष्ट ऑडिट पूर्णता स्पष्ट "
 "रूप से दिखाई जाती है।"
 
-#: ../../operations.rst:297
+#: ../../operations.rst:300
 msgid ""
 "Settings also controls retention: one to 90 days for minute history, one "
 "to seven for rankings, one to 30 for incidents and one to 365 for audit. "
@@ -1468,7 +1487,7 @@ msgstr ""
 "इतिहास वापस नहीं आता। पुराने संपादन अस्वीकार होते हैं और सफल बदलाव Audit "
 "में दिखते हैं।"
 
-#: ../../operations.rst:299
+#: ../../operations.rst:302
 msgid ""
 "Response pages (challenge, denied, rate limited, banned, overloaded) are "
 "editable under Settings as bounded HTML with fixed placeholders; drafts "
@@ -1480,7 +1499,7 @@ msgstr ""
 "संपादित किए जा सकते हैं; ड्राफ़्ट एक sandboxed टैब में प्रीव्यू होते हैं "
 "और सहेजे गए पेज अगले नीति स्नैपशॉट से दिए जाते हैं।"
 
-#: ../../operations.rst:301
+#: ../../operations.rst:304
 msgid ""
 "Policy workflows on the Policies page: reorder managed rules, replay a "
 "draft against retained inspection findings, manage IP groups and country "
@@ -1526,7 +1545,7 @@ msgstr ""
 "के आसपास देखा गया बदलाव एक तुलना है, इस बात का साक्ष्य नहीं कि संपादन ने "
 "ट्रैफ़िक बदला।"
 
-#: ../../operations.rst:303
+#: ../../operations.rst:306
 msgid ""
 "Importing a later GeoIP generation does not automatically refresh "
 "existing country-derived reputation rows. Preview the country action to "
@@ -1596,7 +1615,7 @@ msgstr ""
 "ताज़ा करें। ऐतिहासिक क्वेरी, विवरण रीड और परिवर्तन HTTP अनुरोध ही रहते "
 "हैं।"
 
-#: ../../operations.rst:305
+#: ../../operations.rst:308
 msgid ""
 "Page fragments can be bookmarked; Back and Forward reopen authenticated "
 "pages. The sidebar also remembers theme and spacing choices in this "
@@ -1637,11 +1656,11 @@ msgstr ""
 "लोडिंग और प्रतिक्रियाशीलता के मापन की जगह नहीं लेतीं। मॉड्यूल की linear "
 "memory माँग पर 16 MiB की घोषित अधिकतम सीमा तक बढ़ती है।"
 
-#: ../../operations.rst:307
+#: ../../operations.rst:310
 msgid "Deployment Topologies"
 msgstr "डिप्लॉयमेंट टोपोलॉजी"
 
-#: ../../operations.rst:312
+#: ../../operations.rst:315
 msgid ""
 "Deploy the autonomous reverse proxy and the forward-auth validator behind "
 "Nginx or Caddy."
@@ -1649,15 +1668,15 @@ msgstr ""
 "स्वायत्त रिवर्स प्रॉक्सी और forward-auth सत्यापनकर्ता को Nginx या Caddy "
 "के पीछे डिप्लॉय करें।"
 
-#: ../../operations.rst:314
+#: ../../operations.rst:317
 msgid "Reverse Proxy"
 msgstr "रिवर्स प्रॉक्सी"
 
-#: ../../operations.rst:318
+#: ../../operations.rst:321
 msgid "Request routing on the Shield surface"
 msgstr "Shield सतह पर अनुरोध रूटिंग"
 
-#: ../../operations.rst:348
+#: ../../operations.rst:351
 msgid ""
 "Admitted requests reach the origin with ``X-Forwarded-For``, "
 "``X-Forwarded-Proto``, ``X-Real-IP``, ``X-Sibuna-Status`` and "
@@ -1688,7 +1707,7 @@ msgstr ""
 "वाला पाथ वह सामान्य रूप है जिसका नीति ने निर्णय किया (SID 0009); जिस पाथ "
 "का सामान्य रूप न हो उसे ``400`` उत्तर मिलता है।"
 
-#: ../../operations.rst:350
+#: ../../operations.rst:353
 msgid ""
 "HTTP/1.1 WebSocket upgrades pass through admission and policy checks "
 "before the origin's handshake is accepted. Subprotocol and extension "
@@ -1722,7 +1741,7 @@ msgstr ""
 "वाले इनग्रेस का उपयोग करता है; Sibuna स्वयं ब्राउज़र का TLS समाप्त नहीं "
 "करता।"
 
-#: ../../operations.rst:352
+#: ../../operations.rst:355
 msgid ""
 "The ingress can negotiate HTTP/2 with browsers and forward HTTP/1.1 to "
 "Sibuna. Native HTTP/2 support in Sibuna is deferred to a later update; "
@@ -1734,7 +1753,7 @@ msgstr ""
 "स्थगित है; यह व्यवस्था नेटिव gRPC जैसे एप्लिकेशन के लिए end-to-end HTTP/2 "
 "अर्थ (semantics) नहीं देती।"
 
-#: ../../operations.rst:354
+#: ../../operations.rst:357
 msgid ""
 "Content-Length request bodies stream through fixed buffers, preserving "
 "bytes and MIME headers. Multipart uploads retain boundaries, repeated "
@@ -1769,7 +1788,7 @@ msgstr ""
 "प्रति भाग 2 KiB हेडर तक सीमित है, और delimiter के बाद RFC 2046 की "
 "transport padding स्वीकार करती है।"
 
-#: ../../operations.rst:356
+#: ../../operations.rst:359
 msgid ""
 "This is upload compatibility, not file validation or malware scanning. "
 "The backend must enforce accepted media types rather than trust a "
@@ -1813,11 +1832,11 @@ msgstr ""
 "स्थानीय रूप से मिल जाता है; असमर्थित अपेक्षाओं को 417 मिलता है। Expect "
 "हेडर बैकएंड को फ़ॉरवर्ड करने से पहले ही consume हो जाता है।"
 
-#: ../../operations.rst:358
+#: ../../operations.rst:361
 msgid "Forward Auth Behind an Ingress"
 msgstr "इनग्रेस के पीछे Forward Auth"
 
-#: ../../operations.rst:361
+#: ../../operations.rst:364
 msgid ""
 "In ``--mode forward_auth`` the daemon answers the ingress's subrequest "
 "with ``200`` (plus the audit headers ``X-Sibuna-Status``, "
@@ -1847,7 +1866,7 @@ msgstr ""
 "हमेशा वास्तविक अनुरोध URI का उपयोग करते हैं। forward-auth उस बॉडी का "
 "निरीक्षण नहीं करता जिसे इनग्रेस छोड़ देता है।"
 
-#: ../../operations.rst:441
+#: ../../operations.rst:444
 msgid ""
 "The ``/__sibuna/*`` namespace (interstitial, challenge, verify, solver "
 "assets) must reach the daemon directly in both recipes. The nginx error "
@@ -1890,18 +1909,285 @@ msgstr ""
 "हुए इनग्रेस पर नहीं परखती; जिन फ़ॉरवर्ड-मेटाडेटा नियमों पर वे निर्भर हैं, "
 "वे ``sibuna-http`` के यूनिट परीक्षणों से ढके हैं।"
 
-#: ../../operations.rst:443
+#: ../../operations.rst:446
+msgid "JA4 Fingerprints From the Ingress"
+msgstr "इनग्रेस से JA4 फ़िंगरप्रिंट"
+
+#: ../../operations.rst:449
+msgid ""
+"A JA4 fingerprint summarises how a client opens a TLS connection. It is "
+"computed from the client's first handshake message, the ClientHello. The "
+"client's TLS library fixes that message before any HTTP byte is sent, so "
+"a client cannot change its fingerprint from inside its HTTP requests. "
+"Browsers, libraries and bots differ in it. This makes JA4 a stronger "
+"signal than a ``User-Agent`` value, which any client may write as it "
+"likes (SID 0014). JA4 was defined by FoxIO. A fingerprint has 36 "
+"characters in three parts joined by ``_``:"
+msgstr ""
+"JA4 फ़िंगरप्रिंट संक्षेप में बताता है कि कोई क्लाइंट TLS कनेक्शन कैसे "
+"खोलता है। इसकी गणना क्लाइंट के पहले handshake संदेश, ClientHello, से होती "
+"है। क्लाइंट की TLS लाइब्रेरी यह संदेश किसी भी HTTP बाइट के भेजे जाने से "
+"पहले तय कर देती है, इसलिए कोई क्लाइंट अपने HTTP अनुरोधों के भीतर से अपना "
+"फ़िंगरप्रिंट नहीं बदल सकता। ब्राउज़र, लाइब्रेरी और बॉट इसमें भिन्न होते "
+"हैं। इससे JA4 ``User-Agent`` मान से अधिक मज़बूत संकेत बनता है, जिसे कोई "
+"भी क्लाइंट अपनी इच्छा से लिख सकता है (SID 0014)। JA4 को FoxIO ने परिभाषित "
+"किया था। एक फ़िंगरप्रिंट में 36 अक्षर होते हैं, ``_`` से जुड़े तीन भागों "
+"में:"
+
+#: ../../operations.rst:464
+msgid ""
+"Only the component that terminates TLS sees the ClientHello, so only it "
+"can compute JA4. Sibuna does not terminate TLS: it serves plain HTTP/1.1 "
+"behind an ingress, and the ingress speaks TLS, HTTP/2 and HTTP/3 with "
+"browsers. Several ingresses compute JA4 already. We therefore let the "
+"ingress compute the fingerprint and send it in a request header, and "
+"Sibuna reads it from there."
+msgstr ""
+"केवल वही घटक ClientHello देखता है जो TLS समाप्त करता है, इसलिए केवल वही "
+"JA4 की गणना कर सकता है। Sibuna TLS समाप्त नहीं करता: वह इनग्रेस के पीछे "
+"सादा HTTP/1.1 परोसता है, और इनग्रेस ब्राउज़र के साथ TLS, HTTP/2 और HTTP/3 "
+"बोलता है। कई इनग्रेस पहले से JA4 की गणना करते हैं। इसलिए हम फ़िंगरप्रिंट "
+"की गणना इनग्रेस को करने देते हैं और वह उसे एक अनुरोध हेडर में भेजता है, "
+"और Sibuna उसे वहीं से पढ़ता है।"
+
+#: ../../operations.rst:466
+msgid ""
+"``--ja4-header <name>`` names that header. It is off by default and has "
+"no default name; we always name the header the ingress uses. Sibuna "
+"stores the name in lower case and matches it without regard to case. It "
+"refuses the names of fields it writes or strips itself "
+"(``X-Forwarded-*``, ``X-Real-IP``, ``X-Sibuna-*`` and ``Forwarded``, also "
+"with ``_`` for ``-``). When the option is set, the startup banner prints "
+"a line such as ``JA4: from cf-ja4 (trusted)``."
+msgstr ""
+"``--ja4-header <name>`` उस हेडर का नाम देता है। यह डिफ़ॉल्ट रूप से बंद है "
+"और इसका कोई डिफ़ॉल्ट नाम नहीं है; हम हमेशा वही हेडर नाम देते हैं जिसका "
+"इनग्रेस उपयोग करता है। Sibuna नाम को छोटे अक्षरों में संग्रहीत करता है और "
+"केस की परवाह किए बिना उसका मिलान करता है। वह उन फ़ील्ड के नाम अस्वीकार "
+"करता है जिन्हें वह स्वयं लिखता या हटाता है (``X-Forwarded-*``, "
+"``X-Real-IP``, ``X-Sibuna-*`` और ``Forwarded``, ``-`` की जगह ``_`` के साथ "
+"भी)। विकल्प सेट होने पर स्टार्टअप बैनर ``JA4: from cf-ja4 (trusted)`` "
+"जैसी एक पंक्ति छापता है।"
+
+#: ../../operations.rst:468
+msgid ""
+"The header is read only when forwarded fields are trusted. This is the "
+"decision that governs ``X-Forwarded-For``: ``--trust-forwarded``, or "
+"forward-auth mode without ``--no-trust-forwarded``. From an untrusted "
+"peer the header is ignored. With trust, a request carries a fingerprint "
+"when exactly one field of that name is present and its value has the JA4 "
+"form. A malformed value, or a repeated field, gives the request no "
+"fingerprint. Two counters observe this: ``sibuna_ja4_present_total`` "
+"counts requests with a fingerprint, and ``sibuna_ja4_invalid_total`` "
+"counts requests whose header was malformed or repeated. A request from an "
+"untrusted peer bumps neither counter."
+msgstr ""
+"हेडर केवल तभी पढ़ा जाता है जब फ़ॉरवर्ड किए गए फ़ील्ड पर भरोसा हो। यह वही "
+"निर्णय है जो ``X-Forwarded-For`` को नियंत्रित करता है: "
+"``--trust-forwarded``, या ``--no-trust-forwarded`` के बिना forward-auth "
+"मोड। अविश्वसनीय पीयर से आया हेडर अनदेखा किया जाता है। भरोसे के साथ, किसी "
+"अनुरोध में फ़िंगरप्रिंट तब होता है जब उस नाम का ठीक एक फ़ील्ड मौजूद हो और "
+"उसका मान JA4 के रूप में हो। विकृत मान, या दोहराया गया फ़ील्ड, अनुरोध को "
+"कोई फ़िंगरप्रिंट नहीं देता। दो काउंटर इसे देखते हैं: "
+"``sibuna_ja4_present_total`` फ़िंगरप्रिंट वाले अनुरोध गिनता है, और "
+"``sibuna_ja4_invalid_total`` वे अनुरोध गिनता है जिनका हेडर विकृत या "
+"दोहराया गया था। अविश्वसनीय पीयर का अनुरोध किसी भी काउंटर को नहीं बढ़ाता।"
+
+#: ../../operations.rst:470
+msgid ""
+"In reverse-proxy mode, the origin sees the header only when Sibuna trusts "
+"it. Without trust, Sibuna removes every field of that name from the "
+"request it sends to the origin, also when a client spells the name with "
+"``_`` for ``-``. A client therefore cannot hand the origin a forged "
+"fingerprint under that name. With trust, the field passes unchanged in "
+"its exact spelling, and an alias with ``_`` is still removed. Without "
+"``--ja4-header``, a field of that name is an ordinary field."
+msgstr ""
+"रिवर्स-प्रॉक्सी मोड में ऑरिजिन हेडर को केवल तभी देखता है जब Sibuna उस पर "
+"भरोसा करता है। भरोसे के बिना, Sibuna ऑरिजिन को भेजे जाने वाले अनुरोध से "
+"उस नाम का हर फ़ील्ड हटा देता है, तब भी जब कोई क्लाइंट नाम को ``-`` की जगह "
+"``_`` से लिखता है। इसलिए कोई क्लाइंट उस नाम से ऑरिजिन को जाली "
+"फ़िंगरप्रिंट नहीं थमा सकता। भरोसे के साथ, फ़ील्ड अपनी सटीक वर्तनी में "
+"बिना बदले गुज़रता है, और ``_`` वाला उपनाम फिर भी हटा दिया जाता है। "
+"``--ja4-header`` के बिना उस नाम का फ़ील्ड एक सामान्य फ़ील्ड है।"
+
+#: ../../operations.rst:472
+msgid "The ingress must own the header"
+msgstr "हेडर का स्वामी इनग्रेस होना चाहिए"
+
+#: ../../operations.rst:474
+msgid ""
+"A fingerprint is only as trustworthy as the ingress that wrote it. Sibuna "
+"cannot tell a value the ingress computed from a value the client sent. "
+"The ingress must therefore overwrite, or remove, any copy of the header "
+"that the client supplies, on every route that reaches Sibuna. Sibuna's "
+"listener must accept connections from the ingress alone, as for "
+"``X-Forwarded-For``."
+msgstr ""
+"फ़िंगरप्रिंट उतना ही विश्वसनीय है जितना उसे लिखने वाला इनग्रेस। Sibuna "
+"इनग्रेस द्वारा गणना किए गए मान और क्लाइंट द्वारा भेजे गए मान में अंतर "
+"नहीं कर सकता। इसलिए इनग्रेस को Sibuna तक पहुँचने वाले हर रूट पर क्लाइंट "
+"द्वारा दी गई हेडर की हर प्रति को अधिलेखित करना, या हटाना, चाहिए। Sibuna "
+"के listener को केवल इनग्रेस से कनेक्शन स्वीकार करने चाहिए, जैसे "
+"``X-Forwarded-For`` के लिए।"
+
+#: ../../operations.rst:476
+msgid ""
+"**Cloudflare.** The managed transform \"Add bot protection headers\" adds "
+"``cf-ja4`` to the request sent to the origin, beside ``cf-bot-score``, "
+"``cf-verified-bot`` and ``cf-ja3-hash``. It requires an Enterprise plan "
+"with Bot Management. An ingress between Cloudflare and Sibuna must pass "
+"the field on unchanged. We start Sibuna with:"
+msgstr ""
+"**Cloudflare.** managed transform \"Add bot protection headers\" ऑरिजिन "
+"को भेजे गए अनुरोध में ``cf-bot-score``, ``cf-verified-bot`` और "
+"``cf-ja3-hash`` के साथ ``cf-ja4`` जोड़ता है। इसके लिए Bot Management सहित "
+"Enterprise प्लान आवश्यक है। Cloudflare और Sibuna के बीच के किसी इनग्रेस "
+"को यह फ़ील्ड बिना बदले आगे भेजना चाहिए। हम Sibuna को इस तरह शुरू करते हैं:"
+
+#: ../../operations.rst:482
+msgid ""
+"The ingress in front of Sibuna must accept connections from Cloudflare's "
+"addresses alone; otherwise a client can bypass Cloudflare and send its "
+"own ``cf-ja4``."
+msgstr ""
+"Sibuna के सामने वाले इनग्रेस को केवल Cloudflare के पतों से कनेक्शन "
+"स्वीकार करने चाहिए; अन्यथा कोई क्लाइंट Cloudflare को बायपास करके अपना "
+"``cf-ja4`` भेज सकता है।"
+
+#: ../../operations.rst:484
+msgid ""
+"**nginx.** FoxIO's ``ja4-nginx-module`` computes JA4 inside nginx and "
+"exposes it as ``$http_ssl_ja4``. It needs nginx 1.26 or later with the "
+"module's ClientHello capture patch, built with "
+"``--with-http_ssl_module``. ``proxy_set_header`` replaces a client's "
+"field of the same name, so each location that reaches Sibuna sets the "
+"header itself:"
+msgstr ""
+"**nginx.** FoxIO का ``ja4-nginx-module`` nginx के भीतर JA4 की गणना करता "
+"है और उसे ``$http_ssl_ja4`` के रूप में उपलब्ध कराता है। इसके लिए nginx "
+"1.26 या बाद का संस्करण चाहिए, मॉड्यूल के ClientHello capture पैच के साथ, "
+"``--with-http_ssl_module`` के साथ बिल्ड किया हुआ। ``proxy_set_header`` "
+"क्लाइंट के उसी नाम वाले फ़ील्ड को बदल देता है, इसलिए Sibuna तक पहुँचने "
+"वाला हर location हेडर स्वयं सेट करता है:"
+
+#: ../../operations.rst:503
+msgid ""
+"In the forward-auth recipe, the same ``proxy_set_header X-JA4 "
+"$http_ssl_ja4;`` line belongs in ``@sibuna_challenge`` and in ``location "
+"/__sibuna/`` as well. A location that omits it passes the client's own "
+"``X-JA4`` to Sibuna, which trusts it."
+msgstr ""
+"forward-auth विधि में वही ``proxy_set_header X-JA4 $http_ssl_ja4;`` "
+"पंक्ति ``@sibuna_challenge`` में और ``location /__sibuna/`` में भी होनी "
+"चाहिए। जो location इसे छोड़ देता है वह क्लाइंट का अपना ``X-JA4`` Sibuna "
+"को भेज देता है, और Sibuna उस पर भरोसा करता है।"
+
+#: ../../operations.rst:505
+msgid ""
+"**Apache Traffic Server.** The ``ja4_fingerprint`` plugin is enabled by "
+"the line ``ja4_fingerprint.so`` in ``plugin.config``. It has no options. "
+"It adds a ``ja4`` field with the fingerprint, and an ``x-ja4-via`` field "
+"with the proxy's name, to the requests of each TLS connection. We start "
+"Sibuna with ``--ja4-header ja4 --trust-forwarded``. The plugin's "
+"documentation does not say whether it replaces a ``ja4`` field that the "
+"client sent. We must establish this for our version, or remove the "
+"client's field before the plugin adds its own, before we trust the value."
+msgstr ""
+"**Apache Traffic Server.** ``ja4_fingerprint`` प्लगइन ``plugin.config`` "
+"में ``ja4_fingerprint.so`` पंक्ति से सक्षम होता है। इसके कोई विकल्प नहीं "
+"हैं। यह हर TLS कनेक्शन के अनुरोधों में फ़िंगरप्रिंट वाला एक ``ja4`` "
+"फ़ील्ड, और प्रॉक्सी के नाम वाला एक ``x-ja4-via`` फ़ील्ड जोड़ता है। हम "
+"Sibuna को ``--ja4-header ja4 --trust-forwarded`` के साथ शुरू करते हैं। "
+"प्लगइन का दस्तावेज़ यह नहीं बताता कि वह क्लाइंट द्वारा भेजे गए ``ja4`` "
+"फ़ील्ड को बदलता है या नहीं। मान पर भरोसा करने से पहले हमें अपने संस्करण "
+"के लिए यह पता करना होगा, या प्लगइन के अपना फ़ील्ड जोड़ने से पहले क्लाइंट "
+"का फ़ील्ड हटाना होगा।"
+
+#: ../../operations.rst:507
+msgid ""
+"A rule matches a fingerprint with the ``ja4`` field (Part X, Policy "
+"Schema). The value is either a whole fingerprint, which must be equal, or "
+"a prefix followed by ``*``, which the fingerprint must start with. "
+"``\"*\"`` alone matches any fingerprint. A request without a fingerprint "
+"never matches a ``ja4`` rule. The loader refuses a pattern that no "
+"fingerprint could match, such as ``T13D*`` in upper case, with ``INVALID "
+"POLICY JA4``. Matching compares bytes and allocates nothing."
+msgstr ""
+"कोई नियम ``ja4`` फ़ील्ड से फ़िंगरप्रिंट का मिलान करता है (भाग X, नीति "
+"स्कीमा)। मान या तो पूरा फ़िंगरप्रिंट होता है, जो बराबर होना चाहिए, या "
+"``*`` के बाद वाला प्रीफ़िक्स, जिससे फ़िंगरप्रिंट शुरू होना चाहिए। अकेला "
+"``\"*\"`` किसी भी फ़िंगरप्रिंट से मेल खाता है। फ़िंगरप्रिंट रहित अनुरोध "
+"कभी किसी ``ja4`` नियम से मेल नहीं खाता। लोडर ऐसे पैटर्न को, जिससे कोई "
+"फ़िंगरप्रिंट मेल नहीं खा सकता, जैसे बड़े अक्षरों में ``T13D*``, ``INVALID "
+"POLICY JA4`` के साथ अस्वीकार करता है। मिलान बाइट की तुलना करता है और कुछ "
+"भी आवंटित नहीं करता।"
+
+#: ../../operations.rst:521
+msgid ""
+"The first rule denies one fingerprint exactly; the value is an example, "
+"not a known scanner. The next two add weight to the request's score "
+"instead of deciding: a TLS 1.3 client that sent no server name, and a "
+"headless browser by its ``User-Agent``. When no later rule decides first, "
+"a request that shows both signals scores 45 and reaches the default deny "
+"threshold of 40, while a request that shows one is challenged. The last "
+"rule challenges, by prefix, every client that negotiated TLS 1.2 over TCP "
+"on the checkout path. It challenges rather than denies, because many "
+"legitimate older clients still use TLS 1.2. Rules should combine JA4 with "
+"other signals in this way. A JA4 value names a TLS library and its "
+"configuration, not a person or a device. Many clients share one library, "
+"and specialised libraries can imitate a browser's ClientHello. JA4 raises "
+"the cost of automation; it does not prove identity. For the same reason "
+"Sibuna keeps bans and reputation keyed by address and never by "
+"fingerprint."
+msgstr ""
+"पहला नियम एक फ़िंगरप्रिंट को ठीक-ठीक deny करता है; मान एक उदाहरण है, कोई "
+"ज्ञात स्कैनर नहीं। अगले दो नियम निर्णय लेने के बजाय अनुरोध के स्कोर में "
+"भार जोड़ते हैं: ऐसा TLS 1.3 क्लाइंट जिसने कोई सर्वर नाम नहीं भेजा, और "
+"अपने ``User-Agent`` से पहचाना गया headless ब्राउज़र। जब कोई बाद वाला नियम "
+"पहले निर्णय नहीं लेता, तो दोनों संकेत दिखाने वाले अनुरोध का स्कोर 45 होता "
+"है और वह 40 की डिफ़ॉल्ट deny सीमा तक पहुँच जाता है, जबकि एक संकेत दिखाने "
+"वाले अनुरोध को चैलेंज मिलता है। अंतिम नियम checkout पाथ पर उन सभी क्लाइंट "
+"को प्रीफ़िक्स से चैलेंज करता है जिन्होंने TCP पर TLS 1.2 तय किया। वह deny "
+"के बजाय चैलेंज करता है, क्योंकि कई वैध पुराने क्लाइंट अब भी TLS 1.2 का "
+"उपयोग करते हैं। नियमों को JA4 को इसी तरह अन्य संकेतों के साथ जोड़ना "
+"चाहिए। JA4 मान किसी TLS लाइब्रेरी और उसके कॉन्फ़िगरेशन का नाम बताता है, "
+"किसी व्यक्ति या डिवाइस का नहीं। कई क्लाइंट एक ही लाइब्रेरी साझा करते हैं, "
+"और विशेष लाइब्रेरी किसी ब्राउज़र के ClientHello की नकल कर सकती हैं। JA4 "
+"स्वचालन की लागत बढ़ाता है; यह पहचान सिद्ध नहीं करता। इसी कारण Sibuna "
+"प्रतिबंध और प्रतिष्ठा को पते से कुंजीबद्ध रखता है, फ़िंगरप्रिंट से कभी "
+"नहीं।"
+
+#: ../../operations.rst:523
+msgid ""
+"Incidents (WAF denials, honeypot hits and audit findings) record the "
+"fingerprint of their request when it carried one, in the column "
+"``security_incidents.ja4``. The console shows it in the incident evidence "
+"as \"JA4 fingerprint\", with the value or \"Not recorded\". The Events "
+"filters accept a fingerprint or a prefix. The managed-rule editor has a "
+"JA4 field, stored in ``policies.ja4_pattern``, and the policy test form "
+"takes a fingerprint."
+msgstr ""
+"घटनाएँ (WAF अस्वीकृतियाँ, honeypot हिट और ऑडिट निष्कर्ष) अपने अनुरोध का "
+"फ़िंगरप्रिंट, यदि उसमें था, ``security_incidents.ja4`` कॉलम में दर्ज करती "
+"हैं। कंसोल इसे घटना के साक्ष्य में \"JA4 fingerprint\" के रूप में दिखाता "
+"है, मान के साथ या \"Not recorded\"। Events फ़िल्टर फ़िंगरप्रिंट या "
+"प्रीफ़िक्स स्वीकार करते हैं। managed-rule संपादक में एक JA4 फ़ील्ड है, जो "
+"``policies.ja4_pattern`` में संग्रहीत होता है, और नीति परीक्षण फ़ॉर्म एक "
+"फ़िंगरप्रिंट लेता है।"
+
+#: ../../operations.rst:525
 msgid "Declarative Policy"
 msgstr "घोषणात्मक नीति"
 
-#: ../../operations.rst:448
+#: ../../operations.rst:530
 msgid ""
 "Write a policy file with rules, weights, thresholds, IP rules, and the "
 "WAF switch."
 msgstr ""
 "नियमों, भार, सीमाओं, IP नियमों और WAF स्विच के साथ एक नीति फ़ाइल लिखें।"
 
-#: ../../operations.rst:470
+#: ../../operations.rst:552
 msgid ""
 "The loader fails closed: an unknown key, a misspelled action, a malformed "
 "address or an out-of-range number rejects the whole file, the diagnostic "
@@ -1912,8 +2198,11 @@ msgid ""
 "false`` selects the Gate surface from the file. Two further keys are part "
 "of the schema (Part X): ``inspection`` sets each WAF category to "
 "``disabled``, ``audit`` or ``enforce``, and a rule's ``limits`` object "
-"gives it a quota of its own. Path patterns match the request path in "
-"normal form (SID 0003), so a pattern must be written in that form."
+"gives it a quota of its own. A rule's ``ja4`` field matches the JA4 "
+"fingerprint that a trusted ingress forwarded, exactly or by a prefix "
+"followed by ``*``; it needs ``--ja4-header`` (see \"JA4 Fingerprints From "
+"the Ingress\"). Path patterns match the request path in normal form (SID "
+"0003), so a pattern must be written in that form."
 msgstr ""
 "लोडर बंद होकर विफल होता है (fails closed): कोई अज्ञात कुंजी, गलत वर्तनी "
 "वाला एक्शन, विकृत पता या सीमा से बाहर की संख्या पूरी फ़ाइल को अस्वीकार कर "
@@ -1924,14 +2213,17 @@ msgstr ""
 "है; ``waf: false`` फ़ाइल से Gate सतह चुनता है। दो और कुंजियाँ स्कीमा का "
 "भाग हैं (भाग X): ``inspection`` हर WAF श्रेणी को ``disabled``, ``audit`` "
 "या ``enforce`` पर सेट करता है, और किसी नियम का ``limits`` ऑब्जेक्ट उसे "
-"अपना कोटा देता है। पाथ पैटर्न सामान्य रूप वाले अनुरोध पाथ से मेल खाते हैं "
-"(SID 0003), इसलिए पैटर्न उसी रूप में लिखा जाना चाहिए।"
+"अपना कोटा देता है। किसी नियम का ``ja4`` फ़ील्ड उस JA4 फ़िंगरप्रिंट से मेल "
+"खाता है जिसे किसी विश्वसनीय इनग्रेस ने फ़ॉरवर्ड किया, ठीक-ठीक या ``*`` के "
+"बाद वाले प्रीफ़िक्स से; इसके लिए ``--ja4-header`` आवश्यक है (देखें "
+"\"इनग्रेस से JA4 फ़िंगरप्रिंट\")। पाथ पैटर्न सामान्य रूप वाले अनुरोध पाथ "
+"से मेल खाते हैं (SID 0003), इसलिए पैटर्न उसी रूप में लिखा जाना चाहिए।"
 
-#: ../../operations.rst:472
+#: ../../operations.rst:554
 msgid "Persistent Storage and Clustering"
 msgstr "स्थायी स्टोरेज और क्लस्टरिंग"
 
-#: ../../operations.rst:477
+#: ../../operations.rst:559
 msgid ""
 "Enable SQLite or PostgreSQL storage, add a dynamic policy and a ban with "
 "SQL, query incident forensics, understand campaign clustering, and run "
@@ -1941,11 +2233,11 @@ msgstr ""
 "प्रतिबंध जोड़ें, घटनाओं की फ़ॉरेंसिक क्वेरी करें, कैंपेन क्लस्टरिंग "
 "समझें, और एक PostgreSQL डेटाबेस पर कई नोड चलाएँ।"
 
-#: ../../operations.rst:480
+#: ../../operations.rst:562
 msgid "The storage architecture: workers never block on the database"
 msgstr "स्टोरेज आर्किटेक्चर: वर्कर कभी डेटाबेस पर नहीं रुकते"
 
-#: ../../operations.rst:512
+#: ../../operations.rst:594
 msgid ""
 "``--data-dir /var/lib/sibuna`` opens the SQLite file "
 "``/var/lib/sibuna/sibuna.db`` (WAL mode, ``synchronous=NORMAL``, a busy "
@@ -1972,62 +2264,66 @@ msgstr ""
 "दोबारा बनाना लोड करने से पहले और बाद में revision पढ़ता है, और यदि बीच "
 "में किसी writer ने कमिट किया हो तो अपना उम्मीदवार छोड़ देता है।"
 
-#: ../../operations.rst:514
+#: ../../operations.rst:596
 msgid "Schema"
 msgstr "स्कीमा"
 
-#: ../../operations.rst:517
+#: ../../operations.rst:599
 msgid "Core tables"
 msgstr "मुख्य टेबल"
 
-#: ../../operations.rst:521
+#: ../../operations.rst:603
 msgid "Table"
 msgstr "टेबल"
 
-#: ../../operations.rst:522
+#: ../../operations.rst:604
 msgid "Purpose and key"
 msgstr "उद्देश्य और कुंजी"
 
-#: ../../operations.rst:523
+#: ../../operations.rst:605
 msgid "``policy_revision``"
 msgstr "``policy_revision``"
 
-#: ../../operations.rst:524
+#: ../../operations.rst:606
 msgid ""
 "The policy revision, one row; triggers on the three policy tables advance "
 "it."
 msgstr ""
 "नीति revision, एक पंक्ति; तीनों नीति टेबल पर trigger इसे आगे बढ़ाते हैं।"
 
-#: ../../operations.rst:525
+#: ../../operations.rst:607
 msgid "``policies``"
 msgstr "``policies``"
 
-#: ../../operations.rst:526
-msgid "Ordered dynamic rules, keyed by ``id``."
-msgstr "क्रमबद्ध डायनामिक नियम, ``id`` से कुंजीबद्ध।"
+#: ../../operations.rst:608
+msgid ""
+"Ordered dynamic rules, keyed by ``id``. The nullable ``ja4_pattern`` "
+"holds a rule's JA4 criterion, at most 37 bytes."
+msgstr ""
+"क्रमबद्ध डायनामिक नियम, ``id`` से कुंजीबद्ध। nullable ``ja4_pattern`` "
+"किसी नियम का JA4 मानदंड रखता है, अधिकतम 37 बाइट।"
 
-#: ../../operations.rst:527
+#: ../../operations.rst:609
 msgid "``policy_inspection``"
 msgstr "``policy_inspection``"
 
-#: ../../operations.rst:528
+#: ../../operations.rst:610
 msgid "The stored WAF mode per category, one row."
 msgstr "प्रति श्रेणी संग्रहीत WAF मोड, एक पंक्ति।"
 
-#: ../../operations.rst:529
+#: ../../operations.rst:611
 msgid "``ip_reputation``"
 msgstr "``ip_reputation``"
 
-#: ../../operations.rst:530
+#: ../../operations.rst:612
 msgid "Scores, hit counts and expiry, keyed by address or prefix."
 msgstr "स्कोर, हिट की गिनती और समाप्ति, पते या प्रीफ़िक्स से कुंजीबद्ध।"
 
-#: ../../operations.rst:531
+#: ../../operations.rst:613
 msgid "``incident_receipts``"
 msgstr "``incident_receipts``"
 
-#: ../../operations.rst:532
+#: ../../operations.rst:614
 msgid ""
 "Each node's durable incident receipt (the next sequence after its last "
 "committed batch), keyed by node."
@@ -2035,23 +2331,25 @@ msgstr ""
 "हर नोड की स्थायी घटना रसीद (उसके अंतिम कमिट किए गए बैच के बाद का अगला "
 "क्रमांक), नोड से कुंजीबद्ध।"
 
-#: ../../operations.rst:533
+#: ../../operations.rst:615
 msgid "``security_incidents``"
 msgstr "``security_incidents``"
 
-#: ../../operations.rst:534
+#: ../../operations.rst:616
 msgid ""
 "One bounded event record with its 64-component embedding (256 bytes), "
-"keyed by ``node_id << 40 | sequence``."
+"keyed by ``node_id << 40 | sequence``. The nullable ``ja4`` holds the "
+"request's JA4 fingerprint, exactly 36 bytes."
 msgstr ""
 "अपनी 64-घटक एम्बेडिंग (256 बाइट) के साथ एक सीमित इवेंट रिकॉर्ड, ``node_id "
-"<< 40 | sequence`` से कुंजीबद्ध।"
+"<< 40 | sequence`` से कुंजीबद्ध। nullable ``ja4`` अनुरोध का JA4 "
+"फ़िंगरप्रिंट रखता है, ठीक 36 बाइट।"
 
-#: ../../operations.rst:535
+#: ../../operations.rst:617
 msgid "``incidents_fts``"
 msgstr "``incidents_fts``"
 
-#: ../../operations.rst:536
+#: ../../operations.rst:618
 msgid ""
 "On SQLite: an FTS5 table over the canonical tokens of paths and payloads. "
 "On PostgreSQL the same tokens are the ``tsvector`` column ``search`` of "
@@ -2061,45 +2359,48 @@ msgstr ""
 "वही टोकन ``security_incidents`` का ``tsvector`` कॉलम ``search`` हैं, GIN "
 "इंडेक्स के साथ।"
 
-#: ../../operations.rst:537
+#: ../../operations.rst:619
 msgid "``sibuna_schema``"
 msgstr "``sibuna_schema``"
 
-#: ../../operations.rst:538
+#: ../../operations.rst:620
 msgid "Every applied migration, keyed by component and version."
 msgstr "हर लागू migration, घटक और संस्करण से कुंजीबद्ध।"
 
-#: ../../operations.rst:540
+#: ../../operations.rst:622
 msgid ""
 "The core schema is ``crates/storage/src/schema.rs``, written once per "
 "dialect. With the console the component ``console`` adds 33 tables whose "
 "names start with ``console_`` (SID 0013; "
 "``crates/console-storage/src/schema/``). Migrations are numbered per "
-"component and compiled into the binary; all pending migrations run in one "
-"transaction, and a node refuses a database whose version of a component "
-"is newer than it knows. An abbreviated printed schema is not an upgrade "
-"script. SQLite tables are ``STRICT``, and ``CHECK`` constraints mirror "
-"the Rust types, so the database refuses a row the daemon could not "
-"represent. Enumerated values are stored in lowercase: a direct write of "
-"``'DENY'`` is refused."
+"component and compiled into the binary. Core migration 2 adds the two JA4 "
+"columns; a database created before it is migrated on start. All pending "
+"migrations run in one transaction, and a node refuses a database whose "
+"version of a component is newer than it knows. An abbreviated printed "
+"schema is not an upgrade script. SQLite tables are ``STRICT``, and "
+"``CHECK`` constraints mirror the Rust types, so the database refuses a "
+"row the daemon could not represent. Enumerated values are stored in "
+"lowercase: a direct write of ``'DENY'`` is refused."
 msgstr ""
 "मुख्य स्कीमा ``crates/storage/src/schema.rs`` है, प्रति dialect एक बार "
 "लिखा गया। कंसोल के साथ घटक ``console`` 33 टेबल जोड़ता है जिनके नाम "
 "``console_`` से शुरू होते हैं (SID 0013; "
 "``crates/console-storage/src/schema/``)। migration प्रति घटक क्रमांकित "
-"हैं और बाइनरी में कंपाइल होते हैं; सभी लंबित migration एक ट्रांज़ैक्शन "
-"में चलते हैं, और नोड उस डेटाबेस को अस्वीकार करता है जिसमें किसी घटक का "
-"संस्करण उसकी जानकारी से नया हो। छापा गया संक्षिप्त स्कीमा अपग्रेड "
-"स्क्रिप्ट नहीं है। SQLite टेबल ``STRICT`` हैं, और ``CHECK`` constraint "
-"Rust प्रकारों का प्रतिबिंब हैं, इसलिए डेटाबेस ऐसी पंक्ति अस्वीकार करता है "
-"जिसे डेमन व्यक्त नहीं कर सकता। गणनीय (enumerated) मान छोटे अक्षरों में "
-"संग्रहीत होते हैं: ``'DENY'`` का सीधा राइट अस्वीकार होता है।"
+"हैं और बाइनरी में कंपाइल होते हैं। कोर migration 2 दो JA4 कॉलम जोड़ता है; "
+"उससे पहले बना डेटाबेस शुरू होने पर migrate किया जाता है। सभी लंबित "
+"migration एक ट्रांज़ैक्शन में चलते हैं, और नोड उस डेटाबेस को अस्वीकार "
+"करता है जिसमें किसी घटक का संस्करण उसकी जानकारी से नया हो। छापा गया "
+"संक्षिप्त स्कीमा अपग्रेड स्क्रिप्ट नहीं है। SQLite टेबल ``STRICT`` हैं, "
+"और ``CHECK`` constraint Rust प्रकारों का प्रतिबिंब हैं, इसलिए डेटाबेस ऐसी "
+"पंक्ति अस्वीकार करता है जिसे डेमन व्यक्त नहीं कर सकता। गणनीय (enumerated) "
+"मान छोटे अक्षरों में संग्रहीत होते हैं: ``'DENY'`` का सीधा राइट अस्वीकार "
+"होता है।"
 
-#: ../../operations.rst:542
+#: ../../operations.rst:624
 msgid "Operating It"
 msgstr "इसका संचालन"
 
-#: ../../operations.rst:545
+#: ../../operations.rst:627
 msgid ""
 "Use the ``sqlite3`` shell on ``sibuna.db`` (WAL mode lets it read while "
 "the daemon runs), or ``psql`` on the cluster database:"
@@ -2107,7 +2408,7 @@ msgstr ""
 "``sibuna.db`` पर ``sqlite3`` shell का उपयोग करें (WAL मोड डेमन के चलते "
 "समय इसे पढ़ने देता है), या क्लस्टर डेटाबेस पर ``psql`` का:"
 
-#: ../../operations.rst:565
+#: ../../operations.rst:647
 msgid ""
 "The statements are written for SQLite. On PostgreSQL, ``enabled`` is "
 "``TRUE``, the time is ``CAST(extract(epoch FROM now()) AS BIGINT)`` "
@@ -2129,7 +2430,7 @@ msgstr ""
 "भी जारी करता है, इसलिए दूसरे नोड तुरंत tick करते हैं; polling गारंटी बनी "
 "रहती है।"
 
-#: ../../operations.rst:567
+#: ../../operations.rst:649
 msgid ""
 "Scores at or below :math:`-50` become ``deny`` prefixes in the trie, "
 "scores at or above :math:`50` become ``allow``, and ``banned_until`` "
@@ -2143,11 +2444,11 @@ msgstr ""
 "डालते हैं, इसलिए साझा PostgreSQL डेटाबेस के साथ एक नोड पर फँसा जाल सभी "
 "नोड पर उस पते पर प्रतिबंध लगा देता है।"
 
-#: ../../operations.rst:569
+#: ../../operations.rst:651
 msgid "A Transaction Receipt Makes Retry Safe"
 msgstr "ट्रांज़ैक्शन रसीद रीट्राई को सुरक्षित बनाती है"
 
-#: ../../operations.rst:572
+#: ../../operations.rst:654
 msgid ""
 "The storage thread collects at most 32 pending records and builds one SQL "
 "transaction. The transaction inserts incidents, updates the full-text "
@@ -2164,11 +2465,11 @@ msgstr ""
 "रसीद से सुरक्षित है; ट्रांज़ैक्शन उसे सबसे अंत में आगे बढ़ाता है, और कभी "
 "पीछे नहीं।"
 
-#: ../../operations.rst:574
+#: ../../operations.rst:656
 msgid "Worked example: the acknowledgement disappears"
 msgstr "हल किया गया उदाहरण: पावती गायब हो जाती है"
 
-#: ../../operations.rst:576
+#: ../../operations.rst:658
 msgid ""
 "Suppose issuer 2 prepares sequences 101 through 132, ending at receipt "
 "133. The database commits all records and receipt 133, then the "
@@ -2187,7 +2488,7 @@ msgstr ""
 "हैं न हनीपॉट हिट की गिनती। यदि मूल ट्रांज़ैक्शन rollback हुआ था, तो "
 "पुरानी रसीद बनी रहती है और रीट्राई सभी राइट एक बार लागू करता है।"
 
-#: ../../operations.rst:578
+#: ../../operations.rst:660
 msgid ""
 "A failed commit retains the pending batch in memory and increments "
 "``incident_write_failures``. The tick still attempts policy polling. A "
@@ -2204,11 +2505,11 @@ msgstr ""
 "है। कमिट से पहले प्रोसेस का अंत कतार के डेटा को खो सकता है: यह एक सीमित "
 "असमकालिक फ़ॉरेंसिक पाथ है, कतार में डालते समय टिकाऊ संदेश कतार नहीं।"
 
-#: ../../operations.rst:580
+#: ../../operations.rst:662
 msgid "Exercise 9.1"
 msgstr "अभ्यास 9.1"
 
-#: ../../operations.rst:582
+#: ../../operations.rst:664
 msgid ""
 "Move the receipt update outside the data transaction. Construct one crash "
 "schedule that duplicates a reputation effect and another that loses an "
@@ -2217,11 +2518,11 @@ msgstr ""
 "रसीद अपडेट को डेटा ट्रांज़ैक्शन से बाहर ले जाएँ। क्रैश का एक ऐसा क्रम "
 "बनाएँ जो प्रतिष्ठा प्रभाव को दोगुना करे और दूसरा ऐसा जो एक घटना खो दे।"
 
-#: ../../operations.rst:584
+#: ../../operations.rst:666
 msgid "Campaign Clustering"
 msgstr "कैंपेन क्लस्टरिंग"
 
-#: ../../operations.rst:587
+#: ../../operations.rst:669
 msgid ""
 "Each incident payload is embedded as a 64-dimensional unit vector by the "
 "hashing trick over byte trigrams (digits folded, case folded) and stored "
@@ -2249,11 +2550,11 @@ msgstr ""
 "लेकिन यह गारंटी नहीं कि आक्रमणों का हर जोड़ा एक कैंपेन साझा करता है। कोई "
 "मॉडल नहीं चलता और कुछ भी प्रशिक्षित नहीं होता।"
 
-#: ../../operations.rst:589
+#: ../../operations.rst:671
 msgid "Clustering"
 msgstr "क्लस्टरिंग"
 
-#: ../../operations.rst:592
+#: ../../operations.rst:674
 msgid ""
 "A cluster is a set of nodes that share one PostgreSQL database. Build "
 "with the ``postgres-tls`` feature (``cargo build --release -p sibuna "
@@ -2265,7 +2566,7 @@ msgstr ""
 "sibuna --features postgres-tls``; इसमें ``postgres`` शामिल है) और हर "
 "सदस्य को डेटाबेस और उसके अपने नोड id के साथ शुरू करें:"
 
-#: ../../operations.rst:599
+#: ../../operations.rst:681
 msgid ""
 "Every member must use the same master secret and a unique "
 "``--cluster-node`` from 1 to 8,388,607. The URL file holds one "
@@ -2293,7 +2594,7 @@ msgstr ""
 "सर्वर पर हम TCP केवल ``pg_hba.conf`` की ``hostssl`` पंक्तियों के ज़रिए "
 "स्वीकार करते हैं।"
 
-#: ../../operations.rst:602
+#: ../../operations.rst:684
 msgid ""
 "At startup the daemon prints one line about the database connection. With "
 "``verify-full`` it says that the certificate and host name are verified. "
@@ -2320,7 +2621,7 @@ msgstr ""
 "store में जोड़ता है; वह सिस्टम की authorities को नहीं हटाता (SID 0011, "
 "SID 0012)।"
 
-#: ../../operations.rst:604
+#: ../../operations.rst:686
 msgid ""
 "Sibuna does not replicate a database of its own and elects no leader. "
 "Replication, failover and backups are PostgreSQL's (streaming "
@@ -2348,11 +2649,11 @@ msgstr ""
 "console policies export`` और ``sibuna console policies import`` से "
 "स्थानांतरित होती हैं, और फ़ॉरेंसिक इतिहास माइग्रेट नहीं होता।"
 
-#: ../../operations.rst:606
+#: ../../operations.rst:688
 msgid "Cluster Challenge Routing"
 msgstr "क्लस्टर में चैलेंज रूटिंग"
 
-#: ../../operations.rst:609
+#: ../../operations.rst:691
 msgid ""
 "Challenge keys are bound to ``--cluster-node``; keep challenge issuance "
 "and verification on the same member. Tokens use the shared seed and work "
@@ -2372,11 +2673,11 @@ msgstr ""
 "कभी नहीं टकराते (``crates/storage/tests/multi_node.rs``, SID 0011 मानदंड "
 "2; यह ``SIBUNA_TEST_DATABASE_URL`` सेट होने पर चलता है)।"
 
-#: ../../operations.rst:611
+#: ../../operations.rst:693
 msgid "Packaging"
 msgstr "पैकेजिंग"
 
-#: ../../operations.rst:616
+#: ../../operations.rst:698
 msgid ""
 "Install and verify a release package, run Sibuna as a service, in a "
 "container or under Kubernetes, and build the binary ourselves."
@@ -2384,7 +2685,7 @@ msgstr ""
 "एक रिलीज़ पैकेज इंस्टॉल और सत्यापित करें, Sibuna को सेवा के रूप में, "
 "कंटेनर में या Kubernetes के अधीन चलाएँ, और बाइनरी स्वयं बिल्ड करें।"
 
-#: ../../operations.rst:618
+#: ../../operations.rst:700
 msgid ""
 "Every release on GitHub carries the same executable for each platform, "
 "built from the release tag with the default features: SQLite storage and "
@@ -2394,19 +2695,19 @@ msgstr ""
 "रिलीज़ टैग से डिफ़ॉल्ट features के साथ बिल्ड होता है: SQLite स्टोरेज और "
 "कंसोल। PostgreSQL क्लस्टर के लिए हमें अपना बिल्ड चाहिए (नीचे देखें)।"
 
-#: ../../operations.rst:624
+#: ../../operations.rst:706
 msgid "Platform"
 msgstr "प्लेटफ़ॉर्म"
 
-#: ../../operations.rst:625
+#: ../../operations.rst:707
 msgid "Release assets"
 msgstr "रिलीज़ एसेट"
 
-#: ../../operations.rst:626
+#: ../../operations.rst:708
 msgid "Linux x86-64, ARM64"
 msgstr "Linux x86-64, ARM64"
 
-#: ../../operations.rst:627
+#: ../../operations.rst:709
 msgid ""
 "``sibuna-linux-amd64.tar.gz`` and ``sibuna-linux-arm64.tar.gz`` hold a "
 "static musl executable that runs on any distribution. "
@@ -2422,11 +2723,11 @@ msgstr ""
 "उसे एक systemd सेवा के साथ इंस्टॉल करते हैं; Arch Linux पर "
 "``sibuna-bin-<version>-1-x86_64.pkg.tar.zst`` यही करता है।"
 
-#: ../../operations.rst:628
+#: ../../operations.rst:710
 msgid "macOS arm64, x86-64"
 msgstr "macOS arm64, x86-64"
 
-#: ../../operations.rst:629
+#: ../../operations.rst:711
 msgid ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, for macOS "
 "12 or later."
@@ -2434,11 +2735,11 @@ msgstr ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, macOS 12 या "
 "बाद के संस्करण के लिए।"
 
-#: ../../operations.rst:630
+#: ../../operations.rst:712
 msgid "Windows x86-64"
 msgstr "Windows x86-64"
 
-#: ../../operations.rst:631
+#: ../../operations.rst:713
 msgid ""
 "``sibuna-windows-amd64.zip`` holds ``sibuna.exe``, for Windows 10 or "
 "Server 2016 or later."
@@ -2446,21 +2747,21 @@ msgstr ""
 "``sibuna-windows-amd64.zip`` में ``sibuna.exe`` है, Windows 10 या Server "
 "2016 या बाद के संस्करण के लिए।"
 
-#: ../../operations.rst:632
+#: ../../operations.rst:714
 msgid "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 msgstr "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 
-#: ../../operations.rst:633
+#: ../../operations.rst:715
 msgid ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg`` and ``sibuna-<version>.tgz``."
 msgstr ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg`` और ``sibuna-<version>.tgz``।"
 
-#: ../../operations.rst:634
+#: ../../operations.rst:716
 msgid "Homebrew, Kubernetes, containers"
 msgstr "Homebrew, Kubernetes, कंटेनर"
 
-#: ../../operations.rst:635
+#: ../../operations.rst:717
 msgid ""
 "``sibuna.rb``, ``helm-sibuna-<version>.tgz``, and the image "
 "``ghcr.io/insanai/sibuna:<version>`` for amd64 and arm64, whose digest is "
@@ -2470,15 +2771,15 @@ msgstr ""
 "इमेज ``ghcr.io/insanai/sibuna:<version>``, जिसका डाइजेस्ट "
 "``IMAGE-DIGEST.txt`` में है।"
 
-#: ../../operations.rst:636
+#: ../../operations.rst:718
 msgid "Source"
 msgstr "स्रोत कोड"
 
-#: ../../operations.rst:637
+#: ../../operations.rst:719
 msgid "``sibuna-<version>-source.tar.gz``."
 msgstr "``sibuna-<version>-source.tar.gz``।"
 
-#: ../../operations.rst:639
+#: ../../operations.rst:721
 msgid ""
 "Each archive and package carries ``LICENSE``, ``NOTICE``, ``LICENSES/`` "
 "(with ``THIRD-PARTY-RUST.txt``, the crates in the executable), "
@@ -2499,7 +2800,7 @@ msgstr ""
 "और OpenBSD पर पैकेजों को इंस्टॉल करता है, दोबारा इंस्टॉल करता है और हटाता "
 "है।"
 
-#: ../../operations.rst:641
+#: ../../operations.rst:723
 msgid ""
 "The assets are not signed. We check a download against ``SHA256SUMS`` "
 "from the same release before we install it:"
@@ -2507,7 +2808,7 @@ msgstr ""
 "एसेट हस्ताक्षरित नहीं हैं। किसी डाउनलोड को इंस्टॉल करने से पहले हम उसे "
 "उसी रिलीज़ की ``SHA256SUMS`` से जाँचते हैं:"
 
-#: ../../operations.rst:649
+#: ../../operations.rst:731
 msgid ""
 "On macOS a browser download carries a quarantine attribute that stops an "
 "unsigned executable; ``xattr -d com.apple.quarantine sibuna`` removes it "
@@ -2517,11 +2818,11 @@ msgstr ""
 "होता है जो अहस्ताक्षरित एक्ज़ीक्यूटेबल को रोक देता है; जाँच के बाद "
 "``xattr -d com.apple.quarantine sibuna`` उसे हटा देता है।"
 
-#: ../../operations.rst:651
+#: ../../operations.rst:733
 msgid "The systemd service"
 msgstr "systemd सेवा"
 
-#: ../../operations.rst:654
+#: ../../operations.rst:736
 msgid ""
 "The Debian, RPM and Arch packages install ``/usr/bin/sibuna``, the unit "
 "``sibuna.service``, the account ``sibuna`` (through "
@@ -2536,7 +2837,7 @@ msgstr ""
 "इंस्टॉल करते हैं। इंस्टॉलेशन कुछ भी शुरू नहीं करता। हम सेटिंग फ़ाइल में "
 "ऑरिजिन, एक IP पते का लिटरल, सेट करते हैं और सेवा शुरू करते हैं:"
 
-#: ../../operations.rst:662
+#: ../../operations.rst:744
 msgid ""
 "The service listens on ``127.0.0.1:8080`` until ``SIBUNA_HOST`` and "
 "``SIBUNA_PORT`` say otherwise. ``SIBUNA_OPTIONS`` passes further options, "
@@ -2561,7 +2862,7 @@ msgstr ""
 "(``ProtectSystem=strict``), निजी ``/tmp`` और डिवाइस, और बिना नए "
 "विशेषाधिकारों के चलती है।"
 
-#: ../../operations.rst:664
+#: ../../operations.rst:746
 msgid ""
 "An upgrade keeps the settings file, the seed and the state, and does not "
 "restart the service; we restart it after a backup. Removal stops and "
@@ -2573,7 +2874,7 @@ msgstr ""
 "है और अक्षम हो जाती है, लेकिन खाता, सीड, सेटिंग और स्टेट बने रहते हैं, "
 "जिन्हें होस्ट को सेवानिवृत्त करते समय हम स्वयं मिटाते हैं।"
 
-#: ../../operations.rst:666
+#: ../../operations.rst:748
 msgid ""
 "The FreeBSD and OpenBSD packages install only ``/usr/local/bin/sibuna`` "
 "and its documents (``pkg add``, or ``pkg_add -D unsigned`` for a package "
@@ -2587,11 +2888,11 @@ msgstr ""
 "डेमन को बिना विशेषाधिकार वाले उपयोगकर्ता के रूप में, निजी सीड और डेटा "
 "डायरेक्टरी के साथ चलाते हैं।"
 
-#: ../../operations.rst:668
+#: ../../operations.rst:750
 msgid "Homebrew"
 msgstr "Homebrew"
 
-#: ../../operations.rst:671
+#: ../../operations.rst:753
 msgid ""
 "``sibuna.rb`` installs the release archive for the machine: macOS or "
 "Linux, arm64 or x86-64. It does not build from source, because Homebrew's "
@@ -2608,7 +2909,7 @@ msgstr ""
 "Homebrew फ़ॉर्मूले केवल tap से इंस्टॉल करता है, इसलिए हम फ़ॉर्मूले को एक "
 "स्थानीय tap में रखते हैं:"
 
-#: ../../operations.rst:679
+#: ../../operations.rst:761
 msgid ""
 "The formula starts no service. Its caveats show how to create a seed; its "
 "test starts the daemon twice on the same data directory."
@@ -2616,11 +2917,11 @@ msgstr ""
 "फ़ॉर्मूला कोई सेवा शुरू नहीं करता। उसकी caveats दिखाती हैं कि सीड कैसे "
 "बनाएँ; उसका परीक्षण डेमन को एक ही डेटा डायरेक्टरी पर दो बार शुरू करता है।"
 
-#: ../../operations.rst:681
+#: ../../operations.rst:763
 msgid "Containers and Kubernetes"
 msgstr "कंटेनर और Kubernetes"
 
-#: ../../operations.rst:684
+#: ../../operations.rst:766
 msgid ""
 "The image ``ghcr.io/insanai/sibuna:<version>`` holds the static "
 "executable on a distroless base: CA certificates, user 65532, no shell "
@@ -2636,7 +2937,7 @@ msgstr ""
 "capabilities के, केवल-पढ़ने के लिए माउंट किए गए सीड और स्टेट के लिए एक "
 "वॉल्यूम के साथ चलाता है, और एक बार रीस्टार्ट करता है:"
 
-#: ../../operations.rst:694
+#: ../../operations.rst:776
 msgid ""
 "The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. "
 "It requires a Secret that we create (``secret.existingSecret``, key "
@@ -2668,17 +2969,17 @@ msgstr ""
 "आगे के विकल्प देता है। वर्कफ़्लो चार्ट को एक ऐसे kind क्लस्टर में "
 "इंस्टॉल, अपग्रेड और अनइंस्टॉल करता है जो Restricted standard लागू करता है।"
 
-#: ../../operations.rst:703
+#: ../../operations.rst:785
 msgid "Building from source"
 msgstr "स्रोत से बिल्ड करना"
 
-#: ../../operations.rst:706
+#: ../../operations.rst:788
 msgid "Rust 1.94 or later builds the workspace; the releases use Rust 1.99."
 msgstr ""
 "Rust 1.94 या बाद का संस्करण वर्कस्पेस को बिल्ड करता है; रिलीज़ Rust 1.99 "
 "का उपयोग करती हैं।"
 
-#: ../../operations.rst:708
+#: ../../operations.rst:790
 msgid ""
 "``cargo build --release -p sibuna`` produces ``target/release/sibuna`` "
 "with the default features: SQLite storage and the console. sqlx bundles "
@@ -2697,7 +2998,7 @@ msgstr ""
 "``SIBUNA_POW_WASM=<path>`` और ``SIBUNA_CONSOLE_WASM=<path>`` इसके बजाय "
 "पहले से बने मॉड्यूल एम्बेड करते हैं।"
 
-#: ../../operations.rst:709
+#: ../../operations.rst:791
 msgid ""
 "``cargo build --release -p sibuna --no-default-features`` produces the "
 "in-memory firewall with no external crate at all; ``--data-dir`` and "
@@ -2709,7 +3010,7 @@ msgstr ""
 "``--database-url`` शुरू होते समय ``StorageDisabled`` के साथ अस्वीकार होते "
 "हैं, और ``sibuna console`` ``CONSOLEBUILD`` के साथ।"
 
-#: ../../operations.rst:710
+#: ../../operations.rst:792
 msgid ""
 "``cargo build --release -p sibuna --features postgres-tls`` adds "
 "PostgreSQL clusters with verified TLS to the database. It needs no "
@@ -2719,7 +3020,7 @@ msgstr ""
 "सत्यापित TLS के साथ PostgreSQL क्लस्टर जोड़ता है। इसे OpenSSL की ज़रूरत "
 "नहीं।"
 
-#: ../../operations.rst:711
+#: ../../operations.rst:793
 msgid ""
 "The static Linux executables of the releases come from ``cargo build "
 "--release --locked -p sibuna --target x86_64-unknown-linux-musl`` (or "
@@ -2731,7 +3032,7 @@ msgstr ""
 "``aarch64-unknown-linux-musl``) से बनते हैं, जिसमें C कंपाइलर "
 "``musl-gcc`` होता है (``CC_x86_64_unknown_linux_musl=musl-gcc``)।"
 
-#: ../../operations.rst:713
+#: ../../operations.rst:795
 msgid ""
 "The release profile uses fat LTO and one codegen unit. The workflow "
 "builds the two WebAssembly modules once and passes them to every "
@@ -2745,7 +3046,7 @@ msgstr ""
 "मॉड्यूल एम्बेड करते हैं। किसी निर्भरता के बदलने के बाद ``cargo xtask "
 "licenses`` फ़ाइल ``LICENSES/THIRD-PARTY-RUST.txt`` को फिर से बनाता है।"
 
-#: ../../operations.rst:715
+#: ../../operations.rst:797
 msgid ""
 "On Windows the daemon stops on Ctrl+C, Ctrl+Break and console close "
 "events; it does not run as a Windows service. Windows files have no mode "
@@ -2761,11 +3062,11 @@ msgstr ""
 "सीमित करते हैं। कंसोल के मेमोरी और CPU गेज ``/proc`` से पढ़े जाते हैं और "
 "दूसरे सिस्टम पर उपलब्ध नहीं हैं।"
 
-#: ../../operations.rst:717
+#: ../../operations.rst:799
 msgid "Exercise 9.2"
 msgstr "अभ्यास 9.2"
 
-#: ../../operations.rst:719
+#: ../../operations.rst:801
 msgid ""
 "Write the policy file and the ``ip_reputation`` rows needed so that a "
 "staging network (``10.20.0.0/16``) bypasses challenges, ``/admin/*`` "
@@ -2777,7 +3078,7 @@ msgstr ""
 "कार्य के 20 वर्क बिट्स माँगे, और ``X-Partner-Key`` से पहचाने जाने वाले एक "
 "पार्टनर scraper को प्रति 10 सेकंड 30 अनुरोधों पर प्रवेश मिले।"
 
-#: ../../operations.rst:721
+#: ../../operations.rst:803
 msgid ""
 "Hint: The daemon flags set the per-client limit every request meets "
 "first; a rule can carry a quota of its own in ``limits``."
@@ -2785,11 +3086,11 @@ msgstr ""
 "संकेत: डेमन के फ़्लैग वह प्रति-क्लाइंट सीमा तय करते हैं जिससे हर अनुरोध "
 "पहले मिलता है; कोई नियम ``limits`` में अपना कोटा रख सकता है।"
 
-#: ../../operations.rst:723
+#: ../../operations.rst:805
 msgid "Explain the invariant"
 msgstr "अपरिवर्तनीय नियम समझाइए"
 
-#: ../../operations.rst:725
+#: ../../operations.rst:807
 msgid ""
 "Explain to an operator why adding a row to ``policies`` takes effect "
 "without a restart and without a request ever waiting, in terms of the "
@@ -2798,6 +3099,9 @@ msgstr ""
 "किसी ऑपरेटर को स्टोरेज थ्रेड और इंजन स्लॉट के संदर्भ में समझाइए कि "
 "``policies`` में एक पंक्ति जोड़ना बिना रीस्टार्ट के और बिना किसी अनुरोध "
 "को प्रतीक्षा कराए प्रभावी क्यों होता है।"
+
+#~ msgid "Ordered dynamic rules, keyed by ``id``."
+#~ msgstr "क्रमबद्ध डायनामिक नियम, ``id`` से कुंजीबद्ध।"
 
 #~ msgid ""
 #~ "Build the binary for a target, package it, and run it under systemd."

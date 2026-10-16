@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 05:39+0000\n"
+"POT-Creation-Date: 2026-10-16 07:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -220,20 +220,38 @@ msgstr ""
 "保護されたページの代わりに配信する組み込みのHTMLページです。チャレンジを取得し、Web Workerで解き、解答を送信して再読み込みします。"
 
 #: ../../glossary.rst:54
+msgid "JA4"
+msgstr "JA4"
+
+#: ../../glossary.rst:55
+msgid ""
+"A 36-character fingerprint, defined by FoxIO, of how a client opens a TLS "
+"connection: protocol, TLS version, server name, cipher and extension "
+"counts, ALPN, and hashes of the sorted cipher suites and extensions. "
+"Sibuna does not compute it; it reads the value a trusted ingress forwards "
+"in the header named by ``--ja4-header``, and rules match it with the "
+"``ja4`` field (SID 0014). It is unrelated to the client fingerprint bound "
+"into challenges and tokens."
+msgstr ""
+"FoxIOが定義した36文字のフィンガープリントで、クライアントがTLS接続をどのように開くか（プロトコル、TLSバージョン、サーバー名、暗号スイートと拡張の数、ALPN、ソートした暗号スイートと拡張のハッシュ）を表します。Sibunaはこれを計算しません。信頼する入口が\\ "
+"``--ja4-header``\\ で指定したヘッダーで転送する値を読み、ルールは\\ ``ja4``\\ フィールドでこれと照合します（SID "
+"0014）。チャレンジとトークンに結び付けるクライアントのフィンガープリントとは無関係です。"
+
+#: ../../glossary.rst:57
 msgid "Keyed BLAKE3"
 msgstr "鍵付きBLAKE3"
 
-#: ../../glossary.rst:55
+#: ../../glossary.rst:58
 msgid ""
 "The pseudorandom function behind Sibuna's key schedule, challenge tags, "
 "session tags, fingerprints, and challenge nonces."
 msgstr "Sibunaの鍵スケジュール、チャレンジタグ、セッションタグ、フィンガープリント、チャレンジのnonceを支える擬似ランダム関数です。"
 
-#: ../../glossary.rst:57
+#: ../../glossary.rst:60
 msgid "MAC token"
 msgstr "MACトークン"
 
-#: ../../glossary.rst:58
+#: ../../glossary.rst:61
 msgid ""
 "The default session cookie: a 40-byte payload (version, work level, "
 "timestamp, expiry, rule hash, fingerprint) and a 16-byte keyed BLAKE3 "
@@ -241,11 +259,11 @@ msgid ""
 msgstr ""
 "標準のセッションCookieです。40バイトのペイロード（バージョン、作業レベル、タイムスタンプ、期限、ルールのハッシュ、フィンガープリント）と16バイトの鍵付きBLAKE3タグからなり、定数時間で検証します。"
 
-#: ../../glossary.rst:60
+#: ../../glossary.rst:63
 msgid "Work level"
 msgstr "作業レベル"
 
-#: ../../glossary.rst:61
+#: ../../glossary.rst:64
 msgid ""
 "The mechanism and work bits a session's holder actually solved, carried "
 "in the token; a route admits a session only when its level reaches the "
@@ -253,11 +271,11 @@ msgid ""
 msgstr ""
 "セッションの保有者が実際に解いた方式と作業ビットで、トークンに記録されます。経路がセッションを許可するのは、そのレベルが経路の要件に達するときだけです。"
 
-#: ../../glossary.rst:63
+#: ../../glossary.rst:66
 msgid "Opening"
 msgstr "開示"
 
-#: ../../glossary.rst:64
+#: ../../glossary.rst:67
 msgid ""
 "In a sequential-work proof, one leaf label plus the sibling labels along "
 "its path to the root; the verifier recomputes the path and compares with "
@@ -265,11 +283,11 @@ msgid ""
 msgstr ""
 "逐次作業証明における、一つの葉のラベルと、その葉から根までの経路上の兄弟ラベルの組です。検証者は経路を再計算し、コミットメントと比較します。"
 
-#: ../../glossary.rst:66
+#: ../../glossary.rst:69
 msgid "Proof of Sequential Work (PoSW)"
 msgstr "逐次作業証明（PoSW）"
 
-#: ../../glossary.rst:67
+#: ../../glossary.rst:70
 msgid ""
 "Tier Two: the Cohen-Pietrzak hash graph whose labels depend on all "
 "earlier labels, forcing :math:`2^{n+1}-1` sequential hashes however many "
@@ -278,11 +296,11 @@ msgstr ""
 "第二層です。各ラベルがそれ以前のすべてのラベルに依存するCohen-Pietrzakのハッシュグラフを使い、証明者のコア数にかかわらず\\ "
 ":math:`2^{n+1}-1`\\ 回の逐次ハッシュを強制します。検証は\\ :math:`t(n+1)`\\ 回のハッシュです。"
 
-#: ../../glossary.rst:69
+#: ../../glossary.rst:72
 msgid "Reputation trie"
 msgstr "評判トライ"
 
-#: ../../glossary.rst:70
+#: ../../glossary.rst:73
 msgid ""
 "The 128-bit radix trie holding ``allow``, ``deny``, and ``challenge`` "
 "prefixes from the policy file and from the ``ip_reputation`` table."
@@ -290,21 +308,21 @@ msgstr ""
 "ポリシーファイルと\\ ``ip_reputation``\\ テーブルから得た\\ ``allow``\\ 、\\ ``deny``\\ 、\\ "
 "``challenge``\\ の接頭辞を保持する128ビットの基数トライです。"
 
-#: ../../glossary.rst:72
+#: ../../glossary.rst:75
 msgid "Robin Hood spent set"
 msgstr "Robin Hood使用済み集合"
 
-#: ../../glossary.rst:73
+#: ../../glossary.rst:76
 msgid ""
 "The fixed-capacity open-addressed table of solved challenge tags, which "
 "prevents a valid solution from being submitted twice."
 msgstr "解かれたチャレンジのタグを持つ、容量固定のオープンアドレス法のテーブルです。有効な解答が二度提出されることを防ぎます。"
 
-#: ../../glossary.rst:75
+#: ../../glossary.rst:78
 msgid "Rule hash"
 msgstr "ルールのハッシュ"
 
-#: ../../glossary.rst:76
+#: ../../glossary.rst:79
 msgid ""
 "A 64-bit hash of the rule name that demanded a challenge, carried in the "
 "challenge, the token, and the ``X-Sibuna-Rule-Hash`` header."
@@ -312,19 +330,19 @@ msgstr ""
 "チャレンジを要求したルールの名前の64ビットハッシュです。チャレンジ、トークン、\\ ``X-Sibuna-Rule-Hash``\\ "
 "ヘッダーで運ばれます。"
 
-#: ../../glossary.rst:78
+#: ../../glossary.rst:81
 msgid "Shield"
 msgstr "Shield"
 
-#: ../../glossary.rst:79
+#: ../../glossary.rst:82
 msgid "The default surface: Gate plus the semantic firewall (``--shield``)."
 msgstr "標準の運用構成です。Gateに意味解析ファイアウォールを加えたものです（\\ ``--shield``\\ ）。"
 
-#: ../../glossary.rst:81
+#: ../../glossary.rst:84
 msgid "SID"
 msgstr "SID"
 
-#: ../../glossary.rst:82
+#: ../../glossary.rst:85
 msgid ""
 "A Sibuna Discussion record: a paper-style design document under "
 "``docs/sid/records`` with the assumptions, proofs, and measurements "
@@ -333,21 +351,21 @@ msgstr ""
 "Sibuna Discussionの記録です。\\ ``docs/sid/records``\\ "
 "にある論文形式の設計文書で、システムの一部分を支える前提、証明、測定を示します。"
 
-#: ../../glossary.rst:84
+#: ../../glossary.rst:87
 msgid "Surface"
 msgstr "運用構成"
 
-#: ../../glossary.rst:85
+#: ../../glossary.rst:88
 msgid ""
 "One of the two product shapes, Gate or Shield; storage and clustering are "
 "options for either."
 msgstr "GateとShieldという二つの製品の形のいずれかです。ストレージとクラスタリングはどちらでも選択できます。"
 
-#: ../../glossary.rst:87
+#: ../../glossary.rst:90
 msgid "WEIGH"
 msgstr "WEIGH"
 
-#: ../../glossary.rst:88
+#: ../../glossary.rst:91
 msgid ""
 "A rule action that adds a signed weight to a request's score instead of "
 "deciding; totals at or above the thresholds challenge with extra work "
@@ -355,11 +373,11 @@ msgid ""
 msgstr ""
 "判断を下す代わりに、リクエストのスコアに符号付きの重みを加えるルール動作です。合計がしきい値以上になると、追加の作業ビット付きでチャレンジするか、拒否します。"
 
-#: ../../glossary.rst:90
+#: ../../glossary.rst:93
 msgid "Zaxonlite"
 msgstr "Zaxonlite"
 
-#: ../../glossary.rst:91
+#: ../../glossary.rst:94
 msgid ""
 "The embedded SQLite replication engine (Multi-Paxos) of SID 0005, "
 "replaced by SQLite and PostgreSQL storage in SID 0011; its cluster "
@@ -369,11 +387,11 @@ msgstr ""
 "0011でSQLiteとPostgreSQLによるストレージに置き換えられました。そのクラスターオプションを指定すると、現在は起動が\\ "
 "``RemovedOption``\\ で停止します。"
 
-#: ../../glossary.rst:93
+#: ../../glossary.rst:96
 msgid "Bibliography"
 msgstr "参考文献"
 
-#: ../../glossary.rst:96
+#: ../../glossary.rst:99
 msgid ""
 "Aho, A. V., and Corasick, M. J. \"Efficient string matching: an aid to "
 "bibliographic search.\" *Communications of the ACM* 18(6), 1975."
@@ -381,7 +399,7 @@ msgstr ""
 "Aho, A. V., and Corasick, M. J. \"Efficient string matching: an aid to "
 "bibliographic search.\" *Communications of the ACM* 18(6), 1975."
 
-#: ../../glossary.rst:97
+#: ../../glossary.rst:100
 msgid ""
 "ATM Forum. *Traffic Management Specification Version 4.0*, "
 "af-tm-0056.000, 1996 (the Generic Cell Rate Algorithm)."
@@ -389,14 +407,14 @@ msgstr ""
 "ATM Forum. *Traffic Management Specification Version 4.0*, "
 "af-tm-0056.000, 1996（Generic Cell Rate Algorithm）."
 
-#: ../../glossary.rst:98
+#: ../../glossary.rst:101
 msgid ""
 "Back, A. \"Hashcash: a denial of service counter-measure.\" Technical "
 "report, 2002."
 msgstr ""
 "Back, A. \"Hashcash: a denial of service counter-measure.\" 技術報告, 2002."
 
-#: ../../glossary.rst:99
+#: ../../glossary.rst:102
 msgid ""
 "Blocki, J., Lee, S., and Zhou, S. \"On the security of proofs of "
 "sequential work in a post-quantum world.\" *Information-Theoretic "
@@ -406,36 +424,36 @@ msgstr ""
 "sequential work in a post-quantum world.\" *Information-Theoretic "
 "Cryptography (ITC)*, 2021."
 
-#: ../../glossary.rst:100
+#: ../../glossary.rst:103
 msgid ""
 "Celis, P. *Robin Hood Hashing*. PhD thesis, University of Waterloo, 1986."
 msgstr "Celis, P. *Robin Hood Hashing*. 博士論文, University of Waterloo, 1986."
 
-#: ../../glossary.rst:101
-msgid ""
-"Cohen, B., and Pietrzak, K. \"Simple proofs of sequential work.\" "
-"*EUROCRYPT*, 2018."
-msgstr ""
-"Cohen, B., and Pietrzak, K. \"Simple proofs of sequential work.\" "
-"*EUROCRYPT*, 2018."
-
-#: ../../glossary.rst:102
-msgid ""
-"Dwork, C., and Naor, M. \"Pricing via processing or combatting junk "
-"mail.\" *CRYPTO*, 1992."
-msgstr ""
-"Dwork, C., and Naor, M. \"Pricing via processing or combatting junk "
-"mail.\" *CRYPTO*, 1992."
-
-#: ../../glossary.rst:103
-msgid ""
-"Fiat, A., and Shamir, A. \"How to prove yourself: practical solutions to "
-"identification and signature problems.\" *CRYPTO*, 1986."
-msgstr ""
-"Fiat, A., and Shamir, A. \"How to prove yourself: practical solutions to "
-"identification and signature problems.\" *CRYPTO*, 1986."
-
 #: ../../glossary.rst:104
+msgid ""
+"Cohen, B., and Pietrzak, K. \"Simple proofs of sequential work.\" "
+"*EUROCRYPT*, 2018."
+msgstr ""
+"Cohen, B., and Pietrzak, K. \"Simple proofs of sequential work.\" "
+"*EUROCRYPT*, 2018."
+
+#: ../../glossary.rst:105
+msgid ""
+"Dwork, C., and Naor, M. \"Pricing via processing or combatting junk "
+"mail.\" *CRYPTO*, 1992."
+msgstr ""
+"Dwork, C., and Naor, M. \"Pricing via processing or combatting junk "
+"mail.\" *CRYPTO*, 1992."
+
+#: ../../glossary.rst:106
+msgid ""
+"Fiat, A., and Shamir, A. \"How to prove yourself: practical solutions to "
+"identification and signature problems.\" *CRYPTO*, 1986."
+msgstr ""
+"Fiat, A., and Shamir, A. \"How to prove yourself: practical solutions to "
+"identification and signature problems.\" *CRYPTO*, 1986."
+
+#: ../../glossary.rst:107
 msgid ""
 "Fielding, R., Nottingham, M., and Reschke, J. *HTTP Semantics*, RFC 9110, "
 "and *HTTP/1.1*, RFC 9112. IETF, 2022."
@@ -443,7 +461,15 @@ msgstr ""
 "Fielding, R., Nottingham, M., and Reschke, J. *HTTP Semantics*, RFC "
 "9110、および\\ *HTTP/1.1*, RFC 9112. IETF, 2022."
 
-#: ../../glossary.rst:105
+#: ../../glossary.rst:108
+msgid ""
+"FoxIO. *JA4+ Network Fingerprinting*. https://github.com/FoxIO-LLC/ja4, "
+"2023 (the JA4 TLS client fingerprint)."
+msgstr ""
+"FoxIO. *JA4+ Network Fingerprinting*. https://github.com/FoxIO-LLC/ja4, "
+"2023（JA4 TLSクライアントフィンガープリント）."
+
+#: ../../glossary.rst:109
 msgid ""
 "Hanson, N. \"libinjection: SQL injection detection by tokenization.\" "
 "Black Hat USA, 2012."
@@ -451,7 +477,7 @@ msgstr ""
 "Hanson, N. \"libinjection: SQL injection detection by tokenization.\" "
 "Black Hat USA, 2012."
 
-#: ../../glossary.rst:106
+#: ../../glossary.rst:110
 msgid ""
 "Juels, A., and Brainard, J. \"Client puzzles: a cryptographic "
 "countermeasure against connection depletion attacks.\" *NDSS*, 1999."
@@ -459,7 +485,7 @@ msgstr ""
 "Juels, A., and Brainard, J. \"Client puzzles: a cryptographic "
 "countermeasure against connection depletion attacks.\" *NDSS*, 1999."
 
-#: ../../glossary.rst:107
+#: ../../glossary.rst:111
 msgid ""
 "Lamport, L. \"The part-time parliament.\" *ACM Transactions on Computer "
 "Systems* 16(2), 1998; and \"Paxos made simple.\" *ACM SIGACT News* 32(4), "
@@ -469,7 +495,7 @@ msgstr ""
 "Systems* 16(2), 1998、および\"Paxos made simple.\" *ACM SIGACT News* 32(4), "
 "2001."
 
-#: ../../glossary.rst:108
+#: ../../glossary.rst:112
 msgid ""
 "Mahmoody, M., Moran, T., and Vadhan, S. \"Publicly verifiable proofs of "
 "sequential work.\" *Innovations in Theoretical Computer Science (ITCS)*, "
@@ -479,7 +505,7 @@ msgstr ""
 "sequential work.\" *Innovations in Theoretical Computer Science (ITCS)*, "
 "2013."
 
-#: ../../glossary.rst:109
+#: ../../glossary.rst:113
 msgid ""
 "O'Connor, J., Aumasson, J.-P., Neves, S., and Wilcox-O'Hearn, Z. *BLAKE3: "
 "one function, fast everywhere*. Specification, 2020."
@@ -487,7 +513,7 @@ msgstr ""
 "O'Connor, J., Aumasson, J.-P., Neves, S., and Wilcox-O'Hearn, Z. *BLAKE3: "
 "one function, fast everywhere*. 仕様, 2020."
 
-#: ../../glossary.rst:110
+#: ../../glossary.rst:114
 msgid ""
 "Vyukov, D. \"Bounded MPMC queue.\" 1024cores.net, 2011 (the "
 "sequence-stamped ring used for the incident queue)."
@@ -495,7 +521,7 @@ msgstr ""
 "Vyukov, D. \"Bounded MPMC queue.\" 1024cores.net, "
 "2011（インシデントキューで使う、シーケンス番号付きのリング）."
 
-#: ../../glossary.rst:111
+#: ../../glossary.rst:115
 msgid ""
 "Wang, X., Hong, Y., Chang, H., Park, K., Langdale, G., Hu, J., and Zhu, "
 "H. \"Hyperscan: a fast multi-pattern regex matcher for modern CPUs.\" "
@@ -505,13 +531,14 @@ msgstr ""
 "H. \"Hyperscan: a fast multi-pattern regex matcher for modern CPUs.\" "
 "*NSDI*, 2019."
 
-#: ../../glossary.rst:112
+#: ../../glossary.rst:116
 msgid ""
-"Sibuna Discussions 0001 to 0011, ``docs/sid/records``, 2026: process, "
+"Sibuna Discussions 0001 to 0014, ``docs/sid/records``, 2026: process, "
 "foundation architecture, declarative policy engine, semantic inspection, "
 "Zaxonlite storage architecture, mathematical foundations, console "
 "management interface, AI bot traffic monitoring, chunked request bodies, "
-"the Rust port, and storage through sqlx."
+"the Rust port, storage through sqlx, outbound TLS for the console through "
+"rustls, console storage, and trusted JA4 fingerprints from the ingress."
 msgstr ""
-"Sibuna Discussions 0001から0011、\\ ``docs/sid/records``\\ "
-"、2026。プロセス、基礎アーキテクチャ、宣言的ポリシーエンジン、意味解析による検査、Zaxonliteストレージのアーキテクチャ、数学的基礎、コンソール管理インターフェース、AIボットのトラフィック監視、チャンク形式のリクエストボディー、Rustへの移植、sqlxによるストレージを扱います。"
+"Sibuna Discussions 0001から0014、\\ ``docs/sid/records``\\ "
+"、2026。プロセス、基礎アーキテクチャ、宣言的ポリシーエンジン、意味解析による検査、Zaxonliteストレージのアーキテクチャ、数学的基礎、コンソール管理インターフェース、AIボットのトラフィック監視、チャンク形式のリクエストボディー、Rustへの移植、sqlxによるストレージ、rustlsによるコンソールの外向きのTLS、コンソールのストレージ、入口から受け取る信頼できるJA4フィンガープリントを扱います。"

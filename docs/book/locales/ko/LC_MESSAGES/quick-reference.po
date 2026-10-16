@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 05:39+0000\n"
+"POT-Creation-Date: 2026-10-16 07:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -38,11 +38,11 @@ msgstr "빌드"
 msgid "Run"
 msgstr "실행"
 
-#: ../../quick-reference.rst:39
+#: ../../quick-reference.rst:41
 msgid "Console (opt-in preview)"
 msgstr "콘솔(선택형 미리보기)"
 
-#: ../../quick-reference.rst:48
+#: ../../quick-reference.rst:50
 msgid ""
 "Open ``http://127.0.0.1:19446/console/`` and replace the temporary "
 "password. Add ``--console-location 1.3521,103.8198`` to place the node on "
@@ -57,410 +57,419 @@ msgstr ""
 "Committed 상태입니다. 콘솔은 헤드리스 Chromium에서 브라우저 작업 흐름을 통과합니다(SID 0010, 기준 5). "
 "공식 성능 격리 관문은 아직 열려 있습니다(VIII부)."
 
-#: ../../quick-reference.rst:50
+#: ../../quick-reference.rst:52
 msgid "Flags That Matter First"
 msgstr "먼저 알아야 할 플래그"
 
-#: ../../quick-reference.rst:57
+#: ../../quick-reference.rst:59
 msgid "Flag"
 msgstr "플래그"
 
-#: ../../quick-reference.rst:58
+#: ../../quick-reference.rst:60
 msgid "Default"
 msgstr "기본값"
 
-#: ../../quick-reference.rst:59 ../../quick-reference.rst:224
+#: ../../quick-reference.rst:61 ../../quick-reference.rst:230
 msgid "Meaning"
 msgstr "의미"
 
-#: ../../quick-reference.rst:60
+#: ../../quick-reference.rst:62
 msgid "``-d, --difficulty``"
 msgstr "``-d, --difficulty``"
 
-#: ../../quick-reference.rst:61 ../../quick-reference.rst:67
+#: ../../quick-reference.rst:63 ../../quick-reference.rst:69
 msgid "16"
 msgstr "16"
 
-#: ../../quick-reference.rst:62
+#: ../../quick-reference.rst:64
 msgid "work bits (PoSW depth = bits - 3)"
 msgstr "작업 비트(PoSW 깊이 = 비트 - 3)"
 
-#: ../../quick-reference.rst:63
+#: ../../quick-reference.rst:65
 msgid "``-a, --algorithm``"
 msgstr "``-a, --algorithm``"
 
-#: ../../quick-reference.rst:64
+#: ../../quick-reference.rst:66
 msgid "posw"
 msgstr "posw"
 
-#: ../../quick-reference.rst:65
+#: ../../quick-reference.rst:67
 msgid "``posw`` or ``hashcash``"
 msgstr "``posw`` 또는 ``hashcash``"
 
-#: ../../quick-reference.rst:66
+#: ../../quick-reference.rst:68
 msgid "``--posw-challenges``"
 msgstr "``--posw-challenges``"
 
-#: ../../quick-reference.rst:68
+#: ../../quick-reference.rst:70
 msgid "openings per proof"
 msgstr "증명당 개방 수"
 
-#: ../../quick-reference.rst:69
+#: ../../quick-reference.rst:71
 msgid "``--token-ttl``"
 msgstr "``--token-ttl``"
 
-#: ../../quick-reference.rst:70
+#: ../../quick-reference.rst:72
 msgid "86400"
 msgstr "86400"
 
-#: ../../quick-reference.rst:71
+#: ../../quick-reference.rst:73
 msgid "session seconds"
 msgstr "세션 초"
 
-#: ../../quick-reference.rst:72
+#: ../../quick-reference.rst:74
 msgid "``--challenge-ttl``"
 msgstr "``--challenge-ttl``"
 
-#: ../../quick-reference.rst:73
+#: ../../quick-reference.rst:75
 msgid "300"
 msgstr "300"
 
-#: ../../quick-reference.rst:74
+#: ../../quick-reference.rst:76
 msgid "challenge seconds"
 msgstr "챌린지 초"
 
-#: ../../quick-reference.rst:75
+#: ../../quick-reference.rst:77
 msgid "``--token-scheme``"
 msgstr "``--token-scheme``"
 
-#: ../../quick-reference.rst:76
+#: ../../quick-reference.rst:78
 msgid "mac"
 msgstr "mac"
 
-#: ../../quick-reference.rst:77
+#: ../../quick-reference.rst:79
 msgid "``mac`` or ``ed25519``"
 msgstr "``mac`` 또는 ``ed25519``"
 
-#: ../../quick-reference.rst:78
+#: ../../quick-reference.rst:80
 msgid "``--rate-limit / --rate-window``"
 msgstr "``--rate-limit / --rate-window``"
 
-#: ../../quick-reference.rst:79
+#: ../../quick-reference.rst:81
 msgid "100 / 10"
 msgstr "100 / 10"
 
-#: ../../quick-reference.rst:80
+#: ../../quick-reference.rst:82
 msgid "GCRA burst per window"
 msgstr "윈도당 GCRA 버스트"
 
-#: ../../quick-reference.rst:81
+#: ../../quick-reference.rst:83
 msgid "``--ban-seconds``"
 msgstr "``--ban-seconds``"
 
-#: ../../quick-reference.rst:82
+#: ../../quick-reference.rst:84
 msgid "3600"
 msgstr "3600"
 
-#: ../../quick-reference.rst:83
+#: ../../quick-reference.rst:85
 msgid "honeypot ban"
 msgstr "허니팟 차단"
 
-#: ../../quick-reference.rst:84
+#: ../../quick-reference.rst:86
 msgid "``-w, --workers``"
 msgstr "``-w, --workers``"
 
-#: ../../quick-reference.rst:85
+#: ../../quick-reference.rst:87
 msgid "CPUs"
 msgstr "CPU 수"
 
-#: ../../quick-reference.rst:86
+#: ../../quick-reference.rst:88
 msgid "accept threads"
 msgstr "accept 스레드"
 
-#: ../../quick-reference.rst:87
+#: ../../quick-reference.rst:89
 msgid "``--max-connections``"
 msgstr "``--max-connections``"
 
-#: ../../quick-reference.rst:88
+#: ../../quick-reference.rst:90
 msgid "1024"
 msgstr "1024"
 
-#: ../../quick-reference.rst:89
+#: ../../quick-reference.rst:91
 msgid "then ``503``"
 msgstr "초과 시 ``503``"
 
-#: ../../quick-reference.rst:90
+#: ../../quick-reference.rst:92
 msgid "``--max-connections-per-ip``"
 msgstr "``--max-connections-per-ip``"
 
-#: ../../quick-reference.rst:91
+#: ../../quick-reference.rst:93
 msgid "64"
 msgstr "64"
 
-#: ../../quick-reference.rst:92
+#: ../../quick-reference.rst:94
 msgid "per peer address (IPv6: per ``--ipv6-prefix``), then ``503``"
 msgstr "피어 주소별(IPv6: ``--ipv6-prefix``\\ 별), 초과 시 ``503``"
 
-#: ../../quick-reference.rst:93
+#: ../../quick-reference.rst:95
 msgid "``--trusted-hops``"
 msgstr "``--trusted-hops``"
 
-#: ../../quick-reference.rst:94
+#: ../../quick-reference.rst:96
 msgid "1"
 msgstr "1"
 
-#: ../../quick-reference.rst:95
+#: ../../quick-reference.rst:97
 msgid "client = n-th ``X-Forwarded-For`` entry from the right"
 msgstr "클라이언트 = 오른쪽에서 n번째 ``X-Forwarded-For`` 항목"
 
-#: ../../quick-reference.rst:96
-msgid "``--idle-timeout``"
-msgstr "``--idle-timeout``"
-
-#: ../../quick-reference.rst:97
-msgid "15"
-msgstr "15"
-
 #: ../../quick-reference.rst:98
-msgid "reaper seconds"
-msgstr "회수기 초"
+msgid "``--ja4-header``"
+msgstr "``--ja4-header``"
 
-#: ../../quick-reference.rst:99
-msgid "``-P, --policy-file``"
-msgstr "``-P, --policy-file``"
-
-#: ../../quick-reference.rst:100
-msgid "none"
-msgstr "없음"
-
-#: ../../quick-reference.rst:101
-msgid "JSON policy"
-msgstr "JSON 정책"
-
-#: ../../quick-reference.rst:102
-msgid "``--trust-forwarded``"
-msgstr "``--trust-forwarded``"
-
-#: ../../quick-reference.rst:103 ../../quick-reference.rst:106
+#: ../../quick-reference.rst:99 ../../quick-reference.rst:108
+#: ../../quick-reference.rst:111
 msgid "off"
 msgstr "꺼짐"
 
+#: ../../quick-reference.rst:100
+msgid "header with the ingress's JA4 fingerprint; read only when trusted"
+msgstr "인그레스의 JA4 지문을 담은 헤더. 신뢰할 때만 읽음"
+
+#: ../../quick-reference.rst:101
+msgid "``--idle-timeout``"
+msgstr "``--idle-timeout``"
+
+#: ../../quick-reference.rst:102
+msgid "15"
+msgstr "15"
+
+#: ../../quick-reference.rst:103
+msgid "reaper seconds"
+msgstr "회수기 초"
+
 #: ../../quick-reference.rst:104
+msgid "``-P, --policy-file``"
+msgstr "``-P, --policy-file``"
+
+#: ../../quick-reference.rst:105
+msgid "none"
+msgstr "없음"
+
+#: ../../quick-reference.rst:106
+msgid "JSON policy"
+msgstr "JSON 정책"
+
+#: ../../quick-reference.rst:107
+msgid "``--trust-forwarded``"
+msgstr "``--trust-forwarded``"
+
+#: ../../quick-reference.rst:109
 msgid "on in forward auth"
 msgstr "forward auth에서 켜짐"
 
-#: ../../quick-reference.rst:105
+#: ../../quick-reference.rst:110
 msgid "``--secure-cookie``"
 msgstr "``--secure-cookie``"
 
-#: ../../quick-reference.rst:107
+#: ../../quick-reference.rst:112
 msgid "add ``Secure``"
 msgstr "``Secure`` 추가"
 
-#: ../../quick-reference.rst:109
+#: ../../quick-reference.rst:114
 msgid "Endpoints Under ``/__sibuna/``"
 msgstr "``/__sibuna/`` 아래의 엔드포인트"
 
-#: ../../quick-reference.rst:116
+#: ../../quick-reference.rst:121
 msgid "Route"
 msgstr "경로"
 
-#: ../../quick-reference.rst:117
+#: ../../quick-reference.rst:122
 msgid "Answer"
 msgstr "응답"
 
-#: ../../quick-reference.rst:118
+#: ../../quick-reference.rst:123
 msgid "``challenge``"
 msgstr "``challenge``"
 
-#: ../../quick-reference.rst:119
+#: ../../quick-reference.rst:124
 msgid "interstitial HTML"
 msgstr "중간 페이지 HTML"
 
-#: ../../quick-reference.rst:120
+#: ../../quick-reference.rst:125
 msgid "``challenge.json?need=&path=``"
 msgstr "``challenge.json?need=&path=``"
 
-#: ../../quick-reference.rst:121
+#: ../../quick-reference.rst:126
 msgid "``{id, algorithm, difficulty, challenges, expires_at}``"
 msgstr "``{id, algorithm, difficulty, challenges, expires_at}``"
 
-#: ../../quick-reference.rst:122
+#: ../../quick-reference.rst:127
 msgid "``verify`` (POST)"
 msgstr "``verify``\\ (POST)"
 
-#: ../../quick-reference.rst:123
+#: ../../quick-reference.rst:128
 msgid ""
 "``{challenge_id, nonce | proof}`` -> ``200`` + ``Set-Cookie``, else "
 "``400``"
 msgstr ""
 "``{challenge_id, nonce | proof}`` -> ``200`` + ``Set-Cookie``, 아니면 ``400``"
 
-#: ../../quick-reference.rst:124
+#: ../../quick-reference.rst:129
 msgid "``wasm/sibuna-pow.wasm``"
 msgstr "``wasm/sibuna-pow.wasm``"
 
-#: ../../quick-reference.rst:125
+#: ../../quick-reference.rst:130
 msgid "15,181-byte solver"
 msgstr "15,181바이트 솔버"
 
-#: ../../quick-reference.rst:126
+#: ../../quick-reference.rst:131
 msgid "``worker.js``"
 msgstr "``worker.js``"
 
-#: ../../quick-reference.rst:127
+#: ../../quick-reference.rst:132
 msgid "worker with WASM and JS provers"
 msgstr "WASM 증명자와 JS 증명자를 갖춘 워커"
 
-#: ../../quick-reference.rst:128
+#: ../../quick-reference.rst:133
 msgid "``honeypot``"
 msgstr "``honeypot``"
 
-#: ../../quick-reference.rst:129
+#: ../../quick-reference.rst:134
 msgid "bans caller, ``403``; ``404`` for a subresource or cross-site fetch"
 msgstr "호출자를 차단하고 ``403``, 하위 리소스나 교차 사이트 가져오기에는 ``404``"
 
-#: ../../quick-reference.rst:130
+#: ../../quick-reference.rst:135
 msgid "``health``"
 msgstr "``health``"
 
-#: ../../quick-reference.rst:131
+#: ../../quick-reference.rst:136
 msgid "``{\"status\":\"ok\",...}``"
 msgstr "``{\"status\":\"ok\",...}``"
 
-#: ../../quick-reference.rst:132
+#: ../../quick-reference.rst:137
 msgid "``metrics``"
 msgstr "``metrics``"
 
-#: ../../quick-reference.rst:133
+#: ../../quick-reference.rst:138
 msgid "Prometheus text"
 msgstr "Prometheus 텍스트"
 
-#: ../../quick-reference.rst:135
+#: ../../quick-reference.rst:140
 msgid "Route all of them to the daemon, never to the origin."
 msgstr "이 경로는 모두 원본 서버가 아니라 데몬으로 라우팅하세요."
 
-#: ../../quick-reference.rst:137
+#: ../../quick-reference.rst:142
 msgid "Status Codes"
 msgstr "상태 코드"
 
-#: ../../quick-reference.rst:144
+#: ../../quick-reference.rst:149
 msgid "Code"
 msgstr "코드"
 
-#: ../../quick-reference.rst:145
+#: ../../quick-reference.rst:150
 msgid "When"
 msgstr "상황"
 
-#: ../../quick-reference.rst:146
+#: ../../quick-reference.rst:151
 msgid "200"
 msgstr "200"
 
-#: ../../quick-reference.rst:147
+#: ../../quick-reference.rst:152
 msgid "admitted (forward auth), interstitial, internal routes"
 msgstr "허용(forward auth), 중간 페이지, 내부 경로"
 
-#: ../../quick-reference.rst:148
+#: ../../quick-reference.rst:153
 msgid "400"
 msgstr "400"
 
-#: ../../quick-reference.rst:149
+#: ../../quick-reference.rst:154
 msgid "malformed request or target, rejected solution (diagnostic body)"
 msgstr "잘못된 요청 또는 대상, 거부된 풀이(진단 본문)"
 
-#: ../../quick-reference.rst:150
+#: ../../quick-reference.rst:155
 msgid "401"
 msgstr "401"
 
-#: ../../quick-reference.rst:151
+#: ../../quick-reference.rst:156
 msgid "challenge required: non-HTML client or forward auth"
 msgstr "챌린지 필요: HTML이 아닌 클라이언트 또는 forward auth"
 
-#: ../../quick-reference.rst:152
+#: ../../quick-reference.rst:157
 msgid "403"
 msgstr "403"
 
-#: ../../quick-reference.rst:153
+#: ../../quick-reference.rst:158
 msgid "policy or WAF denial, ban, honeypot"
 msgstr "정책 또는 WAF 거부, 차단, 허니팟"
 
-#: ../../quick-reference.rst:154
+#: ../../quick-reference.rst:159
 msgid "404"
 msgstr "404"
 
-#: ../../quick-reference.rst:155
+#: ../../quick-reference.rst:160
 msgid "unknown ``/__sibuna/`` route, refused honeypot hit"
 msgstr "알 수 없는 ``/__sibuna/`` 경로, 거부된 허니팟 적중"
 
-#: ../../quick-reference.rst:156
+#: ../../quick-reference.rst:161
 msgid "413"
 msgstr "413"
 
-#: ../../quick-reference.rst:157
+#: ../../quick-reference.rst:162
 msgid "solution body over the 64 KB buffer"
 msgstr "64 KB 버퍼를 넘는 풀이 본문"
 
-#: ../../quick-reference.rst:158
+#: ../../quick-reference.rst:163
 msgid "414"
 msgstr "414"
 
-#: ../../quick-reference.rst:159
+#: ../../quick-reference.rst:164
 msgid "reported challenge URL over 8 KiB"
 msgstr "8 KiB를 넘는 보고된 챌린지 URL"
 
-#: ../../quick-reference.rst:160
+#: ../../quick-reference.rst:165
 msgid "417"
 msgstr "417"
 
-#: ../../quick-reference.rst:161
+#: ../../quick-reference.rst:166
 msgid "unsupported request expectation"
 msgstr "지원하지 않는 요청 기대(Expect)"
 
-#: ../../quick-reference.rst:162
+#: ../../quick-reference.rst:167
 msgid "429"
 msgstr "429"
 
-#: ../../quick-reference.rst:163
+#: ../../quick-reference.rst:168
 msgid "GCRA limit, ``Retry-After`` seconds"
 msgstr "GCRA 제한, ``Retry-After`` 초"
 
-#: ../../quick-reference.rst:164
+#: ../../quick-reference.rst:169
 msgid "431"
 msgstr "431"
 
-#: ../../quick-reference.rst:165
+#: ../../quick-reference.rst:170
 msgid "head over 16 KB"
 msgstr "16 KB를 넘는 헤드"
 
-#: ../../quick-reference.rst:166
+#: ../../quick-reference.rst:171
 msgid "501"
 msgstr "501"
 
-#: ../../quick-reference.rst:167
+#: ../../quick-reference.rst:172
 msgid "transfer coding other than chunked"
 msgstr "chunked가 아닌 전송 코딩"
 
-#: ../../quick-reference.rst:168
+#: ../../quick-reference.rst:173
 msgid "502"
 msgstr "502"
 
-#: ../../quick-reference.rst:169
+#: ../../quick-reference.rst:174
 msgid "origin unreachable or malformed"
 msgstr "원본 서버에 연결할 수 없거나 응답이 잘못됨"
 
-#: ../../quick-reference.rst:170
+#: ../../quick-reference.rst:175
 msgid "503"
 msgstr "503"
 
-#: ../../quick-reference.rst:171
+#: ../../quick-reference.rst:176
 msgid "connection limits reached, or node draining"
 msgstr "연결 한도 도달 또는 노드 드레이닝 중"
 
-#: ../../quick-reference.rst:173
+#: ../../quick-reference.rst:178
 msgid "Headers"
 msgstr "헤더"
 
-#: ../../quick-reference.rst:176
+#: ../../quick-reference.rst:181
 msgid ""
 "*Upstream (proxy)*: ``X-Forwarded-For`` (socket peer, after the received "
 "chain when trusted), ``X-Forwarded-Proto``, ``X-Real-IP`` (the judged "
@@ -471,7 +480,7 @@ msgstr ""
 "``X-Forwarded-Proto``, ``X-Real-IP``\\ (판정한 클라이언트), ``X-Sibuna-Status: "
 "PASS``, ``X-Sibuna-Rule: <rule>``. 홉 단위 필드와 다른 전달 필드는 제거하며, 밑줄 표기도 제거합니다."
 
-#: ../../quick-reference.rst:177
+#: ../../quick-reference.rst:182
 msgid ""
 "*Forward-auth reply*: ``X-Sibuna-Status``, ``X-Sibuna-Rule``, "
 "``X-Sibuna-Rule-Hash``."
@@ -479,11 +488,11 @@ msgstr ""
 "*Forward-auth 응답*: ``X-Sibuna-Status``, ``X-Sibuna-Rule``, "
 "``X-Sibuna-Rule-Hash``."
 
-#: ../../quick-reference.rst:178
+#: ../../quick-reference.rst:183
 msgid "*Challenge reply*: ``X-Sibuna-Status: CHALLENGE``."
 msgstr "*챌린지 응답*: ``X-Sibuna-Status: CHALLENGE``."
 
-#: ../../quick-reference.rst:179
+#: ../../quick-reference.rst:184
 msgid ""
 "*Cookie*: ``__sibuna_token=<75 chars, 139 with ed25519>; Path=/; "
 "Max-Age=<ttl>; HttpOnly; SameSite=Lax[; Secure]``"
@@ -491,26 +500,28 @@ msgstr ""
 "*쿠키*: ``__sibuna_token=<75 chars, 139 with ed25519>; Path=/; "
 "Max-Age=<ttl>; HttpOnly; SameSite=Lax[; Secure]``"
 
-#: ../../quick-reference.rst:181
+#: ../../quick-reference.rst:186
 msgid "Policy File Skeleton"
 msgstr "정책 파일 골격"
 
-#: ../../quick-reference.rst:197
+#: ../../quick-reference.rst:203
 msgid ""
-"Patterns: ``*`` or ``.*`` any; ``^...$`` exact; trailing ``*`` prefix; "
-"leading ``/`` exact path; else case-insensitive substring. Paths are "
-"matched in normal form. Order: WAF -> trie deny/allow -> rules -> score "
-"-> bypass -> trie challenge -> bots -> default."
+"JA4: a whole fingerprint, or a prefix and ``*``; no fingerprint, no "
+"match. Patterns: ``*`` or ``.*`` any; ``^...$`` exact; trailing ``*`` "
+"prefix; leading ``/`` exact path; else case-insensitive substring. Paths "
+"are matched in normal form. Order: WAF -> trie deny/allow -> rules -> "
+"score -> bypass -> trie challenge -> bots -> default."
 msgstr ""
-"패턴: ``*`` 또는 ``.*``\\ 는 모두 일치, ``^...$``\\ 는 정확히 일치, 끝의 ``*``\\ 는 접두사, 앞의 "
-"``/``\\ 는 정확한 경로, 그 밖에는 대소문자를 구별하지 않는 부분 문자열입니다. 경로는 정규형으로 비교합니다. 순서: WAF "
-"-> 트라이 deny/allow -> 규칙 -> 점수 -> 우회 -> 트라이 challenge -> 봇 -> 기본값."
+"JA4: 전체 지문, 또는 접두사 뒤에 ``*``. 지문이 없으면 일치하지 않습니다. 패턴: ``*`` 또는 ``.*``\\ 는 "
+"모두 일치, ``^...$``\\ 는 정확히 일치, 끝의 ``*``\\ 는 접두사, 앞의 ``/``\\ 는 정확한 경로, 그 밖에는 "
+"대소문자를 구별하지 않는 부분 문자열입니다. 경로는 정규형으로 비교합니다. 순서: WAF -> 트라이 deny/allow -> 규칙 "
+"-> 점수 -> 우회 -> 트라이 challenge -> 봇 -> 기본값."
 
-#: ../../quick-reference.rst:199
+#: ../../quick-reference.rst:205
 msgid "Storage (Edge) in SQL"
 msgstr "SQL로 보는 저장소(Edge)"
 
-#: ../../quick-reference.rst:214
+#: ../../quick-reference.rst:220
 msgid ""
 "SQLite (``sqlite3 <dir>/sibuna.db``); actions are lowercase. Score "
 ":math:`\\le -50` -> deny prefix; :math:`\\ge 50` -> allow. Cluster: same "
@@ -524,103 +535,103 @@ msgstr ""
 "``--database-url-file <file> --cluster-node N``. 멤버 목록, 리더, 클러스터 TLS는 "
 "없습니다(SID 0011)."
 
-#: ../../quick-reference.rst:216
+#: ../../quick-reference.rst:222
 msgid "Diagnostics"
 msgstr "진단"
 
-#: ../../quick-reference.rst:223
+#: ../../quick-reference.rst:229
 msgid "Title"
 msgstr "제목"
 
-#: ../../quick-reference.rst:225
+#: ../../quick-reference.rst:231
 msgid "``MALFORMED CHALLENGE``"
 msgstr "``MALFORMED CHALLENGE``"
 
-#: ../../quick-reference.rst:226
+#: ../../quick-reference.rst:232
 msgid "id edited or truncated; fetch a new one"
 msgstr "id가 수정되었거나 잘렸습니다. 새 id를 가져오세요"
 
-#: ../../quick-reference.rst:227
+#: ../../quick-reference.rst:233
 msgid "``INVALID CHALLENGE TAG``"
 msgstr "``INVALID CHALLENGE TAG``"
 
-#: ../../quick-reference.rst:228
+#: ../../quick-reference.rst:234
 msgid "not minted by this seed or node"
 msgstr "이 시드나 노드가 발급하지 않았습니다"
 
-#: ../../quick-reference.rst:229
+#: ../../quick-reference.rst:235
 msgid "``CHALLENGE EXPIRED``"
 msgstr "``CHALLENGE EXPIRED``"
 
-#: ../../quick-reference.rst:230
+#: ../../quick-reference.rst:236
 msgid "older than TTL or clock skew > 60 s"
 msgstr "TTL보다 오래되었거나 시계 차이 > 60 s"
 
-#: ../../quick-reference.rst:231
+#: ../../quick-reference.rst:237
 msgid "``CLIENT FINGERPRINT MISMATCH``"
 msgstr "``CLIENT FINGERPRINT MISMATCH``"
 
-#: ../../quick-reference.rst:232
+#: ../../quick-reference.rst:238
 msgid "address or User-Agent changed"
 msgstr "주소나 User-Agent가 바뀌었습니다"
 
-#: ../../quick-reference.rst:233
+#: ../../quick-reference.rst:239
 msgid "``DIFFICULTY NOT MET``"
 msgstr "``DIFFICULTY NOT MET``"
 
-#: ../../quick-reference.rst:234
+#: ../../quick-reference.rst:240
 msgid "nonce lacks zero bits"
 msgstr "nonce에 0비트가 부족합니다"
 
-#: ../../quick-reference.rst:235
+#: ../../quick-reference.rst:241
 msgid "``INVALID PROOF OF SEQUENTIAL WORK``"
 msgstr "``INVALID PROOF OF SEQUENTIAL WORK``"
 
-#: ../../quick-reference.rst:236
+#: ../../quick-reference.rst:242
 msgid "openings do not reach the root"
 msgstr "개방이 루트에 닿지 않습니다"
 
-#: ../../quick-reference.rst:237
+#: ../../quick-reference.rst:243
 msgid "``WRONG SOLUTION TYPE``"
 msgstr "``WRONG SOLUTION TYPE``"
 
-#: ../../quick-reference.rst:238
+#: ../../quick-reference.rst:244
 msgid "nonce for PoSW or proof for Hashcash"
 msgstr "PoSW에 nonce, 또는 Hashcash에 증명을 보냈습니다"
 
-#: ../../quick-reference.rst:239
+#: ../../quick-reference.rst:245
 msgid "``DOUBLE SPEND PREVENTED``"
 msgstr "``DOUBLE SPEND PREVENTED``"
 
-#: ../../quick-reference.rst:240
+#: ../../quick-reference.rst:246
 msgid "challenge already used"
 msgstr "이미 사용한 챌린지입니다"
 
-#: ../../quick-reference.rst:241
+#: ../../quick-reference.rst:247
 msgid "``STORE FULL``"
 msgstr "``STORE FULL``"
 
-#: ../../quick-reference.rst:242
+#: ../../quick-reference.rst:248
 msgid "spent set saturated; lower TTL or raise ``--spent-tags``"
 msgstr "사용 완료 집합이 포화되었습니다. TTL을 낮추거나 ``--spent-tags``\\ 를 늘리세요"
 
-#: ../../quick-reference.rst:243
+#: ../../quick-reference.rst:249
 msgid "``NETWORK BINDING MISMATCH``"
 msgstr "``NETWORK BINDING MISMATCH``"
 
-#: ../../quick-reference.rst:244
+#: ../../quick-reference.rst:250
 msgid "cookie copied to another client"
 msgstr "쿠키가 다른 클라이언트로 복사되었습니다"
 
-#: ../../quick-reference.rst:245
+#: ../../quick-reference.rst:251
 msgid "``INVALID COMMAND LINE``"
 msgstr "``INVALID COMMAND LINE``"
 
-#: ../../quick-reference.rst:246
+#: ../../quick-reference.rst:252
 msgid "unknown option, bad value, or a removed Zaxonlite option"
 msgstr "알 수 없는 옵션, 잘못된 값, 또는 제거된 Zaxonlite 옵션"
 
-#: ../../quick-reference.rst:248
+#: ../../quick-reference.rst:254
 msgid ""
 "Metrics to alert on: ``denied``, ``rate_limited``, ``overloaded``, "
 "``upstream_errors``, ``incidents_dropped``, ``incident_write_failures``, "
@@ -630,11 +641,11 @@ msgstr ""
 "``upstream_errors``, ``incidents_dropped``, ``incident_write_failures``, "
 "``bans_refused``, ``forwarded_invalid``\\ (모두 ``sibuna_*_total``)."
 
-#: ../../quick-reference.rst:250
+#: ../../quick-reference.rst:256
 msgid "Numbers to Remember"
 msgstr "기억할 숫자"
 
-#: ../../quick-reference.rst:253
+#: ../../quick-reference.rst:259
 msgid ""
 "Challenge id 70 chars (36-byte payload + 16-byte tag); token 75 chars (40 "
 "+ 16), 139 with Ed25519; proof bytes :math:`32(1 + t(n+1))`; PoSW depth = "
@@ -654,11 +665,11 @@ msgstr ""
 "최근 임베딩 16,384개에 대한 캠페인 거리 0.35, 연결당 keep-alive 요청 4,096개, 원본 풀 소켓 256개, "
 "저장소 작업 큐 32."
 
-#: ../../quick-reference.rst:255
+#: ../../quick-reference.rst:261
 msgid "Ingress Routing"
 msgstr "인그레스 라우팅"
 
-#: ../../quick-reference.rst:258
+#: ../../quick-reference.rst:264
 msgid ""
 "Use the Nginx or Caddy recipe in Part IX, Forward Auth Behind an Ingress. "
 "Route ``/__sibuna/*`` directly; authorize application requests with the "
@@ -671,7 +682,7 @@ msgstr ""
 "인가합니다. 들어오는 Sibuna 감사 헤더는 인가 결과로 교체합니다. Nginx에는 챌린지, 429, 인가 불가 상황을 명시적으로 "
 "처리하는 설정이 필요합니다."
 
-#: ../../quick-reference.rst:260
+#: ../../quick-reference.rst:266
 msgid ""
 "``reverse_proxy`` carries admitted HTTP/1.1 bodies and WebSockets; "
 "``forward_auth`` grants admission and the ingress carries them. Omitted "

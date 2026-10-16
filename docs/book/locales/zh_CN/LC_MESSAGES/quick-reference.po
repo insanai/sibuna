@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 05:39+0000\n"
+"POT-Creation-Date: 2026-10-16 07:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:25+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,11 +36,11 @@ msgstr "构建"
 msgid "Run"
 msgstr "运行"
 
-#: ../../quick-reference.rst:39
+#: ../../quick-reference.rst:41
 msgid "Console (opt-in preview)"
 msgstr "控制台（可选启用的预览功能）"
 
-#: ../../quick-reference.rst:48
+#: ../../quick-reference.rst:50
 msgid ""
 "Open ``http://127.0.0.1:19446/console/`` and replace the temporary "
 "password. Add ``--console-location 1.3521,103.8198`` to place the node on "
@@ -54,410 +54,419 @@ msgstr ""
 "CIDR；请按照第 IX 部分操作。SID 0007 的状态为 Committed。控制台在无头 Chromium "
 "中通过了它的浏览器工作流测试（SID 0010，标准 5）；它的正式性能隔离门槛仍未完成（第 VIII 部分）。"
 
-#: ../../quick-reference.rst:50
+#: ../../quick-reference.rst:52
 msgid "Flags That Matter First"
 msgstr "最先需要关注的选项"
 
-#: ../../quick-reference.rst:57
+#: ../../quick-reference.rst:59
 msgid "Flag"
 msgstr "选项"
 
-#: ../../quick-reference.rst:58
+#: ../../quick-reference.rst:60
 msgid "Default"
 msgstr "默认值"
 
-#: ../../quick-reference.rst:59 ../../quick-reference.rst:224
+#: ../../quick-reference.rst:61 ../../quick-reference.rst:230
 msgid "Meaning"
 msgstr "含义"
 
-#: ../../quick-reference.rst:60
+#: ../../quick-reference.rst:62
 msgid "``-d, --difficulty``"
 msgstr "``-d, --difficulty``"
 
-#: ../../quick-reference.rst:61 ../../quick-reference.rst:67
+#: ../../quick-reference.rst:63 ../../quick-reference.rst:69
 msgid "16"
 msgstr "16"
 
-#: ../../quick-reference.rst:62
+#: ../../quick-reference.rst:64
 msgid "work bits (PoSW depth = bits - 3)"
 msgstr "工作比特（PoSW 深度 = 比特数 - 3）"
 
-#: ../../quick-reference.rst:63
+#: ../../quick-reference.rst:65
 msgid "``-a, --algorithm``"
 msgstr "``-a, --algorithm``"
 
-#: ../../quick-reference.rst:64
+#: ../../quick-reference.rst:66
 msgid "posw"
 msgstr "posw"
 
-#: ../../quick-reference.rst:65
+#: ../../quick-reference.rst:67
 msgid "``posw`` or ``hashcash``"
 msgstr "``posw`` 或 ``hashcash``"
 
-#: ../../quick-reference.rst:66
+#: ../../quick-reference.rst:68
 msgid "``--posw-challenges``"
 msgstr "``--posw-challenges``"
 
-#: ../../quick-reference.rst:68
+#: ../../quick-reference.rst:70
 msgid "openings per proof"
 msgstr "每个证明的揭示数"
 
-#: ../../quick-reference.rst:69
+#: ../../quick-reference.rst:71
 msgid "``--token-ttl``"
 msgstr "``--token-ttl``"
 
-#: ../../quick-reference.rst:70
+#: ../../quick-reference.rst:72
 msgid "86400"
 msgstr "86400"
 
-#: ../../quick-reference.rst:71
+#: ../../quick-reference.rst:73
 msgid "session seconds"
 msgstr "会话秒数"
 
-#: ../../quick-reference.rst:72
+#: ../../quick-reference.rst:74
 msgid "``--challenge-ttl``"
 msgstr "``--challenge-ttl``"
 
-#: ../../quick-reference.rst:73
+#: ../../quick-reference.rst:75
 msgid "300"
 msgstr "300"
 
-#: ../../quick-reference.rst:74
+#: ../../quick-reference.rst:76
 msgid "challenge seconds"
 msgstr "挑战秒数"
 
-#: ../../quick-reference.rst:75
+#: ../../quick-reference.rst:77
 msgid "``--token-scheme``"
 msgstr "``--token-scheme``"
 
-#: ../../quick-reference.rst:76
+#: ../../quick-reference.rst:78
 msgid "mac"
 msgstr "mac"
 
-#: ../../quick-reference.rst:77
+#: ../../quick-reference.rst:79
 msgid "``mac`` or ``ed25519``"
 msgstr "``mac`` 或 ``ed25519``"
 
-#: ../../quick-reference.rst:78
+#: ../../quick-reference.rst:80
 msgid "``--rate-limit / --rate-window``"
 msgstr "``--rate-limit / --rate-window``"
 
-#: ../../quick-reference.rst:79
+#: ../../quick-reference.rst:81
 msgid "100 / 10"
 msgstr "100 / 10"
 
-#: ../../quick-reference.rst:80
+#: ../../quick-reference.rst:82
 msgid "GCRA burst per window"
 msgstr "每个窗口的 GCRA 突发量"
 
-#: ../../quick-reference.rst:81
+#: ../../quick-reference.rst:83
 msgid "``--ban-seconds``"
 msgstr "``--ban-seconds``"
 
-#: ../../quick-reference.rst:82
+#: ../../quick-reference.rst:84
 msgid "3600"
 msgstr "3600"
 
-#: ../../quick-reference.rst:83
+#: ../../quick-reference.rst:85
 msgid "honeypot ban"
 msgstr "蜜罐封禁"
 
-#: ../../quick-reference.rst:84
+#: ../../quick-reference.rst:86
 msgid "``-w, --workers``"
 msgstr "``-w, --workers``"
 
-#: ../../quick-reference.rst:85
+#: ../../quick-reference.rst:87
 msgid "CPUs"
 msgstr "CPU 数"
 
-#: ../../quick-reference.rst:86
+#: ../../quick-reference.rst:88
 msgid "accept threads"
 msgstr "接受线程"
 
-#: ../../quick-reference.rst:87
+#: ../../quick-reference.rst:89
 msgid "``--max-connections``"
 msgstr "``--max-connections``"
 
-#: ../../quick-reference.rst:88
+#: ../../quick-reference.rst:90
 msgid "1024"
 msgstr "1024"
 
-#: ../../quick-reference.rst:89
+#: ../../quick-reference.rst:91
 msgid "then ``503``"
 msgstr "超出后返回 ``503``"
 
-#: ../../quick-reference.rst:90
+#: ../../quick-reference.rst:92
 msgid "``--max-connections-per-ip``"
 msgstr "``--max-connections-per-ip``"
 
-#: ../../quick-reference.rst:91
+#: ../../quick-reference.rst:93
 msgid "64"
 msgstr "64"
 
-#: ../../quick-reference.rst:92
+#: ../../quick-reference.rst:94
 msgid "per peer address (IPv6: per ``--ipv6-prefix``), then ``503``"
 msgstr "按对端地址（IPv6：按 ``--ipv6-prefix``），超出后返回 ``503``"
 
-#: ../../quick-reference.rst:93
+#: ../../quick-reference.rst:95
 msgid "``--trusted-hops``"
 msgstr "``--trusted-hops``"
 
-#: ../../quick-reference.rst:94
+#: ../../quick-reference.rst:96
 msgid "1"
 msgstr "1"
 
-#: ../../quick-reference.rst:95
+#: ../../quick-reference.rst:97
 msgid "client = n-th ``X-Forwarded-For`` entry from the right"
 msgstr "客户端 = 从右数第 n 个 ``X-Forwarded-For`` 条目"
 
-#: ../../quick-reference.rst:96
-msgid "``--idle-timeout``"
-msgstr "``--idle-timeout``"
-
-#: ../../quick-reference.rst:97
-msgid "15"
-msgstr "15"
-
 #: ../../quick-reference.rst:98
-msgid "reaper seconds"
-msgstr "回收秒数"
+msgid "``--ja4-header``"
+msgstr "``--ja4-header``"
 
-#: ../../quick-reference.rst:99
-msgid "``-P, --policy-file``"
-msgstr "``-P, --policy-file``"
-
-#: ../../quick-reference.rst:100
-msgid "none"
-msgstr "无"
-
-#: ../../quick-reference.rst:101
-msgid "JSON policy"
-msgstr "JSON 策略"
-
-#: ../../quick-reference.rst:102
-msgid "``--trust-forwarded``"
-msgstr "``--trust-forwarded``"
-
-#: ../../quick-reference.rst:103 ../../quick-reference.rst:106
+#: ../../quick-reference.rst:99 ../../quick-reference.rst:108
+#: ../../quick-reference.rst:111
 msgid "off"
 msgstr "关闭"
 
+#: ../../quick-reference.rst:100
+msgid "header with the ingress's JA4 fingerprint; read only when trusted"
+msgstr "包含入口代理所给 JA4 指纹的请求头；仅在受信任时读取"
+
+#: ../../quick-reference.rst:101
+msgid "``--idle-timeout``"
+msgstr "``--idle-timeout``"
+
+#: ../../quick-reference.rst:102
+msgid "15"
+msgstr "15"
+
+#: ../../quick-reference.rst:103
+msgid "reaper seconds"
+msgstr "回收秒数"
+
 #: ../../quick-reference.rst:104
+msgid "``-P, --policy-file``"
+msgstr "``-P, --policy-file``"
+
+#: ../../quick-reference.rst:105
+msgid "none"
+msgstr "无"
+
+#: ../../quick-reference.rst:106
+msgid "JSON policy"
+msgstr "JSON 策略"
+
+#: ../../quick-reference.rst:107
+msgid "``--trust-forwarded``"
+msgstr "``--trust-forwarded``"
+
+#: ../../quick-reference.rst:109
 msgid "on in forward auth"
 msgstr "forward auth 下开启"
 
-#: ../../quick-reference.rst:105
+#: ../../quick-reference.rst:110
 msgid "``--secure-cookie``"
 msgstr "``--secure-cookie``"
 
-#: ../../quick-reference.rst:107
+#: ../../quick-reference.rst:112
 msgid "add ``Secure``"
 msgstr "加上 ``Secure``"
 
-#: ../../quick-reference.rst:109
+#: ../../quick-reference.rst:114
 msgid "Endpoints Under ``/__sibuna/``"
 msgstr "``/__sibuna/`` 下的端点"
 
-#: ../../quick-reference.rst:116
+#: ../../quick-reference.rst:121
 msgid "Route"
 msgstr "路由"
 
-#: ../../quick-reference.rst:117
+#: ../../quick-reference.rst:122
 msgid "Answer"
 msgstr "应答"
 
-#: ../../quick-reference.rst:118
+#: ../../quick-reference.rst:123
 msgid "``challenge``"
 msgstr "``challenge``"
 
-#: ../../quick-reference.rst:119
+#: ../../quick-reference.rst:124
 msgid "interstitial HTML"
 msgstr "验证中间页 HTML"
 
-#: ../../quick-reference.rst:120
+#: ../../quick-reference.rst:125
 msgid "``challenge.json?need=&path=``"
 msgstr "``challenge.json?need=&path=``"
 
-#: ../../quick-reference.rst:121
+#: ../../quick-reference.rst:126
 msgid "``{id, algorithm, difficulty, challenges, expires_at}``"
 msgstr "``{id, algorithm, difficulty, challenges, expires_at}``"
 
-#: ../../quick-reference.rst:122
+#: ../../quick-reference.rst:127
 msgid "``verify`` (POST)"
 msgstr "``verify``\\ （POST）"
 
-#: ../../quick-reference.rst:123
+#: ../../quick-reference.rst:128
 msgid ""
 "``{challenge_id, nonce | proof}`` -> ``200`` + ``Set-Cookie``, else "
 "``400``"
 msgstr ""
 "``{challenge_id, nonce | proof}`` -> ``200`` + ``Set-Cookie``，否则 ``400``"
 
-#: ../../quick-reference.rst:124
+#: ../../quick-reference.rst:129
 msgid "``wasm/sibuna-pow.wasm``"
 msgstr "``wasm/sibuna-pow.wasm``"
 
-#: ../../quick-reference.rst:125
+#: ../../quick-reference.rst:130
 msgid "15,181-byte solver"
 msgstr "15,181 字节的求解器"
 
-#: ../../quick-reference.rst:126
+#: ../../quick-reference.rst:131
 msgid "``worker.js``"
 msgstr "``worker.js``"
 
-#: ../../quick-reference.rst:127
+#: ../../quick-reference.rst:132
 msgid "worker with WASM and JS provers"
 msgstr "包含 WASM 和 JS 证明器的 worker"
 
-#: ../../quick-reference.rst:128
+#: ../../quick-reference.rst:133
 msgid "``honeypot``"
 msgstr "``honeypot``"
 
-#: ../../quick-reference.rst:129
+#: ../../quick-reference.rst:134
 msgid "bans caller, ``403``; ``404`` for a subresource or cross-site fetch"
 msgstr "封禁调用方，``403``；子资源或跨站获取返回 ``404``"
 
-#: ../../quick-reference.rst:130
+#: ../../quick-reference.rst:135
 msgid "``health``"
 msgstr "``health``"
 
-#: ../../quick-reference.rst:131
+#: ../../quick-reference.rst:136
 msgid "``{\"status\":\"ok\",...}``"
 msgstr "``{\"status\":\"ok\",...}``"
 
-#: ../../quick-reference.rst:132
+#: ../../quick-reference.rst:137
 msgid "``metrics``"
 msgstr "``metrics``"
 
-#: ../../quick-reference.rst:133
+#: ../../quick-reference.rst:138
 msgid "Prometheus text"
 msgstr "Prometheus 文本"
 
-#: ../../quick-reference.rst:135
+#: ../../quick-reference.rst:140
 msgid "Route all of them to the daemon, never to the origin."
 msgstr "把它们全部路由到守护进程，绝不路由到源站。"
 
-#: ../../quick-reference.rst:137
+#: ../../quick-reference.rst:142
 msgid "Status Codes"
 msgstr "状态码"
 
-#: ../../quick-reference.rst:144
+#: ../../quick-reference.rst:149
 msgid "Code"
 msgstr "状态码"
 
-#: ../../quick-reference.rst:145
+#: ../../quick-reference.rst:150
 msgid "When"
 msgstr "时机"
 
-#: ../../quick-reference.rst:146
+#: ../../quick-reference.rst:151
 msgid "200"
 msgstr "200"
 
-#: ../../quick-reference.rst:147
+#: ../../quick-reference.rst:152
 msgid "admitted (forward auth), interstitial, internal routes"
 msgstr "已准入（forward auth）、验证中间页、内部路由"
 
-#: ../../quick-reference.rst:148
+#: ../../quick-reference.rst:153
 msgid "400"
 msgstr "400"
 
-#: ../../quick-reference.rst:149
+#: ../../quick-reference.rst:154
 msgid "malformed request or target, rejected solution (diagnostic body)"
 msgstr "请求或目标格式错误，解答被拒（响应体为诊断信息）"
 
-#: ../../quick-reference.rst:150
+#: ../../quick-reference.rst:155
 msgid "401"
 msgstr "401"
 
-#: ../../quick-reference.rst:151
+#: ../../quick-reference.rst:156
 msgid "challenge required: non-HTML client or forward auth"
 msgstr "需要挑战：非 HTML 客户端或 forward auth"
 
-#: ../../quick-reference.rst:152
+#: ../../quick-reference.rst:157
 msgid "403"
 msgstr "403"
 
-#: ../../quick-reference.rst:153
+#: ../../quick-reference.rst:158
 msgid "policy or WAF denial, ban, honeypot"
 msgstr "策略或 WAF 拒绝、封禁、蜜罐"
 
-#: ../../quick-reference.rst:154
+#: ../../quick-reference.rst:159
 msgid "404"
 msgstr "404"
 
-#: ../../quick-reference.rst:155
+#: ../../quick-reference.rst:160
 msgid "unknown ``/__sibuna/`` route, refused honeypot hit"
 msgstr "未知的 ``/__sibuna/`` 路由，被拒绝的蜜罐命中"
 
-#: ../../quick-reference.rst:156
+#: ../../quick-reference.rst:161
 msgid "413"
 msgstr "413"
 
-#: ../../quick-reference.rst:157
+#: ../../quick-reference.rst:162
 msgid "solution body over the 64 KB buffer"
 msgstr "解答请求体超过 64 KB 缓冲区"
 
-#: ../../quick-reference.rst:158
+#: ../../quick-reference.rst:163
 msgid "414"
 msgstr "414"
 
-#: ../../quick-reference.rst:159
+#: ../../quick-reference.rst:164
 msgid "reported challenge URL over 8 KiB"
 msgstr "上报的挑战 URL 超过 8 KiB"
 
-#: ../../quick-reference.rst:160
+#: ../../quick-reference.rst:165
 msgid "417"
 msgstr "417"
 
-#: ../../quick-reference.rst:161
+#: ../../quick-reference.rst:166
 msgid "unsupported request expectation"
 msgstr "不支持的请求期望"
 
-#: ../../quick-reference.rst:162
+#: ../../quick-reference.rst:167
 msgid "429"
 msgstr "429"
 
-#: ../../quick-reference.rst:163
+#: ../../quick-reference.rst:168
 msgid "GCRA limit, ``Retry-After`` seconds"
 msgstr "GCRA 限制，``Retry-After`` 秒数"
 
-#: ../../quick-reference.rst:164
+#: ../../quick-reference.rst:169
 msgid "431"
 msgstr "431"
 
-#: ../../quick-reference.rst:165
+#: ../../quick-reference.rst:170
 msgid "head over 16 KB"
 msgstr "头部超过 16 KB"
 
-#: ../../quick-reference.rst:166
+#: ../../quick-reference.rst:171
 msgid "501"
 msgstr "501"
 
-#: ../../quick-reference.rst:167
+#: ../../quick-reference.rst:172
 msgid "transfer coding other than chunked"
 msgstr "chunked 以外的传输编码"
 
-#: ../../quick-reference.rst:168
+#: ../../quick-reference.rst:173
 msgid "502"
 msgstr "502"
 
-#: ../../quick-reference.rst:169
+#: ../../quick-reference.rst:174
 msgid "origin unreachable or malformed"
 msgstr "源站不可达或响应格式错误"
 
-#: ../../quick-reference.rst:170
+#: ../../quick-reference.rst:175
 msgid "503"
 msgstr "503"
 
-#: ../../quick-reference.rst:171
+#: ../../quick-reference.rst:176
 msgid "connection limits reached, or node draining"
 msgstr "达到连接限制，或节点正在排空"
 
-#: ../../quick-reference.rst:173
+#: ../../quick-reference.rst:178
 msgid "Headers"
 msgstr "请求头与响应头"
 
-#: ../../quick-reference.rst:176
+#: ../../quick-reference.rst:181
 msgid ""
 "*Upstream (proxy)*: ``X-Forwarded-For`` (socket peer, after the received "
 "chain when trusted), ``X-Forwarded-Proto``, ``X-Real-IP`` (the judged "
@@ -469,7 +478,7 @@ msgstr ""
 "（被判定的客户端）、``X-Sibuna-Status: PASS``、``X-Sibuna-Rule: "
 "<rule>``；逐跳字段和其他转发字段会被丢弃，使用下划线拼写的也一样。"
 
-#: ../../quick-reference.rst:177
+#: ../../quick-reference.rst:182
 msgid ""
 "*Forward-auth reply*: ``X-Sibuna-Status``, ``X-Sibuna-Rule``, "
 "``X-Sibuna-Rule-Hash``."
@@ -477,11 +486,11 @@ msgstr ""
 "*forward-auth "
 "回复*：``X-Sibuna-Status``、``X-Sibuna-Rule``、``X-Sibuna-Rule-Hash``。"
 
-#: ../../quick-reference.rst:178
+#: ../../quick-reference.rst:183
 msgid "*Challenge reply*: ``X-Sibuna-Status: CHALLENGE``."
 msgstr "*挑战回复*：``X-Sibuna-Status: CHALLENGE``。"
 
-#: ../../quick-reference.rst:179
+#: ../../quick-reference.rst:184
 msgid ""
 "*Cookie*: ``__sibuna_token=<75 chars, 139 with ed25519>; Path=/; "
 "Max-Age=<ttl>; HttpOnly; SameSite=Lax[; Secure]``"
@@ -489,26 +498,27 @@ msgstr ""
 "*Cookie*：``__sibuna_token=<75 chars, 139 with ed25519>; Path=/; "
 "Max-Age=<ttl>; HttpOnly; SameSite=Lax[; Secure]``"
 
-#: ../../quick-reference.rst:181
+#: ../../quick-reference.rst:186
 msgid "Policy File Skeleton"
 msgstr "策略文件骨架"
 
-#: ../../quick-reference.rst:197
+#: ../../quick-reference.rst:203
 msgid ""
-"Patterns: ``*`` or ``.*`` any; ``^...$`` exact; trailing ``*`` prefix; "
-"leading ``/`` exact path; else case-insensitive substring. Paths are "
-"matched in normal form. Order: WAF -> trie deny/allow -> rules -> score "
-"-> bypass -> trie challenge -> bots -> default."
+"JA4: a whole fingerprint, or a prefix and ``*``; no fingerprint, no "
+"match. Patterns: ``*`` or ``.*`` any; ``^...$`` exact; trailing ``*`` "
+"prefix; leading ``/`` exact path; else case-insensitive substring. Paths "
+"are matched in normal form. Order: WAF -> trie deny/allow -> rules -> "
+"score -> bypass -> trie challenge -> bots -> default."
 msgstr ""
-"模式：``*`` 或 ``.*`` 匹配任意内容；``^...$`` 精确匹配；末尾 ``*`` 为前缀；以 ``/`` "
-"开头为精确路径；其他为不区分大小写的子串。路径按规范形式匹配。顺序：WAF -> 字典树 deny/allow -> 规则 -> 分数 -> 绕过 "
-"-> 字典树 challenge -> 机器人 -> 默认。"
+"JA4：完整的指纹，或者前缀加 ``*``；没有指纹则不匹配。模式：``*`` 或 ``.*`` 匹配任意内容；``^...$`` 精确匹配；末尾 "
+"``*`` 为前缀；以 ``/`` 开头为精确路径；其他为不区分大小写的子串。路径按规范形式匹配。顺序：WAF -> 字典树 deny/allow "
+"-> 规则 -> 分数 -> 绕过 -> 字典树 challenge -> 机器人 -> 默认。"
 
-#: ../../quick-reference.rst:199
+#: ../../quick-reference.rst:205
 msgid "Storage (Edge) in SQL"
 msgstr "SQL 中的存储（Edge）"
 
-#: ../../quick-reference.rst:214
+#: ../../quick-reference.rst:220
 msgid ""
 "SQLite (``sqlite3 <dir>/sibuna.db``); actions are lowercase. Score "
 ":math:`\\le -50` -> deny prefix; :math:`\\ge 50` -> allow. Cluster: same "
@@ -521,103 +531,103 @@ msgstr ""
 "postgres``，``--database-url-file <file> --cluster-node N``，其中 N 唯一，取值 1 到 "
 "8,388,607；没有成员列表、领导者或集群 TLS（SID 0011）。"
 
-#: ../../quick-reference.rst:216
+#: ../../quick-reference.rst:222
 msgid "Diagnostics"
 msgstr "诊断"
 
-#: ../../quick-reference.rst:223
+#: ../../quick-reference.rst:229
 msgid "Title"
 msgstr "标题"
 
-#: ../../quick-reference.rst:225
+#: ../../quick-reference.rst:231
 msgid "``MALFORMED CHALLENGE``"
 msgstr "``MALFORMED CHALLENGE``"
 
-#: ../../quick-reference.rst:226
+#: ../../quick-reference.rst:232
 msgid "id edited or truncated; fetch a new one"
 msgstr "ID 被编辑或截断；获取一个新的"
 
-#: ../../quick-reference.rst:227
+#: ../../quick-reference.rst:233
 msgid "``INVALID CHALLENGE TAG``"
 msgstr "``INVALID CHALLENGE TAG``"
 
-#: ../../quick-reference.rst:228
+#: ../../quick-reference.rst:234
 msgid "not minted by this seed or node"
 msgstr "不是由这个种子或节点签发的"
 
-#: ../../quick-reference.rst:229
+#: ../../quick-reference.rst:235
 msgid "``CHALLENGE EXPIRED``"
 msgstr "``CHALLENGE EXPIRED``"
 
-#: ../../quick-reference.rst:230
+#: ../../quick-reference.rst:236
 msgid "older than TTL or clock skew > 60 s"
 msgstr "超过 TTL，或时钟偏差 > 60 s"
 
-#: ../../quick-reference.rst:231
+#: ../../quick-reference.rst:237
 msgid "``CLIENT FINGERPRINT MISMATCH``"
 msgstr "``CLIENT FINGERPRINT MISMATCH``"
 
-#: ../../quick-reference.rst:232
+#: ../../quick-reference.rst:238
 msgid "address or User-Agent changed"
 msgstr "地址或 User-Agent 发生了变化"
 
-#: ../../quick-reference.rst:233
+#: ../../quick-reference.rst:239
 msgid "``DIFFICULTY NOT MET``"
 msgstr "``DIFFICULTY NOT MET``"
 
-#: ../../quick-reference.rst:234
+#: ../../quick-reference.rst:240
 msgid "nonce lacks zero bits"
 msgstr "nonce 缺少零比特"
 
-#: ../../quick-reference.rst:235
+#: ../../quick-reference.rst:241
 msgid "``INVALID PROOF OF SEQUENTIAL WORK``"
 msgstr "``INVALID PROOF OF SEQUENTIAL WORK``"
 
-#: ../../quick-reference.rst:236
+#: ../../quick-reference.rst:242
 msgid "openings do not reach the root"
 msgstr "揭示无法到达根"
 
-#: ../../quick-reference.rst:237
+#: ../../quick-reference.rst:243
 msgid "``WRONG SOLUTION TYPE``"
 msgstr "``WRONG SOLUTION TYPE``"
 
-#: ../../quick-reference.rst:238
+#: ../../quick-reference.rst:244
 msgid "nonce for PoSW or proof for Hashcash"
 msgstr "为 PoSW 提交了 nonce，或为 Hashcash 提交了证明"
 
-#: ../../quick-reference.rst:239
+#: ../../quick-reference.rst:245
 msgid "``DOUBLE SPEND PREVENTED``"
 msgstr "``DOUBLE SPEND PREVENTED``"
 
-#: ../../quick-reference.rst:240
+#: ../../quick-reference.rst:246
 msgid "challenge already used"
 msgstr "挑战已被使用"
 
-#: ../../quick-reference.rst:241
+#: ../../quick-reference.rst:247
 msgid "``STORE FULL``"
 msgstr "``STORE FULL``"
 
-#: ../../quick-reference.rst:242
+#: ../../quick-reference.rst:248
 msgid "spent set saturated; lower TTL or raise ``--spent-tags``"
 msgstr "已用集合饱和；降低 TTL 或调大 ``--spent-tags``"
 
-#: ../../quick-reference.rst:243
+#: ../../quick-reference.rst:249
 msgid "``NETWORK BINDING MISMATCH``"
 msgstr "``NETWORK BINDING MISMATCH``"
 
-#: ../../quick-reference.rst:244
+#: ../../quick-reference.rst:250
 msgid "cookie copied to another client"
 msgstr "Cookie 被复制到另一个客户端"
 
-#: ../../quick-reference.rst:245
+#: ../../quick-reference.rst:251
 msgid "``INVALID COMMAND LINE``"
 msgstr "``INVALID COMMAND LINE``"
 
-#: ../../quick-reference.rst:246
+#: ../../quick-reference.rst:252
 msgid "unknown option, bad value, or a removed Zaxonlite option"
 msgstr "未知选项、错误的值，或已移除的 Zaxonlite 选项"
 
-#: ../../quick-reference.rst:248
+#: ../../quick-reference.rst:254
 msgid ""
 "Metrics to alert on: ``denied``, ``rate_limited``, ``overloaded``, "
 "``upstream_errors``, ``incidents_dropped``, ``incident_write_failures``, "
@@ -626,11 +636,11 @@ msgstr ""
 "需要告警的指标：``denied``、``rate_limited``、``overloaded``、``upstream_errors``、``incidents_dropped``、``incident_write_failures``、``bans_refused``、``forwarded_invalid``\\ "
 "（均为 ``sibuna_*_total``）。"
 
-#: ../../quick-reference.rst:250
+#: ../../quick-reference.rst:256
 msgid "Numbers to Remember"
 msgstr "需要记住的数字"
 
-#: ../../quick-reference.rst:253
+#: ../../quick-reference.rst:259
 msgid ""
 "Challenge id 70 chars (36-byte payload + 16-byte tag); token 75 chars (40 "
 "+ 16), 139 with Ed25519; proof bytes :math:`32(1 + t(n+1))`; PoSW depth = "
@@ -649,11 +659,11 @@ msgstr ""
 "个连接；事件环 512；批次 32；活动距离 0.35，基于最近的 16,384 个嵌入向量；keep-alive 每个连接 4,096 "
 "个请求；源站连接池 256 个套接字；存储任务队列 32。"
 
-#: ../../quick-reference.rst:255
+#: ../../quick-reference.rst:261
 msgid "Ingress Routing"
 msgstr "入口路由"
 
-#: ../../quick-reference.rst:258
+#: ../../quick-reference.rst:264
 msgid ""
 "Use the Nginx or Caddy recipe in Part IX, Forward Auth Behind an Ingress. "
 "Route ``/__sibuna/*`` directly; authorize application requests with the "
@@ -665,7 +675,7 @@ msgstr ""
 "``/__sibuna/*``；用原始 URI、方法和受信任的客户端地址对应用请求进行授权。用授权结果替换传入的 Sibuna 审计头。Nginx "
 "需要显式处理挑战、429 和认证服务不可用的情况。"
 
-#: ../../quick-reference.rst:260
+#: ../../quick-reference.rst:266
 msgid ""
 "``reverse_proxy`` carries admitted HTTP/1.1 bodies and WebSockets; "
 "``forward_auth`` grants admission and the ingress carries them. Omitted "
