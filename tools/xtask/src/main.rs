@@ -4,8 +4,9 @@
 //! own or in a tool crate beside this one. Today there is `check`, which enforces the
 //! structural limits of the house rules, and `browser`, which runs the `sibuna-browser`
 //! tool (`tools/browser`) for checks in headless Chromium, and `bench`, which builds the
-//! daemon and runs the `sibuna-bench` tool (`tools/bench`) in release mode. Builds of the
-//! WebAssembly solver (`wasm`) are meant to join them as a further module and table entry.
+//! daemon and runs the `sibuna-bench` tool (`tools/bench`) in release mode, and `licenses`,
+//! which writes `LICENSES/THIRD-PARTY-RUST.txt`. Builds of the WebAssembly solver (`wasm`)
+//! are meant to join them as a further module and table entry.
 //!
 //! Deliberate changes from the Zig repository's `tools/check-style.sh` and
 //! `check-style.awk`:
@@ -23,6 +24,7 @@
 //! - Violations are reported as Elm-style diagnostics with an excerpt and a hint.
 
 mod check;
+mod licenses;
 
 use std::ffi::OsString;
 use std::io::{self, Write};
@@ -37,7 +39,7 @@ struct Command {
 }
 
 /// Every subcommand, in the order `help` lists them.
-const COMMANDS: [Command; 4] = [
+const COMMANDS: [Command; 5] = [
     Command {
         name: "check",
         synopsis: "[PATH...]",
@@ -52,6 +54,11 @@ const COMMANDS: [Command; 4] = [
         name: "bench",
         synopsis: "<COMMAND> [OPTIONS]",
         summary: "Run the benchmarks (primitives, product, latency, admission) in release mode",
+    },
+    Command {
+        name: "licenses",
+        synopsis: "[--check]",
+        summary: "Write the third-party crate list LICENSES/THIRD-PARTY-RUST.txt",
     },
     Command { name: "help", synopsis: "", summary: "Print this help" },
 ];
@@ -68,6 +75,7 @@ fn main() -> ExitCode {
         Some("check") => check(rest),
         Some("browser") => browser(rest),
         Some("bench") => bench(rest),
+        Some("licenses") => licenses(rest),
         Some("help" | "-h" | "--help") => help(),
         _ => unknown_command(&command.to_string_lossy()),
     }
@@ -85,6 +93,27 @@ fn check(arguments: &[OsString]) -> ExitCode {
         Err(error) => {
             let _ = writeln!(io::stderr(), "xtask check: {error}");
             ExitCode::from(EXIT_USAGE)
+        }
+    }
+}
+
+/// Runs `cargo xtask licenses` over the workspace that contains this crate.
+fn licenses(arguments: &[OsString]) -> ExitCode {
+    let manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let root = manifest.ancestors().nth(2).unwrap_or(manifest);
+    match licenses::run(root, arguments, &mut io::stdout().lock()) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => {
+            let title = error.title();
+            let location = licenses::OUTPUT;
+            let dashes =
+                "-".repeat(80usize.saturating_sub(title.len() + location.len() + 5).max(3));
+            let _ = writeln!(
+                io::stderr(),
+                "-- {title} {dashes} {location}\n\n{error}\n\nHint: {}",
+                error.hint()
+            );
+            ExitCode::FAILURE
         }
     }
 }
@@ -147,7 +176,7 @@ fn help() -> ExitCode {
     );
     for command in &COMMANDS {
         let usage = format!("{} {}", command.name, command.synopsis);
-        text.push_str(&format!("  {usage:<18}{}\n", command.summary));
+        text.push_str(&format!("  {usage:<28}{}\n", command.summary));
     }
     text.push_str(
         "\n`check` scans crates/, cmd/ and tools/ (or the given paths). It fails when a\n\
@@ -157,7 +186,9 @@ fn help() -> ExitCode {
          `browser` passes its arguments to the sibuna-browser tool; run\n\
          `cargo xtask browser help` for its commands.\n\n\
          `bench` builds the daemon and the sibuna-bench tool in release mode and passes its\n\
-         arguments on; run `cargo xtask bench help` for its commands and options.\n",
+         arguments on; run `cargo xtask bench help` for its commands and options.\n\n\
+         `licenses` lists the third-party crates of the release executable with their\n\
+         licenses in LICENSES/THIRD-PARTY-RUST.txt; `--check` only verifies the file.\n",
     );
     match io::stdout().lock().write_all(text.as_bytes()) {
         Ok(()) => ExitCode::SUCCESS,
