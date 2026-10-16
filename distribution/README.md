@@ -22,7 +22,7 @@ prepare: version check, WebAssembly modules (once)
    +--> freebsd, openbsd (native build and package in a VM) ----+
 ```
 
-Every platform job builds with the same WebAssembly modules (`SIBUNA_POW_WASM`, `SIBUNA_CONSOLE_WASM`), runs `--version` and `scripts/smoke_test.py` against the executable it built, and packages it with `scripts/package_release.py`. The publish job runs only after every job passed. It copies the verified image to GHCR, writes `SHA256SUMS`, and creates the GitHub release, as a pre-release when the version has a pre-release part (`1.0.0-beta.1`).
+Every platform job builds with the same WebAssembly modules (`SIBUNA_POW_WASM`, `SIBUNA_CONSOLE_WASM`), runs `--version` and `scripts/smoke_test.py` against the executable it built, and packages it with `scripts/package_release.py`. The publish job runs only after every job passed. It copies the verified image to GHCR, writes `SHA256SUMS`, and creates the GitHub release and marks it the latest one; a beta is a public release too.
 
 ## Maintainer setup
 
