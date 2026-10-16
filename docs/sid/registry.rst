@@ -51,8 +51,8 @@ Discussion registry
    * - 0013
      - :doc:`records/0013-console-storage`
      - accepted
-   * - XXXXX
-     - :doc:`records/XXXXX-ja4-from-ingress`
-     - prediscussion
+   * - 0014
+     - :doc:`records/0014-ja4-from-ingress`
+     - accepted
 
 .. sid-generated-end
