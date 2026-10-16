@@ -4,10 +4,8 @@
 //! own or in a tool crate beside this one. Today there is `check`, which enforces the
 //! structural limits of the house rules, and `browser`, which runs the `sibuna-browser`
 //! tool (`tools/browser`) for checks in headless Chromium, and `bench`, which builds the
-//! daemon and runs the `sibuna-bench` tool (`tools/bench`) in release mode, and `parity`,
-//! which runs the `sibuna-parity` tool (`tools/parity`) that compares the Rust daemon with
-//! the Zig daemon. Builds of the WebAssembly solver (`wasm`) are meant to join them as a
-//! further module and table entry.
+//! daemon and runs the `sibuna-bench` tool (`tools/bench`) in release mode. Builds of the
+//! WebAssembly solver (`wasm`) are meant to join them as a further module and table entry.
 //!
 //! Deliberate changes from the Zig repository's `tools/check-style.sh` and
 //! `check-style.awk`:
@@ -39,7 +37,7 @@ struct Command {
 }
 
 /// Every subcommand, in the order `help` lists them.
-const COMMANDS: [Command; 5] = [
+const COMMANDS: [Command; 4] = [
     Command {
         name: "check",
         synopsis: "[PATH...]",
@@ -54,11 +52,6 @@ const COMMANDS: [Command; 5] = [
         name: "bench",
         synopsis: "<COMMAND> [OPTIONS]",
         summary: "Run the benchmarks (primitives, product, latency, admission) in release mode",
-    },
-    Command {
-        name: "parity",
-        synopsis: "[OPTIONS]",
-        summary: "Compare the Rust daemon with the Zig daemon over a generated corpus",
     },
     Command { name: "help", synopsis: "", summary: "Print this help" },
 ];
@@ -75,7 +68,6 @@ fn main() -> ExitCode {
         Some("check") => check(rest),
         Some("browser") => browser(rest),
         Some("bench") => bench(rest),
-        Some("parity") => parity(rest),
         Some("help" | "-h" | "--help") => help(),
         _ => unknown_command(&command.to_string_lossy()),
     }
@@ -130,13 +122,6 @@ fn bench(arguments: &[OsString]) -> ExitCode {
     cargo(&run, arguments).map_or_else(|code| code, |()| ExitCode::SUCCESS)
 }
 
-/// Runs `cargo run -q -p sibuna-parity -- <arguments>` and passes on its exit status. The
-/// tool builds the Rust daemon itself unless `--rust` names one.
-fn parity(arguments: &[OsString]) -> ExitCode {
-    let run = ["run", "-q", "-p", "sibuna-parity", "--"];
-    cargo(&run, arguments).map_or_else(|code| code, |()| ExitCode::SUCCESS)
-}
-
 /// Runs the cargo that ran us with `args` and `extra`; a failure carries the exit code to
 /// pass on.
 fn cargo(args: &[&str], extra: &[OsString]) -> Result<(), ExitCode> {
@@ -172,10 +157,7 @@ fn help() -> ExitCode {
          `browser` passes its arguments to the sibuna-browser tool; run\n\
          `cargo xtask browser help` for its commands.\n\n\
          `bench` builds the daemon and the sibuna-bench tool in release mode and passes its\n\
-         arguments on; run `cargo xtask bench help` for its commands and options.\n\n\
-         `parity` runs the sibuna-parity tool, which plays a generated corpus against the\n\
-         Zig and the Rust daemon and reports every difference not on its allow-list; run\n\
-         `cargo xtask parity --help` for its options.\n",
+         arguments on; run `cargo xtask bench help` for its commands and options.\n",
     );
     match io::stdout().lock().write_all(text.as_bytes()) {
         Ok(()) => ExitCode::SUCCESS,

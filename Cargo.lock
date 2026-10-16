@@ -1110,15 +1110,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sibuna-parity"
-version = "1.0.0-beta.1"
-dependencies = [
- "sibuna-encoding",
- "sibuna-json",
- "sibuna-pow",
-]
-
-[[package]]
 name = "sibuna-patterns"
 version = "1.0.0-beta.1"
 
