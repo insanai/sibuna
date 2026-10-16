@@ -141,6 +141,11 @@ pub struct Audit<'a> {
     /// The request's own `X-Forwarded-For` fields come from a trusted proxy, so they are
     /// passed on before `peer`; otherwise they are dropped.
     pub trusts_forwarded: bool,
+    /// The lower-case name of the field a trusted ingress forwards a JA4 fingerprint in
+    /// (SID 0014); empty without one. Without trust every field of that name is dropped, so
+    /// a client cannot hand the origin a fingerprint under Sibuna's name; with trust only
+    /// the exact spelling passes, never an alias with `_` for `-`.
+    pub ja4_header: &'a [u8],
     /// The admission status, written as `X-Sibuna-Status`.
     pub status: &'a [u8],
     /// The deciding rule, written as `X-Sibuna-Rule`.
@@ -162,6 +167,7 @@ impl Default for Audit<'_> {
             client_ip: b"",
             peer: b"",
             trusts_forwarded: false,
+            ja4_header: b"",
             status: b"",
             rule: b"",
             scheme: b"http",

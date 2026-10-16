@@ -45,21 +45,28 @@ fn is_hop_by_hop(name: &[u8]) -> bool {
     HOP_BY_HOP.iter().any(|hop| same_field_name(name, hop))
 }
 
-/// Compares a field name with a lower-case `wanted` name, ignoring case and reading `_` as
-/// `-`.
+/// Compares two field names, ignoring case and reading `_` as `-` on both sides.
 fn same_field_name(name: &[u8], wanted: &[u8]) -> bool {
-    name.len() == wanted.len()
-        && name.iter().zip(wanted).all(|(&byte, &want)| {
-            let byte = if byte == b'_' { b'-' } else { byte.to_ascii_lowercase() };
-            byte == want
-        })
+    let fold = |byte: u8| if byte == b'_' { b'-' } else { byte.to_ascii_lowercase() };
+    name.len() == wanted.len() && name.iter().zip(wanted).all(|(&a, &b)| fold(a) == fold(b))
 }
 
 /// True when a request field is not forwarded: a hop-by-hop or Sibuna field (see
-/// [`is_hop_by_hop`]), or one the client's `Connection` field nominates. `Host` is always
-/// forwarded: a client cannot nominate it away and deliver a request without one.
-fn is_dropped(request: &Request<'_>, name: &[u8]) -> bool {
-    is_hop_by_hop(name) || (nominated(request, name) && !name.eq_ignore_ascii_case(b"host"))
+/// [`is_hop_by_hop`]), a JA4 field the origin must not trust (see [`Audit::ja4_header`]), or
+/// one the client's `Connection` field nominates. `Host` is always forwarded: a client
+/// cannot nominate it away and deliver a request without one.
+fn is_dropped(request: &Request<'_>, name: &[u8], audit: &Audit<'_>) -> bool {
+    is_hop_by_hop(name)
+        || is_untrusted_ja4(name, audit)
+        || (nominated(request, name) && !name.eq_ignore_ascii_case(b"host"))
+}
+
+/// True when `name` spells the JA4 field of `audit` and is not a trusted exact spelling.
+fn is_untrusted_ja4(name: &[u8], audit: &Audit<'_>) -> bool {
+    let wanted = audit.ja4_header;
+    !wanted.is_empty()
+        && same_field_name(name, wanted)
+        && !(audit.trusts_forwarded && name.eq_ignore_ascii_case(wanted))
 }
 
 /// Writes the origin request head for `request`: the request line in HTTP/1.1, the
@@ -90,7 +97,7 @@ pub(crate) fn write_request_head<W: Write + ?Sized>(
     }
     out.write_all(b" HTTP/1.1\r\n")?;
     for header in request.headers() {
-        if is_dropped(request, header.name) {
+        if is_dropped(request, header.name, audit) {
             continue;
         }
         out.write_all(header.name)?;
@@ -267,6 +274,28 @@ mod tests {
         }
     }
 
+    /// The JA4 field (SID 0014) reaches the origin only from a trusted ingress, in its exact
+    /// spelling; an untrusted one, or an alias with `_`, never does.
+    #[test]
+    fn the_ja4_field_passes_only_when_trusted() {
+        let raw = b"GET / HTTP/1.1\r\nHost: h\r\nCF-JA4: t13d1516h2_8daaf6152771_02713d6af862\r\n\
+            cf_ja4: forged\r\n\r\n";
+        let request = parse_request(raw).unwrap();
+        let mut out = Vec::new();
+        let untrusted = Audit { ja4_header: b"cf-ja4", ..audit() };
+        write_request_head(&mut out, &request, &Upload::None, &untrusted, false).unwrap();
+        assert!(!contains(&out, b"t13d") && !contains(&out, b"forged"));
+        out.clear();
+        let trusted = Audit { trusts_forwarded: true, ..untrusted };
+        write_request_head(&mut out, &request, &Upload::None, &trusted, false).unwrap();
+        assert_eq!(field_values(&out, "CF-JA4"), ["t13d1516h2_8daaf6152771_02713d6af862"]);
+        assert!(!contains(&out, b"forged"));
+        // Without the option the field is an ordinary one.
+        out.clear();
+        write_request_head(&mut out, &request, &Upload::None, &audit(), false).unwrap();
+        assert!(contains(&out, b"t13d") && contains(&out, b"forged"));
+    }
+
     #[test]
     fn framing_is_generated_and_nominated_fields_are_dropped() {
         let raw = b"GET /a? HTTP/1.0\r\nHost: h\r\nConnection: X-Secret, content-length\r\n\
@@ -303,7 +332,8 @@ mod tests {
         assert!(text.contains("X_Keep: yes\r\n"), "{text}");
         assert!(same_field_name(b"X_FORWARDED_FOR", b"x-forwarded-for"));
         assert!(!same_field_name(b"X-Forwarded-Fo", b"x-forwarded-for"));
-        assert!(!same_field_name(b"x-forwarded_for", b"x_forwarded_for"));
+        // Both sides fold, so a configured name with `_` matches every spelling too.
+        assert!(same_field_name(b"x-forwarded_for", b"x_forwarded_for"));
     }
 
     #[test]

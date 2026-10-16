@@ -211,15 +211,15 @@ fn run(scenario: &Scenario, pool: &Pool, workspace: &mut Workspace) -> Outcome {
         upload,
         audit: Audit {
             client_ip: b"203.0.113.9",
-            // Zig wrote the judged client as `X-Forwarded-For`; an untrusted chain ending in
-            // the same peer gives the origin the same head.
+            // Zig wrote the judged client as `X-Forwarded-For`; an untrusted chain (the
+            // default) ending in the same peer gives the origin the same head.
             peer: b"203.0.113.9",
-            trusts_forwarded: false,
             status: b"PASS",
             rule: b"default/allow",
             scheme: scenario.scheme.as_bytes(),
             response_status: Some(&mut status),
             response_head: Some(&mut capture),
+            ..Audit::default()
         },
         keep_alive: scenario.keep_alive,
     };
