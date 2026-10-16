@@ -1,0 +1,31 @@
+{
+  "dependencies": {
+    "three": {
+      "version": "0.186.1",
+      "integrity": "sha512-blFeqb49wRCSGUGj7gtpfnSGHy2lwDk94RhUmS1c/hTby70kvChbWpkJ4Pm1390LqzzvTmzgXKHPEafJwCb8jA=="
+    },
+    "esbuild": {
+      "version": "0.28.2",
+      "integrity": "sha512-HKVLS8dvII+xoKW9kmqxbRKrnWEXfJJr/FZhhJmiqIB0e053QNYFqOBouTMO/k5sID4MvCiUCvv8b9M4h32wIA=="
+    }
+  },
+  "rebuild": "node docs/site/build-animation.mjs /absolute/path/to/pinned/node_modules",
+  "files": {
+    "admission-scene.js": {
+      "bytes": 18695,
+      "sha256": "6ab148bd7d65c3fe8e3f260f04e98df50f748acefab26243175540c3a449b484"
+    },
+    "admission-model.js": {
+      "bytes": 3340,
+      "sha256": "61649a372c2d55cf6049fdda3f3aa510064ee8e04be6ab0223be7c8674c4f305"
+    },
+    "admission-scene.bundle.js": {
+      "bytes": 594535,
+      "sha256": "c569c4ca341e8c73ae7b88e29c13e5a5535ef48b7c8a4129e682b790e99e44c4"
+    },
+    "three-LICENSE.txt": {
+      "bytes": 1081,
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  }
+}

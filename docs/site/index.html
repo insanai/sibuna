@@ -1,0 +1,67 @@
+<section class="hero hero-demo">
+  <div><p class="eyebrow">Self-hosted web protection</p>
+    <h1>Protect your site.<br><em>Share the cost of access.</em></h1></div>
+  <div><p class="lead">Sibuna asks clients to solve a puzzle before granting access.
+    Creating the proof takes more computation than checking it. This helps preserve your
+    app's resources for admitted traffic.</p>
+    <div class="actions"><a class="button" href="/sibuna/book/operations.html">Get started</a>
+      <a class="button secondary" href="#how-sibuna-works">See how it works</a></div>
+    <p class="meta">Open source · LGPL 3.0 · v1.0.0-beta.1</p></div>
+</section>
+<!-- admission-demo -->
+<section class="features" aria-label="Protection capabilities">
+  <article><span class="label">01 / Govern admission</span><h2>Ask bots to do the work.</h2>
+  <p>Browser challenges add a cost to automated access. Signed sessions let admitted visitors
+  return without a new puzzle on every request. Hardware and difficulty affect the cost.</p></article>
+  <article><span class="label">02 / Protect applications</span><h2>Keep requests flowing.</h2>
+  <p>Use Sibuna as a reverse proxy or an admission service for your existing ingress.
+  Shield checks requests for SQL injection, XSS, path traversal and command injection.</p></article>
+  <article><span class="label">03 / Operate with evidence</span><h2>See the decisions.</h2>
+  <p>The optional console shows traffic, recorded incidents and policy changes.
+  Coverage and sampling labels help explain what each view can tell you.</p></article>
+</section>
+<section class="section start">
+  <div><p class="eyebrow">Try v1.0.0-beta.1</p><h2>Download.<br>Verify. Configure.</h2>
+  <p>Download binaries for Linux, macOS and Windows; Debian, RPM and Arch packages;
+  or CLI packages for FreeBSD 15.1 and OpenBSD 7.9 x86-64. Releases also include a Helm chart
+  and a container image. Verify checksums before installation.</p>
+  <a href="https://github.com/insanai/sibuna/releases/tag/v1.0.0-beta.1">All downloads</a></div>
+  <div class="code"><div class="code-label">TERMINAL · LINUX x86-64</div><pre><code>curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.1/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.1/SHA256SUMS
+sha256sum --ignore-missing -c SHA256SUMS
+tar -xzf sibuna-linux-amd64.tar.gz
+./sibuna --help
+
+<span class="comment"># Configure a trusted HTTPS ingress before deployment.</span></code></pre></div>
+</section>
+<section class="section"><p class="eyebrow">Find your way through the system</p>
+  <h2>Learn it. Use it. Question it.</h2><div class="cards">
+  <a class="card" href="/sibuna/book/"><span class="label">The book</span>
+  <h3>From proofs to protection</h3><p>The protocol, request pipeline, inspection bounds,
+  algorithms and measurements. Also available as a PDF.</p></a>
+  <a class="card" href="/sibuna/book/operations.html"><span class="label">Operations</span>
+  <h3>Build and operate</h3><p>Installation, ingress recipes, policies, SQLite and
+  PostgreSQL storage, GeoIP, the console and clustering.</p></a>
+  <a class="card" href="/sibuna/sid/"><span class="label">Design discussions</span>
+  <h3>Decisions with context</h3><p>Architecture, alternatives, implementation boundaries
+  and acceptance conditions in each Sibuna Discussion.</p></a></div>
+</section>
+<section class="section start"><div><p class="eyebrow">Know the deployment boundary</p>
+  <h2>Application protection.<br>Explicit limits.</h2>
+  <p>Terminate public HTTPS at a trusted ingress and keep Sibuna's listener private.
+  Linux requires kernel 5.10 or later; macOS requires 15 or later; Windows requires
+  Windows 10 or Server 2019 or later.</p>
+  <a href="/sibuna/book/reference.html">CLI and protocol reference</a></div>
+  <div class="limits"><p>The built-in inspector checks the first 8 KiB of supported bodies.
+  WebSocket messages are relayed without inspection. Forward-auth sees the metadata
+  supplied by the ingress.</p>
+  <p>Your ingress handles public TLS and HTTP/2. Rate limits are local to each node.
+  Sibuna does not provide volumetric network mitigation.
+  A challenge adds work; it does not establish that a visitor is human.</p>
+  <p>The console is opt-in. Its strict performance isolation target has not formally passed.
+  Published measurements identify the code revision and uncertainty.</p>
+  <p><a href="/sibuna/sid/records/0007-console-management-interface.html">Console contract</a>
+  · <a href="/sibuna/whitepaper/">Architecture whitepaper</a>
+  · <a href="/sibuna/pdf/sibuna-book.pdf">Book PDF</a>
+  · <a href="/sibuna/pdf/sibuna-whitepaper.pdf">Whitepaper PDF</a></p></div>
+</section>

@@ -8,6 +8,10 @@ complete license texts.
 Documentation website template and styles adapted from SQLodin: MIT;
 LICENSES/SQLodin-MIT.txt. Source: github.com/insanai/sqlodin.
 
+The documentation website's admission animation bundles three.js 0.186.1: MIT;
+LICENSES/three-MIT.txt (also served as docs/site/three-LICENSE.txt). It is part of
+the website only, not of the executable.
+
 Bundled third-party materials in the default release:
 
 - Rust crates linked into the executable (sqlx with SQLite, tokio, rustls with

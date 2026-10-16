@@ -1,0 +1,326 @@
+/* Adapted from SQLodin; copyright 2026 Vikrant Rathore and Ronak Rathore.
+ * MIT terms: LICENSES/SQLodin-MIT.txt. */
+:root {
+  --paper:#f7f6f1;
+  --ink:#20352f;
+  --muted:#64716b;
+  --line:#d9dfd5;
+  --green:#176a4b;
+  --pale:#e7eee4;
+  --gold:#dba65c;
+  --code:#152d28
+}
+* {
+  box-sizing:border-box
+}
+html {
+  scroll-behavior:smooth;
+  scroll-padding-top:6rem
+}
+body {
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+}
+a {
+  color:var(--green);
+  text-underline-offset:4px
+}
+a:hover {
+  color:#0c402c
+}
+button,input {
+  font:inherit
+}
+button,a {
+  touch-action:manipulation
+}
+a:focus-visible,button:focus-visible,input:focus-visible {
+  outline:3px solid var(--gold);
+  outline-offset:4px
+}
+.skip {
+  position:absolute;
+  left:-10000px;
+  top:0
+}
+.skip:focus {
+  left:1rem;
+  background:white;
+  padding:1rem;
+  z-index:9
+}
+.nav {
+  max-width:1320px;
+  margin:auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:24px 5%;
+  gap:24px;
+  border-bottom:1px solid var(--line)
+}
+.brand {
+  font-size:23px;
+  font-weight:750;
+  letter-spacing:-1px;
+  text-decoration:none;
+  color:var(--ink);
+  white-space:nowrap
+}
+.brand i {
+  display:inline-grid;
+  place-items:center;
+  background:var(--green);
+  color:white;
+  font:700 20px/1 ui-monospace,monospace;
+  width:34px;
+  height:34px;
+  border-radius:9px;
+  margin-right:9px;
+  font-style:normal
+}
+.nav nav {
+  display:flex;
+  gap:25px;
+  align-items:center;
+  font-size:14px
+}
+.nav nav a {
+  text-decoration:none;
+  color:var(--ink)
+}
+.home {
+  max-width:1320px;
+  margin:auto;
+  padding:0 5%
+}
+.hero {
+  display:grid;
+  grid-template-columns:1.15fr 1fr;
+  gap:7%;
+  padding:85px 0 70px;
+  align-items:center
+}
+.eyebrow,.label {
+  font:600 11px/1.5 ui-monospace,monospace;
+  letter-spacing:1.8px;
+  text-transform:uppercase;
+  color:var(--green)
+}
+h1,h2,h3 {
+  line-height:1.16;
+  letter-spacing:-.035em
+}
+h1 {
+  font-size:clamp(44px,5vw,69px);
+  font-weight:550;
+  margin:20px 0 25px
+}
+.hero h1 em {
+  font-family:Georgia,serif;
+  font-weight:400;
+  color:var(--green)
+}
+.lead {
+  font-size:18px;
+  line-height:1.7;
+  color:var(--muted);
+  max-width:540px
+}
+.actions {
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin:28px 0 22px
+}
+.button {
+  display:inline-block;
+  padding:12px 20px;
+  background:var(--green);
+  border:1px solid var(--green);
+  color:white;
+  border-radius:6px;
+  text-decoration:none;
+  font-size:14px;
+  font-weight:600
+}
+.button:hover {
+  background:#105039;
+  color:white
+}
+.button.secondary {
+  background:transparent;
+  color:var(--ink);
+  border-color:var(--line)
+}
+.meta {
+  font:12px/1.8 ui-monospace,monospace;
+  color:var(--muted)
+}
+.features {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:4%;
+  padding:35px 0 55px;
+  border-top:1px solid var(--line)
+}
+.features h2 {
+  font-size:22px;
+  letter-spacing:-.02em
+}
+.features p,.card p {
+  font-size:15px;
+  color:var(--muted)
+}
+.section {
+  padding:65px 0;
+  border-top:1px solid var(--line)
+}
+.section h2 {
+  font-size:36px;
+  margin:12px 0 25px
+}
+.start {
+  display:grid;
+  grid-template-columns:1fr 1.3fr;
+  gap:7%;
+  align-items:start
+}
+.code {
+  border-radius:10px;
+  overflow:hidden;
+  background:var(--code);
+  color:#dfe9dc;
+  min-width:0
+}
+.code-label {
+  padding:13px 20px;
+  border-bottom:1px solid #35574c;
+  font:11px ui-monospace,monospace;
+  color:#9ab7aa
+}
+.code pre {
+  padding:20px;
+  margin:0;
+  overflow:auto;
+  font:13px/1.9 ui-monospace,monospace
+}
+.code .comment {
+  color:#8fad9f
+}
+.cards {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:18px
+}
+.card {
+  border:1px solid var(--line);
+  border-radius:9px;
+  padding:26px;
+  text-decoration:none;
+  color:var(--ink);
+  background:#fcfcf8
+}
+.card:hover {
+  border-color:var(--green)
+}
+.card h3 {
+  font-size:23px;
+  margin:18px 0
+}
+.limits {
+  padding:26px;
+  border-left:3px solid var(--gold);
+  background:#eeeee4
+}
+.limits p {
+  margin:0;
+  color:#465b50
+}
+.footer {
+  max-width:1320px;
+  margin:30px auto 0;
+  padding:35px 5%;
+  border-top:1px solid var(--line);
+  display:flex;
+  justify-content:space-between;
+  gap:25px;
+  font-size:12px;
+  color:var(--muted)
+}
+/* Keep diagram labels readable. Small screens scroll within the figure. */
+.reading figure>svg {
+  width:100% !important;
+  height:auto !important;
+  min-width:640px
+}
+@media(max-width:900px) {
+  .hero {
+    gap:30px}
+  .nav nav {
+    gap:14px}
+  .cards {
+    gap:10px}
+  .card {
+    padding:18px}
+}
+@media(max-width:680px) {
+  .nav {
+    padding:18px 5%;
+    flex-wrap:wrap;
+    gap:14px}
+  .nav nav {
+    width:100%;
+    justify-content:space-between;
+    gap:10px;
+    font-size:13px}
+  .hero,.start {
+    grid-template-columns:1fr}
+  .hero {
+    padding:45px 0}
+  .hero h1 {
+    font-size:46px}
+  .features,.cards {
+    grid-template-columns:1fr}
+  .features {
+    gap:10px;
+    padding-bottom:30px}
+  .features article {
+    padding:12px 0}
+  .section {
+    padding:38px 0}
+  .section h2 {
+    font-size:29px}
+  .footer {
+    flex-direction:column;
+    gap:10px}
+}
+@media(prefers-reduced-motion:reduce) {
+  html {
+    scroll-behavior:auto}
+}
+/* SID metadata uses the same reading column and palette as the book. */
+.sid-back-link {
+  margin-bottom:20px;
+  font-size:13px
+}
+.limits p+p {
+  margin-top:16px
+}
+/* Offscreen positioning would widen the scrolling area; clip the skip link instead. */
+.skip {
+  left:0;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+  clip-path:inset(50%);
+  white-space:nowrap
+}
+.skip:focus {
+  width:auto;
+  height:auto;
+  clip-path:none;
+  overflow:visible
+}
