@@ -55,8 +55,9 @@ Known limitations of this beta:
   gauges are available on Linux only.
 - Sibuna does not terminate TLS; put it behind an ingress that does. Its ingress recipes
   for forward-auth (Caddy, Nginx) are not yet tested against live ingresses.
-- The console's isolation under load with eight active dashboards has not been measured
-  yet, and its WebAssembly module (about 700 KiB) is above the 640 KiB review threshold.
+- The console's formal isolation gate (SID 0007) has not been run; an eight-dashboard smoke
+  run passed with no data-plane errors. Its WebAssembly module (about 700 KiB) is above the
+  640 KiB review threshold.
 - This is a pre-release: options, storage schema and console APIs may still change
   before 1.0.0. Back up the data directory before upgrading.
 
