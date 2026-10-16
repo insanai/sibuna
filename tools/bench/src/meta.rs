@@ -47,16 +47,16 @@ pub fn zig_version() -> Option<String> {
 
 /// Returns the size and SHA-256 of the file at `path` as `{"bytes":..,"sha256":..}`.
 pub fn binary(path: &Path) -> Json {
+    // Only the file name is recorded: an absolute path would publish the local layout of the
+    // machine, and the digest already identifies the binary.
+    let name = path.file_name().map_or_else(String::new, |n| n.to_string_lossy().into_owned());
     let Ok(bytes) = fs::read(path) else {
-        return Json::object().with("path", path.display().to_string());
+        return Json::object().with("path", name);
     };
     let mut hasher = Sha256::new();
     hasher.update(&bytes);
     let digest: String = hasher.finalize().iter().map(|b| format!("{b:02x}")).collect();
-    Json::object()
-        .with("path", path.display().to_string())
-        .with("bytes", bytes.len())
-        .with("sha256", digest)
+    Json::object().with("path", name).with("bytes", bytes.len()).with("sha256", digest)
 }
 
 /// Returns the first line of the trimmed output of `program args` run in `dir`, or `None`

@@ -2,11 +2,9 @@
 
 use std::path::PathBuf;
 
-/// The default Zig daemon: the baseline build of the port's working directory.
-const DEFAULT_ZIG: &str = concat!(
-    "/tmp/claude-1000/-home-insan-projects-sibuna2/",
-    "7eb5843a-dcb8-4e49-b872-04e7f4d823b5/scratchpad/zig-baseline/bin/sibuna"
-);
+/// The Zig daemon used when `--zig` is not given: `$SIBUNA_ZIG_BINARY`, or `sibuna-zig` on
+/// `PATH`.
+const DEFAULT_ZIG: &str = "sibuna-zig";
 
 /// The help text.
 pub const HELP: &str = "\
@@ -15,7 +13,7 @@ Differential test of the Rust daemon against the Zig daemon.
 Usage: cargo xtask parity [OPTIONS]
 
 Options:
-  --zig <PATH>        The Zig daemon (default: the baseline build named in options.rs)
+  --zig <PATH>        The Zig daemon (default: $SIBUNA_ZIG_BINARY, else sibuna-zig)
   --rust <PATH>       The Rust daemon (default: build it with cargo build --release -p sibuna)
   --seed <N>          Corpus seed (default: 20261015)
   --requests <N>      Corpus size in requests (default: 20000)
@@ -64,7 +62,8 @@ impl Default for Options {
         let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let workspace = root.ancestors().nth(2).map_or_else(|| root.clone(), PathBuf::from);
         Options {
-            zig: PathBuf::from(DEFAULT_ZIG),
+            zig: std::env::var_os("SIBUNA_ZIG_BINARY")
+                .map_or_else(|| PathBuf::from(DEFAULT_ZIG), PathBuf::from),
             rust: None,
             seed: 20_261_015,
             requests: 20_000,
