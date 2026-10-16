@@ -1,0 +1,41 @@
+[Unit]
+Description=Sibuna web firewall and anti-crawler proxy
+Documentation=https://insanai.github.io/sibuna/ https://github.com/insanai/sibuna
+After=network.target
+
+[Service]
+Type=simple
+User=sibuna
+Group=sibuna
+StateDirectory=sibuna
+StateDirectoryMode=0700
+UMask=0077
+Environment=SIBUNA_HOST=127.0.0.1 SIBUNA_PORT=8080 SIBUNA_UPSTREAM_HOST=127.0.0.1 SIBUNA_UPSTREAM_PORT=3000 SIBUNA_OPTIONS=
+EnvironmentFile=-/etc/sibuna/service.env
+ExecStartPre=/usr/lib/sibuna/seed.sh /var/lib/sibuna/admission.seed
+ExecStart=/usr/bin/sibuna --host ${SIBUNA_HOST} --port ${SIBUNA_PORT} --upstream-host ${SIBUNA_UPSTREAM_HOST} --upstream-port ${SIBUNA_UPSTREAM_PORT} --secret-file /var/lib/sibuna/admission.seed --data-dir /var/lib/sibuna $SIBUNA_OPTIONS
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+NoNewPrivileges=true
+CapabilityBoundingSet=
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target
