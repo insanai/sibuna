@@ -1,8 +1,8 @@
 """The languages of the Sibuna website: editions, translated text and the language menu.
 
 English is the source. Each other language has a folder under /sibuna/ (its prefix) with
-a translated landing page and a translated book; the whitepaper and the SIDs exist only in
-English, and a translated page that links to them says so in its own language.
+a translated landing page, book and whitepaper; the SIDs exist only in English, and a
+translated page that links to them says so in its own language.
 
 The landing page is translated by phrase. We read the English page, take each run of text
 between tags (with its white space made single spaces) and the attributes that people read
@@ -11,6 +11,10 @@ docs/site/i18n/<code>.json, a map from the English phrase to its translation. Co
 script and style elements, and elements marked translate="no", are left alone. A version
 such as v1.0.0-beta.1 is written {version} in a phrase, so a release does not change the
 maps. A phrase missing from a map stays English, and the build reports it.
+
+The same maps hold the words of the documentation headers (EXTRA_PHRASES) and a few
+settings of the book's and the whitepaper's conf.toml that readers see but no catalog
+translates, such as the credit line on the book's cover (see Bundle.shown in build.py).
 """
 from dataclasses import dataclass
 from html import escape
@@ -27,7 +31,7 @@ class Language:
     """One edition of the site."""
     code: str       # the BCP 47 tag of the landing page and of hreflang
     prefix: str     # the folder under /sibuna/, "" for English
-    gettext: str    # the guidedog language, the name of the book's catalog folder
+    gettext: str    # the guidedog language, the name of the catalog folders
     label: str      # the language's name in its own script, for the menu
     direction: str  # "ltr" or "rtl"
 

@@ -10,20 +10,23 @@ The site has these parts, served under /sibuna/:
     /sibuna/whitepaper/   the whitepaper, `guidedog build html` of docs/whitepaper
     /sibuna/sid/          the Sibuna Discussions, `guidedog dsc build` of docs/sid
     /sibuna/pdf/          the book and whitepaper as PDF; /sibuna/sid/pdf/ holds one per record
-    /sibuna/<lang>/       the landing page, book/ and pdf/sibuna-book.pdf in another language
+    /sibuna/<lang>/       the landing page, book/, whitepaper/ and pdf/ in another language
 
 The other languages are zh-hans, ko, ja, es, de, hi and ar (see languages.py). Their books
-are built from the gettext catalogs in docs/book/locales; a message not yet translated
-stays English. The whitepaper and the SIDs exist only in English.
+and whitepapers are built from the gettext catalogs in docs/book/locales and
+docs/whitepaper/locales; a message not yet translated, or a language without a catalog
+yet, stays English. A few words that no source file holds come from the language's phrase
+map instead (see Bundle.shown). The SIDs exist only in English.
 
 Guidedog writes each project into its own _build folder; this script copies the results,
 adds the site's links and the language menu to the header of every documentation page,
 wraps the landing page in the site's shell, translates it, and checks every local link and
 anchor. It needs guidedog on PATH and nothing else beyond the Python standard library; the
-PDF books in Chinese, Japanese, Korean, Hindi and Arabic need the Noto fonts (Debian
-packages fonts-noto-cjk and fonts-noto-core). --no-build reuses the _build folders. The
-default output is target/site.
+PDF books and whitepapers in Chinese, Japanese, Korean, Hindi and Arabic need the Noto
+fonts (Debian packages fonts-noto-cjk and fonts-noto-core). --no-build reuses the _build
+folders. The default output is target/site.
 """
+from dataclasses import dataclass
 from html import escape
 from html.parser import HTMLParser
 from pathlib import Path
@@ -34,6 +37,7 @@ import json
 import re
 import shutil
 import subprocess
+import tomllib
 
 from languages import ENGLISH, LANGUAGES, TRANSLATIONS
 import languages
@@ -51,21 +55,38 @@ DESCRIPTION = ("Sibuna: self-hosted web protection with browser proof of work"
 ASSETS = ("site.css", "favicon.svg", "admission-demo.css", "admission-model.js",
           "admission-animation.js", "admission-scene.bundle.js", "three-LICENSE.txt",
           "language.css", "site-language.js")
-# The documentation bundles: site folder, guidedog project, PDF built from it.
-BUNDLES = (("book", "docs/book", "the-sibuna-book-en.pdf", "sibuna-book.pdf"),
-           ("whitepaper", "docs/whitepaper", "sibuna-whitepaper-en.pdf",
-            "sibuna-whitepaper.pdf"))
+
+
+@dataclass(frozen=True)
+class Bundle:
+    """A guidedog project the site publishes in every language."""
+    folder: str     # the site folder, in every edition
+    project: str    # the guidedog project, relative to the repository
+    built: str      # the English PDF guidedog writes into _build/pdf
+    published: str  # the PDF's name in the edition's pdf/ folder
+    # The conf.toml settings whose text readers see (on the PDF cover or title page, in
+    # the HTML footer or title) but which no source file holds, so no catalog translates
+    # them. A translated build overrides each with -D, taking the translation of its
+    # English value from the language's phrase map (docs/site/i18n/<code>.json); the
+    # build reports a missing one, which stays English. A setting that holds only a
+    # name, such as the whitepaper's author, is not listed.
+    shown: tuple[str, ...]
+
+
+BUNDLES = (
+    Bundle("book", "docs/book", "the-sibuna-book-en.pdf", "sibuna-book.pdf",
+           ("author", "copyright")),
+    Bundle("whitepaper", "docs/whitepaper", "sibuna-whitepaper-en.pdf",
+           "sibuna-whitepaper.pdf", ("copyright", "html_title", "today")),
+)
 NAVIGATION = (("Home", ""), ("Book", "book/"), ("Operations", "book/operations.html"),
               ("Whitepaper", "whitepaper/"), ("SIDs", "sid/"))
-# The sections that exist in every language; the others link to the English pages.
-TRANSLATED = ("", "book/")
+# The sections that exist in every language: the landing page and the bundles. The SIDs
+# exist only in English, and every edition links to them.
+TRANSLATED = ("",) + tuple(f"{bundle.folder}/" for bundle in BUNDLES)
 TITLE = "Web application protection"
 # The phrases the landing page's scripts and the documentation headers show.
 SCRIPT_PHRASES = languages.model_phrases() | set(languages.EXTRA_PHRASES)
-BOOK = ROOT / "docs/book"
-# Guidedog's own words (Search, On this page, Table 1, ...) for the languages it has no
-# catalog for, beside the book's catalogs.
-THEME_CATALOGS = '["locales", "_templates/locales"]'
 
 
 def run(args, cwd):
@@ -75,36 +96,80 @@ def run(args, cwd):
 
 def build_documents():
     """Fresh guidedog builds; warnings fail the build, as `guidedog dsc build` does."""
-    for _, project, _, _ in BUNDLES:
+    for bundle in BUNDLES:
         for builder in ("html", "pdf"):
-            run(["guidedog", "build", "-E", "-a", "-W", "-q", builder], ROOT / project)
+            run(["guidedog", "build", "-E", "-a", "-W", "-q", builder],
+                ROOT / bundle.project)
     run(["guidedog", "dsc", "build"], ROOT / "docs/sid")
-    for language in TRANSLATIONS:
-        build_translated_book(language)
+    for bundle in BUNDLES:
+        for language in TRANSLATIONS:
+            build_translated(bundle, language)
 
 
-def book_title(language):
-    """The book's title in a language: its translation in the book's catalog, if any."""
-    english = re.search(r'^project = "(.+)"$', (BOOK / "conf.toml").read_text(), re.M)[1]
-    catalog = BOOK / "locales" / language.gettext / "LC_MESSAGES/index.po"
-    for entry in catalog.read_text().split("\n\n"):
-        match = re.search(r'^msgid "(.*)"\nmsgstr "(.+)"$', entry, re.M)
-        if match and match[1] == english and "fuzzy" not in entry:
-            return match[2]
-    return english
+def settings(bundle):
+    """The settings of a bundle's conf.toml."""
+    return tomllib.loads((ROOT / bundle.project / "conf.toml").read_text())
 
 
-def build_translated_book(language):
-    """The book in another language, HTML and PDF, in _build/i18n/<language>/.
+def catalog_messages(path):
+    """The translations of a gettext catalog, from msgid to msgstr.
 
-    Warnings do not fail these builds: the catalogs are still being filled.
+    Fuzzy and empty translations are left out; a string may continue over several
+    quoted lines, as msgmerge wraps long ones. A missing catalog has none.
     """
+    messages = {}
+    if not path.is_file():
+        return messages
+    for entry in path.read_text().split("\n\n"):
+        if re.search(r"^#,.*\bfuzzy\b", entry, re.M):
+            continue
+        fields = {}
+        field = None
+        for line in entry.splitlines():
+            keyword = re.match(r'(msgid|msgstr) (".*")$', line)
+            if keyword:
+                field = keyword[1]
+                fields[field] = json.loads(keyword[2])
+            elif line.startswith('"') and field:
+                fields[field] += json.loads(line)
+            else:
+                field = None
+        if fields.get("msgid") and fields.get("msgstr"):
+            messages[fields["msgid"]] = fields["msgstr"]
+    return messages
+
+
+def translated_title(bundle, language):
+    """A bundle's title in a language: the translation of its English title (the title of
+    index.rst, and project in conf.toml) in the bundle's catalog, else the English."""
+    english = settings(bundle)["project"]
+    catalog = ROOT / bundle.project / "locales" / language.gettext / "LC_MESSAGES/index.po"
+    return catalog_messages(catalog).get(english, english)
+
+
+def shown_phrases():
+    """The English text of every setting that the phrase maps translate (Bundle.shown)."""
+    return {settings(bundle)[name] for bundle in BUNDLES for name in bundle.shown}
+
+
+def build_translated(bundle, language):
+    """A bundle in another language, HTML and PDF, in its _build/i18n/<language>/.
+
+    The title comes from the bundle's catalog, the shown settings from the language's
+    phrase map. Warnings do not fail these builds: the catalogs are still being filled,
+    and a language may have no catalog yet.
+    """
+    words = languages.load_words(language)
+    english = settings(bundle)
+    overrides = ["-D", f"language={language.gettext}",
+                 "-D", f"project={translated_title(bundle, language)}"]
+    for name in bundle.shown:
+        if english[name] in words:
+            overrides += ["-D", f"{name}={words[english[name]]}"]
     for builder in ("html", "pdf"):
         output = f"_build/i18n/{language.gettext}/{builder}"
-        run(["guidedog", "build", "-E", "-a", "-q", "-b", builder, ".", output,
-             "-D", f"language={language.gettext}",
-             "-D", f"locale_dirs={THEME_CATALOGS}",
-             "-D", f"project={book_title(language)}"], BOOK)
+        run(["guidedog", "build", "-E", "-a", "-q", "-b", builder, ".", output, *overrides],
+            ROOT / bundle.project)
 
 
 def check_animation_assets():
@@ -177,32 +242,40 @@ def decorate_bundle(site, folder, pdf, language=ENGLISH):
 
 def copy_bundles(site):
     (site / "pdf").mkdir(parents=True)
-    for folder, project, built, published in BUNDLES:
-        shutil.copytree(ROOT / project / "_build/html", site / folder)
-        shutil.copyfile(ROOT / project / "_build/pdf" / built, site / "pdf" / published)
-        decorate_bundle(site, folder, f"pdf/{published}")
+    for bundle in BUNDLES:
+        project = ROOT / bundle.project
+        shutil.copytree(project / "_build/html", site / bundle.folder)
+        shutil.copyfile(project / "_build/pdf" / bundle.built,
+                        site / "pdf" / bundle.published)
+        decorate_bundle(site, bundle.folder, f"pdf/{bundle.published}")
     shutil.copytree(ROOT / "docs/sid/_build/html", site / "sid")
     (site / "sid/pdf").mkdir()
     for pdf in sorted((ROOT / "docs/sid/_build/pdf").glob("*.pdf")):
         shutil.copyfile(pdf, site / "sid/pdf" / pdf.name)
     decorate_bundle(site, "sid", None)
-    for language in TRANSLATIONS:
-        copy_translated_book(site, language)
+    for bundle in BUNDLES:
+        for language in TRANSLATIONS:
+            copy_translated(site, bundle, language)
 
 
-def copy_translated_book(site, language):
-    """The book of one language at /sibuna/<lang>/book/ and its PDF in <lang>/pdf/."""
-    built = BOOK / "_build/i18n" / language.gettext
+def copy_translated(site, bundle, language):
+    """A bundle in one language at /sibuna/<lang>/<folder>/, its PDF in <lang>/pdf/.
+
+    The English bundle must be in the site already: the translation must have its pages.
+    """
+    built = ROOT / bundle.project / "_build/i18n" / language.gettext
     edition = site / language.prefix
-    shutil.copytree(built / "html", edition / "book")
+    shutil.copytree(built / "html", edition / bundle.folder)
     pdfs = sorted((built / "pdf").glob("*.pdf"))
-    assert len(pdfs) == 1, f"{language.code}: expected one PDF book, found {len(pdfs)}"
-    (edition / "pdf").mkdir()
-    shutil.copyfile(pdfs[0], edition / "pdf/sibuna-book.pdf")
-    english = {path.relative_to(site / "book") for path in (site / "book").rglob("*.html")}
-    pages = {path.relative_to(edition / "book") for path in (edition / "book").rglob("*.html")}
-    assert pages == english, f"{language.code}: the book's pages differ from the English"
-    decorate_bundle(site, "book", f"{language.prefix}pdf/sibuna-book.pdf", language)
+    assert len(pdfs) == 1, f"{language.code}: expected one {bundle.folder} PDF, found {len(pdfs)}"
+    (edition / "pdf").mkdir(exist_ok=True)
+    shutil.copyfile(pdfs[0], edition / "pdf" / bundle.published)
+    english = {path.relative_to(site / bundle.folder)
+               for path in (site / bundle.folder).rglob("*.html")}
+    pages = {path.relative_to(edition / bundle.folder)
+             for path in (edition / bundle.folder).rglob("*.html")}
+    assert pages == english, f"{language.code}: the {bundle.folder} pages differ from the English"
+    decorate_bundle(site, bundle.folder, f"{language.prefix}pdf/{bundle.published}", language)
 
 
 def shell(language, title, body):
@@ -257,22 +330,25 @@ def home_body(language, words):
                         f"{messages}</script></section>")
     body = body.replace("<!-- admission-demo -->", demo)
     if language is not ENGLISH:
-        body = body.replace(f'href="{BASE}book/', f'href="{BASE}{language.prefix}book/')
-        body = body.replace(f'href="{BASE}pdf/sibuna-book.pdf"',
-                            f'href="{BASE}{language.prefix}pdf/sibuna-book.pdf"')
+        for bundle in BUNDLES:
+            body = body.replace(f'href="{BASE}{bundle.folder}/',
+                                f'href="{BASE}{language.prefix}{bundle.folder}/')
+            body = body.replace(f'href="{BASE}pdf/{bundle.published}"',
+                                f'href="{BASE}{language.prefix}pdf/{bundle.published}"')
     return body
 
 
 def build_home(site):
     """The landing page in every language, and the assets they share."""
     english = shell(ENGLISH, TITLE, home_body(ENGLISH, {}))
-    phrases = languages.catalog(english)
+    documents = shown_phrases()
+    phrases = languages.catalog(english) | documents
     for language in LANGUAGES:
         words = languages.load_words(language)
         page = shell(language, TITLE, home_body(language, words))
         if language is not ENGLISH:
             page, missing = languages.translate(page, words)
-            missing |= SCRIPT_PHRASES - set(words)
+            missing |= (SCRIPT_PHRASES | documents) - set(words)
             report_phrases(language, missing, set(words) - phrases)
         (site / language.prefix).mkdir(exist_ok=True)
         (site / language.prefix / "index.html").write_text(page)
@@ -282,7 +358,8 @@ def build_home(site):
 
 
 def report_phrases(language, missing, unused):
-    """Say which phrases of a landing page stay English, and which are no longer used."""
+    """Say which phrases of a language stay English, and which are no longer used: those
+    of the landing page, the documentation headers and the bundles' shown settings."""
     for phrase in sorted(missing):
         print(f"site-i18n: {language.code}: untranslated: {phrase}")
     for phrase in sorted(unused):
