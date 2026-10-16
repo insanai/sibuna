@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 07:43+0000\n"
+"POT-Creation-Date: 2026-10-16 10:45+0000\n"
 "PO-Revision-Date: 2026-10-16 05:28+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -101,12 +101,9 @@ msgstr "``cargo xtask bench product``"
 
 #: ../../benchmarks.rst:26
 msgid ""
-"Whole daemons under ``wrk``: throughput, latency percentiles, CPU time "
-"per request and peak resident memory for Gate and Shield, in forward-auth "
-"and reverse-proxy modes"
+"Whole daemons under ``wrk``: throughput, latency percentiles, CPU time per request and peak resident memory for Gate and Shield, in forward-auth and reverse-proxy modes"
 msgstr ""
-"在 ``wrk`` 下运行的完整守护进程：Gate 和 Shield 在 forward-auth 和反向代理模式下的吞吐量、延迟百分位、每请求 "
-"CPU 时间和峰值驻留内存"
+"在 ``wrk`` 下运行的完整守护进程：Gate 和 Shield 在 forward-auth 和反向代理模式下的吞吐量、延迟百分位、每请求 CPU 时间和峰值常驻内存"
 
 #: ../../benchmarks.rst:27
 msgid "``product-latest.json``, ``product-latest.md``"
@@ -132,9 +129,8 @@ msgstr "``cargo xtask bench product --anubis``"
 
 #: ../../benchmarks.rst:32
 msgid ""
-"The whole-product workloads with Anubis as a further product, behind "
-"``caddy respond``"
-msgstr "把 Anubis 作为另一个产品加入的完整产品工作负载，位于 ``caddy respond`` 之后"
+"The whole-product workloads with Anubis as a further product, behind ``caddy respond``"
+msgstr "把 Anubis 作为另一个产品加入的完整产品工作负载，以 ``caddy respond`` 为源站"
 
 #: ../../benchmarks.rst:33
 msgid "``comparison-latest.json``, ``comparison-latest.md``"
@@ -217,19 +213,9 @@ msgstr "完整产品"
 
 #: ../../benchmarks.rst:53
 msgid ""
-"For each mode (forward auth, reverse proxy) and each surface (Gate, "
-"Shield), the harness starts the daemon in memory with ``--algorithm "
-"hashcash --difficulty 8 --rate-limit 100000000 --idle-timeout 5`` and "
-"four workers, one per CPU of its set. It obtains a session by solving the "
-"daemon's Hashcash challenge with ``sibuna-pow``, as a browser would. It "
-"then drives four workloads with ``wrk`` over keep-alive connections: 2 "
-"threads, 64 connections, 5 seconds, 3 repetitions."
+"For each mode (forward auth, reverse proxy) and each surface (Gate, Shield), the harness starts the daemon in memory with ``--algorithm hashcash --difficulty 8 --rate-limit 100000000 --idle-timeout 5`` and four workers, one per CPU of its set. It obtains a session by solving the daemon's Hashcash challenge with ``sibuna-pow``, as a browser would. It then drives four workloads with ``wrk`` over keep-alive connections: 2 threads, 64 connections, 5 seconds, 3 repetitions."
 msgstr ""
-"对于每种模式（forward auth、反向代理）和每种运行配置（Gate、Shield），测量工具以 ``--algorithm "
-"hashcash --difficulty 8 --rate-limit 100000000 --idle-timeout 5`` 和四个 "
-"worker（其 CPU 集合中每个 CPU 一个）在内存模式下启动守护进程。它像浏览器那样，用 ``sibuna-pow`` 求解守护进程的 "
-"Hashcash 挑战来获得会话。然后，它用 ``wrk`` 通过 keep-alive 连接驱动四种工作负载：2 个线程，64 个连接，5 "
-"秒，重复 3 次。"
+"对于每种模式（forward auth、反向代理）和每种形态（Gate、Shield），测量工具以 ``--algorithm hashcash --difficulty 8 --rate-limit 100000000 --idle-timeout 5`` 和四个 worker（其 CPU 集合中每个 CPU 一个）在内存模式下启动守护进程。它像浏览器那样，用 ``sibuna-pow`` 求解守护进程的 Hashcash 挑战来获得会话。然后，它用 ``wrk`` 通过 keep-alive 连接驱动四种工作负载：2 个线程，64 个连接，5 秒，重复 3 次。"
 
 #: ../../benchmarks.rst:55
 msgid ""
@@ -251,11 +237,9 @@ msgstr ""
 
 #: ../../benchmarks.rst:57
 msgid ""
-"``allowed_static``: ``GET /robots.txt`` from ``curl/8.0``, which both "
-"surfaces admit without a challenge."
+"``allowed_static``: ``GET /robots.txt`` from ``curl/8.0``, which both surfaces admit without a challenge."
 msgstr ""
-"``allowed_static``：来自 ``curl/8.0`` 的 ``GET "
-"/robots.txt``，两种运行配置都会在不挑战的情况下准入它。"
+"``allowed_static``：来自 ``curl/8.0`` 的 ``GET /robots.txt``，两种形态都会在不挑战的情况下准入它。"
 
 #: ../../benchmarks.rst:58
 msgid ""
@@ -303,21 +287,25 @@ msgstr "相同负载下的延迟"
 
 #: ../../benchmarks.rst:67
 msgid ""
-"The open-loop generator (``sibuna-bench generate``) runs one blocking "
-"thread per connection. Each of 64 connections sends ``GET /private`` with "
-"a session on a fixed schedule: request :math:`k` of a connection is due "
-"at :math:`t_0 + o + kT`, where :math:`o` is the connection's offset and "
-":math:`T` its interval, independent of earlier answers. When an answer "
-"arrives after the next request was due, that request goes out at once and "
-"its latency counts from the time it was due, as in ``wrk2``. When the "
-"connection was idle at the due time, latency counts from the actual send, "
-"so the generator's own sleep overshoot is not charged to the daemon."
+"The open-loop generator (``sibuna-bench generate``) runs one blocking thread per connection. Each of 64 connections sends ``GET /private`` with a session on a fixed schedule: request :math:`k` of a connection is due at :math:`t_0 + o + kT`, where :math:`o` is the connection's offset and :math:`T` its interval, independent of earlier answers. When an answer arrives after the next request was due, that request goes out at once and its latency counts from the time it was due, as in ``wrk2``. When the connection was idle at the due time, latency counts from the actual send, so the generator's own sleep overshoot is not charged to the daemon."
 msgstr ""
-"开环生成器（``sibuna-bench generate``）为每个连接运行一个阻塞线程。64 个连接中的每一个都按固定的时间表发送带会话的 "
-"``GET /private``：一个连接的第 :math:`k` 个请求在 :math:`t_0 + o + kT` 时刻到期，其中 "
-":math:`o` 是该连接的偏移量，:math:`T` "
-"是它的间隔，与之前的应答无关。当应答在下一个请求到期之后才到达时，下一个请求立即发出，其延迟从它的到期时刻开始计算，与 ``wrk2`` "
-"的做法相同。当连接在到期时刻处于空闲状态时，延迟从实际发送时刻开始计算，因此生成器自身的睡眠超时不会算到守护进程头上。"
+"开环生成器（``sibuna-bench generate``）为每个连接运行一个阻塞线程。64 个连接中的每一个都按固定的时间表发送带会话的 ``GET /private``：一个连接的第 :math:`k` 个请求在 :math:`t_0 + o + kT` 时刻到期，其中 :math:`o` 是该连接的偏移量，:math:`T` 是它的间隔，与之前的应答无关。当应答在下一个请求到期之后才到达时，下一个请求立即发出，其延迟从它的到期时刻开始计算，与 ``wrk2`` 的做法相同。当连接在到期时刻处于空闲状态时，延迟从实际发送时刻开始计算，因此生成器自身睡眠过头的时间不会算到守护进程头上。"
+
+#: ../../benchmarks.rst:70
+msgid ""
+"time        0         T         2T        3T        4T\n"
+"due         |         |         |         |         |\n"
+"k = 0       S--A\n"
+"k = 1                 S---------------A\n"
+"k = 2                           d.....S--A\n"
+"k = 3                                     S--A"
+msgstr ""
+"时间        0         T         2T        3T        4T\n"
+"到期        |         |         |         |         |\n"
+"k = 0       S--A\n"
+"k = 1                 S---------------A\n"
+"k = 2                           d.....S--A\n"
+"k = 3                                     S--A"
 
 #: ../../benchmarks.rst:70
 msgid ""
@@ -332,21 +320,9 @@ msgstr ""
 
 #: ../../benchmarks.rst:79
 msgid ""
-"The harness runs the Shield surface and the admitted workload at five "
-"offered rates: 10,000, 25,000, 50,000, 100,000 and 150,000 requests per "
-"second, each with a 2-second warm-up, 10 measured seconds and 3 runs. The "
-"harness can measure two daemon builds in one run: it then starts both on "
-"the same CPU set and alternates between them at every rate and "
-"repetition, the idle one using no CPU, so that slow drift of the machine "
-"affects both alike. The recorded run did so. Percentiles are nearest-rank "
-"over every measured request of one run; each figure is the median of the "
-"three runs, with the min-max of p99 beside it."
+"The harness runs the Shield surface and the admitted workload at five offered rates: 10,000, 25,000, 50,000, 100,000 and 150,000 requests per second, each with a 2-second warm-up, 10 measured seconds and 3 runs. The harness can measure two daemon builds in one run: it then starts both on the same CPU set and alternates between them at every rate and repetition, the idle one using no CPU, so that slow drift of the machine affects both alike. The recorded run did so. Percentiles are nearest-rank over every measured request of one run; each figure is the median of the three runs, with the min-max of p99 beside it."
 msgstr ""
-"测量工具运行 Shield 运行配置和已准入工作负载，施加五种速率：每秒 10,000、25,000、50,000、100,000 和 "
-"150,000 个请求，每种速率预热 2 秒，测量 10 秒，运行 3 次。测量工具可以在一次运行中测量两个守护进程构建：此时它把两者启动在同一个 "
-"CPU 集合上，并在每种速率和每次重复之间交替运行，空闲的那个不占用 "
-"CPU，从而让机器的缓慢漂移对两者产生相同的影响。记录的这次运行就是这样做的。百分位按最近秩法在一次运行的所有被测请求上计算；每个数字是三次运行的中位数，旁边列出 "
-"p99 的最小-最大范围。"
+"测量工具运行 Shield 形态和已准入工作负载，施加五种速率：每秒 10,000、25,000、50,000、100,000 和 150,000 个请求，每种速率预热 2 秒，测量 10 秒，运行 3 次。测量工具可以在一次运行中测量两个守护进程构建：此时它把两者启动在同一个 CPU 集合上，并在每种速率和每次重复之间交替运行，空闲的那个不占用 CPU，从而让机器的缓慢漂移对两者产生相同的影响。记录的这次运行就是这样做的。百分位按最近秩法在一次运行的所有被测请求上计算；每个数字是三次运行的中位数，旁边列出 p99 的最小-最大范围。"
 
 #: ../../benchmarks.rst:81
 msgid "CPU Sets"
@@ -366,6 +342,24 @@ msgstr ""
 "等于该集合的大小）。``wrk``、延迟生成器和源站运行在 CPU 8 到 15 上（``--load-cpus``）。原语测试套件运行在 CPU "
 "4 上（``--cpu``）。每个进程在启动之前用 ``taskset -c`` 绑定，因此它创建的每个线程都继承该集合。准入测量工具为产品使用 "
 "0 和 1 两个 CPU，为其客户端使用 CPU 8 到 15。"
+
+#: ../../benchmarks.rst:87
+msgid ""
+"CCD 0   cores  0  1  2  3 |  4         |  5  6  7\n"
+"               daemons    |  primitive |  not assigned\n"
+"               (--cpus)   |  suite     |\n"
+"                          |  (--cpu)   |\n"
+"CCD 1   cores  8  9 10 11 12 13 14 15\n"
+"               wrk, latency generator, origin (--load-cpus)\n"
+"SMT     16 to 31: siblings of 0 to 15, not assigned"
+msgstr ""
+"CCD 0   核心   0  1  2  3 |  4         |  5  6  7\n"
+"               守护进程   |  原语测试  |  未分配\n"
+"               (--cpus)   |  套件      |\n"
+"                          |  (--cpu)   |\n"
+"CCD 1   核心   8  9 10 11 12 13 14 15\n"
+"               wrk、延迟生成器、源站 (--load-cpus)\n"
+"SMT     16 到 31：0 到 15 的 SMT 兄弟线程，未分配"
 
 #: ../../benchmarks.rst:87
 msgid ""
@@ -456,6 +450,18 @@ msgstr "如何复现"
 #: ../../benchmarks.rst:113
 msgid "We need Linux, ``taskset`` (util-linux) and ``wrk`` on ``PATH``."
 msgstr "我们需要 Linux、``taskset``\\ （util-linux），以及 ``PATH`` 中的 ``wrk``。"
+
+#: ../../benchmarks.rst:115
+msgid ""
+"cargo xtask bench primitives\n"
+"cargo xtask bench product\n"
+"cargo xtask bench latency\n"
+"cargo xtask bench help"
+msgstr ""
+"cargo xtask bench primitives\n"
+"cargo xtask bench product\n"
+"cargo xtask bench latency\n"
+"cargo xtask bench help"
 
 #: ../../benchmarks.rst:122
 msgid ""
@@ -791,18 +797,9 @@ msgstr "状态"
 
 #: ../../benchmarks.rst:211
 msgid ""
-"The spent-set row inserts a fresh tag and looks it up again: 21.0 ns. The "
-"table in this row has 16 shards of 4,096 slots (65,536 tags; the daemon's "
-"default is 1,048,576), and it is emptied in place before each batch, "
-"outside the timer. Every batch therefore probes resident memory. An "
-"earlier version of the suite built a fresh zeroed table of the daemon's "
-"default size for each batch; it timed the kernel mapping the table's "
-"pages on first write, a cost a running daemon pays once, and it is not "
-"the row we report."
+"The spent-set row inserts a fresh tag and looks it up again: 21.0 ns. The table in this row has 16 shards of 4,096 slots (65,536 tags; the daemon's default is 1,048,576), and it is emptied in place before each batch, outside the timer. Every batch therefore probes resident memory. An earlier version of the suite built a fresh zeroed table of the daemon's default size for each batch; it timed the kernel mapping the table's pages on first write, a cost a running daemon pays once, and it is not the row we report."
 msgstr ""
-"已用集合这一行插入一个新标签并再次查找它：21.0 ns。这一行中的表有 16 个分片，每个分片 4,096 个槽（65,536 "
-"个标签；守护进程的默认值是 "
-"1,048,576），并在每个批次之前、在计时之外原地清空。因此每个批次探测的都是驻留内存。测试套件的早期版本为每个批次构建一张守护进程默认大小、全新清零的表；它测到的是内核在首次写入时映射表页面的成本，而运行中的守护进程只付出一次这种成本，所以这不是我们报告的那一行。"
+"已用集合这一行插入一个新标签并再次查找它：21.0 ns。这一行中的表有 16 个分片，每个分片 4,096 个槽（65,536 个标签；守护进程的默认值是 1,048,576），并在每个批次之前、在计时之外原地清空。因此每个批次探测的都是常驻内存。测试套件的早期版本为每个批次构建一张守护进程默认大小、全新清零的表；它测到的是内核在首次写入时映射表页面的成本，而运行中的守护进程只付出一次这种成本，所以这不是我们报告的那一行。"
 
 #: ../../benchmarks.rst:213
 msgid ""
@@ -841,14 +838,9 @@ msgstr "HTTP 解析器"
 
 #: ../../benchmarks.rst:220
 msgid ""
-"The parser row parses a 400-byte browser request and looks up a cookie: "
-"132.5 ns. The crate's own timing test agrees (``crates/http``: about 135 "
-"to 180 ns on the same machine). The parser is zero-copy; every field is a "
-"slice of the connection's buffer."
+"The parser row parses a 400-byte browser request and looks up a cookie: 132.5 ns. The crate's own timing test agrees (``crates/http``: about 135 to 180 ns on the same machine). The parser is zero-copy; every field is a slice of the connection's buffer."
 msgstr ""
-"解析器这一行解析一个 400 字节的浏览器请求并查找一个 Cookie：132.5 ns。该 crate "
-"自己的计时测试结果与之一致（``crates/http``：在同一台机器上约 135 到 180 "
-"ns）。解析器是零复制的；每个字段都是连接缓冲区的一个切片。"
+"解析器这一行解析一个 400 字节的浏览器请求并查找一个 Cookie：132.5 ns。该 crate 自己的计时测试结果与之一致（``crates/http``：在同一台机器上约 135 到 180 ns）。解析器是零拷贝的；每个字段都是连接缓冲区的一个切片。"
 
 #: ../../benchmarks.rst:222
 msgid "Policy Engine"
@@ -894,19 +886,14 @@ msgstr "完整产品比较"
 
 #: ../../benchmarks.rst:237
 msgid ""
-"Read the throughput, latency, CPU time and memory of the daemon as a "
-"complete process, compare its surfaces and modes, and say in which rows "
-"the daemon and in which rows the load generator sets the limit."
+"Read the throughput, latency, CPU time and memory of the daemon as a complete process, compare its surfaces and modes, and say in which rows the daemon and in which rows the load generator sets the limit."
 msgstr ""
-"解读守护进程作为完整进程的吞吐量、延迟、CPU "
-"时间和内存，比较它的运行配置和模式，并指出在哪些行中是守护进程设定了上限，在哪些行中是负载生成器设定了上限。"
+"解读守护进程作为完整进程的吞吐量、延迟、CPU 时间和内存，比较它的形态和模式，并指出在哪些行中是守护进程设定了上限，在哪些行中是负载生成器设定了上限。"
 
 #: ../../benchmarks.rst:239
 msgid ""
-"The tables give the medians of three five-second ``wrk`` runs for each "
-"surface and workload. The status beside each workload is the answer the "
-"harness expected and received."
-msgstr "表中给出每种运行配置和工作负载下三次五秒 ``wrk`` 运行的中位数。每个工作负载旁边的状态码是测量工具期望并实际收到的应答。"
+"The tables give the medians of three five-second ``wrk`` runs for each surface and workload. The status beside each workload is the answer the harness expected and received."
+msgstr "表中给出每种形态和工作负载下三次五秒 ``wrk`` 运行的中位数。每个工作负载旁边的状态码是测量工具期望并实际收到的应答。"
 
 #: ../../benchmarks.rst:241
 msgid "Forward-Auth Mode"
@@ -929,7 +916,7 @@ msgstr ""
 
 #: ../../benchmarks.rst:250 ../../benchmarks.rst:334
 msgid "Surface"
-msgstr "运行配置"
+msgstr "形态"
 
 #: ../../benchmarks.rst:251 ../../benchmarks.rst:335
 msgid "Workload (status)"
@@ -1367,20 +1354,9 @@ msgstr "12.17"
 
 #: ../../benchmarks.rst:407
 msgid ""
-"Here the proxied rows (``admitted``, ``allowed_static``, and Gate's "
-"``attack``, which Gate relays) are CPU bound: cores busy is 3.96 to 3.98 "
-"of four. They serve 138,965 to 147,303 requests per second at 26.88 to "
-"28.57 us of CPU per request, about twice the cost of an answer the daemon "
-"gives itself. The ``challenged`` rows and Shield's ``attack`` row are "
-"answered by the daemon itself, and they look like forward-auth rows. "
-"Under saturation ``wrk``'s p99 is the scheduler's tail at the daemon's "
-"own rate, so we read the tails of the next chapter instead."
+"Here the proxied rows (``admitted``, ``allowed_static``, and Gate's ``attack``, which Gate relays) are CPU bound: cores busy is 3.96 to 3.98 of four. They serve 138,965 to 147,303 requests per second at 26.88 to 28.57 us of CPU per request, about twice the cost of an answer the daemon gives itself. The ``challenged`` rows and Shield's ``attack`` row are answered by the daemon itself, and they look like forward-auth rows. Under saturation ``wrk``'s p99 is the scheduler's tail at the daemon's own rate, so we read the tails of the next chapter instead."
 msgstr ""
-"这里经代理的各行（``admitted``、``allowed_static``，以及 Gate 会中继的 Gate ``attack``）受 "
-"CPU 限制：忙碌核心数为四个中的 3.96 到 3.98。它们每秒处理 138,965 到 147,303 个请求，每请求 CPU 时间为 "
-"26.88 到 28.57 us，约为守护进程自己作答时的两倍。``challenged`` 各行和 Shield 的 ``attack`` "
-"行由守护进程自己作答，看起来与 forward-auth 的各行相似。在饱和状态下，``wrk`` 的 p99 "
-"是守护进程以自身速率运行时调度器的尾部，因此我们改为解读下一章的尾延迟。"
+"这里经代理的各行（``admitted``、``allowed_static``，以及由 Gate 中继的 Gate ``attack`` 行）受 CPU 限制：忙碌核心数为四个中的 3.96 到 3.98。它们每秒处理 138,965 到 147,303 个请求，每请求 CPU 时间为 26.88 到 28.57 us，约为守护进程自己作答时的两倍。``challenged`` 各行和 Shield 的 ``attack`` 行由守护进程自己作答，看起来与 forward-auth 的各行相似。在饱和状态下，``wrk`` 的 p99 是守护进程以自身速率运行时调度器的尾部，因此我们改为解读下一章的尾延迟。"
 
 #: ../../benchmarks.rst:409
 msgid ""
@@ -1409,17 +1385,13 @@ msgstr "资源占用"
 
 #: ../../benchmarks.rst:414
 msgid ""
-"Sizes and resident memory of the daemon "
-"(``benchmarks/results/product-latest.json``, generated "
-"2026-10-15T23:15:24Z, and ``primitives-latest.json``, generated "
-"2026-10-15T22:34:59Z)"
+"Sizes and resident memory of the daemon (``benchmarks/results/product-latest.json``, generated 2026-10-15T23:15:24Z, and ``primitives-latest.json``, generated 2026-10-15T22:34:59Z)"
 msgstr ""
-"守护进程的大小和驻留内存（``benchmarks/results/product-latest.json``，生成于 "
-"2026-10-15T23:15:24Z；``primitives-latest.json``，生成于 2026-10-15T22:34:59Z）"
+"守护进程的大小和常驻内存（``benchmarks/results/product-latest.json``，生成于 2026-10-15T23:15:24Z；``primitives-latest.json``，生成于 2026-10-15T22:34:59Z）"
 
 #: ../../benchmarks.rst:418 ../../benchmarks.rst:863
 msgid "Measure"
-msgstr "度量"
+msgstr "指标"
 
 #: ../../benchmarks.rst:419 ../../benchmarks.rst:864
 msgid "Value"
@@ -1435,7 +1407,7 @@ msgstr "49,113,856 字节"
 
 #: ../../benchmarks.rst:422
 msgid "Idle resident memory, product runs"
-msgstr "空闲驻留内存，产品运行"
+msgstr "空闲常驻内存，产品运行"
 
 #: ../../benchmarks.rst:423
 msgid "5,592 to 5,788 KiB"
@@ -1443,7 +1415,7 @@ msgstr "5,592 到 5,788 KiB"
 
 #: ../../benchmarks.rst:424
 msgid "Peak resident memory during a workload"
-msgstr "工作负载期间的峰值驻留内存"
+msgstr "工作负载期间的峰值常驻内存"
 
 #: ../../benchmarks.rst:425
 msgid "15,896 to 16,348 KiB"
@@ -1451,7 +1423,7 @@ msgstr "15,896 到 16,348 KiB"
 
 #: ../../benchmarks.rst:426
 msgid "Resident memory after the workloads"
-msgstr "工作负载之后的驻留内存"
+msgstr "工作负载之后的常驻内存"
 
 #: ../../benchmarks.rst:427
 msgid "16,176 to 16,348 KiB"
@@ -1459,7 +1431,7 @@ msgstr "16,176 到 16,348 KiB"
 
 #: ../../benchmarks.rst:428
 msgid "Idle resident memory, primitive run"
-msgstr "空闲驻留内存，原语运行"
+msgstr "空闲常驻内存，原语运行"
 
 #: ../../benchmarks.rst:429
 msgid "6,052 KiB"
@@ -1499,11 +1471,8 @@ msgstr "14,744 字节"
 
 #: ../../benchmarks.rst:439
 msgid ""
-"The ranges run over the four product runs (two modes, two surfaces), and "
-"for the peak over their sixteen workloads. The table sizes are heap sizes "
-"reported by the engine. The record does not break the binary's size down."
-msgstr ""
-"范围取自四次产品运行（两种模式、两种运行配置），峰值则取自它们的十六个工作负载。表的大小是引擎报告的堆大小。记录没有细分可执行文件的大小构成。"
+"The ranges run over the four product runs (two modes, two surfaces), and for the peak over their sixteen workloads. The table sizes are heap sizes reported by the engine. The record does not break the binary's size down."
+msgstr "范围取自四次产品运行（两种模式、两种形态），峰值则取自它们的十六个工作负载。表的大小是引擎报告的堆大小。记录没有细分可执行文件的大小构成。"
 
 #: ../../benchmarks.rst:441
 msgid "Latency at Equal Offered Load"
@@ -1930,7 +1899,7 @@ msgstr ""
 
 #: ../../benchmarks.rst:583
 msgid "Worked example: why the stall showed at p99.9"
-msgstr "推演示例：为什么卡顿出现在 p99.9"
+msgstr "实例分析：为什么卡顿出现在 p99.9"
 
 #: ../../benchmarks.rst:585
 msgid ""
@@ -1988,6 +1957,14 @@ msgstr ""
 "CPU 上，用同样的工作负载，把 Anubis v1.27.0 "
 "的官方发布可执行文件（``anubis-1.27.0-linux-amd64``，40,001,698 字节）与 Sibuna "
 "并列测量。两个结果文件由以下命令记录："
+
+#: ../../benchmarks.rst:598
+msgid ""
+"cargo xtask bench product --anubis <path/to/anubis>\n"
+"cargo xtask bench admission --anubis <path/to/anubis>"
+msgstr ""
+"cargo xtask bench product --anubis <path/to/anubis>\n"
+"cargo xtask bench admission --anubis <path/to/anubis>"
 
 #: ../../benchmarks.rst:603
 msgid ""
@@ -2047,7 +2024,7 @@ msgstr ""
 
 #: ../../benchmarks.rst:615 ../../benchmarks.rst:705
 msgid "Figure"
-msgstr "数字"
+msgstr "指标"
 
 #: ../../benchmarks.rst:616 ../../benchmarks.rst:706
 msgid "Sibuna Gate"
@@ -2243,13 +2220,9 @@ msgstr "33,764"
 
 #: ../../benchmarks.rst:700
 msgid ""
-"Reverse-proxy mode, behind ``caddy respond``: medians of three "
-"five-second ``wrk`` runs (``benchmarks/results/comparison-latest.md``, "
-"generated 2026-10-16T00:55:19Z)."
+"Reverse-proxy mode, behind ``caddy respond``: medians of three five-second ``wrk`` runs (``benchmarks/results/comparison-latest.md``, generated 2026-10-16T00:55:19Z)."
 msgstr ""
-"反向代理模式，位于 ``caddy respond`` 之前：三次五秒 ``wrk`` "
-"运行的中位数（``benchmarks/results/comparison-latest.md``，生成于 "
-"2026-10-16T00:55:19Z）。"
+"反向代理模式，以 ``caddy respond`` 为源站：三次五秒 ``wrk`` 运行的中位数（``benchmarks/results/comparison-latest.md``，生成于 2026-10-16T00:55:19Z）。"
 
 #: ../../benchmarks.rst:711
 msgid "106,376 (200)"
@@ -2445,30 +2418,9 @@ msgstr ""
 
 #: ../../benchmarks.rst:792
 msgid ""
-"In reverse-proxy mode Sibuna's proxied rows served 103,298 to 106,819 "
-"requests per second at 2.77 to 2.98 cores busy. They are below the "
-"138,965 to 147,303 of the stub origin in ``product-latest.json``, and the "
-"daemon is not CPU bound, so the limit lies outside it: the origin, "
-"``caddy respond``, shares the load CPUs with ``wrk``. Its tail shows in "
-"the p90 of 2.1 to 2.4 ms. Anubis served 19,398 to 28,862 requests per "
-"second at 3.68 to 3.97 cores busy and 135 to 190 us of CPU per request. "
-"Its resident memory rose from 39,980 KiB in the ``admitted`` workload to "
-"516,872 KiB in ``challenged`` and 616,548 KiB in ``allowed_static``, and "
-"it held 589,276 KiB after the workloads against 21,552 KiB at idle. The "
-"rise began in ``challenged``, where every request receives a fresh "
-"challenge with its own id; this suggests a record kept per issued "
-"challenge, but the harness did not confirm the cause. Sibuna's peak "
-"stayed between 16,228 and 16,544 KiB in every row of both modes."
+"In reverse-proxy mode Sibuna's proxied rows served 103,298 to 106,819 requests per second at 2.77 to 2.98 cores busy. They are below the 138,965 to 147,303 of the stub origin in ``product-latest.json``, and the daemon is not CPU bound, so the limit lies outside it: the origin, ``caddy respond``, shares the load CPUs with ``wrk``. Its tail shows in the p90 of 2.1 to 2.4 ms. Anubis served 19,398 to 28,862 requests per second at 3.68 to 3.97 cores busy and 135 to 190 us of CPU per request. Its resident memory rose from 39,980 KiB in the ``admitted`` workload to 516,872 KiB in ``challenged`` and 616,548 KiB in ``allowed_static``, and it held 589,276 KiB after the workloads against 21,552 KiB at idle. The rise began in ``challenged``, where every request receives a fresh challenge with its own id; this suggests a record kept per issued challenge, but the harness did not confirm the cause. Sibuna's peak stayed between 16,228 and 16,544 KiB in every row of both modes."
 msgstr ""
-"在反向代理模式下，Sibuna 经代理的各行每秒处理 103,298 到 106,819 个请求，忙碌核心数为 2.77 到 2.98。这低于 "
-"``product-latest.json`` 中桩源站下的 138,965 到 147,303，而守护进程并未受 CPU "
-"限制，因此上限位于守护进程之外：源站 ``caddy respond`` 与 ``wrk`` 共享负载 CPU。它的尾部体现在 2.1 到 2.4 "
-"ms 的 p90 上。Anubis 每秒处理 19,398 到 28,862 个请求，忙碌核心数为 3.68 到 3.97，每请求 CPU 时间为 "
-"135 到 190 us。它的驻留内存从 ``admitted`` 工作负载中的 39,980 KiB 增长到 ``challenged`` 中的 "
-"516,872 KiB 和 ``allowed_static`` 中的 616,548 KiB，工作负载结束后仍占用 589,276 "
-"KiB，而空闲时为 21,552 KiB。增长始于 ``challenged``，其中每个请求都会收到一个带有自己 ID "
-"的新挑战；这暗示它为每个签发的挑战保存了一条记录，但测量工具没有证实原因。在两种模式的每一行中，Sibuna 的峰值都保持在 16,228 到 "
-"16,544 KiB 之间。"
+"在反向代理模式下，Sibuna 经代理的各行每秒处理 103,298 到 106,819 个请求，忙碌核心数为 2.77 到 2.98。这低于 ``product-latest.json`` 中桩源站下的 138,965 到 147,303，而守护进程并未受 CPU 限制，因此上限位于守护进程之外：源站 ``caddy respond`` 与 ``wrk`` 共享负载 CPU。它的尾部体现在 2.1 到 2.4 ms 的 p90 上。Anubis 每秒处理 19,398 到 28,862 个请求，忙碌核心数为 3.68 到 3.97，每请求 CPU 时间为 135 到 190 us。它的常驻内存从 ``admitted`` 工作负载中的 39,980 KiB 增长到 ``challenged`` 中的 516,872 KiB 和 ``allowed_static`` 中的 616,548 KiB，工作负载结束后仍占用 589,276 KiB，而空闲时为 21,552 KiB。增长始于 ``challenged``，其中每个请求都会收到一个带有自己 ID 的新挑战；这暗示它为每个签发的挑战保存了一条记录，但测量工具没有证实原因。在两种模式的每一行中，Sibuna 的峰值都保持在 16,228 到 16,544 KiB 之间。"
 
 #: ../../benchmarks.rst:794
 msgid "Several rows are not like for like either:"
@@ -2814,21 +2766,9 @@ msgstr "41,496 KiB（VmHWM 41,496 KiB）"
 
 #: ../../benchmarks.rst:880
 msgid ""
-"The tiles were read every two seconds during the traffic and 3 seconds "
-"after it. Every dashboard ended with the same totals (Requests 6,000, "
-"Admitted 2,400, Challenged 3,000, Policy denied 600, Origin 4xx 600, "
-"Origin 5xx 600), received 134 to 139 ``stats`` deltas, kept its WebSocket "
-"open, and reported no exception, console error or Content-Security-Policy "
-"violation. Eight browser subscribers are well under the console's limit "
-"of 64. The daemon of this run has SQLite storage and the console, unlike "
-"the in-memory daemons of the product harness, so its resident memory is "
-"not comparable with theirs."
+"The tiles were read every two seconds during the traffic and 3 seconds after it. Every dashboard ended with the same totals (Requests 6,000, Admitted 2,400, Challenged 3,000, Policy denied 600, Origin 4xx 600, Origin 5xx 600), received 134 to 139 ``stats`` deltas, kept its WebSocket open, and reported no exception, console error or Content-Security-Policy violation. Eight browser subscribers are well under the console's limit of 64. The daemon of this run has SQLite storage and the console, unlike the in-memory daemons of the product harness, so its resident memory is not comparable with theirs."
 msgstr ""
-"在流量期间每两秒读取一次各个磁贴，并在流量结束后 3 秒再读取一次。每个仪表板最终都显示相同的总数（Requests 6,000、Admitted "
-"2,400、Challenged 3,000、Policy denied 600、Origin 4xx 600、Origin 5xx "
-"600），收到 134 到 139 个 ``stats`` 增量，保持 WebSocket 打开，并且没有报告任何异常、控制台错误或 "
-"Content-Security-Policy 违规。八个浏览器订阅者远低于控制台 64 个的上限。这次运行的守护进程带有 SQLite "
-"存储和控制台，不同于产品测量工具中的内存型守护进程，因此它的驻留内存不能与它们比较。"
+"在流量期间每两秒读取一次各张指标卡片，并在流量结束后 3 秒再读取一次。每个仪表板最终都显示相同的总数（Requests 6,000、Admitted 2,400、Challenged 3,000、Policy denied 600、Origin 4xx 600、Origin 5xx 600），收到 134 到 139 个 ``stats`` 增量，保持 WebSocket 打开，并且没有报告任何异常、控制台错误或 Content-Security-Policy 违规。八个浏览器订阅者远低于控制台 64 个的上限。这次运行的守护进程带有 SQLite 存储和控制台，不同于产品测量工具中的内存型守护进程，因此它的常驻内存不能与它们比较。"
 
 #: ../../benchmarks.rst:882
 msgid "Not Measured"
@@ -2901,9 +2841,8 @@ msgstr "目前还没有测量工具在同一个 PostgreSQL 数据库上驱动多
 
 #: ../../benchmarks.rst:900
 msgid ""
-"The protocol properties that SID 0011 specifies (one shared seed, "
-"issuer-bound challenges); no measurement"
-msgstr "SID 0011 规定的协议性质（一个共享种子，与签发者绑定的挑战）；没有测量"
+"The protocol properties that SID 0011 specifies (one shared seed, issuer-bound challenges) and its three-node functional test (criterion 2); no measurement"
+msgstr "SID 0011 规定的协议性质（一个共享种子，挑战与签发者绑定）及其三节点功能测试（标准 2）；没有测量"
 
 #: ../../benchmarks.rst:901
 msgid "Storage on the request path"
@@ -2965,7 +2904,7 @@ msgstr "负载下运行八个活动仪表板时的控制台隔离"
 
 #: ../../benchmarks.rst:914
 msgid "The formal gate of SID 0007 has not been run"
-msgstr "SID 0007 的正式门槛尚未运行"
+msgstr "SID 0007 的正式门槛测试尚未进行"
 
 #: ../../benchmarks.rst:915
 msgid ""

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 07:43+0000\n"
+"POT-Creation-Date: 2026-10-16 10:45+0000\n"
 "PO-Revision-Date: 2026-10-16 05:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -96,6 +96,106 @@ msgstr ""
 
 #: ../../prior-art.rst:21
 msgid ""
+"A lineage graph. Dwork-Naor 1992 leads to Hashcash 1997, Juels-Brainard 1999, Mahmoody et al. 2013, Cohen-Pietrzak 2018 and Blocki-Lee-Zhou 2021. Aho-Corasick 1975 leads to Hyperscan 2019; ModSecurity and CRS 2002 lead to libinjection 2012. Hashcash leads to the Anubis interstitial and libinjection to the SafeLine semantic WAF; the Cloudflare hosted edge stands beside them. Sibuna (Gate, Shield, Edge) descends from Hashcash, Cohen-Pietrzak, Blocki-Lee-Zhou, Aho-Corasick, libinjection, GCRA (ATM Forum 1996), Anubis, SafeLine and Cloudflare."
+msgstr ""
+"一张技术源流图。Dwork-Naor 1992 引出 Hashcash 1997、Juels-Brainard 1999、Mahmoody 等 2013、Cohen-Pietrzak 2018 和 Blocki-Lee-Zhou 2021。Aho-Corasick 1975 引出 Hyperscan 2019；ModSecurity 和 CRS 2002 引出 libinjection 2012。Hashcash 引出 Anubis 验证中间页，libinjection 引出 SafeLine 语义 WAF；Cloudflare 托管边缘与它们并列。Sibuna（Gate、Shield、Edge）源自 Hashcash、Cohen-Pietrzak、Blocki-Lee-Zhou、Aho-Corasick、libinjection、GCRA（ATM Forum 1996）、Anubis、SafeLine 和 Cloudflare。"
+
+#: ../../prior-art.rst:21
+msgid ""
+"digraph lineage {\n"
+"  rankdir=TB;\n"
+"  node [shape=box, fontname=\"Helvetica\", fontsize=10];\n"
+"  edge [fontname=\"Helvetica\", fontsize=9];\n"
+"  subgraph puzzles {\n"
+"    rank=same;\n"
+"    dwork [label=\"Dwork-Naor\\n1992\"];\n"
+"    hashcash [label=\"Hashcash\\n1997\"];\n"
+"    juels [label=\"Juels-Brainard\\n1999\"];\n"
+"    mahmoody [label=\"Mahmoody et al.\\n2013\"];\n"
+"    cohen [label=\"Cohen-Pietrzak\\n2018\"];\n"
+"    blocki [label=\"Blocki-Lee-Zhou\\n2021\"];\n"
+"  }\n"
+"  subgraph systems {\n"
+"    rank=same;\n"
+"    aho [label=\"Aho-Corasick\\n1975\"];\n"
+"    modsec [label=\"ModSecurity, CRS\\n2002\"];\n"
+"    libinj [label=\"libinjection\\n2012\"];\n"
+"    hyperscan [label=\"Hyperscan\\n2019\"];\n"
+"    gcra [label=\"GCRA\\nATM Forum 1996\"];\n"
+"  }\n"
+"  subgraph products {\n"
+"    rank=same;\n"
+"    anubis [label=\"Anubis\\ninterstitial\"];\n"
+"    safeline [label=\"SafeLine\\nsemantic WAF\"];\n"
+"    cloudflare [label=\"Cloudflare\\nhosted edge\"];\n"
+"  }\n"
+"  sibuna [label=\"Sibuna\\nGate, Shield, Edge\", style=\"filled,bold\"];\n"
+"  dwork -> hashcash -> juels -> mahmoody -> cohen -> blocki;\n"
+"  modsec -> libinj;\n"
+"  aho -> hyperscan;\n"
+"  dwork -> aho [style=invis];\n"
+"  aho -> anubis [style=invis];\n"
+"  hashcash -> anubis;\n"
+"  libinj -> safeline;\n"
+"  hashcash -> sibuna;\n"
+"  cohen -> sibuna;\n"
+"  blocki -> sibuna;\n"
+"  aho -> sibuna;\n"
+"  libinj -> sibuna;\n"
+"  gcra -> sibuna;\n"
+"  anubis -> sibuna;\n"
+"  safeline -> sibuna;\n"
+"  cloudflare -> sibuna;\n"
+"}"
+msgstr ""
+"digraph lineage {\n"
+"  rankdir=TB;\n"
+"  node [shape=box, fontname=\"Helvetica\", fontsize=10];\n"
+"  edge [fontname=\"Helvetica\", fontsize=9];\n"
+"  subgraph puzzles {\n"
+"    rank=same;\n"
+"    dwork [label=\"Dwork-Naor\\n1992\"];\n"
+"    hashcash [label=\"Hashcash\\n1997\"];\n"
+"    juels [label=\"Juels-Brainard\\n1999\"];\n"
+"    mahmoody [label=\"Mahmoody 等\\n2013\"];\n"
+"    cohen [label=\"Cohen-Pietrzak\\n2018\"];\n"
+"    blocki [label=\"Blocki-Lee-Zhou\\n2021\"];\n"
+"  }\n"
+"  subgraph systems {\n"
+"    rank=same;\n"
+"    aho [label=\"Aho-Corasick\\n1975\"];\n"
+"    modsec [label=\"ModSecurity, CRS\\n2002\"];\n"
+"    libinj [label=\"libinjection\\n2012\"];\n"
+"    hyperscan [label=\"Hyperscan\\n2019\"];\n"
+"    gcra [label=\"GCRA\\nATM Forum 1996\"];\n"
+"  }\n"
+"  subgraph products {\n"
+"    rank=same;\n"
+"    anubis [label=\"Anubis\\n验证中间页\"];\n"
+"    safeline [label=\"SafeLine\\n语义 WAF\"];\n"
+"    cloudflare [label=\"Cloudflare\\n托管边缘\"];\n"
+"  }\n"
+"  sibuna [label=\"Sibuna\\nGate, Shield, Edge\", style=\"filled,bold\"];\n"
+"  dwork -> hashcash -> juels -> mahmoody -> cohen -> blocki;\n"
+"  modsec -> libinj;\n"
+"  aho -> hyperscan;\n"
+"  dwork -> aho [style=invis];\n"
+"  aho -> anubis [style=invis];\n"
+"  hashcash -> anubis;\n"
+"  libinj -> safeline;\n"
+"  hashcash -> sibuna;\n"
+"  cohen -> sibuna;\n"
+"  blocki -> sibuna;\n"
+"  aho -> sibuna;\n"
+"  libinj -> sibuna;\n"
+"  gcra -> sibuna;\n"
+"  anubis -> sibuna;\n"
+"  safeline -> sibuna;\n"
+"  cloudflare -> sibuna;\n"
+"}"
+
+#: ../../prior-art.rst:21
+msgid ""
 "Lineage of the ideas Sibuna combines. The top row is the cryptography of "
 "client puzzles and sequential work, the middle row the algorithms and "
 "systems Sibuna builds on, and the third row the products in the same "
@@ -139,19 +239,9 @@ msgstr "验证中间页与边缘网络"
 
 #: ../../prior-art.rst:78
 msgid ""
-"The proof-of-work interstitial in front of a website became common in "
-"2025, when scraper traffic feeding language-model training made ordinary "
-"origins unaffordable to run. Anubis (Techaro) is the best-known open "
-"implementation: a Go reverse proxy that serves a JavaScript puzzle, signs "
-"a session token, and otherwise passes traffic through. Sibuna's Gate "
-"surface solves the same problem with a stateless challenge, a symmetric "
-"token, and a second work tier; the comparison below records where the two "
-"differ."
+"The proof-of-work interstitial in front of a website became common in 2025, when scraper traffic feeding language-model training made ordinary origins unaffordable to run. Anubis (Techaro) is the best-known open implementation: a Go reverse proxy that serves a JavaScript puzzle, signs a session token, and otherwise passes traffic through. Sibuna's Gate surface solves the same problem with a stateless challenge, a symmetric token, and a second work tier; the comparison below records where the two differ."
 msgstr ""
-"网站前面的工作量证明验证中间页在 2025 "
-"年变得普遍，当时为语言模型训练提供数据的爬虫流量，让普通源站的运行成本难以承受。Anubis（Techaro）是最知名的开源实现：一个 Go "
-"编写的反向代理，提供 JavaScript 谜题，签发会话令牌，其余流量直接放行。Sibuna 的 Gate "
-"运行配置用无状态挑战、对称令牌和第二层工作量解决同一问题；下面的比较记录了两者的差异。"
+"网站前面的工作量证明验证中间页在 2025 年变得普遍，当时为语言模型训练提供数据的爬虫流量，让普通源站的运行成本难以承受。Anubis（Techaro）是最知名的开源实现：一个 Go 编写的反向代理，提供 JavaScript 谜题，签发会话令牌，其余流量直接放行。Sibuna 的 Gate 形态用无状态挑战、对称令牌和第二层工作量解决同一问题；下面的比较记录了两者的差异。"
 
 #: ../../prior-art.rst:80
 msgid ""
@@ -175,13 +265,9 @@ msgstr "一个可执行文件中的三个思想"
 
 #: ../../prior-art.rst:85
 msgid ""
-"Sibuna combines a browser work challenge for admission, bounded "
-"application-payload inspection, and a shared control plane that publishes "
-"local policy snapshots. Gate and Shield are the two product surfaces; "
-"storage and distributed deployment are options for either."
+"Sibuna combines a browser work challenge for admission, bounded application-payload inspection, and a shared control plane that publishes local policy snapshots. Gate and Shield are the two product surfaces; storage and distributed deployment are options for either."
 msgstr ""
-"Sibuna 结合了三样东西：用于准入的浏览器工作量挑战，有界的应用载荷检查，以及发布本地策略快照的共享控制平面。Gate 和 Shield "
-"是两种产品运行配置；存储和分布式部署是两者都可选用的选项。"
+"Sibuna 结合了三样东西：用于准入的浏览器工作量挑战，有界的应用载荷检查，以及发布本地策略快照的共享控制平面。Gate 和 Shield 是两种产品形态；存储和分布式部署是两者都可选用的选项。"
 
 #: ../../prior-art.rst:91
 msgid "**Property**"
@@ -290,9 +376,8 @@ msgstr "每个引用的数字要么由已提交的测量工具测得，要么标
 
 #: ../../prior-art.rst:118
 msgid ""
-"Cryptographic choices cite a venue and a proof, and state their quantum "
-"posture."
-msgstr "密码学选择注明发表出处和证明，并说明其抗量子立场。"
+"Cryptographic choices cite a venue and a proof, and state their quantum posture."
+msgstr "密码学选择注明发表出处和证明，并说明其抗量子能力。"
 
 #: ../../prior-art.rst:120
 msgid "Feature Comparison"
@@ -300,49 +385,36 @@ msgstr "功能比较"
 
 #: ../../prior-art.rst:123
 msgid ""
-"The four tables below compare Sibuna with the three tools most often "
-"mentioned alongside it. Facts about the other products were read from "
-"their public documentation and release artefacts in September 2026: "
-"Anubis 1.27.0 (MIT licence, Go), SafeLine community edition 9.x (GPL-3.0 "
-"management code around closed detector images, Docker Compose), and the "
-"Cloudflare WAF developer documentation. Anubis was also run on the "
-"benchmark host; SafeLine and Cloudflare were not (Part VIII explains "
-"why). A dash means the product does not offer the feature; a plan name "
-"means the feature exists but only on that plan. Each Sibuna measurement "
-"names the committed result file it comes from."
+"The four tables below compare Sibuna with the three tools most often mentioned alongside it. Facts about the other products were read from their public documentation and release artefacts in September 2026: Anubis 1.27.0 (MIT licence, Go), SafeLine community edition 9.x (GPL-3.0 management code around closed detector images, Docker Compose), and the Cloudflare WAF developer documentation. Anubis was also run on the benchmark host; SafeLine and Cloudflare were not (Part VIII explains why). A dash means the product does not offer the feature; a plan name means the feature exists but only on that plan. Each Sibuna measurement names the committed result file it comes from. The TLS fingerprint row was checked in October 2026, against the Anubis changelog (1.21.0 and 1.26.0), the SafeLine release notes (8.10.0 and 9.2.0), and Cloudflare's page \"JA3/JA4 fingerprint\"."
 msgstr ""
-"下面四张表把 Sibuna 与最常被同时提及的三种工具进行比较。关于其他产品的事实，读自 2026 年 9 月的公开文档和发布制品：Anubis "
-"1.27.0（MIT 许可证，Go），SafeLine 社区版 9.x（GPL-3.0 管理代码，外加闭源检测器镜像，Docker "
-"Compose），以及 Cloudflare WAF 开发者文档。Anubis 还在基准测试主机上运行过；SafeLine 和 "
-"Cloudflare 没有（第 VIII 部分解释了原因）。短横线表示该产品不提供这一功能；套餐名称表示该功能存在，但只在该套餐中提供。每项 "
-"Sibuna 测量都注明了它所来自的已提交结果文件。"
+"下面四张表把 Sibuna 与最常和它一同被提及的三种工具作比较。其他产品的情况取自它们 2026 年 9 月的公开文档和发布制品：Anubis 1.27.0（MIT 许可证，Go），SafeLine 社区版 9.x（GPL-3.0 的管理代码，外加闭源的检测器镜像，Docker Compose），以及 Cloudflare WAF 的开发者文档。Anubis 还在基准测试主机上实际运行过；SafeLine 和 Cloudflare 没有（原因见第 VIII 部分）。短横线表示该产品不提供这项功能；套餐名称表示该功能存在，但只在该套餐中提供。每项 Sibuna 测量都注明了它所来自的已提交结果文件。TLS 指纹一行于 2026 年 10 月核对，依据是 Anubis 的变更日志（1.21.0 和 1.26.0）、SafeLine 的发布说明（8.10.0 和 9.2.0），以及 Cloudflare 的“JA3/JA4 fingerprint”页面。"
 
 #: ../../prior-art.rst:125
 msgid "Feature comparison, part 1: deployment"
 msgstr "功能比较，第 1 部分：部署"
 
-#: ../../prior-art.rst:130 ../../prior-art.rst:161 ../../prior-art.rst:197
-#: ../../prior-art.rst:233
+#: ../../prior-art.rst:130 ../../prior-art.rst:161 ../../prior-art.rst:202
+#: ../../prior-art.rst:238
 msgid "Feature"
 msgstr "功能"
 
-#: ../../prior-art.rst:131 ../../prior-art.rst:162 ../../prior-art.rst:198
-#: ../../prior-art.rst:234
+#: ../../prior-art.rst:131 ../../prior-art.rst:162 ../../prior-art.rst:203
+#: ../../prior-art.rst:239
 msgid "Sibuna"
 msgstr "Sibuna"
 
-#: ../../prior-art.rst:132 ../../prior-art.rst:163 ../../prior-art.rst:199
-#: ../../prior-art.rst:235
+#: ../../prior-art.rst:132 ../../prior-art.rst:163 ../../prior-art.rst:204
+#: ../../prior-art.rst:240
 msgid "Anubis 1.27"
 msgstr "Anubis 1.27"
 
-#: ../../prior-art.rst:133 ../../prior-art.rst:164 ../../prior-art.rst:200
-#: ../../prior-art.rst:236
+#: ../../prior-art.rst:133 ../../prior-art.rst:164 ../../prior-art.rst:205
+#: ../../prior-art.rst:241
 msgid "SafeLine CE 9"
 msgstr "SafeLine CE 9"
 
-#: ../../prior-art.rst:134 ../../prior-art.rst:165 ../../prior-art.rst:201
-#: ../../prior-art.rst:237
+#: ../../prior-art.rst:134 ../../prior-art.rst:165 ../../prior-art.rst:206
+#: ../../prior-art.rst:242
 msgid "Cloudflare WAF"
 msgstr "Cloudflare WAF"
 
@@ -395,8 +467,8 @@ msgid "Licence"
 msgstr "许可证"
 
 #: ../../prior-art.rst:146
-msgid "Source in the repository"
-msgstr "源码在仓库中"
+msgid "LGPL-3.0-or-later"
+msgstr "LGPL-3.0-or-later"
 
 #: ../../prior-art.rst:147
 msgid "MIT"
@@ -434,7 +506,7 @@ msgstr "最低 1 个 CPU 核心、1 GB 内存、5 GB 磁盘，Docker 20.10+"
 
 #: ../../prior-art.rst:154
 msgid "None on premises"
-msgstr "无本地部署"
+msgstr "本地无资源占用"
 
 #: ../../prior-art.rst:156
 msgid "Feature comparison, part 2: admission and sessions"
@@ -513,7 +585,7 @@ msgstr "``cf_clearance`` Cookie"
 
 #: ../../prior-art.rst:181
 msgid "Post-quantum posture of the default token"
-msgstr "默认令牌的后量子立场"
+msgstr "默认令牌的后量子安全性"
 
 #: ../../prior-art.rst:182
 msgid "Symmetric: only Grover's quadratic speedup applies"
@@ -525,7 +597,7 @@ msgstr "Ed25519：可被 Shor 算法攻破"
 
 #: ../../prior-art.rst:184 ../../prior-art.rst:185
 msgid "Not documented"
-msgstr "未见文档说明"
+msgstr "文档未提及"
 
 #: ../../prior-art.rst:186
 msgid "Policy language"
@@ -533,11 +605,9 @@ msgstr "策略语言"
 
 #: ../../prior-art.rst:187
 msgid ""
-"JSON rules: path, User-Agent, headers, IPv4/IPv6 CIDR; ALLOW, DENY, "
-"CHALLENGE, WEIGH with thresholds; dynamic rules from the database"
+"JSON rules: path, User-Agent, headers, IPv4/IPv6 CIDR, JA4 fingerprint; ALLOW, DENY, CHALLENGE, WEIGH with thresholds; dynamic rules from the database"
 msgstr ""
-"JSON 规则：路径、User-Agent、请求头、IPv4/IPv6 CIDR；ALLOW、DENY、CHALLENGE，以及带阈值的 "
-"WEIGH；来自数据库的动态规则"
+"JSON 规则：路径、User-Agent、请求头、IPv4/IPv6 CIDR、JA4 指纹；ALLOW、DENY、CHALLENGE，以及带阈值的 WEIGH；来自数据库的动态规则"
 
 #: ../../prior-art.rst:188
 msgid ""
@@ -554,209 +624,222 @@ msgid ""
 "Rules language expressions; *5 / 20 / 100 / 1000 custom rules by plan*"
 msgstr "Rules 语言表达式；*按套餐为 5 / 20 / 100 / 1000 条自定义规则*"
 
+#: ../../prior-art.rst:191
+msgid "TLS fingerprint (JA4)"
+msgstr "TLS 指纹（JA4）"
+
 #: ../../prior-art.rst:192
+msgid ""
+"Rules match a JA4 fingerprint exactly or by prefix; a trusted ingress computes it and forwards it in a header (``--ja4-header``); Sibuna does not compute it"
+msgstr ""
+"规则可以精确匹配或按前缀匹配 JA4 指纹；指纹由受信任的入口代理计算，并通过请求头转发（``--ja4-header``）；Sibuna 自己不计算"
+
+#: ../../prior-art.rst:193
+msgid ""
+"Not documented; policies may reference the HTTP fingerprint JA4H, which Anubis computes and adds as the header ``X-Http-Fingerprint-JA4H``"
+msgstr ""
+"文档未提及；策略可以引用 HTTP 指纹 JA4H，Anubis 会计算它并添加为请求头 ``X-Http-Fingerprint-JA4H``"
+
+#: ../../prior-art.rst:194
+msgid ""
+"Computed at its own TLS termination; shown in attack details; custom rules match it (equals, not equals); a built-in rule denies fingerprints from its malicious JA4 intelligence"
+msgstr "在自身的 TLS 终止处计算；显示在攻击详情中；自定义规则可以匹配它（等于、不等于）；一条内置规则拒绝其恶意 JA4 情报库中的指纹"
+
+#: ../../prior-art.rst:195
+msgid ""
+"JA3 and JA4 fingerprints in WAF custom rules and analytics *(Enterprise with Bot Management)*"
+msgstr "WAF 自定义规则和分析中的 JA3 与 JA4 指纹 *（Enterprise，需 Bot Management）*"
+
+#: ../../prior-art.rst:197
 msgid "Feature comparison, part 3: inspection and state"
 msgstr "功能比较，第 3 部分：检查与状态"
 
-#: ../../prior-art.rst:202
+#: ../../prior-art.rst:207
 msgid "SQLi, XSS, RCE, traversal inspection"
 msgstr "SQLi、XSS、RCE、路径遍历检查"
 
-#: ../../prior-art.rst:203
+#: ../../prior-art.rst:208
 msgid ""
 "Shield: tagged automaton plus structural tokenizers, first 8 KB of body"
 msgstr "Shield：带标记的自动机加结构分词器，检查请求体的前 8 KB"
 
-#: ../../prior-art.rst:204 ../../prior-art.rst:250
+#: ../../prior-art.rst:209 ../../prior-art.rst:255
 msgid "\\-"
 msgstr "\\-"
 
-#: ../../prior-art.rst:205
+#: ../../prior-art.rst:210
 msgid "Semantic analysis engine over OWASP categories, also SSRF, XXE, CRLF"
 msgstr "覆盖 OWASP 各类别的语义分析引擎，另有 SSRF、XXE、CRLF"
 
-#: ../../prior-art.rst:206
+#: ../../prior-art.rst:211
 msgid ""
 "Managed rulesets *(Pro and above)*; OWASP Core Ruleset; attack score "
 "*(Business and above)*"
 msgstr "托管规则集 *（Pro 及以上）*；OWASP Core Ruleset；攻击评分 *（Business 及以上）*"
 
-#: ../../prior-art.rst:207
+#: ../../prior-art.rst:212
 msgid "Rate limiting"
 msgstr "速率限制"
 
-#: ../../prior-art.rst:208
+#: ../../prior-art.rst:213
 msgid "GCRA per client, local to a node"
 msgstr "按客户端的 GCRA，作用于单个节点本地"
 
-#: ../../prior-art.rst:209
+#: ../../prior-art.rst:214
 msgid "\\- (system load is exposed to CEL rules)"
 msgstr "\\- （系统负载会暴露给 CEL 规则）"
 
-#: ../../prior-art.rst:210
+#: ../../prior-art.rst:215
 msgid "Per IP, path, session"
 msgstr "按 IP、路径、会话"
 
-#: ../../prior-art.rst:211
+#: ../../prior-art.rst:216
 msgid "*1 / 2 / 5 / 100 rules by plan*; IP-only keys below Enterprise"
 msgstr "*按套餐为 1 / 2 / 5 / 100 条规则*；Enterprise 以下只能以 IP 为键"
 
-#: ../../prior-art.rst:212
+#: ../../prior-art.rst:217
 msgid "Bans and reputation"
 msgstr "封禁与信誉"
 
-#: ../../prior-art.rst:213
+#: ../../prior-art.rst:218
 msgid ""
 "Honeypot bans; reputation trie loaded from the reputation table shared "
 "across the cluster"
 msgstr "蜜罐封禁；信誉字典树从集群共享的信誉表加载"
 
-#: ../../prior-art.rst:214
+#: ../../prior-art.rst:219
 msgid "DNSBL; ASN and GeoIP through Thoth *(paid, closed)*"
 msgstr "DNSBL；通过 Thoth 提供 ASN 和 GeoIP *（付费，闭源）*"
 
-#: ../../prior-art.rst:215
+#: ../../prior-art.rst:220
 msgid "IP groups and blacklists; threat intelligence *(Pro)*"
 msgstr "IP 组和黑名单；威胁情报 *（Pro）*"
 
-#: ../../prior-art.rst:216
+#: ../../prior-art.rst:221
 msgid "IP lists; managed lists and bot score *(Enterprise)*"
 msgstr "IP 列表；托管列表和机器人评分 *（Enterprise）*"
 
-#: ../../prior-art.rst:217
+#: ../../prior-art.rst:222
 msgid "Forensics"
 msgstr "取证"
 
-#: ../../prior-art.rst:218
+#: ../../prior-art.rst:223
 msgid ""
-"SQLite or PostgreSQL: full-text search over incidents, vector campaign "
-"clustering"
-msgstr "SQLite 或 PostgreSQL：事件全文搜索，基于向量的活动聚类"
+"SQLite or PostgreSQL: full-text search over incidents, vector campaign clustering"
+msgstr "SQLite 或 PostgreSQL：事件全文搜索，基于向量的攻击活动聚类"
 
-#: ../../prior-art.rst:219
+#: ../../prior-art.rst:224
 msgid "Prometheus metrics only"
 msgstr "仅 Prometheus 指标"
 
-#: ../../prior-art.rst:220
+#: ../../prior-art.rst:225
 msgid "PostgreSQL attack log with console"
 msgstr "PostgreSQL 攻击日志，配有控制台"
 
-#: ../../prior-art.rst:221
+#: ../../prior-art.rst:226
 msgid "Security Events; sampled on Free"
 msgstr "Security Events；Free 套餐为抽样数据"
 
-#: ../../prior-art.rst:222
+#: ../../prior-art.rst:227
 msgid "Multi-node"
 msgstr "多节点"
 
-#: ../../prior-art.rst:223
+#: ../../prior-art.rst:228
 msgid ""
 "One PostgreSQL database shared by every node for policy and reputation; "
 "shared seed; sticky challenge verification"
 msgstr "所有节点共享一个 PostgreSQL 数据库来保存策略和信誉；共享种子；粘性挑战验证"
 
-#: ../../prior-art.rst:224
+#: ../../prior-art.rst:229
 msgid "Shared signing key; shared Valkey store"
 msgstr "共享签名密钥；共享 Valkey 存储"
 
-#: ../../prior-art.rst:225
+#: ../../prior-art.rst:230
 msgid "One stack per host"
 msgstr "每台主机一套组件"
 
-#: ../../prior-art.rst:226
+#: ../../prior-art.rst:231
 msgid "Global anycast"
-msgstr "全局任播"
+msgstr "全球任播"
 
-#: ../../prior-art.rst:228
+#: ../../prior-art.rst:233
 msgid "Feature comparison, part 4: operations"
 msgstr "功能比较，第 4 部分：运维"
 
-#: ../../prior-art.rst:238
+#: ../../prior-art.rst:243
 msgid "Metrics"
 msgstr "指标"
 
-#: ../../prior-art.rst:239
+#: ../../prior-art.rst:244
 msgid "Prometheus at ``/__sibuna/metrics``"
 msgstr "Prometheus，位于 ``/__sibuna/metrics``"
 
-#: ../../prior-art.rst:240
+#: ../../prior-art.rst:245
 msgid "Prometheus on a separate port"
 msgstr "Prometheus，使用单独的端口"
 
-#: ../../prior-art.rst:241
+#: ../../prior-art.rst:246
 msgid "Console dashboards"
 msgstr "控制台仪表板"
 
-#: ../../prior-art.rst:242
+#: ../../prior-art.rst:247
 msgid "Dashboard and analytics"
 msgstr "仪表板和分析"
 
-#: ../../prior-art.rst:243
+#: ../../prior-art.rst:248
 msgid "TLS termination"
 msgstr "TLS 终止"
 
-#: ../../prior-art.rst:244 ../../prior-art.rst:245
+#: ../../prior-art.rst:249 ../../prior-art.rst:250
 msgid "\\- (ingress)"
 msgstr "\\- （由入口代理负责）"
 
-#: ../../prior-art.rst:246 ../../prior-art.rst:247 ../../prior-art.rst:251
-#: ../../prior-art.rst:252 ../../prior-art.rst:255
+#: ../../prior-art.rst:251 ../../prior-art.rst:252 ../../prior-art.rst:256
+#: ../../prior-art.rst:257 ../../prior-art.rst:260
 msgid "**Yes**"
 msgstr "**是**"
 
-#: ../../prior-art.rst:248
+#: ../../prior-art.rst:253
 msgid "Management console"
 msgstr "管理控制台"
 
-#: ../../prior-art.rst:249
+#: ../../prior-art.rst:254
 msgid "Opt-in; SID 0007 Committed"
 msgstr "可选启用；SID 0007 状态为 Committed"
 
-#: ../../prior-art.rst:253
+#: ../../prior-art.rst:258
 msgid "Measured on the benchmark host"
 msgstr "在基准测试主机上测量"
 
-#: ../../prior-art.rst:254
+#: ../../prior-art.rst:259
 msgid "**Yes** (Part VIII)"
-msgstr "**是** （第 VIII 部分）"
+msgstr "**是**\\ （第 VIII 部分）"
 
-#: ../../prior-art.rst:256
+#: ../../prior-art.rst:261
 msgid "\\- (Docker only)"
 msgstr "\\- （仅 Docker）"
 
-#: ../../prior-art.rst:257
+#: ../../prior-art.rst:262
 msgid "\\- (hosted)"
 msgstr "\\- （托管服务）"
 
-#: ../../prior-art.rst:259
+#: ../../prior-art.rst:264
 msgid "Three differences carry most of the weight in a selection decision."
 msgstr "在选型决策中，有三个差异最为关键。"
 
-#: ../../prior-art.rst:261
+#: ../../prior-art.rst:266
 msgid ""
-"*Where the work goes.* Anubis and Sibuna Gate make the *client* pay "
-"before the origin does anything. SafeLine and Cloudflare inspect first "
-"and challenge selectively; their default posture is to admit and filter. "
-"Sibuna Shield does both, in that order: inspection can deny a request "
-"that already holds a valid session."
+"*Where the work goes.* Anubis and Sibuna Gate make the *client* pay before the origin does anything. SafeLine and Cloudflare inspect first and challenge selectively; their default posture is to admit and filter. Sibuna Shield does both, in that order: inspection can deny a request that already holds a valid session."
 msgstr ""
-"*工作由谁承担。* Anubis 和 Sibuna Gate 让 *客户端* 在源站做任何事情之前先付出代价。SafeLine 和 "
-"Cloudflare 先检查，再有选择地发起挑战；它们的默认立场是先准入再过滤。Sibuna Shield "
-"两者都做，并且按这个顺序：即使请求已经持有有效会话，检查仍然可以拒绝它。"
+"*工作落在哪一方。* Anubis 和 Sibuna Gate 让 *客户端* 在源站做任何事情之前先付出代价。SafeLine 和 Cloudflare 先检查，再有选择地发起挑战；它们的默认立场是先准入再过滤。Sibuna Shield 两者都做，并且按这个顺序：即使请求已经持有有效会话，检查仍然可以拒绝它。"
 
-#: ../../prior-art.rst:262
+#: ../../prior-art.rst:267
 msgid ""
-"*What the server remembers.* Anubis keeps challenge state in a store "
-"(memory, bbolt, Valkey, or S3) and signs a JSON Web Token with Ed25519; "
-"Sibuna issues a self-authenticating record and remembers only solved tags "
-"in a fixed table. SafeLine keeps attack logs in PostgreSQL; Cloudflare "
-"keeps everything, with sampled visibility on the Free plan."
+"*What the server remembers.* Anubis keeps challenge state in a store (memory, bbolt, Valkey, or S3) and signs a JSON Web Token with Ed25519; Sibuna issues a self-authenticating record and remembers only solved tags in a fixed table. SafeLine keeps attack logs in PostgreSQL; Cloudflare keeps everything, with sampled visibility on the Free plan."
 msgstr ""
-"*服务器记住什么。* Anubis 把挑战状态保存在一个存储中（内存、bbolt、Valkey 或 S3），并用 Ed25519 签名 JSON "
-"Web Token；Sibuna 签发一个自我认证的记录，只在一张固定大小的表中记住已解出的标签。SafeLine 把攻击日志保存在 "
-"PostgreSQL 中；Cloudflare 保存一切，Free 套餐只提供抽样的可见性。"
+"*服务器记住什么。* Anubis 把挑战状态保存在一个存储中（内存、bbolt、Valkey 或 S3），并用 Ed25519 签名 JSON Web Token；Sibuna 签发一个自认证记录，只在一张固定大小的表中记住已解出的标签。SafeLine 把攻击日志保存在 PostgreSQL 中；Cloudflare 保存一切，Free 套餐只提供抽样的可见性。"
 
-#: ../../prior-art.rst:263
+#: ../../prior-art.rst:268
 msgid ""
 "*What an operator has to run.* Sibuna is one binary with an optional "
 "SQLite file, or a PostgreSQL database shared by a cluster; Anubis is one "
@@ -768,42 +851,32 @@ msgstr ""
 "数据库；Anubis 是一个 Go 可执行文件；SafeLine 是七个容器，运行在 Linux 主机的 Docker "
 "守护进程之上，主机至少需要一个核心、1 GB 内存和 5 GB 磁盘；Cloudflare 则是一次 DNS 修改加一份订阅。"
 
-#: ../../prior-art.rst:265
+#: ../../prior-art.rst:270
 msgid "Current product boundary"
 msgstr "当前的产品边界"
 
-#: ../../prior-art.rst:268
+#: ../../prior-art.rst:273
 msgid ""
-"Sibuna leaves ingress TLS termination to the deployment proxy and does "
-"not score bots with a trained model or publish paid signatures. Its "
-"opt-in console provides authenticated dashboards, country enrichment, "
-"policy editing, investigation and cluster management. Country lookup and "
-"storage work run outside request classification. SID 0007 is Committed, "
-"and the console passes its browser workflows (SID 0010). Its formal "
-"performance isolation gate, with eight active dashboards under load, is "
-"not yet measured; Part VIII records what is."
+"Sibuna leaves ingress TLS termination to the deployment proxy and does not score bots with a trained model or publish paid signatures. It matches the JA4 fingerprint that a trusted ingress computes; it cannot compute one itself (SID 0014, Part IX). Its opt-in console provides authenticated dashboards, country enrichment, policy editing, investigation and cluster management. Country lookup and storage work run outside request classification. SID 0007 is Committed, and the console passes its browser workflows (SID 0010). Its formal performance isolation gate, with eight active dashboards under load, is not yet measured; Part VIII records what is."
 msgstr ""
-"Sibuna 把入口的 TLS "
-"终止交给部署中的代理，不用训练好的模型给机器人评分，也不发布付费签名。它可选启用的控制台提供经过认证的仪表板、国家信息补充、策略编辑、调查和集群管理。国家查询和存储工作在请求分类之外运行。SID "
-"0007 的状态为 Committed，控制台也通过了它的浏览器工作流测试（SID "
-"0010）。它的正式性能隔离门槛，即在负载下运行八个活动仪表板，尚未测量；第 VIII 部分记录了已经测得的内容。"
+"Sibuna 把入口处的 TLS 终止交给部署中的代理，不用训练好的模型给机器人打分，也不发布付费签名。它匹配受信任的入口代理计算出的 JA4 指纹，自己无法计算 JA4（SID 0014，第 IX 部分）。它可选启用的控制台提供需要认证的仪表板、国家信息补充、策略编辑、调查和集群管理。国家查询和存储工作在请求分类之外运行。SID 0007 的状态为 Committed，控制台也通过了浏览器工作流测试（SID 0010）。它的正式性能隔离门槛，即在负载下运行八个活动仪表板，尚未测量；已经测得的内容见第 VIII 部分。"
 
-#: ../../prior-art.rst:270
+#: ../../prior-art.rst:275
 msgid "Exercise 2.1"
 msgstr "练习 2.1"
 
-#: ../../prior-art.rst:272
+#: ../../prior-art.rst:277
 msgid ""
 "Explain why compiling one verifier source to native code and WebAssembly "
 "reduces protocol drift. Which properties still require independent "
 "testing or cryptographic review?"
 msgstr "解释为什么把同一份验证器源码同时编译为原生代码和 WebAssembly 可以减少协议漂移。哪些性质仍然需要独立测试或密码学审查？"
 
-#: ../../prior-art.rst:274
+#: ../../prior-art.rst:279
 msgid "Exercise 2.2"
 msgstr "练习 2.2"
 
-#: ../../prior-art.rst:276
+#: ../../prior-art.rst:281
 msgid ""
 "Using only the comparison tables, write down the smallest deployment that "
 "gives a static site (a) a proof-of-work gate, (b) SQL-injection "
@@ -812,15 +885,15 @@ msgstr ""
 "只使用比较表，写出能为一个静态网站提供以下功能的最小部署：(a) 工作量证明网关，(b) SQL 注入检查，(c) "
 "集群范围的封禁。每个选择是由哪几行决定的？"
 
-#: ../../prior-art.rst:278
+#: ../../prior-art.rst:283
 msgid "Hint: Start from the \"runs as\" and \"multi-node\" rows."
 msgstr "提示：从“运行形式”和“多节点”两行开始。"
 
-#: ../../prior-art.rst:280
+#: ../../prior-art.rst:285
 msgid "Explain the invariant"
 msgstr "解释这个不变量"
 
-#: ../../prior-art.rst:282
+#: ../../prior-art.rst:287
 msgid ""
 "Describe how Gate, Shield, and optional shared storage divide admission, "
 "inspection and policy distribution. Then name one row of the comparison "
@@ -829,3 +902,6 @@ msgid ""
 msgstr ""
 "描述 Gate、Shield "
 "和可选的共享存储如何划分准入、检查和策略分发。然后指出比较表中我们在向客户引用之前想要重新核实的一行，并说明我们会如何核实它。"
+
+#~ msgid "Source in the repository"
+#~ msgstr "源码在仓库中"

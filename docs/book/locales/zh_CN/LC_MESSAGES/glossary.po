@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 07:43+0000\n"
+"POT-Creation-Date: 2026-10-16 10:45+0000\n"
 "PO-Revision-Date: 2026-10-16 05:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -59,7 +59,7 @@ msgstr "4,096 个无锁槽，保存被封禁的客户端地址及其过期时间
 
 #: ../../glossary.rst:15
 msgid "Campaign"
-msgstr "活动（Campaign）"
+msgstr "攻击活动（Campaign）"
 
 #: ../../glossary.rst:16
 msgid ""
@@ -98,14 +98,9 @@ msgstr "Edge"
 
 #: ../../glossary.rst:25
 msgid ""
-"A Sibuna deployment with ``--data-dir`` (a SQLite file on one node), or "
-"with ``--database-url`` and ``--cluster-node`` (one PostgreSQL database "
-"shared by a cluster), giving persistent policies, shared reputation, and "
-"incident forensics to either surface."
+"A Sibuna deployment with ``--data-dir`` (a SQLite file on one node), or with ``--database-url`` and ``--cluster-node`` (one PostgreSQL database shared by a cluster), giving persistent policies, shared reputation, and incident forensics to either surface."
 msgstr ""
-"使用 ``--data-dir``\\ （单个节点上的一个 SQLite 文件），或者使用 ``--database-url`` 和 "
-"``--cluster-node``\\ （由集群共享的一个 PostgreSQL 数据库）的 Sibuna "
-"部署，为任一运行配置提供持久策略、共享信誉和事件取证。"
+"使用 ``--data-dir``\\ （单个节点上的一个 SQLite 文件），或者使用 ``--database-url`` 和 ``--cluster-node``\\ （由集群共享的一个 PostgreSQL 数据库）的 Sibuna 部署，为任一形态提供持久策略、共享信誉和事件取证。"
 
 #: ../../glossary.rst:27
 msgid "Engine slot"
@@ -150,9 +145,8 @@ msgstr "Gate"
 
 #: ../../glossary.rst:37
 msgid ""
-"The surface with proof-of-work admission, sessions, rules, reputation, "
-"GCRA limits and bans, but no application inspection (``--gate``)."
-msgstr "具备工作量证明准入、会话、规则、信誉、GCRA 限制和封禁，但没有应用检查的运行配置（``--gate``）。"
+"The surface with proof-of-work admission, sessions, rules, reputation, GCRA limits and bans, but no application inspection (``--gate``)."
+msgstr "具备工作量证明准入、会话、规则、信誉、GCRA 限制和封禁，但没有应用检查的形态（``--gate``）。"
 
 #: ../../glossary.rst:39
 msgid "GCRA"
@@ -326,7 +320,7 @@ msgstr "Shield"
 
 #: ../../glossary.rst:82
 msgid "The default surface: Gate plus the semantic firewall (``--shield``)."
-msgstr "默认的运行配置：Gate 加上语义防火墙（``--shield``）。"
+msgstr "默认的形态：Gate 加上语义防火墙（``--shield``）。"
 
 #: ../../glossary.rst:84
 msgid "SID"
@@ -343,7 +337,7 @@ msgstr ""
 
 #: ../../glossary.rst:87
 msgid "Surface"
-msgstr "运行配置（Surface）"
+msgstr "形态（Surface）"
 
 #: ../../glossary.rst:88
 msgid ""
@@ -397,10 +391,9 @@ msgstr ""
 
 #: ../../glossary.rst:101
 msgid ""
-"Back, A. \"Hashcash: a denial of service counter-measure.\" Technical "
-"report, 2002."
+"Back, A. \"Hashcash: a denial of service counter-measure.\" Technical report, 2002."
 msgstr ""
-"Back, A. \"Hashcash: a denial of service counter-measure.\" 技术报告, 2002."
+"Back, A. \"Hashcash: a denial of service counter-measure.\" Technical report, 2002."
 
 #: ../../glossary.rst:102
 msgid ""
@@ -415,7 +408,8 @@ msgstr ""
 #: ../../glossary.rst:103
 msgid ""
 "Celis, P. *Robin Hood Hashing*. PhD thesis, University of Waterloo, 1986."
-msgstr "Celis, P. *Robin Hood Hashing*. 博士论文, University of Waterloo, 1986."
+msgstr ""
+"Celis, P. *Robin Hood Hashing*. PhD thesis, University of Waterloo, 1986."
 
 #: ../../glossary.rst:104
 msgid ""
@@ -495,11 +489,9 @@ msgstr ""
 
 #: ../../glossary.rst:113
 msgid ""
-"O'Connor, J., Aumasson, J.-P., Neves, S., and Wilcox-O'Hearn, Z. *BLAKE3: "
-"one function, fast everywhere*. Specification, 2020."
+"O'Connor, J., Aumasson, J.-P., Neves, S., and Wilcox-O'Hearn, Z. *BLAKE3: one function, fast everywhere*. Specification, 2020."
 msgstr ""
-"O'Connor, J., Aumasson, J.-P., Neves, S., and Wilcox-O'Hearn, Z. *BLAKE3: "
-"one function, fast everywhere*. 规范, 2020."
+"O'Connor, J., Aumasson, J.-P., Neves, S., and Wilcox-O'Hearn, Z. *BLAKE3: one function, fast everywhere*. Specification, 2020."
 
 #: ../../glossary.rst:114
 msgid ""

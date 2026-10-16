@@ -21,7 +21,7 @@
 
 发送请求通常很便宜。处理请求却可能让应用付出更多工作。Sibuna 要求客户端先解一道计算题，再获得访问权限。这道题的设计使生成证明比验证证明需要更多计算。自动化客户端因此要承担更多访问网站的成本。
 
-计算也消耗能源，但用量取决于硬件和配置。工作量证明增加的是准入成本。它不能证明访问者是人，也不能阻止所有攻击。签名会话让已获准访问的客户端再次访问时不必为每个请求重新解题。请使用访问规则和本地速率限制，控制这些客户端之后可以请求的内容。
+计算也消耗能源，但用量取决于硬件和配置。工作量证明增加的是准入成本。它不能证明访问者是人，也不能阻止所有攻击。签名会话让已准入的客户端再次访问时不必为每个请求重新解题。请使用访问规则和本地速率限制，控制这些客户端之后可以请求的内容。
 
 <a id="features"></a>
 
@@ -31,8 +31,8 @@
 - **原生安装包：** 支持 Linux、macOS、Windows、FreeBSD 和 OpenBSD。浏览器求解器使用 WebAssembly。
 - **浏览器挑战：** 顺序工作量证明（默认）或 Hashcash，完成后获得签名会话。
 - **访问策略：** 根据地址、路径、请求头和 User-Agent 放行、挑战、加权评估或拒绝请求。
-- **TLS 指纹：** 按可信入口转发的 JA4 指纹匹配请求，可精确匹配，也可按前缀匹配。
-- **应用层检查：** 内置 SQL 注入、XSS、路径遍历和命令注入检测。
+- **TLS 指纹：** 按受信任的入口代理转发的 JA4 指纹匹配请求，可精确匹配，也可按前缀匹配。
+- **应用层检查：** 内置 SQL 注入、XSS、路径遍历和命令注入检查。
 - **本地速率限制：** 控制突发和持续流量，也可为单条规则设置限额。
 - **管理控制台：** 流量、按国家采样的活动、已记录的事件和策略编辑。
 - **集群支持：** 单独的构建版本通过 PostgreSQL 共享策略和信誉数据。
@@ -76,7 +76,7 @@ tar -xzf sibuna-linux-amd64.tar.gz
 ./sibuna --host 127.0.0.1 --port 8080 --upstream-port 3000 --secret-file ./sibuna.seed
 ```
 
-打开 `http://127.0.0.1:8080` 即可在本地试用。对于公开网站，请由可信入口终止 HTTPS，并保持 Sibuna 的监听端口不对外公开。Caddy 或 nginx 的配置请按照[部署指南](https://insanai.github.io/sibuna/book/operations.html)进行。
+打开 `http://127.0.0.1:8080` 即可在本地试用。对于公开网站，请由受信任的入口代理终止 HTTPS，并保持 Sibuna 的监听端口不对外公开。Caddy 或 nginx 的配置请按照[部署指南](https://insanai.github.io/sibuna/book/operations.html)进行。
 
 默认模式为 `reverse_proxy`。如果入口代理负责转发请求，并向 Sibuna 查询访问决策，请使用 `--mode forward_auth`。指南包含这两种配置。Shield 的内置检查默认启用。若只需要准入控制、不需要该检查器，请使用 `--gate`。通过 `--policy-file <file>` 选择访问规则，其中可以包括为无法运行浏览器挑战的 API 客户端和健康检查准备的规则。`./sibuna --help` 列出所有选项。
 
@@ -113,7 +113,7 @@ cargo build --release -p sibuna
 
 ![Sibuna 控制台的地球、请求时间线和覆盖情况](docs/readme/images/console-globe.png)
 
-地球显示过去一分钟内按国家采样的活动。标记给出国家的大致位置。箭头指向配置的服务器位置。它们不表示单条实时连接。GeoIP 需要单独导入数据集。设置 `--console-location <latitude,longitude>` 可以将服务器放在地球上。
+地球显示过去一分钟内按国家采样的活动。标记给出国家的大致位置。箭头指向配置的服务器位置。它们不表示单条实时连接。GeoIP 需要单独导入数据集。设置 `--console-location <latitude,longitude>` 可以将服务器标注在地球视图上。
 
 <details>
 <summary>流量概览、安全概览、策略和事件调查</summary>
@@ -122,9 +122,9 @@ cargo build --release -p sibuna
 
 ![Sibuna 控制台流量概览，显示请求、准入、挑战和拒绝计数](docs/readme/images/console-traffic.png)
 
-**安全概览** - 已记录的发现、挑战、封禁和实时事件流。
+**安全概览** - 已记录的检出结果、挑战、封禁和实时事件流。
 
-![Sibuna 控制台安全概览，显示检查、挑战、封禁和蜜罐发现](docs/readme/images/console-security.png)
+![Sibuna 控制台安全概览，显示检查、挑战、封禁和蜜罐检出结果](docs/readme/images/console-security.png)
 
 **策略** - 节点按顺序应用的规则及其记录的命中次数。
 
@@ -132,7 +132,7 @@ cargo build --release -p sibuna
 
 **事件** - 已记录的事件，可按模块、国家、地址、路径和时间筛选。
 
-![Sibuna 控制台事件页面，显示事件筛选条件和已记录的 SQL 注入发现](docs/readme/images/console-events.png)
+![Sibuna 控制台事件页面，显示事件筛选条件和已记录的 SQL 注入检出结果](docs/readme/images/console-events.png)
 
 </details>
 
@@ -174,7 +174,7 @@ Gate 检查访问规则、会话和本地速率限制。Shield 在此基础上�
 
 ### 部署限制
 
-Sibuna 的私有监听端口使用 HTTP/1.1。公网 TLS 和 HTTP/2 由入口代理处理。Forward-auth 检查入口代理提供的元数据。在反向代理模式下，内置检查器覆盖请求体的前 8 KiB。上传数据以流式方式传给应用。WebSocket 消息直接转发，不进行检查。该检查器是一种启发式方法，不是完整的语言解析器。
+Sibuna 的私有监听端口使用 HTTP/1.1。公网 TLS 和 HTTP/2 由入口代理处理。forward-auth 模式只检查入口代理提供的元数据。在反向代理模式下，内置检查器覆盖请求体的前 8 KiB。上传数据以流式方式传给应用。WebSocket 消息直接转发，不进行检查。该检查器是一种启发式方法，不是完整的语言解析器。
 
 速率限制在每个节点本地计算。Sibuna 不提供针对大流量网络攻击的缓解。挑战与签发它的节点绑定；请将挑战及其解答路由到同一个节点。控制台的严格性能目标尚未正式通过。在生产应用旁启用控制台之前，请阅读[部署限制和测量结果](https://insanai.github.io/sibuna/book/operations.html)。
 
@@ -198,7 +198,7 @@ Sibuna 的私有监听端口使用 HTTP/1.1。公网 TLS 和 HTTP/2 由入口代
 
 ### 与 Anubis 对照
 
-我们使用相同的工作负载、CPU 和负载生成器，测量了官方 Anubis 1.27.0 发行版二进制文件。双方的 Hashcash 工作量保持一致：Sibuna 为 8 个零比特，Anubis 为 2 个十六进制零位。源站为 `caddy respond`。表中为携带会话的已准入请求。
+我们使用相同的工作负载、CPU 和负载生成器，测量了官方 Anubis 1.27.0 发行版可执行文件。双方的 Hashcash 工作量保持一致：Sibuna 为 8 个零比特，Anubis 为 2 个十六进制零位。源站为 `caddy respond`。表中为携带会话的已准入请求。
 
 | 已准入请求 | Sibuna Gate | Sibuna Shield | Anubis 1.27.0 |
 | --- | ---: | ---: | ---: |
@@ -210,11 +210,11 @@ Sibuna 的私有监听端口使用 HTTP/1.1。公网 TLS 和 HTTP/2 由入口代
 
 第二次运行测量准入操作，每个产品使用两个 CPU。Anubis 分别使用默认的 Ed25519 令牌和 HS512 令牌各运行一次。
 
-| 每秒操作数 | Sibuna（带密钥的 BLAKE3） | Anubis（Ed25519） | Anubis（HS512） |
+| 每秒操作数 | Sibuna（带密钥 BLAKE3） | Anubis（Ed25519） | Anubis（HS512） |
 | --- | ---: | ---: | ---: |
 | 有效会话检查 | 88,104 | 10,951 | 16,976 |
 | 未认证检查 | 78,997 | 28,619 | 27,785 |
-| 挑战初始化 | 42,664 | 7,893 | 7,952 |
+| 挑战引导 | 42,664 | 7,893 | 7,952 |
 | 证明验证 | 57,924 | 12,668 | 19,261 |
 
 Sibuna 的内存峰值保持在 16 MiB 左右。Anubis 在 forward-auth 模式下约使用 33 MiB，在反向代理模式下最多约使用 600 MiB。Anubis 是一款广泛使用且能力出色的工具，这些数据并非排名。其中几项并非同等条件的对比：在 forward-auth 模式下，Anubis 会自行响应部分路径，它不做载荷检查，而且两者的挑战页面也不同。测试通过回环接口进行，未使用 TLS、真实浏览器或存储。
