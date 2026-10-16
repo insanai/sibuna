@@ -1,6 +1,7 @@
 //! Policy documents: catalog reads, the private policy tester and edits.
 
 use crate::error::{MAX_I64, ValidationError, limit};
+use crate::ja4;
 use crate::text::Text;
 
 /// The largest policy document.
@@ -44,6 +45,8 @@ pub struct Test {
     pub ip: Text<48>,
     /// The User-Agent.
     pub user_agent: Text<256>,
+    /// The JA4 fingerprint a trusted ingress would forward (SID 0014); empty for none.
+    pub ja4: Text<{ ja4::FINGERPRINT_LEN }>,
     /// The body.
     pub body: Text<2048>,
     /// At most [`MAX_HEADERS`] headers.
@@ -147,11 +150,12 @@ pub fn validate(query: &Query) -> Result<(), ValidationError> {
 /// # Errors
 ///
 /// [`ValidationError::InvalidLimit`] for an invalid query, an empty path or address, too
-/// many headers, a draft without a committed revision (or the reverse), an oversized
-/// revision or an empty draft.
+/// many headers, a JA4 value that is neither empty nor a fingerprint, a draft without a
+/// committed revision (or the reverse), an oversized revision or an empty draft.
 pub fn validate_test(input: &Test) -> Result<(), ValidationError> {
     validate(&input.query)?;
     limit(input.path.is_empty() || input.ip.is_empty() || input.headers.len() > MAX_HEADERS)?;
+    limit(!input.ja4.is_empty() && !ja4::is_fingerprint(input.ja4.as_str()))?;
     limit(input.draft.is_some() != input.committed.is_some())?;
     limit(input.committed.unwrap_or(0) > MAX_I64)?;
     limit(input.draft.as_ref().is_some_and(Text::is_empty))
@@ -173,8 +177,12 @@ mod tests {
         assert_eq!(validate_test(&draft), Err(ValidationError::InvalidLimit));
         let half = Test { committed: Some(1), ..test.clone() };
         assert_eq!(validate_test(&half), Err(ValidationError::InvalidLimit));
-        let headers = Test { headers: vec![Header::default(); 9], ..test };
+        let headers = Test { headers: vec![Header::default(); 9], ..test.clone() };
         assert_eq!(validate_test(&headers), Err(ValidationError::InvalidLimit));
+        let fingerprint = |text: &str| Test { ja4: Text::new(text).unwrap(), ..test.clone() };
+        assert_eq!(validate_test(&fingerprint("t13d1516h2_8daaf6152771_02713d6af862")), Ok(()));
+        let prefix = fingerprint("t13d*");
+        assert_eq!(validate_test(&prefix), Err(ValidationError::InvalidLimit));
         let read = Read {
             session_digest: [0; 32],
             require_totp: false,

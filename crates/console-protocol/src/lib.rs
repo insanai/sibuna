@@ -13,7 +13,8 @@
 //!   [`challenge_minutes`] and [`challenge_records`], [`rule_hits`] and
 //!   [`rule_hit_history`], [`rankings`], [`ranking_storage`], [`rankings_archive`] (SBR1
 //!   and SBR2) and [`ranking_history`], with the Space-Saving sketch in [`space_saving`].
-//! - Incidents: [`events`], [`security`], [`incident_heads`], [`similarity`].
+//! - Incidents: [`events`], [`security`], [`incident_heads`], [`similarity`], and the JA4
+//!   fingerprints of SID 0014 ([`ja4`]).
 //! - The real-time protocol: [`subscriptions`] (commands and bounds), [`subscription_feed`]
 //!   (owner-to-hub feeds), [`json_delta`] (set and remove deltas) and
 //!   [`subscription_client`] (transactional reassembly of views).
@@ -127,6 +128,7 @@ pub mod events;
 pub mod geo;
 pub mod incident_geo;
 pub mod incident_heads;
+pub mod ja4;
 pub mod json_delta;
 pub mod kiosk;
 mod location;

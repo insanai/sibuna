@@ -143,6 +143,7 @@ fn incidents() {
         path: text("/a?b=\"c\"\\d"),
         category: text("waf:sqli"),
         user_agent: text("Mozilla/5.0 \u{e9}\u{4e16}"),
+        ja4: None,
         campaign: Some(7),
         display_truncated: false,
         query_redacted: false,
@@ -160,6 +161,7 @@ fn incidents() {
         method: text("POST"),
         path: text("/login"),
         category: text("honeypot"),
+        ja4: None,
         display_truncated: true,
         query_redacted: false,
     };

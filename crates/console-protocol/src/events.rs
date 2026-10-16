@@ -12,6 +12,7 @@ use crate::codec::{
     optional_str,
 };
 use crate::error::{MAX_I64, ValidationError, limit};
+use crate::ja4;
 use crate::security::Module;
 use crate::text::Text;
 
@@ -64,6 +65,9 @@ pub struct Query {
     pub ip: Text<48>,
     /// A path prefix, or empty for all.
     pub path_prefix: Text<256>,
+    /// A JA4 pattern ([`ja4::is_pattern`]): one fingerprint, or a prefix followed by `*`;
+    /// empty for all (SID 0014).
+    pub ja4: Text<{ ja4::MAX_PATTERN }>,
     /// A search in the storage search language over paths and payloads (SID 0013,
     /// "Search"), or empty for none. Storage parses it and refuses a query the language
     /// does not accept.
@@ -91,6 +95,7 @@ impl Default for Query {
             module: None,
             ip: Text::default(),
             path_prefix: Text::default(),
+            ja4: Text::default(),
             search: Text::default(),
             client: Text::default(),
         }
@@ -185,6 +190,8 @@ pub struct Row {
     pub category: Text<32>,
     /// The User-Agent (display-bounded).
     pub user_agent: Text<128>,
+    /// The JA4 fingerprint a trusted ingress forwarded (SID 0014), if one was accepted.
+    pub ja4: Option<Text<{ ja4::FINGERPRINT_LEN }>>,
     /// The campaign the incident belongs to, if any.
     pub campaign: Option<u64>,
     /// A display field was truncated.
@@ -209,6 +216,7 @@ impl Default for Row {
             path: Text::default(),
             category: Text::default(),
             user_agent: Text::default(),
+            ja4: None,
             campaign: None,
             display_truncated: false,
             query_redacted: false,
@@ -218,7 +226,8 @@ impl Default for Row {
 
 /// Writes the incident in the browser's shape: the id and campaign as decimal strings,
 /// the evidence version and country beside the full objects, and two fields the format
-/// reserves (`response_status`, `matched_rule`) as `null`.
+/// reserves (`response_status`, `matched_rule`) as `null`. The JA4 fingerprint is written
+/// only when the incident has one, so rows without one keep their earlier bytes.
 impl Encode for Row {
     fn encode<W: Write>(&self, json: &mut Writer<W>) -> fmt::Result {
         json.begin_object()?;
@@ -234,6 +243,9 @@ impl Encode for Row {
         field(json, "path", &self.path)?;
         field(json, "category", &self.category)?;
         field(json, "user_agent", &self.user_agent)?;
+        if let Some(ja4) = &self.ja4 {
+            field(json, "ja4", ja4)?;
+        }
         json.key("campaign")?;
         match self.campaign {
             Some(campaign) => decimal_string(json, campaign)?,
@@ -271,6 +283,7 @@ impl Decode for Row {
             path: fields.required("path")?,
             category: fields.required("category")?,
             user_agent: fields.required("user_agent")?,
+            ja4: fields.or_default("ja4")?,
             campaign: campaign.map(|text| decimal(&text, path.key("campaign"))).transpose()?,
             display_truncated: fields.required("display_truncated")?,
             query_redacted: fields.required("query_redacted")?,
@@ -309,10 +322,12 @@ fn decimal(text: &str, path: Path<'_>) -> Result<u64, DecodeError> {
 ///
 /// # Errors
 ///
-/// [`ValidationError::InvalidLimit`] for an invalid country filter, a limit outside 1 to
-/// [`MAX_LIMIT`], an inverted or oversized range, or an oversized identifier or cursor.
+/// [`ValidationError::InvalidLimit`] for an invalid country filter, a JA4 filter that is
+/// neither empty nor a pattern, a limit outside 1 to [`MAX_LIMIT`], an inverted or
+/// oversized range, or an oversized identifier or cursor.
 pub fn validate(query: &Query) -> Result<(), ValidationError> {
     limit(!country::valid_filter(query.country.as_str()))?;
+    limit(!query.ja4.is_empty() && !ja4::is_pattern(query.ja4.as_str()))?;
     limit(
         query.limit == 0
             || query.limit > MAX_LIMIT
@@ -361,5 +376,19 @@ mod tests {
         );
         let before = Some(Cursor { time: u64::MAX, id: 1 });
         assert!(validate(&Query { before, ..Query::default() }).is_err());
+        let ja4 = |text: &str| Query { ja4: Text::new(text).unwrap(), ..Query::default() };
+        assert_eq!(validate(&ja4("t13d*")), Ok(()));
+        assert!(validate(&ja4("t13d")).is_err());
+    }
+
+    #[test]
+    fn rows_write_a_fingerprint_only_when_they_have_one() {
+        let plain = Row { id: 1, ..Row::default() };
+        assert!(!to_json(&plain).contains("ja4"));
+        let chrome = "t13d1516h2_8daaf6152771_02713d6af862";
+        let row = Row { ja4: Some(Text::new(chrome).unwrap()), ..plain };
+        let text = to_json(&row);
+        assert!(text.contains(&format!("\"user_agent\":\"\",\"ja4\":\"{chrome}\",")), "{text}");
+        assert_eq!(from_json::<Row>(text.as_bytes()), Ok(row));
     }
 }

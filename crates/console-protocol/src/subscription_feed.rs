@@ -10,6 +10,7 @@ use crate::audit;
 use crate::codec::{Decode, DecodeError, Encode, Fields, Path, counter_field, field};
 use crate::error::{MAX_I64, ValidationError, limit};
 use crate::events::country;
+use crate::ja4;
 use crate::text::Text;
 
 /// Rows per feed page.
@@ -59,12 +60,16 @@ pub struct Event {
     pub path: Text<128>,
     /// The finding category.
     pub category: Text<32>,
+    /// The JA4 fingerprint a trusted ingress forwarded (SID 0014), if one was accepted.
+    pub ja4: Option<Text<{ ja4::FINGERPRINT_LEN }>>,
     /// A display field was truncated.
     pub display_truncated: bool,
     /// The query string was redacted.
     pub query_redacted: bool,
 }
 
+/// Writes the summary; the JA4 fingerprint only when the incident has one, so summaries
+/// without one keep their earlier bytes.
 impl Encode for Event {
     fn encode<W: Write>(&self, json: &mut Writer<W>) -> fmt::Result {
         json.begin_object()?;
@@ -76,6 +81,9 @@ impl Encode for Event {
         field(json, "method", &self.method)?;
         field(json, "path", &self.path)?;
         field(json, "category", &self.category)?;
+        if let Some(ja4) = &self.ja4 {
+            field(json, "ja4", ja4)?;
+        }
         field(json, "display_truncated", &self.display_truncated)?;
         field(json, "query_redacted", &self.query_redacted)?;
         json.end_object()
@@ -94,6 +102,7 @@ impl Decode for Event {
             method: fields.or_default("method")?,
             path: fields.or_default("path")?,
             category: fields.or_default("category")?,
+            ja4: fields.or_default("ja4")?,
             display_truncated: fields.or_default("display_truncated")?,
             query_redacted: fields.or_default("query_redacted")?,
         };
@@ -193,6 +202,11 @@ mod tests {
              \"id\":\"9007199254740993\",\"node\":2,\"time\":0,\"ip\":\"::1\",\"method\":\"\",\
              \"path\":\"\",\"category\":\"\",\"display_truncated\":false,\"query_redacted\":false}"
         );
+        assert_eq!(from_json::<Event>(text.as_bytes()), Ok(event.clone()));
+        let chrome = "t13d1516h2_8daaf6152771_02713d6af862";
+        let event = Event { ja4: Some(Text::new(chrome).unwrap()), ..event };
+        let text = to_json(&event);
+        assert!(text.contains(&format!("\"category\":\"\",\"ja4\":\"{chrome}\",")), "{text}");
         assert_eq!(from_json::<Event>(text.as_bytes()), Ok(event));
     }
 }
