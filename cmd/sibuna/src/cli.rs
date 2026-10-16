@@ -309,10 +309,10 @@ fn resolve_secret(config: &mut Config, secret: Option<&str>) -> Result<Seed, ()>
     Ok(seed)
 }
 
-/// Reads 32 bytes from the kernel's random source.
+/// Reads 32 bytes from the operating system's random source.
 fn random_seed() -> io::Result<[u8; SEED_LEN]> {
     let mut seed = [0u8; SEED_LEN];
-    File::open("/dev/urandom")?.read_exact(&mut seed)?;
+    crate::random::fill(&mut seed)?;
     Ok(seed)
 }
 
