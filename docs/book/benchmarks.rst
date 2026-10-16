@@ -922,7 +922,7 @@ A row in this table is not a claim about the product's performance. SafeLine's o
 
 .. admonition:: Exercise 8.2
 
-   In the forward-auth table, compute the cores busy of a row as its CPU microseconds per request times its requests per second, divide the CPU microseconds per request by it, and compare the result with the measured latency. Why is the per-request CPU cost higher than the primitive classification cost from the first table, and which components account for the difference?
+   In the forward-auth table, compute the cores busy of a row: its CPU microseconds per request times its requests per second, divided by one million. Was the daemon CPU bound? Then compare its CPU microseconds per request with the classification cost from the first table. Why is the per-request CPU cost so much higher, and which components account for the difference?
 
    *Hint:* list everything between ``accept`` and the flushed response that the primitive suite does not time.
 

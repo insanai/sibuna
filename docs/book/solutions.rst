@@ -55,7 +55,7 @@ Part VII: Browser Engine
 Part VIII: Evaluation
 ---------------------
 
-**8.2.** CPU microseconds per request divided by cores busy gives the wall time the product spent per request; it is far above the sub-microsecond classification cost because the product row also contains the kernel's socket read and write, the parser, the session tag check, the metrics increments, the response formatting, the writer flush, and the scheduler's hand-off between the load generator and the connection thread. The primitive suite times none of those.
+**8.2.** For Gate's ``admitted`` row, :math:`11.84 \times 211{,}345 / 10^6 \approx 2.50` cores busy out of four, so the daemon was not CPU bound and the load generator set the limit. The 11.84 us of CPU per request is far above the sub-microsecond classification cost because a product row also contains the kernel's socket read and write, the parser, the session tag check, the metrics increments, the response formatting, the writer flush, and the scheduler's hand-off between the load generator and the connection thread. The primitive suite times none of those.
 
 Part IX: Operations
 -------------------
