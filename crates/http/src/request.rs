@@ -141,9 +141,15 @@ impl<'a> Request<'a> {
         self.headers().iter().find(|h| h.name.eq_ignore_ascii_case(name)).map(|h| h.value)
     }
 
-    /// The value of the only field named `name`. `Ok(None)` when it is absent and `Err(())`
-    /// when it appears more than once, for callers that must not pick one of several values.
-    pub(crate) fn unique_header(&self, name: &[u8]) -> Result<Option<&'a [u8]>, ()> {
+    /// The value of the only field named `name` (compared without regard to ASCII case).
+    /// `Ok(None)` when it is absent and `Err(())` when it appears more than once, for callers
+    /// that must not pick one of several values.
+    ///
+    /// # Errors
+    ///
+    /// `Err(())` when two or more fields carry the name.
+    #[allow(clippy::result_unit_err)]
+    pub fn unique_header(&self, name: &[u8]) -> Result<Option<&'a [u8]>, ()> {
         let mut found = None;
         for header in self.headers().iter().filter(|h| h.name.eq_ignore_ascii_case(name)) {
             if found.replace(header.value).is_some() {
