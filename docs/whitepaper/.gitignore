@@ -4,3 +4,6 @@
 # Operating system files
 .DS_Store
 Thumbs.db
+
+# Compiled translation catalogs (written by every build)
+*.mo
