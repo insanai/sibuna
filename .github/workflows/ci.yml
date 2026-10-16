@@ -1,0 +1,145 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  RUST_TOOLCHAIN: 1.99.0
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+defaults:
+  run:
+    shell: bash
+jobs:
+  lint:
+    name: Format, clippy and limits
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install Rust
+        run: |
+          rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal \
+            --component rustfmt,clippy --target wasm32-unknown-unknown
+          rustup default "$RUST_TOOLCHAIN"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+          key: lint-${{ env.RUST_TOOLCHAIN }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: lint-${{ env.RUST_TOOLCHAIN }}-
+      - run: cargo fmt --all --check
+      - name: Clippy, default features
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Clippy, no default features
+        run: cargo clippy -p sibuna --all-targets --locked --no-default-features -- -D warnings
+      - name: Clippy, PostgreSQL
+        run: |
+          cargo clippy -p sibuna -p sibuna-storage -p sibuna-console-storage -p sibuna-console \
+            --all-targets --locked --features postgres,postgres-tls -- -D warnings
+      - name: Function, file and line limits
+        run: cargo xtask check
+      - name: Third-party license list
+        run: cargo xtask licenses --check
+  test:
+    name: Tests on SQLite
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install Rust
+        run: |
+          rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal --target wasm32-unknown-unknown
+          rustup default "$RUST_TOOLCHAIN"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+          key: test-${{ env.RUST_TOOLCHAIN }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: test-${{ env.RUST_TOOLCHAIN }}-
+      - run: cargo test --workspace --locked
+      - name: Build without default features
+        run: cargo build -p sibuna --locked --no-default-features
+  postgres:
+    name: Tests on PostgreSQL
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: sibuna
+          POSTGRES_PASSWORD: sibuna
+          POSTGRES_DB: sibuna_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U sibuna -d sibuna_test"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      SIBUNA_TEST_DATABASE_URL: postgres://sibuna:sibuna@127.0.0.1:5432/sibuna_test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install Rust
+        run: |
+          rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal --target wasm32-unknown-unknown
+          rustup default "$RUST_TOOLCHAIN"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+          key: postgres-${{ env.RUST_TOOLCHAIN }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: postgres-${{ env.RUST_TOOLCHAIN }}-
+      - name: PostgreSQL backend and cluster tests
+        run: |
+          cargo test --locked -p sibuna -p sibuna-storage -p sibuna-console-storage \
+            -p sibuna-console --features postgres
+  msrv:
+    name: Minimum Rust version (1.94)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install Rust 1.94
+        run: |
+          rustup toolchain install 1.94.0 --profile minimal --target wasm32-unknown-unknown
+          rustup default 1.94.0
+      - name: Build the workspace (test code may use newer type inference)
+        run: |
+          cargo build --workspace --locked
+          cargo build -p sibuna --locked --no-default-features
+          cargo build -p sibuna --locked --features postgres-tls
+  distribution:
+    name: Distribution recipes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - run: python distribution/scripts/install_distribution_tools.py "$RUNNER_TEMP/tools" helm actionlint
+      - run: python -m pip install PyYAML==6.0.2
+      - name: Lint the workflows
+        run: actionlint -shellcheck=
+      - name: Release version agrees with the chart
+        run: python distribution/scripts/release_version.py --check
+      - name: Validate the Helm chart
+        run: python distribution/scripts/check_helm.py
+      - name: Shell scripts are POSIX
+        run: |
+          for script in distribution/linux/*.sh; do sh -n "$script"; done
