@@ -14,7 +14,9 @@
 //   conf.toml                  pdf_preamble = "_templates/preamble.typ"
 //
 // Only fonts built into Typst are named (New Computer Modern, Libertinus Serif, DejaVu
-// Sans Mono), so a build needs no installed fonts.
+// Sans Mono), so an English build needs no installed fonts. A paper in Chinese,
+// Japanese, Korean, Hindi or Arabic also needs the Noto fonts that wp-script-fonts names
+// (Debian packages fonts-noto-cjk and fonts-noto-core).
 
 // ---- Palette -------------------------------------------------------------------------
 // The colors of the first whitepaper, named as it named them.
@@ -43,6 +45,19 @@
 #let wp-serif = ("New Computer Modern", "Libertinus Serif")
 #let wp-mono = ("DejaVu Sans Mono",)
 
+// The fonts for the scripts that New Computer Modern lacks, by language code. Typst
+// takes each character from the first font in the list that has it, so Latin text keeps
+// the paper's font and the other characters come from these. English needs none. The
+// table is the book's sibuna-script-fonts (docs/book/_templates/sibuna.typ), copied
+// because Typst reads no file outside this project; change both together.
+#let wp-script-fonts = (
+  zh: ("Noto Serif CJK SC", "Noto Sans CJK SC"),
+  ja: ("Noto Serif CJK JP", "Noto Sans CJK JP"),
+  ko: ("Noto Serif CJK KR", "Noto Sans CJK KR"),
+  hi: ("Noto Serif Devanagari", "Noto Sans Devanagari"),
+  ar: ("Noto Naskh Arabic", "Noto Sans Arabic"),
+)
+
 // ---- Small helpers -------------------------------------------------------------------
 
 // The plain text of content: what a reader would copy from it.
@@ -64,12 +79,18 @@
 // Text with its runs of white space made single spaces, trimmed.
 #let wp-clean(s) = s.replace(regex("\s+"), " ").trim()
 
-// The Typst language code of a guidedog language such as "en" or "pt_BR".
+// The Typst language and region of a guidedog language such as "en" or "pt_BR";
+// anything unusable is English, so hyphenation always has patterns.
 #let wp-language(lang) = {
-  let code = lower(lang.replace("_", "-").split("-").at(0))
-  if code.len() < 2 or code.len() > 3 or code.match(regex("^[a-z]+$")) == none { "en" } else {
-    code
+  let parts = lang.replace("_", "-").split("-")
+  let code = lower(parts.at(0))
+  if code.len() < 2 or code.len() > 3 or code.match(regex("^[a-z]+$")) == none {
+    code = "en"
   }
+  let region = if parts.len() > 1 and parts.at(1).match(regex("^[A-Za-z]{2}$")) != none {
+    upper(parts.at(1))
+  } else { none }
+  (code, region)
 }
 
 // ---- Boxes ---------------------------------------------------------------------------
@@ -94,7 +115,7 @@
     text(weight: "bold", fill: wp-ink)[.]
     h(4pt)
     body
-    align(right, text(fill: wp-primary, $square$))
+    align(end, text(fill: wp-primary, $square$))
   })
 
 // A callout: a rule down the left side, a tint, and the title run into the first line.
@@ -315,26 +336,29 @@
 }
 
 // The running header and footer: blank on the first page, then the paper's short title
-// and date over a hairline, and the affiliation and "n of N" under one.
+// and date line over a hairline, and the affiliation and "n of N" under one. page-count
+// is "n of N" in the paper's language, with {page} and {total} for the numbers.
 #let wp-header(running-title, date-line) = context {
   if here().page() <= 1 { return }
   set par(justify: false, first-line-indent: 0em)
   grid(columns: (auto, 1fr),
-    align(left, text(size: 8pt, fill: wp-muted, weight: "bold", running-title)),
-    align(right, text(size: 8pt, fill: wp-muted, style: "italic", date-line)))
+    align(start, text(size: 8pt, fill: wp-muted, weight: "bold", running-title)),
+    align(end, text(size: 8pt, fill: wp-muted, style: "italic", date-line)))
   v(-3pt)
   line(length: 100%, stroke: 0.4pt + wp-light-border)
 }
 
-#let wp-footer(footer-left) = context {
+#let wp-footer(footer-left, page-count) = context {
   if here().page() <= 1 { return }
+  let count = page-count.replace("{page}", str(counter(page).get().first()))
+    .replace("{total}", str(counter(page).final().first()))
   set par(justify: false, first-line-indent: 0em)
   line(length: 100%, stroke: 0.4pt + wp-light-border)
   v(2pt)
   grid(columns: (1fr, 1fr),
-    align(left, text(size: 8pt, fill: wp-muted, footer-left)),
-    align(right, text(size: 8pt, weight: "bold", fill: wp-ink, number-type: "lining",
-      counter(page).display("1 of 1", both: true))))
+    align(start, text(size: 8pt, fill: wp-muted, footer-left)),
+    align(end, text(size: 8pt, weight: "bold", fill: wp-ink, number-type: "lining",
+      count)))
 }
 
 // The closing rule and colophon under the last section.
@@ -346,8 +370,9 @@
 }
 
 // The whitepaper, with guidedog's book(...) parameters and the paper's own: headline
-// (the big word), subtitle, tagline, affiliation, running-title (the header's left
-// side), footer-left, keywords and colophon.
+// (the big word), subtitle, tagline, affiliation, running-title and date-line (the
+// header's left and right sides), footer-left, page-count (see wp-footer), keywords and
+// colophon.
 #let wp-paper(
   title: "",
   author: "",
@@ -365,23 +390,33 @@
   tagline: none,
   affiliation: none,
   running-title: none,
+  date-line: [],
   footer-left: none,
+  page-count: "{page} of {total}",
   keywords: (),
   colophon: none,
   body,
 ) = {
+  let (code, region) = wp-language(lang)
   let authors = if author == "" { () } else { author.split(" and ") }
   set document(title: title, author: authors, keywords: keywords)
   set page(paper: paper, margin: (x: 18mm, top: 20mm, bottom: 20mm),
-    header: wp-header(running-title, [Whitepaper | #date]),
-    footer: wp-footer(footer-left))
-  set text(font: wp-serif, size: 9.6pt, fill: wp-ink, lang: wp-language(lang),
-    hyphenate: true)
+    header: wp-header(running-title, date-line),
+    footer: wp-footer(footer-left, page-count))
+  set text(font: wp-serif + wp-script-fonts.at(code, default: ()), size: 9.6pt,
+    fill: wp-ink, lang: code, region: region, hyphenate: true)
   set par(justify: true, leading: 0.60em, spacing: 0.70em, first-line-indent: 0em)
   set math.equation(numbering: none)
   state("gd-page-ref").update(_ => page-ref)
   show: wp-headings.with(numbering)
   show: wp-blocks
+  // In a right-to-left paper code still reads left to right. Inline code goes in a box,
+  // so the right-to-left text around it cannot reorder its characters.
+  let rtl = code in ("ar", "fa", "he", "ur")
+  show raw: it => if not rtl { it } else if it.block { set text(dir: ltr); it } else {
+    set text(dir: ltr)
+    box(it)
+  }
 
   wp-title-block(headline: if headline != none { headline } else { upper(title) },
     subtitle: subtitle, tagline: tagline, author: author, affiliation: affiliation)
