@@ -1,0 +1,67 @@
+Sibuna 1.0.0-beta.1 is the first beta of Sibuna 1.0, a web firewall and anti-crawler
+daemon written in Rust. It sits in front of an origin as a reverse proxy, or beside an
+ingress as a forward-auth engine, and admits browsers that prove work while it denies
+known automation, injected payloads, floods and honeypot hits before they reach the origin.
+
+Highlights:
+- Proof-of-work admission: Cohen-Pietrzak proof of sequential work (default) or bit-level
+  Hashcash, solved in the browser by an embedded WebAssembly solver and verified natively.
+- Stateless challenges and keyed-BLAKE3 session tokens bound to the client (Ed25519
+  optional); only solved challenges occupy memory.
+- Two surfaces in one binary: Gate (challenge, policy, limits) and Shield (adds semantic
+  SQL injection, XSS, path traversal and command injection inspection).
+- Declarative JSON policy, bot signatures, CIDR reputation, GCRA rate limits per client
+  and per rule, honeypot bans; request parsing and classification do not allocate on the
+  warm path.
+- Optional storage: SQLite for one node (--data-dir) with policies, reputation, forensics
+  with full-text search and campaign similarity.
+- Optional console (--console): dashboards with a country globe, incident investigation,
+  policy editing, users with TOTP, scoped API tokens, audit browsing, GeoIP imports and
+  the `sibuna console` command line client.
+
+Downloads (all for this tag, verify them with SHA256SUMS):
+- Linux x86-64 and ARM64: static musl archives, Debian .deb and RPM .rpm packages.
+- Arch Linux x86-64: sibuna-bin .pkg.tar.zst, installed with pacman -U.
+- macOS Apple Silicon and Intel: unsigned archives, macOS 12 or later.
+- Windows x86-64: sibuna.exe in a ZIP archive, Windows 10 or Server 2016 or later.
+- FreeBSD 15.1 amd64: .pkg, installed with pkg add.
+- OpenBSD 7.9 amd64: .tgz, installed with pkg_add -D unsigned.
+- Homebrew formula sibuna.rb for macOS and Linux, installing the archives above.
+- Helm chart helm-sibuna-1.0.0-beta.1.tgz and the image ghcr.io/insanai/sibuna:1.0.0-beta.1
+  for amd64 and arm64 (digest in IMAGE-DIGEST.txt).
+- The source bundle sibuna-1.0.0-beta.1-source.tar.gz.
+
+Every archive and package carries LICENSE, NOTICE, LICENSES/ (with the third-party crate
+list THIRD-PARTY-RUST.txt), README.md, SECURITY.md and sibuna.build.json, which records
+the commit, Rust target, compiler and the SHA-256 of the executable. Each executable was
+started and checked on its own platform before publication, and the packages were
+installed, upgraded and removed on Debian, Fedora, Arch, FreeBSD and OpenBSD.
+
+Linux packages install the account `sibuna` and a stopped systemd unit. Set the origin
+(an IP literal) in /etc/sibuna/service.env, then start the service; it listens on
+127.0.0.1:8080 and creates a private admission seed in /var/lib/sibuna on first start.
+Configuration, seed and state survive upgrade and removal. BSD packages install only the
+command and its documents; they create no service, account or state.
+
+Known limitations of this beta:
+- The release executables have SQLite storage and the console, but no PostgreSQL
+  support. Clusters on a shared PostgreSQL database need a build from source with
+  `cargo build --release -p sibuna --features postgres-tls`.
+- The assets are not signed. macOS archives are not notarized: remove the quarantine
+  attribute of a browser download with `xattr -d com.apple.quarantine sibuna`. The
+  Windows executable is not Authenticode-signed and has no Windows service integration.
+- Windows has no file mode bits, so Sibuna does not check that key and credential files
+  are private there; restrict them with ACLs. The console's process memory and CPU
+  gauges are available on Linux only.
+- Sibuna does not terminate TLS; put it behind an ingress that does. Its ingress recipes
+  for forward-auth (Caddy, Nginx) are not yet tested against live ingresses.
+- The console's isolation under load with eight active dashboards has not been measured
+  yet, and its WebAssembly module (about 700 KiB) is above the 640 KiB review threshold.
+- This is a pre-release: options, storage schema and console APIs may still change
+  before 1.0.0. Back up the data directory before upgrading.
+
+Sibuna is free software under LGPL-3.0-or-later. Report vulnerabilities privately through
+https://github.com/insanai/sibuna/security/advisories/new (see SECURITY.md).
+
+Documentation: https://insanai.github.io/sibuna/
+Source: https://github.com/insanai/sibuna/tree/v1.0.0-beta.1
