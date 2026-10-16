@@ -250,8 +250,8 @@
 //! `web/` holds the bridge (`glue.js`), the shell (`shell.html`, whose `{{ wasm }}`,
 //! `{{ css }}` and `{{ glue }}` the server replaces with content digests), the Tailwind
 //! source (`tailwind.css`) and the committed built assets in `web/assets`:
-//! `console.css`, `world-110m.bin` (described in `GEOGRAPHY.md`) and the Zig build's
-//! digest list `MANIFEST.md`. The build never runs npm. Regenerating `console.css` after a
+//! `console.css` and `world-110m.bin` (described in `GEOGRAPHY.md`). The build never runs
+//! npm. Regenerating `console.css` after a
 //! change to `tailwind.css` is a manual step that needs the Tailwind CLI 4.1.13 with
 //! daisyUI 5.1.13: `npx @tailwindcss/cli -i tailwind.css -o assets/console.css --minify`
 //! in `web/`, then review and commit the result.
