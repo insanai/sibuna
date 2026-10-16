@@ -35,7 +35,7 @@ controlar lo que esos clientes pueden pedir después.
 
 ## Características
 
-- **Un solo ejecutable:** motor, almacenamiento SQLite integrado, solucionador de navegador y activos de la consola.
+- **Un solo ejecutable:** motor, almacenamiento SQLite integrado, solucionador de navegador y recursos de la consola.
 - **Paquetes nativos:** Linux, macOS, Windows, FreeBSD y OpenBSD. El solucionador de navegador usa WebAssembly.
 - **Desafíos de navegador:** prueba de trabajo secuencial (por defecto) o Hashcash, seguidos de una sesión firmada.
 - **Políticas de acceso:** permitir, desafiar, ponderar o denegar peticiones por dirección, ruta, cabeceras y User-Agent.
@@ -70,8 +70,8 @@ licencias, enlaces a las fuentes y un manifiesto de compilación. Verifica el ar
 Los paquetes Debian/RPM cubren Linux x86-64 y ARM64; Arch `sibuna-bin` cubre x86-64.
 Los paquetes de FreeBSD 15.1 y OpenBSD 7.9 cubren x86-64 e instalan la CLI.
 Los paquetes de Linux incluyen un servicio systemd opcional y desactivado. Los paquetes BSD no
-crean servicio, cuenta ni estado. Son descargas del proyecto; la aceptación en archivos
-comunitarios es independiente. La versión también incluye un chart de Helm y una imagen de
+crean servicio, cuenta ni estado. Son descargas oficiales del proyecto; su inclusión en los
+repositorios de la comunidad es un proceso aparte. La versión también incluye un chart de Helm y una imagen de
 contenedor, `ghcr.io/insanai/sibuna`.
 Consulta la [guía de operaciones de paquetes](https://insanai.github.io/sibuna/book/operations.html)
 para instalación, verificación, estado privado, actualizaciones y configuración de Kubernetes.
@@ -99,14 +99,14 @@ tar -xzf sibuna-linux-amd64.tar.gz
 ```
 
 Abre `http://127.0.0.1:8080` para probarlo localmente. En un sitio público, termina HTTPS en un
-proxy de entrada de confianza y mantén privado el listener de Sibuna. Sigue la
+proxy de entrada de confianza y mantén privado el puerto de escucha de Sibuna. Sigue la
 [guía de despliegue](https://insanai.github.io/sibuna/book/operations.html) para Caddy o nginx.
 
 El modo por defecto es `reverse_proxy`. Usa `--mode forward_auth` cuando tu proxy de entrada
 reenvíe las peticiones y pida a Sibuna una decisión de acceso. La guía incluye ambas
 configuraciones. La inspección integrada de Shield está activada por defecto. Usa `--gate` para
 la admisión sin ese inspector. Elige las reglas de acceso con `--policy-file <file>`, incluidas
-reglas para clientes de API y comprobaciones de salud que no pueden ejecutar un desafío de
+reglas para clientes de API y comprobaciones de estado que no pueden ejecutar un desafío de
 navegador. `./sibuna --help` enumera todas las opciones.
 
 En Windows, extrae el ZIP y ejecuta `.\sibuna.exe --help` en PowerShell.
@@ -136,7 +136,7 @@ Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para pruebas, lints y comprobaciones
 
 ## Consola
 
-La consola se ejecuta en el mismo ejecutable. Inicializa un administrador con el daemon detenido:
+La consola forma parte del mismo ejecutable. Crea el primer administrador con el daemon detenido:
 
 ```sh
 ./sibuna init-admin admin --data-dir ./data
@@ -150,8 +150,8 @@ acceso HTTPS, las importaciones GeoIP, los usuarios, los tokens de API y las pan
 
 ![Globo de la consola Sibuna, cronología de peticiones y cobertura](docs/readme/images/console-globe.png)
 
-El globo muestra la actividad muestreada por país durante el último minuto. Los marcadores dan
-posiciones aproximadas de los países. Las flechas apuntan hacia la ubicación configurada del
+El globo muestra la actividad muestreada por país durante el último minuto. Los marcadores indican
+la posición aproximada de cada país. Las flechas apuntan hacia la ubicación configurada del
 servidor. No muestran conexiones individuales en vivo. GeoIP necesita un conjunto de datos
 importado por separado.
 Usa `--console-location <latitude,longitude>` para situar el servidor en el globo.
@@ -222,15 +222,15 @@ El [libro](https://insanai.github.io/sibuna/book/) explica sus responsabilidades
 
 ### Límites de despliegue
 
-Sibuna usa HTTP/1.1 en su listener privado. Tu proxy de entrada gestiona TLS público y HTTP/2.
+Sibuna usa HTTP/1.1 en su puerto de escucha privado. Tu proxy de entrada gestiona TLS público y HTTP/2.
 Forward-auth inspecciona los metadatos que aporta el proxy de entrada. En modo proxy inverso, el
-inspector integrado cubre los primeros 8 KiB de un cuerpo. Las subidas fluyen hacia tu aplicación.
+inspector integrado cubre los primeros 8 KiB de un cuerpo. Las subidas se reenvían a tu aplicación sobre la marcha.
 Los mensajes WebSocket se retransmiten sin inspección. El inspector es heurístico, no un
 analizador completo del lenguaje.
 
 Los límites de tasa son locales a cada nodo. Sibuna no ofrece mitigación volumétrica de red.
 Los desafíos están ligados al nodo que los emitió; enruta un desafío y su solución al mismo
-nodo. El objetivo estricto de rendimiento de la consola no ha pasado formalmente. Revisa los
+nodo. El objetivo estricto de rendimiento de la consola aún no ha superado formalmente su prueba de aceptación. Revisa los
 [límites de despliegue y mediciones](https://insanai.github.io/sibuna/book/operations.html)
 antes de activar la consola junto a una aplicación de producción.
 
@@ -240,7 +240,7 @@ antes de activar la consola junto a una aplicación de producción.
 
 El libro registra la revisión del código fuente, la configuración y el host de cada ejecución.
 Estas mediciones muestran el coste de las peticiones con algunas cargas de trabajo en una sola
-máquina. No miden protección equivalente ni precisión frente a bots.
+máquina. No miden si la protección es equivalente ni la precisión en la detección de bots.
 
 <a id="sibuna-on-one-host"></a>
 
@@ -264,7 +264,7 @@ Las cifras son medianas de tres ejecuciones.
 ### Junto a Anubis
 
 Medimos el binario oficial de la versión 1.27.0 de Anubis con las mismas cargas, CPU y
-generador de carga. Se igualó el trabajo de Hashcash: 8 bits a cero para Sibuna, 2 dígitos
+generador de carga. Igualamos el trabajo de Hashcash: 8 bits a cero para Sibuna, 2 dígitos
 hexadecimales a cero para Anubis. El origen fue `caddy respond`. La tabla muestra peticiones
 admitidas con una sesión.
 
@@ -305,10 +305,10 @@ La parte VIII del libro analiza cada diferencia.
 ## Documentación
 
 - [Libro](https://insanai.github.io/sibuna/book/): conceptos, algoritmos, ejemplos y mediciones.
-- [Whitepaper](https://insanai.github.io/sibuna/whitepaper/): arquitectura, pruebas y detalles de diseño.
+- [Documento técnico](https://insanai.github.io/sibuna/whitepaper/): arquitectura, demostraciones y detalles de diseño.
 - [Guía de operaciones](https://insanai.github.io/sibuna/book/operations.html): instalación y despliegue.
 - [Referencia](https://insanai.github.io/sibuna/book/reference.html): detalles de la CLI y del protocolo.
-- [Debates de diseño](https://insanai.github.io/sibuna/sid/): decisiones y contratos de ingeniería.
+- [Debates de diseño](https://insanai.github.io/sibuna/sid/) (en inglés): decisiones y contratos de ingeniería.
 - [Contribuir](CONTRIBUTING.md): compilación desde las fuentes y comprobaciones.
 
 <a id="other-software-to-consider"></a>
@@ -329,13 +329,13 @@ completo cuando tu aplicación necesite una cobertura de reglas más amplia.
 
 ## Licencia
 
-Sibuna es **LGPL 3.0 o posterior**. La licencia cubre el motor, las bibliotecas, el
+Sibuna se distribuye bajo la **LGPL 3.0 o posterior**. La licencia cubre el motor, las bibliotecas, el
 solucionador de navegador y la consola, incluida su interfaz WebAssembly.
 
 [LICENSE](LICENSE) describe el alcance. [LICENSES](LICENSES) contiene los términos completos.
 [NOTICE](NOTICE) enumera las dependencias. Las fuentes y los scripts de compilación están
 disponibles en cada etiqueta de versión.
 
-Sibuna está escrito por Vikrant Rathore con la ayuda de Ronak Rathore y Kanak Rathore.
-Las empresas que busquen otros términos de licencia pueden contactar con Vikrant Rathore.
+Sibuna está escrito por Vikrant Rathore con la colaboración de Ronak Rathore y Kanak Rathore.
+Las empresas que necesiten otras condiciones de licencia pueden contactar con Vikrant Rathore.
 Las bibliotecas y materiales de terceros conservan sus respectivas licencias.

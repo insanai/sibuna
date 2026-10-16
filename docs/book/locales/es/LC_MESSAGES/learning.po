@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 07:43+0000\n"
+"POT-Creation-Date: 2026-10-16 10:45+0000\n"
 "PO-Revision-Date: 2026-10-16 05:17+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -50,7 +50,8 @@ msgstr "¿Qué se obtiene con un desafío?"
 #: ../../learning.rst:13
 msgid "Parts I to III: cost, probability, and the limits of proof."
 msgstr ""
-"Partes I a III: el coste, la probabilidad y los límites de la prueba."
+"Partes I a III: el coste, la probabilidad y los límites de la "
+"demostración."
 
 #: ../../learning.rst:14
 msgid "How does Sibuna compare?"
