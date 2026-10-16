@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../solutions.rst:1
 msgid "Selected Solutions"
-msgstr ""
+msgstr "일부 연습 문제 해답"
 
 #: ../../solutions.rst:4
 msgid ""
@@ -28,10 +28,12 @@ msgid ""
 "of time intervals, what is counted as work, and whether a write has "
 "committed are common sources of disagreement."
 msgstr ""
+"이 해답은 논증을 확인하기 위한 것이며 연습 문제를 대신하지 않습니다. 결과가 다르면 먼저 가정을 비교합니다. 시간 구간의 끝점, "
+"무엇을 작업으로 세는지, 쓰기가 커밋되었는지가 흔히 어긋나는 원인입니다."
 
 #: ../../solutions.rst:6
 msgid "Part I: Cost and Probability"
-msgstr ""
+msgstr "제I부: 비용과 확률"
 
 #: ../../solutions.rst:9
 msgid ""
@@ -41,6 +43,9 @@ msgid ""
 "a second process can satisfy the fingerprint and routing bindings; those "
 "conditions are outside the amortization equation."
 msgstr ""
+"**1.1.** 시행 백만 회를 요청 100개로 나누면 요청당 시행 10,000회입니다. 전체 요청 수가 100으로 유지되면 세션을 "
+"공유해도 이 계산은 바뀌지 않습니다. 실제 시스템은 두 번째 프로세스가 지문과 라우팅 바인딩을 만족할 수 있는지 판단해야 합니다. "
+"이 조건은 비용 분할 방정식 밖에 있습니다."
 
 #: ../../solutions.rst:11
 msgid ""
@@ -49,10 +54,13 @@ msgid ""
 "Real producers arrive in bursts and the consumer commits batches, so the "
 "exact first drop depends on arrival and commit times."
 msgstr ""
+"**1.2.** 초과분은 :math:`1000 - 600 = 400` records/s입니다. 레코드 512개짜리 빈 큐는 유체 "
+"모델에서 :math:`512/400 = 1.28`\\ 초를 벌어 줍니다. 실제 생산자는 몰려서 도착하고 소비자는 배치로 커밋하므로, "
+"정확히 언제 처음 버려지는지는 도착 시각과 커밋 시각에 달려 있습니다."
 
 #: ../../solutions.rst:13
 msgid "Part II: Prior Art"
-msgstr ""
+msgstr "제II부: 선행 연구"
 
 #: ../../solutions.rst:16
 msgid ""
@@ -64,6 +72,10 @@ msgid ""
 "WebAssembly and JavaScript provers covers that), or whether the "
 "parameters are calibrated (measurement)."
 msgstr ""
+"**2.1.** 한 소스를 두 번 컴파일하면 명제, nonce 인코딩, 트리 모양, 개방 배치에 대해 스스로와 어긋날 수 없습니다. "
+"어긋나려면 컴파일러 버그가 있어야 합니다. 그러나 구성이 건전한지(암호학적 검토), 브라우저 런타임이 이를 올바르게 "
+"실행하는지(WebAssembly 증명자와 JavaScript 증명자의 바이트 단위 비교가 이를 다룹니다), 매개변수가 "
+"보정되었는지(측정)에 대해서는 아무것도 말하지 않습니다."
 
 #: ../../solutions.rst:18
 msgid ""
@@ -76,10 +88,16 @@ msgid ""
 "(``--database-url`` and ``--cluster-node``); the \"runs as\", "
 "\"inspection\", and \"multi-node\" rows decide it."
 msgstr ""
+"**2.2.** (a) Sibuna Gate 또는 Anubis, 바이너리 하나. (b) Sibuna Shield, SafeLine, "
+"또는 Cloudflare(Pro 요금제 이상). (c) 공유 PostgreSQL 데이터베이스(``--database-url``)를 "
+"쓰는 Sibuna Edge, 공유 Valkey 저장소를 쓰는 Anubis(상태용이며 차단용은 아님), 또는 Cloudflare. "
+"Docker 호스트나 구독 없이 세 조건을 모두 만족하는 단일 제품은 노드들이 PostgreSQL 데이터베이스 하나를 "
+"공유하는(``--database-url``\\ 과 ``--cluster-node``) Sibuna Shield뿐입니다. \"실행 "
+"형태\", \"검사\", \"다중 노드\" 행이 이를 결정합니다."
 
 #: ../../solutions.rst:20
 msgid "Part III: Cryptography"
-msgstr ""
+msgstr "제III부: 암호학"
 
 #: ../../solutions.rst:23
 msgid ""
@@ -88,6 +106,9 @@ msgid ""
 "success probability of each independent trial. Duplicate trials or "
 "coordination work can make a real parallel implementation less efficient."
 msgstr ""
+"**3.0.** 꼬리 추정값은 :math:`e^{-4.6} \\approx 0.010`\\ 입니다. nonce 공간을 나누면 시행을 "
+"마치는 속도가 바뀔 뿐, 각 독립 시행의 성공 확률은 바뀌지 않습니다. 중복 시행이나 조정 작업 때문에 실제 병렬 구현은 효율이 더 "
+"낮을 수 있습니다."
 
 #: ../../solutions.rst:25
 msgid ""
@@ -97,6 +118,9 @@ msgid ""
 "construction, query budgets, dependencies between trials, or the work "
 "needed to find a commitment with a particular acceptance probability."
 msgstr ""
+"**3.1.** 각 커밋먼트가 확률 :math:`q`\\ 로 성공하면, :math:`g`\\ 개가 모두 실패할 확률은 "
+":math:`(1-q)^g`\\ 입니다. 적어도 하나가 성공할 확률은 :math:`1-(1-q)^g`\\ 입니다. 이 공식은 "
+"커밋먼트를 만드는 비용, 질의 예산, 시행 사이의 의존성, 특정 수락 확률을 가진 커밋먼트를 찾는 데 필요한 작업을 세지 않습니다."
 
 #: ../../solutions.rst:27
 msgid ""
@@ -105,6 +129,9 @@ msgid ""
 "18) = 18464` bytes. The opening bytes double; the 32-byte root is still "
 "sent once."
 msgstr ""
+"**3.2.** 깊이 17, 개방 16개에서 증명은 :math:`32(1 + 16 \\times 18) = 9248`\\ "
+"바이트입니다. 개방이 32개이면 :math:`32(1 + 32 \\times 18) = 18464`\\ 바이트입니다. 개방 바이트는 "
+"두 배가 되지만, 32바이트 루트는 여전히 한 번만 보냅니다."
 
 #: ../../solutions.rst:29
 msgid ""
@@ -117,10 +144,15 @@ msgid ""
 "tag must cover all five because any field left outside it could be edited "
 "freely, and the verifier could not tell."
 msgstr ""
+"**3.3.** 작업 수준이 없으면 값싼 경로에서 얻은 세션이 더 많은 작업을 요구하는 비싼 경로의 요청도 허용하게 됩니다. "
+"``timestamp``\\ 가 없으면 토큰을 \"미래에\" 발급해 정책보다 오래 살아남게 할 수 있습니다. ``expiry``\\ "
+"가 없으면 토큰은 결코 만료되지 않습니다. ``rule_hash``\\ 가 없으면 업스트림은 어떤 규칙이 클라이언트를 허용했는지 알 "
+"수 없습니다. ``fingerprint``\\ 가 없으면 다른 기계로 복사한 쿠키가 받아들여집니다. 태그는 다섯 가지를 모두 덮어야 "
+"합니다. 태그 밖에 남은 필드는 마음대로 고칠 수 있고, 검증자는 이를 알아챌 수 없기 때문입니다."
 
 #: ../../solutions.rst:31
 msgid "Part IV: Protocol"
-msgstr ""
+msgstr "제IV부: 프로토콜"
 
 #: ../../solutions.rst:34
 msgid ""
@@ -132,10 +164,14 @@ msgid ""
 "fingerprint would then match, which is why ``HttpOnly`` and ``SameSite`` "
 "matter more than the binding on a shared address."
 msgstr ""
+"**4.1.** 두 브라우저는 주소와 User-Agent를 공유하므로 지문, 속도 제한 셀, 차단 슬롯을 공유합니다. 챌린지(각자 "
+"자신의 nonce를 가진 자신의 레코드를 가져옵니다), 사용 완료 집합 항목, 쿠키는 공유하지 않습니다. 다른 브라우저의 쿠키를 "
+"재사용하려면 NAT에 있는 공격자는 다른 기계에서 쿠키를 읽어 내야 합니다. 그러면 지문이 일치하게 되므로, 공유 주소에서는 "
+"바인딩보다 ``HttpOnly``\\ 와 ``SameSite``\\ 가 더 중요합니다."
 
 #: ../../solutions.rst:36
 msgid "Part V: State and Ordering"
-msgstr ""
+msgstr "제V부: 상태와 순서"
 
 #: ../../solutions.rst:39
 msgid ""
@@ -147,6 +183,10 @@ msgid ""
 "needs ``Content-Length`` before the body, and because the audit headers "
 "are part of the head."
 msgstr ""
+"**5.1.** 헤더와 본문의 첫 부분(64 KB 안에서 헤더 뒤에 들어가는 만큼)은 연결 버퍼에 있으며 "
+"``write_all(request.body)``\\ 로 보냅니다. 나머지 바이트는 결코 한꺼번에 버퍼에 들어오지 않습니다. "
+"``relay_body``\\ 가 클라이언트 리더에서 16 KB씩 읽어 각 조각을 원본 서버에 씁니다. 헤더를 먼저 보내야 하는 "
+"이유는 원본 서버가 본문보다 먼저 ``Content-Length``\\ 를 알아야 하고, 감사 헤더가 헤더의 일부이기 때문입니다."
 
 #: ../../solutions.rst:41
 msgid ""
@@ -157,10 +197,14 @@ msgid ""
 "instant the window rolls over; a sliding log would allow exactly 100 in "
 "any 10 seconds but must store 100 timestamps per client."
 msgstr ""
+"**5.2.** 방출 간격은 100 ms이고 버스트 허용치는 9,900 ms입니다. 유휴 상태의 클라이언트는 요청 100개를 즉시 "
+"보낸 뒤 100 ms마다 하나씩 보낼 수 있습니다. 3,000 ms 끝점을 포함하면 상한은 130입니다. 고정된 10초 카운터는 첫 "
+"창에서 100개를 허용하고, 창이 넘어가는 순간 100개를 더 허용합니다. 슬라이딩 로그는 어느 10초 동안이든 정확히 100개를 "
+"허용하지만, 클라이언트마다 타임스탬프 100개를 저장해야 합니다."
 
 #: ../../solutions.rst:43
 msgid "Part VI: Algorithms"
-msgstr ""
+msgstr "제VI부: 알고리즘"
 
 #: ../../solutions.rst:46
 msgid ""
@@ -170,6 +214,9 @@ msgid ""
 "evidence, including operators and literal relations. It remains bounded "
 "inspection, not a parser for every application language."
 msgstr ""
+"**6.1.** 이름 속의 아포스트로피와 ``order``\\ 라는 평범한 매개변수는 SQL 표현식을 입증하지 않습니다. 부분 "
+"문자열 탐지기는 둘 중 어느 것이든 구문으로 오인할 수 있습니다. 구조적 탐지기는 연산자와 리터럴 관계를 포함한 추가 증거를 "
+"찾습니다. 그래도 이는 유한한 검사이며, 모든 애플리케이션 언어를 위한 파서가 아닙니다."
 
 #: ../../solutions.rst:48
 msgid ""
@@ -180,10 +227,14 @@ msgid ""
 "single parenthesis, for the same reason the SQL detector requires a quote "
 "or a tautology."
 msgstr ""
+"**6.2.** LDAP 필터는 괄호, ``|``, ``&``, ``!``, ``=``\\ 로 만듭니다. 탐지기에는 ``(``\\ "
+"와 ``)``\\ 를 위한 바이트 클래스가 새로 필요하며, ``|``\\ 와 ``&``\\ 에는 기존의 ``=`` 클래스와 셸 "
+"구분자 클래스를 재사용할 수 있습니다. SQL 탐지기가 따옴표나 항진식을 요구하는 것과 같은 이유로, 이 탐지기는 괄호 하나가 "
+"아니라 ``)(``\\ 나 ``(|(`` 같은 *연속*\\ 에 반응해야 합니다."
 
 #: ../../solutions.rst:50
 msgid "Part VII: Browser Engine"
-msgstr ""
+msgstr "제VII부: 브라우저 엔진"
 
 #: ../../solutions.rst:53
 msgid ""
@@ -196,10 +247,15 @@ msgid ""
 "difficulty for a rule that matches clients known to block WebAssembly "
 "rather than for everyone."
 msgstr ""
+"**7.1.** 기본값인 16 작업 비트(깊이 13, 개방 16개)에서 WebAssembly로 20 ms라고 가정한 시간은 노트북의 "
+"JavaScript에서 :math:`50 \\times 20 = 1000` ms, 즉 1초가 되고, 더 느린 휴대폰에서는 4초가 "
+"됩니다. 이 수치는 가정입니다. 정책을 정하기 전에 우리 클라이언트의 기기를 직접 측정합니다. 합리적인 정책은 이렇습니다. 페이지가 "
+"``fallback`` 메시지를 전달하게 하고, 서버에서 이를 지표로 기록하며, 모든 사람이 아니라 WebAssembly를 막는다고 "
+"알려진 클라이언트와 일치하는 규칙에 대해서만 난이도를 낮춥니다."
 
 #: ../../solutions.rst:55
 msgid "Part VIII: Evaluation"
-msgstr ""
+msgstr "제VIII부: 평가"
 
 #: ../../solutions.rst:58
 msgid ""
@@ -211,10 +267,14 @@ msgid ""
 "the scheduler's hand-off between the load generator and the connection "
 "thread. The primitive suite times none of those."
 msgstr ""
+"**8.2.** 요청당 CPU 마이크로초를 사용 코어 수로 나누면 제품이 요청 하나에 쓴 실제 경과 시간이 나옵니다. 이 값은 "
+"마이크로초 미만인 분류 비용보다 훨씬 큽니다. 제품 행에는 커널의 소켓 읽기와 쓰기, 파서, 세션 태그 확인, 지표 증가, 응답 "
+"포맷, 쓰기 플러시, 그리고 부하 생성기와 연결 스레드 사이의 스케줄러 전환이 모두 들어 있기 때문입니다. 기본 연산 측정 모음은 "
+"이 가운데 어느 것도 재지 않습니다."
 
 #: ../../solutions.rst:60
 msgid "Part IX: Operations"
-msgstr ""
+msgstr "제IX부: 운영"
 
 #: ../../solutions.rst:63
 msgid ""
@@ -225,6 +285,10 @@ msgid ""
 "removes both gaps. Losing the transaction's acknowledgement still "
 "requires the retained retry."
 msgstr ""
+"**9.1.** 별도의 영수증 갱신보다 데이터가 먼저 커밋되면, 둘 사이에서 충돌이 일어날 때 옛 영수증이 남아 재시도가 효과를 "
+"다시 적용할 수 있습니다. 영수증이 먼저 커밋되면, 데이터를 쓰기 전에 충돌이 일어날 때 재시도가 존재한 적 없는 데이터를 건너뛸 "
+"수 있습니다. 원자적 트랜잭션 하나가 두 틈을 모두 없앱니다. 트랜잭션의 확인 응답을 잃는 경우에는 여전히 보관된 재시도가 "
+"필요합니다."
 
 #: ../../solutions.rst:65
 msgid ""
@@ -239,10 +303,18 @@ msgid ""
 "(``--rate-limit``, ``--rate-window``), which must therefore be at least "
 "as generous."
 msgstr ""
+"**9.2.** ``ip_rules: {\"10.20.0.0/16\": \"ALLOW\"}``\\ (또는 점수 100인 "
+"``ip_reputation`` 행)는 스테이징을 허용합니다. 규칙 ``{\"name\": \"admin\", \"path\": "
+"\"/admin/*\", \"action\": \"CHALLENGE\", \"challenge\": {\"difficulty\": "
+"20, \"algorithm\": \"posw\"}}``\\ 는 작업을 요구합니다. ``ALLOW``\\ 와 "
+"``\"limits\": {\"rate\": 30, \"window_seconds\": 10}``\\ 를 가진, ``headers: "
+"{\"X-Partner-Key\": \".*\"}``\\ 와 일치하는 규칙은 파트너를 10초당 요청 30개로 허용합니다. 규칙의 "
+"할당량은 그 규칙과 일치하는 모든 요청에 대해 클라이언트별 데몬 제한(``--rate-limit``, "
+"``--rate-window``) 뒤에 확인하므로, 데몬 제한은 적어도 그만큼 넉넉해야 합니다."
 
 #: ../../solutions.rst:67
 msgid "Part X: Reference"
-msgstr ""
+msgstr "제X부: 참고 자료"
 
 #: ../../solutions.rst:70
 msgid ""
@@ -254,10 +326,14 @@ msgid ""
 "solve again instead of showing the error, since the work already done "
 "cannot be transferred."
 msgstr ""
+"**10.1.** 챌린지 레코드에는 그것을 가져온 주소의 키 기반 지문이 담겨 있습니다. 풀이는 새 주소에서 도착하므로 "
+"``verify_and_mint``\\ 는 증명을 보기도 전에 ``FingerprintMismatch``\\ 를 반환합니다. 가장 "
+"작은 복구 방법은 중간 페이지에 있습니다. 제목이 ``CLIENT FINGERPRINT MISMATCH``\\ 인 ``400``\\ "
+"을 받으면 오류를 보여 주는 대신 새 챌린지를 가져와 다시 풉니다. 이미 한 작업은 옮길 수 없기 때문입니다."
 
 #: ../../solutions.rst:72
 msgid "Continue the Investigation"
-msgstr ""
+msgstr "조사 이어 가기"
 
 #: ../../solutions.rst:75
 msgid ""
@@ -267,3 +343,6 @@ msgid ""
 "does more than assert the happy-path output: it demonstrates why the "
 "omitted condition is necessary."
 msgstr ""
+"버려도 되는 테스트에서 불변식을 한 번에 하나씩 바꿔 봅니다. 스냅숏 재확인을 없애거나, 인시던트 영수증을 빼거나, 속도 간격을 "
+"내림으로 반올림해 봅니다. 테스트를 실행하기 전에 실패가 어떤 순서로 일어날지 예측합니다. 쓸모 있는 회귀 테스트는 정상 경로의 "
+"출력을 확인하는 데 그치지 않습니다. 빠뜨린 조건이 왜 필요한지 보여 줍니다."

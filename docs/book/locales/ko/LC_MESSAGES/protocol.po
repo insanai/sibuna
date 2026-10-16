@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../protocol.rst:1
 msgid "Part IV: The Sibuna Protocol"
-msgstr ""
+msgstr "제IV부: Sibuna 프로토콜"
 
 #: ../../protocol.rst:4
 msgid ""
@@ -27,15 +27,17 @@ msgid ""
 "the stateless challenge record, both solution formats, verification "
 "order, single-use enforcement, and the session cookie."
 msgstr ""
+"구현된 그대로의 전송 프로토콜을 명세합니다. 중간 페이지 왕복, 상태 없는 챌린지 레코드, 두 가지 풀이 형식, 검증 순서, 일회용 "
+"강제, 세션 쿠키를 다룹니다."
 
 #: ../../protocol.rst:6
 msgid "The Challenge Round Trip"
-msgstr ""
+msgstr "챌린지 왕복"
 
 #: ../../protocol.rst:9 ../../protocol.rst:72 ../../protocol.rst:135
 #: ../../protocol.rst:186
 msgid "Objectives"
-msgstr ""
+msgstr "학습 목표"
 
 #: ../../protocol.rst:11
 msgid ""
@@ -44,10 +46,12 @@ msgid ""
 "involved, and explain why the challenge carries the protected path's "
 "policy decision."
 msgstr ""
+"이 장을 마치면 브라우저가 첫 요청에서 세션을 발급받기까지의 과정을 추적하고, 관련된 모든 엔드포인트와 JSON 필드를 말하며, "
+"챌린지가 보호된 경로의 정책 결정을 담고 다니는 이유를 설명할 수 있어야 합니다."
 
 #: ../../protocol.rst:14
 msgid "The challenge round trip."
-msgstr ""
+msgstr "챌린지 왕복."
 
 #: ../../protocol.rst:41
 msgid ""
@@ -61,6 +65,12 @@ msgid ""
 "rule's hash, sealed for this client with a keyed BLAKE3 tag under its own "
 "derived key and valid for one challenge lifetime."
 msgstr ""
+"유효한 세션이 없는 탐색 요청은 정책 엔진에 도달해 ``CHALLENGE``\\ 로 분류됩니다. 요청이 ``text/html``\\ "
+"을 받아들이므로 데몬은 중간 페이지와 ``X-Sibuna-Status: CHALLENGE`` 헤더를 담아 ``200``\\ 으로 "
+"응답합니다. HTML을 받아들이지 않는 API 클라이언트는 바로 가져올 수 있는 ``challenge`` URL이 담긴 JSON "
+"본문과 함께 ``401``\\ 을 받습니다. 어느 쪽이든 응답에는 *요구 티켓*\\ 이 담깁니다. 이 결정이 요구하는 "
+"챌린지(알고리즘, 작업 비트, 개방 수)와 규칙의 해시를, 이 클라이언트 전용으로 도출한 키 아래 키 기반 BLAKE3 태그로 "
+"봉인한 것이며, 챌린지 수명 한 번 동안 유효합니다."
 
 #: ../../protocol.rst:42
 msgid ""
@@ -77,30 +87,42 @@ msgid ""
 "advisory: admission still checks the session's work level, so a replayed "
 "or forged ticket can only cost its holder work."
 msgstr ""
+"중간 페이지는 ``GET /__sibuna/challenge.json?path=<original "
+"URL>&need=<ticket>``\\ 을 가져옵니다. 유효한 티켓이 있으면 티켓이 챌린지를 결정합니다. 작업량은 그것을 요구한 "
+"결정으로 고정되며, 보고된 URL과 이 가져오기 요청 자체의 헤더로 다시 계산하지 않습니다. 이 헤더(``Accept``, "
+"``Sec-Fetch-*``)는 탐색 요청의 헤더와 다르기 때문입니다. 유효한 티켓이 없으면(URL을 무시하는 API 클라이언트, "
+"수명이 지나도록 열어 둔 페이지) 서버는 보고된 URL을 평가합니다. URL은 요청 줄을 읽는 것과 같은 함수로 경로와 쿼리로 "
+"나누고, 경로는 요청 허용이 쓰는 정규형으로 바꿉니다(SID 0009). 8 KiB보다 긴 URL은 잘라 내지 않고 "
+"``414``\\ 로 거부하며, 정규형이 없는 경로는 ``400``\\ 으로 거부합니다. 티켓은 권고일 뿐입니다. 요청 허용은 "
+"여전히 세션의 작업 수준을 확인하므로, 재전송하거나 위조한 티켓은 그 보유자에게 작업 비용만 지울 수 있습니다."
 
 #: ../../protocol.rst:43
 msgid "The response is the challenge record:"
-msgstr ""
+msgstr "응답은 챌린지 레코드입니다."
 
 #: ../../protocol.rst:49
 msgid ""
 "For ``hashcash``, ``difficulty`` is the bit count and ``challenges`` is "
 "``0``."
 msgstr ""
+"``hashcash``\\ 에서는 ``difficulty``\\ 가 비트 수이고 ``challenges``\\ 는 ``0``\\ "
+"입니다."
 
 #: ../../protocol.rst:50
 msgid ""
 "A Web Worker solves it with the WebAssembly module, or the JavaScript "
 "prover if WebAssembly is unavailable (Part VII), and posts either"
 msgstr ""
+"Web Worker가 WebAssembly 모듈로, WebAssembly를 쓸 수 없으면 JavaScript 증명자로(VII부) "
+"이를 풀고, 다음"
 
 #: ../../protocol.rst:56
 msgid "or"
-msgstr ""
+msgstr "또는 다음을"
 
 #: ../../protocol.rst:62
 msgid "to ``POST /__sibuna/verify``."
-msgstr ""
+msgstr "``POST /__sibuna/verify``\\ 로 보냅니다."
 
 #: ../../protocol.rst:63
 msgid ""
@@ -108,10 +130,12 @@ msgid ""
 "``Set-Cookie`` header, and the page reloads its original location. Every "
 "later request carries the cookie and is admitted before policy evaluation."
 msgstr ""
+"성공하면 서버는 ``Set-Cookie`` 헤더와 함께 ``200 {\"status\":\"ok\"}``\\ 로 응답하고, 페이지는 "
+"원래 위치를 다시 불러옵니다. 이후의 모든 요청은 쿠키를 담고 있으며 정책 평가 전에 허용됩니다."
 
 #: ../../protocol.rst:65
 msgid "Why the path travels with the challenge"
-msgstr ""
+msgstr "경로가 챌린지와 함께 전달되는 이유"
 
 #: ../../protocol.rst:67
 msgid ""
@@ -122,10 +146,13 @@ msgid ""
 "rule hash into the token, where ``X-Sibuna-Rule-Hash`` reports it "
 "upstream."
 msgstr ""
+"중간 페이지는 보호된 URL에서 제공되므로 브라우저는 자신이 어디에 있는지 압니다. 경로를 보내면 서버가 *규칙별* 난이도와 "
+"알고리즘을 고를 수 있고(결제 경로는 순차 작업 20 작업 비트를, 블로그는 Hashcash 16비트를 요구할 수 있습니다), 규칙 "
+"해시를 토큰에 묶을 수 있습니다. 토큰의 규칙 해시는 ``X-Sibuna-Rule-Hash``\\ 로 업스트림에 보고됩니다."
 
 #: ../../protocol.rst:69
 msgid "The Stateless Challenge Record"
-msgstr ""
+msgstr "상태 없는 챌린지 레코드"
 
 #: ../../protocol.rst:74
 msgid ""
@@ -133,10 +160,12 @@ msgid ""
 "the per-challenge nonce is derived without an entropy syscall on the hot "
 "path."
 msgstr ""
+"챌린지 인코더를 읽고, 각 필드의 목적을 이해하며, 빠른 경로에서 엔트로피 시스템 호출 없이 챌린지별 nonce를 도출하는 방법을 "
+"살펴봅니다."
 
 #: ../../protocol.rst:76
 msgid "Implementation: ``Coordinator::create_challenge_with_spec``"
-msgstr ""
+msgstr "구현: ``Coordinator::create_challenge_with_spec``"
 
 #: ../../protocol.rst:78
 msgid ""
@@ -144,6 +173,9 @@ msgid ""
 "base64url-encodes the 52 bytes into a 70-character identifier. In "
 "``crates/challenge/src/coordinator.rs`` (crate ``sibuna-challenge``)."
 msgstr ""
+"36바이트 페이로드를 만들고 챌린지 키로 태그를 붙인 뒤, 52바이트를 base64url로 인코딩해 70문자 식별자를 만듭니다. "
+"``crates/challenge/src/coordinator.rs``\\ (crate ``sibuna-challenge``)에 "
+"있습니다."
 
 #: ../../protocol.rst:124
 msgid ""
@@ -153,10 +185,13 @@ msgid ""
 "Hashcash bits (at most 64) or PoSW depth (``difficulty - 3``, clamped to "
 "4 through 24)."
 msgstr ""
+"식별자는 ``Encoded<70>``\\ 입니다. 텍스트는 정확히 그 길이의 배열에 담기므로 챌린지를 발급할 때 할당이 일어나지 "
+"않습니다. ``ChallengeSpec::parameter``\\ 는 작업 비트를 계층 고유의 단위로 바꿉니다. Hashcash "
+"비트(최대 64) 또는 PoSW 깊이(``difficulty - 3``, 4에서 24 사이로 제한)입니다."
 
 #: ../../protocol.rst:126
 msgid "Three details deserve attention:"
-msgstr ""
+msgstr "세 가지 세부 사항을 눈여겨볼 만합니다."
 
 #: ../../protocol.rst:128
 msgid ""
@@ -166,6 +201,9 @@ msgid ""
 "work bit, capped at six. A flood pays exponentially more while quiet "
 "traffic keeps the base cost."
 msgstr ""
+"*적응형 난이도.* 코디네이터는 챌린지 발급률의 지수 가중 이동 평균을 원자 변수 세 개에 유지합니다. 기준선인 초당 챌린지 "
+"50개를 넘으면 발급률이 두 배가 될 때마다 작업 비트가 하나씩 늘며, 최대 여섯 비트까지 늘어납니다. 폭주 트래픽은 지수적으로 더 "
+"많은 비용을 치르고, 조용한 트래픽은 기본 비용을 유지합니다."
 
 #: ../../protocol.rst:129
 msgid ""
@@ -175,16 +213,21 @@ msgid ""
 "not been issued, and the hot path never calls into the operating system "
 "for entropy."
 msgstr ""
+"*nonce는 PRF 출력입니다.* 챌린지 키를 키로 하여 카운터, 시계, 지문 위에서 계산합니다. 카운터 덕분에 유일하고 키 "
+"덕분에 예측할 수 없으므로, 공격자는 발급받지 않은 식별자에 대한 풀이를 미리 계산할 수 없습니다. 또한 빠른 경로는 엔트로피를 "
+"얻으려고 운영체제를 호출하지 않습니다."
 
 #: ../../protocol.rst:130
 msgid ""
 "*Difficulty travels inside the tag.* A client cannot lower the difficulty "
 "by editing the record: the tag would fail before any proof is examined."
 msgstr ""
+"*난이도는 태그 안에 담겨 전달됩니다.* 클라이언트는 레코드를 고쳐 난이도를 낮출 수 없습니다. 그렇게 하면 증명을 살펴보기도 전에 "
+"태그 검사가 실패합니다."
 
 #: ../../protocol.rst:132
 msgid "Verification Order and Single Use"
-msgstr ""
+msgstr "검증 순서와 일회용 처리"
 
 #: ../../protocol.rst:137
 msgid ""
@@ -192,10 +235,12 @@ msgid ""
 "is marked spent only after the proof is valid, and how two concurrent "
 "submissions of one solution are resolved."
 msgstr ""
+"값싼 검사를 증명보다 먼저 실행하는 이유, 증명이 유효하다고 확인된 뒤에야 챌린지를 사용 완료로 표시하는 이유, 그리고 한 풀이를 "
+"동시에 두 번 제출할 때 어떻게 해결되는지 이해합니다."
 
 #: ../../protocol.rst:139
 msgid "Implementation: ``Coordinator::verify_and_mint``"
-msgstr ""
+msgstr "구현: ``Coordinator::verify_and_mint``"
 
 #: ../../protocol.rst:141
 msgid ""
@@ -204,6 +249,9 @@ msgid ""
 "mints the session token. In ``crates/challenge/src/coordinator.rs`` "
 "(crate ``sibuna-challenge``)."
 msgstr ""
+"식별자를 디코딩하고 인증한 뒤 나이와 클라이언트 바인딩을 확인하고, 기록된 계층에 맞게 증명을 검증하고, 태그를 사용 완료로 기록한 "
+"다음 세션 토큰을 발급합니다. ``crates/challenge/src/coordinator.rs``\\ (crate "
+"``sibuna-challenge``)에 있습니다."
 
 #: ../../protocol.rst:179
 msgid ""
@@ -217,6 +265,12 @@ msgid ""
 "minted by a node whose clock runs ahead by more than a minute, which "
 "would otherwise extend a challenge's life."
 msgstr ""
+"이 순서는 의도한 것입니다. 태그, 나이, 바인딩은 상수 시간 검사로, 해시를 계산하기 전에 쓰레기 입력을 거부합니다. 틀린 증명이 "
+"챌린지를 소모해서는 안 되므로, 사용 완료 집합에는 ``check_solution``\\ 이 성공한 뒤에만 씁니다. 같은 유효한 "
+"풀이를 검증한 두 스레드는 ``mark_spent``\\ 에서 경쟁합니다. 샤드 잠금이 둘을 직렬화하므로 정확히 하나만 이기고, "
+"다른 하나는 ``VerifyError::DoubleSpendAttempt``\\ 를 받습니다. ``issued_at > now + "
+"60`` 조건(``CLOCK_SKEW_SECONDS``\\ 는 60)은 시계가 1분 넘게 앞선 노드가 만든 레코드를 거부합니다. "
+"그렇지 않으면 그런 레코드가 챌린지의 수명을 늘릴 수 있습니다."
 
 #: ../../protocol.rst:181
 msgid ""
@@ -227,20 +281,24 @@ msgid ""
 "MISMATCH``, ``WRONG SOLUTION TYPE``, and ``MALFORMED CHALLENGE`` in the "
 "response body."
 msgstr ""
+"오류는 Elm 스타일 진단(X부)과 함께 ``400``\\ 으로 클라이언트에 전달됩니다. 각 ``VerifyError``\\ 는 "
+"``sibuna_core::errors::ErrorKind``\\ 로 변환되며, 그 설명이 응답 본문이 됩니다. 종단 간 테스트는 "
+"응답 본문의 ``DOUBLE SPEND``, ``FINGERPRINT MISMATCH``, ``WRONG SOLUTION "
+"TYPE``, ``MALFORMED CHALLENGE``\\ 를 확인합니다."
 
 #: ../../protocol.rst:183
 msgid "The Session Cookie"
-msgstr ""
+msgstr "세션 쿠키"
 
 #: ../../protocol.rst:188
 msgid ""
 "Read the keyed-hash token, understand the cookie attributes, and explain "
 "the client binding."
-msgstr ""
+msgstr "키 기반 해시 토큰을 읽고, 쿠키 속성을 이해하며, 클라이언트 바인딩을 설명합니다."
 
 #: ../../protocol.rst:190
 msgid "Implementation: ``token::mac::mint`` and ``token::mac::verify``"
-msgstr ""
+msgstr "구현: ``token::mac::mint``\\ 와 ``token::mac::verify``"
 
 #: ../../protocol.rst:192
 msgid ""
@@ -249,6 +307,10 @@ msgid ""
 "``crates/challenge/src/token/mac.rs`` (crate ``sibuna-challenge``). "
 "``Coordinator::verify_cookie`` calls it with the client's fingerprint."
 msgstr ""
+"40바이트 페이로드를 직렬화하고, 그 위에서 계산한 키 기반 BLAKE3의 처음 16바이트를 덧붙이며, 상수 시간 비교로 "
+"검증합니다. ``crates/challenge/src/token/mac.rs``\\ (crate "
+"``sibuna-challenge``)에 있습니다. ``Coordinator::verify_cookie``\\ 가 클라이언트 지문과 "
+"함께 이를 호출합니다."
 
 #: ../../protocol.rst:219
 msgid ""
@@ -256,10 +318,12 @@ msgid ""
 "version is refused with ``TokenError::InvalidEncoding`` only once it is "
 "known to be authentic, and a forged one never reaches the parser."
 msgstr ""
+"태그는 페이로드를 파싱하기 전에 확인합니다. 다른 버전의 페이로드는 진본임이 확인된 뒤에야 "
+"``TokenError::InvalidEncoding``\\ 으로 거부되며, 위조된 페이로드는 파서에 도달하지 못합니다."
 
 #: ../../protocol.rst:221
 msgid "The cookie is emitted as"
-msgstr ""
+msgstr "쿠키는 다음과 같이 내보냅니다."
 
 #: ../../protocol.rst:228
 msgid ""
@@ -271,6 +335,11 @@ msgid ""
 "``TokenError::TokenBoundAddressMismatch``; the end-to-end test \"the "
 "cookie is bound to the client identity\" exercises exactly that path."
 msgstr ""
+"``HttpOnly``\\ 는 페이지 스크립트가 쿠키를 읽지 못하게 하고, ``SameSite=Lax``\\ 는 최상위 탐색은 "
+"허용하면서 교차 사이트 재전송을 막습니다. TLS가 데몬 앞에서 종료되면 ``--secure-cookie``\\ 로 "
+"``Secure``\\ 를 추가합니다. 페이로드에 주소와 User-Agent의 키 기반 지문이 담기므로, 다른 기계로 복사한 쿠키는 "
+"``TokenError::TokenBoundAddressMismatch``\\ 로 실패합니다. 종단 간 테스트 \"the "
+"cookie is bound to the client identity\"가 바로 이 경로를 시험합니다."
 
 #: ../../protocol.rst:230
 msgid ""
@@ -288,10 +357,18 @@ msgid ""
 "end-to-end test \"a session earned on a cheaper route does not admit a "
 "route that demands more work\" exercises both directions."
 msgstr ""
+"페이로드는 버전 바이트와, 보유자가 치른 *작업 수준*\\ 으로 시작합니다. 작업 수준은 방식(Hashcash 또는 PoSW)과 "
+"실제로 푼 작업 비트이며, 부하에 따른 추가 비트도 포함합니다. 세션은 그 수준이 경로가 요구하는 수준에 도달할 때에만 챌린지를 "
+"통과합니다. 경로의 요구 수준은 규칙의 난이도에서 챌린지 자체와 같은 제한 방식으로 계산합니다. 수준에는 이름이 아니라 순서가 "
+"있습니다. 24비트로 얻은 쿠키는 모든 16비트 경로에도 통하지만, 16비트 쿠키를 24비트 경로에 제시하면 더 강한 중간 페이지로 "
+"넘어가고 새 쿠키가 옛 쿠키를 대체합니다. ``rule_hash``\\ 는 챌린지를 발급한 규칙의 감사용 식별자로 남습니다. "
+"업스트림에 보고될 뿐 요청 허용에는 쓰이지 않습니다. WAF 탐지 결과와 명시적 거부는 세션으로 결코 통과되지 않습니다. 종단 간 "
+"테스트 \"a session earned on a cheaper route does not admit a route that "
+"demands more work\"가 두 방향을 모두 시험합니다."
 
 #: ../../protocol.rst:232
 msgid "Forwarded addresses"
-msgstr ""
+msgstr "전달된 주소"
 
 #: ../../protocol.rst:235
 msgid ""
@@ -301,10 +378,14 @@ msgid ""
 "leave it off, or any client could pick its own binding and its own "
 "rate-limit bucket."
 msgstr ""
+"인그레스 뒤에서는 클라이언트 주소가 ``X-Forwarded-For``\\ 로 도착합니다. Sibuna는 "
+"``--trust-forwarded``\\ 가 있을 때에만 이 헤더를 신뢰합니다(forward-auth 모드에서는 자동으로 "
+"적용됩니다). 인터넷에 직접 노출된 역방향 프록시에서는 이 옵션을 꺼 두어야 합니다. 그렇지 않으면 어떤 클라이언트든 자신의 "
+"바인딩과 속도 제한 버킷을 스스로 고를 수 있습니다."
 
 #: ../../protocol.rst:237
 msgid "Exercise 4.1"
-msgstr ""
+msgstr "연습 문제 4.1"
 
 #: ../../protocol.rst:239
 msgid ""
@@ -312,13 +393,16 @@ msgid ""
 "User-Agents. Which checks do they share, which do they not, and what "
 "would an attacker on that NAT need to reuse the other browser's cookie?"
 msgstr ""
+"같은 NAT 주소 뒤에서 User-Agent가 똑같은 두 브라우저의 순서도를 그려 보세요. 두 브라우저가 공유하는 검사와 공유하지 "
+"않는 검사는 무엇이며, 그 NAT에 있는 공격자가 다른 브라우저의 쿠키를 재사용하려면 무엇이 필요할까요?"
 
 #: ../../protocol.rst:241
 msgid "Explain the invariant"
-msgstr ""
+msgstr "불변식 설명하기"
 
 #: ../../protocol.rst:243
 msgid ""
 "Explain to an operator why the daemon does not \"remember\" outstanding "
 "challenges and why that is a security feature rather than a shortcut."
 msgstr ""
+"데몬이 아직 풀리지 않은 챌린지를 \"기억\"하지 않는 이유와, 그것이 지름길이 아니라 보안 기능인 이유를 운영자에게 설명하세요."

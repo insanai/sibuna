@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../preface.rst:1
 msgid "Preface"
-msgstr ""
+msgstr "머리말"
 
 #: ../../preface.rst:4
 msgid ""
@@ -29,6 +29,9 @@ msgid ""
 "admit it, refuse it, or ask its sender to do verifiable work. This book "
 "follows that decision from its mathematical model to the bytes in memory."
 msgstr ""
+"요청은 메서드, 경로, 몇 개의 헤더, 그리고 서버의 주의를 요구하는 주장과 함께 도착합니다. 그 바이트 어느 것도 요청을 처리할 "
+"가치가 있음을 입증하지 않습니다. Sibuna는 요청과 원본 서버 사이에 하나의 결정을 둡니다. 요청을 허용하거나, 거부하거나, "
+"보낸 쪽에 검증 가능한 작업을 요구하는 것입니다. 이 책은 그 결정을 수학적 모델에서 메모리 속 바이트까지 따라갑니다."
 
 #: ../../preface.rst:6
 msgid ""
@@ -41,6 +44,11 @@ msgid ""
 "cluster distributes it; it does not turn a local rate counter into a "
 "global quota."
 msgstr ""
+"시스템에는 두 가지 운영 구성이 있습니다. *Gate*\\ 는 작업 증명 기반 요청 허용과 로컬 트래픽 제어를 제공합니다. "
+"*Shield*\\ 는 애플리케이션 검사와 정책 결정을 더합니다. 둘 다 정책, 평판, 인시던트 기록을 위한 영속 저장소를 사용할 "
+"수 있으며, 이 저장소는 노드 하나에 둘 수도 있고 클러스터가 공유할 수도 있습니다. 이러한 배포를 *Edge*\\ 라고 부릅니다. "
+"유효한 세션은 요청 허용을 성립시킬 뿐, 요청을 검사에서 면제하지는 않습니다. 영속 상태를 클러스터 전체에 공유하면 상태가 분산될 "
+"뿐, 로컬 속도 카운터가 전역 할당량이 되지는 않습니다."
 
 #: ../../preface.rst:8
 msgid ""
@@ -52,6 +60,10 @@ msgid ""
 "database disappears? Each answer must name both an invariant and its "
 "boundary."
 msgstr ""
+"공학의 핵심 질문은 해시가 빠른지가 아닙니다. 신뢰할 수 없는 클라이언트가 입력을 고를 때 전체 경로가 유한한 비용 안에 "
+"머무는지입니다. 파서는 몇 바이트를 검사할 수 있을까요? 챌린지 하나가 메모리를 얼마나 차지할 수 있을까요? 클라이언트 하나가 "
+"연결을 몇 개나 열어 둘 수 있을까요? 어떤 쓰기를 재시도해도 될까요? 노드나 데이터베이스가 사라진 뒤에는 무엇이 남을까요? 각 "
+"답은 불변식과 그 경계를 함께 밝혀야 합니다."
 
 #: ../../preface.rst:10
 msgid ""
@@ -62,6 +74,9 @@ msgid ""
 "work examples by hand, and then ask where the implementation departs from "
 "them."
 msgstr ""
+"수학도 같은 목적에 쓰입니다. 기대 비용은 지연 시간 보장이 아닙니다. 고정된 커밋먼트에 대한 표본 추출 논증은 모든 적응적 "
+"증명자에 대한 증명이 아닙니다. 큐는 순간적인 몰림을 흡수하지만, 늘 더 느린 소비자를 보상할 수는 없습니다. 우리는 작은 모델을 "
+"유도하고, 예제를 손으로 풀어 본 뒤, 구현이 모델과 어디서 달라지는지 묻습니다."
 
 #: ../../preface.rst:12
 msgid ""
@@ -74,6 +89,10 @@ msgid ""
 "table. Part XI is a two-page card for the terminal. A glossary and a "
 "bibliography close the book."
 msgstr ""
+"이 책은 세 가지 방식으로 쓰이도록 만들었습니다. 순서대로 읽으면 I부부터 VII부까지가 하나의 과정입니다. 각 장은 장을 마친 뒤 "
+"할 수 있어야 할 일로 시작하고, 예제를 손으로 풀어 보며, 연습 문제와 우리 말로 설명할 불변식으로 끝납니다. 일부 해답은 책 "
+"끝에 있습니다. VIII부부터 X부까지는 참고 자료입니다. 출처를 밝힌 측정, 모든 플래그와 토폴로지, 모든 엔드포인트, 상태, "
+"오류, 테이블을 담습니다. XI부는 터미널 옆에 둘 두 쪽짜리 카드입니다. 책의 끝에는 용어집과 참고 문헌이 있습니다."
 
 #: ../../preface.rst:14
 msgid ""
@@ -84,6 +103,10 @@ msgid ""
 "so the reader can check the claims: the comparison names its sources, and "
 "every measurement names the committed result file it is copied from."
 msgstr ""
+"II부는 Sibuna를 Anubis, SafeLine, Cloudflare WAF와 기능별로 나란히 놓고 비교합니다. VIII부는 "
+"기본 연산 하나에서 전체 제품 실행까지 Sibuna의 측정 결과를 제시하고, 같은 부하 생성기 아래에서 Sibuna와 Anubis를 "
+"전체 제품으로 비교합니다. 두 부분 모두 독자가 주장을 확인할 수 있도록 썼습니다. 비교는 출처를 밝히고, 모든 측정값은 그 값을 "
+"옮겨 온 커밋된 결과 파일을 밝힙니다."
 
 #: ../../preface.rst:16
 msgid ""
@@ -94,6 +117,9 @@ msgid ""
 "determines the concurrency and storage design. Later chapters turn those "
 "invariants into measurements and operating procedures."
 msgstr ""
+"독자는 기초 프로그래밍, 로그, 조건부 확률을 알고 있어야 합니다. Rust는 언어 전반을 훑는 대신 소유권과 데이터 배치를 통해 "
+"소개합니다. 각 장은 순서대로 읽을 수 있습니다. 비용 모델이 프로토콜의 동기가 되고, 프로토콜이 상태를 결정하며, 상태가 동시성과 "
+"저장소 설계를 결정합니다. 뒤의 장들은 이 불변식을 측정과 운영 절차로 바꿉니다."
 
 #: ../../preface.rst:18
 msgid ""
@@ -103,13 +129,16 @@ msgid ""
 "useful result is a system whose costs and limitations can be examined, "
 "tested, and changed without hiding them behind a slogan."
 msgstr ""
+"이 책은 구현에 관한 책입니다. 계산 퍼즐이 자동화된 트래픽을 없앤다고 주장하는 책이 아닙니다. 클라이언트는 연산 자원을 살 수 "
+"있고, 주소는 공유될 수 있으며, 애플리케이션 구문은 유한한 탐지기가 다룰 수 있는 것보다 풍부합니다. 쓸모 있는 결과는 비용과 "
+"한계를 구호 뒤에 숨기지 않고 살펴보고, 시험하고, 바꿀 수 있는 시스템입니다."
 
 #: ../../preface.rst:20
 msgid "Edition for Sibuna 1.0.0-beta.1, October 2026"
-msgstr ""
+msgstr "Sibuna 1.0.0-beta.1판, 2026년 10월"
 
 #: ../../preface.rst:22
 msgid ""
 "Sources, exercises, and reproducible measurements accompany the Sibuna "
 "repository."
-msgstr ""
+msgstr "소스, 연습 문제, 재현 가능한 측정 결과는 Sibuna 저장소에서 함께 제공합니다."

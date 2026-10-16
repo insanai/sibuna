@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../algorithms.rst:1
 msgid "Part VI: Automata, Tries, and the Semantic Firewall"
-msgstr ""
+msgstr "제VI부: 오토마톤, 트라이, 의미 기반 방화벽"
 
 #: ../../algorithms.rst:4
 msgid ""
@@ -28,15 +28,17 @@ msgid ""
 "tokenizers of the semantic WAF, and the declarative policy engine with "
 "WEIGH scoring."
 msgstr ""
+"마이크로초 미만의 분류를 가능하게 하는 알고리즘을 살펴봅니다. 태그가 붙은 Aho-Corasick 오토마톤, IPv4/IPv6 기수 "
+"트라이, 의미 기반 WAF의 바이트 클래스 토크나이저, 그리고 WEIGH 점수를 쓰는 선언형 정책 엔진입니다."
 
 #: ../../algorithms.rst:6
 msgid "Single-Pass Multi-Pattern Matching"
-msgstr ""
+msgstr "한 번의 순회로 여러 패턴 매칭하기"
 
 #: ../../algorithms.rst:9 ../../algorithms.rst:80 ../../algorithms.rst:103
 #: ../../algorithms.rst:162
 msgid "Objectives"
-msgstr ""
+msgstr "학습 목표"
 
 #: ../../algorithms.rst:11
 msgid ""
@@ -45,10 +47,12 @@ msgid ""
 "case folding through byte classes, and argue why a SIMD literal engine "
 "was not adopted."
 msgstr ""
+"이 장을 마치면 Aho-Corasick 오토마톤의 선형 시간 보장을 유도하고, 밀집 테이블 배치와 바이트 클래스를 통한 대소문자 "
+"접기를 설명하며, SIMD 리터럴 엔진을 채택하지 않은 이유를 논증할 수 있어야 합니다."
 
 #: ../../algorithms.rst:13
 msgid "Aho-Corasick as a Dense DFA"
-msgstr ""
+msgstr "밀집 DFA로 구현한 Aho-Corasick"
 
 #: ../../algorithms.rst:16
 msgid ""
@@ -60,6 +64,11 @@ msgid ""
 "so scanning is one table load per input byte with no branches on the "
 "pattern set. The automaton lives in the ``sibuna-patterns`` crate:"
 msgstr ""
+"Sibuna에는 리터럴 패턴 집합이 두 개 있습니다. 봇 시그니처 약 40개와 공격 시그니처 약 100개입니다. 필드 하나를 패턴 "
+":math:`N`\\ 개와 하나씩 대조하면 :math:`O(NM)`\\ 이 듭니다. Aho와 Corasick(1975)의 오토마톤은 "
+"실패 링크가 있는 트라이를 만든 뒤 필드를 :math:`O(M)`\\ 에 한 번 훑습니다. Sibuna는 빌드할 때 실패 링크를 "
+"전이 테이블에 접어 넣으므로, 스캔은 입력 바이트마다 테이블 읽기 한 번이며 패턴 집합에 따른 분기가 없습니다. 오토마톤은 "
+"``sibuna-patterns`` crate에 있습니다."
 
 #: ../../algorithms.rst:37
 msgid ""
@@ -68,10 +77,13 @@ msgid ""
 "after every other state; detecting a match is then one comparison against "
 "``first_match``, with no second table to load in the inner loop."
 msgstr ""
+"상태는 하나의 평평한 테이블 안의 행 오프셋으로 저장되므로, 한 단계는 덧셈 한 번과 읽기 한 번입니다. 상태에는 모든 매치 상태가 "
+"다른 모든 상태보다 뒤에 오도록 번호를 붙입니다. 그러면 매치 탐지는 ``first_match``\\ 와의 비교 한 번이며, 안쪽 "
+"루프에서 두 번째 테이블을 읽을 필요가 없습니다."
 
 #: ../../algorithms.rst:40
 msgid "Trie states and failure edges for two signatures"
-msgstr ""
+msgstr "두 시그니처의 트라이 상태와 실패 간선"
 
 #: ../../algorithms.rst:64
 msgid ""
@@ -87,14 +99,21 @@ msgid ""
 "the comparison with sequential substring search are recorded in Part "
 "VIII. The latter uses the same patterns and any-match semantics."
 msgstr ""
+"오토마톤의 상태 예산은 실행 시간 옵션입니다. 정책 엔진은 루트 하나에 모든 시그니처 길이의 합을 더한 수만큼만 예약하며, 이는 "
+"트라이 상태 수의 안전한 상한입니다. 이렇게 하면 과거의 지나치게 큰 고정 테이블을 피하면서도 바이트 클래스마다 밀집 전이를 유지할 "
+"수 있습니다. 각 패턴에는 작은 범주 태그(0에서 63까지이므로 태그 집합은 64비트 워드 하나)가 붙습니다. 대소문자 접기는 "
+"오토마톤과 함께 만드는 256개 항목의 바이트 클래스 테이블을 사용합니다. 한 글자의 대문자와 소문자는 같은 클래스를 공유하고, "
+"어떤 패턴에도 나오지 않는 바이트는 클래스 하나를 공유합니다. 그래서 테이블 한 행의 너비는 256이 아니라 서로 다른 패턴 바이트 "
+"수에 1을 더한 값입니다. 엔진의 정확한 크기와 순차 부분 문자열 탐색과의 비교는 VIII부에 기록되어 있습니다. 순차 탐색은 같은 "
+"패턴과 같은 any-match 의미론을 사용합니다."
 
 #: ../../algorithms.rst:66
 msgid "Regular Expressions, SIMD Engines, and the Choice"
-msgstr ""
+msgstr "정규 표현식, SIMD 엔진, 그리고 선택"
 
 #: ../../algorithms.rst:69
 msgid "Three families were weighed for the signature stage:"
-msgstr ""
+msgstr "시그니처 단계에 쓸 세 가지 계열을 비교했습니다."
 
 #: ../../algorithms.rst:71
 msgid ""
@@ -102,6 +121,8 @@ msgid ""
 "hundreds of patterns per request and allocate per match; they are the "
 "slowest option and the most prone to false positives."
 msgstr ""
+"*백트래킹 정규 표현식*\\ (백트래킹 규칙 집합 방식)은 요청마다 수백 개의 패턴을 실행하고 매치마다 할당합니다. 가장 느린 "
+"선택지이며 오탐도 가장 많이 냅니다."
 
 #: ../../algorithms.rst:72
 msgid ""
@@ -113,6 +134,10 @@ msgid ""
 "bytes, no advantage: the whole field scans in less time than one cache "
 "miss."
 msgstr ""
+"*SIMD 리터럴 엔진*\\ (Hyperscan, Vectorscan)은 셔플 기반 니블 마스크(\"Teddy\" 알고리즘)로 "
+"16에서 32바이트 블록을 미리 걸러 내고 후보를 오토마톤으로 검증합니다. 큰 리터럴 집합으로 긴 입력을 다룰 때 뛰어납니다. "
+"대가는 수 메가바이트짜리 C++ 의존성, 컴파일 시간 패턴 데이터베이스, WebAssembly 대상 부재이며, 100바이트 정도의 "
+"입력에서는 이점도 없습니다. 필드 전체를 스캔하는 시간이 캐시 미스 한 번보다 짧기 때문입니다."
 
 #: ../../algorithms.rst:73
 msgid ""
@@ -120,6 +145,8 @@ msgid ""
 "lineage, gives exact linear-time behaviour in a fixed table and needs "
 "nothing outside the binary."
 msgstr ""
+"*밀집 Aho-Corasick과 작은 구조 토크나이저*, 즉 libinjection 계보는 고정 테이블에서 정확한 선형 시간 동작을 "
+"제공하며 바이너리 밖의 어떤 것도 필요로 하지 않습니다."
 
 #: ../../algorithms.rst:75
 msgid ""
@@ -129,10 +156,15 @@ msgid ""
 "``benchmarks/results/primitives-latest.md``). That is the one workload "
 "where a SIMD prefilter would pay, and SID 0006 keeps it as an open item."
 msgstr ""
+"Sibuna의 필드는 짧으므로 세 번째 계열이 메모리와 속도 모두에서 이깁니다. VIII부는 8 KiB 본문에서 바이트당 약 "
+"1.56 ns를 기록합니다(의미 기반 스캔에 12,784.3 ns가 걸리며, "
+"``benchmarks/results/primitives-latest.md``\\ 의 "
+"``8kb_body_semantic_scan``\\ 입니다). 이것이 SIMD 사전 필터가 이득을 볼 유일한 워크로드이며, SID "
+"0006은 이를 미결 항목으로 남겨 둡니다."
 
 #: ../../algorithms.rst:77
 msgid "The Radix Trie for IPv4 and IPv6"
-msgstr ""
+msgstr "IPv4와 IPv6를 위한 기수 트라이"
 
 #: ../../algorithms.rst:82
 msgid ""
@@ -140,6 +172,8 @@ msgid ""
 "root shortcut, and see how the trie doubles as the reputation store fed "
 "by the cluster."
 msgstr ""
+"128비트 트라이에서 최장 접두사 조회를 추적하고, IPv4 루트 지름길을 설명하며, 이 트라이가 클러스터가 채우는 평판 저장소 "
+"역할도 겸하는 방식을 살펴봅니다."
 
 #: ../../algorithms.rst:84
 msgid ""
@@ -150,6 +184,10 @@ msgid ""
 "at most 128 dependent loads with no pointer chasing. The trie is the "
 "``PrefixTrie`` of the ``sibuna-cidr`` crate."
 msgstr ""
+"128비트 키 위의 이진 트라이 하나가 두 주소 계열을 모두 처리합니다. IPv6 접두사는 그대로 삽입하고, IPv4 접두사는 "
+"``::ffff:0:0/96``\\ 으로 매핑하므로 ``/24``\\ 는 깊이 120의 경로가 됩니다. 노드는 ``u32``\\ 로 "
+"인덱싱하는 평평한 ``Vec`` 하나에 저장되며, 인덱스 0은 루트이자 \"자식 없음\"을 뜻합니다. 그래서 조회는 포인터 추적 "
+"없이 최대 128번의 의존 읽기입니다. 이 트라이는 ``sibuna-cidr`` crate의 ``PrefixTrie``\\ 입니다."
 
 #: ../../algorithms.rst:86
 msgid ""
@@ -158,6 +196,8 @@ msgid ""
 "the trie records the node at depth 96 at initialisation and starts IPv4 "
 "lookups there:"
 msgstr ""
+"IPv4 조회마다 매핑된 접두사의 96단계를 걸어 내려가면, IPv4 주소의 첫 비트에 닿기도 전에 의존 읽기 96번이 듭니다. "
+"그래서 트라이는 초기화할 때 깊이 96의 노드를 기록해 두고 IPv4 조회를 거기서 시작합니다."
 
 #: ../../algorithms.rst:98
 msgid ""
@@ -168,10 +208,15 @@ msgid ""
 "so a cluster-wide ban beats every rule, and ``challenge`` verdicts after "
 "it."
 msgstr ""
+"IPv4 주소 분류에는 32.0 ns, IPv6 주소 분류에는 79.3 ns가 "
+"걸립니다(``benchmarks/results/primitives-latest.md``\\ 의 "
+"``ipv4_cidr_classification``\\ 과 ``ipv6_cidr_classification``). 엔진은 트라이를 "
+"두 번 참조합니다. 최종 판정인 ``allow``/``deny``\\ 는 규칙 테이블보다 먼저 참조하므로 클러스터 전체의 차단이 "
+"모든 규칙에 우선하고, ``challenge`` 판정은 규칙 테이블 뒤에 참조합니다."
 
 #: ../../algorithms.rst:100
 msgid "The Semantic Firewall"
-msgstr ""
+msgstr "의미 기반 방화벽"
 
 #: ../../algorithms.rst:105
 msgid ""
@@ -180,10 +225,12 @@ msgid ""
 "checks, canonicalisation, and the false-positive discipline that a real "
 "browser request must pass untouched."
 msgstr ""
+"바이트 클래스 사전 스캔, 태그가 붙은 시그니처 오토마톤, 항진식 탐지를 갖춘 SQL 토크나이저, HTML과 셸 구조 검사, "
+"정규화, 그리고 실제 브라우저 요청은 아무 영향 없이 통과해야 한다는 오탐 규율을 이해합니다."
 
 #: ../../algorithms.rst:107
 msgid "A Lesson in False Positives"
-msgstr ""
+msgstr "오탐의 교훈"
 
 #: ../../algorithms.rst:110
 msgid ""
@@ -195,10 +242,15 @@ msgid ""
 "Chrome request, including a comment body containing ``select``, ``--``, "
 "and an apostrophe, through the engine and asserts it comes out clean."
 msgstr ""
+"WAF의 첫 버전은 모든 헤더를 평평한 부분 문자열 목록과 대조했습니다. 목록에는 ``/*``\\ 가 있었고, 모든 브라우저는 "
+"``Accept: text/html,...,*/*;q=0.8``\\ 을 보냅니다. 그래서 실제 브라우저가 모두 SQL 인젝션으로 "
+"분류되어 ``403``\\ 을 받았습니다. 이 교훈이 설계를 결정했습니다. 탐지기는 *구조*\\ 에만 반응해야 합니다. 이제 테스트 "
+"모음은 ``select``, ``--``, 아포스트로피가 들어 있는 댓글 본문을 포함한 완전한 Chrome 요청을 엔진에 "
+"통과시키고, 아무것도 탐지되지 않는지 확인합니다."
 
 #: ../../algorithms.rst:112
 msgid "Byte Classes in One Pass"
-msgstr ""
+msgstr "한 번의 스캔으로 바이트 클래스 수집하기"
 
 #: ../../algorithms.rst:115
 msgid ""
@@ -211,10 +263,15 @@ msgid ""
 "and the two byte pairs (``/*`` and two adjacent spaces) are searched for "
 "only when no single byte has already demanded canonicalisation:"
 msgstr ""
+"검사하는 필드는 한 번 스캔해 어떤 바이트 클래스가 나타나는지 모읍니다. 따옴표, ``=``, ``<``, 셸 구분자, ``%``, "
+"NUL, 정규화 계기, 연속된 공백입니다. 모든 탐지기는 다시 스캔하지 않고 이 클래스를 참조하며, 정규화한 두 번째 패스는 계기가 "
+"보였을 때에만 실행합니다. 스캔은 바이트마다 256개 항목 테이블을 한 번 조회하는 것이며, ``sibuna-policy``\\ 의 "
+"WAF 모듈에 있습니다. 누산기 네 개가 OR 연쇄를 짧게 유지하고, 두 바이트 쌍(``/*``\\ 와 인접한 공백 두 개)은 단일 "
+"바이트가 이미 정규화를 요구하지 않았을 때에만 찾습니다."
 
 #: ../../algorithms.rst:143
 msgid "Detectors"
-msgstr ""
+msgstr "탐지기"
 
 #: ../../algorithms.rst:146
 msgid ""
@@ -222,6 +279,9 @@ msgid ""
 "automaton; a hit is a terminal ``deny`` named ``waf:sqli``, ``waf:xss``, "
 "``waf:path-traversal``, or ``waf:rce``."
 msgstr ""
+"*시그니처.* 모든 범주의 강한 시그니처는 태그가 붙은 오토마톤 하나에 있습니다. 적중하면 ``waf:sqli``, "
+"``waf:xss``, ``waf:path-traversal``, ``waf:rce``\\ 라는 이름의 최종 ``deny``\\ 가 "
+"됩니다."
 
 #: ../../algorithms.rst:147
 msgid ""
@@ -233,6 +293,11 @@ msgid ""
 "(1), an ``=`` (1). ``admin'--`` is terminal by itself. \"it's a group "
 "order from the shop\" scores 3 and passes."
 msgstr ""
+"*SQL 인젝션.* 한 번 순회하는 단어 스캐너가 영숫자 단어(최대 7바이트)를 키워드 테이블에서 찾고, ``or`` / "
+"``and``\\ 에서는 ``literal = literal`` 항진식이 있는지 확인합니다. ``id=1 or 1=1``\\ 은 "
+"최종 판정입니다. 그 밖의 경우에는 따옴표 바이트가 반드시 있어야 하며, 증거 점수가 다음 중에서 4점 이상이어야 합니다. "
+"따옴표(1), 최대 두 개의 키워드(2), 주석 표식(1), ``=``\\ (1)입니다. ``admin'--``\\ 는 그 자체로 "
+"최종 판정입니다. \"it's a group order from the shop\"은 3점이므로 통과합니다."
 
 #: ../../algorithms.rst:148
 msgid ""
@@ -240,6 +305,8 @@ msgid ""
 "script co-occurs with an ``on<event>=`` attribute in attribute position. "
 "``onboarding=1`` does not count."
 msgstr ""
+"*교차 사이트 스크립팅.* ``<``\\ 가 있어야 합니다. 스크립트를 담을 수 있는 태그가 속성 위치의 ``on<event>=`` "
+"속성과 함께 나타날 때 탐지합니다. ``onboarding=1``\\ 은 해당하지 않습니다."
 
 #: ../../algorithms.rst:149
 msgid ""
@@ -247,12 +314,16 @@ msgid ""
 "``&&``, ``$(``, a backtick, or a newline is followed by a known command "
 "name. ``status ok; done | next`` passes."
 msgstr ""
+"*명령 인젝션.* 구분자가 있어야 합니다. ``;``, ``|``, ``&&``, ``$(``, 백틱, 줄 바꿈 뒤에 알려진 명령 "
+"이름이 오면 탐지합니다. ``status ok; done | next``\\ 는 통과합니다."
 
 #: ../../algorithms.rst:150
 msgid ""
 "*Path traversal.* Signatures (``../``, ``..%2f``, ``/etc/passwd``, "
 "``id_rsa``, ...) plus NUL and ``%00``."
 msgstr ""
+"*경로 탐색.* 시그니처(``../``, ``..%2f``, ``/etc/passwd``, ``id_rsa``, ...)와 NUL, "
+"``%00``\\ 입니다."
 
 #: ../../algorithms.rst:152
 msgid ""
@@ -264,10 +335,15 @@ msgid ""
 "buffer and inspected again, so ``1%27/**/UnIoN/**/SeLeCt`` and "
 "``%252e%252e/`` collapse onto the raw signatures."
 msgstr ""
+"문법상 따옴표와 별표를 정당하게 포함하는 구조적 헤더(``Accept*``, ``Content-Type``, ``Sec-*``, "
+"``If-*``, ...)는 건너뜁니다. 경로, 쿼리, User-Agent, 그 밖의 헤더, 본문의 처음 8 KB를 검사합니다. "
+"퍼센트 이스케이프, 더하기 기호, 주석 시작 기호, 줄일 수 있는 공백이 있는 필드는 8 KB 스택 버퍼에 정규화한 뒤 다시 "
+"검사합니다. 그래서 ``1%27/**/UnIoN/**/SeLeCt``\\ 와 ``%252e%252e/``\\ 는 원래의 시그니처로 "
+"접힙니다."
 
 #: ../../algorithms.rst:154
 msgid "Cost"
-msgstr ""
+msgstr "비용"
 
 #: ../../algorithms.rst:157
 msgid ""
@@ -278,16 +354,20 @@ msgid ""
 "ingress using forward-auth must pass the relevant request information; "
 "omitted bytes cannot be inspected by this process."
 msgstr ""
+"검사 비용은 요청 수만이 아니라 엔진에 제시되는 필드와 바이트에 달려 있습니다. 벤치마크 장은 Gate, Shield, 8 KB "
+"본문의 경우를 따로 보고합니다. 8 KB 상한은 검사 한도이며, 업로드의 나머지가 안전하다는 주장이 아닙니다. "
+"forward-auth를 쓰는 인그레스는 관련 요청 정보를 전달해야 합니다. 전달되지 않은 바이트는 이 프로세스가 검사할 수 "
+"없습니다."
 
 #: ../../algorithms.rst:159
 msgid "The Declarative Policy Engine"
-msgstr ""
+msgstr "선언형 정책 엔진"
 
 #: ../../algorithms.rst:164
 msgid ""
 "Read the rule model, the evaluation order, WEIGH scoring with thresholds, "
 "and the JSON policy grammar."
-msgstr ""
+msgstr "규칙 모델, 평가 순서, 임계값이 있는 WEIGH 점수, JSON 정책 문법을 읽어 봅니다."
 
 #: ../../algorithms.rst:166
 msgid ""
@@ -297,20 +377,23 @@ msgid ""
 "per-rule difficulty in work bits and algorithm, and a signed ``weight``. "
 "Evaluation order:"
 msgstr ""
+"규칙은 선택적인 조건(경로 패턴, User-Agent 패턴, 헤더 최대 4개, IPv4/IPv6 CIDR 블록 최대 8개)의 "
+"논리곱이며, 동작 ``ALLOW``, ``DENY``, ``CHALLENGE``, ``WEIGH`` 중 하나와 선택적인 규칙별 "
+"난이도(작업 비트)와 알고리즘, 부호 있는 ``weight``\\ 를 가집니다. 평가 순서는 다음과 같습니다."
 
 #: ../../algorithms.rst:168
 msgid "Semantic WAF (Shield only): violation is a terminal ``deny``."
-msgstr ""
+msgstr "의미 기반 WAF(Shield 전용): 위반은 최종 ``deny``\\ 입니다."
 
 #: ../../algorithms.rst:169
 msgid "Reputation trie: ``deny`` or ``allow`` prefixes are terminal."
-msgstr ""
+msgstr "평판 트라이: ``deny`` 또는 ``allow`` 접두사는 최종 판정입니다."
 
 #: ../../algorithms.rst:170
 msgid ""
 "Rules in order: the first terminal match returns; ``WEIGH`` matches "
 "accumulate."
-msgstr ""
+msgstr "규칙을 순서대로: 처음으로 일치한 최종 규칙이 결과를 반환하고, ``WEIGH`` 일치는 누적됩니다."
 
 #: ../../algorithms.rst:171
 msgid ""
@@ -318,16 +401,18 @@ msgid ""
 "totals :math:`\\geq 10` ``challenge`` with one extra work bit per 5 "
 "points above the threshold, capped at six."
 msgstr ""
+"점수: 합계가 음수이면 ``allow``, :math:`\\geq 40`\\ 이면 ``deny``, :math:`\\geq "
+"10`\\ 이면 ``challenge``\\ 이며, 임계값을 넘는 5점마다 작업 비트를 하나씩 더하되 최대 여섯 비트까지 더합니다."
 
 #: ../../algorithms.rst:172
 msgid ""
 "Static bypass paths, then trie ``challenge`` verdicts, then the bot "
 "automaton."
-msgstr ""
+msgstr "정적 우회 경로, 그다음 트라이의 ``challenge`` 판정, 그다음 봇 오토마톤."
 
 #: ../../algorithms.rst:173
 msgid "Default action, ``challenge`` unless the policy file says otherwise."
-msgstr ""
+msgstr "기본 동작은 정책 파일이 달리 정하지 않으면 ``challenge``\\ 입니다."
 
 #: ../../algorithms.rst:175
 msgid ""
@@ -336,10 +421,14 @@ msgid ""
 "``Amazonbot``, and challenge every ``Mozilla`` User-Agent: a browser "
 "string is free to forge, so admitting it would make the gate decorative."
 msgstr ""
+"내장 규칙은 ``/.well-known/*``, ``/favicon.ico``, ``/robots.txt``, "
+"``/__sibuna/*``\\ 를 허용하고, ``CF-Worker`` 클라이언트와 ``Amazonbot``\\ 을 거부하며, 모든 "
+"``Mozilla`` User-Agent에 챌린지를 제시합니다. 브라우저 문자열은 공짜로 위조할 수 있으므로, 이를 허용하면 "
+"게이트는 장식에 불과해집니다."
 
 #: ../../algorithms.rst:195
 msgid "Worked Trace: an Encoded Attack with a Valid Session"
-msgstr ""
+msgstr "풀이 추적: 유효한 세션에 담긴 인코딩된 공격"
 
 #: ../../algorithms.rst:198
 msgid ""
@@ -349,6 +438,10 @@ msgid ""
 "request. The percent sign marks the field for canonicalization. One "
 "decoding pass exposes ``%27%20OR%201%3D1``; a second exposes ``' OR 1=1``."
 msgstr ""
+"유효한 세션을 가진 클라이언트가 보낸 ``GET /search?q=%2527%2520OR%25201%253D1``\\ 을 생각해 "
+"봅시다. 먼저 HTTP 파서가 바이트를 복사하지 않고 경로와 쿼리를 분리합니다. 로컬 제한이 실행된 다음 Shield가 요청을 "
+"검사합니다. 퍼센트 기호 때문에 필드는 정규화 대상으로 표시됩니다. 한 번 디코딩하면 ``%27%20OR%201%3D1``\\ 이 "
+"드러나고, 두 번째 디코딩에서 ``' OR 1=1``\\ 이 드러납니다."
 
 #: ../../algorithms.rst:200
 msgid ""
@@ -359,10 +452,13 @@ msgid ""
 "later. The response path need not hold the engine snapshot while an "
 "origin connection is idle."
 msgstr ""
+"이제 토크나이저는 따옴표, 키워드 ``OR``, 같은 리터럴 피연산자를 봅니다. 거부는 최종 정책 결과입니다. 유효한 세션이 이를 "
+"허용으로 바꾸지는 않습니다. 세션 확인은 챌린지 결정만 해소합니다. 저장소 훅은 크기가 제한된 인시던트 레코드를 복사하고, SQL은 "
+"나중에 실행됩니다. 응답 경로는 원본 연결이 유휴 상태인 동안 엔진 스냅숏을 붙잡고 있을 필요가 없습니다."
 
 #: ../../algorithms.rst:202
 msgid "Exercise 6.1"
-msgstr ""
+msgstr "연습 문제 6.1"
 
 #: ../../algorithms.rst:204
 msgid ""
@@ -370,10 +466,12 @@ msgid ""
 "should neither alone establish SQL injection? Give an example of a false "
 "positive a substring-only detector could produce."
 msgstr ""
+"페이로드를 ``O'Reilly``\\ 로, 그다음 ``order=1``\\ 로 바꿔 보세요. 어느 쪽도 단독으로 SQL 인젝션을 "
+"입증해서는 안 되는 이유는 무엇일까요? 부분 문자열만 보는 탐지기가 낼 수 있는 오탐의 예를 드세요."
 
 #: ../../algorithms.rst:206
 msgid "Exercise 6.2"
-msgstr ""
+msgstr "연습 문제 6.2"
 
 #: ../../algorithms.rst:208
 msgid ""
@@ -381,10 +479,12 @@ msgid ""
 "injection (patterns such as ``)(|(``), and explain which existing class "
 "bits it can reuse."
 msgstr ""
+"LDAP 인젝션(예: ``)(|(`` 같은 패턴) 탐지기를 추가하는 데 필요한 바이트 클래스 테이블 항목을 쓰고, 기존 클래스 비트 중 "
+"어떤 것을 재사용할 수 있는지 설명하세요."
 
 #: ../../algorithms.rst:210
 msgid "Explain the invariant"
-msgstr ""
+msgstr "불변식 설명하기"
 
 #: ../../algorithms.rst:212
 msgid ""
@@ -392,3 +492,5 @@ msgid ""
 "structural property the new SQL detector requires, and how the automaton "
 "and the tokenizer divide the work."
 msgstr ""
+"``Accept: */*``\\ 가 오탐이었던 이유, 새 SQL 탐지기가 요구하는 구조적 속성, 그리고 오토마톤과 토크나이저가 "
+"작업을 어떻게 나누는지 검토자에게 설명하세요."

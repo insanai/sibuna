@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,59 +19,59 @@ msgstr ""
 
 #: ../../reference.rst:1
 msgid "Part X: Desk Reference and Diagnostics"
-msgstr ""
+msgstr "제X부: 참고 자료와 진단"
 
 #: ../../reference.rst:4
 msgid ""
 "Endpoints, metrics, error catalog, policy schema, and storage tables in "
 "one place."
-msgstr ""
+msgstr "엔드포인트, 지표, 오류 목록, 정책 스키마, 저장소 테이블을 한곳에 모았습니다."
 
 #: ../../reference.rst:6
 msgid "Endpoints"
-msgstr ""
+msgstr "엔드포인트"
 
 #: ../../reference.rst:9
 msgid "Objectives"
-msgstr ""
+msgstr "학습 목표"
 
 #: ../../reference.rst:11
 msgid "Know every route under ``/__sibuna/`` and what each returns."
-msgstr ""
+msgstr "``/__sibuna/`` 아래의 모든 경로와 각 경로가 반환하는 것을 압니다."
 
 #: ../../reference.rst:13
 msgid "Reserved routes"
-msgstr ""
+msgstr "예약된 경로"
 
 #: ../../reference.rst:17
 msgid "Endpoint"
-msgstr ""
+msgstr "엔드포인트"
 
 #: ../../reference.rst:18
 msgid "Method"
-msgstr ""
+msgstr "메서드"
 
 #: ../../reference.rst:19
 msgid "Function"
-msgstr ""
+msgstr "기능"
 
 #: ../../reference.rst:20
 msgid "``/__sibuna/challenge``"
-msgstr ""
+msgstr "``/__sibuna/challenge``"
 
 #: ../../reference.rst:21 ../../reference.rst:24 ../../reference.rst:30
 #: ../../reference.rst:33 ../../reference.rst:36 ../../reference.rst:39
 #: ../../reference.rst:42
 msgid "GET"
-msgstr ""
+msgstr "GET"
 
 #: ../../reference.rst:22
 msgid "The interstitial page"
-msgstr ""
+msgstr "중간 페이지"
 
 #: ../../reference.rst:23
 msgid "``/__sibuna/challenge.json?need=&path=``"
-msgstr ""
+msgstr "``/__sibuna/challenge.json?need=&path=``"
 
 #: ../../reference.rst:25
 msgid ""
@@ -80,14 +80,17 @@ msgid ""
 "form (``414`` above 8 KiB, ``400`` for a path without a normal form). "
 "Returns ``{id, algorithm, difficulty, challenges, expires_at}``"
 msgstr ""
+"상태 없는 챌린지를 발급합니다. 챌린지 응답에 담긴 요구 티켓이 챌린지를 결정하며, 티켓이 없으면 보고된 URL을 정규형으로 "
+"평가합니다(8 KiB를 넘으면 ``414``, 정규형이 없는 경로는 ``400``). ``{id, algorithm, "
+"difficulty, challenges, expires_at}``\\ 을 반환합니다"
 
 #: ../../reference.rst:26
 msgid "``/__sibuna/verify``"
-msgstr ""
+msgstr "``/__sibuna/verify``"
 
 #: ../../reference.rst:27
 msgid "POST"
-msgstr ""
+msgstr "POST"
 
 #: ../../reference.rst:28
 msgid ""
@@ -95,29 +98,34 @@ msgid ""
 "\"proof\"}``; ``200`` with ``Set-Cookie``, ``400`` with a diagnostic, or "
 "``413`` for a body larger than the connection buffer"
 msgstr ""
+"``{\"challenge_id\", \"nonce\"}`` 또는 ``{\"challenge_id\", \"proof\"}``\\ "
+"를 받습니다. ``Set-Cookie``\\ 와 함께 ``200``, 진단과 함께 ``400``, 본문이 연결 버퍼보다 크면 "
+"``413``\\ 을 반환합니다"
 
 #: ../../reference.rst:29
 msgid "``/__sibuna/wasm/sibuna-pow.wasm``"
-msgstr ""
+msgstr "``/__sibuna/wasm/sibuna-pow.wasm``"
 
 #: ../../reference.rst:31
 msgid ""
 "The solver module, 14,744 bytes (``wasm_bytes`` in "
 "``benchmarks/results/primitives-latest.json``), cacheable for one hour"
 msgstr ""
+"솔버 모듈, 14,744바이트(``benchmarks/results/primitives-latest.json``\\ 의 "
+"``wasm_bytes``), 1시간 동안 캐시 가능"
 
 #: ../../reference.rst:32
 msgid "``/__sibuna/worker.js``"
-msgstr ""
+msgstr "``/__sibuna/worker.js``"
 
 #: ../../reference.rst:34
 msgid ""
 "The Web Worker with WASM and JavaScript provers, cacheable for one hour"
-msgstr ""
+msgstr "WASM 증명자와 JavaScript 증명자를 담은 Web Worker, 1시간 동안 캐시 가능"
 
 #: ../../reference.rst:35
 msgid "``/__sibuna/honeypot``"
-msgstr ""
+msgstr "``/__sibuna/honeypot``"
 
 #: ../../reference.rst:37
 msgid ""
@@ -126,24 +134,27 @@ msgid ""
 "no cross-site ``Sec-Fetch-Site``); any other is answered ``404`` and "
 "counted"
 msgstr ""
+"호출자를 ``--ban-seconds`` 동안 차단하고 인시던트를 기록합니다. ``403``\\ 을 반환합니다. 최상위 "
+"요청(``Sec-Fetch-Dest``\\ 가 없거나 ``document``\\ 이고, 교차 사이트 "
+"``Sec-Fetch-Site``\\ 가 아닌 요청)만 차단하며, 그 밖의 요청은 ``404``\\ 로 응답하고 횟수를 셉니다"
 
 #: ../../reference.rst:38
 msgid "``/__sibuna/health``"
-msgstr ""
+msgstr "``/__sibuna/health``"
 
 #: ../../reference.rst:40
 msgid ""
 "JSON liveness status with engine name, version, proxy mode and proof "
 "algorithm"
-msgstr ""
+msgstr "엔진 이름, 버전, 프록시 모드, 증명 알고리즘을 담은 JSON 활성 상태"
 
 #: ../../reference.rst:41
 msgid "``/__sibuna/metrics``"
-msgstr ""
+msgstr "``/__sibuna/metrics``"
 
 #: ../../reference.rst:43
 msgid "Prometheus text format (version 0.0.4)"
-msgstr ""
+msgstr "Prometheus 텍스트 형식(버전 0.0.4)"
 
 #: ../../reference.rst:45
 msgid ""
@@ -156,6 +167,13 @@ msgid ""
 "client that does not accept HTML receives ``401`` with "
 "``{\"error\":\"challenge_required\",\"challenge\":\"/__sibuna/challenge.json?need=<ticket>\"}``."
 msgstr ""
+"``/__sibuna/`` 아래의 그 밖의 경로는 ``404``\\ 로 응답합니다. 발급과 검증은 별도의 "
+"``--challenge-rate-limit`` 예산을 쓰며, 차단된 주소는 모든 경로에서 ``403``\\ 으로 거부됩니다. "
+"챌린지 응답에는 ``X-Sibuna-Status: CHALLENGE``\\ 가 붙습니다. 허용된 요청은 업스트림으로 "
+"``X-Sibuna-Status: PASS``\\ 와 ``X-Sibuna-Rule``\\ 을 전달합니다(forward-auth "
+"응답에는 16진수 ``X-Sibuna-Rule-Hash``\\ 도 붙습니다). HTML을 받아들이지 않는 클라이언트는 "
+"``{\"error\":\"challenge_required\",\"challenge\":\"/__sibuna/challenge.json?need=<ticket>\"}``\\ "
+"와 함께 ``401``\\ 을 받습니다."
 
 #: ../../reference.rst:47
 msgid ""
@@ -170,171 +188,184 @@ msgid ""
 "forward-auth mode. Part IX documents the console's workflows, HTTPS "
 "deployment and current SID 0007 limits."
 msgstr ""
+"별도로 켜는 관리 리스너는 ``/console/``\\ 을 제공합니다. 관리자는 ``sibuna init-admin``\\ 으로 "
+"로컬에서 초기화하고, 처음 로그인할 때 임시 비밀번호를 바꿉니다. ``/console/api/stats``\\ 와 "
+"``/console/ws``\\ 에는 인증된 세션(키오스크 세션 포함)이 필요합니다. WebSocket은 통계, 이벤트, 노드, "
+"정책, 챌린지, 감사 기록을 크기가 제한된 스냅숏, 변경분, 누락 복구와 함께 다중화합니다. 관리 피어는 "
+"``/console/peer``\\ 에 연결하며, 모든 API 경로는 ``/console/api/`` 아래에 있습니다. "
+"forward-auth 모드에서는 원본 서버 오류 카운터를 관찰하지 않습니다. 콘솔의 워크플로, HTTPS 배포, 현재 SID "
+"0007의 한계는 IX부에서 설명합니다."
 
 #: ../../reference.rst:49
 msgid "Metrics"
-msgstr ""
+msgstr "지표"
 
 #: ../../reference.rst:52
 msgid ""
 "Counters exposed as ``sibuna_<name>_total`` in Prometheus text format, in "
 "this order:"
 msgstr ""
+"Prometheus 텍스트 형식으로 ``sibuna_<name>_total``\\ 이라는 이름으로 다음 순서대로 노출하는 "
+"카운터입니다."
 
 #: ../../reference.rst:54
 msgid "Counters"
-msgstr ""
+msgstr "카운터"
 
 #: ../../reference.rst:58
 msgid "Counter"
-msgstr ""
+msgstr "카운터"
 
 #: ../../reference.rst:59
 msgid "Incremented when"
-msgstr ""
+msgstr "증가하는 때"
 
 #: ../../reference.rst:60
 msgid "``incidents_persisted``, ``incident_batches``"
-msgstr ""
+msgstr "``incidents_persisted``, ``incident_batches``"
 
 #: ../../reference.rst:61
 msgid "Records and transactions whose commit the storage thread confirmed"
-msgstr ""
+msgstr "저장소 스레드가 커밋을 확인한 레코드와 트랜잭션"
 
 #: ../../reference.rst:62
 msgid "``incidents_dropped``, ``incident_write_failures``"
-msgstr ""
+msgstr "``incidents_dropped``, ``incident_write_failures``"
 
 #: ../../reference.rst:63
 msgid ""
 "Queue pushes rejected because the ring was full, and failed commit "
 "attempts"
-msgstr ""
+msgstr "링이 가득 차서 거부된 큐 삽입, 그리고 실패한 커밋 시도"
 
 #: ../../reference.rst:64
 msgid "``requests``"
-msgstr ""
+msgstr "``requests``"
 
 #: ../../reference.rst:65
 msgid "A parsed request reached dispatch (reserved routes included)"
-msgstr ""
+msgstr "파싱된 요청이 디스패치에 도달함(예약된 경로 포함)"
 
 #: ../../reference.rst:66
 msgid "``allowed``, ``denied``, ``challenged``"
-msgstr ""
+msgstr "``allowed``, ``denied``, ``challenged``"
 
 #: ../../reference.rst:67
 msgid ""
 "A policy decision was made (admitted, refused, challenge issued or "
 "reissued)"
-msgstr ""
+msgstr "정책 결정이 내려짐(허용, 거부, 챌린지 발급 또는 재발급)"
 
 #: ../../reference.rst:68
 msgid "``challenges_issued``"
-msgstr ""
+msgstr "``challenges_issued``"
 
 #: ../../reference.rst:69
 msgid "``/__sibuna/challenge.json`` minted a challenge record"
-msgstr ""
+msgstr "``/__sibuna/challenge.json``\\ 이 챌린지 레코드를 발급함"
 
 #: ../../reference.rst:70
 msgid "``solutions_accepted``, ``solutions_rejected``"
-msgstr ""
+msgstr "``solutions_accepted``, ``solutions_rejected``"
 
 #: ../../reference.rst:71
 msgid "``/__sibuna/verify`` accepted or rejected a proof"
-msgstr ""
+msgstr "``/__sibuna/verify``\\ 가 증명을 받아들이거나 거부함"
 
 #: ../../reference.rst:72
 msgid "``rate_limited``"
-msgstr ""
+msgstr "``rate_limited``"
 
 #: ../../reference.rst:73
 msgid ""
 "GCRA refused a request (``429``): the request limit, the challenge budget "
 "or a rule's quota"
-msgstr ""
+msgstr "GCRA가 요청을 거부함(``429``): 요청 한도, 챌린지 예산, 또는 규칙의 할당량"
 
 #: ../../reference.rst:74
 msgid "``banned``"
-msgstr ""
+msgstr "``banned``"
 
 #: ../../reference.rst:75
 msgid "A banned address was refused, or the honeypot banned one"
-msgstr ""
+msgstr "차단된 주소가 거부되었거나, 허니팟이 주소를 차단함"
 
 #: ../../reference.rst:76
 msgid "``bans_issued``"
-msgstr ""
+msgstr "``bans_issued``"
 
 #: ../../reference.rst:77
 msgid "A ban was recorded (honeypot or a rule quota's ban)"
-msgstr ""
+msgstr "차단이 기록됨(허니팟 또는 규칙 할당량에 의한 차단)"
 
 #: ../../reference.rst:78
 msgid "``proxied``, ``upstream_errors``"
-msgstr ""
+msgstr "``proxied``, ``upstream_errors``"
 
 #: ../../reference.rst:79
 msgid "A request was relayed to the origin, or the origin failed (``502``)"
-msgstr ""
+msgstr "요청이 원본 서버로 전달되었거나, 원본 서버가 실패함(``502``)"
 
 #: ../../reference.rst:80
 msgid "``parse_errors``"
-msgstr ""
+msgstr "``parse_errors``"
 
 #: ../../reference.rst:81
 msgid ""
 "A malformed head, a repeated ``Host``, a target without a normal form "
 "(``400``), or an unsupported transfer coding (``501``) was refused"
 msgstr ""
+"형식이 잘못된 헤드, 반복된 ``Host``, 정규형이 없는 대상(``400``), 또는 지원하지 않는 전송 코딩(``501``)이 "
+"거부됨"
 
 #: ../../reference.rst:82
 msgid "``overloaded``"
-msgstr ""
+msgstr "``overloaded``"
 
 #: ../../reference.rst:83
 msgid ""
 "A connection beyond ``--max-connections`` or ``--max-connections-per-ip`` "
 "was answered ``503``"
 msgstr ""
+"``--max-connections`` 또는 ``--max-connections-per-ip``\\ 를 넘는 연결에 "
+"``503``\\ 으로 응답함"
 
 #: ../../reference.rst:84
 msgid "``bans_refused``"
-msgstr ""
+msgstr "``bans_refused``"
 
 #: ../../reference.rst:85
 msgid ""
 "A ban was not recorded because every slot its key may take held a ban in "
 "effect"
-msgstr ""
+msgstr "키가 들어갈 수 있는 모든 슬롯에 유효한 차단이 있어서 차단을 기록하지 못함"
 
 #: ../../reference.rst:86
 msgid "``forwarded_invalid``"
-msgstr ""
+msgstr "``forwarded_invalid``"
 
 #: ../../reference.rst:87
 msgid ""
 "A trusted forwarded client address did not parse; the request was judged "
 "by the socket peer"
-msgstr ""
+msgstr "신뢰하는 전달된 클라이언트 주소를 파싱하지 못해, 소켓 피어로 요청을 판정함"
 
 #: ../../reference.rst:88
 msgid "``honeypot_refused``"
-msgstr ""
+msgstr "``honeypot_refused``"
 
 #: ../../reference.rst:89
 msgid ""
 "A honeypot hit banned nobody because a page, not a person, requested it"
-msgstr ""
+msgstr "사람이 아니라 페이지가 요청했으므로 허니팟 적중이 아무도 차단하지 않음"
 
 #: ../../reference.rst:90
 msgid "``rate_evictions``"
-msgstr ""
+msgstr "``rate_evictions``"
 
 #: ../../reference.rst:91
 msgid "A limiter arrival evicted another active client's cell"
-msgstr ""
+msgstr "제한기에 새로 도착한 클라이언트가 다른 활성 클라이언트의 셀을 밀어냄"
 
 #: ../../reference.rst:93
 msgid ""
@@ -342,46 +373,48 @@ msgid ""
 "because the pending batch is retained. Monitor increments over an "
 "interval; totals alone are not a queue depth."
 msgstr ""
+"대기 중인 배치는 보관되므로, 재시도는 레코드를 잃지 않고도 ``incident_write_failures``\\ 를 늘릴 수 "
+"있습니다. 일정 구간 동안의 증가량을 감시하세요. 누적값만으로는 큐 깊이를 알 수 없습니다."
 
 #: ../../reference.rst:95
 msgid "Status Codes"
-msgstr ""
+msgstr "상태 코드"
 
 #: ../../reference.rst:98
 msgid "Status codes of the data plane"
-msgstr ""
+msgstr "데이터 평면의 상태 코드"
 
 #: ../../reference.rst:102 ../../reference.rst:192
 msgid "Code"
-msgstr ""
+msgstr "코드"
 
 #: ../../reference.rst:103
 msgid "When"
-msgstr ""
+msgstr "언제"
 
 #: ../../reference.rst:104
 msgid "200"
-msgstr ""
+msgstr "200"
 
 #: ../../reference.rst:105
 msgid ""
 "Admitted (forward-auth), interstitial (HTML navigation needing a "
 "challenge), internal routes"
-msgstr ""
+msgstr "허용됨(forward-auth), 중간 페이지(챌린지가 필요한 HTML 탐색), 내부 경로"
 
 #: ../../reference.rst:106
 msgid "302"
-msgstr ""
+msgstr "302"
 
 #: ../../reference.rst:107
 msgid ""
 "Not used by the current protocol; verification answers ``200`` and the "
 "page reloads"
-msgstr ""
+msgstr "현재 프로토콜에서는 쓰지 않습니다. 검증은 ``200``\\ 으로 응답하고 페이지가 다시 불러옵니다"
 
 #: ../../reference.rst:108 ../../reference.rst:196
 msgid "400"
-msgstr ""
+msgstr "400"
 
 #: ../../reference.rst:109
 msgid ""
@@ -389,106 +422,110 @@ msgid ""
 "form, invalid forwarded metadata, a malformed body, or a rejected "
 "solution with an Elm-style diagnostic"
 msgstr ""
+"형식이 잘못된 요청, 반복된 ``Host`` 필드, 정규형이 없는 대상, 잘못된 전달 메타데이터, 형식이 잘못된 본문, 또는 Elm "
+"스타일 진단과 함께 거부된 풀이"
 
 #: ../../reference.rst:110
 msgid "401"
-msgstr ""
+msgstr "401"
 
 #: ../../reference.rst:111
 msgid ""
 "Challenge required for a client that does not accept HTML, or in "
 "forward-auth mode"
-msgstr ""
+msgstr "HTML을 받아들이지 않는 클라이언트나 forward-auth 모드에서 챌린지가 필요함"
 
 #: ../../reference.rst:112
 msgid "403"
-msgstr ""
+msgstr "403"
 
 #: ../../reference.rst:113
 msgid "Policy or WAF denial, banned address, honeypot"
-msgstr ""
+msgstr "정책 또는 WAF 거부, 차단된 주소, 허니팟"
 
 #: ../../reference.rst:114
 msgid "404"
-msgstr ""
+msgstr "404"
 
 #: ../../reference.rst:115
 msgid ""
 "An unknown path under ``/__sibuna/``, or a honeypot hit that is not a "
 "top-level request"
-msgstr ""
+msgstr "``/__sibuna/`` 아래의 알 수 없는 경로, 또는 최상위 요청이 아닌 허니팟 적중"
 
 #: ../../reference.rst:116
 msgid "413"
-msgstr ""
+msgstr "413"
 
 #: ../../reference.rst:117
 msgid "Solution body larger than the 64 KB connection buffer"
-msgstr ""
+msgstr "풀이 본문이 64 KB 연결 버퍼보다 큼"
 
 #: ../../reference.rst:118
 msgid "414"
-msgstr ""
+msgstr "414"
 
 #: ../../reference.rst:119
 msgid "A reported challenge URL over 8 KiB"
-msgstr ""
+msgstr "보고된 챌린지 URL이 8 KiB를 넘음"
 
 #: ../../reference.rst:120
 msgid "417"
-msgstr ""
+msgstr "417"
 
 #: ../../reference.rst:121
 msgid "Unsupported request expectation; ``100-continue`` is handled locally"
-msgstr ""
+msgstr "지원하지 않는 요청 기대 조건. ``100-continue``\\ 는 로컬에서 처리합니다"
 
 #: ../../reference.rst:122 ../../reference.rst:211
 msgid "429"
-msgstr ""
+msgstr "429"
 
 #: ../../reference.rst:123
 msgid "GCRA limit exceeded; ``Retry-After`` in seconds"
-msgstr ""
+msgstr "GCRA 한도 초과. ``Retry-After``\\ 는 초 단위입니다"
 
 #: ../../reference.rst:124
 msgid "431"
-msgstr ""
+msgstr "431"
 
 #: ../../reference.rst:125
 msgid "Request head over 16 KB"
-msgstr ""
+msgstr "요청 헤드가 16 KB를 넘음"
 
 #: ../../reference.rst:126
 msgid "501"
-msgstr ""
+msgstr "501"
 
 #: ../../reference.rst:127
 msgid "``Transfer-Encoding`` with a coding other than chunked"
-msgstr ""
+msgstr "chunked가 아닌 코딩을 지정한 ``Transfer-Encoding``"
 
 #: ../../reference.rst:128
 msgid "502"
-msgstr ""
+msgstr "502"
 
 #: ../../reference.rst:129
 msgid ""
 "Origin unreachable, or its response head was malformed or larger than 16 "
 "KB"
-msgstr ""
+msgstr "원본 서버에 연결할 수 없거나, 원본 응답 헤드의 형식이 잘못되었거나 16 KB를 넘음"
 
 #: ../../reference.rst:130 ../../reference.rst:202 ../../reference.rst:205
 msgid "503"
-msgstr ""
+msgstr "503"
 
 #: ../../reference.rst:131
 msgid ""
 "Connection limit (``--max-connections`` or ``--max-connections-per-ip``) "
 "reached, or the node is draining; the socket is closed after the reply"
 msgstr ""
+"연결 한도(``--max-connections`` 또는 ``--max-connections-per-ip``)에 도달했거나 노드가 "
+"드레인 중입니다. 응답 뒤에 소켓을 닫습니다"
 
 #: ../../reference.rst:133
 msgid "Error Catalog"
-msgstr ""
+msgstr "오류 목록"
 
 #: ../../reference.rst:136
 msgid ""
@@ -509,176 +546,189 @@ msgid ""
 "option, and ``CONSOLE001`` a console configuration that breaks a rule "
 "(``StorageRequired`` without storage)."
 msgstr ""
+"``INVALID COMMAND LINE``\\ 은 데몬이 인식하지 못하는 옵션, 문서화된 범위를 벗어난 값, 잘못되었거나 빠졌거나 "
+"중복된 모드 선택이 있으면 시작을 멈춥니다. 오류 블록은 옵션, 주어진 값, 기대하는 범위, 오류(``UnknownOption``, "
+"``MissingValue``, ``InvalidValue``, ``InvalidMode``, ``MissingMode``, "
+"``DuplicateMode``, Zaxonlite 클러스터 옵션에 대한 ``RemovedOption``, 서로 배타적인 두 저장소 "
+"옵션에 대한 ``ConflictingOptions``, ``--cluster-node`` 없이 데이터베이스 URL을 준 경우의 "
+"``MissingOption``)를 밝히고 힌트로 끝납니다. 데이터베이스 URL은 ``[redacted]``\\ 로 표시됩니다. "
+"``--mode reverse_proxy`` 또는 ``--mode forward_auth``\\ 를 한 번만 지정하세요. "
+"``-m``\\ 은 같은 뜻의 짧은 옵션입니다. 거부된 정책 파일은 오류에 맞는 제목의 블록(예: ``INVALID POLICY "
+"ACTION``)에 파일, 오류 이름, 규칙, 필드, 값을 출력합니다. 콘솔 옵션은 따로 검사합니다. ``CONSOLE002``\\ "
+"는 형식이 잘못되었거나 반복된 콘솔 옵션을, ``CONSOLE001``\\ 은 규칙을 어기는 콘솔 설정(저장소 없이 "
+"``StorageRequired``)을 가리킵니다."
 
 #: ../../reference.rst:138
 msgid "Implementation: ``ErrorKind::explain``"
-msgstr ""
+msgstr "구현: ``ErrorKind::explain``"
 
 #: ../../reference.rst:140
 msgid ""
 "Maps every domain error to a boundary line, an explanation, and a "
 "``Hint:``. In ``crates/core/src/errors.rs`` (crate ``sibuna-core``)."
 msgstr ""
+"모든 도메인 오류를 경계선, 설명, ``Hint:``\\ 로 대응시킵니다. ``crates/core/src/errors.rs``\\ "
+"(crate ``sibuna-core``)에 있습니다."
 
 #: ../../reference.rst:142
 msgid "Challenge and session errors"
-msgstr ""
+msgstr "챌린지와 세션 오류"
 
 #: ../../reference.rst:146
 msgid "Error"
-msgstr ""
+msgstr "오류"
 
 #: ../../reference.rst:147
 msgid "Cause"
-msgstr ""
+msgstr "원인"
 
 #: ../../reference.rst:148
 msgid "Hint"
-msgstr ""
+msgstr "힌트"
 
 #: ../../reference.rst:149
 msgid "``MalformedChallenge``"
-msgstr ""
+msgstr "``MalformedChallenge``"
 
 #: ../../reference.rst:150
 msgid "The identifier is not a well-formed challenge record"
-msgstr ""
+msgstr "식별자가 올바른 형식의 챌린지 레코드가 아님"
 
 #: ../../reference.rst:151
 msgid "Fetch a fresh challenge and submit it unchanged"
-msgstr ""
+msgstr "새 챌린지를 가져와 바꾸지 않고 제출하세요"
 
 #: ../../reference.rst:152
 msgid "``InvalidChallengeTag``"
-msgstr ""
+msgstr "``InvalidChallengeTag``"
 
 #: ../../reference.rst:153
 msgid "The tag does not authenticate; not issued by this cluster or edited"
-msgstr ""
+msgstr "태그가 인증되지 않음. 이 클러스터가 발급하지 않았거나 수정됨"
 
 #: ../../reference.rst:154
 msgid "Challenges cannot be forged; request a new one"
-msgstr ""
+msgstr "챌린지는 위조할 수 없습니다. 새 챌린지를 요청하세요"
 
 #: ../../reference.rst:155
 msgid "``ChallengeExpired``"
-msgstr ""
+msgstr "``ChallengeExpired``"
 
 #: ../../reference.rst:156
 msgid "Older than the challenge TTL, or minted in the future"
-msgstr ""
+msgstr "챌린지 TTL보다 오래되었거나, 미래 시각에 발급됨"
 
 #: ../../reference.rst:157
 msgid "Request a new challenge"
-msgstr ""
+msgstr "새 챌린지를 요청하세요"
 
 #: ../../reference.rst:158
 msgid "``FingerprintMismatch``"
-msgstr ""
+msgstr "``FingerprintMismatch``"
 
 #: ../../reference.rst:159
 msgid "Submitted from a different address or User-Agent"
-msgstr ""
+msgstr "다른 주소나 User-Agent에서 제출됨"
 
 #: ../../reference.rst:160
 msgid "Submit from the client that fetched it"
-msgstr ""
+msgstr "챌린지를 가져온 클라이언트에서 제출하세요"
 
 #: ../../reference.rst:161
 msgid "``DifficultyNotMet``"
-msgstr ""
+msgstr "``DifficultyNotMet``"
 
 #: ../../reference.rst:162
 msgid "Hashcash nonce lacks the required zero bits"
-msgstr ""
+msgstr "Hashcash nonce에 필요한 0비트가 부족함"
 
 #: ../../reference.rst:163
 msgid "Keep searching nonces"
-msgstr ""
+msgstr "nonce 탐색을 계속하세요"
 
 #: ../../reference.rst:164
 msgid "``InvalidProof``"
-msgstr ""
+msgstr "``InvalidProof``"
 
 #: ../../reference.rst:165
 msgid "The sequential-work proof does not open the committed labels"
-msgstr ""
+msgstr "순차 작업 증명이 커밋된 라벨을 개방하지 못함"
 
 #: ../../reference.rst:166
 msgid "Run the prover to completion for the issued depth and openings"
-msgstr ""
+msgstr "발급된 깊이와 개방 수로 증명자를 끝까지 실행하세요"
 
 #: ../../reference.rst:167
 msgid "``WrongSolutionType``"
-msgstr ""
+msgstr "``WrongSolutionType``"
 
 #: ../../reference.rst:168
 msgid "A nonce for a PoSW challenge or a proof for Hashcash"
-msgstr ""
+msgstr "PoSW 챌린지에 nonce를, 또는 Hashcash에 증명을 제출함"
 
 #: ../../reference.rst:169
 msgid "Match the solution field to the algorithm"
-msgstr ""
+msgstr "풀이 필드를 알고리즘에 맞추세요"
 
 #: ../../reference.rst:170
 msgid "``DoubleSpendAttempt``"
-msgstr ""
+msgstr "``DoubleSpendAttempt``"
 
 #: ../../reference.rst:171
 msgid "The challenge was already spent"
-msgstr ""
+msgstr "챌린지가 이미 사용됨"
 
 #: ../../reference.rst:172
 msgid "Challenges are single use"
-msgstr ""
+msgstr "챌린지는 한 번만 쓸 수 있습니다"
 
 #: ../../reference.rst:173
 msgid "``StoreFull``"
-msgstr ""
+msgstr "``StoreFull``"
 
 #: ../../reference.rst:174
 msgid "The spent set is full"
-msgstr ""
+msgstr "사용 완료 집합이 가득 참"
 
 #: ../../reference.rst:175
 msgid "Lower the challenge TTL or raise ``--spent-tags``"
-msgstr ""
+msgstr "챌린지 TTL을 낮추거나 ``--spent-tags``\\ 를 높이세요"
 
 #: ../../reference.rst:176
 msgid "``InvalidTokenSignature``"
-msgstr ""
+msgstr "``InvalidTokenSignature``"
 
 #: ../../reference.rst:177
 msgid "Cookie tag or signature fails"
-msgstr ""
+msgstr "쿠키 태그나 서명 검증이 실패함"
 
 #: ../../reference.rst:178
 msgid "Re-authenticate through the interstitial"
-msgstr ""
+msgstr "중간 페이지를 통해 다시 인증하세요"
 
 #: ../../reference.rst:179
 msgid "``TokenExpired``"
-msgstr ""
+msgstr "``TokenExpired``"
 
 #: ../../reference.rst:180
 msgid "Cookie past its expiry"
-msgstr ""
+msgstr "쿠키가 만료됨"
 
 #: ../../reference.rst:181
 msgid "Re-authenticate"
-msgstr ""
+msgstr "다시 인증하세요"
 
 #: ../../reference.rst:182
 msgid "``TokenBoundAddressMismatch``"
-msgstr ""
+msgstr "``TokenBoundAddressMismatch``"
 
 #: ../../reference.rst:183
 msgid "Cookie presented from a different client identity"
-msgstr ""
+msgstr "쿠키가 다른 클라이언트 신원에서 제시됨"
 
 #: ../../reference.rst:184
 msgid "Cookies cannot be shared"
-msgstr ""
+msgstr "쿠키는 공유할 수 없습니다"
 
 #: ../../reference.rst:186
 msgid ""
@@ -686,43 +736,45 @@ msgid ""
 "``{\"error\":\"<CODE>\",\"hint\":\"<sentence>\"}``; the hint is the text "
 "the interface shows (``crates/console/src/http/reply.rs``)."
 msgstr ""
+"콘솔 API는 실패를 ``{\"error\":\"<CODE>\",\"hint\":\"<sentence>\"}``\\ 로 응답합니다. "
+"힌트는 인터페이스가 보여 주는 문장입니다(``crates/console/src/http/reply.rs``)."
 
 #: ../../reference.rst:188
 msgid "Console failure codes that concern operators"
-msgstr ""
+msgstr "운영자와 관련된 콘솔 실패 코드"
 
 #: ../../reference.rst:193
 msgid "Status"
-msgstr ""
+msgstr "상태"
 
 #: ../../reference.rst:194
 msgid "Meaning"
-msgstr ""
+msgstr "의미"
 
 #: ../../reference.rst:195
 msgid "``CONSOLE002``"
-msgstr ""
+msgstr "``CONSOLE002``"
 
 #: ../../reference.rst:197
 msgid "The request is malformed, too large or not allowed in its form"
-msgstr ""
+msgstr "요청의 형식이 잘못되었거나, 너무 크거나, 그 형태로는 허용되지 않음"
 
 #: ../../reference.rst:198
 msgid "``CONSOLE003``"
-msgstr ""
+msgstr "``CONSOLE003``"
 
 #: ../../reference.rst:199
 msgid "503 / 429"
-msgstr ""
+msgstr "503 / 429"
 
 #: ../../reference.rst:200
 msgid ""
 "The storage job queue is full (32 jobs), or the password verifier is busy"
-msgstr ""
+msgstr "저장소 작업 큐가 가득 찼거나(작업 32개), 비밀번호 검증기가 바쁨"
 
 #: ../../reference.rst:201
 msgid "``CONSOLEQUORUM``"
-msgstr ""
+msgstr "``CONSOLEQUORUM``"
 
 #: ../../reference.rst:203
 msgid ""
@@ -730,24 +782,26 @@ msgid ""
 "outcome is unknown, and the data plane continues from the last applied "
 "policy"
 msgstr ""
+"데이터베이스가 요청 대기 시간 10초 안에 응답하지 않음. 결과는 알 수 없으며, 데이터 평면은 마지막으로 적용된 정책으로 계속 "
+"동작합니다"
 
 #: ../../reference.rst:204
 msgid "``CONSOLE004``"
-msgstr ""
+msgstr "``CONSOLE004``"
 
 #: ../../reference.rst:206
 msgid ""
 "The service cannot answer: not available in this build, stopping, or an "
 "internal failure"
-msgstr ""
+msgstr "서비스가 응답할 수 없음: 이 빌드에서 제공되지 않거나, 중지 중이거나, 내부 실패"
 
 #: ../../reference.rst:207
 msgid "``CONSOLENODE``"
-msgstr ""
+msgstr "``CONSOLENODE``"
 
 #: ../../reference.rst:208
 msgid "400 / 409 / 503"
-msgstr ""
+msgstr "400 / 409 / 503"
 
 #: ../../reference.rst:209
 msgid ""
@@ -756,18 +810,20 @@ msgid ""
 "completion could not be recorded (503); inspect the operation receipt "
 "before retrying"
 msgstr ""
+"노드 명령이 거부됨: 다른 노드를 지정했거나(400), 부팅 또는 제어 리비전이 오래되었거나(409), 다른 명령이 실행 중일 때 "
+"도착했거나 완료를 기록할 수 없었음(503). 재시도하기 전에 작업 영수증을 확인하세요"
 
 #: ../../reference.rst:210
 msgid "``CONSOLEMUTATION``"
-msgstr ""
+msgstr "``CONSOLEMUTATION``"
 
 #: ../../reference.rst:212
 msgid "More than sixty management mutations in a minute from one session"
-msgstr ""
+msgstr "한 세션에서 1분에 관리 변경이 60건을 넘음"
 
 #: ../../reference.rst:214
 msgid "Policy Schema"
-msgstr ""
+msgstr "정책 스키마"
 
 #: ../../reference.rst:240
 msgid ""
@@ -780,6 +836,13 @@ msgid ""
 "reputation trie of ``ip_rules`` holds at most 8,192 nodes. Each rule may "
 "use one spelling of each criterion."
 msgstr ""
+"``challenge_at``\\ 과 ``deny_at``\\ 은 -1000에서 1000 사이이며 ``deny_at``\\ 은 "
+"``challenge_at`` 이상이어야 하고, ``bits_step``\\ 은 1에서 1000 사이입니다. "
+"``challenge`` 블록은 ``CHALLENGE`` 규칙에만 쓸 수 있으며 작업 비트는 1에서 64입니다. "
+"``limits``\\ 는 규칙에 자체 할당량을 줍니다. ``rate`` 1에서 1,000,000과 "
+"``window_seconds`` 1에서 86,400은 필수이고, ``ban_seconds``\\ (최대 86,400)는 선택이며, "
+"``WEIGH`` 규칙에는 한도를 둘 수 없습니다. ``ip_rules``\\ 의 평판 트라이는 노드를 최대 8,192개 담습니다. "
+"각 규칙은 조건마다 한 가지 표기만 쓸 수 있습니다."
 
 #: ../../reference.rst:242
 msgid ""
@@ -792,10 +855,15 @@ msgid ""
 "``%5C`` or ``\\`` matches nothing, and path matching is case-sensitive "
 "(SID 0003)."
 msgstr ""
+"패턴 문법: ``.*`` 또는 ``*``\\ 는 모든 것과 일치합니다. ``^...$``\\ 는 정확한 경로를 고정합니다. 끝의 "
+"``*``, ``/*``, ``.*``\\ 는 접두사입니다. ``/``\\ 로 시작하는 패턴은 정확한 경로입니다. 그 밖의 것은 "
+"대소문자를 구별하지 않는 부분 문자열입니다. 경로 패턴은 정규형 경로(세그먼트 사이에 슬래시 하나, 점 세그먼트 없음, 예약되지 "
+"않은 문자는 이스케이프 해제, 그 밖의 이스케이프는 대문자 16진수)와 대조하므로, ``;``, ``%2F``, ``%5C``, "
+"``\\``\\ 를 담은 패턴은 아무것과도 일치하지 않으며, 경로 매칭은 대소문자를 구별합니다(SID 0003)."
 
 #: ../../reference.rst:244
 msgid "Storage Tables"
-msgstr ""
+msgstr "저장소 테이블"
 
 #: ../../reference.rst:247
 msgid ""
@@ -808,121 +876,132 @@ msgid ""
 "lowercase. Incident ids are ``node_id << 40 | sequence``, unique across a "
 "cluster without coordination; node ids run from 1 to 8,388,607."
 msgstr ""
+"``policy_revision``, ``policies``, ``policy_inspection``, "
+"``ip_reputation``, ``incident_receipts``, ``security_incidents``\\ "
+"(256바이트 임베딩 포함), 전문 검색 색인(SQLite에서는 정규 토큰에 대한 FTS5인 ``incidents_fts``, "
+"PostgreSQL에서는 GIN 색인이 있는 ``tsvector`` 열 ``search``), 그리고 "
+"``sibuna_schema``\\ 입니다. 콘솔은 ``console_*`` 테이블 33개를 더합니다. 저장되는 동작, 알고리즘, "
+"모드 이름은 소문자입니다. 인시던트 id는 ``node_id << 40 | sequence``\\ 로, 조정 없이도 클러스터 "
+"전체에서 유일합니다. 노드 id는 1부터 8,388,607까지입니다."
 
 #: ../../reference.rst:249
 msgid "Build Targets"
-msgstr ""
+msgstr "빌드 대상"
 
 #: ../../reference.rst:252
 msgid "Build and repository commands"
-msgstr ""
+msgstr "빌드와 저장소 명령"
 
 #: ../../reference.rst:256
 msgid "Command"
-msgstr ""
+msgstr "명령"
 
 #: ../../reference.rst:257
 msgid "Result"
-msgstr ""
+msgstr "결과"
 
 #: ../../reference.rst:258
 msgid "``cargo build --release -p sibuna``"
-msgstr ""
+msgstr "``cargo build --release -p sibuna``"
 
 #: ../../reference.rst:259
 msgid "Daemon with SQLite storage and the console (the default features)"
-msgstr ""
+msgstr "SQLite 저장소와 콘솔을 포함한 데몬(기본 기능)"
 
 #: ../../reference.rst:260
 msgid "``cargo build --release -p sibuna --no-default-features``"
-msgstr ""
+msgstr "``cargo build --release -p sibuna --no-default-features``"
 
 #: ../../reference.rst:261
 msgid ""
 "In-memory daemon without storage or console and without any external crate"
-msgstr ""
+msgstr "저장소와 콘솔 없이, 외부 crate도 없이 메모리에서만 동작하는 데몬"
 
 #: ../../reference.rst:262
 msgid "``cargo build --release -p sibuna --features postgres``"
-msgstr ""
+msgstr "``cargo build --release -p sibuna --features postgres``"
 
 #: ../../reference.rst:263
 msgid "Daemon that also connects to a shared PostgreSQL database"
-msgstr ""
+msgstr "공유 PostgreSQL 데이터베이스에도 연결하는 데몬"
 
 #: ../../reference.rst:264
 msgid "``cargo test``"
-msgstr ""
+msgstr "``cargo test``"
 
 #: ../../reference.rst:265
 msgid ""
 "Unit tests, integration tests against a live daemon, storage and console "
 "tests (PostgreSQL ones when ``SIBUNA_TEST_DATABASE_URL`` is set)"
 msgstr ""
+"단위 테스트, 실행 중인 데몬에 대한 통합 테스트, 저장소와 콘솔 테스트(``SIBUNA_TEST_DATABASE_URL``\\ 을 "
+"설정하면 PostgreSQL 테스트 포함)"
 
 #: ../../reference.rst:266
 msgid "``cargo clippy --all-targets``, ``cargo fmt --check``"
-msgstr ""
+msgstr "``cargo clippy --all-targets``, ``cargo fmt --check``"
 
 #: ../../reference.rst:267
 msgid "Lints and formatting (``max_width = 99``)"
-msgstr ""
+msgstr "린트와 포맷(``max_width = 99``)"
 
 #: ../../reference.rst:268
 msgid "``cargo xtask check``"
-msgstr ""
+msgstr "``cargo xtask check``"
 
 #: ../../reference.rst:269
 msgid ""
 "The 70-line function, 1,408-line file and 99/108-column line limits; no "
 "tabs"
-msgstr ""
+msgstr "70줄 함수, 1,408줄 파일, 99/108열 줄 길이 한도. 탭 금지"
 
 #: ../../reference.rst:270
 msgid "``cargo xtask browser``"
-msgstr ""
+msgstr "``cargo xtask browser``"
 
 #: ../../reference.rst:271
 msgid "Checks in headless Chromium (``sibuna-browser``)"
-msgstr ""
+msgstr "헤드리스 Chromium에서 실행하는 검사(``sibuna-browser``)"
 
 #: ../../reference.rst:272
 msgid "``cargo xtask bench <primitives|product|latency>``"
-msgstr ""
+msgstr "``cargo xtask bench <primitives|product|latency>``"
 
 #: ../../reference.rst:273
 msgid ""
 "Release-mode benchmarks; results in "
 "``benchmarks/results/<command>-latest.json``"
-msgstr ""
+msgstr "릴리스 모드 벤치마크. 결과는 ``benchmarks/results/<command>-latest.json``\\ 에 저장"
 
 #: ../../reference.rst:274
 msgid ""
 "``cargo build -p sibuna-pow-wasm --target wasm32-unknown-unknown "
 "--profile wasm``"
 msgstr ""
+"``cargo build -p sibuna-pow-wasm --target wasm32-unknown-unknown "
+"--profile wasm``"
 
 #: ../../reference.rst:275
 msgid ""
 "The browser module only (``-p sibuna-console-ui`` for the console "
 "interface)"
-msgstr ""
+msgstr "브라우저 모듈만 빌드(콘솔 인터페이스는 ``-p sibuna-console-ui``)"
 
 #: ../../reference.rst:276
 msgid "``cargo run -p sibuna-geoip --bin geoip-snapshot -- ...``"
-msgstr ""
+msgstr "``cargo run -p sibuna-geoip --bin geoip-snapshot -- ...``"
 
 #: ../../reference.rst:277
 msgid "Validate country data and write an embeddable GeoIP snapshot"
-msgstr ""
+msgstr "국가 데이터를 검증하고 내장할 수 있는 GeoIP 스냅숏을 씀"
 
 #: ../../reference.rst:278
 msgid "``guidedog build`` / ``guidedog dsc``"
-msgstr ""
+msgstr "``guidedog build`` / ``guidedog dsc``"
 
 #: ../../reference.rst:279
 msgid "This book / the SID records"
-msgstr ""
+msgstr "이 책 / SID 기록"
 
 #: ../../reference.rst:281
 msgid ""
@@ -934,10 +1013,16 @@ msgid ""
 "``SIBUNA_GEOIP_DATA`` names a GeoIP snapshot to embed; it is decoded at "
 "build time, and a build without the console refuses it (``GEOIP001``)."
 msgstr ""
+"데몬의 빌드 스크립트(``cmd/sibuna/build.rs``)는 두 WebAssembly 모듈을 ``wasm`` 프로파일로 "
+"워크스페이스의 대상 디렉터리에 빌드하며, 콘솔 인터페이스가 768 KiB를 넘으면 빌드를 실패시킵니다. "
+"``wasm32-unknown-unknown`` 대상이 없는 빌드에서는 ``SIBUNA_POW_WASM``\\ 과 "
+"``SIBUNA_CONSOLE_WASM``\\ 으로 미리 빌드한 모듈을 대신 지정합니다. ``SIBUNA_GEOIP_DATA``\\ "
+"는 내장할 GeoIP 스냅숏을 지정합니다. 이 스냅숏은 빌드할 때 디코딩되며, 콘솔이 없는 빌드는 이를 "
+"거부합니다(``GEOIP001``)."
 
 #: ../../reference.rst:283
 msgid "Exercise 10.1"
-msgstr ""
+msgstr "연습 문제 10.1"
 
 #: ../../reference.rst:285
 msgid ""
@@ -946,10 +1031,13 @@ msgid ""
 "the token and challenge formats, and propose the smallest change to the "
 "interstitial that recovers gracefully."
 msgstr ""
+"클라이언트가 풀이 도중 Wi-Fi에서 셀룰러로 바꾼 뒤 ``CLIENT FINGERPRINT MISMATCH`` 제목과 함께 "
+"``400``\\ 을 받습니다. 토큰과 챌린지 형식으로 원인을 설명하고, 중간 페이지가 매끄럽게 회복하도록 하는 가장 작은 변경을 "
+"제안하세요."
 
 #: ../../reference.rst:287
 msgid "Explain the invariant"
-msgstr ""
+msgstr "불변식 설명하기"
 
 #: ../../reference.rst:289
 msgid ""
@@ -957,3 +1045,5 @@ msgid ""
 "must route to the daemon rather than to the origin, and say why each is "
 "needed."
 msgstr ""
+"보지 않고, Sibuna 앞의 역방향 프록시가 원본 서버가 아니라 데몬으로 보내야 하는 엔드포인트를 나열하고, 각각이 필요한 이유를 "
+"말하세요."

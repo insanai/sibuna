@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../foundations.rst:1
 msgid "Part I: The Cost of a Request"
-msgstr ""
+msgstr "제I부: 요청의 비용"
 
 #: ../../foundations.rst:4
 msgid ""
@@ -28,10 +28,13 @@ msgid ""
 "decision is measured against: origin work, puzzle work, session "
 "amortisation, and the memory an untrusted client can make a server hold."
 msgstr ""
+"알고리즘을 고르기 전에 그 알고리즘이 보호하려는 자원을 먼저 밝힙니다. 이 장에서는 이후의 모든 설계 결정을 재는 기준이 될 작은 "
+"모델들을 세웁니다. 원본 서버의 작업, 퍼즐 작업, 세션에 의한 비용 분할, 그리고 신뢰할 수 없는 클라이언트가 서버에 붙잡아 둘 "
+"수 있는 메모리입니다."
 
 #: ../../foundations.rst:6
 msgid "Objectives"
-msgstr ""
+msgstr "학습 목표"
 
 #: ../../foundations.rst:8
 msgid ""
@@ -41,10 +44,13 @@ msgid ""
 "search, explain how sessions amortise work, and list the five invariants "
 "the rest of the book maintains."
 msgstr ""
+"이 장을 마치면 게이트가 비용 이상의 가치를 하는지 판정하는 부등식을 쓰고, 작업 증명이 입증하는 것과 입증하지 않는 것을 말하며, "
+"해시 탐색의 기댓값과 꼬리를 유도하고, 세션이 작업 비용을 나누는 방식을 설명하고, 이 책의 나머지 부분이 지키는 다섯 가지 "
+"불변식을 나열할 수 있어야 합니다."
 
 #: ../../foundations.rst:10
 msgid "Admission Is an Economic Decision"
-msgstr ""
+msgstr "요청 허용은 경제적 결정입니다"
 
 #: ../../foundations.rst:13
 msgid ""
@@ -57,11 +63,17 @@ msgid ""
 "origin work exceeds its own cost and the cost it imposes on legitimate "
 "visitors."
 msgstr ""
+"원본 서버가 허용된 요청마다 데이터베이스를 조회하고 페이지를 렌더링한다고 합시다. 그 작업을 :math:`c_o`, 요청당 게이트의 "
+"작업을 :math:`c_g`, 도착률을 :math:`r`\\ 이라고 둡니다. 게이트가 없으면 원본 서버는 초당 :math:`r "
+"c_o` 단위의 작업을 감당해야 합니다. 비율 :math:`a`\\ 만큼 허용하는 게이트는 그 수요를 :math:`r a "
+"c_o`\\ 로 바꾸고, 자신은 :math:`r c_g`\\ 를 씁니다. 게이트는 절약한 원본 작업이 게이트 자신의 비용과 정상 "
+"방문자에게 지우는 비용을 넘을 때에만 쓸모가 있습니다."
 
 #: ../../foundations.rst:15
 msgid ""
 "r c_g + r a c_o < r c_o \\quad \\Leftrightarrow \\quad c_g < (1-a) c_o."
 msgstr ""
+"r c_g + r a c_o < r c_o \\quad \\Leftrightarrow \\quad c_g < (1-a) c_o."
 
 #: ../../foundations.rst:19
 msgid ""
@@ -71,10 +83,13 @@ msgid ""
 "query may make it large. There is no universal requester-to-server cost "
 "ratio."
 msgstr ""
+"이것은 용량 모델이며 측정이 아닙니다. 대역폭, 연결 상태, 저장소, 클라이언트 지연은 빠져 있습니다. 이 모델의 가치는 빠진 항이 "
+"모두 눈에 보인다는 데 있습니다. 캐시 적중은 :math:`c_o`\\ 를 작게 만들 수 있고, 비싼 쿼리는 크게 만들 수 "
+"있습니다. 요청자 대 서버의 보편적인 비용 비율은 없습니다."
 
 #: ../../foundations.rst:21
 msgid "Worked example: when a gate pays for itself"
-msgstr ""
+msgstr "풀이 예제: 게이트가 비용 이상의 가치를 할 때"
 
 #: ../../foundations.rst:23
 msgid ""
@@ -85,10 +100,14 @@ msgid ""
 "this model. These selected numbers are not timings. They show why the "
 "workload belongs in every performance claim."
 msgstr ""
+":math:`c_o = 100` 작업 단위와 :math:`c_g = 1`\\ 로 정합니다. 요청의 절반이 거부되면, 게이트를 둔 "
+"시스템은 도착 하나당 100 대신 :math:`1 + 0.5 \\times 100 = 51` 단위를 씁니다. 천 개 중 하나만 "
+"거부되면 :math:`100.9`\\ 를 씁니다. 이 모델에서는 게이트가 절약하는 것보다 더 많은 비용이 듭니다. 이 숫자들은 골라 "
+"둔 값이며 시간 측정이 아닙니다. 모든 성능 주장에 워크로드가 함께 있어야 하는 이유를 보여 줄 뿐입니다."
 
 #: ../../foundations.rst:25
 msgid "What a Proof of Work Establishes"
-msgstr ""
+msgstr "작업 증명이 입증하는 것"
 
 #: ../../foundations.rst:28
 msgid ""
@@ -99,6 +118,9 @@ msgid ""
 "admission cost; policy and inspection still decide what admitted requests "
 "may do."
 msgstr ""
+"클라이언트 퍼즐은 누군가 공개된 검증 규칙을 만족하는 입력을 찾았다는 사실을 입증합니다. 사람임, 신원, 선한 의도는 입증하지 "
+"않습니다. 요청자는 연산 자원을 빌리거나, 유효한 세션을 수명 안에서 재사용하거나, 작업을 여러 기계에 나눌 수 있습니다. 퍼즐은 "
+"요청 허용의 비용을 바꿉니다. 허용된 요청이 무엇을 할 수 있는지는 여전히 정책과 검사가 결정합니다."
 
 #: ../../foundations.rst:30
 msgid ""
@@ -108,10 +130,13 @@ msgid ""
 "therefore keeps admission, inspection, and reputation as distinct "
 "decisions."
 msgstr ""
+"주소 기반 제한은 이를 보완합니다. 주소 기반 제한은 주소 하나를 제약하지만, 공유 주소 하나가 많은 사람을 나타낼 수 있고 요청자 "
+"하나가 많은 주소를 쓸 수 있습니다. 퍼즐도 주소도 신원을 알려 주는 신탁이 아닙니다. 그래서 Sibuna는 요청 허용, 검사, "
+"평판을 서로 다른 결정으로 유지합니다."
 
 #: ../../foundations.rst:32
 msgid "Hash Search as a Random Variable"
-msgstr ""
+msgstr "확률변수로 보는 해시 탐색"
 
 #: ../../foundations.rst:35
 msgid ""
@@ -119,20 +144,24 @@ msgid ""
 "success probability :math:`p = 2^{-b}` for each independent trial. Let "
 ":math:`K` count trials through the first success. Then"
 msgstr ""
+"이상적인 256비트 다이제스트에서 선행 0비트 :math:`b`\\ 개를 요구하면, 독립 시행마다 성공 확률은 :math:`p = "
+"2^{-b}`\\ 입니다. 첫 성공까지의 시행 횟수를 :math:`K`\\ 라고 하면 다음이 성립합니다."
 
 #: ../../foundations.rst:37
 msgid ""
 "P(K=k) = (1-p)^{k-1} p, \\quad P(K>k) = (1-p)^k, \\quad E[K] = 1/p = 2^b."
 msgstr ""
+"P(K=k) = (1-p)^{k-1} p, \\quad P(K>k) = (1-p)^k, \\quad E[K] = 1/p = 2^b."
 
 #: ../../foundations.rst:41
 msgid "The expectation follows from the tail sum:"
-msgstr ""
+msgstr "기댓값은 꼬리 합에서 나옵니다."
 
 #: ../../foundations.rst:43
 msgid ""
 "E[K] = \\sum_{k=0}^{\\infty} P(K>k) = \\sum_{k=0}^{\\infty} (1-p)^k = 1/p."
 msgstr ""
+"E[K] = \\sum_{k=0}^{\\infty} P(K>k) = \\sum_{k=0}^{\\infty} (1-p)^k = 1/p."
 
 #: ../../foundations.rst:47
 msgid ""
@@ -141,6 +170,9 @@ msgid ""
 "far longer than the mean. A client that measures only one solve has "
 "mostly measured this randomness."
 msgstr ""
+"난이도를 한 단계 올리면 기대 시행 횟수가 두 배가 됩니다. 그렇다고 모든 퍼즐이 두 배 오래 걸린다는 약속은 아닙니다. 어떤 "
+"퍼즐은 첫 시행에서 성공하고, 어떤 퍼즐은 평균보다 훨씬 오래 걸립니다. 풀이 한 번만 측정한 클라이언트는 대부분 이 무작위성을 "
+"측정한 셈입니다."
 
 #: ../../foundations.rst:50
 msgid ""
@@ -149,10 +181,12 @@ msgid ""
 "P(K > x/p) ~ e^(-x). The point o marks x = 1, where the probability of "
 "still searching is e^(-1) = 0.368."
 msgstr ""
+"해시 탐색의 생존 확률. 가로축은 시행 횟수를 기대 시행 횟수로 나눈 값입니다. 곡선은 작업량이 클 때의 근사 P(K > x/p) "
+"~ e^(-x)를 사용합니다. 점 o는 x = 1을 표시하며, 이때 아직 탐색 중일 확률은 e^(-1) = 0.368입니다."
 
 #: ../../foundations.rst:68
 msgid "Worked example: expectation is not a deadline"
-msgstr ""
+msgstr "풀이 예제: 기댓값은 마감 시간이 아닙니다"
 
 #: ../../foundations.rst:70
 msgid ""
@@ -163,10 +197,14 @@ msgid ""
 "A user interface should tolerate that spread rather than announcing "
 "failure at the expected completion time."
 msgstr ""
+":math:`b = 16`\\ 에서 기대 작업량은 해시 65,536회입니다. 그만큼 시행한 뒤에도 아직 탐색 중일 확률은 약 "
+":math:`e^{-1} = 0.368`\\ 입니다. 95번째 백분위수 시행 횟수는 :math:`\\lceil \\ln(0.05) "
+"/ \\ln(1 - 2^{-16}) \\rceil \\approx 196327`\\ 로, 평균의 거의 세 배입니다. 사용자 "
+"인터페이스는 기대 완료 시간에 실패를 알리지 말고 이 퍼짐을 견뎌야 합니다."
 
 #: ../../foundations.rst:72
 msgid "Sessions Amortise Work"
-msgstr ""
+msgstr "세션은 작업 비용을 나눕니다"
 
 #: ../../foundations.rst:75
 msgid ""
@@ -178,10 +216,14 @@ msgid ""
 "automated clients alike. Choosing it is a policy decision, not a "
 "cryptographic optimization."
 msgstr ""
+"세션 하나가 만료 전까지 요청 :math:`m`\\ 개를 허용하고, 퍼즐 비용이 :math:`c_p`, 검증 비용이 "
+":math:`c_v`, 세션 확인 비용이 :math:`c_s`\\ 라고 합시다. 실패한 시도를 무시하면 요청당 분할된 게이트 비용은 "
+":math:`c_v/m + c_s`\\ 이고, 클라이언트의 퍼즐 비용은 :math:`c_p/m`\\ 입니다. 세션 수명을 늘리면 "
+"사람과 자동화 클라이언트 모두에게 똑같이 도움이 됩니다. 세션 수명을 정하는 일은 정책 결정이며 암호학적 최적화가 아닙니다."
 
 #: ../../foundations.rst:77
 msgid "Exercise 1.1"
-msgstr ""
+msgstr "연습 문제 1.1"
 
 #: ../../foundations.rst:79
 msgid ""
@@ -189,15 +231,17 @@ msgid ""
 "million trials. What is the amortized work per request? What changes if "
 "it shares the session with a second process?"
 msgstr ""
+"클라이언트가 세션 하나로 요청 100개를 보내고, 시행 백만 회짜리 퍼즐을 풉니다. 요청당 분할된 작업량은 얼마일까요? 이 "
+"클라이언트가 두 번째 프로세스와 세션을 공유하면 무엇이 달라질까요?"
 
 #: ../../foundations.rst:81
 msgid ""
 "Hint: Distinguish the accounting model from the token's actual bindings."
-msgstr ""
+msgstr "힌트: 비용 계산 모델과 토큰에 실제로 묶인 값을 구별하세요."
 
 #: ../../foundations.rst:83
 msgid "Bounded State Is a Second Budget"
-msgstr ""
+msgstr "제한된 상태는 두 번째 예산입니다"
 
 #: ../../foundations.rst:86
 msgid ""
@@ -206,10 +250,13 @@ msgid ""
 "them at average rate :math:`\\mu`, and let the queue hold :math:`Q` "
 "records. When :math:`\\lambda > \\mu`, a fluid approximation gives"
 msgstr ""
+"작업을 요청 경로 밖으로 옮긴다고 작업이 사라지지는 않습니다. 인시던트가 비율 :math:`\\lambda`\\ 로 도착하고, "
+"저장소 스레드가 평균 비율 :math:`\\mu`\\ 로 이를 영속화하며, 큐가 레코드 :math:`Q`\\ 개를 담는다고 합시다. "
+":math:`\\lambda > \\mu`\\ 일 때 유체 근사는 다음을 줍니다."
 
 #: ../../foundations.rst:88
 msgid "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
-msgstr ""
+msgstr "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
 
 #: ../../foundations.rst:92
 msgid ""
@@ -220,10 +267,13 @@ msgid ""
 "The operator must monitor the lost evidence as well as the HTTP success "
 "rate."
 msgstr ""
+"큐가 크면 시간을 벌 수 있지만 처리량이 생기지는 않습니다. 일괄 처리는 트랜잭션 비용을 나누지만, 보관된 레코드는 여전히 메모리를 "
+"차지하고 결국 처리되어야 합니다. 과부하에서 Sibuna는 새 인시던트 레코드를 버리고 그 수를 셉니다. 요청 결정은 메모리 안의 "
+"상태로 계속 내립니다. 운영자는 HTTP 성공률뿐 아니라 잃어버린 증거도 감시해야 합니다."
 
 #: ../../foundations.rst:94
 msgid "Exercise 1.2"
-msgstr ""
+msgstr "연습 문제 1.2"
 
 #: ../../foundations.rst:96
 msgid ""
@@ -231,38 +281,40 @@ msgid ""
 "600/s. How long can an initially empty queue absorb the excess? Why is "
 "the answer only an approximation?"
 msgstr ""
+"큐 하나가 레코드 512개를 담습니다. 도착률은 1,000/s이고 배출률은 600/s입니다. 처음에 비어 있던 큐는 초과분을 얼마 "
+"동안 흡수할 수 있을까요? 이 답이 근사일 뿐인 이유는 무엇일까요?"
 
 #: ../../foundations.rst:98
 msgid ""
 "Hint: Use the difference of rates, then consider bursts and batch commits."
-msgstr ""
+msgstr "힌트: 두 비율의 차를 쓰고, 그다음 버스트와 일괄 커밋을 생각해 보세요."
 
 #: ../../foundations.rst:100
 msgid "The Invariants We Will Carry Forward"
-msgstr ""
+msgstr "앞으로 지켜 갈 불변식"
 
 #: ../../foundations.rst:103
 msgid "Untrusted requests cannot create unbounded server state."
-msgstr ""
+msgstr "신뢰할 수 없는 요청은 서버 상태를 무한히 만들어 낼 수 없습니다."
 
 #: ../../foundations.rst:104
 msgid "A valid admission token does not bypass an application denial."
-msgstr ""
+msgstr "유효한 요청 허용 토큰도 애플리케이션의 거부를 우회하지 못합니다."
 
 #: ../../foundations.rst:105
 msgid "A buffer remains alive for every slice borrowed from it."
-msgstr ""
+msgstr "버퍼는 그 버퍼에서 빌린 모든 슬라이스가 살아 있는 동안 살아 있습니다."
 
 #: ../../foundations.rst:106
 msgid ""
 "A durable retry cannot multiply an incident or its reputation effect."
-msgstr ""
+msgstr "영속적인 재시도는 인시던트나 그 평판 효과를 중복시킬 수 없습니다."
 
 #: ../../foundations.rst:107
 msgid ""
 "A published policy snapshot is immutable until its last reader releases "
 "it."
-msgstr ""
+msgstr "게시된 정책 스냅숏은 마지막 읽는 쪽이 놓아줄 때까지 바뀌지 않습니다."
 
 #: ../../foundations.rst:109
 msgid ""
@@ -270,10 +322,12 @@ msgid ""
 "true, and the tests that would reveal a violation. A fast path is useful "
 "only while those statements remain true."
 msgstr ""
+"이 책의 나머지 부분은 이 명제들을 참으로 만드는 메커니즘과, 위반을 드러낼 테스트를 유도합니다. 빠른 경로는 이 명제들이 참으로 "
+"남아 있는 동안에만 쓸모가 있습니다."
 
 #: ../../foundations.rst:111
 msgid "Explain the invariant"
-msgstr ""
+msgstr "불변식 설명하기"
 
 #: ../../foundations.rst:113
 msgid ""
@@ -281,3 +335,5 @@ msgid ""
 "why a measured verification latency alone cannot tell an operator whether "
 "the gate is worth running."
 msgstr ""
+"게이트 부등식 :math:`c_g < (1-a) c_o`\\ 를 말로 풀어 쓰고, 측정한 검증 지연 시간만으로는 운영자가 게이트를 "
+"운영할 가치가 있는지 알 수 없는 이유를 설명하세요."
