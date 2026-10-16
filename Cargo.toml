@@ -4,36 +4,37 @@ members = ["crates/*", "cmd/*", "tools/*"]
 default-members = ["crates/*", "cmd/sibuna", "tools/*"]
 
 [workspace.package]
-version = "0.2.0"
+version = "1.0.0-beta.1"
 edition = "2024"
 rust-version = "1.94"
-license = "Apache-2.0"
+license = "LGPL-3.0-or-later"
 repository = "https://github.com/insanai/sibuna"
-authors = ["Vikrant Rathore <vikrant@vyomtech.com>"]
+homepage = "https://insanai.github.io/sibuna/"
+authors = ["Vikrant Rathore"]
 
 # Every dependency is declared once here. The data plane has no external crates.
 [workspace.dependencies]
-sibuna-crypto = { path = "crates/crypto", version = "0.2.0" }
-sibuna-encoding = { path = "crates/encoding", version = "0.2.0" }
-sibuna-json = { path = "crates/json", version = "0.2.0" }
-sibuna-pow = { path = "crates/pow", version = "0.2.0" }
-sibuna-http = { path = "crates/http", version = "0.2.0" }
-sibuna-patterns = { path = "crates/patterns", version = "0.2.0" }
-sibuna-cidr = { path = "crates/cidr", version = "0.2.0" }
-sibuna-store = { path = "crates/store", version = "0.2.0" }
-sibuna-inflate = { path = "crates/inflate", version = "0.2.0" }
-sibuna-geoip = { path = "crates/geoip", version = "0.2.0" }
-sibuna-core = { path = "crates/core", version = "0.2.0" }
-sibuna-policy = { path = "crates/policy", version = "0.2.0" }
-sibuna-challenge = { path = "crates/challenge", version = "0.2.0" }
-sibuna-net = { path = "crates/net", version = "0.2.0" }
-sibuna-storage = { path = "crates/storage", version = "0.2.0", default-features = false }
-sibuna-html = { path = "crates/html", version = "0.2.0" }
-sibuna-console-protocol = { path = "crates/console-protocol", version = "0.2.0" }
-sibuna-serve = { path = "crates/serve", version = "0.2.0" }
-sibuna-tls = { path = "crates/tls", version = "0.2.0" }
-sibuna-console-storage = { path = "crates/console-storage", version = "0.2.0", default-features = false }
-sibuna-console = { path = "crates/console", version = "0.2.0", default-features = false }
+sibuna-crypto = { path = "crates/crypto", version = "1.0.0-beta.1" }
+sibuna-encoding = { path = "crates/encoding", version = "1.0.0-beta.1" }
+sibuna-json = { path = "crates/json", version = "1.0.0-beta.1" }
+sibuna-pow = { path = "crates/pow", version = "1.0.0-beta.1" }
+sibuna-http = { path = "crates/http", version = "1.0.0-beta.1" }
+sibuna-patterns = { path = "crates/patterns", version = "1.0.0-beta.1" }
+sibuna-cidr = { path = "crates/cidr", version = "1.0.0-beta.1" }
+sibuna-store = { path = "crates/store", version = "1.0.0-beta.1" }
+sibuna-inflate = { path = "crates/inflate", version = "1.0.0-beta.1" }
+sibuna-geoip = { path = "crates/geoip", version = "1.0.0-beta.1" }
+sibuna-core = { path = "crates/core", version = "1.0.0-beta.1" }
+sibuna-policy = { path = "crates/policy", version = "1.0.0-beta.1" }
+sibuna-challenge = { path = "crates/challenge", version = "1.0.0-beta.1" }
+sibuna-net = { path = "crates/net", version = "1.0.0-beta.1" }
+sibuna-storage = { path = "crates/storage", version = "1.0.0-beta.1", default-features = false }
+sibuna-html = { path = "crates/html", version = "1.0.0-beta.1" }
+sibuna-console-protocol = { path = "crates/console-protocol", version = "1.0.0-beta.1" }
+sibuna-serve = { path = "crates/serve", version = "1.0.0-beta.1" }
+sibuna-tls = { path = "crates/tls", version = "1.0.0-beta.1" }
+sibuna-console-storage = { path = "crates/console-storage", version = "1.0.0-beta.1", default-features = false }
+sibuna-console = { path = "crates/console", version = "1.0.0-beta.1", default-features = false }
 
 # External crates. Each one is admitted by a design record and confined to one crate.
 # sqlx: SQL storage for SQLite (single node) and PostgreSQL (clusters); SID 0011. Used without

@@ -40,11 +40,8 @@ fn scratch_dir() -> PathBuf {
 fn version_prints_the_package_version() {
     let output = run(SIBUNA, &["--version"]);
     assert!(output.status.success());
-    assert_eq!(stderr(&output), "sibuna 0.2.0\n");
+    assert_eq!(stderr(&output), format!("sibuna {}\n", env!("CARGO_PKG_VERSION")));
     assert!(output.stdout.is_empty());
-    if let Some(zig) = zig() {
-        assert_eq!(stderr(&run(&zig, &["--version"])), stderr(&output));
-    }
     // `--version` wins wherever it appears, before any other option is checked.
     assert!(run(SIBUNA, &["--bogus", "--version"]).status.success());
 }

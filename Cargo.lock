@@ -947,7 +947,7 @@ checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
 
 [[package]]
 name = "sibuna"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "sibuna-challenge",
  "sibuna-cidr",
@@ -969,7 +969,7 @@ dependencies = [
 
 [[package]]
 name = "sibuna-bench"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "sibuna-challenge",
  "sibuna-cidr",
@@ -985,7 +985,7 @@ dependencies = [
 
 [[package]]
 name = "sibuna-browser"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "sibuna-encoding",
  "sibuna-http",
@@ -994,7 +994,7 @@ dependencies = [
 
 [[package]]
 name = "sibuna-challenge"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "sibuna-core",
  "sibuna-crypto",
@@ -1005,11 +1005,11 @@ dependencies = [
 
 [[package]]
 name = "sibuna-cidr"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 
 [[package]]
 name = "sibuna-console"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "sibuna-cidr",
  "sibuna-console-protocol",
@@ -1030,14 +1030,14 @@ dependencies = [
 
 [[package]]
 name = "sibuna-console-protocol"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "sibuna-json",
 ]
 
 [[package]]
 name = "sibuna-console-storage"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "sibuna-cidr",
  "sibuna-console-protocol",
@@ -1052,7 +1052,7 @@ dependencies = [
 
 [[package]]
 name = "sibuna-console-ui"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "sibuna-console-protocol",
  "sibuna-crypto",
@@ -1062,19 +1062,19 @@ dependencies = [
 
 [[package]]
 name = "sibuna-core"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 
 [[package]]
 name = "sibuna-crypto"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 
 [[package]]
 name = "sibuna-encoding"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 
 [[package]]
 name = "sibuna-geoip"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "sibuna-cidr",
  "sibuna-crypto",
@@ -1083,11 +1083,11 @@ dependencies = [
 
 [[package]]
 name = "sibuna-html"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 
 [[package]]
 name = "sibuna-http"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "sibuna-crypto",
  "sibuna-encoding",
@@ -1095,15 +1095,15 @@ dependencies = [
 
 [[package]]
 name = "sibuna-inflate"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 
 [[package]]
 name = "sibuna-json"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 
 [[package]]
 name = "sibuna-net"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "sibuna-core",
  "sibuna-http",
@@ -1111,7 +1111,7 @@ dependencies = [
 
 [[package]]
 name = "sibuna-parity"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "sibuna-encoding",
  "sibuna-json",
@@ -1120,11 +1120,11 @@ dependencies = [
 
 [[package]]
 name = "sibuna-patterns"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 
 [[package]]
 name = "sibuna-policy"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "sibuna-cidr",
  "sibuna-crypto",
@@ -1134,14 +1134,14 @@ dependencies = [
 
 [[package]]
 name = "sibuna-pow"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "sibuna-crypto",
 ]
 
 [[package]]
 name = "sibuna-pow-wasm"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "sibuna-crypto",
  "sibuna-pow",
@@ -1149,14 +1149,14 @@ dependencies = [
 
 [[package]]
 name = "sibuna-serve"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "sibuna-http",
 ]
 
 [[package]]
 name = "sibuna-storage"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "sibuna-core",
  "sibuna-crypto",
@@ -1168,14 +1168,14 @@ dependencies = [
 
 [[package]]
 name = "sibuna-store"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "sibuna-crypto",
 ]
 
 [[package]]
 name = "sibuna-tls"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 dependencies = [
  "rustls",
  "rustls-native-certs",
@@ -1685,7 +1685,7 @@ checksum = "3ad82d2a33cdc9674dc7465672f271e096168fcdbe0f799d9e6db8c5892679dc"
 
 [[package]]
 name = "xtask"
-version = "0.2.0"
+version = "1.0.0-beta.1"
 
 [[package]]
 name = "yoke"
