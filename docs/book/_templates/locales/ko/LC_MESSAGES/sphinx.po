@@ -1,0 +1,239 @@
+# Korean translation of Guidedog's own interface strings for The Sibuna Book.
+# Guidedog has no built-in catalog for this language; docs/site/build.py adds
+# this folder to locale_dirs when it builds the translated book.
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Attention"
+msgstr "주의"
+
+msgid "Caution"
+msgstr "조심"
+
+msgid "Danger"
+msgstr "위험"
+
+msgid "Error"
+msgstr "오류"
+
+msgid "Hint"
+msgstr "힌트"
+
+msgid "Important"
+msgstr "중요"
+
+msgid "Note"
+msgstr "참고"
+
+msgid "Tip"
+msgstr "팁"
+
+msgid "Warning"
+msgstr "경고"
+
+msgid "See also"
+msgstr "함께 보기"
+
+msgid "Todo"
+msgstr "할 일"
+
+msgid "Contents"
+msgstr "목차"
+
+msgid "Added in version %s"
+msgstr "버전 %s에서 추가됨"
+
+msgid "Changed in version %s"
+msgstr "버전 %s에서 변경됨"
+
+msgid "Deprecated since version %s"
+msgstr "버전 %s부터 폐기 예정"
+
+msgid "Removed in version %s"
+msgstr "버전 %s에서 제거됨"
+
+msgid "Section author: "
+msgstr "절 작성자: "
+
+msgid "Module author: "
+msgstr "모듈 작성자: "
+
+msgid "Code author: "
+msgstr "코드 작성자: "
+
+msgid "Link to this heading"
+msgstr "이 제목으로 연결"
+
+msgid "Link to this definition"
+msgstr "이 정의로 연결"
+
+msgid "Link to this image"
+msgstr "이 그림으로 연결"
+
+msgid "Link to this table"
+msgstr "이 표로 연결"
+
+msgid "Link to this code"
+msgstr "이 코드로 연결"
+
+msgid "Link to this equation"
+msgstr "이 수식으로 연결"
+
+msgid "Link to this term"
+msgstr "이 용어로 연결"
+
+msgid "Parameters"
+msgstr "매개변수"
+
+msgid "Variables"
+msgstr "변수"
+
+msgid "Raises"
+msgstr "발생 예외"
+
+msgid "Returns"
+msgstr "반환값"
+
+msgid "Return type"
+msgstr "반환 형식"
+
+msgid "Return values"
+msgstr "반환값 목록"
+
+msgid "Template Parameters"
+msgstr "템플릿 매개변수"
+
+msgid "Throws"
+msgstr "던지는 예외"
+
+msgid "Arguments"
+msgstr "인수"
+
+msgid "Availability"
+msgstr "사용 가능 환경"
+
+msgid "Navigation"
+msgstr "탐색"
+
+msgid "Search"
+msgstr "검색"
+
+msgid "Previous"
+msgstr "이전"
+
+msgid "Next"
+msgstr "다음"
+
+msgid "Index"
+msgstr "색인"
+
+msgid "Symbols"
+msgstr "기호"
+
+msgid "see"
+msgstr "참조"
+
+msgid "Skip to content"
+msgstr "본문으로 건너뛰기"
+
+msgid "Search (press /)"
+msgstr "검색 (/ 키)"
+
+msgid "Theme"
+msgstr "테마"
+
+msgid "auto"
+msgstr "자동"
+
+msgid "light"
+msgstr "밝게"
+
+msgid "dark"
+msgstr "어둡게"
+
+msgid "No pages match."
+msgstr "일치하는 페이지가 없습니다."
+
+msgid "Previous and next"
+msgstr "이전과 다음"
+
+msgid "Documentation"
+msgstr "문서"
+
+msgid "On this page"
+msgstr "이 페이지의 내용"
+
+msgid "Last updated on %s."
+msgstr "마지막 업데이트: %s."
+
+msgid "Show source"
+msgstr "소스 보기"
+
+msgid "Built with Guidedog."
+msgstr "Guidedog으로 만들었습니다."
+
+msgid "%s %s documentation"
+msgstr "%s %s 문서"
+
+msgid "%s documentation"
+msgstr "%s 문서"
+
+msgid "Search needs JavaScript. Use the index instead."
+msgstr "검색에는 JavaScript가 필요합니다. 대신 색인을 이용하세요."
+
+msgid "Fig. %s"
+msgstr "그림 %s"
+
+msgid "Table %s"
+msgstr "표 %s"
+
+msgid "Listing %s"
+msgstr "코드 %s"
+
+msgid "Section %s"
+msgstr "%s절"
+
+msgid "Version"
+msgstr "버전"
+
+msgid "General Index"
+msgstr "전체 색인"
+
+msgid "Python Module Index"
+msgstr "Python 모듈 색인"
+
+msgid "Module Index"
+msgstr "모듈 색인"
+
+msgid "Search Page"
+msgstr "검색 페이지"
+
+msgid "Deprecated"
+msgstr "폐기 예정"
+
+msgid "index"
+msgstr "색인"
+
+msgid "next"
+msgstr "다음"
+
+msgid "previous"
+msgstr "이전"
+
+msgid "modules"
+msgstr "모듈"
+
+msgid "Copy"
+msgstr "복사"
+
+msgid "Copied"
+msgstr "복사됨"
+
+msgid "Breadcrumbs"
+msgstr "이동 경로"

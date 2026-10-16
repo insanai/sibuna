@@ -21,7 +21,9 @@
 // guidedog's default look.
 //
 // Only fonts built into Typst are named (Libertinus Serif, New Computer Modern, DejaVu
-// Sans Mono), so a build needs no installed fonts and reports none missing.
+// Sans Mono), so an English build needs no installed fonts and reports none missing. A
+// book in Chinese, Japanese, Korean, Hindi or Arabic also needs the Noto fonts that
+// sibuna-script-fonts names (Debian packages fonts-noto-cjk and fonts-noto-core).
 
 // ---- Palette -------------------------------------------------------------------------
 // The book's colors, from the original docs/book/theme.typ.
@@ -98,6 +100,17 @@
   } else { none }
   (code, region)
 }
+
+// The fonts for the scripts that New Computer Modern lacks, by language code. Typst
+// takes each character from the first font in the list that has it, so Latin text keeps
+// the book's font and the other characters come from these. English needs none.
+#let sibuna-script-fonts = (
+  zh: ("Noto Serif CJK SC", "Noto Sans CJK SC"),
+  ja: ("Noto Serif CJK JP", "Noto Sans CJK JP"),
+  ko: ("Noto Serif CJK KR", "Noto Sans CJK KR"),
+  hi: ("Noto Serif Devanagari", "Noto Sans Devanagari"),
+  ar: ("Noto Naskh Arabic", "Noto Sans Arabic"),
+)
 
 // The heading number guidedog gave a heading, or none.
 #let sibuna-heading-number(it) = if it.numbering != none {
@@ -424,7 +437,8 @@
   let (code, region) = sibuna-language(lang)
   let page-size = if trim == none { (paper: paper) } else { trim }
   set document(title: title, author: if author == "" { () } else { author })
-  set text(font: ("New Computer Modern", "Libertinus Serif"), size: 10.5pt,
+  let fonts = ("New Computer Modern", "Libertinus Serif")
+  set text(font: fonts + sibuna-script-fonts.at(code, default: ()), size: 10.5pt,
     fill: sibuna-ink, lang: code, region: region, hyphenate: true)
   set par(justify: true, leading: 0.60em, spacing: 0.62em)
   set list(indent: 0.4em)
@@ -447,6 +461,13 @@
     } else { it }
   }
   show: sibuna-book-blocks
+  // In a right-to-left book code still reads left to right. Inline code goes in a box,
+  // so the right-to-left text around it cannot reorder its characters.
+  let rtl = code in ("ar", "fa", "he", "ur")
+  show raw: it => if not rtl { it } else if it.block { set text(dir: ltr); it } else {
+    set text(dir: ltr)
+    box(it)
+  }
 
   sibuna-cover(page-size, title: title, author: author, version: version,
     date: date, version-label: version-label, kicker: kicker, headline: headline,

@@ -1,0 +1,239 @@
+# Hindi translation of Guidedog's own interface strings for The Sibuna Book.
+# Guidedog has no built-in catalog for this language; docs/site/build.py adds
+# this folder to locale_dirs when it builds the translated book.
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book\n"
+"Language: hi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Attention"
+msgstr "ध्यान दें"
+
+msgid "Caution"
+msgstr "सावधानी"
+
+msgid "Danger"
+msgstr "ख़तरा"
+
+msgid "Error"
+msgstr "त्रुटि"
+
+msgid "Hint"
+msgstr "संकेत"
+
+msgid "Important"
+msgstr "महत्वपूर्ण"
+
+msgid "Note"
+msgstr "टिप्पणी"
+
+msgid "Tip"
+msgstr "सुझाव"
+
+msgid "Warning"
+msgstr "चेतावनी"
+
+msgid "See also"
+msgstr "यह भी देखें"
+
+msgid "Todo"
+msgstr "करने योग्य"
+
+msgid "Contents"
+msgstr "विषय-सूची"
+
+msgid "Added in version %s"
+msgstr "संस्करण %s में जोड़ा गया"
+
+msgid "Changed in version %s"
+msgstr "संस्करण %s में बदला गया"
+
+msgid "Deprecated since version %s"
+msgstr "संस्करण %s से अप्रचलित"
+
+msgid "Removed in version %s"
+msgstr "संस्करण %s में हटाया गया"
+
+msgid "Section author: "
+msgstr "अनुभाग के लेखक: "
+
+msgid "Module author: "
+msgstr "मॉड्यूल के लेखक: "
+
+msgid "Code author: "
+msgstr "कोड के लेखक: "
+
+msgid "Link to this heading"
+msgstr "इस शीर्षक की कड़ी"
+
+msgid "Link to this definition"
+msgstr "इस परिभाषा की कड़ी"
+
+msgid "Link to this image"
+msgstr "इस चित्र की कड़ी"
+
+msgid "Link to this table"
+msgstr "इस तालिका की कड़ी"
+
+msgid "Link to this code"
+msgstr "इस कोड की कड़ी"
+
+msgid "Link to this equation"
+msgstr "इस समीकरण की कड़ी"
+
+msgid "Link to this term"
+msgstr "इस शब्द की कड़ी"
+
+msgid "Parameters"
+msgstr "पैरामीटर"
+
+msgid "Variables"
+msgstr "चर"
+
+msgid "Raises"
+msgstr "उठाता है"
+
+msgid "Returns"
+msgstr "लौटाता है"
+
+msgid "Return type"
+msgstr "लौटाने का प्रकार"
+
+msgid "Return values"
+msgstr "लौटाए गए मान"
+
+msgid "Template Parameters"
+msgstr "टेम्पलेट पैरामीटर"
+
+msgid "Throws"
+msgstr "फेंकता है"
+
+msgid "Arguments"
+msgstr "आर्ग्युमेंट"
+
+msgid "Availability"
+msgstr "उपलब्धता"
+
+msgid "Navigation"
+msgstr "नेविगेशन"
+
+msgid "Search"
+msgstr "खोजें"
+
+msgid "Previous"
+msgstr "पिछला"
+
+msgid "Next"
+msgstr "अगला"
+
+msgid "Index"
+msgstr "अनुक्रमणिका"
+
+msgid "Symbols"
+msgstr "चिह्न"
+
+msgid "see"
+msgstr "देखें"
+
+msgid "Skip to content"
+msgstr "सामग्री पर जाएँ"
+
+msgid "Search (press /)"
+msgstr "खोजें (/ दबाएँ)"
+
+msgid "Theme"
+msgstr "थीम"
+
+msgid "auto"
+msgstr "स्वचालित"
+
+msgid "light"
+msgstr "हल्का"
+
+msgid "dark"
+msgstr "गहरा"
+
+msgid "No pages match."
+msgstr "कोई पृष्ठ मेल नहीं खाता।"
+
+msgid "Previous and next"
+msgstr "पिछला और अगला"
+
+msgid "Documentation"
+msgstr "दस्तावेज़"
+
+msgid "On this page"
+msgstr "इस पृष्ठ पर"
+
+msgid "Last updated on %s."
+msgstr "अंतिम अद्यतन %s को।"
+
+msgid "Show source"
+msgstr "स्रोत देखें"
+
+msgid "Built with Guidedog."
+msgstr "Guidedog से बनाया गया।"
+
+msgid "%s %s documentation"
+msgstr "%s %s दस्तावेज़"
+
+msgid "%s documentation"
+msgstr "%s दस्तावेज़"
+
+msgid "Search needs JavaScript. Use the index instead."
+msgstr "खोज के लिए JavaScript चाहिए। इसके बजाय अनुक्रमणिका का उपयोग करें।"
+
+msgid "Fig. %s"
+msgstr "चित्र %s"
+
+msgid "Table %s"
+msgstr "तालिका %s"
+
+msgid "Listing %s"
+msgstr "लिस्टिंग %s"
+
+msgid "Section %s"
+msgstr "अनुभाग %s"
+
+msgid "Version"
+msgstr "संस्करण"
+
+msgid "General Index"
+msgstr "सामान्य अनुक्रमणिका"
+
+msgid "Python Module Index"
+msgstr "Python मॉड्यूल अनुक्रमणिका"
+
+msgid "Module Index"
+msgstr "मॉड्यूल अनुक्रमणिका"
+
+msgid "Search Page"
+msgstr "खोज पृष्ठ"
+
+msgid "Deprecated"
+msgstr "अप्रचलित"
+
+msgid "index"
+msgstr "अनुक्रमणिका"
+
+msgid "next"
+msgstr "अगला"
+
+msgid "previous"
+msgstr "पिछला"
+
+msgid "modules"
+msgstr "मॉड्यूल"
+
+msgid "Copy"
+msgstr "कॉपी करें"
+
+msgid "Copied"
+msgstr "कॉपी हो गया"
+
+msgid "Breadcrumbs"
+msgstr "ब्रेडक्रम्ब"

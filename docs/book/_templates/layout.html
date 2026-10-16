@@ -11,7 +11,8 @@
     _static/guidedog.js adds the theme switch, live search, copy buttons for code, and
     the highlighted section in "On this page". -#}
 {%- block doctype -%}<!DOCTYPE html>{%- endblock %}
-<html lang="{{ language }}">
+<html lang="{{ language|replace("_", "-") }}"
+  {%- if language in ["ar", "fa", "he", "ur"] %} dir="rtl"{% endif %}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

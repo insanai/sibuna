@@ -1,0 +1,239 @@
+# Arabic translation of Guidedog's own interface strings for The Sibuna Book.
+# Guidedog has no built-in catalog for this language; docs/site/build.py adds
+# this folder to locale_dirs when it builds the translated book.
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+msgid "Attention"
+msgstr "تنبيه"
+
+msgid "Caution"
+msgstr "حذر"
+
+msgid "Danger"
+msgstr "خطر"
+
+msgid "Error"
+msgstr "خطأ"
+
+msgid "Hint"
+msgstr "تلميح"
+
+msgid "Important"
+msgstr "مهم"
+
+msgid "Note"
+msgstr "ملاحظة"
+
+msgid "Tip"
+msgstr "نصيحة"
+
+msgid "Warning"
+msgstr "تحذير"
+
+msgid "See also"
+msgstr "انظر أيضًا"
+
+msgid "Todo"
+msgstr "مهام متبقية"
+
+msgid "Contents"
+msgstr "المحتويات"
+
+msgid "Added in version %s"
+msgstr "أُضيف في الإصدار %s"
+
+msgid "Changed in version %s"
+msgstr "تغيّر في الإصدار %s"
+
+msgid "Deprecated since version %s"
+msgstr "مُهمل منذ الإصدار %s"
+
+msgid "Removed in version %s"
+msgstr "أُزيل في الإصدار %s"
+
+msgid "Section author: "
+msgstr "كاتب القسم: "
+
+msgid "Module author: "
+msgstr "كاتب الوحدة: "
+
+msgid "Code author: "
+msgstr "كاتب الشيفرة: "
+
+msgid "Link to this heading"
+msgstr "رابط إلى هذا العنوان"
+
+msgid "Link to this definition"
+msgstr "رابط إلى هذا التعريف"
+
+msgid "Link to this image"
+msgstr "رابط إلى هذه الصورة"
+
+msgid "Link to this table"
+msgstr "رابط إلى هذا الجدول"
+
+msgid "Link to this code"
+msgstr "رابط إلى هذه الشيفرة"
+
+msgid "Link to this equation"
+msgstr "رابط إلى هذه المعادلة"
+
+msgid "Link to this term"
+msgstr "رابط إلى هذا المصطلح"
+
+msgid "Parameters"
+msgstr "المعاملات"
+
+msgid "Variables"
+msgstr "المتغيرات"
+
+msgid "Raises"
+msgstr "يطلق"
+
+msgid "Returns"
+msgstr "يُرجع"
+
+msgid "Return type"
+msgstr "نوع القيمة المُرجعة"
+
+msgid "Return values"
+msgstr "القيم المُرجعة"
+
+msgid "Template Parameters"
+msgstr "معاملات القالب"
+
+msgid "Throws"
+msgstr "يرمي"
+
+msgid "Arguments"
+msgstr "الوسائط"
+
+msgid "Availability"
+msgstr "التوفر"
+
+msgid "Navigation"
+msgstr "التنقل"
+
+msgid "Search"
+msgstr "بحث"
+
+msgid "Previous"
+msgstr "السابق"
+
+msgid "Next"
+msgstr "التالي"
+
+msgid "Index"
+msgstr "الفهرس"
+
+msgid "Symbols"
+msgstr "رموز"
+
+msgid "see"
+msgstr "انظر"
+
+msgid "Skip to content"
+msgstr "الانتقال إلى المحتوى"
+
+msgid "Search (press /)"
+msgstr "بحث (اضغط /)"
+
+msgid "Theme"
+msgstr "المظهر"
+
+msgid "auto"
+msgstr "تلقائي"
+
+msgid "light"
+msgstr "فاتح"
+
+msgid "dark"
+msgstr "داكن"
+
+msgid "No pages match."
+msgstr "لا توجد صفحات مطابقة."
+
+msgid "Previous and next"
+msgstr "السابق والتالي"
+
+msgid "Documentation"
+msgstr "الوثائق"
+
+msgid "On this page"
+msgstr "في هذه الصفحة"
+
+msgid "Last updated on %s."
+msgstr "آخر تحديث في %s."
+
+msgid "Show source"
+msgstr "عرض المصدر"
+
+msgid "Built with Guidedog."
+msgstr "بُني باستخدام Guidedog."
+
+msgid "%s %s documentation"
+msgstr "وثائق %s %s"
+
+msgid "%s documentation"
+msgstr "وثائق %s"
+
+msgid "Search needs JavaScript. Use the index instead."
+msgstr "يحتاج البحث إلى JavaScript. استخدم الفهرس بدلًا منه."
+
+msgid "Fig. %s"
+msgstr "الشكل %s"
+
+msgid "Table %s"
+msgstr "الجدول %s"
+
+msgid "Listing %s"
+msgstr "الشيفرة %s"
+
+msgid "Section %s"
+msgstr "القسم %s"
+
+msgid "Version"
+msgstr "الإصدار"
+
+msgid "General Index"
+msgstr "الفهرس العام"
+
+msgid "Python Module Index"
+msgstr "فهرس وحدات Python"
+
+msgid "Module Index"
+msgstr "فهرس الوحدات"
+
+msgid "Search Page"
+msgstr "صفحة البحث"
+
+msgid "Deprecated"
+msgstr "مُهمل"
+
+msgid "index"
+msgstr "الفهرس"
+
+msgid "next"
+msgstr "التالي"
+
+msgid "previous"
+msgstr "السابق"
+
+msgid "modules"
+msgstr "الوحدات"
+
+msgid "Copy"
+msgstr "نسخ"
+
+msgid "Copied"
+msgstr "نُسخ"
+
+msgid "Breadcrumbs"
+msgstr "مسار التنقل"

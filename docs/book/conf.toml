@@ -18,6 +18,8 @@ numfig = true
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 language = "en"
+# Translation catalogs: the book's own, then the theme's interface words for ar, hi and ko.
+locale_dirs = ["locales", "_templates/locales"]
 source_suffix = [".rst"]
 root_doc = "index"
 
