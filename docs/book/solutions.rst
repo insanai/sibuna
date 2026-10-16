@@ -50,7 +50,7 @@ Part VI: Algorithms
 Part VII: Browser Engine
 ------------------------
 
-**7.1.** At the default 16 work bits, depth 13 with 16 openings, the WebAssembly prover on a laptop-class V8 takes on the order of 15 ms (measured on the Zig implementation, September 2026), so the JavaScript fallback takes on the order of one second; on a slow phone several seconds. A sensible policy: let the page forward the ``fallback`` message, log it server-side as a metric, and lower the difficulty for a rule that matches clients known to block WebAssembly rather than for everyone.
+**7.1.** At the default 16 work bits (depth 13 with 16 openings), the supposed 20 ms in WebAssembly become :math:`50 \times 20 = 1000` ms, one second, in JavaScript on the laptop, and four seconds on the slower phone. The figures are suppositions; we measure our own clients' devices before we set a policy. A sensible policy: let the page forward the ``fallback`` message, log it server-side as a metric, and lower the difficulty for a rule that matches clients known to block WebAssembly rather than for everyone.
 
 Part VIII: Evaluation
 ---------------------

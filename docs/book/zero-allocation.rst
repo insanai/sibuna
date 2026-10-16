@@ -1,19 +1,19 @@
 Part V: Zero-Allocation Engineering in Rust
 ===========================================
 
-We follow a connection from accept to response through one fixed buffer, and examine the concurrent data structures that let many connection threads share state without heap allocation on the request path. Where the Zig implementation needed machinery of its own to keep memory safe (reader counts, arenas, descriptor tables, teardown chains), we say what Rust ownership replaced it with.
+We follow a connection from accept to response through one fixed buffer, and examine the concurrent data structures that let many connection threads share state without heap allocation on the request path. Where memory safety would otherwise need machinery of its own (reader counts, arenas, descriptor tables, teardown chains), we show how Rust ownership provides it instead.
 
 The Connection Loop
 -------------------
 
 .. admonition:: Objectives
 
-   By the end of this chapter, we should be able to explain how one 64 KiB buffer serves an entire keep-alive connection, how the head and body are located without copying, why every connection gets its own bounded thread, how the proxy learns the origin's framing so a proxied client connection can stay open, and which of these guarantees the borrow checker now proves for us.
+   By the end of this chapter, we should be able to explain how one 64 KiB buffer serves an entire keep-alive connection, how the head and body are located without copying, why every connection gets its own bounded thread, how the proxy learns the origin's framing so a proxied client connection can stay open, and which of these guarantees the borrow checker proves for us.
 
 One Thread per Connection, Bounded
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Accept workers (``--workers``, one per CPU by default, at most 64) share the listening socket. Each accepted connection is handed to a thread of its own with a one-megabyte stack, and the accept loop goes straight back to ``accept``. A thread that finishes its connection parks and takes the next one, because creating and ending a thread for every connection stalled the other threads (Part VIII, SID 0002). The alternative, serving a connection to completion on the accept thread, was the first design: it measured well on a single client and badly on sixty-four, because sixty of them waited for a worker to finish its 256-request quota. The tail latency under that design was over 100 ms at 64 connections; with a thread per connection it is under one millisecond (measured on the Zig implementation, September 2026; Part VIII).
+Accept workers (``--workers``, one per CPU by default, at most 64) share the listening socket. Each accepted connection is handed to a thread of its own with a one-megabyte stack, and the accept loop goes straight back to ``accept``. A thread that finishes its connection parks and takes the next one, because creating and ending a thread for every connection stalled the other threads (Part VIII, SID 0002). The alternative, serving a connection to completion on the accept thread, was the first design: it measured well on a single client and badly on sixty-four, because sixty of them waited for a worker to finish its 256-request quota, and the tail latency grew with every waiting client. With a thread per connection, the p99 at 64 connections stays under one millisecond in every whole-product workload, from 305 us to 857 us (``benchmarks/results/product-latest.md``; Part VIII).
 
 The number of connection threads is bounded by ``--max-connections`` (1,024 by default, at most 8,192). Past the bound the accept loop answers ``503 Service Unavailable`` on the new socket and closes it without spawning anything, and counts the event in ``sibuna_overloaded_total``.
 
@@ -142,9 +142,9 @@ Every dynamic allocation on a request path is a denial-of-service lever: fragmen
 
 .. admonition:: What the borrow checker proves
 
-   The Zig daemon carried a comment where Rust has a type: "the request slices stay valid until the next fill". In Rust the request is a ``Request<'a>``, and ``'a`` is a shared borrow of the reader's buffer. Filling or consuming the buffer needs ``&mut reader``, which the compiler refuses while a ``Request`` borrowed from it is still in use. In ``serve_one`` the request is moved into ``dispatch``, and only after that call returns may ``reader.consume`` run; writing them the other way round does not compile.
+   The request slices stay valid only until the next fill of the buffer. Sibuna states that rule as a type, not as a comment: the request is a ``Request<'a>``, and ``'a`` is a shared borrow of the reader's buffer. Filling or consuming the buffer needs ``&mut reader``, which the compiler refuses while a ``Request`` borrowed from it is still in use. In ``serve_one`` the request is moved into ``dispatch``, and only after that call returns may ``reader.consume`` run; writing them the other way round does not compile.
 
-   The same rule explains two choices that look odd at first. First, ``serve_with_body`` parses the head a second time. The first parse must end its borrow before the body is buffered, because buffering a chunked body moves bytes inside the buffer; the second parse borrows the settled buffer. Parsing is deterministic and takes about 135 to 170 ns (measured on the Rust implementation, October 2026; the Zig benchmark measured 1,119 to 1,145 ns on the same machine), so the second parse costs little and yields the same verdict. Second, the proxy borrows the parsed request and the pending bytes and must not refill the connection buffer, so it reads further client bytes into an upload buffer of its own. Because it cannot hand back what it read, the client connection is kept only when the body was fully buffered, which is exactly when the Zig daemon kept it.
+   The same rule explains two choices that look odd at first. First, ``serve_with_body`` parses the head a second time. The first parse must end its borrow before the body is buffered, because buffering a chunked body moves bytes inside the buffer; the second parse borrows the settled buffer. Parsing is deterministic and takes about 133 ns for a browser request with a cookie (``zero_copy_request_and_cookie``, 132.5 ns, in ``benchmarks/results/primitives-latest.md``), so the second parse costs little and yields the same verdict. Second, the proxy borrows the parsed request and the pending bytes and must not refill the connection buffer, so it reads further client bytes into an upload buffer of its own. Because it cannot hand back what it read, the client connection is kept only when the body was fully buffered.
 
 The Proxy Head Rewrite
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -185,7 +185,7 @@ A ``Content-Length`` is re-emitted. A chunked body that ended within the connect
 
 Bodies larger than the buffer are relayed in 16 KiB pieces from the client to the origin writer (``relay_body``) before the response is streamed back. The unit test ``proxy_head_rewrite_drops_hop_by_hop_headers_and_injects_audit_fields`` in ``crates/net/src/request.rs`` asserts that the rewrite drops a spoofed ``X-Forwarded-For`` and injects the audit fields.
 
-The proxy's three buffers, the origin read buffer (one response head, 16 KiB), the origin write buffer (8 KiB) and the upload buffer (16 KiB), live in a ``Workspace`` that the connection allocates once and reuses for every request. The Zig proxy kept them in stack arrays per exchange; the workspace makes their lifetime the connection's, and the origin reader and writer borrow them for one exchange at a time.
+The proxy's three buffers, the origin read buffer (one response head, 16 KiB), the origin write buffer (8 KiB) and the upload buffer (16 KiB), live in a ``Workspace`` that the connection allocates once and reuses for every request. The workspace makes their lifetime the connection's, not the exchange's, and the origin reader and writer borrow them for one exchange at a time.
 
 Relaying the Origin Response
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -250,14 +250,14 @@ The head is re-emitted to the client with the origin's ``Connection`` headers re
    client.flush().map_err(|_| ProxyError::ClientFailed)?;
    Ok(Relayed { client_keep: keep, origin_reusable: parsed.keep_alive })
 
-Parsing an eight-field origin head takes 322 ns, and a keep-alive ``GET`` with a 1 KiB response proxied over loopback takes 29.8 us (measured on the Rust implementation, October 2026). The Zig proxy took 1,674 ns and 31.9 us for the same inputs on the same machine.
+Parsing an eight-field origin head takes 322 ns, and a keep-alive ``GET`` with a 1 KiB response proxied over loopback takes 29.8 us (measured in October 2026; ``crates/net/src/lib.rs`` documents the measurement).
 
 The Origin Pool
 ~~~~~~~~~~~~~~~
 
-Parsing the framing also tells the proxy whether the *origin* socket can be used again: an HTTP/1.1 response without ``Connection: close`` (or an HTTP/1.0 one with ``keep-alive``) whose body was fully consumed leaves the socket at a clean request boundary. Such sockets go into a fixed pool of 256 idle origin connections, and the next proxied request takes one instead of connecting. The measurement that forced this (Part VIII) was blunt: with a new origin connection per request, a four-core proxy managed about 1,400 requests per second before loopback ran out of ephemeral ports (measured on the Zig implementation, September 2026).
+Parsing the framing also tells the proxy whether the *origin* socket can be used again: an HTTP/1.1 response without ``Connection: close`` (or an HTTP/1.0 one with ``keep-alive``) whose body was fully consumed leaves the socket at a clean request boundary. Such sockets go into a fixed pool of 256 idle origin connections, and the next proxied request takes one instead of connecting. Without the pool, every proxied request opens a new origin connection, and every closed connection holds its local port in ``TIME_WAIT``; under load a proxy on loopback soon runs out of ephemeral ports, and its throughput collapses.
 
-The Zig pool sat under one spin lock that every proxied request contended for. The Rust pool (``crates/net/src/pool.rs``) is striped: 16 stripes of 16 sockets, each stripe a ``Mutex<Vec<Arc<TcpStream>>>`` on a cache line of its own. A thread is assigned a home stripe round robin on first use, gives to and takes from it first, and looks into the other stripes, without waiting on a held lock, before it connects afresh.
+A pool under one lock would make every proxied request contend for that lock. So the pool (``crates/net/src/pool.rs``) is striped: 16 stripes of 16 sockets, each stripe a ``Mutex<Vec<Arc<TcpStream>>>`` on a cache line of its own. A thread is assigned a home stripe round robin on first use, gives to and takes from it first, and looks into the other stripes, without waiting on a held lock, before it connects afresh.
 
 .. code-block:: rust
 
@@ -309,11 +309,11 @@ A pooled socket may have been closed by the origin while idle. The proxy notices
        }
    }
 
-Unit tests relay fixed byte strings through the same functions and assert the output is byte-identical apart from the connection header (``crates/net/src/relay/tests.rs``). An end-to-end test of the daemon sends two proxied requests on one client socket and checks, through a sequence header the stub origin adds, that the second reused the pooled origin connection. ``crates/net/tests/zig_vectors.rs`` replays scenarios recorded from the Zig proxy and compares what the origin and the client receive.
+Unit tests relay fixed byte strings through the same functions and assert the output is byte-identical apart from the connection header (``crates/net/src/relay/tests.rs``). An end-to-end test of the daemon sends two proxied requests on one client socket and checks, through a sequence header the stub origin adds, that the second reused the pooled origin connection. A vector test in ``crates/net/tests/`` replays recorded proxy scenarios (a raw client request and a canned origin response) and compares every byte the origin and the client receive.
 
-.. admonition:: What ownership replaced: the descriptor table
+.. admonition:: Why the origin socket is an ``Arc``
 
-   A socket descriptor is a small integer that the kernel reuses as soon as it is closed. The Zig daemon therefore tracked every active origin socket in an 8,192-entry table under the pool lock, so that shutdown could interrupt an exchange without touching a descriptor that had meanwhile been reused for another connection. In Rust the origin socket is an ``Arc<TcpStream>``. The pool holds one handle, the exchange holds one, and the connection's ``Activity`` holds a clone while the exchange runs. The descriptor closes when the last handle is dropped, so it cannot close, or be reused, while anyone can still reach it. The table and its lock are gone.
+   A socket descriptor is a small integer that the kernel reuses as soon as it is closed. Shutdown must interrupt an exchange in flight, yet it must never touch a descriptor that has meanwhile been reused for another connection. A table of active descriptors under a lock could guard against that, at the cost of a lock on every exchange. Sibuna needs no such table: the origin socket is an ``Arc<TcpStream>``. The pool holds one handle, the exchange holds one, and the connection's ``Activity`` holds a clone while the exchange runs. The descriptor closes when the last handle is dropped, so it cannot close, or be reused, while anyone can still reach it.
 
 Idle Deadlines
 ~~~~~~~~~~~~~~
@@ -327,7 +327,7 @@ The table has one small lock per slot and no table-wide lock. It holds a ``try_c
 Upgraded Connections
 ~~~~~~~~~~~~~~~~~~~~
 
-After a validated ``101``, a WebSocket upgrade is relayed both ways. Each direction runs on a thread of its own with one fixed buffer: the connection's own thread carries origin-to-client bytes, and a scoped thread with a 128 KiB stack carries client-to-origin bytes. The Zig version served both directions from one thread with ``poll(2)``, which the Rust standard library does not expose; two threads with socket timeouts keep the relay free of ``unsafe``. An upgraded connection therefore holds two threads, so the number of connection threads can reach twice ``--max-connections`` when every connection is upgraded.
+After a validated ``101``, a WebSocket upgrade is relayed both ways. Each direction runs on a thread of its own with one fixed buffer: the connection's own thread carries origin-to-client bytes, and a scoped thread with a 128 KiB stack carries client-to-origin bytes. One thread could serve both directions with ``poll(2)``, but the Rust standard library does not expose it; two threads with socket timeouts keep the relay free of ``unsafe``. An upgraded connection therefore holds two threads, so the number of connection threads can reach twice ``--max-connections`` when every connection is upgraded.
 
 Both directions share one idle deadline (``--websocket-idle-timeout``, 300 seconds by default): bytes moving either way refresh one stamp. Each socket wait carries a timeout equal to the time left; a wait that times out re-reads the shared stamp and either waits again for the rest or ends the relay. When one direction reaches end of stream, the other socket's sending side is shut down (a half close); when a direction fails, both sockets are shut down so the other direction ends too. Before an upgrade is proxied, the connection releases its cached policy engine, so a connection that may live for hours does not keep an old engine alive.
 
@@ -336,47 +336,47 @@ Stopping
 
 ``Running::stop``, and equally ``Drop`` for ``Running``, stops the daemon in a fixed order. It sets the stopping flag and wakes every accept worker by connecting to the listener, joins the workers, shuts down every registered client socket and its attached origin socket (``IdleTable::shutdown``), stops the origin pool, joins every connection thread, joins the reaper, and closes the pooled sockets.
 
-SIGINT and SIGTERM reach that sequence through ordinary Rust. Before it spawns any thread, the daemon blocks both signals (every later thread inherits the mask) and dedicates one thread to ``sigwait``, which records the request and wakes the main thread at once. The Zig daemon installed a handler that set a flag and polled it every 100 ms. The signal module (``cmd/sibuna/src/signals.rs``) holds the daemon's only ``unsafe`` code: the declarations of the few C library functions that ``std`` does not wrap.
+SIGINT and SIGTERM reach that sequence through ordinary Rust. Before it spawns any thread, the daemon blocks both signals (every later thread inherits the mask) and dedicates one thread to ``sigwait``, which records the request and wakes the main thread at once. No code runs in a signal handler, and no thread polls a flag. The signal module (``cmd/sibuna/src/signals.rs``) holds the daemon's only ``unsafe`` code: the declarations of the few C library functions that ``std`` does not wrap.
 
-.. admonition:: What ownership replaced: ``defer`` and ``errdefer``
+.. admonition:: Release by ``Drop``
 
-   The Zig ``main`` released resources with ``defer`` and ``errdefer`` chains written in reverse order of setup, and every early return had to be read against them. In Rust each resource releases itself in ``Drop``: ``Daemon`` and ``Running`` stop the server, a ``Lease`` unregisters its connection, ``Counted`` returns a place in the connection bound, and ``Finished`` frees a task slot. The compiler inserts each release on every path out of the scope, including a panic unwinding through it, so no path can forget one.
+   Explicit cleanup calls must be written in reverse order of setup, and every early return must be read against them. In Sibuna each resource releases itself in ``Drop``: ``Daemon`` and ``Running`` stop the server, a ``Lease`` unregisters its connection, ``Counted`` returns a place in the connection bound, and ``Finished`` frees a task slot. The compiler inserts each release on every path out of the scope, including a panic unwinding through it, so no path can forget one.
 
-What the Port Measured
-~~~~~~~~~~~~~~~~~~~~~~
+What We Measured
+~~~~~~~~~~~~~~~~
 
-The table compares the two daemons on one Ryzen 9 5950X, both in memory, with the flags and workloads of the Zig benchmark tool (``--shield --workers 4 --algorithm hashcash --difficulty 8``, daemon pinned to four CPUs, ``caddy respond`` as the origin, ``wrk -t2 -c64``, five-second runs, medians of three). Part VIII will hold the full benchmark record.
+The table shows Shield in reverse-proxy mode on one Ryzen 9 5950X: the daemon pinned to four CPUs, ``wrk`` with two threads and 64 connections on eight other CPUs, five-second runs, the median of three. The rows are copied from ``benchmarks/results/product-latest.md``; Part VIII holds the full record.
 
-.. list-table:: Throughput and latency of the Zig and Rust daemons, measured on the Rust implementation (October 2026) against the Zig 0.16 daemon in the same run
+.. list-table:: Shield in reverse-proxy mode, from ``benchmarks/results/product-latest.md``
    :header-rows: 1
 
    * - Workload
-     - Zig req/s
-     - Rust req/s
-     - Zig p50 / p99 (us)
-     - Rust p50 / p99 (us)
+     - Status
+     - req/s
+     - p50 / p99 (us)
+     - CPU per request (us)
    * - admitted with session, proxied
-     - 111,490
-     - 125,728
-     - 510 / 2,374
-     - 433 / 2,586
+     - 200
+     - 138,965
+     - 438 / 857
+     - 28.57
    * - challenged (interstitial)
-     - 192,145
-     - 197,245
-     - 162 / 350
-     - 161 / 327
+     - 200
+     - 195,188
+     - 162 / 328
+     - 13.73
    * - static allowed, proxied
-     - 117,360
-     - 127,913
-     - 482 / 2,462
-     - 420 / 2,633
+     - 200
+     - 145,673
+     - 415 / 746
+     - 27.27
    * - WAF denied (with session)
-     - 207,279
-     - 210,054
-     - 152 / 336
-     - 151 / 305
+     - 403
+     - 209,507
+     - 151 / 306
+     - 12.17
 
-``wrk`` keeps 64 requests in flight, so on the CPU-bound proxied paths the faster daemon also sees more requests queued per CPU, and its p99 there is the scheduler's tail at a higher rate. At equal offered load (an open-loop generator sending at a fixed rate and timing from the intended send) the Rust daemon's tail is lower: at 75,000 admitted requests per second its p99 is 1,059 us against Zig's 1,841 us. A warm keep-alive connection serves every decision without a heap allocation: ``cmd/sibuna/tests/steady_state.rs`` counts the allocations of the daemon, and ``crates/net/tests/steady_state.rs`` finds none over 500 proxied keep-alive requests.
+``wrk`` keeps 64 requests in flight, so on the CPU-bound proxied paths requests queue for the four CPUs, and the p99 there is the scheduler's tail rather than the cost of one request. An open-loop generator, which sends at a fixed rate and times each request from its intended send, measures latency at equal offered load instead. For admitted requests in reverse-proxy mode, the p99 is 65 us at 10,000 requests per second and 100 us at 100,000; at 150,000 offered the four CPUs saturate, 134,344 requests per second are achieved, and the queue grows to seconds (``benchmarks/results/latency-latest.md``). A warm keep-alive connection serves every decision without a heap allocation: ``cmd/sibuna/tests/steady_state.rs`` counts the allocations of the daemon, and ``crates/net/tests/steady_state.rs`` finds none over 500 proxied keep-alive requests.
 
 .. admonition:: Exercise 5.1
 
@@ -396,9 +396,9 @@ Locks and Sharding
 
 The critical sections in Sibuna's tables are tens of instructions long, far shorter than a kernel futex round trip. Tables are split into 16 shards by key hash, so two operations contend with probability :math:`1/16`, and each shard sits on a cache line of its own, so neighbouring locks do not false-share.
 
-The Zig tables guarded each shard with a two-state atomic spinlock and ``spinLoopHint`` in the wait loop. The Rust tables use ``std::sync::Mutex``: one compare-and-swap when uncontended, a short spin while the holder runs, then a futex wait. That is the adaptive design the Zig limiter's lock built by hand. SID 0010 asked us to choose between the two by measurement. A spin lock saves about a nanosecond per uncontended operation, but it loses under contention:
+The tables use ``std::sync::Mutex``: one compare-and-swap when uncontended, a short spin while the holder runs, then a futex wait. The alternative is a two-state atomic spin lock with a spin-loop hint in the wait loop. SID 0010 asked us to choose between the two by measurement. A spin lock saves about a nanosecond per uncontended operation, but it loses under contention:
 
-.. list-table:: Shard lock throughput on a Ryzen 9 5950X, measured on the Rust implementation (October 2026)
+.. list-table:: Shard lock throughput on a Ryzen 9 5950X (October 2026)
    :header-rows: 1
 
    * - Workload
@@ -473,7 +473,7 @@ The expired-slot rule is the subtle part: an expired entry may be overwritten in
 
    A refused insertion never evicts a live tag. A tag that was spent and has not expired is therefore always found, and the refusal (``SpendError::Full``) can deny service but never enable a replay.
 
-The Zig slot carried an ``occupied: bool`` beside the entry, and every reader had to check it before trusting the other fields. In Rust the slot is ``Option<Entry>``: an empty slot has no tag to read, and ``match`` will not compile until both cases are handled. The Zig ``StoreError`` had five errors; the spent set can produce two (``DoubleSpend`` and ``Full``), and ``SpendError`` names exactly those.
+A slot is ``Option<Entry>``. An empty slot has no tag to read, so there is no ``occupied`` flag that a reader could forget to check, and ``match`` will not compile until both cases are handled. The error type is equally exact: the spent set can fail in two ways (``DoubleSpend`` and ``Full``), and ``SpendError`` names exactly those.
 
 GCRA: Rate Limiting in One Integer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -626,7 +626,7 @@ Each slot carries a sequence number that tells producers whether the slot is fre
        return Err(value);
    }
 
-Two Zig conventions became types. The Zig ``push`` returned ``false`` on a full ring; ``push`` here returns ``Err(value)``, handing the record back so the caller decides whether to count or drop it. The Zig ring said "single consumer only" in a comment; here ``pop`` takes ``&mut self``, and shared code must claim the unique ``Consumer`` first, so a second consumer does not compile or is refused at run time.
+Two conventions of the ring are types, not comments. On a full ring ``push`` returns ``Err(value)``, handing the record back so the caller decides whether to count or drop it; a bare ``false`` would lose it. The ring has a single consumer, and ``pop`` takes ``&mut self``, and shared code must claim the unique ``Consumer`` first, so a second consumer does not compile or is refused at run time.
 
 Read-Copy-Update Engine Publication
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -704,7 +704,7 @@ The generation is stored with release ordering after the engine is in place, and
 
 Why a cache and not simply a lock? SID 0010 asked us to measure the read cost with 16 threads and choose between ``RwLock<Arc<Engine>>`` and a lock-free alternative in safe Rust. Reading through the lock takes the lock word and the reference count, two cache lines that every core writes. The generation, by contrast, is written once per publication and otherwise only read, so each core keeps its copy:
 
-.. list-table:: Cost of one engine read, Ryzen 9 5950X, 16 threads reading in a loop, measured on the Rust implementation (October 2026)
+.. list-table:: Cost of one engine read, Ryzen 9 5950X, 16 threads reading in a loop (October 2026)
    :header-rows: 1
 
    * - Reader
@@ -720,13 +720,13 @@ Why a cache and not simply a lock? SID 0010 asked us to measure the read cost wi
      - 0.8 ns
      - 1.8 ns
 
-Under contention the cached read is more than 400 times cheaper than the lock, so the request path uses the cache and the ``RwLock`` only on the slow path of a refresh. The measurement is the ignored test ``read_cost_under_contention`` in ``cmd/sibuna/src/slot.rs``. Each use on the request path refreshes, so a request sees the engine current at that step. The engine itself is smaller too: about 200 KiB of compact heap tables, against 853,728 bytes for the fixed-capacity Zig value (SID 0002), with the same capacities (128 rules, 128-byte rule names, 8,192 trie nodes).
+Under contention the cached read is more than 400 times cheaper than the lock, so the request path uses the cache and the ``RwLock`` only on the slow path of a refresh. The measurement is the ignored test ``read_cost_under_contention`` in ``cmd/sibuna/src/slot.rs``. Each use on the request path refreshes, so a request sees the engine current at that step. The engine itself is small: 209,052 bytes, about 204 KiB, of compact heap tables (``engine_bytes`` in ``benchmarks/results/primitives-latest.json``), with capacity for 128 rules, 128-byte rule names and 8,192 trie nodes.
 
-.. admonition:: What ownership replaced: slots, reader counts and arenas
+.. admonition:: Why ``Arc`` and not reader counts
 
-   The Zig daemon kept two engine slots, each with a reader count and its own allocation arena. A request pinned a slot by incrementing its count and re-checking the slot pointer, and both atomics had to be sequentially consistent to close the race in which a writer swapped between the reader's load and its increment. The builder swapped the pointer and then spun until the old slot's readers drained, before resetting that slot's arena and rebuilding into it. A test that held a slot across a rebuild deadlocked, which was the guarantee working as designed. Because a slow origin would have held a reader count and stalled the next publication, a request copied the matched rule name into a 128-byte buffer and released its slot before proxy I/O began.
+   The fixed-memory alternative keeps two engine slots, each with a reader count and its own allocation arena. A request pins a slot by incrementing its count and re-checking the slot pointer, and both atomics must be sequentially consistent to close the race in which a writer swaps between the reader's load and its increment. The builder swaps the pointer and then spins until the old slot's readers drain, before it resets that slot's arena and rebuilds into it. A reader that holds a slot across a rebuild therefore blocks the builder, and a slow origin would stall the next publication unless every request released its slot before proxy I/O began.
 
-   ``Arc`` reference counting replaces all of it. The storage thread builds a fresh ``Engine`` from each snapshot and publishes it; nothing is reused, so there is no spare slot, no arena reset, and no spin: ``publish`` never waits for readers. An old engine simply lives until its last holder lets go, and a slow origin can delay only that moment, never the next publication. The verdict still copies the rule name into a 128-byte buffer, for a different reason: the decision borrows the engine through the connection's cache, and the response path needs the whole connection context mutably, so the copy ends the borrow. An upgraded connection, which may live for hours, releases its cached engine before it is proxied.
+   ``Arc`` reference counting needs none of this. The storage thread builds a fresh ``Engine`` from each snapshot and publishes it; nothing is reused, so there is no spare slot, no arena reset, and no spin: ``publish`` never waits for readers. An old engine simply lives until its last holder lets go, and a slow origin can delay only that moment, never the next publication. The verdict copies the matched rule name into a 128-byte buffer to end a borrow: the decision borrows the engine through the connection's cache, and the response path needs the whole connection context mutably. An upgraded connection, which may live for hours, releases its cached engine before it is proxied.
 
 .. admonition:: Exercise 5.2
 

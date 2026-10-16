@@ -45,7 +45,7 @@ Console (opt-in preview)
    sibuna init-admin admin --data-dir ./data
    sibuna --data-dir ./data --console 127.0.0.1:19446
 
-Open ``http://127.0.0.1:19446/console/`` and replace the temporary password. Add ``--console-location 1.3521,103.8198`` to place the node on the globe. Remote access requires an HTTPS proxy, an explicit origin and trusted-proxy CIDRs; follow Part IX. SID 0007 is Committed; the Zig console's functional verification is complete, while its performance isolation target remained unproved by the container measurements. The Rust console's acceptance (SID 0010, criterion 5) is in progress.
+Open ``http://127.0.0.1:19446/console/`` and replace the temporary password. Add ``--console-location 1.3521,103.8198`` to place the node on the globe. Remote access requires an HTTPS proxy, an explicit origin and trusted-proxy CIDRs; follow Part IX. SID 0007 is Committed. The console passes its browser workflows in headless Chromium (SID 0010, criterion 5); its formal performance isolation gate remains open (Part VIII).
 
 Flags That Matter First
 -----------------------

@@ -18,7 +18,7 @@ Dwork and Naor's "Pricing via Processing" (CRYPTO 1992) proposed that a service 
 Hash search is embarrassingly parallel, so a requester with more cores finishes sooner. Mahmoody, Moran, and Vadhan (CRYPTO 2013) defined proofs of *sequential* work, in which the prover must perform a long chain of dependent steps whatever its core count, and Cohen and Pietrzak (EUROCRYPT 2018) gave the simple hash-graph construction whose verifier needs only :math:`O(t \log N)` work. Blocki, Lee, and Zhou (ITC 2021) proved the same construction sound against quantum provers in the quantum random-oracle model. Part III derives Sibuna's Tier Two from that line of work; SID 0006 records the assumptions.
 
 .. graphviz::
-   :caption: Lineage of the ideas Sibuna combines. The top row is the cryptography of client puzzles and sequential work, the middle row the algorithms and systems Sibuna builds on, and the third row the products in the same space; arrows are direct descent. The Zig implementation also drew on Multi-Paxos (Lamport 1998) for replicated storage; the Rust implementation stores its state in SQLite or PostgreSQL instead (SID 0011).
+   :caption: Lineage of the ideas Sibuna combines. The top row is the cryptography of client puzzles and sequential work, the middle row the algorithms and systems Sibuna builds on, and the third row the products in the same space; arrows are direct descent. An earlier storage design drew on Multi-Paxos (Lamport 1998; SID 0005); Sibuna now stores its state in SQLite or PostgreSQL (SID 0011).
    :alt: A lineage graph. Dwork-Naor 1992 leads to Hashcash 1997, Juels-Brainard 1999, Mahmoody et al. 2013, Cohen-Pietrzak 2018 and Blocki-Lee-Zhou 2021. Aho-Corasick 1975 leads to Hyperscan 2019; ModSecurity and CRS 2002 lead to libinjection 2012. Hashcash leads to the Anubis interstitial and libinjection to the SafeLine semantic WAF; the Cloudflare hosted edge stands beside them. Sibuna (Gate, Shield, Edge) descends from Hashcash, Cohen-Pietrzak, Blocki-Lee-Zhou, Aho-Corasick, libinjection, GCRA (ATM Forum 1996), Anubis, SafeLine and Cloudflare.
 
    digraph lineage {
@@ -120,7 +120,7 @@ The browser solver compiles from the same proof sources as the native verifier. 
 Feature Comparison
 ------------------
 
-The four tables below compare Sibuna with the three tools most often mentioned alongside it. Facts about the other products were read from their public documentation and release artefacts in September 2026: Anubis 1.27.0 (MIT licence, Go), SafeLine community edition 9.x (GPL-3.0 management code around closed detector images, Docker Compose), and the Cloudflare WAF developer documentation. Anubis was also run on the benchmark host; SafeLine and Cloudflare were not (Part VIII explains why). A dash means the product does not offer the feature; a plan name means the feature exists but only on that plan. The Sibuna host footprint and the benchmark runs were measured on the Zig implementation (September 2026).
+The four tables below compare Sibuna with the three tools most often mentioned alongside it. Facts about the other products were read from their public documentation and release artefacts in September 2026: Anubis 1.27.0 (MIT licence, Go), SafeLine community edition 9.x (GPL-3.0 management code around closed detector images, Docker Compose), and the Cloudflare WAF developer documentation. Anubis was also run on the benchmark host; SafeLine and Cloudflare were not (Part VIII explains why). A dash means the product does not offer the feature; a plan name means the feature exists but only on that plan. Each Sibuna measurement names the committed result file it comes from.
 
 .. list-table:: Feature comparison, part 1: deployment
    :header-rows: 1
@@ -148,7 +148,7 @@ The four tables below compare Sibuna with the three tools most often mentioned a
      - GPL-3.0 management code; closed detector images
      - Proprietary service
    * - Host footprint
-     - 32.7 MiB binary; 9.7 MiB idle RSS; Linux fixture, console off (measured on the Zig implementation, September 2026)
+     - 35.7 MiB binary (``benchmarks/results/comparison-latest.json``); 5.9 MiB idle RSS (``benchmarks/results/primitives-latest.json``); at most 16.0 MiB peak RSS under load (``benchmarks/results/product-latest.md``)
      - 38.1 MiB binary; 21 MiB idle RSS; Linux fixture, console off
      - 1 CPU core, 1 GB RAM, 5 GB disk minimum, Docker 20.10+
      - None on premises
@@ -251,7 +251,7 @@ The four tables below compare Sibuna with the three tools most often mentioned a
      - **Yes**
      - **Yes**
    * - Measured on the benchmark host
-     - **Yes** (Zig implementation, September 2026)
+     - **Yes** (Part VIII)
      - **Yes**
      - \- (Docker only)
      - \- (hosted)
@@ -265,7 +265,7 @@ Three differences carry most of the weight in a selection decision.
 .. admonition:: Current product boundary
    :class: warning
 
-   Sibuna leaves ingress TLS termination to the deployment proxy and does not score bots with a trained model or publish paid signatures. Its opt-in console provides authenticated dashboards, country enrichment, policy editing, investigation and cluster management. Country lookup and storage work run outside request classification. SID 0007 is Committed; functional verification is complete. The fresh container measurements do not establish the console's strict performance isolation target; Part VIII records that distinction.
+   Sibuna leaves ingress TLS termination to the deployment proxy and does not score bots with a trained model or publish paid signatures. Its opt-in console provides authenticated dashboards, country enrichment, policy editing, investigation and cluster management. Country lookup and storage work run outside request classification. SID 0007 is Committed, and the console passes its browser workflows (SID 0010). Its formal performance isolation gate, with eight active dashboards under load, is not yet measured; Part VIII records what is.
 
 .. admonition:: Exercise 2.1
 

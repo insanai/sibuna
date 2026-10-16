@@ -72,7 +72,7 @@ Three families were weighed for the signature stage:
 - *SIMD literal engines* (Hyperscan, Vectorscan) prefilter blocks of 16 to 32 bytes with shuffle-based nibble masks (the "Teddy" algorithm) and verify candidates with automata. They excel on long inputs with large literal sets. The cost is a multi-megabyte C++ dependency, a compile-time pattern database, no WebAssembly target, and, for inputs of a hundred bytes, no advantage: the whole field scans in less time than one cache miss.
 - *Dense Aho-Corasick plus small structural tokenizers*, the libinjection lineage, gives exact linear-time behaviour in a fixed table and needs nothing outside the binary.
 
-Sibuna's fields are short, so the third family wins on both memory and speed; Part VIII records 2.9 ns per byte on an 8 KB body (measured on the Zig implementation, September 2026), the one workload where a SIMD prefilter would pay, and SID 0006 keeps that as an open item.
+Sibuna's fields are short, so the third family wins on both memory and speed; Part VIII records about 1.56 ns per byte on an 8 KiB body (the semantic scan takes 12,784.3 ns, ``8kb_body_semantic_scan`` in ``benchmarks/results/primitives-latest.md``). That is the one workload where a SIMD prefilter would pay, and SID 0006 keeps it as an open item.
 
 The Radix Trie for IPv4 and IPv6
 --------------------------------
@@ -83,7 +83,7 @@ The Radix Trie for IPv4 and IPv6
 
 One binary trie over 128-bit keys serves both families: IPv6 prefixes are inserted as-is, IPv4 prefixes are mapped into ``::ffff:0:0/96`` so a ``/24`` becomes a depth-120 path. Nodes live in one flat ``Vec`` indexed by ``u32`` with index zero as both root and "no child", so a lookup is at most 128 dependent loads with no pointer chasing. The trie is the ``PrefixTrie`` of the ``sibuna-cidr`` crate.
 
-A first implementation walked the 96 mapped-prefix levels for every IPv4 lookup and measured 257 ns (Zig implementation, September 2026); the trie now records the node at depth 96 at initialisation and starts IPv4 lookups there:
+Walking the 96 mapped-prefix levels for every IPv4 lookup would cost 96 dependent loads before it reached the first bit of the IPv4 address. So the trie records the node at depth 96 at initialisation and starts IPv4 lookups there:
 
 .. code-block:: rust
 
@@ -95,7 +95,7 @@ A first implementation walked the 96 mapped-prefix levels for every IPv4 lookup 
        (0, 0, self.nodes[0].value.as_ref())
    };
 
-IPv4 lookups cost 45 ns and IPv6 lookups 80 ns (both measured on the Zig implementation, September 2026). The engine consults the trie twice: terminal ``allow``/``deny`` verdicts before the rule table, so a cluster-wide ban beats every rule, and ``challenge`` verdicts after it.
+Classifying an IPv4 address costs 32.0 ns and an IPv6 address 79.3 ns (``ipv4_cidr_classification`` and ``ipv6_cidr_classification`` in ``benchmarks/results/primitives-latest.md``). The engine consults the trie twice: terminal ``allow``/``deny`` verdicts before the rule table, so a cluster-wide ban beats every rule, and ``challenge`` verdicts after it.
 
 The Semantic Firewall
 ---------------------

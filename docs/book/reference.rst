@@ -28,7 +28,7 @@ Endpoints
      - Accepts ``{"challenge_id", "nonce"}`` or ``{"challenge_id", "proof"}``; ``200`` with ``Set-Cookie``, ``400`` with a diagnostic, or ``413`` for a body larger than the connection buffer
    * - ``/__sibuna/wasm/sibuna-pow.wasm``
      - GET
-     - The solver module, 15,181 bytes (measured on the Rust implementation, October 2026), cacheable for one hour
+     - The solver module, 14,744 bytes (``wasm_bytes`` in ``benchmarks/results/primitives-latest.json``), cacheable for one hour
    * - ``/__sibuna/worker.js``
      - GET
      - The Web Worker with WASM and JavaScript provers, cacheable for one hour
@@ -44,7 +44,7 @@ Endpoints
 
 Any other path under ``/__sibuna/`` is answered ``404``. Issuance and verification spend the separate ``--challenge-rate-limit`` budget, and a banned address is refused with ``403`` on every route. Challenge responses carry ``X-Sibuna-Status: CHALLENGE``; admitted requests carry ``X-Sibuna-Status: PASS`` and ``X-Sibuna-Rule`` upstream (and ``X-Sibuna-Rule-Hash``, in hexadecimal, in forward-auth replies). A client that does not accept HTML receives ``401`` with ``{"error":"challenge_required","challenge":"/__sibuna/challenge.json?need=<ticket>"}``.
 
-The separate opt-in management listener serves ``/console/``. Initialize its administrator locally with ``sibuna init-admin``, then replace the temporary password on first sign-in. ``/console/api/stats`` and ``/console/ws`` require an authenticated session (a kiosk session included). The WebSocket multiplexes statistics, events, nodes, policy, challenges and audit with bounded snapshots, deltas and gap recovery. The Zig console's statistics-only ``/console/stream`` is removed; a request for it is an unknown path. Management peers connect to ``/console/peer``, and every API route lives under ``/console/api/``. Origin error counters are not observed in forward-auth mode. Part IX documents the console's workflows, HTTPS deployment and current SID 0007 limits.
+The separate opt-in management listener serves ``/console/``. Initialize its administrator locally with ``sibuna init-admin``, then replace the temporary password on first sign-in. ``/console/api/stats`` and ``/console/ws`` require an authenticated session (a kiosk session included). The WebSocket multiplexes statistics, events, nodes, policy, challenges and audit with bounded snapshots, deltas and gap recovery. Management peers connect to ``/console/peer``, and every API route lives under ``/console/api/``. Origin error counters are not observed in forward-auth mode. Part IX documents the console's workflows, HTTPS deployment and current SID 0007 limits.
 
 Metrics
 -------
@@ -90,7 +90,7 @@ Counters exposed as ``sibuna_<name>_total`` in Prometheus text format, in this o
    * - ``rate_evictions``
      - A limiter arrival evicted another active client's cell
 
-The first 18 counters are the Zig daemon's, byte for byte; ``bans_refused``, ``forwarded_invalid``, ``honeypot_refused`` and ``rate_evictions`` are new in the port (SID 0007). A retry can increment ``incident_write_failures`` without losing records, because the pending batch is retained. Monitor increments over an interval; totals alone are not a queue depth.
+A retry can increment ``incident_write_failures`` without losing records, because the pending batch is retained. Monitor increments over an interval; totals alone are not a queue depth.
 
 Status Codes
 ------------
@@ -137,7 +137,7 @@ Error Catalog
 
 .. admonition:: Implementation: ``ErrorKind::explain``
 
-   Maps every domain error to a boundary line, an explanation, and a ``Hint:``. In ``crates/core/src/errors.rs`` (crate ``sibuna-core``); the texts are byte for byte the Zig daemon's.
+   Maps every domain error to a boundary line, an explanation, and a ``Hint:``. In ``crates/core/src/errors.rs`` (crate ``sibuna-core``).
 
 .. list-table:: Challenge and session errors
    :header-rows: 1
@@ -271,8 +271,6 @@ Build Targets
      - Checks in headless Chromium (``sibuna-browser``)
    * - ``cargo xtask bench <primitives|product|latency>``
      - Release-mode benchmarks; results in ``benchmarks/results/<command>-latest.json``
-   * - ``cargo xtask parity``
-     - Differential replay of generated corpora against the Rust and the Zig daemon
    * - ``cargo build -p sibuna-pow-wasm --target wasm32-unknown-unknown --profile wasm``
      - The browser module only (``-p sibuna-console-ui`` for the console interface)
    * - ``cargo run -p sibuna-geoip --bin geoip-snapshot -- ...``

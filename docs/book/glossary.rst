@@ -88,7 +88,7 @@ Glossary
       A rule action that adds a signed weight to a request's score instead of deciding; totals at or above the thresholds challenge with extra work bits or deny.
 
    Zaxonlite
-      The embedded SQLite replication engine (Multi-Paxos) behind ``--data-dir`` and cluster mode in the Zig implementation. The Rust implementation replaces it with SQLite and PostgreSQL through sqlx (SID 0011) and does not read a Zaxonlite data directory.
+      The embedded SQLite replication engine (Multi-Paxos) of SID 0005, replaced by SQLite and PostgreSQL storage in SID 0011; its cluster options now stop startup with ``RemovedOption``.
 
 Bibliography
 ============
