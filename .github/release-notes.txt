@@ -1,8 +1,26 @@
-Sibuna 1.0.0-beta.1 is the first public beta release of Sibuna 1.0, a web firewall and
+Sibuna 1.0.0-beta.2 is the second public beta release of Sibuna 1.0, a web firewall and
 anti-crawler daemon written in Rust. It sits in front of an origin as a reverse proxy,
 or beside an ingress as a forward-auth engine, and admits browsers that prove work while
 it denies known automation, injected payloads, floods and honeypot hits before they
 reach the origin.
+
+New in 1.0.0-beta.2: JA4 TLS fingerprints from a trusted ingress (SID 0014).
+- `--ja4-header <name>` reads the JA4 fingerprint that the ingress computed (Cloudflare's
+  cf-ja4, nginx with FoxIO's ja4-nginx-module, Apache Traffic Server's ja4_fingerprint
+  plugin). It is read only from a trusted forwarder, the same trust as X-Forwarded-For;
+  from an untrusted peer it is ignored and removed before the request reaches the origin.
+- Policy rules, in the policy file and in the console, match it with the new `ja4` field:
+  a whole fingerprint, or a prefix followed by `*` (for example "t12*"). Matching is a
+  byte comparison and the warm request path still makes no heap allocation.
+- Malformed and repeated values are ignored and counted (sibuna_ja4_present_total,
+  sibuna_ja4_invalid_total).
+- Incidents record the fingerprint. The console shows it in the incident evidence and
+  filters events by it.
+- Storage migration 2 adds two nullable columns (policies.ja4_pattern and
+  security_incidents.ja4) on SQLite and PostgreSQL; it runs on the first start of this
+  release. Back up the data directory before upgrading.
+- The documentation site and The Sibuna Book are now available in English, Simplified
+  Chinese, Korean, Japanese, Spanish, German, Hindi and Arabic.
 
 Highlights:
 - Proof-of-work admission: Cohen-Pietrzak proof of sequential work (default) or bit-level
@@ -28,9 +46,9 @@ Downloads (all for this tag, verify them with SHA256SUMS):
 - FreeBSD 15.1 amd64: .pkg, installed with pkg add.
 - OpenBSD 7.9 amd64: .tgz, installed with pkg_add -D unsigned.
 - Homebrew formula sibuna.rb for macOS and Linux, installing the archives above.
-- Helm chart helm-sibuna-1.0.0-beta.1.tgz and the image ghcr.io/insanai/sibuna:1.0.0-beta.1
+- Helm chart helm-sibuna-1.0.0-beta.2.tgz and the image ghcr.io/insanai/sibuna:1.0.0-beta.2
   for amd64 and arm64 (digest in IMAGE-DIGEST.txt).
-- The source bundle sibuna-1.0.0-beta.1-source.tar.gz.
+- The source bundle sibuna-1.0.0-beta.2-source.tar.gz.
 
 Every archive and package carries LICENSE, NOTICE, LICENSES/ (with the third-party crate
 list THIRD-PARTY-RUST.txt), README.md, SECURITY.md and sibuna.build.json, which records
@@ -67,4 +85,4 @@ Sibuna is free software under LGPL-3.0-or-later. Report vulnerabilities privatel
 https://github.com/insanai/sibuna/security/advisories/new (see SECURITY.md).
 
 Documentation: https://insanai.github.io/sibuna/
-Source: https://github.com/insanai/sibuna/tree/v1.0.0-beta.1
+Source: https://github.com/insanai/sibuna/tree/v1.0.0-beta.2
