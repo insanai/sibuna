@@ -468,11 +468,11 @@ fn token_audit_failures_roll_back_credentials() {
     let fail = |action: &'static str| {
         let sql: &'static str = match action {
             "token.create" => {
-                "CREATE TRIGGER fail_token BEFORE INSERT ON console_audit WHEN \
+                "CREATE TRIGGER fail_token_create BEFORE INSERT ON console_audit WHEN \
                  NEW.action = 'token.create' BEGIN SELECT RAISE(ABORT, 'test'); END"
             }
             _ => {
-                "CREATE TRIGGER fail_token BEFORE INSERT ON console_audit WHEN \
+                "CREATE TRIGGER fail_token_revoke BEFORE INSERT ON console_audit WHEN \
                  NEW.action = 'token.revoke' BEGIN SELECT RAISE(ABORT, 'test'); END"
             }
         };
@@ -484,7 +484,9 @@ fn token_audit_failures_roll_back_credentials() {
         authorize(&harness, 3, CredentialKind::Bearer, now).unwrap_err().failure(),
         Failure::Unauthorized
     );
-    exec(&harness, Sql::both("DROP TRIGGER fail_token"), vec![]);
+    // A distinct name per trigger: the storage pool may run the next statement on another
+    // connection, so a dropped name is not reused at once.
+    exec(&harness, Sql::both("DROP TRIGGER fail_token_create"), vec![]);
     let id = mint_stored(&harness, &credential, create(3), now).unwrap();
     fail("token.revoke");
     let revoke = tokens::Revoke { target: id, expected_revision: 1, ..Default::default() };
