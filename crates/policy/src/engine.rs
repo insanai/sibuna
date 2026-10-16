@@ -171,6 +171,7 @@ struct CompiledRule {
     user_agent: Option<TextMatcher>,
     headers: Box<[(Box<[u8]>, TextMatcher)]>,
     cidrs: Box<[Prefix]>,
+    ja4: Option<crate::ja4::Pattern>,
 }
 
 impl CompiledRule {
@@ -186,6 +187,7 @@ impl CompiledRule {
                 .map(|h| (h.name.as_bytes().into(), TextMatcher::new(h.pattern.as_bytes())))
                 .collect(),
             cidrs: rule.cidrs.as_slice().into(),
+            ja4: rule.ja4.clone(),
         }
     }
 
@@ -204,6 +206,9 @@ impl CompiledRule {
         if !headers_match {
             return false;
         }
+        if self.ja4.as_ref().is_some_and(|pattern| !pattern.matches(request.ja4)) {
+            return false;
+        }
         self.cidrs.is_empty()
             || address.is_some_and(|address| self.cidrs.iter().any(|p| p.contains(address)))
     }
@@ -218,6 +223,7 @@ impl CompiledRule {
                 .map(|(n, m)| size_of::<(Box<[u8]>, TextMatcher)>() + n.len() + m.heap_bytes())
                 .sum::<usize>()
             + size_of_val(&*self.cidrs)
+            + self.ja4.as_ref().map_or(0, crate::ja4::Pattern::heap_bytes)
     }
 }
 

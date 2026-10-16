@@ -31,6 +31,8 @@ pub struct RequestView<'a> {
     pub client_address: Option<IpAddr>,
     /// The User-Agent header value.
     pub user_agent: &'a [u8],
+    /// The JA4 TLS fingerprint a trusted ingress forwarded, if any (SID 0014).
+    pub ja4: Option<crate::ja4::Fingerprint<'a>>,
     /// The request headers in order.
     pub headers: &'a [Header<'a>],
     /// The request body received so far; inspection reads at most its first 8 KiB.

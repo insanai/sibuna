@@ -56,6 +56,7 @@ fn browser_request() -> RequestView<'static> {
         client_ip: b"203.0.113.7",
         client_address: Some(std::net::IpAddr::V4(std::net::Ipv4Addr::new(203, 0, 113, 7))),
         user_agent: UA,
+        ja4: None,
         headers: &HEADERS,
         body: b"",
     }

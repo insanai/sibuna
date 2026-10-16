@@ -172,10 +172,33 @@ fn every_error_has_an_explanation() {
         LoadError::InvalidRuleLimit,
         LoadError::TooManyRules,
         LoadError::TrieFull,
+        LoadError::InvalidJa4,
     ];
     for error in errors {
         assert_ne!(explain(error), GENERIC, "{error}");
     }
     let syntax = LoadError::Json(JsonError { kind: ErrorKind::SyntaxError, offset: 0 });
     assert_eq!(explain(syntax), GENERIC);
+}
+
+/// A `ja4` criterion (SID 0014) is a fingerprint or a prefix and `*`; a pattern no
+/// fingerprint could match rejects the file and names the rule, the field and the value.
+#[test]
+fn ja4_patterns_compile_or_reject_the_file() {
+    let json = br#"{"rules":[
+        {"name":"old-tls","ja4":"t12*","action":"DENY"},
+        {"name":"one","ja4":"t13d1516h2_8daaf6152771_02713d6af862","action":"ALLOW"}
+    ]}"#;
+    let engine = Engine::load_json(json, 8).unwrap();
+    let rules = engine.rules();
+    assert_eq!(rules[0].ja4.as_ref().map(ToString::to_string).as_deref(), Some("t12*"));
+    let old = crate::ja4::Fingerprint::parse(b"t12d1207h1_c866b44c5a26_b5b8b9a1b1e2");
+    let view = RequestView { ja4: old, ..RequestView::new(b"/", b"192.0.2.1", b"") };
+    assert_eq!(engine.evaluate(&view).rule_name, "old-tls");
+    let mut diagnostic = Diagnostic::default();
+    let bad = br#"{"rules":[{"name":"typo","ja4":"T13D*","action":"DENY"}]}"#;
+    let error = Engine::new(8).apply_json(bad, &mut diagnostic).unwrap_err();
+    assert_eq!(error, LoadError::InvalidJa4);
+    assert_eq!((diagnostic.rule.as_str(), diagnostic.field), ("typo", "ja4"));
+    assert_eq!(diagnostic.value, "T13D*");
 }

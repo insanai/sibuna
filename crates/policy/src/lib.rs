@@ -89,6 +89,7 @@ pub mod candidate;
 pub mod embedding;
 pub mod engine;
 pub mod inspection;
+pub mod ja4;
 pub mod json;
 pub mod limits;
 pub mod loader;

@@ -124,6 +124,7 @@ fn inspect_request_passes_a_real_browser_request_untouched() {
         path: b"/blog/post-1",
         query: b"tag=c%2B%2B&page=2",
         user_agent: ua,
+        ja4: None,
         headers: &headers,
         body,
         ..RequestView::default()

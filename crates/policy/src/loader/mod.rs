@@ -22,6 +22,7 @@ pub(crate) mod schema;
 use std::fmt;
 
 use crate::engine::{Engine, MAX_RULE_NAME, RuleError};
+use crate::ja4::Pattern;
 use crate::json::{ErrorKind, JsonError, Members};
 use crate::matchers::{self, MatcherError, valid_text};
 use crate::rule::{Action, Algorithm, PolicyRule};
@@ -69,6 +70,8 @@ pub enum LoadError {
     TooManyRules,
     /// More reputation prefixes than the 8,192-node trie holds.
     TrieFull,
+    /// A JA4 pattern that no fingerprint could match (SID 0014).
+    InvalidJa4,
 }
 
 impl LoadError {
@@ -91,6 +94,7 @@ impl LoadError {
             LoadError::InvalidRuleLimit => "InvalidRuleLimit",
             LoadError::TooManyRules => "TooManyRules",
             LoadError::TrieFull => "TrieFull",
+            LoadError::InvalidJa4 => "InvalidJa4",
         }
     }
 
@@ -255,6 +259,15 @@ fn explain_values(error: LoadError) -> Explanation {
             message: "limits need rate 1..1000000, window_seconds 1..86400 and ban_seconds at \
                 most 86400, and WEIGH rules cannot carry limits.",
             hint: "Attach limits to the terminal rule that should hold the quota.",
+        },
+        LoadError::InvalidJa4 => Explanation {
+            title: "INVALID POLICY JA4",
+            message: "A ja4 pattern is a whole JA4 fingerprint, such as \
+                t13d1516h2_8daaf6152771_02713d6af862, or the start of one followed by '*', \
+                such as t13d*.",
+            hint: "A pattern no fingerprint can match would leave the rule dead, so the file \
+                is rejected. Copy the value from the ingress's header or shorten it to a \
+                prefix.",
         },
         LoadError::InvalidRuleName | LoadError::TooManyRules | LoadError::TrieFull => {
             Explanation {
@@ -434,6 +447,10 @@ fn compile_rule(entry: &RuleEntry, diagnostic: &mut Diagnostic) -> Result<Policy
     }
     let cidrs = entry.cidrs.as_ref().or(entry.remote_addresses.as_ref());
     rule.cidrs = matchers::cidrs(cidrs.map_or(&[][..], Vec::as_slice))?;
+    if let Some(text) = &entry.ja4 {
+        *diagnostic = Diagnostic::at(name, "ja4", text);
+        rule.ja4 = Some(Pattern::parse(text).ok_or(LoadError::InvalidJa4)?);
+    }
     compile_challenge(entry, &mut rule, diagnostic)?;
     *diagnostic = Diagnostic::at(name, "weight", b"");
     match entry.weight {

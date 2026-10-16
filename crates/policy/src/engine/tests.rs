@@ -240,8 +240,7 @@ fn compiled_rules_agree_with_direct_rule_matching() {
     for request in samples {
         let address = sibuna_cidr::parse_ip(request.client_ip).ok();
         for (rule, compiled) in engine.rules.iter().zip(&engine.compiled) {
-            let direct =
-                rule.matches(request.path, request.client_ip, request.user_agent, request.headers);
+            let direct = rule.matches(&request);
             assert_eq!(compiled.matches(&request, address), direct, "{}", rule.name);
         }
     }

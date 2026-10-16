@@ -35,6 +35,7 @@ pub(crate) struct RuleEntry {
     pub(crate) challenge: Option<Challenge>,
     pub(crate) weight: Option<i32>,
     pub(crate) limits: Option<Limits>,
+    pub(crate) ja4: Option<Vec<u8>>,
 }
 
 #[derive(Default)]
@@ -117,7 +118,7 @@ fn challenge(reader: &mut Reader<'_>) -> Result<Challenge> {
     Ok(challenge)
 }
 
-const RULE_FIELDS: [&str; 13] = [
+const RULE_FIELDS: [&str; 14] = [
     "name",
     "action",
     "path",
@@ -131,6 +132,7 @@ const RULE_FIELDS: [&str; 13] = [
     "challenge",
     "weight",
     "limits",
+    "ja4",
 ];
 
 fn rule(reader: &mut Reader<'_>) -> Result<RuleEntry> {
@@ -149,7 +151,8 @@ fn rule(reader: &mut Reader<'_>) -> Result<RuleEntry> {
             9 => entry.cidrs = reader.optional(Reader::string_list)?,
             10 => entry.challenge = reader.optional(challenge)?,
             11 => entry.weight = reader.optional(i32_value)?,
-            _ => entry.limits = reader.optional(limits)?,
+            12 => entry.limits = reader.optional(limits)?,
+            _ => entry.ja4 = reader.optional(Reader::string)?,
         }
         Ok(())
     })?;

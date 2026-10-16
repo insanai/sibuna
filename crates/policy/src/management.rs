@@ -4,6 +4,7 @@
 
 use std::fmt;
 
+use crate::ja4::Pattern;
 use crate::json::{Int, JsonError, Reader};
 use crate::limits::managed_identity;
 use crate::loader::schema;
@@ -36,6 +37,8 @@ pub enum ManagementError {
     InvalidWeight,
     /// Limits on a WEIGH rule, or out of range.
     InvalidRuleLimit,
+    /// A JA4 pattern that no fingerprint could match (SID 0014).
+    InvalidJa4,
     /// Header or CIDR matchers refused (see `MatcherError`).
     Matcher(MatcherError),
     /// The document is not JSON of the documented shape.
@@ -53,6 +56,7 @@ impl ManagementError {
             ManagementError::InvalidChallenge => "InvalidChallenge",
             ManagementError::InvalidWeight => "InvalidWeight",
             ManagementError::InvalidRuleLimit => "InvalidRuleLimit",
+            ManagementError::InvalidJa4 => "InvalidJa4",
             ManagementError::Matcher(error) => error.name(),
             ManagementError::Json(error) => error.kind.name(),
         }
@@ -112,9 +116,10 @@ struct Wire {
     algorithm: Option<Algorithm>,
     weight: i32,
     limits: Option<crate::limits::Limits>,
+    ja4: Option<Vec<u8>>,
 }
 
-const FIELDS: [&str; 13] = [
+const FIELDS: [&str; 14] = [
     "id",
     "name",
     "action",
@@ -128,6 +133,7 @@ const FIELDS: [&str; 13] = [
     "algorithm",
     "weight",
     "limits",
+    "ja4",
 ];
 
 fn wire(source: &[u8]) -> Result<Wire, JsonError> {
@@ -152,7 +158,8 @@ fn wire(source: &[u8]) -> Result<Wire, JsonError> {
                     reader.optional(|r| r.enumeration(&algorithms).map(|i| Algorithm::ALL[i]))?
             }
             11 => wire.weight = reader.int(Int::I32)? as i32,
-            _ => wire.limits = reader.optional(schema::limits)?,
+            12 => wire.limits = reader.optional(schema::limits)?,
+            _ => wire.ja4 = reader.optional(Reader::string)?,
         }
         Ok(())
     })?;
@@ -165,8 +172,8 @@ fn wire(source: &[u8]) -> Result<Wire, JsonError> {
 ///
 /// Fails with `TooLarge` (checked before parsing), `Json` (unknown or repeated keys, a
 /// missing `id`, `name` or `action`, wrong types), `InvalidId`, `InvalidName`,
-/// `InvalidPattern`, `InvalidChallenge`, `InvalidWeight`, `InvalidRuleLimit`, or
-/// `Matcher`, checked in that order.
+/// `InvalidPattern`, `InvalidChallenge`, `InvalidWeight`, `InvalidRuleLimit`,
+/// `InvalidJa4`, or `Matcher`, checked in that order.
 pub fn parse(source: &[u8]) -> Result<Document, ManagementError> {
     if source.len() > MAX_DOCUMENT {
         return Err(ManagementError::TooLarge);
@@ -202,6 +209,10 @@ pub fn parse(source: &[u8]) -> Result<Document, ManagementError> {
     {
         return Err(ManagementError::InvalidRuleLimit);
     }
+    let ja4 = match &wire.ja4 {
+        Some(text) => Some(Pattern::parse(text).ok_or(ManagementError::InvalidJa4)?),
+        None => None,
+    };
     let text = |bytes: &[u8]| String::from_utf8_lossy(bytes).into_owned();
     let rule = PolicyRule {
         path_pattern: wire.path.as_deref().map(text),
@@ -213,6 +224,7 @@ pub fn parse(source: &[u8]) -> Result<Document, ManagementError> {
         limit_identity: managed_identity(&wire.id),
         headers: matchers::headers(wire.headers.as_ref().unwrap_or(&crate::json::Members::Null))?,
         cidrs: matchers::cidrs(&wire.cidrs)?,
+        ja4,
         ..PolicyRule::new(&text(&wire.name), action)
     };
     Ok(Document {
@@ -227,6 +239,7 @@ pub fn parse(source: &[u8]) -> Result<Document, ManagementError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::RequestView;
     use crate::rule::Header;
 
     #[test]
@@ -240,8 +253,12 @@ mod tests {
         assert_eq!(document.id, "checkout");
         assert_eq!(document.rule.algorithm, Some(Algorithm::Posw));
         let headers = [Header { name: b"x-api", value: b"v2" }];
-        assert!(document.rule.matches(b"/checkout/pay", b"8.8.8.8", b"", &headers));
-        assert!(!document.rule.matches(b"/checkout/pay", b"8.8.4.4", b"", &headers));
+        let request = |client_ip| RequestView {
+            headers: &headers,
+            ..RequestView::new(b"/checkout/pay", client_ip, b"")
+        };
+        assert!(document.rule.matches(&request(b"8.8.8.8")));
+        assert!(!document.rule.matches(&request(b"8.8.4.4")));
         assert_eq!(document.rule.limit_identity, managed_identity(b"checkout"));
     }
 
@@ -310,5 +327,14 @@ mod tests {
             parse(maximum.as_bytes()).unwrap().rule.limits.map(|l| l.rate),
             Some(1_000_000)
         );
+    }
+
+    #[test]
+    fn management_documents_carry_a_checked_ja4_pattern() {
+        let source = br#"{"id":"tls12","name":"TLS 1.2","action":"deny","ja4":"t12*"}"#;
+        let document = parse(source).unwrap();
+        assert_eq!(document.rule.ja4, Pattern::parse(b"t12*"));
+        let bad = br#"{"id":"tls12","name":"TLS 1.2","action":"deny","ja4":"tls12"}"#;
+        assert_eq!(parse(bad), Err(ManagementError::InvalidJa4));
     }
 }

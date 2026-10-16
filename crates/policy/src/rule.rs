@@ -1,5 +1,5 @@
-//! Declarative policy rules: actions, proof-of-work algorithms, header and CIDR matchers, and
-//! the pattern grammar shared by paths, user agents and header values.
+//! Declarative policy rules: actions, proof-of-work algorithms, header, CIDR and JA4
+//! matchers, and the pattern grammar shared by paths, user agents and header values.
 //!
 //! A rule is a conjunction of optional criteria. Its action is ALLOW, DENY, CHALLENGE or
 //! WEIGH; a challenge may override the difficulty and the algorithm, and a WEIGH rule adds a
@@ -9,7 +9,9 @@ use std::fmt;
 
 use sibuna_cidr::Prefix;
 
+use crate::ja4;
 use crate::limits::Limits;
+use crate::request::RequestView;
 
 /// Most header matchers one rule may hold.
 pub const MAX_RULE_HEADERS: usize = 4;
@@ -145,6 +147,9 @@ pub struct PolicyRule {
     pub headers: Vec<HeaderMatcher>,
     /// Client address criteria, at most `MAX_RULE_CIDRS`; the client must lie in one.
     pub cidrs: Vec<Prefix>,
+    /// JA4 fingerprint criterion (SID 0014), if any; a request without a fingerprint never
+    /// matches it.
+    pub ja4: Option<ja4::Pattern>,
     /// Challenge difficulty override in work bits.
     pub difficulty: Option<u32>,
     /// Challenge algorithm override.
@@ -166,37 +171,34 @@ impl PolicyRule {
         PolicyRule { name: name.to_owned(), action, ..PolicyRule::default() }
     }
 
-    /// Returns true when every criterion of the rule matches. `client_ip` is address text;
-    /// text that is not an address matches no CIDR criterion.
+    /// Returns true when every criterion of the rule matches `request`. A client that is
+    /// not an address ([`RequestView::address`]) matches no CIDR criterion.
     ///
     /// The engine evaluates compiled forms of these criteria with the same results; this
     /// direct form serves management checks and tests.
-    pub fn matches(
-        &self,
-        path: &[u8],
-        client_ip: &[u8],
-        user_agent: &[u8],
-        headers: &[Header<'_>],
-    ) -> bool {
+    pub fn matches(&self, request: &RequestView<'_>) -> bool {
         if let Some(pattern) = &self.path_pattern
-            && !pattern_matches(pattern.as_bytes(), path)
+            && !pattern_matches(pattern.as_bytes(), request.path)
         {
             return false;
         }
         if let Some(pattern) = &self.ua_pattern
-            && !pattern_matches(pattern.as_bytes(), user_agent)
+            && !pattern_matches(pattern.as_bytes(), request.user_agent)
         {
             return false;
         }
-        if !self.headers.iter().all(|matcher| matcher.matches(headers)) {
+        if !self.headers.iter().all(|matcher| matcher.matches(request.headers)) {
+            return false;
+        }
+        if self.ja4.as_ref().is_some_and(|pattern| !pattern.matches(request.ja4)) {
             return false;
         }
         if self.cidrs.is_empty() {
             return true;
         }
-        match sibuna_cidr::parse_ip(client_ip) {
-            Ok(address) => self.cidrs.iter().any(|prefix| prefix.contains(address)),
-            Err(_) => false,
+        match request.address() {
+            Some(address) => self.cidrs.iter().any(|prefix| prefix.contains(address)),
+            None => false,
         }
     }
 }
@@ -268,18 +270,35 @@ mod tests {
         assert!(pattern_matches(b"mozilla", b"MOZILLA/5.0"));
     }
 
+    fn from(client_ip: &[u8]) -> RequestView<'_> {
+        RequestView::new(b"/", client_ip, b"")
+    }
+
     #[test]
     fn cidr_matcher_verifies_ipv4_and_ipv6_subnets() {
         let mut rule = PolicyRule::new("net", Action::Allow);
         rule.cidrs.push(sibuna_cidr::parse_cidr(b"192.168.1.0/24").unwrap());
-        assert!(rule.matches(b"/", b"192.168.1.50", b"", &[]));
-        assert!(!rule.matches(b"/", b"192.168.2.1", b"", &[]));
+        assert!(rule.matches(&from(b"192.168.1.50")));
+        assert!(!rule.matches(&from(b"192.168.2.1")));
         rule.cidrs = vec![sibuna_cidr::parse_cidr(b"2a02:1234::/32").unwrap()];
-        assert!(rule.matches(b"/", b"2a02:1234:5::9", b"", &[]));
-        assert!(!rule.matches(b"/", b"2a02:1235::1", b"", &[]));
-        assert!(!rule.matches(b"/", b"192.168.1.50", b"", &[]));
-        assert!(!rule.matches(b"/", b"bogus", b"", &[]));
+        assert!(rule.matches(&from(b"2a02:1234:5::9")));
+        assert!(!rule.matches(&from(b"2a02:1235::1")));
+        assert!(!rule.matches(&from(b"192.168.1.50")));
+        assert!(!rule.matches(&from(b"bogus")));
         assert!(sibuna_cidr::parse_cidr(b"bogus").is_err());
+    }
+
+    #[test]
+    fn ja4_criterion_needs_a_matching_fingerprint() {
+        let rule = PolicyRule {
+            ja4: ja4::Pattern::parse(b"t13d*"),
+            ..PolicyRule::new("tls13", Action::Deny)
+        };
+        let chrome = ja4::Fingerprint::parse(b"t13d1516h2_8daaf6152771_02713d6af862");
+        let old = ja4::Fingerprint::parse(b"t12d1516h2_8daaf6152771_02713d6af862");
+        assert!(rule.matches(&RequestView { ja4: chrome, ..from(b"192.0.2.1") }));
+        assert!(!rule.matches(&RequestView { ja4: old, ..from(b"192.0.2.1") }));
+        assert!(!rule.matches(&from(b"192.0.2.1")), "no fingerprint matches no criterion");
     }
 
     #[test]
@@ -293,9 +312,13 @@ mod tests {
         };
         let ok = [Header { name: b"X-Token", value: b"test-123" }];
         let bad = [Header { name: b"X-Token", value: b"wrong" }];
-        assert!(rule.matches(b"/api/data", b"1.1.1.1", b"curl/8.0", &ok));
-        assert!(!rule.matches(b"/api/data", b"1.1.1.1", b"curl/8.0", &bad));
-        assert!(!rule.matches(b"/home", b"1.1.1.1", b"curl/8.0", &ok));
+        let request = |path, headers| RequestView {
+            headers,
+            ..RequestView::new(path, b"1.1.1.1", b"curl/8.0")
+        };
+        assert!(rule.matches(&request(b"/api/data", &ok)));
+        assert!(!rule.matches(&request(b"/api/data", &bad)));
+        assert!(!rule.matches(&request(b"/home", &ok)));
     }
 
     #[test]

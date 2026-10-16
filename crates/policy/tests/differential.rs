@@ -368,6 +368,7 @@ fn request_lines(f: &Fragments, requests: u64, out: &mut Vec<String>) {
             client_ip: &request.ip,
             client_address: sibuna_cidr::parse_ip(&request.ip).ok(),
             user_agent: &request.user_agent,
+            ja4: None,
             headers: &headers,
             body: &request.body,
         };
