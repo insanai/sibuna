@@ -11,6 +11,7 @@
 use sibuna_console_protocol::workflows::{self, ReplayRow, ReplaySummary};
 use sibuna_console_protocol::{Text, policies};
 use sibuna_policy::candidate::Options;
+use sibuna_policy::ja4::Fingerprint;
 use sibuna_policy::{Action, Algorithm, Engine, Header, Limits, RequestView, management};
 use sibuna_storage::{Param, Sql, Transaction};
 
@@ -80,7 +81,9 @@ pub struct TestResult {
 /// is `credential`; `test.query.applied` is the console server's to check.
 ///
 /// Fails with [`ConsoleStorageError::InvalidInput`] for a refused request, a client
-/// address that does not parse, or a draft or candidate that does not validate, like
+/// address that does not parse, a JA4 value that is neither empty nor a fingerprint
+/// (`"ja4 fingerprint"`, by `sibuna_policy::ja4::Fingerprint::parse`), or a draft or
+/// candidate that does not validate, like
 /// [`access::authorize_in`] for policy readers, with [`ConsoleStorageError::Conflict`] when
 /// the draft's committed revision is stale, and with the driver's error.
 pub async fn test_request(
@@ -90,6 +93,7 @@ pub async fn test_request(
     test: &policies::Test,
     now: u64,
 ) -> Result<TestResult, ConsoleStorageError> {
+    let ja4 = test_fingerprint(test)?;
     policies::validate_test(test).map_err(|_| ConsoleStorageError::InvalidInput("test"))?;
     let address = sibuna_cidr::parse_ip(test.ip.as_bytes())
         .map_err(|_| ConsoleStorageError::InvalidInput("client address"))?;
@@ -107,6 +111,7 @@ pub async fn test_request(
         client_ip: test.ip.as_bytes(),
         client_address: Some(address),
         user_agent: test.user_agent.as_bytes(),
+        ja4,
         headers: &headers,
         body: test.body.as_bytes(),
     };
@@ -124,20 +129,35 @@ pub async fn test_request(
     })
 }
 
+/// Returns the test's JA4 fingerprint, `None` when the field is empty. The policy crate's
+/// grammar is the authority; checked before the protocol's bounds, so the refusal names the
+/// field.
+fn test_fingerprint(
+    test: &policies::Test,
+) -> Result<Option<Fingerprint<'_>>, ConsoleStorageError> {
+    if test.ja4.is_empty() {
+        return Ok(None);
+    }
+    Fingerprint::parse(test.ja4.as_bytes())
+        .map(Some)
+        .ok_or(ConsoleStorageError::InvalidInput("ja4 fingerprint"))
+}
+
 const RETAINED: Sql = Sql::both(
-    "SELECT i.id, i.client_ip, i.path, i.user_agent, e.query_bytes, e.body_bytes, \
+    "SELECT i.id, i.client_ip, i.path, i.user_agent, i.ja4, e.query_bytes, e.body_bytes, \
      e.truncated FROM security_incidents i \
      LEFT JOIN console_incident_evidence e ON e.incident_id = i.id \
      WHERE i.recorded_at >= $1 ORDER BY i.recorded_at DESC, i.id DESC LIMIT $2",
 );
 
 /// Replays the newest retained incidents (at most 64, within `replay.hours`) against the
-/// committed policy or a draft. Only the path, address and User-Agent are replayed; an
-/// incident counts as conclusive when its evidence shows no query, no body and nothing
-/// truncated. The request path's rate, ban and session state is never reproduced. Matches
-/// are decisions of the named rule, or any non-allow decision without a name. The scan of
-/// retained incidents runs under `work` (SID 0013's work bound of aggregate reads). The
-/// summary's `applied` is 0: the console server fills in its node's applied revision.
+/// committed policy or a draft. Only the path, address, User-Agent and JA4 fingerprint
+/// are replayed; an incident counts as conclusive when its evidence shows no query, no body
+/// and nothing truncated. The request path's rate, ban and session state is never
+/// reproduced. Matches are decisions of the named rule, or any non-allow decision without a
+/// name. The scan of retained incidents runs under `work` (SID 0013's work bound of
+/// aggregate reads). The summary's `applied` is 0: the console server fills in its node's
+/// applied revision.
 ///
 /// Fails like [`test_request`], and with [`ConsoleStorageError::Unavailable`] when the scan
 /// passes `work`.
@@ -170,13 +190,18 @@ pub async fn replay(
         let ip = fields.text("client_ip")?;
         let path = fields.bytes("path")?;
         let user_agent = fields.bytes("user_agent")?;
+        let stored_ja4 = fields.optional_text("ja4")?;
         let query: Option<u64> = fields.optional_integer("query_bytes")?;
         let body: Option<u64> = fields.optional_integer("body_bytes")?;
         let truncated: Option<u8> = fields.optional_integer("truncated")?;
         if sibuna_cidr::parse_ip(ip.as_bytes()).is_err() {
             continue;
         }
-        let decision = engine.evaluate(&RequestView::new(&path, ip.as_bytes(), &user_agent));
+        // The schema keeps a stored fingerprint in the JA4 form; parsing makes the check
+        // explicit, and a value that is not one is replayed as absent.
+        let ja4 = stored_ja4.as_deref().and_then(|text| Fingerprint::parse(text.as_bytes()));
+        let request = RequestView { ja4, ..RequestView::new(&path, ip.as_bytes(), &user_agent) };
+        let decision = engine.evaluate(&request);
         let conclusive =
             query == Some(0) && body == Some(0) && truncated.is_some_and(|bits| bits & 0xf == 0);
         let matched = if replay.rule.is_empty() {

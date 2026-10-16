@@ -38,6 +38,8 @@ pub struct StoredRule {
     pub weight: i32,
     /// The rule's quota.
     pub limits: Option<Limits>,
+    /// The JA4 criterion (SID 0014): a fingerprint, or a prefix followed by `*`.
+    pub ja4_pattern: Option<String>,
 }
 
 impl StoredRule {
@@ -69,6 +71,7 @@ impl StoredRule {
             }
             _ => return Err(fields.invalid("limit_window_seconds")),
         };
+        let ja4_pattern = fields.optional_text("ja4_pattern")?;
         Ok(StoredRule {
             id,
             name,
@@ -83,12 +86,15 @@ impl StoredRule {
             cidr_matchers,
             weight,
             limits,
+            ja4_pattern,
         })
     }
 
     /// Returns the management document this row stands for, written as Zig's
     /// `console_policy_candidate.encode` wrote it: every scalar field (absent ones as
-    /// `null`), then the matchers and limits that are present.
+    /// `null`), then the matchers and limits that are present, then the JA4 criterion when
+    /// present (SID 0014; documents of rules without one keep their earlier bytes, so
+    /// history comparisons show no change that was not made).
     pub fn document(&self) -> String {
         let mut json = Writer::new(String::with_capacity(256));
         // Writing into a `String` cannot fail, and the stored matchers are compact JSON
@@ -127,6 +133,10 @@ impl StoredRule {
                 limits.rate, limits.window_seconds, limits.ban_seconds
             ));
         }
+        if let Some(pattern) = &self.ja4_pattern {
+            text.push_str(",\"ja4\":");
+            let _ = sibuna_json::write_string(&mut text, pattern);
+        }
         text.push('}');
         text
     }
@@ -163,7 +173,8 @@ pub(crate) fn compact_json(text: &str) -> Option<String> {
 pub(crate) const ALL: Sql = Sql::both(
     "SELECT id, name, priority, enabled, path_pattern, ua_pattern, action, difficulty, \
      algorithm, CAST(header_matchers AS TEXT), CAST(cidr_matchers AS TEXT), weight, \
-     limit_rate, limit_window_seconds, limit_ban_seconds FROM policies ORDER BY id LIMIT $1",
+     limit_rate, limit_window_seconds, limit_ban_seconds, ja4_pattern FROM policies \
+     ORDER BY id LIMIT $1",
 );
 
 /// One rule by id, locked on PostgreSQL (the revision lock already serialises workflows;
@@ -171,11 +182,12 @@ pub(crate) const ALL: Sql = Sql::both(
 pub(crate) const BY_ID: Sql = Sql {
     sqlite: "SELECT id, name, priority, enabled, path_pattern, ua_pattern, action, difficulty, \
              algorithm, CAST(header_matchers AS TEXT), CAST(cidr_matchers AS TEXT), weight, \
-             limit_rate, limit_window_seconds, limit_ban_seconds FROM policies WHERE id = $1",
+             limit_rate, limit_window_seconds, limit_ban_seconds, ja4_pattern FROM policies \
+             WHERE id = $1",
     postgres: "SELECT id, name, priority, enabled, path_pattern, ua_pattern, action, \
                difficulty, algorithm, CAST(header_matchers AS TEXT), \
                CAST(cidr_matchers AS TEXT), weight, limit_rate, limit_window_seconds, \
-               limit_ban_seconds FROM policies WHERE id = $1 FOR UPDATE",
+               limit_ban_seconds, ja4_pattern FROM policies WHERE id = $1 FOR UPDATE",
 };
 
 /// Returns rule `id`, or `None` when no row has it.
@@ -192,9 +204,9 @@ pub(crate) async fn rule(
 const UPSERT: Sql = Sql {
     sqlite: "INSERT INTO policies (id, name, priority, enabled, path_pattern, ua_pattern, \
              action, difficulty, algorithm, header_matchers, cidr_matchers, weight, limit_rate, \
-             limit_window_seconds, limit_ban_seconds, created_at, updated_at) \
+             limit_window_seconds, limit_ban_seconds, ja4_pattern, created_at, updated_at) \
              VALUES ($1, $2, $3, ($4 <> 0), $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, \
-             $16, $16) ON CONFLICT (id) DO UPDATE SET name = excluded.name, \
+             $17, $16, $16) ON CONFLICT (id) DO UPDATE SET name = excluded.name, \
              priority = excluded.priority, enabled = excluded.enabled, \
              path_pattern = excluded.path_pattern, ua_pattern = excluded.ua_pattern, \
              action = excluded.action, difficulty = excluded.difficulty, \
@@ -202,12 +214,14 @@ const UPSERT: Sql = Sql {
              cidr_matchers = excluded.cidr_matchers, weight = excluded.weight, \
              limit_rate = excluded.limit_rate, \
              limit_window_seconds = excluded.limit_window_seconds, \
-             limit_ban_seconds = excluded.limit_ban_seconds, updated_at = excluded.updated_at",
+             limit_ban_seconds = excluded.limit_ban_seconds, \
+             ja4_pattern = excluded.ja4_pattern, updated_at = excluded.updated_at",
     postgres: "INSERT INTO policies (id, name, priority, enabled, path_pattern, ua_pattern, \
                action, difficulty, algorithm, header_matchers, cidr_matchers, weight, \
-               limit_rate, limit_window_seconds, limit_ban_seconds, created_at, updated_at) \
+               limit_rate, limit_window_seconds, limit_ban_seconds, ja4_pattern, created_at, \
+               updated_at) \
                VALUES ($1, $2, $3, ($4 <> 0), $5, $6, $7, $8, $9, CAST($10 AS JSONB), \
-               CAST($11 AS JSONB), $12, $13, $14, $15, $16, $16) \
+               CAST($11 AS JSONB), $12, $13, $14, $15, $17, $16, $16) \
                ON CONFLICT (id) DO UPDATE SET name = excluded.name, \
                priority = excluded.priority, enabled = excluded.enabled, \
                path_pattern = excluded.path_pattern, ua_pattern = excluded.ua_pattern, \
@@ -216,7 +230,8 @@ const UPSERT: Sql = Sql {
                cidr_matchers = excluded.cidr_matchers, weight = excluded.weight, \
                limit_rate = excluded.limit_rate, \
                limit_window_seconds = excluded.limit_window_seconds, \
-               limit_ban_seconds = excluded.limit_ban_seconds, updated_at = excluded.updated_at",
+               limit_ban_seconds = excluded.limit_ban_seconds, \
+               ja4_pattern = excluded.ja4_pattern, updated_at = excluded.updated_at",
 };
 
 /// Inserts or replaces the rule of a validated `document` at `now`, keeping the creation
@@ -231,7 +246,9 @@ pub(crate) async fn store(
     let headers = header_json(document);
     let cidrs = cidr_json(document);
     let limits = rule.limits;
-    let params: [Param<'_>; 16] = [
+    // The pattern is written back as it is written in a rule (`Display`).
+    let ja4 = rule.ja4.as_ref().map(ToString::to_string);
+    let params: [Param<'_>; 17] = [
         document.id.as_str().into(),
         rule.name.as_str().into(),
         i64::from(document.priority).into(),
@@ -248,6 +265,7 @@ pub(crate) async fn store(
         Param::Int(limits.map(|limits| i64::from(limits.window_seconds))),
         i64::from(limits.map_or(0, |limits| limits.ban_seconds)).into(),
         row::int(now)?.into(),
+        ja4.as_deref().into(),
     ];
     tx.execute(UPSERT, &params).await?;
     Ok(())
@@ -306,6 +324,7 @@ mod tests {
             Cell::Int(2),
             Cell::Int(60),
             Cell::Int(5),
+            Cell::Null,
         ]
     }
 
@@ -326,6 +345,19 @@ mod tests {
         assert_eq!(header_json(&document).as_deref(), Some("{\"X-Key\":\"v*\"}"));
         assert_eq!(cidr_json(&document).as_deref(), Some("[\"10.0.0.0/8\"]"));
         assert_eq!(document.rule.limits, rule.limits);
+        assert_eq!(document.rule.ja4, None);
+    }
+
+    #[test]
+    fn a_stored_ja4_criterion_follows_the_document_and_round_trips() {
+        let mut cells = cells();
+        cells[15] = Cell::Text("t13d*".into());
+        let rule = StoredRule::decode(Fields::new(cells, "policies")).unwrap();
+        let text = rule.document();
+        assert!(text.ends_with("\"ban_seconds\":5},\"ja4\":\"t13d*\"}"), "{text}");
+        let document = sibuna_policy::management::parse(text.as_bytes()).unwrap();
+        assert_eq!(document.rule.ja4, sibuna_policy::ja4::Pattern::parse(b"t13d*"));
+        assert_eq!(document.rule.ja4.map(|pattern| pattern.to_string()), rule.ja4_pattern);
     }
 
     #[test]

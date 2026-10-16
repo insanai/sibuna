@@ -12,6 +12,7 @@ mod deliveries;
 mod events;
 mod feed;
 mod geoip;
+mod ja4;
 mod kiosk;
 mod leases;
 mod nodes;

@@ -64,14 +64,15 @@ impl SummaryWriter {
 
 /// Returns the redacted summary of a rule as Zig's `console_policy_commit` trigger wrote it:
 /// the decision fields only, with `selectors_redacted` set when the rule has a path,
-/// User-Agent, header or CIDR selector. Names, patterns and matchers never appear.
+/// User-Agent, header, CIDR or JA4 selector. Names, patterns and matchers never appear.
 pub(crate) fn rule_summary(document: &Document) -> String {
     let rule = &document.rule;
     let limits = rule.limits;
     let selectors = rule.path_pattern.is_some()
         || rule.ua_pattern.is_some()
         || !rule.headers.is_empty()
-        || !document.cidrs.is_empty();
+        || !document.cidrs.is_empty()
+        || rule.ja4.is_some();
     SummaryWriter::new()
         .text("action", rule.action.name())
         .int("enabled", i64::from(document.enabled))
@@ -115,6 +116,10 @@ mod tests {
              \"ban_seconds\":5,\"selectors_redacted\":1}"
         );
         assert!(!summary.contains("private"));
+        let tls = br#"{"id":"c","name":"C","action":"deny","ja4":"t12*"}"#;
+        let tls = sibuna_policy::management::parse(tls).unwrap();
+        let summary = rule_summary(&tls);
+        assert!(summary.ends_with("\"selectors_redacted\":1}") && !summary.contains("t12"));
         let plain =
             sibuna_policy::management::parse(br#"{"id":"b","name":"B","action":"deny"}"#).unwrap();
         assert_eq!(

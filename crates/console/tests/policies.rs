@@ -273,3 +273,32 @@ fn failed_audits_roll_back_rule_and_inspection_edits() {
     assert_eq!(scalar(&harness, audited), 1);
     harness.stop();
 }
+
+const CHROME: &str = "t13d1516h2_8daaf6152771_02713d6af862";
+
+#[test]
+fn ja4_rules_round_trip_and_values_no_fingerprint_could_match_are_refused() {
+    let harness = Harness::start("policies-ja4");
+    let session = admin(&harness, Role::Admin);
+    for bad in ["t13d", "x13*", "T13D*"] {
+        let document = format!(r#"{{"id":"tls","name":"TLS","action":"deny","ja4":"{bad}"}}"#);
+        let refused = edit(&harness, &session, "0", &document);
+        assert_eq!((refused.status, refused.code().as_str()), (400, "CONSOLEPOLICY"), "{bad}");
+    }
+    let rule = r#"{"id":"tls","name":"TLS","action":"deny","ja4":"t13d*"}"#;
+    let saved = edit(&harness, &session, "0", rule);
+    assert_eq!(saved.status, 200, "{}", saved.text());
+    let read = "/console/api/policies/read";
+    let body = r#"{"kind":"document","id":"tls","committed":"1"}"#;
+    let document = member(&post(&harness, &session, read, body).text(), "document");
+    assert!(document.contains(r#"\"ja4\":\"t13d*\""#), "{document}");
+    let path = "/console/api/policies/test";
+    let test = |ja4: &str| format!(r#"{{"path":"/","ip":"192.0.2.1","ja4":"{ja4}"}}"#);
+    let matched = post(&harness, &session, path, &test(CHROME)).text();
+    assert_eq!(member(&matched, "rule"), "\"TLS\"", "{matched}");
+    let without = post(&harness, &session, path, &test("")).text();
+    assert_ne!(member(&without, "rule"), "\"TLS\"", "{without}");
+    let prefix = post(&harness, &session, path, &test("t13d*"));
+    assert_eq!((prefix.status, prefix.code().as_str()), (400, "CONSOLEPOLICY"));
+    harness.stop();
+}

@@ -65,14 +65,15 @@ const AUDIT_HEAD: Sql = Sql::both(
 /// The incident columns, in the order [`decode_event`] reads them.
 const EVENTS: Sql = Sql {
     sqlite: "SELECT s.id, s.node_id, s.recorded_at, s.client_ip, s.method, s.path, \
-             s.violation_category, e.incident_id IS NOT NULL, e.query_bytes, c.country, \
+             s.violation_category, s.ja4, e.incident_id IS NOT NULL, e.query_bytes, c.country, \
              (CASE WHEN c.generation IS NULL THEN NULL ELSE lower(hex(c.generation)) END), \
              c.incident_id IS NOT NULL FROM security_incidents s \
              LEFT JOIN console_incident_evidence e ON e.incident_id = s.id \
              LEFT JOIN console_incident_country c ON c.incident_id = s.id \
              WHERE s.id > $1 AND s.id <= $2 ORDER BY s.id LIMIT $3",
     postgres: "SELECT s.id, s.node_id, s.recorded_at, s.client_ip, s.method, s.path, \
-               s.violation_category, e.incident_id IS NOT NULL, e.query_bytes, c.country, \
+               s.violation_category, s.ja4, e.incident_id IS NOT NULL, e.query_bytes, \
+               c.country, \
                encode(c.generation, 'hex'), c.incident_id IS NOT NULL \
                FROM security_incidents s \
                LEFT JOIN console_incident_evidence e ON e.incident_id = s.id \
@@ -200,6 +201,7 @@ fn decode_event(mut fields: Fields) -> Result<Event, ConsoleStorageError> {
     let (path, path_cut) = display::copy::<128>(path);
     let category = fields.optional_text("violation_category")?.unwrap_or_default();
     let (category, category_cut) = display::copy::<32>(category.as_bytes());
+    let ja4 = crate::events::decode_ja4(&mut fields)?;
     let evidence = fields.flag("evidence")?;
     let query_bytes: Option<u64> = fields.optional_integer("query_bytes")?;
     let geography = decode_geography(&mut fields)?;
@@ -213,6 +215,7 @@ fn decode_event(mut fields: Fields) -> Result<Event, ConsoleStorageError> {
         method,
         path,
         category,
+        ja4,
         display_truncated: ip_cut || method_cut || path_cut || category_cut,
         query_redacted: query_cut || query_captured,
     })

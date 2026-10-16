@@ -25,6 +25,7 @@ pub(crate) struct Stored {
     pub category: &'static str,
     pub payload: Vec<u8>,
     pub user_agent: Vec<u8>,
+    pub ja4: Option<&'static str>,
     pub time: u64,
     pub campaign: i64,
     pub embedding: [u8; 256],
@@ -40,6 +41,7 @@ impl Stored {
             category: "waf:sqli",
             payload: Vec::new(),
             user_agent: b"curl/8".to_vec(),
+            ja4: None,
             time,
             campaign: 1,
             embedding: [0; 256],
@@ -58,12 +60,13 @@ const RECEIPT: Sql = Sql::both(
 );
 const INCIDENT: Sql = Sql {
     sqlite: "INSERT INTO security_incidents (id, node_id, client_ip, user_agent, method, path, \
-             violation_category, offending_payload, campaign_id, recorded_at, embedding) \
-             VALUES ($1, $2, $3, $4, 'GET', $5, $6, $7, $8, $9, $10)",
+             violation_category, offending_payload, campaign_id, recorded_at, embedding, ja4) \
+             VALUES ($1, $2, $3, $4, 'GET', $5, $6, $7, $8, $9, $10, $11)",
     postgres: "INSERT INTO security_incidents (id, node_id, client_ip, user_agent, method, \
                path, violation_category, offending_payload, campaign_id, recorded_at, \
-               embedding, search) \
-               VALUES ($1, $2, $3, $4, 'GET', $5, $6, $7, $8, $9, $10, CAST($11 AS tsvector))",
+               embedding, ja4, search) \
+               VALUES ($1, $2, $3, $4, 'GET', $5, $6, $7, $8, $9, $10, $11, \
+               CAST($12 AS tsvector))",
 };
 const FTS: Sql =
     Sql::both("INSERT INTO incidents_fts (rowid, path, offending_payload) VALUES ($1, $2, $3)");
@@ -75,7 +78,7 @@ pub(crate) async fn store(tx: &mut Transaction, incident: &Stored) {
     let payload_tokens = search::index_tokens(&incident.payload);
     let vector = search::tsvector_literal(&path_tokens, &payload_tokens);
     let id = i64::try_from(incident.id()).expect("id");
-    let params: [Param<'_>; 11] = [
+    let params: [Param<'_>; 12] = [
         id.into(),
         i64::from(incident.node).into(),
         incident.ip.into(),
@@ -86,9 +89,10 @@ pub(crate) async fn store(tx: &mut Transaction, incident: &Stored) {
         incident.campaign.into(),
         i64::try_from(incident.time).expect("time").into(),
         incident.embedding.as_slice().into(),
+        incident.ja4.into(),
         vector.as_str().into(),
     ];
-    let bound = if tx.dialect() == Dialect::Sqlite { &params[..10] } else { &params[..] };
+    let bound = if tx.dialect() == Dialect::Sqlite { &params[..11] } else { &params[..] };
     tx.execute(INCIDENT, bound).await.expect("incident");
     if tx.dialect() == Dialect::Sqlite {
         let path = search::fts_text(&path_tokens);

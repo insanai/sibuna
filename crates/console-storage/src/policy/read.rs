@@ -47,7 +47,7 @@ pub struct RulePage {
 const RULE_PAGE: Sql = Sql::both(
     "SELECT id, name, priority, enabled, path_pattern, ua_pattern, action, difficulty, \
      algorithm, CAST(header_matchers AS TEXT), CAST(cidr_matchers AS TEXT), weight, \
-     limit_rate, limit_window_seconds, limit_ban_seconds FROM policies \
+     limit_rate, limit_window_seconds, limit_ban_seconds, ja4_pattern FROM policies \
      ORDER BY priority, name, id LIMIT $1 OFFSET $2",
 );
 

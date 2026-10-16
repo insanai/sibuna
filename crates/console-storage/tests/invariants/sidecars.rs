@@ -68,6 +68,7 @@ fn captured(id: i64) -> BatchIncident<'static> {
     BatchIncident {
         id,
         client_ip: "198.51.100.7",
+        ja4: None,
         recorded_at: NOW,
         evidence: Evidence {
             version: 1,

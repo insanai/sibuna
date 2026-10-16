@@ -219,6 +219,7 @@ fn collector_retention_removes_expired_history() {
     harness.storage.record_incident(&Incident {
         client_ip: "198.51.100.1",
         user_agent: b"test",
+        ja4: None,
         method: "GET",
         path: b"/trap",
         category: "honeypot",

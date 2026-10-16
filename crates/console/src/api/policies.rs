@@ -198,6 +198,7 @@ struct QueryForm {
     query: Text<512>,
     ip: Text<48>,
     user_agent: Text<256>,
+    ja4: Text<{ sibuna_console_protocol::ja4::FINGERPRINT_LEN }>,
     body: Text<2048>,
     draft: Option<Text<{ policies::MAX_DOCUMENT }>>,
     committed: Option<String>,
@@ -214,6 +215,7 @@ impl Decode for QueryForm {
             query: fields.or_default("query")?,
             ip: fields.or_default("ip")?,
             user_agent: fields.or_default("user_agent")?,
+            ja4: fields.or_default("ja4")?,
             body: fields.or_default("body")?,
             draft: fields.or_default("draft")?,
             committed: fields.or_default("committed")?,
@@ -359,7 +361,7 @@ fn inspection<W: Write>(json: &mut Writer<W>, modes: &sibuna_policy::Modes) -> f
     json.end_object()
 }
 
-/// One applied rule (Zig's `summary`).
+/// One applied rule (Zig's `summary`), with its JA4 criterion as written, or `null`.
 fn rule_row<W: Write>(
     json: &mut Writer<W>,
     index: usize,
@@ -379,6 +381,8 @@ fn rule_row<W: Write>(
     field(json, "action", rule.action.name())?;
     field(json, "path", path)?;
     field(json, "user_agent", agent)?;
+    json.key("ja4")?;
+    optional_str(json, rule.ja4.as_ref().map(ToString::to_string).as_deref())?;
     field(json, "truncated", &(name_cut || path_cut || agent_cut))?;
     field(json, "header_count", &(rule.headers.len() as u64))?;
     field(json, "cidr_count", &(rule.cidrs.len() as u64))?;
@@ -418,6 +422,7 @@ fn test(shared: &Shared, context: &mut Context<'_>, call: &Call) -> Result<(), R
         query_string: form.query,
         ip: form.ip,
         user_agent: form.user_agent,
+        ja4: form.ja4,
         body: form.body,
         headers: form.headers,
         draft: form.draft,
@@ -706,13 +711,30 @@ mod tests {
         assert_eq!(next.applied.as_deref(), Some("2"));
         let test: QueryForm = from_json(
             br#"{"applied":null,"draft":"{}","committed":"3","path":"/","ip":"::1","query":"",
-            "user_agent":"","body":"","headers":[{"name":"a","value":"b"}]}"#,
+            "user_agent":"","body":"","headers":[{"name":"a","value":"b"}],
+            "ja4":"t13d1516h2_8daaf6152771_02713d6af862"}"#,
         )
         .unwrap();
         assert_eq!(test.headers.len(), 1);
+        assert_eq!(test.ja4.as_str(), "t13d1516h2_8daaf6152771_02713d6af862");
+        let long = format!("{{\"ja4\":\"{}\"}}", "t".repeat(37));
+        assert!(from_json::<QueryForm>(long.as_bytes()).is_err());
         assert!(from_json::<QueryForm>(br#"{"other":1}"#).is_err());
         let nine = format!("{{\"headers\":[{}]}}", [r#"{"name":"a","value":"b"}"#; 9].join(","));
         assert!(from_json::<QueryForm>(nine.as_bytes()).is_err());
+    }
+
+    #[test]
+    fn applied_rows_write_the_ja4_criterion_or_null() {
+        let mut rule = PolicyRule::new("tls", sibuna_policy::Action::Deny);
+        let write = |rule: &PolicyRule| {
+            let mut text = String::new();
+            rule_row(&mut Writer::new(&mut text), 0, rule, None).unwrap();
+            text
+        };
+        assert!(write(&rule).contains(",\"user_agent\":\"\",\"ja4\":null,"));
+        rule.ja4 = sibuna_policy::ja4::Pattern::parse(b"t13d*");
+        assert!(write(&rule).contains(",\"ja4\":\"t13d*\","));
     }
 
     #[test]

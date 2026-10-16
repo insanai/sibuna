@@ -178,6 +178,7 @@ fn incident(client_ip: &str, now: u64) -> Incident<'_> {
     Incident {
         client_ip,
         user_agent: b"Mozilla/5.0",
+        ja4: None,
         method: "GET",
         path: b"/__sibuna/honeypot",
         category: "honeypot",

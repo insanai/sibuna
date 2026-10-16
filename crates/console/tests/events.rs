@@ -222,3 +222,56 @@ fn exports_are_attachments_within_the_export_allowance() {
     assert_eq!(audited, 6);
     harness.stop();
 }
+
+const CHROME: &str = "t13d1516h2_8daaf6152771_02713d6af862";
+
+#[test]
+fn ja4_fingerprints_reach_pages_filters_and_csv_exports() {
+    let harness = Harness::start("events-ja4");
+    let admin = harness.create_user("admin", Role::Admin, false);
+    let session = harness.sign_in(admin, 1);
+    for (ip, ja4) in [("8.8.4.1", Some(CHROME)), ("8.8.4.2", None)] {
+        let incident = Incident {
+            client_ip: ip,
+            ja4,
+            method: "GET",
+            path: b"/login",
+            category: "honeypot",
+            now: support::unix_now(),
+            ..Incident::default()
+        };
+        harness.storage.record_incident(&incident);
+    }
+    let deadline = Instant::now() + Duration::from_secs(10);
+    while count(&harness) < 2 {
+        assert!(Instant::now() < deadline, "incidents were not stored");
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    let rows = page(&post(&harness, &session, QUERY, "{}")).0;
+    let carried: BTreeSet<Option<&str>> =
+        rows.iter().map(|row| row.ja4.as_ref().map(|ja4| ja4.as_str())).collect();
+    assert_eq!(carried, BTreeSet::from([Some(CHROME), None]));
+    for filter in ["t13d*", CHROME, "*"] {
+        let body = format!(r#"{{"ja4":"{filter}"}}"#);
+        let rows = page(&post(&harness, &session, QUERY, &body)).0;
+        assert_eq!(rows.len(), 1, "{filter}");
+        assert_eq!(
+            (rows[0].ip.as_str(), rows[0].ja4.as_ref().map(|ja4| ja4.as_str())),
+            ("8.8.4.1", Some(CHROME))
+        );
+    }
+    assert!(page(&post(&harness, &session, QUERY, r#"{"ja4":"q*"}"#)).0.is_empty());
+    for refused in [r#"{"ja4":"t13d"}"#, r#"{"ja4":"T13D*"}"#] {
+        let reply = post(&harness, &session, QUERY, refused);
+        assert_eq!((reply.status, reply.code().as_str()), (400, "CONSOLEEVENTS"), "{refused}");
+    }
+    let too_long = format!(r#"{{"ja4":"{CHROME}**"}}"#);
+    assert_eq!(post(&harness, &session, QUERY, &too_long).status, 400);
+    let csv = post(&harness, &session, "/console/api/events/export", r#"{"format":"csv"}"#);
+    let text = csv.text();
+    let head = "\"id\",\"node\",\"time\",\"ip\",\"category\",\"method\",\"path\",\
+                \"user_agent\",\"ja4\",";
+    assert!(text.starts_with(head), "{text}");
+    assert!(text.contains(&format!("\"{CHROME}\"")), "{text}");
+    harness.stop();
+}

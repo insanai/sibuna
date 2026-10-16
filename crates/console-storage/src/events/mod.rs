@@ -31,11 +31,12 @@ pub mod heads;
 pub mod similar;
 mod sql;
 
-use sibuna_console_protocol::MAX_MESSAGE;
 use sibuna_console_protocol::codec::{Encode, to_json};
 use sibuna_console_protocol::events::{self, Capture, Cursor, Row, country};
 use sibuna_console_protocol::security::Module;
 use sibuna_console_protocol::tokens::Scope;
+use sibuna_console_protocol::{MAX_MESSAGE, Text, ja4};
+use sibuna_policy::ja4::Pattern;
 use sibuna_storage::search;
 use sibuna_storage::{Param, Row as Cells, Sql, Transaction};
 
@@ -95,8 +96,9 @@ impl EventPage {
 /// is audited (S39) before the page is returned. The credential is `credential`;
 /// `input.session_digest` is not read. Borrows everything; returns an owned page.
 ///
-/// Fails with [`ConsoleStorageError::InvalidInput`] for a query the protocol refuses or a
-/// search the language refuses (`"search query"`; parse it with
+/// Fails with [`ConsoleStorageError::InvalidInput`] for a JA4 filter no fingerprint could
+/// match (`"ja4 filter"`, by `sibuna_policy::ja4::Pattern::parse`), a query the protocol
+/// refuses, or a search the language refuses (`"search query"`; parse it with
 /// [`sibuna_storage::search::Query::parse`] for the diagnostic), like
 /// [`access::authorize_in`] with [`EVENTS_NEED`], with [`ConsoleStorageError::Unavailable`]
 /// when a search or grouped read passes `bound`, like [`audit::record_export`] for an
@@ -108,6 +110,11 @@ pub async fn query_events(
     bound: WorkBound,
     now: u64,
 ) -> Result<EventPage, ConsoleStorageError> {
+    // The policy crate's pattern grammar is the authority; checked first, so the refusal
+    // names the field.
+    if !input.ja4.is_empty() && Pattern::parse(input.ja4.as_bytes()).is_none() {
+        return Err(ConsoleStorageError::InvalidInput("ja4 filter"));
+    }
     events::validate(input).map_err(|_| ConsoleStorageError::InvalidInput("events query"))?;
     let search = search::Query::parse(input.search.as_str())
         .map_err(|_| ConsoleStorageError::InvalidInput("search query"))?;
@@ -151,7 +158,7 @@ async fn read_rows(
         Module::Other => 2,
     });
     let nonzero = |value: u64| (value != 0).then(|| row::int(value)).transpose();
-    let params: [Param<'_>; 14] = [
+    let params: [Param<'_>; 15] = [
         row::int(input.from)?.into(),
         row::int(input.until)?.into(),
         nonzero(u64::from(input.node))?.into(),
@@ -165,6 +172,7 @@ async fn read_rows(
         row::int(before.time)?.into(),
         row::int(before.id)?.into(),
         (i64::from(input.limit) + 1).into(),
+        ja4_prefix(input.ja4.as_str()).into(),
         search.unwrap_or_default().into(),
     ];
     let statement: Sql = match (input.grouped, search.is_some()) {
@@ -173,8 +181,8 @@ async fn read_rows(
         (true, false) => sql::GROUPS,
         (true, true) => sql::GROUPS_SEARCH,
     };
-    // The 14th value (the search) is bound only when the statement reads it.
-    let bound_params = if search.is_some() { &params[..] } else { &params[..13] };
+    // The 15th value (the search) is bound only when the statement reads it.
+    let bound_params = if search.is_some() { &params[..] } else { &params[..14] };
     if !(input.grouped || search.is_some()) {
         return Ok(tx.fetch_all(statement, bound_params).await?);
     }
@@ -187,6 +195,15 @@ async fn read_rows(
     let rows = rows?;
     ended?;
     Ok(rows)
+}
+
+/// Returns the prefix the JA4 filter `pattern` compares (see `sql::ja4_prefix`): `None`
+/// without a filter, the pattern without its `*`, or a whole fingerprint.
+fn ja4_prefix(pattern: &str) -> Option<&str> {
+    if pattern.is_empty() {
+        return None;
+    }
+    Some(pattern.strip_suffix('*').unwrap_or(pattern))
 }
 
 /// Decodes the rows and keeps those that fit the query's limit and the page's byte bound.
@@ -231,6 +248,7 @@ fn decode_row(mut fields: Fields) -> Result<Row, ConsoleStorageError> {
     let (category, category_cut) = display::copy::<32>(category.as_bytes());
     let agent = fields.optional_bytes("user_agent")?.unwrap_or_default();
     let (user_agent, agent_cut) = display::copy::<128>(&agent);
+    let ja4 = decode_ja4(&mut fields)?;
     let campaign = fields.optional_integer("campaign_id")?;
     let count = fields.integer("count")?;
     let first_seen = fields.integer("first_seen")?;
@@ -251,10 +269,20 @@ fn decode_row(mut fields: Fields) -> Result<Row, ConsoleStorageError> {
         path,
         category,
         user_agent,
+        ja4,
         campaign,
         display_truncated: ip_cut || method_cut || path_cut || category_cut || agent_cut,
         query_redacted: redacted,
     })
+}
+
+/// Decodes the JA4 column; the schema keeps it NULL or 36 bytes, so a longer value is an
+/// invalid row.
+pub(crate) fn decode_ja4(
+    fields: &mut Fields,
+) -> Result<Option<Text<{ ja4::FINGERPRINT_LEN }>>, ConsoleStorageError> {
+    let Some(text) = fields.optional_text("ja4")? else { return Ok(None) };
+    Text::from_string(text).map(Some).map_err(|_| fields.invalid("ja4"))
 }
 
 /// Decodes the evidence columns: present flag, status, query, body, declared body and
@@ -302,4 +330,42 @@ fn decode_geography(fields: &mut Fields) -> Result<country::Mapping, ConsoleStor
         recorded,
     };
     country::Mapping::from_wire(wire).map_err(|_| fields.invalid("country"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sibuna_policy::ja4::Fingerprint;
+
+    const CHROME: &str = "t13d1516h2_8daaf6152771_02713d6af862";
+
+    /// Checks that the protocol's grammar, which the interface uses, decides `text` as the
+    /// policy crate does.
+    fn agree(text: &str) {
+        let pattern = Pattern::parse(text.as_bytes()).is_some();
+        assert_eq!(ja4::is_pattern(text), pattern, "pattern {text:?}");
+        let fingerprint = Fingerprint::parse(text.as_bytes()).is_some();
+        assert_eq!(ja4::is_fingerprint(text), fingerprint, "fingerprint {text:?}");
+    }
+
+    #[test]
+    fn protocol_and_policy_agree_on_ja4_values() {
+        for length in 0..=CHROME.len() {
+            let start = &CHROME[..length];
+            agree(start);
+            agree(&format!("{start}*"));
+            for character in (0u8..128).map(char::from).chain(['\u{e9}']) {
+                agree(&format!("{start}{character}"));
+                agree(&format!("{start}{character}*"));
+            }
+        }
+    }
+
+    #[test]
+    fn ja4_filters_compare_a_prefix_or_a_whole_fingerprint() {
+        assert_eq!(ja4_prefix(""), None);
+        assert_eq!(ja4_prefix("*"), Some(""));
+        assert_eq!(ja4_prefix("t13d*"), Some("t13d"));
+        assert_eq!(ja4_prefix(CHROME), Some(CHROME));
+    }
 }

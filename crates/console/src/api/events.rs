@@ -2,10 +2,11 @@
 //! and `similarity_routes.zig`).
 //!
 //! An events page is incidents, or source groups, newest first under the filters of the
-//! form and the storage search language (`search`, SID 0013); a grouped read or a search
-//! runs under the work bound. Heads are one incident's redacted request and response heads;
-//! absent rows read as not recorded, never as empty. The similarity scan continues from a
-//! cursor and answers ids as decimal strings so browsers keep them exact.
+//! form (a JA4 fingerprint or prefix among them, SID 0014) and the storage search language
+//! (`search`, SID 0013); a grouped read or a search runs under the work bound. Heads are
+//! one incident's redacted request and response heads; absent rows read as not recorded,
+//! never as empty. The similarity scan continues from a cursor and answers ids as decimal
+//! strings so browsers keep them exact.
 
 use std::fmt::{self, Write};
 
@@ -16,7 +17,7 @@ use sibuna_console_protocol::events::{self, Cursor, MAX_SEARCH, country};
 use sibuna_console_protocol::incident_heads::Read;
 use sibuna_console_protocol::security::Module;
 use sibuna_console_protocol::similarity::{self, Part};
-use sibuna_console_protocol::{Text, storage::Failure};
+use sibuna_console_protocol::{Text, ja4, storage::Failure};
 use sibuna_console_storage::ConsoleStorageError;
 use sibuna_console_storage::events::{
     EventPage, heads::read_heads, query_events, similar::similar,
@@ -138,6 +139,7 @@ struct EventsForm {
     country: country::Filter,
     ip: Text<48>,
     path_prefix: Text<256>,
+    ja4: Text<{ ja4::MAX_PATTERN }>,
     search: Text<MAX_SEARCH>,
 }
 
@@ -162,6 +164,7 @@ impl Decode for EventsForm {
             country: fields.or_default("country")?,
             ip: fields.or_default("ip")?,
             path_prefix: fields.or_default("path_prefix")?,
+            ja4: fields.or_default("ja4")?,
             search: fields.or_default("search")?,
         };
         fields.finish()?;
@@ -198,6 +201,7 @@ impl EventsForm {
             module: self.module,
             ip: self.ip,
             path_prefix: self.path_prefix,
+            ja4: self.ja4,
             search: self.search,
             client: Text::new(&call.origin.client).unwrap_or_default(),
         })
@@ -374,9 +378,10 @@ mod tests {
         assert_eq!((form.view, form.format, form.limit), (View::Raw, Format::Json, 10));
         let grouped: EventsForm = from_json(
             br#"{"view":"source","format":"csv","before":{"time":5,"id":"9007199254740993"},
-            "module":"honeypot","search":"path:/admin"}"#,
+            "module":"honeypot","search":"path:/admin","ja4":"t13d*"}"#,
         )
         .unwrap();
+        assert_eq!(grouped.ja4.as_str(), "t13d*");
         assert_eq!(grouped.before.unwrap().cursor().unwrap().id, 9_007_199_254_740_993);
         assert_eq!(grouped.module, Some(Module::Honeypot));
         assert_eq!(identifier(""), Ok(0));

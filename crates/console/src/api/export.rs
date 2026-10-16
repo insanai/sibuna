@@ -9,6 +9,7 @@
 
 use std::fmt::Write;
 
+use sibuna_console_protocol::Text;
 use sibuna_console_protocol::codec::to_json;
 use sibuna_console_protocol::events::Row;
 use sibuna_console_storage::events::EventPage;
@@ -22,8 +23,9 @@ use crate::http::{RouteError, reply};
 use crate::limits::Spend;
 use crate::shared::Shared;
 
-/// The CSV columns, in Zig's order.
-const COLUMNS: [&str; 20] = [
+/// The CSV columns, in Zig's order, with the JA4 fingerprint (SID 0014) after the
+/// User-Agent.
+const COLUMNS: [&str; 21] = [
     "id",
     "node",
     "time",
@@ -32,6 +34,7 @@ const COLUMNS: [&str; 20] = [
     "method",
     "path",
     "user_agent",
+    "ja4",
     "campaign",
     "grouped",
     "count",
@@ -119,6 +122,8 @@ fn write_row(out: &mut String, row: &Row) {
         cell(out, text);
         out.push(',');
     }
+    optional_cell(out, row.ja4.as_ref().map(Text::as_str));
+    out.push(',');
     optional_cell(out, row.campaign.map(|campaign| campaign.to_string()).as_deref());
     let _ = write!(out, ",{},{},{},", row.grouped, row.count, row.first_seen);
     optional_cell(out, country);
@@ -173,7 +178,6 @@ fn cell(out: &mut String, text: &str) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sibuna_console_protocol::Text;
 
     // event_export.zig: "CSV quotes separators and visibly neutralizes spreadsheet formulas".
     #[test]
@@ -194,6 +198,11 @@ mod tests {
         let line = lines.next().unwrap();
         assert!(line.starts_with("\"9007199254740993\",0,0,\"\","), "{line}");
         assert!(line.ends_with(",false,false"), "{line}");
+        assert!(line.contains(",\"Not recorded\",\"Not recorded\","), "no ja4: {line}");
+        let chrome = "t13d1516h2_8daaf6152771_02713d6af862";
+        let row = Row { ja4: Some(Text::new(chrome).unwrap()), ..Row::default() };
+        let text = csv(&EventPage { rows: vec![row], next: None });
+        assert!(text.contains(&format!(",\"\",\"{chrome}\",\"Not recorded\",")), "{text}");
     }
 
     // event_export.zig: "CSV formula-like prefixes include controls, full-width characters

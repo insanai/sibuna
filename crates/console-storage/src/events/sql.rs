@@ -2,8 +2,9 @@
 //!
 //! Parameters: `$1` from, `$2` until, `$3` node, `$4` category, `$5` address, `$6` path
 //! prefix (bytes), `$7` country filter, `$8` module ordinal, `$9` campaign, `$10` incident,
-//! `$11` and `$12` the cursor's time and id, `$13` the row limit, `$14` the search
-//! expression. An absent filter is `NULL`. Statements without a search bind 13 values.
+//! `$11` and `$12` the cursor's time and id, `$13` the row limit, `$14` the JA4 prefix,
+//! `$15` the search expression. An absent filter is `NULL`. Statements without a search
+//! bind 14 values.
 
 use sibuna_storage::Sql;
 
@@ -44,8 +45,20 @@ macro_rules! filters {
             country_label!(),
             " = $7) AND ($8 IS NULL OR ",
             classification!(),
-            " = $8) AND ($9 IS NULL OR s.campaign_id = $9) AND ($10 IS NULL OR s.id = $10) "
+            " = $8) AND ($9 IS NULL OR s.campaign_id = $9) AND ($10 IS NULL OR s.id = $10) ",
+            ja4_prefix!()
         )
+    };
+}
+
+/// The JA4 filter (SID 0014): the fingerprint starts with `$14`. A stored fingerprint is
+/// always 36 bytes, so a whole fingerprint as the prefix is exact equality, and the empty
+/// prefix (the pattern `*`) keeps every incident that has one. Both dialects compare the
+/// bytes with `substr`; `LIKE` would read `_` as a wildcard and ignore case on SQLite. The
+/// value is ASCII, so `length` counts bytes in both dialects.
+macro_rules! ja4_prefix {
+    () => {
+        "AND ($14 IS NULL OR substr(s.ja4, 1, length($14)) = $14) "
     };
 }
 
@@ -78,7 +91,7 @@ macro_rules! raw_select {
     ($generation:ident) => {
         concat!(
             "SELECT s.id, s.node_id, s.recorded_at, s.client_ip, s.method, s.path, \
-             s.violation_category, s.user_agent, s.campaign_id, 1, s.recorded_at, \
+             s.violation_category, s.user_agent, s.ja4, s.campaign_id, 1, s.recorded_at, \
              e.incident_id IS NOT NULL, e.selected_status, e.query_bytes, e.body_bytes, \
              e.declared_body_bytes, e.truncated, c.country, ",
             $generation!(),
@@ -92,7 +105,8 @@ macro_rules! group_select {
     ($generation:ident) => {
         concat!(
             "SELECT MAX(s.id), s.node_id, MAX(s.recorded_at), s.client_ip, NULL, NULL, NULL, \
-             NULL, NULL, COUNT(*), MIN(s.recorded_at), 1 = 0, NULL, NULL, NULL, NULL, NULL, \
+             NULL, NULL, NULL, COUNT(*), MIN(s.recorded_at), 1 = 0, NULL, NULL, NULL, NULL, \
+             NULL, \
              CASE WHEN COUNT(DISTINCT COALESCE(c.country, '')) = 1 THEN MIN(c.country) END, \
              CASE WHEN COUNT(DISTINCT COALESCE(",
             $generation!(),
@@ -149,8 +163,8 @@ pub const ROWS: Sql = statement!(raw_select, raw_order, "", "");
 pub const ROWS_SEARCH: Sql = statement!(
     raw_select,
     raw_order,
-    " AND s.id IN (SELECT rowid FROM incidents_fts WHERE incidents_fts MATCH $14) ",
-    " AND s.search @@ CAST($14 AS tsquery) "
+    " AND s.id IN (SELECT rowid FROM incidents_fts WHERE incidents_fts MATCH $15) ",
+    " AND s.search @@ CAST($15 AS tsquery) "
 );
 /// Source groups, newest first.
 pub const GROUPS: Sql = statement!(group_select, group_order, "", "");
@@ -158,8 +172,8 @@ pub const GROUPS: Sql = statement!(group_select, group_order, "", "");
 pub const GROUPS_SEARCH: Sql = statement!(
     group_select,
     group_order,
-    " AND s.id IN (SELECT rowid FROM incidents_fts WHERE incidents_fts MATCH $14) ",
-    " AND s.search @@ CAST($14 AS tsquery) "
+    " AND s.id IN (SELECT rowid FROM incidents_fts WHERE incidents_fts MATCH $15) ",
+    " AND s.search @@ CAST($15 AS tsquery) "
 );
 
 #[cfg(test)]
@@ -168,9 +182,11 @@ mod tests {
 
     #[test]
     fn search_clauses_appear_only_in_search_statements() {
-        assert!(ROWS_SEARCH.sqlite.contains("incidents_fts MATCH $14"));
-        assert!(GROUPS_SEARCH.postgres.contains("s.search @@ CAST($14 AS tsquery)"));
-        assert!(!ROWS.sqlite.contains("$14") && !GROUPS.postgres.contains("$14"));
+        assert!(ROWS_SEARCH.sqlite.contains("incidents_fts MATCH $15"));
+        assert!(GROUPS_SEARCH.postgres.contains("s.search @@ CAST($15 AS tsquery)"));
+        assert!(!ROWS.sqlite.contains("$15") && !GROUPS.postgres.contains("$15"));
+        assert!(ROWS.postgres.contains("substr(s.ja4, 1, length($14)) = $14"));
+        assert!(!ROWS.sqlite.contains("LIKE") && !GROUPS_SEARCH.postgres.contains("LIKE"));
         assert!(ROWS.postgres.contains("encode(c.generation, 'hex')"));
         assert!(GROUPS.sqlite.contains("lower(hex(c.generation))"));
     }
