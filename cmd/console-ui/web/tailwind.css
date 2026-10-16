@@ -134,6 +134,8 @@ button, input, select, textarea { font: inherit; }
 
 .sb-globe-controls { display: flex; flex-wrap: wrap; gap: 8px; }
 .sb-globe-mode [aria-pressed="true"] { background: var(--color-primary); color: var(--color-primary-content); }
+/* A pressed toggle shows the current choice. */
+.btn[aria-pressed="true"] { background: var(--color-primary); color: var(--color-primary-content); }
 .sb-settings-form { display: grid; gap: 12px; max-width: 640px; margin-top: 24px; }
 .sb-settings-form .input, .sb-settings-form .textarea, .sb-settings-form .select { width: 100%; }
 .sb-settings-form .sb-field { display: grid; gap: 8px; }

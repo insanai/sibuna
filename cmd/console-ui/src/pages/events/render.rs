@@ -63,9 +63,11 @@ pub(super) fn page(events: &Events, view: &View<'_>, out: &mut Html<'_>) -> fmt:
         out.escaped(state.message.as_str())?;
         out.write_str("</p>")?;
     }
-    out.write_str("<div class=\"flex flex-wrap gap-3 mt-6\" aria-label=\"Incident view\">")?;
-    button(out, "events-raw", "Raw incidents", model.busy || !model.grouped)?;
-    button(out, "events-source", "By source address", model.busy || model.grouped)?;
+    // The current view is a pressed toggle, not a disabled button, which would read as
+    // unavailable.
+    out.write_str("<div class=\"join mt-6\" role=\"group\" aria-label=\"Incident view\">")?;
+    toggle(out, "events-raw", "Raw incidents", !model.grouped, model.busy)?;
+    toggle(out, "events-source", "By source address", model.grouped, model.busy)?;
     out.write_str("</div>")?;
     scope_notes(model, view, out)?;
     live::render_status(state, Topic::Events, out)?;
@@ -388,6 +390,22 @@ fn geography(value: &Mapping, out: &mut Html<'_>) -> fmt::Result {
     out.write_str(" <span class=\"break-all\">\u{b7} GeoIP generation ")?;
     out.escaped(value.generation.as_str())?;
     out.write_str("</span>")
+}
+
+/// Draws a view toggle, pressed when it shows the current view.
+fn toggle(
+    out: &mut Html<'_>,
+    action: &str,
+    label: &str,
+    pressed: bool,
+    disabled: bool,
+) -> fmt::Result {
+    out.write_str("<button class=\"btn join-item\" data-action=\"")?;
+    out.write_str(action)?;
+    out.write_str(if pressed { "\" aria-pressed=\"true\"" } else { "\" aria-pressed=\"false\"" })?;
+    out.write_str(if disabled { " disabled>" } else { ">" })?;
+    out.write_str(label)?;
+    out.write_str("</button>")
 }
 
 fn button(out: &mut Html<'_>, action: &str, label: &str, disabled: bool) -> fmt::Result {
