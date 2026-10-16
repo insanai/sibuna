@@ -17,7 +17,7 @@
   <a href="README.hi.md">हिन्दी</a> · <a href="README.ar.md">العربية</a>
 </p>
 
-**Sibuna hilft, Websites und APIs vor unerwünschtem Bot-Verkehr zu schützen.** Es kann
+**Sibuna hilft, Websites und APIs vor unerwünschtem Datenverkehr von Bots zu schützen.** Es kann
 Anfragen an deine Anwendung weiterleiten oder neben einem vorhandenen Proxy wie Caddy oder
 nginx arbeiten.
 
@@ -36,14 +36,14 @@ um zu steuern, was diese Clients danach anfordern dürfen.
 
 ## Funktionen
 
-- **Ein ausführbares Programm:** Engine, eingebetteter SQLite-Speicher, Browser-Löser und Konsolen-Assets.
+- **Eine ausführbare Datei:** Engine, eingebetteter SQLite-Speicher, Browser-Löser und Konsolen-Assets.
 - **Native Pakete:** Linux, macOS, Windows, FreeBSD und OpenBSD. Der Browser-Löser nutzt WebAssembly.
 - **Browser-Challenges:** Nachweis sequenzieller Arbeit (Standard) oder Hashcash, danach eine signierte Sitzung.
-- **Zugangsrichtlinien:** Anfragen nach Adresse, Pfad, Headern und User-Agent erlauben, herausfordern, gewichten oder ablehnen.
+- **Zugangsrichtlinien:** Anfragen nach Adresse, Pfad, Headern und User-Agent zulassen, mit einer Challenge belegen, gewichten oder ablehnen.
 - **TLS-Fingerabdrücke:** den JA4-Fingerabdruck, den ein vertrauenswürdiger Eingangsproxy weiterleitet, exakt oder per Präfix abgleichen.
-- **Anwendungsprüfung:** eingebaute Prüfungen für SQL-Injection, XSS, Pfadtraversierung und Command-Injection.
-- **Lokale Ratenlimits:** Bursts und Dauerverkehr steuern, optional mit Limits je Regel.
-- **Betreiberkonsole:** Verkehr, Länderstichproben, aufgezeichnete Vorfälle und Richtlinienbearbeitung.
+- **Anwendungsprüfung:** eingebaute Prüfungen für SQL-Injection, XSS, Path Traversal und Command Injection.
+- **Lokale Ratenlimits:** Bursts und Dauerlast steuern, optional mit Limits je Regel.
+- **Betreiberkonsole:** Datenverkehr, Länderstichproben, aufgezeichnete Vorfälle und Richtlinienbearbeitung.
 - **Cluster-Unterstützung:** ein gesonderter Build teilt Richtlinien und Reputation über PostgreSQL.
 
 <a id="quickstart"></a>
@@ -51,7 +51,7 @@ um zu steuern, was diese Clients danach anfordern dürfen.
 ## Schnellstart
 
 [Lade ein Release](https://github.com/insanai/sibuna/releases/tag/v1.0.0-beta.2) für deine
-Plattform herunter. Das Standardpaket unterstützt Speicher und Konsole. Die Konsole startet mit
+Plattform herunter. Das Standardpaket unterstützt Speicherung und Konsole. Die Konsole startet mit
 `--console`.
 
 | Plattform | Paket | Voraussetzungen |
@@ -71,7 +71,7 @@ Debian/RPM-Pakete unterstützen Linux x86-64 und ARM64; Arch `sibuna-bin` unters
 Pakete für FreeBSD 15.1 und OpenBSD 7.9 unterstützen x86-64 und installieren die CLI.
 Linux-Pakete enthalten einen optionalen, deaktivierten systemd-Dienst. BSD-Pakete erzeugen
 weder Dienst noch Konto oder Zustand. Dies sind Upstream-Downloads; die Aufnahme in
-Community-Archive ist ein separates Verfahren. Der Release enthält auch ein Helm-Chart und ein
+Community-Archive ist ein separates Verfahren. Das Release enthält auch ein Helm-Chart und ein
 Container-Image, `ghcr.io/insanai/sibuna`.
 Die [Paket-Betriebsanleitung](https://insanai.github.io/sibuna/book/operations.html)
 beschreibt Installation, Verifikation, privaten Zustand, Upgrades und die Einrichtung unter
@@ -117,7 +117,7 @@ Windows-ACLs.
 
 <a id="build-from-source"></a>
 
-### Aus Quellen bauen
+### Aus dem Quellcode bauen
 
 Wir bauen und testen mit **Rust 1.99**. Browser-Löser und Konsolenoberfläche sind in Rust
 geschrieben und zu WebAssembly kompiliert; der Build braucht weder Node noch npm.
@@ -129,7 +129,7 @@ rustup target add wasm32-unknown-unknown
 cargo build --release -p sibuna
 ```
 
-Das Programm liegt unter `target/release/sibuna`. Es speichert seinen Zustand mit `--data-dir`
+Die ausführbare Datei liegt unter `target/release/sibuna`. Es speichert seinen Zustand mit `--data-dir`
 in SQLite. Cluster-Builds nutzen `--features postgres-tls` und teilen eine PostgreSQL-Datenbank
 über `--database-url-file` und `--cluster-node`.
 [CONTRIBUTING.md](CONTRIBUTING.md) beschreibt Tests, Lints und Größenprüfungen.
@@ -138,7 +138,7 @@ in SQLite. Cluster-Builds nutzen `--features postgres-tls` und teilen eine Postg
 
 ## Konsole
 
-Die Konsole läuft im selben Programm. Initialisiere einen Administrator bei gestopptem Daemon:
+Die Konsole läuft in derselben ausführbaren Datei. Initialisiere einen Administrator bei gestopptem Daemon:
 
 ```sh
 ./sibuna init-admin admin --data-dir ./data
@@ -178,14 +178,14 @@ Setze `--console-location <latitude,longitude>`, um den Server auf dem Globus zu
 
 </details>
 
-Dies sind Headless-Chromium-Aufnahmen von v1.0.0-beta.1 auf einem lokalen Testknoten. Verkehr
+Dies sind Headless-Chromium-Aufnahmen von v1.0.0-beta.1 auf einem lokalen Testknoten. Datenverkehr
 und GeoIP-Zuordnungen sind Testdaten. Die angezeigten Zähler sind keine Benchmark-Ergebnisse.
 
 <a id="how-it-works"></a>
 
 ## Funktionsweise
 
-Eine Anfrage kann zugelassen, herausgefordert oder abgelehnt werden. Ein Besucher, der eine
+Eine Anfrage kann zugelassen, mit einer Challenge belegt oder abgelehnt werden. Ein Besucher, der eine
 Challenge löst, erhält eine signierte Sitzung. Spätere Anfragen durchlaufen weiterhin die
 anwendbaren Richtlinien- und Ratenprüfungen.
 
@@ -202,7 +202,7 @@ Angriffsprüfer. Shield ist der Standard; `--gate` wählt beim Start Gate.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/images/protection-surfaces-dark.svg">
-  <img src="docs/readme/images/protection-surfaces.svg" alt="Gate- und Shield-Entscheidungen über Anfragen: erlauben, herausfordern oder sperren">
+  <img src="docs/readme/images/protection-surfaces.svg" alt="Gate- und Shield-Entscheidungen über Anfragen: zulassen, Challenge stellen oder sperren">
 </picture>
 
 Das Diagramm zeigt die eingebauten Gate- und Shield-Prüfungen.
@@ -223,7 +223,7 @@ Das [Buch](https://insanai.github.io/sibuna/book/) erklärt ihre Aufgaben.
 ### Einsatzgrenzen
 
 Sibuna nutzt HTTP/1.1 auf seinem privaten Listener. Dein Eingangsproxy übernimmt öffentliches
-TLS und HTTP/2. Forward Auth prüft die Metadaten, die der Eingangsproxy liefert. Im
+TLS und HTTP/2. Im Forward-Auth-Modus prüft Sibuna die Metadaten, die der Eingangsproxy liefert. Im
 Reverse-Proxy-Modus deckt der eingebaute Prüfer die ersten 8 KiB eines Bodys ab. Uploads werden
 zu deiner Anwendung gestreamt. WebSocket-Nachrichten werden ungeprüft weitergeleitet. Der
 Prüfer ist eine Heuristik, kein vollständiger Sprachparser.
@@ -248,33 +248,33 @@ noch Bot-Genauigkeit.
 ### Sibuna auf einem Host
 
 Diese Läufe nutzten einen AMD Ryzen 9 5950X. Der Daemon hatte vier CPUs und lief im
-Arbeitsspeicher; Lastgenerator und ein Stub-Ursprung liefen auf acht anderen CPUs. `wrk`
+Arbeitsspeicher; Lastgenerator und ein Stub-Ursprungsserver liefen auf acht anderen CPUs. `wrk`
 nutzte 64 Verbindungen über Loopback.
 Die Werte sind Mediane aus drei Läufen.
 
 - Im Forward-Auth-Modus lief jede Last mit 197.532 bis 211.636 Anfragen pro Sekunde, mit einem
-  p99 von 305 bis 327 us und 11,7 bis 13,8 us CPU pro Anfrage. Die Grenze war der Lastgenerator.
+  p99 von 305 bis 327 µs und 11,7 bis 13,8 µs CPU pro Anfrage. Die Grenze war der Lastgenerator.
 - Weitergeleitete Anfragen liefen mit 138.965 bis 147.303 pro Sekunde. Der Spitzenspeicher lag
   bei etwa 16 MiB.
 - Bei gleicher angebotener Last von 100.000 zugelassenen Anfragen pro Sekunde betrug die
-  p99.9-Latenz 62 us im Forward-Auth-Modus und 150 us im Reverse-Proxy-Modus.
+  p99.9-Latenz 62 µs im Forward-Auth-Modus und 150 µs im Reverse-Proxy-Modus.
 
 <a id="beside-anubis"></a>
 
 ### Neben Anubis
 
-Wir haben das offizielle Release-Binary von Anubis 1.27.0 mit denselben Lasten, CPUs und
-demselben Lastgenerator gemessen. Die Hashcash-Arbeit war angeglichen: 8 Null-Bits für Sibuna,
-2 hexadezimale Nullziffern für Anubis. Der Ursprung war `caddy respond`. Die Tabelle zeigt
+Wir haben die offizielle Release-Binärdatei von Anubis 1.27.0 mit denselben Lasten, CPUs und
+demselben Lastgenerator gemessen. Die Hashcash-Arbeit war angeglichen: 8 Nullbits für Sibuna,
+2 hexadezimale Nullziffern für Anubis. Der Ursprungsserver war `caddy respond`. Die Tabelle zeigt
 zugelassene Anfragen mit Sitzung.
 
 | Zugelassene Anfragen | Sibuna Gate | Sibuna Shield | Anubis 1.27.0 |
 | --- | ---: | ---: | ---: |
-| Forward Auth, req/s | 210.682 | 208.635 | 36.509 |
-| Forward Auth, p99 | 305 us | 308 us | 7.477 us |
-| Forward Auth, CPU pro Anfrage | 12,1 us | 13,2 us | 106,3 us |
-| Reverse Proxy, req/s | 106.376 | 103.298 | 19.398 |
-| Reverse Proxy, p99 | 3.331 us | 3.321 us | 11.062 us |
+| Forward-Auth, Anfr./s | 210.682 | 208.635 | 36.509 |
+| Forward-Auth, p99 | 305 µs | 308 µs | 7.477 µs |
+| Forward-Auth, CPU pro Anfrage | 12,1 µs | 13,2 µs | 106,3 µs |
+| Reverse Proxy, Anfr./s | 106.376 | 103.298 | 19.398 |
+| Reverse Proxy, p99 | 3.331 µs | 3.321 µs | 11.062 µs |
 
 Der zweite Lauf maß die Dauer von Zulassungsoperationen, jedes Produkt auf zwei CPUs. Anubis
 lief einmal mit seinen standardmäßigen Ed25519-Tokens und einmal mit HS512-Tokens.
@@ -290,8 +290,8 @@ Sibunas Spitzenspeicher blieb nahe 16 MiB. Anubis nutzte etwa 33 MiB im Forward-
 bis zu etwa 600 MiB im Reverse-Proxy-Modus. Anubis ist ein weit verbreitetes und
 leistungsfähiges Werkzeug, und diese Zeilen sind keine Rangliste. Mehrere sind nicht direkt
 vergleichbar: Im Forward-Auth-Modus beantwortet Anubis einige Pfade selbst, es prüft keine
-Payloads, und die Challenge-Seiten unterscheiden sich. Die Läufe nutzten Loopback ohne TLS,
-ohne echte Browser und ohne Speicher.
+Nutzlasten, und die Challenge-Seiten unterscheiden sich. Die Läufe nutzten Loopback ohne TLS,
+ohne echte Browser und ohne Speicherung.
 
 Die [Benchmark-Aufzeichnungen](benchmarks/results/README.md) enthalten Methode, Bereiche und
 Wiederholungsbefehle: [product-latest.md](benchmarks/results/product-latest.md),
@@ -315,7 +315,7 @@ Teil VIII des Buchs bespricht jeden Unterschied.
 
 ## Weitere Software
 
-- [Anubis](https://github.com/TecharoHQ/anubis): Browser-Challenges, um Crawler-Verkehr zu verringern.
+- [Anubis](https://github.com/TecharoHQ/anubis): Browser-Challenges, um den Datenverkehr von Crawlern zu verringern.
 - [BunkerWeb](https://github.com/bunkerity/bunkerweb): nginx, ModSecurity, CRS und Bot-Challenges.
 - [ModSecurity](https://github.com/owasp-modsecurity/ModSecurity): eine WAF-Engine, die über Connectoren genutzt wird.
 - [Coraza](https://github.com/corazawaf/coraza): eine Go-WAF-Bibliothek mit Unterstützung für ModSecurity-Regeln und CRS.
@@ -329,7 +329,7 @@ vollständigen WAF, wenn deine Anwendung eine breitere Regelabdeckung braucht.
 
 ## Lizenz
 
-Sibuna steht unter **LGPL 3.0 oder neuer**. Die Lizenz umfasst die Engine, die Bibliotheken,
+Sibuna steht unter **LGPL 3.0 oder später**. Die Lizenz umfasst die Engine, die Bibliotheken,
 den Browser-Löser und die Konsole einschließlich ihrer WebAssembly-Oberfläche.
 
 [LICENSE](LICENSE) beschreibt den Umfang. [LICENSES](LICENSES) enthält die vollständigen
