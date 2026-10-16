@@ -109,13 +109,16 @@ pub async fn migrate(db: &Database, sets: &[MigrationSet], now: u64) -> Result<(
     tx.commit().await
 }
 
-/// The core schema of SID 0011, section "Schema and migrations": one baseline migration that
-/// creates every table, index and trigger at once. No Rust deployment predates it, so the
-/// development migrations that came before were folded into it.
+/// The core schema of SID 0011, section "Schema and migrations": a baseline migration that
+/// creates every table, index and trigger at once (no Rust deployment predates it, so the
+/// development migrations that came before were folded into it), then one migration per
+/// later change.
 pub const CORE: MigrationSet = MigrationSet { component: "core", migrations: &CORE_MIGRATIONS };
 
-const CORE_MIGRATIONS: [Migration; 1] =
-    [Migration { version: 1, sqlite: SQLITE_V1, postgres: POSTGRES_V1 }];
+const CORE_MIGRATIONS: [Migration; 2] = [
+    Migration { version: 1, sqlite: SQLITE_V1, postgres: POSTGRES_V1 },
+    Migration { version: 2, sqlite: SQLITE_V2, postgres: POSTGRES_V2 },
+];
 
 /// Version 1 on SQLite. Every table is `STRICT`, so a value of the wrong storage class is
 /// refused; the `CHECK` constraints mirror the Rust types the storage layer decodes into.
@@ -297,4 +300,20 @@ CREATE TRIGGER ip_reputation_revision
 CREATE TRIGGER policy_inspection_revision
     AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON policy_inspection
     FOR EACH STATEMENT EXECUTE FUNCTION sibuna_policy_revision();
+";
+
+/// Version 2 (SID 0014): a rule's JA4 criterion, and the JA4 fingerprint an incident's
+/// request carried. Both are nullable, so every existing row stays valid. A fingerprint is
+/// always 36 bytes; a criterion is a fingerprint or a prefix and `*`, at most 37 bytes.
+const SQLITE_V2: &str = "
+ALTER TABLE policies ADD COLUMN ja4_pattern TEXT
+    CHECK (ja4_pattern IS NULL OR length(ja4_pattern) BETWEEN 1 AND 37);
+ALTER TABLE security_incidents ADD COLUMN ja4 TEXT CHECK (ja4 IS NULL OR length(ja4) = 36);
+";
+
+/// Version 2 on PostgreSQL; see [`SQLITE_V2`].
+const POSTGRES_V2: &str = "
+ALTER TABLE policies ADD COLUMN ja4_pattern TEXT
+    CHECK (octet_length(ja4_pattern) BETWEEN 1 AND 37);
+ALTER TABLE security_incidents ADD COLUMN ja4 TEXT CHECK (octet_length(ja4) = 36);
 ";

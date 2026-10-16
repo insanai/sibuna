@@ -213,6 +213,7 @@ async fn store_policy(target: Target) {
         cidr_matchers: Some("[\"10.0.0.0/8\", \"192.0.2.0/24\"]".into()),
         weight: -12,
         limits: Some(RuleLimits { rate: 5, window_seconds: 60, ban_seconds: 300 }),
+        ja4_pattern: Some("t13d*".into()),
     };
     p.worker.db.store_policy(&rule, 100).await.unwrap();
     p.worker.tick().await.unwrap();

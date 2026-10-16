@@ -17,6 +17,7 @@ use crate::testing::{Fixture, for_each_backend};
 
 mod console_hooks;
 mod constraints;
+mod ja4;
 #[cfg(feature = "sqlite")]
 mod plans;
 mod raw_bytes;

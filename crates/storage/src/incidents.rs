@@ -64,6 +64,8 @@ impl<const N: usize> Field<N> {
 pub(crate) struct IncidentRecord {
     client_ip: Field<48>,
     user_agent: Field<200>,
+    /// Empty without a fingerprint; a fingerprint is always 36 bytes.
+    ja4: Field<36>,
     method: Field<8>,
     path: Field<512>,
     category: Field<32>,
@@ -85,6 +87,7 @@ impl IncidentRecord {
         let record = IncidentRecord {
             client_ip: Field::copy_from(incident.client_ip.as_bytes()),
             user_agent: Field::copy_from(incident.user_agent),
+            ja4: Field::copy_from(incident.ja4.unwrap_or_default().as_bytes()),
             method: Field::copy_from(incident.method.as_bytes()),
             path: Field::copy_from(incident.path),
             category: Field::copy_from(incident.category.as_bytes()),
@@ -130,6 +133,7 @@ pub(crate) struct PreparedIncident {
     pub(crate) id: i64,
     client_ip: String,
     user_agent: Vec<u8>,
+    ja4: Option<String>,
     method: String,
     path: Vec<u8>,
     category: String,
@@ -167,6 +171,8 @@ pub struct BatchIncident<'a> {
     pub id: i64,
     /// The client address as stored.
     pub client_ip: &'a str,
+    /// The JA4 fingerprint as stored (SID 0014); `None` without one.
+    pub ja4: Option<&'a str>,
     /// The time of the incident in Unix seconds.
     pub recorded_at: u64,
     /// The evidence metadata; version 0 means nothing was recorded.
@@ -235,6 +241,7 @@ pub(crate) fn prepare(
             id,
             client_ip: render(record.client_ip.as_bytes()),
             user_agent: record.user_agent.as_bytes().to_vec(),
+            ja4: Some(render(record.ja4.as_bytes())).filter(|ja4| !ja4.is_empty()),
             method: render(record.method.as_bytes()),
             path: record.path.as_bytes().to_vec(),
             category,
@@ -263,24 +270,25 @@ pub(crate) fn prepare(
 // batch's end", `COALESCE((SELECT next_sequence FROM incident_receipts WHERE node_id = $n),
 // 0) < $end`. A replayed batch whose first commit succeeded therefore inserts nothing.
 
-/// SQLite binds the first 12 parameters of [`write_incident`]'s row; PostgreSQL also binds
+/// SQLite binds the first 13 parameters of [`write_incident`]'s row; PostgreSQL also binds
 /// the `tsvector` literal of the canonical tokens.
 const INSERT_INCIDENT: Sql = Sql {
     sqlite: "INSERT INTO security_incidents (id, node_id, client_ip, user_agent, method, path, \
-             violation_category, offending_payload, campaign_id, recorded_at, embedding) \
-             SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11 \
+             violation_category, offending_payload, campaign_id, recorded_at, embedding, ja4) \
+             SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $13 \
              WHERE COALESCE((SELECT next_sequence FROM incident_receipts \
              WHERE node_id = $2), 0) < $12",
     postgres: "INSERT INTO security_incidents (id, node_id, client_ip, user_agent, method, \
                path, violation_category, offending_payload, campaign_id, recorded_at, \
-               embedding, search) \
-               SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CAST($13 AS tsvector) \
+               embedding, ja4, search) \
+               SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $13, \
+               CAST($14 AS tsvector) \
                WHERE COALESCE((SELECT next_sequence FROM incident_receipts \
                WHERE node_id = $2), 0) < $12",
 };
 
 /// The number of parameters [`INSERT_INCIDENT`] reads on SQLite.
-const SQLITE_INSERT_PARAMS: usize = 12;
+const SQLITE_INSERT_PARAMS: usize = 13;
 
 const INSERT_FTS: Sql = Sql::both(
     "INSERT INTO incidents_fts (rowid, path, offending_payload) SELECT $1, $2, $3 \
@@ -333,11 +341,11 @@ pub(crate) const NEXT_SEQUENCE: Sql = Sql::both(
 
 pub(crate) const SEARCH: Sql = Sql {
     sqlite: "SELECT s.id, s.client_ip, s.method, s.user_agent, s.path, s.violation_category, \
-             s.offending_payload, s.campaign_id \
+             s.offending_payload, s.campaign_id, s.ja4 \
              FROM incidents_fts f JOIN security_incidents s ON s.id = f.rowid \
              WHERE incidents_fts MATCH $1 ORDER BY f.rank, s.id LIMIT $2",
     postgres: "SELECT id, client_ip, method, user_agent, path, violation_category, \
-               offending_payload, campaign_id \
+               offending_payload, campaign_id, ja4 \
                FROM security_incidents, CAST($1 AS tsquery) AS query \
                WHERE search @@ query ORDER BY ts_rank(search, query) DESC, id LIMIT $2",
 };
@@ -395,6 +403,7 @@ pub(crate) fn view(incident: &PreparedIncident) -> BatchIncident<'_> {
     BatchIncident {
         id: incident.id,
         client_ip: &incident.client_ip,
+        ja4: incident.ja4.as_deref(),
         recorded_at: u64::try_from(incident.recorded_at).unwrap_or(0),
         evidence: capture.evidence,
         request_head: &capture.request_head,
@@ -419,7 +428,7 @@ async fn write_incident(
             search::tsvector_literal(&incident.path_tokens, &incident.payload_tokens)
         }
     };
-    let row: [Param<'_>; 13] = [
+    let row: [Param<'_>; 14] = [
         incident.id.into(),
         node.into(),
         incident.client_ip.as_str().into(),
@@ -432,6 +441,7 @@ async fn write_incident(
         incident.recorded_at.into(),
         incident.embedding.as_slice().into(),
         end.into(),
+        incident.ja4.as_deref().into(),
         vector.as_str().into(),
     ];
     // Both bounds are constants no larger than the array, so the slices are in bounds.
@@ -541,6 +551,8 @@ pub struct IncidentHit {
     pub payload: Vec<u8>,
     /// The campaign the incident joined: the id of its first incident.
     pub campaign_id: i64,
+    /// The JA4 fingerprint the request carried (SID 0014), if one was accepted.
+    pub ja4: Option<String>,
 }
 
 impl Database {
@@ -581,6 +593,7 @@ impl IncidentHit {
             category: columns.text("violation_category")?,
             payload: columns.bytes("offending_payload")?,
             campaign_id: columns.integer("campaign_id")?,
+            ja4: columns.optional_text("ja4")?,
         })
     }
 }

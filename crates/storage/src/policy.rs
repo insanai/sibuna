@@ -204,6 +204,8 @@ pub struct PolicyRow {
     pub weight: i32,
     /// The rule's quota, when it has one.
     pub limits: Option<RuleLimits>,
+    /// The JA4 criterion (SID 0014): a fingerprint, or a prefix followed by `*`.
+    pub ja4_pattern: Option<String>,
 }
 
 /// The `policy_inspection` override: one mode per inspection family.
@@ -236,7 +238,7 @@ pub(crate) const REVISION: Sql = Sql::both("SELECT revision FROM policy_revision
 pub(crate) const RULES: Sql = Sql::both(
     "SELECT id, name, priority, path_pattern, ua_pattern, action, difficulty, algorithm, \
      CAST(header_matchers AS TEXT), CAST(cidr_matchers AS TEXT), weight, \
-     limit_rate, limit_window_seconds, limit_ban_seconds \
+     limit_rate, limit_window_seconds, limit_ban_seconds, ja4_pattern \
      FROM policies WHERE enabled ORDER BY priority, name, id LIMIT $1",
 );
 
@@ -268,8 +270,9 @@ const BAN: Sql = Sql {
 const STORE_POLICY: Sql = Sql {
     sqlite: "INSERT INTO policies (id, name, priority, path_pattern, ua_pattern, action, \
              difficulty, algorithm, header_matchers, cidr_matchers, weight, limit_rate, \
-             limit_window_seconds, limit_ban_seconds, enabled, created_at, updated_at) \
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, TRUE, \
+             limit_window_seconds, limit_ban_seconds, ja4_pattern, enabled, created_at, \
+             updated_at) \
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $16, TRUE, \
              $15, $15) ON CONFLICT (id) DO UPDATE SET name = excluded.name, \
              priority = excluded.priority, path_pattern = excluded.path_pattern, \
              ua_pattern = excluded.ua_pattern, action = excluded.action, \
@@ -278,13 +281,15 @@ const STORE_POLICY: Sql = Sql {
              cidr_matchers = excluded.cidr_matchers, weight = excluded.weight, \
              limit_rate = excluded.limit_rate, \
              limit_window_seconds = excluded.limit_window_seconds, \
-             limit_ban_seconds = excluded.limit_ban_seconds, enabled = TRUE, \
+             limit_ban_seconds = excluded.limit_ban_seconds, \
+             ja4_pattern = excluded.ja4_pattern, enabled = TRUE, \
              updated_at = excluded.updated_at",
     postgres: "INSERT INTO policies (id, name, priority, path_pattern, ua_pattern, action, \
                difficulty, algorithm, header_matchers, cidr_matchers, weight, limit_rate, \
-               limit_window_seconds, limit_ban_seconds, enabled, created_at, updated_at) \
+               limit_window_seconds, limit_ban_seconds, ja4_pattern, enabled, created_at, \
+               updated_at) \
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CAST($9 AS JSONB), \
-               CAST($10 AS JSONB), $11, $12, $13, $14, TRUE, $15, $15) \
+               CAST($10 AS JSONB), $11, $12, $13, $14, $16, TRUE, $15, $15) \
                ON CONFLICT (id) DO UPDATE SET name = excluded.name, \
                priority = excluded.priority, path_pattern = excluded.path_pattern, \
                ua_pattern = excluded.ua_pattern, action = excluded.action, \
@@ -293,7 +298,8 @@ const STORE_POLICY: Sql = Sql {
                cidr_matchers = excluded.cidr_matchers, weight = excluded.weight, \
                limit_rate = excluded.limit_rate, \
                limit_window_seconds = excluded.limit_window_seconds, \
-               limit_ban_seconds = excluded.limit_ban_seconds, enabled = TRUE, \
+               limit_ban_seconds = excluded.limit_ban_seconds, \
+               ja4_pattern = excluded.ja4_pattern, enabled = TRUE, \
                updated_at = excluded.updated_at",
 };
 
@@ -321,6 +327,7 @@ impl PolicyRow {
         let rate: Option<u32> = columns.optional_integer("limit_rate")?;
         let window: Option<u32> = columns.optional_integer("limit_window_seconds")?;
         let ban_seconds = columns.integer("limit_ban_seconds")?;
+        let ja4_pattern = columns.optional_text("ja4_pattern")?;
         // The schema keeps rate and window both NULL or both set.
         let limits = match (rate, window) {
             (None, None) => None,
@@ -342,11 +349,12 @@ impl PolicyRow {
             cidr_matchers,
             weight,
             limits,
+            ja4_pattern,
         })
     }
 
-    /// Returns the values [`Database::store_policy`] binds, `$1` to `$15`.
-    fn params(&self, now: i64) -> [Param<'_>; 15] {
+    /// Returns the values [`Database::store_policy`] binds, `$1` to `$16`.
+    fn params(&self, now: i64) -> [Param<'_>; 16] {
         let limits = self.limits;
         [
             self.id.as_str().into(),
@@ -364,6 +372,7 @@ impl PolicyRow {
             Param::Int(limits.map(|limits| i64::from(limits.window_seconds))),
             i64::from(limits.map_or(0, |limits| limits.ban_seconds)).into(),
             now.into(),
+            self.ja4_pattern.as_deref().into(),
         ]
     }
 }
@@ -531,8 +540,10 @@ mod tests {
             Cell::Int(5),
             Cell::Int(60),
             Cell::Int(0),
+            text("t13d*"),
         ];
         let rule = PolicyRow::decode(row.clone()).unwrap();
+        assert_eq!(rule.ja4_pattern.as_deref(), Some("t13d*"));
         assert_eq!(rule.action, PolicyAction::Challenge);
         assert_eq!(rule.algorithm, Some(ChallengeAlgorithm::Posw));
         assert_eq!(rule.limits, Some(RuleLimits { rate: 5, window_seconds: 60, ban_seconds: 0 }));
