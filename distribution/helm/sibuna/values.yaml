@@ -1,0 +1,36 @@
+image:
+  repository: ghcr.io/insanai/sibuna
+  tag: "" # defaults to Chart.appVersion; set digest for immutable deployments
+  digest: ""
+  pullPolicy: IfNotPresent
+secret:
+  existingSecret: "" # REQUIRED; admission.seed holds 64 hexadecimal digits or 32 raw bytes
+  key: admission.seed
+upstream:
+  host: 127.0.0.1 # IP literal; can point at an operator-provided sidecar
+  port: 3000
+service:
+  port: 8080
+# SQLite state in <volume>/data. Without persistence the state lives in an emptyDir and
+# is lost with the Pod.
+persistence:
+  enabled: true
+  existingClaim: ""
+  size: 1Gi
+  storageClass: ""
+# Further daemon options, one list item per word, for example
+# ["--mode", "forward_auth", "--difficulty", "18", "--trust-forwarded"].
+extraArgs: []
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 512Mi
+podAnnotations: {}
+# Internal routes (/__sibuna/*) share the proxy listener. Restrict callers at the
+# network or ingress boundary; this chart creates no ingress and no console.
+networkPolicy:
+  enabled: true
+  ingressFrom: [] # deny ingress until explicit namespace/pod/ipBlock rules are supplied
+  egressTo: [] # deny egress until the IP-literal origin is allowed
