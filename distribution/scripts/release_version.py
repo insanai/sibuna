@@ -22,11 +22,6 @@ def version():
         return tomllib.load(manifest)['workspace']['package']['version']
 
 
-def is_prerelease(release):
-    """A version with a pre-release part (1.0.0-beta.1) is published as a pre-release."""
-    return '-' in release
-
-
 def check(binary=None):
     expected = version()
     ref = os.environ.get('GITHUB_REF', '')

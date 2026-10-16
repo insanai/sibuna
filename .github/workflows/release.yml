@@ -434,7 +434,6 @@ jobs:
           gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber \
             ./*.tar.gz ./*.zip ./*.deb ./*.rpm ./*.pkg.tar.zst ./*.pkg ./*.tgz sibuna.rb \
             IMAGE-DIGEST.txt SHA256SUMS
-          case "$VERSION" in
-            *-*) gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease ;;
-            *) gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest ;;
-          esac
+          # Betas are public releases too, so every published release becomes the latest.
+          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false \
+            --prerelease=false --latest
