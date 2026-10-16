@@ -35,6 +35,7 @@ Use access rules and local rate limits to control what those clients can request
 - **Native packages:** Linux, macOS, Windows, FreeBSD and OpenBSD. The browser solver uses WebAssembly.
 - **Browser challenges:** proof of sequential work (default) or Hashcash, followed by a signed session.
 - **Access policies:** allow, challenge, weigh or deny requests by address, path, headers and User-Agent.
+- **TLS fingerprints:** match the JA4 fingerprint that a trusted ingress forwards, exactly or by prefix.
 - **Application inspection:** built-in checks for SQL injection, XSS, path traversal and command injection.
 - **Local rate limits:** control bursts and sustained traffic, with optional limits per rule.
 - **Operator console:** traffic, sampled country activity, recorded incidents and policy editing.

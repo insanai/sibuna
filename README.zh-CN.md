@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 5527cc911d01ff51c8a8c4597bd60d964251822588fc2868fa7479da621f9af6 -->
+<!-- English source SHA-256: affb8e32937c45cebfeaef63d295c01e72c02dca601df0615f05ec9d6c9d294c -->
 <h1 align="center">sibuna</h1>
 <p align="center">通过浏览器工作量证明保护网站，并提供可选的管理控制台。</p>
 <p align="center">
@@ -31,6 +31,7 @@
 - **原生安装包：** 支持 Linux、macOS、Windows、FreeBSD 和 OpenBSD。浏览器求解器使用 WebAssembly。
 - **浏览器挑战：** 顺序工作量证明（默认）或 Hashcash，完成后获得签名会话。
 - **访问策略：** 根据地址、路径、请求头和 User-Agent 放行、挑战、加权评估或拒绝请求。
+- **TLS 指纹：** 按可信入口转发的 JA4 指纹匹配请求，可精确匹配，也可按前缀匹配。
 - **应用层检查：** 内置 SQL 注入、XSS、路径遍历和命令注入检测。
 - **本地速率限制：** 控制突发和持续流量，也可为单条规则设置限额。
 - **管理控制台：** 流量、按国家采样的活动、已记录的事件和策略编辑。

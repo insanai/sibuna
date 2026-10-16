@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 5527cc911d01ff51c8a8c4597bd60d964251822588fc2868fa7479da621f9af6 -->
+<!-- English source SHA-256: affb8e32937c45cebfeaef63d295c01e72c02dca601df0615f05ec9d6c9d294c -->
 <h1 align="center">sibuna</h1>
 <p align="center">Protección web con prueba de trabajo en el navegador y una consola opcional.</p>
 <p align="center">
@@ -39,6 +39,7 @@ controlar lo que esos clientes pueden pedir después.
 - **Paquetes nativos:** Linux, macOS, Windows, FreeBSD y OpenBSD. El solucionador de navegador usa WebAssembly.
 - **Desafíos de navegador:** prueba de trabajo secuencial (por defecto) o Hashcash, seguidos de una sesión firmada.
 - **Políticas de acceso:** permitir, desafiar, ponderar o denegar peticiones por dirección, ruta, cabeceras y User-Agent.
+- **Huellas TLS:** comparar la huella JA4 que reenvía un proxy de entrada de confianza, de forma exacta o por prefijo.
 - **Inspección de aplicaciones:** comprobaciones integradas de inyección SQL, XSS, recorrido de rutas e inyección de comandos.
 - **Límites de tasa locales:** controlar ráfagas y tráfico sostenido, con límites opcionales por regla.
 - **Consola de operador:** tráfico, actividad de países muestreada, incidentes registrados y edición de políticas.

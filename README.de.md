@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 5527cc911d01ff51c8a8c4597bd60d964251822588fc2868fa7479da621f9af6 -->
+<!-- English source SHA-256: affb8e32937c45cebfeaef63d295c01e72c02dca601df0615f05ec9d6c9d294c -->
 <h1 align="center">sibuna</h1>
 <p align="center">Webschutz mit Proof of Work im Browser und optionaler Konsole.</p>
 <p align="center">
@@ -40,6 +40,7 @@ um zu steuern, was diese Clients danach anfordern dürfen.
 - **Native Pakete:** Linux, macOS, Windows, FreeBSD und OpenBSD. Der Browser-Löser nutzt WebAssembly.
 - **Browser-Challenges:** Nachweis sequenzieller Arbeit (Standard) oder Hashcash, danach eine signierte Sitzung.
 - **Zugangsrichtlinien:** Anfragen nach Adresse, Pfad, Headern und User-Agent erlauben, herausfordern, gewichten oder ablehnen.
+- **TLS-Fingerabdrücke:** den JA4-Fingerabdruck, den ein vertrauenswürdiger Eingangsproxy weiterleitet, exakt oder per Präfix abgleichen.
 - **Anwendungsprüfung:** eingebaute Prüfungen für SQL-Injection, XSS, Pfadtraversierung und Command-Injection.
 - **Lokale Ratenlimits:** Bursts und Dauerverkehr steuern, optional mit Limits je Regel.
 - **Betreiberkonsole:** Verkehr, Länderstichproben, aufgezeichnete Vorfälle und Richtlinienbearbeitung.
