@@ -69,6 +69,11 @@ jobs:
             target
           key: test-${{ env.RUST_TOOLCHAIN }}-${{ hashFiles('Cargo.lock') }}
           restore-keys: test-${{ env.RUST_TOOLCHAIN }}-
+      - name: Use the usual transparent huge page setting
+        # The runners back every anonymous mapping with 2 MiB pages (THP "always"), so one
+        # touched cell makes 2 MiB resident; crates/store/tests/resident.rs measures the
+        # 4 KiB pages of the common "madvise" setting.
+        run: echo madvise | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
       - run: cargo test --workspace --locked
       - name: Build without default features
         run: cargo build -p sibuna --locked --no-default-features
