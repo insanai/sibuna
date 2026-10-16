@@ -636,7 +636,7 @@ Every release on GitHub carries the same executable for each platform, built fro
    * - Source
      - ``sibuna-<version>-source.tar.gz``.
 
-Each archive and package carries ``LICENSE``, ``NOTICE``, ``LICENSES/`` (with ``THIRD-PARTY-RUST.txt``, the crates in the executable), ``README.md``, ``SECURITY.md`` and ``sibuna.build.json``. The manifest records the version, commit, Rust target, compiler version, features and the SHA-256 of the executable and of its two WebAssembly modules. The release workflow starts every executable on its own platform before it publishes anything, and it installs, upgrades and removes the packages on Debian, Fedora, Arch Linux, FreeBSD and OpenBSD.
+Each archive and package carries ``LICENSE``, ``NOTICE``, ``LICENSES/`` (with ``THIRD-PARTY-RUST.txt``, the crates in the executable), ``README.md``, ``SECURITY.md`` and ``sibuna.build.json``. The manifest records the version, commit, Rust target, compiler version, features and the SHA-256 of the executable and of its two WebAssembly modules. The release workflow starts every executable on its own platform before it publishes anything, and it installs, reinstalls and removes the packages on Debian, Fedora, Arch Linux, FreeBSD and OpenBSD.
 
 The assets are not signed. We check a download against ``SHA256SUMS`` from the same release before we install it:
 
