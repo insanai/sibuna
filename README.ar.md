@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 342260624e34417ad0bcee1369881276f974107bab8737fc59b4097880871a03 -->
+<!-- English source SHA-256: 5527cc911d01ff51c8a8c4597bd60d964251822588fc2868fa7479da621f9af6 -->
 <div dir="rtl">
 
 <h1 align="center">sibuna</h1>
@@ -58,7 +58,7 @@
 
 تغطي حزم Debian/RPM نظام Linux على x86-64 وARM64؛ وتغطي حزمة Arch `sibuna-bin` معمارية x86-64. تغطي حزم FreeBSD 15.1 وOpenBSD 7.9 معمارية x86-64 وتثبّت واجهة CLI. تتضمن حزم Linux خدمة systemd اختيارية معطلة. لا تنشئ حزم BSD خدمة أو حسابًا أو حالة. هذه تنزيلات من المشروع نفسه؛ والقبول في الأرشيفات المجتمعية إجراء منفصل. يتضمن الإصدار أيضًا مخطط Helm وصورة حاوية، `ghcr.io/insanai/sibuna`. راجع [دليل تشغيل الحزم](https://insanai.github.io/sibuna/book/operations.html) للتثبيت والتحقق والحالة الخاصة والترقيات وإعداد Kubernetes.
 
-يوفر [مستودع Homebrew الخاص بـ Sibuna](https://github.com/insanai/homebrew-sibuna) صيغة CLI تُبنى من المصدر. لا يبدأ التثبيت أي خدمة. يتبع المستودع الإصدارات المنشورة، لذا قد يصل إليه إصدار تمهيدي مثل هذا الإصدار التجريبي بعد التنزيلات أعلاه:
+يوفر [مستودع Homebrew الخاص بـ Sibuna](https://github.com/insanai/homebrew-sibuna) صيغة CLI تثبّت أرشيف الإصدار المُتحقَّق منه لنظامي macOS وLinux (Apple Silicon وARM64 وx86-64). يتبع المستودع أحدث إصدار منشور، لذا يوفر هذا الإصدار التجريبي بالفعل. لا يبدأ التثبيت أي خدمة:
 
 <div dir="ltr">
 

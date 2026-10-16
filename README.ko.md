@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 342260624e34417ad0bcee1369881276f974107bab8737fc59b4097880871a03 -->
+<!-- English source SHA-256: 5527cc911d01ff51c8a8c4597bd60d964251822588fc2868fa7479da621f9af6 -->
 <h1 align="center">sibuna</h1>
 <p align="center">브라우저 작업 증명과 선택형 콘솔로 웹 서비스를 보호합니다.</p>
 <p align="center">
@@ -56,7 +56,7 @@
 
 Debian/RPM 패키지는 Linux x86-64와 ARM64를 지원하고, Arch `sibuna-bin`은 x86-64를 지원합니다. FreeBSD 15.1과 OpenBSD 7.9 패키지는 x86-64를 지원하며 CLI를 설치합니다. Linux 패키지에는 선택적인 systemd 서비스가 비활성 상태로 포함됩니다. BSD 패키지는 서비스, 계정, 상태를 만들지 않습니다. 이는 업스트림 다운로드이며, 커뮤니티 저장소 채택은 별개입니다. 릴리스에는 Helm 차트와 컨테이너 이미지 `ghcr.io/insanai/sibuna`도 포함됩니다. 설치, 검증, 비공개 상태, 업그레이드, Kubernetes 설정은 [패키지 운영 가이드](https://insanai.github.io/sibuna/book/operations.html)를 참고하세요.
 
-[Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna)은 소스에서 빌드하는 CLI formula를 제공합니다. 설치해도 서비스는 시작되지 않습니다. tap은 게시된 릴리스를 따르므로, 이번 베타 같은 사전 릴리스는 위의 다운로드보다 늦게 tap에 반영될 수 있습니다:
+[Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna)은 검증된 릴리스 압축 파일을 설치하는 CLI formula를 제공합니다. macOS와 Linux(Apple Silicon, ARM64, x86-64)를 지원합니다. tap은 게시된 최신 릴리스를 따르므로 이번 베타도 이미 제공합니다. 설치해도 서비스는 시작되지 않습니다:
 
 ```sh
 brew tap insanai/sibuna

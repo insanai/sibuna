@@ -68,9 +68,10 @@ is separate. The release also includes a Helm chart and a container image,
 See the [package operations guide](https://insanai.github.io/sibuna/book/operations.html)
 for installation, verification, private state, upgrades and Kubernetes setup.
 
-The [Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna) provides a
-source-built CLI formula. Installation does not start a service. The tap follows published
-releases, so a prerelease such as this beta can reach it later than the downloads above:
+The [Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna) provides a CLI formula
+that installs the verified release archive for macOS and Linux (Apple Silicon, ARM64 and
+x86-64). The tap follows the newest published release, so it already provides this beta.
+Installation does not start a service:
 
 ```sh
 brew tap insanai/sibuna

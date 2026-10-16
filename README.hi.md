@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 342260624e34417ad0bcee1369881276f974107bab8737fc59b4097880871a03 -->
+<!-- English source SHA-256: 5527cc911d01ff51c8a8c4597bd60d964251822588fc2868fa7479da621f9af6 -->
 <h1 align="center">sibuna</h1>
 <p align="center">ब्राउज़र Proof of Work और वैकल्पिक कंसोल के साथ वेब सुरक्षा।</p>
 <p align="center">
@@ -56,7 +56,7 @@
 
 Debian/RPM पैकेज Linux x86-64 और ARM64 के लिए हैं; Arch `sibuna-bin` x86-64 के लिए है। FreeBSD 15.1 और OpenBSD 7.9 पैकेज x86-64 के लिए हैं और CLI स्थापित करते हैं। Linux पैकेज में एक वैकल्पिक, निष्क्रिय systemd सेवा शामिल है। BSD पैकेज कोई सेवा, खाता या स्थिति नहीं बनाते। ये upstream डाउनलोड हैं; सामुदायिक रिपॉज़िटरी की स्वीकृति अलग विषय है। रिलीज़ में एक Helm chart और एक कंटेनर इमेज, `ghcr.io/insanai/sibuna`, भी शामिल है। स्थापना, सत्यापन, निजी स्थिति, अपग्रेड और Kubernetes सेटअप के लिए [पैकेज संचालन मार्गदर्शिका](https://insanai.github.io/sibuna/book/operations.html) देखें।
 
-[Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna) स्रोत से बनायी जाने वाली CLI formula प्रदान करता है। स्थापना से कोई सेवा शुरू नहीं होती। Tap प्रकाशित रिलीज़ का अनुसरण करता है, इसलिए इस बीटा जैसी प्रीरिलीज़ ऊपर दिए गए डाउनलोड की तुलना में उस तक बाद में पहुँच सकती है:
+[Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna) एक CLI formula प्रदान करता है, जो macOS और Linux (Apple Silicon, ARM64 और x86-64) के लिए सत्यापित रिलीज़ आर्काइव स्थापित करती है। Tap नवीनतम प्रकाशित रिलीज़ का अनुसरण करता है, इसलिए यह बीटा उसमें पहले से उपलब्ध है। स्थापना से कोई सेवा शुरू नहीं होती:
 
 ```sh
 brew tap insanai/sibuna

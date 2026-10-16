@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 342260624e34417ad0bcee1369881276f974107bab8737fc59b4097880871a03 -->
+<!-- English source SHA-256: 5527cc911d01ff51c8a8c4597bd60d964251822588fc2868fa7479da621f9af6 -->
 <h1 align="center">sibuna</h1>
 <p align="center">ブラウザーの計算量証明でウェブを保護し、必要に応じて管理コンソールも利用できます。</p>
 <p align="center">
@@ -56,7 +56,7 @@
 
 Debian/RPMパッケージはLinux x86-64とARM64に、Archの`sibuna-bin`はx86-64に対応します。FreeBSD 15.1とOpenBSD 7.9のパッケージはx86-64に対応し、CLIをインストールします。Linuxパッケージには、任意で使える無効状態のsystemdサービスが含まれます。BSDパッケージはサービス、アカウント、状態を作成しません。これらは上流の配布物で、コミュニティのアーカイブへの採用は別の手続きです。リリースにはHelm chartとコンテナーイメージ`ghcr.io/insanai/sibuna`も含まれます。インストール、検証、非公開の状態、アップグレード、Kubernetesの設定は[パッケージ運用ガイド](https://insanai.github.io/sibuna/book/operations.html)を参照してください。
 
-[Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna)は、ソースからビルドするCLI formulaを提供します。インストールしてもサービスは起動しません。tapは公開済みのリリースに追従するため、このベータ版のようなプレリリースは、上記のダウンロードより遅れて反映されることがあります：
+[Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna)は、検証済みのリリースアーカイブをインストールするCLI formulaを提供します。対応するのはmacOSとLinux（Apple Silicon、ARM64、x86-64）です。tapは公開済みの最新リリースに追従するため、このベータ版もすでに提供されています。インストールしてもサービスは起動しません：
 
 ```sh
 brew tap insanai/sibuna

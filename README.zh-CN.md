@@ -1,4 +1,4 @@
-<!-- English source SHA-256: 342260624e34417ad0bcee1369881276f974107bab8737fc59b4097880871a03 -->
+<!-- English source SHA-256: 5527cc911d01ff51c8a8c4597bd60d964251822588fc2868fa7479da621f9af6 -->
 <h1 align="center">sibuna</h1>
 <p align="center">通过浏览器工作量证明保护网站，并提供可选的管理控制台。</p>
 <p align="center">
@@ -56,7 +56,7 @@
 
 Debian/RPM 软件包支持 Linux x86-64 和 ARM64；Arch `sibuna-bin` 支持 x86-64。FreeBSD 15.1 和 OpenBSD 7.9 软件包支持 x86-64，并安装 CLI。Linux 软件包包含一个可选的 systemd 服务，默认停用。BSD 软件包不创建服务、账户或状态。这些是上游提供的下载；社区仓库是否收录需另行审核。发行版还包含一个 Helm chart 和一个容器镜像 `ghcr.io/insanai/sibuna`。安装、验证、私密状态、升级及 Kubernetes 设置请参阅[软件包运维指南](https://insanai.github.io/sibuna/book/operations.html)。
 
-[Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna) 提供从源码构建的 CLI formula。安装不会启动服务。该 tap 跟随已发布的版本，因此像本测试版这样的预发布版本进入 tap 的时间可能晚于上面的下载：
+[Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna) 提供一个 CLI formula，用于安装经过校验的发行版压缩包，支持 macOS 和 Linux（Apple Silicon、ARM64 和 x86-64）。该 tap 跟随最新发布的版本，因此已经提供本测试版。安装不会启动服务：
 
 ```sh
 brew tap insanai/sibuna
