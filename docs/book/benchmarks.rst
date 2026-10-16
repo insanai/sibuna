@@ -897,7 +897,7 @@ Not Measured
      - Published plan quotas (checked September 2026): custom rules Free 5, Pro 20, Business 100, Enterprise 1000; rate limiting rules Free 1, Pro 2, Business 5, Enterprise 100
    * - A cluster under load
      - No harness drives several nodes on one PostgreSQL database yet
-     - The protocol properties that SID 0011 specifies (one shared seed, issuer-bound challenges); no measurement
+     - The protocol properties that SID 0011 specifies (one shared seed, issuer-bound challenges) and its three-node functional test (criterion 2); no measurement
    * - Storage on the request path
      - Both daemons run in memory in every harness
      - SID 0011: one storage thread owns all SQL, and the request path never waits on it

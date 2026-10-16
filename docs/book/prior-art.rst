@@ -120,7 +120,7 @@ The browser solver compiles from the same proof sources as the native verifier. 
 Feature Comparison
 ------------------
 
-The four tables below compare Sibuna with the three tools most often mentioned alongside it. Facts about the other products were read from their public documentation and release artefacts in September 2026: Anubis 1.27.0 (MIT licence, Go), SafeLine community edition 9.x (GPL-3.0 management code around closed detector images, Docker Compose), and the Cloudflare WAF developer documentation. Anubis was also run on the benchmark host; SafeLine and Cloudflare were not (Part VIII explains why). A dash means the product does not offer the feature; a plan name means the feature exists but only on that plan. Each Sibuna measurement names the committed result file it comes from.
+The four tables below compare Sibuna with the three tools most often mentioned alongside it. Facts about the other products were read from their public documentation and release artefacts in September 2026: Anubis 1.27.0 (MIT licence, Go), SafeLine community edition 9.x (GPL-3.0 management code around closed detector images, Docker Compose), and the Cloudflare WAF developer documentation. Anubis was also run on the benchmark host; SafeLine and Cloudflare were not (Part VIII explains why). A dash means the product does not offer the feature; a plan name means the feature exists but only on that plan. Each Sibuna measurement names the committed result file it comes from. The TLS fingerprint row was checked in October 2026, against the Anubis changelog (1.21.0 and 1.26.0), the SafeLine release notes (8.10.0 and 9.2.0), and Cloudflare's page "JA3/JA4 fingerprint".
 
 .. list-table:: Feature comparison, part 1: deployment
    :header-rows: 1
@@ -143,7 +143,7 @@ The four tables below compare Sibuna with the three tools most often mentioned a
      - C/C++ proxy and detector, Go management, PostgreSQL
      - Proprietary edge software
    * - Licence
-     - Source in the repository
+     - LGPL-3.0-or-later
      - MIT
      - GPL-3.0 management code; closed detector images
      - Proprietary service
@@ -184,10 +184,15 @@ The four tables below compare Sibuna with the three tools most often mentioned a
      - Not documented
      - Not documented
    * - Policy language
-     - JSON rules: path, User-Agent, headers, IPv4/IPv6 CIDR; ALLOW, DENY, CHALLENGE, WEIGH with thresholds; dynamic rules from the database
+     - JSON rules: path, User-Agent, headers, IPv4/IPv6 CIDR, JA4 fingerprint; ALLOW, DENY, CHALLENGE, WEIGH with thresholds; dynamic rules from the database
      - YAML/JSON bots: regex on UA, path, headers; CIDR; CEL expressions; WEIGH with thresholds
      - Console-defined custom rules, ACLs, IP groups
      - Rules language expressions; *5 / 20 / 100 / 1000 custom rules by plan*
+   * - TLS fingerprint (JA4)
+     - Rules match a JA4 fingerprint exactly or by prefix; a trusted ingress computes it and forwards it in a header (``--ja4-header``); Sibuna does not compute it
+     - Not documented; policies may reference the HTTP fingerprint JA4H, which Anubis computes and adds as the header ``X-Http-Fingerprint-JA4H``
+     - Computed at its own TLS termination; shown in attack details; custom rules match it (equals, not equals); a built-in rule denies fingerprints from its malicious JA4 intelligence
+     - JA3 and JA4 fingerprints in WAF custom rules and analytics *(Enterprise with Bot Management)*
 
 .. list-table:: Feature comparison, part 3: inspection and state
    :header-rows: 1
@@ -265,7 +270,7 @@ Three differences carry most of the weight in a selection decision.
 .. admonition:: Current product boundary
    :class: warning
 
-   Sibuna leaves ingress TLS termination to the deployment proxy and does not score bots with a trained model or publish paid signatures. Its opt-in console provides authenticated dashboards, country enrichment, policy editing, investigation and cluster management. Country lookup and storage work run outside request classification. SID 0007 is Committed, and the console passes its browser workflows (SID 0010). Its formal performance isolation gate, with eight active dashboards under load, is not yet measured; Part VIII records what is.
+   Sibuna leaves ingress TLS termination to the deployment proxy and does not score bots with a trained model or publish paid signatures. It matches the JA4 fingerprint that a trusted ingress computes; it cannot compute one itself (SID 0014, Part IX). Its opt-in console provides authenticated dashboards, country enrichment, policy editing, investigation and cluster management. Country lookup and storage work run outside request classification. SID 0007 is Committed, and the console passes its browser workflows (SID 0010). Its formal performance isolation gate, with eight active dashboards under load, is not yet measured; Part VIII records what is.
 
 .. admonition:: Exercise 2.1
 
