@@ -168,8 +168,51 @@ def build_translated(bundle, language):
             overrides += ["-D", f"{name}={words[english[name]]}"]
     for builder in ("html", "pdf"):
         output = f"_build/i18n/{language.gettext}/{builder}"
-        run(["guidedog", "build", "-E", "-a", "-q", "-b", builder, ".", output, *overrides],
-            ROOT / bundle.project)
+        extra = []
+        if builder == "pdf" and language.gettext in ENGLISH_PDF_GRAPHS:
+            extra = ["-D", f"locale_dirs={english_graph_catalogs(bundle, language)}"]
+        run(["guidedog", "build", "-E", "-a", "-q", "-b", builder, ".", output, *overrides,
+             *extra], ROOT / bundle.project)
+
+
+# The languages whose PDFs draw graph labels in English. Typst draws a graph's SVG text
+# without Devanagari shaping (vowel signs come apart, and no font fixes it), while
+# browsers draw the same SVG correctly; so these PDFs keep the English graphs and their
+# HTML keeps the translated ones.
+ENGLISH_PDF_GRAPHS = ("hi",)
+GRAPH_STARTS = ("digraph", "graph ", "graph{", "strict ")
+
+
+def english_graph_catalogs(bundle, language):
+    """The bundle's locale_dirs with its own catalogs replaced by a copy in which every
+    graph source is untranslated, written below the bundle's _build folder."""
+    project = ROOT / bundle.project
+    source = project / "locales" / language.gettext / "LC_MESSAGES"
+    target = project / "_build/i18n" / language.gettext / "pdf-locales"
+    shutil.rmtree(target, ignore_errors=True)
+    (target / language.gettext / "LC_MESSAGES").mkdir(parents=True)
+    for catalog in source.glob("*.po"):
+        entries = [untranslated_graph(entry) for entry in catalog.read_text().split("\n\n")]
+        (target / language.gettext / "LC_MESSAGES" / catalog.name).write_text(
+            "\n\n".join(entries))
+    conf = (project / "conf.toml").read_text()
+    dirs = json.loads(re.search(r"^locale_dirs = (\[.*\])$", conf, re.M)[1])
+    relative = target.relative_to(project).as_posix()
+    return json.dumps([relative if d == "locales" else d for d in dirs])
+
+
+def untranslated_graph(entry):
+    """One catalog entry, with its translation removed when its message is a graph."""
+    lines = entry.split("\n")
+    start = next((i for i, line in enumerate(lines) if line.startswith("msgid ")), None)
+    end = next((i for i, line in enumerate(lines) if line.startswith("msgstr ")), None)
+    if start is None or end is None:
+        return entry
+    msgid = "".join(line.split('"', 1)[1].rsplit('"', 1)[0] for line in lines[start:end])
+    if not msgid.lstrip().startswith(GRAPH_STARTS):
+        return entry
+    rest = [line for line in lines[end + 1:] if not line.startswith('"')]
+    return "\n".join(lines[:end] + ['msgstr ""'] + rest)
 
 
 def check_animation_assets():
