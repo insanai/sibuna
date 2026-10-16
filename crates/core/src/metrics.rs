@@ -6,7 +6,7 @@
 //! individually monotonic; a scrape may see one counter's later value beside another's
 //! earlier value, as it could in Zig.
 //!
-//! Unlike Zig, each counter sits on its own 128-byte line (2,304 bytes for the daemon's one
+//! Unlike Zig, each counter sits on its own 128-byte line (3,072 bytes for the daemon's one
 //! `Metrics`). With 16 threads on a 32-thread machine, the padded counters were measured
 //! faster in every workload of `padding_measurement` below; the numbers are in the crate
 //! report.
@@ -100,10 +100,15 @@ pub struct Metrics {
     pub honeypot_refused: Counter,
     /// Rate limiter arrivals that evicted another active client's cell.
     pub rate_evictions: Counter,
+    /// Requests from a trusted forwarder whose JA4 header held a fingerprint (SID 0014).
+    pub ja4_present: Counter,
+    /// Requests from a trusted forwarder whose JA4 header was malformed or repeated; they
+    /// are judged without a fingerprint.
+    pub ja4_invalid: Counter,
 }
 
 /// The number of counters in [`Metrics`].
-pub const COUNTER_COUNT: usize = 22;
+pub const COUNTER_COUNT: usize = 24;
 
 /// The number of counters the Zig daemon exposed; the ones after them are new in the port.
 pub const ZIG_COUNTER_COUNT: usize = 18;
@@ -135,6 +140,8 @@ impl Metrics {
             ("forwarded_invalid", &self.forwarded_invalid),
             ("honeypot_refused", &self.honeypot_refused),
             ("rate_evictions", &self.rate_evictions),
+            ("ja4_present", &self.ja4_present),
+            ("ja4_invalid", &self.ja4_invalid),
         ]
     }
 

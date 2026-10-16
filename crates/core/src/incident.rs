@@ -16,6 +16,9 @@ pub struct Incident<'a> {
     pub client_ip: &'a str,
     /// The `User-Agent` value as received.
     pub user_agent: &'a [u8],
+    /// The JA4 TLS fingerprint a trusted ingress forwarded, already checked to have the JA4
+    /// form (SID 0014); `None` without one.
+    pub ja4: Option<&'a str>,
     /// The method name.
     pub method: &'a str,
     /// The request path as received.

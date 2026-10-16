@@ -169,6 +169,7 @@ const VALUED_OPTIONS: &[&str] = &[
     "--challenge-rate-limit",
     "--ban-seconds",
     "--trusted-hops",
+    "--ja4-header",
     "--ipv6-prefix",
     "--rate-table-cells",
     "--ban-table-slots",
@@ -378,6 +379,7 @@ impl Config {
     fn apply_identity_option(&mut self, option: &str, value: &str) -> Result<(), Fault> {
         match option {
             "--trusted-hops" => self.trusted_hops = number(value, 1, 8, "proxies 1-8")?,
+            "--ja4-header" => self.ja4_header = Some(ja4_header(value)?),
             "--ipv6-prefix" => self.ipv6_prefix = number(value, 32, 128, "a length 32-128")?,
             "--rate-table-cells" => {
                 self.rate_table_cells = number(value, 4096, 1 << 24, "cells 4096-16777216")?;
@@ -448,6 +450,24 @@ fn cookie_name(value: &str) -> Result<String, Fault> {
         return Err(Fault::invalid("a cookie name of 1-64 token characters"));
     }
     Ok(value.to_owned())
+}
+
+/// The JA4 header name (SID 0014): 1 to 64 token characters, kept in lower case. It may not
+/// be a field Sibuna writes or strips itself (`X-Forwarded-*`, `X-Real-IP`, `X-Sibuna-*`),
+/// because the fingerprint would then share its trust with that field's own rules.
+fn ja4_header(value: &str) -> Result<String, Fault> {
+    const EXPECTED: &str =
+        "a header name of 1-64 token characters, not X-Forwarded-*, X-Real-IP or X-Sibuna-*";
+    let token = |byte: u8| byte.is_ascii_alphanumeric() || b"!#$%&'*+-.^_`|~".contains(&byte);
+    let name = value.to_ascii_lowercase().replace('_', "-");
+    let reserved = name.starts_with("x-forwarded-")
+        || name.starts_with("x-sibuna-")
+        || name == "x-real-ip"
+        || name == "forwarded";
+    if value.is_empty() || value.len() > 64 || !value.bytes().all(token) || reserved {
+        return Err(Fault::invalid(EXPECTED));
+    }
+    Ok(value.to_ascii_lowercase())
 }
 
 /// A PostgreSQL connection string, as sqlx accepts it.
@@ -533,6 +553,29 @@ mod tests {
         ] {
             assert!(parse(option, bad).is_err(), "{option} {bad}");
         }
+    }
+
+    #[test]
+    fn ja4_headers_are_tokens_sibuna_does_not_own() {
+        assert_eq!(Config::default().ja4_header, None);
+        let parse = |value: &str| Config::parse_args(&["--ja4-header", value]);
+        let header = |value: &str| parse(value).ok().and_then(|config| config.ja4_header);
+        assert_eq!(header("cf-ja4").as_deref(), Some("cf-ja4"));
+        assert_eq!(header("X-JA4").as_deref(), Some("x-ja4"), "kept in lower case");
+        assert_eq!(header(&"a".repeat(64)).map(|name| name.len()), Some(64));
+        for bad in [
+            "",
+            "x ja4",
+            "ja4:",
+            "X-Forwarded-JA4",
+            "x_forwarded_ja4",
+            "X-Real-IP",
+            "x-sibuna-ja4",
+            "Forwarded",
+        ] {
+            assert!(parse(bad).is_err(), "{bad:?}");
+        }
+        assert!(parse(&"a".repeat(65)).is_err());
     }
 
     #[test]

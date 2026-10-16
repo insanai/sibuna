@@ -158,6 +158,10 @@ pub struct Config {
     /// is the `X-Forwarded-For` entry this many positions from the right (1 is the address
     /// the nearest proxy appended). Entries further left are written by the client.
     pub trusted_hops: u8,
+    /// The request header a trusted ingress forwards a JA4 TLS fingerprint in, lower case
+    /// (SID 0014); `None` leaves fingerprints off. It is read only when forwarded fields are
+    /// trusted ([`Config::trusts_forwarded`]).
+    pub ja4_header: Option<String>,
     /// Accept threads; zero means one per CPU. Each accepted connection is then served on
     /// its own thread up to `max_connections`.
     pub workers: u16,
@@ -242,6 +246,7 @@ impl Default for Config {
             policy_file: None,
             trust_forwarded: None,
             trusted_hops: 1,
+            ja4_header: None,
             workers: 0,
             max_connections: 1024,
             max_connections_per_ip: 64,
@@ -334,6 +339,10 @@ impl Config {
         )?;
         writeln!(out, "Surface:     {surface}")?;
         writeln!(out, "Storage:     {storage}")?;
+        if let Some(header) = &self.ja4_header {
+            let trust = if self.trusts_forwarded() { "trusted" } else { "ignored: untrusted" };
+            writeln!(out, "JA4:         from {header} ({trust})")?;
+        }
         writeln!(out, "Secret:      {secret}")?;
         writeln!(out, "{RULE}")
     }
@@ -362,6 +371,7 @@ impl fmt::Debug for Config {
             .field("policy_file", &self.policy_file)
             .field("trust_forwarded", &self.trust_forwarded)
             .field("trusted_hops", &self.trusted_hops)
+            .field("ja4_header", &self.ja4_header)
             .field("workers", &self.workers)
             .field("max_connections", &self.max_connections)
             .field("max_connections_per_ip", &self.max_connections_per_ip)
@@ -432,6 +442,8 @@ Client identity and state tables:
                                --ipv6-prefix network), 0 = no bound (default: 64)
   --trusted-hops <n>           Trusted proxies in front of Sibuna: the client is the n-th
                                X-Forwarded-For entry from the right (1-8, default: 1)
+  --ja4-header <name>          Read the JA4 TLS fingerprint a trusted ingress sends in
+                               this header, such as cf-ja4 (default: off)
   --ipv6-prefix <len>          IPv6 prefix that limits, bans and the connection bound
                                apply to (32-128, default: 64)
   --rate-table-cells <n>       Cells per rate limiter table, 16 bytes each
