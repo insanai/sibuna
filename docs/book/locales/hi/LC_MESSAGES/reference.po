@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:25+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,59 +19,62 @@ msgstr ""
 
 #: ../../reference.rst:1
 msgid "Part X: Desk Reference and Diagnostics"
-msgstr ""
+msgstr "भाग X: डेस्क संदर्भ और निदान"
 
 #: ../../reference.rst:4
 msgid ""
 "Endpoints, metrics, error catalog, policy schema, and storage tables in "
 "one place."
 msgstr ""
+"एंडपॉइंट, मेट्रिक, त्रुटि सूची, नीति स्कीमा और स्टोरेज टेबल, सब एक स्थान "
+"पर।"
 
 #: ../../reference.rst:6
 msgid "Endpoints"
-msgstr ""
+msgstr "एंडपॉइंट"
 
 #: ../../reference.rst:9
 msgid "Objectives"
-msgstr ""
+msgstr "उद्देश्य"
 
 #: ../../reference.rst:11
 msgid "Know every route under ``/__sibuna/`` and what each returns."
 msgstr ""
+"``/__sibuna/`` के अंतर्गत हर रूट को और यह जानें कि हर एक क्या लौटाता है।"
 
 #: ../../reference.rst:13
 msgid "Reserved routes"
-msgstr ""
+msgstr "आरक्षित रूट"
 
 #: ../../reference.rst:17
 msgid "Endpoint"
-msgstr ""
+msgstr "एंडपॉइंट"
 
 #: ../../reference.rst:18
 msgid "Method"
-msgstr ""
+msgstr "मेथड"
 
 #: ../../reference.rst:19
 msgid "Function"
-msgstr ""
+msgstr "कार्य"
 
 #: ../../reference.rst:20
 msgid "``/__sibuna/challenge``"
-msgstr ""
+msgstr "``/__sibuna/challenge``"
 
 #: ../../reference.rst:21 ../../reference.rst:24 ../../reference.rst:30
 #: ../../reference.rst:33 ../../reference.rst:36 ../../reference.rst:39
 #: ../../reference.rst:42
 msgid "GET"
-msgstr ""
+msgstr "GET"
 
 #: ../../reference.rst:22
 msgid "The interstitial page"
-msgstr ""
+msgstr "इंटरस्टिशियल पेज"
 
 #: ../../reference.rst:23
 msgid "``/__sibuna/challenge.json?need=&path=``"
-msgstr ""
+msgstr "``/__sibuna/challenge.json?need=&path=``"
 
 #: ../../reference.rst:25
 msgid ""
@@ -80,14 +83,19 @@ msgid ""
 "form (``414`` above 8 KiB, ``400`` for a path without a normal form). "
 "Returns ``{id, algorithm, difficulty, challenges, expires_at}``"
 msgstr ""
+"एक स्टेटलेस चैलेंज जारी करता है: चैलेंज वाले रिस्पॉन्स का आवश्यकता टिकट "
+"उसे तय करता है, अन्यथा रिपोर्ट किए गए URL का सामान्य रूप में मूल्यांकन "
+"होता है (8 KiB से ऊपर ``414``, सामान्य रूप न रखने वाले पाथ के लिए "
+"``400``)। ``{id, algorithm, difficulty, challenges, expires_at}`` लौटाता "
+"है"
 
 #: ../../reference.rst:26
 msgid "``/__sibuna/verify``"
-msgstr ""
+msgstr "``/__sibuna/verify``"
 
 #: ../../reference.rst:27
 msgid "POST"
-msgstr ""
+msgstr "POST"
 
 #: ../../reference.rst:28
 msgid ""
@@ -95,29 +103,35 @@ msgid ""
 "\"proof\"}``; ``200`` with ``Set-Cookie``, ``400`` with a diagnostic, or "
 "``413`` for a body larger than the connection buffer"
 msgstr ""
+"``{\"challenge_id\", \"nonce\"}`` या ``{\"challenge_id\", \"proof\"}`` "
+"स्वीकार करता है; ``Set-Cookie`` के साथ ``200``, निदान के साथ ``400``, या "
+"कनेक्शन बफ़र से बड़ी बॉडी के लिए ``413``"
 
 #: ../../reference.rst:29
 msgid "``/__sibuna/wasm/sibuna-pow.wasm``"
-msgstr ""
+msgstr "``/__sibuna/wasm/sibuna-pow.wasm``"
 
 #: ../../reference.rst:31
 msgid ""
 "The solver module, 14,744 bytes (``wasm_bytes`` in "
 "``benchmarks/results/primitives-latest.json``), cacheable for one hour"
 msgstr ""
+"सॉल्वर मॉड्यूल, 14,744 बाइट "
+"(``benchmarks/results/primitives-latest.json`` में ``wasm_bytes``), एक "
+"घंटे तक cache योग्य"
 
 #: ../../reference.rst:32
 msgid "``/__sibuna/worker.js``"
-msgstr ""
+msgstr "``/__sibuna/worker.js``"
 
 #: ../../reference.rst:34
 msgid ""
 "The Web Worker with WASM and JavaScript provers, cacheable for one hour"
-msgstr ""
+msgstr "WASM और JavaScript प्रूवर वाला Web Worker, एक घंटे तक cache योग्य"
 
 #: ../../reference.rst:35
 msgid "``/__sibuna/honeypot``"
-msgstr ""
+msgstr "``/__sibuna/honeypot``"
 
 #: ../../reference.rst:37
 msgid ""
@@ -126,24 +140,31 @@ msgid ""
 "no cross-site ``Sec-Fetch-Site``); any other is answered ``404`` and "
 "counted"
 msgstr ""
+"कॉल करने वाले पर ``--ban-seconds`` के लिए प्रतिबंध लगाता है और एक घटना "
+"दर्ज करता है; ``403``। केवल शीर्ष-स्तर का अनुरोध प्रतिबंध लगवाता है "
+"(``Sec-Fetch-Dest`` न हो या ``document`` हो, और cross-site "
+"``Sec-Fetch-Site`` न हो); किसी अन्य को ``404`` उत्तर मिलता है और उसे गिना "
+"जाता है"
 
 #: ../../reference.rst:38
 msgid "``/__sibuna/health``"
-msgstr ""
+msgstr "``/__sibuna/health``"
 
 #: ../../reference.rst:40
 msgid ""
 "JSON liveness status with engine name, version, proxy mode and proof "
 "algorithm"
 msgstr ""
+"इंजन के नाम, संस्करण, प्रॉक्सी मोड और प्रमाण एल्गोरिदम के साथ JSON "
+"liveness स्थिति"
 
 #: ../../reference.rst:41
 msgid "``/__sibuna/metrics``"
-msgstr ""
+msgstr "``/__sibuna/metrics``"
 
 #: ../../reference.rst:43
 msgid "Prometheus text format (version 0.0.4)"
-msgstr ""
+msgstr "Prometheus टेक्स्ट प्रारूप (संस्करण 0.0.4)"
 
 #: ../../reference.rst:45
 msgid ""
@@ -156,6 +177,15 @@ msgid ""
 "client that does not accept HTML receives ``401`` with "
 "``{\"error\":\"challenge_required\",\"challenge\":\"/__sibuna/challenge.json?need=<ticket>\"}``."
 msgstr ""
+"``/__sibuna/`` के अंतर्गत किसी भी अन्य पाथ को ``404`` उत्तर मिलता है। "
+"जारी करना और सत्यापन अलग ``--challenge-rate-limit`` बजट खर्च करते हैं, और "
+"प्रतिबंधित पते को हर रूट पर ``403`` से अस्वीकार किया जाता है। चैलेंज "
+"रिस्पॉन्स ``X-Sibuna-Status: CHALLENGE`` ले जाते हैं; स्वीकृत अनुरोध "
+"अपस्ट्रीम की ओर ``X-Sibuna-Status: PASS`` और ``X-Sibuna-Rule`` ले जाते "
+"हैं (और forward-auth उत्तरों में हेक्साडेसिमल में "
+"``X-Sibuna-Rule-Hash``)। जो क्लाइंट HTML स्वीकार नहीं करता, उसे "
+"``{\"error\":\"challenge_required\",\"challenge\":\"/__sibuna/challenge.json?need=<ticket>\"}`` "
+"के साथ ``401`` मिलता है।"
 
 #: ../../reference.rst:47
 msgid ""
@@ -170,171 +200,199 @@ msgid ""
 "forward-auth mode. Part IX documents the console's workflows, HTTPS "
 "deployment and current SID 0007 limits."
 msgstr ""
+"अलग, वैकल्पिक प्रबंधन listener ``/console/`` देता है। इसके एडमिनिस्ट्रेटर "
+"को ``sibuna init-admin`` से स्थानीय रूप से प्रारंभ करें, फिर पहले साइन-इन "
+"पर अस्थायी पासवर्ड बदलें। ``/console/api/stats`` और ``/console/ws`` के "
+"लिए प्रमाणित सत्र चाहिए (kiosk सत्र सहित)। WebSocket सीमित स्नैपशॉट, "
+"delta और gap recovery के साथ आँकड़े, इवेंट, नोड, नीति, चैलेंज और ऑडिट को "
+"मल्टीप्लेक्स करता है। प्रबंधन पीयर ``/console/peer`` से जुड़ते हैं, और हर "
+"API रूट ``/console/api/`` के अंतर्गत है। forward-auth मोड में ऑरिजिन "
+"त्रुटि काउंटर नहीं देखे जाते। भाग IX कंसोल के वर्कफ़्लो, HTTPS "
+"डिप्लॉयमेंट और SID 0007 की वर्तमान सीमाओं का दस्तावेज़ देता है।"
 
 #: ../../reference.rst:49
 msgid "Metrics"
-msgstr ""
+msgstr "मेट्रिक"
 
 #: ../../reference.rst:52
 msgid ""
 "Counters exposed as ``sibuna_<name>_total`` in Prometheus text format, in "
 "this order:"
 msgstr ""
+"Prometheus टेक्स्ट प्रारूप में ``sibuna_<name>_total`` के रूप में दिखाए "
+"जाने वाले काउंटर, इस क्रम में:"
 
 #: ../../reference.rst:54
 msgid "Counters"
-msgstr ""
+msgstr "काउंटर"
 
 #: ../../reference.rst:58
 msgid "Counter"
-msgstr ""
+msgstr "काउंटर"
 
 #: ../../reference.rst:59
 msgid "Incremented when"
-msgstr ""
+msgstr "कब बढ़ता है"
 
 #: ../../reference.rst:60
 msgid "``incidents_persisted``, ``incident_batches``"
-msgstr ""
+msgstr "``incidents_persisted``, ``incident_batches``"
 
 #: ../../reference.rst:61
 msgid "Records and transactions whose commit the storage thread confirmed"
-msgstr ""
+msgstr "वे रिकॉर्ड और ट्रांज़ैक्शन जिनके कमिट की पुष्टि स्टोरेज थ्रेड ने की"
 
 #: ../../reference.rst:62
 msgid "``incidents_dropped``, ``incident_write_failures``"
-msgstr ""
+msgstr "``incidents_dropped``, ``incident_write_failures``"
 
 #: ../../reference.rst:63
 msgid ""
 "Queue pushes rejected because the ring was full, and failed commit "
 "attempts"
 msgstr ""
+"रिंग भरी होने के कारण अस्वीकार किए गए कतार push, और कमिट के विफल प्रयास"
 
 #: ../../reference.rst:64
 msgid "``requests``"
-msgstr ""
+msgstr "``requests``"
 
 #: ../../reference.rst:65
 msgid "A parsed request reached dispatch (reserved routes included)"
-msgstr ""
+msgstr "पार्स किया गया अनुरोध डिस्पैच तक पहुँचा (आरक्षित रूट सहित)"
 
 #: ../../reference.rst:66
 msgid "``allowed``, ``denied``, ``challenged``"
-msgstr ""
+msgstr "``allowed``, ``denied``, ``challenged``"
 
 #: ../../reference.rst:67
 msgid ""
 "A policy decision was made (admitted, refused, challenge issued or "
 "reissued)"
 msgstr ""
+"नीति निर्णय लिया गया (स्वीकृत, अस्वीकृत, चैलेंज जारी या दोबारा जारी)"
 
 #: ../../reference.rst:68
 msgid "``challenges_issued``"
-msgstr ""
+msgstr "``challenges_issued``"
 
 #: ../../reference.rst:69
 msgid "``/__sibuna/challenge.json`` minted a challenge record"
-msgstr ""
+msgstr "``/__sibuna/challenge.json`` ने एक चैलेंज रिकॉर्ड जारी किया"
 
 #: ../../reference.rst:70
 msgid "``solutions_accepted``, ``solutions_rejected``"
-msgstr ""
+msgstr "``solutions_accepted``, ``solutions_rejected``"
 
 #: ../../reference.rst:71
 msgid "``/__sibuna/verify`` accepted or rejected a proof"
-msgstr ""
+msgstr "``/__sibuna/verify`` ने किसी प्रमाण को स्वीकार या अस्वीकार किया"
 
 #: ../../reference.rst:72
 msgid "``rate_limited``"
-msgstr ""
+msgstr "``rate_limited``"
 
 #: ../../reference.rst:73
 msgid ""
 "GCRA refused a request (``429``): the request limit, the challenge budget "
 "or a rule's quota"
 msgstr ""
+"GCRA ने किसी अनुरोध को अस्वीकार किया (``429``): अनुरोध सीमा, चैलेंज बजट "
+"या किसी नियम का कोटा"
 
 #: ../../reference.rst:74
 msgid "``banned``"
-msgstr ""
+msgstr "``banned``"
 
 #: ../../reference.rst:75
 msgid "A banned address was refused, or the honeypot banned one"
 msgstr ""
+"किसी प्रतिबंधित पते को अस्वीकार किया गया, या हनीपॉट ने किसी पर प्रतिबंध "
+"लगाया"
 
 #: ../../reference.rst:76
 msgid "``bans_issued``"
-msgstr ""
+msgstr "``bans_issued``"
 
 #: ../../reference.rst:77
 msgid "A ban was recorded (honeypot or a rule quota's ban)"
-msgstr ""
+msgstr "एक प्रतिबंध दर्ज किया गया (हनीपॉट या किसी नियम कोटा का प्रतिबंध)"
 
 #: ../../reference.rst:78
 msgid "``proxied``, ``upstream_errors``"
-msgstr ""
+msgstr "``proxied``, ``upstream_errors``"
 
 #: ../../reference.rst:79
 msgid "A request was relayed to the origin, or the origin failed (``502``)"
-msgstr ""
+msgstr "एक अनुरोध ऑरिजिन तक रिले किया गया, या ऑरिजिन विफल हुआ (``502``)"
 
 #: ../../reference.rst:80
 msgid "``parse_errors``"
-msgstr ""
+msgstr "``parse_errors``"
 
 #: ../../reference.rst:81
 msgid ""
 "A malformed head, a repeated ``Host``, a target without a normal form "
 "(``400``), or an unsupported transfer coding (``501``) was refused"
 msgstr ""
+"विकृत हेड, दोहराया गया ``Host``, सामान्य रूप न रखने वाला लक्ष्य "
+"(``400``), या असमर्थित transfer coding (``501``) अस्वीकार किया गया"
 
 #: ../../reference.rst:82
 msgid "``overloaded``"
-msgstr ""
+msgstr "``overloaded``"
 
 #: ../../reference.rst:83
 msgid ""
 "A connection beyond ``--max-connections`` or ``--max-connections-per-ip`` "
 "was answered ``503``"
 msgstr ""
+"``--max-connections`` या ``--max-connections-per-ip`` से आगे के कनेक्शन "
+"को ``503`` उत्तर मिला"
 
 #: ../../reference.rst:84
 msgid "``bans_refused``"
-msgstr ""
+msgstr "``bans_refused``"
 
 #: ../../reference.rst:85
 msgid ""
 "A ban was not recorded because every slot its key may take held a ban in "
 "effect"
 msgstr ""
+"प्रतिबंध दर्ज नहीं हुआ, क्योंकि उसकी कुंजी जो भी स्लॉट ले सकती थी उन सभी "
+"में एक प्रभावी प्रतिबंध था"
 
 #: ../../reference.rst:86
 msgid "``forwarded_invalid``"
-msgstr ""
+msgstr "``forwarded_invalid``"
 
 #: ../../reference.rst:87
 msgid ""
 "A trusted forwarded client address did not parse; the request was judged "
 "by the socket peer"
 msgstr ""
+"विश्वसनीय फ़ॉरवर्ड किया गया क्लाइंट पता पार्स नहीं हुआ; अनुरोध का निर्णय "
+"सॉकेट पीयर से हुआ"
 
 #: ../../reference.rst:88
 msgid "``honeypot_refused``"
-msgstr ""
+msgstr "``honeypot_refused``"
 
 #: ../../reference.rst:89
 msgid ""
 "A honeypot hit banned nobody because a page, not a person, requested it"
 msgstr ""
+"हनीपॉट हिट से किसी पर प्रतिबंध नहीं लगा, क्योंकि उसे किसी व्यक्ति ने "
+"नहीं, एक पेज ने माँगा था"
 
 #: ../../reference.rst:90
 msgid "``rate_evictions``"
-msgstr ""
+msgstr "``rate_evictions``"
 
 #: ../../reference.rst:91
 msgid "A limiter arrival evicted another active client's cell"
 msgstr ""
+"लिमिटर में किसी आगमन ने किसी दूसरे सक्रिय क्लाइंट की सेल को हटा दिया"
 
 #: ../../reference.rst:93
 msgid ""
@@ -342,46 +400,53 @@ msgid ""
 "because the pending batch is retained. Monitor increments over an "
 "interval; totals alone are not a queue depth."
 msgstr ""
+"एक रीट्राई रिकॉर्ड खोए बिना ``incident_write_failures`` बढ़ा सकता है, "
+"क्योंकि लंबित बैच रखा जाता है। किसी अंतराल में हुई बढ़ोतरी की निगरानी "
+"करें; केवल कुल योग कतार की गहराई नहीं बताते।"
 
 #: ../../reference.rst:95
 msgid "Status Codes"
-msgstr ""
+msgstr "स्टेटस कोड"
 
 #: ../../reference.rst:98
 msgid "Status codes of the data plane"
-msgstr ""
+msgstr "डेटा plane के स्टेटस कोड"
 
 #: ../../reference.rst:102 ../../reference.rst:192
 msgid "Code"
-msgstr ""
+msgstr "कोड"
 
 #: ../../reference.rst:103
 msgid "When"
-msgstr ""
+msgstr "कब"
 
 #: ../../reference.rst:104
 msgid "200"
-msgstr ""
+msgstr "200"
 
 #: ../../reference.rst:105
 msgid ""
 "Admitted (forward-auth), interstitial (HTML navigation needing a "
 "challenge), internal routes"
 msgstr ""
+"स्वीकृत (forward-auth), इंटरस्टिशियल (चैलेंज की ज़रूरत वाला HTML "
+"नेविगेशन), आंतरिक रूट"
 
 #: ../../reference.rst:106
 msgid "302"
-msgstr ""
+msgstr "302"
 
 #: ../../reference.rst:107
 msgid ""
 "Not used by the current protocol; verification answers ``200`` and the "
 "page reloads"
 msgstr ""
+"वर्तमान प्रोटोकॉल में उपयोग नहीं होता; सत्यापन ``200`` उत्तर देता है और "
+"पेज दोबारा लोड होता है"
 
 #: ../../reference.rst:108 ../../reference.rst:196
 msgid "400"
-msgstr ""
+msgstr "400"
 
 #: ../../reference.rst:109
 msgid ""
@@ -389,106 +454,118 @@ msgid ""
 "form, invalid forwarded metadata, a malformed body, or a rejected "
 "solution with an Elm-style diagnostic"
 msgstr ""
+"विकृत अनुरोध, दोहराया गया ``Host`` फ़ील्ड, सामान्य रूप न रखने वाला "
+"लक्ष्य, अमान्य फ़ॉरवर्ड किया गया मेटाडेटा, विकृत बॉडी, या Elm-शैली के "
+"निदान के साथ अस्वीकृत समाधान"
 
 #: ../../reference.rst:110
 msgid "401"
-msgstr ""
+msgstr "401"
 
 #: ../../reference.rst:111
 msgid ""
 "Challenge required for a client that does not accept HTML, or in "
 "forward-auth mode"
 msgstr ""
+"HTML स्वीकार न करने वाले क्लाइंट के लिए, या forward-auth मोड में, चैलेंज "
+"आवश्यक"
 
 #: ../../reference.rst:112
 msgid "403"
-msgstr ""
+msgstr "403"
 
 #: ../../reference.rst:113
 msgid "Policy or WAF denial, banned address, honeypot"
-msgstr ""
+msgstr "नीति या WAF द्वारा अस्वीकृति, प्रतिबंधित पता, हनीपॉट"
 
 #: ../../reference.rst:114
 msgid "404"
-msgstr ""
+msgstr "404"
 
 #: ../../reference.rst:115
 msgid ""
 "An unknown path under ``/__sibuna/``, or a honeypot hit that is not a "
 "top-level request"
 msgstr ""
+"``/__sibuna/`` के अंतर्गत अज्ञात पाथ, या ऐसा हनीपॉट हिट जो शीर्ष-स्तर का "
+"अनुरोध नहीं है"
 
 #: ../../reference.rst:116
 msgid "413"
-msgstr ""
+msgstr "413"
 
 #: ../../reference.rst:117
 msgid "Solution body larger than the 64 KB connection buffer"
-msgstr ""
+msgstr "समाधान की बॉडी 64 KB कनेक्शन बफ़र से बड़ी"
 
 #: ../../reference.rst:118
 msgid "414"
-msgstr ""
+msgstr "414"
 
 #: ../../reference.rst:119
 msgid "A reported challenge URL over 8 KiB"
-msgstr ""
+msgstr "रिपोर्ट किया गया चैलेंज URL 8 KiB से बड़ा"
 
 #: ../../reference.rst:120
 msgid "417"
-msgstr ""
+msgstr "417"
 
 #: ../../reference.rst:121
 msgid "Unsupported request expectation; ``100-continue`` is handled locally"
 msgstr ""
+"असमर्थित अनुरोध अपेक्षा (expectation); ``100-continue`` स्थानीय रूप से "
+"संभाला जाता है"
 
 #: ../../reference.rst:122 ../../reference.rst:211
 msgid "429"
-msgstr ""
+msgstr "429"
 
 #: ../../reference.rst:123
 msgid "GCRA limit exceeded; ``Retry-After`` in seconds"
-msgstr ""
+msgstr "GCRA सीमा पार; ``Retry-After`` सेकंड में"
 
 #: ../../reference.rst:124
 msgid "431"
-msgstr ""
+msgstr "431"
 
 #: ../../reference.rst:125
 msgid "Request head over 16 KB"
-msgstr ""
+msgstr "अनुरोध हेड 16 KB से बड़ा"
 
 #: ../../reference.rst:126
 msgid "501"
-msgstr ""
+msgstr "501"
 
 #: ../../reference.rst:127
 msgid "``Transfer-Encoding`` with a coding other than chunked"
-msgstr ""
+msgstr "chunked के अलावा किसी अन्य coding वाला ``Transfer-Encoding``"
 
 #: ../../reference.rst:128
 msgid "502"
-msgstr ""
+msgstr "502"
 
 #: ../../reference.rst:129
 msgid ""
 "Origin unreachable, or its response head was malformed or larger than 16 "
 "KB"
 msgstr ""
+"ऑरिजिन तक पहुँच नहीं, या उसका रिस्पॉन्स हेड विकृत था या 16 KB से बड़ा था"
 
 #: ../../reference.rst:130 ../../reference.rst:202 ../../reference.rst:205
 msgid "503"
-msgstr ""
+msgstr "503"
 
 #: ../../reference.rst:131
 msgid ""
 "Connection limit (``--max-connections`` or ``--max-connections-per-ip``) "
 "reached, or the node is draining; the socket is closed after the reply"
 msgstr ""
+"कनेक्शन सीमा (``--max-connections`` या ``--max-connections-per-ip``) "
+"पूरी, या नोड ड्रेन हो रहा है; उत्तर के बाद सॉकेट बंद कर दिया जाता है"
 
 #: ../../reference.rst:133
 msgid "Error Catalog"
-msgstr ""
+msgstr "त्रुटि सूची"
 
 #: ../../reference.rst:136
 msgid ""
@@ -509,176 +586,195 @@ msgid ""
 "option, and ``CONSOLE001`` a console configuration that breaks a rule "
 "(``StorageRequired`` without storage)."
 msgstr ""
+"``INVALID COMMAND LINE`` हर उस विकल्प के लिए स्टार्टअप रोक देता है जिसे "
+"डेमन नहीं पहचानता, अपनी दस्तावेज़ित सीमा से बाहर के हर मान के लिए, और "
+"अमान्य, अनुपस्थित या दोहराए गए मोड चयन के लिए। ब्लॉक विकल्प, दिया गया "
+"मान, अपेक्षित सीमा और त्रुटि (``UnknownOption``, ``MissingValue``, "
+"``InvalidValue``, ``InvalidMode``, ``MissingMode``, ``DuplicateMode``, "
+"Zaxonlite क्लस्टर विकल्प के लिए ``RemovedOption``, एक-दूसरे को बाहर करने "
+"वाले दो स्टोरेज विकल्पों के लिए ``ConflictingOptions``, "
+"``--cluster-node`` के बिना डेटाबेस URL के लिए ``MissingOption``) का नाम "
+"देता है, और एक संकेत के साथ समाप्त होता है। डेटाबेस URL ``[redacted]`` के "
+"रूप में दिखाया जाता है। ``--mode reverse_proxy`` या ``--mode "
+"forward_auth`` एक बार दें; ``-m`` समतुल्य छोटा विकल्प है। अस्वीकृत नीति "
+"फ़ाइल अपनी त्रुटि के शीर्षक वाला एक ब्लॉक छापती है (उदाहरण के लिए "
+"``INVALID POLICY ACTION``), जिसमें फ़ाइल, त्रुटि का नाम, नियम, फ़ील्ड और "
+"मान होते हैं। कंसोल विकल्पों की जाँच अलग से होती है: ``CONSOLE002`` विकृत "
+"या दोहराए गए कंसोल विकल्प का नाम देता है, और ``CONSOLE001`` किसी नियम को "
+"तोड़ने वाले कंसोल कॉन्फ़िगरेशन का (स्टोरेज के बिना ``StorageRequired``)।"
 
 #: ../../reference.rst:138
 msgid "Implementation: ``ErrorKind::explain``"
-msgstr ""
+msgstr "इम्प्लीमेंटेशन: ``ErrorKind::explain``"
 
 #: ../../reference.rst:140
 msgid ""
 "Maps every domain error to a boundary line, an explanation, and a "
 "``Hint:``. In ``crates/core/src/errors.rs`` (crate ``sibuna-core``)."
 msgstr ""
+"हर डोमेन त्रुटि को एक सीमा पंक्ति, एक व्याख्या और एक ``Hint:`` से जोड़ता "
+"है। ``crates/core/src/errors.rs`` में (क्रेट ``sibuna-core``)।"
 
 #: ../../reference.rst:142
 msgid "Challenge and session errors"
-msgstr ""
+msgstr "चैलेंज और सत्र की त्रुटियाँ"
 
 #: ../../reference.rst:146
 msgid "Error"
-msgstr ""
+msgstr "त्रुटि"
 
 #: ../../reference.rst:147
 msgid "Cause"
-msgstr ""
+msgstr "कारण"
 
 #: ../../reference.rst:148
 msgid "Hint"
-msgstr ""
+msgstr "संकेत"
 
 #: ../../reference.rst:149
 msgid "``MalformedChallenge``"
-msgstr ""
+msgstr "``MalformedChallenge``"
 
 #: ../../reference.rst:150
 msgid "The identifier is not a well-formed challenge record"
-msgstr ""
+msgstr "पहचानकर्ता एक सही रूप वाला चैलेंज रिकॉर्ड नहीं है"
 
 #: ../../reference.rst:151
 msgid "Fetch a fresh challenge and submit it unchanged"
-msgstr ""
+msgstr "नया चैलेंज लाएँ और उसे बिना बदले सबमिट करें"
 
 #: ../../reference.rst:152
 msgid "``InvalidChallengeTag``"
-msgstr ""
+msgstr "``InvalidChallengeTag``"
 
 #: ../../reference.rst:153
 msgid "The tag does not authenticate; not issued by this cluster or edited"
 msgstr ""
+"टैग प्रमाणित नहीं होता; इस क्लस्टर ने जारी नहीं किया या संपादित किया गया"
 
 #: ../../reference.rst:154
 msgid "Challenges cannot be forged; request a new one"
-msgstr ""
+msgstr "चैलेंज जाली नहीं बनाए जा सकते; नया माँगें"
 
 #: ../../reference.rst:155
 msgid "``ChallengeExpired``"
-msgstr ""
+msgstr "``ChallengeExpired``"
 
 #: ../../reference.rst:156
 msgid "Older than the challenge TTL, or minted in the future"
-msgstr ""
+msgstr "चैलेंज TTL से पुराना, या भविष्य में जारी किया गया"
 
 #: ../../reference.rst:157
 msgid "Request a new challenge"
-msgstr ""
+msgstr "नया चैलेंज माँगें"
 
 #: ../../reference.rst:158
 msgid "``FingerprintMismatch``"
-msgstr ""
+msgstr "``FingerprintMismatch``"
 
 #: ../../reference.rst:159
 msgid "Submitted from a different address or User-Agent"
-msgstr ""
+msgstr "किसी दूसरे पते या User-Agent से सबमिट किया गया"
 
 #: ../../reference.rst:160
 msgid "Submit from the client that fetched it"
-msgstr ""
+msgstr "उसी क्लाइंट से सबमिट करें जिसने उसे लाया था"
 
 #: ../../reference.rst:161
 msgid "``DifficultyNotMet``"
-msgstr ""
+msgstr "``DifficultyNotMet``"
 
 #: ../../reference.rst:162
 msgid "Hashcash nonce lacks the required zero bits"
-msgstr ""
+msgstr "Hashcash नॉनस में आवश्यक शून्य बिट नहीं हैं"
 
 #: ../../reference.rst:163
 msgid "Keep searching nonces"
-msgstr ""
+msgstr "नॉनस खोजते रहें"
 
 #: ../../reference.rst:164
 msgid "``InvalidProof``"
-msgstr ""
+msgstr "``InvalidProof``"
 
 #: ../../reference.rst:165
 msgid "The sequential-work proof does not open the committed labels"
-msgstr ""
+msgstr "अनुक्रमिक कार्य का प्रमाण कमिट किए गए लेबल नहीं खोलता"
 
 #: ../../reference.rst:166
 msgid "Run the prover to completion for the issued depth and openings"
-msgstr ""
+msgstr "जारी की गई गहराई और ओपनिंग के लिए प्रूवर को पूरा चलाएँ"
 
 #: ../../reference.rst:167
 msgid "``WrongSolutionType``"
-msgstr ""
+msgstr "``WrongSolutionType``"
 
 #: ../../reference.rst:168
 msgid "A nonce for a PoSW challenge or a proof for Hashcash"
-msgstr ""
+msgstr "PoSW चैलेंज के लिए नॉनस या Hashcash के लिए प्रमाण"
 
 #: ../../reference.rst:169
 msgid "Match the solution field to the algorithm"
-msgstr ""
+msgstr "समाधान के फ़ील्ड को एल्गोरिदम से मिलाएँ"
 
 #: ../../reference.rst:170
 msgid "``DoubleSpendAttempt``"
-msgstr ""
+msgstr "``DoubleSpendAttempt``"
 
 #: ../../reference.rst:171
 msgid "The challenge was already spent"
-msgstr ""
+msgstr "चैलेंज पहले ही खर्च हो चुका था"
 
 #: ../../reference.rst:172
 msgid "Challenges are single use"
-msgstr ""
+msgstr "चैलेंज एक बार ही उपयोग होते हैं"
 
 #: ../../reference.rst:173
 msgid "``StoreFull``"
-msgstr ""
+msgstr "``StoreFull``"
 
 #: ../../reference.rst:174
 msgid "The spent set is full"
-msgstr ""
+msgstr "spent set भरा हुआ है"
 
 #: ../../reference.rst:175
 msgid "Lower the challenge TTL or raise ``--spent-tags``"
-msgstr ""
+msgstr "चैलेंज TTL घटाएँ या ``--spent-tags`` बढ़ाएँ"
 
 #: ../../reference.rst:176
 msgid "``InvalidTokenSignature``"
-msgstr ""
+msgstr "``InvalidTokenSignature``"
 
 #: ../../reference.rst:177
 msgid "Cookie tag or signature fails"
-msgstr ""
+msgstr "कुकी का टैग या हस्ताक्षर विफल"
 
 #: ../../reference.rst:178
 msgid "Re-authenticate through the interstitial"
-msgstr ""
+msgstr "इंटरस्टिशियल के ज़रिए दोबारा प्रमाणित हों"
 
 #: ../../reference.rst:179
 msgid "``TokenExpired``"
-msgstr ""
+msgstr "``TokenExpired``"
 
 #: ../../reference.rst:180
 msgid "Cookie past its expiry"
-msgstr ""
+msgstr "कुकी अपनी समाप्ति से आगे"
 
 #: ../../reference.rst:181
 msgid "Re-authenticate"
-msgstr ""
+msgstr "दोबारा प्रमाणित हों"
 
 #: ../../reference.rst:182
 msgid "``TokenBoundAddressMismatch``"
-msgstr ""
+msgstr "``TokenBoundAddressMismatch``"
 
 #: ../../reference.rst:183
 msgid "Cookie presented from a different client identity"
-msgstr ""
+msgstr "कुकी किसी दूसरी क्लाइंट पहचान से प्रस्तुत की गई"
 
 #: ../../reference.rst:184
 msgid "Cookies cannot be shared"
-msgstr ""
+msgstr "कुकी साझा नहीं की जा सकतीं"
 
 #: ../../reference.rst:186
 msgid ""
@@ -686,43 +782,46 @@ msgid ""
 "``{\"error\":\"<CODE>\",\"hint\":\"<sentence>\"}``; the hint is the text "
 "the interface shows (``crates/console/src/http/reply.rs``)."
 msgstr ""
+"कंसोल का API विफलता का उत्तर "
+"``{\"error\":\"<CODE>\",\"hint\":\"<sentence>\"}`` से देता है; hint वह "
+"टेक्स्ट है जो इंटरफ़ेस दिखाता है (``crates/console/src/http/reply.rs``)।"
 
 #: ../../reference.rst:188
 msgid "Console failure codes that concern operators"
-msgstr ""
+msgstr "ऑपरेटर से संबंधित कंसोल विफलता कोड"
 
 #: ../../reference.rst:193
 msgid "Status"
-msgstr ""
+msgstr "स्थिति"
 
 #: ../../reference.rst:194
 msgid "Meaning"
-msgstr ""
+msgstr "अर्थ"
 
 #: ../../reference.rst:195
 msgid "``CONSOLE002``"
-msgstr ""
+msgstr "``CONSOLE002``"
 
 #: ../../reference.rst:197
 msgid "The request is malformed, too large or not allowed in its form"
-msgstr ""
+msgstr "अनुरोध विकृत है, बहुत बड़ा है, या अपने रूप में अनुमत नहीं है"
 
 #: ../../reference.rst:198
 msgid "``CONSOLE003``"
-msgstr ""
+msgstr "``CONSOLE003``"
 
 #: ../../reference.rst:199
 msgid "503 / 429"
-msgstr ""
+msgstr "503 / 429"
 
 #: ../../reference.rst:200
 msgid ""
 "The storage job queue is full (32 jobs), or the password verifier is busy"
-msgstr ""
+msgstr "स्टोरेज जॉब कतार भरी है (32 जॉब), या पासवर्ड सत्यापनकर्ता व्यस्त है"
 
 #: ../../reference.rst:201
 msgid "``CONSOLEQUORUM``"
-msgstr ""
+msgstr "``CONSOLEQUORUM``"
 
 #: ../../reference.rst:203
 msgid ""
@@ -730,24 +829,28 @@ msgid ""
 "outcome is unknown, and the data plane continues from the last applied "
 "policy"
 msgstr ""
+"डेटाबेस ने अनुरोध की 10 सेकंड की प्रतीक्षा के भीतर उत्तर नहीं दिया; "
+"परिणाम अज्ञात है, और डेटा plane अंतिम लागू नीति से चलता रहता है"
 
 #: ../../reference.rst:204
 msgid "``CONSOLE004``"
-msgstr ""
+msgstr "``CONSOLE004``"
 
 #: ../../reference.rst:206
 msgid ""
 "The service cannot answer: not available in this build, stopping, or an "
 "internal failure"
 msgstr ""
+"सेवा उत्तर नहीं दे सकती: इस बिल्ड में उपलब्ध नहीं, रुक रही है, या आंतरिक "
+"विफलता"
 
 #: ../../reference.rst:207
 msgid "``CONSOLENODE``"
-msgstr ""
+msgstr "``CONSOLENODE``"
 
 #: ../../reference.rst:208
 msgid "400 / 409 / 503"
-msgstr ""
+msgstr "400 / 409 / 503"
 
 #: ../../reference.rst:209
 msgid ""
@@ -756,18 +859,22 @@ msgid ""
 "completion could not be recorded (503); inspect the operation receipt "
 "before retrying"
 msgstr ""
+"नोड कमांड अस्वीकार हुई: वह किसी दूसरे नोड का नाम देती है (400), पुराना "
+"boot या control revision (409), या वह तब आई जब कोई दूसरी कमांड चल रही थी "
+"या किसी पूर्णता को दर्ज नहीं किया जा सका (503); रीट्राई से पहले operation "
+"receipt की जाँच करें"
 
 #: ../../reference.rst:210
 msgid "``CONSOLEMUTATION``"
-msgstr ""
+msgstr "``CONSOLEMUTATION``"
 
 #: ../../reference.rst:212
 msgid "More than sixty management mutations in a minute from one session"
-msgstr ""
+msgstr "एक सत्र से एक मिनट में साठ से अधिक प्रबंधन परिवर्तन (mutation)"
 
 #: ../../reference.rst:214
 msgid "Policy Schema"
-msgstr ""
+msgstr "नीति स्कीमा"
 
 #: ../../reference.rst:240
 msgid ""
@@ -780,6 +887,14 @@ msgid ""
 "reputation trie of ``ip_rules`` holds at most 8,192 nodes. Each rule may "
 "use one spelling of each criterion."
 msgstr ""
+"``challenge_at`` और ``deny_at`` -1000 से 1000 के बीच होते हैं, "
+"``deny_at`` का मान ``challenge_at`` के बराबर या उससे ऊपर होता है, और "
+"``bits_step`` 1 से 1000 के बीच। ``challenge`` ब्लॉक केवल ``CHALLENGE`` "
+"नियमों का होता है, 1 से 64 वर्क बिट्स के साथ। ``limits`` किसी नियम को "
+"उसका अपना कोटा देता है: ``rate`` 1 से 1,000,000 और ``window_seconds`` 1 "
+"से 86,400 आवश्यक हैं, ``ban_seconds`` (अधिकतम 86,400) वैकल्पिक है, और "
+"``WEIGH`` नियम सीमाएँ नहीं रख सकते। ``ip_rules`` का प्रतिष्ठा trie अधिकतम "
+"8,192 नोड रखता है। हर नियम हर मानदंड की एक ही वर्तनी का उपयोग कर सकता है।"
 
 #: ../../reference.rst:242
 msgid ""
@@ -792,10 +907,18 @@ msgid ""
 "``%5C`` or ``\\`` matches nothing, and path matching is case-sensitive "
 "(SID 0003)."
 msgstr ""
+"पैटर्न का व्याकरण: ``.*`` या ``*`` किसी भी चीज़ से मेल खाते हैं; "
+"``^...$`` एक सटीक पाथ को बाँधता है; अंत में ``*``, ``/*`` या ``.*`` "
+"प्रीफ़िक्स है; ``/`` से शुरू होने वाला पैटर्न सटीक पाथ है; बाकी सब "
+"केस-असंवेदी सबस्ट्रिंग है। पाथ पैटर्न सामान्य रूप वाले पाथ से मेल खाते "
+"हैं (खंडों के बीच एक स्लैश, कोई dot खंड नहीं, unreserved अक्षर unescaped, "
+"अन्य escape बड़े अक्षरों वाले हेक्साडेसिमल अंकों के साथ), इसलिए ``;``, "
+"``%2F``, ``%5C`` या ``\\`` रखने वाला पैटर्न किसी से मेल नहीं खाता, और पाथ "
+"मिलान केस-संवेदी है (SID 0003)।"
 
 #: ../../reference.rst:244
 msgid "Storage Tables"
-msgstr ""
+msgstr "स्टोरेज टेबल"
 
 #: ../../reference.rst:247
 msgid ""
@@ -808,121 +931,141 @@ msgid ""
 "lowercase. Incident ids are ``node_id << 40 | sequence``, unique across a "
 "cluster without coordination; node ids run from 1 to 8,388,607."
 msgstr ""
+"``policy_revision``, ``policies``, ``policy_inspection``, "
+"``ip_reputation``, ``incident_receipts``, ``security_incidents`` "
+"(256-बाइट एम्बेडिंग के साथ), full-text इंडेक्स (SQLite पर "
+"``incidents_fts``, canonical टोकन पर FTS5; PostgreSQL पर GIN इंडेक्स के "
+"साथ ``tsvector`` कॉलम ``search``) और ``sibuna_schema``; कंसोल 33 "
+"``console_*`` टेबल जोड़ता है। संग्रहीत एक्शन, एल्गोरिदम और मोड के नाम "
+"छोटे अक्षरों में हैं। घटना id ``node_id << 40 | sequence`` हैं, जो बिना "
+"समन्वय के पूरे क्लस्टर में अद्वितीय हैं; नोड id 1 से 8,388,607 तक होते "
+"हैं।"
 
 #: ../../reference.rst:249
 msgid "Build Targets"
-msgstr ""
+msgstr "बिल्ड टारगेट"
 
 #: ../../reference.rst:252
 msgid "Build and repository commands"
-msgstr ""
+msgstr "बिल्ड और रिपॉज़िटरी कमांड"
 
 #: ../../reference.rst:256
 msgid "Command"
-msgstr ""
+msgstr "कमांड"
 
 #: ../../reference.rst:257
 msgid "Result"
-msgstr ""
+msgstr "परिणाम"
 
 #: ../../reference.rst:258
 msgid "``cargo build --release -p sibuna``"
-msgstr ""
+msgstr "``cargo build --release -p sibuna``"
 
 #: ../../reference.rst:259
 msgid "Daemon with SQLite storage and the console (the default features)"
-msgstr ""
+msgstr "SQLite स्टोरेज और कंसोल वाला डेमन (डिफ़ॉल्ट features)"
 
 #: ../../reference.rst:260
 msgid "``cargo build --release -p sibuna --no-default-features``"
-msgstr ""
+msgstr "``cargo build --release -p sibuna --no-default-features``"
 
 #: ../../reference.rst:261
 msgid ""
 "In-memory daemon without storage or console and without any external crate"
 msgstr ""
+"मेमोरी में चलने वाला डेमन, स्टोरेज या कंसोल के बिना और किसी बाहरी क्रेट "
+"के बिना"
 
 #: ../../reference.rst:262
 msgid "``cargo build --release -p sibuna --features postgres``"
-msgstr ""
+msgstr "``cargo build --release -p sibuna --features postgres``"
 
 #: ../../reference.rst:263
 msgid "Daemon that also connects to a shared PostgreSQL database"
-msgstr ""
+msgstr "डेमन जो एक साझा PostgreSQL डेटाबेस से भी जुड़ता है"
 
 #: ../../reference.rst:264
 msgid "``cargo test``"
-msgstr ""
+msgstr "``cargo test``"
 
 #: ../../reference.rst:265
 msgid ""
 "Unit tests, integration tests against a live daemon, storage and console "
 "tests (PostgreSQL ones when ``SIBUNA_TEST_DATABASE_URL`` is set)"
 msgstr ""
+"यूनिट परीक्षण, चलते हुए डेमन पर integration परीक्षण, स्टोरेज और कंसोल "
+"परीक्षण (``SIBUNA_TEST_DATABASE_URL`` सेट होने पर PostgreSQL वाले भी)"
 
 #: ../../reference.rst:266
 msgid "``cargo clippy --all-targets``, ``cargo fmt --check``"
-msgstr ""
+msgstr "``cargo clippy --all-targets``, ``cargo fmt --check``"
 
 #: ../../reference.rst:267
 msgid "Lints and formatting (``max_width = 99``)"
-msgstr ""
+msgstr "लिंट और फ़ॉर्मेटिंग (``max_width = 99``)"
 
 #: ../../reference.rst:268
 msgid "``cargo xtask check``"
-msgstr ""
+msgstr "``cargo xtask check``"
 
 #: ../../reference.rst:269
 msgid ""
 "The 70-line function, 1,408-line file and 99/108-column line limits; no "
 "tabs"
 msgstr ""
+"70-पंक्ति फ़ंक्शन, 1,408-पंक्ति फ़ाइल और 99/108-कॉलम पंक्ति की सीमाएँ; "
+"कोई टैब नहीं"
 
 #: ../../reference.rst:270
 msgid "``cargo xtask browser``"
-msgstr ""
+msgstr "``cargo xtask browser``"
 
 #: ../../reference.rst:271
 msgid "Checks in headless Chromium (``sibuna-browser``)"
-msgstr ""
+msgstr "headless Chromium में जाँचें (``sibuna-browser``)"
 
 #: ../../reference.rst:272
 msgid "``cargo xtask bench <primitives|product|latency>``"
-msgstr ""
+msgstr "``cargo xtask bench <primitives|product|latency>``"
 
 #: ../../reference.rst:273
 msgid ""
 "Release-mode benchmarks; results in "
 "``benchmarks/results/<command>-latest.json``"
 msgstr ""
+"रिलीज़ मोड के बेंचमार्क; परिणाम "
+"``benchmarks/results/<command>-latest.json`` में"
 
 #: ../../reference.rst:274
 msgid ""
 "``cargo build -p sibuna-pow-wasm --target wasm32-unknown-unknown "
 "--profile wasm``"
 msgstr ""
+"``cargo build -p sibuna-pow-wasm --target wasm32-unknown-unknown "
+"--profile wasm``"
 
 #: ../../reference.rst:275
 msgid ""
 "The browser module only (``-p sibuna-console-ui`` for the console "
 "interface)"
 msgstr ""
+"केवल ब्राउज़र मॉड्यूल (कंसोल इंटरफ़ेस के लिए ``-p sibuna-console-ui``)"
 
 #: ../../reference.rst:276
 msgid "``cargo run -p sibuna-geoip --bin geoip-snapshot -- ...``"
-msgstr ""
+msgstr "``cargo run -p sibuna-geoip --bin geoip-snapshot -- ...``"
 
 #: ../../reference.rst:277
 msgid "Validate country data and write an embeddable GeoIP snapshot"
-msgstr ""
+msgstr "देश डेटा का सत्यापन करें और एम्बेड करने योग्य GeoIP स्नैपशॉट लिखें"
 
 #: ../../reference.rst:278
 msgid "``guidedog build`` / ``guidedog dsc``"
-msgstr ""
+msgstr "``guidedog build`` / ``guidedog dsc``"
 
 #: ../../reference.rst:279
 msgid "This book / the SID records"
-msgstr ""
+msgstr "यह पुस्तक / SID रिकॉर्ड"
 
 #: ../../reference.rst:281
 msgid ""
@@ -934,10 +1077,18 @@ msgid ""
 "``SIBUNA_GEOIP_DATA`` names a GeoIP snapshot to embed; it is decoded at "
 "build time, and a build without the console refuses it (``GEOIP001``)."
 msgstr ""
+"डेमन की बिल्ड स्क्रिप्ट (``cmd/sibuna/build.rs``) दोनों WebAssembly "
+"मॉड्यूल को ``wasm`` प्रोफ़ाइल के साथ वर्कस्पेस की टारगेट डायरेक्टरी में "
+"बनाती है, और कंसोल इंटरफ़ेस 768 KiB से अधिक होने पर बिल्ड विफल कर देती "
+"है। ``wasm32-unknown-unknown`` टारगेट के बिना बिल्ड के लिए "
+"``SIBUNA_POW_WASM`` और ``SIBUNA_CONSOLE_WASM`` इसके बजाय पहले से बने "
+"मॉड्यूल का नाम देते हैं। ``SIBUNA_GEOIP_DATA`` एम्बेड करने के लिए एक "
+"GeoIP स्नैपशॉट का नाम देता है; इसे बिल्ड के समय डिकोड किया जाता है, और "
+"कंसोल के बिना बिल्ड इसे अस्वीकार करता है (``GEOIP001``)।"
 
 #: ../../reference.rst:283
 msgid "Exercise 10.1"
-msgstr ""
+msgstr "अभ्यास 10.1"
 
 #: ../../reference.rst:285
 msgid ""
@@ -946,10 +1097,14 @@ msgid ""
 "the token and challenge formats, and propose the smallest change to the "
 "interstitial that recovers gracefully."
 msgstr ""
+"हल के बीच में Wi-Fi से सेलुलर पर जाने के बाद एक क्लाइंट को ``CLIENT "
+"FINGERPRINT MISMATCH`` शीर्षक के साथ ``400`` मिलता है। टोकन और चैलेंज के "
+"प्रारूपों से कारण समझाइए, और इंटरस्टिशियल में वह सबसे छोटा बदलाव "
+"प्रस्तावित करें जो इससे सहज रूप से उबर जाए।"
 
 #: ../../reference.rst:287
 msgid "Explain the invariant"
-msgstr ""
+msgstr "अपरिवर्तनीय नियम समझाइए"
 
 #: ../../reference.rst:289
 msgid ""
@@ -957,3 +1112,6 @@ msgid ""
 "must route to the daemon rather than to the origin, and say why each is "
 "needed."
 msgstr ""
+"बिना देखे उन एंडपॉइंट की सूची बनाइए जिन्हें Sibuna के सामने का रिवर्स "
+"प्रॉक्सी ऑरिजिन के बजाय डेमन तक रूट करे, और बताइए कि हर एक क्यों आवश्यक "
+"है।"

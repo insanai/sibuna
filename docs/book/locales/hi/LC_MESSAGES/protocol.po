@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:19+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../protocol.rst:1
 msgid "Part IV: The Sibuna Protocol"
-msgstr ""
+msgstr "भाग IV: Sibuna प्रोटोकॉल"
 
 #: ../../protocol.rst:4
 msgid ""
@@ -27,15 +27,18 @@ msgid ""
 "the stateless challenge record, both solution formats, verification "
 "order, single-use enforcement, and the session cookie."
 msgstr ""
+"हम वायर प्रोटोकॉल को उसी रूप में निर्दिष्ट करते हैं जैसा वह लागू है: "
+"इंटरस्टिशियल का राउंड ट्रिप, स्टेटलेस चैलेंज रिकॉर्ड, समाधान के दोनों "
+"प्रारूप, सत्यापन का क्रम, एक-बार-उपयोग का प्रवर्तन, और सत्र कुकी।"
 
 #: ../../protocol.rst:6
 msgid "The Challenge Round Trip"
-msgstr ""
+msgstr "चैलेंज का राउंड ट्रिप"
 
 #: ../../protocol.rst:9 ../../protocol.rst:72 ../../protocol.rst:135
 #: ../../protocol.rst:186
 msgid "Objectives"
-msgstr ""
+msgstr "उद्देश्य"
 
 #: ../../protocol.rst:11
 msgid ""
@@ -44,10 +47,14 @@ msgid ""
 "involved, and explain why the challenge carries the protected path's "
 "policy decision."
 msgstr ""
+"इस अध्याय के अंत तक हमें यह कर पाना चाहिए: किसी ब्राउज़र को उसके पहले "
+"अनुरोध से लेकर जारी किए गए सत्र तक ट्रेस करना, इसमें शामिल हर एंडपॉइंट और "
+"JSON फ़ील्ड का नाम बताना, और समझाना कि चैलेंज संरक्षित पाथ का नीति निर्णय "
+"अपने साथ क्यों रखता है।"
 
 #: ../../protocol.rst:14
 msgid "The challenge round trip."
-msgstr ""
+msgstr "चैलेंज का राउंड ट्रिप।"
 
 #: ../../protocol.rst:41
 msgid ""
@@ -61,6 +68,16 @@ msgid ""
 "rule's hash, sealed for this client with a keyed BLAKE3 tag under its own "
 "derived key and valid for one challenge lifetime."
 msgstr ""
+"वैध सत्र के बिना कोई नेविगेशन नीति इंजन तक पहुँचता है और ``CHALLENGE`` के "
+"रूप में वर्गीकृत होता है। चूँकि अनुरोध ``text/html`` स्वीकार करता है, "
+"डेमन इंटरस्टिशियल पेज और हेडर ``X-Sibuna-Status: CHALLENGE`` के साथ "
+"``200`` उत्तर देता है; जो API क्लाइंट HTML स्वीकार नहीं करता, उसे JSON "
+"बॉडी के साथ ``401`` मिलता है, जिसका ``challenge`` URL लाने के लिए तैयार "
+"होता है। दोनों ही स्थितियों में रिस्पॉन्स एक *आवश्यकता टिकट* (requirement "
+"ticket) ले जाता है: इस निर्णय द्वारा माँगा गया चैलेंज (एल्गोरिदम, वर्क "
+"बिट्स, ओपनिंग) और नियम का हैश, जिसे इस क्लाइंट के लिए उसकी अपनी "
+"व्युत्पन्न कुंजी के तहत कुंजी-युक्त BLAKE3 टैग से सील किया जाता है, और जो "
+"एक चैलेंज अवधि तक वैध रहता है।"
 
 #: ../../protocol.rst:42
 msgid ""
@@ -77,30 +94,47 @@ msgid ""
 "advisory: admission still checks the session's work level, so a replayed "
 "or forged ticket can only cost its holder work."
 msgstr ""
+"इंटरस्टिशियल ``GET /__sibuna/challenge.json?path=<original "
+"URL>&need=<ticket>`` लाता है। वैध टिकट चैलेंज तय करता है: कार्य उस निर्णय "
+"से निश्चित होता है जिसने उसे माँगा था, किसी रिपोर्ट किए गए URL और fetch "
+"के अपने हेडर से दोबारा नहीं निकाला जाता, जो नेविगेशन के हेडर (``Accept``, "
+"``Sec-Fetch-*``) से अलग होते हैं। वैध टिकट के बिना (कोई API क्लाइंट जो "
+"URL को अनदेखा करता है, या अवधि से आगे खुला छोड़ा गया पेज) सर्वर रिपोर्ट "
+"किए गए URL का मूल्यांकन करता है, जिसे उसी फ़ंक्शन से पाथ और क्वेरी में "
+"बाँटा जाता है जो अनुरोध पंक्ति पढ़ता है, और पाथ को उसी सामान्य रूप में "
+"रखा जाता है जिसका प्रवेश उपयोग करता है (SID 0009); 8 KiB से लंबा URL "
+"``414`` के साथ अस्वीकार किया जाता है, कभी छोटा नहीं किया जाता, और जिस पाथ "
+"का सामान्य रूप न हो वह ``400`` के साथ। टिकट केवल सलाह देता है: प्रवेश फिर "
+"भी सत्र के वर्क लेवल की जाँच करता है, इसलिए रीप्ले किया गया या जाली टिकट "
+"केवल अपने धारक का कार्य बढ़ा सकता है।"
 
 #: ../../protocol.rst:43
 msgid "The response is the challenge record:"
-msgstr ""
+msgstr "रिस्पॉन्स चैलेंज रिकॉर्ड है:"
 
 #: ../../protocol.rst:49
 msgid ""
 "For ``hashcash``, ``difficulty`` is the bit count and ``challenges`` is "
 "``0``."
 msgstr ""
+"``hashcash`` के लिए ``difficulty`` बिट की संख्या है और ``challenges`` का "
+"मान ``0`` है।"
 
 #: ../../protocol.rst:50
 msgid ""
 "A Web Worker solves it with the WebAssembly module, or the JavaScript "
 "prover if WebAssembly is unavailable (Part VII), and posts either"
 msgstr ""
+"एक Web Worker इसे WebAssembly मॉड्यूल से हल करता है, या WebAssembly "
+"उपलब्ध न हो तो JavaScript प्रूवर से (भाग VII), और या तो यह पोस्ट करता है"
 
 #: ../../protocol.rst:56
 msgid "or"
-msgstr ""
+msgstr "या यह"
 
 #: ../../protocol.rst:62
 msgid "to ``POST /__sibuna/verify``."
-msgstr ""
+msgstr "``POST /__sibuna/verify`` पर।"
 
 #: ../../protocol.rst:63
 msgid ""
@@ -108,10 +142,13 @@ msgid ""
 "``Set-Cookie`` header, and the page reloads its original location. Every "
 "later request carries the cookie and is admitted before policy evaluation."
 msgstr ""
+"सफलता पर सर्वर ``Set-Cookie`` हेडर के साथ ``200 {\"status\":\"ok\"}`` "
+"उत्तर देता है, और पेज अपना मूल स्थान दोबारा लोड करता है। बाद का हर अनुरोध "
+"कुकी ले जाता है और नीति मूल्यांकन से पहले ही प्रवेश पा जाता है।"
 
 #: ../../protocol.rst:65
 msgid "Why the path travels with the challenge"
-msgstr ""
+msgstr "पाथ चैलेंज के साथ क्यों जाता है"
 
 #: ../../protocol.rst:67
 msgid ""
@@ -122,10 +159,15 @@ msgid ""
 "rule hash into the token, where ``X-Sibuna-Rule-Hash`` reports it "
 "upstream."
 msgstr ""
+"इंटरस्टिशियल संरक्षित URL पर ही दिया जाता है, इसलिए ब्राउज़र जानता है कि "
+"वह कहाँ है। पाथ भेजने से सर्वर *प्रति-नियम* कठिनाई और एल्गोरिदम चुन पाता "
+"है (checkout रूट अनुक्रमिक कार्य के 20 वर्क बिट्स माँग सकता है जबकि कोई "
+"ब्लॉग Hashcash के 16 बिट माँगता है) और नियम हैश को टोकन में बाँध देता है, "
+"जहाँ ``X-Sibuna-Rule-Hash`` उसे अपस्ट्रीम तक रिपोर्ट करता है।"
 
 #: ../../protocol.rst:69
 msgid "The Stateless Challenge Record"
-msgstr ""
+msgstr "स्टेटलेस चैलेंज रिकॉर्ड"
 
 #: ../../protocol.rst:74
 msgid ""
@@ -133,10 +175,12 @@ msgid ""
 "the per-challenge nonce is derived without an entropy syscall on the hot "
 "path."
 msgstr ""
+"चैलेंज एन्कोडर पढ़ें, हर फ़ील्ड का उद्देश्य समझें, और देखें कि हॉट पाथ पर "
+"entropy syscall के बिना प्रति-चैलेंज नॉनस कैसे निकाला जाता है।"
 
 #: ../../protocol.rst:76
 msgid "Implementation: ``Coordinator::create_challenge_with_spec``"
-msgstr ""
+msgstr "इम्प्लीमेंटेशन: ``Coordinator::create_challenge_with_spec``"
 
 #: ../../protocol.rst:78
 msgid ""
@@ -144,6 +188,9 @@ msgid ""
 "base64url-encodes the 52 bytes into a 70-character identifier. In "
 "``crates/challenge/src/coordinator.rs`` (crate ``sibuna-challenge``)."
 msgstr ""
+"36-बाइट पेलोड बनाता है, उसे चैलेंज कुंजी के तहत टैग करता है, और 52 बाइट "
+"को base64url में एन्कोड करके 70 अक्षरों का पहचानकर्ता बनाता है। "
+"``crates/challenge/src/coordinator.rs`` में (क्रेट ``sibuna-challenge``)।"
 
 #: ../../protocol.rst:124
 msgid ""
@@ -153,10 +200,15 @@ msgid ""
 "Hashcash bits (at most 64) or PoSW depth (``difficulty - 3``, clamped to "
 "4 through 24)."
 msgstr ""
+"पहचानकर्ता एक ``Encoded<70>`` है: टेक्स्ट ठीक उसकी लंबाई वाली ऐरे में "
+"रहता है, इसलिए चैलेंज जारी करने में कभी आवंटन नहीं होता। "
+"``ChallengeSpec::parameter`` वर्क बिट्स को टियर की अपनी इकाई में बदलता "
+"है, Hashcash बिट (अधिकतम 64) या PoSW गहराई (``difficulty - 3``, 4 से 24 "
+"के बीच सीमित)।"
 
 #: ../../protocol.rst:126
 msgid "Three details deserve attention:"
-msgstr ""
+msgstr "तीन विवरण ध्यान देने योग्य हैं:"
 
 #: ../../protocol.rst:128
 msgid ""
@@ -166,6 +218,11 @@ msgid ""
 "work bit, capped at six. A flood pays exponentially more while quiet "
 "traffic keeps the base cost."
 msgstr ""
+"*अनुकूली कठिनाई।* कोऑर्डिनेटर तीन atomic में चैलेंज जारी होने की दर का "
+"exponentially weighted moving average रखता है। प्रति सेकंड 50 चैलेंज की "
+"आधार रेखा से ऊपर, दर के हर दोगुना होने पर एक वर्क बिट जुड़ता है, अधिकतम "
+"छह तक। बाढ़ घातीय रूप से अधिक चुकाती है, जबकि शांत ट्रैफ़िक आधार लागत पर "
+"ही रहता है।"
 
 #: ../../protocol.rst:129
 msgid ""
@@ -175,16 +232,23 @@ msgid ""
 "not been issued, and the hot path never calls into the operating system "
 "for entropy."
 msgstr ""
+"*नॉनस एक PRF आउटपुट है*, जो चैलेंज कुंजी से एक काउंटर, घड़ी और "
+"फ़िंगरप्रिंट पर कुंजीबद्ध होता है। यह अद्वितीय (काउंटर) और अप्रत्याशित "
+"(कुंजी) है, इसलिए विरोधी उन पहचानकर्ताओं के लिए पहले से समाधान नहीं निकाल "
+"सकता जो उसे जारी नहीं किए गए, और हॉट पाथ entropy के लिए कभी ऑपरेटिंग "
+"सिस्टम को कॉल नहीं करता।"
 
 #: ../../protocol.rst:130
 msgid ""
 "*Difficulty travels inside the tag.* A client cannot lower the difficulty "
 "by editing the record: the tag would fail before any proof is examined."
 msgstr ""
+"*कठिनाई टैग के अंदर यात्रा करती है।* क्लाइंट रिकॉर्ड संपादित करके कठिनाई "
+"कम नहीं कर सकता: किसी प्रमाण की जाँच से पहले ही टैग विफल हो जाएगा।"
 
 #: ../../protocol.rst:132
 msgid "Verification Order and Single Use"
-msgstr ""
+msgstr "सत्यापन का क्रम और एक-बार उपयोग"
 
 #: ../../protocol.rst:137
 msgid ""
@@ -192,10 +256,13 @@ msgid ""
 "is marked spent only after the proof is valid, and how two concurrent "
 "submissions of one solution are resolved."
 msgstr ""
+"समझें कि सस्ती जाँचें प्रमाण से पहले क्यों चलती हैं, चैलेंज को केवल वैध "
+"प्रमाण के बाद ही spent क्यों चिह्नित किया जाता है, और एक ही समाधान के दो "
+"समवर्ती सबमिशन का निपटारा कैसे होता है।"
 
 #: ../../protocol.rst:139
 msgid "Implementation: ``Coordinator::verify_and_mint``"
-msgstr ""
+msgstr "इम्प्लीमेंटेशन: ``Coordinator::verify_and_mint``"
 
 #: ../../protocol.rst:141
 msgid ""
@@ -204,6 +271,10 @@ msgid ""
 "mints the session token. In ``crates/challenge/src/coordinator.rs`` "
 "(crate ``sibuna-challenge``)."
 msgstr ""
+"पहचानकर्ता को डिकोड और प्रमाणित करता है, आयु और क्लाइंट बाइंडिंग जाँचता "
+"है, दर्ज टियर के लिए प्रमाण का सत्यापन करता है, टैग को spent के रूप में "
+"दर्ज करता है, और सत्र टोकन जारी करता है। "
+"``crates/challenge/src/coordinator.rs`` में (क्रेट ``sibuna-challenge``)।"
 
 #: ../../protocol.rst:179
 msgid ""
@@ -217,6 +288,16 @@ msgid ""
 "minted by a node whose clock runs ahead by more than a minute, which "
 "would otherwise extend a challenge's life."
 msgstr ""
+"यह क्रम जानबूझकर है। टैग, आयु और बाइंडिंग स्थिर-समय जाँचें हैं जो किसी भी "
+"हैशिंग से पहले कचरे को अस्वीकार कर देती हैं। गलत प्रमाण को चैलेंज का "
+"उपभोग नहीं करना चाहिए, इसलिए spent set में तभी लिखा जाता है जब "
+"``check_solution`` सफल हो। एक ही वैध समाधान का सत्यापन करने वाले दो थ्रेड "
+"``mark_spent`` पर होड़ करते हैं; शार्ड लॉक उन्हें क्रम में लगाता है, ठीक "
+"एक जीतता है, और दूसरे को ``VerifyError::DoubleSpendAttempt`` मिलता है। "
+"शर्त ``issued_at > now + 60`` (``CLOCK_SKEW_SECONDS`` का मान 60 है) उन "
+"रिकॉर्ड को अस्वीकार करती है जिन्हें ऐसे नोड ने जारी किया जिसकी घड़ी एक "
+"मिनट से अधिक आगे चल रही है, क्योंकि अन्यथा वे किसी चैलेंज की अवधि बढ़ा "
+"देते।"
 
 #: ../../protocol.rst:181
 msgid ""
@@ -227,20 +308,27 @@ msgid ""
 "MISMATCH``, ``WRONG SOLUTION TYPE``, and ``MALFORMED CHALLENGE`` in the "
 "response body."
 msgstr ""
+"त्रुटियाँ क्लाइंट तक Elm-शैली के निदान के साथ ``400`` के रूप में पहुँचती "
+"हैं (भाग X): हर ``VerifyError`` एक ``sibuna_core::errors::ErrorKind`` में "
+"बदलता है, जिसकी व्याख्या रिस्पॉन्स बॉडी होती है। end-to-end परीक्षण "
+"रिस्पॉन्स बॉडी में ``DOUBLE SPEND``, ``FINGERPRINT MISMATCH``, ``WRONG "
+"SOLUTION TYPE`` और ``MALFORMED CHALLENGE`` की पुष्टि करते हैं।"
 
 #: ../../protocol.rst:183
 msgid "The Session Cookie"
-msgstr ""
+msgstr "सत्र कुकी"
 
 #: ../../protocol.rst:188
 msgid ""
 "Read the keyed-hash token, understand the cookie attributes, and explain "
 "the client binding."
 msgstr ""
+"कुंजी-युक्त हैश वाला टोकन पढ़ें, कुकी के एट्रिब्यूट समझें, और क्लाइंट "
+"बाइंडिंग समझाएँ।"
 
 #: ../../protocol.rst:190
 msgid "Implementation: ``token::mac::mint`` and ``token::mac::verify``"
-msgstr ""
+msgstr "इम्प्लीमेंटेशन: ``token::mac::mint`` और ``token::mac::verify``"
 
 #: ../../protocol.rst:192
 msgid ""
@@ -249,6 +337,11 @@ msgid ""
 "``crates/challenge/src/token/mac.rs`` (crate ``sibuna-challenge``). "
 "``Coordinator::verify_cookie`` calls it with the client's fingerprint."
 msgstr ""
+"40-बाइट पेलोड को सीरियलाइज़ करता है, उस पर कुंजी-युक्त BLAKE3 के पहले 16 "
+"बाइट जोड़ता है, और स्थिर-समय तुलना से सत्यापन करता है। "
+"``crates/challenge/src/token/mac.rs`` में (क्रेट ``sibuna-challenge``)। "
+"``Coordinator::verify_cookie`` इसे क्लाइंट के फ़िंगरप्रिंट के साथ कॉल "
+"करता है।"
 
 #: ../../protocol.rst:219
 msgid ""
@@ -256,10 +349,13 @@ msgid ""
 "version is refused with ``TokenError::InvalidEncoding`` only once it is "
 "known to be authentic, and a forged one never reaches the parser."
 msgstr ""
+"पेलोड पार्स होने से पहले टैग जाँचा जाता है: किसी दूसरे संस्करण वाला पेलोड "
+"``TokenError::InvalidEncoding`` के साथ तभी अस्वीकार होता है जब यह ज्ञात "
+"हो जाए कि वह प्रामाणिक है, और जाली पेलोड कभी पार्सर तक नहीं पहुँचता।"
 
 #: ../../protocol.rst:221
 msgid "The cookie is emitted as"
-msgstr ""
+msgstr "कुकी इस रूप में भेजी जाती है"
 
 #: ../../protocol.rst:228
 msgid ""
@@ -271,6 +367,14 @@ msgid ""
 "``TokenError::TokenBoundAddressMismatch``; the end-to-end test \"the "
 "cookie is bound to the client identity\" exercises exactly that path."
 msgstr ""
+"``HttpOnly`` इसे पेज स्क्रिप्ट से दूर रखता है, ``SameSite=Lax`` "
+"शीर्ष-स्तर के नेविगेशन की अनुमति देते हुए cross-site रीप्ले रोकता है, और "
+"जब TLS डेमन के सामने समाप्त होता है तब ``--secure-cookie`` के साथ "
+"``Secure`` जोड़ा जाता है। चूँकि पेलोड पते और User-Agent का कुंजी-युक्त "
+"फ़िंगरप्रिंट रखता है, किसी दूसरी मशीन पर कॉपी की गई कुकी "
+"``TokenError::TokenBoundAddressMismatch`` के साथ विफल होती है; end-to-end "
+"परीक्षण \"the cookie is bound to the client identity\" ठीक इसी पाथ को "
+"परखता है।"
 
 #: ../../protocol.rst:230
 msgid ""
@@ -288,10 +392,23 @@ msgid ""
 "end-to-end test \"a session earned on a cheaper route does not admit a "
 "route that demands more work\" exercises both directions."
 msgstr ""
+"पेलोड एक संस्करण बाइट और धारक द्वारा चुकाए गए *वर्क लेवल* से शुरू होता "
+"है: तंत्र (Hashcash या PoSW) और वास्तव में हल किए गए वर्क बिट्स, लोड के "
+"अनुसार हुई किसी भी बढ़ोतरी सहित। कोई सत्र चैलेंज को तभी पार करता है जब "
+"उसका लेवल रूट की माँग तक पहुँचता है, जिसकी गणना नियम की कठिनाई से उसी "
+"सीमांकन (clamping) के ज़रिए होती है जो चैलेंज स्वयं लागू करता है। लेवल "
+"क्रमबद्ध हैं, नामित नहीं: 24 बिट पर अर्जित कुकी हर 16-बिट रूट को भी ढकती "
+"है, जबकि 24-बिट रूट पर प्रस्तुत 16-बिट कुकी अधिक कठिन इंटरस्टिशियल तक "
+"पहुँचती है और नई कुकी पुरानी को बदल देती है। ``rule_hash`` उस नियम की "
+"ऑडिट पहचान बना रहता है जिसने चैलेंज जारी किया; इसे अपस्ट्रीम तक रिपोर्ट "
+"किया जाता है, प्रवेश के लिए कभी उपयोग नहीं किया जाता। WAF के निष्कर्षों "
+"और स्पष्ट अस्वीकृतियों को सत्र कभी पार नहीं करता। end-to-end परीक्षण \"a "
+"session earned on a cheaper route does not admit a route that demands "
+"more work\" दोनों दिशाओं को परखता है।"
 
 #: ../../protocol.rst:232
 msgid "Forwarded addresses"
-msgstr ""
+msgstr "फ़ॉरवर्ड किए गए पते"
 
 #: ../../protocol.rst:235
 msgid ""
@@ -301,10 +418,15 @@ msgid ""
 "leave it off, or any client could pick its own binding and its own "
 "rate-limit bucket."
 msgstr ""
+"इनग्रेस के पीछे क्लाइंट का पता ``X-Forwarded-For`` में आता है। Sibuna इस "
+"हेडर पर केवल ``--trust-forwarded`` के साथ भरोसा करता है (forward-auth मोड "
+"में यह अंतर्निहित है)। सीधे इंटरनेट के सामने खुले रिवर्स प्रॉक्सी को इसे "
+"बंद रखना चाहिए, अन्यथा कोई भी क्लाइंट अपनी बाइंडिंग और अपना रेट-लिमिट "
+"बकेट स्वयं चुन सकता है।"
 
 #: ../../protocol.rst:237
 msgid "Exercise 4.1"
-msgstr ""
+msgstr "अभ्यास 4.1"
 
 #: ../../protocol.rst:239
 msgid ""
@@ -312,13 +434,18 @@ msgid ""
 "User-Agents. Which checks do they share, which do they not, and what "
 "would an attacker on that NAT need to reuse the other browser's cookie?"
 msgstr ""
+"एक NAT पते के पीछे समान User-Agent वाले दो ब्राउज़र का अनुक्रम खींचें। वे "
+"कौन-सी जाँचें साझा करते हैं, कौन-सी नहीं, और उस NAT पर मौजूद हमलावर को "
+"दूसरे ब्राउज़र की कुकी दोबारा उपयोग करने के लिए क्या चाहिए?"
 
 #: ../../protocol.rst:241
 msgid "Explain the invariant"
-msgstr ""
+msgstr "अपरिवर्तनीय नियम समझाइए"
 
 #: ../../protocol.rst:243
 msgid ""
 "Explain to an operator why the daemon does not \"remember\" outstanding "
 "challenges and why that is a security feature rather than a shortcut."
 msgstr ""
+"किसी ऑपरेटर को समझाइए कि डेमन लंबित चैलेंज को \"याद\" क्यों नहीं रखता, और "
+"यह कोई शॉर्टकट नहीं बल्कि सुरक्षा की विशेषता क्यों है।"

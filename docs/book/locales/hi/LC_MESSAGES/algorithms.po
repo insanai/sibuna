@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:38+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../algorithms.rst:1
 msgid "Part VI: Automata, Tries, and the Semantic Firewall"
-msgstr ""
+msgstr "भाग VI: ऑटोमेटा, trie और सिमैंटिक फ़ायरवॉल"
 
 #: ../../algorithms.rst:4
 msgid ""
@@ -28,15 +28,18 @@ msgid ""
 "tokenizers of the semantic WAF, and the declarative policy engine with "
 "WEIGH scoring."
 msgstr ""
+"हम सब-माइक्रोसेकंड वर्गीकरण के पीछे के एल्गोरिदम की जाँच करते हैं: टैग "
+"किया गया Aho-Corasick ऑटोमेटन, IPv4/IPv6 radix trie, सिमैंटिक WAF के "
+"byte-class टोकनाइज़र, और WEIGH स्कोरिंग वाला घोषणात्मक नीति इंजन।"
 
 #: ../../algorithms.rst:6
 msgid "Single-Pass Multi-Pattern Matching"
-msgstr ""
+msgstr "एक पास में अनेक पैटर्न का मिलान"
 
 #: ../../algorithms.rst:9 ../../algorithms.rst:80 ../../algorithms.rst:103
 #: ../../algorithms.rst:162
 msgid "Objectives"
-msgstr ""
+msgstr "उद्देश्य"
 
 #: ../../algorithms.rst:11
 msgid ""
@@ -45,10 +48,13 @@ msgid ""
 "case folding through byte classes, and argue why a SIMD literal engine "
 "was not adopted."
 msgstr ""
+"इस अध्याय के अंत तक हमें यह कर पाना चाहिए: Aho-Corasick ऑटोमेटन की "
+"रैखिक-समय गारंटी निकालना, सघन टेबल का लेआउट और byte class के ज़रिए case "
+"folding समझाना, और तर्क देना कि SIMD लिटरल इंजन क्यों नहीं अपनाया गया।"
 
 #: ../../algorithms.rst:13
 msgid "Aho-Corasick as a Dense DFA"
-msgstr ""
+msgstr "सघन DFA के रूप में Aho-Corasick"
 
 #: ../../algorithms.rst:16
 msgid ""
@@ -60,6 +66,13 @@ msgid ""
 "so scanning is one table load per input byte with no branches on the "
 "pattern set. The automaton lives in the ``sibuna-patterns`` crate:"
 msgstr ""
+"Sibuna के पास लिटरल पैटर्न के दो समुच्चय हैं: लगभग चालीस बॉट सिग्नेचर और "
+"लगभग सौ आक्रमण सिग्नेचर। किसी फ़ील्ड को :math:`N` पैटर्न से एक-एक करके "
+"जाँचना :math:`O(NM)` है; Aho और Corasick (1975) का ऑटोमेटन failure link "
+"वाला trie बनाने के बाद उसे एक बार में :math:`O(M)` में स्कैन करता है। "
+"Sibuna बिल्ड के समय failure link को ट्रांज़िशन टेबल में समाहित कर देता "
+"है, इसलिए स्कैन करना प्रति इनपुट बाइट एक टेबल लोड है, और पैटर्न समुच्चय "
+"पर कोई ब्रांच नहीं होती। ऑटोमेटन ``sibuna-patterns`` क्रेट में है:"
 
 #: ../../algorithms.rst:37
 msgid ""
@@ -68,10 +81,15 @@ msgid ""
 "after every other state; detecting a match is then one comparison against "
 "``first_match``, with no second table to load in the inner loop."
 msgstr ""
+"एक स्टेट को एक सपाट टेबल में उसकी पंक्ति के ऑफ़सेट के रूप में रखा जाता "
+"है, इसलिए एक कदम एक जोड़ और एक लोड है। स्टेट को इस तरह क्रमांकित किया "
+"जाता है कि हर मैच स्टेट बाकी सभी स्टेट के बाद आए; तब मैच का पता लगाना "
+"``first_match`` से एक तुलना है, और भीतरी लूप में लोड करने के लिए कोई "
+"दूसरी टेबल नहीं होती।"
 
 #: ../../algorithms.rst:40
 msgid "Trie states and failure edges for two signatures"
-msgstr ""
+msgstr "दो सिग्नेचर के लिए trie स्टेट और failure edge"
 
 #: ../../algorithms.rst:64
 msgid ""
@@ -87,14 +105,25 @@ msgid ""
 "the comparison with sequential substring search are recorded in Part "
 "VIII. The latter uses the same patterns and any-match semantics."
 msgstr ""
+"ऑटोमेटन का स्टेट बजट एक रन-टाइम विकल्प है। नीति इंजन अधिकतम एक रूट और सभी "
+"सिग्नेचर की लंबाइयों का योग आरक्षित करता है, जो trie स्टेट की एक सुरक्षित "
+"ऊपरी सीमा है। इससे ऐतिहासिक रूप से बहुत बड़ी निश्चित टेबल से बचा जाता है, "
+"और हर byte class के लिए सघन ट्रांज़िशन बना रहता है। हर पैटर्न एक छोटा "
+"श्रेणी टैग रखता है (0 से 63, ताकि टैग का समुच्चय एक 64-बिट शब्द हो)। case "
+"folding ऑटोमेटन के साथ बनी 256 प्रविष्टियों वाली byte-class टेबल का उपयोग "
+"करता है: किसी अक्षर के दोनों case एक class साझा करते हैं, और जो बाइट किसी "
+"पैटर्न में नहीं आते वे एक class साझा करते हैं, इसलिए टेबल की एक पंक्ति "
+"256 के बजाय अलग-अलग पैटर्न बाइट की संख्या से एक अधिक चौड़ी होती है। इंजन "
+"के सटीक आकार और अनुक्रमिक सबस्ट्रिंग खोज से तुलना भाग VIII में दर्ज है। "
+"सबस्ट्रिंग खोज वही पैटर्न और any-match अर्थ (semantics) उपयोग करती है।"
 
 #: ../../algorithms.rst:66
 msgid "Regular Expressions, SIMD Engines, and the Choice"
-msgstr ""
+msgstr "रेगुलर एक्सप्रेशन, SIMD इंजन और चुनाव"
 
 #: ../../algorithms.rst:69
 msgid "Three families were weighed for the signature stage:"
-msgstr ""
+msgstr "सिग्नेचर चरण के लिए तीन परिवारों को तौला गया:"
 
 #: ../../algorithms.rst:71
 msgid ""
@@ -102,6 +131,9 @@ msgid ""
 "hundreds of patterns per request and allocate per match; they are the "
 "slowest option and the most prone to false positives."
 msgstr ""
+"*बैकट्रैकिंग रेगुलर एक्सप्रेशन* (बैकट्रैकिंग नियम-समुच्चय की शैली) प्रति "
+"अनुरोध सैकड़ों पैटर्न चलाते हैं और प्रति मैच आवंटन करते हैं; ये सबसे धीमा "
+"विकल्प हैं और false positive की सबसे अधिक संभावना इन्हीं में है।"
 
 #: ../../algorithms.rst:72
 msgid ""
@@ -113,6 +145,13 @@ msgid ""
 "bytes, no advantage: the whole field scans in less time than one cache "
 "miss."
 msgstr ""
+"*SIMD लिटरल इंजन* (Hyperscan, Vectorscan) shuffle पर आधारित nibble मास्क "
+"(\"Teddy\" एल्गोरिदम) से 16 से 32 बाइट के ब्लॉक को पहले छानते हैं और "
+"उम्मीदवारों का सत्यापन ऑटोमेटा से करते हैं। बड़े लिटरल समुच्चय वाले लंबे "
+"इनपुट पर ये बेहतरीन हैं। इसकी कीमत है कई मेगाबाइट की C++ निर्भरता, "
+"कंपाइल-टाइम पैटर्न डेटाबेस, कोई WebAssembly टारगेट नहीं, और सौ बाइट के "
+"इनपुट के लिए कोई लाभ नहीं: पूरा फ़ील्ड एक cache miss से कम समय में स्कैन "
+"हो जाता है।"
 
 #: ../../algorithms.rst:73
 msgid ""
@@ -120,6 +159,9 @@ msgid ""
 "lineage, gives exact linear-time behaviour in a fixed table and needs "
 "nothing outside the binary."
 msgstr ""
+"*सघन Aho-Corasick और छोटे संरचनात्मक टोकनाइज़र*, libinjection की परंपरा, "
+"एक निश्चित टेबल में सटीक रैखिक-समय व्यवहार देते हैं और बाइनरी के बाहर "
+"किसी चीज़ की ज़रूरत नहीं रखते।"
 
 #: ../../algorithms.rst:75
 msgid ""
@@ -129,10 +171,16 @@ msgid ""
 "``benchmarks/results/primitives-latest.md``). That is the one workload "
 "where a SIMD prefilter would pay, and SID 0006 keeps it as an open item."
 msgstr ""
+"Sibuna के फ़ील्ड छोटे हैं, इसलिए तीसरा परिवार मेमोरी और गति दोनों में "
+"जीतता है; भाग VIII 8 KiB बॉडी पर लगभग 1.56 ns प्रति बाइट दर्ज करता है "
+"(सिमैंटिक स्कैन में 12,784.3 ns लगते हैं, "
+"``benchmarks/results/primitives-latest.md`` में "
+"``8kb_body_semantic_scan``)। यही एक वर्कलोड है जहाँ SIMD प्रीफ़िल्टर लाभ "
+"देगा, और SID 0006 इसे एक खुले बिंदु के रूप में रखता है।"
 
 #: ../../algorithms.rst:77
 msgid "The Radix Trie for IPv4 and IPv6"
-msgstr ""
+msgstr "IPv4 और IPv6 के लिए radix trie"
 
 #: ../../algorithms.rst:82
 msgid ""
@@ -140,6 +188,9 @@ msgid ""
 "root shortcut, and see how the trie doubles as the reputation store fed "
 "by the cluster."
 msgstr ""
+"128-बिट trie में longest-prefix लुकअप को ट्रेस करें, IPv4 रूट का शॉर्टकट "
+"समझाएँ, और देखें कि trie क्लस्टर से भरे जाने वाले प्रतिष्ठा स्टोर का काम "
+"भी कैसे करता है।"
 
 #: ../../algorithms.rst:84
 msgid ""
@@ -150,6 +201,13 @@ msgid ""
 "at most 128 dependent loads with no pointer chasing. The trie is the "
 "``PrefixTrie`` of the ``sibuna-cidr`` crate."
 msgstr ""
+"128-बिट कुंजियों पर एक बाइनरी trie दोनों परिवारों की सेवा करता है: IPv6 "
+"प्रीफ़िक्स जैसे के तैसे डाले जाते हैं, IPv4 प्रीफ़िक्स ``::ffff:0:0/96`` "
+"में मैप किए जाते हैं, इसलिए एक ``/24`` गहराई 120 का पाथ बन जाता है। नोड "
+"``u32`` से इंडेक्स किए गए एक सपाट ``Vec`` में रहते हैं, जिसमें इंडेक्स "
+"शून्य रूट भी है और \"कोई चाइल्ड नहीं\" भी, इसलिए एक लुकअप अधिकतम 128 "
+"आश्रित लोड है, बिना pointer chasing के। यह trie ``sibuna-cidr`` क्रेट का "
+"``PrefixTrie`` है।"
 
 #: ../../algorithms.rst:86
 msgid ""
@@ -158,6 +216,10 @@ msgid ""
 "the trie records the node at depth 96 at initialisation and starts IPv4 "
 "lookups there:"
 msgstr ""
+"हर IPv4 लुकअप के लिए मैप किए गए प्रीफ़िक्स के 96 स्तरों पर चलना, IPv4 पते "
+"के पहले बिट तक पहुँचने से पहले ही 96 आश्रित लोड खर्च करेगा। इसलिए trie "
+"प्रारंभ होते समय गहराई 96 वाले नोड को दर्ज कर लेता है और IPv4 लुकअप वहीं "
+"से शुरू करता है:"
 
 #: ../../algorithms.rst:98
 msgid ""
@@ -168,10 +230,16 @@ msgid ""
 "so a cluster-wide ban beats every rule, and ``challenge`` verdicts after "
 "it."
 msgstr ""
+"IPv4 पते के वर्गीकरण में 32.0 ns और IPv6 पते में 79.3 ns लगते हैं "
+"(``benchmarks/results/primitives-latest.md`` में "
+"``ipv4_cidr_classification`` और ``ipv6_cidr_classification``)। इंजन trie "
+"से दो बार परामर्श करता है: नियम टेबल से पहले अंतिम ``allow``/``deny`` "
+"निर्णयों के लिए, ताकि क्लस्टर-व्यापी प्रतिबंध हर नियम पर भारी पड़े, और "
+"उसके बाद ``challenge`` निर्णयों के लिए।"
 
 #: ../../algorithms.rst:100
 msgid "The Semantic Firewall"
-msgstr ""
+msgstr "सिमैंटिक फ़ायरवॉल"
 
 #: ../../algorithms.rst:105
 msgid ""
@@ -180,10 +248,14 @@ msgid ""
 "checks, canonicalisation, and the false-positive discipline that a real "
 "browser request must pass untouched."
 msgstr ""
+"byte-class प्री-स्कैन, टैग किया गया सिग्नेचर ऑटोमेटन, tautology पहचानने "
+"वाला SQL टोकनाइज़र, HTML और shell संरचना की जाँचें, canonicalisation, और "
+"false positive का वह अनुशासन समझें जिसके तहत किसी वास्तविक ब्राउज़र "
+"अनुरोध को बिना छेड़े पास होना चाहिए।"
 
 #: ../../algorithms.rst:107
 msgid "A Lesson in False Positives"
-msgstr ""
+msgstr "False positive से एक सबक"
 
 #: ../../algorithms.rst:110
 msgid ""
@@ -195,10 +267,18 @@ msgid ""
 "Chrome request, including a comment body containing ``select``, ``--``, "
 "and an apostrophe, through the engine and asserts it comes out clean."
 msgstr ""
+"WAF का पहला संस्करण हर हेडर पर सबस्ट्रिंग की एक सपाट सूची का मिलान करता "
+"था। सूची में ``/*`` था, और हर ब्राउज़र ``Accept: "
+"text/html,...,*/*;q=0.8`` भेजता है। हर वास्तविक ब्राउज़र को SQL injection "
+"के रूप में वर्गीकृत किया गया और उसे ``403`` मिला। इस सबक ने डिज़ाइन को "
+"आकार दिया: कोई डिटेक्टर केवल *संरचना* पर सक्रिय हो सकता है, और परीक्षण "
+"सूट अब एक पूरा Chrome अनुरोध, जिसमें ``select``, ``--`` और एक "
+"एपॉस्ट्रॉफ़ी वाली कमेंट बॉडी शामिल है, इंजन से गुज़ारता है और पुष्टि करता "
+"है कि वह साफ़ निकलता है।"
 
 #: ../../algorithms.rst:112
 msgid "Byte Classes in One Pass"
-msgstr ""
+msgstr "एक पास में byte class"
 
 #: ../../algorithms.rst:115
 msgid ""
@@ -211,10 +291,19 @@ msgid ""
 "and the two byte pairs (``/*`` and two adjacent spaces) are searched for "
 "only when no single byte has already demanded canonicalisation:"
 msgstr ""
+"हर निरीक्षित फ़ील्ड को एक बार स्कैन करके यह इकट्ठा किया जाता है कि कौन-सी "
+"byte class आती हैं: quote, ``=``, ``<``, shell separator, ``%``, NUL, "
+"canonicalisation के ट्रिगर, और दोहरे स्पेस। हर डिटेक्टर दोबारा स्कैन करने "
+"के बजाय इन class से परामर्श करता है, और canonicalised दूसरा पास तभी चलता "
+"है जब कोई ट्रिगर दिखा हो। स्कैन प्रति बाइट 256 प्रविष्टियों वाली टेबल का "
+"एक लुकअप है, ``sibuna-policy`` के WAF मॉड्यूल से। चार accumulator OR "
+"शृंखलाओं को छोटा रखते हैं, और दो बाइट-जोड़ों (``/*`` और दो सटे हुए स्पेस) "
+"को तभी खोजा जाता है जब किसी अकेले बाइट ने पहले ही canonicalisation की "
+"माँग न की हो:"
 
 #: ../../algorithms.rst:143
 msgid "Detectors"
-msgstr ""
+msgstr "डिटेक्टर"
 
 #: ../../algorithms.rst:146
 msgid ""
@@ -222,6 +311,9 @@ msgid ""
 "automaton; a hit is a terminal ``deny`` named ``waf:sqli``, ``waf:xss``, "
 "``waf:path-traversal``, or ``waf:rce``."
 msgstr ""
+"*सिग्नेचर।* हर श्रेणी के सभी मज़बूत सिग्नेचर एक टैग किए गए ऑटोमेटन में "
+"रहते हैं; हिट एक अंतिम ``deny`` है, जिसका नाम ``waf:sqli``, ``waf:xss``, "
+"``waf:path-traversal`` या ``waf:rce`` होता है।"
 
 #: ../../algorithms.rst:147
 msgid ""
@@ -233,6 +325,13 @@ msgid ""
 "(1), an ``=`` (1). ``admin'--`` is terminal by itself. \"it's a group "
 "order from the shop\" scores 3 and passes."
 msgstr ""
+"*SQL injection।* एक-पास वाला शब्द स्कैनर हर अल्फ़ान्यूमेरिक शब्द (अधिकतम "
+"सात बाइट) को कीवर्ड टेबल में खोजता है और ``or`` / ``and`` पर ``literal = "
+"literal`` tautology की जाँच करता है; ``id=1 or 1=1`` अंतिम है। अन्यथा "
+"quote बाइट अनिवार्य है और साक्ष्य का स्कोर इनमें से कम से कम 4 होना "
+"चाहिए: quote (1), अधिकतम दो कीवर्ड (2), कमेंट मार्कर (1), एक ``=`` (1)। "
+"``admin'--`` अपने आप में अंतिम है। \"it's a group order from the shop\" "
+"का स्कोर 3 है और यह पास हो जाता है।"
 
 #: ../../algorithms.rst:148
 msgid ""
@@ -240,6 +339,9 @@ msgid ""
 "script co-occurs with an ``on<event>=`` attribute in attribute position. "
 "``onboarding=1`` does not count."
 msgstr ""
+"*Cross-site scripting।* ``<`` आवश्यक है; यह तब सक्रिय होता है जब "
+"स्क्रिप्ट रख सकने वाला कोई टैग एट्रिब्यूट की स्थिति में ``on<event>=`` "
+"एट्रिब्यूट के साथ आता है। ``onboarding=1`` नहीं गिना जाता।"
 
 #: ../../algorithms.rst:149
 msgid ""
@@ -247,12 +349,17 @@ msgid ""
 "``&&``, ``$(``, a backtick, or a newline is followed by a known command "
 "name. ``status ok; done | next`` passes."
 msgstr ""
+"*Command injection।* एक separator आवश्यक है; यह तब सक्रिय होता है जब "
+"``;``, ``|``, ``&&``, ``$(``, backtick या newline के बाद कोई ज्ञात कमांड "
+"नाम आता है। ``status ok; done | next`` पास हो जाता है।"
 
 #: ../../algorithms.rst:150
 msgid ""
 "*Path traversal.* Signatures (``../``, ``..%2f``, ``/etc/passwd``, "
 "``id_rsa``, ...) plus NUL and ``%00``."
 msgstr ""
+"*Path traversal।* सिग्नेचर (``../``, ``..%2f``, ``/etc/passwd``, "
+"``id_rsa``, ...) और साथ में NUL तथा ``%00``।"
 
 #: ../../algorithms.rst:152
 msgid ""
@@ -264,10 +371,18 @@ msgid ""
 "buffer and inspected again, so ``1%27/**/UnIoN/**/SeLeCt`` and "
 "``%252e%252e/`` collapse onto the raw signatures."
 msgstr ""
+"जिन संरचनात्मक हेडर के व्याकरण में वैध रूप से quote और तारांकन होते हैं "
+"(``Accept*``, ``Content-Type``, ``Sec-*``, ``If-*``, ...), उन्हें छोड़ "
+"दिया जाता है; पाथ, क्वेरी, User-Agent, अन्य हेडर और बॉडी के पहले 8 KB का "
+"निरीक्षण होता है, और जिन फ़ील्ड में percent escape, plus चिह्न, कमेंट "
+"ओपनर या समेटे जा सकने वाले whitespace हों, उन्हें 8 KB के स्टैक बफ़र में "
+"canonicalise करके दोबारा निरीक्षित किया जाता है, ताकि "
+"``1%27/**/UnIoN/**/SeLeCt`` और ``%252e%252e/`` कच्चे सिग्नेचर पर सिमट "
+"जाएँ।"
 
 #: ../../algorithms.rst:154
 msgid "Cost"
-msgstr ""
+msgstr "लागत"
 
 #: ../../algorithms.rst:157
 msgid ""
@@ -278,16 +393,24 @@ msgid ""
 "ingress using forward-auth must pass the relevant request information; "
 "omitted bytes cannot be inspected by this process."
 msgstr ""
+"निरीक्षण की लागत इंजन को दिए गए फ़ील्ड और बाइट पर निर्भर करती है, केवल "
+"अनुरोधों की संख्या पर नहीं। बेंचमार्क अध्याय Gate, Shield और 8 KB बॉडी की "
+"स्थितियाँ अलग-अलग रिपोर्ट करता है। 8 KB की सीमा निरीक्षण की सीमा है, यह "
+"दावा नहीं कि अपलोड का शेष भाग सुरक्षित है। forward-auth उपयोग करने वाले "
+"इनग्रेस को अनुरोध की प्रासंगिक जानकारी आगे भेजनी चाहिए; छोड़े गए बाइट का "
+"निरीक्षण यह प्रोसेस नहीं कर सकती।"
 
 #: ../../algorithms.rst:159
 msgid "The Declarative Policy Engine"
-msgstr ""
+msgstr "घोषणात्मक नीति इंजन"
 
 #: ../../algorithms.rst:164
 msgid ""
 "Read the rule model, the evaluation order, WEIGH scoring with thresholds, "
 "and the JSON policy grammar."
 msgstr ""
+"नियम मॉडल, मूल्यांकन का क्रम, सीमाओं के साथ WEIGH स्कोरिंग, और JSON नीति "
+"का व्याकरण पढ़ें।"
 
 #: ../../algorithms.rst:166
 msgid ""
@@ -297,20 +420,26 @@ msgid ""
 "per-rule difficulty in work bits and algorithm, and a signed ``weight``. "
 "Evaluation order:"
 msgstr ""
+"नियम वैकल्पिक मानदंडों (पाथ पैटर्न, User-Agent पैटर्न, अधिकतम चार हेडर, "
+"अधिकतम आठ IPv4/IPv6 CIDR ब्लॉक) का संयोजन (AND) है, जिसमें एक एक्शन "
+"``ALLOW``, ``DENY``, ``CHALLENGE`` या ``WEIGH``, वर्क बिट्स में वैकल्पिक "
+"प्रति-नियम कठिनाई और एल्गोरिदम, और एक चिह्नित ``weight`` होता है। "
+"मूल्यांकन का क्रम:"
 
 #: ../../algorithms.rst:168
 msgid "Semantic WAF (Shield only): violation is a terminal ``deny``."
-msgstr ""
+msgstr "सिमैंटिक WAF (केवल Shield): उल्लंघन एक अंतिम ``deny`` है।"
 
 #: ../../algorithms.rst:169
 msgid "Reputation trie: ``deny`` or ``allow`` prefixes are terminal."
-msgstr ""
+msgstr "प्रतिष्ठा trie: ``deny`` या ``allow`` प्रीफ़िक्स अंतिम हैं।"
 
 #: ../../algorithms.rst:170
 msgid ""
 "Rules in order: the first terminal match returns; ``WEIGH`` matches "
 "accumulate."
 msgstr ""
+"क्रम से नियम: पहला अंतिम मैच लौटता है; ``WEIGH`` मैच जुड़ते जाते हैं।"
 
 #: ../../algorithms.rst:171
 msgid ""
@@ -318,16 +447,20 @@ msgid ""
 "totals :math:`\\geq 10` ``challenge`` with one extra work bit per 5 "
 "points above the threshold, capped at six."
 msgstr ""
+"स्कोर: ऋणात्मक योग ``allow``; :math:`\\geq 40` योग ``deny``; :math:`\\geq "
+"10` योग ``challenge``, सीमा से ऊपर हर 5 अंक पर एक अतिरिक्त वर्क बिट के "
+"साथ, अधिकतम छह।"
 
 #: ../../algorithms.rst:172
 msgid ""
 "Static bypass paths, then trie ``challenge`` verdicts, then the bot "
 "automaton."
 msgstr ""
+"स्टैटिक बायपास पाथ, फिर trie के ``challenge`` निर्णय, फिर बॉट ऑटोमेटन।"
 
 #: ../../algorithms.rst:173
 msgid "Default action, ``challenge`` unless the policy file says otherwise."
-msgstr ""
+msgstr "डिफ़ॉल्ट एक्शन, ``challenge``, जब तक नीति फ़ाइल कुछ और न कहे।"
 
 #: ../../algorithms.rst:175
 msgid ""
@@ -336,10 +469,15 @@ msgid ""
 "``Amazonbot``, and challenge every ``Mozilla`` User-Agent: a browser "
 "string is free to forge, so admitting it would make the gate decorative."
 msgstr ""
+"अंतर्निहित नियम ``/.well-known/*``, ``/favicon.ico``, ``/robots.txt`` और "
+"``/__sibuna/*`` की अनुमति देते हैं, ``CF-Worker`` क्लाइंट और "
+"``Amazonbot`` को अस्वीकार करते हैं, और हर ``Mozilla`` User-Agent को "
+"चैलेंज करते हैं: ब्राउज़र स्ट्रिंग को जाली बनाना मुफ़्त है, इसलिए उसे "
+"प्रवेश देने से गेट केवल सजावटी रह जाएगा।"
 
 #: ../../algorithms.rst:195
 msgid "Worked Trace: an Encoded Attack with a Valid Session"
-msgstr ""
+msgstr "हल किया गया ट्रेस: वैध सत्र के साथ एन्कोड किया गया आक्रमण"
 
 #: ../../algorithms.rst:198
 msgid ""
@@ -349,6 +487,12 @@ msgid ""
 "request. The percent sign marks the field for canonicalization. One "
 "decoding pass exposes ``%27%20OR%201%3D1``; a second exposes ``' OR 1=1``."
 msgstr ""
+"वैध सत्र रखने वाले क्लाइंट से ``GET /search?q=%2527%2520OR%25201%253D1`` "
+"पर विचार करें। पहले HTTP पार्सर पाथ और क्वेरी को उनके बाइट कॉपी किए बिना "
+"अलग करता है। स्थानीय सीमाएँ चलती हैं, फिर Shield अनुरोध का निरीक्षण करता "
+"है। percent चिह्न फ़ील्ड को canonicalization के लिए चिह्नित करता है। "
+"डिकोडिंग का एक पास ``%27%20OR%201%3D1`` प्रकट करता है; दूसरा ``' OR 1=1`` "
+"प्रकट करता है।"
 
 #: ../../algorithms.rst:200
 msgid ""
@@ -359,10 +503,16 @@ msgid ""
 "later. The response path need not hold the engine snapshot while an "
 "origin connection is idle."
 msgstr ""
+"अब टोकनाइज़र एक quote, कीवर्ड ``OR`` और बराबर लिटरल ऑपरेंड देखता है। "
+"अस्वीकृति एक अंतिम नीति परिणाम है। वैध सत्र इसे अनुमति में नहीं बदलता: "
+"सत्र जाँच केवल चैलेंज निर्णय का निपटारा करती है। स्टोरेज हुक एक सीमित "
+"घटना रिकॉर्ड कॉपी करता है; SQL बाद में चलता है। जब ऑरिजिन कनेक्शन "
+"निष्क्रिय हो, तब रिस्पॉन्स पाथ को इंजन स्नैपशॉट पकड़े रखने की ज़रूरत नहीं "
+"होती।"
 
 #: ../../algorithms.rst:202
 msgid "Exercise 6.1"
-msgstr ""
+msgstr "अभ्यास 6.1"
 
 #: ../../algorithms.rst:204
 msgid ""
@@ -370,10 +520,13 @@ msgid ""
 "should neither alone establish SQL injection? Give an example of a false "
 "positive a substring-only detector could produce."
 msgstr ""
+"पेलोड को ``O'Reilly`` से और फिर ``order=1`` से बदलें। इनमें से कोई भी "
+"अकेले SQL injection क्यों स्थापित न करे? एक ऐसे false positive का उदाहरण "
+"दें जो केवल सबस्ट्रिंग पर आधारित डिटेक्टर उत्पन्न कर सकता है।"
 
 #: ../../algorithms.rst:206
 msgid "Exercise 6.2"
-msgstr ""
+msgstr "अभ्यास 6.2"
 
 #: ../../algorithms.rst:208
 msgid ""
@@ -381,10 +534,13 @@ msgid ""
 "injection (patterns such as ``)(|(``), and explain which existing class "
 "bits it can reuse."
 msgstr ""
+"LDAP injection (जैसे ``)(|(`` पैटर्न) के लिए डिटेक्टर जोड़ने हेतु आवश्यक "
+"byte-class टेबल प्रविष्टियाँ लिखें, और समझाएँ कि वह कौन-से मौजूदा class "
+"बिट दोबारा उपयोग कर सकता है।"
 
 #: ../../algorithms.rst:210
 msgid "Explain the invariant"
-msgstr ""
+msgstr "अपरिवर्तनीय नियम समझाइए"
 
 #: ../../algorithms.rst:212
 msgid ""
@@ -392,3 +548,6 @@ msgid ""
 "structural property the new SQL detector requires, and how the automaton "
 "and the tokenizer divide the work."
 msgstr ""
+"किसी समीक्षक को समझाइए कि ``Accept: */*`` false positive क्यों था, नया "
+"SQL डिटेक्टर किस संरचनात्मक गुण की माँग करता है, और ऑटोमेटन तथा टोकनाइज़र "
+"कार्य को कैसे बाँटते हैं।"

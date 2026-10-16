@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:37+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../cryptography.rst:1
 msgid "Part III: Foundations from Cryptography Research"
-msgstr ""
+msgstr "भाग III: क्रिप्टोग्राफ़ी अनुसंधान से आधार"
 
 #: ../../cryptography.rst:4
 msgid ""
@@ -28,15 +28,20 @@ msgid ""
 "argument, and justify keyed-hash authentication for challenges and "
 "sessions. SID 0006 records the assumptions and references."
 msgstr ""
+"हम Sibuna के दो proof-of-work टियर के पीछे के लागत मॉडल निकालते हैं, "
+"Cohen-Pietrzak के अनुक्रमिक कार्य के प्रमाण (Proof of Sequential Work) को "
+"उसके सुरक्षा तर्क के साथ प्रस्तुत करते हैं, और चैलेंज तथा सत्र के लिए "
+"कुंजी-युक्त हैश प्रमाणीकरण का औचित्य बताते हैं। SID 0006 धारणाएँ और "
+"संदर्भ दर्ज करता है।"
 
 #: ../../cryptography.rst:6
 msgid "Hashcash: The Mathematics of Tier One"
-msgstr ""
+msgstr "Hashcash: टियर एक का गणित"
 
 #: ../../cryptography.rst:9 ../../cryptography.rst:36
 #: ../../cryptography.rst:167
 msgid "Objectives"
-msgstr ""
+msgstr "उद्देश्य"
 
 #: ../../cryptography.rst:11
 msgid ""
@@ -45,10 +50,14 @@ msgid ""
 "why the server's verification cost bounds the attacker's advantage, and "
 "describe the two limits that motivate a second tier."
 msgstr ""
+"इस अध्याय के अंत तक हमें यह कर पाना चाहिए: बिट-स्तर की Hashcash पहेली का "
+"अपेक्षित कार्य, प्रसरण और टेल प्रायिकता बताना, समझाना कि सर्वर की सत्यापन "
+"लागत हमलावर के लाभ को कैसे सीमित करती है, और उन दो सीमाओं का वर्णन करना "
+"जो दूसरे टियर की प्रेरणा देती हैं।"
 
 #: ../../cryptography.rst:13
 msgid "Definition and Cost"
-msgstr ""
+msgstr "परिभाषा और लागत"
 
 #: ../../cryptography.rst:16
 msgid ""
@@ -60,6 +69,13 @@ msgid ""
 "the WebAssembly solver, the JavaScript fallback, and the native verifier "
 "without a binary encoding step."
 msgstr ""
+"चैलेंज स्ट्रिंग :math:`C` और :math:`b` बिट की कठिनाई के लिए Sibuna की "
+"टियर एक पहेली यह है: ऐसा :math:`N \\in \\mathbb{N}` खोजें कि "
+":math:`\\text{SHA-256}(C \\parallel \\text{\":\"} \\parallel "
+"\\mathrm{dec}(N))` में :math:`b` शुरुआती शून्य बिट हों। नॉनस को दशमलव रूप "
+"में लिखना जानबूझकर है; इससे WebAssembly सॉल्वर, JavaScript फ़ॉलबैक और "
+"नेटिव सत्यापनकर्ता के बीच वायर प्रारूप बिना किसी बाइनरी एन्कोडिंग चरण के "
+"एक समान रहता है।"
 
 #: ../../cryptography.rst:18
 msgid ""
@@ -69,6 +85,11 @@ msgid ""
 "the digest predicate; implementations must agree on the statement and "
 "nonce encoding, not on an estimated CPU cost."
 msgstr ""
+"कठिनाई की इकाई एक अपेक्षित *हैश प्रयास* (hash trial) है, compression "
+"फ़ंक्शन की कॉल नहीं। एक इनपुट कई SHA-256 ब्लॉक घेर सकता है। प्रीफ़िक्स की "
+"पूर्व-गणना भी प्रति नॉनस कार्य बदल सकती है। वायर नियम डाइजेस्ट प्रेडिकेट "
+"ही रहता है; इम्प्लीमेंटेशन को स्टेटमेंट और नॉनस एन्कोडिंग पर सहमत होना "
+"चाहिए, अनुमानित CPU लागत पर नहीं।"
 
 #: ../../cryptography.rst:20
 msgid ""
@@ -81,10 +102,18 @@ msgid ""
 "response are additional work. A primitive timing cannot be inverted into "
 "a server's flood capacity."
 msgstr ""
+"स्वतंत्र आदर्श डाइजेस्ट के लिए प्रयास संख्या :math:`X`, :math:`p = "
+"2^{-b}` के साथ ज्यामितीय है। इसकी माध्यिका :math:`\\left\\lceil \\ln(1/2) "
+"/ \\ln(1-p) \\right\\rceil` है, जो छोटे :math:`p` के लिए लगभग :math:`2^b "
+"\\ln 2` है, और इसका प्रसरण :math:`(1-p)/p^2` है। सत्यापनकर्ता खोज करने के "
+"बजाय एक उम्मीदवार डाइजेस्ट की जाँच करता है। पार्सिंग, चैलेंज प्रमाणीकरण, "
+"फ़िंगरप्रिंट जाँच, spent-state में प्रविष्टि और रिस्पॉन्स अतिरिक्त कार्य "
+"हैं। किसी प्रिमिटिव के समय-माप को उलटकर सर्वर की बाढ़ सहने की क्षमता नहीं "
+"निकाली जा सकती।"
 
 #: ../../cryptography.rst:22
 msgid "Two Limits of Search"
-msgstr ""
+msgstr "खोज की दो सीमाएँ"
 
 #: ../../cryptography.rst:25
 msgid ""
@@ -95,10 +124,15 @@ msgid ""
 "the admission policy. Neither a claimed hash rate nor a single benchmark "
 "can bound every requester's advantage."
 msgstr ""
+"पहली सीमा प्रसरण है: लंबी खोज का अर्थ यह नहीं कि वर्कर खराब है। दूसरी "
+"सीमा समानांतरता है: स्वतंत्र नॉनस प्रयास एक साथ चल सकते हैं। अधिक कोर खोज "
+"में बीता समय घटाते हैं, भले ही अपेक्षित कुल प्रयास संख्या वही रहे। इसलिए "
+"प्रवेश नीति के लिए हार्डवेयर थ्रूपुट मायने रखता है। न कोई दावा की गई हैश "
+"दर और न कोई अकेला बेंचमार्क हर अनुरोधकर्ता के लाभ को सीमित कर सकता है।"
 
 #: ../../cryptography.rst:27
 msgid "Exercise 3.0"
-msgstr ""
+msgstr "अभ्यास 3.0"
 
 #: ../../cryptography.rst:29
 msgid ""
@@ -106,14 +140,17 @@ msgid ""
 ":math:`4.6 \\times 2^b` trials. Why is the expected trial count unchanged "
 "by dividing the nonce space among several workers?"
 msgstr ""
+"ज्यामितीय टेल का उपयोग करके :math:`4.6 \\times 2^b` से अधिक प्रयासों की "
+"आवश्यकता की प्रायिकता का अनुमान लगाएँ। नॉनस स्पेस को कई वर्करों में "
+"बाँटने से अपेक्षित प्रयास संख्या क्यों नहीं बदलती?"
 
 #: ../../cryptography.rst:31
 msgid "*Hint:* Count aggregate trials, not elapsed seconds."
-msgstr ""
+msgstr "*संकेत:* कुल प्रयास गिनें, बीते हुए सेकंड नहीं।"
 
 #: ../../cryptography.rst:33
 msgid "Proof of Sequential Work: Tier Two"
-msgstr ""
+msgstr "अनुक्रमिक कार्य का प्रमाण: टियर दो"
 
 #: ../../cryptography.rst:38
 msgid ""
@@ -123,10 +160,14 @@ msgid ""
 "prover's memory bound, and the calibration data behind the work-bit "
 "mapping."
 msgstr ""
+"Cohen-Pietrzak लेबलिंग को समझें: यह अनुक्रमिक गणना को क्यों अनिवार्य करती "
+"है, सत्यापनकर्ता क्या जाँचता है, सशर्त सैंपलिंग सीमा :math:`(1 - "
+"\\alpha)^t` और उसकी सीमाएँ, पोस्ट-क्वांटम परिणाम, प्रूवर की मेमोरी सीमा, "
+"और वर्क-बिट मैपिंग के पीछे का कैलिब्रेशन डेटा।"
 
 #: ../../cryptography.rst:40
 msgid "Why Sequential Work"
-msgstr ""
+msgstr "अनुक्रमिक कार्य क्यों"
 
 #: ../../cryptography.rst:43
 msgid ""
@@ -136,6 +177,10 @@ msgid ""
 "the computation. Independent puzzles can still run in parallel, and "
 "hardware hash latency still matters."
 msgstr ""
+"अनुक्रमिक कार्य वाला निर्माण गणनाओं के बीच निर्भरताएँ लाता है: बाद के "
+"लेबल को पहले बना मान चाहिए। यह कुल कार्य से अलग एक मात्रा को संबोधित करता "
+"है, यानी गणना की गहराई। स्वतंत्र पहेलियाँ फिर भी समानांतर चल सकती हैं, और "
+"हार्डवेयर की हैश लेटेंसी फिर भी मायने रखती है।"
 
 #: ../../cryptography.rst:45
 msgid ""
@@ -147,10 +192,17 @@ msgid ""
 "must not be turned into an unqualified claim about every concrete "
 "implementation or adversary."
 msgstr ""
+"Sibuna, Cohen और Pietrzak द्वारा वर्णित हैश-आधारित निर्माण का अनुसरण करता "
+"है। इसके ग्राफ़ में गहराई :math:`n` पर :math:`2^{n+1}-1` लेबल होते हैं, "
+"लेकिन लेबल की निश्चित संख्या ब्राउज़र की निश्चित लेटेंसी नहीं है: लेबल कई "
+"compression ब्लॉक में फैल सकते हैं, ओपनिंग सबट्री की दोबारा गणना कर सकती "
+"हैं, और शेड्यूलिंग भिन्नता जोड़ती है। oracle-model विश्लेषणों से मिले "
+"सुरक्षा कथनों को हर ठोस इम्प्लीमेंटेशन या विरोधी के बारे में बिना शर्त "
+"दावे में नहीं बदलना चाहिए।"
 
 #: ../../cryptography.rst:47
 msgid "The Construction"
-msgstr ""
+msgstr "निर्माण"
 
 #: ../../cryptography.rst:50
 msgid ""
@@ -162,12 +214,21 @@ msgid ""
 "is the challenge statement and :math:`H` is SHA-256 with :math:`\\chi` "
 "absorbed once (the same prefix trick as the Hashcash solver):"
 msgstr ""
+"मान लें :math:`n` गहराई है, और उस पूर्ण बाइनरी ट्री पर विचार करें जिसके "
+"नोड अधिकतम :math:`n` लंबाई की बाइनरी स्ट्रिंग से नामित हैं (रूट "
+":math:`\\varepsilon`, चाइल्ड :math:`v0` और :math:`v1`, लीफ़ की लंबाई "
+":math:`n`)। हर नोड :math:`v` एक 32-बाइट लेबल :math:`\\ell_v = H(\\chi, v, "
+"\\mathrm{parents}(v))` रखता है, जहाँ :math:`\\chi` चैलेंज स्टेटमेंट है और "
+":math:`H` वह SHA-256 है जिसमें :math:`\\chi` एक बार सोखा गया है (Hashcash "
+"सॉल्वर वाली ही प्रीफ़िक्स तरकीब):"
 
 #: ../../cryptography.rst:52
 msgid ""
 "an internal node hashes its two children: :math:`\\ell_v = H(\\chi, v, "
 "\\ell_{v0}, \\ell_{v1})`;"
 msgstr ""
+"आंतरिक नोड अपने दो चाइल्ड का हैश करता है: :math:`\\ell_v = H(\\chi, v, "
+"\\ell_{v0}, \\ell_{v1})`;"
 
 #: ../../cryptography.rst:53
 msgid ""
@@ -175,6 +236,10 @@ msgid ""
 "ancestors* wherever the root path turned right: :math:`\\ell_u = H(\\chi, "
 "u, \\{\\ell_{u_1 \\dots u_{i-1} 0} : u_i = 1\\})`."
 msgstr ""
+"लीफ़ :math:`u = u_1 \\dots u_n` उन सभी स्थानों पर *अपने पूर्वजों के बाएँ "
+"सहोदरों* का हैश करती है जहाँ रूट से आने वाला पाथ दाईं ओर मुड़ा: "
+":math:`\\ell_u = H(\\chi, u, \\{\\ell_{u_1 \\dots u_{i-1} 0} : u_i = "
+"1\\})`।"
 
 #: ../../cryptography.rst:56
 msgid ""
@@ -184,6 +249,11 @@ msgid ""
 "green nodes are the siblings sent in the opening, and the dashed red "
 "edges are the left-sibling edges hashed into the leaf."
 msgstr ""
+"गहराई-3 का ट्री: लीफ़ 3.5 की ओपनिंग लीफ़ लेबल और तीन सहोदर लेबल भेजती है; "
+"डैश वाली किनारियाँ बाएँ-सहोदर की वे निर्भरताएँ हैं जो लेबलिंग को "
+"अनुक्रमिक बनाती हैं। एम्बर नोड लीफ़ 3.5 का पाथ बनाते हैं, हरे नोड ओपनिंग "
+"में भेजे गए सहोदर हैं, और डैश वाली लाल किनारियाँ लीफ़ में हैश की गई "
+"बाएँ-सहोदर की किनारियाँ हैं।"
 
 #: ../../cryptography.rst:81
 msgid ""
@@ -193,6 +263,11 @@ msgid ""
 ":math:`\\varphi = \\ell_\\varepsilon` depends on all :math:`2^{n+1} - 1` "
 "labels in sequence."
 msgstr ""
+"बाएँ-सहोदर की किनारियाँ ही गणना को अनुक्रमिक बनाती हैं: लीफ़ :math:`u` का "
+"लेबल तब तक नहीं बन सकता जब तक उसके बाईं ओर का हर सबट्री पूरा न हो जाए, "
+"इसलिए depth-first post-order traversal अनिवार्य हो जाता है और रूट लेबल "
+":math:`\\varphi = \\ell_\\varepsilon` क्रम से सभी :math:`2^{n+1} - 1` "
+"लेबल पर निर्भर करता है।"
 
 #: ../../cryptography.rst:83
 msgid ""
@@ -206,20 +281,30 @@ msgid ""
 "computation may span multiple hash blocks; counting labels is not "
 "counting compression calls."
 msgstr ""
+"**ओपनिंग।** :math:`\\varphi` की गणना के बाद प्रूवर Fiat-Shamir से "
+":math:`t` लीफ़ निकालता है, :math:`\\gamma_i = H(\\chi \\parallel \\varphi "
+"\\parallel i) \\bmod 2^n`, और हर एक के लिए लीफ़ लेबल तथा रूट पाथ पर पड़ने "
+"वाले :math:`n` सहोदर लेबल भेजता है। सत्यापनकर्ता उन सहोदरों से लीफ़ की "
+"दोबारा गणना करता है जो उसके पैरेंट हैं, पाथ से ऊपर की ओर हैश करता है, और "
+"जाँचता है कि वह :math:`\\varphi` तक पहुँचता है। सत्यापनकर्ता की लागत "
+"सीमित वर्कस्पेस के साथ :math:`O(tn)` लेबल गणनाएँ है। एक लेबल गणना कई हैश "
+"ब्लॉक में फैल सकती है; लेबल गिनना compression कॉल गिनना नहीं है।"
 
 #: ../../cryptography.rst:85
 msgid "Implementation: ``posw::verify_opening``"
-msgstr ""
+msgstr "इम्प्लीमेंटेशन: ``posw::verify_opening``"
 
 #: ../../cryptography.rst:87
 msgid ""
 "Recomputes one opened leaf from its sibling labels and walks the path to "
 "the root. In ``crates/pow/src/posw.rs`` (crate ``sibuna-pow``)."
 msgstr ""
+"खोली गई एक लीफ़ की उसके सहोदर लेबल से दोबारा गणना करता है और रूट तक पाथ "
+"पर चलता है। ``crates/pow/src/posw.rs`` में (क्रेट ``sibuna-pow``)।"
 
 #: ../../cryptography.rst:120
 msgid "Sampling, Soundness, and Their Limits"
-msgstr ""
+msgstr "सैंपलिंग, सुदृढ़ता और उनकी सीमाएँ"
 
 #: ../../cryptography.rst:123
 msgid ""
@@ -230,10 +315,16 @@ msgid ""
 "openings help. It is not, by itself, a security proof for a "
 "sequential-work protocol."
 msgstr ""
+"एक निश्चित कमिटमेंट पर विचार करें जिसमें स्वतंत्र रूप से पहचाना जा सकने "
+"वाला खराब अंश :math:`\\alpha` है। यदि हर ओपनिंग समान रूप से और स्वतंत्र "
+"रूप से सैंपल करती है, तो :math:`t` ओपनिंग में हर खराब स्थान के छूट जाने "
+"की संभावना :math:`(1-\\alpha)^t` है। यह प्रारंभिक गणना समझाती है कि अधिक "
+"ओपनिंग क्यों मदद करती हैं। यह अपने आप में अनुक्रमिक कार्य वाले प्रोटोकॉल "
+"का सुरक्षा प्रमाण नहीं है।"
 
 #: ../../cryptography.rst:125
 msgid "Worked example: a conditional sampling bound"
-msgstr ""
+msgstr "हल किया गया उदाहरण: एक सशर्त सैंपलिंग सीमा"
 
 #: ../../cryptography.rst:127
 msgid ""
@@ -244,6 +335,12 @@ msgid ""
 "can grind many roots, choose which commitment to reveal, or correlate "
 "failures, this calculation does not account for that strategy."
 msgstr ""
+"निश्चित खराब अंश :math:`\\alpha = 0.1` और :math:`t = 16` स्वतंत्र ओपनिंग "
+"के साथ हर खराब स्थान के छूट जाने की संभावना :math:`0.9^{16} \\approx "
+"0.185` है। 32 ओपनिंग के साथ यह लगभग 0.034 है। आधार-धारणा सैंपल चुने जाने "
+"से पहले कमिटमेंट को निश्चित कर देती है। यदि कोई प्रूवर कई रूट आज़मा "
+"(grind) सकता है, चुन सकता है कि कौन-सा कमिटमेंट प्रकट करे, या विफलताओं को "
+"परस्पर संबद्ध कर सकता है, तो यह गणना उस रणनीति का हिसाब नहीं रखती।"
 
 #: ../../cryptography.rst:129
 msgid ""
@@ -254,10 +351,16 @@ msgid ""
 "commitment; reproducibility alone does not prove resistance to grinding. "
 "We make no unconditional claim that cheating is never cheaper."
 msgstr ""
+"संदर्भित अनुक्रमिक कार्य वाले निर्माण का oracle model में सुरक्षा "
+"विश्लेषण है। Sibuna के domain separation, पैरामीटर मैपिंग, truncation और "
+"इम्प्लीमेंटेशन को फिर भी निर्माण की धारणाओं के विरुद्ध जाँचना होगा। "
+"Fiat-Shamir सैंपलिंग ओपनिंग को कमिटमेंट से दोबारा बनाने योग्य बनाती है; "
+"केवल दोबारा बनाने योग्य होना grinding के प्रति प्रतिरोध सिद्ध नहीं करता। "
+"हम कोई बिना शर्त दावा नहीं करते कि धोखा देना कभी सस्ता नहीं होता।"
 
 #: ../../cryptography.rst:131
 msgid "Exercise 3.1"
-msgstr ""
+msgstr "अभ्यास 3.1"
 
 #: ../../cryptography.rst:133
 msgid ""
@@ -265,14 +368,17 @@ msgid ""
 "with probability :math:`q`, derive the probability that at least one is "
 "accepted. Which costs are missing from that expression?"
 msgstr ""
+"यदि कोई हमलावर :math:`g` स्वतंत्र कमिटमेंट आज़माता है, जिनमें से हर एक "
+":math:`q` प्रायिकता से स्वीकार होता है, तो कम से कम एक के स्वीकार होने की "
+"प्रायिकता निकालें। उस अभिव्यक्ति में कौन-सी लागतें छूटी हुई हैं?"
 
 #: ../../cryptography.rst:135
 msgid "*Hint:* First calculate the probability that all :math:`g` fail."
-msgstr ""
+msgstr "*संकेत:* पहले यह प्रायिकता निकालें कि सभी :math:`g` विफल हों।"
 
 #: ../../cryptography.rst:137
 msgid "Prover Memory"
-msgstr ""
+msgstr "प्रूवर की मेमोरी"
 
 #: ../../cryptography.rst:140
 msgid ""
@@ -287,10 +393,20 @@ msgid ""
 "browser tab and a native test share the same ``Workspace`` type "
 "(``sibuna_pow::posw::Workspace``)."
 msgstr ""
+"एक सीधा-सादा प्रूवर हर लेबल (:math:`2^{n+1} - 1` लेबल) संग्रहीत करता है। "
+"Sibuna का प्रूवर पहले पास के दौरान मौजूदा पाथ के बाएँ-सहोदर लेबल का एक "
+"स्टैक (:math:`n + 1` लेबल) रखता है और केवल ऊपर के :math:`m = \\min(n, "
+"10)` स्तर (:math:`2^{m+1} - 1` लेबल, अधिकतम 64 KB) बनाए रखता है। किसी "
+"लीफ़ को खोलने के लिए वह लीफ़ के गहराई :math:`m` वाले पूर्वज के सबट्री की "
+"दोबारा गणना करता है, यानी :math:`2^{n-m+1} - 1` हैश, और रखे गए स्तरों से "
+"स्टैक को प्रारंभ करता है। प्रूवर की कुल लागत :math:`2^{n+1} - 1 + "
+"t\\,(2^{n-m+1} - 1)` हैश है, और आउटपुट प्रमाण सहित पूरा वर्कस्पेस 100 KB "
+"से कम है: ब्राउज़र टैब और नेटिव परीक्षण एक ही ``Workspace`` प्रकार "
+"(``sibuna_pow::posw::Workspace``) साझा करते हैं।"
 
 #: ../../cryptography.rst:142
 msgid "Parameters Are Not Timings"
-msgstr ""
+msgstr "पैरामीटर समय-माप नहीं हैं"
 
 #: ../../cryptography.rst:145
 msgid ""
@@ -302,6 +418,13 @@ msgid ""
 "costs. The committed primitive benchmark measures verification; it does "
 "not establish browser solve latency."
 msgstr ""
+"Sibuna वर्क बिट्स को :math:`n = b - 3` से गहराई में बदलता है, जिसे "
+"समर्थित अंतराल :math:`[4, 24]` में सीमित किया जाता है। यह कार्य के पैमाने "
+"की एक परिपाटी है, एल्गोरिदम के बीच बराबर वास्तविक समय की गारंटी नहीं। एक "
+"लीफ़ कई पैरेंट लेबल का हैश कर सकती है, जबकि Hashcash बार-बार एक नॉनस "
+"परखता है। कंपाइलर, ब्राउज़र, प्रोसेसर और पैरामीटर के चुनाव, सभी उनकी "
+"सापेक्ष लागतों को प्रभावित करते हैं। कमिट किया गया प्रिमिटिव बेंचमार्क "
+"सत्यापन को मापता है; वह ब्राउज़र में हल की लेटेंसी स्थापित नहीं करता।"
 
 #: ../../cryptography.rst:147
 msgid ""
@@ -310,20 +433,26 @@ msgid ""
 "opening count increases both the proof and the verifier's work, even if "
 "the dominant cost of constructing the tree stays the same."
 msgstr ""
+"प्रमाण का आकार :math:`32(1 + t(n+1))` बाइट है। सोलह ओपनिंग के साथ गहराई "
+"13 पर यह :math:`32(1 + 16 \\times 14) = 7200` बाइट है। ओपनिंग की संख्या "
+"बढ़ाने से प्रमाण और सत्यापनकर्ता का कार्य, दोनों बढ़ते हैं, भले ही ट्री "
+"बनाने की प्रमुख लागत वही रहे।"
 
 #: ../../cryptography.rst:149
 msgid "Exercise 3.2"
-msgstr ""
+msgstr "अभ्यास 3.2"
 
 #: ../../cryptography.rst:151
 msgid ""
 "Compute the proof size at depth 17 with 16 openings. Then double the "
 "opening count. Which term doubles and which term remains fixed?"
 msgstr ""
+"16 ओपनिंग के साथ गहराई 17 पर प्रमाण का आकार निकालें। फिर ओपनिंग की संख्या "
+"दोगुनी करें। कौन-सा पद दोगुना होता है और कौन-सा स्थिर रहता है?"
 
 #: ../../cryptography.rst:153
 msgid "Choosing a Construction"
-msgstr ""
+msgstr "निर्माण का चुनाव"
 
 #: ../../cryptography.rst:156
 msgid ""
@@ -335,6 +464,13 @@ msgid ""
 "resources. Publicly verifiable delay constructions serve a different "
 "trust model from a shared-secret gate."
 msgstr ""
+"प्रासंगिक तुलना संसाधन बजट की है, किसी एल्गोरिदम की प्रतिष्ठा की नहीं। "
+"प्रूवर की मेमोरी, सत्यापनकर्ता का सबसे खराब स्थिति वाला कार्य, प्रमाण के "
+"बाइट, और दावा किए गए गुण के लिए आवश्यक धारणाएँ दर्ज करें। memory-hard खोज "
+"उपयोगी हो सकती है, लेकिन जिस सत्यापनकर्ता को महँगा कार्य दोहराना पड़े, वह "
+"हमलावर को सर्वर के संसाधन खर्च कराने की एक और जगह देता है। सार्वजनिक रूप "
+"से सत्यापित की जा सकने वाली delay रचनाएँ साझा सीक्रेट वाले गेट से भिन्न "
+"विश्वास मॉडल की सेवा करती हैं।"
 
 #: ../../cryptography.rst:158
 msgid ""
@@ -343,10 +479,14 @@ msgid ""
 "analysis. Neither choice removes the need to reject malformed proofs "
 "before entering expensive verification."
 msgstr ""
+"Sibuna सस्ता हैश सत्यापन और हैश-आधारित अनुक्रमिक कार्य का विकल्प बनाए "
+"रखता है। अनुक्रमिक कार्य के लिए अधिक प्रमाण बाइट और अधिक सावधान पैरामीटर "
+"विश्लेषण चाहिए। कोई भी चुनाव महँगे सत्यापन में प्रवेश से पहले विकृत "
+"प्रमाणों को अस्वीकार करने की आवश्यकता को नहीं हटाता।"
 
 #: ../../cryptography.rst:160 ../../cryptography.rst:245
 msgid "Explain the invariant"
-msgstr ""
+msgstr "अपरिवर्तनीय नियम समझाइए"
 
 #: ../../cryptography.rst:162
 msgid ""
@@ -354,10 +494,13 @@ msgid ""
 "a label belongs to a commitment, and dependency edges, which constrain "
 "how labels are computed."
 msgstr ""
+"प्रमाणीकरण ट्री, जो सिद्ध करता है कि कोई लेबल किसी कमिटमेंट का हिस्सा है, "
+"और निर्भरता की किनारियों, जो यह बाँधती हैं कि लेबल की गणना कैसे होती है, "
+"के बीच का अंतर समझाइए।"
 
 #: ../../cryptography.rst:164
 msgid "Symmetric Authentication: Challenges and Sessions"
-msgstr ""
+msgstr "सममित प्रमाणीकरण: चैलेंज और सत्र"
 
 #: ../../cryptography.rst:169
 msgid ""
@@ -366,10 +509,14 @@ msgid ""
 "for a 128-bit tag, describe the stateless challenge record and the "
 "spent-set bound, and read the key schedule."
 msgstr ""
+"समझाइए कि जब जारीकर्ता और सत्यापनकर्ता एक ही विश्वास क्षेत्र में हों, तब "
+"कुंजी-युक्त pseudorandom फ़ंक्शन ही सही प्रिमिटिव क्यों है; 128-बिट टैग "
+"के लिए जालसाज़ी की सीमा बताइए; स्टेटलेस चैलेंज रिकॉर्ड और spent-set सीमा "
+"का वर्णन कीजिए; और key schedule पढ़िए।"
 
 #: ../../cryptography.rst:171
 msgid "Issuer Equals Verifier"
-msgstr ""
+msgstr "जारीकर्ता ही सत्यापनकर्ता है"
 
 #: ../../cryptography.rst:174
 msgid ""
@@ -381,10 +528,17 @@ msgid ""
 "the MAC key can also mint tokens. The benchmark chapter compares the "
 "implemented token operations."
 msgstr ""
+"डिजिटल हस्ताक्षर सार्वजनिक कुंजी रखने वाले *किसी को भी* सत्यापन करने देता "
+"है, जो तब सही उपकरण है जब सत्यापनकर्ताओं को टोकन बनाने (mint) में सक्षम "
+"नहीं होना चाहिए। Sibuna का सत्यापनकर्ता *ही* जारीकर्ता है (या एक सीड साझा "
+"करने वाला क्लस्टर)। pseudorandom फ़ंक्शन से बना message authentication "
+"code उस विश्वास क्षेत्र के भीतर प्रमाणीकरण देता है। यह सार्वजनिक सत्यापन "
+"नहीं देता: MAC कुंजी रखने वाला कोई भी टोकन बना भी सकता है। बेंचमार्क "
+"अध्याय लागू किए गए टोकन संचालनों की तुलना करता है।"
 
 #: ../../cryptography.rst:176
 msgid "Lemma 3 (Forgery bound)"
-msgstr ""
+msgstr "लेम्मा 3 (जालसाज़ी की सीमा)"
 
 #: ../../cryptography.rst:178
 msgid ""
@@ -394,6 +548,10 @@ msgid ""
 "\\varepsilon_{\\mathrm{PRF}}`. At a million queries per second that is "
 ":math:`2^{-108}` per second."
 msgstr ""
+"keyed मोड वाले BLAKE3 को PRF के रूप में मॉडल करने और 16-बाइट टैग के साथ, "
+":math:`q` सत्यापन क्वेरी करने वाला विरोधी अधिकतम :math:`q \\cdot 2^{-128} "
+"+ \\varepsilon_{\\mathrm{PRF}}` प्रायिकता से वैध टोकन जाली बना पाता है। "
+"प्रति सेकंड दस लाख क्वेरी पर यह प्रति सेकंड :math:`2^{-108}` है।"
 
 #: ../../cryptography.rst:180
 msgid ""
@@ -404,10 +562,16 @@ msgid ""
 "option (``--token-scheme ed25519``) for deployments that need non-minting "
 "verifiers."
 msgstr ""
+"दीर्घकाल के लिए एक दूसरा परिणाम मायने रखता है: Ed25519 elliptic-curve "
+"समूह में discrete logarithm पर टिका है, जिसे Shor का एल्गोरिदम तोड़ देता "
+"है; कुंजी-युक्त हैश केवल हैश फ़ंक्शन पर टिका है, जिसके विरुद्ध क्वांटम "
+"एल्गोरिदम अधिकतम द्विघाती गति-वृद्धि देते हैं। Sibuna उन डिप्लॉयमेंट के "
+"लिए Ed25519 को एक विकल्प (``--token-scheme ed25519``) के रूप में रखता है "
+"जिन्हें टोकन न बना सकने वाले सत्यापनकर्ता चाहिए।"
 
 #: ../../cryptography.rst:182
 msgid "The Key Schedule"
-msgstr ""
+msgstr "कुंजी अनुसूची (key schedule)"
 
 #: ../../cryptography.rst:185
 msgid ""
@@ -416,10 +580,14 @@ msgid ""
 "domain string: the token, challenge, Ed25519 and fingerprint keys, and "
 "the requirement key that seals requirement tickets (Part IV)."
 msgstr ""
+"एक 32-बाइट मास्टर सीड (``--secret-file``, ``SIBUNA_SECRET`` से, या एक नए "
+"यादृच्छिक मान से) कुंजी-युक्त BLAKE3 और एक domain स्ट्रिंग के साथ हर "
+"उद्देश्य की कुंजी निकालता है: टोकन, चैलेंज, Ed25519 और फ़िंगरप्रिंट "
+"कुंजियाँ, और वह आवश्यकता कुंजी जो आवश्यकता टिकट को सील करती है (भाग IV)।"
 
 #: ../../cryptography.rst:187
 msgid "Implementation: ``Keys::derive``"
-msgstr ""
+msgstr "इम्प्लीमेंटेशन: ``Keys::derive``"
 
 #: ../../cryptography.rst:189
 msgid ""
@@ -428,6 +596,10 @@ msgid ""
 "and ``Seed`` zero their bytes when dropped, and their ``Debug`` output is "
 "redacted."
 msgstr ""
+"सीड से पाँच उद्देश्य-कुंजियाँ निकालता है। "
+"``crates/challenge/src/keys.rs`` में (क्रेट ``sibuna-challenge``)। "
+"``Keys`` और ``Seed`` छोड़े जाने (drop) पर अपने बाइट शून्य कर देते हैं, और "
+"उनका ``Debug`` आउटपुट छिपाया (redact) जाता है।"
 
 #: ../../cryptography.rst:207
 msgid ""
@@ -436,6 +608,10 @@ msgid ""
 "challenge must return to the node that issued it, while session tokens "
 "and requirement tickets stay valid on every member."
 msgstr ""
+"क्लस्टर में ``Keys::bind_node`` चैलेंज कुंजी को "
+"``sibuna/challenge-node/v1`` और नोड id पर उसी कुंजी के तहत कुंजी-युक्त "
+"BLAKE3 से बदल देता है, इसलिए चैलेंज को उसी नोड पर लौटना होगा जिसने उसे "
+"जारी किया, जबकि सत्र टोकन और आवश्यकता टिकट हर सदस्य पर वैध रहते हैं।"
 
 #: ../../cryptography.rst:209
 msgid ""
@@ -443,16 +619,21 @@ msgid ""
 "of the master seed compromises every derived key. A cluster only has to "
 "agree on one seed."
 msgstr ""
+"domain separation उद्देश्यों के बीच आकस्मिक पुनः उपयोग रोकता है; मास्टर "
+"सीड के लीक होने से हर व्युत्पन्न कुंजी लीक हो जाती है। क्लस्टर को केवल एक "
+"सीड पर सहमत होना होता है।"
 
 #: ../../cryptography.rst:211
 msgid "Stateless Challenges"
-msgstr ""
+msgstr "स्टेटलेस चैलेंज"
 
 #: ../../cryptography.rst:215
 msgid ""
 "Wire formats of the challenge identifier and the session token (field "
 "widths in bytes)."
 msgstr ""
+"चैलेंज पहचानकर्ता और सत्र टोकन के वायर प्रारूप (फ़ील्ड की चौड़ाई बाइट "
+"में)।"
 
 #: ../../cryptography.rst:233
 msgid ""
@@ -465,10 +646,18 @@ msgid ""
 "checks the fingerprint against the submitting client, and only then "
 "examines the proof."
 msgstr ""
+"चैलेंज पहचानकर्ता एक स्वयं-प्रमाणित रिकॉर्ड है: संस्करण, एल्गोरिदम, "
+"कठिनाई, ओपनिंग की संख्या, जारी करने का समय, क्लाइंट का कुंजी-युक्त "
+"फ़िंगरप्रिंट, PRF से निकाला गया नॉनस, और उस नीति नियम का हैश जिसने चैलेंज "
+"माँगा, जिसके बाद चैलेंज कुंजी के तहत 16-बाइट टैग आता है। इसे जारी करने "
+"में कुछ भी नहीं लिखा जाता। सत्यापन रिकॉर्ड को डिकोड करता है, स्थिर समय "
+"में टैग जाँचता है, चैलेंज TTL के विरुद्ध आयु जाँचता है, सबमिट करने वाले "
+"क्लाइंट के विरुद्ध फ़िंगरप्रिंट जाँचता है, और उसके बाद ही प्रमाण की जाँच "
+"करता है।"
 
 #: ../../cryptography.rst:235
 msgid "Lemma 4 (State grows only with paid work)"
-msgstr ""
+msgstr "लेम्मा 4 (स्थिति केवल चुकाए गए कार्य के साथ बढ़ती है)"
 
 #: ../../cryptography.rst:237
 msgid ""
@@ -481,6 +670,14 @@ msgid ""
 "valid solution when saturated. This is a state bound, not a lower bound "
 "on every adversary's computational strategy."
 msgstr ""
+"मान लें :math:`S` उन चैलेंज टैग का समुच्चय है जिन्हें डेमन याद रखता है। "
+"कोई टैग :math:`S` में तभी आता है जब उसके लिए वैध प्रमाण स्वीकार हो चुका "
+"हो, और चैलेंज TTL के बाद निकल जाता है। इसलिए :math:`|S| \\le r \\cdot "
+"\\mathrm{TTL}`, जब :math:`r` उस अंतराल में स्वीकृत अलग-अलग समाधानों की दर "
+"को सीमित करता है। मुफ़्त चैलेंज लाने पर कोई टैग आवंटित नहीं होता। "
+"इम्प्लीमेंटेशन की क्षमता भी निश्चित है और भर जाने पर वह वैध समाधान को "
+"अस्वीकार कर सकता है। यह स्थिति की सीमा है, हर विरोधी की गणना-रणनीति पर "
+"निचली सीमा नहीं।"
 
 #: ../../cryptography.rst:239
 msgid ""
@@ -489,10 +686,15 @@ msgid ""
 "User-Agent, length-separated so no two inputs collide by concatenation, "
 "and keyed so fingerprints of other clients cannot be computed offline."
 msgstr ""
+"spent set 16-बाइट टैग पर Robin Hood open addressing के 16 शार्ड है (भाग "
+"V)। फ़िंगरप्रिंट क्लाइंट पते और User-Agent का कुंजी-युक्त हैश है, लंबाई "
+"से अलग किया गया ताकि कोई दो इनपुट जोड़ने (concatenation) से टकराएँ नहीं, "
+"और कुंजी-युक्त ताकि दूसरे क्लाइंट के फ़िंगरप्रिंट ऑफ़लाइन न निकाले जा "
+"सकें।"
 
 #: ../../cryptography.rst:241
 msgid "Exercise 3.3"
-msgstr ""
+msgstr "अभ्यास 3.3"
 
 #: ../../cryptography.rst:243
 msgid ""
@@ -500,6 +702,9 @@ msgid ""
 "``rule_hash``, and ``fingerprint``. Explain what each field prevents if "
 "it were removed, and why the tag must cover all five."
 msgstr ""
+"टोकन पेलोड एक वर्क लेवल, ``timestamp``, ``expiry``, ``rule_hash`` और "
+"``fingerprint`` रखता है। समझाइए कि यदि हर फ़ील्ड हटा दिया जाए तो वह क्या "
+"रोकता है, और टैग को पाँचों को क्यों ढकना चाहिए।"
 
 #: ../../cryptography.rst:247
 msgid ""
@@ -507,3 +712,6 @@ msgid ""
 "stronger\". Explain the trust-domain argument, the cost difference, and "
 "the post-quantum consideration."
 msgstr ""
+"एक सहकर्मी सभी टोकन को Ed25519 पर ले जाने का प्रस्ताव देता है \"क्योंकि "
+"वह अधिक मज़बूत है\"। विश्वास क्षेत्र का तर्क, लागत का अंतर और "
+"पोस्ट-क्वांटम पहलू समझाइए।"

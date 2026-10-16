@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:17+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../quick-reference.rst:1
 msgid "Part XI: Quick Reference Card"
-msgstr ""
+msgstr "भाग XI: त्वरित संदर्भ कार्ड"
 
 #: ../../quick-reference.rst:4
 msgid ""
@@ -27,18 +27,20 @@ msgid ""
 "diagnose. Part X holds the full tables; this card holds what an operator "
 "types."
 msgstr ""
+"इसे टर्मिनल के पास रखें: बिल्ड, चलाना, कॉन्फ़िगर, रूट, निगरानी और निदान। "
+"पूरी तालिकाएँ भाग X में हैं; इस कार्ड में वह है जो ऑपरेटर टाइप करता है।"
 
 #: ../../quick-reference.rst:6
 msgid "Build"
-msgstr ""
+msgstr "बिल्ड"
 
 #: ../../quick-reference.rst:22
 msgid "Run"
-msgstr ""
+msgstr "चलाना"
 
 #: ../../quick-reference.rst:39
 msgid "Console (opt-in preview)"
-msgstr ""
+msgstr "कंसोल (वैकल्पिक प्रीव्यू)"
 
 #: ../../quick-reference.rst:48
 msgid ""
@@ -49,408 +51,418 @@ msgid ""
 "passes its browser workflows in headless Chromium (SID 0010, criterion "
 "5); its formal performance isolation gate remains open (Part VIII)."
 msgstr ""
+"``http://127.0.0.1:19446/console/`` खोलें और अस्थायी पासवर्ड बदलें। नोड "
+"को ग्लोब पर रखने के लिए ``--console-location 1.3521,103.8198`` जोड़ें। "
+"दूरस्थ पहुँच के लिए एक HTTPS प्रॉक्सी, एक स्पष्ट ऑरिजिन और trusted-proxy "
+"CIDR चाहिए; भाग IX का पालन करें। SID 0007 की स्थिति Committed है। कंसोल "
+"headless Chromium में अपने ब्राउज़र वर्कफ़्लो पास करता है (SID 0010, "
+"मानदंड 5); उसका औपचारिक प्रदर्शन-पृथक्करण गेट अभी खुला है (भाग VIII)।"
 
 #: ../../quick-reference.rst:50
 msgid "Flags That Matter First"
-msgstr ""
+msgstr "सबसे पहले महत्वपूर्ण फ़्लैग"
 
 #: ../../quick-reference.rst:57
 msgid "Flag"
-msgstr ""
+msgstr "फ़्लैग"
 
 #: ../../quick-reference.rst:58
 msgid "Default"
-msgstr ""
+msgstr "डिफ़ॉल्ट"
 
 #: ../../quick-reference.rst:59 ../../quick-reference.rst:224
 msgid "Meaning"
-msgstr ""
+msgstr "अर्थ"
 
 #: ../../quick-reference.rst:60
 msgid "``-d, --difficulty``"
-msgstr ""
+msgstr "``-d, --difficulty``"
 
 #: ../../quick-reference.rst:61 ../../quick-reference.rst:67
 msgid "16"
-msgstr ""
+msgstr "16"
 
 #: ../../quick-reference.rst:62
 msgid "work bits (PoSW depth = bits - 3)"
-msgstr ""
+msgstr "वर्क बिट्स (PoSW गहराई = बिट्स - 3)"
 
 #: ../../quick-reference.rst:63
 msgid "``-a, --algorithm``"
-msgstr ""
+msgstr "``-a, --algorithm``"
 
 #: ../../quick-reference.rst:64
 msgid "posw"
-msgstr ""
+msgstr "posw"
 
 #: ../../quick-reference.rst:65
 msgid "``posw`` or ``hashcash``"
-msgstr ""
+msgstr "``posw`` या ``hashcash``"
 
 #: ../../quick-reference.rst:66
 msgid "``--posw-challenges``"
-msgstr ""
+msgstr "``--posw-challenges``"
 
 #: ../../quick-reference.rst:68
 msgid "openings per proof"
-msgstr ""
+msgstr "प्रति प्रमाण ओपनिंग"
 
 #: ../../quick-reference.rst:69
 msgid "``--token-ttl``"
-msgstr ""
+msgstr "``--token-ttl``"
 
 #: ../../quick-reference.rst:70
 msgid "86400"
-msgstr ""
+msgstr "86400"
 
 #: ../../quick-reference.rst:71
 msgid "session seconds"
-msgstr ""
+msgstr "सत्र के सेकंड"
 
 #: ../../quick-reference.rst:72
 msgid "``--challenge-ttl``"
-msgstr ""
+msgstr "``--challenge-ttl``"
 
 #: ../../quick-reference.rst:73
 msgid "300"
-msgstr ""
+msgstr "300"
 
 #: ../../quick-reference.rst:74
 msgid "challenge seconds"
-msgstr ""
+msgstr "चैलेंज के सेकंड"
 
 #: ../../quick-reference.rst:75
 msgid "``--token-scheme``"
-msgstr ""
+msgstr "``--token-scheme``"
 
 #: ../../quick-reference.rst:76
 msgid "mac"
-msgstr ""
+msgstr "mac"
 
 #: ../../quick-reference.rst:77
 msgid "``mac`` or ``ed25519``"
-msgstr ""
+msgstr "``mac`` या ``ed25519``"
 
 #: ../../quick-reference.rst:78
 msgid "``--rate-limit / --rate-window``"
-msgstr ""
+msgstr "``--rate-limit / --rate-window``"
 
 #: ../../quick-reference.rst:79
 msgid "100 / 10"
-msgstr ""
+msgstr "100 / 10"
 
 #: ../../quick-reference.rst:80
 msgid "GCRA burst per window"
-msgstr ""
+msgstr "प्रति विंडो GCRA बर्स्ट"
 
 #: ../../quick-reference.rst:81
 msgid "``--ban-seconds``"
-msgstr ""
+msgstr "``--ban-seconds``"
 
 #: ../../quick-reference.rst:82
 msgid "3600"
-msgstr ""
+msgstr "3600"
 
 #: ../../quick-reference.rst:83
 msgid "honeypot ban"
-msgstr ""
+msgstr "हनीपॉट प्रतिबंध"
 
 #: ../../quick-reference.rst:84
 msgid "``-w, --workers``"
-msgstr ""
+msgstr "``-w, --workers``"
 
 #: ../../quick-reference.rst:85
 msgid "CPUs"
-msgstr ""
+msgstr "CPU की संख्या"
 
 #: ../../quick-reference.rst:86
 msgid "accept threads"
-msgstr ""
+msgstr "accept थ्रेड"
 
 #: ../../quick-reference.rst:87
 msgid "``--max-connections``"
-msgstr ""
+msgstr "``--max-connections``"
 
 #: ../../quick-reference.rst:88
 msgid "1024"
-msgstr ""
+msgstr "1024"
 
 #: ../../quick-reference.rst:89
 msgid "then ``503``"
-msgstr ""
+msgstr "फिर ``503``"
 
 #: ../../quick-reference.rst:90
 msgid "``--max-connections-per-ip``"
-msgstr ""
+msgstr "``--max-connections-per-ip``"
 
 #: ../../quick-reference.rst:91
 msgid "64"
-msgstr ""
+msgstr "64"
 
 #: ../../quick-reference.rst:92
 msgid "per peer address (IPv6: per ``--ipv6-prefix``), then ``503``"
-msgstr ""
+msgstr "प्रति पीयर पता (IPv6: प्रति ``--ipv6-prefix``), फिर ``503``"
 
 #: ../../quick-reference.rst:93
 msgid "``--trusted-hops``"
-msgstr ""
+msgstr "``--trusted-hops``"
 
 #: ../../quick-reference.rst:94
 msgid "1"
-msgstr ""
+msgstr "1"
 
 #: ../../quick-reference.rst:95
 msgid "client = n-th ``X-Forwarded-For`` entry from the right"
-msgstr ""
+msgstr "क्लाइंट = दाईं ओर से n-वीं ``X-Forwarded-For`` प्रविष्टि"
 
 #: ../../quick-reference.rst:96
 msgid "``--idle-timeout``"
-msgstr ""
+msgstr "``--idle-timeout``"
 
 #: ../../quick-reference.rst:97
 msgid "15"
-msgstr ""
+msgstr "15"
 
 #: ../../quick-reference.rst:98
 msgid "reaper seconds"
-msgstr ""
+msgstr "रीपर के सेकंड"
 
 #: ../../quick-reference.rst:99
 msgid "``-P, --policy-file``"
-msgstr ""
+msgstr "``-P, --policy-file``"
 
 #: ../../quick-reference.rst:100
 msgid "none"
-msgstr ""
+msgstr "कोई नहीं"
 
 #: ../../quick-reference.rst:101
 msgid "JSON policy"
-msgstr ""
+msgstr "JSON नीति"
 
 #: ../../quick-reference.rst:102
 msgid "``--trust-forwarded``"
-msgstr ""
+msgstr "``--trust-forwarded``"
 
 #: ../../quick-reference.rst:103 ../../quick-reference.rst:106
 msgid "off"
-msgstr ""
+msgstr "बंद"
 
 #: ../../quick-reference.rst:104
 msgid "on in forward auth"
-msgstr ""
+msgstr "forward auth में चालू"
 
 #: ../../quick-reference.rst:105
 msgid "``--secure-cookie``"
-msgstr ""
+msgstr "``--secure-cookie``"
 
 #: ../../quick-reference.rst:107
 msgid "add ``Secure``"
-msgstr ""
+msgstr "``Secure`` जोड़ें"
 
 #: ../../quick-reference.rst:109
 msgid "Endpoints Under ``/__sibuna/``"
-msgstr ""
+msgstr "``/__sibuna/`` के अंतर्गत एंडपॉइंट"
 
 #: ../../quick-reference.rst:116
 msgid "Route"
-msgstr ""
+msgstr "रूट"
 
 #: ../../quick-reference.rst:117
 msgid "Answer"
-msgstr ""
+msgstr "उत्तर"
 
 #: ../../quick-reference.rst:118
 msgid "``challenge``"
-msgstr ""
+msgstr "``challenge``"
 
 #: ../../quick-reference.rst:119
 msgid "interstitial HTML"
-msgstr ""
+msgstr "बीच का (interstitial) HTML पेज"
 
 #: ../../quick-reference.rst:120
 msgid "``challenge.json?need=&path=``"
-msgstr ""
+msgstr "``challenge.json?need=&path=``"
 
 #: ../../quick-reference.rst:121
 msgid "``{id, algorithm, difficulty, challenges, expires_at}``"
-msgstr ""
+msgstr "``{id, algorithm, difficulty, challenges, expires_at}``"
 
 #: ../../quick-reference.rst:122
 msgid "``verify`` (POST)"
-msgstr ""
+msgstr "``verify`` (POST)"
 
 #: ../../quick-reference.rst:123
 msgid ""
 "``{challenge_id, nonce | proof}`` -> ``200`` + ``Set-Cookie``, else "
 "``400``"
 msgstr ""
+"``{challenge_id, nonce | proof}`` -> ``200`` + ``Set-Cookie``, अन्यथा "
+"``400``"
 
 #: ../../quick-reference.rst:124
 msgid "``wasm/sibuna-pow.wasm``"
-msgstr ""
+msgstr "``wasm/sibuna-pow.wasm``"
 
 #: ../../quick-reference.rst:125
 msgid "15,181-byte solver"
-msgstr ""
+msgstr "15,181-बाइट सॉल्वर"
 
 #: ../../quick-reference.rst:126
 msgid "``worker.js``"
-msgstr ""
+msgstr "``worker.js``"
 
 #: ../../quick-reference.rst:127
 msgid "worker with WASM and JS provers"
-msgstr ""
+msgstr "WASM और JS प्रूवर वाला वर्कर"
 
 #: ../../quick-reference.rst:128
 msgid "``honeypot``"
-msgstr ""
+msgstr "``honeypot``"
 
 #: ../../quick-reference.rst:129
 msgid "bans caller, ``403``; ``404`` for a subresource or cross-site fetch"
 msgstr ""
+"कॉल करने वाले पर प्रतिबंध, ``403``; सबरिसोर्स या cross-site fetch के लिए "
+"``404``"
 
 #: ../../quick-reference.rst:130
 msgid "``health``"
-msgstr ""
+msgstr "``health``"
 
 #: ../../quick-reference.rst:131
 msgid "``{\"status\":\"ok\",...}``"
-msgstr ""
+msgstr "``{\"status\":\"ok\",...}``"
 
 #: ../../quick-reference.rst:132
 msgid "``metrics``"
-msgstr ""
+msgstr "``metrics``"
 
 #: ../../quick-reference.rst:133
 msgid "Prometheus text"
-msgstr ""
+msgstr "Prometheus टेक्स्ट"
 
 #: ../../quick-reference.rst:135
 msgid "Route all of them to the daemon, never to the origin."
-msgstr ""
+msgstr "इन सबको डेमन तक रूट करें, कभी ऑरिजिन तक नहीं।"
 
 #: ../../quick-reference.rst:137
 msgid "Status Codes"
-msgstr ""
+msgstr "स्टेटस कोड"
 
 #: ../../quick-reference.rst:144
 msgid "Code"
-msgstr ""
+msgstr "कोड"
 
 #: ../../quick-reference.rst:145
 msgid "When"
-msgstr ""
+msgstr "कब"
 
 #: ../../quick-reference.rst:146
 msgid "200"
-msgstr ""
+msgstr "200"
 
 #: ../../quick-reference.rst:147
 msgid "admitted (forward auth), interstitial, internal routes"
-msgstr ""
+msgstr "स्वीकृत (forward auth), बीच का पेज, आंतरिक रूट"
 
 #: ../../quick-reference.rst:148
 msgid "400"
-msgstr ""
+msgstr "400"
 
 #: ../../quick-reference.rst:149
 msgid "malformed request or target, rejected solution (diagnostic body)"
-msgstr ""
+msgstr "विकृत अनुरोध या लक्ष्य, अस्वीकृत समाधान (निदान वाली बॉडी)"
 
 #: ../../quick-reference.rst:150
 msgid "401"
-msgstr ""
+msgstr "401"
 
 #: ../../quick-reference.rst:151
 msgid "challenge required: non-HTML client or forward auth"
-msgstr ""
+msgstr "चैलेंज आवश्यक: गैर-HTML क्लाइंट या forward auth"
 
 #: ../../quick-reference.rst:152
 msgid "403"
-msgstr ""
+msgstr "403"
 
 #: ../../quick-reference.rst:153
 msgid "policy or WAF denial, ban, honeypot"
-msgstr ""
+msgstr "नीति या WAF द्वारा अस्वीकृति, प्रतिबंध, हनीपॉट"
 
 #: ../../quick-reference.rst:154
 msgid "404"
-msgstr ""
+msgstr "404"
 
 #: ../../quick-reference.rst:155
 msgid "unknown ``/__sibuna/`` route, refused honeypot hit"
-msgstr ""
+msgstr "अज्ञात ``/__sibuna/`` रूट, अस्वीकृत हनीपॉट हिट"
 
 #: ../../quick-reference.rst:156
 msgid "413"
-msgstr ""
+msgstr "413"
 
 #: ../../quick-reference.rst:157
 msgid "solution body over the 64 KB buffer"
-msgstr ""
+msgstr "समाधान की बॉडी 64 KB बफ़र से बड़ी"
 
 #: ../../quick-reference.rst:158
 msgid "414"
-msgstr ""
+msgstr "414"
 
 #: ../../quick-reference.rst:159
 msgid "reported challenge URL over 8 KiB"
-msgstr ""
+msgstr "रिपोर्ट किया गया चैलेंज URL 8 KiB से बड़ा"
 
 #: ../../quick-reference.rst:160
 msgid "417"
-msgstr ""
+msgstr "417"
 
 #: ../../quick-reference.rst:161
 msgid "unsupported request expectation"
-msgstr ""
+msgstr "असमर्थित अनुरोध अपेक्षा (expectation)"
 
 #: ../../quick-reference.rst:162
 msgid "429"
-msgstr ""
+msgstr "429"
 
 #: ../../quick-reference.rst:163
 msgid "GCRA limit, ``Retry-After`` seconds"
-msgstr ""
+msgstr "GCRA सीमा, ``Retry-After`` सेकंड"
 
 #: ../../quick-reference.rst:164
 msgid "431"
-msgstr ""
+msgstr "431"
 
 #: ../../quick-reference.rst:165
 msgid "head over 16 KB"
-msgstr ""
+msgstr "हेड 16 KB से बड़ा"
 
 #: ../../quick-reference.rst:166
 msgid "501"
-msgstr ""
+msgstr "501"
 
 #: ../../quick-reference.rst:167
 msgid "transfer coding other than chunked"
-msgstr ""
+msgstr "chunked के अलावा कोई अन्य transfer coding"
 
 #: ../../quick-reference.rst:168
 msgid "502"
-msgstr ""
+msgstr "502"
 
 #: ../../quick-reference.rst:169
 msgid "origin unreachable or malformed"
-msgstr ""
+msgstr "ऑरिजिन तक पहुँच नहीं या उसका उत्तर विकृत"
 
 #: ../../quick-reference.rst:170
 msgid "503"
-msgstr ""
+msgstr "503"
 
 #: ../../quick-reference.rst:171
 msgid "connection limits reached, or node draining"
-msgstr ""
+msgstr "कनेक्शन सीमाएँ पूरी, या नोड ड्रेन हो रहा है"
 
 #: ../../quick-reference.rst:173
 msgid "Headers"
-msgstr ""
+msgstr "हेडर"
 
 #: ../../quick-reference.rst:176
 msgid ""
@@ -459,26 +471,35 @@ msgid ""
 "client), ``X-Sibuna-Status: PASS``, ``X-Sibuna-Rule: <rule>``; hop-by-hop "
 "and alternative forwarding fields dropped, underscore spellings too."
 msgstr ""
+"*अपस्ट्रीम (प्रॉक्सी)*: ``X-Forwarded-For`` (सॉकेट पीयर, विश्वसनीय होने "
+"पर प्राप्त शृंखला के बाद), ``X-Forwarded-Proto``, ``X-Real-IP`` (जिस "
+"क्लाइंट का निर्णय हुआ), ``X-Sibuna-Status: PASS``, ``X-Sibuna-Rule: "
+"<rule>``; hop-by-hop और वैकल्पिक फ़ॉरवर्डिंग फ़ील्ड हटा दिए जाते हैं, "
+"अंडरस्कोर वाली वर्तनियाँ भी।"
 
 #: ../../quick-reference.rst:177
 msgid ""
 "*Forward-auth reply*: ``X-Sibuna-Status``, ``X-Sibuna-Rule``, "
 "``X-Sibuna-Rule-Hash``."
 msgstr ""
+"*Forward-auth उत्तर*: ``X-Sibuna-Status``, ``X-Sibuna-Rule``, "
+"``X-Sibuna-Rule-Hash``।"
 
 #: ../../quick-reference.rst:178
 msgid "*Challenge reply*: ``X-Sibuna-Status: CHALLENGE``."
-msgstr ""
+msgstr "*चैलेंज उत्तर*: ``X-Sibuna-Status: CHALLENGE``।"
 
 #: ../../quick-reference.rst:179
 msgid ""
 "*Cookie*: ``__sibuna_token=<75 chars, 139 with ed25519>; Path=/; "
 "Max-Age=<ttl>; HttpOnly; SameSite=Lax[; Secure]``"
 msgstr ""
+"*कुकी*: ``__sibuna_token=<75 chars, 139 with ed25519>; Path=/; "
+"Max-Age=<ttl>; HttpOnly; SameSite=Lax[; Secure]``"
 
 #: ../../quick-reference.rst:181
 msgid "Policy File Skeleton"
-msgstr ""
+msgstr "नीति फ़ाइल का ढाँचा"
 
 #: ../../quick-reference.rst:197
 msgid ""
@@ -487,10 +508,14 @@ msgid ""
 "matched in normal form. Order: WAF -> trie deny/allow -> rules -> score "
 "-> bypass -> trie challenge -> bots -> default."
 msgstr ""
+"पैटर्न: ``*`` या ``.*`` कुछ भी; ``^...$`` सटीक; अंत में ``*`` प्रीफ़िक्स; "
+"शुरू में ``/`` सटीक पाथ; अन्यथा केस-असंवेदी सबस्ट्रिंग। पाथ का मिलान "
+"सामान्य रूप (normal form) में होता है। क्रम: WAF -> trie deny/allow -> "
+"नियम -> स्कोर -> बायपास -> trie challenge -> बॉट -> डिफ़ॉल्ट।"
 
 #: ../../quick-reference.rst:199
 msgid "Storage (Edge) in SQL"
-msgstr ""
+msgstr "SQL में स्टोरेज (Edge)"
 
 #: ../../quick-reference.rst:214
 msgid ""
@@ -500,102 +525,107 @@ msgid ""
 "``--database-url-file <file> --cluster-node N`` with a unique N from 1 to "
 "8,388,607; no member list, leader or cluster TLS (SID 0011)."
 msgstr ""
+"SQLite (``sqlite3 <dir>/sibuna.db``); एक्शन छोटे अक्षरों में हैं। स्कोर "
+":math:`\\le -50` -> deny प्रीफ़िक्स; :math:`\\ge 50` -> allow। क्लस्टर: "
+"हर नोड पर एक ही सीक्रेट, एक PostgreSQL डेटाबेस, ``--features postgres``, "
+"``--database-url-file <file> --cluster-node N`` जिसमें N, 1 से 8,388,607 "
+"तक अद्वितीय हो; कोई सदस्य सूची, लीडर या क्लस्टर TLS नहीं (SID 0011)।"
 
 #: ../../quick-reference.rst:216
 msgid "Diagnostics"
-msgstr ""
+msgstr "निदान"
 
 #: ../../quick-reference.rst:223
 msgid "Title"
-msgstr ""
+msgstr "शीर्षक"
 
 #: ../../quick-reference.rst:225
 msgid "``MALFORMED CHALLENGE``"
-msgstr ""
+msgstr "``MALFORMED CHALLENGE``"
 
 #: ../../quick-reference.rst:226
 msgid "id edited or truncated; fetch a new one"
-msgstr ""
+msgstr "id संपादित या छोटा कर दिया गया; नया लें"
 
 #: ../../quick-reference.rst:227
 msgid "``INVALID CHALLENGE TAG``"
-msgstr ""
+msgstr "``INVALID CHALLENGE TAG``"
 
 #: ../../quick-reference.rst:228
 msgid "not minted by this seed or node"
-msgstr ""
+msgstr "इस सीड या नोड ने जारी नहीं किया"
 
 #: ../../quick-reference.rst:229
 msgid "``CHALLENGE EXPIRED``"
-msgstr ""
+msgstr "``CHALLENGE EXPIRED``"
 
 #: ../../quick-reference.rst:230
 msgid "older than TTL or clock skew > 60 s"
-msgstr ""
+msgstr "TTL से पुराना या घड़ी का अंतर > 60 s"
 
 #: ../../quick-reference.rst:231
 msgid "``CLIENT FINGERPRINT MISMATCH``"
-msgstr ""
+msgstr "``CLIENT FINGERPRINT MISMATCH``"
 
 #: ../../quick-reference.rst:232
 msgid "address or User-Agent changed"
-msgstr ""
+msgstr "पता या User-Agent बदल गया"
 
 #: ../../quick-reference.rst:233
 msgid "``DIFFICULTY NOT MET``"
-msgstr ""
+msgstr "``DIFFICULTY NOT MET``"
 
 #: ../../quick-reference.rst:234
 msgid "nonce lacks zero bits"
-msgstr ""
+msgstr "नॉनस में शून्य बिट कम हैं"
 
 #: ../../quick-reference.rst:235
 msgid "``INVALID PROOF OF SEQUENTIAL WORK``"
-msgstr ""
+msgstr "``INVALID PROOF OF SEQUENTIAL WORK``"
 
 #: ../../quick-reference.rst:236
 msgid "openings do not reach the root"
-msgstr ""
+msgstr "ओपनिंग रूट तक नहीं पहुँचतीं"
 
 #: ../../quick-reference.rst:237
 msgid "``WRONG SOLUTION TYPE``"
-msgstr ""
+msgstr "``WRONG SOLUTION TYPE``"
 
 #: ../../quick-reference.rst:238
 msgid "nonce for PoSW or proof for Hashcash"
-msgstr ""
+msgstr "PoSW के लिए नॉनस या Hashcash के लिए प्रमाण"
 
 #: ../../quick-reference.rst:239
 msgid "``DOUBLE SPEND PREVENTED``"
-msgstr ""
+msgstr "``DOUBLE SPEND PREVENTED``"
 
 #: ../../quick-reference.rst:240
 msgid "challenge already used"
-msgstr ""
+msgstr "चैलेंज पहले ही उपयोग हो चुका"
 
 #: ../../quick-reference.rst:241
 msgid "``STORE FULL``"
-msgstr ""
+msgstr "``STORE FULL``"
 
 #: ../../quick-reference.rst:242
 msgid "spent set saturated; lower TTL or raise ``--spent-tags``"
-msgstr ""
+msgstr "spent set भर गया; TTL घटाएँ या ``--spent-tags`` बढ़ाएँ"
 
 #: ../../quick-reference.rst:243
 msgid "``NETWORK BINDING MISMATCH``"
-msgstr ""
+msgstr "``NETWORK BINDING MISMATCH``"
 
 #: ../../quick-reference.rst:244
 msgid "cookie copied to another client"
-msgstr ""
+msgstr "कुकी किसी दूसरे क्लाइंट में कॉपी की गई"
 
 #: ../../quick-reference.rst:245
 msgid "``INVALID COMMAND LINE``"
-msgstr ""
+msgstr "``INVALID COMMAND LINE``"
 
 #: ../../quick-reference.rst:246
 msgid "unknown option, bad value, or a removed Zaxonlite option"
-msgstr ""
+msgstr "अज्ञात विकल्प, गलत मान, या हटाया गया Zaxonlite विकल्प"
 
 #: ../../quick-reference.rst:248
 msgid ""
@@ -603,10 +633,13 @@ msgid ""
 "``upstream_errors``, ``incidents_dropped``, ``incident_write_failures``, "
 "``bans_refused``, ``forwarded_invalid`` (all ``sibuna_*_total``)."
 msgstr ""
+"जिन मेट्रिक पर अलर्ट लगाएँ: ``denied``, ``rate_limited``, ``overloaded``, "
+"``upstream_errors``, ``incidents_dropped``, ``incident_write_failures``, "
+"``bans_refused``, ``forwarded_invalid`` (सभी ``sibuna_*_total``)।"
 
 #: ../../quick-reference.rst:250
 msgid "Numbers to Remember"
-msgstr ""
+msgstr "याद रखने योग्य संख्याएँ"
 
 #: ../../quick-reference.rst:253
 msgid ""
@@ -620,10 +653,18 @@ msgid ""
 "embeddings; keep-alive 4,096 requests per connection; origin pool 256 "
 "sockets; storage job queue 32."
 msgstr ""
+"चैलेंज id 70 अक्षर (36-बाइट पेलोड + 16-बाइट टैग); टोकन 75 अक्षर (40 + "
+"16), Ed25519 के साथ 139; प्रमाण के बाइट :math:`32(1 + t(n+1))`; PoSW "
+"गहराई = बिट्स - 3, सीमा 4 से 24; अनुरोध बफ़र 64 KB; हेड सीमा 16 KB; "
+"निरीक्षित बॉडी 8 KB; spent set 1,048,576 टैग (``--spent-tags``); रेट सेल "
+"प्रति टेबल 262,144 (``--rate-table-cells``); प्रतिबंध 65,536 स्लॉट "
+"(``--ban-table-slots``); प्रति क्लाइंट पता 64 कनेक्शन; घटना रिंग 512; बैच "
+"32; सबसे हाल की 16,384 एम्बेडिंग पर कैंपेन दूरी 0.35; keep-alive प्रति "
+"कनेक्शन 4,096 अनुरोध; ऑरिजिन पूल 256 सॉकेट; स्टोरेज जॉब कतार 32।"
 
 #: ../../quick-reference.rst:255
 msgid "Ingress Routing"
-msgstr ""
+msgstr "इनग्रेस रूटिंग"
 
 #: ../../quick-reference.rst:258
 msgid ""
@@ -633,6 +674,11 @@ msgid ""
 "audit headers with the authorization result. Nginx needs explicit "
 "challenge, 429 and unavailable-auth handling."
 msgstr ""
+"भाग IX, इनग्रेस के पीछे Forward Auth, में दी गई Nginx या Caddy विधि का "
+"उपयोग करें। ``/__sibuna/*`` को सीधे रूट करें; एप्लिकेशन अनुरोधों को मूल "
+"URI, मेथड और विश्वसनीय क्लाइंट पते के साथ अधिकृत करें। आने वाले Sibuna "
+"ऑडिट हेडर को प्राधिकरण के परिणाम से बदलें। Nginx को चैलेंज, 429 और "
+"अनुपलब्ध auth के लिए स्पष्ट हैंडलिंग चाहिए।"
 
 #: ../../quick-reference.rst:260
 msgid ""
@@ -643,3 +689,9 @@ msgid ""
 "use Content-Length or chunked coding; inspection sees at most an 8 KiB "
 "prefix, with file bytes opaque."
 msgstr ""
+"``reverse_proxy`` स्वीकृत HTTP/1.1 बॉडी और WebSocket ले जाता है; "
+"``forward_auth`` प्रवेश देता है और उन्हें इनग्रेस ले जाता है। छोड़ी गई "
+"auth बॉडी और ऑरिजिन रिस्पॉन्स का Sibuna निरीक्षण या गिनती नहीं कर सकता। "
+"TLS इनग्रेस पर समाप्त होता है; नेटिव HTTP/2 स्थगित है। अपलोड "
+"Content-Length या chunked coding का उपयोग करते हैं; निरीक्षण अधिकतम 8 KiB "
+"प्रीफ़िक्स देखता है, और फ़ाइल के बाइट अपारदर्शी रहते हैं।"
