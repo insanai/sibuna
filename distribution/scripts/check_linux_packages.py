@@ -11,7 +11,8 @@ cases = [
      "sed -i '\\|path-exclude.*usr/share/doc|d' /etc/dpkg/dpkg.cfg.d/*; apt-get update -qq; "
      "apt-get install -y /packages/*_amd64.deb",
      'apt-get install -y --reinstall /packages/*_amd64.deb', 'apt-get remove -y sibuna'),
-    ('fedora:44', '*.x86_64.rpm', 'dnf install -y /packages/*.x86_64.rpm',
+    # util-linux brings setpriv, which the minimal Fedora image lacks.
+    ('fedora:44', '*.x86_64.rpm', 'dnf install -y util-linux /packages/*.x86_64.rpm',
      'rpm -Uvh --replacepkgs /packages/*.x86_64.rpm', 'rpm -e sibuna'),
     ('archlinux:base', '*.pkg.tar.zst',
      "sed -i 's#usr/share/doc/\\*##g' /etc/pacman.conf; pacman -Syu --noconfirm; "
