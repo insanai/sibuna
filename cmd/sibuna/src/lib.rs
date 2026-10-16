@@ -135,12 +135,9 @@
 //!
 //! `tests/e2e.rs` is the Zig end-to-end suite, scenario for scenario; `tests/storage.rs` runs
 //! policy reloads, persistent honeypot bans and incident recording against SQLite (and
-//! PostgreSQL with `SIBUNA_TEST_DATABASE_URL`); `tests/cli.rs` runs the binary. With
-//! `SIBUNA_ZIG_BINARY` naming a Zig build, `tests/cli.rs` and `tests/zig_parity.rs` compare
-//! the two daemons byte for byte (masking only random and time-dependent values) and check
-//! that sessions and tickets minted by one are accepted by the other. Clients see an error
-//! explanation only where Zig sent one (a rejected solution); an invalid session cookie falls
-//! through to the challenge, unexplained.
+//! PostgreSQL with `SIBUNA_TEST_DATABASE_URL`); `tests/cli.rs` runs the binary. Clients see
+//! an error explanation only where Zig sent one (a rejected solution); an invalid session
+//! cookie falls through to the challenge, unexplained.
 
 pub mod assets;
 mod challenge;

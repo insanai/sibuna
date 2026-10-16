@@ -1,8 +1,5 @@
 //! The binary itself: `--help`, `--version`, the `INVALID COMMAND LINE` report, policy-file
 //! diagnostics, secrets, the banner and the stop on SIGTERM.
-//!
-//! With `SIBUNA_ZIG_BINARY` naming a Zig build of the daemon, the shared outputs are also
-//! compared with it byte for byte.
 
 #![allow(clippy::unwrap_used)]
 
@@ -20,10 +17,6 @@ fn run(binary: &str, args: &[&str]) -> Output {
 
 fn stderr(output: &Output) -> String {
     String::from_utf8_lossy(&output.stderr).into_owned()
-}
-
-fn zig() -> Option<String> {
-    std::env::var("SIBUNA_ZIG_BINARY").ok().filter(|path| !path.is_empty())
 }
 
 /// A fresh directory under the system temporary directory.
@@ -58,22 +51,9 @@ fn help_lists_every_option() {
     for option in ["--max-connections", "--policy-file", "--database-url", "--storage-poll-ms"] {
         assert!(text.contains(option), "{option}");
     }
-    if let Some(zig) = zig() {
-        // The network, proof and surface sections are the Zig daemon's, line for line.
-        let zig_help = stderr(&run(&zig, &["--help"]));
-        let section = |text: &str| {
-            let start = text.find("Usage: sibuna [options]").unwrap();
-            let end = text.find("  --policy-file").unwrap();
-            text[start..end].replace(
-                "  --no-trust-forwarded         Never honour them, even in forward_auth mode\n",
-                "",
-            )
-        };
-        assert_eq!(section(&text), section(&zig_help));
-    }
 }
 
-/// Command lines both daemons refuse, with the report the Rust daemon prints.
+/// Command lines the daemon refuses, with the report it prints.
 const REFUSED: [(&[&str], &str); 6] = [
     (&["--bogus"], "Option:   --bogus\nError:    UnknownOption\n"),
     (&["--port", "99999"], "Option:   --port\nValue:    99999\nExpected: a port 1-65535\n"),
@@ -94,9 +74,6 @@ fn invalid_command_lines_stop_with_the_diagnostic() {
         assert!(text.contains(expected), "{args:?}: {text}");
         assert!(text.contains("\n\nHint: "));
         assert!(text.ends_with(".\n\n"), "{text:?}");
-        if let Some(zig) = zig() {
-            assert_eq!(text, stderr(&run(&zig, args)), "{args:?}");
-        }
     }
     let exact = stderr(&run(SIBUNA, &["--port"]));
     assert_eq!(
@@ -116,7 +93,7 @@ fn removed_cluster_options_name_the_storage_record() {
     assert!(text.contains("SID 0011"));
 }
 
-/// Policy files both daemons reject, by what they contain.
+/// Policy files the daemon rejects, by what they contain.
 const POLICIES: [&str; 5] = [
     r#"{"rules":[{"name":"r","path":"/x","action":"DENNY"}]}"#,
     r#"{"rules":[{"name":"r","path":"/x","action":"DENY","colour":"red"}]}"#,
@@ -139,9 +116,6 @@ fn rejected_policy_files_stop_startup_with_an_elm_style_diagnostic() {
         assert!(text.starts_with("-- "), "{text}");
         assert!(text.contains(&format!("File:   {path}\nError:  ")), "{text}");
         assert!(text.contains("\n\nHint: "), "{text}");
-        if let Some(zig) = zig() {
-            assert_eq!(text, stderr(&run(&zig, &args)), "{policy}");
-        }
     }
     let text = stderr(&run(SIBUNA, &["--policy-file", "/nonexistent/policy.json"]));
     assert_eq!(
@@ -262,17 +236,6 @@ fn the_banner_describes_the_configuration_and_sigterm_stops_the_daemon() {
     assert_eq!(daemon.terminate(), Some(0));
     let mut rest = Vec::new();
     let _ = held.read_to_end(&mut rest);
-    if let Some(zig) = zig() {
-        let port = free_port().to_string();
-        let args =
-            ["--host", "127.0.0.1", "--port", &port, "--gate", "-a", "hashcash", "-d", "12"];
-        let mut theirs = Daemon::spawn(&zig, &args);
-        let expected = theirs.read_banner();
-        theirs.terminate();
-        let mut ours = Daemon::spawn(SIBUNA, &args);
-        assert_eq!(ours.read_banner(), expected);
-        assert_eq!(ours.terminate(), Some(0));
-    }
 }
 
 #[test]

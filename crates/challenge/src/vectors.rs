@@ -1,15 +1,9 @@
 //! Cross-implementation vectors: values produced by the Zig 0.16 implementation
 //! (`libs/challenge` and `libs/crypto` of the Zig repository, run with `zig run`), and the
-//! checks that Rust produces the same bytes and accepts what Zig minted.
-//!
-//! The ignored test `write_rust_vectors_for_zig` writes values that Rust minted from other
-//! inputs as a Zig source file; a Zig program then verifies them with the Zig coordinator.
-//! Together they show that a Zig node and a Rust node sharing a seed interoperate
-//! (SID 0010, acceptance criterion 2).
+//! checks that Rust produces the same bytes and accepts what Zig minted (SID 0010,
+//! acceptance criterion 2).
 
 use core::num::NonZeroU32;
-use std::fmt::Write as _;
-use std::string::String;
 
 use sibuna_crypto::ed25519::SigningKey;
 use sibuna_encoding::hex;
@@ -351,75 +345,4 @@ fn adaptive_trace_matches_zig() {
         }
     }
     assert_eq!(trace, ADAPTIVE_TRACE);
-}
-
-/// Writes values Rust minted from inputs the Zig program never used, as a Zig source file
-/// for the Zig verifier. Run with
-/// `SIBUNA_INTEROP_OUT=<dir>/interop_data.zig cargo test -p sibuna-challenge -- --ignored
-/// write_rust_vectors_for_zig`.
-#[test]
-#[ignore = "writes a file for the Zig cross-check; run explicitly"]
-fn write_rust_vectors_for_zig() {
-    let path = std::env::var("SIBUNA_INTEROP_OUT").expect("set SIBUNA_INTEROP_OUT");
-    let (ip, ua, now) = (&b"198.51.100.23"[..], &b"curl/8.5.0"[..], 1_760_000_000u64);
-    let rule = rule_hash("waf:sqli");
-    let mut out = String::new();
-    let mut line =
-        |name: &str, value: &str| writeln!(out, "pub const {name} = \"{value}\";").unwrap();
-
-    // Hashcash on node 7 with MAC tokens: one Rust node issues, another Rust node verifies.
-    let options = Options {
-        default_spec: ChallengeSpec {
-            algorithm: Algorithm::Hashcash,
-            difficulty: 12,
-            ..Default::default()
-        },
-        challenge_ttl: 600,
-        token_ttl: 3600,
-        node: node(7),
-        ..Default::default()
-    };
-    let issuer = Coordinator::new(&Seed::new(SEED), options);
-    let ch = issuer.create_challenge_with_spec(ip, ua, now, issuer.default_spec(), rule);
-    let nonce = hashcash::solve_bits(ch.id.as_bytes(), 12, 1 << 32).unwrap();
-    let verifier = Coordinator::new(&Seed::new(SEED), options);
-    let token = verifier
-        .verify_and_mint(ch.id.as_bytes(), Solution::Nonce(nonce), ip, ua, now + 3)
-        .unwrap()
-        .token;
-    line("R_ID", ch.id.as_str());
-    line("R_NONCE", &nonce.to_string());
-    line("R_TOKEN", token.as_str());
-    let requirement = Requirement {
-        spec: ChallengeSpec { algorithm: Algorithm::Posw, difficulty: 21, posw_challenges: 9 },
-        rule_hash: 0xabcdef,
-    };
-    line("R_TICKET", issuer.requirement_ticket(requirement, ip, ua, now).as_str());
-
-    // PoSW without node binding, Ed25519 tokens.
-    let options = Options {
-        default_spec: ChallengeSpec {
-            algorithm: Algorithm::Posw,
-            difficulty: 12,
-            posw_challenges: 5,
-        },
-        challenge_ttl: 600,
-        token_ttl: 7200,
-        token_scheme: TokenScheme::Ed25519,
-        ..Default::default()
-    };
-    let issuer = Coordinator::new(&Seed::new(SEED), options);
-    let ch = issuer.create_challenge_with_spec(ip, ua, now, issuer.default_spec(), rule);
-    let mut ws = Box::new(Workspace::new());
-    let params = Params { depth: ch.difficulty, challenges: ch.challenges };
-    let proof = posw::solve(ch.id.as_bytes(), params, &mut ws).unwrap();
-    let verifier = Coordinator::new(&Seed::new(SEED), options);
-    let token = verifier
-        .verify_and_mint(ch.id.as_bytes(), Solution::Proof(proof), ip, ua, now + 4)
-        .unwrap()
-        .token;
-    line("R_ED_ID", ch.id.as_str());
-    line("R_ED_PROOF_HEX", &hex::encode(proof));
-    line("R_ED_TOKEN", token.as_str());
-    std::fs::write(path, out).unwrap();
 }
