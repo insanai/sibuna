@@ -1,0 +1,142 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="880pt" height="905pt" viewBox="0.00 0.00 880.00 904.72" role="img" aria-labelledby="diagram-title diagram-description">
+<title id="diagram-title">How Sibuna protects a request</title><desc id="diagram-description">Shield checks requests for web attacks; Gate skips those checks. Both apply access rules, sessions and request limits. A request can reach the app, receive a puzzle or be stopped.</desc><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 883.12)">
+<title>ProtectionSurfaces</title>
+<polygon fill="#ffffff" stroke="transparent" points="-21.6,21.6 -21.6,-883.12 858.4,-883.12 858.4,21.6 -21.6,21.6" />
+<text text-anchor="middle" x="418.4" y="-839.92" font-family="Arial" font-size="22.00" fill="#172033">How Sibuna protects a request</text>
+
+<g id="node1" class="node">
+<title>request</title>
+<ellipse fill="#eff3f8" stroke="#475569" stroke-width="1.6" cx="305.8" cy="-803.36" rx="141.34" ry="26.33" />
+<text text-anchor="middle" x="305.8" y="-799.26" font-family="Arial" font-size="17.00" fill="#172033">Visitor requests a page</text>
+</g>
+
+<g id="node2" class="node">
+<title>mode</title>
+<polygon fill="#fff4cc" stroke="#475569" stroke-width="1.6" points="305.8,-746.2 181.8,-690.2 305.8,-634.2 429.8,-690.2 305.8,-746.2" />
+<text text-anchor="middle" x="305.8" y="-695.6" font-family="Arial" font-size="17.00" fill="#172033">Check for</text>
+<text text-anchor="middle" x="305.8" y="-676.6" font-family="Arial" font-size="17.00" fill="#172033">web attacks?</text>
+</g>
+
+<g id="edge1" class="edge">
+<title>request-&gt;mode</title>
+<path fill="none" stroke="#475569" stroke-width="1.5" d="M305.8,-777.13C305.8,-770.22 305.8,-762.39 305.8,-754.35" />
+<polygon fill="#475569" stroke="#475569" stroke-width="1.5" points="308.6,-754.27 305.8,-746.27 303,-754.27 308.6,-754.27" />
+</g>
+
+<g id="node3" class="node">
+<title>scan</title>
+<polygon fill="#eff3f8" stroke="#475569" stroke-width="1.6" points="460.8,-587.2 150.8,-587.2 150.8,-531.2 460.8,-531.2 460.8,-587.2" />
+<text text-anchor="middle" x="305.8" y="-564.6" font-family="Arial" font-size="17.00" fill="#172033">Look for SQL injection, XSS,</text>
+<text text-anchor="middle" x="305.8" y="-545.6" font-family="Arial" font-size="17.00" fill="#172033">path traversal and command injection</text>
+</g>
+
+<g id="edge2" class="edge">
+<title>mode-&gt;scan</title>
+<path fill="none" stroke="#475569" stroke-width="1.5" d="M305.8,-634.11C305.8,-621.11 305.8,-607.58 305.8,-595.71" />
+<polygon fill="#475569" stroke="#475569" stroke-width="1.5" points="308.6,-595.39 305.8,-587.39 303,-595.39 308.6,-595.39" />
+<text text-anchor="middle" x="373.3" y="-607.2" font-family="Arial" font-size="15.00" fill="#172033">Yes: Shield (default)</text>
+</g>
+
+<g id="node6" class="node">
+<title>checks</title>
+<polygon fill="#eff3f8" stroke="#475569" stroke-width="1.6" points="416.3,-325.2 195.3,-325.2 195.3,-269.2 416.3,-269.2 416.3,-325.2" />
+<text text-anchor="middle" x="305.8" y="-302.6" font-family="Arial" font-size="17.00" fill="#172033">Check your access rules,</text>
+<text text-anchor="middle" x="305.8" y="-283.6" font-family="Arial" font-size="17.00" fill="#172033">session and request limits</text>
+</g>
+
+<g id="edge3" class="edge">
+<title>mode:e-&gt;checks:e</title>
+<path fill="none" stroke="#475569" stroke-width="1.5" d="M430.8,-690.2C430.8,-690.2 744.8,-484.2 744.8,-484.2 744.8,-484.2 744.8,-372.2 744.8,-372.2 744.8,-372.2 475.42,-310.6 424.91,-299.05" />
+<polygon fill="#475569" stroke="#475569" stroke-width="1.5" points="425.23,-296.25 416.8,-297.2 423.98,-301.71 425.23,-296.25" />
+<text text-anchor="middle" x="778.8" y="-504.2" font-family="Arial" font-size="15.00" fill="#172033">No: Gate (--gate)</text>
+</g>
+
+<g id="node4" class="node">
+<title>attack</title>
+<polygon fill="#fff4cc" stroke="#475569" stroke-width="1.6" points="305.8,-484.2 151.8,-428.2 305.8,-372.2 459.8,-428.2 305.8,-484.2" />
+<text text-anchor="middle" x="305.8" y="-433.6" font-family="Arial" font-size="17.00" fill="#172033">Does your policy</text>
+<text text-anchor="middle" x="305.8" y="-414.6" font-family="Arial" font-size="17.00" fill="#172033">block this attack?</text>
+</g>
+
+<g id="edge4" class="edge">
+<title>scan-&gt;attack</title>
+<path fill="none" stroke="#475569" stroke-width="1.5" d="M305.8,-531.15C305.8,-519.79 305.8,-506.05 305.8,-492.39" />
+<polygon fill="#475569" stroke="#475569" stroke-width="1.5" points="308.6,-492.38 305.8,-484.38 303,-492.38 308.6,-492.38" />
+</g>
+
+<g id="node5" class="node">
+<title>attack_stop</title>
+<ellipse fill="#fde8e7" stroke="#475569" stroke-width="1.6" cx="623.8" cy="-428.2" rx="106.55" ry="26.33" />
+<text text-anchor="middle" x="623.8" y="-424.1" font-family="Arial" font-size="17.00" fill="#172033">Stop the request</text>
+</g>
+
+<g id="edge6" class="edge">
+<title>attack:e-&gt;attack_stop:w</title>
+<path fill="none" stroke="#475569" stroke-width="1.5" d="M459.8,-428.2C459.8,-428.2 476.3,-444.2 476.3,-444.2 476.3,-444.2 476.33,-444.2 476.37,-444.2" />
+<polygon fill="#475569" stroke="#475569" stroke-width="1.5" points="510.61,-433.73 517.03,-428.2 508.56,-428.52 510.61,-433.73" />
+<text text-anchor="middle" x="488.8" y="-449.2" font-family="Arial" font-size="15.00" fill="#172033">Yes</text>
+</g>
+
+<g id="edge5" class="edge">
+<title>attack-&gt;checks</title>
+<path fill="none" stroke="#475569" stroke-width="1.5" d="M305.8,-372.11C305.8,-359.11 305.8,-345.58 305.8,-333.71" />
+<polygon fill="#475569" stroke="#475569" stroke-width="1.5" points="308.6,-333.39 305.8,-325.39 303,-333.39 308.6,-333.39" />
+<text text-anchor="middle" x="315.3" y="-345.2" font-family="Arial" font-size="15.00" fill="#172033">No</text>
+</g>
+
+<g id="node7" class="node">
+<title>result</title>
+<polygon fill="#fff4cc" stroke="#475569" stroke-width="1.6" points="305.8,-238.2 155.8,-182.2 305.8,-126.2 455.8,-182.2 305.8,-238.2" />
+<text text-anchor="middle" x="305.8" y="-187.6" font-family="Arial" font-size="17.00" fill="#172033">Can this request</text>
+<text text-anchor="middle" x="305.8" y="-168.6" font-family="Arial" font-size="17.00" fill="#172033">reach your app?</text>
+</g>
+
+<g id="edge7" class="edge">
+<title>checks-&gt;result</title>
+<path fill="none" stroke="#475569" stroke-width="1.5" d="M305.8,-269.13C305.8,-262.32 305.8,-254.72 305.8,-246.93" />
+<polygon fill="#475569" stroke="#475569" stroke-width="1.5" points="308.6,-246.44 305.8,-238.44 303,-246.44 308.6,-246.44" />
+</g>
+
+<g id="node8" class="node">
+<title>app</title>
+<ellipse fill="#e2f3e8" stroke="#475569" stroke-width="1.6" cx="89.8" cy="-39.6" rx="89.61" ry="39.7" />
+<text text-anchor="middle" x="89.8" y="-45" font-family="Arial" font-size="17.00" fill="#172033">Send request</text>
+<text text-anchor="middle" x="89.8" y="-26" font-family="Arial" font-size="17.00" fill="#172033">to your app</text>
+</g>
+
+<g id="edge8" class="edge">
+<title>result-&gt;app</title>
+<path fill="none" stroke="#475569" stroke-width="1.5" d="M251.85,-146.08C219.66,-125.12 178.82,-98.54 146.2,-77.31" />
+<polygon fill="#475569" stroke="#475569" stroke-width="1.5" points="147.6,-74.88 139.37,-72.86 144.55,-79.57 147.6,-74.88" />
+<text text-anchor="middle" x="210.3" y="-99.2" font-family="Arial" font-size="15.00" fill="#172033">Yes</text>
+</g>
+
+<g id="node9" class="node">
+<title>puzzle</title>
+<polygon fill="#fff4cc" stroke="#475569" stroke-width="1.6" points="403.3,-67.6 208.3,-67.6 208.3,-11.6 403.3,-11.6 403.3,-67.6" />
+<text text-anchor="middle" x="305.8" y="-45" font-family="Arial" font-size="17.00" fill="#172033">Ask browser to solve</text>
+<text text-anchor="middle" x="305.8" y="-26" font-family="Arial" font-size="17.00" fill="#172033">a proof-of-work puzzle</text>
+</g>
+
+<g id="edge9" class="edge">
+<title>result-&gt;puzzle</title>
+<path fill="none" stroke="#475569" stroke-width="1.5" d="M305.8,-126.03C305.8,-109.15 305.8,-91.06 305.8,-75.88" />
+<polygon fill="#475569" stroke="#475569" stroke-width="1.5" points="308.6,-75.78 305.8,-67.78 303,-75.78 308.6,-75.78" />
+<text text-anchor="middle" x="357.3" y="-99.2" font-family="Arial" font-size="15.00" fill="#172033">Needs a puzzle</text>
+</g>
+
+<g id="node10" class="node">
+<title>stop</title>
+<ellipse fill="#fde8e7" stroke="#475569" stroke-width="1.6" cx="538.8" cy="-39.6" rx="106.55" ry="26.33" />
+<text text-anchor="middle" x="538.8" y="-35.5" font-family="Arial" font-size="17.00" fill="#172033">Stop the request</text>
+</g>
+
+<g id="edge10" class="edge">
+<title>result-&gt;stop</title>
+<path fill="none" stroke="#475569" stroke-width="1.5" d="M362.21,-147.16C402.23,-123.01 455.29,-90.99 492.77,-68.38" />
+<polygon fill="#475569" stroke="#475569" stroke-width="1.5" points="494.64,-70.52 500.05,-63.99 491.75,-65.72 494.64,-70.52" />
+<text text-anchor="middle" x="452.3" y="-99.2" font-family="Arial" font-size="15.00" fill="#172033">No</text>
+</g>
+</g>
+</svg>

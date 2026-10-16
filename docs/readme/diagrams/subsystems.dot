@@ -1,0 +1,39 @@
+digraph Subsystems {
+    graph [bgcolor="#ffffff", pad=0.25];
+    node [shape=plain, fontname="Arial", fontsize=17, fontcolor="#172033"];
+
+    // One row per crate group under crates/; the small reusable libraries are left out.
+    modules [label=<
+        <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="14"
+            COLOR="#475569" BGCOLOR="#ffffff">
+            <TR><TD COLSPAN="2" BGCOLOR="#eff3f8">
+                <FONT POINT-SIZE="22"><B>Inside Sibuna</B></FONT><BR/>
+                <FONT POINT-SIZE="15">One executable; each crate has a job</FONT>
+            </TD></TR>
+            <HR/>
+            <TR><TD ALIGN="LEFT"><B>serve</B></TD>
+                <TD ALIGN="LEFT">Accept connections and bound how many stay open</TD></TR>
+            <HR/>
+            <TR><TD ALIGN="LEFT"><B>http, net</B></TD>
+                <TD ALIGN="LEFT">Read HTTP requests and forward allowed traffic</TD></TR>
+            <HR/>
+            <TR><TD ALIGN="LEFT"><B>pow, crypto</B></TD>
+                <TD ALIGN="LEFT">Check proofs of work and sign or verify sessions</TD></TR>
+            <HR/>
+            <TR><TD ALIGN="LEFT"><B>challenge</B></TD>
+                <TD ALIGN="LEFT">Create puzzles and adjust the required work</TD></TR>
+            <HR/>
+            <TR><TD ALIGN="LEFT"><B>policy</B></TD>
+                <TD ALIGN="LEFT">Apply access rules and look for attacks</TD></TR>
+            <HR/>
+            <TR><TD ALIGN="LEFT"><B>store</B></TD>
+                <TD ALIGN="LEFT">Track request limits, bans and already-used proofs</TD></TR>
+            <HR/>
+            <TR><TD ALIGN="LEFT"><B>storage</B></TD>
+                <TD ALIGN="LEFT">Save policies and incidents in SQLite or PostgreSQL</TD></TR>
+            <HR/>
+            <TR><TD ALIGN="LEFT"><B>console</B></TD>
+                <TD ALIGN="LEFT">Show traffic and help you manage protection</TD></TR>
+        </TABLE>
+    >];
+}

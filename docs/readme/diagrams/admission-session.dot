@@ -1,0 +1,36 @@
+digraph AdmissionSession {
+    graph [rankdir=TB, bgcolor="#ffffff", pad=0.3, nodesep=0.4,
+        ranksep=0.35, splines=polyline, fontname="Arial", fontsize=22,
+        fontcolor="#172033", label="Solve a puzzle, then keep browsing", labelloc=t];
+    node [shape=box, style=filled, fillcolor="#eff3f8", fontname="Arial",
+        fontsize=17, color="#475569", fontcolor="#172033", penwidth=1.6,
+        margin="0.16,0.12", group="main"];
+    edge [fontname="Arial", fontsize=15, color="#475569",
+        fontcolor="#172033", penwidth=1.5, arrowsize=0.8];
+
+    challenge [shape=oval, label="Sibuna asks the browser\nto solve a puzzle"];
+    work [label="Browser solves the puzzle\nin the background"];
+    proof [shape=diamond, fillcolor="#fff4cc", label="Does Sibuna accept\nthe solution?"];
+    cookie [label="Browser saves a signed\nsession cookie"];
+    invalid [group="side", shape=oval, fillcolor="#fde8e7", label="Reject the solution"];
+    requests [label="On the next request,\nbrowser sends the cookie"];
+    checks [label="Check the session, rules and limits\nShield also checks for attacks"];
+    result [shape=diamond, fillcolor="#fff4cc", label="Can this request\nreach your app?"];
+    app [group="left", shape=oval, fillcolor="#e2f3e8", label="Send request\nto your app"];
+    again [fillcolor="#fff4cc", label="Ask for a new puzzle\n(e.g. expired session)"];
+    stop [group="right", shape=oval, fillcolor="#fde8e7", label="Stop the request"];
+
+    // A session proves paid work, not that the visitor is human.
+    challenge -> work;
+    work -> proof;
+    proof -> cookie [label="Yes"];
+    proof:e -> invalid:w [label="No"];
+    {rank=same; proof; invalid;}
+    cookie -> requests;
+    requests -> checks;
+    checks -> result;
+    result -> app [label="Yes"];
+    result -> again [label="Needs a puzzle"];
+    result -> stop [label="No"];
+    {rank=same; app; again; stop;}
+}

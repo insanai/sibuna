@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="591pt" height="481pt" viewBox="0.00 0.00 591.00 481.00" role="img" aria-labelledby="diagram-title diagram-description">
+<title id="diagram-title">Inside Sibuna</title><desc id="diagram-description">Eight groups of crates handle connections, HTTP, proofs, puzzles, access rules, request limits, storage in SQLite or PostgreSQL, and the operator console.</desc><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(18 463)">
+<title>Subsystems</title>
+<polygon fill="#ffffff" stroke="transparent" points="-18,18 -18,-463 573,-463 573,18 -18,18" />
+
+<g id="node1" class="node">
+<title>modules</title>
+<polygon fill="#ffffff" stroke="transparent" points="0,0 0,-445 555,-445 555,0 0,0" />
+<polygon fill="#eff3f8" stroke="transparent" points="1.5,-376.5 1.5,-443.5 554.5,-443.5 554.5,-376.5 1.5,-376.5" />
+<text text-anchor="start" x="170" y="-412.9" font-family="Arial" font-size="17.00" fill="#172033">                </text>
+<text text-anchor="start" x="243" y="-412.9" font-family="Arial" font-weight="bold" font-size="22.00" fill="#172033">Inside Sibuna</text>
+<text text-anchor="start" x="89" y="-394.9" font-family="Arial" font-size="17.00" fill="#172033">                </text>
+<text text-anchor="start" x="162" y="-394.9" font-family="Arial" font-size="15.00" fill="#172033">One executable; each crate has a job</text>
+<text text-anchor="start" x="412" y="-394.9" font-family="Arial" font-size="17.00" fill="#172033">            </text>
+<text text-anchor="start" x="15.5" y="-349.9" font-family="Arial" font-weight="bold" font-size="17.00" fill="#172033">serve</text>
+<text text-anchor="start" x="140.5" y="-348.9" font-family="Arial" font-size="17.00" fill="#172033">Accept connections and bound how many stay open</text>
+<text text-anchor="start" x="15.5" y="-302.9" font-family="Arial" font-weight="bold" font-size="17.00" fill="#172033">http, net</text>
+<text text-anchor="start" x="140.5" y="-301.9" font-family="Arial" font-size="17.00" fill="#172033">Read HTTP requests and forward allowed traffic</text>
+<text text-anchor="start" x="15.5" y="-255.9" font-family="Arial" font-weight="bold" font-size="17.00" fill="#172033">pow, crypto</text>
+<text text-anchor="start" x="140.5" y="-254.9" font-family="Arial" font-size="17.00" fill="#172033">Check proofs of work and sign or verify sessions</text>
+<text text-anchor="start" x="15.5" y="-208.9" font-family="Arial" font-weight="bold" font-size="17.00" fill="#172033">challenge</text>
+<text text-anchor="start" x="140.5" y="-207.9" font-family="Arial" font-size="17.00" fill="#172033">Create puzzles and adjust the required work</text>
+<text text-anchor="start" x="15.5" y="-161.9" font-family="Arial" font-weight="bold" font-size="17.00" fill="#172033">policy</text>
+<text text-anchor="start" x="140.5" y="-160.9" font-family="Arial" font-size="17.00" fill="#172033">Apply access rules and look for attacks</text>
+<text text-anchor="start" x="15.5" y="-114.9" font-family="Arial" font-weight="bold" font-size="17.00" fill="#172033">store</text>
+<text text-anchor="start" x="140.5" y="-113.9" font-family="Arial" font-size="17.00" fill="#172033">Track request limits, bans and already-used proofs</text>
+<text text-anchor="start" x="15.5" y="-67.9" font-family="Arial" font-weight="bold" font-size="17.00" fill="#172033">storage</text>
+<text text-anchor="start" x="140.5" y="-66.9" font-family="Arial" font-size="17.00" fill="#172033">Save policies and incidents in SQLite or PostgreSQL</text>
+<text text-anchor="start" x="15.5" y="-20.9" font-family="Arial" font-weight="bold" font-size="17.00" fill="#172033">console</text>
+<text text-anchor="start" x="140.5" y="-19.9" font-family="Arial" font-size="17.00" fill="#172033">Show traffic and help you manage protection</text>
+<polygon fill="#475569" stroke="#475569" points="0.5,-376.5 0.5,-376.5 555.5,-376.5 555.5,-376.5 0.5,-376.5" />
+<polygon fill="#475569" stroke="#475569" points="0.5,-329.5 0.5,-329.5 126.5,-329.5 126.5,-329.5 0.5,-329.5" />
+<polygon fill="#475569" stroke="#475569" points="126.5,-329.5 126.5,-329.5 555.5,-329.5 555.5,-329.5 126.5,-329.5" />
+<polygon fill="#475569" stroke="#475569" points="0.5,-282.5 0.5,-282.5 126.5,-282.5 126.5,-282.5 0.5,-282.5" />
+<polygon fill="#475569" stroke="#475569" points="126.5,-282.5 126.5,-282.5 555.5,-282.5 555.5,-282.5 126.5,-282.5" />
+<polygon fill="#475569" stroke="#475569" points="0.5,-235.5 0.5,-235.5 126.5,-235.5 126.5,-235.5 0.5,-235.5" />
+<polygon fill="#475569" stroke="#475569" points="126.5,-235.5 126.5,-235.5 555.5,-235.5 555.5,-235.5 126.5,-235.5" />
+<polygon fill="#475569" stroke="#475569" points="0.5,-188.5 0.5,-188.5 126.5,-188.5 126.5,-188.5 0.5,-188.5" />
+<polygon fill="#475569" stroke="#475569" points="126.5,-188.5 126.5,-188.5 555.5,-188.5 555.5,-188.5 126.5,-188.5" />
+<polygon fill="#475569" stroke="#475569" points="0.5,-141.5 0.5,-141.5 126.5,-141.5 126.5,-141.5 0.5,-141.5" />
+<polygon fill="#475569" stroke="#475569" points="126.5,-141.5 126.5,-141.5 555.5,-141.5 555.5,-141.5 126.5,-141.5" />
+<polygon fill="#475569" stroke="#475569" points="0.5,-94.5 0.5,-94.5 126.5,-94.5 126.5,-94.5 0.5,-94.5" />
+<polygon fill="#475569" stroke="#475569" points="126.5,-94.5 126.5,-94.5 555.5,-94.5 555.5,-94.5 126.5,-94.5" />
+<polygon fill="#475569" stroke="#475569" points="0.5,-47.5 0.5,-47.5 126.5,-47.5 126.5,-47.5 0.5,-47.5" />
+<polygon fill="#475569" stroke="#475569" points="126.5,-47.5 126.5,-47.5 555.5,-47.5 555.5,-47.5 126.5,-47.5" />
+<polygon fill="none" stroke="#475569" points="0,0 0,-445 555,-445 555,0 0,0" />
+</g>
+</g>
+</svg>
