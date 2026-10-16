@@ -1,4 +1,4 @@
-//! A small command-line reader: flags and `--name value` options, taken by name.
+//! A small command-line reader: `--name value` options, taken by name.
 
 use std::str::FromStr;
 
@@ -19,13 +19,6 @@ impl Args {
     /// Returns the arguments that have not been taken yet, in order.
     pub fn remaining(&self) -> &[String] {
         &self.items
-    }
-
-    /// Takes the flag `name` and returns whether it was present.
-    pub fn flag(&mut self, name: &str) -> bool {
-        let before = self.items.len();
-        self.items.retain(|item| item != name);
-        self.items.len() != before
     }
 
     /// Takes the last `name value` or `name=value` pair and returns its value.
@@ -122,12 +115,11 @@ mod tests {
     }
 
     #[test]
-    fn takes_values_in_both_spellings_and_flags() {
-        let mut a = args("--seconds 5 --zig=/bin/z --verbose");
-        assert_eq!(a.value("--zig").unwrap().as_deref(), Some("/bin/z"));
+    fn takes_values_in_both_spellings() {
+        let mut a = args("--seconds 5 --rust=/bin/s");
+        assert_eq!(a.value("--rust").unwrap().as_deref(), Some("/bin/s"));
         assert_eq!(a.parsed("--seconds", 1u64).unwrap(), 5);
         assert_eq!(a.parsed("--threads", 2u64).unwrap(), 2);
-        assert!(a.flag("--verbose"));
         assert!(a.finish(&[]).is_ok());
         let mut a = args("-H a:1 -H=b:2 -H c:3");
         assert_eq!(a.values("-H").unwrap(), ["a:1", "b:2", "c:3"]);

@@ -1,5 +1,5 @@
 //! Result documents: a JSON value we build and write with two-space indentation, and helpers
-//! for reading the JSON other programs print (the Zig benchmark, wrk, the daemon).
+//! for reading the JSON other programs print (the primitive suite, wrk, the daemon).
 //!
 //! Parsing uses `sibuna-json`; its writer is compact, and result files are read by people
 //! and diffed in git, so we keep a small indented writer here.

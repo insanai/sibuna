@@ -21,8 +21,7 @@
 //! Deliberate changes from `compare.py`: the clients are threads of this program, not Python
 //! processes, so the figures are no longer limited by the clients; the program re-executes
 //! itself under `taskset` so that the clients run on `--load-cpus`; a batch is timed from the
-//! moment both clients hold a connection, so connection setup is outside the timer; the Zig
-//! daemon can be measured beside the Rust daemon.
+//! moment both clients hold a connection, so connection setup is outside the timer.
 
 mod client;
 
@@ -37,11 +36,11 @@ use sibuna_pow::hashcash;
 
 use crate::anubis::{self, TokenScheme};
 use crate::args::Args;
-use crate::daemon::{Implementation, browser_headers};
+use crate::daemon::{IMPLEMENTATION, browser_headers};
 use crate::error::{Error, Result};
 use crate::json::{Json, member_str, member_u64};
 use crate::process::{self, CpuSet, TempDir};
-use crate::product::{Daemons, parse_anubis, parse_daemons};
+use crate::product::{parse_anubis, parse_daemon};
 use crate::report::{Table, fmt_count, write_results};
 use crate::server::{Launch, Server};
 use crate::stats::Spread;
@@ -72,7 +71,7 @@ const PROOFS: usize = 64;
 
 /// The options of `bench admission`.
 struct Options {
-    daemons: Daemons,
+    daemon: PathBuf,
     anubis: PathBuf,
     cpus: CpuSet,
     load_cpus: CpuSet,
@@ -81,7 +80,7 @@ struct Options {
 }
 
 fn parse_options(mut args: Args) -> Result<Options> {
-    let (daemons, cpus, load_cpus) = parse_daemons(&mut args, "0-1")?;
+    let (daemon, cpus, load_cpus) = parse_daemon(&mut args, "0-1")?;
     let anubis = parse_anubis(&mut args)?.ok_or_else(|| {
         Error::new("MISSING VALUE", "`admission` compares with Anubis and needs `--anubis`.")
             .hint("Write `cargo xtask bench admission --anubis <path/to/anubis>`.")
@@ -91,24 +90,15 @@ fn parse_options(mut args: Args) -> Result<Options> {
         return Err(Error::new("INVALID VALUE", "`--batches` must be positive."));
     }
     let out = args.value("--out")?.map_or_else(paths::results_dir, PathBuf::from);
-    args.finish(&[
-        "--rust",
-        "--zig",
-        "--zig-only",
-        "--anubis",
-        "--cpus",
-        "--load-cpus",
-        "--batches",
-        "--out",
-    ])?;
-    Ok(Options { daemons, anubis, cpus, load_cpus, batches, out })
+    args.finish(&["--rust", "--anubis", "--cpus", "--load-cpus", "--batches", "--out"])?;
+    Ok(Options { daemon, anubis, cpus, load_cpus, batches, out })
 }
 
 /// A product and token scheme under test.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Contender {
-    /// A Sibuna daemon, with its default keyed BLAKE3 tokens.
-    Sibuna(Implementation),
+    /// The Sibuna daemon, with its default keyed BLAKE3 tokens.
+    Sibuna,
     /// Anubis with one token scheme.
     Anubis(TokenScheme),
 }
@@ -116,21 +106,21 @@ enum Contender {
 impl Contender {
     fn product(self) -> &'static str {
         match self {
-            Contender::Sibuna(_) => "sibuna",
+            Contender::Sibuna => "sibuna",
             Contender::Anubis(_) => "anubis",
         }
     }
 
     fn implementation(self) -> &'static str {
         match self {
-            Contender::Sibuna(implementation) => implementation.name(),
+            Contender::Sibuna => IMPLEMENTATION,
             Contender::Anubis(_) => "anubis",
         }
     }
 
     fn token_scheme(self) -> &'static str {
         match self {
-            Contender::Sibuna(_) => "blake3",
+            Contender::Sibuna => "blake3",
             Contender::Anubis(scheme) => scheme.name(),
         }
     }
@@ -138,7 +128,7 @@ impl Contender {
     /// Returns the forward-auth check endpoint.
     fn check(self) -> &'static str {
         match self {
-            Contender::Sibuna(_) => "/private",
+            Contender::Sibuna => "/private",
             Contender::Anubis(_) => anubis::CHECK,
         }
     }
@@ -157,22 +147,14 @@ pub fn command(args: Args, stdout: &mut dyn Write) -> Result<()> {
         return run_pinned(&options.load_cpus, &original);
     }
     let temp = TempDir::new("admission")?;
-    let mut contenders: Vec<(Contender, &Path)> = options
-        .daemons
-        .iter()
-        .map(|(implementation, path)| (Contender::Sibuna(*implementation), path.as_path()))
-        .collect();
-    for scheme in [TokenScheme::Ed25519, TokenScheme::Hs512] {
-        contenders.push((Contender::Anubis(scheme), options.anubis.as_path()));
-    }
+    let contenders = [
+        (Contender::Sibuna, options.daemon.as_path()),
+        (Contender::Anubis(TokenScheme::Ed25519), options.anubis.as_path()),
+        (Contender::Anubis(TokenScheme::Hs512), options.anubis.as_path()),
+    ];
     let mut runs = Vec::new();
     for (contender, binary) in contenders {
-        let line = format!(
-            "Measuring {} {} ({})\n",
-            contender.implementation(),
-            contender.product(),
-            contender.token_scheme()
-        );
+        let line = format!("Measuring {} ({})\n", contender.product(), contender.token_scheme());
         stdout.write_all(line.as_bytes()).map_err(|e| Error::io("stdout", e))?;
         runs.push(run_case(&options, contender, binary, temp.path(), stdout)?);
     }
@@ -252,9 +234,9 @@ impl Measurement {
 /// Starts `contender` from `binary` in forward-auth mode, pinned to the daemon CPUs.
 fn start(options: &Options, contender: Contender, binary: &Path, dir: &Path) -> Result<Server> {
     let workers = options.cpus.count();
-    let label = format!("{}-{}", contender.implementation(), contender.token_scheme());
+    let label = format!("{}-{}", contender.product(), contender.token_scheme());
     match contender {
-        Contender::Sibuna(_) => {
+        Contender::Sibuna => {
             let port = process::free_port()?;
             Server::start(Launch {
                 label: &label,
@@ -361,7 +343,7 @@ fn measure_proofs(options: &Options, port: u16, contender: Contender) -> Result<
 fn bootstrap(port: u16, contender: Contender) -> Vec<Exchange> {
     let headers = browser_headers();
     match contender {
-        Contender::Sibuna(_) => vec![
+        Contender::Sibuna => vec![
             Exchange::new(port, "GET", "/__sibuna/challenge", &headers, b"", 200),
             Exchange::new(port, "GET", CHALLENGE_JSON, &headers, b"", 200),
         ],
@@ -376,7 +358,7 @@ const CHALLENGE_JSON: &str = "/__sibuna/challenge.json?path=/private";
 fn proof(port: u16, contender: Contender) -> Result<Exchange> {
     let mut headers = browser_headers();
     match contender {
-        Contender::Sibuna(_) => {
+        Contender::Sibuna => {
             let id = issue(port)?;
             let nonce = hashcash::solve_bits(id.as_bytes(), BITS, 1 << 40).ok_or_else(|| {
                 Error::new("NO SOLUTION", format!("No nonce solves challenge {id}."))
@@ -463,7 +445,7 @@ fn case_json(case: &CaseResult, cpus: &CpuSet) -> Json {
         .with("binary", meta::binary(&case.binary))
         .with("binary_bytes", fs::metadata(&case.binary).ok().map(|m| m.len()))
         .with("cpu_affinity", affinity);
-    if let Contender::Sibuna(_) = case.contender {
+    if case.contender == Contender::Sibuna {
         json.set("challenge_rate_limit", CHALLENGE_BUDGET);
     }
     for (name, measurement) in &case.operations {
@@ -473,11 +455,9 @@ fn case_json(case: &CaseResult, cpus: &CpuSet) -> Json {
 }
 
 fn admission_document(options: &Options, runs: &[CaseResult]) -> Json {
-    let mut daemons = Json::object();
-    for (implementation, path) in &options.daemons {
-        daemons.set(implementation.name(), meta::binary(path));
-    }
-    daemons.set("anubis", meta::binary(&options.anubis));
+    let daemons = Json::object()
+        .with(IMPLEMENTATION, meta::binary(&options.daemon))
+        .with("anubis", meta::binary(&options.anubis));
     Json::object()
         .with("meta", meta::machine(&paths::workspace_root(), &options.cpus))
         .with("anubis_version", anubis::version(&options.anubis))
@@ -520,17 +500,13 @@ fn admission_markdown(options: &Options, runs: &[CaseResult]) -> String {
         options.batches,
     );
     let names = ["valid_session", "unauthenticated_check", "challenge_bootstrap"];
-    let mut header = vec!["Product", "Impl", "Token"];
+    let mut header = vec!["Product", "Token"];
     header.extend(names);
     header.extend(["proof_verification", "RSS after KiB"]);
     let mut rates = Table::new(&header);
     let mut spreads = Table::new(&header[..header.len() - 1]);
     for run in runs {
-        let lead = [
-            run.contender.product(),
-            run.contender.implementation(),
-            run.contender.token_scheme(),
-        ];
+        let lead = [run.contender.product(), run.contender.token_scheme()];
         let mut row: Vec<String> = lead.iter().map(|s| (*s).to_owned()).collect();
         let mut spread_row = row.clone();
         for (_, measurement) in &run.operations {
@@ -567,7 +543,7 @@ mod tests {
 
     #[test]
     fn contenders_name_their_product_and_endpoints() {
-        let sibuna = Contender::Sibuna(Implementation::Rust);
+        let sibuna = Contender::Sibuna;
         assert_eq!(
             (sibuna.product(), sibuna.token_scheme(), sibuna.check()),
             ("sibuna", "blake3", "/private")

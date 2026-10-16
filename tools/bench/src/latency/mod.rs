@@ -19,11 +19,11 @@ use std::path::PathBuf;
 use std::process::Command;
 
 use crate::args::Args;
-use crate::daemon::{Config, Daemon, Implementation, Mode, Surface, browser_headers};
+use crate::daemon::{Config, Daemon, IMPLEMENTATION, Mode, Surface, browser_headers};
 use crate::error::{Error, Result};
 use crate::json::Json;
 use crate::process::{self, CpuSet, TempDir};
-use crate::product::{Daemons, Origin, OriginKind, parse_daemons, parse_list};
+use crate::product::{Origin, OriginKind, parse_daemon, parse_list};
 use crate::report::{Table, fmt_count, write_results};
 use crate::stats::Spread;
 use crate::{meta, paths};
@@ -33,7 +33,7 @@ use generator::{LATENCY_KEYS, RateResult};
 
 /// The options of `bench latency`.
 struct Options {
-    daemons: Daemons,
+    daemon: PathBuf,
     cpus: CpuSet,
     load_cpus: CpuSet,
     rates: Vec<f64>,
@@ -47,12 +47,12 @@ struct Options {
 }
 
 fn parse_options(mut args: Args) -> Result<Options> {
-    let (daemons, cpus, load_cpus) = parse_daemons(&mut args, "0-3")?;
+    let (daemon, cpus, load_cpus) = parse_daemon(&mut args, "0-3")?;
     let rates = args.parsed("--rates", "10000,25000,50000,100000,150000".to_owned())?;
     let surface = args.parsed("--surface", "shield".to_owned())?;
     let modes = args.parsed("--modes", "forward_auth,reverse_proxy".to_owned())?;
     let options = Options {
-        daemons,
+        daemon,
         cpus,
         load_cpus,
         rates: parse_list(&rates, "--rates", |r| r.parse().ok().filter(|&r: &f64| r > 0.0))?,
@@ -69,8 +69,6 @@ fn parse_options(mut args: Args) -> Result<Options> {
     };
     args.finish(&[
         "--rust",
-        "--zig",
-        "--zig-only",
         "--cpus",
         "--load-cpus",
         "--rates",
@@ -91,7 +89,7 @@ struct Measured {
     cpu_us_per_request: Option<f64>,
 }
 
-/// The repeated runs of one daemon at one rate.
+/// The repeated runs at one rate.
 struct Point {
     rate: f64,
     runs: Vec<Measured>,
@@ -134,9 +132,8 @@ impl Point {
     }
 }
 
-/// One daemon's results at every rate, in one mode.
+/// The results at every rate, in one mode.
 struct Series {
-    implementation: Implementation,
     mode: Mode,
     points: Vec<Point>,
 }
@@ -153,7 +150,7 @@ pub fn command(args: Args, stdout: &mut dyn Write) -> Result<()> {
     let load_before = meta::load_average();
     let mut series = Vec::new();
     for &mode in &options.modes {
-        series.extend(run_mode(&options, mode, origin.port, &temp, stdout)?);
+        series.push(run_mode(&options, mode, origin.port, &temp, stdout)?);
     }
     drop(origin);
     let mut document = latency_document(&options, &series);
@@ -166,38 +163,33 @@ pub fn command(args: Args, stdout: &mut dyn Write) -> Result<()> {
     stdout.write_all(text.as_bytes()).map_err(|e| Error::io("stdout", e))
 }
 
-/// Starts every daemon in `mode` and steps through the rates and repetitions, alternating
-/// daemons at each step so that slow drift of the machine affects both alike.
+/// Starts the daemon in `mode` and steps through the rates, running each rate
+/// `--repetitions` times.
 fn run_mode(
     options: &Options,
     mode: Mode,
     origin_port: u16,
     temp: &TempDir,
     stdout: &mut dyn Write,
-) -> Result<Vec<Series>> {
+) -> Result<Series> {
     let config =
         Config { surface: options.surface, mode, workers: options.cpus.count(), origin_port };
-    let mut running = Vec::new();
-    for (implementation, binary) in &options.daemons {
-        let label = format!("{}-latency-{}", implementation.name(), mode.name());
-        let daemon = Daemon::start(&label, binary, Some(&options.cpus), &config, temp.path())?;
-        let cookie = daemon.session_cookie()?;
-        let points = options.rates.iter().map(|&rate| Point { rate, runs: Vec::new() }).collect();
-        running.push((daemon, cookie, Series { implementation: *implementation, mode, points }));
-    }
-    for index in 0..options.rates.len() {
+    let label = format!("latency-{}", mode.name());
+    let daemon =
+        Daemon::start(&label, &options.daemon, Some(&options.cpus), &config, temp.path())?;
+    let cookie = daemon.session_cookie()?;
+    let mut points = Vec::with_capacity(options.rates.len());
+    for &rate in &options.rates {
+        let mut point = Point { rate, runs: Vec::new() };
         for _ in 0..options.repetitions {
-            for (daemon, cookie, series) in &mut running {
-                let point = &mut series.points[index];
-                let measured = measure(options, daemon, cookie, point.rate)?;
-                let line =
-                    progress_line(series.implementation, mode, point.rate, &measured.result);
-                stdout.write_all(line.as_bytes()).map_err(|e| Error::io("stdout", e))?;
-                point.runs.push(measured);
-            }
+            let measured = measure(options, &daemon, &cookie, rate)?;
+            let line = progress_line(mode, rate, &measured.result);
+            stdout.write_all(line.as_bytes()).map_err(|e| Error::io("stdout", e))?;
+            point.runs.push(measured);
         }
+        points.push(point);
     }
-    Ok(running.into_iter().map(|(_, _, series)| series).collect())
+    Ok(Series { mode, points })
 }
 
 fn measure(options: &Options, daemon: &Daemon, cookie: &str, rate: f64) -> Result<Measured> {
@@ -209,11 +201,10 @@ fn measure(options: &Options, daemon: &Daemon, cookie: &str, rate: f64) -> Resul
     Ok(Measured { result, cpu_us_per_request })
 }
 
-fn progress_line(implementation: Implementation, mode: Mode, rate: f64, r: &RateResult) -> String {
+fn progress_line(mode: Mode, rate: f64, r: &RateResult) -> String {
     format!(
-        "  {:<4} {:<13} {:>8} req/s offered {:>9.0} achieved  p50 {:>8.1} us  p99 {:>9.1} us  \
+        "  {:<13} {:>8} req/s offered {:>9.0} achieved  p50 {:>8.1} us  p99 {:>9.1} us  \
          p99.9 {:>9.1} us  errors {}\n",
-        implementation.name(),
         mode.name(),
         rate,
         r.achieved_rps,
@@ -250,10 +241,7 @@ fn run_generator(options: &Options, port: u16, cookie: &str, rate: f64) -> Resul
 }
 
 fn latency_document(options: &Options, series: &[Series]) -> Json {
-    let mut daemons = Json::object();
-    for (implementation, path) in &options.daemons {
-        daemons.set(implementation.name(), meta::binary(path));
-    }
+    let daemons = Json::object().with(IMPLEMENTATION, meta::binary(&options.daemon));
     let load = Json::object()
         .with("generator", "sibuna-bench generate (open loop, one blocking thread per connection)")
         .with("connections", options.connections)
@@ -265,7 +253,7 @@ fn latency_document(options: &Options, series: &[Series]) -> Json {
         .with("product", options.surface.product());
     let runs = series.iter().map(|s| {
         Json::object()
-            .with("implementation", s.implementation.name())
+            .with("implementation", IMPLEMENTATION)
             .with("product", options.surface.product())
             .with("mode", s.mode.name())
             .with("rates", s.points.iter().map(Point::to_json).collect::<Vec<_>>())
@@ -303,7 +291,6 @@ fn latency_markdown(options: &Options, series: &[Series]) -> String {
     for &mode in &options.modes {
         let mut table = Table::new(&[
             "Offered req/s",
-            "Impl",
             "Achieved req/s",
             "p50",
             "p90",
@@ -314,11 +301,9 @@ fn latency_markdown(options: &Options, series: &[Series]) -> String {
             "Errors",
             "CPU us/req",
         ]);
-        for index in 0..options.rates.len() {
-            for s in series.iter().filter(|s| s.mode == mode) {
-                if let Some(point) = s.points.get(index) {
-                    table.row(markdown_row(s.implementation, point));
-                }
+        for s in series.iter().filter(|s| s.mode == mode) {
+            for point in &s.points {
+                table.row(markdown_row(point));
             }
         }
         out.push_str(&format!("\n## {}\n\n{}", mode.name(), table.markdown()));
@@ -326,13 +311,12 @@ fn latency_markdown(options: &Options, series: &[Series]) -> String {
     out
 }
 
-fn markdown_row(implementation: Implementation, point: &Point) -> Vec<String> {
+fn markdown_row(point: &Point) -> Vec<String> {
     let median =
         |s: Option<Spread>| s.map_or_else(|| "-".to_owned(), |s| format!("{:.0}", s.median));
     let p99 = point.latency(2);
     vec![
         fmt_count(point.rate),
-        implementation.name().to_owned(),
         point
             .spread(|m| m.result.achieved_rps)
             .map_or_else(|| "-".to_owned(), |s| fmt_count(s.median)),

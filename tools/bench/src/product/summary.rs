@@ -1,8 +1,8 @@
 //! The result document and the Markdown summary of `bench product`.
 
-use super::{CaseResult, Options, Sample, Subject, WorkloadResult, wrk};
+use super::{CaseResult, Options, Sample, WorkloadResult, wrk};
 use crate::anubis;
-use crate::daemon::Implementation;
+use crate::daemon::IMPLEMENTATION;
 use crate::json::Json;
 use crate::report::{Table, fmt_count};
 use crate::{meta, paths};
@@ -12,10 +12,7 @@ type Figure<'f> = (&'static str, &'f dyn Fn(&WorkloadResult) -> String);
 
 /// Returns the result document: the setup, every case and the limitations.
 pub fn product_document(options: &Options, origin: &str, cases: &[CaseResult]) -> Json {
-    let mut daemons = Json::object();
-    for (implementation, path) in &options.daemons {
-        daemons.set(implementation.name(), meta::binary(path));
-    }
+    let mut daemons = Json::object().with(IMPLEMENTATION, meta::binary(&options.daemon));
     if let Some(path) = &options.anubis {
         daemons.set("anubis", meta::binary(path));
     }
@@ -69,8 +66,8 @@ const COMPARISON_LIMITATIONS: [&str; 5] = [
      load generator could not connect is recorded as failed with the error text.",
 ];
 
-/// Returns the Markdown summary: one table per mode, then the side-by-side or Rust-Zig
-/// tables that apply.
+/// Returns the Markdown summary: one table per mode, then, with Anubis, one side-by-side
+/// table per mode.
 pub fn product_markdown(options: &Options, cases: &[CaseResult]) -> String {
     let (title, command) = match &options.anubis {
         Some(_) => ("Sibuna and Anubis as whole products", "product --anubis"),
@@ -90,7 +87,6 @@ pub fn product_markdown(options: &Options, cases: &[CaseResult]) -> String {
     );
     for mode in &options.modes {
         let mut table = Table::new(&[
-            "Impl",
             "Product",
             "Workload",
             "Status",
@@ -117,18 +113,12 @@ pub fn product_markdown(options: &Options, cases: &[CaseResult]) -> String {
             out.push_str(&side_by_side(&mode_cases).markdown());
         }
     }
-    if options.daemons.len() == 2 {
-        out.push_str("\n## Rust against Zig\n\nRatios of medians; req/s above 1 and p99 below 1 ");
-        out.push_str("favour Rust.\n\n");
-        out.push_str(&ratio_table(cases).markdown());
-    }
     out
 }
 
 fn markdown_row(case: &CaseResult, w: &WorkloadResult) -> Vec<String> {
     let rate = w.spread(Sample::requests_per_second);
     vec![
-        case.subject.implementation().to_owned(),
         case.subject.product().to_owned(),
         w.workload.name.to_owned(),
         status_text(w),
@@ -162,9 +152,8 @@ fn peak_rss_text(w: &WorkloadResult) -> String {
 /// Returns one table of one mode with a column per product and, per workload, a row for
 /// each figure: req/s (status), p99, CPU per request and peak resident memory.
 fn side_by_side(cases: &[&CaseResult]) -> Table {
-    let names: Vec<String> = cases.iter().map(|c| c.subject.label()).collect();
     let mut header = vec!["Workload", "Figure"];
-    header.extend(names.iter().map(String::as_str));
+    header.extend(cases.iter().map(|c| c.subject.product()));
     let mut table = Table::new(&header);
     let Some(first) = cases.first() else { return table };
     for (index, workload) in first.workloads.iter().enumerate() {
@@ -184,39 +173,6 @@ fn side_by_side(cases: &[&CaseResult]) -> Table {
                 row.push(case.workloads.get(index).map_or_else(|| "-".to_owned(), text));
             }
             table.row(row);
-        }
-    }
-    table
-}
-
-fn ratio_table(cases: &[CaseResult]) -> Table {
-    let mut table = Table::new(&[
-        "Mode",
-        "Product",
-        "Workload",
-        "req/s Rust/Zig",
-        "p99 Rust/Zig",
-        "CPU/req Rust/Zig",
-    ]);
-    for rust in cases {
-        let Subject::Sibuna(Implementation::Rust, surface) = rust.subject else { continue };
-        let zig = cases.iter().find(|c| {
-            c.subject == Subject::Sibuna(Implementation::Zig, surface) && c.mode == rust.mode
-        });
-        let Some(zig) = zig else { continue };
-        for (r, z) in rust.workloads.iter().zip(&zig.workloads) {
-            let ratio = |f: &dyn Fn(&Sample) -> f64| match (r.spread(f), z.spread(f)) {
-                (Some(a), Some(b)) if b.median > 0.0 => format!("{:.2}", a.median / b.median),
-                _ => "-".to_owned(),
-            };
-            table.row(vec![
-                rust.mode.name().to_owned(),
-                rust.subject.product().to_owned(),
-                r.workload.name.to_owned(),
-                ratio(&Sample::requests_per_second),
-                ratio(&|s| s.summary.latency.p99),
-                ratio(&Sample::cpu_us_per_request),
-            ]);
         }
     }
     table

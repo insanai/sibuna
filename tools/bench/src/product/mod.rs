@@ -1,12 +1,11 @@
 //! `bench product`: whole daemons under `wrk`, the successor of `benchmarks/tools.py`.
 //!
-//! For each mode (forward auth, reverse proxy), each surface (Gate, Shield) and each daemon
-//! (Rust, and Zig when given), we start the daemon in memory pinned to `--cpus`, obtain a
-//! session by solving its challenge, and drive four workloads with wrk pinned to
-//! `--load-cpus`: admitted with a session, challenged, an allowed static path, and an SQL
-//! injection with a session. Each workload runs `--repetitions` times; we report the median
-//! with the min-max spread, the daemon's CPU time per request (`/proc/<pid>/stat`) and its
-//! peak resident set (`VmHWM`, reset before each run).
+//! For each mode (forward auth, reverse proxy) and each surface (Gate, Shield), we start the
+//! daemon in memory pinned to `--cpus`, obtain a session by solving its challenge, and drive four
+//! workloads with wrk pinned to `--load-cpus`: admitted with a session, challenged, an allowed
+//! static path, and an SQL injection with a session. Each workload runs `--repetitions` times; we
+//! report the median with the min-max spread, the daemon's CPU time per request
+//! (`/proc/<pid>/stat`) and its peak resident set (`VmHWM`, reset before each run).
 //!
 //! With `--anubis <path>`, Anubis is a third product after the Sibuna surfaces of each mode,
 //! as in `tools.py`: started with its flags and `GOMAXPROCS` equal to the worker count,
@@ -25,7 +24,7 @@ use std::time::Duration;
 
 use crate::anubis::{self, TokenScheme};
 use crate::args::Args;
-use crate::daemon::{self, Config, Daemon, Implementation, Mode, Surface};
+use crate::daemon::{self, Config, Daemon, IMPLEMENTATION, Mode, Surface};
 use crate::error::{Error, Result};
 use crate::json::Json;
 use crate::process::{self, CpuSet, Process, TempDir};
@@ -37,9 +36,6 @@ use crate::{meta, origin, paths};
 use summary::{product_document, product_markdown};
 
 pub use wrk::Load;
-
-/// The daemons to measure, each with the binary to run.
-pub type Daemons = Vec<(Implementation, PathBuf)>;
 
 /// Reads one figure of a sample.
 type Metric<'f> = &'f dyn Fn(&Sample) -> f64;
@@ -56,8 +52,8 @@ const TIME_WAIT_TIMEOUT: Duration = Duration::from_secs(90);
 /// One product under test: a Sibuna daemon on one surface, or Anubis.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Subject {
-    /// A Sibuna daemon, Rust or Zig, as Gate or Shield.
-    Sibuna(Implementation, Surface),
+    /// A Sibuna daemon as Gate or Shield.
+    Sibuna(Surface),
     /// Anubis, given with `--anubis`.
     Anubis,
 }
@@ -67,26 +63,15 @@ impl Subject {
     /// `anubis`).
     fn product(self) -> &'static str {
         match self {
-            Subject::Sibuna(_, surface) => surface.product(),
+            Subject::Sibuna(surface) => surface.product(),
             Subject::Anubis => "anubis",
         }
     }
 
-    /// Returns a short column name: `rust gate`, `zig shield`, `anubis`.
-    fn label(self) -> String {
-        match self {
-            Subject::Sibuna(implementation, surface) => {
-                let surface = surface.product().trim_start_matches("sibuna-");
-                format!("{} {surface}", implementation.name())
-            }
-            Subject::Anubis => "anubis".to_owned(),
-        }
-    }
-
-    /// Returns the implementation name of the result files (`rust`, `zig`, `anubis`).
+    /// Returns the implementation name of the result files (`rust`, `anubis`).
     fn implementation(self) -> &'static str {
         match self {
-            Subject::Sibuna(implementation, _) => implementation.name(),
+            Subject::Sibuna(_) => IMPLEMENTATION,
             Subject::Anubis => "anubis",
         }
     }
@@ -177,7 +162,7 @@ impl Origin {
 
 /// The options of `bench product`.
 struct Options {
-    daemons: Daemons,
+    daemon: PathBuf,
     anubis: Option<PathBuf>,
     cpus: CpuSet,
     load_cpus: CpuSet,
@@ -189,29 +174,24 @@ struct Options {
     out: PathBuf,
 }
 
-/// Parses the options shared by `product`, `latency` and `admission`: the daemons and the
-/// CPU sets, with `default_cpus` for the daemons when `--cpus` is absent.
-pub fn parse_daemons(args: &mut Args, default_cpus: &str) -> Result<(Daemons, CpuSet, CpuSet)> {
-    let rust = args.value("--rust")?.map_or_else(paths::rust_daemon, PathBuf::from);
-    let mut daemons = vec![(Implementation::Rust, rust)];
-    if let Some(zig) = args.value("--zig")? {
-        daemons.push((Implementation::Zig, PathBuf::from(zig)));
-    }
-    if args.flag("--zig-only") {
-        daemons.remove(0);
-    }
-    for (_, path) in &daemons {
-        if !path.is_file() {
-            return Err(Error::new(
-                "NO DAEMON",
-                format!("There is no daemon at {}.", path.display()),
-            )
-            .hint("Build it with `cargo build --release -p sibuna`, or pass `--rust <path>`."));
-        }
+/// Parses the options shared by `product`, `latency` and `admission`: the Sibuna daemon and
+/// the CPU sets, with `default_cpus` for the daemon when `--cpus` is absent.
+///
+/// # Errors
+///
+/// Fails when the daemon is not a file or a CPU list does not parse.
+pub fn parse_daemon(args: &mut Args, default_cpus: &str) -> Result<(PathBuf, CpuSet, CpuSet)> {
+    let daemon = args.value("--rust")?.map_or_else(paths::rust_daemon, PathBuf::from);
+    if !daemon.is_file() {
+        return Err(Error::new(
+            "NO DAEMON",
+            format!("There is no daemon at {}.", daemon.display()),
+        )
+        .hint("Build it with `cargo build --release -p sibuna`, or pass `--rust <path>`."));
     }
     let cpus = CpuSet::parse(&args.parsed("--cpus", default_cpus.to_owned())?)?;
     let load_cpus = CpuSet::parse(&args.parsed("--load-cpus", "8-15".to_owned())?)?;
-    Ok((daemons, cpus, load_cpus))
+    Ok((daemon, cpus, load_cpus))
 }
 
 /// Parses a comma-separated list with `parse`, naming `option` in the error.
@@ -247,7 +227,7 @@ pub fn parse_anubis(args: &mut Args) -> Result<Option<PathBuf>> {
 }
 
 fn parse_options(mut args: Args) -> Result<Options> {
-    let (daemons, cpus, load_cpus) = parse_daemons(&mut args, "0-3")?;
+    let (daemon, cpus, load_cpus) = parse_daemon(&mut args, "0-3")?;
     let anubis = parse_anubis(&mut args)?;
     let defaults = Load::default();
     let load = Load {
@@ -266,7 +246,7 @@ fn parse_options(mut args: Args) -> Result<Options> {
         }
     };
     let options = Options {
-        daemons,
+        daemon,
         anubis,
         cpus,
         load_cpus,
@@ -287,8 +267,6 @@ fn parse_options(mut args: Args) -> Result<Options> {
     };
     args.finish(&[
         "--rust",
-        "--zig",
-        "--zig-only",
         "--anubis",
         "--cpus",
         "--load-cpus",
@@ -320,7 +298,7 @@ fn workloads(subject: Subject, mode: Mode, cookie: &str) -> [Workload; 4] {
         (Subject::Anubis, Mode::ForwardAuth) => anubis::CHECK,
         _ => "/private",
     };
-    let shield = matches!(subject, Subject::Sibuna(_, Surface::Shield));
+    let shield = subject == Subject::Sibuna(Surface::Shield);
     let browser = daemon::browser_headers();
     let mut with_cookie = browser.clone();
     with_cookie.push(("Cookie".to_owned(), cookie.to_owned()));
@@ -512,12 +490,7 @@ pub fn command(args: Args, stdout: &mut dyn Write) -> Result<()> {
     let mut cases = Vec::new();
     for &mode in &options.modes {
         for (subject, binary) in subjects(&options) {
-            let line = format!(
-                "Measuring {} {} {}\n",
-                subject.implementation(),
-                subject.product(),
-                mode.name()
-            );
+            let line = format!("Measuring {} {}\n", subject.product(), mode.name());
             stdout.write_all(line.as_bytes()).map_err(|e| Error::io("stdout", e))?;
             cases.push(run_case(&bench, subject, binary, mode, stdout)?);
         }
@@ -534,15 +507,14 @@ pub fn command(args: Args, stdout: &mut dyn Write) -> Result<()> {
     stdout.write_all(text.as_bytes()).map_err(|e| Error::io("stdout", e))
 }
 
-/// Returns the products of one mode in the order of measurement: each surface with each
-/// daemon, then Anubis, as `tools.py` ordered them.
+/// Returns the products of one mode in the order of measurement: each surface, then
+/// Anubis, as `tools.py` ordered them.
 fn subjects(options: &Options) -> Vec<(Subject, &Path)> {
-    let mut subjects = Vec::new();
-    for &surface in &options.surfaces {
-        for (implementation, binary) in &options.daemons {
-            subjects.push((Subject::Sibuna(*implementation, surface), binary.as_path()));
-        }
-    }
+    let mut subjects: Vec<(Subject, &Path)> = options
+        .surfaces
+        .iter()
+        .map(|&surface| (Subject::Sibuna(surface), options.daemon.as_path()))
+        .collect();
     if let Some(binary) = &options.anubis {
         subjects.push((Subject::Anubis, binary.as_path()));
     }
@@ -558,9 +530,9 @@ fn start_subject(
 ) -> Result<Running> {
     let options = bench.options;
     let workers = options.cpus.count();
-    let label = format!("{}-{}-{}", subject.implementation(), subject.product(), mode.name());
+    let label = format!("{}-{}", subject.product(), mode.name());
     match subject {
-        Subject::Sibuna(_, surface) => {
+        Subject::Sibuna(surface) => {
             let config = Config { surface, mode, workers, origin_port: bench.origin_port };
             let daemon = Daemon::start(&label, binary, Some(&options.cpus), &config, bench.temp)?;
             Ok(Running::Sibuna(daemon))
@@ -610,8 +582,7 @@ fn run_case(
 
 fn measure_workload(bench: &Bench<'_>, running: &Running, workload: Workload) -> WorkloadResult {
     let options = bench.options;
-    // Only a comparison with Anubis waits for TIME_WAIT, as tools.py did; Rust against Zig
-    // runs as before.
+    // Only a comparison with Anubis waits for TIME_WAIT, as tools.py did.
     let drain = || {
         if options.anubis.is_some() {
             process::drain_time_wait(TIME_WAIT_LIMIT, TIME_WAIT_TIMEOUT);
@@ -655,8 +626,7 @@ fn progress_line(subject: Subject, mode: Mode, result: &WorkloadResult) -> Strin
     let status =
         result.status.as_ref().map_or_else(|e| format!("probe failed ({e})"), u16::to_string);
     let prefix = format!(
-        "  {:<4} {:<13} {:<13} {:<15} {status:>3}",
-        subject.implementation(),
+        "  {:<13} {:<13} {:<15} {status:>3}",
         subject.product(),
         mode.name(),
         result.workload.name
@@ -680,12 +650,12 @@ mod tests {
 
     #[test]
     fn workloads_expect_the_tools_py_statuses() {
-        let shield = Subject::Sibuna(Implementation::Rust, Surface::Shield);
+        let shield = Subject::Sibuna(Surface::Shield);
         let shield = workloads(shield, Mode::ForwardAuth, "t=1");
         let statuses: Vec<u16> = shield.iter().map(|w| w.expected).collect();
         assert_eq!(statuses, [200, 401, 200, 403]);
         assert_eq!(shield[0].path, "/private");
-        let gate = Subject::Sibuna(Implementation::Zig, Surface::Gate);
+        let gate = Subject::Sibuna(Surface::Gate);
         let gate = workloads(gate, Mode::ReverseProxy, "t=1");
         let statuses: Vec<u16> = gate.iter().map(|w| w.expected).collect();
         assert_eq!(statuses, [200, 200, 200, 200]);
@@ -704,9 +674,9 @@ mod tests {
         let proxy = workloads(Subject::Anubis, Mode::ReverseProxy, "a=1");
         assert_eq!(proxy[0].path, "/private");
         assert_eq!(Subject::Anubis.product(), "anubis");
-        let zig_gate = Subject::Sibuna(Implementation::Zig, Surface::Gate);
-        assert_eq!((zig_gate.implementation(), zig_gate.label().as_str()), ("zig", "zig gate"));
-        assert_eq!(Subject::Anubis.label(), "anubis");
+        let gate = Subject::Sibuna(Surface::Gate);
+        assert_eq!((gate.implementation(), gate.product()), ("rust", "sibuna-gate"));
+        assert_eq!(Subject::Anubis.implementation(), "anubis");
     }
 
     #[test]

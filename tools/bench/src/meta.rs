@@ -40,11 +40,6 @@ pub fn load_average() -> Option<String> {
     read_trimmed("/proc/loadavg")
 }
 
-/// Returns the version line of the Zig compiler on `PATH`, if there is one.
-pub fn zig_version() -> Option<String> {
-    command_line(Path::new("."), "zig", &["version"])
-}
-
 /// Returns the size and SHA-256 of the file at `path` as `{"bytes":..,"sha256":..}`.
 pub fn binary(path: &Path) -> Json {
     // Only the file name is recorded: an absolute path would publish the local layout of the

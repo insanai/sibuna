@@ -4,12 +4,11 @@
 //!
 //! - `primitives` runs the sixteen workloads of `benchmarks/benchmark.zig` against the Rust
 //!   crates with the same inputs, iteration counts and statistics (seven batches after an
-//!   untimed warm-up; median, minimum and maximum per operation), and with `--zig` runs the
-//!   Zig benchmark binary on the same CPU for one comparison table.
+//!   untimed warm-up; median, minimum and maximum per operation).
 //! - `product` replaces `benchmarks/tools.py`: whole daemons in front of a stub origin under
 //!   `wrk`, four workloads, in forward-auth and reverse-proxy modes, for Gate and Shield; with
 //!   `--anubis`, Anubis is measured beside them behind `caddy respond`, as `tools.py` did.
-//! - `latency` drives the daemons with an open-loop generator at fixed rates, so that p99 can
+//! - `latency` drives the daemon with an open-loop generator at fixed rates, so that p99 can
 //!   be compared at equal offered load.
 //! - `admission` replaces `benchmarks/compare.py`: admission operations per second of Sibuna
 //!   and Anubis in forward-auth mode, from two clients over keep-alive connections.
@@ -29,15 +28,12 @@
 //!   some containers), and peak memory is `VmHWM`, reset through `clear_refs` before each run,
 //!   instead of `ps` samples every 100 ms.
 //! - wrk reports p90 and p99.9 too, and every figure carries its min-max spread.
-//! - `primitives` alternates the Zig and Rust suites over several rounds (`--rounds`, 3 by
-//!   default) and keeps, per row, the round with the lowest median: on a shared host a busy
-//!   SMT sibling or a lower clock slows whole suite runs, and alternation exposes both
-//!   implementations to the same conditions. Within a round the statistics are Zig's.
+//! - `primitives` runs the suite over several rounds (`--rounds`, 3 by default) and keeps,
+//!   per row, the round with the lowest median: on a shared host a busy SMT sibling or a
+//!   lower clock slows whole suite runs. Within a round the statistics are Zig's.
 //! - The policy rows leave `RequestView::client_address` empty, so the engine parses the
 //!   client address text inside evaluation, as the Zig engine did; the daemon parses it
 //!   once per request before evaluation.
-//! - Result files hold the Rust rows in the Zig shape (`runs`) and the Zig rows beside them
-//!   (`zig_baseline`, `implementation`), instead of one implementation per file.
 
 mod admission;
 mod anubis;
@@ -69,25 +65,21 @@ Sibuna benchmarks.
 Usage: cargo xtask bench <COMMAND> [OPTIONS]
 
 Commands:
-  primitives   Primitive timings of benchmark.zig for the Rust crates (and Zig with --zig)
+  primitives   Primitive timings of benchmark.zig for the Rust crates
   product      Whole daemons under wrk: four workloads, two modes, Gate and Shield
   latency      Open-loop latency at fixed offered rates
   admission    Admission operations per second of Sibuna and Anubis (needs --anubis)
   help         Print this help
 
 primitives options:
-  --zig <PATH>          The Zig benchmark binary (sibuna-benchmark) to compare with
-  --zig-daemon <PATH>   Also record the Zig daemon's size and idle memory
-  --rust <PATH>         The Rust daemon (default: sibuna beside this program)
-  --cpu <LIST>          CPU both suites are pinned to (default: 4)
-  --rounds <N>          Alternating runs of each suite; per row the fastest (default: 3)
+  --rust <PATH>         The daemon (default: sibuna beside this program)
+  --cpu <LIST>          CPU the suite is pinned to (default: 4)
+  --rounds <N>          Runs of the suite; per row the fastest (default: 3)
   --out <DIR>           Result directory (default: benchmarks/results)
 
 product and latency options:
-  --rust <PATH>         The Rust daemon (default: sibuna beside this program)
-  --zig <PATH>          The Zig daemon, measured with the same flags
-  --zig-only            Measure only the Zig daemon
-  --cpus <LIST>         CPUs of the daemons; --workers is their count (default: 0-3)
+  --rust <PATH>         The daemon (default: sibuna beside this program)
+  --cpus <LIST>         CPUs of the daemon; --workers is their count (default: 0-3)
   --load-cpus <LIST>    CPUs of wrk, the generator and the origin (default: 8-15)
   --modes <LIST>        forward_auth,reverse_proxy (default: both)
   --out <DIR>           Result directory (default: benchmarks/results)
@@ -110,9 +102,7 @@ latency options:
 
 admission options:
   --anubis <PATH>       The Anubis binary (required)
-  --rust <PATH>         The Rust daemon (default: sibuna beside this program)
-  --zig <PATH>          The Zig daemon, measured with the same flags
-  --zig-only            Measure only the Zig daemon beside Anubis
+  --rust <PATH>         The daemon (default: sibuna beside this program)
   --cpus <LIST>         CPUs of the products (default: 0-1)
   --load-cpus <LIST>    CPUs of the two clients (default: 8-15)
   --batches <N>         Timed batches per operation; the median is reported (default: 7)

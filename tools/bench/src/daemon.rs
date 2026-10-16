@@ -1,5 +1,5 @@
-//! Starting a Sibuna daemon (Rust or Zig, the same flags for both) and obtaining a session
-//! the way a browser does: fetch a challenge, solve it with `sibuna-pow`, submit the proof.
+//! Starting a Sibuna daemon and obtaining a session the way a browser does: fetch a
+//! challenge, solve it with `sibuna-pow`, submit the proof.
 
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
@@ -26,24 +26,10 @@ pub fn browser_headers() -> Vec<(String, String)> {
     BROWSER_HEADERS.iter().map(|&(n, v)| (n.to_owned(), v.to_owned())).collect()
 }
 
-/// Which daemon build runs.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Implementation {
-    /// The Rust port, `cmd/sibuna`.
-    Rust,
-    /// The Zig original.
-    Zig,
-}
-
-impl Implementation {
-    /// Returns `rust` or `zig`.
-    pub fn name(self) -> &'static str {
-        match self {
-            Implementation::Rust => "rust",
-            Implementation::Zig => "zig",
-        }
-    }
-}
+/// The `implementation` the result files give Sibuna's daemon (`cmd/sibuna`). Files
+/// recorded by earlier versions of this tool hold other builds beside it under other names,
+/// so the name stays.
+pub const IMPLEMENTATION: &str = "rust";
 
 /// The product surface: challenge only, or challenge and semantic WAF.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -101,7 +87,7 @@ impl Mode {
     }
 }
 
-/// The flags a daemon starts with; both implementations receive the same ones.
+/// The flags a daemon starts with.
 #[derive(Clone, Copy, Debug)]
 pub struct Config {
     /// Gate or Shield.
