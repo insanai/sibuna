@@ -112,6 +112,11 @@
   ar: ("Noto Naskh Arabic", "Noto Sans Arabic"),
 )
 
+// The languages whose letters join (Arabic) or hang from a common line (Devanagari):
+// letter spacing would pull them apart, so the cover and the part labels set them
+// without it.
+#let sibuna-joined-scripts = ("ar", "fa", "ur", "hi", "mr", "ne")
+
 // The heading number guidedog gave a heading, or none.
 #let sibuna-heading-number(it) = if it.numbering != none {
   numbering(it.numbering, ..counter(heading).at(it.location()))
@@ -268,10 +273,12 @@
   })
 }
 
-// The cover: the night page with its copper lettering and art.
+// The cover: the night page with its copper lettering and art. spaced is false for a
+// script that letter spacing would break (see sibuna-joined-scripts).
 #let sibuna-cover(page-size, title: "", author: "", version: "", date: "",
   version-label: "Version", kicker: none, headline: none, subtitle: none, motto: none,
-  cover-note: none, logo: none) = {
+  cover-note: none, logo: none, spaced: true) = {
+  let spacing(amount) = if spaced { amount } else { 0pt }
   page(..page-size, margin: (x: 18mm, y: 17mm), header: none, footer: none,
     numbering: none, fill: sibuna-night, {
       set text(fill: sibuna-cream)
@@ -279,7 +286,9 @@
       align(center, {
         v(6mm)
         if logo != none { image(logo, height: 14mm); v(4mm) }
-        if kicker != none { text(size: 9pt, tracking: 2.8pt, fill: sibuna-copper, kicker) }
+        if kicker != none {
+          text(size: 9pt, tracking: spacing(2.8pt), fill: sibuna-copper, kicker)
+        }
         v(9mm)
         let big = if headline != none { headline } else { upper(title) }
         block(text(size: 46pt, tracking: 5pt, weight: "regular", hyphenate: false, big))
@@ -287,7 +296,9 @@
         v(14mm)
         sibuna-cover-art()
         v(9mm)
-        if motto != none { text(size: 10pt, tracking: 1pt, fill: sibuna-copper, motto) }
+        if motto != none {
+          text(size: 10pt, tracking: spacing(1pt), fill: sibuna-copper, motto)
+        }
         v(1fr)
         if author != "" { text(size: 10pt, author) }
         if cover-note != none { v(2mm); text(size: 8.5pt, fill: sibuna-mist, cover-note) }
@@ -303,11 +314,17 @@
 
 // ---- The book ------------------------------------------------------------------------
 
+// How the title of a part's chapter reads in English: "Part VI: Automata" is the label
+// "Part VI" and the title "Automata". A translated book gives the pattern of its own
+// language (see the covers table in book.typ): a regular expression whose first group
+// is the label and whose second is the title.
+#let sibuna-part-pattern = regex("^(Part\s+[IVXLCDM0-9]+)\s*[:.]?\s*(.*)$")
+
 // A chapter heading: a new page, the title set large, and a short blue rule. A chapter
-// whose title starts "Part " is a part: "Part VI: Automata" shows a letter-spaced
+// whose title matches part-pattern is a part: "Part VI: Automata" shows a letter-spaced
 // PART VI above the title "Automata", and its first paragraph becomes the part's
-// italic summary.
-#let sibuna-chapter-heading(it) = {
+// italic summary. spaced is false for a script that letter spacing would break.
+#let sibuna-chapter-heading(it, part-pattern: sibuna-part-pattern, spaced: true) = {
   if not it.outlined {
     sibuna-part-intro.update(false)
     return block(above: 1.6em, below: 0.8em, sticky: true,
@@ -315,13 +332,13 @@
   }
   pagebreak(weak: true)
   let name = sibuna-clean(sibuna-plain(it.body))
-  let part = name.match(regex("^Part\s+([IVXLCDM0-9]+)\s*[:.]?\s*(.*)$"))
+  let part = name.match(part-pattern)
   let number = sibuna-heading-number(it)
   block(width: 100%, above: 4mm, below: 6mm, sticky: true, {
     set par(justify: false, first-line-indent: 0em, leading: 0.4em)
     if part != none {
-      text(size: 9pt, weight: "bold", tracking: 2.4pt, fill: sibuna-blue,
-        upper("Part " + part.captures.at(0)))
+      text(size: 9pt, weight: "bold", tracking: if spaced { 2.4pt } else { 0pt },
+        fill: sibuna-blue, upper(part.captures.at(0)))
       v(2.5mm)
       text(size: 22pt, weight: "bold", hyphenate: false, part.captures.at(1))
     } else {
@@ -348,18 +365,18 @@
   set par(justify: false, first-line-indent: 0em)
   grid(columns: (1fr, 1fr), column-gutter: 1em,
     box(width: 100%, clip: true, title),
-    box(width: 100%, clip: true, align(right, emph(chapter))))
+    box(width: 100%, clip: true, align(end, emph(chapter))))
   v(-0.5em)
   line(length: 100%, stroke: 0.4pt + sibuna-rule)
 }
 
-// The contents, titled like a chapter.
+// The contents, titled like a chapter; title is "Contents" in the book's language.
 // The colophon, when there is one, sits at the foot of the last contents page.
-#let sibuna-contents(colophon: none) = context {
+#let sibuna-contents(colophon: none, title: [Contents]) = context {
   if query(heading.where(outlined: true)).len() == 0 { return }
   pagebreak(weak: true)
   block(above: 4mm, below: 8mm, {
-    text(size: 22pt, weight: "bold")[Contents]
+    text(size: 22pt, weight: "bold", title)
     v(3mm)
     line(length: 42mm, stroke: 1.6pt + sibuna-blue)
   })
@@ -404,7 +421,7 @@
       emph(it.body)
       if it.attribution != none {
         linebreak()
-        align(right, text(size: 9pt, fill: sibuna-gray)[- #it.attribution])
+        align(end, text(size: 9pt, fill: sibuna-gray)[- #it.attribution])
       }
     })
   body
@@ -412,8 +429,10 @@
 
 // The Sibuna book, with guidedog's book(...) parameters (see the Templates chapter of
 // the guidedog manual) and the cover's own: kicker, headline (the big word; the title in
-// capitals when none), subtitle, motto and cover-note. trim is the page size, the
-// original 190 mm by 250 mm; none follows pdf_paper_size.
+// capitals when none), subtitle, motto and cover-note. Two more words follow the book's
+// language: contents-title, the heading of the contents, and part-pattern, how a part's
+// chapter title reads (see sibuna-part-pattern). trim is the page size, the original
+// 190 mm by 250 mm; none follows pdf_paper_size.
 #let sibuna-book(
   title: "",
   author: "",
@@ -431,11 +450,14 @@
   subtitle: none,
   motto: none,
   cover-note: none,
+  contents-title: [Contents],
+  part-pattern: sibuna-part-pattern,
   trim: (width: 190mm, height: 250mm),
   body,
 ) = {
   let (code, region) = sibuna-language(lang)
   let page-size = if trim == none { (paper: paper) } else { trim }
+  let spaced = code not in sibuna-joined-scripts
   set document(title: title, author: if author == "" { () } else { author })
   let fonts = ("New Computer Modern", "Libertinus Serif")
   set text(font: fonts + sibuna-script-fonts.at(code, default: ()), size: 10.5pt,
@@ -448,7 +470,8 @@
   show heading: set text(fill: sibuna-ink, hyphenate: false)
   show heading: set par(justify: false, first-line-indent: 0em)
   show heading: it => { sibuna-part-intro.update(false); it }
-  show heading.where(level: 1): sibuna-chapter-heading
+  show heading.where(level: 1): sibuna-chapter-heading.with(part-pattern: part-pattern,
+    spaced: spaced)
   show heading.where(level: 2): set text(size: 15pt)
   show heading.where(level: 2): set block(above: 1.6em, below: 0.9em)
   show heading.where(level: 3): set text(size: 12pt, fill: sibuna-blue)
@@ -471,7 +494,8 @@
 
   sibuna-cover(page-size, title: title, author: author, version: version,
     date: date, version-label: version-label, kicker: kicker, headline: headline,
-    subtitle: subtitle, motto: motto, cover-note: cover-note, logo: logo)
+    subtitle: subtitle, motto: motto, cover-note: cover-note, logo: logo,
+    spaced: spaced)
 
   set page(..page-size,
     margin: (inside: 21mm, outside: 18mm, top: 19mm, bottom: 20mm),
@@ -480,7 +504,7 @@
     text(size: 8pt, fill: sibuna-gray)[#emph(title)#if version != "" [,
       #version-label #version] \ \u{00A9} #copyright]
   }
-  sibuna-contents(colophon: colophon)
+  sibuna-contents(colophon: colophon, title: contents-title)
   body
 }
 

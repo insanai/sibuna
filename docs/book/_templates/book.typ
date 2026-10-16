@@ -3,34 +3,56 @@
 //   #show: book.with(title: ..., author: ..., version: ..., ...)
 //
 // followed by the chapters. The design itself is in sibuna.typ, the theme every Sibuna
-// guidedog project shares; this file only names the book's cover, in each language the
-// book is translated into. A new book (such as the manual) copies this file, sibuna.typ
-// and preamble.typ, sets pdf_preamble = "_templates/preamble.typ" in its conf.toml, and
-// changes the cover text below. See the comment at the top of sibuna.typ.
-#import "sibuna.typ": sibuna-book, sibuna-language
+// guidedog project shares; this file only names the words of the book's cover and
+// contents, in each language the book is translated into. A new book (such as the
+// manual) copies this file, sibuna.typ and preamble.typ, sets pdf_preamble =
+// "_templates/preamble.typ" in its conf.toml, and changes the words below. See the
+// comment at the top of sibuna.typ.
+#import "sibuna.typ": sibuna-book, sibuna-language, sibuna-part-pattern
 
-// The cover's words in each language of the book, by language code; a language missing
-// here gets the English cover. Hindi and Arabic are set without letter spacing, which
-// would break their joined letters apart.
+// The words of the cover and the contents in each language of the book, by language
+// code. A language missing here, or a word missing from its entry, is English. The
+// book's other words come from elsewhere: its title from the title of index.rst in the
+// language's catalog (docs/site/build.py passes it as -D project), the credit line and
+// the copyright from the language's phrase map in docs/site/i18n (-D author and
+// -D copyright), and "Version" from guidedog's interface catalog.
+//
+//   kicker    the small capitals above SIBUNA
+//   subtitle  the line under SIBUNA
+//   motto     the copper line under the cover art
+//   contents  the heading of the contents
+//   part      how the catalog translates a part's title, such as "Part VI: Automata":
+//             a regular expression whose first group is the label set above the title
+//             ("Part VI") and whose second is the title ("Automata")
+//
+// Arabic and Hindi are set without the cover's letter spacing, which would break their
+// joined letters apart; sibuna.typ does that for them (sibuna-joined-scripts).
 #let cover-dot = [#h(0.4em) \u{00B7} #h(0.4em)]
 #let covers = (
   en: (kicker: [THE BOOK OF], subtitle: [The mathematics and engineering of web defense],
-    motto: [WORK #h(0.4em) \u{00B7} #h(0.4em) TRUST #h(0.4em) \u{00B7} #h(0.4em) BOUNDED STATE]),
+    motto: [WORK #h(0.4em) \u{00B7} #h(0.4em) TRUST #h(0.4em) \u{00B7} #h(0.4em) BOUNDED STATE],
+    contents: [Contents], part: sibuna-part-pattern),
   zh: (kicker: [技术手册], subtitle: [Web 防御的数学与工程],
-    motto: [工作量#cover-dot;信任#cover-dot;有界状态]),
+    motto: [工作量#cover-dot;信任#cover-dot;有界状态], contents: [目录],
+    part: regex("^(第\s*[IVXLCDM0-9]+\s*部分)\s*[:：]?\s*(.*)$")),
   ko: (kicker: [기술 안내서], subtitle: [웹 방어의 수학과 공학],
-    motto: [작업#cover-dot;신뢰#cover-dot;제한된 상태]),
+    motto: [작업#cover-dot;신뢰#cover-dot;제한된 상태], contents: [목차],
+    part: regex("^(제\s*[IVXLCDM0-9]+\s*부)\s*[:.]?\s*(.*)$")),
   ja: (kicker: [技術ガイド], subtitle: [Web 防御の数学とエンジニアリング],
-    motto: [計算#cover-dot;信頼#cover-dot;有界な状態]),
+    motto: [計算#cover-dot;信頼#cover-dot;有界な状態], contents: [目次],
+    part: regex("^(第\s*[IVXLCDM0-9]+\s*部)\s*[:：]?\s*(.*)$")),
   es: (kicker: [EL LIBRO DE], subtitle: [Las matemáticas y la ingeniería de la defensa web],
-    motto: [TRABAJO#cover-dot;CONFIANZA#cover-dot;ESTADO ACOTADO]),
+    motto: [TRABAJO#cover-dot;CONFIANZA#cover-dot;ESTADO ACOTADO], contents: [Contenido],
+    part: regex("^(Parte\s+[IVXLCDM0-9]+)\s*[:.]?\s*(.*)$")),
   de: (kicker: [DAS HANDBUCH ZU], subtitle: [Mathematik und Technik des Webschutzes],
-    motto: [ARBEIT#cover-dot;VERTRAUEN#cover-dot;BEGRENZTER ZUSTAND]),
-  hi: (kicker: text(tracking: 0pt)[तकनीकी मार्गदर्शिका],
-    subtitle: [वेब सुरक्षा का गणित और इंजीनियरिंग],
-    motto: text(tracking: 0pt)[कार्य#cover-dot;विश्वास#cover-dot;सीमित अवस्था]),
-  ar: (kicker: text(tracking: 0pt)[الدليل التقني], subtitle: [رياضيات حماية الويب وهندستها],
-    motto: text(tracking: 0pt)[إثبات العمل#cover-dot;الثقة#cover-dot;الحالة المحدودة]),
+    motto: [ARBEIT#cover-dot;VERTRAUEN#cover-dot;BEGRENZTER ZUSTAND], contents: [Inhalt],
+    part: regex("^(Teil\s+[IVXLCDM0-9]+)\s*[:.]?\s*(.*)$")),
+  hi: (kicker: [तकनीकी मार्गदर्शिका], subtitle: [वेब सुरक्षा का गणित और इंजीनियरिंग],
+    motto: [कार्य#cover-dot;विश्वास#cover-dot;सीमित अवस्था], contents: [विषय-सूची],
+    part: regex("^(भाग\s+[IVXLCDM0-9]+)\s*[:.]?\s*(.*)$")),
+  ar: (kicker: [الدليل التقني], subtitle: [رياضيات حماية الويب وهندستها],
+    motto: [إثبات العمل#cover-dot;الثقة#cover-dot;الحالة المحدودة], contents: [المحتويات],
+    part: regex("^(الجزء\s+[^:]+?)\s*:\s*(.*)$")),
 )
 
 #let book(
@@ -48,7 +70,7 @@
   page-ref: none,
   body,
 ) = {
-  let cover = covers.at(sibuna-language(lang).at(0), default: covers.en)
+  let cover = covers.en + covers.at(sibuna-language(lang).at(0), default: (:))
   sibuna-book(
     title: title,
     author: author,
@@ -65,6 +87,8 @@
     headline: [SIBUNA],
     subtitle: cover.subtitle,
     motto: cover.motto,
+    contents-title: cover.contents,
+    part-pattern: cover.part,
     body,
   )
 }

@@ -1,6 +1,8 @@
-# Arabic translation of Guidedog's own interface strings for The Sibuna Book.
-# Guidedog has no built-in catalog for this language; docs/site/build.py adds
-# this folder to locale_dirs when it builds the translated book.
+# Arabic translation of Guidedog's own interface strings for The Sibuna Book
+# and the Sibuna whitepaper.
+# Guidedog has no built-in catalog for this language; locale_dirs in
+# docs/book/conf.toml and docs/whitepaper/conf.toml names this folder, so the
+# translated book and whitepaper both read it.
 msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book\n"
