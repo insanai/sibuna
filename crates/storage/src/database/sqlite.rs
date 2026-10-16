@@ -35,7 +35,8 @@ pub(super) async fn open(path: &Path) -> Result<Database, StorageError> {
 }
 
 /// Creates `dir` and its parents; new directories are owner-only on Unix, because the
-/// database holds forensic payloads.
+/// database holds forensic payloads. On Windows they inherit the parent's ACL, which the
+/// operator restricts.
 fn create_private_dir(dir: &Path) -> std::io::Result<()> {
     let mut builder = std::fs::DirBuilder::new();
     builder.recursive(true);
