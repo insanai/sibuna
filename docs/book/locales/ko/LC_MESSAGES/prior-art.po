@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 07:43+0000\n"
+"POT-Creation-Date: 2026-10-16 10:45+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,9 +30,9 @@ msgid ""
 "weigh against each other, feature by feature, and record which facts were "
 "checked."
 msgstr ""
-"Sibuna가 배운 시스템들 사이에 Sibuna를 놓아 봅니다. 암호학 문헌의 클라이언트 퍼즐과 순차 작업, 시그니처 기반 및 의미 "
-"기반 애플리케이션 방화벽, 작업 증명 중간 페이지, 호스팅형 엣지 네트워크입니다. 그런 다음 운영자가 서로 견주어 볼 가능성이 가장 "
-"큰 네 도구를 기능별로 비교하고, 어떤 사실을 확인했는지 기록합니다."
+"먼저 Sibuna가 배워 온 시스템들 사이에서 Sibuna의 자리를 찾습니다. 암호학 문헌의 클라이언트 퍼즐과 순차 작업, 시그니처 "
+"기반 및 의미 기반 애플리케이션 방화벽, 작업 증명 중간 페이지, 호스팅형 엣지 네트워크가 그 시스템들입니다. 그런 다음 운영자가 "
+"서로 견주어 볼 가능성이 가장 큰 네 도구를 기능별로 비교하고, 어떤 사실을 직접 확인했는지 기록합니다."
 
 #: ../../prior-art.rst:6
 msgid "Where Sibuna Comes From"
@@ -51,9 +51,9 @@ msgid ""
 "comparison claims were verified and which were only read from "
 "documentation."
 msgstr ""
-"이 장을 마치면 1992년의 클라이언트 퍼즐부터 2018년의 순차 작업 구성까지의 계보를 추적하고, Sibuna가 결합한 세 가지 "
-"아키텍처 아이디어를 말하며, Sibuna, Anubis, SafeLine, Cloudflare WAF를 하나의 설계 공간에 놓고, "
-"어떤 비교 주장을 검증했고 어떤 주장은 문서에서 읽기만 했는지 말할 수 있어야 합니다."
+"이 장을 마치면 1992년의 클라이언트 퍼즐부터 2018년의 순차 작업 구성까지 이어지는 계보를 추적하고, Sibuna가 결합한 세 "
+"가지 아키텍처 아이디어를 꼽고, Sibuna, Anubis, SafeLine, Cloudflare WAF를 하나의 설계 공간에 "
+"놓고, 어떤 비교 주장을 검증했고 어떤 주장은 문서에서 읽기만 했는지 말할 수 있어야 합니다."
 
 #: ../../prior-art.rst:13
 msgid "Client Puzzles and Sequential Work"
@@ -71,12 +71,12 @@ msgid ""
 "statement, a solution whose cost is tunable, and verification that is "
 "orders of magnitude cheaper than solving."
 msgstr ""
-"Dwork와 Naor의 \"Pricing via Processing\"(CRYPTO 1992)은 서비스가 요청자를 위해 일하기 전에 "
-"적당히 어렵고 쉽게 확인할 수 있는 계산을 요구하자고 제안했습니다. Back의 Hashcash(1997년, 2002년에 정리)는 "
-"퍼즐을 난이도가 정수 하나인 부분 해시 역산으로 만들었고, Juels와 Brainard의 클라이언트 퍼즐(NDSS 1999)은 이 "
-"아이디어를 연결 폭주에 적용했습니다. 연결 폭주에서는 서버가 풀리지 않은 퍼즐에 대해 아무것도 기억해서는 안 됩니다. 세 가지 모두 "
-"Sibuna가 유지하는 형태를 공유합니다. 서버가 고른 명제, 비용을 조절할 수 있는 풀이, 그리고 푸는 것보다 몇 자릿수 더 값싼 "
-"검증입니다."
+"Dwork와 Naor의 \"Pricing via Processing\"(CRYPTO 1992)은 서비스가 요청자를 위해 일하기 "
+"전에, 적당히 어렵고 확인하기 쉬운 계산을 요구하자고 제안했습니다. Back의 Hashcash(1997년, 2002년에 논문으로 "
+"정리)는 퍼즐을 난이도가 정수 하나로 정해지는 부분 해시 역산으로 만들었고, Juels와 Brainard의 클라이언트 퍼즐(NDSS "
+"1999)은 이 아이디어를 연결 폭주에 적용했습니다. 연결 폭주에서는 서버가 풀리지 않은 퍼즐에 대해 아무것도 기억해서는 안 "
+"됩니다. 세 연구 모두 Sibuna가 이어받은 형태를 공유합니다. 서버가 고른 명제, 비용을 조절할 수 있는 풀이, 그리고 풀이보다 "
+"몇 자릿수 값싼 검증입니다."
 
 #: ../../prior-art.rst:18
 msgid ""
@@ -93,9 +93,122 @@ msgstr ""
 "해시 탐색은 완전히 병렬화할 수 있으므로, 코어가 많은 요청자가 더 빨리 끝냅니다. Mahmoody, Moran, "
 "Vadhan(CRYPTO 2013)은 *순차* 작업 증명을 정의했습니다. 증명자는 코어 수와 상관없이 서로 의존하는 긴 단계의 "
 "사슬을 수행해야 합니다. Cohen과 Pietrzak(EUROCRYPT 2018)은 검증자가 :math:`O(t \\log "
-"N)`\\ 의 작업만 하면 되는 간단한 해시 그래프 구성을 내놓았습니다. Blocki, Lee, Zhou(ITC 2021)는 같은 "
-"구성이 양자 랜덤 오라클 모델에서 양자 증명자에 대해 건전함을 증명했습니다. III부는 이 연구 흐름에서 Sibuna의 두 번째 "
-"계층을 유도하며, SID 0006은 그 가정을 기록합니다."
+"N)`\\ 의 작업만 하면 되는 간단한 해시 그래프 구성을 내놓았습니다. Blocki, Lee, Zhou(ITC 2021)는 양자 "
+"랜덤 오라클 모델에서 같은 구성이 양자 증명자에 대해서도 건전함을 증명했습니다. 제III부는 이 연구 흐름에서 Sibuna의 두 "
+"번째 계층을 유도하며, SID 0006은 그 가정을 기록합니다."
+
+#: ../../prior-art.rst:21
+msgid ""
+"A lineage graph. Dwork-Naor 1992 leads to Hashcash 1997, Juels-Brainard "
+"1999, Mahmoody et al. 2013, Cohen-Pietrzak 2018 and Blocki-Lee-Zhou 2021. "
+"Aho-Corasick 1975 leads to Hyperscan 2019; ModSecurity and CRS 2002 lead "
+"to libinjection 2012. Hashcash leads to the Anubis interstitial and "
+"libinjection to the SafeLine semantic WAF; the Cloudflare hosted edge "
+"stands beside them. Sibuna (Gate, Shield, Edge) descends from Hashcash, "
+"Cohen-Pietrzak, Blocki-Lee-Zhou, Aho-Corasick, libinjection, GCRA (ATM "
+"Forum 1996), Anubis, SafeLine and Cloudflare."
+msgstr ""
+"계보 그래프입니다. Dwork-Naor 1992에서 Hashcash 1997, Juels-Brainard 1999, Mahmoody "
+"외 2013, Cohen-Pietrzak 2018, Blocki-Lee-Zhou 2021로 이어집니다. Aho-Corasick "
+"1975는 Hyperscan 2019로, ModSecurity와 CRS 2002는 libinjection 2012로 이어집니다. "
+"Hashcash는 Anubis 중간 페이지로, libinjection은 SafeLine 의미 기반 WAF로 이어지며, "
+"Cloudflare 호스팅형 엣지는 그 옆에 놓입니다. Sibuna(Gate, Shield, Edge)는 Hashcash, "
+"Cohen-Pietrzak, Blocki-Lee-Zhou, Aho-Corasick, libinjection, GCRA(ATM "
+"Forum 1996), Anubis, SafeLine, Cloudflare에서 이어집니다."
+
+#: ../../prior-art.rst:21
+msgid ""
+"digraph lineage {\n"
+"  rankdir=TB;\n"
+"  node [shape=box, fontname=\"Helvetica\", fontsize=10];\n"
+"  edge [fontname=\"Helvetica\", fontsize=9];\n"
+"  subgraph puzzles {\n"
+"    rank=same;\n"
+"    dwork [label=\"Dwork-Naor\\n1992\"];\n"
+"    hashcash [label=\"Hashcash\\n1997\"];\n"
+"    juels [label=\"Juels-Brainard\\n1999\"];\n"
+"    mahmoody [label=\"Mahmoody et al.\\n2013\"];\n"
+"    cohen [label=\"Cohen-Pietrzak\\n2018\"];\n"
+"    blocki [label=\"Blocki-Lee-Zhou\\n2021\"];\n"
+"  }\n"
+"  subgraph systems {\n"
+"    rank=same;\n"
+"    aho [label=\"Aho-Corasick\\n1975\"];\n"
+"    modsec [label=\"ModSecurity, CRS\\n2002\"];\n"
+"    libinj [label=\"libinjection\\n2012\"];\n"
+"    hyperscan [label=\"Hyperscan\\n2019\"];\n"
+"    gcra [label=\"GCRA\\nATM Forum 1996\"];\n"
+"  }\n"
+"  subgraph products {\n"
+"    rank=same;\n"
+"    anubis [label=\"Anubis\\ninterstitial\"];\n"
+"    safeline [label=\"SafeLine\\nsemantic WAF\"];\n"
+"    cloudflare [label=\"Cloudflare\\nhosted edge\"];\n"
+"  }\n"
+"  sibuna [label=\"Sibuna\\nGate, Shield, Edge\", style=\"filled,bold\"];\n"
+"  dwork -> hashcash -> juels -> mahmoody -> cohen -> blocki;\n"
+"  modsec -> libinj;\n"
+"  aho -> hyperscan;\n"
+"  dwork -> aho [style=invis];\n"
+"  aho -> anubis [style=invis];\n"
+"  hashcash -> anubis;\n"
+"  libinj -> safeline;\n"
+"  hashcash -> sibuna;\n"
+"  cohen -> sibuna;\n"
+"  blocki -> sibuna;\n"
+"  aho -> sibuna;\n"
+"  libinj -> sibuna;\n"
+"  gcra -> sibuna;\n"
+"  anubis -> sibuna;\n"
+"  safeline -> sibuna;\n"
+"  cloudflare -> sibuna;\n"
+"}"
+msgstr ""
+"digraph lineage {\n"
+"  rankdir=TB;\n"
+"  node [shape=box, fontname=\"Helvetica\", fontsize=10];\n"
+"  edge [fontname=\"Helvetica\", fontsize=9];\n"
+"  subgraph puzzles {\n"
+"    rank=same;\n"
+"    dwork [label=\"Dwork-Naor\\n1992\"];\n"
+"    hashcash [label=\"Hashcash\\n1997\"];\n"
+"    juels [label=\"Juels-Brainard\\n1999\"];\n"
+"    mahmoody [label=\"Mahmoody 외\\n2013\"];\n"
+"    cohen [label=\"Cohen-Pietrzak\\n2018\"];\n"
+"    blocki [label=\"Blocki-Lee-Zhou\\n2021\"];\n"
+"  }\n"
+"  subgraph systems {\n"
+"    rank=same;\n"
+"    aho [label=\"Aho-Corasick\\n1975\"];\n"
+"    modsec [label=\"ModSecurity, CRS\\n2002\"];\n"
+"    libinj [label=\"libinjection\\n2012\"];\n"
+"    hyperscan [label=\"Hyperscan\\n2019\"];\n"
+"    gcra [label=\"GCRA\\nATM Forum 1996\"];\n"
+"  }\n"
+"  subgraph products {\n"
+"    rank=same;\n"
+"    anubis [label=\"Anubis\\n중간 페이지\"];\n"
+"    safeline [label=\"SafeLine\\n의미 기반 WAF\"];\n"
+"    cloudflare [label=\"Cloudflare\\n호스팅형 엣지\"];\n"
+"  }\n"
+"  sibuna [label=\"Sibuna\\nGate, Shield, Edge\", style=\"filled,bold\"];\n"
+"  dwork -> hashcash -> juels -> mahmoody -> cohen -> blocki;\n"
+"  modsec -> libinj;\n"
+"  aho -> hyperscan;\n"
+"  dwork -> aho [style=invis];\n"
+"  aho -> anubis [style=invis];\n"
+"  hashcash -> anubis;\n"
+"  libinj -> safeline;\n"
+"  hashcash -> sibuna;\n"
+"  cohen -> sibuna;\n"
+"  blocki -> sibuna;\n"
+"  aho -> sibuna;\n"
+"  libinj -> sibuna;\n"
+"  gcra -> sibuna;\n"
+"  anubis -> sibuna;\n"
+"  safeline -> sibuna;\n"
+"  cloudflare -> sibuna;\n"
+"}"
 
 #: ../../prior-art.rst:21
 msgid ""
@@ -106,8 +219,8 @@ msgid ""
 "Multi-Paxos (Lamport 1998; SID 0005); Sibuna now stores its state in "
 "SQLite or PostgreSQL (SID 0011)."
 msgstr ""
-"Sibuna가 결합한 아이디어의 계보. 위쪽 줄은 클라이언트 퍼즐과 순차 작업의 암호학, 가운데 줄은 Sibuna가 기반으로 삼은 "
-"알고리즘과 시스템, 세 번째 줄은 같은 공간의 제품입니다. 화살표는 직접적인 계승을 뜻합니다. 이전 저장소 설계는 "
+"Sibuna가 결합한 아이디어의 계보. 위쪽 줄은 클라이언트 퍼즐과 순차 작업의 암호학, 가운데 줄은 Sibuna가 바탕으로 삼은 "
+"알고리즘과 시스템, 세 번째 줄은 같은 영역의 제품입니다. 화살표는 직접적인 계승을 뜻합니다. 이전 저장소 설계는 "
 "Multi-Paxos(Lamport 1998; SID 0005)를 바탕으로 했습니다. 지금 Sibuna는 상태를 SQLite나 "
 "PostgreSQL에 저장합니다(SID 0011)."
 
@@ -132,12 +245,12 @@ msgid ""
 "inspects."
 msgstr ""
 "1세대 웹 애플리케이션 방화벽은 요청 바이트를 정규 표현식과 대조했습니다. ModSecurity(2002)와 OWASP Core "
-"Rule Set은 이 방식을 공개하고 널리 배포했으며, 그 비용도 익숙하게 만들었습니다. 요청마다 수백 개의 백트래킹 패턴, 손으로 "
-"조정하는 이상 점수, 평범한 입력에 대한 긴 오탐의 꼬리입니다. libinjection(Hanson, 2012)은 패턴 목록을 "
-"문자열이 SQL로 *파싱되는지* 묻는 토크나이저로 바꾸어 비용과 오탐을 모두 줄였습니다. Chaitin의 SafeLine은 이 의미 "
-"기반 아이디어를 완전한 제품으로 옮겼고, Hyperscan(Wang 외, NSDI 2019)은 입력이 길 때 벡터화된 리터럴 매칭을 "
-"어디까지 밀어붙일 수 있는지 보여 주었습니다. VI부는 Sibuna가 검사하는 짧은 필드에 대해 정규 표현식이나 SIMD 엔진 대신 "
-"밀집 오토마톤과 작은 구조 토크나이저를 고른 이유를 설명합니다."
+"Rule Set은 이 방식을 공개하고 널리 퍼뜨렸으며, 그 비용도 널리 알렸습니다. 요청마다 백트래킹하는 패턴 수백 개, 손으로 "
+"조정하는 이상 점수, 평범한 입력에서 끝없이 이어지는 오탐이 그것입니다. libinjection(Hanson, 2012)은 패턴 "
+"목록 대신 문자열이 SQL로 *파싱되는지* 묻는 토크나이저를 써서 비용과 오탐을 모두 줄였습니다. Chaitin의 SafeLine은 "
+"이 의미 기반 아이디어를 완전한 제품으로 옮겼고, Hyperscan(Wang 외, NSDI 2019)은 입력이 길 때 벡터화된 "
+"리터럴 매칭을 어디까지 밀어붙일 수 있는지 보여 주었습니다. 제VI부는 Sibuna가 검사하는 짧은 필드에 정규 표현식이나 SIMD "
+"엔진 대신 밀집 오토마톤과 작은 구조 토크나이저를 고른 이유를 설명합니다."
 
 #: ../../prior-art.rst:75
 msgid "Interstitials and Edges"
@@ -155,10 +268,10 @@ msgid ""
 "differ."
 msgstr ""
 "웹사이트 앞에 두는 작업 증명 중간 페이지는 2025년에 흔해졌습니다. 언어 모델 학습 데이터를 모으는 스크레이퍼 트래픽 때문에 "
-"평범한 원본 서버를 운영하는 비용을 감당할 수 없게 되었기 때문입니다. Anubis(Techaro)는 가장 잘 알려진 공개 "
-"구현입니다. JavaScript 퍼즐을 제공하고, 세션 토큰에 서명하며, 그 밖의 트래픽은 그대로 통과시키는 Go 역방향 "
-"프록시입니다. Sibuna의 Gate 구성은 상태 없는 챌린지, 대칭 토큰, 두 번째 작업 계층으로 같은 문제를 풉니다. 아래 "
-"비교는 둘이 어디서 다른지 기록합니다."
+"평범한 원본 서버도 운영 비용을 감당하기 어려워졌기 때문입니다. Anubis(Techaro)는 가장 잘 알려진 공개 구현입니다. "
+"JavaScript 퍼즐을 제공하고, 세션 토큰에 서명하며, 그 밖의 트래픽은 그대로 통과시키는 Go 리버스 프록시입니다. "
+"Sibuna의 Gate 구성은 상태 없는 챌린지, 대칭 토큰, 두 번째 작업 계층으로 같은 문제를 풉니다. 아래 비교는 둘이 어디서 "
+"다른지 기록합니다."
 
 #: ../../prior-art.rst:80
 msgid ""
@@ -171,8 +284,8 @@ msgid ""
 "database shared by a cluster) read by a storage thread off the request "
 "path, rather than a service call."
 msgstr ""
-"규모의 반대쪽 끝에서는 Cloudflare 같은 호스팅형 엣지가 전역 제어 평면과 함께 수백 개의 거점에 검사, 속도 제한, 봇 "
-"점수를 배치합니다. Sibuna의 Edge 배포는 그 형태(로컬의 불변 스냅숏을 채우는 공유 정책 및 평판 평면)를 빌리면서도 자체 "
+"규모의 반대쪽 끝에서는 Cloudflare 같은 호스팅형 엣지가 전역 제어 평면을 두고 수백 개의 거점에 검사, 속도 제한, 봇 "
+"점수를 배치합니다. Sibuna의 Edge 배포는 그 형태(노드마다 불변 스냅숏을 공급하는 공유 정책·평판 평면)를 빌리면서도 셀프 "
 "호스팅을 유지합니다. 그래서 저장소 계층은 서비스 호출이 아니라 운영자가 직접 운영하는 데이터베이스(노드 하나에서는 SQLite "
 "파일, 클러스터에서는 공유하는 PostgreSQL 데이터베이스 하나)이며, 요청 경로 밖의 저장소 스레드가 이를 읽습니다."
 
@@ -188,7 +301,7 @@ msgid ""
 "storage and distributed deployment are options for either."
 msgstr ""
 "Sibuna는 요청 허용을 위한 브라우저 작업 챌린지, 범위가 제한된 애플리케이션 페이로드 검사, 그리고 로컬 정책 스냅숏을 "
-"게시하는 공유 제어 평면을 결합합니다. Gate와 Shield는 두 가지 제품 구성이며, 저장소와 분산 배포는 어느 쪽에서든 선택할 "
+"게시하는 공유 제어 평면을 결합합니다. Gate와 Shield는 두 가지 운영 구성이며, 저장소와 분산 배포는 어느 쪽에서든 선택할 "
 "수 있습니다."
 
 #: ../../prior-art.rst:91
@@ -221,7 +334,7 @@ msgstr "세션"
 
 #: ../../prior-art.rst:98
 msgid "Keyed BLAKE3; optional Ed25519"
-msgstr "키 기반 BLAKE3; 선택적으로 Ed25519"
+msgstr "키 기반 BLAKE3, 선택적으로 Ed25519"
 
 #: ../../prior-art.rst:100
 msgid "Local controls"
@@ -249,7 +362,7 @@ msgstr "상태"
 
 #: ../../prior-art.rst:107
 msgid "Optional persistent policy and reputation, shared across a cluster"
-msgstr "선택적인 영속 정책과 평판, 클러스터 전체에서 공유"
+msgstr "선택적인 영속 정책과 평판(클러스터 전체에서 공유)"
 
 #: ../../prior-art.rst:108
 msgid "Also inspection forensics"
@@ -266,8 +379,8 @@ msgid ""
 "the tradeoffs."
 msgstr ""
 "브라우저 솔버는 네이티브 검증자와 같은 증명 소스에서 컴파일됩니다. 밀집 리터럴 매칭은 백트래킹을 피하고 스캔 작업을 입력 길이에 "
-"선형으로 유지합니다. 불변 정책 스냅숏은 요청 처리를 SQL과 데이터베이스의 가용성에서 분리합니다. 이 선택들 중 어느 것도 "
-"보편적인 알고리즘 최적성을 입증하지는 않습니다. 짧은 헤더, 긴 본문, 패턴의 다양성, 코어 수, 캐시 크기에 따라 절충점이 "
+"선형으로 유지합니다. 불변 정책 스냅숏은 요청 처리를 SQL과 데이터베이스의 가용성에서 분리합니다. 그렇다고 이 가운데 어느 선택도 "
+"보편적인 알고리즘 최적성을 보장하지는 않습니다. 짧은 헤더, 긴 본문, 패턴의 다양성, 코어 수, 캐시 크기에 따라 절충점이 "
 "달라집니다."
 
 #: ../../prior-art.rst:112
@@ -284,7 +397,7 @@ msgstr "요청 경로에서 힙 할당을 하지 않습니다. 모든 테이블�
 msgid ""
 "Issuing a challenge writes nothing; only a paid-for solution occupies "
 "memory."
-msgstr "챌린지를 발급할 때는 아무것도 쓰지 않습니다. 대가를 치른 풀이만 메모리를 차지합니다."
+msgstr "챌린지를 발급해도 아무것도 기록하지 않습니다. 대가를 치른 풀이만 메모리를 차지합니다."
 
 #: ../../prior-art.rst:116
 msgid ""
@@ -302,7 +415,7 @@ msgstr "주장하는 모든 숫자는 커밋된 하니스로 측정했거나 모
 msgid ""
 "Cryptographic choices cite a venue and a proof, and state their quantum "
 "posture."
-msgstr "암호학적 선택은 발표처와 증명을 인용하고, 양자 컴퓨팅에 대한 입장을 밝힙니다."
+msgstr "암호학적 선택은 발표 학회와 증명을 인용하고, 양자 공격에 대한 안전성 입장을 밝힙니다."
 
 #: ../../prior-art.rst:120
 msgid "Feature Comparison"
@@ -319,41 +432,46 @@ msgid ""
 "benchmark host; SafeLine and Cloudflare were not (Part VIII explains "
 "why). A dash means the product does not offer the feature; a plan name "
 "means the feature exists but only on that plan. Each Sibuna measurement "
-"names the committed result file it comes from."
+"names the committed result file it comes from. The TLS fingerprint row "
+"was checked in October 2026, against the Anubis changelog (1.21.0 and "
+"1.26.0), the SafeLine release notes (8.10.0 and 9.2.0), and Cloudflare's "
+"page \"JA3/JA4 fingerprint\"."
 msgstr ""
-"아래의 네 표는 Sibuna를 함께 자주 언급되는 세 도구와 비교합니다. 다른 제품에 관한 사실은 2026년 9월에 공개 문서와 "
-"릴리스 산출물에서 읽었습니다. Anubis 1.27.0(MIT 라이선스, Go), SafeLine 커뮤니티 에디션 9.x(비공개 "
-"탐지기 이미지를 둘러싼 GPL-3.0 관리 코드, Docker Compose), Cloudflare WAF 개발자 문서입니다. "
-"Anubis는 벤치마크 호스트에서도 실행했고, SafeLine과 Cloudflare는 실행하지 않았습니다(이유는 VIII부에서 "
-"설명합니다). 대시는 제품이 그 기능을 제공하지 않음을 뜻하고, 요금제 이름은 기능이 있지만 그 요금제에서만 제공됨을 뜻합니다. "
-"Sibuna의 각 측정값은 그 값이 나온 커밋된 결과 파일을 밝힙니다."
+"아래 네 표는 Sibuna와 함께 자주 언급되는 세 도구를 Sibuna와 비교합니다. 다른 제품에 관한 사실은 2026년 9월에 "
+"공개 문서와 릴리스 파일에서 읽었습니다. Anubis 1.27.0(MIT 라이선스, Go), SafeLine 커뮤니티 에디션 "
+"9.x(비공개 탐지기 이미지를 둘러싼 GPL-3.0 관리 코드, Docker Compose), Cloudflare WAF 개발자 "
+"문서입니다. Anubis는 벤치마크 호스트에서도 실행했고, SafeLine과 Cloudflare는 실행하지 않았습니다(이유는 "
+"제VIII부에서 설명합니다). 대시는 제품이 그 기능을 제공하지 않음을, 요금제 이름은 기능이 있지만 그 요금제에서만 제공됨을 "
+"뜻합니다. Sibuna의 각 측정값은 그 값이 나온 커밋된 결과 파일을 밝힙니다. TLS 지문 행은 2026년 10월에 Anubis "
+"변경 기록(1.21.0, 1.26.0), SafeLine 릴리스 노트(8.10.0, 9.2.0), Cloudflare의 "
+"\"JA3/JA4 fingerprint\" 페이지와 대조해 확인했습니다."
 
 #: ../../prior-art.rst:125
 msgid "Feature comparison, part 1: deployment"
 msgstr "기능 비교 1부: 배포"
 
-#: ../../prior-art.rst:130 ../../prior-art.rst:161 ../../prior-art.rst:197
-#: ../../prior-art.rst:233
+#: ../../prior-art.rst:130 ../../prior-art.rst:161 ../../prior-art.rst:202
+#: ../../prior-art.rst:238
 msgid "Feature"
 msgstr "기능"
 
-#: ../../prior-art.rst:131 ../../prior-art.rst:162 ../../prior-art.rst:198
-#: ../../prior-art.rst:234
+#: ../../prior-art.rst:131 ../../prior-art.rst:162 ../../prior-art.rst:203
+#: ../../prior-art.rst:239
 msgid "Sibuna"
 msgstr "Sibuna"
 
-#: ../../prior-art.rst:132 ../../prior-art.rst:163 ../../prior-art.rst:199
-#: ../../prior-art.rst:235
+#: ../../prior-art.rst:132 ../../prior-art.rst:163 ../../prior-art.rst:204
+#: ../../prior-art.rst:240
 msgid "Anubis 1.27"
 msgstr "Anubis 1.27"
 
-#: ../../prior-art.rst:133 ../../prior-art.rst:164 ../../prior-art.rst:200
-#: ../../prior-art.rst:236
+#: ../../prior-art.rst:133 ../../prior-art.rst:164 ../../prior-art.rst:205
+#: ../../prior-art.rst:241
 msgid "SafeLine CE 9"
 msgstr "SafeLine CE 9"
 
-#: ../../prior-art.rst:134 ../../prior-art.rst:165 ../../prior-art.rst:201
-#: ../../prior-art.rst:237
+#: ../../prior-art.rst:134 ../../prior-art.rst:165 ../../prior-art.rst:206
+#: ../../prior-art.rst:242
 msgid "Cloudflare WAF"
 msgstr "Cloudflare WAF"
 
@@ -366,11 +484,11 @@ msgid ""
 "One binary; reverse proxy or forward auth; optional SQLite file or shared "
 "PostgreSQL database"
 msgstr ""
-"바이너리 하나; 역방향 프록시 또는 forward auth; 선택적으로 SQLite 파일 또는 공유 PostgreSQL 데이터베이스"
+"바이너리 하나; 리버스 프록시 또는 forward-auth; 선택적으로 SQLite 파일 또는 공유 PostgreSQL 데이터베이스"
 
 #: ../../prior-art.rst:137
 msgid "One Go binary; reverse proxy or forward auth"
-msgstr "Go 바이너리 하나; 역방향 프록시 또는 forward auth"
+msgstr "Go 바이너리 하나; 리버스 프록시 또는 forward-auth"
 
 #: ../../prior-art.rst:138
 msgid ""
@@ -408,8 +526,8 @@ msgid "Licence"
 msgstr "라이선스"
 
 #: ../../prior-art.rst:146
-msgid "Source in the repository"
-msgstr "저장소에 소스 공개"
+msgid "LGPL-3.0-or-later"
+msgstr "LGPL-3.0-or-later"
 
 #: ../../prior-art.rst:147
 msgid "MIT"
@@ -439,7 +557,7 @@ msgstr ""
 
 #: ../../prior-art.rst:152
 msgid "38.1 MiB binary; 21 MiB idle RSS; Linux fixture, console off"
-msgstr "바이너리 38.1 MiB; 유휴 RSS 21 MiB; Linux 고정 환경, 콘솔 꺼짐"
+msgstr "바이너리 38.1 MiB; 유휴 RSS 21 MiB; Linux 테스트 환경, 콘솔 꺼짐"
 
 #: ../../prior-art.rst:153
 msgid "1 CPU core, 1 GB RAM, 5 GB disk minimum, Docker 20.10+"
@@ -475,7 +593,7 @@ msgstr ""
 
 #: ../../prior-art.rst:169
 msgid "JavaScript anti-bot challenge and CAPTCHA; not work-bound"
-msgstr "JavaScript 봇 방지 챌린지와 CAPTCHA; 작업량에 묶이지 않음"
+msgstr "JavaScript 봇 방지 챌린지와 CAPTCHA; 작업 증명 방식 아님"
 
 #: ../../prior-art.rst:170
 msgid ""
@@ -511,7 +629,7 @@ msgstr "세션 토큰"
 msgid ""
 "Keyed BLAKE3 tag, 75-character cookie bound to the work paid; Ed25519 "
 "optional"
-msgstr "키 기반 BLAKE3 태그, 치른 작업에 묶인 75문자 쿠키; 선택적으로 Ed25519"
+msgstr "키 기반 BLAKE3 태그, 치른 작업에 묶인 75자 쿠키; 선택적으로 Ed25519"
 
 #: ../../prior-art.rst:178
 msgid "JSON Web Token signed with Ed25519; HS512 optional"
@@ -527,11 +645,11 @@ msgstr "``cf_clearance`` 쿠키"
 
 #: ../../prior-art.rst:181
 msgid "Post-quantum posture of the default token"
-msgstr "기본 토큰의 양자 이후 안전성"
+msgstr "기본 토큰의 양자 내성"
 
 #: ../../prior-art.rst:182
 msgid "Symmetric: only Grover's quadratic speedup applies"
-msgstr "대칭 방식: Grover의 제곱 수준 속도 향상만 적용됨"
+msgstr "대칭 방식: Grover 알고리즘의 이차 가속만 적용됨"
 
 #: ../../prior-art.rst:183
 msgid "Ed25519: broken by Shor's algorithm"
@@ -547,10 +665,11 @@ msgstr "정책 언어"
 
 #: ../../prior-art.rst:187
 msgid ""
-"JSON rules: path, User-Agent, headers, IPv4/IPv6 CIDR; ALLOW, DENY, "
-"CHALLENGE, WEIGH with thresholds; dynamic rules from the database"
+"JSON rules: path, User-Agent, headers, IPv4/IPv6 CIDR, JA4 fingerprint; "
+"ALLOW, DENY, CHALLENGE, WEIGH with thresholds; dynamic rules from the "
+"database"
 msgstr ""
-"JSON 규칙: 경로, User-Agent, 헤더, IPv4/IPv6 CIDR; 임계값이 있는 ALLOW, DENY, "
+"JSON 규칙: 경로, User-Agent, 헤더, IPv4/IPv6 CIDR, JA4 지문; 임계값이 있는 ALLOW, DENY, "
 "CHALLENGE, WEIGH; 데이터베이스의 동적 규칙"
 
 #: ../../prior-art.rst:188
@@ -568,185 +687,222 @@ msgid ""
 "Rules language expressions; *5 / 20 / 100 / 1000 custom rules by plan*"
 msgstr "Rules language 표현식; *요금제별 사용자 지정 규칙 5 / 20 / 100 / 1000개*"
 
+#: ../../prior-art.rst:191
+msgid "TLS fingerprint (JA4)"
+msgstr "TLS 지문(JA4)"
+
 #: ../../prior-art.rst:192
+msgid ""
+"Rules match a JA4 fingerprint exactly or by prefix; a trusted ingress "
+"computes it and forwards it in a header (``--ja4-header``); Sibuna does "
+"not compute it"
+msgstr ""
+"규칙이 JA4 지문을 정확히 일치 또는 접두사로 비교; 신뢰할 수 있는 인그레스가 지문을 계산해 헤더로 "
+"전달(``--ja4-header``); Sibuna는 직접 계산하지 않음"
+
+#: ../../prior-art.rst:193
+msgid ""
+"Not documented; policies may reference the HTTP fingerprint JA4H, which "
+"Anubis computes and adds as the header ``X-Http-Fingerprint-JA4H``"
+msgstr ""
+"문서화되지 않음; 정책에서 HTTP 지문 JA4H를 참조할 수 있으며, Anubis가 이를 계산해 "
+"``X-Http-Fingerprint-JA4H`` 헤더로 추가함"
+
+#: ../../prior-art.rst:194
+msgid ""
+"Computed at its own TLS termination; shown in attack details; custom "
+"rules match it (equals, not equals); a built-in rule denies fingerprints "
+"from its malicious JA4 intelligence"
+msgstr ""
+"자체 TLS 종료 지점에서 계산; 공격 상세 정보에 표시; 사용자 지정 규칙으로 비교(같음, 같지 않음); 내장 규칙이 자체 악성 "
+"JA4 위협 정보에 있는 지문을 거부"
+
+#: ../../prior-art.rst:195
+msgid ""
+"JA3 and JA4 fingerprints in WAF custom rules and analytics *(Enterprise "
+"with Bot Management)*"
+msgstr ""
+"WAF 사용자 지정 규칙과 분석에서 JA3, JA4 지문 사용 *(Enterprise, Bot Management 포함)*"
+
+#: ../../prior-art.rst:197
 msgid "Feature comparison, part 3: inspection and state"
 msgstr "기능 비교 3부: 검사와 상태"
 
-#: ../../prior-art.rst:202
+#: ../../prior-art.rst:207
 msgid "SQLi, XSS, RCE, traversal inspection"
 msgstr "SQLi, XSS, RCE, 경로 탐색 검사"
 
-#: ../../prior-art.rst:203
+#: ../../prior-art.rst:208
 msgid ""
 "Shield: tagged automaton plus structural tokenizers, first 8 KB of body"
 msgstr "Shield: 태그가 붙은 오토마톤과 구조 토크나이저, 본문의 처음 8 KB"
 
-#: ../../prior-art.rst:204 ../../prior-art.rst:250
+#: ../../prior-art.rst:209 ../../prior-art.rst:255
 msgid "\\-"
 msgstr "\\-"
 
-#: ../../prior-art.rst:205
+#: ../../prior-art.rst:210
 msgid "Semantic analysis engine over OWASP categories, also SSRF, XXE, CRLF"
 msgstr "OWASP 범주에 대한 의미 분석 엔진, SSRF, XXE, CRLF도 포함"
 
-#: ../../prior-art.rst:206
+#: ../../prior-art.rst:211
 msgid ""
 "Managed rulesets *(Pro and above)*; OWASP Core Ruleset; attack score "
 "*(Business and above)*"
 msgstr "관리형 규칙 집합 *(Pro 이상)*; OWASP Core Ruleset; 공격 점수 *(Business 이상)*"
 
-#: ../../prior-art.rst:207
+#: ../../prior-art.rst:212
 msgid "Rate limiting"
 msgstr "속도 제한"
 
-#: ../../prior-art.rst:208
+#: ../../prior-art.rst:213
 msgid "GCRA per client, local to a node"
 msgstr "클라이언트별 GCRA, 노드 로컬"
 
-#: ../../prior-art.rst:209
+#: ../../prior-art.rst:214
 msgid "\\- (system load is exposed to CEL rules)"
-msgstr "\\- (시스템 부하를 CEL 규칙에 노출)"
+msgstr "\\- (CEL 규칙에서 시스템 부하를 참조할 수 있음)"
 
-#: ../../prior-art.rst:210
+#: ../../prior-art.rst:215
 msgid "Per IP, path, session"
 msgstr "IP, 경로, 세션별"
 
-#: ../../prior-art.rst:211
+#: ../../prior-art.rst:216
 msgid "*1 / 2 / 5 / 100 rules by plan*; IP-only keys below Enterprise"
 msgstr "*요금제별 규칙 1 / 2 / 5 / 100개*; Enterprise 미만은 IP 전용 키"
 
-#: ../../prior-art.rst:212
+#: ../../prior-art.rst:217
 msgid "Bans and reputation"
 msgstr "차단과 평판"
 
-#: ../../prior-art.rst:213
+#: ../../prior-art.rst:218
 msgid ""
 "Honeypot bans; reputation trie loaded from the reputation table shared "
 "across the cluster"
 msgstr "허니팟 차단; 클러스터 전체가 공유하는 평판 테이블에서 불러온 평판 트라이"
 
-#: ../../prior-art.rst:214
+#: ../../prior-art.rst:219
 msgid "DNSBL; ASN and GeoIP through Thoth *(paid, closed)*"
 msgstr "DNSBL; Thoth를 통한 ASN과 GeoIP *(유료, 비공개)*"
 
-#: ../../prior-art.rst:215
+#: ../../prior-art.rst:220
 msgid "IP groups and blacklists; threat intelligence *(Pro)*"
 msgstr "IP 그룹과 차단 목록; 위협 인텔리전스 *(Pro)*"
 
-#: ../../prior-art.rst:216
+#: ../../prior-art.rst:221
 msgid "IP lists; managed lists and bot score *(Enterprise)*"
 msgstr "IP 목록; 관리형 목록과 봇 점수 *(Enterprise)*"
 
-#: ../../prior-art.rst:217
+#: ../../prior-art.rst:222
 msgid "Forensics"
 msgstr "포렌식"
 
-#: ../../prior-art.rst:218
+#: ../../prior-art.rst:223
 msgid ""
 "SQLite or PostgreSQL: full-text search over incidents, vector campaign "
 "clustering"
 msgstr "SQLite 또는 PostgreSQL: 인시던트 전문 검색, 벡터 기반 캠페인 군집화"
 
-#: ../../prior-art.rst:219
+#: ../../prior-art.rst:224
 msgid "Prometheus metrics only"
 msgstr "Prometheus 지표만"
 
-#: ../../prior-art.rst:220
+#: ../../prior-art.rst:225
 msgid "PostgreSQL attack log with console"
-msgstr "콘솔이 있는 PostgreSQL 공격 로그"
+msgstr "PostgreSQL 공격 로그와 콘솔"
 
-#: ../../prior-art.rst:221
+#: ../../prior-art.rst:226
 msgid "Security Events; sampled on Free"
-msgstr "Security Events; Free에서는 표본 추출"
+msgstr "Security Events; Free 요금제에서는 표본만 표시"
 
-#: ../../prior-art.rst:222
+#: ../../prior-art.rst:227
 msgid "Multi-node"
 msgstr "다중 노드"
 
-#: ../../prior-art.rst:223
+#: ../../prior-art.rst:228
 msgid ""
 "One PostgreSQL database shared by every node for policy and reputation; "
 "shared seed; sticky challenge verification"
 msgstr "정책과 평판을 위해 모든 노드가 공유하는 PostgreSQL 데이터베이스 하나; 공유 시드; 발급 노드 고정 챌린지 검증"
 
-#: ../../prior-art.rst:224
+#: ../../prior-art.rst:229
 msgid "Shared signing key; shared Valkey store"
 msgstr "공유 서명 키; 공유 Valkey 저장소"
 
-#: ../../prior-art.rst:225
+#: ../../prior-art.rst:230
 msgid "One stack per host"
 msgstr "호스트당 스택 하나"
 
-#: ../../prior-art.rst:226
+#: ../../prior-art.rst:231
 msgid "Global anycast"
 msgstr "전역 애니캐스트"
 
-#: ../../prior-art.rst:228
+#: ../../prior-art.rst:233
 msgid "Feature comparison, part 4: operations"
 msgstr "기능 비교 4부: 운영"
 
-#: ../../prior-art.rst:238
+#: ../../prior-art.rst:243
 msgid "Metrics"
 msgstr "지표"
 
-#: ../../prior-art.rst:239
+#: ../../prior-art.rst:244
 msgid "Prometheus at ``/__sibuna/metrics``"
-msgstr "``/__sibuna/metrics``\\ 의 Prometheus"
+msgstr "``/__sibuna/metrics``\\ 에서 Prometheus 형식"
 
-#: ../../prior-art.rst:240
+#: ../../prior-art.rst:245
 msgid "Prometheus on a separate port"
 msgstr "별도 포트의 Prometheus"
 
-#: ../../prior-art.rst:241
+#: ../../prior-art.rst:246
 msgid "Console dashboards"
 msgstr "콘솔 대시보드"
 
-#: ../../prior-art.rst:242
+#: ../../prior-art.rst:247
 msgid "Dashboard and analytics"
 msgstr "대시보드와 분석"
 
-#: ../../prior-art.rst:243
+#: ../../prior-art.rst:248
 msgid "TLS termination"
 msgstr "TLS 종료"
 
-#: ../../prior-art.rst:244 ../../prior-art.rst:245
+#: ../../prior-art.rst:249 ../../prior-art.rst:250
 msgid "\\- (ingress)"
 msgstr "\\- (인그레스)"
 
-#: ../../prior-art.rst:246 ../../prior-art.rst:247 ../../prior-art.rst:251
-#: ../../prior-art.rst:252 ../../prior-art.rst:255
+#: ../../prior-art.rst:251 ../../prior-art.rst:252 ../../prior-art.rst:256
+#: ../../prior-art.rst:257 ../../prior-art.rst:260
 msgid "**Yes**"
 msgstr "**예**"
 
-#: ../../prior-art.rst:248
+#: ../../prior-art.rst:253
 msgid "Management console"
 msgstr "관리 콘솔"
 
-#: ../../prior-art.rst:249
+#: ../../prior-art.rst:254
 msgid "Opt-in; SID 0007 Committed"
 msgstr "선택 사항; SID 0007 Committed"
 
-#: ../../prior-art.rst:253
+#: ../../prior-art.rst:258
 msgid "Measured on the benchmark host"
 msgstr "벤치마크 호스트에서 측정"
 
-#: ../../prior-art.rst:254
+#: ../../prior-art.rst:259
 msgid "**Yes** (Part VIII)"
-msgstr "**예** (VIII부)"
+msgstr "**예** (제VIII부)"
 
-#: ../../prior-art.rst:256
+#: ../../prior-art.rst:261
 msgid "\\- (Docker only)"
 msgstr "\\- (Docker 전용)"
 
-#: ../../prior-art.rst:257
+#: ../../prior-art.rst:262
 msgid "\\- (hosted)"
 msgstr "\\- (호스팅형)"
 
-#: ../../prior-art.rst:259
+#: ../../prior-art.rst:264
 msgid "Three differences carry most of the weight in a selection decision."
-msgstr "선택 결정에서는 세 가지 차이가 대부분의 무게를 차지합니다."
+msgstr "제품을 고를 때는 세 가지 차이가 가장 큰 비중을 차지합니다."
 
-#: ../../prior-art.rst:261
+#: ../../prior-art.rst:266
 msgid ""
 "*Where the work goes.* Anubis and Sibuna Gate make the *client* pay "
 "before the origin does anything. SafeLine and Cloudflare inspect first "
@@ -754,12 +910,12 @@ msgid ""
 "Sibuna Shield does both, in that order: inspection can deny a request "
 "that already holds a valid session."
 msgstr ""
-"*작업이 어디에 쓰이는가.* Anubis와 Sibuna Gate는 원본 서버가 무엇이든 하기 전에 *클라이언트*\\ 가 비용을 "
-"치르게 합니다. SafeLine과 Cloudflare는 먼저 검사하고 선택적으로 챌린지를 제시합니다. 기본 태도는 허용한 뒤 걸러 "
-"내는 것입니다. Sibuna Shield는 이 순서대로 둘 다 합니다. 이미 유효한 세션을 가진 요청이라도 검사가 거부할 수 "
-"있습니다."
+"*작업을 누가 하는가.* Anubis와 Sibuna Gate는 원본 서버가 무슨 일이든 하기 전에 *클라이언트*\\ 가 먼저 비용을 "
+"치르게 합니다. SafeLine과 Cloudflare는 먼저 검사하고 필요할 때만 챌린지를 제시합니다. 기본 방침은 일단 허용하고 "
+"걸러 내는 것입니다. Sibuna Shield는 이 순서로 두 가지를 모두 합니다. 이미 유효한 세션을 가진 요청이라도 검사에서 "
+"거부될 수 있습니다."
 
-#: ../../prior-art.rst:262
+#: ../../prior-art.rst:267
 msgid ""
 "*What the server remembers.* Anubis keeps challenge state in a store "
 "(memory, bbolt, Valkey, or S3) and signs a JSON Web Token with Ed25519; "
@@ -769,10 +925,10 @@ msgid ""
 msgstr ""
 "*서버가 무엇을 기억하는가.* Anubis는 챌린지 상태를 저장소(memory, bbolt, Valkey, S3)에 두고 JSON "
 "Web Token에 Ed25519로 서명합니다. Sibuna는 스스로를 인증하는 레코드를 발급하고, 풀린 태그만 고정 테이블에 "
-"기억합니다. SafeLine은 공격 로그를 PostgreSQL에 보관합니다. Cloudflare는 모든 것을 보관하며, Free "
-"요금제에서는 표본 추출된 가시성만 제공합니다."
+"기억합니다. SafeLine은 공격 로그를 PostgreSQL에 보관합니다. Cloudflare는 모든 것을 보관하지만, Free "
+"요금제에서는 표본만 볼 수 있습니다."
 
-#: ../../prior-art.rst:263
+#: ../../prior-art.rst:268
 msgid ""
 "*What an operator has to run.* Sibuna is one binary with an optional "
 "SQLite file, or a PostgreSQL database shared by a cluster; Anubis is one "
@@ -780,67 +936,70 @@ msgid ""
 "host with at least one core, one gigabyte of memory, and five gigabytes "
 "of disk; Cloudflare is a DNS change and a subscription."
 msgstr ""
-"*운영자가 무엇을 운영해야 하는가.* Sibuna는 바이너리 하나와 선택적인 SQLite 파일, 또는 클러스터가 공유하는 "
-"PostgreSQL 데이터베이스입니다. Anubis는 Go 바이너리 하나입니다. SafeLine은 코어 하나 이상, 메모리 "
-"1기가바이트 이상, 디스크 5기가바이트 이상인 Linux 호스트의 Docker 데몬 뒤에서 도는 컨테이너 일곱 개입니다. "
-"Cloudflare는 DNS 변경과 구독입니다."
+"*운영자가 무엇을 운영해야 하는가.* Sibuna는 바이너리 하나에 선택적으로 SQLite 파일, 또는 클러스터가 공유하는 "
+"PostgreSQL 데이터베이스가 붙습니다. Anubis는 Go 바이너리 하나입니다. SafeLine은 코어 하나 이상, 메모리 "
+"1기가바이트 이상, 디스크 5기가바이트 이상인 Linux 호스트에서 Docker 데몬 위에 실행되는 컨테이너 일곱 개입니다. "
+"Cloudflare는 DNS 변경과 구독만 하면 됩니다."
 
-#: ../../prior-art.rst:265
+#: ../../prior-art.rst:270
 msgid "Current product boundary"
 msgstr "현재 제품의 경계"
 
-#: ../../prior-art.rst:268
+#: ../../prior-art.rst:273
 msgid ""
 "Sibuna leaves ingress TLS termination to the deployment proxy and does "
-"not score bots with a trained model or publish paid signatures. Its "
-"opt-in console provides authenticated dashboards, country enrichment, "
-"policy editing, investigation and cluster management. Country lookup and "
-"storage work run outside request classification. SID 0007 is Committed, "
-"and the console passes its browser workflows (SID 0010). Its formal "
-"performance isolation gate, with eight active dashboards under load, is "
-"not yet measured; Part VIII records what is."
+"not score bots with a trained model or publish paid signatures. It "
+"matches the JA4 fingerprint that a trusted ingress computes; it cannot "
+"compute one itself (SID 0014, Part IX). Its opt-in console provides "
+"authenticated dashboards, country enrichment, policy editing, "
+"investigation and cluster management. Country lookup and storage work run "
+"outside request classification. SID 0007 is Committed, and the console "
+"passes its browser workflows (SID 0010). Its formal performance isolation "
+"gate, with eight active dashboards under load, is not yet measured; Part "
+"VIII records what is."
 msgstr ""
-"Sibuna는 인그레스 TLS 종료를 배포 환경의 프록시에 맡기며, 학습된 모델로 봇 점수를 매기거나 유료 시그니처를 게시하지 "
-"않습니다. 선택형 콘솔은 인증된 대시보드, 국가 정보 보강, 정책 편집, 조사, 클러스터 관리를 제공합니다. 국가 조회와 저장소 "
-"작업은 요청 분류 밖에서 실행됩니다. SID 0007은 Committed 상태이며, 콘솔은 브라우저 워크플로를 통과합니다(SID "
-"0010). 대시보드 여덟 개를 부하 아래에서 활성화한 상태의 공식 성능 격리 관문은 아직 측정되지 않았습니다. 측정된 내용은 "
-"VIII부에 기록되어 있습니다."
+"Sibuna는 인그레스의 TLS 종료를 배포 환경의 프록시에 맡기며, 학습된 모델로 봇 점수를 매기지 않고 유료 시그니처도 제공하지 "
+"않습니다. 신뢰할 수 있는 인그레스가 계산한 JA4 지문을 비교할 수는 있지만, 지문을 직접 계산하지는 못합니다(SID 0014, "
+"제IX부). 선택형 콘솔은 인증된 대시보드, 국가 정보 보강, 정책 편집, 조사, 클러스터 관리를 제공합니다. 국가 조회와 저장소 "
+"작업은 요청 분류 밖에서 실행됩니다. SID 0007은 Committed 상태이며, 콘솔은 브라우저 워크플로 테스트를 "
+"통과합니다(SID 0010). 대시보드 여덟 개를 활성화하고 부하를 건 상태의 공식 성능 격리 관문은 아직 측정하지 않았습니다. "
+"측정한 내용은 제VIII부에 기록되어 있습니다."
 
-#: ../../prior-art.rst:270
+#: ../../prior-art.rst:275
 msgid "Exercise 2.1"
 msgstr "연습 문제 2.1"
 
-#: ../../prior-art.rst:272
+#: ../../prior-art.rst:277
 msgid ""
 "Explain why compiling one verifier source to native code and WebAssembly "
 "reduces protocol drift. Which properties still require independent "
 "testing or cryptographic review?"
 msgstr ""
-"검증자 소스 하나를 네이티브 코드와 WebAssembly로 컴파일하면 프로토콜의 어긋남이 줄어드는 이유를 설명하세요. 어떤 속성은 "
-"여전히 독립적인 테스트나 암호학적 검토가 필요할까요?"
+"검증자 소스 하나를 네이티브 코드와 WebAssembly로 함께 컴파일하면 프로토콜의 어긋남이 줄어드는 이유를 설명하세요. 그래도 "
+"독립적인 테스트나 암호학적 검토가 필요한 속성은 무엇일까요?"
 
-#: ../../prior-art.rst:274
+#: ../../prior-art.rst:279
 msgid "Exercise 2.2"
 msgstr "연습 문제 2.2"
 
-#: ../../prior-art.rst:276
+#: ../../prior-art.rst:281
 msgid ""
 "Using only the comparison tables, write down the smallest deployment that "
 "gives a static site (a) a proof-of-work gate, (b) SQL-injection "
 "inspection, and (c) a cluster-wide ban. Which rows forced each choice?"
 msgstr ""
 "비교 표만 사용해서, 정적 사이트에 (a) 작업 증명 게이트, (b) SQL 인젝션 검사, (c) 클러스터 전체 차단을 제공하는 "
-"가장 작은 배포를 적어 보세요. 각 선택을 강제한 행은 무엇일까요?"
+"가장 작은 배포를 적어 보세요. 각 선택은 어느 행 때문에 정해졌을까요?"
 
-#: ../../prior-art.rst:278
+#: ../../prior-art.rst:283
 msgid "Hint: Start from the \"runs as\" and \"multi-node\" rows."
 msgstr "힌트: \"실행 형태\"와 \"다중 노드\" 행에서 시작하세요."
 
-#: ../../prior-art.rst:280
+#: ../../prior-art.rst:285
 msgid "Explain the invariant"
 msgstr "불변식 설명하기"
 
-#: ../../prior-art.rst:282
+#: ../../prior-art.rst:287
 msgid ""
 "Describe how Gate, Shield, and optional shared storage divide admission, "
 "inspection and policy distribution. Then name one row of the comparison "
@@ -849,3 +1008,6 @@ msgid ""
 msgstr ""
 "Gate, Shield, 선택적 공유 저장소가 요청 허용, 검사, 정책 배포를 어떻게 나누는지 설명하세요. 그런 다음 고객에게 "
 "인용하기 전에 다시 검증하고 싶은 비교 표의 행 하나를 고르고, 그것을 어떻게 검증할지 말하세요."
+
+#~ msgid "Source in the repository"
+#~ msgstr "저장소에 소스 공개"

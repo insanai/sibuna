@@ -16,7 +16,7 @@ msgid "Attention"
 msgstr "주의"
 
 msgid "Caution"
-msgstr "조심"
+msgstr "주의"
 
 msgid "Danger"
 msgstr "위험"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 07:43+0000\n"
+"POT-Creation-Date: 2026-10-16 10:45+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -32,7 +32,7 @@ msgid ""
 "``allow`` prefix, and it never overrides a WAF denial."
 msgstr ""
 "요청을 원본 서버로 전달하기로 하는 결정입니다. Sibuna에서는 유효한 세션, ``ALLOW`` 규칙, 정적 우회 경로, 평판 "
-"``allow`` 접두사가 이 결정을 내리며, WAF 거부를 덮어쓰는 일은 결코 없습니다."
+"``allow`` 접두사가 이 결정을 내리며, 어떤 경우에도 WAF의 거부 판정을 뒤집지는 않습니다."
 
 #: ../../glossary.rst:9
 msgid "Aho-Corasick automaton"
@@ -44,8 +44,8 @@ msgid ""
 "over the input. Sibuna folds failure links into a dense transition table "
 "so each byte costs one table load."
 msgstr ""
-"입력을 한 번 훑어 고정된 패턴 집합 중 어느 것이든 찾아내는 유한 오토마톤입니다. Sibuna는 실패 링크를 밀집 전이 테이블에 "
-"접어 넣으므로 바이트마다 테이블 읽기 한 번이 듭니다."
+"고정된 패턴 집합에 속한 패턴을 입력을 한 번 훑으며 찾아내는 유한 오토마톤입니다. Sibuna는 실패 링크를 밀집 전이 테이블에 "
+"미리 반영해 두므로 바이트마다 테이블을 한 번만 읽습니다."
 
 #: ../../glossary.rst:12
 msgid "Ban table"
@@ -57,8 +57,8 @@ msgid ""
 "the honeypot and by reputation shared across a cluster, read on every "
 "request."
 msgstr ""
-"차단된 클라이언트 주소와 만료 시각을 담는 무잠금 슬롯 4,096개입니다. 허니팟과 클러스터 전체가 공유하는 평판이 쓰고, 모든 "
-"요청이 읽습니다."
+"차단된 클라이언트 주소와 만료 시각을 담는 락 프리 슬롯 4,096개입니다. 허니팟과 클러스터 전체가 공유하는 평판이 기록하고, "
+"모든 요청이 읽습니다."
 
 #: ../../glossary.rst:15
 msgid "Campaign"
@@ -84,8 +84,9 @@ msgid ""
 "nonce, rule hash, and a 16-byte keyed BLAKE3 tag. Issuing one writes "
 "nothing on the server."
 msgstr ""
-"클라이언트가 풀어야 하는 70문자의 상태 없는 식별자입니다. 버전, 알고리즘, 난이도, 개방 수, 발급 시각, 클라이언트 지문, "
-"PRF nonce, 규칙 해시, 16바이트 키 기반 BLAKE3 태그를 담습니다. 챌린지를 발급해도 서버에는 아무것도 쓰지 않습니다."
+"클라이언트가 풀어야 하는 70자 길이의 상태 없는 식별자입니다. 버전, 알고리즘, 난이도, 개방 수, 발급 시각, 클라이언트 지문, "
+"PRF nonce, 규칙 해시, 16바이트 키 기반 BLAKE3 태그를 담습니다. 챌린지를 발급해도 서버에는 아무것도 기록되지 "
+"않습니다."
 
 #: ../../glossary.rst:21
 msgid "Difficulty, work bits"
@@ -96,7 +97,7 @@ msgid ""
 "The single integer that scales both tiers: the number of leading zero "
 "bits for Hashcash, or three more than the tree depth for sequential work."
 msgstr ""
-"두 계층의 규모를 함께 조절하는 정수 하나입니다. Hashcash에서는 선행 0비트의 수이고, 순차 작업에서는 트리 깊이에 3을 "
+"두 계층의 작업량을 함께 정하는 정수 하나입니다. Hashcash에서는 선행 0비트의 개수이고, 순차 작업에서는 트리 깊이에 3을 "
 "더한 값입니다."
 
 #: ../../glossary.rst:24
@@ -125,8 +126,8 @@ msgid ""
 "builds a new engine off the request path and publishes it by pointer "
 "swap, and the old engine is freed when its last reader releases it."
 msgstr ""
-"게시된 정책 엔진이 참조 카운트 포인터로 놓이는 자리입니다. 워커는 분류하는 동안 참조를 붙잡고 있습니다. 저장소 스레드는 요청 "
-"경로 밖에서 새 엔진을 만들어 포인터 교환으로 게시하고, 옛 엔진은 마지막으로 읽는 쪽이 놓아줄 때 해제됩니다."
+"게시된 정책 엔진이 참조 카운트 포인터로 놓이는 자리입니다. 워커는 분류하는 동안 참조를 쥐고 있습니다. 저장소 스레드는 요청 경로 "
+"밖에서 새 엔진을 만들어 포인터 교환으로 게시하고, 이전 엔진은 마지막 읽기 측이 참조를 놓을 때 해제됩니다."
 
 #: ../../glossary.rst:30
 msgid "Fingerprint"
@@ -137,12 +138,12 @@ msgid ""
 "A keyed hash of client address and User-Agent, bound into challenges and "
 "tokens so neither can be replayed from another client."
 msgstr ""
-"클라이언트 주소와 User-Agent의 키 기반 해시입니다. 챌린지와 토큰에 묶여 있어 둘 다 다른 클라이언트에서 재전송할 수 "
-"없습니다."
+"클라이언트 주소와 User-Agent의 키 기반 해시입니다. 챌린지와 토큰에 묶여 있으므로 어느 쪽도 다른 클라이언트에서 재전송할 "
+"수 없습니다."
 
 #: ../../glossary.rst:33
 msgid "Forward auth"
-msgstr "Forward auth"
+msgstr "forward-auth"
 
 #: ../../glossary.rst:34
 msgid ""
@@ -151,7 +152,7 @@ msgid ""
 "``429``), and proxies the origin itself."
 msgstr ""
 "인그레스가 Sibuna에 요청을 허용할지(``200``), 아니면 챌린지를 제시하거나 거부하거나 제한할지(``401``, "
-"``403``, ``429``) 묻고, 원본 서버로의 프록시는 직접 수행하는 배포 모드입니다."
+"``403``, ``429``) 묻고, 원본 서버로의 프록시는 인그레스가 직접 맡는 배포 모드입니다."
 
 #: ../../glossary.rst:36
 msgid "Gate"
@@ -175,8 +176,8 @@ msgid ""
 "that admits a burst of :math:`N` then one request per emission interval, "
 "with no window boundaries."
 msgstr ""
-"Generic Cell Rate Algorithm입니다. 클라이언트마다 이론적 도착 시각 하나를 두어 :math:`N`\\ 개의 "
-"버스트를 허용한 뒤 방출 간격마다 요청 하나를 허용하며, 창 경계가 없습니다."
+"Generic Cell Rate Algorithm입니다. 클라이언트마다 이론적 도착 시각 하나만 두고, :math:`N`\\ 개의 "
+"버스트를 허용한 뒤 방출 간격마다 요청 하나를 허용합니다. 윈도 경계가 없습니다."
 
 #: ../../glossary.rst:42
 msgid "Hashcash"
@@ -212,8 +213,8 @@ msgid ""
 "A thread that closes connections that have been silent longer than "
 "``--idle-timeout``, so a slow client cannot pin a connection thread."
 msgstr ""
-"``--idle-timeout``\\ 보다 오래 조용한 연결을 닫는 스레드입니다. 느린 클라이언트가 연결 스레드를 붙잡아 둘 수 "
-"없게 합니다."
+"``--idle-timeout``\\ 보다 오래 아무것도 주고받지 않은 연결을 닫는 스레드입니다. 느린 클라이언트가 연결 스레드를 "
+"붙잡아 둘 수 없게 합니다."
 
 #: ../../glossary.rst:51
 msgid "Interstitial"
@@ -224,8 +225,8 @@ msgid ""
 "The embedded HTML page served in place of a protected page; it fetches a "
 "challenge, solves it in a Web Worker, posts the solution, and reloads."
 msgstr ""
-"보호된 페이지 대신 제공하는 내장 HTML 페이지입니다. 챌린지를 가져와 Web Worker에서 풀고, 풀이를 보낸 뒤 다시 "
-"불러옵니다."
+"보호된 페이지 대신 제공하는 내장 HTML 페이지입니다. 챌린지를 가져와 Web Worker에서 풀고, 풀이를 보낸 뒤 페이지를 "
+"다시 불러옵니다."
 
 #: ../../glossary.rst:54
 msgid "JA4"
@@ -279,8 +280,8 @@ msgid ""
 "in the token; a route admits a session only when its level reaches the "
 "route's requirement."
 msgstr ""
-"세션 보유자가 실제로 푼 방식과 작업 비트로, 토큰에 담깁니다. 경로는 세션의 수준이 경로의 요구 수준에 도달할 때에만 그 세션을 "
-"허용합니다."
+"세션 보유자가 실제로 푼 방식과 작업 비트입니다. 토큰에 담기며, 경로는 세션의 수준이 그 경로의 요구 수준에 이를 때에만 그 "
+"세션을 허용합니다."
 
 #: ../../glossary.rst:66
 msgid "Opening"
@@ -292,8 +293,8 @@ msgid ""
 "its path to the root; the verifier recomputes the path and compares with "
 "the commitment."
 msgstr ""
-"순차 작업 증명에서 잎 라벨 하나와, 그 잎에서 루트까지의 경로를 따라 있는 형제 라벨들입니다. 검증자는 경로를 다시 계산해 "
-"커밋먼트와 비교합니다."
+"순차 작업 증명에서 잎 라벨 하나와, 그 잎에서 루트까지의 경로에 있는 형제 라벨입니다. 검증자는 경로를 다시 계산해 커밋먼트와 "
+"비교합니다."
 
 #: ../../glossary.rst:69
 msgid "Proof of Sequential Work (PoSW)"
@@ -328,7 +329,7 @@ msgstr "Robin Hood 사용 완료 집합"
 msgid ""
 "The fixed-capacity open-addressed table of solved challenge tags, which "
 "prevents a valid solution from being submitted twice."
-msgstr "해결된 챌린지 태그를 담는 고정 용량의 개방 주소 테이블입니다. 유효한 풀이가 두 번 제출되는 것을 막습니다."
+msgstr "해결된 챌린지 태그를 담는 고정 용량의 개방 주소법 테이블입니다. 유효한 풀이를 두 번 제출하지 못하게 합니다."
 
 #: ../../glossary.rst:78
 msgid "Rule hash"
@@ -347,7 +348,7 @@ msgstr "Shield"
 
 #: ../../glossary.rst:82
 msgid "The default surface: Gate plus the semantic firewall (``--shield``)."
-msgstr "기본 운영 구성으로, Gate에 의미 기반 방화벽을 더한 것입니다(``--shield``)."
+msgstr "기본 운영 구성입니다. Gate에 의미 기반 방화벽을 더합니다(``--shield``)."
 
 #: ../../glossary.rst:84
 msgid "SID"
@@ -396,7 +397,7 @@ msgid ""
 "options now stop startup with ``RemovedOption``."
 msgstr ""
 "SID 0005의 내장 SQLite 복제 엔진(Multi-Paxos)으로, SID 0011에서 SQLite와 PostgreSQL "
-"저장소로 대체되었습니다. 이제 그 클러스터 옵션을 쓰면 ``RemovedOption``\\ 으로 시작이 중단됩니다."
+"저장소로 대체되었습니다. 지금은 그 클러스터 옵션을 지정하면 ``RemovedOption`` 오류로 시작이 중단됩니다."
 
 #: ../../glossary.rst:96
 msgid "Bibliography"
@@ -470,7 +471,7 @@ msgid ""
 "Fielding, R., Nottingham, M., and Reschke, J. *HTTP Semantics*, RFC 9110, "
 "and *HTTP/1.1*, RFC 9112. IETF, 2022."
 msgstr ""
-"Fielding, R., Nottingham, M., and Reschke, J. *HTTP Semantics*, RFC 9110, "
+"Fielding, R., Nottingham, M., and Reschke, J. *HTTP Semantics*, RFC 9110 "
 "및 *HTTP/1.1*, RFC 9112. IETF, 2022."
 
 #: ../../glossary.rst:108
@@ -504,7 +505,7 @@ msgid ""
 "2001."
 msgstr ""
 "Lamport, L. \"The part-time parliament.\" *ACM Transactions on Computer "
-"Systems* 16(2), 1998; 및 \"Paxos made simple.\" *ACM SIGACT News* 32(4), "
+"Systems* 16(2), 1998 및 \"Paxos made simple.\" *ACM SIGACT News* 32(4), "
 "2001."
 
 #: ../../glossary.rst:112
@@ -530,8 +531,8 @@ msgid ""
 "Vyukov, D. \"Bounded MPMC queue.\" 1024cores.net, 2011 (the "
 "sequence-stamped ring used for the incident queue)."
 msgstr ""
-"Vyukov, D. \"Bounded MPMC queue.\" 1024cores.net, 2011 (인시던트 큐에 쓰는 시퀀스 표식 "
-"링)."
+"Vyukov, D. \"Bounded MPMC queue.\" 1024cores.net, 2011 (인시던트 큐에 쓰는, 시퀀스 "
+"번호를 붙인 링)."
 
 #: ../../glossary.rst:115
 msgid ""

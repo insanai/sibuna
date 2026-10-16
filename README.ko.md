@@ -142,7 +142,7 @@ cargo build --release -p sibuna
 
 ## 작동 방식
 
-요청은 허용되거나, 챌린지를 받거나, 거부될 수 있습니다. 챌린지를 해결한 방문자는 서명된 세션을 받습니다. 이후 요청도 해당 정책과 속도 검사를 통과해야 합니다.
+요청은 허용되거나, 챌린지를 받거나, 거부될 수 있습니다. 챌린지를 해결한 방문자는 서명된 세션을 받습니다. 이후 요청도 해당 정책과 속도 제한 검사를 통과해야 합니다.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/images/admission-session-dark.svg">
@@ -210,7 +210,7 @@ Sibuna의 비공개 리스너는 HTTP/1.1을 사용합니다. 공개 TLS와 HTTP
 
 두 번째 실행에서는 각 제품에 CPU 두 개를 주고 허용 처리 작업의 시간을 측정했습니다. Anubis는 기본 Ed25519 토큰으로 한 번, HS512 토큰으로 한 번 실행했습니다.
 
-| 초당 작업 수 | Sibuna (키를 사용한 BLAKE3) | Anubis (Ed25519) | Anubis (HS512) |
+| 초당 작업 수 | Sibuna (키 기반 BLAKE3) | Anubis (Ed25519) | Anubis (HS512) |
 | --- | ---: | ---: | ---: |
 | 유효한 세션 검사 | 88,104 | 10,951 | 16,976 |
 | 인증되지 않은 요청 검사 | 78,997 | 28,619 | 27,785 |
@@ -219,7 +219,7 @@ Sibuna의 비공개 리스너는 HTTP/1.1을 사용합니다. 공개 TLS와 HTTP
 
 Sibuna의 최대 메모리는 16 MiB 근처에 머물렀습니다. Anubis는 forward-auth 모드에서 약 33 MiB, 리버스 프록시 모드에서 최대 약 600 MiB를 사용했습니다. Anubis는 널리 쓰이는 유능한 도구이며, 이 표는 순위가 아닙니다. 몇몇 행은 같은 조건의 비교가 아닙니다. forward-auth 모드에서 Anubis는 일부 경로에 직접 응답하고, 페이로드를 검사하지 않으며, 챌린지 페이지도 다릅니다. 이 실행은 루프백을 사용했고 TLS, 실제 브라우저, 저장소는 사용하지 않았습니다.
 
-방법, 범위와 재실행 명령은 [벤치마크 기록](benchmarks/results/README.md)을 참고하세요: [product-latest.md](benchmarks/results/product-latest.md), [latency-latest.md](benchmarks/results/latency-latest.md), [comparison-latest.md](benchmarks/results/comparison-latest.md), [admission-latest.md](benchmarks/results/admission-latest.md). 안내서의 VIII부에서 각 차이를 설명합니다.
+방법, 범위와 재실행 명령은 [벤치마크 기록](benchmarks/results/README.md)을 참고하세요: [product-latest.md](benchmarks/results/product-latest.md), [latency-latest.md](benchmarks/results/latency-latest.md), [comparison-latest.md](benchmarks/results/comparison-latest.md), [admission-latest.md](benchmarks/results/admission-latest.md). 기술 안내서의 제VIII부에서 각 차이를 설명합니다.
 
 <a id="documentation"></a>
 
@@ -252,4 +252,4 @@ Sibuna의 라이선스는 **LGPL 3.0 이상**입니다. 이 라이선스는 엔�
 
 [LICENSE](LICENSE)는 적용 범위를 설명합니다. [LICENSES](LICENSES)에는 전체 약관이 있습니다. [NOTICE](NOTICE)에는 의존성이 나열되어 있습니다. 각 릴리스 태그에서 소스와 빌드 스크립트를 확인할 수 있습니다.
 
-Sibuna는 Vikrant Rathore가 작성했으며, Ronak Rathore와 Kanak Rathore가 도왔습니다. 다른 라이선스 조건이 필요한 회사는 Vikrant Rathore에게 문의할 수 있습니다. 타사 라이브러리와 자료에는 각각의 라이선스가 적용됩니다.
+Sibuna는 Vikrant Rathore가 작성했으며, Ronak Rathore와 Kanak Rathore가 도왔습니다. 다른 라이선스 조건이 필요한 회사는 Vikrant Rathore에게 문의할 수 있습니다. 타사 라이브러리와 자료에는 각자의 라이선스가 적용됩니다.

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 07:43+0000\n"
+"POT-Creation-Date: 2026-10-16 10:45+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,8 +29,8 @@ msgid ""
 "request is a defect; a correct operation with unbounded cost is another "
 "kind of defect."
 msgstr ""
-"우리는 하나의 질문에서 시작합니다. 서버가 지금 내릴 수 있는 가장 값싸고 안전한 결정은 무엇일까요? 프로토콜과 구현을 다루는 장 "
-"내내 이 질문을 곁에 둡니다. 잘못된 요청을 허용하는 값싼 연산은 결함입니다. 비용에 한계가 없는 올바른 연산은 또 다른 종류의 "
+"우리는 질문 하나에서 시작합니다. 서버가 지금 내릴 수 있는 가장 값싸고 안전한 결정은 무엇일까요? 프로토콜과 구현을 다루는 장 "
+"내내 이 질문을 곁에 둡니다. 잘못된 요청을 허용하는 값싼 연산은 결함입니다. 비용에 상한이 없는 올바른 연산은 또 다른 종류의 "
 "결함입니다."
 
 #: ../../learning.rst:10
@@ -47,15 +47,15 @@ msgstr "퍼즐로 무엇을 얻을까요?"
 
 #: ../../learning.rst:13
 msgid "Parts I to III: cost, probability, and the limits of proof."
-msgstr "I부에서 III부: 비용, 확률, 증명의 한계."
+msgstr "제I부부터 제III부까지: 비용, 확률, 증명의 한계."
 
 #: ../../learning.rst:14
 msgid "How does Sibuna compare?"
-msgstr "Sibuna는 다른 제품과 어떻게 다를까요?"
+msgstr "Sibuna는 다른 제품과 비교해 어떨까요?"
 
 #: ../../learning.rst:15
 msgid "Part II: lineage and the feature table; Part VIII: measurements."
-msgstr "II부: 계보와 기능 표. VIII부: 측정."
+msgstr "제II부: 계보와 기능 표. 제VIII부: 측정."
 
 #: ../../learning.rst:16
 msgid "What does a session mean?"
@@ -63,7 +63,7 @@ msgstr "세션은 무엇을 뜻할까요?"
 
 #: ../../learning.rst:17
 msgid "Part IV: bindings, verification order, expiry, and replay."
-msgstr "IV부: 바인딩, 검증 순서, 만료, 재전송."
+msgstr "제IV부: 바인딩, 검증 순서, 만료, 재전송."
 
 #: ../../learning.rst:18
 msgid "Where does the memory go?"
@@ -71,15 +71,15 @@ msgstr "메모리는 어디에 쓰일까요?"
 
 #: ../../learning.rst:19
 msgid "Parts V and VI: buffers, threads, tables, automata, and publication."
-msgstr "V부와 VI부: 버퍼, 스레드, 테이블, 오토마톤, 게시."
+msgstr "제V부와 제VI부: 버퍼, 스레드, 테이블, 오토마톤, 게시."
 
 #: ../../learning.rst:20
 msgid "How does the browser solve?"
-msgstr "브라우저는 어떻게 풀까요?"
+msgstr "브라우저는 퍼즐을 어떻게 풀까요?"
 
 #: ../../learning.rst:21
 msgid "Part VII: worker messages, memory, and calibration."
-msgstr "VII부: 워커 메시지, 메모리, 보정."
+msgstr "제VII부: 워커 메시지, 메모리, 보정."
 
 #: ../../learning.rst:22
 msgid "How do we know it works?"
@@ -87,7 +87,7 @@ msgstr "제대로 동작하는지 어떻게 알까요?"
 
 #: ../../learning.rst:23
 msgid "Part VIII: three harnesses and what each excludes."
-msgstr "VIII부: 세 가지 측정 도구와 각각이 제외하는 것."
+msgstr "제VIII부: 하니스 세 개와 각 하니스가 측정에서 빼는 것."
 
 #: ../../learning.rst:24
 msgid "How do we run it?"
@@ -95,15 +95,15 @@ msgstr "어떻게 실행할까요?"
 
 #: ../../learning.rst:25
 msgid "Part IX: flags, topologies, policy, storage, clustering, packaging."
-msgstr "IX부: 플래그, 토폴로지, 정책, 저장소, 클러스터 구성, 패키징."
+msgstr "제IX부: 플래그, 토폴로지, 정책, 저장소, 클러스터 구성, 패키징."
 
 #: ../../learning.rst:26
 msgid "What was that error?"
-msgstr "그 오류는 무엇이었을까요?"
+msgstr "방금 그 오류는 무엇이었을까요?"
 
 #: ../../learning.rst:27
 msgid "Part X: endpoints, statuses, errors, schema; Part XI: the card."
-msgstr "X부: 엔드포인트, 상태, 오류, 스키마. XI부: 카드."
+msgstr "제X부: 엔드포인트, 상태, 오류, 스키마. 제XI부: 카드."
 
 #: ../../learning.rst:29
 msgid "Three Reading Paths"
@@ -116,8 +116,8 @@ msgid ""
 "the back only afterwards. Return to Part V when a trace reaches a shared "
 "table or a borrowed slice."
 msgstr ""
-"*설계를 배우려면.* I부부터 IV부까지 순서대로 읽고, VI부의 풀이 추적을 본 뒤 VII부를 읽습니다. 연습 문제를 풀고, 책 "
-"끝의 해답은 그 뒤에만 비교합니다. 추적이 공유 테이블이나 빌린 슬라이스에 닿으면 V부로 돌아갑니다."
+"*설계를 배우려면.* 제I부부터 제IV부까지 순서대로 읽고, 제VI부의 풀이 추적을 본 뒤 제VII부를 읽습니다. 연습 문제를 먼저 "
+"풀고, 책 끝의 해답과는 그다음에만 비교합니다. 추적이 공유 테이블이나 빌린 슬라이스에 이르면 제V부로 돌아갑니다."
 
 #: ../../learning.rst:33
 msgid ""
@@ -126,8 +126,8 @@ msgid ""
 "surface, and the \"Whole-Product Comparison\" in Part VIII before "
 "choosing worker and connection limits."
 msgstr ""
-"*배포를 운영하려면.* IX부와 XI부를 읽고, 찾아볼 때를 위해 X부를 펼쳐 둡니다. 운영 구성을 고르기 전에 II부의 \"기능 "
-"비교\"를 읽고, 워커와 연결 한도를 정하기 전에 VIII부의 \"전체 제품 비교\"를 읽습니다."
+"*배포를 운영하려면.* 제IX부와 제XI부를 읽고, 제X부는 찾아볼 수 있게 펼쳐 둡니다. 운영 구성을 고르기 전에 제II부의 "
+"\"기능 비교\"를 읽고, 워커와 연결 한도를 정하기 전에 제VIII부의 \"전체 제품 비교\"를 읽습니다."
 
 #: ../../learning.rst:34
 msgid ""
@@ -136,8 +136,8 @@ msgid ""
 "catch a regression in what we touched; Part II lists the constraints a "
 "change must keep."
 msgstr ""
-"*코드를 바꾸려면.* V부와 VI부, 각 장의 소스 위치, 그리고 그 위치가 인용하는 SID 기록을 봅니다. VIII부는 우리가 "
-"건드린 부분의 회귀를 어떤 측정 도구가 잡아낼지 설명합니다. II부는 변경이 지켜야 할 제약을 나열합니다."
+"*코드를 바꾸려면.* 제V부와 제VI부, 각 장의 소스 위치, 그리고 그 위치가 인용하는 SID 기록을 봅니다. 제VIII부는 "
+"우리가 건드린 부분의 회귀를 어느 하니스가 잡아내는지 설명합니다. 제II부는 변경이 지켜야 할 제약을 나열합니다."
 
 #: ../../learning.rst:36
 msgid "Conventions"
@@ -153,10 +153,10 @@ msgid ""
 "disagree. Boxes headed \"Implementation\" name a function and its file; "
 "boxes headed \"Explain the invariant\" ask us to teach the idea back."
 msgstr ""
-"*풀이 예제*\\ 는 답만이 아니라 중간 상태를 보여 줍니다. *연습 문제*\\ 는 가정 하나를 바꿔 보도록 요구합니다. 힌트는 "
-"첫걸음을 제안하고, 책 끝의 일부 해답은 추론을 확인할 수 있게 해 줍니다. 그림은 요청 경로와 백그라운드 작업을 구별합니다. 소스 "
-"위치는 설명과 코드가 어긋나 보일 때 살펴볼 구현을 가리킵니다. \"구현\" 상자는 함수와 그 파일을 밝힙니다. \"불변식 "
-"설명하기\" 상자는 그 개념을 우리가 다시 가르쳐 보도록 요구합니다."
+"*풀이 예제*\\ 는 답만이 아니라 중간 상태를 보여 줍니다. *연습 문제*\\ 는 가정 하나를 바꿔 보게 합니다. 힌트는 첫걸음을 "
+"제안하고, 책 끝의 일부 해답으로 추론을 확인할 수 있습니다. 그림은 요청 경로와 백그라운드 작업을 구별합니다. 소스 위치는 설명과 "
+"코드가 어긋나 보일 때 살펴볼 구현을 가리킵니다. 제목이 \"구현\"인 상자는 함수와 그 파일을 밝힙니다. 제목이 \"불변식 "
+"설명하기\"인 상자는 그 개념을 우리가 다시 가르쳐 보게 합니다."
 
 #: ../../learning.rst:41
 msgid ""
@@ -173,5 +173,6 @@ msgstr ""
 "수식에서 :math:`b`\\ 는 비트 단위의 Hashcash 난이도, :math:`n`\\ 은 순차 작업 깊이, "
 ":math:`t`\\ 는 개방 수, :math:`p`\\ 는 시행당 성공 확률, :math:`K`\\ 는 시행 횟수, "
 ":math:`T`\\ 는 속도 제한기의 방출 간격, :math:`\\tau`\\ 는 그 버스트 허용치, :math:`Q`\\ 는 큐 "
-"용량입니다. 따로 밝히지 않으면 기호는 그 절 안에서만 쓰입니다. VIII부의 나노초와 초당 요청 수는 이름 붙은 실행에서 얻은 "
-"측정값입니다. 풀이 예제의 숫자는 골라 둔 입력이며 벤치마크 주장이 아닙니다. 통계 모델은 결론을 내리기 전에 가정을 밝힙니다."
+"용량입니다. 따로 밝히지 않으면 기호는 그 절 안에서만 쓰입니다. 제VIII부의 나노초와 초당 요청 수는 이름이 밝혀진 실행에서 "
+"얻은 측정값입니다. 풀이 예제의 숫자는 골라 둔 입력이며, 벤치마크 결과로 내세우는 값이 아닙니다. 통계 모델은 결론을 내리기 전에 "
+"가정을 밝힙니다."
