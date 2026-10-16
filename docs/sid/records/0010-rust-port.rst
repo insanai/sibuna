@@ -1,11 +1,11 @@
 :sid-number: 0010
 :sid-title: The Rust Port: Workspace, Crates, Dependency Policy and Performance Parity
-:sid-state: discussion
-:sid-status: Open for Discussion
+:sid-state: committed
+:sid-status: Committed
 :sid-type: Architectural Specification
 :sid-authors: ["Vikrant Rathore"]
 :sid-created: 2026-10-15
-:sid-updated: 2026-10-15
+:sid-updated: 2026-10-16
 :sid-discussion: No external discussion URL assigned
 :sid-summary: Ports Sibuna from Zig 0.16 to a Rust workspace that keeps every wire format bit for bit, builds the data plane from small in-house crates without external dependencies, and is accepted when it matches or exceeds the Zig daemon in the benchmarks of SID 0002.
 :sid-labels: ["architecture","rust","performance"]
@@ -241,7 +241,7 @@ The port is accepted when:
 4. The benchmarks of SID 0002 (primitives, and whole-product runs under ``wrk``) show the Rust daemon at or above the Zig daemon's throughput, with p99 latency no worse, on the same machine; the results are recorded under ``benchmarks/results/``.
 5. The console passes its golden fixtures and its browser workflows in a headless browser, with screenshots reviewed.
 
-Status: all five criteria are met (evidence below, 2026-10-15). The record stays open for the maintainer's review before it is accepted.
+Status: all five criteria are met (evidence below, 2026-10-15). Committed on 2026-10-16 after the maintainer's review; released in 1.0.0-beta.1.
 
 Evidence recorded so far (2026-10-15):
 
@@ -287,3 +287,20 @@ References
 
    2026-10-15: prediscussion -> discussion. Specification of the port, drafted
    before the code
+
+.. rubric:: Lifecycle event
+
+::
+
+   2026-10-16: discussion -> accepted. Implemented and released in Sibuna
+   1.0.0-beta.1; reviewed by the maintainer on 2026-10-16.
+
+.. rubric:: Lifecycle event
+
+::
+
+   2026-10-16: accepted -> committed. Implemented and released in Sibuna
+   1.0.0-beta.1; reviewed by the maintainer on 2026-10-16. All five acceptance
+   criteria met, with the evidence recorded in the record (test map
+   docs/sid/assets/0010-zig-test-map.tsv, cross-implementation token tests,
+   cargo xtask browser, benchmarks/results); release v1.0.0-beta.1

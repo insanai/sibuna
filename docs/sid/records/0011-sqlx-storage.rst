@@ -1,11 +1,11 @@
 :sid-number: 0011
 :sid-title: Storage Through sqlx: SQLite for One Node, PostgreSQL for Clusters
-:sid-state: discussion
-:sid-status: Open for Discussion
+:sid-state: committed
+:sid-status: Committed
 :sid-type: Architectural Specification
 :sid-authors: ["Vikrant Rathore"]
 :sid-created: 2026-10-15
-:sid-updated: 2026-10-15
+:sid-updated: 2026-10-16
 :sid-discussion: No external discussion URL assigned
 :sid-summary: Replaces Zaxonlite with storage through sqlx, an embedded SQLite file for a single node and one shared PostgreSQL database for a cluster, while storage stays optional and one storage thread owns all SQL off the request path.
 :sid-labels: ["storage","rust","cluster"]
@@ -274,12 +274,12 @@ Acceptance criteria and implementation status
 4. The console's storage invariants hold on both backends.
 5. On both backends the schema refuses rows outside the ranges and names of the Rust types, and a direct operator insert into ``policies`` advances the revision and reaches a running node.
 
-Status: in progress.
+Status: all five criteria are met by the tests of ``sibuna-storage`` and ``sibuna-console-storage`` on both backends. Committed on 2026-10-16; released in 1.0.0-beta.1. The release executables are built without PostgreSQL support; a cluster builds from source with ``--features postgres-tls``.
 
 Open questions
 --------------
 
-- Whether to offer TLS to PostgreSQL in the default build or only behind a feature.
+- Closed 2026-10-16: TLS to PostgreSQL is offered only behind the ``postgres-tls`` feature (see the review history, "transport security").
 
 Review history
 --------------
@@ -310,3 +310,20 @@ References
 
    2026-10-15: prediscussion -> discussion. Specification of the storage
    replacement, drafted before the code
+
+.. rubric:: Lifecycle event
+
+::
+
+   2026-10-16: discussion -> accepted. Implemented and released in Sibuna
+   1.0.0-beta.1; reviewed by the maintainer on 2026-10-16.
+
+.. rubric:: Lifecycle event
+
+::
+
+   2026-10-16: accepted -> committed. Implemented and released in Sibuna
+   1.0.0-beta.1; reviewed by the maintainer on 2026-10-16. crates/storage tests
+   on SQLite and PostgreSQL (worker tests, tests/multi_node.rs,
+   tests/resilience.rs, worker/tests/constraints.rs), crates/console-storage
+   invariants on both backends; release v1.0.0-beta.1

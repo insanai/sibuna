@@ -1424,7 +1424,7 @@ Acceptance criteria and implementation status
 8. Two nodes against one PostgreSQL database race every capacity-checked insert and every policy workflow without exceeding a capacity, losing an update or deadlocking, and their audit identifiers follow commit order.
 9. ``cargo build``, ``cargo test``, ``cargo clippy --all-targets`` and the limit checker pass.
 
-Status: accepted. The implementation in ``sibuna-console-storage`` is in progress.
+Status: accepted. ``sibuna-console-storage`` is implemented and released in 1.0.0-beta.1, but acceptance criterion 6 is still open: no test yet runs each route group under a PostgreSQL role granted only that group's reads and writes. The record moves to committed when that test passes.
 
 Open questions
 --------------

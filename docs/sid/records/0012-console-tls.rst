@@ -1,11 +1,11 @@
 :sid-number: 0012
 :sid-title: Outbound TLS for the Console Through rustls
-:sid-state: accepted
-:sid-status: Accepted
+:sid-state: committed
+:sid-status: Committed
 :sid-type: Architectural Specification
 :sid-authors: ["Vikrant Rathore"]
 :sid-created: 2026-10-15
-:sid-updated: 2026-10-15
+:sid-updated: 2026-10-16
 :sid-discussion: No external discussion URL assigned
 :sid-summary: Admits rustls with the ring provider and the system trust store for the console's outbound HTTPS and WSS connections only, keeping the data plane free of external crates.
 :sid-labels: ["console","security","rust"]
@@ -57,7 +57,7 @@ Acceptance criteria and implementation status
 2. Tests connect to a local TLS server with a test CA (accept), a wrong host name (refuse), an untrusted certificate (refuse), and plain HTTP to a non-loopback address (refuse before connecting).
 3. A two-console peer stream over WSS with a private CA passes the console peer tests of SID 0007.
 
-Status: accepted by the maintainer; implementation pending.
+Status: all three criteria are met (see the review history). Committed on 2026-10-16; released in 1.0.0-beta.1.
 
 Open questions
 --------------
@@ -99,3 +99,14 @@ References
 
    2026-10-15: discussion -> accepted. The maintainer chose rustls for the
    console on 2026-10-15
+
+.. rubric:: Lifecycle event
+
+::
+
+   2026-10-16: accepted -> committed. Implemented and released in Sibuna
+   1.0.0-beta.1; reviewed by the maintainer on 2026-10-16. cargo tree -p sibuna
+   --no-default-features lists no external crate; crates/tls/tests/connect.rs
+   (accept, wrong host name, untrusted issuer, plain HTTP only to loopback);
+   crates/console/tests/peers.rs (two consoles over WSS with a private CA);
+   release v1.0.0-beta.1

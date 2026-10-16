@@ -1,11 +1,11 @@
 :sid-number: 0009
 :sid-title: Chunked Request Bodies: Strict In-Place Decoding, Canonical Re-Framing, and Inspection Equivalence
-:sid-state: discussion
-:sid-status: Open for Discussion
+:sid-state: committed
+:sid-status: Committed
 :sid-type: Architectural Specification
 :sid-authors: ["Sibuna Contributors <team@sibuna.local>"]
 :sid-created: 2026-10-02
-:sid-updated: 2026-10-15
+:sid-updated: 2026-10-16
 :sid-discussion: No external discussion URL assigned
 :sid-summary: Specifies how the reverse proxy accepts chunked request bodies without a heap allocation or a second buffer: a strict RFC 9112 chunk grammar that rejects every known terminator and extension ambiguity, an in-place decoder whose output never overtakes its input, Content-Length forwarding for bodies that complete within the connection buffer and canonical re-chunking for the rest, and proofs that inspection sees exactly the bytes a Content-Length request would show and that the origin cannot observe the client's framing.
 :sid-labels: ["http", "proxy", "security", "request-smuggling", "performance"]
@@ -321,3 +321,20 @@ References
 
    2026-10-15: prediscussion -> discussion. Ported from the Zig repository's
    Typst record
+
+.. rubric:: Lifecycle event
+
+::
+
+   2026-10-16: discussion -> accepted. Implemented and released in Sibuna
+   1.0.0-beta.1; reviewed by the maintainer on 2026-10-16.
+
+.. rubric:: Lifecycle event
+
+::
+
+   2026-10-16: accepted -> committed. Implemented and released in Sibuna
+   1.0.0-beta.1; reviewed by the maintainer on 2026-10-16.
+   crates/http/src/chunked.rs and its tests (the R1 to R10 rejection table, the
+   partition property), crates/http/src/request.rs framing tests,
+   cmd/sibuna/tests/e2e.rs chunked uploads; release v1.0.0-beta.1

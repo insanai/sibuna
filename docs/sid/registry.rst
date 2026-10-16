@@ -38,16 +38,16 @@ Discussion registry
      - discussion
    * - 0009
      - :doc:`records/0009-chunked-request-bodies`
-     - discussion
+     - committed
    * - 0010
      - :doc:`records/0010-rust-port`
-     - discussion
+     - committed
    * - 0011
      - :doc:`records/0011-sqlx-storage`
-     - discussion
+     - committed
    * - 0012
      - :doc:`records/0012-console-tls`
-     - accepted
+     - committed
    * - 0013
      - :doc:`records/0013-console-storage`
      - accepted
