@@ -264,8 +264,8 @@ Build Targets
      - Daemon with SQLite storage and the console (the default features)
    * - ``cargo build --release -p sibuna --no-default-features``
      - In-memory daemon without storage or console and without any external crate
-   * - ``cargo build --release -p sibuna --features postgres``
-     - Daemon that also connects to a shared PostgreSQL database
+   * - ``cargo build --release -p sibuna --features postgres-tls``
+     - Daemon that also connects to a shared PostgreSQL database, with verified TLS (the ``postgres`` feature alone connects without TLS)
    * - ``cargo test``
      - Unit tests, integration tests against a live daemon, storage and console tests (PostgreSQL ones when ``SIBUNA_TEST_DATABASE_URL`` is set)
    * - ``cargo clippy --all-targets``, ``cargo fmt --check``

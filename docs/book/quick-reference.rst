@@ -10,7 +10,7 @@ Build
 
    cargo build --release -p sibuna                          # daemon + SQLite + console
    cargo build --release -p sibuna --no-default-features    # in-memory, no external crate
-   cargo build --release -p sibuna --features postgres      # shared PostgreSQL clusters
+   cargo build --release -p sibuna --features postgres-tls  # shared PostgreSQL clusters
    rustup target add wasm32-unknown-unknown   # or set SIBUNA_POW_WASM / SIBUNA_CONSOLE_WASM
    cargo test            # unit, live daemon, storage and console tests
    cargo clippy --all-targets && cargo fmt --check
@@ -217,7 +217,7 @@ Storage (Edge) in SQL
      FROM incidents_fts f JOIN security_incidents s ON s.id = f.rowid
      WHERE incidents_fts MATCH 'union' ORDER BY rank LIMIT 20;
 
-SQLite (``sqlite3 <dir>/sibuna.db``); actions are lowercase. Score :math:`\le -50` -> deny prefix; :math:`\ge 50` -> allow. Cluster: same secret on every node, one PostgreSQL database, ``--features postgres``, ``--database-url-file <file> --cluster-node N`` with a unique N from 1 to 8,388,607; no member list, leader or cluster TLS (SID 0011).
+SQLite (``sqlite3 <dir>/sibuna.db``); actions are lowercase. Score :math:`\le -50` -> deny prefix; :math:`\ge 50` -> allow. Cluster: same secret on every node, one PostgreSQL database, ``--features postgres-tls``, ``--database-url-file <file> --cluster-node N`` with a unique N from 1 to 8,388,607; no member list, leader or cluster TLS (SID 0011).
 
 Diagnostics
 -----------
