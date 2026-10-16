@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 05:09+0000\n"
+"POT-Creation-Date: 2026-10-16 05:39+0000\n"
 "PO-Revision-Date: 2026-10-16 05:37+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2377,33 +2377,327 @@ msgid "Packaging"
 msgstr "पैकेजिंग"
 
 #: ../../operations.rst:616
-msgid "Build the binary for a target, package it, and run it under systemd."
+msgid ""
+"Install and verify a release package, run Sibuna as a service, in a "
+"container or under Kubernetes, and build the binary ourselves."
 msgstr ""
-"किसी टारगेट के लिए बाइनरी बिल्ड करें, उसे पैकेज करें, और systemd के अधीन "
-"चलाएँ।"
+"एक रिलीज़ पैकेज इंस्टॉल और सत्यापित करें, Sibuna को सेवा के रूप में, "
+"कंटेनर में या Kubernetes के अधीन चलाएँ, और बाइनरी स्वयं बिल्ड करें।"
 
 #: ../../operations.rst:618
+msgid ""
+"Every release on GitHub carries the same executable for each platform, "
+"built from the release tag with the default features: SQLite storage and "
+"the console. PostgreSQL clusters need a build of our own (below)."
+msgstr ""
+"GitHub पर हर रिलीज़ हर प्लेटफ़ॉर्म के लिए वही एक्ज़ीक्यूटेबल देती है, जो "
+"रिलीज़ टैग से डिफ़ॉल्ट features के साथ बिल्ड होता है: SQLite स्टोरेज और "
+"कंसोल। PostgreSQL क्लस्टर के लिए हमें अपना बिल्ड चाहिए (नीचे देखें)।"
+
+#: ../../operations.rst:624
+msgid "Platform"
+msgstr "प्लेटफ़ॉर्म"
+
+#: ../../operations.rst:625
+msgid "Release assets"
+msgstr "रिलीज़ एसेट"
+
+#: ../../operations.rst:626
+msgid "Linux x86-64, ARM64"
+msgstr "Linux x86-64, ARM64"
+
+#: ../../operations.rst:627
+msgid ""
+"``sibuna-linux-amd64.tar.gz`` and ``sibuna-linux-arm64.tar.gz`` hold a "
+"static musl executable that runs on any distribution. "
+"``sibuna_<version>-1_amd64.deb``, ``sibuna_<version>-1_arm64.deb``, "
+"``sibuna-<version>-1.x86_64.rpm`` and ``sibuna-<version>-1.aarch64.rpm`` "
+"install it with a systemd service; "
+"``sibuna-bin-<version>-1-x86_64.pkg.tar.zst`` does so on Arch Linux."
+msgstr ""
+"``sibuna-linux-amd64.tar.gz`` और ``sibuna-linux-arm64.tar.gz`` में एक "
+"स्टैटिक musl एक्ज़ीक्यूटेबल है जो किसी भी डिस्ट्रीब्यूशन पर चलता है। "
+"``sibuna_<version>-1_amd64.deb``, ``sibuna_<version>-1_arm64.deb``, "
+"``sibuna-<version>-1.x86_64.rpm`` और ``sibuna-<version>-1.aarch64.rpm`` "
+"उसे एक systemd सेवा के साथ इंस्टॉल करते हैं; Arch Linux पर "
+"``sibuna-bin-<version>-1-x86_64.pkg.tar.zst`` यही करता है।"
+
+#: ../../operations.rst:628
+msgid "macOS arm64, x86-64"
+msgstr "macOS arm64, x86-64"
+
+#: ../../operations.rst:629
+msgid ""
+"``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, for macOS "
+"12 or later."
+msgstr ""
+"``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, macOS 12 या "
+"बाद के संस्करण के लिए।"
+
+#: ../../operations.rst:630
+msgid "Windows x86-64"
+msgstr "Windows x86-64"
+
+#: ../../operations.rst:631
+msgid ""
+"``sibuna-windows-amd64.zip`` holds ``sibuna.exe``, for Windows 10 or "
+"Server 2016 or later."
+msgstr ""
+"``sibuna-windows-amd64.zip`` में ``sibuna.exe`` है, Windows 10 या Server "
+"2016 या बाद के संस्करण के लिए।"
+
+#: ../../operations.rst:632
+msgid "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
+msgstr "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
+
+#: ../../operations.rst:633
+msgid ""
+"``sibuna-<version>-freebsd-15.1-amd64.pkg`` and ``sibuna-<version>.tgz``."
+msgstr ""
+"``sibuna-<version>-freebsd-15.1-amd64.pkg`` और ``sibuna-<version>.tgz``।"
+
+#: ../../operations.rst:634
+msgid "Homebrew, Kubernetes, containers"
+msgstr "Homebrew, Kubernetes, कंटेनर"
+
+#: ../../operations.rst:635
+msgid ""
+"``sibuna.rb``, ``helm-sibuna-<version>.tgz``, and the image "
+"``ghcr.io/insanai/sibuna:<version>`` for amd64 and arm64, whose digest is "
+"in ``IMAGE-DIGEST.txt``."
+msgstr ""
+"``sibuna.rb``, ``helm-sibuna-<version>.tgz``, और amd64 तथा arm64 के लिए "
+"इमेज ``ghcr.io/insanai/sibuna:<version>``, जिसका डाइजेस्ट "
+"``IMAGE-DIGEST.txt`` में है।"
+
+#: ../../operations.rst:636
+msgid "Source"
+msgstr "स्रोत कोड"
+
+#: ../../operations.rst:637
+msgid "``sibuna-<version>-source.tar.gz``."
+msgstr "``sibuna-<version>-source.tar.gz``।"
+
+#: ../../operations.rst:639
+msgid ""
+"Each archive and package carries ``LICENSE``, ``NOTICE``, ``LICENSES/`` "
+"(with ``THIRD-PARTY-RUST.txt``, the crates in the executable), "
+"``README.md``, ``SECURITY.md`` and ``sibuna.build.json``. The manifest "
+"records the version, commit, Rust target, compiler version, features and "
+"the SHA-256 of the executable and of its two WebAssembly modules. The "
+"release workflow starts every executable on its own platform before it "
+"publishes anything, and it installs, reinstalls and removes the packages "
+"on Debian, Fedora, Arch Linux, FreeBSD and OpenBSD."
+msgstr ""
+"हर आर्काइव और पैकेज में ``LICENSE``, ``NOTICE``, ``LICENSES/`` "
+"(``THIRD-PARTY-RUST.txt`` सहित, जिसमें एक्ज़ीक्यूटेबल के क्रेट दर्ज हैं), "
+"``README.md``, ``SECURITY.md`` और ``sibuna.build.json`` होते हैं। "
+"मैनिफ़ेस्ट संस्करण, commit, Rust टारगेट, कंपाइलर संस्करण, features और "
+"एक्ज़ीक्यूटेबल तथा उसके दो WebAssembly मॉड्यूल के SHA-256 दर्ज करता है। "
+"रिलीज़ वर्कफ़्लो कुछ भी प्रकाशित करने से पहले हर एक्ज़ीक्यूटेबल को उसके "
+"अपने प्लेटफ़ॉर्म पर शुरू करता है, और Debian, Fedora, Arch Linux, FreeBSD "
+"और OpenBSD पर पैकेजों को इंस्टॉल करता है, दोबारा इंस्टॉल करता है और हटाता "
+"है।"
+
+#: ../../operations.rst:641
+msgid ""
+"The assets are not signed. We check a download against ``SHA256SUMS`` "
+"from the same release before we install it:"
+msgstr ""
+"एसेट हस्ताक्षरित नहीं हैं। किसी डाउनलोड को इंस्टॉल करने से पहले हम उसे "
+"उसी रिलीज़ की ``SHA256SUMS`` से जाँचते हैं:"
+
+#: ../../operations.rst:649
+msgid ""
+"On macOS a browser download carries a quarantine attribute that stops an "
+"unsigned executable; ``xattr -d com.apple.quarantine sibuna`` removes it "
+"after the check."
+msgstr ""
+"macOS पर ब्राउज़र से डाउनलोड की गई फ़ाइल पर एक क्वारंटीन एट्रिब्यूट लगा "
+"होता है जो अहस्ताक्षरित एक्ज़ीक्यूटेबल को रोक देता है; जाँच के बाद "
+"``xattr -d com.apple.quarantine sibuna`` उसे हटा देता है।"
+
+#: ../../operations.rst:651
+msgid "The systemd service"
+msgstr "systemd सेवा"
+
+#: ../../operations.rst:654
+msgid ""
+"The Debian, RPM and Arch packages install ``/usr/bin/sibuna``, the unit "
+"``sibuna.service``, the account ``sibuna`` (through "
+"``systemd-sysusers``), the helper ``/usr/lib/sibuna/seed.sh`` and the "
+"settings file ``/etc/sibuna/service.env``. Installation starts nothing. "
+"We set the origin, an IP literal, in the settings file and start the "
+"service:"
+msgstr ""
+"Debian, RPM और Arch पैकेज ``/usr/bin/sibuna``, यूनिट ``sibuna.service``, "
+"खाता ``sibuna`` (``systemd-sysusers`` के ज़रिए), सहायक स्क्रिप्ट "
+"``/usr/lib/sibuna/seed.sh`` और सेटिंग फ़ाइल ``/etc/sibuna/service.env`` "
+"इंस्टॉल करते हैं। इंस्टॉलेशन कुछ भी शुरू नहीं करता। हम सेटिंग फ़ाइल में "
+"ऑरिजिन, एक IP पते का लिटरल, सेट करते हैं और सेवा शुरू करते हैं:"
+
+#: ../../operations.rst:662
+msgid ""
+"The service listens on ``127.0.0.1:8080`` until ``SIBUNA_HOST`` and "
+"``SIBUNA_PORT`` say otherwise. ``SIBUNA_OPTIONS`` passes further options, "
+"split at spaces, for example ``--mode forward_auth`` or ``--console "
+"127.0.0.1:19446``. Before each start, ``seed.sh`` creates the admission "
+"seed ``/var/lib/sibuna/admission.seed`` (64 hexadecimal digits, mode "
+"0600, owned by ``sibuna``) if it does not exist; it never replaces one, "
+"because a new seed would end every session. The daemon keeps its SQLite "
+"database in ``/var/lib/sibuna``, a directory of mode 0700. The unit runs "
+"without capabilities, with a read-only system (``ProtectSystem=strict``), "
+"private ``/tmp`` and devices, and no new privileges."
+msgstr ""
+"सेवा ``127.0.0.1:8080`` पर सुनती है, जब तक ``SIBUNA_HOST`` और "
+"``SIBUNA_PORT`` कुछ और न कहें। ``SIBUNA_OPTIONS`` आगे के विकल्प देता है, "
+"जो रिक्त स्थानों पर विभाजित होते हैं, उदाहरण के लिए ``--mode "
+"forward_auth`` या ``--console 127.0.0.1:19446``। हर शुरुआत से पहले, यदि "
+"प्रवेश सीड ``/var/lib/sibuna/admission.seed`` मौजूद न हो, तो ``seed.sh`` "
+"उसे बनाता है (64 हेक्साडेसिमल अंक, mode 0600, स्वामी ``sibuna``); वह किसी "
+"मौजूदा सीड को कभी नहीं बदलता, क्योंकि नया सीड हर सत्र समाप्त कर देगा। "
+"डेमन अपना SQLite डेटाबेस ``/var/lib/sibuna`` में रखता है, जो mode 0700 की "
+"डायरेक्टरी है। यूनिट बिना capabilities के, केवल-पढ़ने वाले सिस्टम "
+"(``ProtectSystem=strict``), निजी ``/tmp`` और डिवाइस, और बिना नए "
+"विशेषाधिकारों के चलती है।"
+
+#: ../../operations.rst:664
+msgid ""
+"An upgrade keeps the settings file, the seed and the state, and does not "
+"restart the service; we restart it after a backup. Removal stops and "
+"disables the service but keeps the account, the seed, the settings and "
+"the state, which we delete ourselves when we retire the host."
+msgstr ""
+"अपग्रेड सेटिंग फ़ाइल, सीड और स्टेट को बनाए रखता है, और सेवा को रीस्टार्ट "
+"नहीं करता; हम बैकअप के बाद उसे रीस्टार्ट करते हैं। हटाने पर सेवा रुक जाती "
+"है और अक्षम हो जाती है, लेकिन खाता, सीड, सेटिंग और स्टेट बने रहते हैं, "
+"जिन्हें होस्ट को सेवानिवृत्त करते समय हम स्वयं मिटाते हैं।"
+
+#: ../../operations.rst:666
+msgid ""
+"The FreeBSD and OpenBSD packages install only ``/usr/local/bin/sibuna`` "
+"and its documents (``pkg add``, or ``pkg_add -D unsigned`` for a package "
+"from outside the OpenBSD mirrors). They create no service, account or "
+"state: we run the daemon as an unprivileged user with a private seed and "
+"data directory."
+msgstr ""
+"FreeBSD और OpenBSD पैकेज केवल ``/usr/local/bin/sibuna`` और उसके दस्तावेज़ "
+"इंस्टॉल करते हैं (``pkg add``, या OpenBSD mirror के बाहर से आए पैकेज के "
+"लिए ``pkg_add -D unsigned``)। वे कोई सेवा, खाता या स्टेट नहीं बनाते: हम "
+"डेमन को बिना विशेषाधिकार वाले उपयोगकर्ता के रूप में, निजी सीड और डेटा "
+"डायरेक्टरी के साथ चलाते हैं।"
+
+#: ../../operations.rst:668
+msgid "Homebrew"
+msgstr "Homebrew"
+
+#: ../../operations.rst:671
+msgid ""
+"``sibuna.rb`` installs the release archive for the machine: macOS or "
+"Linux, arm64 or x86-64. It does not build from source, because Homebrew's "
+"Rust has no standard library for ``wasm32-unknown-unknown``, which the "
+"build of the two embedded WebAssembly modules needs; the archives hold "
+"the executables the release workflow already checked. Homebrew installs "
+"formulae from taps only, so we put the formula in a local tap:"
+msgstr ""
+"``sibuna.rb`` मशीन के लिए रिलीज़ आर्काइव इंस्टॉल करता है: macOS या Linux, "
+"arm64 या x86-64। यह स्रोत से बिल्ड नहीं करता, क्योंकि Homebrew के Rust "
+"में ``wasm32-unknown-unknown`` के लिए मानक लाइब्रेरी नहीं है, जिसकी "
+"ज़रूरत दो एम्बेडेड WebAssembly मॉड्यूल के बिल्ड को होती है; आर्काइव में "
+"वही एक्ज़ीक्यूटेबल हैं जिन्हें रिलीज़ वर्कफ़्लो पहले ही जाँच चुका है। "
+"Homebrew फ़ॉर्मूले केवल tap से इंस्टॉल करता है, इसलिए हम फ़ॉर्मूले को एक "
+"स्थानीय tap में रखते हैं:"
+
+#: ../../operations.rst:679
+msgid ""
+"The formula starts no service. Its caveats show how to create a seed; its "
+"test starts the daemon twice on the same data directory."
+msgstr ""
+"फ़ॉर्मूला कोई सेवा शुरू नहीं करता। उसकी caveats दिखाती हैं कि सीड कैसे "
+"बनाएँ; उसका परीक्षण डेमन को एक ही डेटा डायरेक्टरी पर दो बार शुरू करता है।"
+
+#: ../../operations.rst:681
+msgid "Containers and Kubernetes"
+msgstr "कंटेनर और Kubernetes"
+
+#: ../../operations.rst:684
+msgid ""
+"The image ``ghcr.io/insanai/sibuna:<version>`` holds the static "
+"executable on a distroless base: CA certificates, user 65532, no shell "
+"and no package manager. The entry point is ``sibuna``, so the arguments "
+"are daemon options. The release workflow runs it read-only, without "
+"capabilities, with a seed mounted read-only and a volume for the state, "
+"and restarts it once:"
+msgstr ""
+"इमेज ``ghcr.io/insanai/sibuna:<version>`` में distroless base पर स्टैटिक "
+"एक्ज़ीक्यूटेबल है: CA प्रमाणपत्र, उपयोगकर्ता 65532, कोई shell नहीं और कोई "
+"पैकेज मैनेजर नहीं। entry point ``sibuna`` है, इसलिए आर्ग्युमेंट डेमन के "
+"विकल्प होते हैं। रिलीज़ वर्कफ़्लो उसे केवल-पढ़ने वाले रूप में, बिना "
+"capabilities के, केवल-पढ़ने के लिए माउंट किए गए सीड और स्टेट के लिए एक "
+"वॉल्यूम के साथ चलाता है, और एक बार रीस्टार्ट करता है:"
+
+#: ../../operations.rst:694
+msgid ""
+"The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. "
+"It requires a Secret that we create (``secret.existingSecret``, key "
+"``admission.seed``), so no seed ever appears in values or templates. The "
+"Pod runs as UID 65532 with a read-only root filesystem under the "
+"Restricted pod security standard. One replica with ``Recreate`` upgrades "
+"keeps a single writer on the ReadWriteOnce volume, where Sibuna keeps its "
+"SQLite state in ``data/``; the claim is kept on uninstall. The probes "
+"call ``/__sibuna/health``. The Service is ClusterIP, the chart creates no "
+"ingress and no console, and its NetworkPolicy denies all traffic until "
+"``networkPolicy.ingressFrom`` and ``networkPolicy.egressTo`` allow the "
+"clients and the origin. ``upstream.host`` must be an IP literal, and "
+"``extraArgs`` passes further daemon options. The workflow installs, "
+"upgrades and uninstalls the chart in a kind cluster that enforces the "
+"Restricted standard."
+msgstr ""
+"Helm चार्ट ``helm-sibuna-<version>.tgz`` उस इमेज का एक Pod चलाता है। उसे "
+"एक Secret चाहिए जिसे हम बनाते हैं (``secret.existingSecret``, कुंजी "
+"``admission.seed``), इसलिए कोई सीड कभी values या templates में नहीं आता। "
+"Pod, Restricted pod security standard के अधीन, केवल-पढ़ने वाले root फ़ाइल "
+"सिस्टम के साथ UID 65532 के रूप में चलता है। ``Recreate`` अपग्रेड वाली एक "
+"रेप्लिका ReadWriteOnce वॉल्यूम पर एक ही लेखक रखती है, जहाँ Sibuna अपना "
+"SQLite स्टेट ``data/`` में रखता है; अनइंस्टॉल करने पर claim बना रहता है। "
+"प्रोब ``/__sibuna/health`` को कॉल करते हैं। Service ClusterIP है, चार्ट "
+"कोई इनग्रेस और कोई कंसोल नहीं बनाता, और उसकी NetworkPolicy सारा ट्रैफ़िक "
+"तब तक अस्वीकार करती है जब तक ``networkPolicy.ingressFrom`` और "
+"``networkPolicy.egressTo`` क्लाइंट और ऑरिजिन को अनुमति न दें। "
+"``upstream.host`` एक IP पते का लिटरल होना चाहिए, और ``extraArgs`` डेमन के "
+"आगे के विकल्प देता है। वर्कफ़्लो चार्ट को एक ऐसे kind क्लस्टर में "
+"इंस्टॉल, अपग्रेड और अनइंस्टॉल करता है जो Restricted standard लागू करता है।"
+
+#: ../../operations.rst:703
+msgid "Building from source"
+msgstr "स्रोत से बिल्ड करना"
+
+#: ../../operations.rst:706
+msgid "Rust 1.94 or later builds the workspace; the releases use Rust 1.99."
+msgstr ""
+"Rust 1.94 या बाद का संस्करण वर्कस्पेस को बिल्ड करता है; रिलीज़ Rust 1.99 "
+"का उपयोग करती हैं।"
+
+#: ../../operations.rst:708
 msgid ""
 "``cargo build --release -p sibuna`` produces ``target/release/sibuna`` "
 "with the default features: SQLite storage and the console. sqlx bundles "
 "SQLite, and ``ring`` (rustls) needs a C compiler at build time; the "
-"binary links only the system C runtime (``libc``, ``libm``, ``libgcc_s``) "
-"dynamically. The build script also builds the WebAssembly solver and "
-"console interface, which needs ``rustup target add "
-"wasm32-unknown-unknown``; ``SIBUNA_POW_WASM=<path>`` and "
+"binary links the system C runtime dynamically. The build script also "
+"builds the WebAssembly solver and console interface, which needs ``rustup "
+"target add wasm32-unknown-unknown``; ``SIBUNA_POW_WASM=<path>`` and "
 "``SIBUNA_CONSOLE_WASM=<path>`` embed prebuilt modules instead."
 msgstr ""
 "``cargo build --release -p sibuna`` डिफ़ॉल्ट features के साथ "
 "``target/release/sibuna`` बनाता है: SQLite स्टोरेज और कंसोल। sqlx SQLite "
 "को साथ में बाँधता (bundle करता) है, और ``ring`` (rustls) को बिल्ड के समय "
-"C कंपाइलर चाहिए; बाइनरी केवल सिस्टम C रनटाइम (``libc``, ``libm``, "
-"``libgcc_s``) को डायनामिक रूप से लिंक करती है। बिल्ड स्क्रिप्ट "
-"WebAssembly सॉल्वर और कंसोल इंटरफ़ेस भी बनाती है, जिसके लिए ``rustup "
-"target add wasm32-unknown-unknown`` चाहिए; ``SIBUNA_POW_WASM=<path>`` और "
-"``SIBUNA_CONSOLE_WASM=<path>`` इसके बजाय पहले से बने मॉड्यूल एम्बेड करते "
-"हैं।"
+"C कंपाइलर चाहिए; बाइनरी सिस्टम C रनटाइम को डायनामिक रूप से लिंक करती है। "
+"बिल्ड स्क्रिप्ट WebAssembly सॉल्वर और कंसोल इंटरफ़ेस भी बनाती है, जिसके "
+"लिए ``rustup target add wasm32-unknown-unknown`` चाहिए; "
+"``SIBUNA_POW_WASM=<path>`` और ``SIBUNA_CONSOLE_WASM=<path>`` इसके बजाय "
+"पहले से बने मॉड्यूल एम्बेड करते हैं।"
 
-#: ../../operations.rst:619
+#: ../../operations.rst:709
 msgid ""
 "``cargo build --release -p sibuna --no-default-features`` produces the "
 "in-memory firewall with no external crate at all; ``--data-dir`` and "
@@ -2415,33 +2709,63 @@ msgstr ""
 "``--database-url`` शुरू होते समय ``StorageDisabled`` के साथ अस्वीकार होते "
 "हैं, और ``sibuna console`` ``CONSOLEBUILD`` के साथ।"
 
-#: ../../operations.rst:620
+#: ../../operations.rst:710
 msgid ""
-"``cargo build --release -p sibuna --features postgres`` adds PostgreSQL "
-"clusters. It needs no OpenSSL."
+"``cargo build --release -p sibuna --features postgres-tls`` adds "
+"PostgreSQL clusters with verified TLS to the database. It needs no "
+"OpenSSL."
 msgstr ""
-"``cargo build --release -p sibuna --features postgres`` PostgreSQL "
-"क्लस्टर जोड़ता है। इसे OpenSSL की ज़रूरत नहीं।"
+"``cargo build --release -p sibuna --features postgres-tls`` डेटाबेस तक "
+"सत्यापित TLS के साथ PostgreSQL क्लस्टर जोड़ता है। इसे OpenSSL की ज़रूरत "
+"नहीं।"
 
-#: ../../operations.rst:622
+#: ../../operations.rst:711
 msgid ""
-"The release profile uses fat LTO and one codegen unit. Sibuna ships no "
-"container image definition, no systemd unit and no operating-system "
-"package; the binary links the system C runtime dynamically, so a "
-"container image needs a base that provides it. The unit below is an "
-"example:"
+"The static Linux executables of the releases come from ``cargo build "
+"--release --locked -p sibuna --target x86_64-unknown-linux-musl`` (or "
+"``aarch64-unknown-linux-musl``) with ``musl-gcc`` as the C compiler "
+"(``CC_x86_64_unknown_linux_musl=musl-gcc``)."
 msgstr ""
-"रिलीज़ प्रोफ़ाइल fat LTO और एक codegen unit का उपयोग करती है। Sibuna कोई "
-"container image परिभाषा, कोई systemd unit और कोई ऑपरेटिंग-सिस्टम पैकेज "
-"नहीं देता; बाइनरी सिस्टम C रनटाइम को डायनामिक रूप से लिंक करती है, इसलिए "
-"container image को ऐसा base चाहिए जो इसे प्रदान करे। नीचे का unit एक "
-"उदाहरण है:"
+"रिलीज़ के स्टैटिक Linux एक्ज़ीक्यूटेबल ``cargo build --release --locked "
+"-p sibuna --target x86_64-unknown-linux-musl`` (या "
+"``aarch64-unknown-linux-musl``) से बनते हैं, जिसमें C कंपाइलर "
+"``musl-gcc`` होता है (``CC_x86_64_unknown_linux_musl=musl-gcc``)।"
 
-#: ../../operations.rst:642
+#: ../../operations.rst:713
+msgid ""
+"The release profile uses fat LTO and one codegen unit. The workflow "
+"builds the two WebAssembly modules once and passes them to every "
+"platform, so all executables of a release embed byte-identical modules. "
+"``cargo xtask licenses`` regenerates ``LICENSES/THIRD-PARTY-RUST.txt`` "
+"after a dependency changes."
+msgstr ""
+"रिलीज़ प्रोफ़ाइल fat LTO और एक codegen unit का उपयोग करती है। वर्कफ़्लो "
+"दोनों WebAssembly मॉड्यूल एक बार बिल्ड करता है और उन्हें हर प्लेटफ़ॉर्म "
+"को देता है, इसलिए किसी रिलीज़ के सभी एक्ज़ीक्यूटेबल बाइट-दर-बाइट समान "
+"मॉड्यूल एम्बेड करते हैं। किसी निर्भरता के बदलने के बाद ``cargo xtask "
+"licenses`` फ़ाइल ``LICENSES/THIRD-PARTY-RUST.txt`` को फिर से बनाता है।"
+
+#: ../../operations.rst:715
+msgid ""
+"On Windows the daemon stops on Ctrl+C, Ctrl+Break and console close "
+"events; it does not run as a Windows service. Windows files have no mode "
+"bits, so Sibuna cannot refuse a key, credential or database URL file that "
+"others may read: we restrict those files with ACLs. The console's memory "
+"and CPU gauges are read from ``/proc`` and are unavailable on other "
+"systems."
+msgstr ""
+"Windows पर डेमन Ctrl+C, Ctrl+Break और कंसोल बंद होने के इवेंट पर रुकता "
+"है; वह Windows सेवा के रूप में नहीं चलता। Windows फ़ाइलों में mode bits "
+"नहीं होते, इसलिए Sibuna ऐसी कुंजी, क्रेडेंशियल या डेटाबेस URL फ़ाइल को "
+"अस्वीकार नहीं कर सकता जिसे दूसरे पढ़ सकते हों: हम उन फ़ाइलों को ACL से "
+"सीमित करते हैं। कंसोल के मेमोरी और CPU गेज ``/proc`` से पढ़े जाते हैं और "
+"दूसरे सिस्टम पर उपलब्ध नहीं हैं।"
+
+#: ../../operations.rst:717
 msgid "Exercise 9.2"
 msgstr "अभ्यास 9.2"
 
-#: ../../operations.rst:644
+#: ../../operations.rst:719
 msgid ""
 "Write the policy file and the ``ip_reputation`` rows needed so that a "
 "staging network (``10.20.0.0/16``) bypasses challenges, ``/admin/*`` "
@@ -2453,7 +2777,7 @@ msgstr ""
 "कार्य के 20 वर्क बिट्स माँगे, और ``X-Partner-Key`` से पहचाने जाने वाले एक "
 "पार्टनर scraper को प्रति 10 सेकंड 30 अनुरोधों पर प्रवेश मिले।"
 
-#: ../../operations.rst:646
+#: ../../operations.rst:721
 msgid ""
 "Hint: The daemon flags set the per-client limit every request meets "
 "first; a rule can carry a quota of its own in ``limits``."
@@ -2461,11 +2785,11 @@ msgstr ""
 "संकेत: डेमन के फ़्लैग वह प्रति-क्लाइंट सीमा तय करते हैं जिससे हर अनुरोध "
 "पहले मिलता है; कोई नियम ``limits`` में अपना कोटा रख सकता है।"
 
-#: ../../operations.rst:648
+#: ../../operations.rst:723
 msgid "Explain the invariant"
 msgstr "अपरिवर्तनीय नियम समझाइए"
 
-#: ../../operations.rst:650
+#: ../../operations.rst:725
 msgid ""
 "Explain to an operator why adding a row to ``policies`` takes effect "
 "without a restart and without a request ever waiting, in terms of the "
@@ -2474,3 +2798,22 @@ msgstr ""
 "किसी ऑपरेटर को स्टोरेज थ्रेड और इंजन स्लॉट के संदर्भ में समझाइए कि "
 "``policies`` में एक पंक्ति जोड़ना बिना रीस्टार्ट के और बिना किसी अनुरोध "
 "को प्रतीक्षा कराए प्रभावी क्यों होता है।"
+
+#~ msgid ""
+#~ "Build the binary for a target, package it, and run it under systemd."
+#~ msgstr ""
+#~ "किसी टारगेट के लिए बाइनरी बिल्ड करें, उसे पैकेज करें, और systemd के "
+#~ "अधीन चलाएँ।"
+
+#~ msgid ""
+#~ "The release profile uses fat LTO and one codegen unit. Sibuna ships no "
+#~ "container image definition, no systemd unit and no operating-system "
+#~ "package; the binary links the system C runtime dynamically, so a "
+#~ "container image needs a base that provides it. The unit below is an "
+#~ "example:"
+#~ msgstr ""
+#~ "रिलीज़ प्रोफ़ाइल fat LTO और एक codegen unit का उपयोग करती है। Sibuna "
+#~ "कोई container image परिभाषा, कोई systemd unit और कोई ऑपरेटिंग-सिस्टम "
+#~ "पैकेज नहीं देता; बाइनरी सिस्टम C रनटाइम को डायनामिक रूप से लिंक करती "
+#~ "है, इसलिए container image को ऐसा base चाहिए जो इसे प्रदान करे। नीचे का "
+#~ "unit एक उदाहरण है:"
