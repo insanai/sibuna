@@ -66,6 +66,15 @@
 
 #let sibuna-mono = ("DejaVu Sans Mono",)
 
+// Chinese, Japanese and Korean code needs a monospace font whose Han, kana and Hangul are
+// exactly two of its Latin columns wide, so translated ASCII diagrams stay aligned; that
+// font goes first, so its own Latin glyphs set the column. Other languages keep DejaVu.
+#let sibuna-cjk-mono = (zh: "Noto Sans Mono CJK SC", ja: "Noto Sans Mono CJK JP",
+  ko: "Noto Sans Mono CJK KR")
+#let sibuna-mono-for(code) = if code in sibuna-cjk-mono {
+  (sibuna-cjk-mono.at(code),) + sibuna-mono
+} else { sibuna-mono }
+
 // ---- Small helpers -------------------------------------------------------------------
 
 // The plain text of content: what a reader would copy from it.
@@ -161,9 +170,67 @@
 // invariant" boxes blue, both framed; every other box a callout with a rule down its
 // left side, green for objectives, worked examples, definitions and lemmas, red for
 // warnings, and blue otherwise. The title runs into the first paragraph.
-#let sibuna-box(kind, title, body) = {
+// The opening words of the translated box titles, by language: a translation starts every
+// title of a kind with the same words, so its boxes get the English boxes' colours.
+// exercise and explain are framed amber and blue; plain titles keep the default colour
+// although they start like an idea title; idea titles are green; stop titles are red.
+#let sibuna-box-words = (
+  zh: (
+    exercise: ("练习",),
+    explain: ("解释这个不变量",),
+    plain: (),
+    idea: ("学习目标", "实例分析", "引理", "定理", "采用的设计约束"),
+    stop: ("继续之前",),
+  ),
+  ko: (
+    exercise: ("연습 문제",),
+    explain: ("불변식 설명하기",),
+    plain: ("풀이 예제: 보정 계획",),
+    idea: ("학습 목표", "풀이 예제:", "보조정리", "정리"),
+    stop: ("계속하기 전에",),
+  ),
+  ja: (
+    exercise: ("演習",),
+    explain: ("不変条件を説明してください",),
+    plain: (),
+    idea: ("この章の学習目標", "例題：", "補題", "定理", "設計上の制約"),
+    stop: ("先に進む前に",),
+  ),
+  es: (
+    exercise: ("Ejercicio",),
+    explain: ("Explica el invariante",),
+    plain: (),
+    idea: ("Objetivos", "En este capítulo", "Ejemplo resuelto", "Definición", "Lema", "Teorema", "Corolario", "Proposición", "Restricciones de diseño"),
+    stop: ("Antes de continuar",),
+  ),
+  de: (
+    exercise: ("Übung",),
+    explain: ("Die Invariante erklären",),
+    plain: (),
+    idea: ("Lernziele", "Durchgerechnetes Beispiel", "Definition", "Lemma", "Satz", "Übernommene Entwurfsbeschränkungen"),
+    stop: ("Bevor wir weitermachen",),
+  ),
+  hi: (
+    exercise: ("अभ्यास",),
+    explain: ("अपरिवर्तनीय नियम समझाएँ",),
+    plain: ("हल किया गया उदाहरण: कैलिब्रेशन योजना",),
+    idea: ("उद्देश्य", "हल किया गया उदाहरण", "लेम्मा", "प्रमेय", "अपनाई गई डिज़ाइन शर्तें"),
+    stop: ("आगे बढ़ने से पहले",),
+  ),
+  ar: (
+    exercise: ("تمرين",),
+    explain: ("اشرح اللامتغير",),
+    plain: (),
+    idea: ("الأهداف", "مثال محلول", "تمهيدية", "مبرهنة"),
+    stop: ("قبل المتابعة",),
+  ),
+)
+
+#let sibuna-box(kind, title, body) = context {
   sibuna-part-intro.update(false)
   let name = sibuna-clean(sibuna-plain(title))
+  let words = sibuna-box-words.at(text.lang, default: (:))
+  let opens(role) = words.at(role, default: ()).any(w => name.starts-with(w))
   let lead(accent) = {
     let stop = if name.ends-with(regex("[.:?!]")) { [] } else { [.] }
     text(weight: "bold", fill: accent)[#title#stop]
@@ -176,15 +243,20 @@
       lead(accent)
       body
     })
-  if name.starts-with("Exercise") { return framed(sibuna-amber, sibuna-amber-light) }
-  if name.starts-with("Explain the invariant") {
+  if name.starts-with("Exercise") or opens("exercise") {
+    return framed(sibuna-amber, sibuna-amber-light)
+  }
+  if name.starts-with("Explain the invariant") or opens("explain") {
     return framed(sibuna-blue, sibuna-blue-light)
   }
   let idea = ("Objectives", "In this chapter", "Worked example", "Definition", "Lemma",
     "Theorem", "Corollary", "Proposition", "Design constraints")
-  let (accent, fill) = if kind in sibuna-loud-kinds or name.starts-with("Before continuing") {
+  let stop = kind in sibuna-loud-kinds or name.starts-with("Before continuing")
+  let (accent, fill) = if stop or opens("stop") {
     (sibuna-red, sibuna-red-light)
-  } else if kind in ("tip", "hint") or idea.any(w => name.starts-with(w)) {
+  } else if opens("plain") {
+    (sibuna-blue, sibuna-blue-light)
+  } else if kind in ("tip", "hint") or idea.any(w => name.starts-with(w)) or opens("idea") {
     (sibuna-green, sibuna-green-light)
   } else {
     (sibuna-blue, sibuna-blue-light)
@@ -355,17 +427,29 @@
 
 // The running head: the book's title on the left, and the chapter on the right: the
 // chapter that opens on this page, or else the last one before it.
-#let sibuna-running-head(title) = context {
+// The languages whose scripts set marks above and below the line: Devanagari's reph and
+// vowel signs, the dots of Arabic letters. A clipping box cuts them off at the line, so
+// the running header's boxes clip these scripts with room above and below.
+#let sibuna-tall-scripts = ("hi", "ar", "fa", "he", "ur")
+
+// fonts is the book's font list: the page header is laid out apart from the body, and
+// without it a script's characters fall back to any font that has them (Devanagari
+// then loses its vowel signs).
+#let sibuna-running-head(title, fonts: auto) = context {
   let pg = here().page()
   if pg <= 1 { return }
   let chapters = query(heading.where(level: 1, outlined: true))
     .filter(h => h.location().page() <= pg)
   let chapter = if chapters.len() > 0 { chapters.last().body } else { [] }
+  if fonts != auto { set text(font: fonts) }
   set text(size: 8pt, fill: sibuna-gray, number-type: "lining")
   set par(justify: false, first-line-indent: 0em)
-  grid(columns: (1fr, 1fr), column-gutter: 1em,
-    box(width: 100%, clip: true, title),
-    box(width: 100%, clip: true, align(end, emph(chapter))))
+  let room = if text.lang in sibuna-tall-scripts { (y: 0.5em) } else { 0pt }
+  // The book's title takes its own width and the chapter's the rest, so the long
+  // chapter titles of some translations still fit on one line.
+  grid(columns: (auto, 1fr), column-gutter: 1em,
+    box(clip: true, outset: room, title),
+    box(width: 100%, clip: true, outset: room, align(end, emph(chapter))))
   v(-0.5em)
   line(length: 100%, stroke: 0.4pt + sibuna-rule)
 }
@@ -459,8 +543,9 @@
   let page-size = if trim == none { (paper: paper) } else { trim }
   let spaced = code not in sibuna-joined-scripts
   set document(title: title, author: if author == "" { () } else { author })
-  let fonts = ("New Computer Modern", "Libertinus Serif")
-  set text(font: fonts + sibuna-script-fonts.at(code, default: ()), size: 10.5pt,
+  let fonts = ("New Computer Modern", "Libertinus Serif") + sibuna-script-fonts.at(code,
+    default: ())
+  set text(font: fonts, size: 10.5pt,
     fill: sibuna-ink, lang: code, region: region, hyphenate: true)
   set par(justify: true, leading: 0.60em, spacing: 0.62em)
   set list(indent: 0.4em)
@@ -491,6 +576,7 @@
     set text(dir: ltr)
     box(it)
   }
+  show raw: set text(font: sibuna-mono-for(code))
 
   sibuna-cover(page-size, title: title, author: author, version: version,
     date: date, version-label: version-label, kicker: kicker, headline: headline,
@@ -499,7 +585,8 @@
 
   set page(..page-size,
     margin: (inside: 21mm, outside: 18mm, top: 19mm, bottom: 20mm),
-    numbering: "1", number-align: center, header: sibuna-running-head(title))
+    numbering: "1", number-align: center,
+    header: sibuna-running-head(title, fonts: fonts))
   let colophon = if copyright != "" {
     text(size: 8pt, fill: sibuna-gray)[#emph(title)#if version != "" [,
       #version-label #version] \ \u{00A9} #copyright]
