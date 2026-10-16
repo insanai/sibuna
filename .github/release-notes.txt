@@ -1,7 +1,8 @@
-Sibuna 1.0.0-beta.1 is the first beta of Sibuna 1.0, a web firewall and anti-crawler
-daemon written in Rust. It sits in front of an origin as a reverse proxy, or beside an
-ingress as a forward-auth engine, and admits browsers that prove work while it denies
-known automation, injected payloads, floods and honeypot hits before they reach the origin.
+Sibuna 1.0.0-beta.1 is the first public beta release of Sibuna 1.0, a web firewall and
+anti-crawler daemon written in Rust. It sits in front of an origin as a reverse proxy,
+or beside an ingress as a forward-auth engine, and admits browsers that prove work while
+it denies known automation, injected payloads, floods and honeypot hits before they
+reach the origin.
 
 Highlights:
 - Proof-of-work admission: Cohen-Pietrzak proof of sequential work (default) or bit-level
@@ -58,8 +59,9 @@ Known limitations of this beta:
 - The console's formal isolation gate (SID 0007) has not been run; an eight-dashboard smoke
   run passed with no data-plane errors. Its WebAssembly module (about 700 KiB) is above the
   640 KiB review threshold.
-- This is a pre-release: options, storage schema and console APIs may still change
-  before 1.0.0. Back up the data directory before upgrading.
+- This is a public beta release, published for everyone and supported as the current
+  release. Options, storage schema and console APIs may still change before 1.0.0. Back up
+  the data directory before upgrading.
 
 Sibuna is free software under LGPL-3.0-or-later. Report vulnerabilities privately through
 https://github.com/insanai/sibuna/security/advisories/new (see SECURITY.md).
