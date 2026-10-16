@@ -6,10 +6,10 @@
 # -- Project information -----------------------------------------------------
 
 project = "Sibuna: Architecture, Algorithms, and Empirical Foundations of Work-Bound Web Defense"
-copyright = "2026, Vikrant Rathore and Ronak Rathore"
-author = "Vikrant Rathore and Ronak Rathore"
-version = "0.2"
-release = "0.2.0"
+copyright = "2026, Vikrant Rathore and Sibuna contributors"
+author = "Vikrant Rathore"
+version = "1.0.0-beta.1"
+release = "1.0.0-beta.1"
 # The date on the title block and in the running header.
 today = "October 2026"
 
@@ -38,4 +38,4 @@ pdf_preamble = "_templates/preamble.typ"
 root = "index"
 file = "sibuna-whitepaper.pdf"
 title = "Sibuna: Architecture, Algorithms, and Empirical Foundations of Work-Bound Web Defense"
-author = "Vikrant Rathore and Ronak Rathore"
+author = "Vikrant Rathore"

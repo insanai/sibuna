@@ -3,7 +3,7 @@ Sibuna: Architecture, Algorithms, and Empirical Foundations of Work-Bound Web De
 
 .. only:: html
 
-   **Vikrant Rathore and Ronak Rathore.** Insan AI Systems & Architecture Lab. Whitepaper, October 2026, for Sibuna 0.2.0.
+   **Vikrant Rathore**, with assistance from Ronak Rathore and Kanak Rathore. Insan AI Systems & Architecture Lab. Whitepaper, October 2026, for Sibuna 1.0.0-beta.1.
 
 .. topic:: Abstract
 
@@ -14,7 +14,7 @@ Sibuna: Architecture, Algorithms, and Empirical Foundations of Work-Bound Web De
    .. raw:: typst
 
       #wp-metrics(
-        source: [Sibuna 0.2.0 on one AMD Ryzen 9 5950X core, or four CPUs for the daemon, 15 October 2026: benchmarks/results/primitives-latest.md and product-latest.md; the evaluation section gives the method.],
+        source: [Sibuna on one AMD Ryzen 9 5950X core, or four CPUs for the daemon, 15 October 2026: benchmarks/results/primitives-latest.md and product-latest.md; the evaluation section gives the method.],
         ("6.2 ns", "GCRA RATE CHECK", "hashed client | 16 shards"),
         ("55.7 ns", "BOT MATCHER", "Aho-Corasick | 40 signatures"),
         ([22.3 #(sym.mu)s], "PoSW VERIFICATION", "depth 13 | 16 openings"),
@@ -23,7 +23,7 @@ Sibuna: Architecture, Algorithms, and Empirical Foundations of Work-Bound Web De
 
 .. only:: html
 
-   Four figures of Sibuna 0.2.0 on an AMD Ryzen 9 5950X, 15 October 2026 (``benchmarks/results/primitives-latest.md`` and ``product-latest.md``; the evaluation section gives the method):
+   Four figures of Sibuna on an AMD Ryzen 9 5950X, 15 October 2026 (``benchmarks/results/primitives-latest.md`` and ``product-latest.md``; the evaluation section gives the method):
 
    - **6.2 ns**: a GCRA rate check on a hashed client, 16 shards.
    - **55.7 ns**: the bot matcher, Aho-Corasick over 40 signatures.
@@ -33,7 +33,7 @@ Sibuna: Architecture, Algorithms, and Empirical Foundations of Work-Bound Web De
 Prologue: The Economics of a Request
 ------------------------------------
 
-Every request that reaches a server makes a claim on its attention. A method, a path and some headers do not establish that serving the request is worthwhile. A defense therefore places a decision between the request and the origin: admit it, refuse it, or ask the sender to do verifiable work first. This paper follows that decision from its mathematics to the bytes in memory, in Sibuna 0.2.0. Sibuna began as an earlier implementation and was rebuilt in Rust; we describe the system as it is now.
+Every request that reaches a server makes a claim on its attention. A method, a path and some headers do not establish that serving the request is worthwhile. A defense therefore places a decision between the request and the origin: admit it, refuse it, or ask the sender to do verifiable work first. This paper follows that decision from its mathematics to the bytes in memory, in Sibuna. Sibuna began as an earlier implementation and was rebuilt in Rust; we describe the system as it is now.
 
 .. admonition:: Feynman on Physical Intuition: Who Pays for the Work?
 
@@ -502,7 +502,7 @@ Empirical Evaluation
 Method
 ~~~~~~
 
-Three harnesses, run through ``cargo xtask bench``, measure Sibuna 0.2.0. The *primitive* suite times the operations of the request path in seven timed batches after an untimed warm-up, rebuilds mutable state outside the timer, and reports the median batch per operation with the fastest and slowest batch beside it. The *whole-product* harness drives the daemon with ``wrk`` (2 threads, 64 connections, 5 seconds, 3 repetitions) in forward-auth and reverse-proxy modes, on the Gate and Shield surfaces, over four workloads: ``admitted`` (a valid session), ``challenged`` (no session), ``allowed_static`` (``/robots.txt``) and ``attack`` (a session plus ``q=' OR 1=1--``, which only Shield refuses). The *latency* harness uses an open-loop generator that sends at a fixed rate whatever the daemon does, and times each request from when it was due, so that queueing in the daemon is charged to the daemon [#method-sources]_.
+Three harnesses, run through ``cargo xtask bench``, measure Sibuna. The *primitive* suite times the operations of the request path in seven timed batches after an untimed warm-up, rebuilds mutable state outside the timer, and reports the median batch per operation with the fastest and slowest batch beside it. The *whole-product* harness drives the daemon with ``wrk`` (2 threads, 64 connections, 5 seconds, 3 repetitions) in forward-auth and reverse-proxy modes, on the Gate and Shield surfaces, over four workloads: ``admitted`` (a valid session), ``challenged`` (no session), ``allowed_static`` (``/robots.txt``) and ``attack`` (a session plus ``q=' OR 1=1--``, which only Shield refuses). The *latency* harness uses an open-loop generator that sends at a fixed rate whatever the daemon does, and times each request from when it was due, so that queueing in the daemon is charged to the daemon [#method-sources]_.
 
 The runs were recorded on 15 October 2026 on one host: an AMD Ryzen 9 5950X (16 cores, 32 threads) running Linux 7.0.0-28. The daemon ran on CPUs 0 to 3 with four workers, the load generator and a stub origin on CPUs 8 to 15 (the other CCD), and the primitive suite on CPU 4. The daemon was the default release build, with SQLite and the console compiled in, and ran in memory, without storage.
 
@@ -513,7 +513,7 @@ The runs were recorded on 15 October 2026 on one host: an AMD Ryzen 9 5950X (16 
 Primitive Latencies
 ~~~~~~~~~~~~~~~~~~~
 
-.. list-table:: Primitive timings of Sibuna 0.2.0 in nanoseconds per operation on one Ryzen 9 5950X core: the median of seven batches, with the fastest and slowest batch (``benchmarks/results/primitives-latest.md``, generated 2026-10-15T22:34:59Z)
+.. list-table:: Primitive timings of Sibuna in nanoseconds per operation on one Ryzen 9 5950X core: the median of seven batches, with the fastest and slowest batch (``benchmarks/results/primitives-latest.md``, generated 2026-10-15T22:34:59Z)
    :header-rows: 1
    :widths: 20 46 16 18
 
@@ -601,7 +601,7 @@ The spreads are narrow: no batch of any row lies more than 4.2% from its row's m
 Whole Products
 ~~~~~~~~~~~~~~
 
-.. list-table:: Sibuna 0.2.0 under ``wrk``: requests per second, latency in microseconds, CPU time per request in microseconds and peak resident memory; medians of three runs (``benchmarks/results/product-latest.md``, generated 2026-10-15T23:15:24Z)
+.. list-table:: Sibuna under ``wrk``: requests per second, latency in microseconds, CPU time per request in microseconds and peak resident memory; medians of three runs (``benchmarks/results/product-latest.md``, generated 2026-10-15T23:15:24Z)
    :header-rows: 1
    :widths: 13 9 22 13 8 8 10 11
 
@@ -746,7 +746,7 @@ In forward-auth mode the ingress asks Sibuna whether to admit a request, and the
 
 A few answers in about two million in three reverse-proxy rows were ``503``: ``wrk`` reconnected before a closing connection had given back its place under the per-address connection limit. The daemon now gives the place back before it writes the closing response; these files predate that fix.
 
-.. list-table:: Footprint of the Sibuna 0.2.0 daemon (``product-latest.json`` and ``primitives-latest.json``, 15 October 2026, as tabulated in book Part VIII)
+.. list-table:: Footprint of the Sibuna daemon (``product-latest.json`` and ``primitives-latest.json``, 15 October 2026, as tabulated in book Part VIII)
    :header-rows: 1
    :widths: 60 40
 
@@ -776,7 +776,7 @@ Latency at Equal Offered Load
 
 ``wrk`` keeps 64 requests in flight, so the request rate depends on the daemon, and ``wrk``'s percentiles leave out the requests it did not send while it waited. The open-loop harness fixes the offered rate instead and charges every delay to the daemon, which is what a visitor experiences.
 
-.. list-table:: Sibuna 0.2.0, Shield, admitted requests at fixed offered rates; latency in microseconds and CPU time per request, medians of three 10-second runs (``benchmarks/results/latency-latest.md``, generated 2026-10-15T23:07:14Z)
+.. list-table:: Sibuna, Shield, admitted requests at fixed offered rates; latency in microseconds and CPU time per request, medians of three 10-second runs (``benchmarks/results/latency-latest.md``, generated 2026-10-15T23:07:14Z)
    :header-rows: 1
    :widths: 14 12 12 9 9 9 10 10 10
 
@@ -924,7 +924,7 @@ We compare Sibuna with the tools an operator is most likely to weigh against it.
      - C/C++ proxy and detector, Go management, PostgreSQL
      - Proprietary edge software
    * - Licence
-     - Apache-2.0
+     - LGPL-3.0-or-later
      - MIT
      - GPL-3.0 management code; closed detector images
      - Proprietary service
