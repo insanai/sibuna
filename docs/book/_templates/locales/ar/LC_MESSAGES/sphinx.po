@@ -16,7 +16,7 @@ msgid "Attention"
 msgstr "تنبيه"
 
 msgid "Caution"
-msgstr "حذر"
+msgstr "احذر"
 
 msgid "Danger"
 msgstr "خطر"
@@ -97,7 +97,7 @@ msgid "Variables"
 msgstr "المتغيرات"
 
 msgid "Raises"
-msgstr "يطلق"
+msgstr "يُطلِق"
 
 msgid "Returns"
 msgstr "يُرجع"
@@ -136,7 +136,7 @@ msgid "Index"
 msgstr "الفهرس"
 
 msgid "Symbols"
-msgstr "رموز"
+msgstr "الرموز"
 
 msgid "see"
 msgstr "انظر"

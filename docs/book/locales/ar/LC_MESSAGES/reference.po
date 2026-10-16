@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 07:43+0000\n"
+"POT-Creation-Date: 2026-10-16 10:45+0000\n"
 "PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,14 +20,14 @@ msgstr ""
 
 #: ../../reference.rst:1
 msgid "Part X: Desk Reference and Diagnostics"
-msgstr "الجزء العاشر: مرجع العمل والتشخيص"
+msgstr "الجزء العاشر: المرجع التفصيلي والتشخيص"
 
 #: ../../reference.rst:4
 msgid ""
 "Endpoints, metrics, error catalog, policy schema, and storage tables in "
 "one place."
 msgstr ""
-"نقاط النهاية، والمقاييس، ودليل الأخطاء، ومخطط السياسة، وجداول التخزين في "
+"نقاط النهاية، والمقاييس، وفهرس الأخطاء، ومخطط السياسة، وجداول التخزين في "
 "مكان واحد."
 
 #: ../../reference.rst:6
@@ -40,7 +40,7 @@ msgstr "الأهداف"
 
 #: ../../reference.rst:11
 msgid "Know every route under ``/__sibuna/`` and what each returns."
-msgstr "اعرف كل مسار تحت ``/__sibuna/`` وما يعيده كل منها."
+msgstr "معرفة كل مسار تحت ``/__sibuna/`` وما يعيده كل منها."
 
 #: ../../reference.rst:13
 msgid "Reserved routes"
@@ -84,9 +84,9 @@ msgid ""
 "Returns ``{id, algorithm, difficulty, challenges, expires_at}``"
 msgstr ""
 "يصدر تحديًا عديم الحالة: تحدده تذكرة المتطلبات الواردة في استجابة التحدي، "
-"وإلا يُقيّم عنوان URL المبلغ عنه في صيغته القياسية (``414`` فوق 8 KiB، "
-"و\\ ``400`` لمسار ليست له صيغة قياسية). يعيد ``{id, algorithm, "
-"difficulty, challenges, expires_at}``"
+"وإلا يُقيَّم عنوان URL المُبلَّغ عنه في صيغته المُطبَّعة (``414`` إذا "
+"تجاوز 8 KiB، و\\ ``400`` لمسار ليست له صيغة مُطبَّعة). يعيد ``{id, "
+"algorithm, difficulty, challenges, expires_at}``"
 
 #: ../../reference.rst:26
 msgid "``/__sibuna/verify``"
@@ -127,7 +127,7 @@ msgstr "``/__sibuna/worker.js``"
 msgid ""
 "The Web Worker with WASM and JavaScript provers, cacheable for one hour"
 msgstr ""
-"Web Worker مع مُبرهِنَي WASM وJavaScript، قابل للتخزين المؤقت ساعة واحدة"
+"Web Worker يضم مُبرهِنَي WASM وJavaScript، قابل للتخزين المؤقت ساعة واحدة"
 
 #: ../../reference.rst:35
 msgid "``/__sibuna/honeypot``"
@@ -142,7 +142,7 @@ msgid ""
 msgstr ""
 "يحظر المستدعي مدة ``--ban-seconds`` ويسجل حادثًا؛ ``403``. لا يحظر إلا "
 "طلب المستوى الأعلى (بلا ``Sec-Fetch-Dest`` أو بقيمة ``document``، وبلا "
-"``Sec-Fetch-Site`` عابر للمواقع)؛ ويُجاب أي طلب آخر بـ ``404`` ويُعد"
+"``Sec-Fetch-Site`` عابر للمواقع)؛ ويُجاب أي طلب آخر بـ ``404`` ويُحتسب"
 
 #: ../../reference.rst:38
 msgid "``/__sibuna/health``"
@@ -153,7 +153,7 @@ msgid ""
 "JSON liveness status with engine name, version, proxy mode and proof "
 "algorithm"
 msgstr ""
-"حالة الحياة بصيغة JSON مع اسم المحرك، والإصدار، ووضع الوكيل، وخوارزمية "
+"حالة الحيوية بصيغة JSON مع اسم المحرك، والإصدار، ووضع الوكيل، وخوارزمية "
 "الإثبات"
 
 #: ../../reference.rst:41
@@ -179,7 +179,7 @@ msgstr ""
 "ميزانية ``--challenge-rate-limit`` المستقلة، ويُرفض العنوان المحظور بـ "
 "``403`` على كل مسار. تحمل استجابات التحدي ``X-Sibuna-Status: CHALLENGE``؛ "
 "وتحمل الطلبات المقبولة ``X-Sibuna-Status: PASS`` و\\ ``X-Sibuna-Rule`` "
-"إلى الخادم الخلفي (و\\ ``X-Sibuna-Rule-Hash``، بالنظام الست عشري، في ردود "
+"نحو الخادم الأصلي (و\\ ``X-Sibuna-Rule-Hash``، بالنظام الست عشري، في ردود "
 "forward-auth). يتلقى العميل الذي لا يقبل HTML الحالة ``401`` مع "
 "``{\"error\":\"challenge_required\",\"challenge\":\"/__sibuna/challenge.json?need=<ticket>\"}``."
 
@@ -196,15 +196,15 @@ msgid ""
 "forward-auth mode. Part IX documents the console's workflows, HTTPS "
 "deployment and current SID 0007 limits."
 msgstr ""
-"يقدم مستمع الإدارة الاختياري المستقل ``/console/``. هيئ مسؤوله محليًا "
-"بالأمر ``sibuna init-admin``، ثم استبدل كلمة المرور المؤقتة عند أول تسجيل "
-"دخول. يتطلب ``/console/api/stats`` و\\ ``/console/ws`` جلسة موثقة (بما "
-"فيها جلسة الكشك). يجمع WebSocket الإحصاءات والأحداث والعقد والسياسة "
-"والتحديات والتدقيق، مع لقطات محدودة وفروق واستعادة للفجوات. يتصل نظراء "
-"الإدارة بـ ``/console/peer``، وتقع كل مسارات API تحت ``/console/api/``. "
-"لا تُرصد عدادات أخطاء الخادم الأصلي في وضع forward-auth. يوثق الجزء "
-"التاسع مسارات عمل وحدة التحكم، ونشرها عبر HTTPS، والحدود الحالية لـ SID "
-"0007."
+"يقدم مستمع الإدارة الاختياري المستقل ``/console/``. هيّئ حساب مسؤوله "
+"محليًا بالأمر ``sibuna init-admin``، ثم استبدل كلمة المرور المؤقتة عند "
+"أول تسجيل دخول. يتطلب ``/console/api/stats`` و\\ ``/console/ws`` جلسة "
+"موثقة (بما فيها جلسة الكشك). يدمج اتصال WebSocket الإحصاءات والأحداث "
+"والعقد والسياسة والتحديات والتدقيق في قناة واحدة، مع لقطات محدودة وفروق "
+"واستعادة للفجوات. يتصل نظراء الإدارة بـ ``/console/peer``، وتقع كل مسارات "
+"API تحت ``/console/api/``. لا تُرصد عدادات أخطاء الخادم الأصلي في وضع "
+"forward-auth. يوثق الجزء التاسع مسارات عمل وحدة التحكم، ونشرها عبر HTTPS، "
+"والحدود الحالية لـ SID 0007."
 
 #: ../../reference.rst:49
 msgid "Metrics"
@@ -254,7 +254,7 @@ msgstr "``requests``"
 
 #: ../../reference.rst:65
 msgid "A parsed request reached dispatch (reserved routes included)"
-msgstr "وصل طلب محلل إلى التوزيع (بما في ذلك المسارات المحجوزة)"
+msgstr "وصل طلب مُحلَّل إلى مرحلة التوجيه (بما في ذلك المسارات المحجوزة)"
 
 #: ../../reference.rst:66
 msgid "``allowed``, ``denied``, ``challenged``"
@@ -307,7 +307,7 @@ msgstr "``bans_issued``"
 
 #: ../../reference.rst:77
 msgid "A ban was recorded (honeypot or a rule quota's ban)"
-msgstr "سُجل حظر (من المصيدة أو من حظر حصة قاعدة)"
+msgstr "سُجّل حظر (من المصيدة، أو حظرٌ تفرضه حصة قاعدة)"
 
 #: ../../reference.rst:78
 msgid "``proxied``, ``upstream_errors``"
@@ -326,8 +326,8 @@ msgid ""
 "A malformed head, a repeated ``Host``, a target without a normal form "
 "(``400``), or an unsupported transfer coding (``501``) was refused"
 msgstr ""
-"رُفض رأس مشوه، أو ``Host`` مكرر، أو هدف ليست له صيغة قياسية (``400``)، أو "
-"ترميز نقل غير مدعوم (``501``)"
+"رُفض رأس مشوه، أو ``Host`` مكرر، أو هدف ليست له صيغة مُطبَّعة (``400``)، "
+"أو ترميز نقل غير مدعوم (``501``)"
 
 #: ../../reference.rst:82
 msgid "``overloaded``"
@@ -359,7 +359,8 @@ msgstr "``forwarded_invalid``"
 msgid ""
 "A trusted forwarded client address did not parse; the request was judged "
 "by the socket peer"
-msgstr "تعذر تحليل عنوان عميل ممرر موثوق؛ فحُكم على الطلب بنظير المقبس"
+msgstr ""
+"تعذر تحليل عنوان عميل ممرر موثوق؛ فحُكم على الطلب بعنوان نظير المقبس"
 
 #: ../../reference.rst:88
 msgid "``honeypot_refused``"
@@ -368,7 +369,7 @@ msgstr "``honeypot_refused``"
 #: ../../reference.rst:89
 msgid ""
 "A honeypot hit banned nobody because a page, not a person, requested it"
-msgstr "لم تحظر إصابة المصيدة أحدًا لأن صفحة، لا شخصًا، هي التي طلبتها"
+msgstr "لم يحظر طلبُ المصيدة أحدًا، لأن الذي طلبها صفحة لا شخص"
 
 #: ../../reference.rst:90
 msgid "``rate_evictions``"
@@ -376,7 +377,7 @@ msgstr "``rate_evictions``"
 
 #: ../../reference.rst:91
 msgid "A limiter arrival evicted another active client's cell"
-msgstr "أخرج وصول إلى المحدد خلية عميل نشط آخر"
+msgstr "أزاح وصولٌ إلى محدد المعدل خليةَ عميل نشط آخر"
 
 #: ../../reference.rst:92
 msgid "``ja4_present``"
@@ -409,7 +410,7 @@ msgid ""
 "interval; totals alone are not a queue depth."
 msgstr ""
 "قد تزيد إعادة المحاولة ``incident_write_failures`` دون فقد سجلات، لأن "
-"الدفعة المعلقة تُحفظ. راقب الزيادات خلال فترة؛ فالمجاميع وحدها ليست عمق "
+"الدفعة المعلقة تُستبقى. راقب الزيادات خلال فترة؛ فالمجاميع وحدها ليست عمق "
 "الطابور."
 
 #: ../../reference.rst:99
@@ -437,8 +438,8 @@ msgid ""
 "Admitted (forward-auth), interstitial (HTML navigation needing a "
 "challenge), internal routes"
 msgstr ""
-"مقبول (forward-auth)، الصفحة الوسيطة (تنقل HTML يحتاج إلى تحدٍّ)، "
-"المسارات الداخلية"
+"مقبول (forward-auth)، والصفحة الوسيطة (تصفّح HTML يحتاج إلى تحدٍّ)، "
+"والمسارات الداخلية"
 
 #: ../../reference.rst:110
 msgid "302"
@@ -461,7 +462,7 @@ msgid ""
 "form, invalid forwarded metadata, a malformed body, or a rejected "
 "solution with an Elm-style diagnostic"
 msgstr ""
-"طلب مشوه، أو حقل ``Host`` مكرر، أو هدف ليست له صيغة قياسية، أو بيانات "
+"طلب مشوه، أو حقل ``Host`` مكرر، أو هدف ليست له صيغة مُطبَّعة، أو بيانات "
 "تمرير وصفية غير صالحة، أو جسم مشوه، أو حل مرفوض مع تشخيص بأسلوب Elm"
 
 #: ../../reference.rst:114
@@ -472,7 +473,7 @@ msgstr "401"
 msgid ""
 "Challenge required for a client that does not accept HTML, or in "
 "forward-auth mode"
-msgstr "التحدي مطلوب لعميل لا يقبل HTML، أو في وضع forward-auth"
+msgstr "مطلوب تحدٍّ لعميل لا يقبل HTML، أو في وضع forward-auth"
 
 #: ../../reference.rst:116
 msgid "403"
@@ -480,7 +481,7 @@ msgstr "403"
 
 #: ../../reference.rst:117
 msgid "Policy or WAF denial, banned address, honeypot"
-msgstr "رفض بالسياسة أو WAF، عنوان محظور، المصيدة"
+msgstr "رفض من السياسة أو WAF، أو عنوان محظور، أو المصيدة"
 
 #: ../../reference.rst:118
 msgid "404"
@@ -491,7 +492,8 @@ msgid ""
 "An unknown path under ``/__sibuna/``, or a honeypot hit that is not a "
 "top-level request"
 msgstr ""
-"مسار غير معروف تحت ``/__sibuna/``، أو إصابة مصيدة ليست طلب مستوى أعلى"
+"مسار غير معروف تحت ``/__sibuna/``، أو طلب مصيدة ليس طلبًا من المستوى "
+"الأعلى"
 
 #: ../../reference.rst:120
 msgid "413"
@@ -499,7 +501,7 @@ msgstr "413"
 
 #: ../../reference.rst:121
 msgid "Solution body larger than the 64 KB connection buffer"
-msgstr "جسم الحل أكبر من مخزن الاتصال المؤقت ذي 64 KB"
+msgstr "جسم الحل أكبر من مخزن الاتصال المؤقت البالغ 64 KB"
 
 #: ../../reference.rst:122
 msgid "414"
@@ -507,7 +509,7 @@ msgstr "414"
 
 #: ../../reference.rst:123
 msgid "A reported challenge URL over 8 KiB"
-msgstr "عنوان URL للتحدي المبلغ عنه أطول من 8 KiB"
+msgstr "عنوان URL المُبلَّغ عنه للتحدي أطول من 8 KiB"
 
 #: ../../reference.rst:124
 msgid "417"
@@ -515,7 +517,8 @@ msgstr "417"
 
 #: ../../reference.rst:125
 msgid "Unsupported request expectation; ``100-continue`` is handled locally"
-msgstr "توقع طلب غير مدعوم؛ يُعالج ``100-continue`` محليًا"
+msgstr ""
+"توقُّع (Expect) غير مدعوم في الطلب؛ ويُعالَج ``100-continue`` محليًا"
 
 #: ../../reference.rst:126 ../../reference.rst:215
 msgid "429"
@@ -562,12 +565,12 @@ msgid ""
 "reached, or the node is draining; the socket is closed after the reply"
 msgstr ""
 "بلوغ حد الاتصالات (``--max-connections`` أو "
-"``--max-connections-per-ip``)، أو العقدة في حالة تصريف؛ ويُغلق المقبس بعد "
+"``--max-connections-per-ip``)، أو العقدة قيد التصريف؛ ويُغلق المقبس بعد "
 "الرد"
 
 #: ../../reference.rst:137
 msgid "Error Catalog"
-msgstr "دليل الأخطاء"
+msgstr "فهرس الأخطاء"
 
 #: ../../reference.rst:140
 msgid ""
@@ -592,18 +595,18 @@ msgid ""
 msgstr ""
 "يوقف ``INVALID COMMAND LINE`` بدء التشغيل عند أي خيار لا يعرفه البرنامج "
 "الخدمي، وأي قيمة خارج مداها الموثق، وأي اختيار وضع غير صالح أو غائب أو "
-"مكرر. تسمي الكتلة الخيار، والقيمة المعطاة، والمدى المتوقع، والخطأ "
+"مكرر. تذكر كتلة الخطأ الخيار، والقيمة المعطاة، والمدى المتوقع، والخطأ "
 "(``UnknownOption``، و\\ ``MissingValue``، و\\ ``InvalidValue``، و\\ "
 "``InvalidMode``، و\\ ``MissingMode``، و\\ ``DuplicateMode``، و\\ "
 "``RemovedOption`` لخيار عنقود Zaxonlite، و\\ ``ConflictingOptions`` "
 "لخياري تخزين يستبعد أحدهما الآخر، و\\ ``MissingOption`` لعنوان URL لقاعدة "
 "بيانات بلا ``--cluster-node``)، وتنتهي بتلميح. يُعرض عنوان URL لقاعدة "
-"البيانات بالصيغة ``[redacted]``. قدم ``--mode reverse_proxy`` أو ``--mode "
-"forward_auth`` مرة واحدة؛ والخيار القصير المكافئ هو ``-m``. يطبع ملف "
-"السياسة المرفوض كتلة عنوانها اسم خطئه (مثل ``INVALID POLICY ACTION``) مع "
-"الملف، واسم الخطأ، والقاعدة، والحقل، والقيمة. ونمط ``ja4`` الذي لا يمكن "
-"أن تطابقه أي بصمة يطبع ``INVALID POLICY JA4`` (``InvalidJa4``)؛ ويُرفض "
-"مستند إدارة وحدة التحكم الذي يحوي مثل هذا النمط باسم الخطأ نفسه. تُفحص "
+"البيانات بالصيغة ``[redacted]``. حدّد ``--mode reverse_proxy`` أو "
+"``--mode forward_auth`` مرة واحدة؛ والخيار القصير المكافئ هو ``-m``. يطبع "
+"ملف السياسة المرفوض كتلة عنوانها اسم خطئه (مثل ``INVALID POLICY ACTION``) "
+"مع الملف، واسم الخطأ، والقاعدة، والحقل، والقيمة. ونمط ``ja4`` الذي لا "
+"يمكن أن تطابقه أي بصمة يطبع ``INVALID POLICY JA4`` (``InvalidJa4``)؛ "
+"ويُرفض مستند إدارة وحدة التحكم الذي يحوي مثل هذا النمط بالخطأ نفسه. تُفحص "
 "خيارات وحدة التحكم على حدة: يسمي ``CONSOLE002`` خيار وحدة تحكم مشوهًا أو "
 "مكررًا، ويسمي ``CONSOLE001`` إعداد وحدة تحكم يخالف قاعدة "
 "(``StorageRequired`` بلا تخزين)."
@@ -617,7 +620,7 @@ msgid ""
 "Maps every domain error to a boundary line, an explanation, and a "
 "``Hint:``. In ``crates/core/src/errors.rs`` (crate ``sibuna-core``)."
 msgstr ""
-"يربط كل خطأ مجال بسطر حد، وشرح، و\\ ``Hint:``. في "
+"يربط كل خطأ من أخطاء المجال بسطر عنوان فاصل، وشرح، و\\ ``Hint:``. في "
 "``crates/core/src/errors.rs`` (الحزمة ``sibuna-core``)."
 
 #: ../../reference.rst:146
@@ -634,7 +637,7 @@ msgstr "السبب"
 
 #: ../../reference.rst:152
 msgid "Hint"
-msgstr "التلميح"
+msgstr "تلميح"
 
 #: ../../reference.rst:153
 msgid "``MalformedChallenge``"
@@ -654,7 +657,7 @@ msgstr "``InvalidChallengeTag``"
 
 #: ../../reference.rst:157
 msgid "The tag does not authenticate; not issued by this cluster or edited"
-msgstr "الوسم لا يصادق؛ لم يصدره هذا العنقود أو عُدّل"
+msgstr "الوسم لا يجتاز المصادقة؛ لم يصدره هذا العنقود، أو عُدّل"
 
 #: ../../reference.rst:158
 msgid "Challenges cannot be forged; request a new one"
@@ -666,7 +669,7 @@ msgstr "``ChallengeExpired``"
 
 #: ../../reference.rst:160
 msgid "Older than the challenge TTL, or minted in the future"
-msgstr "أقدم من TTL التحدي، أو صادر في المستقبل"
+msgstr "أقدم من TTL التحدي، أو يحمل وقت إصدار في المستقبل"
 
 #: ../../reference.rst:161
 msgid "Request a new challenge"
@@ -690,7 +693,7 @@ msgstr "``DifficultyNotMet``"
 
 #: ../../reference.rst:166
 msgid "Hashcash nonce lacks the required zero bits"
-msgstr "تنقص قيمة Hashcash المؤقتة البتات الصفرية المطلوبة"
+msgstr "لا تحقق قيمة Hashcash المؤقتة البتات الصفرية المطلوبة"
 
 #: ../../reference.rst:167
 msgid "Keep searching nonces"
@@ -702,11 +705,12 @@ msgstr "``InvalidProof``"
 
 #: ../../reference.rst:169
 msgid "The sequential-work proof does not open the committed labels"
-msgstr "لا يفتح إثبات العمل المتسلسل التسميات الملتزم بها"
+msgstr "لا يفتح إثبات العمل المتسلسل التسميات المُلتزَم بها"
 
 #: ../../reference.rst:170
 msgid "Run the prover to completion for the issued depth and openings"
-msgstr "شغّل المُبرهِن حتى النهاية للعمق والفتحات الصادرة"
+msgstr ""
+"شغّل المُبرهِن حتى النهاية بالعمق وعدد عمليات الفتح المحددين في التحدي"
 
 #: ../../reference.rst:171
 msgid "``WrongSolutionType``"
@@ -726,7 +730,7 @@ msgstr "``DoubleSpendAttempt``"
 
 #: ../../reference.rst:175
 msgid "The challenge was already spent"
-msgstr "استُهلك التحدي من قبل"
+msgstr "أُنفق التحدي من قبل"
 
 #: ../../reference.rst:176
 msgid "Challenges are single use"
@@ -738,7 +742,7 @@ msgstr "``StoreFull``"
 
 #: ../../reference.rst:178
 msgid "The spent set is full"
-msgstr "امتلأت مجموعة المستهلك"
+msgstr "امتلأت مجموعة الحلول المُنفَقة"
 
 #: ../../reference.rst:179
 msgid "Lower the challenge TTL or raise ``--spent-tags``"
@@ -750,7 +754,7 @@ msgstr "``InvalidTokenSignature``"
 
 #: ../../reference.rst:181
 msgid "Cookie tag or signature fails"
-msgstr "فشل وسم ملف تعريف الارتباط أو توقيعه"
+msgstr "فشل التحقق من وسم ملف تعريف الارتباط أو توقيعه"
 
 #: ../../reference.rst:182
 msgid "Re-authenticate through the interstitial"
@@ -879,6 +883,76 @@ msgstr "أكثر من ستين تعديلًا إداريًا في دقيقة و�
 msgid "Policy Schema"
 msgstr "مخطط السياسة"
 
+#: ../../reference.rst:221
+msgid ""
+"{\n"
+"  \"default_action\": \"ALLOW\" | \"DENY\" | \"CHALLENGE\",\n"
+"  \"waf\": true | false,\n"
+"  \"inspection\": { \"path_traversal\" | \"sqli\" | \"xss\" | \"rce\": "
+"\"disabled\" | \"audit\" | \"enforce\" },\n"
+"  \"thresholds\": { \"challenge_at\": int, \"deny_at\": int, "
+"\"bits_step\": int },\n"
+"  \"ip_rules\": { \"<cidr>\": \"ALLOW\" | \"DENY\" | \"CHALLENGE\", ... "
+"},\n"
+"  \"rules\": [                                                    // up "
+"to 128\n"
+"    {\n"
+"      \"name\": \"<kebab-case>\",                                   // 1 "
+"to 128 printable bytes\n"
+"      \"path\" | \"path_regex\": \"<pattern>\",                       // "
+"up to 512 bytes\n"
+"      \"user_agent\" | \"user_agent_regex\": \"<pattern>\",\n"
+"      \"headers\" | \"headers_regex\": { \"<Header>\": \"<pattern>\" }, "
+"// up to 4\n"
+"      \"remote_addresses\" | \"cidrs\": [\"<cidr>\", ...],            // "
+"up to 8, IPv4 or IPv6\n"
+"      \"action\": \"ALLOW\" | \"DENY\" | \"CHALLENGE\" | \"WEIGH\",\n"
+"      \"weight\": int,                                            // "
+"WEIGH only, -1000..1000\n"
+"      \"challenge\": { \"difficulty\": <work bits>, \"algorithm\": "
+"\"hashcash\" | \"posw\" },\n"
+"      \"limits\": { \"rate\": int, \"window_seconds\": int, "
+"\"ban_seconds\": int },\n"
+"      \"ja4\": \"<fingerprint>\" | \"<prefix>*\"                      // "
+"36 bytes, or a prefix and *\n"
+"    }\n"
+"  ]\n"
+"}"
+msgstr ""
+"{\n"
+"  \"default_action\": \"ALLOW\" | \"DENY\" | \"CHALLENGE\",\n"
+"  \"waf\": true | false,\n"
+"  \"inspection\": { \"path_traversal\" | \"sqli\" | \"xss\" | \"rce\": "
+"\"disabled\" | \"audit\" | \"enforce\" },\n"
+"  \"thresholds\": { \"challenge_at\": int, \"deny_at\": int, "
+"\"bits_step\": int },\n"
+"  \"ip_rules\": { \"<cidr>\": \"ALLOW\" | \"DENY\" | \"CHALLENGE\", ... "
+"},\n"
+"  \"rules\": [                                                    // ⁧حتى "
+"128⁩\n"
+"    {\n"
+"      \"name\": \"<kebab-case>\",                                   // "
+"⁧من 1 إلى 128 بايتًا قابلة للطباعة⁩\n"
+"      \"path\" | \"path_regex\": \"<pattern>\",                       // "
+"⁧حتى 512 بايتًا⁩\n"
+"      \"user_agent\" | \"user_agent_regex\": \"<pattern>\",\n"
+"      \"headers\" | \"headers_regex\": { \"<Header>\": \"<pattern>\" }, "
+"// ⁧حتى 4⁩\n"
+"      \"remote_addresses\" | \"cidrs\": [\"<cidr>\", ...],            // "
+"⁧حتى 8، من IPv4 أو IPv6⁩\n"
+"      \"action\": \"ALLOW\" | \"DENY\" | \"CHALLENGE\" | \"WEIGH\",\n"
+"      \"weight\": int,                                            // ⁧لـ "
+"WEIGH فقط، ⁦-1000..1000⁩⁩\n"
+"      \"challenge\": { \"difficulty\": <work bits>, \"algorithm\": "
+"\"hashcash\" | \"posw\" },\n"
+"      \"limits\": { \"rate\": int, \"window_seconds\": int, "
+"\"ban_seconds\": int },\n"
+"      \"ja4\": \"<fingerprint>\" | \"<prefix>*\"                      // "
+"⁧36 بايتًا، أو بادئة يتبعها *⁩\n"
+"    }\n"
+"  ]\n"
+"}"
+
 #: ../../reference.rst:245
 msgid ""
 "``challenge_at`` and ``deny_at`` lie in -1000 to 1000 with ``deny_at`` at "
@@ -897,16 +971,16 @@ msgid ""
 msgstr ""
 "تقع ``challenge_at`` و\\ ``deny_at`` بين -1000 و1000، على أن تكون "
 "``deny_at`` مساوية لـ ``challenge_at`` أو أعلى منها، وتقع ``bits_step`` "
-"بين 1 و1000. لا تنتمي كتلة ``challenge`` إلا إلى قواعد ``CHALLENGE``، مع "
-"1 إلى 64 بت عمل. تمنح ``limits`` القاعدة حصتها الخاصة: ``rate`` من 1 إلى "
-"1,000,000 و\\ ``window_seconds`` من 1 إلى 86,400 مطلوبتان، و\\ "
+"بين 1 و1000. لا تنتمي كتلة ``challenge`` إلا إلى قواعد ``CHALLENGE``، "
+"ببتات عمل من 1 إلى 64. تمنح ``limits`` القاعدة حصتها الخاصة: ``rate`` من "
+"1 إلى 1,000,000 و\\ ``window_seconds`` من 1 إلى 86,400 مطلوبتان، و\\ "
 "``ban_seconds`` (86,400 على الأكثر) اختيارية، ولا يمكن لقواعد ``WEIGH`` "
 "حمل حدود. أما ``ja4`` فهو بصمة JA4 كاملة يجب أن تساويها البصمة، أو بادئة "
 "يتبعها ``*`` يجب أن تبدأ بها البصمة؛ والقيمة ``*`` وحدها تطابق أي بصمة، "
 "والطلب الذي لا يحمل بصمة لا يطابق أي قاعدة ``ja4``. ويُرفض النمط الذي لا "
-"يمكن أن تطابقه أي بصمة مع ``InvalidJa4`` (الجزء التاسع، بصمات JA4 من وكيل "
-"الدخول). تحمل شجرة السمعة في ``ip_rules`` 8,192 عقدة على الأكثر. يمكن لكل "
-"قاعدة استخدام صيغة واحدة لكل معيار."
+"يمكن أن تطابقه أي بصمة بالخطأ ``InvalidJa4`` (الجزء التاسع، بصمات JA4 من "
+"وكيل الدخول). تحمل شجرة السمعة في ``ip_rules`` 8,192 عقدة على الأكثر. "
+"يمكن لكل قاعدة استخدام صيغة واحدة لكل معيار."
 
 #: ../../reference.rst:247
 msgid ""
@@ -919,13 +993,14 @@ msgid ""
 "``%5C`` or ``\\`` matches nothing, and path matching is case-sensitive "
 "(SID 0003)."
 msgstr ""
-"قواعد الأنماط: يطابق ``.*`` أو ``*`` أي شيء؛ ويثبت ``^...$`` مسارًا "
-"تامًا؛ وتمثل ``*`` أو ``/*`` أو ``.*`` في النهاية بادئة؛ والنمط الذي يبدأ "
-"بـ ``/`` مسار تام؛ وأي شيء آخر سلسلة فرعية دون تمييز حالة الأحرف. تطابق "
-"أنماط المسار المسار في صيغته القياسية (شرطة مائلة واحدة بين المقاطع، بلا "
-"مقاطع نقطية، والمحارف غير المحجوزة غير مهربة، والتهريبات الأخرى بأرقام ست "
-"عشرية كبيرة)، لذا لا يطابق النمط الذي يحمل ``;`` أو ``%2F`` أو ``%5C`` أو "
-"``\\`` أي شيء، ومطابقة المسار حساسة لحالة الأحرف (SID 0003)."
+"صياغة الأنماط: يطابق ``.*`` أو ``*`` أي شيء؛ ويقيّد ``^...$`` المطابقة "
+"بمسار تام؛ وتجعل ``*`` أو ``/*`` أو ``.*`` في النهاية النمطَ بادئة؛ "
+"والنمط الذي يبدأ بـ ``/`` مسار تام؛ وأي شيء آخر سلسلة فرعية دون تمييز "
+"حالة الأحرف. تطابق أنماط المسار المسارَ في صيغته المُطبَّعة (شرطة مائلة "
+"واحدة بين المقاطع، بلا مقاطع نقطية، والمحارف غير المحجوزة غير مهرّبة، "
+"وسائر الترميزات المهرّبة بأرقام ست عشرية كبيرة)، لذا لا يطابق النمط الذي "
+"يحمل ``;`` أو ``%2F`` أو ``%5C`` أو ``\\`` أي شيء، ومطابقة المسار حساسة "
+"لحالة الأحرف (SID 0003)."
 
 #: ../../reference.rst:249
 msgid "Storage Tables"
@@ -948,9 +1023,9 @@ msgstr ""
 "للقيمة NULL بطول 37 بايت على الأكثر)، و\\ ``policy_inspection``، و\\ "
 "``ip_reputation``، و\\ ``incident_receipts``، و\\ ``security_incidents`` "
 "(مع التضمين ذي 256 بايت وبصمة ``ja4`` القابلة للقيمة NULL بطول 36 بايت)، "
-"وفهرس النص الكامل (``incidents_fts``، وهو FTS5 على الرموز القياسية في "
-"SQLite؛ والعمود ``search`` من نوع ``tsvector`` مع فهرس GIN في "
-"PostgreSQL)، و\\ ``sibuna_schema``؛ وتضيف وحدة التحكم 33 جدولًا من نوع "
+"وفهرس النص الكامل (``incidents_fts``، وهو FTS5 على الوحدات المعجمية "
+"المُطبَّعة في SQLite؛ والعمود ``search`` من نوع ``tsvector`` مع فهرس GIN "
+"في PostgreSQL)، و\\ ``sibuna_schema``؛ وتضيف وحدة التحكم 33 جدولًا من نوع "
 "``console_*``. تُخزن أسماء الإجراءات والخوارزميات والأوضاع بأحرف صغيرة. "
 "معرفات الحوادث هي ``node_id << 40 | sequence``، فريدة عبر العنقود دون "
 "تنسيق؛ وتمتد معرفات العقد من 1 إلى 8,388,607."
@@ -989,12 +1064,16 @@ msgid ""
 msgstr "برنامج خدمي في الذاكرة بلا تخزين ولا وحدة تحكم، وبلا أي حزمة خارجية"
 
 #: ../../reference.rst:267
-msgid "``cargo build --release -p sibuna --features postgres``"
-msgstr "``cargo build --release -p sibuna --features postgres``"
+msgid "``cargo build --release -p sibuna --features postgres-tls``"
+msgstr "``cargo build --release -p sibuna --features postgres-tls``"
 
 #: ../../reference.rst:268
-msgid "Daemon that also connects to a shared PostgreSQL database"
-msgstr "برنامج خدمي يتصل أيضًا بقاعدة بيانات PostgreSQL مشتركة"
+msgid ""
+"Daemon that also connects to a shared PostgreSQL database, with verified "
+"TLS (the ``postgres`` feature alone connects without TLS)"
+msgstr ""
+"برنامج خدمي يتصل أيضًا بقاعدة بيانات PostgreSQL مشتركة عبر TLS مُتحقَّق "
+"منه (الميزة ``postgres`` وحدها تتصل دون TLS)"
 
 #: ../../reference.rst:269
 msgid "``cargo test``"
@@ -1046,7 +1125,7 @@ msgid ""
 "Release-mode benchmarks; results in "
 "``benchmarks/results/<command>-latest.json``"
 msgstr ""
-"قياسات أداء بنمط الإصدار؛ النتائج في "
+"قياسات أداء في وضع الإصدار (release)؛ والنتائج في "
 "``benchmarks/results/<command>-latest.json``"
 
 #: ../../reference.rst:279
@@ -1094,12 +1173,12 @@ msgstr ""
 "ويُفشل البناء عندما تتجاوز واجهة وحدة التحكم 768 KiB. يسمي "
 "``SIBUNA_POW_WASM`` و\\ ``SIBUNA_CONSOLE_WASM`` وحدات مبنية مسبقًا بدلًا "
 "من ذلك، للبناءات التي لا يتوفر فيها الهدف ``wasm32-unknown-unknown``. "
-"يسمي ``SIBUNA_GEOIP_DATA`` لقطة GeoIP للتضمين؛ تُفك في وقت البناء، "
+"يسمي ``SIBUNA_GEOIP_DATA`` لقطة GeoIP للتضمين؛ ويُفك ترميزها وقت البناء، "
 "ويرفضها البناء الذي لا يضم وحدة التحكم (``GEOIP001``)."
 
 #: ../../reference.rst:288
 msgid "Exercise 10.1"
-msgstr "التمرين 10.1"
+msgstr "تمرين 10.1"
 
 #: ../../reference.rst:290
 msgid ""
@@ -1108,14 +1187,14 @@ msgid ""
 "the token and challenge formats, and propose the smallest change to the "
 "interstitial that recovers gracefully."
 msgstr ""
-"يتلقى عميل الحالة ``400`` بالعنوان ``CLIENT FINGERPRINT MISMATCH`` بعد "
+"يتلقى عميل الحالة ``400`` وعنوانها ``CLIENT FINGERPRINT MISMATCH`` بعد "
 "انتقاله من Wi-Fi إلى الشبكة الخلوية في منتصف الحل. اشرح السبب انطلاقًا من "
 "تنسيقي الرمز والتحدي، واقترح أصغر تغيير في الصفحة الوسيطة يسمح بالتعافي "
 "السلس."
 
 #: ../../reference.rst:292
 msgid "Explain the invariant"
-msgstr "اشرح الثابت"
+msgstr "اشرح اللامتغير"
 
 #: ../../reference.rst:294
 msgid ""

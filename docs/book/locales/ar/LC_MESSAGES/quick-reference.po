@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 07:43+0000\n"
+"POT-Creation-Date: 2026-10-16 10:45+0000\n"
 "PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,20 +29,101 @@ msgid ""
 "types."
 msgstr ""
 "أبقِ هذه البطاقة بجانب الطرفية: البناء، والتشغيل، والإعداد، والتوجيه، "
-"والمراقبة، والتشخيص. يحتوي الجزء العاشر الجداول الكاملة، وتحتوي هذه "
-"البطاقة ما يكتبه المشغل."
+"والمراقبة، والتشخيص. يضم الجزء العاشر الجداول الكاملة، وتضم هذه البطاقة "
+"ما يكتبه المشغل."
 
 #: ../../quick-reference.rst:6
 msgid "Build"
 msgstr "البناء"
 
+#: ../../quick-reference.rst:9
+msgid ""
+"cargo build --release -p sibuna                          # daemon + "
+"SQLite + console\n"
+"cargo build --release -p sibuna --no-default-features    # in-memory, no "
+"external crate\n"
+"cargo build --release -p sibuna --features postgres-tls  # shared "
+"PostgreSQL clusters\n"
+"rustup target add wasm32-unknown-unknown   # or set SIBUNA_POW_WASM / "
+"SIBUNA_CONSOLE_WASM\n"
+"cargo test            # unit, live daemon, storage and console tests\n"
+"cargo clippy --all-targets && cargo fmt --check\n"
+"cargo xtask check     # 70-line / 1,408-line / 99-column gate\n"
+"cargo xtask browser   # headless Chromium checks\n"
+"cargo xtask bench product   # whole products under wrk -> "
+"benchmarks/results/\n"
+"guidedog build        # this book (guidedog dsc: the SID records)"
+msgstr ""
+"cargo build --release -p sibuna                          # ⁧البرنامج "
+"الخدمي + SQLite + وحدة التحكم⁩\n"
+"cargo build --release -p sibuna --no-default-features    # ⁧في الذاكرة، "
+"بلا أي حزمة خارجية⁩\n"
+"cargo build --release -p sibuna --features postgres-tls  # ⁧عناقيد "
+"PostgreSQL المشتركة⁩\n"
+"rustup target add wasm32-unknown-unknown   # ⁧أو اضبط SIBUNA_POW_WASM / "
+"SIBUNA_CONSOLE_WASM⁩\n"
+"cargo test            # ⁧اختبارات الوحدات والبرنامج الخدمي الحي والتخزين "
+"ووحدة التحكم⁩\n"
+"cargo clippy --all-targets && cargo fmt --check\n"
+"cargo xtask check     # ⁧فحص حدود 70 سطرًا / 1,408 سطرًا / 99 عمودًا⁩\n"
+"cargo xtask browser   # ⁧فحوص Chromium بلا واجهة⁩\n"
+"cargo xtask bench product   # ⁧المنتجات كاملة تحت wrk -> "
+"benchmarks/results/⁩\n"
+"guidedog build        # ⁧هذا الكتاب (guidedog dsc: سجلات SID)⁩"
+
 #: ../../quick-reference.rst:22
 msgid "Run"
 msgstr "التشغيل"
 
+#: ../../quick-reference.rst:25
+msgid ""
+"# Shield (default): PoW + WAF, proxy to :3000\n"
+"sibuna -p 8080 -u 3000 -s /etc/sibuna/secret\n"
+"# Gate: PoW only\n"
+"sibuna --gate -p 8080 -u 3000 -s /etc/sibuna/secret\n"
+"# Forward auth behind Nginx/Caddy (trusts X-Forwarded-For)\n"
+"sibuna -m forward_auth --host 127.0.0.1 -p 8080 -s /etc/sibuna/secret\n"
+"# Edge: persistent policies, reputation, forensics in <dir>/sibuna.db\n"
+"sibuna -D /var/lib/sibuna -s /etc/sibuna/secret\n"
+"# JA4 from a trusted ingress (Cloudflare's header; nginx module: x-ja4; "
+"ATS: ja4)\n"
+"sibuna --ja4-header cf-ja4 --trust-forwarded -p 8080 -u 3000 -s "
+"/etc/sibuna/secret\n"
+"# Cluster member: shared PostgreSQL, unique node id\n"
+"sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 -s "
+"/etc/sibuna/secret\n"
+"head -c 32 /dev/urandom | xxd -p -c 64 > /etc/sibuna/secret"
+msgstr ""
+"# ⁧Shield (الافتراضي): PoW + WAF، مع التمرير إلى المنفذ 3000⁩\n"
+"sibuna -p 8080 -u 3000 -s /etc/sibuna/secret\n"
+"# ⁧Gate: إثبات العمل فقط⁩\n"
+"sibuna --gate -p 8080 -u 3000 -s /etc/sibuna/secret\n"
+"# ⁧forward auth خلف Nginx/Caddy (يثق بـ X-Forwarded-For)⁩\n"
+"sibuna -m forward_auth --host 127.0.0.1 -p 8080 -s /etc/sibuna/secret\n"
+"# ⁧Edge: سياسات دائمة وسمعة وأدلة جنائية في ⁦<dir>/sibuna.db⁩⁩\n"
+"sibuna -D /var/lib/sibuna -s /etc/sibuna/secret\n"
+"# ⁧JA4 من وكيل دخول موثوق (ترويسة Cloudflare؛ وحدة nginx: x-ja4؛ ATS: "
+"ja4)⁩\n"
+"sibuna --ja4-header cf-ja4 --trust-forwarded -p 8080 -u 3000 -s "
+"/etc/sibuna/secret\n"
+"# ⁧عضو في عنقود: PostgreSQL مشتركة ومعرّف عقدة فريد⁩\n"
+"sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 -s "
+"/etc/sibuna/secret\n"
+"head -c 32 /dev/urandom | xxd -p -c 64 > /etc/sibuna/secret"
+
 #: ../../quick-reference.rst:41
 msgid "Console (opt-in preview)"
-msgstr "وحدة التحكم (معاينة اختيارية)"
+msgstr "وحدة التحكم (معاينة تُفعَّل اختياريًا)"
+
+#: ../../quick-reference.rst:44
+msgid ""
+"# Initialize while the daemon is stopped, then start the console\n"
+"sibuna init-admin admin --data-dir ./data\n"
+"sibuna --data-dir ./data --console 127.0.0.1:19446"
+msgstr ""
+"# ⁧هيّئ والبرنامج الخدمي متوقف، ثم شغّل وحدة التحكم⁩\n"
+"sibuna init-admin admin --data-dir ./data\n"
+"sibuna --data-dir ./data --console 127.0.0.1:19446"
 
 #: ../../quick-reference.rst:50
 msgid ""
@@ -55,11 +136,10 @@ msgid ""
 msgstr ""
 "افتح ``http://127.0.0.1:19446/console/`` واستبدل كلمة المرور المؤقتة. أضف "
 "``--console-location 1.3521,103.8198`` لوضع العقدة على الكرة الأرضية. "
-"يتطلب الوصول البعيد وكيل HTTPS، وأصلًا صريحًا، ونطاقات CIDR للوكلاء "
-"الموثوقين؛ اتبع الجزء التاسع. حالة SID 0007 هي Committed. تجتاز وحدة "
-"التحكم مسارات عملها في المتصفح على Chromium بلا واجهة (SID 0010، المعيار "
-"5)؛ أما بوابة عزل الأداء الرسمية الخاصة بها فلا تزال مفتوحة (الجزء "
-"الثامن)."
+"يتطلب الوصول البعيد وكيل HTTPS، ومصدرًا (origin) صريحًا، ونطاقات CIDR "
+"للوكلاء الموثوقين؛ اتبع الجزء التاسع. حالة SID 0007 هي Committed. تجتاز "
+"وحدة التحكم مسارات عملها في المتصفح على Chromium بلا واجهة (SID 0010، "
+"المعيار 5)؛ أما شرطها الرسمي لعزل الأداء فلم يُحسم بعد (الجزء الثامن)."
 
 #: ../../quick-reference.rst:52
 msgid "Flags That Matter First"
@@ -107,7 +187,7 @@ msgstr "``--posw-challenges``"
 
 #: ../../quick-reference.rst:70
 msgid "openings per proof"
-msgstr "عدد الفتحات لكل إثبات"
+msgstr "عدد عمليات الفتح لكل إثبات"
 
 #: ../../quick-reference.rst:71
 msgid "``--token-ttl``"
@@ -119,7 +199,7 @@ msgstr "86400"
 
 #: ../../quick-reference.rst:73
 msgid "session seconds"
-msgstr "ثواني الجلسة"
+msgstr "مدة الجلسة بالثواني"
 
 #: ../../quick-reference.rst:74
 msgid "``--challenge-ttl``"
@@ -131,7 +211,7 @@ msgstr "300"
 
 #: ../../quick-reference.rst:76
 msgid "challenge seconds"
-msgstr "ثواني التحدي"
+msgstr "مدة التحدي بالثواني"
 
 #: ../../quick-reference.rst:77
 msgid "``--token-scheme``"
@@ -175,11 +255,11 @@ msgstr "``-w, --workers``"
 
 #: ../../quick-reference.rst:87
 msgid "CPUs"
-msgstr "عدد المعالجات"
+msgstr "عدد وحدات CPU"
 
 #: ../../quick-reference.rst:88
 msgid "accept threads"
-msgstr "خيوط القبول"
+msgstr "خيوط قبول الاتصالات"
 
 #: ../../quick-reference.rst:89
 msgid "``--max-connections``"
@@ -215,7 +295,7 @@ msgstr "1"
 
 #: ../../quick-reference.rst:97
 msgid "client = n-th ``X-Forwarded-For`` entry from the right"
-msgstr "العميل = المدخل رقم n في ``X-Forwarded-For`` من اليمين"
+msgstr "العميل = العنصر رقم n في ``X-Forwarded-For`` من اليمين"
 
 #: ../../quick-reference.rst:98
 msgid "``--ja4-header``"
@@ -228,7 +308,9 @@ msgstr "معطل"
 
 #: ../../quick-reference.rst:100
 msgid "header with the ingress's JA4 fingerprint; read only when trusted"
-msgstr "ترويسة تحمل بصمة JA4 من وكيل الدخول؛ لا تُقرأ إلا عند الثقة"
+msgstr ""
+"ترويسة تحمل بصمة JA4 من وكيل الدخول؛ ولا تُقرأ إلا عند الوثوق بالترويسات "
+"الممررة"
 
 #: ../../quick-reference.rst:101
 msgid "``--idle-timeout``"
@@ -240,7 +322,7 @@ msgstr "15"
 
 #: ../../quick-reference.rst:103
 msgid "reaper seconds"
-msgstr "ثواني جامع الاتصالات الخاملة"
+msgstr "مهلة جامع الاتصالات الخاملة بالثواني"
 
 #: ../../quick-reference.rst:104
 msgid "``-P, --policy-file``"
@@ -248,7 +330,7 @@ msgstr "``-P, --policy-file``"
 
 #: ../../quick-reference.rst:105
 msgid "none"
-msgstr "لا يوجد"
+msgstr "لا شيء"
 
 #: ../../quick-reference.rst:106
 msgid "JSON policy"
@@ -260,7 +342,7 @@ msgstr "``--trust-forwarded``"
 
 #: ../../quick-reference.rst:109
 msgid "on in forward auth"
-msgstr "مفعل في Forward auth"
+msgstr "مفعّل في وضع forward auth"
 
 #: ../../quick-reference.rst:110
 msgid "``--secure-cookie``"
@@ -280,7 +362,7 @@ msgstr "المسار"
 
 #: ../../quick-reference.rst:122
 msgid "Answer"
-msgstr "الاستجابة"
+msgstr "الرد"
 
 #: ../../quick-reference.rst:123
 msgid "``challenge``"
@@ -374,7 +456,7 @@ msgstr "200"
 
 #: ../../quick-reference.rst:152
 msgid "admitted (forward auth), interstitial, internal routes"
-msgstr "مقبول (Forward auth)، الصفحة الوسيطة، المسارات الداخلية"
+msgstr "مقبول (forward auth)، والصفحة الوسيطة، والمسارات الداخلية"
 
 #: ../../quick-reference.rst:153
 msgid "400"
@@ -382,7 +464,7 @@ msgstr "400"
 
 #: ../../quick-reference.rst:154
 msgid "malformed request or target, rejected solution (diagnostic body)"
-msgstr "طلب أو هدف مشوه، حل مرفوض (جسم تشخيصي)"
+msgstr "طلب أو هدف (target) مشوّه، أو حل مرفوض (مع جسم تشخيصي)"
 
 #: ../../quick-reference.rst:155
 msgid "401"
@@ -390,7 +472,7 @@ msgstr "401"
 
 #: ../../quick-reference.rst:156
 msgid "challenge required: non-HTML client or forward auth"
-msgstr "التحدي مطلوب: عميل غير HTML أو Forward auth"
+msgstr "مطلوب تحدٍّ: عميل لا يقبل HTML، أو وضع forward auth"
 
 #: ../../quick-reference.rst:157
 msgid "403"
@@ -398,7 +480,7 @@ msgstr "403"
 
 #: ../../quick-reference.rst:158
 msgid "policy or WAF denial, ban, honeypot"
-msgstr "رفض بالسياسة أو WAF، حظر، المصيدة"
+msgstr "رفض من السياسة أو WAF، أو حظر، أو المصيدة"
 
 #: ../../quick-reference.rst:159
 msgid "404"
@@ -406,7 +488,7 @@ msgstr "404"
 
 #: ../../quick-reference.rst:160
 msgid "unknown ``/__sibuna/`` route, refused honeypot hit"
-msgstr "مسار ``/__sibuna/`` غير معروف، إصابة مصيدة مرفوضة"
+msgstr "مسار ``/__sibuna/`` غير معروف، أو طلب مصيدة مرفوض"
 
 #: ../../quick-reference.rst:161
 msgid "413"
@@ -414,7 +496,7 @@ msgstr "413"
 
 #: ../../quick-reference.rst:162
 msgid "solution body over the 64 KB buffer"
-msgstr "جسم الحل أكبر من المخزن المؤقت ذي 64 KB"
+msgstr "جسم الحل أكبر من المخزن المؤقت البالغ 64 KB"
 
 #: ../../quick-reference.rst:163
 msgid "414"
@@ -422,7 +504,7 @@ msgstr "414"
 
 #: ../../quick-reference.rst:164
 msgid "reported challenge URL over 8 KiB"
-msgstr "عنوان URL للتحدي المبلغ عنه أطول من 8 KiB"
+msgstr "عنوان URL المُبلَّغ عنه للتحدي أطول من 8 KiB"
 
 #: ../../quick-reference.rst:165
 msgid "417"
@@ -430,7 +512,7 @@ msgstr "417"
 
 #: ../../quick-reference.rst:166
 msgid "unsupported request expectation"
-msgstr "توقع طلب غير مدعوم"
+msgstr "توقُّع (Expect) غير مدعوم في الطلب"
 
 #: ../../quick-reference.rst:167
 msgid "429"
@@ -438,7 +520,7 @@ msgstr "429"
 
 #: ../../quick-reference.rst:168
 msgid "GCRA limit, ``Retry-After`` seconds"
-msgstr "حد GCRA، ثواني ``Retry-After``"
+msgstr "حد GCRA، مع ``Retry-After`` بالثواني"
 
 #: ../../quick-reference.rst:169
 msgid "431"
@@ -470,7 +552,7 @@ msgstr "503"
 
 #: ../../quick-reference.rst:176
 msgid "connection limits reached, or node draining"
-msgstr "بلوغ حدود الاتصالات، أو العقدة في حالة تصريف"
+msgstr "بلوغ حدود الاتصالات، أو العقدة قيد التصريف"
 
 #: ../../quick-reference.rst:178
 msgid "Headers"
@@ -483,9 +565,9 @@ msgid ""
 "client), ``X-Sibuna-Status: PASS``, ``X-Sibuna-Rule: <rule>``; hop-by-hop "
 "and alternative forwarding fields dropped, underscore spellings too."
 msgstr ""
-"*إلى الخادم الخلفي (الوكيل)*: ``X-Forwarded-For`` (نظير المقبس، بعد "
+"*نحو الخادم الأصلي (الوكيل)*: ``X-Forwarded-For`` (نظير المقبس، بعد "
 "السلسلة المستلمة عندما تكون موثوقة)، و\\ ``X-Forwarded-Proto``، و\\ "
-"``X-Real-IP`` (العميل الذي صدر الحكم عليه)، و\\ ``X-Sibuna-Status: "
+"``X-Real-IP`` (العميل الذي بُني عليه القرار)، و\\ ``X-Sibuna-Status: "
 "PASS``، و\\ ``X-Sibuna-Rule: <rule>``؛ وتُحذف ترويسات hop-by-hop وحقول "
 "التمرير البديلة، وكذلك صيغها المكتوبة بشرطة سفلية."
 
@@ -494,7 +576,7 @@ msgid ""
 "*Forward-auth reply*: ``X-Sibuna-Status``, ``X-Sibuna-Rule``, "
 "``X-Sibuna-Rule-Hash``."
 msgstr ""
-"*رد Forward auth*: ``X-Sibuna-Status``، و\\ ``X-Sibuna-Rule``، و\\ "
+"*رد forward auth*: ``X-Sibuna-Status``، و\\ ``X-Sibuna-Rule``، و\\ "
 "``X-Sibuna-Rule-Hash``."
 
 #: ../../quick-reference.rst:183
@@ -513,6 +595,48 @@ msgstr ""
 msgid "Policy File Skeleton"
 msgstr "هيكل ملف السياسة"
 
+#: ../../quick-reference.rst:189
+msgid ""
+"{ \"default_action\": \"CHALLENGE\", \"waf\": true,\n"
+"  \"thresholds\": {\"challenge_at\": 10, \"deny_at\": 40, \"bits_step\": "
+"5},\n"
+"  \"ip_rules\": {\"10.0.0.0/8\": \"ALLOW\", \"2001:db8::/32\": "
+"\"DENY\"},\n"
+"  \"rules\": [\n"
+"    {\"name\": \"api\", \"path\": \"/api/*\", \"headers\": "
+"{\"X-Api-Key\": \".*\"}, \"action\": \"ALLOW\"},\n"
+"    {\"name\": \"checkout\", \"path\": \"/checkout/*\", \"action\": "
+"\"CHALLENGE\",\n"
+"     \"challenge\": {\"difficulty\": 20, \"algorithm\": \"posw\"}},\n"
+"    {\"name\": \"login\", \"path\": \"^/login$\", \"action\": "
+"\"CHALLENGE\",\n"
+"     \"limits\": {\"rate\": 10, \"window_seconds\": 60, \"ban_seconds\": "
+"600}},\n"
+"    {\"name\": \"old-tls\", \"ja4\": \"t12*\", \"action\": "
+"\"CHALLENGE\"},\n"
+"    {\"name\": \"headless\", \"user_agent\": \"Headless\", \"action\": "
+"\"WEIGH\", \"weight\": 30} ] }"
+msgstr ""
+"{ \"default_action\": \"CHALLENGE\", \"waf\": true,\n"
+"  \"thresholds\": {\"challenge_at\": 10, \"deny_at\": 40, \"bits_step\": "
+"5},\n"
+"  \"ip_rules\": {\"10.0.0.0/8\": \"ALLOW\", \"2001:db8::/32\": "
+"\"DENY\"},\n"
+"  \"rules\": [\n"
+"    {\"name\": \"api\", \"path\": \"/api/*\", \"headers\": "
+"{\"X-Api-Key\": \".*\"}, \"action\": \"ALLOW\"},\n"
+"    {\"name\": \"checkout\", \"path\": \"/checkout/*\", \"action\": "
+"\"CHALLENGE\",\n"
+"     \"challenge\": {\"difficulty\": 20, \"algorithm\": \"posw\"}},\n"
+"    {\"name\": \"login\", \"path\": \"^/login$\", \"action\": "
+"\"CHALLENGE\",\n"
+"     \"limits\": {\"rate\": 10, \"window_seconds\": 60, \"ban_seconds\": "
+"600}},\n"
+"    {\"name\": \"old-tls\", \"ja4\": \"t12*\", \"action\": "
+"\"CHALLENGE\"},\n"
+"    {\"name\": \"headless\", \"user_agent\": \"Headless\", \"action\": "
+"\"WEIGH\", \"weight\": 30} ] }"
+
 #: ../../quick-reference.rst:203
 msgid ""
 "JA4: a whole fingerprint, or a prefix and ``*``; no fingerprint, no "
@@ -524,27 +648,60 @@ msgstr ""
 "JA4: بصمة كاملة، أو بادئة مع ``*``؛ لا بصمة، لا مطابقة. الأنماط: ``*`` أو "
 "``.*`` لأي قيمة؛ ``^...$`` للتطابق التام؛ ``*`` في النهاية لبادئة؛ ``/`` "
 "في البداية لمسار تام؛ وإلا فسلسلة فرعية دون تمييز حالة الأحرف. تُطابق "
-"المسارات في صيغتها القياسية. الترتيب: WAF -> رفض/سماح الشجرة -> القواعد "
+"المسارات في صيغتها المُطبَّعة. الترتيب: WAF -> رفض/سماح الشجرة -> القواعد "
 "-> الدرجة -> التجاوز -> تحدي الشجرة -> الروبوتات -> الافتراضي."
 
 #: ../../quick-reference.rst:205
 msgid "Storage (Edge) in SQL"
 msgstr "التخزين (Edge) بلغة SQL"
 
+#: ../../quick-reference.rst:208
+msgid ""
+"INSERT INTO policies (id, name, priority, path_pattern, action, "
+"difficulty, algorithm,\n"
+"  header_matchers, cidr_matchers, weight, enabled, created_at, "
+"updated_at)\n"
+"  VALUES ('p1', 'protect', 10, '/checkout/*', 'challenge', 20, 'posw', "
+"'{}', '[]', 0, 1,\n"
+"  unixepoch(), unixepoch());\n"
+"INSERT INTO ip_reputation (ip_or_cidr, reputation_score, banned_until, "
+"trigger_rule, hits, last_seen)\n"
+"  VALUES ('198.51.100.7', -100, unixepoch() + 86400, 'analyst', 1, "
+"unixepoch());\n"
+"SELECT s.client_ip, s.violation_category, s.path, s.campaign_id\n"
+"  FROM incidents_fts f JOIN security_incidents s ON s.id = f.rowid\n"
+"  WHERE incidents_fts MATCH 'union' ORDER BY rank LIMIT 20;"
+msgstr ""
+"INSERT INTO policies (id, name, priority, path_pattern, action, "
+"difficulty, algorithm,\n"
+"  header_matchers, cidr_matchers, weight, enabled, created_at, "
+"updated_at)\n"
+"  VALUES ('p1', 'protect', 10, '/checkout/*', 'challenge', 20, 'posw', "
+"'{}', '[]', 0, 1,\n"
+"  unixepoch(), unixepoch());\n"
+"INSERT INTO ip_reputation (ip_or_cidr, reputation_score, banned_until, "
+"trigger_rule, hits, last_seen)\n"
+"  VALUES ('198.51.100.7', -100, unixepoch() + 86400, 'analyst', 1, "
+"unixepoch());\n"
+"SELECT s.client_ip, s.violation_category, s.path, s.campaign_id\n"
+"  FROM incidents_fts f JOIN security_incidents s ON s.id = f.rowid\n"
+"  WHERE incidents_fts MATCH 'union' ORDER BY rank LIMIT 20;"
+
 #: ../../quick-reference.rst:220
 msgid ""
 "SQLite (``sqlite3 <dir>/sibuna.db``); actions are lowercase. Score "
 ":math:`\\le -50` -> deny prefix; :math:`\\ge 50` -> allow. Cluster: same "
-"secret on every node, one PostgreSQL database, ``--features postgres``, "
-"``--database-url-file <file> --cluster-node N`` with a unique N from 1 to "
-"8,388,607; no member list, leader or cluster TLS (SID 0011)."
+"secret on every node, one PostgreSQL database, ``--features "
+"postgres-tls``, ``--database-url-file <file> --cluster-node N`` with a "
+"unique N from 1 to 8,388,607; no member list, leader or cluster TLS (SID "
+"0011)."
 msgstr ""
 "SQLite (``sqlite3 <dir>/sibuna.db``)؛ تُكتب الإجراءات بأحرف صغيرة. الدرجة "
 ":math:`\\le -50` -> بادئة رفض؛ و\\ :math:`\\ge 50` -> سماح. العنقود: السر "
 "نفسه على كل عقدة، وقاعدة بيانات PostgreSQL واحدة، و\\ ``--features "
-"postgres``، و\\ ``--database-url-file <file> --cluster-node N`` مع قيمة N "
-"فريدة من 1 إلى 8,388,607؛ بلا قائمة أعضاء، ولا قائد، ولا TLS للعنقود (SID "
-"0011)."
+"postgres-tls``، و\\ ``--database-url-file <file> --cluster-node N`` مع "
+"قيمة N فريدة من 1 إلى 8,388,607؛ بلا قائمة أعضاء، ولا قائد، ولا TLS "
+"للعنقود (SID 0011)."
 
 #: ../../quick-reference.rst:222
 msgid "Diagnostics"
@@ -592,7 +749,7 @@ msgstr "``DIFFICULTY NOT MET``"
 
 #: ../../quick-reference.rst:240
 msgid "nonce lacks zero bits"
-msgstr "تنقص القيمة المؤقتة بتات صفرية"
+msgstr "لا تحقق القيمة المؤقتة عدد البتات الصفرية المطلوب"
 
 #: ../../quick-reference.rst:241
 msgid "``INVALID PROOF OF SEQUENTIAL WORK``"
@@ -600,7 +757,7 @@ msgstr "``INVALID PROOF OF SEQUENTIAL WORK``"
 
 #: ../../quick-reference.rst:242
 msgid "openings do not reach the root"
-msgstr "لا تصل الفتحات إلى الجذر"
+msgstr "لا تصل عمليات الفتح إلى الجذر"
 
 #: ../../quick-reference.rst:243
 msgid "``WRONG SOLUTION TYPE``"
@@ -624,7 +781,7 @@ msgstr "``STORE FULL``"
 
 #: ../../quick-reference.rst:248
 msgid "spent set saturated; lower TTL or raise ``--spent-tags``"
-msgstr "امتلأت مجموعة المستهلك؛ اخفض TTL أو ارفع ``--spent-tags``"
+msgstr "امتلأت مجموعة الحلول المُنفَقة؛ اخفض TTL أو ارفع ``--spent-tags``"
 
 #: ../../quick-reference.rst:249
 msgid "``NETWORK BINDING MISMATCH``"
@@ -640,7 +797,7 @@ msgstr "``INVALID COMMAND LINE``"
 
 #: ../../quick-reference.rst:252
 msgid "unknown option, bad value, or a removed Zaxonlite option"
-msgstr "خيار غير معروف، أو قيمة خاطئة، أو خيار Zaxonlite مُزال"
+msgstr "خيار غير معروف، أو قيمة خاطئة، أو خيار من خيارات Zaxonlite المُزالة"
 
 #: ../../quick-reference.rst:254
 msgid ""
@@ -648,14 +805,14 @@ msgid ""
 "``upstream_errors``, ``incidents_dropped``, ``incident_write_failures``, "
 "``bans_refused``, ``forwarded_invalid`` (all ``sibuna_*_total``)."
 msgstr ""
-"المقاييس التي تستحق التنبيه: ``denied``، و\\ ``rate_limited``، و\\ "
+"المقاييس التي ينبغي التنبيه عليها: ``denied``، و\\ ``rate_limited``، و\\ "
 "``overloaded``، و\\ ``upstream_errors``، و\\ ``incidents_dropped``، و\\ "
 "``incident_write_failures``، و\\ ``bans_refused``، و\\ "
 "``forwarded_invalid`` (كلها بصيغة ``sibuna_*_total``)."
 
 #: ../../quick-reference.rst:256
 msgid "Numbers to Remember"
-msgstr "أرقام يجب تذكرها"
+msgstr "أرقام جديرة بالحفظ"
 
 #: ../../quick-reference.rst:259
 msgid ""
@@ -672,12 +829,12 @@ msgstr ""
 "معرف التحدي 70 محرفًا (حمولة 36 بايت + وسم 16 بايت)؛ الرمز 75 محرفًا (40 "
 "+ 16)، و139 مع Ed25519؛ بايتات الإثبات :math:`32(1 + t(n+1))`؛ عمق PoSW = "
 "البتات - 3، ضمن المدى 4 إلى 24؛ مخزن الطلب المؤقت 64 KB؛ حد الرأس 16 KB؛ "
-"الجزء المفحوص من الجسم 8 KB؛ مجموعة المستهلك 1,048,576 وسمًا "
+"الجزء المفحوص من الجسم 8 KB؛ مجموعة الحلول المُنفَقة 1,048,576 وسمًا "
 "(``--spent-tags``)؛ خلايا المعدل 262,144 لكل جدول "
 "(``--rate-table-cells``)؛ الحظر 65,536 موضعًا (``--ban-table-slots``)؛ 64 "
 "اتصالًا لكل عنوان عميل؛ حلقة الحوادث 512؛ الدفعة 32؛ مسافة الحملة 0.35 "
-"على أحدث 16,384 تضمينًا؛ keep-alive حتى 4,096 طلبًا لكل اتصال؛ مجمع "
-"الخادم الأصلي 256 مقبسًا؛ طابور مهام التخزين 32."
+"على أحدث 16,384 تضمينًا؛ keep-alive حتى 4,096 طلبًا لكل اتصال؛ مجمّع "
+"اتصالات الخادم الأصلي 256 مقبسًا؛ طابور مهام التخزين 32."
 
 #: ../../quick-reference.rst:261
 msgid "Ingress Routing"
@@ -692,10 +849,10 @@ msgid ""
 "challenge, 429 and unavailable-auth handling."
 msgstr ""
 "استخدم وصفة Nginx أو Caddy في الجزء التاسع، Forward Auth خلف وكيل دخول. "
-"وجّه ``/__sibuna/*`` مباشرة؛ واعتمد طلبات التطبيق بعنوان URI الأصلي، "
-"والطريقة، وعنوان العميل الموثوق. استبدل ترويسات تدقيق Sibuna الواردة "
-"بنتيجة التفويض. يحتاج Nginx إلى معالجة صريحة للتحدي، وللحالة 429، ولتعذر "
-"خدمة المصادقة."
+"وجّه ``/__sibuna/*`` مباشرة؛ وقرّر الإذن لطلبات التطبيق بناءً على عنوان "
+"URI الأصلي، والطريقة، وعنوان العميل الموثوق. استبدل ترويسات تدقيق Sibuna "
+"الواردة بنتيجة التفويض. يحتاج Nginx إلى معالجة صريحة للتحدي، وللحالة 429، "
+"ولتعذر خدمة المصادقة."
 
 #: ../../quick-reference.rst:266
 msgid ""
@@ -706,9 +863,9 @@ msgid ""
 "use Content-Length or chunked coding; inspection sees at most an 8 KiB "
 "prefix, with file bytes opaque."
 msgstr ""
-"ينقل ``reverse_proxy`` أجسام HTTP/1.1 المقبولة وWebSockets؛ أما "
-"``forward_auth`` فيمنح الدخول وينقلها وكيل الدخول. لا يستطيع Sibuna فحص "
-"أجسام المصادقة المحذوفة ولا استجابات الخادم الأصلي ولا عدها. ينتهي TLS "
-"عند وكيل الدخول؛ ودعم HTTP/2 الأصلي مؤجل. تستخدم عمليات الرفع "
-"Content-Length أو الترميز المجزأ (chunked)؛ ولا يرى الفحص إلا بادئة 8 KiB "
-"على الأكثر، وتبقى بايتات الملفات معتمة."
+"ينقل ``reverse_proxy`` أجسام HTTP/1.1 المقبولة واتصالات WebSocket؛ أما "
+"``forward_auth`` فيمنح القبول وينقلها وكيل الدخول. ولا يستطيع Sibuna فحص "
+"الأجسام التي لا تصله في طلب المصادقة، ولا استجابات الخادم الأصلي، ولا "
+"عدّها. ينتهي TLS عند وكيل الدخول؛ ودعم HTTP/2 الأصلي مؤجل. تستخدم عمليات "
+"الرفع Content-Length أو الترميز المجزأ (chunked)؛ ولا يرى الفحص إلا بادئة "
+"8 KiB على الأكثر، ولا تُفسَّر بايتات الملفات."

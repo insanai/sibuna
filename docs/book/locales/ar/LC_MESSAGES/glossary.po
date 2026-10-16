@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 07:43+0000\n"
+"POT-Creation-Date: 2026-10-16 10:45+0000\n"
 "PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,7 +24,7 @@ msgstr "مسرد المصطلحات"
 
 #: ../../glossary.rst:6
 msgid "Admission"
-msgstr "الدخول (Admission)"
+msgstr "القبول (Admission)"
 
 #: ../../glossary.rst:7
 msgid ""
@@ -60,8 +60,8 @@ msgid ""
 "the honeypot and by reputation shared across a cluster, read on every "
 "request."
 msgstr ""
-"4,096 موضعًا بلا قفل لعناوين العملاء المحظورين مع وقت انتهاء الحظر. تكتب "
-"فيه المصيدة والسمعة المشتركة عبر العنقود، ويُقرأ في كل طلب."
+"4,096 موضعًا بلا أقفال لعناوين العملاء المحظورين مع وقت انتهاء الحظر. "
+"تكتب فيه المصيدةُ والسمعةُ المشتركة عبر العنقود، ويُقرأ في كل طلب."
 
 #: ../../glossary.rst:15
 msgid "Campaign"
@@ -73,7 +73,7 @@ msgid ""
 "cosine distance 0.35 of one another; a heuristic grouping, not a proof of "
 "common origin."
 msgstr ""
-"مجموعة من الحوادث الأمنية تقع تضمينات حمولاتها ضمن مسافة جيب تمام 0.35 "
+"مجموعة من الحوادث الأمنية تقع تضمينات حمولاتها ضمن مسافة جيب التمام 0.35 "
 "بعضها من بعض؛ وهي تجميع استدلالي، لا برهان على مصدر مشترك."
 
 #: ../../glossary.rst:18
@@ -88,8 +88,9 @@ msgid ""
 "nothing on the server."
 msgstr ""
 "معرّف عديم الحالة من 70 محرفًا يجب أن يحله العميل: الإصدار، والخوارزمية، "
-"والصعوبة، والفتحات، ووقت الإصدار، وبصمة العميل، وقيمة PRF مؤقتة، وتجزئة "
-"القاعدة، ووسم BLAKE3 ذو مفتاح من 16 بايت. لا يكتب إصداره شيئًا على الخادم."
+"والصعوبة، وعدد عمليات الفتح، ووقت الإصدار، وبصمة العميل، وقيمة PRF مؤقتة، "
+"وتجزئة القاعدة، ووسم BLAKE3 ذو مفتاح من 16 بايت. لا يكتب إصداره شيئًا على "
+"الخادم."
 
 #: ../../glossary.rst:21
 msgid "Difficulty, work bits"
@@ -145,7 +146,7 @@ msgid ""
 "tokens so neither can be replayed from another client."
 msgstr ""
 "تجزئة ذات مفتاح لعنوان العميل وUser-Agent، تُربط في التحديات والرموز كي "
-"لا يمكن إعادة تشغيل أي منهما من عميل آخر."
+"لا يمكن إعادة إرسال أي منهما من عميل آخر."
 
 #: ../../glossary.rst:33
 msgid "Forward auth"
@@ -170,7 +171,7 @@ msgid ""
 "The surface with proof-of-work admission, sessions, rules, reputation, "
 "GCRA limits and bans, but no application inspection (``--gate``)."
 msgstr ""
-"الوضع الذي يقدم الدخول بإثبات العمل، والجلسات، والقواعد، والسمعة، وحدود "
+"الوضع الذي يقدم القبول بإثبات العمل، والجلسات، والقواعد، والسمعة، وحدود "
 "GCRA، والحظر، دون فحص للتطبيق (``--gate``)."
 
 #: ../../glossary.rst:39
@@ -280,8 +281,8 @@ msgid ""
 "tag, verified in constant time."
 msgstr ""
 "ملف تعريف الارتباط الافتراضي للجلسة: حمولة من 40 بايت (الإصدار، ومستوى "
-"العمل، والطابع الزمني، والانتهاء، وتجزئة القاعدة، والبصمة) ووسم BLAKE3 ذو "
-"مفتاح من 16 بايت، يُتحقق منه في زمن ثابت."
+"العمل، والطابع الزمني، ووقت الانتهاء، وتجزئة القاعدة، والبصمة) ووسم "
+"BLAKE3 ذو مفتاح من 16 بايت، يُتحقق منه في زمن ثابت."
 
 #: ../../glossary.rst:63
 msgid "Work level"
@@ -298,7 +299,7 @@ msgstr ""
 
 #: ../../glossary.rst:66
 msgid "Opening"
-msgstr "الفتحة"
+msgstr "الفتح (Opening)"
 
 #: ../../glossary.rst:67
 msgid ""
@@ -306,7 +307,7 @@ msgid ""
 "its path to the root; the verifier recomputes the path and compares with "
 "the commitment."
 msgstr ""
-"في برهان العمل المتسلسل، تسمية ورقة واحدة مع تسميات أشقائها على طول "
+"في إثبات العمل المتسلسل، تسمية ورقة واحدة مع تسميات أشقاء العقد على "
 "مسارها إلى الجذر؛ يعيد المتحقق حساب المسار ويقارنه بالالتزام."
 
 #: ../../glossary.rst:69
@@ -319,9 +320,9 @@ msgid ""
 "earlier labels, forcing :math:`2^{n+1}-1` sequential hashes however many "
 "cores the prover has. Verified with :math:`t(n+1)` hashes."
 msgstr ""
-"المستوى الثاني: رسم التجزئة لـ Cohen-Pietrzak الذي تعتمد تسمياته على كل "
-"التسميات السابقة، فيفرض :math:`2^{n+1}-1` تجزئة متسلسلة مهما بلغ عدد "
-"أنوية المُبرهِن. يُتحقق منه بـ :math:`t(n+1)` تجزئة."
+"المستوى الثاني: مخطط التجزئة (hash graph) لـ Cohen-Pietrzak الذي تعتمد "
+"تسمياته على كل التسميات السابقة، فيفرض :math:`2^{n+1}-1` تجزئة متسلسلة "
+"مهما بلغ عدد أنوية المُبرهِن. يُتحقق منه بـ :math:`t(n+1)` تجزئة."
 
 #: ../../glossary.rst:72
 msgid "Reputation trie"
@@ -337,7 +338,7 @@ msgstr ""
 
 #: ../../glossary.rst:75
 msgid "Robin Hood spent set"
-msgstr "مجموعة المستهلك Robin Hood"
+msgstr "مجموعة Robin Hood للحلول المُنفَقة"
 
 #: ../../glossary.rst:76
 msgid ""
