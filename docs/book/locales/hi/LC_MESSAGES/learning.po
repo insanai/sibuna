@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 07:43+0000\n"
+"POT-Creation-Date: 2026-10-16 10:45+0000\n"
 "PO-Revision-Date: 2026-10-16 05:16+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -40,7 +40,7 @@ msgstr "प्रश्न"
 
 #: ../../learning.rst:11
 msgid "Where the answer develops"
-msgstr "उत्तर कहाँ विकसित होता है"
+msgstr "उत्तर किन भागों में मिलता है"
 
 #: ../../learning.rst:12
 msgid "What does a puzzle buy?"
@@ -56,7 +56,7 @@ msgstr "Sibuna की तुलना कैसी है?"
 
 #: ../../learning.rst:15
 msgid "Part II: lineage and the feature table; Part VIII: measurements."
-msgstr "भाग II: पृष्ठभूमि और सुविधाओं की तालिका; भाग VIII: मापन।"
+msgstr "भाग II: परंपरा और सुविधाओं की तालिका; भाग VIII: मापन।"
 
 #: ../../learning.rst:16
 msgid "What does a session mean?"
@@ -104,7 +104,7 @@ msgstr "वह त्रुटि क्या थी?"
 
 #: ../../learning.rst:27
 msgid "Part X: endpoints, statuses, errors, schema; Part XI: the card."
-msgstr "भाग X: एंडपॉइंट, स्थितियाँ, त्रुटियाँ, स्कीमा; भाग XI: कार्ड।"
+msgstr "भाग X: एंडपॉइंट, स्टेटस, त्रुटियाँ, स्कीमा; भाग XI: कार्ड।"
 
 #: ../../learning.rst:29
 msgid "Three Reading Paths"
@@ -166,7 +166,7 @@ msgstr ""
 "अनुरोध पाथ को बैकग्राउंड कार्य से अलग दिखाते हैं। स्रोत-संदर्भ उस "
 "इम्प्लीमेंटेशन का नाम देता है जिसे तब देखना चाहिए जब पाठ और कोड में "
 "असहमति लगे। \"इम्प्लीमेंटेशन\" शीर्षक वाले बॉक्स एक फ़ंक्शन और उसकी फ़ाइल "
-"का नाम देते हैं; \"अपरिवर्तनीय नियम समझाइए\" शीर्षक वाले बॉक्स हमसे विचार "
+"का नाम देते हैं; \"अपरिवर्तनीय नियम समझाएँ\" शीर्षक वाले बॉक्स हमसे विचार "
 "को वापस समझाने को कहते हैं।"
 
 #: ../../learning.rst:41
@@ -186,7 +186,7 @@ msgstr ""
 "सफलता की प्रायिकता है, :math:`K` प्रयासों की संख्या है, :math:`T` रेट "
 "लिमिटर का उत्सर्जन अंतराल (emission interval) है, :math:`\\tau` उसका "
 "बर्स्ट टॉलरेंस है, और :math:`Q` कतार की क्षमता है। जब तक अन्यथा न कहा "
-"जाए, कोई प्रतीक अपने खंड तक सीमित है। भाग VIII में नैनोसेकंड और प्रति "
+"जाए, कोई प्रतीक अपने अनुभाग तक सीमित है। भाग VIII में नैनोसेकंड और प्रति "
 "सेकंड अनुरोध किसी नामित रन के मापन हैं। हल किए गए उदाहरणों की संख्याएँ "
 "चुने हुए इनपुट हैं, बेंचमार्क के दावे नहीं। सांख्यिकीय मॉडल निष्कर्ष "
 "निकालने से पहले अपनी धारणाएँ बताते हैं।"

@@ -43,7 +43,7 @@ msgid "See also"
 msgstr "यह भी देखें"
 
 msgid "Todo"
-msgstr "करने योग्य"
+msgstr "करना बाकी"
 
 msgid "Contents"
 msgstr "विषय-सूची"
@@ -70,25 +70,25 @@ msgid "Code author: "
 msgstr "कोड के लेखक: "
 
 msgid "Link to this heading"
-msgstr "इस शीर्षक की कड़ी"
+msgstr "इस शीर्षक का लिंक"
 
 msgid "Link to this definition"
-msgstr "इस परिभाषा की कड़ी"
+msgstr "इस परिभाषा का लिंक"
 
 msgid "Link to this image"
-msgstr "इस चित्र की कड़ी"
+msgstr "इस चित्र का लिंक"
 
 msgid "Link to this table"
-msgstr "इस तालिका की कड़ी"
+msgstr "इस तालिका का लिंक"
 
 msgid "Link to this code"
-msgstr "इस कोड की कड़ी"
+msgstr "इस कोड का लिंक"
 
 msgid "Link to this equation"
-msgstr "इस समीकरण की कड़ी"
+msgstr "इस समीकरण का लिंक"
 
 msgid "Link to this term"
-msgstr "इस शब्द की कड़ी"
+msgstr "इस शब्द का लिंक"
 
 msgid "Parameters"
 msgstr "पैरामीटर"
@@ -97,7 +97,7 @@ msgid "Variables"
 msgstr "चर"
 
 msgid "Raises"
-msgstr "उठाता है"
+msgstr "अपवाद"
 
 msgid "Returns"
 msgstr "लौटाता है"
@@ -112,7 +112,7 @@ msgid "Template Parameters"
 msgstr "टेम्पलेट पैरामीटर"
 
 msgid "Throws"
-msgstr "फेंकता है"
+msgstr "अपवाद"
 
 msgid "Arguments"
 msgstr "आर्ग्युमेंट"
@@ -154,10 +154,10 @@ msgid "auto"
 msgstr "स्वचालित"
 
 msgid "light"
-msgstr "हल्का"
+msgstr "हल्की"
 
 msgid "dark"
-msgstr "गहरा"
+msgstr "गहरी"
 
 msgid "No pages match."
 msgstr "कोई पृष्ठ मेल नहीं खाता।"
@@ -172,7 +172,7 @@ msgid "On this page"
 msgstr "इस पृष्ठ पर"
 
 msgid "Last updated on %s."
-msgstr "अंतिम अद्यतन %s को।"
+msgstr "अंतिम अपडेट: %s।"
 
 msgid "Show source"
 msgstr "स्रोत देखें"
@@ -238,4 +238,4 @@ msgid "Copied"
 msgstr "कॉपी हो गया"
 
 msgid "Breadcrumbs"
-msgstr "ब्रेडक्रम्ब"
+msgstr "ब्रेडक्रंब"

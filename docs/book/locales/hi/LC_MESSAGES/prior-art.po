@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 07:43+0000\n"
+"POT-Creation-Date: 2026-10-16 10:45+0000\n"
 "PO-Revision-Date: 2026-10-16 05:24+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -34,8 +34,8 @@ msgstr ""
 "क्रिप्टोग्राफ़ी साहित्य से क्लाइंट पहेलियाँ और अनुक्रमिक कार्य, सिग्नेचर "
 "और सिमैंटिक एप्लिकेशन फ़ायरवॉल, proof-of-work इंटरस्टिशियल, और होस्टेड "
 "edge नेटवर्क। फिर हम उन चार उपकरणों की, जिन्हें कोई ऑपरेटर सबसे अधिक "
-"एक-दूसरे के विरुद्ध तौलेगा, एक-एक सुविधा करके तुलना करते हैं, और दर्ज "
-"करते हैं कि कौन-से तथ्य जाँचे गए।"
+"एक-दूसरे के विरुद्ध तौलेगा, सुविधा-दर-सुविधा तुलना करते हैं, और दर्ज करते "
+"हैं कि कौन-से तथ्य जाँचे गए।"
 
 #: ../../prior-art.rst:6
 msgid "Where Sibuna Comes From"
@@ -55,7 +55,7 @@ msgid ""
 "documentation."
 msgstr ""
 "इस अध्याय के अंत तक हमें यह कर पाना चाहिए: 1992 से 2018 की अनुक्रमिक "
-"कार्य वाली रचनाओं तक क्लाइंट पहेलियों की वंश-परंपरा ट्रेस करना, Sibuna "
+"कार्य वाले निर्माणों तक क्लाइंट पहेलियों की वंश-परंपरा ट्रेस करना, Sibuna "
 "द्वारा जोड़े गए तीन आर्किटेक्चरल विचारों के नाम बताना, Sibuna, Anubis, "
 "SafeLine और Cloudflare WAF को एक डिज़ाइन क्षेत्र में रखना, और बताना कि "
 "तुलना के कौन-से दावे सत्यापित किए गए और कौन-से केवल दस्तावेज़ों से पढ़े "
@@ -103,11 +103,126 @@ msgstr ""
 "वाला अनुरोधकर्ता जल्दी पूरा करता है। Mahmoody, Moran और Vadhan (CRYPTO "
 "2013) ने *अनुक्रमिक* कार्य के प्रमाण परिभाषित किए, जिनमें प्रूवर को कोर "
 "की संख्या चाहे जितनी हो, आश्रित कदमों की एक लंबी शृंखला पूरी करनी होती "
-"है, और Cohen तथा Pietrzak (EUROCRYPT 2018) ने वह सरल hash-graph रचना दी "
-"जिसके सत्यापनकर्ता को केवल :math:`O(t \\log N)` कार्य चाहिए। Blocki, Lee "
-"और Zhou (ITC 2021) ने quantum random-oracle model में इसी रचना को क्वांटम "
-"प्रूवर के विरुद्ध सुदृढ़ सिद्ध किया। भाग III इसी कार्य-परंपरा से Sibuna "
-"का टियर दो निकालता है; SID 0006 धारणाएँ दर्ज करता है।"
+"है, और Cohen तथा Pietrzak (EUROCRYPT 2018) ने वह सरल hash-graph निर्माण "
+"दिया जिसके सत्यापनकर्ता को केवल :math:`O(t \\log N)` कार्य चाहिए। Blocki, "
+"Lee और Zhou (ITC 2021) ने quantum random-oracle model में इसी निर्माण को "
+"क्वांटम प्रूवर के विरुद्ध सुदृढ़ सिद्ध किया। भाग III इसी कार्य-परंपरा से "
+"Sibuna का टियर दो निकालता है; SID 0006 धारणाएँ दर्ज करता है।"
+
+#: ../../prior-art.rst:21
+msgid ""
+"A lineage graph. Dwork-Naor 1992 leads to Hashcash 1997, Juels-Brainard "
+"1999, Mahmoody et al. 2013, Cohen-Pietrzak 2018 and Blocki-Lee-Zhou 2021. "
+"Aho-Corasick 1975 leads to Hyperscan 2019; ModSecurity and CRS 2002 lead "
+"to libinjection 2012. Hashcash leads to the Anubis interstitial and "
+"libinjection to the SafeLine semantic WAF; the Cloudflare hosted edge "
+"stands beside them. Sibuna (Gate, Shield, Edge) descends from Hashcash, "
+"Cohen-Pietrzak, Blocki-Lee-Zhou, Aho-Corasick, libinjection, GCRA (ATM "
+"Forum 1996), Anubis, SafeLine and Cloudflare."
+msgstr ""
+"विचारों की वंश-परंपरा का ग्राफ़। Dwork-Naor 1992 से Hashcash 1997, "
+"Juels-Brainard 1999, Mahmoody et al. 2013, Cohen-Pietrzak 2018 और "
+"Blocki-Lee-Zhou 2021 निकलते हैं। Aho-Corasick 1975 से Hyperscan 2019 "
+"निकलता है; ModSecurity और CRS 2002 से libinjection 2012। Hashcash से "
+"Anubis इंटरस्टिशियल और libinjection से SafeLine सिमैंटिक WAF निकलते हैं; "
+"Cloudflare का होस्टेड edge उनके बगल में खड़ा है। Sibuna (Gate, Shield, "
+"Edge) Hashcash, Cohen-Pietrzak, Blocki-Lee-Zhou, Aho-Corasick, "
+"libinjection, GCRA (ATM Forum 1996), Anubis, SafeLine और Cloudflare से "
+"निकला है।"
+
+#: ../../prior-art.rst:21
+msgid ""
+"digraph lineage {\n"
+"  rankdir=TB;\n"
+"  node [shape=box, fontname=\"Helvetica\", fontsize=10];\n"
+"  edge [fontname=\"Helvetica\", fontsize=9];\n"
+"  subgraph puzzles {\n"
+"    rank=same;\n"
+"    dwork [label=\"Dwork-Naor\\n1992\"];\n"
+"    hashcash [label=\"Hashcash\\n1997\"];\n"
+"    juels [label=\"Juels-Brainard\\n1999\"];\n"
+"    mahmoody [label=\"Mahmoody et al.\\n2013\"];\n"
+"    cohen [label=\"Cohen-Pietrzak\\n2018\"];\n"
+"    blocki [label=\"Blocki-Lee-Zhou\\n2021\"];\n"
+"  }\n"
+"  subgraph systems {\n"
+"    rank=same;\n"
+"    aho [label=\"Aho-Corasick\\n1975\"];\n"
+"    modsec [label=\"ModSecurity, CRS\\n2002\"];\n"
+"    libinj [label=\"libinjection\\n2012\"];\n"
+"    hyperscan [label=\"Hyperscan\\n2019\"];\n"
+"    gcra [label=\"GCRA\\nATM Forum 1996\"];\n"
+"  }\n"
+"  subgraph products {\n"
+"    rank=same;\n"
+"    anubis [label=\"Anubis\\ninterstitial\"];\n"
+"    safeline [label=\"SafeLine\\nsemantic WAF\"];\n"
+"    cloudflare [label=\"Cloudflare\\nhosted edge\"];\n"
+"  }\n"
+"  sibuna [label=\"Sibuna\\nGate, Shield, Edge\", style=\"filled,bold\"];\n"
+"  dwork -> hashcash -> juels -> mahmoody -> cohen -> blocki;\n"
+"  modsec -> libinj;\n"
+"  aho -> hyperscan;\n"
+"  dwork -> aho [style=invis];\n"
+"  aho -> anubis [style=invis];\n"
+"  hashcash -> anubis;\n"
+"  libinj -> safeline;\n"
+"  hashcash -> sibuna;\n"
+"  cohen -> sibuna;\n"
+"  blocki -> sibuna;\n"
+"  aho -> sibuna;\n"
+"  libinj -> sibuna;\n"
+"  gcra -> sibuna;\n"
+"  anubis -> sibuna;\n"
+"  safeline -> sibuna;\n"
+"  cloudflare -> sibuna;\n"
+"}"
+msgstr ""
+"digraph lineage {\n"
+"  rankdir=TB;\n"
+"  node [shape=box, fontname=\"Helvetica\", fontsize=10];\n"
+"  edge [fontname=\"Helvetica\", fontsize=9];\n"
+"  subgraph puzzles {\n"
+"    rank=same;\n"
+"    dwork [label=\"Dwork-Naor\\n1992\"];\n"
+"    hashcash [label=\"Hashcash\\n1997\"];\n"
+"    juels [label=\"Juels-Brainard\\n1999\"];\n"
+"    mahmoody [label=\"Mahmoody et al.\\n2013\"];\n"
+"    cohen [label=\"Cohen-Pietrzak\\n2018\"];\n"
+"    blocki [label=\"Blocki-Lee-Zhou\\n2021\"];\n"
+"  }\n"
+"  subgraph systems {\n"
+"    rank=same;\n"
+"    aho [label=\"Aho-Corasick\\n1975\"];\n"
+"    modsec [label=\"ModSecurity, CRS\\n2002\"];\n"
+"    libinj [label=\"libinjection\\n2012\"];\n"
+"    hyperscan [label=\"Hyperscan\\n2019\"];\n"
+"    gcra [label=\"GCRA\\nATM Forum 1996\"];\n"
+"  }\n"
+"  subgraph products {\n"
+"    rank=same;\n"
+"    anubis [label=\"Anubis\\nइंटरस्टिशियल\"];\n"
+"    safeline [label=\"SafeLine\\nसिमैंटिक WAF\"];\n"
+"    cloudflare [label=\"Cloudflare\\nहोस्टेड edge\"];\n"
+"  }\n"
+"  sibuna [label=\"Sibuna\\nGate, Shield, Edge\", style=\"filled,bold\"];\n"
+"  dwork -> hashcash -> juels -> mahmoody -> cohen -> blocki;\n"
+"  modsec -> libinj;\n"
+"  aho -> hyperscan;\n"
+"  dwork -> aho [style=invis];\n"
+"  aho -> anubis [style=invis];\n"
+"  hashcash -> anubis;\n"
+"  libinj -> safeline;\n"
+"  hashcash -> sibuna;\n"
+"  cohen -> sibuna;\n"
+"  blocki -> sibuna;\n"
+"  aho -> sibuna;\n"
+"  libinj -> sibuna;\n"
+"  gcra -> sibuna;\n"
+"  anubis -> sibuna;\n"
+"  safeline -> sibuna;\n"
+"  cloudflare -> sibuna;\n"
+"}"
 
 #: ../../prior-art.rst:21
 msgid ""
@@ -123,7 +238,7 @@ msgstr ""
 "एल्गोरिदम और प्रणालियाँ हैं जिन पर Sibuna बना है, और तीसरी पंक्ति उसी "
 "क्षेत्र के उत्पाद हैं; तीर सीधी वंश-परंपरा दिखाते हैं। स्टोरेज का एक "
 "पुराना डिज़ाइन Multi-Paxos (Lamport 1998; SID 0005) पर आधारित था; अब "
-"Sibuna अपनी स्थिति SQLite या PostgreSQL में संग्रहीत करता है (SID 0011)।"
+"Sibuna अपनी अवस्था SQLite या PostgreSQL में संग्रहीत करता है (SID 0011)।"
 
 #: ../../prior-art.rst:70
 msgid "Application Firewalls"
@@ -273,7 +388,7 @@ msgstr "सीमित सिग्नेचर और संरचनात्
 
 #: ../../prior-art.rst:106
 msgid "State"
-msgstr "स्थिति"
+msgstr "अवस्था"
 
 #: ../../prior-art.rst:107
 msgid "Optional persistent policy and reputation, shared across a cluster"
@@ -360,7 +475,10 @@ msgid ""
 "benchmark host; SafeLine and Cloudflare were not (Part VIII explains "
 "why). A dash means the product does not offer the feature; a plan name "
 "means the feature exists but only on that plan. Each Sibuna measurement "
-"names the committed result file it comes from."
+"names the committed result file it comes from. The TLS fingerprint row "
+"was checked in October 2026, against the Anubis changelog (1.21.0 and "
+"1.26.0), the SafeLine release notes (8.10.0 and 9.2.0), and Cloudflare's "
+"page \"JA3/JA4 fingerprint\"."
 msgstr ""
 "नीचे की चार तालिकाएँ Sibuna की तुलना उन तीन उपकरणों से करती हैं जिनका "
 "उल्लेख अक्सर उसके साथ होता है। अन्य उत्पादों के बारे में तथ्य सितंबर 2026 "
@@ -371,34 +489,37 @@ msgstr ""
 "SafeLine और Cloudflare को नहीं (भाग VIII कारण बताता है)। डैश का अर्थ है "
 "कि उत्पाद यह सुविधा नहीं देता; प्लान के नाम का अर्थ है कि सुविधा मौजूद है "
 "लेकिन केवल उस प्लान पर। Sibuna का हर मापन उस कमिट की गई परिणाम फ़ाइल का "
-"नाम देता है जिससे वह आया है।"
+"नाम देता है जिससे वह आया है। TLS फ़िंगरप्रिंट वाली पंक्ति अक्टूबर 2026 "
+"में Anubis के changelog (1.21.0 और 1.26.0), SafeLine के release notes "
+"(8.10.0 और 9.2.0) और Cloudflare के पेज \"JA3/JA4 fingerprint\" से मिलाकर "
+"जाँची गई।"
 
 #: ../../prior-art.rst:125
 msgid "Feature comparison, part 1: deployment"
 msgstr "सुविधाओं की तुलना, भाग 1: डिप्लॉयमेंट"
 
-#: ../../prior-art.rst:130 ../../prior-art.rst:161 ../../prior-art.rst:197
-#: ../../prior-art.rst:233
+#: ../../prior-art.rst:130 ../../prior-art.rst:161 ../../prior-art.rst:202
+#: ../../prior-art.rst:238
 msgid "Feature"
 msgstr "सुविधा"
 
-#: ../../prior-art.rst:131 ../../prior-art.rst:162 ../../prior-art.rst:198
-#: ../../prior-art.rst:234
+#: ../../prior-art.rst:131 ../../prior-art.rst:162 ../../prior-art.rst:203
+#: ../../prior-art.rst:239
 msgid "Sibuna"
 msgstr "Sibuna"
 
-#: ../../prior-art.rst:132 ../../prior-art.rst:163 ../../prior-art.rst:199
-#: ../../prior-art.rst:235
+#: ../../prior-art.rst:132 ../../prior-art.rst:163 ../../prior-art.rst:204
+#: ../../prior-art.rst:240
 msgid "Anubis 1.27"
 msgstr "Anubis 1.27"
 
-#: ../../prior-art.rst:133 ../../prior-art.rst:164 ../../prior-art.rst:200
-#: ../../prior-art.rst:236
+#: ../../prior-art.rst:133 ../../prior-art.rst:164 ../../prior-art.rst:205
+#: ../../prior-art.rst:241
 msgid "SafeLine CE 9"
 msgstr "SafeLine CE 9"
 
-#: ../../prior-art.rst:134 ../../prior-art.rst:165 ../../prior-art.rst:201
-#: ../../prior-art.rst:237
+#: ../../prior-art.rst:134 ../../prior-art.rst:165 ../../prior-art.rst:206
+#: ../../prior-art.rst:242
 msgid "Cloudflare WAF"
 msgstr "Cloudflare WAF"
 
@@ -455,8 +576,8 @@ msgid "Licence"
 msgstr "लाइसेंस"
 
 #: ../../prior-art.rst:146
-msgid "Source in the repository"
-msgstr "स्रोत रिपॉज़िटरी में"
+msgid "LGPL-3.0-or-later"
+msgstr "LGPL-3.0-or-later"
 
 #: ../../prior-art.rst:147
 msgid "MIT"
@@ -494,7 +615,7 @@ msgstr "न्यूनतम 1 CPU कोर, 1 GB RAM, 5 GB डिस्क, D
 
 #: ../../prior-art.rst:154
 msgid "None on premises"
-msgstr "परिसर पर कुछ नहीं"
+msgstr "अपने परिसर में कुछ नहीं"
 
 #: ../../prior-art.rst:156
 msgid "Feature comparison, part 2: admission and sessions"
@@ -534,7 +655,7 @@ msgstr ""
 
 #: ../../prior-art.rst:171
 msgid "Challenge state on the server"
-msgstr "सर्वर पर चैलेंज की स्थिति"
+msgstr "सर्वर पर चैलेंज की अवस्था"
 
 #: ../../prior-art.rst:172
 msgid "None until solved; solved tags in a fixed Robin Hood table"
@@ -598,19 +719,20 @@ msgstr "नीति भाषा"
 
 #: ../../prior-art.rst:187
 msgid ""
-"JSON rules: path, User-Agent, headers, IPv4/IPv6 CIDR; ALLOW, DENY, "
-"CHALLENGE, WEIGH with thresholds; dynamic rules from the database"
+"JSON rules: path, User-Agent, headers, IPv4/IPv6 CIDR, JA4 fingerprint; "
+"ALLOW, DENY, CHALLENGE, WEIGH with thresholds; dynamic rules from the "
+"database"
 msgstr ""
-"JSON नियम: पाथ, User-Agent, हेडर, IPv4/IPv6 CIDR; ALLOW, DENY, CHALLENGE, "
-"सीमाओं के साथ WEIGH; डेटाबेस से डायनामिक नियम"
+"JSON नियम: पाथ, User-Agent, हेडर, IPv4/IPv6 CIDR, JA4 फ़िंगरप्रिंट; "
+"ALLOW, DENY, CHALLENGE, थ्रेशोल्ड के साथ WEIGH; डेटाबेस से डायनामिक नियम"
 
 #: ../../prior-art.rst:188
 msgid ""
 "YAML/JSON bots: regex on UA, path, headers; CIDR; CEL expressions; WEIGH "
 "with thresholds"
 msgstr ""
-"YAML/JSON bots: UA, पाथ, हेडर पर regex; CIDR; CEL एक्सप्रेशन; सीमाओं के "
-"साथ WEIGH"
+"YAML/JSON bots: UA, पाथ, हेडर पर regex; CIDR; CEL एक्सप्रेशन; थ्रेशोल्ड "
+"के साथ WEIGH"
 
 #: ../../prior-art.rst:189
 msgid "Console-defined custom rules, ACLs, IP groups"
@@ -623,29 +745,70 @@ msgstr ""
 "Rules language एक्सप्रेशन; *प्लान के अनुसार 5 / 20 / 100 / 1000 कस्टम "
 "नियम*"
 
-#: ../../prior-art.rst:192
-msgid "Feature comparison, part 3: inspection and state"
-msgstr "सुविधाओं की तुलना, भाग 3: निरीक्षण और स्थिति"
+#: ../../prior-art.rst:191
+msgid "TLS fingerprint (JA4)"
+msgstr "TLS फ़िंगरप्रिंट (JA4)"
 
-#: ../../prior-art.rst:202
+#: ../../prior-art.rst:192
+msgid ""
+"Rules match a JA4 fingerprint exactly or by prefix; a trusted ingress "
+"computes it and forwards it in a header (``--ja4-header``); Sibuna does "
+"not compute it"
+msgstr ""
+"नियम JA4 फ़िंगरप्रिंट का सटीक या प्रीफ़िक्स से मिलान करते हैं; कोई "
+"विश्वसनीय इनग्रेस उसकी गणना करके उसे एक हेडर (``--ja4-header``) में "
+"फ़ॉरवर्ड करता है; Sibuna स्वयं उसकी गणना नहीं करता"
+
+#: ../../prior-art.rst:193
+msgid ""
+"Not documented; policies may reference the HTTP fingerprint JA4H, which "
+"Anubis computes and adds as the header ``X-Http-Fingerprint-JA4H``"
+msgstr ""
+"दस्तावेज़ों में नहीं; नीतियाँ HTTP फ़िंगरप्रिंट JA4H का संदर्भ दे सकती "
+"हैं, जिसकी गणना करके Anubis उसे ``X-Http-Fingerprint-JA4H`` हेडर के रूप "
+"में जोड़ता है"
+
+#: ../../prior-art.rst:194
+msgid ""
+"Computed at its own TLS termination; shown in attack details; custom "
+"rules match it (equals, not equals); a built-in rule denies fingerprints "
+"from its malicious JA4 intelligence"
+msgstr ""
+"अपने ही TLS टर्मिनेशन पर गणना; आक्रमण के विवरण में दिखता है; कस्टम नियम "
+"उसका मिलान करते हैं (equals, not equals); एक बिल्ट-इन नियम उसकी "
+"दुर्भावनापूर्ण JA4 इंटेलिजेंस में दर्ज फ़िंगरप्रिंट अस्वीकार करता है"
+
+#: ../../prior-art.rst:195
+msgid ""
+"JA3 and JA4 fingerprints in WAF custom rules and analytics *(Enterprise "
+"with Bot Management)*"
+msgstr ""
+"WAF कस्टम नियमों और analytics में JA3 और JA4 फ़िंगरप्रिंट *(Bot "
+"Management के साथ Enterprise)*"
+
+#: ../../prior-art.rst:197
+msgid "Feature comparison, part 3: inspection and state"
+msgstr "सुविधाओं की तुलना, भाग 3: निरीक्षण और अवस्था"
+
+#: ../../prior-art.rst:207
 msgid "SQLi, XSS, RCE, traversal inspection"
 msgstr "SQLi, XSS, RCE, traversal निरीक्षण"
 
-#: ../../prior-art.rst:203
+#: ../../prior-art.rst:208
 msgid ""
 "Shield: tagged automaton plus structural tokenizers, first 8 KB of body"
 msgstr ""
 "Shield: टैग किया गया ऑटोमेटन और संरचनात्मक टोकनाइज़र, बॉडी के पहले 8 KB"
 
-#: ../../prior-art.rst:204 ../../prior-art.rst:250
+#: ../../prior-art.rst:209 ../../prior-art.rst:255
 msgid "\\-"
 msgstr "\\-"
 
-#: ../../prior-art.rst:205
+#: ../../prior-art.rst:210
 msgid "Semantic analysis engine over OWASP categories, also SSRF, XXE, CRLF"
 msgstr "OWASP श्रेणियों पर सिमैंटिक विश्लेषण इंजन, साथ में SSRF, XXE, CRLF"
 
-#: ../../prior-art.rst:206
+#: ../../prior-art.rst:211
 msgid ""
 "Managed rulesets *(Pro and above)*; OWASP Core Ruleset; attack score "
 "*(Business and above)*"
@@ -653,33 +816,33 @@ msgstr ""
 "Managed rulesets *(Pro और ऊपर)*; OWASP Core Ruleset; attack score "
 "*(Business और ऊपर)*"
 
-#: ../../prior-art.rst:207
+#: ../../prior-art.rst:212
 msgid "Rate limiting"
 msgstr "रेट लिमिटिंग"
 
-#: ../../prior-art.rst:208
+#: ../../prior-art.rst:213
 msgid "GCRA per client, local to a node"
 msgstr "प्रति क्लाइंट GCRA, एक नोड पर स्थानीय"
 
-#: ../../prior-art.rst:209
+#: ../../prior-art.rst:214
 msgid "\\- (system load is exposed to CEL rules)"
 msgstr "\\- (सिस्टम लोड CEL नियमों को उपलब्ध है)"
 
-#: ../../prior-art.rst:210
+#: ../../prior-art.rst:215
 msgid "Per IP, path, session"
 msgstr "प्रति IP, पाथ, सत्र"
 
-#: ../../prior-art.rst:211
+#: ../../prior-art.rst:216
 msgid "*1 / 2 / 5 / 100 rules by plan*; IP-only keys below Enterprise"
 msgstr ""
 "*प्लान के अनुसार 1 / 2 / 5 / 100 नियम*; Enterprise से नीचे केवल IP "
 "कुंजियाँ"
 
-#: ../../prior-art.rst:212
+#: ../../prior-art.rst:217
 msgid "Bans and reputation"
 msgstr "प्रतिबंध और प्रतिष्ठा"
 
-#: ../../prior-art.rst:213
+#: ../../prior-art.rst:218
 msgid ""
 "Honeypot bans; reputation trie loaded from the reputation table shared "
 "across the cluster"
@@ -687,46 +850,46 @@ msgstr ""
 "हनीपॉट प्रतिबंध; क्लस्टर में साझा प्रतिष्ठा टेबल से लोड किया गया "
 "प्रतिष्ठा trie"
 
-#: ../../prior-art.rst:214
+#: ../../prior-art.rst:219
 msgid "DNSBL; ASN and GeoIP through Thoth *(paid, closed)*"
 msgstr "DNSBL; Thoth के माध्यम से ASN और GeoIP *(सशुल्क, बंद)*"
 
-#: ../../prior-art.rst:215
+#: ../../prior-art.rst:220
 msgid "IP groups and blacklists; threat intelligence *(Pro)*"
 msgstr "IP समूह और ब्लैकलिस्ट; threat intelligence *(Pro)*"
 
-#: ../../prior-art.rst:216
+#: ../../prior-art.rst:221
 msgid "IP lists; managed lists and bot score *(Enterprise)*"
 msgstr "IP सूचियाँ; managed lists और bot score *(Enterprise)*"
 
-#: ../../prior-art.rst:217
+#: ../../prior-art.rst:222
 msgid "Forensics"
 msgstr "फ़ॉरेंसिक"
 
-#: ../../prior-art.rst:218
+#: ../../prior-art.rst:223
 msgid ""
 "SQLite or PostgreSQL: full-text search over incidents, vector campaign "
 "clustering"
 msgstr ""
 "SQLite या PostgreSQL: घटनाओं पर full-text खोज, vector कैंपेन क्लस्टरिंग"
 
-#: ../../prior-art.rst:219
+#: ../../prior-art.rst:224
 msgid "Prometheus metrics only"
 msgstr "केवल Prometheus मेट्रिक"
 
-#: ../../prior-art.rst:220
+#: ../../prior-art.rst:225
 msgid "PostgreSQL attack log with console"
 msgstr "कंसोल के साथ PostgreSQL आक्रमण लॉग"
 
-#: ../../prior-art.rst:221
+#: ../../prior-art.rst:226
 msgid "Security Events; sampled on Free"
 msgstr "Security Events; Free पर सैंपल किए गए"
 
-#: ../../prior-art.rst:222
+#: ../../prior-art.rst:227
 msgid "Multi-node"
 msgstr "मल्टी-नोड"
 
-#: ../../prior-art.rst:223
+#: ../../prior-art.rst:228
 msgid ""
 "One PostgreSQL database shared by every node for policy and reputation; "
 "shared seed; sticky challenge verification"
@@ -734,84 +897,84 @@ msgstr ""
 "नीति और प्रतिष्ठा के लिए हर नोड द्वारा साझा एक PostgreSQL डेटाबेस; साझा "
 "सीड; sticky चैलेंज सत्यापन"
 
-#: ../../prior-art.rst:224
+#: ../../prior-art.rst:229
 msgid "Shared signing key; shared Valkey store"
 msgstr "साझा signing कुंजी; साझा Valkey स्टोर"
 
-#: ../../prior-art.rst:225
+#: ../../prior-art.rst:230
 msgid "One stack per host"
 msgstr "प्रति होस्ट एक स्टैक"
 
-#: ../../prior-art.rst:226
+#: ../../prior-art.rst:231
 msgid "Global anycast"
 msgstr "वैश्विक anycast"
 
-#: ../../prior-art.rst:228
+#: ../../prior-art.rst:233
 msgid "Feature comparison, part 4: operations"
 msgstr "सुविधाओं की तुलना, भाग 4: संचालन"
 
-#: ../../prior-art.rst:238
+#: ../../prior-art.rst:243
 msgid "Metrics"
 msgstr "मेट्रिक"
 
-#: ../../prior-art.rst:239
+#: ../../prior-art.rst:244
 msgid "Prometheus at ``/__sibuna/metrics``"
 msgstr "``/__sibuna/metrics`` पर Prometheus"
 
-#: ../../prior-art.rst:240
+#: ../../prior-art.rst:245
 msgid "Prometheus on a separate port"
 msgstr "अलग पोर्ट पर Prometheus"
 
-#: ../../prior-art.rst:241
+#: ../../prior-art.rst:246
 msgid "Console dashboards"
 msgstr "कंसोल डैशबोर्ड"
 
-#: ../../prior-art.rst:242
+#: ../../prior-art.rst:247
 msgid "Dashboard and analytics"
 msgstr "डैशबोर्ड और analytics"
 
-#: ../../prior-art.rst:243
+#: ../../prior-art.rst:248
 msgid "TLS termination"
-msgstr "TLS समाप्ति"
+msgstr "TLS टर्मिनेशन"
 
-#: ../../prior-art.rst:244 ../../prior-art.rst:245
+#: ../../prior-art.rst:249 ../../prior-art.rst:250
 msgid "\\- (ingress)"
 msgstr "\\- (इनग्रेस)"
 
-#: ../../prior-art.rst:246 ../../prior-art.rst:247 ../../prior-art.rst:251
-#: ../../prior-art.rst:252 ../../prior-art.rst:255
+#: ../../prior-art.rst:251 ../../prior-art.rst:252 ../../prior-art.rst:256
+#: ../../prior-art.rst:257 ../../prior-art.rst:260
 msgid "**Yes**"
 msgstr "**हाँ**"
 
-#: ../../prior-art.rst:248
+#: ../../prior-art.rst:253
 msgid "Management console"
 msgstr "प्रबंधन कंसोल"
 
-#: ../../prior-art.rst:249
+#: ../../prior-art.rst:254
 msgid "Opt-in; SID 0007 Committed"
 msgstr "वैकल्पिक (opt-in); SID 0007 Committed"
 
-#: ../../prior-art.rst:253
+#: ../../prior-art.rst:258
 msgid "Measured on the benchmark host"
 msgstr "बेंचमार्क होस्ट पर मापा गया"
 
-#: ../../prior-art.rst:254
+#: ../../prior-art.rst:259
 msgid "**Yes** (Part VIII)"
 msgstr "**हाँ** (भाग VIII)"
 
-#: ../../prior-art.rst:256
+#: ../../prior-art.rst:261
 msgid "\\- (Docker only)"
 msgstr "\\- (केवल Docker)"
 
-#: ../../prior-art.rst:257
+#: ../../prior-art.rst:262
 msgid "\\- (hosted)"
 msgstr "\\- (होस्टेड)"
 
-#: ../../prior-art.rst:259
+#: ../../prior-art.rst:264
 msgid "Three differences carry most of the weight in a selection decision."
 msgstr "चयन के निर्णय में सबसे अधिक भार तीन अंतरों का है।"
 
-#: ../../prior-art.rst:261
+#: ../../prior-art.rst:266
 msgid ""
 "*Where the work goes.* Anubis and Sibuna Gate make the *client* pay "
 "before the origin does anything. SafeLine and Cloudflare inspect first "
@@ -821,11 +984,11 @@ msgid ""
 msgstr ""
 "*कार्य कहाँ जाता है।* Anubis और Sibuna Gate ऑरिजिन के कुछ भी करने से पहले "
 "*क्लाइंट* से कीमत चुकवाते हैं। SafeLine और Cloudflare पहले निरीक्षण करते "
-"हैं और चुनिंदा रूप से चैलेंज करते हैं; उनकी डिफ़ॉल्ट स्थिति प्रवेश देकर "
-"छानने की है। Sibuna Shield दोनों करता है, इसी क्रम में: निरीक्षण उस "
+"हैं और चुनिंदा रूप से चैलेंज करते हैं; उनका डिफ़ॉल्ट रुख प्रवेश देकर "
+"छानने का है। Sibuna Shield दोनों करता है, इसी क्रम में: निरीक्षण उस "
 "अनुरोध को भी अस्वीकार कर सकता है जिसके पास पहले से वैध सत्र है।"
 
-#: ../../prior-art.rst:262
+#: ../../prior-art.rst:267
 msgid ""
 "*What the server remembers.* Anubis keeps challenge state in a store "
 "(memory, bbolt, Valkey, or S3) and signs a JSON Web Token with Ed25519; "
@@ -833,14 +996,14 @@ msgid ""
 "in a fixed table. SafeLine keeps attack logs in PostgreSQL; Cloudflare "
 "keeps everything, with sampled visibility on the Free plan."
 msgstr ""
-"*सर्वर क्या याद रखता है।* Anubis चैलेंज की स्थिति एक स्टोर (memory, "
+"*सर्वर क्या याद रखता है।* Anubis चैलेंज की अवस्था एक स्टोर (memory, "
 "bbolt, Valkey या S3) में रखता है और Ed25519 से JSON Web Token पर "
 "हस्ताक्षर करता है; Sibuna एक स्वयं-प्रमाणित रिकॉर्ड जारी करता है और केवल "
 "हल किए गए टैग एक निश्चित टेबल में याद रखता है। SafeLine आक्रमण लॉग "
 "PostgreSQL में रखता है; Cloudflare सब कुछ रखता है, Free प्लान पर सैंपल की "
 "गई दृश्यता के साथ।"
 
-#: ../../prior-art.rst:263
+#: ../../prior-art.rst:268
 msgid ""
 "*What an operator has to run.* Sibuna is one binary with an optional "
 "SQLite file, or a PostgreSQL database shared by a cluster; Anubis is one "
@@ -854,49 +1017,53 @@ msgstr ""
 "वाले Linux होस्ट पर Docker डेमन के पीछे सात कंटेनर है; Cloudflare एक DNS "
 "बदलाव और एक सब्सक्रिप्शन है।"
 
-#: ../../prior-art.rst:265
+#: ../../prior-art.rst:270
 msgid "Current product boundary"
 msgstr "उत्पाद की वर्तमान सीमा"
 
-#: ../../prior-art.rst:268
+#: ../../prior-art.rst:273
 msgid ""
 "Sibuna leaves ingress TLS termination to the deployment proxy and does "
-"not score bots with a trained model or publish paid signatures. Its "
-"opt-in console provides authenticated dashboards, country enrichment, "
-"policy editing, investigation and cluster management. Country lookup and "
-"storage work run outside request classification. SID 0007 is Committed, "
-"and the console passes its browser workflows (SID 0010). Its formal "
-"performance isolation gate, with eight active dashboards under load, is "
-"not yet measured; Part VIII records what is."
+"not score bots with a trained model or publish paid signatures. It "
+"matches the JA4 fingerprint that a trusted ingress computes; it cannot "
+"compute one itself (SID 0014, Part IX). Its opt-in console provides "
+"authenticated dashboards, country enrichment, policy editing, "
+"investigation and cluster management. Country lookup and storage work run "
+"outside request classification. SID 0007 is Committed, and the console "
+"passes its browser workflows (SID 0010). Its formal performance isolation "
+"gate, with eight active dashboards under load, is not yet measured; Part "
+"VIII records what is."
 msgstr ""
-"Sibuna इनग्रेस पर TLS समाप्ति डिप्लॉयमेंट प्रॉक्सी पर छोड़ता है, और न तो "
-"प्रशिक्षित मॉडल से बॉट का स्कोर निकालता है और न ही सशुल्क सिग्नेचर "
-"प्रकाशित करता है। उसका वैकल्पिक कंसोल प्रमाणित डैशबोर्ड, देश की जानकारी, "
-"नीति संपादन, जाँच और क्लस्टर प्रबंधन देता है। देश का लुकअप और स्टोरेज का "
-"कार्य अनुरोध वर्गीकरण से बाहर चलते हैं। SID 0007 Committed है, और कंसोल "
-"अपने ब्राउज़र वर्कफ़्लो पास करता है (SID 0010)। लोड में आठ सक्रिय "
-"डैशबोर्ड के साथ उसका औपचारिक प्रदर्शन-पृथक्करण गेट अभी मापा नहीं गया है; "
-"भाग VIII दर्ज करता है कि क्या मापा गया है।"
+"Sibuna इनग्रेस पर TLS टर्मिनेशन डिप्लॉयमेंट प्रॉक्सी पर छोड़ता है, और न "
+"तो प्रशिक्षित मॉडल से बॉट का स्कोर निकालता है और न ही सशुल्क सिग्नेचर "
+"प्रकाशित करता है। वह उस JA4 फ़िंगरप्रिंट का मिलान करता है जिसकी गणना कोई "
+"विश्वसनीय इनग्रेस करता है; वह स्वयं उसकी गणना नहीं कर सकता (SID 0014, भाग "
+"IX)। उसका वैकल्पिक कंसोल प्रमाणित डैशबोर्ड, देश की जानकारी, नीति संपादन, "
+"जाँच और क्लस्टर प्रबंधन देता है। देश का लुकअप और स्टोरेज का कार्य अनुरोध "
+"वर्गीकरण से बाहर चलते हैं। SID 0007 Committed है, और कंसोल अपने ब्राउज़र "
+"वर्कफ़्लो पास करता है (SID 0010)। लोड में आठ सक्रिय डैशबोर्ड के साथ उसका "
+"औपचारिक प्रदर्शन-पृथक्करण गेट अभी मापा नहीं गया है; भाग VIII दर्ज करता है "
+"कि क्या मापा गया है।"
 
-#: ../../prior-art.rst:270
+#: ../../prior-art.rst:275
 msgid "Exercise 2.1"
 msgstr "अभ्यास 2.1"
 
-#: ../../prior-art.rst:272
+#: ../../prior-art.rst:277
 msgid ""
 "Explain why compiling one verifier source to native code and WebAssembly "
 "reduces protocol drift. Which properties still require independent "
 "testing or cryptographic review?"
 msgstr ""
-"समझाइए कि एक ही सत्यापनकर्ता स्रोत को नेटिव कोड और WebAssembly में कंपाइल "
+"समझाएँ कि एक ही सत्यापनकर्ता स्रोत को नेटिव कोड और WebAssembly में कंपाइल "
 "करने से प्रोटोकॉल का विचलन क्यों घटता है। किन गुणों के लिए अब भी स्वतंत्र "
 "परीक्षण या क्रिप्टोग्राफ़िक समीक्षा चाहिए?"
 
-#: ../../prior-art.rst:274
+#: ../../prior-art.rst:279
 msgid "Exercise 2.2"
 msgstr "अभ्यास 2.2"
 
-#: ../../prior-art.rst:276
+#: ../../prior-art.rst:281
 msgid ""
 "Using only the comparison tables, write down the smallest deployment that "
 "gives a static site (a) a proof-of-work gate, (b) SQL-injection "
@@ -906,16 +1073,16 @@ msgstr ""
 "स्टैटिक साइट को (a) proof-of-work गेट, (b) SQL-injection निरीक्षण, और (c) "
 "क्लस्टर-व्यापी प्रतिबंध दे। किन पंक्तियों ने हर चुनाव को बाध्य किया?"
 
-#: ../../prior-art.rst:278
+#: ../../prior-art.rst:283
 msgid "Hint: Start from the \"runs as\" and \"multi-node\" rows."
 msgstr ""
 "संकेत: \"किस रूप में चलता है\" और \"मल्टी-नोड\" पंक्तियों से शुरू करें।"
 
-#: ../../prior-art.rst:280
+#: ../../prior-art.rst:285
 msgid "Explain the invariant"
-msgstr "अपरिवर्तनीय नियम समझाइए"
+msgstr "अपरिवर्तनीय नियम समझाएँ"
 
-#: ../../prior-art.rst:282
+#: ../../prior-art.rst:287
 msgid ""
 "Describe how Gate, Shield, and optional shared storage divide admission, "
 "inspection and policy distribution. Then name one row of the comparison "
@@ -926,3 +1093,6 @@ msgstr ""
 "नीति वितरण को कैसे बाँटते हैं। फिर तुलना तालिकाओं की एक ऐसी पंक्ति बताएँ "
 "जिसे हम किसी ग्राहक को बताने से पहले दोबारा सत्यापित करना चाहेंगे, और "
 "बताएँ कि हम उसे कैसे सत्यापित करेंगे।"
+
+#~ msgid "Source in the repository"
+#~ msgstr "स्रोत रिपॉज़िटरी में"
