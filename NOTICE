@@ -1,0 +1,31 @@
+Sibuna
+Copyright (c) 2026 Vikrant Rathore and Sibuna contributors.
+Written by Vikrant Rathore, with assistance from Ronak Rathore and Kanak Rathore.
+
+First-party code: LGPL-3.0-or-later. See LICENSE and LICENSES/ for the
+complete license texts.
+
+Documentation website template and styles adapted from SQLodin: MIT;
+LICENSES/SQLodin-MIT.txt. Source: github.com/insanai/sqlodin.
+
+Bundled third-party materials in the default release:
+
+- Rust crates linked into the executable (sqlx with SQLite, tokio, rustls with
+  ring and the system trust store, and their dependencies): each under its own
+  permissive license (MIT, Apache-2.0, ISC, BSD-3-Clause, Zlib, Unicode-3.0 or
+  Unlicense). The complete list of crates, versions and licenses for a release
+  is in LICENSES/THIRD-PARTY-RUST.txt, generated with `cargo xtask licenses`.
+- SQLite: public domain; sqlite.org/copyright.html. Compiled from the
+  amalgamation bundled by libsqlite3-sys.
+- daisyUI and Tailwind CSS: MIT; LICENSES/daisyUI-MIT.txt and
+  LICENSES/Tailwind-MIT.txt. Only the generated console stylesheet is bundled;
+  Node and npm are not build or runtime dependencies.
+- Natural Earth 5.1.2 country boundaries: public domain. The console's world
+  geometry is derived from ne_110m_admin_0_countries (see
+  cmd/console-ui/web/assets/GEOGRAPHY.md).
+- musl libc (statically linked Linux release binaries only): MIT;
+  LICENSES/musl-COPYRIGHT.txt.
+
+GeoIP datasets are not bundled. An operator imports one at run time; the
+default provider, ip-location-db user-country, is PDDL 1.0, and DB-IP IP to
+Country Lite is CC BY 4.0.

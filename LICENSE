@@ -1,0 +1,31 @@
+Copyright (c) 2026 Vikrant Rathore and Sibuna contributors.
+
+Sibuna is written by Vikrant Rathore, with assistance from Ronak Rathore and
+Kanak Rathore.
+
+Sibuna is free software: you can redistribute it and/or modify it under the
+terms of the GNU Lesser General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version.
+
+Sibuna is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+
+The license covers all first-party code in this repository: the daemon, the
+libraries under crates/, the browser solver, the console and its WebAssembly
+interface, the tools, tests, benchmarks and documentation. The complete LGPL
+text is in LICENSES/LGPL-3.0.txt, and the GNU General Public License it
+incorporates is in LICENSES/GPL-3.0.txt.
+
+SPDX-License-Identifier: LGPL-3.0-or-later
+
+Corresponding source, build scripts and pinned dependency declarations
+accompany every release tag at https://github.com/insanai/sibuna.
+
+Companies seeking a version under other terms can contact the author, Vikrant
+Rathore, about alternative licensing.
+
+Third-party code, styles and data retain their original licenses. See NOTICE
+and LICENSES/ for their notices and terms. These notices do not relicense
+third-party materials.
