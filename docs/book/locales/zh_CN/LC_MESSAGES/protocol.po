@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,23 +19,23 @@ msgstr ""
 
 #: ../../protocol.rst:1
 msgid "Part IV: The Sibuna Protocol"
-msgstr ""
+msgstr "第 IV 部分：Sibuna 协议"
 
 #: ../../protocol.rst:4
 msgid ""
 "We specify the wire protocol as implemented: the interstitial round trip, "
 "the stateless challenge record, both solution formats, verification "
 "order, single-use enforcement, and the session cookie."
-msgstr ""
+msgstr "我们按实现的样子规定线上协议：验证中间页的往返过程、无状态挑战记录、两种解答格式、验证顺序、一次性使用的强制执行，以及会话 Cookie。"
 
 #: ../../protocol.rst:6
 msgid "The Challenge Round Trip"
-msgstr ""
+msgstr "挑战的往返过程"
 
 #: ../../protocol.rst:9 ../../protocol.rst:72 ../../protocol.rst:135
 #: ../../protocol.rst:186
 msgid "Objectives"
-msgstr ""
+msgstr "学习目标"
 
 #: ../../protocol.rst:11
 msgid ""
@@ -44,10 +44,12 @@ msgid ""
 "involved, and explain why the challenge carries the protected path's "
 "policy decision."
 msgstr ""
+"学完本章，我们应当能够追踪一个浏览器从第一个请求到获得会话的全过程，说出其中"
+"涉及的每个端点和 JSON 字段，并解释为什么挑战要携带受保护路径的策略决策。"
 
 #: ../../protocol.rst:14
 msgid "The challenge round trip."
-msgstr ""
+msgstr "挑战的往返过程。"
 
 #: ../../protocol.rst:41
 msgid ""
@@ -61,6 +63,13 @@ msgid ""
 "rule's hash, sealed for this client with a keyed BLAKE3 tag under its own "
 "derived key and valid for one challenge lifetime."
 msgstr ""
+"一次没有有效会话的页面导航到达策略引擎，被分类为 ``CHALLENGE``。由于该请求接"
+"受 ``text/html``，守护进程以 ``200`` 返回验证中间页，并带上响应头 "
+"``X-Sibuna-Status: CHALLENGE``；不接受 HTML 的 API 客户端则收到 ``401`` 和一"
+"个 JSON 响应体，其中的 ``challenge`` URL 可以直接获取。无论哪种情况，响应都"
+"携带一张 *要求票据*：即这个决策所要求的挑战（算法、工作比特、揭示数）和规则"
+"的哈希，用该客户端自己的派生密钥计算带密钥 BLAKE3 标签加以封装，在一个挑战有"
+"效期内有效。"
 
 #: ../../protocol.rst:42
 msgid ""
@@ -77,30 +86,41 @@ msgid ""
 "advisory: admission still checks the session's work level, so a replayed "
 "or forged ticket can only cost its holder work."
 msgstr ""
+"验证中间页获取 ``GET /__sibuna/challenge.json?path=<original "
+"URL>&need=<ticket>``。有效的票据决定挑战：工作量由要求该挑战的决策确定，而不"
+"是根据上报的 URL 和这次获取请求自身的请求头重新计算，因为这些请求头与页面导"
+"航的不同（``Accept``、``Sec-Fetch-*``）。没有有效票据时（忽略该 URL 的 API "
+"客户端，或页面打开时间超过了有效期），服务器评估上报的 URL：用读取请求行的同"
+"一个函数把它拆分为路径和查询，并把路径转换为准入所用的规范形式（SID 0009）；"
+"长度超过 8 KiB 的 URL 以 ``414`` 拒绝，绝不截断；没有规范形式的路径以 "
+"``400`` 拒绝。票据只是建议性的：准入仍然检查会话的工作等级，因此重放或伪造的"
+"票据只会让其持有者多付出工作。"
 
 #: ../../protocol.rst:43
 msgid "The response is the challenge record:"
-msgstr ""
+msgstr "响应是挑战记录："
 
 #: ../../protocol.rst:49
 msgid ""
 "For ``hashcash``, ``difficulty`` is the bit count and ``challenges`` is "
 "``0``."
-msgstr ""
+msgstr "对于 ``hashcash``，``difficulty`` 是比特数，``challenges`` 为 ``0``。"
 
 #: ../../protocol.rst:50
 msgid ""
 "A Web Worker solves it with the WebAssembly module, or the JavaScript "
 "prover if WebAssembly is unavailable (Part VII), and posts either"
 msgstr ""
+"一个 Web Worker 用 WebAssembly 模块求解它；如果 WebAssembly 不可用，则使用 "
+"JavaScript 证明器（第 VII 部分）。然后它把以下两者之一"
 
 #: ../../protocol.rst:56
 msgid "or"
-msgstr ""
+msgstr "或"
 
 #: ../../protocol.rst:62
 msgid "to ``POST /__sibuna/verify``."
-msgstr ""
+msgstr "提交到 ``POST /__sibuna/verify``。"
 
 #: ../../protocol.rst:63
 msgid ""
@@ -108,10 +128,13 @@ msgid ""
 "``Set-Cookie`` header, and the page reloads its original location. Every "
 "later request carries the cookie and is admitted before policy evaluation."
 msgstr ""
+"成功时，服务器返回 ``200 {\"status\":\"ok\"}`` 并带上 ``Set-Cookie`` 响应头，"
+"页面随后重新加载原来的地址。之后的每个请求都携带这个 Cookie，并在策略评估之"
+"前被准入。"
 
 #: ../../protocol.rst:65
 msgid "Why the path travels with the challenge"
-msgstr ""
+msgstr "为什么路径要随挑战一起传递"
 
 #: ../../protocol.rst:67
 msgid ""
@@ -122,21 +145,25 @@ msgid ""
 "rule hash into the token, where ``X-Sibuna-Rule-Hash`` reports it "
 "upstream."
 msgstr ""
+"验证中间页在受保护的 URL 上提供，因此浏览器知道自己在哪里。发送路径让服务器"
+"能够选择 *按规则* 设定的难度和算法（结账路由可能要求 20 个工作比特的顺序工作"
+"量，而博客只要求 16 比特的 Hashcash），并把规则哈希绑定进令牌，再由 "
+"``X-Sibuna-Rule-Hash`` 把它报告给上游。"
 
 #: ../../protocol.rst:69
 msgid "The Stateless Challenge Record"
-msgstr ""
+msgstr "无状态挑战记录"
 
 #: ../../protocol.rst:74
 msgid ""
 "Read the challenge encoder, understand every field's purpose, and see how "
 "the per-challenge nonce is derived without an entropy syscall on the hot "
 "path."
-msgstr ""
+msgstr "阅读挑战编码器，理解每个字段的用途，并了解如何在热路径上不通过熵系统调用来派生每个挑战的 nonce。"
 
 #: ../../protocol.rst:76
 msgid "Implementation: ``Coordinator::create_challenge_with_spec``"
-msgstr ""
+msgstr "实现：``Coordinator::create_challenge_with_spec``"
 
 #: ../../protocol.rst:78
 msgid ""
@@ -144,6 +171,9 @@ msgid ""
 "base64url-encodes the 52 bytes into a 70-character identifier. In "
 "``crates/challenge/src/coordinator.rs`` (crate ``sibuna-challenge``)."
 msgstr ""
+"构建 36 字节的载荷，用挑战密钥为它计算标签，并把这 52 字节进行 base64url 编"
+"码，得到 70 字符的标识符。位于 ``crates/challenge/src/coordinator.rs``\\ （"
+"crate ``sibuna-challenge``）。"
 
 #: ../../protocol.rst:124
 msgid ""
@@ -153,10 +183,14 @@ msgid ""
 "Hashcash bits (at most 64) or PoSW depth (``difficulty - 3``, clamped to "
 "4 through 24)."
 msgstr ""
+"标识符是一个 ``Encoded<70>``：文本存放在一个长度恰好相等的数组中，因此签发挑"
+"战从不分配内存。``ChallengeSpec::parameter`` 把工作比特映射为各层自己的单位，"
+"即 Hashcash 比特数（最多 64）或 PoSW 深度（``difficulty - 3``，限制在 4 到 "
+"24 之间）。"
 
 #: ../../protocol.rst:126
 msgid "Three details deserve attention:"
-msgstr ""
+msgstr "有三个细节值得注意："
 
 #: ../../protocol.rst:128
 msgid ""
@@ -166,6 +200,9 @@ msgid ""
 "work bit, capped at six. A flood pays exponentially more while quiet "
 "traffic keeps the base cost."
 msgstr ""
+"*自适应难度。* 协调器用三个原子变量保存挑战签发速率的指数加权移动平均。速率"
+"超过每秒 50 次挑战的基线后，速率每翻一倍就增加一个工作比特，最多增加六个。洪"
+"泛流量需要付出指数级增长的代价，而平静的流量保持基础成本。"
 
 #: ../../protocol.rst:129
 msgid ""
@@ -175,27 +212,30 @@ msgid ""
 "not been issued, and the hot path never calls into the operating system "
 "for entropy."
 msgstr ""
+"*nonce 是 PRF 的输出*，以挑战密钥为密钥，对一个计数器、时钟和指纹计算得出。"
+"它是唯一的（来自计数器）且不可预测的（来自密钥），因此对手无法为尚未签发给它"
+"的标识符预先计算解答，热路径也从不为获取熵而调用操作系统。"
 
 #: ../../protocol.rst:130
 msgid ""
 "*Difficulty travels inside the tag.* A client cannot lower the difficulty "
 "by editing the record: the tag would fail before any proof is examined."
-msgstr ""
+msgstr "*难度包含在标签之内。* 客户端无法通过编辑记录来降低难度：在检查任何证明之前，标签校验就会失败。"
 
 #: ../../protocol.rst:132
 msgid "Verification Order and Single Use"
-msgstr ""
+msgstr "验证顺序与一次性使用"
 
 #: ../../protocol.rst:137
 msgid ""
 "Understand why the cheap checks run before the proof, why the challenge "
 "is marked spent only after the proof is valid, and how two concurrent "
 "submissions of one solution are resolved."
-msgstr ""
+msgstr "理解为什么低成本的检查要在证明之前执行，为什么只有在证明有效之后才把挑战标记为已用，以及同一个解答的两次并发提交如何解决。"
 
 #: ../../protocol.rst:139
 msgid "Implementation: ``Coordinator::verify_and_mint``"
-msgstr ""
+msgstr "实现：``Coordinator::verify_and_mint``"
 
 #: ../../protocol.rst:141
 msgid ""
@@ -204,6 +244,9 @@ msgid ""
 "mints the session token. In ``crates/challenge/src/coordinator.rs`` "
 "(crate ``sibuna-challenge``)."
 msgstr ""
+"解码并认证标识符，检查时效和客户端绑定，按记录的层验证证明，把标签记为已用，"
+"然后签发会话令牌。位于 ``crates/challenge/src/coordinator.rs``\\ （crate "
+"``sibuna-challenge``）。"
 
 #: ../../protocol.rst:179
 msgid ""
@@ -217,6 +260,13 @@ msgid ""
 "minted by a node whose clock runs ahead by more than a minute, which "
 "would otherwise extend a challenge's life."
 msgstr ""
+"这个顺序是有意为之的。标签、时效和绑定都是常量时间的检查，它们在任何哈希计算"
+"之前就拒绝垃圾输入。错误的证明不能消耗挑战，因此只有在 ``check_solution`` 成"
+"功之后才写入已用集合。两个线程同时验证同一个有效解答时，会在 ``mark_spent`` "
+"上竞争；分片锁让它们串行执行，恰好一个获胜，另一个收到 "
+"``VerifyError::DoubleSpendAttempt``。条件 ``issued_at > now + 60``\\ （"
+"``CLOCK_SKEW_SECONDS`` 为 60）拒绝由时钟超前一分钟以上的节点签发的记录，否则"
+"这类记录会延长挑战的寿命。"
 
 #: ../../protocol.rst:181
 msgid ""
@@ -227,20 +277,24 @@ msgid ""
 "MISMATCH``, ``WRONG SOLUTION TYPE``, and ``MALFORMED CHALLENGE`` in the "
 "response body."
 msgstr ""
+"错误以 ``400`` 和 Elm 风格的诊断信息（第 X 部分）呈现给客户端：每个 "
+"``VerifyError`` 都转换为 ``sibuna_core::errors::ErrorKind``，其说明就是响应"
+"体。端到端测试对响应体中的 ``DOUBLE SPEND``、``FINGERPRINT MISMATCH``、"
+"``WRONG SOLUTION TYPE`` 和 ``MALFORMED CHALLENGE`` 进行断言。"
 
 #: ../../protocol.rst:183
 msgid "The Session Cookie"
-msgstr ""
+msgstr "会话 Cookie"
 
 #: ../../protocol.rst:188
 msgid ""
 "Read the keyed-hash token, understand the cookie attributes, and explain "
 "the client binding."
-msgstr ""
+msgstr "阅读带密钥哈希令牌，理解 Cookie 的各个属性，并解释客户端绑定。"
 
 #: ../../protocol.rst:190
 msgid "Implementation: ``token::mac::mint`` and ``token::mac::verify``"
-msgstr ""
+msgstr "实现：``token::mac::mint`` 和 ``token::mac::verify``"
 
 #: ../../protocol.rst:192
 msgid ""
@@ -249,6 +303,9 @@ msgid ""
 "``crates/challenge/src/token/mac.rs`` (crate ``sibuna-challenge``). "
 "``Coordinator::verify_cookie`` calls it with the client's fingerprint."
 msgstr ""
+"序列化 40 字节的载荷，追加对它计算的带密钥 BLAKE3 的前 16 字节，并用常量时间"
+"比较进行验证。位于 ``crates/challenge/src/token/mac.rs``\\ （crate "
+"``sibuna-challenge``）。``Coordinator::verify_cookie`` 用客户端的指纹调用它。"
 
 #: ../../protocol.rst:219
 msgid ""
@@ -256,10 +313,12 @@ msgid ""
 "version is refused with ``TokenError::InvalidEncoding`` only once it is "
 "known to be authentic, and a forged one never reaches the parser."
 msgstr ""
+"标签在解析载荷之前检查：只有在确认载荷真实之后，其他版本的载荷才会以 "
+"``TokenError::InvalidEncoding`` 被拒绝，而伪造的载荷永远到不了解析器。"
 
 #: ../../protocol.rst:221
 msgid "The cookie is emitted as"
-msgstr ""
+msgstr "Cookie 以如下形式发出："
 
 #: ../../protocol.rst:228
 msgid ""
@@ -271,6 +330,11 @@ msgid ""
 "``TokenError::TokenBoundAddressMismatch``; the end-to-end test \"the "
 "cookie is bound to the client identity\" exercises exactly that path."
 msgstr ""
+"``HttpOnly`` 使页面脚本无法读取它，``SameSite=Lax`` 在允许顶层导航的同时阻止"
+"跨站重放；当 TLS 在守护进程前端终止时，通过 ``--secure-cookie`` 加上 "
+"``Secure``。由于载荷携带地址和 User-Agent 的带密钥指纹，复制到另一台机器上的"
+" Cookie 会以 ``TokenError::TokenBoundAddressMismatch`` 失败；端到端测试"
+"“Cookie 与客户端身份绑定”正是检验这条路径。"
 
 #: ../../protocol.rst:230
 msgid ""
@@ -288,10 +352,19 @@ msgid ""
 "end-to-end test \"a session earned on a cheaper route does not admit a "
 "route that demands more work\" exercises both directions."
 msgstr ""
+"载荷以一个版本字节和持有者付出的 *工作等级* 开头：即机制（Hashcash 或 PoSW）"
+"以及实际求解的工作比特，包括任何随负载自适应增加的部分。只有当会话的等级达到"
+"路由的要求时，会话才能免除挑战；路由的要求由规则的难度经过与挑战本身相同的限"
+"幅计算得出。等级是有序的，而不是按名称区分：以 24 比特获得的 Cookie 也覆盖所"
+"有 16 比特的路由，而 16 比特的 Cookie 出现在 24 比特的路由上时，会落入要求更"
+"高的验证中间页，新的 Cookie 将替换旧的。``rule_hash`` 仍然是签发该挑战的规则"
+"的审计标识；它被报告给上游，但从不用于准入。会话绝不会免除 WAF 发现和明确的"
+"拒绝。端到端测试“在成本较低的路由上获得的会话不能准入要求更多工作的路由”检验"
+"了两个方向。"
 
 #: ../../protocol.rst:232
 msgid "Forwarded addresses"
-msgstr ""
+msgstr "转发的地址"
 
 #: ../../protocol.rst:235
 msgid ""
@@ -301,10 +374,14 @@ msgid ""
 "leave it off, or any client could pick its own binding and its own "
 "rate-limit bucket."
 msgstr ""
+"在入口代理之后，客户端地址通过 ``X-Forwarded-For`` 到达。只有在使用 "
+"``--trust-forwarded`` 时（forward-auth 模式下默认隐含），Sibuna 才信任这个请"
+"求头。直接暴露在互联网上的反向代理必须关闭它，否则任何客户端都可以自己选择绑"
+"定和速率限制桶。"
 
 #: ../../protocol.rst:237
 msgid "Exercise 4.1"
-msgstr ""
+msgstr "练习 4.1"
 
 #: ../../protocol.rst:239
 msgid ""
@@ -312,13 +389,16 @@ msgid ""
 "User-Agents. Which checks do they share, which do they not, and what "
 "would an attacker on that NAT need to reuse the other browser's cookie?"
 msgstr ""
+"画出位于同一个 NAT 地址之后、User-Agent 相同的两个浏览器的交互序列。它们共享"
+"哪些检查，不共享哪些检查？位于该 NAT 之后的攻击者需要什么才能复用另一个浏览"
+"器的 Cookie？"
 
 #: ../../protocol.rst:241
 msgid "Explain the invariant"
-msgstr ""
+msgstr "解释这个不变量"
 
 #: ../../protocol.rst:243
 msgid ""
 "Explain to an operator why the daemon does not \"remember\" outstanding "
 "challenges and why that is a security feature rather than a shortcut."
-msgstr ""
+msgstr "向运维人员解释为什么守护进程不“记住”未完成的挑战，以及为什么这是一项安全特性，而不是一种偷懒的做法。"

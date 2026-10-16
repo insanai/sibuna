@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../foundations.rst:1
 msgid "Part I: The Cost of a Request"
-msgstr ""
+msgstr "第 I 部分：一次请求的成本"
 
 #: ../../foundations.rst:4
 msgid ""
@@ -28,10 +28,13 @@ msgid ""
 "decision is measured against: origin work, puzzle work, session "
 "amortisation, and the memory an untrusted client can make a server hold."
 msgstr ""
+"选择算法之前，先确定它要保护的资源。本章建立几个小模型，后面的每个设计决策都"
+"以它们为衡量标准：源站工作、谜题工作、会话分摊，以及不可信客户端能让服务器占"
+"用的内存。"
 
 #: ../../foundations.rst:6
 msgid "Objectives"
-msgstr ""
+msgstr "学习目标"
 
 #: ../../foundations.rst:8
 msgid ""
@@ -41,10 +44,13 @@ msgid ""
 "search, explain how sessions amortise work, and list the five invariants "
 "the rest of the book maintains."
 msgstr ""
+"学完本章，我们应当能够写出判断网关是否值得部署的不等式，说明工作量证明能证明"
+"什么、不能证明什么，推导哈希搜索的期望与尾部，解释会话如何分摊工作，并列出本"
+"书其余部分所维护的五个不变量。"
 
 #: ../../foundations.rst:10
 msgid "Admission Is an Economic Decision"
-msgstr ""
+msgstr "准入是一个经济决策"
 
 #: ../../foundations.rst:13
 msgid ""
@@ -57,11 +63,17 @@ msgid ""
 "origin work exceeds its own cost and the cost it imposes on legitimate "
 "visitors."
 msgstr ""
+"假设源站为每个获准的请求执行一次数据库查询并渲染一个页面。令 :math:`c_o` 表"
+"示这项工作，:math:`c_g` 表示网关处理每个请求的工作，:math:`r` 表示到达率。没"
+"有网关时，源站每秒必须承担 :math:`r c_o` 个单位的工作。准入比例为 :math:`a` "
+"的网关把这一需求变为 :math:`r a c_o`，而自身消耗 :math:`r c_g`。只有当节省下"
+"来的源站工作超过网关自身的成本以及它给合法访问者带来的成本时，网关才有用。"
 
 #: ../../foundations.rst:15
 msgid ""
 "r c_g + r a c_o < r c_o \\quad \\Leftrightarrow \\quad c_g < (1-a) c_o."
 msgstr ""
+"r c_g + r a c_o < r c_o \\quad \\Leftrightarrow \\quad c_g < (1-a) c_o."
 
 #: ../../foundations.rst:19
 msgid ""
@@ -71,10 +83,13 @@ msgid ""
 "query may make it large. There is no universal requester-to-server cost "
 "ratio."
 msgstr ""
+"这是一个容量模型，不是测量结果。它省略了带宽、连接状态、存储和客户端延迟。它"
+"的价值在于每个缺失的项都清晰可见。缓存命中可能使 :math:`c_o` 很小；代价高昂"
+"的查询可能使它很大。请求方与服务器之间不存在通用的成本比例。"
 
 #: ../../foundations.rst:21
 msgid "Worked example: when a gate pays for itself"
-msgstr ""
+msgstr "推演示例：网关何时值得部署"
 
 #: ../../foundations.rst:23
 msgid ""
@@ -85,10 +100,15 @@ msgid ""
 "this model. These selected numbers are not timings. They show why the "
 "workload belongs in every performance claim."
 msgstr ""
+"取 :math:`c_o = 100` 个工作单位，:math:`c_g = 1`。如果一半请求被拒绝，带网关"
+"的系统每次到达消耗 :math:`1 + 0.5 \\times 100 = 51` 个单位，而不是 100。如果"
+"只有千分之一的请求被拒绝，它消耗 :math:`100.9`：在这个模型中，网关的成本超过"
+"了它节省的成本。这些选定的数字不是耗时。它们说明了为什么每一项性能结论都必须"
+"交代工作负载。"
 
 #: ../../foundations.rst:25
 msgid "What a Proof of Work Establishes"
-msgstr ""
+msgstr "工作量证明能证明什么"
 
 #: ../../foundations.rst:28
 msgid ""
@@ -99,6 +119,10 @@ msgid ""
 "admission cost; policy and inspection still decide what admitted requests "
 "may do."
 msgstr ""
+"客户端谜题证明的是：某个人或程序找到了一个满足公开验证规则的输入。它不能证明"
+"对方是人、对方的身份或良好意图。请求方可以租用算力，在会话有效期内复用有效会"
+"话，或者把工作分散到多台机器上。谜题改变的是准入成本；获准的请求可以做什么，"
+"仍然由策略和检查决定。"
 
 #: ../../foundations.rst:30
 msgid ""
@@ -108,10 +132,13 @@ msgid ""
 "therefore keeps admission, inspection, and reputation as distinct "
 "decisions."
 msgstr ""
+"基于地址的限制与之互补。它们约束单个地址，但一个共享地址可能代表很多人，一个"
+"请求方也可以使用很多地址。谜题和地址都不是能识别身份的神谕。因此，Sibuna 把"
+"准入、检查和信誉作为彼此独立的决策。"
 
 #: ../../foundations.rst:32
 msgid "Hash Search as a Random Variable"
-msgstr ""
+msgstr "把哈希搜索看作随机变量"
 
 #: ../../foundations.rst:35
 msgid ""
@@ -119,20 +146,25 @@ msgid ""
 "success probability :math:`p = 2^{-b}` for each independent trial. Let "
 ":math:`K` count trials through the first success. Then"
 msgstr ""
+"对于理想的 256 位摘要，要求 :math:`b` 个前导零比特，则每次独立尝试的成功概率"
+"为 :math:`p = 2^{-b}`。令 :math:`K` 表示直到首次成功（含）为止的尝试次数。于"
+"是"
 
 #: ../../foundations.rst:37
 msgid ""
 "P(K=k) = (1-p)^{k-1} p, \\quad P(K>k) = (1-p)^k, \\quad E[K] = 1/p = 2^b."
 msgstr ""
+"P(K=k) = (1-p)^{k-1} p, \\quad P(K>k) = (1-p)^k, \\quad E[K] = 1/p = 2^b."
 
 #: ../../foundations.rst:41
 msgid "The expectation follows from the tail sum:"
-msgstr ""
+msgstr "期望可由尾部求和得到："
 
 #: ../../foundations.rst:43
 msgid ""
 "E[K] = \\sum_{k=0}^{\\infty} P(K>k) = \\sum_{k=0}^{\\infty} (1-p)^k = 1/p."
 msgstr ""
+"E[K] = \\sum_{k=0}^{\\infty} P(K>k) = \\sum_{k=0}^{\\infty} (1-p)^k = 1/p."
 
 #: ../../foundations.rst:47
 msgid ""
@@ -141,6 +173,9 @@ msgid ""
 "far longer than the mean. A client that measures only one solve has "
 "mostly measured this randomness."
 msgstr ""
+"难度每增加一级，期望尝试次数翻倍。但这并不保证每道谜题的耗时都翻倍。有些谜题"
+"第一次尝试就成功；有些的耗时远超平均值。只测量一次求解的客户端，测到的主要是"
+"这种随机性。"
 
 #: ../../foundations.rst:50
 msgid ""
@@ -149,10 +184,12 @@ msgid ""
 "P(K > x/p) ~ e^(-x). The point o marks x = 1, where the probability of "
 "still searching is e^(-1) = 0.368."
 msgstr ""
+"哈希搜索的生存概率。横轴是尝试次数除以期望尝试次数；曲线使用大工作量近似 "
+"P(K > x/p) ~ e^(-x)。点 o 标出 x = 1，此处仍在搜索的概率为 e^(-1) = 0.368。"
 
 #: ../../foundations.rst:68
 msgid "Worked example: expectation is not a deadline"
-msgstr ""
+msgstr "推演示例：期望不是截止时间"
 
 #: ../../foundations.rst:70
 msgid ""
@@ -163,10 +200,14 @@ msgid ""
 "A user interface should tolerate that spread rather than announcing "
 "failure at the expected completion time."
 msgstr ""
+"当 :math:`b = 16` 时，期望工作量为 65,536 次哈希。尝试这么多次之后仍在搜索的"
+"概率约为 :math:`e^{-1} = 0.368`。第 95 百分位的尝试次数为 :math:`\\lceil "
+"\\ln(0.05) / \\ln(1 - 2^{-16}) \\rceil \\approx 196327`，接近平均值的三倍。"
+"用户界面应当容忍这种离散，而不是在到达期望完成时间时就宣告失败。"
 
 #: ../../foundations.rst:72
 msgid "Sessions Amortise Work"
-msgstr ""
+msgstr "会话分摊工作"
 
 #: ../../foundations.rst:75
 msgid ""
@@ -178,10 +219,15 @@ msgid ""
 "automated clients alike. Choosing it is a policy decision, not a "
 "cryptographic optimization."
 msgstr ""
+"假设一个会话在过期前允许 :math:`m` 个请求，一道谜题的成本为 :math:`c_p`，验"
+"证成本为 :math:`c_v`，一次会话检查的成本为 :math:`c_s`。忽略失败的尝试，网关"
+"分摊到每个请求的成本为 :math:`c_v/m + c_s`，而客户端的谜题成本为 "
+":math:`c_p/m`。延长会话有效期对真人和自动化客户端同样有利。选择有效期是一个"
+"策略决策，而不是密码学优化。"
 
 #: ../../foundations.rst:77
 msgid "Exercise 1.1"
-msgstr ""
+msgstr "练习 1.1"
 
 #: ../../foundations.rst:79
 msgid ""
@@ -189,15 +235,17 @@ msgid ""
 "million trials. What is the amortized work per request? What changes if "
 "it shares the session with a second process?"
 msgstr ""
+"一个客户端每个会话可以发出 100 个请求，并完成一道需要一百万次尝试的谜题。分"
+"摊到每个请求的工作量是多少？如果它与第二个进程共享这个会话，会有什么变化？"
 
 #: ../../foundations.rst:81
 msgid ""
 "Hint: Distinguish the accounting model from the token's actual bindings."
-msgstr ""
+msgstr "提示：区分记账模型与令牌实际的绑定。"
 
 #: ../../foundations.rst:83
 msgid "Bounded State Is a Second Budget"
-msgstr ""
+msgstr "有界状态是第二种预算"
 
 #: ../../foundations.rst:86
 msgid ""
@@ -206,10 +254,13 @@ msgid ""
 "them at average rate :math:`\\mu`, and let the queue hold :math:`Q` "
 "records. When :math:`\\lambda > \\mu`, a fluid approximation gives"
 msgstr ""
+"把工作移出请求路径并不会让它消失。设事件以速率 :math:`\\lambda` 到达，存储线"
+"程以平均速率 :math:`\\mu` 持久化它们，队列可容纳 :math:`Q` 条记录。当 "
+":math:`\\lambda > \\mu` 时，流体近似给出"
 
 #: ../../foundations.rst:88
 msgid "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
-msgstr ""
+msgstr "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
 
 #: ../../foundations.rst:92
 msgid ""
@@ -220,10 +271,14 @@ msgid ""
 "The operator must monitor the lost evidence as well as the HTTP success "
 "rate."
 msgstr ""
+"更大的队列换来的是时间，而不是吞吐量。批处理分摊了事务成本，但被保留的记录仍"
+"然需要内存，最终也需要处理。过载时，Sibuna 丢弃新的事件记录并对其计数，同时"
+"继续依据内存中的状态作出请求决策。运维人员既要监控 HTTP 成功率，也要监控丢失"
+"的证据。"
 
 #: ../../foundations.rst:94
 msgid "Exercise 1.2"
-msgstr ""
+msgstr "练习 1.2"
 
 #: ../../foundations.rst:96
 msgid ""
@@ -231,49 +286,51 @@ msgid ""
 "600/s. How long can an initially empty queue absorb the excess? Why is "
 "the answer only an approximation?"
 msgstr ""
+"一个队列可容纳 512 条记录。到达率为 1,000/s，排空速率为 600/s。一个初始为空"
+"的队列能吸收多长时间的超额流量？为什么这个答案只是近似值？"
 
 #: ../../foundations.rst:98
 msgid ""
 "Hint: Use the difference of rates, then consider bursts and batch commits."
-msgstr ""
+msgstr "提示：先用两个速率之差计算，再考虑突发和批量提交。"
 
 #: ../../foundations.rst:100
 msgid "The Invariants We Will Carry Forward"
-msgstr ""
+msgstr "我们将贯穿全书的不变量"
 
 #: ../../foundations.rst:103
 msgid "Untrusted requests cannot create unbounded server state."
-msgstr ""
+msgstr "不可信的请求不能创建无界的服务器状态。"
 
 #: ../../foundations.rst:104
 msgid "A valid admission token does not bypass an application denial."
-msgstr ""
+msgstr "有效的准入令牌不能绕过应用层的拒绝。"
 
 #: ../../foundations.rst:105
 msgid "A buffer remains alive for every slice borrowed from it."
-msgstr ""
+msgstr "只要还有从缓冲区借出的切片，该缓冲区就保持存活。"
 
 #: ../../foundations.rst:106
 msgid ""
 "A durable retry cannot multiply an incident or its reputation effect."
-msgstr ""
+msgstr "持久化重试不能让一个事件或它对信誉的影响成倍增加。"
 
 #: ../../foundations.rst:107
 msgid ""
 "A published policy snapshot is immutable until its last reader releases "
 "it."
-msgstr ""
+msgstr "已发布的策略快照在最后一个读者释放它之前保持不可变。"
 
 #: ../../foundations.rst:109
 msgid ""
 "The rest of the book derives the mechanisms that make these statements "
 "true, and the tests that would reveal a violation. A fast path is useful "
 "only while those statements remain true."
-msgstr ""
+msgstr "本书其余部分推导使这些陈述成立的机制，以及能够揭示违反情况的测试。只有在这些陈述保持成立时，快速路径才有用。"
 
 #: ../../foundations.rst:111
 msgid "Explain the invariant"
-msgstr ""
+msgstr "解释这个不变量"
 
 #: ../../foundations.rst:113
 msgid ""
@@ -281,3 +338,5 @@ msgid ""
 "why a measured verification latency alone cannot tell an operator whether "
 "the gate is worth running."
 msgstr ""
+"用文字表述网关不等式 :math:`c_g < (1-a) c_o`，然后解释为什么仅凭测得的验证延"
+"迟，运维人员无法判断这个网关是否值得运行。"

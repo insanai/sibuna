@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../wasm-engine.rst:1
 msgid "Part VII: The Browser Proof-of-Work Engine"
-msgstr ""
+msgstr "第 VII 部分：浏览器端的工作量证明引擎"
 
 #: ../../wasm-engine.rst:4
 msgid ""
@@ -27,15 +27,17 @@ msgid ""
 "crate, the Web Worker protocol, the JavaScript fallback provers, and the "
 "interstitial."
 msgstr ""
+"我们考察由服务器自己的验证器 crate 编译而成的 WebAssembly 模块、Web Worker "
+"协议、JavaScript 后备证明器，以及验证中间页。"
 
 #: ../../wasm-engine.rst:6
 msgid "One Source, Two Targets"
-msgstr ""
+msgstr "一份源码，两个目标"
 
 #: ../../wasm-engine.rst:9 ../../wasm-engine.rst:172
 #: ../../wasm-engine.rst:211
 msgid "Objectives"
-msgstr ""
+msgstr "学习目标"
 
 #: ../../wasm-engine.rst:11
 msgid ""
@@ -44,10 +46,12 @@ msgid ""
 "exported functions, and describe the memory the sequential-work prover "
 "needs in a tab."
 msgstr ""
+"学完本章，我们应当能够解释浏览器模块如何由服务器自己的 ``sibuna-pow`` crate "
+"构建，说出它导出的函数，并描述顺序工作量证明器在一个标签页中所需的内存。"
 
 #: ../../wasm-engine.rst:13
 msgid "Build Wiring"
-msgstr ""
+msgstr "构建连接"
 
 #: ../../wasm-engine.rst:16
 msgid ""
@@ -56,6 +60,9 @@ msgid ""
 "built for ``wasm32-unknown-unknown``, whose only dependencies are the "
 "workspace crates ``sibuna-pow`` and ``sibuna-crypto``:"
 msgstr ""
+"浏览器求解器编译的正是服务器用来验证的那些源码。``cmd/sibuna-pow-wasm`` 是一"
+"个类型为 ``cdylib`` 的 ``no_std`` 库 crate，为 ``wasm32-unknown-unknown`` 构"
+"建，它仅有的依赖是工作区 crate ``sibuna-pow`` 和 ``sibuna-crypto``："
 
 #: ../../wasm-engine.rst:34
 msgid ""
@@ -70,6 +77,15 @@ msgid ""
 "embeds a prebuilt module instead, for builds without the WebAssembly "
 "target. The daemon then includes the bytes in its binary:"
 msgstr ""
+"守护进程内嵌了这个模块。它的构建脚本（``cmd/sibuna/build.rs``）运行一次嵌套"
+"的 ``cargo rustc -p sibuna-pow-wasm --target wasm32-unknown-unknown "
+"--profile wasm``，输出到工作区的目标目录（"
+"``target/wasm32-unknown-unknown/wasm/``）中。嵌套构建只锁定 ``wasm`` "
+"profile 的目录，因此从不等待外层构建。最终链接时加上 "
+"``--compress-relocations``。脚本检查结果是否以 WebAssembly 魔数字节开头，然"
+"后把它复制到构建输出目录。对于没有 WebAssembly 目标的构建，"
+"``SIBUNA_POW_WASM=<path>`` 可以改为嵌入一个预先构建的模块。然后，守护进程把"
+"这些字节包含进它的可执行文件："
 
 #: ../../wasm-engine.rst:44
 msgid ""
@@ -79,70 +95,74 @@ msgid ""
 "the module measures 14,744 bytes with both tiers (``wasm_bytes`` in "
 "``benchmarks/results/primitives-latest.json``)."
 msgstr ""
+"不存在会发生漂移的第二份实现。守护进程在 ``/__sibuna/wasm/sibuna-pow.wasm`` "
+"提供这个模块，并带有一小时的缓存头（``Cache-Control: public, "
+"max-age=3600``）。用上面的 profile 构建时，包含两层的模块大小为 14,744 字节"
+"（``benchmarks/results/primitives-latest.json`` 中的 ``wasm_bytes``）。"
 
 #: ../../wasm-engine.rst:46
 msgid "Exports"
-msgstr ""
+msgstr "导出"
 
 #: ../../wasm-engine.rst:49
 msgid ""
 "The module exports six functions, and the worker script calls them by "
 "name:"
-msgstr ""
+msgstr "模块导出六个函数，worker 脚本按名称调用它们："
 
 #: ../../wasm-engine.rst:55
 msgid "Export"
-msgstr ""
+msgstr "导出函数"
 
 #: ../../wasm-engine.rst:56
 msgid "Purpose"
-msgstr ""
+msgstr "用途"
 
 #: ../../wasm-engine.rst:57
 msgid "``sibuna_get_buffer_ptr()`` / ``sibuna_get_buffer_len()``"
-msgstr ""
+msgstr "``sibuna_get_buffer_ptr()`` / ``sibuna_get_buffer_len()``"
 
 #: ../../wasm-engine.rst:58
 msgid "256-byte input buffer the worker writes the challenge string into"
-msgstr ""
+msgstr "256 字节的输入缓冲区，worker 把挑战字符串写入其中"
 
 #: ../../wasm-engine.rst:59
 msgid "``sibuna_solve_step(ptr, len, bits, start, max_steps)``"
-msgstr ""
+msgstr "``sibuna_solve_step(ptr, len, bits, start, max_steps)``"
 
 #: ../../wasm-engine.rst:60
 msgid ""
 "Hashcash: search ``max_steps`` nonces from ``start``; returns the nonce "
 "or the all-ones sentinel"
-msgstr ""
+msgstr "Hashcash：从 ``start`` 开始搜索 ``max_steps`` 个 nonce；返回找到的 nonce 或全 1 的哨兵值"
 
 #: ../../wasm-engine.rst:61
 msgid "``sibuna_solve_sha256(ptr, len, bits)``"
-msgstr ""
+msgstr "``sibuna_solve_sha256(ptr, len, bits)``"
 
 #: ../../wasm-engine.rst:62
 msgid ""
 "Hashcash in one batch from nonce 0 (``sibuna_solve_step`` with "
 "``u32::MAX`` steps)"
-msgstr ""
+msgstr "从 nonce 0 开始一次性批量求解 Hashcash（步数为 ``u32::MAX`` 的 ``sibuna_solve_step``）"
 
 #: ../../wasm-engine.rst:63
 msgid "``sibuna_posw_solve(len, depth, challenges)``"
-msgstr ""
+msgstr "``sibuna_posw_solve(len, depth, challenges)``"
 
 #: ../../wasm-engine.rst:64
 msgid ""
 "Sequential work: runs the prover over the buffer and returns the proof "
 "length, or 0 for invalid arguments"
-msgstr ""
+msgstr "顺序工作量：对缓冲区运行证明器，并返回证明长度，参数无效时返回 0"
 
 #: ../../wasm-engine.rst:65
 msgid "``sibuna_posw_proof_ptr()``"
-msgstr ""
+msgstr "``sibuna_posw_proof_ptr()``"
 
 #: ../../wasm-engine.rst:66
 msgid "Start of the proof bytes in the prover workspace"
-msgstr ""
+msgstr "证明器工作空间中证明字节的起始位置"
 
 #: ../../wasm-engine.rst:68
 msgid ""
@@ -151,10 +171,13 @@ msgid ""
 "and the module has no imports. ``Workspace::new`` is a ``const fn``, so "
 "the static costs only zeroed memory, not initialised data in the module."
 msgstr ""
+"证明器的工作空间（保留的顶部各层、兄弟标签栈和证明）是一块约 92 KiB 的静态区"
+"域；没有链接任何分配器，模块也没有任何导入。``Workspace::new`` 是一个 "
+"``const fn``，因此这块静态区域只占用清零的内存，而不是模块中已初始化的数据。"
 
 #: ../../wasm-engine.rst:70
 msgid "Implementation: ``sibuna_solve_step``"
-msgstr ""
+msgstr "实现：``sibuna_solve_step``"
 
 #: ../../wasm-engine.rst:72
 msgid ""
@@ -162,6 +185,8 @@ msgid ""
 "one batch of the shared nonce search. In "
 "``cmd/sibuna-pow-wasm/src/lib.rs`` (crate ``sibuna-pow-wasm``)."
 msgstr ""
+"Hashcash 的导出函数：从线性内存借用挑战，并运行共享 nonce 搜索的一个批次。位"
+"于 ``cmd/sibuna-pow-wasm/src/lib.rs``\\ （crate ``sibuna-pow-wasm``）。"
 
 #: ../../wasm-engine.rst:96
 msgid ""
@@ -178,10 +203,19 @@ msgid ""
 "construction, because the functions of ``sibuna-pow`` are total and never "
 "panic."
 msgstr ""
+"这些导出函数是该 crate 的外部函数边界，也是它的 ``unsafe`` 代码唯一所在的地"
+"方。输入缓冲区和证明器工作空间是位于 ``ExportCell`` 中的静态变量；这个类型是"
+"对 ``UnsafeCell`` 的封装，被声明为 ``Sync``，并写明了理由：没有共享内存的 "
+"WebAssembly 实例只运行一个线程，而每个导出函数都在返回之前创建、使用并丢弃它"
+"的引用，因此任何时刻至多只有一个指向单元的引用是活跃的。在宿主机上，测试直接"
+"调用导出函数，此时由一个仅用于测试的互斥锁让它们串行执行。panic 会触发陷阱（"
+"``unreachable`` 指令），而不是格式化一条消息，这使模块不含格式化代码和导入；"
+"从构造上说 panic 是不可达的，因为 ``sibuna-pow`` 的函数都是全函数，从不 "
+"panic。"
 
 #: ../../wasm-engine.rst:98
 msgid "Prefix Pre-Hashing"
-msgstr ""
+msgstr "前缀预哈希"
 
 #: ../../wasm-engine.rst:101
 msgid ""
@@ -191,6 +225,9 @@ msgid ""
 "``sibuna_pow::hashcash::Search``, shared by the browser module and the "
 "native reference solver:"
 msgstr ""
+"Hashcash 的内层循环只吸收一次挑战和冒号，然后为每个 nonce 克隆 SHA-256 状态，"
+"因此每个候选只需一次压缩，而不是两次。搜索由 "
+"``sibuna_pow::hashcash::Search`` 实现，浏览器模块和原生参考求解器共用它："
 
 #: ../../wasm-engine.rst:130
 msgid ""
@@ -201,6 +238,10 @@ msgid ""
 "state that has absorbed the statement once, which makes verification "
 ":math:`t` compressions cheaper with the same digests."
 msgstr ""
+"哈希器状态是一个约 110 字节的普通值，因此克隆的成本很低。顺序工作量证明器使"
+"用同样的技巧：陈述 :math:`\\chi` 在 ``base_hasher`` 中只吸收一次，然后为每个"
+"节点克隆；验证器现在也是如此：它从一个已经吸收过陈述的状态派生每个被挑战的叶"
+"子，这使验证在得到相同摘要的同时少做 :math:`t` 次压缩。"
 
 #: ../../wasm-engine.rst:132
 msgid ""
@@ -214,6 +255,11 @@ msgid ""
 "longer needs, and the eight working variables are renamed from round to "
 "round instead of being shifted:"
 msgstr ""
+"在服务器上，压缩函数使用 x86-64 SHA 扩展或 ARMv8 SHA-2 指令，在运行时检测。"
+"浏览器中没有这样的指令，求解器几乎把所有时间都花在可移植的压缩函数上（"
+"``crates/crypto/src/sha256/portable.rs``）。这个函数是为 WebAssembly 编写的："
+"64 轮全部展开，消息调度保存在一个 16 字的窗口中，从第 16 轮起，每一轮都覆盖"
+"它不再需要的那个字，八个工作变量在轮与轮之间重命名，而不是移位："
 
 #: ../../wasm-engine.rst:167
 msgid ""
@@ -226,23 +272,28 @@ msgid ""
 "and about 14% faster natively (measured on the Rust implementation, "
 "October 2026)."
 msgstr ""
+"每个 ``eight_rounds!`` 是变量名的一次完整轮换：宏在每一轮把它们轮转一个位置"
+"后传入，因此一轮只写入其中两个变量，从不移动另外六个。由于轮次索引是字面量，"
+"每个调度位置都是常量，整个分组变成直线代码，其值始终保存在 WebAssembly 局部"
+"变量中。这种布局在 V8 中比使用 64 字调度和未展开循环的写法快约 20%，在原生环"
+"境中快约 14%（在 Rust 实现上测量，2026 年 10 月）。"
 
 #: ../../wasm-engine.rst:169
 msgid "The Worker Protocol"
-msgstr ""
+msgstr "Worker 协议"
 
 #: ../../wasm-engine.rst:174
 msgid ""
 "Read the message protocol, understand the fallback hierarchy, and see the "
 "sentinel bug that the signed-integer boundary between WebAssembly and "
 "JavaScript caused."
-msgstr ""
+msgstr "阅读消息协议，理解后备层级，并了解 WebAssembly 与 JavaScript 之间的有符号整数边界所造成的哨兵值缺陷。"
 
 #: ../../wasm-engine.rst:176
 msgid ""
 "The page posts one message to ``web/worker.js`` and receives progress, "
 "fallback, and result messages:"
-msgstr ""
+msgstr "页面向 ``web/worker.js`` 发送一条消息，并接收进度、后备和结果消息："
 
 #: ../../wasm-engine.rst:191
 msgid ""
@@ -255,10 +306,15 @@ msgid ""
 "The JavaScript provers are much slower, but they guarantee that every "
 "browser can pass."
 msgstr ""
+"worker 先尝试 WebAssembly；当 ``WebAssembly`` 不存在、被策略阻止或实例化失败"
+"时，回退到纯 JavaScript。JavaScript 证明器逐个标签地镜像 ``sibuna-pow`` 的 "
+"Rust 证明器，产生 *逐字节相同* 的输出。测试为两层都固定了 nonce 和证明，SID "
+"0010 要求求解器在无头浏览器中，无论使用 WebAssembly 还是 JavaScript 后备，都"
+"能通过。JavaScript 证明器慢得多，但它保证每个浏览器都能通过。"
 
 #: ../../wasm-engine.rst:193
 msgid "The signed sentinel"
-msgstr ""
+msgstr "有符号的哨兵值"
 
 #: ../../wasm-engine.rst:196
 msgid ""
@@ -270,6 +326,11 @@ msgid ""
 "nonce. The fix is one call, ``BigInt.asUintN(64, result)``, and the "
 "worker keeps it:"
 msgstr ""
+"WebAssembly 把 64 位整数作为 *有符号* 的 ``BigInt`` 返回给 JavaScript。"
+"Hashcash 导出函数用全 1（``EXHAUSTED``，即 ``u64::MAX``）表示“批次已耗尽”，"
+"而 JavaScript 看到的是 ``-1n``，而不是 ``18446744073709551615n``。最初的 "
+"worker 与无符号值进行比较，因此循环在第一个批次之后就带着一个错误的 nonce 退"
+"出了。修复只需一次调用 ``BigInt.asUintN(64, result)``，worker 保留了它："
 
 #: ../../wasm-engine.rst:206
 msgid ""
@@ -277,16 +338,18 @@ msgid ""
 "normalised. Rust cannot enforce this on the JavaScript side; the export's "
 "type says ``u64``, and the conversion happens in the engine."
 msgstr ""
+"这个教训具有普遍性：每个跨越边界的 u64 都必须规范化。Rust 无法在 JavaScript "
+"一侧强制这一点；导出函数的类型写的是 ``u64``，而转换发生在引擎中。"
 
 #: ../../wasm-engine.rst:208
 msgid "Calibration"
-msgstr ""
+msgstr "校准"
 
 #: ../../wasm-engine.rst:213
 msgid ""
 "Relate difficulty settings to wall-clock time in a browser engine and on "
 "native silicon."
-msgstr ""
+msgstr "把难度设置与浏览器引擎中和原生硬件上的实际耗时联系起来。"
 
 #: ../../wasm-engine.rst:215
 msgid ""
@@ -297,10 +360,13 @@ msgid ""
 "repeated solves. Keep module fetch and compilation separate from "
 "steady-state hashing."
 msgstr ""
+"不要根据一台笔记本电脑的平均求解时间来选择难度。Hashcash 有几何分布的尾部；"
+"浏览器中的计时包括调度、温度状态、启动和编译。部署时的校准应当记录浏览器版本、"
+"设备、算法、参数，以及多次重复求解的分布。把模块的获取和编译与稳态哈希分开。"
 
 #: ../../wasm-engine.rst:217
 msgid "Worked calibration plan"
-msgstr ""
+msgstr "推演校准计划"
 
 #: ../../wasm-engine.rst:219
 msgid ""
@@ -311,6 +377,10 @@ msgid ""
 "Choose a setting against the slow-device budget, then test the complete "
 "fetch, solve and verify flow."
 msgstr ""
+"固定 :math:`b`，预热模块，并在每类目标设备上求解至少 100 道独立签发的谜题。"
+"记录耗时的中位数和高百分位数、失败次数以及证明大小。在 :math:`b+1` 下重复。"
+"期望尝试次数会翻倍；单个样本则未必。按照慢速设备的预算选择设置，然后测试完整"
+"的获取、求解和验证流程。"
 
 #: ../../wasm-engine.rst:221
 msgid ""
@@ -322,10 +392,15 @@ msgid ""
 "boundary at which those costs can be measured without adding a timer to "
 "the server's request handler."
 msgstr ""
+"仓库中的原生原语测量结果，不能作为对手机或浏览器求解时间作出承诺的证据。"
+"WASM 模块可以执行相同的算术，但启动、执行和内存成本都不同：在原生环境中，服"
+"务器用 SHA-NI 计算哈希，而浏览器运行的是上面那个可移植的压缩函数。worker 的"
+"消息构成了一个边界，可以在这里测量这些成本，而无需在服务器的请求处理器中加入"
+"计时器。"
 
 #: ../../wasm-engine.rst:223
 msgid "The Interstitial"
-msgstr ""
+msgstr "验证中间页"
 
 #: ../../wasm-engine.rst:226
 msgid ""
@@ -341,10 +416,18 @@ msgid ""
 "to people and to script-running browsers; blind crawlers that follow "
 "every ``href`` ban themselves."
 msgstr ""
+"这个页面（``web/challenge.html``，内嵌在守护进程中）是一个单独的 HTML 文件，"
+"包含一张卡片、一个不确定进度条和一行状态文字。它为自己的位置请求挑战（"
+"``?path=``），启动 worker，用 ``fetch`` 提交解答，成功后重新加载；``fetch`` "
+"调用会以带抖动的指数退避重试，验证返回 ``4xx`` 时会显示其诊断标题。页面的 "
+"``Content-Security-Policy`` 通过 SHA-256 哈希只允许一个脚本，即求解器代码块，"
+"该哈希由守护进程从内嵌页面计算一次得出。一个位于屏幕外的蜜罐链接（"
+"``/__sibuna/honeypot``）对人和执行脚本的浏览器都不可见；盲目跟随每个 "
+"``href`` 的爬虫会让自己被封禁。"
 
 #: ../../wasm-engine.rst:228
 msgid "Exercise 7.1"
-msgstr ""
+msgstr "练习 7.1"
 
 #: ../../wasm-engine.rst:230
 msgid ""
@@ -355,14 +438,18 @@ msgid ""
 "fallback (hint: the worker posts a ``fallback`` message the page can "
 "forward)."
 msgstr ""
+"假设 WebAssembly 证明器在一台笔记本电脑上以默认难度求解一个挑战需要 20 ms，"
+"而 JavaScript 顺序工作量证明器慢 50 倍。估算这台笔记本电脑上以及一部慢四倍的"
+"手机上的后备求解时间，并为报告使用了后备方案的客户端提出一条策略（提示："
+"worker 会发送一条页面可以转发的 ``fallback`` 消息）。"
 
 #: ../../wasm-engine.rst:232
 msgid "Explain the invariant"
-msgstr ""
+msgstr "解释这个不变量"
 
 #: ../../wasm-engine.rst:234
 msgid ""
 "Explain why compiling the browser module from the server's verifier "
 "sources is a stronger guarantee than testing two implementations against "
 "each other."
-msgstr ""
+msgstr "解释为什么用服务器的验证器源码编译浏览器模块，比让两份实现相互对照测试提供了更强的保证。"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../prior-art.rst:1
 msgid "Part II: Prior Art and the Design Space"
-msgstr ""
+msgstr "第 II 部分：前人工作与设计空间"
 
 #: ../../prior-art.rst:4
 msgid ""
@@ -30,14 +30,17 @@ msgid ""
 "weigh against each other, feature by feature, and record which facts were "
 "checked."
 msgstr ""
+"我们把 Sibuna 放到它所借鉴的系统之中：密码学文献中的客户端谜题和顺序工作量，"
+"基于签名和基于语义的应用防火墙，工作量证明验证中间页，以及托管的边缘网络。然"
+"后，我们逐项比较运维人员最可能相互权衡的四种工具，并记录哪些事实经过了核查。"
 
 #: ../../prior-art.rst:6
 msgid "Where Sibuna Comes From"
-msgstr ""
+msgstr "Sibuna 的来历"
 
 #: ../../prior-art.rst:9
 msgid "Objectives"
-msgstr ""
+msgstr "学习目标"
 
 #: ../../prior-art.rst:11
 msgid ""
@@ -48,10 +51,14 @@ msgid ""
 "comparison claims were verified and which were only read from "
 "documentation."
 msgstr ""
+"学完本章，我们应当能够追溯客户端谜题从 1992 年到 2018 年顺序工作量构造的发展"
+"脉络，说出 Sibuna 结合的三个架构思想，把 Sibuna、Anubis、SafeLine 和 "
+"Cloudflare WAF 放进同一个设计空间，并说明哪些比较结论经过了验证、哪些只是从"
+"文档中读到的。"
 
 #: ../../prior-art.rst:13
 msgid "Client Puzzles and Sequential Work"
-msgstr ""
+msgstr "客户端谜题与顺序工作量"
 
 #: ../../prior-art.rst:16
 msgid ""
@@ -65,6 +72,12 @@ msgid ""
 "statement, a solution whose cost is tunable, and verification that is "
 "orders of magnitude cheaper than solving."
 msgstr ""
+"Dwork 和 Naor 的 “Pricing via Processing”（CRYPTO 1992）提出：服务在为请求方"
+"工作之前，先要求对方完成一项难度适中、易于检查的计算。Back 的 Hashcash（"
+"1997 年提出，2002 年成文）把谜题变成部分哈希求逆，其难度由一个整数决定；"
+"Juels 和 Brainard 的客户端谜题（NDSS 1999）把这一思想用于连接洪泛，此时服务"
+"器不能为未解出的谜题记住任何东西。三者共有 Sibuna 保留的形态：由服务器选定的"
+"陈述，成本可调的解答，以及比求解便宜几个数量级的验证。"
 
 #: ../../prior-art.rst:18
 msgid ""
@@ -78,6 +91,12 @@ msgid ""
 "random-oracle model. Part III derives Sibuna's Tier Two from that line of "
 "work; SID 0006 records the assumptions."
 msgstr ""
+"哈希搜索是易并行的，因此核心更多的请求方完成得更快。Mahmoody、Moran 和 "
+"Vadhan（CRYPTO 2013）定义了 *顺序* 工作量证明：无论证明者有多少核心，都必须"
+"执行一长串相互依赖的步骤；Cohen 和 Pietrzak（EUROCRYPT 2018）给出了简单的哈"
+"希图构造，其验证者只需 :math:`O(t \\log N)` 的工作量。Blocki、Lee 和 Zhou（"
+"ITC 2021）在量子随机预言机模型中证明了同一构造对量子证明者也是可靠的。第 "
+"III 部分从这一系列工作推导出 Sibuna 的第二层；SID 0006 记录了相关假设。"
 
 #: ../../prior-art.rst:21
 msgid ""
@@ -88,10 +107,14 @@ msgid ""
 "Multi-Paxos (Lamport 1998; SID 0005); Sibuna now stores its state in "
 "SQLite or PostgreSQL (SID 0011)."
 msgstr ""
+"Sibuna 所结合思想的源流。第一行是客户端谜题与顺序工作量的密码学，中间一行是 "
+"Sibuna 所依托的算法与系统，第三行是同一领域中的产品；箭头表示直接的传承关系。"
+"较早的一种存储设计借鉴了 Multi-Paxos（Lamport 1998；SID 0005）；Sibuna 现在"
+"把状态存放在 SQLite 或 PostgreSQL 中（SID 0011）。"
 
 #: ../../prior-art.rst:70
 msgid "Application Firewalls"
-msgstr ""
+msgstr "应用防火墙"
 
 #: ../../prior-art.rst:73
 msgid ""
@@ -109,10 +132,18 @@ msgid ""
 "either regular expressions or a SIMD engine for the short fields it "
 "inspects."
 msgstr ""
+"第一代 Web 应用防火墙用正则表达式匹配请求字节。ModSecurity（2002）和 OWASP "
+"Core Rule Set 使这种方法开放并得到广泛部署，也让它的代价广为人知：每个请求要"
+"执行数百个带回溯的模式，异常分数需要手工调整，普通输入上还有大量长尾误报。"
+"libinjection（Hanson，2012）用一个分词器取代模式列表，判断一个字符串能否 *解"
+"析* 为 SQL，同时降低了成本和误报。长亭科技的 SafeLine 把这种语义思想带进了完"
+"整的产品，Hyperscan（Wang 等，NSDI 2019）则展示了在输入很长时，向量化的字面"
+"量匹配能走多远。第 VI 部分解释为什么对于它所检查的短字段，Sibuna 选择了稠密"
+"自动机加小型结构分词器，而不是正则表达式或 SIMD 引擎。"
 
 #: ../../prior-art.rst:75
 msgid "Interstitials and Edges"
-msgstr ""
+msgstr "验证中间页与边缘网络"
 
 #: ../../prior-art.rst:78
 msgid ""
@@ -125,6 +156,11 @@ msgid ""
 "token, and a second work tier; the comparison below records where the two "
 "differ."
 msgstr ""
+"网站前面的工作量证明验证中间页在 2025 年变得普遍，当时为语言模型训练提供数据"
+"的爬虫流量，让普通源站的运行成本难以承受。Anubis（Techaro）是最知名的开源实"
+"现：一个 Go 编写的反向代理，提供 JavaScript 谜题，签发会话令牌，其余流量直接"
+"放行。Sibuna 的 Gate 运行配置用无状态挑战、对称令牌和第二层工作量解决同一问"
+"题；下面的比较记录了两者的差异。"
 
 #: ../../prior-art.rst:80
 msgid ""
@@ -137,10 +173,16 @@ msgid ""
 "database shared by a cluster) read by a storage thread off the request "
 "path, rather than a service call."
 msgstr ""
+"在规模的另一端，Cloudflare 这样的托管边缘网络把检查、速率限制和机器人评分部"
+"署在数百个接入点中，并由全局控制平面统一管理。Sibuna 的 Edge 部署借鉴了这种"
+"形态（由共享的策略和信誉平面向本地不可变快照供数），同时保持自托管。因此，它"
+"的存储层是运维人员自己运行的数据库（单个节点上的一个 SQLite 文件，或由集群共"
+"享的一个 PostgreSQL 数据库），由存储线程在请求路径之外读取，而不是一次服务调"
+"用。"
 
 #: ../../prior-art.rst:82
 msgid "Three Ideas in One Binary"
-msgstr ""
+msgstr "一个可执行文件中的三个思想"
 
 #: ../../prior-art.rst:85
 msgid ""
@@ -149,70 +191,73 @@ msgid ""
 "local policy snapshots. Gate and Shield are the two product surfaces; "
 "storage and distributed deployment are options for either."
 msgstr ""
+"Sibuna 结合了三样东西：用于准入的浏览器工作量挑战，有界的应用载荷检查，以及"
+"发布本地策略快照的共享控制平面。Gate 和 Shield 是两种产品运行配置；存储和分"
+"布式部署是两者都可选用的选项。"
 
 #: ../../prior-art.rst:91
 msgid "**Property**"
-msgstr ""
+msgstr "**属性**"
 
 #: ../../prior-art.rst:92
 msgid "**Gate**"
-msgstr ""
+msgstr "**Gate**"
 
 #: ../../prior-art.rst:93
 msgid "**Shield**"
-msgstr ""
+msgstr "**Shield**"
 
 #: ../../prior-art.rst:94
 msgid "Admission"
-msgstr ""
+msgstr "准入"
 
 #: ../../prior-art.rst:95
 msgid "Native Hashcash or sequential-work verification"
-msgstr ""
+msgstr "原生 Hashcash 或顺序工作量验证"
 
 #: ../../prior-art.rst:96 ../../prior-art.rst:99 ../../prior-art.rst:102
 msgid "Same"
-msgstr ""
+msgstr "相同"
 
 #: ../../prior-art.rst:97
 msgid "Session"
-msgstr ""
+msgstr "会话"
 
 #: ../../prior-art.rst:98
 msgid "Keyed BLAKE3; optional Ed25519"
-msgstr ""
+msgstr "带密钥 BLAKE3；可选 Ed25519"
 
 #: ../../prior-art.rst:100
 msgid "Local controls"
-msgstr ""
+msgstr "本地控制"
 
 #: ../../prior-art.rst:101
 msgid "Rules, CIDRs, GCRA, bans"
-msgstr ""
+msgstr "规则、CIDR、GCRA、封禁"
 
 #: ../../prior-art.rst:103
 msgid "Inspection"
-msgstr ""
+msgstr "检查"
 
 #: ../../prior-art.rst:104
 msgid "Disabled"
-msgstr ""
+msgstr "停用"
 
 #: ../../prior-art.rst:105
 msgid "Bounded signatures and structural tokenizers"
-msgstr ""
+msgstr "有界签名匹配和结构分词器"
 
 #: ../../prior-art.rst:106
 msgid "State"
-msgstr ""
+msgstr "状态"
 
 #: ../../prior-art.rst:107
 msgid "Optional persistent policy and reputation, shared across a cluster"
-msgstr ""
+msgstr "可选的持久策略和信誉，可在集群中共享"
 
 #: ../../prior-art.rst:108
 msgid "Also inspection forensics"
-msgstr ""
+msgstr "另有检查取证"
 
 #: ../../prior-art.rst:110
 msgid ""
@@ -224,44 +269,48 @@ msgid ""
 "headers, long bodies, pattern diversity, core count and cache size change "
 "the tradeoffs."
 msgstr ""
+"浏览器求解器与原生验证器由同一份证明源码编译而成。稠密的字面量匹配避免了回溯，"
+"使扫描工作量与输入长度呈线性关系。不可变的策略快照把请求处理与 SQL 以及数据"
+"库的可用性隔离开。这些选择都不能证明算法具有普遍的最优性：短请求头、长请求体、"
+"模式的多样性、核心数和缓存大小都会改变取舍。"
 
 #: ../../prior-art.rst:112
 msgid "Design constraints adopted"
-msgstr ""
+msgstr "采用的设计约束"
 
 #: ../../prior-art.rst:114
 msgid ""
 "No heap allocation on the request path; every table has a fixed capacity "
 "and a stated saturation behaviour."
-msgstr ""
+msgstr "请求路径上没有堆分配；每张表都有固定容量和明确的饱和行为。"
 
 #: ../../prior-art.rst:115
 msgid ""
 "Issuing a challenge writes nothing; only a paid-for solution occupies "
 "memory."
-msgstr ""
+msgstr "签发挑战不写入任何内容；只有付出了工作的解答才占用内存。"
 
 #: ../../prior-art.rst:116
 msgid ""
 "A session admits; it never exempts a request from inspection or an "
 "explicit denial."
-msgstr ""
+msgstr "会话只负责准入；它绝不让请求免于检查或明确的拒绝。"
 
 #: ../../prior-art.rst:117
 msgid ""
 "Every claimed number is either measured by a committed harness or "
 "labelled as a model."
-msgstr ""
+msgstr "每个引用的数字要么由已提交的测量工具测得，要么标明为模型。"
 
 #: ../../prior-art.rst:118
 msgid ""
 "Cryptographic choices cite a venue and a proof, and state their quantum "
 "posture."
-msgstr ""
+msgstr "密码学选择注明发表出处和证明，并说明其抗量子立场。"
 
 #: ../../prior-art.rst:120
 msgid "Feature Comparison"
-msgstr ""
+msgstr "功能比较"
 
 #: ../../prior-art.rst:123
 msgid ""
@@ -276,103 +325,110 @@ msgid ""
 "means the feature exists but only on that plan. Each Sibuna measurement "
 "names the committed result file it comes from."
 msgstr ""
+"下面四张表把 Sibuna 与最常被同时提及的三种工具进行比较。关于其他产品的事实，"
+"读自 2026 年 9 月的公开文档和发布制品：Anubis 1.27.0（MIT 许可证，Go），"
+"SafeLine 社区版 9.x（GPL-3.0 管理代码，外加闭源检测器镜像，Docker Compose），"
+"以及 Cloudflare WAF 开发者文档。Anubis 还在基准测试主机上运行过；SafeLine 和"
+" Cloudflare 没有（第 VIII 部分解释了原因）。短横线表示该产品不提供这一功能；"
+"套餐名称表示该功能存在，但只在该套餐中提供。每项 Sibuna 测量都注明了它所来自"
+"的已提交结果文件。"
 
 #: ../../prior-art.rst:125
 msgid "Feature comparison, part 1: deployment"
-msgstr ""
+msgstr "功能比较，第 1 部分：部署"
 
 #: ../../prior-art.rst:130 ../../prior-art.rst:161 ../../prior-art.rst:197
 #: ../../prior-art.rst:233
 msgid "Feature"
-msgstr ""
+msgstr "功能"
 
 #: ../../prior-art.rst:131 ../../prior-art.rst:162 ../../prior-art.rst:198
 #: ../../prior-art.rst:234
 msgid "Sibuna"
-msgstr ""
+msgstr "Sibuna"
 
 #: ../../prior-art.rst:132 ../../prior-art.rst:163 ../../prior-art.rst:199
 #: ../../prior-art.rst:235
 msgid "Anubis 1.27"
-msgstr ""
+msgstr "Anubis 1.27"
 
 #: ../../prior-art.rst:133 ../../prior-art.rst:164 ../../prior-art.rst:200
 #: ../../prior-art.rst:236
 msgid "SafeLine CE 9"
-msgstr ""
+msgstr "SafeLine CE 9"
 
 #: ../../prior-art.rst:134 ../../prior-art.rst:165 ../../prior-art.rst:201
 #: ../../prior-art.rst:237
 msgid "Cloudflare WAF"
-msgstr ""
+msgstr "Cloudflare WAF"
 
 #: ../../prior-art.rst:135
 msgid "Runs as"
-msgstr ""
+msgstr "运行形式"
 
 #: ../../prior-art.rst:136
 msgid ""
 "One binary; reverse proxy or forward auth; optional SQLite file or shared "
 "PostgreSQL database"
-msgstr ""
+msgstr "一个可执行文件；反向代理或 forward auth；可选的 SQLite 文件或共享的 PostgreSQL 数据库"
 
 #: ../../prior-art.rst:137
 msgid "One Go binary; reverse proxy or forward auth"
-msgstr ""
+msgstr "一个 Go 可执行文件；反向代理或 forward auth"
 
 #: ../../prior-art.rst:138
 msgid ""
 "Seven Docker containers (tengine, detector, mgt, luigi, fvm, chaos, "
 "PostgreSQL)"
-msgstr ""
+msgstr "七个 Docker 容器（tengine、detector、mgt、luigi、fvm、chaos、PostgreSQL）"
 
 #: ../../prior-art.rst:139
 msgid "Hosted network; DNS points at Cloudflare"
-msgstr ""
+msgstr "托管网络；DNS 指向 Cloudflare"
 
 #: ../../prior-art.rst:140
 msgid "Language, runtime"
-msgstr ""
+msgstr "语言与运行时"
 
 #: ../../prior-art.rst:141
 msgid "Rust, no garbage collector; no external crate when storage is off"
-msgstr ""
+msgstr "Rust，无垃圾回收器；关闭存储时不依赖外部 crate"
 
 #: ../../prior-art.rst:142
 msgid "Go, garbage collected"
-msgstr ""
+msgstr "Go，带垃圾回收"
 
 #: ../../prior-art.rst:143
 msgid "C/C++ proxy and detector, Go management, PostgreSQL"
-msgstr ""
+msgstr "C/C++ 代理和检测器，Go 管理端，PostgreSQL"
 
 #: ../../prior-art.rst:144
 msgid "Proprietary edge software"
-msgstr ""
+msgstr "专有边缘软件"
 
 #: ../../prior-art.rst:145
 msgid "Licence"
-msgstr ""
+msgstr "许可证"
 
 #: ../../prior-art.rst:146
 msgid "Source in the repository"
-msgstr ""
+msgstr "源码在仓库中"
 
 #: ../../prior-art.rst:147
 msgid "MIT"
-msgstr ""
+msgstr "MIT"
 
 #: ../../prior-art.rst:148
 msgid "GPL-3.0 management code; closed detector images"
-msgstr ""
+msgstr "GPL-3.0 管理代码；闭源检测器镜像"
 
 #: ../../prior-art.rst:149
 msgid "Proprietary service"
-msgstr ""
+msgstr "专有服务"
 
 #: ../../prior-art.rst:150
 msgid "Host footprint"
-msgstr ""
+msgstr "主机资源占用"
 
 #: ../../prior-art.rst:151
 msgid ""
@@ -380,309 +436,318 @@ msgid ""
 "idle RSS (``benchmarks/results/primitives-latest.json``); at most 16.0 "
 "MiB peak RSS under load (``benchmarks/results/product-latest.md``)"
 msgstr ""
+"35.7 MiB 可执行文件（``benchmarks/results/comparison-latest.json``）；空闲 "
+"RSS 5.9 MiB（``benchmarks/results/primitives-latest.json``）；负载下峰值 "
+"RSS 最多 16.0 MiB（``benchmarks/results/product-latest.md``）"
 
 #: ../../prior-art.rst:152
 msgid "38.1 MiB binary; 21 MiB idle RSS; Linux fixture, console off"
-msgstr ""
+msgstr "38.1 MiB 可执行文件；空闲 RSS 21 MiB；Linux 测试环境，控制台关闭"
 
 #: ../../prior-art.rst:153
 msgid "1 CPU core, 1 GB RAM, 5 GB disk minimum, Docker 20.10+"
-msgstr ""
+msgstr "最低 1 个 CPU 核心、1 GB 内存、5 GB 磁盘，Docker 20.10+"
 
 #: ../../prior-art.rst:154
 msgid "None on premises"
-msgstr ""
+msgstr "无本地部署"
 
 #: ../../prior-art.rst:156
 msgid "Feature comparison, part 2: admission and sessions"
-msgstr ""
+msgstr "功能比较，第 2 部分：准入与会话"
 
 #: ../../prior-art.rst:166
 msgid "Proof-of-work admission"
-msgstr ""
+msgstr "工作量证明准入"
 
 #: ../../prior-art.rst:167
 msgid ""
 "Hashcash (bit-level) and Cohen-Pietrzak sequential work, chosen per rule; "
 "WebAssembly with JavaScript fallback"
 msgstr ""
+"Hashcash（比特级）和 Cohen-Pietrzak 顺序工作量，按规则选择；WebAssembly，并"
+"以 JavaScript 作为后备"
 
 #: ../../prior-art.rst:168
 msgid ""
 "SHA-256 Hashcash in hex nibbles (``fast``, ``slow``); non-work "
 "``metarefresh`` and ``preact`` challenges"
 msgstr ""
+"以十六进制半字节计的 SHA-256 Hashcash（``fast``、``slow``）；不涉及工作量的 "
+"``metarefresh`` 和 ``preact`` 挑战"
 
 #: ../../prior-art.rst:169
 msgid "JavaScript anti-bot challenge and CAPTCHA; not work-bound"
-msgstr ""
+msgstr "JavaScript 反机器人挑战和验证码；不受工作量约束"
 
 #: ../../prior-art.rst:170
 msgid ""
 "Managed challenge, JS challenge, Turnstile; Bot Fight Mode issues a "
 "compute challenge"
-msgstr ""
+msgstr "托管质询、JS 质询、Turnstile；Bot Fight Mode 会发出计算质询"
 
 #: ../../prior-art.rst:171
 msgid "Challenge state on the server"
-msgstr ""
+msgstr "服务器上的挑战状态"
 
 #: ../../prior-art.rst:172
 msgid "None until solved; solved tags in a fixed Robin Hood table"
-msgstr ""
+msgstr "解出之前没有；已解出的标签保存在固定大小的 Robin Hood 表中"
 
 #: ../../prior-art.rst:173
 msgid "Store backend: memory, bbolt, Valkey, or S3"
-msgstr ""
+msgstr "存储后端：内存、bbolt、Valkey 或 S3"
 
 #: ../../prior-art.rst:174
 msgid "Managed by the stack"
-msgstr ""
+msgstr "由整套组件管理"
 
 #: ../../prior-art.rst:175
 msgid "Managed by Cloudflare"
-msgstr ""
+msgstr "由 Cloudflare 管理"
 
 #: ../../prior-art.rst:176
 msgid "Session token"
-msgstr ""
+msgstr "会话令牌"
 
 #: ../../prior-art.rst:177
 msgid ""
 "Keyed BLAKE3 tag, 75-character cookie bound to the work paid; Ed25519 "
 "optional"
-msgstr ""
+msgstr "带密钥 BLAKE3 标签，75 字符的 Cookie，与所付出的工作绑定；可选 Ed25519"
 
 #: ../../prior-art.rst:178
 msgid "JSON Web Token signed with Ed25519; HS512 optional"
-msgstr ""
+msgstr "用 Ed25519 签名的 JSON Web Token；可选 HS512"
 
 #: ../../prior-art.rst:179
 msgid "Cookie issued by the stack"
-msgstr ""
+msgstr "由整套组件签发的 Cookie"
 
 #: ../../prior-art.rst:180
 msgid "``cf_clearance`` cookie"
-msgstr ""
+msgstr "``cf_clearance`` Cookie"
 
 #: ../../prior-art.rst:181
 msgid "Post-quantum posture of the default token"
-msgstr ""
+msgstr "默认令牌的后量子立场"
 
 #: ../../prior-art.rst:182
 msgid "Symmetric: only Grover's quadratic speedup applies"
-msgstr ""
+msgstr "对称：只有 Grover 算法的平方加速适用"
 
 #: ../../prior-art.rst:183
 msgid "Ed25519: broken by Shor's algorithm"
-msgstr ""
+msgstr "Ed25519：可被 Shor 算法攻破"
 
 #: ../../prior-art.rst:184 ../../prior-art.rst:185
 msgid "Not documented"
-msgstr ""
+msgstr "未见文档说明"
 
 #: ../../prior-art.rst:186
 msgid "Policy language"
-msgstr ""
+msgstr "策略语言"
 
 #: ../../prior-art.rst:187
 msgid ""
 "JSON rules: path, User-Agent, headers, IPv4/IPv6 CIDR; ALLOW, DENY, "
 "CHALLENGE, WEIGH with thresholds; dynamic rules from the database"
 msgstr ""
+"JSON 规则：路径、User-Agent、请求头、IPv4/IPv6 CIDR；ALLOW、DENY、"
+"CHALLENGE，以及带阈值的 WEIGH；来自数据库的动态规则"
 
 #: ../../prior-art.rst:188
 msgid ""
 "YAML/JSON bots: regex on UA, path, headers; CIDR; CEL expressions; WEIGH "
 "with thresholds"
-msgstr ""
+msgstr "YAML/JSON 机器人定义：对 UA、路径、请求头使用正则表达式；CIDR；CEL 表达式；带阈值的 WEIGH"
 
 #: ../../prior-art.rst:189
 msgid "Console-defined custom rules, ACLs, IP groups"
-msgstr ""
+msgstr "在控制台中定义的自定义规则、ACL、IP 组"
 
 #: ../../prior-art.rst:190
 msgid ""
 "Rules language expressions; *5 / 20 / 100 / 1000 custom rules by plan*"
-msgstr ""
+msgstr "Rules 语言表达式；*按套餐为 5 / 20 / 100 / 1000 条自定义规则*"
 
 #: ../../prior-art.rst:192
 msgid "Feature comparison, part 3: inspection and state"
-msgstr ""
+msgstr "功能比较，第 3 部分：检查与状态"
 
 #: ../../prior-art.rst:202
 msgid "SQLi, XSS, RCE, traversal inspection"
-msgstr ""
+msgstr "SQLi、XSS、RCE、路径遍历检查"
 
 #: ../../prior-art.rst:203
 msgid ""
 "Shield: tagged automaton plus structural tokenizers, first 8 KB of body"
-msgstr ""
+msgstr "Shield：带标记的自动机加结构分词器，检查请求体的前 8 KB"
 
 #: ../../prior-art.rst:204 ../../prior-art.rst:250
 msgid "\\-"
-msgstr ""
+msgstr "\\-"
 
 #: ../../prior-art.rst:205
 msgid "Semantic analysis engine over OWASP categories, also SSRF, XXE, CRLF"
-msgstr ""
+msgstr "覆盖 OWASP 各类别的语义分析引擎，另有 SSRF、XXE、CRLF"
 
 #: ../../prior-art.rst:206
 msgid ""
 "Managed rulesets *(Pro and above)*; OWASP Core Ruleset; attack score "
 "*(Business and above)*"
-msgstr ""
+msgstr "托管规则集 *（Pro 及以上）*；OWASP Core Ruleset；攻击评分 *（Business 及以上）*"
 
 #: ../../prior-art.rst:207
 msgid "Rate limiting"
-msgstr ""
+msgstr "速率限制"
 
 #: ../../prior-art.rst:208
 msgid "GCRA per client, local to a node"
-msgstr ""
+msgstr "按客户端的 GCRA，作用于单个节点本地"
 
 #: ../../prior-art.rst:209
 msgid "\\- (system load is exposed to CEL rules)"
-msgstr ""
+msgstr "\\- （系统负载会暴露给 CEL 规则）"
 
 #: ../../prior-art.rst:210
 msgid "Per IP, path, session"
-msgstr ""
+msgstr "按 IP、路径、会话"
 
 #: ../../prior-art.rst:211
 msgid "*1 / 2 / 5 / 100 rules by plan*; IP-only keys below Enterprise"
-msgstr ""
+msgstr "*按套餐为 1 / 2 / 5 / 100 条规则*；Enterprise 以下只能以 IP 为键"
 
 #: ../../prior-art.rst:212
 msgid "Bans and reputation"
-msgstr ""
+msgstr "封禁与信誉"
 
 #: ../../prior-art.rst:213
 msgid ""
 "Honeypot bans; reputation trie loaded from the reputation table shared "
 "across the cluster"
-msgstr ""
+msgstr "蜜罐封禁；信誉字典树从集群共享的信誉表加载"
 
 #: ../../prior-art.rst:214
 msgid "DNSBL; ASN and GeoIP through Thoth *(paid, closed)*"
-msgstr ""
+msgstr "DNSBL；通过 Thoth 提供 ASN 和 GeoIP *（付费，闭源）*"
 
 #: ../../prior-art.rst:215
 msgid "IP groups and blacklists; threat intelligence *(Pro)*"
-msgstr ""
+msgstr "IP 组和黑名单；威胁情报 *（Pro）*"
 
 #: ../../prior-art.rst:216
 msgid "IP lists; managed lists and bot score *(Enterprise)*"
-msgstr ""
+msgstr "IP 列表；托管列表和机器人评分 *（Enterprise）*"
 
 #: ../../prior-art.rst:217
 msgid "Forensics"
-msgstr ""
+msgstr "取证"
 
 #: ../../prior-art.rst:218
 msgid ""
 "SQLite or PostgreSQL: full-text search over incidents, vector campaign "
 "clustering"
-msgstr ""
+msgstr "SQLite 或 PostgreSQL：事件全文搜索，基于向量的活动聚类"
 
 #: ../../prior-art.rst:219
 msgid "Prometheus metrics only"
-msgstr ""
+msgstr "仅 Prometheus 指标"
 
 #: ../../prior-art.rst:220
 msgid "PostgreSQL attack log with console"
-msgstr ""
+msgstr "PostgreSQL 攻击日志，配有控制台"
 
 #: ../../prior-art.rst:221
 msgid "Security Events; sampled on Free"
-msgstr ""
+msgstr "Security Events；Free 套餐为抽样数据"
 
 #: ../../prior-art.rst:222
 msgid "Multi-node"
-msgstr ""
+msgstr "多节点"
 
 #: ../../prior-art.rst:223
 msgid ""
 "One PostgreSQL database shared by every node for policy and reputation; "
 "shared seed; sticky challenge verification"
-msgstr ""
+msgstr "所有节点共享一个 PostgreSQL 数据库来保存策略和信誉；共享种子；粘性挑战验证"
 
 #: ../../prior-art.rst:224
 msgid "Shared signing key; shared Valkey store"
-msgstr ""
+msgstr "共享签名密钥；共享 Valkey 存储"
 
 #: ../../prior-art.rst:225
 msgid "One stack per host"
-msgstr ""
+msgstr "每台主机一套组件"
 
 #: ../../prior-art.rst:226
 msgid "Global anycast"
-msgstr ""
+msgstr "全局任播"
 
 #: ../../prior-art.rst:228
 msgid "Feature comparison, part 4: operations"
-msgstr ""
+msgstr "功能比较，第 4 部分：运维"
 
 #: ../../prior-art.rst:238
 msgid "Metrics"
-msgstr ""
+msgstr "指标"
 
 #: ../../prior-art.rst:239
 msgid "Prometheus at ``/__sibuna/metrics``"
-msgstr ""
+msgstr "Prometheus，位于 ``/__sibuna/metrics``"
 
 #: ../../prior-art.rst:240
 msgid "Prometheus on a separate port"
-msgstr ""
+msgstr "Prometheus，使用单独的端口"
 
 #: ../../prior-art.rst:241
 msgid "Console dashboards"
-msgstr ""
+msgstr "控制台仪表板"
 
 #: ../../prior-art.rst:242
 msgid "Dashboard and analytics"
-msgstr ""
+msgstr "仪表板和分析"
 
 #: ../../prior-art.rst:243
 msgid "TLS termination"
-msgstr ""
+msgstr "TLS 终止"
 
 #: ../../prior-art.rst:244 ../../prior-art.rst:245
 msgid "\\- (ingress)"
-msgstr ""
+msgstr "\\- （由入口代理负责）"
 
 #: ../../prior-art.rst:246 ../../prior-art.rst:247 ../../prior-art.rst:251
 #: ../../prior-art.rst:252 ../../prior-art.rst:255
 msgid "**Yes**"
-msgstr ""
+msgstr "**是**"
 
 #: ../../prior-art.rst:248
 msgid "Management console"
-msgstr ""
+msgstr "管理控制台"
 
 #: ../../prior-art.rst:249
 msgid "Opt-in; SID 0007 Committed"
-msgstr ""
+msgstr "可选启用；SID 0007 状态为 Committed"
 
 #: ../../prior-art.rst:253
 msgid "Measured on the benchmark host"
-msgstr ""
+msgstr "在基准测试主机上测量"
 
 #: ../../prior-art.rst:254
 msgid "**Yes** (Part VIII)"
-msgstr ""
+msgstr "**是** （第 VIII 部分）"
 
 #: ../../prior-art.rst:256
 msgid "\\- (Docker only)"
-msgstr ""
+msgstr "\\- （仅 Docker）"
 
 #: ../../prior-art.rst:257
 msgid "\\- (hosted)"
-msgstr ""
+msgstr "\\- （托管服务）"
 
 #: ../../prior-art.rst:259
 msgid "Three differences carry most of the weight in a selection decision."
-msgstr ""
+msgstr "在选型决策中，有三个差异最为关键。"
 
 #: ../../prior-art.rst:261
 msgid ""
@@ -692,6 +757,10 @@ msgid ""
 "Sibuna Shield does both, in that order: inspection can deny a request "
 "that already holds a valid session."
 msgstr ""
+"*工作由谁承担。* Anubis 和 Sibuna Gate 让 *客户端* 在源站做任何事情之前先付"
+"出代价。SafeLine 和 Cloudflare 先检查，再有选择地发起挑战；它们的默认立场是"
+"先准入再过滤。Sibuna Shield 两者都做，并且按这个顺序：即使请求已经持有有效会"
+"话，检查仍然可以拒绝它。"
 
 #: ../../prior-art.rst:262
 msgid ""
@@ -701,6 +770,10 @@ msgid ""
 "in a fixed table. SafeLine keeps attack logs in PostgreSQL; Cloudflare "
 "keeps everything, with sampled visibility on the Free plan."
 msgstr ""
+"*服务器记住什么。* Anubis 把挑战状态保存在一个存储中（内存、bbolt、Valkey 或"
+" S3），并用 Ed25519 签名 JSON Web Token；Sibuna 签发一个自我认证的记录，只在"
+"一张固定大小的表中记住已解出的标签。SafeLine 把攻击日志保存在 PostgreSQL 中；"
+"Cloudflare 保存一切，Free 套餐只提供抽样的可见性。"
 
 #: ../../prior-art.rst:263
 msgid ""
@@ -710,10 +783,14 @@ msgid ""
 "host with at least one core, one gigabyte of memory, and five gigabytes "
 "of disk; Cloudflare is a DNS change and a subscription."
 msgstr ""
+"*运维人员需要运行什么。* Sibuna 是一个可执行文件，加上可选的 SQLite 文件，或"
+"者由集群共享的 PostgreSQL 数据库；Anubis 是一个 Go 可执行文件；SafeLine 是七"
+"个容器，运行在 Linux 主机的 Docker 守护进程之上，主机至少需要一个核心、1 GB "
+"内存和 5 GB 磁盘；Cloudflare 则是一次 DNS 修改加一份订阅。"
 
 #: ../../prior-art.rst:265
 msgid "Current product boundary"
-msgstr ""
+msgstr "当前的产品边界"
 
 #: ../../prior-art.rst:268
 msgid ""
@@ -726,21 +803,27 @@ msgid ""
 "performance isolation gate, with eight active dashboards under load, is "
 "not yet measured; Part VIII records what is."
 msgstr ""
+"Sibuna 把入口的 TLS 终止交给部署中的代理，不用训练好的模型给机器人评分，也不"
+"发布付费签名。它可选启用的控制台提供经过认证的仪表板、国家信息补充、策略编辑、"
+"调查和集群管理。国家查询和存储工作在请求分类之外运行。SID 0007 的状态为 "
+"Committed，控制台也通过了它的浏览器工作流测试（SID 0010）。它的正式性能隔离"
+"门槛，即在负载下运行八个活动仪表板，尚未测量；第 VIII 部分记录了已经测得的内"
+"容。"
 
 #: ../../prior-art.rst:270
 msgid "Exercise 2.1"
-msgstr ""
+msgstr "练习 2.1"
 
 #: ../../prior-art.rst:272
 msgid ""
 "Explain why compiling one verifier source to native code and WebAssembly "
 "reduces protocol drift. Which properties still require independent "
 "testing or cryptographic review?"
-msgstr ""
+msgstr "解释为什么把同一份验证器源码同时编译为原生代码和 WebAssembly 可以减少协议漂移。哪些性质仍然需要独立测试或密码学审查？"
 
 #: ../../prior-art.rst:274
 msgid "Exercise 2.2"
-msgstr ""
+msgstr "练习 2.2"
 
 #: ../../prior-art.rst:276
 msgid ""
@@ -748,14 +831,16 @@ msgid ""
 "gives a static site (a) a proof-of-work gate, (b) SQL-injection "
 "inspection, and (c) a cluster-wide ban. Which rows forced each choice?"
 msgstr ""
+"只使用比较表，写出能为一个静态网站提供以下功能的最小部署：(a) 工作量证明网关，"
+"(b) SQL 注入检查，(c) 集群范围的封禁。每个选择是由哪几行决定的？"
 
 #: ../../prior-art.rst:278
 msgid "Hint: Start from the \"runs as\" and \"multi-node\" rows."
-msgstr ""
+msgstr "提示：从“运行形式”和“多节点”两行开始。"
 
 #: ../../prior-art.rst:280
 msgid "Explain the invariant"
-msgstr ""
+msgstr "解释这个不变量"
 
 #: ../../prior-art.rst:282
 msgid ""
@@ -764,3 +849,5 @@ msgid ""
 "tables we would want to re-verify before quoting it to a customer, and "
 "say how we would verify it."
 msgstr ""
+"描述 Gate、Shield 和可选的共享存储如何划分准入、检查和策略分发。然后指出比较"
+"表中我们在向客户引用之前想要重新核实的一行，并说明我们会如何核实它。"

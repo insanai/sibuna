@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:31+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../operations.rst:1
 msgid "Part IX: Operations and Deployment"
-msgstr ""
+msgstr "第 IX 部分：运维与部署"
 
 #: ../../operations.rst:4
 msgid ""
@@ -27,15 +27,17 @@ msgid ""
 "policy files, persistent storage in SQLite or PostgreSQL, clustering over "
 "one shared database, and packaging."
 msgstr ""
+"我们介绍两种运行配置、每个命令行选项、forward auth 配置方案、策略文件、"
+"SQLite 或 PostgreSQL 中的持久存储、基于一个共享数据库的集群，以及打包。"
 
 #: ../../operations.rst:6
 msgid "Surfaces and Configuration"
-msgstr ""
+msgstr "运行配置与配置项"
 
 #: ../../operations.rst:9 ../../operations.rst:310 ../../operations.rst:446
 #: ../../operations.rst:475 ../../operations.rst:614
 msgid "Objectives"
-msgstr ""
+msgstr "学习目标"
 
 #: ../../operations.rst:11
 msgid ""
@@ -43,22 +45,24 @@ msgid ""
 "proxy or a forward-auth validator, choose a surface, set the "
 "proof-of-work tier and difficulty, and manage the master secret."
 msgstr ""
+"学完本章，我们应当能够把 Sibuna 作为反向代理或 forward-auth 验证器运行，选择"
+"运行配置，设置工作量证明的层和难度，并管理主密钥。"
 
 #: ../../operations.rst:13
 msgid "Choosing a Surface"
-msgstr ""
+msgstr "选择运行配置"
 
 #: ../../operations.rst:16
 msgid ""
 "*Gate* (``--gate``, alias ``--no-waf``): proof-of-work admission, "
 "sessions, declarative rules, reputation, GCRA limits, bans."
-msgstr ""
+msgstr "*Gate*\\ （``--gate``，别名 ``--no-waf``）：工作量证明准入、会话、声明式规则、信誉、GCRA 限制、封禁。"
 
 #: ../../operations.rst:17
 msgid ""
 "*Shield* (default, ``--shield``, alias ``--waf``): Gate plus the semantic "
 "firewall."
-msgstr ""
+msgstr "*Shield*\\ （默认，``--shield``，别名 ``--waf``）：Gate 加上语义防火墙。"
 
 #: ../../operations.rst:18
 msgid ""
@@ -67,130 +71,135 @@ msgid ""
 "``--database-url`` with ``--cluster-node`` connects several nodes to one "
 "PostgreSQL database (SID 0011)."
 msgstr ""
+"*分布式部署*\\ （两种运行配置都可选用）：``--data-dir`` 把策略、信誉和取证数"
+"据保存在本地 SQLite 文件中；``--database-url`` 加上 ``--cluster-node`` 把多"
+"个节点连接到同一个 PostgreSQL 数据库（SID 0011）。"
 
 #: ../../operations.rst:20
 msgid "Command-Line Reference"
-msgstr ""
+msgstr "命令行参考"
 
 #: ../../operations.rst:23
 msgid ""
 "The table lists every option of ``sibuna --help``. Ranges are those the "
 "parser enforces."
-msgstr ""
+msgstr "下表列出 ``sibuna --help`` 的每个选项。范围是解析器强制执行的范围。"
 
 #: ../../operations.rst:25
 msgid "Daemon options"
-msgstr ""
+msgstr "守护进程选项"
 
 #: ../../operations.rst:29 ../../operations.rst:172
 msgid "Flag"
-msgstr ""
+msgstr "选项"
 
 #: ../../operations.rst:30
 msgid "Default"
-msgstr ""
+msgstr "默认值"
 
 #: ../../operations.rst:31 ../../operations.rst:173
 msgid "Meaning"
-msgstr ""
+msgstr "含义"
 
 #: ../../operations.rst:32
 msgid "``--port, -p``"
-msgstr ""
+msgstr "``--port, -p``"
 
 #: ../../operations.rst:33
 msgid "``8080``"
-msgstr ""
+msgstr "``8080``"
 
 #: ../../operations.rst:34
 msgid "Listening port, 1 to 65535"
-msgstr ""
+msgstr "监听端口，1 到 65535"
 
 #: ../../operations.rst:35
 msgid "``--host, -h``"
-msgstr ""
+msgstr "``--host, -h``"
 
 #: ../../operations.rst:36
 msgid "``0.0.0.0``"
-msgstr ""
+msgstr "``0.0.0.0``"
 
 #: ../../operations.rst:37
 msgid "Listening address, an IP address literal"
-msgstr ""
+msgstr "监听地址，一个 IP 地址字面量"
 
 #: ../../operations.rst:38
 msgid "``--upstream-host``"
-msgstr ""
+msgstr "``--upstream-host``"
 
 #: ../../operations.rst:39
 msgid "``127.0.0.1``"
-msgstr ""
+msgstr "``127.0.0.1``"
 
 #: ../../operations.rst:40
 msgid "Origin host (reverse proxy mode)"
-msgstr ""
+msgstr "源站主机（反向代理模式）"
 
 #: ../../operations.rst:41
 msgid "``--upstream-port, -u``"
-msgstr ""
+msgstr "``--upstream-port, -u``"
 
 #: ../../operations.rst:42
 msgid "``3000``"
-msgstr ""
+msgstr "``3000``"
 
 #: ../../operations.rst:43
 msgid "Origin port"
-msgstr ""
+msgstr "源站端口"
 
 #: ../../operations.rst:44
 msgid "``--mode, -m``"
-msgstr ""
+msgstr "``--mode, -m``"
 
 #: ../../operations.rst:45
 msgid "``reverse_proxy``"
-msgstr ""
+msgstr "``reverse_proxy``"
 
 #: ../../operations.rst:46
 msgid ""
 "``reverse_proxy`` or ``forward_auth`` (also ``proxy`` and ``auth``), "
 "given once"
 msgstr ""
+"``reverse_proxy`` 或 ``forward_auth``\\ （也可写作 ``proxy`` 和 ``auth``），"
+"只能给出一次"
 
 #: ../../operations.rst:47
 msgid "``--workers, -w``"
-msgstr ""
+msgstr "``--workers, -w``"
 
 #: ../../operations.rst:48
 msgid "one per CPU"
-msgstr ""
+msgstr "每个 CPU 一个"
 
 #: ../../operations.rst:49
 msgid ""
 "Accept threads sharing the listening socket, 0 (one per CPU) to 64; each "
 "accepted connection then gets its own thread"
-msgstr ""
+msgstr "共享监听套接字的接受线程，0（每个 CPU 一个）到 64；之后每个被接受的连接都有自己的线程"
 
 #: ../../operations.rst:50
 msgid "``--max-connections``"
-msgstr ""
+msgstr "``--max-connections``"
 
 #: ../../operations.rst:51
 msgid "``1024``"
-msgstr ""
+msgstr "``1024``"
 
 #: ../../operations.rst:52
 msgid ""
 "Connections served concurrently, 1 to 8192; further ones are answered "
 "``503``"
-msgstr ""
+msgstr "同时服务的连接数，1 到 8192；超出的连接被回答 ``503``"
 
 #: ../../operations.rst:53
 msgid "``--max-connections-per-ip``"
-msgstr ""
+msgstr "``--max-connections-per-ip``"
 
 #: ../../operations.rst:54 ../../operations.rst:72
 msgid "``64``"
-msgstr ""
+msgstr "``64``"
 
 #: ../../operations.rst:55
 msgid ""
@@ -198,14 +207,16 @@ msgid ""
 "IPv6 peer counts with its ``--ipv6-prefix`` network, and forwarded "
 "headers play no part; further ones are answered ``503``"
 msgstr ""
+"一个套接字对端地址可以持有的连接数，0（不限）到 8192；IPv6 对端按其 "
+"``--ipv6-prefix`` 网络计数，转发头不起作用；超出的连接被回答 ``503``"
 
 #: ../../operations.rst:56
 msgid "``--idle-timeout``"
-msgstr ""
+msgstr "``--idle-timeout``"
 
 #: ../../operations.rst:57
 msgid "``15``"
-msgstr ""
+msgstr "``15``"
 
 #: ../../operations.rst:58
 msgid ""
@@ -216,348 +227,353 @@ msgid ""
 "attacks). The client socket carries a write timeout of the same length, "
 "so a client that accepts no byte for that long loses the connection"
 msgstr ""
+"最长静默时间（秒），0 到 86400。请求头部必须在此时间内到达。源站响应每次读取"
+"都会刷新它，因此只要有字节流动，慢速流就能存活，而静默的源站会在两个套接字上"
+"都被切断。经代理的上传必须在每个周期内传送 16 KiB（防御慢速请求体攻击的最低"
+"速率）。客户端套接字带有同样长度的写超时，因此一个在这么长时间内不接收任何字"
+"节的客户端会失去连接"
 
 #: ../../operations.rst:59
 msgid "``--websocket-idle-timeout``"
-msgstr ""
+msgstr "``--websocket-idle-timeout``"
 
 #: ../../operations.rst:60 ../../operations.rst:90
 msgid "``300``"
-msgstr ""
+msgstr "``300``"
 
 #: ../../operations.rst:61
 msgid "Idle deadline of an upgraded connection in seconds, 0 to 86400"
-msgstr ""
+msgstr "升级连接的空闲期限（秒），0 到 86400"
 
 #: ../../operations.rst:62
 msgid "``--trust-forwarded``"
-msgstr ""
+msgstr "``--trust-forwarded``"
 
 #: ../../operations.rst:63
 msgid "off; on in forward-auth"
-msgstr ""
+msgstr "关闭；forward-auth 模式下开启"
 
 #: ../../operations.rst:64
 msgid "Honour ``X-Forwarded-For`` / ``X-Real-IP`` from the peer"
-msgstr ""
+msgstr "信任对端发来的 ``X-Forwarded-For`` / ``X-Real-IP``"
 
 #: ../../operations.rst:65
 msgid "``--no-trust-forwarded``"
-msgstr ""
+msgstr "``--no-trust-forwarded``"
 
 #: ../../operations.rst:66 ../../operations.rst:99 ../../operations.rst:144
 msgid "off"
-msgstr ""
+msgstr "关闭"
 
 #: ../../operations.rst:67
 msgid "Never honour them, even in forward-auth mode"
-msgstr ""
+msgstr "即使在 forward-auth 模式下也从不信任它们"
 
 #: ../../operations.rst:68
 msgid "``--trusted-hops``"
-msgstr ""
+msgstr "``--trusted-hops``"
 
 #: ../../operations.rst:69
 msgid "``1``"
-msgstr ""
+msgstr "``1``"
 
 #: ../../operations.rst:70
 msgid ""
 "With forwarded identity trusted, the client is the ``X-Forwarded-For`` "
 "entry this many positions from the right, 1 to 8"
-msgstr ""
+msgstr "信任转发身份时，客户端是从右数第这么多个 ``X-Forwarded-For`` 条目，1 到 8"
 
 #: ../../operations.rst:71
 msgid "``--ipv6-prefix``"
-msgstr ""
+msgstr "``--ipv6-prefix``"
 
 #: ../../operations.rst:73
 msgid ""
 "IPv6 prefix length, 32 to 128, that rate limits, bans and the per-client "
 "connection bound apply to"
-msgstr ""
+msgstr "速率限制、封禁和按客户端连接上限所作用的 IPv6 前缀长度，32 到 128"
 
 #: ../../operations.rst:74
 msgid "``--algorithm, -a``"
-msgstr ""
+msgstr "``--algorithm, -a``"
 
 #: ../../operations.rst:75
 msgid "``posw``"
-msgstr ""
+msgstr "``posw``"
 
 #: ../../operations.rst:76
 msgid "``posw`` or ``hashcash``"
-msgstr ""
+msgstr "``posw`` 或 ``hashcash``"
 
 #: ../../operations.rst:77
 msgid "``--difficulty, -d``"
-msgstr ""
+msgstr "``--difficulty, -d``"
 
 #: ../../operations.rst:78 ../../operations.rst:81
 msgid "``16``"
-msgstr ""
+msgstr "``16``"
 
 #: ../../operations.rst:79
 msgid "Work bits, 1 to 64: Hashcash zero bits, or PoSW depth plus three"
-msgstr ""
+msgstr "工作比特，1 到 64：Hashcash 的零比特数，或 PoSW 深度加三"
 
 #: ../../operations.rst:80
 msgid "``--posw-challenges``"
-msgstr ""
+msgstr "``--posw-challenges``"
 
 #: ../../operations.rst:82
 msgid "Openings per sequential-work proof, 1 to 32"
-msgstr ""
+msgstr "每个顺序工作量证明的揭示数，1 到 32"
 
 #: ../../operations.rst:83
 msgid "``--token-scheme``"
-msgstr ""
+msgstr "``--token-scheme``"
 
 #: ../../operations.rst:84
 msgid "``mac``"
-msgstr ""
+msgstr "``mac``"
 
 #: ../../operations.rst:85
 msgid "``mac`` (keyed BLAKE3) or ``ed25519``"
-msgstr ""
+msgstr "``mac``\\ （带密钥 BLAKE3）或 ``ed25519``"
 
 #: ../../operations.rst:86
 msgid "``--token-ttl``"
-msgstr ""
+msgstr "``--token-ttl``"
 
 #: ../../operations.rst:87
 msgid "``86400``"
-msgstr ""
+msgstr "``86400``"
 
 #: ../../operations.rst:88
 msgid "Session lifetime, seconds (1 to 31,536,000)"
-msgstr ""
+msgstr "会话有效期，秒（1 到 31,536,000）"
 
 #: ../../operations.rst:89
 msgid "``--challenge-ttl``"
-msgstr ""
+msgstr "``--challenge-ttl``"
 
 #: ../../operations.rst:91
 msgid "Challenge lifetime, seconds (1 to 86,400)"
-msgstr ""
+msgstr "挑战有效期，秒（1 到 86,400）"
 
 #: ../../operations.rst:92
 msgid "``--secret-file, -s``"
-msgstr ""
+msgstr "``--secret-file, -s``"
 
 #: ../../operations.rst:93
 msgid "random"
-msgstr ""
+msgstr "随机"
 
 #: ../../operations.rst:94
 msgid ""
 "64 hex characters or 32 raw bytes; ``SIBUNA_SECRET`` (64 hex characters) "
 "is also accepted"
-msgstr ""
+msgstr "64 个十六进制字符或 32 个原始字节；也接受 ``SIBUNA_SECRET``\\ （64 个十六进制字符）"
 
 #: ../../operations.rst:95
 msgid "``--cookie-name``"
-msgstr ""
+msgstr "``--cookie-name``"
 
 #: ../../operations.rst:96
 msgid "``__sibuna_token``"
-msgstr ""
+msgstr "``__sibuna_token``"
 
 #: ../../operations.rst:97
 msgid "Session cookie name, 1 to 64 token characters"
-msgstr ""
+msgstr "会话 Cookie 名称，1 到 64 个 token 字符"
 
 #: ../../operations.rst:98
 msgid "``--secure-cookie``"
-msgstr ""
+msgstr "``--secure-cookie``"
 
 #: ../../operations.rst:100
 msgid "Add the ``Secure`` attribute"
-msgstr ""
+msgstr "添加 ``Secure`` 属性"
 
 #: ../../operations.rst:101
 msgid "``--gate`` / ``--shield``"
-msgstr ""
+msgstr "``--gate`` / ``--shield``"
 
 #: ../../operations.rst:102
 msgid "shield"
-msgstr ""
+msgstr "shield"
 
 #: ../../operations.rst:103
 msgid "Surface selection"
-msgstr ""
+msgstr "运行配置选择"
 
 #: ../../operations.rst:104
 msgid "``--rate-limit``"
-msgstr ""
+msgstr "``--rate-limit``"
 
 #: ../../operations.rst:105
 msgid "``100``"
-msgstr ""
+msgstr "``100``"
 
 #: ../../operations.rst:106
 msgid "Requests per window per client (GCRA burst)"
-msgstr ""
+msgstr "每个客户端每个窗口内的请求数（GCRA 突发量）"
 
 #: ../../operations.rst:107
 msgid "``--rate-window``"
-msgstr ""
+msgstr "``--rate-window``"
 
 #: ../../operations.rst:108
 msgid "``10``"
-msgstr ""
+msgstr "``10``"
 
 #: ../../operations.rst:109
 msgid "Window in seconds, 1 to 86400"
-msgstr ""
+msgstr "窗口长度（秒），1 到 86400"
 
 #: ../../operations.rst:110
 msgid "``--challenge-rate-limit``"
-msgstr ""
+msgstr "``--challenge-rate-limit``"
 
 #: ../../operations.rst:111
 msgid "``30``"
-msgstr ""
+msgstr "``30``"
 
 #: ../../operations.rst:112
 msgid ""
 "Challenge issuances and verifications per window per client, separate "
 "from the request budget"
-msgstr ""
+msgstr "每个客户端每个窗口内的挑战签发和验证次数，与请求预算分开计算"
 
 #: ../../operations.rst:113
 msgid "``--ban-seconds``"
-msgstr ""
+msgstr "``--ban-seconds``"
 
 #: ../../operations.rst:114
 msgid "``3600``"
-msgstr ""
+msgstr "``3600``"
 
 #: ../../operations.rst:115
 msgid "Honeypot ban duration, 0 to 31,536,000"
-msgstr ""
+msgstr "蜜罐封禁时长，0 到 31,536,000"
 
 #: ../../operations.rst:116
 msgid "``--policy-file, -P``"
-msgstr ""
+msgstr "``--policy-file, -P``"
 
 #: ../../operations.rst:117 ../../operations.rst:129
 #: ../../operations.rst:132 ../../operations.rst:135
 #: ../../operations.rst:138
 msgid "none"
-msgstr ""
+msgstr "无"
 
 #: ../../operations.rst:118
 msgid "Declarative JSON policy"
-msgstr ""
+msgstr "声明式 JSON 策略"
 
 #: ../../operations.rst:119
 msgid "``--rate-table-cells``"
-msgstr ""
+msgstr "``--rate-table-cells``"
 
 #: ../../operations.rst:120
 msgid "``262144``"
-msgstr ""
+msgstr "``262144``"
 
 #: ../../operations.rst:121
 msgid ""
 "Cells per rate limiter table, 16 bytes each, 4,096 to 16,777,216, rounded "
 "up to a power of two"
-msgstr ""
+msgstr "每张速率限制器表的单元数，每个 16 字节，4,096 到 16,777,216，向上取整为 2 的幂"
 
 #: ../../operations.rst:122
 msgid "``--ban-table-slots``"
-msgstr ""
+msgstr "``--ban-table-slots``"
 
 #: ../../operations.rst:123
 msgid "``65536``"
-msgstr ""
+msgstr "``65536``"
 
 #: ../../operations.rst:124
 msgid ""
 "Ban table slots, 24 bytes each, 1,024 to 16,777,216, rounded up to a "
 "power of two"
-msgstr ""
+msgstr "封禁表槽数，每个 24 字节，1,024 到 16,777,216，向上取整为 2 的幂"
 
 #: ../../operations.rst:125
 msgid "``--spent-tags``"
-msgstr ""
+msgstr "``--spent-tags``"
 
 #: ../../operations.rst:126
 msgid "``1048576``"
-msgstr ""
+msgstr "``1048576``"
 
 #: ../../operations.rst:127
 msgid ""
 "Solved challenges remembered against replay, 24 bytes each, 65,536 to "
 "16,777,216"
-msgstr ""
+msgstr "为防重放而记住的已解挑战数，每个 24 字节，65,536 到 16,777,216"
 
 #: ../../operations.rst:128
 msgid "``--data-dir, -D``"
-msgstr ""
+msgstr "``--data-dir, -D``"
 
 #: ../../operations.rst:130
 msgid "One node: persist to the SQLite file ``<path>/sibuna.db``"
-msgstr ""
+msgstr "单节点：持久化到 SQLite 文件 ``<path>/sibuna.db``"
 
 #: ../../operations.rst:131
 msgid "``--database-url``"
-msgstr ""
+msgstr "``--database-url``"
 
 #: ../../operations.rst:133
 msgid ""
 "A cluster: the shared PostgreSQL database (``postgres://`` or "
 "``postgresql://``)"
-msgstr ""
+msgstr "集群：共享的 PostgreSQL 数据库（``postgres://`` 或 ``postgresql://``）"
 
 #: ../../operations.rst:134
 msgid "``--database-url-file``"
-msgstr ""
+msgstr "``--database-url-file``"
 
 #: ../../operations.rst:136
 msgid "Read the database URL from an owner-only file"
-msgstr ""
+msgstr "从一个仅所有者可读的文件中读取数据库 URL"
 
 #: ../../operations.rst:137
 msgid "``--cluster-node``"
-msgstr ""
+msgstr "``--cluster-node``"
 
 #: ../../operations.rst:139
 msgid ""
 "This node's id; binds challenge keys and the top bits of incident "
 "identifiers; required with a database URL"
-msgstr ""
+msgstr "本节点的 ID；绑定挑战密钥和事件标识符的高位；使用数据库 URL 时必需"
 
 #: ../../operations.rst:140
 msgid "``--storage-poll-ms``"
-msgstr ""
+msgstr "``--storage-poll-ms``"
 
 #: ../../operations.rst:141
 msgid "``500``"
-msgstr ""
+msgstr "``500``"
 
 #: ../../operations.rst:142
 msgid "Storage tick interval, 1 to 60,000 ms"
-msgstr ""
+msgstr "存储节拍间隔，1 到 60,000 ms"
 
 #: ../../operations.rst:143
 msgid "``--verbose, -v``"
-msgstr ""
+msgstr "``--verbose, -v``"
 
 #: ../../operations.rst:145
 msgid "Verbose logging"
-msgstr ""
+msgstr "详细日志"
 
 #: ../../operations.rst:146
 msgid "``--help`` / ``--version``"
-msgstr ""
+msgstr "``--help`` / ``--version``"
 
 #: ../../operations.rst:148
 msgid ""
 "Print the help (console options first, when the console is compiled in) "
 "or the version, and exit"
-msgstr ""
+msgstr "打印帮助（编译了控制台时，控制台选项列在最前）或版本号，然后退出"
 
 #: ../../operations.rst:150
 msgid ""
@@ -570,10 +586,17 @@ msgid ""
 "startup with ``RemovedOption`` and a hint that names SID 0011. The "
 "console's options are listed in the next chapter."
 msgstr ""
+"``--data-dir`` 与数据库 URL 互斥，``--database-url`` 与 "
+"``--database-url-file`` 也互斥。没有 ``--cluster-node`` 的数据库 URL 会被拒"
+"绝。Zaxonlite 的集群选项 ``--cluster-listen``、``--cluster-peer``、"
+"``--cluster-secret-file`` 以及 ``--cluster-tls-cert``、"
+"``--cluster-tls-key`` 和 ``--cluster-tls-ca`` 已被移除；给出其中任何一个都会"
+"以 ``RemovedOption`` 终止启动，并附带一条指向 SID 0011 的提示。控制台的选项"
+"列在下一章。"
 
 #: ../../operations.rst:152
 msgid "The master secret"
-msgstr ""
+msgstr "主密钥"
 
 #: ../../operations.rst:154
 msgid ""
@@ -584,10 +607,15 @@ msgid ""
 "``head -c 32 /dev/urandom | xxd -p -c 64 > /etc/sibuna/secret`` and mode "
 "0600."
 msgstr ""
+"没有 ``--secret-file`` 或 ``SIBUNA_SECRET`` 时，守护进程会生成一个随机种子，"
+"启动横幅打印 “random (set --secret-file)”。此时令牌和挑战会随进程一起失效，"
+"而节点持有不同种子的集群会相互拒绝对方的 Cookie。用 ``head -c 32 "
+"/dev/urandom | xxd -p -c 64 > /etc/sibuna/secret`` 生成一个，并设置权限为 "
+"0600。"
 
 #: ../../operations.rst:156
 msgid "Console Preview"
-msgstr ""
+msgstr "控制台预览"
 
 #: ../../operations.rst:159
 msgid ""
@@ -599,6 +627,12 @@ msgid ""
 "build with ``--no-default-features`` alone has neither storage nor "
 "console. Bootstrap locally while the daemon is stopped:"
 msgstr ""
+"默认的 ``console`` 特性会把控制台编译进守护进程，但只有使用 ``--console`` 时"
+"才会启动。它需要存储：没有 ``--data-dir`` 或 ``--database-url`` 的 "
+"``--console`` 会以 ``CONSOLE001``\\ （``StorageRequired``）被拒绝。使用 "
+"``cargo build --release -p sibuna --no-default-features --features sqlite`` "
+"可以把它排除在编译之外；只用 ``--no-default-features`` 的构建既没有存储也没"
+"有控制台。在守护进程停止时于本地完成初始化："
 
 #: ../../operations.rst:166
 msgid ""
@@ -613,146 +647,153 @@ msgid ""
 "(crate ``sibuna-console-ui``) by the daemon's build script; it and the "
 "committed stylesheet ship with ordinary builds."
 msgstr ""
+"``sibuna console init-admin`` 是同一个命令。打开 "
+"``http://127.0.0.1:19446/console/`` 并更换生成的临时密码；该密码必须在首次登"
+"录时修改，一小时后过期。登录后的导航提供动画国家地球、请求和挑战统计、事件调"
+"查、策略和检查编辑器、用户、限定范围的 API 令牌、审计以及服务节点控制。认证"
+"界面不加载任何地球几何数据或遥测数据。界面是一个由守护进程的构建脚本从 "
+"``cmd/console-ui``\\ （crate ``sibuna-console-ui``）构建的 WebAssembly 模块；"
+"它和已提交的样式表随普通构建一起发布。"
 
 #: ../../operations.rst:168
 msgid "Console options"
-msgstr ""
+msgstr "控制台选项"
 
 #: ../../operations.rst:174
 msgid "``--console <ip:port>``"
-msgstr ""
+msgstr "``--console <ip:port>``"
 
 #: ../../operations.rst:175
 msgid ""
 "Start the console on this listener (IPv6 in brackets, nonzero port); "
 "requires ``--data-dir`` or ``--database-url``"
-msgstr ""
+msgstr "在这个监听地址上启动控制台（IPv6 放在方括号中，端口非零）；需要 ``--data-dir`` 或 ``--database-url``"
 
 #: ../../operations.rst:176
 msgid "``--console-key-file <path>``"
-msgstr ""
+msgstr "``--console-key-file <path>``"
 
 #: ../../operations.rst:177
 msgid ""
 "64 hex characters, owner-only permissions; protects stored second-factor "
 "and webhook secrets"
-msgstr ""
+msgstr "64 个十六进制字符，仅所有者可访问；保护存储的第二因素密钥和 webhook 密钥"
 
 #: ../../operations.rst:178
 msgid "``--console-origin <https-origin>``"
-msgstr ""
+msgstr "``--console-origin <https-origin>``"
 
 #: ../../operations.rst:179
 msgid "The canonical HTTPS origin behind a proxy"
-msgstr ""
+msgstr "代理之后的规范 HTTPS origin"
 
 #: ../../operations.rst:180
 msgid "``--console-behind-proxy``"
-msgstr ""
+msgstr "``--console-behind-proxy``"
 
 #: ../../operations.rst:181
 msgid "A TLS-terminating proxy delivers every request"
-msgstr ""
+msgstr "每个请求都经由一个终止 TLS 的代理送达"
 
 #: ../../operations.rst:182
 msgid "``--console-trusted-proxy <cidr>``"
-msgstr ""
+msgstr "``--console-trusted-proxy <cidr>``"
 
 #: ../../operations.rst:183
 msgid ""
 "A network whose connections may carry forwarded fields; repeatable, at "
 "most 16"
-msgstr ""
+msgstr "一个其连接可以携带转发字段的网络；可重复，最多 16 个"
 
 #: ../../operations.rst:184
 msgid "``--console-advertise <origin>``"
-msgstr ""
+msgstr "``--console-advertise <origin>``"
 
 #: ../../operations.rst:185
 msgid "The link other consoles show for this one"
-msgstr ""
+msgstr "其他控制台为本控制台显示的链接"
 
 #: ../../operations.rst:186
 msgid "``--console-location <latitude,longitude>``"
-msgstr ""
+msgstr "``--console-location <latitude,longitude>``"
 
 #: ../../operations.rst:187
 msgid "This node's declared position on the globe"
-msgstr ""
+msgstr "本节点在地球上声明的位置"
 
 #: ../../operations.rst:188
 msgid "``--console-probe <node-id>=<http://ip:port>``"
-msgstr ""
+msgstr "``--console-probe <node-id>=<http://ip:port>``"
 
 #: ../../operations.rst:189
 msgid ""
 "A peer data-plane listener to health-check; repeatable, at most eight"
-msgstr ""
+msgstr "一个需要健康检查的对等数据平面监听地址；可重复，最多八个"
 
 #: ../../operations.rst:190
 msgid "``--console-peer <node-id>=<https://origin>``"
-msgstr ""
+msgstr "``--console-peer <node-id>=<https://origin>``"
 
 #: ../../operations.rst:191
 msgid "A management peer; repeatable, at most eight"
-msgstr ""
+msgstr "一个管理对等节点；可重复，最多八个"
 
 #: ../../operations.rst:192
 msgid "``--console-peer-key-file <path>``"
-msgstr ""
+msgstr "``--console-peer-key-file <path>``"
 
 #: ../../operations.rst:193
 msgid ""
 "The peer key: owner-only, 64 hex characters, independent of the console "
 "key"
-msgstr ""
+msgstr "对等密钥：仅所有者可访问，64 个十六进制字符，独立于控制台密钥"
 
 #: ../../operations.rst:194
 msgid "``--console-peer-ca-file <path>``"
-msgstr ""
+msgstr "``--console-peer-ca-file <path>``"
 
 #: ../../operations.rst:195
 msgid "Optional PEM trust anchors for peers, replacing the system roots"
-msgstr ""
+msgstr "可选的对等节点 PEM 信任锚，替代系统根证书"
 
 #: ../../operations.rst:196
 msgid "``--console-query-steps <n>``"
-msgstr ""
+msgstr "``--console-query-steps <n>``"
 
 #: ../../operations.rst:197
 msgid ""
 "SQLite steps per aggregate read, 100,000 to 50,000,000, default 4,000,000"
-msgstr ""
+msgstr "每次聚合读取的 SQLite 步数，100,000 到 50,000,000，默认 4,000,000"
 
 #: ../../operations.rst:198
 msgid "``--console-capture-heads``"
-msgstr ""
+msgstr "``--console-capture-heads``"
 
 #: ../../operations.rst:199
 msgid ""
 "Store redacted request and origin response heads per incident; off by "
 "default"
-msgstr ""
+msgstr "为每个事件存储脱敏后的请求头部和源站响应头部；默认关闭"
 
 #: ../../operations.rst:200
 msgid "``--console-capture-header <name>``"
-msgstr ""
+msgstr "``--console-capture-header <name>``"
 
 #: ../../operations.rst:201
 msgid ""
 "Keep this header's value in stored heads; repeatable, at most 16; "
 "requires ``--console-capture-heads``"
-msgstr ""
+msgstr "在存储的头部中保留这个头字段的值；可重复，最多 16 个；需要 ``--console-capture-heads``"
 
 #: ../../operations.rst:202
 msgid "``--console-cookie-secure``"
-msgstr ""
+msgstr "``--console-cookie-secure``"
 
 #: ../../operations.rst:203
 msgid ""
 "Give console cookies the ``Secure`` attribute without a proxy (accepted "
 "by the parser, not listed in ``--help``)"
-msgstr ""
+msgstr "在没有代理的情况下为控制台 Cookie 加上 ``Secure`` 属性（解析器接受，但不在 ``--help`` 中列出）"
 
 #: ../../operations.rst:205
 msgid ""
@@ -762,10 +803,13 @@ msgid ""
 "off-loopback listener without a trusted proxy) stops it with "
 "``CONSOLE001``."
 msgstr ""
+"没有 ``--console`` 的控制台选项、重复的选项或格式错误的值，会以 "
+"``CONSOLE002`` 和该选项的错误名称终止启动。违反控制台规则的配置（例如没有受"
+"信任代理却监听非回环地址）会以 ``CONSOLE001`` 终止启动。"
 
 #: ../../operations.rst:207
 msgid "A Tour of the Console"
-msgstr ""
+msgstr "控制台导览"
 
 #: ../../operations.rst:210
 msgid ""
@@ -780,13 +824,20 @@ msgid ""
 "stated in its title and carries the product, the serving node, the page "
 "and the way back in the same place."
 msgstr ""
+"下面的截图来自一个 release 构建，运行在一个带 SQLite 存储的回环节点上，策略"
+"是在默认挑战之上加四条 ``ALLOW`` 规则，截图前运行了大约四分钟的合成流量：来"
+"自文档地址段的地址、SQL 注入和跨站脚本探测、三次蜜罐命中，以及在无头 "
+"Chromium 中解出的七个挑战。因此，每个数字都只是示意。我们用 ``cargo xtask "
+"browser console --viewport-only`` 截取它们，该命令在 1440 x 960 像素的 "
+"Chromium 中遍历控制台，并检查每个页面。每个页面回答其标题中提出的一个问题，"
+"并在同样的位置显示产品、服务节点、当前页面和返回路径。"
 
 #: ../../operations.rst:215
 msgid ""
 "Sign-in. The public shell loads no globe geometry, GeoIP data or "
 "telemetry; the second form exchanges a wall-display code for a read-only "
 "statistics session."
-msgstr ""
+msgstr "登录。公开界面不加载任何地球几何数据、GeoIP 数据或遥测数据；第二个表单用大屏显示代码换取一个只读的统计会话。"
 
 #: ../../operations.rst:220
 msgid ""
@@ -802,6 +853,14 @@ msgid ""
 "the timeline, and sampled panels that rank request paths and referring "
 "hosts and count client operating systems, browsers and response status."
 msgstr ""
+"统计，流量，最近 24 小时。时间段控件下方的说明给出覆盖情况：预期的 1,440 条"
+"分钟记录中只存在四条，因此每个 “Yesterday” 都显示 “Not available”。磁贴显示"
+"保留的已结束分钟计数，并附有实时的 60 秒迷你走势图；决定的颜色（准入为绿色，"
+"挑战为琥珀色，拒绝为红色）在每个面板中都相同。对于保留的时间段，源站 4xx 和 "
+"5xx 显示 “Not recorded”，因为分钟记录没有保存赋予源站计数意义的代理模式；实"
+"时的本次启动总数会显示它们。可见磁贴下方还有两个水平磁贴（活跃封禁条目和健康"
+"节点）、时间线，以及若干抽样面板，它们对请求路径和来源主机排名，并统计客户端"
+"操作系统、浏览器和响应状态码。"
 
 #: ../../operations.rst:225
 msgid ""
@@ -812,6 +871,10 @@ msgid ""
 "Further down the page are findings over sixty equal buckets, attack "
 "categories and attacked paths."
 msgstr ""
+"统计，安全。所选时间段内每个模块一个磁贴，实时结果趋势，以及带有最新发现的实"
+"时事件流（这里是 ``waf:sqli`` 和 ``waf:xss``）。未记录的值会如实说明，而不是"
+"显示为零：信誉磁贴显示 “Not recorded”。页面再往下是按六十个等宽时间桶统计的"
+"发现、攻击类别和被攻击的路径。"
 
 #: ../../operations.rst:230
 msgid ""
@@ -828,6 +891,14 @@ msgid ""
 "read as not recorded. Deny and allow actions open the IP groups form with "
 "the address drafted."
 msgstr ""
+"事件。已记录事件上方的筛选表单，最新的排在最前。每个事件都可以就地展开并显示"
+"其证据：所选的本地响应、字节长度、候选活动，以及对匹配规则、评分项和 JA4 指"
+"纹明确标注的 “not recorded” 条目。使用 ``--console-capture-heads`` 时，脱敏"
+"的请求头部（对于经反向代理、处于审计模式的准入，还有源站响应头部）可以按需展"
+"开，以 UTF-8 或 Latin-1 渲染，并注明响应情况（已捕获、本地响应、"
+"forward-auth 下未观测、源站不可用），附带一条 “复制为 cURL” 命令；只保留列出"
+"的头字段的值，``--console-capture-header <name>`` 可以向该列表中添加。否则头"
+"部显示为未记录。拒绝和放行动作会打开 IP 组表单，并预先填好地址。"
 
 #: ../../operations.rst:235
 msgid ""
@@ -840,6 +911,11 @@ msgid ""
 "adaptive-difficulty transitions and per-address records with deny and "
 "allow shortcuts, retained seven days."
 msgstr ""
+"挑战。一个保留的时间窗口（一小时、一天或七天）汇总持久化的每分钟记录，并说明"
+"有多少分钟被记录且完整；这里签发、提交并接受了七个挑战，各项拒绝原因都为零。"
+"页面再往下是本次启动以来的实时总数、配置的参数和最近签发的参数、按算法和参数"
+"分组的已接受求解时间直方图、自适应难度的变化，以及带有拒绝和放行快捷操作的按"
+"地址记录，保留七天。"
 
 #: ../../operations.rst:240
 msgid ""
@@ -851,6 +927,10 @@ msgid ""
 "review of the changed fields, and confirming validates the whole "
 "candidate and creates a new revision."
 msgstr ""
+"策略。已应用的引擎列出它的运行配置、修订版本、默认算法和难度，以及它的节点本"
+"地限制，然后按评估顺序列出规则、它们今天的命中次数以及这些计数的覆盖情况。页"
+"面再往下是检查模式矩阵、请求测试器和 IP 组。*Managed rules* 打开编辑器；保存"
+"修改时会先显示被修改字段的审阅，确认后会验证整个候选并创建一个新的修订版本。"
 
 #: ../../operations.rst:245
 msgid ""
@@ -860,20 +940,23 @@ msgid ""
 "committed revision, its management address and its probe result (SID "
 "0007, SID 0013)."
 msgstr ""
+"节点。服务节点的状态和命令，以及最近一秒的驻留内存和 CPU 及其六十秒迷你走势"
+"图；下方是每个已通告的成员，包括它已应用的策略修订版本与已提交修订版本的对照、"
+"它的管理地址和探测结果（SID 0007，SID 0013）。"
 
 #: ../../operations.rst:250
 msgid ""
 "GeoIP. Provider, licence, active generation digest, load time and the "
 "import form; here no generation has been loaded yet. A failed import "
 "never replaces the active generation."
-msgstr ""
+msgstr "GeoIP。提供方、许可证、当前生效数据代的摘要、加载时间和导入表单；这里尚未加载任何数据代。失败的导入永远不会替换当前生效的数据代。"
 
 #: ../../operations.rst:255
 msgid ""
 "Settings, with no notification destination yet and the form for a new "
 "one. Further down the page are denial-spike thresholds, retention with an "
 "explicit acknowledgement per window, response-page templates and About."
-msgstr ""
+msgstr "设置，此时还没有通知目标，页面上是新建通知目标的表单。页面再往下是拒绝激增阈值、按时间窗口逐一明确确认的保留期设置、响应页面模板和“关于”。"
 
 #: ../../operations.rst:260
 msgid ""
@@ -886,12 +969,17 @@ msgid ""
 "as a new, audited revision after a confirmation, and is refused if the "
 "rule set has moved on."
 msgstr ""
+"审计。只追加的历史记录，包含执行者及其角色、动作、对象，以及一个显示脱敏前后"
+"摘要的详情视图；被拒绝的登录也会被记录。每条管理变更和认证记录都会记下出示凭"
+"据的客户端地址；系统自行写入的记录将其显示为未记录。策略记录提供 *Revert "
+"this change*，它在确认后把该修订之前记录的文档恢复为一个新的、经过审计的修订"
+"版本；如果规则集已经发生了后续变化，则会被拒绝。"
 
 #: ../../operations.rst:265
 msgid ""
 "A wall display. A kiosk session shows the Traffic and Security views "
 "only, without navigation, and states when it expires."
-msgstr ""
+msgstr "大屏显示。大屏会话只显示流量和安全视图，没有导航，并注明会话何时过期。"
 
 #: ../../operations.rst:267
 msgid ""
@@ -906,6 +994,12 @@ msgid ""
 "configured marker remains visible through telemetry outages; stale "
 "traffic does not animate."
 msgstr ""
+"可选的 ``--console-location <latitude,longitude>`` 声明本节点的位置，例如新"
+"加坡的部署为 ``1.3521,103.8198``。地球最初以该点为中心；旋转之后，Center "
+"Sibuna 会回到该点。各国的活动沿着朝向节点的动画大圆弧显示，背面半球和平面地"
+"图上的日期变更线会被裁剪。国家位置是具有代表性的中心点，箭头表示观测到的六十"
+"秒窗口，而不是单个连接。未设置的服务器位置明确保持为未知。遥测中断期间，配置"
+"的标记仍然可见；过时的流量不会产生动画。"
 
 #: ../../operations.rst:269
 msgid ""
@@ -922,6 +1016,13 @@ msgid ""
 "committed intent alone does not establish that the runtime effect "
 "finished."
 msgstr ""
+"策略预览会构建一个包含已配置文件规则的私有候选。保存时会比较预期的修订版本，"
+"并要求确认字段对比。历史回退会与当前规则比较，并创建一个新的修订版本。已提交"
+"的修订版本与本地已应用的修订版本是不同的。审计详情保留有界的决策变化以及实际"
+"生效的执行角色。匹配器的值会被脱敏，缺少上下文的旧记录明确保持为缺失。排空、"
+"恢复和清除本地封禁需要先预览命令。当节点上另一条命令正在运行时到达的命令会以"
+" ``503`` ``CONSOLENODE`` 被拒绝，而不是排队。丢失响应后，先检查持久化的回执"
+"再重试；仅凭已提交的意图并不能说明运行时效果已经完成。"
 
 #: ../../operations.rst:271
 msgid ""
@@ -935,13 +1036,19 @@ msgid ""
 "inbound TLS on the console listener either; the console uses TLS only for "
 "its outbound connections, through rustls (SID 0012)."
 msgstr ""
+"远程运维时，请使用 HTTPS 代理，并配置 ``--console-origin``、"
+"``--console-behind-proxy``、明确的 ``--console-trusted-proxy`` CIDR 和 "
+"``--console-key-file``。密钥文件包含 64 个十六进制字符，权限仅限所有者，用于"
+"保护存储的第二因素密钥；重启时要保留它，并与挑战种子分开保存。对于非回环访问，"
+"配置的 HTTPS origin 和代理允许列表是必需的。Sibuna 在控制台监听地址上同样不"
+"终止入站 TLS；控制台只在其出站连接中通过 rustls 使用 TLS（SID 0012）。"
 
 #: ../../operations.rst:273
 msgid ""
 "The native CLI accesses the running console through the same "
 "authorization and storage contracts. It reads credentials from private "
 "files, not command-line values:"
-msgstr ""
+msgstr "原生 CLI 通过相同的授权和存储约定访问运行中的控制台。它从私有文件中读取凭据，而不是从命令行参数中读取："
 
 #: ../../operations.rst:281
 msgid ""
@@ -966,6 +1073,20 @@ msgid ""
 "sample loss and stale data remain visible; importing country data does "
 "not create traffic or enrich already expired samples."
 msgstr ""
+"请使用仅所有者可读的密码文件，先完成密码设置，并在需要时为认证器代码或恢复代"
+"码加上 ``--factor-file``；对于账户和 GeoIP 操作，``--token-file`` 可以代替用"
+"户名和密码。客户端使用 HTTP/1.1，除字面量回环地址外都要求 HTTPS，从不跟随重"
+"定向，并把每个请求限制在 20 秒以内、每个回复限制在 16 KiB 以内。``geoip "
+"status`` 读取当前生效的数据代。更新时通过 HTTPS 下载所选提供方发布的文件（默"
+"认是公有领域的 ``user-country`` 数据集，或用 ``--provider dbip --version "
+"YYYY-MM`` 选择 DB-IP Lite），校验发布者的校验和（或 ``--checksum`` 给出的校"
+"验和），通过 ``sibuna-geoip`` 验证有界的地址范围，持久化新的数据代并在本地激"
+"活。失败的更新会保留之前的数据代。CLI 超时（``--timeout``，默认 1200 秒）只"
+"是停止等待；它不会取消已提交的存储工作。DB-IP Lite 要求 CC BY 4.0 署名，只在"
+"其数据生效期间显示。使用 ``SIBUNA_GEOIP_DATA=<snapshot>`` 的构建会嵌入一个经"
+"过验证的快照（由 ``geoip-snapshot`` 工具写出），直到第一次持久导入为止；不带"
+"控制台的构建会以 ``GEOIP001`` 拒绝它。未知地址、样本丢失和过时数据都保持可见；"
+"导入国家数据不会产生流量，也不会补充已经过期的样本。"
 
 #: ../../operations.rst:283
 msgid ""
@@ -1013,6 +1134,35 @@ msgid ""
 "console node independently of the selected traffic source. Local commands "
 "remain per node."
 msgstr ""
+"集群成员在启动时、每分钟一次，以及已应用的策略或控制修订版本变化后的两秒内，"
+"通过共享数据库的成员表（``console_nodes``）通告自己，并出现在每个控制台的节"
+"点页面上。没有领导者选举：SQLite 节点报告角色 ``single`` 并以自己为领导者，"
+"PostgreSQL 节点报告角色 ``unknown`` 且没有领导者，因为 PostgreSQL 的故障切换"
+"对 Sibuna 不可见（SID 0007）。为需要由本控制台对其数据平面监听地址进行健康检"
+"查的对等节点配置 ``--console-probe <node-id>=<http://ip:port>``，并用 "
+"``--console-advertise <origin>`` 配置其他控制台显示的链接。直接的实时遥测使"
+"用 ``--console-peer <node-id>=<https://origin>``\\ （可重复，最多八个）和专"
+"用的 ``--console-peer-key-file``。对等节点需要 ``--console-behind-proxy``。"
+"两端必须相互列出对方，并使用受信任的 HTTPS 入口。对等密钥是一个仅所有者可访"
+"问、包含 64 个十六进制字符的文件，与控制台密钥和挑战种子分别配置。对等节点之"
+"间通过一个经过认证的 TLS WebSocket 通信，使用带 ``ring`` 提供方的 rustls（"
+"SID 0012）。``--console-peer-ca-file`` 可选地为私有管理 PKI 提供 PEM 信任锚；"
+"否则客户端使用系统根证书。主机名验证始终生效且无法关闭：每个管理 origin 的主"
+"机（DNS 名称或 IP 地址字面量）必须出现在对等节点的证书中。被拒绝的证书会把该"
+"对等节点标记为 ``rejected``，并写入一条 ``peer.rejected`` 审计记录。轮换密钥"
+"和更换 CA 文件需要协调重启；对等节点的证书可以在不重启的情况下续期。节点 "
+"API 及其订阅会报告接收时延、时钟偏差、启动变化和采样丢失。缺失的观测保持为不"
+"可用，断开连接的值保持为过时；收到的统计数据永远不会变成另一个节点自己的贡献。"
+"仪表板的 *Live traffic scope* 选择一个节点，或合并已配置的各节点。*Node "
+"coverage and locations* 标出缺失、过时和存在时钟偏差的来源、观测时间和配置的"
+"目标位置。国家排名显示由被省略的来源行带来的不确定性。箭头保留其接收节点，缺"
+"失的节点位置不会被凭空捏造。只要任何一个参与的来源缺少一个连续的时间间隔，合"
+"并后的速率就保持为未观测。选择一个节点可以查看它保留的秒级数据和当前分钟的路"
+"径排名。远程查询使用经过认证的对等连接；查询结果必须能放进一条 4 KiB 的 "
+"WebSocket 消息，因此当一页放不下时，提供服务的控制台会把该页的行数减半。缺失"
+"的对等节点保持为不可用，历史游标不能跨越节点重启。分钟历史保留它自己的节点选"
+"择和按节点的行。导航栏和移动端页头标识的是提供服务的控制台节点，与所选的流量"
+"来源无关。本地命令仍然按节点执行。"
 
 #: ../../operations.rst:285
 msgid ""
@@ -1025,6 +1175,11 @@ msgid ""
 "age visible until replacement; changing the source or period discards the "
 "old scope. Missing history never becomes zero."
 msgstr ""
+"流量磁贴默认显示所选节点最近 24 小时保留的已结束分钟记录。时间段控件还提供一"
+"小时、七天或九十天，以及实时的本次启动总数。与昨天的偏差需要每个所选节点都有"
+"完整匹配的覆盖。地球和迷你走势图仍然描述它们各自独立的实时 60 秒窗口。保留数"
+"据的扫描在完成一分钟后刷新，在被替换之前保持之前的值及其时效可见；更换来源或"
+"时间段会丢弃旧的范围。缺失的历史永远不会变成零。"
 
 #: ../../operations.rst:287
 msgid ""
@@ -1042,6 +1197,14 @@ msgid ""
 "origin-response comparisons remain unavailable rather than interpreting "
 "forward-auth zeros as observed responses."
 msgstr ""
+"*Compare retained traffic* 把两个已结束的分钟窗口并排显示：昨天的同一窗口、"
+"前一个时间段，或另一个节点。时长和结束偏移控件会冻结两个 UTC 范围。每次操作"
+"每侧最多读取十六个紧凑页面，每页 96 条存储记录。这可以在一个批次中覆盖一个不"
+"跨越重启的 24 小时窗口；Continue 会为更长的扫描保持相同的边界。完整覆盖、不"
+"完整覆盖和缺失历史都会明确标出。速率百分比要求在相等的 UTC 窗口中有完整且不"
+"重叠的时间间隔，并按观测到的毫秒数归一化；参考值为零而出现新流量时显示 "
+"“New”。主流量时间段保持独立。分钟格式不记录历史的代理模式，因此源站响应的比"
+"较保持为不可用，而不是把 forward-auth 下的零解读为观测到的响应。"
 
 #: ../../operations.rst:289
 msgid ""
@@ -1056,6 +1219,12 @@ msgid ""
 "boundaries and reported queue loss; missing archives cannot establish "
 "zero traffic or complete coverage."
 msgstr ""
+"*Compare retained path rankings* 选择两个已结束的窗口或节点。节点 0 包括所有"
+"保留的节点，包括已退役的成员。一次操作最多读取十六个不可变的归档，检查它们的"
+"标识和校验和，并在选择显示行之前合并所有计数器。归档在 60 秒的迟到样本窗口之"
+"后封存，因此最新的已结束分钟可能仍在等待中。Continue 保持原来的窗口和游标。"
+"边界描述的是抽样的路径前缀，而不是精确的请求总数。页面会显示部分扫描、截断、"
+"保留期边界和报告的队列丢失；缺失的归档不能证明流量为零或覆盖完整。"
 
 #: ../../operations.rst:291
 msgid ""
@@ -1072,6 +1241,15 @@ msgid ""
 "findings, so missing incident coverage cannot be interpreted as absence "
 "of attacks."
 msgstr ""
+"安全视图默认显示最近 24 小时，并把所选时间段分成六十个等宽的时间桶。它的聚合"
+"在存储线程上运行，并受一个工作量上界的约束。在 SQLite 上，这个上界是 "
+"``--console-query-steps`` 个虚拟机步数（100,000 到 50,000,000，默认四百万）。"
+"它与 ``--console`` 一起设置；无效或重复的值会被拒绝。在 PostgreSQL 上，这个"
+"上界是在读取事务中设置的 2,000 ms 语句超时（SID 0013）；修改 "
+"``--console-query-steps`` 不会改变它。耗尽上界的查询会提示缩小时间段。步数限"
+"制的是查询工作量，而不是经过的时间。各图表共享同一刻度；展开趋势值可以看到 "
+"UTC 区间的起点和精确的分组计数。这些都是保留的发现，因此缺失的事件覆盖不能被"
+"解读为没有攻击。"
 
 #: ../../operations.rst:293
 msgid ""
@@ -1086,6 +1264,13 @@ msgid ""
 "or payload evidence. Automatic cycling is optional, off initially and "
 "suspended with reduced motion, stale data or Pause."
 msgstr ""
+"大屏显示使用大屏会话。在 Account 下，运维人员为显示屏命名，然后选择 Create "
+"display code。显示屏需要在十分钟内把这个一次性代码粘贴到登录表单中；它的会话"
+"是只读的，仅限于统计，并在十二小时内过期。账户页面在导航离开或被隐藏时会清除"
+"显示的代码。隐藏不会撤销一个尚未使用的授权；兑换期限仍然有效。代码绝不应出现"
+"在 URL 中。流量和安全视图共用显示屏：安全视图显示聚合的模块趋势和请求结果，"
+"不显示事件地址或载荷证据。自动轮播是可选的，初始关闭，在减少动态效果、数据过"
+"时或 Pause 时暂停。"
 
 #: ../../operations.rst:295
 msgid ""
@@ -1105,6 +1290,16 @@ msgid ""
 "the destination outcome; an unconfirmed audit completion is shown "
 "explicitly before an operator retries."
 msgstr ""
+"通知目标（针对拒绝激增、封禁、不可达成员和领导者变更的签名 webhook 和 "
+"syslog）位于 Settings 下；webhook 密钥需要 ``--console-key-file``。领导者变"
+"更这一类型仍然保留定义，以便已存储的目标保持其含义，但没有任何节点会触发它，"
+"因为没有领导者选举。每个目标有自己的冷却时间和三次尝试的重试预算。投递审计记"
+"录显示结果；已完成的队列历史限制为七天和 4,096 个事件。webhook 包含一个稳定"
+"的 ``Idempotency-Key``，使接收方可以在网络完成情况不确定时抑制重复的效果。"
+"webhook 通过 HTTPS 发送，只有发往字面量回环地址时才使用普通 HTTP，回复体最多"
+"读取 64 KiB。syslog 的 UDP/TCP 选择只适用于出站通知，与受保护的 Web 流量无关。"
+"手动测试会在审计中记录意图和完成情况，并刷新目标的结果；未确认的审计完成情况"
+"会在运维人员重试之前明确显示。"
 
 #: ../../operations.rst:297
 msgid ""
@@ -1116,6 +1311,10 @@ msgid ""
 "value later does not restore deleted history. Stale edits are refused and "
 "successful changes appear in Audit."
 msgstr ""
+"Settings 还控制保留期：分钟历史为 1 到 90 天，排名为 1 到 7 天，事件为 1 到 "
+"30 天，审计为 1 到 365 天。上限值即默认值；排名保持其 512 MiB 的配额。保存保"
+"留期的值需要确认，因为清理会以有界批次永久删除较旧的记录。之后再增大这个值也"
+"不会恢复已删除的历史。过时的修改会被拒绝，成功的修改会出现在审计中。"
 
 #: ../../operations.rst:299
 msgid ""
@@ -1124,6 +1323,9 @@ msgid ""
 "preview in a sandboxed tab and saved pages are served from the next "
 "policy snapshot."
 msgstr ""
+"响应页面（挑战、拒绝、限速、封禁、过载）可以在 Settings 下以带固定占位符的有"
+"界 HTML 形式编辑；草稿在一个沙箱标签页中预览，保存的页面从下一个策略快照开始"
+"提供。"
 
 #: ../../operations.rst:301
 msgid ""
@@ -1149,6 +1351,20 @@ msgid ""
 "observed change around an edit is a comparison, not evidence that the "
 "edit caused the traffic change."
 msgstr ""
+"策略页面上的策略工作流程：对托管规则重新排序，针对保留的检查发现重放草稿，管"
+"理 IP 组和固定到当前 GeoIP 数据代的国家封锁，以及导出或以原子方式导入托管规"
+"则集（也可以用 ``sibuna console policies export`` 和 ``sibuna console "
+"policies import --file <set.json>``）。一次导入是一个请求，携带 1 到 128 个"
+"文档，每个最多 4 KiB，总计最多 256 KiB；对于超过约 96 KiB 的规则集，页面说明"
+"会指出命令行导入方式。已应用的规则显示今天记录的命中次数、按小时的迷你走势图"
+"和一张无障碍表格。一次命中是指一次成功的声明式匹配器评估：匹配的 WEIGH 规则"
+"和第一个终止性匹配都会计数；更早的检查或信誉决定可能使评估不会发生。私有测试"
+"不会递增这些计数器。*Compare rule hits* 为一个已记录的节点冻结两个已结束的时"
+"间段。修订历史提供 *Compare hits around this edit*，它排除修改所在的那一分钟，"
+"并使用不超过所选时长的相等可用时间段。可选的已应用修订版本筛选器可以把无关的"
+"数据代排除在比较之外。启动、切换、缺失的写入和保留期都会留下可见的覆盖缺口；"
+"百分比要求两侧都有完整覆盖。规则观测以及按小时/按天的汇总遵循分钟保留期设置。"
+"在一次修改前后观测到的变化只是一种比较，并不能证明是这次修改导致了流量变化。"
 
 #: ../../operations.rst:303
 msgid ""
@@ -1186,6 +1402,26 @@ msgid ""
 "refresh a selected non-default challenge timing partition explicitly. "
 "Historical queries, detail reads and mutations remain HTTP requests."
 msgstr ""
+"导入较新的 GeoIP 数据代不会自动刷新已有的、由国家派生的信誉行。先预览国家动"
+"作，比较新增、保留和移除的前缀；在应用之前翻阅审阅过的差异。替换会移除该国家"
+"所拥有的过时行，并保留独立管理的前缀。数据代或策略修订版本发生变化后需要重新"
+"预览，相互重叠的独立修改会被拒绝。事件页面包含保留的 WAF 发现和蜜罐事件；它"
+"不是完整的访问日志。加载了 GeoIP 时，存储线程会在事件批次的事务中记录每个事"
+"件的国家和数据代。这是持久化时的归属，而不是重建出的请求时刻位置。之后的导入"
+"不会改变已记录的映射。国家筛选器接受一个大写的两字母代码，``unknown`` 表示不"
+"在已加载数据代中的地址，``not_recorded`` 表示没有映射数据的事件。来源分组会"
+"明确报告混合的国家或覆盖情况。地球的 *View events* 动作保持所选节点，并打开"
+"该国家最近一小时内保留的事件。统计页面的 *Security* 视图把实时的限速、挑战和"
+"封禁速率，与一小时、一天、七天或三十天内保留的检查和蜜罐发现结合起来。类别、"
+"来源和路径链接以相同的节点和固定的时间边界打开常规的事件工作流程。应用事件筛"
+"选器会开始一个新的时间段。发现包括审计记录，与被阻止请求的总数不同；缺失的信"
+"誉和规则命中归属显示为未记录。事件和审计筛选器让标签与其控件保持在一起，把 "
+"Apply 动作单独对齐，并让列宽适应可用的内容宽度。一个经过认证的 WebSocket 在"
+"导航过程中始终存活，承载统计、事件摘要、节点状态、策略修订版本、挑战和审计摘"
+"要。新的事件和审计记录在 *Load latest records* 之后等待，使表格在阅读时保持"
+"不动。策略更新会显示当前已提交和已应用的修订版本，而不会替换打开的草稿。流量"
+"计数器实时更新；所选的非默认挑战计时分区需要显式刷新。历史查询、详情读取和变"
+"更操作仍然是 HTTP 请求。"
 
 #: ../../operations.rst:305
 msgid ""
@@ -1209,24 +1445,38 @@ msgid ""
 "responsiveness measurements. The module's linear memory grows on demand "
 "up to a declared maximum of 16 MiB."
 msgstr ""
+"页面片段可以加入书签；后退和前进会重新打开经过认证的页面。侧边栏还会在本浏览"
+"器中记住主题和间距选择，默认主题为 System。SID 0007 的状态为 Committed。控制"
+"台在无头 Chromium 中通过了它的黄金样例和浏览器工作流测试（``cargo xtask "
+"browser console``，SID 0010 标准 5）。它的端到端测试套件是 "
+"``cmd/sibuna/tests/console_*.rs``，其中的 PostgreSQL 集群场景在设置了 "
+"``SIBUNA_TEST_DATABASE_URL`` 时运行。SID 0010 记录：在控制台编译进来但停用、"
+"仅启用存储、或启用但空闲的情况下，16 个产品工作负载与不含控制台构建的守护进"
+"程相差都在约 1% 以内，处于噪声范围内。SID 0007 的正式隔离门槛，即负载下运行"
+"八个活动仪表板，尚未测量（第 VIII 部分）。完整的 WebAssembly 应用有一个 768 "
+"KiB 的未压缩上限，由守护进程的构建脚本通过使构建失败来强制执行，另有一个 "
+"640 KiB 的审查阈值。该模块大小为 719,406 字节（gzip 压缩后 270,612 字节，"
+"2026 年 10 月），超过了审查阈值，SID 0007 已将其记录待审。这些项目限制为控制"
+"台的工作流程留出了空间；它们不能代替对浏览器加载和响应速度的测量。模块的线性"
+"内存按需增长，声明的最大值为 16 MiB。"
 
 #: ../../operations.rst:307
 msgid "Deployment Topologies"
-msgstr ""
+msgstr "部署拓扑"
 
 #: ../../operations.rst:312
 msgid ""
 "Deploy the autonomous reverse proxy and the forward-auth validator behind "
 "Nginx or Caddy."
-msgstr ""
+msgstr "在 Nginx 或 Caddy 之后部署自主运行的反向代理和 forward-auth 验证器。"
 
 #: ../../operations.rst:314
 msgid "Reverse Proxy"
-msgstr ""
+msgstr "反向代理"
 
 #: ../../operations.rst:318
 msgid "Request routing on the Shield surface"
-msgstr ""
+msgstr "Shield 运行配置下的请求路由"
 
 #: ../../operations.rst:348
 msgid ""
@@ -1245,6 +1495,15 @@ msgid ""
 "policy judged (SID 0009); a path without a normal form is answered "
 "``400``."
 msgstr ""
+"被准入的请求带着 ``X-Forwarded-For``、``X-Forwarded-Proto``、``X-Real-IP``、"
+"``X-Sibuna-Status`` 和 ``X-Sibuna-Rule`` 头到达源站。逐跳头、Sibuna 自己写入"
+"的字段以及其他转发字段（``Forwarded``、``X-Forwarded-Host``、"
+"``X-Forwarded-Port``）都会被剥离，客户端用下划线拼写这些名称（"
+"``X_Forwarded_For``）时也是如此。``X-Real-IP`` 是判定请求所依据的客户端。"
+"``X-Forwarded-For`` 只是套接字对端，从不包含客户端写入的条目；信任转发身份时，"
+"它是收到的链后面再加上套接字对端。因此，源站必须从 ``X-Real-IP`` 或 "
+"``X-Forwarded-For`` 的右侧读取客户端，绝不能读取其最左边的条目。源站收到的路"
+"径是策略所判定的规范形式（SID 0009）；没有规范形式的路径会被回答 ``400``。"
 
 #: ../../operations.rst:350
 msgid ""
@@ -1264,6 +1523,16 @@ msgid ""
 "of Sibuna's private HTTP/1.1 listener; Sibuna does not terminate browser "
 "TLS itself."
 msgstr ""
+"HTTP/1.1 WebSocket 升级在源站的握手被接受之前，要先通过准入和策略检查。子协"
+"议和扩展的协商保持端到端。两个线程中继字节，每个方向一个，各自使用一个固定的"
+"缓冲区，包括预取的字节和半关闭；因此，一个升级后的连接占用两个线程，当所有连"
+"接都被升级时，连接线程的数量可以达到 ``--max-connections`` 的两倍。升级后的"
+"套接字仍然受普通连接配额和关闭登记表的约束，但使用 "
+"``--websocket-idle-timeout``\\ （默认 300 秒），与 HTTP 空闲期限相互独立。任"
+"一方向的流量都会刷新这个上界，但如果一个对端在整个周期内不接收任何字节，无论"
+"另一个方向多么繁忙，中继都会结束。握手之后的帧不是 WAF 检查的输入。"
+"HTTPS/WSS 需要在 Sibuna 私有的 HTTP/1.1 监听地址之前放置一个终止 TLS 的入口"
+"代理；Sibuna 自己不终止浏览器的 TLS。"
 
 #: ../../operations.rst:352
 msgid ""
@@ -1272,6 +1541,9 @@ msgid ""
 "this arrangement does not provide end-to-end HTTP/2 semantics for "
 "applications such as native gRPC."
 msgstr ""
+"入口代理可以与浏览器协商 HTTP/2，并以 HTTP/1.1 转发给 Sibuna。Sibuna 对原生 "
+"HTTP/2 的支持推迟到以后的更新；这种安排不能为原生 gRPC 之类的应用提供端到端"
+"的 HTTP/2 语义。"
 
 #: ../../operations.rst:354
 msgid ""
@@ -1291,6 +1563,16 @@ msgid ""
 "to 32 parts and 2 KiB of headers per part within that same prefix, and "
 "accepts the transport padding of RFC 2046 after a delimiter."
 msgstr ""
+"带 Content-Length 的请求体以流方式通过固定缓冲区，字节和 MIME 头都保持不变。"
+"multipart 上传保留边界、重复的字段名、文件名和各部分的类型。WAF 最多检查请求"
+"体的前 8 KiB：multipart 元数据和非文件字段仍然作为文本检查的输入，而文件载荷"
+"是不透明的。``filename`` 为空的部分是普通字段。属于已识别的二进制顶层 MIME "
+"类型（SVG 以外的图像、音频、视频、PDF、ZIP、gzip、7z、protobuf 和 "
+"octet-stream）的请求体，只有当其前缀看起来也是二进制时才被视为不透明，即每十"
+"六个字节中至少有一个是制表符、换行、垂直制表、换页和回车以外的控制字节；否则"
+"按文本检查（SID 0004）。JSON、XML、SVG、URL 编码表单和未知类型保持文本检查。"
+"含糊或格式错误的 MIME 元数据会回退到文本检查。multipart 解析在同一前缀内限制"
+"为 32 个部分、每部分 2 KiB 的头部，并接受分隔符之后符合 RFC 2046 的传输填充。"
 
 #: ../../operations.rst:356
 msgid ""
@@ -1315,10 +1597,22 @@ msgid ""
 "unsupported expectations receive 417. The Expect header is consumed "
 "before forwarding to the backend."
 msgstr ""
+"这是上传兼容性，而不是文件验证或恶意软件扫描。后端必须自己强制执行可接受的媒"
+"体类型，而不是信任客户端声明的 Content-Type。检查前缀之后的字段（包括大文件"
+"上传之后的字段）不会被检查。压缩的载荷不会为检查而解压。上传仍然要经过准入、"
+"路径、查询和请求头检查，并受连接期限的约束。分块请求体在检查之前于连接缓冲区"
+"内解码（SID 0009）。在缓冲区内结束的请求体以 Content-Length 到达后端。更长的"
+"请求体由 Sibuna 重新分块，每次读取一个块，因此后端永远看不到客户端的块大小、"
+"扩展或尾部字段。包含单独的 CR 或 LF、大小两侧有空白、扩展格式错误或超过 4 "
+"KiB 的块行会以 400 被拒绝。超过 16 KiB 的尾部字段段也是如此。使用其他编码的 "
+"``Transfer-Encoding`` 会收到 501。无法解析分块请求的后端，对于约 44 KiB 以下"
+"的请求体仍然会收到 Content-Length。承载过请求体的源站连接在交换结束后关闭，"
+"永远不会回到连接池。等待 ``100-continue`` 的客户端会在发送请求体之前从本地收"
+"到它；不支持的期望会收到 417。Expect 头在转发给后端之前被消费掉。"
 
 #: ../../operations.rst:358
 msgid "Forward Auth Behind an Ingress"
-msgstr ""
+msgstr "入口代理之后的 forward auth"
 
 #: ../../operations.rst:361
 msgid ""
@@ -1336,6 +1630,15 @@ msgid ""
 "routes always use the actual request URI. Forward-auth does not inspect a "
 "body the ingress omits."
 msgstr ""
+"在 ``--mode forward_auth`` 下，守护进程对入口代理的子请求回答 ``200``\\ （外"
+"加审计头 ``X-Sibuna-Status``、``X-Sibuna-Rule`` 和 ``X-Sibuna-Rule-Hash``），"
+"需要挑战时回答 ``401``，拒绝时回答 ``403``，被限速时回答 ``429``。入口代理必"
+"须转发客户端地址和原始 URL；forward-auth 模式默认信任它们。请把这个监听地址"
+"绑定在私有网络上，使只有入口代理能够连接。``X-Forwarded-Uri``\\ （Caddy）或 "
+"``X-Original-URI``\\ （Nginx）以及 ``X-Forwarded-Method`` 为策略评估还原应用"
+"请求；原始路径会像请求行中的路径一样被转换为规范形式。重复或相互冲突的原始 "
+"URL 字段，以及不是 origin-form 的原始 URI，会以 ``400`` 被拒绝。守护进程的内"
+"部路由始终使用实际的请求 URI。forward auth 不检查入口代理省略的请求体。"
 
 #: ../../operations.rst:441
 msgid ""
@@ -1360,16 +1663,29 @@ msgid ""
 "these recipes against live ingresses; the forwarded-metadata rules they "
 "rely on are covered by unit tests in ``sibuna-http``."
 msgstr ""
+"在两种配置方案中，``/__sibuna/*`` 命名空间（验证中间页、挑战、验证、求解器资"
+"源）都必须直接到达守护进程。nginx 的错误页面会传递原始 URI 和方法，使验证中"
+"间页携带授权所决定的要求；没有它们时页面仍然可用，签发会回退为评估浏览器上报"
+"的 URL。Caddy 自己提供原始 URI 和方法的元数据。互斥的 ``handle`` 块确保挑战"
+"和验证路由不会进入 forward-auth 预检查。对于应用的 WebSocket，Nginx 需要上面"
+"所示的显式 Upgrade/Connection 头。Nginx 的错误处理器渲染内部挑战路由时，不会"
+"进行第二次授权决定，也不会消耗上传的请求体。它的 auth 模块只直接接受 2xx、"
+"401 和 403，因此示例把限速导致的认证错误转换回带 Retry-After 的 429；其他授"
+"权失败以 503 保持关闭。Nginx 提供它自己的 403 响应体，而 Caddy 转发 Sibuna "
+"的拒绝页面。两种配置方案都会用实际的授权响应替换传入的 Sibuna 审计头。请在入"
+"口代理上配置常规的 TLS 证书以及应用的上传和期限限制；示例只展示路由逻辑。仓"
+"库目前还没有针对真实运行的入口代理测试这些配置方案；它们所依赖的转发元数据规"
+"则由 ``sibuna-http`` 中的单元测试覆盖。"
 
 #: ../../operations.rst:443
 msgid "Declarative Policy"
-msgstr ""
+msgstr "声明式策略"
 
 #: ../../operations.rst:448
 msgid ""
 "Write a policy file with rules, weights, thresholds, IP rules, and the "
 "WAF switch."
-msgstr ""
+msgstr "编写一个包含规则、权重、阈值、IP 规则和 WAF 开关的策略文件。"
 
 #: ../../operations.rst:470
 msgid ""
@@ -1385,10 +1701,18 @@ msgid ""
 "gives it a quota of its own. Path patterns match the request path in "
 "normal form (SID 0003), so a pattern must be written in that form."
 msgstr ""
+"加载器以失败即关闭的方式工作：一个未知的键、一个拼错的动作、一个格式错误的地"
+"址或一个超出范围的数字都会使整个文件被拒绝，诊断信息会指出规则和字段，守护进"
+"程不会启动。带有未知选项或超出范围的值的命令行也以同样方式被拒绝。存在 "
+"``rules`` 时，它替换内置的规则表；``ip_rules`` 为信誉字典树提供数据，可以扩"
+"展到数千个前缀；``waf: false`` 从文件中选择 Gate 运行配置。模式中还有两个键"
+"（第 X 部分）：``inspection`` 把每个 WAF 类别设置为 ``disabled``、``audit`` "
+"或 ``enforce``，规则的 ``limits`` 对象为它设定自己的配额。路径模式匹配规范形"
+"式的请求路径（SID 0003），因此模式必须以这种形式书写。"
 
 #: ../../operations.rst:472
 msgid "Persistent Storage and Clustering"
-msgstr ""
+msgstr "持久存储与集群"
 
 #: ../../operations.rst:477
 msgid ""
@@ -1396,10 +1720,12 @@ msgid ""
 "SQL, query incident forensics, understand campaign clustering, and run "
 "several nodes on one PostgreSQL database."
 msgstr ""
+"启用 SQLite 或 PostgreSQL 存储，用 SQL 添加一条动态策略和一次封禁，查询事件"
+"取证数据，理解活动聚类，并在同一个 PostgreSQL 数据库上运行多个节点。"
 
 #: ../../operations.rst:480
 msgid "The storage architecture: workers never block on the database"
-msgstr ""
+msgstr "存储架构：worker 从不阻塞在数据库上"
 
 #: ../../operations.rst:512
 msgid ""
@@ -1416,80 +1742,89 @@ msgid ""
 "before and after loading, and discards its candidate if a writer "
 "committed in between."
 msgstr ""
+"``--data-dir /var/lib/sibuna`` 打开 SQLite 文件 "
+"``/var/lib/sibuna/sibuna.db``\\ （WAL 模式，``synchronous=NORMAL``，设置忙等"
+"待超时），并启动存储线程。``--database-url``\\ （或 "
+"``--database-url-file``）则改为连接一个 PostgreSQL 数据库。存储线程拥有一个"
+"单线程的 tokio 运行时和一个小型连接池；它是唯一执行 SQL 的地方。在启动时、每"
+"当策略修订版本变化时（对 ``policies``、``ip_reputation`` 或 "
+"``policy_inspection`` 的写入），以及信誉条目过期时，该线程都会从策略文件和数"
+"据库重建引擎并发布它；请求从不等待 SQL。一次重建会在加载前后各读取一次修订版"
+"本，如果期间有写者提交，就丢弃这次的候选。"
 
 #: ../../operations.rst:514
 msgid "Schema"
-msgstr ""
+msgstr "模式"
 
 #: ../../operations.rst:517
 msgid "Core tables"
-msgstr ""
+msgstr "核心表"
 
 #: ../../operations.rst:521
 msgid "Table"
-msgstr ""
+msgstr "表"
 
 #: ../../operations.rst:522
 msgid "Purpose and key"
-msgstr ""
+msgstr "用途与键"
 
 #: ../../operations.rst:523
 msgid "``policy_revision``"
-msgstr ""
+msgstr "``policy_revision``"
 
 #: ../../operations.rst:524
 msgid ""
 "The policy revision, one row; triggers on the three policy tables advance "
 "it."
-msgstr ""
+msgstr "策略修订版本，一行；三张策略表上的触发器会推进它。"
 
 #: ../../operations.rst:525
 msgid "``policies``"
-msgstr ""
+msgstr "``policies``"
 
 #: ../../operations.rst:526
 msgid "Ordered dynamic rules, keyed by ``id``."
-msgstr ""
+msgstr "有序的动态规则，以 ``id`` 为键。"
 
 #: ../../operations.rst:527
 msgid "``policy_inspection``"
-msgstr ""
+msgstr "``policy_inspection``"
 
 #: ../../operations.rst:528
 msgid "The stored WAF mode per category, one row."
-msgstr ""
+msgstr "每个类别存储的 WAF 模式，一行。"
 
 #: ../../operations.rst:529
 msgid "``ip_reputation``"
-msgstr ""
+msgstr "``ip_reputation``"
 
 #: ../../operations.rst:530
 msgid "Scores, hit counts and expiry, keyed by address or prefix."
-msgstr ""
+msgstr "分数、命中次数和过期时间，以地址或前缀为键。"
 
 #: ../../operations.rst:531
 msgid "``incident_receipts``"
-msgstr ""
+msgstr "``incident_receipts``"
 
 #: ../../operations.rst:532
 msgid ""
 "Each node's durable incident receipt (the next sequence after its last "
 "committed batch), keyed by node."
-msgstr ""
+msgstr "每个节点的持久事件回执（其最后一个已提交批次之后的下一个序号），以节点为键。"
 
 #: ../../operations.rst:533
 msgid "``security_incidents``"
-msgstr ""
+msgstr "``security_incidents``"
 
 #: ../../operations.rst:534
 msgid ""
 "One bounded event record with its 64-component embedding (256 bytes), "
 "keyed by ``node_id << 40 | sequence``."
-msgstr ""
+msgstr "一条有界的事件记录及其 64 维嵌入向量（256 字节），以 ``node_id << 40 | sequence`` 为键。"
 
 #: ../../operations.rst:535
 msgid "``incidents_fts``"
-msgstr ""
+msgstr "``incidents_fts``"
 
 #: ../../operations.rst:536
 msgid ""
@@ -1497,14 +1832,17 @@ msgid ""
 "On PostgreSQL the same tokens are the ``tsvector`` column ``search`` of "
 "``security_incidents`` with a GIN index."
 msgstr ""
+"在 SQLite 上：一张基于路径和载荷规范词元的 FTS5 表。在 PostgreSQL 上，同样的"
+"词元存放在 ``security_incidents`` 的 ``tsvector`` 列 ``search`` 中，并带有 "
+"GIN 索引。"
 
 #: ../../operations.rst:537
 msgid "``sibuna_schema``"
-msgstr ""
+msgstr "``sibuna_schema``"
 
 #: ../../operations.rst:538
 msgid "Every applied migration, keyed by component and version."
-msgstr ""
+msgstr "每次已应用的迁移，以组件和版本为键。"
 
 #: ../../operations.rst:540
 msgid ""
@@ -1520,16 +1858,25 @@ msgid ""
 "represent. Enumerated values are stored in lowercase: a direct write of "
 "``'DENY'`` is refused."
 msgstr ""
+"核心模式位于 ``crates/storage/src/schema.rs``，每种方言各写一份。启用控制台"
+"时，组件 ``console`` 会增加 33 张名称以 ``console_`` 开头的表（SID 0013；"
+"``crates/console-storage/src/schema/``）。迁移按组件编号并编译进可执行文件；"
+"所有待执行的迁移在一个事务中运行，如果数据库中某个组件的版本比节点所知道的更"
+"新，节点会拒绝该数据库。打印出来的简略模式不是升级脚本。SQLite 的表是 "
+"``STRICT`` 的，``CHECK`` 约束与 Rust 类型相对应，因此数据库会拒绝守护进程无"
+"法表示的行。枚举值以小写存储：直接写入 ``'DENY'`` 会被拒绝。"
 
 #: ../../operations.rst:542
 msgid "Operating It"
-msgstr ""
+msgstr "日常运维"
 
 #: ../../operations.rst:545
 msgid ""
 "Use the ``sqlite3`` shell on ``sibuna.db`` (WAL mode lets it read while "
 "the daemon runs), or ``psql`` on the cluster database:"
 msgstr ""
+"在 ``sibuna.db`` 上使用 ``sqlite3`` shell（WAL 模式允许在守护进程运行时读取），"
+"或在集群数据库上使用 ``psql``："
 
 #: ../../operations.rst:565
 msgid ""
@@ -1543,6 +1890,13 @@ msgid ""
 "``NOTIFY sibuna_policy``, so the other nodes tick at once; polling "
 "remains the guarantee."
 msgstr ""
+"这些语句是为 SQLite 编写的。在 PostgreSQL 上，``enabled`` 为 ``TRUE``，时间"
+"用 ``CAST(extract(epoch FROM now()) AS BIGINT)`` 代替 ``unixepoch()``，搜索"
+"则在 ``security_incidents`` 上写作 ``WHERE search @@ CAST('union' AS "
+"tsquery)``。``path`` 和 ``offending_payload`` 保存原始请求字节（``BLOB`` 或 "
+"``BYTEA``）。违反约束的直接写入会被数据库拒绝，永远不会到达节点。在 "
+"PostgreSQL 下，修订版本触发器还会发出 ``NOTIFY sibuna_policy``，使其他节点立"
+"即执行一次节拍；轮询仍然是最终保证。"
 
 #: ../../operations.rst:567
 msgid ""
@@ -1552,10 +1906,14 @@ msgid ""
 "so with a shared PostgreSQL database a trap sprung on one node bans the "
 "address on all of them."
 msgstr ""
+"分数不高于 :math:`-50` 的在字典树中成为 ``deny`` 前缀，分数不低于 "
+":math:`50` 的成为 ``allow``，``banned_until`` 限定封禁的期限。蜜罐命中会自动"
+"插入一条 :math:`-100` 的记录，因此在共享 PostgreSQL 数据库时，一个节点上触发"
+"的陷阱会在所有节点上封禁该地址。"
 
 #: ../../operations.rst:569
 msgid "A Transaction Receipt Makes Retry Safe"
-msgstr ""
+msgstr "事务回执使重试变得安全"
 
 #: ../../operations.rst:572
 msgid ""
@@ -1566,10 +1924,14 @@ msgid ""
 "data-changing statement is guarded by that receipt; the transaction "
 "advances it last, and never backwards."
 msgstr ""
+"存储线程最多收集 32 条待处理记录，并构建一个 SQL 事务。该事务插入事件、更新"
+"全文索引，并应用蜜罐带来的信誉变化。每个签发者（节点）都有一个单调递增的回执，"
+"即它在 ``incident_receipts`` 中的那一行。每条修改数据的语句都受该回执的保护；"
+"事务最后才推进回执，并且从不回退。"
 
 #: ../../operations.rst:574
 msgid "Worked example: the acknowledgement disappears"
-msgstr ""
+msgstr "推演示例：确认消失了"
 
 #: ../../operations.rst:576
 msgid ""
@@ -1582,6 +1944,11 @@ msgid ""
 "original transaction rolled back, the old receipt remains and the retry "
 "applies all writes once."
 msgstr ""
+"假设签发者 2 准备了序号 101 到 132，最终回执为 133。数据库提交了所有记录和回"
+"执 133，然后连接在确认到达之前失败。存储线程保留准备好的批次（标识符、嵌入向"
+"量和活动）并重试。回执已经等于 133，因此受保护的写入什么都不做：事件和蜜罐命"
+"中次数都不会加倍。如果原来的事务回滚了，旧的回执仍然存在，重试会把所有写入施"
+"加一次。"
 
 #: ../../operations.rst:578
 msgid ""
@@ -1593,21 +1960,26 @@ msgid ""
 "bounded asynchronous forensic path, not a durable message queue at "
 "enqueue time."
 msgstr ""
+"提交失败时，待处理批次保留在内存中，并递增 ``incident_write_failures``。节拍"
+"仍然会尝试轮询策略。512 条记录的队列满时计入 ``incidents_dropped``；它从不为"
+"等待磁盘而阻塞 HTTP 响应。待处理批次额外提供 32 条记录的空间。进程在提交之前"
+"死亡可能丢失排队的数据：这是一条有界的异步取证路径，而不是在入队时就保证持久"
+"的消息队列。"
 
 #: ../../operations.rst:580
 msgid "Exercise 9.1"
-msgstr ""
+msgstr "练习 9.1"
 
 #: ../../operations.rst:582
 msgid ""
 "Move the receipt update outside the data transaction. Construct one crash "
 "schedule that duplicates a reputation effect and another that loses an "
 "incident."
-msgstr ""
+msgstr "把回执更新移到数据事务之外。构造一个使信誉效果重复的崩溃时序，再构造一个使事件丢失的崩溃时序。"
 
 #: ../../operations.rst:584
 msgid "Campaign Clustering"
-msgstr ""
+msgstr "活动聚类"
 
 #: ../../operations.rst:587
 msgid ""
@@ -1624,10 +1996,18 @@ msgid ""
 "payloads, but that is not a guarantee that every pair of attacks shares a "
 "campaign. No model runs and nothing is trained."
 msgstr ""
+"每个事件的载荷都通过对字节三元组（数字折叠、大小写折叠）使用哈希技巧，嵌入为"
+"一个 64 维单位向量，并以 256 字节存储在 ``security_incidents.embedding`` 中。"
+"存储线程在内存中保存所有节点最近的 16,384 个嵌入向量（4 MiB），并在每次节拍"
+"时从数据库刷新。插入之前，它在其中找出最近的一个（包括同一批次中较早的记录）；"
+"如果余弦距离不超过 :math:`0.35`，新事件就加入该事件的 ``campaign_id``，否则"
+"以自己的标识符为名开始一个新活动。早于这个窗口的事件不参与比较。相似性只是一"
+"种启发式：回归示例会把相关的 SQL 载荷分到一组，但这并不保证每一对攻击都属于"
+"同一个活动。这里没有运行任何模型，也没有训练任何东西。"
 
 #: ../../operations.rst:589
 msgid "Clustering"
-msgstr ""
+msgstr "集群"
 
 #: ../../operations.rst:592
 msgid ""
@@ -1636,6 +2016,9 @@ msgid ""
 "--features postgres-tls``; it implies ``postgres``) and start each member "
 "with the database and a node id of its own:"
 msgstr ""
+"集群是共享同一个 PostgreSQL 数据库的一组节点。使用 ``postgres-tls`` 特性构建"
+"（``cargo build --release -p sibuna --features postgres-tls``；它隐含 "
+"``postgres``），并用数据库和各自的节点 ID 启动每个成员："
 
 #: ../../operations.rst:599
 msgid ""
@@ -1652,6 +2035,14 @@ msgid ""
 "On the server we accept TCP only through ``hostssl`` lines in "
 "``pg_hba.conf``."
 msgstr ""
+"每个成员都必须使用相同的主密钥，以及一个唯一的、取值 1 到 8,388,607 的 "
+"``--cluster-node``。URL 文件保存一个 ``postgres://`` URL，并且必须只有其所有"
+"者可读；启动横幅从不打印 URL。写入发往 PostgreSQL 主库。每个节点的存储线程看"
+"到已提交的修订版本变化（通过 ``NOTIFY`` 或轮询）后重建自己的引擎。节点通过网"
+"络访问共享数据库，因此我们对这条连接进行加密和验证。我们为服务器颁发一张由自"
+"己的证书颁发机构签名的证书，并在 URL 中指定该机构："
+"``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``。"
+"在服务器上，我们只通过 ``pg_hba.conf`` 中的 ``hostssl`` 行接受 TCP 连接。"
 
 #: ../../operations.rst:602
 msgid ""
@@ -1667,6 +2058,14 @@ msgid ""
 "certificate. ``sslrootcert`` adds our authority to the system trust "
 "store; it does not remove the system's authorities (SID 0011, SID 0012)."
 msgstr ""
+"启动时，守护进程会打印一行关于数据库连接的信息。使用 ``verify-full`` 时，它"
+"说明证书和主机名都已验证。使用任何更弱的模式时，它会打印一条警告和一条提示。"
+"没有 ``sslmode`` 时，模式为 ``prefer``：只有当服务器提供 TLS 时连接才会加密，"
+"并且不验证服务器。不带 ``postgres-tls`` 构建的守护进程会拒绝 ``require``、"
+"``verify-ca`` 和 ``verify-full``，并指出缺少的特性；它从不回退为明文。被拒绝"
+"的证书会立即终止启动；提示会要求我们检查 ``sslrootcert``，以及 URL 中的主机"
+"是否是服务器证书中的名称。``sslrootcert`` 把我们的证书颁发机构添加到系统信任"
+"存储中；它不会移除系统的证书颁发机构（SID 0011，SID 0012）。"
 
 #: ../../operations.rst:604
 msgid ""
@@ -1683,10 +2082,18 @@ msgid ""
 "``sibuna console policies export`` and ``sibuna console policies "
 "import``, and forensic history is not migrated."
 msgstr ""
+"Sibuna 不复制自己的数据库，也不选举领导者。复制、故障切换和备份都由 "
+"PostgreSQL 负责（流复制、Patroni 或托管服务）。控制台的节点视图中没有领导者："
+"SQLite 节点显示角色 ``single``，PostgreSQL 节点显示 ``unknown``，``quorum`` "
+"只表示该节点最近一次数据库往返成功了。如果数据库不可达，最后发布的引擎继续提"
+"供服务，事件在有界环中排队，环满后被丢弃并计数，存储线程以退避方式重试；节点"
+"在重新连接之前保持它最后的策略。Zaxonlite 的数据目录（SID 0005）不会被读取；"
+"策略通过 ``sibuna console policies export`` 和 ``sibuna console policies "
+"import`` 迁移，取证历史不会迁移。"
 
 #: ../../operations.rst:606
 msgid "Cluster Challenge Routing"
-msgstr ""
+msgstr "集群中的挑战路由"
 
 #: ../../operations.rst:609
 msgid ""
@@ -1699,14 +2106,20 @@ msgid ""
 "identifiers never collide (``crates/storage/tests/multi_node.rs``, SID "
 "0011 criterion 2; it runs when ``SIBUNA_TEST_DATABASE_URL`` is set)."
 msgstr ""
+"挑战密钥与 ``--cluster-node`` 绑定；请让挑战的签发和验证发生在同一个成员上。"
+"令牌使用共享种子，在其他成员上也有效。本地速率配额不会变成全局配额，进程重启"
+"会清空已用集合。在一个本地 PostgreSQL 上运行三个节点时，直接写入的策略行会在"
+"一个节拍内到达全部三个节点，一个节点上的蜜罐封禁会到达其他节点，事件标识符也"
+"从不冲突（``crates/storage/tests/multi_node.rs``，SID 0011 标准 2；设置 "
+"``SIBUNA_TEST_DATABASE_URL`` 时运行）。"
 
 #: ../../operations.rst:611
 msgid "Packaging"
-msgstr ""
+msgstr "打包"
 
 #: ../../operations.rst:616
 msgid "Build the binary for a target, package it, and run it under systemd."
-msgstr ""
+msgstr "为某个目标构建可执行文件，将其打包，并在 systemd 下运行。"
 
 #: ../../operations.rst:618
 msgid ""
@@ -1719,6 +2132,12 @@ msgid ""
 "wasm32-unknown-unknown``; ``SIBUNA_POW_WASM=<path>`` and "
 "``SIBUNA_CONSOLE_WASM=<path>`` embed prebuilt modules instead."
 msgstr ""
+"``cargo build --release -p sibuna`` 以默认特性（SQLite 存储和控制台）生成 "
+"``target/release/sibuna``。sqlx 自带 SQLite，``ring``\\ （rustls）在构建时需"
+"要 C 编译器；可执行文件只动态链接系统 C 运行时（``libc``、``libm``、"
+"``libgcc_s``）。构建脚本还会构建 WebAssembly 求解器和控制台界面，这需要 "
+"``rustup target add wasm32-unknown-unknown``；``SIBUNA_POW_WASM=<path>`` 和 "
+"``SIBUNA_CONSOLE_WASM=<path>`` 可以改为嵌入预先构建的模块。"
 
 #: ../../operations.rst:619
 msgid ""
@@ -1727,12 +2146,18 @@ msgid ""
 "``--database-url`` are then refused at start with ``StorageDisabled``, "
 "and ``sibuna console`` with ``CONSOLEBUILD``."
 msgstr ""
+"``cargo build --release -p sibuna --no-default-features`` 生成完全不依赖外部"
+" crate 的内存型防火墙；此时 ``--data-dir`` 和 ``--database-url`` 会在启动时"
+"以 ``StorageDisabled`` 被拒绝，``sibuna console`` 则以 ``CONSOLEBUILD`` 被拒"
+"绝。"
 
 #: ../../operations.rst:620
 msgid ""
 "``cargo build --release -p sibuna --features postgres`` adds PostgreSQL "
 "clusters. It needs no OpenSSL."
 msgstr ""
+"``cargo build --release -p sibuna --features postgres`` 增加 PostgreSQL 集群"
+"支持。它不需要 OpenSSL。"
 
 #: ../../operations.rst:622
 msgid ""
@@ -1742,10 +2167,13 @@ msgid ""
 "container image needs a base that provides it. The unit below is an "
 "example:"
 msgstr ""
+"release profile 使用 fat LTO 和单个代码生成单元。Sibuna 不提供容器镜像定义、"
+"systemd 单元或操作系统软件包；可执行文件动态链接系统 C 运行时，因此容器镜像"
+"需要一个提供它的基础镜像。下面的单元是一个示例："
 
 #: ../../operations.rst:642
 msgid "Exercise 9.2"
-msgstr ""
+msgstr "练习 9.2"
 
 #: ../../operations.rst:644
 msgid ""
@@ -1754,20 +2182,23 @@ msgid ""
 "demands 20 work bits of sequential work, and a partner scraper identified "
 "by ``X-Partner-Key`` is admitted at 30 requests per 10 seconds."
 msgstr ""
+"编写策略文件和所需的 ``ip_reputation`` 行，使预发布网络（``10.20.0.0/16``）"
+"绕过挑战，``/admin/*`` 要求 20 个工作比特的顺序工作量，并以每 10 秒 30 个请"
+"求的速率准入一个由 ``X-Partner-Key`` 标识的合作伙伴爬虫。"
 
 #: ../../operations.rst:646
 msgid ""
 "Hint: The daemon flags set the per-client limit every request meets "
 "first; a rule can carry a quota of its own in ``limits``."
-msgstr ""
+msgstr "提示：守护进程的选项设定了每个请求首先要满足的按客户端限制；规则可以在 ``limits`` 中携带自己的配额。"
 
 #: ../../operations.rst:648
 msgid "Explain the invariant"
-msgstr ""
+msgstr "解释这个不变量"
 
 #: ../../operations.rst:650
 msgid ""
 "Explain to an operator why adding a row to ``policies`` takes effect "
 "without a restart and without a request ever waiting, in terms of the "
 "storage thread and the engine slot."
-msgstr ""
+msgstr "用存储线程和引擎槽来向运维人员解释：为什么向 ``policies`` 添加一行无需重启就能生效，而且从不需要任何请求等待。"

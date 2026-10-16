@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:25+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,59 +19,59 @@ msgstr ""
 
 #: ../../reference.rst:1
 msgid "Part X: Desk Reference and Diagnostics"
-msgstr ""
+msgstr "第 X 部分：案头参考与诊断"
 
 #: ../../reference.rst:4
 msgid ""
 "Endpoints, metrics, error catalog, policy schema, and storage tables in "
 "one place."
-msgstr ""
+msgstr "端点、指标、错误目录、策略模式和存储表，集中在一处。"
 
 #: ../../reference.rst:6
 msgid "Endpoints"
-msgstr ""
+msgstr "端点"
 
 #: ../../reference.rst:9
 msgid "Objectives"
-msgstr ""
+msgstr "学习目标"
 
 #: ../../reference.rst:11
 msgid "Know every route under ``/__sibuna/`` and what each returns."
-msgstr ""
+msgstr "了解 ``/__sibuna/`` 下的每个路由及其返回内容。"
 
 #: ../../reference.rst:13
 msgid "Reserved routes"
-msgstr ""
+msgstr "保留路由"
 
 #: ../../reference.rst:17
 msgid "Endpoint"
-msgstr ""
+msgstr "端点"
 
 #: ../../reference.rst:18
 msgid "Method"
-msgstr ""
+msgstr "方法"
 
 #: ../../reference.rst:19
 msgid "Function"
-msgstr ""
+msgstr "功能"
 
 #: ../../reference.rst:20
 msgid "``/__sibuna/challenge``"
-msgstr ""
+msgstr "``/__sibuna/challenge``"
 
 #: ../../reference.rst:21 ../../reference.rst:24 ../../reference.rst:30
 #: ../../reference.rst:33 ../../reference.rst:36 ../../reference.rst:39
 #: ../../reference.rst:42
 msgid "GET"
-msgstr ""
+msgstr "GET"
 
 #: ../../reference.rst:22
 msgid "The interstitial page"
-msgstr ""
+msgstr "验证中间页"
 
 #: ../../reference.rst:23
 msgid "``/__sibuna/challenge.json?need=&path=``"
-msgstr ""
+msgstr "``/__sibuna/challenge.json?need=&path=``"
 
 #: ../../reference.rst:25
 msgid ""
@@ -80,14 +80,17 @@ msgid ""
 "form (``414`` above 8 KiB, ``400`` for a path without a normal form). "
 "Returns ``{id, algorithm, difficulty, challenges, expires_at}``"
 msgstr ""
+"签发一个无状态挑战：若被挑战的响应中带有要求票据，则由票据决定；否则按规范形"
+"式评估上报的 URL（超过 8 KiB 返回 ``414``，路径没有规范形式时返回 ``400``）。"
+"返回 ``{id, algorithm, difficulty, challenges, expires_at}``"
 
 #: ../../reference.rst:26
 msgid "``/__sibuna/verify``"
-msgstr ""
+msgstr "``/__sibuna/verify``"
 
 #: ../../reference.rst:27
 msgid "POST"
-msgstr ""
+msgstr "POST"
 
 #: ../../reference.rst:28
 msgid ""
@@ -95,29 +98,34 @@ msgid ""
 "\"proof\"}``; ``200`` with ``Set-Cookie``, ``400`` with a diagnostic, or "
 "``413`` for a body larger than the connection buffer"
 msgstr ""
+"接受 ``{\"challenge_id\", \"nonce\"}`` 或 ``{\"challenge_id\", "
+"\"proof\"}``；返回带 ``Set-Cookie`` 的 ``200``、带诊断信息的 ``400``，或在请"
+"求体大于连接缓冲区时返回 ``413``"
 
 #: ../../reference.rst:29
 msgid "``/__sibuna/wasm/sibuna-pow.wasm``"
-msgstr ""
+msgstr "``/__sibuna/wasm/sibuna-pow.wasm``"
 
 #: ../../reference.rst:31
 msgid ""
 "The solver module, 14,744 bytes (``wasm_bytes`` in "
 "``benchmarks/results/primitives-latest.json``), cacheable for one hour"
 msgstr ""
+"求解器模块，14,744 字节（``benchmarks/results/primitives-latest.json`` 中的 "
+"``wasm_bytes``），可缓存一小时"
 
 #: ../../reference.rst:32
 msgid "``/__sibuna/worker.js``"
-msgstr ""
+msgstr "``/__sibuna/worker.js``"
 
 #: ../../reference.rst:34
 msgid ""
 "The Web Worker with WASM and JavaScript provers, cacheable for one hour"
-msgstr ""
+msgstr "包含 WASM 和 JavaScript 证明器的 Web Worker，可缓存一小时"
 
 #: ../../reference.rst:35
 msgid "``/__sibuna/honeypot``"
-msgstr ""
+msgstr "``/__sibuna/honeypot``"
 
 #: ../../reference.rst:37
 msgid ""
@@ -126,24 +134,27 @@ msgid ""
 "no cross-site ``Sec-Fetch-Site``); any other is answered ``404`` and "
 "counted"
 msgstr ""
+"将调用方封禁 ``--ban-seconds`` 并记录一条事件；返回 ``403``。只有顶层请求才"
+"会触发封禁（没有 ``Sec-Fetch-Dest`` 或其值为 ``document``，且 "
+"``Sec-Fetch-Site`` 不是跨站）；其他请求返回 ``404`` 并计数"
 
 #: ../../reference.rst:38
 msgid "``/__sibuna/health``"
-msgstr ""
+msgstr "``/__sibuna/health``"
 
 #: ../../reference.rst:40
 msgid ""
 "JSON liveness status with engine name, version, proxy mode and proof "
 "algorithm"
-msgstr ""
+msgstr "JSON 格式的存活状态，包含引擎名称、版本、代理模式和证明算法"
 
 #: ../../reference.rst:41
 msgid "``/__sibuna/metrics``"
-msgstr ""
+msgstr "``/__sibuna/metrics``"
 
 #: ../../reference.rst:43
 msgid "Prometheus text format (version 0.0.4)"
-msgstr ""
+msgstr "Prometheus 文本格式（版本 0.0.4）"
 
 #: ../../reference.rst:45
 msgid ""
@@ -156,6 +167,12 @@ msgid ""
 "client that does not accept HTML receives ``401`` with "
 "``{\"error\":\"challenge_required\",\"challenge\":\"/__sibuna/challenge.json?need=<ticket>\"}``."
 msgstr ""
+"``/__sibuna/`` 下的任何其他路径都返回 ``404``。签发和验证消耗单独的 "
+"``--challenge-rate-limit`` 预算，被封禁的地址在每个路由上都以 ``403`` 被拒绝。"
+"挑战响应带有 ``X-Sibuna-Status: CHALLENGE``；被准入的请求向上游携带 "
+"``X-Sibuna-Status: PASS`` 和 ``X-Sibuna-Rule``\\ （在 forward-auth 回复中还"
+"有十六进制的 ``X-Sibuna-Rule-Hash``）。不接受 HTML 的客户端收到 ``401`` 和 "
+"``{\"error\":\"challenge_required\",\"challenge\":\"/__sibuna/challenge.json?need=<ticket>\"}``。"
 
 #: ../../reference.rst:47
 msgid ""
@@ -170,171 +187,178 @@ msgid ""
 "forward-auth mode. Part IX documents the console's workflows, HTTPS "
 "deployment and current SID 0007 limits."
 msgstr ""
+"单独的、需显式启用的管理监听器提供 ``/console/``。先用 ``sibuna "
+"init-admin`` 在本地初始化管理员，然后在首次登录时更换临时密码。"
+"``/console/api/stats`` 和 ``/console/ws`` 需要经过认证的会话（包括大屏会话）。"
+"WebSocket 以有界的快照、增量和缺口恢复，多路传输统计、事件、节点、策略、挑战"
+"和审计数据。管理对等节点连接到 ``/console/peer``，每个 API 路由都位于 "
+"``/console/api/`` 之下。forward-auth 模式下不观测源站错误计数。第 IX 部分记"
+"录了控制台的工作流程、HTTPS 部署和 SID 0007 当前的限制。"
 
 #: ../../reference.rst:49
 msgid "Metrics"
-msgstr ""
+msgstr "指标"
 
 #: ../../reference.rst:52
 msgid ""
 "Counters exposed as ``sibuna_<name>_total`` in Prometheus text format, in "
 "this order:"
-msgstr ""
+msgstr "计数器以 Prometheus 文本格式暴露为 ``sibuna_<name>_total``，顺序如下："
 
 #: ../../reference.rst:54
 msgid "Counters"
-msgstr ""
+msgstr "计数器"
 
 #: ../../reference.rst:58
 msgid "Counter"
-msgstr ""
+msgstr "计数器"
 
 #: ../../reference.rst:59
 msgid "Incremented when"
-msgstr ""
+msgstr "递增时机"
 
 #: ../../reference.rst:60
 msgid "``incidents_persisted``, ``incident_batches``"
-msgstr ""
+msgstr "``incidents_persisted``, ``incident_batches``"
 
 #: ../../reference.rst:61
 msgid "Records and transactions whose commit the storage thread confirmed"
-msgstr ""
+msgstr "存储线程已确认提交的记录和事务"
 
 #: ../../reference.rst:62
 msgid "``incidents_dropped``, ``incident_write_failures``"
-msgstr ""
+msgstr "``incidents_dropped``, ``incident_write_failures``"
 
 #: ../../reference.rst:63
 msgid ""
 "Queue pushes rejected because the ring was full, and failed commit "
 "attempts"
-msgstr ""
+msgstr "因环已满而被拒绝的入队操作，以及失败的提交尝试"
 
 #: ../../reference.rst:64
 msgid "``requests``"
-msgstr ""
+msgstr "``requests``"
 
 #: ../../reference.rst:65
 msgid "A parsed request reached dispatch (reserved routes included)"
-msgstr ""
+msgstr "一个解析后的请求到达分派阶段（包括保留路由）"
 
 #: ../../reference.rst:66
 msgid "``allowed``, ``denied``, ``challenged``"
-msgstr ""
+msgstr "``allowed``, ``denied``, ``challenged``"
 
 #: ../../reference.rst:67
 msgid ""
 "A policy decision was made (admitted, refused, challenge issued or "
 "reissued)"
-msgstr ""
+msgstr "作出了一个策略决定（准入、拒绝、签发或重新签发挑战）"
 
 #: ../../reference.rst:68
 msgid "``challenges_issued``"
-msgstr ""
+msgstr "``challenges_issued``"
 
 #: ../../reference.rst:69
 msgid "``/__sibuna/challenge.json`` minted a challenge record"
-msgstr ""
+msgstr "``/__sibuna/challenge.json`` 签发了一条挑战记录"
 
 #: ../../reference.rst:70
 msgid "``solutions_accepted``, ``solutions_rejected``"
-msgstr ""
+msgstr "``solutions_accepted``, ``solutions_rejected``"
 
 #: ../../reference.rst:71
 msgid "``/__sibuna/verify`` accepted or rejected a proof"
-msgstr ""
+msgstr "``/__sibuna/verify`` 接受或拒绝了一个证明"
 
 #: ../../reference.rst:72
 msgid "``rate_limited``"
-msgstr ""
+msgstr "``rate_limited``"
 
 #: ../../reference.rst:73
 msgid ""
 "GCRA refused a request (``429``): the request limit, the challenge budget "
 "or a rule's quota"
-msgstr ""
+msgstr "GCRA 拒绝了一个请求（``429``）：请求限制、挑战预算或规则配额"
 
 #: ../../reference.rst:74
 msgid "``banned``"
-msgstr ""
+msgstr "``banned``"
 
 #: ../../reference.rst:75
 msgid "A banned address was refused, or the honeypot banned one"
-msgstr ""
+msgstr "一个被封禁的地址被拒绝，或蜜罐封禁了一个地址"
 
 #: ../../reference.rst:76
 msgid "``bans_issued``"
-msgstr ""
+msgstr "``bans_issued``"
 
 #: ../../reference.rst:77
 msgid "A ban was recorded (honeypot or a rule quota's ban)"
-msgstr ""
+msgstr "记录了一次封禁（蜜罐或规则配额触发的封禁）"
 
 #: ../../reference.rst:78
 msgid "``proxied``, ``upstream_errors``"
-msgstr ""
+msgstr "``proxied``, ``upstream_errors``"
 
 #: ../../reference.rst:79
 msgid "A request was relayed to the origin, or the origin failed (``502``)"
-msgstr ""
+msgstr "一个请求被中继到源站，或源站失败（``502``）"
 
 #: ../../reference.rst:80
 msgid "``parse_errors``"
-msgstr ""
+msgstr "``parse_errors``"
 
 #: ../../reference.rst:81
 msgid ""
 "A malformed head, a repeated ``Host``, a target without a normal form "
 "(``400``), or an unsupported transfer coding (``501``) was refused"
-msgstr ""
+msgstr "拒绝了格式错误的头部、重复的 ``Host``、没有规范形式的目标（``400``），或不支持的传输编码（``501``）"
 
 #: ../../reference.rst:82
 msgid "``overloaded``"
-msgstr ""
+msgstr "``overloaded``"
 
 #: ../../reference.rst:83
 msgid ""
 "A connection beyond ``--max-connections`` or ``--max-connections-per-ip`` "
 "was answered ``503``"
-msgstr ""
+msgstr "超出 ``--max-connections`` 或 ``--max-connections-per-ip`` 的连接被回答 ``503``"
 
 #: ../../reference.rst:84
 msgid "``bans_refused``"
-msgstr ""
+msgstr "``bans_refused``"
 
 #: ../../reference.rst:85
 msgid ""
 "A ban was not recorded because every slot its key may take held a ban in "
 "effect"
-msgstr ""
+msgstr "一次封禁未被记录，因为其键可能占用的每个槽都持有一个仍然有效的封禁"
 
 #: ../../reference.rst:86
 msgid "``forwarded_invalid``"
-msgstr ""
+msgstr "``forwarded_invalid``"
 
 #: ../../reference.rst:87
 msgid ""
 "A trusted forwarded client address did not parse; the request was judged "
 "by the socket peer"
-msgstr ""
+msgstr "一个受信任的转发客户端地址无法解析；该请求按套接字对端判定"
 
 #: ../../reference.rst:88
 msgid "``honeypot_refused``"
-msgstr ""
+msgstr "``honeypot_refused``"
 
 #: ../../reference.rst:89
 msgid ""
 "A honeypot hit banned nobody because a page, not a person, requested it"
-msgstr ""
+msgstr "一次蜜罐命中没有封禁任何人，因为请求它的是页面而不是人"
 
 #: ../../reference.rst:90
 msgid "``rate_evictions``"
-msgstr ""
+msgstr "``rate_evictions``"
 
 #: ../../reference.rst:91
 msgid "A limiter arrival evicted another active client's cell"
-msgstr ""
+msgstr "一次限制器到达逐出了另一个活跃客户端的单元"
 
 #: ../../reference.rst:93
 msgid ""
@@ -342,46 +366,48 @@ msgid ""
 "because the pending batch is retained. Monitor increments over an "
 "interval; totals alone are not a queue depth."
 msgstr ""
+"重试可能递增 ``incident_write_failures`` 而不丢失记录，因为待处理批次会被保"
+"留。应监控一段时间内的增量；仅凭总数并不能反映队列深度。"
 
 #: ../../reference.rst:95
 msgid "Status Codes"
-msgstr ""
+msgstr "状态码"
 
 #: ../../reference.rst:98
 msgid "Status codes of the data plane"
-msgstr ""
+msgstr "数据平面的状态码"
 
 #: ../../reference.rst:102 ../../reference.rst:192
 msgid "Code"
-msgstr ""
+msgstr "状态码"
 
 #: ../../reference.rst:103
 msgid "When"
-msgstr ""
+msgstr "时机"
 
 #: ../../reference.rst:104
 msgid "200"
-msgstr ""
+msgstr "200"
 
 #: ../../reference.rst:105
 msgid ""
 "Admitted (forward-auth), interstitial (HTML navigation needing a "
 "challenge), internal routes"
-msgstr ""
+msgstr "已准入（forward-auth）、验证中间页（需要挑战的 HTML 导航）、内部路由"
 
 #: ../../reference.rst:106
 msgid "302"
-msgstr ""
+msgstr "302"
 
 #: ../../reference.rst:107
 msgid ""
 "Not used by the current protocol; verification answers ``200`` and the "
 "page reloads"
-msgstr ""
+msgstr "当前协议不使用；验证返回 ``200``，页面重新加载"
 
 #: ../../reference.rst:108 ../../reference.rst:196
 msgid "400"
-msgstr ""
+msgstr "400"
 
 #: ../../reference.rst:109
 msgid ""
@@ -389,106 +415,110 @@ msgid ""
 "form, invalid forwarded metadata, a malformed body, or a rejected "
 "solution with an Elm-style diagnostic"
 msgstr ""
+"格式错误的请求、重复的 ``Host`` 字段、没有规范形式的目标、无效的转发元数据、"
+"格式错误的请求体，或带有 Elm 风格诊断信息的被拒解答"
 
 #: ../../reference.rst:110
 msgid "401"
-msgstr ""
+msgstr "401"
 
 #: ../../reference.rst:111
 msgid ""
 "Challenge required for a client that does not accept HTML, or in "
 "forward-auth mode"
-msgstr ""
+msgstr "对不接受 HTML 的客户端或在 forward-auth 模式下要求挑战"
 
 #: ../../reference.rst:112
 msgid "403"
-msgstr ""
+msgstr "403"
 
 #: ../../reference.rst:113
 msgid "Policy or WAF denial, banned address, honeypot"
-msgstr ""
+msgstr "策略或 WAF 拒绝、被封禁的地址、蜜罐"
 
 #: ../../reference.rst:114
 msgid "404"
-msgstr ""
+msgstr "404"
 
 #: ../../reference.rst:115
 msgid ""
 "An unknown path under ``/__sibuna/``, or a honeypot hit that is not a "
 "top-level request"
-msgstr ""
+msgstr "``/__sibuna/`` 下的未知路径，或不是顶层请求的蜜罐命中"
 
 #: ../../reference.rst:116
 msgid "413"
-msgstr ""
+msgstr "413"
 
 #: ../../reference.rst:117
 msgid "Solution body larger than the 64 KB connection buffer"
-msgstr ""
+msgstr "解答的请求体大于 64 KB 的连接缓冲区"
 
 #: ../../reference.rst:118
 msgid "414"
-msgstr ""
+msgstr "414"
 
 #: ../../reference.rst:119
 msgid "A reported challenge URL over 8 KiB"
-msgstr ""
+msgstr "上报的挑战 URL 超过 8 KiB"
 
 #: ../../reference.rst:120
 msgid "417"
-msgstr ""
+msgstr "417"
 
 #: ../../reference.rst:121
 msgid "Unsupported request expectation; ``100-continue`` is handled locally"
-msgstr ""
+msgstr "不支持的请求期望；``100-continue`` 在本地处理"
 
 #: ../../reference.rst:122 ../../reference.rst:211
 msgid "429"
-msgstr ""
+msgstr "429"
 
 #: ../../reference.rst:123
 msgid "GCRA limit exceeded; ``Retry-After`` in seconds"
-msgstr ""
+msgstr "超出 GCRA 限制；``Retry-After`` 以秒为单位"
 
 #: ../../reference.rst:124
 msgid "431"
-msgstr ""
+msgstr "431"
 
 #: ../../reference.rst:125
 msgid "Request head over 16 KB"
-msgstr ""
+msgstr "请求头部超过 16 KB"
 
 #: ../../reference.rst:126
 msgid "501"
-msgstr ""
+msgstr "501"
 
 #: ../../reference.rst:127
 msgid "``Transfer-Encoding`` with a coding other than chunked"
-msgstr ""
+msgstr "``Transfer-Encoding`` 使用了 chunked 以外的编码"
 
 #: ../../reference.rst:128
 msgid "502"
-msgstr ""
+msgstr "502"
 
 #: ../../reference.rst:129
 msgid ""
 "Origin unreachable, or its response head was malformed or larger than 16 "
 "KB"
-msgstr ""
+msgstr "源站不可达，或其响应头部格式错误或大于 16 KB"
 
 #: ../../reference.rst:130 ../../reference.rst:202 ../../reference.rst:205
 msgid "503"
-msgstr ""
+msgstr "503"
 
 #: ../../reference.rst:131
 msgid ""
 "Connection limit (``--max-connections`` or ``--max-connections-per-ip``) "
 "reached, or the node is draining; the socket is closed after the reply"
 msgstr ""
+"达到连接限制（``--max-connections`` 或 ``--max-connections-per-ip``），或节"
+"点正在排空；回复后关闭套接字"
 
 #: ../../reference.rst:133
 msgid "Error Catalog"
-msgstr ""
+msgstr "错误目录"
 
 #: ../../reference.rst:136
 msgid ""
@@ -509,176 +539,190 @@ msgid ""
 "option, and ``CONSOLE001`` a console configuration that breaks a rule "
 "(``StorageRequired`` without storage)."
 msgstr ""
+"对于守护进程不认识的任何选项、超出文档所述范围的任何值，以及无效、缺失或重复"
+"的模式选择，``INVALID COMMAND LINE`` 会终止启动。错误块会指出选项、给定的值、"
+"期望的范围和错误（``UnknownOption``、``MissingValue``、``InvalidValue``、"
+"``InvalidMode``、``MissingMode``、``DuplicateMode``；Zaxonlite 集群选项对应 "
+"``RemovedOption``，两个互斥的存储选项对应 ``ConflictingOptions``，没有 "
+"``--cluster-node`` 的数据库 URL 对应 ``MissingOption``），并以一条提示结尾。"
+"数据库 URL 显示为 ``[redacted]``。请只提供一次 ``--mode reverse_proxy`` 或 "
+"``--mode forward_auth``；``-m`` 是等价的短选项。被拒绝的策略文件会打印一个以"
+"其错误命名标题的错误块（例如 ``INVALID POLICY ACTION``），其中包含文件、错误"
+"名称、规则、字段和值。控制台选项单独检查：``CONSOLE002`` 指出格式错误或重复"
+"的控制台选项，``CONSOLE001`` 指出违反规则的控制台配置（没有存储时的 "
+"``StorageRequired``）。"
 
 #: ../../reference.rst:138
 msgid "Implementation: ``ErrorKind::explain``"
-msgstr ""
+msgstr "实现：``ErrorKind::explain``"
 
 #: ../../reference.rst:140
 msgid ""
 "Maps every domain error to a boundary line, an explanation, and a "
 "``Hint:``. In ``crates/core/src/errors.rs`` (crate ``sibuna-core``)."
 msgstr ""
+"把每个领域错误映射为一条边界线、一段说明和一条 ``Hint:``。位于 "
+"``crates/core/src/errors.rs``\\ （crate ``sibuna-core``）。"
 
 #: ../../reference.rst:142
 msgid "Challenge and session errors"
-msgstr ""
+msgstr "挑战与会话错误"
 
 #: ../../reference.rst:146
 msgid "Error"
-msgstr ""
+msgstr "错误"
 
 #: ../../reference.rst:147
 msgid "Cause"
-msgstr ""
+msgstr "原因"
 
 #: ../../reference.rst:148
 msgid "Hint"
-msgstr ""
+msgstr "提示"
 
 #: ../../reference.rst:149
 msgid "``MalformedChallenge``"
-msgstr ""
+msgstr "``MalformedChallenge``"
 
 #: ../../reference.rst:150
 msgid "The identifier is not a well-formed challenge record"
-msgstr ""
+msgstr "标识符不是格式正确的挑战记录"
 
 #: ../../reference.rst:151
 msgid "Fetch a fresh challenge and submit it unchanged"
-msgstr ""
+msgstr "获取一个新挑战，并原样提交"
 
 #: ../../reference.rst:152
 msgid "``InvalidChallengeTag``"
-msgstr ""
+msgstr "``InvalidChallengeTag``"
 
 #: ../../reference.rst:153
 msgid "The tag does not authenticate; not issued by this cluster or edited"
-msgstr ""
+msgstr "标签认证失败；不是由本集群签发，或已被编辑"
 
 #: ../../reference.rst:154
 msgid "Challenges cannot be forged; request a new one"
-msgstr ""
+msgstr "挑战无法伪造；请请求一个新挑战"
 
 #: ../../reference.rst:155
 msgid "``ChallengeExpired``"
-msgstr ""
+msgstr "``ChallengeExpired``"
 
 #: ../../reference.rst:156
 msgid "Older than the challenge TTL, or minted in the future"
-msgstr ""
+msgstr "超过挑战 TTL，或签发时间在未来"
 
 #: ../../reference.rst:157
 msgid "Request a new challenge"
-msgstr ""
+msgstr "请求一个新挑战"
 
 #: ../../reference.rst:158
 msgid "``FingerprintMismatch``"
-msgstr ""
+msgstr "``FingerprintMismatch``"
 
 #: ../../reference.rst:159
 msgid "Submitted from a different address or User-Agent"
-msgstr ""
+msgstr "从不同的地址或 User-Agent 提交"
 
 #: ../../reference.rst:160
 msgid "Submit from the client that fetched it"
-msgstr ""
+msgstr "从获取挑战的那个客户端提交"
 
 #: ../../reference.rst:161
 msgid "``DifficultyNotMet``"
-msgstr ""
+msgstr "``DifficultyNotMet``"
 
 #: ../../reference.rst:162
 msgid "Hashcash nonce lacks the required zero bits"
-msgstr ""
+msgstr "Hashcash nonce 缺少所需的零比特"
 
 #: ../../reference.rst:163
 msgid "Keep searching nonces"
-msgstr ""
+msgstr "继续搜索 nonce"
 
 #: ../../reference.rst:164
 msgid "``InvalidProof``"
-msgstr ""
+msgstr "``InvalidProof``"
 
 #: ../../reference.rst:165
 msgid "The sequential-work proof does not open the committed labels"
-msgstr ""
+msgstr "顺序工作量证明没有打开已承诺的标签"
 
 #: ../../reference.rst:166
 msgid "Run the prover to completion for the issued depth and openings"
-msgstr ""
+msgstr "按签发的深度和揭示数完整运行证明器"
 
 #: ../../reference.rst:167
 msgid "``WrongSolutionType``"
-msgstr ""
+msgstr "``WrongSolutionType``"
 
 #: ../../reference.rst:168
 msgid "A nonce for a PoSW challenge or a proof for Hashcash"
-msgstr ""
+msgstr "为 PoSW 挑战提交了 nonce，或为 Hashcash 提交了证明"
 
 #: ../../reference.rst:169
 msgid "Match the solution field to the algorithm"
-msgstr ""
+msgstr "让解答字段与算法相符"
 
 #: ../../reference.rst:170
 msgid "``DoubleSpendAttempt``"
-msgstr ""
+msgstr "``DoubleSpendAttempt``"
 
 #: ../../reference.rst:171
 msgid "The challenge was already spent"
-msgstr ""
+msgstr "挑战已被使用"
 
 #: ../../reference.rst:172
 msgid "Challenges are single use"
-msgstr ""
+msgstr "挑战只能使用一次"
 
 #: ../../reference.rst:173
 msgid "``StoreFull``"
-msgstr ""
+msgstr "``StoreFull``"
 
 #: ../../reference.rst:174
 msgid "The spent set is full"
-msgstr ""
+msgstr "已用集合已满"
 
 #: ../../reference.rst:175
 msgid "Lower the challenge TTL or raise ``--spent-tags``"
-msgstr ""
+msgstr "降低挑战 TTL，或调大 ``--spent-tags``"
 
 #: ../../reference.rst:176
 msgid "``InvalidTokenSignature``"
-msgstr ""
+msgstr "``InvalidTokenSignature``"
 
 #: ../../reference.rst:177
 msgid "Cookie tag or signature fails"
-msgstr ""
+msgstr "Cookie 的标签或签名校验失败"
 
 #: ../../reference.rst:178
 msgid "Re-authenticate through the interstitial"
-msgstr ""
+msgstr "通过验证中间页重新认证"
 
 #: ../../reference.rst:179
 msgid "``TokenExpired``"
-msgstr ""
+msgstr "``TokenExpired``"
 
 #: ../../reference.rst:180
 msgid "Cookie past its expiry"
-msgstr ""
+msgstr "Cookie 已过期"
 
 #: ../../reference.rst:181
 msgid "Re-authenticate"
-msgstr ""
+msgstr "重新认证"
 
 #: ../../reference.rst:182
 msgid "``TokenBoundAddressMismatch``"
-msgstr ""
+msgstr "``TokenBoundAddressMismatch``"
 
 #: ../../reference.rst:183
 msgid "Cookie presented from a different client identity"
-msgstr ""
+msgstr "Cookie 由不同的客户端身份出示"
 
 #: ../../reference.rst:184
 msgid "Cookies cannot be shared"
-msgstr ""
+msgstr "Cookie 不能共享"
 
 #: ../../reference.rst:186
 msgid ""
@@ -686,68 +730,70 @@ msgid ""
 "``{\"error\":\"<CODE>\",\"hint\":\"<sentence>\"}``; the hint is the text "
 "the interface shows (``crates/console/src/http/reply.rs``)."
 msgstr ""
+"控制台 API 以 ``{\"error\":\"<CODE>\",\"hint\":\"<sentence>\"}`` 报告失败；"
+"其中的 hint 就是界面显示的文字（``crates/console/src/http/reply.rs``）。"
 
 #: ../../reference.rst:188
 msgid "Console failure codes that concern operators"
-msgstr ""
+msgstr "与运维人员相关的控制台失败代码"
 
 #: ../../reference.rst:193
 msgid "Status"
-msgstr ""
+msgstr "状态码"
 
 #: ../../reference.rst:194
 msgid "Meaning"
-msgstr ""
+msgstr "含义"
 
 #: ../../reference.rst:195
 msgid "``CONSOLE002``"
-msgstr ""
+msgstr "``CONSOLE002``"
 
 #: ../../reference.rst:197
 msgid "The request is malformed, too large or not allowed in its form"
-msgstr ""
+msgstr "请求格式错误、过大，或其形式不被允许"
 
 #: ../../reference.rst:198
 msgid "``CONSOLE003``"
-msgstr ""
+msgstr "``CONSOLE003``"
 
 #: ../../reference.rst:199
 msgid "503 / 429"
-msgstr ""
+msgstr "503 / 429"
 
 #: ../../reference.rst:200
 msgid ""
 "The storage job queue is full (32 jobs), or the password verifier is busy"
-msgstr ""
+msgstr "存储任务队列已满（32 个任务），或密码验证器繁忙"
 
 #: ../../reference.rst:201
 msgid "``CONSOLEQUORUM``"
-msgstr ""
+msgstr "``CONSOLEQUORUM``"
 
 #: ../../reference.rst:203
 msgid ""
 "The database did not answer within the request's wait of 10 seconds; the "
 "outcome is unknown, and the data plane continues from the last applied "
 "policy"
-msgstr ""
+msgstr "数据库未在请求的 10 秒等待时间内应答；结果未知，数据平面继续使用最后应用的策略"
 
 #: ../../reference.rst:204
 msgid "``CONSOLE004``"
-msgstr ""
+msgstr "``CONSOLE004``"
 
 #: ../../reference.rst:206
 msgid ""
 "The service cannot answer: not available in this build, stopping, or an "
 "internal failure"
-msgstr ""
+msgstr "服务无法应答：此构建中不可用、正在停止，或发生内部故障"
 
 #: ../../reference.rst:207
 msgid "``CONSOLENODE``"
-msgstr ""
+msgstr "``CONSOLENODE``"
 
 #: ../../reference.rst:208
 msgid "400 / 409 / 503"
-msgstr ""
+msgstr "400 / 409 / 503"
 
 #: ../../reference.rst:209
 msgid ""
@@ -756,18 +802,21 @@ msgid ""
 "completion could not be recorded (503); inspect the operation receipt "
 "before retrying"
 msgstr ""
+"节点命令被拒绝：它指向另一个节点（400），启动或控制修订版本已过时（409），或"
+"者它在另一条命令运行时到达，或某次完成无法被记录（503）；重试之前请检查操作"
+"回执"
 
 #: ../../reference.rst:210
 msgid "``CONSOLEMUTATION``"
-msgstr ""
+msgstr "``CONSOLEMUTATION``"
 
 #: ../../reference.rst:212
 msgid "More than sixty management mutations in a minute from one session"
-msgstr ""
+msgstr "一个会话在一分钟内发起了超过六十次管理变更"
 
 #: ../../reference.rst:214
 msgid "Policy Schema"
-msgstr ""
+msgstr "策略模式"
 
 #: ../../reference.rst:240
 msgid ""
@@ -780,6 +829,13 @@ msgid ""
 "reputation trie of ``ip_rules`` holds at most 8,192 nodes. Each rule may "
 "use one spelling of each criterion."
 msgstr ""
+"``challenge_at`` 和 ``deny_at`` 的取值范围为 -1000 到 1000，并且 "
+"``deny_at`` 不小于 ``challenge_at``；``bits_step`` 的取值范围为 1 到 1000。"
+"``challenge`` 块只属于 ``CHALLENGE`` 规则，工作比特为 1 到 64。``limits`` 为"
+"规则设定自己的配额：``rate``\\ （1 到 1,000,000）和 ``window_seconds``\\ （"
+"1 到 86,400）是必需的，``ban_seconds``\\ （最多 86,400）是可选的，``WEIGH`` "
+"规则不能带有 limits。``ip_rules`` 的信誉字典树最多容纳 8,192 个节点。每条规"
+"则对每个条件只能使用一种写法。"
 
 #: ../../reference.rst:242
 msgid ""
@@ -792,10 +848,15 @@ msgid ""
 "``%5C`` or ``\\`` matches nothing, and path matching is case-sensitive "
 "(SID 0003)."
 msgstr ""
+"模式语法：``.*`` 或 ``*`` 匹配任何内容；``^...$`` 锚定一个精确路径；末尾的 "
+"``*``、``/*`` 或 ``.*`` 表示前缀；以 ``/`` 开头的模式是精确路径；其他情况是"
+"不区分大小写的子串。路径模式匹配规范形式的路径（段之间只有一个斜杠，没有点段，"
+"非保留字符不转义，其他转义使用大写十六进制数字），因此包含 ``;``、``%2F``、"
+"``%5C`` 或 ``\\`` 的模式不会匹配任何内容，并且路径匹配区分大小写（SID 0003）。"
 
 #: ../../reference.rst:244
 msgid "Storage Tables"
-msgstr ""
+msgstr "存储表"
 
 #: ../../reference.rst:247
 msgid ""
@@ -808,121 +869,132 @@ msgid ""
 "lowercase. Incident ids are ``node_id << 40 | sequence``, unique across a "
 "cluster without coordination; node ids run from 1 to 8,388,607."
 msgstr ""
+"``policy_revision``、``policies``、``policy_inspection``、"
+"``ip_reputation``、``incident_receipts``、``security_incidents``\\ （含 256 "
+"字节的嵌入向量）、全文索引（SQLite 上为 ``incidents_fts``，即基于规范词元的 "
+"FTS5；PostgreSQL 上为带 GIN 索引的 ``tsvector`` 列 ``search``）以及 "
+"``sibuna_schema``；控制台另外增加 33 张 ``console_*`` 表。存储的动作、算法和"
+"模式名称均为小写。事件 ID 为 ``node_id << 40 | sequence``，无需协调即可在集"
+"群内保持唯一；节点 ID 的范围为 1 到 8,388,607。"
 
 #: ../../reference.rst:249
 msgid "Build Targets"
-msgstr ""
+msgstr "构建目标"
 
 #: ../../reference.rst:252
 msgid "Build and repository commands"
-msgstr ""
+msgstr "构建与仓库命令"
 
 #: ../../reference.rst:256
 msgid "Command"
-msgstr ""
+msgstr "命令"
 
 #: ../../reference.rst:257
 msgid "Result"
-msgstr ""
+msgstr "结果"
 
 #: ../../reference.rst:258
 msgid "``cargo build --release -p sibuna``"
-msgstr ""
+msgstr "``cargo build --release -p sibuna``"
 
 #: ../../reference.rst:259
 msgid "Daemon with SQLite storage and the console (the default features)"
-msgstr ""
+msgstr "带 SQLite 存储和控制台的守护进程（默认特性）"
 
 #: ../../reference.rst:260
 msgid "``cargo build --release -p sibuna --no-default-features``"
-msgstr ""
+msgstr "``cargo build --release -p sibuna --no-default-features``"
 
 #: ../../reference.rst:261
 msgid ""
 "In-memory daemon without storage or console and without any external crate"
-msgstr ""
+msgstr "不带存储和控制台、也不依赖任何外部 crate 的内存型守护进程"
 
 #: ../../reference.rst:262
 msgid "``cargo build --release -p sibuna --features postgres``"
-msgstr ""
+msgstr "``cargo build --release -p sibuna --features postgres``"
 
 #: ../../reference.rst:263
 msgid "Daemon that also connects to a shared PostgreSQL database"
-msgstr ""
+msgstr "还能连接共享 PostgreSQL 数据库的守护进程"
 
 #: ../../reference.rst:264
 msgid "``cargo test``"
-msgstr ""
+msgstr "``cargo test``"
 
 #: ../../reference.rst:265
 msgid ""
 "Unit tests, integration tests against a live daemon, storage and console "
 "tests (PostgreSQL ones when ``SIBUNA_TEST_DATABASE_URL`` is set)"
 msgstr ""
+"单元测试、针对运行中守护进程的集成测试、存储和控制台测试（设置 "
+"``SIBUNA_TEST_DATABASE_URL`` 时包括 PostgreSQL 测试）"
 
 #: ../../reference.rst:266
 msgid "``cargo clippy --all-targets``, ``cargo fmt --check``"
-msgstr ""
+msgstr "``cargo clippy --all-targets``, ``cargo fmt --check``"
 
 #: ../../reference.rst:267
 msgid "Lints and formatting (``max_width = 99``)"
-msgstr ""
+msgstr "lint 和格式化（``max_width = 99``）"
 
 #: ../../reference.rst:268
 msgid "``cargo xtask check``"
-msgstr ""
+msgstr "``cargo xtask check``"
 
 #: ../../reference.rst:269
 msgid ""
 "The 70-line function, 1,408-line file and 99/108-column line limits; no "
 "tabs"
-msgstr ""
+msgstr "70 行函数、1,408 行文件和 99/108 列的行长度限制；不允许制表符"
 
 #: ../../reference.rst:270
 msgid "``cargo xtask browser``"
-msgstr ""
+msgstr "``cargo xtask browser``"
 
 #: ../../reference.rst:271
 msgid "Checks in headless Chromium (``sibuna-browser``)"
-msgstr ""
+msgstr "在无头 Chromium 中进行的检查（``sibuna-browser``）"
 
 #: ../../reference.rst:272
 msgid "``cargo xtask bench <primitives|product|latency>``"
-msgstr ""
+msgstr "``cargo xtask bench <primitives|product|latency>``"
 
 #: ../../reference.rst:273
 msgid ""
 "Release-mode benchmarks; results in "
 "``benchmarks/results/<command>-latest.json``"
-msgstr ""
+msgstr "release 模式的基准测试；结果位于 ``benchmarks/results/<command>-latest.json``"
 
 #: ../../reference.rst:274
 msgid ""
 "``cargo build -p sibuna-pow-wasm --target wasm32-unknown-unknown "
 "--profile wasm``"
 msgstr ""
+"``cargo build -p sibuna-pow-wasm --target wasm32-unknown-unknown --profile "
+"wasm``"
 
 #: ../../reference.rst:275
 msgid ""
 "The browser module only (``-p sibuna-console-ui`` for the console "
 "interface)"
-msgstr ""
+msgstr "只构建浏览器模块（控制台界面用 ``-p sibuna-console-ui``）"
 
 #: ../../reference.rst:276
 msgid "``cargo run -p sibuna-geoip --bin geoip-snapshot -- ...``"
-msgstr ""
+msgstr "``cargo run -p sibuna-geoip --bin geoip-snapshot -- ...``"
 
 #: ../../reference.rst:277
 msgid "Validate country data and write an embeddable GeoIP snapshot"
-msgstr ""
+msgstr "校验国家数据，并写出一个可嵌入的 GeoIP 快照"
 
 #: ../../reference.rst:278
 msgid "``guidedog build`` / ``guidedog dsc``"
-msgstr ""
+msgstr "``guidedog build`` / ``guidedog dsc``"
 
 #: ../../reference.rst:279
 msgid "This book / the SID records"
-msgstr ""
+msgstr "本书 / SID 记录"
 
 #: ../../reference.rst:281
 msgid ""
@@ -934,10 +1006,16 @@ msgid ""
 "``SIBUNA_GEOIP_DATA`` names a GeoIP snapshot to embed; it is decoded at "
 "build time, and a build without the console refuses it (``GEOIP001``)."
 msgstr ""
+"守护进程的构建脚本（``cmd/sibuna/build.rs``）用 ``wasm`` profile 把两个 "
+"WebAssembly 模块构建到工作区的目标目录中，并在控制台界面超过 768 KiB 时使构"
+"建失败。对于没有 ``wasm32-unknown-unknown`` 目标的构建，可以用 "
+"``SIBUNA_POW_WASM`` 和 ``SIBUNA_CONSOLE_WASM`` 指定预先构建的模块。"
+"``SIBUNA_GEOIP_DATA`` 指定要嵌入的 GeoIP 快照；它在构建时解码，不带控制台的"
+"构建会拒绝它（``GEOIP001``）。"
 
 #: ../../reference.rst:283
 msgid "Exercise 10.1"
-msgstr ""
+msgstr "练习 10.1"
 
 #: ../../reference.rst:285
 msgid ""
@@ -946,14 +1024,17 @@ msgid ""
 "the token and challenge formats, and propose the smallest change to the "
 "interstitial that recovers gracefully."
 msgstr ""
+"一个客户端在求解过程中从 Wi-Fi 切换到蜂窝网络后，收到标题为 ``CLIENT "
+"FINGERPRINT MISMATCH`` 的 ``400``。根据令牌和挑战的格式解释原因，并提出对验"
+"证中间页最小的修改，使其能够平稳恢复。"
 
 #: ../../reference.rst:287
 msgid "Explain the invariant"
-msgstr ""
+msgstr "解释这个不变量"
 
 #: ../../reference.rst:289
 msgid ""
 "Without looking, list the endpoints a reverse proxy in front of Sibuna "
 "must route to the daemon rather than to the origin, and say why each is "
 "needed."
-msgstr ""
+msgstr "不看书，列出位于 Sibuna 之前的反向代理必须路由到守护进程而不是源站的端点，并说明每个端点为什么需要。"

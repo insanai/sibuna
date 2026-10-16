@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../learning.rst:1
 msgid "How to Read This Book"
-msgstr ""
+msgstr "如何阅读本书"
 
 #: ../../learning.rst:4
 msgid ""
@@ -29,82 +29,85 @@ msgid ""
 "request is a defect; a correct operation with unbounded cost is another "
 "kind of defect."
 msgstr ""
+"我们从一个问题开始：服务器此刻能做出的、成本最低的安全决策是什么？在阅读协议"
+"和实现章节时，我们始终把这个问题放在身边。一个成本低廉却准入了错误请求的操作"
+"是缺陷；一个正确却成本无界的操作是另一种缺陷。"
 
 #: ../../learning.rst:10
 msgid "Question"
-msgstr ""
+msgstr "问题"
 
 #: ../../learning.rst:11
 msgid "Where the answer develops"
-msgstr ""
+msgstr "在哪里展开解答"
 
 #: ../../learning.rst:12
 msgid "What does a puzzle buy?"
-msgstr ""
+msgstr "谜题换来了什么？"
 
 #: ../../learning.rst:13
 msgid "Parts I to III: cost, probability, and the limits of proof."
-msgstr ""
+msgstr "第 I 至 III 部分：成本、概率和证明的局限。"
 
 #: ../../learning.rst:14
 msgid "How does Sibuna compare?"
-msgstr ""
+msgstr "Sibuna 与其他方案相比如何？"
 
 #: ../../learning.rst:15
 msgid "Part II: lineage and the feature table; Part VIII: measurements."
-msgstr ""
+msgstr "第 II 部分：技术源流与功能表；第 VIII 部分：测量。"
 
 #: ../../learning.rst:16
 msgid "What does a session mean?"
-msgstr ""
+msgstr "会话意味着什么？"
 
 #: ../../learning.rst:17
 msgid "Part IV: bindings, verification order, expiry, and replay."
-msgstr ""
+msgstr "第 IV 部分：绑定、验证顺序、过期和重放。"
 
 #: ../../learning.rst:18
 msgid "Where does the memory go?"
-msgstr ""
+msgstr "内存用在了哪里？"
 
 #: ../../learning.rst:19
 msgid "Parts V and VI: buffers, threads, tables, automata, and publication."
-msgstr ""
+msgstr "第 V 和 VI 部分：缓冲区、线程、表、自动机和发布。"
 
 #: ../../learning.rst:20
 msgid "How does the browser solve?"
-msgstr ""
+msgstr "浏览器怎样解题？"
 
 #: ../../learning.rst:21
 msgid "Part VII: worker messages, memory, and calibration."
-msgstr ""
+msgstr "第 VII 部分：worker 消息、内存和校准。"
 
 #: ../../learning.rst:22
 msgid "How do we know it works?"
-msgstr ""
+msgstr "我们怎样知道它有效？"
 
 #: ../../learning.rst:23
 msgid "Part VIII: three harnesses and what each excludes."
-msgstr ""
+msgstr "第 VIII 部分：三套测量工具以及各自不包含的内容。"
 
 #: ../../learning.rst:24
 msgid "How do we run it?"
-msgstr ""
+msgstr "我们怎样运行它？"
 
 #: ../../learning.rst:25
 msgid "Part IX: flags, topologies, policy, storage, clustering, packaging."
-msgstr ""
+msgstr "第 IX 部分：选项、拓扑、策略、存储、集群和打包。"
 
 #: ../../learning.rst:26
 msgid "What was that error?"
-msgstr ""
+msgstr "那个错误是什么意思？"
 
 #: ../../learning.rst:27
 msgid "Part X: endpoints, statuses, errors, schema; Part XI: the card."
-msgstr ""
+msgstr "第 X 部分：端点、状态码、错误和数据库模式；第 XI 部分：速查卡。"
 
 #: ../../learning.rst:29
 msgid "Three Reading Paths"
-msgstr ""
+msgstr "三条阅读路径"
 
 #: ../../learning.rst:32
 msgid ""
@@ -113,6 +116,9 @@ msgid ""
 "the back only afterwards. Return to Part V when a trace reaches a shared "
 "table or a borrowed slice."
 msgstr ""
+"*学习设计。* 按顺序阅读第 I 至 IV 部分，然后阅读第 VI 部分的完整执行推演，再"
+"阅读第 VII 部分。先完成练习，之后再与书末的解答比较。当推演涉及共享表或借用"
+"切片时，回到第 V 部分。"
 
 #: ../../learning.rst:33
 msgid ""
@@ -121,6 +127,9 @@ msgid ""
 "surface, and the \"Whole-Product Comparison\" in Part VIII before "
 "choosing worker and connection limits."
 msgstr ""
+"*运维部署。* 先读第 IX 部分，再读第 XI 部分，同时打开第 X 部分以便查阅。选择"
+"运行配置之前，阅读第 II 部分的“功能比较”；选择 worker 数量和连接限制之前，阅"
+"读第 VIII 部分的“完整产品比较”。"
 
 #: ../../learning.rst:34
 msgid ""
@@ -129,10 +138,13 @@ msgid ""
 "catch a regression in what we touched; Part II lists the constraints a "
 "change must keep."
 msgstr ""
+"*修改代码。* 阅读第 V 和 VI 部分、每章中的源码定位，以及它们引用的 SID 记录。"
+"第 VIII 部分说明哪套测量工具能发现我们所改动部分的性能退化；第 II 部分列出修"
+"改必须保持的约束。"
 
 #: ../../learning.rst:36
 msgid "Conventions"
-msgstr ""
+msgstr "约定"
 
 #: ../../learning.rst:39
 msgid ""
@@ -144,6 +156,10 @@ msgid ""
 "disagree. Boxes headed \"Implementation\" name a function and its file; "
 "boxes headed \"Explain the invariant\" ask us to teach the idea back."
 msgstr ""
+"*推演示例* 展示中间状态，而不只是答案。*练习* 要求我们改变一个假设。提示给出"
+"第一步；书末的部分解答使推理可以核查。图示区分请求路径和后台工作。当正文与代"
+"码看起来不一致时，源码定位指出应当查看的实现。标题为“实现”的框给出一个函数及"
+"其所在文件；标题为“解释这个不变量”的框要求我们把这个思想讲回来。"
 
 #: ../../learning.rst:41
 msgid ""
@@ -157,3 +173,9 @@ msgid ""
 "are chosen inputs, not benchmark claims. Statistical models state their "
 "assumptions before drawing conclusions."
 msgstr ""
+"公式中，:math:`b` 是以比特计的 Hashcash 难度，:math:`n` 是顺序工作量的深度，"
+":math:`t` 是揭示的数量，:math:`p` 是每次尝试的成功概率，:math:`K` 是尝试次数，"
+":math:`T` 是速率限制器的发射间隔，:math:`\\tau` 是它的突发容忍量，:math:`Q` "
+"是队列容量。除非另有说明，符号只在所在小节内有效。第 VIII 部分中的纳秒数和每"
+"秒请求数是来自某次具名运行的测量结果。推演示例中的数字是选定的输入，不是基准"
+"测试结论。统计模型先说明假设，再得出结论。"

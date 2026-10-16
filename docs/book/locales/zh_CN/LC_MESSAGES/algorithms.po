@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../algorithms.rst:1
 msgid "Part VI: Automata, Tries, and the Semantic Firewall"
-msgstr ""
+msgstr "第 VI 部分：自动机、字典树与语义防火墙"
 
 #: ../../algorithms.rst:4
 msgid ""
@@ -28,15 +28,17 @@ msgid ""
 "tokenizers of the semantic WAF, and the declarative policy engine with "
 "WEIGH scoring."
 msgstr ""
+"我们考察亚微秒级分类背后的算法：带标记的 Aho-Corasick 自动机，IPv4/IPv6 基数"
+"字典树，语义 WAF 的字节类分词器，以及带 WEIGH 评分的声明式策略引擎。"
 
 #: ../../algorithms.rst:6
 msgid "Single-Pass Multi-Pattern Matching"
-msgstr ""
+msgstr "单遍多模式匹配"
 
 #: ../../algorithms.rst:9 ../../algorithms.rst:80 ../../algorithms.rst:103
 #: ../../algorithms.rst:162
 msgid "Objectives"
-msgstr ""
+msgstr "学习目标"
 
 #: ../../algorithms.rst:11
 msgid ""
@@ -45,10 +47,12 @@ msgid ""
 "case folding through byte classes, and argue why a SIMD literal engine "
 "was not adopted."
 msgstr ""
+"学完本章，我们应当能够推导 Aho-Corasick 自动机的线性时间保证，解释稠密表布局"
+"以及通过字节类实现的大小写折叠，并论证为什么没有采用 SIMD 字面量引擎。"
 
 #: ../../algorithms.rst:13
 msgid "Aho-Corasick as a Dense DFA"
-msgstr ""
+msgstr "作为稠密 DFA 的 Aho-Corasick"
 
 #: ../../algorithms.rst:16
 msgid ""
@@ -60,6 +64,12 @@ msgid ""
 "so scanning is one table load per input byte with no branches on the "
 "pattern set. The automaton lives in the ``sibuna-patterns`` crate:"
 msgstr ""
+"Sibuna 有两个字面量模式集合：大约四十个机器人签名和大约一百个攻击签名。逐个"
+"地把一个字段与 :math:`N` 个模式比较，复杂度为 :math:`O(NM)`；Aho 和 "
+"Corasick（1975）的自动机在构建带失败链接的字典树之后，只需以 :math:`O(M)` 扫"
+"描一遍。Sibuna 在构建时把失败链接折叠进转移表，因此扫描时每个输入字节只需一"
+"次表读取，不需要针对模式集合进行分支。自动机位于 ``sibuna-patterns`` crate "
+"中："
 
 #: ../../algorithms.rst:37
 msgid ""
@@ -68,10 +78,13 @@ msgid ""
 "after every other state; detecting a match is then one comparison against "
 "``first_match``, with no second table to load in the inner loop."
 msgstr ""
+"状态以它在一张扁平表中的行偏移量存储，因此一步只是一次加法和一次读取。状态的"
+"编号使每个匹配状态都排在所有其他状态之后；于是检测匹配只需与 "
+"``first_match`` 比较一次，内层循环中不必再读取第二张表。"
 
 #: ../../algorithms.rst:40
 msgid "Trie states and failure edges for two signatures"
-msgstr ""
+msgstr "两个签名的字典树状态和失败边"
 
 #: ../../algorithms.rst:64
 msgid ""
@@ -87,21 +100,28 @@ msgid ""
 "the comparison with sequential substring search are recorded in Part "
 "VIII. The latter uses the same patterns and any-match semantics."
 msgstr ""
+"自动机的状态预算是一个运行时选项。策略引擎最多预留一个根加上所有签名长度之和，"
+"这是字典树状态数的一个安全上界。这样既避免了以往过大的固定表，又为每个字节类"
+"保留了稠密的转移。每个模式带有一个小的类别标记（0 到 63，因此一组标记就是一"
+"个 64 位字）。大小写折叠使用一张随自动机一起构建的 256 项字节类表：一个字母"
+"的大小写形式共用一个类，所有不出现在任何模式中的字节共用一个类，因此表的一行"
+"的宽度等于不同模式字节的数量加一，而不是 256。确切的引擎大小，以及与顺序子串"
+"搜索的比较，记录在第 VIII 部分中。后者使用相同的模式和“任一匹配”语义。"
 
 #: ../../algorithms.rst:66
 msgid "Regular Expressions, SIMD Engines, and the Choice"
-msgstr ""
+msgstr "正则表达式、SIMD 引擎与最终选择"
 
 #: ../../algorithms.rst:69
 msgid "Three families were weighed for the signature stage:"
-msgstr ""
+msgstr "为签名阶段权衡过三类方案："
 
 #: ../../algorithms.rst:71
 msgid ""
 "*Backtracking regular expressions* (a backtracking rule-set style) run "
 "hundreds of patterns per request and allocate per match; they are the "
 "slowest option and the most prone to false positives."
-msgstr ""
+msgstr "*回溯式正则表达式*\\ （回溯规则集的风格）每个请求要运行数百个模式，每次匹配都要分配内存；它们是最慢的选项，也最容易产生误报。"
 
 #: ../../algorithms.rst:72
 msgid ""
@@ -113,6 +133,11 @@ msgid ""
 "bytes, no advantage: the whole field scans in less time than one cache "
 "miss."
 msgstr ""
+"*SIMD 字面量引擎*\\ （Hyperscan、Vectorscan）用基于 shuffle 的半字节掩码（"
+"“Teddy”算法）对 16 到 32 字节的数据块进行预过滤，再用自动机验证候选。它们擅"
+"长处理带有大型字面量集合的长输入。代价是一个数兆字节的 C++ 依赖、一个编译期"
+"的模式数据库、不支持 WebAssembly 目标，而且对于一百字节左右的输入没有优势："
+"扫描整个字段的时间还不到一次缓存未命中。"
 
 #: ../../algorithms.rst:73
 msgid ""
@@ -120,6 +145,8 @@ msgid ""
 "lineage, gives exact linear-time behaviour in a fixed table and needs "
 "nothing outside the binary."
 msgstr ""
+"*稠密 Aho-Corasick 加小型结构分词器*，即 libinjection 一脉的做法，在一张固定"
+"表中提供精确的线性时间行为，并且不需要可执行文件之外的任何东西。"
 
 #: ../../algorithms.rst:75
 msgid ""
@@ -129,17 +156,22 @@ msgid ""
 "``benchmarks/results/primitives-latest.md``). That is the one workload "
 "where a SIMD prefilter would pay, and SID 0006 keeps it as an open item."
 msgstr ""
+"Sibuna 的字段很短，因此第三类方案在内存和速度上都胜出；第 VIII 部分记录了 8 "
+"KiB 请求体上约每字节 1.56 ns 的成本（语义扫描耗时 12,784.3 ns，见 "
+"``benchmarks/results/primitives-latest.md`` 中的 "
+"``8kb_body_semantic_scan``）。这是 SIMD 预过滤唯一可能值得的工作负载，SID "
+"0006 把它列为一个待定事项。"
 
 #: ../../algorithms.rst:77
 msgid "The Radix Trie for IPv4 and IPv6"
-msgstr ""
+msgstr "IPv4 和 IPv6 的基数字典树"
 
 #: ../../algorithms.rst:82
 msgid ""
 "Trace a longest-prefix lookup through the 128-bit trie, explain the IPv4 "
 "root shortcut, and see how the trie doubles as the reputation store fed "
 "by the cluster."
-msgstr ""
+msgstr "在 128 位字典树中追踪一次最长前缀查找，解释 IPv4 的根捷径，并了解这棵字典树如何兼作由集群供数的信誉存储。"
 
 #: ../../algorithms.rst:84
 msgid ""
@@ -150,6 +182,11 @@ msgid ""
 "at most 128 dependent loads with no pointer chasing. The trie is the "
 "``PrefixTrie`` of the ``sibuna-cidr`` crate."
 msgstr ""
+"一棵基于 128 位键的二叉字典树同时服务两个地址族：IPv6 前缀按原样插入，IPv4 "
+"前缀被映射到 ``::ffff:0:0/96`` 中，因此一个 ``/24`` 会成为深度为 120 的路径。"
+"节点存放在一个以 ``u32`` 为索引的扁平 ``Vec`` 中，索引零既表示根也表示“无子"
+"节点”，因此一次查找最多是 128 次相互依赖的读取，没有指针追逐。这棵字典树就是"
+" ``sibuna-cidr`` crate 中的 ``PrefixTrie``。"
 
 #: ../../algorithms.rst:86
 msgid ""
@@ -158,6 +195,9 @@ msgid ""
 "the trie records the node at depth 96 at initialisation and starts IPv4 "
 "lookups there:"
 msgstr ""
+"如果每次 IPv4 查找都走完映射前缀的 96 层，那么在到达 IPv4 地址的第一个比特之"
+"前，就要付出 96 次相互依赖的读取。因此，字典树在初始化时记录深度 96 处的节点，"
+"并从那里开始 IPv4 查找："
 
 #: ../../algorithms.rst:98
 msgid ""
@@ -168,10 +208,15 @@ msgid ""
 "so a cluster-wide ban beats every rule, and ``challenge`` verdicts after "
 "it."
 msgstr ""
+"分类一个 IPv4 地址耗时 32.0 ns，一个 IPv6 地址耗时 79.3 ns（"
+"``benchmarks/results/primitives-latest.md`` 中的 "
+"``ipv4_cidr_classification`` 和 ``ipv6_cidr_classification``）。引擎会查询字"
+"典树两次：在规则表之前查询终止性的 ``allow``/``deny`` 判定，使集群范围的封禁"
+"优先于每条规则；在规则表之后查询 ``challenge`` 判定。"
 
 #: ../../algorithms.rst:100
 msgid "The Semantic Firewall"
-msgstr ""
+msgstr "语义防火墙"
 
 #: ../../algorithms.rst:105
 msgid ""
@@ -180,10 +225,12 @@ msgid ""
 "checks, canonicalisation, and the false-positive discipline that a real "
 "browser request must pass untouched."
 msgstr ""
+"理解字节类预扫描、带标记的签名自动机、带恒真式检测的 SQL 分词器、HTML 和 "
+"shell 结构检查、规范化，以及误报纪律：真实的浏览器请求必须原封不动地通过。"
 
 #: ../../algorithms.rst:107
 msgid "A Lesson in False Positives"
-msgstr ""
+msgstr "关于误报的一课"
 
 #: ../../algorithms.rst:110
 msgid ""
@@ -195,10 +242,15 @@ msgid ""
 "Chrome request, including a comment body containing ``select``, ``--``, "
 "and an apostrophe, through the engine and asserts it comes out clean."
 msgstr ""
+"WAF 的第一个版本把一个扁平的子串列表与每个请求头进行匹配。列表中包含 "
+"``/*``，而每个浏览器都会发送 ``Accept: text/html,...,*/*;q=0.8``。于是每个真"
+"实的浏览器都被分类为 SQL 注入，并收到 ``403``。这一教训塑造了设计：检测器只"
+"能针对 *结构* 触发；测试套件现在会让一个完整的 Chrome 请求（包括一个含有 "
+"``select``、``--`` 和撇号的评论正文）通过引擎，并断言它被判定为干净。"
 
 #: ../../algorithms.rst:112
 msgid "Byte Classes in One Pass"
-msgstr ""
+msgstr "单遍收集字节类"
 
 #: ../../algorithms.rst:115
 msgid ""
@@ -211,10 +263,16 @@ msgid ""
 "and the two byte pairs (``/*`` and two adjacent spaces) are searched for "
 "only when no single byte has already demanded canonicalisation:"
 msgstr ""
+"每个被检查的字段只扫描一遍，收集其中出现了哪些字节类：引号、``=``、``<``、"
+"shell 分隔符、``%``、NUL、规范化触发字节和连续空格。每个检测器都查询这些字节"
+"类，而不是重新扫描；只有出现了触发字节时，才运行规范化后的第二遍。扫描对每个"
+"字节查一次 256 项的表，代码来自 ``sibuna-policy`` 的 WAF 模块。四个累加器使 "
+"OR 链保持简短；只有当没有任何单个字节已经要求规范化时，才搜索两种字节对（"
+"``/*`` 和两个相邻的空格）："
 
 #: ../../algorithms.rst:143
 msgid "Detectors"
-msgstr ""
+msgstr "检测器"
 
 #: ../../algorithms.rst:146
 msgid ""
@@ -222,6 +280,9 @@ msgid ""
 "automaton; a hit is a terminal ``deny`` named ``waf:sqli``, ``waf:xss``, "
 "``waf:path-traversal``, or ``waf:rce``."
 msgstr ""
+"*签名。* 所有类别的所有强签名都位于同一个带标记的自动机中；命中即为终止性的 "
+"``deny``，名称为 ``waf:sqli``、``waf:xss``、``waf:path-traversal`` 或 "
+"``waf:rce``。"
 
 #: ../../algorithms.rst:147
 msgid ""
@@ -233,6 +294,12 @@ msgid ""
 "(1), an ``=`` (1). ``admin'--`` is terminal by itself. \"it's a group "
 "order from the shop\" scores 3 and passes."
 msgstr ""
+"*SQL 注入。* 一个单遍的单词扫描器在关键字表中查找每个字母数字单词（最多七个"
+"字节），遇到 ``or`` / ``and`` 时检查是否存在 ``literal = literal`` 形式的恒"
+"真式；``id=1 or 1=1`` 是终止性的。否则必须出现引号字节，并且证据得分至少为 "
+"4，计分项为：引号（1），最多两个关键字（2），注释标记（1），一个 ``=``\\ （"
+"1）。``admin'--`` 本身就是终止性的。“it's a group order from the shop” 得 3 "
+"分，可以通过。"
 
 #: ../../algorithms.rst:148
 msgid ""
@@ -240,6 +307,8 @@ msgid ""
 "script co-occurs with an ``on<event>=`` attribute in attribute position. "
 "``onboarding=1`` does not count."
 msgstr ""
+"*跨站脚本。* 要求出现 ``<``；当一个可以承载脚本的标签与处于属性位置的 "
+"``on<event>=`` 属性同时出现时触发。``onboarding=1`` 不算。"
 
 #: ../../algorithms.rst:149
 msgid ""
@@ -247,12 +316,16 @@ msgid ""
 "``&&``, ``$(``, a backtick, or a newline is followed by a known command "
 "name. ``status ok; done | next`` passes."
 msgstr ""
+"*命令注入。* 要求出现分隔符；当 ``;``、``|``、``&&``、``$(``、反引号或换行后"
+"面跟着一个已知的命令名时触发。``status ok; done | next`` 可以通过。"
 
 #: ../../algorithms.rst:150
 msgid ""
 "*Path traversal.* Signatures (``../``, ``..%2f``, ``/etc/passwd``, "
 "``id_rsa``, ...) plus NUL and ``%00``."
 msgstr ""
+"*路径遍历。* 签名（``../``、``..%2f``、``/etc/passwd``、``id_rsa`` 等），外"
+"加 NUL 和 ``%00``。"
 
 #: ../../algorithms.rst:152
 msgid ""
@@ -264,10 +337,15 @@ msgid ""
 "buffer and inspected again, so ``1%27/**/UnIoN/**/SeLeCt`` and "
 "``%252e%252e/`` collapse onto the raw signatures."
 msgstr ""
+"语法中合法地包含引号和星号的结构性请求头（``Accept*``、``Content-Type``、"
+"``Sec-*``、``If-*`` 等）会被跳过；路径、查询、User-Agent、其他请求头以及请求"
+"体的前 8 KB 会被检查。含有百分号转义、加号、注释起始符或可折叠空白的字段，会"
+"被规范化到一个 8 KB 的栈缓冲区中再检查一次，因此 "
+"``1%27/**/UnIoN/**/SeLeCt`` 和 ``%252e%252e/`` 都会归结为原始签名。"
 
 #: ../../algorithms.rst:154
 msgid "Cost"
-msgstr ""
+msgstr "成本"
 
 #: ../../algorithms.rst:157
 msgid ""
@@ -278,16 +356,20 @@ msgid ""
 "ingress using forward-auth must pass the relevant request information; "
 "omitted bytes cannot be inspected by this process."
 msgstr ""
+"检查成本取决于提交给引擎的字段和字节，而不仅仅是请求的数量。基准测试一章分别"
+"报告了 Gate、Shield 和 8 KB 请求体的情形。8 KB 的上界是一个检查限制，并不意"
+"味着上传内容的其余部分是安全的。使用 forward auth 的入口代理必须传递相关的请"
+"求信息；被省略的字节无法由这个进程检查。"
 
 #: ../../algorithms.rst:159
 msgid "The Declarative Policy Engine"
-msgstr ""
+msgstr "声明式策略引擎"
 
 #: ../../algorithms.rst:164
 msgid ""
 "Read the rule model, the evaluation order, WEIGH scoring with thresholds, "
 "and the JSON policy grammar."
-msgstr ""
+msgstr "阅读规则模型、评估顺序、带阈值的 WEIGH 评分，以及 JSON 策略语法。"
 
 #: ../../algorithms.rst:166
 msgid ""
@@ -297,20 +379,24 @@ msgid ""
 "per-rule difficulty in work bits and algorithm, and a signed ``weight``. "
 "Evaluation order:"
 msgstr ""
+"一条规则是若干可选条件的合取（路径模式、User-Agent 模式、最多四个请求头、最"
+"多八个 IPv4/IPv6 CIDR 块），带有一个动作 ``ALLOW``、``DENY``、``CHALLENGE`` "
+"或 ``WEIGH``，可选的按规则设定的难度（以工作比特计）和算法，以及一个有符号的"
+" ``weight``。评估顺序如下："
 
 #: ../../algorithms.rst:168
 msgid "Semantic WAF (Shield only): violation is a terminal ``deny``."
-msgstr ""
+msgstr "语义 WAF（仅 Shield）：违规即为终止性的 ``deny``。"
 
 #: ../../algorithms.rst:169
 msgid "Reputation trie: ``deny`` or ``allow`` prefixes are terminal."
-msgstr ""
+msgstr "信誉字典树：``deny`` 或 ``allow`` 前缀是终止性的。"
 
 #: ../../algorithms.rst:170
 msgid ""
 "Rules in order: the first terminal match returns; ``WEIGH`` matches "
 "accumulate."
-msgstr ""
+msgstr "按顺序评估规则：第一个终止性匹配直接返回；``WEIGH`` 匹配累加分数。"
 
 #: ../../algorithms.rst:171
 msgid ""
@@ -318,16 +404,19 @@ msgid ""
 "totals :math:`\\geq 10` ``challenge`` with one extra work bit per 5 "
 "points above the threshold, capped at six."
 msgstr ""
+"分数：总分为负时 ``allow``；总分 :math:`\\geq 40` 时 ``deny``；总分 "
+":math:`\\geq 10` 时 ``challenge``，超过阈值的部分每 5 分增加一个工作比特，最"
+"多增加六个。"
 
 #: ../../algorithms.rst:172
 msgid ""
 "Static bypass paths, then trie ``challenge`` verdicts, then the bot "
 "automaton."
-msgstr ""
+msgstr "静态绕过路径，然后是字典树的 ``challenge`` 判定，然后是机器人自动机。"
 
 #: ../../algorithms.rst:173
 msgid "Default action, ``challenge`` unless the policy file says otherwise."
-msgstr ""
+msgstr "默认动作，除非策略文件另有规定，否则为 ``challenge``。"
 
 #: ../../algorithms.rst:175
 msgid ""
@@ -336,10 +425,14 @@ msgid ""
 "``Amazonbot``, and challenge every ``Mozilla`` User-Agent: a browser "
 "string is free to forge, so admitting it would make the gate decorative."
 msgstr ""
+"内置规则放行 ``/.well-known/*``、``/favicon.ico``、``/robots.txt`` 和 "
+"``/__sibuna/*``，拒绝 ``CF-Worker`` 客户端和 ``Amazonbot``，并对每个 "
+"``Mozilla`` User-Agent 发起挑战：浏览器字符串可以随意伪造，准入它会让网关形"
+"同虚设。"
 
 #: ../../algorithms.rst:195
 msgid "Worked Trace: an Encoded Attack with a Valid Session"
-msgstr ""
+msgstr "完整执行推演：持有有效会话的编码攻击"
 
 #: ../../algorithms.rst:198
 msgid ""
@@ -349,6 +442,10 @@ msgid ""
 "request. The percent sign marks the field for canonicalization. One "
 "decoding pass exposes ``%27%20OR%201%3D1``; a second exposes ``' OR 1=1``."
 msgstr ""
+"考虑一个持有有效会话的客户端发出的 ``GET "
+"/search?q=%2527%2520OR%25201%253D1``。首先，HTTP 解析器在不复制字节的情况下"
+"分离路径和查询。接着执行本地限制，然后由 Shield 检查请求。百分号把该字段标记"
+"为需要规范化。第一遍解码得到 ``%27%20OR%201%3D1``；第二遍得到 ``' OR 1=1``。"
 
 #: ../../algorithms.rst:200
 msgid ""
@@ -359,10 +456,13 @@ msgid ""
 "later. The response path need not hold the engine snapshot while an "
 "origin connection is idle."
 msgstr ""
+"此时分词器看到一个引号、关键字 ``OR`` 和相等的字面量操作数。拒绝是终止性的策"
+"略结果。有效会话不会把它变成放行：会话检查只用于解决挑战决定。存储钩子复制一"
+"条有界的事件记录；SQL 稍后才执行。当源站连接空闲时，响应路径不必持有引擎快照。"
 
 #: ../../algorithms.rst:202
 msgid "Exercise 6.1"
-msgstr ""
+msgstr "练习 6.1"
 
 #: ../../algorithms.rst:204
 msgid ""
@@ -370,25 +470,27 @@ msgid ""
 "should neither alone establish SQL injection? Give an example of a false "
 "positive a substring-only detector could produce."
 msgstr ""
+"把载荷换成 ``O'Reilly``，再换成 ``order=1``。为什么单独其中任何一个都不应被"
+"认定为 SQL 注入？举出一个只做子串匹配的检测器可能产生的误报例子。"
 
 #: ../../algorithms.rst:206
 msgid "Exercise 6.2"
-msgstr ""
+msgstr "练习 6.2"
 
 #: ../../algorithms.rst:208
 msgid ""
 "Write the byte-class table entries needed to add a detector for LDAP "
 "injection (patterns such as ``)(|(``), and explain which existing class "
 "bits it can reuse."
-msgstr ""
+msgstr "写出为 LDAP 注入（例如 ``)(|(`` 这样的模式）增加一个检测器所需的字节类表项，并解释它可以复用哪些现有的类比特。"
 
 #: ../../algorithms.rst:210
 msgid "Explain the invariant"
-msgstr ""
+msgstr "解释这个不变量"
 
 #: ../../algorithms.rst:212
 msgid ""
 "Explain to a reviewer why ``Accept: */*`` was a false positive, what "
 "structural property the new SQL detector requires, and how the automaton "
 "and the tokenizer divide the work."
-msgstr ""
+msgstr "向审阅者解释为什么 ``Accept: */*`` 曾是一个误报，新的 SQL 检测器要求什么样的结构性质，以及自动机和分词器如何分工。"
