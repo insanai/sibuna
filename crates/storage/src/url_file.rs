@@ -16,6 +16,9 @@ pub const MAX_URL_FILE: u64 = 4096;
 /// have any permission on it (Unix), when it exceeds [`MAX_URL_FILE`] bytes, is not UTF-8, is
 /// empty, or does not start with `postgres://` or `postgresql://`. The error never contains
 /// the file's content.
+///
+/// Windows has no mode bits and this function does not inspect ACLs there: restricting the
+/// file to the account that runs Sibuna is the operator's job.
 pub fn read_database_url_file(path: impl AsRef<Path>) -> Result<String, StorageError> {
     let path = path.as_ref();
     let fail = |problem| StorageError::UrlFile { path: path.to_path_buf(), problem };
@@ -61,14 +64,18 @@ mod tests {
         dir.join("url")
     }
 
-    #[cfg(unix)]
+    /// Writes `content` to `path` with `mode` on Unix; elsewhere the mode is not applied.
     fn write(path: &Path, content: &[u8], mode: u32) {
-        use std::os::unix::fs::PermissionsExt;
         std::fs::write(path, content).unwrap();
-        std::fs::set_permissions(path, std::fs::Permissions::from_mode(mode)).unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(path, std::fs::Permissions::from_mode(mode)).unwrap();
+        }
+        #[cfg(not(unix))]
+        let _ = mode;
     }
 
-    #[cfg(unix)]
     #[test]
     fn an_owner_only_file_yields_the_trimmed_url() {
         let path = scratch("ok");
@@ -77,18 +84,23 @@ mod tests {
         std::fs::remove_dir_all(path.parent().unwrap()).unwrap();
     }
 
-    #[cfg(unix)]
     #[test]
     fn unsafe_or_malformed_files_are_rejected_without_echoing_the_secret() {
         let path = scratch("bad");
         type Case<'a> = (&'a [u8], u32, fn(&UrlFileProblem) -> bool);
-        let cases: [Case<'_>; 5] = [
-            (b"postgres://u:secret@db/x", 0o640, |p| matches!(p, UrlFileProblem::NotPrivate(_))),
+        let mut cases: Vec<Case<'_>> = vec![
             (b" \n", 0o600, |p| matches!(p, UrlFileProblem::Empty)),
             (b"mysql://u:secret@db/x", 0o600, |p| matches!(p, UrlFileProblem::NotPostgres)),
             (b"postgres://\xff", 0o600, |p| matches!(p, UrlFileProblem::NotUtf8)),
             (&[b'a'; 5000], 0o600, |p| matches!(p, UrlFileProblem::TooLarge)),
         ];
+        // Only Unix has mode bits to check; Windows leaves the ACL to the operator.
+        if cfg!(unix) {
+            let exposed: Case<'_> = (b"postgres://u:secret@db/x", 0o640, |p| {
+                matches!(p, UrlFileProblem::NotPrivate(_))
+            });
+            cases.push(exposed);
+        }
         for (content, mode, expected) in cases {
             write(&path, content, mode);
             let error = read_database_url_file(&path).unwrap_err();
