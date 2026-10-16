@@ -1,0 +1,308 @@
+{
+  "meta": {
+    "date": "2026-10-16T00:55:44Z",
+    "host": "paxos-zig",
+    "cpu": "AMD Ryzen 9 5950X 16-Core Processor",
+    "logical_cpus": 8,
+    "os": "Linux 7.0.0-28-generic x86_64",
+    "kernel": "7.0.0-28-generic",
+    "governor": "powersave",
+    "load_average": "0.56 1.94 3.67 1/1297 2388909",
+    "boost": "1",
+    "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)",
+    "git": "54e4ec5fa76c68b3cd0aee307c8a51e0eec46061",
+    "dirty": true
+  },
+  "anubis_version": "Anubis v1.27.0",
+  "daemon_cpus": "0,1",
+  "client_cpus": "8,9,10,11,12,13,14,15",
+  "daemons": {
+    "rust": {
+      "path": "/home/insan/projects/sibuna2/target/agent-anubis/release/sibuna",
+      "bytes": 37450232,
+      "sha256": "edfd7d68e5466e007d898ce6a7994afae430afae9246ad45ad399352443be6ad"
+    },
+    "anubis": {
+      "path": "/home/insan/anubis/anubis-1.27.0-linux-amd64/bin/anubis",
+      "bytes": 40001698,
+      "sha256": "43a02b1d3908d3d775fe9454140f91ac36843320bc3d3712b33b638f38e801ac"
+    }
+  },
+  "runs": [
+    {
+      "product": "sibuna",
+      "implementation": "rust",
+      "token_scheme": "blake3",
+      "binary": {
+        "path": "/home/insan/projects/sibuna2/target/agent-anubis/release/sibuna",
+        "bytes": 37450232,
+        "sha256": "edfd7d68e5466e007d898ce6a7994afae430afae9246ad45ad399352443be6ad"
+      },
+      "binary_bytes": 37450232,
+      "cpu_affinity": [
+        0,
+        1
+      ],
+      "challenge_rate_limit": 100000000,
+      "valid_session": {
+        "operations_per_second_median": 88104.4072467637,
+        "operations_per_second_min": 81053.10680611043,
+        "operations_per_second_max": 89702.3898959228,
+        "operations_per_second_batches": [
+          81053.10680611043,
+          88161.1479992048,
+          89702.3898959228,
+          87347.19154758696,
+          89258.81709752641,
+          87323.16513290805,
+          88104.4072467637
+        ],
+        "slowest_client_ns_per_operation_median": 22685.73,
+        "batches": 7,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "unauthenticated_check": {
+        "operations_per_second_median": 78997.17822079395,
+        "operations_per_second_min": 77858.42613084498,
+        "operations_per_second_max": 79737.9174130468,
+        "operations_per_second_batches": [
+          79486.64346186588,
+          78497.68000106757,
+          77858.42613084498,
+          79192.33323183516,
+          78997.17822079395,
+          78436.75546361024,
+          79737.9174130468
+        ],
+        "slowest_client_ns_per_operation_median": 25260.27,
+        "batches": 7,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "challenge_bootstrap": {
+        "operations_per_second_median": 42664.0908932858,
+        "operations_per_second_min": 41730.2183116371,
+        "operations_per_second_max": 42907.64515549087,
+        "operations_per_second_batches": [
+          41730.2183116371,
+          42703.89991230754,
+          42671.37303463657,
+          42177.524356465874,
+          42290.96948241351,
+          42907.64515549087,
+          42664.0908932858
+        ],
+        "slowest_client_ns_per_operation_median": 46869.83,
+        "batches": 7,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "proof_verification": {
+        "operations_per_second_median": 57923.898857632106,
+        "operations_per_second_min": 51681.130653935885,
+        "operations_per_second_max": 60462.976346694704,
+        "operations_per_second_batches": [
+          51681.130653935885,
+          53661.33826346878,
+          57212.94299802973,
+          60462.976346694704,
+          57923.898857632106,
+          58363.38135545306,
+          58989.545946404316
+        ],
+        "slowest_client_ns_per_operation_median": 34265.5625,
+        "batches": 7,
+        "operations_per_batch": 64,
+        "clients": 2
+      },
+      "rss_kib_after_workload": 7792
+    },
+    {
+      "product": "anubis",
+      "implementation": "anubis",
+      "token_scheme": "ed25519",
+      "binary": {
+        "path": "/home/insan/anubis/anubis-1.27.0-linux-amd64/bin/anubis",
+        "bytes": 40001698,
+        "sha256": "43a02b1d3908d3d775fe9454140f91ac36843320bc3d3712b33b638f38e801ac"
+      },
+      "binary_bytes": 40001698,
+      "cpu_affinity": [
+        0,
+        1
+      ],
+      "valid_session": {
+        "operations_per_second_median": 10951.380960925637,
+        "operations_per_second_min": 9877.749026942944,
+        "operations_per_second_max": 12419.838481242536,
+        "operations_per_second_batches": [
+          10229.892277188343,
+          10951.380960925637,
+          11107.536335667082,
+          10609.444697420759,
+          9877.749026942944,
+          12419.838481242536,
+          11262.167434530627
+        ],
+        "slowest_client_ns_per_operation_median": 182543.87,
+        "batches": 7,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "unauthenticated_check": {
+        "operations_per_second_median": 28618.50191872746,
+        "operations_per_second_min": 25393.89099164414,
+        "operations_per_second_max": 32740.613634402922,
+        "operations_per_second_batches": [
+          25541.149921314103,
+          29413.058015345086,
+          26627.57383792941,
+          31108.059756094146,
+          25393.89099164414,
+          28618.50191872746,
+          32740.613634402922
+        ],
+        "slowest_client_ns_per_operation_median": 69813.46,
+        "batches": 7,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "challenge_bootstrap": {
+        "operations_per_second_median": 7892.544895459098,
+        "operations_per_second_min": 7426.845663054484,
+        "operations_per_second_max": 8393.136529389365,
+        "operations_per_second_batches": [
+          8278.18886803797,
+          7426.845663054484,
+          7687.500048046875,
+          8393.136529389365,
+          7822.9105827239155,
+          7892.544895459098,
+          8318.212555867714
+        ],
+        "slowest_client_ns_per_operation_median": 253320.69,
+        "batches": 7,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "proof_verification": {
+        "operations_per_second_median": 12668.420715084842,
+        "operations_per_second_min": 11362.918111000086,
+        "operations_per_second_max": 17385.76735887375,
+        "operations_per_second_batches": [
+          11362.918111000086,
+          12175.990240943822,
+          12452.963309094808,
+          12668.420715084842,
+          17385.76735887375,
+          13931.833281234083,
+          13765.678893170587
+        ],
+        "slowest_client_ns_per_operation_median": 157872.875,
+        "batches": 7,
+        "operations_per_batch": 64,
+        "clients": 2
+      },
+      "rss_kib_after_workload": 33400
+    },
+    {
+      "product": "anubis",
+      "implementation": "anubis",
+      "token_scheme": "hs512",
+      "binary": {
+        "path": "/home/insan/anubis/anubis-1.27.0-linux-amd64/bin/anubis",
+        "bytes": 40001698,
+        "sha256": "43a02b1d3908d3d775fe9454140f91ac36843320bc3d3712b33b638f38e801ac"
+      },
+      "binary_bytes": 40001698,
+      "cpu_affinity": [
+        0,
+        1
+      ],
+      "valid_session": {
+        "operations_per_second_median": 16976.003400633002,
+        "operations_per_second_min": 15607.435538364833,
+        "operations_per_second_max": 18655.451258109642,
+        "operations_per_second_batches": [
+          15607.435538364833,
+          16976.003400633002,
+          15688.528736050544,
+          18655.451258109642,
+          17159.09111383006,
+          17079.846660552652,
+          15819.943728460157
+        ],
+        "slowest_client_ns_per_operation_median": 117727.86,
+        "batches": 7,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "unauthenticated_check": {
+        "operations_per_second_median": 27784.72395876747,
+        "operations_per_second_min": 24175.383705646334,
+        "operations_per_second_max": 33907.517584862464,
+        "operations_per_second_batches": [
+          31983.179406286647,
+          24484.056655617424,
+          31082.774672263222,
+          24175.383705646334,
+          27784.72395876747,
+          24245.689328587156,
+          33907.517584862464
+        ],
+        "slowest_client_ns_per_operation_median": 71912.2,
+        "batches": 7,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "challenge_bootstrap": {
+        "operations_per_second_median": 7951.756692148734,
+        "operations_per_second_min": 7049.600744099458,
+        "operations_per_second_max": 8892.081343693082,
+        "operations_per_second_batches": [
+          8892.081343693082,
+          7681.822300322457,
+          7951.756692148734,
+          7049.600744099458,
+          7767.338087021916,
+          7970.535480898473,
+          8355.052640800286
+        ],
+        "slowest_client_ns_per_operation_median": 251432.15,
+        "batches": 7,
+        "operations_per_batch": 200,
+        "clients": 2
+      },
+      "proof_verification": {
+        "operations_per_second_median": 19260.78897608743,
+        "operations_per_second_min": 17478.826722831964,
+        "operations_per_second_max": 20434.175136206548,
+        "operations_per_second_batches": [
+          17670.800713679466,
+          20434.175136206548,
+          19489.057807590623,
+          17478.826722831964,
+          19073.720525886318,
+          19260.78897608743,
+          19360.70937639155
+        ],
+        "slowest_client_ns_per_operation_median": 103837.90625,
+        "batches": 7,
+        "operations_per_batch": 64,
+        "clients": 2
+      },
+      "rss_kib_after_workload": 29840
+    }
+  ],
+  "limitations": [
+    "Two client threads, each with one keep-alive connection, on the client CPU set; the product on two CPUs (two Sibuna workers, GOMAXPROCS=2); loopback HTTP forward auth, no origin or TLS.",
+    "Every product thread is pinned to the same CPU set with taskset before the product starts.",
+    "Hashcash work matched at 8 zero bits / 2 zero hex digits; same User-Agent and client address.",
+    "Proof challenges are issued below the 50/s adaptive baseline so the matched work holds; the bootstrap batches above it measure issuance only, which is difficulty independent.",
+    "Sibuna reserves 100 million challenge operations per window for this fixture; the limiter check remains, but exhaustion and production budgets are not measured.",
+    "Default Anubis Ed25519 and optional HS512 are both tested; Sibuna uses its default keyed BLAKE3 MAC. Bootstrap is the interstitial plus the JSON challenge for Sibuna and the page with the embedded challenge for Anubis; static assets excluded.",
+    "Fresh proofs are prepared outside the timed batches; browser solve time and network latency are not measured. A batch is timed once both clients hold a connection.",
+    "Batches are short (200 operations, 64 proofs); sequential runs are not a universal product ranking."
+  ]
+}
