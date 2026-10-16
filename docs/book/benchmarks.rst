@@ -607,225 +607,189 @@ Whole-Product Workloads
 
 The four workloads, the load and the statistics are those of the whole-product harness, with one change: the origin is ``caddy respond``, pinned to the load CPUs, as the earlier drivers used. Before every run the harness waits until fewer than 3,000 sockets remain in ``TIME_WAIT``, because the Anubis reverse-proxy runs leave tens of thousands behind.
 
-.. list-table:: Forward-auth mode: medians of three five-second ``wrk`` runs (``benchmarks/results/comparison-latest.md``, generated 2026-10-16T00:55:19Z). The last column is recorded, not measured in this run: the Gate row of Sibuna 0.1, the Zig implementation, from the Zig repository's ``benchmarks/results/tools-comparison-latest.json`` (recorded 2026-09-12T07:22:26Z, revision ``41925dd``)
+.. list-table:: Forward-auth mode: medians of three five-second ``wrk`` runs (``benchmarks/results/comparison-latest.md``, generated 2026-10-16T00:55:19Z).
    :header-rows: 1
-   :widths: 16 16 15 15 15 23
+   :widths: 16 16 15 15 15
 
    * - Workload
      - Figure
      - Sibuna Gate
      - Sibuna Shield
      - Anubis 1.27.0
-     - Sibuna 0.1 Gate (Zig implementation, recorded September 2026)
    * - ``admitted``
      - req/s (status)
      - 210,682 (200)
      - 208,635 (200)
      - 36,509 (200)
-     - 219,551 (200)
    * -
      - p99 us
      - 305
      - 308
      - 7,477
-     - 320
    * -
      - CPU us/req
      - 12.09
      - 13.21
      - 106.30
-     - 14.71
    * -
      - Peak RSS KiB
      - 16,228
      - 16,316
      - 32,624
-     - 28,416
    * - ``challenged``
      - req/s (status)
      - 198,251 (401)
      - 193,087 (401)
      - 113,170 (401)
-     - 205,479 (401)
    * -
      - p99 us
      - 326
      - 342
      - 3,781
-     - 332
    * -
      - CPU us/req
      - 13.49
      - 15.02
      - 32.96
-     - 18.49
    * -
      - Peak RSS KiB
      - 16,240
      - 16,328
      - 32,696
-     - 29,952
    * - ``allowed_static``
      - req/s (status)
      - 212,569 (200)
      - 212,444 (200)
      - 89,904 (200)
-     - 219,483 (200)
    * -
      - p99 us
      - 304
      - 304
      - 4,547
-     - 316
    * -
      - CPU us/req
      - 11.73
      - 11.95
      - 41.63
-     - 13.62
    * -
      - Peak RSS KiB
      - 16,240
      - 16,328
      - 33,396
-     - 28,416
    * - ``attack``
      - req/s (status)
      - 212,086 (200)
      - 211,347 (403)
      - 36,853 (200)
-     - 218,315 (200)
    * -
      - p99 us
      - 305
      - 306
      - 7,283
-     - 314
    * -
      - CPU us/req
      - 12.07
      - 12.56
      - 104.88
-     - 15.27
    * -
      - Peak RSS KiB
      - 16,240
      - 16,328
      - 33,764
-     - 28,416
 
-.. list-table:: Reverse-proxy mode, behind ``caddy respond``: medians of three five-second ``wrk`` runs (``benchmarks/results/comparison-latest.md``, generated 2026-10-16T00:55:19Z). The last column is recorded, not measured in this run, from the same file of the Zig repository as above
+.. list-table:: Reverse-proxy mode, behind ``caddy respond``: medians of three five-second ``wrk`` runs (``benchmarks/results/comparison-latest.md``, generated 2026-10-16T00:55:19Z).
    :header-rows: 1
-   :widths: 16 16 15 15 15 23
+   :widths: 16 16 15 15 15
 
    * - Workload
      - Figure
      - Sibuna Gate
      - Sibuna Shield
      - Anubis 1.27.0
-     - Sibuna 0.1 Gate (Zig implementation, recorded September 2026)
    * - ``admitted``
      - req/s (status)
      - 106,376 (200)
      - 103,298 (200)
      - 19,398 (200)
-     - 109,120 (200)
    * -
      - p99 us
      - 3,331
      - 3,321
      - 11,062
-     - 5,235
    * -
      - CPU us/req
      - 27.02
      - 27.92
      - 190.40
-     - 78.65
    * -
      - Peak RSS KiB
      - 16,528
      - 16,444
      - 39,980
-     - 30,168
    * - ``challenged``
      - req/s (status)
      - 198,402 (200)
      - 197,327 (200)
      - 28,842 (200)
-     - 204,123 (200)
    * -
      - p99 us
      - 325
      - 328
      - 9,546
-     - 347
    * -
      - CPU us/req
      - 13.05
      - 13.78
      - 137.73
-     - 18.56
    * -
      - Peak RSS KiB
      - 16,544
      - 16,464
      - 516,872
-     - 30,680
    * - ``allowed_static``
      - req/s (status)
      - 105,427 (200)
      - 106,819 (200)
      - 28,862 (200)
-     - 116,500 (200)
    * -
      - p99 us
      - 3,320
      - 3,316
      - 30,124
-     - 5,597
    * -
      - CPU us/req
      - 26.24
      - 26.52
      - 135.41
-     - 72.37
    * -
      - Peak RSS KiB
      - 16,544
      - 16,464
      - 616,548
-     - 30,168
    * - ``attack``
      - req/s (status)
      - 105,616 (200)
      - 210,483 (403)
      - 23,399 (200)
-     - 107,138 (200)
    * -
      - p99 us
      - 3,327
      - 306
      - 14,124
-     - 6,131
    * -
      - CPU us/req
      - 26.98
      - 12.28
      - 169.04
-     - 80.09
    * -
      - Peak RSS KiB
      - 16,544
      - 16,464
      - 599,516
-     - 30,168
 
 In forward-auth mode Sibuna served 193,087 to 212,569 requests per second with a p99 of 304 to 342 us, and Anubis 36,509 (``admitted``) to 113,170 (``challenged``) with a p99 of 3,781 to 7,477 us. Sibuna's cores busy stayed between 2.49 and 2.90 of four, so the load generator set its limit; Anubis's were 3.73 to 3.88, so Anubis was CPU bound. The clearest figure is CPU time per request: an admitted request cost Sibuna Gate 12.09 us and Anubis 106.30 us. A likely part of that difference is the session token. Anubis signs sessions with Ed25519 by default, and Sibuna checks a keyed BLAKE3 MAC (155.8 ns in the primitive table); the admission measurements below, where HS512 tokens raise Anubis's session checks by more than half, support that reading.
 
 In reverse-proxy mode Sibuna's proxied rows served 103,298 to 106,819 requests per second at 2.77 to 2.98 cores busy. They are below the 138,965 to 147,303 of the stub origin in ``product-latest.json``, and the daemon is not CPU bound, so the limit lies outside it: the origin, ``caddy respond``, shares the load CPUs with ``wrk``. Its tail shows in the p90 of 2.1 to 2.4 ms. Anubis served 19,398 to 28,862 requests per second at 3.68 to 3.97 cores busy and 135 to 190 us of CPU per request. Its resident memory rose from 39,980 KiB in the ``admitted`` workload to 516,872 KiB in ``challenged`` and 616,548 KiB in ``allowed_static``, and it held 589,276 KiB after the workloads against 21,552 KiB at idle. The rise began in ``challenged``, where every request receives a fresh challenge with its own id; this suggests a record kept per issued challenge, but the harness did not confirm the cause. Sibuna's peak stayed between 16,228 and 16,544 KiB in every row of both modes.
-
-The last column is not a measurement of these runs. It shows the first Sibuna implementation, written in Zig, as measured in September 2026 with the Python driver of its repository: the same workloads and load, but with the load generator and the origin unpinned beside the product, CPU time from ``ps`` and memory sampled every 100 ms, and, as that file records, proxied connections closed after each response. It is a reference for the reader, not a like-for-like figure.
 
 Several rows are not like for like either:
 

@@ -33,7 +33,7 @@ Sibuna: Architecture, Algorithms, and Empirical Foundations of Work-Bound Web De
 Prologue: The Economics of a Request
 ------------------------------------
 
-Every request that reaches a server makes a claim on its attention. A method, a path and some headers do not establish that serving the request is worthwhile. A defense therefore places a decision between the request and the origin: admit it, refuse it, or ask the sender to do verifiable work first. This paper follows that decision from its mathematics to the bytes in memory, in Sibuna. Sibuna began as an earlier implementation and was rebuilt in Rust; we describe the system as it is now.
+Every request that reaches a server makes a claim on its attention. A method, a path and some headers do not establish that serving the request is worthwhile. A defense therefore places a decision between the request and the origin: admit it, refuse it, or ask the sender to do verifiable work first. This paper follows that decision from its mathematics to the bytes in memory, in Sibuna.
 
 .. admonition:: Feynman on Physical Intuition: Who Pays for the Work?
 
@@ -382,7 +382,7 @@ Why SQL, and Why Not a Consensus Protocol of Our Own
 
 Sibuna stores little: a few hundred policy rows, a reputation table, and forensic incidents that operators also export to other systems. That state does not need a bespoke replicated engine. It needs a reliable SQL store, local for one node and shared for many. A single node therefore keeps its state in an embedded SQLite file in its data directory, in WAL mode, and a cluster points every node at one PostgreSQL database [#zaxonlite]_.
 
-We chose not to run a consensus protocol inside the firewall, although an earlier version of Sibuna did. A consensus engine is a large system to own beside a firewall, with its own formats and its own failure modes, and it adds work to shutdown and to every upgrade. The availability and replication of a cluster's state are instead PostgreSQL's concern, served by its streaming replication and failover tools or by a managed service. We think this is the humbler choice: PostgreSQL's replication has been exercised by far more deployments than ours could be, and Sibuna's write rate (batched incidents and rare policy changes) is small enough that one primary is not a bottleneck.
+We chose not to run a consensus protocol inside the firewall. A consensus engine is a large system to own beside a firewall, with its own formats and its own failure modes, and it adds work to shutdown and to every upgrade. The availability and replication of a cluster's state are instead PostgreSQL's concern, served by its streaming replication and failover tools or by a managed service. We think this is the humbler choice: PostgreSQL's replication has been exercised by far more deployments than ours could be, and Sibuna's write rate (batched incidents and rare policy changes) is small enough that one primary is not a bottleneck.
 
 Storage also stays optional. Without ``--data-dir`` or ``--database-url`` the daemon is an in-memory firewall whose policies come from a file.
 
@@ -964,7 +964,7 @@ We compare Sibuna with the tools an operator is most likely to weigh against it.
 Measured Comparison With Anubis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We measured the official Anubis v1.27.0 release binary beside Sibuna with the harness of :ref:`whole-products`: the same four workloads, the same four CPUs for every product thread, the same ``wrk`` load, matched Hashcash work (8 zero bits for Sibuna, 2 zero hex digits for Anubis), a session obtained by solving each product's challenge as a browser would, and ``caddy respond`` as the origin [#comparison]_. Sibuna runs its Shield surface here, so it also inspects every payload, which Anubis does not. The last two columns are the first Sibuna implementation, recorded in September 2026 with an earlier harness; they were not measured in these runs.
+We measured the official Anubis v1.27.0 release binary beside Sibuna with the harness of :ref:`whole-products`: the same four workloads, the same four CPUs for every product thread, the same ``wrk`` load, matched Hashcash work (8 zero bits for Sibuna, 2 zero hex digits for Anubis), a session obtained by solving each product's challenge as a browser would, and ``caddy respond`` as the origin [#comparison]_. Sibuna runs its Shield surface here, so it also inspects every payload, which Anubis does not.
 
 .. admonition:: Reading these rows
 
@@ -972,7 +972,7 @@ We measured the official Anubis v1.27.0 release binary beside Sibuna with the ha
 
 .. list-table:: Sibuna (Shield) and Anubis 1.27.0 under ``wrk``: requests per second and p99 latency in microseconds, medians of three five-second runs (``benchmarks/results/comparison-latest.md``). The status is 200 unless shown; Shield refuses the attack with 403.
    :header-rows: 1
-   :widths: 13 17 12 10 12 10 14 12
+   :widths: 13 17 12 10 12 10
 
    * - Mode
      - Workload
@@ -980,72 +980,54 @@ We measured the official Anubis v1.27.0 release binary beside Sibuna with the ha
      - Sibuna p99
      - Anubis req/s
      - Anubis p99
-     - Sibuna 0.1 (recorded) req/s
-     - Sibuna 0.1 p99
    * - forward auth
      - ``admitted``
      - 208,635
      - 308
      - 36,509
      - 7,477
-     - 218,762
-     - 310
    * - forward auth
      - ``challenged``
      - 193,087
      - 342
      - 113,170
      - 3,781
-     - 204,257
-     - 345
    * - forward auth
      - ``allowed_static``
      - 212,444
      - 304
      - 89,904
      - 4,547
-     - 216,708
-     - 310
    * - forward auth
      - ``attack``
      - 211,347 (403)
      - 306
      - 36,853
      - 7,283
-     - 219,695
-     - 319
    * - reverse proxy
      - ``admitted``
      - 103,298
      - 3,321
      - 19,398
      - 11,062
-     - 108,193
-     - 5,438
    * - reverse proxy
      - ``challenged``
      - 197,327
      - 328
      - 28,842
      - 9,546
-     - 205,427
-     - 327
    * - reverse proxy
      - ``allowed_static``
      - 106,819
      - 3,316
      - 28,862
      - 30,124
-     - 116,387
-     - 5,744
    * - reverse proxy
      - ``attack``
      - 210,483 (403)
      - 306
      - 23,399
      - 14,124
-     - 218,583
-     - 325
 
 Anubis spends 106 us of CPU per admitted request in forward-auth mode, where Sibuna spends 13; its peak resident memory was about 32 MiB in forward-auth mode and grew to about 600 MiB in reverse-proxy mode, while Sibuna's stayed near 16 MiB throughout. Behind ``caddy respond`` Sibuna's proxied rows are limited by the origin, which shares the load generator's CPUs: with the lighter stub origin of :ref:`whole-products` the same rows reach about 139,000 requests per second.
 
@@ -1219,7 +1201,7 @@ Every number in this paper comes from a committed result file of the Sibuna repo
 .. [#binary] Book Part VIII, "Footprint"; the root ``Cargo.toml``, profile ``[profile.release.package.libsqlite3-sys]``.
 .. [#latency] ``benchmarks/results/latency-latest.md``; the rows at 25,000 requests per second and the reverse-proxy rows at 150,000 are in that file.
 .. [#thread-reuse] SID 0002, revision note (performance, connection threads reused); book Part VIII, "What the Measurement Changed"; ``benchmarks/results/latency-latest.md``.
-.. [#comparison] ``benchmarks/results/comparison-latest.md`` and ``admission-latest.md``, recorded on 16 October 2026 with ``cargo xtask bench product --anubis`` and ``cargo xtask bench admission --anubis``; book Part VIII, "Sibuna and Anubis", lists the method and every difference between the products. The recorded columns come from the first implementation's ``tools-comparison-latest.json`` (12 September 2026).
+.. [#comparison] ``benchmarks/results/comparison-latest.md`` and ``admission-latest.md``, recorded on 16 October 2026 with ``cargo xtask bench product --anubis`` and ``cargo xtask bench admission --anubis``; book Part VIII, "Sibuna and Anubis", lists the method and every difference between the products.
 .. [#tests] SID 0010, "Acceptance criteria and implementation status" (criteria 1, 3 and 5).
 .. [#prior-art] Book Part II, "Feature Comparison" and "Interstitials and Edges"; the Sibuna licence is the workspace's ``license`` in ``Cargo.toml``.
 .. [#safeline] Book Part VIII, "Not Measured": vendor-reported figures checked in September 2026.

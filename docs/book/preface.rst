@@ -19,4 +19,4 @@ This is an implementation book, not a claim that computational puzzles eliminate
 
 .. rubric:: Edition for Sibuna 1.0.0-beta.1, October 2026
 
-Sources, exercises, and reproducible measurements accompany the Sibuna repository. Sibuna was first written in Zig and later rebuilt in Rust; the design records (SIDs) keep that history.
+Sources, exercises, and reproducible measurements accompany the Sibuna repository.
