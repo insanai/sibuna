@@ -53,6 +53,6 @@ Discussion registry
      - accepted
    * - 0014
      - :doc:`records/0014-ja4-from-ingress`
-     - accepted
+     - committed
 
 .. sid-generated-end

@@ -1,7 +1,7 @@
 :sid-number: 0014
 :sid-title: Trusted JA4 Fingerprints From the Ingress
-:sid-state: accepted
-:sid-status: Accepted
+:sid-state: committed
+:sid-status: Committed
 :sid-type: Architectural Specification
 :sid-authors: ["Vikrant Rathore"]
 :sid-created: 2026-10-16
@@ -72,7 +72,7 @@ Acceptance criteria and implementation status
 5. A warm request still makes no heap allocation. Met: ``cmd/sibuna/tests/steady_state.rs`` now sends a fingerprint with every request and holds a ``ja4`` rule that each request is compared with.
 6. The book gives recipes for Cloudflare, nginx and Apache Traffic Server. Met: the operations chapter, section "JA4 Fingerprints From the Ingress".
 
-Status: Implemented in 1.0.0-beta.2.
+Status: implemented and released in 1.0.0-beta.2; committed on 2026-10-16.
 
 Resolved questions
 ------------------
@@ -111,3 +111,16 @@ References
 
    2026-10-16: discussion -> accepted. Accepted by the maintainer on 2026-10-16
    with the proposed answers; implemented for 1.0.0-beta.2
+
+.. rubric:: Lifecycle event
+
+::
+
+   2026-10-16: accepted -> committed. Implemented and released in Sibuna
+   1.0.0-beta.2 on 2026-10-16. All six acceptance criteria met by the tests the
+   record names (cmd/sibuna/tests/ja4.rs, steady_state.rs,
+   crates/storage/src/worker/tests/ja4.rs,
+   crates/console-storage/tests/invariants/ja4.rs, the console and interface
+   tests); CI run 38872753827; release v1.0.0-beta.2, whose published
+   linux-amd64 executable denied a TLS 1.2 fingerprint by prefix and admitted a
+   TLS 1.3 one
