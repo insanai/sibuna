@@ -1,0 +1,368 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Vikrant Rathore and Sibuna contributors
+# This file is distributed under the same license as the The Sibuna Book package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-16 05:09+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ko\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: ../../wasm-engine.rst:1
+msgid "Part VII: The Browser Proof-of-Work Engine"
+msgstr ""
+
+#: ../../wasm-engine.rst:4
+msgid ""
+"We look at the WebAssembly module that compiles the server's own verifier "
+"crate, the Web Worker protocol, the JavaScript fallback provers, and the "
+"interstitial."
+msgstr ""
+
+#: ../../wasm-engine.rst:6
+msgid "One Source, Two Targets"
+msgstr ""
+
+#: ../../wasm-engine.rst:9 ../../wasm-engine.rst:172
+#: ../../wasm-engine.rst:211
+msgid "Objectives"
+msgstr ""
+
+#: ../../wasm-engine.rst:11
+msgid ""
+"By the end of this chapter, we should be able to explain how the browser "
+"module is built from the server's own ``sibuna-pow`` crate, name the "
+"exported functions, and describe the memory the sequential-work prover "
+"needs in a tab."
+msgstr ""
+
+#: ../../wasm-engine.rst:13
+msgid "Build Wiring"
+msgstr ""
+
+#: ../../wasm-engine.rst:16
+msgid ""
+"The browser solver compiles the exact sources the server verifies with. "
+"``cmd/sibuna-pow-wasm`` is a ``no_std`` library crate of type ``cdylib``, "
+"built for ``wasm32-unknown-unknown``, whose only dependencies are the "
+"workspace crates ``sibuna-pow`` and ``sibuna-crypto``:"
+msgstr ""
+
+#: ../../wasm-engine.rst:34
+msgid ""
+"The daemon embeds the module. Its build script (``cmd/sibuna/build.rs``) "
+"runs a nested ``cargo rustc -p sibuna-pow-wasm --target "
+"wasm32-unknown-unknown --profile wasm`` into the workspace's target "
+"directory (``target/wasm32-unknown-unknown/wasm/``). The nested build "
+"locks only the ``wasm`` profile's directories, so it never waits on the "
+"outer build. The final link gets ``--compress-relocations``. The script "
+"checks that the result starts with the WebAssembly magic bytes, and "
+"copies it to the build output directory. ``SIBUNA_POW_WASM=<path>`` "
+"embeds a prebuilt module instead, for builds without the WebAssembly "
+"target. The daemon then includes the bytes in its binary:"
+msgstr ""
+
+#: ../../wasm-engine.rst:44
+msgid ""
+"There is no second implementation to drift. The module is served from the "
+"daemon at ``/__sibuna/wasm/sibuna-pow.wasm`` with a one-hour cache header "
+"(``Cache-Control: public, max-age=3600``). Built with the profile above, "
+"the module measures 14,744 bytes with both tiers (``wasm_bytes`` in "
+"``benchmarks/results/primitives-latest.json``)."
+msgstr ""
+
+#: ../../wasm-engine.rst:46
+msgid "Exports"
+msgstr ""
+
+#: ../../wasm-engine.rst:49
+msgid ""
+"The module exports six functions, and the worker script calls them by "
+"name:"
+msgstr ""
+
+#: ../../wasm-engine.rst:55
+msgid "Export"
+msgstr ""
+
+#: ../../wasm-engine.rst:56
+msgid "Purpose"
+msgstr ""
+
+#: ../../wasm-engine.rst:57
+msgid "``sibuna_get_buffer_ptr()`` / ``sibuna_get_buffer_len()``"
+msgstr ""
+
+#: ../../wasm-engine.rst:58
+msgid "256-byte input buffer the worker writes the challenge string into"
+msgstr ""
+
+#: ../../wasm-engine.rst:59
+msgid "``sibuna_solve_step(ptr, len, bits, start, max_steps)``"
+msgstr ""
+
+#: ../../wasm-engine.rst:60
+msgid ""
+"Hashcash: search ``max_steps`` nonces from ``start``; returns the nonce "
+"or the all-ones sentinel"
+msgstr ""
+
+#: ../../wasm-engine.rst:61
+msgid "``sibuna_solve_sha256(ptr, len, bits)``"
+msgstr ""
+
+#: ../../wasm-engine.rst:62
+msgid ""
+"Hashcash in one batch from nonce 0 (``sibuna_solve_step`` with "
+"``u32::MAX`` steps)"
+msgstr ""
+
+#: ../../wasm-engine.rst:63
+msgid "``sibuna_posw_solve(len, depth, challenges)``"
+msgstr ""
+
+#: ../../wasm-engine.rst:64
+msgid ""
+"Sequential work: runs the prover over the buffer and returns the proof "
+"length, or 0 for invalid arguments"
+msgstr ""
+
+#: ../../wasm-engine.rst:65
+msgid "``sibuna_posw_proof_ptr()``"
+msgstr ""
+
+#: ../../wasm-engine.rst:66
+msgid "Start of the proof bytes in the prover workspace"
+msgstr ""
+
+#: ../../wasm-engine.rst:68
+msgid ""
+"The prover's workspace, the retained top levels, the sibling stack, and "
+"the proof, is a static region of about 92 KiB; no allocator is linked, "
+"and the module has no imports. ``Workspace::new`` is a ``const fn``, so "
+"the static costs only zeroed memory, not initialised data in the module."
+msgstr ""
+
+#: ../../wasm-engine.rst:70
+msgid "Implementation: ``sibuna_solve_step``"
+msgstr ""
+
+#: ../../wasm-engine.rst:72
+msgid ""
+"The Hashcash export: borrows the challenge from linear memory and runs "
+"one batch of the shared nonce search. In "
+"``cmd/sibuna-pow-wasm/src/lib.rs`` (crate ``sibuna-pow-wasm``)."
+msgstr ""
+
+#: ../../wasm-engine.rst:96
+msgid ""
+"The exports are the crate's foreign function boundary, and the only place "
+"its ``unsafe`` code lives. The input buffer and the prover workspace are "
+"statics in an ``ExportCell``, a wrapper around ``UnsafeCell`` that is "
+"declared ``Sync`` with a stated reason: a WebAssembly instance without "
+"shared memory runs one thread, and each export creates its references, "
+"uses them and drops them before it returns, so at most one reference into "
+"a cell is ever live. On the host, where the tests call the exports "
+"directly, a test-only mutex serialises them. A panic traps (the "
+"``unreachable`` instruction) instead of formatting a message, which keeps "
+"the module free of formatting code and imports; panics are unreachable by "
+"construction, because the functions of ``sibuna-pow`` are total and never "
+"panic."
+msgstr ""
+
+#: ../../wasm-engine.rst:98
+msgid "Prefix Pre-Hashing"
+msgstr ""
+
+#: ../../wasm-engine.rst:101
+msgid ""
+"The Hashcash inner loop absorbs the challenge and the colon once and "
+"clones the SHA-256 state per nonce, so each candidate costs one "
+"compression rather than two. The search is "
+"``sibuna_pow::hashcash::Search``, shared by the browser module and the "
+"native reference solver:"
+msgstr ""
+
+#: ../../wasm-engine.rst:130
+msgid ""
+"The hasher state is a plain value of about 110 bytes, so the clone is "
+"cheap. The sequential-work prover uses the same trick with the statement "
+":math:`\\chi` absorbed once in ``base_hasher`` and cloned for every node, "
+"and the verifier now does too: it derives each challenged leaf from a "
+"state that has absorbed the statement once, which makes verification "
+":math:`t` compressions cheaper with the same digests."
+msgstr ""
+
+#: ../../wasm-engine.rst:132
+msgid ""
+"On the server the compression function uses the x86-64 SHA extensions or "
+"the ARMv8 SHA-2 instructions, detected at run time. In the browser there "
+"are no such instructions, and the solver spends nearly all its time in "
+"the portable compression function "
+"(``crates/crypto/src/sha256/portable.rs``). That function is written for "
+"WebAssembly: the 64 rounds are unrolled, the message schedule lives in a "
+"16-word window in which each round from 16 on overwrites the word it no "
+"longer needs, and the eight working variables are renamed from round to "
+"round instead of being shifted:"
+msgstr ""
+
+#: ../../wasm-engine.rst:167
+msgid ""
+"Each ``eight_rounds!`` is one full turn of the variable names: the macro "
+"passes them rotated by one position per round, so a round writes only two "
+"of them and never moves the other six. With a literal round index every "
+"schedule position is a constant, and the whole block becomes "
+"straight-line code whose values stay in WebAssembly locals. This layout "
+"runs about 20% faster in V8 than a 64-word schedule with a rolled loop, "
+"and about 14% faster natively (measured on the Rust implementation, "
+"October 2026)."
+msgstr ""
+
+#: ../../wasm-engine.rst:169
+msgid "The Worker Protocol"
+msgstr ""
+
+#: ../../wasm-engine.rst:174
+msgid ""
+"Read the message protocol, understand the fallback hierarchy, and see the "
+"sentinel bug that the signed-integer boundary between WebAssembly and "
+"JavaScript caused."
+msgstr ""
+
+#: ../../wasm-engine.rst:176
+msgid ""
+"The page posts one message to ``web/worker.js`` and receives progress, "
+"fallback, and result messages:"
+msgstr ""
+
+#: ../../wasm-engine.rst:191
+msgid ""
+"The worker tries WebAssembly first and falls back to pure JavaScript when "
+"``WebAssembly`` is absent, blocked by policy, or fails to instantiate. "
+"The JavaScript provers mirror the Rust prover of ``sibuna-pow`` label for "
+"label and produce *byte-identical* output. The tests pin fixed nonces and "
+"proofs for both tiers, and SID 0010 requires the solver to pass in a "
+"headless browser both with WebAssembly and with the JavaScript fallback. "
+"The JavaScript provers are much slower, but they guarantee that every "
+"browser can pass."
+msgstr ""
+
+#: ../../wasm-engine.rst:193
+msgid "The signed sentinel"
+msgstr ""
+
+#: ../../wasm-engine.rst:196
+msgid ""
+"WebAssembly returns a 64-bit integer to JavaScript as a *signed* "
+"``BigInt``. The Hashcash export signals \"batch exhausted\" with all ones "
+"(``EXHAUSTED``, ``u64::MAX``), which JavaScript sees as ``-1n``, not "
+"``18446744073709551615n``. The original worker compared against the "
+"unsigned value, so the loop exited after the first batch with a bogus "
+"nonce. The fix is one call, ``BigInt.asUintN(64, result)``, and the "
+"worker keeps it:"
+msgstr ""
+
+#: ../../wasm-engine.rst:206
+msgid ""
+"The lesson generalises: every u64 crossing the boundary must be "
+"normalised. Rust cannot enforce this on the JavaScript side; the export's "
+"type says ``u64``, and the conversion happens in the engine."
+msgstr ""
+
+#: ../../wasm-engine.rst:208
+msgid "Calibration"
+msgstr ""
+
+#: ../../wasm-engine.rst:213
+msgid ""
+"Relate difficulty settings to wall-clock time in a browser engine and on "
+"native silicon."
+msgstr ""
+
+#: ../../wasm-engine.rst:215
+msgid ""
+"Do not choose a difficulty from one laptop's average solve. Hashcash has "
+"a geometric tail; browser clocks include scheduling, thermal state, "
+"startup and compilation. A deployment calibration should record the "
+"browser version, device, algorithm, parameters, and a distribution of "
+"repeated solves. Keep module fetch and compilation separate from "
+"steady-state hashing."
+msgstr ""
+
+#: ../../wasm-engine.rst:217
+msgid "Worked calibration plan"
+msgstr ""
+
+#: ../../wasm-engine.rst:219
+msgid ""
+"Hold :math:`b` fixed, warm the module, and solve at least 100 "
+"independently issued puzzles on each target device class. Record median "
+"and high-percentile durations, failures and proof sizes. Repeat at "
+":math:`b+1`. Expected trial count doubles; an individual sample need not. "
+"Choose a setting against the slow-device budget, then test the complete "
+"fetch, solve and verify flow."
+msgstr ""
+
+#: ../../wasm-engine.rst:221
+msgid ""
+"The repository's native primitive measurements are not evidence for a "
+"promised phone or browser solve time. A WASM module can run the same "
+"arithmetic while having different startup, execution, and memory costs: "
+"natively the server hashes with SHA-NI, while the browser runs the "
+"portable compression function above. The worker's messages form the "
+"boundary at which those costs can be measured without adding a timer to "
+"the server's request handler."
+msgstr ""
+
+#: ../../wasm-engine.rst:223
+msgid "The Interstitial"
+msgstr ""
+
+#: ../../wasm-engine.rst:226
+msgid ""
+"The page (``web/challenge.html``, embedded in the daemon) is a single "
+"HTML file with a card, an indeterminate progress bar, and a status line. "
+"It requests the challenge for its own location (``?path=``), spawns the "
+"worker, posts the solution with ``fetch``, and reloads on success; "
+"``fetch`` calls retry with jittered exponential backoff, and a ``4xx`` "
+"verification answer is shown with its diagnostic title. The page's "
+"``Content-Security-Policy`` admits exactly one script, the solver block, "
+"by its SHA-256 hash, which the daemon computes once from the embedded "
+"page. An off-screen honeypot link (``/__sibuna/honeypot``) is invisible "
+"to people and to script-running browsers; blind crawlers that follow "
+"every ``href`` ban themselves."
+msgstr ""
+
+#: ../../wasm-engine.rst:228
+msgid "Exercise 7.1"
+msgstr ""
+
+#: ../../wasm-engine.rst:230
+msgid ""
+"Suppose the WebAssembly prover solves a challenge at the default "
+"difficulty in 20 ms on a laptop, and the JavaScript sequential prover is "
+"50 times slower. Estimate the fallback solve time on that laptop and on a "
+"phone four times slower and propose a policy for clients that report the "
+"fallback (hint: the worker posts a ``fallback`` message the page can "
+"forward)."
+msgstr ""
+
+#: ../../wasm-engine.rst:232
+msgid "Explain the invariant"
+msgstr ""
+
+#: ../../wasm-engine.rst:234
+msgid ""
+"Explain why compiling the browser module from the server's verifier "
+"sources is a stronger guarantee than testing two implementations against "
+"each other."
+msgstr ""

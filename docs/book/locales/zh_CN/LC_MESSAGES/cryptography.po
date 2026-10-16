@@ -1,0 +1,509 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Vikrant Rathore and Sibuna contributors
+# This file is distributed under the same license as the The Sibuna Book package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-16 05:09+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: zh_CN\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: ../../cryptography.rst:1
+msgid "Part III: Foundations from Cryptography Research"
+msgstr ""
+
+#: ../../cryptography.rst:4
+msgid ""
+"We derive the cost models behind Sibuna's two proof-of-work tiers, "
+"present the Cohen-Pietrzak Proof of Sequential Work with its security "
+"argument, and justify keyed-hash authentication for challenges and "
+"sessions. SID 0006 records the assumptions and references."
+msgstr ""
+
+#: ../../cryptography.rst:6
+msgid "Hashcash: The Mathematics of Tier One"
+msgstr ""
+
+#: ../../cryptography.rst:9 ../../cryptography.rst:36
+#: ../../cryptography.rst:167
+msgid "Objectives"
+msgstr ""
+
+#: ../../cryptography.rst:11
+msgid ""
+"By the end of this chapter, we should be able to state the expected work, "
+"variance, and tail probability of a bit-level Hashcash puzzle, explain "
+"why the server's verification cost bounds the attacker's advantage, and "
+"describe the two limits that motivate a second tier."
+msgstr ""
+
+#: ../../cryptography.rst:13
+msgid "Definition and Cost"
+msgstr ""
+
+#: ../../cryptography.rst:16
+msgid ""
+"Sibuna's Tier One puzzle for challenge string :math:`C` and difficulty "
+":math:`b` bits is: find :math:`N \\in \\mathbb{N}` such that "
+":math:`\\text{SHA-256}(C \\parallel \\text{\":\"} \\parallel "
+"\\mathrm{dec}(N))` has :math:`b` leading zero bits. The decimal rendering "
+"of the nonce is deliberate; it keeps the wire format identical between "
+"the WebAssembly solver, the JavaScript fallback, and the native verifier "
+"without a binary encoding step."
+msgstr ""
+
+#: ../../cryptography.rst:18
+msgid ""
+"The unit of difficulty is an expected *hash trial*, not a compression "
+"function call. An input can occupy several SHA-256 blocks. Prefix "
+"precomputation can also change the work per nonce. The wire rule remains "
+"the digest predicate; implementations must agree on the statement and "
+"nonce encoding, not on an estimated CPU cost."
+msgstr ""
+
+#: ../../cryptography.rst:20
+msgid ""
+"For independent ideal digests, the trial count :math:`X` is geometric "
+"with :math:`p = 2^{-b}`. Its median is :math:`\\left\\lceil \\ln(1/2) / "
+"\\ln(1-p) \\right\\rceil`, approximately :math:`2^b \\ln 2` for small "
+":math:`p`, and its variance is :math:`(1-p)/p^2`. The verifier checks one "
+"candidate digest rather than performing the search. Parsing, challenge "
+"authentication, fingerprint checks, spent-state insertion, and the "
+"response are additional work. A primitive timing cannot be inverted into "
+"a server's flood capacity."
+msgstr ""
+
+#: ../../cryptography.rst:22
+msgid "Two Limits of Search"
+msgstr ""
+
+#: ../../cryptography.rst:25
+msgid ""
+"The first is variance: a long search is not necessarily a broken worker. "
+"The second is parallelism: independent nonce trials can run concurrently. "
+"More cores reduce elapsed search time even when the expected aggregate "
+"trial count remains the same. Hardware throughput therefore matters to "
+"the admission policy. Neither a claimed hash rate nor a single benchmark "
+"can bound every requester's advantage."
+msgstr ""
+
+#: ../../cryptography.rst:27
+msgid "Exercise 3.0"
+msgstr ""
+
+#: ../../cryptography.rst:29
+msgid ""
+"Using the geometric tail, estimate the probability of needing more than "
+":math:`4.6 \\times 2^b` trials. Why is the expected trial count unchanged "
+"by dividing the nonce space among several workers?"
+msgstr ""
+
+#: ../../cryptography.rst:31
+msgid "*Hint:* Count aggregate trials, not elapsed seconds."
+msgstr ""
+
+#: ../../cryptography.rst:33
+msgid "Proof of Sequential Work: Tier Two"
+msgstr ""
+
+#: ../../cryptography.rst:38
+msgid ""
+"Understand the Cohen-Pietrzak labelling, why it forces sequential "
+"computation, what the verifier checks, the conditional sampling bound "
+":math:`(1 - \\alpha)^t` and its limitations, the post-quantum result, the "
+"prover's memory bound, and the calibration data behind the work-bit "
+"mapping."
+msgstr ""
+
+#: ../../cryptography.rst:40
+msgid "Why Sequential Work"
+msgstr ""
+
+#: ../../cryptography.rst:43
+msgid ""
+"A sequential-work construction introduces dependencies between "
+"computations: a later label needs a value produced earlier. This "
+"addresses a different quantity from aggregate work, namely the depth of "
+"the computation. Independent puzzles can still run in parallel, and "
+"hardware hash latency still matters."
+msgstr ""
+
+#: ../../cryptography.rst:45
+msgid ""
+"Sibuna follows the hash-based construction described by Cohen and "
+"Pietrzak. Its graph has :math:`2^{n+1}-1` labels at depth :math:`n`, but "
+"a fixed label count is not a deterministic browser latency: labels can "
+"span several compression blocks, openings may recompute subtrees, and "
+"scheduling adds variation. Security statements from oracle-model analyses "
+"must not be turned into an unqualified claim about every concrete "
+"implementation or adversary."
+msgstr ""
+
+#: ../../cryptography.rst:47
+msgid "The Construction"
+msgstr ""
+
+#: ../../cryptography.rst:50
+msgid ""
+"Let :math:`n` be the depth and consider the complete binary tree with "
+"nodes named by binary strings of length at most :math:`n` (root "
+":math:`\\varepsilon`, children :math:`v0` and :math:`v1`, leaves of "
+"length :math:`n`). Each node :math:`v` carries a 32-byte label "
+":math:`\\ell_v = H(\\chi, v, \\mathrm{parents}(v))`, where :math:`\\chi` "
+"is the challenge statement and :math:`H` is SHA-256 with :math:`\\chi` "
+"absorbed once (the same prefix trick as the Hashcash solver):"
+msgstr ""
+
+#: ../../cryptography.rst:52
+msgid ""
+"an internal node hashes its two children: :math:`\\ell_v = H(\\chi, v, "
+"\\ell_{v0}, \\ell_{v1})`;"
+msgstr ""
+
+#: ../../cryptography.rst:53
+msgid ""
+"a leaf :math:`u = u_1 \\dots u_n` hashes the *left siblings of its "
+"ancestors* wherever the root path turned right: :math:`\\ell_u = H(\\chi, "
+"u, \\{\\ell_{u_1 \\dots u_{i-1} 0} : u_i = 1\\})`."
+msgstr ""
+
+#: ../../cryptography.rst:56
+msgid ""
+"The depth-3 tree: an opening of leaf 3.5 sends the leaf label and the "
+"three sibling labels; the dashed edges are the left-sibling dependencies "
+"that make labelling sequential. Amber nodes form the path of leaf 3.5, "
+"green nodes are the siblings sent in the opening, and the dashed red "
+"edges are the left-sibling edges hashed into the leaf."
+msgstr ""
+
+#: ../../cryptography.rst:81
+msgid ""
+"The left-sibling edges are what make the computation sequential: leaf "
+":math:`u` cannot be labelled until every subtree to its left is complete, "
+"so a depth-first post-order traversal is forced and the root label "
+":math:`\\varphi = \\ell_\\varepsilon` depends on all :math:`2^{n+1} - 1` "
+"labels in sequence."
+msgstr ""
+
+#: ../../cryptography.rst:83
+msgid ""
+"**Openings.** After computing :math:`\\varphi`, the prover derives "
+":math:`t` leaves by Fiat-Shamir, :math:`\\gamma_i = H(\\chi \\parallel "
+"\\varphi \\parallel i) \\bmod 2^n`, and for each sends the leaf label and "
+"the :math:`n` sibling labels along its root path. The verifier recomputes "
+"the leaf from the siblings that are its parents, hashes upward through "
+"the path, and checks that it arrives at :math:`\\varphi`. The verifier's "
+"cost is :math:`O(tn)` label computations with bounded workspace. A label "
+"computation may span multiple hash blocks; counting labels is not "
+"counting compression calls."
+msgstr ""
+
+#: ../../cryptography.rst:85
+msgid "Implementation: ``posw::verify_opening``"
+msgstr ""
+
+#: ../../cryptography.rst:87
+msgid ""
+"Recomputes one opened leaf from its sibling labels and walks the path to "
+"the root. In ``crates/pow/src/posw.rs`` (crate ``sibuna-pow``)."
+msgstr ""
+
+#: ../../cryptography.rst:120
+msgid "Sampling, Soundness, and Their Limits"
+msgstr ""
+
+#: ../../cryptography.rst:123
+msgid ""
+"Consider a fixed commitment with an independently detectable bad fraction "
+":math:`\\alpha`. If each opening samples uniformly and independently, the "
+"chance of missing every bad location in :math:`t` openings is "
+":math:`(1-\\alpha)^t`. This elementary calculation explains why more "
+"openings help. It is not, by itself, a security proof for a "
+"sequential-work protocol."
+msgstr ""
+
+#: ../../cryptography.rst:125
+msgid "Worked example: a conditional sampling bound"
+msgstr ""
+
+#: ../../cryptography.rst:127
+msgid ""
+"With a fixed bad fraction :math:`\\alpha = 0.1` and :math:`t = 16` "
+"independent openings, the chance of missing every bad location is "
+":math:`0.9^{16} \\approx 0.185`. With 32 openings it is about 0.034. The "
+"premise fixes the commitment before the samples are chosen. If a prover "
+"can grind many roots, choose which commitment to reveal, or correlate "
+"failures, this calculation does not account for that strategy."
+msgstr ""
+
+#: ../../cryptography.rst:129
+msgid ""
+"The referenced sequential-work construction has a security analysis in an "
+"oracle model. Sibuna's domain separation, parameter mapping, truncation, "
+"and implementation must still be checked against the construction's "
+"assumptions. Fiat-Shamir sampling makes openings reproducible from a "
+"commitment; reproducibility alone does not prove resistance to grinding. "
+"We make no unconditional claim that cheating is never cheaper."
+msgstr ""
+
+#: ../../cryptography.rst:131
+msgid "Exercise 3.1"
+msgstr ""
+
+#: ../../cryptography.rst:133
+msgid ""
+"If an attacker tries :math:`g` independent commitments, each accepted "
+"with probability :math:`q`, derive the probability that at least one is "
+"accepted. Which costs are missing from that expression?"
+msgstr ""
+
+#: ../../cryptography.rst:135
+msgid "*Hint:* First calculate the probability that all :math:`g` fail."
+msgstr ""
+
+#: ../../cryptography.rst:137
+msgid "Prover Memory"
+msgstr ""
+
+#: ../../cryptography.rst:140
+msgid ""
+"A naive prover stores every label (:math:`2^{n+1} - 1` of them). Sibuna's "
+"prover keeps a stack of the current path's left-sibling labels (:math:`n "
+"+ 1` labels) during the first pass and retains only the top :math:`m = "
+"\\min(n, 10)` levels (:math:`2^{m+1} - 1` labels, at most 64 KB). To open "
+"a leaf it recomputes the subtree of the leaf's depth-:math:`m` ancestor, "
+":math:`2^{n-m+1} - 1` hashes, seeding the stack from the retained levels. "
+"Total prover cost is :math:`2^{n+1} - 1 + t\\,(2^{n-m+1} - 1)` hashes and "
+"the whole workspace, including the output proof, is under 100 KB: a "
+"browser tab and a native test share the same ``Workspace`` type "
+"(``sibuna_pow::posw::Workspace``)."
+msgstr ""
+
+#: ../../cryptography.rst:142
+msgid "Parameters Are Not Timings"
+msgstr ""
+
+#: ../../cryptography.rst:145
+msgid ""
+"Sibuna maps work bits to depth using :math:`n = b - 3`, clamped to the "
+"supported interval :math:`[4, 24]`. This is a work-scale convention, not "
+"a guarantee of equal wall-clock time between algorithms. A leaf can hash "
+"several parent labels, while Hashcash repeatedly tests a nonce. Compiler, "
+"browser, processor, and parameter choices all affect their relative "
+"costs. The committed primitive benchmark measures verification; it does "
+"not establish browser solve latency."
+msgstr ""
+
+#: ../../cryptography.rst:147
+msgid ""
+"Proof size is :math:`32(1 + t(n+1))` bytes. At depth 13 with sixteen "
+"openings, this is :math:`32(1 + 16 \\times 14) = 7200` bytes. Raising the "
+"opening count increases both the proof and the verifier's work, even if "
+"the dominant cost of constructing the tree stays the same."
+msgstr ""
+
+#: ../../cryptography.rst:149
+msgid "Exercise 3.2"
+msgstr ""
+
+#: ../../cryptography.rst:151
+msgid ""
+"Compute the proof size at depth 17 with 16 openings. Then double the "
+"opening count. Which term doubles and which term remains fixed?"
+msgstr ""
+
+#: ../../cryptography.rst:153
+msgid "Choosing a Construction"
+msgstr ""
+
+#: ../../cryptography.rst:156
+msgid ""
+"The relevant comparison is a resource budget, not an algorithm's "
+"reputation. Record the prover's memory, the verifier's worst-case work, "
+"the proof bytes, and the assumptions needed for the claimed property. "
+"Memory-hard search can be useful, but a verifier that must repeat "
+"expensive work gives an attacker another place to spend the server's "
+"resources. Publicly verifiable delay constructions serve a different "
+"trust model from a shared-secret gate."
+msgstr ""
+
+#: ../../cryptography.rst:158
+msgid ""
+"Sibuna retains cheap hash verification and a hash-based sequential-work "
+"option. The latter requires more proof bytes and more careful parameter "
+"analysis. Neither choice removes the need to reject malformed proofs "
+"before entering expensive verification."
+msgstr ""
+
+#: ../../cryptography.rst:160 ../../cryptography.rst:245
+msgid "Explain the invariant"
+msgstr ""
+
+#: ../../cryptography.rst:162
+msgid ""
+"Explain the distinction between an authentication tree, which proves that "
+"a label belongs to a commitment, and dependency edges, which constrain "
+"how labels are computed."
+msgstr ""
+
+#: ../../cryptography.rst:164
+msgid "Symmetric Authentication: Challenges and Sessions"
+msgstr ""
+
+#: ../../cryptography.rst:169
+msgid ""
+"Explain why a keyed pseudorandom function is the correct primitive when "
+"issuer and verifier are the same trust domain, state the forgery bound "
+"for a 128-bit tag, describe the stateless challenge record and the "
+"spent-set bound, and read the key schedule."
+msgstr ""
+
+#: ../../cryptography.rst:171
+msgid "Issuer Equals Verifier"
+msgstr ""
+
+#: ../../cryptography.rst:174
+msgid ""
+"A digital signature lets *anyone* holding the public key verify, which is "
+"the right tool when verifiers must not be able to mint. Sibuna's verifier "
+"*is* the issuer (or a cluster sharing one seed). A message authentication "
+"code built from a pseudorandom function supplies authentication within "
+"that trust domain. It does not supply public verification: anyone holding "
+"the MAC key can also mint tokens. The benchmark chapter compares the "
+"implemented token operations."
+msgstr ""
+
+#: ../../cryptography.rst:176
+msgid "Lemma 3 (Forgery bound)"
+msgstr ""
+
+#: ../../cryptography.rst:178
+msgid ""
+"With BLAKE3 in keyed mode modelled as a PRF and a 16-byte tag, an "
+"adversary making :math:`q` verification queries forges a valid token with "
+"probability at most :math:`q \\cdot 2^{-128} + "
+"\\varepsilon_{\\mathrm{PRF}}`. At a million queries per second that is "
+":math:`2^{-108}` per second."
+msgstr ""
+
+#: ../../cryptography.rst:180
+msgid ""
+"A second consequence matters for the long term: Ed25519 rests on discrete "
+"logarithms in an elliptic-curve group, which Shor's algorithm breaks; a "
+"keyed hash rests only on the hash function, against which quantum "
+"algorithms give at most a quadratic speedup. Sibuna keeps Ed25519 as an "
+"option (``--token-scheme ed25519``) for deployments that need non-minting "
+"verifiers."
+msgstr ""
+
+#: ../../cryptography.rst:182
+msgid "The Key Schedule"
+msgstr ""
+
+#: ../../cryptography.rst:185
+msgid ""
+"One 32-byte master seed (from ``--secret-file``, ``SIBUNA_SECRET``, or a "
+"fresh random value) derives every purpose key with keyed BLAKE3 and a "
+"domain string: the token, challenge, Ed25519 and fingerprint keys, and "
+"the requirement key that seals requirement tickets (Part IV)."
+msgstr ""
+
+#: ../../cryptography.rst:187
+msgid "Implementation: ``Keys::derive``"
+msgstr ""
+
+#: ../../cryptography.rst:189
+msgid ""
+"Derives the five purpose keys from the seed. In "
+"``crates/challenge/src/keys.rs`` (crate ``sibuna-challenge``). ``Keys`` "
+"and ``Seed`` zero their bytes when dropped, and their ``Debug`` output is "
+"redacted."
+msgstr ""
+
+#: ../../cryptography.rst:207
+msgid ""
+"In a cluster, ``Keys::bind_node`` replaces the challenge key by keyed "
+"BLAKE3 under it over ``sibuna/challenge-node/v1`` and the node id, so a "
+"challenge must return to the node that issued it, while session tokens "
+"and requirement tickets stay valid on every member."
+msgstr ""
+
+#: ../../cryptography.rst:209
+msgid ""
+"Domain separation prevents accidental reuse across purposes; compromise "
+"of the master seed compromises every derived key. A cluster only has to "
+"agree on one seed."
+msgstr ""
+
+#: ../../cryptography.rst:211
+msgid "Stateless Challenges"
+msgstr ""
+
+#: ../../cryptography.rst:215
+msgid ""
+"Wire formats of the challenge identifier and the session token (field "
+"widths in bytes)."
+msgstr ""
+
+#: ../../cryptography.rst:233
+msgid ""
+"A challenge identifier is a self-authenticating record: version, "
+"algorithm, difficulty, opening count, issue time, the client's keyed "
+"fingerprint, a PRF-derived nonce, and the hash of the policy rule that "
+"demanded the challenge, followed by a 16-byte tag under the challenge "
+"key. Issuing one writes nothing. Verification decodes the record, checks "
+"the tag in constant time, checks the age against the challenge TTL, "
+"checks the fingerprint against the submitting client, and only then "
+"examines the proof."
+msgstr ""
+
+#: ../../cryptography.rst:235
+msgid "Lemma 4 (State grows only with paid work)"
+msgstr ""
+
+#: ../../cryptography.rst:237
+msgid ""
+"Let :math:`S` be the set of challenge tags the daemon remembers. A tag "
+"enters :math:`S` only after a valid proof for it was accepted, and it "
+"leaves after the challenge TTL. Hence :math:`|S| \\le r \\cdot "
+"\\mathrm{TTL}` when :math:`r` bounds the rate of accepted distinct "
+"solutions over that interval. A tag is not allocated on a free challenge "
+"fetch. The implementation also has a fixed capacity and can reject a "
+"valid solution when saturated. This is a state bound, not a lower bound "
+"on every adversary's computational strategy."
+msgstr ""
+
+#: ../../cryptography.rst:239
+msgid ""
+"The spent set is 16 shards of Robin Hood open addressing over the 16-byte "
+"tags (Part V). The fingerprint is a keyed hash of the client address and "
+"User-Agent, length-separated so no two inputs collide by concatenation, "
+"and keyed so fingerprints of other clients cannot be computed offline."
+msgstr ""
+
+#: ../../cryptography.rst:241
+msgid "Exercise 3.3"
+msgstr ""
+
+#: ../../cryptography.rst:243
+msgid ""
+"A token payload carries a work level, ``timestamp``, ``expiry``, "
+"``rule_hash``, and ``fingerprint``. Explain what each field prevents if "
+"it were removed, and why the tag must cover all five."
+msgstr ""
+
+#: ../../cryptography.rst:247
+msgid ""
+"A colleague proposes switching all tokens to Ed25519 \"because it is "
+"stronger\". Explain the trust-domain argument, the cost difference, and "
+"the post-quantum consideration."
+msgstr ""

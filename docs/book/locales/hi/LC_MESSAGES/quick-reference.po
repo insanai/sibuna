@@ -1,0 +1,645 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Vikrant Rathore and Sibuna contributors
+# This file is distributed under the same license as the The Sibuna Book package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-16 05:09+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: hi\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ../../quick-reference.rst:1
+msgid "Part XI: Quick Reference Card"
+msgstr ""
+
+#: ../../quick-reference.rst:4
+msgid ""
+"Keep beside a terminal: build, run, configure, route, observe, and "
+"diagnose. Part X holds the full tables; this card holds what an operator "
+"types."
+msgstr ""
+
+#: ../../quick-reference.rst:6
+msgid "Build"
+msgstr ""
+
+#: ../../quick-reference.rst:22
+msgid "Run"
+msgstr ""
+
+#: ../../quick-reference.rst:39
+msgid "Console (opt-in preview)"
+msgstr ""
+
+#: ../../quick-reference.rst:48
+msgid ""
+"Open ``http://127.0.0.1:19446/console/`` and replace the temporary "
+"password. Add ``--console-location 1.3521,103.8198`` to place the node on "
+"the globe. Remote access requires an HTTPS proxy, an explicit origin and "
+"trusted-proxy CIDRs; follow Part IX. SID 0007 is Committed. The console "
+"passes its browser workflows in headless Chromium (SID 0010, criterion "
+"5); its formal performance isolation gate remains open (Part VIII)."
+msgstr ""
+
+#: ../../quick-reference.rst:50
+msgid "Flags That Matter First"
+msgstr ""
+
+#: ../../quick-reference.rst:57
+msgid "Flag"
+msgstr ""
+
+#: ../../quick-reference.rst:58
+msgid "Default"
+msgstr ""
+
+#: ../../quick-reference.rst:59 ../../quick-reference.rst:224
+msgid "Meaning"
+msgstr ""
+
+#: ../../quick-reference.rst:60
+msgid "``-d, --difficulty``"
+msgstr ""
+
+#: ../../quick-reference.rst:61 ../../quick-reference.rst:67
+msgid "16"
+msgstr ""
+
+#: ../../quick-reference.rst:62
+msgid "work bits (PoSW depth = bits - 3)"
+msgstr ""
+
+#: ../../quick-reference.rst:63
+msgid "``-a, --algorithm``"
+msgstr ""
+
+#: ../../quick-reference.rst:64
+msgid "posw"
+msgstr ""
+
+#: ../../quick-reference.rst:65
+msgid "``posw`` or ``hashcash``"
+msgstr ""
+
+#: ../../quick-reference.rst:66
+msgid "``--posw-challenges``"
+msgstr ""
+
+#: ../../quick-reference.rst:68
+msgid "openings per proof"
+msgstr ""
+
+#: ../../quick-reference.rst:69
+msgid "``--token-ttl``"
+msgstr ""
+
+#: ../../quick-reference.rst:70
+msgid "86400"
+msgstr ""
+
+#: ../../quick-reference.rst:71
+msgid "session seconds"
+msgstr ""
+
+#: ../../quick-reference.rst:72
+msgid "``--challenge-ttl``"
+msgstr ""
+
+#: ../../quick-reference.rst:73
+msgid "300"
+msgstr ""
+
+#: ../../quick-reference.rst:74
+msgid "challenge seconds"
+msgstr ""
+
+#: ../../quick-reference.rst:75
+msgid "``--token-scheme``"
+msgstr ""
+
+#: ../../quick-reference.rst:76
+msgid "mac"
+msgstr ""
+
+#: ../../quick-reference.rst:77
+msgid "``mac`` or ``ed25519``"
+msgstr ""
+
+#: ../../quick-reference.rst:78
+msgid "``--rate-limit / --rate-window``"
+msgstr ""
+
+#: ../../quick-reference.rst:79
+msgid "100 / 10"
+msgstr ""
+
+#: ../../quick-reference.rst:80
+msgid "GCRA burst per window"
+msgstr ""
+
+#: ../../quick-reference.rst:81
+msgid "``--ban-seconds``"
+msgstr ""
+
+#: ../../quick-reference.rst:82
+msgid "3600"
+msgstr ""
+
+#: ../../quick-reference.rst:83
+msgid "honeypot ban"
+msgstr ""
+
+#: ../../quick-reference.rst:84
+msgid "``-w, --workers``"
+msgstr ""
+
+#: ../../quick-reference.rst:85
+msgid "CPUs"
+msgstr ""
+
+#: ../../quick-reference.rst:86
+msgid "accept threads"
+msgstr ""
+
+#: ../../quick-reference.rst:87
+msgid "``--max-connections``"
+msgstr ""
+
+#: ../../quick-reference.rst:88
+msgid "1024"
+msgstr ""
+
+#: ../../quick-reference.rst:89
+msgid "then ``503``"
+msgstr ""
+
+#: ../../quick-reference.rst:90
+msgid "``--max-connections-per-ip``"
+msgstr ""
+
+#: ../../quick-reference.rst:91
+msgid "64"
+msgstr ""
+
+#: ../../quick-reference.rst:92
+msgid "per peer address (IPv6: per ``--ipv6-prefix``), then ``503``"
+msgstr ""
+
+#: ../../quick-reference.rst:93
+msgid "``--trusted-hops``"
+msgstr ""
+
+#: ../../quick-reference.rst:94
+msgid "1"
+msgstr ""
+
+#: ../../quick-reference.rst:95
+msgid "client = n-th ``X-Forwarded-For`` entry from the right"
+msgstr ""
+
+#: ../../quick-reference.rst:96
+msgid "``--idle-timeout``"
+msgstr ""
+
+#: ../../quick-reference.rst:97
+msgid "15"
+msgstr ""
+
+#: ../../quick-reference.rst:98
+msgid "reaper seconds"
+msgstr ""
+
+#: ../../quick-reference.rst:99
+msgid "``-P, --policy-file``"
+msgstr ""
+
+#: ../../quick-reference.rst:100
+msgid "none"
+msgstr ""
+
+#: ../../quick-reference.rst:101
+msgid "JSON policy"
+msgstr ""
+
+#: ../../quick-reference.rst:102
+msgid "``--trust-forwarded``"
+msgstr ""
+
+#: ../../quick-reference.rst:103 ../../quick-reference.rst:106
+msgid "off"
+msgstr ""
+
+#: ../../quick-reference.rst:104
+msgid "on in forward auth"
+msgstr ""
+
+#: ../../quick-reference.rst:105
+msgid "``--secure-cookie``"
+msgstr ""
+
+#: ../../quick-reference.rst:107
+msgid "add ``Secure``"
+msgstr ""
+
+#: ../../quick-reference.rst:109
+msgid "Endpoints Under ``/__sibuna/``"
+msgstr ""
+
+#: ../../quick-reference.rst:116
+msgid "Route"
+msgstr ""
+
+#: ../../quick-reference.rst:117
+msgid "Answer"
+msgstr ""
+
+#: ../../quick-reference.rst:118
+msgid "``challenge``"
+msgstr ""
+
+#: ../../quick-reference.rst:119
+msgid "interstitial HTML"
+msgstr ""
+
+#: ../../quick-reference.rst:120
+msgid "``challenge.json?need=&path=``"
+msgstr ""
+
+#: ../../quick-reference.rst:121
+msgid "``{id, algorithm, difficulty, challenges, expires_at}``"
+msgstr ""
+
+#: ../../quick-reference.rst:122
+msgid "``verify`` (POST)"
+msgstr ""
+
+#: ../../quick-reference.rst:123
+msgid ""
+"``{challenge_id, nonce | proof}`` -> ``200`` + ``Set-Cookie``, else "
+"``400``"
+msgstr ""
+
+#: ../../quick-reference.rst:124
+msgid "``wasm/sibuna-pow.wasm``"
+msgstr ""
+
+#: ../../quick-reference.rst:125
+msgid "15,181-byte solver"
+msgstr ""
+
+#: ../../quick-reference.rst:126
+msgid "``worker.js``"
+msgstr ""
+
+#: ../../quick-reference.rst:127
+msgid "worker with WASM and JS provers"
+msgstr ""
+
+#: ../../quick-reference.rst:128
+msgid "``honeypot``"
+msgstr ""
+
+#: ../../quick-reference.rst:129
+msgid "bans caller, ``403``; ``404`` for a subresource or cross-site fetch"
+msgstr ""
+
+#: ../../quick-reference.rst:130
+msgid "``health``"
+msgstr ""
+
+#: ../../quick-reference.rst:131
+msgid "``{\"status\":\"ok\",...}``"
+msgstr ""
+
+#: ../../quick-reference.rst:132
+msgid "``metrics``"
+msgstr ""
+
+#: ../../quick-reference.rst:133
+msgid "Prometheus text"
+msgstr ""
+
+#: ../../quick-reference.rst:135
+msgid "Route all of them to the daemon, never to the origin."
+msgstr ""
+
+#: ../../quick-reference.rst:137
+msgid "Status Codes"
+msgstr ""
+
+#: ../../quick-reference.rst:144
+msgid "Code"
+msgstr ""
+
+#: ../../quick-reference.rst:145
+msgid "When"
+msgstr ""
+
+#: ../../quick-reference.rst:146
+msgid "200"
+msgstr ""
+
+#: ../../quick-reference.rst:147
+msgid "admitted (forward auth), interstitial, internal routes"
+msgstr ""
+
+#: ../../quick-reference.rst:148
+msgid "400"
+msgstr ""
+
+#: ../../quick-reference.rst:149
+msgid "malformed request or target, rejected solution (diagnostic body)"
+msgstr ""
+
+#: ../../quick-reference.rst:150
+msgid "401"
+msgstr ""
+
+#: ../../quick-reference.rst:151
+msgid "challenge required: non-HTML client or forward auth"
+msgstr ""
+
+#: ../../quick-reference.rst:152
+msgid "403"
+msgstr ""
+
+#: ../../quick-reference.rst:153
+msgid "policy or WAF denial, ban, honeypot"
+msgstr ""
+
+#: ../../quick-reference.rst:154
+msgid "404"
+msgstr ""
+
+#: ../../quick-reference.rst:155
+msgid "unknown ``/__sibuna/`` route, refused honeypot hit"
+msgstr ""
+
+#: ../../quick-reference.rst:156
+msgid "413"
+msgstr ""
+
+#: ../../quick-reference.rst:157
+msgid "solution body over the 64 KB buffer"
+msgstr ""
+
+#: ../../quick-reference.rst:158
+msgid "414"
+msgstr ""
+
+#: ../../quick-reference.rst:159
+msgid "reported challenge URL over 8 KiB"
+msgstr ""
+
+#: ../../quick-reference.rst:160
+msgid "417"
+msgstr ""
+
+#: ../../quick-reference.rst:161
+msgid "unsupported request expectation"
+msgstr ""
+
+#: ../../quick-reference.rst:162
+msgid "429"
+msgstr ""
+
+#: ../../quick-reference.rst:163
+msgid "GCRA limit, ``Retry-After`` seconds"
+msgstr ""
+
+#: ../../quick-reference.rst:164
+msgid "431"
+msgstr ""
+
+#: ../../quick-reference.rst:165
+msgid "head over 16 KB"
+msgstr ""
+
+#: ../../quick-reference.rst:166
+msgid "501"
+msgstr ""
+
+#: ../../quick-reference.rst:167
+msgid "transfer coding other than chunked"
+msgstr ""
+
+#: ../../quick-reference.rst:168
+msgid "502"
+msgstr ""
+
+#: ../../quick-reference.rst:169
+msgid "origin unreachable or malformed"
+msgstr ""
+
+#: ../../quick-reference.rst:170
+msgid "503"
+msgstr ""
+
+#: ../../quick-reference.rst:171
+msgid "connection limits reached, or node draining"
+msgstr ""
+
+#: ../../quick-reference.rst:173
+msgid "Headers"
+msgstr ""
+
+#: ../../quick-reference.rst:176
+msgid ""
+"*Upstream (proxy)*: ``X-Forwarded-For`` (socket peer, after the received "
+"chain when trusted), ``X-Forwarded-Proto``, ``X-Real-IP`` (the judged "
+"client), ``X-Sibuna-Status: PASS``, ``X-Sibuna-Rule: <rule>``; hop-by-hop "
+"and alternative forwarding fields dropped, underscore spellings too."
+msgstr ""
+
+#: ../../quick-reference.rst:177
+msgid ""
+"*Forward-auth reply*: ``X-Sibuna-Status``, ``X-Sibuna-Rule``, "
+"``X-Sibuna-Rule-Hash``."
+msgstr ""
+
+#: ../../quick-reference.rst:178
+msgid "*Challenge reply*: ``X-Sibuna-Status: CHALLENGE``."
+msgstr ""
+
+#: ../../quick-reference.rst:179
+msgid ""
+"*Cookie*: ``__sibuna_token=<75 chars, 139 with ed25519>; Path=/; "
+"Max-Age=<ttl>; HttpOnly; SameSite=Lax[; Secure]``"
+msgstr ""
+
+#: ../../quick-reference.rst:181
+msgid "Policy File Skeleton"
+msgstr ""
+
+#: ../../quick-reference.rst:197
+msgid ""
+"Patterns: ``*`` or ``.*`` any; ``^...$`` exact; trailing ``*`` prefix; "
+"leading ``/`` exact path; else case-insensitive substring. Paths are "
+"matched in normal form. Order: WAF -> trie deny/allow -> rules -> score "
+"-> bypass -> trie challenge -> bots -> default."
+msgstr ""
+
+#: ../../quick-reference.rst:199
+msgid "Storage (Edge) in SQL"
+msgstr ""
+
+#: ../../quick-reference.rst:214
+msgid ""
+"SQLite (``sqlite3 <dir>/sibuna.db``); actions are lowercase. Score "
+":math:`\\le -50` -> deny prefix; :math:`\\ge 50` -> allow. Cluster: same "
+"secret on every node, one PostgreSQL database, ``--features postgres``, "
+"``--database-url-file <file> --cluster-node N`` with a unique N from 1 to "
+"8,388,607; no member list, leader or cluster TLS (SID 0011)."
+msgstr ""
+
+#: ../../quick-reference.rst:216
+msgid "Diagnostics"
+msgstr ""
+
+#: ../../quick-reference.rst:223
+msgid "Title"
+msgstr ""
+
+#: ../../quick-reference.rst:225
+msgid "``MALFORMED CHALLENGE``"
+msgstr ""
+
+#: ../../quick-reference.rst:226
+msgid "id edited or truncated; fetch a new one"
+msgstr ""
+
+#: ../../quick-reference.rst:227
+msgid "``INVALID CHALLENGE TAG``"
+msgstr ""
+
+#: ../../quick-reference.rst:228
+msgid "not minted by this seed or node"
+msgstr ""
+
+#: ../../quick-reference.rst:229
+msgid "``CHALLENGE EXPIRED``"
+msgstr ""
+
+#: ../../quick-reference.rst:230
+msgid "older than TTL or clock skew > 60 s"
+msgstr ""
+
+#: ../../quick-reference.rst:231
+msgid "``CLIENT FINGERPRINT MISMATCH``"
+msgstr ""
+
+#: ../../quick-reference.rst:232
+msgid "address or User-Agent changed"
+msgstr ""
+
+#: ../../quick-reference.rst:233
+msgid "``DIFFICULTY NOT MET``"
+msgstr ""
+
+#: ../../quick-reference.rst:234
+msgid "nonce lacks zero bits"
+msgstr ""
+
+#: ../../quick-reference.rst:235
+msgid "``INVALID PROOF OF SEQUENTIAL WORK``"
+msgstr ""
+
+#: ../../quick-reference.rst:236
+msgid "openings do not reach the root"
+msgstr ""
+
+#: ../../quick-reference.rst:237
+msgid "``WRONG SOLUTION TYPE``"
+msgstr ""
+
+#: ../../quick-reference.rst:238
+msgid "nonce for PoSW or proof for Hashcash"
+msgstr ""
+
+#: ../../quick-reference.rst:239
+msgid "``DOUBLE SPEND PREVENTED``"
+msgstr ""
+
+#: ../../quick-reference.rst:240
+msgid "challenge already used"
+msgstr ""
+
+#: ../../quick-reference.rst:241
+msgid "``STORE FULL``"
+msgstr ""
+
+#: ../../quick-reference.rst:242
+msgid "spent set saturated; lower TTL or raise ``--spent-tags``"
+msgstr ""
+
+#: ../../quick-reference.rst:243
+msgid "``NETWORK BINDING MISMATCH``"
+msgstr ""
+
+#: ../../quick-reference.rst:244
+msgid "cookie copied to another client"
+msgstr ""
+
+#: ../../quick-reference.rst:245
+msgid "``INVALID COMMAND LINE``"
+msgstr ""
+
+#: ../../quick-reference.rst:246
+msgid "unknown option, bad value, or a removed Zaxonlite option"
+msgstr ""
+
+#: ../../quick-reference.rst:248
+msgid ""
+"Metrics to alert on: ``denied``, ``rate_limited``, ``overloaded``, "
+"``upstream_errors``, ``incidents_dropped``, ``incident_write_failures``, "
+"``bans_refused``, ``forwarded_invalid`` (all ``sibuna_*_total``)."
+msgstr ""
+
+#: ../../quick-reference.rst:250
+msgid "Numbers to Remember"
+msgstr ""
+
+#: ../../quick-reference.rst:253
+msgid ""
+"Challenge id 70 chars (36-byte payload + 16-byte tag); token 75 chars (40 "
+"+ 16), 139 with Ed25519; proof bytes :math:`32(1 + t(n+1))`; PoSW depth = "
+"bits - 3, range 4 to 24; request buffer 64 KB; head limit 16 KB; body "
+"inspected 8 KB; spent set 1,048,576 tags (``--spent-tags``); rate cells "
+"262,144 per table (``--rate-table-cells``); bans 65,536 slots "
+"(``--ban-table-slots``); 64 connections per client address; incident ring "
+"512; batch 32; campaign distance 0.35 over the 16,384 most recent "
+"embeddings; keep-alive 4,096 requests per connection; origin pool 256 "
+"sockets; storage job queue 32."
+msgstr ""
+
+#: ../../quick-reference.rst:255
+msgid "Ingress Routing"
+msgstr ""
+
+#: ../../quick-reference.rst:258
+msgid ""
+"Use the Nginx or Caddy recipe in Part IX, Forward Auth Behind an Ingress. "
+"Route ``/__sibuna/*`` directly; authorize application requests with the "
+"original URI, method and trusted client address. Replace incoming Sibuna "
+"audit headers with the authorization result. Nginx needs explicit "
+"challenge, 429 and unavailable-auth handling."
+msgstr ""
+
+#: ../../quick-reference.rst:260
+msgid ""
+"``reverse_proxy`` carries admitted HTTP/1.1 bodies and WebSockets; "
+"``forward_auth`` grants admission and the ingress carries them. Omitted "
+"auth bodies and origin responses cannot be inspected or counted by "
+"Sibuna. TLS terminates at the ingress; native HTTP/2 is deferred. Uploads "
+"use Content-Length or chunked coding; inspection sees at most an 8 KiB "
+"prefix, with file bytes opaque."
+msgstr ""

@@ -1,0 +1,324 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Vikrant Rathore and Sibuna contributors
+# This file is distributed under the same license as the The Sibuna Book package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-16 05:09+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: es\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ../../protocol.rst:1
+msgid "Part IV: The Sibuna Protocol"
+msgstr ""
+
+#: ../../protocol.rst:4
+msgid ""
+"We specify the wire protocol as implemented: the interstitial round trip, "
+"the stateless challenge record, both solution formats, verification "
+"order, single-use enforcement, and the session cookie."
+msgstr ""
+
+#: ../../protocol.rst:6
+msgid "The Challenge Round Trip"
+msgstr ""
+
+#: ../../protocol.rst:9 ../../protocol.rst:72 ../../protocol.rst:135
+#: ../../protocol.rst:186
+msgid "Objectives"
+msgstr ""
+
+#: ../../protocol.rst:11
+msgid ""
+"By the end of this chapter, we should be able to trace a browser from its "
+"first request to a minted session, name every endpoint and JSON field "
+"involved, and explain why the challenge carries the protected path's "
+"policy decision."
+msgstr ""
+
+#: ../../protocol.rst:14
+msgid "The challenge round trip."
+msgstr ""
+
+#: ../../protocol.rst:41
+msgid ""
+"A navigation with no valid session reaches the policy engine and is "
+"classified ``CHALLENGE``. Because the request accepts ``text/html``, the "
+"daemon answers ``200`` with the interstitial page and the header "
+"``X-Sibuna-Status: CHALLENGE``; an API client that does not accept HTML "
+"receives ``401`` with a JSON body whose ``challenge`` URL is ready to "
+"fetch. Either way the response carries a *requirement ticket*: the "
+"challenge this decision demands (algorithm, work bits, openings) and the "
+"rule's hash, sealed for this client with a keyed BLAKE3 tag under its own "
+"derived key and valid for one challenge lifetime."
+msgstr ""
+
+#: ../../protocol.rst:42
+msgid ""
+"The interstitial fetches ``GET /__sibuna/challenge.json?path=<original "
+"URL>&need=<ticket>``. A valid ticket decides the challenge: the work is "
+"fixed by the decision that demanded it, not recomputed from a reported "
+"URL and the fetch's own headers, which differ from the navigation's "
+"(``Accept``, ``Sec-Fetch-*``). Without a valid ticket (an API client that "
+"ignores the URL, a page left open past the lifetime) the server evaluates "
+"the reported URL, split into path and query by the same function that "
+"reads the request line, with the path put in the normal form admission "
+"uses (SID 0009); a URL longer than 8 KiB is refused with ``414``, never "
+"truncated, and a path without a normal form with ``400``. The ticket is "
+"advisory: admission still checks the session's work level, so a replayed "
+"or forged ticket can only cost its holder work."
+msgstr ""
+
+#: ../../protocol.rst:43
+msgid "The response is the challenge record:"
+msgstr ""
+
+#: ../../protocol.rst:49
+msgid ""
+"For ``hashcash``, ``difficulty`` is the bit count and ``challenges`` is "
+"``0``."
+msgstr ""
+
+#: ../../protocol.rst:50
+msgid ""
+"A Web Worker solves it with the WebAssembly module, or the JavaScript "
+"prover if WebAssembly is unavailable (Part VII), and posts either"
+msgstr ""
+
+#: ../../protocol.rst:56
+msgid "or"
+msgstr ""
+
+#: ../../protocol.rst:62
+msgid "to ``POST /__sibuna/verify``."
+msgstr ""
+
+#: ../../protocol.rst:63
+msgid ""
+"On success the server answers ``200 {\"status\":\"ok\"}`` with a "
+"``Set-Cookie`` header, and the page reloads its original location. Every "
+"later request carries the cookie and is admitted before policy evaluation."
+msgstr ""
+
+#: ../../protocol.rst:65
+msgid "Why the path travels with the challenge"
+msgstr ""
+
+#: ../../protocol.rst:67
+msgid ""
+"The interstitial is served at the protected URL, so the browser knows "
+"where it is. Sending the path lets the server pick the *per-rule* "
+"difficulty and algorithm (a checkout route may demand 20 work bits of "
+"sequential work while a blog demands 16 bits of Hashcash) and binds the "
+"rule hash into the token, where ``X-Sibuna-Rule-Hash`` reports it "
+"upstream."
+msgstr ""
+
+#: ../../protocol.rst:69
+msgid "The Stateless Challenge Record"
+msgstr ""
+
+#: ../../protocol.rst:74
+msgid ""
+"Read the challenge encoder, understand every field's purpose, and see how "
+"the per-challenge nonce is derived without an entropy syscall on the hot "
+"path."
+msgstr ""
+
+#: ../../protocol.rst:76
+msgid "Implementation: ``Coordinator::create_challenge_with_spec``"
+msgstr ""
+
+#: ../../protocol.rst:78
+msgid ""
+"Builds the 36-byte payload, tags it under the challenge key, and "
+"base64url-encodes the 52 bytes into a 70-character identifier. In "
+"``crates/challenge/src/coordinator.rs`` (crate ``sibuna-challenge``)."
+msgstr ""
+
+#: ../../protocol.rst:124
+msgid ""
+"The identifier is an ``Encoded<70>``: the text lives in an array of "
+"exactly its length, so issuing a challenge never allocates. "
+"``ChallengeSpec::parameter`` maps work bits to the tier's own unit, "
+"Hashcash bits (at most 64) or PoSW depth (``difficulty - 3``, clamped to "
+"4 through 24)."
+msgstr ""
+
+#: ../../protocol.rst:126
+msgid "Three details deserve attention:"
+msgstr ""
+
+#: ../../protocol.rst:128
+msgid ""
+"*Adaptive difficulty.* The coordinator keeps an exponentially weighted "
+"moving average of the challenge issue rate in three atomics. Above a "
+"baseline of 50 challenges per second, each doubling of the rate adds one "
+"work bit, capped at six. A flood pays exponentially more while quiet "
+"traffic keeps the base cost."
+msgstr ""
+
+#: ../../protocol.rst:129
+msgid ""
+"*The nonce is a PRF output*, keyed by the challenge key over a counter, "
+"the clock, and the fingerprint. It is unique (counter) and unpredictable "
+"(key), so an adversary cannot precompute solutions for identifiers it has "
+"not been issued, and the hot path never calls into the operating system "
+"for entropy."
+msgstr ""
+
+#: ../../protocol.rst:130
+msgid ""
+"*Difficulty travels inside the tag.* A client cannot lower the difficulty "
+"by editing the record: the tag would fail before any proof is examined."
+msgstr ""
+
+#: ../../protocol.rst:132
+msgid "Verification Order and Single Use"
+msgstr ""
+
+#: ../../protocol.rst:137
+msgid ""
+"Understand why the cheap checks run before the proof, why the challenge "
+"is marked spent only after the proof is valid, and how two concurrent "
+"submissions of one solution are resolved."
+msgstr ""
+
+#: ../../protocol.rst:139
+msgid "Implementation: ``Coordinator::verify_and_mint``"
+msgstr ""
+
+#: ../../protocol.rst:141
+msgid ""
+"Decodes and authenticates the identifier, checks age and client binding, "
+"verifies the proof for the recorded tier, records the tag as spent, and "
+"mints the session token. In ``crates/challenge/src/coordinator.rs`` "
+"(crate ``sibuna-challenge``)."
+msgstr ""
+
+#: ../../protocol.rst:179
+msgid ""
+"The order is deliberate. Tag, age, and binding are constant-time checks "
+"that reject garbage before any hashing. A wrong proof must not consume "
+"the challenge, so the spent set is written only after ``check_solution`` "
+"succeeds. Two threads that both verify the same valid solution race on "
+"``mark_spent``; the shard lock serialises them, exactly one wins, and the "
+"other receives ``VerifyError::DoubleSpendAttempt``. The clause "
+"``issued_at > now + 60`` (``CLOCK_SKEW_SECONDS`` is 60) rejects records "
+"minted by a node whose clock runs ahead by more than a minute, which "
+"would otherwise extend a challenge's life."
+msgstr ""
+
+#: ../../protocol.rst:181
+msgid ""
+"Errors surface to the client as ``400`` with an Elm-style diagnostic "
+"(Part X): each ``VerifyError`` converts into "
+"``sibuna_core::errors::ErrorKind``, whose explanation is the response "
+"body. The end-to-end tests assert on ``DOUBLE SPEND``, ``FINGERPRINT "
+"MISMATCH``, ``WRONG SOLUTION TYPE``, and ``MALFORMED CHALLENGE`` in the "
+"response body."
+msgstr ""
+
+#: ../../protocol.rst:183
+msgid "The Session Cookie"
+msgstr ""
+
+#: ../../protocol.rst:188
+msgid ""
+"Read the keyed-hash token, understand the cookie attributes, and explain "
+"the client binding."
+msgstr ""
+
+#: ../../protocol.rst:190
+msgid "Implementation: ``token::mac::mint`` and ``token::mac::verify``"
+msgstr ""
+
+#: ../../protocol.rst:192
+msgid ""
+"Serialises the 40-byte payload, appends the first 16 bytes of keyed "
+"BLAKE3 over it, and verifies with a constant-time comparison. In "
+"``crates/challenge/src/token/mac.rs`` (crate ``sibuna-challenge``). "
+"``Coordinator::verify_cookie`` calls it with the client's fingerprint."
+msgstr ""
+
+#: ../../protocol.rst:219
+msgid ""
+"The tag is checked before the payload is parsed: a payload of another "
+"version is refused with ``TokenError::InvalidEncoding`` only once it is "
+"known to be authentic, and a forged one never reaches the parser."
+msgstr ""
+
+#: ../../protocol.rst:221
+msgid "The cookie is emitted as"
+msgstr ""
+
+#: ../../protocol.rst:228
+msgid ""
+"``HttpOnly`` keeps it out of page scripts, ``SameSite=Lax`` stops "
+"cross-site replay while allowing top-level navigation, and ``Secure`` is "
+"added with ``--secure-cookie`` when TLS terminates in front of the "
+"daemon. Because the payload carries the keyed fingerprint of address and "
+"User-Agent, a cookie copied to another machine fails with "
+"``TokenError::TokenBoundAddressMismatch``; the end-to-end test \"the "
+"cookie is bound to the client identity\" exercises exactly that path."
+msgstr ""
+
+#: ../../protocol.rst:230
+msgid ""
+"The payload begins with a version byte and the *work level* the holder "
+"paid: the mechanism (Hashcash or PoSW) and the work bits actually solved, "
+"including any load-adaptive bump. A session clears a challenge only when "
+"its level reaches what the route demands, computed from the rule's "
+"difficulty through the same clamping the challenge itself applies. Levels "
+"are ordered, not named: a cookie earned at 24 bits also covers every "
+"16-bit route, while a 16-bit cookie presented to a 24-bit route falls "
+"through to the stronger interstitial and the new cookie replaces the old "
+"one. ``rule_hash`` remains the audit identity of the rule that issued the "
+"challenge; it is reported upstream, never used for admission. WAF "
+"findings and explicit denials are never cleared by a session. The "
+"end-to-end test \"a session earned on a cheaper route does not admit a "
+"route that demands more work\" exercises both directions."
+msgstr ""
+
+#: ../../protocol.rst:232
+msgid "Forwarded addresses"
+msgstr ""
+
+#: ../../protocol.rst:235
+msgid ""
+"Behind an ingress the client address arrives in ``X-Forwarded-For``. "
+"Sibuna trusts that header only with ``--trust-forwarded`` (implied in "
+"forward-auth mode). A reverse proxy exposed directly to the internet must "
+"leave it off, or any client could pick its own binding and its own "
+"rate-limit bucket."
+msgstr ""
+
+#: ../../protocol.rst:237
+msgid "Exercise 4.1"
+msgstr ""
+
+#: ../../protocol.rst:239
+msgid ""
+"Sketch the sequence of two browsers behind one NAT address with identical "
+"User-Agents. Which checks do they share, which do they not, and what "
+"would an attacker on that NAT need to reuse the other browser's cookie?"
+msgstr ""
+
+#: ../../protocol.rst:241
+msgid "Explain the invariant"
+msgstr ""
+
+#: ../../protocol.rst:243
+msgid ""
+"Explain to an operator why the daemon does not \"remember\" outstanding "
+"challenges and why that is a security feature rather than a shortcut."
+msgstr ""

@@ -1,0 +1,767 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Vikrant Rathore and Sibuna contributors
+# This file is distributed under the same license as the The Sibuna Book package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-16 05:09+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ar\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : "
+"n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#: ../../prior-art.rst:1
+msgid "Part II: Prior Art and the Design Space"
+msgstr ""
+
+#: ../../prior-art.rst:4
+msgid ""
+"We place Sibuna among the systems it learned from: client puzzles and "
+"sequential work from the cryptography literature, signature and semantic "
+"application firewalls, proof-of-work interstitials, and hosted edge "
+"networks. We then compare the four tools an operator is most likely to "
+"weigh against each other, feature by feature, and record which facts were "
+"checked."
+msgstr ""
+
+#: ../../prior-art.rst:6
+msgid "Where Sibuna Comes From"
+msgstr ""
+
+#: ../../prior-art.rst:9
+msgid "Objectives"
+msgstr ""
+
+#: ../../prior-art.rst:11
+msgid ""
+"By the end of this chapter, we should be able to trace the lineage of "
+"client puzzles from 1992 to the sequential-work constructions of 2018, "
+"name the three architectural ideas Sibuna combines, place Sibuna, Anubis, "
+"SafeLine, and the Cloudflare WAF in one design space, and say which "
+"comparison claims were verified and which were only read from "
+"documentation."
+msgstr ""
+
+#: ../../prior-art.rst:13
+msgid "Client Puzzles and Sequential Work"
+msgstr ""
+
+#: ../../prior-art.rst:16
+msgid ""
+"Dwork and Naor's \"Pricing via Processing\" (CRYPTO 1992) proposed that a "
+"service require a moderately hard, easily checked computation before "
+"doing work for a requester. Back's Hashcash (1997, written up in 2002) "
+"made the puzzle a partial hash inversion whose difficulty is one integer, "
+"and Juels and Brainard's client puzzles (NDSS 1999) applied the idea to "
+"connection floods, where the server must not remember anything about an "
+"unsolved puzzle. All three share the shape Sibuna keeps: a server-chosen "
+"statement, a solution whose cost is tunable, and verification that is "
+"orders of magnitude cheaper than solving."
+msgstr ""
+
+#: ../../prior-art.rst:18
+msgid ""
+"Hash search is embarrassingly parallel, so a requester with more cores "
+"finishes sooner. Mahmoody, Moran, and Vadhan (CRYPTO 2013) defined proofs "
+"of *sequential* work, in which the prover must perform a long chain of "
+"dependent steps whatever its core count, and Cohen and Pietrzak "
+"(EUROCRYPT 2018) gave the simple hash-graph construction whose verifier "
+"needs only :math:`O(t \\log N)` work. Blocki, Lee, and Zhou (ITC 2021) "
+"proved the same construction sound against quantum provers in the quantum "
+"random-oracle model. Part III derives Sibuna's Tier Two from that line of "
+"work; SID 0006 records the assumptions."
+msgstr ""
+
+#: ../../prior-art.rst:21
+msgid ""
+"Lineage of the ideas Sibuna combines. The top row is the cryptography of "
+"client puzzles and sequential work, the middle row the algorithms and "
+"systems Sibuna builds on, and the third row the products in the same "
+"space; arrows are direct descent. An earlier storage design drew on "
+"Multi-Paxos (Lamport 1998; SID 0005); Sibuna now stores its state in "
+"SQLite or PostgreSQL (SID 0011)."
+msgstr ""
+
+#: ../../prior-art.rst:70
+msgid "Application Firewalls"
+msgstr ""
+
+#: ../../prior-art.rst:73
+msgid ""
+"The first generation of web application firewalls matched request bytes "
+"against regular expressions. ModSecurity (2002) and the OWASP Core Rule "
+"Set made that approach open and widely deployed, and also made its costs "
+"familiar: hundreds of backtracking patterns per request, anomaly scores "
+"tuned by hand, and a long tail of false positives on ordinary input. "
+"libinjection (Hanson, 2012) replaced pattern lists with a tokenizer that "
+"asks whether a string *parses* as SQL, cutting both cost and false "
+"positives. Chaitin's SafeLine carries that semantic idea into a full "
+"product, and Hyperscan (Wang et al., NSDI 2019) showed how far vectorised "
+"literal matching can be pushed when inputs are long. Part VI explains why "
+"Sibuna chose a dense automaton plus small structural tokenizers over "
+"either regular expressions or a SIMD engine for the short fields it "
+"inspects."
+msgstr ""
+
+#: ../../prior-art.rst:75
+msgid "Interstitials and Edges"
+msgstr ""
+
+#: ../../prior-art.rst:78
+msgid ""
+"The proof-of-work interstitial in front of a website became common in "
+"2025, when scraper traffic feeding language-model training made ordinary "
+"origins unaffordable to run. Anubis (Techaro) is the best-known open "
+"implementation: a Go reverse proxy that serves a JavaScript puzzle, signs "
+"a session token, and otherwise passes traffic through. Sibuna's Gate "
+"surface solves the same problem with a stateless challenge, a symmetric "
+"token, and a second work tier; the comparison below records where the two "
+"differ."
+msgstr ""
+
+#: ../../prior-art.rst:80
+msgid ""
+"At the other end of the scale, hosted edges such as Cloudflare place "
+"inspection, rate limiting, and bot scoring in hundreds of points of "
+"presence with a global control plane. Sibuna's Edge deployment borrows "
+"the shape (a shared policy and reputation plane feeding local, immutable "
+"snapshots) while staying self-hosted, which is why the storage layer is a "
+"database the operator runs (a SQLite file on one node, one PostgreSQL "
+"database shared by a cluster) read by a storage thread off the request "
+"path, rather than a service call."
+msgstr ""
+
+#: ../../prior-art.rst:82
+msgid "Three Ideas in One Binary"
+msgstr ""
+
+#: ../../prior-art.rst:85
+msgid ""
+"Sibuna combines a browser work challenge for admission, bounded "
+"application-payload inspection, and a shared control plane that publishes "
+"local policy snapshots. Gate and Shield are the two product surfaces; "
+"storage and distributed deployment are options for either."
+msgstr ""
+
+#: ../../prior-art.rst:91
+msgid "**Property**"
+msgstr ""
+
+#: ../../prior-art.rst:92
+msgid "**Gate**"
+msgstr ""
+
+#: ../../prior-art.rst:93
+msgid "**Shield**"
+msgstr ""
+
+#: ../../prior-art.rst:94
+msgid "Admission"
+msgstr ""
+
+#: ../../prior-art.rst:95
+msgid "Native Hashcash or sequential-work verification"
+msgstr ""
+
+#: ../../prior-art.rst:96 ../../prior-art.rst:99 ../../prior-art.rst:102
+msgid "Same"
+msgstr ""
+
+#: ../../prior-art.rst:97
+msgid "Session"
+msgstr ""
+
+#: ../../prior-art.rst:98
+msgid "Keyed BLAKE3; optional Ed25519"
+msgstr ""
+
+#: ../../prior-art.rst:100
+msgid "Local controls"
+msgstr ""
+
+#: ../../prior-art.rst:101
+msgid "Rules, CIDRs, GCRA, bans"
+msgstr ""
+
+#: ../../prior-art.rst:103
+msgid "Inspection"
+msgstr ""
+
+#: ../../prior-art.rst:104
+msgid "Disabled"
+msgstr ""
+
+#: ../../prior-art.rst:105
+msgid "Bounded signatures and structural tokenizers"
+msgstr ""
+
+#: ../../prior-art.rst:106
+msgid "State"
+msgstr ""
+
+#: ../../prior-art.rst:107
+msgid "Optional persistent policy and reputation, shared across a cluster"
+msgstr ""
+
+#: ../../prior-art.rst:108
+msgid "Also inspection forensics"
+msgstr ""
+
+#: ../../prior-art.rst:110
+msgid ""
+"The browser solver compiles from the same proof sources as the native "
+"verifier. Dense literal matching avoids backtracking and keeps scan work "
+"linear in input length. Immutable policy snapshots isolate request "
+"handling from SQL and from the availability of the database. None of "
+"these choices establishes universal algorithmic optimality: short "
+"headers, long bodies, pattern diversity, core count and cache size change "
+"the tradeoffs."
+msgstr ""
+
+#: ../../prior-art.rst:112
+msgid "Design constraints adopted"
+msgstr ""
+
+#: ../../prior-art.rst:114
+msgid ""
+"No heap allocation on the request path; every table has a fixed capacity "
+"and a stated saturation behaviour."
+msgstr ""
+
+#: ../../prior-art.rst:115
+msgid ""
+"Issuing a challenge writes nothing; only a paid-for solution occupies "
+"memory."
+msgstr ""
+
+#: ../../prior-art.rst:116
+msgid ""
+"A session admits; it never exempts a request from inspection or an "
+"explicit denial."
+msgstr ""
+
+#: ../../prior-art.rst:117
+msgid ""
+"Every claimed number is either measured by a committed harness or "
+"labelled as a model."
+msgstr ""
+
+#: ../../prior-art.rst:118
+msgid ""
+"Cryptographic choices cite a venue and a proof, and state their quantum "
+"posture."
+msgstr ""
+
+#: ../../prior-art.rst:120
+msgid "Feature Comparison"
+msgstr ""
+
+#: ../../prior-art.rst:123
+msgid ""
+"The four tables below compare Sibuna with the three tools most often "
+"mentioned alongside it. Facts about the other products were read from "
+"their public documentation and release artefacts in September 2026: "
+"Anubis 1.27.0 (MIT licence, Go), SafeLine community edition 9.x (GPL-3.0 "
+"management code around closed detector images, Docker Compose), and the "
+"Cloudflare WAF developer documentation. Anubis was also run on the "
+"benchmark host; SafeLine and Cloudflare were not (Part VIII explains "
+"why). A dash means the product does not offer the feature; a plan name "
+"means the feature exists but only on that plan. Each Sibuna measurement "
+"names the committed result file it comes from."
+msgstr ""
+
+#: ../../prior-art.rst:125
+msgid "Feature comparison, part 1: deployment"
+msgstr ""
+
+#: ../../prior-art.rst:130 ../../prior-art.rst:161 ../../prior-art.rst:197
+#: ../../prior-art.rst:233
+msgid "Feature"
+msgstr ""
+
+#: ../../prior-art.rst:131 ../../prior-art.rst:162 ../../prior-art.rst:198
+#: ../../prior-art.rst:234
+msgid "Sibuna"
+msgstr ""
+
+#: ../../prior-art.rst:132 ../../prior-art.rst:163 ../../prior-art.rst:199
+#: ../../prior-art.rst:235
+msgid "Anubis 1.27"
+msgstr ""
+
+#: ../../prior-art.rst:133 ../../prior-art.rst:164 ../../prior-art.rst:200
+#: ../../prior-art.rst:236
+msgid "SafeLine CE 9"
+msgstr ""
+
+#: ../../prior-art.rst:134 ../../prior-art.rst:165 ../../prior-art.rst:201
+#: ../../prior-art.rst:237
+msgid "Cloudflare WAF"
+msgstr ""
+
+#: ../../prior-art.rst:135
+msgid "Runs as"
+msgstr ""
+
+#: ../../prior-art.rst:136
+msgid ""
+"One binary; reverse proxy or forward auth; optional SQLite file or shared "
+"PostgreSQL database"
+msgstr ""
+
+#: ../../prior-art.rst:137
+msgid "One Go binary; reverse proxy or forward auth"
+msgstr ""
+
+#: ../../prior-art.rst:138
+msgid ""
+"Seven Docker containers (tengine, detector, mgt, luigi, fvm, chaos, "
+"PostgreSQL)"
+msgstr ""
+
+#: ../../prior-art.rst:139
+msgid "Hosted network; DNS points at Cloudflare"
+msgstr ""
+
+#: ../../prior-art.rst:140
+msgid "Language, runtime"
+msgstr ""
+
+#: ../../prior-art.rst:141
+msgid "Rust, no garbage collector; no external crate when storage is off"
+msgstr ""
+
+#: ../../prior-art.rst:142
+msgid "Go, garbage collected"
+msgstr ""
+
+#: ../../prior-art.rst:143
+msgid "C/C++ proxy and detector, Go management, PostgreSQL"
+msgstr ""
+
+#: ../../prior-art.rst:144
+msgid "Proprietary edge software"
+msgstr ""
+
+#: ../../prior-art.rst:145
+msgid "Licence"
+msgstr ""
+
+#: ../../prior-art.rst:146
+msgid "Source in the repository"
+msgstr ""
+
+#: ../../prior-art.rst:147
+msgid "MIT"
+msgstr ""
+
+#: ../../prior-art.rst:148
+msgid "GPL-3.0 management code; closed detector images"
+msgstr ""
+
+#: ../../prior-art.rst:149
+msgid "Proprietary service"
+msgstr ""
+
+#: ../../prior-art.rst:150
+msgid "Host footprint"
+msgstr ""
+
+#: ../../prior-art.rst:151
+msgid ""
+"35.7 MiB binary (``benchmarks/results/comparison-latest.json``); 5.9 MiB "
+"idle RSS (``benchmarks/results/primitives-latest.json``); at most 16.0 "
+"MiB peak RSS under load (``benchmarks/results/product-latest.md``)"
+msgstr ""
+
+#: ../../prior-art.rst:152
+msgid "38.1 MiB binary; 21 MiB idle RSS; Linux fixture, console off"
+msgstr ""
+
+#: ../../prior-art.rst:153
+msgid "1 CPU core, 1 GB RAM, 5 GB disk minimum, Docker 20.10+"
+msgstr ""
+
+#: ../../prior-art.rst:154
+msgid "None on premises"
+msgstr ""
+
+#: ../../prior-art.rst:156
+msgid "Feature comparison, part 2: admission and sessions"
+msgstr ""
+
+#: ../../prior-art.rst:166
+msgid "Proof-of-work admission"
+msgstr ""
+
+#: ../../prior-art.rst:167
+msgid ""
+"Hashcash (bit-level) and Cohen-Pietrzak sequential work, chosen per rule; "
+"WebAssembly with JavaScript fallback"
+msgstr ""
+
+#: ../../prior-art.rst:168
+msgid ""
+"SHA-256 Hashcash in hex nibbles (``fast``, ``slow``); non-work "
+"``metarefresh`` and ``preact`` challenges"
+msgstr ""
+
+#: ../../prior-art.rst:169
+msgid "JavaScript anti-bot challenge and CAPTCHA; not work-bound"
+msgstr ""
+
+#: ../../prior-art.rst:170
+msgid ""
+"Managed challenge, JS challenge, Turnstile; Bot Fight Mode issues a "
+"compute challenge"
+msgstr ""
+
+#: ../../prior-art.rst:171
+msgid "Challenge state on the server"
+msgstr ""
+
+#: ../../prior-art.rst:172
+msgid "None until solved; solved tags in a fixed Robin Hood table"
+msgstr ""
+
+#: ../../prior-art.rst:173
+msgid "Store backend: memory, bbolt, Valkey, or S3"
+msgstr ""
+
+#: ../../prior-art.rst:174
+msgid "Managed by the stack"
+msgstr ""
+
+#: ../../prior-art.rst:175
+msgid "Managed by Cloudflare"
+msgstr ""
+
+#: ../../prior-art.rst:176
+msgid "Session token"
+msgstr ""
+
+#: ../../prior-art.rst:177
+msgid ""
+"Keyed BLAKE3 tag, 75-character cookie bound to the work paid; Ed25519 "
+"optional"
+msgstr ""
+
+#: ../../prior-art.rst:178
+msgid "JSON Web Token signed with Ed25519; HS512 optional"
+msgstr ""
+
+#: ../../prior-art.rst:179
+msgid "Cookie issued by the stack"
+msgstr ""
+
+#: ../../prior-art.rst:180
+msgid "``cf_clearance`` cookie"
+msgstr ""
+
+#: ../../prior-art.rst:181
+msgid "Post-quantum posture of the default token"
+msgstr ""
+
+#: ../../prior-art.rst:182
+msgid "Symmetric: only Grover's quadratic speedup applies"
+msgstr ""
+
+#: ../../prior-art.rst:183
+msgid "Ed25519: broken by Shor's algorithm"
+msgstr ""
+
+#: ../../prior-art.rst:184 ../../prior-art.rst:185
+msgid "Not documented"
+msgstr ""
+
+#: ../../prior-art.rst:186
+msgid "Policy language"
+msgstr ""
+
+#: ../../prior-art.rst:187
+msgid ""
+"JSON rules: path, User-Agent, headers, IPv4/IPv6 CIDR; ALLOW, DENY, "
+"CHALLENGE, WEIGH with thresholds; dynamic rules from the database"
+msgstr ""
+
+#: ../../prior-art.rst:188
+msgid ""
+"YAML/JSON bots: regex on UA, path, headers; CIDR; CEL expressions; WEIGH "
+"with thresholds"
+msgstr ""
+
+#: ../../prior-art.rst:189
+msgid "Console-defined custom rules, ACLs, IP groups"
+msgstr ""
+
+#: ../../prior-art.rst:190
+msgid ""
+"Rules language expressions; *5 / 20 / 100 / 1000 custom rules by plan*"
+msgstr ""
+
+#: ../../prior-art.rst:192
+msgid "Feature comparison, part 3: inspection and state"
+msgstr ""
+
+#: ../../prior-art.rst:202
+msgid "SQLi, XSS, RCE, traversal inspection"
+msgstr ""
+
+#: ../../prior-art.rst:203
+msgid ""
+"Shield: tagged automaton plus structural tokenizers, first 8 KB of body"
+msgstr ""
+
+#: ../../prior-art.rst:204 ../../prior-art.rst:250
+msgid "\\-"
+msgstr ""
+
+#: ../../prior-art.rst:205
+msgid "Semantic analysis engine over OWASP categories, also SSRF, XXE, CRLF"
+msgstr ""
+
+#: ../../prior-art.rst:206
+msgid ""
+"Managed rulesets *(Pro and above)*; OWASP Core Ruleset; attack score "
+"*(Business and above)*"
+msgstr ""
+
+#: ../../prior-art.rst:207
+msgid "Rate limiting"
+msgstr ""
+
+#: ../../prior-art.rst:208
+msgid "GCRA per client, local to a node"
+msgstr ""
+
+#: ../../prior-art.rst:209
+msgid "\\- (system load is exposed to CEL rules)"
+msgstr ""
+
+#: ../../prior-art.rst:210
+msgid "Per IP, path, session"
+msgstr ""
+
+#: ../../prior-art.rst:211
+msgid "*1 / 2 / 5 / 100 rules by plan*; IP-only keys below Enterprise"
+msgstr ""
+
+#: ../../prior-art.rst:212
+msgid "Bans and reputation"
+msgstr ""
+
+#: ../../prior-art.rst:213
+msgid ""
+"Honeypot bans; reputation trie loaded from the reputation table shared "
+"across the cluster"
+msgstr ""
+
+#: ../../prior-art.rst:214
+msgid "DNSBL; ASN and GeoIP through Thoth *(paid, closed)*"
+msgstr ""
+
+#: ../../prior-art.rst:215
+msgid "IP groups and blacklists; threat intelligence *(Pro)*"
+msgstr ""
+
+#: ../../prior-art.rst:216
+msgid "IP lists; managed lists and bot score *(Enterprise)*"
+msgstr ""
+
+#: ../../prior-art.rst:217
+msgid "Forensics"
+msgstr ""
+
+#: ../../prior-art.rst:218
+msgid ""
+"SQLite or PostgreSQL: full-text search over incidents, vector campaign "
+"clustering"
+msgstr ""
+
+#: ../../prior-art.rst:219
+msgid "Prometheus metrics only"
+msgstr ""
+
+#: ../../prior-art.rst:220
+msgid "PostgreSQL attack log with console"
+msgstr ""
+
+#: ../../prior-art.rst:221
+msgid "Security Events; sampled on Free"
+msgstr ""
+
+#: ../../prior-art.rst:222
+msgid "Multi-node"
+msgstr ""
+
+#: ../../prior-art.rst:223
+msgid ""
+"One PostgreSQL database shared by every node for policy and reputation; "
+"shared seed; sticky challenge verification"
+msgstr ""
+
+#: ../../prior-art.rst:224
+msgid "Shared signing key; shared Valkey store"
+msgstr ""
+
+#: ../../prior-art.rst:225
+msgid "One stack per host"
+msgstr ""
+
+#: ../../prior-art.rst:226
+msgid "Global anycast"
+msgstr ""
+
+#: ../../prior-art.rst:228
+msgid "Feature comparison, part 4: operations"
+msgstr ""
+
+#: ../../prior-art.rst:238
+msgid "Metrics"
+msgstr ""
+
+#: ../../prior-art.rst:239
+msgid "Prometheus at ``/__sibuna/metrics``"
+msgstr ""
+
+#: ../../prior-art.rst:240
+msgid "Prometheus on a separate port"
+msgstr ""
+
+#: ../../prior-art.rst:241
+msgid "Console dashboards"
+msgstr ""
+
+#: ../../prior-art.rst:242
+msgid "Dashboard and analytics"
+msgstr ""
+
+#: ../../prior-art.rst:243
+msgid "TLS termination"
+msgstr ""
+
+#: ../../prior-art.rst:244 ../../prior-art.rst:245
+msgid "\\- (ingress)"
+msgstr ""
+
+#: ../../prior-art.rst:246 ../../prior-art.rst:247 ../../prior-art.rst:251
+#: ../../prior-art.rst:252 ../../prior-art.rst:255
+msgid "**Yes**"
+msgstr ""
+
+#: ../../prior-art.rst:248
+msgid "Management console"
+msgstr ""
+
+#: ../../prior-art.rst:249
+msgid "Opt-in; SID 0007 Committed"
+msgstr ""
+
+#: ../../prior-art.rst:253
+msgid "Measured on the benchmark host"
+msgstr ""
+
+#: ../../prior-art.rst:254
+msgid "**Yes** (Part VIII)"
+msgstr ""
+
+#: ../../prior-art.rst:256
+msgid "\\- (Docker only)"
+msgstr ""
+
+#: ../../prior-art.rst:257
+msgid "\\- (hosted)"
+msgstr ""
+
+#: ../../prior-art.rst:259
+msgid "Three differences carry most of the weight in a selection decision."
+msgstr ""
+
+#: ../../prior-art.rst:261
+msgid ""
+"*Where the work goes.* Anubis and Sibuna Gate make the *client* pay "
+"before the origin does anything. SafeLine and Cloudflare inspect first "
+"and challenge selectively; their default posture is to admit and filter. "
+"Sibuna Shield does both, in that order: inspection can deny a request "
+"that already holds a valid session."
+msgstr ""
+
+#: ../../prior-art.rst:262
+msgid ""
+"*What the server remembers.* Anubis keeps challenge state in a store "
+"(memory, bbolt, Valkey, or S3) and signs a JSON Web Token with Ed25519; "
+"Sibuna issues a self-authenticating record and remembers only solved tags "
+"in a fixed table. SafeLine keeps attack logs in PostgreSQL; Cloudflare "
+"keeps everything, with sampled visibility on the Free plan."
+msgstr ""
+
+#: ../../prior-art.rst:263
+msgid ""
+"*What an operator has to run.* Sibuna is one binary with an optional "
+"SQLite file, or a PostgreSQL database shared by a cluster; Anubis is one "
+"Go binary; SafeLine is seven containers behind a Docker daemon on a Linux "
+"host with at least one core, one gigabyte of memory, and five gigabytes "
+"of disk; Cloudflare is a DNS change and a subscription."
+msgstr ""
+
+#: ../../prior-art.rst:265
+msgid "Current product boundary"
+msgstr ""
+
+#: ../../prior-art.rst:268
+msgid ""
+"Sibuna leaves ingress TLS termination to the deployment proxy and does "
+"not score bots with a trained model or publish paid signatures. Its "
+"opt-in console provides authenticated dashboards, country enrichment, "
+"policy editing, investigation and cluster management. Country lookup and "
+"storage work run outside request classification. SID 0007 is Committed, "
+"and the console passes its browser workflows (SID 0010). Its formal "
+"performance isolation gate, with eight active dashboards under load, is "
+"not yet measured; Part VIII records what is."
+msgstr ""
+
+#: ../../prior-art.rst:270
+msgid "Exercise 2.1"
+msgstr ""
+
+#: ../../prior-art.rst:272
+msgid ""
+"Explain why compiling one verifier source to native code and WebAssembly "
+"reduces protocol drift. Which properties still require independent "
+"testing or cryptographic review?"
+msgstr ""
+
+#: ../../prior-art.rst:274
+msgid "Exercise 2.2"
+msgstr ""
+
+#: ../../prior-art.rst:276
+msgid ""
+"Using only the comparison tables, write down the smallest deployment that "
+"gives a static site (a) a proof-of-work gate, (b) SQL-injection "
+"inspection, and (c) a cluster-wide ban. Which rows forced each choice?"
+msgstr ""
+
+#: ../../prior-art.rst:278
+msgid "Hint: Start from the \"runs as\" and \"multi-node\" rows."
+msgstr ""
+
+#: ../../prior-art.rst:280
+msgid "Explain the invariant"
+msgstr ""
+
+#: ../../prior-art.rst:282
+msgid ""
+"Describe how Gate, Shield, and optional shared storage divide admission, "
+"inspection and policy distribution. Then name one row of the comparison "
+"tables we would want to re-verify before quoting it to a customer, and "
+"say how we would verify it."
+msgstr ""

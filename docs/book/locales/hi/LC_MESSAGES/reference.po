@@ -1,0 +1,959 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Vikrant Rathore and Sibuna contributors
+# This file is distributed under the same license as the The Sibuna Book package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-16 05:09+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: hi\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ../../reference.rst:1
+msgid "Part X: Desk Reference and Diagnostics"
+msgstr ""
+
+#: ../../reference.rst:4
+msgid ""
+"Endpoints, metrics, error catalog, policy schema, and storage tables in "
+"one place."
+msgstr ""
+
+#: ../../reference.rst:6
+msgid "Endpoints"
+msgstr ""
+
+#: ../../reference.rst:9
+msgid "Objectives"
+msgstr ""
+
+#: ../../reference.rst:11
+msgid "Know every route under ``/__sibuna/`` and what each returns."
+msgstr ""
+
+#: ../../reference.rst:13
+msgid "Reserved routes"
+msgstr ""
+
+#: ../../reference.rst:17
+msgid "Endpoint"
+msgstr ""
+
+#: ../../reference.rst:18
+msgid "Method"
+msgstr ""
+
+#: ../../reference.rst:19
+msgid "Function"
+msgstr ""
+
+#: ../../reference.rst:20
+msgid "``/__sibuna/challenge``"
+msgstr ""
+
+#: ../../reference.rst:21 ../../reference.rst:24 ../../reference.rst:30
+#: ../../reference.rst:33 ../../reference.rst:36 ../../reference.rst:39
+#: ../../reference.rst:42
+msgid "GET"
+msgstr ""
+
+#: ../../reference.rst:22
+msgid "The interstitial page"
+msgstr ""
+
+#: ../../reference.rst:23
+msgid "``/__sibuna/challenge.json?need=&path=``"
+msgstr ""
+
+#: ../../reference.rst:25
+msgid ""
+"Issues a stateless challenge: the requirement ticket from the challenged "
+"response decides it, otherwise the reported URL is evaluated in normal "
+"form (``414`` above 8 KiB, ``400`` for a path without a normal form). "
+"Returns ``{id, algorithm, difficulty, challenges, expires_at}``"
+msgstr ""
+
+#: ../../reference.rst:26
+msgid "``/__sibuna/verify``"
+msgstr ""
+
+#: ../../reference.rst:27
+msgid "POST"
+msgstr ""
+
+#: ../../reference.rst:28
+msgid ""
+"Accepts ``{\"challenge_id\", \"nonce\"}`` or ``{\"challenge_id\", "
+"\"proof\"}``; ``200`` with ``Set-Cookie``, ``400`` with a diagnostic, or "
+"``413`` for a body larger than the connection buffer"
+msgstr ""
+
+#: ../../reference.rst:29
+msgid "``/__sibuna/wasm/sibuna-pow.wasm``"
+msgstr ""
+
+#: ../../reference.rst:31
+msgid ""
+"The solver module, 14,744 bytes (``wasm_bytes`` in "
+"``benchmarks/results/primitives-latest.json``), cacheable for one hour"
+msgstr ""
+
+#: ../../reference.rst:32
+msgid "``/__sibuna/worker.js``"
+msgstr ""
+
+#: ../../reference.rst:34
+msgid ""
+"The Web Worker with WASM and JavaScript provers, cacheable for one hour"
+msgstr ""
+
+#: ../../reference.rst:35
+msgid "``/__sibuna/honeypot``"
+msgstr ""
+
+#: ../../reference.rst:37
+msgid ""
+"Bans the caller for ``--ban-seconds`` and records an incident; ``403``. "
+"Only a top-level request bans (no ``Sec-Fetch-Dest`` or ``document``, and "
+"no cross-site ``Sec-Fetch-Site``); any other is answered ``404`` and "
+"counted"
+msgstr ""
+
+#: ../../reference.rst:38
+msgid "``/__sibuna/health``"
+msgstr ""
+
+#: ../../reference.rst:40
+msgid ""
+"JSON liveness status with engine name, version, proxy mode and proof "
+"algorithm"
+msgstr ""
+
+#: ../../reference.rst:41
+msgid "``/__sibuna/metrics``"
+msgstr ""
+
+#: ../../reference.rst:43
+msgid "Prometheus text format (version 0.0.4)"
+msgstr ""
+
+#: ../../reference.rst:45
+msgid ""
+"Any other path under ``/__sibuna/`` is answered ``404``. Issuance and "
+"verification spend the separate ``--challenge-rate-limit`` budget, and a "
+"banned address is refused with ``403`` on every route. Challenge "
+"responses carry ``X-Sibuna-Status: CHALLENGE``; admitted requests carry "
+"``X-Sibuna-Status: PASS`` and ``X-Sibuna-Rule`` upstream (and "
+"``X-Sibuna-Rule-Hash``, in hexadecimal, in forward-auth replies). A "
+"client that does not accept HTML receives ``401`` with "
+"``{\"error\":\"challenge_required\",\"challenge\":\"/__sibuna/challenge.json?need=<ticket>\"}``."
+msgstr ""
+
+#: ../../reference.rst:47
+msgid ""
+"The separate opt-in management listener serves ``/console/``. Initialize "
+"its administrator locally with ``sibuna init-admin``, then replace the "
+"temporary password on first sign-in. ``/console/api/stats`` and "
+"``/console/ws`` require an authenticated session (a kiosk session "
+"included). The WebSocket multiplexes statistics, events, nodes, policy, "
+"challenges and audit with bounded snapshots, deltas and gap recovery. "
+"Management peers connect to ``/console/peer``, and every API route lives "
+"under ``/console/api/``. Origin error counters are not observed in "
+"forward-auth mode. Part IX documents the console's workflows, HTTPS "
+"deployment and current SID 0007 limits."
+msgstr ""
+
+#: ../../reference.rst:49
+msgid "Metrics"
+msgstr ""
+
+#: ../../reference.rst:52
+msgid ""
+"Counters exposed as ``sibuna_<name>_total`` in Prometheus text format, in "
+"this order:"
+msgstr ""
+
+#: ../../reference.rst:54
+msgid "Counters"
+msgstr ""
+
+#: ../../reference.rst:58
+msgid "Counter"
+msgstr ""
+
+#: ../../reference.rst:59
+msgid "Incremented when"
+msgstr ""
+
+#: ../../reference.rst:60
+msgid "``incidents_persisted``, ``incident_batches``"
+msgstr ""
+
+#: ../../reference.rst:61
+msgid "Records and transactions whose commit the storage thread confirmed"
+msgstr ""
+
+#: ../../reference.rst:62
+msgid "``incidents_dropped``, ``incident_write_failures``"
+msgstr ""
+
+#: ../../reference.rst:63
+msgid ""
+"Queue pushes rejected because the ring was full, and failed commit "
+"attempts"
+msgstr ""
+
+#: ../../reference.rst:64
+msgid "``requests``"
+msgstr ""
+
+#: ../../reference.rst:65
+msgid "A parsed request reached dispatch (reserved routes included)"
+msgstr ""
+
+#: ../../reference.rst:66
+msgid "``allowed``, ``denied``, ``challenged``"
+msgstr ""
+
+#: ../../reference.rst:67
+msgid ""
+"A policy decision was made (admitted, refused, challenge issued or "
+"reissued)"
+msgstr ""
+
+#: ../../reference.rst:68
+msgid "``challenges_issued``"
+msgstr ""
+
+#: ../../reference.rst:69
+msgid "``/__sibuna/challenge.json`` minted a challenge record"
+msgstr ""
+
+#: ../../reference.rst:70
+msgid "``solutions_accepted``, ``solutions_rejected``"
+msgstr ""
+
+#: ../../reference.rst:71
+msgid "``/__sibuna/verify`` accepted or rejected a proof"
+msgstr ""
+
+#: ../../reference.rst:72
+msgid "``rate_limited``"
+msgstr ""
+
+#: ../../reference.rst:73
+msgid ""
+"GCRA refused a request (``429``): the request limit, the challenge budget "
+"or a rule's quota"
+msgstr ""
+
+#: ../../reference.rst:74
+msgid "``banned``"
+msgstr ""
+
+#: ../../reference.rst:75
+msgid "A banned address was refused, or the honeypot banned one"
+msgstr ""
+
+#: ../../reference.rst:76
+msgid "``bans_issued``"
+msgstr ""
+
+#: ../../reference.rst:77
+msgid "A ban was recorded (honeypot or a rule quota's ban)"
+msgstr ""
+
+#: ../../reference.rst:78
+msgid "``proxied``, ``upstream_errors``"
+msgstr ""
+
+#: ../../reference.rst:79
+msgid "A request was relayed to the origin, or the origin failed (``502``)"
+msgstr ""
+
+#: ../../reference.rst:80
+msgid "``parse_errors``"
+msgstr ""
+
+#: ../../reference.rst:81
+msgid ""
+"A malformed head, a repeated ``Host``, a target without a normal form "
+"(``400``), or an unsupported transfer coding (``501``) was refused"
+msgstr ""
+
+#: ../../reference.rst:82
+msgid "``overloaded``"
+msgstr ""
+
+#: ../../reference.rst:83
+msgid ""
+"A connection beyond ``--max-connections`` or ``--max-connections-per-ip`` "
+"was answered ``503``"
+msgstr ""
+
+#: ../../reference.rst:84
+msgid "``bans_refused``"
+msgstr ""
+
+#: ../../reference.rst:85
+msgid ""
+"A ban was not recorded because every slot its key may take held a ban in "
+"effect"
+msgstr ""
+
+#: ../../reference.rst:86
+msgid "``forwarded_invalid``"
+msgstr ""
+
+#: ../../reference.rst:87
+msgid ""
+"A trusted forwarded client address did not parse; the request was judged "
+"by the socket peer"
+msgstr ""
+
+#: ../../reference.rst:88
+msgid "``honeypot_refused``"
+msgstr ""
+
+#: ../../reference.rst:89
+msgid ""
+"A honeypot hit banned nobody because a page, not a person, requested it"
+msgstr ""
+
+#: ../../reference.rst:90
+msgid "``rate_evictions``"
+msgstr ""
+
+#: ../../reference.rst:91
+msgid "A limiter arrival evicted another active client's cell"
+msgstr ""
+
+#: ../../reference.rst:93
+msgid ""
+"A retry can increment ``incident_write_failures`` without losing records, "
+"because the pending batch is retained. Monitor increments over an "
+"interval; totals alone are not a queue depth."
+msgstr ""
+
+#: ../../reference.rst:95
+msgid "Status Codes"
+msgstr ""
+
+#: ../../reference.rst:98
+msgid "Status codes of the data plane"
+msgstr ""
+
+#: ../../reference.rst:102 ../../reference.rst:192
+msgid "Code"
+msgstr ""
+
+#: ../../reference.rst:103
+msgid "When"
+msgstr ""
+
+#: ../../reference.rst:104
+msgid "200"
+msgstr ""
+
+#: ../../reference.rst:105
+msgid ""
+"Admitted (forward-auth), interstitial (HTML navigation needing a "
+"challenge), internal routes"
+msgstr ""
+
+#: ../../reference.rst:106
+msgid "302"
+msgstr ""
+
+#: ../../reference.rst:107
+msgid ""
+"Not used by the current protocol; verification answers ``200`` and the "
+"page reloads"
+msgstr ""
+
+#: ../../reference.rst:108 ../../reference.rst:196
+msgid "400"
+msgstr ""
+
+#: ../../reference.rst:109
+msgid ""
+"Malformed request, a repeated ``Host`` field, a target without a normal "
+"form, invalid forwarded metadata, a malformed body, or a rejected "
+"solution with an Elm-style diagnostic"
+msgstr ""
+
+#: ../../reference.rst:110
+msgid "401"
+msgstr ""
+
+#: ../../reference.rst:111
+msgid ""
+"Challenge required for a client that does not accept HTML, or in "
+"forward-auth mode"
+msgstr ""
+
+#: ../../reference.rst:112
+msgid "403"
+msgstr ""
+
+#: ../../reference.rst:113
+msgid "Policy or WAF denial, banned address, honeypot"
+msgstr ""
+
+#: ../../reference.rst:114
+msgid "404"
+msgstr ""
+
+#: ../../reference.rst:115
+msgid ""
+"An unknown path under ``/__sibuna/``, or a honeypot hit that is not a "
+"top-level request"
+msgstr ""
+
+#: ../../reference.rst:116
+msgid "413"
+msgstr ""
+
+#: ../../reference.rst:117
+msgid "Solution body larger than the 64 KB connection buffer"
+msgstr ""
+
+#: ../../reference.rst:118
+msgid "414"
+msgstr ""
+
+#: ../../reference.rst:119
+msgid "A reported challenge URL over 8 KiB"
+msgstr ""
+
+#: ../../reference.rst:120
+msgid "417"
+msgstr ""
+
+#: ../../reference.rst:121
+msgid "Unsupported request expectation; ``100-continue`` is handled locally"
+msgstr ""
+
+#: ../../reference.rst:122 ../../reference.rst:211
+msgid "429"
+msgstr ""
+
+#: ../../reference.rst:123
+msgid "GCRA limit exceeded; ``Retry-After`` in seconds"
+msgstr ""
+
+#: ../../reference.rst:124
+msgid "431"
+msgstr ""
+
+#: ../../reference.rst:125
+msgid "Request head over 16 KB"
+msgstr ""
+
+#: ../../reference.rst:126
+msgid "501"
+msgstr ""
+
+#: ../../reference.rst:127
+msgid "``Transfer-Encoding`` with a coding other than chunked"
+msgstr ""
+
+#: ../../reference.rst:128
+msgid "502"
+msgstr ""
+
+#: ../../reference.rst:129
+msgid ""
+"Origin unreachable, or its response head was malformed or larger than 16 "
+"KB"
+msgstr ""
+
+#: ../../reference.rst:130 ../../reference.rst:202 ../../reference.rst:205
+msgid "503"
+msgstr ""
+
+#: ../../reference.rst:131
+msgid ""
+"Connection limit (``--max-connections`` or ``--max-connections-per-ip``) "
+"reached, or the node is draining; the socket is closed after the reply"
+msgstr ""
+
+#: ../../reference.rst:133
+msgid "Error Catalog"
+msgstr ""
+
+#: ../../reference.rst:136
+msgid ""
+"``INVALID COMMAND LINE`` stops startup for any option the daemon does not "
+"recognise, any value outside its documented range, and an invalid, "
+"missing or duplicate mode selection. The block names the option, the "
+"value given, the range expected and the error (``UnknownOption``, "
+"``MissingValue``, ``InvalidValue``, ``InvalidMode``, ``MissingMode``, "
+"``DuplicateMode``, ``RemovedOption`` for a Zaxonlite cluster option, "
+"``ConflictingOptions`` for two storage options that exclude each other, "
+"``MissingOption`` for a database URL without ``--cluster-node``), and "
+"ends with a hint. A database URL is shown as ``[redacted]``. Supply "
+"``--mode reverse_proxy`` or ``--mode forward_auth`` once; ``-m`` is the "
+"equivalent short option. A rejected policy file prints a block titled for "
+"its error (for example ``INVALID POLICY ACTION``) with the file, the "
+"error name, the rule, the field and the value. Console options are "
+"checked separately: ``CONSOLE002`` names a malformed or repeated console "
+"option, and ``CONSOLE001`` a console configuration that breaks a rule "
+"(``StorageRequired`` without storage)."
+msgstr ""
+
+#: ../../reference.rst:138
+msgid "Implementation: ``ErrorKind::explain``"
+msgstr ""
+
+#: ../../reference.rst:140
+msgid ""
+"Maps every domain error to a boundary line, an explanation, and a "
+"``Hint:``. In ``crates/core/src/errors.rs`` (crate ``sibuna-core``)."
+msgstr ""
+
+#: ../../reference.rst:142
+msgid "Challenge and session errors"
+msgstr ""
+
+#: ../../reference.rst:146
+msgid "Error"
+msgstr ""
+
+#: ../../reference.rst:147
+msgid "Cause"
+msgstr ""
+
+#: ../../reference.rst:148
+msgid "Hint"
+msgstr ""
+
+#: ../../reference.rst:149
+msgid "``MalformedChallenge``"
+msgstr ""
+
+#: ../../reference.rst:150
+msgid "The identifier is not a well-formed challenge record"
+msgstr ""
+
+#: ../../reference.rst:151
+msgid "Fetch a fresh challenge and submit it unchanged"
+msgstr ""
+
+#: ../../reference.rst:152
+msgid "``InvalidChallengeTag``"
+msgstr ""
+
+#: ../../reference.rst:153
+msgid "The tag does not authenticate; not issued by this cluster or edited"
+msgstr ""
+
+#: ../../reference.rst:154
+msgid "Challenges cannot be forged; request a new one"
+msgstr ""
+
+#: ../../reference.rst:155
+msgid "``ChallengeExpired``"
+msgstr ""
+
+#: ../../reference.rst:156
+msgid "Older than the challenge TTL, or minted in the future"
+msgstr ""
+
+#: ../../reference.rst:157
+msgid "Request a new challenge"
+msgstr ""
+
+#: ../../reference.rst:158
+msgid "``FingerprintMismatch``"
+msgstr ""
+
+#: ../../reference.rst:159
+msgid "Submitted from a different address or User-Agent"
+msgstr ""
+
+#: ../../reference.rst:160
+msgid "Submit from the client that fetched it"
+msgstr ""
+
+#: ../../reference.rst:161
+msgid "``DifficultyNotMet``"
+msgstr ""
+
+#: ../../reference.rst:162
+msgid "Hashcash nonce lacks the required zero bits"
+msgstr ""
+
+#: ../../reference.rst:163
+msgid "Keep searching nonces"
+msgstr ""
+
+#: ../../reference.rst:164
+msgid "``InvalidProof``"
+msgstr ""
+
+#: ../../reference.rst:165
+msgid "The sequential-work proof does not open the committed labels"
+msgstr ""
+
+#: ../../reference.rst:166
+msgid "Run the prover to completion for the issued depth and openings"
+msgstr ""
+
+#: ../../reference.rst:167
+msgid "``WrongSolutionType``"
+msgstr ""
+
+#: ../../reference.rst:168
+msgid "A nonce for a PoSW challenge or a proof for Hashcash"
+msgstr ""
+
+#: ../../reference.rst:169
+msgid "Match the solution field to the algorithm"
+msgstr ""
+
+#: ../../reference.rst:170
+msgid "``DoubleSpendAttempt``"
+msgstr ""
+
+#: ../../reference.rst:171
+msgid "The challenge was already spent"
+msgstr ""
+
+#: ../../reference.rst:172
+msgid "Challenges are single use"
+msgstr ""
+
+#: ../../reference.rst:173
+msgid "``StoreFull``"
+msgstr ""
+
+#: ../../reference.rst:174
+msgid "The spent set is full"
+msgstr ""
+
+#: ../../reference.rst:175
+msgid "Lower the challenge TTL or raise ``--spent-tags``"
+msgstr ""
+
+#: ../../reference.rst:176
+msgid "``InvalidTokenSignature``"
+msgstr ""
+
+#: ../../reference.rst:177
+msgid "Cookie tag or signature fails"
+msgstr ""
+
+#: ../../reference.rst:178
+msgid "Re-authenticate through the interstitial"
+msgstr ""
+
+#: ../../reference.rst:179
+msgid "``TokenExpired``"
+msgstr ""
+
+#: ../../reference.rst:180
+msgid "Cookie past its expiry"
+msgstr ""
+
+#: ../../reference.rst:181
+msgid "Re-authenticate"
+msgstr ""
+
+#: ../../reference.rst:182
+msgid "``TokenBoundAddressMismatch``"
+msgstr ""
+
+#: ../../reference.rst:183
+msgid "Cookie presented from a different client identity"
+msgstr ""
+
+#: ../../reference.rst:184
+msgid "Cookies cannot be shared"
+msgstr ""
+
+#: ../../reference.rst:186
+msgid ""
+"The console's API answers a failure with "
+"``{\"error\":\"<CODE>\",\"hint\":\"<sentence>\"}``; the hint is the text "
+"the interface shows (``crates/console/src/http/reply.rs``)."
+msgstr ""
+
+#: ../../reference.rst:188
+msgid "Console failure codes that concern operators"
+msgstr ""
+
+#: ../../reference.rst:193
+msgid "Status"
+msgstr ""
+
+#: ../../reference.rst:194
+msgid "Meaning"
+msgstr ""
+
+#: ../../reference.rst:195
+msgid "``CONSOLE002``"
+msgstr ""
+
+#: ../../reference.rst:197
+msgid "The request is malformed, too large or not allowed in its form"
+msgstr ""
+
+#: ../../reference.rst:198
+msgid "``CONSOLE003``"
+msgstr ""
+
+#: ../../reference.rst:199
+msgid "503 / 429"
+msgstr ""
+
+#: ../../reference.rst:200
+msgid ""
+"The storage job queue is full (32 jobs), or the password verifier is busy"
+msgstr ""
+
+#: ../../reference.rst:201
+msgid "``CONSOLEQUORUM``"
+msgstr ""
+
+#: ../../reference.rst:203
+msgid ""
+"The database did not answer within the request's wait of 10 seconds; the "
+"outcome is unknown, and the data plane continues from the last applied "
+"policy"
+msgstr ""
+
+#: ../../reference.rst:204
+msgid "``CONSOLE004``"
+msgstr ""
+
+#: ../../reference.rst:206
+msgid ""
+"The service cannot answer: not available in this build, stopping, or an "
+"internal failure"
+msgstr ""
+
+#: ../../reference.rst:207
+msgid "``CONSOLENODE``"
+msgstr ""
+
+#: ../../reference.rst:208
+msgid "400 / 409 / 503"
+msgstr ""
+
+#: ../../reference.rst:209
+msgid ""
+"A node command was refused: it names another node (400), a stale boot or "
+"control revision (409), or it arrived while another command ran or a "
+"completion could not be recorded (503); inspect the operation receipt "
+"before retrying"
+msgstr ""
+
+#: ../../reference.rst:210
+msgid "``CONSOLEMUTATION``"
+msgstr ""
+
+#: ../../reference.rst:212
+msgid "More than sixty management mutations in a minute from one session"
+msgstr ""
+
+#: ../../reference.rst:214
+msgid "Policy Schema"
+msgstr ""
+
+#: ../../reference.rst:240
+msgid ""
+"``challenge_at`` and ``deny_at`` lie in -1000 to 1000 with ``deny_at`` at "
+"or above ``challenge_at``, and ``bits_step`` in 1 to 1000. A "
+"``challenge`` block belongs only to ``CHALLENGE`` rules, with 1 to 64 "
+"work bits. ``limits`` gives a rule its own quota: ``rate`` 1 to 1,000,000 "
+"and ``window_seconds`` 1 to 86,400 are required, ``ban_seconds`` (at most "
+"86,400) is optional, and ``WEIGH`` rules cannot carry limits. The "
+"reputation trie of ``ip_rules`` holds at most 8,192 nodes. Each rule may "
+"use one spelling of each criterion."
+msgstr ""
+
+#: ../../reference.rst:242
+msgid ""
+"Pattern grammar: ``.*`` or ``*`` match anything; ``^...$`` anchors an "
+"exact path; a trailing ``*``, ``/*``, or ``.*`` is a prefix; a pattern "
+"starting with ``/`` is an exact path; anything else is a case-insensitive "
+"substring. Path patterns match the path in normal form (one slash between "
+"segments, no dot segments, unreserved characters unescaped, other escapes "
+"with upper-case hexadecimal digits), so a pattern holding ``;``, ``%2F``, "
+"``%5C`` or ``\\`` matches nothing, and path matching is case-sensitive "
+"(SID 0003)."
+msgstr ""
+
+#: ../../reference.rst:244
+msgid "Storage Tables"
+msgstr ""
+
+#: ../../reference.rst:247
+msgid ""
+"``policy_revision``, ``policies``, ``policy_inspection``, "
+"``ip_reputation``, ``incident_receipts``, ``security_incidents`` (with "
+"the 256-byte embedding), the full-text index (``incidents_fts``, FTS5 "
+"over canonical tokens, on SQLite; the ``tsvector`` column ``search`` with "
+"a GIN index on PostgreSQL) and ``sibuna_schema``; the console adds 33 "
+"``console_*`` tables. Stored action, algorithm and mode names are "
+"lowercase. Incident ids are ``node_id << 40 | sequence``, unique across a "
+"cluster without coordination; node ids run from 1 to 8,388,607."
+msgstr ""
+
+#: ../../reference.rst:249
+msgid "Build Targets"
+msgstr ""
+
+#: ../../reference.rst:252
+msgid "Build and repository commands"
+msgstr ""
+
+#: ../../reference.rst:256
+msgid "Command"
+msgstr ""
+
+#: ../../reference.rst:257
+msgid "Result"
+msgstr ""
+
+#: ../../reference.rst:258
+msgid "``cargo build --release -p sibuna``"
+msgstr ""
+
+#: ../../reference.rst:259
+msgid "Daemon with SQLite storage and the console (the default features)"
+msgstr ""
+
+#: ../../reference.rst:260
+msgid "``cargo build --release -p sibuna --no-default-features``"
+msgstr ""
+
+#: ../../reference.rst:261
+msgid ""
+"In-memory daemon without storage or console and without any external crate"
+msgstr ""
+
+#: ../../reference.rst:262
+msgid "``cargo build --release -p sibuna --features postgres``"
+msgstr ""
+
+#: ../../reference.rst:263
+msgid "Daemon that also connects to a shared PostgreSQL database"
+msgstr ""
+
+#: ../../reference.rst:264
+msgid "``cargo test``"
+msgstr ""
+
+#: ../../reference.rst:265
+msgid ""
+"Unit tests, integration tests against a live daemon, storage and console "
+"tests (PostgreSQL ones when ``SIBUNA_TEST_DATABASE_URL`` is set)"
+msgstr ""
+
+#: ../../reference.rst:266
+msgid "``cargo clippy --all-targets``, ``cargo fmt --check``"
+msgstr ""
+
+#: ../../reference.rst:267
+msgid "Lints and formatting (``max_width = 99``)"
+msgstr ""
+
+#: ../../reference.rst:268
+msgid "``cargo xtask check``"
+msgstr ""
+
+#: ../../reference.rst:269
+msgid ""
+"The 70-line function, 1,408-line file and 99/108-column line limits; no "
+"tabs"
+msgstr ""
+
+#: ../../reference.rst:270
+msgid "``cargo xtask browser``"
+msgstr ""
+
+#: ../../reference.rst:271
+msgid "Checks in headless Chromium (``sibuna-browser``)"
+msgstr ""
+
+#: ../../reference.rst:272
+msgid "``cargo xtask bench <primitives|product|latency>``"
+msgstr ""
+
+#: ../../reference.rst:273
+msgid ""
+"Release-mode benchmarks; results in "
+"``benchmarks/results/<command>-latest.json``"
+msgstr ""
+
+#: ../../reference.rst:274
+msgid ""
+"``cargo build -p sibuna-pow-wasm --target wasm32-unknown-unknown "
+"--profile wasm``"
+msgstr ""
+
+#: ../../reference.rst:275
+msgid ""
+"The browser module only (``-p sibuna-console-ui`` for the console "
+"interface)"
+msgstr ""
+
+#: ../../reference.rst:276
+msgid "``cargo run -p sibuna-geoip --bin geoip-snapshot -- ...``"
+msgstr ""
+
+#: ../../reference.rst:277
+msgid "Validate country data and write an embeddable GeoIP snapshot"
+msgstr ""
+
+#: ../../reference.rst:278
+msgid "``guidedog build`` / ``guidedog dsc``"
+msgstr ""
+
+#: ../../reference.rst:279
+msgid "This book / the SID records"
+msgstr ""
+
+#: ../../reference.rst:281
+msgid ""
+"The daemon's build script (``cmd/sibuna/build.rs``) builds both "
+"WebAssembly modules with the ``wasm`` profile into the workspace's target "
+"directory and fails the build when the console interface exceeds 768 KiB. "
+"``SIBUNA_POW_WASM`` and ``SIBUNA_CONSOLE_WASM`` name prebuilt modules "
+"instead, for builds without the ``wasm32-unknown-unknown`` target. "
+"``SIBUNA_GEOIP_DATA`` names a GeoIP snapshot to embed; it is decoded at "
+"build time, and a build without the console refuses it (``GEOIP001``)."
+msgstr ""
+
+#: ../../reference.rst:283
+msgid "Exercise 10.1"
+msgstr ""
+
+#: ../../reference.rst:285
+msgid ""
+"A client receives ``400`` with the title ``CLIENT FINGERPRINT MISMATCH`` "
+"after switching from Wi-Fi to cellular mid-solve. Explain the cause from "
+"the token and challenge formats, and propose the smallest change to the "
+"interstitial that recovers gracefully."
+msgstr ""
+
+#: ../../reference.rst:287
+msgid "Explain the invariant"
+msgstr ""
+
+#: ../../reference.rst:289
+msgid ""
+"Without looking, list the endpoints a reverse proxy in front of Sibuna "
+"must route to the daemon rather than to the origin, and say why each is "
+"needed."
+msgstr ""

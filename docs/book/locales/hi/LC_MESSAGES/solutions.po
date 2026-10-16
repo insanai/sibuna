@@ -1,0 +1,269 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Vikrant Rathore and Sibuna contributors
+# This file is distributed under the same license as the The Sibuna Book package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-16 05:09+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: hi\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ../../solutions.rst:1
+msgid "Selected Solutions"
+msgstr ""
+
+#: ../../solutions.rst:4
+msgid ""
+"These solutions are checks on the argument, not substitutes for the "
+"exercises. If a result differs, we first compare assumptions: endpoints "
+"of time intervals, what is counted as work, and whether a write has "
+"committed are common sources of disagreement."
+msgstr ""
+
+#: ../../solutions.rst:6
+msgid "Part I: Cost and Probability"
+msgstr ""
+
+#: ../../solutions.rst:9
+msgid ""
+"**1.1.** One million trials divided among 100 requests is 10,000 trials "
+"per request. Sharing a session does not change that arithmetic if the "
+"aggregate request count stays 100. The actual system must decide whether "
+"a second process can satisfy the fingerprint and routing bindings; those "
+"conditions are outside the amortization equation."
+msgstr ""
+
+#: ../../solutions.rst:11
+msgid ""
+"**1.2.** The excess is :math:`1000 - 600 = 400` records/s. An empty queue "
+"of 512 records buys :math:`512/400 = 1.28` seconds in the fluid model. "
+"Real producers arrive in bursts and the consumer commits batches, so the "
+"exact first drop depends on arrival and commit times."
+msgstr ""
+
+#: ../../solutions.rst:13
+msgid "Part II: Prior Art"
+msgstr ""
+
+#: ../../solutions.rst:16
+msgid ""
+"**2.1.** One source compiled twice cannot disagree with itself about the "
+"statement, the nonce encoding, the tree shape, or the opening layout; "
+"drift would require a compiler bug. It says nothing about whether the "
+"construction is sound (cryptographic review), whether the browser runtime "
+"executes it correctly (a byte-identical comparison between the "
+"WebAssembly and JavaScript provers covers that), or whether the "
+"parameters are calibrated (measurement)."
+msgstr ""
+
+#: ../../solutions.rst:18
+msgid ""
+"**2.2.** (a) Sibuna Gate or Anubis, one binary; (b) Sibuna Shield, "
+"SafeLine, or Cloudflare (Pro plan or above); (c) Sibuna Edge with a "
+"shared PostgreSQL database (``--database-url``), Anubis with a shared "
+"Valkey store (for state, not for bans), or Cloudflare. The only single "
+"product meeting all three without a Docker host or a subscription is "
+"Sibuna Shield with its nodes sharing one PostgreSQL database "
+"(``--database-url`` and ``--cluster-node``); the \"runs as\", "
+"\"inspection\", and \"multi-node\" rows decide it."
+msgstr ""
+
+#: ../../solutions.rst:20
+msgid "Part III: Cryptography"
+msgstr ""
+
+#: ../../solutions.rst:23
+msgid ""
+"**3.0.** The tail estimate is :math:`e^{-4.6} \\approx 0.010`. Dividing "
+"the nonce space changes the rate at which trials are completed, not the "
+"success probability of each independent trial. Duplicate trials or "
+"coordination work can make a real parallel implementation less efficient."
+msgstr ""
+
+#: ../../solutions.rst:25
+msgid ""
+"**3.1.** If each commitment succeeds with probability :math:`q`, all "
+":math:`g` fail with probability :math:`(1-q)^g`. At least one succeeds "
+"with probability :math:`1-(1-q)^g`. The formula does not count commitment "
+"construction, query budgets, dependencies between trials, or the work "
+"needed to find a commitment with a particular acceptance probability."
+msgstr ""
+
+#: ../../solutions.rst:27
+msgid ""
+"**3.2.** At depth 17 and 16 openings, the proof has :math:`32(1 + 16 "
+"\\times 18) = 9248` bytes. At 32 openings it has :math:`32(1 + 32 \\times "
+"18) = 18464` bytes. The opening bytes double; the 32-byte root is still "
+"sent once."
+msgstr ""
+
+#: ../../solutions.rst:29
+msgid ""
+"**3.3.** Without the work level a session earned on a cheap route would "
+"admit a request to an expensive one that demanded more work; without "
+"``timestamp`` a token could be minted \"in the future\" and outlive its "
+"policy; without ``expiry`` it would never die; without ``rule_hash`` the "
+"upstream could not learn which rule admitted the client; without "
+"``fingerprint`` a cookie copied to another machine would be accepted. The "
+"tag must cover all five because any field left outside it could be edited "
+"freely, and the verifier could not tell."
+msgstr ""
+
+#: ../../solutions.rst:31
+msgid "Part IV: Protocol"
+msgstr ""
+
+#: ../../solutions.rst:34
+msgid ""
+"**4.1.** Both browsers share the address and User-Agent, so they share "
+"the fingerprint, the rate-limit cell, and the ban slot. They do not share "
+"the challenge (each fetches its own record with its own nonce), the "
+"spent-set entry, or the cookie. To reuse the other browser's cookie an "
+"attacker on the NAT would need to read it from the other machine: the "
+"fingerprint would then match, which is why ``HttpOnly`` and ``SameSite`` "
+"matter more than the binding on a shared address."
+msgstr ""
+
+#: ../../solutions.rst:36
+msgid "Part V: State and Ordering"
+msgstr ""
+
+#: ../../solutions.rst:39
+msgid ""
+"**5.1.** The head and the first part of the body (up to what fits after "
+"the head in 64 KB) are in the connection buffer and are sent with "
+"``write_all(request.body)``. The remaining bytes never enter the buffer "
+"whole: ``relay_body`` reads them in 16 KB pieces from the client reader "
+"and writes each to the origin. The head must go first because the origin "
+"needs ``Content-Length`` before the body, and because the audit headers "
+"are part of the head."
+msgstr ""
+
+#: ../../solutions.rst:41
+msgid ""
+"**5.2.** The emission interval is 100 ms and burst tolerance is 9,900 ms. "
+"An idle client may send 100 requests immediately, then one per 100 ms. "
+"Through the inclusive endpoint at 3,000 ms, the bound is 130. A fixed "
+"10-second counter would allow 100 in the first window and 100 more the "
+"instant the window rolls over; a sliding log would allow exactly 100 in "
+"any 10 seconds but must store 100 timestamps per client."
+msgstr ""
+
+#: ../../solutions.rst:43
+msgid "Part VI: Algorithms"
+msgstr ""
+
+#: ../../solutions.rst:46
+msgid ""
+"**6.1.** An apostrophe in a name and an ordinary parameter named "
+"``order`` do not establish an SQL expression. A substring detector could "
+"mistake either for syntax. The structural detector looks for additional "
+"evidence, including operators and literal relations. It remains bounded "
+"inspection, not a parser for every application language."
+msgstr ""
+
+#: ../../solutions.rst:48
+msgid ""
+"**6.2.** LDAP filters are built from parentheses, ``|``, ``&``, ``!``, "
+"and ``=``. The detector needs a byte class for ``(`` and ``)`` (new) and "
+"can reuse the existing ``=`` and shell-separator classes for ``|`` and "
+"``&``. It should fire on a *sequence* such as ``)(`` or ``(|(``, not on a "
+"single parenthesis, for the same reason the SQL detector requires a quote "
+"or a tautology."
+msgstr ""
+
+#: ../../solutions.rst:50
+msgid "Part VII: Browser Engine"
+msgstr ""
+
+#: ../../solutions.rst:53
+msgid ""
+"**7.1.** At the default 16 work bits (depth 13 with 16 openings), the "
+"supposed 20 ms in WebAssembly become :math:`50 \\times 20 = 1000` ms, one "
+"second, in JavaScript on the laptop, and four seconds on the slower "
+"phone. The figures are suppositions; we measure our own clients' devices "
+"before we set a policy. A sensible policy: let the page forward the "
+"``fallback`` message, log it server-side as a metric, and lower the "
+"difficulty for a rule that matches clients known to block WebAssembly "
+"rather than for everyone."
+msgstr ""
+
+#: ../../solutions.rst:55
+msgid "Part VIII: Evaluation"
+msgstr ""
+
+#: ../../solutions.rst:58
+msgid ""
+"**8.2.** CPU microseconds per request divided by cores busy gives the "
+"wall time the product spent per request; it is far above the "
+"sub-microsecond classification cost because the product row also contains "
+"the kernel's socket read and write, the parser, the session tag check, "
+"the metrics increments, the response formatting, the writer flush, and "
+"the scheduler's hand-off between the load generator and the connection "
+"thread. The primitive suite times none of those."
+msgstr ""
+
+#: ../../solutions.rst:60
+msgid "Part IX: Operations"
+msgstr ""
+
+#: ../../solutions.rst:63
+msgid ""
+"**9.1.** If the data commits before a separate receipt update, a crash "
+"between them leaves the old receipt and a retry can apply the effect "
+"again. If the receipt commits first, a crash before the data write can "
+"cause the retry to skip data that never existed. One atomic transaction "
+"removes both gaps. Losing the transaction's acknowledgement still "
+"requires the retained retry."
+msgstr ""
+
+#: ../../solutions.rst:65
+msgid ""
+"**9.2.** ``ip_rules: {\"10.20.0.0/16\": \"ALLOW\"}`` (or an "
+"``ip_reputation`` row with score 100) admits staging; a rule ``{\"name\": "
+"\"admin\", \"path\": \"/admin/*\", \"action\": \"CHALLENGE\", "
+"\"challenge\": {\"difficulty\": 20, \"algorithm\": \"posw\"}}`` demands "
+"the work; a rule matching ``headers: {\"X-Partner-Key\": \".*\"}`` with "
+"``ALLOW`` and ``\"limits\": {\"rate\": 30, \"window_seconds\": 10}`` "
+"admits the partner at 30 requests per 10 seconds. The rule's quota is "
+"checked for every request it matches, after the per-client daemon limit "
+"(``--rate-limit``, ``--rate-window``), which must therefore be at least "
+"as generous."
+msgstr ""
+
+#: ../../solutions.rst:67
+msgid "Part X: Reference"
+msgstr ""
+
+#: ../../solutions.rst:70
+msgid ""
+"**10.1.** The challenge record carries the keyed fingerprint of the "
+"address that fetched it; the solution arrives from a new address, so "
+"``verify_and_mint`` returns ``FingerprintMismatch`` before looking at the "
+"proof. The smallest recovery is in the interstitial: on a ``400`` whose "
+"title is ``CLIENT FINGERPRINT MISMATCH``, fetch a fresh challenge and "
+"solve again instead of showing the error, since the work already done "
+"cannot be transferred."
+msgstr ""
+
+#: ../../solutions.rst:72
+msgid "Continue the Investigation"
+msgstr ""
+
+#: ../../solutions.rst:75
+msgid ""
+"Change one invariant at a time in a disposable test. Remove the snapshot "
+"recheck, omit the incident receipt, or round the rate interval downward. "
+"Predict a failure schedule before we run the test. A useful regression "
+"does more than assert the happy-path output: it demonstrates why the "
+"omitted condition is necessary."
+msgstr ""

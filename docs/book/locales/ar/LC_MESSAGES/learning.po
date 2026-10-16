@@ -1,0 +1,160 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Vikrant Rathore and Sibuna contributors
+# This file is distributed under the same license as the The Sibuna Book package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-16 05:09+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ar\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : "
+"n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#: ../../learning.rst:1
+msgid "How to Read This Book"
+msgstr ""
+
+#: ../../learning.rst:4
+msgid ""
+"We begin with a single question: what is the cheapest safe decision the "
+"server can make now? We keep that question beside us through the protocol "
+"and implementation chapters. A cheap operation that admits the wrong "
+"request is a defect; a correct operation with unbounded cost is another "
+"kind of defect."
+msgstr ""
+
+#: ../../learning.rst:10
+msgid "Question"
+msgstr ""
+
+#: ../../learning.rst:11
+msgid "Where the answer develops"
+msgstr ""
+
+#: ../../learning.rst:12
+msgid "What does a puzzle buy?"
+msgstr ""
+
+#: ../../learning.rst:13
+msgid "Parts I to III: cost, probability, and the limits of proof."
+msgstr ""
+
+#: ../../learning.rst:14
+msgid "How does Sibuna compare?"
+msgstr ""
+
+#: ../../learning.rst:15
+msgid "Part II: lineage and the feature table; Part VIII: measurements."
+msgstr ""
+
+#: ../../learning.rst:16
+msgid "What does a session mean?"
+msgstr ""
+
+#: ../../learning.rst:17
+msgid "Part IV: bindings, verification order, expiry, and replay."
+msgstr ""
+
+#: ../../learning.rst:18
+msgid "Where does the memory go?"
+msgstr ""
+
+#: ../../learning.rst:19
+msgid "Parts V and VI: buffers, threads, tables, automata, and publication."
+msgstr ""
+
+#: ../../learning.rst:20
+msgid "How does the browser solve?"
+msgstr ""
+
+#: ../../learning.rst:21
+msgid "Part VII: worker messages, memory, and calibration."
+msgstr ""
+
+#: ../../learning.rst:22
+msgid "How do we know it works?"
+msgstr ""
+
+#: ../../learning.rst:23
+msgid "Part VIII: three harnesses and what each excludes."
+msgstr ""
+
+#: ../../learning.rst:24
+msgid "How do we run it?"
+msgstr ""
+
+#: ../../learning.rst:25
+msgid "Part IX: flags, topologies, policy, storage, clustering, packaging."
+msgstr ""
+
+#: ../../learning.rst:26
+msgid "What was that error?"
+msgstr ""
+
+#: ../../learning.rst:27
+msgid "Part X: endpoints, statuses, errors, schema; Part XI: the card."
+msgstr ""
+
+#: ../../learning.rst:29
+msgid "Three Reading Paths"
+msgstr ""
+
+#: ../../learning.rst:32
+msgid ""
+"*Learning the design.* Parts I to IV in order, then the worked trace in "
+"Part VI, then Part VII. Do the exercises; compare with the solutions at "
+"the back only afterwards. Return to Part V when a trace reaches a shared "
+"table or a borrowed slice."
+msgstr ""
+
+#: ../../learning.rst:33
+msgid ""
+"*Operating a deployment.* Part IX, then Part XI, with Part X open for "
+"lookups. Read the \"Feature Comparison\" in Part II before choosing a "
+"surface, and the \"Whole-Product Comparison\" in Part VIII before "
+"choosing worker and connection limits."
+msgstr ""
+
+#: ../../learning.rst:34
+msgid ""
+"*Changing the code.* Parts V and VI, the source anchors in every chapter, "
+"and the SID records they cite. Part VIII explains which harness will "
+"catch a regression in what we touched; Part II lists the constraints a "
+"change must keep."
+msgstr ""
+
+#: ../../learning.rst:36
+msgid "Conventions"
+msgstr ""
+
+#: ../../learning.rst:39
+msgid ""
+"A *worked example* shows the intermediate states, not just the answer. An "
+"*exercise* asks us to change one assumption. Hints suggest a first step; "
+"selected solutions at the end of the book make the reasoning checkable. "
+"Diagrams distinguish the request path from background work. A source "
+"anchor names the implementation to inspect when prose and code appear to "
+"disagree. Boxes headed \"Implementation\" name a function and its file; "
+"boxes headed \"Explain the invariant\" ask us to teach the idea back."
+msgstr ""
+
+#: ../../learning.rst:41
+msgid ""
+"In equations, :math:`b` is Hashcash difficulty in bits, :math:`n` is "
+"sequential-work depth, :math:`t` is the number of openings, :math:`p` is "
+"success probability per trial, :math:`K` is the number of trials, "
+":math:`T` is a rate limiter's emission interval, :math:`\\tau` its burst "
+"tolerance, and :math:`Q` is a queue capacity. A symbol is local to its "
+"section unless stated otherwise. Nanoseconds and requests per second in "
+"Part VIII are measurements from a named run. Numbers in worked examples "
+"are chosen inputs, not benchmark claims. Statistical models state their "
+"assumptions before drawing conclusions."
+msgstr ""
