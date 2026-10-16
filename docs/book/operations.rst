@@ -613,31 +613,106 @@ Packaging
 
 .. admonition:: Objectives
 
-   Build the binary for a target, package it, and run it under systemd.
+   Install and verify a release package, run Sibuna as a service, in a container or under Kubernetes, and build the binary ourselves.
 
-- ``cargo build --release -p sibuna`` produces ``target/release/sibuna`` with the default features: SQLite storage and the console. sqlx bundles SQLite, and ``ring`` (rustls) needs a C compiler at build time; the binary links only the system C runtime (``libc``, ``libm``, ``libgcc_s``) dynamically. The build script also builds the WebAssembly solver and console interface, which needs ``rustup target add wasm32-unknown-unknown``; ``SIBUNA_POW_WASM=<path>`` and ``SIBUNA_CONSOLE_WASM=<path>`` embed prebuilt modules instead.
+Every release on GitHub carries the same executable for each platform, built from the release tag with the default features: SQLite storage and the console. PostgreSQL clusters need a build of our own (below).
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 75
+
+   * - Platform
+     - Release assets
+   * - Linux x86-64, ARM64
+     - ``sibuna-linux-amd64.tar.gz`` and ``sibuna-linux-arm64.tar.gz`` hold a static musl executable that runs on any distribution. ``sibuna_<version>-1_amd64.deb``, ``sibuna_<version>-1_arm64.deb``, ``sibuna-<version>-1.x86_64.rpm`` and ``sibuna-<version>-1.aarch64.rpm`` install it with a systemd service; ``sibuna-bin-<version>-1-x86_64.pkg.tar.zst`` does so on Arch Linux.
+   * - macOS arm64, x86-64
+     - ``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, for macOS 12 or later.
+   * - Windows x86-64
+     - ``sibuna-windows-amd64.zip`` holds ``sibuna.exe``, for Windows 10 or Server 2016 or later.
+   * - FreeBSD 15.1, OpenBSD 7.9 (amd64)
+     - ``sibuna-<version>-freebsd-15.1-amd64.pkg`` and ``sibuna-<version>.tgz``.
+   * - Homebrew, Kubernetes, containers
+     - ``sibuna.rb``, ``helm-sibuna-<version>.tgz``, and the image ``ghcr.io/insanai/sibuna:<version>`` for amd64 and arm64, whose digest is in ``IMAGE-DIGEST.txt``.
+   * - Source
+     - ``sibuna-<version>-source.tar.gz``.
+
+Each archive and package carries ``LICENSE``, ``NOTICE``, ``LICENSES/`` (with ``THIRD-PARTY-RUST.txt``, the crates in the executable), ``README.md``, ``SECURITY.md`` and ``sibuna.build.json``. The manifest records the version, commit, Rust target, compiler version, features and the SHA-256 of the executable and of its two WebAssembly modules. The release workflow starts every executable on its own platform before it publishes anything, and it installs, upgrades and removes the packages on Debian, Fedora, Arch Linux, FreeBSD and OpenBSD.
+
+The assets are not signed. We check a download against ``SHA256SUMS`` from the same release before we install it:
+
+.. code-block:: sh
+
+   sha256sum --ignore-missing -c SHA256SUMS          # Linux
+   shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD
+   sha256 -C SHA256SUMS sibuna-1.0.0-beta.1.tgz      # OpenBSD
+
+On macOS a browser download carries a quarantine attribute that stops an unsigned executable; ``xattr -d com.apple.quarantine sibuna`` removes it after the check.
+
+The systemd service
+~~~~~~~~~~~~~~~~~~~
+
+The Debian, RPM and Arch packages install ``/usr/bin/sibuna``, the unit ``sibuna.service``, the account ``sibuna`` (through ``systemd-sysusers``), the helper ``/usr/lib/sibuna/seed.sh`` and the settings file ``/etc/sibuna/service.env``. Installation starts nothing. We set the origin, an IP literal, in the settings file and start the service:
+
+.. code-block:: sh
+
+   sudoedit /etc/sibuna/service.env      # SIBUNA_UPSTREAM_HOST, SIBUNA_UPSTREAM_PORT
+   sudo systemctl enable --now sibuna
+   curl -s http://127.0.0.1:8080/__sibuna/health
+
+The service listens on ``127.0.0.1:8080`` until ``SIBUNA_HOST`` and ``SIBUNA_PORT`` say otherwise. ``SIBUNA_OPTIONS`` passes further options, split at spaces, for example ``--mode forward_auth`` or ``--console 127.0.0.1:19446``. Before each start, ``seed.sh`` creates the admission seed ``/var/lib/sibuna/admission.seed`` (64 hexadecimal digits, mode 0600, owned by ``sibuna``) if it does not exist; it never replaces one, because a new seed would end every session. The daemon keeps its SQLite database in ``/var/lib/sibuna``, a directory of mode 0700. The unit runs without capabilities, with a read-only system (``ProtectSystem=strict``), private ``/tmp`` and devices, and no new privileges.
+
+An upgrade keeps the settings file, the seed and the state, and does not restart the service; we restart it after a backup. Removal stops and disables the service but keeps the account, the seed, the settings and the state, which we delete ourselves when we retire the host.
+
+The FreeBSD and OpenBSD packages install only ``/usr/local/bin/sibuna`` and its documents (``pkg add``, or ``pkg_add -D unsigned`` for a package from outside the OpenBSD mirrors). They create no service, account or state: we run the daemon as an unprivileged user with a private seed and data directory.
+
+Homebrew
+~~~~~~~~
+
+``sibuna.rb`` installs the release archive for the machine: macOS or Linux, arm64 or x86-64. It does not build from source, because Homebrew's Rust has no standard library for ``wasm32-unknown-unknown``, which the build of the two embedded WebAssembly modules needs; the archives hold the executables the release workflow already checked. Homebrew installs formulae from taps only, so we put the formula in a local tap:
+
+.. code-block:: sh
+
+   brew tap-new "$USER/local"
+   cp sibuna.rb "$(brew --repository)/Library/Taps/$USER/homebrew-local/Formula/"
+   brew install "$USER/local/sibuna"
+
+The formula starts no service. Its caveats show how to create a seed; its test starts the daemon twice on the same data directory.
+
+Containers and Kubernetes
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The image ``ghcr.io/insanai/sibuna:<version>`` holds the static executable on a distroless base: CA certificates, user 65532, no shell and no package manager. The entry point is ``sibuna``, so the arguments are daemon options. The release workflow runs it read-only, without capabilities, with a seed mounted read-only and a volume for the state, and restarts it once:
+
+.. code-block:: sh
+
+   docker run -d --read-only --cap-drop=ALL --security-opt=no-new-privileges \
+     -v "$PWD/admission.seed:/run/admission.seed:ro" -v sibuna-state:/var/lib/sibuna \
+     -p 8080:8080 ghcr.io/insanai/sibuna:1.0.0-beta.1 \
+     --host 0.0.0.0 --secret-file /run/admission.seed --data-dir /var/lib/sibuna/data \
+     --upstream-host 10.0.0.5 --upstream-port 3000
+
+The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. It requires a Secret that we create (``secret.existingSecret``, key ``admission.seed``), so no seed ever appears in values or templates. The Pod runs as UID 65532 with a read-only root filesystem under the Restricted pod security standard. One replica with ``Recreate`` upgrades keeps a single writer on the ReadWriteOnce volume, where Sibuna keeps its SQLite state in ``data/``; the claim is kept on uninstall. The probes call ``/__sibuna/health``. The Service is ClusterIP, the chart creates no ingress and no console, and its NetworkPolicy denies all traffic until ``networkPolicy.ingressFrom`` and ``networkPolicy.egressTo`` allow the clients and the origin. ``upstream.host`` must be an IP literal, and ``extraArgs`` passes further daemon options. The workflow installs, upgrades and uninstalls the chart in a kind cluster that enforces the Restricted standard.
+
+.. code-block:: sh
+
+   kubectl -n sibuna create secret generic sibuna-admission --from-file=admission.seed
+   helm install gateway ./helm-sibuna-1.0.0-beta.1.tgz --namespace sibuna \
+     --set secret.existingSecret=sibuna-admission \
+     --set upstream.host=10.0.0.5 --set upstream.port=3000
+
+Building from source
+~~~~~~~~~~~~~~~~~~~~
+
+Rust 1.94 or later builds the workspace; the releases use Rust 1.99.
+
+- ``cargo build --release -p sibuna`` produces ``target/release/sibuna`` with the default features: SQLite storage and the console. sqlx bundles SQLite, and ``ring`` (rustls) needs a C compiler at build time; the binary links the system C runtime dynamically. The build script also builds the WebAssembly solver and console interface, which needs ``rustup target add wasm32-unknown-unknown``; ``SIBUNA_POW_WASM=<path>`` and ``SIBUNA_CONSOLE_WASM=<path>`` embed prebuilt modules instead.
 - ``cargo build --release -p sibuna --no-default-features`` produces the in-memory firewall with no external crate at all; ``--data-dir`` and ``--database-url`` are then refused at start with ``StorageDisabled``, and ``sibuna console`` with ``CONSOLEBUILD``.
-- ``cargo build --release -p sibuna --features postgres`` adds PostgreSQL clusters. It needs no OpenSSL.
+- ``cargo build --release -p sibuna --features postgres-tls`` adds PostgreSQL clusters with verified TLS to the database. It needs no OpenSSL.
+- The static Linux executables of the releases come from ``cargo build --release --locked -p sibuna --target x86_64-unknown-linux-musl`` (or ``aarch64-unknown-linux-musl``) with ``musl-gcc`` as the C compiler (``CC_x86_64_unknown_linux_musl=musl-gcc``).
 
-The release profile uses fat LTO and one codegen unit. Sibuna ships no container image definition, no systemd unit and no operating-system package; the binary links the system C runtime dynamically, so a container image needs a base that provides it. The unit below is an example:
+The release profile uses fat LTO and one codegen unit. The workflow builds the two WebAssembly modules once and passes them to every platform, so all executables of a release embed byte-identical modules. ``cargo xtask licenses`` regenerates ``LICENSES/THIRD-PARTY-RUST.txt`` after a dependency changes.
 
-.. code-block:: ini
-
-   [Unit]
-   Description=Sibuna Web Firewall
-   After=network.target
-
-   [Service]
-   User=sibuna
-   ExecStart=/usr/local/bin/sibuna --port 8080 --upstream-port 3000 \
-     --secret-file /etc/sibuna/secret --data-dir /var/lib/sibuna
-   Restart=always
-   LimitNOFILE=65535
-   ProtectSystem=strict
-   ReadWritePaths=/var/lib/sibuna
-
-   [Install]
-   WantedBy=multi-user.target
+On Windows the daemon stops on Ctrl+C, Ctrl+Break and console close events; it does not run as a Windows service. Windows files have no mode bits, so Sibuna cannot refuse a key, credential or database URL file that others may read: we restrict those files with ACLs. The console's memory and CPU gauges are read from ``/proc`` and are unavailable on other systems.
 
 .. admonition:: Exercise 9.2
 
