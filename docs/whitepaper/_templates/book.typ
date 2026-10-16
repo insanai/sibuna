@@ -35,9 +35,9 @@
   headline: [SIBUNA],
   subtitle: [A Zero-Allocation, Work-Bound Web Defense Engine],
   tagline: [Work-Bound Admission, Linear-Time Inspection, Bounded State, and Storage Through SQL],
-  affiliation: [With assistance from Ronak Rathore and Kanak Rathore \ Insan AI Systems & Architecture Lab | Release #version],
+  affiliation: [With assistance from Ronak Rathore and Kanak Rathore \ Insan AI | Release #version],
   running-title: [SIBUNA: ARCHITECTURE, ALGORITHMS & EMPIRICAL FOUNDATIONS],
-  footer-left: [Insan AI Systems Research | Zero-Allocation Web Defense],
+  footer-left: [Insan AI | Zero-Allocation Web Defense],
   keywords: ("WAF", "Proof of Work", "Proof of Sequential Work",
     "Zero-Allocation", "GCRA", "Aho-Corasick", "SQLite", "PostgreSQL"),
   colophon: [
