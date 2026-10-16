@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 07:43+0000\n"
+"POT-Creation-Date: 2026-10-16 10:45+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -46,7 +46,7 @@ msgstr ""
 
 #: ../../foundations.rst:10
 msgid "Admission Is an Economic Decision"
-msgstr "許可は経済的な判断です"
+msgstr "許可は経済的な判断"
 
 #: ../../foundations.rst:13
 msgid ""
@@ -73,14 +73,14 @@ msgstr ""
 
 #: ../../foundations.rst:19
 msgid ""
-"This is a capacity model, not a measurement. It omits bandwidth, "
-"connection state, storage, and client delay. Its value is that every "
-"missing term is visible. A cache hit may make :math:`c_o` small; a costly "
-"query may make it large. There is no universal requester-to-server cost "
-"ratio."
+"This is a capacity model, not a measurement. It omits bandwidth, connection "
+"state, storage, and client delay. Its value is that every missing term is "
+"visible. A cache hit may make :math:`c_o` small; a costly query may make it "
+"large. There is no universal requester-to-server cost ratio."
 msgstr ""
-"これは容量のモデルであり、測定ではありません。帯域幅、接続の状態、ストレージ、クライアントの待ち時間を省いています。このモデルの価値は、欠けている項がすべて目に見えることです。キャッシュにヒットすれば\\ "
-":math:`c_o`\\ は小さくなり、高価なクエリなら大きくなります。要求側とサーバー側のコスト比に普遍的な値はありません。"
+"これは処理能力のモデルであり、測定ではありません。帯域幅、接続の状態、ストレージ、クライアントの待ち時間を省いています。このモデルの価値は、"
+"欠けている項がすべて目に見えることです。キャッシュにヒットすれば\\ :math:`c_o`\\ は小さくなり、高価なクエリなら大きくなります。"
+"要求側とサーバー側のコスト比に普遍的な値はありません。"
 
 #: ../../foundations.rst:21
 msgid "Worked example: when a gate pays for itself"
@@ -120,10 +120,11 @@ msgid ""
 "Address-based limits are complementary. They constrain one address, but "
 "shared addresses can represent many people and one requester can use many "
 "addresses. Neither a puzzle nor an address is an identity oracle. Sibuna "
-"therefore keeps admission, inspection, and reputation as distinct "
-"decisions."
+"therefore keeps admission, inspection, and reputation as distinct decisions."
 msgstr ""
-"アドレスに基づく制限はこれを補います。制限は一つのアドレスを縛りますが、共有アドレスの背後には多くの人がいることがあり、一人の要求者が多くのアドレスを使うこともあります。パズルもアドレスも、身元を教えてくれる託宣ではありません。そのためSibunaは、許可、検査、評判を別々の判断として扱います。"
+"アドレスに基づく制限はこれを補います。制限は一つのアドレスを縛りますが、共有アドレスの背後には多くの人がいることがあり、"
+"一人の要求者が多くのアドレスを使うこともあります。パズルもアドレスも、身元を判定するオラクルにはなりません。そのためSibunaは、許可、検査、"
+"レピュテーションを別々の判断として扱います。"
 
 #: ../../foundations.rst:32
 msgid "Hash Search as a Random Variable"
@@ -165,6 +166,40 @@ msgstr ""
 
 #: ../../foundations.rst:50
 msgid ""
+"P(K > x E[K])\n"
+"1.0 |*\n"
+"    | *\n"
+"    |  *\n"
+"    |   **\n"
+"    |     *\n"
+"0.5 |      **\n"
+"    |        **o\n"
+"    |           ***\n"
+"    |              *****\n"
+"    |                   ***********\n"
+"0.0 |                              ***********\n"
+"    +-----------------------------------------\n"
+"     0         1         2         3         4\n"
+"              trials / expected trials (x)"
+msgstr ""
+"P(K > x E[K])\n"
+"1.0 |*\n"
+"    | *\n"
+"    |  *\n"
+"    |   **\n"
+"    |     *\n"
+"0.5 |      **\n"
+"    |        **o\n"
+"    |           ***\n"
+"    |              *****\n"
+"    |                   ***********\n"
+"0.0 |                              ***********\n"
+"    +-----------------------------------------\n"
+"     0         1         2         3         4\n"
+"              試行回数 / 期待試行回数 (x)"
+
+#: ../../foundations.rst:50
+msgid ""
 "Survival probability of hash search. The horizontal axis is trials "
 "divided by expected trials; the curve uses the large-work approximation "
 "P(K > x/p) ~ e^(-x). The point o marks x = 1, where the probability of "
@@ -175,7 +210,7 @@ msgstr ""
 
 #: ../../foundations.rst:68
 msgid "Worked example: expectation is not a deadline"
-msgstr "例題：期待値は締め切りではありません"
+msgstr "例題：期待値は締め切りではない"
 
 #: ../../foundations.rst:70
 msgid ""
@@ -193,7 +228,7 @@ msgstr ""
 
 #: ../../foundations.rst:72
 msgid "Sessions Amortise Work"
-msgstr "セッションは作業を償却します"
+msgstr "セッションによる作業の償却"
 
 #: ../../foundations.rst:75
 msgid ""
@@ -230,7 +265,7 @@ msgstr "ヒント：会計上のモデルと、トークンが実際に結び付
 
 #: ../../foundations.rst:83
 msgid "Bounded State Is a Second Budget"
-msgstr "有界な状態は第二の予算です"
+msgstr "有界な状態という第二の予算"
 
 #: ../../foundations.rst:86
 msgid ""
@@ -292,9 +327,8 @@ msgid "A buffer remains alive for every slice borrowed from it."
 msgstr "バッファーは、そこから借用したどのスライスよりも長く生存します。"
 
 #: ../../foundations.rst:106
-msgid ""
-"A durable retry cannot multiply an incident or its reputation effect."
-msgstr "永続的な再試行によって、インシデントやその評判への効果が重複することはありません。"
+msgid "A durable retry cannot multiply an incident or its reputation effect."
+msgstr "永続的な再試行によって、インシデントやそのレピュテーションへの効果が重複することはありません。"
 
 #: ../../foundations.rst:107
 msgid ""
@@ -308,7 +342,7 @@ msgid ""
 "true, and the tests that would reveal a violation. A fast path is useful "
 "only while those statements remain true."
 msgstr ""
-"本書の残りでは、これらの主張を真にする仕組みと、違反を明らかにするテストを導きます。高速な経路が役に立つのは、これらの主張が真であり続ける間だけです。"
+"本書の残りでは、これらの主張を真にする仕組みと、違反を明らかにするテストを導きます。高速パスが役に立つのは、これらの主張が真であり続ける間だけです。"
 
 #: ../../foundations.rst:111
 msgid "Explain the invariant"
@@ -320,5 +354,5 @@ msgid ""
 "why a measured verification latency alone cannot tell an operator whether "
 "the gate is worth running."
 msgstr ""
-"ゲートの不等式\\ :math:`c_g < (1-a) c_o`\\ "
-"を言葉で述べてください。次に、測定した検証の遅延だけでは、ゲートを運用する価値があるかどうかを運用者が判断できない理由を説明してください。"
+"ゲートの不等式\\ :math:`c_g < (1-a) c_o`\\ を言葉で述べてください。次に、測定した検証のレイテンシーだけでは、"
+"ゲートを運用する価値があるかどうかを運用者が判断できない理由を説明してください。"
