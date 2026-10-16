@@ -6,8 +6,8 @@
 
 use std::fmt::{self, Write as _};
 
-use sibuna_console_protocol::Text;
 use sibuna_console_protocol::policies::MAX_DOCUMENT;
+use sibuna_console_protocol::{Text, ja4};
 use sibuna_html::write_value;
 use sibuna_json::{Value, Writer};
 
@@ -21,6 +21,9 @@ use crate::snippets;
 pub const HEADER_ROWS: usize = 4;
 /// The most client networks a rule has.
 const MAX_NETWORKS: usize = 8;
+/// What the editor says about a JA4 pattern no fingerprint could match.
+pub const INVALID_JA4_MESSAGE: &str =
+    "Use a whole JA4 fingerprint, or its start followed by *, such as t13d*.";
 
 /// Why a form or document is refused.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -35,6 +38,8 @@ pub enum FormError {
     InvalidNetworks,
     /// The quota is invalid.
     InvalidRuleLimit,
+    /// The JA4 pattern is not a fingerprint or the start of one followed by `*`.
+    InvalidJa4,
     /// A number field is not a number of its type.
     InvalidNumber,
 }
@@ -71,6 +76,8 @@ pub struct Form {
     pub path: Text<512>,
     /// The user-agent pattern.
     pub user_agent: Text<512>,
+    /// The JA4 pattern (SID 0014): a fingerprint, or its start followed by `*`.
+    pub ja4: Text<{ ja4::MAX_PATTERN }>,
     /// The priority.
     pub priority: Text<12>,
     /// The WEIGH score.
@@ -109,6 +116,7 @@ impl Form {
         self.name.set(json::string(fields, "rule_name"))?;
         self.path.set(json::string(fields, "rule_path"))?;
         self.user_agent.set(json::string(fields, "rule_user_agent"))?;
+        self.ja4.set(json::string(fields, "rule_ja4"))?;
         self.priority.set(json::string(fields, "rule_priority"))?;
         self.weight.set(json::string(fields, "rule_weight"))?;
         self.difficulty.set(json::string(fields, "rule_difficulty"))?;
@@ -147,6 +155,7 @@ impl Form {
             name: Text::new(json::string(&root, "name"))?,
             path: Text::new(json::string(&root, "path"))?,
             user_agent: Text::new(json::string(&root, "user_agent"))?,
+            ja4: Text::new(json::string(&root, "ja4"))?,
             action: Text::new(json::string(&root, "action"))?,
             algorithm: Text::new(json::string(&root, "algorithm"))?,
             priority: numeric(&root, "priority", Some(100))?,
@@ -166,7 +175,8 @@ impl Form {
     }
 
     /// Builds the rule document (compact JSON, at most 4 KiB). Settings that belong to
-    /// another action are left out.
+    /// another action are left out. The JA4 pattern follows the other members, and only
+    /// when the rule has one, so documents without one keep their earlier bytes.
     pub fn document(&self) -> Result<String, FormError> {
         let action = fallback(self.action.as_str(), "deny");
         let challenge = action == "challenge";
@@ -186,6 +196,9 @@ impl Form {
         };
         let headers = header_pairs(&self.headers)?;
         let networks = networks(self.cidrs.as_str())?;
+        if !self.ja4.is_empty() && !ja4::is_pattern(self.ja4.as_str()) {
+            return Err(FormError::InvalidJa4);
+        }
         let limits = self.limits()?;
         let mut text = String::new();
         let mut json = Writer::new(&mut text);
@@ -245,13 +258,14 @@ impl Form {
             4 => self.priority.as_str(),
             5 => self.path.as_str(),
             6 => self.user_agent.as_str(),
-            7 => return self.headers_text().into(),
-            8 => self.cidrs.as_str(),
-            9 => self.algorithm.as_str(),
-            10 => self.difficulty.as_str(),
-            11 => self.weight.as_str(),
-            12 => self.limit_rate.as_str(),
-            13 => self.limit_window.as_str(),
+            7 => self.ja4.as_str(),
+            8 => return self.headers_text().into(),
+            9 => self.cidrs.as_str(),
+            10 => self.algorithm.as_str(),
+            11 => self.difficulty.as_str(),
+            12 => self.weight.as_str(),
+            13 => self.limit_rate.as_str(),
+            14 => self.limit_window.as_str(),
             _ => self.limit_ban.as_str(),
         };
         text.into()
@@ -321,6 +335,10 @@ impl Document<'_> {
             }
             None => json.null(),
         }?;
+        if let Some(pattern) = optional(self.form.ja4.as_str()) {
+            json.key("ja4")?;
+            json.string(pattern)?;
+        }
         json.end_object()
     }
 }
@@ -471,6 +489,7 @@ pub fn render(out: &mut Html<'_>, form: &Form, existing: bool) -> fmt::Result {
         &snippets::PolicyFormValues {
             path: &form.path.as_str(),
             user_agent: &form.user_agent.as_str(),
+            ja4: &form.ja4.as_str(),
             priority: &fallback(form.priority.as_str(), "100"),
         },
     )?;
@@ -616,6 +635,22 @@ mod tests {
         assert_eq!(Form::load("{\"limits\":{\"rate\":1}}"), Err(FormError::InvalidRuleLimit));
         let typo = "{\"limits\":{\"rate\":1,\"window_seconds\":60,\"typo\":1}}";
         assert_eq!(Form::load(typo), Err(FormError::InvalidRuleLimit));
+    }
+
+    #[test]
+    fn ja4_patterns_round_trip_and_invalid_ones_stay_editable() {
+        let source = "{\"id\":\"tls\",\"name\":\"TLS\",\"action\":\"deny\",\"ja4\":\"t13d*\"}";
+        let mut form = Form::load(source).unwrap();
+        assert_eq!(form.ja4.as_str(), "t13d*");
+        let document = form.document().unwrap();
+        assert!(document.ends_with(",\"limits\":null,\"ja4\":\"t13d*\"}"), "{document}");
+        assert_eq!(Form::load(&document).unwrap().ja4.as_str(), "t13d*");
+        assert_eq!(form.field_text(7), "t13d*");
+        form.ja4.set("t13d").unwrap();
+        assert_eq!(form.document(), Err(FormError::InvalidJa4));
+        assert_eq!(form.ja4.as_str(), "t13d", "the typed text survives the refusal");
+        form.ja4 = Text::default();
+        assert!(!form.document().unwrap().contains("ja4"));
     }
 
     #[test]

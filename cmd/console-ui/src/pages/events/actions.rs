@@ -3,10 +3,10 @@
 
 use std::fmt;
 
-use sibuna_console_protocol::Text;
 use sibuna_console_protocol::codec::WireEnum;
 use sibuna_console_protocol::events::country::{self, Filter};
 use sibuna_console_protocol::security::Module;
+use sibuna_console_protocol::{Text, ja4};
 use sibuna_json::Value;
 
 use super::heads::{self, Charset, Copied, IncidentHeads};
@@ -281,6 +281,11 @@ fn filter(model: &mut Model, fields: &Value<'_>, browser_time: u64) -> Result<()
     let country = Filter::new(code)?;
     let ip = Text::new(json::string(fields, "ip"))?;
     let path = Text::new(json::string(fields, "path_prefix"))?;
+    let fingerprint = json::string(fields, "ja4");
+    if !fingerprint.is_empty() && !ja4::is_pattern(fingerprint) {
+        return Err(UiError::InvalidRequest);
+    }
+    let fingerprint = Text::new(fingerprint)?;
     let hours = parse_integer(json::string(fields, "hours")).ok_or(UiError::InvalidRequest)?;
     if !RANGES.contains(&hours) {
         return Err(UiError::InvalidRequest);
@@ -295,6 +300,7 @@ fn filter(model: &mut Model, fields: &Value<'_>, browser_time: u64) -> Result<()
     model.country = country;
     model.ip = ip;
     model.path = path;
+    model.ja4 = fingerprint;
     model.node = node;
     model.hours = hours;
     model.cursors.clear();
@@ -372,6 +378,7 @@ fn query_body(json: &mut Json<'_>, model: &Model, csv: bool) -> fmt::Result {
     text(json, "country", model.country.as_str())?;
     text(json, "ip", model.ip.as_str())?;
     text(json, "path_prefix", model.path.as_str())?;
+    text(json, "ja4", model.ja4.as_str())?;
     json.key("until")?;
     json.uint(model.until)?;
     json.key("from")?;

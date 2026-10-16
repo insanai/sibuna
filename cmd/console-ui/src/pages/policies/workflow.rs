@@ -16,7 +16,7 @@ use sibuna_console_protocol::{Action, Text};
 use sibuna_html::write_value;
 use sibuna_json::Value;
 
-use super::form::{Form, FormError};
+use super::form::{self, Form, FormError};
 use super::limits;
 use super::manager::ManagedView;
 use super::replay::Replay;
@@ -74,7 +74,7 @@ impl From<FormError> for TransferError {
 }
 
 /// The members a rule document may have.
-const DOCUMENT_FIELDS: [&str; 13] = [
+const DOCUMENT_FIELDS: [&str; 14] = [
     "id",
     "name",
     "action",
@@ -88,10 +88,11 @@ const DOCUMENT_FIELDS: [&str; 13] = [
     "headers",
     "cidrs",
     "limits",
+    "ja4",
 ];
 
 /// Checks the members of an imported document before it is loaded: only known members;
-/// `id`, `name` and `action` present as strings; `path`, `user_agent` and `algorithm`
+/// `id`, `name` and `action` present as strings; `path`, `user_agent`, `algorithm` and `ja4`
 /// strings or null; and a known action.
 fn validate_fields(source: &str) -> Result<(), FormError> {
     let root = sibuna_json::parse_with_limits(source.as_bytes(), &json::limits(source.len()))
@@ -100,7 +101,7 @@ fn validate_fields(source: &str) -> Result<(), FormError> {
     if object.iter().any(|(key, _)| !DOCUMENT_FIELDS.contains(&key)) {
         return Err(FormError::InvalidDocument);
     }
-    for key in ["id", "name", "action", "path", "user_agent", "algorithm"] {
+    for key in ["id", "name", "action", "path", "user_agent", "algorithm", "ja4"] {
         let required = matches!(key, "id" | "name" | "action");
         match object.get(key) {
             None if required => return Err(FormError::InvalidDocument),
@@ -303,13 +304,11 @@ impl Policies {
                 ("text", Field::Text(&document)),
             ])?,
             Err(error) => {
-                cx.state.set_message(
-                    if error == TransferError::Invalid(FormError::InvalidRuleLimit) {
-                        limits::INVALID_MESSAGE
-                    } else {
-                        "Check the rule JSON, field types and ID. No rule was imported or saved."
-                    },
-                );
+                cx.state.set_message(match error {
+                    TransferError::Invalid(FormError::InvalidRuleLimit) => limits::INVALID_MESSAGE,
+                    TransferError::Invalid(FormError::InvalidJa4) => form::INVALID_JA4_MESSAGE,
+                    _ => "Check the rule JSON, field types and ID. No rule was imported or saved.",
+                });
                 cx.commands.focus("#console-message")?;
             }
         }

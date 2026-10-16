@@ -70,6 +70,51 @@ fn historical_incident_rendering_escapes_stored_markup_and_names_absent_fields()
     assert!(!render_page(&page, &state).contains("events-deny-"));
 }
 
+const CHROME: &str = "t13d1516h2_8daaf6152771_02713d6af862";
+
+#[test]
+fn incident_evidence_shows_the_recorded_ja4_fingerprint_or_not_recorded() {
+    let state = State { phase: Phase::Events, ..State::new() };
+    let mut page = Events::default();
+    page.model.rows.push(Row { id: 1, ja4: Some(Text::new(CHROME).unwrap()), ..Row::default() });
+    page.model.rows.push(Row { id: 2, ..Row::default() });
+    let output = render_page(&page, &state);
+    assert!(output.contains(&format!(
+        "<dt>JA4 fingerprint</dt><dd><code class=\"break-all\">{CHROME}</code></dd>"
+    )));
+    assert!(output.contains("<dt>JA4 fingerprint</dt><dd>Not recorded</dd>"));
+}
+
+#[test]
+fn replies_carry_the_ja4_fingerprint_of_each_incident() {
+    let mut harness = signed_in();
+    harness.action("events", "null");
+    let body = format!("{{\"rows\":[{{\"id\":\"1\",\"ja4\":\"{CHROME}\"}},{{\"id\":\"2\"}}]}}");
+    harness.respond("events", 200, &body);
+    let rows = &events(&mut harness.app).model.rows;
+    assert_eq!(rows[0].ja4.as_ref().map(Text::as_str), Some(CHROME));
+    assert_eq!(rows[1].ja4, None);
+    assert!(harness.html().contains(&format!("<code class=\"break-all\">{CHROME}</code>")));
+}
+
+#[test]
+fn the_ja4_filter_narrows_the_query_and_has_no_live_rows() {
+    let mut harness = signed_in();
+    harness.action("events", "null");
+    events(&mut harness.app).model.busy = false;
+    harness.action("events-filter", "{\"hours\":\"0\",\"ja4\":\"t13d*\"}");
+    let html = harness.html();
+    assert!(html.contains("<label for=\"ja4\">JA4 fingerprint</label>"), "{html}");
+    assert!(html.contains("name=\"ja4\" class=\"input input-bordered\""));
+    assert!(html.contains("maxlength=\"37\" value=\"t13d*\" placeholder=\"e.g. t13d*\""));
+    let state = State { phase: Phase::Events, ..State::new() };
+    let page = Events::default();
+    assert!(page.subscription(&state, Topic::Events).is_some());
+    let mut filtered = Events::default();
+    filtered.model.ja4 = Text::new("t13d*").unwrap();
+    assert!(filtered.subscription(&state, Topic::Events).is_none());
+}
+
 #[test]
 fn evidence_names_every_truncation_and_groups_name_their_source() {
     let state = State { phase: Phase::Events, ..State::new() };
@@ -231,20 +276,21 @@ fn queries_carry_the_filters_in_the_zig_member_order() {
          \"filename\":\"sibuna-events.json\",\"path\":\"/console/api/events/query\",\
          \"csrf\":\"test\",\"body\":{\"format\":\"json\",\"view\":\"raw\",\"node\":0,\
          \"campaign\":\"\",\"incident\":\"\",\"before\":null,\"category\":\"\",\
-         \"module\":null,\"country\":\"\",\"ip\":\"\",\"path_prefix\":\"\",\
+         \"module\":null,\"country\":\"\",\"ip\":\"\",\"path_prefix\":\"\",\"ja4\":\"\",\
          \"until\":172800,\"from\":0}}"
     ));
     events(&mut harness.app).model.busy = false;
     harness.action(
         "events-filter",
         "{\"module\":\"honeypot\",\"category\":\"waf:sqli\",\"country\":\"US\",\
-         \"ip\":\"192.0.2.1\",\"path_prefix\":\"/a\",\"hours\":\"24\",\"node\":\"3\"}",
+         \"ip\":\"192.0.2.1\",\"path_prefix\":\"/a\",\"ja4\":\"t13d*\",\"hours\":\"24\",\
+         \"node\":\"3\"}",
     );
     assert!(harness.commands().contains(
         "\"body\":{\"format\":\"json\",\"view\":\"raw\",\"node\":3,\"campaign\":\"\",\
          \"incident\":\"\",\"before\":null,\"category\":\"waf:sqli\",\"module\":\"honeypot\",\
-         \"country\":\"US\",\"ip\":\"192.0.2.1\",\"path_prefix\":\"/a\",\"until\":172800,\
-         \"from\":86400}"
+         \"country\":\"US\",\"ip\":\"192.0.2.1\",\"path_prefix\":\"/a\",\"ja4\":\"t13d*\",\
+         \"until\":172800,\"from\":86400}"
     ));
 }
 
@@ -260,6 +306,8 @@ fn a_refused_filter_form_changes_nothing() {
         "{\"hours\":\"2\"}",
         "{\"hours\":\"\"}",
         "{\"hours\":\"0\",\"node\":\"x\"}",
+        "{\"hours\":\"0\",\"ja4\":\"t13d\"}",
+        "{\"hours\":\"0\",\"ja4\":\"T13D*\"}",
     ] {
         harness.action("events-filter", fields);
         assert_eq!(events(&mut harness.app).model, before, "{fields}");

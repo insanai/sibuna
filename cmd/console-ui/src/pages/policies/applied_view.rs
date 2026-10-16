@@ -94,6 +94,7 @@ impl Policies {
                 ip: &if request.ip.is_empty() { "8.8.8.8" } else { request.ip.as_str() },
                 query: &request.query.as_str(),
                 user_agent: &request.user_agent.as_str(),
+                ja4: &request.ja4.as_str(),
                 body: &request.body.as_str(),
                 headers: &request.headers.as_str(),
             },
@@ -140,6 +141,7 @@ fn policy_row(out: &mut Html<'_>, row: &Row) -> fmt::Result {
             } else {
                 row.user_agent.as_str()
             },
+            ja4: &if row.ja4.is_empty() { "Not checked" } else { row.ja4.as_str() },
             headers: &row.header_count,
             cidrs: &row.cidr_count,
             weight: &row.weight,

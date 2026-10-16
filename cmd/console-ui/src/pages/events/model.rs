@@ -1,9 +1,9 @@
 //! The Events page's query and its current page of incidents (Zig `events_state.zig`).
 
-use sibuna_console_protocol::Text;
 use sibuna_console_protocol::events::country::{self, Filter, Mapping};
 use sibuna_console_protocol::events::{Capture, Cursor, MAX_LIMIT, Row};
 use sibuna_console_protocol::security::Module;
+use sibuna_console_protocol::{Text, ja4};
 use sibuna_json::Value;
 
 use super::wire::{self, boolean, counter, nullable, number, or, required, text};
@@ -52,6 +52,8 @@ pub struct Model {
     pub ip: Text<48>,
     /// A path prefix, or empty for all.
     pub path: Text<256>,
+    /// A JA4 fingerprint, or its start followed by `*`; empty for all (SID 0014).
+    pub ja4: Text<{ ja4::MAX_PATTERN }>,
     /// The time range in hours (0, 1, 24, 168 or 720); 0 for all recorded time.
     pub hours: u32,
     /// The fixed start of a security drill-down period, in Unix seconds.
@@ -161,6 +163,8 @@ pub struct WireRow<'v> {
     pub category: &'v str,
     /// The User-Agent.
     pub user_agent: &'v str,
+    /// The JA4 fingerprint, when the incident has one.
+    pub ja4: Option<&'v str>,
     /// The query string was redacted.
     pub query_redacted: bool,
     /// A display field was truncated.
@@ -191,6 +195,7 @@ impl<'v> WireRow<'v> {
             path: or(value, "path", "", text)?,
             category: or(value, "category", "", text)?,
             user_agent: or(value, "user_agent", "", text)?,
+            ja4: or(value, "ja4", None, nullable(text))?,
             query_redacted: or(value, "query_redacted", false, boolean)?,
             display_truncated: or(value, "display_truncated", false, boolean)?,
             campaign: or(value, "campaign", None, nullable(text))?,
@@ -215,6 +220,7 @@ impl<'v> WireRow<'v> {
             path: Text::new(self.path)?,
             category: Text::new(self.category)?,
             user_agent: Text::new(self.user_agent)?,
+            ja4: self.ja4.map(Text::new).transpose()?,
             query_redacted: self.query_redacted,
             display_truncated: self.display_truncated,
             capture: self.capture,

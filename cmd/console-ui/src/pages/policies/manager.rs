@@ -376,10 +376,13 @@ impl Policies {
         match manager.form.document() {
             Ok(document) => Ok(Some(document)),
             Err(error) => {
-                cx.state.set_message(if error == FormError::InvalidRuleLimit {
-                    super::limits::INVALID_MESSAGE
-                } else {
-                    "Check numbers, headers and networks. Rule documents must fit within 4 KiB."
+                cx.state.set_message(match error {
+                    FormError::InvalidRuleLimit => super::limits::INVALID_MESSAGE,
+                    FormError::InvalidJa4 => form::INVALID_JA4_MESSAGE,
+                    _ => {
+                        "Check numbers, headers and networks. Rule documents must fit within \
+                         4 KiB."
+                    }
                 });
                 cx.commands.focus("#console-message")?;
                 Ok(None)
@@ -553,6 +556,7 @@ impl Policies {
                 path: &if request.path.is_empty() { "/" } else { request.path.as_str() },
                 ip: &if request.ip.is_empty() { "8.8.8.8" } else { request.ip.as_str() },
                 user_agent: &request.user_agent.as_str(),
+                ja4: &request.ja4.as_str(),
                 query: &request.query.as_str(),
                 body: &request.body.as_str(),
                 headers: &request.headers.as_str(),

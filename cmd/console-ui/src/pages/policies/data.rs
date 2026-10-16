@@ -124,6 +124,8 @@ pub struct Row {
     pub path: String,
     /// The user-agent pattern; empty matches any.
     pub user_agent: String,
+    /// The JA4 pattern (SID 0014); empty when the rule has no JA4 criterion.
+    pub ja4: String,
     /// The displayed text was shortened or replaced.
     pub truncated: bool,
     /// Header matchers.
@@ -312,6 +314,7 @@ impl Row {
             action: text(value, "action")?,
             path: text(value, "path")?,
             user_agent: text(value, "user_agent")?,
+            ja4: optional_text(value, "ja4")?.unwrap_or_default(),
             truncated: flag(value, "truncated")?,
             header_count: integer(value, "header_count")?,
             cidr_count: integer(value, "cidr_count")?,

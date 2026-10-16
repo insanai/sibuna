@@ -7,6 +7,11 @@
 <input class="input" id="rule-agent" name="rule_user_agent" value="{{ user_agent }}" maxlength="512">
 </div>
 <div class="sb-rule-field">
+<label for="rule-ja4">JA4 pattern: a fingerprint, or its start and * (blank does not check)</label>
+<input class="input" id="rule-ja4" name="rule_ja4" value="{{ ja4 }}" maxlength="37"
+       placeholder="t13d*" autocomplete="off" spellcheck="false">
+</div>
+<div class="sb-rule-field">
 <label for="rule-priority">Priority (lower numbers run first)</label>
 <input class="input" id="rule-priority" name="rule_priority" type="number"
        min="-2147483648" max="2147483647" value="{{ priority }}" required>

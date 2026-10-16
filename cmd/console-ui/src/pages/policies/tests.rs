@@ -614,3 +614,67 @@ fn an_oversized_policy_set_names_the_command_line_import() {
     harness.send(11, "{\"kind\":1,\"action\":\"managed-import\",\"bytes\":101169}");
     assert!(harness.html().contains("This form is larger than the console accepts."));
 }
+
+#[test]
+fn the_rule_editor_carries_a_ja4_pattern_and_refuses_an_invalid_one() {
+    let mut fields = String::new();
+    form::render(&mut Html::new(&mut fields, 1 << 20), &form::Form::default(), false).unwrap();
+    assert!(fields.contains("<label for=\"rule-ja4\">JA4 pattern"), "{fields}");
+    assert!(fields.contains("name=\"rule_ja4\" value=\"\" maxlength=\"37\""));
+    let mut harness = editor();
+    let invalid = FIELDS.replace('}', ",\"rule_ja4\":\"t13d\"}");
+    harness.action("managed-save", &invalid);
+    assert_eq!(harness.app.state().message.as_str(), form::INVALID_JA4_MESSAGE);
+    let model = page(&mut harness.app);
+    assert!(model.manager.review.is_empty(), "nothing goes to review");
+    assert_eq!(model.manager.form.ja4.as_str(), "t13d", "the typed text stays editable");
+    let valid = FIELDS.replace('}', ",\"rule_ja4\":\"t13d*\"}");
+    harness.action("managed-save", &valid);
+    let state = State {
+        phase: Phase::Policies,
+        csrf: crate::secret::Secret::new("test").unwrap(),
+        role: Text::new("operator").unwrap(),
+        ..State::new()
+    };
+    let model = page(&mut harness.app);
+    let review = model.manager.review.as_str();
+    assert!(review.ends_with(",\"ja4\":\"t13d*\"}"), "{review}");
+    let changes = render_changes(model, &state);
+    assert!(changes.contains("<th scope=\"row\">JA4 pattern</th>"), "{changes}");
+}
+
+#[test]
+fn applied_rules_and_the_tester_show_the_ja4_fields() {
+    let mut harness = signed_in("admin");
+    harness.action("policies", "null");
+    let row = |index: usize, ja4: &str| {
+        format!(
+            "{{\"index\":{index},\"name\":\"R{index}\",\"action\":\"deny\",\"path\":\"\",\
+             \"user_agent\":\"\",\"ja4\":{ja4},\"truncated\":false,\"header_count\":0,\
+             \"cidr_count\":0,\"difficulty\":null,\"algorithm\":null,\"weight\":0,\
+             \"limits\":null}}"
+        )
+    };
+    let body = format!(
+        "{{\"committed\":\"1\",\"applied\":\"1\",\"total\":2,\"waf\":true,\
+         \"default_difficulty\":8,\"default_algorithm\":\"hashcash\",\"rows\":[{},{}],\
+         \"next\":null}}",
+        row(0, "\"t13d*\""),
+        row(1, "null")
+    );
+    let id = format!("policies-{}", generation(&mut harness));
+    harness.respond(&id, 200, &body);
+    let html = harness.html();
+    assert!(html.contains("<p>JA4 fingerprint: t13d*</p>"), "{html}");
+    assert!(html.contains("<p>JA4 fingerprint: Not checked</p>"));
+    assert!(html.contains("<label for=\"policy-ja4\">JA4 fingerprint (blank for none)</label>"));
+    let chrome = "t13d1516h2_8daaf6152771_02713d6af862";
+    let fields = format!("{{\"path\":\"/\",\"ip\":\"192.0.2.1\",\"ja4\":\"{chrome}\"}}");
+    harness.action("policy-run", &fields);
+    let commands = harness.commands();
+    assert!(
+        commands.contains(&format!("\"user_agent\":\"\",\"ja4\":\"{chrome}\",")),
+        "{commands}"
+    );
+    assert!(harness.html().contains(&format!("name=\"ja4\" value=\"{chrome}\" maxlength=\"36\"")));
+}

@@ -249,7 +249,10 @@ impl Page for Events {
         if topic != Topic::Events || state.phase != Phase::Events {
             return None;
         }
-        if model.path.len() > 128 || model.campaign != 0 || model.incident != 0 {
+        // The live feed cannot filter by campaign, incident or JA4 fingerprint, so such a
+        // query has no live rows.
+        let narrowed = model.campaign != 0 || model.incident != 0 || !model.ja4.is_empty();
+        if model.path.len() > 128 || narrowed {
             return None;
         }
         Some(Args {

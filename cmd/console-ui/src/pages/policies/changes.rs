@@ -13,7 +13,7 @@ use crate::snippets;
 use crate::state::State;
 
 /// The labels of the compared fields, in the order of [`Form::field_text`].
-const LABELS: [&str; 15] = [
+const LABELS: [&str; 16] = [
     "Rule ID",
     "Rule name",
     "Action",
@@ -21,6 +21,7 @@ const LABELS: [&str; 15] = [
     "Priority",
     "Path pattern",
     "User-agent pattern",
+    "JA4 pattern",
     "Header matchers",
     "Client networks",
     "Challenge algorithm",

@@ -8,6 +8,9 @@
 <input class="input" id="draft-ip" name="ip" value="{{ ip }}" maxlength="48">
 <label for="draft-agent">Request user agent</label>
 <input class="input" id="draft-agent" name="user_agent" value="{{ user_agent }}" maxlength="256">
+<label for="draft-ja4">Request JA4 fingerprint (blank for none)</label>
+<input class="input" id="draft-ja4" name="ja4" value="{{ ja4 }}" maxlength="36"
+       autocomplete="off" spellcheck="false">
 <label for="draft-query">Query string (without ?)</label>
 <input class="input" id="draft-query" name="query" value="{{ query }}" maxlength="512">
 <label for="draft-body">Request body (up to 2 KiB)</label>

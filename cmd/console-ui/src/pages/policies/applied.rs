@@ -24,6 +24,8 @@ pub struct TestRequest {
     pub ip: Text<48>,
     /// The User-Agent.
     pub user_agent: Text<256>,
+    /// The JA4 fingerprint a trusted ingress would forward; empty for none (SID 0014).
+    pub ja4: Text<{ sibuna_console_protocol::ja4::FINGERPRINT_LEN }>,
     /// The query string, without `?`.
     pub query: Text<512>,
     /// The body.
@@ -152,6 +154,7 @@ impl Policies {
         request.ip.set(json::string(fields, "ip"))?;
         request.query.set(json::string(fields, "query"))?;
         request.user_agent.set(json::string(fields, "user_agent"))?;
+        request.ja4.set(json::string(fields, "ja4"))?;
         request.body.set(json::string(fields, "body"))?;
         request.headers.set(json::string(fields, "headers"))?;
         let request = &self.applied.request;
@@ -175,6 +178,7 @@ impl Policies {
                 ("ip", Field::Text(request.ip.as_str())),
                 ("query", Field::Text(request.query.as_str())),
                 ("user_agent", Field::Text(request.user_agent.as_str())),
+                ("ja4", Field::Text(request.ja4.as_str())),
                 ("body", Field::Text(request.body.as_str())),
             ];
             for (key, value) in members {

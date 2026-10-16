@@ -193,6 +193,16 @@ fn filters(model: &Model, out: &mut Html<'_>) -> fmt::Result {
     let label = "Path starts with";
     Input { name: "path_prefix", label, value: path, limit: 256, wide: true, ..plain }
         .render(out)?;
+    Input {
+        name: "ja4",
+        label: "JA4 fingerprint",
+        value: model.ja4.as_str(),
+        limit: 37,
+        hint: "event-filter-help",
+        placeholder: "e.g. t13d*",
+        ..plain
+    }
+    .render(out)?;
     let node = if model.node == 0 { String::new() } else { model.node.to_string() };
     let placeholder = "All nodes";
     Input { name: "node", label: "Node ID", value: &node, limit: 10, placeholder, ..plain }
@@ -211,7 +221,8 @@ fn filters(model: &Model, out: &mut Html<'_>) -> fmt::Result {
     out.write_str(
         "</select></div></div><p id=\"event-filter-help\" class=\"sb-note mt-4\">Leave \
          fields blank to include all values. Category and address match exactly. Country \
-         accepts a two-letter code, unknown or not_recorded.</p>",
+         accepts a two-letter code, unknown or not_recorded. JA4 accepts a whole \
+         fingerprint, or its start followed by *.</p>",
     )?;
     period(model, out)?;
     out.write_str(
@@ -327,11 +338,23 @@ fn details(row: &Row, out: &mut Html<'_>) -> fmt::Result {
         }
         None => out.write_str("Not recorded")?,
     }
-    out.write_str(
-        "</dd><dt>Matched rule and score terms</dt><dd>Not recorded</dd><dt>JA4 fingerprint\
-         </dt><dd>Not recorded: requires bounded capture at a trusted ingress that \
-         overwrites spoofed headers.</dd></dl>",
-    )
+    out.write_str("</dd><dt>Matched rule and score terms</dt><dd>Not recorded</dd>")?;
+    fingerprint(row, out)?;
+    out.write_str("</dl>")
+}
+
+/// The JA4 fingerprint a trusted ingress forwarded (SID 0014), or that none was recorded.
+fn fingerprint(row: &Row, out: &mut Html<'_>) -> fmt::Result {
+    out.write_str("<dt>JA4 fingerprint</dt><dd>")?;
+    match &row.ja4 {
+        Some(ja4) => {
+            out.write_str("<code class=\"break-all\">")?;
+            out.escaped(ja4.as_str())?;
+            out.write_str("</code>")?;
+        }
+        None => out.write_str("Not recorded")?,
+    }
+    out.write_str("</dd>")
 }
 
 /// Address actions open the IP groups form with this address; the operator chooses the
