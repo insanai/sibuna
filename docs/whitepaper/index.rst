@@ -92,7 +92,7 @@ Sibuna keeps admission, inspection and reputation as three separate decisions, a
      - Hashcash or sequential-work browser challenge; a session token bound to the client and to the work it paid
      - Same
    * - Policy
-     - Declarative rules (path, User-Agent, headers, IPv4 and IPv6 CIDR) with ALLOW, DENY, CHALLENGE and WEIGH; bot signatures; reputation
+     - Declarative rules (path, User-Agent, headers, IPv4 and IPv6 CIDR, a JA4 TLS fingerprint from a trusted ingress) with ALLOW, DENY, CHALLENGE and WEIGH; bot signatures; reputation
      - Same
    * - Flood controls
      - GCRA rate limits, honeypot, temporary bans
@@ -279,6 +279,16 @@ Inspection has four stages, each linear in the field.
 
 An 8 KiB body scans in 12,784.3 ns, about 1.56 ns per byte. An operator may audit a category rather than enforce it, so that its findings are logged but not acted on. A field must then be judged per category, so that an audited finding cannot hide an enforced one. Rather than scanning the field once per category, Sibuna scans it once for the set of categories whose signatures occur, and then searches only the wanted categories among them; the same 8 KiB body with SQL injection audited takes 15,485.4 ns [#waf-cost]_. Shield remains a bounded heuristic inspector, not a full SQL or HTML parser, and bytes beyond the inspection bound are not inspected.
 
+TLS Fingerprints From the Ingress
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A User-Agent is a string that any client may write as it likes. A JA4 fingerprint is harder to forge. It summarises how a client opens a TLS connection: protocol, version, cipher suites, extensions and the first ALPN value. The client's TLS library fixes these before the first HTTP byte is sent. Only the component that terminates TLS sees the handshake, so only it can compute JA4. Sibuna terminates no inbound TLS, so it does not compute JA4. It reads the fingerprint that a trusted ingress computed and forwarded in a request header, named with ``--ja4-header`` [#ja4]_.
+
+- *Trust.* The header is read only when forwarded headers are trusted, by the decision that governs ``X-Forwarded-For``. From an untrusted peer it is ignored, and in reverse-proxy mode every copy of it is removed before the request reaches the origin.
+- *Validation.* A value is accepted only in the 36-byte JA4 form, and only when exactly one field of that name is present. A malformed or repeated value is treated as absent and counted.
+- *Policy.* A rule matches a whole fingerprint, or a prefix followed by ``*``; a request without a fingerprint never matches such a rule. Matching is a byte comparison, and the warm request path still makes no heap allocation.
+- *Records.* Incidents store the fingerprint of their request, and the console shows it in the incident evidence and filters events by it. Bans and reputation stay keyed by address, because many legitimate clients share one TLS library.
+
 .. _keyed-hashing:
 
 Keyed Hashing and the Security Review
@@ -443,7 +453,7 @@ Incidents that look alike are grouped into campaigns. Each incident carries a 64
 What This Design Does Not Do
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We should be plain about the limits of this choice. Sibuna contains no consensus protocol of its own, and a cluster's consistency is PostgreSQL's: a node that loses the database keeps its last policy until it reconnects. A session minted on one node is accepted by every node, and a solution spent on one node is refused when replayed to another, because the nodes share one seed and challenge keys are bound to the issuing node; neither property needs the database. No harness yet drives several nodes on one PostgreSQL database under load, so this paper reports no cluster measurements, and SID 0011 still records its acceptance as in progress [#gave-up]_.
+We should be plain about the limits of this choice. Sibuna contains no consensus protocol of its own, and a cluster's consistency is PostgreSQL's: a node that loses the database keeps its last policy until it reconnects. A session minted on one node is accepted by every node, and a solution spent on one node is refused when replayed to another, because the nodes share one seed and challenge keys are bound to the issuing node; neither property needs the database. SID 0011 is committed: a functional test with three nodes on one PostgreSQL database shows that a policy inserted on one node is enforced by all three within one tick, that a honeypot ban on one node reaches the others, and that incident identifiers never collide. No harness yet drives several nodes on one PostgreSQL database under load, so this paper reports no cluster measurements. The release executables are built without PostgreSQL support; a cluster builds Sibuna from source with the ``postgres-tls`` feature [#gave-up]_.
 
 .. _console:
 
@@ -471,7 +481,7 @@ Sibuna includes an opt-in management console: authenticated dashboards with live
      server -> tls [label="verified\ncertificates"];
    }
 
-The console's defining constraint is isolation from the request path. It may read the data plane's counters and its database and write the database, but it never enters a request thread, never allocates on one, and never holds a lock a connection thread needs. Its listener admits at most 96 connections, of which 16 are reserved for HTTP, 64 may be browser streams and 16 peer streams. The complete interface module measures 720,447 bytes (270,935 bytes compressed with gzip), against a budget of 768 KiB.
+The console's defining constraint is isolation from the request path. It may read the data plane's counters and its database and write the database, but it never enters a request thread, never allocates on one, and never holds a lock a connection thread needs. Its listener admits at most 96 connections, of which 16 are reserved for HTTP, 64 may be browser streams and 16 peer streams. In 1.0.0-beta.2 the complete interface module measures 724,311 bytes (272,441 bytes compressed with gzip). That is below the ceiling of 768 KiB, which the build enforces, and above the review threshold of 640 KiB, which SID 0007 records for review [#console-size]_.
 
 The console makes outbound TLS connections for long-lived peer streams, webhooks and GeoIP downloads. Certificates are verified against the system roots or an operator's CA file, host-name verification cannot be disabled, plain HTTP is allowed only to literal loopback addresses, and a certificate error never falls back to plaintext. Sibuna still terminates no inbound TLS; that remains the job of the ingress.
 
@@ -904,12 +914,12 @@ Market Comparison: Sibuna and Its Neighbours
 
 We compare Sibuna with the tools an operator is most likely to weigh against it. The facts about the other products were read from their public documentation and release artefacts in September 2026, and the Sibuna book records them with their sources in Part II [#prior-art]_. Each of these products serves its users well, and each made design choices whose benefits our harness does not measure. We describe the differences in architecture, not a ranking.
 
-.. list-table:: Feature comparison (book Part II; facts about other products read from public documentation in September 2026)
+.. list-table:: Feature comparison (book Part II; facts about other products read from public documentation in September 2026, the JA4 row in October 2026)
    :header-rows: 1
    :widths: 16 24 20 20 20
 
    * - Feature
-     - Sibuna 0.2
+     - Sibuna 1.0.0-beta.2
      - Anubis 1.27
      - SafeLine CE 9
      - Cloudflare WAF
@@ -948,6 +958,11 @@ We compare Sibuna with the tools an operator is most likely to weigh against it.
      - None
      - Semantic analysis over OWASP categories
      - Managed rulesets (Pro and above)
+   * - TLS fingerprint (JA4)
+     - Rules match a JA4 value that a trusted ingress forwards; not computed by Sibuna
+     - Not documented; policies may reference the HTTP fingerprint JA4H, which Anubis computes
+     - Computed at its own TLS termination; custom rules and a built-in deny list
+     - JA3 and JA4 in custom rules and analytics (Enterprise with Bot Management)
    * - Shared state
      - One PostgreSQL database for policy, reputation and forensics
      - Shared signing key; shared Valkey store
@@ -1133,19 +1148,21 @@ Sibuna is written in Rust, as a workspace of small crates whose dependencies poi
 
 *Memory safety.* Code that bypasses the compiler's memory-safety checks is denied by default, and a module that needs it must opt in by name and justify each use in a comment. A few modules do: the paths that use the processor's SHA instructions, one write that wipes secrets, the declarations of a few C library functions for signal handling, the exports of the two WebAssembly modules, and the ring that carries incidents to the storage thread. The ring is the one place where we kept such code for speed, and only after a measurement: the standard library's bounded channel cost 20 to 45% more per push with 16 producers [#ring]_. Elsewhere ownership does the work that hand-written memory management would otherwise do: a parsed request cannot outlive its buffer, an engine is freed with its last reader, and a socket cannot be closed while any thread can still reach it.
 
-*Discipline and tests.* A function body has at most 70 logical lines and a file at most 1,408 lines, enforced by a checker. Library code returns structured errors and never prints, and every error a user sees names its location, shows an excerpt, and gives a hint. The workspace suite runs about 2,100 tests on SQLite and about 700 more against PostgreSQL; the console's interface has 290 tests, including golden fixtures; and browser checks drive headless Chromium through the interstitial and through every console page [#tests]_.
+*Discipline and tests.* A function body has at most 70 logical lines and a file at most 1,408 lines, enforced by a checker. Library code returns structured errors and never prints, and every error a user sees names its location, shows an excerpt, and gives a hint. The workspace suite of 1.0.0-beta.2 runs about 2,200 tests on SQLite and about 700 more against PostgreSQL; the console's interface has 298 tests, including golden fixtures; and browser checks drive headless Chromium through the interstitial and through every console page [#tests]_.
 
 Limitations and Open Work
 -------------------------
 
 We list what this paper does not establish, so that no claim is read more widely than its evidence.
 
-- *No measured comparison with Anubis yet* (:ref:`anubis-comparison`), and none with SafeLine or a hosted WAF.
-- *No cluster under load.* No harness drives several nodes on one PostgreSQL database; SID 0011 records its acceptance as in progress.
+- *One measured neighbour.* We measured Anubis on one host (:ref:`anubis-comparison`). We have measured neither SafeLine nor a hosted WAF.
+- *No cluster under load.* A functional test runs three nodes on one PostgreSQL database (SID 0011, committed), but no harness drives several nodes under load.
+- *PostgreSQL needs a source build.* The release executables have SQLite storage and the console but no PostgreSQL support; a cluster builds Sibuna with the ``postgres-tls`` feature.
 - *The console's isolation gate* with eight active dashboards under load has not been run (:ref:`console`).
 - *Loopback only.* No measurement covers TLS, a wide-area network or real browsers under load; a deployment should measure its own path.
 - *Bounded inspection.* Shield is a heuristic inspector of the first 8 KiB of a body, not a full SQL or HTML parser, and forward-auth inspection sees only the bytes the ingress sends.
 - *Protocol scope.* Sibuna speaks HTTP/1.0 and HTTP/1.1; it has no HTTP/2 and no inbound TLS termination.
+- *TLS fingerprints come from the ingress.* Sibuna cannot compute JA4 itself. A fingerprint is only as trustworthy as the ingress that writes it, and that ingress must overwrite any copy a client sent. A client can imitate a browser's handshake with specialised libraries, so JA4 raises the cost of automation; it does not prove identity [#ja4]_.
 - *Cryptographic assurance.* The sequential-work tier rests on published proofs in the random-oracle model; our concrete protocol has tests against a reference labeller, not an independent cryptographic audit.
 - *One machine.* Every number was taken on one AMD Ryzen 9 5950X. A ranking on this host is not a ranking on another.
 
@@ -1167,8 +1184,8 @@ Sources and Reproduction
 Every number in this paper comes from a committed result file of the Sibuna repository, from a Sibuna Discussion (SID) record, or from the Sibuna book, and each table or footnote names its source. The result files are written by ``cargo xtask bench primitives``, ``cargo xtask bench product`` and ``cargo xtask bench latency``, and ``benchmarks/results/README.md`` gives the commands, the CPU sets and the provenance of each file.
 
 - ``benchmarks/results/primitives-latest.md``, ``product-latest.md``, ``latency-latest.md`` and their ``.json`` files; ``console-8-dashboards-2026-10-15.md``.
-- SID 0002 (foundation architecture and its revision notes), SID 0004 (the Shield surface), SID 0006 (mathematical foundations), SID 0007 (the console), SID 0010 (workspace, crates and dependency policy), SID 0011 (storage through sqlx), SID 0012 (console TLS) and SID 0013 (console storage), in ``docs/sid/records/``.
-- The Sibuna book, ``docs/book/``: Part I (the cost of a request), Part II (prior art), Part III (cryptography), Part IV (the protocol), Part V (zero-allocation engineering), Part VI (automata and the semantic firewall) and Part VIII (empirical evaluation).
+- SID 0002 (foundation architecture and its revision notes), SID 0004 (the Shield surface), SID 0006 (mathematical foundations), SID 0007 (the console), SID 0010 (workspace, crates and dependency policy), SID 0011 (storage through sqlx), SID 0012 (console TLS), SID 0013 (console storage) and SID 0014 (JA4 fingerprints from the ingress), in ``docs/sid/records/``.
+- The Sibuna book, ``docs/book/``: Part I (the cost of a request), Part II (prior art), Part III (cryptography), Part IV (the protocol), Part V (zero-allocation engineering), Part VI (automata and the semantic firewall), Part VIII (empirical evaluation) and Part IX (operations).
 - The primary literature: Back, Hashcash (1997); Cohen and Pietrzak, Simple Proofs of Sequential Work (EUROCRYPT 2018); Blocki, Lee and Zhou, On the Security of Proofs of Sequential Work in a Post-Quantum World (ITC 2021); Aho and Corasick, Efficient String Matching (1975); Celis, Robin Hood Hashing (1986); the ATM Forum's Generic Cell Rate Algorithm (1996).
 
 .. only:: html
@@ -1185,6 +1202,7 @@ Every number in this paper comes from a committed result file of the Sibuna repo
 .. [#spent] Book Part III (Lemma 3 and Lemma 4, wire formats); book Part V, "The Robin Hood Spent Set"; SID 0006, Part E (Lemma 28); ``benchmarks/results/primitives-latest.md`` (``robin_hood_spend_and_lookup``).
 .. [#waf] SID 0004, "Revision note (2026-09-07)" and "Verification"; book Part VI, "A Lesson in False Positives".
 .. [#waf-cost] ``benchmarks/results/primitives-latest.md`` (``8kb_body_semantic_scan``, ``8kb_body_sqli_audit_other_enforce``); SID 0004, revision note "inspection modes"; book Part VIII, "WAF Inspection".
+.. [#ja4] SID 0014, "Specification" and "Security and operational considerations"; book Part IX, "JA4 Fingerprints From the Ingress"; ``.github/release-notes.txt``.
 .. [#security] SID 0002, revision notes (forwarded identity; cookie values); SID 0004, revision notes (keyed placement, ban table, measured costs, zeroed tables); SID 0006, revision notes (spent-set capacity, adaptive controller input); SID 0010, review history (security review, 2026-10-15); ``benchmarks/results/primitives-latest.md`` (``gcra_check`` and ``gcra_check_hashed``).
 .. [#hashcash] Book Part III, "Hashcash: The Mathematics of Tier One"; book Part I, "Hash Search as a Random Variable".
 .. [#posw] Book Part III, "Proof of Sequential Work: Tier Two", "Prover Memory" and "Parameters Are Not Timings"; SID 0006, Part B and its implementation review of 2026-09-07.
@@ -1193,8 +1211,9 @@ Every number in this paper comes from a committed result file of the Sibuna repo
 .. [#zaxonlite] SID 0011, "Abstract", "Motivation and scope" and "Why PostgreSQL for clusters"; SID 0005 describes the earlier replicated design.
 .. [#storage-thread] SID 0011, "The storage thread", "Policy revision" and "Incidents and campaigns".
 .. [#schema] SID 0011, "Schema and migrations" and its review history (transport security); SID 0013, "Abstract".
-.. [#gave-up] SID 0011, "Security and operational considerations" and "Acceptance criteria and implementation status"; SID 0002, "Authentication and work" (node-bound challenge keys); book Part VIII, "Not Measured".
+.. [#gave-up] SID 0011, "Security and operational considerations" and "Acceptance criteria and implementation status" (criterion 2, ``crates/storage/tests/multi_node.rs``); ``.github/release-notes.txt``, "Known limitations"; SID 0002, "Authentication and work" (node-bound challenge keys); book Part VIII, "Not Measured".
 .. [#console-sources] SID 0007, "Abstract" and its revision notes (listener admission, interface module, GeoIP and passwords); SID 0010, review history (console port, TOTP); SID 0012; SID 0013. The isolation measurement is in SID 0010's review history (console port); book Part VIII, "Console Overhead", notes that the record names no result file for it.
+.. [#console-size] SID 0007, review history (Rust port, consolidation; daemon integration), which records 719,406 bytes before the JA4 fields of SID 0014. The size for 1.0.0-beta.2 is of the module built as the daemon's build script builds it (``cargo rustc --lib -p sibuna-console-ui --target wasm32-unknown-unknown --profile wasm -- -C link-arg=--compress-relocations``), compressed with ``gzip -9``.
 .. [#method-sources] ``benchmarks/results/README.md``, "Method" and "Provenance and limits" (rustc 1.99.0; the daemon is ``cargo build --release -p sibuna``, 49,113,856 bytes); book Part VIII, "Methodology".
 .. [#spread] Book Part VIII, "Primitive Latencies", computed from ``primitives-latest.json``.
 .. [#product] ``benchmarks/results/product-latest.md``; CPUs busy from ``cores_busy_median`` in ``product-latest.json``; the ``503`` answers and their fix from ``benchmarks/results/README.md`` and SID 0002, revision note (bug fix).
@@ -1202,7 +1221,7 @@ Every number in this paper comes from a committed result file of the Sibuna repo
 .. [#latency] ``benchmarks/results/latency-latest.md``; the rows at 25,000 requests per second and the reverse-proxy rows at 150,000 are in that file.
 .. [#thread-reuse] SID 0002, revision note (performance, connection threads reused); book Part VIII, "What the Measurement Changed"; ``benchmarks/results/latency-latest.md``.
 .. [#comparison] ``benchmarks/results/comparison-latest.md`` and ``admission-latest.md``, recorded on 16 October 2026 with ``cargo xtask bench product --anubis`` and ``cargo xtask bench admission --anubis``; book Part VIII, "Sibuna and Anubis", lists the method and every difference between the products.
-.. [#tests] SID 0010, "Acceptance criteria and implementation status" (criteria 1, 3 and 5).
+.. [#tests] SID 0010, "Acceptance criteria and implementation status" (criteria 1, 3 and 5), which recorded about 2,100 workspace tests and 290 interface tests before SID 0014; the counts for 1.0.0-beta.2 are from ``cargo test --workspace -- --list``.
 .. [#prior-art] Book Part II, "Feature Comparison" and "Interstitials and Edges"; the Sibuna licence is the workspace's ``license`` in ``Cargo.toml``.
 .. [#safeline] Book Part VIII, "Not Measured": vendor-reported figures checked in September 2026.
 .. [#crs] SID 0010, "The OWASP Core Rule Set".
