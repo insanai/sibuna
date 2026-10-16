@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:18+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../cryptography.rst:1
 msgid "Part III: Foundations from Cryptography Research"
-msgstr ""
+msgstr "Parte III: Fundamentos de la investigación criptográfica"
 
 #: ../../cryptography.rst:4
 msgid ""
@@ -28,15 +28,20 @@ msgid ""
 "argument, and justify keyed-hash authentication for challenges and "
 "sessions. SID 0006 records the assumptions and references."
 msgstr ""
+"Deducimos los modelos de coste de los dos niveles de prueba de trabajo de "
+"Sibuna, presentamos la Proof of Sequential Work de Cohen-Pietrzak con su "
+"argumento de seguridad y justificamos la autenticación con hash con clave "
+"para desafíos y sesiones. La SID 0006 recoge los supuestos y las "
+"referencias."
 
 #: ../../cryptography.rst:6
 msgid "Hashcash: The Mathematics of Tier One"
-msgstr ""
+msgstr "Hashcash: las matemáticas del primer nivel"
 
 #: ../../cryptography.rst:9 ../../cryptography.rst:36
 #: ../../cryptography.rst:167
 msgid "Objectives"
-msgstr ""
+msgstr "Objetivos"
 
 #: ../../cryptography.rst:11
 msgid ""
@@ -45,10 +50,15 @@ msgid ""
 "why the server's verification cost bounds the attacker's advantage, and "
 "describe the two limits that motivate a second tier."
 msgstr ""
+"Al terminar este capítulo, deberíamos poder enunciar el trabajo esperado, "
+"la varianza y la probabilidad de cola de un desafío Hashcash a nivel de "
+"bits, explicar por qué el coste de verificación del servidor acota la "
+"ventaja del atacante y describir los dos límites que motivan un segundo "
+"nivel."
 
 #: ../../cryptography.rst:13
 msgid "Definition and Cost"
-msgstr ""
+msgstr "Definición y coste"
 
 #: ../../cryptography.rst:16
 msgid ""
@@ -60,6 +70,14 @@ msgid ""
 "the WebAssembly solver, the JavaScript fallback, and the native verifier "
 "without a binary encoding step."
 msgstr ""
+"El desafío del primer nivel de Sibuna para la cadena de desafío :math:`C` "
+"y la dificultad de :math:`b` bits es: encontrar :math:`N \\in "
+"\\mathbb{N}` tal que :math:`\\text{SHA-256}(C \\parallel \\text{\":\"} "
+"\\parallel \\mathrm{dec}(N))` tenga :math:`b` bits iniciales a cero. La "
+"representación decimal del nonce es deliberada: mantiene idéntico el "
+"formato de transmisión entre el solucionador WebAssembly, la alternativa "
+"en JavaScript y el verificador nativo, sin un paso de codificación "
+"binaria."
 
 #: ../../cryptography.rst:18
 msgid ""
@@ -69,6 +87,12 @@ msgid ""
 "the digest predicate; implementations must agree on the statement and "
 "nonce encoding, not on an estimated CPU cost."
 msgstr ""
+"La unidad de dificultad es un *intento de hash* esperado, no una llamada "
+"a la función de compresión. Una entrada puede ocupar varios bloques de "
+"SHA-256. El precálculo del prefijo también puede cambiar el trabajo por "
+"nonce. La regla de transmisión sigue siendo el predicado sobre el "
+"resumen; las implementaciones deben coincidir en el enunciado y en la "
+"codificación del nonce, no en un coste de CPU estimado."
 
 #: ../../cryptography.rst:20
 msgid ""
@@ -81,10 +105,19 @@ msgid ""
 "response are additional work. A primitive timing cannot be inverted into "
 "a server's flood capacity."
 msgstr ""
+"Para resúmenes ideales independientes, el número de intentos :math:`X` es "
+"geométrico con :math:`p = 2^{-b}`. Su mediana es :math:`\\left\\lceil "
+"\\ln(1/2) / \\ln(1-p) \\right\\rceil`, aproximadamente :math:`2^b \\ln 2` "
+"para :math:`p` pequeño, y su varianza es :math:`(1-p)/p^2`. El "
+"verificador comprueba un resumen candidato en lugar de realizar la "
+"búsqueda. El análisis sintáctico, la autenticación del desafío, las "
+"comprobaciones de huella, la inserción en el estado de gastados y la "
+"respuesta son trabajo adicional. Un tiempo de una primitiva no puede "
+"invertirse para obtener la capacidad de un servidor frente a inundaciones."
 
 #: ../../cryptography.rst:22
 msgid "Two Limits of Search"
-msgstr ""
+msgstr "Dos límites de la búsqueda"
 
 #: ../../cryptography.rst:25
 msgid ""
@@ -95,10 +128,18 @@ msgid ""
 "the admission policy. Neither a claimed hash rate nor a single benchmark "
 "can bound every requester's advantage."
 msgstr ""
+"El primero es la varianza: una búsqueda larga no indica necesariamente un "
+"worker averiado. El segundo es el paralelismo: los intentos de nonce "
+"independientes pueden ejecutarse en paralelo. Más núcleos reducen el "
+"tiempo transcurrido de la búsqueda aunque el número total de intentos "
+"esperado siga siendo el mismo. Por tanto, el rendimiento del hardware "
+"importa para la política de admisión. Ni una tasa de hash declarada ni "
+"una única prueba de rendimiento pueden acotar la ventaja de cada "
+"solicitante."
 
 #: ../../cryptography.rst:27
 msgid "Exercise 3.0"
-msgstr ""
+msgstr "Ejercicio 3.0"
 
 #: ../../cryptography.rst:29
 msgid ""
@@ -106,14 +147,18 @@ msgid ""
 ":math:`4.6 \\times 2^b` trials. Why is the expected trial count unchanged "
 "by dividing the nonce space among several workers?"
 msgstr ""
+"Usando la cola geométrica, estima la probabilidad de necesitar más de "
+":math:`4.6 \\times 2^b` intentos. ¿Por qué no cambia el número esperado "
+"de intentos al repartir el espacio de nonces entre varios workers?"
 
 #: ../../cryptography.rst:31
 msgid "*Hint:* Count aggregate trials, not elapsed seconds."
 msgstr ""
+"*Pista:* cuenta los intentos totales, no los segundos transcurridos."
 
 #: ../../cryptography.rst:33
 msgid "Proof of Sequential Work: Tier Two"
-msgstr ""
+msgstr "Proof of Sequential Work: el segundo nivel"
 
 #: ../../cryptography.rst:38
 msgid ""
@@ -123,10 +168,15 @@ msgid ""
 "prover's memory bound, and the calibration data behind the work-bit "
 "mapping."
 msgstr ""
+"Comprender el etiquetado de Cohen-Pietrzak, por qué obliga a un cálculo "
+"secuencial, qué comprueba el verificador, la cota condicional de muestreo "
+":math:`(1 - \\alpha)^t` y sus limitaciones, el resultado poscuántico, la "
+"cota de memoria del probador y los datos de calibración en los que se "
+"basa la correspondencia de bits de trabajo."
 
 #: ../../cryptography.rst:40
 msgid "Why Sequential Work"
-msgstr ""
+msgstr "Por qué trabajo secuencial"
 
 #: ../../cryptography.rst:43
 msgid ""
@@ -136,6 +186,11 @@ msgid ""
 "the computation. Independent puzzles can still run in parallel, and "
 "hardware hash latency still matters."
 msgstr ""
+"Una construcción de trabajo secuencial introduce dependencias entre "
+"cálculos: una etiqueta posterior necesita un valor producido antes. Esto "
+"aborda una magnitud distinta del trabajo total, a saber, la profundidad "
+"del cálculo. Los desafíos independientes pueden seguir ejecutándose en "
+"paralelo, y la latencia del hash en el hardware sigue importando."
 
 #: ../../cryptography.rst:45
 msgid ""
@@ -147,10 +202,18 @@ msgid ""
 "must not be turned into an unqualified claim about every concrete "
 "implementation or adversary."
 msgstr ""
+"Sibuna sigue la construcción basada en hashes descrita por Cohen y "
+"Pietrzak. Su grafo tiene :math:`2^{n+1}-1` etiquetas a profundidad "
+":math:`n`, pero un número fijo de etiquetas no es una latencia "
+"determinista en el navegador: las etiquetas pueden ocupar varios bloques "
+"de compresión, las aperturas pueden recalcular subárboles y la "
+"planificación añade variación. Las afirmaciones de seguridad de los "
+"análisis en el modelo de oráculo no deben convertirse en una afirmación "
+"sin matices sobre cualquier implementación concreta o adversario."
 
 #: ../../cryptography.rst:47
 msgid "The Construction"
-msgstr ""
+msgstr "La construcción"
 
 #: ../../cryptography.rst:50
 msgid ""
@@ -162,12 +225,22 @@ msgid ""
 "is the challenge statement and :math:`H` is SHA-256 with :math:`\\chi` "
 "absorbed once (the same prefix trick as the Hashcash solver):"
 msgstr ""
+"Sea :math:`n` la profundidad y consideremos el árbol binario completo "
+"cuyos nodos se nombran con cadenas binarias de longitud como máximo "
+":math:`n` (raíz :math:`\\varepsilon`, hijos :math:`v0` y :math:`v1`, "
+"hojas de longitud :math:`n`). Cada nodo :math:`v` lleva una etiqueta de "
+"32 bytes :math:`\\ell_v = H(\\chi, v, \\mathrm{parents}(v))`, donde "
+":math:`\\chi` es el enunciado del desafío y :math:`H` es SHA-256 con "
+":math:`\\chi` absorbido una sola vez (el mismo truco del prefijo que en "
+"el solucionador de Hashcash):"
 
 #: ../../cryptography.rst:52
 msgid ""
 "an internal node hashes its two children: :math:`\\ell_v = H(\\chi, v, "
 "\\ell_{v0}, \\ell_{v1})`;"
 msgstr ""
+"un nodo interno calcula el hash de sus dos hijos: :math:`\\ell_v = "
+"H(\\chi, v, \\ell_{v0}, \\ell_{v1})`;"
 
 #: ../../cryptography.rst:53
 msgid ""
@@ -175,6 +248,10 @@ msgid ""
 "ancestors* wherever the root path turned right: :math:`\\ell_u = H(\\chi, "
 "u, \\{\\ell_{u_1 \\dots u_{i-1} 0} : u_i = 1\\})`."
 msgstr ""
+"una hoja :math:`u = u_1 \\dots u_n` calcula el hash de los *hermanos "
+"izquierdos de sus antepasados* allí donde el camino desde la raíz giró a "
+"la derecha: :math:`\\ell_u = H(\\chi, u, \\{\\ell_{u_1 \\dots u_{i-1} 0} "
+": u_i = 1\\})`."
 
 #: ../../cryptography.rst:56
 msgid ""
@@ -184,6 +261,13 @@ msgid ""
 "green nodes are the siblings sent in the opening, and the dashed red "
 "edges are the left-sibling edges hashed into the leaf."
 msgstr ""
+"El árbol de profundidad 3: una apertura de la hoja 3.5 envía la etiqueta "
+"de la hoja y las tres etiquetas hermanas; las aristas discontinuas son "
+"las dependencias de los hermanos izquierdos que hacen secuencial el "
+"etiquetado. Los nodos ámbar forman el camino de la hoja 3.5, los nodos "
+"verdes son las hermanas enviadas en la apertura y las aristas rojas "
+"discontinuas son las aristas de los hermanos izquierdos incluidas en el "
+"hash de la hoja."
 
 #: ../../cryptography.rst:81
 msgid ""
@@ -193,6 +277,11 @@ msgid ""
 ":math:`\\varphi = \\ell_\\varepsilon` depends on all :math:`2^{n+1} - 1` "
 "labels in sequence."
 msgstr ""
+"Las aristas de los hermanos izquierdos son lo que hace secuencial el "
+"cálculo: la hoja :math:`u` no puede etiquetarse hasta que esté completo "
+"cada subárbol a su izquierda, así que se impone un recorrido en postorden "
+"en profundidad, y la etiqueta raíz :math:`\\varphi = \\ell_\\varepsilon` "
+"depende de las :math:`2^{n+1} - 1` etiquetas en secuencia."
 
 #: ../../cryptography.rst:83
 msgid ""
@@ -206,20 +295,33 @@ msgid ""
 "computation may span multiple hash blocks; counting labels is not "
 "counting compression calls."
 msgstr ""
+"**Aperturas.** Tras calcular :math:`\\varphi`, el probador deriva "
+":math:`t` hojas mediante Fiat-Shamir, :math:`\\gamma_i = H(\\chi "
+"\\parallel \\varphi \\parallel i) \\bmod 2^n`, y para cada una envía la "
+"etiqueta de la hoja y las :math:`n` etiquetas hermanas a lo largo de su "
+"camino hasta la raíz. El verificador recalcula la hoja a partir de las "
+"hermanas que son sus padres, calcula los hashes hacia arriba a lo largo "
+"del camino y comprueba que llega a :math:`\\varphi`. El coste del "
+"verificador es de :math:`O(tn)` cálculos de etiquetas con un espacio de "
+"trabajo acotado. Un cálculo de etiqueta puede abarcar varios bloques de "
+"hash; contar etiquetas no es contar llamadas de compresión."
 
 #: ../../cryptography.rst:85
 msgid "Implementation: ``posw::verify_opening``"
-msgstr ""
+msgstr "Implementación: ``posw::verify_opening``"
 
 #: ../../cryptography.rst:87
 msgid ""
 "Recomputes one opened leaf from its sibling labels and walks the path to "
 "the root. In ``crates/pow/src/posw.rs`` (crate ``sibuna-pow``)."
 msgstr ""
+"Recalcula una hoja abierta a partir de sus etiquetas hermanas y recorre "
+"el camino hasta la raíz. En ``crates/pow/src/posw.rs`` (crate "
+"``sibuna-pow``)."
 
 #: ../../cryptography.rst:120
 msgid "Sampling, Soundness, and Their Limits"
-msgstr ""
+msgstr "Muestreo, solidez y sus límites"
 
 #: ../../cryptography.rst:123
 msgid ""
@@ -230,10 +332,17 @@ msgid ""
 "openings help. It is not, by itself, a security proof for a "
 "sequential-work protocol."
 msgstr ""
+"Consideremos un compromiso fijo con una fracción defectuosa "
+":math:`\\alpha` detectable de forma independiente. Si cada apertura "
+"muestrea de manera uniforme e independiente, la probabilidad de no "
+"encontrar ninguna posición defectuosa en :math:`t` aperturas es "
+":math:`(1-\\alpha)^t`. Este cálculo elemental explica por qué ayudan más "
+"aperturas. No es, por sí solo, una demostración de seguridad para un "
+"protocolo de trabajo secuencial."
 
 #: ../../cryptography.rst:125
 msgid "Worked example: a conditional sampling bound"
-msgstr ""
+msgstr "Ejemplo resuelto: una cota condicional de muestreo"
 
 #: ../../cryptography.rst:127
 msgid ""
@@ -244,6 +353,13 @@ msgid ""
 "can grind many roots, choose which commitment to reveal, or correlate "
 "failures, this calculation does not account for that strategy."
 msgstr ""
+"Con una fracción defectuosa fija :math:`\\alpha = 0.1` y :math:`t = 16` "
+"aperturas independientes, la probabilidad de no encontrar ninguna "
+"posición defectuosa es :math:`0.9^{16} \\approx 0.185`. Con 32 aperturas "
+"es de alrededor de 0.034. La premisa fija el compromiso antes de elegir "
+"las muestras. Si un probador puede probar muchas raíces por fuerza bruta, "
+"elegir qué compromiso revelar o correlacionar los fallos, este cálculo no "
+"tiene en cuenta esa estrategia."
 
 #: ../../cryptography.rst:129
 msgid ""
@@ -254,10 +370,18 @@ msgid ""
 "commitment; reproducibility alone does not prove resistance to grinding. "
 "We make no unconditional claim that cheating is never cheaper."
 msgstr ""
+"La construcción de trabajo secuencial a la que nos referimos tiene un "
+"análisis de seguridad en un modelo de oráculo. La separación de dominios, "
+"la correspondencia de parámetros, el truncamiento y la implementación de "
+"Sibuna deben seguir comprobándose frente a los supuestos de la "
+"construcción. El muestreo de Fiat-Shamir hace que las aperturas sean "
+"reproducibles a partir de un compromiso; la reproducibilidad por sí sola "
+"no demuestra la resistencia a la búsqueda por fuerza bruta. No afirmamos "
+"de forma incondicional que hacer trampa nunca sea más barato."
 
 #: ../../cryptography.rst:131
 msgid "Exercise 3.1"
-msgstr ""
+msgstr "Ejercicio 3.1"
 
 #: ../../cryptography.rst:133
 msgid ""
@@ -265,14 +389,18 @@ msgid ""
 "with probability :math:`q`, derive the probability that at least one is "
 "accepted. Which costs are missing from that expression?"
 msgstr ""
+"Si un atacante prueba :math:`g` compromisos independientes, cada uno "
+"aceptado con probabilidad :math:`q`, deduce la probabilidad de que al "
+"menos uno sea aceptado. ¿Qué costes faltan en esa expresión?"
 
 #: ../../cryptography.rst:135
 msgid "*Hint:* First calculate the probability that all :math:`g` fail."
 msgstr ""
+"*Pista:* calcula primero la probabilidad de que fallen los :math:`g`."
 
 #: ../../cryptography.rst:137
 msgid "Prover Memory"
-msgstr ""
+msgstr "Memoria del probador"
 
 #: ../../cryptography.rst:140
 msgid ""
@@ -287,10 +415,22 @@ msgid ""
 "browser tab and a native test share the same ``Workspace`` type "
 "(``sibuna_pow::posw::Workspace``)."
 msgstr ""
+"Un probador ingenuo guarda todas las etiquetas (:math:`2^{n+1} - 1` en "
+"total). El probador de Sibuna mantiene una pila con las etiquetas de los "
+"hermanos izquierdos del camino actual (:math:`n + 1` etiquetas) durante "
+"la primera pasada y conserva solo los :math:`m = \\min(n, 10)` niveles "
+"superiores (:math:`2^{m+1} - 1` etiquetas, como máximo 64 KB). Para abrir "
+"una hoja recalcula el subárbol del antepasado de la hoja a profundidad "
+":math:`m`, :math:`2^{n-m+1} - 1` hashes, inicializando la pila a partir "
+"de los niveles conservados. El coste total del probador es de "
+":math:`2^{n+1} - 1 + t\\,(2^{n-m+1} - 1)` hashes y todo el espacio de "
+"trabajo, incluida la prueba de salida, ocupa menos de 100 KB: una pestaña "
+"del navegador y una prueba nativa comparten el mismo tipo ``Workspace`` "
+"(``sibuna_pow::posw::Workspace``)."
 
 #: ../../cryptography.rst:142
 msgid "Parameters Are Not Timings"
-msgstr ""
+msgstr "Los parámetros no son tiempos"
 
 #: ../../cryptography.rst:145
 msgid ""
@@ -302,6 +442,15 @@ msgid ""
 "costs. The committed primitive benchmark measures verification; it does "
 "not establish browser solve latency."
 msgstr ""
+"Sibuna hace corresponder los bits de trabajo con la profundidad mediante "
+":math:`n = b - 3`, limitada al intervalo admitido :math:`[4, 24]`. Es una "
+"convención de escala de trabajo, no una garantía de igual tiempo real "
+"entre algoritmos. Una hoja puede calcular el hash de varias etiquetas "
+"padre, mientras que Hashcash prueba un nonce repetidamente. El "
+"compilador, el navegador, el procesador y la elección de parámetros "
+"afectan a sus costes relativos. La prueba de rendimiento de primitivas "
+"confirmada en el repositorio mide la verificación; no establece la "
+"latencia de resolución en el navegador."
 
 #: ../../cryptography.rst:147
 msgid ""
@@ -310,20 +459,28 @@ msgid ""
 "opening count increases both the proof and the verifier's work, even if "
 "the dominant cost of constructing the tree stays the same."
 msgstr ""
+"El tamaño de la prueba es de :math:`32(1 + t(n+1))` bytes. A profundidad "
+"13 con dieciséis aperturas, esto da :math:`32(1 + 16 \\times 14) = 7200` "
+"bytes. Aumentar el número de aperturas incrementa tanto la prueba como el "
+"trabajo del verificador, aunque el coste dominante de construir el árbol "
+"siga siendo el mismo."
 
 #: ../../cryptography.rst:149
 msgid "Exercise 3.2"
-msgstr ""
+msgstr "Ejercicio 3.2"
 
 #: ../../cryptography.rst:151
 msgid ""
 "Compute the proof size at depth 17 with 16 openings. Then double the "
 "opening count. Which term doubles and which term remains fixed?"
 msgstr ""
+"Calcula el tamaño de la prueba a profundidad 17 con 16 aperturas. Después "
+"duplica el número de aperturas. ¿Qué término se duplica y cuál permanece "
+"fijo?"
 
 #: ../../cryptography.rst:153
 msgid "Choosing a Construction"
-msgstr ""
+msgstr "Elegir una construcción"
 
 #: ../../cryptography.rst:156
 msgid ""
@@ -335,6 +492,15 @@ msgid ""
 "resources. Publicly verifiable delay constructions serve a different "
 "trust model from a shared-secret gate."
 msgstr ""
+"La comparación relevante es un presupuesto de recursos, no la reputación "
+"de un algoritmo. Registra la memoria del probador, el trabajo del "
+"verificador en el peor caso, los bytes de la prueba y los supuestos "
+"necesarios para la propiedad afirmada. La búsqueda con memoria difícil "
+"(memory-hard) puede ser útil, pero un verificador que debe repetir un "
+"trabajo costoso da al atacante otro lugar donde gastar los recursos del "
+"servidor. Las construcciones de retardo verificables públicamente sirven "
+"a un modelo de confianza distinto del de un control de admisión con "
+"secreto compartido."
 
 #: ../../cryptography.rst:158
 msgid ""
@@ -343,10 +509,15 @@ msgid ""
 "analysis. Neither choice removes the need to reject malformed proofs "
 "before entering expensive verification."
 msgstr ""
+"Sibuna conserva la verificación barata por hash y una opción de trabajo "
+"secuencial basada en hashes. Esta última requiere más bytes de prueba y "
+"un análisis de parámetros más cuidadoso. Ninguna de las dos elecciones "
+"elimina la necesidad de rechazar las pruebas mal formadas antes de entrar "
+"en una verificación costosa."
 
 #: ../../cryptography.rst:160 ../../cryptography.rst:245
 msgid "Explain the invariant"
-msgstr ""
+msgstr "Explica el invariante"
 
 #: ../../cryptography.rst:162
 msgid ""
@@ -354,10 +525,13 @@ msgid ""
 "a label belongs to a commitment, and dependency edges, which constrain "
 "how labels are computed."
 msgstr ""
+"Explica la diferencia entre un árbol de autenticación, que demuestra que "
+"una etiqueta pertenece a un compromiso, y las aristas de dependencia, que "
+"restringen cómo se calculan las etiquetas."
 
 #: ../../cryptography.rst:164
 msgid "Symmetric Authentication: Challenges and Sessions"
-msgstr ""
+msgstr "Autenticación simétrica: desafíos y sesiones"
 
 #: ../../cryptography.rst:169
 msgid ""
@@ -366,10 +540,15 @@ msgid ""
 "for a 128-bit tag, describe the stateless challenge record and the "
 "spent-set bound, and read the key schedule."
 msgstr ""
+"Explicar por qué una función pseudoaleatoria con clave es la primitiva "
+"correcta cuando el emisor y el verificador pertenecen al mismo dominio de "
+"confianza, enunciar la cota de falsificación para una etiqueta de 128 "
+"bits, describir el registro de desafío sin estado y la cota del conjunto "
+"de gastados, y leer la derivación de claves."
 
 #: ../../cryptography.rst:171
 msgid "Issuer Equals Verifier"
-msgstr ""
+msgstr "El emisor es el verificador"
 
 #: ../../cryptography.rst:174
 msgid ""
@@ -381,10 +560,19 @@ msgid ""
 "the MAC key can also mint tokens. The benchmark chapter compares the "
 "implemented token operations."
 msgstr ""
+"Una firma digital permite verificar a *cualquiera* que tenga la clave "
+"pública, lo cual es la herramienta adecuada cuando los verificadores no "
+"deben poder emitir. El verificador de Sibuna *es* el emisor (o un clúster "
+"que comparte una semilla). Un código de autenticación de mensajes "
+"construido a partir de una función pseudoaleatoria proporciona "
+"autenticación dentro de ese dominio de confianza. No proporciona "
+"verificación pública: cualquiera que tenga la clave MAC también puede "
+"emitir tokens. El capítulo de pruebas de rendimiento compara las "
+"operaciones de token implementadas."
 
 #: ../../cryptography.rst:176
 msgid "Lemma 3 (Forgery bound)"
-msgstr ""
+msgstr "Lema 3 (cota de falsificación)"
 
 #: ../../cryptography.rst:178
 msgid ""
@@ -394,6 +582,11 @@ msgid ""
 "\\varepsilon_{\\mathrm{PRF}}`. At a million queries per second that is "
 ":math:`2^{-108}` per second."
 msgstr ""
+"Con BLAKE3 en modo con clave modelado como una PRF y una etiqueta de 16 "
+"bytes, un adversario que hace :math:`q` consultas de verificación "
+"falsifica un token válido con probabilidad como máximo :math:`q \\cdot "
+"2^{-128} + \\varepsilon_{\\mathrm{PRF}}`. A un millón de consultas por "
+"segundo, eso es :math:`2^{-108}` por segundo."
 
 #: ../../cryptography.rst:180
 msgid ""
@@ -404,10 +597,17 @@ msgid ""
 "option (``--token-scheme ed25519``) for deployments that need non-minting "
 "verifiers."
 msgstr ""
+"Una segunda consecuencia importa a largo plazo: Ed25519 se basa en "
+"logaritmos discretos en un grupo de curva elíptica, que el algoritmo de "
+"Shor rompe; un hash con clave se basa solo en la función hash, frente a "
+"la que los algoritmos cuánticos dan como mucho una aceleración "
+"cuadrática. Sibuna mantiene Ed25519 como opción (``--token-scheme "
+"ed25519``) para los despliegues que necesitan verificadores que no puedan "
+"emitir tokens."
 
 #: ../../cryptography.rst:182
 msgid "The Key Schedule"
-msgstr ""
+msgstr "La derivación de claves"
 
 #: ../../cryptography.rst:185
 msgid ""
@@ -416,10 +616,15 @@ msgid ""
 "domain string: the token, challenge, Ed25519 and fingerprint keys, and "
 "the requirement key that seals requirement tickets (Part IV)."
 msgstr ""
+"Una semilla maestra de 32 bytes (de ``--secret-file``, de "
+"``SIBUNA_SECRET`` o un valor aleatorio nuevo) deriva cada clave de "
+"propósito con BLAKE3 con clave y una cadena de dominio: las claves de "
+"token, de desafío, de Ed25519 y de huella, y la clave de requisito que "
+"sella los tickets de requisito (parte IV)."
 
 #: ../../cryptography.rst:187
 msgid "Implementation: ``Keys::derive``"
-msgstr ""
+msgstr "Implementación: ``Keys::derive``"
 
 #: ../../cryptography.rst:189
 msgid ""
@@ -428,6 +633,10 @@ msgid ""
 "and ``Seed`` zero their bytes when dropped, and their ``Debug`` output is "
 "redacted."
 msgstr ""
+"Deriva las cinco claves de propósito a partir de la semilla. En "
+"``crates/challenge/src/keys.rs`` (crate ``sibuna-challenge``). ``Keys`` y "
+"``Seed`` ponen a cero sus bytes al liberarse, y su salida ``Debug`` está "
+"censurada."
 
 #: ../../cryptography.rst:207
 msgid ""
@@ -436,6 +645,11 @@ msgid ""
 "challenge must return to the node that issued it, while session tokens "
 "and requirement tickets stay valid on every member."
 msgstr ""
+"En un clúster, ``Keys::bind_node`` sustituye la clave de desafío por "
+"BLAKE3 con esa clave sobre ``sibuna/challenge-node/v1`` y el "
+"identificador del nodo, de modo que un desafío debe volver al nodo que lo "
+"emitió, mientras que los tokens de sesión y los tickets de requisito "
+"siguen siendo válidos en todos los miembros."
 
 #: ../../cryptography.rst:209
 msgid ""
@@ -443,16 +657,21 @@ msgid ""
 "of the master seed compromises every derived key. A cluster only has to "
 "agree on one seed."
 msgstr ""
+"La separación de dominios evita la reutilización accidental entre "
+"propósitos; comprometer la semilla maestra compromete todas las claves "
+"derivadas. Un clúster solo tiene que ponerse de acuerdo en una semilla."
 
 #: ../../cryptography.rst:211
 msgid "Stateless Challenges"
-msgstr ""
+msgstr "Desafíos sin estado"
 
 #: ../../cryptography.rst:215
 msgid ""
 "Wire formats of the challenge identifier and the session token (field "
 "widths in bytes)."
 msgstr ""
+"Formatos de transmisión del identificador de desafío y del token de "
+"sesión (anchos de campo en bytes)."
 
 #: ../../cryptography.rst:233
 msgid ""
@@ -465,10 +684,18 @@ msgid ""
 "checks the fingerprint against the submitting client, and only then "
 "examines the proof."
 msgstr ""
+"Un identificador de desafío es un registro autoautenticado: versión, "
+"algoritmo, dificultad, número de aperturas, hora de emisión, la huella "
+"con clave del cliente, un nonce derivado de la PRF y el hash de la regla "
+"de política que exigió el desafío, seguidos de una etiqueta de 16 bytes "
+"bajo la clave de desafío. Emitir uno no escribe nada. La verificación "
+"decodifica el registro, comprueba la etiqueta en tiempo constante, "
+"comprueba la antigüedad frente al TTL del desafío, comprueba la huella "
+"frente al cliente que lo envía y solo entonces examina la prueba."
 
 #: ../../cryptography.rst:235
 msgid "Lemma 4 (State grows only with paid work)"
-msgstr ""
+msgstr "Lema 4 (el estado solo crece con trabajo pagado)"
 
 #: ../../cryptography.rst:237
 msgid ""
@@ -481,6 +708,15 @@ msgid ""
 "valid solution when saturated. This is a state bound, not a lower bound "
 "on every adversary's computational strategy."
 msgstr ""
+"Sea :math:`S` el conjunto de etiquetas de desafío que recuerda el daemon. "
+"Una etiqueta entra en :math:`S` solo después de aceptarse una prueba "
+"válida para ella, y sale tras el TTL del desafío. Por tanto, :math:`|S| "
+"\\le r \\cdot \\mathrm{TTL}` cuando :math:`r` acota la tasa de soluciones "
+"distintas aceptadas en ese intervalo. No se reserva ninguna etiqueta al "
+"obtener gratis un desafío. La implementación también tiene una capacidad "
+"fija y puede rechazar una solución válida cuando está saturada. Es una "
+"cota sobre el estado, no una cota inferior sobre la estrategia de cálculo "
+"de cualquier adversario."
 
 #: ../../cryptography.rst:239
 msgid ""
@@ -489,10 +725,16 @@ msgid ""
 "User-Agent, length-separated so no two inputs collide by concatenation, "
 "and keyed so fingerprints of other clients cannot be computed offline."
 msgstr ""
+"El conjunto de gastados está formado por 16 particiones de "
+"direccionamiento abierto Robin Hood sobre las etiquetas de 16 bytes "
+"(parte V). La huella es un hash con clave de la dirección del cliente y "
+"del User-Agent, con separación de longitudes para que dos entradas no "
+"colisionen por concatenación, y con clave para que no puedan calcularse "
+"sin conexión las huellas de otros clientes."
 
 #: ../../cryptography.rst:241
 msgid "Exercise 3.3"
-msgstr ""
+msgstr "Ejercicio 3.3"
 
 #: ../../cryptography.rst:243
 msgid ""
@@ -500,6 +742,10 @@ msgid ""
 "``rule_hash``, and ``fingerprint``. Explain what each field prevents if "
 "it were removed, and why the tag must cover all five."
 msgstr ""
+"La carga útil de un token lleva un nivel de trabajo, ``timestamp``, "
+"``expiry``, ``rule_hash`` y ``fingerprint``. Explica qué impide cada "
+"campo, es decir, qué ocurriría si se eliminara, y por qué la etiqueta "
+"debe cubrir los cinco."
 
 #: ../../cryptography.rst:247
 msgid ""
@@ -507,3 +753,6 @@ msgid ""
 "stronger\". Explain the trust-domain argument, the cost difference, and "
 "the post-quantum consideration."
 msgstr ""
+"Un compañero propone cambiar todos los tokens a Ed25519 \"porque es más "
+"fuerte\". Explica el argumento del dominio de confianza, la diferencia de "
+"coste y la consideración poscuántica."

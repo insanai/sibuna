@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:18+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../zero-allocation.rst:1
 msgid "Part V: Zero-Allocation Engineering in Rust"
-msgstr ""
+msgstr "Parte V: Ingeniería sin asignaciones en Rust"
 
 #: ../../zero-allocation.rst:4
 msgid ""
@@ -30,14 +30,21 @@ msgid ""
 "arenas, descriptor tables, teardown chains), we show how Rust ownership "
 "provides it instead."
 msgstr ""
+"Seguimos una conexión desde la aceptación hasta la respuesta a través de "
+"un único búfer fijo, y examinamos las estructuras de datos concurrentes "
+"que permiten a muchos hilos de conexión compartir estado sin asignaciones "
+"en el heap en la ruta de la petición. Donde la seguridad de memoria "
+"necesitaría de otro modo una maquinaria propia (contadores de lectores, "
+"arenas, tablas de descriptores, cadenas de desmontaje), mostramos cómo la "
+"proporciona en su lugar el sistema de propiedad de Rust."
 
 #: ../../zero-allocation.rst:6
 msgid "The Connection Loop"
-msgstr ""
+msgstr "El bucle de conexión"
 
 #: ../../zero-allocation.rst:9 ../../zero-allocation.rst:388
 msgid "Objectives"
-msgstr ""
+msgstr "Objetivos"
 
 #: ../../zero-allocation.rst:11
 msgid ""
@@ -48,10 +55,17 @@ msgid ""
 "connection can stay open, and which of these guarantees the borrow "
 "checker proves for us."
 msgstr ""
+"Al terminar este capítulo, deberíamos poder explicar cómo un único búfer "
+"de 64 KiB sirve a toda una conexión keep-alive, cómo se localizan el "
+"encabezado y el cuerpo sin copiarlos, por qué cada conexión recibe su "
+"propio hilo acotado, cómo averigua el proxy el delimitado del origen para "
+"que una conexión de cliente a través del proxy pueda seguir abierta, y "
+"cuáles de estas garantías demuestra por nosotros el comprobador de "
+"préstamos."
 
 #: ../../zero-allocation.rst:13
 msgid "One Thread per Connection, Bounded"
-msgstr ""
+msgstr "Un hilo por conexión, con un límite"
 
 #: ../../zero-allocation.rst:16
 msgid ""
@@ -69,6 +83,20 @@ msgid ""
 "workload, from 305 us to 857 us "
 "(``benchmarks/results/product-latest.md``; Part VIII)."
 msgstr ""
+"Los workers de aceptación (``--workers``, uno por CPU por defecto, 64 "
+"como máximo) comparten el socket de escucha. Cada conexión aceptada se "
+"entrega a un hilo propio con una pila de un megabyte, y el bucle de "
+"aceptación vuelve directamente a ``accept``. Un hilo que termina su "
+"conexión se aparca y toma la siguiente, porque crear y terminar un hilo "
+"para cada conexión detenía a los demás hilos (parte VIII, SID 0002). La "
+"alternativa, servir una conexión hasta el final en el hilo de aceptación, "
+"fue el primer diseño: daba buenas mediciones con un solo cliente y malas "
+"con sesenta y cuatro, porque sesenta de ellos esperaban a que un worker "
+"agotara su cuota de 256 peticiones, y la latencia de cola crecía con cada "
+"cliente en espera. Con un hilo por conexión, el p99 con 64 conexiones se "
+"mantiene por debajo de un milisegundo en todas las cargas de trabajo del "
+"producto completo, de 305 us a 857 us "
+"(``benchmarks/results/product-latest.md``; parte VIII)."
 
 #: ../../zero-allocation.rst:18
 msgid ""
@@ -77,10 +105,15 @@ msgid ""
 "``503 Service Unavailable`` on the new socket and closes it without "
 "spawning anything, and counts the event in ``sibuna_overloaded_total``."
 msgstr ""
+"El número de hilos de conexión está acotado por ``--max-connections`` "
+"(1,024 por defecto, 8,192 como máximo). Por encima del límite, el bucle "
+"de aceptación responde ``503 Service Unavailable`` en el nuevo socket y "
+"lo cierra sin lanzar nada, y cuenta el evento en "
+"``sibuna_overloaded_total``."
 
 #: ../../zero-allocation.rst:20
 msgid "Implementation: ``accept_loop``"
-msgstr ""
+msgstr "Implementación: ``accept_loop``"
 
 #: ../../zero-allocation.rst:22
 msgid ""
@@ -88,6 +121,9 @@ msgid ""
 "launches it on a thread of its own from the task pool. In "
 "``cmd/sibuna/src/server.rs`` (crate ``sibuna``)."
 msgstr ""
+"Acepta conexiones, comprueba cada una frente al límite de conexiones y la "
+"lanza en un hilo propio del conjunto de tareas. En "
+"``cmd/sibuna/src/server.rs`` (crate ``sibuna``)."
 
 #: ../../zero-allocation.rst:50
 msgid ""
@@ -97,6 +133,11 @@ msgid ""
 "side of the socket: closing a socket over unread bytes answers with a "
 "reset, and the reset would discard the ``503``."
 msgstr ""
+"``Counted`` es un guardián cuyo ``Drop`` devuelve el lugar de la conexión "
+"dentro del límite termine como termine el hilo, por retorno o por pánico. "
+"La ruta del ``503`` vacía lo que el cliente ya ha enviado antes de cerrar "
+"su lado del socket: cerrar un socket con bytes sin leer responde con un "
+"reset, y el reset descartaría el ``503``."
 
 #: ../../zero-allocation.rst:52
 msgid ""
@@ -110,6 +151,16 @@ msgid ""
 "``Finished``, marks the slot free when the task ends, so a panicking "
 "connection frees its slot too."
 msgstr ""
+"Los hilos proceden de un ``TaskPool`` (``cmd/sibuna/src/tasks.rs``), una "
+"tabla fija de ranuras que admiten join. Un hilo terminado conserva su "
+"pila hasta que se le hace join, así que a una ranura se le hace join "
+"cuando vuelve a tomarse, y una tarea nueva toma la ranura terminada *más "
+"baja* en lugar de avanzar un cursor. Un cursor solo volvería a una ranura "
+"terminada tras dar una vuelta completa a la tabla, dejando residentes "
+"miles de hilos terminados, y la memoria crecería con las conexiones "
+"servidas en lugar de con las conexiones abiertas. Un segundo guardián, "
+"``Finished``, marca la ranura como libre cuando la tarea termina, así que "
+"una conexión que entra en pánico también libera su ranura."
 
 #: ../../zero-allocation.rst:54
 msgid ""
@@ -120,10 +171,18 @@ msgid ""
 "client can open. The idle reaper (below) closes connections that stop "
 "sending, so a slow client cannot pin a thread past ``--idle-timeout``."
 msgstr ""
+"La memoria se acota del mismo modo. Un hilo de conexión guarda en su pila "
+"su búfer de lectura de 64 KiB y su búfer de escritura de 16 KiB, y en el "
+"heap un espacio de trabajo del proxy de 40 KiB, asignado una sola vez al "
+"empezar la conexión. El peor caso es, por tanto, un número conocido y no "
+"una función de cuántos sockets puede abrir un cliente. El recolector de "
+"conexiones inactivas (más adelante) cierra las conexiones que dejan de "
+"enviar, así que un cliente lento no puede retener un hilo más allá de "
+"``--idle-timeout``."
 
 #: ../../zero-allocation.rst:56
 msgid "One Buffer per Connection"
-msgstr ""
+msgstr "Un búfer por conexión"
 
 #: ../../zero-allocation.rst:59
 msgid ""
@@ -135,10 +194,18 @@ msgid ""
 "KiB read buffer and a 16 KiB write buffer for the life of the socket; "
 "everything else is a slice into them."
 msgstr ""
+"Cada asignación dinámica en la ruta de una petición es una palanca de "
+"denegación de servicio: fragmentación a lo largo de los días, contención "
+"del cerrojo del asignador entre hilos y amplificación por atacantes que "
+"fabrican peticiones para maximizar las asignaciones. La regla de Sibuna "
+"es absoluta: la clasificación, la verificación y la entrega al proxy se "
+"ejecutan con cero asignaciones en el heap. El manejador de la conexión "
+"posee un búfer de lectura de 64 KiB y un búfer de escritura de 16 KiB "
+"durante toda la vida del socket; todo lo demás es una porción de ellos."
 
 #: ../../zero-allocation.rst:61
 msgid "Implementation: ``connection::serve``"
-msgstr ""
+msgstr "Implementación: ``connection::serve``"
 
 #: ../../zero-allocation.rst:63
 msgid ""
@@ -146,6 +213,10 @@ msgid ""
 "proxy workspace and the engine cache once, and serves up to 4,096 "
 "requests. In ``cmd/sibuna/src/connection.rs`` (crate ``sibuna``)."
 msgstr ""
+"Registra la conexión en el recolector de conexiones inactivas, prepara "
+"una sola vez los búferes, el espacio de trabajo del proxy y la caché del "
+"motor, y sirve hasta 4,096 peticiones. En "
+"``cmd/sibuna/src/connection.rs`` (crate ``sibuna``)."
 
 #: ../../zero-allocation.rst:93
 msgid ""
@@ -164,16 +235,35 @@ msgid ""
 "response is framed and the body was fully buffered; the next sections "
 "show how the proxy decides."
 msgstr ""
+"``read_head`` llena el búfer hasta que aparece la línea en blanco, "
+"buscando solo en los bytes llegados desde la última búsqueda, y rechaza "
+"con ``431`` los encabezados de más de 16 KiB. ``parse_request`` (crate "
+"``sibuna-http``) produce un ``Request<'a>`` cuyos método, ruta, consulta, "
+"cabeceras y cookies son porciones del búfer. El cuerpo declarado se llena "
+"hasta donde cabe y se toma como porción tras el encabezado. Después, "
+"``reader.consume(head_len + body_len)`` hace avanzar el lector, de modo "
+"que la siguiente petición keep-alive empieza limpia; el lector solo mueve "
+"los bytes no leídos al principio cuando necesita espacio. Un cuerpo "
+"chunked se decodifica in situ detrás del encabezado (SID 0009): el "
+"delimitado de cada paso se recorta del búfer, de modo que el prefijo "
+"decodificado sigue siendo contiguo para la inspección. Las rutas internas "
+"están delimitadas por longitud y mantienen abierta la conexión. Las "
+"peticiones a través del proxy también la mantienen abierta, siempre que "
+"la respuesta del origen esté delimitada y el cuerpo se haya almacenado "
+"entero en el búfer; las secciones siguientes muestran cómo decide el "
+"proxy."
 
 #: ../../zero-allocation.rst:96
 msgid ""
 "The connection's read buffer while one request is served. Every field of "
 "the request is a slice of it."
 msgstr ""
+"El búfer de lectura de la conexión mientras se sirve una petición. Cada "
+"campo de la petición es una porción de él."
 
 #: ../../zero-allocation.rst:143
 msgid "What the borrow checker proves"
-msgstr ""
+msgstr "Lo que demuestra el comprobador de préstamos"
 
 #: ../../zero-allocation.rst:145
 msgid ""
@@ -186,6 +276,14 @@ msgid ""
 "call returns may ``reader.consume`` run; writing them the other way round "
 "does not compile."
 msgstr ""
+"Las porciones de la petición solo son válidas hasta el siguiente llenado "
+"del búfer. Sibuna expresa esa regla como un tipo, no como un comentario: "
+"la petición es un ``Request<'a>``, y ``'a`` es un préstamo compartido del "
+"búfer del lector. Llenar o consumir el búfer necesita ``&mut reader``, "
+"que el compilador rechaza mientras siga en uso un ``Request`` tomado "
+"prestado de él. En ``serve_one`` la petición se mueve a ``dispatch``, y "
+"solo cuando esa llamada vuelve puede ejecutarse ``reader.consume``; "
+"escribirlas en el orden inverso no compila."
 
 #: ../../zero-allocation.rst:147
 msgid ""
@@ -202,10 +300,24 @@ msgid ""
 "Because it cannot hand back what it read, the client connection is kept "
 "only when the body was fully buffered."
 msgstr ""
+"La misma regla explica dos decisiones que a primera vista parecen "
+"extrañas. Primero, ``serve_with_body`` analiza el encabezado una segunda "
+"vez. El primer análisis debe terminar su préstamo antes de almacenar el "
+"cuerpo en el búfer, porque almacenar un cuerpo chunked mueve bytes dentro "
+"del búfer; el segundo análisis toma prestado el búfer ya estable. El "
+"análisis es determinista y tarda unos 133 ns para una petición de "
+"navegador con una cookie (``zero_copy_request_and_cookie``, 132.5 ns, en "
+"``benchmarks/results/primitives-latest.md``), así que el segundo análisis "
+"cuesta poco y da el mismo veredicto. Segundo, el proxy toma prestados la "
+"petición analizada y los bytes pendientes y no debe volver a llenar el "
+"búfer de la conexión, así que lee los bytes adicionales del cliente en un "
+"búfer de subida propio. Como no puede devolver lo que ha leído, la "
+"conexión del cliente solo se conserva cuando el cuerpo se almacenó entero "
+"en el búfer."
 
 #: ../../zero-allocation.rst:149
 msgid "The Proxy Head Rewrite"
-msgstr ""
+msgstr "La reescritura del encabezado en el proxy"
 
 #: ../../zero-allocation.rst:152
 msgid ""
@@ -221,6 +333,18 @@ msgid ""
 "and every field the request's ``Connection`` header nominates. It then "
 "appends the audit set. Body framing is generated, never copied:"
 msgstr ""
+"El encabezado no se reenvía literalmente. ``write_request_head`` "
+"(``crates/net/src/request.rs``, crate ``sibuna-net``) vuelve a emitir la "
+"línea de petición y cada cabecera hacia el escritor del origen, "
+"descartando los campos salto a salto (``Connection``, ``Keep-Alive``, "
+"``Proxy-Connection``, ``Transfer-Encoding``, ``TE``, ``Trailer``, "
+"``Upgrade``, los campos de autorización del proxy), cualquier campo de "
+"reenvío o de auditoría entrante (``X-Forwarded-For``, ``X-Real-IP``, "
+"``Forwarded``, ``X-Forwarded-Proto``, ``X-Forwarded-Host``, "
+"``X-Forwarded-Port``, ``X-Sibuna-Status``, ``X-Sibuna-Rule``), "
+"``Expect``, ``Content-Length`` y cada campo que nombre la cabecera "
+"``Connection`` de la petición. Después añade el conjunto de auditoría. El "
+"delimitado del cuerpo se genera, nunca se copia:"
 
 #: ../../zero-allocation.rst:175
 msgid ""
@@ -232,6 +356,14 @@ msgid ""
 "so the origin never sees the client's chunk sizes, extensions or "
 "trailers. The audit set:"
 msgstr ""
+"Un ``Content-Length`` se vuelve a emitir. Un cuerpo chunked que terminó "
+"dentro del búfer de la conexión se decodifica in situ y se envía con su "
+"longitud. Uno más largo se anuncia como ``Transfer-Encoding: chunked`` y "
+"se vuelve a dividir en chunks lectura a lectura (SID 0009): cada lectura "
+"cae en el búfer de subida de 16 KiB del proxy, se decodifica allí in situ "
+"y sale como un chunk canónico, de modo que el origen nunca ve los tamaños "
+"de chunk, las extensiones ni los trailers del cliente. El conjunto de "
+"auditoría:"
 
 #: ../../zero-allocation.rst:186
 msgid ""
@@ -242,6 +374,12 @@ msgid ""
 "in ``crates/net/src/request.rs`` asserts that the rewrite drops a spoofed "
 "``X-Forwarded-For`` and injects the audit fields."
 msgstr ""
+"Los cuerpos mayores que el búfer se retransmiten en piezas de 16 KiB del "
+"cliente al escritor del origen (``relay_body``) antes de devolver la "
+"respuesta en streaming. La prueba unitaria "
+"``proxy_head_rewrite_drops_hop_by_hop_headers_and_injects_audit_fields`` "
+"de ``crates/net/src/request.rs`` comprueba que la reescritura descarta un "
+"``X-Forwarded-For`` falsificado e inyecta los campos de auditoría."
 
 #: ../../zero-allocation.rst:188
 msgid ""
@@ -252,10 +390,17 @@ msgid ""
 "the exchange's, and the origin reader and writer borrow them for one "
 "exchange at a time."
 msgstr ""
+"Los tres búferes del proxy, el búfer de lectura del origen (un encabezado "
+"de respuesta, 16 KiB), el búfer de escritura del origen (8 KiB) y el "
+"búfer de subida (16 KiB), viven en un ``Workspace`` que la conexión "
+"asigna una sola vez y reutiliza en cada petición. El espacio de trabajo "
+"hace que su vida útil sea la de la conexión, no la del intercambio, y el "
+"lector y el escritor del origen los toman prestados para un intercambio "
+"cada vez."
 
 #: ../../zero-allocation.rst:190
 msgid "Relaying the Origin Response"
-msgstr ""
+msgstr "Retransmisión de la respuesta del origen"
 
 #: ../../zero-allocation.rst:193
 msgid ""
@@ -266,10 +411,17 @@ msgid ""
 "on loopback, exhausted ephemeral ports. The proxy now reads the origin's "
 "head (at most 16 KiB) and classifies the body by RFC 9112's rules:"
 msgstr ""
+"El primer proxy transmitía los bytes del origen hasta que este cerraba y "
+"después cerraba el cliente: un delimitado correcto sin análisis, al "
+"precio de una conexión TCP nueva por cada petición a través del proxy. "
+"Bajo un generador de carga, ese precio se veía como decenas de miles de "
+"sockets en ``TIME_WAIT`` y, en loopback, como puertos efímeros agotados. "
+"Ahora el proxy lee el encabezado del origen (16 KiB como máximo) y "
+"clasifica el cuerpo según las reglas de RFC 9112:"
 
 #: ../../zero-allocation.rst:195
 msgid "Implementation: ``parse_response_head``"
-msgstr ""
+msgstr "Implementación: ``parse_response_head``"
 
 #: ../../zero-allocation.rst:197
 msgid ""
@@ -278,6 +430,10 @@ msgid ""
 "and whether the origin keeps the connection. In "
 "``crates/net/src/response.rs`` (crate ``sibuna-net``)."
 msgstr ""
+"Devuelve el estado, uno de cuatro delimitados (sin cuerpo para HEAD, 1xx, "
+"204 y 304; un ``Content-Length``; codificación de transferencia chunked; "
+"o delimitado por cierre) y si el origen mantiene la conexión. En "
+"``crates/net/src/response.rs`` (crate ``sibuna-net``)."
 
 #: ../../zero-allocation.rst:235
 msgid ""
@@ -287,6 +443,12 @@ msgid ""
 "field that nominates ``Content-Length`` or ``Transfer-Encoding``. Its "
 "work is linear in the head, and it never panics."
 msgstr ""
+"El analizador rechaza lo que el proxy no debe retransmitir: una línea de "
+"estado incorrecta, un nombre de campo que no es un token, un byte de "
+"control en un valor, longitudes contradictorias, una codificación "
+"``chunked`` repetida o que no es la última, y un campo ``Connection`` que "
+"nombra ``Content-Length`` o ``Transfer-Encoding``. Su trabajo es lineal "
+"en el encabezado y nunca entra en pánico."
 
 #: ../../zero-allocation.rst:237
 msgid ""
@@ -300,6 +462,16 @@ msgid ""
 "writes is therefore delivered as it is produced, while a bulk transfer "
 "still moves a full buffer per read and write."
 msgstr ""
+"El encabezado se vuelve a emitir hacia el cliente con las cabeceras "
+"``Connection`` del origen sustituidas por la decisión propia de Sibuna, y "
+"el cuerpo se retransmite con exactitud: ``copy_exact`` para una longitud, "
+"chunk a chunk (línea de tamaño, datos, trailers) para la codificación "
+"chunked, ``copy_remaining`` para el caso heredado. Solo el caso heredado "
+"cierra el cliente. Toda retransmisión se basa en un único paso de copia: "
+"reenviar lo que la fuente ya tenga y, solo cuando no tenga nada, vaciar "
+"el destino y después leer una vez. Así, un flujo de escrituras pequeñas "
+"se entrega a medida que se produce, mientras que una transferencia masiva "
+"sigue moviendo un búfer completo por lectura y escritura."
 
 #: ../../zero-allocation.rst:253
 msgid ""
@@ -307,10 +479,14 @@ msgid ""
 "with a 1 KiB response proxied over loopback takes 29.8 us (measured in "
 "October 2026; ``crates/net/src/lib.rs`` documents the measurement)."
 msgstr ""
+"Analizar un encabezado de origen de ocho campos tarda 322 ns, y un "
+"``GET`` keep-alive con una respuesta de 1 KiB a través del proxy por "
+"loopback tarda 29.8 us (medido en octubre de 2026; "
+"``crates/net/src/lib.rs`` documenta la medición)."
 
 #: ../../zero-allocation.rst:255
 msgid "The Origin Pool"
-msgstr ""
+msgstr "El conjunto de conexiones al origen"
 
 #: ../../zero-allocation.rst:258
 msgid ""
@@ -324,6 +500,16 @@ msgid ""
 "in ``TIME_WAIT``; under load a proxy on loopback soon runs out of "
 "ephemeral ports, and its throughput collapses."
 msgstr ""
+"Analizar el delimitado también le dice al proxy si el socket del *origen* "
+"puede volver a usarse: una respuesta HTTP/1.1 sin ``Connection: close`` "
+"(o una HTTP/1.0 con ``keep-alive``) cuyo cuerpo se consumió entero deja "
+"el socket en una frontera limpia entre peticiones. Esos sockets van a un "
+"conjunto fijo de 256 conexiones inactivas al origen, y la siguiente "
+"petición a través del proxy toma una en lugar de conectar. Sin el "
+"conjunto, cada petición a través del proxy abre una conexión nueva al "
+"origen, y cada conexión cerrada retiene su puerto local en ``TIME_WAIT``; "
+"bajo carga, un proxy en loopback se queda pronto sin puertos efímeros y "
+"su rendimiento se desploma."
 
 #: ../../zero-allocation.rst:260
 msgid ""
@@ -334,6 +520,14 @@ msgid ""
 "gives to and takes from it first, and looks into the other stripes, "
 "without waiting on a held lock, before it connects afresh."
 msgstr ""
+"Un conjunto bajo un único cerrojo haría que todas las peticiones a través "
+"del proxy compitieran por ese cerrojo. Por eso el conjunto "
+"(``crates/net/src/pool.rs``) está dividido en franjas: 16 franjas de 16 "
+"sockets, cada una un ``Mutex<Vec<Arc<TcpStream>>>`` en su propia línea de "
+"caché. A cada hilo se le asigna una franja propia por turno rotatorio en "
+"su primer uso; deposita y toma primero de ella, y mira en las demás "
+"franjas, sin esperar a un cerrojo ocupado, antes de abrir una conexión "
+"nueva."
 
 #: ../../zero-allocation.rst:280
 msgid ""
@@ -350,6 +544,20 @@ msgid ""
 "relayed in pieces cannot be sent again; in both cases the client gets "
 "``502``."
 msgstr ""
+"Puede que el origen haya cerrado un socket del conjunto mientras estaba "
+"inactivo. El proxy lo detecta de una de dos maneras, una escritura "
+"fallida o un fin de flujo antes del primer byte de la respuesta, y en "
+"ambos casos todavía no ha llegado nada al cliente, así que cierra el "
+"socket y reintenta una vez con una conexión nueva, nunca con otra del "
+"conjunto: tras un periodo de inactividad todos los sockets del conjunto "
+"pueden estar caducados, y la primera versión de este reintento, que "
+"tomaba un segundo socket del conjunto, respondía ``502`` a la primera "
+"petición después de cada periodo de calma. El reintento solo se permite "
+"para un método seguro (``GET``, ``HEAD``, ``OPTIONS``) cuyo cuerpo se "
+"almacenó entero en el búfer. La falta de respuesta no demuestra que el "
+"origen no haya consolidado una modificación, y un cuerpo retransmitido "
+"por piezas no puede volver a enviarse; en ambos casos el cliente recibe "
+"``502``."
 
 #: ../../zero-allocation.rst:312
 msgid ""
@@ -362,10 +570,20 @@ msgid ""
 "recorded proxy scenarios (a raw client request and a canned origin "
 "response) and compares every byte the origin and the client receive."
 msgstr ""
+"Las pruebas unitarias retransmiten cadenas de bytes fijas a través de las "
+"mismas funciones y comprueban que la salida es idéntica byte a byte salvo "
+"la cabecera de conexión (``crates/net/src/relay/tests.rs``). Una prueba "
+"de extremo a extremo del daemon envía dos peticiones a través del proxy "
+"por un mismo socket de cliente y comprueba, mediante una cabecera de "
+"secuencia que añade el origen simulado, que la segunda reutilizó la "
+"conexión al origen del conjunto. Una prueba de vectores en "
+"``crates/net/tests/`` reproduce escenarios de proxy grabados (una "
+"petición de cliente en bruto y una respuesta de origen predefinida) y "
+"compara cada byte que reciben el origen y el cliente."
 
 #: ../../zero-allocation.rst:314
 msgid "Why the origin socket is an ``Arc``"
-msgstr ""
+msgstr "Por qué el socket del origen es un ``Arc``"
 
 #: ../../zero-allocation.rst:316
 msgid ""
@@ -380,10 +598,21 @@ msgid ""
 "last handle is dropped, so it cannot close, or be reused, while anyone "
 "can still reach it."
 msgstr ""
+"Un descriptor de socket es un entero pequeño que el kernel reutiliza en "
+"cuanto se cierra. El apagado debe interrumpir un intercambio en curso, "
+"pero nunca debe tocar un descriptor que entretanto se haya reutilizado "
+"para otra conexión. Una tabla de descriptores activos bajo un cerrojo "
+"podría protegerlo, al precio de un cerrojo en cada intercambio. Sibuna no "
+"necesita esa tabla: el socket del origen es un ``Arc<TcpStream>``. El "
+"conjunto guarda un manejador, el intercambio guarda otro, y la "
+"``Activity`` de la conexión guarda un clon mientras dura el intercambio. "
+"El descriptor se cierra cuando se suelta el último manejador, así que no "
+"puede cerrarse, ni reutilizarse, mientras alguien pueda alcanzarlo "
+"todavía."
 
 #: ../../zero-allocation.rst:318
 msgid "Idle Deadlines"
-msgstr ""
+msgstr "Plazos de inactividad"
 
 #: ../../zero-allocation.rst:321
 msgid ""
@@ -398,6 +627,16 @@ msgid ""
 "attached origin socket, so the thread blocked on either side sees end of "
 "stream and releases its slot."
 msgstr ""
+"Cada conexión de cliente registra su socket en una ``IdleTable`` "
+"(``crates/net/src/idle.rs``) y recibe un ``Lease``. La ``Activity`` del "
+"lease guarda el momento en que se movieron bytes por última vez en la "
+"conexión. El daemon la actualiza tras servir cada petición; el proxy la "
+"actualiza en cada lectura del origen y por cada 16 KiB de subida, y "
+"adjunta el socket del origen del intercambio en curso. El hilo recolector "
+"se despierta cada cuarto del plazo más corto (entre 200 ms y un segundo) "
+"y cierra toda conexión silenciosa durante más tiempo que su plazo, junto "
+"con el socket del origen adjunto, de modo que el hilo bloqueado en "
+"cualquiera de los dos lados ve el fin del flujo y libera su ranura."
 
 #: ../../zero-allocation.rst:323
 msgid ""
@@ -407,6 +646,12 @@ msgid ""
 "for at least 16 KiB per idle period, the slow-body defence of "
 "minimum-rate request timeouts."
 msgstr ""
+"Por tanto, los plazos miden el silencio, nunca la duración de una "
+"respuesta: una descarga grande que sigue avanzando nunca se corta. Los "
+"bytes de subida vienen del lado no fiable y solo renuevan la marca de "
+"tiempo cada 16 KiB, lo que exige al cliente al menos 16 KiB por periodo "
+"de inactividad: la defensa contra cuerpos lentos de los plazos de "
+"petición con tasa mínima."
 
 #: ../../zero-allocation.rst:325
 msgid ""
@@ -416,10 +661,16 @@ msgid ""
 "connection in ``Drop``, and a reaped slot stays owned by its lease until "
 "then, so an old connection can never release a slot that a new one took."
 msgstr ""
+"La tabla tiene un pequeño cerrojo por ranura y ningún cerrojo para toda "
+"la tabla. Guarda un ``try_clone`` de cada socket de cliente y un ``Arc`` "
+"de cada socket de origen adjunto, por el motivo explicado arriba. Un "
+"``Lease`` da de baja su conexión en ``Drop``, y una ranura recolectada "
+"sigue perteneciendo a su lease hasta entonces, así que una conexión "
+"antigua nunca puede liberar una ranura que haya tomado una nueva."
 
 #: ../../zero-allocation.rst:327
 msgid "Upgraded Connections"
-msgstr ""
+msgstr "Conexiones actualizadas"
 
 #: ../../zero-allocation.rst:330
 msgid ""
@@ -433,6 +684,16 @@ msgid ""
 "threads, so the number of connection threads can reach twice "
 "``--max-connections`` when every connection is upgraded."
 msgstr ""
+"Tras un ``101`` validado, una actualización a WebSocket se retransmite en "
+"ambos sentidos. Cada sentido se ejecuta en un hilo propio con un único "
+"búfer fijo: el propio hilo de la conexión lleva los bytes del origen al "
+"cliente, y un hilo con ámbito con una pila de 128 KiB lleva los bytes del "
+"cliente al origen. Un solo hilo podría servir ambos sentidos con "
+"``poll(2)``, pero la biblioteca estándar de Rust no lo expone; dos hilos "
+"con plazos de socket mantienen la retransmisión libre de ``unsafe``. Una "
+"conexión actualizada ocupa, por tanto, dos hilos, así que el número de "
+"hilos de conexión puede llegar al doble de ``--max-connections`` cuando "
+"todas las conexiones están actualizadas."
 
 #: ../../zero-allocation.rst:332
 msgid ""
@@ -446,10 +707,21 @@ msgid ""
 "is proxied, the connection releases its cached policy engine, so a "
 "connection that may live for hours does not keep an old engine alive."
 msgstr ""
+"Ambos sentidos comparten un mismo plazo de inactividad "
+"(``--websocket-idle-timeout``, 300 segundos por defecto): los bytes que "
+"se mueven en cualquier sentido renuevan una única marca de tiempo. Cada "
+"espera en un socket lleva un plazo igual al tiempo restante; una espera "
+"que vence vuelve a leer la marca compartida y espera de nuevo el resto o "
+"termina la retransmisión. Cuando un sentido llega al fin del flujo, se "
+"cierra el lado de envío del otro socket (un cierre parcial); cuando un "
+"sentido falla, se cierran ambos sockets para que el otro sentido también "
+"termine. Antes de pasar una actualización por el proxy, la conexión "
+"libera su motor de políticas en caché, para que una conexión que puede "
+"vivir horas no mantenga vivo un motor antiguo."
 
 #: ../../zero-allocation.rst:334
 msgid "Stopping"
-msgstr ""
+msgstr "Parada"
 
 #: ../../zero-allocation.rst:337
 msgid ""
@@ -460,6 +732,13 @@ msgid ""
 "(``IdleTable::shutdown``), stops the origin pool, joins every connection "
 "thread, joins the reaper, and closes the pooled sockets."
 msgstr ""
+"``Running::stop``, e igualmente ``Drop`` para ``Running``, detiene el "
+"daemon en un orden fijo. Activa el indicador de parada y despierta a cada "
+"worker de aceptación conectándose al listener, hace join de los workers, "
+"cierra cada socket de cliente registrado y su socket de origen adjunto "
+"(``IdleTable::shutdown``), detiene el conjunto de conexiones al origen, "
+"hace join de cada hilo de conexión, hace join del recolector y cierra los "
+"sockets del conjunto."
 
 #: ../../zero-allocation.rst:339
 msgid ""
@@ -472,10 +751,18 @@ msgid ""
 "the declarations of the few C library functions that ``std`` does not "
 "wrap."
 msgstr ""
+"SIGINT y SIGTERM llegan a esa secuencia mediante Rust ordinario. Antes de "
+"lanzar ningún hilo, el daemon bloquea ambas señales (todos los hilos "
+"posteriores heredan la máscara) y dedica un hilo a ``sigwait``, que "
+"registra la petición y despierta de inmediato al hilo principal. No se "
+"ejecuta código en un manejador de señales, y ningún hilo consulta un "
+"indicador en bucle. El módulo de señales (``cmd/sibuna/src/signals.rs``) "
+"contiene el único código ``unsafe`` del daemon: las declaraciones de las "
+"pocas funciones de la biblioteca de C que ``std`` no envuelve."
 
 #: ../../zero-allocation.rst:341
 msgid "Release by ``Drop``"
-msgstr ""
+msgstr "Liberación mediante ``Drop``"
 
 #: ../../zero-allocation.rst:343
 msgid ""
@@ -487,10 +774,18 @@ msgid ""
 "inserts each release on every path out of the scope, including a panic "
 "unwinding through it, so no path can forget one."
 msgstr ""
+"Las llamadas explícitas de limpieza deben escribirse en orden inverso a "
+"la preparación, y cada retorno anticipado debe leerse teniéndolas en "
+"cuenta. En Sibuna, cada recurso se libera a sí mismo en ``Drop``: "
+"``Daemon`` y ``Running`` detienen el servidor, un ``Lease`` da de baja su "
+"conexión, ``Counted`` devuelve un lugar dentro del límite de conexiones y "
+"``Finished`` libera una ranura de tarea. El compilador inserta cada "
+"liberación en todas las salidas del ámbito, incluido un pánico que se "
+"propaga a través de él, así que ningún camino puede olvidar una."
 
 #: ../../zero-allocation.rst:345
 msgid "What We Measured"
-msgstr ""
+msgstr "Lo que medimos"
 
 #: ../../zero-allocation.rst:348
 msgid ""
@@ -500,105 +795,111 @@ msgid ""
 "copied from ``benchmarks/results/product-latest.md``; Part VIII holds the "
 "full record."
 msgstr ""
+"La tabla muestra Shield en modo proxy inverso en un Ryzen 9 5950X: el "
+"daemon fijado a cuatro CPU, ``wrk`` con dos hilos y 64 conexiones en "
+"otras ocho CPU, ejecuciones de cinco segundos, la mediana de tres. Las "
+"filas se copian de ``benchmarks/results/product-latest.md``; la parte "
+"VIII contiene el registro completo."
 
 #: ../../zero-allocation.rst:350
 msgid ""
 "Shield in reverse-proxy mode, from "
 "``benchmarks/results/product-latest.md``"
 msgstr ""
+"Shield en modo proxy inverso, de ``benchmarks/results/product-latest.md``"
 
 #: ../../zero-allocation.rst:353 ../../zero-allocation.rst:404
 msgid "Workload"
-msgstr ""
+msgstr "Carga de trabajo"
 
 #: ../../zero-allocation.rst:354
 msgid "Status"
-msgstr ""
+msgstr "Estado"
 
 #: ../../zero-allocation.rst:355
 msgid "req/s"
-msgstr ""
+msgstr "req/s"
 
 #: ../../zero-allocation.rst:356
 msgid "p50 / p99 (us)"
-msgstr ""
+msgstr "p50 / p99 (us)"
 
 #: ../../zero-allocation.rst:357
 msgid "CPU per request (us)"
-msgstr ""
+msgstr "CPU por petición (us)"
 
 #: ../../zero-allocation.rst:358
 msgid "admitted with session, proxied"
-msgstr ""
+msgstr "admitida con sesión, a través del proxy"
 
 #: ../../zero-allocation.rst:359 ../../zero-allocation.rst:364
 #: ../../zero-allocation.rst:369
 msgid "200"
-msgstr ""
+msgstr "200"
 
 #: ../../zero-allocation.rst:360
 msgid "138,965"
-msgstr ""
+msgstr "138,965"
 
 #: ../../zero-allocation.rst:361
 msgid "438 / 857"
-msgstr ""
+msgstr "438 / 857"
 
 #: ../../zero-allocation.rst:362
 msgid "28.57"
-msgstr ""
+msgstr "28.57"
 
 #: ../../zero-allocation.rst:363
 msgid "challenged (interstitial)"
-msgstr ""
+msgstr "desafiada (página intermedia)"
 
 #: ../../zero-allocation.rst:365
 msgid "195,188"
-msgstr ""
+msgstr "195,188"
 
 #: ../../zero-allocation.rst:366
 msgid "162 / 328"
-msgstr ""
+msgstr "162 / 328"
 
 #: ../../zero-allocation.rst:367
 msgid "13.73"
-msgstr ""
+msgstr "13.73"
 
 #: ../../zero-allocation.rst:368
 msgid "static allowed, proxied"
-msgstr ""
+msgstr "estática permitida, a través del proxy"
 
 #: ../../zero-allocation.rst:370
 msgid "145,673"
-msgstr ""
+msgstr "145,673"
 
 #: ../../zero-allocation.rst:371
 msgid "415 / 746"
-msgstr ""
+msgstr "415 / 746"
 
 #: ../../zero-allocation.rst:372
 msgid "27.27"
-msgstr ""
+msgstr "27.27"
 
 #: ../../zero-allocation.rst:373
 msgid "WAF denied (with session)"
-msgstr ""
+msgstr "denegada por el WAF (con sesión)"
 
 #: ../../zero-allocation.rst:374
 msgid "403"
-msgstr ""
+msgstr "403"
 
 #: ../../zero-allocation.rst:375
 msgid "209,507"
-msgstr ""
+msgstr "209,507"
 
 #: ../../zero-allocation.rst:376
 msgid "151 / 306"
-msgstr ""
+msgstr "151 / 306"
 
 #: ../../zero-allocation.rst:377
 msgid "12.17"
-msgstr ""
+msgstr "12.17"
 
 #: ../../zero-allocation.rst:379
 msgid ""
@@ -616,10 +917,24 @@ msgid ""
 "daemon, and ``crates/net/tests/steady_state.rs`` finds none over 500 "
 "proxied keep-alive requests."
 msgstr ""
+"``wrk`` mantiene 64 peticiones en curso, así que en las rutas limitadas "
+"por CPU a través del proxy las peticiones hacen cola para las cuatro CPU, "
+"y el p99 en ellas es la cola del planificador, no el coste de una "
+"petición. Un generador de bucle abierto, que envía a una tasa fija y mide "
+"cada petición desde su envío previsto, mide en cambio la latencia con la "
+"misma carga ofrecida. Para las peticiones admitidas en modo proxy "
+"inverso, el p99 es de 65 us a 10,000 peticiones por segundo y de 100 us a "
+"100,000; con 150,000 ofrecidas, las cuatro CPU se saturan, se alcanzan "
+"134,344 peticiones por segundo y la cola crece hasta segundos "
+"(``benchmarks/results/latency-latest.md``). Una conexión keep-alive ya "
+"caliente sirve cada decisión sin una asignación en el heap: "
+"``cmd/sibuna/tests/steady_state.rs`` cuenta las asignaciones del daemon, "
+"y ``crates/net/tests/steady_state.rs`` no encuentra ninguna en 500 "
+"peticiones keep-alive a través del proxy."
 
 #: ../../zero-allocation.rst:381
 msgid "Exercise 5.1"
-msgstr ""
+msgstr "Ejercicio 5.1"
 
 #: ../../zero-allocation.rst:383
 msgid ""
@@ -627,10 +942,14 @@ msgid ""
 "buffer, which are relayed by ``relay_body`` through the upload buffer, "
 "and why the proxy must write the head to the origin *before* relaying."
 msgstr ""
+"Un cliente envía una subida de 200 KB. Sigue qué bytes viven en el búfer "
+"de 64 KiB, cuáles retransmite ``relay_body`` a través del búfer de subida "
+"y por qué el proxy debe escribir el encabezado hacia el origen *antes* de "
+"retransmitir."
 
 #: ../../zero-allocation.rst:385
 msgid "Concurrent State Without Allocation"
-msgstr ""
+msgstr "Estado concurrente sin asignaciones"
 
 #: ../../zero-allocation.rst:390
 msgid ""
@@ -639,6 +958,10 @@ msgid ""
 "publication of the policy engine with ``Arc`` and a generation-checked "
 "cache."
 msgstr ""
+"Analiza los cerrojos por partición, el conjunto Robin Hood de desafíos "
+"gastados, el limitador GCRA, la tabla versionada de bloqueos, el anillo "
+"MPSC de incidentes y la publicación read-copy-update del motor de "
+"políticas con ``Arc`` y una caché comprobada por generación."
 
 #: ../../zero-allocation.rst:392
 msgid ""
@@ -646,10 +969,14 @@ msgid ""
 "it is built, and never allocates or blocks on a global lock afterwards. "
 "None needs a background sweeper: expired state is reclaimed in place."
 msgstr ""
+"Cada almacén de ``sibuna-store`` asigna su capacidad fija una sola vez, "
+"al construirse, y después nunca asigna memoria ni se bloquea en un "
+"cerrojo global. Ninguno necesita un barrido en segundo plano: el estado "
+"caducado se recupera in situ."
 
 #: ../../zero-allocation.rst:394
 msgid "Locks and Sharding"
-msgstr ""
+msgstr "Cerrojos y particiones"
 
 #: ../../zero-allocation.rst:397
 msgid ""
@@ -659,6 +986,12 @@ msgid ""
 ":math:`1/16`, and each shard sits on a cache line of its own, so "
 "neighbouring locks do not false-share."
 msgstr ""
+"Las secciones críticas de las tablas de Sibuna tienen decenas de "
+"instrucciones, mucho menos que un viaje de ida y vuelta de un futex del "
+"kernel. Las tablas se dividen en 16 particiones según el hash de la "
+"clave, de modo que dos operaciones compiten con probabilidad "
+":math:`1/16`, y cada partición ocupa su propia línea de caché, de modo "
+"que los cerrojos vecinos no sufren compartición falsa."
 
 #: ../../zero-allocation.rst:399
 msgid ""
@@ -669,66 +1002,75 @@ msgid ""
 "spin lock saves about a nanosecond per uncontended operation, but it "
 "loses under contention:"
 msgstr ""
+"Las tablas usan ``std::sync::Mutex``: una comparación e intercambio sin "
+"contención, una breve espera activa mientras el titular se ejecuta y "
+"después una espera en futex. La alternativa es un spin lock atómico de "
+"dos estados con una indicación de bucle de espera en el bucle de espera. "
+"SID 0010 nos pidió elegir entre ambos midiendo. Un spin lock ahorra "
+"alrededor de un nanosegundo por operación sin contención, pero pierde con "
+"contención:"
 
 #: ../../zero-allocation.rst:401
 msgid "Shard lock throughput on a Ryzen 9 5950X (October 2026)"
 msgstr ""
+"Rendimiento de los cerrojos de partición en un Ryzen 9 5950X (octubre de "
+"2026)"
 
 #: ../../zero-allocation.rst:405
 msgid "``Mutex``"
-msgstr ""
+msgstr "``Mutex``"
 
 #: ../../zero-allocation.rst:406
 msgid "Spin lock"
-msgstr ""
+msgstr "Spin lock"
 
 #: ../../zero-allocation.rst:407
 msgid "spent set, 16 threads"
-msgstr ""
+msgstr "conjunto de desafíos gastados, 16 hilos"
 
 #: ../../zero-allocation.rst:408
 msgid "10.8 M/s"
-msgstr ""
+msgstr "10.8 M/s"
 
 #: ../../zero-allocation.rst:409
 msgid "8.6 M/s"
-msgstr ""
+msgstr "8.6 M/s"
 
 #: ../../zero-allocation.rst:410
 msgid "spent set, 64 threads (more than the CPUs)"
-msgstr ""
+msgstr "conjunto de desafíos gastados, 64 hilos (más que CPU)"
 
 #: ../../zero-allocation.rst:411
 msgid "11.2 M/s"
-msgstr ""
+msgstr "11.2 M/s"
 
 #: ../../zero-allocation.rst:412
 msgid "6.9 M/s"
-msgstr ""
+msgstr "6.9 M/s"
 
 #: ../../zero-allocation.rst:413
 msgid "GCRA on six hot addresses, 16 threads"
-msgstr ""
+msgstr "GCRA sobre seis direcciones calientes, 16 hilos"
 
 #: ../../zero-allocation.rst:414
 msgid "44.9 M/s"
-msgstr ""
+msgstr "44.9 M/s"
 
 #: ../../zero-allocation.rst:415
 msgid "19.3 M/s"
-msgstr ""
+msgstr "19.3 M/s"
 
 #: ../../zero-allocation.rst:416
 msgid "GCRA on six hot addresses, 64 threads"
-msgstr ""
+msgstr "GCRA sobre seis direcciones calientes, 64 hilos"
 
 #: ../../zero-allocation.rst:417
 msgid "37.4 M/s"
-msgstr ""
+msgstr "37.4 M/s"
 
 #: ../../zero-allocation.rst:418
 msgid "6.5 M/s"
-msgstr ""
+msgstr "6.5 M/s"
 
 #: ../../zero-allocation.rst:420
 msgid ""
@@ -738,10 +1080,16 @@ msgid ""
 "operation panics while it holds a shard, and the shard stays structurally "
 "valid even if one did."
 msgstr ""
+"Un servidor de borde ejecuta más hilos de conexión que CPU, y un spin "
+"lock cuyo titular es desalojado hace que cada hilo en espera consuma su "
+"porción de tiempo, así que mantenemos el mutex. En un cerrojo envenenado "
+"se entra en lugar de propagar el envenenamiento: ninguna operación entra "
+"en pánico mientras tiene una partición, y la partición sigue siendo "
+"estructuralmente válida aunque alguna lo hiciera."
 
 #: ../../zero-allocation.rst:422
 msgid "The Robin Hood Spent Set"
-msgstr ""
+msgstr "El conjunto Robin Hood de desafíos gastados"
 
 #: ../../zero-allocation.rst:425
 msgid ""
@@ -753,16 +1101,27 @@ msgid ""
 "stop as soon as they meet an entry nearer its home than they are to "
 "theirs."
 msgstr ""
+"Solo las pruebas aceptadas entran en el conjunto de desafíos gastados "
+"(parte III). Tiene 16 particiones, cada una un array de direccionamiento "
+"abierto de 4,096 ranuras de ``Option<Entry>``, donde una entrada es ``{ "
+"tag: [u8; 16], expires_at: u64, dist: u8 }``. La inserción Robin Hood "
+"(Celis, 1986) desplaza a cualquier ocupante más cercano a su posición "
+"inicial que la clave entrante, lo que mantiene muy agrupadas las "
+"longitudes de sondeo; las búsquedas se detienen en cuanto encuentran una "
+"entrada más cerca de su posición inicial de lo que ellas están de la suya."
 
 #: ../../zero-allocation.rst:427
 msgid "Implementation: ``Table::insert``"
-msgstr ""
+msgstr "Implementación: ``Table::insert``"
 
 #: ../../zero-allocation.rst:429
 msgid ""
 "Inserts a spent tag with its expiry, reclaiming expired slots on the way. "
 "In ``crates/store/src/spent.rs`` (crate ``sibuna-store``)."
 msgstr ""
+"Inserta una etiqueta gastada con su caducidad y recupera por el camino "
+"las ranuras caducadas. En ``crates/store/src/spent.rs`` (crate "
+"``sibuna-store``)."
 
 #: ../../zero-allocation.rst:470
 msgid ""
@@ -774,10 +1133,18 @@ msgid ""
 "changing anything (``can_insert``) and checks that bounded displacement "
 "can succeed without losing a live tag."
 msgstr ""
+"La regla de las ranuras caducadas es la parte sutil: una entrada caducada "
+"solo puede sobrescribirse in situ con una clave al menos igual de lejos "
+"de su posición inicial; de lo contrario, una clave posterior que sondee "
+"más allá de la ranura se detendría antes de tiempo y se perdería. Las "
+"entradas caducadas que resultan desplazadas simplemente se descartan. No "
+"hace falta ningún hilo de barrido. La inserción simula primero el camino "
+"de desplazamiento sin cambiar nada (``can_insert``) y comprueba que el "
+"desplazamiento acotado puede tener éxito sin perder una etiqueta vigente."
 
 #: ../../zero-allocation.rst:472 ../../zero-allocation.rst:701
 msgid "Invariant"
-msgstr ""
+msgstr "Invariante"
 
 #: ../../zero-allocation.rst:474
 msgid ""
@@ -785,6 +1152,10 @@ msgid ""
 "not expired is therefore always found, and the refusal "
 "(``SpendError::Full``) can deny service but never enable a replay."
 msgstr ""
+"Una inserción rechazada nunca expulsa una etiqueta vigente. Por tanto, "
+"una etiqueta gastada y no caducada siempre se encuentra, y el rechazo "
+"(``SpendError::Full``) puede denegar el servicio, pero nunca permitir una "
+"repetición."
 
 #: ../../zero-allocation.rst:476
 msgid ""
@@ -794,10 +1165,16 @@ msgid ""
 "is equally exact: the spent set can fail in two ways (``DoubleSpend`` and "
 "``Full``), and ``SpendError`` names exactly those."
 msgstr ""
+"Una ranura es un ``Option<Entry>``. Una ranura vacía no tiene etiqueta "
+"que leer, así que no hay un indicador ``occupied`` que un lector pueda "
+"olvidar comprobar, y ``match`` no compila hasta que se tratan ambos "
+"casos. El tipo de error es igual de exacto: el conjunto de desafíos "
+"gastados puede fallar de dos maneras (``DoubleSpend`` y ``Full``), y "
+"``SpendError`` nombra exactamente esas."
 
 #: ../../zero-allocation.rst:478
 msgid "GCRA: Rate Limiting in One Integer"
-msgstr ""
+msgstr "GCRA: limitar la tasa con un entero"
 
 #: ../../zero-allocation.rst:481
 msgid ""
@@ -807,6 +1184,12 @@ msgid ""
 "\\max(1, \\lceil W / N \\rceil)` for a positive limit :math:`N` per "
 "window :math:`W`, and burst tolerance :math:`\\tau = (N - 1) T`:"
 msgstr ""
+"El Generic Cell Rate Algorithm (ATM Forum, 1996) es la forma de "
+"planificación virtual del cubo con fugas. Para cada cliente guarda un "
+"único *tiempo teórico de llegada* (TAT). Con el intervalo de emisión "
+":math:`T = \\max(1, \\lceil W / N \\rceil)` para un límite positivo "
+":math:`N` por ventana :math:`W`, y la tolerancia de ráfaga :math:`\\tau = "
+"(N - 1) T`:"
 
 #: ../../zero-allocation.rst:483
 msgid ""
@@ -814,10 +1197,13 @@ msgid ""
 "\\tau, \\quad \\text{then } \\mathrm{TAT} \\leftarrow "
 "\\max(\\mathrm{TAT}, t) + T."
 msgstr ""
+"\\text{arrival at } t \\text{ conforms} \\iff \\mathrm{TAT} \\le t + "
+"\\tau, \\quad \\text{then } \\mathrm{TAT} \\leftarrow "
+"\\max(\\mathrm{TAT}, t) + T."
 
 #: ../../zero-allocation.rst:487
 msgid "Theorem (token-bucket bound)"
-msgstr ""
+msgstr "Teorema (cota del cubo de tokens)"
 
 #: ../../zero-allocation.rst:489
 msgid ""
@@ -828,16 +1214,25 @@ msgid ""
 "one per :math:`T`. There is no fixed-window boundary artefact beyond the "
 "defined burst, and no per-request history."
 msgstr ""
+"Tras la primera llegada conforme en :math:`t_1`, la :math:`k`-ésima "
+"llegada conforme cumple :math:`t_k - t_1 \\ge (k - 1) T - \\tau`. Por "
+"tanto, cualquier intervalo de longitud :math:`L` contiene como máximo "
+":math:`N + \\lfloor L / T \\rfloor` llegadas conformes: una ráfaga de "
+":math:`N` y después una por cada :math:`T`. No hay ningún artefacto de "
+"frontera de ventana fija más allá de la ráfaga definida, ni historial por "
+"petición."
 
 #: ../../zero-allocation.rst:492
 msgid ""
 "GCRA admission for a limit of 5 per second: a burst of five, then one "
 "every 200 ms."
 msgstr ""
+"Admisión GCRA con un límite de 5 por segundo: una ráfaga de cinco y "
+"después una cada 200 ms."
 
 #: ../../zero-allocation.rst:505
 msgid "Worked example: five per second by hand"
-msgstr ""
+msgstr "Ejemplo resuelto: cinco por segundo a mano"
 
 #: ../../zero-allocation.rst:507
 msgid ""
@@ -854,10 +1249,23 @@ msgid ""
 "``gcra_admits_exactly_the_burst_then_drains_at_the_emission_rate`` in "
 "``crates/store/src/limiter.rs`` checks exactly these numbers."
 msgstr ""
+"Tomemos :math:`N = 5` y :math:`W = 1000` ms, de modo que :math:`T = 200` "
+"ms y :math:`\\tau = 800` ms, y supongamos que un cliente inactivo envía "
+"seis peticiones en :math:`t = 0`. La primera encuentra una celda vacía: "
+":math:`\\mathrm{TAT} = \\max(0, 0) = 0 \\le 800`, así que es conforme y "
+":math:`\\mathrm{TAT} \\leftarrow 200`. Las cuatro siguientes son "
+"conformes del mismo modo y dejan :math:`\\mathrm{TAT} = 1000`. La sexta "
+"encuentra :math:`1000 > 0 + 800` y se rechaza con ``Retry-After`` "
+":math:`\\mathrm{TAT} - \\tau - t = 200` ms. En :math:`t = 199`, una "
+"petición todavía encuentra :math:`1000 > 999` y se rechaza; en :math:`t = "
+"200` encuentra :math:`1000 \\le 1000`, es conforme y deja "
+":math:`\\mathrm{TAT} = 1200`. La prueba unitaria "
+"``gcra_admits_exactly_the_burst_then_drains_at_the_emission_rate`` de "
+"``crates/store/src/limiter.rs`` comprueba exactamente estas cifras."
 
 #: ../../zero-allocation.rst:509
 msgid "Implementation: ``arrive``"
-msgstr ""
+msgstr "Implementación: ``arrive``"
 
 #: ../../zero-allocation.rst:511
 msgid ""
@@ -865,6 +1273,9 @@ msgid ""
 "decision, the retry delay and the remaining budget. In "
 "``crates/store/src/limiter.rs`` (crate ``sibuna-store``)."
 msgstr ""
+"Aplica una llegada a las celdas de una partición bloqueada y devuelve la "
+"decisión, el retardo de reintento y el presupuesto restante. En "
+"``crates/store/src/limiter.rs`` (crate ``sibuna-store``)."
 
 #: ../../zero-allocation.rst:545
 msgid ""
@@ -881,10 +1292,24 @@ msgid ""
 "address seeded with the rule's scope, so the same client in different "
 "scopes has independent budgets."
 msgstr ""
+"El ``check`` de la partición toma el cerrojo y llama a ``arrive`` con las "
+"celdas bloqueadas; el guardián libera el cerrojo cuando ``check`` vuelve. "
+"Las celdas ocupan 16 bytes (una clave y un TAT) en 16 particiones de 512 "
+"ranuras con una ventana de sondeo de 16 ranuras, unos 128 KiB en total. "
+"Una celda cuyo TAT es anterior a :math:`t - \\tau` se ha vaciado y se "
+"recupera en el acto. La cabecera ``Retry-After`` se calcula con la misma "
+"aritmética. Las ventanas de sondeo saturadas rechazan clientes nuevos en "
+"lugar de expulsar estado de cuota activo, y la decisión lo indica "
+"(``capacity_exhausted``), para que quien llama no convierta un rechazo "
+"por saturación en un bloqueo. Una tasa configurada a cero rechaza las "
+"peticiones. Un único limitador sirve a varias reglas: la clave de la "
+"celda es un Wyhash de la dirección del cliente con la semilla del ámbito "
+"de la regla, de modo que el mismo cliente tiene presupuestos "
+"independientes en ámbitos distintos."
 
 #: ../../zero-allocation.rst:547
 msgid "The Versioned Ban Table"
-msgstr ""
+msgstr "La tabla versionada de bloqueos"
 
 #: ../../zero-allocation.rst:550
 msgid ""
@@ -894,16 +1319,25 @@ msgid ""
 "each update with version increments; readers take no lock, accept only a "
 "stable even version, and retry concurrent changes."
 msgstr ""
+"Los bloqueos usan 4,096 ranuras con campos atómicos de versión, clave y "
+"caducidad, con direccionamiento abierto mediante un hash con clave de la "
+"dirección bloqueada y una ventana de sondeo de 8 ranuras. Un escritor, "
+"serializado con los demás escritores mediante un mutex, rodea cada "
+"actualización con incrementos de versión; los lectores no toman ningún "
+"cerrojo, solo aceptan una versión par estable y reintentan si hay cambios "
+"concurrentes."
 
 #: ../../zero-allocation.rst:552
 msgid "Implementation: ``BanTable::ban`` and ``BanTable::read_slot``"
-msgstr ""
+msgstr "Implementación: ``BanTable::ban`` y ``BanTable::read_slot``"
 
 #: ../../zero-allocation.rst:554
 msgid ""
 "The writer's bracket and the reader's consistent snapshot. In "
 "``crates/store/src/ban_table.rs`` (crate ``sibuna-store``)."
 msgstr ""
+"La envoltura del escritor y la instantánea coherente del lector. En "
+"``crates/store/src/ban_table.rs`` (crate ``sibuna-store``)."
 
 #: ../../zero-allocation.rst:586
 msgid ""
@@ -916,10 +1350,20 @@ msgid ""
 "lifts every ban but leaves the keys in place, because an emptied slot "
 "could hide a colliding key later in a probe chain."
 msgstr ""
+"La consistencia secuencial impide mezclar una identidad antigua con una "
+"caducidad de reemplazo: todo acceso pertenece a un único orden total, lo "
+"que mantiene sencillo el razonamiento. Los lectores no toman ningún "
+"mutex, pero pueden esperar a un escritor y no están libres de espera. "
+"Estas operaciones atómicas tienen un coste real, medido indirectamente en "
+"el banco de pruebas HTTP en lugar de suponerlo nulo. Una ventana de "
+"sondeo llena sobrescribe una ranura que haya caducado o, si no la hay, la "
+"que caduque antes. ``clear`` levanta todos los bloqueos pero deja las "
+"claves en su sitio, porque una ranura vaciada podría ocultar una clave en "
+"colisión situada más adelante en una cadena de sondeo."
 
 #: ../../zero-allocation.rst:588
 msgid "The MPSC Incident Ring"
-msgstr ""
+msgstr "El anillo MPSC de incidentes"
 
 #: ../../zero-allocation.rst:591
 msgid ""
@@ -933,6 +1377,17 @@ msgid ""
 "response, an explicit loss policy rather than a durability guarantee. The "
 "drop counter makes that loss observable."
 msgstr ""
+"Cuando el modo de protección Shield deniega una petición o salta el "
+"honeypot, el incidente se copia en un registro fijo de unos 1.3 KB "
+"(dirección del cliente, User-Agent, método, ruta, categoría y carga útil, "
+"cada uno recortado a su capacidad) y se añade a un anillo acotado de "
+"múltiples productores y un solo consumidor (el diseño de Vyukov con "
+"números de secuencia, 512 ranuras, ``BoundedQueue<IncidentRecord, "
+"512>``). Los productores son los hilos de conexión; el consumidor es el "
+"hilo de almacenamiento. Un anillo lleno descarta el registro más reciente "
+"en lugar de bloquear una respuesta: una política de pérdida explícita, no "
+"una garantía de durabilidad. El contador de descartes hace observable esa "
+"pérdida."
 
 #: ../../zero-allocation.rst:602
 msgid ""
@@ -941,6 +1396,10 @@ msgid ""
 "does not silently discard it on a database error, and a retry writes the "
 "identical batch."
 msgstr ""
+"Tras mover un registro a un lote pendiente, el hilo de almacenamiento lo "
+"conserva, junto con las filas preparadas, hasta que se confirma el "
+"commit; no lo descarta en silencio ante un error de la base de datos, y "
+"un reintento escribe exactamente el mismo lote."
 
 #: ../../zero-allocation.rst:604
 msgid ""
@@ -953,6 +1412,15 @@ msgid ""
 "values in ``UnsafeCell<MaybeUninit<T>>`` slots, and each ``unsafe`` block "
 "names the step of the protocol that justifies it:"
 msgstr ""
+"Cada ranura lleva un número de secuencia que indica a los productores si "
+"la ranura está libre y al consumidor si está llena, así que ningún lado "
+"toma un cerrojo. Un anillo así no puede escribirse en Rust seguro: los "
+"productores y el consumidor tocan a la vez ranuras distintas de un mismo "
+"array, y solo el protocolo de secuencia, no el sistema de tipos, "
+"demuestra qué hilo puede tocar qué ranura. Por eso el módulo "
+"``crates/store/src/ring.rs`` guarda sus valores en ranuras "
+"``UnsafeCell<MaybeUninit<T>>``, y cada bloque ``unsafe`` nombra el paso "
+"del protocolo que lo justifica:"
 
 #: ../../zero-allocation.rst:629
 msgid ""
@@ -963,10 +1431,17 @@ msgid ""
 "code must claim the unique ``Consumer`` first, so a second consumer does "
 "not compile or is refused at run time."
 msgstr ""
+"Dos convenciones del anillo son tipos, no comentarios. Con el anillo "
+"lleno, ``push`` devuelve ``Err(value)`` y entrega de vuelta el registro "
+"para que quien llama decida si lo cuenta o lo descarta; un simple "
+"``false`` lo perdería. El anillo tiene un único consumidor: ``pop`` toma "
+"``&mut self``, y el código compartido debe reclamar primero el "
+"``Consumer`` único, de modo que un segundo consumidor no compila o se "
+"rechaza en tiempo de ejecución."
 
 #: ../../zero-allocation.rst:631
 msgid "Read-Copy-Update Engine Publication"
-msgstr ""
+msgstr "Publicación read-copy-update del motor"
 
 #: ../../zero-allocation.rst:634
 msgid ""
@@ -976,6 +1451,11 @@ msgid ""
 "engine as an ``Arc<Engine>`` in an ``EngineSlot``, and each connection "
 "reads it through an ``EngineCache``:"
 msgstr ""
+"El motor de políticas se reconstruye fuera de la ruta crítica cuando "
+"cambian las políticas. Las peticiones nunca deben observar un motor a "
+"medio construir, y un motor nunca debe liberarse mientras una petición lo "
+"esté leyendo. Sibuna publica cada motor como un ``Arc<Engine>`` en un "
+"``EngineSlot``, y cada conexión lo lee a través de una ``EngineCache``:"
 
 #: ../../zero-allocation.rst:637
 msgid ""
@@ -984,16 +1464,23 @@ msgid ""
 "acquire load and clones the published Arc only after a publication. An "
 "old engine is freed when the last cache holding it lets go."
 msgstr ""
+"Publicación del motor. El hilo de almacenamiento publica un motor "
+"completo y avanza la generación; cada conexión comprueba la generación "
+"con una carga acquire y clona el Arc publicado solo después de una "
+"publicación. Un motor antiguo se libera cuando lo suelta la última caché "
+"que lo retiene."
 
 #: ../../zero-allocation.rst:660
 msgid "Implementation: ``EngineSlot::publish`` and ``EngineCache::refresh``"
-msgstr ""
+msgstr "Implementación: ``EngineSlot::publish`` y ``EngineCache::refresh``"
 
 #: ../../zero-allocation.rst:662
 msgid ""
 "Publication of a complete engine, and one connection's view of it. In "
 "``cmd/sibuna/src/slot.rs`` (crate ``sibuna``)."
 msgstr ""
+"La publicación de un motor completo y la vista que tiene de él una "
+"conexión. En ``cmd/sibuna/src/slot.rs`` (crate ``sibuna``)."
 
 #: ../../zero-allocation.rst:699
 msgid ""
@@ -1007,6 +1494,16 @@ msgid ""
 "a half-built engine, because only complete engines are ever stored in the "
 "slot."
 msgstr ""
+"La generación se almacena con orden release una vez que el motor está en "
+"su sitio, y se carga con orden acquire: un lector que ve una generación "
+"nueva también ve el motor almacenado antes que ella. La carrera "
+"mencionada en el comentario es benigna. Si una publicación ocurre entre "
+"la carga de la generación por un lector y su clonación, el lector guarda "
+"en caché el motor más nuevo con el número de generación anterior, y su "
+"siguiente actualización detecta la discrepancia y vuelve a cargar. Un "
+"lector puede ir un motor por detrás durante una petición; nunca puede ver "
+"un motor a medio construir, porque en el espacio solo se almacenan "
+"motores completos."
 
 #: ../../zero-allocation.rst:703
 msgid ""
@@ -1016,6 +1513,11 @@ msgid ""
 "every reader holds an ``Arc``, and the engine is dropped only with its "
 "last ``Arc``."
 msgstr ""
+"Todo motor que lee una petición está completo, y ningún motor se libera "
+"mientras lo retenga alguna petición o caché de conexión. Lo primero se "
+"cumple porque un motor se construye por completo antes de que ``publish`` "
+"lo almacene; lo segundo, porque cada lector tiene un ``Arc`` y el motor "
+"solo se libera con su último ``Arc``."
 
 #: ../../zero-allocation.rst:705
 msgid ""
@@ -1026,60 +1528,69 @@ msgid ""
 "writes. The generation, by contrast, is written once per publication and "
 "otherwise only read, so each core keeps its copy:"
 msgstr ""
+"¿Por qué una caché y no simplemente un cerrojo? SID 0010 nos pidió medir "
+"el coste de lectura con 16 hilos y elegir entre ``RwLock<Arc<Engine>>`` y "
+"una alternativa sin bloqueos en Rust seguro. Leer a través del cerrojo "
+"toma la palabra del cerrojo y el contador de referencias, dos líneas de "
+"caché que escriben todos los núcleos. La generación, en cambio, se "
+"escribe una vez por publicación y por lo demás solo se lee, así que cada "
+"núcleo conserva su copia:"
 
 #: ../../zero-allocation.rst:707
 msgid ""
 "Cost of one engine read, Ryzen 9 5950X, 16 threads reading in a loop "
 "(October 2026)"
 msgstr ""
+"Coste de una lectura del motor, Ryzen 9 5950X, 16 hilos leyendo en bucle "
+"(octubre de 2026)"
 
 #: ../../zero-allocation.rst:710
 msgid "Reader"
-msgstr ""
+msgstr "Lector"
 
 #: ../../zero-allocation.rst:711
 msgid "1 thread"
-msgstr ""
+msgstr "1 hilo"
 
 #: ../../zero-allocation.rst:712
 msgid "16 threads"
-msgstr ""
+msgstr "16 hilos"
 
 #: ../../zero-allocation.rst:713
 msgid "``RwLock`` read guard only"
-msgstr ""
+msgstr "solo el guardián de lectura de ``RwLock``"
 
 #: ../../zero-allocation.rst:714
 msgid "4.2 ns"
-msgstr ""
+msgstr "4.2 ns"
 
 #: ../../zero-allocation.rst:715
 msgid "752 ns"
-msgstr ""
+msgstr "752 ns"
 
 #: ../../zero-allocation.rst:716
 msgid "``RwLock`` read and ``Arc`` clone"
-msgstr ""
+msgstr "lectura de ``RwLock`` y clonación de ``Arc``"
 
 #: ../../zero-allocation.rst:717
 msgid "7.6 ns"
-msgstr ""
+msgstr "7.6 ns"
 
 #: ../../zero-allocation.rst:718
 msgid "833 ns"
-msgstr ""
+msgstr "833 ns"
 
 #: ../../zero-allocation.rst:719
 msgid "generation check with a cached ``Arc``"
-msgstr ""
+msgstr "comprobación de generación con un ``Arc`` en caché"
 
 #: ../../zero-allocation.rst:720
 msgid "0.8 ns"
-msgstr ""
+msgstr "0.8 ns"
 
 #: ../../zero-allocation.rst:721
 msgid "1.8 ns"
-msgstr ""
+msgstr "1.8 ns"
 
 #: ../../zero-allocation.rst:723
 msgid ""
@@ -1093,10 +1604,20 @@ msgid ""
 "``benchmarks/results/primitives-latest.json``), with capacity for 128 "
 "rules, 128-byte rule names and 8,192 trie nodes."
 msgstr ""
+"Con contención, la lectura en caché es más de 400 veces más barata que el "
+"cerrojo, así que la ruta de la petición usa la caché y recurre al "
+"``RwLock`` solo en la ruta lenta de una actualización. La medición es la "
+"prueba ignorada ``read_cost_under_contention`` de "
+"``cmd/sibuna/src/slot.rs``. Cada uso en la ruta de la petición actualiza "
+"la caché, de modo que una petición ve el motor vigente en ese paso. El "
+"propio motor es pequeño: 209,052 bytes, unos 204 KiB, de tablas compactas "
+"en el heap (``engine_bytes`` en "
+"``benchmarks/results/primitives-latest.json``), con capacidad para 128 "
+"reglas, nombres de regla de 128 bytes y 8,192 nodos del trie."
 
 #: ../../zero-allocation.rst:725
 msgid "Why ``Arc`` and not reader counts"
-msgstr ""
+msgstr "Por qué ``Arc`` y no contadores de lectores"
 
 #: ../../zero-allocation.rst:727
 msgid ""
@@ -1111,6 +1632,18 @@ msgid ""
 "next publication unless every request released its slot before proxy I/O "
 "began."
 msgstr ""
+"La alternativa de memoria fija mantiene dos espacios del motor, cada uno "
+"con un contador de lectores y su propia arena de asignación. Una petición "
+"fija un espacio incrementando su contador y volviendo a comprobar el "
+"puntero del espacio, y ambas operaciones atómicas deben ser "
+"secuencialmente consistentes para cerrar la carrera en la que un escritor "
+"hace el intercambio entre la carga del lector y su incremento. El "
+"constructor intercambia el puntero y después espera activamente a que se "
+"vacíen los lectores del espacio antiguo, antes de reiniciar la arena de "
+"ese espacio y reconstruir en ella. Un lector que retiene un espacio "
+"durante una reconstrucción bloquea, por tanto, al constructor, y un "
+"origen lento detendría la siguiente publicación a menos que cada petición "
+"liberara su espacio antes de empezar la E/S del proxy."
 
 #: ../../zero-allocation.rst:729
 msgid ""
@@ -1125,10 +1658,22 @@ msgid ""
 "context mutably. An upgraded connection, which may live for hours, "
 "releases its cached engine before it is proxied."
 msgstr ""
+"El conteo de referencias de ``Arc`` no necesita nada de esto. El hilo de "
+"almacenamiento construye un ``Engine`` nuevo a partir de cada instantánea "
+"y lo publica; no se reutiliza nada, así que no hay espacio de reserva, ni "
+"reinicio de arena, ni espera activa: ``publish`` nunca espera a los "
+"lectores. Un motor antiguo simplemente vive hasta que lo suelta su último "
+"titular, y un origen lento solo puede retrasar ese momento, nunca la "
+"siguiente publicación. El veredicto copia el nombre de la regla "
+"coincidente en un búfer de 128 bytes para terminar un préstamo: la "
+"decisión toma prestado el motor a través de la caché de la conexión, y la "
+"ruta de respuesta necesita todo el contexto de la conexión de forma "
+"mutable. Una conexión actualizada, que puede vivir horas, libera su motor "
+"en caché antes de pasar por el proxy."
 
 #: ../../zero-allocation.rst:731
 msgid "Exercise 5.2"
-msgstr ""
+msgstr "Ejercicio 5.2"
 
 #: ../../zero-allocation.rst:733
 msgid ""
@@ -1137,13 +1682,20 @@ msgid ""
 "``--rate-limit 100 --rate-window 10``. Compare with a fixed 10-second "
 "window counter and with a true sliding-window log."
 msgstr ""
+"Usando el teorema de GCRA, calcula el número máximo de peticiones que un "
+"solo cliente puede pasar en los primeros 3 segundos tras estar inactivo, "
+"con ``--rate-limit 100 --rate-window 10``. Compáralo con un contador de "
+"ventana fija de 10 segundos y con un registro de ventana deslizante real."
 
 #: ../../zero-allocation.rst:735
 msgid "Explain the invariant"
-msgstr ""
+msgstr "Explica el invariante"
 
 #: ../../zero-allocation.rst:737
 msgid ""
 "Explain why an expired Robin Hood entry can be overwritten only by a key "
 "with a distance at least as large, using a three-slot example."
 msgstr ""
+"Explica, con un ejemplo de tres ranuras, por qué una entrada Robin Hood "
+"caducada solo puede sobrescribirse con una clave cuya distancia sea al "
+"menos igual de grande."
