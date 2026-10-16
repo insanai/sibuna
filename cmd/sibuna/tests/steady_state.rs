@@ -128,8 +128,9 @@ fn response_length(stream: &mut TcpStream, request: &[u8]) -> usize {
     }
 }
 
-/// The engine of the steady-state daemon: the daemon's pages and one rule that matches the
-/// static path, so rule hits are recorded when the console counts them.
+/// The engine of the steady-state daemon: the daemon's pages, one rule that matches the
+/// static path, so rule hits are recorded when the console counts them, and one JA4 rule
+/// (SID 0014) that every request's fingerprint is compared with.
 fn engine(difficulty: u32) -> Engine {
     let mut engine = Engine::new(difficulty);
     engine.pages = sibuna::recipe::daemon_pages().unwrap();
@@ -138,6 +139,11 @@ fn engine(difficulty: u32) -> Engine {
         ..PolicyRule::new("static", Action::Allow)
     };
     engine.insert_rule(0, rule).unwrap();
+    let quic = PolicyRule {
+        ja4: sibuna_policy::ja4::Pattern::parse(b"q13d*"),
+        ..PolicyRule::new("quic", Action::Deny)
+    };
+    engine.insert_rule(1, quic).unwrap();
     engine
 }
 
@@ -184,6 +190,7 @@ fn daemon_and_requests(console: bool) -> (support::Fixture, Vec<Vec<u8>>) {
     let mut config = Config {
         upstream_port: start_origin(),
         trust_forwarded: Some(true),
+        ja4_header: Some("x-ja4".into()),
         algorithm: PowAlgorithm::Hashcash,
         default_difficulty: 8,
         rate_limit: 1_000_000,
@@ -208,7 +215,7 @@ fn daemon_and_requests(console: bool) -> (support::Fixture, Vec<Vec<u8>>) {
     let head = |path: &str, extra: &str| {
         format!(
             "GET {path} HTTP/1.1\r\nHost: t\r\nX-Forwarded-For: {ip}\r\n\
-             User-Agent: {}\r\n{extra}\r\n",
+             X-JA4: t13d1516h2_8daaf6152771_02713d6af862\r\nUser-Agent: {}\r\n{extra}\r\n",
             support::BROWSER_UA
         )
         .into_bytes()

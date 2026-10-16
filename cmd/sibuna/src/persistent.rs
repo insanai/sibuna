@@ -152,6 +152,10 @@ fn decode_rule(row: &PolicyRow) -> Result<PolicyRule, BuildError> {
         rule.cidrs = matchers::cidrs_from_json(text.as_bytes())
             .map_err(|error| invalid(row, matcher_name(error)))?;
     }
+    if let Some(text) = &row.ja4_pattern {
+        let pattern = sibuna_policy::ja4::Pattern::parse(text.as_bytes());
+        rule.ja4 = Some(pattern.ok_or_else(|| invalid(row, "InvalidJa4"))?);
+    }
     Ok(rule)
 }
 
@@ -355,7 +359,7 @@ mod tests {
     #[test]
     fn invalid_stored_matchers_and_limits_refuse_the_snapshot() {
         type Corruption = (&'static str, fn(&mut PolicyRow));
-        let cases: [Corruption; 7] = [
+        let cases: [Corruption; 8] = [
             ("[] headers", |r| r.header_matchers = Some("[]".into())),
             ("numeric header", |r| r.header_matchers = Some(r#"{"X-Api":7}"#.into())),
             ("duplicate header", |r| {
@@ -371,6 +375,7 @@ mod tests {
             ("bad limit", |r| {
                 r.limits = Some(RuleLimits { rate: 0, window_seconds: 60, ban_seconds: 0 });
             }),
+            ("bad ja4", |r| r.ja4_pattern = Some("x13d*".into())),
         ];
         for (label, corrupt) in cases {
             let mut stored = row("limited", PolicyAction::Allow, "/private");

@@ -46,6 +46,7 @@ pub(crate) fn record_incident<W: Write>(ctx: &Ctx<'_, W>, category: &str) {
     let incident = Incident {
         client_ip: text(ctx.client_ip),
         user_agent: ctx.user_agent,
+        ja4: ctx.ja4.map(|fingerprint| fingerprint.as_str()),
         method: method_name(request.method),
         path: request.path,
         category,
@@ -87,6 +88,7 @@ pub(crate) fn record_findings<W: Write>(
         hook(&Incident {
             client_ip: text(ctx.client_ip),
             user_agent: ctx.user_agent,
+            ja4: ctx.ja4.map(|fingerprint| fingerprint.as_str()),
             method: method_name(ctx.request.method),
             path: ctx.request.path,
             category: audit_name(category),

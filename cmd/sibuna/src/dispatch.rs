@@ -250,6 +250,7 @@ fn request_verdict<W: Write>(ctx: &mut Ctx<'_, W>) -> Verdict {
         client_ip: ctx.client_ip,
         client_address: ctx.client_address,
         user_agent: ctx.user_agent,
+        ja4: ctx.ja4,
         headers: fields.get(..count).unwrap_or_default(),
         body: ctx.request.body,
     };
@@ -272,6 +273,7 @@ pub(crate) fn target_verdict<W: Write>(
         client_ip: ctx.client_ip,
         client_address: ctx.client_address,
         user_agent: ctx.user_agent,
+        ja4: ctx.ja4,
         headers: fields.get(..count).unwrap_or_default(),
         body: b"",
     };
@@ -404,6 +406,7 @@ pub(crate) fn forward<W: Write>(
             client_ip: ctx.client_ip,
             peer: ctx.peer,
             trusts_forwarded: config.trusts_forwarded(),
+            ja4_header: config.ja4_header.as_deref().unwrap_or_default().as_bytes(),
             status: status.as_bytes(),
             rule: rule_name.as_bytes(),
             scheme: forwarded::scheme(&ctx.request, config.trusts_forwarded()).as_bytes(),

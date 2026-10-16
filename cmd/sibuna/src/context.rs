@@ -24,6 +24,14 @@
 //! request pays for one keyed hash, not one per table. The text stays for incidents, logs
 //! and the token fingerprint, a format shared with Zig nodes.
 //!
+//! # The JA4 fingerprint
+//!
+//! With `--ja4-header` (SID 0014) and trusted forwarding, the request's one field of that
+//! name is its JA4 TLS fingerprint, which the ingress computed. A value without the JA4
+//! form, or a repeated field, is no fingerprint and is counted in
+//! `sibuna_ja4_invalid_total`; a valid one is counted in `sibuna_ja4_present_total`. From
+//! an untrusted peer the field is ignored here and removed before the origin sees it.
+//!
 //! [`ClientHasher`]: sibuna_store::placement::ClientHasher
 
 use std::io::Write;
@@ -32,6 +40,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use sibuna_http::Request;
 use sibuna_net::{Activity, Upload, Workspace};
+use sibuna_policy::ja4::Fingerprint;
 use sibuna_store::placement::ClientHash;
 
 use crate::connection::Link;
@@ -67,6 +76,8 @@ pub(crate) struct Ctx<'c, W> {
     /// The socket peer address as text, whatever the forwarded fields say.
     pub peer: &'c [u8],
     pub user_agent: &'c [u8],
+    /// The trusted JA4 fingerprint; `None` without one (see the module documentation).
+    pub ja4: Option<Fingerprint<'c>>,
     /// Unix seconds and milliseconds when the request was dispatched.
     pub now: u64,
     pub now_ms: u64,
@@ -93,6 +104,7 @@ impl<'c, W: Write> Ctx<'c, W> {
         let client_key = ClientKey::new(client_ip, client_address, server.config.ipv6_prefix);
         let client_hash = server.client_hasher.hash(client_key.as_bytes());
         let user_agent = request.header(b"user-agent").unwrap_or_default();
+        let ja4 = resolve_ja4(server, &request);
         let keep_alive =
             request.wants_keep_alive() && declared_body <= request.body.len() && !link.last;
         if !keep_alive {
@@ -116,6 +128,7 @@ impl<'c, W: Write> Ctx<'c, W> {
             client_hash,
             peer,
             user_agent,
+            ja4,
             now: now_ms / 1000,
             now_ms,
             keep_alive,
@@ -144,6 +157,26 @@ fn resolve_client<'c>(
         }
     }
     (peer, sibuna_cidr::parse_ip(peer).ok())
+}
+
+/// Returns the JA4 fingerprint of `request` (see the module documentation), counting a
+/// present or an invalid one.
+fn resolve_ja4<'c>(server: &Server, request: &Request<'c>) -> Option<Fingerprint<'c>> {
+    let name = server.config.ja4_header.as_deref()?;
+    if !server.config.trusts_forwarded() {
+        return None;
+    }
+    let fingerprint = match request.unique_header(name.as_bytes()) {
+        Ok(None) => return None,
+        Ok(Some(value)) => Fingerprint::parse(value),
+        Err(()) => None,
+    };
+    let counter = match fingerprint {
+        Some(_) => &server.metrics.ja4_present,
+        None => &server.metrics.ja4_invalid,
+    };
+    counter.bump();
+    fingerprint
 }
 
 /// Returns the `X-Forwarded-For` entry `hops` positions from the right (1 is the last),
