@@ -34,7 +34,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends fonts-noto-cjk fonts-noto-core
-          fc-list : family | grep -E 'Noto (Serif|Sans) CJK SC|Noto Serif Devanagari|Noto Naskh Arabic'
+          fc-list : family | grep -E 'Noto (Serif|Sans) CJK SC|Noto Sans Mono CJK SC|Noto Serif Devanagari|Noto Naskh Arabic'
       - name: Show tool versions
         run: guidedog --version && python3 --version
       - name: Build the book and whitepaper in eight languages, the SIDs and landing pages
