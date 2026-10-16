@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:20+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../wasm-engine.rst:1
 msgid "Part VII: The Browser Proof-of-Work Engine"
-msgstr ""
+msgstr "Teil VII: Die Proof-of-Work-Engine im Browser"
 
 #: ../../wasm-engine.rst:4
 msgid ""
@@ -27,15 +27,18 @@ msgid ""
 "crate, the Web Worker protocol, the JavaScript fallback provers, and the "
 "interstitial."
 msgstr ""
+"Wir betrachten das WebAssembly-Modul, das das Verifizierer-Crate des "
+"Servers selbst kompiliert, das Web-Worker-Protokoll, die "
+"JavaScript-Fallback-Beweiser und die Zwischenseite."
 
 #: ../../wasm-engine.rst:6
 msgid "One Source, Two Targets"
-msgstr ""
+msgstr "Eine Quelle, zwei Ziele"
 
 #: ../../wasm-engine.rst:9 ../../wasm-engine.rst:172
 #: ../../wasm-engine.rst:211
 msgid "Objectives"
-msgstr ""
+msgstr "Lernziele"
 
 #: ../../wasm-engine.rst:11
 msgid ""
@@ -44,10 +47,14 @@ msgid ""
 "exported functions, and describe the memory the sequential-work prover "
 "needs in a tab."
 msgstr ""
+"Am Ende dieses Kapitels sollten wir erklären können, wie das Browsermodul "
+"aus dem eigenen Crate ``sibuna-pow`` des Servers gebaut wird, die "
+"exportierten Funktionen benennen und den Speicher beschreiben können, den "
+"der Beweiser für sequenzielle Arbeit in einem Tab braucht."
 
 #: ../../wasm-engine.rst:13
 msgid "Build Wiring"
-msgstr ""
+msgstr "Verdrahtung des Builds"
 
 #: ../../wasm-engine.rst:16
 msgid ""
@@ -56,6 +63,11 @@ msgid ""
 "built for ``wasm32-unknown-unknown``, whose only dependencies are the "
 "workspace crates ``sibuna-pow`` and ``sibuna-crypto``:"
 msgstr ""
+"Der Browser-Löser kompiliert genau die Quellen, mit denen der Server "
+"verifiziert. ``cmd/sibuna-pow-wasm`` ist ein ``no_std``-Bibliotheks-Crate "
+"vom Typ ``cdylib``, gebaut für ``wasm32-unknown-unknown``, dessen einzige "
+"Abhängigkeiten die Workspace-Crates ``sibuna-pow`` und ``sibuna-crypto`` "
+"sind:"
 
 #: ../../wasm-engine.rst:34
 msgid ""
@@ -70,6 +82,19 @@ msgid ""
 "embeds a prebuilt module instead, for builds without the WebAssembly "
 "target. The daemon then includes the bytes in its binary:"
 msgstr ""
+"Der Daemon bettet das Modul ein. Sein Build-Skript "
+"(``cmd/sibuna/build.rs``) führt ein verschachteltes ``cargo rustc -p "
+"sibuna-pow-wasm --target wasm32-unknown-unknown --profile wasm`` in das "
+"Zielverzeichnis des Workspace aus "
+"(``target/wasm32-unknown-unknown/wasm/``). Der verschachtelte Build "
+"sperrt nur die Verzeichnisse des Profils ``wasm`` und wartet daher nie "
+"auf den äußeren Build. Der abschließende Link erhält "
+"``--compress-relocations``. Das Skript prüft, dass das Ergebnis mit den "
+"magischen Bytes von WebAssembly beginnt, und kopiert es in das "
+"Ausgabeverzeichnis des Builds. ``SIBUNA_POW_WASM=<path>`` bettet "
+"stattdessen ein vorgefertigtes Modul ein, für Builds ohne das "
+"WebAssembly-Ziel. Der Daemon nimmt die Bytes dann in sein Binärprogramm "
+"auf:"
 
 #: ../../wasm-engine.rst:44
 msgid ""
@@ -79,70 +104,86 @@ msgid ""
 "the module measures 14,744 bytes with both tiers (``wasm_bytes`` in "
 "``benchmarks/results/primitives-latest.json``)."
 msgstr ""
+"Es gibt keine zweite Implementierung, die auseinanderlaufen könnte. Der "
+"Daemon liefert das Modul unter ``/__sibuna/wasm/sibuna-pow.wasm`` mit "
+"einem Cache-Header für eine Stunde aus (``Cache-Control: public, "
+"max-age=3600``). Mit dem obigen Profil gebaut, misst das Modul mit beiden "
+"Stufen 14,744 Bytes (``wasm_bytes`` in "
+"``benchmarks/results/primitives-latest.json``)."
 
 #: ../../wasm-engine.rst:46
 msgid "Exports"
-msgstr ""
+msgstr "Exporte"
 
 #: ../../wasm-engine.rst:49
 msgid ""
 "The module exports six functions, and the worker script calls them by "
 "name:"
 msgstr ""
+"Das Modul exportiert sechs Funktionen, und das Worker-Skript ruft sie "
+"beim Namen auf:"
 
 #: ../../wasm-engine.rst:55
 msgid "Export"
-msgstr ""
+msgstr "Export"
 
 #: ../../wasm-engine.rst:56
 msgid "Purpose"
-msgstr ""
+msgstr "Zweck"
 
 #: ../../wasm-engine.rst:57
 msgid "``sibuna_get_buffer_ptr()`` / ``sibuna_get_buffer_len()``"
-msgstr ""
+msgstr "``sibuna_get_buffer_ptr()`` / ``sibuna_get_buffer_len()``"
 
 #: ../../wasm-engine.rst:58
 msgid "256-byte input buffer the worker writes the challenge string into"
 msgstr ""
+"256-Byte-Eingabepuffer, in den der Worker die Challenge-Zeichenkette "
+"schreibt"
 
 #: ../../wasm-engine.rst:59
 msgid "``sibuna_solve_step(ptr, len, bits, start, max_steps)``"
-msgstr ""
+msgstr "``sibuna_solve_step(ptr, len, bits, start, max_steps)``"
 
 #: ../../wasm-engine.rst:60
 msgid ""
 "Hashcash: search ``max_steps`` nonces from ``start``; returns the nonce "
 "or the all-ones sentinel"
 msgstr ""
+"Hashcash: durchsucht ``max_steps`` Nonces ab ``start``; gibt die Nonce "
+"oder den Sentinel aus lauter Einsen zurück"
 
 #: ../../wasm-engine.rst:61
 msgid "``sibuna_solve_sha256(ptr, len, bits)``"
-msgstr ""
+msgstr "``sibuna_solve_sha256(ptr, len, bits)``"
 
 #: ../../wasm-engine.rst:62
 msgid ""
 "Hashcash in one batch from nonce 0 (``sibuna_solve_step`` with "
 "``u32::MAX`` steps)"
 msgstr ""
+"Hashcash in einem Batch ab Nonce 0 (``sibuna_solve_step`` mit "
+"``u32::MAX`` Schritten)"
 
 #: ../../wasm-engine.rst:63
 msgid "``sibuna_posw_solve(len, depth, challenges)``"
-msgstr ""
+msgstr "``sibuna_posw_solve(len, depth, challenges)``"
 
 #: ../../wasm-engine.rst:64
 msgid ""
 "Sequential work: runs the prover over the buffer and returns the proof "
 "length, or 0 for invalid arguments"
 msgstr ""
+"Sequenzielle Arbeit: führt den Beweiser über den Puffer aus und gibt die "
+"Beweislänge zurück, oder 0 bei ungültigen Argumenten"
 
 #: ../../wasm-engine.rst:65
 msgid "``sibuna_posw_proof_ptr()``"
-msgstr ""
+msgstr "``sibuna_posw_proof_ptr()``"
 
 #: ../../wasm-engine.rst:66
 msgid "Start of the proof bytes in the prover workspace"
-msgstr ""
+msgstr "Beginn der Beweisbytes im Arbeitsspeicher des Beweisers"
 
 #: ../../wasm-engine.rst:68
 msgid ""
@@ -151,10 +192,15 @@ msgid ""
 "and the module has no imports. ``Workspace::new`` is a ``const fn``, so "
 "the static costs only zeroed memory, not initialised data in the module."
 msgstr ""
+"Der Arbeitsspeicher des Beweisers, also die behaltenen oberen Ebenen, der "
+"Geschwisterstack und der Beweis, ist ein statischer Bereich von etwa 92 "
+"KiB; es ist kein Allokator eingebunden, und das Modul hat keine Importe. "
+"``Workspace::new`` ist eine ``const fn``, daher kostet der statische "
+"Bereich nur genullten Speicher, keine initialisierten Daten im Modul."
 
 #: ../../wasm-engine.rst:70
 msgid "Implementation: ``sibuna_solve_step``"
-msgstr ""
+msgstr "Implementierung: ``sibuna_solve_step``"
 
 #: ../../wasm-engine.rst:72
 msgid ""
@@ -162,6 +208,9 @@ msgid ""
 "one batch of the shared nonce search. In "
 "``cmd/sibuna-pow-wasm/src/lib.rs`` (crate ``sibuna-pow-wasm``)."
 msgstr ""
+"Der Hashcash-Export: leiht die Challenge aus dem linearen Speicher und "
+"führt einen Batch der gemeinsamen Nonce-Suche aus. In "
+"``cmd/sibuna-pow-wasm/src/lib.rs`` (Crate ``sibuna-pow-wasm``)."
 
 #: ../../wasm-engine.rst:96
 msgid ""
@@ -178,10 +227,24 @@ msgid ""
 "construction, because the functions of ``sibuna-pow`` are total and never "
 "panic."
 msgstr ""
+"Die Exporte bilden die Fremdfunktionsgrenze des Crates und sind der "
+"einzige Ort seines ``unsafe``-Codes. Der Eingabepuffer und der "
+"Arbeitsspeicher des Beweisers sind statische Variablen in einer "
+"``ExportCell``, einer Hülle um ``UnsafeCell``, die mit angegebener "
+"Begründung als ``Sync`` deklariert ist: Eine WebAssembly-Instanz ohne "
+"gemeinsamen Speicher läuft in einem Thread, und jeder Export erzeugt "
+"seine Referenzen, nutzt sie und gibt sie frei, bevor er zurückkehrt, "
+"sodass höchstens eine Referenz in eine Zelle zugleich lebt. Auf dem Host, "
+"wo die Tests die Exporte direkt aufrufen, serialisiert ein nur für Tests "
+"vorhandener Mutex sie. Eine Panic löst einen Trap aus (die Instruktion "
+"``unreachable``), statt eine Meldung zu formatieren; das hält das Modul "
+"frei von Formatierungscode und Importen. Panics sind konstruktionsbedingt "
+"unerreichbar, weil die Funktionen von ``sibuna-pow`` total sind und nie "
+"eine Panic auslösen."
 
 #: ../../wasm-engine.rst:98
 msgid "Prefix Pre-Hashing"
-msgstr ""
+msgstr "Vorab-Hashing des Präfixes"
 
 #: ../../wasm-engine.rst:101
 msgid ""
@@ -191,6 +254,11 @@ msgid ""
 "``sibuna_pow::hashcash::Search``, shared by the browser module and the "
 "native reference solver:"
 msgstr ""
+"Die innere Hashcash-Schleife absorbiert die Challenge und den Doppelpunkt "
+"einmal und klont den SHA-256-Zustand pro Nonce, sodass jeder Kandidat "
+"eine Kompression statt zwei kostet. Die Suche ist "
+"``sibuna_pow::hashcash::Search``, die das Browsermodul und der native "
+"Referenzlöser gemeinsam nutzen:"
 
 #: ../../wasm-engine.rst:130
 msgid ""
@@ -201,6 +269,13 @@ msgid ""
 "state that has absorbed the statement once, which makes verification "
 ":math:`t` compressions cheaper with the same digests."
 msgstr ""
+"Der Hasher-Zustand ist ein einfacher Wert von etwa 110 Bytes, daher ist "
+"das Klonen billig. Der Beweiser für sequenzielle Arbeit nutzt denselben "
+"Trick, wobei die Aussage :math:`\\chi` einmal in ``base_hasher`` "
+"absorbiert und für jeden Knoten geklont wird, und der Verifizierer tut "
+"das inzwischen auch: Er leitet jedes geforderte Blatt aus einem Zustand "
+"ab, der die Aussage einmal absorbiert hat. Das macht die Verifikation um "
+":math:`t` Kompressionen billiger, bei denselben Digests."
 
 #: ../../wasm-engine.rst:132
 msgid ""
@@ -214,6 +289,16 @@ msgid ""
 "longer needs, and the eight working variables are renamed from round to "
 "round instead of being shifted:"
 msgstr ""
+"Auf dem Server nutzt die Kompressionsfunktion die SHA-Erweiterungen von "
+"x86-64 oder die SHA-2-Instruktionen von ARMv8, zur Laufzeit erkannt. Im "
+"Browser gibt es solche Instruktionen nicht, und der Löser verbringt fast "
+"seine gesamte Zeit in der portablen Kompressionsfunktion "
+"(``crates/crypto/src/sha256/portable.rs``). Diese Funktion ist für "
+"WebAssembly geschrieben: Die 64 Runden sind ausgerollt, der "
+"Nachrichtenplan liegt in einem Fenster von 16 Wörtern, in dem jede Runde "
+"ab Runde 16 das Wort überschreibt, das sie nicht mehr braucht, und die "
+"acht Arbeitsvariablen werden von Runde zu Runde umbenannt, statt "
+"verschoben zu werden:"
 
 #: ../../wasm-engine.rst:167
 msgid ""
@@ -226,10 +311,19 @@ msgid ""
 "and about 14% faster natively (measured on the Rust implementation, "
 "October 2026)."
 msgstr ""
+"Jedes ``eight_rounds!`` ist eine volle Umdrehung der Variablennamen: Das "
+"Makro übergibt sie pro Runde um eine Position rotiert, sodass eine Runde "
+"nur zwei von ihnen schreibt und die anderen sechs nie bewegt. Mit einem "
+"literalen Rundenindex ist jede Position im Plan eine Konstante, und der "
+"ganze Block wird zu geradlinigem Code, dessen Werte in lokalen "
+"WebAssembly-Variablen bleiben. Dieses Layout läuft in V8 etwa 20% "
+"schneller als ein Plan mit 64 Wörtern und einer nicht ausgerollten "
+"Schleife, und nativ etwa 14% schneller (gemessen an der "
+"Rust-Implementierung, Oktober 2026)."
 
 #: ../../wasm-engine.rst:169
 msgid "The Worker Protocol"
-msgstr ""
+msgstr "Das Worker-Protokoll"
 
 #: ../../wasm-engine.rst:174
 msgid ""
@@ -237,12 +331,17 @@ msgid ""
 "sentinel bug that the signed-integer boundary between WebAssembly and "
 "JavaScript caused."
 msgstr ""
+"Das Nachrichtenprotokoll lesen, die Fallback-Hierarchie verstehen und den "
+"Sentinel-Fehler sehen, den die Grenze vorzeichenbehafteter Ganzzahlen "
+"zwischen WebAssembly und JavaScript verursacht hat."
 
 #: ../../wasm-engine.rst:176
 msgid ""
 "The page posts one message to ``web/worker.js`` and receives progress, "
 "fallback, and result messages:"
 msgstr ""
+"Die Seite sendet eine Nachricht an ``web/worker.js`` und empfängt "
+"Fortschritts-, Fallback- und Ergebnisnachrichten:"
 
 #: ../../wasm-engine.rst:191
 msgid ""
@@ -255,10 +354,19 @@ msgid ""
 "The JavaScript provers are much slower, but they guarantee that every "
 "browser can pass."
 msgstr ""
+"Der Worker versucht zuerst WebAssembly und weicht auf reines JavaScript "
+"aus, wenn ``WebAssembly`` fehlt, durch eine Richtlinie blockiert ist oder "
+"sich nicht instanziieren lässt. Die JavaScript-Beweiser bilden den "
+"Rust-Beweiser von ``sibuna-pow`` Label für Label nach und erzeugen "
+"*byteidentische* Ausgabe. Die Tests legen feste Nonces und Beweise für "
+"beide Stufen fest, und SID 0010 verlangt, dass der Löser in einem "
+"Headless-Browser sowohl mit WebAssembly als auch mit dem "
+"JavaScript-Fallback besteht. Die JavaScript-Beweiser sind viel langsamer, "
+"garantieren aber, dass jeder Browser bestehen kann."
 
 #: ../../wasm-engine.rst:193
 msgid "The signed sentinel"
-msgstr ""
+msgstr "Der vorzeichenbehaftete Sentinel"
 
 #: ../../wasm-engine.rst:196
 msgid ""
@@ -270,6 +378,14 @@ msgid ""
 "nonce. The fix is one call, ``BigInt.asUintN(64, result)``, and the "
 "worker keeps it:"
 msgstr ""
+"WebAssembly gibt eine 64-Bit-Ganzzahl als *vorzeichenbehafteten* "
+"``BigInt`` an JavaScript zurück. Der Hashcash-Export signalisiert \"Batch "
+"erschöpft\" mit lauter Einsen (``EXHAUSTED``, ``u64::MAX``), was "
+"JavaScript als ``-1n`` sieht, nicht als ``18446744073709551615n``. Der "
+"ursprüngliche Worker verglich mit dem vorzeichenlosen Wert, sodass die "
+"Schleife nach dem ersten Batch mit einer falschen Nonce endete. Die "
+"Korrektur ist ein einziger Aufruf, ``BigInt.asUintN(64, result)``, und "
+"der Worker behält ihn:"
 
 #: ../../wasm-engine.rst:206
 msgid ""
@@ -277,16 +393,22 @@ msgid ""
 "normalised. Rust cannot enforce this on the JavaScript side; the export's "
 "type says ``u64``, and the conversion happens in the engine."
 msgstr ""
+"Die Lektion lässt sich verallgemeinern: Jeder u64, der die Grenze "
+"überquert, muss normalisiert werden. Rust kann dies auf der "
+"JavaScript-Seite nicht erzwingen; der Typ des Exports sagt ``u64``, und "
+"die Umwandlung geschieht in der Engine."
 
 #: ../../wasm-engine.rst:208
 msgid "Calibration"
-msgstr ""
+msgstr "Kalibrierung"
 
 #: ../../wasm-engine.rst:213
 msgid ""
 "Relate difficulty settings to wall-clock time in a browser engine and on "
 "native silicon."
 msgstr ""
+"Schwierigkeitseinstellungen zur Echtzeit in einer Browser-Engine und auf "
+"nativer Hardware in Beziehung setzen."
 
 #: ../../wasm-engine.rst:215
 msgid ""
@@ -297,10 +419,17 @@ msgid ""
 "repeated solves. Keep module fetch and compilation separate from "
 "steady-state hashing."
 msgstr ""
+"Keine Schwierigkeit aus der durchschnittlichen Lösungszeit eines einzigen "
+"Laptops wählen. Hashcash hat ein geometrisches Verteilungsende; "
+"Browser-Uhren schließen Scheduling, thermischen Zustand, Start und "
+"Kompilierung ein. Eine Kalibrierung für einen Einsatz sollte "
+"Browserversion, Gerät, Algorithmus, Parameter und eine Verteilung "
+"wiederholter Lösungen festhalten. Abruf und Kompilierung des Moduls "
+"getrennt vom Hashen im eingeschwungenen Zustand halten."
 
 #: ../../wasm-engine.rst:217
 msgid "Worked calibration plan"
-msgstr ""
+msgstr "Durchgerechneter Kalibrierungsplan"
 
 #: ../../wasm-engine.rst:219
 msgid ""
@@ -311,6 +440,13 @@ msgid ""
 "Choose a setting against the slow-device budget, then test the complete "
 "fetch, solve and verify flow."
 msgstr ""
+":math:`b` festhalten, das Modul aufwärmen und auf jeder Zielgeräteklasse "
+"mindestens 100 unabhängig ausgestellte Rätsel lösen. Median- und hohe "
+"Perzentildauern, Fehlschläge und Beweisgrößen festhalten. Bei :math:`b+1` "
+"wiederholen. Die erwartete Versuchszahl verdoppelt sich; eine einzelne "
+"Stichprobe muss das nicht. Eine Einstellung anhand des Budgets für "
+"langsame Geräte wählen und dann den vollständigen Ablauf aus Abruf, "
+"Lösung und Verifikation testen."
 
 #: ../../wasm-engine.rst:221
 msgid ""
@@ -322,10 +458,17 @@ msgid ""
 "boundary at which those costs can be measured without adding a timer to "
 "the server's request handler."
 msgstr ""
+"Die nativen Primitive-Messungen des Repositorys sind kein Beleg für eine "
+"versprochene Lösungszeit auf Telefon oder Browser. Ein WASM-Modul kann "
+"dieselbe Arithmetik ausführen und dabei andere Start-, Ausführungs- und "
+"Speicherkosten haben: Nativ hasht der Server mit SHA-NI, während der "
+"Browser die obige portable Kompressionsfunktion ausführt. Die Nachrichten "
+"des Workers bilden die Grenze, an der sich diese Kosten messen lassen, "
+"ohne dem Anfrage-Handler des Servers einen Timer hinzuzufügen."
 
 #: ../../wasm-engine.rst:223
 msgid "The Interstitial"
-msgstr ""
+msgstr "Die Zwischenseite"
 
 #: ../../wasm-engine.rst:226
 msgid ""
@@ -341,10 +484,23 @@ msgid ""
 "to people and to script-running browsers; blind crawlers that follow "
 "every ``href`` ban themselves."
 msgstr ""
+"Die Seite (``web/challenge.html``, im Daemon eingebettet) ist eine "
+"einzelne HTML-Datei mit einer Karte, einem unbestimmten "
+"Fortschrittsbalken und einer Statuszeile. Sie fordert die Challenge für "
+"ihre eigene Adresse an (``?path=``), startet den Worker, sendet die "
+"Lösung mit ``fetch`` und lädt bei Erfolg neu; ``fetch``-Aufrufe werden "
+"mit exponentiellem Backoff mit Jitter wiederholt, und eine "
+"Verifikationsantwort ``4xx`` wird mit ihrem Diagnosetitel angezeigt. Die "
+"``Content-Security-Policy`` der Seite lässt genau ein Skript zu, den "
+"Löserblock, über seinen SHA-256-Hash, den der Daemon einmal aus der "
+"eingebetteten Seite berechnet. Ein Honeypot-Link außerhalb des sichtbaren "
+"Bereichs (``/__sibuna/honeypot``) ist für Menschen und für Browser, die "
+"Skripte ausführen, unsichtbar; blinde Crawler, die jedem ``href`` folgen, "
+"sperren sich selbst."
 
 #: ../../wasm-engine.rst:228
 msgid "Exercise 7.1"
-msgstr ""
+msgstr "Übung 7.1"
 
 #: ../../wasm-engine.rst:230
 msgid ""
@@ -355,10 +511,17 @@ msgid ""
 "fallback (hint: the worker posts a ``fallback`` message the page can "
 "forward)."
 msgstr ""
+"Angenommen, der WebAssembly-Beweiser löst eine Challenge bei der "
+"Standardschwierigkeit auf einem Laptop in 20 ms, und der sequenzielle "
+"JavaScript-Beweiser ist 50-mal langsamer. Die Lösungszeit mit Fallback "
+"auf diesem Laptop und auf einem viermal langsameren Telefon abschätzen "
+"und eine Richtlinie für Clients vorschlagen, die den Fallback melden "
+"(Hinweis: Der Worker sendet eine ``fallback``-Nachricht, die die Seite "
+"weiterleiten kann)."
 
 #: ../../wasm-engine.rst:232
 msgid "Explain the invariant"
-msgstr ""
+msgstr "Die Invariante erklären"
 
 #: ../../wasm-engine.rst:234
 msgid ""
@@ -366,3 +529,6 @@ msgid ""
 "sources is a stronger guarantee than testing two implementations against "
 "each other."
 msgstr ""
+"Erklären, warum die Kompilierung des Browsermoduls aus den "
+"Verifizierer-Quellen des Servers eine stärkere Garantie ist, als zwei "
+"Implementierungen gegeneinander zu testen."

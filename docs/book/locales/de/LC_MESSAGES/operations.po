@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:19+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../operations.rst:1
 msgid "Part IX: Operations and Deployment"
-msgstr ""
+msgstr "Teil IX: Betrieb und Einsatz"
 
 #: ../../operations.rst:4
 msgid ""
@@ -27,15 +27,19 @@ msgid ""
 "policy files, persistent storage in SQLite or PostgreSQL, clustering over "
 "one shared database, and packaging."
 msgstr ""
+"Wir behandeln die beiden Betriebsformen, jede Kommandozeilenoption, "
+"Rezepte für Forward Auth, Richtliniendateien, persistenten Speicher in "
+"SQLite oder PostgreSQL, Cluster über eine gemeinsame Datenbank und die "
+"Paketierung."
 
 #: ../../operations.rst:6
 msgid "Surfaces and Configuration"
-msgstr ""
+msgstr "Betriebsformen und Konfiguration"
 
 #: ../../operations.rst:9 ../../operations.rst:310 ../../operations.rst:446
 #: ../../operations.rst:475 ../../operations.rst:614
 msgid "Objectives"
-msgstr ""
+msgstr "Lernziele"
 
 #: ../../operations.rst:11
 msgid ""
@@ -43,22 +47,30 @@ msgid ""
 "proxy or a forward-auth validator, choose a surface, set the "
 "proof-of-work tier and difficulty, and manage the master secret."
 msgstr ""
+"Am Ende dieses Kapitels sollten wir Sibuna als Reverse Proxy oder als "
+"Forward-Auth-Validator betreiben, eine Betriebsform wählen, die "
+"Proof-of-Work-Stufe und die Schwierigkeit festlegen und das "
+"Master-Geheimnis verwalten können."
 
 #: ../../operations.rst:13
 msgid "Choosing a Surface"
-msgstr ""
+msgstr "Eine Betriebsform wählen"
 
 #: ../../operations.rst:16
 msgid ""
 "*Gate* (``--gate``, alias ``--no-waf``): proof-of-work admission, "
 "sessions, declarative rules, reputation, GCRA limits, bans."
 msgstr ""
+"*Gate* (``--gate``, Alias ``--no-waf``): Proof-of-Work-Zulassung, "
+"Sitzungen, deklarative Regeln, Reputation, GCRA-Limits, Sperren."
 
 #: ../../operations.rst:17
 msgid ""
 "*Shield* (default, ``--shield``, alias ``--waf``): Gate plus the semantic "
 "firewall."
 msgstr ""
+"*Shield* (Standard, ``--shield``, Alias ``--waf``): Gate plus die "
+"semantische Firewall."
 
 #: ../../operations.rst:18
 msgid ""
@@ -67,130 +79,142 @@ msgid ""
 "``--database-url`` with ``--cluster-node`` connects several nodes to one "
 "PostgreSQL database (SID 0011)."
 msgstr ""
+"*Verteilter Einsatz* (eine Option für beide Betriebsformen): "
+"``--data-dir`` hält Richtlinien, Reputation und Forensik in einer lokalen "
+"SQLite-Datei; ``--database-url`` mit ``--cluster-node`` verbindet mehrere "
+"Knoten mit einer PostgreSQL-Datenbank (SID 0011)."
 
 #: ../../operations.rst:20
 msgid "Command-Line Reference"
-msgstr ""
+msgstr "Kommandozeilenreferenz"
 
 #: ../../operations.rst:23
 msgid ""
 "The table lists every option of ``sibuna --help``. Ranges are those the "
 "parser enforces."
 msgstr ""
+"Die Tabelle listet jede Option von ``sibuna --help``. Die Wertebereiche "
+"sind diejenigen, die der Parser durchsetzt."
 
 #: ../../operations.rst:25
 msgid "Daemon options"
-msgstr ""
+msgstr "Daemon-Optionen"
 
 #: ../../operations.rst:29 ../../operations.rst:172
 msgid "Flag"
-msgstr ""
+msgstr "Option"
 
 #: ../../operations.rst:30
 msgid "Default"
-msgstr ""
+msgstr "Standard"
 
 #: ../../operations.rst:31 ../../operations.rst:173
 msgid "Meaning"
-msgstr ""
+msgstr "Bedeutung"
 
 #: ../../operations.rst:32
 msgid "``--port, -p``"
-msgstr ""
+msgstr "``--port, -p``"
 
 #: ../../operations.rst:33
 msgid "``8080``"
-msgstr ""
+msgstr "``8080``"
 
 #: ../../operations.rst:34
 msgid "Listening port, 1 to 65535"
-msgstr ""
+msgstr "Port, auf dem gelauscht wird, 1 bis 65535"
 
 #: ../../operations.rst:35
 msgid "``--host, -h``"
-msgstr ""
+msgstr "``--host, -h``"
 
 #: ../../operations.rst:36
 msgid "``0.0.0.0``"
-msgstr ""
+msgstr "``0.0.0.0``"
 
 #: ../../operations.rst:37
 msgid "Listening address, an IP address literal"
-msgstr ""
+msgstr "Adresse, auf der gelauscht wird, ein IP-Adressliteral"
 
 #: ../../operations.rst:38
 msgid "``--upstream-host``"
-msgstr ""
+msgstr "``--upstream-host``"
 
 #: ../../operations.rst:39
 msgid "``127.0.0.1``"
-msgstr ""
+msgstr "``127.0.0.1``"
 
 #: ../../operations.rst:40
 msgid "Origin host (reverse proxy mode)"
-msgstr ""
+msgstr "Host des Ursprungsservers (Reverse-Proxy-Modus)"
 
 #: ../../operations.rst:41
 msgid "``--upstream-port, -u``"
-msgstr ""
+msgstr "``--upstream-port, -u``"
 
 #: ../../operations.rst:42
 msgid "``3000``"
-msgstr ""
+msgstr "``3000``"
 
 #: ../../operations.rst:43
 msgid "Origin port"
-msgstr ""
+msgstr "Port des Ursprungsservers"
 
 #: ../../operations.rst:44
 msgid "``--mode, -m``"
-msgstr ""
+msgstr "``--mode, -m``"
 
 #: ../../operations.rst:45
 msgid "``reverse_proxy``"
-msgstr ""
+msgstr "``reverse_proxy``"
 
 #: ../../operations.rst:46
 msgid ""
 "``reverse_proxy`` or ``forward_auth`` (also ``proxy`` and ``auth``), "
 "given once"
 msgstr ""
+"``reverse_proxy`` oder ``forward_auth`` (auch ``proxy`` und ``auth``), "
+"genau einmal angegeben"
 
 #: ../../operations.rst:47
 msgid "``--workers, -w``"
-msgstr ""
+msgstr "``--workers, -w``"
 
 #: ../../operations.rst:48
 msgid "one per CPU"
-msgstr ""
+msgstr "eine pro CPU"
 
 #: ../../operations.rst:49
 msgid ""
 "Accept threads sharing the listening socket, 0 (one per CPU) to 64; each "
 "accepted connection then gets its own thread"
 msgstr ""
+"Accept-Threads, die sich den lauschenden Socket teilen, 0 (eine pro CPU) "
+"bis 64; jede angenommene Verbindung erhält danach einen eigenen Thread"
 
 #: ../../operations.rst:50
 msgid "``--max-connections``"
-msgstr ""
+msgstr "``--max-connections``"
 
 #: ../../operations.rst:51
 msgid "``1024``"
-msgstr ""
+msgstr "``1024``"
 
 #: ../../operations.rst:52
 msgid ""
 "Connections served concurrently, 1 to 8192; further ones are answered "
 "``503``"
 msgstr ""
+"Gleichzeitig bediente Verbindungen, 1 bis 8192; weitere werden mit "
+"``503`` beantwortet"
 
 #: ../../operations.rst:53
 msgid "``--max-connections-per-ip``"
-msgstr ""
+msgstr "``--max-connections-per-ip``"
 
 #: ../../operations.rst:54 ../../operations.rst:72
 msgid "``64``"
-msgstr ""
+msgstr "``64``"
 
 #: ../../operations.rst:55
 msgid ""
@@ -198,14 +222,18 @@ msgid ""
 "IPv6 peer counts with its ``--ipv6-prefix`` network, and forwarded "
 "headers play no part; further ones are answered ``503``"
 msgstr ""
+"Verbindungen, die eine Peer-Adresse eines Sockets halten darf, 0 (keine "
+"Grenze) bis 8192; ein IPv6-Peer zählt mit seinem ``--ipv6-prefix``-Netz, "
+"und weitergeleitete Header spielen keine Rolle; weitere werden mit "
+"``503`` beantwortet"
 
 #: ../../operations.rst:56
 msgid "``--idle-timeout``"
-msgstr ""
+msgstr "``--idle-timeout``"
 
 #: ../../operations.rst:57
 msgid "``15``"
-msgstr ""
+msgstr "``15``"
 
 #: ../../operations.rst:58
 msgid ""
@@ -216,348 +244,382 @@ msgid ""
 "attacks). The client socket carries a write timeout of the same length, "
 "so a client that accepts no byte for that long loses the connection"
 msgstr ""
+"Längste Stille in Sekunden, 0 bis 86400. Ein Anfragekopf muss innerhalb "
+"dieser Zeit eintreffen. Eine Antwort des Ursprungsservers erneuert die "
+"Frist bei jedem Lesen, sodass ein langsamer Stream lebt, solange Bytes "
+"fließen, und ein stummer Ursprungsserver auf beiden Sockets getrennt "
+"wird. Ein weitergeleiteter Upload muss pro Periode 16 KiB liefern (eine "
+"Mindestrate gegen Slow-Body-Angriffe). Der Client-Socket trägt ein "
+"Schreib-Timeout derselben Länge, sodass ein Client, der so lange kein "
+"Byte annimmt, die Verbindung verliert"
 
 #: ../../operations.rst:59
 msgid "``--websocket-idle-timeout``"
-msgstr ""
+msgstr "``--websocket-idle-timeout``"
 
 #: ../../operations.rst:60 ../../operations.rst:90
 msgid "``300``"
-msgstr ""
+msgstr "``300``"
 
 #: ../../operations.rst:61
 msgid "Idle deadline of an upgraded connection in seconds, 0 to 86400"
 msgstr ""
+"Leerlauffrist einer per Upgrade umgestellten Verbindung in Sekunden, 0 "
+"bis 86400"
 
 #: ../../operations.rst:62
 msgid "``--trust-forwarded``"
-msgstr ""
+msgstr "``--trust-forwarded``"
 
 #: ../../operations.rst:63
 msgid "off; on in forward-auth"
-msgstr ""
+msgstr "aus; an bei Forward Auth"
 
 #: ../../operations.rst:64
 msgid "Honour ``X-Forwarded-For`` / ``X-Real-IP`` from the peer"
-msgstr ""
+msgstr "``X-Forwarded-For`` / ``X-Real-IP`` vom Peer berücksichtigen"
 
 #: ../../operations.rst:65
 msgid "``--no-trust-forwarded``"
-msgstr ""
+msgstr "``--no-trust-forwarded``"
 
 #: ../../operations.rst:66 ../../operations.rst:99 ../../operations.rst:144
 msgid "off"
-msgstr ""
+msgstr "aus"
 
 #: ../../operations.rst:67
 msgid "Never honour them, even in forward-auth mode"
-msgstr ""
+msgstr "Sie nie berücksichtigen, auch nicht im Forward-Auth-Modus"
 
 #: ../../operations.rst:68
 msgid "``--trusted-hops``"
-msgstr ""
+msgstr "``--trusted-hops``"
 
 #: ../../operations.rst:69
 msgid "``1``"
-msgstr ""
+msgstr "``1``"
 
 #: ../../operations.rst:70
 msgid ""
 "With forwarded identity trusted, the client is the ``X-Forwarded-For`` "
 "entry this many positions from the right, 1 to 8"
 msgstr ""
+"Bei vertrauenswürdiger weitergeleiteter Identität ist der Client der "
+"Eintrag von ``X-Forwarded-For``, der so viele Positionen von rechts "
+"steht, 1 bis 8"
 
 #: ../../operations.rst:71
 msgid "``--ipv6-prefix``"
-msgstr ""
+msgstr "``--ipv6-prefix``"
 
 #: ../../operations.rst:73
 msgid ""
 "IPv6 prefix length, 32 to 128, that rate limits, bans and the per-client "
 "connection bound apply to"
 msgstr ""
+"IPv6-Präfixlänge, 32 bis 128, für die Ratenlimits, Sperren und die "
+"Verbindungsgrenze pro Client gelten"
 
 #: ../../operations.rst:74
 msgid "``--algorithm, -a``"
-msgstr ""
+msgstr "``--algorithm, -a``"
 
 #: ../../operations.rst:75
 msgid "``posw``"
-msgstr ""
+msgstr "``posw``"
 
 #: ../../operations.rst:76
 msgid "``posw`` or ``hashcash``"
-msgstr ""
+msgstr "``posw`` oder ``hashcash``"
 
 #: ../../operations.rst:77
 msgid "``--difficulty, -d``"
-msgstr ""
+msgstr "``--difficulty, -d``"
 
 #: ../../operations.rst:78 ../../operations.rst:81
 msgid "``16``"
-msgstr ""
+msgstr "``16``"
 
 #: ../../operations.rst:79
 msgid "Work bits, 1 to 64: Hashcash zero bits, or PoSW depth plus three"
 msgstr ""
+"Arbeitsbits, 1 bis 64: Nullbits bei Hashcash oder PoSW-Tiefe plus drei"
 
 #: ../../operations.rst:80
 msgid "``--posw-challenges``"
-msgstr ""
+msgstr "``--posw-challenges``"
 
 #: ../../operations.rst:82
 msgid "Openings per sequential-work proof, 1 to 32"
-msgstr ""
+msgstr "Öffnungen pro Nachweis sequenzieller Arbeit, 1 bis 32"
 
 #: ../../operations.rst:83
 msgid "``--token-scheme``"
-msgstr ""
+msgstr "``--token-scheme``"
 
 #: ../../operations.rst:84
 msgid "``mac``"
-msgstr ""
+msgstr "``mac``"
 
 #: ../../operations.rst:85
 msgid "``mac`` (keyed BLAKE3) or ``ed25519``"
-msgstr ""
+msgstr "``mac`` (BLAKE3 mit Schlüssel) oder ``ed25519``"
 
 #: ../../operations.rst:86
 msgid "``--token-ttl``"
-msgstr ""
+msgstr "``--token-ttl``"
 
 #: ../../operations.rst:87
 msgid "``86400``"
-msgstr ""
+msgstr "``86400``"
 
 #: ../../operations.rst:88
 msgid "Session lifetime, seconds (1 to 31,536,000)"
-msgstr ""
+msgstr "Lebensdauer der Sitzung, Sekunden (1 bis 31,536,000)"
 
 #: ../../operations.rst:89
 msgid "``--challenge-ttl``"
-msgstr ""
+msgstr "``--challenge-ttl``"
 
 #: ../../operations.rst:91
 msgid "Challenge lifetime, seconds (1 to 86,400)"
-msgstr ""
+msgstr "Lebensdauer der Challenge, Sekunden (1 bis 86,400)"
 
 #: ../../operations.rst:92
 msgid "``--secret-file, -s``"
-msgstr ""
+msgstr "``--secret-file, -s``"
 
 #: ../../operations.rst:93
 msgid "random"
-msgstr ""
+msgstr "zufällig"
 
 #: ../../operations.rst:94
 msgid ""
 "64 hex characters or 32 raw bytes; ``SIBUNA_SECRET`` (64 hex characters) "
 "is also accepted"
 msgstr ""
+"64 Hex-Zeichen oder 32 Rohbytes; ``SIBUNA_SECRET`` (64 Hex-Zeichen) wird "
+"ebenfalls akzeptiert"
 
 #: ../../operations.rst:95
 msgid "``--cookie-name``"
-msgstr ""
+msgstr "``--cookie-name``"
 
 #: ../../operations.rst:96
 msgid "``__sibuna_token``"
-msgstr ""
+msgstr "``__sibuna_token``"
 
 #: ../../operations.rst:97
 msgid "Session cookie name, 1 to 64 token characters"
-msgstr ""
+msgstr "Name des Sitzungscookies, 1 bis 64 Token-Zeichen"
 
 #: ../../operations.rst:98
 msgid "``--secure-cookie``"
-msgstr ""
+msgstr "``--secure-cookie``"
 
 #: ../../operations.rst:100
 msgid "Add the ``Secure`` attribute"
-msgstr ""
+msgstr "Das Attribut ``Secure`` hinzufügen"
 
 #: ../../operations.rst:101
 msgid "``--gate`` / ``--shield``"
-msgstr ""
+msgstr "``--gate`` / ``--shield``"
 
 #: ../../operations.rst:102
 msgid "shield"
-msgstr ""
+msgstr "shield"
 
 #: ../../operations.rst:103
 msgid "Surface selection"
-msgstr ""
+msgstr "Auswahl der Betriebsform"
 
 #: ../../operations.rst:104
 msgid "``--rate-limit``"
-msgstr ""
+msgstr "``--rate-limit``"
 
 #: ../../operations.rst:105
 msgid "``100``"
-msgstr ""
+msgstr "``100``"
 
 #: ../../operations.rst:106
 msgid "Requests per window per client (GCRA burst)"
-msgstr ""
+msgstr "Anfragen pro Fenster und Client (GCRA-Burst)"
 
 #: ../../operations.rst:107
 msgid "``--rate-window``"
-msgstr ""
+msgstr "``--rate-window``"
 
 #: ../../operations.rst:108
 msgid "``10``"
-msgstr ""
+msgstr "``10``"
 
 #: ../../operations.rst:109
 msgid "Window in seconds, 1 to 86400"
-msgstr ""
+msgstr "Fenster in Sekunden, 1 bis 86400"
 
 #: ../../operations.rst:110
 msgid "``--challenge-rate-limit``"
-msgstr ""
+msgstr "``--challenge-rate-limit``"
 
 #: ../../operations.rst:111
 msgid "``30``"
-msgstr ""
+msgstr "``30``"
 
 #: ../../operations.rst:112
 msgid ""
 "Challenge issuances and verifications per window per client, separate "
 "from the request budget"
 msgstr ""
+"Ausgaben und Prüfungen von Challenges pro Fenster und Client, getrennt "
+"vom Anfragebudget"
 
 #: ../../operations.rst:113
 msgid "``--ban-seconds``"
-msgstr ""
+msgstr "``--ban-seconds``"
 
 #: ../../operations.rst:114
 msgid "``3600``"
-msgstr ""
+msgstr "``3600``"
 
 #: ../../operations.rst:115
 msgid "Honeypot ban duration, 0 to 31,536,000"
-msgstr ""
+msgstr "Sperrdauer durch den Honeypot, 0 bis 31,536,000"
 
 #: ../../operations.rst:116
 msgid "``--policy-file, -P``"
-msgstr ""
+msgstr "``--policy-file, -P``"
 
 #: ../../operations.rst:117 ../../operations.rst:129
 #: ../../operations.rst:132 ../../operations.rst:135
 #: ../../operations.rst:138
 msgid "none"
-msgstr ""
+msgstr "keine"
 
 #: ../../operations.rst:118
 msgid "Declarative JSON policy"
-msgstr ""
+msgstr "Deklarative JSON-Richtlinie"
 
 #: ../../operations.rst:119
 msgid "``--rate-table-cells``"
-msgstr ""
+msgstr "``--rate-table-cells``"
 
 #: ../../operations.rst:120
 msgid "``262144``"
-msgstr ""
+msgstr "``262144``"
 
 #: ../../operations.rst:121
 msgid ""
 "Cells per rate limiter table, 16 bytes each, 4,096 to 16,777,216, rounded "
 "up to a power of two"
 msgstr ""
+"Zellen pro Tabelle des Ratenbegrenzers, je 16 Bytes, 4,096 bis "
+"16,777,216, aufgerundet auf eine Zweierpotenz"
 
 #: ../../operations.rst:122
 msgid "``--ban-table-slots``"
-msgstr ""
+msgstr "``--ban-table-slots``"
 
 #: ../../operations.rst:123
 msgid "``65536``"
-msgstr ""
+msgstr "``65536``"
 
 #: ../../operations.rst:124
 msgid ""
 "Ban table slots, 24 bytes each, 1,024 to 16,777,216, rounded up to a "
 "power of two"
 msgstr ""
+"Slots der Sperrtabelle, je 24 Bytes, 1,024 bis 16,777,216, aufgerundet "
+"auf eine Zweierpotenz"
 
 #: ../../operations.rst:125
 msgid "``--spent-tags``"
-msgstr ""
+msgstr "``--spent-tags``"
 
 #: ../../operations.rst:126
 msgid "``1048576``"
-msgstr ""
+msgstr "``1048576``"
 
 #: ../../operations.rst:127
 msgid ""
 "Solved challenges remembered against replay, 24 bytes each, 65,536 to "
 "16,777,216"
 msgstr ""
+"Gelöste Challenges, die gegen Wiedereinspielung gespeichert werden, je 24 "
+"Bytes, 65,536 bis 16,777,216"
 
 #: ../../operations.rst:128
 msgid "``--data-dir, -D``"
-msgstr ""
+msgstr "``--data-dir, -D``"
 
 #: ../../operations.rst:130
 msgid "One node: persist to the SQLite file ``<path>/sibuna.db``"
 msgstr ""
+"Ein Knoten: dauerhaft in der SQLite-Datei ``<path>/sibuna.db`` speichern"
 
 #: ../../operations.rst:131
 msgid "``--database-url``"
-msgstr ""
+msgstr "``--database-url``"
 
 #: ../../operations.rst:133
 msgid ""
 "A cluster: the shared PostgreSQL database (``postgres://`` or "
 "``postgresql://``)"
 msgstr ""
+"Ein Cluster: die gemeinsame PostgreSQL-Datenbank (``postgres://`` oder "
+"``postgresql://``)"
 
 #: ../../operations.rst:134
 msgid "``--database-url-file``"
-msgstr ""
+msgstr "``--database-url-file``"
 
 #: ../../operations.rst:136
 msgid "Read the database URL from an owner-only file"
 msgstr ""
+"Die Datenbank-URL aus einer Datei lesen, die nur der Eigentümer lesen darf"
 
 #: ../../operations.rst:137
 msgid "``--cluster-node``"
-msgstr ""
+msgstr "``--cluster-node``"
 
 #: ../../operations.rst:139
 msgid ""
 "This node's id; binds challenge keys and the top bits of incident "
 "identifiers; required with a database URL"
 msgstr ""
+"Die Kennung dieses Knotens; bindet Challenge-Schlüssel und die oberen "
+"Bits der Vorfallskennungen; mit einer Datenbank-URL erforderlich"
 
 #: ../../operations.rst:140
 msgid "``--storage-poll-ms``"
-msgstr ""
+msgstr "``--storage-poll-ms``"
 
 #: ../../operations.rst:141
 msgid "``500``"
-msgstr ""
+msgstr "``500``"
 
 #: ../../operations.rst:142
 msgid "Storage tick interval, 1 to 60,000 ms"
-msgstr ""
+msgstr "Taktintervall des Speicherthreads, 1 bis 60,000 ms"
 
 #: ../../operations.rst:143
 msgid "``--verbose, -v``"
-msgstr ""
+msgstr "``--verbose, -v``"
 
 #: ../../operations.rst:145
 msgid "Verbose logging"
-msgstr ""
+msgstr "Ausführliche Protokollierung"
 
 #: ../../operations.rst:146
 msgid "``--help`` / ``--version``"
-msgstr ""
+msgstr "``--help`` / ``--version``"
 
 #: ../../operations.rst:148
 msgid ""
 "Print the help (console options first, when the console is compiled in) "
 "or the version, and exit"
 msgstr ""
+"Die Hilfe (zuerst die Konsolenoptionen, wenn die Konsole einkompiliert "
+"ist) oder die Version ausgeben und beenden"
 
 #: ../../operations.rst:150
 msgid ""
@@ -570,10 +632,18 @@ msgid ""
 "startup with ``RemovedOption`` and a hint that names SID 0011. The "
 "console's options are listed in the next chapter."
 msgstr ""
+"``--data-dir`` und eine Datenbank-URL schließen einander aus, ebenso "
+"``--database-url`` und ``--database-url-file``. Eine Datenbank-URL ohne "
+"``--cluster-node`` wird abgewiesen. Die Zaxonlite-Clusteroptionen "
+"``--cluster-listen``, ``--cluster-peer``, ``--cluster-secret-file`` sowie "
+"``--cluster-tls-cert``, ``--cluster-tls-key`` und ``--cluster-tls-ca`` "
+"gibt es nicht mehr; wer eine davon angibt, bricht den Start mit "
+"``RemovedOption`` und einem Hinweis auf SID 0011 ab. Die Optionen der "
+"Konsole stehen im nächsten Kapitel."
 
 #: ../../operations.rst:152
 msgid "The master secret"
-msgstr ""
+msgstr "Das Master-Geheimnis"
 
 #: ../../operations.rst:154
 msgid ""
@@ -584,10 +654,16 @@ msgid ""
 "``head -c 32 /dev/urandom | xxd -p -c 64 > /etc/sibuna/secret`` and mode "
 "0600."
 msgstr ""
+"Ohne ``--secret-file`` oder ``SIBUNA_SECRET`` zieht der Daemon einen "
+"zufälligen Seed, und das Banner gibt \"random (set --secret-file)\" aus. "
+"Tokens und Challenges sterben dann mit dem Prozess, und ein Cluster, "
+"dessen Knoten verschiedene Seeds halten, weist die Cookies der jeweils "
+"anderen ab. Einen Seed mit ``head -c 32 /dev/urandom | xxd -p -c 64 > "
+"/etc/sibuna/secret`` und Modus 0600 erzeugen."
 
 #: ../../operations.rst:156
 msgid "Console Preview"
-msgstr ""
+msgstr "Vorschau der Konsole"
 
 #: ../../operations.rst:159
 msgid ""
@@ -599,6 +675,14 @@ msgid ""
 "build with ``--no-default-features`` alone has neither storage nor "
 "console. Bootstrap locally while the daemon is stopped:"
 msgstr ""
+"Die Konsole wird über das Standard-Feature ``console`` in den Daemon "
+"einkompiliert, startet aber nur mit ``--console``. Sie braucht Speicher: "
+"``--console`` ohne ``--data-dir`` oder ``--database-url`` wird mit "
+"``CONSOLE001`` (``StorageRequired``) abgewiesen. Mit ``cargo build "
+"--release -p sibuna --no-default-features --features sqlite`` lässt sie "
+"sich herauskompilieren; ein Build mit ``--no-default-features`` allein "
+"hat weder Speicher noch Konsole. Die lokale Ersteinrichtung erfolgt bei "
+"angehaltenem Daemon:"
 
 #: ../../operations.rst:166
 msgid ""
@@ -613,146 +697,178 @@ msgid ""
 "(crate ``sibuna-console-ui``) by the daemon's build script; it and the "
 "committed stylesheet ship with ordinary builds."
 msgstr ""
+"``sibuna console init-admin`` ist derselbe Befehl. "
+"``http://127.0.0.1:19446/console/`` öffnen und das erzeugte temporäre "
+"Passwort ersetzen, das bei der ersten Anmeldung geändert werden muss und "
+"nach einer Stunde abläuft. Die Navigation nach der Anmeldung bietet den "
+"animierten Länderglobus, Anfrage- und Challenge-Statistiken, die "
+"Untersuchung von Vorfällen, Editoren für Richtlinien und Prüfung, "
+"Benutzer, API-Tokens mit begrenztem Geltungsbereich, Audit sowie "
+"Steuerelemente für den bedienenden Knoten. Die "
+"Authentifizierungsoberfläche lädt weder Globusgeometrie noch Telemetrie. "
+"Die Oberfläche ist ein WebAssembly-Modul, das das Build-Skript des "
+"Daemons aus ``cmd/console-ui`` (Crate ``sibuna-console-ui``) baut; es "
+"wird zusammen mit dem eingecheckten Stylesheet in gewöhnlichen Builds "
+"ausgeliefert."
 
 #: ../../operations.rst:168
 msgid "Console options"
-msgstr ""
+msgstr "Konsolenoptionen"
 
 #: ../../operations.rst:174
 msgid "``--console <ip:port>``"
-msgstr ""
+msgstr "``--console <ip:port>``"
 
 #: ../../operations.rst:175
 msgid ""
 "Start the console on this listener (IPv6 in brackets, nonzero port); "
 "requires ``--data-dir`` or ``--database-url``"
 msgstr ""
+"Die Konsole auf diesem Listener starten (IPv6 in eckigen Klammern, Port "
+"ungleich null); erfordert ``--data-dir`` oder ``--database-url``"
 
 #: ../../operations.rst:176
 msgid "``--console-key-file <path>``"
-msgstr ""
+msgstr "``--console-key-file <path>``"
 
 #: ../../operations.rst:177
 msgid ""
 "64 hex characters, owner-only permissions; protects stored second-factor "
 "and webhook secrets"
 msgstr ""
+"64 Hex-Zeichen, Rechte nur für den Eigentümer; schützt gespeicherte "
+"Geheimnisse für den zweiten Faktor und für Webhooks"
 
 #: ../../operations.rst:178
 msgid "``--console-origin <https-origin>``"
-msgstr ""
+msgstr "``--console-origin <https-origin>``"
 
 #: ../../operations.rst:179
 msgid "The canonical HTTPS origin behind a proxy"
-msgstr ""
+msgstr "Der kanonische HTTPS-Ursprung hinter einem Proxy"
 
 #: ../../operations.rst:180
 msgid "``--console-behind-proxy``"
-msgstr ""
+msgstr "``--console-behind-proxy``"
 
 #: ../../operations.rst:181
 msgid "A TLS-terminating proxy delivers every request"
-msgstr ""
+msgstr "Ein TLS-terminierender Proxy liefert jede Anfrage"
 
 #: ../../operations.rst:182
 msgid "``--console-trusted-proxy <cidr>``"
-msgstr ""
+msgstr "``--console-trusted-proxy <cidr>``"
 
 #: ../../operations.rst:183
 msgid ""
 "A network whose connections may carry forwarded fields; repeatable, at "
 "most 16"
 msgstr ""
+"Ein Netz, dessen Verbindungen weitergeleitete Felder tragen dürfen; "
+"wiederholbar, höchstens 16"
 
 #: ../../operations.rst:184
 msgid "``--console-advertise <origin>``"
-msgstr ""
+msgstr "``--console-advertise <origin>``"
 
 #: ../../operations.rst:185
 msgid "The link other consoles show for this one"
-msgstr ""
+msgstr "Der Link, den andere Konsolen für diese anzeigen"
 
 #: ../../operations.rst:186
 msgid "``--console-location <latitude,longitude>``"
-msgstr ""
+msgstr "``--console-location <latitude,longitude>``"
 
 #: ../../operations.rst:187
 msgid "This node's declared position on the globe"
-msgstr ""
+msgstr "Die angegebene Position dieses Knotens auf dem Globus"
 
 #: ../../operations.rst:188
 msgid "``--console-probe <node-id>=<http://ip:port>``"
-msgstr ""
+msgstr "``--console-probe <node-id>=<http://ip:port>``"
 
 #: ../../operations.rst:189
 msgid ""
 "A peer data-plane listener to health-check; repeatable, at most eight"
 msgstr ""
+"Ein Data-Plane-Listener eines Peers, dessen Zustand geprüft wird; "
+"wiederholbar, höchstens acht"
 
 #: ../../operations.rst:190
 msgid "``--console-peer <node-id>=<https://origin>``"
-msgstr ""
+msgstr "``--console-peer <node-id>=<https://origin>``"
 
 #: ../../operations.rst:191
 msgid "A management peer; repeatable, at most eight"
-msgstr ""
+msgstr "Ein Management-Peer; wiederholbar, höchstens acht"
 
 #: ../../operations.rst:192
 msgid "``--console-peer-key-file <path>``"
-msgstr ""
+msgstr "``--console-peer-key-file <path>``"
 
 #: ../../operations.rst:193
 msgid ""
 "The peer key: owner-only, 64 hex characters, independent of the console "
 "key"
 msgstr ""
+"Der Peer-Schlüssel: nur für den Eigentümer, 64 Hex-Zeichen, unabhängig "
+"vom Konsolenschlüssel"
 
 #: ../../operations.rst:194
 msgid "``--console-peer-ca-file <path>``"
-msgstr ""
+msgstr "``--console-peer-ca-file <path>``"
 
 #: ../../operations.rst:195
 msgid "Optional PEM trust anchors for peers, replacing the system roots"
 msgstr ""
+"Optionale PEM-Vertrauensanker für Peers, die die Systemwurzeln ersetzen"
 
 #: ../../operations.rst:196
 msgid "``--console-query-steps <n>``"
-msgstr ""
+msgstr "``--console-query-steps <n>``"
 
 #: ../../operations.rst:197
 msgid ""
 "SQLite steps per aggregate read, 100,000 to 50,000,000, default 4,000,000"
 msgstr ""
+"SQLite-Schritte pro Aggregatabfrage, 100,000 bis 50,000,000, Standard "
+"4,000,000"
 
 #: ../../operations.rst:198
 msgid "``--console-capture-heads``"
-msgstr ""
+msgstr "``--console-capture-heads``"
 
 #: ../../operations.rst:199
 msgid ""
 "Store redacted request and origin response heads per incident; off by "
 "default"
 msgstr ""
+"Geschwärzte Köpfe von Anfrage und Ursprungsantwort pro Vorfall speichern; "
+"standardmäßig aus"
 
 #: ../../operations.rst:200
 msgid "``--console-capture-header <name>``"
-msgstr ""
+msgstr "``--console-capture-header <name>``"
 
 #: ../../operations.rst:201
 msgid ""
 "Keep this header's value in stored heads; repeatable, at most 16; "
 "requires ``--console-capture-heads``"
 msgstr ""
+"Den Wert dieses Headers in gespeicherten Köpfen behalten; wiederholbar, "
+"höchstens 16; erfordert ``--console-capture-heads``"
 
 #: ../../operations.rst:202
 msgid "``--console-cookie-secure``"
-msgstr ""
+msgstr "``--console-cookie-secure``"
 
 #: ../../operations.rst:203
 msgid ""
 "Give console cookies the ``Secure`` attribute without a proxy (accepted "
 "by the parser, not listed in ``--help``)"
 msgstr ""
+"Konsolen-Cookies ohne Proxy das Attribut ``Secure`` geben (vom Parser "
+"akzeptiert, nicht in ``--help`` aufgeführt)"
 
 #: ../../operations.rst:205
 msgid ""
@@ -762,10 +878,15 @@ msgid ""
 "off-loopback listener without a trusted proxy) stops it with "
 "``CONSOLE001``."
 msgstr ""
+"Eine Konsolenoption ohne ``--console``, eine wiederholte Option oder ein "
+"fehlerhafter Wert bricht den Start mit ``CONSOLE002`` und dem Fehlernamen "
+"der Option ab. Eine Konfiguration, die eine Regel der Konsole verletzt "
+"(zum Beispiel ein Listener außerhalb des Loopbacks ohne "
+"vertrauenswürdigen Proxy), bricht ihn mit ``CONSOLE001`` ab."
 
 #: ../../operations.rst:207
 msgid "A Tour of the Console"
-msgstr ""
+msgstr "Ein Rundgang durch die Konsole"
 
 #: ../../operations.rst:210
 msgid ""
@@ -780,6 +901,17 @@ msgid ""
 "stated in its title and carries the product, the serving node, the page "
 "and the way back in the same place."
 msgstr ""
+"Die folgenden Bildschirmfotos stammen von einem Release-Build auf einem "
+"Loopback-Knoten mit SQLite-Speicher und einer Richtlinie aus vier "
+"``ALLOW``-Regeln über einer Standard-Challenge, nach etwa vier Minuten "
+"synthetischen Verkehrs: Adressen aus Dokumentationsbereichen, "
+"Sondierungen auf SQL-Injection und Cross-Site-Scripting, drei "
+"Honeypot-Treffer und sieben in headless Chromium gelöste Challenges. Jede "
+"Zahl ist daher nur ein Beispiel. Wir haben sie mit ``cargo xtask browser "
+"console --viewport-only`` aufgenommen; der Befehl durchläuft die Konsole "
+"in Chromium mit 1440 mal 960 Pixeln und bewertet jede Seite. Jede Seite "
+"beantwortet eine Frage, die in ihrem Titel steht, und zeigt an derselben "
+"Stelle das Produkt, den bedienenden Knoten, die Seite und den Weg zurück."
 
 #: ../../operations.rst:215
 msgid ""
@@ -787,6 +919,9 @@ msgid ""
 "telemetry; the second form exchanges a wall-display code for a read-only "
 "statistics session."
 msgstr ""
+"Anmeldung. Die öffentliche Oberfläche lädt weder Globusgeometrie noch "
+"GeoIP-Daten noch Telemetrie; das zweite Formular tauscht einen Code für "
+"eine Wandanzeige gegen eine schreibgeschützte Statistiksitzung."
 
 #: ../../operations.rst:220
 msgid ""
@@ -802,6 +937,20 @@ msgid ""
 "the timeline, and sampled panels that rank request paths and referring "
 "hosts and count client operating systems, browsers and response status."
 msgstr ""
+"Statistik, Verkehr, über die letzten 24 Stunden. Der Hinweis unter der "
+"Zeitraumauswahl nennt die Abdeckung: Nur vier von 1,440 erwarteten "
+"Minutendatensätzen existieren, daher zeigt jedes \"Yesterday\" den Wert "
+"\"Not available\". Kacheln zeigen aufbewahrte Zählungen abgeschlossener "
+"Minuten mit einer Live-Sparkline über 60 Sekunden; die "
+"Entscheidungsfarben (zugelassen grün, mit Challenge belegt "
+"bernsteinfarben, abgelehnt rot) sind in jedem Feld gleich. Ursprungs-4xx "
+"und -5xx zeigen für einen aufbewahrten Zeitraum \"Not recorded\", weil "
+"die Minutendatensätze den Proxy-Modus nicht festhalten, der einer "
+"Ursprungszählung ihre Bedeutung gibt; die Live-Summen seit dem Start "
+"zeigen sie. Unter den sichtbaren Kacheln liegen zwei Zustandskacheln, "
+"aktive Sperreinträge und gesunde Knoten, die Zeitleiste sowie "
+"Stichprobenfelder, die Anfragepfade und verweisende Hosts ordnen und "
+"Betriebssysteme, Browser und Antwortstatus der Clients zählen."
 
 #: ../../operations.rst:225
 msgid ""
@@ -812,6 +961,12 @@ msgid ""
 "Further down the page are findings over sixty equal buckets, attack "
 "categories and attacked paths."
 msgstr ""
+"Statistik, Sicherheit. Eine Kachel pro Modul über den gewählten Zeitraum, "
+"Live-Trends der Ergebnisse und der Live-Ereignisstrom mit seinen neuesten "
+"Befunden (hier ``waf:sqli`` und ``waf:xss``). Nicht erfasste Werte sagen "
+"das, statt null zu zeigen: Die Kachel Reputation zeigt \"Not recorded\". "
+"Weiter unten auf der Seite stehen Befunde über sechzig gleiche "
+"Intervalle, Angriffskategorien und angegriffene Pfade."
 
 #: ../../operations.rst:230
 msgid ""
@@ -828,6 +983,20 @@ msgid ""
 "read as not recorded. Deny and allow actions open the IP groups form with "
 "the address drafted."
 msgstr ""
+"Ereignisse. Das Filterformular über den aufgezeichneten Vorfällen, die "
+"neuesten zuerst. Jeder Vorfall öffnet sich direkt in der Liste mit seinen "
+"Belegen: der gewählten lokalen Antwort, Bytelängen, dem "
+"Kampagnenkandidaten und ausdrücklichen \"not recorded\"-Einträgen für die "
+"getroffene Regel, die Bewertungsterme und den JA4-Fingerabdruck. Mit "
+"``--console-capture-heads`` öffnet sich auf Anforderung der geschwärzte "
+"Anfragekopf (und bei auditierten Zulassungen über den Reverse Proxy der "
+"Kopf der Ursprungsantwort), dargestellt als UTF-8 oder Latin-1, mit "
+"Angabe des Antwortzustands (erfasst, lokal, bei Forward Auth nicht "
+"beobachtet, Ursprungsserver nicht verfügbar) und einem Befehl zum "
+"Kopieren als cURL; nur aufgelistete Header-Werte werden behalten, und "
+"``--console-capture-header <name>`` erweitert diese Liste. Andernfalls "
+"gelten Köpfe als nicht erfasst. Die Aktionen Ablehnen und Erlauben öffnen "
+"das Formular für IP-Gruppen mit der Adresse als Entwurf."
 
 #: ../../operations.rst:235
 msgid ""
@@ -840,6 +1009,15 @@ msgid ""
 "adaptive-difficulty transitions and per-address records with deny and "
 "allow shortcuts, retained seven days."
 msgstr ""
+"Challenges. Ein aufbewahrtes Fenster (eine Stunde, ein Tag oder sieben "
+"Tage) summiert dauerhafte Datensätze pro Minute und gibt an, wie viele "
+"Minuten erfasst und vollständig waren; hier wurden sieben Challenges "
+"ausgegeben, eingereicht und akzeptiert, und alle Ablehnungsgründe stehen "
+"auf null. Weiter unten stehen die Live-Summen seit diesem Start, die "
+"konfigurierten und zuletzt ausgegebenen Parameter, das Histogramm der "
+"Lösungszeiten akzeptierter Challenges, aufgeteilt nach Algorithmus und "
+"Parameterklasse, Übergänge der adaptiven Schwierigkeit und Datensätze pro "
+"Adresse mit Abkürzungen zum Ablehnen und Erlauben, sieben Tage aufbewahrt."
 
 #: ../../operations.rst:240
 msgid ""
@@ -851,6 +1029,14 @@ msgid ""
 "review of the changed fields, and confirming validates the whole "
 "candidate and creates a new revision."
 msgstr ""
+"Richtlinien. Die angewandte Engine nennt ihre Betriebsform, Revisionen, "
+"Standardalgorithmus und Schwierigkeit sowie ihre knotenlokalen Limits und "
+"listet dann die Regeln in Auswertungsreihenfolge mit ihren heutigen "
+"Treffern und der Abdeckung dieser Zählungen. Weiter unten stehen die "
+"Matrix der Prüfmodi, der Anfragetester und die IP-Gruppen. *Managed "
+"rules* öffnet den Editor; das Speichern einer Änderung zeigt zuerst eine "
+"Durchsicht der geänderten Felder, und die Bestätigung validiert den "
+"ganzen Kandidaten und erzeugt eine neue Revision."
 
 #: ../../operations.rst:245
 msgid ""
@@ -860,6 +1046,11 @@ msgid ""
 "committed revision, its management address and its probe result (SID "
 "0007, SID 0013)."
 msgstr ""
+"Knoten. Status und Befehle des bedienenden Knotens, mit residentem "
+"Speicher und CPU der letzten Sekunde und ihren Sparklines über sechzig "
+"Sekunden; darunter jedes angekündigte Mitglied mit seiner angewandten "
+"Richtlinienrevision im Vergleich zur festgeschriebenen Revision, seiner "
+"Management-Adresse und seinem Prüfergebnis (SID 0007, SID 0013)."
 
 #: ../../operations.rst:250
 msgid ""
@@ -867,6 +1058,9 @@ msgid ""
 "import form; here no generation has been loaded yet. A failed import "
 "never replaces the active generation."
 msgstr ""
+"GeoIP. Anbieter, Lizenz, Digest der aktiven Generation, Ladezeit und das "
+"Importformular; hier wurde noch keine Generation geladen. Ein "
+"fehlgeschlagener Import ersetzt nie die aktive Generation."
 
 #: ../../operations.rst:255
 msgid ""
@@ -874,6 +1068,10 @@ msgid ""
 "one. Further down the page are denial-spike thresholds, retention with an "
 "explicit acknowledgement per window, response-page templates and About."
 msgstr ""
+"Einstellungen, noch ohne Benachrichtigungsziel und mit dem Formular für "
+"ein neues. Weiter unten auf der Seite stehen Schwellen für "
+"Ablehnungsspitzen, die Aufbewahrung mit einer ausdrücklichen Bestätigung "
+"pro Fenster, Vorlagen für Antwortseiten und About."
 
 #: ../../operations.rst:260
 msgid ""
@@ -886,12 +1084,24 @@ msgid ""
 "as a new, audited revision after a confirmation, and is refused if the "
 "rule set has moved on."
 msgstr ""
+"Audit. Eine nur erweiterbare Historie mit Akteur und Rolle, Aktion, "
+"Gegenstand und einer Detailansicht mit geschwärzten Zusammenfassungen des "
+"Vorher und Nachher; abgewiesene Anmeldungen werden ebenfalls erfasst. "
+"Jede Management-Änderung und jede Authentifizierungszeile hält die "
+"Client-Adresse fest, die die Anmeldedaten vorgelegt hat; Zeilen, die das "
+"System selbst schreibt, zeigen sie als nicht erfasst. Ein "
+"Richtliniendatensatz bietet *Revert this change*; das stellt nach einer "
+"Bestätigung das vor dieser Revision erfasste Dokument als neue, "
+"auditierte Revision wieder her und wird abgewiesen, wenn sich der "
+"Regelsatz inzwischen weiterentwickelt hat."
 
 #: ../../operations.rst:265
 msgid ""
 "A wall display. A kiosk session shows the Traffic and Security views "
 "only, without navigation, and states when it expires."
 msgstr ""
+"Eine Wandanzeige. Eine Kiosk-Sitzung zeigt nur die Ansichten Verkehr und "
+"Sicherheit, ohne Navigation, und gibt an, wann sie abläuft."
 
 #: ../../operations.rst:267
 msgid ""
@@ -906,6 +1116,17 @@ msgid ""
 "configured marker remains visible through telemetry outages; stale "
 "traffic does not animate."
 msgstr ""
+"Die optionale Angabe ``--console-location <latitude,longitude>`` legt die "
+"Position dieses Knotens fest, zum Beispiel ``1.3521,103.8198`` für einen "
+"Einsatz in Singapur. Der Globus ist zunächst dort zentriert; Center "
+"Sibuna kehrt nach einer Drehung zu diesem Punkt zurück. Die Aktivität der "
+"Länder folgt animierten Großkreisbögen zum Knoten, mit Abschneiden an der "
+"Rückseite der Halbkugel und an der Datumsgrenze der flachen Karte. "
+"Länderpositionen sind repräsentative Schwerpunkte, und Pfeile stellen das "
+"beobachtete Fenster von sechzig Sekunden dar, nicht einzelne "
+"Verbindungen. Eine nicht gesetzte Serverposition bleibt ausdrücklich "
+"unbekannt. Die konfigurierte Markierung bleibt bei Telemetrieausfällen "
+"sichtbar; veralteter Verkehr wird nicht animiert."
 
 #: ../../operations.rst:269
 msgid ""
@@ -922,6 +1143,21 @@ msgid ""
 "committed intent alone does not establish that the runtime effect "
 "finished."
 msgstr ""
+"Richtlinienvorschauen bauen einen privaten Kandidaten einschließlich der "
+"konfigurierten Dateiregeln. Beim Speichern wird die erwartete Revision "
+"verglichen, und ein Feldvergleich muss bestätigt werden. Historische "
+"Rücknahmen vergleichen mit der aktuellen Regel und erzeugen eine neue "
+"Revision. Festgeschriebene und lokal angewandte Revisionen sind "
+"verschieden. Audit-Details behalten begrenzte Entscheidungsänderungen und "
+"die tatsächlich handelnde Rolle. Werte von Matchern werden geschwärzt, "
+"und bei alten Datensätzen bleibt fehlender Kontext ausdrücklich als "
+"fehlend gekennzeichnet. Drain, Resume und das Löschen lokaler Sperren "
+"erfordern eine Befehlsvorschau. Ein Befehl, der eintrifft, während auf "
+"dem Knoten ein anderer läuft, wird mit ``503`` ``CONSOLENODE`` "
+"abgewiesen, statt in eine Warteschlange zu kommen. Nach einer verlorenen "
+"Antwort vor einem neuen Versuch die dauerhafte Quittung prüfen; eine "
+"festgeschriebene Absicht allein belegt nicht, dass die Wirkung zur "
+"Laufzeit abgeschlossen ist."
 
 #: ../../operations.rst:271
 msgid ""
@@ -935,6 +1171,16 @@ msgid ""
 "inbound TLS on the console listener either; the console uses TLS only for "
 "its outbound connections, through rustls (SID 0012)."
 msgstr ""
+"Für den Fernbetrieb einen HTTPS-Proxy verwenden und ``--console-origin``, "
+"``--console-behind-proxy``, ausdrückliche CIDRs für "
+"``--console-trusted-proxy`` und ``--console-key-file`` konfigurieren. Die "
+"Schlüsseldatei enthält 64 hexadezimale Zeichen, hat Rechte nur für den "
+"Eigentümer und schützt gespeicherte Geheimnisse für den zweiten Faktor; "
+"sie ist über Neustarts hinweg getrennt vom Challenge-Seed aufzubewahren. "
+"Der konfigurierte HTTPS-Ursprung und die Allowlist der Proxys sind für "
+"Zugriffe außerhalb des Loopbacks Pflicht. Auch auf dem Konsolen-Listener "
+"terminiert Sibuna kein eingehendes TLS; die Konsole nutzt TLS nur für "
+"ihre ausgehenden Verbindungen, über rustls (SID 0012)."
 
 #: ../../operations.rst:273
 msgid ""
@@ -942,6 +1188,9 @@ msgid ""
 "authorization and storage contracts. It reads credentials from private "
 "files, not command-line values:"
 msgstr ""
+"Die native CLI greift über dieselben Autorisierungs- und Speicherverträge "
+"auf die laufende Konsole zu. Sie liest Anmeldedaten aus privaten Dateien, "
+"nicht aus Werten der Kommandozeile:"
 
 #: ../../operations.rst:281
 msgid ""
@@ -966,6 +1215,30 @@ msgid ""
 "sample loss and stale data remain visible; importing country data does "
 "not create traffic or enrich already expired samples."
 msgstr ""
+"Eine Passwortdatei nur für den Eigentümer verwenden, zuerst die "
+"Passworteinrichtung abschließen und bei Bedarf ``--factor-file`` für "
+"einen Authenticator- oder Wiederherstellungscode hinzufügen; "
+"``--token-file`` ersetzt Benutzername und Passwort bei Konto- und "
+"GeoIP-Operationen. Der Client spricht HTTP/1.1, verlangt HTTPS außer bei "
+"einer literalen Loopback-Adresse, folgt nie Weiterleitungen und begrenzt "
+"jede Anfrage auf 20 Sekunden und jede Antwort auf 16 KiB. ``geoip "
+"status`` liest die aktive Generation. Aktualisierungen laden die "
+"veröffentlichten Dateien des gewählten Anbieters über HTTPS herunter "
+"(standardmäßig den gemeinfreien Datensatz ``user-country`` oder DB-IP "
+"Lite mit ``--provider dbip --version YYYY-MM``), prüfen die Prüfsummen "
+"des Herausgebers (oder die mit ``--checksum`` angegebene), validieren "
+"begrenzte Bereiche über ``sibuna-geoip``, speichern die neue Generation "
+"dauerhaft und aktivieren sie lokal. Fehlgeschlagene Aktualisierungen "
+"erhalten die vorherige Generation. Ein CLI-Timeout (``--timeout``, "
+"Standard 1200 Sekunden) beendet das Warten; es bricht bereits übergebene "
+"Speicherarbeit nicht ab. DB-IP Lite verlangt eine Namensnennung nach CC "
+"BY 4.0, die nur angezeigt wird, solange seine Daten aktiv sind. Ein Build "
+"mit ``SIBUNA_GEOIP_DATA=<snapshot>`` bettet einen validierten Snapshot "
+"ein (geschrieben vom Werkzeug ``geoip-snapshot``), der bis zum ersten "
+"dauerhaften Import gilt; ein Build ohne Konsole weist ihn mit "
+"``GEOIP001`` ab. Unbekannte Adressen, Stichprobenverluste und veraltete "
+"Daten bleiben sichtbar; der Import von Länderdaten erzeugt keinen Verkehr "
+"und reichert keine bereits abgelaufenen Stichproben an."
 
 #: ../../operations.rst:283
 msgid ""
@@ -1013,6 +1286,55 @@ msgid ""
 "console node independently of the selected traffic source. Local commands "
 "remain per node."
 msgstr ""
+"Cluster-Mitglieder kündigen sich über die Mitgliedertabelle der "
+"gemeinsamen Datenbank (``console_nodes``) an: beim Start, jede Minute und "
+"innerhalb von zwei Sekunden nach einer Änderung der angewandten "
+"Richtlinien- oder Steuerrevision; sie erscheinen auf der Seite Knoten "
+"jeder Konsole. Es gibt keine Leader-Wahl: Ein SQLite-Knoten meldet die "
+"Rolle ``single`` und sich selbst als Leader, und ein PostgreSQL-Knoten "
+"meldet die Rolle ``unknown`` und keinen Leader, weil das Failover von "
+"PostgreSQL für Sibuna nicht sichtbar ist (SID 0007). ``--console-probe "
+"<node-id>=<http://ip:port>`` für die Peers konfigurieren, deren "
+"Data-Plane-Listener diese Konsole auf ihren Zustand prüfen soll, und "
+"``--console-advertise <origin>`` für den Link, den andere Konsolen "
+"anzeigen. Direkte Live-Telemetrie verwendet ``--console-peer "
+"<node-id>=<https://origin>`` (wiederholbar, höchstens acht) und eine "
+"eigene ``--console-peer-key-file``. Peers erfordern "
+"``--console-behind-proxy``. Beide Endpunkte müssen einander aufführen und "
+"vertrauenswürdigen HTTPS-Ingress nutzen. Der Peer-Schlüssel ist eine "
+"Datei nur für den Eigentümer mit 64 Hex-Zeichen, die unabhängig vom "
+"Konsolenschlüssel und vom Challenge-Seed bereitgestellt wird. Peers "
+"kommunizieren über einen authentifizierten TLS-WebSocket, über rustls mit "
+"dem Provider ``ring`` (SID 0012). ``--console-peer-ca-file`` liefert "
+"optional PEM-Vertrauensanker für eine private Management-PKI; andernfalls "
+"nutzt der Client die Systemwurzeln. Die Prüfung des Hostnamens gilt immer "
+"und lässt sich nicht abschalten: Der Host jedes Management-Ursprungs, ein "
+"DNS-Name oder ein IP-Adressliteral, muss im Zertifikat des Peers genannt "
+"sein. Ein abgewiesenes Zertifikat markiert den Peer als ``rejected`` und "
+"schreibt eine Audit-Zeile ``peer.rejected``. Schlüsselrotation und ein "
+"Wechsel der CA-Datei erfordern einen koordinierten Neustart; das "
+"Zertifikat eines Peers lässt sich ohne Neustart erneuern. Die Knoten-API "
+"und ihr Abonnement melden das Alter der Quittung, die Uhrenabweichung, "
+"Neustarts und Stichprobenverluste. Fehlende Beobachtungen bleiben nicht "
+"verfügbar, und getrennte Werte bleiben veraltet; empfangene Statistiken "
+"werden nie zum eigenen Beitrag eines anderen Knotens. Der *Live traffic "
+"scope* des Dashboards wählt einen Knoten oder kombiniert die "
+"konfigurierten Knoten. *Node coverage and locations* zeigt fehlende, "
+"veraltete und zeitlich abweichende Quellen, Beobachtungszeiten und "
+"konfigurierte Ziele. Länderranglisten zeigen die Unsicherheit durch "
+"ausgelassene Quellzeilen. Pfeile behalten ihren empfangenden Knoten, und "
+"fehlende Knotenpositionen werden nicht erfunden. Die kombinierte Rate "
+"bleibt unbeobachtet, wenn einer beitragenden Quelle ein lückenloses "
+"Intervall fehlt. Einen Knoten wählen, um seine aufbewahrten Sekunden und "
+"die Pfadranglisten der laufenden Minute zu untersuchen. Entfernte "
+"Abfragen nutzen die authentifizierte Peer-Verbindung; eine Antwort muss "
+"in eine WebSocket-Nachricht von 4 KiB passen, daher halbiert die "
+"bedienende Konsole die Zeilen einer Seite, die nicht passt. Fehlende "
+"Peers bleiben nicht verfügbar, und Verlaufscursor können keinen Neustart "
+"eines Knotens überqueren. Der Minutenverlauf behält seine eigene "
+"Knotenauswahl und Zeilen pro Knoten. Navigation und mobiler Kopfbereich "
+"nennen den bedienenden Konsolenknoten unabhängig von der gewählten "
+"Verkehrsquelle. Lokale Befehle bleiben pro Knoten."
 
 #: ../../operations.rst:285
 msgid ""
@@ -1025,6 +1347,16 @@ msgid ""
 "age visible until replacement; changing the source or period discards the "
 "old scope. Missing history never becomes zero."
 msgstr ""
+"Verkehrskacheln öffnen mit den letzten 24 Stunden aufbewahrter Datensätze "
+"abgeschlossener Minuten für die gewählten Knoten. Die Zeitraumauswahl "
+"bietet außerdem eine Stunde, sieben oder neunzig Tage und die Live-Summen "
+"seit dem Start. Abweichungen gegenüber gestern erfordern vollständige "
+"passende Abdeckung von jedem gewählten Knoten. Globus und Sparklines "
+"beschreiben weiterhin ihr eigenes Live-Fenster von 60 Sekunden. Eine "
+"aufbewahrte Auswertung wird eine Minute nach ihrem Abschluss aufgefrischt "
+"und hält ihre vorigen Werte und deren Alter bis zur Ersetzung sichtbar; "
+"ein Wechsel der Quelle oder des Zeitraums verwirft den alten Umfang. "
+"Fehlender Verlauf wird nie zu null."
 
 #: ../../operations.rst:287
 msgid ""
@@ -1042,6 +1374,21 @@ msgid ""
 "origin-response comparisons remain unavailable rather than interpreting "
 "forward-auth zeros as observed responses."
 msgstr ""
+"*Compare retained traffic* zeigt zwei abgeschlossene Minutenfenster "
+"nebeneinander: dasselbe Fenster gestern, den vorhergehenden Zeitraum oder "
+"einen zweiten Knoten. Steuerelemente für Dauer und Endversatz frieren "
+"beide UTC-Bereiche ein. Jede Aktion liest höchstens sechzehn kompakte "
+"Seiten pro Seite des Vergleichs, mit 96 gespeicherten Datensätzen pro "
+"Seite. Das deckt ein Fenster von 24 Stunden ohne überlappende Neustarts "
+"in einem Durchgang ab; Continue behält für längere Auswertungen dieselben "
+"Grenzen bei. Vollständige Abdeckung, unvollständige Abdeckung und "
+"fehlender Verlauf bleiben ausdrücklich sichtbar. Prozentuale Raten "
+"erfordern vollständige, nicht überlappende Intervalle in gleichen "
+"UTC-Fenstern, normiert auf beobachtete Millisekunden; eine Referenz von "
+"null mit neuem Verkehr zeigt \"New\". Der Hauptzeitraum für Verkehr "
+"bleibt unabhängig. Das Minutenformat erfasst den historischen Proxy-Modus "
+"nicht, daher bleiben Vergleiche von Ursprungsantworten nicht verfügbar, "
+"statt Nullen aus Forward Auth als beobachtete Antworten zu deuten."
 
 #: ../../operations.rst:289
 msgid ""
@@ -1056,6 +1403,19 @@ msgid ""
 "boundaries and reported queue loss; missing archives cannot establish "
 "zero traffic or complete coverage."
 msgstr ""
+"*Compare retained path rankings* wählt zwei abgeschlossene Fenster oder "
+"Knoten. Knoten 0 umfasst alle aufbewahrten Knoten, auch ausgeschiedene "
+"Mitglieder. Eine Aktion liest höchstens sechzehn unveränderliche Archive, "
+"prüft ihre Identitäten und Prüfsummen und führt jeden Zähler zusammen, "
+"bevor sie Anzeigezeilen auswählt. Archive werden nach dem Fenster von 60 "
+"Sekunden für verspätete Stichproben versiegelt, sodass die neueste "
+"abgeschlossene Minute noch ausstehen kann. Continue bewahrt die "
+"ursprünglichen Fenster und den Cursor. Die Grenzen beschreiben "
+"stichprobenartig erfasste Pfadpräfixe, keine exakten Anfragesummen. Die "
+"Seite zeigt unvollständige Auswertungen, Abschneidungen, "
+"Aufbewahrungsgrenzen und gemeldete Verluste in der Warteschlange; "
+"fehlende Archive können weder null Verkehr noch vollständige Abdeckung "
+"belegen."
 
 #: ../../operations.rst:291
 msgid ""
@@ -1072,6 +1432,21 @@ msgid ""
 "findings, so missing incident coverage cannot be interpreted as absence "
 "of attacks."
 msgstr ""
+"Sicherheit öffnet mit den letzten 24 Stunden und verwendet sechzig "
+"gleiche Zeitintervalle über den gewählten Zeitraum. Ihre Aggregate laufen "
+"auf dem Speicherthread unter einer Arbeitsgrenze. Unter SQLite ist die "
+"Grenze ``--console-query-steps`` Schritte der virtuellen Maschine "
+"(100,000 bis 50,000,000, Standard vier Millionen). Sie wird zusammen mit "
+"``--console`` gesetzt; ungültige oder wiederholte Werte werden "
+"abgewiesen. Unter PostgreSQL ist die Grenze ein Statement-Timeout von "
+"2,000 ms, das in der Transaktion der Leseoperation gesetzt wird (SID "
+"0013); eine Änderung von ``--console-query-steps`` ändert es nicht. "
+"Erschöpfte Abfragen bitten um einen engeren Zeitraum. Schrittzahlen "
+"begrenzen die Arbeit einer Abfrage, nicht die verstrichene Zeit. "
+"Diagramme teilen sich eine Skala; die Trend-Werte aufklappen, um die "
+"UTC-Intervallanfänge und die exakten gruppierten Zählungen zu sehen. Dies "
+"sind aufbewahrte Befunde, daher darf fehlende Vorfallsabdeckung nicht als "
+"Abwesenheit von Angriffen gedeutet werden."
 
 #: ../../operations.rst:293
 msgid ""
@@ -1086,6 +1461,18 @@ msgid ""
 "or payload evidence. Automatic cycling is optional, off initially and "
 "suspended with reduced motion, stale data or Pause."
 msgstr ""
+"Wandanzeigen verwenden Kiosk-Sitzungen. Unter Account benennt ein "
+"Betreiber die Anzeige und wählt Create display code. Die Anzeige fügt den "
+"Einmalcode innerhalb von zehn Minuten in das Anmeldeformular ein; ihre "
+"Sitzung ist schreibgeschützt, auf Statistiken beschränkt und läuft "
+"innerhalb von zwölf Stunden ab. Die Kontoseite löscht den angezeigten "
+"Code beim Navigieren oder wenn sie verborgen wird. Das Verbergen "
+"widerruft eine unbenutzte Berechtigung nicht; die Frist für den Austausch "
+"gilt weiterhin. Codes gehören nie in URLs. Verkehr und Sicherheit teilen "
+"sich die Anzeige: Sicherheit zeigt aggregierte Modultrends und "
+"Anfrageergebnisse ohne Vorfallsadressen oder Nutzlastbelege. "
+"Automatisches Durchschalten ist optional, anfangs aus und wird bei "
+"reduzierter Bewegung, veralteten Daten oder Pause ausgesetzt."
 
 #: ../../operations.rst:295
 msgid ""
@@ -1105,6 +1492,24 @@ msgid ""
 "the destination outcome; an unconfirmed audit completion is shown "
 "explicitly before an operator retries."
 msgstr ""
+"Benachrichtigungsziele (signierte Webhooks und Syslog für "
+"Ablehnungsspitzen, Sperren, unerreichbare Mitglieder und Leader-Wechsel) "
+"liegen unter Einstellungen; Webhook-Geheimnisse brauchen "
+"``--console-key-file``. Die Art Leader-Wechsel bleibt definiert, damit "
+"gespeicherte Ziele ihre Bedeutung behalten, aber kein Knoten löst sie "
+"aus, weil es keine Leader-Wahl gibt. Jedes Ziel hat seine eigene "
+"Abklingzeit und ein Budget von drei Zustellversuchen. Audit-Datensätze "
+"der Zustellung zeigen die Ergebnisse; der Verlauf abgeschlossener "
+"Warteschlangeneinträge ist auf sieben Tage und 4,096 Ereignisse begrenzt. "
+"Webhooks enthalten einen stabilen ``Idempotency-Key``, damit Empfänger "
+"wiederholte Wirkungen nach unsicherem Netzwerkabschluss unterdrücken "
+"können. Webhooks werden über HTTPS gesendet, oder über reines HTTP nur an "
+"eine literale Loopback-Adresse, und der Antwortbody wird bis zu 64 KiB "
+"gelesen. Die Wahl zwischen UDP und TCP für Syslog gilt nur für ausgehende "
+"Benachrichtigungen, unabhängig vom geschützten Webverkehr. Manuelle Tests "
+"erfassen Absicht und Abschluss im Audit und frischen das Ergebnis des "
+"Ziels auf; ein unbestätigter Audit-Abschluss wird ausdrücklich angezeigt, "
+"bevor ein Betreiber es erneut versucht."
 
 #: ../../operations.rst:297
 msgid ""
@@ -1116,6 +1521,15 @@ msgid ""
 "value later does not restore deleted history. Stale edits are refused and "
 "successful changes appear in Audit."
 msgstr ""
+"Einstellungen steuert auch die Aufbewahrung: ein bis 90 Tage für den "
+"Minutenverlauf, ein bis sieben für Ranglisten, ein bis 30 für Vorfälle "
+"und ein bis 365 für das Audit. Die oberen Werte sind die Standardwerte; "
+"Ranglisten behalten ihr Kontingent von 512 MiB. Das Speichern eines "
+"Aufbewahrungswerts erfordert eine Bestätigung, weil die Bereinigung "
+"ältere Datensätze in begrenzten Durchgängen endgültig entfernt. Ein "
+"späteres Erhöhen des Werts stellt gelöschten Verlauf nicht wieder her. "
+"Veraltete Änderungen werden abgewiesen, und erfolgreiche Änderungen "
+"erscheinen im Audit."
 
 #: ../../operations.rst:299
 msgid ""
@@ -1124,6 +1538,11 @@ msgid ""
 "preview in a sandboxed tab and saved pages are served from the next "
 "policy snapshot."
 msgstr ""
+"Antwortseiten (Challenge, abgelehnt, Ratenlimit erreicht, gesperrt, "
+"überlastet) lassen sich unter Einstellungen als begrenztes HTML mit "
+"festen Platzhaltern bearbeiten; Entwürfe werden in einem Tab mit Sandbox "
+"als Vorschau gezeigt, und gespeicherte Seiten werden ab dem nächsten "
+"Richtlinienschnappschuss ausgeliefert."
 
 #: ../../operations.rst:301
 msgid ""
@@ -1149,6 +1568,32 @@ msgid ""
 "observed change around an edit is a comparison, not evidence that the "
 "edit caused the traffic change."
 msgstr ""
+"Richtlinien-Workflows auf der Seite Richtlinien: verwaltete Regeln neu "
+"ordnen, einen Entwurf gegen aufbewahrte Prüfbefunde abspielen, IP-Gruppen "
+"und Ländersperren verwalten, die an die aktive GeoIP-Generation gebunden "
+"sind, und den verwalteten Satz exportieren oder atomar importieren (auch "
+"``sibuna console policies export`` und ``sibuna console policies import "
+"--file <set.json>``). Ein Import ist eine Anfrage mit 1 bis 128 "
+"Dokumenten von je höchstens 4 KiB und insgesamt höchstens 256 KiB; der "
+"Hinweis der Seite nennt den Import über die Kommandozeile für Sätze über "
+"etwa 96 KiB. Angewandte Regeln zeigen die heute erfassten Treffer, "
+"stündliche Sparklines und eine barrierefreie Tabelle. Ein Treffer ist "
+"eine erfolgreiche Auswertung eines deklarativen Matchers: Passende "
+"WEIGH-Regeln und der erste terminale Treffer zählen; eine frühere Prüf- "
+"oder Reputationsentscheidung kann die Auswertung verhindern. Private "
+"Tests erhöhen diese Zähler nicht. *Compare rule hits* friert zwei "
+"abgeschlossene Zeiträume für einen erfassten Knoten ein. Der "
+"Revisionsverlauf bietet *Compare hits around this edit*; dabei wird die "
+"Minute der Änderung ausgeschlossen, und es werden gleiche verfügbare "
+"Zeiträume bis zur gewählten Dauer verwendet. Optionale Filter nach "
+"angewandter Revision halten fremde Generationen aus dem Vergleich heraus. "
+"Start, Umstellung, fehlende Schreibvorgänge und Aufbewahrung hinterlassen "
+"sichtbare Abdeckungslücken; Prozentangaben erfordern vollständige "
+"Abdeckung auf beiden Seiten. Regelbeobachtungen und stündliche/tägliche "
+"Zusammenfassungen folgen der Einstellung für die Minutenaufbewahrung. "
+"Eine beobachtete Änderung rund um eine Bearbeitung ist ein Vergleich, "
+"kein Beleg dafür, dass die Bearbeitung die Verkehrsänderung verursacht "
+"hat."
 
 #: ../../operations.rst:303
 msgid ""
@@ -1186,6 +1631,47 @@ msgid ""
 "refresh a selected non-default challenge timing partition explicitly. "
 "Historical queries, detail reads and mutations remain HTTP requests."
 msgstr ""
+"Der Import einer späteren GeoIP-Generation frischt vorhandene, aus "
+"Ländern abgeleitete Reputationszeilen nicht automatisch auf. Die Vorschau "
+"der Länderaktion ansehen, um hinzugefügte, behaltene und entfernte "
+"Präfixe zu vergleichen, und vor dem Anwenden durch den geprüften Diff "
+"blättern. Die Ersetzung entfernt veraltete Zeilen, die diesem Land "
+"gehören, und bewahrt unabhängig verwaltete Präfixe. Eine geänderte "
+"Generation oder Richtlinienrevision erfordert eine neue Vorschau, und "
+"überlappende unabhängige Änderungen werden abgewiesen. Die Seite "
+"Ereignisse enthält aufbewahrte WAF-Befunde und Honeypot-Vorfälle; sie ist "
+"kein vollständiges Zugriffsprotokoll. Mit geladenem GeoIP erfasst der "
+"Speicherthread Land und Generation jedes Vorfalls in der Transaktion des "
+"Vorfallsstapels. Das ist eine Zuordnung zum Zeitpunkt der Speicherung, "
+"keine rekonstruierte Position zum Zeitpunkt der Anfrage. Spätere Importe "
+"lassen erfasste Zuordnungen unverändert. Der Länderfilter akzeptiert "
+"einen großgeschriebenen Code aus zwei Buchstaben, ``unknown`` für eine "
+"Adresse, die in der geladenen Generation fehlt, oder ``not_recorded`` für "
+"einen Vorfall ohne Zuordnungsdaten. Quellgruppen melden gemischte Länder "
+"oder Abdeckung ausdrücklich. Die Aktion *View events* des Globus behält "
+"den gewählten Knoten bei und öffnet die aufbewahrten Vorfälle des Landes "
+"für die letzte Stunde. Die Ansicht *Security* der Statistikseite "
+"kombiniert Live-Raten von Ratenlimits, Challenges und Sperren mit "
+"aufbewahrten Prüf- und Honeypot-Befunden über eine Stunde, einen Tag, "
+"sieben Tage oder dreißig Tage. Links zu Kategorie, Quelle und Pfad öffnen "
+"den normalen Vorfalls-Workflow mit demselben Knoten und einer festen "
+"Zeitgrenze. Das Anwenden von Vorfallsfiltern beginnt einen neuen "
+"Zeitraum. Befunde schließen Audit-Datensätze ein und sind von den Summen "
+"blockierter Anfragen verschieden; fehlende Zuordnungen zu Reputation und "
+"Regeltreffern werden als nicht erfasst angezeigt. Ereignis- und "
+"Audit-Filter halten Beschriftungen bei ihren Steuerelementen, richten die "
+"Aktion Apply getrennt aus und passen ihre Spalten an die verfügbare "
+"Inhaltsbreite an. Ein authentifizierter WebSocket überdauert die "
+"Navigation und überträgt Statistiken, Vorfallszusammenfassungen, "
+"Knotenstatus, Richtlinienrevisionen, Challenges und "
+"Audit-Zusammenfassungen. Neue Vorfalls- und Audit-Datensätze warten "
+"hinter *Load latest records*, damit die Tabelle beim Lesen an ihrem Platz "
+"bleibt. Richtlinienaktualisierungen zeigen die aktuellen "
+"festgeschriebenen und angewandten Revisionen, ohne einen offenen Entwurf "
+"zu ersetzen. Flusszähler werden live aktualisiert; eine gewählte, vom "
+"Standard abweichende Partition der Challenge-Zeiten ausdrücklich "
+"auffrischen. Historische Abfragen, Detailabrufe und Änderungen bleiben "
+"HTTP-Anfragen."
 
 #: ../../operations.rst:305
 msgid ""
@@ -1209,24 +1695,48 @@ msgid ""
 "responsiveness measurements. The module's linear memory grows on demand "
 "up to a declared maximum of 16 MiB."
 msgstr ""
+"Seitenfragmente lassen sich als Lesezeichen speichern; Zurück und "
+"Vorwärts öffnen authentifizierte Seiten erneut. Die Seitenleiste merkt "
+"sich in diesem Browser außerdem die Wahl von Design und Abständen, mit "
+"System als Standarddesign. SID 0007 hat den Status Committed. Die Konsole "
+"besteht ihre Golden Fixtures und ihre Browser-Workflows in headless "
+"Chromium (``cargo xtask browser console``, SID 0010, Kriterium 5). Ihre "
+"End-to-End-Testsuite ist ``cmd/sibuna/tests/console_*.rs``; deren "
+"PostgreSQL-Clusterszenarien laufen, wenn ``SIBUNA_TEST_DATABASE_URL`` "
+"gesetzt ist. SID 0010 hält fest, dass die 16 Produkt-Workloads mit "
+"einkompilierter Konsole, ob deaktiviert, nur mit Speicher oder aktiviert "
+"und im Leerlauf, innerhalb von etwa 1% des ohne Konsole gebauten Daemons "
+"bleiben, was im Rauschen liegt. Das formale Isolationskriterium von SID "
+"0007, mit acht aktiven Dashboards unter Last, wurde noch nicht gemessen "
+"(Teil VIII). Die vollständige WebAssembly-Anwendung hat eine "
+"unkomprimierte Obergrenze von 768 KiB, die das Build-Skript des Daemons "
+"durchsetzt, indem es den Build scheitern lässt, und eine Prüfschwelle von "
+"640 KiB. Das Modul misst 719,406 Bytes (270,612 mit gzip, Oktober 2026) "
+"und liegt damit über der Prüfschwelle, was SID 0007 zur Durchsicht "
+"festhält. Diese Projektgrenzen lassen Raum für Konsolen-Workflows; sie "
+"ersetzen keine Messungen von Ladezeit und Reaktionsfähigkeit im Browser. "
+"Der lineare Speicher des Moduls wächst bei Bedarf bis zu einem "
+"deklarierten Maximum von 16 MiB."
 
 #: ../../operations.rst:307
 msgid "Deployment Topologies"
-msgstr ""
+msgstr "Einsatztopologien"
 
 #: ../../operations.rst:312
 msgid ""
 "Deploy the autonomous reverse proxy and the forward-auth validator behind "
 "Nginx or Caddy."
 msgstr ""
+"Den autonomen Reverse Proxy und den Forward-Auth-Validator hinter Nginx "
+"oder Caddy einsetzen."
 
 #: ../../operations.rst:314
 msgid "Reverse Proxy"
-msgstr ""
+msgstr "Reverse Proxy"
 
 #: ../../operations.rst:318
 msgid "Request routing on the Shield surface"
-msgstr ""
+msgstr "Anfrage-Routing in der Betriebsform Shield"
 
 #: ../../operations.rst:348
 msgid ""
@@ -1245,6 +1755,21 @@ msgid ""
 "policy judged (SID 0009); a path without a normal form is answered "
 "``400``."
 msgstr ""
+"Zugelassene Anfragen erreichen den Ursprungsserver mit den Headern "
+"``X-Forwarded-For``, ``X-Forwarded-Proto``, ``X-Real-IP``, "
+"``X-Sibuna-Status`` und ``X-Sibuna-Rule``. Hop-by-Hop-Header, die Felder, "
+"die Sibuna selbst schreibt, und die alternativen Weiterleitungsfelder "
+"(``Forwarded``, ``X-Forwarded-Host``, ``X-Forwarded-Port``) werden "
+"entfernt, auch wenn ein Client ihre Namen mit Unterstrichen schreibt "
+"(``X_Forwarded_For``). ``X-Real-IP`` ist der Client, nach dem die Anfrage "
+"beurteilt wurde. ``X-Forwarded-For`` ist allein der Socket-Peer, nie ein "
+"vom Client geschriebener Eintrag; wenn der weitergeleiteten Identität "
+"vertraut wird, ist es die empfangene Kette, gefolgt vom Socket-Peer. "
+"Ursprungsserver müssen den Client daher aus ``X-Real-IP`` oder von rechts "
+"aus ``X-Forwarded-For`` lesen, nie aus dessen linkestem Eintrag. Der "
+"Pfad, den der Ursprungsserver erhält, ist die Normalform, die die "
+"Richtlinie beurteilt hat (SID 0009); ein Pfad ohne Normalform wird mit "
+"``400`` beantwortet."
 
 #: ../../operations.rst:350
 msgid ""
@@ -1264,6 +1789,23 @@ msgid ""
 "of Sibuna's private HTTP/1.1 listener; Sibuna does not terminate browser "
 "TLS itself."
 msgstr ""
+"WebSocket-Upgrades unter HTTP/1.1 durchlaufen Zulassung und "
+"Richtlinienprüfung, bevor der Handshake des Ursprungsservers angenommen "
+"wird. Die Aushandlung von Subprotokollen und Erweiterungen bleibt "
+"Ende-zu-Ende. Zwei Threads leiten Bytes weiter, einer pro Richtung, jeder "
+"mit einem festen Puffer, einschließlich vorab gelesener Bytes und "
+"halbseitiger Schließungen; eine per Upgrade umgestellte Verbindung hält "
+"daher zwei Threads, und die Zahl der Verbindungsthreads kann das Doppelte "
+"von ``--max-connections`` erreichen, wenn jede Verbindung umgestellt ist. "
+"Umgestellte Sockets bleiben im normalen Verbindungskontingent und im "
+"Shutdown-Register, verwenden aber ``--websocket-idle-timeout`` "
+"(standardmäßig 300 Sekunden) unabhängig von der HTTP-Leerlauffrist. "
+"Verkehr in beide Richtungen erneuert diese Grenze, aber ein Peer, der "
+"während der ganzen Periode kein Byte annimmt, beendet die Weiterleitung, "
+"wie beschäftigt die andere Richtung auch ist. Frames nach dem Handshake "
+"sind keine Eingaben der WAF-Prüfung. HTTPS/WSS nutzt einen "
+"TLS-terminierenden Eingangsproxy vor dem privaten HTTP/1.1-Listener von "
+"Sibuna; Sibuna terminiert Browser-TLS nicht selbst."
 
 #: ../../operations.rst:352
 msgid ""
@@ -1272,6 +1814,10 @@ msgid ""
 "this arrangement does not provide end-to-end HTTP/2 semantics for "
 "applications such as native gRPC."
 msgstr ""
+"Der Eingangsproxy kann mit Browsern HTTP/2 aushandeln und HTTP/1.1 an "
+"Sibuna weiterleiten. Native HTTP/2-Unterstützung in Sibuna ist auf ein "
+"späteres Update verschoben; diese Anordnung bietet keine "
+"Ende-zu-Ende-Semantik von HTTP/2 für Anwendungen wie natives gRPC."
 
 #: ../../operations.rst:354
 msgid ""
@@ -1291,6 +1837,24 @@ msgid ""
 "to 32 parts and 2 KiB of headers per part within that same prefix, and "
 "accepts the transport padding of RFC 2046 after a delimiter."
 msgstr ""
+"Anfragebodies mit Content-Length fließen durch feste Puffer, wobei Bytes "
+"und MIME-Header erhalten bleiben. Multipart-Uploads behalten Grenzen, "
+"wiederholte Feldnamen, Dateinamen und Teiltypen. Die WAF untersucht "
+"höchstens die ersten 8 KiB des Bodys: Multipart-Metadaten und Felder, die "
+"keine Dateien sind, bleiben Eingaben der Textprüfung, während "
+"Dateinutzlasten undurchsichtig sind. Ein Teil, dessen ``filename`` leer "
+"ist, ist ein gewöhnliches Feld. Ein Body eines erkannten binären "
+"MIME-Haupttyps (Bilder außer SVG, Audio, Video, PDF, ZIP, gzip, 7z, "
+"protobuf und octet-stream) ist nur dann undurchsichtig, wenn auch sein "
+"Präfix binär aussieht, das heißt, wenn mindestens eines von sechzehn "
+"Bytes ein Steuerbyte außer Tabulator, Zeilenvorschub, vertikalem "
+"Tabulator, Seitenvorschub und Wagenrücklauf ist; andernfalls wird er als "
+"Text geprüft (SID 0004). JSON, XML, SVG, URL-codierte Formulare und "
+"unbekannte Typen behalten die Textprüfung. Mehrdeutige oder fehlerhafte "
+"MIME-Metadaten fallen auf die Textprüfung zurück. Das Multipart-Parsing "
+"ist innerhalb desselben Präfixes auf 32 Teile und 2 KiB Header pro Teil "
+"begrenzt und akzeptiert das Transport-Padding nach RFC 2046 nach einem "
+"Trennzeichen."
 
 #: ../../operations.rst:356
 msgid ""
@@ -1315,10 +1879,33 @@ msgid ""
 "unsupported expectations receive 417. The Expect header is consumed "
 "before forwarding to the backend."
 msgstr ""
+"Das ist Upload-Kompatibilität, keine Dateivalidierung und keine "
+"Malware-Prüfung. Das Backend muss akzeptierte Medientypen selbst "
+"durchsetzen, statt der Content-Type-Angabe eines Clients zu vertrauen. "
+"Felder nach dem Prüfpräfix, auch solche nach einer großen hochgeladenen "
+"Datei, werden nicht geprüft. Komprimierte Nutzlasten werden für die "
+"Prüfung nicht dekomprimiert. Uploads durchlaufen dennoch Zulassung sowie "
+"Pfad-, Query- und Header-Prüfungen und unterliegen weiterhin den "
+"Verbindungsfristen. Chunked-Anfragebodies werden vor der Prüfung im "
+"Verbindungspuffer decodiert (SID 0009). Ein Body, der innerhalb des "
+"Puffers endet, erreicht das Backend mit Content-Length. Ein längerer wird "
+"von Sibuna neu in Chunks zerlegt, ein Chunk pro Leseoperation, sodass das "
+"Backend nie die Chunk-Größen, Erweiterungen oder Trailer des Clients "
+"sieht. Eine Chunk-Zeile mit einem einzelnen CR oder LF, Leerraum um die "
+"Größe, einer fehlerhaften Erweiterung oder mehr als 4 KiB wird mit 400 "
+"abgewiesen. Ebenso ein Trailer-Abschnitt über 16 KiB. "
+"``Transfer-Encoding`` mit einer anderen Codierung erhält 501. Backends, "
+"die keine Chunked-Anfragen parsen können, erhalten für Bodies unter etwa "
+"44 KiB weiterhin Content-Length. Eine Verbindung zum Ursprungsserver, die "
+"einen Anfragebody übertragen hat, wird nach ihrem Austausch geschlossen "
+"und kehrt nie in den Pool zurück. Clients, die auf ``100-continue`` "
+"warten, erhalten es lokal, bevor sie den Body senden; nicht unterstützte "
+"Erwartungen erhalten 417. Der Expect-Header wird vor der Weiterleitung an "
+"das Backend verbraucht."
 
 #: ../../operations.rst:358
 msgid "Forward Auth Behind an Ingress"
-msgstr ""
+msgstr "Forward Auth hinter einem Eingangsproxy"
 
 #: ../../operations.rst:361
 msgid ""
@@ -1336,6 +1923,22 @@ msgid ""
 "routes always use the actual request URI. Forward-auth does not inspect a "
 "body the ingress omits."
 msgstr ""
+"Mit ``--mode forward_auth`` beantwortet der Daemon die Unteranfrage des "
+"Eingangsproxys mit ``200`` (plus den Audit-Headern ``X-Sibuna-Status``, "
+"``X-Sibuna-Rule`` und ``X-Sibuna-Rule-Hash``), ``401`` für eine "
+"Challenge, ``403`` für eine Ablehnung oder ``429`` bei erreichtem "
+"Ratenlimit. Der Eingangsproxy muss die Client-Adresse und die "
+"ursprüngliche URL weiterleiten; der Forward-Auth-Modus vertraut ihnen "
+"standardmäßig. Dieser Listener wird privat gebunden, damit sich nur der "
+"Eingangsproxy verbinden kann. ``X-Forwarded-Uri`` (Caddy) oder "
+"``X-Original-URI`` (Nginx) und ``X-Forwarded-Method`` stellen die "
+"Anwendungsanfrage für die Richtlinienauswertung wieder her; der "
+"ursprüngliche Pfad wird in Normalform gebracht, so wie der Pfad einer "
+"Anfragezeile. Doppelte oder widersprüchliche Felder für die ursprüngliche "
+"URL und eine ursprüngliche URI, die nicht in Origin-Form vorliegt, werden "
+"mit ``400`` abgewiesen. Interne Routen des Daemons verwenden immer die "
+"tatsächliche Anfrage-URI. Forward Auth prüft keinen Body, den der "
+"Eingangsproxy weglässt."
 
 #: ../../operations.rst:441
 msgid ""
@@ -1360,16 +1963,42 @@ msgid ""
 "these recipes against live ingresses; the forwarded-metadata rules they "
 "rely on are covered by unit tests in ``sibuna-http``."
 msgstr ""
+"Der Namensraum ``/__sibuna/*`` (Zwischenseite, Challenge, Verifikation, "
+"Assets des Lösers) muss in beiden Rezepten den Daemon direkt erreichen. "
+"Die Fehlerseite von nginx übergibt die ursprüngliche URI und Methode, "
+"damit die Zwischenseite die Anforderung trägt, die die Autorisierung "
+"entschieden hat; ohne sie funktioniert die Seite trotzdem, und die "
+"Ausgabe fällt darauf zurück, die vom Browser gemeldete URL auszuwerten. "
+"Caddy liefert die Metadaten zu ursprünglicher URI und Methode selbst. Die "
+"exklusiven ``handle``-Blöcke stellen sicher, dass Challenge- und "
+"Verifikationsrouten nicht in die Forward-Auth-Vorprüfung gelangen. Nginx "
+"benötigt für WebSockets der Anwendung die oben gezeigten ausdrücklichen "
+"Upgrade/Connection-Header. Der Fehlerhandler von Nginx stellt die interne "
+"Challenge-Route dar, ohne eine zweite Autorisierungsentscheidung zu "
+"treffen oder den Upload-Body zu verbrauchen. Sein Auth-Modul akzeptiert "
+"direkt nur 2xx, 401 und 403, daher übersetzt das Beispiel einen "
+"Auth-Fehler wegen Ratenlimit zurück in 429 mit Retry-After; andere "
+"Autorisierungsfehler bleiben mit 503 geschlossen. Nginx liefert seinen "
+"eigenen 403-Body, während Caddy die Ablehnungsseite von Sibuna "
+"weiterleitet. Beide Rezepte ersetzen eingehende Audit-Header von Sibuna "
+"durch die tatsächliche Autorisierungsantwort. Normale TLS-Zertifikate und "
+"die Upload- und Fristgrenzen der Anwendung werden am Eingangsproxy "
+"konfiguriert; die Beispiele zeigen die Routing-Logik. Das Repository "
+"testet diese Rezepte noch nicht gegen laufende Eingangsproxys; die Regeln "
+"für weitergeleitete Metadaten, auf die sie sich stützen, sind durch "
+"Unit-Tests in ``sibuna-http`` abgedeckt."
 
 #: ../../operations.rst:443
 msgid "Declarative Policy"
-msgstr ""
+msgstr "Deklarative Richtlinie"
 
 #: ../../operations.rst:448
 msgid ""
 "Write a policy file with rules, weights, thresholds, IP rules, and the "
 "WAF switch."
 msgstr ""
+"Eine Richtliniendatei mit Regeln, Gewichten, Schwellen, IP-Regeln und dem "
+"WAF-Schalter schreiben."
 
 #: ../../operations.rst:470
 msgid ""
@@ -1385,10 +2014,23 @@ msgid ""
 "gives it a quota of its own. Path patterns match the request path in "
 "normal form (SID 0003), so a pattern must be written in that form."
 msgstr ""
+"Der Lader schlägt geschlossen fehl: Ein unbekannter Schlüssel, eine "
+"falsch geschriebene Aktion, eine fehlerhafte Adresse oder eine Zahl "
+"außerhalb des Bereichs weist die ganze Datei ab, die Diagnose nennt Regel "
+"und Feld, und der Daemon startet nicht. Eine Kommandozeile mit einer "
+"unbekannten Option oder einem Wert außerhalb des Bereichs wird auf "
+"dieselbe Weise abgewiesen. ``rules`` ersetzt, wenn vorhanden, die "
+"eingebaute Tabelle; ``ip_rules`` speist den Reputations-Trie, der auf "
+"Tausende von Präfixen skaliert; ``waf: false`` wählt die Betriebsform "
+"Gate aus der Datei. Zwei weitere Schlüssel gehören zum Schema (Teil X): "
+"``inspection`` setzt jede WAF-Kategorie auf ``disabled``, ``audit`` oder "
+"``enforce``, und das Objekt ``limits`` einer Regel gibt ihr ein eigenes "
+"Kontingent. Pfadmuster passen auf den Anfragepfad in Normalform (SID "
+"0003), daher muss ein Muster in dieser Form geschrieben sein."
 
 #: ../../operations.rst:472
 msgid "Persistent Storage and Clustering"
-msgstr ""
+msgstr "Persistenter Speicher und Cluster"
 
 #: ../../operations.rst:477
 msgid ""
@@ -1396,10 +2038,14 @@ msgid ""
 "SQL, query incident forensics, understand campaign clustering, and run "
 "several nodes on one PostgreSQL database."
 msgstr ""
+"SQLite- oder PostgreSQL-Speicher aktivieren, eine dynamische Richtlinie "
+"und eine Sperre per SQL hinzufügen, die Vorfallsforensik abfragen, die "
+"Kampagnenbildung verstehen und mehrere Knoten auf einer "
+"PostgreSQL-Datenbank betreiben."
 
 #: ../../operations.rst:480
 msgid "The storage architecture: workers never block on the database"
-msgstr ""
+msgstr "Die Speicherarchitektur: Worker blockieren nie auf der Datenbank"
 
 #: ../../operations.rst:512
 msgid ""
@@ -1416,80 +2062,103 @@ msgid ""
 "before and after loading, and discards its candidate if a writer "
 "committed in between."
 msgstr ""
+"``--data-dir /var/lib/sibuna`` öffnet die SQLite-Datei "
+"``/var/lib/sibuna/sibuna.db`` (WAL-Modus, ``synchronous=NORMAL``, ein "
+"Busy-Timeout) und startet den Speicherthread. ``--database-url`` (oder "
+"``--database-url-file``) verbindet stattdessen mit einer "
+"PostgreSQL-Datenbank. Der Speicherthread besitzt eine einfädige "
+"tokio-Laufzeit und einen kleinen Verbindungspool; er ist die einzige "
+"Stelle, die SQL ausführt. Beim Start, bei jeder Änderung der "
+"Richtlinienrevision (ein Schreibvorgang auf ``policies``, "
+"``ip_reputation`` oder ``policy_inspection``) und wenn ein "
+"Reputationseintrag abläuft, baut der Thread die Engine aus der "
+"Richtliniendatei und der Datenbank neu auf und veröffentlicht sie; "
+"Anfragen warten nie auf SQL. Ein Neuaufbau liest die Revision vor und "
+"nach dem Laden und verwirft seinen Kandidaten, wenn ein Schreiber "
+"dazwischen festgeschrieben hat."
 
 #: ../../operations.rst:514
 msgid "Schema"
-msgstr ""
+msgstr "Schema"
 
 #: ../../operations.rst:517
 msgid "Core tables"
-msgstr ""
+msgstr "Kerntabellen"
 
 #: ../../operations.rst:521
 msgid "Table"
-msgstr ""
+msgstr "Tabelle"
 
 #: ../../operations.rst:522
 msgid "Purpose and key"
-msgstr ""
+msgstr "Zweck und Schlüssel"
 
 #: ../../operations.rst:523
 msgid "``policy_revision``"
-msgstr ""
+msgstr "``policy_revision``"
 
 #: ../../operations.rst:524
 msgid ""
 "The policy revision, one row; triggers on the three policy tables advance "
 "it."
 msgstr ""
+"Die Richtlinienrevision, eine Zeile; Trigger auf den drei "
+"Richtlinientabellen erhöhen sie."
 
 #: ../../operations.rst:525
 msgid "``policies``"
-msgstr ""
+msgstr "``policies``"
 
 #: ../../operations.rst:526
 msgid "Ordered dynamic rules, keyed by ``id``."
-msgstr ""
+msgstr "Geordnete dynamische Regeln, mit Schlüssel ``id``."
 
 #: ../../operations.rst:527
 msgid "``policy_inspection``"
-msgstr ""
+msgstr "``policy_inspection``"
 
 #: ../../operations.rst:528
 msgid "The stored WAF mode per category, one row."
-msgstr ""
+msgstr "Der gespeicherte WAF-Modus pro Kategorie, eine Zeile."
 
 #: ../../operations.rst:529
 msgid "``ip_reputation``"
-msgstr ""
+msgstr "``ip_reputation``"
 
 #: ../../operations.rst:530
 msgid "Scores, hit counts and expiry, keyed by address or prefix."
 msgstr ""
+"Bewertungen, Trefferzahlen und Ablauf, mit Adresse oder Präfix als "
+"Schlüssel."
 
 #: ../../operations.rst:531
 msgid "``incident_receipts``"
-msgstr ""
+msgstr "``incident_receipts``"
 
 #: ../../operations.rst:532
 msgid ""
 "Each node's durable incident receipt (the next sequence after its last "
 "committed batch), keyed by node."
 msgstr ""
+"Die dauerhafte Vorfallsquittung jedes Knotens (die nächste Sequenznummer "
+"nach seinem letzten festgeschriebenen Stapel), mit dem Knoten als "
+"Schlüssel."
 
 #: ../../operations.rst:533
 msgid "``security_incidents``"
-msgstr ""
+msgstr "``security_incidents``"
 
 #: ../../operations.rst:534
 msgid ""
 "One bounded event record with its 64-component embedding (256 bytes), "
 "keyed by ``node_id << 40 | sequence``."
 msgstr ""
+"Ein begrenzter Ereignisdatensatz mit seiner Einbettung aus 64 Komponenten "
+"(256 Bytes), mit Schlüssel ``node_id << 40 | sequence``."
 
 #: ../../operations.rst:535
 msgid "``incidents_fts``"
-msgstr ""
+msgstr "``incidents_fts``"
 
 #: ../../operations.rst:536
 msgid ""
@@ -1497,14 +2166,19 @@ msgid ""
 "On PostgreSQL the same tokens are the ``tsvector`` column ``search`` of "
 "``security_incidents`` with a GIN index."
 msgstr ""
+"Unter SQLite: eine FTS5-Tabelle über die kanonischen Tokens von Pfaden "
+"und Nutzlasten. Unter PostgreSQL sind dieselben Tokens die "
+"``tsvector``-Spalte ``search`` von ``security_incidents`` mit einem "
+"GIN-Index."
 
 #: ../../operations.rst:537
 msgid "``sibuna_schema``"
-msgstr ""
+msgstr "``sibuna_schema``"
 
 #: ../../operations.rst:538
 msgid "Every applied migration, keyed by component and version."
 msgstr ""
+"Jede angewandte Migration, mit Komponente und Version als Schlüssel."
 
 #: ../../operations.rst:540
 msgid ""
@@ -1520,16 +2194,31 @@ msgid ""
 "represent. Enumerated values are stored in lowercase: a direct write of "
 "``'DENY'`` is refused."
 msgstr ""
+"Das Kernschema ist ``crates/storage/src/schema.rs``, einmal pro Dialekt "
+"geschrieben. Mit der Konsole fügt die Komponente ``console`` 33 Tabellen "
+"hinzu, deren Namen mit ``console_`` beginnen (SID 0013; "
+"``crates/console-storage/src/schema/``). Migrationen sind pro Komponente "
+"nummeriert und in das Binary einkompiliert; alle ausstehenden Migrationen "
+"laufen in einer Transaktion, und ein Knoten weist eine Datenbank ab, "
+"deren Version einer Komponente neuer ist, als er kennt. Ein gekürzt "
+"abgedrucktes Schema ist kein Upgrade-Skript. SQLite-Tabellen sind "
+"``STRICT``, und ``CHECK``-Constraints spiegeln die Rust-Typen, sodass die "
+"Datenbank eine Zeile abweist, die der Daemon nicht darstellen könnte. "
+"Aufzählungswerte werden in Kleinbuchstaben gespeichert: Ein direkter "
+"Schreibvorgang von ``'DENY'`` wird abgewiesen."
 
 #: ../../operations.rst:542
 msgid "Operating It"
-msgstr ""
+msgstr "Der Betrieb"
 
 #: ../../operations.rst:545
 msgid ""
 "Use the ``sqlite3`` shell on ``sibuna.db`` (WAL mode lets it read while "
 "the daemon runs), or ``psql`` on the cluster database:"
 msgstr ""
+"Die ``sqlite3``-Shell auf ``sibuna.db`` verwenden (der WAL-Modus erlaubt "
+"ihr das Lesen, während der Daemon läuft) oder ``psql`` auf der "
+"Cluster-Datenbank:"
 
 #: ../../operations.rst:565
 msgid ""
@@ -1543,6 +2232,16 @@ msgid ""
 "``NOTIFY sibuna_policy``, so the other nodes tick at once; polling "
 "remains the guarantee."
 msgstr ""
+"Die Anweisungen sind für SQLite geschrieben. Unter PostgreSQL ist "
+"``enabled`` gleich ``TRUE``, die Zeit ist ``CAST(extract(epoch FROM "
+"now()) AS BIGINT)`` statt ``unixepoch()``, und die Suche lautet ``WHERE "
+"search @@ CAST('union' AS tsquery)`` auf ``security_incidents``. ``path`` "
+"und ``offending_payload`` halten die rohen Anfragebytes (``BLOB`` oder "
+"``BYTEA``). Ein direkter Schreibvorgang, der einen Constraint verletzt, "
+"wird von der Datenbank abgewiesen und erreicht nie einen Knoten. Unter "
+"PostgreSQL sendet der Revisionstrigger außerdem ``NOTIFY sibuna_policy``, "
+"sodass die anderen Knoten sofort einen Takt ausführen; das Polling bleibt "
+"die Garantie."
 
 #: ../../operations.rst:567
 msgid ""
@@ -1552,10 +2251,16 @@ msgid ""
 "so with a shared PostgreSQL database a trap sprung on one node bans the "
 "address on all of them."
 msgstr ""
+"Bewertungen bei oder unter :math:`-50` werden zu ``deny``-Präfixen im "
+"Trie, Bewertungen bei oder über :math:`50` zu ``allow``, und "
+"``banned_until`` begrenzt die Sperre. Honeypot-Treffer fügen automatisch "
+"einen Datensatz mit :math:`-100` ein, sodass mit einer gemeinsamen "
+"PostgreSQL-Datenbank eine auf einem Knoten ausgelöste Falle die Adresse "
+"auf allen Knoten sperrt."
 
 #: ../../operations.rst:569
 msgid "A Transaction Receipt Makes Retry Safe"
-msgstr ""
+msgstr "Eine Transaktionsquittung macht Wiederholungen sicher"
 
 #: ../../operations.rst:572
 msgid ""
@@ -1566,10 +2271,17 @@ msgid ""
 "data-changing statement is guarded by that receipt; the transaction "
 "advances it last, and never backwards."
 msgstr ""
+"Der Speicherthread sammelt höchstens 32 ausstehende Datensätze und baut "
+"daraus eine SQL-Transaktion. Die Transaktion fügt Vorfälle ein, "
+"aktualisiert den Volltextindex und wendet Reputationsänderungen durch den "
+"Honeypot an. Jeder Aussteller (Knoten) hat eine monoton wachsende "
+"Quittung, seine Zeile in ``incident_receipts``. Jede datenverändernde "
+"Anweisung ist durch diese Quittung geschützt; die Transaktion erhöht sie "
+"zuletzt, und nie rückwärts."
 
 #: ../../operations.rst:574
 msgid "Worked example: the acknowledgement disappears"
-msgstr ""
+msgstr "Durchgerechnetes Beispiel: Die Bestätigung geht verloren"
 
 #: ../../operations.rst:576
 msgid ""
@@ -1582,6 +2294,16 @@ msgid ""
 "original transaction rolled back, the old receipt remains and the retry "
 "applies all writes once."
 msgstr ""
+"Angenommen, Aussteller 2 bereitet die Sequenzen 101 bis 132 vor, die bei "
+"Quittung 133 enden. Die Datenbank schreibt alle Datensätze und Quittung "
+"133 fest, dann bricht die Verbindung ab, bevor die Bestätigung eintrifft. "
+"Der Speicherthread behält den vorbereiteten Stapel (Kennungen, "
+"Einbettungen und Kampagnen) und versucht ihn erneut. Die Quittung ist "
+"bereits 133, daher bewirken die geschützten Schreibvorgänge nichts: Weder "
+"Vorfälle noch Honeypot-Trefferzahlen werden verdoppelt. Wurde die "
+"ursprüngliche Transaktion zurückgerollt, bleibt die alte Quittung "
+"bestehen, und der Wiederholungsversuch wendet alle Schreibvorgänge genau "
+"einmal an."
 
 #: ../../operations.rst:578
 msgid ""
@@ -1593,10 +2315,19 @@ msgid ""
 "bounded asynchronous forensic path, not a durable message queue at "
 "enqueue time."
 msgstr ""
+"Ein fehlgeschlagenes Festschreiben behält den ausstehenden Stapel im "
+"Speicher und erhöht ``incident_write_failures``. Der Takt versucht "
+"dennoch das Polling der Richtlinie. Eine volle Warteschlange mit 512 "
+"Datensätzen zählt ``incidents_dropped``; sie blockiert nie eine "
+"HTTP-Antwort, die auf die Festplatte wartet. Der ausstehende Stapel "
+"bietet Platz für weitere 32 Datensätze. Stirbt der Prozess vor dem "
+"Festschreiben, können eingereihte Daten verloren gehen: Dies ist ein "
+"begrenzter asynchroner Forensikpfad, keine Nachrichtenwarteschlange, die "
+"schon beim Einreihen dauerhaft ist."
 
 #: ../../operations.rst:580
 msgid "Exercise 9.1"
-msgstr ""
+msgstr "Übung 9.1"
 
 #: ../../operations.rst:582
 msgid ""
@@ -1604,10 +2335,13 @@ msgid ""
 "schedule that duplicates a reputation effect and another that loses an "
 "incident."
 msgstr ""
+"Die Aktualisierung der Quittung aus der Datentransaktion herausnehmen. "
+"Einen Absturzablauf konstruieren, der eine Reputationswirkung verdoppelt, "
+"und einen weiteren, der einen Vorfall verliert."
 
 #: ../../operations.rst:584
 msgid "Campaign Clustering"
-msgstr ""
+msgstr "Kampagnenbildung"
 
 #: ../../operations.rst:587
 msgid ""
@@ -1624,10 +2358,24 @@ msgid ""
 "payloads, but that is not a guarantee that every pair of attacks shares a "
 "campaign. No model runs and nothing is trained."
 msgstr ""
+"Jede Vorfallsnutzlast wird mit dem Hashing-Trick über Byte-Trigramme "
+"(Ziffern zusammengefasst, Groß- und Kleinschreibung zusammengefasst) als "
+"64-dimensionaler Einheitsvektor eingebettet und als 256 Bytes in "
+"``security_incidents.embedding`` gespeichert. Der Speicherthread hält die "
+"16,384 neuesten Einbettungen aller Knoten im Speicher (4 MiB) und frischt "
+"sie bei jedem Takt aus der Datenbank auf. Vor dem Einfügen sucht er die "
+"nächstgelegene davon, einschließlich früherer Datensätze desselben "
+"Stapels; ist der Kosinusabstand höchstens :math:`0.35`, schließt sich der "
+"neue Vorfall der ``campaign_id`` dieses Vorfalls an, andernfalls beginnt "
+"er eine Kampagne, die nach seiner eigenen Kennung benannt ist. Vorfälle, "
+"die älter als das Fenster sind, werden nicht verglichen. Ähnlichkeit ist "
+"eine Heuristik: Die Regressionsbeispiele gruppieren verwandte "
+"SQL-Nutzlasten, aber das garantiert nicht, dass jedes Paar von Angriffen "
+"eine Kampagne teilt. Es läuft kein Modell, und nichts wird trainiert."
 
 #: ../../operations.rst:589
 msgid "Clustering"
-msgstr ""
+msgstr "Cluster"
 
 #: ../../operations.rst:592
 msgid ""
@@ -1636,6 +2384,10 @@ msgid ""
 "--features postgres-tls``; it implies ``postgres``) and start each member "
 "with the database and a node id of its own:"
 msgstr ""
+"Ein Cluster ist eine Menge von Knoten, die sich eine PostgreSQL-Datenbank "
+"teilen. Mit dem Feature ``postgres-tls`` bauen (``cargo build --release "
+"-p sibuna --features postgres-tls``; es schließt ``postgres`` ein) und "
+"jedes Mitglied mit der Datenbank und einer eigenen Knotenkennung starten:"
 
 #: ../../operations.rst:599
 msgid ""
@@ -1652,6 +2404,19 @@ msgid ""
 "On the server we accept TCP only through ``hostssl`` lines in "
 "``pg_hba.conf``."
 msgstr ""
+"Jedes Mitglied muss dasselbe Master-Geheimnis und ein eindeutiges "
+"``--cluster-node`` von 1 bis 8,388,607 verwenden. Die URL-Datei enthält "
+"eine ``postgres://``-URL und darf nur für ihren Eigentümer lesbar sein; "
+"das Banner gibt die URL nie aus. Schreibvorgänge gehen an den "
+"PostgreSQL-Primary. Der Speicherthread jedes Knotens sieht die Änderung "
+"der festgeschriebenen Revision (per ``NOTIFY`` oder per Polling) und baut "
+"seine Engine neu auf. Knoten erreichen die gemeinsame Datenbank über das "
+"Netz, daher verschlüsseln und verifizieren wir diese Verbindung. Wir "
+"geben dem Server ein Zertifikat, das von unserer eigenen "
+"Zertifizierungsstelle signiert ist, und nennen diese Stelle in der URL: "
+"``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``. "
+"Auf dem Server akzeptieren wir TCP nur über ``hostssl``-Zeilen in "
+"``pg_hba.conf``."
 
 #: ../../operations.rst:602
 msgid ""
@@ -1667,6 +2432,19 @@ msgid ""
 "certificate. ``sslrootcert`` adds our authority to the system trust "
 "store; it does not remove the system's authorities (SID 0011, SID 0012)."
 msgstr ""
+"Beim Start gibt der Daemon eine Zeile über die Datenbankverbindung aus. "
+"Mit ``verify-full`` meldet er, dass Zertifikat und Hostname verifiziert "
+"sind. Mit jedem schwächeren Modus gibt er eine Warnung und einen Hinweis "
+"aus. Ohne ``sslmode`` ist der Modus ``prefer``: Die Verbindung ist nur "
+"verschlüsselt, wenn der Server TLS anbietet, und der Server wird nicht "
+"verifiziert. Ein ohne ``postgres-tls`` gebauter Daemon weist ``require``, "
+"``verify-ca`` und ``verify-full`` ab und nennt das fehlende Feature; er "
+"fällt nie auf Klartext zurück. Ein abgewiesenes Zertifikat bricht den "
+"Start sofort ab; der Hinweis bittet uns, ``sslrootcert`` zu prüfen und ob "
+"der Host der URL ein Name im Zertifikat des Servers ist. ``sslrootcert`` "
+"fügt unsere Zertifizierungsstelle zum Vertrauensspeicher des Systems "
+"hinzu; es entfernt nicht die Zertifizierungsstellen des Systems (SID "
+"0011, SID 0012)."
 
 #: ../../operations.rst:604
 msgid ""
@@ -1683,10 +2461,25 @@ msgid ""
 "``sibuna console policies export`` and ``sibuna console policies "
 "import``, and forensic history is not migrated."
 msgstr ""
+"Sibuna repliziert keine eigene Datenbank und wählt keinen Leader. "
+"Replikation, Failover und Backups sind Sache von PostgreSQL "
+"(Streaming-Replikation, Patroni oder ein verwalteter Dienst). Die "
+"Knotenansicht der Konsole hat keinen Leader: Sie zeigt die Rolle "
+"``single`` für einen SQLite-Knoten und ``unknown`` für einen "
+"PostgreSQL-Knoten, und ``quorum`` bedeutet nur, dass der letzte "
+"Datenbank-Roundtrip des Knotens gelungen ist. Ist die Datenbank nicht "
+"erreichbar, bedient die zuletzt veröffentlichte Engine weiter, Vorfälle "
+"werden im begrenzten Ring eingereiht und mit einem Zähler verworfen, "
+"sobald er voll ist, und der Speicherthread versucht es mit Backoff "
+"erneut; ein Knoten behält seine letzte Richtlinie, bis er sich wieder "
+"verbindet. Ein Zaxonlite-Datenverzeichnis (SID 0005) wird nicht gelesen; "
+"Richtlinien werden mit ``sibuna console policies export`` und ``sibuna "
+"console policies import`` übertragen, und der Forensikverlauf wird nicht "
+"migriert."
 
 #: ../../operations.rst:606
 msgid "Cluster Challenge Routing"
-msgstr ""
+msgstr "Challenge-Routing im Cluster"
 
 #: ../../operations.rst:609
 msgid ""
@@ -1699,14 +2492,25 @@ msgid ""
 "identifiers never collide (``crates/storage/tests/multi_node.rs``, SID "
 "0011 criterion 2; it runs when ``SIBUNA_TEST_DATABASE_URL`` is set)."
 msgstr ""
+"Challenge-Schlüssel sind an ``--cluster-node`` gebunden; Ausgabe und "
+"Verifikation einer Challenge bleiben daher auf demselben Mitglied. Tokens "
+"verwenden den gemeinsamen Seed und funktionieren auf anderen Mitgliedern. "
+"Lokale Ratenkontingente werden nicht zu globalen Kontingenten, und "
+"Prozessneustarts leeren die Verbrauchsmengen. Mit drei Knoten auf einer "
+"lokalen PostgreSQL-Datenbank erreicht eine direkt geschriebene "
+"Richtlinienzeile alle drei innerhalb eines Takts, eine Honeypot-Sperre "
+"auf einem Knoten erreicht die anderen, und Vorfallskennungen kollidieren "
+"nie (``crates/storage/tests/multi_node.rs``, SID 0011, Kriterium 2; der "
+"Test läuft, wenn ``SIBUNA_TEST_DATABASE_URL`` gesetzt ist)."
 
 #: ../../operations.rst:611
 msgid "Packaging"
-msgstr ""
+msgstr "Paketierung"
 
 #: ../../operations.rst:616
 msgid "Build the binary for a target, package it, and run it under systemd."
 msgstr ""
+"Das Binary für ein Ziel bauen, paketieren und unter systemd betreiben."
 
 #: ../../operations.rst:618
 msgid ""
@@ -1719,6 +2523,14 @@ msgid ""
 "wasm32-unknown-unknown``; ``SIBUNA_POW_WASM=<path>`` and "
 "``SIBUNA_CONSOLE_WASM=<path>`` embed prebuilt modules instead."
 msgstr ""
+"``cargo build --release -p sibuna`` erzeugt ``target/release/sibuna`` mit "
+"den Standard-Features: SQLite-Speicher und Konsole. sqlx bündelt SQLite, "
+"und ``ring`` (rustls) braucht zur Build-Zeit einen C-Compiler; das Binary "
+"bindet nur die C-Laufzeit des Systems (``libc``, ``libm``, ``libgcc_s``) "
+"dynamisch. Das Build-Skript baut außerdem den WebAssembly-Löser und die "
+"Konsolenoberfläche, wofür ``rustup target add wasm32-unknown-unknown`` "
+"nötig ist; ``SIBUNA_POW_WASM=<path>`` und ``SIBUNA_CONSOLE_WASM=<path>`` "
+"betten stattdessen vorgebaute Module ein."
 
 #: ../../operations.rst:619
 msgid ""
@@ -1727,12 +2539,18 @@ msgid ""
 "``--database-url`` are then refused at start with ``StorageDisabled``, "
 "and ``sibuna console`` with ``CONSOLEBUILD``."
 msgstr ""
+"``cargo build --release -p sibuna --no-default-features`` erzeugt die "
+"Firewall im Arbeitsspeicher ganz ohne externe Crates; ``--data-dir`` und "
+"``--database-url`` werden dann beim Start mit ``StorageDisabled`` "
+"abgewiesen und ``sibuna console`` mit ``CONSOLEBUILD``."
 
 #: ../../operations.rst:620
 msgid ""
 "``cargo build --release -p sibuna --features postgres`` adds PostgreSQL "
 "clusters. It needs no OpenSSL."
 msgstr ""
+"``cargo build --release -p sibuna --features postgres`` fügt "
+"PostgreSQL-Cluster hinzu. Es braucht kein OpenSSL."
 
 #: ../../operations.rst:622
 msgid ""
@@ -1742,10 +2560,15 @@ msgid ""
 "container image needs a base that provides it. The unit below is an "
 "example:"
 msgstr ""
+"Das Release-Profil verwendet fettes LTO und eine Codegen-Einheit. Sibuna "
+"liefert keine Definition eines Container-Images, keine systemd-Unit und "
+"kein Betriebssystempaket; das Binary bindet die C-Laufzeit des Systems "
+"dynamisch, daher braucht ein Container-Image eine Basis, die sie "
+"bereitstellt. Die folgende Unit ist ein Beispiel:"
 
 #: ../../operations.rst:642
 msgid "Exercise 9.2"
-msgstr ""
+msgstr "Übung 9.2"
 
 #: ../../operations.rst:644
 msgid ""
@@ -1754,16 +2577,24 @@ msgid ""
 "demands 20 work bits of sequential work, and a partner scraper identified "
 "by ``X-Partner-Key`` is admitted at 30 requests per 10 seconds."
 msgstr ""
+"Die Richtliniendatei und die ``ip_reputation``-Zeilen schreiben, die "
+"nötig sind, damit ein Staging-Netz (``10.20.0.0/16``) Challenges umgeht, "
+"``/admin/*`` 20 Arbeitsbits sequenzieller Arbeit verlangt und ein durch "
+"``X-Partner-Key`` identifizierter Partner-Scraper mit 30 Anfragen pro 10 "
+"Sekunden zugelassen wird."
 
 #: ../../operations.rst:646
 msgid ""
 "Hint: The daemon flags set the per-client limit every request meets "
 "first; a rule can carry a quota of its own in ``limits``."
 msgstr ""
+"Hinweis: Die Daemon-Optionen legen das Limit pro Client fest, auf das "
+"jede Anfrage zuerst trifft; eine Regel kann in ``limits`` ein eigenes "
+"Kontingent tragen."
 
 #: ../../operations.rst:648
 msgid "Explain the invariant"
-msgstr ""
+msgstr "Die Invariante erklären"
 
 #: ../../operations.rst:650
 msgid ""
@@ -1771,3 +2602,6 @@ msgid ""
 "without a restart and without a request ever waiting, in terms of the "
 "storage thread and the engine slot."
 msgstr ""
+"Einem Betreiber erklären, warum das Hinzufügen einer Zeile zu "
+"``policies`` ohne Neustart wirkt und ohne dass je eine Anfrage wartet, "
+"und zwar anhand des Speicherthreads und des Engine-Slots."

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:18+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../learning.rst:1
 msgid "How to Read This Book"
-msgstr ""
+msgstr "Wie wir dieses Buch lesen"
 
 #: ../../learning.rst:4
 msgid ""
@@ -29,82 +29,92 @@ msgid ""
 "request is a defect; a correct operation with unbounded cost is another "
 "kind of defect."
 msgstr ""
+"Wir beginnen mit einer einzigen Frage: Was ist die billigste sichere "
+"Entscheidung, die der Server jetzt treffen kann? Diese Frage begleitet "
+"uns durch die Kapitel über Protokoll und Implementierung. Eine billige "
+"Operation, die die falsche Anfrage zulässt, ist ein Defekt; eine korrekte "
+"Operation mit unbeschränkten Kosten ist eine andere Art von Defekt."
 
 #: ../../learning.rst:10
 msgid "Question"
-msgstr ""
+msgstr "Frage"
 
 #: ../../learning.rst:11
 msgid "Where the answer develops"
-msgstr ""
+msgstr "Wo die Antwort entwickelt wird"
 
 #: ../../learning.rst:12
 msgid "What does a puzzle buy?"
-msgstr ""
+msgstr "Was bringt uns ein Rätsel?"
 
 #: ../../learning.rst:13
 msgid "Parts I to III: cost, probability, and the limits of proof."
 msgstr ""
+"Teile I bis III: Kosten, Wahrscheinlichkeit und die Grenzen des Beweises."
 
 #: ../../learning.rst:14
 msgid "How does Sibuna compare?"
-msgstr ""
+msgstr "Wie schneidet Sibuna im Vergleich ab?"
 
 #: ../../learning.rst:15
 msgid "Part II: lineage and the feature table; Part VIII: measurements."
-msgstr ""
+msgstr "Teil II: Herkunft und die Funktionstabelle; Teil VIII: Messungen."
 
 #: ../../learning.rst:16
 msgid "What does a session mean?"
-msgstr ""
+msgstr "Was bedeutet eine Sitzung?"
 
 #: ../../learning.rst:17
 msgid "Part IV: bindings, verification order, expiry, and replay."
 msgstr ""
+"Teil IV: Bindungen, Reihenfolge der Prüfung, Ablauf und Wiederholung."
 
 #: ../../learning.rst:18
 msgid "Where does the memory go?"
-msgstr ""
+msgstr "Wohin geht der Speicher?"
 
 #: ../../learning.rst:19
 msgid "Parts V and VI: buffers, threads, tables, automata, and publication."
 msgstr ""
+"Teile V und VI: Puffer, Threads, Tabellen, Automaten und Veröffentlichung."
 
 #: ../../learning.rst:20
 msgid "How does the browser solve?"
-msgstr ""
+msgstr "Wie löst der Browser?"
 
 #: ../../learning.rst:21
 msgid "Part VII: worker messages, memory, and calibration."
-msgstr ""
+msgstr "Teil VII: Worker-Nachrichten, Speicher und Kalibrierung."
 
 #: ../../learning.rst:22
 msgid "How do we know it works?"
-msgstr ""
+msgstr "Woher wissen wir, dass es funktioniert?"
 
 #: ../../learning.rst:23
 msgid "Part VIII: three harnesses and what each excludes."
-msgstr ""
+msgstr "Teil VIII: drei Messprogramme und was jedes ausschließt."
 
 #: ../../learning.rst:24
 msgid "How do we run it?"
-msgstr ""
+msgstr "Wie betreiben wir es?"
 
 #: ../../learning.rst:25
 msgid "Part IX: flags, topologies, policy, storage, clustering, packaging."
 msgstr ""
+"Teil IX: Optionen, Topologien, Richtlinien, Speicherung, Clusterbildung, "
+"Paketierung."
 
 #: ../../learning.rst:26
 msgid "What was that error?"
-msgstr ""
+msgstr "Was war das für ein Fehler?"
 
 #: ../../learning.rst:27
 msgid "Part X: endpoints, statuses, errors, schema; Part XI: the card."
-msgstr ""
+msgstr "Teil X: Endpunkte, Status, Fehler, Schema; Teil XI: die Karte."
 
 #: ../../learning.rst:29
 msgid "Three Reading Paths"
-msgstr ""
+msgstr "Drei Lesewege"
 
 #: ../../learning.rst:32
 msgid ""
@@ -113,6 +123,11 @@ msgid ""
 "the back only afterwards. Return to Part V when a trace reaches a shared "
 "table or a borrowed slice."
 msgstr ""
+"*Den Entwurf lernen.* Die Teile I bis IV der Reihe nach, dann die "
+"durchgerechnete Ablaufverfolgung in Teil VI, dann Teil VII. Wir "
+"bearbeiten die Übungen und vergleichen erst danach mit den Lösungen am "
+"Ende des Buchs. Zu Teil V kehren wir zurück, wenn eine Ablaufverfolgung "
+"eine gemeinsame Tabelle oder einen geliehenen Slice erreicht."
 
 #: ../../learning.rst:33
 msgid ""
@@ -121,6 +136,10 @@ msgid ""
 "surface, and the \"Whole-Product Comparison\" in Part VIII before "
 "choosing worker and connection limits."
 msgstr ""
+"*Einen Einsatz betreiben.* Teil IX, dann Teil XI, mit Teil X zum "
+"Nachschlagen. Vor der Wahl einer Betriebsform lesen wir den "
+"\"Funktionsvergleich\" in Teil II, und vor der Wahl der Worker- und "
+"Verbindungsgrenzen den \"Vergleich ganzer Produkte\" in Teil VIII."
 
 #: ../../learning.rst:34
 msgid ""
@@ -129,10 +148,14 @@ msgid ""
 "catch a regression in what we touched; Part II lists the constraints a "
 "change must keep."
 msgstr ""
+"*Den Code ändern.* Die Teile V und VI, die Quellverweise in jedem Kapitel "
+"und die SID-Dokumente, die sie zitieren. Teil VIII erklärt, welches "
+"Messprogramm eine Regression in dem erkennt, was wir geändert haben; Teil "
+"II nennt die Randbedingungen, die eine Änderung einhalten muss."
 
 #: ../../learning.rst:36
 msgid "Conventions"
-msgstr ""
+msgstr "Konventionen"
 
 #: ../../learning.rst:39
 msgid ""
@@ -144,6 +167,15 @@ msgid ""
 "disagree. Boxes headed \"Implementation\" name a function and its file; "
 "boxes headed \"Explain the invariant\" ask us to teach the idea back."
 msgstr ""
+"Ein *durchgerechnetes Beispiel* zeigt die Zwischenzustände, nicht nur die "
+"Antwort. Eine *Übung* fordert uns auf, eine Annahme zu ändern. Hinweise "
+"schlagen einen ersten Schritt vor; ausgewählte Lösungen am Ende des Buchs "
+"machen die Begründung überprüfbar. Diagramme unterscheiden den "
+"Anfragepfad von Hintergrundarbeit. Ein Quellverweis nennt die "
+"Implementierung, die wir untersuchen, wenn Text und Code einander zu "
+"widersprechen scheinen. Kästen mit der Überschrift \"Implementierung\" "
+"nennen eine Funktion und ihre Datei; Kästen mit der Überschrift \"Die "
+"Invariante erklären\" fordern uns auf, die Idee zurückzuerklären."
 
 #: ../../learning.rst:41
 msgid ""
@@ -157,3 +189,13 @@ msgid ""
 "are chosen inputs, not benchmark claims. Statistical models state their "
 "assumptions before drawing conclusions."
 msgstr ""
+"In Gleichungen ist :math:`b` die Hashcash-Schwierigkeit in Bits, "
+":math:`n` die Tiefe der sequenziellen Arbeit, :math:`t` die Zahl der "
+"Öffnungen, :math:`p` die Erfolgswahrscheinlichkeit pro Versuch, :math:`K` "
+"die Zahl der Versuche, :math:`T` das Emissionsintervall eines "
+"Ratenbegrenzers, :math:`\\tau` seine Bursttoleranz und :math:`Q` eine "
+"Warteschlangenkapazität. Ein Symbol gilt nur in seinem Abschnitt, sofern "
+"nicht anders angegeben. Nanosekunden und Anfragen pro Sekunde in Teil "
+"VIII sind Messungen aus einem benannten Lauf. Zahlen in durchgerechneten "
+"Beispielen sind gewählte Eingaben, keine Benchmark-Aussagen. Statistische "
+"Modelle nennen ihre Annahmen, bevor sie Schlüsse ziehen."

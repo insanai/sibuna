@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:18+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../foundations.rst:1
 msgid "Part I: The Cost of a Request"
-msgstr ""
+msgstr "Teil I: Die Kosten einer Anfrage"
 
 #: ../../foundations.rst:4
 msgid ""
@@ -28,10 +28,16 @@ msgid ""
 "decision is measured against: origin work, puzzle work, session "
 "amortisation, and the memory an untrusted client can make a server hold."
 msgstr ""
+"Bevor wir einen Algorithmus wählen, bestimmen wir die Ressource, die er "
+"schützen soll. Dieses Kapitel baut die kleinen Modelle auf, an denen jede "
+"spätere Entwurfsentscheidung gemessen wird: die Arbeit des "
+"Ursprungsservers, die Rätselarbeit, die Amortisierung durch Sitzungen und "
+"den Speicher, den ein nicht vertrauenswürdiger Client den Server belegen "
+"lassen kann."
 
 #: ../../foundations.rst:6
 msgid "Objectives"
-msgstr ""
+msgstr "Lernziele"
 
 #: ../../foundations.rst:8
 msgid ""
@@ -41,10 +47,16 @@ msgid ""
 "search, explain how sessions amortise work, and list the five invariants "
 "the rest of the book maintains."
 msgstr ""
+"Am Ende dieses Kapitels sollten wir die Ungleichung aufschreiben können, "
+"die entscheidet, ob sich ein Gate lohnt, angeben können, was ein Proof of "
+"Work belegt und was nicht, Erwartungswert und Verteilungsende einer "
+"Hash-Suche herleiten, erklären können, wie Sitzungen Arbeit amortisieren, "
+"und die fünf Invarianten nennen können, die der Rest des Buchs "
+"aufrechterhält."
 
 #: ../../foundations.rst:10
 msgid "Admission Is an Economic Decision"
-msgstr ""
+msgstr "Zulassung ist eine wirtschaftliche Entscheidung"
 
 #: ../../foundations.rst:13
 msgid ""
@@ -57,11 +69,21 @@ msgid ""
 "origin work exceeds its own cost and the cost it imposes on legitimate "
 "visitors."
 msgstr ""
+"Angenommen, ein Ursprungsserver führt für jede zugelassene Anfrage eine "
+"Datenbankabfrage aus und rendert eine Seite. Sei :math:`c_o` diese "
+"Arbeit, :math:`c_g` die Arbeit des Gates pro Anfrage und :math:`r` die "
+"Ankunftsrate. Ohne Gate muss der Ursprungsserver :math:`r c_o` "
+"Arbeitseinheiten pro Sekunde leisten. Ein Gate, das den Anteil :math:`a` "
+"zulässt, ändert diesen Bedarf auf :math:`r a c_o` und wendet selbst "
+":math:`r c_g` auf. Das Gate ist nur nützlich, wenn die eingesparte Arbeit "
+"des Ursprungsservers seine eigenen Kosten und die Kosten übersteigt, die "
+"es legitimen Besuchern auferlegt."
 
 #: ../../foundations.rst:15
 msgid ""
 "r c_g + r a c_o < r c_o \\quad \\Leftrightarrow \\quad c_g < (1-a) c_o."
 msgstr ""
+"r c_g + r a c_o < r c_o \\quad \\Leftrightarrow \\quad c_g < (1-a) c_o."
 
 #: ../../foundations.rst:19
 msgid ""
@@ -71,10 +93,16 @@ msgid ""
 "query may make it large. There is no universal requester-to-server cost "
 "ratio."
 msgstr ""
+"Dies ist ein Kapazitätsmodell, keine Messung. Es lässt Bandbreite, "
+"Verbindungszustand, Speicherung und die Verzögerung beim Client weg. Sein "
+"Wert liegt darin, dass jeder fehlende Term sichtbar ist. Ein "
+"Cache-Treffer kann :math:`c_o` klein machen; eine teure Abfrage kann es "
+"groß machen. Es gibt kein universelles Kostenverhältnis zwischen "
+"Anfragendem und Server."
 
 #: ../../foundations.rst:21
 msgid "Worked example: when a gate pays for itself"
-msgstr ""
+msgstr "Durchgerechnetes Beispiel: wann sich ein Gate lohnt"
 
 #: ../../foundations.rst:23
 msgid ""
@@ -85,10 +113,17 @@ msgid ""
 "this model. These selected numbers are not timings. They show why the "
 "workload belongs in every performance claim."
 msgstr ""
+"Wir wählen :math:`c_o = 100` Arbeitseinheiten und :math:`c_g = 1`. Wird "
+"die Hälfte der Anfragen abgewiesen, wendet das System mit Gate :math:`1 + "
+"0.5 \\times 100 = 51` Einheiten pro Ankunft statt 100 auf. Wird nur eine "
+"von tausend abgewiesen, wendet es :math:`100.9` auf: In diesem Modell "
+"kostet das Gate mehr, als es einspart. Diese gewählten Zahlen sind keine "
+"Zeitmessungen. Sie zeigen, warum die Arbeitslast in jede Leistungsaussage "
+"gehört."
 
 #: ../../foundations.rst:25
 msgid "What a Proof of Work Establishes"
-msgstr ""
+msgstr "Was ein Proof of Work belegt"
 
 #: ../../foundations.rst:28
 msgid ""
@@ -99,6 +134,13 @@ msgid ""
 "admission cost; policy and inspection still decide what admitted requests "
 "may do."
 msgstr ""
+"Ein Client-Rätsel belegt, dass jemand eine Eingabe gefunden hat, die eine "
+"öffentliche Prüfregel erfüllt. Es belegt weder Menschsein noch Identität "
+"noch gute Absicht. Ein Anfragender kann Rechenleistung mieten, eine "
+"gültige Sitzung innerhalb ihrer Lebensdauer wiederverwenden oder Arbeit "
+"auf mehrere Maschinen verteilen. Das Rätsel ändert die Kosten der "
+"Zulassung; Richtlinien und Prüfung entscheiden weiterhin, was zugelassene "
+"Anfragen tun dürfen."
 
 #: ../../foundations.rst:30
 msgid ""
@@ -108,10 +150,15 @@ msgid ""
 "therefore keeps admission, inspection, and reputation as distinct "
 "decisions."
 msgstr ""
+"Adressbasierte Limits ergänzen dies. Sie beschränken eine Adresse, aber "
+"geteilte Adressen können für viele Menschen stehen, und ein Anfragender "
+"kann viele Adressen nutzen. Weder ein Rätsel noch eine Adresse ist ein "
+"Identitätsorakel. Sibuna hält deshalb Zulassung, Prüfung und Reputation "
+"als getrennte Entscheidungen auseinander."
 
 #: ../../foundations.rst:32
 msgid "Hash Search as a Random Variable"
-msgstr ""
+msgstr "Hash-Suche als Zufallsvariable"
 
 #: ../../foundations.rst:35
 msgid ""
@@ -119,20 +166,26 @@ msgid ""
 "success probability :math:`p = 2^{-b}` for each independent trial. Let "
 ":math:`K` count trials through the first success. Then"
 msgstr ""
+"Für einen idealen 256-Bit-Digest ergibt die Forderung nach :math:`b` "
+"führenden Nullbits die Erfolgswahrscheinlichkeit :math:`p = 2^{-b}` für "
+"jeden unabhängigen Versuch. Sei :math:`K` die Zahl der Versuche bis "
+"einschließlich des ersten Erfolgs. Dann gilt"
 
 #: ../../foundations.rst:37
 msgid ""
 "P(K=k) = (1-p)^{k-1} p, \\quad P(K>k) = (1-p)^k, \\quad E[K] = 1/p = 2^b."
 msgstr ""
+"P(K=k) = (1-p)^{k-1} p, \\quad P(K>k) = (1-p)^k, \\quad E[K] = 1/p = 2^b."
 
 #: ../../foundations.rst:41
 msgid "The expectation follows from the tail sum:"
-msgstr ""
+msgstr "Der Erwartungswert folgt aus der Summe über das Verteilungsende:"
 
 #: ../../foundations.rst:43
 msgid ""
 "E[K] = \\sum_{k=0}^{\\infty} P(K>k) = \\sum_{k=0}^{\\infty} (1-p)^k = 1/p."
 msgstr ""
+"E[K] = \\sum_{k=0}^{\\infty} P(K>k) = \\sum_{k=0}^{\\infty} (1-p)^k = 1/p."
 
 #: ../../foundations.rst:47
 msgid ""
@@ -141,6 +194,11 @@ msgid ""
 "far longer than the mean. A client that measures only one solve has "
 "mostly measured this randomness."
 msgstr ""
+"Eine Schwierigkeitsstufe mehr verdoppelt die erwarteten Versuche. Sie "
+"verspricht nicht, dass jedes Rätsel doppelt so lange dauert. Manche "
+"gelingen beim ersten Versuch; manche dauern weit länger als der "
+"Mittelwert. Ein Client, der nur eine Lösung misst, hat vor allem diesen "
+"Zufall gemessen."
 
 #: ../../foundations.rst:50
 msgid ""
@@ -149,10 +207,14 @@ msgid ""
 "P(K > x/p) ~ e^(-x). The point o marks x = 1, where the probability of "
 "still searching is e^(-1) = 0.368."
 msgstr ""
+"Überlebenswahrscheinlichkeit der Hash-Suche. Die horizontale Achse zeigt "
+"die Versuche geteilt durch die erwarteten Versuche; die Kurve nutzt die "
+"Näherung für große Arbeit P(K > x/p) ~ e^(-x). Der Punkt o markiert x = "
+"1, wo die Wahrscheinlichkeit, noch zu suchen, e^(-1) = 0.368 beträgt."
 
 #: ../../foundations.rst:68
 msgid "Worked example: expectation is not a deadline"
-msgstr ""
+msgstr "Durchgerechnetes Beispiel: Erwartung ist keine Frist"
 
 #: ../../foundations.rst:70
 msgid ""
@@ -163,10 +225,17 @@ msgid ""
 "A user interface should tolerate that spread rather than announcing "
 "failure at the expected completion time."
 msgstr ""
+"Bei :math:`b = 16` beträgt die erwartete Arbeit 65,536 Hashes. Die "
+"Wahrscheinlichkeit, nach so vielen Versuchen noch zu suchen, beträgt etwa "
+":math:`e^{-1} = 0.368`. Die Versuchszahl am 95. Perzentil ist "
+":math:`\\lceil \\ln(0.05) / \\ln(1 - 2^{-16}) \\rceil \\approx 196327`, "
+"fast das Dreifache des Mittelwerts. Eine Benutzeroberfläche sollte diese "
+"Streuung tolerieren, statt zum erwarteten Fertigstellungszeitpunkt einen "
+"Fehlschlag zu melden."
 
 #: ../../foundations.rst:72
 msgid "Sessions Amortise Work"
-msgstr ""
+msgstr "Sitzungen amortisieren Arbeit"
 
 #: ../../foundations.rst:75
 msgid ""
@@ -178,10 +247,18 @@ msgid ""
 "automated clients alike. Choosing it is a policy decision, not a "
 "cryptographic optimization."
 msgstr ""
+"Angenommen, eine Sitzung erlaubt :math:`m` Anfragen vor ihrem Ablauf, ein "
+"Rätsel kostet :math:`c_p`, die Verifikation kostet :math:`c_v` und eine "
+"Sitzungsprüfung kostet :math:`c_s`. Ohne erfolglose Versuche betragen die "
+"amortisierten Kosten des Gates pro Anfrage :math:`c_v/m + c_s`, während "
+"die Rätselkosten des Clients :math:`c_p/m` betragen. Eine längere "
+"Sitzungsdauer hilft Menschen und automatisierten Clients gleichermaßen. "
+"Sie zu wählen ist eine Richtlinienentscheidung, keine kryptographische "
+"Optimierung."
 
 #: ../../foundations.rst:77
 msgid "Exercise 1.1"
-msgstr ""
+msgstr "Übung 1.1"
 
 #: ../../foundations.rst:79
 msgid ""
@@ -189,15 +266,21 @@ msgid ""
 "million trials. What is the amortized work per request? What changes if "
 "it shares the session with a second process?"
 msgstr ""
+"Ein Client erhält 100 Anfragen pro Sitzung und löst ein Rätsel, das eine "
+"Million Versuche kostet. Wie groß ist die amortisierte Arbeit pro "
+"Anfrage? Was ändert sich, wenn er die Sitzung mit einem zweiten Prozess "
+"teilt?"
 
 #: ../../foundations.rst:81
 msgid ""
 "Hint: Distinguish the accounting model from the token's actual bindings."
 msgstr ""
+"Hinweis: Das Abrechnungsmodell von den tatsächlichen Bindungen des Tokens "
+"unterscheiden."
 
 #: ../../foundations.rst:83
 msgid "Bounded State Is a Second Budget"
-msgstr ""
+msgstr "Beschränkter Zustand ist ein zweites Budget"
 
 #: ../../foundations.rst:86
 msgid ""
@@ -206,10 +289,15 @@ msgid ""
 "them at average rate :math:`\\mu`, and let the queue hold :math:`Q` "
 "records. When :math:`\\lambda > \\mu`, a fluid approximation gives"
 msgstr ""
+"Arbeit vom Anfragepfad wegzuverlagern lässt sie nicht verschwinden. "
+"Vorfälle mögen mit der Rate :math:`\\lambda` eintreffen, der "
+"Speicherthread speichert sie mit der mittleren Rate :math:`\\mu`, und die "
+"Warteschlange fasst :math:`Q` Datensätze. Für :math:`\\lambda > \\mu` "
+"ergibt eine Fluidnäherung"
 
 #: ../../foundations.rst:88
 msgid "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
-msgstr ""
+msgstr "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
 
 #: ../../foundations.rst:92
 msgid ""
@@ -220,10 +308,17 @@ msgid ""
 "The operator must monitor the lost evidence as well as the HTTP success "
 "rate."
 msgstr ""
+"Eine größere Warteschlange verschafft Zeit; sie schafft keinen Durchsatz. "
+"Bündelung amortisiert die Transaktionskosten, aber zurückgehaltene "
+"Datensätze brauchen weiterhin Speicher und müssen irgendwann abgearbeitet "
+"werden. Unter Überlast verwirft Sibuna neue Vorfallsdatensätze und zählt "
+"sie. Es trifft weiterhin Anfrageentscheidungen aus dem Zustand im "
+"Speicher. Der Betreiber muss die verlorenen Belege ebenso überwachen wie "
+"die HTTP-Erfolgsrate."
 
 #: ../../foundations.rst:94
 msgid "Exercise 1.2"
-msgstr ""
+msgstr "Übung 1.2"
 
 #: ../../foundations.rst:96
 msgid ""
@@ -231,38 +326,54 @@ msgid ""
 "600/s. How long can an initially empty queue absorb the excess? Why is "
 "the answer only an approximation?"
 msgstr ""
+"Eine Warteschlange fasst 512 Datensätze. Die Ankunftsrate beträgt 1,000/s "
+"und die Abflussrate 600/s. Wie lange kann eine anfangs leere "
+"Warteschlange den Überschuss aufnehmen? Warum ist die Antwort nur eine "
+"Näherung?"
 
 #: ../../foundations.rst:98
 msgid ""
 "Hint: Use the difference of rates, then consider bursts and batch commits."
 msgstr ""
+"Hinweis: Die Differenz der Raten nutzen, dann Bursts und gebündelte "
+"Commits betrachten."
 
 #: ../../foundations.rst:100
 msgid "The Invariants We Will Carry Forward"
-msgstr ""
+msgstr "Die Invarianten, die wir mitnehmen"
 
 #: ../../foundations.rst:103
 msgid "Untrusted requests cannot create unbounded server state."
 msgstr ""
+"Nicht vertrauenswürdige Anfragen können keinen unbeschränkten "
+"Serverzustand erzeugen."
 
 #: ../../foundations.rst:104
 msgid "A valid admission token does not bypass an application denial."
 msgstr ""
+"Ein gültiges Zulassungstoken umgeht keine Ablehnung durch die "
+"Anwendungsprüfung."
 
 #: ../../foundations.rst:105
 msgid "A buffer remains alive for every slice borrowed from it."
 msgstr ""
+"Ein Puffer bleibt am Leben, solange ein von ihm geliehener Slice "
+"existiert."
 
 #: ../../foundations.rst:106
 msgid ""
 "A durable retry cannot multiply an incident or its reputation effect."
 msgstr ""
+"Eine dauerhafte Wiederholung kann einen Vorfall oder seine Wirkung auf "
+"die Reputation nicht vervielfachen."
 
 #: ../../foundations.rst:107
 msgid ""
 "A published policy snapshot is immutable until its last reader releases "
 "it."
 msgstr ""
+"Ein veröffentlichter Richtlinienschnappschuss bleibt unveränderlich, bis "
+"sein letzter Leser ihn freigibt."
 
 #: ../../foundations.rst:109
 msgid ""
@@ -270,10 +381,13 @@ msgid ""
 "true, and the tests that would reveal a violation. A fast path is useful "
 "only while those statements remain true."
 msgstr ""
+"Der Rest des Buchs leitet die Mechanismen her, die diese Aussagen wahr "
+"machen, und die Tests, die eine Verletzung aufdecken würden. Ein "
+"schneller Pfad ist nur nützlich, solange diese Aussagen wahr bleiben."
 
 #: ../../foundations.rst:111
 msgid "Explain the invariant"
-msgstr ""
+msgstr "Die Invariante erklären"
 
 #: ../../foundations.rst:113
 msgid ""
@@ -281,3 +395,6 @@ msgid ""
 "why a measured verification latency alone cannot tell an operator whether "
 "the gate is worth running."
 msgstr ""
+"Die Gate-Ungleichung :math:`c_g < (1-a) c_o` in Worten formulieren und "
+"dann erklären, warum eine gemessene Verifikationslatenz allein einem "
+"Betreiber nicht sagen kann, ob sich der Betrieb des Gates lohnt."

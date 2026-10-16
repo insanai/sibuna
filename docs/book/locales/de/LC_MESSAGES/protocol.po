@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-16 05:09+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-10-16 05:21+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../protocol.rst:1
 msgid "Part IV: The Sibuna Protocol"
-msgstr ""
+msgstr "Teil IV: Das Sibuna-Protokoll"
 
 #: ../../protocol.rst:4
 msgid ""
@@ -27,15 +27,20 @@ msgid ""
 "the stateless challenge record, both solution formats, verification "
 "order, single-use enforcement, and the session cookie."
 msgstr ""
+"Wir spezifizieren das Übertragungsprotokoll so, wie es implementiert ist: "
+"den Rundlauf über die Zwischenseite, den zustandslosen "
+"Challenge-Datensatz, beide Lösungsformate, die Reihenfolge der "
+"Verifikation, die Durchsetzung der Einmalverwendung und das "
+"Sitzungscookie."
 
 #: ../../protocol.rst:6
 msgid "The Challenge Round Trip"
-msgstr ""
+msgstr "Der Challenge-Rundlauf"
 
 #: ../../protocol.rst:9 ../../protocol.rst:72 ../../protocol.rst:135
 #: ../../protocol.rst:186
 msgid "Objectives"
-msgstr ""
+msgstr "Lernziele"
 
 #: ../../protocol.rst:11
 msgid ""
@@ -44,10 +49,15 @@ msgid ""
 "involved, and explain why the challenge carries the protected path's "
 "policy decision."
 msgstr ""
+"Am Ende dieses Kapitels sollten wir einen Browser von seiner ersten "
+"Anfrage bis zu einer ausgestellten Sitzung verfolgen, jeden beteiligten "
+"Endpunkt und jedes JSON-Feld benennen und erklären können, warum die "
+"Challenge die Richtlinienentscheidung für den geschützten Pfad mit sich "
+"trägt."
 
 #: ../../protocol.rst:14
 msgid "The challenge round trip."
-msgstr ""
+msgstr "Der Challenge-Rundlauf."
 
 #: ../../protocol.rst:41
 msgid ""
@@ -61,6 +71,16 @@ msgid ""
 "rule's hash, sealed for this client with a keyed BLAKE3 tag under its own "
 "derived key and valid for one challenge lifetime."
 msgstr ""
+"Eine Navigation ohne gültige Sitzung erreicht die Richtlinien-Engine und "
+"wird als ``CHALLENGE`` eingestuft. Weil die Anfrage ``text/html`` "
+"akzeptiert, antwortet der Daemon mit ``200``, der Zwischenseite und dem "
+"Header ``X-Sibuna-Status: CHALLENGE``; ein API-Client, der kein HTML "
+"akzeptiert, erhält ``401`` mit einem JSON-Body, dessen URL im Feld "
+"``challenge`` direkt abrufbar ist. In beiden Fällen trägt die Antwort ein "
+"*Anforderungsticket*: die Challenge, die diese Entscheidung verlangt "
+"(Algorithmus, Arbeitsbits, Öffnungen), und den Hash der Regel, für diesen "
+"Client versiegelt mit einem Tag aus BLAKE3 mit Schlüssel unter einem "
+"eigenen abgeleiteten Schlüssel und gültig für eine Challenge-Lebensdauer."
 
 #: ../../protocol.rst:42
 msgid ""
@@ -77,30 +97,50 @@ msgid ""
 "advisory: admission still checks the session's work level, so a replayed "
 "or forged ticket can only cost its holder work."
 msgstr ""
+"Die Zwischenseite ruft ``GET /__sibuna/challenge.json?path=<original "
+"URL>&need=<ticket>`` ab. Ein gültiges Ticket bestimmt die Challenge: Die "
+"Arbeit ist durch die Entscheidung festgelegt, die sie verlangt hat, und "
+"wird nicht aus einer gemeldeten URL und den eigenen Headern des Abrufs "
+"neu berechnet, die sich von denen der Navigation unterscheiden "
+"(``Accept``, ``Sec-Fetch-*``). Ohne gültiges Ticket (ein API-Client, der "
+"die URL ignoriert, eine Seite, die über die Lebensdauer hinaus offen "
+"blieb) wertet der Server die gemeldete URL aus. Er zerlegt sie mit "
+"derselben Funktion, die die Anfragezeile liest, in Pfad und Query und "
+"bringt den Pfad in die Normalform, die die Zulassung verwendet (SID "
+"0009); eine URL, die länger als 8 KiB ist, wird mit ``414`` abgewiesen, "
+"nie gekürzt, und ein Pfad ohne Normalform mit ``400``. Das Ticket ist nur "
+"ein Hinweis: Die Zulassung prüft weiterhin die Arbeitsstufe der Sitzung, "
+"sodass ein wiederholtes oder gefälschtes Ticket seinen Inhaber nur Arbeit "
+"kosten kann."
 
 #: ../../protocol.rst:43
 msgid "The response is the challenge record:"
-msgstr ""
+msgstr "Die Antwort ist der Challenge-Datensatz:"
 
 #: ../../protocol.rst:49
 msgid ""
 "For ``hashcash``, ``difficulty`` is the bit count and ``challenges`` is "
 "``0``."
 msgstr ""
+"Für ``hashcash`` ist ``difficulty`` die Bitzahl und ``challenges`` ist "
+"``0``."
 
 #: ../../protocol.rst:50
 msgid ""
 "A Web Worker solves it with the WebAssembly module, or the JavaScript "
 "prover if WebAssembly is unavailable (Part VII), and posts either"
 msgstr ""
+"Ein Web Worker löst sie mit dem WebAssembly-Modul oder, wenn WebAssembly "
+"nicht verfügbar ist, mit dem JavaScript-Beweiser (Teil VII) und sendet "
+"entweder"
 
 #: ../../protocol.rst:56
 msgid "or"
-msgstr ""
+msgstr "oder"
 
 #: ../../protocol.rst:62
 msgid "to ``POST /__sibuna/verify``."
-msgstr ""
+msgstr "an ``POST /__sibuna/verify``."
 
 #: ../../protocol.rst:63
 msgid ""
@@ -108,10 +148,14 @@ msgid ""
 "``Set-Cookie`` header, and the page reloads its original location. Every "
 "later request carries the cookie and is admitted before policy evaluation."
 msgstr ""
+"Bei Erfolg antwortet der Server mit ``200 {\"status\":\"ok\"}`` und einem "
+"``Set-Cookie``-Header, und die Seite lädt ihre ursprüngliche Adresse neu. "
+"Jede spätere Anfrage trägt das Cookie und wird vor der "
+"Richtlinienauswertung zugelassen."
 
 #: ../../protocol.rst:65
 msgid "Why the path travels with the challenge"
-msgstr ""
+msgstr "Warum der Pfad mit der Challenge reist"
 
 #: ../../protocol.rst:67
 msgid ""
@@ -122,10 +166,16 @@ msgid ""
 "rule hash into the token, where ``X-Sibuna-Rule-Hash`` reports it "
 "upstream."
 msgstr ""
+"Die Zwischenseite wird unter der geschützten URL ausgeliefert, also weiß "
+"der Browser, wo er ist. Den Pfad mitzusenden lässt den Server die "
+"Schwierigkeit und den Algorithmus *pro Regel* wählen (eine Checkout-Route "
+"kann 20 Arbeitsbits sequenzieller Arbeit verlangen, während ein Blog 16 "
+"Bits Hashcash verlangt) und bindet den Regelhash in das Token, wo "
+"``X-Sibuna-Rule-Hash`` ihn nach oben meldet."
 
 #: ../../protocol.rst:69
 msgid "The Stateless Challenge Record"
-msgstr ""
+msgstr "Der zustandslose Challenge-Datensatz"
 
 #: ../../protocol.rst:74
 msgid ""
@@ -133,10 +183,13 @@ msgid ""
 "the per-challenge nonce is derived without an entropy syscall on the hot "
 "path."
 msgstr ""
+"Den Challenge-Encoder lesen, den Zweck jedes Felds verstehen und sehen, "
+"wie die Nonce pro Challenge ohne Systemaufruf für Entropie auf dem heißen "
+"Pfad abgeleitet wird."
 
 #: ../../protocol.rst:76
 msgid "Implementation: ``Coordinator::create_challenge_with_spec``"
-msgstr ""
+msgstr "Implementierung: ``Coordinator::create_challenge_with_spec``"
 
 #: ../../protocol.rst:78
 msgid ""
@@ -144,6 +197,10 @@ msgid ""
 "base64url-encodes the 52 bytes into a 70-character identifier. In "
 "``crates/challenge/src/coordinator.rs`` (crate ``sibuna-challenge``)."
 msgstr ""
+"Baut die 36-Byte-Nutzlast, versieht sie mit einem Tag unter dem "
+"Challenge-Schlüssel und kodiert die 52 Bytes mit base64url in eine 70 "
+"Zeichen lange Kennung. In ``crates/challenge/src/coordinator.rs`` (Crate "
+"``sibuna-challenge``)."
 
 #: ../../protocol.rst:124
 msgid ""
@@ -153,10 +210,15 @@ msgid ""
 "Hashcash bits (at most 64) or PoSW depth (``difficulty - 3``, clamped to "
 "4 through 24)."
 msgstr ""
+"Die Kennung ist ein ``Encoded<70>``: Der Text liegt in einem Array von "
+"genau seiner Länge, sodass das Ausstellen einer Challenge nie allokiert. "
+"``ChallengeSpec::parameter`` bildet Arbeitsbits auf die eigene Einheit "
+"der Stufe ab, Hashcash-Bits (höchstens 64) oder PoSW-Tiefe (``difficulty "
+"- 3``, begrenzt auf 4 bis 24)."
 
 #: ../../protocol.rst:126
 msgid "Three details deserve attention:"
-msgstr ""
+msgstr "Drei Details verdienen Aufmerksamkeit:"
 
 #: ../../protocol.rst:128
 msgid ""
@@ -166,6 +228,12 @@ msgid ""
 "work bit, capped at six. A flood pays exponentially more while quiet "
 "traffic keeps the base cost."
 msgstr ""
+"*Adaptive Schwierigkeit.* Der Koordinator führt einen exponentiell "
+"gewichteten gleitenden Mittelwert der Challenge-Ausgaberate in drei "
+"atomaren Variablen. Oberhalb einer Grundrate von 50 Challenges pro "
+"Sekunde fügt jede Verdopplung der Rate ein Arbeitsbit hinzu, höchstens "
+"sechs. Eine Flut zahlt exponentiell mehr, während ruhiger Verkehr die "
+"Grundkosten behält."
 
 #: ../../protocol.rst:129
 msgid ""
@@ -175,16 +243,24 @@ msgid ""
 "not been issued, and the hot path never calls into the operating system "
 "for entropy."
 msgstr ""
+"*Die Nonce ist eine PRF-Ausgabe*, mit dem Challenge-Schlüssel über einen "
+"Zähler, die Uhr und den Fingerabdruck berechnet. Sie ist eindeutig "
+"(Zähler) und unvorhersagbar (Schlüssel), sodass ein Gegner keine Lösungen "
+"für Kennungen vorberechnen kann, die ihm nicht ausgestellt wurden, und "
+"der heiße Pfad nie das Betriebssystem nach Entropie fragt."
 
 #: ../../protocol.rst:130
 msgid ""
 "*Difficulty travels inside the tag.* A client cannot lower the difficulty "
 "by editing the record: the tag would fail before any proof is examined."
 msgstr ""
+"*Die Schwierigkeit reist im Tag mit.* Ein Client kann die Schwierigkeit "
+"nicht senken, indem er den Datensatz bearbeitet: Der Tag würde scheitern, "
+"bevor irgendein Beweis untersucht wird."
 
 #: ../../protocol.rst:132
 msgid "Verification Order and Single Use"
-msgstr ""
+msgstr "Reihenfolge der Verifikation und Einmalverwendung"
 
 #: ../../protocol.rst:137
 msgid ""
@@ -192,10 +268,14 @@ msgid ""
 "is marked spent only after the proof is valid, and how two concurrent "
 "submissions of one solution are resolved."
 msgstr ""
+"Verstehen, warum die billigen Prüfungen vor dem Beweis laufen, warum die "
+"Challenge erst als verbraucht markiert wird, nachdem der Beweis gültig "
+"ist, und wie zwei gleichzeitige Einreichungen derselben Lösung aufgelöst "
+"werden."
 
 #: ../../protocol.rst:139
 msgid "Implementation: ``Coordinator::verify_and_mint``"
-msgstr ""
+msgstr "Implementierung: ``Coordinator::verify_and_mint``"
 
 #: ../../protocol.rst:141
 msgid ""
@@ -204,6 +284,10 @@ msgid ""
 "mints the session token. In ``crates/challenge/src/coordinator.rs`` "
 "(crate ``sibuna-challenge``)."
 msgstr ""
+"Dekodiert und authentifiziert die Kennung, prüft Alter und Clientbindung, "
+"verifiziert den Beweis für die verzeichnete Stufe, verzeichnet den Tag "
+"als verbraucht und stellt das Sitzungstoken aus. In "
+"``crates/challenge/src/coordinator.rs`` (Crate ``sibuna-challenge``)."
 
 #: ../../protocol.rst:179
 msgid ""
@@ -217,6 +301,17 @@ msgid ""
 "minted by a node whose clock runs ahead by more than a minute, which "
 "would otherwise extend a challenge's life."
 msgstr ""
+"Die Reihenfolge ist Absicht. Tag, Alter und Bindung sind Prüfungen in "
+"konstanter Zeit, die Unsinn vor jedem Hashen abweisen. Ein falscher "
+"Beweis darf die Challenge nicht verbrauchen, daher wird die "
+"Verbrauchsmenge erst beschrieben, nachdem ``check_solution`` erfolgreich "
+"war. Zwei Threads, die beide dieselbe gültige Lösung verifizieren, "
+"liefern sich bei ``mark_spent`` einen Wettlauf; die Shard-Sperre "
+"serialisiert sie, genau einer gewinnt, und der andere erhält "
+"``VerifyError::DoubleSpendAttempt``. Die Klausel ``issued_at > now + 60`` "
+"(``CLOCK_SKEW_SECONDS`` ist 60) weist Datensätze ab, die ein Knoten "
+"ausgestellt hat, dessen Uhr um mehr als eine Minute vorgeht; sonst würde "
+"sich die Lebensdauer einer Challenge verlängern."
 
 #: ../../protocol.rst:181
 msgid ""
@@ -227,20 +322,28 @@ msgid ""
 "MISMATCH``, ``WRONG SOLUTION TYPE``, and ``MALFORMED CHALLENGE`` in the "
 "response body."
 msgstr ""
+"Fehler erreichen den Client als ``400`` mit einer Diagnose im Elm-Stil "
+"(Teil X): Jeder ``VerifyError`` wird in "
+"``sibuna_core::errors::ErrorKind`` umgewandelt, dessen Erklärung der "
+"Antwort-Body ist. Die End-to-End-Tests prüfen den Antwort-Body auf "
+"``DOUBLE SPEND``, ``FINGERPRINT MISMATCH``, ``WRONG SOLUTION TYPE`` und "
+"``MALFORMED CHALLENGE``."
 
 #: ../../protocol.rst:183
 msgid "The Session Cookie"
-msgstr ""
+msgstr "Das Sitzungscookie"
 
 #: ../../protocol.rst:188
 msgid ""
 "Read the keyed-hash token, understand the cookie attributes, and explain "
 "the client binding."
 msgstr ""
+"Das Token mit schlüsselbasiertem Hash lesen, die Cookie-Attribute "
+"verstehen und die Clientbindung erklären."
 
 #: ../../protocol.rst:190
 msgid "Implementation: ``token::mac::mint`` and ``token::mac::verify``"
-msgstr ""
+msgstr "Implementierung: ``token::mac::mint`` und ``token::mac::verify``"
 
 #: ../../protocol.rst:192
 msgid ""
@@ -249,6 +352,11 @@ msgid ""
 "``crates/challenge/src/token/mac.rs`` (crate ``sibuna-challenge``). "
 "``Coordinator::verify_cookie`` calls it with the client's fingerprint."
 msgstr ""
+"Serialisiert die 40-Byte-Nutzlast, hängt die ersten 16 Bytes von BLAKE3 "
+"mit Schlüssel über sie an und verifiziert mit einem Vergleich in "
+"konstanter Zeit. In ``crates/challenge/src/token/mac.rs`` (Crate "
+"``sibuna-challenge``). ``Coordinator::verify_cookie`` ruft es mit dem "
+"Fingerabdruck des Clients auf."
 
 #: ../../protocol.rst:219
 msgid ""
@@ -256,10 +364,14 @@ msgid ""
 "version is refused with ``TokenError::InvalidEncoding`` only once it is "
 "known to be authentic, and a forged one never reaches the parser."
 msgstr ""
+"Der Tag wird geprüft, bevor die Nutzlast geparst wird: Eine Nutzlast "
+"einer anderen Version wird erst dann mit ``TokenError::InvalidEncoding`` "
+"abgewiesen, wenn feststeht, dass sie authentisch ist, und eine gefälschte "
+"erreicht den Parser nie."
 
 #: ../../protocol.rst:221
 msgid "The cookie is emitted as"
-msgstr ""
+msgstr "Das Cookie wird ausgegeben als"
 
 #: ../../protocol.rst:228
 msgid ""
@@ -271,6 +383,14 @@ msgid ""
 "``TokenError::TokenBoundAddressMismatch``; the end-to-end test \"the "
 "cookie is bound to the client identity\" exercises exactly that path."
 msgstr ""
+"``HttpOnly`` hält es von Seitenskripten fern, ``SameSite=Lax`` verhindert "
+"websiteübergreifende Wiederholung und erlaubt dennoch Navigation auf "
+"oberster Ebene, und ``Secure`` kommt mit ``--secure-cookie`` hinzu, wenn "
+"TLS vor dem Daemon terminiert. Weil die Nutzlast den schlüsselbasierten "
+"Fingerabdruck von Adresse und User-Agent trägt, scheitert ein auf eine "
+"andere Maschine kopiertes Cookie mit "
+"``TokenError::TokenBoundAddressMismatch``; der End-to-End-Test \"the "
+"cookie is bound to the client identity\" übt genau diesen Pfad."
 
 #: ../../protocol.rst:230
 msgid ""
@@ -288,10 +408,25 @@ msgid ""
 "end-to-end test \"a session earned on a cheaper route does not admit a "
 "route that demands more work\" exercises both directions."
 msgstr ""
+"Die Nutzlast beginnt mit einem Versionsbyte und der *Arbeitsstufe*, die "
+"der Inhaber bezahlt hat: dem Verfahren (Hashcash oder PoSW) und den "
+"tatsächlich gelösten Arbeitsbits, einschließlich einer etwaigen "
+"lastabhängigen Erhöhung. Eine Sitzung erledigt eine Challenge nur, wenn "
+"ihre Stufe erreicht, was die Route verlangt; das wird aus der "
+"Schwierigkeit der Regel mit derselben Begrenzung berechnet, die die "
+"Challenge selbst anwendet. Stufen sind geordnet, nicht benannt: Ein bei "
+"24 Bits erworbenes Cookie deckt auch jede 16-Bit-Route ab, während ein "
+"16-Bit-Cookie an einer 24-Bit-Route zur stärkeren Zwischenseite "
+"durchfällt und das neue Cookie das alte ersetzt. ``rule_hash`` bleibt die "
+"Prüfidentität der Regel, die die Challenge ausgestellt hat; er wird nach "
+"oben gemeldet, nie für die Zulassung verwendet. WAF-Befunde und explizite "
+"Ablehnungen werden durch eine Sitzung nie aufgehoben. Der End-to-End-Test "
+"\"a session earned on a cheaper route does not admit a route that demands "
+"more work\" übt beide Richtungen."
 
 #: ../../protocol.rst:232
 msgid "Forwarded addresses"
-msgstr ""
+msgstr "Weitergeleitete Adressen"
 
 #: ../../protocol.rst:235
 msgid ""
@@ -301,10 +436,16 @@ msgid ""
 "leave it off, or any client could pick its own binding and its own "
 "rate-limit bucket."
 msgstr ""
+"Hinter einem Eingangsproxy kommt die Clientadresse in ``X-Forwarded-For`` "
+"an. Sibuna vertraut diesem Header nur mit ``--trust-forwarded`` (im "
+"Forward-Auth-Modus impliziert). Ein Reverse Proxy, der direkt dem "
+"Internet ausgesetzt ist, muss die Option ausgeschaltet lassen, sonst "
+"könnte jeder Client seine eigene Bindung und seinen eigenen "
+"Ratenlimit-Bucket wählen."
 
 #: ../../protocol.rst:237
 msgid "Exercise 4.1"
-msgstr ""
+msgstr "Übung 4.1"
 
 #: ../../protocol.rst:239
 msgid ""
@@ -312,13 +453,19 @@ msgid ""
 "User-Agents. Which checks do they share, which do they not, and what "
 "would an attacker on that NAT need to reuse the other browser's cookie?"
 msgstr ""
+"Den Ablauf für zwei Browser hinter einer NAT-Adresse mit identischen "
+"User-Agents skizzieren. Welche Prüfungen teilen sie, welche nicht, und "
+"was bräuchte ein Angreifer an diesem NAT, um das Cookie des anderen "
+"Browsers wiederzuverwenden?"
 
 #: ../../protocol.rst:241
 msgid "Explain the invariant"
-msgstr ""
+msgstr "Die Invariante erklären"
 
 #: ../../protocol.rst:243
 msgid ""
 "Explain to an operator why the daemon does not \"remember\" outstanding "
 "challenges and why that is a security feature rather than a shortcut."
 msgstr ""
+"Einem Betreiber erklären, warum sich der Daemon offene Challenges nicht "
+"\"merkt\" und warum das ein Sicherheitsmerkmal ist und keine Abkürzung."
