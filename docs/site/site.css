@@ -324,3 +324,52 @@ h1 {
   clip-path:none;
   overflow:visible
 }
+/* The other languages (language.css holds the menu). The scripts that system-ui may lack,
+ * and more room between their lines. */
+html:lang(zh) body {
+  font-family:system-ui,"Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif
+}
+html:lang(ja) body {
+  font-family:system-ui,"Noto Sans CJK JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif
+}
+html:lang(ko) body {
+  font-family:system-ui,"Noto Sans CJK KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif
+}
+html:lang(hi) body {
+  font-family:system-ui,"Noto Sans Devanagari","Kohinoor Devanagari","Nirmala UI",sans-serif;
+  line-height:1.85
+}
+html:lang(ar) body {
+  font-family:system-ui,"Noto Naskh Arabic","Noto Sans Arabic",Tahoma,sans-serif;
+  line-height:1.9
+}
+/* Letter spacing and monospaced capitals suit Latin labels only. */
+html:is(:lang(zh),:lang(ja),:lang(ko),:lang(hi),:lang(ar)) :is(.eyebrow,.label,.meta) {
+  font-family:inherit;
+  letter-spacing:normal
+}
+html:is(:lang(hi),:lang(ar)) .hero h1 em {
+  font-family:inherit
+}
+/* Right to left. The brand and the demo's stage keep their direction. */
+.brand,.demo-stage,.demo-progress {
+  direction:ltr;
+  unicode-bidi:isolate
+}
+[dir="rtl"] .demo-node,[dir="rtl"] .demo-work,[dir="rtl"] .demo-legend,
+[dir="rtl"] .demo-static {
+  direction:rtl
+}
+[dir="rtl"] .limits {
+  border-left:0;
+  border-right:3px solid var(--gold)
+}
+/* Longer translated labels wrap between links, never inside one. */
+.nav nav a {
+  white-space:nowrap
+}
+@media(max-width:680px) {
+  .nav nav {
+    flex-wrap:wrap;
+    row-gap:6px}
+}
