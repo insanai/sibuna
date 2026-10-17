@@ -135,7 +135,7 @@ Open `http://127.0.0.1:19446/console/` and change the temporary password.
 The [operations guide](https://insanai.github.io/sibuna/book/operations.html) explains HTTPS
 access, GeoIP imports, users, API tokens and wall displays.
 
-![Sibuna Console with navigation, country activity globe, request outcomes, coverage and country samples](docs/readme/images/console-globe.png)
+![Sibuna Console with navigation, country activity globe, request outcomes, coverage and country samples](docs/readme/images/console-globe-93225dc9.png)
 
 The globe shows sampled country activity over the last minute. Markers give approximate
 country positions. Arrows point toward the server's configured location. They do not show
@@ -147,7 +147,7 @@ Set `--console-location <latitude,longitude>` to place the server on the globe.
 
 **Traffic overview** - live request outcomes, admission and challenge counters, node health and sparklines.
 
-![Sibuna Console traffic overview with request, admission, challenge and denial counters](docs/readme/images/console-traffic.png)
+![Sibuna Console traffic overview with request, admission, challenge and denial counters](docs/readme/images/console-traffic-fba02476.png)
 
 **Security overview** - recorded findings, challenges, bans and a live event feed.
 

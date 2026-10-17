@@ -21,14 +21,14 @@ https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html
 https://github.blog/developer-skills/github/how-to-make-your-images-in-markdown-on-github-adjust-for-dark-mode-and-light-mode/
 
 SCREENSHOT PROVENANCE
-console-globe.png and console-traffic.png:
+console-globe-93225dc9.png and console-traffic-fba02476.png:
 Captured 2026-10-17 from a release build of Rust revision b52ef5d (version
 1.0.0-beta.2), on one SQLite node, in normal (headed) Google Chrome 155.0.8059.85.
 The browser viewport was 1440 x 646, with the system dark theme and the console's
 compact spacing. Browser full-page region captures preserve complete dashboard
 sections (1440 x 1128 and 1440 x 1288 respectively): the request summary in
-console-traffic.png, and both complete globe /
-timeline panels in console-globe.png. Navigation is retained in both images.
+console-traffic-fba02476.png, and both complete globe /
+timeline panels in console-globe-93225dc9.png. Navigation is retained in both images.
 No CSS, interface content or counters were altered. Browser captures were
 re-encoded as PNG without retouching or compositing.
 

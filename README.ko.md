@@ -111,7 +111,7 @@ cargo build --release -p sibuna
 
 `http://127.0.0.1:19446/console/`을 열고 임시 비밀번호를 바꾸세요. [운영 가이드](https://insanai.github.io/sibuna/book/operations.html)에는 HTTPS 접근, GeoIP 가져오기, 사용자, API 토큰과 벽면 디스플레이가 설명되어 있습니다.
 
-![탐색 메뉴, 국가별 활동 지구본, 요청 결과, 관측 범위와 국가별 샘플을 보여 주는 Sibuna 콘솔](docs/readme/images/console-globe.png)
+![탐색 메뉴, 국가별 활동 지구본, 요청 결과, 관측 범위와 국가별 샘플을 보여 주는 Sibuna 콘솔](docs/readme/images/console-globe-93225dc9.png)
 
 지구본은 최근 1분 동안 표본으로 수집한 국가별 활동을 보여 줍니다. 표식은 국가의 대략적인 위치를 나타냅니다. 화살표는 설정된 서버 위치를 향합니다. 화살표가 개별 실시간 연결을 나타내는 것은 아닙니다. GeoIP 데이터셋은 별도로 가져와야 합니다. `--console-location <latitude,longitude>`로 지구본에 서버 위치를 설정하세요.
 
@@ -120,7 +120,7 @@ cargo build --release -p sibuna
 
 **트래픽 개요** - 실시간 요청 결과, 허용 및 챌린지 카운터, 노드 상태와 스파크라인.
 
-![요청, 허용, 챌린지, 거부 수가 표시된 Sibuna 콘솔 트래픽 개요](docs/readme/images/console-traffic.png)
+![요청, 허용, 챌린지, 거부 수가 표시된 Sibuna 콘솔 트래픽 개요](docs/readme/images/console-traffic-fba02476.png)
 
 **보안 개요** - 기록된 탐지 결과, 챌린지, 차단과 실시간 이벤트 피드를 확인합니다.
 

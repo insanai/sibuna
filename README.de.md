@@ -150,7 +150,7 @@ Die Konsole läuft in derselben ausführbaren Datei. Initialisiere einen Adminis
 Die [Betriebsanleitung](https://insanai.github.io/sibuna/book/operations.html) erklärt
 HTTPS-Zugriff, GeoIP-Importe, Benutzer, API-Tokens und Wandanzeigen.
 
-![Sibuna-Konsole mit Navigation, Globus der Länderaktivität, Anfrageergebnissen, Abdeckung und Länderstichproben](docs/readme/images/console-globe.png)
+![Sibuna-Konsole mit Navigation, Globus der Länderaktivität, Anfrageergebnissen, Abdeckung und Länderstichproben](docs/readme/images/console-globe-93225dc9.png)
 
 Der Globus zeigt Länderstichproben der letzten Minute. Marker geben ungefähre Länderpositionen
 an. Pfeile zeigen zum eingestellten Standort des Servers. Sie zeigen keine einzelnen
@@ -162,7 +162,7 @@ Setze `--console-location <latitude,longitude>`, um den Server auf dem Globus zu
 
 **Verkehrsübersicht** - Live-Anfrageergebnisse, Zähler für Zulassungen und Challenges, Knotenstatus und Sparklines.
 
-![Verkehrsübersicht der Sibuna-Konsole mit Zählern für Anfragen, Zulassungen, Challenges und Ablehnungen](docs/readme/images/console-traffic.png)
+![Verkehrsübersicht der Sibuna-Konsole mit Zählern für Anfragen, Zulassungen, Challenges und Ablehnungen](docs/readme/images/console-traffic-fba02476.png)
 
 **Sicherheitsübersicht** - aufgezeichnete Funde, Challenges, Sperren und ein Live-Ereignis-Feed.
 

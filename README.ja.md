@@ -111,7 +111,7 @@ cargo build --release -p sibuna
 
 `http://127.0.0.1:19446/console/`を開き、一時パスワードを変更してください。[運用ガイド](https://insanai.github.io/sibuna/book/operations.html)では、HTTPSでのアクセス、GeoIPのインポート、ユーザー、APIトークン、ウォールディスプレイについて説明しています。
 
-![ナビゲーション、国別活動の地球儀、リクエストの結果、観測範囲、国別サンプルを表示したSibunaコンソール](docs/readme/images/console-globe.png)
+![ナビゲーション、国別活動の地球儀、リクエストの結果、観測範囲、国別サンプルを表示したSibunaコンソール](docs/readme/images/console-globe-93225dc9.png)
 
 地球儀は、直近1分間のサンプリングされた国別の活動を示します。マーカーは国のおおよその位置を示します。矢印は、設定したサーバーの位置へ向かいます。個々のライブ接続を示すものではありません。GeoIPには、別途インポートしたデータセットが必要です。地球儀上にサーバーを配置するには、`--console-location <latitude,longitude>`を設定してください。
 
@@ -120,7 +120,7 @@ cargo build --release -p sibuna
 
 **トラフィックの概要** - ライブのリクエスト結果、許可とチャレンジのカウンター、ノードの稼働状態、スパークライン。
 
-![リクエスト、許可、チャレンジ、拒否のカウンターを表示したSibunaコンソールのトラフィック概要](docs/readme/images/console-traffic.png)
+![リクエスト、許可、チャレンジ、拒否のカウンターを表示したSibunaコンソールのトラフィック概要](docs/readme/images/console-traffic-fba02476.png)
 
 **セキュリティの概要** - 記録された検出結果、チャレンジ、アクセス禁止、ライブのイベントフィード。
 
