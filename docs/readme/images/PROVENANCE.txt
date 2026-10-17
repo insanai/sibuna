@@ -21,20 +21,40 @@ https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html
 https://github.blog/developer-skills/github/how-to-make-your-images-in-markdown-on-github-adjust-for-dark-mode-and-light-mode/
 
 SCREENSHOT PROVENANCE
-console-globe.png, console-traffic.png and console-events.png:
-Captured 2026-10-16 with `sibuna-browser console` (tools/browser) in headless Chromium
-155.0.8059.39, at the 1440 x 960 viewport, from a release build of revision 7ae853f, with uncommitted
-work in the tree (version 1.0.0-beta.1), on one SQLite node. All traffic stayed on loopback: wrk sent
-about 800 requests per second with forwarded client addresses from eight public test
-ranges, and the build embedded a synthetic nine-row GeoIP snapshot that maps those ranges
-to countries. These are illustrative mappings, not real IP geolocation. The configured
-server position was London (51.5, -0.12), not the capture machine's location.
-The walk took full-page captures; console-traffic.png and console-events.png are the top
-1440 x 960 pixels of a page, and console-globe.png is the 1160 x 556 region of the
-Traffic page that holds the globe, the request timeline and the start of the coverage
-table. The crops were taken in the same browser; the pixels are otherwise unmodified.
+console-globe.png and console-traffic.png:
+Captured 2026-10-17 from a release build of Rust revision b52ef5d (version
+1.0.0-beta.2), on one SQLite node, in normal (headed) Google Chrome 155.0.8059.85.
+The browser viewport was 1440 x 646, with the system dark theme and the console's
+compact spacing. Browser full-page region captures preserve complete dashboard
+sections (1440 x 1128 and 1440 x 1288 respectively): the request summary in
+console-traffic.png, and both complete globe /
+timeline panels in console-globe.png. Navigation is retained in both images.
+No CSS, interface content or counters were altered. Browser captures were
+re-encoded as PNG without retouching or compositing.
+
+All requests stayed on loopback. Eight Python HTTP clients sent roughly 90–160
+requests per second to a forward-auth listener. The mix included allowed public
+pages, challenged checkout requests, denied admin requests, SQL injection and XSS
+queries. A local policy supplied four named rules. User-Agent and Referer fields
+were synthetic. Live boot totals were selected; counts are illustrative, not
+benchmark results or real visitor activity. The globe was centered on the
+configured London server position (51.5, -0.12), with animation paused.
+
+The build used SIBUNA_GEOIP_DATA with a synthetic nine-range snapshot produced by
+geoip-snapshot --provider user-country --version 2026-10-17. Ranges 11.0.0.0/16
+through 11.8.0.0/16 were assigned US, GB, DE, BR, ZA, IN, SG, JP and AU respectively.
+These are test mappings, not actual geolocation, and no traffic was sent to those
+public addresses: they appeared only in X-Forwarded-For on local requests.
+The snapshot and disposable seed, account and SQLite state stayed outside the repo.
+
+console-events.png:
+Captured 2026-10-16 with sibuna-browser console (tools/browser), in headless
+Chromium 155.0.8059.39, from revision 7ae853f with uncommitted work (version
+1.0.0-beta.1). The image shows the top 1440 x 960 pixels of the Events page.
+The local SQLite node received generated loopback traffic and used a synthetic
+nine-row GeoIP snapshot. Counts and country mappings are illustrative test data.
 
 console-security.png and console-policies.png:
-Copied from docs/book/assets/images (captured 2026-10-16 with `sibuna-browser console
---viewport-only` on a local test node with generated traffic from documentation address
-ranges). The policies page shows the walk-through's test policy.
+Copied from docs/book/assets/images (captured 2026-10-16 with sibuna-browser console
+--viewport-only on a local test node with generated traffic from documentation
+address ranges, version 1.0.0-beta.1). The policies page shows the walk's test policy.

@@ -150,7 +150,7 @@ Die Konsole läuft in derselben ausführbaren Datei. Initialisiere einen Adminis
 Die [Betriebsanleitung](https://insanai.github.io/sibuna/book/operations.html) erklärt
 HTTPS-Zugriff, GeoIP-Importe, Benutzer, API-Tokens und Wandanzeigen.
 
-![Sibuna-Konsole mit Globus, Anfragezeitachse und Abdeckung](docs/readme/images/console-globe.png)
+![Sibuna-Konsole mit Navigation, Globus der Länderaktivität, Anfrageergebnissen, Abdeckung und Länderstichproben](docs/readme/images/console-globe.png)
 
 Der Globus zeigt Länderstichproben der letzten Minute. Marker geben ungefähre Länderpositionen
 an. Pfeile zeigen zum eingestellten Standort des Servers. Sie zeigen keine einzelnen
@@ -160,7 +160,7 @@ Setze `--console-location <latitude,longitude>`, um den Server auf dem Globus zu
 <details>
 <summary>Verkehrsübersicht, Sicherheitsübersicht, Richtlinien und Vorfallsuntersuchung</summary>
 
-**Verkehrsübersicht** - Anfrageergebnisse, Beobachtungsfenster und Live-Updates.
+**Verkehrsübersicht** - Live-Anfrageergebnisse, Zähler für Zulassungen und Challenges, Knotenstatus und Sparklines.
 
 ![Verkehrsübersicht der Sibuna-Konsole mit Zählern für Anfragen, Zulassungen, Challenges und Ablehnungen](docs/readme/images/console-traffic.png)
 
@@ -178,8 +178,10 @@ Setze `--console-location <latitude,longitude>`, um den Server auf dem Globus zu
 
 </details>
 
-Dies sind Headless-Chromium-Aufnahmen von v1.0.0-beta.1 auf einem lokalen Testknoten. Datenverkehr
-und GeoIP-Zuordnungen sind Testdaten. Die angezeigten Zähler sind keine Benchmark-Ergebnisse.
+Der Globus und die Verkehrsübersicht wurden in einem normalen Chrome-Fenster mit
+v1.0.0-beta.2 aufgenommen; die anderen Ansichten zeigen v1.0.0-beta.1. Alle Aufnahmen
+verwenden einen lokalen Testknoten mit erzeugtem Datenverkehr und GeoIP-Testzuordnungen.
+Die angezeigten Zähler sind keine Benchmark-Ergebnisse.
 
 <a id="how-it-works"></a>
 

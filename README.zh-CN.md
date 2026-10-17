@@ -111,14 +111,14 @@ cargo build --release -p sibuna
 
 打开 `http://127.0.0.1:19446/console/` 并修改临时密码。[运维指南](https://insanai.github.io/sibuna/book/operations.html)介绍 HTTPS 访问、GeoIP 导入、用户、API 令牌和大屏显示。
 
-![Sibuna 控制台的地球、请求时间线和覆盖情况](docs/readme/images/console-globe.png)
+![显示导航、国家活动地球、请求结果、覆盖情况和国家采样的 Sibuna 控制台](docs/readme/images/console-globe.png)
 
 地球显示过去一分钟内按国家采样的活动。标记给出国家的大致位置。箭头指向配置的服务器位置。它们不表示单条实时连接。GeoIP 需要单独导入数据集。设置 `--console-location <latitude,longitude>` 可以将服务器标注在地球视图上。
 
 <details>
 <summary>流量概览、安全概览、策略和事件调查</summary>
 
-**流量概览** - 请求结果、观测时间窗口和实时更新。
+**流量概览** - 实时请求结果、准入和挑战计数、节点健康状态及迷你趋势图。
 
 ![Sibuna 控制台流量概览，显示请求、准入、挑战和拒绝计数](docs/readme/images/console-traffic.png)
 
@@ -136,7 +136,7 @@ cargo build --release -p sibuna
 
 </details>
 
-这些截图由无头 Chromium 在本地测试节点上截取，运行的是 v1.0.0-beta.1。流量和 GeoIP 映射均为测试数据。图中显示的计数不是基准测试结果。
+地球和流量概览截图是在运行 v1.0.0-beta.2 时通过普通 Chrome 窗口截取的；其他视图展示的是 v1.0.0-beta.1。所有截图均来自使用生成流量和测试 GeoIP 映射的本地测试节点。图中显示的计数不是基准测试结果。
 
 <a id="how-it-works"></a>
 

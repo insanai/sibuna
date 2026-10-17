@@ -148,7 +148,7 @@ Abre `http://127.0.0.1:19446/console/` y cambia la contraseña temporal.
 La [guía de operaciones](https://insanai.github.io/sibuna/book/operations.html) explica el
 acceso HTTPS, las importaciones GeoIP, los usuarios, los tokens de API y las pantallas murales.
 
-![Globo de la consola Sibuna, cronología de peticiones y cobertura](docs/readme/images/console-globe.png)
+![Consola Sibuna con navegación, globo de actividad por país, resultados de peticiones, cobertura y muestras por país](docs/readme/images/console-globe.png)
 
 El globo muestra la actividad muestreada por país durante el último minuto. Los marcadores indican
 la posición aproximada de cada país. Las flechas apuntan hacia la ubicación configurada del
@@ -159,7 +159,7 @@ Usa `--console-location <latitude,longitude>` para situar el servidor en el glob
 <details>
 <summary>Resumen de tráfico, resumen de seguridad, políticas e investigación de incidentes</summary>
 
-**Resumen de tráfico** - resultados de peticiones, ventanas de observación y actualizaciones en vivo.
+**Resumen de tráfico** - resultados de peticiones en vivo, contadores de admisiones y desafíos, estado de los nodos y minigráficos.
 
 ![Resumen de tráfico de la consola Sibuna con contadores de peticiones, admisiones, desafíos y denegaciones](docs/readme/images/console-traffic.png)
 
@@ -177,9 +177,10 @@ Usa `--console-location <latitude,longitude>` para situar el servidor en el glob
 
 </details>
 
-Son capturas de Chromium sin interfaz gráfica de v1.0.0-beta.1 en un nodo de prueba local. El
-tráfico y las asignaciones GeoIP son datos de prueba. Los contadores mostrados no son
-resultados de pruebas de rendimiento.
+El globo y el resumen de tráfico se capturaron en una ventana normal de Chrome con
+v1.0.0-beta.2; las otras vistas muestran v1.0.0-beta.1. Todas las capturas usan un nodo
+de prueba local con tráfico generado y asignaciones GeoIP de prueba. Los contadores
+mostrados no son resultados de pruebas de rendimiento.
 
 <a id="how-it-works"></a>
 

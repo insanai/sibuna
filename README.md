@@ -135,7 +135,7 @@ Open `http://127.0.0.1:19446/console/` and change the temporary password.
 The [operations guide](https://insanai.github.io/sibuna/book/operations.html) explains HTTPS
 access, GeoIP imports, users, API tokens and wall displays.
 
-![Sibuna Console globe, request timeline and coverage](docs/readme/images/console-globe.png)
+![Sibuna Console with navigation, country activity globe, request outcomes, coverage and country samples](docs/readme/images/console-globe.png)
 
 The globe shows sampled country activity over the last minute. Markers give approximate
 country positions. Arrows point toward the server's configured location. They do not show
@@ -145,7 +145,7 @@ Set `--console-location <latitude,longitude>` to place the server on the globe.
 <details>
 <summary>Traffic overview, security overview, policies and incident investigation</summary>
 
-**Traffic overview** - request outcomes, observation windows and live updates.
+**Traffic overview** - live request outcomes, admission and challenge counters, node health and sparklines.
 
 ![Sibuna Console traffic overview with request, admission, challenge and denial counters](docs/readme/images/console-traffic.png)
 
@@ -163,8 +163,9 @@ Set `--console-location <latitude,longitude>` to place the server on the globe.
 
 </details>
 
-These are headless Chromium captures of v1.0.0-beta.1 on a local test node. Traffic and
-GeoIP mappings are test data. The displayed counts are not benchmark results.
+The globe and traffic overview were captured in a normal Chrome window running
+v1.0.0-beta.2; the other views show v1.0.0-beta.1. All captures use a local test node
+with generated traffic and test GeoIP mappings. The displayed counts are not benchmark results.
 
 ## How it works
 

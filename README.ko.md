@@ -111,14 +111,14 @@ cargo build --release -p sibuna
 
 `http://127.0.0.1:19446/console/`을 열고 임시 비밀번호를 바꾸세요. [운영 가이드](https://insanai.github.io/sibuna/book/operations.html)에는 HTTPS 접근, GeoIP 가져오기, 사용자, API 토큰과 벽면 디스플레이가 설명되어 있습니다.
 
-![Sibuna 콘솔의 지구본, 요청 타임라인과 관측 범위](docs/readme/images/console-globe.png)
+![탐색 메뉴, 국가별 활동 지구본, 요청 결과, 관측 범위와 국가별 샘플을 보여 주는 Sibuna 콘솔](docs/readme/images/console-globe.png)
 
 지구본은 최근 1분 동안 표본으로 수집한 국가별 활동을 보여 줍니다. 표식은 국가의 대략적인 위치를 나타냅니다. 화살표는 설정된 서버 위치를 향합니다. 화살표가 개별 실시간 연결을 나타내는 것은 아닙니다. GeoIP 데이터셋은 별도로 가져와야 합니다. `--console-location <latitude,longitude>`로 지구본에 서버 위치를 설정하세요.
 
 <details>
 <summary>트래픽 개요, 보안 개요, 정책과 인시던트 조사</summary>
 
-**트래픽 개요** - 요청 결과, 관측 시간 범위와 실시간 업데이트를 확인합니다.
+**트래픽 개요** - 실시간 요청 결과, 허용 및 챌린지 카운터, 노드 상태와 스파크라인.
 
 ![요청, 허용, 챌린지, 거부 수가 표시된 Sibuna 콘솔 트래픽 개요](docs/readme/images/console-traffic.png)
 
@@ -136,7 +136,7 @@ cargo build --release -p sibuna
 
 </details>
 
-로컬 테스트 노드에서 v1.0.0-beta.1을 실행하고 헤드리스 Chromium으로 캡처한 화면입니다. 트래픽과 GeoIP 매핑은 테스트 데이터입니다. 표시된 수치는 벤치마크 결과가 아닙니다.
+지구본과 트래픽 개요는 v1.0.0-beta.2를 실행하는 일반 Chrome 창에서 캡처했으며, 다른 화면은 v1.0.0-beta.1입니다. 모든 캡처는 생성된 트래픽과 테스트 GeoIP 매핑을 사용하는 로컬 테스트 노드에서 촬영했습니다. 표시된 수치는 벤치마크 결과가 아닙니다.
 
 <a id="how-it-works"></a>
 
