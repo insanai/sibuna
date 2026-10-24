@@ -104,12 +104,14 @@ left = "الأشقاء اليساريون الداخلون في تجزئة ال�
 
 [work-asymmetry]
 inspect-title = "الفحص أولًا"
+inspect-verdict = "الدفاع يدفع ثمن كل طلب"
 inspect-sender = "المرسل"
 inspect-arrow = "طلب واحد رخيص، رخيص الإرسال ومكلف الإجابة"
 inspect-defense = "الدفاع: يحلل وينسخ، ويفحص بتعابير نمطية، ويسأل مخزنًا مشتركًا"
 inspect-sender-work = "عمل المرسل: طلب واحد"
 inspect-defense-work = "عمل الدفاع: العمل كله، مع كل طلب"
 work-title = "العمل أولًا (Sibuna)"
+work-verdict = "المرسل يدفع مرة واحدة، ثم يعيد استخدام جلسته"
 work-sender = "المرسل يحل لغزًا"
 work-arrow = "لغز محلول، مكلف الكسب ورخيص الفحص"
 work-defense = "يتحقق Sibuna بتجزئة واحدة، ولا يحتفظ بأي حالة حتى يُحل اللغز"
