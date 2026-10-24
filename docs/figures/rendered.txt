@@ -1,0 +1,12 @@
+# The figures `cargo xtask figures` rendered, and what from. Do not edit.
+# Each line: the SVG file, the SHA-256 of its language and inputs, and the inputs.
+docs/book/assets/figures/cpu-sets.svg 2ef260f1e56218afdb64ba2167a6ce4f02e7ca71022fcff87bf1226ac82a931c docs/figures/book/cpu-sets.typ docs/figures/style.typ docs/figures/words/en.toml
+docs/book/assets/figures/gcra.svg e306e7b6bba8b85bf9d4f49886e839e20477e46347c2d7fbd0c03afebde0f7c4 docs/figures/book/gcra.typ docs/figures/style.typ docs/figures/words/en.toml
+docs/book/assets/figures/open-loop.svg 588e0263e97cbd804d6dfeb61fe057414118f4f42a32fc3841826452482709e0 docs/figures/book/open-loop.typ docs/figures/style.typ docs/figures/words/en.toml
+docs/book/assets/figures/posw-tree.svg 6d9845ee7a09c931c8ea3f01cabf12179ddd20d0870e0a13750e15f27833e409 docs/figures/book/posw-tree.typ docs/figures/posw-tree.typ docs/figures/style.typ docs/figures/words/en.toml
+docs/book/assets/figures/primitive-latency.svg 9838da1a9d91c3879d82214b34a510c69932e267a08030c5ab2cae58006f928e benchmarks/results/primitives-latest.json docs/figures/book/primitive-latency.typ docs/figures/style.typ docs/figures/words/en.toml
+docs/book/assets/figures/read-buffer.svg 443abb5ec8f45d6b4b24feea7742438d8ef9881829ce0d00eb0b37b298c60a71 docs/figures/book/read-buffer.typ docs/figures/style.typ docs/figures/words/en.toml
+docs/book/assets/figures/survival.svg b9b1d6dd5ad10f05884e0598c62e0ac64ef5355a3c92e07324df1b2ebb0bb518 docs/figures/book/survival.typ docs/figures/style.typ docs/figures/words/en.toml
+docs/book/assets/figures/wire-formats.svg 802d2d8080a515474b19261dbc3900150b1e2cedaf6484a25ae1ad8f045731ef docs/figures/book/wire-formats.typ docs/figures/style.typ docs/figures/words/en.toml
+docs/whitepaper/assets/figures/sequential-work.svg 0d0ba5d16d565ef7ccc41ace289dde2b70f96f750f60b356c641b6093d4a79ae docs/figures/posw-tree.typ docs/figures/style.typ docs/figures/whitepaper/sequential-work.typ docs/figures/words/en.toml
+docs/whitepaper/assets/figures/work-asymmetry.svg 8c48cc51087564fa108f257743ebf8efc3f13acbd402e8e0f61d34afbbe09e43 benchmarks/results/primitives-latest.json docs/figures/style.typ docs/figures/whitepaper/work-asymmetry.typ docs/figures/words/en.toml

@@ -92,20 +92,10 @@ Every dynamic allocation on a request path is a denial-of-service lever: fragmen
 
 ``read_head`` fills the buffer until the blank line appears, searching only the bytes that arrived since the last search, and refuses heads over 16 KiB with ``431``. ``parse_request`` (crate ``sibuna-http``) produces a ``Request<'a>`` whose method, path, query, headers, and cookies are slices of the buffer. The declared body is filled up to what fits and sliced after the head. Then ``reader.consume(head_len + body_len)`` advances the reader, so the next keep-alive request starts cleanly; the reader moves the unread bytes to the front only when it needs room. A chunked body is decoded in place behind the head (SID 0009): each step's framing is cut out of the buffer, so the decoded prefix stays contiguous for inspection. Internal routes are length-delimited and keep the connection open. Proxied requests keep it open too, provided the origin's response is framed and the body was fully buffered; the next sections show how the proxy decides.
 
-.. code-block:: text
-   :caption: The connection's read buffer while one request is served. Every field of the request is a slice of it.
+.. figure:: /assets/figures/read-buffer.svg
+   :alt: The 64 KiB read buffer of one connection: a served part, then the unread window of request head (at most 16 KiB), body prefix and pending bytes, then free space. Method, path, query, headers and cookies are slices of the head, request.body is a slice of the body prefix, and ctx.pending holds the pending bytes, which the proxy sends to the origin first. After the response, reader.consume(head_len + body_len) moves the start of the window to the pending bytes.
 
-   reader.buffered(): the unread window of the 64 KiB read buffer
-   +-------------------------+---------------------------+------------------------+
-   | request head            | body prefix               | pending                |
-   | at most 16 KiB, ends in | min(declared, room left), | the next request, or   |
-   | CR LF CR LF             | chunked: decoded in place | the rest of an upload  |
-   +-------------------------+---------------------------+------------------------+
-   |<------ head_len ------->|<-------- body_len ------->|
-     ^ method, path, query,     ^ request.body              ^ ctx.pending (the
-       headers, cookies                                       proxy sends it first)
-
-   after the response: reader.consume(head_len + body_len)
+   The connection's read buffer while one request is served. Every field of the request is a slice of it.
 
 .. code-block:: rust
 
@@ -488,19 +478,10 @@ The Generic Cell Rate Algorithm (ATM Forum, 1996) is the virtual-scheduling form
 
    After the first conforming arrival at :math:`t_1`, the :math:`k`-th conforming arrival satisfies :math:`t_k - t_1 \ge (k - 1) T - \tau`. Hence any interval of length :math:`L` contains at most :math:`N + \lfloor L / T \rfloor` conforming arrivals: a burst of :math:`N`, then one per :math:`T`. There is no fixed-window boundary artefact beyond the defined burst, and no per-request history.
 
-.. code-block:: text
-   :caption: GCRA admission for a limit of 5 per second: a burst of five, then one every 200 ms.
+.. figure:: /assets/figures/gcra.svg
+   :alt: A chart of TAT against arrival time for T = 200 ms and tau = 800 ms. Five arrivals at t = 0 are admitted while TAT rises from 0 to 1000 ms; a sixth at t = 0 finds 1000 ms above the line t + tau and is refused. Afterwards an arrival halfway between multiples of 200 ms is refused, and one at each multiple of 200 ms finds TAT exactly on the line and is admitted.
 
-   rate = 5 per 1000 ms, so T = 200 ms and tau = 800 ms
-   | admitted     x rejected (6th arrival at 0, and one just before each admission)
-
-      |||||x   x|        x|        x|        x|        x|
-      +---------+---------+---------+---------+---------+------> t (ms)
-      0         200       400       600       800       1000
-      1000      1200      1400      1600      1800      2000   <- TAT after
-
-   TAT after the k-th admission is t_1 + k T, so any interval of length L
-   admits at most N + floor(L / T)
+   GCRA admission for a limit of 5 per second: a burst of five, then one every 200 ms. An arrival is admitted when the TAT it finds lies on or below the line :math:`t + \tau`.
 
 .. admonition:: Worked example: five per second by hand
 

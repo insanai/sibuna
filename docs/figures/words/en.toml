@@ -1,0 +1,124 @@
+# The words of Sibuna's figures in English. Every other language has a file of the same
+# shape; a key it leaves out is drawn in English. "{name}" marks a value the figure
+# fills in, such as a number in the language's own format.
+
+[number]
+decimal = "."
+group = ","
+
+[survival]
+x-axis = "trials as a multiple of the expected number, x"
+y-axis = "probability of still searching"
+at-mean = "At the expected number of trials, a search is still running with probability e⁻¹ ≈ {p}."
+p95 = "95% of searches have ended by x ≈ {x}."
+
+[wire-formats]
+challenge = "Challenge identifier"
+session = "Session token"
+payload = "{n}-byte payload"
+tag = "{n}-byte keyed tag"
+total = "{bytes} bytes in all, sent as {characters} URL-safe base64 characters"
+
+[open-loop]
+due = "due"
+send = "request sent"
+answer = "answer received"
+waiting = "due, waiting for the previous answer"
+latency = "recorded latency: from the due time, or from the send when the connection was idle"
+
+[cpu-sets]
+ccd0 = "CCD 0"
+ccd1 = "CCD 1"
+daemons = "daemons"
+primitive = "primitive suite"
+idle = "not assigned"
+load = "wrk, latency generator and origin"
+smt = "The small number in each core names its SMT sibling, one of CPUs 16 to 31. No run uses them."
+
+[read-buffer]
+buffer = "The 64 KiB read buffer of one connection"
+window = "the unread window"
+head = "request head"
+head-note = "at most 16 KiB, ends in CR\u00A0LF\u00A0CR\u00A0LF"
+body = "body prefix"
+body-note = "what fits of the declared body; a chunked body is decoded in place"
+pending = "pending"
+pending-note = "the next request, or the rest of an upload"
+free = "free"
+served = "served"
+fields = "method, path, query, headers and cookies: slices of the head"
+pending-proxy = "sent to the origin first"
+after = "After the response:"
+next = "becomes the start of the next request"
+
+[gcra]
+x-axis = "arrival time t (ms)"
+y-axis = "TAT (ms)"
+limit = "t + τ"
+refuse-zone = "TAT > t + τ: refused"
+burst = "a burst of five at t = 0"
+sixth = "the sixth at t = 0"
+example = "At t = {refused}, TAT = {tat} > {early}: refused. At t = {admitted}, TAT = {tat} ≤ {limit}: admitted."
+admitted = "admitted"
+refused = "refused"
+tat = "TAT after each arrival"
+
+[primitive-latency]
+source = "Each bar is the median of 7 batches on one core of an {cpu}, {date}; the thin line spans the fastest and the slowest batch. Logarithmic scale."
+
+[primitive-latency.groups]
+work = "proof of work"
+match = "matching"
+token = "tokens"
+state = "state"
+request = "request path"
+
+[primitive-latency.rows]
+hashcash_16_bits = "Hashcash verify (16 bits)"
+posw_depth13_t16 = "PoSW verify (depth 13, t = 16)"
+aho_corasick_40_signatures = "Bot signatures (40, Aho-Corasick)"
+sequential_substring_40_signatures = "Bot signatures (40, sequential search)"
+ipv4_cidr_classification = "IPv4 CIDR lookup"
+ipv6_cidr_classification = "IPv6 CIDR lookup"
+blake3_mac_token = "Session token (keyed BLAKE3)"
+ed25519_compact_token = "Session token (Ed25519)"
+robin_hood_spend_and_lookup = "Spent set: spend and look up"
+gcra_check = "Rate limiter, client bytes"
+gcra_four_rule_scopes = "Four rule scopes, client bytes"
+gcra_check_hashed = "Rate limiter, hashed client"
+gcra_four_rule_scopes_hashed = "Four rule scopes, hashed client"
+zero_copy_request_and_cookie = "HTTP parse and cookie"
+browser_request_full_classification = "Classification, Shield profile"
+browser_request_gate_profile = "Classification, Gate profile"
+8kb_body_semantic_scan = "WAF body scan (8 KiB)"
+8kb_body_sqli_audit_other_enforce = "WAF body scan, SQL injection audited"
+
+[posw-tree]
+order = "leaves are labelled from left to right"
+path = "the root path of leaf 3.5"
+siblings = "siblings sent in the opening"
+left = "left siblings hashed into the leaf"
+
+[work-asymmetry]
+inspect-title = "Inspect first"
+inspect-sender = "Sender"
+inspect-arrow = "one cheap request, cheap to send and costly to answer"
+inspect-defense = "Defense: parse and copy, scan with regular expressions, ask a shared store"
+inspect-sender-work = "the sender's work: one request"
+inspect-defense-work = "the defense's work: all of it, on every request"
+work-title = "Work first (Sibuna)"
+work-sender = "Sender solves a puzzle"
+work-arrow = "a solved puzzle, costly to earn and cheap to check"
+work-defense = "Sibuna verifies one hash and keeps no state until the puzzle is solved"
+work-sender-work = "the sender's work: {power} expected SHA-256 trials, {trials} at b = 16"
+work-defense-work = "Sibuna's work: one hash, {ns} ns; the session is then reused"
+
+[sequential-work]
+hashcash = "Hashcash: parallel search"
+core = "core {n}"
+time = "Each core tries its own nonces; core 3 finds one at nonce 18, and every core stops."
+posw = "Proof of sequential work: a forced order"
+found = "a nonce that meets the target"
+path = "the root path of leaf 3.5"
+siblings = "siblings sent in its opening"
+left = "left siblings hashed into the leaf"

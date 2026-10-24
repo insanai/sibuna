@@ -51,28 +51,10 @@ that is, when the work it saves the origin exceeds its own cost [#cost-model]_. 
 
 Sibuna reverses the asymmetry by conditioning admission on a proof of work. To earn a session, a browser finds a nonce whose SHA-256 digest has :math:`b` leading zero bits, or computes a proof of sequential work. The expected search is :math:`2^b` hash trials, 65,536 at :math:`b = 16`; the server checks one candidate. The server's check is also stateless: issuing a challenge writes nothing, and only a solution that was paid for occupies memory.
 
-.. graphviz::
-   :caption: Where the work goes. Above, a defense that inspects first spends its own work on every request a sender emits. Below, Sibuna asks the sender for :math:`2^b` expected hash trials and verifies the answer with one hash. The trial counts are a model; the verification time is measured (Hashcash verification at 16 bits, ``benchmarks/results/primitives-latest.md``).
-   :alt: Two rows. In the first, a sender emits one cheap request to a defense that parses, scans with regular expressions and queries a shared store for every request. In the second, the sender solves a puzzle of 2 to the b expected hash trials, 65,536 at b equal to 16, and Sibuna verifies one hash in 70.2 ns, keeps no state for unsolved challenges, and reuses the session afterwards.
+.. figure:: /assets/figures/work-asymmetry.svg
+   :alt: Two rows. In the first, a sender emits one cheap request to a defense that parses, scans with regular expressions and queries a shared store for every request; the defense's work meter is full and the sender's nearly empty. In the second, the sender solves a puzzle of 2 to the b expected hash trials, 65,536 at b equal to 16, and Sibuna verifies one hash in 70.2 ns and keeps no state until the puzzle is solved; now the sender's meter is full and Sibuna's nearly empty.
 
-   digraph cost {
-     graph [rankdir=LR, bgcolor="transparent", nodesep=0.35, ranksep=0.6, fontname="Helvetica", fontsize=10];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9.5, color="#64748b", fillcolor="#ffffff", fontcolor="#0f172a"];
-     edge [fontname="Helvetica", fontsize=9, color="#64748b", fontcolor="#334155"];
-     subgraph cluster_work {
-       label="Work first (Sibuna)"; style="rounded,filled"; fillcolor="#ecfdf5"; color="#86efac"; fontcolor="#047857";
-       s2 [label=<Sender<BR/>solves a puzzle:<BR/>2<SUP>b</SUP> expected SHA-256 trials<BR/>(65,536 at b = 16)>, color="#b45309"];
-       d2 [label="Sibuna\nverifies one hash: 70.2 ns\nno state until solved\nsession reused afterwards", color="#047857"];
-       s2 -> d2 [label="costly to earn,\ncheap to check", color="#047857", fontcolor="#047857"];
-     }
-     subgraph cluster_inspect {
-       label="Inspect first"; style="rounded,filled"; fillcolor="#fef2f2"; color="#fca5a5"; fontcolor="#b91c1c";
-       s1 [label="Sender\none cheap request", color="#b91c1c"];
-       d1 [label="Defense\nparse and copy, regex scan,\nshared-store round trip\non every request", color="#b91c1c"];
-       s1 -> d1 [label="cheap to send,\ncostly to answer", color="#b91c1c", fontcolor="#b91c1c"];
-     }
-   }
-   }
+   Where the work goes. Above, a defense that inspects first spends its own work on every request a sender emits. Below, Sibuna asks the sender for :math:`2^b` expected hash trials and verifies the answer with one hash. The meters are a model; the verification time is measured (Hashcash verification at 16 bits, ``benchmarks/results/primitives-latest.md``).
 
 A proof of work does not establish humanity, identity or intent. A sender can rent computers, share a session within its lifetime, or spread work across machines. The puzzle changes the price of admission; policy and inspection still decide what an admitted request may do.
 
@@ -326,43 +308,10 @@ The Sequential-Work Tier
 
 The second tier follows the proof of sequential work of Cohen and Pietrzak (EUROCRYPT 2018). Its labels form a complete binary tree of depth :math:`n`. An internal node hashes its two children. A leaf hashes the *left siblings of its ancestors* wherever its root path turned right. Those left-sibling edges make the computation sequential: a leaf cannot be labelled until every subtree to its left is complete, so the root label depends on all :math:`2^{n+1} - 1` labels in order. After computing the root :math:`\varphi`, the prover derives :math:`t` leaves by Fiat-Shamir and, for each, sends the leaf label and the :math:`n` sibling labels along its path. The verifier recomputes each opened leaf and hashes up to :math:`\varphi`, at a cost of :math:`O(tn)` label computations in a fixed workspace.
 
-.. graphviz::
-   :caption: Parallel search against sequential work. Left, Hashcash: independent nonce trials, so :math:`M` cores finish about :math:`M` times sooner. Right, the Cohen-Pietrzak tree at depth 3: the dashed left-sibling edges make leaf 3.5 wait for the subtrees to its left, and an opening of leaf 3.5 sends its label and the three green siblings (after book Part III).
-   :alt: Left, four cores each try a disjoint share of the nonces against one target, and any core may find the solution. Right, a binary tree of depth three. The path of leaf 3.5 is amber, the siblings 1.0, 2.3 and 3.4 sent in its opening are green, and dashed red edges run from 1.0 and 3.4 into leaf 3.5.
+.. figure:: /assets/figures/sequential-work.svg
+   :alt: Left, four cores each try a disjoint share of the nonces, and core 3 finds one at nonce 18, after which every core stops. Right, a binary tree of depth three. The path of leaf 3.5 is amber, the siblings 1.0, 2.3 and 3.4 sent in its opening are green, and dashed red arrows run from 1.0 and 3.4 into leaf 3.5.
 
-   digraph pow {
-     graph [rankdir=TB, bgcolor="transparent", nodesep=0.18, ranksep=0.35, fontname="Helvetica", fontsize=9, ordering=out];
-     node [fontname="Helvetica", fontsize=8.5, fontcolor="#0f172a"];
-     edge [color="#64748b", arrowsize=0.5];
-     subgraph cluster_hashcash {
-       label="Hashcash: parallel search"; style="rounded,filled"; fillcolor="#fef2f2"; color="#fca5a5"; fontcolor="#b91c1c";
-       node [shape=box, style="rounded,filled", fillcolor="#ffffff", color="#b91c1c"];
-       c1 [label="core 1\nnonces 0, 4, 8"];
-       c2 [label="core 2\nnonces 1, 5, 9"];
-       c3 [label="core 3\nnonces 2, 6, 10"];
-       c4 [label="core 4\nnonces 3, 7, 11"];
-       target [label="SHA-256(C : N)\nhas b zero bits?\nany core may win", fillcolor="#fff7ed"];
-       c1 -> target; c2 -> target; c3 -> target; c4 -> target;
-     }
-     subgraph cluster_posw {
-       label="Proof of sequential work: forced order"; style="rounded,filled"; fillcolor="#ecfdf5"; color="#86efac"; fontcolor="#047857";
-       node [shape=circle, fixedsize=true, width=0.42, style=filled, fillcolor="#ffffff", color="#0369a1"];
-       edge [arrowhead=none];
-       "0.0" [fillcolor="#fffbeb", color="#b45309", penwidth=1.4, label="root"];
-       "1.1" [fillcolor="#fffbeb", color="#b45309", penwidth=1.4];
-       "2.2" [fillcolor="#fffbeb", color="#b45309", penwidth=1.4];
-       "3.5" [fillcolor="#fffbeb", color="#b45309", penwidth=1.4];
-       "1.0" [fillcolor="#ecfdf5", color="#047857", penwidth=1.4];
-       "2.3" [fillcolor="#ecfdf5", color="#047857", penwidth=1.4];
-       "3.4" [fillcolor="#ecfdf5", color="#047857", penwidth=1.4];
-       "0.0" -> "1.0"; "0.0" -> "1.1";
-       "1.0" -> "2.0"; "1.0" -> "2.1"; "1.1" -> "2.2"; "1.1" -> "2.3";
-       "2.0" -> "3.0"; "2.0" -> "3.1"; "2.1" -> "3.2"; "2.1" -> "3.3";
-       "2.2" -> "3.4"; "2.2" -> "3.5"; "2.3" -> "3.6"; "2.3" -> "3.7";
-       "3.5" -> "1.0" [style=dashed, color="#b91c1c", dir=back, arrowtail=normal, constraint=false];
-       "3.5" -> "3.4" [style=dashed, color="#b91c1c", dir=back, arrowtail=normal, constraint=false];
-     }
-   }
+   Parallel search against sequential work. Left, Hashcash: independent nonce trials, so :math:`M` cores finish about :math:`M` times sooner. Right, the Cohen-Pietrzak tree at depth 3: the dashed left-sibling edges make leaf 3.5 wait for the subtrees to its left, and an opening of leaf 3.5 sends its label and the three green siblings (after book Part III).
 
 The parameters are chosen so that the numbers stay small. Work bits map to depth by :math:`n = b - 3`, clamped to :math:`[4, 24]`. A proof has :math:`32(1 + t(n+1))` bytes, which at depth 13 with 16 openings is :math:`32(1 + 16 \times 14) = 7200` bytes. The prover keeps only the top levels of the tree and recomputes the subtree it must open, so its whole workspace, the proof included, stays under 100 KB; a browser tab and the native tests use the same prover [#posw]_. Blocki, Lee and Zhou (ITC 2021) proved the construction sound against quantum provers in the quantum random-oracle model.
 
