@@ -4,8 +4,9 @@
 //! own or in a tool crate beside this one. Today there is `check`, which enforces the
 //! structural limits of the house rules, and `browser`, which runs the `sibuna-browser`
 //! tool (`tools/browser`) for checks in headless Chromium, and `bench`, which builds the
-//! daemon and runs the `sibuna-bench` tool (`tools/bench`) in release mode, and `licenses`,
-//! which writes `LICENSES/THIRD-PARTY-RUST.txt`. Builds of the WebAssembly solver (`wasm`)
+//! daemon and runs the `sibuna-bench` tool (`tools/bench`) in release mode, `licenses`,
+//! which writes `LICENSES/THIRD-PARTY-RUST.txt`, and `figures`, which renders the
+//! documentation figures from their Typst sources. Builds of the WebAssembly solver (`wasm`)
 //! are meant to join them as a further module and table entry.
 //!
 //! Deliberate changes from the Zig repository's `tools/check-style.sh` and
@@ -24,6 +25,7 @@
 //! - Violations are reported as Elm-style diagnostics with an excerpt and a hint.
 
 mod check;
+mod figures;
 mod licenses;
 
 use std::ffi::OsString;
@@ -39,7 +41,7 @@ struct Command {
 }
 
 /// Every subcommand, in the order `help` lists them.
-const COMMANDS: [Command; 5] = [
+const COMMANDS: [Command; 6] = [
     Command {
         name: "check",
         synopsis: "[PATH...]",
@@ -60,6 +62,11 @@ const COMMANDS: [Command; 5] = [
         synopsis: "[--check]",
         summary: "Write the third-party crate list LICENSES/THIRD-PARTY-RUST.txt",
     },
+    Command {
+        name: "figures",
+        synopsis: "[--check | --force]",
+        summary: "Render the documentation figures whose Typst sources changed",
+    },
     Command { name: "help", synopsis: "", summary: "Print this help" },
 ];
 
@@ -76,6 +83,7 @@ fn main() -> ExitCode {
         Some("browser") => browser(rest),
         Some("bench") => bench(rest),
         Some("licenses") => licenses(rest),
+        Some("figures") => figures(rest),
         Some("help" | "-h" | "--help") => help(),
         _ => unknown_command(&command.to_string_lossy()),
     }
@@ -104,18 +112,30 @@ fn licenses(arguments: &[OsString]) -> ExitCode {
     match licenses::run(root, arguments, &mut io::stdout().lock()) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
-            let title = error.title();
-            let location = licenses::OUTPUT;
-            let dashes =
-                "-".repeat(80usize.saturating_sub(title.len() + location.len() + 5).max(3));
-            let _ = writeln!(
-                io::stderr(),
-                "-- {title} {dashes} {location}\n\n{error}\n\nHint: {}",
-                error.hint()
-            );
+            print_diagnostic(error.title(), licenses::OUTPUT, &error, error.hint());
             ExitCode::FAILURE
         }
     }
+}
+
+/// Runs `cargo xtask figures` over the workspace that contains this crate.
+fn figures(arguments: &[OsString]) -> ExitCode {
+    let manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let root = manifest.ancestors().nth(2).unwrap_or(manifest);
+    match figures::run(root, arguments, &mut io::stdout().lock()) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => {
+            print_diagnostic(error.title(), &error.location(), &error, error.hint());
+            ExitCode::FAILURE
+        }
+    }
+}
+
+/// Prints an Elm-style diagnostic on standard error: a title rule with the location, the
+/// message and a hint.
+fn print_diagnostic(title: &str, location: &str, message: &dyn std::fmt::Display, hint: &str) {
+    let dashes = "-".repeat(80usize.saturating_sub(title.len() + location.len() + 5).max(3));
+    let _ = writeln!(io::stderr(), "-- {title} {dashes} {location}\n\n{message}\n\nHint: {hint}");
 }
 
 /// Runs `cargo run -q -p sibuna-browser -- <arguments>` and passes on its exit status.
@@ -188,7 +208,10 @@ fn help() -> ExitCode {
          `bench` builds the daemon and the sibuna-bench tool in release mode and passes its\n\
          arguments on; run `cargo xtask bench help` for its commands and options.\n\n\
          `licenses` lists the third-party crates of the release executable with their\n\
-         licenses in LICENSES/THIRD-PARTY-RUST.txt; `--check` only verifies the file.\n",
+         licenses in LICENSES/THIRD-PARTY-RUST.txt; `--check` only verifies the file.\n\n\
+         `figures` renders each Typst figure of docs/figures once per language into SVG,\n\
+         skipping those whose inputs are unchanged since docs/figures/rendered.txt was\n\
+         written; `--force` renders all, and `--check` only verifies the record.\n",
     );
     match io::stdout().lock().write_all(text.as_bytes()) {
         Ok(()) => ExitCode::SUCCESS,

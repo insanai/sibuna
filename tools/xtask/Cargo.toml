@@ -10,8 +10,10 @@ authors.workspace = true
 publish = false
 
 [dependencies]
-# Parses `cargo metadata` for `cargo xtask licenses`.
+# Parses `cargo metadata` for `licenses` and Typst dependency lists for `figures`.
 sibuna-json = { workspace = true }
+# Hashes the inputs of each figure for `cargo xtask figures`.
+sibuna-crypto = { workspace = true }
 
 [lints]
 workspace = true
