@@ -1,10 +1,11 @@
 /* Sibuna's body text on the web, set as in the PDF: justified, hyphenated in the page's
    language (the html element's lang), and broken a paragraph at a time. Typst breaks
    every paragraph of the PDF with the Knuth-Plass algorithm. In the browser,
-   typography.js does the same for English prose paragraphs; every other paragraph gets
-   the browser's own hyphenation and text-wrap: pretty, the nearest the browser offers.
-   As in the PDF, headings, code, tables, captions and footnotes stay ragged. The book
-   and the whitepaper keep identical copies of this file. */
+   typography.js (from the CCM documentation) does the same for English paragraphs, list
+   items, definitions and admonitions, links and inline code included; the rest, and every
+   other language, gets the browser's own hyphenation and text-wrap: pretty. As in the PDF,
+   headings, code, tables, captions and footnotes stay ragged. The book and the whitepaper
+   keep identical copies of this file. */
 
 .gd-article :is(p, li, dd) {
   -webkit-hyphens: auto;
@@ -30,8 +31,24 @@
   }
 }
 
-/* typography.js sets each line of a broken paragraph as its own span, with the
-   word spacing that justifies it and a hyphen where it breaks a word. */
+/* typography.js sets each line of a broken paragraph as its own span. Every line but the
+   last is justified on its own, so it meets the right margin exactly, and a line that
+   ends inside a word shows a hyphen. The space a line ends at is kept for copying but
+   takes no room. */
 .gd-typeset-line { display: block; white-space: nowrap; text-wrap: nowrap; }
+.gd-typeset-line:not(:last-child) { text-align: justify; text-align-last: justify; }
 .gd-typeset-line[data-hyphen]::after { content: "\2010"; }
-.gd-article p[data-layout="knuth-plass"] { -webkit-hyphens: manual; hyphens: manual; text-align: left; }
+.gd-line-space { font-size: 0; }
+.gd-typeset-line code.gd-code-cut-end {
+  padding-right: 0; border-right-width: 0; border-top-right-radius: 0; border-bottom-right-radius: 0;
+}
+.gd-typeset-line code.gd-code-cut-start {
+  padding-left: 0; border-left-width: 0; border-top-left-radius: 0; border-bottom-left-radius: 0;
+}
+.gd-article [data-layout="knuth-plass"] { -webkit-hyphens: manual; hyphens: manual; text-align: left; }
+
+/* On a phone the other paragraphs are ragged, so typeset ones keep their breaks but
+   are ragged too. */
+@media (max-width: 39.99rem) {
+  .gd-typeset-line:not(:last-child) { text-align: start; text-align-last: start; }
+}
