@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-10-24 10:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -47,8 +47,8 @@ msgstr ""
 msgid "Methodology"
 msgstr "المنهجية"
 
-#: ../../benchmarks.rst:9 ../../benchmarks.rst:235 ../../benchmarks.rst:444
-#: ../../benchmarks.rst:592
+#: ../../benchmarks.rst:9 ../../benchmarks.rst:229 ../../benchmarks.rst:438
+#: ../../benchmarks.rst:586
 msgid "Objectives"
 msgstr "الأهداف"
 
@@ -358,36 +358,29 @@ msgstr ""
 "الاتصال خاملًا عند موعد الاستحقاق، يُحسب زمن الاستجابة من الإرسال الفعلي، "
 "فلا يُحمَّل على البرنامج الخدمي تجاوزُ نوم المولد نفسه."
 
-#: ../../benchmarks.rst:70
+#: ../../benchmarks.rst:69
 msgid ""
-"time        0         T         2T        3T        4T\n"
-"due         |         |         |         |         |\n"
-"k = 0       S--A\n"
-"k = 1                 S---------------A\n"
-"k = 2                           d.....S--A\n"
-"k = 3                                     S--A"
+"A timeline with due times 0, T, 2T, 3T and 4T and four requests. Requests "
+"0 and 3 are sent when due and answered quickly. Request 1 is sent at T "
+"and answered after 2T. Request 2, due at 2T, waits until that answer "
+"arrives and is then sent; its recorded latency starts at 2T."
 msgstr ""
-"time        0         T         2T        3T        4T\n"
-"due         |         |         |         |         |\n"
-"k = 0       S--A\n"
-"k = 1                 S---------------A\n"
-"k = 2                           d.....S--A\n"
-"k = 3                                     S--A"
+"خط زمني بمواعيد استحقاق 0 وT و2T و3T و4T وأربعة طلبات. يُرسَل الطلبان 0 و3 "
+"في موعد استحقاقهما ويُجابان سريعًا. ويُرسَل الطلب 1 عند T ويُجاب بعد 2T. "
+"أما الطلب 2، المستحق عند 2T، فينتظر حتى تصل تلك الإجابة ثم يُرسَل؛ ويبدأ "
+"زمن استجابته المسجَّل عند 2T."
 
-#: ../../benchmarks.rst:70
+#: ../../benchmarks.rst:72
 msgid ""
-"One connection of the open-loop generator. S is a send, A an answer, d a "
-"due time that passed while the connection waited. Request 1 is answered "
-"after request 2 was due, so request 2 is sent at once and its latency "
-"counts from 2T; request 3 finds the connection idle and counts from its "
-"send."
+"One connection of the open-loop generator. Request 1 is answered after "
+"request 2 was due, so request 2 is sent at once and its latency counts "
+"from 2T; request 3 finds the connection idle and counts from its send."
 msgstr ""
-"اتصال واحد لمولد الحلقة المفتوحة. S إرسال، وA إجابة، وd موعد استحقاق مر "
-"بينما ينتظر الاتصال. يُجاب الطلب 1 بعد موعد استحقاق الطلب 2، فيُرسل الطلب "
-"2 فورًا ويُحسب زمن استجابته من 2T؛ ويجد الطلب 3 الاتصال خاملًا فيُحسب من "
-"إرساله."
+"اتصال واحد لمولد الحلقة المفتوحة. يُجاب الطلب 1 بعد موعد استحقاق الطلب 2، "
+"فيُرسَل الطلب 2 فورًا ويُحسب زمن استجابته من 2T؛ ويجد الطلب 3 الاتصال "
+"خاملًا فيُحسب من إرساله."
 
-#: ../../benchmarks.rst:79
+#: ../../benchmarks.rst:74
 msgid ""
 "The harness runs the Shield surface and the admitted workload at five "
 "offered rates: 10,000, 25,000, 50,000, 100,000 and 150,000 requests per "
@@ -408,11 +401,11 @@ msgstr ""
 "المئينات بطريقة أقرب رتبة على كل طلب مقاس في تشغيل واحد؛ وكل رقم هو وسيط "
 "التشغيلات الثلاثة، مع مجال الأدنى-الأقصى لـ p99 بجانبه."
 
-#: ../../benchmarks.rst:81
+#: ../../benchmarks.rst:76
 msgid "CPU Sets"
 msgstr "مجموعات CPU"
 
-#: ../../benchmarks.rst:84
+#: ../../benchmarks.rst:79
 msgid ""
 "The CPU sets matter more than any other setting. The daemons run on CPUs "
 "0 to 3 (``--cpus``; ``--workers`` is the size of that set). ``wrk``, the "
@@ -430,25 +423,21 @@ msgstr ""
 "تنشئه المجموعة. وتستخدم أداة قياس القبول وحدتي CPU، 0 و1، للمنتج، ووحدات "
 "CPU من 8 إلى 15 لعملائها."
 
-#: ../../benchmarks.rst:87
+#: ../../benchmarks.rst:81
 msgid ""
-"CCD 0   cores  0  1  2  3 |  4         |  5  6  7\n"
-"               daemons    |  primitive |  not assigned\n"
-"               (--cpus)   |  suite     |\n"
-"                          |  (--cpu)   |\n"
-"CCD 1   cores  8  9 10 11 12 13 14 15\n"
-"               wrk, latency generator, origin (--load-cpus)\n"
-"SMT     16 to 31: siblings of 0 to 15, not assigned"
+"Two rows of eight cores. In CCD 0, cores 0 to 3 run the daemons (--cpus "
+"0-3), core 4 the primitive suite (--cpu 4), and cores 5 to 7 are not "
+"assigned. In CCD 1, cores 8 to 15 run wrk, the latency generator and the "
+"origin (--load-cpus 8-15). Each core's SMT sibling, CPUs 16 to 31, is not "
+"used."
 msgstr ""
-"CCD 0   cores  0  1  2  3 |  4         |  5  6  7\n"
-"               daemons    |  primitive |  not assigned\n"
-"               (--cpus)   |  suite     |\n"
-"                          |  (--cpu)   |\n"
-"CCD 1   cores  8  9 10 11 12 13 14 15\n"
-"               wrk, latency generator, origin (--load-cpus)\n"
-"SMT     16 to 31: siblings of 0 to 15, not assigned"
+"صفان من ثماني أنوية. في CCD 0 تشغّل الأنوية من 0 إلى 3 البرامج الخدمية "
+"(--cpus 0-3)، والنواة 4 مجموعة العمليات الأولية (--cpu 4)، والأنوية من 5 "
+"إلى 7 غير مخصصة. وفي CCD 1 تشغّل الأنوية من 8 إلى 15 كلًّا من wrk ومولد زمن "
+"الاستجابة والخادم الأصلي (--load-cpus 8-15). ولا يُستخدم شقيق SMT لأي نواة، "
+"أي وحدات CPU من 16 إلى 31."
 
-#: ../../benchmarks.rst:87
+#: ../../benchmarks.rst:84
 msgid ""
 "CPU sets on the AMD Ryzen 9 5950X. CPUs 0 to 7 are the eight cores of the "
 "first CCD, 8 to 15 those of the second, and 16 to 31 their SMT siblings. "
@@ -458,7 +447,7 @@ msgstr ""
 "الثماني في أول CCD، ومن 8 إلى 15 أنوية الثاني، ومن 16 إلى 31 أشقاؤها في "
 "SMT. لا يتشارك البرنامج الخدمي ومولد الحمل نواة أبدًا."
 
-#: ../../benchmarks.rst:97
+#: ../../benchmarks.rst:86
 msgid ""
 "On other machines we choose sets that do not share cores (``lscpu -e`` "
 "shows the topology)."
@@ -466,11 +455,11 @@ msgstr ""
 "على الأجهزة الأخرى نختار مجموعات لا تتشارك الأنوية (يعرض ``lscpu -e`` "
 "البنية)."
 
-#: ../../benchmarks.rst:99
+#: ../../benchmarks.rst:88
 msgid "Machine and Conditions"
 msgstr "الجهاز والظروف"
 
-#: ../../benchmarks.rst:102
+#: ../../benchmarks.rst:91
 msgid ""
 "The files were recorded on ``paxos-zig``: an AMD Ryzen 9 5950X 16-Core "
 "Processor (32 logical CPUs), Linux 7.0.0-28-generic x86_64, the "
@@ -506,7 +495,7 @@ msgstr ""
 "بوضع الإصدار من تلك المراجعة (37,450,232 بايت). كان متوسط الحمل لدقيقة "
 "واحدة 3.53 قبل تشغيل المقارنة، و0.56 عند انتهاء تشغيل القبول."
 
-#: ../../benchmarks.rst:104
+#: ../../benchmarks.rst:93
 msgid ""
 "The files record one-minute load averages of 2.46 at the primitive run, "
 "1.30 before and 52.31 after the latency run, and 52.31 before and 33.39 "
@@ -518,11 +507,11 @@ msgstr ""
 "المنتجات و33.39 بعده. الأرقام المرتفعة سببها خيوط مولد زمن الاستجابة الـ "
 "64، وقد تلاه تشغيل المنتجات مباشرة."
 
-#: ../../benchmarks.rst:106
+#: ../../benchmarks.rst:95
 msgid "Measurement scope"
 msgstr "نطاق القياس"
 
-#: ../../benchmarks.rst:108
+#: ../../benchmarks.rst:97
 msgid ""
 "Only local measurements are emitted. Every run uses one host over "
 "loopback: no TLS, no WAN, no real browsers. The daemons run in memory, "
@@ -544,16 +533,16 @@ msgstr ""
 "أداتا المنتجات وزمن الاستجابة الملف التنفيذي للإصدار دون تعديل، معرَّفًا "
 "بقيمة SHA-256 له. والترتيب على هذا المضيف لا يصلح ترتيبًا على مضيف آخر."
 
-#: ../../benchmarks.rst:110
+#: ../../benchmarks.rst:99
 msgid "How to Reproduce"
 msgstr "كيف نعيد إنتاج القياسات"
 
-#: ../../benchmarks.rst:113
+#: ../../benchmarks.rst:102
 msgid "We need Linux, ``taskset`` (util-linux) and ``wrk`` on ``PATH``."
 msgstr ""
 "نحتاج إلى Linux، و\\ ``taskset`` (util-linux)، و\\ ``wrk`` على ``PATH``."
 
-#: ../../benchmarks.rst:115
+#: ../../benchmarks.rst:104
 msgid ""
 "cargo xtask bench primitives\n"
 "cargo xtask bench product\n"
@@ -565,7 +554,7 @@ msgstr ""
 "cargo xtask bench latency\n"
 "cargo xtask bench help"
 
-#: ../../benchmarks.rst:122
+#: ../../benchmarks.rst:111
 msgid ""
 "``cargo xtask bench`` first builds the daemon with ``cargo build "
 "--release -p sibuna``, then runs ``sibuna-bench`` in release mode. The "
@@ -583,11 +572,11 @@ msgstr ""
 "``--seconds`` و\\ ``--rates`` و\\ ``--warmup``. ويعطي القسم الخاص بـ "
 "Anubis أدناه الأوامر التي سجلت تلك المقارنة."
 
-#: ../../benchmarks.rst:124
+#: ../../benchmarks.rst:113
 msgid "Primitive Latencies"
 msgstr "أزمنة العمليات الأولية"
 
-#: ../../benchmarks.rst:127
+#: ../../benchmarks.rst:116
 msgid ""
 "The table gives every row of the primitive run. The JSON file names each "
 "row by subsystem and workload (``pow_verify`` and ``hashcash_16_bits``, "
@@ -596,7 +585,7 @@ msgstr ""
 "يعطي الجدول كل صف من تشغيل العمليات الأولية. يسمي ملف JSON كل صف بالنظام "
 "الفرعي وعبء العمل (``pow_verify`` و\\ ``hashcash_16_bits``، مثلًا)."
 
-#: ../../benchmarks.rst:129
+#: ../../benchmarks.rst:118
 msgid ""
 "Primitive timings in nanoseconds per operation on one Ryzen 9 5950X core "
 "(``benchmarks/results/primitives-latest.md``, generated "
@@ -606,246 +595,270 @@ msgstr ""
 "واحدة (``benchmarks/results/primitives-latest.md``، أُنشئ في "
 "2026-10-15T22:34:59Z)"
 
-#: ../../benchmarks.rst:133 ../../benchmarks.rst:614
-#: ../../benchmarks.rst:704
+#: ../../benchmarks.rst:122 ../../benchmarks.rst:608
+#: ../../benchmarks.rst:698
 msgid "Workload"
 msgstr "عبء العمل"
 
-#: ../../benchmarks.rst:134
+#: ../../benchmarks.rst:123
 msgid "ns/op"
 msgstr "ns/op"
 
-#: ../../benchmarks.rst:135
+#: ../../benchmarks.rst:124
 msgid "min-max"
 msgstr "الأدنى-الأقصى"
 
-#: ../../benchmarks.rst:136
+#: ../../benchmarks.rst:125
 msgid "Hashcash verify (16 bits)"
 msgstr "تحقق Hashcash (16 بت)"
 
-#: ../../benchmarks.rst:137
+#: ../../benchmarks.rst:126
 msgid "70.2"
 msgstr "70.2"
 
-#: ../../benchmarks.rst:138
+#: ../../benchmarks.rst:127
 msgid "69.9-71.0"
 msgstr "69.9-71.0"
 
-#: ../../benchmarks.rst:139
+#: ../../benchmarks.rst:128
 msgid "PoSW verify (depth 13, t = 16)"
 msgstr "تحقق PoSW (العمق 13، t = 16)"
 
-#: ../../benchmarks.rst:140
+#: ../../benchmarks.rst:129
 msgid "22272.4"
 msgstr "22272.4"
 
-#: ../../benchmarks.rst:141
+#: ../../benchmarks.rst:130
 msgid "22257.0-22316.4"
 msgstr "22257.0-22316.4"
 
-#: ../../benchmarks.rst:142
+#: ../../benchmarks.rst:131
 msgid "Bot signatures (40, Aho-Corasick)"
 msgstr "توقيعات الروبوتات (40، Aho-Corasick)"
 
-#: ../../benchmarks.rst:143
+#: ../../benchmarks.rst:132
 msgid "55.7"
 msgstr "55.7"
 
-#: ../../benchmarks.rst:144
+#: ../../benchmarks.rst:133
 msgid "55.3-57.2"
 msgstr "55.3-57.2"
 
-#: ../../benchmarks.rst:145
+#: ../../benchmarks.rst:134
 msgid "Bot signatures (40, sequential search)"
 msgstr "توقيعات الروبوتات (40، بحث متسلسل)"
 
-#: ../../benchmarks.rst:146
+#: ../../benchmarks.rst:135
 msgid "763.0"
 msgstr "763.0"
 
-#: ../../benchmarks.rst:147
+#: ../../benchmarks.rst:136
 msgid "762.2-763.5"
 msgstr "762.2-763.5"
 
-#: ../../benchmarks.rst:148
+#: ../../benchmarks.rst:137
 msgid "IPv4 CIDR lookup"
 msgstr "بحث IPv4 CIDR"
 
-#: ../../benchmarks.rst:149
+#: ../../benchmarks.rst:138
 msgid "32.0"
 msgstr "32.0"
 
-#: ../../benchmarks.rst:150
+#: ../../benchmarks.rst:139
 msgid "31.8-32.2"
 msgstr "31.8-32.2"
 
-#: ../../benchmarks.rst:151
+#: ../../benchmarks.rst:140
 msgid "IPv6 CIDR lookup"
 msgstr "بحث IPv6 CIDR"
 
-#: ../../benchmarks.rst:152
+#: ../../benchmarks.rst:141
 msgid "79.3"
 msgstr "79.3"
 
-#: ../../benchmarks.rst:153
+#: ../../benchmarks.rst:142
 msgid "78.5-79.6"
 msgstr "78.5-79.6"
 
-#: ../../benchmarks.rst:154
+#: ../../benchmarks.rst:143
 msgid "Session token (keyed BLAKE3)"
 msgstr "رمز الجلسة (BLAKE3 ذو مفتاح)"
 
-#: ../../benchmarks.rst:155
+#: ../../benchmarks.rst:144
 msgid "155.8"
 msgstr "155.8"
 
-#: ../../benchmarks.rst:156
+#: ../../benchmarks.rst:145
 msgid "155.3-156.4"
 msgstr "155.3-156.4"
 
-#: ../../benchmarks.rst:157
+#: ../../benchmarks.rst:146
 msgid "Session token (Ed25519)"
 msgstr "رمز الجلسة (Ed25519)"
 
-#: ../../benchmarks.rst:158
+#: ../../benchmarks.rst:147
 msgid "40587.5"
 msgstr "40587.5"
 
-#: ../../benchmarks.rst:159
+#: ../../benchmarks.rst:148
 msgid "40544.6-40631.1"
 msgstr "40544.6-40631.1"
 
-#: ../../benchmarks.rst:160
+#: ../../benchmarks.rst:149
 msgid "Spent set (Robin Hood), spend and look up"
 msgstr "مجموعة الحلول المُنفَقة (Robin Hood)، الإنفاق والبحث"
 
-#: ../../benchmarks.rst:161
+#: ../../benchmarks.rst:150
 msgid "21.0"
 msgstr "21.0"
 
-#: ../../benchmarks.rst:162
+#: ../../benchmarks.rst:151
 msgid "20.8-21.3"
 msgstr "20.8-21.3"
 
-#: ../../benchmarks.rst:163
+#: ../../benchmarks.rst:152
 msgid "Rate limiter (GCRA), client bytes"
 msgstr "محدد المعدل (GCRA)، بايتات العميل"
 
-#: ../../benchmarks.rst:164
+#: ../../benchmarks.rst:153
 msgid "12.8"
 msgstr "12.8"
 
-#: ../../benchmarks.rst:165
+#: ../../benchmarks.rst:154
 msgid "12.7-12.8"
 msgstr "12.7-12.8"
 
-#: ../../benchmarks.rst:166
+#: ../../benchmarks.rst:155
 msgid "Rate limiter, four rule scopes, client bytes"
 msgstr "محدد المعدل، أربعة نطاقات قواعد، بايتات العميل"
 
-#: ../../benchmarks.rst:167
+#: ../../benchmarks.rst:156
 msgid "13.1"
 msgstr "13.1"
 
-#: ../../benchmarks.rst:168
+#: ../../benchmarks.rst:157
 msgid "13.0-13.2"
 msgstr "13.0-13.2"
 
-#: ../../benchmarks.rst:169
+#: ../../benchmarks.rst:158
 msgid "Rate limiter (GCRA), hashed client"
 msgstr "محدد المعدل (GCRA)، عميل مُعرَّف بتجزئة"
 
-#: ../../benchmarks.rst:170
+#: ../../benchmarks.rst:159
 msgid "6.2"
 msgstr "6.2"
 
-#: ../../benchmarks.rst:171
+#: ../../benchmarks.rst:160
 msgid "6.1-6.3"
 msgstr "6.1-6.3"
 
-#: ../../benchmarks.rst:172
+#: ../../benchmarks.rst:161
 msgid "Rate limiter, four rule scopes, hashed client"
 msgstr "محدد المعدل، أربعة نطاقات قواعد، عميل مُعرَّف بتجزئة"
 
-#: ../../benchmarks.rst:173
+#: ../../benchmarks.rst:162
 msgid "6.3"
 msgstr "6.3"
 
-#: ../../benchmarks.rst:174
+#: ../../benchmarks.rst:163
 msgid "6.2-6.4"
 msgstr "6.2-6.4"
 
-#: ../../benchmarks.rst:175
+#: ../../benchmarks.rst:164
 msgid "HTTP parse and cookie"
 msgstr "تحليل HTTP وملف تعريف الارتباط"
 
-#: ../../benchmarks.rst:176
+#: ../../benchmarks.rst:165
 msgid "132.5"
 msgstr "132.5"
 
-#: ../../benchmarks.rst:177
+#: ../../benchmarks.rst:166
 msgid "132.3-133.2"
 msgstr "132.3-133.2"
 
-#: ../../benchmarks.rst:178
+#: ../../benchmarks.rst:167
 msgid "Classification, Shield profile"
 msgstr "التصنيف، بإعدادات Shield"
 
-#: ../../benchmarks.rst:179
+#: ../../benchmarks.rst:168
 msgid "790.8"
 msgstr "790.8"
 
-#: ../../benchmarks.rst:180
+#: ../../benchmarks.rst:169
 msgid "787.2-793.1"
 msgstr "787.2-793.1"
 
-#: ../../benchmarks.rst:181
+#: ../../benchmarks.rst:170
 msgid "Classification, Gate profile"
 msgstr "التصنيف، بإعدادات Gate"
 
-#: ../../benchmarks.rst:182
+#: ../../benchmarks.rst:171
 msgid "75.9"
 msgstr "75.9"
 
-#: ../../benchmarks.rst:183
+#: ../../benchmarks.rst:172
 msgid "75.6-76.1"
 msgstr "75.6-76.1"
 
-#: ../../benchmarks.rst:184
+#: ../../benchmarks.rst:173
 msgid "WAF body scan (8 KiB)"
 msgstr "فحص WAF للجسم (8 KiB)"
 
-#: ../../benchmarks.rst:185
+#: ../../benchmarks.rst:174
 msgid "12784.3"
 msgstr "12784.3"
 
-#: ../../benchmarks.rst:186
+#: ../../benchmarks.rst:175
 msgid "12771.5-12809.2"
 msgstr "12771.5-12809.2"
 
-#: ../../benchmarks.rst:187
+#: ../../benchmarks.rst:176
 msgid "WAF body scan (8 KiB), SQL injection audited"
 msgstr "فحص WAF للجسم (8 KiB)، مع تدقيق حقن SQL"
 
-#: ../../benchmarks.rst:188
+#: ../../benchmarks.rst:177
 msgid "15485.4"
 msgstr "15485.4"
 
-#: ../../benchmarks.rst:189
+#: ../../benchmarks.rst:178
 msgid "15460.9-15530.1"
 msgstr "15460.9-15530.1"
 
-#: ../../benchmarks.rst:191
+#: ../../benchmarks.rst:180
 msgid ""
 "The spreads are narrow: no batch of any row lies more than 2.8% from its "
-"row's median."
-msgstr "المجالات ضيقة: لا تبعد أي دفعة في أي صف أكثر من 2.8% عن وسيط صفها."
+"row's median. The figure shows the same rows on a logarithmic scale, "
+"which keeps rows of 6 ns and of 40 us readable side by side."
+msgstr ""
+"المجالات ضيقة: لا تبعد أي دفعة في أي صف أكثر من 2.8% عن وسيط صفها. ويعرض "
+"الشكل الصفوف نفسها على مقياس لوغاريتمي، فتبقى الصفوف التي تستغرق 6 ns والتي "
+"تستغرق 40 us مقروءة جنبًا إلى جنب."
 
-#: ../../benchmarks.rst:193
+#: ../../benchmarks.rst:182
+msgid ""
+"A bar chart of the table above on a logarithmic scale from 1 ns to 100 "
+"us, coloured by group: proof of work, matching, tokens, state and the "
+"request path. The rate limiter rows are the shortest bars, at 6.2 to 13.1 "
+"ns; Ed25519 token verification is the longest, at 40.6 us."
+msgstr ""
+"مخطط أعمدة للجدول أعلاه على مقياس لوغاريتمي من 1 ns إلى 100 us، ملوّن بحسب "
+"المجموعة: إثبات العمل، والمطابقة، والرموز، والحالة، ومسار الطلب. صفوف محدد "
+"المعدل هي أقصر الأعمدة، من 6.2 إلى 13.1 ns؛ والتحقق من رمز Ed25519 أطولها، "
+"عند 40.6 us."
+
+#: ../../benchmarks.rst:185
+msgid ""
+"Primitive timings on a logarithmic scale, drawn from "
+"``benchmarks/results/primitives-latest.json``."
+msgstr ""
+"أزمنة العمليات الأولية على مقياس لوغاريتمي، مرسومة من "
+"``benchmarks/results/primitives-latest.json``."
+
+#: ../../benchmarks.rst:187
 msgid "Proof-of-Work Verification"
 msgstr "التحقق من إثبات العمل"
 
-#: ../../benchmarks.rst:196
+#: ../../benchmarks.rst:190
 msgid ""
 "Hashcash verification hashes a challenge, a separator and a decimal "
 "nonce: 70.2 ns. The sequential-work verifier checks graph openings: "
@@ -860,11 +873,11 @@ msgstr ""
 "تختلف. كلا الصفين محدود بأداء SHA-256، وتستخدم ``sibuna-crypto`` تعليمات "
 "SHA-NI عندما تتوفر في CPU، وتكشف توفرها وقت التشغيل (SID 0010)."
 
-#: ../../benchmarks.rst:198
+#: ../../benchmarks.rst:192
 msgid "Matching"
 msgstr "المطابقة"
 
-#: ../../benchmarks.rst:201
+#: ../../benchmarks.rst:195
 msgid ""
 "The dense Aho-Corasick automaton and sequential substring search use "
 "identical patterns and any-match semantics. The automaton is 13.7 times "
@@ -881,11 +894,11 @@ msgstr ""
 "توقيعات الروبوتات عند 42,244 بايت (جدول الحجم والذاكرة أدناه). وتستغرق "
 "مصنفات CIDR 32.0 ns (IPv4) و79.3 ns (IPv6)."
 
-#: ../../benchmarks.rst:203
+#: ../../benchmarks.rst:197
 msgid "Tokens"
 msgstr "الرموز"
 
-#: ../../benchmarks.rst:206
+#: ../../benchmarks.rst:200
 msgid ""
 "The BLAKE3 MAC token verifies in 155.8 ns. ``sibuna-crypto`` implements "
 "BLAKE3 portably, without SIMD paths; those win on large inputs, but "
@@ -903,11 +916,11 @@ msgstr ""
 "Ed25519 واحد قدر 260 تحققًا من MAC تقريبًا؛ وMAC هو مخطط الرموز الافتراضي "
 "في Sibuna."
 
-#: ../../benchmarks.rst:208
+#: ../../benchmarks.rst:202
 msgid "State"
 msgstr "الحالة"
 
-#: ../../benchmarks.rst:211
+#: ../../benchmarks.rst:205
 msgid ""
 "The spent-set row inserts a fresh tag and looks it up again: 21.0 ns. The "
 "table in this row has 16 shards of 4,096 slots (65,536 tags; the daemon's "
@@ -926,7 +939,7 @@ msgstr ""
 "فكانت توقِّت النواة وهي تربط صفحات الجدول عند الكتابة الأولى، وهي تكلفة "
 "يدفعها البرنامج الخدمي أثناء عمله مرة واحدة، وليس هذا الصف ما نعرضه."
 
-#: ../../benchmarks.rst:213
+#: ../../benchmarks.rst:207
 msgid ""
 "The rate limiter rows need care. The two rows for client bytes "
 "(``gcra_check`` and ``gcra_four_rule_scopes``) call the byte API: each "
@@ -943,7 +956,7 @@ msgstr ""
 "حساب عناوين تشارك الضحيةَ نافذة السبر (SID 0010 ووثائق ``sibuna-store``). "
 "تستغرق هذه الصفوف 12.8 و13.1 ns."
 
-#: ../../benchmarks.rst:215
+#: ../../benchmarks.rst:209
 msgid ""
 "The daemon does not use the byte API on the request path. It hashes the "
 "client once per request (``ClientHasher``) and passes the hash to every "
@@ -962,11 +975,11 @@ msgstr ""
 "6.6 ns، هو تقريبًا ثمن التجزئة ذات المفتاح على هذه المدخلات، ويدفعه "
 "البرنامج الخدمي مرة لكل طلب لا مرة لكل جدول."
 
-#: ../../benchmarks.rst:217
+#: ../../benchmarks.rst:211
 msgid "HTTP Parser"
 msgstr "محلل HTTP"
 
-#: ../../benchmarks.rst:220
+#: ../../benchmarks.rst:214
 msgid ""
 "The parser row parses a 400-byte browser request and looks up a cookie: "
 "132.5 ns. The crate's own timing test agrees (``crates/http``: about 135 "
@@ -977,11 +990,11 @@ msgstr ""
 "ويتفق معه اختبار التوقيت الخاص بالحزمة (``crates/http``: نحو 135 إلى 180 "
 "ns على الجهاز نفسه). المحلل بلا نسخ؛ كل حقل مقطع من المخزن المؤقت للاتصال."
 
-#: ../../benchmarks.rst:222
+#: ../../benchmarks.rst:216
 msgid "Policy Engine"
 msgstr "محرك السياسة"
 
-#: ../../benchmarks.rst:225
+#: ../../benchmarks.rst:219
 msgid ""
 "A full classification of a browser request takes 790.8 ns and the Gate "
 "profile 75.9 ns. The rows leave the request's parsed client address "
@@ -996,11 +1009,11 @@ msgstr ""
 "التقييم، لذا تشمل هذه الصفوف تكلفة صغيرة يدفعها البرنامج الخدمي خارج "
 "المحرك. يبلغ مجموع جداول المحرك في الكومة 209,052 بايت (SID 0002)."
 
-#: ../../benchmarks.rst:227
+#: ../../benchmarks.rst:221
 msgid "WAF Inspection"
 msgstr "فحص WAF"
 
-#: ../../benchmarks.rst:230
+#: ../../benchmarks.rst:224
 msgid ""
 "The semantic scan of an 8 KiB body takes 12,784.3 ns, or :math:`12784.3 / "
 "8192 \\approx 1.56` ns per byte. The second row scans the same body with "
@@ -1020,11 +1033,11 @@ msgstr ""
 "يبحث فقط في الفئات المطلوبة منها، لذا يكلف تدقيق فئة واحدة أكثر بنحو "
 "الخُمس من فرض الفئات كلها، لا فحصًا مستقلًا لكل فئة."
 
-#: ../../benchmarks.rst:232
+#: ../../benchmarks.rst:226
 msgid "Whole-Product Comparison"
 msgstr "مقارنة المنتجات الكاملة"
 
-#: ../../benchmarks.rst:237
+#: ../../benchmarks.rst:231
 msgid ""
 "Read the throughput, latency, CPU time and memory of the daemon as a "
 "complete process, compare its surfaces and modes, and say in which rows "
@@ -1034,7 +1047,7 @@ msgstr ""
 "كاملة، وقارن أوضاعه وأوضاع نشره، وبيِّن في أي الصفوف يضع البرنامج الخدمي "
 "الحد وفي أيها يضعه مولد الحمل."
 
-#: ../../benchmarks.rst:239
+#: ../../benchmarks.rst:233
 msgid ""
 "The tables give the medians of three five-second ``wrk`` runs for each "
 "surface and workload. The status beside each workload is the answer the "
@@ -1044,11 +1057,11 @@ msgstr ""
 "وضع وعبء عمل. الحالة بجانب كل عبء هي الإجابة التي توقعتها أداة القياس "
 "وتلقتها."
 
-#: ../../benchmarks.rst:241
+#: ../../benchmarks.rst:235
 msgid "Forward-Auth Mode"
 msgstr "وضع Forward-Auth"
 
-#: ../../benchmarks.rst:244
+#: ../../benchmarks.rst:238
 msgid ""
 "The ingress asks the daemon whether to admit a request; there is no "
 "origin and no body relay, so this is the purest measure of admission cost."
@@ -1056,7 +1069,7 @@ msgstr ""
 "يسأل وكيل الدخول البرنامج الخدمي هل يقبل الطلب؛ لا يوجد خادم أصلي ولا "
 "تمرير للجسم، لذا هذا أنقى قياس لتكلفة القبول."
 
-#: ../../benchmarks.rst:246
+#: ../../benchmarks.rst:240
 msgid ""
 "Forward-auth mode, Gate and Shield; latency in microseconds "
 "(``benchmarks/results/product-latest.md``, generated 2026-10-15T23:15:24Z)"
@@ -1064,225 +1077,225 @@ msgstr ""
 "وضع forward-auth، Gate وShield؛ زمن الاستجابة بالميكروثانية "
 "(``benchmarks/results/product-latest.md``، أُنشئ في 2026-10-15T23:15:24Z)"
 
-#: ../../benchmarks.rst:250 ../../benchmarks.rst:334
+#: ../../benchmarks.rst:244 ../../benchmarks.rst:328
 msgid "Surface"
 msgstr "الوضع"
 
-#: ../../benchmarks.rst:251 ../../benchmarks.rst:335
+#: ../../benchmarks.rst:245 ../../benchmarks.rst:329
 msgid "Workload (status)"
 msgstr "عبء العمل (الحالة)"
 
-#: ../../benchmarks.rst:252 ../../benchmarks.rst:336
+#: ../../benchmarks.rst:246 ../../benchmarks.rst:330
 msgid "req/s"
 msgstr "req/s"
 
-#: ../../benchmarks.rst:253 ../../benchmarks.rst:337
-#: ../../benchmarks.rst:456 ../../benchmarks.rst:515
+#: ../../benchmarks.rst:247 ../../benchmarks.rst:331
+#: ../../benchmarks.rst:450 ../../benchmarks.rst:509
 msgid "p50"
 msgstr "p50"
 
-#: ../../benchmarks.rst:254 ../../benchmarks.rst:338
-#: ../../benchmarks.rst:457 ../../benchmarks.rst:516
+#: ../../benchmarks.rst:248 ../../benchmarks.rst:332
+#: ../../benchmarks.rst:451 ../../benchmarks.rst:510
 msgid "p90"
 msgstr "p90"
 
-#: ../../benchmarks.rst:255 ../../benchmarks.rst:339
+#: ../../benchmarks.rst:249 ../../benchmarks.rst:333
 msgid "p99"
 msgstr "p99"
 
-#: ../../benchmarks.rst:256 ../../benchmarks.rst:340
-#: ../../benchmarks.rst:462 ../../benchmarks.rst:521
-#: ../../benchmarks.rst:630 ../../benchmarks.rst:650
-#: ../../benchmarks.rst:670 ../../benchmarks.rst:690
-#: ../../benchmarks.rst:720 ../../benchmarks.rst:740
-#: ../../benchmarks.rst:760 ../../benchmarks.rst:780
+#: ../../benchmarks.rst:250 ../../benchmarks.rst:334
+#: ../../benchmarks.rst:456 ../../benchmarks.rst:515
+#: ../../benchmarks.rst:624 ../../benchmarks.rst:644
+#: ../../benchmarks.rst:664 ../../benchmarks.rst:684
+#: ../../benchmarks.rst:714 ../../benchmarks.rst:734
+#: ../../benchmarks.rst:754 ../../benchmarks.rst:774
 msgid "CPU us/req"
 msgstr "CPU us/req"
 
-#: ../../benchmarks.rst:257 ../../benchmarks.rst:341
-#: ../../benchmarks.rst:635 ../../benchmarks.rst:655
-#: ../../benchmarks.rst:675 ../../benchmarks.rst:695
-#: ../../benchmarks.rst:725 ../../benchmarks.rst:745
-#: ../../benchmarks.rst:765 ../../benchmarks.rst:785
+#: ../../benchmarks.rst:251 ../../benchmarks.rst:335
+#: ../../benchmarks.rst:629 ../../benchmarks.rst:649
+#: ../../benchmarks.rst:669 ../../benchmarks.rst:689
+#: ../../benchmarks.rst:719 ../../benchmarks.rst:739
+#: ../../benchmarks.rst:759 ../../benchmarks.rst:779
 msgid "Peak RSS KiB"
 msgstr "ذروة RSS KiB"
 
-#: ../../benchmarks.rst:258 ../../benchmarks.rst:266
-#: ../../benchmarks.rst:274 ../../benchmarks.rst:282
-#: ../../benchmarks.rst:342 ../../benchmarks.rst:350
-#: ../../benchmarks.rst:358 ../../benchmarks.rst:366
+#: ../../benchmarks.rst:252 ../../benchmarks.rst:260
+#: ../../benchmarks.rst:268 ../../benchmarks.rst:276
+#: ../../benchmarks.rst:336 ../../benchmarks.rst:344
+#: ../../benchmarks.rst:352 ../../benchmarks.rst:360
 msgid "Gate"
 msgstr "Gate"
 
-#: ../../benchmarks.rst:259 ../../benchmarks.rst:291
-#: ../../benchmarks.rst:343 ../../benchmarks.rst:375
+#: ../../benchmarks.rst:253 ../../benchmarks.rst:285
+#: ../../benchmarks.rst:337 ../../benchmarks.rst:369
 msgid "``admitted`` (200)"
 msgstr "``admitted`` (200)"
 
-#: ../../benchmarks.rst:260
+#: ../../benchmarks.rst:254
 msgid "211,345"
 msgstr "211,345"
 
-#: ../../benchmarks.rst:261 ../../benchmarks.rst:285
-#: ../../benchmarks.rst:309 ../../benchmarks.rst:401
+#: ../../benchmarks.rst:255 ../../benchmarks.rst:279
+#: ../../benchmarks.rst:303 ../../benchmarks.rst:395
 msgid "151"
 msgstr "151"
 
-#: ../../benchmarks.rst:262 ../../benchmarks.rst:278
-#: ../../benchmarks.rst:310 ../../benchmarks.rst:318
+#: ../../benchmarks.rst:256 ../../benchmarks.rst:272
+#: ../../benchmarks.rst:304 ../../benchmarks.rst:312
 msgid "175"
 msgstr "175"
 
-#: ../../benchmarks.rst:263 ../../benchmarks.rst:279
-#: ../../benchmarks.rst:287 ../../benchmarks.rst:311
-#: ../../benchmarks.rst:626 ../../benchmarks.rst:686
+#: ../../benchmarks.rst:257 ../../benchmarks.rst:273
+#: ../../benchmarks.rst:281 ../../benchmarks.rst:305
+#: ../../benchmarks.rst:620 ../../benchmarks.rst:680
 msgid "305"
 msgstr "305"
 
-#: ../../benchmarks.rst:264 ../../benchmarks.rst:288
+#: ../../benchmarks.rst:258 ../../benchmarks.rst:282
 msgid "11.84"
 msgstr "11.84"
 
-#: ../../benchmarks.rst:265
+#: ../../benchmarks.rst:259
 msgid "15912"
 msgstr "15912"
 
-#: ../../benchmarks.rst:267 ../../benchmarks.rst:299
+#: ../../benchmarks.rst:261 ../../benchmarks.rst:293
 msgid "``challenged`` (401)"
 msgstr "``challenged`` (401)"
 
-#: ../../benchmarks.rst:268
+#: ../../benchmarks.rst:262
 msgid "198,315"
 msgstr "198,315"
 
-#: ../../benchmarks.rst:269 ../../benchmarks.rst:353
+#: ../../benchmarks.rst:263 ../../benchmarks.rst:347
 msgid "160"
 msgstr "160"
 
-#: ../../benchmarks.rst:270
+#: ../../benchmarks.rst:264
 msgid "180"
 msgstr "180"
 
-#: ../../benchmarks.rst:271 ../../benchmarks.rst:646
+#: ../../benchmarks.rst:265 ../../benchmarks.rst:640
 msgid "326"
 msgstr "326"
 
-#: ../../benchmarks.rst:272
+#: ../../benchmarks.rst:266
 msgid "13.15"
 msgstr "13.15"
 
-#: ../../benchmarks.rst:273 ../../benchmarks.rst:281
-#: ../../benchmarks.rst:289
+#: ../../benchmarks.rst:267 ../../benchmarks.rst:275
+#: ../../benchmarks.rst:283
 msgid "16176"
 msgstr "16176"
 
-#: ../../benchmarks.rst:275 ../../benchmarks.rst:307
-#: ../../benchmarks.rst:359 ../../benchmarks.rst:391
+#: ../../benchmarks.rst:269 ../../benchmarks.rst:301
+#: ../../benchmarks.rst:353 ../../benchmarks.rst:385
 msgid "``allowed_static`` (200)"
 msgstr "``allowed_static`` (200)"
 
-#: ../../benchmarks.rst:276
+#: ../../benchmarks.rst:270
 msgid "211,053"
 msgstr "211,053"
 
-#: ../../benchmarks.rst:277 ../../benchmarks.rst:293
-#: ../../benchmarks.rst:317
+#: ../../benchmarks.rst:271 ../../benchmarks.rst:287
+#: ../../benchmarks.rst:311
 msgid "152"
 msgstr "152"
 
-#: ../../benchmarks.rst:280 ../../benchmarks.rst:671
+#: ../../benchmarks.rst:274 ../../benchmarks.rst:665
 msgid "11.73"
 msgstr "11.73"
 
-#: ../../benchmarks.rst:283 ../../benchmarks.rst:367
+#: ../../benchmarks.rst:277 ../../benchmarks.rst:361
 msgid "``attack`` (200)"
 msgstr "``attack`` (200)"
 
-#: ../../benchmarks.rst:284
+#: ../../benchmarks.rst:278
 msgid "211,618"
 msgstr "211,618"
 
-#: ../../benchmarks.rst:286
+#: ../../benchmarks.rst:280
 msgid "176"
 msgstr "176"
 
-#: ../../benchmarks.rst:290 ../../benchmarks.rst:298
-#: ../../benchmarks.rst:306 ../../benchmarks.rst:314
-#: ../../benchmarks.rst:374 ../../benchmarks.rst:382
-#: ../../benchmarks.rst:390 ../../benchmarks.rst:398
+#: ../../benchmarks.rst:284 ../../benchmarks.rst:292
+#: ../../benchmarks.rst:300 ../../benchmarks.rst:308
+#: ../../benchmarks.rst:368 ../../benchmarks.rst:376
+#: ../../benchmarks.rst:384 ../../benchmarks.rst:392
 msgid "Shield"
 msgstr "Shield"
 
-#: ../../benchmarks.rst:292
+#: ../../benchmarks.rst:286
 msgid "208,101"
 msgstr "208,101"
 
-#: ../../benchmarks.rst:294
+#: ../../benchmarks.rst:288
 msgid "178"
 msgstr "178"
 
-#: ../../benchmarks.rst:295 ../../benchmarks.rst:627
+#: ../../benchmarks.rst:289 ../../benchmarks.rst:621
 msgid "308"
 msgstr "308"
 
-#: ../../benchmarks.rst:296
+#: ../../benchmarks.rst:290
 msgid "12.87"
 msgstr "12.87"
 
-#: ../../benchmarks.rst:297
+#: ../../benchmarks.rst:291
 msgid "15928"
 msgstr "15928"
 
-#: ../../benchmarks.rst:300
+#: ../../benchmarks.rst:294
 msgid "197,532"
 msgstr "197,532"
 
-#: ../../benchmarks.rst:301
+#: ../../benchmarks.rst:295
 msgid "161"
 msgstr "161"
 
-#: ../../benchmarks.rst:302
+#: ../../benchmarks.rst:296
 msgid "183"
 msgstr "183"
 
-#: ../../benchmarks.rst:303
+#: ../../benchmarks.rst:297
 msgid "327"
 msgstr "327"
 
-#: ../../benchmarks.rst:304
+#: ../../benchmarks.rst:298
 msgid "13.77"
 msgstr "13.77"
 
-#: ../../benchmarks.rst:305 ../../benchmarks.rst:313
-#: ../../benchmarks.rst:321
+#: ../../benchmarks.rst:299 ../../benchmarks.rst:307
+#: ../../benchmarks.rst:315
 msgid "16192"
 msgstr "16192"
 
-#: ../../benchmarks.rst:308
+#: ../../benchmarks.rst:302
 msgid "211,636"
 msgstr "211,636"
 
-#: ../../benchmarks.rst:312
+#: ../../benchmarks.rst:306
 msgid "11.78"
 msgstr "11.78"
 
-#: ../../benchmarks.rst:315 ../../benchmarks.rst:399
+#: ../../benchmarks.rst:309 ../../benchmarks.rst:393
 msgid "``attack`` (403)"
 msgstr "``attack`` (403)"
 
-#: ../../benchmarks.rst:316
+#: ../../benchmarks.rst:310
 msgid "210,549"
 msgstr "210,549"
 
-#: ../../benchmarks.rst:319
+#: ../../benchmarks.rst:313
 msgid "307"
 msgstr "307"
 
-#: ../../benchmarks.rst:320
+#: ../../benchmarks.rst:314
 msgid "12.32"
 msgstr "12.32"
 
-#: ../../benchmarks.rst:323
+#: ../../benchmarks.rst:317
 msgid ""
 "In forward-auth mode the daemon is not the bottleneck. Its cores busy "
 "(CPU time over wall time, ``cores_busy_median`` in the JSON file) stay "
@@ -1305,11 +1318,11 @@ msgstr ""
 "طلب: من 11.73 إلى 13.77 us، وهو أكثر قليلًا في Shield منه في Gate، وأكثر "
 "ما يكون في صفوف ``challenged``، التي تنشئ إجابة التحدي."
 
-#: ../../benchmarks.rst:325
+#: ../../benchmarks.rst:319
 msgid "Reverse-Proxy Mode"
 msgstr "وضع الوكيل العكسي"
 
-#: ../../benchmarks.rst:328
+#: ../../benchmarks.rst:322
 msgid ""
 "The daemon sits in front of the stub origin and relays admitted requests "
 "and responses. Proxied rows therefore include the origin's own cost and "
@@ -1319,7 +1332,7 @@ msgstr ""
 "والاستجابات. لذلك تشمل الصفوف الممررة تكلفة الخادم الأصلي نفسه وقفزة "
 "loopback إضافية."
 
-#: ../../benchmarks.rst:330
+#: ../../benchmarks.rst:324
 msgid ""
 "Reverse-proxy mode, Gate and Shield; latency in microseconds "
 "(``benchmarks/results/product-latest.md``, generated 2026-10-15T23:15:24Z)"
@@ -1327,189 +1340,189 @@ msgstr ""
 "وضع الوكيل العكسي، Gate وShield؛ زمن الاستجابة بالميكروثانية "
 "(``benchmarks/results/product-latest.md``، أُنشئ في 2026-10-15T23:15:24Z)"
 
-#: ../../benchmarks.rst:344
+#: ../../benchmarks.rst:338
 msgid "142,498"
 msgstr "142,498"
 
-#: ../../benchmarks.rst:345
+#: ../../benchmarks.rst:339
 msgid "427"
 msgstr "427"
 
-#: ../../benchmarks.rst:346
+#: ../../benchmarks.rst:340
 msgid "548"
 msgstr "548"
 
-#: ../../benchmarks.rst:347
+#: ../../benchmarks.rst:341
 msgid "768"
 msgstr "768"
 
-#: ../../benchmarks.rst:348
+#: ../../benchmarks.rst:342
 msgid "27.68"
 msgstr "27.68"
 
-#: ../../benchmarks.rst:349
+#: ../../benchmarks.rst:343
 msgid "15896"
 msgstr "15896"
 
-#: ../../benchmarks.rst:351 ../../benchmarks.rst:383
+#: ../../benchmarks.rst:345 ../../benchmarks.rst:377
 msgid "``challenged`` (200)"
 msgstr "``challenged`` (200)"
 
-#: ../../benchmarks.rst:352
+#: ../../benchmarks.rst:346
 msgid "199,465"
 msgstr "199,465"
 
-#: ../../benchmarks.rst:354
+#: ../../benchmarks.rst:348
 msgid "181"
 msgstr "181"
 
-#: ../../benchmarks.rst:355
+#: ../../benchmarks.rst:349
 msgid "324"
 msgstr "324"
 
-#: ../../benchmarks.rst:356
+#: ../../benchmarks.rst:350
 msgid "12.98"
 msgstr "12.98"
 
-#: ../../benchmarks.rst:357
+#: ../../benchmarks.rst:351
 msgid "16160"
 msgstr "16160"
 
-#: ../../benchmarks.rst:360
+#: ../../benchmarks.rst:354
 msgid "147,303"
 msgstr "147,303"
 
-#: ../../benchmarks.rst:361
+#: ../../benchmarks.rst:355
 msgid "411"
 msgstr "411"
 
-#: ../../benchmarks.rst:362
+#: ../../benchmarks.rst:356
 msgid "541"
 msgstr "541"
 
-#: ../../benchmarks.rst:363
+#: ../../benchmarks.rst:357
 msgid "759"
 msgstr "759"
 
-#: ../../benchmarks.rst:364
+#: ../../benchmarks.rst:358
 msgid "26.88"
 msgstr "26.88"
 
-#: ../../benchmarks.rst:365
+#: ../../benchmarks.rst:359
 msgid "16324"
 msgstr "16324"
 
-#: ../../benchmarks.rst:368
+#: ../../benchmarks.rst:362
 msgid "143,900"
 msgstr "143,900"
 
-#: ../../benchmarks.rst:369
+#: ../../benchmarks.rst:363
 msgid "422"
 msgstr "422"
 
-#: ../../benchmarks.rst:370 ../../benchmarks.rst:528
+#: ../../benchmarks.rst:364 ../../benchmarks.rst:522
 msgid "555"
 msgstr "555"
 
-#: ../../benchmarks.rst:371
+#: ../../benchmarks.rst:365
 msgid "745"
 msgstr "745"
 
-#: ../../benchmarks.rst:372
+#: ../../benchmarks.rst:366
 msgid "27.67"
 msgstr "27.67"
 
-#: ../../benchmarks.rst:373
+#: ../../benchmarks.rst:367
 msgid "16348"
 msgstr "16348"
 
-#: ../../benchmarks.rst:376
+#: ../../benchmarks.rst:370
 msgid "138,965"
 msgstr "138,965"
 
-#: ../../benchmarks.rst:377
+#: ../../benchmarks.rst:371
 msgid "438"
 msgstr "438"
 
-#: ../../benchmarks.rst:378
+#: ../../benchmarks.rst:372
 msgid "571"
 msgstr "571"
 
-#: ../../benchmarks.rst:379
+#: ../../benchmarks.rst:373
 msgid "857"
 msgstr "857"
 
-#: ../../benchmarks.rst:380
+#: ../../benchmarks.rst:374
 msgid "28.57"
 msgstr "28.57"
 
-#: ../../benchmarks.rst:381
+#: ../../benchmarks.rst:375
 msgid "16064"
 msgstr "16064"
 
-#: ../../benchmarks.rst:384
+#: ../../benchmarks.rst:378
 msgid "195,188"
 msgstr "195,188"
 
-#: ../../benchmarks.rst:385
+#: ../../benchmarks.rst:379
 msgid "162"
 msgstr "162"
 
-#: ../../benchmarks.rst:386
+#: ../../benchmarks.rst:380
 msgid "185"
 msgstr "185"
 
-#: ../../benchmarks.rst:387 ../../benchmarks.rst:737
+#: ../../benchmarks.rst:381 ../../benchmarks.rst:731
 msgid "328"
 msgstr "328"
 
-#: ../../benchmarks.rst:388
+#: ../../benchmarks.rst:382
 msgid "13.73"
 msgstr "13.73"
 
-#: ../../benchmarks.rst:389 ../../benchmarks.rst:397
-#: ../../benchmarks.rst:405
+#: ../../benchmarks.rst:383 ../../benchmarks.rst:391
+#: ../../benchmarks.rst:399
 msgid "16328"
 msgstr "16328"
 
-#: ../../benchmarks.rst:392
+#: ../../benchmarks.rst:386
 msgid "145,673"
 msgstr "145,673"
 
-#: ../../benchmarks.rst:393
+#: ../../benchmarks.rst:387
 msgid "415"
 msgstr "415"
 
-#: ../../benchmarks.rst:394
+#: ../../benchmarks.rst:388
 msgid "551"
 msgstr "551"
 
-#: ../../benchmarks.rst:395
+#: ../../benchmarks.rst:389
 msgid "746"
 msgstr "746"
 
-#: ../../benchmarks.rst:396
+#: ../../benchmarks.rst:390
 msgid "27.27"
 msgstr "27.27"
 
-#: ../../benchmarks.rst:400
+#: ../../benchmarks.rst:394
 msgid "209,507"
 msgstr "209,507"
 
-#: ../../benchmarks.rst:402
+#: ../../benchmarks.rst:396
 msgid "177"
 msgstr "177"
 
-#: ../../benchmarks.rst:403 ../../benchmarks.rst:687
-#: ../../benchmarks.rst:777
+#: ../../benchmarks.rst:397 ../../benchmarks.rst:681
+#: ../../benchmarks.rst:771
 msgid "306"
 msgstr "306"
 
-#: ../../benchmarks.rst:404
+#: ../../benchmarks.rst:398
 msgid "12.17"
 msgstr "12.17"
 
-#: ../../benchmarks.rst:407
+#: ../../benchmarks.rst:401
 msgid ""
 "Here the proxied rows (``admitted``, ``allowed_static``, and Gate's "
 "``attack``, which Gate relays) are CPU bound: cores busy is 3.96 to 3.98 "
@@ -1529,7 +1542,7 @@ msgstr ""
 "يكون p99 في ``wrk`` ذيل المجدول عند معدل البرنامج الخدمي نفسه، لذا نقرأ "
 "ذيول الفصل التالي بدلًا منه."
 
-#: ../../benchmarks.rst:409
+#: ../../benchmarks.rst:403
 msgid ""
 "In three reverse-proxy rows ``wrk`` counted responses outside the 2xx and "
 "3xx classes where none was expected: 3 of 2,162,579 requests (Gate "
@@ -1554,11 +1567,11 @@ msgstr ""
 "الاتصال القديم مكانه. صار البرنامج الخدمي الآن يُخلي المكان قبل أن يكتب "
 "استجابة الإغلاق (SID 0002، \"bug fix\")؛ والجداول أقدم من ذلك الإصلاح."
 
-#: ../../benchmarks.rst:411
+#: ../../benchmarks.rst:405
 msgid "Footprint"
 msgstr "الحجم والذاكرة"
 
-#: ../../benchmarks.rst:414
+#: ../../benchmarks.rst:408
 msgid ""
 "Sizes and resident memory of the daemon "
 "(``benchmarks/results/product-latest.json``, generated "
@@ -1570,87 +1583,87 @@ msgstr ""
 "2026-10-15T23:15:24Z، و\\ ``primitives-latest.json``، أُنشئ في "
 "2026-10-15T22:34:59Z)"
 
-#: ../../benchmarks.rst:418 ../../benchmarks.rst:863
+#: ../../benchmarks.rst:412 ../../benchmarks.rst:857
 msgid "Measure"
 msgstr "المقياس"
 
-#: ../../benchmarks.rst:419 ../../benchmarks.rst:864
+#: ../../benchmarks.rst:413 ../../benchmarks.rst:858
 msgid "Value"
 msgstr "القيمة"
 
-#: ../../benchmarks.rst:420
+#: ../../benchmarks.rst:414
 msgid "Daemon binary"
 msgstr "الملف التنفيذي للبرنامج الخدمي"
 
-#: ../../benchmarks.rst:421
+#: ../../benchmarks.rst:415
 msgid "49,113,856 bytes"
 msgstr "49,113,856 بايت"
 
-#: ../../benchmarks.rst:422
+#: ../../benchmarks.rst:416
 msgid "Idle resident memory, product runs"
 msgstr "الذاكرة المقيمة في الخمول، تشغيلات المنتجات"
 
-#: ../../benchmarks.rst:423
+#: ../../benchmarks.rst:417
 msgid "5,592 to 5,788 KiB"
 msgstr "من 5,592 إلى 5,788 KiB"
 
-#: ../../benchmarks.rst:424
+#: ../../benchmarks.rst:418
 msgid "Peak resident memory during a workload"
 msgstr "ذروة الذاكرة المقيمة أثناء عبء عمل"
 
-#: ../../benchmarks.rst:425
+#: ../../benchmarks.rst:419
 msgid "15,896 to 16,348 KiB"
 msgstr "من 15,896 إلى 16,348 KiB"
 
-#: ../../benchmarks.rst:426
+#: ../../benchmarks.rst:420
 msgid "Resident memory after the workloads"
 msgstr "الذاكرة المقيمة بعد الأعباء"
 
-#: ../../benchmarks.rst:427
+#: ../../benchmarks.rst:421
 msgid "16,176 to 16,348 KiB"
 msgstr "من 16,176 إلى 16,348 KiB"
 
-#: ../../benchmarks.rst:428
+#: ../../benchmarks.rst:422
 msgid "Idle resident memory, primitive run"
 msgstr "الذاكرة المقيمة في الخمول، تشغيل العمليات الأولية"
 
-#: ../../benchmarks.rst:429
+#: ../../benchmarks.rst:423
 msgid "6,052 KiB"
 msgstr "6,052 KiB"
 
-#: ../../benchmarks.rst:430
+#: ../../benchmarks.rst:424
 msgid "Policy engine tables"
 msgstr "جداول محرك السياسة"
 
-#: ../../benchmarks.rst:431
+#: ../../benchmarks.rst:425
 msgid "209,052 bytes (heap)"
 msgstr "209,052 بايت (الكومة)"
 
-#: ../../benchmarks.rst:432
+#: ../../benchmarks.rst:426
 msgid "Bot signature table"
 msgstr "جدول توقيعات الروبوتات"
 
-#: ../../benchmarks.rst:433
+#: ../../benchmarks.rst:427
 msgid "42,244 bytes (heap)"
 msgstr "42,244 بايت (الكومة)"
 
-#: ../../benchmarks.rst:434
+#: ../../benchmarks.rst:428
 msgid "WAF table"
 msgstr "جدول WAF"
 
-#: ../../benchmarks.rst:435
+#: ../../benchmarks.rst:429
 msgid "164,908 bytes (heap)"
 msgstr "164,908 بايت (الكومة)"
 
-#: ../../benchmarks.rst:436
+#: ../../benchmarks.rst:430
 msgid "Browser solver module (WebAssembly)"
 msgstr "وحدة حل الألغاز في المتصفح (WebAssembly)"
 
-#: ../../benchmarks.rst:437
+#: ../../benchmarks.rst:431
 msgid "14,744 bytes"
 msgstr "14,744 بايت"
 
-#: ../../benchmarks.rst:439
+#: ../../benchmarks.rst:433
 msgid ""
 "The ranges run over the four product runs (two modes, two surfaces), and "
 "for the peak over their sixteen workloads. The table sizes are heap sizes "
@@ -1660,11 +1673,11 @@ msgstr ""
 "للذروة عبر أعبائها الستة عشر. أحجام الجداول أحجام كومة يعرضها المحرك. لا "
 "يفصِّل السجل حجم الملف التنفيذي."
 
-#: ../../benchmarks.rst:441
+#: ../../benchmarks.rst:435
 msgid "Latency at Equal Offered Load"
 msgstr "زمن الاستجابة عند حمل معروض متساوٍ"
 
-#: ../../benchmarks.rst:446
+#: ../../benchmarks.rst:440
 msgid ""
 "Read a latency distribution at a fixed offered load, read a tail "
 "percentile together with its spread, and follow one tail defect from its "
@@ -1673,7 +1686,7 @@ msgstr ""
 "اقرأ توزيع زمن الاستجابة عند حمل معروض ثابت، واقرأ مئين الذيل مع مجاله، "
 "وتتبع خللًا واحدًا في الذيل من قياسه إلى إصلاحه."
 
-#: ../../benchmarks.rst:448
+#: ../../benchmarks.rst:442
 msgid ""
 "Both tables come from one run of ``cargo xtask bench latency``. The "
 "errors column counts the generator's connection, I/O and framing errors."
@@ -1681,7 +1694,7 @@ msgstr ""
 "يأتي الجدولان كلاهما من تشغيل واحد لـ ``cargo xtask bench latency``. يعد "
 "عمود الأخطاء أخطاء الاتصال والإدخال/الإخراج والتأطير في المولد."
 
-#: ../../benchmarks.rst:450
+#: ../../benchmarks.rst:444
 msgid ""
 "Forward-auth mode, Shield, admitted requests at fixed offered rates; "
 "latency in microseconds (``benchmarks/results/latency-latest.md``, "
@@ -1691,186 +1704,186 @@ msgstr ""
 "الاستجابة بالميكروثانية (``benchmarks/results/latency-latest.md``، أُنشئ "
 "في 2026-10-15T23:07:14Z)"
 
-#: ../../benchmarks.rst:454 ../../benchmarks.rst:513
+#: ../../benchmarks.rst:448 ../../benchmarks.rst:507
 msgid "Offered req/s"
 msgstr "req/s المعروضة"
 
-#: ../../benchmarks.rst:455 ../../benchmarks.rst:514
+#: ../../benchmarks.rst:449 ../../benchmarks.rst:508
 msgid "Achieved req/s"
 msgstr "req/s المحققة"
 
-#: ../../benchmarks.rst:458 ../../benchmarks.rst:517
+#: ../../benchmarks.rst:452 ../../benchmarks.rst:511
 msgid "p99 (min-max)"
 msgstr "p99 (الأدنى-الأقصى)"
 
-#: ../../benchmarks.rst:459 ../../benchmarks.rst:518
+#: ../../benchmarks.rst:453 ../../benchmarks.rst:512
 msgid "p99.9"
 msgstr "p99.9"
 
-#: ../../benchmarks.rst:460 ../../benchmarks.rst:519
+#: ../../benchmarks.rst:454 ../../benchmarks.rst:513
 msgid "max"
 msgstr "الأقصى"
 
-#: ../../benchmarks.rst:461 ../../benchmarks.rst:520
+#: ../../benchmarks.rst:455 ../../benchmarks.rst:514
 msgid "Errors"
 msgstr "الأخطاء"
 
-#: ../../benchmarks.rst:463 ../../benchmarks.rst:464
-#: ../../benchmarks.rst:522 ../../benchmarks.rst:523
+#: ../../benchmarks.rst:457 ../../benchmarks.rst:458
+#: ../../benchmarks.rst:516 ../../benchmarks.rst:517
 msgid "10,000"
 msgstr "10,000"
 
-#: ../../benchmarks.rst:465
+#: ../../benchmarks.rst:459
 msgid "30"
 msgstr "30"
 
-#: ../../benchmarks.rst:466
+#: ../../benchmarks.rst:460
 msgid "32"
 msgstr "32"
 
-#: ../../benchmarks.rst:467
+#: ../../benchmarks.rst:461
 msgid "37 (36-39)"
 msgstr "37 (36-39)"
 
-#: ../../benchmarks.rst:468
+#: ../../benchmarks.rst:462
 msgid "58"
 msgstr "58"
 
-#: ../../benchmarks.rst:469
+#: ../../benchmarks.rst:463
 msgid "355"
 msgstr "355"
 
-#: ../../benchmarks.rst:470 ../../benchmarks.rst:479
-#: ../../benchmarks.rst:488 ../../benchmarks.rst:497
-#: ../../benchmarks.rst:506 ../../benchmarks.rst:529
-#: ../../benchmarks.rst:538 ../../benchmarks.rst:547
-#: ../../benchmarks.rst:556 ../../benchmarks.rst:870
+#: ../../benchmarks.rst:464 ../../benchmarks.rst:473
+#: ../../benchmarks.rst:482 ../../benchmarks.rst:491
+#: ../../benchmarks.rst:500 ../../benchmarks.rst:523
+#: ../../benchmarks.rst:532 ../../benchmarks.rst:541
+#: ../../benchmarks.rst:550 ../../benchmarks.rst:864
 msgid "0"
 msgstr "0"
 
-#: ../../benchmarks.rst:471
+#: ../../benchmarks.rst:465
 msgid "16.92"
 msgstr "16.92"
 
-#: ../../benchmarks.rst:472 ../../benchmarks.rst:473
-#: ../../benchmarks.rst:531 ../../benchmarks.rst:532
+#: ../../benchmarks.rst:466 ../../benchmarks.rst:467
+#: ../../benchmarks.rst:525 ../../benchmarks.rst:526
 msgid "25,000"
 msgstr "25,000"
 
-#: ../../benchmarks.rst:474
+#: ../../benchmarks.rst:468
 msgid "28"
 msgstr "28"
 
-#: ../../benchmarks.rst:475
+#: ../../benchmarks.rst:469
 msgid "31"
 msgstr "31"
 
-#: ../../benchmarks.rst:476
+#: ../../benchmarks.rst:470
 msgid "34 (32-34)"
 msgstr "34 (32-34)"
 
-#: ../../benchmarks.rst:477
+#: ../../benchmarks.rst:471
 msgid "45"
 msgstr "45"
 
-#: ../../benchmarks.rst:478
+#: ../../benchmarks.rst:472
 msgid "1035"
 msgstr "1035"
 
-#: ../../benchmarks.rst:480
+#: ../../benchmarks.rst:474
 msgid "15.83"
 msgstr "15.83"
 
-#: ../../benchmarks.rst:481 ../../benchmarks.rst:482
-#: ../../benchmarks.rst:540 ../../benchmarks.rst:541
+#: ../../benchmarks.rst:475 ../../benchmarks.rst:476
+#: ../../benchmarks.rst:534 ../../benchmarks.rst:535
 msgid "50,000"
 msgstr "50,000"
 
-#: ../../benchmarks.rst:483 ../../benchmarks.rst:501
+#: ../../benchmarks.rst:477 ../../benchmarks.rst:495
 msgid "25"
 msgstr "25"
 
-#: ../../benchmarks.rst:484
+#: ../../benchmarks.rst:478
 msgid "27"
 msgstr "27"
 
-#: ../../benchmarks.rst:485
+#: ../../benchmarks.rst:479
 msgid "30 (30-30)"
 msgstr "30 (30-30)"
 
-#: ../../benchmarks.rst:486
+#: ../../benchmarks.rst:480
 msgid "40"
 msgstr "40"
 
-#: ../../benchmarks.rst:487
+#: ../../benchmarks.rst:481
 msgid "3029"
 msgstr "3029"
 
-#: ../../benchmarks.rst:489
+#: ../../benchmarks.rst:483
 msgid "13.83"
 msgstr "13.83"
 
-#: ../../benchmarks.rst:490 ../../benchmarks.rst:549
+#: ../../benchmarks.rst:484 ../../benchmarks.rst:543
 msgid "100,000"
 msgstr "100,000"
 
-#: ../../benchmarks.rst:491
+#: ../../benchmarks.rst:485
 msgid "99,998"
 msgstr "99,998"
 
-#: ../../benchmarks.rst:492
+#: ../../benchmarks.rst:486
 msgid "24"
 msgstr "24"
 
-#: ../../benchmarks.rst:493
+#: ../../benchmarks.rst:487
 msgid "26"
 msgstr "26"
 
-#: ../../benchmarks.rst:494
+#: ../../benchmarks.rst:488
 msgid "41 (40-42)"
 msgstr "41 (40-42)"
 
-#: ../../benchmarks.rst:495
+#: ../../benchmarks.rst:489
 msgid "62"
 msgstr "62"
 
-#: ../../benchmarks.rst:496
+#: ../../benchmarks.rst:490
 msgid "2358"
 msgstr "2358"
 
-#: ../../benchmarks.rst:498
+#: ../../benchmarks.rst:492
 msgid "13.48"
 msgstr "13.48"
 
-#: ../../benchmarks.rst:499 ../../benchmarks.rst:558
+#: ../../benchmarks.rst:493 ../../benchmarks.rst:552
 msgid "150,000"
 msgstr "150,000"
 
-#: ../../benchmarks.rst:500
+#: ../../benchmarks.rst:494
 msgid "149,996"
 msgstr "149,996"
 
-#: ../../benchmarks.rst:502
+#: ../../benchmarks.rst:496
 msgid "36"
 msgstr "36"
 
-#: ../../benchmarks.rst:503
+#: ../../benchmarks.rst:497
 msgid "51 (51-52)"
 msgstr "51 (51-52)"
 
-#: ../../benchmarks.rst:504 ../../benchmarks.rst:545
+#: ../../benchmarks.rst:498 ../../benchmarks.rst:539
 msgid "74"
 msgstr "74"
 
-#: ../../benchmarks.rst:505
+#: ../../benchmarks.rst:499
 msgid "1753"
 msgstr "1753"
 
-#: ../../benchmarks.rst:507
+#: ../../benchmarks.rst:501
 msgid "14.16"
 msgstr "14.16"
 
-#: ../../benchmarks.rst:509
+#: ../../benchmarks.rst:503
 msgid ""
 "Reverse-proxy mode, Shield, admitted requests at fixed offered rates; "
 "latency in microseconds (``benchmarks/results/latency-latest.md``, "
@@ -1880,131 +1893,131 @@ msgstr ""
 "الاستجابة بالميكروثانية (``benchmarks/results/latency-latest.md``، أُنشئ "
 "في 2026-10-15T23:07:14Z)"
 
-#: ../../benchmarks.rst:524
+#: ../../benchmarks.rst:518
 msgid "56"
 msgstr "56"
 
-#: ../../benchmarks.rst:525
+#: ../../benchmarks.rst:519
 msgid "61"
 msgstr "61"
 
-#: ../../benchmarks.rst:526
+#: ../../benchmarks.rst:520
 msgid "65 (65-66)"
 msgstr "65 (65-66)"
 
-#: ../../benchmarks.rst:527
+#: ../../benchmarks.rst:521
 msgid "76"
 msgstr "76"
 
-#: ../../benchmarks.rst:530
+#: ../../benchmarks.rst:524
 msgid "32.25"
 msgstr "32.25"
 
-#: ../../benchmarks.rst:533
+#: ../../benchmarks.rst:527
 msgid "51"
 msgstr "51"
 
-#: ../../benchmarks.rst:534
+#: ../../benchmarks.rst:528
 msgid "54"
 msgstr "54"
 
-#: ../../benchmarks.rst:535
+#: ../../benchmarks.rst:529
 msgid "58 (58-60)"
 msgstr "58 (58-60)"
 
-#: ../../benchmarks.rst:536
+#: ../../benchmarks.rst:530
 msgid "72"
 msgstr "72"
 
-#: ../../benchmarks.rst:537
+#: ../../benchmarks.rst:531
 msgid "1105"
 msgstr "1105"
 
-#: ../../benchmarks.rst:539
+#: ../../benchmarks.rst:533
 msgid "28.63"
 msgstr "28.63"
 
-#: ../../benchmarks.rst:542
+#: ../../benchmarks.rst:536
 msgid "47"
 msgstr "47"
 
-#: ../../benchmarks.rst:543
+#: ../../benchmarks.rst:537
 msgid "50"
 msgstr "50"
 
-#: ../../benchmarks.rst:544
+#: ../../benchmarks.rst:538
 msgid "60 (58-66)"
 msgstr "60 (58-66)"
 
-#: ../../benchmarks.rst:546
+#: ../../benchmarks.rst:540
 msgid "3066"
 msgstr "3066"
 
-#: ../../benchmarks.rst:548
+#: ../../benchmarks.rst:542
 msgid "27.45"
 msgstr "27.45"
 
-#: ../../benchmarks.rst:550
+#: ../../benchmarks.rst:544
 msgid "99,996"
 msgstr "99,996"
 
-#: ../../benchmarks.rst:551
+#: ../../benchmarks.rst:545
 msgid "55"
 msgstr "55"
 
-#: ../../benchmarks.rst:552
+#: ../../benchmarks.rst:546
 msgid "75"
 msgstr "75"
 
-#: ../../benchmarks.rst:553
+#: ../../benchmarks.rst:547
 msgid "100 (100-104)"
 msgstr "100 (100-104)"
 
-#: ../../benchmarks.rst:554
+#: ../../benchmarks.rst:548
 msgid "150"
 msgstr "150"
 
-#: ../../benchmarks.rst:555
+#: ../../benchmarks.rst:549
 msgid "2239"
 msgstr "2239"
 
-#: ../../benchmarks.rst:557
+#: ../../benchmarks.rst:551
 msgid "28.42"
 msgstr "28.42"
 
-#: ../../benchmarks.rst:559
+#: ../../benchmarks.rst:553
 msgid "134,344"
 msgstr "134,344"
 
-#: ../../benchmarks.rst:560
+#: ../../benchmarks.rst:554
 msgid "583934"
 msgstr "583934"
 
-#: ../../benchmarks.rst:561
+#: ../../benchmarks.rst:555
 msgid "1544160"
 msgstr "1544160"
 
-#: ../../benchmarks.rst:562
+#: ../../benchmarks.rst:556
 msgid "1906273 (1631234-2218760)"
 msgstr "1906273 (1631234-2218760)"
 
-#: ../../benchmarks.rst:563
+#: ../../benchmarks.rst:557
 msgid "1967134"
 msgstr "1967134"
 
-#: ../../benchmarks.rst:564
+#: ../../benchmarks.rst:558
 msgid "1989964"
 msgstr "1989964"
 
-#: ../../benchmarks.rst:565
+#: ../../benchmarks.rst:559
 msgid "4"
 msgstr "4"
 
-#: ../../benchmarks.rst:566
+#: ../../benchmarks.rst:560
 msgid "29.22"
 msgstr "29.22"
 
-#: ../../benchmarks.rst:568
+#: ../../benchmarks.rst:562
 msgid ""
 "In forward-auth mode the p50 stays between 24 and 30 us at every rate. "
 "The p99 stays at or under 51 us up to 150,000 requests per second, and "
@@ -2015,7 +2028,7 @@ msgstr ""
 "us أو دونها حتى 150,000 طلب في الثانية، وp99.9 عند 74 us أو دونها. ينفق "
 "البرنامج الخدمي من 13.48 إلى 16.92 us من وقت CPU لكل طلب."
 
-#: ../../benchmarks.rst:570
+#: ../../benchmarks.rst:564
 msgid ""
 "In reverse-proxy mode the p50 is 47 to 56 us up to 100,000 requests per "
 "second, the p99 100 us and the p99.9 150 us at 100,000. At 150,000 "
@@ -2034,7 +2047,7 @@ msgstr ""
 "(138,965 طلبًا في الثانية لصف Shield ``admitted``). وقعت أخطاء ذلك الصف "
 "الأربعة أثناء الحمل الزائد."
 
-#: ../../benchmarks.rst:572
+#: ../../benchmarks.rst:566
 msgid ""
 "The p99 spreads are narrow below saturation; the widest is the "
 "reverse-proxy p99 at 50,000 requests per second, 58 to 66 us. The max "
@@ -2046,11 +2059,11 @@ msgstr ""
 "مليون في التشغيل. وعلى مضيف مشترك نقرؤه على أنه أسوأ لحظة مرّ بها المضيف، "
 "لا خاصيةً للبرنامج الخدمي."
 
-#: ../../benchmarks.rst:574
+#: ../../benchmarks.rst:568
 msgid "What the Measurement Changed"
 msgstr "ما الذي غيَّره القياس"
 
-#: ../../benchmarks.rst:577
+#: ../../benchmarks.rst:571
 msgid ""
 "External load has changed Sibuna's design. The daemon serves each "
 "connection on a thread of its own (SID 0002, SID 0010), and its first "
@@ -2064,7 +2077,7 @@ msgstr ""
 "بعد 4,096 طلبًا، كان المئين 99.9 عند 100,000 طلب مقبول في الثانية من 0.3 "
 "إلى 2 ms."
 
-#: ../../benchmarks.rst:579
+#: ../../benchmarks.rst:573
 msgid ""
 "The diagnosis, recorded in SID 0002 and in the documentation of "
 "``cmd/sibuna/src/tasks.rs``, is thread turnover. Creating and ending a "
@@ -2092,7 +2105,7 @@ msgstr ""
 "ينتهي بدل أن ينتظر. ويُخدم ``--max-connections`` اتصالًا على الأكثر في "
 "وقت واحد، كما من قبل."
 
-#: ../../benchmarks.rst:581
+#: ../../benchmarks.rst:575
 msgid ""
 "The tables above are from the run after the fix: a p99.9 of 62 us in "
 "forward-auth mode and 150 us in reverse-proxy mode at 100,000 requests "
@@ -2104,11 +2117,11 @@ msgstr ""
 "تُحفظ تشغيلات ما قبل الإصلاح ملفات نتائج، ولهذا لا تظهر أرقامها إلا في "
 "SID 0002 وفي هذا القسم."
 
-#: ../../benchmarks.rst:583
+#: ../../benchmarks.rst:577
 msgid "Worked example: why the stall showed at p99.9"
 msgstr "مثال محلول: لماذا ظهر التوقف عند p99.9"
 
-#: ../../benchmarks.rst:585
+#: ../../benchmarks.rst:579
 msgid ""
 "At 100,000 requests per second over 64 connections, each connection "
 "carries :math:`100000 / 64 = 1562.5` requests per second. The daemon "
@@ -2127,7 +2140,7 @@ msgstr ""
 "اتصالًا جديدًا في الثانية. ومع خيط لكل اتصال، يعني ذلك نحو 24 بدء خيط و24 "
 "انتهاء خيط كل ثانية."
 
-#: ../../benchmarks.rst:587
+#: ../../benchmarks.rst:581
 msgid ""
 "A 10-second run at this rate measures 1,000,000 requests. Its p99.9 is "
 "exceeded by 1,000 of them, 100 per second; its p99 by 1,000 per second. "
@@ -2146,11 +2159,11 @@ msgstr ""
 "النادر الدوري يحرك الذيل البعيد قبل أن يحرك p99 بوقت طويل. ولهذا يحتاج "
 "مثل هذا الخلل إلى p99.9 ومؤقت على كل طلب حتى يُرى."
 
-#: ../../benchmarks.rst:589
+#: ../../benchmarks.rst:583
 msgid "Sibuna and Anubis"
 msgstr "Sibuna وAnubis"
 
-#: ../../benchmarks.rst:594
+#: ../../benchmarks.rst:588
 msgid ""
 "Read Sibuna's figures beside those of an established product under the "
 "same load, and say which differences come from the products and which "
@@ -2159,7 +2172,7 @@ msgstr ""
 "اقرأ أرقام Sibuna بجانب أرقام منتج راسخ تحت الحمل نفسه، وبيِّن أي الفروق "
 "تأتي من المنتجين وأيها من الإعداد."
 
-#: ../../benchmarks.rst:596
+#: ../../benchmarks.rst:590
 msgid ""
 "Anubis, by Techaro, is a widely deployed proof-of-work gate that sits in "
 "front of web sites, much as Sibuna's Gate does. We measured the official "
@@ -2172,7 +2185,7 @@ msgstr ""
 "(``anubis-1.27.0-linux-amd64``، 40,001,698 بايت) بجانب Sibuna على المضيف "
 "نفسه، وعلى وحدات CPU نفسها، وبالأعباء نفسها. سُجل ملفا النتائج بالأمرين:"
 
-#: ../../benchmarks.rst:598
+#: ../../benchmarks.rst:592
 msgid ""
 "cargo xtask bench product --anubis <path/to/anubis>\n"
 "cargo xtask bench admission --anubis <path/to/anubis>"
@@ -2180,7 +2193,7 @@ msgstr ""
 "cargo xtask bench product --anubis <path/to/anubis>\n"
 "cargo xtask bench admission --anubis <path/to/anubis>"
 
-#: ../../benchmarks.rst:603
+#: ../../benchmarks.rst:597
 msgid ""
 "Anubis started as the earlier Python drivers of this project started it: "
 "``--bind``, ``--metrics-bind``, ``--target=`` (empty in forward-auth "
@@ -2213,11 +2226,11 @@ msgstr ""
 "بالصفحة. وفي وضع forward-auth يسأل عبئا ``admitted`` و\\ ``challenged`` "
 "نقطة نهاية الفحص في Anubis (``/.within.website/x/cmd/anubis/api/check``)."
 
-#: ../../benchmarks.rst:605
+#: ../../benchmarks.rst:599
 msgid "Whole-Product Workloads"
 msgstr "أعباء المنتجات الكاملة"
 
-#: ../../benchmarks.rst:608
+#: ../../benchmarks.rst:602
 msgid ""
 "The four workloads, the load and the statistics are those of the "
 "whole-product harness, with one change: the origin is ``caddy respond``, "
@@ -2231,7 +2244,7 @@ msgstr ""
 "القياس حتى يبقى أقل من 3,000 مقبس في ``TIME_WAIT``، لأن تشغيلات الوكيل "
 "العكسي لـ Anubis تترك عشرات الآلاف منها."
 
-#: ../../benchmarks.rst:610
+#: ../../benchmarks.rst:604
 msgid ""
 "Forward-auth mode: medians of three five-second ``wrk`` runs "
 "(``benchmarks/results/comparison-latest.md``, generated "
@@ -2241,203 +2254,203 @@ msgstr ""
 "(``benchmarks/results/comparison-latest.md``، أُنشئ في "
 "2026-10-16T00:55:19Z)."
 
-#: ../../benchmarks.rst:615 ../../benchmarks.rst:705
+#: ../../benchmarks.rst:609 ../../benchmarks.rst:699
 msgid "Figure"
 msgstr "المقياس"
 
-#: ../../benchmarks.rst:616 ../../benchmarks.rst:706
+#: ../../benchmarks.rst:610 ../../benchmarks.rst:700
 msgid "Sibuna Gate"
 msgstr "Sibuna Gate"
 
-#: ../../benchmarks.rst:617 ../../benchmarks.rst:707
+#: ../../benchmarks.rst:611 ../../benchmarks.rst:701
 msgid "Sibuna Shield"
 msgstr "Sibuna Shield"
 
-#: ../../benchmarks.rst:618 ../../benchmarks.rst:708
+#: ../../benchmarks.rst:612 ../../benchmarks.rst:702
 msgid "Anubis 1.27.0"
 msgstr "Anubis 1.27.0"
 
-#: ../../benchmarks.rst:619 ../../benchmarks.rst:709
+#: ../../benchmarks.rst:613 ../../benchmarks.rst:703
 msgid "``admitted``"
 msgstr "``admitted``"
 
-#: ../../benchmarks.rst:620 ../../benchmarks.rst:640
-#: ../../benchmarks.rst:660 ../../benchmarks.rst:680
-#: ../../benchmarks.rst:710 ../../benchmarks.rst:730
-#: ../../benchmarks.rst:750 ../../benchmarks.rst:770
+#: ../../benchmarks.rst:614 ../../benchmarks.rst:634
+#: ../../benchmarks.rst:654 ../../benchmarks.rst:674
+#: ../../benchmarks.rst:704 ../../benchmarks.rst:724
+#: ../../benchmarks.rst:744 ../../benchmarks.rst:764
 msgid "req/s (status)"
 msgstr "req/s (الحالة)"
 
-#: ../../benchmarks.rst:621
+#: ../../benchmarks.rst:615
 msgid "210,682 (200)"
 msgstr "210,682 (200)"
 
-#: ../../benchmarks.rst:622
+#: ../../benchmarks.rst:616
 msgid "208,635 (200)"
 msgstr "208,635 (200)"
 
-#: ../../benchmarks.rst:623
+#: ../../benchmarks.rst:617
 msgid "36,509 (200)"
 msgstr "36,509 (200)"
 
-#: ../../benchmarks.rst:625 ../../benchmarks.rst:645
-#: ../../benchmarks.rst:665 ../../benchmarks.rst:685
-#: ../../benchmarks.rst:715 ../../benchmarks.rst:735
-#: ../../benchmarks.rst:755 ../../benchmarks.rst:775
+#: ../../benchmarks.rst:619 ../../benchmarks.rst:639
+#: ../../benchmarks.rst:659 ../../benchmarks.rst:679
+#: ../../benchmarks.rst:709 ../../benchmarks.rst:729
+#: ../../benchmarks.rst:749 ../../benchmarks.rst:769
 msgid "p99 us"
 msgstr "p99 us"
 
-#: ../../benchmarks.rst:628
+#: ../../benchmarks.rst:622
 msgid "7,477"
 msgstr "7,477"
 
-#: ../../benchmarks.rst:631
+#: ../../benchmarks.rst:625
 msgid "12.09"
 msgstr "12.09"
 
-#: ../../benchmarks.rst:632
+#: ../../benchmarks.rst:626
 msgid "13.21"
 msgstr "13.21"
 
-#: ../../benchmarks.rst:633
+#: ../../benchmarks.rst:627
 msgid "106.30"
 msgstr "106.30"
 
-#: ../../benchmarks.rst:636
+#: ../../benchmarks.rst:630
 msgid "16,228"
 msgstr "16,228"
 
-#: ../../benchmarks.rst:637
+#: ../../benchmarks.rst:631
 msgid "16,316"
 msgstr "16,316"
 
-#: ../../benchmarks.rst:638
+#: ../../benchmarks.rst:632
 msgid "32,624"
 msgstr "32,624"
 
-#: ../../benchmarks.rst:639 ../../benchmarks.rst:729
+#: ../../benchmarks.rst:633 ../../benchmarks.rst:723
 msgid "``challenged``"
 msgstr "``challenged``"
 
-#: ../../benchmarks.rst:641
+#: ../../benchmarks.rst:635
 msgid "198,251 (401)"
 msgstr "198,251 (401)"
 
-#: ../../benchmarks.rst:642
+#: ../../benchmarks.rst:636
 msgid "193,087 (401)"
 msgstr "193,087 (401)"
 
-#: ../../benchmarks.rst:643
+#: ../../benchmarks.rst:637
 msgid "113,170 (401)"
 msgstr "113,170 (401)"
 
-#: ../../benchmarks.rst:647
+#: ../../benchmarks.rst:641
 msgid "342"
 msgstr "342"
 
-#: ../../benchmarks.rst:648
+#: ../../benchmarks.rst:642
 msgid "3,781"
 msgstr "3,781"
 
-#: ../../benchmarks.rst:651
+#: ../../benchmarks.rst:645
 msgid "13.49"
 msgstr "13.49"
 
-#: ../../benchmarks.rst:652
+#: ../../benchmarks.rst:646
 msgid "15.02"
 msgstr "15.02"
 
-#: ../../benchmarks.rst:653
+#: ../../benchmarks.rst:647
 msgid "32.96"
 msgstr "32.96"
 
-#: ../../benchmarks.rst:656 ../../benchmarks.rst:676
-#: ../../benchmarks.rst:696
+#: ../../benchmarks.rst:650 ../../benchmarks.rst:670
+#: ../../benchmarks.rst:690
 msgid "16,240"
 msgstr "16,240"
 
-#: ../../benchmarks.rst:657 ../../benchmarks.rst:677
-#: ../../benchmarks.rst:697
+#: ../../benchmarks.rst:651 ../../benchmarks.rst:671
+#: ../../benchmarks.rst:691
 msgid "16,328"
 msgstr "16,328"
 
-#: ../../benchmarks.rst:658
+#: ../../benchmarks.rst:652
 msgid "32,696"
 msgstr "32,696"
 
-#: ../../benchmarks.rst:659 ../../benchmarks.rst:749
+#: ../../benchmarks.rst:653 ../../benchmarks.rst:743
 msgid "``allowed_static``"
 msgstr "``allowed_static``"
 
-#: ../../benchmarks.rst:661
+#: ../../benchmarks.rst:655
 msgid "212,569 (200)"
 msgstr "212,569 (200)"
 
-#: ../../benchmarks.rst:662
+#: ../../benchmarks.rst:656
 msgid "212,444 (200)"
 msgstr "212,444 (200)"
 
-#: ../../benchmarks.rst:663
+#: ../../benchmarks.rst:657
 msgid "89,904 (200)"
 msgstr "89,904 (200)"
 
-#: ../../benchmarks.rst:666 ../../benchmarks.rst:667
+#: ../../benchmarks.rst:660 ../../benchmarks.rst:661
 msgid "304"
 msgstr "304"
 
-#: ../../benchmarks.rst:668
+#: ../../benchmarks.rst:662
 msgid "4,547"
 msgstr "4,547"
 
-#: ../../benchmarks.rst:672
+#: ../../benchmarks.rst:666
 msgid "11.95"
 msgstr "11.95"
 
-#: ../../benchmarks.rst:673
+#: ../../benchmarks.rst:667
 msgid "41.63"
 msgstr "41.63"
 
-#: ../../benchmarks.rst:678
+#: ../../benchmarks.rst:672
 msgid "33,396"
 msgstr "33,396"
 
-#: ../../benchmarks.rst:679 ../../benchmarks.rst:769
+#: ../../benchmarks.rst:673 ../../benchmarks.rst:763
 msgid "``attack``"
 msgstr "``attack``"
 
-#: ../../benchmarks.rst:681
+#: ../../benchmarks.rst:675
 msgid "212,086 (200)"
 msgstr "212,086 (200)"
 
-#: ../../benchmarks.rst:682
+#: ../../benchmarks.rst:676
 msgid "211,347 (403)"
 msgstr "211,347 (403)"
 
-#: ../../benchmarks.rst:683
+#: ../../benchmarks.rst:677
 msgid "36,853 (200)"
 msgstr "36,853 (200)"
 
-#: ../../benchmarks.rst:688
+#: ../../benchmarks.rst:682
 msgid "7,283"
 msgstr "7,283"
 
-#: ../../benchmarks.rst:691
+#: ../../benchmarks.rst:685
 msgid "12.07"
 msgstr "12.07"
 
-#: ../../benchmarks.rst:692
+#: ../../benchmarks.rst:686
 msgid "12.56"
 msgstr "12.56"
 
-#: ../../benchmarks.rst:693
+#: ../../benchmarks.rst:687
 msgid "104.88"
 msgstr "104.88"
 
-#: ../../benchmarks.rst:698
+#: ../../benchmarks.rst:692
 msgid "33,764"
 msgstr "33,764"
 
-#: ../../benchmarks.rst:700
+#: ../../benchmarks.rst:694
 msgid ""
 "Reverse-proxy mode, behind ``caddy respond``: medians of three "
 "five-second ``wrk`` runs (``benchmarks/results/comparison-latest.md``, "
@@ -2447,177 +2460,177 @@ msgstr ""
 "مدة كل منها خمس ثوانٍ (``benchmarks/results/comparison-latest.md``، أُنشئ "
 "في 2026-10-16T00:55:19Z)."
 
-#: ../../benchmarks.rst:711
+#: ../../benchmarks.rst:705
 msgid "106,376 (200)"
 msgstr "106,376 (200)"
 
-#: ../../benchmarks.rst:712
+#: ../../benchmarks.rst:706
 msgid "103,298 (200)"
 msgstr "103,298 (200)"
 
-#: ../../benchmarks.rst:713
+#: ../../benchmarks.rst:707
 msgid "19,398 (200)"
 msgstr "19,398 (200)"
 
-#: ../../benchmarks.rst:716
+#: ../../benchmarks.rst:710
 msgid "3,331"
 msgstr "3,331"
 
-#: ../../benchmarks.rst:717
+#: ../../benchmarks.rst:711
 msgid "3,321"
 msgstr "3,321"
 
-#: ../../benchmarks.rst:718
+#: ../../benchmarks.rst:712
 msgid "11,062"
 msgstr "11,062"
 
-#: ../../benchmarks.rst:721
+#: ../../benchmarks.rst:715
 msgid "27.02"
 msgstr "27.02"
 
-#: ../../benchmarks.rst:722
+#: ../../benchmarks.rst:716
 msgid "27.92"
 msgstr "27.92"
 
-#: ../../benchmarks.rst:723
+#: ../../benchmarks.rst:717
 msgid "190.40"
 msgstr "190.40"
 
-#: ../../benchmarks.rst:726
+#: ../../benchmarks.rst:720
 msgid "16,528"
 msgstr "16,528"
 
-#: ../../benchmarks.rst:727
+#: ../../benchmarks.rst:721
 msgid "16,444"
 msgstr "16,444"
 
-#: ../../benchmarks.rst:728
+#: ../../benchmarks.rst:722
 msgid "39,980"
 msgstr "39,980"
 
-#: ../../benchmarks.rst:731
+#: ../../benchmarks.rst:725
 msgid "198,402 (200)"
 msgstr "198,402 (200)"
 
-#: ../../benchmarks.rst:732
+#: ../../benchmarks.rst:726
 msgid "197,327 (200)"
 msgstr "197,327 (200)"
 
-#: ../../benchmarks.rst:733
+#: ../../benchmarks.rst:727
 msgid "28,842 (200)"
 msgstr "28,842 (200)"
 
-#: ../../benchmarks.rst:736
+#: ../../benchmarks.rst:730
 msgid "325"
 msgstr "325"
 
-#: ../../benchmarks.rst:738
+#: ../../benchmarks.rst:732
 msgid "9,546"
 msgstr "9,546"
 
-#: ../../benchmarks.rst:741
+#: ../../benchmarks.rst:735
 msgid "13.05"
 msgstr "13.05"
 
-#: ../../benchmarks.rst:742
+#: ../../benchmarks.rst:736
 msgid "13.78"
 msgstr "13.78"
 
-#: ../../benchmarks.rst:743
+#: ../../benchmarks.rst:737
 msgid "137.73"
 msgstr "137.73"
 
-#: ../../benchmarks.rst:746 ../../benchmarks.rst:766
-#: ../../benchmarks.rst:786
+#: ../../benchmarks.rst:740 ../../benchmarks.rst:760
+#: ../../benchmarks.rst:780
 msgid "16,544"
 msgstr "16,544"
 
-#: ../../benchmarks.rst:747 ../../benchmarks.rst:767
-#: ../../benchmarks.rst:787
+#: ../../benchmarks.rst:741 ../../benchmarks.rst:761
+#: ../../benchmarks.rst:781
 msgid "16,464"
 msgstr "16,464"
 
-#: ../../benchmarks.rst:748
+#: ../../benchmarks.rst:742
 msgid "516,872"
 msgstr "516,872"
 
-#: ../../benchmarks.rst:751
+#: ../../benchmarks.rst:745
 msgid "105,427 (200)"
 msgstr "105,427 (200)"
 
-#: ../../benchmarks.rst:752
+#: ../../benchmarks.rst:746
 msgid "106,819 (200)"
 msgstr "106,819 (200)"
 
-#: ../../benchmarks.rst:753
+#: ../../benchmarks.rst:747
 msgid "28,862 (200)"
 msgstr "28,862 (200)"
 
-#: ../../benchmarks.rst:756
+#: ../../benchmarks.rst:750
 msgid "3,320"
 msgstr "3,320"
 
-#: ../../benchmarks.rst:757
+#: ../../benchmarks.rst:751
 msgid "3,316"
 msgstr "3,316"
 
-#: ../../benchmarks.rst:758
+#: ../../benchmarks.rst:752
 msgid "30,124"
 msgstr "30,124"
 
-#: ../../benchmarks.rst:761
+#: ../../benchmarks.rst:755
 msgid "26.24"
 msgstr "26.24"
 
-#: ../../benchmarks.rst:762
+#: ../../benchmarks.rst:756
 msgid "26.52"
 msgstr "26.52"
 
-#: ../../benchmarks.rst:763
+#: ../../benchmarks.rst:757
 msgid "135.41"
 msgstr "135.41"
 
-#: ../../benchmarks.rst:768
+#: ../../benchmarks.rst:762
 msgid "616,548"
 msgstr "616,548"
 
-#: ../../benchmarks.rst:771
+#: ../../benchmarks.rst:765
 msgid "105,616 (200)"
 msgstr "105,616 (200)"
 
-#: ../../benchmarks.rst:772
+#: ../../benchmarks.rst:766
 msgid "210,483 (403)"
 msgstr "210,483 (403)"
 
-#: ../../benchmarks.rst:773
+#: ../../benchmarks.rst:767
 msgid "23,399 (200)"
 msgstr "23,399 (200)"
 
-#: ../../benchmarks.rst:776
+#: ../../benchmarks.rst:770
 msgid "3,327"
 msgstr "3,327"
 
-#: ../../benchmarks.rst:778
+#: ../../benchmarks.rst:772
 msgid "14,124"
 msgstr "14,124"
 
-#: ../../benchmarks.rst:781
+#: ../../benchmarks.rst:775
 msgid "26.98"
 msgstr "26.98"
 
-#: ../../benchmarks.rst:782
+#: ../../benchmarks.rst:776
 msgid "12.28"
 msgstr "12.28"
 
-#: ../../benchmarks.rst:783
+#: ../../benchmarks.rst:777
 msgid "169.04"
 msgstr "169.04"
 
-#: ../../benchmarks.rst:788
+#: ../../benchmarks.rst:782
 msgid "599,516"
 msgstr "599,516"
 
-#: ../../benchmarks.rst:790
+#: ../../benchmarks.rst:784
 msgid ""
 "In forward-auth mode Sibuna served 193,087 to 212,569 requests per second "
 "with a p99 of 304 to 342 us, and Anubis 36,509 (``admitted``) to 113,170 "
@@ -2642,7 +2655,7 @@ msgstr ""
 "العمليات الأولية)؛ وتدعم هذه القراءةَ قياساتُ عمليات القبول أدناه، حيث "
 "ترفع رموز HS512 فحوص الجلسات في Anubis بأكثر من النصف."
 
-#: ../../benchmarks.rst:792
+#: ../../benchmarks.rst:786
 msgid ""
 "In reverse-proxy mode Sibuna's proxied rows served 103,298 to 106,819 "
 "requests per second at 2.77 to 2.98 cores busy. They are below the "
@@ -2673,11 +2686,11 @@ msgstr ""
 "تحدٍّ صادر، لكن أداة القياس لم تؤكد السبب. وبقيت ذروة Sibuna بين 16,228 "
 "و16,544 KiB في كل صف من الوضعين."
 
-#: ../../benchmarks.rst:794
+#: ../../benchmarks.rst:788
 msgid "Several rows are not like for like either:"
 msgstr "وليست المقارنة متكافئة في صفوف عدة أيضًا:"
 
-#: ../../benchmarks.rst:796
+#: ../../benchmarks.rst:790
 msgid ""
 "In forward-auth mode Anubis answers ``/robots.txt`` and the ``attack`` "
 "path itself with ``200``, without an origin; Sibuna answers them as it "
@@ -2687,7 +2700,7 @@ msgstr ""
 "بنفسه بـ ``200``، بلا خادم أصلي؛ ويجيب Sibuna عنهما كما يجيب عن أي طلب في "
 "ذلك الوضع."
 
-#: ../../benchmarks.rst:797
+#: ../../benchmarks.rst:791
 msgid ""
 "Anubis has no request inspection, so it admits the SQL injection of the "
 "``attack`` workload. Shield refuses it with ``403``, after more work; "
@@ -2696,7 +2709,7 @@ msgstr ""
 "لا يفحص Anubis الطلبات، لذا يقبل حقن SQL في عبء ``attack``. يرفضه Shield "
 "بـ ``403``، بعد عمل أكثر؛ ويقبله Gate، كما يفعل Anubis."
 
-#: ../../benchmarks.rst:798
+#: ../../benchmarks.rst:792
 msgid ""
 "The products sign sessions differently (Ed25519 for Anubis by default, a "
 "keyed BLAKE3 MAC for Sibuna), and they render different challenge pages."
@@ -2704,11 +2717,11 @@ msgstr ""
 "يوقع المنتجان الجلسات بطريقتين مختلفتين (Ed25519 في Anubis افتراضيًا، "
 "وBLAKE3 MAC ذو مفتاح في Sibuna)، ويعرضان صفحتي تحدٍّ مختلفتين."
 
-#: ../../benchmarks.rst:800
+#: ../../benchmarks.rst:794
 msgid "Admission Operations"
 msgstr "عمليات القبول"
 
-#: ../../benchmarks.rst:803
+#: ../../benchmarks.rst:797
 msgid ""
 "The admission harness times the four operations that admission is made "
 "of, in forward-auth mode, with each product on two CPUs (two Sibuna "
@@ -2723,15 +2736,15 @@ msgstr ""
 "منهما اتصال keep-alive واحد، كل دفعة: 200 عملية، أو 64 إثباتًا للتحقق، "
 "تُعد قبل الدفعة. نعرض وسيط سبع دفعات."
 
-#: ../../benchmarks.rst:805
+#: ../../benchmarks.rst:799
 msgid "Session check: the check endpoint with a valid session (``200``)."
 msgstr "فحص الجلسة: نقطة نهاية الفحص مع جلسة صالحة (``200``)."
 
-#: ../../benchmarks.rst:806
+#: ../../benchmarks.rst:800
 msgid "Unauthenticated check: the same without a cookie (``401``)."
 msgstr "فحص بلا مصادقة: الطلب نفسه بلا ملف تعريف ارتباط (``401``)."
 
-#: ../../benchmarks.rst:807
+#: ../../benchmarks.rst:801
 msgid ""
 "Challenge bootstrap: what a browser fetches to start a challenge. For "
 "Sibuna that is two requests, the interstitial and the challenge record; "
@@ -2740,7 +2753,7 @@ msgstr ""
 "تمهيد التحدي: ما يجلبه المتصفح لبدء تحدٍّ. في Sibuna هما طلبان، الصفحة "
 "الوسيطة وسجل التحدي؛ وفي Anubis طلب واحد، الصفحة مع التحدي المضمن."
 
-#: ../../benchmarks.rst:808
+#: ../../benchmarks.rst:802
 msgid ""
 "Proof verification: one fresh proof per operation. Sibuna's proof "
 "challenges are issued 25 ms apart, below the 50 per second at which its "
@@ -2753,14 +2766,14 @@ msgstr ""
 "التكيفية بإضافة بتات، فيبقى العمل متكافئًا. يعمل Sibuna مع "
 "``--challenge-rate-limit 100000000``، فيُفحص محدده لكنه لا يُستنفد أبدًا."
 
-#: ../../benchmarks.rst:810
+#: ../../benchmarks.rst:804
 msgid ""
 "Anubis ran twice, with its default Ed25519 tokens and with "
 "``--hs512-secret``."
 msgstr ""
 "شُغِّل Anubis مرتين، مع رموز Ed25519 الافتراضية ومع ``--hs512-secret``."
 
-#: ../../benchmarks.rst:812
+#: ../../benchmarks.rst:806
 msgid ""
 "Admission operations per second, two clients, product on two CPUs "
 "(``benchmarks/results/admission-latest.md``, generated "
@@ -2770,103 +2783,103 @@ msgstr ""
 "(``benchmarks/results/admission-latest.md``، أُنشئ في "
 "2026-10-16T00:55:44Z)"
 
-#: ../../benchmarks.rst:816
+#: ../../benchmarks.rst:810
 msgid "Product (token)"
 msgstr "المنتج (الرمز)"
 
-#: ../../benchmarks.rst:817
+#: ../../benchmarks.rst:811
 msgid "Session check"
 msgstr "فحص الجلسة"
 
-#: ../../benchmarks.rst:818
+#: ../../benchmarks.rst:812
 msgid "Unauthenticated check"
 msgstr "فحص بلا مصادقة"
 
-#: ../../benchmarks.rst:819
+#: ../../benchmarks.rst:813
 msgid "Challenge bootstrap"
 msgstr "تمهيد التحدي"
 
-#: ../../benchmarks.rst:820
+#: ../../benchmarks.rst:814
 msgid "Proof verification"
 msgstr "التحقق من الإثبات"
 
-#: ../../benchmarks.rst:821
+#: ../../benchmarks.rst:815
 msgid "RSS after, KiB"
 msgstr "RSS بعد القياس، KiB"
 
-#: ../../benchmarks.rst:822
+#: ../../benchmarks.rst:816
 msgid "Sibuna (keyed BLAKE3)"
 msgstr "Sibuna (BLAKE3 ذو مفتاح)"
 
-#: ../../benchmarks.rst:823
+#: ../../benchmarks.rst:817
 msgid "88,104"
 msgstr "88,104"
 
-#: ../../benchmarks.rst:824
+#: ../../benchmarks.rst:818
 msgid "78,997"
 msgstr "78,997"
 
-#: ../../benchmarks.rst:825
+#: ../../benchmarks.rst:819
 msgid "42,664"
 msgstr "42,664"
 
-#: ../../benchmarks.rst:826
+#: ../../benchmarks.rst:820
 msgid "57,924"
 msgstr "57,924"
 
-#: ../../benchmarks.rst:827
+#: ../../benchmarks.rst:821
 msgid "7,792"
 msgstr "7,792"
 
-#: ../../benchmarks.rst:828
+#: ../../benchmarks.rst:822
 msgid "Anubis 1.27.0 (Ed25519)"
 msgstr "Anubis 1.27.0 (Ed25519)"
 
-#: ../../benchmarks.rst:829
+#: ../../benchmarks.rst:823
 msgid "10,951"
 msgstr "10,951"
 
-#: ../../benchmarks.rst:830
+#: ../../benchmarks.rst:824
 msgid "28,619"
 msgstr "28,619"
 
-#: ../../benchmarks.rst:831
+#: ../../benchmarks.rst:825
 msgid "7,893"
 msgstr "7,893"
 
-#: ../../benchmarks.rst:832
+#: ../../benchmarks.rst:826
 msgid "12,668"
 msgstr "12,668"
 
-#: ../../benchmarks.rst:833
+#: ../../benchmarks.rst:827
 msgid "33,400"
 msgstr "33,400"
 
-#: ../../benchmarks.rst:834
+#: ../../benchmarks.rst:828
 msgid "Anubis 1.27.0 (HS512)"
 msgstr "Anubis 1.27.0 (HS512)"
 
-#: ../../benchmarks.rst:835
+#: ../../benchmarks.rst:829
 msgid "16,976"
 msgstr "16,976"
 
-#: ../../benchmarks.rst:836
+#: ../../benchmarks.rst:830
 msgid "27,785"
 msgstr "27,785"
 
-#: ../../benchmarks.rst:837
+#: ../../benchmarks.rst:831
 msgid "7,952"
 msgstr "7,952"
 
-#: ../../benchmarks.rst:838
+#: ../../benchmarks.rst:832
 msgid "19,261"
 msgstr "19,261"
 
-#: ../../benchmarks.rst:839
+#: ../../benchmarks.rst:833
 msgid "29,840"
 msgstr "29,840"
 
-#: ../../benchmarks.rst:841
+#: ../../benchmarks.rst:835
 msgid ""
 "The ranges of the seven batches are in the file. Sibuna's lie within 11% "
 "of its medians; Anubis's are wider (its unauthenticated checks with "
@@ -2883,7 +2896,7 @@ msgstr ""
 "والإياب: 22.7 us لفحص جلسة في Sibuna، و182.5 us لفحص في Anubis مع رموز "
 "Ed25519، و117.7 us مع HS512."
 
-#: ../../benchmarks.rst:843
+#: ../../benchmarks.rst:837
 msgid ""
 "In none of the rows above did Anubis serve more requests, or use less CPU "
 "or memory, than Sibuna. That is a statement about these workloads on this "
@@ -2893,11 +2906,11 @@ msgstr ""
 "يستهلك وقت CPU أو ذاكرة أقل منه. هذا حكم على هذه الأعباء على هذا المضيف، "
 "لا أكثر."
 
-#: ../../benchmarks.rst:845
+#: ../../benchmarks.rst:839
 msgid "Reading the Anubis rows"
 msgstr "قراءة صفوف Anubis"
 
-#: ../../benchmarks.rst:847
+#: ../../benchmarks.rst:841
 msgid ""
 "Anubis is a capable, widely deployed product, and these rows are not a "
 "claim that it is slow. It runs on a garbage-collected runtime, signs "
@@ -2915,11 +2928,11 @@ msgstr ""
 "هذه. تبين الصفوف ما كلفه الطلب كل منتج على مضيف واحد تحت شكل حمل واحد، في "
 "أكتوبر 2026. Sibuna جديد، وهذه أولى قياساته بجانب منتج راسخ."
 
-#: ../../benchmarks.rst:849
+#: ../../benchmarks.rst:843
 msgid "Console Overhead"
 msgstr "التكلفة الإضافية لوحدة التحكم"
 
-#: ../../benchmarks.rst:852
+#: ../../benchmarks.rst:846
 msgid ""
 "SID 0007 sets the console's isolation contract. Enabling the console may "
 "cost at most 1% of data-plane throughput and at most 10% of p99 latency, "
@@ -2937,7 +2950,7 @@ msgstr ""
 "ولا تغني خطوط الأساس للعمليات الأولية وتشغيلات الفحص السريع عن معيار "
 "الاجتياز الرسمي."
 
-#: ../../benchmarks.rst:854
+#: ../../benchmarks.rst:848
 msgid ""
 "SID 0010 records one measurement: with the console compiled in, disabled, "
 "storage only, or enabled and idle, the 16 product workloads stay within "
@@ -2953,7 +2966,7 @@ msgstr ""
 "النشطة الثماني تحت الحمل، لذا يبقى معيار الاجتياز الرسمي في SID 0007 "
 "مفتوحًا."
 
-#: ../../benchmarks.rst:856
+#: ../../benchmarks.rst:850
 msgid ""
 "The eight-dashboard run checks function, not overhead. ``sibuna-browser "
 "dashboards`` started a release daemon on one SQLite node with its "
@@ -2978,7 +2991,7 @@ msgstr ""
 "من 4 إلى 8 شاشات حائط فُتحت برموز أصدرتها اللوحة الأولى، لأن وحدة التحكم "
 "تسمح بخمس عمليات تسجيل دخول في الدقيقة لكل عنوان ولكل حساب."
 
-#: ../../benchmarks.rst:859
+#: ../../benchmarks.rst:853
 msgid ""
 "Eight Traffic dashboards on one node "
 "(``benchmarks/results/console-8-dashboards-2026-10-15.md``, recorded "
@@ -2988,60 +3001,60 @@ msgstr ""
 "(``benchmarks/results/console-8-dashboards-2026-10-15.md``، سُجل في "
 "2026-10-15، Chromium 155.0.8059.39). النتيجة: PASS"
 
-#: ../../benchmarks.rst:865
+#: ../../benchmarks.rst:859
 msgid "Data-plane requests"
 msgstr "طلبات مستوى البيانات"
 
-#: ../../benchmarks.rst:866
+#: ../../benchmarks.rst:860
 msgid ""
 "6,000 in 30.0 s (200 per second, 4 threads, one connection per request)"
 msgstr "6,000 في 30.0 s (200 في الثانية، 4 خيوط، اتصال واحد لكل طلب)"
 
-#: ../../benchmarks.rst:867
+#: ../../benchmarks.rst:861
 msgid "Answered"
 msgstr "المجاب عنها"
 
-#: ../../benchmarks.rst:868
+#: ../../benchmarks.rst:862
 msgid "6,000: 200 x 1,200, 401 x 3,000, 403 x 600, 404 x 600, 500 x 600"
 msgstr "6,000: 200 x 1,200، 401 x 3,000، 403 x 600، 404 x 600، 500 x 600"
 
-#: ../../benchmarks.rst:869
+#: ../../benchmarks.rst:863
 msgid "Errors (no reply)"
 msgstr "الأخطاء (بلا رد)"
 
-#: ../../benchmarks.rst:871
+#: ../../benchmarks.rst:865
 msgid "Latency p50 / p90 / p99 / max"
 msgstr "زمن الاستجابة p50 / p90 / p99 / الأقصى"
 
-#: ../../benchmarks.rst:872
+#: ../../benchmarks.rst:866
 msgid "246 / 311 / 373 / 552 us (connect included)"
 msgstr "246 / 311 / 373 / 552 us (بما في ذلك زمن الاتصال)"
 
-#: ../../benchmarks.rst:873
+#: ../../benchmarks.rst:867
 msgid "Daemon VmRSS at start"
 msgstr "VmRSS للبرنامج الخدمي عند البدء"
 
-#: ../../benchmarks.rst:874
+#: ../../benchmarks.rst:868
 msgid "36,152 KiB"
 msgstr "36,152 KiB"
 
-#: ../../benchmarks.rst:875
+#: ../../benchmarks.rst:869
 msgid "Daemon VmRSS with 8 dashboards open"
 msgstr "VmRSS للبرنامج الخدمي مع فتح 8 لوحات معلومات"
 
-#: ../../benchmarks.rst:876
+#: ../../benchmarks.rst:870
 msgid "38,028 KiB"
 msgstr "38,028 KiB"
 
-#: ../../benchmarks.rst:877
+#: ../../benchmarks.rst:871
 msgid "Daemon VmRSS after the traffic"
 msgstr "VmRSS للبرنامج الخدمي بعد حركة المرور"
 
-#: ../../benchmarks.rst:878
+#: ../../benchmarks.rst:872
 msgid "41,496 KiB (VmHWM 41,496 KiB)"
 msgstr "41,496 KiB (VmHWM 41,496 KiB)"
 
-#: ../../benchmarks.rst:880
+#: ../../benchmarks.rst:874
 msgid ""
 "The tiles were read every two seconds during the traffic and 3 seconds "
 "after it. Every dashboard ended with the same totals (Requests 6,000, "
@@ -3063,32 +3076,32 @@ msgstr ""
 "الخدمية العاملة في الذاكرة في أداة قياس المنتجات، لذا لا تُقارن ذاكرته "
 "المقيمة بذاكرتها."
 
-#: ../../benchmarks.rst:882
+#: ../../benchmarks.rst:876
 msgid "Not Measured"
 msgstr "ما لم يُقس"
 
-#: ../../benchmarks.rst:885
+#: ../../benchmarks.rst:879
 msgid ""
 "What this part does not measure, and what stands in for a measurement"
 msgstr "ما لا يقيسه هذا الجزء، وما يقوم مقام القياس"
 
-#: ../../benchmarks.rst:889
+#: ../../benchmarks.rst:883
 msgid "Subject"
 msgstr "الموضوع"
 
-#: ../../benchmarks.rst:890
+#: ../../benchmarks.rst:884
 msgid "Why it is not measured here"
 msgstr "لماذا لا يُقاس هنا"
 
-#: ../../benchmarks.rst:891
+#: ../../benchmarks.rst:885
 msgid "What stands in"
 msgstr "ما يقوم مقامه"
 
-#: ../../benchmarks.rst:892
+#: ../../benchmarks.rst:886
 msgid "SafeLine community edition 9.x"
 msgstr "الإصدار المجتمعي من SafeLine 9.x"
 
-#: ../../benchmarks.rst:893
+#: ../../benchmarks.rst:887
 msgid ""
 "Ships only as a Docker Compose stack; the host had no Docker daemon, and "
 "the detector image is not an open-source build that can be compiled there"
@@ -3096,7 +3109,7 @@ msgstr ""
 "لا يُوزع إلا حزمة Docker Compose؛ ولم يكن على المضيف برنامج Docker "
 "الخدمي، وصورة الكاشف ليست بناءً مفتوح المصدر يمكن بناؤه هناك"
 
-#: ../../benchmarks.rst:894
+#: ../../benchmarks.rst:888
 msgid ""
 "Published, vendor-reported facts (checked September 2026): detection rate "
 "71.65% (balance) and 76.17% (strict), false positives 0.07% (balance) and "
@@ -3108,17 +3121,17 @@ msgstr ""
 "(strict)؛ والحد الأدنى للمضيف Linux x86_64 أو arm64 مع SSSE3، ونواة CPU "
 "واحدة، و1 GB من RAM، و5 GB من القرص، وDocker 20.10.14+ وCompose 2.0+"
 
-#: ../../benchmarks.rst:895
+#: ../../benchmarks.rst:889
 msgid "Cloudflare WAF"
 msgstr "Cloudflare WAF"
 
-#: ../../benchmarks.rst:896
+#: ../../benchmarks.rst:890
 msgid ""
 "A hosted service; a loopback measurement would measure the network path, "
 "not the WAF"
 msgstr "خدمة مستضافة؛ وقياس loopback سيقيس مسار الشبكة، لا WAF"
 
-#: ../../benchmarks.rst:897
+#: ../../benchmarks.rst:891
 msgid ""
 "Published plan quotas (checked September 2026): custom rules Free 5, Pro "
 "20, Business 100, Enterprise 1000; rate limiting rules Free 1, Pro 2, "
@@ -3128,17 +3141,17 @@ msgstr ""
 "20، وBusiness 100، وEnterprise 1000؛ وقواعد حد المعدل Free 1، وPro 2، "
 "وBusiness 5، وEnterprise 100"
 
-#: ../../benchmarks.rst:898
+#: ../../benchmarks.rst:892
 msgid "A cluster under load"
 msgstr "عنقود تحت الحمل"
 
-#: ../../benchmarks.rst:899
+#: ../../benchmarks.rst:893
 msgid "No harness drives several nodes on one PostgreSQL database yet"
 msgstr ""
 "لا توجد بعد أداة قياس تُحمِّل عدة عقد تشترك في قاعدة بيانات PostgreSQL "
 "واحدة"
 
-#: ../../benchmarks.rst:900
+#: ../../benchmarks.rst:894
 msgid ""
 "The protocol properties that SID 0011 specifies (one shared seed, "
 "issuer-bound challenges) and its three-node functional test (criterion "
@@ -3147,25 +3160,25 @@ msgstr ""
 "خصائص البروتوكول التي يحددها SID 0011 (بذرة مشتركة واحدة، وتحديات مرتبطة "
 "بمُصدرها) واختباره الوظيفي على ثلاث عقد (المعيار 2)؛ بلا قياس"
 
-#: ../../benchmarks.rst:901
+#: ../../benchmarks.rst:895
 msgid "Storage on the request path"
 msgstr "التخزين على مسار الطلب"
 
-#: ../../benchmarks.rst:902
+#: ../../benchmarks.rst:896
 msgid "Both daemons run in memory in every harness"
 msgstr "يعمل البرنامجان الخدميان كلاهما في الذاكرة في كل أداة قياس"
 
-#: ../../benchmarks.rst:903
+#: ../../benchmarks.rst:897
 msgid ""
 "SID 0011: one storage thread owns all SQL, and the request path never "
 "waits on it"
 msgstr "SID 0011: خيط تخزين واحد يملك كل SQL، ولا ينتظره مسار الطلب أبدًا"
 
-#: ../../benchmarks.rst:904
+#: ../../benchmarks.rst:898
 msgid "TLS, WAN, real browsers"
 msgstr "TLS وWAN والمتصفحات الحقيقية"
 
-#: ../../benchmarks.rst:905
+#: ../../benchmarks.rst:899
 msgid ""
 "The harnesses use loopback and HTTP; sessions are solved once per case by "
 "``sibuna-pow``"
@@ -3173,19 +3186,19 @@ msgstr ""
 "تستخدم أدوات القياس loopback وHTTP؛ وتُحل الجلسات مرة لكل حالة بـ "
 "``sibuna-pow``"
 
-#: ../../benchmarks.rst:906
+#: ../../benchmarks.rst:900
 msgid "Nothing; a deployment measures its own path"
 msgstr "لا شيء؛ يقيس كل نشر مساره الخاص"
 
-#: ../../benchmarks.rst:907
+#: ../../benchmarks.rst:901
 msgid "The browser solver's solve time"
 msgstr "زمن الحل في برنامج حل الألغاز في المتصفح"
 
-#: ../../benchmarks.rst:908
+#: ../../benchmarks.rst:902
 msgid "The harness solves at 8 bits with the native solver"
 msgstr "تحل أداة القياس عند 8 بتات ببرنامج الحل الأصلي"
 
-#: ../../benchmarks.rst:909
+#: ../../benchmarks.rst:903
 msgid ""
 "The module size above; Part VII explains why native timings do not stand "
 "for browser solve times"
@@ -3193,34 +3206,34 @@ msgstr ""
 "حجم الوحدة أعلاه؛ ويشرح الجزء السابع لماذا لا تمثل التوقيتات الأصلية "
 "أزمنة الحل في المتصفح"
 
-#: ../../benchmarks.rst:910
+#: ../../benchmarks.rst:904
 msgid "Allocation counts"
 msgstr "أعداد التخصيصات"
 
-#: ../../benchmarks.rst:911
+#: ../../benchmarks.rst:905
 msgid "The harness does not instrument the allocator"
 msgstr "لا تُجهِّز أداة القياس المُخصِّص بأدوات رصد"
 
-#: ../../benchmarks.rst:912
+#: ../../benchmarks.rst:906
 msgid "The steady-state tests of Part V"
 msgstr "اختبارات الحالة المستقرة في الجزء الخامس"
 
-#: ../../benchmarks.rst:913
+#: ../../benchmarks.rst:907
 msgid "Console isolation with eight active dashboards under load"
 msgstr "عزل وحدة التحكم مع ثماني لوحات معلومات نشطة تحت الحمل"
 
-#: ../../benchmarks.rst:914
+#: ../../benchmarks.rst:908
 msgid "The formal gate of SID 0007 has not been run"
 msgstr "لم يُشغَّل معيار الاجتياز الرسمي في SID 0007"
 
-#: ../../benchmarks.rst:915
+#: ../../benchmarks.rst:909
 msgid ""
 "The SID 0010 figure (within about 1%, console idle) and the functional "
 "run above"
 msgstr ""
 "رقم SID 0010 (ضمن نحو 1%، ووحدة التحكم خاملة) والتشغيل الوظيفي أعلاه"
 
-#: ../../benchmarks.rst:917
+#: ../../benchmarks.rst:911
 msgid ""
 "A row in this table is not a claim about the product's performance. "
 "SafeLine's own numbers concern detection quality, not throughput, and "
@@ -3232,11 +3245,11 @@ msgstr ""
 "طلب. يستطيع أي أحد لديه مضيف Docker تشغيل SafeLine خلف أعباء ``wrk`` "
 "نفسها."
 
-#: ../../benchmarks.rst:919
+#: ../../benchmarks.rst:913
 msgid "Exercise 8.1"
 msgstr "تمرين 8.1"
 
-#: ../../benchmarks.rst:921
+#: ../../benchmarks.rst:915
 msgid ""
 "Run ``cargo xtask bench primitives`` on another machine and compare the "
 "Hashcash verification and token verification rows with the reference "
@@ -3247,11 +3260,11 @@ msgstr ""
 "Hashcash وتحقق الرمز بالمضيف المرجعي. أي الاثنين يعتمد أكثر على تعليمات "
 "التجزئة في العتاد، ولماذا؟"
 
-#: ../../benchmarks.rst:923
+#: ../../benchmarks.rst:917
 msgid "Exercise 8.2"
 msgstr "تمرين 8.2"
 
-#: ../../benchmarks.rst:925
+#: ../../benchmarks.rst:919
 msgid ""
 "In the forward-auth table, compute the cores busy of a row: its CPU "
 "microseconds per request times its requests per second, divided by one "
@@ -3266,7 +3279,7 @@ msgstr ""
 "الجدول الأول. لماذا تكون تكلفة CPU لكل طلب أعلى بكثير، وأي المكونات تفسر "
 "الفرق؟"
 
-#: ../../benchmarks.rst:927
+#: ../../benchmarks.rst:921
 msgid ""
 "*Hint:* list everything between ``accept`` and the flushed response that "
 "the primitive suite does not time."
@@ -3274,11 +3287,11 @@ msgstr ""
 "*تلميح:* اسرد كل ما يقع بين ``accept`` وتفريغ الاستجابة (flush) مما لا "
 "توقِّته مجموعة العمليات الأولية."
 
-#: ../../benchmarks.rst:929
+#: ../../benchmarks.rst:923
 msgid "Explain the invariant"
 msgstr "اشرح اللامتغير"
 
-#: ../../benchmarks.rst:931
+#: ../../benchmarks.rst:925
 msgid ""
 "Every figure in this part is a median over repetitions, with its spread "
 "beside it. Explain the difference between a median-of-batches figure and "

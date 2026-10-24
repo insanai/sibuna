@@ -1,0 +1,124 @@
+# Sibuna 그림에 쓰는 한국어 낱말. 표와 키는 en.toml과 같으며, 빠진 키는 영어로 그립니다.
+# "{name}"은 그림이 채워 넣는 값(예: 이 언어의 형식으로 쓴 숫자)입니다.
+
+[number]
+decimal = "."
+group = ","
+
+[survival]
+x-axis = "시행 횟수(기대 시행 횟수의 배수), x"
+y-axis = "아직 탐색 중일 확률"
+at-mean = "탐색이 기대 시행 횟수를 넘어\n계속될 확률은 e⁻¹ ≈ {p}입니다."
+p95 = "x ≈ {x}까지 탐색의\n95%가 끝납니다."
+
+[wire-formats]
+challenge = "챌린지 식별자"
+session = "세션 토큰"
+payload = "{n}바이트 페이로드"
+tag = "{n}바이트 키 기반 태그"
+tag-field = "BLAKE3 태그"
+total = "모두 {bytes}바이트이며, URL 안전 base64 {characters}자로 보냅니다"
+
+[open-loop]
+due = "예정 시각"
+send = "요청 전송"
+answer = "응답 수신"
+waiting = "예정 시각이 지났지만 이전 응답을 기다리는 중"
+latency = "기록되는 지연: 예정 시각부터, 연결이 유휴 상태였다면 전송 시각부터"
+
+[cpu-sets]
+ccd0 = "CCD 0"
+ccd1 = "CCD 1"
+daemons = "데몬"
+primitive = "기본 연산\n측정 모음"
+idle = "미할당"
+load = "wrk, 지연 생성기, 원본 서버"
+smt = "각 코어 안의 작은 숫자는 그 코어의 SMT 형제인 CPU(16부터 31 가운데 하나)입니다.\n어떤 실행도 이 CPU들을 쓰지 않습니다."
+
+[read-buffer]
+buffer = "연결 하나의 64 KiB 읽기 버퍼"
+window = "(아직 읽지 않은 구간)"
+head = "요청 헤드"
+head-note = "최대 16 KiB, CR LF CR LF로 끝남"
+body = "본문 앞부분"
+body-note = "선언된 본문 가운데 들어가는 만큼,\nchunked 본문은 제자리에서 디코딩"
+pending = "대기 중인 바이트"
+pending-note = "다음 요청 또는\n업로드의 나머지"
+free = "빈 공간"
+served = "처리 완료"
+fields = "메서드, 경로, 쿼리, 헤더, 쿠키:\n모두 헤드의 슬라이스"
+pending-proxy = "원본 서버로 먼저 보냄"
+after = "응답 후:"
+next = "다음 요청의 시작이 됨"
+
+[gcra]
+x-axis = "도착 시각 t (ms)"
+y-axis = "TAT (ms)"
+limit = "t + τ"
+refuse-zone = "TAT > t + τ: 거부"
+burst = "t = 0에 온 버스트 다섯 개"
+sixth = "t = 0에 온 여섯 번째"
+example = "t = {refused}이면 TAT = {tat} > {early}이라\n거부되고, t = {admitted}이면\nTAT = {tat} ≤ {limit}이라 허용됩니다."
+admitted = "허용"
+refused = "거부"
+tat = "각 도착 뒤의 TAT"
+
+[primitive-latency]
+source = "각 막대는 {date}에 {cpu}의 코어 하나에서 잰 배치 7개의 중앙값이고,\n가는 선은 가장 빠른 배치부터 가장 느린 배치까지의 범위입니다. 로그 눈금입니다."
+
+[primitive-latency.groups]
+work = "작업 증명"
+match = "매칭"
+token = "토큰"
+state = "상태"
+request = "요청 경로"
+
+[primitive-latency.rows]
+hashcash_16_bits = "Hashcash 검증(16비트)"
+posw_depth13_t16 = "PoSW 검증(깊이 13, t = 16)"
+aho_corasick_40_signatures = "봇 시그니처(40개, Aho-Corasick)"
+sequential_substring_40_signatures = "봇 시그니처(40개, 순차 검색)"
+ipv4_cidr_classification = "IPv4 CIDR 조회"
+ipv6_cidr_classification = "IPv6 CIDR 조회"
+blake3_mac_token = "세션 토큰(키 기반 BLAKE3)"
+ed25519_compact_token = "세션 토큰(Ed25519)"
+robin_hood_spend_and_lookup = "사용 완료 집합: 사용 처리와 조회"
+gcra_check = "속도 제한기, 클라이언트 바이트"
+gcra_four_rule_scopes = "규칙 범위 4개, 클라이언트 바이트"
+gcra_check_hashed = "속도 제한기, 해시된 클라이언트"
+gcra_four_rule_scopes_hashed = "규칙 범위 4개, 해시된 클라이언트"
+zero_copy_request_and_cookie = "HTTP 파싱과 쿠키"
+browser_request_full_classification = "분류, Shield 프로파일"
+browser_request_gate_profile = "분류, Gate 프로파일"
+8kb_body_semantic_scan = "WAF 본문 스캔(8 KiB)"
+8kb_body_sqli_audit_other_enforce = "WAF 본문 스캔, SQL 인젝션 감사 모드"
+
+[posw-tree]
+order = "잎은 왼쪽에서 오른쪽 순서로 라벨링됩니다"
+path = "잎 3.5의 루트 경로"
+siblings = "개방에 담겨 보내지는 형제"
+left = "잎에 해시되어 들어가는 왼쪽 형제"
+
+[work-asymmetry]
+inspect-title = "검사 먼저"
+inspect-sender = "송신자"
+inspect-arrow = "값싼 요청 하나: 보내기는 싸고 응답하기는 비쌈"
+inspect-defense = "방어 시스템: 파싱과 복사,\n정규 표현식 스캔,\n공유 저장소 조회"
+inspect-sender-work = "송신자의 작업: 요청 하나"
+inspect-defense-work = "방어 시스템의 작업: 모든 요청마다 전부"
+work-title = "작업 먼저(Sibuna)"
+work-sender = "퍼즐을 푸는 송신자"
+work-arrow = "풀린 퍼즐: 얻기는 비싸고 확인하기는 쌈"
+work-defense = "Sibuna는 해시 하나만 검증하고,\n퍼즐이 풀리기 전에는\n상태를 두지 않음"
+work-sender-work = "송신자의 작업: 기대 SHA-256 시행 {power}번,\nb = 16이면 {trials}번"
+work-defense-work = "Sibuna의 작업: 해시 하나, {ns} ns,\n이후 세션 재사용"
+
+[sequential-work]
+hashcash = "Hashcash: 병렬 탐색"
+core = "코어 {n}"
+time = "각 코어는 자기 몫의 nonce를 시도합니다.\n코어 3이 nonce 18에서 하나를 찾으면\n모든 코어가 멈춥니다."
+posw = "순차 작업 증명: 강제된 순서"
+found = "목표를 만족하는 nonce"
+path = "잎 3.5의 루트 경로"
+siblings = "그 개방에 담겨 보내지는 형제"
+left = "잎에 해시되어 들어가는 왼쪽 형제"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-10-24 10:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:18+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -39,7 +39,7 @@ msgid "Hashcash: The Mathematics of Tier One"
 msgstr "Hashcash: las matemáticas del primer nivel"
 
 #: ../../cryptography.rst:9 ../../cryptography.rst:36
-#: ../../cryptography.rst:167
+#: ../../cryptography.rst:146
 msgid "Objectives"
 msgstr "Objetivos"
 
@@ -254,100 +254,33 @@ msgstr ""
 "la derecha: :math:`\\ell_u = H(\\chi, u, \\{\\ell_{u_1 \\dots u_{i-1} 0} "
 ": u_i = 1\\})`."
 
-#: ../../cryptography.rst:56
+#: ../../cryptography.rst:55
 msgid ""
 "A complete binary tree of depth 3 with nodes named depth.index. The root "
-"path of leaf 3.5 (nodes 0.0, 1.1, 2.2, 3.5) is highlighted in amber, the "
-"siblings 1.0, 2.3 and 3.4 sent in its opening are green, and dashed red "
-"edges run from 1.0 and 3.4 into leaf 3.5."
+"path of leaf 3.5 (nodes 0.0, 1.1, 2.2, 3.5) is amber, the siblings 1.0, "
+"2.3 and 3.4 sent in its opening are green, and dashed red arrows run from "
+"1.0 and 3.4 into leaf 3.5. An arrow under the leaves shows that they are "
+"labelled from left to right."
 msgstr ""
 "Un árbol binario completo de profundidad 3 cuyos nodos se nombran "
 "profundidad.índice. El camino desde la raíz de la hoja 3.5 (nodos 0.0, "
-"1.1, 2.2, 3.5) está resaltado en ámbar, los hermanos 1.0, 2.3 y 3.4 "
-"enviados en su apertura están en verde, y unas aristas rojas discontinuas "
-"van de 1.0 y de 3.4 a la hoja 3.5."
+"1.1, 2.2, 3.5) está en ámbar, los hermanos 1.0, 2.3 y 3.4 enviados en su "
+"apertura están en verde, y unas flechas rojas discontinuas van de 1.0 y "
+"de 3.4 a la hoja 3.5. Una flecha bajo las hojas indica que estas se "
+"etiquetan de izquierda a derecha."
 
-#: ../../cryptography.rst:56
-msgid ""
-"digraph posw_tree {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.25, ranksep=0.5, "
-"ordering=out];\n"
-"  node [shape=circle, fixedsize=true, width=0.5, fontname=\"Helvetica\", "
-"fontsize=10, style=filled, fillcolor=\"#ffffff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", arrowhead=none];\n"
-"\n"
-"  \"0.0\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5, "
-"xlabel=<<font color=\"#64748b\">root &phi;</font>>];\n"
-"  \"1.1\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"2.2\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"3.5\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"1.0\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"2.3\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"3.4\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"\n"
-"  \"0.0\" -> \"1.0\"; \"0.0\" -> \"1.1\";\n"
-"  \"1.0\" -> \"2.0\"; \"1.0\" -> \"2.1\"; \"1.1\" -> \"2.2\"; \"1.1\" -> "
-"\"2.3\";\n"
-"  \"2.0\" -> \"3.0\"; \"2.0\" -> \"3.1\"; \"2.1\" -> \"3.2\"; \"2.1\" -> "
-"\"3.3\";\n"
-"  \"2.2\" -> \"3.4\"; \"2.2\" -> \"3.5\"; \"2.3\" -> \"3.6\"; \"2.3\" -> "
-"\"3.7\";\n"
-"\n"
-"  \"3.5\" -> \"1.0\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"  \"3.5\" -> \"3.4\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"}"
-msgstr ""
-"digraph posw_tree {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.25, ranksep=0.5, "
-"ordering=out];\n"
-"  node [shape=circle, fixedsize=true, width=0.5, fontname=\"Helvetica\", "
-"fontsize=10, style=filled, fillcolor=\"#ffffff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", arrowhead=none];\n"
-"\n"
-"  \"0.0\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5, "
-"xlabel=<<font color=\"#64748b\">raíz &phi;</font>>];\n"
-"  \"1.1\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"2.2\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"3.5\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"1.0\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"2.3\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"3.4\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"\n"
-"  \"0.0\" -> \"1.0\"; \"0.0\" -> \"1.1\";\n"
-"  \"1.0\" -> \"2.0\"; \"1.0\" -> \"2.1\"; \"1.1\" -> \"2.2\"; \"1.1\" -> "
-"\"2.3\";\n"
-"  \"2.0\" -> \"3.0\"; \"2.0\" -> \"3.1\"; \"2.1\" -> \"3.2\"; \"2.1\" -> "
-"\"3.3\";\n"
-"  \"2.2\" -> \"3.4\"; \"2.2\" -> \"3.5\"; \"2.3\" -> \"3.6\"; \"2.3\" -> "
-"\"3.7\";\n"
-"\n"
-"  \"3.5\" -> \"1.0\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"  \"3.5\" -> \"3.4\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"}"
-
-#: ../../cryptography.rst:56
+#: ../../cryptography.rst:58
 msgid ""
 "The depth-3 tree: an opening of leaf 3.5 sends the leaf label and the "
 "three sibling labels; the dashed edges are the left-sibling dependencies "
-"that make labelling sequential. Amber nodes form the path of leaf 3.5, "
-"green nodes are the siblings sent in the opening, and the dashed red "
-"edges are the left-sibling edges hashed into the leaf."
+"that make labelling sequential."
 msgstr ""
 "El árbol de profundidad 3: una apertura de la hoja 3.5 envía la etiqueta "
 "de la hoja y las tres etiquetas hermanas; las aristas discontinuas son "
 "las dependencias de los hermanos izquierdos que hacen secuencial el "
-"etiquetado. Los nodos ámbar forman el camino de la hoja 3.5, los nodos "
-"verdes son los hermanos enviados en la apertura y las aristas rojas "
-"discontinuas son las aristas de los hermanos izquierdos incluidas en el "
-"hash de la hoja."
+"etiquetado."
 
-#: ../../cryptography.rst:81
+#: ../../cryptography.rst:60
 msgid ""
 "The left-sibling edges are what make the computation sequential: leaf "
 ":math:`u` cannot be labelled until every subtree to its left is complete, "
@@ -361,7 +294,7 @@ msgstr ""
 "en profundidad, y la etiqueta raíz :math:`\\varphi = \\ell_\\varepsilon` "
 "depende de las :math:`2^{n+1} - 1` etiquetas en secuencia."
 
-#: ../../cryptography.rst:83
+#: ../../cryptography.rst:62
 msgid ""
 "**Openings.** After computing :math:`\\varphi`, the prover derives "
 ":math:`t` leaves by Fiat-Shamir, :math:`\\gamma_i = H(\\chi \\parallel "
@@ -384,11 +317,11 @@ msgstr ""
 "trabajo acotado. Un cálculo de etiqueta puede abarcar varios bloques de "
 "hash; contar etiquetas no es contar llamadas de compresión."
 
-#: ../../cryptography.rst:85
+#: ../../cryptography.rst:64
 msgid "Implementation: ``posw::verify_opening``"
 msgstr "Implementación: ``posw::verify_opening``"
 
-#: ../../cryptography.rst:87
+#: ../../cryptography.rst:66
 msgid ""
 "Recomputes one opened leaf from its sibling labels and walks the path to "
 "the root. In ``crates/pow/src/posw.rs`` (crate ``sibuna-pow``)."
@@ -397,7 +330,7 @@ msgstr ""
 "el camino hasta la raíz. En ``crates/pow/src/posw.rs`` (crate "
 "``sibuna-pow``)."
 
-#: ../../cryptography.rst:89
+#: ../../cryptography.rst:68
 msgid ""
 "fn verify_opening(base: &Sha256, n: u8, phi: &Label, gamma: u32, opening: "
 "&[Label]) -> bool {\n"
@@ -461,11 +394,11 @@ msgstr ""
 "    current == *phi\n"
 "}"
 
-#: ../../cryptography.rst:120
+#: ../../cryptography.rst:99
 msgid "Sampling, Soundness, and Their Limits"
 msgstr "Muestreo, solidez y sus límites"
 
-#: ../../cryptography.rst:123
+#: ../../cryptography.rst:102
 msgid ""
 "Consider a fixed commitment with an independently detectable bad fraction "
 ":math:`\\alpha`. If each opening samples uniformly and independently, the "
@@ -482,11 +415,11 @@ msgstr ""
 "aperturas. No es, por sí solo, una demostración de seguridad para un "
 "protocolo de trabajo secuencial."
 
-#: ../../cryptography.rst:125
+#: ../../cryptography.rst:104
 msgid "Worked example: a conditional sampling bound"
 msgstr "Ejemplo resuelto: una cota condicional de muestreo"
 
-#: ../../cryptography.rst:127
+#: ../../cryptography.rst:106
 msgid ""
 "With a fixed bad fraction :math:`\\alpha = 0.1` and :math:`t = 16` "
 "independent openings, the chance of missing every bad location is "
@@ -503,7 +436,7 @@ msgstr ""
 "elegir qué compromiso revelar o correlacionar los fallos, este cálculo no "
 "tiene en cuenta esa estrategia."
 
-#: ../../cryptography.rst:129
+#: ../../cryptography.rst:108
 msgid ""
 "The referenced sequential-work construction has a security analysis in an "
 "oracle model. Sibuna's domain separation, parameter mapping, truncation, "
@@ -521,11 +454,11 @@ msgstr ""
 "no demuestra la resistencia a la búsqueda por fuerza bruta. No afirmamos "
 "de forma incondicional que hacer trampa nunca sea más barato."
 
-#: ../../cryptography.rst:131
+#: ../../cryptography.rst:110
 msgid "Exercise 3.1"
 msgstr "Ejercicio 3.1"
 
-#: ../../cryptography.rst:133
+#: ../../cryptography.rst:112
 msgid ""
 "If an attacker tries :math:`g` independent commitments, each accepted "
 "with probability :math:`q`, derive the probability that at least one is "
@@ -535,16 +468,16 @@ msgstr ""
 "aceptado con probabilidad :math:`q`, deduce la probabilidad de que al "
 "menos uno sea aceptado. ¿Qué costes faltan en esa expresión?"
 
-#: ../../cryptography.rst:135
+#: ../../cryptography.rst:114
 msgid "*Hint:* First calculate the probability that all :math:`g` fail."
 msgstr ""
 "*Pista:* calcula primero la probabilidad de que fallen los :math:`g`."
 
-#: ../../cryptography.rst:137
+#: ../../cryptography.rst:116
 msgid "Prover Memory"
 msgstr "Memoria del probador"
 
-#: ../../cryptography.rst:140
+#: ../../cryptography.rst:119
 msgid ""
 "A naive prover stores every label (:math:`2^{n+1} - 1` of them). Sibuna's "
 "prover keeps a stack of the current path's left-sibling labels (:math:`n "
@@ -570,11 +503,11 @@ msgstr ""
 "del navegador y una prueba nativa comparten el mismo tipo ``Workspace`` "
 "(``sibuna_pow::posw::Workspace``)."
 
-#: ../../cryptography.rst:142
+#: ../../cryptography.rst:121
 msgid "Parameters Are Not Timings"
 msgstr "Los parámetros no son tiempos"
 
-#: ../../cryptography.rst:145
+#: ../../cryptography.rst:124
 msgid ""
 "Sibuna maps work bits to depth using :math:`n = b - 3`, clamped to the "
 "supported interval :math:`[4, 24]`. This is a work-scale convention, not "
@@ -594,7 +527,7 @@ msgstr ""
 "confirmada en el repositorio mide la verificación; no establece la "
 "latencia de resolución en el navegador."
 
-#: ../../cryptography.rst:147
+#: ../../cryptography.rst:126
 msgid ""
 "Proof size is :math:`32(1 + t(n+1))` bytes. At depth 13 with sixteen "
 "openings, this is :math:`32(1 + 16 \\times 14) = 7200` bytes. Raising the "
@@ -607,11 +540,11 @@ msgstr ""
 "trabajo del verificador, aunque el coste dominante de construir el árbol "
 "siga siendo el mismo."
 
-#: ../../cryptography.rst:149
+#: ../../cryptography.rst:128
 msgid "Exercise 3.2"
 msgstr "Ejercicio 3.2"
 
-#: ../../cryptography.rst:151
+#: ../../cryptography.rst:130
 msgid ""
 "Compute the proof size at depth 17 with 16 openings. Then double the "
 "opening count. Which term doubles and which term remains fixed?"
@@ -620,11 +553,11 @@ msgstr ""
 "duplica el número de aperturas. ¿Qué término se duplica y cuál permanece "
 "fijo?"
 
-#: ../../cryptography.rst:153
+#: ../../cryptography.rst:132
 msgid "Choosing a Construction"
 msgstr "Elegir una construcción"
 
-#: ../../cryptography.rst:156
+#: ../../cryptography.rst:135
 msgid ""
 "The relevant comparison is a resource budget, not an algorithm's "
 "reputation. Record the prover's memory, the verifier's worst-case work, "
@@ -644,7 +577,7 @@ msgstr ""
 "públicamente sirven a un modelo de confianza distinto del de un control "
 "de admisión con secreto compartido."
 
-#: ../../cryptography.rst:158
+#: ../../cryptography.rst:137
 msgid ""
 "Sibuna retains cheap hash verification and a hash-based sequential-work "
 "option. The latter requires more proof bytes and more careful parameter "
@@ -657,11 +590,11 @@ msgstr ""
 "elimina la necesidad de rechazar las pruebas mal formadas antes de entrar "
 "en una verificación costosa."
 
-#: ../../cryptography.rst:160 ../../cryptography.rst:245
+#: ../../cryptography.rst:139 ../../cryptography.rst:210
 msgid "Explain the invariant"
 msgstr "Explica el invariante"
 
-#: ../../cryptography.rst:162
+#: ../../cryptography.rst:141
 msgid ""
 "Explain the distinction between an authentication tree, which proves that "
 "a label belongs to a commitment, and dependency edges, which constrain "
@@ -671,11 +604,11 @@ msgstr ""
 "una etiqueta pertenece a un compromiso, y las aristas de dependencia, que "
 "restringen cómo se calculan las etiquetas."
 
-#: ../../cryptography.rst:164
+#: ../../cryptography.rst:143
 msgid "Symmetric Authentication: Challenges and Sessions"
 msgstr "Autenticación simétrica: desafíos y sesiones"
 
-#: ../../cryptography.rst:169
+#: ../../cryptography.rst:148
 msgid ""
 "Explain why a keyed pseudorandom function is the correct primitive when "
 "issuer and verifier are the same trust domain, state the forgery bound "
@@ -688,11 +621,11 @@ msgstr ""
 "bits, describe el registro de desafío sin estado y la cota del conjunto "
 "de desafíos gastados, y lee la derivación de claves."
 
-#: ../../cryptography.rst:171
+#: ../../cryptography.rst:150
 msgid "Issuer Equals Verifier"
 msgstr "El emisor es el verificador"
 
-#: ../../cryptography.rst:174
+#: ../../cryptography.rst:153
 msgid ""
 "A digital signature lets *anyone* holding the public key verify, which is "
 "the right tool when verifiers must not be able to mint. Sibuna's verifier "
@@ -712,11 +645,11 @@ msgstr ""
 "emitir tokens. El capítulo de pruebas de rendimiento compara las "
 "operaciones de token implementadas."
 
-#: ../../cryptography.rst:176
+#: ../../cryptography.rst:155
 msgid "Lemma 3 (Forgery bound)"
 msgstr "Lema 3 (cota de falsificación)"
 
-#: ../../cryptography.rst:178
+#: ../../cryptography.rst:157
 msgid ""
 "With BLAKE3 in keyed mode modelled as a PRF and a 16-byte tag, an "
 "adversary making :math:`q` verification queries forges a valid token with "
@@ -730,7 +663,7 @@ msgstr ""
 "2^{-128} + \\varepsilon_{\\mathrm{PRF}}`. A un millón de consultas por "
 "segundo, eso es :math:`2^{-108}` por segundo."
 
-#: ../../cryptography.rst:180
+#: ../../cryptography.rst:159
 msgid ""
 "A second consequence matters for the long term: Ed25519 rests on discrete "
 "logarithms in an elliptic-curve group, which Shor's algorithm breaks; a "
@@ -747,11 +680,11 @@ msgstr ""
 "ed25519``) para los despliegues que necesitan verificadores que no puedan "
 "emitir tokens."
 
-#: ../../cryptography.rst:182
+#: ../../cryptography.rst:161
 msgid "The Key Schedule"
 msgstr "La derivación de claves"
 
-#: ../../cryptography.rst:185
+#: ../../cryptography.rst:164
 msgid ""
 "One 32-byte master seed (from ``--secret-file``, ``SIBUNA_SECRET``, or a "
 "fresh random value) derives every purpose key with keyed BLAKE3 and a "
@@ -764,11 +697,11 @@ msgstr ""
 "claves de token, de desafío, de Ed25519 y de huella, y la clave de "
 "requisito que sella los tickets de requisito (parte IV)."
 
-#: ../../cryptography.rst:187
+#: ../../cryptography.rst:166
 msgid "Implementation: ``Keys::derive``"
 msgstr "Implementación: ``Keys::derive``"
 
-#: ../../cryptography.rst:189
+#: ../../cryptography.rst:168
 msgid ""
 "Derives the five purpose keys from the seed. In "
 "``crates/challenge/src/keys.rs`` (crate ``sibuna-challenge``). ``Keys`` "
@@ -780,7 +713,7 @@ msgstr ""
 "``Seed`` ponen a cero sus bytes al liberarse, y su salida ``Debug`` "
 "oculta su contenido."
 
-#: ../../cryptography.rst:191
+#: ../../cryptography.rst:170
 msgid ""
 "pub fn derive(seed: &Seed) -> Keys {\n"
 "    Keys {\n"
@@ -810,7 +743,7 @@ msgstr ""
 "    blake3::keyed_hash(seed.as_bytes(), purpose.as_bytes())\n"
 "}"
 
-#: ../../cryptography.rst:207
+#: ../../cryptography.rst:186
 msgid ""
 "In a cluster, ``Keys::bind_node`` replaces the challenge key by keyed "
 "BLAKE3 under it over ``sibuna/challenge-node/v1`` and the node id, so a "
@@ -823,7 +756,7 @@ msgstr ""
 "emitió, mientras que los tokens de sesión y los tickets de requisito "
 "siguen siendo válidos en todos los miembros."
 
-#: ../../cryptography.rst:209
+#: ../../cryptography.rst:188
 msgid ""
 "Domain separation prevents accidental reuse across purposes; compromise "
 "of the master seed compromises every derived key. A cluster only has to "
@@ -833,69 +766,40 @@ msgstr ""
 "comprometer la semilla maestra compromete todas las claves derivadas. Un "
 "clúster solo tiene que ponerse de acuerdo en una semilla."
 
-#: ../../cryptography.rst:211
+#: ../../cryptography.rst:190
 msgid "Stateless Challenges"
 msgstr "Desafíos sin estado"
 
-#: ../../cryptography.rst:215
+#: ../../cryptography.rst:193
 msgid ""
-"Challenge identifier\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"| ver | alg | diff | t | issued_at | fingerprint | nonce   | rule_hash | "
-"BLAKE3 tag     |\n"
-"|  1  |  1  |  1   | 1 |     8     |      8      |    8    |     8     "
-"|       16       |\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"|<----------------------- 36-byte payload "
-"---------------------------->|<-- keyed tag ->|\n"
-"36-byte payload + 16-byte keyed tag = 52 bytes, 70 URL-safe base64 "
-"characters\n"
-"\n"
-"Session token\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"| ver | alg | bits | res | timestamp | expiry | rule_hash | fingerprint | "
-"BLAKE3 tag     |\n"
-"|  1  |  1  |  1   |  5  |     8     |   8    |     8     |      8      "
-"|       16       |\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"|<------------------------ 40-byte payload "
-"---------------------------->|<-- keyed tag ->|\n"
-"40-byte payload + 16-byte keyed tag = 56 bytes, 75 URL-safe base64 "
-"characters"
+"Two byte layouts. The challenge identifier: ver, alg, diff and t of one "
+"byte each, then issued_at, fingerprint, nonce and rule_hash of eight "
+"bytes each, a 36-byte payload, followed by a 16-byte BLAKE3 tag; 52 "
+"bytes, sent as 70 URL-safe base64 characters. The session token: ver, alg "
+"and bits of one byte each, res of five bytes, then timestamp, expiry, "
+"rule_hash and fingerprint of eight bytes each, a 40-byte payload, "
+"followed by a 16-byte BLAKE3 tag; 56 bytes, sent as 75 URL-safe base64 "
+"characters."
 msgstr ""
-"Identificador de desafío\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"| ver | alg | diff | t | issued_at | fingerprint | nonce   | rule_hash | "
-"etiqueta BLAKE3|\n"
-"|  1  |  1  |  1   | 1 |     8     |      8      |    8    |     8     "
-"|       16       |\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"|<---------------------- carga útil de 36 bytes "
-"---------------------->|<-- etiqueta -->|\n"
-"36 bytes de carga útil + 16 bytes de etiqueta = 52 bytes, 70 caracteres "
-"base64url\n"
-"\n"
-"Token de sesión\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"| ver | alg | bits | res | timestamp | expiry | rule_hash | fingerprint | "
-"etiqueta BLAKE3|\n"
-"|  1  |  1  |  1   |  5  |     8     |   8    |     8     |      8      "
-"|       16       |\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"|<---------------------- carga útil de 40 bytes "
-"----------------------->|<-- etiqueta -->|\n"
-"40 bytes de carga útil + 16 bytes de etiqueta = 56 bytes, 75 caracteres "
-"base64url"
+"Dos disposiciones de bytes. El identificador de desafío: ver, alg, diff y "
+"t, de un byte cada uno, y después issued_at, fingerprint, nonce y "
+"rule_hash, de ocho bytes cada uno, que forman una carga útil de 36 bytes, "
+"seguida de una etiqueta BLAKE3 de 16 bytes; 52 bytes, enviados como 70 "
+"caracteres en base64 apto para URL. El token de sesión: ver, alg y bits, "
+"de un byte cada uno, res, de cinco bytes, y después timestamp, expiry, "
+"rule_hash y fingerprint, de ocho bytes cada uno, que forman una carga "
+"útil de 40 bytes, seguida de una etiqueta BLAKE3 de 16 bytes; 56 bytes, "
+"enviados como 75 caracteres en base64 apto para URL."
 
-#: ../../cryptography.rst:215
+#: ../../cryptography.rst:196
 msgid ""
-"Wire formats of the challenge identifier and the session token (field "
-"widths in bytes)."
+"Wire formats of the challenge identifier and the session token. The "
+"numbers above each record are byte offsets."
 msgstr ""
 "Formatos de transmisión del identificador de desafío y del token de "
-"sesión (anchos de campo en bytes)."
+"sesión. Los números sobre cada registro son desplazamientos en bytes."
 
-#: ../../cryptography.rst:233
+#: ../../cryptography.rst:198
 msgid ""
 "A challenge identifier is a self-authenticating record: version, "
 "algorithm, difficulty, opening count, issue time, the client's keyed "
@@ -915,11 +819,11 @@ msgstr ""
 "comprueba la antigüedad frente al TTL del desafío, comprueba la huella "
 "frente al cliente que lo envía y solo entonces examina la prueba."
 
-#: ../../cryptography.rst:235
+#: ../../cryptography.rst:200
 msgid "Lemma 4 (State grows only with paid work)"
 msgstr "Lema 4 (el estado solo crece con trabajo pagado)"
 
-#: ../../cryptography.rst:237
+#: ../../cryptography.rst:202
 msgid ""
 "Let :math:`S` be the set of challenge tags the daemon remembers. A tag "
 "enters :math:`S` only after a valid proof for it was accepted, and it "
@@ -940,7 +844,7 @@ msgstr ""
 "saturada. Es una cota sobre el estado, no una cota inferior sobre la "
 "estrategia de cálculo de cualquier adversario."
 
-#: ../../cryptography.rst:239
+#: ../../cryptography.rst:204
 msgid ""
 "The spent set is 16 shards of Robin Hood open addressing over the 16-byte "
 "tags (Part V). The fingerprint is a keyed hash of the client address and "
@@ -954,11 +858,11 @@ msgstr ""
 "colisionen por concatenación, y con clave para que no puedan calcularse "
 "sin conexión las huellas de otros clientes."
 
-#: ../../cryptography.rst:241
+#: ../../cryptography.rst:206
 msgid "Exercise 3.3"
 msgstr "Ejercicio 3.3"
 
-#: ../../cryptography.rst:243
+#: ../../cryptography.rst:208
 msgid ""
 "A token payload carries a work level, ``timestamp``, ``expiry``, "
 "``rule_hash``, and ``fingerprint``. Explain what each field prevents if "
@@ -969,7 +873,7 @@ msgstr ""
 "campo (qué fallaría si se eliminara) y por qué la etiqueta debe cubrir "
 "los cinco."
 
-#: ../../cryptography.rst:247
+#: ../../cryptography.rst:212
 msgid ""
 "A colleague proposes switching all tokens to Ed25519 \"because it is "
 "stronger\". Explain the trust-domain argument, the cost difference, and "

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-10-24 10:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -115,9 +115,14 @@ msgstr ""
 
 #: ../../foundations.rst:30
 msgid ""
-"Address-based limits are complementary. They constrain one address, but shared addresses can represent many people and one requester can use many addresses. Neither a puzzle nor an address is an identity oracle. Sibuna therefore keeps admission, inspection, and reputation as distinct decisions."
+"Address-based limits are complementary. They constrain one address, but "
+"shared addresses can represent many people and one requester can use many "
+"addresses. Neither a puzzle nor an address is an identity oracle. Sibuna "
+"therefore keeps admission, inspection, and reputation as distinct "
+"decisions."
 msgstr ""
-"基于地址的限制与之互补。它们约束单个地址，但一个共享地址可能代表很多人，一个请求方也可以使用很多地址。谜题和地址都不是可靠的身份判据。因此，Sibuna 把准入、检查和信誉作为彼此独立的决策。"
+"基于地址的限制与之互补。它们约束单个地址，但一个共享地址可能代表很多人，一个请求方也可以使用很多地址。谜题和地址都不是可靠的身份判据。因此，Sibuna "
+"把准入、检查和信誉作为彼此独立的决策。"
 
 #: ../../foundations.rst:32
 msgid "Hash Search as a Random Variable"
@@ -157,55 +162,30 @@ msgid ""
 msgstr ""
 "难度每增加一级，期望尝试次数翻倍。但这并不保证每道谜题的耗时都翻倍。有些谜题第一次尝试就成功；有些的耗时远超平均值。只测量一次求解的客户端，测到的主要是这种随机性。"
 
-#: ../../foundations.rst:50
+#: ../../foundations.rst:49
 msgid ""
-"P(K > x E[K])\n"
-"1.0 |*\n"
-"    | *\n"
-"    |  *\n"
-"    |   **\n"
-"    |     *\n"
-"0.5 |      **\n"
-"    |        **o\n"
-"    |           ***\n"
-"    |              *****\n"
-"    |                   ***********\n"
-"0.0 |                              ***********\n"
-"    +-----------------------------------------\n"
-"     0         1         2         3         4\n"
-"              trials / expected trials (x)"
+"A curve falling from 1 at x = 0 towards 0 at x = 4. At x = 1 a marked "
+"point shows that a search is still running with probability e to the "
+"minus 1, about 0.368; at x of about 3.0 a second point shows that 95 "
+"percent of searches have ended."
 msgstr ""
-"P(K > x E[K])\n"
-"1.0 |*\n"
-"    | *\n"
-"    |  *\n"
-"    |   **\n"
-"    |     *\n"
-"0.5 |      **\n"
-"    |        **o\n"
-"    |           ***\n"
-"    |              *****\n"
-"    |                   ***********\n"
-"0.0 |                              ***********\n"
-"    +-----------------------------------------\n"
-"     0         1         2         3         4\n"
-"              尝试次数 / 期望尝试次数 (x)"
+"一条曲线，在 x = 0 处从 1 开始下降，到 x = 4 时趋近于 0。x = 1 处的标记点表明，"
+"搜索仍在进行的概率为 e 的负 1 次方，约 0.368；x 约为 3.0 处的第二个点表明，95% 的搜索已经结束。"
 
-#: ../../foundations.rst:50
+#: ../../foundations.rst:52
 msgid ""
-"Survival probability of hash search. The horizontal axis is trials "
-"divided by expected trials; the curve uses the large-work approximation "
-"P(K > x/p) ~ e^(-x). The point o marks x = 1, where the probability of "
-"still searching is e^(-1) = 0.368."
+"Survival probability of hash search: the probability that a search is "
+"still running after :math:`x` times the expected number of trials, in the "
+"large-work approximation :math:`P(K > x/p) \\approx e^{-x}`."
 msgstr ""
-"哈希搜索的生存概率。横轴是尝试次数除以期望尝试次数；曲线使用大工作量近似 P(K > x/p) ~ e^(-x)。点 o 标出 x = "
-"1，此处仍在搜索的概率为 e^(-1) = 0.368。"
+"哈希搜索的生存概率：在大工作量近似 :math:`P(K > x/p) \\approx e^{-x}` 下，"
+"尝试次数达到期望次数的 :math:`x` 倍之后，搜索仍在进行的概率。"
 
-#: ../../foundations.rst:68
+#: ../../foundations.rst:54
 msgid "Worked example: expectation is not a deadline"
 msgstr "实例分析：期望不是截止时间"
 
-#: ../../foundations.rst:70
+#: ../../foundations.rst:56
 msgid ""
 "At :math:`b = 16`, the expected work is 65,536 hashes. The probability of "
 "still searching after that many trials is approximately :math:`e^{-1} = "
@@ -218,11 +198,11 @@ msgstr ""
 "0.368`。第 95 百分位的尝试次数为 :math:`\\lceil \\ln(0.05) / \\ln(1 - 2^{-16}) "
 "\\rceil \\approx 196327`，接近平均值的三倍。用户界面应当容忍这种离散，而不是在到达期望完成时间时就宣告失败。"
 
-#: ../../foundations.rst:72
+#: ../../foundations.rst:58
 msgid "Sessions Amortise Work"
 msgstr "会话分摊工作"
 
-#: ../../foundations.rst:75
+#: ../../foundations.rst:61
 msgid ""
 "Suppose a session permits :math:`m` requests before expiry, a puzzle "
 "costs :math:`c_p`, verification costs :math:`c_v`, and a session check "
@@ -236,11 +216,11 @@ msgstr ""
 ":math:`c_v`，一次会话检查的成本为 :math:`c_s`。忽略失败的尝试，网关分摊到每个请求的成本为 :math:`c_v/m + "
 "c_s`，而客户端的谜题成本为 :math:`c_p/m`。延长会话有效期对真人和自动化客户端同样有利。选择有效期是一个策略决策，而不是密码学优化。"
 
-#: ../../foundations.rst:77
+#: ../../foundations.rst:63
 msgid "Exercise 1.1"
 msgstr "练习 1.1"
 
-#: ../../foundations.rst:79
+#: ../../foundations.rst:65
 msgid ""
 "A client gets 100 requests per session and performs a puzzle costing one "
 "million trials. What is the amortized work per request? What changes if "
@@ -249,16 +229,16 @@ msgstr ""
 "一个客户端每个会话可以发出 100 "
 "个请求，并完成一道需要一百万次尝试的谜题。分摊到每个请求的工作量是多少？如果它与第二个进程共享这个会话，会有什么变化？"
 
-#: ../../foundations.rst:81
+#: ../../foundations.rst:67
 msgid ""
 "Hint: Distinguish the accounting model from the token's actual bindings."
 msgstr "提示：区分记账模型与令牌实际的绑定。"
 
-#: ../../foundations.rst:83
+#: ../../foundations.rst:69
 msgid "Bounded State Is a Second Budget"
 msgstr "有界状态是第二种预算"
 
-#: ../../foundations.rst:86
+#: ../../foundations.rst:72
 msgid ""
 "Moving work off the request path does not make it disappear. Let "
 "incidents arrive at rate :math:`\\lambda`, let the storage thread persist "
@@ -268,11 +248,11 @@ msgstr ""
 "把工作移出请求路径并不会让它消失。设事件以速率 :math:`\\lambda` 到达，存储线程以平均速率 :math:`\\mu` "
 "持久化它们，队列可容纳 :math:`Q` 条记录。当 :math:`\\lambda > \\mu` 时，流体近似给出"
 
-#: ../../foundations.rst:88
+#: ../../foundations.rst:74
 msgid "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
 msgstr "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
 
-#: ../../foundations.rst:92
+#: ../../foundations.rst:78
 msgid ""
 "A larger queue buys time; it does not create throughput. Batching "
 "amortizes transaction cost, but retained records still need memory and "
@@ -284,11 +264,11 @@ msgstr ""
 "更大的队列换来的是时间，而不是吞吐量。批处理分摊了事务成本，但被保留的记录仍然需要内存，最终也需要处理。过载时，Sibuna "
 "丢弃新的事件记录并对其计数，同时继续依据内存中的状态作出请求决策。运维人员既要监控 HTTP 成功率，也要监控丢失的证据。"
 
-#: ../../foundations.rst:94
+#: ../../foundations.rst:80
 msgid "Exercise 1.2"
 msgstr "练习 1.2"
 
-#: ../../foundations.rst:96
+#: ../../foundations.rst:82
 msgid ""
 "A queue holds 512 records. Arrival rate is 1,000/s and drain rate is "
 "600/s. How long can an initially empty queue absorb the excess? Why is "
@@ -297,50 +277,50 @@ msgstr ""
 "一个队列可容纳 512 条记录。到达率为 1,000/s，排空速率为 "
 "600/s。一个初始为空的队列能吸收多长时间的超额流量？为什么这个答案只是近似值？"
 
-#: ../../foundations.rst:98
+#: ../../foundations.rst:84
 msgid ""
 "Hint: Use the difference of rates, then consider bursts and batch commits."
 msgstr "提示：先用两个速率之差计算，再考虑突发和批量提交。"
 
-#: ../../foundations.rst:100
+#: ../../foundations.rst:86
 msgid "The Invariants We Will Carry Forward"
 msgstr "我们将贯穿全书的不变量"
 
-#: ../../foundations.rst:103
+#: ../../foundations.rst:89
 msgid "Untrusted requests cannot create unbounded server state."
 msgstr "不可信的请求不能创建无界的服务器状态。"
 
-#: ../../foundations.rst:104
+#: ../../foundations.rst:90
 msgid "A valid admission token does not bypass an application denial."
 msgstr "有效的准入令牌不能绕过应用层的拒绝。"
 
-#: ../../foundations.rst:105
+#: ../../foundations.rst:91
 msgid "A buffer remains alive for every slice borrowed from it."
 msgstr "只要还有从缓冲区借出的切片，该缓冲区就保持存活。"
 
-#: ../../foundations.rst:106
+#: ../../foundations.rst:92
 msgid ""
 "A durable retry cannot multiply an incident or its reputation effect."
 msgstr "持久化重试不能让一个事件或它对信誉的影响成倍增加。"
 
-#: ../../foundations.rst:107
+#: ../../foundations.rst:93
 msgid ""
 "A published policy snapshot is immutable until its last reader releases "
 "it."
 msgstr "已发布的策略快照在最后一个读者释放它之前保持不可变。"
 
-#: ../../foundations.rst:109
+#: ../../foundations.rst:95
 msgid ""
 "The rest of the book derives the mechanisms that make these statements "
 "true, and the tests that would reveal a violation. A fast path is useful "
 "only while those statements remain true."
 msgstr "本书其余部分推导使这些陈述成立的机制，以及能够揭示违反情况的测试。只有在这些陈述保持成立时，快速路径才有用。"
 
-#: ../../foundations.rst:111
+#: ../../foundations.rst:97
 msgid "Explain the invariant"
 msgstr "解释这个不变量"
 
-#: ../../foundations.rst:113
+#: ../../foundations.rst:99
 msgid ""
 "State the gate inequality :math:`c_g < (1-a) c_o` in words, then explain "
 "why a measured verification latency alone cannot tell an operator whether "

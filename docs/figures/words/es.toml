@@ -1,0 +1,125 @@
+# Las palabras de las figuras de Sibuna en español. Este archivo tiene la misma forma que
+# en.toml; una clave que falte se dibuja en inglés. "{name}" marca un valor que la figura
+# rellena, como un número en el formato propio del idioma.
+
+[number]
+decimal = ","
+group = "."
+
+[survival]
+x-axis = "intentos como múltiplo del número esperado, x"
+y-axis = "probabilidad de seguir buscando"
+at-mean = "Con el número esperado de intentos, una búsqueda sigue en curso con probabilidad e⁻¹ ≈ {p}."
+p95 = "En x ≈ {x}, el 95% de las búsquedas ya ha terminado."
+
+[wire-formats]
+challenge = "Identificador de desafío"
+session = "Token de sesión"
+payload = "carga útil de {n} bytes"
+tag = "etiqueta con clave de {n} bytes"
+tag-field = "etiqueta BLAKE3"
+total = "{bytes} bytes en total, enviados como {characters} caracteres en base64 apto para URL"
+
+[open-loop]
+due = "vence"
+send = "petición enviada"
+answer = "respuesta recibida"
+waiting = "vencida, esperando la respuesta anterior"
+latency = "latencia registrada: desde la hora de vencimiento, o desde el envío si la conexión estaba inactiva"
+
+[cpu-sets]
+ccd0 = "CCD 0"
+ccd1 = "CCD 1"
+daemons = "daemons"
+primitive = "primitivas"
+idle = "sin asignar"
+load = "wrk, generador de latencia y origen"
+smt = "El número pequeño de cada núcleo indica su hermano SMT, una de las CPU 16 a 31. Ninguna ejecución los usa."
+
+[read-buffer]
+buffer = "El búfer de lectura de 64 KiB de una conexión"
+window = "la ventana no leída"
+head = "encabezado de petición"
+head-note = "16 KiB como máximo, termina en CR LF CR LF"
+body = "prefijo del cuerpo"
+body-note = "lo que cabe del cuerpo declarado; un cuerpo chunked se decodifica in situ"
+pending = "pendiente"
+pending-note = "la petición siguiente o el resto de una subida"
+free = "libre"
+served = "servido"
+fields = "método, ruta, consulta, cabeceras y cookies: slices del encabezado"
+pending-proxy = "se envía primero al origen"
+after = "Tras la respuesta:"
+next = "pasa a ser el inicio de la petición siguiente"
+
+[gcra]
+x-axis = "tiempo de llegada t (ms)"
+y-axis = "TAT (ms)"
+limit = "t + τ"
+refuse-zone = "TAT > t + τ: rechazada"
+burst = "una ráfaga de cinco en t = 0"
+sixth = "la sexta en t = 0"
+example = "En t\u00A0=\u00A0{refused}, TAT\u00A0=\u00A0{tat}\u00A0>\u00A0{early}: rechazada. En t\u00A0=\u00A0{admitted}, TAT\u00A0=\u00A0{tat}\u00A0≤\u00A0{limit}: admitida."
+admitted = "admitida"
+refused = "rechazada"
+tat = "TAT tras cada llegada"
+
+[primitive-latency]
+source = "Cada barra es la mediana de 7 lotes en un núcleo de un {cpu} ({date}); la línea fina va del lote más rápido al más lento. Escala logarítmica."
+
+[primitive-latency.groups]
+work = "prueba de trabajo"
+match = "búsqueda de patrones"
+token = "tokens"
+state = "estado"
+request = "camino de la petición"
+
+[primitive-latency.rows]
+hashcash_16_bits = "Verificación Hashcash (16 bits)"
+posw_depth13_t16 = "Verificación PoSW (profundidad 13, t = 16)"
+aho_corasick_40_signatures = "Firmas de bots (40, Aho-Corasick)"
+sequential_substring_40_signatures = "Firmas de bots (40, búsqueda secuencial)"
+ipv4_cidr_classification = "Búsqueda CIDR IPv4"
+ipv6_cidr_classification = "Búsqueda CIDR IPv6"
+blake3_mac_token = "Token de sesión (BLAKE3 con clave)"
+ed25519_compact_token = "Token de sesión (Ed25519)"
+robin_hood_spend_and_lookup = "Desafíos gastados: gastar y consultar"
+gcra_check = "Limitador de tasa, bytes del cliente"
+gcra_four_rule_scopes = "Cuatro ámbitos de regla, bytes del cliente"
+gcra_check_hashed = "Limitador de tasa, cliente en hash"
+gcra_four_rule_scopes_hashed = "Cuatro ámbitos de regla, cliente en hash"
+zero_copy_request_and_cookie = "Análisis HTTP y cookie"
+browser_request_full_classification = "Clasificación, perfil Shield"
+browser_request_gate_profile = "Clasificación, perfil Gate"
+8kb_body_semantic_scan = "Exploración WAF del cuerpo (8 KiB)"
+8kb_body_sqli_audit_other_enforce = "Exploración WAF, inyección SQL en auditoría"
+
+[posw-tree]
+order = "las hojas se etiquetan de izquierda a derecha"
+path = "el camino desde la raíz de la hoja 3.5"
+siblings = "hermanos enviados en la apertura"
+left = "hermanos izquierdos incluidos en el hash de la hoja"
+
+[work-asymmetry]
+inspect-title = "Primero la inspección"
+inspect-sender = "Remitente"
+inspect-arrow = "una petición barata, barata de enviar y cara de responder"
+inspect-defense = "Defensa: analiza y copia, aplica regex y consulta un almacén compartido"
+inspect-sender-work = "trabajo del remitente: una petición"
+inspect-defense-work = "trabajo de la defensa: todo, en cada petición"
+work-title = "Primero el trabajo (Sibuna)"
+work-sender = "El remitente resuelve un desafío"
+work-arrow = "un desafío resuelto, caro de obtener y barato de comprobar"
+work-defense = "Sibuna verifica un hash y no guarda estado hasta que se resuelve el desafío"
+work-sender-work = "trabajo del remitente: {power} intentos SHA-256 esperados, {trials} si b\u00A0=\u00A016"
+work-defense-work = "trabajo de Sibuna: un hash, {ns} ns; después se reutiliza la sesión"
+
+[sequential-work]
+hashcash = "Hashcash: búsqueda paralela"
+core = "núcleo {n}"
+time = "Cada núcleo prueba sus propios nonces; el núcleo 3 encuentra uno en el nonce 18 y todos los núcleos se detienen."
+posw = "Prueba de trabajo secuencial: un orden forzado"
+found = "un nonce que cumple el objetivo"
+path = "el camino desde la raíz de la hoja 3.5"
+siblings = "hermanos enviados en su apertura"
+left = "hermanos izquierdos incluidos en el hash de la hoja"

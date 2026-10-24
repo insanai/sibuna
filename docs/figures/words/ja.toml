@@ -1,0 +1,124 @@
+# Sibunaの図で使う日本語の語句。en.tomlと同じ形のファイルで、ここにないキーは英語で描かれる。
+# "{name}" は図が埋める値で、たとえば日本語の書式で書いた数値。
+
+[number]
+decimal = "."
+group = ","
+
+[survival]
+x-axis = "試行回数 x（期待試行回数を1とした倍率）"
+y-axis = "まだ探索を続けている確率"
+at-mean = "期待試行回数に達しても、探索が\nまだ続いている確率は e⁻¹\u00A0≈\u00A0{p}。"
+p95 = "x ≈ {x} までに\n95%の探索が終わる。"
+
+[wire-formats]
+challenge = "チャレンジ識別子"
+session = "セッショントークン"
+payload = "{n}バイトのペイロード"
+tag = "{n}バイトの鍵付きタグ"
+tag-field = "BLAKE3タグ"
+total = "合計{bytes}バイト、URL安全なbase64の{characters}文字として送る"
+
+[open-loop]
+due = "予定"
+send = "リクエスト送信"
+answer = "応答受信"
+waiting = "予定時刻を過ぎ、前の応答を待っている"
+latency = "記録するレイテンシー：予定時刻から。接続がアイドルだったときは送信時刻から"
+
+[cpu-sets]
+ccd0 = "CCD 0"
+ccd1 = "CCD 1"
+daemons = "デーモン"
+primitive = "プリミティブの\nスイート"
+idle = "割り当てなし"
+load = "wrk、レイテンシーの生成器、オリジン"
+smt = "各コアの小さな数字は、そのSMTの兄弟スレッド（CPU 16から31のいずれか）を示す。どの実行もこれらを使わない。"
+
+[read-buffer]
+buffer = "一つの接続が持つ64 KiBの読み込みバッファー"
+window = "未読の範囲"
+head = "リクエストのヘッダー部"
+head-note = "最大16 KiB、末尾はCR LF CR LF"
+body = "ボディーの先頭部分"
+body-note = "宣言されたボディーのうち収まる分。\nchunkedはその場でデコード"
+pending = "保留分"
+pending-note = "次のリクエスト、またはアップロードの残り"
+free = "空き"
+served = "処理済み"
+fields = "メソッド、パス、クエリ、\nヘッダー、Cookie：\nヘッダー部のスライス"
+pending-proxy = "先にオリジンへ送る"
+after = "応答の後："
+next = "次のリクエストの\n先頭になる"
+
+[gcra]
+x-axis = "到着時刻 t (ms)"
+y-axis = "TAT (ms)"
+limit = "t + τ"
+refuse-zone = "TAT > t + τ：拒否"
+burst = "t = 0での5件のバースト"
+sixth = "t = 0の6件目"
+example = "t = {refused} では\nTAT = {tat} > {early} なので拒否。\nt = {admitted} では\nTAT = {tat} ≤ {limit} なので許可。"
+admitted = "許可"
+refused = "拒否"
+tat = "各到着の後のTAT"
+
+[primitive-latency]
+source = "各棒は{cpu}の1コアで測った7バッチの中央値（{date}）。\n細い線は最速と最遅のバッチの範囲。対数目盛。"
+
+[primitive-latency.groups]
+work = "作業証明"
+match = "照合"
+token = "トークン"
+state = "状態"
+request = "リクエストの経路"
+
+[primitive-latency.rows]
+hashcash_16_bits = "Hashcashの検証（16ビット）"
+posw_depth13_t16 = "PoSWの検証（深さ13、t = 16）"
+aho_corasick_40_signatures = "ボットのシグネチャ（40個、Aho-Corasick）"
+sequential_substring_40_signatures = "ボットのシグネチャ（40個、逐次探索）"
+ipv4_cidr_classification = "IPv4 CIDRの検索"
+ipv6_cidr_classification = "IPv6 CIDRの検索"
+blake3_mac_token = "セッショントークン（鍵付きBLAKE3）"
+ed25519_compact_token = "セッショントークン（Ed25519）"
+robin_hood_spend_and_lookup = "使用済み集合：使用と検索"
+gcra_check = "レートリミッター、クライアントのバイト列"
+gcra_four_rule_scopes = "四つのルールのスコープ、クライアントのバイト列"
+gcra_check_hashed = "レートリミッター、ハッシュ化したクライアント"
+gcra_four_rule_scopes_hashed = "四つのルールのスコープ、ハッシュ化したクライアント"
+zero_copy_request_and_cookie = "HTTPのパースとCookie"
+browser_request_full_classification = "分類、Shieldのプロファイル"
+browser_request_gate_profile = "分類、Gateのプロファイル"
+8kb_body_semantic_scan = "WAFのボディーの走査（8 KiB）"
+8kb_body_sqli_audit_other_enforce = "WAFのボディーの走査、SQLインジェクションを監査"
+
+[posw-tree]
+order = "葉は左から右の順にラベル付けする"
+path = "葉3.5の根からの経路"
+siblings = "開示で送る兄弟"
+left = "葉にハッシュされる左の兄弟"
+
+[work-asymmetry]
+inspect-title = "検査が先"
+inspect-sender = "送信者"
+inspect-arrow = "安価なリクエスト一つ。\n送るのは安価、応えるのは高価"
+inspect-defense = "防御側：解析とコピー、\n正規表現による走査、\n共有ストアへの問い合わせ"
+inspect-sender-work = "送信者の作業：リクエスト一つ"
+inspect-defense-work = "防御側の作業：すべて、\nしかもリクエストごとに"
+work-title = "作業が先（Sibuna）"
+work-sender = "送信者がパズルを解く"
+work-arrow = "解いたパズル。\n得るのは高価、確かめるのは安価"
+work-defense = "Sibunaの検証はハッシュ一回。\n解かれるまで状態を持たない"
+work-sender-work = "送信者の作業：期待値{power}回の\nSHA-256試行（b = 16で{trials}回）"
+work-defense-work = "Sibunaの作業：ハッシュ一回、\n{ns} ns。以後はセッションを再利用"
+
+[sequential-work]
+hashcash = "Hashcash：並列探索"
+core = "コア{n}"
+time = "各コアは自分のnonceを試す。\nコア3がnonce 18で解を見つけ、\nすべてのコアが止まる。"
+posw = "逐次作業証明：強制される順序"
+found = "目標を満たすnonce"
+path = "葉3.5の根からの経路"
+siblings = "開示で送る兄弟"
+left = "葉にハッシュされる左の兄弟"

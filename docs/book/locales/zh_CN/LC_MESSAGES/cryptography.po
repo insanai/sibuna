@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-10-24 10:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,7 +36,7 @@ msgid "Hashcash: The Mathematics of Tier One"
 msgstr "Hashcash：第一层的数学"
 
 #: ../../cryptography.rst:9 ../../cryptography.rst:36
-#: ../../cryptography.rst:167
+#: ../../cryptography.rst:146
 msgid "Objectives"
 msgstr "学习目标"
 
@@ -56,15 +56,29 @@ msgstr "定义与成本"
 
 #: ../../cryptography.rst:16
 msgid ""
-"Sibuna's Tier One puzzle for challenge string :math:`C` and difficulty :math:`b` bits is: find :math:`N \\in \\mathbb{N}` such that :math:`\\text{SHA-256}(C \\parallel \\text{\":\"} \\parallel \\mathrm{dec}(N))` has :math:`b` leading zero bits. The decimal rendering of the nonce is deliberate; it keeps the wire format identical between the WebAssembly solver, the JavaScript fallback, and the native verifier without a binary encoding step."
+"Sibuna's Tier One puzzle for challenge string :math:`C` and difficulty "
+":math:`b` bits is: find :math:`N \\in \\mathbb{N}` such that "
+":math:`\\text{SHA-256}(C \\parallel \\text{\":\"} \\parallel "
+"\\mathrm{dec}(N))` has :math:`b` leading zero bits. The decimal rendering "
+"of the nonce is deliberate; it keeps the wire format identical between "
+"the WebAssembly solver, the JavaScript fallback, and the native verifier "
+"without a binary encoding step."
 msgstr ""
-"对于挑战字符串 :math:`C` 和 :math:`b` 比特的难度，Sibuna 的第一层谜题是：找到 :math:`N \\in \\mathbb{N}`，使 :math:`\\text{SHA-256}(C \\parallel \\text{\":\"} \\parallel \\mathrm{dec}(N))` 具有 :math:`b` 个前导零比特。nonce 采用十进制表示是有意为之；它使 WebAssembly 求解器、JavaScript 后备实现和原生验证器之间的线路格式保持一致，而不需要二进制编码步骤。"
+"对于挑战字符串 :math:`C` 和 :math:`b` 比特的难度，Sibuna 的第一层谜题是：找到 :math:`N \\in "
+"\\mathbb{N}`，使 :math:`\\text{SHA-256}(C \\parallel \\text{\":\"} "
+"\\parallel \\mathrm{dec}(N))` 具有 :math:`b` 个前导零比特。nonce 采用十进制表示是有意为之；它使 "
+"WebAssembly 求解器、JavaScript 后备实现和原生验证器之间的线路格式保持一致，而不需要二进制编码步骤。"
 
 #: ../../cryptography.rst:18
 msgid ""
-"The unit of difficulty is an expected *hash trial*, not a compression function call. An input can occupy several SHA-256 blocks. Prefix precomputation can also change the work per nonce. The wire rule remains the digest predicate; implementations must agree on the statement and nonce encoding, not on an estimated CPU cost."
+"The unit of difficulty is an expected *hash trial*, not a compression "
+"function call. An input can occupy several SHA-256 blocks. Prefix "
+"precomputation can also change the work per nonce. The wire rule remains "
+"the digest predicate; implementations must agree on the statement and "
+"nonce encoding, not on an estimated CPU cost."
 msgstr ""
-"难度的单位是一次期望的 *哈希尝试*，而不是一次压缩函数调用。一个输入可能占用多个 SHA-256 分组。前缀预计算也会改变每个 nonce 的工作量。线路规则始终是摘要谓词；各个实现必须就陈述和 nonce 编码达成一致，而不是就估计的 CPU 成本达成一致。"
+"难度的单位是一次期望的 *哈希尝试*，而不是一次压缩函数调用。一个输入可能占用多个 SHA-256 分组。前缀预计算也会改变每个 nonce "
+"的工作量。线路规则始终是摘要谓词；各个实现必须就陈述和 nonce 编码达成一致，而不是就估计的 CPU 成本达成一致。"
 
 #: ../../cryptography.rst:20
 msgid ""
@@ -194,70 +208,26 @@ msgstr ""
 "叶子 :math:`u = u_1 \\dots u_n` 在根路径每次向右转的地方，对 *其祖先的左兄弟* 做哈希：:math:`\\ell_u "
 "= H(\\chi, u, \\{\\ell_{u_1 \\dots u_{i-1} 0} : u_i = 1\\})`。"
 
-#: ../../cryptography.rst:56
+#: ../../cryptography.rst:55
 msgid ""
-"A complete binary tree of depth 3 with nodes named depth.index. The root path of leaf 3.5 (nodes 0.0, 1.1, 2.2, 3.5) is highlighted in amber, the siblings 1.0, 2.3 and 3.4 sent in its opening are green, and dashed red edges run from 1.0 and 3.4 into leaf 3.5."
+"A complete binary tree of depth 3 with nodes named depth.index. The root "
+"path of leaf 3.5 (nodes 0.0, 1.1, 2.2, 3.5) is amber, the siblings 1.0, "
+"2.3 and 3.4 sent in its opening are green, and dashed red arrows run from "
+"1.0 and 3.4 into leaf 3.5. An arrow under the leaves shows that they are "
+"labelled from left to right."
 msgstr ""
-"一棵深度为 3 的完全二叉树，节点按“深度.序号”命名。叶子 3.5 通往根的路径（节点 0.0、1.1、2.2、3.5）以琥珀色突出显示，它的揭示中发送的兄弟节点 1.0、2.3 和 3.4 为绿色，红色虚线从 1.0 和 3.4 指向叶子 3.5。"
+"一棵深度为 3 的完全二叉树，节点按“深度.序号”命名。叶子 3.5 通往根的路径（节点 0.0、1.1、2.2、"
+"3.5）为琥珀色，它的揭示中发送的兄弟节点 1.0、2.3 和 3.4 为绿色，红色虚线箭头从 1.0 和 3.4 "
+"指向叶子 3.5。叶子下方的箭头表示叶子从左到右依次计算标签。"
 
-#: ../../cryptography.rst:56
-msgid ""
-"digraph posw_tree {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.25, ranksep=0.5, ordering=out];\n"
-"  node [shape=circle, fixedsize=true, width=0.5, fontname=\"Helvetica\", fontsize=10, style=filled, fillcolor=\"#ffffff\", color=\"#1e40af\", fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", arrowhead=none];\n"
-"\n"
-"  \"0.0\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5, xlabel=<<font color=\"#64748b\">root &phi;</font>>];\n"
-"  \"1.1\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"2.2\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"3.5\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"1.0\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"2.3\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"3.4\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"\n"
-"  \"0.0\" -> \"1.0\"; \"0.0\" -> \"1.1\";\n"
-"  \"1.0\" -> \"2.0\"; \"1.0\" -> \"2.1\"; \"1.1\" -> \"2.2\"; \"1.1\" -> \"2.3\";\n"
-"  \"2.0\" -> \"3.0\"; \"2.0\" -> \"3.1\"; \"2.1\" -> \"3.2\"; \"2.1\" -> \"3.3\";\n"
-"  \"2.2\" -> \"3.4\"; \"2.2\" -> \"3.5\"; \"2.3\" -> \"3.6\"; \"2.3\" -> \"3.7\";\n"
-"\n"
-"  \"3.5\" -> \"1.0\" [style=dashed, color=\"#b91c1c\", dir=back, arrowtail=normal, constraint=false];\n"
-"  \"3.5\" -> \"3.4\" [style=dashed, color=\"#b91c1c\", dir=back, arrowtail=normal, constraint=false];\n"
-"}"
-msgstr ""
-"digraph posw_tree {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.25, ranksep=0.5, ordering=out];\n"
-"  node [shape=circle, fixedsize=true, width=0.5, fontname=\"Helvetica\", fontsize=10, style=filled, fillcolor=\"#ffffff\", color=\"#1e40af\", fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", arrowhead=none];\n"
-"\n"
-"  \"0.0\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5, xlabel=<<font color=\"#64748b\">根 &phi;</font>>];\n"
-"  \"1.1\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"2.2\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"3.5\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"1.0\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"2.3\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"3.4\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"\n"
-"  \"0.0\" -> \"1.0\"; \"0.0\" -> \"1.1\";\n"
-"  \"1.0\" -> \"2.0\"; \"1.0\" -> \"2.1\"; \"1.1\" -> \"2.2\"; \"1.1\" -> \"2.3\";\n"
-"  \"2.0\" -> \"3.0\"; \"2.0\" -> \"3.1\"; \"2.1\" -> \"3.2\"; \"2.1\" -> \"3.3\";\n"
-"  \"2.2\" -> \"3.4\"; \"2.2\" -> \"3.5\"; \"2.3\" -> \"3.6\"; \"2.3\" -> \"3.7\";\n"
-"\n"
-"  \"3.5\" -> \"1.0\" [style=dashed, color=\"#b91c1c\", dir=back, arrowtail=normal, constraint=false];\n"
-"  \"3.5\" -> \"3.4\" [style=dashed, color=\"#b91c1c\", dir=back, arrowtail=normal, constraint=false];\n"
-"}"
-
-#: ../../cryptography.rst:56
+#: ../../cryptography.rst:58
 msgid ""
 "The depth-3 tree: an opening of leaf 3.5 sends the leaf label and the "
 "three sibling labels; the dashed edges are the left-sibling dependencies "
-"that make labelling sequential. Amber nodes form the path of leaf 3.5, "
-"green nodes are the siblings sent in the opening, and the dashed red "
-"edges are the left-sibling edges hashed into the leaf."
-msgstr ""
-"深度为 3 的树：叶子 3.5 的一次揭示发送该叶子标签和三个兄弟标签；虚线边是使标签计算成为顺序过程的左兄弟依赖。琥珀色节点构成叶子 3.5 "
-"的路径，绿色节点是揭示中发送的兄弟节点，红色虚线边是被哈希进叶子的左兄弟边。"
+"that make labelling sequential."
+msgstr "深度为 3 的树：叶子 3.5 的一次揭示发送该叶子标签和三个兄弟标签；虚线边是使标签计算成为顺序过程的左兄弟依赖。"
 
-#: ../../cryptography.rst:81
+#: ../../cryptography.rst:60
 msgid ""
 "The left-sibling edges are what make the computation sequential: leaf "
 ":math:`u` cannot be labelled until every subtree to its left is complete, "
@@ -269,7 +239,7 @@ msgstr ""
 "左侧的每棵子树都完成之前，无法计算它的标签，因此只能按深度优先的后序遍历进行，根标签 :math:`\\varphi = "
 "\\ell_\\varepsilon` 依次依赖于全部 :math:`2^{n+1} - 1` 个标签。"
 
-#: ../../cryptography.rst:83
+#: ../../cryptography.rst:62
 msgid ""
 "**Openings.** After computing :math:`\\varphi`, the prover derives "
 ":math:`t` leaves by Fiat-Shamir, :math:`\\gamma_i = H(\\chi \\parallel "
@@ -287,11 +257,11 @@ msgstr ""
 "个兄弟标签。验证者用作为父节点的兄弟标签重新计算叶子，沿路径向上做哈希，并检查最终是否得到 :math:`\\varphi`。验证者的成本是 "
 ":math:`O(tn)` 次标签计算，所需工作空间有界。一次标签计算可能跨越多个哈希分组；统计标签数并不等于统计压缩函数调用次数。"
 
-#: ../../cryptography.rst:85
+#: ../../cryptography.rst:64
 msgid "Implementation: ``posw::verify_opening``"
 msgstr "实现：``posw::verify_opening``"
 
-#: ../../cryptography.rst:87
+#: ../../cryptography.rst:66
 msgid ""
 "Recomputes one opened leaf from its sibling labels and walks the path to "
 "the root. In ``crates/pow/src/posw.rs`` (crate ``sibuna-pow``)."
@@ -299,13 +269,15 @@ msgstr ""
 "用兄弟标签重新计算一个被揭示的叶子，并沿路径走到根。位于 ``crates/pow/src/posw.rs``\\ （crate "
 "``sibuna-pow``）。"
 
-#: ../../cryptography.rst:89
+#: ../../cryptography.rst:68
 msgid ""
-"fn verify_opening(base: &Sha256, n: u8, phi: &Label, gamma: u32, opening: &[Label]) -> bool {\n"
+"fn verify_opening(base: &Sha256, n: u8, phi: &Label, gamma: u32, opening: "
+"&[Label]) -> bool {\n"
 "    let Some((leaf, siblings)) = opening.split_first() else {\n"
 "        return false;\n"
 "    };\n"
-"    // `siblings` runs from depth n up to depth 1; reversed, it pairs with depths 1..=n.\n"
+"    // `siblings` runs from depth n up to depth 1; reversed, it pairs "
+"with depths 1..=n.\n"
 "    let mut hasher = node_hasher(base, n, gamma);\n"
 "    for (d, sibling) in (1..=n).zip(siblings.iter().rev()) {\n"
 "        if turns_right(gamma, n, d) {\n"
@@ -330,7 +302,8 @@ msgid ""
 "    current == *phi\n"
 "}"
 msgstr ""
-"fn verify_opening(base: &Sha256, n: u8, phi: &Label, gamma: u32, opening: &[Label]) -> bool {\n"
+"fn verify_opening(base: &Sha256, n: u8, phi: &Label, gamma: u32, opening: "
+"&[Label]) -> bool {\n"
 "    let Some((leaf, siblings)) = opening.split_first() else {\n"
 "        return false;\n"
 "    };\n"
@@ -359,11 +332,11 @@ msgstr ""
 "    current == *phi\n"
 "}"
 
-#: ../../cryptography.rst:120
+#: ../../cryptography.rst:99
 msgid "Sampling, Soundness, and Their Limits"
 msgstr "抽样、可靠性及其局限"
 
-#: ../../cryptography.rst:123
+#: ../../cryptography.rst:102
 msgid ""
 "Consider a fixed commitment with an independently detectable bad fraction "
 ":math:`\\alpha`. If each opening samples uniformly and independently, the "
@@ -376,11 +349,11 @@ msgstr ""
 ":math:`t` 次揭示全部错过坏位置的概率是 "
 ":math:`(1-\\alpha)^t`。这个初等计算解释了为什么更多的揭示有帮助。但它本身并不是顺序工作量协议的安全性证明。"
 
-#: ../../cryptography.rst:125
+#: ../../cryptography.rst:104
 msgid "Worked example: a conditional sampling bound"
 msgstr "实例分析：一个条件抽样界"
 
-#: ../../cryptography.rst:127
+#: ../../cryptography.rst:106
 msgid ""
 "With a fixed bad fraction :math:`\\alpha = 0.1` and :math:`t = 16` "
 "independent openings, the chance of missing every bad location is "
@@ -393,7 +366,7 @@ msgstr ""
 ":math:`0.9^{16} \\approx 0.185`。进行 32 次揭示时，该概率约为 "
 "0.034。这个前提要求在选择样本之前承诺已经固定。如果证明者可以反复尝试许多个根、选择揭示哪个承诺，或者让失败相互关联，那么这个计算没有考虑这些策略。"
 
-#: ../../cryptography.rst:129
+#: ../../cryptography.rst:108
 msgid ""
 "The referenced sequential-work construction has a security analysis in an "
 "oracle model. Sibuna's domain separation, parameter mapping, truncation, "
@@ -406,11 +379,11 @@ msgstr ""
 "的域分离、参数映射、截断和实现，仍然必须对照该构造的假设进行检查。Fiat-Shamir "
 "抽样使揭示可以从承诺复现；但仅有可复现性并不能证明能够抵御反复尝试（grinding）。我们不作出“作弊永远不会更便宜”这样的无条件声明。"
 
-#: ../../cryptography.rst:131
+#: ../../cryptography.rst:110
 msgid "Exercise 3.1"
 msgstr "练习 3.1"
 
-#: ../../cryptography.rst:133
+#: ../../cryptography.rst:112
 msgid ""
 "If an attacker tries :math:`g` independent commitments, each accepted "
 "with probability :math:`q`, derive the probability that at least one is "
@@ -418,15 +391,15 @@ msgid ""
 msgstr ""
 "如果攻击者尝试 :math:`g` 个相互独立的承诺，每个被接受的概率为 :math:`q`，推导至少有一个被接受的概率。这个表达式遗漏了哪些成本？"
 
-#: ../../cryptography.rst:135
+#: ../../cryptography.rst:114
 msgid "*Hint:* First calculate the probability that all :math:`g` fail."
 msgstr "*提示：* 先计算全部 :math:`g` 个都失败的概率。"
 
-#: ../../cryptography.rst:137
+#: ../../cryptography.rst:116
 msgid "Prover Memory"
 msgstr "证明者的内存"
 
-#: ../../cryptography.rst:140
+#: ../../cryptography.rst:119
 msgid ""
 "A naive prover stores every label (:math:`2^{n+1} - 1` of them). Sibuna's "
 "prover keeps a stack of the current path's left-sibling labels (:math:`n "
@@ -446,11 +419,11 @@ msgstr ""
 ":math:`2^{n+1} - 1 + t\\,(2^{n-m+1} - 1)` 次哈希，整个工作空间（包括输出的证明）不到 100 "
 "KB：浏览器标签页和原生测试共用同一个 ``Workspace`` 类型（``sibuna_pow::posw::Workspace``）。"
 
-#: ../../cryptography.rst:142
+#: ../../cryptography.rst:121
 msgid "Parameters Are Not Timings"
 msgstr "参数不是耗时"
 
-#: ../../cryptography.rst:145
+#: ../../cryptography.rst:124
 msgid ""
 "Sibuna maps work bits to depth using :math:`n = b - 3`, clamped to the "
 "supported interval :math:`[4, 24]`. This is a work-scale convention, not "
@@ -464,7 +437,7 @@ msgstr ""
 "内。这是一个工作量尺度上的约定，并不保证不同算法的实际耗时相等。一个叶子可能要对多个父标签做哈希，而 Hashcash 是反复测试 "
 "nonce。编译器、浏览器、处理器和参数的选择都会影响它们的相对成本。已提交的原语基准测试测量的是验证；它并不能说明浏览器的求解延迟。"
 
-#: ../../cryptography.rst:147
+#: ../../cryptography.rst:126
 msgid ""
 "Proof size is :math:`32(1 + t(n+1))` bytes. At depth 13 with sixteen "
 "openings, this is :math:`32(1 + 16 \\times 14) = 7200` bytes. Raising the "
@@ -474,21 +447,21 @@ msgstr ""
 "证明的大小是 :math:`32(1 + t(n+1))` 字节。在深度 13、十六次揭示时，大小为 :math:`32(1 + 16 "
 "\\times 14) = 7200` 字节。即使构造树这一主要成本保持不变，增加揭示次数也会同时增大证明和验证者的工作量。"
 
-#: ../../cryptography.rst:149
+#: ../../cryptography.rst:128
 msgid "Exercise 3.2"
 msgstr "练习 3.2"
 
-#: ../../cryptography.rst:151
+#: ../../cryptography.rst:130
 msgid ""
 "Compute the proof size at depth 17 with 16 openings. Then double the "
 "opening count. Which term doubles and which term remains fixed?"
 msgstr "计算深度 17、16 次揭示时的证明大小。然后把揭示次数加倍。哪一项加倍了，哪一项保持不变？"
 
-#: ../../cryptography.rst:153
+#: ../../cryptography.rst:132
 msgid "Choosing a Construction"
 msgstr "选择一种构造"
 
-#: ../../cryptography.rst:156
+#: ../../cryptography.rst:135
 msgid ""
 "The relevant comparison is a resource budget, not an algorithm's "
 "reputation. Record the prover's memory, the verifier's worst-case work, "
@@ -500,7 +473,7 @@ msgid ""
 msgstr ""
 "有意义的比较对象是资源预算，而不是算法的名声。记录证明者的内存、验证者的最坏情况工作量、证明的字节数，以及所声称的性质需要的假设。内存困难的搜索可能有用，但如果验证者必须重复昂贵的工作，攻击者就多了一个消耗服务器资源的地方。可公开验证的延迟构造所服务的信任模型，与共享密钥的网关不同。"
 
-#: ../../cryptography.rst:158
+#: ../../cryptography.rst:137
 msgid ""
 "Sibuna retains cheap hash verification and a hash-based sequential-work "
 "option. The latter requires more proof bytes and more careful parameter "
@@ -510,22 +483,22 @@ msgstr ""
 "Sibuna "
 "保留了低成本的哈希验证，以及一个基于哈希的顺序工作量选项。后者需要更多的证明字节和更仔细的参数分析。无论哪种选择，都需要在进入昂贵的验证之前拒绝格式错误的证明。"
 
-#: ../../cryptography.rst:160 ../../cryptography.rst:245
+#: ../../cryptography.rst:139 ../../cryptography.rst:210
 msgid "Explain the invariant"
 msgstr "解释这个不变量"
 
-#: ../../cryptography.rst:162
+#: ../../cryptography.rst:141
 msgid ""
 "Explain the distinction between an authentication tree, which proves that "
 "a label belongs to a commitment, and dependency edges, which constrain "
 "how labels are computed."
 msgstr "解释认证树与依赖边之间的区别：前者证明某个标签属于一个承诺，后者约束标签的计算方式。"
 
-#: ../../cryptography.rst:164
+#: ../../cryptography.rst:143
 msgid "Symmetric Authentication: Challenges and Sessions"
 msgstr "对称认证：挑战与会话"
 
-#: ../../cryptography.rst:169
+#: ../../cryptography.rst:148
 msgid ""
 "Explain why a keyed pseudorandom function is the correct primitive when "
 "issuer and verifier are the same trust domain, state the forgery bound "
@@ -535,11 +508,11 @@ msgstr ""
 "解释当签发者和验证者属于同一个信任域时，为什么带密钥的伪随机函数是正确的原语；给出 128 "
 "位标签的伪造界；描述无状态挑战记录和已用集合的上界；并读懂密钥派生方案。"
 
-#: ../../cryptography.rst:171
+#: ../../cryptography.rst:150
 msgid "Issuer Equals Verifier"
 msgstr "签发者即验证者"
 
-#: ../../cryptography.rst:174
+#: ../../cryptography.rst:153
 msgid ""
 "A digital signature lets *anyone* holding the public key verify, which is "
 "the right tool when verifiers must not be able to mint. Sibuna's verifier "
@@ -553,11 +526,11 @@ msgstr ""
 "签发者（或共享同一个种子的集群）。由伪随机函数构建的消息认证码在这个信任域内提供认证。它不提供公开验证：任何持有 MAC "
 "密钥的人也都能签发令牌。基准测试一章比较了已实现的令牌操作。"
 
-#: ../../cryptography.rst:176
+#: ../../cryptography.rst:155
 msgid "Lemma 3 (Forgery bound)"
 msgstr "引理 3（伪造界）"
 
-#: ../../cryptography.rst:178
+#: ../../cryptography.rst:157
 msgid ""
 "With BLAKE3 in keyed mode modelled as a PRF and a 16-byte tag, an "
 "adversary making :math:`q` verification queries forges a valid token with "
@@ -569,7 +542,7 @@ msgstr ""
 ":math:`q \\cdot 2^{-128} + \\varepsilon_{\\mathrm{PRF}}`。按每秒一百万次查询计算，即每秒 "
 ":math:`2^{-108}`。"
 
-#: ../../cryptography.rst:180
+#: ../../cryptography.rst:159
 msgid ""
 "A second consequence matters for the long term: Ed25519 rests on discrete "
 "logarithms in an elliptic-curve group, which Shor's algorithm breaks; a "
@@ -582,11 +555,11 @@ msgstr ""
 "算法可以攻破它；带密钥哈希只依赖于哈希函数，量子算法对它至多带来平方级加速。对于需要验证者不具备签发能力的部署，Sibuna 保留 Ed25519 "
 "作为选项（``--token-scheme ed25519``）。"
 
-#: ../../cryptography.rst:182
+#: ../../cryptography.rst:161
 msgid "The Key Schedule"
 msgstr "密钥派生方案"
 
-#: ../../cryptography.rst:185
+#: ../../cryptography.rst:164
 msgid ""
 "One 32-byte master seed (from ``--secret-file``, ``SIBUNA_SECRET``, or a "
 "fresh random value) derives every purpose key with keyed BLAKE3 and a "
@@ -596,11 +569,11 @@ msgstr ""
 "一个 32 字节的主种子（来自 ``--secret-file``、``SIBUNA_SECRET`` 或一个新生成的随机值）通过带密钥 "
 "BLAKE3 和域字符串派生出每个用途的密钥：令牌密钥、挑战密钥、Ed25519 密钥、指纹密钥，以及用于封装要求票据的要求密钥（第 IV 部分）。"
 
-#: ../../cryptography.rst:187
+#: ../../cryptography.rst:166
 msgid "Implementation: ``Keys::derive``"
 msgstr "实现：``Keys::derive``"
 
-#: ../../cryptography.rst:189
+#: ../../cryptography.rst:168
 msgid ""
 "Derives the five purpose keys from the seed. In "
 "``crates/challenge/src/keys.rs`` (crate ``sibuna-challenge``). ``Keys`` "
@@ -611,7 +584,7 @@ msgstr ""
 "``sibuna-challenge``）。``Keys`` 和 ``Seed`` 在被丢弃时将其字节清零，它们的 ``Debug`` "
 "输出也经过脱敏。"
 
-#: ../../cryptography.rst:191
+#: ../../cryptography.rst:170
 msgid ""
 "pub fn derive(seed: &Seed) -> Keys {\n"
 "    Keys {\n"
@@ -641,7 +614,7 @@ msgstr ""
 "    blake3::keyed_hash(seed.as_bytes(), purpose.as_bytes())\n"
 "}"
 
-#: ../../cryptography.rst:207
+#: ../../cryptography.rst:186
 msgid ""
 "In a cluster, ``Keys::bind_node`` replaces the challenge key by keyed "
 "BLAKE3 under it over ``sibuna/challenge-node/v1`` and the node id, so a "
@@ -651,67 +624,61 @@ msgstr ""
 "在集群中，``Keys::bind_node`` 以挑战密钥为密钥，对 ``sibuna/challenge-node/v1`` 和节点 ID "
 "计算带密钥 BLAKE3，并用结果替换挑战密钥。这样，挑战必须回到签发它的节点，而会话令牌和要求票据在每个成员上都保持有效。"
 
-#: ../../cryptography.rst:209
+#: ../../cryptography.rst:188
 msgid ""
 "Domain separation prevents accidental reuse across purposes; compromise "
 "of the master seed compromises every derived key. A cluster only has to "
 "agree on one seed."
 msgstr "域分离可以防止不同用途之间的意外复用；主种子一旦泄露，所有派生密钥都会随之泄露。集群只需要就一个种子达成一致。"
 
-#: ../../cryptography.rst:211
+#: ../../cryptography.rst:190
 msgid "Stateless Challenges"
 msgstr "无状态挑战"
 
-#: ../../cryptography.rst:215
+#: ../../cryptography.rst:193
 msgid ""
-"Challenge identifier\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"| ver | alg | diff | t | issued_at | fingerprint | nonce   | rule_hash | BLAKE3 tag     |\n"
-"|  1  |  1  |  1   | 1 |     8     |      8      |    8    |     8     |       16       |\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"|<----------------------- 36-byte payload ---------------------------->|<-- keyed tag ->|\n"
-"36-byte payload + 16-byte keyed tag = 52 bytes, 70 URL-safe base64 characters\n"
-"\n"
-"Session token\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"| ver | alg | bits | res | timestamp | expiry | rule_hash | fingerprint | BLAKE3 tag     |\n"
-"|  1  |  1  |  1   |  5  |     8     |   8    |     8     |      8      |       16       |\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"|<------------------------ 40-byte payload ---------------------------->|<-- keyed tag ->|\n"
-"40-byte payload + 16-byte keyed tag = 56 bytes, 75 URL-safe base64 characters"
+"Two byte layouts. The challenge identifier: ver, alg, diff and t of one "
+"byte each, then issued_at, fingerprint, nonce and rule_hash of eight "
+"bytes each, a 36-byte payload, followed by a 16-byte BLAKE3 tag; 52 "
+"bytes, sent as 70 URL-safe base64 characters. The session token: ver, alg "
+"and bits of one byte each, res of five bytes, then timestamp, expiry, "
+"rule_hash and fingerprint of eight bytes each, a 40-byte payload, "
+"followed by a 16-byte BLAKE3 tag; 56 bytes, sent as 75 URL-safe base64 "
+"characters."
 msgstr ""
-"挑战标识符\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"| ver | alg | diff | t | issued_at | fingerprint | nonce   | rule_hash | BLAKE3 tag     |\n"
-"|  1  |  1  |  1   | 1 |     8     |      8      |    8    |     8     |       16       |\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"|<------------------------- 36 字节载荷 ------------------------------>|<- 带密钥标签 ->|\n"
-"36 字节载荷 + 16 字节带密钥标签 = 52 字节，70 个 URL 安全的 base64 字符\n"
-"\n"
-"会话令牌\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"| ver | alg | bits | res | timestamp | expiry | rule_hash | fingerprint | BLAKE3 tag     |\n"
-"|  1  |  1  |  1   |  5  |     8     |   8    |     8     |      8      |       16       |\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"|<-------------------------- 40 字节载荷 ------------------------------>|<- 带密钥标签 ->|\n"
-"40 字节载荷 + 16 字节带密钥标签 = 56 字节，75 个 URL 安全的 base64 字符"
+"两种字节布局。挑战标识符：ver、alg、diff 和 t 各占一个字节，随后 issued_at、"
+"fingerprint、nonce 和 rule_hash 各占八个字节，构成 36 字节载荷，其后是 16 字节的 "
+"BLAKE3 标签；共 52 字节，以 70 个 URL 安全的 base64 字符发送。会话令牌：ver、alg 和 "
+"bits 各占一个字节，res 占五个字节，随后 timestamp、expiry、rule_hash 和 "
+"fingerprint 各占八个字节，构成 40 字节载荷，其后是 16 字节的 BLAKE3 标签；共 56 字节，"
+"以 75 个 URL 安全的 base64 字符发送。"
 
-#: ../../cryptography.rst:215
+#: ../../cryptography.rst:196
 msgid ""
-"Wire formats of the challenge identifier and the session token (field widths in bytes)."
-msgstr "挑战标识符和会话令牌的线路格式（字段宽度以字节计）。"
+"Wire formats of the challenge identifier and the session token. The "
+"numbers above each record are byte offsets."
+msgstr "挑战标识符和会话令牌的线路格式。每条记录上方的数字是字节偏移量。"
 
-#: ../../cryptography.rst:233
+#: ../../cryptography.rst:198
 msgid ""
-"A challenge identifier is a self-authenticating record: version, algorithm, difficulty, opening count, issue time, the client's keyed fingerprint, a PRF-derived nonce, and the hash of the policy rule that demanded the challenge, followed by a 16-byte tag under the challenge key. Issuing one writes nothing. Verification decodes the record, checks the tag in constant time, checks the age against the challenge TTL, checks the fingerprint against the submitting client, and only then examines the proof."
+"A challenge identifier is a self-authenticating record: version, "
+"algorithm, difficulty, opening count, issue time, the client's keyed "
+"fingerprint, a PRF-derived nonce, and the hash of the policy rule that "
+"demanded the challenge, followed by a 16-byte tag under the challenge "
+"key. Issuing one writes nothing. Verification decodes the record, checks "
+"the tag in constant time, checks the age against the challenge TTL, "
+"checks the fingerprint against the submitting client, and only then "
+"examines the proof."
 msgstr ""
-"挑战标识符是一个自认证记录：版本、算法、难度、揭示次数、签发时间、客户端的带密钥指纹、由 PRF 派生的 nonce，以及要求该挑战的策略规则的哈希，后面跟着一个用挑战密钥计算的 16 字节标签。签发挑战不写入任何内容。验证时先解码记录，以常量时间检查标签，对照挑战 TTL 检查时效，对照提交方客户端检查指纹，最后才检查证明。"
+"挑战标识符是一个自认证记录：版本、算法、难度、揭示次数、签发时间、客户端的带密钥指纹、由 PRF 派生的 "
+"nonce，以及要求该挑战的策略规则的哈希，后面跟着一个用挑战密钥计算的 16 "
+"字节标签。签发挑战不写入任何内容。验证时先解码记录，以常量时间检查标签，对照挑战 TTL 检查时效，对照提交方客户端检查指纹，最后才检查证明。"
 
-#: ../../cryptography.rst:235
+#: ../../cryptography.rst:200
 msgid "Lemma 4 (State grows only with paid work)"
 msgstr "引理 4（状态只随付出的工作增长）"
 
-#: ../../cryptography.rst:237
+#: ../../cryptography.rst:202
 msgid ""
 "Let :math:`S` be the set of challenge tags the daemon remembers. A tag "
 "enters :math:`S` only after a valid proof for it was accepted, and it "
@@ -726,7 +693,7 @@ msgstr ""
 "之后离开。因此，若 :math:`r` 是该时间段内被接受的不同解答的速率上界，则 :math:`|S| \\le r \\cdot "
 "\\mathrm{TTL}`。免费获取挑战不会分配标签。实现还具有固定容量，饱和时可能拒绝有效的解答。这是一个状态上界，而不是对每个对手计算策略的下界。"
 
-#: ../../cryptography.rst:239
+#: ../../cryptography.rst:204
 msgid ""
 "The spent set is 16 shards of Robin Hood open addressing over the 16-byte "
 "tags (Part V). The fingerprint is a keyed hash of the client address and "
@@ -736,11 +703,11 @@ msgstr ""
 "已用集合由 16 个分片组成，每个分片对 16 字节标签使用 Robin Hood 开放寻址（第 V 部分）。指纹是客户端地址和 "
 "User-Agent 的带密钥哈希；输入按长度分隔，使任何两个输入都不会因拼接而碰撞；并且带有密钥，使其他客户端的指纹无法离线计算。"
 
-#: ../../cryptography.rst:241
+#: ../../cryptography.rst:206
 msgid "Exercise 3.3"
 msgstr "练习 3.3"
 
-#: ../../cryptography.rst:243
+#: ../../cryptography.rst:208
 msgid ""
 "A token payload carries a work level, ``timestamp``, ``expiry``, "
 "``rule_hash``, and ``fingerprint``. Explain what each field prevents if "
@@ -749,7 +716,7 @@ msgstr ""
 "令牌载荷包含工作等级、``timestamp``、``expiry``、``rule_hash`` 和 "
 "``fingerprint``。解释如果去掉每个字段，分别会失去什么防护，以及为什么标签必须覆盖全部五个字段。"
 
-#: ../../cryptography.rst:247
+#: ../../cryptography.rst:212
 msgid ""
 "A colleague proposes switching all tokens to Ed25519 \"because it is "
 "stronger\". Explain the trust-domain argument, the cost difference, and "

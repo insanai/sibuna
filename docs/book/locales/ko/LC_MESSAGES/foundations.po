@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-10-24 10:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -174,55 +174,30 @@ msgstr ""
 "퍼즐은 첫 시행에서 성공하고, 어떤 퍼즐은 평균보다 훨씬 오래 걸립니다. 풀이 한 번만 측정한 클라이언트는 대부분 이 무작위성을 "
 "측정한 셈입니다."
 
-#: ../../foundations.rst:50
+#: ../../foundations.rst:49
 msgid ""
-"P(K > x E[K])\n"
-"1.0 |*\n"
-"    | *\n"
-"    |  *\n"
-"    |   **\n"
-"    |     *\n"
-"0.5 |      **\n"
-"    |        **o\n"
-"    |           ***\n"
-"    |              *****\n"
-"    |                   ***********\n"
-"0.0 |                              ***********\n"
-"    +-----------------------------------------\n"
-"     0         1         2         3         4\n"
-"              trials / expected trials (x)"
+"A curve falling from 1 at x = 0 towards 0 at x = 4. At x = 1 a marked "
+"point shows that a search is still running with probability e to the "
+"minus 1, about 0.368; at x of about 3.0 a second point shows that 95 "
+"percent of searches have ended."
 msgstr ""
-"P(K > x E[K])\n"
-"1.0 |*\n"
-"    | *\n"
-"    |  *\n"
-"    |   **\n"
-"    |     *\n"
-"0.5 |      **\n"
-"    |        **o\n"
-"    |           ***\n"
-"    |              *****\n"
-"    |                   ***********\n"
-"0.0 |                              ***********\n"
-"    +-----------------------------------------\n"
-"     0         1         2         3         4\n"
-"              시행 횟수 / 기대 시행 횟수 (x)"
+"x = 0에서 1로 시작해 x = 4에서 0에 가까워지는 곡선입니다. x = 1에 표시한 점은 탐색이 아직 진행 중일 확률이 e의 "
+"마이너스 1제곱, 약 0.368임을 보여 줍니다. x가 약 3.0인 곳의 두 번째 점은 탐색의 95퍼센트가 끝났음을 보여 줍니다."
 
-#: ../../foundations.rst:50
+#: ../../foundations.rst:52
 msgid ""
-"Survival probability of hash search. The horizontal axis is trials "
-"divided by expected trials; the curve uses the large-work approximation "
-"P(K > x/p) ~ e^(-x). The point o marks x = 1, where the probability of "
-"still searching is e^(-1) = 0.368."
+"Survival probability of hash search: the probability that a search is "
+"still running after :math:`x` times the expected number of trials, in the "
+"large-work approximation :math:`P(K > x/p) \\approx e^{-x}`."
 msgstr ""
-"해시 탐색의 생존 확률. 가로축은 시행 횟수를 기대 시행 횟수로 나눈 값입니다. 곡선은 작업량이 클 때의 근사 P(K > x/p) "
-"~ e^(-x)를 사용합니다. 점 o는 x = 1을 표시하며, 이때 아직 탐색 중일 확률은 e^(-1) = 0.368입니다."
+"해시 탐색의 생존 확률: 기대 시행 횟수의 :math:`x`\\ 배를 시행한 뒤에도 탐색이 아직 진행 중일 확률입니다. 작업량이 클 때의 "
+"근사 :math:`P(K > x/p) \\approx e^{-x}`\\ 를 사용합니다."
 
-#: ../../foundations.rst:68
+#: ../../foundations.rst:54
 msgid "Worked example: expectation is not a deadline"
 msgstr "풀이 예제: 기댓값은 마감 시간이 아닙니다"
 
-#: ../../foundations.rst:70
+#: ../../foundations.rst:56
 msgid ""
 "At :math:`b = 16`, the expected work is 65,536 hashes. The probability of "
 "still searching after that many trials is approximately :math:`e^{-1} = "
@@ -236,11 +211,11 @@ msgstr ""
 "/ \\ln(1 - 2^{-16}) \\rceil \\approx 196327`\\ 로, 평균의 거의 세 배입니다. 사용자 "
 "인터페이스는 기대 완료 시간에 실패를 알리지 말고 이 정도의 편차를 감안해야 합니다."
 
-#: ../../foundations.rst:72
+#: ../../foundations.rst:58
 msgid "Sessions Amortise Work"
 msgstr "세션은 작업 비용을 분할 상환합니다"
 
-#: ../../foundations.rst:75
+#: ../../foundations.rst:61
 msgid ""
 "Suppose a session permits :math:`m` requests before expiry, a puzzle "
 "costs :math:`c_p`, verification costs :math:`c_v`, and a session check "
@@ -255,11 +230,11 @@ msgstr ""
 "비용은 :math:`c_v/m + c_s`\\ 이고, 클라이언트의 퍼즐 비용은 :math:`c_p/m`\\ 입니다. 세션 수명을 "
 "늘리면 사람과 자동화 클라이언트 모두에게 똑같이 도움이 됩니다. 세션 수명을 정하는 일은 정책 결정이며 암호학적 최적화가 아닙니다."
 
-#: ../../foundations.rst:77
+#: ../../foundations.rst:63
 msgid "Exercise 1.1"
 msgstr "연습 문제 1.1"
 
-#: ../../foundations.rst:79
+#: ../../foundations.rst:65
 msgid ""
 "A client gets 100 requests per session and performs a puzzle costing one "
 "million trials. What is the amortized work per request? What changes if "
@@ -268,16 +243,16 @@ msgstr ""
 "클라이언트가 세션 하나로 요청 100개를 보내고, 시행 백만 회짜리 퍼즐을 풉니다. 분할 상환한 요청당 작업량은 얼마일까요? 이 "
 "클라이언트가 두 번째 프로세스와 세션을 공유하면 무엇이 달라질까요?"
 
-#: ../../foundations.rst:81
+#: ../../foundations.rst:67
 msgid ""
 "Hint: Distinguish the accounting model from the token's actual bindings."
 msgstr "힌트: 비용 계산 모델과 토큰에 실제로 묶인 값을 구별하세요."
 
-#: ../../foundations.rst:83
+#: ../../foundations.rst:69
 msgid "Bounded State Is a Second Budget"
 msgstr "제한된 상태는 두 번째 예산입니다"
 
-#: ../../foundations.rst:86
+#: ../../foundations.rst:72
 msgid ""
 "Moving work off the request path does not make it disappear. Let "
 "incidents arrive at rate :math:`\\lambda`, let the storage thread persist "
@@ -288,11 +263,11 @@ msgstr ""
 "저장소 스레드가 평균 비율 :math:`\\mu`\\ 로 이를 영속화하며, 큐가 레코드 :math:`Q`\\ 개를 담는다고 합시다. "
 ":math:`\\lambda > \\mu`\\ 일 때 유체 근사로 다음을 얻습니다."
 
-#: ../../foundations.rst:88
+#: ../../foundations.rst:74
 msgid "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
 msgstr "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
 
-#: ../../foundations.rst:92
+#: ../../foundations.rst:78
 msgid ""
 "A larger queue buys time; it does not create throughput. Batching "
 "amortizes transaction cost, but retained records still need memory and "
@@ -305,11 +280,11 @@ msgstr ""
 "메모리를 차지하고 결국 처리되어야 합니다. 과부하에서 Sibuna는 새 인시던트 레코드를 버리고 그 수를 셉니다. 요청에 대한 "
 "판단은 메모리 상태만으로 계속 내립니다. 운영자는 HTTP 성공률뿐 아니라 잃어버린 증거도 감시해야 합니다."
 
-#: ../../foundations.rst:94
+#: ../../foundations.rst:80
 msgid "Exercise 1.2"
 msgstr "연습 문제 1.2"
 
-#: ../../foundations.rst:96
+#: ../../foundations.rst:82
 msgid ""
 "A queue holds 512 records. Arrival rate is 1,000/s and drain rate is "
 "600/s. How long can an initially empty queue absorb the excess? Why is "
@@ -318,39 +293,39 @@ msgstr ""
 "큐 하나가 레코드 512개를 담습니다. 도착률은 1,000/s이고 배출률은 600/s입니다. 처음에 비어 있던 큐는 초과분을 얼마 "
 "동안 흡수할 수 있을까요? 이 답이 근사일 뿐인 이유는 무엇일까요?"
 
-#: ../../foundations.rst:98
+#: ../../foundations.rst:84
 msgid ""
 "Hint: Use the difference of rates, then consider bursts and batch commits."
 msgstr "힌트: 두 비율의 차를 쓰고, 그다음 버스트와 일괄 커밋을 생각해 보세요."
 
-#: ../../foundations.rst:100
+#: ../../foundations.rst:86
 msgid "The Invariants We Will Carry Forward"
 msgstr "앞으로 지켜 갈 불변식"
 
-#: ../../foundations.rst:103
+#: ../../foundations.rst:89
 msgid "Untrusted requests cannot create unbounded server state."
 msgstr "신뢰할 수 없는 요청은 서버 상태를 무한정 늘릴 수 없습니다."
 
-#: ../../foundations.rst:104
+#: ../../foundations.rst:90
 msgid "A valid admission token does not bypass an application denial."
 msgstr "유효한 요청 허용 토큰도 애플리케이션의 거부를 우회하지 못합니다."
 
-#: ../../foundations.rst:105
+#: ../../foundations.rst:91
 msgid "A buffer remains alive for every slice borrowed from it."
 msgstr "버퍼는 그 버퍼에서 빌린 모든 슬라이스가 살아 있는 동안 살아 있습니다."
 
-#: ../../foundations.rst:106
+#: ../../foundations.rst:92
 msgid ""
 "A durable retry cannot multiply an incident or its reputation effect."
 msgstr "영속 재시도도 인시던트나 그 평판 효과를 여러 번 반영할 수 없습니다."
 
-#: ../../foundations.rst:107
+#: ../../foundations.rst:93
 msgid ""
 "A published policy snapshot is immutable until its last reader releases "
 "it."
 msgstr "게시된 정책 스냅숏은 마지막으로 읽는 쪽이 놓아줄 때까지 바뀌지 않습니다."
 
-#: ../../foundations.rst:109
+#: ../../foundations.rst:95
 msgid ""
 "The rest of the book derives the mechanisms that make these statements "
 "true, and the tests that would reveal a violation. A fast path is useful "
@@ -359,11 +334,11 @@ msgstr ""
 "이 책의 나머지 부분은 이 명제들을 참으로 만드는 메커니즘과, 위반을 드러낼 테스트를 이끌어 냅니다. 빠른 경로는 이 명제들이 참인 "
 "동안에만 쓸모가 있습니다."
 
-#: ../../foundations.rst:111
+#: ../../foundations.rst:97
 msgid "Explain the invariant"
 msgstr "불변식 설명하기"
 
-#: ../../foundations.rst:113
+#: ../../foundations.rst:99
 msgid ""
 "State the gate inequality :math:`c_g < (1-a) c_o` in words, then explain "
 "why a measured verification latency alone cannot tell an operator whether "

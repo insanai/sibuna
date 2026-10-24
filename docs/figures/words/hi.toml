@@ -1,0 +1,125 @@
+# Sibuna के चित्रों के शब्द, हिंदी में। इसका आकार en.toml जैसा ही है; जो कुंजी यहाँ नहीं
+# है, वह अंग्रेज़ी में दिखती है। "{name}" वह मान है जिसे चित्र स्वयं भरता है, जैसे भाषा
+# के अपने प्रारूप में कोई संख्या।
+
+[number]
+decimal = "."
+group = ","
+
+[survival]
+x-axis = "अपेक्षित संख्या के गुणज में प्रयास, x"
+y-axis = "खोज अब भी जारी रहने की प्रायिकता"
+at-mean = "अपेक्षित संख्या जितने प्रयासों पर कोई खोज e⁻¹ ≈ {p} प्रायिकता से अब\u00A0भी जारी\u00A0रहती\u00A0है।"
+p95 = "x ≈ {x} तक 95% खोजें समाप्त\u00A0हो\u00A0जाती\u00A0हैं।"
+
+[wire-formats]
+challenge = "चैलेंज पहचानकर्ता"
+session = "सत्र टोकन"
+payload = "{n}-बाइट पेलोड"
+tag = "{n}-बाइट कुंजी-युक्त टैग"
+tag-field = "BLAKE3 टैग"
+total = "कुल {bytes} बाइट, जो {characters} URL-safe base64 अक्षरों के रूप में भेजे जाते हैं"
+
+[open-loop]
+due = "देय"
+send = "अनुरोध भेजा गया"
+answer = "उत्तर मिला"
+waiting = "देय, पिछले उत्तर की प्रतीक्षा में"
+latency = "दर्ज लेटेंसी: देय समय से, या कनेक्शन निष्क्रिय होने पर भेजने के क्षण से"
+
+[cpu-sets]
+ccd0 = "CCD 0"
+ccd1 = "CCD 1"
+daemons = "डेमन"
+primitive = "प्रिमिटिव सूट"
+idle = "आवंटित नहीं"
+load = "wrk, लेटेंसी जनरेटर और ऑरिजिन"
+smt = "हर कोर में लिखी छोटी संख्या उसका SMT sibling है, जो CPU 16 से 31 में से एक है। कोई भी रन इनका उपयोग\u00A0नहीं\u00A0करता।"
+
+[read-buffer]
+buffer = "एक कनेक्शन का 64 KiB रीड बफ़र"
+window = "बिना पढ़ी विंडो"
+head = "अनुरोध हेड"
+head-note = "अधिकतम 16 KiB, अंत में CR LF CR LF"
+body = "बॉडी प्रीफ़िक्स"
+body-note = "घोषित बॉडी का जितना भाग समा सके; chunked बॉडी यहीं डिकोड होती है"
+pending = "लंबित"
+pending-note = "अगला अनुरोध, या अपलोड\u00A0का\u00A0बाकी\u00A0भाग"
+free = "खाली"
+served = "सर्व हो चुका"
+fields = "मेथड, पाथ, क्वेरी, हेडर और कुकी: हेड\u00A0की\u00A0स्लाइस"
+pending-proxy = "पहले ऑरिजिन को भेजा जाता है"
+after = "रिस्पॉन्स के बाद:"
+next = "अगले अनुरोध की शुरुआत बनता है"
+
+[gcra]
+x-axis = "आगमन समय t (ms)"
+y-axis = "TAT (ms)"
+limit = "t + τ"
+refuse-zone = "TAT > t + τ: अस्वीकृत"
+burst = "t = 0 पर पाँच का बर्स्ट"
+sixth = "t = 0 पर छठा"
+example = "t\u00A0=\u00A0{refused} पर TAT\u00A0=\u00A0{tat}\u00A0>\u00A0{early}: अस्वीकृत। t\u00A0=\u00A0{admitted} पर TAT\u00A0=\u00A0{tat}\u00A0≤\u00A0{limit}: स्वीकृत।"
+admitted = "स्वीकृत"
+refused = "अस्वीकृत"
+tat = "हर आगमन के बाद TAT"
+
+[primitive-latency]
+source = "हर पट्टी {cpu} के एक कोर पर 7 बैच की माध्यिका है, {date}; पतली रेखा सबसे तेज़ से सबसे धीमे बैच तक फैली है। लघुगणकीय पैमाना।"
+
+[primitive-latency.groups]
+work = "कार्य का प्रमाण"
+match = "मिलान"
+token = "टोकन"
+state = "अवस्था"
+request = "अनुरोध पाथ"
+
+[primitive-latency.rows]
+hashcash_16_bits = "Hashcash सत्यापन (16 बिट)"
+posw_depth13_t16 = "PoSW सत्यापन (गहराई 13, t = 16)"
+aho_corasick_40_signatures = "बॉट सिग्नेचर (40, Aho-Corasick)"
+sequential_substring_40_signatures = "बॉट सिग्नेचर (40, अनुक्रमिक खोज)"
+ipv4_cidr_classification = "IPv4 CIDR लुकअप"
+ipv6_cidr_classification = "IPv6 CIDR लुकअप"
+blake3_mac_token = "सत्र टोकन (कुंजी-युक्त BLAKE3)"
+ed25519_compact_token = "सत्र टोकन (Ed25519)"
+robin_hood_spend_and_lookup = "spent set: खर्च और लुकअप"
+gcra_check = "रेट लिमिटर, क्लाइंट बाइट"
+gcra_four_rule_scopes = "चार नियम scope, क्लाइंट बाइट"
+gcra_check_hashed = "रेट लिमिटर, हैश किया गया क्लाइंट"
+gcra_four_rule_scopes_hashed = "चार नियम scope, हैश किया गया क्लाइंट"
+zero_copy_request_and_cookie = "HTTP पार्स और कुकी"
+browser_request_full_classification = "वर्गीकरण, Shield प्रोफ़ाइल"
+browser_request_gate_profile = "वर्गीकरण, Gate प्रोफ़ाइल"
+8kb_body_semantic_scan = "WAF बॉडी स्कैन (8 KiB)"
+8kb_body_sqli_audit_other_enforce = "WAF बॉडी स्कैन, SQL injection ऑडिट मोड में"
+
+[posw-tree]
+order = "लीफ़ बाएँ से दाएँ लेबल की जाती हैं"
+path = "लीफ़ 3.5 का रूट पाथ"
+siblings = "ओपनिंग में भेजे गए सहोदर"
+left = "लीफ़ में हैश किए गए बाएँ सहोदर"
+
+[work-asymmetry]
+inspect-title = "पहले निरीक्षण"
+inspect-sender = "प्रेषक"
+inspect-arrow = "एक सस्ता अनुरोध: भेजना सस्ता, उत्तर देना महँगा"
+inspect-defense = "सुरक्षा प्रणाली: पार्स और कॉपी, regex स्कैन, साझा स्टोर से क्वेरी"
+inspect-sender-work = "प्रेषक का कार्य: एक अनुरोध"
+inspect-defense-work = "सुरक्षा प्रणाली का कार्य: सारा, हर अनुरोध पर"
+work-title = "पहले कार्य (Sibuna)"
+work-sender = "प्रेषक पहेली हल करता है"
+work-arrow = "हल की गई पहेली: अर्जित करना महँगा, जाँचना सस्ता"
+work-defense = "Sibuna एक हैश जाँचता है और पहेली हल होने तक कोई अवस्था नहीं रखता"
+work-sender-work = "प्रेषक का कार्य: {power} अपेक्षित SHA-256 प्रयास, b\u00A0=\u00A016 पर {trials}"
+work-defense-work = "Sibuna का कार्य: एक हैश, {ns} ns; इसके बाद सत्र दोबारा उपयोग होता है"
+
+[sequential-work]
+hashcash = "Hashcash: समानांतर खोज"
+core = "कोर {n}"
+time = "हर कोर अपने नॉनस आज़माता है; कोर\u00A03 नॉनस\u00A018 पर सफल होता है, और सभी कोर रुक\u00A0जाते\u00A0हैं।"
+posw = "अनुक्रमिक कार्य का प्रमाण: अनिवार्य क्रम"
+found = "लक्ष्य पूरा करने वाला नॉनस"
+path = "लीफ़ 3.5 का रूट पाथ"
+siblings = "उसकी ओपनिंग में भेजे गए सहोदर"
+left = "लीफ़ में हैश किए गए बाएँ सहोदर"

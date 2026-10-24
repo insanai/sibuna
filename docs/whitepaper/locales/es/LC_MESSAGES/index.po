@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Sibuna: Architecture, Algorithms, and Empirical "
 "Foundations of Work-Bound Web Defense 1.0.0-beta.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-10-24 10:43+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -296,100 +296,41 @@ msgstr ""
 "emitir un desafío no escribe nada, y solo una solución pagada ocupa "
 "memoria."
 
-#: ../../index.rst:55
+#: ../../index.rst:54
 msgid ""
 "Two rows. In the first, a sender emits one cheap request to a defense "
 "that parses, scans with regular expressions and queries a shared store "
-"for every request. In the second, the sender solves a puzzle of 2 to the "
-"b expected hash trials, 65,536 at b equal to 16, and Sibuna verifies one "
-"hash in 70.2 ns, keeps no state for unsolved challenges, and reuses the "
-"session afterwards."
+"for every request; the defense's work meter is full and the sender's "
+"nearly empty. In the second, the sender solves a puzzle of 2 to the b "
+"expected hash trials, 65,536 at b equal to 16, and Sibuna verifies one "
+"hash in 70.2 ns and keeps no state until the puzzle is solved; now the "
+"sender's meter is full and Sibuna's nearly empty."
 msgstr ""
 "Dos filas. En la primera, un remitente envía una petición barata a una "
 "defensa que, con cada petición, analiza, aplica expresiones regulares y "
-"consulta un almacén compartido. En la segunda, el remitente resuelve un "
-"desafío de 2 elevado a b intentos de hash esperados, 65.536 con b igual a "
-"16, y Sibuna verifica un hash en 70,2 ns, no guarda estado para los "
-"desafíos sin resolver y después reutiliza la sesión."
+"consulta un almacén compartido; el medidor de trabajo de la defensa está "
+"lleno y el del remitente, casi vacío. En la segunda, el remitente "
+"resuelve un desafío de 2 elevado a b intentos de hash esperados, 65.536 "
+"con b igual a 16, y Sibuna verifica un hash en 70,2 ns y no guarda estado "
+"hasta que se resuelve el desafío; ahora el medidor del remitente está "
+"lleno y el de Sibuna, casi vacío."
 
-#: ../../index.rst:55
-msgid ""
-"digraph cost {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.35, ranksep=0.6, "
-"fontname=\"Helvetica\", fontsize=10];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=9.5, color=\"#64748b\", fillcolor=\"#ffffff\", "
-"fontcolor=\"#0f172a\"];\n"
-"  edge [fontname=\"Helvetica\", fontsize=9, color=\"#64748b\", "
-"fontcolor=\"#334155\"];\n"
-"  subgraph cluster_work {\n"
-"    label=\"Work first (Sibuna)\"; style=\"rounded,filled\"; "
-"fillcolor=\"#ecfdf5\"; color=\"#86efac\"; fontcolor=\"#047857\";\n"
-"    s2 [label=<Sender<BR/>solves a puzzle:<BR/>2<SUP>b</SUP> expected "
-"SHA-256 trials<BR/>(65,536 at b = 16)>, color=\"#b45309\"];\n"
-"    d2 [label=\"Sibuna\\nverifies one hash: 70.2 ns\\nno state until "
-"solved\\nsession reused afterwards\", color=\"#047857\"];\n"
-"    s2 -> d2 [label=\"costly to earn,\\ncheap to check\", "
-"color=\"#047857\", fontcolor=\"#047857\"];\n"
-"  }\n"
-"  subgraph cluster_inspect {\n"
-"    label=\"Inspect first\"; style=\"rounded,filled\"; "
-"fillcolor=\"#fef2f2\"; color=\"#fca5a5\"; fontcolor=\"#b91c1c\";\n"
-"    s1 [label=\"Sender\\none cheap request\", color=\"#b91c1c\"];\n"
-"    d1 [label=\"Defense\\nparse and copy, regex scan,\\nshared-store "
-"round trip\\non every request\", color=\"#b91c1c\"];\n"
-"    s1 -> d1 [label=\"cheap to send,\\ncostly to answer\", "
-"color=\"#b91c1c\", fontcolor=\"#b91c1c\"];\n"
-"  }\n"
-"}\n"
-"}"
-msgstr ""
-"digraph cost {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.35, ranksep=0.6, "
-"fontname=\"Helvetica\", fontsize=10];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=9.5, color=\"#64748b\", fillcolor=\"#ffffff\", "
-"fontcolor=\"#0f172a\"];\n"
-"  edge [fontname=\"Helvetica\", fontsize=9, color=\"#64748b\", "
-"fontcolor=\"#334155\"];\n"
-"  subgraph cluster_work {\n"
-"    label=\"Primero el trabajo (Sibuna)\"; style=\"rounded,filled\"; "
-"fillcolor=\"#ecfdf5\"; color=\"#86efac\"; fontcolor=\"#047857\";\n"
-"    s2 [label=<Remitente<BR/>resuelve un desafío:<BR/>2<SUP>b</SUP> "
-"intentos SHA-256 esperados<BR/>(65,536 con b = 16)>, color=\"#b45309\"];\n"
-"    d2 [label=\"Sibuna\\nverifica un hash: 70.2 ns\\nsin estado hasta la "
-"solución\\nreutiliza después la sesión\", color=\"#047857\"];\n"
-"    s2 -> d2 [label=\"caro de obtener,\\nbarato de comprobar\", "
-"color=\"#047857\", fontcolor=\"#047857\"];\n"
-"  }\n"
-"  subgraph cluster_inspect {\n"
-"    label=\"Primero la inspección\"; style=\"rounded,filled\"; "
-"fillcolor=\"#fef2f2\"; color=\"#fca5a5\"; fontcolor=\"#b91c1c\";\n"
-"    s1 [label=\"Remitente\\nuna petición barata\", color=\"#b91c1c\"];\n"
-"    d1 [label=\"Defensa\\nanaliza y copia, aplica regex,\\nida y vuelta "
-"al almacén compartido\\nen cada petición\", color=\"#b91c1c\"];\n"
-"    s1 -> d1 [label=\"barato de enviar,\\ncaro de responder\", "
-"color=\"#b91c1c\", fontcolor=\"#b91c1c\"];\n"
-"  }\n"
-"}\n"
-"}"
-
-#: ../../index.rst:55
+#: ../../index.rst:57
 msgid ""
 "Where the work goes. Above, a defense that inspects first spends its own "
 "work on every request a sender emits. Below, Sibuna asks the sender for "
 ":math:`2^b` expected hash trials and verifies the answer with one hash. "
-"The trial counts are a model; the verification time is measured (Hashcash "
+"The meters are a model; the verification time is measured (Hashcash "
 "verification at 16 bits, ``benchmarks/results/primitives-latest.md``)."
 msgstr ""
 "Adónde va el trabajo. Arriba, una defensa que inspecciona primero gasta "
 "su propio trabajo en cada petición que envía un remitente. Abajo, Sibuna "
 "pide al remitente :math:`2^b` intentos de hash esperados y verifica la "
-"respuesta con un solo hash. Los recuentos de intentos son un modelo; el "
-"tiempo de verificación está medido (verificación Hashcash con 16 bits, "
+"respuesta con un solo hash. Los medidores son un modelo; el tiempo de "
+"verificación está medido (verificación Hashcash con 16 bits, "
 "``benchmarks/results/primitives-latest.md``)."
 
-#: ../../index.rst:77
+#: ../../index.rst:59
 msgid ""
 "A proof of work does not establish humanity, identity or intent. A sender "
 "can rent computers, share a session within its lifetime, or spread work "
@@ -402,11 +343,11 @@ msgstr ""
 "precio de la admisión; la política y la inspección siguen decidiendo qué "
 "puede hacer una petición admitida."
 
-#: ../../index.rst:79
+#: ../../index.rst:61
 msgid "Design Overview: Three Decisions in One Pass"
 msgstr "Visión general del diseño: tres decisiones en una sola pasada"
 
-#: ../../index.rst:82
+#: ../../index.rst:64
 msgid ""
 "Sibuna keeps admission, inspection and reputation as three separate "
 "decisions, and it takes them in one pass over a request, in one process, "
@@ -432,27 +373,27 @@ msgstr ""
 "opción para ambos: local a un nodo o compartido por un clúster "
 "[#surfaces]_."
 
-#: ../../index.rst:84
+#: ../../index.rst:66
 msgid "The two product surfaces (SID 0002; book Part II)"
 msgstr "Los dos modos de protección (SID 0002; parte II del libro)"
 
-#: ../../index.rst:88
+#: ../../index.rst:70
 msgid "Capability"
 msgstr "Capacidad"
 
-#: ../../index.rst:89
+#: ../../index.rst:71
 msgid "Gate (``--gate``)"
 msgstr "Gate (``--gate``)"
 
-#: ../../index.rst:90
+#: ../../index.rst:72
 msgid "Shield (``--shield``, default)"
 msgstr "Shield (``--shield``, por defecto)"
 
-#: ../../index.rst:91
+#: ../../index.rst:73
 msgid "Admission"
 msgstr "Admisión"
 
-#: ../../index.rst:92
+#: ../../index.rst:74
 msgid ""
 "Hashcash or sequential-work browser challenge; a session token bound to "
 "the client and to the work it paid"
@@ -460,15 +401,15 @@ msgstr ""
 "Desafío de navegador Hashcash o de trabajo secuencial; un token de sesión "
 "vinculado al cliente y al trabajo que pagó"
 
-#: ../../index.rst:93 ../../index.rst:96 ../../index.rst:99
+#: ../../index.rst:75 ../../index.rst:78 ../../index.rst:81
 msgid "Same"
 msgstr "Igual"
 
-#: ../../index.rst:94
+#: ../../index.rst:76
 msgid "Policy"
 msgstr "Política"
 
-#: ../../index.rst:95
+#: ../../index.rst:77
 msgid ""
 "Declarative rules (path, User-Agent, headers, IPv4 and IPv6 CIDR, a JA4 "
 "TLS fingerprint from a trusted ingress) with ALLOW, DENY, CHALLENGE and "
@@ -478,23 +419,23 @@ msgstr ""
 "huella TLS JA4 de un proxy de entrada de confianza) con ALLOW, DENY, "
 "CHALLENGE y WEIGH; firmas de bots; reputación"
 
-#: ../../index.rst:97
+#: ../../index.rst:79
 msgid "Flood controls"
 msgstr "Controles frente a inundaciones"
 
-#: ../../index.rst:98
+#: ../../index.rst:80
 msgid "GCRA rate limits, honeypot, temporary bans"
 msgstr "Límites de tasa GCRA, honeypot, bloqueos temporales"
 
-#: ../../index.rst:100 ../../index.rst:956
+#: ../../index.rst:82 ../../index.rst:905
 msgid "Payload inspection"
 msgstr "Inspección de la carga útil"
 
-#: ../../index.rst:101
+#: ../../index.rst:83
 msgid "Disabled"
 msgstr "Desactivada"
 
-#: ../../index.rst:102
+#: ../../index.rst:84
 msgid ""
 "SQL injection, cross-site scripting, command injection and path "
 "traversal, over the first 8 KiB of the body"
@@ -502,25 +443,25 @@ msgstr ""
 "Inyección SQL, cross-site scripting, inyección de comandos y recorrido de "
 "rutas, sobre los primeros 8 KiB del cuerpo"
 
-#: ../../index.rst:103
+#: ../../index.rst:85
 msgid "Optional state"
 msgstr "Estado opcional"
 
-#: ../../index.rst:104
+#: ../../index.rst:86
 msgid "Policy and reputation in SQLite, or shared through PostgreSQL"
 msgstr "Políticas y reputación en SQLite, o compartidas mediante PostgreSQL"
 
-#: ../../index.rst:105
+#: ../../index.rst:87
 msgid "Also incident forensics: full-text search and campaign clustering"
 msgstr ""
 "Además, análisis forense de incidentes: búsqueda de texto completo y "
 "agrupación en campañas"
 
-#: ../../index.rst:107
+#: ../../index.rst:89
 msgid "The Design Choices"
 msgstr "Las decisiones de diseño"
 
-#: ../../index.rst:110
+#: ../../index.rst:92
 msgid ""
 "Most of the ideas below come from the research literature or from earlier "
 "systems, and the book's Part II traces their lineage. What we have tried "
@@ -534,7 +475,7 @@ msgstr ""
 "petición acotado, mantener barato cada paso y medir el resultado con "
 "honestidad. Enumeramos las decisiones con la razón de cada una."
 
-#: ../../index.rst:112
+#: ../../index.rst:94
 msgid ""
 "*Challenges that cost the server nothing to issue.* A challenge is a "
 "self-authenticating record sealed with a keyed hash, so issuing one "
@@ -546,7 +487,7 @@ msgstr ""
 "no escribe estado; solo una solución pagada ocupa memoria, y la libera "
 "cuando el desafío caduca (:ref:`algorithms`)."
 
-#: ../../index.rst:113
+#: ../../index.rst:95
 msgid ""
 "*Two tiers of work, chosen per rule.* Next to Hashcash, Sibuna offers the "
 "Cohen-Pietrzak proof of sequential work, whose soundness has been proved "
@@ -561,7 +502,7 @@ msgstr ""
 "trabajo secuencial mientras un blog exige 16 bits de Hashcash "
 "(:ref:`proofs-of-work`)."
 
-#: ../../index.rst:114
+#: ../../index.rst:96
 msgid ""
 "*Sessions that remember the work paid.* A session token records the "
 "mechanism and the work bits its holder solved. It admits only routes that "
@@ -572,7 +513,7 @@ msgstr ""
 "rutas que no exigen más, así que una sesión barata no puede abrir una "
 "ruta cara."
 
-#: ../../index.rst:115
+#: ../../index.rst:97
 msgid ""
 "*Symmetric tokens.* Sessions are sealed with keyed BLAKE3, which verifies "
 "in 155.8 ns, about 260 times less work than an Ed25519 signature, and "
@@ -583,7 +524,7 @@ msgstr ""
 "y frente al que la búsqueda cuántica solo ofrece una aceleración "
 "cuadrática."
 
-#: ../../index.rst:116
+#: ../../index.rst:98
 msgid ""
 "*Inspection that a session cannot bypass.* Admission and inspection run "
 "in the same pass, and a valid session satisfies only a challenge: a "
@@ -594,7 +535,7 @@ msgstr ""
 "satisface un desafío: una petición con sesión y ``q=' OR 1=1--`` se sigue "
 "rechazando."
 
-#: ../../index.rst:117
+#: ../../index.rst:99
 msgid ""
 "*Linear-time, structure-aware inspection.* One byte-class scan, one "
 "automaton pass and small structural tokenizers decide in time linear in "
@@ -605,7 +546,7 @@ msgstr ""
 "estructurales deciden en tiempo lineal en la entrada, sin expresiones "
 "regulares que puedan hacer retroceso."
 
-#: ../../index.rst:118
+#: ../../index.rst:100
 msgid ""
 "*Bounded state with keyed placement.* Every table has a fixed capacity "
 "and a stated behaviour when it is full, and keys are placed by a keyed "
@@ -617,7 +558,7 @@ msgstr ""
 "se colocan mediante un hash con clave, de modo que un atacante no puede "
 "dirigir colisiones contra una víctima (:ref:`keyed-hashing`)."
 
-#: ../../index.rst:119
+#: ../../index.rst:101
 msgid ""
 "*No allocation per request, and policy updates without pauses.* A "
 "connection serves every decision from one fixed buffer, and a new policy "
@@ -629,7 +570,7 @@ msgstr ""
 "fijo, y un motor de políticas nuevo se publica sin que espere ninguna "
 "petición ni ningún escritor (:ref:`mechanical-sympathy`)."
 
-#: ../../index.rst:120
+#: ../../index.rst:102
 msgid ""
 "*Difficulty that follows the load.* Above a baseline of 50 verified "
 "solutions per second, each doubling of the rate adds one work bit, up to "
@@ -641,7 +582,7 @@ msgstr ""
 "bit de trabajo, hasta seis, de modo que una inundación paga "
 "exponencialmente más mientras el tráfico tranquilo conserva el coste base."
 
-#: ../../index.rst:121
+#: ../../index.rst:103
 msgid ""
 "*Campaigns from incidents.* Denied requests are recorded with a small "
 "embedding, and similar incidents are grouped into campaigns that an "
@@ -651,16 +592,16 @@ msgstr ""
 "con un pequeño embedding, y los incidentes similares se agrupan en "
 "campañas que un operador puede investigar desde la consola."
 
-#: ../../index.rst:125
+#: ../../index.rst:107
 msgid "Mechanical Sympathy: Zero Allocation and Bounded State"
 msgstr "Simpatía mecánica: sin asignaciones y con estado acotado"
 
-#: ../../index.rst:128
+#: ../../index.rst:110
 msgid "Knuth on Mechanical Precision: Cache Lines and Concrete Mathematics"
 msgstr ""
 "Knuth sobre la precisión mecánica: líneas de caché y matemáticas concretas"
 
-#: ../../index.rst:130
+#: ../../index.rst:112
 msgid ""
 "A programmer who calls a general-purpose allocator inside the inner loop "
 "of a real-time system has handed part of the design to a stranger. The "
@@ -683,11 +624,11 @@ msgstr ""
 "de abrir el primer socket, y cuando cada bucle hace exactamente el "
 "trabajo que exigen sus matemáticas."
 
-#: ../../index.rst:132
+#: ../../index.rst:114
 msgid "The Zero-Allocation Invariant"
 msgstr "El invariante de cero asignaciones"
 
-#: ../../index.rst:135
+#: ../../index.rst:117
 msgid ""
 "Every dynamic allocation on a request path is a lever for denial of "
 "service: fragmentation over days, contention on the allocator's locks, "
@@ -717,7 +658,7 @@ msgstr ""
 "analizada no puede sobrevivir a los bytes que describe, de modo que el "
 "búfer no puede rellenarse mientras una petición todavía lo lee."
 
-#: ../../index.rst:137
+#: ../../index.rst:119
 msgid ""
 "The rule is a contract of the request path, not a claim about the whole "
 "process. Thread creation, startup and storage allocate. The contract is "
@@ -732,11 +673,11 @@ msgstr ""
 "asignaciones, y la del proxy no encuentra ninguna a lo largo de 500 "
 "peticiones keep-alive a través del proxy [#steady-state]_."
 
-#: ../../index.rst:139
+#: ../../index.rst:121
 msgid "Bounded Threads, Reused"
 msgstr "Hilos acotados y reutilizados"
 
-#: ../../index.rst:142
+#: ../../index.rst:124
 msgid ""
 "Each accepted connection is served on a thread of its own, so a slow "
 "client delays only itself, and the request path stays synchronous. We "
@@ -761,7 +702,7 @@ msgstr ""
 "de par del socket puede mantener como máximo 64 conexiones por defecto, y "
 "un par IPv6 se cuenta con su red /64."
 
-#: ../../index.rst:144
+#: ../../index.rst:126
 msgid ""
 "Threads come from a fixed table of joinable slots. A finished thread "
 "keeps its stack until it is joined, so a new task joins and takes the "
@@ -779,11 +720,11 @@ msgstr ""
 "se aparca y toma la siguiente. La sección :ref:`what-measurement-changed` "
 "cuenta cómo una medición nos enseñó a añadir esta última regla."
 
-#: ../../index.rst:146
+#: ../../index.rst:128
 msgid "The Request Pipeline"
 msgstr "La cadena de procesamiento de la petición"
 
-#: ../../index.rst:149
+#: ../../index.rst:131
 msgid ""
 "A request passes the checks below in a fixed order. The cheap checks come "
 "first, and each decision that ends the request does so before any more "
@@ -793,7 +734,7 @@ msgstr ""
 "comprobaciones baratas van primero, y cada decisión que termina la "
 "petición lo hace antes de que se ejecute cualquier etapa más cara."
 
-#: ../../index.rst:152
+#: ../../index.rst:134
 msgid ""
 "A pipeline. Accept and read into the 64 KiB buffer, then the zero-copy "
 "parse (132.5 ns), the ban table, the internal routes for challenges and "
@@ -818,7 +759,7 @@ msgstr ""
 "responden con un veredicto forward-auth. Las peticiones bloqueadas, "
 "limitadas por tasa o denegadas terminan antes."
 
-#: ../../index.rst:152
+#: ../../index.rst:134
 msgid ""
 "digraph pipeline {\n"
 "  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.28, ranksep=0.5, "
@@ -916,7 +857,7 @@ msgstr ""
 "  refuse -> challenge [style=invis];\n"
 "}"
 
-#: ../../index.rst:152
+#: ../../index.rst:134
 msgid ""
 "The request pipeline, with the median time of each primitive on one core "
 "where the primitive suite measures it "
@@ -934,7 +875,7 @@ msgstr ""
 "forma). La clasificación completa de una petición de navegador tarda 75,9 "
 "ns en el perfil Gate y 790,8 ns en el perfil Shield."
 
-#: ../../index.rst:188
+#: ../../index.rst:170
 msgid ""
 "A valid session satisfies a challenge; it never overrides a denial or a "
 "WAF finding. The proxy, in turn, reads the origin's response head, "
@@ -952,11 +893,11 @@ msgstr ""
 "conexión de cliente a través del proxy sigue abierta y no hace falta "
 "reconectar con el origen en cada petición."
 
-#: ../../index.rst:190
+#: ../../index.rst:172
 msgid "Publishing Policy Without Stopping Requests"
 msgstr "Publicar políticas sin detener las peticiones"
 
-#: ../../index.rst:193
+#: ../../index.rst:175
 msgid ""
 "The policy engine is rebuilt off the request path when policies change, "
 "and requests must never see a half-built engine. The storage thread "
@@ -982,7 +923,7 @@ msgstr ""
 "unos 200 KiB de tablas compactas (209.052 bytes), con capacidad para 128 "
 "reglas y 8.192 nodos del trie."
 
-#: ../../index.rst:195
+#: ../../index.rst:177
 msgid ""
 "The cost of one engine read with 1 and 16 threads reading in a loop, on a "
 "Ryzen 9 5950X (book Part V, October 2026)"
@@ -990,59 +931,59 @@ msgstr ""
 "El coste de una lectura del motor con 1 y 16 hilos leyendo en bucle, en "
 "un Ryzen 9 5950X (parte V del libro, octubre de 2026)"
 
-#: ../../index.rst:199
+#: ../../index.rst:181
 msgid "Reader"
 msgstr "Lector"
 
-#: ../../index.rst:200
+#: ../../index.rst:182
 msgid "1 thread"
 msgstr "1 hilo"
 
-#: ../../index.rst:201
+#: ../../index.rst:183
 msgid "16 threads"
 msgstr "16 hilos"
 
-#: ../../index.rst:202
+#: ../../index.rst:184
 msgid "Read-write lock, read guard only"
 msgstr "Cerrojo de lectura-escritura, solo la guarda de lectura"
 
-#: ../../index.rst:203
+#: ../../index.rst:185
 msgid "4.2 ns"
 msgstr "4,2 ns"
 
-#: ../../index.rst:204
+#: ../../index.rst:186
 msgid "752 ns"
 msgstr "752 ns"
 
-#: ../../index.rst:205
+#: ../../index.rst:187
 msgid "Read-write lock and a new reference"
 msgstr "Cerrojo de lectura-escritura y una referencia nueva"
 
-#: ../../index.rst:206
+#: ../../index.rst:188
 msgid "7.6 ns"
 msgstr "7,6 ns"
 
-#: ../../index.rst:207
+#: ../../index.rst:189
 msgid "833 ns"
 msgstr "833 ns"
 
-#: ../../index.rst:208
+#: ../../index.rst:190
 msgid "Generation check with a cached reference"
 msgstr "Comprobación de la generación con una referencia en caché"
 
-#: ../../index.rst:209
+#: ../../index.rst:191
 msgid "0.8 ns"
 msgstr "0,8 ns"
 
-#: ../../index.rst:210
+#: ../../index.rst:192
 msgid "1.8 ns"
 msgstr "1,8 ns"
 
-#: ../../index.rst:212
+#: ../../index.rst:194
 msgid "Locks in Shards"
 msgstr "Cerrojos por partición"
 
-#: ../../index.rst:215
+#: ../../index.rst:197
 msgid ""
 "The tables that connection threads share (the spent set, the limiter, the "
 "ban table) are split into 16 shards by a hash of the key, and each shard "
@@ -1064,7 +1005,7 @@ msgstr ""
 "planificador hace que cada hilo en espera consuma su porción de tiempo. "
 "El mutex ganó con contención, así que lo conservamos."
 
-#: ../../index.rst:217
+#: ../../index.rst:199
 msgid ""
 "Shard lock throughput in millions of operations per second on a Ryzen 9 "
 "5950X (book Part V; SID 0010)"
@@ -1072,71 +1013,71 @@ msgstr ""
 "Rendimiento de los cerrojos de partición, en millones de operaciones por "
 "segundo, en un Ryzen 9 5950X (parte V del libro; SID 0010)"
 
-#: ../../index.rst:221 ../../index.rst:531 ../../index.rst:993
+#: ../../index.rst:203 ../../index.rst:480 ../../index.rst:942
 msgid "Workload"
 msgstr "Carga de trabajo"
 
-#: ../../index.rst:222
+#: ../../index.rst:204
 msgid "Adaptive mutex"
 msgstr "Mutex adaptativo"
 
-#: ../../index.rst:223
+#: ../../index.rst:205
 msgid "Spin lock"
 msgstr "Spin lock"
 
-#: ../../index.rst:224
+#: ../../index.rst:206
 msgid "Spent set, 16 threads"
 msgstr "Conjunto de desafíos gastados, 16 hilos"
 
-#: ../../index.rst:225
+#: ../../index.rst:207
 msgid "10.8"
 msgstr "10,8"
 
-#: ../../index.rst:226
+#: ../../index.rst:208
 msgid "8.6"
 msgstr "8,6"
 
-#: ../../index.rst:227
+#: ../../index.rst:209
 msgid "Spent set, 64 threads"
 msgstr "Conjunto de desafíos gastados, 64 hilos"
 
-#: ../../index.rst:228
+#: ../../index.rst:210
 msgid "11.2"
 msgstr "11,2"
 
-#: ../../index.rst:229
+#: ../../index.rst:211
 msgid "6.9"
 msgstr "6,9"
 
-#: ../../index.rst:230
+#: ../../index.rst:212
 msgid "GCRA on six hot addresses, 16 threads"
 msgstr "GCRA sobre seis direcciones calientes, 16 hilos"
 
-#: ../../index.rst:231
+#: ../../index.rst:213
 msgid "44.9"
 msgstr "44,9"
 
-#: ../../index.rst:232
+#: ../../index.rst:214
 msgid "19.3"
 msgstr "19,3"
 
-#: ../../index.rst:233
+#: ../../index.rst:215
 msgid "GCRA on six hot addresses, 64 threads"
 msgstr "GCRA sobre seis direcciones calientes, 64 hilos"
 
-#: ../../index.rst:234
+#: ../../index.rst:216
 msgid "37.4"
 msgstr "37,4"
 
-#: ../../index.rst:235
+#: ../../index.rst:217
 msgid "6.5"
 msgstr "6,5"
 
-#: ../../index.rst:239
+#: ../../index.rst:221
 msgid "Algorithms and Their Guarantees"
 msgstr "Los algoritmos y sus garantías"
 
-#: ../../index.rst:242
+#: ../../index.rst:224
 msgid ""
 "Each primitive on the request path has a statement of what it costs and "
 "what it guarantees. We give three of them as theorems, with the argument "
@@ -1149,7 +1090,7 @@ msgstr ""
 "Sibuna dan las demostraciones completas, las definiciones y las "
 "referencias."
 
-#: ../../index.rst:244
+#: ../../index.rst:226
 msgid ""
 "Theorem 1 (Linear-time inspection with a byte-class Aho-Corasick "
 "automaton)"
@@ -1157,7 +1098,7 @@ msgstr ""
 "Teorema 1 (inspección en tiempo lineal con un autómata Aho-Corasick por "
 "clases de bytes)"
 
-#: ../../index.rst:246
+#: ../../index.rst:228
 msgid ""
 "Let :math:`\\mathcal{P}` be a set of patterns of total length :math:`m` "
 "whose bytes fall into :math:`c \\le 256` classes, and let a text have "
@@ -1174,7 +1115,7 @@ msgstr ""
 "entrada, sea cual sea el número de patrones. Ninguna entrada puede "
 "hacerlo retroceder."
 
-#: ../../index.rst:248
+#: ../../index.rst:230
 msgid ""
 "*Proof sketch.* The automaton of Aho and Corasick scans a text once after "
 "building a trie with failure links. Sibuna folds the failure links into "
@@ -1196,7 +1137,7 @@ msgstr ""
 "coincidencia se numeran después de todos los demás, así que detectar una "
 "coincidencia es una sola comparación."
 
-#: ../../index.rst:250
+#: ../../index.rst:232
 msgid ""
 "*Measurement.* On 40 bot signatures the automaton takes 55.7 ns against "
 "763.0 ns for sequential substring search with the same patterns and "
@@ -1209,11 +1150,11 @@ msgstr ""
 "Con clases de bytes, la tabla completa de firmas de bots ocupa 42.244 "
 "bytes [#automaton]_."
 
-#: ../../index.rst:252
+#: ../../index.rst:234
 msgid "Theorem 2 (The GCRA interval bound)"
 msgstr "Teorema 2 (la cota del intervalo de GCRA)"
 
-#: ../../index.rst:254
+#: ../../index.rst:236
 msgid ""
 "Fix a limit of :math:`N` requests per window :math:`W`, with emission "
 "interval :math:`T = \\max(1, \\lceil W/N \\rceil)` and burst tolerance "
@@ -1234,7 +1175,7 @@ msgstr ""
 ":math:`L` que empiece con una llegada conforme contiene como máximo "
 ":math:`N + \\lfloor L/T \\rfloor` llegadas conformes."
 
-#: ../../index.rst:256
+#: ../../index.rst:238
 msgid ""
 "*Proof sketch.* Number the conforming arrivals :math:`1, \\dots, k` at "
 "times :math:`t_1 \\le \\dots \\le t_k`. Each conforming arrival raises "
@@ -1253,7 +1194,7 @@ msgstr ""
 ":math:`(k-1)T \\le L + (N-1)T`, de modo que :math:`k \\le N + L/T`, y "
 ":math:`k` es un número entero."
 
-#: ../../index.rst:258
+#: ../../index.rst:240
 msgid ""
 "*Implementation.* The state of a client is one 16-byte cell, with no "
 "per-request history and no fixed-window boundary effect. The 16 shards "
@@ -1269,11 +1210,11 @@ msgstr ""
 "recupera en su sitio sin un hilo de barrido. Una comprobación sobre un "
 "cliente cuyo hash ya ha calculado el daemon tarda 6,2 ns [#gcra]_."
 
-#: ../../index.rst:260
+#: ../../index.rst:242
 msgid "Theorem 3 (State grows only with paid work)"
 msgstr "Teorema 3 (el estado solo crece con trabajo pagado)"
 
-#: ../../index.rst:262
+#: ../../index.rst:244
 msgid ""
 "Let :math:`S` be the set of challenge tags the daemon remembers. A tag "
 "enters :math:`S` only after a valid proof for its challenge was accepted, "
@@ -1289,7 +1230,7 @@ msgstr ""
 "de un desafío, entonces :math:`|S| \\le r \\cdot \\mathrm{TTL}`. Un "
 "desafío que se obtuvo pero no se resolvió no ocupa memoria."
 
-#: ../../index.rst:264
+#: ../../index.rst:246
 msgid ""
 "*Proof sketch.* A challenge identifier is a self-authenticating record: "
 "version, algorithm, difficulty, opening count, issue time, the client's "
@@ -1316,7 +1257,7 @@ msgstr ""
 "etiqueta con probabilidad como máximo :math:`q \\cdot 2^{-128}` más la "
 "ventaja frente a la PRF."
 
-#: ../../index.rst:266
+#: ../../index.rst:248
 msgid ""
 "*Implementation.* The spent set is 16 shards of Robin Hood open "
 "addressing. An expired entry may be overwritten in place only by a key at "
@@ -1334,11 +1275,11 @@ msgstr ""
 "rechazada nunca expulsa una etiqueta viva. Un gasto y una búsqueda juntos "
 "tardan 21,0 ns [#spent]_."
 
-#: ../../index.rst:268
+#: ../../index.rst:250
 msgid "The Semantic Firewall"
 msgstr "El cortafuegos semántico"
 
-#: ../../index.rst:271
+#: ../../index.rst:253
 msgid ""
 "Shield inspects the path, the query, the User-Agent, the headers that are "
 "not structural, and the first 8 KiB of the body. Its first version taught "
@@ -1358,11 +1299,11 @@ msgstr ""
 "dispararse ante una *estructura*, y una prueba hace pasar por el motor "
 "una petición completa de Chrome y exige que salga limpia [#waf]_."
 
-#: ../../index.rst:273
+#: ../../index.rst:255
 msgid "Inspection has four stages, each linear in the field."
 msgstr "La inspección tiene cuatro etapas, cada una lineal en el campo."
 
-#: ../../index.rst:275
+#: ../../index.rst:257
 msgid ""
 "*A byte-class pre-scan.* One pass with a 256-entry table records which "
 "classes of byte occur: quotes, ``=``, ``<``, shell separators, ``%``, NUL "
@@ -1377,7 +1318,7 @@ msgstr ""
 "recorrer el campo, de modo que un campo sin comillas ni signo igual nunca "
 "entra en el analizador léxico SQL."
 
-#: ../../index.rst:276
+#: ../../index.rst:258
 msgid ""
 "*A tagged signature automaton.* All strong signatures of every category "
 "live in one automaton (Theorem 1). A hit is a terminal denial named "
@@ -1388,7 +1329,7 @@ msgstr ""
 "es una denegación terminal con el nombre ``waf:sqli``, ``waf:xss``, "
 "``waf:path-traversal`` o ``waf:rce``."
 
-#: ../../index.rst:277
+#: ../../index.rst:259
 msgid ""
 "*Structural tokenizers.* The SQL tokenizer looks up each short word in a "
 "keyword table and checks ``literal = literal`` tautologies after ``or`` "
@@ -1409,7 +1350,7 @@ msgstr ""
 "de comandos exige un separador seguido de un nombre de comando que no sea "
 "una asignación, así que ``a=1&id=5`` es un parámetro, no un comando."
 
-#: ../../index.rst:278
+#: ../../index.rst:260
 msgid ""
 "*Canonicalisation.* A field with percent escapes, comment openers, JSON "
 "or HTML escapes, or collapsible white space is decoded and inspected "
@@ -1422,7 +1363,7 @@ msgstr ""
 "``1%27/**/UnIoN/**/SeLeCt`` y ``%252e%252e/`` se reducen a las firmas "
 "originales."
 
-#: ../../index.rst:280
+#: ../../index.rst:262
 msgid ""
 "An 8 KiB body scans in 12,784.3 ns, about 1.56 ns per byte. An operator "
 "may audit a category rather than enforce it, so that its findings are "
@@ -1448,11 +1389,11 @@ msgstr ""
 "HTML, y los bytes que quedan más allá del límite de inspección no se "
 "inspeccionan."
 
-#: ../../index.rst:282
+#: ../../index.rst:264
 msgid "TLS Fingerprints From the Ingress"
 msgstr "Huellas TLS desde el proxy de entrada"
 
-#: ../../index.rst:285
+#: ../../index.rst:267
 msgid ""
 "A User-Agent is a string that any client may write as it likes. A JA4 "
 "fingerprint is harder to forge. It summarises how a client opens a TLS "
@@ -1473,7 +1414,7 @@ msgstr ""
 "un proxy de entrada de confianza calculó y reenvió en una cabecera de la "
 "petición, cuyo nombre se indica con ``--ja4-header`` [#ja4]_."
 
-#: ../../index.rst:287
+#: ../../index.rst:269
 msgid ""
 "*Trust.* The header is read only when forwarded headers are trusted, by "
 "the decision that governs ``X-Forwarded-For``. From an untrusted peer it "
@@ -1486,7 +1427,7 @@ msgstr ""
 "inverso se eliminan todas sus copias antes de que la petición llegue al "
 "origen."
 
-#: ../../index.rst:288
+#: ../../index.rst:270
 msgid ""
 "*Validation.* A value is accepted only in the 36-byte JA4 form, and only "
 "when exactly one field of that name is present. A malformed or repeated "
@@ -1496,7 +1437,7 @@ msgstr ""
 "cuando hay exactamente un campo con ese nombre. Un valor malformado o "
 "repetido se trata como ausente y se contabiliza."
 
-#: ../../index.rst:289
+#: ../../index.rst:271
 msgid ""
 "*Policy.* A rule matches a whole fingerprint, or a prefix followed by "
 "``*``; a request without a fingerprint never matches such a rule. "
@@ -1508,7 +1449,7 @@ msgstr ""
 "así. La comparación es byte a byte y, una vez en régimen estable, el "
 "camino de la petición sigue sin hacer ninguna asignación en el heap."
 
-#: ../../index.rst:290
+#: ../../index.rst:272
 msgid ""
 "*Records.* Incidents store the fingerprint of their request, and the "
 "console shows it in the incident evidence and filters events by it. Bans "
@@ -1521,11 +1462,11 @@ msgstr ""
 "dirección, porque muchos clientes legítimos comparten la misma biblioteca "
 "TLS."
 
-#: ../../index.rst:294
+#: ../../index.rst:276
 msgid "Keyed Hashing and the Security Review"
 msgstr "El hash con clave y la revisión de seguridad"
 
-#: ../../index.rst:297
+#: ../../index.rst:279
 msgid ""
 "An adversarial review of the request path in October 2026 found "
 "weaknesses in mechanisms we had considered settled. We fixed each one and "
@@ -1536,7 +1477,7 @@ msgstr ""
 "cada una y dejamos constancia de la corrección en el documento de diseño "
 "del mecanismo [#security]_."
 
-#: ../../index.rst:299
+#: ../../index.rst:281
 msgid ""
 "*Predictable table placement.* The limiter and the ban table placed keys "
 "with a hash under seeds written in the source, so anyone could compute "
@@ -1555,7 +1496,7 @@ msgstr ""
 "del cliente una vez por petición (8,7 ns) y lo pasa a todas las tablas; "
 "el camino de escritura de una petición bajó de 43 a 26 ns."
 
-#: ../../index.rst:300
+#: ../../index.rst:282
 msgid ""
 "*Ban eviction.* A ban in effect is never evicted. When every slot a key "
 "may take holds a live ban, the new ban is refused and counted, so a "
@@ -1566,7 +1507,7 @@ msgstr ""
 "vigente, el bloqueo nuevo se rechaza y se contabiliza, de modo que un "
 "cliente bloqueado no puede expulsar su propio bloqueo."
 
-#: ../../index.rst:301
+#: ../../index.rst:283
 msgid ""
 "*Forwarded identity.* The leftmost ``X-Forwarded-For`` entry can be "
 "written by the client. Sibuna takes the entry ``--trusted-hops`` "
@@ -1577,7 +1518,7 @@ msgstr ""
 "``--trusted-hops`` posiciones desde la derecha, la que añadió el proxy de "
 "confianza más cercano."
 
-#: ../../index.rst:302
+#: ../../index.rst:284
 msgid ""
 "*Cookie tossing.* A request may carry several values of the session "
 "cookie; the daemon tries up to eight, so a cookie planted by a sibling "
@@ -1588,7 +1529,7 @@ msgstr ""
 "por un dominio hermano no puede mantener a un visitante en un bucle de "
 "desafíos."
 
-#: ../../index.rst:303
+#: ../../index.rst:285
 msgid ""
 "*Spent-set capacity.* A table of 65,536 tags was exhausted by about 220 "
 "verified solutions per second within a five-minute challenge lifetime, "
@@ -1601,7 +1542,7 @@ msgstr ""
 "rechazaban soluciones honestas. Ahora la capacidad es configurable, con "
 "1.048.576 etiquetas (24 MiB) por defecto."
 
-#: ../../index.rst:304
+#: ../../index.rst:286
 msgid ""
 "*Adaptive difficulty.* The controller that raises the work under load now "
 "counts verified solutions instead of issued challenges, which cost a "
@@ -1611,7 +1552,7 @@ msgstr ""
 "cuenta ahora las soluciones verificadas en lugar de los desafíos "
 "emitidos, que a quien inunda no le cuestan nada."
 
-#: ../../index.rst:306
+#: ../../index.rst:288
 msgid ""
 "Keyed placement has a price, and we pay it once per request rather than "
 "once per table. A limiter check that hashes raw client bytes itself takes "
@@ -1629,15 +1570,15 @@ msgstr ""
 "residentes, así que su capacidad configurada no cuesta memoria hasta que "
 "se usa."
 
-#: ../../index.rst:310
+#: ../../index.rst:292
 msgid "Proofs of Work: Parallel Search and Sequential Work"
 msgstr "Pruebas de trabajo: búsqueda paralela y trabajo secuencial"
 
-#: ../../index.rst:313
+#: ../../index.rst:295
 msgid "The Hashcash Tier"
 msgstr "El nivel Hashcash"
 
-#: ../../index.rst:316
+#: ../../index.rst:298
 msgid ""
 "The first tier is Hashcash at bit granularity. For a challenge string "
 ":math:`C` and difficulty :math:`b`, the client finds a nonce :math:`N` "
@@ -1658,7 +1599,7 @@ msgstr ""
 "ideales, el número de intentos :math:`K` sigue una distribución "
 "geométrica con :math:`p = 2^{-b}`:"
 
-#: ../../index.rst:318
+#: ../../index.rst:300
 msgid ""
 "P(K > k) = (1 - p)^k, \\qquad E[K] = 2^b, \\qquad \\mathrm{median}(K) "
 "\\approx 2^b \\ln 2."
@@ -1666,7 +1607,7 @@ msgstr ""
 "P(K > k) = (1 - p)^k, \\qquad E[K] = 2^b, \\qquad \\mathrm{median}(K) "
 "\\approx 2^b \\ln 2."
 
-#: ../../index.rst:322
+#: ../../index.rst:304
 msgid ""
 "Search has two limits. Its variance is large, so one slow solve is not a "
 "broken worker. And independent trials run in parallel, so a sender with "
@@ -1679,11 +1620,11 @@ msgstr ""
 "núcleos termina antes, aunque el trabajo total esperado sea el mismo "
 "[#hashcash]_."
 
-#: ../../index.rst:324
+#: ../../index.rst:306
 msgid "The Sequential-Work Tier"
 msgstr "El nivel de trabajo secuencial"
 
-#: ../../index.rst:327
+#: ../../index.rst:309
 msgid ""
 "The second tier follows the proof of sequential work of Cohen and "
 "Pietrzak (EUROCRYPT 2018). Its labels form a complete binary tree of "
@@ -1713,118 +1654,22 @@ msgstr ""
 "calculando hashes hasta :math:`\\varphi`, con un coste de :math:`O(tn)` "
 "cálculos de etiquetas en un espacio de trabajo fijo."
 
-#: ../../index.rst:330
+#: ../../index.rst:311
 msgid ""
-"Left, four cores each try a disjoint share of the nonces against one "
-"target, and any core may find the solution. Right, a binary tree of depth "
-"three. The path of leaf 3.5 is amber, the siblings 1.0, 2.3 and 3.4 sent "
-"in its opening are green, and dashed red edges run from 1.0 and 3.4 into "
-"leaf 3.5."
+"Left, four cores each try a disjoint share of the nonces, and core 3 "
+"finds one at nonce 18, after which every core stops. Right, a binary tree "
+"of depth three. The path of leaf 3.5 is amber, the siblings 1.0, 2.3 and "
+"3.4 sent in its opening are green, and dashed red arrows run from 1.0 and "
+"3.4 into leaf 3.5."
 msgstr ""
 "A la izquierda, cuatro núcleos prueban cada uno una parte disjunta de los "
-"nonces contra un mismo objetivo, y cualquier núcleo puede encontrar la "
-"solución. A la derecha, un árbol binario de profundidad tres. El camino "
-"de la hoja 3.5 está en ámbar, los hermanos 1.0, 2.3 y 3.4 enviados en su "
-"apertura están en verde, y unas aristas rojas discontinuas van de 1.0 y "
-"3.4 a la hoja 3.5."
+"nonces, y el núcleo 3 encuentra uno en el nonce 18, tras lo cual todos "
+"los núcleos se detienen. A la derecha, un árbol binario de profundidad "
+"tres. El camino de la hoja 3.5 está en ámbar, los hermanos 1.0, 2.3 y 3.4 "
+"enviados en su apertura están en verde, y unas flechas rojas discontinuas "
+"van de 1.0 y de 3.4 a la hoja 3.5."
 
-#: ../../index.rst:330
-msgid ""
-"digraph pow {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.18, ranksep=0.35, "
-"fontname=\"Helvetica\", fontsize=9, ordering=out];\n"
-"  node [fontname=\"Helvetica\", fontsize=8.5, fontcolor=\"#0f172a\"];\n"
-"  edge [color=\"#64748b\", arrowsize=0.5];\n"
-"  subgraph cluster_hashcash {\n"
-"    label=\"Hashcash: parallel search\"; style=\"rounded,filled\"; "
-"fillcolor=\"#fef2f2\"; color=\"#fca5a5\"; fontcolor=\"#b91c1c\";\n"
-"    node [shape=box, style=\"rounded,filled\", fillcolor=\"#ffffff\", "
-"color=\"#b91c1c\"];\n"
-"    c1 [label=\"core 1\\nnonces 0, 4, 8\"];\n"
-"    c2 [label=\"core 2\\nnonces 1, 5, 9\"];\n"
-"    c3 [label=\"core 3\\nnonces 2, 6, 10\"];\n"
-"    c4 [label=\"core 4\\nnonces 3, 7, 11\"];\n"
-"    target [label=\"SHA-256(C : N)\\nhas b zero bits?\\nany core may "
-"win\", fillcolor=\"#fff7ed\"];\n"
-"    c1 -> target; c2 -> target; c3 -> target; c4 -> target;\n"
-"  }\n"
-"  subgraph cluster_posw {\n"
-"    label=\"Proof of sequential work: forced order\"; "
-"style=\"rounded,filled\"; fillcolor=\"#ecfdf5\"; color=\"#86efac\"; "
-"fontcolor=\"#047857\";\n"
-"    node [shape=circle, fixedsize=true, width=0.42, style=filled, "
-"fillcolor=\"#ffffff\", color=\"#0369a1\"];\n"
-"    edge [arrowhead=none];\n"
-"    \"0.0\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.4, "
-"label=\"root\"];\n"
-"    \"1.1\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.4];\n"
-"    \"2.2\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.4];\n"
-"    \"3.5\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.4];\n"
-"    \"1.0\" [fillcolor=\"#ecfdf5\", color=\"#047857\", penwidth=1.4];\n"
-"    \"2.3\" [fillcolor=\"#ecfdf5\", color=\"#047857\", penwidth=1.4];\n"
-"    \"3.4\" [fillcolor=\"#ecfdf5\", color=\"#047857\", penwidth=1.4];\n"
-"    \"0.0\" -> \"1.0\"; \"0.0\" -> \"1.1\";\n"
-"    \"1.0\" -> \"2.0\"; \"1.0\" -> \"2.1\"; \"1.1\" -> \"2.2\"; \"1.1\" "
-"-> \"2.3\";\n"
-"    \"2.0\" -> \"3.0\"; \"2.0\" -> \"3.1\"; \"2.1\" -> \"3.2\"; \"2.1\" "
-"-> \"3.3\";\n"
-"    \"2.2\" -> \"3.4\"; \"2.2\" -> \"3.5\"; \"2.3\" -> \"3.6\"; \"2.3\" "
-"-> \"3.7\";\n"
-"    \"3.5\" -> \"1.0\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"    \"3.5\" -> \"3.4\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"  }\n"
-"}"
-msgstr ""
-"digraph pow {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.18, ranksep=0.35, "
-"fontname=\"Helvetica\", fontsize=9, ordering=out];\n"
-"  node [fontname=\"Helvetica\", fontsize=8.5, fontcolor=\"#0f172a\"];\n"
-"  edge [color=\"#64748b\", arrowsize=0.5];\n"
-"  subgraph cluster_hashcash {\n"
-"    label=\"Hashcash: búsqueda paralela\"; style=\"rounded,filled\"; "
-"fillcolor=\"#fef2f2\"; color=\"#fca5a5\"; fontcolor=\"#b91c1c\";\n"
-"    node [shape=box, style=\"rounded,filled\", fillcolor=\"#ffffff\", "
-"color=\"#b91c1c\"];\n"
-"    c1 [label=\"núcleo 1\\nnonces 0, 4, 8\"];\n"
-"    c2 [label=\"núcleo 2\\nnonces 1, 5, 9\"];\n"
-"    c3 [label=\"núcleo 3\\nnonces 2, 6, 10\"];\n"
-"    c4 [label=\"núcleo 4\\nnonces 3, 7, 11\"];\n"
-"    target [label=\"SHA-256(C : N)\\n¿tiene b bits a cero?\\ncualquier "
-"núcleo puede ganar\", fillcolor=\"#fff7ed\"];\n"
-"    c1 -> target; c2 -> target; c3 -> target; c4 -> target;\n"
-"  }\n"
-"  subgraph cluster_posw {\n"
-"    label=\"Prueba de trabajo secuencial: orden forzado\"; "
-"style=\"rounded,filled\"; fillcolor=\"#ecfdf5\"; color=\"#86efac\"; "
-"fontcolor=\"#047857\";\n"
-"    node [shape=circle, fixedsize=true, width=0.42, style=filled, "
-"fillcolor=\"#ffffff\", color=\"#0369a1\"];\n"
-"    edge [arrowhead=none];\n"
-"    \"0.0\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.4, "
-"label=\"raíz\"];\n"
-"    \"1.1\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.4];\n"
-"    \"2.2\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.4];\n"
-"    \"3.5\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.4];\n"
-"    \"1.0\" [fillcolor=\"#ecfdf5\", color=\"#047857\", penwidth=1.4];\n"
-"    \"2.3\" [fillcolor=\"#ecfdf5\", color=\"#047857\", penwidth=1.4];\n"
-"    \"3.4\" [fillcolor=\"#ecfdf5\", color=\"#047857\", penwidth=1.4];\n"
-"    \"0.0\" -> \"1.0\"; \"0.0\" -> \"1.1\";\n"
-"    \"1.0\" -> \"2.0\"; \"1.0\" -> \"2.1\"; \"1.1\" -> \"2.2\"; \"1.1\" "
-"-> \"2.3\";\n"
-"    \"2.0\" -> \"3.0\"; \"2.0\" -> \"3.1\"; \"2.1\" -> \"3.2\"; \"2.1\" "
-"-> \"3.3\";\n"
-"    \"2.2\" -> \"3.4\"; \"2.2\" -> \"3.5\"; \"2.3\" -> \"3.6\"; \"2.3\" "
-"-> \"3.7\";\n"
-"    \"3.5\" -> \"1.0\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"    \"3.5\" -> \"3.4\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"  }\n"
-"}"
-
-#: ../../index.rst:330
+#: ../../index.rst:314
 msgid ""
 "Parallel search against sequential work. Left, Hashcash: independent "
 "nonce trials, so :math:`M` cores finish about :math:`M` times sooner. "
@@ -1840,7 +1685,7 @@ msgstr ""
 "apertura de la hoja 3.5 envía su etiqueta y los tres hermanos verdes "
 "(según la parte III del libro)."
 
-#: ../../index.rst:367
+#: ../../index.rst:316
 msgid ""
 "The parameters are chosen so that the numbers stay small. Work bits map "
 "to depth by :math:`n = b - 3`, clamped to :math:`[4, 24]`. A proof has "
@@ -1864,7 +1709,7 @@ msgstr ""
 "es sólida frente a probadores cuánticos en el modelo de oráculo aleatorio "
 "cuántico."
 
-#: ../../index.rst:369
+#: ../../index.rst:318
 msgid ""
 "We should be careful about what this establishes. The security results "
 "hold under the random-oracle assumptions of the papers, for the "
@@ -1888,11 +1733,11 @@ msgstr ""
 "con una favorable. No afirmamos incondicionalmente que hacer trampa nunca "
 "sea más barato."
 
-#: ../../index.rst:371
+#: ../../index.rst:320
 msgid "The Round Trip and the Session"
 msgstr "El viaje de ida y vuelta y la sesión"
 
-#: ../../index.rst:374
+#: ../../index.rst:323
 msgid ""
 "A navigation without a valid session receives the interstitial page, "
 "which carries a *requirement ticket*: the challenge this decision demands "
@@ -1921,11 +1766,11 @@ msgstr ""
 "verificador del servidor, así que los dos no pueden divergir "
 "[#round-trip]_."
 
-#: ../../index.rst:376
+#: ../../index.rst:325
 msgid "What Verification Costs"
 msgstr "Lo que cuesta la verificación"
 
-#: ../../index.rst:379
+#: ../../index.rst:328
 msgid ""
 "Both tiers are bound by SHA-256, and Sibuna selects the processor's SHA "
 "instructions at run time where they exist, so one binary is fast on every "
@@ -1949,7 +1794,7 @@ msgstr ""
 "[#verify-cost]_. El conjunto de primitivas solo mide la verificación; un "
 "tiempo nativo no representa el tiempo de resolución de un navegador."
 
-#: ../../index.rst:381
+#: ../../index.rst:330
 msgid ""
 "Sessions use a symmetric token. The verifier is the issuer, or a cluster "
 "that shares one seed, so a keyed pseudorandom function supplies exactly "
@@ -1973,18 +1818,18 @@ msgstr ""
 "una opción para los despliegues que necesitan verificadores incapaces de "
 "emitir tokens."
 
-#: ../../index.rst:383
+#: ../../index.rst:332
 msgid "Shared State Without a Consensus Protocol of Our Own"
 msgstr "Estado compartido sin un protocolo de consenso propio"
 
-#: ../../index.rst:386
+#: ../../index.rst:335
 msgid ""
 "Lamport on Distributed Invariants: Safety, Liveness, and Who Owns the Log"
 msgstr ""
 "Lamport sobre los invariantes distribuidos: seguridad, vivacidad y quién "
 "es dueño del registro"
 
-#: ../../index.rst:388
+#: ../../index.rst:337
 msgid ""
 "In 1987 Leslie Lamport described a distributed system as one in which the "
 "failure of a computer you did not even know existed can render your own "
@@ -2011,11 +1856,11 @@ msgstr ""
 "que mantener, y la pregunta para un cortafuegos no es si el consenso es "
 "bueno, sino quién debe mantener el registro."
 
-#: ../../index.rst:390
+#: ../../index.rst:339
 msgid "Why SQL, and Why Not a Consensus Protocol of Our Own"
 msgstr "Por qué SQL, y por qué no un protocolo de consenso propio"
 
-#: ../../index.rst:393
+#: ../../index.rst:342
 msgid ""
 "Sibuna stores little: a few hundred policy rows, a reputation table, and "
 "forensic incidents that operators also export to other systems. That "
@@ -2033,7 +1878,7 @@ msgstr ""
 "integrado en su directorio de datos, en modo WAL, y un clúster apunta "
 "todos sus nodos a una misma base de datos PostgreSQL [#zaxonlite]_."
 
-#: ../../index.rst:395
+#: ../../index.rst:344
 msgid ""
 "We chose not to run a consensus protocol inside the firewall. A consensus "
 "engine is a large system to own beside a firewall, with its own formats "
@@ -2059,7 +1904,7 @@ msgstr ""
 "frecuentes) es lo bastante baja para que un único primario no sea un "
 "cuello de botella."
 
-#: ../../index.rst:397
+#: ../../index.rst:346
 msgid ""
 "Storage also stays optional. Without ``--data-dir`` or ``--database-url`` "
 "the daemon is an in-memory firewall whose policies come from a file."
@@ -2068,11 +1913,11 @@ msgstr ""
 "``--database-url``, el daemon es un cortafuegos en memoria cuyas "
 "políticas proceden de un archivo."
 
-#: ../../index.rst:399
+#: ../../index.rst:348
 msgid "One Storage Thread"
 msgstr "Un único hilo de almacenamiento"
 
-#: ../../index.rst:402
+#: ../../index.rst:351
 msgid ""
 "One storage thread owns the database connections; nothing else touches "
 "SQL. Request threads never wait on it. They push incident records into a "
@@ -2102,7 +1947,7 @@ msgstr ""
 "nodos ejecutar un ciclo de inmediato, mientras que el sondeo sigue siendo "
 "la garantía [#storage-thread]_."
 
-#: ../../index.rst:405
+#: ../../index.rst:354
 msgid ""
 "An ingress sends traffic to three Sibuna nodes. In each node, connection "
 "threads read a published engine and push incidents into a bounded ring; a "
@@ -2119,7 +1964,7 @@ msgstr ""
 "primario se replica en un servidor en espera mediante replicación en "
 "streaming, que gestiona el operador."
 
-#: ../../index.rst:405
+#: ../../index.rst:354
 msgid ""
 "digraph cluster {\n"
 "  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.3, ranksep=0.4, "
@@ -2211,7 +2056,7 @@ msgstr ""
 "  pg -> standby [label=\" replicación en streaming\", style=dashed];\n"
 "}"
 
-#: ../../index.rst:405
+#: ../../index.rst:354
 msgid ""
 "A Sibuna cluster. Every node keeps its request path in memory and gives "
 "all SQL to one storage thread; the nodes share one PostgreSQL database, "
@@ -2224,7 +2069,7 @@ msgstr ""
 "conmutación por error corresponden a PostgreSQL (SID 0011). Un nodo único "
 "usa en su lugar un archivo SQLite integrado."
 
-#: ../../index.rst:438
+#: ../../index.rst:387
 msgid ""
 "Each node of a cluster has a distinct ``--cluster-node`` identifier "
 "between 1 and 8,388,607. Challenge keys are bound to the issuing node, so "
@@ -2244,11 +2089,11 @@ msgstr ""
 "un recibo duradero que avanza en la misma transacción que su lote, de "
 "modo que un lote repetido tras un fallo ambiguo no escribe nada dos veces."
 
-#: ../../index.rst:440
+#: ../../index.rst:389
 msgid "Invariants of the storage layer (SID 0011)"
 msgstr "Invariantes de la capa de almacenamiento (SID 0011)"
 
-#: ../../index.rst:442
+#: ../../index.rst:391
 msgid ""
 "**S1 (one owner).** All SQL runs on the storage thread; no request thread "
 "ever waits on the database. **S2 (complete engines).** Every engine a "
@@ -2272,11 +2117,11 @@ msgstr ""
 "acotado y se descartan con un contador cuando se llena, y el hilo de "
 "almacenamiento reintenta con esperas crecientes."
 
-#: ../../index.rst:444
+#: ../../index.rst:393
 msgid "A Typed Schema"
 msgstr "Un esquema tipado"
 
-#: ../../index.rst:447
+#: ../../index.rst:396
 msgid ""
 "The schema states in SQL what the program's types state, so the database "
 "refuses a row the storage layer could not represent. SQLite tables are "
@@ -2304,7 +2149,7 @@ msgstr ""
 "una función que ejecuta sus sentencias en una transacción, igual en "
 "SQLite que en PostgreSQL [#schema]_."
 
-#: ../../index.rst:449
+#: ../../index.rst:398
 msgid ""
 "Connections to PostgreSQL are protected as the URL says, with libpq's "
 "``sslmode`` and ``sslrootcert``, when the daemon is built with the "
@@ -2318,7 +2163,7 @@ msgstr ""
 "``require``, ``verify-ca`` y ``verify-full`` al arrancar; nunca recurre a "
 "texto plano. Los clústeres de producción usan ``sslmode=verify-full``."
 
-#: ../../index.rst:451
+#: ../../index.rst:400
 msgid ""
 "Incidents that look alike are grouped into campaigns. Each incident "
 "carries a 64-dimension embedding stored as 256 bytes. The storage thread "
@@ -2337,11 +2182,11 @@ msgstr ""
 "recientes por naturaleza, y la cota mantiene fijos la memoria y el "
 "trabajo."
 
-#: ../../index.rst:453
+#: ../../index.rst:402
 msgid "What This Design Does Not Do"
 msgstr "Lo que este diseño no hace"
 
-#: ../../index.rst:456
+#: ../../index.rst:405
 msgid ""
 "We should be plain about the limits of this choice. Sibuna contains no "
 "consensus protocol of its own, and a cluster's consistency is "
@@ -2377,11 +2222,11 @@ msgstr ""
 "de PostgreSQL; un clúster compila Sibuna desde el código fuente con la "
 "feature ``postgres-tls`` [#gave-up]_."
 
-#: ../../index.rst:460
+#: ../../index.rst:409
 msgid "The Console"
 msgstr "La consola"
 
-#: ../../index.rst:463
+#: ../../index.rst:412
 msgid ""
 "Sibuna includes an opt-in management console: authenticated dashboards "
 "with live traffic, an investigation path from a denial to its recorded "
@@ -2400,7 +2245,7 @@ msgstr ""
 "interfaz se ejecuta en el navegador como un módulo WebAssembly "
 "[#console-sources]_."
 
-#: ../../index.rst:466
+#: ../../index.rst:415
 msgid ""
 "A browser runs the console interface, a WebAssembly module, and talks to "
 "the console server over HTTP and a WebSocket. The console server reads "
@@ -2416,7 +2261,7 @@ msgstr ""
 "que posee SQLite o PostgreSQL. Las conexiones HTTPS y WSS salientes hacia "
 "consolas pares, webhooks y proveedores de GeoIP usan TLS."
 
-#: ../../index.rst:466
+#: ../../index.rst:415
 msgid ""
 "digraph console {\n"
 "  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.3, ranksep=0.5, "
@@ -2466,7 +2311,7 @@ msgstr ""
 "  server -> tls [label=\"certificados\\nverificados\"];\n"
 "}"
 
-#: ../../index.rst:466
+#: ../../index.rst:415
 msgid ""
 "The console. The browser runs the interface as a WebAssembly module; the "
 "console server reads the data plane's counters and gives its SQL to the "
@@ -2479,7 +2324,7 @@ msgstr ""
 "webhooks y proveedores de GeoIP usan TLS con certificados verificados "
 "(SID 0007, 0012 y 0013)."
 
-#: ../../index.rst:484
+#: ../../index.rst:433
 msgid ""
 "The console's defining constraint is isolation from the request path. It "
 "may read the data plane's counters and its database and write the "
@@ -2504,7 +2349,7 @@ msgstr ""
 "del umbral de revisión de 640 KiB, que el SID 0007 registra para su "
 "revisión [#console-size]_."
 
-#: ../../index.rst:486
+#: ../../index.rst:435
 msgid ""
 "The console makes outbound TLS connections for long-lived peer streams, "
 "webhooks and GeoIP downloads. Certificates are verified against the "
@@ -2521,7 +2366,7 @@ msgstr ""
 "y un error de certificado nunca recurre a texto plano. Sibuna sigue sin "
 "terminar TLS entrante; esa sigue siendo tarea del proxy de entrada."
 
-#: ../../index.rst:488
+#: ../../index.rst:437
 msgid ""
 "SID 0007 sets the console's performance target: enabling it may cost at "
 "most 1% of data-plane throughput and at most 10% of p99 latency. One "
@@ -2542,7 +2387,7 @@ msgstr ""
 "ejecutado, así que no afirmamos que se cumpla el objetivo. Una ejecución "
 "funcional con ocho paneles en vivo fue satisfactoria."
 
-#: ../../index.rst:490
+#: ../../index.rst:439
 msgid ""
 "Eight Traffic dashboards on one SQLite node with its console, in headless "
 "Chromium 155 (``benchmarks/results/console-8-dashboards-2026-10-15.md``, "
@@ -2553,65 +2398,65 @@ msgstr ""
 "(``benchmarks/results/console-8-dashboards-2026-10-15.md``, registrado el "
 "2026-10-15). Resultado: PASS"
 
-#: ../../index.rst:494 ../../index.rst:763
+#: ../../index.rst:443 ../../index.rst:712
 msgid "Measure"
 msgstr "Medida"
 
-#: ../../index.rst:495 ../../index.rst:764
+#: ../../index.rst:444 ../../index.rst:713
 msgid "Value"
 msgstr "Valor"
 
-#: ../../index.rst:496
+#: ../../index.rst:445
 msgid "Data-plane requests"
 msgstr "Peticiones del plano de datos"
 
-#: ../../index.rst:497
+#: ../../index.rst:446
 msgid "6,000 in 30.0 s (200 per second, one connection per request)"
 msgstr "6.000 en 30,0 s (200 por segundo, una conexión por petición)"
 
-#: ../../index.rst:498
+#: ../../index.rst:447
 msgid "Answered"
 msgstr "Respondidas"
 
-#: ../../index.rst:499
+#: ../../index.rst:448
 msgid "6,000: 200 x 1,200, 401 x 3,000, 403 x 600, 404 x 600, 500 x 600"
 msgstr "6.000: 200 x 1.200, 401 x 3.000, 403 x 600, 404 x 600, 500 x 600"
 
-#: ../../index.rst:500
+#: ../../index.rst:449
 msgid "Errors (no reply)"
 msgstr "Errores (sin respuesta)"
 
-#: ../../index.rst:501 ../../index.rst:809 ../../index.rst:818
-#: ../../index.rst:827 ../../index.rst:836 ../../index.rst:845
-#: ../../index.rst:854 ../../index.rst:863 ../../index.rst:872
-#: ../../index.rst:881
+#: ../../index.rst:450 ../../index.rst:758 ../../index.rst:767
+#: ../../index.rst:776 ../../index.rst:785 ../../index.rst:794
+#: ../../index.rst:803 ../../index.rst:812 ../../index.rst:821
+#: ../../index.rst:830
 msgid "0"
 msgstr "0"
 
-#: ../../index.rst:502
+#: ../../index.rst:451
 msgid "Latency p50 / p90 / p99 / max"
 msgstr "Latencia p50 / p90 / p99 / máx"
 
-#: ../../index.rst:503
+#: ../../index.rst:452
 msgid "246 / 311 / 373 / 552 us (connect included)"
 msgstr "246 / 311 / 373 / 552 us (conexión incluida)"
 
-#: ../../index.rst:504
+#: ../../index.rst:453
 msgid ""
 "Daemon resident memory at start, with 8 dashboards, after the traffic"
 msgstr ""
 "Memoria residente del daemon al arrancar, con 8 paneles y después del "
 "tráfico"
 
-#: ../../index.rst:505
+#: ../../index.rst:454
 msgid "36,152 KiB; 38,028 KiB; 41,496 KiB"
 msgstr "36.152 KiB; 38.028 KiB; 41.496 KiB"
 
-#: ../../index.rst:506
+#: ../../index.rst:455
 msgid "Dashboards"
 msgstr "Paneles"
 
-#: ../../index.rst:507
+#: ../../index.rst:456
 msgid ""
 "3 administrator sessions and 5 wall displays; each received 134 to 139 "
 "``stats`` deltas and ended with the same totals, with no exception, "
@@ -2622,15 +2467,15 @@ msgstr ""
 "excepciones, errores de consola ni infracciones de la "
 "Content-Security-Policy"
 
-#: ../../index.rst:509
+#: ../../index.rst:458
 msgid "Empirical Evaluation"
 msgstr "Evaluación empírica"
 
-#: ../../index.rst:512
+#: ../../index.rst:461
 msgid "Method"
 msgstr "Método"
 
-#: ../../index.rst:515
+#: ../../index.rst:464
 msgid ""
 "Three harnesses, run through ``cargo xtask bench``, measure Sibuna. The "
 "*primitive* suite times the operations of the request path in seven timed "
@@ -2662,7 +2507,7 @@ msgstr ""
 "enviarse, de modo que la espera en las colas del daemon se imputa al "
 "daemon [#method-sources]_."
 
-#: ../../index.rst:517
+#: ../../index.rst:466
 msgid ""
 "The runs were recorded on 15 October 2026 on one host: an AMD Ryzen 9 "
 "5950X (16 cores, 32 threads) running Linux 7.0.0-28. The daemon ran on "
@@ -2679,11 +2524,11 @@ msgstr ""
 "defecto, con SQLite y la consola incluidos, y se ejecutó en memoria, sin "
 "almacenamiento."
 
-#: ../../index.rst:519
+#: ../../index.rst:468
 msgid "Measurement scope"
 msgstr "Alcance de las mediciones"
 
-#: ../../index.rst:521
+#: ../../index.rst:470
 msgid ""
 "Every run uses one host over loopback: no TLS, no wide-area network, no "
 "real browsers. The harnesses do not count allocations; the "
@@ -2698,11 +2543,11 @@ msgstr ""
 "binario de la versión sin modificar, identificado por su SHA-256. Una "
 "clasificación obtenida en este host no vale para otro."
 
-#: ../../index.rst:523
+#: ../../index.rst:472
 msgid "Primitive Latencies"
 msgstr "Latencias de primitivas"
 
-#: ../../index.rst:526
+#: ../../index.rst:475
 msgid ""
 "Primitive timings of Sibuna in nanoseconds per operation on one Ryzen 9 "
 "5950X core: the median of seven batches, with the fastest and slowest "
@@ -2714,272 +2559,272 @@ msgstr ""
 "rápido y el más lento (``benchmarks/results/primitives-latest.md``, "
 "generado el 2026-10-15T22:34:59Z)"
 
-#: ../../index.rst:530
+#: ../../index.rst:479
 msgid "Subsystem"
 msgstr "Subsistema"
 
-#: ../../index.rst:532
+#: ../../index.rst:481
 msgid "Median"
 msgstr "Mediana"
 
-#: ../../index.rst:533
+#: ../../index.rst:482
 msgid "Min-max"
 msgstr "Mín-máx"
 
-#: ../../index.rst:534 ../../index.rst:538
+#: ../../index.rst:483 ../../index.rst:487
 msgid "Proof of work"
 msgstr "Prueba de trabajo"
 
-#: ../../index.rst:535
+#: ../../index.rst:484
 msgid "Hashcash verify, 16 bits"
 msgstr "Verificación Hashcash, 16 bits"
 
-#: ../../index.rst:536
+#: ../../index.rst:485
 msgid "70.2"
 msgstr "70,2"
 
-#: ../../index.rst:537
+#: ../../index.rst:486
 msgid "69.9-71.0"
 msgstr "69,9-71,0"
 
-#: ../../index.rst:539
+#: ../../index.rst:488
 msgid "PoSW verify, depth 13, 16 openings"
 msgstr "Verificación PoSW, profundidad 13, 16 aperturas"
 
-#: ../../index.rst:540
+#: ../../index.rst:489
 msgid "22,272.4"
 msgstr "22.272,4"
 
-#: ../../index.rst:541
+#: ../../index.rst:490
 msgid "22,257.0-22,316.4"
 msgstr "22.257,0-22.316,4"
 
-#: ../../index.rst:542 ../../index.rst:546
+#: ../../index.rst:491 ../../index.rst:495
 msgid "Bot matcher"
 msgstr "Detector de bots"
 
-#: ../../index.rst:543
+#: ../../index.rst:492
 msgid "Aho-Corasick, 40 signatures"
 msgstr "Aho-Corasick, 40 firmas"
 
-#: ../../index.rst:544
+#: ../../index.rst:493
 msgid "55.7"
 msgstr "55,7"
 
-#: ../../index.rst:545
+#: ../../index.rst:494
 msgid "55.3-57.2"
 msgstr "55,3-57,2"
 
-#: ../../index.rst:547
+#: ../../index.rst:496
 msgid "Sequential substring search, 40 signatures (for reference)"
 msgstr "Búsqueda secuencial de subcadenas, 40 firmas (como referencia)"
 
-#: ../../index.rst:548
+#: ../../index.rst:497
 msgid "763.0"
 msgstr "763,0"
 
-#: ../../index.rst:549
+#: ../../index.rst:498
 msgid "762.2-763.5"
 msgstr "762,2-763,5"
 
-#: ../../index.rst:550 ../../index.rst:554
+#: ../../index.rst:499 ../../index.rst:503
 msgid "IP classifier"
 msgstr "Clasificador de IP"
 
-#: ../../index.rst:551
+#: ../../index.rst:500
 msgid "IPv4 CIDR lookup"
 msgstr "Búsqueda CIDR IPv4"
 
-#: ../../index.rst:552
+#: ../../index.rst:501
 msgid "32.0"
 msgstr "32,0"
 
-#: ../../index.rst:553
+#: ../../index.rst:502
 msgid "31.8-32.2"
 msgstr "31,8-32,2"
 
-#: ../../index.rst:555
+#: ../../index.rst:504
 msgid "IPv6 CIDR lookup"
 msgstr "Búsqueda CIDR IPv6"
 
-#: ../../index.rst:556
+#: ../../index.rst:505
 msgid "79.3"
 msgstr "79,3"
 
-#: ../../index.rst:557
+#: ../../index.rst:506
 msgid "78.5-79.6"
 msgstr "78,5-79,6"
 
-#: ../../index.rst:558 ../../index.rst:562
+#: ../../index.rst:507 ../../index.rst:511
 msgid "Token"
 msgstr "Token"
 
-#: ../../index.rst:559
+#: ../../index.rst:508
 msgid "Keyed BLAKE3 session token"
 msgstr "Token de sesión BLAKE3 con clave"
 
-#: ../../index.rst:560
+#: ../../index.rst:509
 msgid "155.8"
 msgstr "155,8"
 
-#: ../../index.rst:561
+#: ../../index.rst:510
 msgid "155.3-156.4"
 msgstr "155,3-156,4"
 
-#: ../../index.rst:563
+#: ../../index.rst:512
 msgid "Ed25519 session token"
 msgstr "Token de sesión Ed25519"
 
-#: ../../index.rst:564
+#: ../../index.rst:513
 msgid "40,587.5"
 msgstr "40.587,5"
 
-#: ../../index.rst:565
+#: ../../index.rst:514
 msgid "40,544.6-40,631.1"
 msgstr "40.544,6-40.631,1"
 
-#: ../../index.rst:566
+#: ../../index.rst:515
 msgid "Spent set"
 msgstr "Conjunto de desafíos gastados"
 
-#: ../../index.rst:567
+#: ../../index.rst:516
 msgid "Robin Hood spend and look up"
 msgstr "Robin Hood, gastar y consultar"
 
-#: ../../index.rst:568
+#: ../../index.rst:517
 msgid "21.0"
 msgstr "21,0"
 
-#: ../../index.rst:569
+#: ../../index.rst:518
 msgid "20.8-21.3"
 msgstr "20,8-21,3"
 
-#: ../../index.rst:570 ../../index.rst:574 ../../index.rst:578
-#: ../../index.rst:582
+#: ../../index.rst:519 ../../index.rst:523 ../../index.rst:527
+#: ../../index.rst:531
 msgid "Rate limiter"
 msgstr "Limitador de tasa"
 
-#: ../../index.rst:571
+#: ../../index.rst:520
 msgid "GCRA, hashed client"
 msgstr "GCRA, cliente en hash"
 
-#: ../../index.rst:572
+#: ../../index.rst:521
 msgid "6.2"
 msgstr "6,2"
 
-#: ../../index.rst:573
+#: ../../index.rst:522
 msgid "6.1-6.3"
 msgstr "6,1-6,3"
 
-#: ../../index.rst:575
+#: ../../index.rst:524
 msgid "GCRA, four rule scopes, hashed client"
 msgstr "GCRA, cuatro ámbitos de regla, cliente en hash"
 
-#: ../../index.rst:576
+#: ../../index.rst:525
 msgid "6.3"
 msgstr "6,3"
 
-#: ../../index.rst:577
+#: ../../index.rst:526
 msgid "6.2-6.4"
 msgstr "6,2-6,4"
 
-#: ../../index.rst:579
+#: ../../index.rst:528
 msgid "GCRA, client as bytes (keyed hash included)"
 msgstr "GCRA, cliente en bytes (hash con clave incluido)"
 
-#: ../../index.rst:580
+#: ../../index.rst:529
 msgid "12.8"
 msgstr "12,8"
 
-#: ../../index.rst:581
+#: ../../index.rst:530
 msgid "12.7-12.8"
 msgstr "12,7-12,8"
 
-#: ../../index.rst:583
+#: ../../index.rst:532
 msgid "GCRA, four rule scopes, client as bytes"
 msgstr "GCRA, cuatro ámbitos de regla, cliente en bytes"
 
-#: ../../index.rst:584
+#: ../../index.rst:533
 msgid "13.1"
 msgstr "13,1"
 
-#: ../../index.rst:585
+#: ../../index.rst:534
 msgid "13.0-13.2"
 msgstr "13,0-13,2"
 
-#: ../../index.rst:586
+#: ../../index.rst:535
 msgid "HTTP parser"
 msgstr "Analizador HTTP"
 
-#: ../../index.rst:587
+#: ../../index.rst:536
 msgid "Zero-copy request and cookie"
 msgstr "Petición y cookie sin copia"
 
-#: ../../index.rst:588
+#: ../../index.rst:537
 msgid "132.5"
 msgstr "132,5"
 
-#: ../../index.rst:589
+#: ../../index.rst:538
 msgid "132.3-133.2"
 msgstr "132,3-133,2"
 
-#: ../../index.rst:590 ../../index.rst:594
+#: ../../index.rst:539 ../../index.rst:543
 msgid "Policy engine"
 msgstr "Motor de políticas"
 
-#: ../../index.rst:591
+#: ../../index.rst:540
 msgid "Full classification, Shield profile"
 msgstr "Clasificación completa, perfil Shield"
 
-#: ../../index.rst:592
+#: ../../index.rst:541
 msgid "790.8"
 msgstr "790,8"
 
-#: ../../index.rst:593
+#: ../../index.rst:542
 msgid "787.2-793.1"
 msgstr "787,2-793,1"
 
-#: ../../index.rst:595
+#: ../../index.rst:544
 msgid "Classification, Gate profile"
 msgstr "Clasificación, perfil Gate"
 
-#: ../../index.rst:596
+#: ../../index.rst:545
 msgid "75.9"
 msgstr "75,9"
 
-#: ../../index.rst:597
+#: ../../index.rst:546
 msgid "75.6-76.1"
 msgstr "75,6-76,1"
 
-#: ../../index.rst:598 ../../index.rst:602
+#: ../../index.rst:547 ../../index.rst:551
 msgid "WAF"
 msgstr "WAF"
 
-#: ../../index.rst:599
+#: ../../index.rst:548
 msgid "8 KiB body, semantic scan"
 msgstr "Cuerpo de 8 KiB, exploración semántica"
 
-#: ../../index.rst:600
+#: ../../index.rst:549
 msgid "12,784.3"
 msgstr "12.784,3"
 
-#: ../../index.rst:601
+#: ../../index.rst:550
 msgid "12,771.5-12,809.2"
 msgstr "12.771,5-12.809,2"
 
-#: ../../index.rst:603
+#: ../../index.rst:552
 msgid "8 KiB body, SQL injection audited"
 msgstr "Cuerpo de 8 KiB, inyección SQL en auditoría"
 
-#: ../../index.rst:604
+#: ../../index.rst:553
 msgid "15,485.4"
 msgstr "15.485,4"
 
-#: ../../index.rst:605
+#: ../../index.rst:554
 msgid "15,460.9-15,530.1"
 msgstr "15.460,9-15.530,1"
 
-#: ../../index.rst:607
+#: ../../index.rst:556
 msgid ""
 "The spreads are narrow: no batch of any row lies more than 4.2% from its "
 "row's median [#spread]_. The daemon uses the rows on a hashed client, "
@@ -2996,11 +2841,11 @@ msgstr ""
 "nunca operaciones sueltas, así que la tabla no da percentiles por "
 "operación."
 
-#: ../../index.rst:611
+#: ../../index.rst:560
 msgid "Whole Products"
 msgstr "Productos completos"
 
-#: ../../index.rst:614
+#: ../../index.rst:563
 msgid ""
 "Sibuna under ``wrk``: requests per second, latency in microseconds, CPU "
 "time per request in microseconds and peak resident memory; medians of "
@@ -3012,353 +2857,353 @@ msgstr ""
 "medianas de tres ejecuciones (``benchmarks/results/product-latest.md``, "
 "generado el 2026-10-15T23:15:24Z)"
 
-#: ../../index.rst:618 ../../index.rst:793 ../../index.rst:992
+#: ../../index.rst:567 ../../index.rst:742 ../../index.rst:941
 msgid "Mode"
 msgstr "Modo"
 
-#: ../../index.rst:619
+#: ../../index.rst:568
 msgid "Surface"
 msgstr "Modo de protección"
 
-#: ../../index.rst:620
+#: ../../index.rst:569
 msgid "Workload (status)"
 msgstr "Carga de trabajo (estado)"
 
-#: ../../index.rst:621
+#: ../../index.rst:570
 msgid "req/s"
 msgstr "req/s"
 
-#: ../../index.rst:622 ../../index.rst:796
+#: ../../index.rst:571 ../../index.rst:745
 msgid "p50"
 msgstr "p50"
 
-#: ../../index.rst:623 ../../index.rst:798
+#: ../../index.rst:572 ../../index.rst:747
 msgid "p99"
 msgstr "p99"
 
-#: ../../index.rst:624
+#: ../../index.rst:573
 msgid "CPU"
 msgstr "CPU"
 
-#: ../../index.rst:625
+#: ../../index.rst:574
 msgid "Peak KiB"
 msgstr "KiB máx."
 
-#: ../../index.rst:626 ../../index.rst:634 ../../index.rst:642
-#: ../../index.rst:650 ../../index.rst:658 ../../index.rst:666
-#: ../../index.rst:674 ../../index.rst:682 ../../index.rst:802
-#: ../../index.rst:811 ../../index.rst:820 ../../index.rst:829
-#: ../../index.rst:838 ../../index.rst:998 ../../index.rst:1004
-#: ../../index.rst:1010 ../../index.rst:1016
+#: ../../index.rst:575 ../../index.rst:583 ../../index.rst:591
+#: ../../index.rst:599 ../../index.rst:607 ../../index.rst:615
+#: ../../index.rst:623 ../../index.rst:631 ../../index.rst:751
+#: ../../index.rst:760 ../../index.rst:769 ../../index.rst:778
+#: ../../index.rst:787 ../../index.rst:947 ../../index.rst:953
+#: ../../index.rst:959 ../../index.rst:965
 msgid "forward auth"
 msgstr "forward-auth"
 
-#: ../../index.rst:627 ../../index.rst:635 ../../index.rst:643
-#: ../../index.rst:651 ../../index.rst:691 ../../index.rst:699
-#: ../../index.rst:707 ../../index.rst:715
+#: ../../index.rst:576 ../../index.rst:584 ../../index.rst:592
+#: ../../index.rst:600 ../../index.rst:640 ../../index.rst:648
+#: ../../index.rst:656 ../../index.rst:664
 msgid "Gate"
 msgstr "Gate"
 
-#: ../../index.rst:628 ../../index.rst:660 ../../index.rst:692
-#: ../../index.rst:724
+#: ../../index.rst:577 ../../index.rst:609 ../../index.rst:641
+#: ../../index.rst:673
 msgid "``admitted`` (200)"
 msgstr "``admitted`` (200)"
 
-#: ../../index.rst:629
+#: ../../index.rst:578
 msgid "211,345"
 msgstr "211.345"
 
-#: ../../index.rst:630 ../../index.rst:654 ../../index.rst:678
-#: ../../index.rst:750
+#: ../../index.rst:579 ../../index.rst:603 ../../index.rst:627
+#: ../../index.rst:699
 msgid "151"
 msgstr "151"
 
-#: ../../index.rst:631 ../../index.rst:647 ../../index.rst:655
-#: ../../index.rst:679
+#: ../../index.rst:580 ../../index.rst:596 ../../index.rst:604
+#: ../../index.rst:628
 msgid "305"
 msgstr "305"
 
-#: ../../index.rst:632 ../../index.rst:656
+#: ../../index.rst:581 ../../index.rst:605
 msgid "11.84"
 msgstr "11,84"
 
-#: ../../index.rst:633
+#: ../../index.rst:582
 msgid "15,912"
 msgstr "15.912"
 
-#: ../../index.rst:636 ../../index.rst:668
+#: ../../index.rst:585 ../../index.rst:617
 msgid "``challenged`` (401)"
 msgstr "``challenged`` (401)"
 
-#: ../../index.rst:637
+#: ../../index.rst:586
 msgid "198,315"
 msgstr "198.315"
 
-#: ../../index.rst:638 ../../index.rst:702
+#: ../../index.rst:587 ../../index.rst:651
 msgid "160"
 msgstr "160"
 
-#: ../../index.rst:639
+#: ../../index.rst:588
 msgid "326"
 msgstr "326"
 
-#: ../../index.rst:640
+#: ../../index.rst:589
 msgid "13.15"
 msgstr "13,15"
 
-#: ../../index.rst:641 ../../index.rst:649 ../../index.rst:657
+#: ../../index.rst:590 ../../index.rst:598 ../../index.rst:606
 msgid "16,176"
 msgstr "16.176"
 
-#: ../../index.rst:644 ../../index.rst:676 ../../index.rst:708
-#: ../../index.rst:740
+#: ../../index.rst:593 ../../index.rst:625 ../../index.rst:657
+#: ../../index.rst:689
 msgid "``allowed_static`` (200)"
 msgstr "``allowed_static`` (200)"
 
-#: ../../index.rst:645
+#: ../../index.rst:594
 msgid "211,053"
 msgstr "211.053"
 
-#: ../../index.rst:646 ../../index.rst:662 ../../index.rst:686
+#: ../../index.rst:595 ../../index.rst:611 ../../index.rst:635
 msgid "152"
 msgstr "152"
 
-#: ../../index.rst:648
+#: ../../index.rst:597
 msgid "11.73"
 msgstr "11,73"
 
-#: ../../index.rst:652 ../../index.rst:716
+#: ../../index.rst:601 ../../index.rst:665
 msgid "``attack`` (200)"
 msgstr "``attack`` (200)"
 
-#: ../../index.rst:653
+#: ../../index.rst:602
 msgid "211,618"
 msgstr "211.618"
 
-#: ../../index.rst:659 ../../index.rst:667 ../../index.rst:675
-#: ../../index.rst:683 ../../index.rst:723 ../../index.rst:731
-#: ../../index.rst:739 ../../index.rst:747
+#: ../../index.rst:608 ../../index.rst:616 ../../index.rst:624
+#: ../../index.rst:632 ../../index.rst:672 ../../index.rst:680
+#: ../../index.rst:688 ../../index.rst:696
 msgid "Shield"
 msgstr "Shield"
 
-#: ../../index.rst:661
+#: ../../index.rst:610
 msgid "208,101"
 msgstr "208.101"
 
-#: ../../index.rst:663 ../../index.rst:1001
+#: ../../index.rst:612 ../../index.rst:950
 msgid "308"
 msgstr "308"
 
-#: ../../index.rst:664
+#: ../../index.rst:613
 msgid "12.87"
 msgstr "12,87"
 
-#: ../../index.rst:665
+#: ../../index.rst:614
 msgid "15,928"
 msgstr "15.928"
 
-#: ../../index.rst:669
+#: ../../index.rst:618
 msgid "197,532"
 msgstr "197.532"
 
-#: ../../index.rst:670
+#: ../../index.rst:619
 msgid "161"
 msgstr "161"
 
-#: ../../index.rst:671
+#: ../../index.rst:620
 msgid "327"
 msgstr "327"
 
-#: ../../index.rst:672
+#: ../../index.rst:621
 msgid "13.77"
 msgstr "13,77"
 
-#: ../../index.rst:673 ../../index.rst:681 ../../index.rst:689
+#: ../../index.rst:622 ../../index.rst:630 ../../index.rst:638
 msgid "16,192"
 msgstr "16.192"
 
-#: ../../index.rst:677
+#: ../../index.rst:626
 msgid "211,636"
 msgstr "211.636"
 
-#: ../../index.rst:680
+#: ../../index.rst:629
 msgid "11.78"
 msgstr "11,78"
 
-#: ../../index.rst:684 ../../index.rst:748
+#: ../../index.rst:633 ../../index.rst:697
 msgid "``attack`` (403)"
 msgstr "``attack`` (403)"
 
-#: ../../index.rst:685
+#: ../../index.rst:634
 msgid "210,549"
 msgstr "210.549"
 
-#: ../../index.rst:687
+#: ../../index.rst:636
 msgid "307"
 msgstr "307"
 
-#: ../../index.rst:688
+#: ../../index.rst:637
 msgid "12.32"
 msgstr "12,32"
 
-#: ../../index.rst:690 ../../index.rst:698 ../../index.rst:706
-#: ../../index.rst:714 ../../index.rst:722 ../../index.rst:730
-#: ../../index.rst:738 ../../index.rst:746 ../../index.rst:847
-#: ../../index.rst:856 ../../index.rst:865 ../../index.rst:874
-#: ../../index.rst:883 ../../index.rst:1022 ../../index.rst:1028
-#: ../../index.rst:1034 ../../index.rst:1040
+#: ../../index.rst:639 ../../index.rst:647 ../../index.rst:655
+#: ../../index.rst:663 ../../index.rst:671 ../../index.rst:679
+#: ../../index.rst:687 ../../index.rst:695 ../../index.rst:796
+#: ../../index.rst:805 ../../index.rst:814 ../../index.rst:823
+#: ../../index.rst:832 ../../index.rst:971 ../../index.rst:977
+#: ../../index.rst:983 ../../index.rst:989
 msgid "reverse proxy"
 msgstr "proxy inverso"
 
-#: ../../index.rst:693
+#: ../../index.rst:642
 msgid "142,498"
 msgstr "142.498"
 
-#: ../../index.rst:694
+#: ../../index.rst:643
 msgid "427"
 msgstr "427"
 
-#: ../../index.rst:695
+#: ../../index.rst:644
 msgid "768"
 msgstr "768"
 
-#: ../../index.rst:696
+#: ../../index.rst:645
 msgid "27.68"
 msgstr "27,68"
 
-#: ../../index.rst:697
+#: ../../index.rst:646
 msgid "15,896"
 msgstr "15.896"
 
-#: ../../index.rst:700 ../../index.rst:732
+#: ../../index.rst:649 ../../index.rst:681
 msgid "``challenged`` (200)"
 msgstr "``challenged`` (200)"
 
-#: ../../index.rst:701
+#: ../../index.rst:650
 msgid "199,465"
 msgstr "199.465"
 
-#: ../../index.rst:703
+#: ../../index.rst:652
 msgid "324"
 msgstr "324"
 
-#: ../../index.rst:704
+#: ../../index.rst:653
 msgid "12.98"
 msgstr "12,98"
 
-#: ../../index.rst:705
+#: ../../index.rst:654
 msgid "16,160"
 msgstr "16.160"
 
-#: ../../index.rst:709
+#: ../../index.rst:658
 msgid "147,303"
 msgstr "147.303"
 
-#: ../../index.rst:710
+#: ../../index.rst:659
 msgid "411"
 msgstr "411"
 
-#: ../../index.rst:711
+#: ../../index.rst:660
 msgid "759"
 msgstr "759"
 
-#: ../../index.rst:712
+#: ../../index.rst:661
 msgid "26.88"
 msgstr "26,88"
 
-#: ../../index.rst:713
+#: ../../index.rst:662
 msgid "16,324"
 msgstr "16.324"
 
-#: ../../index.rst:717
+#: ../../index.rst:666
 msgid "143,900"
 msgstr "143.900"
 
-#: ../../index.rst:718
+#: ../../index.rst:667
 msgid "422"
 msgstr "422"
 
-#: ../../index.rst:719
+#: ../../index.rst:668
 msgid "745"
 msgstr "745"
 
-#: ../../index.rst:720
+#: ../../index.rst:669
 msgid "27.67"
 msgstr "27,67"
 
-#: ../../index.rst:721
+#: ../../index.rst:670
 msgid "16,348"
 msgstr "16.348"
 
-#: ../../index.rst:725
+#: ../../index.rst:674
 msgid "138,965"
 msgstr "138.965"
 
-#: ../../index.rst:726
+#: ../../index.rst:675
 msgid "438"
 msgstr "438"
 
-#: ../../index.rst:727
+#: ../../index.rst:676
 msgid "857"
 msgstr "857"
 
-#: ../../index.rst:728
+#: ../../index.rst:677
 msgid "28.57"
 msgstr "28,57"
 
-#: ../../index.rst:729
+#: ../../index.rst:678
 msgid "16,064"
 msgstr "16.064"
 
-#: ../../index.rst:733
+#: ../../index.rst:682
 msgid "195,188"
 msgstr "195.188"
 
-#: ../../index.rst:734
+#: ../../index.rst:683
 msgid "162"
 msgstr "162"
 
-#: ../../index.rst:735 ../../index.rst:1031
+#: ../../index.rst:684 ../../index.rst:980
 msgid "328"
 msgstr "328"
 
-#: ../../index.rst:736
+#: ../../index.rst:685
 msgid "13.73"
 msgstr "13,73"
 
-#: ../../index.rst:737 ../../index.rst:745 ../../index.rst:753
+#: ../../index.rst:686 ../../index.rst:694 ../../index.rst:702
 msgid "16,328"
 msgstr "16.328"
 
-#: ../../index.rst:741
+#: ../../index.rst:690
 msgid "145,673"
 msgstr "145.673"
 
-#: ../../index.rst:742
+#: ../../index.rst:691
 msgid "415"
 msgstr "415"
 
-#: ../../index.rst:743
+#: ../../index.rst:692
 msgid "746"
 msgstr "746"
 
-#: ../../index.rst:744
+#: ../../index.rst:693
 msgid "27.27"
 msgstr "27,27"
 
-#: ../../index.rst:749
+#: ../../index.rst:698
 msgid "209,507"
 msgstr "209.507"
 
-#: ../../index.rst:751 ../../index.rst:1019 ../../index.rst:1043
+#: ../../index.rst:700 ../../index.rst:968 ../../index.rst:992
 msgid "306"
 msgstr "306"
 
-#: ../../index.rst:752
+#: ../../index.rst:701
 msgid "12.17"
 msgstr "12,17"
 
-#: ../../index.rst:755
+#: ../../index.rst:704
 msgid ""
 "In forward-auth mode the ingress asks Sibuna whether to admit a request, "
 "and there is no origin; every workload lies between 197,532 and 211,636 "
@@ -3385,7 +3230,7 @@ msgstr ""
 "memoria residente máxima se mantiene entre 15.896 y 16.348 KiB en todas "
 "las cargas de trabajo [#product]_."
 
-#: ../../index.rst:757
+#: ../../index.rst:706
 msgid ""
 "A few answers in about two million in three reverse-proxy rows were "
 "``503``: ``wrk`` reconnected before a closing connection had given back "
@@ -3400,7 +3245,7 @@ msgstr ""
 "escribir la respuesta de cierre; estos archivos son anteriores a esa "
 "corrección."
 
-#: ../../index.rst:759
+#: ../../index.rst:708
 msgid ""
 "Footprint of the Sibuna daemon (``product-latest.json`` and "
 "``primitives-latest.json``, 15 October 2026, as tabulated in book Part "
@@ -3410,71 +3255,71 @@ msgstr ""
 "``primitives-latest.json``, 15 de octubre de 2026, tal como se tabula en "
 "la parte VIII del libro)"
 
-#: ../../index.rst:765
+#: ../../index.rst:714
 msgid "Daemon binary, default build with SQLite and the console"
 msgstr "Binario del daemon, compilación por defecto con SQLite y la consola"
 
-#: ../../index.rst:766
+#: ../../index.rst:715
 msgid "49,113,856 bytes"
 msgstr "49.113.856 bytes"
 
-#: ../../index.rst:767
+#: ../../index.rst:716
 msgid "Idle resident memory, product runs"
 msgstr "Memoria residente en reposo, ejecuciones de producto"
 
-#: ../../index.rst:768
+#: ../../index.rst:717
 msgid "5,592 to 5,788 KiB"
 msgstr "5.592 a 5.788 KiB"
 
-#: ../../index.rst:769
+#: ../../index.rst:718
 msgid "Peak resident memory during a workload"
 msgstr "Memoria residente máxima durante una carga de trabajo"
 
-#: ../../index.rst:770
+#: ../../index.rst:719
 msgid "15,896 to 16,348 KiB"
 msgstr "15.896 a 16.348 KiB"
 
-#: ../../index.rst:771
+#: ../../index.rst:720
 msgid "Resident memory after the workloads"
 msgstr "Memoria residente después de las cargas de trabajo"
 
-#: ../../index.rst:772
+#: ../../index.rst:721
 msgid "16,176 to 16,348 KiB"
 msgstr "16.176 a 16.348 KiB"
 
-#: ../../index.rst:773
+#: ../../index.rst:722
 msgid "Policy engine tables"
 msgstr "Tablas del motor de políticas"
 
-#: ../../index.rst:774
+#: ../../index.rst:723
 msgid "209,052 bytes"
 msgstr "209.052 bytes"
 
-#: ../../index.rst:775
+#: ../../index.rst:724
 msgid "Bot signature table"
 msgstr "Tabla de firmas de bots"
 
-#: ../../index.rst:776
+#: ../../index.rst:725
 msgid "42,244 bytes"
 msgstr "42.244 bytes"
 
-#: ../../index.rst:777
+#: ../../index.rst:726
 msgid "WAF signature table"
 msgstr "Tabla de firmas del WAF"
 
-#: ../../index.rst:778
+#: ../../index.rst:727
 msgid "164,908 bytes"
 msgstr "164.908 bytes"
 
-#: ../../index.rst:779
+#: ../../index.rst:728
 msgid "Browser prover (WebAssembly)"
 msgstr "Probador del navegador (WebAssembly)"
 
-#: ../../index.rst:780
+#: ../../index.rst:729
 msgid "14,744 bytes"
 msgstr "14.744 bytes"
 
-#: ../../index.rst:782
+#: ../../index.rst:731
 msgid ""
 "A later change to the release profile drops the bundled SQLite's debug "
 "information, about 13 MB of the 49 MB by the note in the build manifest; "
@@ -3486,11 +3331,11 @@ msgstr ""
 "manifiesto de compilación; los archivos de resultados no se han "
 "regenerado desde entonces, así que citamos el tamaño medido [#binary]_."
 
-#: ../../index.rst:784
+#: ../../index.rst:733
 msgid "Latency at Equal Offered Load"
 msgstr "Latencia con la misma carga ofrecida"
 
-#: ../../index.rst:787
+#: ../../index.rst:736
 msgid ""
 "``wrk`` keeps 64 requests in flight, so the request rate depends on the "
 "daemon, and ``wrk``'s percentiles leave out the requests it did not send "
@@ -3503,7 +3348,7 @@ msgstr ""
 "cambio la tasa ofrecida e imputa cada retraso al daemon, que es lo que "
 "percibe un visitante."
 
-#: ../../index.rst:789
+#: ../../index.rst:738
 msgid ""
 "Sibuna, Shield, admitted requests at fixed offered rates; latency in "
 "microseconds and CPU time per request, medians of three 10-second runs "
@@ -3514,254 +3359,254 @@ msgstr ""
 "de 10 segundos (``benchmarks/results/latency-latest.md``, generado el "
 "2026-10-15T23:07:14Z)"
 
-#: ../../index.rst:794
+#: ../../index.rst:743
 msgid "Offered req/s"
 msgstr "req/s ofrecidas"
 
-#: ../../index.rst:795
+#: ../../index.rst:744
 msgid "Achieved req/s"
 msgstr "req/s logradas"
 
-#: ../../index.rst:797
+#: ../../index.rst:746
 msgid "p90"
 msgstr "p90"
 
-#: ../../index.rst:799
+#: ../../index.rst:748
 msgid "p99.9"
 msgstr "p99.9"
 
-#: ../../index.rst:800
+#: ../../index.rst:749
 msgid "Errors"
 msgstr "Errores"
 
-#: ../../index.rst:801
+#: ../../index.rst:750
 msgid "CPU us"
 msgstr "CPU us"
 
-#: ../../index.rst:803 ../../index.rst:804 ../../index.rst:848
-#: ../../index.rst:849
+#: ../../index.rst:752 ../../index.rst:753 ../../index.rst:797
+#: ../../index.rst:798
 msgid "10,000"
 msgstr "10.000"
 
-#: ../../index.rst:805 ../../index.rst:825
+#: ../../index.rst:754 ../../index.rst:774
 msgid "30"
 msgstr "30"
 
-#: ../../index.rst:806
+#: ../../index.rst:755
 msgid "32"
 msgstr "32"
 
-#: ../../index.rst:807
+#: ../../index.rst:756
 msgid "37"
 msgstr "37"
 
-#: ../../index.rst:808 ../../index.rst:861
+#: ../../index.rst:757 ../../index.rst:810
 msgid "58"
 msgstr "58"
 
-#: ../../index.rst:810
+#: ../../index.rst:759
 msgid "16.92"
 msgstr "16,92"
 
-#: ../../index.rst:812 ../../index.rst:813 ../../index.rst:857
-#: ../../index.rst:858
+#: ../../index.rst:761 ../../index.rst:762 ../../index.rst:806
+#: ../../index.rst:807
 msgid "25,000"
 msgstr "25.000"
 
-#: ../../index.rst:814
+#: ../../index.rst:763
 msgid "28"
 msgstr "28"
 
-#: ../../index.rst:815
+#: ../../index.rst:764
 msgid "31"
 msgstr "31"
 
-#: ../../index.rst:816
+#: ../../index.rst:765
 msgid "34"
 msgstr "34"
 
-#: ../../index.rst:817
+#: ../../index.rst:766
 msgid "45"
 msgstr "45"
 
-#: ../../index.rst:819
+#: ../../index.rst:768
 msgid "15.83"
 msgstr "15,83"
 
-#: ../../index.rst:821 ../../index.rst:822 ../../index.rst:866
-#: ../../index.rst:867
+#: ../../index.rst:770 ../../index.rst:771 ../../index.rst:815
+#: ../../index.rst:816
 msgid "50,000"
 msgstr "50.000"
 
-#: ../../index.rst:823 ../../index.rst:841
+#: ../../index.rst:772 ../../index.rst:790
 msgid "25"
 msgstr "25"
 
-#: ../../index.rst:824
+#: ../../index.rst:773
 msgid "27"
 msgstr "27"
 
-#: ../../index.rst:826
+#: ../../index.rst:775
 msgid "40"
 msgstr "40"
 
-#: ../../index.rst:828
+#: ../../index.rst:777
 msgid "13.83"
 msgstr "13,83"
 
-#: ../../index.rst:830 ../../index.rst:875
+#: ../../index.rst:779 ../../index.rst:824
 msgid "100,000"
 msgstr "100.000"
 
-#: ../../index.rst:831
+#: ../../index.rst:780
 msgid "99,998"
 msgstr "99.998"
 
-#: ../../index.rst:832
+#: ../../index.rst:781
 msgid "24"
 msgstr "24"
 
-#: ../../index.rst:833
+#: ../../index.rst:782
 msgid "26"
 msgstr "26"
 
-#: ../../index.rst:834
+#: ../../index.rst:783
 msgid "41"
 msgstr "41"
 
-#: ../../index.rst:835
+#: ../../index.rst:784
 msgid "62"
 msgstr "62"
 
-#: ../../index.rst:837
+#: ../../index.rst:786
 msgid "13.48"
 msgstr "13,48"
 
-#: ../../index.rst:839 ../../index.rst:884
+#: ../../index.rst:788 ../../index.rst:833
 msgid "150,000"
 msgstr "150.000"
 
-#: ../../index.rst:840
+#: ../../index.rst:789
 msgid "149,996"
 msgstr "149.996"
 
-#: ../../index.rst:842
+#: ../../index.rst:791
 msgid "36"
 msgstr "36"
 
-#: ../../index.rst:843 ../../index.rst:859
+#: ../../index.rst:792 ../../index.rst:808
 msgid "51"
 msgstr "51"
 
-#: ../../index.rst:844 ../../index.rst:871
+#: ../../index.rst:793 ../../index.rst:820
 msgid "74"
 msgstr "74"
 
-#: ../../index.rst:846
+#: ../../index.rst:795
 msgid "14.16"
 msgstr "14,16"
 
-#: ../../index.rst:850
+#: ../../index.rst:799
 msgid "56"
 msgstr "56"
 
-#: ../../index.rst:851
+#: ../../index.rst:800
 msgid "61"
 msgstr "61"
 
-#: ../../index.rst:852
+#: ../../index.rst:801
 msgid "65"
 msgstr "65"
 
-#: ../../index.rst:853
+#: ../../index.rst:802
 msgid "76"
 msgstr "76"
 
-#: ../../index.rst:855
+#: ../../index.rst:804
 msgid "32.25"
 msgstr "32,25"
 
-#: ../../index.rst:860
+#: ../../index.rst:809
 msgid "54"
 msgstr "54"
 
-#: ../../index.rst:862
+#: ../../index.rst:811
 msgid "72"
 msgstr "72"
 
-#: ../../index.rst:864
+#: ../../index.rst:813
 msgid "28.63"
 msgstr "28,63"
 
-#: ../../index.rst:868
+#: ../../index.rst:817
 msgid "47"
 msgstr "47"
 
-#: ../../index.rst:869
+#: ../../index.rst:818
 msgid "50"
 msgstr "50"
 
-#: ../../index.rst:870
+#: ../../index.rst:819
 msgid "60"
 msgstr "60"
 
-#: ../../index.rst:873
+#: ../../index.rst:822
 msgid "27.45"
 msgstr "27,45"
 
-#: ../../index.rst:876
+#: ../../index.rst:825
 msgid "99,996"
 msgstr "99.996"
 
-#: ../../index.rst:877
+#: ../../index.rst:826
 msgid "55"
 msgstr "55"
 
-#: ../../index.rst:878
+#: ../../index.rst:827
 msgid "75"
 msgstr "75"
 
-#: ../../index.rst:879
+#: ../../index.rst:828
 msgid "100"
 msgstr "100"
 
-#: ../../index.rst:880
+#: ../../index.rst:829
 msgid "150"
 msgstr "150"
 
-#: ../../index.rst:882
+#: ../../index.rst:831
 msgid "28.42"
 msgstr "28,42"
 
-#: ../../index.rst:885
+#: ../../index.rst:834
 msgid "134,344"
 msgstr "134.344"
 
-#: ../../index.rst:886
+#: ../../index.rst:835
 msgid "583,934"
 msgstr "583.934"
 
-#: ../../index.rst:887
+#: ../../index.rst:836
 msgid "1,544,160"
 msgstr "1.544.160"
 
-#: ../../index.rst:888
+#: ../../index.rst:837
 msgid "1,906,273"
 msgstr "1.906.273"
 
-#: ../../index.rst:889
+#: ../../index.rst:838
 msgid "1,967,134"
 msgstr "1.967.134"
 
-#: ../../index.rst:890
+#: ../../index.rst:839
 msgid "4"
 msgstr "4"
 
-#: ../../index.rst:891
+#: ../../index.rst:840
 msgid "29.22"
 msgstr "29,22"
 
-#: ../../index.rst:893
+#: ../../index.rst:842
 msgid ""
 "In forward-auth mode the p99.9 stays below 75 us up to 150,000 requests "
 "per second. In reverse-proxy mode, with the origin in the path, the p99 "
@@ -3782,11 +3627,11 @@ msgstr ""
 "prueba en lazo abierto por encima de la capacidad. Los cuatro errores de "
 "esa fila se produjeron durante la sobrecarga [#latency]_."
 
-#: ../../index.rst:897
+#: ../../index.rst:846
 msgid "What the Measurement Changed"
 msgstr "Qué cambió la medición"
 
-#: ../../index.rst:900
+#: ../../index.rst:849
 msgid ""
 "The latency harness changed the design of the connection threads. In its "
 "first runs, with 64 connections each closed by the daemon after 4,096 "
@@ -3817,7 +3662,7 @@ msgstr ""
 "corrección, el p99.9 a 100.000 peticiones por segundo es de 62 us en modo "
 "forward-auth y de 150 us en modo proxy inverso [#thread-reuse]_."
 
-#: ../../index.rst:902
+#: ../../index.rst:851
 msgid ""
 "A rare, periodic stall moves the far tail long before it moves p99. At "
 "100,000 requests per second over 64 connections, each connection lasts "
@@ -3836,11 +3681,11 @@ msgstr ""
 "Para ver un defecto así hacen falta el p99.9 y un cronómetro en cada "
 "petición."
 
-#: ../../index.rst:904
+#: ../../index.rst:853
 msgid "Key Takeaways"
 msgstr "Conclusiones principales"
 
-#: ../../index.rst:907
+#: ../../index.rst:856
 msgid ""
 "*Classification below a microsecond.* In the Gate profile the policy "
 "engine classifies a browser request in 75.9 ns; with full inspection in "
@@ -3850,7 +3695,7 @@ msgstr ""
 "de políticas clasifica una petición de navegador en 75,9 ns; con la "
 "inspección completa del perfil Shield tarda 790,8 ns."
 
-#: ../../index.rst:908
+#: ../../index.rst:857
 msgid ""
 "*Symmetric verification.* A keyed-BLAKE3 session token verifies in 155.8 "
 "ns, against 40,587.5 ns for an Ed25519 token: about 260 times less work "
@@ -3861,7 +3706,7 @@ msgstr ""
 "menos trabajo para la misma integridad dentro de un único dominio de "
 "confianza."
 
-#: ../../index.rst:909
+#: ../../index.rst:858
 msgid ""
 "*A small, steady footprint.* About 200,000 forward-auth requests per "
 "second on four CPUs, with peak resident memory near 16 MiB in every "
@@ -3871,7 +3716,7 @@ msgstr ""
 "segundo en cuatro CPU, con una memoria residente máxima cercana a 16 MiB "
 "en todas las cargas de trabajo y por debajo de 6 MiB en reposo."
 
-#: ../../index.rst:910
+#: ../../index.rst:859
 msgid ""
 "*Tails need open-loop measurement.* The thread-turnover stall was "
 "invisible to the closed-loop harness and obvious at p99.9 under an "
@@ -3881,11 +3726,11 @@ msgstr ""
 "era invisible para el programa en lazo cerrado y evidente en el p99.9 con "
 "un generador en lazo abierto."
 
-#: ../../index.rst:912
+#: ../../index.rst:861
 msgid "Market Comparison: Sibuna and Its Neighbours"
 msgstr "Comparación de mercado: Sibuna y sus alternativas"
 
-#: ../../index.rst:915
+#: ../../index.rst:864
 msgid ""
 "We compare Sibuna with the tools an operator is most likely to weigh "
 "against it. The facts about the other products were read from their "
@@ -3904,7 +3749,7 @@ msgstr ""
 "medición no mide. Describimos diferencias de arquitectura, no una "
 "clasificación."
 
-#: ../../index.rst:917
+#: ../../index.rst:866
 msgid ""
 "Feature comparison (book Part II; facts about other products read from "
 "public documentation in September 2026, the JA4 row in October 2026)"
@@ -3913,31 +3758,31 @@ msgstr ""
 "productos tomados de su documentación pública en septiembre de 2026, y la "
 "fila de JA4, en octubre de 2026)"
 
-#: ../../index.rst:921
+#: ../../index.rst:870
 msgid "Feature"
 msgstr "Característica"
 
-#: ../../index.rst:922
+#: ../../index.rst:871
 msgid "Sibuna 1.0.0-beta.2"
 msgstr "Sibuna 1.0.0-beta.2"
 
-#: ../../index.rst:923
+#: ../../index.rst:872
 msgid "Anubis 1.27"
 msgstr "Anubis 1.27"
 
-#: ../../index.rst:924
+#: ../../index.rst:873
 msgid "SafeLine CE 9"
 msgstr "SafeLine CE 9"
 
-#: ../../index.rst:925
+#: ../../index.rst:874
 msgid "Cloudflare WAF"
 msgstr "Cloudflare WAF"
 
-#: ../../index.rst:926
+#: ../../index.rst:875
 msgid "Runs as"
 msgstr "Se ejecuta como"
 
-#: ../../index.rst:927
+#: ../../index.rst:876
 msgid ""
 "One binary; reverse proxy or forward auth; optional SQLite file or shared "
 "PostgreSQL database"
@@ -3945,11 +3790,11 @@ msgstr ""
 "Un binario; proxy inverso o forward-auth; archivo SQLite opcional o base "
 "de datos PostgreSQL compartida"
 
-#: ../../index.rst:928
+#: ../../index.rst:877
 msgid "One Go binary; reverse proxy or forward auth"
 msgstr "Un binario Go; proxy inverso o forward-auth"
 
-#: ../../index.rst:929
+#: ../../index.rst:878
 msgid ""
 "Seven Docker containers (tengine, detector, mgt, luigi, fvm, chaos, "
 "PostgreSQL)"
@@ -3957,15 +3802,15 @@ msgstr ""
 "Siete contenedores Docker (tengine, detector, mgt, luigi, fvm, chaos, "
 "PostgreSQL)"
 
-#: ../../index.rst:930
+#: ../../index.rst:879
 msgid "Hosted network; DNS points at Cloudflare"
 msgstr "Red alojada; el DNS apunta a Cloudflare"
 
-#: ../../index.rst:931
+#: ../../index.rst:880
 msgid "Runtime"
 msgstr "Entorno de ejecución"
 
-#: ../../index.rst:932
+#: ../../index.rst:881
 msgid ""
 "Native code, no garbage collector; no third-party dependency when storage "
 "is off"
@@ -3973,130 +3818,130 @@ msgstr ""
 "Código nativo, sin recolector de basura; sin dependencias de terceros "
 "cuando el almacenamiento está desactivado"
 
-#: ../../index.rst:933
+#: ../../index.rst:882
 msgid "Go, garbage collected"
 msgstr "Go, con recolector de basura"
 
-#: ../../index.rst:934
+#: ../../index.rst:883
 msgid "C/C++ proxy and detector, Go management, PostgreSQL"
 msgstr "Proxy y detector en C/C++, gestión en Go, PostgreSQL"
 
-#: ../../index.rst:935
+#: ../../index.rst:884
 msgid "Proprietary edge software"
 msgstr "Software perimetral propietario"
 
-#: ../../index.rst:936
+#: ../../index.rst:885
 msgid "Licence"
 msgstr "Licencia"
 
-#: ../../index.rst:937
+#: ../../index.rst:886
 msgid "LGPL-3.0-or-later"
 msgstr "LGPL-3.0-or-later"
 
-#: ../../index.rst:938
+#: ../../index.rst:887
 msgid "MIT"
 msgstr "MIT"
 
-#: ../../index.rst:939
+#: ../../index.rst:888
 msgid "GPL-3.0 management code; closed detector images"
 msgstr "Código de gestión GPL-3.0; imágenes de detector cerradas"
 
-#: ../../index.rst:940
+#: ../../index.rst:889
 msgid "Proprietary service"
 msgstr "Servicio propietario"
 
-#: ../../index.rst:941
+#: ../../index.rst:890
 msgid "Proof-of-work admission"
 msgstr "Admisión por prueba de trabajo"
 
-#: ../../index.rst:942
+#: ../../index.rst:891
 msgid ""
 "Hashcash (bit-level) and Cohen-Pietrzak sequential work, chosen per rule"
 msgstr ""
 "Hashcash (a nivel de bit) y trabajo secuencial de Cohen-Pietrzak, "
 "elegidos por regla"
 
-#: ../../index.rst:943
+#: ../../index.rst:892
 msgid "SHA-256 Hashcash in hex nibbles; non-work challenges"
 msgstr "Hashcash SHA-256 en nibbles hexadecimales; desafíos sin trabajo"
 
-#: ../../index.rst:944
+#: ../../index.rst:893
 msgid "JavaScript challenge and CAPTCHA; not work-bound"
 msgstr "Desafío JavaScript y CAPTCHA; no condicionado al trabajo"
 
-#: ../../index.rst:945
+#: ../../index.rst:894
 msgid "Managed challenge, JS challenge, Turnstile"
 msgstr "Desafío gestionado, desafío JS, Turnstile"
 
-#: ../../index.rst:946
+#: ../../index.rst:895
 msgid "Challenge state on the server"
 msgstr "Estado del desafío en el servidor"
 
-#: ../../index.rst:947
+#: ../../index.rst:896
 msgid "None until solved; solved tags in a fixed Robin Hood table"
 msgstr ""
 "Ninguno hasta que se resuelve; etiquetas resueltas en una tabla Robin "
 "Hood fija"
 
-#: ../../index.rst:948
+#: ../../index.rst:897
 msgid "Store backend: memory, bbolt, Valkey or S3"
 msgstr "Almacén: memoria, bbolt, Valkey o S3"
 
-#: ../../index.rst:949
+#: ../../index.rst:898
 msgid "Managed by the stack"
 msgstr "Gestionado por la pila"
 
-#: ../../index.rst:950
+#: ../../index.rst:899
 msgid "Managed by Cloudflare"
 msgstr "Gestionado por Cloudflare"
 
-#: ../../index.rst:951
+#: ../../index.rst:900
 msgid "Session token"
 msgstr "Token de sesión"
 
-#: ../../index.rst:952
+#: ../../index.rst:901
 msgid ""
 "Keyed BLAKE3, 75 characters, bound to the work paid; Ed25519 optional"
 msgstr ""
 "BLAKE3 con clave, 75 caracteres, vinculado al trabajo pagado; Ed25519 "
 "opcional"
 
-#: ../../index.rst:953
+#: ../../index.rst:902
 msgid "JSON Web Token signed with Ed25519; HS512 optional"
 msgstr "JSON Web Token firmado con Ed25519; HS512 opcional"
 
-#: ../../index.rst:954
+#: ../../index.rst:903
 msgid "Cookie issued by the stack"
 msgstr "Cookie emitida por la pila"
 
-#: ../../index.rst:955
+#: ../../index.rst:904
 msgid "``cf_clearance`` cookie"
 msgstr "Cookie ``cf_clearance``"
 
-#: ../../index.rst:957
+#: ../../index.rst:906
 msgid ""
 "Shield: tagged automaton plus structural tokenizers, first 8 KiB of body"
 msgstr ""
 "Shield: autómata etiquetado más tokenizadores estructurales, primeros 8 "
 "KiB del cuerpo"
 
-#: ../../index.rst:958
+#: ../../index.rst:907
 msgid "None"
 msgstr "Ninguna"
 
-#: ../../index.rst:959
+#: ../../index.rst:908
 msgid "Semantic analysis over OWASP categories"
 msgstr "Análisis semántico sobre las categorías de OWASP"
 
-#: ../../index.rst:960
+#: ../../index.rst:909
 msgid "Managed rulesets (Pro and above)"
 msgstr "Conjuntos de reglas gestionados (Pro y superiores)"
 
-#: ../../index.rst:961
+#: ../../index.rst:910
 msgid "TLS fingerprint (JA4)"
 msgstr "Huella TLS (JA4)"
 
-#: ../../index.rst:962
+#: ../../index.rst:911
 msgid ""
 "Rules match a JA4 value that a trusted ingress forwards; not computed by "
 "Sibuna"
@@ -4104,7 +3949,7 @@ msgstr ""
 "Las reglas comparan un valor JA4 que reenvía un proxy de entrada de "
 "confianza; Sibuna no lo calcula"
 
-#: ../../index.rst:963
+#: ../../index.rst:912
 msgid ""
 "Not documented; policies may reference the HTTP fingerprint JA4H, which "
 "Anubis computes"
@@ -4112,58 +3957,58 @@ msgstr ""
 "No documentado; las políticas pueden hacer referencia a la huella HTTP "
 "JA4H, que Anubis calcula"
 
-#: ../../index.rst:964
+#: ../../index.rst:913
 msgid ""
 "Computed at its own TLS termination; custom rules and a built-in deny list"
 msgstr ""
 "Calculada en su propia terminación TLS; reglas personalizadas y una lista "
 "de denegación integrada"
 
-#: ../../index.rst:965
+#: ../../index.rst:914
 msgid ""
 "JA3 and JA4 in custom rules and analytics (Enterprise with Bot Management)"
 msgstr ""
 "JA3 y JA4 en reglas personalizadas y analíticas (Enterprise con Bot "
 "Management)"
 
-#: ../../index.rst:966
+#: ../../index.rst:915
 msgid "Shared state"
 msgstr "Estado compartido"
 
-#: ../../index.rst:967
+#: ../../index.rst:916
 msgid "One PostgreSQL database for policy, reputation and forensics"
 msgstr ""
 "Una base de datos PostgreSQL para políticas, reputación y análisis forense"
 
-#: ../../index.rst:968
+#: ../../index.rst:917
 msgid "Shared signing key; shared Valkey store"
 msgstr "Clave de firma compartida; almacén Valkey compartido"
 
-#: ../../index.rst:969
+#: ../../index.rst:918
 msgid "One stack per host"
 msgstr "Una pila por host"
 
-#: ../../index.rst:970
+#: ../../index.rst:919
 msgid "Global anycast network"
 msgstr "Red anycast global"
 
-#: ../../index.rst:971
+#: ../../index.rst:920
 msgid "TLS termination"
 msgstr "Terminación TLS"
 
-#: ../../index.rst:972 ../../index.rst:973
+#: ../../index.rst:921 ../../index.rst:922
 msgid "No (ingress)"
 msgstr "No (proxy de entrada)"
 
-#: ../../index.rst:974 ../../index.rst:975
+#: ../../index.rst:923 ../../index.rst:924
 msgid "Yes"
 msgstr "Sí"
 
-#: ../../index.rst:979
+#: ../../index.rst:928
 msgid "Measured Comparison With Anubis"
 msgstr "Comparación medida con Anubis"
 
-#: ../../index.rst:982
+#: ../../index.rst:931
 msgid ""
 "We measured the official Anubis v1.27.0 release binary beside Sibuna with "
 "the harness of :ref:`whole-products`: the same four workloads, the same "
@@ -4184,11 +4029,11 @@ msgstr ""
 "ejecuta su modo de protección Shield, así que además inspecciona cada "
 "carga útil, cosa que Anubis no hace."
 
-#: ../../index.rst:984
+#: ../../index.rst:933
 msgid "Reading these rows"
 msgstr "Cómo leer estas filas"
 
-#: ../../index.rst:986
+#: ../../index.rst:935
 msgid ""
 "These numbers describe four workloads on one machine, not every "
 "deployment, and several rows are not like for like. In forward-auth mode "
@@ -4214,7 +4059,7 @@ msgstr ""
 "medición es que un camino de la petición pequeño y acotado puede abaratar "
 "la admisión para el defensor."
 
-#: ../../index.rst:988
+#: ../../index.rst:937
 msgid ""
 "Sibuna (Shield) and Anubis 1.27.0 under ``wrk``: requests per second and "
 "p99 latency in microseconds, medians of three five-second runs "
@@ -4226,151 +4071,151 @@ msgstr ""
 "segundos (``benchmarks/results/comparison-latest.md``). El estado es 200 "
 "salvo que se indique otro; Shield rechaza el ataque con 403."
 
-#: ../../index.rst:994
+#: ../../index.rst:943
 msgid "Sibuna req/s"
 msgstr "req/s de Sibuna"
 
-#: ../../index.rst:995
+#: ../../index.rst:944
 msgid "Sibuna p99"
 msgstr "p99 de Sibuna"
 
-#: ../../index.rst:996
+#: ../../index.rst:945
 msgid "Anubis req/s"
 msgstr "req/s de Anubis"
 
-#: ../../index.rst:997
+#: ../../index.rst:946
 msgid "Anubis p99"
 msgstr "p99 de Anubis"
 
-#: ../../index.rst:999 ../../index.rst:1023
+#: ../../index.rst:948 ../../index.rst:972
 msgid "``admitted``"
 msgstr "``admitted``"
 
-#: ../../index.rst:1000
+#: ../../index.rst:949
 msgid "208,635"
 msgstr "208.635"
 
-#: ../../index.rst:1002
+#: ../../index.rst:951
 msgid "36,509"
 msgstr "36.509"
 
-#: ../../index.rst:1003
+#: ../../index.rst:952
 msgid "7,477"
 msgstr "7.477"
 
-#: ../../index.rst:1005 ../../index.rst:1029
+#: ../../index.rst:954 ../../index.rst:978
 msgid "``challenged``"
 msgstr "``challenged``"
 
-#: ../../index.rst:1006
+#: ../../index.rst:955
 msgid "193,087"
 msgstr "193.087"
 
-#: ../../index.rst:1007
+#: ../../index.rst:956
 msgid "342"
 msgstr "342"
 
-#: ../../index.rst:1008
+#: ../../index.rst:957
 msgid "113,170"
 msgstr "113.170"
 
-#: ../../index.rst:1009
+#: ../../index.rst:958
 msgid "3,781"
 msgstr "3.781"
 
-#: ../../index.rst:1011 ../../index.rst:1035
+#: ../../index.rst:960 ../../index.rst:984
 msgid "``allowed_static``"
 msgstr "``allowed_static``"
 
-#: ../../index.rst:1012
+#: ../../index.rst:961
 msgid "212,444"
 msgstr "212.444"
 
-#: ../../index.rst:1013
+#: ../../index.rst:962
 msgid "304"
 msgstr "304"
 
-#: ../../index.rst:1014
+#: ../../index.rst:963
 msgid "89,904"
 msgstr "89.904"
 
-#: ../../index.rst:1015
+#: ../../index.rst:964
 msgid "4,547"
 msgstr "4.547"
 
-#: ../../index.rst:1017 ../../index.rst:1041
+#: ../../index.rst:966 ../../index.rst:990
 msgid "``attack``"
 msgstr "``attack``"
 
-#: ../../index.rst:1018
+#: ../../index.rst:967
 msgid "211,347 (403)"
 msgstr "211.347 (403)"
 
-#: ../../index.rst:1020
+#: ../../index.rst:969
 msgid "36,853"
 msgstr "36.853"
 
-#: ../../index.rst:1021
+#: ../../index.rst:970
 msgid "7,283"
 msgstr "7.283"
 
-#: ../../index.rst:1024
+#: ../../index.rst:973
 msgid "103,298"
 msgstr "103.298"
 
-#: ../../index.rst:1025
+#: ../../index.rst:974
 msgid "3,321"
 msgstr "3.321"
 
-#: ../../index.rst:1026
+#: ../../index.rst:975
 msgid "19,398"
 msgstr "19.398"
 
-#: ../../index.rst:1027
+#: ../../index.rst:976
 msgid "11,062"
 msgstr "11.062"
 
-#: ../../index.rst:1030
+#: ../../index.rst:979
 msgid "197,327"
 msgstr "197.327"
 
-#: ../../index.rst:1032
+#: ../../index.rst:981
 msgid "28,842"
 msgstr "28.842"
 
-#: ../../index.rst:1033
+#: ../../index.rst:982
 msgid "9,546"
 msgstr "9.546"
 
-#: ../../index.rst:1036
+#: ../../index.rst:985
 msgid "106,819"
 msgstr "106.819"
 
-#: ../../index.rst:1037
+#: ../../index.rst:986
 msgid "3,316"
 msgstr "3.316"
 
-#: ../../index.rst:1038
+#: ../../index.rst:987
 msgid "28,862"
 msgstr "28.862"
 
-#: ../../index.rst:1039
+#: ../../index.rst:988
 msgid "30,124"
 msgstr "30.124"
 
-#: ../../index.rst:1042
+#: ../../index.rst:991
 msgid "210,483 (403)"
 msgstr "210.483 (403)"
 
-#: ../../index.rst:1044
+#: ../../index.rst:993
 msgid "23,399"
 msgstr "23.399"
 
-#: ../../index.rst:1045
+#: ../../index.rst:994
 msgid "14,124"
 msgstr "14.124"
 
-#: ../../index.rst:1047
+#: ../../index.rst:996
 msgid ""
 "Anubis spends 106 us of CPU per admitted request in forward-auth mode, "
 "where Sibuna spends 13; its peak resident memory was about 32 MiB in "
@@ -4389,7 +4234,7 @@ msgstr ""
 "el origen simulado, más ligero, de :ref:`whole-products`, las mismas "
 "filas alcanzan unas 139.000 peticiones por segundo."
 
-#: ../../index.rst:1049
+#: ../../index.rst:998
 msgid ""
 "Admission operations per second on two CPUs, median of seven batches "
 "(``benchmarks/results/admission-latest.md``). Anubis runs once with each "
@@ -4399,111 +4244,111 @@ msgstr ""
 "(``benchmarks/results/admission-latest.md``). Anubis se ejecuta una vez "
 "con cada uno de sus esquemas de token."
 
-#: ../../index.rst:1053
+#: ../../index.rst:1002
 msgid "Product (token)"
 msgstr "Producto (token)"
 
-#: ../../index.rst:1054
+#: ../../index.rst:1003
 msgid "Session check"
 msgstr "Comprobación de sesión"
 
-#: ../../index.rst:1055
+#: ../../index.rst:1004
 msgid "Unauthenticated"
 msgstr "Sin autenticar"
 
-#: ../../index.rst:1056
+#: ../../index.rst:1005
 msgid "Bootstrap"
 msgstr "Arranque del desafío"
 
-#: ../../index.rst:1057
+#: ../../index.rst:1006
 msgid "Proof verification"
 msgstr "Verificación de la prueba"
 
-#: ../../index.rst:1058
+#: ../../index.rst:1007
 msgid "Resident memory"
 msgstr "Memoria residente"
 
-#: ../../index.rst:1059
+#: ../../index.rst:1008
 msgid "Sibuna (keyed BLAKE3)"
 msgstr "Sibuna (BLAKE3 con clave)"
 
-#: ../../index.rst:1060
+#: ../../index.rst:1009
 msgid "88,104"
 msgstr "88.104"
 
-#: ../../index.rst:1061
+#: ../../index.rst:1010
 msgid "78,997"
 msgstr "78.997"
 
-#: ../../index.rst:1062
+#: ../../index.rst:1011
 msgid "42,664"
 msgstr "42.664"
 
-#: ../../index.rst:1063
+#: ../../index.rst:1012
 msgid "57,924"
 msgstr "57.924"
 
-#: ../../index.rst:1064
+#: ../../index.rst:1013
 msgid "7.6 MiB"
 msgstr "7,6 MiB"
 
-#: ../../index.rst:1065
+#: ../../index.rst:1014
 msgid "Anubis (Ed25519)"
 msgstr "Anubis (Ed25519)"
 
-#: ../../index.rst:1066
+#: ../../index.rst:1015
 msgid "10,951"
 msgstr "10.951"
 
-#: ../../index.rst:1067
+#: ../../index.rst:1016
 msgid "28,619"
 msgstr "28.619"
 
-#: ../../index.rst:1068
+#: ../../index.rst:1017
 msgid "7,893"
 msgstr "7.893"
 
-#: ../../index.rst:1069
+#: ../../index.rst:1018
 msgid "12,668"
 msgstr "12.668"
 
-#: ../../index.rst:1070
+#: ../../index.rst:1019
 msgid "32.6 MiB"
 msgstr "32,6 MiB"
 
-#: ../../index.rst:1071
+#: ../../index.rst:1020
 msgid "Anubis (HS512)"
 msgstr "Anubis (HS512)"
 
-#: ../../index.rst:1072
+#: ../../index.rst:1021
 msgid "16,976"
 msgstr "16.976"
 
-#: ../../index.rst:1073
+#: ../../index.rst:1022
 msgid "27,785"
 msgstr "27.785"
 
-#: ../../index.rst:1074
+#: ../../index.rst:1023
 msgid "7,952"
 msgstr "7.952"
 
-#: ../../index.rst:1075
+#: ../../index.rst:1024
 msgid "19,261"
 msgstr "19.261"
 
-#: ../../index.rst:1076
+#: ../../index.rst:1025
 msgid "29.1 MiB"
 msgstr "29,1 MiB"
 
-#: ../../index.rst:1078
+#: ../../index.rst:1027
 msgid "Detailed Architectural Comparison"
 msgstr "Comparación arquitectónica detallada"
 
-#: ../../index.rst:1081
+#: ../../index.rst:1030
 msgid "SafeLine (Chaitin Technology)"
 msgstr "SafeLine (Chaitin Technology)"
 
-#: ../../index.rst:1084
+#: ../../index.rst:1033
 msgid ""
 "SafeLine carries the semantic idea of libinjection into a complete "
 "product with a management console, and its vendor reports detection rates "
@@ -4517,7 +4362,7 @@ msgstr ""
 "falsos positivos del 0,07% y del 0,22% [#safeline]_. Son mediciones de la "
 "calidad de detección, que Sibuna no ha publicado para su propio motor."
 
-#: ../../index.rst:1086
+#: ../../index.rst:1035
 msgid ""
 "*Deployment.* The community edition ships as seven Docker containers on a "
 "Linux host with at least one CPU core, 1 GB of memory and 5 GB of disk. "
@@ -4528,7 +4373,7 @@ msgstr ""
 "de memoria y 5 GB de disco. Termina TLS por sí misma, algo que Sibuna no "
 "hace."
 
-#: ../../index.rst:1087
+#: ../../index.rst:1036
 msgid ""
 "*State.* It keeps its attack log in PostgreSQL within the stack, one "
 "stack per host."
@@ -4536,7 +4381,7 @@ msgstr ""
 "*Estado.* Guarda su registro de ataques en PostgreSQL dentro de la pila, "
 "una pila por host."
 
-#: ../../index.rst:1088
+#: ../../index.rst:1037
 msgid ""
 "*Where Sibuna differs.* Sibuna is one binary that starts with an optional "
 "SQLite file, and a cluster shares one PostgreSQL database that the "
@@ -4551,11 +4396,11 @@ msgstr ""
 "hemos ejecutado SafeLine en nuestro host, que no tenía daemon de Docker, "
 "así que no hacemos ninguna comparación de rendimiento."
 
-#: ../../index.rst:1090
+#: ../../index.rst:1039
 msgid "Anubis and Coraza"
 msgstr "Anubis y Coraza"
 
-#: ../../index.rst:1093
+#: ../../index.rst:1042
 msgid ""
 "The proof-of-work interstitial became common in 2025, when scraper "
 "traffic for language-model training made ordinary origins expensive to "
@@ -4576,7 +4421,7 @@ msgstr ""
 "Set; es una forma de añadir inspección basada en reglas junto a un "
 "control de admisión de ese tipo."
 
-#: ../../index.rst:1095
+#: ../../index.rst:1044
 msgid ""
 "*Where the work goes.* Anubis and Sibuna Gate both make the client pay "
 "before the origin does anything. Sibuna adds a second tier of sequential "
@@ -4589,7 +4434,7 @@ msgstr ""
 "control de admisión más fuerte, y sus sesiones recuerdan cuánto trabajo "
 "se pagó."
 
-#: ../../index.rst:1096
+#: ../../index.rst:1045
 msgid ""
 "*What the server remembers.* Anubis stores challenges; Sibuna issues a "
 "self-authenticating record and remembers only solved tags, in a fixed "
@@ -4602,7 +4447,7 @@ msgstr ""
 "abarata de verificar y solo deja a un atacante cuántico una aceleración "
 "cuadrática."
 
-#: ../../index.rst:1097
+#: ../../index.rst:1046
 msgid ""
 "*Inspection.* Sibuna Shield performs its own structural inspection in the "
 "same pass as admission, so one process and one parser serve both roles. "
@@ -4623,7 +4468,7 @@ msgstr ""
 "compatibilidad con el Core Rule Set, un registro de diseño especificará "
 "antes el subconjunto [#crs]_."
 
-#: ../../index.rst:1098
+#: ../../index.rst:1047
 msgid ""
 "*Measurement.* On one host under the same load, Sibuna answered more than "
 "five times as many admitted requests in forward-auth mode with a lower "
@@ -4634,11 +4479,11 @@ msgstr ""
 "menor y aproximadamente una octava parte de la CPU por petición "
 "(:ref:`anubis-comparison`)."
 
-#: ../../index.rst:1100
+#: ../../index.rst:1049
 msgid "Cloud Edge WAFs (Cloudflare and Others)"
 msgstr "WAF perimetrales en la nube (Cloudflare y otros)"
 
-#: ../../index.rst:1103
+#: ../../index.rst:1052
 msgid ""
 "Hosted edges place inspection, rate limiting and bot scoring in many "
 "points of presence with a global control plane. They absorb volumetric "
@@ -4654,7 +4499,7 @@ msgstr ""
 "políticas que alimenta instantáneas locales e inmutables, sin dejar de "
 "ser autoalojado."
 
-#: ../../index.rst:1105
+#: ../../index.rst:1054
 msgid ""
 "*Data residency.* A hosted WAF terminates the operator's TLS and sees "
 "request payloads on shared infrastructure, which can conflict with "
@@ -4665,7 +4510,7 @@ msgstr ""
 "lo que puede entrar en conflicto con los requisitos de residencia de los "
 "datos."
 
-#: ../../index.rst:1106
+#: ../../index.rst:1055
 msgid ""
 "*Plans and quotas.* Features are tied to plans: Cloudflare's published "
 "quotas allow 5, 20, 100 and 1,000 custom rules and 1, 2, 5 and 100 "
@@ -4676,7 +4521,7 @@ msgstr ""
 "y 100 reglas de limitación de tasa en los planes Free, Pro, Business y "
 "Enterprise."
 
-#: ../../index.rst:1107
+#: ../../index.rst:1056
 msgid ""
 "*Where Sibuna differs.* Sibuna runs on the operator's own machines with "
 "no per-request fee, and its policy changes reach every node on the next "
@@ -4692,11 +4537,11 @@ msgstr ""
 "entrenado y no termina TLS; un despliegue que necesite todo eso sigue "
 "necesitando delante un proxy de entrada o una red perimetral."
 
-#: ../../index.rst:1109
+#: ../../index.rst:1058
 msgid "Implementation: Small Crates and Few Dependencies"
 msgstr "Implementación: crates pequeños y pocas dependencias"
 
-#: ../../index.rst:1112
+#: ../../index.rst:1061
 msgid ""
 "Sibuna is written in Rust, as a workspace of small crates whose "
 "dependencies point one way: reusable libraries, then a core of "
@@ -4711,7 +4556,7 @@ msgstr ""
 "Tres decisiones de ingeniería importan a un operador, así que las "
 "recogemos brevemente [#sid-0010]_."
 
-#: ../../index.rst:1114
+#: ../../index.rst:1063
 msgid ""
 "*Few dependencies.* We treat every third-party library as a liability: it "
 "must be reviewed, updated and trusted. The data plane uses none. Hashing, "
@@ -4744,7 +4589,7 @@ msgstr ""
 "plano de datos de Sibuna [#rustls]_. Una compilación sin almacenamiento "
 "ni consola no tiene ninguna dependencia de terceros."
 
-#: ../../index.rst:1117
+#: ../../index.rst:1066
 msgid ""
 "A layered graph. The daemon uses policy, challenge, net and storage. "
 "Policy uses patterns, cidr, json and core. Challenge uses crypto, pow, "
@@ -4758,7 +4603,7 @@ msgstr ""
 "El probador del navegador usa pow. Pow y http usan crypto; geoip usa "
 "inflate y crypto."
 
-#: ../../index.rst:1117
+#: ../../index.rst:1066
 msgid ""
 "digraph crates {\n"
 "  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.18, ranksep=0.5, "
@@ -4839,7 +4684,7 @@ msgstr ""
 "geoip -> crypto;\n"
 "}"
 
-#: ../../index.rst:1117
+#: ../../index.rst:1066
 msgid ""
 "The libraries of Sibuna, simplified (after SID 0010). Arrows point from a "
 "library to what it uses. Reusable libraries depend on no application "
@@ -4851,7 +4696,7 @@ msgstr ""
 "dependen de ninguna biblioteca de la aplicación, y solo las bibliotecas "
 "de almacenamiento y de la consola traen código de terceros."
 
-#: ../../index.rst:1149
+#: ../../index.rst:1098
 msgid ""
 "*Memory safety.* Code that bypasses the compiler's memory-safety checks "
 "is denied by default, and a module that needs it must opt in by name and "
@@ -4883,7 +4728,7 @@ msgstr ""
 "búfer, un motor se libera con su último lector y un socket no puede "
 "cerrarse mientras algún hilo pueda alcanzarlo todavía."
 
-#: ../../index.rst:1151
+#: ../../index.rst:1100
 msgid ""
 "*Discipline and tests.* A function body has at most 70 logical lines and "
 "a file at most 1,408 lines, enforced by a checker. Library code returns "
@@ -4905,11 +4750,11 @@ msgstr ""
 "Chromium sin interfaz gráfica la página intermedia y todas las páginas de "
 "la consola [#tests]_."
 
-#: ../../index.rst:1153
+#: ../../index.rst:1102
 msgid "Limitations and Open Work"
 msgstr "Limitaciones y trabajo pendiente"
 
-#: ../../index.rst:1156
+#: ../../index.rst:1105
 msgid ""
 "We list what this paper does not establish, so that no claim is read more "
 "widely than its evidence."
@@ -4917,7 +4762,7 @@ msgstr ""
 "Enumeramos lo que este documento no establece, para que ninguna "
 "afirmación se lea de forma más amplia que su evidencia."
 
-#: ../../index.rst:1158
+#: ../../index.rst:1107
 msgid ""
 "*One measured neighbour.* We measured Anubis on one host "
 "(:ref:`anubis-comparison`). We have measured neither SafeLine nor a "
@@ -4926,7 +4771,7 @@ msgstr ""
 "*Una sola alternativa medida.* Medimos Anubis en un host "
 "(:ref:`anubis-comparison`). No hemos medido ni SafeLine ni un WAF alojado."
 
-#: ../../index.rst:1159
+#: ../../index.rst:1108
 msgid ""
 "*No cluster under load.* A functional test runs three nodes on one "
 "PostgreSQL database (SID 0011, committed), but no harness drives several "
@@ -4936,7 +4781,7 @@ msgstr ""
 "una base de datos PostgreSQL (SID 0011, en estado Committed), pero ningún "
 "programa de medición somete varios nodos a carga."
 
-#: ../../index.rst:1160
+#: ../../index.rst:1109
 msgid ""
 "*PostgreSQL needs a source build.* The release executables have SQLite "
 "storage and the console but no PostgreSQL support; a cluster builds "
@@ -4946,7 +4791,7 @@ msgstr ""
 "versión incluyen el almacenamiento SQLite y la consola, pero no "
 "PostgreSQL; un clúster compila Sibuna con la feature ``postgres-tls``."
 
-#: ../../index.rst:1161
+#: ../../index.rst:1110
 msgid ""
 "*The console's isolation gate* with eight active dashboards under load "
 "has not been run (:ref:`console`)."
@@ -4954,7 +4799,7 @@ msgstr ""
 "*El control de aislamiento de la consola* con ocho paneles activos bajo "
 "carga no se ha ejecutado (:ref:`console`)."
 
-#: ../../index.rst:1162
+#: ../../index.rst:1111
 msgid ""
 "*Loopback only.* No measurement covers TLS, a wide-area network or real "
 "browsers under load; a deployment should measure its own path."
@@ -4963,7 +4808,7 @@ msgstr ""
 "navegadores reales bajo carga; cada despliegue debe medir su propio "
 "camino."
 
-#: ../../index.rst:1163
+#: ../../index.rst:1112
 msgid ""
 "*Bounded inspection.* Shield is a heuristic inspector of the first 8 KiB "
 "of a body, not a full SQL or HTML parser, and forward-auth inspection "
@@ -4973,7 +4818,7 @@ msgstr ""
 "KiB de un cuerpo, no un analizador completo de SQL o HTML, y la "
 "inspección forward-auth solo ve los bytes que envía el proxy de entrada."
 
-#: ../../index.rst:1164
+#: ../../index.rst:1113
 msgid ""
 "*Protocol scope.* Sibuna speaks HTTP/1.0 and HTTP/1.1; it has no HTTP/2 "
 "and no inbound TLS termination."
@@ -4981,7 +4826,7 @@ msgstr ""
 "*Alcance del protocolo.* Sibuna habla HTTP/1.0 y HTTP/1.1; no tiene "
 "HTTP/2 ni terminación TLS de entrada."
 
-#: ../../index.rst:1165
+#: ../../index.rst:1114
 msgid ""
 "*TLS fingerprints come from the ingress.* Sibuna cannot compute JA4 "
 "itself. A fingerprint is only as trustworthy as the ingress that writes "
@@ -4996,7 +4841,7 @@ msgstr ""
 "con bibliotecas especializadas, así que JA4 encarece la automatización, "
 "pero no demuestra la identidad [#ja4]_."
 
-#: ../../index.rst:1166
+#: ../../index.rst:1115
 msgid ""
 "*Cryptographic assurance.* The sequential-work tier rests on published "
 "proofs in the random-oracle model; our concrete protocol has tests "
@@ -5007,7 +4852,7 @@ msgstr ""
 "protocolo concreto tiene pruebas frente a un etiquetador de referencia, "
 "no una auditoría criptográfica independiente."
 
-#: ../../index.rst:1167
+#: ../../index.rst:1116
 msgid ""
 "*One machine.* Every number was taken on one AMD Ryzen 9 5950X. A ranking "
 "on this host is not a ranking on another."
@@ -5015,11 +4860,11 @@ msgstr ""
 "*Una sola máquina.* Todas las cifras se tomaron en un único AMD Ryzen 9 "
 "5950X. Una clasificación obtenida en este host no vale para otro."
 
-#: ../../index.rst:1169
+#: ../../index.rst:1118
 msgid "Conclusion"
 msgstr "Conclusión"
 
-#: ../../index.rst:1172
+#: ../../index.rst:1121
 msgid ""
 "Web defense has often grown by accretion: interpreted runtimes, "
 "containers, regular-expression rule sets and external stores piled in "
@@ -5031,7 +4876,7 @@ msgstr ""
 "y almacenes externos apilados delante de una aplicación. Con Sibuna hemos "
 "probado la dirección contraria, guiados por unas pocas ideas sencillas:"
 
-#: ../../index.rst:1174
+#: ../../index.rst:1123
 msgid ""
 "make the sender pay for admission with verifiable work, keep the server's "
 "check cheap and stateless, and let a session remember how much work it "
@@ -5041,7 +4886,7 @@ msgstr ""
 "mantener barata y sin estado la comprobación del servidor, y dejar que "
 "una sesión recuerde cuánto trabajo pagó;"
 
-#: ../../index.rst:1175
+#: ../../index.rst:1124
 msgid ""
 "inspect by structure in linear time, in the same pass as admission, so "
 "that no session can bypass inspection;"
@@ -5049,7 +4894,7 @@ msgstr ""
 "inspeccionar por estructura en tiempo lineal, en la misma pasada que la "
 "admisión, para que ninguna sesión pueda eludir la inspección;"
 
-#: ../../index.rst:1176
+#: ../../index.rst:1125
 msgid ""
 "respect the machine: one buffer per connection, no allocation on the "
 "request path, bounded tables with keyed placement, and threads that are "
@@ -5059,7 +4904,7 @@ msgstr ""
 "camino de la petición, tablas acotadas con ubicación con clave e hilos "
 "que se reutilizan en lugar de recrearse; y"
 
-#: ../../index.rst:1177
+#: ../../index.rst:1126
 msgid ""
 "let a mature database own durable shared state, behind one storage thread "
 "that the request path never waits on."
@@ -5068,7 +4913,7 @@ msgstr ""
 "duradero, detrás de un único hilo de almacenamiento al que el camino de "
 "la petición nunca espera."
 
-#: ../../index.rst:1179
+#: ../../index.rst:1128
 msgid ""
 "On one 16-core machine, these choices let Sibuna serve more than 200,000 "
 "admitted requests per second in forward-auth mode on four CPUs, with "
@@ -5090,11 +4935,11 @@ msgstr ""
 "más pequeño y su plano de datos no tiene dependencias de terceros. Queda "
 "mucho por medir, y hemos intentado decir exactamente qué."
 
-#: ../../index.rst:1181
+#: ../../index.rst:1130
 msgid "Sources and Reproduction"
 msgstr "Fuentes y reproducción"
 
-#: ../../index.rst:1184
+#: ../../index.rst:1133
 msgid ""
 "Every number in this paper comes from a committed result file of the "
 "Sibuna repository, from a Sibuna Discussion (SID) record, or from the "
@@ -5112,7 +4957,7 @@ msgstr ""
 "``benchmarks/results/README.md`` da los comandos, los conjuntos de CPU y "
 "la procedencia de cada archivo."
 
-#: ../../index.rst:1186
+#: ../../index.rst:1135
 msgid ""
 "``benchmarks/results/primitives-latest.md``, ``product-latest.md``, "
 "``latency-latest.md`` and their ``.json`` files; "
@@ -5122,7 +4967,7 @@ msgstr ""
 "``latency-latest.md`` y sus archivos ``.json``; "
 "``console-8-dashboards-2026-10-15.md``."
 
-#: ../../index.rst:1187
+#: ../../index.rst:1136
 msgid ""
 "SID 0002 (foundation architecture and its revision notes), SID 0004 (the "
 "Shield surface), SID 0006 (mathematical foundations), SID 0007 (the "
@@ -5138,7 +4983,7 @@ msgstr ""
 "(almacenamiento de la consola) y SID 0014 (huellas JA4 desde el proxy de "
 "entrada), en ``docs/sid/records/``."
 
-#: ../../index.rst:1188
+#: ../../index.rst:1137
 msgid ""
 "The Sibuna book, ``docs/book/``: Part I (the cost of a request), Part II "
 "(prior art), Part III (cryptography), Part IV (the protocol), Part V "
@@ -5151,7 +4996,7 @@ msgstr ""
 "el cortafuegos semántico), parte VIII (evaluación empírica) y parte IX "
 "(operaciones)."
 
-#: ../../index.rst:1189
+#: ../../index.rst:1138
 msgid ""
 "The primary literature: Back, Hashcash (1997); Cohen and Pietrzak, Simple "
 "Proofs of Sequential Work (EUROCRYPT 2018); Blocki, Lee and Zhou, On the "
@@ -5165,11 +5010,11 @@ msgstr ""
 "Aho y Corasick, Efficient String Matching (1975); Celis, Robin Hood "
 "Hashing (1986); el Generic Cell Rate Algorithm del ATM Forum (1996)."
 
-#: ../../index.rst:1193
+#: ../../index.rst:1142
 msgid "Notes"
 msgstr "Notas"
 
-#: ../../index.rst:1195
+#: ../../index.rst:1144
 msgid ""
 "Book Part I, \"Admission Is an Economic Decision\". The inequality is a "
 "capacity model, not a measurement; it omits bandwidth, connection state "
@@ -5179,7 +5024,7 @@ msgstr ""
 "es un modelo de capacidad, no una medición; omite el ancho de banda, el "
 "estado de las conexiones y el retardo del cliente."
 
-#: ../../index.rst:1196
+#: ../../index.rst:1145
 msgid ""
 "SID 0002, \"Decision\"; book Part II, \"Three Ideas in One Binary\"; book "
 "Part VI, \"The Declarative Policy Engine\". The per-rule example, the "
@@ -5192,7 +5037,7 @@ msgstr ""
 "trabajo proceden de la parte IV del libro; la referencia adaptativa, de "
 "la parte IV del libro y del SID 0006 (nota de revisión, parte H)."
 
-#: ../../index.rst:1197
+#: ../../index.rst:1146
 msgid ""
 "Book Part V, \"One Thread per Connection, Bounded\" and \"One Buffer per "
 "Connection\"."
@@ -5200,7 +5045,7 @@ msgstr ""
 "Libro, parte V, \"Un hilo por conexión, con un límite\" y \"Un búfer por "
 "conexión\"."
 
-#: ../../index.rst:1198
+#: ../../index.rst:1147
 msgid ""
 "Book Part V, \"The Connection Loop\"; "
 "``cmd/sibuna/tests/steady_state.rs`` and "
@@ -5210,7 +5055,7 @@ msgstr ""
 "``cmd/sibuna/tests/steady_state.rs`` y "
 "``crates/net/tests/steady_state.rs``."
 
-#: ../../index.rst:1199
+#: ../../index.rst:1148
 msgid ""
 "SID 0010, \"Concurrency model\" and \"Rationale and alternatives\"; SID "
 "0002, \"Request contract\" and its revision notes (connections per "
@@ -5221,7 +5066,7 @@ msgstr ""
 "dirección, prefijo IPv6, el conjunto de conexiones al origen dividido en "
 "franjas)."
 
-#: ../../index.rst:1200
+#: ../../index.rst:1149
 msgid ""
 "``benchmarks/results/primitives-latest.md`` (55.7 and 763.0 ns); the "
 "table size from ``primitives-latest.json`` as given in book Part VIII, "
@@ -5232,7 +5077,7 @@ msgstr ""
 "VIII del libro, \"Consumo de recursos\"; SID 0006, parte F, y su nota de "
 "revisión sobre las clases de bytes."
 
-#: ../../index.rst:1201
+#: ../../index.rst:1150
 msgid ""
 "SID 0006, Part D (Definition 22, Theorem 23); SID 0004, revision notes "
 "(keyed placement, ``--rate-table-cells``); "
@@ -5242,7 +5087,7 @@ msgstr ""
 "revisión (ubicación con clave, ``--rate-table-cells``); "
 "``benchmarks/results/primitives-latest.md`` (``gcra_check_hashed``)."
 
-#: ../../index.rst:1202
+#: ../../index.rst:1151
 msgid ""
 "Book Part III (Lemma 3 and Lemma 4, wire formats); book Part V, \"The "
 "Robin Hood Spent Set\"; SID 0006, Part E (Lemma 28); "
@@ -5254,7 +5099,7 @@ msgstr ""
 "(lema 28); ``benchmarks/results/primitives-latest.md`` "
 "(``robin_hood_spend_and_lookup``)."
 
-#: ../../index.rst:1203
+#: ../../index.rst:1152
 msgid ""
 "SID 0004, \"Revision note (2026-09-07)\" and \"Verification\"; book Part "
 "VI, \"A Lesson in False Positives\"."
@@ -5262,7 +5107,7 @@ msgstr ""
 "SID 0004, \"Revision note (2026-09-07)\" y \"Verification\"; libro, parte "
 "VI, \"Una lección sobre falsos positivos\"."
 
-#: ../../index.rst:1204
+#: ../../index.rst:1153
 msgid ""
 "``benchmarks/results/primitives-latest.md`` (``8kb_body_semantic_scan``, "
 "``8kb_body_sqli_audit_other_enforce``); SID 0004, revision note "
@@ -5272,7 +5117,7 @@ msgstr ""
 "``8kb_body_sqli_audit_other_enforce``); SID 0004, nota de revisión "
 "\"inspection modes\"; libro, parte VIII, \"Inspección WAF\"."
 
-#: ../../index.rst:1205
+#: ../../index.rst:1154
 msgid ""
 "SID 0014, \"Specification\" and \"Security and operational "
 "considerations\"; book Part IX, \"JA4 Fingerprints From the Ingress\"; "
@@ -5282,7 +5127,7 @@ msgstr ""
 "considerations\"; libro, parte IX, \"Huellas JA4 desde el proxy de "
 "entrada\"; ``.github/release-notes.txt``."
 
-#: ../../index.rst:1206
+#: ../../index.rst:1155
 msgid ""
 "SID 0002, revision notes (forwarded identity; cookie values); SID 0004, "
 "revision notes (keyed placement, ban table, measured costs, zeroed "
@@ -5299,7 +5144,7 @@ msgstr ""
 "seguridad, 2026-10-15); ``benchmarks/results/primitives-latest.md`` "
 "(``gcra_check`` y ``gcra_check_hashed``)."
 
-#: ../../index.rst:1207
+#: ../../index.rst:1156
 msgid ""
 "Book Part III, \"Hashcash: The Mathematics of Tier One\"; book Part I, "
 "\"Hash Search as a Random Variable\"."
@@ -5307,7 +5152,7 @@ msgstr ""
 "Libro, parte III, \"Hashcash: las matemáticas del primer nivel\"; libro, "
 "parte I, \"La búsqueda de hashes como variable aleatoria\"."
 
-#: ../../index.rst:1208
+#: ../../index.rst:1157
 msgid ""
 "Book Part III, \"Proof of Sequential Work: Tier Two\", \"Prover Memory\" "
 "and \"Parameters Are Not Timings\"; SID 0006, Part B and its "
@@ -5317,7 +5162,7 @@ msgstr ""
 "\"Memoria del probador\" y \"Los parámetros no son tiempos\"; SID 0006, "
 "parte B, y su revisión de la implementación del 2026-09-07."
 
-#: ../../index.rst:1209
+#: ../../index.rst:1158
 msgid ""
 "Book Part IV, \"The Challenge Round Trip\" and \"The Session Cookie\"; "
 "SID 0010, \"The browser solver\"."
@@ -5325,7 +5170,7 @@ msgstr ""
 "Libro, parte IV, \"El intercambio del desafío\" y \"La cookie de "
 "sesión\"; SID 0010, \"The browser solver\"."
 
-#: ../../index.rst:1210
+#: ../../index.rst:1159
 msgid ""
 "``benchmarks/results/primitives-latest.md``; the WebAssembly size from "
 "``primitives-latest.json`` as given in book Part VIII, \"Footprint\"; "
@@ -5340,7 +5185,7 @@ msgstr ""
 "browser``); la detección en tiempo de ejecución de las instrucciones SHA, "
 "de la nota de revisión del SID 0006 (partes A a C)."
 
-#: ../../index.rst:1211
+#: ../../index.rst:1160
 msgid ""
 "SID 0011, \"Abstract\", \"Motivation and scope\" and \"Why PostgreSQL for "
 "clusters\"; SID 0005 describes the earlier replicated design."
@@ -5348,7 +5193,7 @@ msgstr ""
 "SID 0011, \"Abstract\", \"Motivation and scope\" y \"Why PostgreSQL for "
 "clusters\"; el SID 0005 describe el diseño replicado anterior."
 
-#: ../../index.rst:1212
+#: ../../index.rst:1161
 msgid ""
 "SID 0011, \"The storage thread\", \"Policy revision\" and \"Incidents and "
 "campaigns\"."
@@ -5356,7 +5201,7 @@ msgstr ""
 "SID 0011, \"The storage thread\", \"Policy revision\" y \"Incidents and "
 "campaigns\"."
 
-#: ../../index.rst:1213
+#: ../../index.rst:1162
 msgid ""
 "SID 0011, \"Schema and migrations\" and its review history (transport "
 "security); SID 0013, \"Abstract\"."
@@ -5364,7 +5209,7 @@ msgstr ""
 "SID 0011, \"Schema and migrations\" y su historial de revisiones "
 "(seguridad del transporte); SID 0013, \"Abstract\"."
 
-#: ../../index.rst:1214
+#: ../../index.rst:1163
 msgid ""
 "SID 0011, \"Security and operational considerations\" and \"Acceptance "
 "criteria and implementation status\" (criterion 2, "
@@ -5378,7 +5223,7 @@ msgstr ""
 "\"Known limitations\"; SID 0002, \"Authentication and work\" (claves de "
 "desafío vinculadas al nodo); libro, parte VIII, \"Lo que no se mide\"."
 
-#: ../../index.rst:1215
+#: ../../index.rst:1164
 msgid ""
 "SID 0007, \"Abstract\" and its revision notes (listener admission, "
 "interface module, GeoIP and passwords); SID 0010, review history (console "
@@ -5394,7 +5239,7 @@ msgstr ""
 "consola\", señala que el registro no nombra ningún archivo de resultados "
 "para ella."
 
-#: ../../index.rst:1216
+#: ../../index.rst:1165
 msgid ""
 "SID 0007, review history (Rust port, consolidation; daemon integration), "
 "which records 719,406 bytes before the JA4 fields of SID 0014. The size "
@@ -5410,7 +5255,7 @@ msgstr ""
 "--lib -p sibuna-console-ui --target wasm32-unknown-unknown --profile wasm "
 "-- -C link-arg=--compress-relocations``), comprimido con ``gzip -9``."
 
-#: ../../index.rst:1217
+#: ../../index.rst:1166
 msgid ""
 "``benchmarks/results/README.md``, \"Method\" and \"Provenance and "
 "limits\" (rustc 1.99.0; the daemon is ``cargo build --release -p "
@@ -5420,7 +5265,7 @@ msgstr ""
 "(rustc 1.99.0; el daemon es ``cargo build --release -p sibuna``, "
 "49.113.856 bytes); libro, parte VIII, \"Metodología\"."
 
-#: ../../index.rst:1218
+#: ../../index.rst:1167
 msgid ""
 "Book Part VIII, \"Primitive Latencies\", computed from "
 "``primitives-latest.json``."
@@ -5428,7 +5273,7 @@ msgstr ""
 "Libro, parte VIII, \"Latencias de primitivas\", calculado a partir de "
 "``primitives-latest.json``."
 
-#: ../../index.rst:1219
+#: ../../index.rst:1168
 msgid ""
 "``benchmarks/results/product-latest.md``; CPUs busy from "
 "``cores_busy_median`` in ``product-latest.json``; the ``503`` answers and "
@@ -5440,7 +5285,7 @@ msgstr ""
 "y su corrección, de ``benchmarks/results/README.md`` y de la nota de "
 "revisión del SID 0002 (corrección de errores)."
 
-#: ../../index.rst:1220
+#: ../../index.rst:1169
 msgid ""
 "Book Part VIII, \"Footprint\"; the root ``Cargo.toml``, profile "
 "``[profile.release.package.libsqlite3-sys]``."
@@ -5448,7 +5293,7 @@ msgstr ""
 "Libro, parte VIII, \"Consumo de recursos\"; el ``Cargo.toml`` raíz, "
 "perfil ``[profile.release.package.libsqlite3-sys]``."
 
-#: ../../index.rst:1221
+#: ../../index.rst:1170
 msgid ""
 "``benchmarks/results/latency-latest.md``; the rows at 25,000 requests per "
 "second and the reverse-proxy rows at 150,000 are in that file."
@@ -5456,7 +5301,7 @@ msgstr ""
 "``benchmarks/results/latency-latest.md``; las filas a 25.000 peticiones "
 "por segundo y las filas de proxy inverso a 150.000 están en ese archivo."
 
-#: ../../index.rst:1222
+#: ../../index.rst:1171
 msgid ""
 "SID 0002, revision note (performance, connection threads reused); book "
 "Part VIII, \"What the Measurement Changed\"; "
@@ -5466,7 +5311,7 @@ msgstr ""
 "conexión); libro, parte VIII, \"Qué cambió la medición\"; "
 "``benchmarks/results/latency-latest.md``."
 
-#: ../../index.rst:1223
+#: ../../index.rst:1172
 msgid ""
 "``benchmarks/results/comparison-latest.md`` and ``admission-latest.md``, "
 "recorded on 16 October 2026 with ``cargo xtask bench product --anubis`` "
@@ -5479,7 +5324,7 @@ msgstr ""
 "libro, \"Sibuna y Anubis\", recoge el método y cada diferencia entre los "
 "productos."
 
-#: ../../index.rst:1224
+#: ../../index.rst:1173
 msgid ""
 "SID 0010, \"Acceptance criteria and implementation status\" (criteria 1, "
 "3 and 5), which recorded about 2,100 workspace tests and 290 interface "
@@ -5491,7 +5336,7 @@ msgstr ""
 "la interfaz antes del SID 0014; los recuentos para 1.0.0-beta.2 proceden "
 "de ``cargo test --workspace -- --list``."
 
-#: ../../index.rst:1225
+#: ../../index.rst:1174
 msgid ""
 "Book Part II, \"Feature Comparison\" and \"Interstitials and Edges\"; the "
 "Sibuna licence is the workspace's ``license`` in ``Cargo.toml``."
@@ -5500,7 +5345,7 @@ msgstr ""
 "intermedias y redes perimetrales\"; la licencia de Sibuna es el campo "
 "``license`` del workspace en ``Cargo.toml``."
 
-#: ../../index.rst:1226
+#: ../../index.rst:1175
 msgid ""
 "Book Part VIII, \"Not Measured\": vendor-reported figures checked in "
 "September 2026."
@@ -5508,11 +5353,11 @@ msgstr ""
 "Libro, parte VIII, \"Lo que no se mide\": cifras declaradas por los "
 "fabricantes, comprobadas en septiembre de 2026."
 
-#: ../../index.rst:1227
+#: ../../index.rst:1176
 msgid "SID 0010, \"The OWASP Core Rule Set\"."
 msgstr "SID 0010, \"The OWASP Core Rule Set\"."
 
-#: ../../index.rst:1228
+#: ../../index.rst:1177
 msgid ""
 "SID 0010, \"Workspace\", \"Dependency policy\" and \"Engineering "
 "standards\"."
@@ -5520,7 +5365,7 @@ msgstr ""
 "SID 0010, \"Workspace\", \"Dependency policy\" y \"Engineering "
 "standards\"."
 
-#: ../../index.rst:1229
+#: ../../index.rst:1178
 msgid ""
 "SID 0011, \"Why sqlx\"; ``Cargo.toml``, where each third-party crate "
 "carries its reason."
@@ -5528,7 +5373,7 @@ msgstr ""
 "SID 0011, \"Why sqlx\"; ``Cargo.toml``, donde cada crate de terceros "
 "lleva su motivo."
 
-#: ../../index.rst:1230
+#: ../../index.rst:1179
 msgid ""
 "SID 0012, \"Specification\", \"Rationale and alternatives\" and review "
 "history (PostgreSQL TLS built)."
@@ -5536,7 +5381,7 @@ msgstr ""
 "SID 0012, \"Specification\", \"Rationale and alternatives\" e historial "
 "de revisiones (TLS de PostgreSQL implementado)."
 
-#: ../../index.rst:1231
+#: ../../index.rst:1180
 msgid ""
 "SID 0010, review history (security review, 2026-10-15): the standard "
 "bounded channel against the Vyukov ring, ``tests/timing.rs``. The opt-in "

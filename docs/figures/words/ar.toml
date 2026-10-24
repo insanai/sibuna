@@ -1,0 +1,127 @@
+# The words of Sibuna's figures in Arabic (Modern Standard Arabic). The file has the
+# shape of en.toml; a key it leaves out is drawn in English. "{name}" marks a value the
+# figure fills in, such as a number in the language's own format.
+
+# The Arabic book writes numbers with the digits 0 to 9, a full stop as the decimal mark
+# and a comma between digit groups (65,536 and 70.2).
+[number]
+decimal = "."
+group = ","
+
+[survival]
+x-axis = "عدد المحاولات بمضاعفات العدد المتوقع، x"
+y-axis = "احتمال استمرار البحث"
+at-mean = "عند العدد المتوقع من المحاولات، يبقى البحث جاريًا باحتمال e⁻¹\u00A0≈\u00A0{p}."
+p95 = "تكون 95% من عمليات البحث قد انتهت عند x\u00A0≈\u00A0{x}."
+
+[wire-formats]
+challenge = "معرّف التحدي"
+session = "رمز الجلسة"
+payload = "حمولة من {n} بايت"
+tag = "وسم ذو مفتاح من {n} بايت"
+tag-field = "وسم BLAKE3"
+total = "{bytes} بايت في المجموع، تُرسَل في {characters} محرفًا بترميز base64 الآمن في URL"
+
+[open-loop]
+due = "الاستحقاق"
+send = "إرسال الطلب"
+answer = "وصول الإجابة"
+waiting = "حلّ موعده، وينتظر الإجابة السابقة"
+latency = "زمن الاستجابة المسجَّل: من موعد الاستحقاق، أو من الإرسال إذا كان الاتصال خاملًا"
+
+[cpu-sets]
+ccd0 = "CCD 0"
+ccd1 = "CCD 1"
+daemons = "البرامج الخدمية"
+primitive = "العمليات الأولية"
+idle = "غير مخصصة"
+load = "wrk ومولد زمن الاستجابة والخادم الأصلي"
+smt = "يدل الرقم الصغير في كل نواة على شقيقها في SMT، وهو إحدى وحدات CPU من 16 إلى 31. لا يستخدمها أي تشغيل."
+
+[read-buffer]
+buffer = "مخزن القراءة لاتصال واحد، وسعته 64 KiB"
+window = "النافذة غير المقروءة"
+head = "رأس الطلب"
+head-note = "16 KiB على الأكثر، وينتهي بالتسلسل CR LF CR LF"
+body = "بادئة الجسم"
+body-note = "ما يتسع من الجسم المُعلَن؛ ويُفك ترميز الجسم المجزأ في مكانه"
+pending = "البايتات المعلقة"
+pending-note = "الطلب التالي، أو بقية الرفع"
+free = "مساحة حرة"
+served = "مخدوم"
+fields = "الطريقة والمسار والاستعلام والترويسات وملفات تعريف الارتباط: مقاطع من الرأس"
+pending-proxy = "تُرسَل إلى الخادم الأصلي أولًا"
+after = "بعد الاستجابة:"
+next = "تصبح بداية الطلب التالي"
+
+[gcra]
+x-axis = "زمن الوصول t (ms)"
+y-axis = "TAT (ms)"
+limit = "t + τ"
+refuse-zone = "TAT > t + τ: مرفوض"
+burst = "دفعة من خمسة عند t = 0"
+sixth = "الطلب السادس عند t = 0"
+example = "عند t\u00A0=\u00A0{refused} يكون TAT\u00A0=\u00A0{tat}\u00A0>\u00A0{early}، فيُرفض. وعند t\u00A0=\u00A0{admitted} يكون TAT\u00A0=\u00A0{tat}\u00A0≤\u00A0{limit}، فيُقبل."
+admitted = "مقبول"
+refused = "مرفوض"
+tat = "قيمة TAT بعد كل وصول"
+
+[primitive-latency]
+source = "كل عمود هو وسيط 7 دفعات على نواة واحدة من {cpu}، في {date}؛ ويمتد الخط الرفيع من أسرع دفعة إلى أبطئها. المقياس لوغاريتمي."
+
+[primitive-latency.groups]
+work = "إثبات العمل"
+match = "المطابقة"
+token = "الرموز"
+state = "الحالة"
+request = "مسار الطلب"
+
+[primitive-latency.rows]
+hashcash_16_bits = "تحقق Hashcash (16 بت)"
+posw_depth13_t16 = "تحقق PoSW (العمق 13، t = 16)"
+aho_corasick_40_signatures = "توقيعات الروبوتات (40، Aho-Corasick)"
+sequential_substring_40_signatures = "توقيعات الروبوتات (40، بحث متسلسل)"
+ipv4_cidr_classification = "بحث IPv4 CIDR"
+ipv6_cidr_classification = "بحث IPv6 CIDR"
+blake3_mac_token = "رمز الجلسة (BLAKE3 ذو مفتاح)"
+ed25519_compact_token = "رمز الجلسة (Ed25519)"
+robin_hood_spend_and_lookup = "الحلول المُنفَقة: الإنفاق والبحث"
+gcra_check = "محدد المعدل، بايتات العميل"
+gcra_four_rule_scopes = "أربعة نطاقات قواعد، بايتات العميل"
+gcra_check_hashed = "محدد المعدل، عميل مُعرَّف بتجزئة"
+gcra_four_rule_scopes_hashed = "أربعة نطاقات قواعد، عميل مُعرَّف بتجزئة"
+zero_copy_request_and_cookie = "تحليل HTTP وملف تعريف الارتباط"
+browser_request_full_classification = "التصنيف، بإعدادات Shield"
+browser_request_gate_profile = "التصنيف، بإعدادات Gate"
+8kb_body_semantic_scan = "فحص WAF للجسم (8 KiB)"
+8kb_body_sqli_audit_other_enforce = "فحص WAF للجسم، مع تدقيق حقن SQL"
+
+[posw-tree]
+order = "تُحسب تسميات الأوراق من اليسار إلى اليمين"
+path = "مسار الورقة 3.5 إلى الجذر"
+siblings = "الأشقاء المرسلة في الفتح"
+left = "الأشقاء اليساريون الداخلون في تجزئة الورقة"
+
+[work-asymmetry]
+inspect-title = "الفحص أولًا"
+inspect-sender = "المرسل"
+inspect-arrow = "طلب واحد رخيص، رخيص الإرسال ومكلف الإجابة"
+inspect-defense = "الدفاع: يحلل وينسخ، ويفحص بتعابير نمطية، ويسأل مخزنًا مشتركًا"
+inspect-sender-work = "عمل المرسل: طلب واحد"
+inspect-defense-work = "عمل الدفاع: العمل كله، مع كل طلب"
+work-title = "العمل أولًا (Sibuna)"
+work-sender = "المرسل يحل لغزًا"
+work-arrow = "لغز محلول، مكلف الكسب ورخيص الفحص"
+work-defense = "يتحقق Sibuna بتجزئة واحدة، ولا يحتفظ بأي حالة حتى يُحل اللغز"
+work-sender-work = "عمل المرسل: {power} محاولة SHA-256 متوقعة، أي {trials} عند b = 16"
+work-defense-work = "عمل Sibuna: تجزئة واحدة في {ns} ns، ثم يُعاد استخدام الجلسة"
+
+[sequential-work]
+hashcash = "Hashcash: بحث متوازٍ"
+core = "النواة {n}"
+time = "تجرب كل نواة قيمها المؤقتة الخاصة بها؛ وتعثر النواة 3 على قيمة مناسبة هي 18، فتتوقف الأنوية كلها."
+posw = "إثبات العمل المتسلسل: ترتيب مفروض"
+found = "قيمة مؤقتة تحقق الهدف"
+path = "مسار الورقة 3.5 إلى الجذر"
+siblings = "الأشقاء المرسلة في فتحها"
+left = "الأشقاء اليساريون الداخلون في تجزئة الورقة"

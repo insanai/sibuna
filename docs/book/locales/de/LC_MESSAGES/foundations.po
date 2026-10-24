@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-10-24 10:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:18+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -151,9 +151,9 @@ msgid ""
 msgstr ""
 "Adressbasierte Limits ergänzen dies. Sie beschränken eine Adresse, aber "
 "gemeinsam genutzte Adressen können für viele Menschen stehen, und ein "
-"Anfragender kann viele Adressen nutzen. Weder ein Rätsel noch eine Adresse "
-"ist ein Identitätsorakel. Sibuna hält deshalb Zulassung, Prüfung und "
-"Reputation als getrennte Entscheidungen auseinander."
+"Anfragender kann viele Adressen nutzen. Weder ein Rätsel noch eine "
+"Adresse ist ein Identitätsorakel. Sibuna hält deshalb Zulassung, Prüfung "
+"und Reputation als getrennte Entscheidungen auseinander."
 
 #: ../../foundations.rst:32
 msgid "Hash Search as a Random Variable"
@@ -199,57 +199,33 @@ msgstr ""
 "Mittelwert. Ein Client, der nur eine Lösung misst, hat vor allem diesen "
 "Zufall gemessen."
 
-#: ../../foundations.rst:50
+#: ../../foundations.rst:49
 msgid ""
-"P(K > x E[K])\n"
-"1.0 |*\n"
-"    | *\n"
-"    |  *\n"
-"    |   **\n"
-"    |     *\n"
-"0.5 |      **\n"
-"    |        **o\n"
-"    |           ***\n"
-"    |              *****\n"
-"    |                   ***********\n"
-"0.0 |                              ***********\n"
-"    +-----------------------------------------\n"
-"     0         1         2         3         4\n"
-"              trials / expected trials (x)"
+"A curve falling from 1 at x = 0 towards 0 at x = 4. At x = 1 a marked "
+"point shows that a search is still running with probability e to the "
+"minus 1, about 0.368; at x of about 3.0 a second point shows that 95 "
+"percent of searches have ended."
 msgstr ""
-"P(K > x E[K])\n"
-"1.0 |*\n"
-"    | *\n"
-"    |  *\n"
-"    |   **\n"
-"    |     *\n"
-"0.5 |      **\n"
-"    |        **o\n"
-"    |           ***\n"
-"    |              *****\n"
-"    |                   ***********\n"
-"0.0 |                              ***********\n"
-"    +-----------------------------------------\n"
-"     0         1         2         3         4\n"
-"            Versuche / erwartete Versuche (x)"
+"Eine Kurve, die von 1 bei x = 0 gegen 0 bei x = 4 fällt. Bei x = 1 zeigt ein "
+"markierter Punkt, dass eine Suche mit Wahrscheinlichkeit e hoch minus 1, "
+"etwa 0,368, noch läuft; bei x von etwa 3,0 zeigt ein zweiter Punkt, dass 95 "
+"Prozent der Suchen beendet sind."
 
-#: ../../foundations.rst:50
+#: ../../foundations.rst:52
 msgid ""
-"Survival probability of hash search. The horizontal axis is trials "
-"divided by expected trials; the curve uses the large-work approximation "
-"P(K > x/p) ~ e^(-x). The point o marks x = 1, where the probability of "
-"still searching is e^(-1) = 0.368."
+"Survival probability of hash search: the probability that a search is "
+"still running after :math:`x` times the expected number of trials, in the "
+"large-work approximation :math:`P(K > x/p) \\approx e^{-x}`."
 msgstr ""
-"Überlebenswahrscheinlichkeit der Hash-Suche. Die horizontale Achse zeigt "
-"die Versuche geteilt durch die erwarteten Versuche; die Kurve nutzt die "
-"Näherung für große Arbeit P(K > x/p) ~ e^(-x). Der Punkt o markiert x = "
-"1, wo die Wahrscheinlichkeit, noch zu suchen, e^(-1) = 0,368 beträgt."
+"Überlebenswahrscheinlichkeit der Hash-Suche: die Wahrscheinlichkeit, dass "
+"eine Suche nach dem :math:`x`-Fachen der erwarteten Zahl von Versuchen noch "
+"läuft, in der Näherung für große Arbeit :math:`P(K > x/p) \\approx e^{-x}`."
 
-#: ../../foundations.rst:68
+#: ../../foundations.rst:54
 msgid "Worked example: expectation is not a deadline"
 msgstr "Durchgerechnetes Beispiel: Erwartung ist keine Frist"
 
-#: ../../foundations.rst:70
+#: ../../foundations.rst:56
 msgid ""
 "At :math:`b = 16`, the expected work is 65,536 hashes. The probability of "
 "still searching after that many trials is approximately :math:`e^{-1} = "
@@ -266,11 +242,11 @@ msgstr ""
 "Streuung tolerieren, statt zum erwarteten Fertigstellungszeitpunkt einen "
 "Fehlschlag zu melden."
 
-#: ../../foundations.rst:72
+#: ../../foundations.rst:58
 msgid "Sessions Amortise Work"
 msgstr "Sitzungen amortisieren Arbeit"
 
-#: ../../foundations.rst:75
+#: ../../foundations.rst:61
 msgid ""
 "Suppose a session permits :math:`m` requests before expiry, a puzzle "
 "costs :math:`c_p`, verification costs :math:`c_v`, and a session check "
@@ -289,11 +265,11 @@ msgstr ""
 "Sie zu wählen ist eine Richtlinienentscheidung, keine kryptographische "
 "Optimierung."
 
-#: ../../foundations.rst:77
+#: ../../foundations.rst:63
 msgid "Exercise 1.1"
 msgstr "Übung 1.1"
 
-#: ../../foundations.rst:79
+#: ../../foundations.rst:65
 msgid ""
 "A client gets 100 requests per session and performs a puzzle costing one "
 "million trials. What is the amortized work per request? What changes if "
@@ -304,18 +280,18 @@ msgstr ""
 "Anfrage? Was ändert sich, wenn er die Sitzung mit einem zweiten Prozess "
 "teilt?"
 
-#: ../../foundations.rst:81
+#: ../../foundations.rst:67
 msgid ""
 "Hint: Distinguish the accounting model from the token's actual bindings."
 msgstr ""
 "Hinweis: Das Abrechnungsmodell von den tatsächlichen Bindungen des Tokens "
 "unterscheiden."
 
-#: ../../foundations.rst:83
+#: ../../foundations.rst:69
 msgid "Bounded State Is a Second Budget"
 msgstr "Begrenzter Zustand ist ein zweites Budget"
 
-#: ../../foundations.rst:86
+#: ../../foundations.rst:72
 msgid ""
 "Moving work off the request path does not make it disappear. Let "
 "incidents arrive at rate :math:`\\lambda`, let the storage thread persist "
@@ -328,11 +304,11 @@ msgstr ""
 "fasst :math:`Q` Datensätze. Für :math:`\\lambda > \\mu` ergibt eine "
 "Fluidnäherung"
 
-#: ../../foundations.rst:88
+#: ../../foundations.rst:74
 msgid "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
 msgstr "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
 
-#: ../../foundations.rst:92
+#: ../../foundations.rst:78
 msgid ""
 "A larger queue buys time; it does not create throughput. Batching "
 "amortizes transaction cost, but retained records still need memory and "
@@ -349,11 +325,11 @@ msgstr ""
 "Speicher. Der Betreiber muss die verlorenen Belege ebenso überwachen wie "
 "die HTTP-Erfolgsrate."
 
-#: ../../foundations.rst:94
+#: ../../foundations.rst:80
 msgid "Exercise 1.2"
 msgstr "Übung 1.2"
 
-#: ../../foundations.rst:96
+#: ../../foundations.rst:82
 msgid ""
 "A queue holds 512 records. Arrival rate is 1,000/s and drain rate is "
 "600/s. How long can an initially empty queue absorb the excess? Why is "
@@ -364,43 +340,43 @@ msgstr ""
 "Warteschlange den Überschuss aufnehmen? Warum ist die Antwort nur eine "
 "Näherung?"
 
-#: ../../foundations.rst:98
+#: ../../foundations.rst:84
 msgid ""
 "Hint: Use the difference of rates, then consider bursts and batch commits."
 msgstr ""
 "Hinweis: Die Differenz der Raten nutzen, dann Bursts und gebündelte "
 "Commits betrachten."
 
-#: ../../foundations.rst:100
+#: ../../foundations.rst:86
 msgid "The Invariants We Will Carry Forward"
 msgstr "Die Invarianten, die wir mitnehmen"
 
-#: ../../foundations.rst:103
+#: ../../foundations.rst:89
 msgid "Untrusted requests cannot create unbounded server state."
 msgstr ""
 "Nicht vertrauenswürdige Anfragen können keinen unbegrenzten Serverzustand "
 "erzeugen."
 
-#: ../../foundations.rst:104
+#: ../../foundations.rst:90
 msgid "A valid admission token does not bypass an application denial."
 msgstr ""
 "Ein gültiges Zulassungstoken umgeht keine Ablehnung durch die "
 "Anwendungsprüfung."
 
-#: ../../foundations.rst:105
+#: ../../foundations.rst:91
 msgid "A buffer remains alive for every slice borrowed from it."
 msgstr ""
 "Ein Puffer bleibt am Leben, solange ein von ihm geliehener Slice "
 "existiert."
 
-#: ../../foundations.rst:106
+#: ../../foundations.rst:92
 msgid ""
 "A durable retry cannot multiply an incident or its reputation effect."
 msgstr ""
 "Eine dauerhafte Wiederholung kann einen Vorfall oder seine Wirkung auf "
 "die Reputation nicht vervielfachen."
 
-#: ../../foundations.rst:107
+#: ../../foundations.rst:93
 msgid ""
 "A published policy snapshot is immutable until its last reader releases "
 "it."
@@ -408,7 +384,7 @@ msgstr ""
 "Ein veröffentlichter Richtlinienschnappschuss bleibt unveränderlich, bis "
 "sein letzter Leser ihn freigibt."
 
-#: ../../foundations.rst:109
+#: ../../foundations.rst:95
 msgid ""
 "The rest of the book derives the mechanisms that make these statements "
 "true, and the tests that would reveal a violation. A fast path is useful "
@@ -418,11 +394,11 @@ msgstr ""
 "machen, und die Tests, die eine Verletzung aufdecken würden. Ein "
 "schneller Pfad ist nur nützlich, solange diese Aussagen wahr bleiben."
 
-#: ../../foundations.rst:111
+#: ../../foundations.rst:97
 msgid "Explain the invariant"
 msgstr "Die Invariante erklären"
 
-#: ../../foundations.rst:113
+#: ../../foundations.rst:99
 msgid ""
 "State the gate inequality :math:`c_g < (1-a) c_o` in words, then explain "
 "why a measured verification latency alone cannot tell an operator whether "

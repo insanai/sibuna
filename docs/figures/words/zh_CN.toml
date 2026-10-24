@@ -1,0 +1,124 @@
+# Sibuna 图中的简体中文文字。表的结构与 en.toml 相同；缺少的键以英文绘制。
+# "{name}" 标出图中填入的值，例如按本语言格式书写的数字。
+
+[number]
+decimal = "."
+group = ","
+
+[survival]
+x-axis = "尝试次数与期望次数之比 x"
+y-axis = "仍在搜索的概率"
+at-mean = "尝试次数达到期望值时，有 e⁻¹\u00A0≈\u00A0{p} 的概率仍在搜索。"
+p95 = "到 x ≈ {x} 时，95% 的搜索已经结束。"
+
+[wire-formats]
+challenge = "挑战标识符"
+session = "会话令牌"
+payload = "{n} 字节载荷"
+tag = "{n} 字节带密钥标签"
+tag-field = "BLAKE3 标签"
+total = "共 {bytes} 字节，以 {characters} 个 URL 安全的 base64 字符发送"
+
+[open-loop]
+due = "到期"
+send = "发出请求"
+answer = "收到应答"
+waiting = "已到期，等待上一个应答"
+latency = "记录的延迟：从到期时刻算起；若连接空闲，则从发送时刻算起"
+
+[cpu-sets]
+ccd0 = "CCD 0"
+ccd1 = "CCD 1"
+daemons = "守护进程"
+primitive = "原语套件"
+idle = "未分配"
+load = "wrk、延迟生成器和源站"
+smt = "核心中的小号数字是它的 SMT 兄弟线程（CPU 16 到 31），任何运行都不使用。"
+
+[read-buffer]
+buffer = "一个连接的 64 KiB 读缓冲区"
+window = "尚未读取的窗口"
+head = "请求头部"
+head-note = "最多 16 KiB，以 CR LF CR LF 结尾"
+body = "请求体前缀"
+body-note = "声明的请求体中能放进缓冲区的部分；分块编码的请求体就地解码"
+pending = "待处理数据"
+pending-note = "下一个请求，或者上传的剩余部分"
+free = "空闲"
+served = "已处理"
+fields = "方法、路径、查询、请求头和 Cookie：都是头部的切片"
+pending-proxy = "先发送给源站"
+after = "响应之后："
+next = "成为下一个请求的开头"
+
+[gcra]
+x-axis = "到达时间 t (ms)"
+y-axis = "TAT (ms)"
+limit = "t + τ"
+refuse-zone = "TAT > t + τ：拒绝"
+burst = "t = 0 时的五次突发"
+sixth = "t = 0 时的第六次"
+example = "当 t\u00A0=\u00A0{refused} 时，TAT\u00A0=\u00A0{tat}\u00A0>\u00A0{early}，拒绝。当 t\u00A0=\u00A0{admitted} 时，TAT\u00A0=\u00A0{tat}\u00A0≤\u00A0{limit}，准入。"
+admitted = "准入"
+refused = "拒绝"
+tat = "每次到达后的 TAT"
+
+[primitive-latency]
+source = "每根条形是 {cpu} 单个核心上 7 个批次的中位数，测于 {date}；细线从最快的批次延伸到最慢的批次。对数刻度。"
+
+[primitive-latency.groups]
+work = "工作量证明"
+match = "匹配"
+token = "令牌"
+state = "状态"
+request = "请求路径"
+
+[primitive-latency.rows]
+hashcash_16_bits = "Hashcash 验证（16 比特）"
+posw_depth13_t16 = "PoSW 验证（深度 13，t = 16）"
+aho_corasick_40_signatures = "机器人签名（40 个，Aho-Corasick）"
+sequential_substring_40_signatures = "机器人签名（40 个，顺序搜索）"
+ipv4_cidr_classification = "IPv4 CIDR 查找"
+ipv6_cidr_classification = "IPv6 CIDR 查找"
+blake3_mac_token = "会话令牌（带密钥 BLAKE3）"
+ed25519_compact_token = "会话令牌（Ed25519）"
+robin_hood_spend_and_lookup = "已用集合：写入并查找"
+gcra_check = "速率限制器，客户端字节"
+gcra_four_rule_scopes = "四个规则作用域，客户端字节"
+gcra_check_hashed = "速率限制器，已哈希的客户端"
+gcra_four_rule_scopes_hashed = "四个规则作用域，已哈希的客户端"
+zero_copy_request_and_cookie = "HTTP 解析与 Cookie"
+browser_request_full_classification = "分类，Shield 配置"
+browser_request_gate_profile = "分类，Gate 配置"
+8kb_body_semantic_scan = "WAF 请求体扫描（8 KiB）"
+8kb_body_sqli_audit_other_enforce = "WAF 请求体扫描，SQL 注入为审计模式"
+
+[posw-tree]
+order = "叶子标签从左到右依次计算"
+path = "叶子 3.5 通往根的路径"
+siblings = "揭示中发送的兄弟节点"
+left = "哈希进叶子的左兄弟节点"
+
+[work-asymmetry]
+inspect-title = "先检查"
+inspect-sender = "发送方"
+inspect-arrow = "一个廉价请求：发送代价低，应答代价高"
+inspect-defense = "防御系统：解析和复制请求，正则扫描，查询共享存储"
+inspect-sender-work = "发送方的工作：一个请求"
+inspect-defense-work = "防御系统的工作：全部由它自己承担，每个请求都是如此"
+work-title = "先工作（Sibuna）"
+work-sender = "发送方求解谜题"
+work-arrow = "已求解的谜题：获取代价高，检查代价低"
+work-defense = "Sibuna 只验证一次哈希，谜题解出之前不保存任何状态"
+work-sender-work = "发送方的工作：期望进行 {power} 次 SHA-256 尝试，b\u00A0=\u00A016 时为 {trials} 次"
+work-defense-work = "Sibuna 的工作：一次哈希，{ns} ns；之后复用会话"
+
+[sequential-work]
+hashcash = "Hashcash：并行搜索"
+core = "核心 {n}"
+time = "每个核心尝试各自的 nonce；核心 3 在 nonce 18 处找到解，全部核心停止。"
+posw = "顺序工作量证明：强制的顺序"
+found = "满足目标的 nonce"
+path = "叶子 3.5 通往根的路径"
+siblings = "其揭示中发送的兄弟节点"
+left = "哈希进叶子的左兄弟节点"

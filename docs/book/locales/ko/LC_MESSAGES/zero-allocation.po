@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-10-24 10:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -38,7 +38,7 @@ msgstr ""
 msgid "The Connection Loop"
 msgstr "연결 루프"
 
-#: ../../zero-allocation.rst:9 ../../zero-allocation.rst:388
+#: ../../zero-allocation.rst:9 ../../zero-allocation.rst:378
 msgid "Objectives"
 msgstr "학습 목표"
 
@@ -320,44 +320,29 @@ msgstr ""
 "둡니다. 프록시된 요청도 원본 서버의 응답에 프레이밍이 있고 본문을 모두 버퍼에 담았다면 연결을 열어 둡니다. 프록시가 이를 어떻게 "
 "결정하는지는 다음 절에서 봅니다."
 
-#: ../../zero-allocation.rst:96
+#: ../../zero-allocation.rst:95
 msgid ""
-"reader.buffered(): the unread window of the 64 KiB read buffer\n"
-"+-------------------------+---------------------------+------------------------+\n"
-"| request head            | body prefix               | pending           "
-"     |\n"
-"| at most 16 KiB, ends in | min(declared, room left), | the next request, "
-"or   |\n"
-"| CR LF CR LF             | chunked: decoded in place | the rest of an "
-"upload  |\n"
-"+-------------------------+---------------------------+------------------------+\n"
-"|<------ head_len ------->|<-------- body_len ------->|\n"
-"  ^ method, path, query,     ^ request.body              ^ ctx.pending "
-"(the\n"
-"    headers, cookies                                       proxy sends it "
-"first)\n"
-"\n"
-"after the response: reader.consume(head_len + body_len)"
+"The 64 KiB read buffer of one connection: a served part, then the unread "
+"window of request head (at most 16 KiB), body prefix and pending bytes, "
+"then free space. Method, path, query, headers and cookies are slices of "
+"the head, request.body is a slice of the body prefix, and ctx.pending "
+"holds the pending bytes, which the proxy sends to the origin first. After "
+"the response, reader.consume(head_len + body_len) moves the start of the "
+"window to the pending bytes."
 msgstr ""
-"reader.buffered(): 64 KiB 읽기 버퍼에서 아직 읽지 않은 구간\n"
-"+-------------------------+---------------------------+------------------------+\n"
-"| 요청 헤드               | 본문 앞부분               | 대기 중인 바이트       |\n"
-"| 최대 16 KiB, 끝은       | min(declared, 남은 공간), | 다음 요청 또는         |\n"
-"| CR LF CR LF             | chunked: 제자리 디코딩    | 업로드의 나머지        |\n"
-"+-------------------------+---------------------------+------------------------+\n"
-"|<------ head_len ------->|<-------- body_len ------->|\n"
-"  ^ 메서드, 경로, 쿼리,      ^ request.body              ^ ctx.pending (프록시가\n"
-"    헤더, 쿠키                                             이것을 먼저 보냄)\n"
-"\n"
-"응답 후: reader.consume(head_len + body_len)"
+"연결 하나의 64 KiB 읽기 버퍼입니다. 이미 처리한 부분 뒤에 요청 헤드(최대 16 KiB), 본문 앞부분, 대기 중인 바이트로 "
+"이루어진 아직 읽지 않은 구간이 있고, 그 뒤는 빈 공간입니다. 메서드, 경로, 쿼리, 헤더, 쿠키는 헤드의 슬라이스이고, "
+"request.body는 본문 앞부분의 슬라이스이며, ctx.pending은 대기 중인 바이트를 담습니다. 프록시는 이 바이트를 원본 "
+"서버로 먼저 보냅니다. 응답 후 reader.consume(head_len + body_len)이 구간의 시작을 대기 중인 바이트로 "
+"옮깁니다."
 
-#: ../../zero-allocation.rst:96
+#: ../../zero-allocation.rst:98
 msgid ""
 "The connection's read buffer while one request is served. Every field of "
 "the request is a slice of it."
 msgstr "요청 하나를 처리하는 동안의 연결 읽기 버퍼. 요청의 모든 필드는 이 버퍼의 슬라이스입니다."
 
-#: ../../zero-allocation.rst:110
+#: ../../zero-allocation.rst:100
 msgid ""
 "fn serve_one<W: Write>(\n"
 "    reader: &mut Reader<'_, &TcpStream>,\n"
@@ -425,11 +410,11 @@ msgstr ""
 "    serve_with_body(reader, link, peer, head_len, framing)\n"
 "}"
 
-#: ../../zero-allocation.rst:143
+#: ../../zero-allocation.rst:133
 msgid "What the borrow checker proves"
 msgstr "빌림 검사기가 증명하는 것"
 
-#: ../../zero-allocation.rst:145
+#: ../../zero-allocation.rst:135
 msgid ""
 "The request slices stay valid only until the next fill of the buffer. "
 "Sibuna states that rule as a type, not as a comment: the request is a "
@@ -446,7 +431,7 @@ msgstr ""
 "거부합니다. ``serve_one``\\ 에서 요청은 ``dispatch``\\ 로 이동하고, 그 호출이 반환된 뒤에야 "
 "``reader.consume``\\ 을 실행할 수 있습니다. 순서를 거꾸로 쓰면 컴파일되지 않습니다."
 
-#: ../../zero-allocation.rst:147
+#: ../../zero-allocation.rst:137
 msgid ""
 "The same rule explains two choices that look odd at first. First, "
 "``serve_with_body`` parses the head a second time. The first parse must "
@@ -470,11 +455,11 @@ msgstr ""
 "바이트는 전용 업로드 버퍼로 읽습니다. 읽은 것을 되돌려 줄 수 없으므로, 클라이언트 연결은 본문을 모두 버퍼에 담았을 때에만 "
 "유지됩니다."
 
-#: ../../zero-allocation.rst:149
+#: ../../zero-allocation.rst:139
 msgid "The Proxy Head Rewrite"
 msgstr "프록시 헤드 재작성"
 
-#: ../../zero-allocation.rst:152
+#: ../../zero-allocation.rst:142
 msgid ""
 "The head is not forwarded verbatim. ``write_request_head`` "
 "(``crates/net/src/request.rs``, crate ``sibuna-net``) re-emits the "
@@ -499,7 +484,7 @@ msgstr ""
 "``Connection`` 헤더가 지정하는 모든 필드입니다. 그런 다음 감사 필드 집합을 덧붙입니다. 본문 프레이밍은 복사하지 않고 "
 "새로 만듭니다."
 
-#: ../../zero-allocation.rst:154
+#: ../../zero-allocation.rst:144
 msgid ""
 "for header in request.headers() {\n"
 "    if is_hop_by_hop(header.name) || nominated(request, header.name) {\n"
@@ -541,7 +526,7 @@ msgstr ""
 "chunked\\r\\n\")?,\n"
 "}"
 
-#: ../../zero-allocation.rst:175
+#: ../../zero-allocation.rst:165
 msgid ""
 "A ``Content-Length`` is re-emitted. A chunked body that ended within the "
 "connection buffer is decoded in place and sent with its length. A longer "
@@ -556,7 +541,7 @@ msgstr ""
 "나눕니다(SID 0009). 읽은 데이터는 프록시의 16 KiB 업로드 버퍼에 들어가 그 자리에서 디코딩되고 정규화된 청크 하나로 "
 "나가므로, 원본 서버는 클라이언트의 청크 크기, 확장, 트레일러를 결코 보지 못합니다. 감사 필드 집합은 다음과 같습니다."
 
-#: ../../zero-allocation.rst:177
+#: ../../zero-allocation.rst:167
 msgid ""
 "Connection: keep-alive\n"
 "X-Forwarded-For: <client>\n"
@@ -572,7 +557,7 @@ msgstr ""
 "X-Sibuna-Status: PASS\n"
 "X-Sibuna-Rule: session | robots-txt | ip/cidr-trie | ..."
 
-#: ../../zero-allocation.rst:186
+#: ../../zero-allocation.rst:176
 msgid ""
 "Bodies larger than the buffer are relayed in 16 KiB pieces from the "
 "client to the origin writer (``relay_body``) before the response is "
@@ -586,7 +571,7 @@ msgstr ""
 "``proxy_head_rewrite_drops_hop_by_hop_headers_and_injects_audit_fields``\\ "
 "는 재작성이 위조된 ``X-Forwarded-For``\\ 를 제거하고 감사 필드를 주입하는지 확인합니다."
 
-#: ../../zero-allocation.rst:188
+#: ../../zero-allocation.rst:178
 msgid ""
 "The proxy's three buffers, the origin read buffer (one response head, 16 "
 "KiB), the origin write buffer (8 KiB) and the upload buffer (16 KiB), "
@@ -599,11 +584,11 @@ msgstr ""
 "KiB)는 연결이 한 번 할당해 모든 요청에 재사용하는 ``Workspace`` 안에 있습니다. 작업 공간 덕분에 버퍼의 수명은 "
 "교환 하나가 아니라 연결 전체와 같아지고, 원본 리더와 라이터는 한 번에 교환 하나 동안만 버퍼를 빌립니다."
 
-#: ../../zero-allocation.rst:190
+#: ../../zero-allocation.rst:180
 msgid "Relaying the Origin Response"
 msgstr "원본 응답 릴레이"
 
-#: ../../zero-allocation.rst:193
+#: ../../zero-allocation.rst:183
 msgid ""
 "The first proxy streamed the origin's bytes until the origin closed and "
 "then closed the client: correct framing with no parsing, at the price of "
@@ -617,11 +602,11 @@ msgstr ""
 "``TIME_WAIT`` 상태의 소켓 수만 개로, 루프백에서는 임시 포트 고갈로 드러났습니다. 이제 프록시는 원본의 헤드(최대 16 "
 "KiB)를 읽고 RFC 9112의 규칙에 따라 본문을 분류합니다."
 
-#: ../../zero-allocation.rst:195
+#: ../../zero-allocation.rst:185
 msgid "Implementation: ``parse_response_head``"
 msgstr "구현: ``parse_response_head``"
 
-#: ../../zero-allocation.rst:197
+#: ../../zero-allocation.rst:187
 msgid ""
 "Returns the status, one of four framings (no body for HEAD, 1xx, 204 and "
 "304; a ``Content-Length``; chunked transfer coding; or close-delimited) "
@@ -632,7 +617,7 @@ msgstr ""
 "chunked 전송 코딩; 연결 종료로 구분), 그리고 원본 서버가 연결을 유지하는지를 반환합니다. "
 "``crates/net/src/response.rs``\\ (crate ``sibuna-net``)에 있습니다."
 
-#: ../../zero-allocation.rst:199
+#: ../../zero-allocation.rst:189
 msgid ""
 "pub enum Framing { None, Length(u64), Chunked, UntilClose }\n"
 "\n"
@@ -710,7 +695,7 @@ msgstr ""
 "    Some(ResponseHead { status, framing, keep_alive })\n"
 "}"
 
-#: ../../zero-allocation.rst:235
+#: ../../zero-allocation.rst:225
 msgid ""
 "The parser refuses what the proxy must not relay: a bad status line, a "
 "field name that is not a token, a control byte in a value, conflicting "
@@ -723,7 +708,7 @@ msgstr ""
 "``Transfer-Encoding``\\ 을 지정하는 ``Connection`` 필드입니다. 파서의 작업량은 헤드 길이에 "
 "선형이며, 결코 패닉하지 않습니다."
 
-#: ../../zero-allocation.rst:237
+#: ../../zero-allocation.rst:227
 msgid ""
 "The head is re-emitted to the client with the origin's ``Connection`` "
 "headers replaced by Sibuna's own decision, and the body is relayed "
@@ -742,7 +727,7 @@ msgstr ""
 "읽습니다. 따라서 작은 쓰기가 이어지는 스트림은 만들어지는 즉시 전달되고, 대량 전송은 여전히 읽기와 쓰기 한 번마다 버퍼 하나를 "
 "가득 옮깁니다."
 
-#: ../../zero-allocation.rst:239
+#: ../../zero-allocation.rst:229
 msgid ""
 "let keep = client_keep_alive && parsed.framing != Framing::UntilClose;\n"
 "write_client_head(client, head, keep).map_err(client_head_error)?;\n"
@@ -770,7 +755,7 @@ msgstr ""
 "client.flush().map_err(|_| ProxyError::ClientFailed)?;\n"
 "Ok(Relayed { client_keep: keep, origin_reusable: parsed.keep_alive })"
 
-#: ../../zero-allocation.rst:253
+#: ../../zero-allocation.rst:243
 msgid ""
 "Parsing an eight-field origin head takes 322 ns, and a keep-alive ``GET`` "
 "with a 1 KiB response proxied over loopback takes 29.8 us (measured in "
@@ -780,11 +765,11 @@ msgstr ""
 "루프백으로 프록시하는 데 29.8 us가 걸립니다(2026년 10월 측정, ``crates/net/src/lib.rs``\\ 에 "
 "측정 방법이 문서화되어 있습니다)."
 
-#: ../../zero-allocation.rst:255
+#: ../../zero-allocation.rst:245
 msgid "The Origin Pool"
 msgstr "원본 연결 풀"
 
-#: ../../zero-allocation.rst:258
+#: ../../zero-allocation.rst:248
 msgid ""
 "Parsing the framing also tells the proxy whether the *origin* socket can "
 "be used again: an HTTP/1.1 response without ``Connection: close`` (or an "
@@ -802,7 +787,7 @@ msgstr ""
 "그 소켓을 가져갑니다. 풀이 없으면 프록시하는 요청마다 새 원본 연결을 열고, 닫힌 연결마다 로컬 포트를 "
 "``TIME_WAIT``\\ 에 붙잡아 둡니다. 부하가 걸리면 루프백 위의 프록시는 곧 임시 포트가 바닥나고 처리량이 급락합니다."
 
-#: ../../zero-allocation.rst:260
+#: ../../zero-allocation.rst:250
 msgid ""
 "A pool under one lock would make every proxied request contend for that "
 "lock. So the pool (``crates/net/src/pool.rs``) is striped: 16 stripes of "
@@ -817,7 +802,7 @@ msgstr ""
 "라운드 로빈으로 홈 스트라이프를 배정받고, 소켓을 반납하거나 가져갈 때 그 스트라이프를 먼저 쓰며, 새로 연결하기 전에 다른 "
 "스트라이프도 살펴봅니다. 이때 다른 스레드가 잡은 락은 기다리지 않습니다."
 
-#: ../../zero-allocation.rst:262
+#: ../../zero-allocation.rst:252
 msgid ""
 "pub fn take(&self) -> Option<Arc<TcpStream>> {\n"
 "    if self.is_stopping() {\n"
@@ -851,7 +836,7 @@ msgstr ""
 "    })\n"
 "}"
 
-#: ../../zero-allocation.rst:280
+#: ../../zero-allocation.rst:270
 msgid ""
 "A pooled socket may have been closed by the origin while idle. The proxy "
 "notices in one of two ways, a failed write or an end-of-stream before the "
@@ -874,7 +859,7 @@ msgstr ""
 "없다고 원본 서버가 변경을 커밋하지 않았다는 증거가 되지는 않으며, 조각으로 릴레이한 본문은 다시 보낼 수 없습니다. 두 경우 모두 "
 "클라이언트는 ``502``\\ 를 받습니다."
 
-#: ../../zero-allocation.rst:282
+#: ../../zero-allocation.rst:272
 msgid ""
 "let safe = matches!(request.method, Method::Get | Method::Head | "
 "Method::Options);\n"
@@ -938,7 +923,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../zero-allocation.rst:312
+#: ../../zero-allocation.rst:302
 msgid ""
 "Unit tests relay fixed byte strings through the same functions and assert "
 "the output is byte-identical apart from the connection header "
@@ -955,11 +940,11 @@ msgstr ""
 "``crates/net/tests/``\\ 의 벡터 테스트는 기록된 프록시 시나리오(원시 클라이언트 요청과 미리 준비한 원본 "
 "응답)를 재생하고 원본 서버와 클라이언트가 받는 모든 바이트를 비교합니다."
 
-#: ../../zero-allocation.rst:314
+#: ../../zero-allocation.rst:304
 msgid "Why the origin socket is an ``Arc``"
 msgstr "원본 소켓이 ``Arc``\\ 인 이유"
 
-#: ../../zero-allocation.rst:316
+#: ../../zero-allocation.rst:306
 msgid ""
 "A socket descriptor is a small integer that the kernel reuses as soon as "
 "it is closed. Shutdown must interrupt an exchange in flight, yet it must "
@@ -978,11 +963,11 @@ msgstr ""
 "입니다. 풀이 핸들 하나를, 교환이 하나를 들고, 교환이 실행되는 동안 연결의 ``Activity``\\ 가 복제본 하나를 듭니다. "
 "디스크립터는 마지막 핸들이 버려질 때 닫히므로, 누군가 아직 접근할 수 있는 동안에는 닫히거나 재사용될 수 없습니다."
 
-#: ../../zero-allocation.rst:318
+#: ../../zero-allocation.rst:308
 msgid "Idle Deadlines"
 msgstr "유휴 기한"
 
-#: ../../zero-allocation.rst:321
+#: ../../zero-allocation.rst:311
 msgid ""
 "Every client connection registers its socket in an ``IdleTable`` "
 "(``crates/net/src/idle.rs``) and receives a ``Lease``. The lease's "
@@ -1002,7 +987,7 @@ msgstr ""
 "타임아웃보다 오래 조용했던 모든 연결을 붙어 있는 원본 소켓과 함께 종료합니다. 그러면 어느 쪽에서든 막혀 있던 스레드가 스트림 "
 "끝을 보고 슬롯을 놓아줍니다."
 
-#: ../../zero-allocation.rst:323
+#: ../../zero-allocation.rst:313
 msgid ""
 "Deadlines therefore measure silence, never the length of a response: a "
 "large download that keeps moving is never cut. Upload bytes come from the "
@@ -1014,7 +999,7 @@ msgstr ""
 "않습니다. 업로드 바이트는 신뢰할 수 없는 쪽에서 오므로 16 KiB마다 한 번만 시각을 갱신합니다. 이는 클라이언트에게 유휴 "
 "기간마다 최소 16 KiB를 요구하는 셈으로, 최소 전송 속도 기반 요청 타임아웃이 제공하는 느린 본문 공격 방어와 같습니다."
 
-#: ../../zero-allocation.rst:325
+#: ../../zero-allocation.rst:315
 msgid ""
 "The table has one small lock per slot and no table-wide lock. It holds a "
 "``try_clone`` of each client socket and an ``Arc`` of each attached "
@@ -1027,11 +1012,11 @@ msgstr ""
 "``Drop``\\ 에서 연결 등록을 해제하며, 회수된 슬롯은 그때까지 리스가 소유하므로, 옛 연결이 새 연결이 차지한 슬롯을 "
 "해제하는 일은 결코 일어나지 않습니다."
 
-#: ../../zero-allocation.rst:327
+#: ../../zero-allocation.rst:317
 msgid "Upgraded Connections"
 msgstr "업그레이드된 연결"
 
-#: ../../zero-allocation.rst:330
+#: ../../zero-allocation.rst:320
 msgid ""
 "After a validated ``101``, a WebSocket upgrade is relayed both ways. Each "
 "direction runs on a thread of its own with one fixed buffer: the "
@@ -1050,7 +1035,7 @@ msgstr ""
 "필요 없습니다. 따라서 업그레이드된 연결은 스레드 두 개를 차지하므로, 모든 연결이 업그레이드되면 연결 스레드 수가 "
 "``--max-connections``\\ 의 두 배에 이를 수 있습니다."
 
-#: ../../zero-allocation.rst:332
+#: ../../zero-allocation.rst:322
 msgid ""
 "Both directions share one idle deadline (``--websocket-idle-timeout``, "
 "300 seconds by default): bytes moving either way refresh one stamp. Each "
@@ -1068,11 +1053,11 @@ msgstr ""
 "종료합니다(half close). 한 방향이 실패하면 두 소켓을 모두 종료해 다른 방향도 끝나게 합니다. 업그레이드를 프록시하기 "
 "전에 연결은 캐시한 정책 엔진을 놓아주므로, 몇 시간 동안 살아 있을 수 있는 연결이 옛 엔진을 살려 두지 않습니다."
 
-#: ../../zero-allocation.rst:334
+#: ../../zero-allocation.rst:324
 msgid "Stopping"
 msgstr "중지"
 
-#: ../../zero-allocation.rst:337
+#: ../../zero-allocation.rst:327
 msgid ""
 "``Running::stop``, and equally ``Drop`` for ``Running``, stops the daemon "
 "in a fixed order. It sets the stopping flag and wakes every accept worker "
@@ -1086,7 +1071,7 @@ msgstr ""
 "있는 원본 소켓을 종료하고(``IdleTable::shutdown``), 원본 연결 풀을 멈추고, 모든 연결 스레드를 join하고, "
 "회수기를 join한 뒤, 풀의 소켓을 닫습니다."
 
-#: ../../zero-allocation.rst:339
+#: ../../zero-allocation.rst:329
 msgid ""
 "SIGINT and SIGTERM reach that sequence through ordinary Rust. Before it "
 "spawns any thread, the daemon blocks both signals (every later thread "
@@ -1103,11 +1088,11 @@ msgstr ""
 "모듈(``cmd/sibuna/src/signals.rs``)에는 데몬의 유일한 ``unsafe`` 코드가 있습니다. "
 "``std``\\ 가 감싸지 않는 몇 가지 C 라이브러리 함수의 선언입니다."
 
-#: ../../zero-allocation.rst:341
+#: ../../zero-allocation.rst:331
 msgid "Release by ``Drop``"
 msgstr "``Drop``\\ 으로 해제하기"
 
-#: ../../zero-allocation.rst:343
+#: ../../zero-allocation.rst:333
 msgid ""
 "Explicit cleanup calls must be written in reverse order of setup, and "
 "every early return must be read against them. In Sibuna each resource "
@@ -1123,11 +1108,11 @@ msgstr ""
 "``Finished``\\ 는 작업 슬롯을 놓아줍니다. 컴파일러는 범위를 빠져나가는 모든 경로에 각 해제를 삽입하며, 범위를 거쳐 "
 "되감기(unwinding)되는 패닉도 예외가 아닙니다. 따라서 어떤 경로도 해제를 잊을 수 없습니다."
 
-#: ../../zero-allocation.rst:345
+#: ../../zero-allocation.rst:335
 msgid "What We Measured"
 msgstr "측정한 내용"
 
-#: ../../zero-allocation.rst:348
+#: ../../zero-allocation.rst:338
 msgid ""
 "The table shows Shield in reverse-proxy mode on one Ryzen 9 5950X: the "
 "daemon pinned to four CPUs, ``wrk`` with two threads and 64 connections "
@@ -1139,106 +1124,106 @@ msgstr ""
 "``wrk``\\ 는 다른 CPU 여덟 개에서 스레드 두 개와 연결 64개로 실행했으며, 5초씩 세 번 실행한 중앙값입니다. 행은 "
 "``benchmarks/results/product-latest.md``\\ 에서 옮겨 왔으며, 전체 기록은 제VIII부에 있습니다."
 
-#: ../../zero-allocation.rst:350
+#: ../../zero-allocation.rst:340
 msgid ""
 "Shield in reverse-proxy mode, from "
 "``benchmarks/results/product-latest.md``"
 msgstr "리버스 프록시 모드의 Shield(출처: ``benchmarks/results/product-latest.md``)"
 
-#: ../../zero-allocation.rst:353 ../../zero-allocation.rst:404
+#: ../../zero-allocation.rst:343 ../../zero-allocation.rst:394
 msgid "Workload"
 msgstr "워크로드"
 
-#: ../../zero-allocation.rst:354
+#: ../../zero-allocation.rst:344
 msgid "Status"
 msgstr "상태"
 
-#: ../../zero-allocation.rst:355
+#: ../../zero-allocation.rst:345
 msgid "req/s"
 msgstr "req/s"
 
-#: ../../zero-allocation.rst:356
+#: ../../zero-allocation.rst:346
 msgid "p50 / p99 (us)"
 msgstr "p50 / p99 (us)"
 
-#: ../../zero-allocation.rst:357
+#: ../../zero-allocation.rst:347
 msgid "CPU per request (us)"
 msgstr "요청당 CPU 시간(us)"
 
-#: ../../zero-allocation.rst:358
+#: ../../zero-allocation.rst:348
 msgid "admitted with session, proxied"
 msgstr "세션으로 허용, 프록시됨"
 
-#: ../../zero-allocation.rst:359 ../../zero-allocation.rst:364
-#: ../../zero-allocation.rst:369
+#: ../../zero-allocation.rst:349 ../../zero-allocation.rst:354
+#: ../../zero-allocation.rst:359
 msgid "200"
 msgstr "200"
 
-#: ../../zero-allocation.rst:360
+#: ../../zero-allocation.rst:350
 msgid "138,965"
 msgstr "138,965"
 
-#: ../../zero-allocation.rst:361
+#: ../../zero-allocation.rst:351
 msgid "438 / 857"
 msgstr "438 / 857"
 
-#: ../../zero-allocation.rst:362
+#: ../../zero-allocation.rst:352
 msgid "28.57"
 msgstr "28.57"
 
-#: ../../zero-allocation.rst:363
+#: ../../zero-allocation.rst:353
 msgid "challenged (interstitial)"
 msgstr "챌린지(중간 페이지)"
 
-#: ../../zero-allocation.rst:365
+#: ../../zero-allocation.rst:355
 msgid "195,188"
 msgstr "195,188"
 
-#: ../../zero-allocation.rst:366
+#: ../../zero-allocation.rst:356
 msgid "162 / 328"
 msgstr "162 / 328"
 
-#: ../../zero-allocation.rst:367
+#: ../../zero-allocation.rst:357
 msgid "13.73"
 msgstr "13.73"
 
-#: ../../zero-allocation.rst:368
+#: ../../zero-allocation.rst:358
 msgid "static allowed, proxied"
 msgstr "정적 경로 허용, 프록시됨"
 
-#: ../../zero-allocation.rst:370
+#: ../../zero-allocation.rst:360
 msgid "145,673"
 msgstr "145,673"
 
-#: ../../zero-allocation.rst:371
+#: ../../zero-allocation.rst:361
 msgid "415 / 746"
 msgstr "415 / 746"
 
-#: ../../zero-allocation.rst:372
+#: ../../zero-allocation.rst:362
 msgid "27.27"
 msgstr "27.27"
 
-#: ../../zero-allocation.rst:373
+#: ../../zero-allocation.rst:363
 msgid "WAF denied (with session)"
 msgstr "WAF 거부(세션 있음)"
 
-#: ../../zero-allocation.rst:374
+#: ../../zero-allocation.rst:364
 msgid "403"
 msgstr "403"
 
-#: ../../zero-allocation.rst:375
+#: ../../zero-allocation.rst:365
 msgid "209,507"
 msgstr "209,507"
 
-#: ../../zero-allocation.rst:376
+#: ../../zero-allocation.rst:366
 msgid "151 / 306"
 msgstr "151 / 306"
 
-#: ../../zero-allocation.rst:377
+#: ../../zero-allocation.rst:367
 msgid "12.17"
 msgstr "12.17"
 
-#: ../../zero-allocation.rst:379
+#: ../../zero-allocation.rst:369
 msgid ""
 "``wrk`` keeps 64 requests in flight, so on the CPU-bound proxied paths "
 "requests queue for the four CPUs, and the p99 there is the scheduler's "
@@ -1264,11 +1249,11 @@ msgstr ""
 "``crates/net/tests/steady_state.rs``\\ 는 프록시한 keep-alive 요청 500개 동안 할당을 "
 "하나도 찾지 못합니다."
 
-#: ../../zero-allocation.rst:381
+#: ../../zero-allocation.rst:371
 msgid "Exercise 5.1"
 msgstr "연습 문제 5.1"
 
-#: ../../zero-allocation.rst:383
+#: ../../zero-allocation.rst:373
 msgid ""
 "A client sends a 200 KB upload. Trace which bytes live in the 64 KiB "
 "buffer, which are relayed by ``relay_body`` through the upload buffer, "
@@ -1277,11 +1262,11 @@ msgstr ""
 "클라이언트가 200 KB를 업로드합니다. 어떤 바이트가 64 KiB 버퍼에 머무는지, 어떤 바이트를 ``relay_body``\\ "
 "가 업로드 버퍼를 거쳐 릴레이하는지, 그리고 프록시가 릴레이하기 *전에* 헤드를 원본 서버에 써야 하는 이유를 추적하세요."
 
-#: ../../zero-allocation.rst:385
+#: ../../zero-allocation.rst:375
 msgid "Concurrent State Without Allocation"
 msgstr "할당 없는 동시성 상태"
 
-#: ../../zero-allocation.rst:390
+#: ../../zero-allocation.rst:380
 msgid ""
 "Analyse the shard locks, the Robin Hood spent set, the GCRA limiter, the "
 "versioned ban table, the MPSC incident ring, and the read-copy-update "
@@ -1291,7 +1276,7 @@ msgstr ""
 "샤드 락, Robin Hood 사용 완료 집합, GCRA 제한기, 버전이 있는 차단 테이블, MPSC 인시던트 링, 그리고 "
 "``Arc``\\ 와 세대 확인 캐시를 이용한 정책 엔진의 read-copy-update 게시를 분석합니다."
 
-#: ../../zero-allocation.rst:392
+#: ../../zero-allocation.rst:382
 msgid ""
 "Every store in ``sibuna-store`` allocates its fixed capacity once, when "
 "it is built, and never allocates or blocks on a global lock afterwards. "
@@ -1300,11 +1285,11 @@ msgstr ""
 "``sibuna-store``\\ 의 모든 저장소는 만들어질 때 고정 용량을 한 번 할당하며, 그 뒤로는 할당하지도 전역 락을 "
 "기다리며 멈추지도 않습니다. 백그라운드 청소기가 필요한 저장소도 없습니다. 만료된 상태는 그 자리에서 회수됩니다."
 
-#: ../../zero-allocation.rst:394
+#: ../../zero-allocation.rst:384
 msgid "Locks and Sharding"
 msgstr "락과 샤딩"
 
-#: ../../zero-allocation.rst:397
+#: ../../zero-allocation.rst:387
 msgid ""
 "The critical sections in Sibuna's tables are tens of instructions long, "
 "far shorter than a kernel futex round trip. Tables are split into 16 "
@@ -1316,7 +1301,7 @@ msgstr ""
 "16개에 나뉘므로 두 연산이 경합할 확률은 :math:`1/16`\\ 이며, 각 샤드는 각자의 캐시 라인에 놓이므로 이웃한 락끼리 "
 "거짓 공유가 일어나지 않습니다."
 
-#: ../../zero-allocation.rst:399
+#: ../../zero-allocation.rst:389
 msgid ""
 "The tables use ``std::sync::Mutex``: one compare-and-swap when "
 "uncontended, a short spin while the holder runs, then a futex wait. The "
@@ -1330,67 +1315,67 @@ msgstr ""
 "SID 0010은 둘 사이에서 측정으로 고르도록 요구했습니다. 스핀 락은 경합 없는 연산마다 약 1나노초를 아끼지만, 경합이 생기면 "
 "뒤처집니다."
 
-#: ../../zero-allocation.rst:401
+#: ../../zero-allocation.rst:391
 msgid "Shard lock throughput on a Ryzen 9 5950X (October 2026)"
 msgstr "Ryzen 9 5950X에서의 샤드 락 처리량(2026년 10월)"
 
-#: ../../zero-allocation.rst:405
+#: ../../zero-allocation.rst:395
 msgid "``Mutex``"
 msgstr "``Mutex``"
 
-#: ../../zero-allocation.rst:406
+#: ../../zero-allocation.rst:396
 msgid "Spin lock"
 msgstr "스핀 락"
 
-#: ../../zero-allocation.rst:407
+#: ../../zero-allocation.rst:397
 msgid "spent set, 16 threads"
 msgstr "사용 완료 집합, 스레드 16개"
 
-#: ../../zero-allocation.rst:408
+#: ../../zero-allocation.rst:398
 msgid "10.8 M/s"
 msgstr "10.8 M/s"
 
-#: ../../zero-allocation.rst:409
+#: ../../zero-allocation.rst:399
 msgid "8.6 M/s"
 msgstr "8.6 M/s"
 
-#: ../../zero-allocation.rst:410
+#: ../../zero-allocation.rst:400
 msgid "spent set, 64 threads (more than the CPUs)"
 msgstr "사용 완료 집합, 스레드 64개(CPU 수보다 많음)"
 
-#: ../../zero-allocation.rst:411
+#: ../../zero-allocation.rst:401
 msgid "11.2 M/s"
 msgstr "11.2 M/s"
 
-#: ../../zero-allocation.rst:412
+#: ../../zero-allocation.rst:402
 msgid "6.9 M/s"
 msgstr "6.9 M/s"
 
-#: ../../zero-allocation.rst:413
+#: ../../zero-allocation.rst:403
 msgid "GCRA on six hot addresses, 16 threads"
 msgstr "요청이 몰리는 주소 여섯 개에 대한 GCRA, 스레드 16개"
 
-#: ../../zero-allocation.rst:414
+#: ../../zero-allocation.rst:404
 msgid "44.9 M/s"
 msgstr "44.9 M/s"
 
-#: ../../zero-allocation.rst:415
+#: ../../zero-allocation.rst:405
 msgid "19.3 M/s"
 msgstr "19.3 M/s"
 
-#: ../../zero-allocation.rst:416
+#: ../../zero-allocation.rst:406
 msgid "GCRA on six hot addresses, 64 threads"
 msgstr "요청이 몰리는 주소 여섯 개에 대한 GCRA, 스레드 64개"
 
-#: ../../zero-allocation.rst:417
+#: ../../zero-allocation.rst:407
 msgid "37.4 M/s"
 msgstr "37.4 M/s"
 
-#: ../../zero-allocation.rst:418
+#: ../../zero-allocation.rst:408
 msgid "6.5 M/s"
 msgstr "6.5 M/s"
 
-#: ../../zero-allocation.rst:420
+#: ../../zero-allocation.rst:410
 msgid ""
 "An edge server runs more connection threads than CPUs, and a spin lock "
 "whose holder is preempted makes every waiter burn its time slice, so we "
@@ -1402,11 +1387,11 @@ msgstr ""
 "만듭니다. 그래서 뮤텍스를 유지합니다. 오염된(poisoned) 락은 오류를 전파하지 않고 그대로 진입합니다. 어떤 연산도 샤드를 "
 "잡은 동안 패닉하지 않으며, 설령 패닉하더라도 샤드는 구조적으로 유효한 상태로 남습니다."
 
-#: ../../zero-allocation.rst:422
+#: ../../zero-allocation.rst:412
 msgid "The Robin Hood Spent Set"
 msgstr "Robin Hood 사용 완료 집합"
 
-#: ../../zero-allocation.rst:425
+#: ../../zero-allocation.rst:415
 msgid ""
 "Only accepted proofs enter the spent set (Part III). It has 16 shards, "
 "each an open-addressed array of 4,096 slots of ``Option<Entry>``, where "
@@ -1422,11 +1407,11 @@ msgstr ""
 "자기 홈에 더 가까운 점유자를 밀어내므로 탐사 길이의 편차가 작게 유지됩니다. 조회는 찾는 키가 자기 홈에서 떨어진 거리보다 자기 "
 "홈에 더 가까이 있는 항목을 만나는 즉시 멈춥니다."
 
-#: ../../zero-allocation.rst:427
+#: ../../zero-allocation.rst:417
 msgid "Implementation: ``Table::insert``"
 msgstr "구현: ``Table::insert``"
 
-#: ../../zero-allocation.rst:429
+#: ../../zero-allocation.rst:419
 msgid ""
 "Inserts a spent tag with its expiry, reclaiming expired slots on the way. "
 "In ``crates/store/src/spent.rs`` (crate ``sibuna-store``)."
@@ -1434,7 +1419,7 @@ msgstr ""
 "사용 완료 태그를 만료 시각과 함께 삽입하며, 지나가는 길에 만료된 슬롯을 회수합니다. "
 "``crates/store/src/spent.rs``\\ (crate ``sibuna-store``)에 있습니다."
 
-#: ../../zero-allocation.rst:431
+#: ../../zero-allocation.rst:421
 msgid ""
 "fn insert(\n"
 "    &mut self,\n"
@@ -1511,7 +1496,7 @@ msgstr ""
 "    Err(SpendError::Full)\n"
 "}"
 
-#: ../../zero-allocation.rst:470
+#: ../../zero-allocation.rst:460
 msgid ""
 "The expired-slot rule is the subtle part: an expired entry may be "
 "overwritten in place only by a key at least as far from its home, "
@@ -1526,11 +1511,11 @@ msgstr ""
 "삽입은 먼저 아무것도 바꾸지 않고 밀어내기 경로를 모의 실행하여(``can_insert``), 횟수가 제한된 밀어내기가 살아 있는 "
 "태그를 잃지 않고 성공할 수 있는지 확인합니다."
 
-#: ../../zero-allocation.rst:472 ../../zero-allocation.rst:701
+#: ../../zero-allocation.rst:462 ../../zero-allocation.rst:682
 msgid "Invariant"
 msgstr "불변식"
 
-#: ../../zero-allocation.rst:474
+#: ../../zero-allocation.rst:464
 msgid ""
 "A refused insertion never evicts a live tag. A tag that was spent and has "
 "not expired is therefore always found, and the refusal "
@@ -1539,7 +1524,7 @@ msgstr ""
 "거부된 삽입은 살아 있는 태그를 결코 쫓아내지 않습니다. 따라서 사용되었고 아직 만료되지 않은 태그는 언제나 찾을 수 있으며, "
 "거부(``SpendError::Full``)는 서비스를 거부할 수는 있어도 재전송을 가능하게 하지는 않습니다."
 
-#: ../../zero-allocation.rst:476
+#: ../../zero-allocation.rst:466
 msgid ""
 "A slot is ``Option<Entry>``. An empty slot has no tag to read, so there "
 "is no ``occupied`` flag that a reader could forget to check, and "
@@ -1552,11 +1537,11 @@ msgstr ""
 "마찬가지로 정확합니다. 사용 완료 집합은 두 가지 방식(``DoubleSpend``\\ 와 ``Full``)으로 실패할 수 있으며, "
 "``SpendError``\\ 는 정확히 그 둘만 나타냅니다."
 
-#: ../../zero-allocation.rst:478
+#: ../../zero-allocation.rst:468
 msgid "GCRA: Rate Limiting in One Integer"
 msgstr "GCRA: 정수 하나로 하는 속도 제한"
 
-#: ../../zero-allocation.rst:481
+#: ../../zero-allocation.rst:471
 msgid ""
 "The Generic Cell Rate Algorithm (ATM Forum, 1996) is the "
 "virtual-scheduling form of the leaky bucket. Per client it stores one "
@@ -1569,7 +1554,7 @@ msgstr ""
 "에 대해 방출 간격 :math:`T = \\max(1, \\lceil W / N \\rceil)`, 버스트 허용치 "
 ":math:`\\tau = (N - 1) T`\\ 로 두면 다음과 같습니다."
 
-#: ../../zero-allocation.rst:483
+#: ../../zero-allocation.rst:473
 msgid ""
 "\\text{arrival at } t \\text{ conforms} \\iff \\mathrm{TAT} \\le t + "
 "\\tau, \\quad \\text{then } \\mathrm{TAT} \\leftarrow "
@@ -1579,11 +1564,11 @@ msgstr ""
 "\\tau, \\quad \\text{then } \\mathrm{TAT} \\leftarrow "
 "\\max(\\mathrm{TAT}, t) + T."
 
-#: ../../zero-allocation.rst:487
+#: ../../zero-allocation.rst:477
 msgid "Theorem (token-bucket bound)"
 msgstr "정리(토큰 버킷 상한)"
 
-#: ../../zero-allocation.rst:489
+#: ../../zero-allocation.rst:479
 msgid ""
 "After the first conforming arrival at :math:`t_1`, the :math:`k`-th "
 "conforming arrival satisfies :math:`t_k - t_1 \\ge (k - 1) T - \\tau`. "
@@ -1597,42 +1582,33 @@ msgstr ""
 ":math:`N + \\lfloor L / T \\rfloor`\\ 개입니다. :math:`N`\\ 개의 버스트 뒤에 "
 ":math:`T`\\ 마다 하나입니다. 정의된 버스트를 넘어서는 고정 윈도 경계의 부작용이 없고, 요청별 이력도 없습니다."
 
-#: ../../zero-allocation.rst:492
+#: ../../zero-allocation.rst:481
 msgid ""
-"rate = 5 per 1000 ms, so T = 200 ms and tau = 800 ms\n"
-"| admitted     x rejected (6th arrival at 0, and one just before each "
-"admission)\n"
-"\n"
-"   |||||x   x|        x|        x|        x|        x|\n"
-"   +---------+---------+---------+---------+---------+------> t (ms)\n"
-"   0         200       400       600       800       1000\n"
-"   1000      1200      1400      1600      1800      2000   <- TAT after\n"
-"\n"
-"TAT after the k-th admission is t_1 + k T, so any interval of length L\n"
-"admits at most N + floor(L / T)"
+"A chart of TAT against arrival time for T = 200 ms and tau = 800 ms. Five "
+"arrivals at t = 0 are admitted while TAT rises from 0 to 1000 ms; a sixth "
+"at t = 0 finds 1000 ms above the line t + tau and is refused. Afterwards "
+"an arrival halfway between multiples of 200 ms is refused, and one at "
+"each multiple of 200 ms finds TAT exactly on the line and is admitted."
 msgstr ""
-"속도 = 1000 ms당 5개, 따라서 T = 200 ms, tau = 800 ms\n"
-"| 허용   x 거부 (t = 0의 여섯 번째 도착, 그리고 매 허용 직전의 도착)\n"
-"\n"
-"   |||||x   x|        x|        x|        x|        x|\n"
-"   +---------+---------+---------+---------+---------+------> t (ms)\n"
-"   0         200       400       600       800       1000\n"
-"   1000      1200      1400      1600      1800      2000   <- 허용 후 TAT\n"
-"\n"
-"k번째 허용 뒤 TAT는 t_1 + k T이므로, 길이 L인 어떤 구간에서도\n"
-"허용되는 도착은 최대 N + floor(L / T)개"
+"T = 200 ms, tau = 800 ms일 때 도착 시각에 따른 TAT를 그린 차트입니다. t = 0에 도착한 다섯 개는 허용되고, "
+"그동안 TAT는 0에서 1000 ms로 올라갑니다. t = 0의 여섯 번째 도착 시점의 TAT 1000 ms는 t + tau 선보다 "
+"위에 있으므로 거부됩니다. 그 뒤로 200 ms의 배수 사이 한가운데에 도착한 요청은 거부되고, 200 ms의 배수마다 도착한 요청은 "
+"TAT가 정확히 선 위에 놓이므로 허용됩니다."
 
-#: ../../zero-allocation.rst:492
+#: ../../zero-allocation.rst:484
 msgid ""
 "GCRA admission for a limit of 5 per second: a burst of five, then one "
-"every 200 ms."
-msgstr "초당 5개 한도의 GCRA 허용: 버스트 다섯 개 뒤에 200 ms마다 하나."
+"every 200 ms. An arrival is admitted when the TAT it finds lies on or "
+"below the line :math:`t + \\tau`."
+msgstr ""
+"초당 5개 한도의 GCRA 허용: 버스트 다섯 개 뒤에 200 ms마다 하나. 도착 시점의 TAT가 :math:`t + \\tau` "
+"선에 걸치거나 그 아래에 있으면 그 도착은 허용됩니다."
 
-#: ../../zero-allocation.rst:505
+#: ../../zero-allocation.rst:486
 msgid "Worked example: five per second by hand"
 msgstr "풀이 예제: 초당 다섯 개를 손으로 계산하기"
 
-#: ../../zero-allocation.rst:507
+#: ../../zero-allocation.rst:488
 msgid ""
 "Take :math:`N = 5` and :math:`W = 1000` ms, so :math:`T = 200` ms and "
 ":math:`\\tau = 800` ms, and let a client that has been idle send six "
@@ -1660,11 +1636,11 @@ msgstr ""
 "``gcra_admits_exactly_the_burst_then_drains_at_the_emission_rate``\\ 가 바로 "
 "이 숫자들을 확인합니다."
 
-#: ../../zero-allocation.rst:509
+#: ../../zero-allocation.rst:490
 msgid "Implementation: ``arrive``"
 msgstr "구현: ``arrive``"
 
-#: ../../zero-allocation.rst:511
+#: ../../zero-allocation.rst:492
 msgid ""
 "Applies one arrival to the cells of a locked shard and returns the "
 "decision, the retry delay and the remaining budget. In "
@@ -1673,7 +1649,7 @@ msgstr ""
 "락을 잡은 샤드의 셀에 도착 하나를 적용하고 결정, 재시도 지연, 남은 예산을 반환합니다. "
 "``crates/store/src/limiter.rs``\\ (crate ``sibuna-store``)에 있습니다."
 
-#: ../../zero-allocation.rst:513
+#: ../../zero-allocation.rst:494
 msgid ""
 "fn arrive(\n"
 "    cells: &mut [Cell; SLOTS_PER_SHARD],\n"
@@ -1735,7 +1711,7 @@ msgstr ""
 "    // ... remaining = min(rate, floor((t + tau - TAT) / T) + 1)\n"
 "}"
 
-#: ../../zero-allocation.rst:545
+#: ../../zero-allocation.rst:526
 msgid ""
 "The shard's ``check`` takes the lock and calls ``arrive`` with the locked "
 "cells; the guard releases the lock when ``check`` returns. Cells are 16 "
@@ -1753,16 +1729,16 @@ msgstr ""
 "샤드의 ``check``\\ 는 락을 잡고, 락으로 보호된 셀을 넘겨 ``arrive``\\ 를 호출합니다. ``check``\\ "
 "가 반환되면 가드가 락을 풉니다. 셀은 16바이트(키와 TAT)이며, 16슬롯 탐사 윈도을 가진 512슬롯 샤드 16개에 있어 모두 "
 "합쳐 약 128 KiB입니다. TAT가 :math:`t - \\tau`\\ 보다 오래된 셀은 이미 다 빠진 상태이므로 그 자리에서 "
-"회수됩니다. ``Retry-After`` 헤더도 같은 산술로 계산합니다. 탐사 윈도이 가득 차면 활성 할당량 상태를 쫓아내는 대신 새 "
-"클라이언트를 거부하며, 결정이 그 사실을 알립니다(``capacity_exhausted``). 그래서 호출자는 포화로 인한 거부를 "
-"차단으로 격상하지 않습니다. 설정된 속도가 0이면 요청을 거부합니다. 제한기 하나가 여러 규칙을 처리합니다. 셀 키는 규칙의 범위를 "
-"시드로 한 클라이언트 주소의 Wyhash이므로, 서로 다른 범위의 같은 클라이언트는 독립된 예산을 가집니다."
+"회수됩니다. ``Retry-After`` 헤더도 같은 산술로 계산합니다. 탐사 윈도이 가득 차면 활성 할당량 상태를 쫓아내는 대신 "
+"새 클라이언트를 거부하며, 결정이 그 사실을 알립니다(``capacity_exhausted``). 그래서 호출자는 포화로 인한 "
+"거부를 차단으로 격상하지 않습니다. 설정된 속도가 0이면 요청을 거부합니다. 제한기 하나가 여러 규칙을 처리합니다. 셀 키는 규칙의 "
+"범위를 시드로 한 클라이언트 주소의 Wyhash이므로, 서로 다른 범위의 같은 클라이언트는 독립된 예산을 가집니다."
 
-#: ../../zero-allocation.rst:547
+#: ../../zero-allocation.rst:528
 msgid "The Versioned Ban Table"
 msgstr "버전이 있는 차단 테이블"
 
-#: ../../zero-allocation.rst:550
+#: ../../zero-allocation.rst:531
 msgid ""
 "Bans use 4,096 slots with atomic version, key and expiry fields, "
 "open-addressed by a keyed hash of the banned address with an 8-slot probe "
@@ -1770,15 +1746,15 @@ msgid ""
 "each update with version increments; readers take no lock, accept only a "
 "stable even version, and retry concurrent changes."
 msgstr ""
-"차단에는 원자적 버전, 키, 만료 필드를 가진 슬롯 4,096개를 쓰며, 차단된 주소의 키 기반 해시로 8슬롯 탐사 윈도의 개방 주소 "
-"방식을 씁니다. 쓰는 쪽은 뮤텍스로 다른 쓰는 쪽과 직렬화되며, 갱신마다 앞뒤로 버전을 증가시킵니다. 읽는 쪽은 락을 잡지 않고, "
-"안정된 짝수 버전만 받아들이며, 동시 변경이 있으면 재시도합니다."
+"차단에는 원자적 버전, 키, 만료 필드를 가진 슬롯 4,096개를 쓰며, 차단된 주소의 키 기반 해시로 8슬롯 탐사 윈도의 개방 "
+"주소 방식을 씁니다. 쓰는 쪽은 뮤텍스로 다른 쓰는 쪽과 직렬화되며, 갱신마다 앞뒤로 버전을 증가시킵니다. 읽는 쪽은 락을 잡지 "
+"않고, 안정된 짝수 버전만 받아들이며, 동시 변경이 있으면 재시도합니다."
 
-#: ../../zero-allocation.rst:552
+#: ../../zero-allocation.rst:533
 msgid "Implementation: ``BanTable::ban`` and ``BanTable::read_slot``"
 msgstr "구현: ``BanTable::ban``\\ 과 ``BanTable::read_slot``"
 
-#: ../../zero-allocation.rst:554
+#: ../../zero-allocation.rst:535
 msgid ""
 "The writer's bracket and the reader's consistent snapshot. In "
 "``crates/store/src/ban_table.rs`` (crate ``sibuna-store``)."
@@ -1786,7 +1762,7 @@ msgstr ""
 "쓰는 쪽이 갱신을 버전 증가로 감싸는 방식과 읽는 쪽의 일관된 스냅숏입니다. "
 "``crates/store/src/ban_table.rs``\\ (crate ``sibuna-store``)에 있습니다."
 
-#: ../../zero-allocation.rst:556
+#: ../../zero-allocation.rst:537
 msgid ""
 "pub fn ban(&self, banned: &[u8], until: u64, now: u64) {\n"
 "    let key = slot_key(banned);\n"
@@ -1845,7 +1821,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../zero-allocation.rst:586
+#: ../../zero-allocation.rst:567
 msgid ""
 "Sequential consistency prevents mixing an old identity with a replacement "
 "expiry: every access belongs to one total order, which keeps the argument "
@@ -1862,11 +1838,11 @@ msgstr ""
 "만료되는 슬롯을 덮어씁니다. ``clear``\\ 는 모든 차단을 풀지만 키는 그대로 둡니다. 비운 슬롯은 탐사 연쇄에서 뒤에 있는 "
 "충돌 키를 숨길 수 있기 때문입니다."
 
-#: ../../zero-allocation.rst:588
+#: ../../zero-allocation.rst:569
 msgid "The MPSC Incident Ring"
 msgstr "MPSC 인시던트 링"
 
-#: ../../zero-allocation.rst:591
+#: ../../zero-allocation.rst:572
 msgid ""
 "When the Shield surface denies a request or the honeypot fires, the "
 "incident is copied into a fixed record of about 1.3 KB (client address, "
@@ -1884,7 +1860,7 @@ msgstr ""
 "들어갑니다. 생산자는 연결 스레드이고 소비자는 저장소 스레드입니다. 링이 가득 차면 응답을 막는 대신 가장 새로운 레코드를 "
 "버립니다. 이는 영속성 보장이 아니라 명시적인 손실 정책입니다. 버린 레코드를 세는 카운터로 그 손실을 관찰할 수 있습니다."
 
-#: ../../zero-allocation.rst:593
+#: ../../zero-allocation.rst:574
 msgid ""
 "/// Copies `incident` into the ring; a full ring drops it and counts the "
 "drop.\n"
@@ -1903,7 +1879,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../zero-allocation.rst:602
+#: ../../zero-allocation.rst:583
 msgid ""
 "After moving a record into a pending batch, the storage thread retains "
 "it, together with the prepared rows, until the commit is confirmed; it "
@@ -1913,7 +1889,7 @@ msgstr ""
 "레코드를 대기 중인 배치로 옮긴 뒤, 저장소 스레드는 커밋이 확인될 때까지 준비된 행과 함께 레코드를 보관합니다. 데이터베이스 "
 "오류가 나도 조용히 버리지 않으며, 재시도는 똑같은 배치를 씁니다."
 
-#: ../../zero-allocation.rst:604
+#: ../../zero-allocation.rst:585
 msgid ""
 "Each slot carries a sequence number that tells producers whether the slot "
 "is free and the consumer whether it is full, so neither side takes a "
@@ -1930,7 +1906,7 @@ msgstr ""
 "``crates/store/src/ring.rs`` 모듈은 값을 ``UnsafeCell<MaybeUninit<T>>`` 슬롯에 "
 "담고, 각 ``unsafe`` 블록은 자신을 정당화하는 프로토콜 단계를 밝힙니다."
 
-#: ../../zero-allocation.rst:606
+#: ../../zero-allocation.rst:587
 msgid ""
 "if diff == 0 {\n"
 "    // Relaxed: the CAS only arbitrates which producer owns position "
@@ -1977,7 +1953,7 @@ msgstr ""
 "    return Err(value);\n"
 "}"
 
-#: ../../zero-allocation.rst:629
+#: ../../zero-allocation.rst:610
 msgid ""
 "Two conventions of the ring are types, not comments. On a full ring "
 "``push`` returns ``Err(value)``, handing the record back so the caller "
@@ -1991,11 +1967,11 @@ msgstr ""
 "하나뿐이며, ``pop``\\ 은 ``&mut self``\\ 를 받고, 공유 코드는 먼저 유일한 ``Consumer``\\ 를 "
 "차지해야 하므로, 두 번째 소비자는 컴파일되지 않거나 실행 중에 거부됩니다."
 
-#: ../../zero-allocation.rst:631
+#: ../../zero-allocation.rst:612
 msgid "Read-Copy-Update Engine Publication"
 msgstr "Read-Copy-Update 엔진 게시"
 
-#: ../../zero-allocation.rst:634
+#: ../../zero-allocation.rst:615
 msgid ""
 "The policy engine is rebuilt off the hot path when policies change. "
 "Requests must never observe a half-built engine, and an engine must never "
@@ -2007,7 +1983,7 @@ msgstr ""
 "읽고 있는 엔진을 해제해서도 안 됩니다. Sibuna는 각 엔진을 ``EngineSlot`` 안의 ``Arc<Engine>``\\ "
 "으로 게시하며, 각 연결은 ``EngineCache``\\ 를 통해 이를 읽습니다."
 
-#: ../../zero-allocation.rst:637
+#: ../../zero-allocation.rst:618
 msgid ""
 "The storage thread builds Engine v2 off the request path and publishes it "
 "into the EngineSlot, which holds an RwLock around the current Arc and an "
@@ -2024,7 +2000,7 @@ msgstr ""
 "Arc를 가지고 있습니다. B는 다음 갱신에서 세대가 바뀐 것을 보고 읽기 락을 잡아 v2의 Arc를 복제합니다. Engine "
 "v1은 B가 놓아줄 때 해제됩니다."
 
-#: ../../zero-allocation.rst:637
+#: ../../zero-allocation.rst:618
 msgid ""
 "digraph engine_publication {\n"
 "  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.8];\n"
@@ -2083,7 +2059,7 @@ msgstr ""
 "  b -> v1 [label=\"다음 갱신까지\\nArc 보유\"];\n"
 "}"
 
-#: ../../zero-allocation.rst:637
+#: ../../zero-allocation.rst:618
 msgid ""
 "Engine publication. The storage thread publishes a complete engine and "
 "advances the generation; each connection checks the generation with one "
@@ -2093,11 +2069,11 @@ msgstr ""
 "엔진 게시. 저장소 스레드가 완성된 엔진을 게시하고 세대를 올립니다. 각 연결은 acquire 읽기 한 번으로 세대를 확인하고, "
 "게시가 일어난 뒤에만 게시된 Arc를 복제합니다. 옛 엔진은 그 엔진을 가진 마지막 캐시가 놓아줄 때 해제됩니다."
 
-#: ../../zero-allocation.rst:660
+#: ../../zero-allocation.rst:641
 msgid "Implementation: ``EngineSlot::publish`` and ``EngineCache::refresh``"
 msgstr "구현: ``EngineSlot::publish``\\ 와 ``EngineCache::refresh``"
 
-#: ../../zero-allocation.rst:662
+#: ../../zero-allocation.rst:643
 msgid ""
 "Publication of a complete engine, and one connection's view of it. In "
 "``cmd/sibuna/src/slot.rs`` (crate ``sibuna``)."
@@ -2105,7 +2081,7 @@ msgstr ""
 "완성된 엔진의 게시와, 연결 하나가 그 엔진을 보는 방식입니다. ``cmd/sibuna/src/slot.rs``\\ (crate "
 "``sibuna``)에 있습니다."
 
-#: ../../zero-allocation.rst:664
+#: ../../zero-allocation.rst:645
 msgid ""
 "pub struct EngineSlot {\n"
 "    current: RwLock<Arc<Engine>>,\n"
@@ -2178,7 +2154,7 @@ msgstr ""
 "    self.engine.get_or_insert_with(|| slot.load())\n"
 "}"
 
-#: ../../zero-allocation.rst:699
+#: ../../zero-allocation.rst:680
 msgid ""
 "The generation is stored with release ordering after the engine is in "
 "place, and loaded with acquire ordering: a reader that sees a new "
@@ -2195,7 +2171,7 @@ msgstr ""
 "새로운 엔진을 더 오래된 세대 번호 아래에 캐시하게 되고, 다음 갱신 때 불일치를 알아차려 다시 읽습니다. 읽는 쪽은 요청 하나 "
 "동안 엔진 하나만큼 늦을 수는 있어도, 절반만 만들어진 엔진을 볼 수는 없습니다. 슬롯에는 완성된 엔진만 저장되기 때문입니다."
 
-#: ../../zero-allocation.rst:703
+#: ../../zero-allocation.rst:684
 msgid ""
 "Every engine a request reads is complete, and no engine is freed while "
 "any request or connection cache holds it. The first holds because an "
@@ -2207,7 +2183,7 @@ msgstr ""
 "첫째는 ``publish``\\ 가 저장하기 전에 엔진이 완전히 만들어지기 때문에 성립하고, 둘째는 모든 읽는 쪽이 "
 "``Arc``\\ 를 가지며 엔진은 마지막 ``Arc``\\ 와 함께만 버려지기 때문에 성립합니다."
 
-#: ../../zero-allocation.rst:705
+#: ../../zero-allocation.rst:686
 msgid ""
 "Why a cache and not simply a lock? SID 0010 asked us to measure the read "
 "cost with 16 threads and choose between ``RwLock<Arc<Engine>>`` and a "
@@ -2221,61 +2197,61 @@ msgstr ""
 "읽으면 락 워드와 참조 카운트를 건드리는데, 이 둘은 모든 코어가 쓰기를 하는 캐시 라인 두 개입니다. 반면 세대는 게시할 때 한 "
 "번 쓰이고 그 밖에는 읽히기만 하므로, 각 코어가 자기 사본을 유지합니다."
 
-#: ../../zero-allocation.rst:707
+#: ../../zero-allocation.rst:688
 msgid ""
 "Cost of one engine read, Ryzen 9 5950X, 16 threads reading in a loop "
 "(October 2026)"
 msgstr "엔진 읽기 한 번의 비용, Ryzen 9 5950X, 루프에서 읽는 스레드 16개(2026년 10월)"
 
-#: ../../zero-allocation.rst:710
+#: ../../zero-allocation.rst:691
 msgid "Reader"
 msgstr "읽기 방식"
 
-#: ../../zero-allocation.rst:711
+#: ../../zero-allocation.rst:692
 msgid "1 thread"
 msgstr "스레드 1개"
 
-#: ../../zero-allocation.rst:712
+#: ../../zero-allocation.rst:693
 msgid "16 threads"
 msgstr "스레드 16개"
 
-#: ../../zero-allocation.rst:713
+#: ../../zero-allocation.rst:694
 msgid "``RwLock`` read guard only"
 msgstr "``RwLock`` 읽기 가드만"
 
-#: ../../zero-allocation.rst:714
+#: ../../zero-allocation.rst:695
 msgid "4.2 ns"
 msgstr "4.2 ns"
 
-#: ../../zero-allocation.rst:715
+#: ../../zero-allocation.rst:696
 msgid "752 ns"
 msgstr "752 ns"
 
-#: ../../zero-allocation.rst:716
+#: ../../zero-allocation.rst:697
 msgid "``RwLock`` read and ``Arc`` clone"
 msgstr "``RwLock`` 읽기와 ``Arc`` 복제"
 
-#: ../../zero-allocation.rst:717
+#: ../../zero-allocation.rst:698
 msgid "7.6 ns"
 msgstr "7.6 ns"
 
-#: ../../zero-allocation.rst:718
+#: ../../zero-allocation.rst:699
 msgid "833 ns"
 msgstr "833 ns"
 
-#: ../../zero-allocation.rst:719
+#: ../../zero-allocation.rst:700
 msgid "generation check with a cached ``Arc``"
 msgstr "캐시된 ``Arc``\\ 로 세대 확인"
 
-#: ../../zero-allocation.rst:720
+#: ../../zero-allocation.rst:701
 msgid "0.8 ns"
 msgstr "0.8 ns"
 
-#: ../../zero-allocation.rst:721
+#: ../../zero-allocation.rst:702
 msgid "1.8 ns"
 msgstr "1.8 ns"
 
-#: ../../zero-allocation.rst:723
+#: ../../zero-allocation.rst:704
 msgid ""
 "Under contention the cached read is more than 400 times cheaper than the "
 "lock, so the request path uses the cache and the ``RwLock`` only on the "
@@ -2294,11 +2270,11 @@ msgstr ""
 "KiB이며(``benchmarks/results/primitives-latest.json``\\ 의 "
 "``engine_bytes``), 규칙 128개, 128바이트 규칙 이름, 트라이 노드 8,192개를 담을 용량이 있습니다."
 
-#: ../../zero-allocation.rst:725
+#: ../../zero-allocation.rst:706
 msgid "Why ``Arc`` and not reader counts"
 msgstr "읽는 쪽 카운트가 아니라 ``Arc``\\ 인 이유"
 
-#: ../../zero-allocation.rst:727
+#: ../../zero-allocation.rst:708
 msgid ""
 "The fixed-memory alternative keeps two engine slots, each with a reader "
 "count and its own allocation arena. A request pins a slot by incrementing "
@@ -2317,7 +2293,7 @@ msgstr ""
 "슬롯의 아레나를 초기화하고 그 안에 다시 만듭니다. 따라서 재구성 시점에 걸쳐 슬롯을 붙잡고 있는 읽는 쪽은 빌더를 막으며, 모든 "
 "요청이 프록시 I/O를 시작하기 전에 슬롯을 놓지 않으면 느린 원본 서버가 다음 게시를 멈춰 세울 것입니다."
 
-#: ../../zero-allocation.rst:729
+#: ../../zero-allocation.rst:710
 msgid ""
 "``Arc`` reference counting needs none of this. The storage thread builds "
 "a fresh ``Engine`` from each snapshot and publishes it; nothing is "
@@ -2337,11 +2313,11 @@ msgstr ""
 "엔진을 빌리고, 응답 경로는 연결 컨텍스트 전체를 가변으로 빌려야 하기 때문입니다. 몇 시간 동안 살아 있을 수 있는 업그레이드된 "
 "연결은 프록시되기 전에 캐시한 엔진을 놓아줍니다."
 
-#: ../../zero-allocation.rst:731
+#: ../../zero-allocation.rst:712
 msgid "Exercise 5.2"
 msgstr "연습 문제 5.2"
 
-#: ../../zero-allocation.rst:733
+#: ../../zero-allocation.rst:714
 msgid ""
 "Using the GCRA theorem, compute the maximum number of requests a single "
 "client can get through in the first 3 seconds after being idle, for "
@@ -2352,11 +2328,11 @@ msgstr ""
 "하나가 처음 3초 동안 통과시킬 수 있는 요청의 최대 수를 계산하세요. 고정 10초 윈도 카운터, 그리고 엄밀한 슬라이딩 윈도 "
 "로그와 비교하세요."
 
-#: ../../zero-allocation.rst:735
+#: ../../zero-allocation.rst:716
 msgid "Explain the invariant"
 msgstr "불변식 설명하기"
 
-#: ../../zero-allocation.rst:737
+#: ../../zero-allocation.rst:718
 msgid ""
 "Explain why an expired Robin Hood entry can be overwritten only by a key "
 "with a distance at least as large, using a three-slot example."

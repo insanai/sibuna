@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-10-24 10:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,7 +36,7 @@ msgid "Hashcash: The Mathematics of Tier One"
 msgstr "Hashcash：第一層の数学"
 
 #: ../../cryptography.rst:9 ../../cryptography.rst:36
-#: ../../cryptography.rst:167
+#: ../../cryptography.rst:146
 msgid "Objectives"
 msgstr "この章の学習目標"
 
@@ -57,17 +57,17 @@ msgstr "定義とコスト"
 msgid ""
 "Sibuna's Tier One puzzle for challenge string :math:`C` and difficulty "
 ":math:`b` bits is: find :math:`N \\in \\mathbb{N}` such that "
-":math:`\\text{SHA-256}(C \\parallel \\text{\":\"} \\parallel \\mathrm{dec}(N))` "
-"has :math:`b` leading zero bits. The decimal rendering of the nonce is "
-"deliberate; it keeps the wire format identical between the WebAssembly "
-"solver, the JavaScript fallback, and the native verifier without a binary "
-"encoding step."
+":math:`\\text{SHA-256}(C \\parallel \\text{\":\"} \\parallel "
+"\\mathrm{dec}(N))` has :math:`b` leading zero bits. The decimal rendering "
+"of the nonce is deliberate; it keeps the wire format identical between "
+"the WebAssembly solver, the JavaScript fallback, and the native verifier "
+"without a binary encoding step."
 msgstr ""
 "チャレンジ文字列\\ :math:`C`\\ と難易度\\ :math:`b`\\ ビットに対するSibunaの第一層のパズルは、\\ "
-":math:`\\text{SHA-256}(C \\parallel \\text{\":\"} \\parallel \\mathrm{dec}(N))`\\ "
-"が先頭に\\ :math:`b`\\ 個のゼロビットを持つような\\ :math:`N \\in \\mathbb{N}`\\ を見つけることです。"
-"nonceを十進数で表すのは意図的です。これにより、バイナリへのエンコード手順なしに、WebAssemblyソルバー、"
-"JavaScriptによる代替手段、ネイティブの検証器の間でワイヤーフォーマットが同一に保たれます。"
+":math:`\\text{SHA-256}(C \\parallel \\text{\":\"} \\parallel "
+"\\mathrm{dec}(N))`\\ が先頭に\\ :math:`b`\\ 個のゼロビットを持つような\\ :math:`N \\in "
+"\\mathbb{N}`\\ "
+"を見つけることです。nonceを十進数で表すのは意図的です。これにより、バイナリへのエンコード手順なしに、WebAssemblyソルバー、JavaScriptによる代替手段、ネイティブの検証器の間でワイヤーフォーマットが同一に保たれます。"
 
 #: ../../cryptography.rst:18
 msgid ""
@@ -151,28 +151,26 @@ msgstr "なぜ逐次作業か"
 #: ../../cryptography.rst:43
 msgid ""
 "A sequential-work construction introduces dependencies between "
-"computations: a later label needs a value produced earlier. This addresses "
-"a different quantity from aggregate work, namely the depth of the "
-"computation. Independent puzzles can still run in parallel, and hardware "
-"hash latency still matters."
+"computations: a later label needs a value produced earlier. This "
+"addresses a different quantity from aggregate work, namely the depth of "
+"the computation. Independent puzzles can still run in parallel, and "
+"hardware hash latency still matters."
 msgstr ""
-"逐次作業の構成は計算の間に依存関係を持ち込みます。後のラベルには、先に作られた値が必要です。これは総作業量とは別の量、つまり計算の深さを扱います。"
-"独立したパズルは依然として並列に実行でき、ハードウェアのハッシュのレイテンシーも依然として影響します。"
+"逐次作業の構成は計算の間に依存関係を持ち込みます。後のラベルには、先に作られた値が必要です。これは総作業量とは別の量、つまり計算の深さを扱います。独立したパズルは依然として並列に実行でき、ハードウェアのハッシュのレイテンシーも依然として影響します。"
 
 #: ../../cryptography.rst:45
 msgid ""
-"Sibuna follows the hash-based construction described by Cohen and Pietrzak. "
-"Its graph has :math:`2^{n+1}-1` labels at depth :math:`n`, but a fixed "
-"label count is not a deterministic browser latency: labels can span several "
-"compression blocks, openings may recompute subtrees, and scheduling adds "
-"variation. Security statements from oracle-model analyses must not be "
-"turned into an unqualified claim about every concrete implementation or "
-"adversary."
+"Sibuna follows the hash-based construction described by Cohen and "
+"Pietrzak. Its graph has :math:`2^{n+1}-1` labels at depth :math:`n`, but "
+"a fixed label count is not a deterministic browser latency: labels can "
+"span several compression blocks, openings may recompute subtrees, and "
+"scheduling adds variation. Security statements from oracle-model analyses "
+"must not be turned into an unqualified claim about every concrete "
+"implementation or adversary."
 msgstr ""
 "SibunaはCohenとPietrzakが示したハッシュに基づく構成に従います。そのグラフは深さ\\ :math:`n`\\ で\\ "
-":math:`2^{n+1}-1`\\ 個のラベルを持ちますが、ラベルの数が決まっていても、ブラウザーでのレイテンシーが決まるわけではありません。"
-"ラベルは複数の圧縮ブロックにわたることがあり、開示では部分木を再計算することがあり、スケジューリングもばらつきを加えます。"
-"オラクルモデルでの解析から得た安全性の主張を、具体的なすべての実装や敵対者についての無条件の主張に変えてはなりません。"
+":math:`2^{n+1}-1`\\ "
+"個のラベルを持ちますが、ラベルの数が決まっていても、ブラウザーでのレイテンシーが決まるわけではありません。ラベルは複数の圧縮ブロックにわたることがあり、開示では部分木を再計算することがあり、スケジューリングもばらつきを加えます。オラクルモデルでの解析から得た安全性の主張を、具体的なすべての実装や敵対者についての無条件の主張に変えてはなりません。"
 
 #: ../../cryptography.rst:47
 msgid "The Construction"
@@ -213,85 +211,23 @@ msgstr ""
 "をハッシュします：\\ :math:`\\ell_u = H(\\chi, u, \\{\\ell_{u_1 \\dots u_{i-1} 0} "
 ": u_i = 1\\})`\\ 。"
 
-#: ../../cryptography.rst:56
+#: ../../cryptography.rst:55
 msgid ""
 "A complete binary tree of depth 3 with nodes named depth.index. The root "
-"path of leaf 3.5 (nodes 0.0, 1.1, 2.2, 3.5) is highlighted in amber, the "
-"siblings 1.0, 2.3 and 3.4 sent in its opening are green, and dashed red "
-"edges run from 1.0 and 3.4 into leaf 3.5."
-msgstr ""
-"ノードをdepth.indexで名付けた深さ3の完全二分木です。葉3.5の根からの経路（ノード0.0、1.1、2.2、3.5）は琥珀色で強調され、"
-"その開示で送る兄弟1.0、2.3、3.4は緑色で、赤い破線の辺が1.0と3.4から葉3.5へ伸びています。"
+"path of leaf 3.5 (nodes 0.0, 1.1, 2.2, 3.5) is amber, the siblings 1.0, "
+"2.3 and 3.4 sent in its opening are green, and dashed red arrows run from "
+"1.0 and 3.4 into leaf 3.5. An arrow under the leaves shows that they are "
+"labelled from left to right."
+msgstr "ノードをdepth.indexで名付けた深さ3の完全二分木です。葉3.5の根からの経路（ノード0.0、1.1、2.2、3.5）は琥珀色、その開示で送る兄弟1.0、2.3、3.4は緑色で、赤い破線の矢印が1.0と3.4から葉3.5へ伸びています。葉の下の矢印は、葉を左から右の順にラベル付けすることを示します。"
 
-#: ../../cryptography.rst:56
-msgid ""
-"digraph posw_tree {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.25, ranksep=0.5, "
-"ordering=out];\n"
-"  node [shape=circle, fixedsize=true, width=0.5, fontname=\"Helvetica\", "
-"fontsize=10, style=filled, fillcolor=\"#ffffff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", arrowhead=none];\n"
-"\n"
-"  \"0.0\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5, xlabel=<<font "
-"color=\"#64748b\">root &phi;</font>>];\n"
-"  \"1.1\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"2.2\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"3.5\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"1.0\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"2.3\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"3.4\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"\n"
-"  \"0.0\" -> \"1.0\"; \"0.0\" -> \"1.1\";\n"
-"  \"1.0\" -> \"2.0\"; \"1.0\" -> \"2.1\"; \"1.1\" -> \"2.2\"; \"1.1\" -> \"2.3\";\n"
-"  \"2.0\" -> \"3.0\"; \"2.0\" -> \"3.1\"; \"2.1\" -> \"3.2\"; \"2.1\" -> \"3.3\";\n"
-"  \"2.2\" -> \"3.4\"; \"2.2\" -> \"3.5\"; \"2.3\" -> \"3.6\"; \"2.3\" -> \"3.7\";\n"
-"\n"
-"  \"3.5\" -> \"1.0\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"  \"3.5\" -> \"3.4\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"}"
-msgstr ""
-"digraph posw_tree {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.25, ranksep=0.5, "
-"ordering=out];\n"
-"  node [shape=circle, fixedsize=true, width=0.5, fontname=\"Helvetica\", "
-"fontsize=10, style=filled, fillcolor=\"#ffffff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", arrowhead=none];\n"
-"\n"
-"  \"0.0\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5, xlabel=<<font "
-"color=\"#64748b\">根 &phi;</font>>];\n"
-"  \"1.1\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"2.2\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"3.5\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"1.0\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"2.3\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"3.4\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"\n"
-"  \"0.0\" -> \"1.0\"; \"0.0\" -> \"1.1\";\n"
-"  \"1.0\" -> \"2.0\"; \"1.0\" -> \"2.1\"; \"1.1\" -> \"2.2\"; \"1.1\" -> \"2.3\";\n"
-"  \"2.0\" -> \"3.0\"; \"2.0\" -> \"3.1\"; \"2.1\" -> \"3.2\"; \"2.1\" -> \"3.3\";\n"
-"  \"2.2\" -> \"3.4\"; \"2.2\" -> \"3.5\"; \"2.3\" -> \"3.6\"; \"2.3\" -> \"3.7\";\n"
-"\n"
-"  \"3.5\" -> \"1.0\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"  \"3.5\" -> \"3.4\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"}"
-
-#: ../../cryptography.rst:56
+#: ../../cryptography.rst:58
 msgid ""
 "The depth-3 tree: an opening of leaf 3.5 sends the leaf label and the "
 "three sibling labels; the dashed edges are the left-sibling dependencies "
-"that make labelling sequential. Amber nodes form the path of leaf 3.5, "
-"green nodes are the siblings sent in the opening, and the dashed red "
-"edges are the left-sibling edges hashed into the leaf."
-msgstr ""
-"深さ3の木。葉3.5の開示では、葉のラベルと三つの兄弟のラベルを送ります。破線の辺は、ラベル付けを逐次的にする左の兄弟への依存です。琥珀色のノードは葉3.5の経路、緑のノードは開示で送る兄弟、赤い破線の辺は葉にハッシュされる左の兄弟の辺です。"
+"that make labelling sequential."
+msgstr "深さ3の木。葉3.5の開示では、葉のラベルと三つの兄弟のラベルを送ります。破線の辺は、ラベル付けを逐次的にする左の兄弟への依存です。"
 
-#: ../../cryptography.rst:81
+#: ../../cryptography.rst:60
 msgid ""
 "The left-sibling edges are what make the computation sequential: leaf "
 ":math:`u` cannot be labelled until every subtree to its left is complete, "
@@ -304,7 +240,7 @@ msgstr ""
 ":math:`\\varphi = \\ell_\\varepsilon`\\ は\\ :math:`2^{n+1} - 1`\\ "
 "個すべてのラベルに順に依存します。"
 
-#: ../../cryptography.rst:83
+#: ../../cryptography.rst:62
 msgid ""
 "**Openings.** After computing :math:`\\varphi`, the prover derives "
 ":math:`t` leaves by Fiat-Shamir, :math:`\\gamma_i = H(\\chi \\parallel "
@@ -323,11 +259,11 @@ msgstr ""
 "に到達することを確認します。検証者のコストは、有界な作業領域での\\ :math:`O(tn)`\\ "
 "回のラベル計算です。一回のラベル計算は複数のハッシュブロックにわたることがあります。ラベルを数えることは、圧縮関数の呼び出しを数えることではありません。"
 
-#: ../../cryptography.rst:85
+#: ../../cryptography.rst:64
 msgid "Implementation: ``posw::verify_opening``"
 msgstr "実装：\\ ``posw::verify_opening``"
 
-#: ../../cryptography.rst:87
+#: ../../cryptography.rst:66
 msgid ""
 "Recomputes one opened leaf from its sibling labels and walks the path to "
 "the root. In ``crates/pow/src/posw.rs`` (crate ``sibuna-pow``)."
@@ -335,15 +271,15 @@ msgstr ""
 "開示された葉一つを兄弟のラベルから再計算し、根までの経路をたどります。\\ ``crates/pow/src/posw.rs``\\ "
 "（クレート\\ ``sibuna-pow``\\ ）にあります。"
 
-#: ../../cryptography.rst:89
+#: ../../cryptography.rst:68
 msgid ""
 "fn verify_opening(base: &Sha256, n: u8, phi: &Label, gamma: u32, opening: "
 "&[Label]) -> bool {\n"
 "    let Some((leaf, siblings)) = opening.split_first() else {\n"
 "        return false;\n"
 "    };\n"
-"    // `siblings` runs from depth n up to depth 1; reversed, it pairs with "
-"depths 1..=n.\n"
+"    // `siblings` runs from depth n up to depth 1; reversed, it pairs "
+"with depths 1..=n.\n"
 "    let mut hasher = node_hasher(base, n, gamma);\n"
 "    for (d, sibling) in (1..=n).zip(siblings.iter().rev()) {\n"
 "        if turns_right(gamma, n, d) {\n"
@@ -398,11 +334,11 @@ msgstr ""
 "    current == *phi\n"
 "}"
 
-#: ../../cryptography.rst:120
+#: ../../cryptography.rst:99
 msgid "Sampling, Soundness, and Their Limits"
 msgstr "サンプリング、健全性、その限界"
 
-#: ../../cryptography.rst:123
+#: ../../cryptography.rst:102
 msgid ""
 "Consider a fixed commitment with an independently detectable bad fraction "
 ":math:`\\alpha`. If each opening samples uniformly and independently, the "
@@ -416,11 +352,11 @@ msgstr ""
 "回の開示で不正な位置をすべて見逃す確率は\\ :math:`(1-\\alpha)^t`\\ "
 "です。この初等的な計算は、開示が多いほど役立つ理由を説明します。しかし、これだけでは逐次作業プロトコルの安全性の証明にはなりません。"
 
-#: ../../cryptography.rst:125
+#: ../../cryptography.rst:104
 msgid "Worked example: a conditional sampling bound"
 msgstr "例題：条件付きのサンプリングの上限"
 
-#: ../../cryptography.rst:127
+#: ../../cryptography.rst:106
 msgid ""
 "With a fixed bad fraction :math:`\\alpha = 0.1` and :math:`t = 16` "
 "independent openings, the chance of missing every bad location is "
@@ -433,7 +369,7 @@ msgstr ""
 "回行うと、不正な位置をすべて見逃す確率は\\ :math:`0.9^{16} \\approx 0.185`\\ "
 "です。開示が32回なら約0.034です。この前提では、サンプルを選ぶ前にコミットメントが固定されています。証明者が多数の根を試せる場合、どのコミットメントを明かすかを選べる場合、失敗を相関させられる場合、この計算はその戦略を考慮していません。"
 
-#: ../../cryptography.rst:129
+#: ../../cryptography.rst:108
 msgid ""
 "The referenced sequential-work construction has a security analysis in an "
 "oracle model. Sibuna's domain separation, parameter mapping, truncation, "
@@ -444,11 +380,11 @@ msgid ""
 msgstr ""
 "参照した逐次作業の構成には、オラクルモデルでの安全性の解析があります。Sibunaのドメイン分離、パラメーターの対応付け、切り詰め、実装は、それでもなお構成の前提に照らして確認しなければなりません。Fiat-Shamirによるサンプリングは、コミットメントから開示を再現可能にします。再現可能であるだけでは、総当たりによる試行への耐性は証明されません。不正が決して安くならないという無条件の主張はしません。"
 
-#: ../../cryptography.rst:131
+#: ../../cryptography.rst:110
 msgid "Exercise 3.1"
 msgstr "演習3.1"
 
-#: ../../cryptography.rst:133
+#: ../../cryptography.rst:112
 msgid ""
 "If an attacker tries :math:`g` independent commitments, each accepted "
 "with probability :math:`q`, derive the probability that at least one is "
@@ -457,15 +393,15 @@ msgstr ""
 "攻撃者が独立なコミットメントを\\ :math:`g`\\ 個試し、それぞれが確率\\ :math:`q`\\ "
 "で受理されるとします。少なくとも一つが受理される確率を導いてください。その式にはどのコストが欠けているでしょうか。"
 
-#: ../../cryptography.rst:135
+#: ../../cryptography.rst:114
 msgid "*Hint:* First calculate the probability that all :math:`g` fail."
 msgstr "*ヒント：*\\ まず\\ :math:`g`\\ 個すべてが失敗する確率を計算してください。"
 
-#: ../../cryptography.rst:137
+#: ../../cryptography.rst:116
 msgid "Prover Memory"
 msgstr "証明者のメモリ"
 
-#: ../../cryptography.rst:140
+#: ../../cryptography.rst:119
 msgid ""
 "A naive prover stores every label (:math:`2^{n+1} - 1` of them). Sibuna's "
 "prover keeps a stack of the current path's left-sibling labels (:math:`n "
@@ -487,27 +423,25 @@ msgstr ""
 "KB未満です。ブラウザーのタブとネイティブのテストは同じ\\ ``Workspace``\\ 型（\\ "
 "``sibuna_pow::posw::Workspace``\\ ）を共有します。"
 
-#: ../../cryptography.rst:142
+#: ../../cryptography.rst:121
 msgid "Parameters Are Not Timings"
 msgstr "パラメーターは所要時間ではない"
 
-#: ../../cryptography.rst:145
+#: ../../cryptography.rst:124
 msgid ""
 "Sibuna maps work bits to depth using :math:`n = b - 3`, clamped to the "
-"supported interval :math:`[4, 24]`. This is a work-scale convention, not a "
-"guarantee of equal wall-clock time between algorithms. A leaf can hash "
+"supported interval :math:`[4, 24]`. This is a work-scale convention, not "
+"a guarantee of equal wall-clock time between algorithms. A leaf can hash "
 "several parent labels, while Hashcash repeatedly tests a nonce. Compiler, "
-"browser, processor, and parameter choices all affect their relative costs. "
-"The committed primitive benchmark measures verification; it does not "
-"establish browser solve latency."
+"browser, processor, and parameter choices all affect their relative "
+"costs. The committed primitive benchmark measures verification; it does "
+"not establish browser solve latency."
 msgstr ""
-"Sibunaは\\ :math:`n = b - 3`\\ を使って作業ビットを深さに対応付け、サポートする区間\\ :math:`[4, 24]`\\ "
-"に収めます。これは作業の尺度に関する取り決めであり、アルゴリズム間で実時間が等しいことを保証するものではありません。"
-"葉は複数の親のラベルをハッシュすることがあり、Hashcashはnonceを繰り返し試します。コンパイラー、ブラウザー、プロセッサー、"
-"パラメーターの選択はすべて、両者の相対的なコストに影響します。コミット済みのプリミティブのベンチマークは検証を測るもので、"
-"ブラウザーでの解答のレイテンシーを示すものではありません。"
+"Sibunaは\\ :math:`n = b - 3`\\ を使って作業ビットを深さに対応付け、サポートする区間\\ :math:`[4, "
+"24]`\\ "
+"に収めます。これは作業の尺度に関する取り決めであり、アルゴリズム間で実時間が等しいことを保証するものではありません。葉は複数の親のラベルをハッシュすることがあり、Hashcashはnonceを繰り返し試します。コンパイラー、ブラウザー、プロセッサー、パラメーターの選択はすべて、両者の相対的なコストに影響します。コミット済みのプリミティブのベンチマークは検証を測るもので、ブラウザーでの解答のレイテンシーを示すものではありません。"
 
-#: ../../cryptography.rst:147
+#: ../../cryptography.rst:126
 msgid ""
 "Proof size is :math:`32(1 + t(n+1))` bytes. At depth 13 with sixteen "
 "openings, this is :math:`32(1 + 16 \\times 14) = 7200` bytes. Raising the "
@@ -518,36 +452,34 @@ msgstr ""
 "16 \\times 14) = 7200`\\ "
 "バイトです。開示の回数を増やすと、木を構築する主要なコストが同じでも、証明と検証者の作業の両方が増えます。"
 
-#: ../../cryptography.rst:149
+#: ../../cryptography.rst:128
 msgid "Exercise 3.2"
 msgstr "演習3.2"
 
-#: ../../cryptography.rst:151
+#: ../../cryptography.rst:130
 msgid ""
 "Compute the proof size at depth 17 with 16 openings. Then double the "
 "opening count. Which term doubles and which term remains fixed?"
 msgstr ""
 "深さ17、開示16回での証明のサイズを計算してください。次に開示の回数を2倍にしてください。どの項が2倍になり、どの項が変わらないでしょうか。"
 
-#: ../../cryptography.rst:153
+#: ../../cryptography.rst:132
 msgid "Choosing a Construction"
 msgstr "構成の選び方"
 
-#: ../../cryptography.rst:156
+#: ../../cryptography.rst:135
 msgid ""
 "The relevant comparison is a resource budget, not an algorithm's "
-"reputation. Record the prover's memory, the verifier's worst-case work, the "
-"proof bytes, and the assumptions needed for the claimed property. "
-"Memory-hard search can be useful, but a verifier that must repeat expensive "
-"work gives an attacker another place to spend the server's resources. "
-"Publicly verifiable delay constructions serve a different trust model from "
-"a shared-secret gate."
+"reputation. Record the prover's memory, the verifier's worst-case work, "
+"the proof bytes, and the assumptions needed for the claimed property. "
+"Memory-hard search can be useful, but a verifier that must repeat "
+"expensive work gives an attacker another place to spend the server's "
+"resources. Publicly verifiable delay constructions serve a different "
+"trust model from a shared-secret gate."
 msgstr ""
-"比べるべきはアルゴリズムの評判ではなく、資源の予算です。証明者のメモリ、検証者の最悪時の作業量、証明のバイト数、"
-"主張する性質に必要な前提を記録してください。メモリハードな探索は役立つことがありますが、高価な作業を繰り返さなければならない検証器は、"
-"攻撃者にサーバーの資源を消費させる別の場所を与えます。公開検証可能な遅延の構成は、秘密を共有するゲートとは別の信頼モデルに向いています。"
+"比べるべきはアルゴリズムの評判ではなく、資源の予算です。証明者のメモリ、検証者の最悪時の作業量、証明のバイト数、主張する性質に必要な前提を記録してください。メモリハードな探索は役立つことがありますが、高価な作業を繰り返さなければならない検証器は、攻撃者にサーバーの資源を消費させる別の場所を与えます。公開検証可能な遅延の構成は、秘密を共有するゲートとは別の信頼モデルに向いています。"
 
-#: ../../cryptography.rst:158
+#: ../../cryptography.rst:137
 msgid ""
 "Sibuna retains cheap hash verification and a hash-based sequential-work "
 "option. The latter requires more proof bytes and more careful parameter "
@@ -556,22 +488,22 @@ msgid ""
 msgstr ""
 "Sibunaは、安価なハッシュによる検証と、ハッシュに基づく逐次作業の選択肢を保持しています。後者は証明のバイト数が多く、パラメーターをより慎重に解析する必要があります。どちらを選んでも、高価な検証に入る前に不正な形式の証明を拒否する必要はなくなりません。"
 
-#: ../../cryptography.rst:160 ../../cryptography.rst:245
+#: ../../cryptography.rst:139 ../../cryptography.rst:210
 msgid "Explain the invariant"
 msgstr "不変条件を説明してください"
 
-#: ../../cryptography.rst:162
+#: ../../cryptography.rst:141
 msgid ""
 "Explain the distinction between an authentication tree, which proves that "
 "a label belongs to a commitment, and dependency edges, which constrain "
 "how labels are computed."
 msgstr "ラベルがコミットメントに属することを証明する認証木と、ラベルの計算方法を制約する依存の辺との違いを説明してください。"
 
-#: ../../cryptography.rst:164
+#: ../../cryptography.rst:143
 msgid "Symmetric Authentication: Challenges and Sessions"
 msgstr "対称鍵による認証：チャレンジとセッション"
 
-#: ../../cryptography.rst:169
+#: ../../cryptography.rst:148
 msgid ""
 "Explain why a keyed pseudorandom function is the correct primitive when "
 "issuer and verifier are the same trust domain, state the forgery bound "
@@ -580,11 +512,11 @@ msgid ""
 msgstr ""
 "発行者と検証者が同じ信頼ドメインにあるとき鍵付き擬似ランダム関数が正しいプリミティブである理由を説明し、128ビットのタグに対する偽造の上限を述べ、状態を持たないチャレンジレコードと使用済み集合の上限を説明し、鍵スケジュールを読み解きます。"
 
-#: ../../cryptography.rst:171
+#: ../../cryptography.rst:150
 msgid "Issuer Equals Verifier"
 msgstr "発行者と検証者は同じ"
 
-#: ../../cryptography.rst:174
+#: ../../cryptography.rst:153
 msgid ""
 "A digital signature lets *anyone* holding the public key verify, which is "
 "the right tool when verifiers must not be able to mint. Sibuna's verifier "
@@ -598,11 +530,11 @@ msgstr ""
 "検証できます。検証者に発行させてはならない場合には、これが正しい道具です。Sibunaの検証者は発行者\\ *そのもの*\\ "
 "です（または一つのシードを共有するクラスターです）。擬似ランダム関数から作るメッセージ認証コードは、その信頼ドメインの中での認証を提供します。公開検証は提供しません。MAC鍵を持つ者は誰でもトークンを発行できます。ベンチマークの章では、実装したトークンの操作を比較します。"
 
-#: ../../cryptography.rst:176
+#: ../../cryptography.rst:155
 msgid "Lemma 3 (Forgery bound)"
 msgstr "補題3（偽造の上限）"
 
-#: ../../cryptography.rst:178
+#: ../../cryptography.rst:157
 msgid ""
 "With BLAKE3 in keyed mode modelled as a PRF and a 16-byte tag, an "
 "adversary making :math:`q` verification queries forges a valid token with "
@@ -614,7 +546,7 @@ msgstr ""
 "回の検証クエリを行う敵対者が有効なトークンを偽造する確率は高々\\ :math:`q \\cdot 2^{-128} + "
 "\\varepsilon_{\\mathrm{PRF}}`\\ です。毎秒100万クエリでも、毎秒\\ :math:`2^{-108}`\\ です。"
 
-#: ../../cryptography.rst:180
+#: ../../cryptography.rst:159
 msgid ""
 "A second consequence matters for the long term: Ed25519 rests on discrete "
 "logarithms in an elliptic-curve group, which Shor's algorithm breaks; a "
@@ -623,16 +555,14 @@ msgid ""
 "option (``--token-scheme ed25519``) for deployments that need non-minting "
 "verifiers."
 msgstr ""
-"長期的にはもう一つの帰結が重要です。Ed25519は楕円曲線群の離散対数に依拠しており、これはShorのアルゴリズムで破られます。"
-"鍵付きハッシュはハッシュ関数だけに依拠しており、量子アルゴリズムによる高速化は高々二次です。Sibunaは、"
-"発行能力を持たない検証者を必要とするデプロイのために、Ed25519を選択肢（\\ ``--token-scheme ed25519``\\ "
-"）として残しています。"
+"長期的にはもう一つの帰結が重要です。Ed25519は楕円曲線群の離散対数に依拠しており、これはShorのアルゴリズムで破られます。鍵付きハッシュはハッシュ関数だけに依拠しており、量子アルゴリズムによる高速化は高々二次です。Sibunaは、発行能力を持たない検証者を必要とするデプロイのために、Ed25519を選択肢（\\ "
+"``--token-scheme ed25519``\\ ）として残しています。"
 
-#: ../../cryptography.rst:182
+#: ../../cryptography.rst:161
 msgid "The Key Schedule"
 msgstr "鍵スケジュール"
 
-#: ../../cryptography.rst:185
+#: ../../cryptography.rst:164
 msgid ""
 "One 32-byte master seed (from ``--secret-file``, ``SIBUNA_SECRET``, or a "
 "fresh random value) derives every purpose key with keyed BLAKE3 and a "
@@ -642,11 +572,11 @@ msgstr ""
 "32バイトのマスターシード一つ（\\ ``--secret-file``\\ 、\\ ``SIBUNA_SECRET``\\ "
 "、または新たに生成した乱数値から得ます）から、鍵付きBLAKE3とドメイン文字列によって用途ごとの鍵をすべて導きます。トークン鍵、チャレンジ鍵、Ed25519鍵、フィンガープリント鍵、そして要件チケットを封印する要件鍵です（第IV部）。"
 
-#: ../../cryptography.rst:187
+#: ../../cryptography.rst:166
 msgid "Implementation: ``Keys::derive``"
 msgstr "実装：\\ ``Keys::derive``"
 
-#: ../../cryptography.rst:189
+#: ../../cryptography.rst:168
 msgid ""
 "Derives the five purpose keys from the seed. In "
 "``crates/challenge/src/keys.rs`` (crate ``sibuna-challenge``). ``Keys`` "
@@ -657,7 +587,7 @@ msgstr ""
 "``sibuna-challenge``\\ ）にあります。\\ ``Keys``\\ と\\ ``Seed``\\ "
 "は破棄されるときにバイトをゼロにし、\\ ``Debug``\\ 出力は伏せ字になります。"
 
-#: ../../cryptography.rst:191
+#: ../../cryptography.rst:170
 msgid ""
 "pub fn derive(seed: &Seed) -> Keys {\n"
 "    Keys {\n"
@@ -687,7 +617,7 @@ msgstr ""
 "    blake3::keyed_hash(seed.as_bytes(), purpose.as_bytes())\n"
 "}"
 
-#: ../../cryptography.rst:207
+#: ../../cryptography.rst:186
 msgid ""
 "In a cluster, ``Keys::bind_node`` replaces the challenge key by keyed "
 "BLAKE3 under it over ``sibuna/challenge-node/v1`` and the node id, so a "
@@ -698,7 +628,7 @@ msgstr ""
 "``sibuna/challenge-node/v1``\\ "
 "とノードIDに対して計算した鍵付きBLAKE3で置き換えます。これにより、チャレンジは発行したノードに戻らなければなりません。一方、セッショントークンと要件チケットはすべてのメンバーで有効なままです。"
 
-#: ../../cryptography.rst:209
+#: ../../cryptography.rst:188
 msgid ""
 "Domain separation prevents accidental reuse across purposes; compromise "
 "of the master seed compromises every derived key. A cluster only has to "
@@ -706,64 +636,29 @@ msgid ""
 msgstr ""
 "ドメイン分離は、用途をまたぐ偶発的な再利用を防ぎます。マスターシードが漏れれば、導出したすべての鍵が漏れます。クラスターが合意すべきなのはシード一つだけです。"
 
-#: ../../cryptography.rst:211
+#: ../../cryptography.rst:190
 msgid "Stateless Challenges"
 msgstr "状態を持たないチャレンジ"
 
-#: ../../cryptography.rst:215
+#: ../../cryptography.rst:193
 msgid ""
-"Challenge identifier\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"| ver | alg | diff | t | issued_at | fingerprint | nonce   | rule_hash | "
-"BLAKE3 tag     |\n"
-"|  1  |  1  |  1   | 1 |     8     |      8      |    8    |     8     |    "
-"   16       |\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"|<----------------------- 36-byte payload ---------------------------->|<-- "
-"keyed tag ->|\n"
-"36-byte payload + 16-byte keyed tag = 52 bytes, 70 URL-safe base64 "
-"characters\n"
-"\n"
-"Session token\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"| ver | alg | bits | res | timestamp | expiry | rule_hash | fingerprint | "
-"BLAKE3 tag     |\n"
-"|  1  |  1  |  1   |  5  |     8     |   8    |     8     |      8      |   "
-"    16       |\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"|<------------------------ 40-byte payload "
-"---------------------------->|<-- keyed tag ->|\n"
-"40-byte payload + 16-byte keyed tag = 56 bytes, 75 URL-safe base64 "
-"characters"
-msgstr ""
-"チャレンジの識別子\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"| ver | alg | diff | t | issued_at | fingerprint | nonce   | rule_hash | "
-"BLAKE3 tag     |\n"
-"|  1  |  1  |  1   | 1 |     8     |      8      |    8    |     8     |    "
-"   16       |\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"|<----------------------- 36バイトのペイロード ----------------------->|<- 鍵付きタグ ->|\n"
-"36バイトのペイロード + 16バイトの鍵付きタグ = 52バイト、URL安全なbase64で70文字\n"
-"\n"
-"セッショントークン\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"| ver | alg | bits | res | timestamp | expiry | rule_hash | fingerprint | "
-"BLAKE3 tag     |\n"
-"|  1  |  1  |  1   |  5  |     8     |   8    |     8     |      8      |   "
-"    16       |\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"|<------------------------ 40バイトのペイロード ----------------------->|<- 鍵付きタグ "
-"->|\n"
-"40バイトのペイロード + 16バイトの鍵付きタグ = 56バイト、URL安全なbase64で75文字"
+"Two byte layouts. The challenge identifier: ver, alg, diff and t of one "
+"byte each, then issued_at, fingerprint, nonce and rule_hash of eight "
+"bytes each, a 36-byte payload, followed by a 16-byte BLAKE3 tag; 52 "
+"bytes, sent as 70 URL-safe base64 characters. The session token: ver, alg "
+"and bits of one byte each, res of five bytes, then timestamp, expiry, "
+"rule_hash and fingerprint of eight bytes each, a 40-byte payload, "
+"followed by a 16-byte BLAKE3 tag; 56 bytes, sent as 75 URL-safe base64 "
+"characters."
+msgstr "二つのバイト配置です。チャレンジ識別子では、1バイトずつのver、alg、diff、tと、8バイトずつのissued_at、fingerprint、nonce、rule_hashからなる36バイトのペイロードに、16バイトのBLAKE3タグが続きます。合計52バイトで、URL安全なbase64の70文字として送ります。セッショントークンでは、1バイトずつのver、alg、bits、5バイトのres、8バイトずつのtimestamp、expiry、rule_hash、fingerprintからなる40バイトのペイロードに、16バイトのBLAKE3タグが続きます。合計56バイトで、URL安全なbase64の75文字として送ります。"
 
-#: ../../cryptography.rst:215
+#: ../../cryptography.rst:196
 msgid ""
-"Wire formats of the challenge identifier and the session token (field "
-"widths in bytes)."
-msgstr "チャレンジ識別子とセッショントークンのワイヤーフォーマット（フィールドの幅はバイト単位）。"
+"Wire formats of the challenge identifier and the session token. The "
+"numbers above each record are byte offsets."
+msgstr "チャレンジ識別子とセッショントークンのワイヤーフォーマット。各レコードの上の数字はバイトオフセットです。"
 
-#: ../../cryptography.rst:233
+#: ../../cryptography.rst:198
 msgid ""
 "A challenge identifier is a self-authenticating record: version, "
 "algorithm, difficulty, opening count, issue time, the client's keyed "
@@ -776,11 +671,11 @@ msgid ""
 msgstr ""
 "チャレンジ識別子は自己認証するレコードです。バージョン、アルゴリズム、難易度、開示数、発行時刻、クライアントの鍵付きフィンガープリント、PRFで導いたnonce、チャレンジを要求したポリシールールのハッシュを持ち、その後にチャレンジ鍵による16バイトのタグが続きます。発行しても何も書き込みません。検証ではレコードをデコードし、タグを定数時間で確認し、経過時間をチャレンジのTTLと照合し、フィンガープリントを送信元のクライアントと照合し、その後で初めて証明を調べます。"
 
-#: ../../cryptography.rst:235
+#: ../../cryptography.rst:200
 msgid "Lemma 4 (State grows only with paid work)"
 msgstr "補題4（状態は支払われた作業に比例してのみ増える）"
 
-#: ../../cryptography.rst:237
+#: ../../cryptography.rst:202
 msgid ""
 "Let :math:`S` be the set of challenge tags the daemon remembers. A tag "
 "enters :math:`S` only after a valid proof for it was accepted, and it "
@@ -796,7 +691,7 @@ msgstr ""
 ":math:`r`\\ とすると、\\ :math:`|S| \\le r \\cdot \\mathrm{TTL}`\\ "
 "です。無償のチャレンジ取得ではタグは割り当てられません。実装は容量も固定しており、満杯のときは有効な解答を拒否することがあります。これは状態の上限であり、あらゆる敵対者の計算戦略に対する下限ではありません。"
 
-#: ../../cryptography.rst:239
+#: ../../cryptography.rst:204
 msgid ""
 "The spent set is 16 shards of Robin Hood open addressing over the 16-byte "
 "tags (Part V). The fingerprint is a keyed hash of the client address and "
@@ -806,11 +701,11 @@ msgstr ""
 "使用済み集合は、16バイトのタグに対するRobin "
 "Hoodオープンアドレス法の16個のシャードです（第V部）。フィンガープリントはクライアントのアドレスとUser-Agentの鍵付きハッシュです。連結によって二つの入力が衝突しないように長さで区切り、他のクライアントのフィンガープリントをオフラインで計算できないように鍵を付けています。"
 
-#: ../../cryptography.rst:241
+#: ../../cryptography.rst:206
 msgid "Exercise 3.3"
 msgstr "演習3.3"
 
-#: ../../cryptography.rst:243
+#: ../../cryptography.rst:208
 msgid ""
 "A token payload carries a work level, ``timestamp``, ``expiry``, "
 "``rule_hash``, and ``fingerprint``. Explain what each field prevents if "
@@ -820,7 +715,7 @@ msgstr ""
 "、\\ ``fingerprint``\\ "
 "を持ちます。各フィールドを取り除いたら何が防げなくなるかを説明し、タグが五つすべてを覆わなければならない理由を説明してください。"
 
-#: ../../cryptography.rst:247
+#: ../../cryptography.rst:212
 msgid ""
 "A colleague proposes switching all tokens to Ed25519 \"because it is "
 "stronger\". Explain the trust-domain argument, the cost difference, and "

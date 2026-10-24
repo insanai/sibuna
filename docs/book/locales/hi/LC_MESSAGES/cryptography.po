@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-10-24 10:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:37+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -39,7 +39,7 @@ msgid "Hashcash: The Mathematics of Tier One"
 msgstr "Hashcash: टियर एक का गणित"
 
 #: ../../cryptography.rst:9 ../../cryptography.rst:36
-#: ../../cryptography.rst:167
+#: ../../cryptography.rst:146
 msgid "Objectives"
 msgstr "उद्देश्य"
 
@@ -241,97 +241,31 @@ msgstr ""
 ":math:`\\ell_u = H(\\chi, u, \\{\\ell_{u_1 \\dots u_{i-1} 0} : u_i = "
 "1\\})`।"
 
-#: ../../cryptography.rst:56
+#: ../../cryptography.rst:55
 msgid ""
 "A complete binary tree of depth 3 with nodes named depth.index. The root "
-"path of leaf 3.5 (nodes 0.0, 1.1, 2.2, 3.5) is highlighted in amber, the "
-"siblings 1.0, 2.3 and 3.4 sent in its opening are green, and dashed red "
-"edges run from 1.0 and 3.4 into leaf 3.5."
+"path of leaf 3.5 (nodes 0.0, 1.1, 2.2, 3.5) is amber, the siblings 1.0, "
+"2.3 and 3.4 sent in its opening are green, and dashed red arrows run from "
+"1.0 and 3.4 into leaf 3.5. An arrow under the leaves shows that they are "
+"labelled from left to right."
 msgstr ""
-"गहराई 3 का एक पूर्ण बाइनरी ट्री, जिसके नोड depth.index के रूप में नामित "
-"हैं। लीफ़ 3.5 का रूट पाथ (नोड 0.0, 1.1, 2.2, 3.5) एम्बर रंग में हाइलाइट "
-"है, उसकी ओपनिंग में भेजे गए सहोदर 1.0, 2.3 और 3.4 हरे हैं, और डैश वाले "
-"लाल किनारे 1.0 और 3.4 से लीफ़ 3.5 तक जाते हैं।"
+"गहराई 3 का एक पूर्ण बाइनरी ट्री, जिसके नोड depth.index के रूप में नामित हैं। "
+"लीफ़ 3.5 का रूट पाथ (नोड 0.0, 1.1, 2.2, 3.5) एम्बर रंग में है, उसकी ओपनिंग "
+"में भेजे गए सहोदर 1.0, 2.3 और 3.4 हरे हैं, और डैश वाले लाल तीर 1.0 और 3.4 से "
+"लीफ़ 3.5 तक जाते हैं। लीफ़ के नीचे का एक तीर दिखाता है कि लीफ़ बाएँ से दाएँ "
+"लेबल की जाती हैं।"
 
-#: ../../cryptography.rst:56
-msgid ""
-"digraph posw_tree {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.25, ranksep=0.5, "
-"ordering=out];\n"
-"  node [shape=circle, fixedsize=true, width=0.5, fontname=\"Helvetica\", "
-"fontsize=10, style=filled, fillcolor=\"#ffffff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", arrowhead=none];\n"
-"\n"
-"  \"0.0\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5, "
-"xlabel=<<font color=\"#64748b\">root &phi;</font>>];\n"
-"  \"1.1\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"2.2\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"3.5\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"1.0\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"2.3\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"3.4\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"\n"
-"  \"0.0\" -> \"1.0\"; \"0.0\" -> \"1.1\";\n"
-"  \"1.0\" -> \"2.0\"; \"1.0\" -> \"2.1\"; \"1.1\" -> \"2.2\"; \"1.1\" -> "
-"\"2.3\";\n"
-"  \"2.0\" -> \"3.0\"; \"2.0\" -> \"3.1\"; \"2.1\" -> \"3.2\"; \"2.1\" -> "
-"\"3.3\";\n"
-"  \"2.2\" -> \"3.4\"; \"2.2\" -> \"3.5\"; \"2.3\" -> \"3.6\"; \"2.3\" -> "
-"\"3.7\";\n"
-"\n"
-"  \"3.5\" -> \"1.0\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"  \"3.5\" -> \"3.4\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"}"
-msgstr ""
-"digraph posw_tree {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.25, ranksep=0.5, "
-"ordering=out];\n"
-"  node [shape=circle, fixedsize=true, width=0.5, fontname=\"Helvetica\", "
-"fontsize=10, style=filled, fillcolor=\"#ffffff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", arrowhead=none];\n"
-"\n"
-"  \"0.0\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5, "
-"xlabel=<<font color=\"#64748b\">रूट &phi;</font>>];\n"
-"  \"1.1\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"2.2\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"3.5\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"1.0\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"2.3\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"3.4\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"\n"
-"  \"0.0\" -> \"1.0\"; \"0.0\" -> \"1.1\";\n"
-"  \"1.0\" -> \"2.0\"; \"1.0\" -> \"2.1\"; \"1.1\" -> \"2.2\"; \"1.1\" -> "
-"\"2.3\";\n"
-"  \"2.0\" -> \"3.0\"; \"2.0\" -> \"3.1\"; \"2.1\" -> \"3.2\"; \"2.1\" -> "
-"\"3.3\";\n"
-"  \"2.2\" -> \"3.4\"; \"2.2\" -> \"3.5\"; \"2.3\" -> \"3.6\"; \"2.3\" -> "
-"\"3.7\";\n"
-"\n"
-"  \"3.5\" -> \"1.0\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"  \"3.5\" -> \"3.4\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"}"
-
-#: ../../cryptography.rst:56
+#: ../../cryptography.rst:58
 msgid ""
 "The depth-3 tree: an opening of leaf 3.5 sends the leaf label and the "
 "three sibling labels; the dashed edges are the left-sibling dependencies "
-"that make labelling sequential. Amber nodes form the path of leaf 3.5, "
-"green nodes are the siblings sent in the opening, and the dashed red "
-"edges are the left-sibling edges hashed into the leaf."
+"that make labelling sequential."
 msgstr ""
 "गहराई-3 का ट्री: लीफ़ 3.5 की ओपनिंग लीफ़ लेबल और तीन सहोदर लेबल भेजती है; "
 "डैश वाले किनारे बाएँ सहोदर की वे निर्भरताएँ हैं जो लेबलिंग को अनुक्रमिक "
-"बनाती हैं। एम्बर नोड लीफ़ 3.5 का पाथ बनाते हैं, हरे नोड ओपनिंग में भेजे "
-"गए सहोदर हैं, और डैश वाले लाल किनारे वे बाएँ-सहोदर किनारे हैं जिनका हैश "
-"लीफ़ में जाता है।"
+"बनाती हैं।"
 
-#: ../../cryptography.rst:81
+#: ../../cryptography.rst:60
 msgid ""
 "The left-sibling edges are what make the computation sequential: leaf "
 ":math:`u` cannot be labelled until every subtree to its left is complete, "
@@ -345,7 +279,7 @@ msgstr ""
 ":math:`\\varphi = \\ell_\\varepsilon` क्रम से सभी :math:`2^{n+1} - 1` "
 "लेबल पर निर्भर करता है।"
 
-#: ../../cryptography.rst:83
+#: ../../cryptography.rst:62
 msgid ""
 "**Openings.** After computing :math:`\\varphi`, the prover derives "
 ":math:`t` leaves by Fiat-Shamir, :math:`\\gamma_i = H(\\chi \\parallel "
@@ -366,11 +300,11 @@ msgstr ""
 "सीमित वर्कस्पेस के साथ :math:`O(tn)` लेबल गणनाएँ है। एक लेबल गणना कई हैश "
 "ब्लॉक में फैल सकती है; लेबल गिनना compression कॉल गिनना नहीं है।"
 
-#: ../../cryptography.rst:85
+#: ../../cryptography.rst:64
 msgid "Implementation: ``posw::verify_opening``"
 msgstr "इम्प्लीमेंटेशन: ``posw::verify_opening``"
 
-#: ../../cryptography.rst:87
+#: ../../cryptography.rst:66
 msgid ""
 "Recomputes one opened leaf from its sibling labels and walks the path to "
 "the root. In ``crates/pow/src/posw.rs`` (crate ``sibuna-pow``)."
@@ -378,7 +312,7 @@ msgstr ""
 "खोली गई एक लीफ़ की उसके सहोदर लेबल से दोबारा गणना करता है और रूट तक पाथ "
 "पर चलता है। ``crates/pow/src/posw.rs`` में (क्रेट ``sibuna-pow``)।"
 
-#: ../../cryptography.rst:89
+#: ../../cryptography.rst:68
 msgid ""
 "fn verify_opening(base: &Sha256, n: u8, phi: &Label, gamma: u32, opening: "
 "&[Label]) -> bool {\n"
@@ -442,11 +376,11 @@ msgstr ""
 "    current == *phi\n"
 "}"
 
-#: ../../cryptography.rst:120
+#: ../../cryptography.rst:99
 msgid "Sampling, Soundness, and Their Limits"
 msgstr "सैंपलिंग, सुदृढ़ता और उनकी सीमाएँ"
 
-#: ../../cryptography.rst:123
+#: ../../cryptography.rst:102
 msgid ""
 "Consider a fixed commitment with an independently detectable bad fraction "
 ":math:`\\alpha`. If each opening samples uniformly and independently, the "
@@ -462,11 +396,11 @@ msgstr ""
 "ओपनिंग क्यों मदद करती हैं। यह अपने आप में अनुक्रमिक कार्य वाले प्रोटोकॉल "
 "का सुरक्षा प्रमाण नहीं है।"
 
-#: ../../cryptography.rst:125
+#: ../../cryptography.rst:104
 msgid "Worked example: a conditional sampling bound"
 msgstr "हल किया गया उदाहरण: एक सशर्त सैंपलिंग सीमा"
 
-#: ../../cryptography.rst:127
+#: ../../cryptography.rst:106
 msgid ""
 "With a fixed bad fraction :math:`\\alpha = 0.1` and :math:`t = 16` "
 "independent openings, the chance of missing every bad location is "
@@ -482,7 +416,7 @@ msgstr ""
 "(grind) सकता है, चुन सकता है कि कौन-सा कमिटमेंट प्रकट करे, या विफलताओं को "
 "परस्पर संबद्ध कर सकता है, तो यह गणना उस रणनीति का हिसाब नहीं रखती।"
 
-#: ../../cryptography.rst:129
+#: ../../cryptography.rst:108
 msgid ""
 "The referenced sequential-work construction has a security analysis in an "
 "oracle model. Sibuna's domain separation, parameter mapping, truncation, "
@@ -498,11 +432,11 @@ msgstr ""
 "केवल दोबारा बनाने योग्य होना grinding के प्रति प्रतिरोध सिद्ध नहीं करता। "
 "हम कोई बिना शर्त दावा नहीं करते कि धोखा देना कभी सस्ता नहीं होता।"
 
-#: ../../cryptography.rst:131
+#: ../../cryptography.rst:110
 msgid "Exercise 3.1"
 msgstr "अभ्यास 3.1"
 
-#: ../../cryptography.rst:133
+#: ../../cryptography.rst:112
 msgid ""
 "If an attacker tries :math:`g` independent commitments, each accepted "
 "with probability :math:`q`, derive the probability that at least one is "
@@ -512,15 +446,15 @@ msgstr ""
 ":math:`q` प्रायिकता से स्वीकार होता है, तो कम से कम एक के स्वीकार होने की "
 "प्रायिकता निकालें। उस अभिव्यक्ति में कौन-सी लागतें छूटी हुई हैं?"
 
-#: ../../cryptography.rst:135
+#: ../../cryptography.rst:114
 msgid "*Hint:* First calculate the probability that all :math:`g` fail."
 msgstr "*संकेत:* पहले यह प्रायिकता निकालें कि सभी :math:`g` विफल हों।"
 
-#: ../../cryptography.rst:137
+#: ../../cryptography.rst:116
 msgid "Prover Memory"
 msgstr "प्रूवर की मेमोरी"
 
-#: ../../cryptography.rst:140
+#: ../../cryptography.rst:119
 msgid ""
 "A naive prover stores every label (:math:`2^{n+1} - 1` of them). Sibuna's "
 "prover keeps a stack of the current path's left-sibling labels (:math:`n "
@@ -544,11 +478,11 @@ msgstr ""
 "से कम है: ब्राउज़र टैब और नेटिव परीक्षण एक ही ``Workspace`` प्रकार "
 "(``sibuna_pow::posw::Workspace``) साझा करते हैं।"
 
-#: ../../cryptography.rst:142
+#: ../../cryptography.rst:121
 msgid "Parameters Are Not Timings"
 msgstr "पैरामीटर समय-माप नहीं हैं"
 
-#: ../../cryptography.rst:145
+#: ../../cryptography.rst:124
 msgid ""
 "Sibuna maps work bits to depth using :math:`n = b - 3`, clamped to the "
 "supported interval :math:`[4, 24]`. This is a work-scale convention, not "
@@ -566,7 +500,7 @@ msgstr ""
 "सापेक्ष लागतों को प्रभावित करते हैं। कमिट किया गया प्रिमिटिव बेंचमार्क "
 "सत्यापन को मापता है; वह ब्राउज़र में हल की लेटेंसी स्थापित नहीं करता।"
 
-#: ../../cryptography.rst:147
+#: ../../cryptography.rst:126
 msgid ""
 "Proof size is :math:`32(1 + t(n+1))` bytes. At depth 13 with sixteen "
 "openings, this is :math:`32(1 + 16 \\times 14) = 7200` bytes. Raising the "
@@ -578,11 +512,11 @@ msgstr ""
 "बढ़ाने से प्रमाण और सत्यापनकर्ता का कार्य, दोनों बढ़ते हैं, भले ही ट्री "
 "बनाने की प्रमुख लागत वही रहे।"
 
-#: ../../cryptography.rst:149
+#: ../../cryptography.rst:128
 msgid "Exercise 3.2"
 msgstr "अभ्यास 3.2"
 
-#: ../../cryptography.rst:151
+#: ../../cryptography.rst:130
 msgid ""
 "Compute the proof size at depth 17 with 16 openings. Then double the "
 "opening count. Which term doubles and which term remains fixed?"
@@ -590,11 +524,11 @@ msgstr ""
 "16 ओपनिंग के साथ गहराई 17 पर प्रमाण का आकार निकालें। फिर ओपनिंग की संख्या "
 "दोगुनी करें। कौन-सा पद दोगुना होता है और कौन-सा स्थिर रहता है?"
 
-#: ../../cryptography.rst:153
+#: ../../cryptography.rst:132
 msgid "Choosing a Construction"
 msgstr "निर्माण का चुनाव"
 
-#: ../../cryptography.rst:156
+#: ../../cryptography.rst:135
 msgid ""
 "The relevant comparison is a resource budget, not an algorithm's "
 "reputation. Record the prover's memory, the verifier's worst-case work, "
@@ -612,7 +546,7 @@ msgstr ""
 "से सत्यापित की जा सकने वाली delay निर्माण साझा सीक्रेट वाले गेट से भिन्न "
 "विश्वास मॉडल की सेवा करते हैं।"
 
-#: ../../cryptography.rst:158
+#: ../../cryptography.rst:137
 msgid ""
 "Sibuna retains cheap hash verification and a hash-based sequential-work "
 "option. The latter requires more proof bytes and more careful parameter "
@@ -624,11 +558,11 @@ msgstr ""
 "विश्लेषण चाहिए। कोई भी चुनाव महँगे सत्यापन में प्रवेश से पहले विकृत "
 "प्रमाणों को अस्वीकार करने की आवश्यकता को नहीं हटाता।"
 
-#: ../../cryptography.rst:160 ../../cryptography.rst:245
+#: ../../cryptography.rst:139 ../../cryptography.rst:210
 msgid "Explain the invariant"
 msgstr "अपरिवर्तनीय नियम समझाएँ"
 
-#: ../../cryptography.rst:162
+#: ../../cryptography.rst:141
 msgid ""
 "Explain the distinction between an authentication tree, which proves that "
 "a label belongs to a commitment, and dependency edges, which constrain "
@@ -638,11 +572,11 @@ msgstr ""
 "और निर्भरता वाले किनारों, जो यह तय करते हैं कि लेबल की गणना कैसे होती है, "
 "के बीच का अंतर समझाएँ।"
 
-#: ../../cryptography.rst:164
+#: ../../cryptography.rst:143
 msgid "Symmetric Authentication: Challenges and Sessions"
 msgstr "सममित प्रमाणीकरण: चैलेंज और सत्र"
 
-#: ../../cryptography.rst:169
+#: ../../cryptography.rst:148
 msgid ""
 "Explain why a keyed pseudorandom function is the correct primitive when "
 "issuer and verifier are the same trust domain, state the forgery bound "
@@ -654,11 +588,11 @@ msgstr ""
 "के लिए जालसाज़ी की सीमा बताएँ; स्टेटलेस चैलेंज रिकॉर्ड और spent-set सीमा "
 "का वर्णन करें; और key schedule पढ़ें।"
 
-#: ../../cryptography.rst:171
+#: ../../cryptography.rst:150
 msgid "Issuer Equals Verifier"
 msgstr "जारीकर्ता ही सत्यापनकर्ता है"
 
-#: ../../cryptography.rst:174
+#: ../../cryptography.rst:153
 msgid ""
 "A digital signature lets *anyone* holding the public key verify, which is "
 "the right tool when verifiers must not be able to mint. Sibuna's verifier "
@@ -676,11 +610,11 @@ msgstr ""
 "नहीं देता: MAC कुंजी रखने वाला कोई भी टोकन बना भी सकता है। बेंचमार्क "
 "अध्याय लागू किए गए टोकन संचालनों की तुलना करता है।"
 
-#: ../../cryptography.rst:176
+#: ../../cryptography.rst:155
 msgid "Lemma 3 (Forgery bound)"
 msgstr "लेम्मा 3 (जालसाज़ी की सीमा)"
 
-#: ../../cryptography.rst:178
+#: ../../cryptography.rst:157
 msgid ""
 "With BLAKE3 in keyed mode modelled as a PRF and a 16-byte tag, an "
 "adversary making :math:`q` verification queries forges a valid token with "
@@ -693,7 +627,7 @@ msgstr ""
 "+ \\varepsilon_{\\mathrm{PRF}}` प्रायिकता से वैध टोकन जाली बना पाता है। "
 "प्रति सेकंड दस लाख क्वेरी पर यह प्रति सेकंड :math:`2^{-108}` है।"
 
-#: ../../cryptography.rst:180
+#: ../../cryptography.rst:159
 msgid ""
 "A second consequence matters for the long term: Ed25519 rests on discrete "
 "logarithms in an elliptic-curve group, which Shor's algorithm breaks; a "
@@ -709,11 +643,11 @@ msgstr ""
 "लिए Ed25519 को एक विकल्प (``--token-scheme ed25519``) के रूप में रखता है "
 "जिन्हें टोकन न बना सकने वाले सत्यापनकर्ता चाहिए।"
 
-#: ../../cryptography.rst:182
+#: ../../cryptography.rst:161
 msgid "The Key Schedule"
 msgstr "कुंजी अनुसूची (key schedule)"
 
-#: ../../cryptography.rst:185
+#: ../../cryptography.rst:164
 msgid ""
 "One 32-byte master seed (from ``--secret-file``, ``SIBUNA_SECRET``, or a "
 "fresh random value) derives every purpose key with keyed BLAKE3 and a "
@@ -725,11 +659,11 @@ msgstr ""
 "उद्देश्य की कुंजी निकालता है: टोकन, चैलेंज, Ed25519 और फ़िंगरप्रिंट "
 "कुंजियाँ, और वह आवश्यकता कुंजी जो आवश्यकता टिकट को सील करती है (भाग IV)।"
 
-#: ../../cryptography.rst:187
+#: ../../cryptography.rst:166
 msgid "Implementation: ``Keys::derive``"
 msgstr "इम्प्लीमेंटेशन: ``Keys::derive``"
 
-#: ../../cryptography.rst:189
+#: ../../cryptography.rst:168
 msgid ""
 "Derives the five purpose keys from the seed. In "
 "``crates/challenge/src/keys.rs`` (crate ``sibuna-challenge``). ``Keys`` "
@@ -741,7 +675,7 @@ msgstr ""
 "``Keys`` और ``Seed`` छोड़े जाने (drop) पर अपने बाइट शून्य कर देते हैं, और "
 "उनका ``Debug`` आउटपुट छिपाया (redact) जाता है।"
 
-#: ../../cryptography.rst:191
+#: ../../cryptography.rst:170
 msgid ""
 "pub fn derive(seed: &Seed) -> Keys {\n"
 "    Keys {\n"
@@ -771,7 +705,7 @@ msgstr ""
 "    blake3::keyed_hash(seed.as_bytes(), purpose.as_bytes())\n"
 "}"
 
-#: ../../cryptography.rst:207
+#: ../../cryptography.rst:186
 msgid ""
 "In a cluster, ``Keys::bind_node`` replaces the challenge key by keyed "
 "BLAKE3 under it over ``sibuna/challenge-node/v1`` and the node id, so a "
@@ -783,7 +717,7 @@ msgstr ""
 "BLAKE3 से बदल देता है, इसलिए चैलेंज को उसी नोड पर लौटना होगा जिसने उसे "
 "जारी किया, जबकि सत्र टोकन और आवश्यकता टिकट हर सदस्य पर वैध रहते हैं।"
 
-#: ../../cryptography.rst:209
+#: ../../cryptography.rst:188
 msgid ""
 "Domain separation prevents accidental reuse across purposes; compromise "
 "of the master seed compromises every derived key. A cluster only has to "
@@ -793,69 +727,38 @@ msgstr ""
 "सीड के लीक होने से हर व्युत्पन्न कुंजी लीक हो जाती है। क्लस्टर को केवल एक "
 "सीड पर सहमत होना होता है।"
 
-#: ../../cryptography.rst:211
+#: ../../cryptography.rst:190
 msgid "Stateless Challenges"
 msgstr "स्टेटलेस चैलेंज"
 
-#: ../../cryptography.rst:215
+#: ../../cryptography.rst:193
 msgid ""
-"Challenge identifier\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"| ver | alg | diff | t | issued_at | fingerprint | nonce   | rule_hash | "
-"BLAKE3 tag     |\n"
-"|  1  |  1  |  1   | 1 |     8     |      8      |    8    |     8     |  "
-"     16       |\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"|<----------------------- 36-byte payload "
-"---------------------------->|<-- keyed tag ->|\n"
-"36-byte payload + 16-byte keyed tag = 52 bytes, 70 URL-safe base64 "
-"characters\n"
-"\n"
-"Session token\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"| ver | alg | bits | res | timestamp | expiry | rule_hash | fingerprint | "
-"BLAKE3 tag     |\n"
-"|  1  |  1  |  1   |  5  |     8     |   8    |     8     |      8      | "
-"      16       |\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"|<------------------------ 40-byte payload "
-"---------------------------->|<-- keyed tag ->|\n"
-"40-byte payload + 16-byte keyed tag = 56 bytes, 75 URL-safe base64 "
-"characters"
+"Two byte layouts. The challenge identifier: ver, alg, diff and t of one "
+"byte each, then issued_at, fingerprint, nonce and rule_hash of eight "
+"bytes each, a 36-byte payload, followed by a 16-byte BLAKE3 tag; 52 "
+"bytes, sent as 70 URL-safe base64 characters. The session token: ver, alg "
+"and bits of one byte each, res of five bytes, then timestamp, expiry, "
+"rule_hash and fingerprint of eight bytes each, a 40-byte payload, "
+"followed by a 16-byte BLAKE3 tag; 56 bytes, sent as 75 URL-safe base64 "
+"characters."
 msgstr ""
-"चैलेंज पहचानकर्ता\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"| ver | alg | diff | t | issued_at | fingerprint | nonce   | rule_hash | "
-"BLAKE3 tag     |\n"
-"|  1  |  1  |  1   | 1 |     8     |      8      |    8    |     8     |  "
-"     16       |\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"|<----------------------- 36-byte payload "
-"---------------------------->|<-- keyed tag ->|\n"
-"36-बाइट पेलोड + 16-बाइट कुंजी-युक्त टैग = 52 बाइट, 70 URL-safe base64 "
-"अक्षर\n"
-"\n"
-"सत्र टोकन\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"| ver | alg | bits | res | timestamp | expiry | rule_hash | fingerprint | "
-"BLAKE3 tag     |\n"
-"|  1  |  1  |  1   |  5  |     8     |   8    |     8     |      8      | "
-"      16       |\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"|<------------------------ 40-byte payload "
-"---------------------------->|<-- keyed tag ->|\n"
-"40-बाइट पेलोड + 16-बाइट कुंजी-युक्त टैग = 56 बाइट, 75 URL-safe base64 "
-"अक्षर"
+"दो बाइट लेआउट। चैलेंज पहचानकर्ता: ver, alg, diff और t, एक-एक बाइट के, फिर "
+"issued_at, fingerprint, nonce और rule_hash, आठ-आठ बाइट के; यह 36-बाइट पेलोड "
+"है, जिसके बाद 16-बाइट BLAKE3 टैग आता है; कुल 52 बाइट, जो 70 URL-safe base64 "
+"अक्षरों के रूप में भेजे जाते हैं। सत्र टोकन: ver, alg और bits, एक-एक बाइट "
+"के, पाँच बाइट का res, फिर timestamp, expiry, rule_hash और fingerprint, आठ-आठ "
+"बाइट के; यह 40-बाइट पेलोड है, जिसके बाद 16-बाइट BLAKE3 टैग आता है; कुल 56 "
+"बाइट, जो 75 URL-safe base64 अक्षरों के रूप में भेजे जाते हैं।"
 
-#: ../../cryptography.rst:215
+#: ../../cryptography.rst:196
 msgid ""
-"Wire formats of the challenge identifier and the session token (field "
-"widths in bytes)."
+"Wire formats of the challenge identifier and the session token. The "
+"numbers above each record are byte offsets."
 msgstr ""
-"चैलेंज पहचानकर्ता और सत्र टोकन के वायर प्रारूप (फ़ील्ड की चौड़ाई बाइट "
-"में)।"
+"चैलेंज पहचानकर्ता और सत्र टोकन के वायर प्रारूप। हर रिकॉर्ड के ऊपर की "
+"संख्याएँ बाइट ऑफ़सेट हैं।"
 
-#: ../../cryptography.rst:233
+#: ../../cryptography.rst:198
 msgid ""
 "A challenge identifier is a self-authenticating record: version, "
 "algorithm, difficulty, opening count, issue time, the client's keyed "
@@ -875,11 +778,11 @@ msgstr ""
 "क्लाइंट के विरुद्ध फ़िंगरप्रिंट जाँचता है, और उसके बाद ही प्रमाण की जाँच "
 "करता है।"
 
-#: ../../cryptography.rst:235
+#: ../../cryptography.rst:200
 msgid "Lemma 4 (State grows only with paid work)"
 msgstr "लेम्मा 4 (अवस्था केवल चुकाए गए कार्य के साथ बढ़ती है)"
 
-#: ../../cryptography.rst:237
+#: ../../cryptography.rst:202
 msgid ""
 "Let :math:`S` be the set of challenge tags the daemon remembers. A tag "
 "enters :math:`S` only after a valid proof for it was accepted, and it "
@@ -899,7 +802,7 @@ msgstr ""
 "अस्वीकार कर सकता है। यह अवस्था की सीमा है, हर विरोधी की गणना-रणनीति पर "
 "निचली सीमा नहीं।"
 
-#: ../../cryptography.rst:239
+#: ../../cryptography.rst:204
 msgid ""
 "The spent set is 16 shards of Robin Hood open addressing over the 16-byte "
 "tags (Part V). The fingerprint is a keyed hash of the client address and "
@@ -912,11 +815,11 @@ msgstr ""
 "और कुंजी-युक्त ताकि दूसरे क्लाइंट के फ़िंगरप्रिंट ऑफ़लाइन न निकाले जा "
 "सकें।"
 
-#: ../../cryptography.rst:241
+#: ../../cryptography.rst:206
 msgid "Exercise 3.3"
 msgstr "अभ्यास 3.3"
 
-#: ../../cryptography.rst:243
+#: ../../cryptography.rst:208
 msgid ""
 "A token payload carries a work level, ``timestamp``, ``expiry``, "
 "``rule_hash``, and ``fingerprint``. Explain what each field prevents if "
@@ -926,7 +829,7 @@ msgstr ""
 "``fingerprint`` रखता है। समझाएँ कि हर फ़ील्ड क्या रोकता है, यानी उसे "
 "हटाने पर क्या संभव हो जाता, और टैग को पाँचों को क्यों ढकना चाहिए।"
 
-#: ../../cryptography.rst:247
+#: ../../cryptography.rst:212
 msgid ""
 "A colleague proposes switching all tokens to Ed25519 \"because it is "
 "stronger\". Explain the trust-domain argument, the cost difference, and "

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-10-24 10:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -37,7 +37,7 @@ msgstr ""
 msgid "The Connection Loop"
 msgstr "连接循环"
 
-#: ../../zero-allocation.rst:9 ../../zero-allocation.rst:388
+#: ../../zero-allocation.rst:9 ../../zero-allocation.rst:378
 msgid "Objectives"
 msgstr "学习目标"
 
@@ -111,13 +111,15 @@ msgid ""
 "    while !server.is_stopping() {\n"
 "        let stream = match listener.accept() {\n"
 "            Ok((stream, _)) => stream,\n"
-"            // ... out of descriptors or memory: back off 1 ms instead of spinning\n"
+"            // ... out of descriptors or memory: back off 1 ms instead of "
+"spinning\n"
 "        };\n"
 "        let limit = server.max_connections.load(Ordering::Relaxed);\n"
 "        if server.connections.fetch_add(1, Ordering::Relaxed) >= limit {\n"
 "            server.connections.fetch_sub(1, Ordering::Relaxed);\n"
 "            server.metrics.overloaded.bump();\n"
-"            let text = \"Service Unavailable: connection limit reached\";\n"
+"            let text = \"Service Unavailable: connection limit "
+"reached\";\n"
 "            reject(server, &stream, text);\n"
 "            continue;\n"
 "        }\n"
@@ -127,7 +129,8 @@ msgid ""
 "            let _counted = Counted(&task_server);\n"
 "            crate::connection::serve(&task_server, &stream);\n"
 "        });\n"
-"        // ... a launch failure gives the place back and counts an overload\n"
+"        // ... a launch failure gives the place back and counts an "
+"overload\n"
 "    }\n"
 "}"
 msgstr ""
@@ -141,7 +144,8 @@ msgstr ""
 "        if server.connections.fetch_add(1, Ordering::Relaxed) >= limit {\n"
 "            server.connections.fetch_sub(1, Ordering::Relaxed);\n"
 "            server.metrics.overloaded.bump();\n"
-"            let text = \"Service Unavailable: connection limit reached\";\n"
+"            let text = \"Service Unavailable: connection limit "
+"reached\";\n"
 "            reject(server, &stream, text);\n"
 "            continue;\n"
 "        }\n"
@@ -307,39 +311,28 @@ msgstr ""
 "请求干净地开始；读取器只在需要空间时才把未读字节移到前面。分块请求体在头部之后原地解码（SID "
 "0009）：每一步的分帧信息都从缓冲区中剪除，使解码后的前缀保持连续，便于检查。内部路由以长度定界，并保持连接打开。被代理的请求也会保持连接打开，前提是源站的响应有明确的分帧，且请求体已被完整缓冲；下面几节说明代理如何作出判断。"
 
-#: ../../zero-allocation.rst:96
+#: ../../zero-allocation.rst:95
 msgid ""
-"reader.buffered(): the unread window of the 64 KiB read buffer\n"
-"+-------------------------+---------------------------+------------------------+\n"
-"| request head            | body prefix               | pending                |\n"
-"| at most 16 KiB, ends in | min(declared, room left), | the next request, or   |\n"
-"| CR LF CR LF             | chunked: decoded in place | the rest of an upload  |\n"
-"+-------------------------+---------------------------+------------------------+\n"
-"|<------ head_len ------->|<-------- body_len ------->|\n"
-"  ^ method, path, query,     ^ request.body              ^ ctx.pending (the\n"
-"    headers, cookies                                       proxy sends it first)\n"
-"\n"
-"after the response: reader.consume(head_len + body_len)"
+"The 64 KiB read buffer of one connection: a served part, then the unread "
+"window of request head (at most 16 KiB), body prefix and pending bytes, "
+"then free space. Method, path, query, headers and cookies are slices of "
+"the head, request.body is a slice of the body prefix, and ctx.pending "
+"holds the pending bytes, which the proxy sends to the origin first. After "
+"the response, reader.consume(head_len + body_len) moves the start of the "
+"window to the pending bytes."
 msgstr ""
-"reader.buffered()：64 KiB 读缓冲区中尚未读取的窗口\n"
-"+-------------------------+---------------------------+------------------------+\n"
-"| 请求头部                | 请求体前缀                | 待处理数据             |\n"
-"| 最多 16 KiB，以         | min(声明长度, 剩余空间)， | 下一个请求，或者       |\n"
-"| CR LF CR LF 结尾        | 分块编码：就地解码        | 上传的剩余部分         |\n"
-"+-------------------------+---------------------------+------------------------+\n"
-"|<------ head_len ------->|<-------- body_len ------->|\n"
-"  ^ 方法、路径、查询、       ^ request.body              ^ ctx.pending（代理\n"
-"    请求头、Cookie                                         先发送它）\n"
-"\n"
-"响应之后：reader.consume(head_len + body_len)"
+"一个连接的 64 KiB 读缓冲区：先是已处理的部分，然后是尚未读取的窗口，依次为请求头部（最多 16 KiB）、"
+"请求体前缀和待处理字节，最后是空闲空间。方法、路径、查询、请求头和 Cookie 是头部的切片，"
+"request.body 是请求体前缀的切片，ctx.pending 保存待处理字节，代理会先把它们发送给源站。"
+"响应之后，reader.consume(head_len + body_len) 把窗口的起点移到待处理字节处。"
 
-#: ../../zero-allocation.rst:96
+#: ../../zero-allocation.rst:98
 msgid ""
 "The connection's read buffer while one request is served. Every field of "
 "the request is a slice of it."
 msgstr "服务一个请求时连接的读缓冲区。请求的每个字段都是它的一个切片。"
 
-#: ../../zero-allocation.rst:110
+#: ../../zero-allocation.rst:100
 msgid ""
 "fn serve_one<W: Write>(\n"
 "    reader: &mut Reader<'_, &TcpStream>,\n"
@@ -348,7 +341,8 @@ msgid ""
 ") -> bool {\n"
 "    let head_len = match read_head(reader) {\n"
 "        Head::Complete(length) => length,\n"
-"        Head::TooLarge => { /* 431 \"Request head exceeds 16 KB\" */ return false; }\n"
+"        Head::TooLarge => { /* 431 \"Request head exceeds 16 KB\" */ "
+"return false; }\n"
 "        Head::Closed | Head::Failed => return false,\n"
 "    };\n"
 "    let framing = {\n"
@@ -363,7 +357,8 @@ msgid ""
 "        if declared == 0 && !request.chunked {\n"
 "            let upload = Upload::declared(&request);\n"
 "            let pending = bytes.get(head_len..).unwrap_or_default();\n"
-"            let keep = dispatch(link, request, pending, upload, 0, peer);\n"
+"            let keep = dispatch(link, request, pending, upload, 0, "
+"peer);\n"
 "            reader.consume(head_len);\n"
 "            return keep;\n"
 "        }\n"
@@ -379,7 +374,8 @@ msgstr ""
 ") -> bool {\n"
 "    let head_len = match read_head(reader) {\n"
 "        Head::Complete(length) => length,\n"
-"        Head::TooLarge => { /* 431 \"Request head exceeds 16 KB\" */ return false; }\n"
+"        Head::TooLarge => { /* 431 \"Request head exceeds 16 KB\" */ "
+"return false; }\n"
 "        Head::Closed | Head::Failed => return false,\n"
 "    };\n"
 "    let framing = {\n"
@@ -394,7 +390,8 @@ msgstr ""
 "        if declared == 0 && !request.chunked {\n"
 "            let upload = Upload::declared(&request);\n"
 "            let pending = bytes.get(head_len..).unwrap_or_default();\n"
-"            let keep = dispatch(link, request, pending, upload, 0, peer);\n"
+"            let keep = dispatch(link, request, pending, upload, 0, "
+"peer);\n"
 "            reader.consume(head_len);\n"
 "            return keep;\n"
 "        }\n"
@@ -403,11 +400,11 @@ msgstr ""
 "    serve_with_body(reader, link, peer, head_len, framing)\n"
 "}"
 
-#: ../../zero-allocation.rst:143
+#: ../../zero-allocation.rst:133
 msgid "What the borrow checker proves"
 msgstr "借用检查器证明了什么"
 
-#: ../../zero-allocation.rst:145
+#: ../../zero-allocation.rst:135
 msgid ""
 "The request slices stay valid only until the next fill of the buffer. "
 "Sibuna states that rule as a type, not as a comment: the request is a "
@@ -423,7 +420,7 @@ msgstr ""
 "仍在使用，编译器就会拒绝。在 ``serve_one`` 中，请求被移动进 ``dispatch``，只有在该调用返回之后才能运行 "
 "``reader.consume``；如果颠倒两者的顺序，代码就无法编译。"
 
-#: ../../zero-allocation.rst:147
+#: ../../zero-allocation.rst:137
 msgid ""
 "The same rule explains two choices that look odd at first. First, "
 "``serve_with_body`` parses the head a second time. The first parse must "
@@ -444,11 +441,11 @@ msgstr ""
 "``zero_copy_request_and_cookie``，132.5 "
 "ns），因此第二次解析成本很低，并且得出相同的结论。第二，代理借用已解析的请求和待处理的字节，不能重新填充连接缓冲区，因此它把更多的客户端字节读入自己的上传缓冲区。由于它无法交还已经读取的内容，只有在请求体已被完整缓冲时，客户端连接才会保持。"
 
-#: ../../zero-allocation.rst:149
+#: ../../zero-allocation.rst:139
 msgid "The Proxy Head Rewrite"
 msgstr "代理对请求头部的改写"
 
-#: ../../zero-allocation.rst:152
+#: ../../zero-allocation.rst:142
 msgid ""
 "The head is not forwarded verbatim. ``write_request_head`` "
 "(``crates/net/src/request.rs``, crate ``sibuna-net``) re-emits the "
@@ -466,7 +463,7 @@ msgstr ""
 "``sibuna-net``）把请求行和每个请求头重新写入源站写入器，同时丢弃逐跳字段（``Connection``、``Keep-Alive``、``Proxy-Connection``、``Transfer-Encoding``、``TE``、``Trailer``、``Upgrade``、代理授权字段）、任何传入的转发或审计字段（``X-Forwarded-For``、``X-Real-IP``、``Forwarded``、``X-Forwarded-Proto``、``X-Forwarded-Host``、``X-Forwarded-Port``、``X-Sibuna-Status``、``X-Sibuna-Rule``）、``Expect``、``Content-Length``，以及请求的 "
 "``Connection`` 头所指名的每个字段。然后它追加审计字段集合。请求体的分帧由代理生成，从不复制："
 
-#: ../../zero-allocation.rst:154
+#: ../../zero-allocation.rst:144
 msgid ""
 "for header in request.headers() {\n"
 "    if is_hop_by_hop(header.name) || nominated(request, header.name) {\n"
@@ -484,7 +481,8 @@ msgid ""
 "        write_decimal(out, *length)?;\n"
 "        out.write_all(b\"\\r\\n\")?;\n"
 "    }\n"
-"    Upload::Chunked(_) => out.write_all(b\"Transfer-Encoding: chunked\\r\\n\")?,\n"
+"    Upload::Chunked(_) => out.write_all(b\"Transfer-Encoding: "
+"chunked\\r\\n\")?,\n"
 "}"
 msgstr ""
 "for header in request.headers() {\n"
@@ -503,10 +501,11 @@ msgstr ""
 "        write_decimal(out, *length)?;\n"
 "        out.write_all(b\"\\r\\n\")?;\n"
 "    }\n"
-"    Upload::Chunked(_) => out.write_all(b\"Transfer-Encoding: chunked\\r\\n\")?,\n"
+"    Upload::Chunked(_) => out.write_all(b\"Transfer-Encoding: "
+"chunked\\r\\n\")?,\n"
 "}"
 
-#: ../../zero-allocation.rst:175
+#: ../../zero-allocation.rst:165
 msgid ""
 "A ``Content-Length`` is re-emitted. A chunked body that ended within the "
 "connection buffer is decoded in place and sent with its length. A longer "
@@ -520,7 +519,7 @@ msgstr ""
 "``Transfer-Encoding: chunked`` 声明，并逐次读取、重新分块（SID 0009）：每次读取的数据进入代理的 16 "
 "KiB 上传缓冲区，在那里原地解码，然后作为一个规范的块发出，因此源站永远看不到客户端的块大小、扩展或尾部字段。审计字段集合如下："
 
-#: ../../zero-allocation.rst:177
+#: ../../zero-allocation.rst:167
 msgid ""
 "Connection: keep-alive\n"
 "X-Forwarded-For: <client>\n"
@@ -536,7 +535,7 @@ msgstr ""
 "X-Sibuna-Status: PASS\n"
 "X-Sibuna-Rule: session | robots-txt | ip/cidr-trie | ..."
 
-#: ../../zero-allocation.rst:186
+#: ../../zero-allocation.rst:176
 msgid ""
 "Bodies larger than the buffer are relayed in 16 KiB pieces from the "
 "client to the origin writer (``relay_body``) before the response is "
@@ -551,7 +550,7 @@ msgstr ""
 "``proxy_head_rewrite_drops_hop_by_hop_headers_and_injects_audit_fields`` "
 "断言改写会丢弃伪造的 ``X-Forwarded-For`` 并注入审计字段。"
 
-#: ../../zero-allocation.rst:188
+#: ../../zero-allocation.rst:178
 msgid ""
 "The proxy's three buffers, the origin read buffer (one response head, 16 "
 "KiB), the origin write buffer (8 KiB) and the upload buffer (16 KiB), "
@@ -564,11 +563,11 @@ msgstr ""
 "``Workspace`` "
 "中，由连接一次性分配并在每个请求中复用。工作空间使它们的生命周期与连接一致，而不是与单次交换一致，源站读取器和写入器每次只为一次交换借用它们。"
 
-#: ../../zero-allocation.rst:190
+#: ../../zero-allocation.rst:180
 msgid "Relaying the Origin Response"
 msgstr "中继源站响应"
 
-#: ../../zero-allocation.rst:193
+#: ../../zero-allocation.rst:183
 msgid ""
 "The first proxy streamed the origin's bytes until the origin closed and "
 "then closed the client: correct framing with no parsing, at the price of "
@@ -581,11 +580,11 @@ msgstr ""
 "连接。在负载生成器下，这一代价表现为数以万计处于 ``TIME_WAIT`` "
 "状态的套接字，在回环接口上还会耗尽临时端口。现在，代理读取源站的响应头部（最多 16 KiB），并按 RFC 9112 的规则对响应体分类："
 
-#: ../../zero-allocation.rst:195
+#: ../../zero-allocation.rst:185
 msgid "Implementation: ``parse_response_head``"
 msgstr "实现：``parse_response_head``"
 
-#: ../../zero-allocation.rst:197
+#: ../../zero-allocation.rst:187
 msgid ""
 "Returns the status, one of four framings (no body for HEAD, 1xx, 204 and "
 "304; a ``Content-Length``; chunked transfer coding; or close-delimited) "
@@ -596,7 +595,7 @@ msgstr ""
 "没有响应体；``Content-Length``；分块传输编码；或以关闭连接定界），以及源站是否保持连接。位于 "
 "``crates/net/src/response.rs``\\ （crate ``sibuna-net``）。"
 
-#: ../../zero-allocation.rst:199
+#: ../../zero-allocation.rst:189
 msgid ""
 "pub enum Framing { None, Length(u64), Chunked, UntilClose }\n"
 "\n"
@@ -613,14 +612,18 @@ msgid ""
 "        if line.is_empty() {\n"
 "            break;\n"
 "        }\n"
-"        fields.read_line(line)?; // Transfer-Encoding, Content-Length, Connection\n"
+"        fields.read_line(line)?; // Transfer-Encoding, Content-Length, "
+"Connection\n"
 "    }\n"
-"    let mut framing = fields.length.map_or(Framing::UntilClose, Framing::Length);\n"
-"    if head_request || status / 100 == 1 || status == 204 || status == 304 {\n"
+"    let mut framing = fields.length.map_or(Framing::UntilClose, "
+"Framing::Length);\n"
+"    if head_request || status / 100 == 1 || status == 204 || status == "
+"304 {\n"
 "        framing = Framing::None;\n"
 "    } else if fields.encoded {\n"
 "        framing =\n"
-"            if fields.chunked { Framing::Chunked } else { Framing::UntilClose };\n"
+"            if fields.chunked { Framing::Chunked } else { "
+"Framing::UntilClose };\n"
 "    }\n"
 "    let mut keep_alive = fields.keep_alive;\n"
 "    if framing == Framing::UntilClose || fields.closing {\n"
@@ -647,14 +650,18 @@ msgstr ""
 "        if line.is_empty() {\n"
 "            break;\n"
 "        }\n"
-"        fields.read_line(line)?; // Transfer-Encoding, Content-Length, Connection\n"
+"        fields.read_line(line)?; // Transfer-Encoding, Content-Length, "
+"Connection\n"
 "    }\n"
-"    let mut framing = fields.length.map_or(Framing::UntilClose, Framing::Length);\n"
-"    if head_request || status / 100 == 1 || status == 204 || status == 304 {\n"
+"    let mut framing = fields.length.map_or(Framing::UntilClose, "
+"Framing::Length);\n"
+"    if head_request || status / 100 == 1 || status == 204 || status == "
+"304 {\n"
 "        framing = Framing::None;\n"
 "    } else if fields.encoded {\n"
 "        framing =\n"
-"            if fields.chunked { Framing::Chunked } else { Framing::UntilClose };\n"
+"            if fields.chunked { Framing::Chunked } else { "
+"Framing::UntilClose };\n"
 "    }\n"
 "    let mut keep_alive = fields.keep_alive;\n"
 "    if framing == Framing::UntilClose || fields.closing {\n"
@@ -666,7 +673,7 @@ msgstr ""
 "    Some(ResponseHead { status, framing, keep_alive })\n"
 "}"
 
-#: ../../zero-allocation.rst:235
+#: ../../zero-allocation.rst:225
 msgid ""
 "The parser refuses what the proxy must not relay: a bad status line, a "
 "field name that is not a token, a control byte in a value, conflicting "
@@ -678,7 +685,7 @@ msgstr ""
 "编码，以及指名 ``Content-Length`` 或 ``Transfer-Encoding`` 的 ``Connection`` "
 "字段。它的工作量与头部长度呈线性关系，并且从不 panic。"
 
-#: ../../zero-allocation.rst:237
+#: ../../zero-allocation.rst:227
 msgid ""
 "The head is re-emitted to the client with the origin's ``Connection`` "
 "headers replaced by Sibuna's own decision, and the body is relayed "
@@ -694,14 +701,15 @@ msgstr ""
 "``copy_exact``，分块编码时逐块处理（大小行、数据、尾部字段），旧式情形用 "
 "``copy_remaining``。只有旧式情形会关闭客户端连接。每种中继都建立在同一个复制步骤之上：转发源端已经持有的所有数据，只有当它什么都没有时，才刷新目标端，然后读取一次。因此，一串小的写入会随产生随交付，而大块传输仍然在每次读写中搬运一整个缓冲区。"
 
-#: ../../zero-allocation.rst:239
+#: ../../zero-allocation.rst:229
 msgid ""
 "let keep = client_keep_alive && parsed.framing != Framing::UntilClose;\n"
 "write_client_head(client, head, keep).map_err(client_head_error)?;\n"
 "origin.consume(head_length);\n"
 "match parsed.framing {\n"
 "    Framing::None => {}\n"
-"    Framing::Length(length) => copy_exact(origin, client, length, progress)?,\n"
+"    Framing::Length(length) => copy_exact(origin, client, length, "
+"progress)?,\n"
 "    Framing::Chunked => relay_chunked(origin, client, progress)?,\n"
 "    Framing::UntilClose => copy_remaining(origin, client, progress)?,\n"
 "}\n"
@@ -713,14 +721,15 @@ msgstr ""
 "origin.consume(head_length);\n"
 "match parsed.framing {\n"
 "    Framing::None => {}\n"
-"    Framing::Length(length) => copy_exact(origin, client, length, progress)?,\n"
+"    Framing::Length(length) => copy_exact(origin, client, length, "
+"progress)?,\n"
 "    Framing::Chunked => relay_chunked(origin, client, progress)?,\n"
 "    Framing::UntilClose => copy_remaining(origin, client, progress)?,\n"
 "}\n"
 "client.flush().map_err(|_| ProxyError::ClientFailed)?;\n"
 "Ok(Relayed { client_keep: keep, origin_reusable: parsed.keep_alive })"
 
-#: ../../zero-allocation.rst:253
+#: ../../zero-allocation.rst:243
 msgid ""
 "Parsing an eight-field origin head takes 322 ns, and a keep-alive ``GET`` "
 "with a 1 KiB response proxied over loopback takes 29.8 us (measured in "
@@ -729,11 +738,11 @@ msgstr ""
 "解析一个包含八个字段的源站响应头部需要 322 ns，通过回环接口代理一个响应为 1 KiB 的 keep-alive ``GET`` 需要 "
 "29.8 us（2026 年 10 月测量；``crates/net/src/lib.rs`` 记录了这次测量）。"
 
-#: ../../zero-allocation.rst:255
+#: ../../zero-allocation.rst:245
 msgid "The Origin Pool"
 msgstr "源站连接池"
 
-#: ../../zero-allocation.rst:258
+#: ../../zero-allocation.rst:248
 msgid ""
 "Parsing the framing also tells the proxy whether the *origin* socket can "
 "be used again: an HTTP/1.1 response without ``Connection: close`` (or an "
@@ -751,7 +760,7 @@ msgstr ""
 "个空闲源站连接的固定连接池，下一个被代理的请求从池中取用，而无需重新连接。没有连接池时，每个被代理的请求都会打开一个新的源站连接，每个关闭的连接都会让它的本地端口停留在 "
 "``TIME_WAIT``；在负载下，回环接口上的代理很快就会耗尽临时端口，吞吐量随之崩溃。"
 
-#: ../../zero-allocation.rst:260
+#: ../../zero-allocation.rst:250
 msgid ""
 "A pool under one lock would make every proxied request contend for that "
 "lock. So the pool (``crates/net/src/pool.rs``) is striped: 16 stripes of "
@@ -764,7 +773,7 @@ msgstr ""
 "个条带，每个条带 16 个套接字，每个条带是一个独占一条缓存行的 "
 "``Mutex<Vec<Arc<TcpStream>>>``。线程在首次使用时以轮转方式分配到一个主条带，优先向它归还和从它取用；在重新连接之前，它还会查看其他条带，但不会等待已被持有的锁。"
 
-#: ../../zero-allocation.rst:262
+#: ../../zero-allocation.rst:252
 msgid ""
 "pub fn take(&self) -> Option<Arc<TcpStream>> {\n"
 "    if self.is_stopping() {\n"
@@ -798,7 +807,7 @@ msgstr ""
 "    })\n"
 "}"
 
-#: ../../zero-allocation.rst:280
+#: ../../zero-allocation.rst:270
 msgid ""
 "A pooled socket may have been closed by the origin while idle. The proxy "
 "notices in one of two ways, a failed write or an end-of-stream before the "
@@ -817,16 +826,19 @@ msgstr ""
 "``502``。只有对请求体已被完整缓冲的安全方法（``GET``、``HEAD``、``OPTIONS``）才允许重试。没有收到回复并不能证明源站没有提交一次修改，而分段中继的请求体也无法再次发送；这两种情况下，客户端都会收到 "
 "``502``。"
 
-#: ../../zero-allocation.rst:282
+#: ../../zero-allocation.rst:272
 msgid ""
-"let safe = matches!(request.method, Method::Get | Method::Head | Method::Options);\n"
+"let safe = matches!(request.method, Method::Get | Method::Head | "
+"Method::Options);\n"
 "let buffered = exchange.upload.is_buffered(request.body.len());\n"
 "let retryable = safe && buffered;\n"
 "for attempt in 0..2 {\n"
 "    // A retry always connects afresh: after an idle period every pooled\n"
-"    // socket may be stale, and a second stale one would fail the request.\n"
+"    // socket may be stale, and a second stale one would fail the "
+"request.\n"
 "    let pooled = if attempt == 0 { pool.take() } else { None };\n"
-"    // ... connect if nothing was pooled, attach to the activity, exchange\n"
+"    // ... connect if nothing was pooled, attach to the activity, "
+"exchange\n"
 "    match outcome {\n"
 "        Ok(relayed) => {\n"
 "            if relayed.origin_reusable {\n"
@@ -840,14 +852,16 @@ msgid ""
 "                && retryable\n"
 "                && matches!(\n"
 "                    error,\n"
-"                    ProxyError::UpstreamClosed | ProxyError::UpstreamWriteFailed\n"
+"                    ProxyError::UpstreamClosed | "
+"ProxyError::UpstreamWriteFailed\n"
 "                );\n"
 "            // ... anything else is reported at once\n"
 "        }\n"
 "    }\n"
 "}"
 msgstr ""
-"let safe = matches!(request.method, Method::Get | Method::Head | Method::Options);\n"
+"let safe = matches!(request.method, Method::Get | Method::Head | "
+"Method::Options);\n"
 "let buffered = exchange.upload.is_buffered(request.body.len());\n"
 "let retryable = safe && buffered;\n"
 "for attempt in 0..2 {\n"
@@ -868,14 +882,15 @@ msgstr ""
 "                && retryable\n"
 "                && matches!(\n"
 "                    error,\n"
-"                    ProxyError::UpstreamClosed | ProxyError::UpstreamWriteFailed\n"
+"                    ProxyError::UpstreamClosed | "
+"ProxyError::UpstreamWriteFailed\n"
 "                );\n"
 "            // ... 其他错误立即报告\n"
 "        }\n"
 "    }\n"
 "}"
 
-#: ../../zero-allocation.rst:312
+#: ../../zero-allocation.rst:302
 msgid ""
 "Unit tests relay fixed byte strings through the same functions and assert "
 "the output is byte-identical apart from the connection header "
@@ -889,11 +904,11 @@ msgstr ""
 "单元测试让固定的字节串通过同样的函数中继，并断言除连接头之外输出逐字节相同（``crates/net/src/relay/tests.rs``）。守护进程的一个端到端测试在同一个客户端套接字上发送两个被代理的请求，并通过桩源站添加的序号头检查第二个请求复用了池中的源站连接。``crates/net/tests/`` "
 "中的一个向量测试重放录制的代理场景（一个原始的客户端请求和一个预制的源站响应），并比较源站和客户端收到的每个字节。"
 
-#: ../../zero-allocation.rst:314
+#: ../../zero-allocation.rst:304
 msgid "Why the origin socket is an ``Arc``"
 msgstr "为什么源站套接字是 ``Arc``"
 
-#: ../../zero-allocation.rst:316
+#: ../../zero-allocation.rst:306
 msgid ""
 "A socket descriptor is a small integer that the kernel reuses as soon as "
 "it is closed. Shutdown must interrupt an exchange in flight, yet it must "
@@ -910,11 +925,11 @@ msgstr ""
 "不需要这样的表：源站套接字是一个 ``Arc<TcpStream>``。连接池持有一个句柄，交换持有一个，在交换运行期间，连接的 "
 "``Activity`` 还持有一个克隆。描述符在最后一个句柄被丢弃时才关闭，因此只要还有人能访问它，它就不会关闭，也不会被复用。"
 
-#: ../../zero-allocation.rst:318
+#: ../../zero-allocation.rst:308
 msgid "Idle Deadlines"
 msgstr "空闲期限"
 
-#: ../../zero-allocation.rst:321
+#: ../../zero-allocation.rst:311
 msgid ""
 "Every client connection registers its socket in an ``IdleTable`` "
 "(``crates/net/src/idle.rs``) and receives a ``Lease``. The lease's "
@@ -933,7 +948,7 @@ msgstr ""
 "时更新它，并附上正在进行的交换所用的源站套接字。回收线程每隔最短超时的四分之一（介于 200 ms "
 "和一秒之间）醒来一次，关闭所有静默时间超过其超时的连接以及附带的源站套接字，使阻塞在任一端的线程看到流结束并释放它的槽。"
 
-#: ../../zero-allocation.rst:323
+#: ../../zero-allocation.rst:313
 msgid ""
 "Deadlines therefore measure silence, never the length of a response: a "
 "large download that keeps moving is never cut. Upload bytes come from the "
@@ -944,7 +959,7 @@ msgstr ""
 "因此，期限衡量的是静默时间，而不是响应的长度：一个持续传输的大型下载永远不会被切断。上传字节来自不可信的一方，只有每 16 KiB "
 "才刷新一次时间戳，这要求客户端在每个空闲期内至少发送 16 KiB，即最低速率请求超时所提供的慢速请求体防御。"
 
-#: ../../zero-allocation.rst:325
+#: ../../zero-allocation.rst:315
 msgid ""
 "The table has one small lock per slot and no table-wide lock. It holds a "
 "``try_clone`` of each client socket and an ``Arc`` of each attached "
@@ -956,11 +971,11 @@ msgstr ""
 "``Arc``。``Lease`` 在 ``Drop`` "
 "中注销它的连接，被回收的槽在此之前一直归该租约所有，因此旧连接永远不会释放一个已被新连接占用的槽。"
 
-#: ../../zero-allocation.rst:327
+#: ../../zero-allocation.rst:317
 msgid "Upgraded Connections"
 msgstr "升级后的连接"
 
-#: ../../zero-allocation.rst:330
+#: ../../zero-allocation.rst:320
 msgid ""
 "After a validated ``101``, a WebSocket upgrade is relayed both ways. Each "
 "direction runs on a thread of its own with one fixed buffer: the "
@@ -979,7 +994,7 @@ msgstr ""
 "``unsafe``。因此，一个升级后的连接占用两个线程，当所有连接都被升级时，连接线程的数量可以达到 ``--max-connections`` "
 "的两倍。"
 
-#: ../../zero-allocation.rst:332
+#: ../../zero-allocation.rst:322
 msgid ""
 "Both directions share one idle deadline (``--websocket-idle-timeout``, "
 "300 seconds by default): bytes moving either way refresh one stamp. Each "
@@ -994,11 +1009,11 @@ msgstr ""
 "两个方向共享一个空闲期限（``--websocket-idle-timeout``，默认 300 "
 "秒）：任一方向的字节传输都会刷新同一个时间戳。每次套接字等待都带有一个等于剩余时间的超时；超时的等待会重新读取共享时间戳，然后要么继续等待剩余时间，要么结束中继。当一个方向到达流结束时，另一个套接字的发送端被关闭（半关闭）；当一个方向失败时，两个套接字都被关闭，使另一个方向也随之结束。在代理一次升级之前，连接会释放它缓存的策略引擎，使一个可能存活数小时的连接不会让旧引擎一直存活。"
 
-#: ../../zero-allocation.rst:334
+#: ../../zero-allocation.rst:324
 msgid "Stopping"
 msgstr "停止"
 
-#: ../../zero-allocation.rst:337
+#: ../../zero-allocation.rst:327
 msgid ""
 "``Running::stop``, and equally ``Drop`` for ``Running``, stops the daemon "
 "in a fixed order. It sets the stopping flag and wakes every accept worker "
@@ -1012,7 +1027,7 @@ msgstr ""
 "worker，关闭每个已登记的客户端套接字及其附带的源站套接字（``IdleTable::shutdown``），停止源站连接池，join "
 "每个连接线程，join 回收线程，最后关闭池中的套接字。"
 
-#: ../../zero-allocation.rst:339
+#: ../../zero-allocation.rst:329
 msgid ""
 "SIGINT and SIGTERM reach that sequence through ordinary Rust. Before it "
 "spawns any thread, the daemon blocks both signals (every later thread "
@@ -1028,11 +1043,11 @@ msgstr ""
 "``sigwait``，它记录停止请求并立即唤醒主线程。没有任何代码在信号处理函数中运行，也没有线程轮询标志。信号模块（``cmd/sibuna/src/signals.rs``）包含守护进程中唯一的 "
 "``unsafe`` 代码：即 ``std`` 没有封装的少数几个 C 库函数的声明。"
 
-#: ../../zero-allocation.rst:341
+#: ../../zero-allocation.rst:331
 msgid "Release by ``Drop``"
 msgstr "通过 ``Drop`` 释放"
 
-#: ../../zero-allocation.rst:343
+#: ../../zero-allocation.rst:333
 msgid ""
 "Explicit cleanup calls must be written in reverse order of setup, and "
 "every early return must be read against them. In Sibuna each resource "
@@ -1047,11 +1062,11 @@ msgstr ""
 "归还连接上限中的一个名额，``Finished`` 释放一个任务槽。编译器在离开作用域的每条路径上（包括穿过它展开的 "
 "panic）插入相应的释放，因此没有任何路径会遗漏。"
 
-#: ../../zero-allocation.rst:345
+#: ../../zero-allocation.rst:335
 msgid "What We Measured"
 msgstr "我们测得了什么"
 
-#: ../../zero-allocation.rst:348
+#: ../../zero-allocation.rst:338
 msgid ""
 "The table shows Shield in reverse-proxy mode on one Ryzen 9 5950X: the "
 "daemon pinned to four CPUs, ``wrk`` with two threads and 64 connections "
@@ -1063,106 +1078,106 @@ msgstr ""
 "64 个连接运行在另外八个 CPU 上，每次运行五秒，取三次的中位数。各行抄自 "
 "``benchmarks/results/product-latest.md``；完整记录见第 VIII 部分。"
 
-#: ../../zero-allocation.rst:350
+#: ../../zero-allocation.rst:340
 msgid ""
 "Shield in reverse-proxy mode, from "
 "``benchmarks/results/product-latest.md``"
 msgstr "反向代理模式下的 Shield，数据来自 ``benchmarks/results/product-latest.md``"
 
-#: ../../zero-allocation.rst:353 ../../zero-allocation.rst:404
+#: ../../zero-allocation.rst:343 ../../zero-allocation.rst:394
 msgid "Workload"
 msgstr "工作负载"
 
-#: ../../zero-allocation.rst:354
+#: ../../zero-allocation.rst:344
 msgid "Status"
 msgstr "状态码"
 
-#: ../../zero-allocation.rst:355
+#: ../../zero-allocation.rst:345
 msgid "req/s"
 msgstr "req/s"
 
-#: ../../zero-allocation.rst:356
+#: ../../zero-allocation.rst:346
 msgid "p50 / p99 (us)"
 msgstr "p50 / p99 (us)"
 
-#: ../../zero-allocation.rst:357
+#: ../../zero-allocation.rst:347
 msgid "CPU per request (us)"
 msgstr "每请求 CPU 时间 (us)"
 
-#: ../../zero-allocation.rst:358
+#: ../../zero-allocation.rst:348
 msgid "admitted with session, proxied"
 msgstr "带会话准入，经代理"
 
-#: ../../zero-allocation.rst:359 ../../zero-allocation.rst:364
-#: ../../zero-allocation.rst:369
+#: ../../zero-allocation.rst:349 ../../zero-allocation.rst:354
+#: ../../zero-allocation.rst:359
 msgid "200"
 msgstr "200"
 
-#: ../../zero-allocation.rst:360
+#: ../../zero-allocation.rst:350
 msgid "138,965"
 msgstr "138,965"
 
-#: ../../zero-allocation.rst:361
+#: ../../zero-allocation.rst:351
 msgid "438 / 857"
 msgstr "438 / 857"
 
-#: ../../zero-allocation.rst:362
+#: ../../zero-allocation.rst:352
 msgid "28.57"
 msgstr "28.57"
 
-#: ../../zero-allocation.rst:363
+#: ../../zero-allocation.rst:353
 msgid "challenged (interstitial)"
 msgstr "被挑战（验证中间页）"
 
-#: ../../zero-allocation.rst:365
+#: ../../zero-allocation.rst:355
 msgid "195,188"
 msgstr "195,188"
 
-#: ../../zero-allocation.rst:366
+#: ../../zero-allocation.rst:356
 msgid "162 / 328"
 msgstr "162 / 328"
 
-#: ../../zero-allocation.rst:367
+#: ../../zero-allocation.rst:357
 msgid "13.73"
 msgstr "13.73"
 
-#: ../../zero-allocation.rst:368
+#: ../../zero-allocation.rst:358
 msgid "static allowed, proxied"
 msgstr "静态资源放行，经代理"
 
-#: ../../zero-allocation.rst:370
+#: ../../zero-allocation.rst:360
 msgid "145,673"
 msgstr "145,673"
 
-#: ../../zero-allocation.rst:371
+#: ../../zero-allocation.rst:361
 msgid "415 / 746"
 msgstr "415 / 746"
 
-#: ../../zero-allocation.rst:372
+#: ../../zero-allocation.rst:362
 msgid "27.27"
 msgstr "27.27"
 
-#: ../../zero-allocation.rst:373
+#: ../../zero-allocation.rst:363
 msgid "WAF denied (with session)"
 msgstr "被 WAF 拒绝（带会话）"
 
-#: ../../zero-allocation.rst:374
+#: ../../zero-allocation.rst:364
 msgid "403"
 msgstr "403"
 
-#: ../../zero-allocation.rst:375
+#: ../../zero-allocation.rst:365
 msgid "209,507"
 msgstr "209,507"
 
-#: ../../zero-allocation.rst:376
+#: ../../zero-allocation.rst:366
 msgid "151 / 306"
 msgstr "151 / 306"
 
-#: ../../zero-allocation.rst:377
+#: ../../zero-allocation.rst:367
 msgid "12.17"
 msgstr "12.17"
 
-#: ../../zero-allocation.rst:379
+#: ../../zero-allocation.rst:369
 msgid ""
 "``wrk`` keeps 64 requests in flight, so on the CPU-bound proxied paths "
 "requests queue for the four CPUs, and the p99 there is the scheduler's "
@@ -1187,11 +1202,11 @@ msgstr ""
 "统计守护进程的分配次数，``crates/net/tests/steady_state.rs`` 在 500 个经代理的 keep-alive "
 "请求中没有发现任何分配。"
 
-#: ../../zero-allocation.rst:381
+#: ../../zero-allocation.rst:371
 msgid "Exercise 5.1"
 msgstr "练习 5.1"
 
-#: ../../zero-allocation.rst:383
+#: ../../zero-allocation.rst:373
 msgid ""
 "A client sends a 200 KB upload. Trace which bytes live in the 64 KiB "
 "buffer, which are relayed by ``relay_body`` through the upload buffer, "
@@ -1200,17 +1215,21 @@ msgstr ""
 "一个客户端上传 200 KB 的数据。追踪哪些字节位于 64 KiB 缓冲区中，哪些由 ``relay_body`` "
 "经上传缓冲区中继，以及为什么代理必须 *先* 把头部写给源站，然后才能中继。"
 
-#: ../../zero-allocation.rst:385
+#: ../../zero-allocation.rst:375
 msgid "Concurrent State Without Allocation"
 msgstr "无分配的并发状态"
 
-#: ../../zero-allocation.rst:390
+#: ../../zero-allocation.rst:380
 msgid ""
-"Analyse the shard locks, the Robin Hood spent set, the GCRA limiter, the versioned ban table, the MPSC incident ring, and the read-copy-update publication of the policy engine with ``Arc`` and a generation-checked cache."
+"Analyse the shard locks, the Robin Hood spent set, the GCRA limiter, the "
+"versioned ban table, the MPSC incident ring, and the read-copy-update "
+"publication of the policy engine with ``Arc`` and a generation-checked "
+"cache."
 msgstr ""
-"分析分片锁、Robin Hood 已用集合、GCRA 限制器、带版本号的封禁表、MPSC 事件环，以及借助 ``Arc`` 和按代次检查的缓存实现的策略引擎读-复制-更新发布。"
+"分析分片锁、Robin Hood 已用集合、GCRA 限制器、带版本号的封禁表、MPSC 事件环，以及借助 ``Arc`` "
+"和按代次检查的缓存实现的策略引擎读-复制-更新发布。"
 
-#: ../../zero-allocation.rst:392
+#: ../../zero-allocation.rst:382
 msgid ""
 "Every store in ``sibuna-store`` allocates its fixed capacity once, when "
 "it is built, and never allocates or blocks on a global lock afterwards. "
@@ -1219,11 +1238,11 @@ msgstr ""
 "``sibuna-store`` "
 "中的每个存储都在构建时一次性分配其固定容量，之后从不分配内存，也从不阻塞在全局锁上。它们都不需要后台清扫线程：过期状态在原地回收。"
 
-#: ../../zero-allocation.rst:394
+#: ../../zero-allocation.rst:384
 msgid "Locks and Sharding"
 msgstr "锁与分片"
 
-#: ../../zero-allocation.rst:397
+#: ../../zero-allocation.rst:387
 msgid ""
 "The critical sections in Sibuna's tables are tens of instructions long, "
 "far shorter than a kernel futex round trip. Tables are split into 16 "
@@ -1234,7 +1253,7 @@ msgstr ""
 "Sibuna 各张表中的临界区只有几十条指令，远短于一次内核 futex 往返。表按键的哈希分成 16 个分片，因此两个操作发生争用的概率为 "
 ":math:`1/16`；每个分片独占一条缓存行，因此相邻的锁不会发生伪共享。"
 
-#: ../../zero-allocation.rst:399
+#: ../../zero-allocation.rst:389
 msgid ""
 "The tables use ``std::sync::Mutex``: one compare-and-swap when "
 "uncontended, a short spin while the holder runs, then a futex wait. The "
@@ -1247,67 +1266,67 @@ msgstr ""
 "等待。另一种选择是双状态的原子自旋锁，在等待循环中使用自旋提示。SID 0010 "
 "要求我们通过测量在两者之间作出选择。自旋锁在每次无争用的操作上大约节省一纳秒，但在争用下会落败："
 
-#: ../../zero-allocation.rst:401
+#: ../../zero-allocation.rst:391
 msgid "Shard lock throughput on a Ryzen 9 5950X (October 2026)"
 msgstr "Ryzen 9 5950X 上的分片锁吞吐量（2026 年 10 月）"
 
-#: ../../zero-allocation.rst:405
+#: ../../zero-allocation.rst:395
 msgid "``Mutex``"
 msgstr "``Mutex``"
 
-#: ../../zero-allocation.rst:406
+#: ../../zero-allocation.rst:396
 msgid "Spin lock"
 msgstr "自旋锁"
 
-#: ../../zero-allocation.rst:407
+#: ../../zero-allocation.rst:397
 msgid "spent set, 16 threads"
 msgstr "已用集合，16 个线程"
 
-#: ../../zero-allocation.rst:408
+#: ../../zero-allocation.rst:398
 msgid "10.8 M/s"
 msgstr "10.8 M/s"
 
-#: ../../zero-allocation.rst:409
+#: ../../zero-allocation.rst:399
 msgid "8.6 M/s"
 msgstr "8.6 M/s"
 
-#: ../../zero-allocation.rst:410
+#: ../../zero-allocation.rst:400
 msgid "spent set, 64 threads (more than the CPUs)"
 msgstr "已用集合，64 个线程（多于 CPU 数）"
 
-#: ../../zero-allocation.rst:411
+#: ../../zero-allocation.rst:401
 msgid "11.2 M/s"
 msgstr "11.2 M/s"
 
-#: ../../zero-allocation.rst:412
+#: ../../zero-allocation.rst:402
 msgid "6.9 M/s"
 msgstr "6.9 M/s"
 
-#: ../../zero-allocation.rst:413
+#: ../../zero-allocation.rst:403
 msgid "GCRA on six hot addresses, 16 threads"
 msgstr "在六个热点地址上运行 GCRA，16 个线程"
 
-#: ../../zero-allocation.rst:414
+#: ../../zero-allocation.rst:404
 msgid "44.9 M/s"
 msgstr "44.9 M/s"
 
-#: ../../zero-allocation.rst:415
+#: ../../zero-allocation.rst:405
 msgid "19.3 M/s"
 msgstr "19.3 M/s"
 
-#: ../../zero-allocation.rst:416
+#: ../../zero-allocation.rst:406
 msgid "GCRA on six hot addresses, 64 threads"
 msgstr "在六个热点地址上运行 GCRA，64 个线程"
 
-#: ../../zero-allocation.rst:417
+#: ../../zero-allocation.rst:407
 msgid "37.4 M/s"
 msgstr "37.4 M/s"
 
-#: ../../zero-allocation.rst:418
+#: ../../zero-allocation.rst:408
 msgid "6.5 M/s"
 msgstr "6.5 M/s"
 
-#: ../../zero-allocation.rst:420
+#: ../../zero-allocation.rst:410
 msgid ""
 "An edge server runs more connection threads than CPUs, and a spin lock "
 "whose holder is preempted makes every waiter burn its time slice, so we "
@@ -1319,11 +1338,11 @@ msgstr ""
 "数，而持有者被抢占的自旋锁会让每个等待者白白耗尽自己的时间片，因此我们保留互斥锁。中毒的锁会被直接进入，而不是传播错误：没有任何操作会在持有分片时 "
 "panic，即使发生了，分片在结构上也仍然有效。"
 
-#: ../../zero-allocation.rst:422
+#: ../../zero-allocation.rst:412
 msgid "The Robin Hood Spent Set"
 msgstr "Robin Hood 已用集合"
 
-#: ../../zero-allocation.rst:425
+#: ../../zero-allocation.rst:415
 msgid ""
 "Only accepted proofs enter the spent set (Part III). It has 16 shards, "
 "each an open-addressed array of 4,096 slots of ``Option<Entry>``, where "
@@ -1338,11 +1357,11 @@ msgstr ""
 "}``。Robin Hood "
 "插入（Celis，1986）会挤走任何比新来的键更靠近自己初始位置的占用者，从而使探测长度紧密集中；查找一旦遇到一个比自己更靠近其初始位置的条目，就会停止。"
 
-#: ../../zero-allocation.rst:427
+#: ../../zero-allocation.rst:417
 msgid "Implementation: ``Table::insert``"
 msgstr "实现：``Table::insert``"
 
-#: ../../zero-allocation.rst:429
+#: ../../zero-allocation.rst:419
 msgid ""
 "Inserts a spent tag with its expiry, reclaiming expired slots on the way. "
 "In ``crates/store/src/spent.rs`` (crate ``sibuna-store``)."
@@ -1350,7 +1369,7 @@ msgstr ""
 "插入一个带过期时间的已用标签，并在途中回收过期的槽。位于 ``crates/store/src/spent.rs``\\ （crate "
 "``sibuna-store``）。"
 
-#: ../../zero-allocation.rst:431
+#: ../../zero-allocation.rst:421
 msgid ""
 "fn insert(\n"
 "    &mut self,\n"
@@ -1369,7 +1388,8 @@ msgid ""
 "            *slot = Some(carry);\n"
 "            return Ok(());\n"
 "        };\n"
-"        // Overwriting an expired occupant is safe only when the new distance\n"
+"        // Overwriting an expired occupant is safe only when the new "
+"distance\n"
 "        // is not smaller, so keys probing past this slot still pass the\n"
 "        // early-termination test.\n"
 "        if e.is_expired(now) && carry.dist >= e.dist {\n"
@@ -1426,7 +1446,7 @@ msgstr ""
 "    Err(SpendError::Full)\n"
 "}"
 
-#: ../../zero-allocation.rst:470
+#: ../../zero-allocation.rst:460
 msgid ""
 "The expired-slot rule is the subtle part: an expired entry may be "
 "overwritten in place only by a key at least as far from its home, "
@@ -1438,11 +1458,11 @@ msgid ""
 msgstr ""
 "过期槽的规则是其中微妙的部分：只有距离自己初始位置至少同样远的键，才能原地覆盖一个过期条目，否则一个探测会越过该槽的后来键将提前停止并丢失。被挤走的过期条目直接丢弃。不需要清扫线程。插入时先在不改变任何内容的情况下模拟挤占路径（``can_insert``），确认有界的挤占可以成功且不会丢失任何存活的标签。"
 
-#: ../../zero-allocation.rst:472 ../../zero-allocation.rst:701
+#: ../../zero-allocation.rst:462 ../../zero-allocation.rst:682
 msgid "Invariant"
 msgstr "不变量"
 
-#: ../../zero-allocation.rst:474
+#: ../../zero-allocation.rst:464
 msgid ""
 "A refused insertion never evicts a live tag. A tag that was spent and has "
 "not expired is therefore always found, and the refusal "
@@ -1450,7 +1470,7 @@ msgid ""
 msgstr ""
 "被拒绝的插入永远不会逐出存活的标签。因此，一个已被使用且尚未过期的标签总能被找到，而拒绝（``SpendError::Full``）可能导致拒绝服务，但永远不会让重放成为可能。"
 
-#: ../../zero-allocation.rst:476
+#: ../../zero-allocation.rst:466
 msgid ""
 "A slot is ``Option<Entry>``. An empty slot has no tag to read, so there "
 "is no ``occupied`` flag that a reader could forget to check, and "
@@ -1462,17 +1482,23 @@ msgstr ""
 "标志，而且在两种情况都被处理之前，``match`` 无法通过编译。错误类型同样精确：已用集合有两种失败方式（``DoubleSpend`` 和 "
 "``Full``），``SpendError`` 恰好列出这两种。"
 
-#: ../../zero-allocation.rst:478
+#: ../../zero-allocation.rst:468
 msgid "GCRA: Rate Limiting in One Integer"
 msgstr "GCRA：用一个整数实现速率限制"
 
-#: ../../zero-allocation.rst:481
+#: ../../zero-allocation.rst:471
 msgid ""
-"The Generic Cell Rate Algorithm (ATM Forum, 1996) is the virtual-scheduling form of the leaky bucket. Per client it stores one *theoretical arrival time* (TAT). With emission interval :math:`T = \\max(1, \\lceil W / N \\rceil)` for a positive limit :math:`N` per window :math:`W`, and burst tolerance :math:`\\tau = (N - 1) T`:"
+"The Generic Cell Rate Algorithm (ATM Forum, 1996) is the "
+"virtual-scheduling form of the leaky bucket. Per client it stores one "
+"*theoretical arrival time* (TAT). With emission interval :math:`T = "
+"\\max(1, \\lceil W / N \\rceil)` for a positive limit :math:`N` per "
+"window :math:`W`, and burst tolerance :math:`\\tau = (N - 1) T`:"
 msgstr ""
-"通用信元速率算法（ATM Forum，1996）是漏桶算法的虚拟调度形式。它为每个客户端保存一个 *理论到达时间*\\ （TAT）。对于每个窗口 :math:`W` 内的正限额 :math:`N`，发射间隔为 :math:`T = \\max(1, \\lceil W / N \\rceil)`，突发容限为 :math:`\\tau = (N - 1) T`："
+"通用信元速率算法（ATM Forum，1996）是漏桶算法的虚拟调度形式。它为每个客户端保存一个 *理论到达时间*\\ （TAT）。对于每个窗口 "
+":math:`W` 内的正限额 :math:`N`，发射间隔为 :math:`T = \\max(1, \\lceil W / N "
+"\\rceil)`，突发容限为 :math:`\\tau = (N - 1) T`："
 
-#: ../../zero-allocation.rst:483
+#: ../../zero-allocation.rst:473
 msgid ""
 "\\text{arrival at } t \\text{ conforms} \\iff \\mathrm{TAT} \\le t + "
 "\\tau, \\quad \\text{then } \\mathrm{TAT} \\leftarrow "
@@ -1482,11 +1508,11 @@ msgstr ""
 "\\tau, \\quad \\text{then } \\mathrm{TAT} \\leftarrow "
 "\\max(\\mathrm{TAT}, t) + T."
 
-#: ../../zero-allocation.rst:487
+#: ../../zero-allocation.rst:477
 msgid "Theorem (token-bucket bound)"
 msgstr "定理（令牌桶上界）"
 
-#: ../../zero-allocation.rst:489
+#: ../../zero-allocation.rst:479
 msgid ""
 "After the first conforming arrival at :math:`t_1`, the :math:`k`-th "
 "conforming arrival satisfies :math:`t_k - t_1 \\ge (k - 1) T - \\tau`. "
@@ -1500,41 +1526,33 @@ msgstr ""
 "\\rfloor` 次合规到达：先是 :math:`N` 次突发，然后每个 :math:`T` "
 "一次。除了定义的突发之外，不存在固定窗口边界造成的异常，也不需要保存每个请求的历史。"
 
-#: ../../zero-allocation.rst:492
+#: ../../zero-allocation.rst:481
 msgid ""
-"rate = 5 per 1000 ms, so T = 200 ms and tau = 800 ms\n"
-"| admitted     x rejected (6th arrival at 0, and one just before each admission)\n"
-"\n"
-"   |||||x   x|        x|        x|        x|        x|\n"
-"   +---------+---------+---------+---------+---------+------> t (ms)\n"
-"   0         200       400       600       800       1000\n"
-"   1000      1200      1400      1600      1800      2000   <- TAT after\n"
-"\n"
-"TAT after the k-th admission is t_1 + k T, so any interval of length L\n"
-"admits at most N + floor(L / T)"
+"A chart of TAT against arrival time for T = 200 ms and tau = 800 ms. Five "
+"arrivals at t = 0 are admitted while TAT rises from 0 to 1000 ms; a sixth "
+"at t = 0 finds 1000 ms above the line t + tau and is refused. Afterwards "
+"an arrival halfway between multiples of 200 ms is refused, and one at "
+"each multiple of 200 ms finds TAT exactly on the line and is admitted."
 msgstr ""
-"速率 = 每 1000 ms 5 次，因此 T = 200 ms，tau = 800 ms\n"
-"| 准入         x 拒绝（0 时刻的第 6 次到达，以及每次准入前紧挨着的一次）\n"
-"\n"
-"   |||||x   x|        x|        x|        x|        x|\n"
-"   +---------+---------+---------+---------+---------+------> t (ms)\n"
-"   0         200       400       600       800       1000\n"
-"   1000      1200      1400      1600      1800      2000   <- 之后的 TAT\n"
-"\n"
-"第 k 次准入之后的 TAT 为 t_1 + k T，因此任意长度为 L 的区间\n"
-"最多准入 N + floor(L / T) 次"
+"T = 200 ms、tau = 800 ms 时 TAT 随到达时间变化的图。t = 0 时的五次到达被准入，TAT "
+"从 0 升至 1000 ms；t = 0 时的第六次到达发现 TAT 为 1000 ms，高于直线 t + tau，"
+"因而被拒绝。此后，位于两个 200 ms 整数倍正中间的到达被拒绝，而恰好位于 200 ms 整数倍处的到达发现 "
+"TAT 正好落在直线上，因而被准入。"
 
-#: ../../zero-allocation.rst:492
+#: ../../zero-allocation.rst:484
 msgid ""
 "GCRA admission for a limit of 5 per second: a burst of five, then one "
-"every 200 ms."
-msgstr "限额为每秒 5 次时的 GCRA 准入：先是五次突发，然后每 200 ms 一次。"
+"every 200 ms. An arrival is admitted when the TAT it finds lies on or "
+"below the line :math:`t + \\tau`."
+msgstr ""
+"限额为每秒 5 次时的 GCRA 准入：先是五次突发，然后每 200 ms 一次。到达时若 TAT 位于直线 "
+":math:`t + \\tau` 上或其下方，就会被准入。"
 
-#: ../../zero-allocation.rst:505
+#: ../../zero-allocation.rst:486
 msgid "Worked example: five per second by hand"
 msgstr "实例分析：手工计算每秒五次"
 
-#: ../../zero-allocation.rst:507
+#: ../../zero-allocation.rst:488
 msgid ""
 "Take :math:`N = 5` and :math:`W = 1000` ms, so :math:`T = 200` ms and "
 ":math:`\\tau = 800` ms, and let a client that has been idle send six "
@@ -1561,11 +1579,11 @@ msgstr ""
 "``gcra_admits_exactly_the_burst_then_drains_at_the_emission_rate`` "
 "正是检查这些数字。"
 
-#: ../../zero-allocation.rst:509
+#: ../../zero-allocation.rst:490
 msgid "Implementation: ``arrive``"
 msgstr "实现：``arrive``"
 
-#: ../../zero-allocation.rst:511
+#: ../../zero-allocation.rst:492
 msgid ""
 "Applies one arrival to the cells of a locked shard and returns the "
 "decision, the retry delay and the remaining budget. In "
@@ -1574,7 +1592,7 @@ msgstr ""
 "把一次到达应用到已加锁分片的单元上，并返回决定、重试延迟和剩余预算。位于 ``crates/store/src/limiter.rs``\\ "
 "（crate ``sibuna-store``）。"
 
-#: ../../zero-allocation.rst:513
+#: ../../zero-allocation.rst:494
 msgid ""
 "fn arrive(\n"
 "    cells: &mut [Cell; SLOTS_PER_SHARD],\n"
@@ -1636,7 +1654,7 @@ msgstr ""
 "    // ... remaining = min(rate, floor((t + tau - TAT) / T) + 1)\n"
 "}"
 
-#: ../../zero-allocation.rst:545
+#: ../../zero-allocation.rst:526
 msgid ""
 "The shard's ``check`` takes the lock and calls ``arrive`` with the locked "
 "cells; the guard releases the lock when ``check`` returns. Cells are 16 "
@@ -1657,11 +1675,11 @@ msgstr ""
 "响应头由同样的算术计算得出。探测窗口饱和时，会拒绝新客户端，而不是逐出活跃的配额状态，并且决定中会注明这一点（``capacity_exhausted``），使调用方不会把饱和造成的拒绝升级为封禁。配置的速率为零时拒绝请求。一个限制器可服务多条规则：单元的键是以规则作用域为种子、对客户端地址计算的 "
 "Wyhash，因此同一个客户端在不同作用域中拥有相互独立的预算。"
 
-#: ../../zero-allocation.rst:547
+#: ../../zero-allocation.rst:528
 msgid "The Versioned Ban Table"
 msgstr "带版本号的封禁表"
 
-#: ../../zero-allocation.rst:550
+#: ../../zero-allocation.rst:531
 msgid ""
 "Bans use 4,096 slots with atomic version, key and expiry fields, "
 "open-addressed by a keyed hash of the banned address with an 8-slot probe "
@@ -1672,11 +1690,11 @@ msgstr ""
 "封禁使用 4,096 个槽，每个槽具有原子的版本、键和过期时间字段，按被封禁地址的带密钥哈希进行开放寻址，探测窗口为 8 "
 "个槽。写者通过互斥锁与其他写者串行执行，并在每次更新前后各递增一次版本号；读者不加锁，只接受稳定的偶数版本号，遇到并发修改时重试。"
 
-#: ../../zero-allocation.rst:552
+#: ../../zero-allocation.rst:533
 msgid "Implementation: ``BanTable::ban`` and ``BanTable::read_slot``"
 msgstr "实现：``BanTable::ban`` 和 ``BanTable::read_slot``"
 
-#: ../../zero-allocation.rst:554
+#: ../../zero-allocation.rst:535
 msgid ""
 "The writer's bracket and the reader's consistent snapshot. In "
 "``crates/store/src/ban_table.rs`` (crate ``sibuna-store``)."
@@ -1684,14 +1702,16 @@ msgstr ""
 "写者的前后递增，以及读者获得的一致快照。位于 ``crates/store/src/ban_table.rs``\\ （crate "
 "``sibuna-store``）。"
 
-#: ../../zero-allocation.rst:556
+#: ../../zero-allocation.rst:537
 msgid ""
 "pub fn ban(&self, banned: &[u8], until: u64, now: u64) {\n"
 "    let key = slot_key(banned);\n"
 "    let _writers = self.lock_writers();\n"
 "    let victim = &self.slots[self.victim(key, now)];\n"
-"    // A key and an expiry are one logical value: bracket the replacement with\n"
-"    // an odd version so readers cannot combine an old key with the next key's\n"
+"    // A key and an expiry are one logical value: bracket the replacement "
+"with\n"
+"    // an odd version so readers cannot combine an old key with the next "
+"key's\n"
 "    // expiry.\n"
 "    victim.version.fetch_add(1, Ordering::SeqCst);\n"
 "    victim.until.store(until, Ordering::SeqCst);\n"
@@ -1742,7 +1762,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../zero-allocation.rst:586
+#: ../../zero-allocation.rst:567
 msgid ""
 "Sequential consistency prevents mixing an old identity with a replacement "
 "expiry: every access belongs to one total order, which keeps the argument "
@@ -1757,33 +1777,47 @@ msgstr ""
 "HTTP 测量工具中间接测得，而不是假定为零。探测窗口已满时，覆盖一个已过期的槽，否则覆盖最先过期的槽。``clear`` "
 "解除所有封禁，但保留键不动，因为一个被清空的槽可能会让探测链中后面一个发生碰撞的键无法被找到。"
 
-#: ../../zero-allocation.rst:588
+#: ../../zero-allocation.rst:569
 msgid "The MPSC Incident Ring"
 msgstr "MPSC 事件环"
 
-#: ../../zero-allocation.rst:591
+#: ../../zero-allocation.rst:572
 msgid ""
-"When the Shield surface denies a request or the honeypot fires, the incident is copied into a fixed record of about 1.3 KB (client address, User-Agent, method, path, category and payload, each cut at its capacity) and pushed onto a bounded multi-producer single-consumer ring (Vyukov's sequence-stamped design, 512 slots, ``BoundedQueue<IncidentRecord, 512>``). Producers are connection threads; the consumer is the storage thread. A full ring drops the newest record rather than blocking a response, an explicit loss policy rather than a durability guarantee. The drop counter makes that loss observable."
+"When the Shield surface denies a request or the honeypot fires, the "
+"incident is copied into a fixed record of about 1.3 KB (client address, "
+"User-Agent, method, path, category and payload, each cut at its capacity) "
+"and pushed onto a bounded multi-producer single-consumer ring (Vyukov's "
+"sequence-stamped design, 512 slots, ``BoundedQueue<IncidentRecord, "
+"512>``). Producers are connection threads; the consumer is the storage "
+"thread. A full ring drops the newest record rather than blocking a "
+"response, an explicit loss policy rather than a durability guarantee. The "
+"drop counter makes that loss observable."
 msgstr ""
-"当 Shield 形态拒绝一个请求或蜜罐被触发时，事件被复制进一条约 1.3 KB 的固定记录（客户端地址、User-Agent、方法、路径、类别和载荷，各自按容量截断），并推入一个有界的多生产者单消费者环（Vyukov 的带序号设计，512 个槽，``BoundedQueue<IncidentRecord, 512>``）。生产者是连接线程；消费者是存储线程。环满时丢弃最新的记录，而不是阻塞响应，这是一种明确的丢失策略，而不是持久性保证。丢弃计数器使这种丢失可以被观察到。"
+"当 Shield 形态拒绝一个请求或蜜罐被触发时，事件被复制进一条约 1.3 KB "
+"的固定记录（客户端地址、User-Agent、方法、路径、类别和载荷，各自按容量截断），并推入一个有界的多生产者单消费者环（Vyukov "
+"的带序号设计，512 个槽，``BoundedQueue<IncidentRecord, "
+"512>``）。生产者是连接线程；消费者是存储线程。环满时丢弃最新的记录，而不是阻塞响应，这是一种明确的丢失策略，而不是持久性保证。丢弃计数器使这种丢失可以被观察到。"
 
-#: ../../zero-allocation.rst:593
+#: ../../zero-allocation.rst:574
 msgid ""
-"/// Copies `incident` into the ring; a full ring drops it and counts the drop.\n"
+"/// Copies `incident` into the ring; a full ring drops it and counts the "
+"drop.\n"
 "pub(crate) fn record(&self, incident: &Incident<'_>) {\n"
-"    if self.queue.push(IncidentRecord::from_incident(incident)).is_err() {\n"
+"    if self.queue.push(IncidentRecord::from_incident(incident)).is_err() "
+"{\n"
 "        self.metrics.incidents_dropped.bump();\n"
 "    }\n"
 "}"
 msgstr ""
 "/// 把 `incident` 复制进环形缓冲区；缓冲区已满时丢弃它，并为丢弃计数。\n"
 "pub(crate) fn record(&self, incident: &Incident<'_>) {\n"
-"    if self.queue.push(IncidentRecord::from_incident(incident)).is_err() {\n"
+"    if self.queue.push(IncidentRecord::from_incident(incident)).is_err() "
+"{\n"
 "        self.metrics.incidents_dropped.bump();\n"
 "    }\n"
 "}"
 
-#: ../../zero-allocation.rst:602
+#: ../../zero-allocation.rst:583
 msgid ""
 "After moving a record into a pending batch, the storage thread retains "
 "it, together with the prepared rows, until the commit is confirmed; it "
@@ -1792,7 +1826,7 @@ msgid ""
 msgstr ""
 "把一条记录移入待处理批次之后，存储线程会连同准备好的行一起保留它，直到提交得到确认；遇到数据库错误时，它不会悄悄丢弃这条记录，重试时写入的是完全相同的批次。"
 
-#: ../../zero-allocation.rst:604
+#: ../../zero-allocation.rst:585
 msgid ""
 "Each slot carries a sequence number that tells producers whether the slot "
 "is free and the consumer whether it is full, so neither side takes a "
@@ -1808,17 +1842,20 @@ msgstr ""
 "``crates/store/src/ring.rs`` 把值存放在 ``UnsafeCell<MaybeUninit<T>>`` 槽中，每个 "
 "``unsafe`` 块都写明了为其提供依据的协议步骤："
 
-#: ../../zero-allocation.rst:606
+#: ../../zero-allocation.rst:587
 msgid ""
 "if diff == 0 {\n"
-"    // Relaxed: the CAS only arbitrates which producer owns position `pos`.\n"
+"    // Relaxed: the CAS only arbitrates which producer owns position "
+"`pos`.\n"
 "    match self.tail.0.compare_exchange_weak(\n"
 "        pos, pos.wrapping_add(1), Ordering::Relaxed, Ordering::Relaxed,\n"
 "    ) {\n"
 "        Ok(_) => {\n"
 "            // SAFETY: the CAS gave this thread position `pos`, and\n"
-"            // `sequence == pos` says the slot is empty; no other producer can\n"
-"            // claim `pos` and the consumer does not read it before the Release\n"
+"            // `sequence == pos` says the slot is empty; no other "
+"producer can\n"
+"            // claim `pos` and the consumer does not read it before the "
+"Release\n"
 "            // store below.\n"
 "            unsafe { (*slot.value.get()).write(value) };\n"
 "            // Release: publishes the written value to the consumer.\n"
@@ -1852,7 +1889,7 @@ msgstr ""
 "    return Err(value);\n"
 "}"
 
-#: ../../zero-allocation.rst:629
+#: ../../zero-allocation.rst:610
 msgid ""
 "Two conventions of the ring are types, not comments. On a full ring "
 "``push`` returns ``Err(value)``, handing the record back so the caller "
@@ -1866,11 +1903,11 @@ msgstr ""
 "会让记录丢失。这个环只有一个消费者，``pop`` 接受 ``&mut self``，共享代码必须先取得唯一的 "
 "``Consumer``，因此第二个消费者要么无法编译，要么在运行时被拒绝。"
 
-#: ../../zero-allocation.rst:631
+#: ../../zero-allocation.rst:612
 msgid "Read-Copy-Update Engine Publication"
 msgstr "读-复制-更新式的引擎发布"
 
-#: ../../zero-allocation.rst:634
+#: ../../zero-allocation.rst:615
 msgid ""
 "The policy engine is rebuilt off the hot path when policies change. "
 "Requests must never observe a half-built engine, and an engine must never "
@@ -1881,47 +1918,74 @@ msgstr ""
 "策略变化时，策略引擎在热路径之外重建。请求绝不能看到构建了一半的引擎，引擎也绝不能在仍有请求读取它时被释放。Sibuna 把每个引擎作为 "
 "``Arc<Engine>`` 发布到一个 ``EngineSlot`` 中，每个连接通过一个 ``EngineCache`` 读取它："
 
-#: ../../zero-allocation.rst:637
+#: ../../zero-allocation.rst:618
 msgid ""
-"The storage thread builds Engine v2 off the request path and publishes it into the EngineSlot, which holds an RwLock around the current Arc and an atomic generation. Connection thread A has refreshed: its cache holds generation 2 and an Arc of Engine v2, and its next refresh is one acquire load with no clone. Connection thread B still holds generation 1 and an Arc of Engine v1; on its next refresh it sees the generation moved, takes the read lock and clones the Arc of v2. Engine v1 is freed when B lets go of it."
+"The storage thread builds Engine v2 off the request path and publishes it "
+"into the EngineSlot, which holds an RwLock around the current Arc and an "
+"atomic generation. Connection thread A has refreshed: its cache holds "
+"generation 2 and an Arc of Engine v2, and its next refresh is one acquire "
+"load with no clone. Connection thread B still holds generation 1 and an "
+"Arc of Engine v1; on its next refresh it sees the generation moved, takes "
+"the read lock and clones the Arc of v2. Engine v1 is freed when B lets go "
+"of it."
 msgstr ""
-"存储线程在请求路径之外构建 Engine v2，并把它发布到 EngineSlot 中；EngineSlot 持有一个包裹当前 Arc 的 RwLock 和一个原子代次。连接线程 A 已经刷新：它的缓存持有代次 2 和指向 Engine v2 的 Arc，下一次刷新只需一次 acquire 加载，无需克隆。连接线程 B 仍持有代次 1 和指向 Engine v1 的 Arc；下次刷新时，它发现代次已变，于是获取读锁并克隆 v2 的 Arc。B 放手之后，Engine v1 即被释放。"
+"存储线程在请求路径之外构建 Engine v2，并把它发布到 EngineSlot 中；EngineSlot 持有一个包裹当前 Arc 的 "
+"RwLock 和一个原子代次。连接线程 A 已经刷新：它的缓存持有代次 2 和指向 Engine v2 的 Arc，下一次刷新只需一次 "
+"acquire 加载，无需克隆。连接线程 B 仍持有代次 1 和指向 Engine v1 的 "
+"Arc；下次刷新时，它发现代次已变，于是获取读锁并克隆 v2 的 Arc。B 放手之后，Engine v1 即被释放。"
 
-#: ../../zero-allocation.rst:637
+#: ../../zero-allocation.rst:618
 msgid ""
 "digraph engine_publication {\n"
 "  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.8];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, fontcolor=\"#64748b\"];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
+"fontcolor=\"#172033\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, "
+"fontcolor=\"#64748b\"];\n"
 "\n"
-"  storage [label=\"Storage thread\\nbuild Engine v2\\noff the request path\"];\n"
-"  slot [label=\"EngineSlot\\nRwLock<Arc<Engine>>\\ngeneration: AtomicU64\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  v2 [label=\"Engine v2\\n(published)\", fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
-"  v1 [label=\"Engine v1\\nfreed when the last\\ncache lets go\", fillcolor=\"#fef2f2\", color=\"#b91c1c\"];\n"
+"  storage [label=\"Storage thread\\nbuild Engine v2\\noff the request "
+"path\"];\n"
+"  slot [label=\"EngineSlot\\nRwLock<Arc<Engine>>\\ngeneration: "
+"AtomicU64\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
+"  v2 [label=\"Engine v2\\n(published)\", fillcolor=\"#f0fdf4\", "
+"color=\"#15803d\"];\n"
+"  v1 [label=\"Engine v1\\nfreed when the last\\ncache lets go\", "
+"fillcolor=\"#fef2f2\", color=\"#b91c1c\"];\n"
 "  a [label=\"Connection thread A\\nEngineCache\\ngeneration 2\"];\n"
 "  b [label=\"Connection thread B\\nEngineCache\\ngeneration 1\"];\n"
 "\n"
-"  storage -> slot [label=\"publish: swap the Arc\\nunder the write lock,\\ngeneration += 1 (Release)\"];\n"
+"  storage -> slot [label=\"publish: swap the Arc\\nunder the write "
+"lock,\\ngeneration += 1 (Release)\"];\n"
 "  slot -> v2 [label=\"holds\"];\n"
-"  a -> slot [label=\"refresh: load generation\\n(Acquire); equal, no clone\"];\n"
+"  a -> slot [label=\"refresh: load generation\\n(Acquire); equal, no "
+"clone\"];\n"
 "  a -> v2 [label=\"Arc\"];\n"
-"  b -> slot [label=\"generation moved:\\nread lock, clone Arc\", style=dashed];\n"
+"  b -> slot [label=\"generation moved:\\nread lock, clone Arc\", "
+"style=dashed];\n"
 "  b -> v1 [label=\"Arc until\\nnext refresh\"];\n"
 "}"
 msgstr ""
 "digraph engine_publication {\n"
 "  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.8];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, fontcolor=\"#64748b\"];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
+"fontcolor=\"#172033\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, "
+"fontcolor=\"#64748b\"];\n"
 "\n"
 "  storage [label=\"存储线程\\n在请求路径之外\\n构建 Engine v2\"];\n"
-"  slot [label=\"EngineSlot\\nRwLock<Arc<Engine>>\\ngeneration: AtomicU64\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  v2 [label=\"Engine v2\\n（已发布）\", fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
-"  v1 [label=\"Engine v1\\n最后一个缓存\\n放手时释放\", fillcolor=\"#fef2f2\", color=\"#b91c1c\"];\n"
+"  slot [label=\"EngineSlot\\nRwLock<Arc<Engine>>\\ngeneration: "
+"AtomicU64\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
+"  v2 [label=\"Engine v2\\n（已发布）\", fillcolor=\"#f0fdf4\", "
+"color=\"#15803d\"];\n"
+"  v1 [label=\"Engine v1\\n最后一个缓存\\n放手时释放\", fillcolor=\"#fef2f2\", "
+"color=\"#b91c1c\"];\n"
 "  a [label=\"连接线程 A\\nEngineCache\\n代次 2\"];\n"
 "  b [label=\"连接线程 B\\nEngineCache\\n代次 1\"];\n"
 "\n"
-"  storage -> slot [label=\"发布：在写锁下\\n交换 Arc，\\ngeneration += 1 (Release)\"];\n"
+"  storage -> slot [label=\"发布：在写锁下\\n交换 Arc，\\ngeneration += 1 "
+"(Release)\"];\n"
 "  slot -> v2 [label=\"持有\"];\n"
 "  a -> slot [label=\"刷新：加载 generation\\n(Acquire)；相等则不克隆\"];\n"
 "  a -> v2 [label=\"Arc\"];\n"
@@ -1929,24 +1993,28 @@ msgstr ""
 "  b -> v1 [label=\"Arc 保留到\\n下次刷新\"];\n"
 "}"
 
-#: ../../zero-allocation.rst:637
+#: ../../zero-allocation.rst:618
 msgid ""
-"Engine publication. The storage thread publishes a complete engine and advances the generation; each connection checks the generation with one acquire load and clones the published Arc only after a publication. An old engine is freed when the last cache holding it lets go."
+"Engine publication. The storage thread publishes a complete engine and "
+"advances the generation; each connection checks the generation with one "
+"acquire load and clones the published Arc only after a publication. An "
+"old engine is freed when the last cache holding it lets go."
 msgstr ""
-"引擎发布。存储线程发布一个完整的引擎并推进代次；每个连接用一次 acquire 加载检查代次，只有在发生发布之后才克隆已发布的 Arc。旧引擎在最后一个持有它的缓存放手时被释放。"
+"引擎发布。存储线程发布一个完整的引擎并推进代次；每个连接用一次 acquire 加载检查代次，只有在发生发布之后才克隆已发布的 "
+"Arc。旧引擎在最后一个持有它的缓存放手时被释放。"
 
-#: ../../zero-allocation.rst:660
+#: ../../zero-allocation.rst:641
 msgid "Implementation: ``EngineSlot::publish`` and ``EngineCache::refresh``"
 msgstr "实现：``EngineSlot::publish`` 和 ``EngineCache::refresh``"
 
-#: ../../zero-allocation.rst:662
+#: ../../zero-allocation.rst:643
 msgid ""
 "Publication of a complete engine, and one connection's view of it. In "
 "``cmd/sibuna/src/slot.rs`` (crate ``sibuna``)."
 msgstr ""
 "完整引擎的发布，以及一个连接对它的视图。位于 ``cmd/sibuna/src/slot.rs``\\ （crate ``sibuna``）。"
 
-#: ../../zero-allocation.rst:664
+#: ../../zero-allocation.rst:645
 msgid ""
 "pub struct EngineSlot {\n"
 "    current: RwLock<Arc<Engine>>,\n"
@@ -1957,11 +2025,13 @@ msgid ""
 "    let fresh = Arc::new(engine);\n"
 "    let previous = {\n"
 "        let mut current =\n"
-"            self.current.write().unwrap_or_else(PoisonError::into_inner);\n"
+"            "
+"self.current.write().unwrap_or_else(PoisonError::into_inner);\n"
 "        std::mem::replace(&mut *current, fresh)\n"
 "    };\n"
 "    self.generation.fetch_add(1, Ordering::Release);\n"
-"    // The old engine is dropped outside the lock (when this was its last holder).\n"
+"    // The old engine is dropped outside the lock (when this was its last "
+"holder).\n"
 "    drop(previous);\n"
 "}\n"
 "\n"
@@ -1973,8 +2043,10 @@ msgid ""
 "pub fn refresh(&mut self, slot: &EngineSlot) -> &Engine {\n"
 "    let generation = slot.generation();\n"
 "    if self.generation != generation {\n"
-"        // A publication between the load above and this clone labels a newer\n"
-"        // engine with an older generation; the next refresh simply loads again.\n"
+"        // A publication between the load above and this clone labels a "
+"newer\n"
+"        // engine with an older generation; the next refresh simply loads "
+"again.\n"
 "        self.generation = generation;\n"
 "        self.engine = None;\n"
 "    }\n"
@@ -1990,7 +2062,8 @@ msgstr ""
 "    let fresh = Arc::new(engine);\n"
 "    let previous = {\n"
 "        let mut current =\n"
-"            self.current.write().unwrap_or_else(PoisonError::into_inner);\n"
+"            "
+"self.current.write().unwrap_or_else(PoisonError::into_inner);\n"
 "        std::mem::replace(&mut *current, fresh)\n"
 "    };\n"
 "    self.generation.fetch_add(1, Ordering::Release);\n"
@@ -2014,13 +2087,22 @@ msgstr ""
 "    self.engine.get_or_insert_with(|| slot.load())\n"
 "}"
 
-#: ../../zero-allocation.rst:699
+#: ../../zero-allocation.rst:680
 msgid ""
-"The generation is stored with release ordering after the engine is in place, and loaded with acquire ordering: a reader that sees a new generation also sees the engine stored before it. The race named in the comment is benign. If a publication lands between a reader's generation load and its clone, the reader caches the newer engine under the older generation number, and its next refresh notices the mismatch and loads again. A reader can be one engine late for one request; it can never see a half-built engine, because only complete engines are ever stored in the slot."
+"The generation is stored with release ordering after the engine is in "
+"place, and loaded with acquire ordering: a reader that sees a new "
+"generation also sees the engine stored before it. The race named in the "
+"comment is benign. If a publication lands between a reader's generation "
+"load and its clone, the reader caches the newer engine under the older "
+"generation number, and its next refresh notices the mismatch and loads "
+"again. A reader can be one engine late for one request; it can never see "
+"a half-built engine, because only complete engines are ever stored in the "
+"slot."
 msgstr ""
-"代次在引擎就位之后以 release 顺序存储，并以 acquire 顺序加载：看到新代次的读者也能看到在它之前存入的引擎。注释中提到的竞争是良性的。如果一次发布恰好发生在读者加载代次和克隆之间，读者会把较新的引擎缓存在较旧的代次下，下一次刷新时会发现不匹配并重新加载。读者可能在一个请求中晚一个引擎；但它永远看不到构建了一半的引擎，因为存入槽中的只有完整的引擎。"
+"代次在引擎就位之后以 release 顺序存储，并以 acquire "
+"顺序加载：看到新代次的读者也能看到在它之前存入的引擎。注释中提到的竞争是良性的。如果一次发布恰好发生在读者加载代次和克隆之间，读者会把较新的引擎缓存在较旧的代次下，下一次刷新时会发现不匹配并重新加载。读者可能在一个请求中晚一个引擎；但它永远看不到构建了一半的引擎，因为存入槽中的只有完整的引擎。"
 
-#: ../../zero-allocation.rst:703
+#: ../../zero-allocation.rst:684
 msgid ""
 "Every engine a request reads is complete, and no engine is freed while "
 "any request or connection cache holds it. The first holds because an "
@@ -2031,67 +2113,74 @@ msgstr ""
 "请求读取的每个引擎都是完整的，并且只要还有任何请求或连接缓存持有某个引擎，它就不会被释放。前者成立，是因为引擎在 ``publish`` "
 "存储它之前已经完全构建好；后者成立，是因为每个读者都持有一个 ``Arc``，而引擎只会随最后一个 ``Arc`` 一起被丢弃。"
 
-#: ../../zero-allocation.rst:705
+#: ../../zero-allocation.rst:686
 msgid ""
-"Why a cache and not simply a lock? SID 0010 asked us to measure the read cost with 16 threads and choose between ``RwLock<Arc<Engine>>`` and a lock-free alternative in safe Rust. Reading through the lock takes the lock word and the reference count, two cache lines that every core writes. The generation, by contrast, is written once per publication and otherwise only read, so each core keeps its copy:"
+"Why a cache and not simply a lock? SID 0010 asked us to measure the read "
+"cost with 16 threads and choose between ``RwLock<Arc<Engine>>`` and a "
+"lock-free alternative in safe Rust. Reading through the lock takes the "
+"lock word and the reference count, two cache lines that every core "
+"writes. The generation, by contrast, is written once per publication and "
+"otherwise only read, so each core keeps its copy:"
 msgstr ""
-"为什么用缓存，而不简单地用锁？SID 0010 要求我们测量 16 个线程下的读取成本，并在 ``RwLock<Arc<Engine>>`` 和安全 Rust 中的一种无锁方案之间作出选择。通过锁读取要访问锁字和引用计数，这两条缓存行每个核心都会写入。相比之下，代次每次发布只写一次，其余时间只被读取，因此每个核心都能保留自己的副本："
+"为什么用缓存，而不简单地用锁？SID 0010 要求我们测量 16 个线程下的读取成本，并在 ``RwLock<Arc<Engine>>`` "
+"和安全 Rust "
+"中的一种无锁方案之间作出选择。通过锁读取要访问锁字和引用计数，这两条缓存行每个核心都会写入。相比之下，代次每次发布只写一次，其余时间只被读取，因此每个核心都能保留自己的副本："
 
-#: ../../zero-allocation.rst:707
+#: ../../zero-allocation.rst:688
 msgid ""
 "Cost of one engine read, Ryzen 9 5950X, 16 threads reading in a loop "
 "(October 2026)"
 msgstr "一次引擎读取的成本，Ryzen 9 5950X，16 个线程循环读取（2026 年 10 月）"
 
-#: ../../zero-allocation.rst:710
+#: ../../zero-allocation.rst:691
 msgid "Reader"
 msgstr "读取方式"
 
-#: ../../zero-allocation.rst:711
+#: ../../zero-allocation.rst:692
 msgid "1 thread"
 msgstr "1 个线程"
 
-#: ../../zero-allocation.rst:712
+#: ../../zero-allocation.rst:693
 msgid "16 threads"
 msgstr "16 个线程"
 
-#: ../../zero-allocation.rst:713
+#: ../../zero-allocation.rst:694
 msgid "``RwLock`` read guard only"
 msgstr "仅 ``RwLock`` 读守卫"
 
-#: ../../zero-allocation.rst:714
+#: ../../zero-allocation.rst:695
 msgid "4.2 ns"
 msgstr "4.2 ns"
 
-#: ../../zero-allocation.rst:715
+#: ../../zero-allocation.rst:696
 msgid "752 ns"
 msgstr "752 ns"
 
-#: ../../zero-allocation.rst:716
+#: ../../zero-allocation.rst:697
 msgid "``RwLock`` read and ``Arc`` clone"
 msgstr "``RwLock`` 读取加 ``Arc`` 克隆"
 
-#: ../../zero-allocation.rst:717
+#: ../../zero-allocation.rst:698
 msgid "7.6 ns"
 msgstr "7.6 ns"
 
-#: ../../zero-allocation.rst:718
+#: ../../zero-allocation.rst:699
 msgid "833 ns"
 msgstr "833 ns"
 
-#: ../../zero-allocation.rst:719
+#: ../../zero-allocation.rst:700
 msgid "generation check with a cached ``Arc``"
 msgstr "用缓存的 ``Arc`` 检查代次"
 
-#: ../../zero-allocation.rst:720
+#: ../../zero-allocation.rst:701
 msgid "0.8 ns"
 msgstr "0.8 ns"
 
-#: ../../zero-allocation.rst:721
+#: ../../zero-allocation.rst:702
 msgid "1.8 ns"
 msgstr "1.8 ns"
 
-#: ../../zero-allocation.rst:723
+#: ../../zero-allocation.rst:704
 msgid ""
 "Under contention the cached read is more than 400 times cheaper than the "
 "lock, so the request path uses the cache and the ``RwLock`` only on the "
@@ -2109,11 +2198,11 @@ msgstr ""
 "字节，约 204 KiB 的紧凑堆表（``benchmarks/results/primitives-latest.json`` 中的 "
 "``engine_bytes``），可容纳 128 条规则、128 字节的规则名称和 8,192 个字典树节点。"
 
-#: ../../zero-allocation.rst:725
+#: ../../zero-allocation.rst:706
 msgid "Why ``Arc`` and not reader counts"
 msgstr "为什么用 ``Arc`` 而不是读者计数"
 
-#: ../../zero-allocation.rst:727
+#: ../../zero-allocation.rst:708
 msgid ""
 "The fixed-memory alternative keeps two engine slots, each with a reader "
 "count and its own allocation arena. A request pins a slot by incrementing "
@@ -2129,7 +2218,7 @@ msgstr ""
 "固定内存的替代方案保留两个引擎槽，每个槽有一个读者计数和自己的内存分配区（arena）。请求通过递增计数并重新检查槽指针来固定一个槽，而且两个原子操作都必须是顺序一致的，才能消除写者在读者加载和递增之间进行交换的竞争。构建者交换指针，然后自旋等待旧槽的读者全部退出，再重置该槽的内存区并在其中重建。因此，一个在重建期间持有槽的读者会阻塞构建者；除非每个请求都在代理 "
 "I/O 开始之前释放它的槽，否则一个慢速源站会拖住下一次发布。"
 
-#: ../../zero-allocation.rst:729
+#: ../../zero-allocation.rst:710
 msgid ""
 "``Arc`` reference counting needs none of this. The storage thread builds "
 "a fresh ``Engine`` from each snapshot and publishes it; nothing is "
@@ -2148,11 +2237,11 @@ msgstr ""
 "128 "
 "字节的缓冲区，以结束一次借用：决策通过连接的缓存借用引擎，而响应路径需要以可变方式访问整个连接上下文。一个可能存活数小时的升级连接，在被代理之前会释放它缓存的引擎。"
 
-#: ../../zero-allocation.rst:731
+#: ../../zero-allocation.rst:712
 msgid "Exercise 5.2"
 msgstr "练习 5.2"
 
-#: ../../zero-allocation.rst:733
+#: ../../zero-allocation.rst:714
 msgid ""
 "Using the GCRA theorem, compute the maximum number of requests a single "
 "client can get through in the first 3 seconds after being idle, for "
@@ -2162,11 +2251,11 @@ msgstr ""
 "利用 GCRA 定理，计算在 ``--rate-limit 100 --rate-window 10`` 下，单个客户端在空闲之后的前 3 "
 "秒内最多能通过多少个请求。与固定 10 秒窗口计数器以及真正的滑动窗口日志进行比较。"
 
-#: ../../zero-allocation.rst:735
+#: ../../zero-allocation.rst:716
 msgid "Explain the invariant"
 msgstr "解释这个不变量"
 
-#: ../../zero-allocation.rst:737
+#: ../../zero-allocation.rst:718
 msgid ""
 "Explain why an expired Robin Hood entry can be overwritten only by a key "
 "with a distance at least as large, using a three-slot example."

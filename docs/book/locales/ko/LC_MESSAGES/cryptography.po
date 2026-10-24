@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-10-24 10:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,7 +36,7 @@ msgid "Hashcash: The Mathematics of Tier One"
 msgstr "Hashcash: 첫 번째 계층의 수학"
 
 #: ../../cryptography.rst:9 ../../cryptography.rst:36
-#: ../../cryptography.rst:167
+#: ../../cryptography.rst:146
 msgid "Objectives"
 msgstr "학습 목표"
 
@@ -217,94 +217,28 @@ msgstr ""
 "해시합니다: :math:`\\ell_u = H(\\chi, u, \\{\\ell_{u_1 \\dots u_{i-1} 0} : u_i "
 "= 1\\})`."
 
-#: ../../cryptography.rst:56
+#: ../../cryptography.rst:55
 msgid ""
 "A complete binary tree of depth 3 with nodes named depth.index. The root "
-"path of leaf 3.5 (nodes 0.0, 1.1, 2.2, 3.5) is highlighted in amber, the "
-"siblings 1.0, 2.3 and 3.4 sent in its opening are green, and dashed red "
-"edges run from 1.0 and 3.4 into leaf 3.5."
+"path of leaf 3.5 (nodes 0.0, 1.1, 2.2, 3.5) is amber, the siblings 1.0, "
+"2.3 and 3.4 sent in its opening are green, and dashed red arrows run from "
+"1.0 and 3.4 into leaf 3.5. An arrow under the leaves shows that they are "
+"labelled from left to right."
 msgstr ""
 "노드 이름을 깊이.인덱스로 붙인 깊이 3의 완전 이진 트리입니다. 잎 3.5의 루트 경로(노드 0.0, 1.1, 2.2, 3.5)는 "
-"호박색으로 강조하고, 개방에 담겨 보내지는 형제 1.0, 2.3, 3.4는 초록색으로 표시합니다. 빨간 점선 간선은 1.0과 "
-"3.4에서 잎 3.5로 이어집니다."
+"호박색, 개방에 담겨 보내지는 형제 1.0, 2.3, 3.4는 초록색이며, 빨간 점선 화살표가 1.0과 3.4에서 잎 3.5로 "
+"이어집니다. 잎 아래의 화살표는 잎이 왼쪽에서 오른쪽 순서로 라벨링됨을 보여 줍니다."
 
-#: ../../cryptography.rst:56
-msgid ""
-"digraph posw_tree {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.25, ranksep=0.5, "
-"ordering=out];\n"
-"  node [shape=circle, fixedsize=true, width=0.5, fontname=\"Helvetica\", "
-"fontsize=10, style=filled, fillcolor=\"#ffffff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", arrowhead=none];\n"
-"\n"
-"  \"0.0\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5, "
-"xlabel=<<font color=\"#64748b\">root &phi;</font>>];\n"
-"  \"1.1\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"2.2\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"3.5\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"1.0\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"2.3\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"3.4\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"\n"
-"  \"0.0\" -> \"1.0\"; \"0.0\" -> \"1.1\";\n"
-"  \"1.0\" -> \"2.0\"; \"1.0\" -> \"2.1\"; \"1.1\" -> \"2.2\"; \"1.1\" -> "
-"\"2.3\";\n"
-"  \"2.0\" -> \"3.0\"; \"2.0\" -> \"3.1\"; \"2.1\" -> \"3.2\"; \"2.1\" -> "
-"\"3.3\";\n"
-"  \"2.2\" -> \"3.4\"; \"2.2\" -> \"3.5\"; \"2.3\" -> \"3.6\"; \"2.3\" -> "
-"\"3.7\";\n"
-"\n"
-"  \"3.5\" -> \"1.0\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"  \"3.5\" -> \"3.4\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"}"
-msgstr ""
-"digraph posw_tree {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.25, ranksep=0.5, "
-"ordering=out];\n"
-"  node [shape=circle, fixedsize=true, width=0.5, fontname=\"Helvetica\", "
-"fontsize=10, style=filled, fillcolor=\"#ffffff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", arrowhead=none];\n"
-"\n"
-"  \"0.0\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5, "
-"xlabel=<<font color=\"#64748b\">루트 &phi;</font>>];\n"
-"  \"1.1\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"2.2\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"3.5\" [fillcolor=\"#fffbeb\", color=\"#b45309\", penwidth=1.5];\n"
-"  \"1.0\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"2.3\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"  \"3.4\" [fillcolor=\"#f0fdf4\", color=\"#15803d\", penwidth=1.5];\n"
-"\n"
-"  \"0.0\" -> \"1.0\"; \"0.0\" -> \"1.1\";\n"
-"  \"1.0\" -> \"2.0\"; \"1.0\" -> \"2.1\"; \"1.1\" -> \"2.2\"; \"1.1\" -> "
-"\"2.3\";\n"
-"  \"2.0\" -> \"3.0\"; \"2.0\" -> \"3.1\"; \"2.1\" -> \"3.2\"; \"2.1\" -> "
-"\"3.3\";\n"
-"  \"2.2\" -> \"3.4\"; \"2.2\" -> \"3.5\"; \"2.3\" -> \"3.6\"; \"2.3\" -> "
-"\"3.7\";\n"
-"\n"
-"  \"3.5\" -> \"1.0\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"  \"3.5\" -> \"3.4\" [style=dashed, color=\"#b91c1c\", dir=back, "
-"arrowtail=normal, constraint=false];\n"
-"}"
-
-#: ../../cryptography.rst:56
+#: ../../cryptography.rst:58
 msgid ""
 "The depth-3 tree: an opening of leaf 3.5 sends the leaf label and the "
 "three sibling labels; the dashed edges are the left-sibling dependencies "
-"that make labelling sequential. Amber nodes form the path of leaf 3.5, "
-"green nodes are the siblings sent in the opening, and the dashed red "
-"edges are the left-sibling edges hashed into the leaf."
+"that make labelling sequential."
 msgstr ""
 "깊이 3의 트리: 잎 3.5의 개방은 잎 라벨과 형제 라벨 세 개를 보냅니다. 점선 간선은 라벨링을 순차적으로 만드는 왼쪽 형제 "
-"의존성입니다. 호박색 노드는 잎 3.5의 경로, 초록색 노드는 개방에 담겨 보내지는 형제, 빨간 점선 간선은 잎에 해시되어 들어가는 "
-"왼쪽 형제 간선입니다."
+"의존성입니다."
 
-#: ../../cryptography.rst:81
+#: ../../cryptography.rst:60
 msgid ""
 "The left-sibling edges are what make the computation sequential: leaf "
 ":math:`u` cannot be labelled until every subtree to its left is complete, "
@@ -316,7 +250,7 @@ msgstr ""
 "라벨을 붙일 수 없으므로, 깊이 우선 후위 순회가 강제되고 루트 라벨 :math:`\\varphi = "
 "\\ell_\\varepsilon`\\ 은 :math:`2^{n+1} - 1`\\ 개의 라벨 전체에 순서대로 의존합니다."
 
-#: ../../cryptography.rst:83
+#: ../../cryptography.rst:62
 msgid ""
 "**Openings.** After computing :math:`\\varphi`, the prover derives "
 ":math:`t` leaves by Fiat-Shamir, :math:`\\gamma_i = H(\\chi \\parallel "
@@ -335,11 +269,11 @@ msgstr ""
 "검증자의 비용은 제한된 작업 공간에서 라벨 계산 :math:`O(tn)`\\ 번입니다. 라벨 계산 하나가 해시 블록 여러 개에 걸칠 "
 "수 있으므로, 라벨 수를 세는 것은 압축 호출 수를 세는 것과 다릅니다."
 
-#: ../../cryptography.rst:85
+#: ../../cryptography.rst:64
 msgid "Implementation: ``posw::verify_opening``"
 msgstr "구현: ``posw::verify_opening``"
 
-#: ../../cryptography.rst:87
+#: ../../cryptography.rst:66
 msgid ""
 "Recomputes one opened leaf from its sibling labels and walks the path to "
 "the root. In ``crates/pow/src/posw.rs`` (crate ``sibuna-pow``)."
@@ -347,7 +281,7 @@ msgstr ""
 "개방된 잎 하나를 형제 라벨로 다시 계산하고 경로를 따라 루트까지 올라갑니다. ``crates/pow/src/posw.rs``\\ "
 "(crate ``sibuna-pow``)에 있습니다."
 
-#: ../../cryptography.rst:89
+#: ../../cryptography.rst:68
 msgid ""
 "fn verify_opening(base: &Sha256, n: u8, phi: &Label, gamma: u32, opening: "
 "&[Label]) -> bool {\n"
@@ -410,11 +344,11 @@ msgstr ""
 "    current == *phi\n"
 "}"
 
-#: ../../cryptography.rst:120
+#: ../../cryptography.rst:99
 msgid "Sampling, Soundness, and Their Limits"
 msgstr "표본 추출, 건전성, 그 한계"
 
-#: ../../cryptography.rst:123
+#: ../../cryptography.rst:102
 msgid ""
 "Consider a fixed commitment with an independently detectable bad fraction "
 ":math:`\\alpha`. If each opening samples uniformly and independently, the "
@@ -428,11 +362,11 @@ msgstr ""
 ":math:`(1-\\alpha)^t`\\ 입니다. 이 기초 계산은 개방이 많을수록 도움이 되는 이유를 설명합니다. 그러나 "
 "이것만으로는 순차 작업 프로토콜의 보안 증명이 되지 않습니다."
 
-#: ../../cryptography.rst:125
+#: ../../cryptography.rst:104
 msgid "Worked example: a conditional sampling bound"
 msgstr "풀이 예제: 조건부 표본 추출 상한"
 
-#: ../../cryptography.rst:127
+#: ../../cryptography.rst:106
 msgid ""
 "With a fixed bad fraction :math:`\\alpha = 0.1` and :math:`t = 16` "
 "independent openings, the chance of missing every bad location is "
@@ -446,7 +380,7 @@ msgstr ""
 "전제는 표본을 고르기 전에 커밋먼트를 고정합니다. 증명자가 루트를 많이 만들어 골라 볼(grinding) 수 있거나, 어떤 "
 "커밋먼트를 공개할지 고를 수 있거나, 실패들을 서로 연관시킬 수 있다면, 이 계산은 그런 전략을 반영하지 못합니다."
 
-#: ../../cryptography.rst:129
+#: ../../cryptography.rst:108
 msgid ""
 "The referenced sequential-work construction has a security analysis in an "
 "oracle model. Sibuna's domain separation, parameter mapping, truncation, "
@@ -460,11 +394,11 @@ msgstr ""
 "재현 가능성만으로는 그라인딩(grinding) 공격에 대한 저항이 증명되지 않습니다. 우리는 속임수가 결코 더 싸지 않다고 무조건 "
 "주장하지는 않습니다."
 
-#: ../../cryptography.rst:131
+#: ../../cryptography.rst:110
 msgid "Exercise 3.1"
 msgstr "연습 문제 3.1"
 
-#: ../../cryptography.rst:133
+#: ../../cryptography.rst:112
 msgid ""
 "If an attacker tries :math:`g` independent commitments, each accepted "
 "with probability :math:`q`, derive the probability that at least one is "
@@ -473,15 +407,15 @@ msgstr ""
 "공격자가 각각 확률 :math:`q`\\ 로 받아들여지는 독립 커밋먼트 :math:`g`\\ 개를 시도한다면, 적어도 하나가 "
 "받아들여질 확률을 유도하세요. 그 식에서 빠진 비용은 무엇일까요?"
 
-#: ../../cryptography.rst:135
+#: ../../cryptography.rst:114
 msgid "*Hint:* First calculate the probability that all :math:`g` fail."
 msgstr "*힌트:* 먼저 :math:`g`\\ 개가 모두 실패할 확률을 계산하세요."
 
-#: ../../cryptography.rst:137
+#: ../../cryptography.rst:116
 msgid "Prover Memory"
 msgstr "증명자의 메모리"
 
-#: ../../cryptography.rst:140
+#: ../../cryptography.rst:119
 msgid ""
 "A naive prover stores every label (:math:`2^{n+1} - 1` of them). Sibuna's "
 "prover keeps a stack of the current path's left-sibling labels (:math:`n "
@@ -502,11 +436,11 @@ msgstr ""
 "1)`\\ 번이고, 출력 증명을 포함한 작업 공간 전체가 100 KB 미만입니다. 브라우저 탭과 네이티브 테스트는 같은 "
 "``Workspace`` 타입(``sibuna_pow::posw::Workspace``)을 공유합니다."
 
-#: ../../cryptography.rst:142
+#: ../../cryptography.rst:121
 msgid "Parameters Are Not Timings"
 msgstr "매개변수는 시간이 아닙니다"
 
-#: ../../cryptography.rst:145
+#: ../../cryptography.rst:124
 msgid ""
 "Sibuna maps work bits to depth using :math:`n = b - 3`, clamped to the "
 "supported interval :math:`[4, 24]`. This is a work-scale convention, not "
@@ -521,7 +455,7 @@ msgstr ""
 "여러 개를 해시할 수 있지만, Hashcash는 nonce를 반복해서 시험합니다. 컴파일러, 브라우저, 프로세서, 매개변수 선택이 "
 "모두 상대 비용에 영향을 줍니다. 커밋된 기본 연산 벤치마크는 검증을 측정하며, 브라우저 풀이 지연 시간을 입증하지는 않습니다."
 
-#: ../../cryptography.rst:147
+#: ../../cryptography.rst:126
 msgid ""
 "Proof size is :math:`32(1 + t(n+1))` bytes. At depth 13 with sixteen "
 "openings, this is :math:`32(1 + 16 \\times 14) = 7200` bytes. Raising the "
@@ -532,11 +466,11 @@ msgstr ""
 "\\times 14) = 7200`\\ 바이트입니다. 트리를 만드는 주된 비용이 그대로여도, 개방 수를 늘리면 증명과 검증자의 "
 "작업이 모두 늘어납니다."
 
-#: ../../cryptography.rst:149
+#: ../../cryptography.rst:128
 msgid "Exercise 3.2"
 msgstr "연습 문제 3.2"
 
-#: ../../cryptography.rst:151
+#: ../../cryptography.rst:130
 msgid ""
 "Compute the proof size at depth 17 with 16 openings. Then double the "
 "opening count. Which term doubles and which term remains fixed?"
@@ -544,11 +478,11 @@ msgstr ""
 "깊이 17에 개방 16개일 때의 증명 크기를 계산하세요. 그다음 개방 수를 두 배로 늘리세요. 어느 항이 두 배가 되고 어느 항이 "
 "그대로일까요?"
 
-#: ../../cryptography.rst:153
+#: ../../cryptography.rst:132
 msgid "Choosing a Construction"
 msgstr "구성 선택하기"
 
-#: ../../cryptography.rst:156
+#: ../../cryptography.rst:135
 msgid ""
 "The relevant comparison is a resource budget, not an algorithm's "
 "reputation. Record the prover's memory, the verifier's worst-case work, "
@@ -563,7 +497,7 @@ msgstr ""
 "공격자에게 서버 자원을 소모시킬 또 다른 지점을 줍니다. 공개 검증 가능한 지연 구성은 공유 비밀 기반 게이트와는 다른 신뢰 모델에 "
 "쓰입니다."
 
-#: ../../cryptography.rst:158
+#: ../../cryptography.rst:137
 msgid ""
 "Sibuna retains cheap hash verification and a hash-based sequential-work "
 "option. The latter requires more proof bytes and more careful parameter "
@@ -573,22 +507,22 @@ msgstr ""
 "Sibuna는 값싼 해시 검증과 해시 기반 순차 작업 선택지를 유지합니다. 후자는 증명 바이트가 더 많고 매개변수 분석도 더 "
 "신중해야 합니다. 어느 쪽을 택하든, 비싼 검증에 들어가기 전에 형식이 잘못된 증명을 거부해야 한다는 점은 변하지 않습니다."
 
-#: ../../cryptography.rst:160 ../../cryptography.rst:245
+#: ../../cryptography.rst:139 ../../cryptography.rst:210
 msgid "Explain the invariant"
 msgstr "불변식 설명하기"
 
-#: ../../cryptography.rst:162
+#: ../../cryptography.rst:141
 msgid ""
 "Explain the distinction between an authentication tree, which proves that "
 "a label belongs to a commitment, and dependency edges, which constrain "
 "how labels are computed."
 msgstr "라벨이 커밋먼트에 속함을 증명하는 인증 트리와, 라벨을 계산하는 방식을 제약하는 의존 간선의 차이를 설명하세요."
 
-#: ../../cryptography.rst:164
+#: ../../cryptography.rst:143
 msgid "Symmetric Authentication: Challenges and Sessions"
 msgstr "대칭 인증: 챌린지와 세션"
 
-#: ../../cryptography.rst:169
+#: ../../cryptography.rst:148
 msgid ""
 "Explain why a keyed pseudorandom function is the correct primitive when "
 "issuer and verifier are the same trust domain, state the forgery bound "
@@ -598,11 +532,11 @@ msgstr ""
 "발급자와 검증자가 같은 신뢰 도메인에 있을 때 키 기반 의사 난수 함수가 올바른 기본 요소인 이유를 설명하고, 128비트 태그의 "
 "위조 상한을 말하며, 상태 없는 챌린지 레코드와 사용 완료 집합의 상한을 설명하고, 키 스케줄를 읽습니다."
 
-#: ../../cryptography.rst:171
+#: ../../cryptography.rst:150
 msgid "Issuer Equals Verifier"
 msgstr "발급자가 곧 검증자"
 
-#: ../../cryptography.rst:174
+#: ../../cryptography.rst:153
 msgid ""
 "A digital signature lets *anyone* holding the public key verify, which is "
 "the right tool when verifiers must not be able to mint. Sibuna's verifier "
@@ -617,11 +551,11 @@ msgstr ""
 "코드는 그 신뢰 도메인 안에서 인증을 제공합니다. 공개 검증은 제공하지 않습니다. MAC 키를 가진 사람은 누구나 토큰을 발급할 "
 "수도 있습니다. 벤치마크 장은 구현된 토큰 연산을 비교합니다."
 
-#: ../../cryptography.rst:176
+#: ../../cryptography.rst:155
 msgid "Lemma 3 (Forgery bound)"
 msgstr "보조정리 3 (위조 상한)"
 
-#: ../../cryptography.rst:178
+#: ../../cryptography.rst:157
 msgid ""
 "With BLAKE3 in keyed mode modelled as a PRF and a 16-byte tag, an "
 "adversary making :math:`q` verification queries forges a valid token with "
@@ -633,7 +567,7 @@ msgstr ""
 "토큰을 위조할 확률은 최대 :math:`q \\cdot 2^{-128} + \\varepsilon_{\\mathrm{PRF}}`\\ "
 "입니다. 초당 질의가 백만 번이면 초당 :math:`2^{-108}`\\ 입니다."
 
-#: ../../cryptography.rst:180
+#: ../../cryptography.rst:159
 msgid ""
 "A second consequence matters for the long term: Ed25519 rests on discrete "
 "logarithms in an elliptic-curve group, which Shor's algorithm breaks; a "
@@ -647,11 +581,11 @@ msgstr ""
 "Sibuna는 토큰을 발급할 수 없는 검증자가 필요한 배포를 위해 Ed25519를 선택지(``--token-scheme "
 "ed25519``)로 유지합니다."
 
-#: ../../cryptography.rst:182
+#: ../../cryptography.rst:161
 msgid "The Key Schedule"
 msgstr "키 스케줄"
 
-#: ../../cryptography.rst:185
+#: ../../cryptography.rst:164
 msgid ""
 "One 32-byte master seed (from ``--secret-file``, ``SIBUNA_SECRET``, or a "
 "fresh random value) derives every purpose key with keyed BLAKE3 and a "
@@ -662,11 +596,11 @@ msgstr ""
 "기반 BLAKE3와 도메인 문자열로 모든 용도별 키를 도출합니다. 토큰 키, 챌린지 키, Ed25519 키, 지문 키, 그리고 요구 "
 "티켓을 봉인하는 요구 키입니다(제IV부)."
 
-#: ../../cryptography.rst:187
+#: ../../cryptography.rst:166
 msgid "Implementation: ``Keys::derive``"
 msgstr "구현: ``Keys::derive``"
 
-#: ../../cryptography.rst:189
+#: ../../cryptography.rst:168
 msgid ""
 "Derives the five purpose keys from the seed. In "
 "``crates/challenge/src/keys.rs`` (crate ``sibuna-challenge``). ``Keys`` "
@@ -677,7 +611,7 @@ msgstr ""
 "``sibuna-challenge``)에 있습니다. ``Keys``\\ 와 ``Seed``\\ 는 해제될 때 바이트를 0으로 "
 "지우며, ``Debug`` 출력에서는 값을 가립니다."
 
-#: ../../cryptography.rst:191
+#: ../../cryptography.rst:170
 msgid ""
 "pub fn derive(seed: &Seed) -> Keys {\n"
 "    Keys {\n"
@@ -707,7 +641,7 @@ msgstr ""
 "    blake3::keyed_hash(seed.as_bytes(), purpose.as_bytes())\n"
 "}"
 
-#: ../../cryptography.rst:207
+#: ../../cryptography.rst:186
 msgid ""
 "In a cluster, ``Keys::bind_node`` replaces the challenge key by keyed "
 "BLAKE3 under it over ``sibuna/challenge-node/v1`` and the node id, so a "
@@ -718,7 +652,7 @@ msgstr ""
 "``sibuna/challenge-node/v1``\\ 과 노드 id를 키 기반 BLAKE3로 해시한 값입니다. 그래서 챌린지는 "
 "발급한 노드로 돌아와야 하지만, 세션 토큰과 요구 티켓은 모든 구성원에서 유효합니다."
 
-#: ../../cryptography.rst:209
+#: ../../cryptography.rst:188
 msgid ""
 "Domain separation prevents accidental reuse across purposes; compromise "
 "of the master seed compromises every derived key. A cluster only has to "
@@ -727,65 +661,34 @@ msgstr ""
 "도메인 분리는 한 키가 실수로 여러 용도에 재사용되는 일을 막습니다. 마스터 시드가 노출되면 도출된 모든 키가 노출됩니다. "
 "클러스터는 시드 하나에만 합의하면 됩니다."
 
-#: ../../cryptography.rst:211
+#: ../../cryptography.rst:190
 msgid "Stateless Challenges"
 msgstr "상태 없는 챌린지"
 
-#: ../../cryptography.rst:215
+#: ../../cryptography.rst:193
 msgid ""
-"Challenge identifier\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"| ver | alg | diff | t | issued_at | fingerprint | nonce   | rule_hash | "
-"BLAKE3 tag     |\n"
-"|  1  |  1  |  1   | 1 |     8     |      8      |    8    |     8     |  "
-"     16       |\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"|<----------------------- 36-byte payload "
-"---------------------------->|<-- keyed tag ->|\n"
-"36-byte payload + 16-byte keyed tag = 52 bytes, 70 URL-safe base64 "
-"characters\n"
-"\n"
-"Session token\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"| ver | alg | bits | res | timestamp | expiry | rule_hash | fingerprint | "
-"BLAKE3 tag     |\n"
-"|  1  |  1  |  1   |  5  |     8     |   8    |     8     |      8      | "
-"      16       |\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"|<------------------------ 40-byte payload "
-"---------------------------->|<-- keyed tag ->|\n"
-"40-byte payload + 16-byte keyed tag = 56 bytes, 75 URL-safe base64 "
-"characters"
+"Two byte layouts. The challenge identifier: ver, alg, diff and t of one "
+"byte each, then issued_at, fingerprint, nonce and rule_hash of eight "
+"bytes each, a 36-byte payload, followed by a 16-byte BLAKE3 tag; 52 "
+"bytes, sent as 70 URL-safe base64 characters. The session token: ver, alg "
+"and bits of one byte each, res of five bytes, then timestamp, expiry, "
+"rule_hash and fingerprint of eight bytes each, a 40-byte payload, "
+"followed by a 16-byte BLAKE3 tag; 56 bytes, sent as 75 URL-safe base64 "
+"characters."
 msgstr ""
-"챌린지 식별자\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"| ver | alg | diff | t | issued_at | fingerprint | nonce   | rule_hash | "
-"BLAKE3 태그    |\n"
-"|  1  |  1  |  1   | 1 |     8     |      8      |    8    |     8     "
-"|       16       |\n"
-"+-----+-----+------+---+-----------+-------------+---------+-----------+----------------+\n"
-"|<----------------------- 36바이트 페이로드 -------------------------->|<-키 기반 "
-"태그->|\n"
-"36바이트 페이로드 + 16바이트 키 기반 태그 = 52바이트, URL 안전 base64 70자\n"
-"\n"
-"세션 토큰\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"| ver | alg | bits | res | timestamp | expiry | rule_hash | fingerprint | "
-"BLAKE3 태그    |\n"
-"|  1  |  1  |  1   |  5  |     8     |   8    |     8     |      8      "
-"|       16       |\n"
-"+-----+-----+------+-----+-----------+--------+-----------+-------------+----------------+\n"
-"|<------------------------ 40바이트 페이로드 -------------------------->|<-키 기반 "
-"태그->|\n"
-"40바이트 페이로드 + 16바이트 키 기반 태그 = 56바이트, URL 안전 base64 75자"
+"두 가지 바이트 배치입니다. 챌린지 식별자는 각 1바이트인 ver, alg, diff, t에 이어 각 8바이트인 issued_at, "
+"fingerprint, nonce, rule_hash로 36바이트 페이로드를 이루고, 그 뒤에 16바이트 BLAKE3 태그가 붙습니다. "
+"모두 52바이트이며 URL 안전 base64 70자로 보냅니다. 세션 토큰은 각 1바이트인 ver, alg, bits와 5바이트인 "
+"res에 이어 각 8바이트인 timestamp, expiry, rule_hash, fingerprint로 40바이트 페이로드를 이루고, "
+"그 뒤에 16바이트 BLAKE3 태그가 붙습니다. 모두 56바이트이며 URL 안전 base64 75자로 보냅니다."
 
-#: ../../cryptography.rst:215
+#: ../../cryptography.rst:196
 msgid ""
-"Wire formats of the challenge identifier and the session token (field "
-"widths in bytes)."
-msgstr "챌린지 식별자와 세션 토큰의 전송 형식(필드 너비는 바이트 단위)."
+"Wire formats of the challenge identifier and the session token. The "
+"numbers above each record are byte offsets."
+msgstr "챌린지 식별자와 세션 토큰의 전송 형식. 각 레코드 위의 숫자는 바이트 오프셋입니다."
 
-#: ../../cryptography.rst:233
+#: ../../cryptography.rst:198
 msgid ""
 "A challenge identifier is a self-authenticating record: version, "
 "algorithm, difficulty, opening count, issue time, the client's keyed "
@@ -801,11 +704,11 @@ msgstr ""
 "붙습니다. 발급할 때는 아무것도 쓰지 않습니다. 검증은 레코드를 디코딩하고, 태그를 상수 시간에 확인하고, 경과 시간을 챌린지 "
 "TTL과 비교하고, 지문을 제출한 클라이언트와 비교한 다음에야 증명을 살펴봅니다."
 
-#: ../../cryptography.rst:235
+#: ../../cryptography.rst:200
 msgid "Lemma 4 (State grows only with paid work)"
 msgstr "보조정리 4 (상태는 대가를 치른 작업으로만 늘어남)"
 
-#: ../../cryptography.rst:237
+#: ../../cryptography.rst:202
 msgid ""
 "Let :math:`S` be the set of challenge tags the daemon remembers. A tag "
 "enters :math:`S` only after a valid proof for it was accepted, and it "
@@ -822,7 +725,7 @@ msgstr ""
 "챌린지를 가져오기만 해서는 태그가 할당되지 않습니다. 구현에는 고정 용량도 있어서, 가득 차면 유효한 풀이를 거부할 수 있습니다. "
 "이것은 상태에 대한 상한이며, 모든 공격자의 계산 전략에 대한 하한이 아닙니다."
 
-#: ../../cryptography.rst:239
+#: ../../cryptography.rst:204
 msgid ""
 "The spent set is 16 shards of Robin Hood open addressing over the 16-byte "
 "tags (Part V). The fingerprint is a keyed hash of the client address and "
@@ -833,11 +736,11 @@ msgstr ""
 "User-Agent의 키 기반 해시입니다. 길이를 붙여 구분하므로 이어 붙여도 서로 다른 두 입력이 충돌하지 않으며, 키를 쓰므로 "
 "다른 클라이언트의 지문을 오프라인으로 계산할 수 없습니다."
 
-#: ../../cryptography.rst:241
+#: ../../cryptography.rst:206
 msgid "Exercise 3.3"
 msgstr "연습 문제 3.3"
 
-#: ../../cryptography.rst:243
+#: ../../cryptography.rst:208
 msgid ""
 "A token payload carries a work level, ``timestamp``, ``expiry``, "
 "``rule_hash``, and ``fingerprint``. Explain what each field prevents if "
@@ -847,7 +750,7 @@ msgstr ""
 "``fingerprint``\\ 가 담깁니다. 각 필드를 없애면 무엇을 막지 못하게 되는지, 그리고 태그가 다섯 필드를 모두 덮어야 "
 "하는 이유를 설명하세요."
 
-#: ../../cryptography.rst:247
+#: ../../cryptography.rst:212
 msgid ""
 "A colleague proposes switching all tokens to Ed25519 \"because it is "
 "stronger\". Explain the trust-domain argument, the cost difference, and "

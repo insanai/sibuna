@@ -1,0 +1,125 @@
+# Die Wörter der Abbildungen von Sibuna auf Deutsch. Diese Datei hat dieselbe Gestalt
+# wie en.toml; ein Schlüssel, der hier fehlt, wird auf Englisch gezeichnet. "{name}"
+# markiert einen Wert, den die Abbildung einsetzt, etwa eine Zahl im deutschen Format.
+
+[number]
+decimal = ","
+group = "."
+
+[survival]
+x-axis = "Versuche als Vielfaches der erwarteten Anzahl, x"
+y-axis = "Wahrscheinlichkeit, noch zu suchen"
+at-mean = "Bei der erwarteten Versuchszahl läuft eine Suche noch mit Wahrscheinlichkeit e⁻¹\u00A0≈\u00A0{p}."
+p95 = "95\u00A0% der Suchen sind bis x\u00A0≈\u00A0{x} beendet."
+
+[wire-formats]
+challenge = "Challenge-Kennung"
+session = "Sitzungstoken"
+payload = "{n}-Byte-Nutzlast"
+tag = "{n}-Byte-MAC-Tag"
+tag-field = "BLAKE3-Tag"
+total = "{bytes} Bytes insgesamt, gesendet als {characters} Zeichen in URL-sicherem Base64"
+
+[open-loop]
+due = "fällig"
+send = "Anfrage gesendet"
+answer = "Antwort erhalten"
+waiting = "fällig, wartet auf die vorige Antwort"
+latency = "erfasste Latenz: ab dem Fälligkeitszeitpunkt, bei Verbindung im Leerlauf ab dem Senden"
+
+[cpu-sets]
+ccd0 = "CCD 0"
+ccd1 = "CCD 1"
+daemons = "Daemons"
+primitive = "Primitive-Suite"
+idle = "nicht zugewiesen"
+load = "wrk, Latenzgenerator und Ursprungsserver"
+smt = "Die kleine Zahl in jedem Kern nennt seinen SMT-Geschwisterkern, eine der CPUs 16 bis 31. Kein Lauf nutzt sie."
+
+[read-buffer]
+buffer = "Der 64-KiB-Lesepuffer einer Verbindung"
+window = "das ungelesene Fenster"
+head = "Anfragekopf"
+head-note = "höchstens 16 KiB, endet auf CR\u00A0LF\u00A0CR\u00A0LF"
+body = "Body-Präfix"
+body-note = "was vom angegebenen Body passt; ein Chunked-Body wird an\u00A0Ort\u00A0und\u00A0Stelle dekodiert"
+pending = "ausstehend"
+pending-note = "die nächste Anfrage oder der Rest eines Uploads"
+free = "frei"
+served = "bedient"
+fields = "Methode, Pfad, Query, Header und Cookies: Slices des Kopfs"
+pending-proxy = "geht zuerst an den Ursprungsserver"
+after = "Nach der Antwort:"
+next = "wird zum Anfang der nächsten Anfrage"
+
+[gcra]
+x-axis = "Ankunftszeit t (ms)"
+y-axis = "TAT (ms)"
+limit = "t + τ"
+refuse-zone = "TAT > t + τ: abgewiesen"
+burst = "ein Burst von fünf bei t = 0"
+sixth = "die sechste bei t = 0"
+example = "Bei t\u00A0=\u00A0{refused} ist TAT\u00A0=\u00A0{tat}\u00A0>\u00A0{early}: abgewiesen. Bei t\u00A0=\u00A0{admitted} ist TAT\u00A0=\u00A0{tat}\u00A0≤\u00A0{limit}: zugelassen."
+admitted = "zugelassen"
+refused = "abgewiesen"
+tat = "TAT nach jeder Ankunft"
+
+[primitive-latency]
+source = "Jeder Balken ist der Median von 7 Batches auf einem Kern eines {cpu}, {date}; die dünne Linie reicht vom schnellsten bis zum langsamsten Batch. Logarithmische Skala."
+
+[primitive-latency.groups]
+work = "Proof of Work"
+match = "Mustersuche"
+token = "Tokens"
+state = "Zustand"
+request = "Anfragepfad"
+
+[primitive-latency.rows]
+hashcash_16_bits = "Hashcash-Verifikation (16 Bits)"
+posw_depth13_t16 = "PoSW-Verifikation (Tiefe 13, t = 16)"
+aho_corasick_40_signatures = "Bot-Signaturen (40, Aho-Corasick)"
+sequential_substring_40_signatures = "Bot-Signaturen (40, sequenzielle Suche)"
+ipv4_cidr_classification = "IPv4-CIDR-Suche"
+ipv6_cidr_classification = "IPv6-CIDR-Suche"
+blake3_mac_token = "Sitzungstoken (BLAKE3 mit Schlüssel)"
+ed25519_compact_token = "Sitzungstoken (Ed25519)"
+robin_hood_spend_and_lookup = "Verbrauchsmenge: verbrauchen und nachschlagen"
+gcra_check = "Ratenbegrenzer, Client-Bytes"
+gcra_four_rule_scopes = "Vier Regelbereiche, Client-Bytes"
+gcra_check_hashed = "Ratenbegrenzer, gehashter Client"
+gcra_four_rule_scopes_hashed = "Vier Regelbereiche, gehashter Client"
+zero_copy_request_and_cookie = "HTTP-Parsen und Cookie"
+browser_request_full_classification = "Klassifikation, Shield-Profil"
+browser_request_gate_profile = "Klassifikation, Gate-Profil"
+8kb_body_semantic_scan = "WAF-Body-Scan (8 KiB)"
+8kb_body_sqli_audit_other_enforce = "WAF-Body-Scan, SQL-Injection im Audit-Modus"
+
+[posw-tree]
+order = "die Blätter werden von links nach rechts beschriftet"
+path = "der Wurzelpfad von Blatt 3.5"
+siblings = "in der Öffnung gesendete Geschwister"
+left = "linke Geschwister, in das Blatt gehasht"
+
+[work-asymmetry]
+inspect-title = "Erst die Prüfung"
+inspect-sender = "Absender"
+inspect-arrow = "eine billige Anfrage, billig zu senden und teuer zu beantworten"
+inspect-defense = "Abwehr: parsen, kopieren, Regex-Scan, gemeinsamen Speicher abfragen"
+inspect-sender-work = "Arbeit des Absenders: eine Anfrage"
+inspect-defense-work = "Arbeit der Abwehr: alles, bei jeder Anfrage"
+work-title = "Erst die Arbeit (Sibuna)"
+work-sender = "Absender löst ein Rätsel"
+work-arrow = "ein gelöstes Rätsel, teuer zu erwerben und billig zu prüfen"
+work-defense = "Sibuna verifiziert einen Hash und hält keinen Zustand, bis das Rätsel gelöst ist"
+work-sender-work = "Arbeit des Absenders: {power} erwartete SHA-256-Versuche, {trials} bei b\u00A0=\u00A016"
+work-defense-work = "Sibunas Arbeit: ein Hash, {ns}\u00A0ns; danach wird die Sitzung wiederverwendet"
+
+[sequential-work]
+hashcash = "Hashcash: parallele Suche"
+core = "Kern {n}"
+time = "Jeder Kern probiert eigene Nonces; Kern 3 findet eine bei Nonce 18, und alle Kerne hören auf."
+posw = "Proof of Sequential Work: erzwungene Reihenfolge"
+found = "eine Nonce, die das Ziel erfüllt"
+path = "der Wurzelpfad von Blatt 3.5"
+siblings = "in seiner Öffnung gesendete Geschwister"
+left = "linke Geschwister, in das Blatt gehasht"
