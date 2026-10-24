@@ -2,7 +2,7 @@
 
 Typeset: Knuth-Plass boxes, glue, penalties and fitness classes.
 https://github.com/bramstein/typeset/tree/48ebb5547de116db57e14454e19767e4ff9b2266
-The linked list and line breaker are unmodified. See TYPESET-LICENSE.txt.
+The linked list is unmodified. The line breaker has one change: after a break at a penalty, computeSum no longer adds the penalty's width (the hyphen) to the totals the next line starts from. Upstream, every line after a hyphen was measured one hyphen too narrow and could overflow. See TYPESET-LICENSE.txt.
 
 Hypher: Frank Liang pattern-trie hyphenation.
 https://github.com/bramstein/typeset/blob/48ebb5547de116db57e14454e19767e4ff9b2266/lib/hypher.js

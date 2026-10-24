@@ -106,9 +106,9 @@ Typeset.linebreak = (function () {
                 result.width += node.width;
                 result.stretch += node.stretch;
                 result.shrink += node.shrink;
-            } else if (node.type === 'penalty' && node.penalty !== linebreak.infinity) {
-                result.width += node.width;
             }
+            // Sibuna: a penalty's width (the hyphen) belongs to the line it ends, so the next
+            // line does not start with it. Knuth and Plass (1981) discard it at the break.
             return result;
         }
 
