@@ -1,0 +1,37 @@
+/* Sibuna's body text on the web, set as in the PDF: justified, hyphenated in the page's
+   language (the html element's lang), and broken a paragraph at a time. Typst breaks
+   every paragraph of the PDF with the Knuth-Plass algorithm. In the browser,
+   typography.js does the same for English prose paragraphs; every other paragraph gets
+   the browser's own hyphenation and text-wrap: pretty, the nearest the browser offers.
+   As in the PDF, headings, code, tables, captions and footnotes stay ragged. The book
+   and the whitepaper keep identical copies of this file. */
+
+.gd-article :is(p, li, dd) {
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  /* Hyphenate only words of six letters or more, keeping three on each side. */
+  hyphenate-limit-chars: 6 3 3;
+  text-wrap: pretty;
+}
+
+/* Headings, titles, captions and code keep their words whole. */
+.gd-article :is(h1, h2, h3, h4, h5, h6, .admonition-title, caption, figcaption),
+.gd-article :is(code, pre, kbd, samp),
+.gd-article .toctree-wrapper :is(p, li) {
+  -webkit-hyphens: manual;
+  hyphens: manual;
+}
+
+/* A narrow column justifies into wide gaps, so phones keep ragged text. */
+@media (min-width: 40rem) {
+  .gd-article :is(p, li, dd) { text-align: justify; text-justify: inter-word; }
+  .gd-article :is(table, figcaption, aside.footnote, .toctree-wrapper) :is(p, li, dd) {
+    text-align: start;
+  }
+}
+
+/* typography.js sets each line of a broken paragraph as its own span, with the
+   word spacing that justifies it and a hyphen where it breaks a word. */
+.gd-typeset-line { display: block; white-space: nowrap; text-wrap: nowrap; }
+.gd-typeset-line[data-hyphen]::after { content: "\2010"; }
+.gd-article p[data-layout="knuth-plass"] { -webkit-hyphens: manual; hyphens: manual; text-align: left; }

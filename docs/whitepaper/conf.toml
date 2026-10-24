@@ -34,11 +34,10 @@ root_doc = "index"
 # -- Options for HTML output -------------------------------------------------
 
 html_theme = "guidedog"
-html_static_path = ["../shared/_static"]
-# The shared folder sits beside the project, so the build is allowed to read it.
-include_roots = ["../shared"]
+html_static_path = ["_static"]
 # Body text: sibuna.css hyphenates and justifies it, and typography.js breaks English
-# prose paragraphs with the Knuth-Plass algorithm, as Typst does in the PDF.
+# prose paragraphs with the Knuth-Plass algorithm, as Typst does in the PDF. The
+# book and the whitepaper keep identical copies of these files in their _static.
 html_css_files = ["sibuna.css"]
 html_js_files = ["data/typography/linked-list.js", "data/typography/linebreak.js",
                  "data/typography/hypher.js", "data/typography/english.js",
