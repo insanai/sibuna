@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Sibuna: Architecture, Algorithms, and Empirical "
 "Foundations of Work-Bound Web Defense 1.0.0-beta.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-24 10:43+0000\n"
+"POT-Creation-Date: 2026-10-24 12:17+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -239,10 +239,9 @@ msgid ""
 "hash in 70.2 ns and keeps no state until the puzzle is solved; now the "
 "sender's meter is full and Sibuna's nearly empty."
 msgstr ""
-"两行。第一行中，发送方向防御系统发出一个廉价的请求，防御系统对每个请求都要解析、用正则表达式扫描并查询共享存储；"
-"防御系统的工作量条是满的，发送方的几乎是空的。第二行中，发送方求解一道期望需要 2 的 b 次方次哈希尝试的谜题（b "
-"等于 16 时为 65,536 次），Sibuna 用 70.2 ns 验证一次哈希，在谜题解出之前不保存任何状态；"
-"这时发送方的工作量条是满的，Sibuna 的几乎是空的。"
+"两行。第一行中，发送方向防御系统发出一个廉价的请求，防御系统对每个请求都要解析、用正则表达式扫描并查询共享存储；防御系统的工作量条是满的，发送方的几乎是空的。第二行中，发送方求解一道期望需要 "
+"2 的 b 次方次哈希尝试的谜题（b 等于 16 时为 65,536 次），Sibuna 用 70.2 ns "
+"验证一次哈希，在谜题解出之前不保存任何状态；这时发送方的工作量条是满的，Sibuna 的几乎是空的。"
 
 #: ../../index.rst:57
 msgid ""
@@ -252,9 +251,9 @@ msgid ""
 "The meters are a model; the verification time is measured (Hashcash "
 "verification at 16 bits, ``benchmarks/results/primitives-latest.md``)."
 msgstr ""
-"工作落在哪一方。上图：先检查的防御系统为发送方发出的每个请求付出自己的工作。下图：Sibuna 要求发送方完成期望 "
-":math:`2^b` 次的哈希尝试，并用一次哈希验证解答。工作量条只是模型；验证时间是实测值（16 比特的 "
-"Hashcash 验证，``benchmarks/results/primitives-latest.md``）。"
+"工作落在哪一方。上图：先检查的防御系统为发送方发出的每个请求付出自己的工作。下图：Sibuna 要求发送方完成期望 :math:`2^b` "
+"次的哈希尝试，并用一次哈希验证解答。工作量条只是模型；验证时间是实测值（16 比特的 Hashcash "
+"验证，``benchmarks/results/primitives-latest.md``）。"
 
 #: ../../index.rst:59
 msgid ""
@@ -339,7 +338,7 @@ msgstr "洪泛防护"
 msgid "GCRA rate limits, honeypot, temporary bans"
 msgstr "GCRA 速率限制、蜜罐、临时封禁"
 
-#: ../../index.rst:82 ../../index.rst:905
+#: ../../index.rst:82 ../../index.rst:921
 msgid "Payload inspection"
 msgstr "载荷检查"
 
@@ -598,99 +597,119 @@ msgstr ""
 #: ../../index.rst:134
 msgid ""
 "digraph pipeline {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.28, ranksep=0.5, "
-"fontname=\"Helvetica\", fontsize=9, newrank=true];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.18, "
+"ranksep=0.34, pad=0.1, fontname=\"Helvetica\", fontsize=9, "
+"fontcolor=\"#475569\"];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, color=\"#0369a1\", fillcolor=\"#f0f9ff\", "
-"fontcolor=\"#0f172a\", width=1.25, height=0.5];\n"
+"fontsize=8.5, fontcolor=\"#172033\", color=\"#0369a1\", "
+"fillcolor=\"#f0f9ff\", penwidth=1.1, width=1.32, height=0.44, "
+"margin=\"0.08,0.04\"];\n"
 "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
-"fontcolor=\"#334155\", arrowsize=0.6];\n"
+"fontcolor=\"#475569\", arrowsize=0.55, penwidth=1.0];\n"
+"\n"
 "  accept [label=\"Accept, read head\\ninto 64 KiB buffer\", "
-"color=\"#0f172a\", fillcolor=\"#ffffff\"];\n"
-"  parse [label=\"1. Zero-copy parse\\n132.5 ns\"];\n"
-"  ban [label=\"2. Ban table\\nlock-free readers\"];\n"
-"  routes [label=\"3. Internal routes\\nchallenge, verify\"];\n"
-"  gcra [label=\"4. GCRA limiter\\n6.2 ns\"];\n"
-"  waf [label=\"5. Shield inspection\\n8 KiB body: 12.8 us\", "
-"color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
-"  trie [label=\"6. Reputation trie\\nIPv4: 32.0 ns\", color=\"#6d28d9\", "
-"fillcolor=\"#f5f3ff\"];\n"
-"  rules [label=\"7. Ordered rules\\nWEIGH scores\", color=\"#6d28d9\", "
-"fillcolor=\"#f5f3ff\"];\n"
-"  bots [label=\"8. Bot automaton\\n55.7 ns\", color=\"#6d28d9\", "
-"fillcolor=\"#f5f3ff\"];\n"
-"  session [label=\"9. Session token\\nkeyed BLAKE3: 155.8 ns\", "
-"color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
-"  refuse [label=\"Refuse\\n403, 429 or a ban\", color=\"#b91c1c\", "
-"fillcolor=\"#fef2f2\"];\n"
-"  challenge [label=\"Challenge\\ninterstitial (200)\\nor JSON (401)\", "
-"color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
+"color=\"#172033\", fillcolor=\"#ffffff\"];\n"
+"  {\n"
+"    parse [group=left, label=\"1. Zero-copy parse\\n132.5 ns\"];\n"
+"    ban [label=\"2. Ban table\\nlock-free readers\"];\n"
+"    routes [label=\"3. Internal routes\\nchallenge, verify\"];\n"
+"    gcra [label=\"4. GCRA limiter\\n6.2 ns\"];\n"
+"  }\n"
+"  {\n"
+"    node [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
+"    bots [group=left, label=\"8. Bot automaton\\n55.7 ns\"];\n"
+"    rules [label=\"7. Ordered rules\\nWEIGH scores\"];\n"
+"    trie [label=\"6. Reputation trie\\nIPv4: 32.0 ns\"];\n"
+"    waf [label=\"5. Shield inspection\\n8 KiB body: 12.8 us\"];\n"
+"  }\n"
+"  session [group=left, label=\"9. Session token\\nkeyed BLAKE3: 155.8 "
+"ns\", color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
+"  challenge [group=left, label=\"Challenge\\ninterstitial (200)\\nor JSON "
+"(401)\", color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
 "  admit [label=\"Admit\\nproxy via the origin pool,\\nor a forward-auth "
-"verdict\", color=\"#047857\", fillcolor=\"#ecfdf5\"];\n"
-"  { rank=same; accept; parse; ban; routes; gcra; }\n"
+"verdict\", color=\"#15803d\", fillcolor=\"#f0fdf4\", penwidth=1.4];\n"
+"  refuse [label=\"Refuse\\n403, 429 or a ban\", color=\"#b91c1c\", "
+"fillcolor=\"#fef2f2\", penwidth=1.4];\n"
+"\n"
+"  { rank=same; parse; ban; routes; gcra; }\n"
 "  { rank=same; bots; rules; trie; waf; }\n"
-"  { rank=same; refuse; session; challenge; admit; }\n"
-"  accept -> parse -> ban -> routes -> gcra;\n"
+"  { rank=same; session; admit; refuse; }\n"
+"\n"
+"  accept -> parse;\n"
+"  parse -> ban -> routes -> gcra;\n"
 "  gcra -> waf [label=\" pass\"];\n"
-"  bots -> rules [dir=back]; rules -> trie [dir=back]; trie -> waf "
-"[dir=back];\n"
+"  bots -> rules -> trie -> waf [dir=back];\n"
+"  parse -> bots [style=invis];\n"
+"  ban -> rules [style=invis];\n"
+"  routes -> trie [style=invis];\n"
+"  rules -> session [style=invis];\n"
 "  bots -> session [label=\" challenge\"];\n"
 "  bots -> admit [label=\" allow\"];\n"
-"  session -> admit [label=\" enough work\"];\n"
-"  challenge -> session [dir=back, label=\" none or\\n too little\"];\n"
-"  ban -> refuse [style=dashed, color=\"#b91c1c\", constraint=false];\n"
-"  waf -> refuse [style=dashed, color=\"#b91c1c\", constraint=false, "
-"label=\"waf:*\", fontcolor=\"#b91c1c\"];\n"
-"  rules -> refuse [style=dashed, color=\"#b91c1c\", constraint=false];\n"
-"  refuse -> challenge [style=invis];\n"
+"  session -> challenge [label=\" none or too little\"];\n"
+"  session -> admit [label=\"enough\\nwork\"];\n"
+"  admit -> refuse [style=invis];\n"
+"  ban -> refuse [style=dashed, color=\"#dc2626\"];\n"
+"  waf -> refuse [style=dashed, color=\"#dc2626\", label=\" waf:*\", "
+"fontcolor=\"#b91c1c\"];\n"
+"  rules -> refuse [style=dashed, color=\"#dc2626\"];\n"
 "}"
 msgstr ""
 "digraph pipeline {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.28, ranksep=0.5, "
-"fontname=\"Helvetica\", fontsize=9, newrank=true];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.18, "
+"ranksep=0.34, pad=0.1, fontname=\"Helvetica\", fontsize=9, "
+"fontcolor=\"#475569\"];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, color=\"#0369a1\", fillcolor=\"#f0f9ff\", "
-"fontcolor=\"#0f172a\", width=1.25, height=0.5];\n"
+"fontsize=8.5, fontcolor=\"#172033\", color=\"#0369a1\", "
+"fillcolor=\"#f0f9ff\", penwidth=1.1, width=1.32, height=0.44, "
+"margin=\"0.08,0.04\"];\n"
 "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
-"fontcolor=\"#334155\", arrowsize=0.6];\n"
-"  accept [label=\"接受连接，把请求头部\\n读入 64 KiB 缓冲区\", color=\"#0f172a\", "
+"fontcolor=\"#475569\", arrowsize=0.55, penwidth=1.0];\n"
+"\n"
+"  accept [label=\"接受连接，把请求头部\\n读入 64 KiB 缓冲区\", color=\"#172033\", "
 "fillcolor=\"#ffffff\"];\n"
-"  parse [label=\"1. 零拷贝解析\\n132.5 ns\"];\n"
-"  ban [label=\"2. 封禁表\\n读者无锁\"];\n"
-"  routes [label=\"3. 内部路由\\n挑战、验证\"];\n"
-"  gcra [label=\"4. GCRA 限制器\\n6.2 ns\"];\n"
-"  waf [label=\"5. Shield 检查\\n8 KiB 请求体：12.8 us\", color=\"#6d28d9\", "
-"fillcolor=\"#f5f3ff\"];\n"
-"  trie [label=\"6. 信誉字典树\\nIPv4：32.0 ns\", color=\"#6d28d9\", "
-"fillcolor=\"#f5f3ff\"];\n"
-"  rules [label=\"7. 有序规则\\nWEIGH 评分\", color=\"#6d28d9\", "
-"fillcolor=\"#f5f3ff\"];\n"
-"  bots [label=\"8. 机器人自动机\\n55.7 ns\", color=\"#6d28d9\", "
-"fillcolor=\"#f5f3ff\"];\n"
-"  session [label=\"9. 会话令牌\\n带密钥 BLAKE3：155.8 ns\", color=\"#b45309\", "
-"fillcolor=\"#fffbeb\"];\n"
-"  refuse [label=\"拒绝\\n403、429 或封禁\", color=\"#b91c1c\", "
-"fillcolor=\"#fef2f2\"];\n"
-"  challenge [label=\"挑战\\n验证中间页 (200)\\n或 JSON (401)\", "
+"  {\n"
+"    parse [group=left, label=\"1. 零拷贝解析\\n132.5 ns\"];\n"
+"    ban [label=\"2. 封禁表\\n读者无锁\"];\n"
+"    routes [label=\"3. 内部路由\\n挑战、验证\"];\n"
+"    gcra [label=\"4. GCRA 限制器\\n6.2 ns\"];\n"
+"  }\n"
+"  {\n"
+"    node [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
+"    bots [group=left, label=\"8. 机器人自动机\\n55.7 ns\"];\n"
+"    rules [label=\"7. 有序规则\\nWEIGH 评分\"];\n"
+"    trie [label=\"6. 信誉字典树\\nIPv4：32.0 ns\"];\n"
+"    waf [label=\"5. Shield 检查\\n8 KiB 请求体：12.8 us\"];\n"
+"  }\n"
+"  session [group=left, label=\"9. 会话令牌\\n带密钥 BLAKE3：155.8 ns\", "
+"color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
+"  challenge [group=left, label=\"挑战\\n验证中间页 (200)\\n或 JSON (401)\", "
 "color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
 "  admit [label=\"准入\\n经源站连接池代理，\\n或给出 forward-auth 判定\", "
-"color=\"#047857\", fillcolor=\"#ecfdf5\"];\n"
-"  { rank=same; accept; parse; ban; routes; gcra; }\n"
+"color=\"#15803d\", fillcolor=\"#f0fdf4\", penwidth=1.4];\n"
+"  refuse [label=\"拒绝\\n403、429 或封禁\", color=\"#b91c1c\", "
+"fillcolor=\"#fef2f2\", penwidth=1.4];\n"
+"\n"
+"  { rank=same; parse; ban; routes; gcra; }\n"
 "  { rank=same; bots; rules; trie; waf; }\n"
-"  { rank=same; refuse; session; challenge; admit; }\n"
-"  accept -> parse -> ban -> routes -> gcra;\n"
+"  { rank=same; session; admit; refuse; }\n"
+"\n"
+"  accept -> parse;\n"
+"  parse -> ban -> routes -> gcra;\n"
 "  gcra -> waf [label=\" 通过\"];\n"
-"  bots -> rules [dir=back]; rules -> trie [dir=back]; trie -> waf "
-"[dir=back];\n"
+"  bots -> rules -> trie -> waf [dir=back];\n"
+"  parse -> bots [style=invis];\n"
+"  ban -> rules [style=invis];\n"
+"  routes -> trie [style=invis];\n"
+"  rules -> session [style=invis];\n"
 "  bots -> session [label=\" 挑战\"];\n"
 "  bots -> admit [label=\" 允许\"];\n"
-"  session -> admit [label=\" 工作量足够\"];\n"
-"  challenge -> session [dir=back, label=\" 没有或\\n 不足\"];\n"
-"  ban -> refuse [style=dashed, color=\"#b91c1c\", constraint=false];\n"
-"  waf -> refuse [style=dashed, color=\"#b91c1c\", constraint=false, "
-"label=\"waf:*\", fontcolor=\"#b91c1c\"];\n"
-"  rules -> refuse [style=dashed, color=\"#b91c1c\", constraint=false];\n"
-"  refuse -> challenge [style=invis];\n"
+"  session -> challenge [label=\" 没有或不足\"];\n"
+"  session -> admit [label=\"工作量\\n足够\"];\n"
+"  admit -> refuse [style=invis];\n"
+"  ban -> refuse [style=dashed, color=\"#dc2626\"];\n"
+"  waf -> refuse [style=dashed, color=\"#dc2626\", label=\" waf:*\", "
+"fontcolor=\"#b91c1c\"];\n"
+"  rules -> refuse [style=dashed, color=\"#dc2626\"];\n"
 "}"
 
 #: ../../index.rst:134
@@ -707,7 +726,7 @@ msgstr ""
 "限制器和信誉字典树也以同样的方式拒绝）。对一个浏览器请求的完整分类，在 Gate 配置下耗时 75.9 ns，在 Shield 配置下耗时 "
 "790.8 ns。"
 
-#: ../../index.rst:170
+#: ../../index.rst:183
 msgid ""
 "A valid session satisfies a challenge; it never overrides a denial or a "
 "WAF finding. The proxy, in turn, reads the origin's response head, "
@@ -720,11 +739,11 @@ msgstr ""
 "检出结果。代理则读取源站的响应头部，判定其分帧方式（无响应体、固定长度、分块编码或读到连接关闭为止），原样转发响应体，并把停在干净边界上的源站套接字归还给一个有 "
 "256 个槽、分条带的连接池；这样，经代理的客户端连接可以保持打开，也不必为每个请求重新连接源站。"
 
-#: ../../index.rst:172
+#: ../../index.rst:185
 msgid "Publishing Policy Without Stopping Requests"
 msgstr "发布策略而不中断请求"
 
-#: ../../index.rst:175
+#: ../../index.rst:188
 msgid ""
 "The policy engine is rebuilt off the request path when policies change, "
 "and requests must never see a half-built engine. The storage thread "
@@ -742,66 +761,66 @@ msgstr ""
 "加载读取代次，只有在发生发布之后才获取新的引用。旧引擎在最后一个持有它的缓存放手时被释放，写者从不需要等待读者退出。在争用下，缓存读取比获取读写锁便宜 "
 "400 多倍。引擎本身约有 200 KiB 的紧凑表（209,052 字节），可容纳 128 条规则和 8,192 个字典树节点。"
 
-#: ../../index.rst:177
+#: ../../index.rst:190
 msgid ""
 "The cost of one engine read with 1 and 16 threads reading in a loop, on a "
 "Ryzen 9 5950X (book Part V, October 2026)"
 msgstr ""
 "1 个和 16 个线程循环读取时，一次引擎读取的成本，Ryzen 9 5950X（《Sibuna 之书》第 V 部分，2026 年 10 月）"
 
-#: ../../index.rst:181
+#: ../../index.rst:194
 msgid "Reader"
 msgstr "读取方式"
 
-#: ../../index.rst:182
+#: ../../index.rst:195
 msgid "1 thread"
 msgstr "1 个线程"
 
-#: ../../index.rst:183
+#: ../../index.rst:196
 msgid "16 threads"
 msgstr "16 个线程"
 
-#: ../../index.rst:184
+#: ../../index.rst:197
 msgid "Read-write lock, read guard only"
 msgstr "读写锁，仅获取读守卫"
 
-#: ../../index.rst:185
+#: ../../index.rst:198
 msgid "4.2 ns"
 msgstr "4.2 ns"
 
-#: ../../index.rst:186
+#: ../../index.rst:199
 msgid "752 ns"
 msgstr "752 ns"
 
-#: ../../index.rst:187
+#: ../../index.rst:200
 msgid "Read-write lock and a new reference"
 msgstr "读写锁，并获取新引用"
 
-#: ../../index.rst:188
+#: ../../index.rst:201
 msgid "7.6 ns"
 msgstr "7.6 ns"
 
-#: ../../index.rst:189
+#: ../../index.rst:202
 msgid "833 ns"
 msgstr "833 ns"
 
-#: ../../index.rst:190
+#: ../../index.rst:203
 msgid "Generation check with a cached reference"
 msgstr "代次检查，使用缓存的引用"
 
-#: ../../index.rst:191
+#: ../../index.rst:204
 msgid "0.8 ns"
 msgstr "0.8 ns"
 
-#: ../../index.rst:192
+#: ../../index.rst:205
 msgid "1.8 ns"
 msgstr "1.8 ns"
 
-#: ../../index.rst:194
+#: ../../index.rst:207
 msgid "Locks in Shards"
 msgstr "分片锁"
 
-#: ../../index.rst:197
+#: ../../index.rst:210
 msgid ""
 "The tables that connection threads share (the spent set, the limiter, the "
 "ban table) are split into 16 shards by a hash of the key, and each shard "
@@ -816,77 +835,77 @@ msgstr ""
 "个分片，每个分片独占一条缓存行。它们的临界区只有几十条指令长，因此我们测量了自旋锁与自适应互斥锁的对比；后者先短暂自旋，然后休眠。无人争用时，自旋锁大约节省一纳秒；但边缘服务器运行的线程多于 "
 "CPU 数，而持有者被抢占的自旋锁会让每个等待者白白耗尽自己的时间片。互斥锁在争用下胜出，因此我们保留了它。"
 
-#: ../../index.rst:199
+#: ../../index.rst:212
 msgid ""
 "Shard lock throughput in millions of operations per second on a Ryzen 9 "
 "5950X (book Part V; SID 0010)"
 msgstr "分片锁吞吐量，单位为每秒百万次操作，Ryzen 9 5950X（《Sibuna 之书》第 V 部分；SID 0010）"
 
-#: ../../index.rst:203 ../../index.rst:480 ../../index.rst:942
+#: ../../index.rst:216 ../../index.rst:496 ../../index.rst:958
 msgid "Workload"
 msgstr "工作负载"
 
-#: ../../index.rst:204
+#: ../../index.rst:217
 msgid "Adaptive mutex"
 msgstr "自适应互斥锁"
 
-#: ../../index.rst:205
+#: ../../index.rst:218
 msgid "Spin lock"
 msgstr "自旋锁"
 
-#: ../../index.rst:206
+#: ../../index.rst:219
 msgid "Spent set, 16 threads"
 msgstr "已用集合，16 个线程"
 
-#: ../../index.rst:207
+#: ../../index.rst:220
 msgid "10.8"
 msgstr "10.8"
 
-#: ../../index.rst:208
+#: ../../index.rst:221
 msgid "8.6"
 msgstr "8.6"
 
-#: ../../index.rst:209
+#: ../../index.rst:222
 msgid "Spent set, 64 threads"
 msgstr "已用集合，64 个线程"
 
-#: ../../index.rst:210
+#: ../../index.rst:223
 msgid "11.2"
 msgstr "11.2"
 
-#: ../../index.rst:211
+#: ../../index.rst:224
 msgid "6.9"
 msgstr "6.9"
 
-#: ../../index.rst:212
+#: ../../index.rst:225
 msgid "GCRA on six hot addresses, 16 threads"
 msgstr "在六个热点地址上运行 GCRA，16 个线程"
 
-#: ../../index.rst:213
+#: ../../index.rst:226
 msgid "44.9"
 msgstr "44.9"
 
-#: ../../index.rst:214
+#: ../../index.rst:227
 msgid "19.3"
 msgstr "19.3"
 
-#: ../../index.rst:215
+#: ../../index.rst:228
 msgid "GCRA on six hot addresses, 64 threads"
 msgstr "在六个热点地址上运行 GCRA，64 个线程"
 
-#: ../../index.rst:216
+#: ../../index.rst:229
 msgid "37.4"
 msgstr "37.4"
 
-#: ../../index.rst:217
+#: ../../index.rst:230
 msgid "6.5"
 msgstr "6.5"
 
-#: ../../index.rst:221
+#: ../../index.rst:234
 msgid "Algorithms and Their Guarantees"
 msgstr "算法及其保证"
 
-#: ../../index.rst:224
+#: ../../index.rst:237
 msgid ""
 "Each primitive on the request path has a statement of what it costs and "
 "what it guarantees. We give three of them as theorems, with the argument "
@@ -896,13 +915,13 @@ msgstr ""
 "请求路径上的每个原语都有一份说明，写明它的成本和它所保证的性质。我们把其中三条写成定理，并简要给出论证；SID 0006 和《Sibuna "
 "之书》第 III 到 VI 部分给出了完整的证明、定义和参考文献。"
 
-#: ../../index.rst:226
+#: ../../index.rst:239
 msgid ""
 "Theorem 1 (Linear-time inspection with a byte-class Aho-Corasick "
 "automaton)"
 msgstr "定理 1（字节类 Aho-Corasick 自动机的线性时间检查）"
 
-#: ../../index.rst:228
+#: ../../index.rst:241
 msgid ""
 "Let :math:`\\mathcal{P}` be a set of patterns of total length :math:`m` "
 "whose bytes fall into :math:`c \\le 256` classes, and let a text have "
@@ -915,7 +934,7 @@ msgstr ""
 "个类，文本长度为 :math:`M`。Sibuna 以 :math:`O(mc)` 的时间和空间构建自动机，并在 :math:`O(M)` "
 "时间内报告文本中是否出现任一模式；每个输入字节只需一次相互依赖的表读取，与模式数量无关。任何输入都无法使它回溯。"
 
-#: ../../index.rst:230
+#: ../../index.rst:243
 msgid ""
 "*Proof sketch.* The automaton of Aho and Corasick scans a text once after "
 "building a trie with failure links. Sibuna folds the failure links into "
@@ -930,7 +949,7 @@ msgstr ""
 "在构建时把失败链接折叠进转移表，因此每个输入字节只是一次转移，从不沿失败链前进。一个字节类要么是某个模式中出现的字节（字母的大小写归入同一类），要么是由其余所有字节组成的那一个类；因此表的每一行只有 "
 ":math:`c` 个条目，而不是 256 个。匹配状态排在所有其他状态之后编号，因此检测匹配只需一次比较。"
 
-#: ../../index.rst:232
+#: ../../index.rst:245
 msgid ""
 "*Measurement.* On 40 bot signatures the automaton takes 55.7 ns against "
 "763.0 ns for sequential substring search with the same patterns and "
@@ -940,11 +959,11 @@ msgstr ""
 "*测量。* 在 40 条机器人签名上，自动机耗时 55.7 ns；使用相同模式、同样采用任一匹配语义的顺序子串搜索耗时 763.0 ns，自动机快 "
 "13.7 倍。借助字节类，整张机器人签名表只占 42,244 字节 [#automaton]_。"
 
-#: ../../index.rst:234
+#: ../../index.rst:247
 msgid "Theorem 2 (The GCRA interval bound)"
 msgstr "定理 2（GCRA 区间界）"
 
-#: ../../index.rst:236
+#: ../../index.rst:249
 msgid ""
 "Fix a limit of :math:`N` requests per window :math:`W`, with emission "
 "interval :math:`T = \\max(1, \\lceil W/N \\rceil)` and burst tolerance "
@@ -962,7 +981,7 @@ msgstr ""
 "t) + T`。那么，任何以一次合规到达开始、长度为 :math:`L` 的区间，至多包含 :math:`N + \\lfloor L/T "
 "\\rfloor` 次合规到达。"
 
-#: ../../index.rst:238
+#: ../../index.rst:251
 msgid ""
 "*Proof sketch.* Number the conforming arrivals :math:`1, \\dots, k` at "
 "times :math:`t_1 \\le \\dots \\le t_k`. Each conforming arrival raises "
@@ -978,7 +997,7 @@ msgstr ""
 "+ \\tau \\le t_1 + L + \\tau`。两式合起来得到 :math:`(k-1)T \\le L + (N-1)T`，即 "
 ":math:`k \\le N + L/T`，而 :math:`k` 是整数。"
 
-#: ../../index.rst:240
+#: ../../index.rst:253
 msgid ""
 "*Implementation.* The state of a client is one 16-byte cell, with no "
 "per-request history and no fixed-window boundary effect. The 16 shards "
@@ -991,11 +1010,11 @@ msgstr ""
 "``--rate-table-cells`` 个单元（默认 262,144 个，4 "
 "MiB），按带密钥哈希放置；排空的单元就地回收，无需清扫线程。对守护进程已经算好哈希的客户端做一次检查，耗时 6.2 ns [#gcra]_。"
 
-#: ../../index.rst:242
+#: ../../index.rst:255
 msgid "Theorem 3 (State grows only with paid work)"
 msgstr "定理 3（状态只随付出的工作增长）"
 
-#: ../../index.rst:244
+#: ../../index.rst:257
 msgid ""
 "Let :math:`S` be the set of challenge tags the daemon remembers. A tag "
 "enters :math:`S` only after a valid proof for its challenge was accepted, "
@@ -1008,7 +1027,7 @@ msgstr ""
 ":math:`r` 是一个挑战有效期内被接受的不同解答的速率上界，则 :math:`|S| \\le r \\cdot "
 "\\mathrm{TTL}`。已获取但未求解的挑战不占用任何内存。"
 
-#: ../../index.rst:246
+#: ../../index.rst:259
 msgid ""
 "*Proof sketch.* A challenge identifier is a self-authenticating record: "
 "version, algorithm, difficulty, opening count, issue time, the client's "
@@ -1027,7 +1046,7 @@ msgstr ""
 "BLAKE3 建模为伪随机函数时，发起 :math:`q` 次验证查询的对手伪造标签的概率至多为 :math:`q \\cdot "
 "2^{-128}` 加上 PRF 优势。"
 
-#: ../../index.rst:248
+#: ../../index.rst:261
 msgid ""
 "*Implementation.* The spent set is 16 shards of Robin Hood open "
 "addressing. An expired entry may be overwritten in place only by a key at "
@@ -1040,11 +1059,11 @@ msgstr ""
 "开放寻址的分片组成。一个过期条目只能被距其原位槽至少同样远的键就地覆盖，否则后续查找可能提前停止而漏掉仍然有效的标签；有了这条规则，就不需要清扫线程，而且被拒绝的插入从不驱逐有效标签。一次花费加一次查找共耗时 "
 "21.0 ns [#spent]_。"
 
-#: ../../index.rst:250
+#: ../../index.rst:263
 msgid "The Semantic Firewall"
 msgstr "语义防火墙"
 
-#: ../../index.rst:253
+#: ../../index.rst:266
 msgid ""
 "Shield inspects the path, the query, the User-Agent, the headers that are "
 "not structural, and the first 8 KiB of the body. Its first version taught "
@@ -1060,11 +1079,11 @@ msgstr ""
 "``Accept: text/html,...,*/*;q=0.8``。结果，每个真实的浏览器都被判为 SQL 注入。从那以后，检测器只能依据 "
 "*结构* 触发，并且有一项测试会让一个完整的 Chrome 请求通过引擎，要求它干净地通过 [#waf]_。"
 
-#: ../../index.rst:255
+#: ../../index.rst:268
 msgid "Inspection has four stages, each linear in the field."
 msgstr "检查分为四个阶段，每个阶段的耗时都与字段长度成线性关系。"
 
-#: ../../index.rst:257
+#: ../../index.rst:270
 msgid ""
 "*A byte-class pre-scan.* One pass with a 256-entry table records which "
 "classes of byte occur: quotes, ``=``, ``<``, shell separators, ``%``, NUL "
@@ -1076,7 +1095,7 @@ msgstr ""
 "分隔符、``%``、NUL，以及触发规范化的字节。后续每个检测器都查询这些类别，而不是重新扫描，因此不含引号或等号的字段永远不会进入 SQL "
 "分词器。"
 
-#: ../../index.rst:258
+#: ../../index.rst:271
 msgid ""
 "*A tagged signature automaton.* All strong signatures of every category "
 "live in one automaton (Theorem 1). A hit is a terminal denial named "
@@ -1085,7 +1104,7 @@ msgstr ""
 "*带标签的签名自动机。* 所有类别的全部强签名都放在同一个自动机中（定理 1）。一次命中就是终局性的拒绝，名为 "
 "``waf:sqli``、``waf:xss``、``waf:path-traversal`` 或 ``waf:rce``。"
 
-#: ../../index.rst:259
+#: ../../index.rst:272
 msgid ""
 "*Structural tokenizers.* The SQL tokenizer looks up each short word in a "
 "keyword table and checks ``literal = literal`` tautologies after ``or`` "
@@ -1102,7 +1121,7 @@ msgstr ""
 "分，可以通过。跨站脚本要求出现一个能承载脚本的标签，并在属性位置上带有事件处理属性；命令注入要求一个分隔符后跟一个不是赋值的命令名，因此 "
 "``a=1&id=5`` 是参数，而不是命令。"
 
-#: ../../index.rst:260
+#: ../../index.rst:273
 msgid ""
 "*Canonicalisation.* A field with percent escapes, comment openers, JSON "
 "or HTML escapes, or collapsible white space is decoded and inspected "
@@ -1112,7 +1131,7 @@ msgstr ""
 "*规范化。* 含有百分号转义、注释开头、JSON 或 HTML 转义，或可折叠空白的字段，会被解码后再检查一次，因此 "
 "``1%27/**/UnIoN/**/SeLeCt`` 和 ``%252e%252e/`` 都会还原为原始签名。"
 
-#: ../../index.rst:262
+#: ../../index.rst:275
 msgid ""
 "An 8 KiB body scans in 12,784.3 ns, about 1.56 ns per byte. An operator "
 "may audit a category rather than enforce it, so that its findings are "
@@ -1131,11 +1150,11 @@ msgstr ""
 "注入设为审计时耗时 15,485.4 ns [#waf-cost]_。Shield 仍然是一个有界的启发式检查器，而不是完整的 SQL 或 "
 "HTML 解析器；超出检查范围的字节不会被检查。"
 
-#: ../../index.rst:264
+#: ../../index.rst:277
 msgid "TLS Fingerprints From the Ingress"
 msgstr "来自入口代理的 TLS 指纹"
 
-#: ../../index.rst:267
+#: ../../index.rst:280
 msgid ""
 "A User-Agent is a string that any client may write as it likes. A JA4 "
 "fingerprint is harder to forge. It summarises how a client opens a TLS "
@@ -1151,7 +1170,7 @@ msgstr ""
 "TLS 的组件能看到握手，因此只有它能计算 JA4。Sibuna 不终止任何入站 TLS，所以它不计算 "
 "JA4，而是读取受信任的入口代理计算后在请求头中转发的指纹，请求头名称由 ``--ja4-header`` 指定 [#ja4]_。"
 
-#: ../../index.rst:269
+#: ../../index.rst:282
 msgid ""
 "*Trust.* The header is read only when forwarded headers are trusted, by "
 "the decision that governs ``X-Forwarded-For``. From an untrusted peer it "
@@ -1161,14 +1180,14 @@ msgstr ""
 "*信任。* 只有在信任转发头时才读取该请求头，这一判断与决定是否信任 ``X-Forwarded-For`` "
 "的判断相同。来自不受信任对端的该请求头会被忽略；在反向代理模式下，请求到达源站之前，它的所有副本都会被移除。"
 
-#: ../../index.rst:270
+#: ../../index.rst:283
 msgid ""
 "*Validation.* A value is accepted only in the 36-byte JA4 form, and only "
 "when exactly one field of that name is present. A malformed or repeated "
 "value is treated as absent and counted."
 msgstr "*校验。* 只有 36 字节 JA4 格式的值才会被接受，并且必须恰好只有一个同名字段。格式错误或重复的值被视为不存在，并计数。"
 
-#: ../../index.rst:271
+#: ../../index.rst:284
 msgid ""
 "*Policy.* A rule matches a whole fingerprint, or a prefix followed by "
 "``*``; a request without a fingerprint never matches such a rule. "
@@ -1178,7 +1197,7 @@ msgstr ""
 "*策略。* 规则匹配完整的指纹，或匹配后跟 ``*`` "
 "的前缀；没有指纹的请求永远不会匹配这样的规则。匹配只是字节比较，预热后的请求路径仍然不做任何堆分配。"
 
-#: ../../index.rst:272
+#: ../../index.rst:285
 msgid ""
 "*Records.* Incidents store the fingerprint of their request, and the "
 "console shows it in the incident evidence and filters events by it. Bans "
@@ -1187,11 +1206,11 @@ msgid ""
 msgstr ""
 "*记录。* 事件保存其请求的指纹，控制台在事件证据中显示它，并可以按它筛选事件。封禁和信誉仍然以地址为键，因为许多合法客户端共用同一个 TLS 库。"
 
-#: ../../index.rst:276
+#: ../../index.rst:289
 msgid "Keyed Hashing and the Security Review"
 msgstr "带密钥哈希与安全审查"
 
-#: ../../index.rst:279
+#: ../../index.rst:292
 msgid ""
 "An adversarial review of the request path in October 2026 found "
 "weaknesses in mechanisms we had considered settled. We fixed each one and "
@@ -1200,7 +1219,7 @@ msgstr ""
 "2026 年 10 月，一次针对请求路径的对抗性审查发现了我们原以为已经定型的机制中的弱点。我们逐一修复，并把修复记录在相应机制的设计记录中 "
 "[#security]_。"
 
-#: ../../index.rst:281
+#: ../../index.rst:294
 msgid ""
 "*Predictable table placement.* The limiter and the ban table placed keys "
 "with a hash under seeds written in the source, so anyone could compute "
@@ -1214,7 +1233,7 @@ msgstr ""
 "SipHash-1-3，密钥取自操作系统的随机源，每张表派生自己的密钥。守护进程对每个请求只计算一次客户端哈希（8.7 "
 "ns），并把哈希传给每张表；一个请求的存储路径从 43 ns 降到了 26 ns。"
 
-#: ../../index.rst:282
+#: ../../index.rst:295
 msgid ""
 "*Ban eviction.* A ban in effect is never evicted. When every slot a key "
 "may take holds a live ban, the new ban is refused and counted, so a "
@@ -1223,7 +1242,7 @@ msgstr ""
 "*封禁驱逐。* "
 "生效中的封禁永远不会被驱逐。当一个键可能占用的每个槽都持有有效的封禁时，新的封禁会被拒绝并计数，因此被封禁的客户端无法驱逐自己的封禁。"
 
-#: ../../index.rst:283
+#: ../../index.rst:296
 msgid ""
 "*Forwarded identity.* The leftmost ``X-Forwarded-For`` entry can be "
 "written by the client. Sibuna takes the entry ``--trusted-hops`` "
@@ -1232,7 +1251,7 @@ msgstr ""
 "*转发的身份。* ``X-Forwarded-For`` 最左边的条目可以由客户端写入。Sibuna 取从右数第 "
 "``--trusted-hops`` 个位置的条目，即最近的受信任代理所追加的那一项。"
 
-#: ../../index.rst:284
+#: ../../index.rst:297
 msgid ""
 "*Cookie tossing.* A request may carry several values of the session "
 "cookie; the daemon tries up to eight, so a cookie planted by a sibling "
@@ -1241,7 +1260,7 @@ msgstr ""
 "*Cookie 投掷。* 一个请求可以携带会话 Cookie 的多个值；守护进程最多尝试八个，因此兄弟域名植入的 Cookie "
 "无法让访问者陷入挑战循环。"
 
-#: ../../index.rst:285
+#: ../../index.rst:298
 msgid ""
 "*Spent-set capacity.* A table of 65,536 tags was exhausted by about 220 "
 "verified solutions per second within a five-minute challenge lifetime, "
@@ -1251,14 +1270,14 @@ msgstr ""
 "*已用集合的容量。* 一张 65,536 个标签的表，在五分钟的挑战有效期内，只需每秒约 220 "
 "个已验证的解答就会被耗尽，此后诚实的解答都会被拒绝。现在容量可以配置，默认为 1,048,576 个标签（24 MiB）。"
 
-#: ../../index.rst:286
+#: ../../index.rst:299
 msgid ""
 "*Adaptive difficulty.* The controller that raises the work under load now "
 "counts verified solutions instead of issued challenges, which cost a "
 "flooder nothing."
 msgstr "*自适应难度。* 在负载下提高工作量的控制器现在统计的是已验证的解答，而不是已签发的挑战，因为后者对洪泛者毫无成本。"
 
-#: ../../index.rst:288
+#: ../../index.rst:301
 msgid ""
 "Keyed placement has a price, and we pay it once per request rather than "
 "once per table. A limiter check that hashes raw client bytes itself takes "
@@ -1271,15 +1290,15 @@ msgstr ""
 "ns；对已算好哈希的客户端做检查（守护进程实际走的路径）耗时 6.2 "
 "ns。由于限制器和已用集合以清零的内存分配，空闲的表不会驻留在内存中，因此配置的容量在被使用之前不占用内存。"
 
-#: ../../index.rst:292
+#: ../../index.rst:305
 msgid "Proofs of Work: Parallel Search and Sequential Work"
 msgstr "工作量证明：并行搜索与顺序工作"
 
-#: ../../index.rst:295
+#: ../../index.rst:308
 msgid "The Hashcash Tier"
 msgstr "Hashcash 层"
 
-#: ../../index.rst:298
+#: ../../index.rst:311
 msgid ""
 "The first tier is Hashcash at bit granularity. For a challenge string "
 ":math:`C` and difficulty :math:`b`, the client finds a nonce :math:`N` "
@@ -1296,7 +1315,7 @@ msgstr ""
 "WebAssembly 求解器、JavaScript 后备实现和原生验证器之间的线路格式完全一致。对于理想的摘要，尝试次数 :math:`K` "
 "服从 :math:`p = 2^{-b}` 的几何分布："
 
-#: ../../index.rst:300
+#: ../../index.rst:313
 msgid ""
 "P(K > k) = (1 - p)^k, \\qquad E[K] = 2^b, \\qquad \\mathrm{median}(K) "
 "\\approx 2^b \\ln 2."
@@ -1304,7 +1323,7 @@ msgstr ""
 "P(K > k) = (1 - p)^k, \\qquad E[K] = 2^b, \\qquad \\mathrm{median}(K) "
 "\\approx 2^b \\ln 2."
 
-#: ../../index.rst:304
+#: ../../index.rst:317
 msgid ""
 "Search has two limits. Its variance is large, so one slow solve is not a "
 "broken worker. And independent trials run in parallel, so a sender with "
@@ -1314,11 +1333,11 @@ msgstr ""
 "搜索有两个局限。它的方差很大，所以一次缓慢的求解并不说明 worker "
 "出了故障。而且各次独立尝试可以并行进行，因此核心更多的发送方完成得更快，尽管期望的总工作量相同 [#hashcash]_。"
 
-#: ../../index.rst:306
+#: ../../index.rst:319
 msgid "The Sequential-Work Tier"
 msgstr "顺序工作层"
 
-#: ../../index.rst:309
+#: ../../index.rst:322
 msgid ""
 "The second tier follows the proof of sequential work of Cohen and "
 "Pietrzak (EUROCRYPT 2018). Its labels form a complete binary tree of "
@@ -1340,7 +1359,7 @@ msgstr ""
 ":math:`t` 个叶子，并为每个叶子发送叶子标签及其路径上的 :math:`n` 个兄弟标签。验证者重新计算每个被揭示的叶子，再逐层哈希直到 "
 ":math:`\\varphi`，代价为在固定工作区内计算 :math:`O(tn)` 个标签。"
 
-#: ../../index.rst:311
+#: ../../index.rst:324
 msgid ""
 "Left, four cores each try a disjoint share of the nonces, and core 3 "
 "finds one at nonce 18, after which every core stops. Right, a binary tree "
@@ -1348,11 +1367,10 @@ msgid ""
 "3.4 sent in its opening are green, and dashed red arrows run from 1.0 and "
 "3.4 into leaf 3.5."
 msgstr ""
-"左图：四个核心各自尝试互不相交的一部分 nonce，核心 3 在 nonce 18 处找到解，随后所有核心都停止。右图："
-"一棵深度为三的二叉树。叶子 3.5 的路径为琥珀色，它的揭示中发送的兄弟节点 1.0、2.3 和 3.4 为绿色，"
-"红色虚线箭头从 1.0 和 3.4 指向叶子 3.5。"
+"左图：四个核心各自尝试互不相交的一部分 nonce，核心 3 在 nonce 18 处找到解，随后所有核心都停止。右图：一棵深度为三的二叉树。叶子 "
+"3.5 的路径为琥珀色，它的揭示中发送的兄弟节点 1.0、2.3 和 3.4 为绿色，红色虚线箭头从 1.0 和 3.4 指向叶子 3.5。"
 
-#: ../../index.rst:314
+#: ../../index.rst:327
 msgid ""
 "Parallel search against sequential work. Left, Hashcash: independent "
 "nonce trials, so :math:`M` cores finish about :math:`M` times sooner. "
@@ -1364,7 +1382,7 @@ msgstr ""
 "倍完成。右图为深度 3 的 Cohen-Pietrzak 树：虚线表示的左兄弟边使叶子 3.5 必须等待其左边的子树完成；揭示叶子 3.5 "
 "时，发送它的标签和三个绿色的兄弟节点（据《Sibuna 之书》第 III 部分）。"
 
-#: ../../index.rst:316
+#: ../../index.rst:329
 msgid ""
 "The parameters are chosen so that the numbers stay small. Work bits map "
 "to depth by :math:`n = b - 3`, clamped to :math:`[4, 24]`. A proof has "
@@ -1382,7 +1400,7 @@ msgstr ""
 "KB；浏览器标签页和原生测试使用同一个证明者 [#posw]_。Blocki、Lee 和 Zhou（ITC "
 "2021）在量子随机预言机模型中证明了该构造对量子证明者也是可靠的。"
 
-#: ../../index.rst:318
+#: ../../index.rst:331
 msgid ""
 "We should be careful about what this establishes. The security results "
 "hold under the random-oracle assumptions of the papers, for the "
@@ -1399,11 +1417,11 @@ msgstr ""
 "次独立揭示全部错过一个固定的坏比例 :math:`\\alpha` "
 "的概率，解释了为什么更多的揭示有帮助；但它本身并不能防御一个反复尝试大量根的证明者。我们不作“作弊永远不会更便宜”这样的无条件断言。"
 
-#: ../../index.rst:320
+#: ../../index.rst:333
 msgid "The Round Trip and the Session"
 msgstr "往返流程与会话"
 
-#: ../../index.rst:323
+#: ../../index.rst:336
 msgid ""
 "A navigation without a valid session receives the interstitial page, "
 "which carries a *requirement ticket*: the challenge this decision demands "
@@ -1424,11 +1442,11 @@ msgstr ""
 "后备实现），然后提交答案。成功后，服务器设置一个 75 个字符的会话 Cookie，它通过带密钥的指纹与客户端的地址和 User-Agent "
 "绑定，随后页面重新加载。浏览器中的证明器与服务器的验证器由同一份源代码编译而成，因此两者不会逐渐偏离 [#round-trip]_。"
 
-#: ../../index.rst:325
+#: ../../index.rst:338
 msgid "What Verification Costs"
 msgstr "验证的成本"
 
-#: ../../index.rst:328
+#: ../../index.rst:341
 msgid ""
 "Both tiers are bound by SHA-256, and Sibuna selects the processor's SHA "
 "instructions at run time where they exist, so one binary is fast on every "
@@ -1447,7 +1465,7 @@ msgstr ""
 "JavaScript 后备实现时耗时 84 到 91 ms "
 "[#verify-cost]_。原语测试套件只测量验证；原生环境下的耗时不能代表浏览器的求解时间。"
 
-#: ../../index.rst:330
+#: ../../index.rst:343
 msgid ""
 "Sessions use a symmetric token. The verifier is the issuer, or a cluster "
 "that shares one seed, so a keyed pseudorandom function supplies exactly "
@@ -1464,16 +1482,16 @@ msgstr ""
 "验证。选择对称令牌还有第二个理由：Shor 算法能攻破 Ed25519 "
 "所依赖的离散对数，而对带密钥哈希，量子搜索至多带来平方级加速。对于需要验证者无法签发令牌的部署，Ed25519 仍是一个可选项。"
 
-#: ../../index.rst:332
+#: ../../index.rst:345
 msgid "Shared State Without a Consensus Protocol of Our Own"
 msgstr "无需自研共识协议的共享状态"
 
-#: ../../index.rst:335
+#: ../../index.rst:348
 msgid ""
 "Lamport on Distributed Invariants: Safety, Liveness, and Who Owns the Log"
 msgstr "兰波特谈分布式不变量：安全性、活性，以及谁拥有日志"
 
-#: ../../index.rst:337
+#: ../../index.rst:350
 msgid ""
 "In 1987 Leslie Lamport described a distributed system as one in which the "
 "failure of a computer you did not even know existed can render your own "
@@ -1490,11 +1508,11 @@ msgstr ""
 "1987 "
 "年，莱斯利·兰波特这样描述分布式系统：在这种系统中，一台你甚至不知道其存在的计算机出了故障，就能让你自己的计算机无法使用。把它当作忠告来读，它要求我们清点自己依赖的计算机，并说明其中任何一台出故障时必须成立的性质。两类陈述就够了。*安全性*：坏事永远不会发生，例如节点永远不会依据一个没有任何已提交事务写入过的策略行事。*活性*：好事最终会发生，例如能连上数据库的节点最终会采用最新的策略。共识协议是同时获得这两者的一种优美方式。它也是一个需要长期维护的庞大系统；对防火墙来说，问题不在于共识好不好，而在于应该由谁来维护日志。"
 
-#: ../../index.rst:339
+#: ../../index.rst:352
 msgid "Why SQL, and Why Not a Consensus Protocol of Our Own"
 msgstr "为什么用 SQL，为什么不自研共识协议"
 
-#: ../../index.rst:342
+#: ../../index.rst:355
 msgid ""
 "Sibuna stores little: a few hundred policy rows, a reputation table, and "
 "forensic incidents that operators also export to other systems. That "
@@ -1509,7 +1527,7 @@ msgstr ""
 "存储，单个节点用本地的，多个节点用共享的。因此，单个节点把状态保存在其数据目录中的一个嵌入式 SQLite 文件里（WAL "
 "模式），集群则让每个节点都指向同一个 PostgreSQL 数据库 [#zaxonlite]_。"
 
-#: ../../index.rst:344
+#: ../../index.rst:357
 msgid ""
 "We chose not to run a consensus protocol inside the firewall. A consensus "
 "engine is a large system to own beside a firewall, with its own formats "
@@ -1526,18 +1544,18 @@ msgstr ""
 "PostgreSQL 负责，借助其流复制和故障切换工具或托管服务来实现。我们认为这是更谦逊的选择：PostgreSQL "
 "的复制经受过的部署远比我们的多，而 Sibuna 的写入速率（分批写入的事件和少有的策略变更）足够低，一个主库不会成为瓶颈。"
 
-#: ../../index.rst:346
+#: ../../index.rst:359
 msgid ""
 "Storage also stays optional. Without ``--data-dir`` or ``--database-url`` "
 "the daemon is an in-memory firewall whose policies come from a file."
 msgstr ""
 "存储也仍然是可选的。不使用 ``--data-dir`` 或 ``--database-url`` 时，守护进程是一个纯内存的防火墙，策略来自文件。"
 
-#: ../../index.rst:348
+#: ../../index.rst:361
 msgid "One Storage Thread"
 msgstr "单一存储线程"
 
-#: ../../index.rst:351
+#: ../../index.rst:364
 msgid ""
 "One storage thread owns the database connections; nothing else touches "
 "SQL. Request threads never wait on it. They push incident records into a "
@@ -1557,7 +1575,7 @@ msgstr ""
 "个排队的事件，读取策略修订版本，如果版本有变，就重建并发布引擎。重建时会在加载前后各读一次修订版本；如果期间有写者提交，就丢弃这个候选引擎，旧引擎继续生效。运维人员可以直接写策略表：触发器在写者的事务中推进修订版本；在 "
 "PostgreSQL 下，``NOTIFY`` 让各节点立即执行节拍，而轮询仍然是最终的保证 [#storage-thread]_。"
 
-#: ../../index.rst:354
+#: ../../index.rst:367
 msgid ""
 "An ingress sends traffic to three Sibuna nodes. In each node, connection "
 "threads read a published engine and push incidents into a bounded ring; a "
@@ -1570,94 +1588,109 @@ msgstr ""
 "节点。在每个节点中，连接线程读取已发布的引擎，并把事件推入一个有界环形缓冲区；存储线程排空环形缓冲区，分批写入并重建引擎。三个存储线程都连接到同一个 "
 "PostgreSQL 主库，可选地使用 verify-full 模式的 TLS。主库通过流复制把数据复制到一个备库，复制由运维人员负责运行。"
 
-#: ../../index.rst:354
+#: ../../index.rst:367
 msgid ""
 "digraph cluster {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.3, ranksep=0.4, "
-"fontname=\"Helvetica\", fontsize=9, size=\"6.2,3.6\"];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.25, "
+"ranksep=0.4, pad=0.1, fontname=\"Helvetica\", fontsize=9, "
+"fontcolor=\"#334155\"];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, color=\"#0369a1\", fillcolor=\"#f0f9ff\", "
-"fontcolor=\"#0f172a\"];\n"
+"fontsize=9, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.5, height=0.42, "
+"margin=\"0.1,0.05\"];\n"
 "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
-"fontcolor=\"#334155\", arrowsize=0.6];\n"
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
+"\n"
 "  ingress [label=\"Ingress (TLS termination)\\nCaddy or Nginx\", "
-"color=\"#0f172a\", fillcolor=\"#ffffff\"];\n"
+"color=\"#172033\", fillcolor=\"#ffffff\", width=2.4];\n"
 "  subgraph cluster_n1 {\n"
-"    label=\"Node 1 (cluster node 1)\"; style=\"rounded\"; "
-"color=\"#94a3b8\"; fontcolor=\"#334155\";\n"
+"    label=<<b>Node 1</b>>; labeljust=l; style=\"rounded,filled\"; "
+"color=\"#cbd5e1\"; fillcolor=\"#f8fafc\"; margin=10;\n"
 "    r1 [label=\"connection threads\\nread the engine, push incidents\"];\n"
-"    s1 [label=\"storage thread\\nbatches, rebuilds\", "
-"fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
+"    s1 [label=\"storage thread\\nbatches, rebuilds\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
 "    r1 -> s1 [label=\" ring of 512\", style=dashed];\n"
 "  }\n"
 "  subgraph cluster_n2 {\n"
-"    label=\"Node 2\"; style=\"rounded\"; color=\"#94a3b8\"; "
-"fontcolor=\"#334155\";\n"
+"    label=<<b>Node 2</b>>; labeljust=l; style=\"rounded,filled\"; "
+"color=\"#cbd5e1\"; fillcolor=\"#f8fafc\"; margin=10;\n"
 "    r2 [label=\"connection threads\"];\n"
-"    s2 [label=\"storage thread\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
+"    s2 [label=\"storage thread\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
 "    r2 -> s2 [style=dashed];\n"
 "  }\n"
 "  subgraph cluster_n3 {\n"
-"    label=\"Node 3\"; style=\"rounded\"; color=\"#94a3b8\"; "
-"fontcolor=\"#334155\";\n"
+"    label=<<b>Node 3</b>>; labeljust=r; style=\"rounded,filled\"; "
+"color=\"#cbd5e1\"; fillcolor=\"#f8fafc\"; margin=10;\n"
 "    r3 [label=\"connection threads\"];\n"
-"    s3 [label=\"storage thread\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
+"    s3 [label=\"storage thread\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
 "    r3 -> s3 [style=dashed];\n"
 "  }\n"
 "  pg [label=\"PostgreSQL primary\\npolicies, reputation, "
 "incidents,\\nconsole tables\", shape=cylinder, style=filled, "
-"fillcolor=\"#ecfdf5\", color=\"#047857\"];\n"
+"color=\"#15803d\", fillcolor=\"#f0fdf4\", penwidth=1.4, width=2.4, "
+"height=0.75];\n"
 "  standby [label=\"Standby\\n(operator's replication)\", shape=cylinder, "
-"style=\"filled,dashed\", fillcolor=\"#ffffff\", color=\"#94a3b8\"];\n"
+"style=\"filled,dashed\", color=\"#94a3b8\", fillcolor=\"#ffffff\", "
+"fontcolor=\"#475569\", width=1.8, height=0.6];\n"
+"\n"
+"\n"
 "  ingress -> r1; ingress -> r2; ingress -> r3;\n"
 "  s1 -> pg [label=\" SQL, TLS verify-full\"]; s2 -> pg; s3 -> pg;\n"
-"  pg -> standby [label=\" streaming replication\", style=dashed];\n"
+"  pg -> standby [label=\" streaming replication\", style=dashed, "
+"color=\"#94a3b8\"];\n"
 "}"
 msgstr ""
 "digraph cluster {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.3, ranksep=0.4, "
-"fontname=\"Helvetica\", fontsize=9, size=\"6.2,3.6\"];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.25, "
+"ranksep=0.4, pad=0.1, fontname=\"Helvetica\", fontsize=9, "
+"fontcolor=\"#334155\"];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, color=\"#0369a1\", fillcolor=\"#f0f9ff\", "
-"fontcolor=\"#0f172a\"];\n"
+"fontsize=9, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.5, height=0.42, "
+"margin=\"0.1,0.05\"];\n"
 "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
-"fontcolor=\"#334155\", arrowsize=0.6];\n"
-"  ingress [label=\"入口代理（TLS 终止）\\nCaddy 或 Nginx\", color=\"#0f172a\", "
-"fillcolor=\"#ffffff\"];\n"
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
+"\n"
+"  ingress [label=\"入口代理（TLS 终止）\\nCaddy 或 Nginx\", color=\"#172033\", "
+"fillcolor=\"#ffffff\", width=2.4];\n"
 "  subgraph cluster_n1 {\n"
-"    label=\"节点 1（集群节点编号 1）\"; style=\"rounded\"; color=\"#94a3b8\"; "
-"fontcolor=\"#334155\";\n"
+"    label=<<b>节点 1</b>>; labeljust=l; style=\"rounded,filled\"; "
+"color=\"#cbd5e1\"; fillcolor=\"#f8fafc\"; margin=10;\n"
 "    r1 [label=\"连接线程\\n读取引擎，推入事件\"];\n"
-"    s1 [label=\"存储线程\\n分批写入、重建引擎\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
+"    s1 [label=\"存储线程\\n分批写入、重建引擎\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
 "    r1 -> s1 [label=\" 512 槽环形缓冲区\", style=dashed];\n"
 "  }\n"
 "  subgraph cluster_n2 {\n"
-"    label=\"节点 2\"; style=\"rounded\"; color=\"#94a3b8\"; "
-"fontcolor=\"#334155\";\n"
+"    label=<<b>节点 2</b>>; labeljust=l; style=\"rounded,filled\"; "
+"color=\"#cbd5e1\"; fillcolor=\"#f8fafc\"; margin=10;\n"
 "    r2 [label=\"连接线程\"];\n"
-"    s2 [label=\"存储线程\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
+"    s2 [label=\"存储线程\", color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
 "    r2 -> s2 [style=dashed];\n"
 "  }\n"
 "  subgraph cluster_n3 {\n"
-"    label=\"节点 3\"; style=\"rounded\"; color=\"#94a3b8\"; "
-"fontcolor=\"#334155\";\n"
+"    label=<<b>节点 3</b>>; labeljust=r; style=\"rounded,filled\"; "
+"color=\"#cbd5e1\"; fillcolor=\"#f8fafc\"; margin=10;\n"
 "    r3 [label=\"连接线程\"];\n"
-"    s3 [label=\"存储线程\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
+"    s3 [label=\"存储线程\", color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
 "    r3 -> s3 [style=dashed];\n"
 "  }\n"
 "  pg [label=\"PostgreSQL 主库\\n策略、信誉、事件、\\n控制台表\", shape=cylinder, "
-"style=filled, fillcolor=\"#ecfdf5\", color=\"#047857\"];\n"
+"style=filled, color=\"#15803d\", fillcolor=\"#f0fdf4\", penwidth=1.4, "
+"width=2.4, height=0.75];\n"
 "  standby [label=\"备库\\n（由运维人员负责复制）\", shape=cylinder, "
-"style=\"filled,dashed\", fillcolor=\"#ffffff\", color=\"#94a3b8\"];\n"
+"style=\"filled,dashed\", color=\"#94a3b8\", fillcolor=\"#ffffff\", "
+"fontcolor=\"#475569\", width=1.8, height=0.6];\n"
+"\n"
+"\n"
 "  ingress -> r1; ingress -> r2; ingress -> r3;\n"
 "  s1 -> pg [label=\" SQL，TLS verify-full\"]; s2 -> pg; s3 -> pg;\n"
-"  pg -> standby [label=\" 流复制\", style=dashed];\n"
+"  pg -> standby [label=\" 流复制\", style=dashed, color=\"#94a3b8\"];\n"
 "}"
 
-#: ../../index.rst:354
+#: ../../index.rst:367
 msgid ""
 "A Sibuna cluster. Every node keeps its request path in memory and gives "
 "all SQL to one storage thread; the nodes share one PostgreSQL database, "
@@ -1667,7 +1700,7 @@ msgstr ""
 "Sibuna 集群。每个节点都把请求路径保持在内存中，并把所有 SQL 交给一个存储线程；各节点共享一个 PostgreSQL "
 "数据库，其复制和故障切换由 PostgreSQL 负责（SID 0011）。单个节点则改用一个嵌入式 SQLite 文件。"
 
-#: ../../index.rst:387
+#: ../../index.rst:403
 msgid ""
 "Each node of a cluster has a distinct ``--cluster-node`` identifier "
 "between 1 and 8,388,607. Challenge keys are bound to the issuing node, so "
@@ -1681,11 +1714,11 @@ msgstr ""
 "集群中的每个节点都有一个互不相同的 ``--cluster-node`` 标识符，取值在 1 到 8,388,607 "
 "之间。挑战密钥与签发节点绑定，因此解答必须回到签发其挑战的节点；而会话令牌和要求票据在共享同一种子的每个节点上都有效。事件标识符的高位携带节点编号，每个节点都维护一个持久回执，回执与其批次在同一事务中推进，因此在结果不明的故障之后重放一个批次，不会把任何内容写两次。"
 
-#: ../../index.rst:389
+#: ../../index.rst:405
 msgid "Invariants of the storage layer (SID 0011)"
 msgstr "不变量：存储层（SID 0011）"
 
-#: ../../index.rst:391
+#: ../../index.rst:407
 msgid ""
 "**S1 (one owner).** All SQL runs on the storage thread; no request thread "
 "ever waits on the database. **S2 (complete engines).** Every engine a "
@@ -1702,11 +1735,11 @@ msgstr ""
 "对策略表的一次已提交修改，会在下一个节拍之前到达每个能连上数据库的节点。**F1（平稳降级）。** "
 "数据库宕机时，最后发布的引擎继续提供服务，事件在有界环形缓冲区中排队，缓冲区满后被丢弃并计数，存储线程则以退避方式重试。"
 
-#: ../../index.rst:393
+#: ../../index.rst:409
 msgid "A Typed Schema"
 msgstr "带类型的模式"
 
-#: ../../index.rst:396
+#: ../../index.rst:412
 msgid ""
 "The schema states in SQL what the program's types state, so the database "
 "refuses a row the storage layer could not represent. SQLite tables are "
@@ -1726,7 +1759,7 @@ msgstr ""
 "张带类型的表，没有触发器。控制台的每个不变量，例如“对令牌的每次修改都写入一行审计记录”，都恰好由一个函数保证，该函数在一个事务中运行其语句，在 "
 "SQLite 和 PostgreSQL 上都是如此 [#schema]_。"
 
-#: ../../index.rst:398
+#: ../../index.rst:414
 msgid ""
 "Connections to PostgreSQL are protected as the URL says, with libpq's "
 "``sslmode`` and ``sslrootcert``, when the daemon is built with the "
@@ -1739,7 +1772,7 @@ msgstr ""
 "``require``、``verify-ca`` 和 ``verify-full``，绝不会退回到明文连接。生产集群使用 "
 "``sslmode=verify-full``。"
 
-#: ../../index.rst:400
+#: ../../index.rst:416
 msgid ""
 "Incidents that look alike are grouped into campaigns. Each incident "
 "carries a 64-dimension embedding stored as 256 bytes. The storage thread "
@@ -1753,11 +1786,11 @@ msgstr ""
 "个嵌入向量（4 MiB）；当余弦距离不超过 0.35 "
 "时，把事件归入其最近邻所在的攻击活动。不与更早的事件做聚类是有意的取舍：攻击活动本质上是近期的，而这个上界让内存和工作量保持固定。"
 
-#: ../../index.rst:402
+#: ../../index.rst:418
 msgid "What This Design Does Not Do"
 msgstr "这一设计不做什么"
 
-#: ../../index.rst:405
+#: ../../index.rst:421
 msgid ""
 "We should be plain about the limits of this choice. Sibuna contains no "
 "consensus protocol of its own, and a cluster's consistency is "
@@ -1782,11 +1815,11 @@ msgstr ""
 "PostgreSQL 数据库，因此本文不报告任何集群测量结果。发布的可执行文件不含 PostgreSQL 支持；集群需要从源代码以 "
 "``postgres-tls`` 特性构建 Sibuna [#gave-up]_。"
 
-#: ../../index.rst:409
+#: ../../index.rst:425
 msgid "The Console"
 msgstr "控制台"
 
-#: ../../index.rst:412
+#: ../../index.rst:428
 msgid ""
 "Sibuna includes an opt-in management console: authenticated dashboards "
 "with live traffic, an investigation path from a denial to its recorded "
@@ -1801,7 +1834,7 @@ msgstr ""
 "第二因素的用户，审计记录，webhook，以及集群管理。它编译进同一个可执行文件，界面以 WebAssembly 模块的形式在浏览器中运行 "
 "[#console-sources]_。"
 
-#: ../../index.rst:415
+#: ../../index.rst:431
 msgid ""
 "A browser runs the console interface, a WebAssembly module, and talks to "
 "the console server over HTTP and a WebSocket. The console server reads "
@@ -1814,56 +1847,61 @@ msgstr ""
 "与控制台服务器通信。控制台服务器读取数据平面的计数器，但不进入任何请求线程；它把作业提交给拥有 SQLite 或 PostgreSQL "
 "的存储线程。到对等控制台、webhook 和 GeoIP 发布方的出站 HTTPS 和 WSS 连接使用 TLS。"
 
-#: ../../index.rst:415
+#: ../../index.rst:431
 msgid ""
 "digraph console {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.3, ranksep=0.5, "
-"fontname=\"Helvetica\", fontsize=9];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.3, ranksep=0.5, "
+"pad=0.1];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, color=\"#0369a1\", fillcolor=\"#f0f9ff\", "
-"fontcolor=\"#0f172a\"];\n"
+"fontsize=9, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.6, margin=\"0.1,0.05\"];\n"
 "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
-"fontcolor=\"#334155\", arrowsize=0.6];\n"
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
 "  browser [label=\"Browser\\nconsole interface\\n(WebAssembly)\", "
 "color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
-"  server [label=\"Console server\\nbounded listener\", "
-"style=\"rounded,filled,bold\"];\n"
+"  server [label=\"Console server\\nbounded listener\", color=\"#172033\", "
+"fillcolor=\"#ffffff\", penwidth=1.8, height=0.6];\n"
 "  plane [label=\"Data plane\\ncounters and stats\\n(read only)\", "
-"color=\"#047857\", fillcolor=\"#ecfdf5\"];\n"
+"color=\"#15803d\", fillcolor=\"#f0fdf4\"];\n"
 "  storage [label=\"Storage thread\\nSQLite or PostgreSQL\", "
 "color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
 "  tls [label=\"Outbound TLS\\npeers (WSS), webhooks,\\nGeoIP downloads\", "
-"color=\"#0f172a\", fillcolor=\"#ffffff\"];\n"
-"  browser -> server [label=\"HTTP and\\nWebSocket\", dir=both];\n"
-"  server -> plane [label=\"reads\", style=dashed];\n"
-"  server -> storage [label=\"jobs (at most 32 queued)\"];\n"
+"color=\"#475569\", fillcolor=\"#f8fafc\"];\n"
+"  browser -> server [label=\" HTTP and WebSocket\", dir=both];\n"
+"  server -> plane [label=\"reads\", style=dashed, color=\"#15803d\", "
+"fontcolor=\"#15803d\"];\n"
+"  server -> storage [label=\" jobs (at most\\n 32 queued)\", "
+"color=\"#b45309\", fontcolor=\"#92400e\"];\n"
 "  server -> tls [label=\"verified\\ncertificates\"];\n"
 "}"
 msgstr ""
 "digraph console {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.3, ranksep=0.5, "
-"fontname=\"Helvetica\", fontsize=9];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.3, ranksep=0.5, "
+"pad=0.1];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, color=\"#0369a1\", fillcolor=\"#f0f9ff\", "
-"fontcolor=\"#0f172a\"];\n"
+"fontsize=9, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.6, margin=\"0.1,0.05\"];\n"
 "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
-"fontcolor=\"#334155\", arrowsize=0.6];\n"
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
 "  browser [label=\"浏览器\\n控制台界面\\n(WebAssembly)\", color=\"#6d28d9\", "
 "fillcolor=\"#f5f3ff\"];\n"
-"  server [label=\"控制台服务器\\n有界监听器\", style=\"rounded,filled,bold\"];\n"
-"  plane [label=\"数据平面\\n计数器和统计\\n（只读）\", color=\"#047857\", "
-"fillcolor=\"#ecfdf5\"];\n"
+"  server [label=\"控制台服务器\\n有界监听器\", color=\"#172033\", "
+"fillcolor=\"#ffffff\", penwidth=1.8, height=0.6];\n"
+"  plane [label=\"数据平面\\n计数器和统计\\n（只读）\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\"];\n"
 "  storage [label=\"存储线程\\nSQLite 或 PostgreSQL\", color=\"#b45309\", "
 "fillcolor=\"#fffbeb\"];\n"
 "  tls [label=\"出站 TLS\\n对等节点 (WSS)、webhook、\\nGeoIP 下载\", "
-"color=\"#0f172a\", fillcolor=\"#ffffff\"];\n"
-"  browser -> server [label=\"HTTP 和\\nWebSocket\", dir=both];\n"
-"  server -> plane [label=\"读取\", style=dashed];\n"
-"  server -> storage [label=\"作业（最多 32 个排队）\"];\n"
+"color=\"#475569\", fillcolor=\"#f8fafc\"];\n"
+"  browser -> server [label=\" HTTP 和 WebSocket\", dir=both];\n"
+"  server -> plane [label=\"读取\", style=dashed, color=\"#15803d\", "
+"fontcolor=\"#15803d\"];\n"
+"  server -> storage [label=\" 作业（最多\\n 32 个排队）\", color=\"#b45309\", "
+"fontcolor=\"#92400e\"];\n"
 "  server -> tls [label=\"已验证的\\n证书\"];\n"
 "}"
 
-#: ../../index.rst:415
+#: ../../index.rst:431
 msgid ""
 "The console. The browser runs the interface as a WebAssembly module; the "
 "console server reads the data plane's counters and gives its SQL to the "
@@ -1873,7 +1911,7 @@ msgstr ""
 "控制台。浏览器以 WebAssembly 模块的形式运行界面；控制台服务器读取数据平面的计数器，并把 SQL "
 "交给存储线程；到对等节点、webhook 和 GeoIP 发布方的出站连接使用 TLS，并验证证书（SID 0007、0012、0013）。"
 
-#: ../../index.rst:433
+#: ../../index.rst:449
 msgid ""
 "The console's defining constraint is isolation from the request path. It "
 "may read the data plane's counters and its database and write the "
@@ -1891,7 +1929,7 @@ msgstr ""
 "中，完整的界面模块大小为 724,311 字节（gzip 压缩后 272,441 字节）。这低于构建过程强制执行的 768 KiB 上限，但高于 "
 "640 KiB 的审查阈值，SID 0007 已将其记录待审 [#console-size]_。"
 
-#: ../../index.rst:435
+#: ../../index.rst:451
 msgid ""
 "The console makes outbound TLS connections for long-lived peer streams, "
 "webhooks and GeoIP downloads. Certificates are verified against the "
@@ -1904,7 +1942,7 @@ msgstr ""
 "文件验证；主机名验证无法关闭；只有字面量回环地址才允许使用明文 HTTP；证书错误也绝不会退回到明文连接。Sibuna 仍然不终止任何入站 "
 "TLS，这仍是入口代理的职责。"
 
-#: ../../index.rst:437
+#: ../../index.rst:453
 msgid ""
 "SID 0007 sets the console's performance target: enabling it may cost at "
 "most 1% of data-plane throughput and at most 10% of p99 latency. One "
@@ -1920,7 +1958,7 @@ msgstr ""
 "个完整产品工作负载与不含控制台的守护进程构建之间的差异都在约 1% "
 "以内，处于噪声范围。在负载下运行八个活动仪表板的正式门槛测试尚未进行，因此我们不声称已达到该目标。一次运行八个实时仪表板的功能测试已经通过。"
 
-#: ../../index.rst:439
+#: ../../index.rst:455
 msgid ""
 "Eight Traffic dashboards on one SQLite node with its console, in headless "
 "Chromium 155 (``benchmarks/results/console-8-dashboards-2026-10-15.md``, "
@@ -1930,63 +1968,63 @@ msgstr ""
 "155（``benchmarks/results/console-8-dashboards-2026-10-15.md``，记录于 "
 "2026-10-15）。结果：PASS"
 
-#: ../../index.rst:443 ../../index.rst:712
+#: ../../index.rst:459 ../../index.rst:728
 msgid "Measure"
 msgstr "指标"
 
-#: ../../index.rst:444 ../../index.rst:713
+#: ../../index.rst:460 ../../index.rst:729
 msgid "Value"
 msgstr "数值"
 
-#: ../../index.rst:445
+#: ../../index.rst:461
 msgid "Data-plane requests"
 msgstr "数据平面请求"
 
-#: ../../index.rst:446
+#: ../../index.rst:462
 msgid "6,000 in 30.0 s (200 per second, one connection per request)"
 msgstr "30.0 秒内 6,000 个（每秒 200 个，每个请求一个连接）"
 
-#: ../../index.rst:447
+#: ../../index.rst:463
 msgid "Answered"
 msgstr "已应答"
 
-#: ../../index.rst:448
+#: ../../index.rst:464
 msgid "6,000: 200 x 1,200, 401 x 3,000, 403 x 600, 404 x 600, 500 x 600"
 msgstr "6,000: 200 x 1,200, 401 x 3,000, 403 x 600, 404 x 600, 500 x 600"
 
-#: ../../index.rst:449
+#: ../../index.rst:465
 msgid "Errors (no reply)"
 msgstr "错误（无回复）"
 
-#: ../../index.rst:450 ../../index.rst:758 ../../index.rst:767
-#: ../../index.rst:776 ../../index.rst:785 ../../index.rst:794
-#: ../../index.rst:803 ../../index.rst:812 ../../index.rst:821
-#: ../../index.rst:830
+#: ../../index.rst:466 ../../index.rst:774 ../../index.rst:783
+#: ../../index.rst:792 ../../index.rst:801 ../../index.rst:810
+#: ../../index.rst:819 ../../index.rst:828 ../../index.rst:837
+#: ../../index.rst:846
 msgid "0"
 msgstr "0"
 
-#: ../../index.rst:451
+#: ../../index.rst:467
 msgid "Latency p50 / p90 / p99 / max"
 msgstr "延迟 p50 / p90 / p99 / 最大值"
 
-#: ../../index.rst:452
+#: ../../index.rst:468
 msgid "246 / 311 / 373 / 552 us (connect included)"
 msgstr "246 / 311 / 373 / 552 us（含建立连接）"
 
-#: ../../index.rst:453
+#: ../../index.rst:469
 msgid ""
 "Daemon resident memory at start, with 8 dashboards, after the traffic"
 msgstr "守护进程的常驻内存：启动时、打开 8 个仪表板时、流量结束后"
 
-#: ../../index.rst:454
+#: ../../index.rst:470
 msgid "36,152 KiB; 38,028 KiB; 41,496 KiB"
 msgstr "36,152 KiB; 38,028 KiB; 41,496 KiB"
 
-#: ../../index.rst:455
+#: ../../index.rst:471
 msgid "Dashboards"
 msgstr "仪表板"
 
-#: ../../index.rst:456
+#: ../../index.rst:472
 msgid ""
 "3 administrator sessions and 5 wall displays; each received 134 to 139 "
 "``stats`` deltas and ended with the same totals, with no exception, "
@@ -1995,15 +2033,15 @@ msgstr ""
 "3 个管理员会话和 5 个大屏显示；每个都收到了 134 到 139 个 ``stats`` 增量，最终总数相同，没有异常、控制台错误或 "
 "Content-Security-Policy 违规"
 
-#: ../../index.rst:458
+#: ../../index.rst:474
 msgid "Empirical Evaluation"
 msgstr "实证评估"
 
-#: ../../index.rst:461
+#: ../../index.rst:477
 msgid "Method"
 msgstr "方法"
 
-#: ../../index.rst:464
+#: ../../index.rst:480
 msgid ""
 "Three harnesses, run through ``cargo xtask bench``, measure Sibuna. The "
 "*primitive* suite times the operations of the request path in seven timed "
@@ -2028,7 +2066,7 @@ msgstr ""
 "测量工具使用开环生成器，无论守护进程表现如何都以固定速率发送，并从每个请求的预定发送时刻开始计时，从而把守护进程中的排队时间计入守护进程 "
 "[#method-sources]_。"
 
-#: ../../index.rst:466
+#: ../../index.rst:482
 msgid ""
 "The runs were recorded on 15 October 2026 on one host: an AMD Ryzen 9 "
 "5950X (16 cores, 32 threads) running Linux 7.0.0-28. The daemon ran on "
@@ -2042,11 +2080,11 @@ msgstr ""
 "CCD）；原语测试套件运行在 CPU 4 上。守护进程是默认的 release 构建，编译进了 SQLite "
 "和控制台，以纯内存方式运行，不使用存储。"
 
-#: ../../index.rst:468
+#: ../../index.rst:484
 msgid "Measurement scope"
 msgstr "测量范围"
 
-#: ../../index.rst:470
+#: ../../index.rst:486
 msgid ""
 "Every run uses one host over loopback: no TLS, no wide-area network, no "
 "real browsers. The harnesses do not count allocations; the "
@@ -2058,11 +2096,11 @@ msgstr ""
 "TLS，没有广域网，也没有真实的浏览器。测量工具不统计分配次数；无分配的请求路径改由稳态测试检查。它们运行未经修改的 release "
 "可执行文件，以其 SHA-256 标识。在这台主机上的排名并不代表在另一台主机上的排名。"
 
-#: ../../index.rst:472
+#: ../../index.rst:488
 msgid "Primitive Latencies"
 msgstr "原语延迟"
 
-#: ../../index.rst:475
+#: ../../index.rst:491
 msgid ""
 "Primitive timings of Sibuna in nanoseconds per operation on one Ryzen 9 "
 "5950X core: the median of seven batches, with the fastest and slowest "
@@ -2073,272 +2111,272 @@ msgstr ""
 "核心上测得：七个批次的中位数，以及最快和最慢的批次（``benchmarks/results/primitives-latest.md``，生成于 "
 "2026-10-15T22:34:59Z）"
 
-#: ../../index.rst:479
+#: ../../index.rst:495
 msgid "Subsystem"
 msgstr "子系统"
 
-#: ../../index.rst:481
+#: ../../index.rst:497
 msgid "Median"
 msgstr "中位数"
 
-#: ../../index.rst:482
+#: ../../index.rst:498
 msgid "Min-max"
 msgstr "最小值-最大值"
 
-#: ../../index.rst:483 ../../index.rst:487
+#: ../../index.rst:499 ../../index.rst:503
 msgid "Proof of work"
 msgstr "工作量证明"
 
-#: ../../index.rst:484
+#: ../../index.rst:500
 msgid "Hashcash verify, 16 bits"
 msgstr "Hashcash 验证，16 比特"
 
-#: ../../index.rst:485
+#: ../../index.rst:501
 msgid "70.2"
 msgstr "70.2"
 
-#: ../../index.rst:486
+#: ../../index.rst:502
 msgid "69.9-71.0"
 msgstr "69.9-71.0"
 
-#: ../../index.rst:488
+#: ../../index.rst:504
 msgid "PoSW verify, depth 13, 16 openings"
 msgstr "PoSW 验证，深度 13，16 次揭示"
 
-#: ../../index.rst:489
+#: ../../index.rst:505
 msgid "22,272.4"
 msgstr "22,272.4"
 
-#: ../../index.rst:490
+#: ../../index.rst:506
 msgid "22,257.0-22,316.4"
 msgstr "22,257.0-22,316.4"
 
-#: ../../index.rst:491 ../../index.rst:495
+#: ../../index.rst:507 ../../index.rst:511
 msgid "Bot matcher"
 msgstr "机器人匹配器"
 
-#: ../../index.rst:492
+#: ../../index.rst:508
 msgid "Aho-Corasick, 40 signatures"
 msgstr "Aho-Corasick，40 条签名"
 
-#: ../../index.rst:493
+#: ../../index.rst:509
 msgid "55.7"
 msgstr "55.7"
 
-#: ../../index.rst:494
+#: ../../index.rst:510
 msgid "55.3-57.2"
 msgstr "55.3-57.2"
 
-#: ../../index.rst:496
+#: ../../index.rst:512
 msgid "Sequential substring search, 40 signatures (for reference)"
 msgstr "顺序子串搜索，40 条签名（作为参照）"
 
-#: ../../index.rst:497
+#: ../../index.rst:513
 msgid "763.0"
 msgstr "763.0"
 
-#: ../../index.rst:498
+#: ../../index.rst:514
 msgid "762.2-763.5"
 msgstr "762.2-763.5"
 
-#: ../../index.rst:499 ../../index.rst:503
+#: ../../index.rst:515 ../../index.rst:519
 msgid "IP classifier"
 msgstr "IP 分类器"
 
-#: ../../index.rst:500
+#: ../../index.rst:516
 msgid "IPv4 CIDR lookup"
 msgstr "IPv4 CIDR 查找"
 
-#: ../../index.rst:501
+#: ../../index.rst:517
 msgid "32.0"
 msgstr "32.0"
 
-#: ../../index.rst:502
+#: ../../index.rst:518
 msgid "31.8-32.2"
 msgstr "31.8-32.2"
 
-#: ../../index.rst:504
+#: ../../index.rst:520
 msgid "IPv6 CIDR lookup"
 msgstr "IPv6 CIDR 查找"
 
-#: ../../index.rst:505
+#: ../../index.rst:521
 msgid "79.3"
 msgstr "79.3"
 
-#: ../../index.rst:506
+#: ../../index.rst:522
 msgid "78.5-79.6"
 msgstr "78.5-79.6"
 
-#: ../../index.rst:507 ../../index.rst:511
+#: ../../index.rst:523 ../../index.rst:527
 msgid "Token"
 msgstr "令牌"
 
-#: ../../index.rst:508
+#: ../../index.rst:524
 msgid "Keyed BLAKE3 session token"
 msgstr "带密钥 BLAKE3 会话令牌"
 
-#: ../../index.rst:509
+#: ../../index.rst:525
 msgid "155.8"
 msgstr "155.8"
 
-#: ../../index.rst:510
+#: ../../index.rst:526
 msgid "155.3-156.4"
 msgstr "155.3-156.4"
 
-#: ../../index.rst:512
+#: ../../index.rst:528
 msgid "Ed25519 session token"
 msgstr "Ed25519 会话令牌"
 
-#: ../../index.rst:513
+#: ../../index.rst:529
 msgid "40,587.5"
 msgstr "40,587.5"
 
-#: ../../index.rst:514
+#: ../../index.rst:530
 msgid "40,544.6-40,631.1"
 msgstr "40,544.6-40,631.1"
 
-#: ../../index.rst:515
+#: ../../index.rst:531
 msgid "Spent set"
 msgstr "已用集合"
 
-#: ../../index.rst:516
+#: ../../index.rst:532
 msgid "Robin Hood spend and look up"
 msgstr "Robin Hood 花费与查找"
 
-#: ../../index.rst:517
+#: ../../index.rst:533
 msgid "21.0"
 msgstr "21.0"
 
-#: ../../index.rst:518
+#: ../../index.rst:534
 msgid "20.8-21.3"
 msgstr "20.8-21.3"
 
-#: ../../index.rst:519 ../../index.rst:523 ../../index.rst:527
-#: ../../index.rst:531
+#: ../../index.rst:535 ../../index.rst:539 ../../index.rst:543
+#: ../../index.rst:547
 msgid "Rate limiter"
 msgstr "速率限制器"
 
-#: ../../index.rst:520
+#: ../../index.rst:536
 msgid "GCRA, hashed client"
 msgstr "GCRA，已哈希的客户端"
 
-#: ../../index.rst:521
+#: ../../index.rst:537
 msgid "6.2"
 msgstr "6.2"
 
-#: ../../index.rst:522
+#: ../../index.rst:538
 msgid "6.1-6.3"
 msgstr "6.1-6.3"
 
-#: ../../index.rst:524
+#: ../../index.rst:540
 msgid "GCRA, four rule scopes, hashed client"
 msgstr "GCRA，四个规则作用域，已哈希的客户端"
 
-#: ../../index.rst:525
+#: ../../index.rst:541
 msgid "6.3"
 msgstr "6.3"
 
-#: ../../index.rst:526
+#: ../../index.rst:542
 msgid "6.2-6.4"
 msgstr "6.2-6.4"
 
-#: ../../index.rst:528
+#: ../../index.rst:544
 msgid "GCRA, client as bytes (keyed hash included)"
 msgstr "GCRA，客户端为原始字节（含带密钥哈希）"
 
-#: ../../index.rst:529
+#: ../../index.rst:545
 msgid "12.8"
 msgstr "12.8"
 
-#: ../../index.rst:530
+#: ../../index.rst:546
 msgid "12.7-12.8"
 msgstr "12.7-12.8"
 
-#: ../../index.rst:532
+#: ../../index.rst:548
 msgid "GCRA, four rule scopes, client as bytes"
 msgstr "GCRA，四个规则作用域，客户端为原始字节"
 
-#: ../../index.rst:533
+#: ../../index.rst:549
 msgid "13.1"
 msgstr "13.1"
 
-#: ../../index.rst:534
+#: ../../index.rst:550
 msgid "13.0-13.2"
 msgstr "13.0-13.2"
 
-#: ../../index.rst:535
+#: ../../index.rst:551
 msgid "HTTP parser"
 msgstr "HTTP 解析器"
 
-#: ../../index.rst:536
+#: ../../index.rst:552
 msgid "Zero-copy request and cookie"
 msgstr "零拷贝解析请求和 Cookie"
 
-#: ../../index.rst:537
+#: ../../index.rst:553
 msgid "132.5"
 msgstr "132.5"
 
-#: ../../index.rst:538
+#: ../../index.rst:554
 msgid "132.3-133.2"
 msgstr "132.3-133.2"
 
-#: ../../index.rst:539 ../../index.rst:543
+#: ../../index.rst:555 ../../index.rst:559
 msgid "Policy engine"
 msgstr "策略引擎"
 
-#: ../../index.rst:540
+#: ../../index.rst:556
 msgid "Full classification, Shield profile"
 msgstr "完整分类，Shield 配置"
 
-#: ../../index.rst:541
+#: ../../index.rst:557
 msgid "790.8"
 msgstr "790.8"
 
-#: ../../index.rst:542
+#: ../../index.rst:558
 msgid "787.2-793.1"
 msgstr "787.2-793.1"
 
-#: ../../index.rst:544
+#: ../../index.rst:560
 msgid "Classification, Gate profile"
 msgstr "分类，Gate 配置"
 
-#: ../../index.rst:545
+#: ../../index.rst:561
 msgid "75.9"
 msgstr "75.9"
 
-#: ../../index.rst:546
+#: ../../index.rst:562
 msgid "75.6-76.1"
 msgstr "75.6-76.1"
 
-#: ../../index.rst:547 ../../index.rst:551
+#: ../../index.rst:563 ../../index.rst:567
 msgid "WAF"
 msgstr "WAF"
 
-#: ../../index.rst:548
+#: ../../index.rst:564
 msgid "8 KiB body, semantic scan"
 msgstr "8 KiB 请求体，语义扫描"
 
-#: ../../index.rst:549
+#: ../../index.rst:565
 msgid "12,784.3"
 msgstr "12,784.3"
 
-#: ../../index.rst:550
+#: ../../index.rst:566
 msgid "12,771.5-12,809.2"
 msgstr "12,771.5-12,809.2"
 
-#: ../../index.rst:552
+#: ../../index.rst:568
 msgid "8 KiB body, SQL injection audited"
 msgstr "8 KiB 请求体，SQL 注入设为审计"
 
-#: ../../index.rst:553
+#: ../../index.rst:569
 msgid "15,485.4"
 msgstr "15,485.4"
 
-#: ../../index.rst:554
+#: ../../index.rst:570
 msgid "15,460.9-15,530.1"
 msgstr "15,460.9-15,530.1"
 
-#: ../../index.rst:556
+#: ../../index.rst:572
 msgid ""
 "The spreads are narrow: no batch of any row lies more than 4.2% from its "
 "row's median [#spread]_. The daemon uses the rows on a hashed client, "
@@ -2350,11 +2388,11 @@ msgstr ""
 "离散范围很窄：任何一行的任何批次与该行中位数的偏差都不超过 4.2% "
 "[#spread]_。守护进程采用的是已哈希客户端的那几行，因为它对每个请求只计算一次客户端哈希；传入原始字节的那几行在每次检查中都包含这次带密钥哈希。计时器包围整个批次，从不包围单次操作，因此表中不报告每次操作的百分位。"
 
-#: ../../index.rst:560
+#: ../../index.rst:576
 msgid "Whole Products"
 msgstr "完整产品"
 
-#: ../../index.rst:563
+#: ../../index.rst:579
 msgid ""
 "Sibuna under ``wrk``: requests per second, latency in microseconds, CPU "
 "time per request in microseconds and peak resident memory; medians of "
@@ -2365,353 +2403,353 @@ msgstr ""
 "时间和峰值常驻内存；三次运行的中位数（``benchmarks/results/product-latest.md``，生成于 "
 "2026-10-15T23:15:24Z）"
 
-#: ../../index.rst:567 ../../index.rst:742 ../../index.rst:941
+#: ../../index.rst:583 ../../index.rst:758 ../../index.rst:957
 msgid "Mode"
 msgstr "模式"
 
-#: ../../index.rst:568
+#: ../../index.rst:584
 msgid "Surface"
 msgstr "形态"
 
-#: ../../index.rst:569
+#: ../../index.rst:585
 msgid "Workload (status)"
 msgstr "工作负载（状态码）"
 
-#: ../../index.rst:570
+#: ../../index.rst:586
 msgid "req/s"
 msgstr "req/s"
 
-#: ../../index.rst:571 ../../index.rst:745
+#: ../../index.rst:587 ../../index.rst:761
 msgid "p50"
 msgstr "p50"
 
-#: ../../index.rst:572 ../../index.rst:747
+#: ../../index.rst:588 ../../index.rst:763
 msgid "p99"
 msgstr "p99"
 
-#: ../../index.rst:573
+#: ../../index.rst:589
 msgid "CPU"
 msgstr "CPU"
 
-#: ../../index.rst:574
+#: ../../index.rst:590
 msgid "Peak KiB"
 msgstr "峰值 KiB"
 
-#: ../../index.rst:575 ../../index.rst:583 ../../index.rst:591
-#: ../../index.rst:599 ../../index.rst:607 ../../index.rst:615
-#: ../../index.rst:623 ../../index.rst:631 ../../index.rst:751
-#: ../../index.rst:760 ../../index.rst:769 ../../index.rst:778
-#: ../../index.rst:787 ../../index.rst:947 ../../index.rst:953
-#: ../../index.rst:959 ../../index.rst:965
+#: ../../index.rst:591 ../../index.rst:599 ../../index.rst:607
+#: ../../index.rst:615 ../../index.rst:623 ../../index.rst:631
+#: ../../index.rst:639 ../../index.rst:647 ../../index.rst:767
+#: ../../index.rst:776 ../../index.rst:785 ../../index.rst:794
+#: ../../index.rst:803 ../../index.rst:963 ../../index.rst:969
+#: ../../index.rst:975 ../../index.rst:981
 msgid "forward auth"
 msgstr "forward auth"
 
-#: ../../index.rst:576 ../../index.rst:584 ../../index.rst:592
-#: ../../index.rst:600 ../../index.rst:640 ../../index.rst:648
-#: ../../index.rst:656 ../../index.rst:664
+#: ../../index.rst:592 ../../index.rst:600 ../../index.rst:608
+#: ../../index.rst:616 ../../index.rst:656 ../../index.rst:664
+#: ../../index.rst:672 ../../index.rst:680
 msgid "Gate"
 msgstr "Gate"
 
-#: ../../index.rst:577 ../../index.rst:609 ../../index.rst:641
-#: ../../index.rst:673
+#: ../../index.rst:593 ../../index.rst:625 ../../index.rst:657
+#: ../../index.rst:689
 msgid "``admitted`` (200)"
 msgstr "``admitted`` (200)"
 
-#: ../../index.rst:578
+#: ../../index.rst:594
 msgid "211,345"
 msgstr "211,345"
 
-#: ../../index.rst:579 ../../index.rst:603 ../../index.rst:627
-#: ../../index.rst:699
+#: ../../index.rst:595 ../../index.rst:619 ../../index.rst:643
+#: ../../index.rst:715
 msgid "151"
 msgstr "151"
 
-#: ../../index.rst:580 ../../index.rst:596 ../../index.rst:604
-#: ../../index.rst:628
+#: ../../index.rst:596 ../../index.rst:612 ../../index.rst:620
+#: ../../index.rst:644
 msgid "305"
 msgstr "305"
 
-#: ../../index.rst:581 ../../index.rst:605
+#: ../../index.rst:597 ../../index.rst:621
 msgid "11.84"
 msgstr "11.84"
 
-#: ../../index.rst:582
+#: ../../index.rst:598
 msgid "15,912"
 msgstr "15,912"
 
-#: ../../index.rst:585 ../../index.rst:617
+#: ../../index.rst:601 ../../index.rst:633
 msgid "``challenged`` (401)"
 msgstr "``challenged`` (401)"
 
-#: ../../index.rst:586
+#: ../../index.rst:602
 msgid "198,315"
 msgstr "198,315"
 
-#: ../../index.rst:587 ../../index.rst:651
+#: ../../index.rst:603 ../../index.rst:667
 msgid "160"
 msgstr "160"
 
-#: ../../index.rst:588
+#: ../../index.rst:604
 msgid "326"
 msgstr "326"
 
-#: ../../index.rst:589
+#: ../../index.rst:605
 msgid "13.15"
 msgstr "13.15"
 
-#: ../../index.rst:590 ../../index.rst:598 ../../index.rst:606
+#: ../../index.rst:606 ../../index.rst:614 ../../index.rst:622
 msgid "16,176"
 msgstr "16,176"
 
-#: ../../index.rst:593 ../../index.rst:625 ../../index.rst:657
-#: ../../index.rst:689
+#: ../../index.rst:609 ../../index.rst:641 ../../index.rst:673
+#: ../../index.rst:705
 msgid "``allowed_static`` (200)"
 msgstr "``allowed_static`` (200)"
 
-#: ../../index.rst:594
+#: ../../index.rst:610
 msgid "211,053"
 msgstr "211,053"
 
-#: ../../index.rst:595 ../../index.rst:611 ../../index.rst:635
+#: ../../index.rst:611 ../../index.rst:627 ../../index.rst:651
 msgid "152"
 msgstr "152"
 
-#: ../../index.rst:597
+#: ../../index.rst:613
 msgid "11.73"
 msgstr "11.73"
 
-#: ../../index.rst:601 ../../index.rst:665
+#: ../../index.rst:617 ../../index.rst:681
 msgid "``attack`` (200)"
 msgstr "``attack`` (200)"
 
-#: ../../index.rst:602
+#: ../../index.rst:618
 msgid "211,618"
 msgstr "211,618"
 
-#: ../../index.rst:608 ../../index.rst:616 ../../index.rst:624
-#: ../../index.rst:632 ../../index.rst:672 ../../index.rst:680
-#: ../../index.rst:688 ../../index.rst:696
+#: ../../index.rst:624 ../../index.rst:632 ../../index.rst:640
+#: ../../index.rst:648 ../../index.rst:688 ../../index.rst:696
+#: ../../index.rst:704 ../../index.rst:712
 msgid "Shield"
 msgstr "Shield"
 
-#: ../../index.rst:610
+#: ../../index.rst:626
 msgid "208,101"
 msgstr "208,101"
 
-#: ../../index.rst:612 ../../index.rst:950
+#: ../../index.rst:628 ../../index.rst:966
 msgid "308"
 msgstr "308"
 
-#: ../../index.rst:613
+#: ../../index.rst:629
 msgid "12.87"
 msgstr "12.87"
 
-#: ../../index.rst:614
+#: ../../index.rst:630
 msgid "15,928"
 msgstr "15,928"
 
-#: ../../index.rst:618
+#: ../../index.rst:634
 msgid "197,532"
 msgstr "197,532"
 
-#: ../../index.rst:619
+#: ../../index.rst:635
 msgid "161"
 msgstr "161"
 
-#: ../../index.rst:620
+#: ../../index.rst:636
 msgid "327"
 msgstr "327"
 
-#: ../../index.rst:621
+#: ../../index.rst:637
 msgid "13.77"
 msgstr "13.77"
 
-#: ../../index.rst:622 ../../index.rst:630 ../../index.rst:638
+#: ../../index.rst:638 ../../index.rst:646 ../../index.rst:654
 msgid "16,192"
 msgstr "16,192"
 
-#: ../../index.rst:626
+#: ../../index.rst:642
 msgid "211,636"
 msgstr "211,636"
 
-#: ../../index.rst:629
+#: ../../index.rst:645
 msgid "11.78"
 msgstr "11.78"
 
-#: ../../index.rst:633 ../../index.rst:697
+#: ../../index.rst:649 ../../index.rst:713
 msgid "``attack`` (403)"
 msgstr "``attack`` (403)"
 
-#: ../../index.rst:634
+#: ../../index.rst:650
 msgid "210,549"
 msgstr "210,549"
 
-#: ../../index.rst:636
+#: ../../index.rst:652
 msgid "307"
 msgstr "307"
 
-#: ../../index.rst:637
+#: ../../index.rst:653
 msgid "12.32"
 msgstr "12.32"
 
-#: ../../index.rst:639 ../../index.rst:647 ../../index.rst:655
-#: ../../index.rst:663 ../../index.rst:671 ../../index.rst:679
-#: ../../index.rst:687 ../../index.rst:695 ../../index.rst:796
-#: ../../index.rst:805 ../../index.rst:814 ../../index.rst:823
-#: ../../index.rst:832 ../../index.rst:971 ../../index.rst:977
-#: ../../index.rst:983 ../../index.rst:989
+#: ../../index.rst:655 ../../index.rst:663 ../../index.rst:671
+#: ../../index.rst:679 ../../index.rst:687 ../../index.rst:695
+#: ../../index.rst:703 ../../index.rst:711 ../../index.rst:812
+#: ../../index.rst:821 ../../index.rst:830 ../../index.rst:839
+#: ../../index.rst:848 ../../index.rst:987 ../../index.rst:993
+#: ../../index.rst:999 ../../index.rst:1005
 msgid "reverse proxy"
 msgstr "反向代理"
 
-#: ../../index.rst:642
+#: ../../index.rst:658
 msgid "142,498"
 msgstr "142,498"
 
-#: ../../index.rst:643
+#: ../../index.rst:659
 msgid "427"
 msgstr "427"
 
-#: ../../index.rst:644
+#: ../../index.rst:660
 msgid "768"
 msgstr "768"
 
-#: ../../index.rst:645
+#: ../../index.rst:661
 msgid "27.68"
 msgstr "27.68"
 
-#: ../../index.rst:646
+#: ../../index.rst:662
 msgid "15,896"
 msgstr "15,896"
 
-#: ../../index.rst:649 ../../index.rst:681
+#: ../../index.rst:665 ../../index.rst:697
 msgid "``challenged`` (200)"
 msgstr "``challenged`` (200)"
 
-#: ../../index.rst:650
+#: ../../index.rst:666
 msgid "199,465"
 msgstr "199,465"
 
-#: ../../index.rst:652
+#: ../../index.rst:668
 msgid "324"
 msgstr "324"
 
-#: ../../index.rst:653
+#: ../../index.rst:669
 msgid "12.98"
 msgstr "12.98"
 
-#: ../../index.rst:654
+#: ../../index.rst:670
 msgid "16,160"
 msgstr "16,160"
 
-#: ../../index.rst:658
+#: ../../index.rst:674
 msgid "147,303"
 msgstr "147,303"
 
-#: ../../index.rst:659
+#: ../../index.rst:675
 msgid "411"
 msgstr "411"
 
-#: ../../index.rst:660
+#: ../../index.rst:676
 msgid "759"
 msgstr "759"
 
-#: ../../index.rst:661
+#: ../../index.rst:677
 msgid "26.88"
 msgstr "26.88"
 
-#: ../../index.rst:662
+#: ../../index.rst:678
 msgid "16,324"
 msgstr "16,324"
 
-#: ../../index.rst:666
+#: ../../index.rst:682
 msgid "143,900"
 msgstr "143,900"
 
-#: ../../index.rst:667
+#: ../../index.rst:683
 msgid "422"
 msgstr "422"
 
-#: ../../index.rst:668
+#: ../../index.rst:684
 msgid "745"
 msgstr "745"
 
-#: ../../index.rst:669
+#: ../../index.rst:685
 msgid "27.67"
 msgstr "27.67"
 
-#: ../../index.rst:670
+#: ../../index.rst:686
 msgid "16,348"
 msgstr "16,348"
 
-#: ../../index.rst:674
+#: ../../index.rst:690
 msgid "138,965"
 msgstr "138,965"
 
-#: ../../index.rst:675
+#: ../../index.rst:691
 msgid "438"
 msgstr "438"
 
-#: ../../index.rst:676
+#: ../../index.rst:692
 msgid "857"
 msgstr "857"
 
-#: ../../index.rst:677
+#: ../../index.rst:693
 msgid "28.57"
 msgstr "28.57"
 
-#: ../../index.rst:678
+#: ../../index.rst:694
 msgid "16,064"
 msgstr "16,064"
 
-#: ../../index.rst:682
+#: ../../index.rst:698
 msgid "195,188"
 msgstr "195,188"
 
-#: ../../index.rst:683
+#: ../../index.rst:699
 msgid "162"
 msgstr "162"
 
-#: ../../index.rst:684 ../../index.rst:980
+#: ../../index.rst:700 ../../index.rst:996
 msgid "328"
 msgstr "328"
 
-#: ../../index.rst:685
+#: ../../index.rst:701
 msgid "13.73"
 msgstr "13.73"
 
-#: ../../index.rst:686 ../../index.rst:694 ../../index.rst:702
+#: ../../index.rst:702 ../../index.rst:710 ../../index.rst:718
 msgid "16,328"
 msgstr "16,328"
 
-#: ../../index.rst:690
+#: ../../index.rst:706
 msgid "145,673"
 msgstr "145,673"
 
-#: ../../index.rst:691
+#: ../../index.rst:707
 msgid "415"
 msgstr "415"
 
-#: ../../index.rst:692
+#: ../../index.rst:708
 msgid "746"
 msgstr "746"
 
-#: ../../index.rst:693
+#: ../../index.rst:709
 msgid "27.27"
 msgstr "27.27"
 
-#: ../../index.rst:698
+#: ../../index.rst:714
 msgid "209,507"
 msgstr "209,507"
 
-#: ../../index.rst:700 ../../index.rst:968 ../../index.rst:992
+#: ../../index.rst:716 ../../index.rst:984 ../../index.rst:1008
 msgid "306"
 msgstr "306"
 
-#: ../../index.rst:701
+#: ../../index.rst:717
 msgid "12.17"
 msgstr "12.17"
 
-#: ../../index.rst:704
+#: ../../index.rst:720
 msgid ""
 "In forward-auth mode the ingress asks Sibuna whether to admit a request, "
 "and there is no origin; every workload lies between 197,532 and 211,636 "
@@ -2732,7 +2770,7 @@ msgstr ""
 "195,000 到 210,000 个的速度运行。在每种工作负载下，峰值常驻内存都保持在 15,896 到 16,348 KiB 之间 "
 "[#product]_。"
 
-#: ../../index.rst:706
+#: ../../index.rst:722
 msgid ""
 "A few answers in about two million in three reverse-proxy rows were "
 "``503``: ``wrk`` reconnected before a closing connection had given back "
@@ -2743,7 +2781,7 @@ msgstr ""
 "在三个反向代理行中，约两百万个应答里有少数几个是 ``503``：``wrk`` "
 "在一个正在关闭的连接归还其在按地址连接限制下的名额之前就重新连接了。守护进程现在会在写出关闭响应之前归还名额；这些结果文件早于这一修复。"
 
-#: ../../index.rst:708
+#: ../../index.rst:724
 msgid ""
 "Footprint of the Sibuna daemon (``product-latest.json`` and "
 "``primitives-latest.json``, 15 October 2026, as tabulated in book Part "
@@ -2752,71 +2790,71 @@ msgstr ""
 "Sibuna 守护进程的资源占用（``product-latest.json`` 和 "
 "``primitives-latest.json``，2026 年 10 月 15 日，按《Sibuna 之书》第 VIII 部分的列表）"
 
-#: ../../index.rst:714
+#: ../../index.rst:730
 msgid "Daemon binary, default build with SQLite and the console"
 msgstr "守护进程可执行文件，带 SQLite 和控制台的默认构建"
 
-#: ../../index.rst:715
+#: ../../index.rst:731
 msgid "49,113,856 bytes"
 msgstr "49,113,856 字节"
 
-#: ../../index.rst:716
+#: ../../index.rst:732
 msgid "Idle resident memory, product runs"
 msgstr "空闲常驻内存，产品运行"
 
-#: ../../index.rst:717
+#: ../../index.rst:733
 msgid "5,592 to 5,788 KiB"
 msgstr "5,592 到 5,788 KiB"
 
-#: ../../index.rst:718
+#: ../../index.rst:734
 msgid "Peak resident memory during a workload"
 msgstr "工作负载期间的峰值常驻内存"
 
-#: ../../index.rst:719
+#: ../../index.rst:735
 msgid "15,896 to 16,348 KiB"
 msgstr "15,896 到 16,348 KiB"
 
-#: ../../index.rst:720
+#: ../../index.rst:736
 msgid "Resident memory after the workloads"
 msgstr "工作负载之后的常驻内存"
 
-#: ../../index.rst:721
+#: ../../index.rst:737
 msgid "16,176 to 16,348 KiB"
 msgstr "16,176 到 16,348 KiB"
 
-#: ../../index.rst:722
+#: ../../index.rst:738
 msgid "Policy engine tables"
 msgstr "策略引擎表"
 
-#: ../../index.rst:723
+#: ../../index.rst:739
 msgid "209,052 bytes"
 msgstr "209,052 字节"
 
-#: ../../index.rst:724
+#: ../../index.rst:740
 msgid "Bot signature table"
 msgstr "机器人签名表"
 
-#: ../../index.rst:725
+#: ../../index.rst:741
 msgid "42,244 bytes"
 msgstr "42,244 字节"
 
-#: ../../index.rst:726
+#: ../../index.rst:742
 msgid "WAF signature table"
 msgstr "WAF 签名表"
 
-#: ../../index.rst:727
+#: ../../index.rst:743
 msgid "164,908 bytes"
 msgstr "164,908 字节"
 
-#: ../../index.rst:728
+#: ../../index.rst:744
 msgid "Browser prover (WebAssembly)"
 msgstr "浏览器证明器（WebAssembly）"
 
-#: ../../index.rst:729
+#: ../../index.rst:745
 msgid "14,744 bytes"
 msgstr "14,744 字节"
 
-#: ../../index.rst:731
+#: ../../index.rst:747
 msgid ""
 "A later change to the release profile drops the bundled SQLite's debug "
 "information, about 13 MB of the 49 MB by the note in the build manifest; "
@@ -2826,11 +2864,11 @@ msgstr ""
 "此后对 release 配置的一次修改去掉了内置 SQLite 的调试信息，据构建清单中的说明，约占 49 MB 中的 13 "
 "MB；结果文件此后没有重新生成，因此我们引用的是实测大小 [#binary]_。"
 
-#: ../../index.rst:733
+#: ../../index.rst:749
 msgid "Latency at Equal Offered Load"
 msgstr "相同施加负载下的延迟"
 
-#: ../../index.rst:736
+#: ../../index.rst:752
 msgid ""
 "``wrk`` keeps 64 requests in flight, so the request rate depends on the "
 "daemon, and ``wrk``'s percentiles leave out the requests it did not send "
@@ -2840,7 +2878,7 @@ msgstr ""
 "``wrk`` 始终保持 64 个请求在途，因此请求速率取决于守护进程，而且 ``wrk`` "
 "的百分位遗漏了它在等待期间没有发送的请求。开环测量工具则固定施加速率，并把每一处延迟都计入守护进程，这正是访问者实际感受到的。"
 
-#: ../../index.rst:738
+#: ../../index.rst:754
 msgid ""
 "Sibuna, Shield, admitted requests at fixed offered rates; latency in "
 "microseconds and CPU time per request, medians of three 10-second runs "
@@ -2849,254 +2887,254 @@ msgstr ""
 "Sibuna Shield 在固定施加速率下的已准入请求：以微秒计的延迟和每请求 CPU 时间，三次 10 "
 "秒运行的中位数（``benchmarks/results/latency-latest.md``，生成于 2026-10-15T23:07:14Z）"
 
-#: ../../index.rst:743
+#: ../../index.rst:759
 msgid "Offered req/s"
 msgstr "施加 req/s"
 
-#: ../../index.rst:744
+#: ../../index.rst:760
 msgid "Achieved req/s"
 msgstr "实际 req/s"
 
-#: ../../index.rst:746
+#: ../../index.rst:762
 msgid "p90"
 msgstr "p90"
 
-#: ../../index.rst:748
+#: ../../index.rst:764
 msgid "p99.9"
 msgstr "p99.9"
 
-#: ../../index.rst:749
+#: ../../index.rst:765
 msgid "Errors"
 msgstr "错误"
 
-#: ../../index.rst:750
+#: ../../index.rst:766
 msgid "CPU us"
 msgstr "CPU us"
 
-#: ../../index.rst:752 ../../index.rst:753 ../../index.rst:797
-#: ../../index.rst:798
+#: ../../index.rst:768 ../../index.rst:769 ../../index.rst:813
+#: ../../index.rst:814
 msgid "10,000"
 msgstr "10,000"
 
-#: ../../index.rst:754 ../../index.rst:774
+#: ../../index.rst:770 ../../index.rst:790
 msgid "30"
 msgstr "30"
 
-#: ../../index.rst:755
+#: ../../index.rst:771
 msgid "32"
 msgstr "32"
 
-#: ../../index.rst:756
+#: ../../index.rst:772
 msgid "37"
 msgstr "37"
 
-#: ../../index.rst:757 ../../index.rst:810
+#: ../../index.rst:773 ../../index.rst:826
 msgid "58"
 msgstr "58"
 
-#: ../../index.rst:759
+#: ../../index.rst:775
 msgid "16.92"
 msgstr "16.92"
 
-#: ../../index.rst:761 ../../index.rst:762 ../../index.rst:806
-#: ../../index.rst:807
+#: ../../index.rst:777 ../../index.rst:778 ../../index.rst:822
+#: ../../index.rst:823
 msgid "25,000"
 msgstr "25,000"
 
-#: ../../index.rst:763
+#: ../../index.rst:779
 msgid "28"
 msgstr "28"
 
-#: ../../index.rst:764
+#: ../../index.rst:780
 msgid "31"
 msgstr "31"
 
-#: ../../index.rst:765
+#: ../../index.rst:781
 msgid "34"
 msgstr "34"
 
-#: ../../index.rst:766
+#: ../../index.rst:782
 msgid "45"
 msgstr "45"
 
-#: ../../index.rst:768
+#: ../../index.rst:784
 msgid "15.83"
 msgstr "15.83"
 
-#: ../../index.rst:770 ../../index.rst:771 ../../index.rst:815
-#: ../../index.rst:816
+#: ../../index.rst:786 ../../index.rst:787 ../../index.rst:831
+#: ../../index.rst:832
 msgid "50,000"
 msgstr "50,000"
 
-#: ../../index.rst:772 ../../index.rst:790
+#: ../../index.rst:788 ../../index.rst:806
 msgid "25"
 msgstr "25"
 
-#: ../../index.rst:773
+#: ../../index.rst:789
 msgid "27"
 msgstr "27"
 
-#: ../../index.rst:775
+#: ../../index.rst:791
 msgid "40"
 msgstr "40"
 
-#: ../../index.rst:777
+#: ../../index.rst:793
 msgid "13.83"
 msgstr "13.83"
 
-#: ../../index.rst:779 ../../index.rst:824
+#: ../../index.rst:795 ../../index.rst:840
 msgid "100,000"
 msgstr "100,000"
 
-#: ../../index.rst:780
+#: ../../index.rst:796
 msgid "99,998"
 msgstr "99,998"
 
-#: ../../index.rst:781
+#: ../../index.rst:797
 msgid "24"
 msgstr "24"
 
-#: ../../index.rst:782
+#: ../../index.rst:798
 msgid "26"
 msgstr "26"
 
-#: ../../index.rst:783
+#: ../../index.rst:799
 msgid "41"
 msgstr "41"
 
-#: ../../index.rst:784
+#: ../../index.rst:800
 msgid "62"
 msgstr "62"
 
-#: ../../index.rst:786
+#: ../../index.rst:802
 msgid "13.48"
 msgstr "13.48"
 
-#: ../../index.rst:788 ../../index.rst:833
+#: ../../index.rst:804 ../../index.rst:849
 msgid "150,000"
 msgstr "150,000"
 
-#: ../../index.rst:789
+#: ../../index.rst:805
 msgid "149,996"
 msgstr "149,996"
 
-#: ../../index.rst:791
+#: ../../index.rst:807
 msgid "36"
 msgstr "36"
 
-#: ../../index.rst:792 ../../index.rst:808
+#: ../../index.rst:808 ../../index.rst:824
 msgid "51"
 msgstr "51"
 
-#: ../../index.rst:793 ../../index.rst:820
+#: ../../index.rst:809 ../../index.rst:836
 msgid "74"
 msgstr "74"
 
-#: ../../index.rst:795
+#: ../../index.rst:811
 msgid "14.16"
 msgstr "14.16"
 
-#: ../../index.rst:799
+#: ../../index.rst:815
 msgid "56"
 msgstr "56"
 
-#: ../../index.rst:800
+#: ../../index.rst:816
 msgid "61"
 msgstr "61"
 
-#: ../../index.rst:801
+#: ../../index.rst:817
 msgid "65"
 msgstr "65"
 
-#: ../../index.rst:802
+#: ../../index.rst:818
 msgid "76"
 msgstr "76"
 
-#: ../../index.rst:804
+#: ../../index.rst:820
 msgid "32.25"
 msgstr "32.25"
 
-#: ../../index.rst:809
+#: ../../index.rst:825
 msgid "54"
 msgstr "54"
 
-#: ../../index.rst:811
+#: ../../index.rst:827
 msgid "72"
 msgstr "72"
 
-#: ../../index.rst:813
+#: ../../index.rst:829
 msgid "28.63"
 msgstr "28.63"
 
-#: ../../index.rst:817
+#: ../../index.rst:833
 msgid "47"
 msgstr "47"
 
-#: ../../index.rst:818
+#: ../../index.rst:834
 msgid "50"
 msgstr "50"
 
-#: ../../index.rst:819
+#: ../../index.rst:835
 msgid "60"
 msgstr "60"
 
-#: ../../index.rst:822
+#: ../../index.rst:838
 msgid "27.45"
 msgstr "27.45"
 
-#: ../../index.rst:825
+#: ../../index.rst:841
 msgid "99,996"
 msgstr "99,996"
 
-#: ../../index.rst:826
+#: ../../index.rst:842
 msgid "55"
 msgstr "55"
 
-#: ../../index.rst:827
+#: ../../index.rst:843
 msgid "75"
 msgstr "75"
 
-#: ../../index.rst:828
+#: ../../index.rst:844
 msgid "100"
 msgstr "100"
 
-#: ../../index.rst:829
+#: ../../index.rst:845
 msgid "150"
 msgstr "150"
 
-#: ../../index.rst:831
+#: ../../index.rst:847
 msgid "28.42"
 msgstr "28.42"
 
-#: ../../index.rst:834
+#: ../../index.rst:850
 msgid "134,344"
 msgstr "134,344"
 
-#: ../../index.rst:835
+#: ../../index.rst:851
 msgid "583,934"
 msgstr "583,934"
 
-#: ../../index.rst:836
+#: ../../index.rst:852
 msgid "1,544,160"
 msgstr "1,544,160"
 
-#: ../../index.rst:837
+#: ../../index.rst:853
 msgid "1,906,273"
 msgstr "1,906,273"
 
-#: ../../index.rst:838
+#: ../../index.rst:854
 msgid "1,967,134"
 msgstr "1,967,134"
 
-#: ../../index.rst:839
+#: ../../index.rst:855
 msgid "4"
 msgstr "4"
 
-#: ../../index.rst:840
+#: ../../index.rst:856
 msgid "29.22"
 msgstr "29.22"
 
-#: ../../index.rst:842
+#: ../../index.rst:858
 msgid ""
 "In forward-auth mode the p99.9 stays below 75 us up to 150,000 requests "
 "per second. In reverse-proxy mode, with the origin in the path, the p99 "
@@ -3112,11 +3150,11 @@ msgstr ""
 "个请求时，守护进程已经超出其容量：它每秒完成 134,344 个请求，接近 ``wrk`` 对同一工作负载测得的 138,965 "
 "个，而延迟增长到秒级，这正是开环测试在超出容量时应当显示的。该行的四个错误发生在过载期间 [#latency]_。"
 
-#: ../../index.rst:846
+#: ../../index.rst:862
 msgid "What the Measurement Changed"
 msgstr "测量带来的改变"
 
-#: ../../index.rst:849
+#: ../../index.rst:865
 msgid ""
 "The latency harness changed the design of the connection threads. In its "
 "first runs, with 64 connections each closed by the daemon after 4,096 "
@@ -3139,7 +3177,7 @@ msgstr ""
 "秒的线程会结束，因此一次突发不会让它的栈一直驻留在内存中。修复之后，每秒 100,000 个请求时的 p99.9 在 forward-auth "
 "模式下为 62 us，在反向代理模式下为 150 us [#thread-reuse]_。"
 
-#: ../../index.rst:851
+#: ../../index.rst:867
 msgid ""
 "A rare, periodic stall moves the far tail long before it moves p99. At "
 "100,000 requests per second over 64 connections, each connection lasts "
@@ -3153,11 +3191,11 @@ msgstr ""
 ":math:`4096 / 1562.5 \\approx 2.6` 秒，因此每秒约有 24 个线程启动和结束；在一次一百万个请求的运行中，最高的 "
 "0.1% 只有 1,000 个请求，每次线程更替延迟少数几个请求就足以填满它。要发现这样的缺陷，需要 p99.9 和对每个请求的计时。"
 
-#: ../../index.rst:853
+#: ../../index.rst:869
 msgid "Key Takeaways"
 msgstr "要点"
 
-#: ../../index.rst:856
+#: ../../index.rst:872
 msgid ""
 "*Classification below a microsecond.* In the Gate profile the policy "
 "engine classifies a browser request in 75.9 ns; with full inspection in "
@@ -3166,7 +3204,7 @@ msgstr ""
 "*分类不到一微秒。* 在 Gate 配置下，策略引擎对一个浏览器请求的分类耗时 75.9 ns；在执行完整检查的 Shield 配置下耗时 "
 "790.8 ns。"
 
-#: ../../index.rst:857
+#: ../../index.rst:873
 msgid ""
 "*Symmetric verification.* A keyed-BLAKE3 session token verifies in 155.8 "
 "ns, against 40,587.5 ns for an Ed25519 token: about 260 times less work "
@@ -3175,7 +3213,7 @@ msgstr ""
 "*对称验证。* 带密钥 BLAKE3 会话令牌的验证耗时 155.8 ns，Ed25519 令牌则为 40,587.5 "
 "ns：在同一信任域内获得同样的完整性，工作量约为后者的 1/260。"
 
-#: ../../index.rst:858
+#: ../../index.rst:874
 msgid ""
 "*A small, steady footprint.* About 200,000 forward-auth requests per "
 "second on four CPUs, with peak resident memory near 16 MiB in every "
@@ -3184,18 +3222,18 @@ msgstr ""
 "*占用小而稳定。* 使用四个 CPU 时每秒约处理 200,000 个 forward-auth 请求，每种工作负载下的峰值常驻内存都在 16 "
 "MiB 左右，空闲时低于 6 MiB。"
 
-#: ../../index.rst:859
+#: ../../index.rst:875
 msgid ""
 "*Tails need open-loop measurement.* The thread-turnover stall was "
 "invisible to the closed-loop harness and obvious at p99.9 under an "
 "open-loop generator."
 msgstr "*尾部需要开环测量。* 线程更替造成的卡顿在闭环测量工具下不可见，在开环生成器下的 p99.9 中却一目了然。"
 
-#: ../../index.rst:861
+#: ../../index.rst:877
 msgid "Market Comparison: Sibuna and Its Neighbours"
 msgstr "市场比较：Sibuna 及其同类产品"
 
-#: ../../index.rst:864
+#: ../../index.rst:880
 msgid ""
 "We compare Sibuna with the tools an operator is most likely to weigh "
 "against it. The facts about the other products were read from their "
@@ -3209,241 +3247,241 @@ msgstr ""
 "之书》第 II 部分记录了这些情况及其来源 "
 "[#prior-art]_。这些产品都很好地服务着各自的用户，也都作出了一些设计选择，而这些选择的好处是我们的测量工具无法测量的。我们描述的是架构上的差异，而不是排名。"
 
-#: ../../index.rst:866
+#: ../../index.rst:882
 msgid ""
 "Feature comparison (book Part II; facts about other products read from "
 "public documentation in September 2026, the JA4 row in October 2026)"
 msgstr ""
 "功能比较（《Sibuna 之书》第 II 部分；其他产品的情况读自 2026 年 9 月的公开文档，JA4 一行为 2026 年 10 月）"
 
-#: ../../index.rst:870
+#: ../../index.rst:886
 msgid "Feature"
 msgstr "功能"
 
-#: ../../index.rst:871
+#: ../../index.rst:887
 msgid "Sibuna 1.0.0-beta.2"
 msgstr "Sibuna 1.0.0-beta.2"
 
-#: ../../index.rst:872
+#: ../../index.rst:888
 msgid "Anubis 1.27"
 msgstr "Anubis 1.27"
 
-#: ../../index.rst:873
+#: ../../index.rst:889
 msgid "SafeLine CE 9"
 msgstr "SafeLine CE 9"
 
-#: ../../index.rst:874
+#: ../../index.rst:890
 msgid "Cloudflare WAF"
 msgstr "Cloudflare WAF"
 
-#: ../../index.rst:875
+#: ../../index.rst:891
 msgid "Runs as"
 msgstr "运行形式"
 
-#: ../../index.rst:876
+#: ../../index.rst:892
 msgid ""
 "One binary; reverse proxy or forward auth; optional SQLite file or shared "
 "PostgreSQL database"
 msgstr "一个可执行文件；反向代理或 forward auth；可选的 SQLite 文件或共享的 PostgreSQL 数据库"
 
-#: ../../index.rst:877
+#: ../../index.rst:893
 msgid "One Go binary; reverse proxy or forward auth"
 msgstr "一个 Go 可执行文件；反向代理或 forward auth"
 
-#: ../../index.rst:878
+#: ../../index.rst:894
 msgid ""
 "Seven Docker containers (tengine, detector, mgt, luigi, fvm, chaos, "
 "PostgreSQL)"
 msgstr "七个 Docker 容器（tengine、detector、mgt、luigi、fvm、chaos、PostgreSQL）"
 
-#: ../../index.rst:879
+#: ../../index.rst:895
 msgid "Hosted network; DNS points at Cloudflare"
 msgstr "托管网络；DNS 指向 Cloudflare"
 
-#: ../../index.rst:880
+#: ../../index.rst:896
 msgid "Runtime"
 msgstr "运行时"
 
-#: ../../index.rst:881
+#: ../../index.rst:897
 msgid ""
 "Native code, no garbage collector; no third-party dependency when storage "
 "is off"
 msgstr "原生代码，无垃圾回收器；关闭存储时没有第三方依赖"
 
-#: ../../index.rst:882
+#: ../../index.rst:898
 msgid "Go, garbage collected"
 msgstr "Go，带垃圾回收"
 
-#: ../../index.rst:883
+#: ../../index.rst:899
 msgid "C/C++ proxy and detector, Go management, PostgreSQL"
 msgstr "C/C++ 代理和检测器，Go 管理端，PostgreSQL"
 
-#: ../../index.rst:884
+#: ../../index.rst:900
 msgid "Proprietary edge software"
 msgstr "专有边缘软件"
 
-#: ../../index.rst:885
+#: ../../index.rst:901
 msgid "Licence"
 msgstr "许可证"
 
-#: ../../index.rst:886
+#: ../../index.rst:902
 msgid "LGPL-3.0-or-later"
 msgstr "LGPL-3.0-or-later"
 
-#: ../../index.rst:887
+#: ../../index.rst:903
 msgid "MIT"
 msgstr "MIT"
 
-#: ../../index.rst:888
+#: ../../index.rst:904
 msgid "GPL-3.0 management code; closed detector images"
 msgstr "GPL-3.0 管理代码；闭源检测器镜像"
 
-#: ../../index.rst:889
+#: ../../index.rst:905
 msgid "Proprietary service"
 msgstr "专有服务"
 
-#: ../../index.rst:890
+#: ../../index.rst:906
 msgid "Proof-of-work admission"
 msgstr "工作量证明准入"
 
-#: ../../index.rst:891
+#: ../../index.rst:907
 msgid ""
 "Hashcash (bit-level) and Cohen-Pietrzak sequential work, chosen per rule"
 msgstr "Hashcash（比特粒度）和 Cohen-Pietrzak 顺序工作量，按规则选择"
 
-#: ../../index.rst:892
+#: ../../index.rst:908
 msgid "SHA-256 Hashcash in hex nibbles; non-work challenges"
 msgstr "以十六进制半字节计的 SHA-256 Hashcash；不涉及工作量的挑战"
 
-#: ../../index.rst:893
+#: ../../index.rst:909
 msgid "JavaScript challenge and CAPTCHA; not work-bound"
 msgstr "JavaScript 挑战和验证码；不受工作量约束"
 
-#: ../../index.rst:894
+#: ../../index.rst:910
 msgid "Managed challenge, JS challenge, Turnstile"
 msgstr "托管质询、JS 质询、Turnstile"
 
-#: ../../index.rst:895
+#: ../../index.rst:911
 msgid "Challenge state on the server"
 msgstr "服务器上的挑战状态"
 
-#: ../../index.rst:896
+#: ../../index.rst:912
 msgid "None until solved; solved tags in a fixed Robin Hood table"
 msgstr "解出之前没有；已解出的标签保存在固定大小的 Robin Hood 表中"
 
-#: ../../index.rst:897
+#: ../../index.rst:913
 msgid "Store backend: memory, bbolt, Valkey or S3"
 msgstr "存储后端：内存、bbolt、Valkey 或 S3"
 
-#: ../../index.rst:898
+#: ../../index.rst:914
 msgid "Managed by the stack"
 msgstr "由整套组件管理"
 
-#: ../../index.rst:899
+#: ../../index.rst:915
 msgid "Managed by Cloudflare"
 msgstr "由 Cloudflare 管理"
 
-#: ../../index.rst:900
+#: ../../index.rst:916
 msgid "Session token"
 msgstr "会话令牌"
 
-#: ../../index.rst:901
+#: ../../index.rst:917
 msgid ""
 "Keyed BLAKE3, 75 characters, bound to the work paid; Ed25519 optional"
 msgstr "带密钥 BLAKE3，75 个字符，与付出的工作绑定；可选 Ed25519"
 
-#: ../../index.rst:902
+#: ../../index.rst:918
 msgid "JSON Web Token signed with Ed25519; HS512 optional"
 msgstr "用 Ed25519 签名的 JSON Web Token；可选 HS512"
 
-#: ../../index.rst:903
+#: ../../index.rst:919
 msgid "Cookie issued by the stack"
 msgstr "由整套组件签发的 Cookie"
 
-#: ../../index.rst:904
+#: ../../index.rst:920
 msgid "``cf_clearance`` cookie"
 msgstr "``cf_clearance`` Cookie"
 
-#: ../../index.rst:906
+#: ../../index.rst:922
 msgid ""
 "Shield: tagged automaton plus structural tokenizers, first 8 KiB of body"
 msgstr "Shield：带标签的自动机加结构化分词器，检查请求体的前 8 KiB"
 
-#: ../../index.rst:907
+#: ../../index.rst:923
 msgid "None"
 msgstr "无"
 
-#: ../../index.rst:908
+#: ../../index.rst:924
 msgid "Semantic analysis over OWASP categories"
 msgstr "覆盖 OWASP 各类别的语义分析"
 
-#: ../../index.rst:909
+#: ../../index.rst:925
 msgid "Managed rulesets (Pro and above)"
 msgstr "托管规则集（Pro 及以上）"
 
-#: ../../index.rst:910
+#: ../../index.rst:926
 msgid "TLS fingerprint (JA4)"
 msgstr "TLS 指纹（JA4）"
 
-#: ../../index.rst:911
+#: ../../index.rst:927
 msgid ""
 "Rules match a JA4 value that a trusted ingress forwards; not computed by "
 "Sibuna"
 msgstr "规则匹配受信任的入口代理转发的 JA4 值；Sibuna 不计算"
 
-#: ../../index.rst:912
+#: ../../index.rst:928
 msgid ""
 "Not documented; policies may reference the HTTP fingerprint JA4H, which "
 "Anubis computes"
 msgstr "文档未提及；策略可以引用 Anubis 计算的 HTTP 指纹 JA4H"
 
-#: ../../index.rst:913
+#: ../../index.rst:929
 msgid ""
 "Computed at its own TLS termination; custom rules and a built-in deny list"
 msgstr "在自身的 TLS 终止处计算；自定义规则和内置的拒绝列表"
 
-#: ../../index.rst:914
+#: ../../index.rst:930
 msgid ""
 "JA3 and JA4 in custom rules and analytics (Enterprise with Bot Management)"
 msgstr "自定义规则和分析中的 JA3 与 JA4（Enterprise，需 Bot Management）"
 
-#: ../../index.rst:915
+#: ../../index.rst:931
 msgid "Shared state"
 msgstr "共享状态"
 
-#: ../../index.rst:916
+#: ../../index.rst:932
 msgid "One PostgreSQL database for policy, reputation and forensics"
 msgstr "一个 PostgreSQL 数据库，存放策略、信誉和取证数据"
 
-#: ../../index.rst:917
+#: ../../index.rst:933
 msgid "Shared signing key; shared Valkey store"
 msgstr "共享签名密钥；共享 Valkey 存储"
 
-#: ../../index.rst:918
+#: ../../index.rst:934
 msgid "One stack per host"
 msgstr "每台主机一套组件"
 
-#: ../../index.rst:919
+#: ../../index.rst:935
 msgid "Global anycast network"
 msgstr "全球任播网络"
 
-#: ../../index.rst:920
+#: ../../index.rst:936
 msgid "TLS termination"
 msgstr "TLS 终止"
 
-#: ../../index.rst:921 ../../index.rst:922
+#: ../../index.rst:937 ../../index.rst:938
 msgid "No (ingress)"
 msgstr "否（由入口代理负责）"
 
-#: ../../index.rst:923 ../../index.rst:924
+#: ../../index.rst:939 ../../index.rst:940
 msgid "Yes"
 msgstr "是"
 
-#: ../../index.rst:928
+#: ../../index.rst:944
 msgid "Measured Comparison With Anubis"
 msgstr "与 Anubis 的实测比较"
 
-#: ../../index.rst:931
+#: ../../index.rst:947
 msgid ""
 "We measured the official Anubis v1.27.0 release binary beside Sibuna with "
 "the harness of :ref:`whole-products`: the same four workloads, the same "
@@ -3460,11 +3498,11 @@ msgstr ""
 "respond`` 作为源站 [#comparison]_。这里 Sibuna 运行的是 Shield 形态，因此它还会检查每个载荷，而 "
 "Anubis 不做这件事。"
 
-#: ../../index.rst:933
+#: ../../index.rst:949
 msgid "Reading these rows"
 msgstr "如何解读这些数据行"
 
-#: ../../index.rst:935
+#: ../../index.rst:951
 msgid ""
 "These numbers describe four workloads on one machine, not every "
 "deployment, and several rows are not like for like. In forward-auth mode "
@@ -3483,7 +3521,7 @@ msgstr ""
 "Ed25519 快 55%。Anubis "
 "是一个被广泛使用且能力很强的工具，它的维护者出于充分的理由作出了不同的选择。这项测量真正表明的是：一条小而有界的请求路径，可以让准入对防御方来说成本很低。"
 
-#: ../../index.rst:937
+#: ../../index.rst:953
 msgid ""
 "Sibuna (Shield) and Anubis 1.27.0 under ``wrk``: requests per second and "
 "p99 latency in microseconds, medians of three five-second runs "
@@ -3494,151 +3532,151 @@ msgstr ""
 "延迟，三次五秒运行的中位数（``benchmarks/results/comparison-latest.md``）。除非另有标注，状态码均为 "
 "200；Shield 以 403 拒绝攻击。"
 
-#: ../../index.rst:943
+#: ../../index.rst:959
 msgid "Sibuna req/s"
 msgstr "Sibuna 请求/秒"
 
-#: ../../index.rst:944
+#: ../../index.rst:960
 msgid "Sibuna p99"
 msgstr "Sibuna p99"
 
-#: ../../index.rst:945
+#: ../../index.rst:961
 msgid "Anubis req/s"
 msgstr "Anubis 请求/秒"
 
-#: ../../index.rst:946
+#: ../../index.rst:962
 msgid "Anubis p99"
 msgstr "Anubis p99"
 
-#: ../../index.rst:948 ../../index.rst:972
+#: ../../index.rst:964 ../../index.rst:988
 msgid "``admitted``"
 msgstr "``admitted``"
 
-#: ../../index.rst:949
+#: ../../index.rst:965
 msgid "208,635"
 msgstr "208,635"
 
-#: ../../index.rst:951
+#: ../../index.rst:967
 msgid "36,509"
 msgstr "36,509"
 
-#: ../../index.rst:952
+#: ../../index.rst:968
 msgid "7,477"
 msgstr "7,477"
 
-#: ../../index.rst:954 ../../index.rst:978
+#: ../../index.rst:970 ../../index.rst:994
 msgid "``challenged``"
 msgstr "``challenged``"
 
-#: ../../index.rst:955
+#: ../../index.rst:971
 msgid "193,087"
 msgstr "193,087"
 
-#: ../../index.rst:956
+#: ../../index.rst:972
 msgid "342"
 msgstr "342"
 
-#: ../../index.rst:957
+#: ../../index.rst:973
 msgid "113,170"
 msgstr "113,170"
 
-#: ../../index.rst:958
+#: ../../index.rst:974
 msgid "3,781"
 msgstr "3,781"
 
-#: ../../index.rst:960 ../../index.rst:984
+#: ../../index.rst:976 ../../index.rst:1000
 msgid "``allowed_static``"
 msgstr "``allowed_static``"
 
-#: ../../index.rst:961
+#: ../../index.rst:977
 msgid "212,444"
 msgstr "212,444"
 
-#: ../../index.rst:962
+#: ../../index.rst:978
 msgid "304"
 msgstr "304"
 
-#: ../../index.rst:963
+#: ../../index.rst:979
 msgid "89,904"
 msgstr "89,904"
 
-#: ../../index.rst:964
+#: ../../index.rst:980
 msgid "4,547"
 msgstr "4,547"
 
-#: ../../index.rst:966 ../../index.rst:990
+#: ../../index.rst:982 ../../index.rst:1006
 msgid "``attack``"
 msgstr "``attack``"
 
-#: ../../index.rst:967
+#: ../../index.rst:983
 msgid "211,347 (403)"
 msgstr "211,347 (403)"
 
-#: ../../index.rst:969
+#: ../../index.rst:985
 msgid "36,853"
 msgstr "36,853"
 
-#: ../../index.rst:970
+#: ../../index.rst:986
 msgid "7,283"
 msgstr "7,283"
 
-#: ../../index.rst:973
+#: ../../index.rst:989
 msgid "103,298"
 msgstr "103,298"
 
-#: ../../index.rst:974
+#: ../../index.rst:990
 msgid "3,321"
 msgstr "3,321"
 
-#: ../../index.rst:975
+#: ../../index.rst:991
 msgid "19,398"
 msgstr "19,398"
 
-#: ../../index.rst:976
+#: ../../index.rst:992
 msgid "11,062"
 msgstr "11,062"
 
-#: ../../index.rst:979
+#: ../../index.rst:995
 msgid "197,327"
 msgstr "197,327"
 
-#: ../../index.rst:981
+#: ../../index.rst:997
 msgid "28,842"
 msgstr "28,842"
 
-#: ../../index.rst:982
+#: ../../index.rst:998
 msgid "9,546"
 msgstr "9,546"
 
-#: ../../index.rst:985
+#: ../../index.rst:1001
 msgid "106,819"
 msgstr "106,819"
 
-#: ../../index.rst:986
+#: ../../index.rst:1002
 msgid "3,316"
 msgstr "3,316"
 
-#: ../../index.rst:987
+#: ../../index.rst:1003
 msgid "28,862"
 msgstr "28,862"
 
-#: ../../index.rst:988
+#: ../../index.rst:1004
 msgid "30,124"
 msgstr "30,124"
 
-#: ../../index.rst:991
+#: ../../index.rst:1007
 msgid "210,483 (403)"
 msgstr "210,483 (403)"
 
-#: ../../index.rst:993
+#: ../../index.rst:1009
 msgid "23,399"
 msgstr "23,399"
 
-#: ../../index.rst:994
+#: ../../index.rst:1010
 msgid "14,124"
 msgstr "14,124"
 
-#: ../../index.rst:996
+#: ../../index.rst:1012
 msgid ""
 "Anubis spends 106 us of CPU per admitted request in forward-auth mode, "
 "where Sibuna spends 13; its peak resident memory was about 32 MiB in "
@@ -3654,7 +3692,7 @@ msgstr ""
 "的代理行受限于源站，因为源站与负载生成器共用 CPU：换用 :ref:`whole-products` 中更轻量的桩源站时，同样的行可达到每秒约 "
 "139,000 个请求。"
 
-#: ../../index.rst:998
+#: ../../index.rst:1014
 msgid ""
 "Admission operations per second on two CPUs, median of seven batches "
 "(``benchmarks/results/admission-latest.md``). Anubis runs once with each "
@@ -3664,111 +3702,111 @@ msgstr ""
 "上每秒的准入操作次数，七个批次的中位数（``benchmarks/results/admission-latest.md``）。Anubis "
 "对其每种令牌方案各运行一次。"
 
-#: ../../index.rst:1002
+#: ../../index.rst:1018
 msgid "Product (token)"
 msgstr "产品（令牌）"
 
-#: ../../index.rst:1003
+#: ../../index.rst:1019
 msgid "Session check"
 msgstr "会话检查"
 
-#: ../../index.rst:1004
+#: ../../index.rst:1020
 msgid "Unauthenticated"
 msgstr "未认证"
 
-#: ../../index.rst:1005
+#: ../../index.rst:1021
 msgid "Bootstrap"
 msgstr "引导"
 
-#: ../../index.rst:1006
+#: ../../index.rst:1022
 msgid "Proof verification"
 msgstr "证明验证"
 
-#: ../../index.rst:1007
+#: ../../index.rst:1023
 msgid "Resident memory"
 msgstr "常驻内存"
 
-#: ../../index.rst:1008
+#: ../../index.rst:1024
 msgid "Sibuna (keyed BLAKE3)"
 msgstr "Sibuna（带密钥 BLAKE3）"
 
-#: ../../index.rst:1009
+#: ../../index.rst:1025
 msgid "88,104"
 msgstr "88,104"
 
-#: ../../index.rst:1010
+#: ../../index.rst:1026
 msgid "78,997"
 msgstr "78,997"
 
-#: ../../index.rst:1011
+#: ../../index.rst:1027
 msgid "42,664"
 msgstr "42,664"
 
-#: ../../index.rst:1012
+#: ../../index.rst:1028
 msgid "57,924"
 msgstr "57,924"
 
-#: ../../index.rst:1013
+#: ../../index.rst:1029
 msgid "7.6 MiB"
 msgstr "7.6 MiB"
 
-#: ../../index.rst:1014
+#: ../../index.rst:1030
 msgid "Anubis (Ed25519)"
 msgstr "Anubis (Ed25519)"
 
-#: ../../index.rst:1015
+#: ../../index.rst:1031
 msgid "10,951"
 msgstr "10,951"
 
-#: ../../index.rst:1016
+#: ../../index.rst:1032
 msgid "28,619"
 msgstr "28,619"
 
-#: ../../index.rst:1017
+#: ../../index.rst:1033
 msgid "7,893"
 msgstr "7,893"
 
-#: ../../index.rst:1018
+#: ../../index.rst:1034
 msgid "12,668"
 msgstr "12,668"
 
-#: ../../index.rst:1019
+#: ../../index.rst:1035
 msgid "32.6 MiB"
 msgstr "32.6 MiB"
 
-#: ../../index.rst:1020
+#: ../../index.rst:1036
 msgid "Anubis (HS512)"
 msgstr "Anubis (HS512)"
 
-#: ../../index.rst:1021
+#: ../../index.rst:1037
 msgid "16,976"
 msgstr "16,976"
 
-#: ../../index.rst:1022
+#: ../../index.rst:1038
 msgid "27,785"
 msgstr "27,785"
 
-#: ../../index.rst:1023
+#: ../../index.rst:1039
 msgid "7,952"
 msgstr "7,952"
 
-#: ../../index.rst:1024
+#: ../../index.rst:1040
 msgid "19,261"
 msgstr "19,261"
 
-#: ../../index.rst:1025
+#: ../../index.rst:1041
 msgid "29.1 MiB"
 msgstr "29.1 MiB"
 
-#: ../../index.rst:1027
+#: ../../index.rst:1043
 msgid "Detailed Architectural Comparison"
 msgstr "详细的架构比较"
 
-#: ../../index.rst:1030
+#: ../../index.rst:1046
 msgid "SafeLine (Chaitin Technology)"
 msgstr "SafeLine（长亭科技）"
 
-#: ../../index.rst:1033
+#: ../../index.rst:1049
 msgid ""
 "SafeLine carries the semantic idea of libinjection into a complete "
 "product with a management console, and its vendor reports detection rates "
@@ -3780,7 +3818,7 @@ msgstr ""
 "76.17%（严格模式），误报率分别为 0.07% 和 0.22% [#safeline]_。这些是对检测质量的测量，而 Sibuna "
 "尚未发布自身引擎的此类数据。"
 
-#: ../../index.rst:1035
+#: ../../index.rst:1051
 msgid ""
 "*Deployment.* The community edition ships as seven Docker containers on a "
 "Linux host with at least one CPU core, 1 GB of memory and 5 GB of disk. "
@@ -3789,13 +3827,13 @@ msgstr ""
 "*部署。* 社区版以七个 Docker 容器的形式发布，运行在至少有一个 CPU 核心、1 GB 内存和 5 GB 磁盘的 Linux "
 "主机上。它自己终止 TLS，Sibuna 则不这样做。"
 
-#: ../../index.rst:1036
+#: ../../index.rst:1052
 msgid ""
 "*State.* It keeps its attack log in PostgreSQL within the stack, one "
 "stack per host."
 msgstr "*状态。* 它把攻击日志保存在栈内的 PostgreSQL 中，每台主机一个栈。"
 
-#: ../../index.rst:1037
+#: ../../index.rst:1053
 msgid ""
 "*Where Sibuna differs.* Sibuna is one binary that starts with an optional "
 "SQLite file, and a cluster shares one PostgreSQL database that the "
@@ -3807,11 +3845,11 @@ msgstr ""
 "PostgreSQL 数据库。在产品测试中，它空闲时的常驻内存为 5,592 到 5,788 KiB。我们的主机上没有 Docker "
 "守护进程，因此没有在其上运行 SafeLine，也就不作性能比较。"
 
-#: ../../index.rst:1039
+#: ../../index.rst:1055
 msgid "Anubis and Coraza"
 msgstr "Anubis 与 Coraza"
 
-#: ../../index.rst:1042
+#: ../../index.rst:1058
 msgid ""
 "The proof-of-work interstitial became common in 2025, when scraper "
 "traffic for language-model training made ordinary origins expensive to "
@@ -3827,7 +3865,7 @@ msgstr ""
 "JSON Web Token，并把挑战状态保存在一个存储中。Coraza 实现了 ModSecurity 规则语言（SecLang），运行 "
 "OWASP Core Rule Set；它是在这类网关旁边增加基于规则的检查的一种方式。"
 
-#: ../../index.rst:1044
+#: ../../index.rst:1060
 msgid ""
 "*Where the work goes.* Anubis and Sibuna Gate both make the client pay "
 "before the origin does anything. Sibuna adds a second tier of sequential "
@@ -3837,7 +3875,7 @@ msgstr ""
 "*工作落在哪一方。* Anubis 和 Sibuna Gate 都让客户端在源站做任何事之前先付出代价。Sibuna "
 "另外提供第二层顺序工作量，按规则选择，供需要更强门槛的路由使用，而且它的会话会记住付出了多少工作。"
 
-#: ../../index.rst:1045
+#: ../../index.rst:1061
 msgid ""
 "*What the server remembers.* Anubis stores challenges; Sibuna issues a "
 "self-authenticating record and remembers only solved tags, in a fixed "
@@ -3847,7 +3885,7 @@ msgstr ""
 "*服务器记住什么。* Anubis 存储挑战；Sibuna 签发一条自认证记录，只在一张固定的表中记住已求解的标签（定理 "
 "3）。它的默认令牌是对称的，验证成本更低，量子攻击者对它只能获得平方级加速。"
 
-#: ../../index.rst:1046
+#: ../../index.rst:1062
 msgid ""
 "*Inspection.* Sibuna Shield performs its own structural inspection in the "
 "same pass as admission, so one process and one parser serve both roles. "
@@ -3863,7 +3901,7 @@ msgstr ""
 "的绑定，但一个都没有采用：边缘服务器上的检查引擎是安全关键代码，我们宁愿自己掌握并审查它。如果 Sibuna 将来增加对 Core Rule "
 "Set 的兼容，会先由一份设计记录规定所支持的子集 [#crs]_。"
 
-#: ../../index.rst:1047
+#: ../../index.rst:1063
 msgid ""
 "*Measurement.* On one host under the same load, Sibuna answered more than "
 "five times as many admitted requests in forward-auth mode with a lower "
@@ -3872,11 +3910,11 @@ msgstr ""
 "*测量。* 在同一台主机、同样的负载下，Sibuna 在 forward-auth 模式下应答的已准入请求是 Anubis 的五倍多，p99 "
 "更低，每个请求的 CPU 时间约为其八分之一（:ref:`anubis-comparison`）。"
 
-#: ../../index.rst:1049
+#: ../../index.rst:1065
 msgid "Cloud Edge WAFs (Cloudflare and Others)"
 msgstr "云端边缘 WAF（Cloudflare 等）"
 
-#: ../../index.rst:1052
+#: ../../index.rst:1068
 msgid ""
 "Hosted edges place inspection, rate limiting and bot scoring in many "
 "points of presence with a global control plane. They absorb volumetric "
@@ -3887,14 +3925,14 @@ msgstr ""
 "托管边缘网络把检查、速率限制和机器人评分放在众多的接入点中，并配有全局控制平面。它们能吸收任何单台服务器都无法承受的大流量攻击，也不需要运维人员提供硬件。Sibuna "
 "的集群部署借鉴了它们的形态，即由共享的策略平面向各处本地的不可变快照供给策略，同时保持自托管。"
 
-#: ../../index.rst:1054
+#: ../../index.rst:1070
 msgid ""
 "*Data residency.* A hosted WAF terminates the operator's TLS and sees "
 "request payloads on shared infrastructure, which can conflict with "
 "data-residency requirements."
 msgstr "*数据驻留。* 托管 WAF 会终止运维人员的 TLS，并在共享的基础设施上看到请求载荷，这可能与数据驻留要求相冲突。"
 
-#: ../../index.rst:1055
+#: ../../index.rst:1071
 msgid ""
 "*Plans and quotas.* Features are tied to plans: Cloudflare's published "
 "quotas allow 5, 20, 100 and 1,000 custom rules and 1, 2, 5 and 100 "
@@ -3903,7 +3941,7 @@ msgstr ""
 "*套餐与配额。* 功能与套餐挂钩：根据 Cloudflare 公布的配额，Free、Pro、Business 和 Enterprise "
 "套餐分别允许 5、20、100 和 1,000 条自定义规则，以及 1、2、5 和 100 条速率限制规则。"
 
-#: ../../index.rst:1056
+#: ../../index.rst:1072
 msgid ""
 "*Where Sibuna differs.* Sibuna runs on the operator's own machines with "
 "no per-request fee, and its policy changes reach every node on the next "
@@ -3916,11 +3954,11 @@ msgstr ""
 "ms）到达每个节点。它不缓解大流量网络攻击，不用训练好的模型给机器人打分，也不终止 "
 "TLS；需要这些功能的部署，仍然要在它前面放置入口代理或边缘网络。"
 
-#: ../../index.rst:1058
+#: ../../index.rst:1074
 msgid "Implementation: Small Crates and Few Dependencies"
 msgstr "实现：小型 crate 与少量依赖"
 
-#: ../../index.rst:1061
+#: ../../index.rst:1077
 msgid ""
 "Sibuna is written in Rust, as a workspace of small crates whose "
 "dependencies point one way: reusable libraries, then a core of "
@@ -3932,7 +3970,7 @@ msgstr ""
 "组成的工作区，依赖关系只朝一个方向：先是可复用的库，然后是配置和诊断的核心，再是应用库，最后是守护进程和浏览器证明器。有三项工程选择对运维人员很重要，我们在此简要记录 "
 "[#sid-0010]_。"
 
-#: ../../index.rst:1063
+#: ../../index.rst:1079
 msgid ""
 "*Few dependencies.* We treat every third-party library as a liability: it "
 "must be reviewed, updated and trusted. The data plane uses none. Hashing, "
@@ -3957,7 +3995,7 @@ msgstr ""
 "TLS 和 PostgreSQL 的 TLS，运行时涉及十三个 crate，因为自行编写的 TLS 客户端会是一个比 Sibuna "
 "的数据平面还大的安全关键项目 [#rustls]_。不带存储和控制台的构建完全没有第三方依赖。"
 
-#: ../../index.rst:1066
+#: ../../index.rst:1082
 msgid ""
 "A layered graph. The daemon uses policy, challenge, net and storage. "
 "Policy uses patterns, cidr, json and core. Challenge uses crypto, pow, "
@@ -3970,87 +4008,101 @@ msgstr ""
 "core。storage 使用 policy 和 core，并引入 sqlx。浏览器证明器使用 pow。pow 和 http 使用 "
 "crypto；geoip 使用 inflate 和 crypto。"
 
-#: ../../index.rst:1066
+#: ../../index.rst:1082
 msgid ""
 "digraph crates {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.18, ranksep=0.5, "
-"fontname=\"Helvetica\", fontsize=9, newrank=true];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.14, "
+"ranksep=0.42, pad=0.1, fontname=\"Helvetica\", fontsize=8.5, "
+"fontcolor=\"#475569\"];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=9, color=\"#0369a1\", fillcolor=\"#f0f9ff\", "
-"fontcolor=\"#0f172a\", height=0.32];\n"
-"  edge [color=\"#94a3b8\", arrowsize=0.55];\n"
-"  sibuna [label=\"sibuna (daemon)\", fillcolor=\"#ecfdf5\", "
-"color=\"#047857\", style=\"rounded,filled,bold\"];\n"
-"  wasm [label=\"browser prover (WebAssembly)\", fillcolor=\"#ecfdf5\", "
-"color=\"#047857\"];\n"
-"  storage [label=\"storage (sqlx)\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
-"  policy [fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
-"  challenge [fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
-"  net [fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
-"  core [fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
+"fontsize=9, fontcolor=\"#172033\", color=\"#0369a1\", "
+"fillcolor=\"#f0f9ff\", penwidth=1.0, height=0.3, width=0.6, "
+"margin=\"0.08,0.03\"];\n"
+"  edge [color=\"#94a3b8\", arrowsize=0.5, penwidth=0.9];\n"
+"\n"
+"  sibuna [label=\"sibuna (daemon)\", color=\"#15803d\", "
+"fillcolor=\"#bbf7d0\", penwidth=1.6];\n"
+"  wasm [label=\"browser prover (WebAssembly)\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\"];\n"
+"  storage [label=\"storage (sqlx)\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
+"  policy [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
+"  challenge [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
+"  net [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
+"  core [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
 "  subgraph cluster_reusable {\n"
 "    label=\"reusable libraries, no third-party code\"; labelloc=b; "
-"style=\"dashed,rounded\"; color=\"#94a3b8\"; fontcolor=\"#64748b\";\n"
-"    patterns; cidr; json; store; pow; http; geoip;\n"
-"    crypto; encoding; inflate;\n"
+"labeljust=r; style=\"dashed,rounded,filled\"; color=\"#7dd3fc\"; "
+"fillcolor=\"#fafdff\"; margin=10;\n"
+"    geoip; inflate; cidr; json; patterns; http; encoding; crypto; pow; "
+"store;\n"
 "  }\n"
-"  { rank=same; sibuna; wasm; }\n"
-"  { rank=same; policy; challenge; net; core; }\n"
-"  { rank=same; patterns; cidr; json; store; pow; http; geoip; }\n"
-"  { rank=same; crypto; encoding; inflate; }\n"
-"  sibuna -> storage; sibuna -> policy; sibuna -> challenge; sibuna -> "
-"net;\n"
+"  { rank=same; wasm; sibuna; }\n"
+"  { rank=same; policy; core; net; challenge; }\n"
+"  { rank=same; geoip; cidr; json; patterns; http; pow; }\n"
+"  { rank=same; inflate; encoding; crypto; store; }\n"
+"\n"
+"  sibuna -> policy; sibuna -> storage; sibuna -> net; sibuna -> "
+"challenge;\n"
 "  storage -> policy; storage -> core;\n"
-"  policy -> patterns; policy -> cidr; policy -> json; policy -> core;\n"
-"  challenge -> store; challenge -> pow; challenge -> crypto; challenge -> "
-"encoding;\n"
-"  net -> http; net -> core;\n"
-"  wasm -> pow;\n"
-"  pow -> crypto; http -> crypto; http -> encoding; geoip -> inflate; "
-"geoip -> crypto;\n"
+"  policy -> cidr; policy -> json; policy -> patterns; policy -> core;\n"
+"  core -> net [dir=back];\n"
+"  net -> http;\n"
+"  http -> encoding; http -> crypto;\n"
+"  geoip -> inflate; geoip -> crypto;\n"
+"  challenge -> encoding; challenge -> crypto; challenge -> pow; challenge "
+"-> store;\n"
+"  pow -> crypto;\n"
+"  wasm -> pow [color=\"#15803d\"];\n"
 "}"
 msgstr ""
 "digraph crates {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.18, ranksep=0.5, "
-"fontname=\"Helvetica\", fontsize=9, newrank=true];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.14, "
+"ranksep=0.42, pad=0.1, fontname=\"Helvetica\", fontsize=8.5, "
+"fontcolor=\"#475569\"];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=9, color=\"#0369a1\", fillcolor=\"#f0f9ff\", "
-"fontcolor=\"#0f172a\", height=0.32];\n"
-"  edge [color=\"#94a3b8\", arrowsize=0.55];\n"
-"  sibuna [label=\"sibuna（守护进程）\", fillcolor=\"#ecfdf5\", "
-"color=\"#047857\", style=\"rounded,filled,bold\"];\n"
-"  wasm [label=\"浏览器证明器 (WebAssembly)\", fillcolor=\"#ecfdf5\", "
-"color=\"#047857\"];\n"
-"  storage [label=\"storage (sqlx)\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
-"  policy [fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
-"  challenge [fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
-"  net [fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
-"  core [fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
+"fontsize=9, fontcolor=\"#172033\", color=\"#0369a1\", "
+"fillcolor=\"#f0f9ff\", penwidth=1.0, height=0.3, width=0.6, "
+"margin=\"0.08,0.03\"];\n"
+"  edge [color=\"#94a3b8\", arrowsize=0.5, penwidth=0.9];\n"
+"\n"
+"  sibuna [label=\"sibuna（守护进程）\", color=\"#15803d\", "
+"fillcolor=\"#bbf7d0\", penwidth=1.6];\n"
+"  wasm [label=\"浏览器证明器 (WebAssembly)\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\"];\n"
+"  storage [label=\"storage (sqlx)\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
+"  policy [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
+"  challenge [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
+"  net [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
+"  core [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
 "  subgraph cluster_reusable {\n"
-"    label=\"可复用库，不含第三方代码\"; labelloc=b; style=\"dashed,rounded\"; "
-"color=\"#94a3b8\"; fontcolor=\"#64748b\";\n"
-"    patterns; cidr; json; store; pow; http; geoip;\n"
-"    crypto; encoding; inflate;\n"
+"    label=\"可复用库，不含第三方代码\"; labelloc=b; labeljust=r; "
+"style=\"dashed,rounded,filled\"; color=\"#7dd3fc\"; "
+"fillcolor=\"#fafdff\"; margin=10;\n"
+"    geoip; inflate; cidr; json; patterns; http; encoding; crypto; pow; "
+"store;\n"
 "  }\n"
-"  { rank=same; sibuna; wasm; }\n"
-"  { rank=same; policy; challenge; net; core; }\n"
-"  { rank=same; patterns; cidr; json; store; pow; http; geoip; }\n"
-"  { rank=same; crypto; encoding; inflate; }\n"
-"  sibuna -> storage; sibuna -> policy; sibuna -> challenge; sibuna -> "
-"net;\n"
+"  { rank=same; wasm; sibuna; }\n"
+"  { rank=same; policy; core; net; challenge; }\n"
+"  { rank=same; geoip; cidr; json; patterns; http; pow; }\n"
+"  { rank=same; inflate; encoding; crypto; store; }\n"
+"\n"
+"  sibuna -> policy; sibuna -> storage; sibuna -> net; sibuna -> "
+"challenge;\n"
 "  storage -> policy; storage -> core;\n"
-"  policy -> patterns; policy -> cidr; policy -> json; policy -> core;\n"
-"  challenge -> store; challenge -> pow; challenge -> crypto; challenge -> "
-"encoding;\n"
-"  net -> http; net -> core;\n"
-"  wasm -> pow;\n"
-"  pow -> crypto; http -> crypto; http -> encoding; geoip -> inflate; "
-"geoip -> crypto;\n"
+"  policy -> cidr; policy -> json; policy -> patterns; policy -> core;\n"
+"  core -> net [dir=back];\n"
+"  net -> http;\n"
+"  http -> encoding; http -> crypto;\n"
+"  geoip -> inflate; geoip -> crypto;\n"
+"  challenge -> encoding; challenge -> crypto; challenge -> pow; challenge "
+"-> store;\n"
+"  pow -> crypto;\n"
+"  wasm -> pow [color=\"#15803d\"];\n"
 "}"
 
-#: ../../index.rst:1066
+#: ../../index.rst:1082
 msgid ""
 "The libraries of Sibuna, simplified (after SID 0010). Arrows point from a "
 "library to what it uses. Reusable libraries depend on no application "
@@ -4059,7 +4111,7 @@ msgid ""
 msgstr ""
 "Sibuna 的库，经过简化（据 SID 0010）。箭头从一个库指向它所使用的库。可复用库不依赖任何应用库，只有存储库和控制台库会引入第三方代码。"
 
-#: ../../index.rst:1098
+#: ../../index.rst:1118
 msgid ""
 "*Memory safety.* Code that bypasses the compiler's memory-safety checks "
 "is denied by default, and a module that needs it must opt in by name and "
@@ -4082,7 +4134,7 @@ msgstr ""
 "个生产者的情况下，标准库的有界通道每次推入的成本要高出 20% 到 45% "
 "[#ring]_。在其他地方，所有权完成了原本需要手写内存管理才能完成的工作：已解析的请求不能比它的缓冲区活得更久，引擎随最后一个读者一起释放，只要还有线程能访问某个套接字，它就不能被关闭。"
 
-#: ../../index.rst:1100
+#: ../../index.rst:1120
 msgid ""
 "*Discipline and tests.* A function body has at most 70 logical lines and "
 "a file at most 1,408 lines, enforced by a checker. Library code returns "
@@ -4098,17 +4150,17 @@ msgstr ""
 "的工作区测试套件在 SQLite 上运行约 2,200 个测试，另有约 700 个针对 PostgreSQL 的测试；控制台界面有 298 "
 "个测试，其中包括黄金样例；浏览器检查驱动无头 Chromium 走过验证中间页和控制台的每个页面 [#tests]_。"
 
-#: ../../index.rst:1102
+#: ../../index.rst:1122
 msgid "Limitations and Open Work"
 msgstr "局限与待完成的工作"
 
-#: ../../index.rst:1105
+#: ../../index.rst:1125
 msgid ""
 "We list what this paper does not establish, so that no claim is read more "
 "widely than its evidence."
 msgstr "我们列出本文没有证明的内容，以免任何结论被解读得超出其证据所及。"
 
-#: ../../index.rst:1107
+#: ../../index.rst:1127
 msgid ""
 "*One measured neighbour.* We measured Anubis on one host "
 "(:ref:`anubis-comparison`). We have measured neither SafeLine nor a "
@@ -4117,7 +4169,7 @@ msgstr ""
 "*只实测了一个同类产品。* 我们在一台主机上测量了 Anubis（:ref:`anubis-comparison`）。SafeLine 和托管 "
 "WAF 都没有测量。"
 
-#: ../../index.rst:1108
+#: ../../index.rst:1128
 msgid ""
 "*No cluster under load.* A functional test runs three nodes on one "
 "PostgreSQL database (SID 0011, committed), but no harness drives several "
@@ -4126,7 +4178,7 @@ msgstr ""
 "*没有负载下的集群测试。* 一项功能测试在同一个 PostgreSQL 数据库上运行三个节点（SID 0011，状态为 "
 "Committed），但还没有测量工具在负载下驱动多个节点。"
 
-#: ../../index.rst:1109
+#: ../../index.rst:1129
 msgid ""
 "*PostgreSQL needs a source build.* The release executables have SQLite "
 "storage and the console but no PostgreSQL support; a cluster builds "
@@ -4135,19 +4187,19 @@ msgstr ""
 "*PostgreSQL 需要从源代码构建。* 发布的可执行文件带有 SQLite 存储和控制台，但不支持 PostgreSQL；集群需要以 "
 "``postgres-tls`` 特性构建 Sibuna。"
 
-#: ../../index.rst:1110
+#: ../../index.rst:1130
 msgid ""
 "*The console's isolation gate* with eight active dashboards under load "
 "has not been run (:ref:`console`)."
 msgstr "*控制台的隔离门槛测试*，即在负载下运行八个活动仪表板，尚未进行（:ref:`console`）。"
 
-#: ../../index.rst:1111
+#: ../../index.rst:1131
 msgid ""
 "*Loopback only.* No measurement covers TLS, a wide-area network or real "
 "browsers under load; a deployment should measure its own path."
 msgstr "*只测了回环接口。* 没有任何测量涵盖 TLS、广域网或负载下的真实浏览器；部署者应当测量自己的路径。"
 
-#: ../../index.rst:1112
+#: ../../index.rst:1132
 msgid ""
 "*Bounded inspection.* Shield is a heuristic inspector of the first 8 KiB "
 "of a body, not a full SQL or HTML parser, and forward-auth inspection "
@@ -4156,13 +4208,13 @@ msgstr ""
 "*有界的检查。* Shield 是一个只检查请求体前 8 KiB 的启发式检查器，而不是完整的 SQL 或 HTML "
 "解析器；forward-auth 模式下的检查只能看到入口代理发来的字节。"
 
-#: ../../index.rst:1113
+#: ../../index.rst:1133
 msgid ""
 "*Protocol scope.* Sibuna speaks HTTP/1.0 and HTTP/1.1; it has no HTTP/2 "
 "and no inbound TLS termination."
 msgstr "*协议范围。* Sibuna 支持 HTTP/1.0 和 HTTP/1.1；它不支持 HTTP/2，也不终止入站 TLS。"
 
-#: ../../index.rst:1114
+#: ../../index.rst:1134
 msgid ""
 "*TLS fingerprints come from the ingress.* Sibuna cannot compute JA4 "
 "itself. A fingerprint is only as trustworthy as the ingress that writes "
@@ -4174,24 +4226,24 @@ msgstr ""
 "JA4。指纹的可信程度取决于写入它的入口代理，而该入口代理必须覆盖客户端发来的任何副本。客户端可以借助专门的库模仿浏览器的握手，因此 JA4 "
 "提高了自动化的成本，但并不能证明身份 [#ja4]_。"
 
-#: ../../index.rst:1115
+#: ../../index.rst:1135
 msgid ""
 "*Cryptographic assurance.* The sequential-work tier rests on published "
 "proofs in the random-oracle model; our concrete protocol has tests "
 "against a reference labeller, not an independent cryptographic audit."
 msgstr "*密码学保证。* 顺序工作层依赖于随机预言机模型下已发表的证明；我们的具体协议有针对参考标签计算器的测试，但没有经过独立的密码学审计。"
 
-#: ../../index.rst:1116
+#: ../../index.rst:1136
 msgid ""
 "*One machine.* Every number was taken on one AMD Ryzen 9 5950X. A ranking "
 "on this host is not a ranking on another."
 msgstr "*只有一台机器。* 每个数字都是在一台 AMD Ryzen 9 5950X 上测得的。在这台主机上的排名并不代表在另一台主机上的排名。"
 
-#: ../../index.rst:1118
+#: ../../index.rst:1138
 msgid "Conclusion"
 msgstr "结论"
 
-#: ../../index.rst:1121
+#: ../../index.rst:1141
 msgid ""
 "Web defense has often grown by accretion: interpreted runtimes, "
 "containers, regular-expression rule sets and external stores piled in "
@@ -4201,33 +4253,33 @@ msgstr ""
 "Web 防御往往是层层堆砌起来的：解释型运行时、容器、正则表达式规则集和外部存储，一层层堆在应用前面。在 Sibuna "
 "中，我们尝试了相反的方向，由几条朴素的思想指引："
 
-#: ../../index.rst:1123
+#: ../../index.rst:1143
 msgid ""
 "make the sender pay for admission with verifiable work, keep the server's "
 "check cheap and stateless, and let a session remember how much work it "
 "paid;"
 msgstr "让发送方用可验证的工作为准入付费，让服务器的检查保持廉价和无状态，并让会话记住它付出了多少工作；"
 
-#: ../../index.rst:1124
+#: ../../index.rst:1144
 msgid ""
 "inspect by structure in linear time, in the same pass as admission, so "
 "that no session can bypass inspection;"
 msgstr "在准入的同一遍处理中，以线性时间按结构进行检查，使任何会话都无法绕过检查；"
 
-#: ../../index.rst:1125
+#: ../../index.rst:1145
 msgid ""
 "respect the machine: one buffer per connection, no allocation on the "
 "request path, bounded tables with keyed placement, and threads that are "
 "reused rather than recreated; and"
 msgstr "尊重机器：每个连接一块缓冲区，请求路径上零分配，表有界且采用带密钥的放置，线程被复用而不是反复重建；"
 
-#: ../../index.rst:1126
+#: ../../index.rst:1146
 msgid ""
 "let a mature database own durable shared state, behind one storage thread "
 "that the request path never waits on."
 msgstr "让成熟的数据库掌管持久的共享状态，由一个请求路径从不等待的存储线程居中访问。"
 
-#: ../../index.rst:1128
+#: ../../index.rst:1148
 msgid ""
 "On one 16-core machine, these choices let Sibuna serve more than 200,000 "
 "admitted requests per second in forward-auth mode on four CPUs, with "
@@ -4243,11 +4295,11 @@ msgstr ""
 "个已准入请求，在该负载下常驻内存约为 16 MiB，在每秒 100,000 个请求时 p99.9 为 62 "
 "us。这些是一台主机通过回环接口测得的数字，我们把它们作为设计自洽的证据，而不是作为排名。我们去掉了自研的共识协议，并坦白地说明这一点；作为回报，系统变得更小，其数据平面也没有任何第三方依赖。还有许多内容有待测量，我们已尽力把它们确切地说清楚。"
 
-#: ../../index.rst:1130
+#: ../../index.rst:1150
 msgid "Sources and Reproduction"
 msgstr "来源与复现"
 
-#: ../../index.rst:1133
+#: ../../index.rst:1153
 msgid ""
 "Every number in this paper comes from a committed result file of the "
 "Sibuna repository, from a Sibuna Discussion (SID) record, or from the "
@@ -4262,7 +4314,7 @@ msgstr ""
 "bench product`` 和 ``cargo xtask bench latency`` "
 "生成，``benchmarks/results/README.md`` 给出了命令、CPU 集合和每个文件的来历。"
 
-#: ../../index.rst:1135
+#: ../../index.rst:1155
 msgid ""
 "``benchmarks/results/primitives-latest.md``, ``product-latest.md``, "
 "``latency-latest.md`` and their ``.json`` files; "
@@ -4271,7 +4323,7 @@ msgstr ""
 "``benchmarks/results/primitives-latest.md``、``product-latest.md``、``latency-latest.md`` "
 "及其 ``.json`` 文件；``console-8-dashboards-2026-10-15.md``。"
 
-#: ../../index.rst:1136
+#: ../../index.rst:1156
 msgid ""
 "SID 0002 (foundation architecture and its revision notes), SID 0004 (the "
 "Shield surface), SID 0006 (mathematical foundations), SID 0007 (the "
@@ -4284,7 +4336,7 @@ msgstr ""
 "0010（工作区、crate 与依赖策略）、SID 0011（通过 sqlx 实现的存储）、SID 0012（控制台 TLS）、SID "
 "0013（控制台存储）和 SID 0014（来自入口代理的 JA4 指纹），位于 ``docs/sid/records/``。"
 
-#: ../../index.rst:1137
+#: ../../index.rst:1157
 msgid ""
 "The Sibuna book, ``docs/book/``: Part I (the cost of a request), Part II "
 "(prior art), Part III (cryptography), Part IV (the protocol), Part V "
@@ -4294,7 +4346,7 @@ msgstr ""
 "《Sibuna 之书》，``docs/book/``：第 I 部分（一次请求的成本）、第 II 部分（前人工作）、第 III 部分（密码学）、第 "
 "IV 部分（协议）、第 V 部分（零分配工程）、第 VI 部分（自动机与语义防火墙）、第 VIII 部分（实证评估）和第 IX 部分（运维）。"
 
-#: ../../index.rst:1138
+#: ../../index.rst:1158
 msgid ""
 "The primary literature: Back, Hashcash (1997); Cohen and Pietrzak, Simple "
 "Proofs of Sequential Work (EUROCRYPT 2018); Blocki, Lee and Zhou, On the "
@@ -4308,11 +4360,11 @@ msgstr ""
 "Corasick，Efficient String Matching（1975）；Celis，Robin Hood "
 "Hashing（1986）；ATM Forum 的 Generic Cell Rate Algorithm（1996）。"
 
-#: ../../index.rst:1142
+#: ../../index.rst:1162
 msgid "Notes"
 msgstr "注释"
 
-#: ../../index.rst:1144
+#: ../../index.rst:1164
 msgid ""
 "Book Part I, \"Admission Is an Economic Decision\". The inequality is a "
 "capacity model, not a measurement; it omits bandwidth, connection state "
@@ -4320,7 +4372,7 @@ msgid ""
 msgstr ""
 "《Sibuna 之书》第 I 部分，“准入是一个经济决策”。这个不等式是一个容量模型，不是测量结果；它省略了带宽、连接状态和客户端延迟。"
 
-#: ../../index.rst:1145
+#: ../../index.rst:1165
 msgid ""
 "SID 0002, \"Decision\"; book Part II, \"Three Ideas in One Binary\"; book "
 "Part VI, \"The Declarative Policy Engine\". The per-rule example, the "
@@ -4331,13 +4383,13 @@ msgstr ""
 "部分，“声明式策略引擎”。按规则选择的示例、要求票据和带工作等级的会话出自第 IV 部分；自适应基线出自第 IV 部分和 SID "
 "0006（修订说明，Part H）。"
 
-#: ../../index.rst:1146
+#: ../../index.rst:1166
 msgid ""
 "Book Part V, \"One Thread per Connection, Bounded\" and \"One Buffer per "
 "Connection\"."
 msgstr "《Sibuna 之书》第 V 部分，“每个连接一个线程，并且有界”和“每个连接一个缓冲区”。"
 
-#: ../../index.rst:1147
+#: ../../index.rst:1167
 msgid ""
 "Book Part V, \"The Connection Loop\"; "
 "``cmd/sibuna/tests/steady_state.rs`` and "
@@ -4346,7 +4398,7 @@ msgstr ""
 "《Sibuna 之书》第 V 部分，“连接循环”；``cmd/sibuna/tests/steady_state.rs`` 和 "
 "``crates/net/tests/steady_state.rs``。"
 
-#: ../../index.rst:1148
+#: ../../index.rst:1168
 msgid ""
 "SID 0010, \"Concurrency model\" and \"Rationale and alternatives\"; SID "
 "0002, \"Request contract\" and its revision notes (connections per "
@@ -4355,7 +4407,7 @@ msgstr ""
 "SID 0010，“Concurrency model”和“Rationale and alternatives”；SID "
 "0002，“Request contract”及其修订说明（每个地址的连接数、IPv6 前缀、分条带的源站连接池）。"
 
-#: ../../index.rst:1149
+#: ../../index.rst:1169
 msgid ""
 "``benchmarks/results/primitives-latest.md`` (55.7 and 763.0 ns); the "
 "table size from ``primitives-latest.json`` as given in book Part VIII, "
@@ -4365,7 +4417,7 @@ msgstr ""
 "``primitives-latest.json``，见《Sibuna 之书》第 VIII 部分，“资源占用”；SID 0006，Part "
 "F，及其关于字节类的修订说明。"
 
-#: ../../index.rst:1150
+#: ../../index.rst:1170
 msgid ""
 "SID 0006, Part D (Definition 22, Theorem 23); SID 0004, revision notes "
 "(keyed placement, ``--rate-table-cells``); "
@@ -4375,7 +4427,7 @@ msgstr ""
 "0004，修订说明（带密钥的放置，``--rate-table-cells``）；``benchmarks/results/primitives-latest.md``\\ "
 "（``gcra_check_hashed``）。"
 
-#: ../../index.rst:1151
+#: ../../index.rst:1171
 msgid ""
 "Book Part III (Lemma 3 and Lemma 4, wire formats); book Part V, \"The "
 "Robin Hood Spent Set\"; SID 0006, Part E (Lemma 28); "
@@ -4386,7 +4438,7 @@ msgstr ""
 "0006，Part E（Lemma 28）；``benchmarks/results/primitives-latest.md``\\ "
 "（``robin_hood_spend_and_lookup``）。"
 
-#: ../../index.rst:1152
+#: ../../index.rst:1172
 msgid ""
 "SID 0004, \"Revision note (2026-09-07)\" and \"Verification\"; book Part "
 "VI, \"A Lesson in False Positives\"."
@@ -4394,7 +4446,7 @@ msgstr ""
 "SID 0004，“Revision note (2026-09-07)”和“Verification”；《Sibuna 之书》第 VI "
 "部分，“关于误报的一课”。"
 
-#: ../../index.rst:1153
+#: ../../index.rst:1173
 msgid ""
 "``benchmarks/results/primitives-latest.md`` (``8kb_body_semantic_scan``, "
 "``8kb_body_sqli_audit_other_enforce``); SID 0004, revision note "
@@ -4404,7 +4456,7 @@ msgstr ""
 "（``8kb_body_semantic_scan``，``8kb_body_sqli_audit_other_enforce``）；SID "
 "0004，修订说明“inspection modes”；《Sibuna 之书》第 VIII 部分，“WAF 检查”。"
 
-#: ../../index.rst:1154
+#: ../../index.rst:1174
 msgid ""
 "SID 0014, \"Specification\" and \"Security and operational "
 "considerations\"; book Part IX, \"JA4 Fingerprints From the Ingress\"; "
@@ -4414,7 +4466,7 @@ msgstr ""
 "considerations”；《Sibuna 之书》第 IX 部分，“来自入口代理的 JA4 "
 "指纹”；``.github/release-notes.txt``。"
 
-#: ../../index.rst:1155
+#: ../../index.rst:1175
 msgid ""
 "SID 0002, revision notes (forwarded identity; cookie values); SID 0004, "
 "revision notes (keyed placement, ban table, measured costs, zeroed "
@@ -4428,13 +4480,13 @@ msgstr ""
 "0010，审查历史（安全审查，2026-10-15）；``benchmarks/results/primitives-latest.md``\\ "
 "（``gcra_check`` 和 ``gcra_check_hashed``）。"
 
-#: ../../index.rst:1156
+#: ../../index.rst:1176
 msgid ""
 "Book Part III, \"Hashcash: The Mathematics of Tier One\"; book Part I, "
 "\"Hash Search as a Random Variable\"."
 msgstr "《Sibuna 之书》第 III 部分，“Hashcash：第一层的数学”；第 I 部分，“把哈希搜索看作随机变量”。"
 
-#: ../../index.rst:1157
+#: ../../index.rst:1177
 msgid ""
 "Book Part III, \"Proof of Sequential Work: Tier Two\", \"Prover Memory\" "
 "and \"Parameters Are Not Timings\"; SID 0006, Part B and its "
@@ -4443,14 +4495,14 @@ msgstr ""
 "《Sibuna 之书》第 III 部分，“顺序工作量证明：第二层”、“证明者的内存”和“参数不是耗时”；SID 0006，Part B，及其 "
 "2026-09-07 的实现审查。"
 
-#: ../../index.rst:1158
+#: ../../index.rst:1178
 msgid ""
 "Book Part IV, \"The Challenge Round Trip\" and \"The Session Cookie\"; "
 "SID 0010, \"The browser solver\"."
 msgstr ""
 "《Sibuna 之书》第 IV 部分，“挑战的往返过程”和“会话 Cookie”；SID 0010，“The browser solver”。"
 
-#: ../../index.rst:1159
+#: ../../index.rst:1179
 msgid ""
 "``benchmarks/results/primitives-latest.md``; the WebAssembly size from "
 "``primitives-latest.json`` as given in book Part VIII, \"Footprint\"; "
@@ -4463,7 +4515,7 @@ msgstr ""
 "0010，标准 3（Chromium 155，``cargo xtask browser``）；SHA 指令的运行时检测取自 SID "
 "0006，修订说明（Parts A to C）。"
 
-#: ../../index.rst:1160
+#: ../../index.rst:1180
 msgid ""
 "SID 0011, \"Abstract\", \"Motivation and scope\" and \"Why PostgreSQL for "
 "clusters\"; SID 0005 describes the earlier replicated design."
@@ -4471,20 +4523,20 @@ msgstr ""
 "SID 0011，“Abstract”“Motivation and scope”和“Why PostgreSQL for "
 "clusters”；SID 0005 描述了早先的复制式设计。"
 
-#: ../../index.rst:1161
+#: ../../index.rst:1181
 msgid ""
 "SID 0011, \"The storage thread\", \"Policy revision\" and \"Incidents and "
 "campaigns\"."
 msgstr ""
 "SID 0011，“The storage thread”“Policy revision”和“Incidents and campaigns”。"
 
-#: ../../index.rst:1162
+#: ../../index.rst:1182
 msgid ""
 "SID 0011, \"Schema and migrations\" and its review history (transport "
 "security); SID 0013, \"Abstract\"."
 msgstr "SID 0011，“Schema and migrations”及其审查历史（传输安全）；SID 0013，“Abstract”。"
 
-#: ../../index.rst:1163
+#: ../../index.rst:1183
 msgid ""
 "SID 0011, \"Security and operational considerations\" and \"Acceptance "
 "criteria and implementation status\" (criterion 2, "
@@ -4498,7 +4550,7 @@ msgstr ""
 "limitations”；SID 0002，“Authentication and work”（与节点绑定的挑战密钥）；《Sibuna 之书》第 "
 "VIII 部分，“未测量的内容”。"
 
-#: ../../index.rst:1164
+#: ../../index.rst:1184
 msgid ""
 "SID 0007, \"Abstract\" and its revision notes (listener admission, "
 "interface module, GeoIP and passwords); SID 0010, review history (console "
@@ -4510,7 +4562,7 @@ msgstr ""
 "0010，审查历史（控制台移植、TOTP）；SID 0012；SID 0013。隔离测量记录在 SID 0010 "
 "的审查历史中（控制台移植）；《Sibuna 之书》第 VIII 部分“控制台开销”一节指出，该记录没有注明对应的结果文件。"
 
-#: ../../index.rst:1165
+#: ../../index.rst:1185
 msgid ""
 "SID 0007, review history (Rust port, consolidation; daemon integration), "
 "which records 719,406 bytes before the JA4 fields of SID 0014. The size "
@@ -4524,7 +4576,7 @@ msgstr ""
 "sibuna-console-ui --target wasm32-unknown-unknown --profile wasm -- -C "
 "link-arg=--compress-relocations``），再用 ``gzip -9`` 压缩后的大小。"
 
-#: ../../index.rst:1166
+#: ../../index.rst:1186
 msgid ""
 "``benchmarks/results/README.md``, \"Method\" and \"Provenance and "
 "limits\" (rustc 1.99.0; the daemon is ``cargo build --release -p "
@@ -4534,13 +4586,13 @@ msgstr ""
 "1.99.0；守护进程为 ``cargo build --release -p sibuna``，49,113,856 字节）；《Sibuna "
 "之书》第 VIII 部分，“方法”。"
 
-#: ../../index.rst:1167
+#: ../../index.rst:1187
 msgid ""
 "Book Part VIII, \"Primitive Latencies\", computed from "
 "``primitives-latest.json``."
 msgstr "《Sibuna 之书》第 VIII 部分，“原语延迟”，由 ``primitives-latest.json`` 计算得出。"
 
-#: ../../index.rst:1168
+#: ../../index.rst:1188
 msgid ""
 "``benchmarks/results/product-latest.md``; CPUs busy from "
 "``cores_busy_median`` in ``product-latest.json``; the ``503`` answers and "
@@ -4551,7 +4603,7 @@ msgstr ""
 "``product-latest.json`` 中的 ``cores_busy_median``；``503`` 应答及其修复取自 "
 "``benchmarks/results/README.md`` 和 SID 0002 的修订说明（缺陷修复）。"
 
-#: ../../index.rst:1169
+#: ../../index.rst:1189
 msgid ""
 "Book Part VIII, \"Footprint\"; the root ``Cargo.toml``, profile "
 "``[profile.release.package.libsqlite3-sys]``."
@@ -4559,7 +4611,7 @@ msgstr ""
 "《Sibuna 之书》第 VIII 部分，“资源占用”；根目录的 ``Cargo.toml``，配置段 "
 "``[profile.release.package.libsqlite3-sys]``。"
 
-#: ../../index.rst:1170
+#: ../../index.rst:1190
 msgid ""
 "``benchmarks/results/latency-latest.md``; the rows at 25,000 requests per "
 "second and the reverse-proxy rows at 150,000 are in that file."
@@ -4567,7 +4619,7 @@ msgstr ""
 "``benchmarks/results/latency-latest.md``；每秒 25,000 个请求的各行和每秒 150,000 "
 "个请求的反向代理行都在该文件中。"
 
-#: ../../index.rst:1171
+#: ../../index.rst:1191
 msgid ""
 "SID 0002, revision note (performance, connection threads reused); book "
 "Part VIII, \"What the Measurement Changed\"; "
@@ -4576,7 +4628,7 @@ msgstr ""
 "SID 0002，修订说明（性能，复用连接线程）；《Sibuna 之书》第 VIII "
 "部分，“测量带来的改变”；``benchmarks/results/latency-latest.md``。"
 
-#: ../../index.rst:1172
+#: ../../index.rst:1192
 msgid ""
 "``benchmarks/results/comparison-latest.md`` and ``admission-latest.md``, "
 "recorded on 16 October 2026 with ``cargo xtask bench product --anubis`` "
@@ -4588,7 +4640,7 @@ msgstr ""
 "bench admission --anubis`` 记录；《Sibuna 之书》第 VIII 部分“Sibuna 与 "
 "Anubis”一节列出了方法以及两个产品之间的每一处差异。"
 
-#: ../../index.rst:1173
+#: ../../index.rst:1193
 msgid ""
 "SID 0010, \"Acceptance criteria and implementation status\" (criteria 1, "
 "3 and 5), which recorded about 2,100 workspace tests and 290 interface "
@@ -4599,7 +4651,7 @@ msgstr ""
 "5），其中记录了 SID 0014 之前约 2,100 个工作区测试和 290 个界面测试；1.0.0-beta.2 的数字取自 ``cargo "
 "test --workspace -- --list``。"
 
-#: ../../index.rst:1174
+#: ../../index.rst:1194
 msgid ""
 "Book Part II, \"Feature Comparison\" and \"Interstitials and Edges\"; the "
 "Sibuna licence is the workspace's ``license`` in ``Cargo.toml``."
@@ -4607,29 +4659,29 @@ msgstr ""
 "《Sibuna 之书》第 II 部分，“功能比较”和“验证中间页与边缘网络”；Sibuna 的许可证是 ``Cargo.toml`` 中工作区的 "
 "``license``。"
 
-#: ../../index.rst:1175
+#: ../../index.rst:1195
 msgid ""
 "Book Part VIII, \"Not Measured\": vendor-reported figures checked in "
 "September 2026."
 msgstr "《Sibuna 之书》第 VIII 部分，“未测量的内容”：厂商报告的数字，于 2026 年 9 月核对。"
 
-#: ../../index.rst:1176
+#: ../../index.rst:1196
 msgid "SID 0010, \"The OWASP Core Rule Set\"."
 msgstr "SID 0010，“The OWASP Core Rule Set”。"
 
-#: ../../index.rst:1177
+#: ../../index.rst:1197
 msgid ""
 "SID 0010, \"Workspace\", \"Dependency policy\" and \"Engineering "
 "standards\"."
 msgstr "SID 0010，“Workspace”“Dependency policy”和“Engineering standards”。"
 
-#: ../../index.rst:1178
+#: ../../index.rst:1198
 msgid ""
 "SID 0011, \"Why sqlx\"; ``Cargo.toml``, where each third-party crate "
 "carries its reason."
 msgstr "SID 0011，“Why sqlx”；``Cargo.toml``，其中每个第三方 crate 都注明了采用理由。"
 
-#: ../../index.rst:1179
+#: ../../index.rst:1199
 msgid ""
 "SID 0012, \"Specification\", \"Rationale and alternatives\" and review "
 "history (PostgreSQL TLS built)."
@@ -4637,7 +4689,7 @@ msgstr ""
 "SID 0012，“Specification”“Rationale and alternatives”和审查历史（已构建 PostgreSQL "
 "TLS）。"
 
-#: ../../index.rst:1180
+#: ../../index.rst:1200
 msgid ""
 "SID 0010, review history (security review, 2026-10-15): the standard "
 "bounded channel against the Vyukov ring, ``tests/timing.rs``. The opt-in "

@@ -135,36 +135,49 @@ A request passes the checks below in a fixed order. The cheap checks come first,
    :alt: A pipeline. Accept and read into the 64 KiB buffer, then the zero-copy parse (132.5 ns), the ban table, the internal routes for challenges and verification, the GCRA limiter (6.2 ns), then the policy snapshot: Shield inspection of an 8 KiB body (12.8 us), the reputation trie (IPv4 32.0 ns), ordered rules and WEIGH scores, and the bot automaton (55.7 ns). A challenge decision checks the session token (155.8 ns); with a valid session the request is admitted, without one the interstitial is served. Admitted requests are proxied to the origin through the pool or answered with a forward-auth verdict. Banned, rate-limited and denied requests end early.
 
    digraph pipeline {
-     graph [rankdir=TB, bgcolor="transparent", nodesep=0.28, ranksep=0.5, fontname="Helvetica", fontsize=9, newrank=true];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, color="#0369a1", fillcolor="#f0f9ff", fontcolor="#0f172a", width=1.25, height=0.5];
-     edge [color="#64748b", fontname="Helvetica", fontsize=7.5, fontcolor="#334155", arrowsize=0.6];
-     accept [label="Accept, read head\ninto 64 KiB buffer", color="#0f172a", fillcolor="#ffffff"];
-     parse [label="1. Zero-copy parse\n132.5 ns"];
-     ban [label="2. Ban table\nlock-free readers"];
-     routes [label="3. Internal routes\nchallenge, verify"];
-     gcra [label="4. GCRA limiter\n6.2 ns"];
-     waf [label="5. Shield inspection\n8 KiB body: 12.8 us", color="#6d28d9", fillcolor="#f5f3ff"];
-     trie [label="6. Reputation trie\nIPv4: 32.0 ns", color="#6d28d9", fillcolor="#f5f3ff"];
-     rules [label="7. Ordered rules\nWEIGH scores", color="#6d28d9", fillcolor="#f5f3ff"];
-     bots [label="8. Bot automaton\n55.7 ns", color="#6d28d9", fillcolor="#f5f3ff"];
-     session [label="9. Session token\nkeyed BLAKE3: 155.8 ns", color="#b45309", fillcolor="#fffbeb"];
-     refuse [label="Refuse\n403, 429 or a ban", color="#b91c1c", fillcolor="#fef2f2"];
-     challenge [label="Challenge\ninterstitial (200)\nor JSON (401)", color="#b45309", fillcolor="#fffbeb"];
-     admit [label="Admit\nproxy via the origin pool,\nor a forward-auth verdict", color="#047857", fillcolor="#ecfdf5"];
-     { rank=same; accept; parse; ban; routes; gcra; }
+     graph [rankdir=TB, bgcolor="transparent", newrank=true, nodesep=0.18, ranksep=0.34, pad=0.1, fontname="Helvetica", fontsize=9, fontcolor="#475569"];
+     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fontcolor="#172033", color="#0369a1", fillcolor="#f0f9ff", penwidth=1.1, width=1.32, height=0.44, margin="0.08,0.04"];
+     edge [color="#64748b", fontname="Helvetica", fontsize=7.5, fontcolor="#475569", arrowsize=0.55, penwidth=1.0];
+
+     accept [label="Accept, read head\ninto 64 KiB buffer", color="#172033", fillcolor="#ffffff"];
+     {
+       parse [group=left, label="1. Zero-copy parse\n132.5 ns"];
+       ban [label="2. Ban table\nlock-free readers"];
+       routes [label="3. Internal routes\nchallenge, verify"];
+       gcra [label="4. GCRA limiter\n6.2 ns"];
+     }
+     {
+       node [color="#6d28d9", fillcolor="#f5f3ff"];
+       bots [group=left, label="8. Bot automaton\n55.7 ns"];
+       rules [label="7. Ordered rules\nWEIGH scores"];
+       trie [label="6. Reputation trie\nIPv4: 32.0 ns"];
+       waf [label="5. Shield inspection\n8 KiB body: 12.8 us"];
+     }
+     session [group=left, label="9. Session token\nkeyed BLAKE3: 155.8 ns", color="#b45309", fillcolor="#fffbeb"];
+     challenge [group=left, label="Challenge\ninterstitial (200)\nor JSON (401)", color="#b45309", fillcolor="#fffbeb"];
+     admit [label="Admit\nproxy via the origin pool,\nor a forward-auth verdict", color="#15803d", fillcolor="#f0fdf4", penwidth=1.4];
+     refuse [label="Refuse\n403, 429 or a ban", color="#b91c1c", fillcolor="#fef2f2", penwidth=1.4];
+
+     { rank=same; parse; ban; routes; gcra; }
      { rank=same; bots; rules; trie; waf; }
-     { rank=same; refuse; session; challenge; admit; }
-     accept -> parse -> ban -> routes -> gcra;
+     { rank=same; session; admit; refuse; }
+
+     accept -> parse;
+     parse -> ban -> routes -> gcra;
      gcra -> waf [label=" pass"];
-     bots -> rules [dir=back]; rules -> trie [dir=back]; trie -> waf [dir=back];
+     bots -> rules -> trie -> waf [dir=back];
+     parse -> bots [style=invis];
+     ban -> rules [style=invis];
+     routes -> trie [style=invis];
+     rules -> session [style=invis];
      bots -> session [label=" challenge"];
      bots -> admit [label=" allow"];
-     session -> admit [label=" enough work"];
-     challenge -> session [dir=back, label=" none or\n too little"];
-     ban -> refuse [style=dashed, color="#b91c1c", constraint=false];
-     waf -> refuse [style=dashed, color="#b91c1c", constraint=false, label="waf:*", fontcolor="#b91c1c"];
-     rules -> refuse [style=dashed, color="#b91c1c", constraint=false];
-     refuse -> challenge [style=invis];
+     session -> challenge [label=" none or too little"];
+     session -> admit [label="enough\nwork"];
+     admit -> refuse [style=invis];
+     ban -> refuse [style=dashed, color="#dc2626"];
+     waf -> refuse [style=dashed, color="#dc2626", label=" waf:*", fontcolor="#b91c1c"];
+     rules -> refuse [style=dashed, color="#dc2626"];
    }
 
 A valid session satisfies a challenge; it never overrides a denial or a WAF finding. The proxy, in turn, reads the origin's response head, classifies its framing (no body, a length, chunked coding, or until close), relays the body exactly, and returns origin sockets left at a clean boundary to a striped pool of 256, so a proxied client connection stays open and the origin is not reconnected for every request.
@@ -355,33 +368,36 @@ One storage thread owns the database connections; nothing else touches SQL. Requ
    :alt: An ingress sends traffic to three Sibuna nodes. In each node, connection threads read a published engine and push incidents into a bounded ring; a storage thread drains the ring, writes batches and rebuilds the engine. All three storage threads connect to one PostgreSQL primary, optionally over TLS with verify-full. The primary replicates to a standby by streaming replication, which the operator runs.
 
    digraph cluster {
-     graph [rankdir=TB, bgcolor="transparent", nodesep=0.3, ranksep=0.4, fontname="Helvetica", fontsize=9, size="6.2,3.6"];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, color="#0369a1", fillcolor="#f0f9ff", fontcolor="#0f172a"];
-     edge [color="#64748b", fontname="Helvetica", fontsize=8, fontcolor="#334155", arrowsize=0.6];
-     ingress [label="Ingress (TLS termination)\nCaddy or Nginx", color="#0f172a", fillcolor="#ffffff"];
+     graph [rankdir=TB, bgcolor="transparent", newrank=true, nodesep=0.25, ranksep=0.4, pad=0.1, fontname="Helvetica", fontsize=9, fontcolor="#334155"];
+     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9, fontcolor="#172033", color="#1e40af", fillcolor="#eff6ff", penwidth=1.1, width=1.5, height=0.42, margin="0.1,0.05"];
+     edge [color="#64748b", fontname="Helvetica", fontsize=8, fontcolor="#475569", arrowsize=0.6, penwidth=1.1];
+
+     ingress [label="Ingress (TLS termination)\nCaddy or Nginx", color="#172033", fillcolor="#ffffff", width=2.4];
      subgraph cluster_n1 {
-       label="Node 1 (cluster node 1)"; style="rounded"; color="#94a3b8"; fontcolor="#334155";
+       label=<<b>Node 1</b>>; labeljust=l; style="rounded,filled"; color="#cbd5e1"; fillcolor="#f8fafc"; margin=10;
        r1 [label="connection threads\nread the engine, push incidents"];
-       s1 [label="storage thread\nbatches, rebuilds", fillcolor="#fffbeb", color="#b45309"];
+       s1 [label="storage thread\nbatches, rebuilds", color="#b45309", fillcolor="#fffbeb"];
        r1 -> s1 [label=" ring of 512", style=dashed];
      }
      subgraph cluster_n2 {
-       label="Node 2"; style="rounded"; color="#94a3b8"; fontcolor="#334155";
+       label=<<b>Node 2</b>>; labeljust=l; style="rounded,filled"; color="#cbd5e1"; fillcolor="#f8fafc"; margin=10;
        r2 [label="connection threads"];
-       s2 [label="storage thread", fillcolor="#fffbeb", color="#b45309"];
+       s2 [label="storage thread", color="#b45309", fillcolor="#fffbeb"];
        r2 -> s2 [style=dashed];
      }
      subgraph cluster_n3 {
-       label="Node 3"; style="rounded"; color="#94a3b8"; fontcolor="#334155";
+       label=<<b>Node 3</b>>; labeljust=r; style="rounded,filled"; color="#cbd5e1"; fillcolor="#f8fafc"; margin=10;
        r3 [label="connection threads"];
-       s3 [label="storage thread", fillcolor="#fffbeb", color="#b45309"];
+       s3 [label="storage thread", color="#b45309", fillcolor="#fffbeb"];
        r3 -> s3 [style=dashed];
      }
-     pg [label="PostgreSQL primary\npolicies, reputation, incidents,\nconsole tables", shape=cylinder, style=filled, fillcolor="#ecfdf5", color="#047857"];
-     standby [label="Standby\n(operator's replication)", shape=cylinder, style="filled,dashed", fillcolor="#ffffff", color="#94a3b8"];
+     pg [label="PostgreSQL primary\npolicies, reputation, incidents,\nconsole tables", shape=cylinder, style=filled, color="#15803d", fillcolor="#f0fdf4", penwidth=1.4, width=2.4, height=0.75];
+     standby [label="Standby\n(operator's replication)", shape=cylinder, style="filled,dashed", color="#94a3b8", fillcolor="#ffffff", fontcolor="#475569", width=1.8, height=0.6];
+
+
      ingress -> r1; ingress -> r2; ingress -> r3;
      s1 -> pg [label=" SQL, TLS verify-full"]; s2 -> pg; s3 -> pg;
-     pg -> standby [label=" streaming replication", style=dashed];
+     pg -> standby [label=" streaming replication", style=dashed, color="#94a3b8"];
    }
 
 Each node of a cluster has a distinct ``--cluster-node`` identifier between 1 and 8,388,607. Challenge keys are bound to the issuing node, so a solution must return to the node that issued its challenge, while session tokens and requirement tickets are valid on every node that shares the seed. Incident identifiers carry the node in their top bits, and each node keeps a durable receipt advanced in the same transaction as its batch, so a batch replayed after an ambiguous failure writes nothing twice.
@@ -416,17 +432,17 @@ Sibuna includes an opt-in management console: authenticated dashboards with live
    :alt: A browser runs the console interface, a WebAssembly module, and talks to the console server over HTTP and a WebSocket. The console server reads the data plane's counters without entering a request thread and submits jobs to the storage thread, which owns SQLite or PostgreSQL. Outbound HTTPS and WSS connections to peer consoles, webhooks and GeoIP publishers use TLS.
 
    digraph console {
-     graph [rankdir=LR, bgcolor="transparent", nodesep=0.3, ranksep=0.5, fontname="Helvetica", fontsize=9];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, color="#0369a1", fillcolor="#f0f9ff", fontcolor="#0f172a"];
-     edge [color="#64748b", fontname="Helvetica", fontsize=8, fontcolor="#334155", arrowsize=0.6];
+     graph [rankdir=TB, bgcolor="transparent", nodesep=0.3, ranksep=0.5, pad=0.1];
+     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9, fontcolor="#172033", color="#1e40af", fillcolor="#eff6ff", penwidth=1.1, width=1.6, margin="0.1,0.05"];
+     edge [color="#64748b", fontname="Helvetica", fontsize=8, fontcolor="#475569", arrowsize=0.6, penwidth=1.1];
      browser [label="Browser\nconsole interface\n(WebAssembly)", color="#6d28d9", fillcolor="#f5f3ff"];
-     server [label="Console server\nbounded listener", style="rounded,filled,bold"];
-     plane [label="Data plane\ncounters and stats\n(read only)", color="#047857", fillcolor="#ecfdf5"];
+     server [label="Console server\nbounded listener", color="#172033", fillcolor="#ffffff", penwidth=1.8, height=0.6];
+     plane [label="Data plane\ncounters and stats\n(read only)", color="#15803d", fillcolor="#f0fdf4"];
      storage [label="Storage thread\nSQLite or PostgreSQL", color="#b45309", fillcolor="#fffbeb"];
-     tls [label="Outbound TLS\npeers (WSS), webhooks,\nGeoIP downloads", color="#0f172a", fillcolor="#ffffff"];
-     browser -> server [label="HTTP and\nWebSocket", dir=both];
-     server -> plane [label="reads", style=dashed];
-     server -> storage [label="jobs (at most 32 queued)"];
+     tls [label="Outbound TLS\npeers (WSS), webhooks,\nGeoIP downloads", color="#475569", fillcolor="#f8fafc"];
+     browser -> server [label=" HTTP and WebSocket", dir=both];
+     server -> plane [label="reads", style=dashed, color="#15803d", fontcolor="#15803d"];
+     server -> storage [label=" jobs (at most\n 32 queued)", color="#b45309", fontcolor="#92400e"];
      server -> tls [label="verified\ncertificates"];
    }
 
@@ -1067,32 +1083,36 @@ Sibuna is written in Rust, as a workspace of small crates whose dependencies poi
    :alt: A layered graph. The daemon uses policy, challenge, net and storage. Policy uses patterns, cidr, json and core. Challenge uses crypto, pow, store and encoding. Net uses http and core. Storage uses policy and core and brings sqlx. The browser prover uses pow. Pow and http use crypto; geoip uses inflate and crypto.
 
    digraph crates {
-     graph [rankdir=TB, bgcolor="transparent", nodesep=0.18, ranksep=0.5, fontname="Helvetica", fontsize=9, newrank=true];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9, color="#0369a1", fillcolor="#f0f9ff", fontcolor="#0f172a", height=0.32];
-     edge [color="#94a3b8", arrowsize=0.55];
-     sibuna [label="sibuna (daemon)", fillcolor="#ecfdf5", color="#047857", style="rounded,filled,bold"];
-     wasm [label="browser prover (WebAssembly)", fillcolor="#ecfdf5", color="#047857"];
-     storage [label="storage (sqlx)", fillcolor="#fffbeb", color="#b45309"];
-     policy [fillcolor="#f5f3ff", color="#6d28d9"];
-     challenge [fillcolor="#f5f3ff", color="#6d28d9"];
-     net [fillcolor="#f5f3ff", color="#6d28d9"];
-     core [fillcolor="#f5f3ff", color="#6d28d9"];
+     graph [rankdir=TB, bgcolor="transparent", newrank=true, nodesep=0.14, ranksep=0.42, pad=0.1, fontname="Helvetica", fontsize=8.5, fontcolor="#475569"];
+     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9, fontcolor="#172033", color="#0369a1", fillcolor="#f0f9ff", penwidth=1.0, height=0.3, width=0.6, margin="0.08,0.03"];
+     edge [color="#94a3b8", arrowsize=0.5, penwidth=0.9];
+
+     sibuna [label="sibuna (daemon)", color="#15803d", fillcolor="#bbf7d0", penwidth=1.6];
+     wasm [label="browser prover (WebAssembly)", color="#15803d", fillcolor="#f0fdf4"];
+     storage [label="storage (sqlx)", color="#b45309", fillcolor="#fffbeb"];
+     policy [color="#6d28d9", fillcolor="#f5f3ff"];
+     challenge [color="#6d28d9", fillcolor="#f5f3ff"];
+     net [color="#6d28d9", fillcolor="#f5f3ff"];
+     core [color="#6d28d9", fillcolor="#f5f3ff"];
      subgraph cluster_reusable {
-       label="reusable libraries, no third-party code"; labelloc=b; style="dashed,rounded"; color="#94a3b8"; fontcolor="#64748b";
-       patterns; cidr; json; store; pow; http; geoip;
-       crypto; encoding; inflate;
+       label="reusable libraries, no third-party code"; labelloc=b; labeljust=r; style="dashed,rounded,filled"; color="#7dd3fc"; fillcolor="#fafdff"; margin=10;
+       geoip; inflate; cidr; json; patterns; http; encoding; crypto; pow; store;
      }
-     { rank=same; sibuna; wasm; }
-     { rank=same; policy; challenge; net; core; }
-     { rank=same; patterns; cidr; json; store; pow; http; geoip; }
-     { rank=same; crypto; encoding; inflate; }
-     sibuna -> storage; sibuna -> policy; sibuna -> challenge; sibuna -> net;
+     { rank=same; wasm; sibuna; }
+     { rank=same; policy; core; net; challenge; }
+     { rank=same; geoip; cidr; json; patterns; http; pow; }
+     { rank=same; inflate; encoding; crypto; store; }
+
+     sibuna -> policy; sibuna -> storage; sibuna -> net; sibuna -> challenge;
      storage -> policy; storage -> core;
-     policy -> patterns; policy -> cidr; policy -> json; policy -> core;
-     challenge -> store; challenge -> pow; challenge -> crypto; challenge -> encoding;
-     net -> http; net -> core;
-     wasm -> pow;
-     pow -> crypto; http -> crypto; http -> encoding; geoip -> inflate; geoip -> crypto;
+     policy -> cidr; policy -> json; policy -> patterns; policy -> core;
+     core -> net [dir=back];
+     net -> http;
+     http -> encoding; http -> crypto;
+     geoip -> inflate; geoip -> crypto;
+     challenge -> encoding; challenge -> crypto; challenge -> pow; challenge -> store;
+     pow -> crypto;
+     wasm -> pow [color="#15803d"];
    }
 
 *Memory safety.* Code that bypasses the compiler's memory-safety checks is denied by default, and a module that needs it must opt in by name and justify each use in a comment. A few modules do: the paths that use the processor's SHA instructions, one write that wipes secrets, the declarations of a few C library functions for signal handling, the exports of the two WebAssembly modules, and the ring that carries incidents to the storage thread. The ring is the one place where we kept such code for speed, and only after a measurement: the standard library's bounded channel cost 20 to 45% more per push with 16 producers [#ring]_. Elsewhere ownership does the work that hand-written memory management would otherwise do: a parsed request cannot outlive its buffer, an engine is freed with its last reader, and a socket cannot be closed while any thread can still reach it.

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Sibuna: Architecture, Algorithms, and Empirical "
 "Foundations of Work-Bound Web Defense 1.0.0-beta.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-24 10:43+0000\n"
+"POT-Creation-Date: 2026-10-24 12:17+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -254,10 +254,10 @@ msgid ""
 "sender's meter is full and Sibuna's nearly empty."
 msgstr ""
 "두 행으로 된 그림입니다. 첫 행에서는 송신자가 값싼 요청 하나를 방어 시스템에 보내고, 방어 시스템은 요청마다 파싱하고, 정규 "
-"표현식으로 스캔하고, 공유 저장소에 조회합니다. 방어 시스템의 작업량 막대는 가득 차 있고 송신자의 막대는 거의 비어 있습니다. 둘째 "
-"행에서는 송신자가 기대 해시 시행 2의 b제곱 번(b가 16이면 65,536번)짜리 퍼즐을 풀고, Sibuna는 해시 하나를 70.2 "
-"ns에 검증하며 퍼즐이 풀리기 전까지는 상태를 두지 않습니다. 이번에는 송신자의 막대가 가득 차 있고 Sibuna의 막대는 거의 비어 "
-"있습니다."
+"표현식으로 스캔하고, 공유 저장소에 조회합니다. 방어 시스템의 작업량 막대는 가득 차 있고 송신자의 막대는 거의 비어 있습니다. "
+"둘째 행에서는 송신자가 기대 해시 시행 2의 b제곱 번(b가 16이면 65,536번)짜리 퍼즐을 풀고, Sibuna는 해시 하나를 "
+"70.2 ns에 검증하며 퍼즐이 풀리기 전까지는 상태를 두지 않습니다. 이번에는 송신자의 막대가 가득 차 있고 Sibuna의 막대는 "
+"거의 비어 있습니다."
 
 #: ../../index.rst:57
 msgid ""
@@ -267,9 +267,9 @@ msgid ""
 "The meters are a model; the verification time is measured (Hashcash "
 "verification at 16 bits, ``benchmarks/results/primitives-latest.md``)."
 msgstr ""
-"작업은 어디로 가는가. 위쪽의 먼저 검사하는 방어는 송신자가 보내는 모든 요청에 자기 작업을 씁니다. 아래쪽의 Sibuna는 송신자에게 "
-"기대 해시 시행 :math:`2^b`\\ 번을 요구하고, 그 답을 해시 하나로 검증합니다. 작업량 막대는 모델이고, 검증 시간은 "
-"측정값입니다(16비트 Hashcash 검증, ``benchmarks/results/primitives-latest.md``)."
+"작업은 어디로 가는가. 위쪽의 먼저 검사하는 방어는 송신자가 보내는 모든 요청에 자기 작업을 씁니다. 아래쪽의 Sibuna는 "
+"송신자에게 기대 해시 시행 :math:`2^b`\\ 번을 요구하고, 그 답을 해시 하나로 검증합니다. 작업량 막대는 모델이고, 검증 "
+"시간은 측정값입니다(16비트 Hashcash 검증, ``benchmarks/results/primitives-latest.md``)."
 
 #: ../../index.rst:59
 msgid ""
@@ -357,7 +357,7 @@ msgstr "폭주 제어"
 msgid "GCRA rate limits, honeypot, temporary bans"
 msgstr "GCRA 속도 제한, 허니팟, 임시 차단"
 
-#: ../../index.rst:82 ../../index.rst:905
+#: ../../index.rst:82 ../../index.rst:921
 msgid "Payload inspection"
 msgstr "페이로드 검사"
 
@@ -635,99 +635,119 @@ msgstr ""
 #: ../../index.rst:134
 msgid ""
 "digraph pipeline {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.28, ranksep=0.5, "
-"fontname=\"Helvetica\", fontsize=9, newrank=true];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.18, "
+"ranksep=0.34, pad=0.1, fontname=\"Helvetica\", fontsize=9, "
+"fontcolor=\"#475569\"];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, color=\"#0369a1\", fillcolor=\"#f0f9ff\", "
-"fontcolor=\"#0f172a\", width=1.25, height=0.5];\n"
+"fontsize=8.5, fontcolor=\"#172033\", color=\"#0369a1\", "
+"fillcolor=\"#f0f9ff\", penwidth=1.1, width=1.32, height=0.44, "
+"margin=\"0.08,0.04\"];\n"
 "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
-"fontcolor=\"#334155\", arrowsize=0.6];\n"
+"fontcolor=\"#475569\", arrowsize=0.55, penwidth=1.0];\n"
+"\n"
 "  accept [label=\"Accept, read head\\ninto 64 KiB buffer\", "
-"color=\"#0f172a\", fillcolor=\"#ffffff\"];\n"
-"  parse [label=\"1. Zero-copy parse\\n132.5 ns\"];\n"
-"  ban [label=\"2. Ban table\\nlock-free readers\"];\n"
-"  routes [label=\"3. Internal routes\\nchallenge, verify\"];\n"
-"  gcra [label=\"4. GCRA limiter\\n6.2 ns\"];\n"
-"  waf [label=\"5. Shield inspection\\n8 KiB body: 12.8 us\", "
-"color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
-"  trie [label=\"6. Reputation trie\\nIPv4: 32.0 ns\", color=\"#6d28d9\", "
-"fillcolor=\"#f5f3ff\"];\n"
-"  rules [label=\"7. Ordered rules\\nWEIGH scores\", color=\"#6d28d9\", "
-"fillcolor=\"#f5f3ff\"];\n"
-"  bots [label=\"8. Bot automaton\\n55.7 ns\", color=\"#6d28d9\", "
-"fillcolor=\"#f5f3ff\"];\n"
-"  session [label=\"9. Session token\\nkeyed BLAKE3: 155.8 ns\", "
-"color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
-"  refuse [label=\"Refuse\\n403, 429 or a ban\", color=\"#b91c1c\", "
-"fillcolor=\"#fef2f2\"];\n"
-"  challenge [label=\"Challenge\\ninterstitial (200)\\nor JSON (401)\", "
-"color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
+"color=\"#172033\", fillcolor=\"#ffffff\"];\n"
+"  {\n"
+"    parse [group=left, label=\"1. Zero-copy parse\\n132.5 ns\"];\n"
+"    ban [label=\"2. Ban table\\nlock-free readers\"];\n"
+"    routes [label=\"3. Internal routes\\nchallenge, verify\"];\n"
+"    gcra [label=\"4. GCRA limiter\\n6.2 ns\"];\n"
+"  }\n"
+"  {\n"
+"    node [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
+"    bots [group=left, label=\"8. Bot automaton\\n55.7 ns\"];\n"
+"    rules [label=\"7. Ordered rules\\nWEIGH scores\"];\n"
+"    trie [label=\"6. Reputation trie\\nIPv4: 32.0 ns\"];\n"
+"    waf [label=\"5. Shield inspection\\n8 KiB body: 12.8 us\"];\n"
+"  }\n"
+"  session [group=left, label=\"9. Session token\\nkeyed BLAKE3: 155.8 "
+"ns\", color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
+"  challenge [group=left, label=\"Challenge\\ninterstitial (200)\\nor JSON "
+"(401)\", color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
 "  admit [label=\"Admit\\nproxy via the origin pool,\\nor a forward-auth "
-"verdict\", color=\"#047857\", fillcolor=\"#ecfdf5\"];\n"
-"  { rank=same; accept; parse; ban; routes; gcra; }\n"
+"verdict\", color=\"#15803d\", fillcolor=\"#f0fdf4\", penwidth=1.4];\n"
+"  refuse [label=\"Refuse\\n403, 429 or a ban\", color=\"#b91c1c\", "
+"fillcolor=\"#fef2f2\", penwidth=1.4];\n"
+"\n"
+"  { rank=same; parse; ban; routes; gcra; }\n"
 "  { rank=same; bots; rules; trie; waf; }\n"
-"  { rank=same; refuse; session; challenge; admit; }\n"
-"  accept -> parse -> ban -> routes -> gcra;\n"
+"  { rank=same; session; admit; refuse; }\n"
+"\n"
+"  accept -> parse;\n"
+"  parse -> ban -> routes -> gcra;\n"
 "  gcra -> waf [label=\" pass\"];\n"
-"  bots -> rules [dir=back]; rules -> trie [dir=back]; trie -> waf "
-"[dir=back];\n"
+"  bots -> rules -> trie -> waf [dir=back];\n"
+"  parse -> bots [style=invis];\n"
+"  ban -> rules [style=invis];\n"
+"  routes -> trie [style=invis];\n"
+"  rules -> session [style=invis];\n"
 "  bots -> session [label=\" challenge\"];\n"
 "  bots -> admit [label=\" allow\"];\n"
-"  session -> admit [label=\" enough work\"];\n"
-"  challenge -> session [dir=back, label=\" none or\\n too little\"];\n"
-"  ban -> refuse [style=dashed, color=\"#b91c1c\", constraint=false];\n"
-"  waf -> refuse [style=dashed, color=\"#b91c1c\", constraint=false, "
-"label=\"waf:*\", fontcolor=\"#b91c1c\"];\n"
-"  rules -> refuse [style=dashed, color=\"#b91c1c\", constraint=false];\n"
-"  refuse -> challenge [style=invis];\n"
+"  session -> challenge [label=\" none or too little\"];\n"
+"  session -> admit [label=\"enough\\nwork\"];\n"
+"  admit -> refuse [style=invis];\n"
+"  ban -> refuse [style=dashed, color=\"#dc2626\"];\n"
+"  waf -> refuse [style=dashed, color=\"#dc2626\", label=\" waf:*\", "
+"fontcolor=\"#b91c1c\"];\n"
+"  rules -> refuse [style=dashed, color=\"#dc2626\"];\n"
 "}"
 msgstr ""
 "digraph pipeline {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.28, ranksep=0.5, "
-"fontname=\"Helvetica\", fontsize=9, newrank=true];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.18, "
+"ranksep=0.34, pad=0.1, fontname=\"Helvetica\", fontsize=9, "
+"fontcolor=\"#475569\"];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, color=\"#0369a1\", fillcolor=\"#f0f9ff\", "
-"fontcolor=\"#0f172a\", width=1.25, height=0.5];\n"
+"fontsize=8.5, fontcolor=\"#172033\", color=\"#0369a1\", "
+"fillcolor=\"#f0f9ff\", penwidth=1.1, width=1.32, height=0.44, "
+"margin=\"0.08,0.04\"];\n"
 "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
-"fontcolor=\"#334155\", arrowsize=0.6];\n"
-"  accept [label=\"수락, 헤드를\\n64 KiB 버퍼로 읽기\", color=\"#0f172a\", "
+"fontcolor=\"#475569\", arrowsize=0.55, penwidth=1.0];\n"
+"\n"
+"  accept [label=\"수락, 헤드를\\n64 KiB 버퍼로 읽기\", color=\"#172033\", "
 "fillcolor=\"#ffffff\"];\n"
-"  parse [label=\"1. 제로 카피 파싱\\n132.5 ns\"];\n"
-"  ban [label=\"2. 차단 테이블\\n락 프리 읽기\"];\n"
-"  routes [label=\"3. 내부 경로\\n챌린지, 검증\"];\n"
-"  gcra [label=\"4. GCRA 속도 제한기\\n6.2 ns\"];\n"
-"  waf [label=\"5. Shield 검사\\n8 KiB 본문: 12.8 us\", color=\"#6d28d9\", "
-"fillcolor=\"#f5f3ff\"];\n"
-"  trie [label=\"6. 평판 트라이\\nIPv4: 32.0 ns\", color=\"#6d28d9\", "
-"fillcolor=\"#f5f3ff\"];\n"
-"  rules [label=\"7. 순서 있는 규칙\\nWEIGH 점수\", color=\"#6d28d9\", "
-"fillcolor=\"#f5f3ff\"];\n"
-"  bots [label=\"8. 봇 오토마톤\\n55.7 ns\", color=\"#6d28d9\", "
-"fillcolor=\"#f5f3ff\"];\n"
-"  session [label=\"9. 세션 토큰\\n키 기반 BLAKE3: 155.8 ns\", color=\"#b45309\", "
-"fillcolor=\"#fffbeb\"];\n"
-"  refuse [label=\"거부\\n403, 429 또는 차단\", color=\"#b91c1c\", "
-"fillcolor=\"#fef2f2\"];\n"
-"  challenge [label=\"챌린지\\n중간 페이지(200)\\n또는 JSON(401)\", "
+"  {\n"
+"    parse [group=left, label=\"1. 제로 카피 파싱\\n132.5 ns\"];\n"
+"    ban [label=\"2. 차단 테이블\\n락 프리 읽기\"];\n"
+"    routes [label=\"3. 내부 경로\\n챌린지, 검증\"];\n"
+"    gcra [label=\"4. GCRA 속도 제한기\\n6.2 ns\"];\n"
+"  }\n"
+"  {\n"
+"    node [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
+"    bots [group=left, label=\"8. 봇 오토마톤\\n55.7 ns\"];\n"
+"    rules [label=\"7. 순서 있는 규칙\\nWEIGH 점수\"];\n"
+"    trie [label=\"6. 평판 트라이\\nIPv4: 32.0 ns\"];\n"
+"    waf [label=\"5. Shield 검사\\n8 KiB 본문: 12.8 us\"];\n"
+"  }\n"
+"  session [group=left, label=\"9. 세션 토큰\\n키 기반 BLAKE3: 155.8 ns\", "
+"color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
+"  challenge [group=left, label=\"챌린지\\n중간 페이지(200)\\n또는 JSON(401)\", "
 "color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
 "  admit [label=\"허용\\n원본 서버 풀로 프록시\\n또는 forward-auth 판정\", "
-"color=\"#047857\", fillcolor=\"#ecfdf5\"];\n"
-"  { rank=same; accept; parse; ban; routes; gcra; }\n"
+"color=\"#15803d\", fillcolor=\"#f0fdf4\", penwidth=1.4];\n"
+"  refuse [label=\"거부\\n403, 429 또는 차단\", color=\"#b91c1c\", "
+"fillcolor=\"#fef2f2\", penwidth=1.4];\n"
+"\n"
+"  { rank=same; parse; ban; routes; gcra; }\n"
 "  { rank=same; bots; rules; trie; waf; }\n"
-"  { rank=same; refuse; session; challenge; admit; }\n"
-"  accept -> parse -> ban -> routes -> gcra;\n"
+"  { rank=same; session; admit; refuse; }\n"
+"\n"
+"  accept -> parse;\n"
+"  parse -> ban -> routes -> gcra;\n"
 "  gcra -> waf [label=\" 통과\"];\n"
-"  bots -> rules [dir=back]; rules -> trie [dir=back]; trie -> waf "
-"[dir=back];\n"
+"  bots -> rules -> trie -> waf [dir=back];\n"
+"  parse -> bots [style=invis];\n"
+"  ban -> rules [style=invis];\n"
+"  routes -> trie [style=invis];\n"
+"  rules -> session [style=invis];\n"
 "  bots -> session [label=\" 챌린지\"];\n"
 "  bots -> admit [label=\" 허용\"];\n"
-"  session -> admit [label=\" 작업 충분\"];\n"
-"  challenge -> session [dir=back, label=\" 없거나\\n 부족함\"];\n"
-"  ban -> refuse [style=dashed, color=\"#b91c1c\", constraint=false];\n"
-"  waf -> refuse [style=dashed, color=\"#b91c1c\", constraint=false, "
-"label=\"waf:*\", fontcolor=\"#b91c1c\"];\n"
-"  rules -> refuse [style=dashed, color=\"#b91c1c\", constraint=false];\n"
-"  refuse -> challenge [style=invis];\n"
+"  session -> challenge [label=\" 없거나 부족함\"];\n"
+"  session -> admit [label=\"작업\\n충분\"];\n"
+"  admit -> refuse [style=invis];\n"
+"  ban -> refuse [style=dashed, color=\"#dc2626\"];\n"
+"  waf -> refuse [style=dashed, color=\"#dc2626\", label=\" waf:*\", "
+"fontcolor=\"#b91c1c\"];\n"
+"  rules -> refuse [style=dashed, color=\"#dc2626\"];\n"
 "}"
 
 #: ../../index.rst:134
@@ -745,7 +765,7 @@ msgstr ""
 "화살표는 조기 거부를 나타냅니다(GCRA 속도 제한기와 평판 트라이도 같은 방식으로 거부합니다). 브라우저 요청 하나의 전체 분류는 "
 "Gate 프로필에서 75.9 ns, Shield 프로필에서 790.8 ns가 걸립니다."
 
-#: ../../index.rst:170
+#: ../../index.rst:183
 msgid ""
 "A valid session satisfies a challenge; it never overrides a denial or a "
 "WAF finding. The proxy, in turn, reads the origin's response head, "
@@ -759,11 +779,11 @@ msgstr ""
 "서버 소켓을 256개짜리 스트라이프 풀에 돌려줍니다. 그래서 프록시된 클라이언트 연결은 열린 채로 유지되고, 요청마다 원본 서버에 "
 "다시 연결하지 않습니다."
 
-#: ../../index.rst:172
+#: ../../index.rst:185
 msgid "Publishing Policy Without Stopping Requests"
 msgstr "요청을 멈추지 않는 정책 게시"
 
-#: ../../index.rst:175
+#: ../../index.rst:188
 msgid ""
 "The policy engine is rebuilt off the request path when policies change, "
 "and requests must never see a half-built engine. The storage thread "
@@ -783,66 +803,66 @@ msgstr ""
 "400배 넘게 저렴합니다. 엔진 자체는 약 200 KiB(209,052바이트)의 압축된 테이블을 담으며, 규칙 128개와 트라이 "
 "노드 8,192개를 수용합니다."
 
-#: ../../index.rst:177
+#: ../../index.rst:190
 msgid ""
 "The cost of one engine read with 1 and 16 threads reading in a loop, on a "
 "Ryzen 9 5950X (book Part V, October 2026)"
 msgstr ""
 "스레드 1개와 16개가 루프로 읽을 때 엔진 읽기 한 번의 비용, Ryzen 9 5950X (기술 안내서 제V부, 2026년 10월)"
 
-#: ../../index.rst:181
+#: ../../index.rst:194
 msgid "Reader"
 msgstr "읽기 방식"
 
-#: ../../index.rst:182
+#: ../../index.rst:195
 msgid "1 thread"
 msgstr "스레드 1개"
 
-#: ../../index.rst:183
+#: ../../index.rst:196
 msgid "16 threads"
 msgstr "스레드 16개"
 
-#: ../../index.rst:184
+#: ../../index.rst:197
 msgid "Read-write lock, read guard only"
 msgstr "읽기-쓰기 락, 읽기 가드만"
 
-#: ../../index.rst:185
+#: ../../index.rst:198
 msgid "4.2 ns"
 msgstr "4.2 ns"
 
-#: ../../index.rst:186
+#: ../../index.rst:199
 msgid "752 ns"
 msgstr "752 ns"
 
-#: ../../index.rst:187
+#: ../../index.rst:200
 msgid "Read-write lock and a new reference"
 msgstr "읽기-쓰기 락과 새 참조"
 
-#: ../../index.rst:188
+#: ../../index.rst:201
 msgid "7.6 ns"
 msgstr "7.6 ns"
 
-#: ../../index.rst:189
+#: ../../index.rst:202
 msgid "833 ns"
 msgstr "833 ns"
 
-#: ../../index.rst:190
+#: ../../index.rst:203
 msgid "Generation check with a cached reference"
 msgstr "캐시된 참조와 세대 확인"
 
-#: ../../index.rst:191
+#: ../../index.rst:204
 msgid "0.8 ns"
 msgstr "0.8 ns"
 
-#: ../../index.rst:192
+#: ../../index.rst:205
 msgid "1.8 ns"
 msgstr "1.8 ns"
 
-#: ../../index.rst:194
+#: ../../index.rst:207
 msgid "Locks in Shards"
 msgstr "샤드별 락"
 
-#: ../../index.rst:197
+#: ../../index.rst:210
 msgid ""
 "The tables that connection threads share (the spent set, the limiter, the "
 "ban table) are split into 16 shards by a hash of the key, and each shard "
@@ -858,77 +878,77 @@ msgstr ""
 "비교 측정했습니다. 경합이 없을 때 스핀 락은 약 1나노초를 아끼지만, 엣지 서버는 CPU 수보다 많은 스레드를 실행하며, 보유자가 "
 "선점된 스핀 락은 모든 대기자가 자기 시간 조각을 태우게 만듭니다. 경합 상황에서 뮤텍스가 이겼으므로 뮤텍스를 유지했습니다."
 
-#: ../../index.rst:199
+#: ../../index.rst:212
 msgid ""
 "Shard lock throughput in millions of operations per second on a Ryzen 9 "
 "5950X (book Part V; SID 0010)"
 msgstr "샤드 락 처리량, 초당 백만 연산 단위, Ryzen 9 5950X (기술 안내서 제V부, SID 0010)"
 
-#: ../../index.rst:203 ../../index.rst:480 ../../index.rst:942
+#: ../../index.rst:216 ../../index.rst:496 ../../index.rst:958
 msgid "Workload"
 msgstr "워크로드"
 
-#: ../../index.rst:204
+#: ../../index.rst:217
 msgid "Adaptive mutex"
 msgstr "적응형 뮤텍스"
 
-#: ../../index.rst:205
+#: ../../index.rst:218
 msgid "Spin lock"
 msgstr "스핀 락"
 
-#: ../../index.rst:206
+#: ../../index.rst:219
 msgid "Spent set, 16 threads"
 msgstr "사용 완료 집합, 스레드 16개"
 
-#: ../../index.rst:207
+#: ../../index.rst:220
 msgid "10.8"
 msgstr "10.8"
 
-#: ../../index.rst:208
+#: ../../index.rst:221
 msgid "8.6"
 msgstr "8.6"
 
-#: ../../index.rst:209
+#: ../../index.rst:222
 msgid "Spent set, 64 threads"
 msgstr "사용 완료 집합, 스레드 64개"
 
-#: ../../index.rst:210
+#: ../../index.rst:223
 msgid "11.2"
 msgstr "11.2"
 
-#: ../../index.rst:211
+#: ../../index.rst:224
 msgid "6.9"
 msgstr "6.9"
 
-#: ../../index.rst:212
+#: ../../index.rst:225
 msgid "GCRA on six hot addresses, 16 threads"
 msgstr "요청이 몰리는 주소 6개에 대한 GCRA, 스레드 16개"
 
-#: ../../index.rst:213
+#: ../../index.rst:226
 msgid "44.9"
 msgstr "44.9"
 
-#: ../../index.rst:214
+#: ../../index.rst:227
 msgid "19.3"
 msgstr "19.3"
 
-#: ../../index.rst:215
+#: ../../index.rst:228
 msgid "GCRA on six hot addresses, 64 threads"
 msgstr "요청이 몰리는 주소 6개에 대한 GCRA, 스레드 64개"
 
-#: ../../index.rst:216
+#: ../../index.rst:229
 msgid "37.4"
 msgstr "37.4"
 
-#: ../../index.rst:217
+#: ../../index.rst:230
 msgid "6.5"
 msgstr "6.5"
 
-#: ../../index.rst:221
+#: ../../index.rst:234
 msgid "Algorithms and Their Guarantees"
 msgstr "알고리즘과 그 보장"
 
-#: ../../index.rst:224
+#: ../../index.rst:237
 msgid ""
 "Each primitive on the request path has a statement of what it costs and "
 "what it guarantees. We give three of them as theorems, with the argument "
@@ -938,13 +958,13 @@ msgstr ""
 "요청 경로의 각 기본 연산에는 무엇을 대가로 무엇을 보장하는지에 대한 명제가 있습니다. 그중 세 가지를 정리로 제시하고 논증은 "
 "간략히 적습니다. 완전한 증명, 정의, 참고 문헌은 SID 0006과 Sibuna 기술 안내서 제III부부터 제VI부까지에 있습니다."
 
-#: ../../index.rst:226
+#: ../../index.rst:239
 msgid ""
 "Theorem 1 (Linear-time inspection with a byte-class Aho-Corasick "
 "automaton)"
 msgstr "정리 1 (바이트 클래스 Aho-Corasick 오토마톤을 이용한 선형 시간 검사)"
 
-#: ../../index.rst:228
+#: ../../index.rst:241
 msgid ""
 "Let :math:`\\mathcal{P}` be a set of patterns of total length :math:`m` "
 "whose bytes fall into :math:`c \\le 256` classes, and let a text have "
@@ -958,7 +978,7 @@ msgstr ""
 ":math:`O(mc)` 시간과 공간에 만들고, 어떤 패턴이 텍스트에 나타나는지를 :math:`O(M)` 시간에 보고합니다. 입력 "
 "바이트마다 의존적인 테이블 읽기가 한 번이며, 이는 패턴 수와 무관합니다. 어떤 입력도 백트래킹을 일으킬 수 없습니다."
 
-#: ../../index.rst:230
+#: ../../index.rst:243
 msgid ""
 "*Proof sketch.* The automaton of Aho and Corasick scans a text once after "
 "building a trie with failure links. Sibuna folds the failure links into "
@@ -975,7 +995,7 @@ msgstr ""
 "클래스입니다. 따라서 테이블 한 행은 256개가 아니라 :math:`c`\\ 개 항목을 가집니다. 일치 상태는 다른 모든 상태 뒤에 "
 "번호가 매겨지므로, 일치 감지는 비교 한 번입니다."
 
-#: ../../index.rst:232
+#: ../../index.rst:245
 msgid ""
 "*Measurement.* On 40 bot signatures the automaton takes 55.7 ns against "
 "763.0 ns for sequential substring search with the same patterns and "
@@ -986,11 +1006,11 @@ msgstr ""
 "검색의 763.0 ns보다 13.7배 빠릅니다. 바이트 클래스 덕분에 봇 시그니처 테이블 전체가 42,244바이트입니다 "
 "[#automaton]_."
 
-#: ../../index.rst:234
+#: ../../index.rst:247
 msgid "Theorem 2 (The GCRA interval bound)"
 msgstr "정리 2 (GCRA 구간 상한)"
 
-#: ../../index.rst:236
+#: ../../index.rst:249
 msgid ""
 "Fix a limit of :math:`N` requests per window :math:`W`, with emission "
 "interval :math:`T = \\max(1, \\lceil W/N \\rceil)` and burst tolerance "
@@ -1009,7 +1029,7 @@ msgstr ""
 "그러면 적합한 도착으로 시작하는 길이 :math:`L`\\ 의 모든 구간에는 적합한 도착이 많아야 :math:`N + "
 "\\lfloor L/T \\rfloor`\\ 개 있습니다."
 
-#: ../../index.rst:238
+#: ../../index.rst:251
 msgid ""
 "*Proof sketch.* Number the conforming arrivals :math:`1, \\dots, k` at "
 "times :math:`t_1 \\le \\dots \\le t_k`. Each conforming arrival raises "
@@ -1026,7 +1046,7 @@ msgstr ""
 "\\tau`\\ 입니다. 두 식을 합치면 :math:`(k-1)T \\le L + (N-1)T`, 즉 :math:`k \\le N "
 "+ L/T`\\ 이고, :math:`k`\\ 는 정수입니다."
 
-#: ../../index.rst:240
+#: ../../index.rst:253
 msgid ""
 "*Implementation.* The state of a client is one 16-byte cell, with no "
 "per-request history and no fixed-window boundary effect. The 16 shards "
@@ -1040,11 +1060,11 @@ msgstr ""
 "정리 스레드 없이 제자리에서 회수됩니다. 데몬이 이미 해시를 계산해 둔 클라이언트를 검사하는 데는 6.2 ns가 걸립니다 "
 "[#gcra]_."
 
-#: ../../index.rst:242
+#: ../../index.rst:255
 msgid "Theorem 3 (State grows only with paid work)"
 msgstr "정리 3 (상태는 대가를 치른 작업으로만 늘어남)"
 
-#: ../../index.rst:244
+#: ../../index.rst:257
 msgid ""
 "Let :math:`S` be the set of challenge tags the daemon remembers. A tag "
 "enters :math:`S` only after a valid proof for its challenge was accepted, "
@@ -1058,7 +1078,7 @@ msgstr ""
 ":math:`r`\\ 이하이면 :math:`|S| \\le r \\cdot \\mathrm{TTL}`\\ 입니다. 가져갔지만 풀지 "
 "않은 챌린지는 메모리를 차지하지 않습니다."
 
-#: ../../index.rst:246
+#: ../../index.rst:259
 msgid ""
 "*Proof sketch.* A challenge identifier is a self-authenticating record: "
 "version, algorithm, difficulty, opening count, issue time, the client's "
@@ -1078,7 +1098,7 @@ msgstr ""
 "BLAKE3를 의사 난수 함수로 모델링하면, 검증 질의를 :math:`q`\\ 번 하는 공격자가 태그를 위조할 확률은 많아야 "
 ":math:`q \\cdot 2^{-128}`\\ 에 PRF 이점을 더한 값입니다."
 
-#: ../../index.rst:248
+#: ../../index.rst:261
 msgid ""
 "*Implementation.* The spent set is 16 shards of Robin Hood open "
 "addressing. An expired entry may be overwritten in place only by a key at "
@@ -1092,11 +1112,11 @@ msgstr ""
 "있습니다. 이 규칙 덕분에 정리 스레드가 필요 없고, 거부된 삽입이 살아 있는 태그를 내쫓는 일도 없습니다. 사용 처리와 조회를 "
 "합쳐 21.0 ns가 걸립니다 [#spent]_."
 
-#: ../../index.rst:250
+#: ../../index.rst:263
 msgid "The Semantic Firewall"
 msgstr "의미 기반 방화벽"
 
-#: ../../index.rst:253
+#: ../../index.rst:266
 msgid ""
 "Shield inspects the path, the query, the User-Agent, the headers that are "
 "not structural, and the first 8 KiB of the body. Its first version taught "
@@ -1113,11 +1133,11 @@ msgstr ""
 "인젝션으로 분류되었습니다. 그 뒤로 탐지기는 *구조*\\ 에만 반응할 수 있으며, 완전한 Chrome 요청을 엔진에 통과시켜 "
 "깨끗하게 나와야 한다고 요구하는 테스트가 있습니다 [#waf]_."
 
-#: ../../index.rst:255
+#: ../../index.rst:268
 msgid "Inspection has four stages, each linear in the field."
 msgstr "검사는 네 단계로 이루어지며, 각 단계는 필드 길이에 선형입니다."
 
-#: ../../index.rst:257
+#: ../../index.rst:270
 msgid ""
 "*A byte-class pre-scan.* One pass with a 256-entry table records which "
 "classes of byte occur: quotes, ``=``, ``<``, shell separators, ``%``, NUL "
@@ -1129,7 +1149,7 @@ msgstr ""
 "``<``, 셸 구분자, ``%``, NUL, 정규화 계기입니다. 이후의 모든 탐지기는 다시 스캔하지 않고 이 클래스를 참조하므로, "
 "따옴표나 등호가 없는 필드는 SQL 토크나이저에 아예 들어가지 않습니다."
 
-#: ../../index.rst:258
+#: ../../index.rst:271
 msgid ""
 "*A tagged signature automaton.* All strong signatures of every category "
 "live in one automaton (Theorem 1). A hit is a terminal denial named "
@@ -1139,7 +1159,7 @@ msgstr ""
 "``waf:sqli``, ``waf:xss``, ``waf:path-traversal``, ``waf:rce``\\ 라는 이름의 "
 "최종 거부가 됩니다."
 
-#: ../../index.rst:259
+#: ../../index.rst:272
 msgid ""
 "*Structural tokenizers.* The SQL tokenizer looks up each short word in a "
 "keyword table and checks ``literal = literal`` tautologies after ``or`` "
@@ -1156,7 +1176,7 @@ msgstr ""
 "사이트 스크립팅은 스크립트를 담을 수 있는 태그와 속성 위치의 이벤트 핸들러 속성을 함께 요구하고, 명령 인젝션은 구분자 뒤에 "
 "대입이 아닌 명령 이름이 오기를 요구합니다. 그래서 ``a=1&id=5``\\ 는 명령이 아니라 매개변수입니다."
 
-#: ../../index.rst:260
+#: ../../index.rst:273
 msgid ""
 "*Canonicalisation.* A field with percent escapes, comment openers, JSON "
 "or HTML escapes, or collapsible white space is decoded and inspected "
@@ -1167,7 +1187,7 @@ msgstr ""
 "다시 검사합니다. 그래서 ``1%27/**/UnIoN/**/SeLeCt``\\ 와 ``%252e%252e/``\\ 는 원래 "
 "시그니처로 수렴합니다."
 
-#: ../../index.rst:262
+#: ../../index.rst:275
 msgid ""
 "An 8 KiB body scans in 12,784.3 ns, about 1.56 ns per byte. An operator "
 "may audit a category rather than enforce it, so that its findings are "
@@ -1187,11 +1207,11 @@ msgstr ""
 "걸립니다 [#waf-cost]_. Shield는 여전히 상한이 있는 휴리스틱 검사기이며 완전한 SQL 파서나 HTML 파서가 "
 "아닙니다. 검사 한도를 넘는 바이트는 검사하지 않습니다."
 
-#: ../../index.rst:264
+#: ../../index.rst:277
 msgid "TLS Fingerprints From the Ingress"
 msgstr "인그레스에서 받는 TLS 지문"
 
-#: ../../index.rst:267
+#: ../../index.rst:280
 msgid ""
 "A User-Agent is a string that any client may write as it likes. A JA4 "
 "fingerprint is harder to forge. It summarises how a client opens a TLS "
@@ -1209,7 +1229,7 @@ msgstr ""
 "신뢰할 수 있는 인그레스가 계산해 ``--ja4-header``\\ 로 지정한 요청 헤더에 담아 전달한 지문을 읽습니다 "
 "[#ja4]_."
 
-#: ../../index.rst:269
+#: ../../index.rst:282
 msgid ""
 "*Trust.* The header is read only when forwarded headers are trusted, by "
 "the decision that governs ``X-Forwarded-For``. From an untrusted peer it "
@@ -1220,7 +1240,7 @@ msgstr ""
 "따릅니다. 신뢰할 수 없는 피어에서 온 헤더는 무시하고, 리버스 프록시 모드에서는 요청이 원본 서버에 도달하기 전에 이 헤더를 모두 "
 "제거합니다."
 
-#: ../../index.rst:270
+#: ../../index.rst:283
 msgid ""
 "*Validation.* A value is accepted only in the 36-byte JA4 form, and only "
 "when exactly one field of that name is present. A malformed or repeated "
@@ -1229,7 +1249,7 @@ msgstr ""
 "*검증.* 값은 36바이트 JA4 형식일 때, 그리고 그 이름의 필드가 정확히 하나 있을 때에만 받아들입니다. 형식이 잘못되었거나 "
 "반복된 값은 없는 것으로 취급하고 그 횟수를 셉니다."
 
-#: ../../index.rst:271
+#: ../../index.rst:284
 msgid ""
 "*Policy.* A rule matches a whole fingerprint, or a prefix followed by "
 "``*``; a request without a fingerprint never matches such a rule. "
@@ -1239,7 +1259,7 @@ msgstr ""
 "*정책.* 규칙은 지문 전체, 또는 ``*``\\ 가 뒤따르는 접두사와 일치합니다. 지문이 없는 요청은 이런 규칙과 결코 일치하지 "
 "않습니다. 비교는 바이트 비교이며, 예열된 요청 경로는 여전히 힙 할당을 하지 않습니다."
 
-#: ../../index.rst:272
+#: ../../index.rst:285
 msgid ""
 "*Records.* Incidents store the fingerprint of their request, and the "
 "console shows it in the incident evidence and filters events by it. Bans "
@@ -1249,11 +1269,11 @@ msgstr ""
 "*기록.* 인시던트는 해당 요청의 지문을 저장하고, 콘솔은 인시던트 증거에 지문을 보여 주며 지문으로 이벤트를 필터링합니다. 차단과 "
 "평판은 계속 주소를 키로 삼습니다. 정상 클라이언트 다수가 같은 TLS 라이브러리를 공유하기 때문입니다."
 
-#: ../../index.rst:276
+#: ../../index.rst:289
 msgid "Keyed Hashing and the Security Review"
 msgstr "키 기반 해싱과 보안 검토"
 
-#: ../../index.rst:279
+#: ../../index.rst:292
 msgid ""
 "An adversarial review of the request path in October 2026 found "
 "weaknesses in mechanisms we had considered settled. We fixed each one and "
@@ -1262,7 +1282,7 @@ msgstr ""
 "2026년 10월 요청 경로를 공격자의 관점에서 검토한 결과, 이미 해결되었다고 여긴 메커니즘에서 약점이 드러났습니다. 약점마다 "
 "수정하고, 그 내용을 해당 메커니즘의 설계 기록에 남겼습니다 [#security]_."
 
-#: ../../index.rst:281
+#: ../../index.rst:294
 msgid ""
 "*Predictable table placement.* The limiter and the ban table placed keys "
 "with a hash under seeds written in the source, so anyone could compute "
@@ -1277,7 +1297,7 @@ msgstr ""
 "사용하며, 테이블마다 자체 키를 도출합니다. 데몬은 요청마다 클라이언트를 한 번만 해시하고(8.7 ns) 그 해시를 모든 테이블에 "
 "넘깁니다. 요청의 저장 경로는 43 ns에서 26 ns로 줄었습니다."
 
-#: ../../index.rst:282
+#: ../../index.rst:295
 msgid ""
 "*Ban eviction.* A ban in effect is never evicted. When every slot a key "
 "may take holds a live ban, the new ban is refused and counted, so a "
@@ -1286,7 +1306,7 @@ msgstr ""
 "*차단 축출.* 유효한 차단은 결코 축출되지 않습니다. 키가 차지할 수 있는 모든 슬롯에 유효한 차단이 있으면 새 차단을 거부하고 "
 "그 횟수를 셉니다. 따라서 차단된 클라이언트가 자기 차단을 밀어낼 수 없습니다."
 
-#: ../../index.rst:283
+#: ../../index.rst:296
 msgid ""
 "*Forwarded identity.* The leftmost ``X-Forwarded-For`` entry can be "
 "written by the client. Sibuna takes the entry ``--trusted-hops`` "
@@ -1295,7 +1315,7 @@ msgstr ""
 "*전달된 신원.* ``X-Forwarded-For``\\ 의 가장 왼쪽 항목은 클라이언트가 직접 쓸 수 있습니다. Sibuna는 "
 "오른쪽에서 ``--trusted-hops``\\ 번째 항목, 즉 가장 가까운 신뢰할 수 있는 프록시가 덧붙인 항목을 사용합니다."
 
-#: ../../index.rst:284
+#: ../../index.rst:297
 msgid ""
 "*Cookie tossing.* A request may carry several values of the session "
 "cookie; the daemon tries up to eight, so a cookie planted by a sibling "
@@ -1304,7 +1324,7 @@ msgstr ""
 "*쿠키 토싱(cookie tossing).* 요청 하나에 세션 쿠키 값이 여러 개 담길 수 있습니다. 데몬은 최대 여덟 개까지 "
 "시도하므로, 형제 도메인이 심어 둔 쿠키가 방문자를 챌린지 루프에 가둘 수 없습니다."
 
-#: ../../index.rst:285
+#: ../../index.rst:298
 msgid ""
 "*Spent-set capacity.* A table of 65,536 tags was exhausted by about 220 "
 "verified solutions per second within a five-minute challenge lifetime, "
@@ -1315,7 +1335,7 @@ msgstr ""
 "찼고, 그 뒤로는 정직한 풀이가 거부되었습니다. 이제 용량은 설정할 수 있으며, 기본값은 태그 1,048,576개(24 "
 "MiB)입니다."
 
-#: ../../index.rst:286
+#: ../../index.rst:299
 msgid ""
 "*Adaptive difficulty.* The controller that raises the work under load now "
 "counts verified solutions instead of issued challenges, which cost a "
@@ -1324,7 +1344,7 @@ msgstr ""
 "*적응형 난이도.* 부하가 높을 때 작업량을 올리는 제어기는 이제 발급된 챌린지 대신 검증된 풀이를 셉니다. 챌린지 발급은 요청을 "
 "쏟아붓는 쪽에 아무 비용도 들지 않기 때문입니다."
 
-#: ../../index.rst:288
+#: ../../index.rst:301
 msgid ""
 "Keyed placement has a price, and we pay it once per request rather than "
 "once per table. A limiter check that hashes raw client bytes itself takes "
@@ -1338,15 +1358,15 @@ msgstr ""
 "제한기와 사용 완료 집합은 0으로 채운 상태로 할당되므로 유휴 테이블은 메모리에 상주하지 않습니다. 따라서 설정한 용량은 실제로 "
 "쓰기 전까지 메모리를 차지하지 않습니다."
 
-#: ../../index.rst:292
+#: ../../index.rst:305
 msgid "Proofs of Work: Parallel Search and Sequential Work"
 msgstr "작업 증명: 병렬 탐색과 순차 작업"
 
-#: ../../index.rst:295
+#: ../../index.rst:308
 msgid "The Hashcash Tier"
 msgstr "Hashcash 계층"
 
-#: ../../index.rst:298
+#: ../../index.rst:311
 msgid ""
 "The first tier is Hashcash at bit granularity. For a challenge string "
 ":math:`C` and difficulty :math:`b`, the client finds a nonce :math:`N` "
@@ -1364,7 +1384,7 @@ msgstr ""
 "네이티브 검증기의 전송 형식이 똑같습니다. 이상적인 다이제스트라면 시행 횟수 :math:`K`\\ 는 :math:`p = "
 "2^{-b}`\\ 인 기하 분포를 따릅니다."
 
-#: ../../index.rst:300
+#: ../../index.rst:313
 msgid ""
 "P(K > k) = (1 - p)^k, \\qquad E[K] = 2^b, \\qquad \\mathrm{median}(K) "
 "\\approx 2^b \\ln 2."
@@ -1372,7 +1392,7 @@ msgstr ""
 "P(K > k) = (1 - p)^k, \\qquad E[K] = 2^b, \\qquad \\mathrm{median}(K) "
 "\\approx 2^b \\ln 2."
 
-#: ../../index.rst:304
+#: ../../index.rst:317
 msgid ""
 "Search has two limits. Its variance is large, so one slow solve is not a "
 "broken worker. And independent trials run in parallel, so a sender with "
@@ -1382,11 +1402,11 @@ msgstr ""
 "탐색에는 두 가지 한계가 있습니다. 분산이 크므로 풀이 한 번이 느리다고 해서 워커가 고장 난 것은 아닙니다. 또 독립 시행은 "
 "병렬로 실행되므로, 기대 총작업량은 같더라도 코어가 많은 송신자가 더 빨리 끝냅니다 [#hashcash]_."
 
-#: ../../index.rst:306
+#: ../../index.rst:319
 msgid "The Sequential-Work Tier"
 msgstr "순차 작업 계층"
 
-#: ../../index.rst:309
+#: ../../index.rst:322
 msgid ""
 "The second tier follows the proof of sequential work of Cohen and "
 "Pietrzak (EUROCRYPT 2018). Its labels form a complete binary tree of "
@@ -1410,7 +1430,7 @@ msgstr ""
 "계산하고 :math:`\\varphi`\\ 까지 해시해 올라갑니다. 비용은 고정된 작업 공간에서 라벨 계산 "
 ":math:`O(tn)`\\ 번입니다."
 
-#: ../../index.rst:311
+#: ../../index.rst:324
 msgid ""
 "Left, four cores each try a disjoint share of the nonces, and core 3 "
 "finds one at nonce 18, after which every core stops. Right, a binary tree "
@@ -1418,11 +1438,11 @@ msgid ""
 "3.4 sent in its opening are green, and dashed red arrows run from 1.0 and "
 "3.4 into leaf 3.5."
 msgstr ""
-"왼쪽에서는 코어 네 개가 서로 겹치지 않는 nonce 몫을 각각 시도하다가, 코어 3이 nonce 18에서 하나를 찾으면 모든 코어가 "
-"멈춥니다. 오른쪽은 깊이 3인 이진 트리입니다. 잎 3.5의 경로는 호박색, 그 개방에 담겨 전송되는 형제 1.0, 2.3, 3.4는 "
-"녹색이며, 빨간 점선 화살표가 1.0과 3.4에서 잎 3.5로 이어집니다."
+"왼쪽에서는 코어 네 개가 서로 겹치지 않는 nonce 몫을 각각 시도하다가, 코어 3이 nonce 18에서 하나를 찾으면 모든 "
+"코어가 멈춥니다. 오른쪽은 깊이 3인 이진 트리입니다. 잎 3.5의 경로는 호박색, 그 개방에 담겨 전송되는 형제 1.0, 2.3, "
+"3.4는 녹색이며, 빨간 점선 화살표가 1.0과 3.4에서 잎 3.5로 이어집니다."
 
-#: ../../index.rst:314
+#: ../../index.rst:327
 msgid ""
 "Parallel search against sequential work. Left, Hashcash: independent "
 "nonce trials, so :math:`M` cores finish about :math:`M` times sooner. "
@@ -1435,7 +1455,7 @@ msgstr ""
 "때문에 잎 3.5는 왼쪽 하위 트리가 끝나기를 기다려야 하며, 잎 3.5의 개방은 그 라벨과 녹색 형제 세 개를 보냅니다(기술 "
 "안내서 제III부에서 가져옴)."
 
-#: ../../index.rst:316
+#: ../../index.rst:329
 msgid ""
 "The parameters are chosen so that the numbers stay small. Work bits map "
 "to depth by :math:`n = b - 3`, clamped to :math:`[4, 24]`. A proof has "
@@ -1454,7 +1474,7 @@ msgstr ""
 "테스트는 같은 증명자를 사용합니다 [#posw]_. Blocki, Lee, Zhou(ITC 2021)는 양자 랜덤 오라클 모델에서 "
 "이 구성이 양자 증명자에 대해서도 건전함을 증명했습니다."
 
-#: ../../index.rst:318
+#: ../../index.rst:331
 msgid ""
 "We should be careful about what this establishes. The security results "
 "hold under the random-oracle assumptions of the papers, for the "
@@ -1473,11 +1493,11 @@ msgstr ""
 "상한만으로는 루트를 많이 만들어 골라 보는 증명자에 대한 증명이 되지 않습니다. 부정행위가 결코 더 싸지 않다고 무조건 주장하지는 "
 "않습니다."
 
-#: ../../index.rst:320
+#: ../../index.rst:333
 msgid "The Round Trip and the Session"
 msgstr "왕복 과정과 세션"
 
-#: ../../index.rst:323
+#: ../../index.rst:336
 msgid ""
 "A navigation without a valid session receives the interstitial page, "
 "which carries a *requirement ticket*: the challenge this decision demands "
@@ -1500,11 +1520,11 @@ msgstr ""
 "페이지는 다시 불러옵니다. 브라우저의 증명자는 서버의 검증기와 같은 소스에서 컴파일되므로 둘이 서로 어긋날 수 없습니다 "
 "[#round-trip]_."
 
-#: ../../index.rst:325
+#: ../../index.rst:338
 msgid "What Verification Costs"
 msgstr "검증 비용"
 
-#: ../../index.rst:328
+#: ../../index.rst:341
 msgid ""
 "Both tiers are bound by SHA-256, and Sibuna selects the processor's SHA "
 "instructions at run time where they exist, so one binary is fast on every "
@@ -1523,7 +1543,7 @@ msgstr ""
 "ms, JavaScript 대체 솔버로 84에서 91 ms 만에 풀었습니다 [#verify-cost]_. 기본 연산 측정 모음은 "
 "검증만 측정합니다. 네이티브 측정 시간이 브라우저의 풀이 시간을 대신하지는 않습니다."
 
-#: ../../index.rst:330
+#: ../../index.rst:343
 msgid ""
 "Sessions use a symmetric token. The verifier is the issuer, or a cluster "
 "that shares one seed, so a keyed pseudorandom function supplies exactly "
@@ -1541,16 +1561,16 @@ msgstr ""
 "Ed25519의 바탕인 이산 로그 문제를 깨뜨리지만, 키 기반 해시에 대해 양자 탐색이 주는 이득은 많아야 제곱 수준의 속도 "
 "향상입니다. 토큰을 발급할 수 없는 검증자가 필요한 배포를 위해 Ed25519도 선택지로 남겨 둡니다."
 
-#: ../../index.rst:332
+#: ../../index.rst:345
 msgid "Shared State Without a Consensus Protocol of Our Own"
 msgstr "자체 합의 프로토콜 없이 공유하는 상태"
 
-#: ../../index.rst:335
+#: ../../index.rst:348
 msgid ""
 "Lamport on Distributed Invariants: Safety, Liveness, and Who Owns the Log"
 msgstr "Lamport의 분산 불변식: 안전성, 활성, 그리고 로그의 주인"
 
-#: ../../index.rst:337
+#: ../../index.rst:350
 msgid ""
 "In 1987 Leslie Lamport described a distributed system as one in which the "
 "failure of a computer you did not even know existed can render your own "
@@ -1571,11 +1591,11 @@ msgstr ""
 "수 있는 노드는 결국 최신 정책을 제공합니다. 합의 프로토콜은 이 둘을 함께 얻는 아름다운 방법입니다. 동시에 직접 떠안기에는 큰 "
 "시스템이기도 합니다. 그러므로 방화벽이 물어야 할 것은 합의가 좋은지가 아니라 로그를 누가 관리해야 하는지입니다."
 
-#: ../../index.rst:339
+#: ../../index.rst:352
 msgid "Why SQL, and Why Not a Consensus Protocol of Our Own"
 msgstr "왜 SQL인가, 왜 자체 합의 프로토콜이 아닌가"
 
-#: ../../index.rst:342
+#: ../../index.rst:355
 msgid ""
 "Sibuna stores little: a few hundred policy rows, a reputation table, and "
 "forensic incidents that operators also export to other systems. That "
@@ -1590,7 +1610,7 @@ msgstr ""
 "하나라면 로컬 저장소이고 여러 노드라면 공유 저장소입니다. 그래서 단일 노드는 데이터 디렉터리의 내장 SQLite 파일에 WAL "
 "모드로 상태를 보관하고, 클러스터는 모든 노드가 PostgreSQL 데이터베이스 하나를 가리키게 합니다 [#zaxonlite]_."
 
-#: ../../index.rst:344
+#: ../../index.rst:357
 msgid ""
 "We chose not to run a consensus protocol inside the firewall. A consensus "
 "engine is a large system to own beside a firewall, with its own formats "
@@ -1609,7 +1629,7 @@ msgstr ""
 "선택이라고 생각합니다. PostgreSQL의 복제는 우리 엔진이 거칠 수 있는 것보다 훨씬 많은 배포에서 검증되었고, Sibuna의 "
 "쓰기 빈도(일괄 기록하는 인시던트와 드문 정책 변경)는 주 서버 하나가 병목이 되지 않을 만큼 낮습니다."
 
-#: ../../index.rst:346
+#: ../../index.rst:359
 msgid ""
 "Storage also stays optional. Without ``--data-dir`` or ``--database-url`` "
 "the daemon is an in-memory firewall whose policies come from a file."
@@ -1617,11 +1637,11 @@ msgstr ""
 "저장소도 선택 사항입니다. ``--data-dir``\\ 나 ``--database-url`` 없이 실행하면 데몬은 파일에서 정책을 "
 "읽는 인메모리 방화벽입니다."
 
-#: ../../index.rst:348
+#: ../../index.rst:361
 msgid "One Storage Thread"
 msgstr "저장소 스레드 하나"
 
-#: ../../index.rst:351
+#: ../../index.rst:364
 msgid ""
 "One storage thread owns the database connections; nothing else touches "
 "SQL. Request threads never wait on it. They push incident records into a "
@@ -1644,7 +1664,7 @@ msgstr ""
 "있습니다. 트리거가 쓰는 쪽의 트랜잭션 안에서 리비전을 올리고, PostgreSQL에서는 ``NOTIFY``\\ 로 노드가 곧바로 "
 "틱을 실행할 수 있지만, 보장은 여전히 폴링이 맡습니다 [#storage-thread]_."
 
-#: ../../index.rst:354
+#: ../../index.rst:367
 msgid ""
 "An ingress sends traffic to three Sibuna nodes. In each node, connection "
 "threads read a published engine and push incidents into a bounded ring; a "
@@ -1658,94 +1678,109 @@ msgstr ""
 "PostgreSQL 주 서버 하나에 연결하며, 선택적으로 verify-full TLS를 사용합니다. 주 서버는 운영자가 운영하는 "
 "스트리밍 복제로 대기 서버에 복제됩니다."
 
-#: ../../index.rst:354
+#: ../../index.rst:367
 msgid ""
 "digraph cluster {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.3, ranksep=0.4, "
-"fontname=\"Helvetica\", fontsize=9, size=\"6.2,3.6\"];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.25, "
+"ranksep=0.4, pad=0.1, fontname=\"Helvetica\", fontsize=9, "
+"fontcolor=\"#334155\"];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, color=\"#0369a1\", fillcolor=\"#f0f9ff\", "
-"fontcolor=\"#0f172a\"];\n"
+"fontsize=9, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.5, height=0.42, "
+"margin=\"0.1,0.05\"];\n"
 "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
-"fontcolor=\"#334155\", arrowsize=0.6];\n"
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
+"\n"
 "  ingress [label=\"Ingress (TLS termination)\\nCaddy or Nginx\", "
-"color=\"#0f172a\", fillcolor=\"#ffffff\"];\n"
+"color=\"#172033\", fillcolor=\"#ffffff\", width=2.4];\n"
 "  subgraph cluster_n1 {\n"
-"    label=\"Node 1 (cluster node 1)\"; style=\"rounded\"; "
-"color=\"#94a3b8\"; fontcolor=\"#334155\";\n"
+"    label=<<b>Node 1</b>>; labeljust=l; style=\"rounded,filled\"; "
+"color=\"#cbd5e1\"; fillcolor=\"#f8fafc\"; margin=10;\n"
 "    r1 [label=\"connection threads\\nread the engine, push incidents\"];\n"
-"    s1 [label=\"storage thread\\nbatches, rebuilds\", "
-"fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
+"    s1 [label=\"storage thread\\nbatches, rebuilds\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
 "    r1 -> s1 [label=\" ring of 512\", style=dashed];\n"
 "  }\n"
 "  subgraph cluster_n2 {\n"
-"    label=\"Node 2\"; style=\"rounded\"; color=\"#94a3b8\"; "
-"fontcolor=\"#334155\";\n"
+"    label=<<b>Node 2</b>>; labeljust=l; style=\"rounded,filled\"; "
+"color=\"#cbd5e1\"; fillcolor=\"#f8fafc\"; margin=10;\n"
 "    r2 [label=\"connection threads\"];\n"
-"    s2 [label=\"storage thread\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
+"    s2 [label=\"storage thread\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
 "    r2 -> s2 [style=dashed];\n"
 "  }\n"
 "  subgraph cluster_n3 {\n"
-"    label=\"Node 3\"; style=\"rounded\"; color=\"#94a3b8\"; "
-"fontcolor=\"#334155\";\n"
+"    label=<<b>Node 3</b>>; labeljust=r; style=\"rounded,filled\"; "
+"color=\"#cbd5e1\"; fillcolor=\"#f8fafc\"; margin=10;\n"
 "    r3 [label=\"connection threads\"];\n"
-"    s3 [label=\"storage thread\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
+"    s3 [label=\"storage thread\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
 "    r3 -> s3 [style=dashed];\n"
 "  }\n"
 "  pg [label=\"PostgreSQL primary\\npolicies, reputation, "
 "incidents,\\nconsole tables\", shape=cylinder, style=filled, "
-"fillcolor=\"#ecfdf5\", color=\"#047857\"];\n"
+"color=\"#15803d\", fillcolor=\"#f0fdf4\", penwidth=1.4, width=2.4, "
+"height=0.75];\n"
 "  standby [label=\"Standby\\n(operator's replication)\", shape=cylinder, "
-"style=\"filled,dashed\", fillcolor=\"#ffffff\", color=\"#94a3b8\"];\n"
+"style=\"filled,dashed\", color=\"#94a3b8\", fillcolor=\"#ffffff\", "
+"fontcolor=\"#475569\", width=1.8, height=0.6];\n"
+"\n"
+"\n"
 "  ingress -> r1; ingress -> r2; ingress -> r3;\n"
 "  s1 -> pg [label=\" SQL, TLS verify-full\"]; s2 -> pg; s3 -> pg;\n"
-"  pg -> standby [label=\" streaming replication\", style=dashed];\n"
+"  pg -> standby [label=\" streaming replication\", style=dashed, "
+"color=\"#94a3b8\"];\n"
 "}"
 msgstr ""
 "digraph cluster {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.3, ranksep=0.4, "
-"fontname=\"Helvetica\", fontsize=9, size=\"6.2,3.6\"];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.25, "
+"ranksep=0.4, pad=0.1, fontname=\"Helvetica\", fontsize=9, "
+"fontcolor=\"#334155\"];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, color=\"#0369a1\", fillcolor=\"#f0f9ff\", "
-"fontcolor=\"#0f172a\"];\n"
+"fontsize=9, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.5, height=0.42, "
+"margin=\"0.1,0.05\"];\n"
 "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
-"fontcolor=\"#334155\", arrowsize=0.6];\n"
-"  ingress [label=\"인그레스 (TLS 종료)\\nCaddy 또는 Nginx\", color=\"#0f172a\", "
-"fillcolor=\"#ffffff\"];\n"
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
+"\n"
+"  ingress [label=\"인그레스 (TLS 종료)\\nCaddy 또는 Nginx\", color=\"#172033\", "
+"fillcolor=\"#ffffff\", width=2.4];\n"
 "  subgraph cluster_n1 {\n"
-"    label=\"노드 1 (클러스터 노드 1)\"; style=\"rounded\"; color=\"#94a3b8\"; "
-"fontcolor=\"#334155\";\n"
+"    label=<<b>노드 1</b>>; labeljust=l; style=\"rounded,filled\"; "
+"color=\"#cbd5e1\"; fillcolor=\"#f8fafc\"; margin=10;\n"
 "    r1 [label=\"연결 스레드\\n엔진 읽기, 인시던트 넣기\"];\n"
-"    s1 [label=\"저장소 스레드\\n일괄 쓰기, 재빌드\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
+"    s1 [label=\"저장소 스레드\\n일괄 쓰기, 재빌드\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
 "    r1 -> s1 [label=\" 링 (슬롯 512개)\", style=dashed];\n"
 "  }\n"
 "  subgraph cluster_n2 {\n"
-"    label=\"노드 2\"; style=\"rounded\"; color=\"#94a3b8\"; "
-"fontcolor=\"#334155\";\n"
+"    label=<<b>노드 2</b>>; labeljust=l; style=\"rounded,filled\"; "
+"color=\"#cbd5e1\"; fillcolor=\"#f8fafc\"; margin=10;\n"
 "    r2 [label=\"연결 스레드\"];\n"
-"    s2 [label=\"저장소 스레드\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
+"    s2 [label=\"저장소 스레드\", color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
 "    r2 -> s2 [style=dashed];\n"
 "  }\n"
 "  subgraph cluster_n3 {\n"
-"    label=\"노드 3\"; style=\"rounded\"; color=\"#94a3b8\"; "
-"fontcolor=\"#334155\";\n"
+"    label=<<b>노드 3</b>>; labeljust=r; style=\"rounded,filled\"; "
+"color=\"#cbd5e1\"; fillcolor=\"#f8fafc\"; margin=10;\n"
 "    r3 [label=\"연결 스레드\"];\n"
-"    s3 [label=\"저장소 스레드\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
+"    s3 [label=\"저장소 스레드\", color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
 "    r3 -> s3 [style=dashed];\n"
 "  }\n"
 "  pg [label=\"PostgreSQL 주 서버\\n정책, 평판, 인시던트,\\n콘솔 테이블\", shape=cylinder, "
-"style=filled, fillcolor=\"#ecfdf5\", color=\"#047857\"];\n"
+"style=filled, color=\"#15803d\", fillcolor=\"#f0fdf4\", penwidth=1.4, "
+"width=2.4, height=0.75];\n"
 "  standby [label=\"대기 서버\\n(운영자가 관리하는 복제)\", shape=cylinder, "
-"style=\"filled,dashed\", fillcolor=\"#ffffff\", color=\"#94a3b8\"];\n"
+"style=\"filled,dashed\", color=\"#94a3b8\", fillcolor=\"#ffffff\", "
+"fontcolor=\"#475569\", width=1.8, height=0.6];\n"
+"\n"
+"\n"
 "  ingress -> r1; ingress -> r2; ingress -> r3;\n"
 "  s1 -> pg [label=\" SQL, TLS verify-full\"]; s2 -> pg; s3 -> pg;\n"
-"  pg -> standby [label=\" 스트리밍 복제\", style=dashed];\n"
+"  pg -> standby [label=\" 스트리밍 복제\", style=dashed, color=\"#94a3b8\"];\n"
 "}"
 
-#: ../../index.rst:354
+#: ../../index.rst:367
 msgid ""
 "A Sibuna cluster. Every node keeps its request path in memory and gives "
 "all SQL to one storage thread; the nodes share one PostgreSQL database, "
@@ -1756,7 +1791,7 @@ msgstr ""
 "PostgreSQL 데이터베이스 하나를 공유하며, 그 복제와 장애 조치는 PostgreSQL이 담당합니다(SID 0011). 단일 "
 "노드는 그 대신 내장 SQLite 파일을 사용합니다."
 
-#: ../../index.rst:387
+#: ../../index.rst:403
 msgid ""
 "Each node of a cluster has a distinct ``--cluster-node`` identifier "
 "between 1 and 8,388,607. Challenge keys are bound to the issuing node, so "
@@ -1772,11 +1807,11 @@ msgstr ""
 "노드에서 유효합니다. 인시던트 식별자는 상위 비트에 노드를 담고, 각 노드는 일괄 쓰기와 같은 트랜잭션에서 갱신하는 영속 영수증을 "
 "유지합니다. 따라서 결과가 불분명한 장애 뒤에 같은 일괄 쓰기가 다시 실행되어도 아무것도 두 번 쓰이지 않습니다."
 
-#: ../../index.rst:389
+#: ../../index.rst:405
 msgid "Invariants of the storage layer (SID 0011)"
 msgstr "불변식: 저장소 계층 (SID 0011)"
 
-#: ../../index.rst:391
+#: ../../index.rst:407
 msgid ""
 "**S1 (one owner).** All SQL runs on the storage thread; no request thread "
 "ever waits on the database. **S2 (complete engines).** Every engine a "
@@ -1794,11 +1829,11 @@ msgstr ""
 "도달합니다. **F1 (통제된 손실).** 데이터베이스가 내려가면 마지막으로 게시된 엔진이 계속 서비스하고, 인시던트는 크기가 "
 "제한된 링에 쌓였다가 링이 가득 차면 카운터를 올리며 버려지고, 저장소 스레드는 백오프하며 재시도합니다."
 
-#: ../../index.rst:393
+#: ../../index.rst:409
 msgid "A Typed Schema"
 msgstr "타입이 있는 스키마"
 
-#: ../../index.rst:396
+#: ../../index.rst:412
 msgid ""
 "The schema states in SQL what the program's types state, so the database "
 "refuses a row the storage layer could not represent. SQLite tables are "
@@ -1820,7 +1855,7 @@ msgstr ""
 "콘솔의 불변식은 각각 정확히 하나의 함수가 강제하며, 이 함수는 자기 문들을 트랜잭션 하나에서 실행합니다. SQLite와 "
 "PostgreSQL에서 똑같습니다 [#schema]_."
 
-#: ../../index.rst:398
+#: ../../index.rst:414
 msgid ""
 "Connections to PostgreSQL are protected as the URL says, with libpq's "
 "``sslmode`` and ``sslrootcert``, when the daemon is built with the "
@@ -1833,7 +1868,7 @@ msgstr ""
 "``require``, ``verify-ca``, ``verify-full``\\ 을 거부하며, 결코 평문으로 대체하지 않습니다. "
 "운영 클러스터는 ``sslmode=verify-full``\\ 을 사용합니다."
 
-#: ../../index.rst:400
+#: ../../index.rst:416
 msgid ""
 "Incidents that look alike are grouped into campaigns. Each incident "
 "carries a 64-dimension embedding stored as 256 bytes. The storage thread "
@@ -1848,11 +1883,11 @@ msgstr ""
 "인시던트를 그 이웃의 캠페인에 배정합니다. 더 오래된 인시던트와 비교해 군집화하지 않는 것은 의도적인 생략입니다. 캠페인은 본래 "
 "최근의 일이며, 이 상한 덕분에 메모리와 작업량이 고정됩니다."
 
-#: ../../index.rst:402
+#: ../../index.rst:418
 msgid "What This Design Does Not Do"
 msgstr "이 설계가 하지 않는 것"
 
-#: ../../index.rst:405
+#: ../../index.rst:421
 msgid ""
 "We should be plain about the limits of this choice. Sibuna contains no "
 "consensus protocol of its own, and a cluster's consistency is "
@@ -1880,11 +1915,11 @@ msgstr ""
 "결과를 보고하지 않습니다. 릴리스 실행 파일은 PostgreSQL 지원 없이 빌드됩니다. 클러스터를 구성하려면 Sibuna를 "
 "``postgres-tls`` 기능으로 소스에서 빌드합니다 [#gave-up]_."
 
-#: ../../index.rst:409
+#: ../../index.rst:425
 msgid "The Console"
 msgstr "콘솔"
 
-#: ../../index.rst:412
+#: ../../index.rst:428
 msgid ""
 "Sibuna includes an opt-in management console: authenticated dashboards "
 "with live traffic, an investigation path from a denial to its recorded "
@@ -1899,7 +1934,7 @@ msgstr ""
 "TOTP 2단계 인증을 쓰는 사용자, 감사 기록, 웹훅, 클러스터 관리를 제공합니다. 콘솔은 같은 바이너리에 컴파일되어 들어가며, "
 "그 인터페이스는 브라우저에서 WebAssembly 모듈로 실행됩니다 [#console-sources]_."
 
-#: ../../index.rst:415
+#: ../../index.rst:431
 msgid ""
 "A browser runs the console interface, a WebAssembly module, and talks to "
 "the console server over HTTP and a WebSocket. The console server reads "
@@ -1912,57 +1947,61 @@ msgstr ""
 "서버는 요청 스레드에 들어가지 않고 데이터 플레인의 카운터를 읽으며, SQLite나 PostgreSQL을 소유한 저장소 스레드에 "
 "작업을 제출합니다. 피어 콘솔, 웹훅, GeoIP 배포처로 나가는 HTTPS와 WSS 연결은 TLS를 사용합니다."
 
-#: ../../index.rst:415
+#: ../../index.rst:431
 msgid ""
 "digraph console {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.3, ranksep=0.5, "
-"fontname=\"Helvetica\", fontsize=9];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.3, ranksep=0.5, "
+"pad=0.1];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, color=\"#0369a1\", fillcolor=\"#f0f9ff\", "
-"fontcolor=\"#0f172a\"];\n"
+"fontsize=9, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.6, margin=\"0.1,0.05\"];\n"
 "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
-"fontcolor=\"#334155\", arrowsize=0.6];\n"
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
 "  browser [label=\"Browser\\nconsole interface\\n(WebAssembly)\", "
 "color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
-"  server [label=\"Console server\\nbounded listener\", "
-"style=\"rounded,filled,bold\"];\n"
+"  server [label=\"Console server\\nbounded listener\", color=\"#172033\", "
+"fillcolor=\"#ffffff\", penwidth=1.8, height=0.6];\n"
 "  plane [label=\"Data plane\\ncounters and stats\\n(read only)\", "
-"color=\"#047857\", fillcolor=\"#ecfdf5\"];\n"
+"color=\"#15803d\", fillcolor=\"#f0fdf4\"];\n"
 "  storage [label=\"Storage thread\\nSQLite or PostgreSQL\", "
 "color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
 "  tls [label=\"Outbound TLS\\npeers (WSS), webhooks,\\nGeoIP downloads\", "
-"color=\"#0f172a\", fillcolor=\"#ffffff\"];\n"
-"  browser -> server [label=\"HTTP and\\nWebSocket\", dir=both];\n"
-"  server -> plane [label=\"reads\", style=dashed];\n"
-"  server -> storage [label=\"jobs (at most 32 queued)\"];\n"
+"color=\"#475569\", fillcolor=\"#f8fafc\"];\n"
+"  browser -> server [label=\" HTTP and WebSocket\", dir=both];\n"
+"  server -> plane [label=\"reads\", style=dashed, color=\"#15803d\", "
+"fontcolor=\"#15803d\"];\n"
+"  server -> storage [label=\" jobs (at most\\n 32 queued)\", "
+"color=\"#b45309\", fontcolor=\"#92400e\"];\n"
 "  server -> tls [label=\"verified\\ncertificates\"];\n"
 "}"
 msgstr ""
 "digraph console {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.3, ranksep=0.5, "
-"fontname=\"Helvetica\", fontsize=9];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.3, ranksep=0.5, "
+"pad=0.1];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, color=\"#0369a1\", fillcolor=\"#f0f9ff\", "
-"fontcolor=\"#0f172a\"];\n"
+"fontsize=9, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.6, margin=\"0.1,0.05\"];\n"
 "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
-"fontcolor=\"#334155\", arrowsize=0.6];\n"
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
 "  browser [label=\"브라우저\\n콘솔 인터페이스\\n(WebAssembly)\", color=\"#6d28d9\", "
 "fillcolor=\"#f5f3ff\"];\n"
-"  server [label=\"콘솔 서버\\n연결 수가 제한된 리스너\", "
-"style=\"rounded,filled,bold\"];\n"
-"  plane [label=\"데이터 플레인\\n카운터와 통계\\n(읽기 전용)\", color=\"#047857\", "
-"fillcolor=\"#ecfdf5\"];\n"
+"  server [label=\"콘솔 서버\\n연결 수가 제한된 리스너\", color=\"#172033\", "
+"fillcolor=\"#ffffff\", penwidth=1.8, height=0.6];\n"
+"  plane [label=\"데이터 플레인\\n카운터와 통계\\n(읽기 전용)\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\"];\n"
 "  storage [label=\"저장소 스레드\\nSQLite 또는 PostgreSQL\", color=\"#b45309\", "
 "fillcolor=\"#fffbeb\"];\n"
 "  tls [label=\"아웃바운드 TLS\\n피어 (WSS), 웹훅,\\nGeoIP 다운로드\", "
-"color=\"#0f172a\", fillcolor=\"#ffffff\"];\n"
-"  browser -> server [label=\"HTTP와\\nWebSocket\", dir=both];\n"
-"  server -> plane [label=\"읽기\", style=dashed];\n"
-"  server -> storage [label=\"작업 (대기 최대 32개)\"];\n"
+"color=\"#475569\", fillcolor=\"#f8fafc\"];\n"
+"  browser -> server [label=\" HTTP와 WebSocket\", dir=both];\n"
+"  server -> plane [label=\"읽기\", style=dashed, color=\"#15803d\", "
+"fontcolor=\"#15803d\"];\n"
+"  server -> storage [label=\" 작업\\n (대기 최대 32개)\", color=\"#b45309\", "
+"fontcolor=\"#92400e\"];\n"
 "  server -> tls [label=\"검증된\\n인증서\"];\n"
 "}"
 
-#: ../../index.rst:415
+#: ../../index.rst:431
 msgid ""
 "The console. The browser runs the interface as a WebAssembly module; the "
 "console server reads the data plane's counters and gives its SQL to the "
@@ -1973,7 +2012,7 @@ msgstr ""
 "스레드에 맡깁니다. 피어, 웹훅, GeoIP 배포처로 나가는 연결은 검증된 인증서와 함께 TLS를 사용합니다(SID 0007, "
 "0012, 0013)."
 
-#: ../../index.rst:433
+#: ../../index.rst:449
 msgid ""
 "The console's defining constraint is isolation from the request path. It "
 "may read the data plane's counters and its database and write the "
@@ -1993,7 +2032,7 @@ msgstr ""
 "빌드가 강제하는 상한 768 KiB보다 작고, SID 0007이 검토 대상으로 기록한 검토 기준 640 KiB보다는 큽니다 "
 "[#console-size]_."
 
-#: ../../index.rst:435
+#: ../../index.rst:451
 msgid ""
 "The console makes outbound TLS connections for long-lived peer streams, "
 "webhooks and GeoIP downloads. Certificates are verified against the "
@@ -2007,7 +2046,7 @@ msgstr ""
 "인증서 오류가 나도 결코 평문으로 대체하지 않습니다. Sibuna는 여전히 인바운드 TLS를 종료하지 않으며, 그 일은 계속 "
 "인그레스가 맡습니다."
 
-#: ../../index.rst:437
+#: ../../index.rst:453
 msgid ""
 "SID 0007 sets the console's performance target: enabling it may cost at "
 "most 1% of data-plane throughput and at most 10% of p99 latency. One "
@@ -2024,7 +2063,7 @@ msgstr ""
 "활성 대시보드 8개로 진행하는 공식 관문은 아직 실행하지 않았으므로, 목표를 충족한다고 주장하지 않습니다. 실시간 대시보드 8개를 "
 "띄운 기능 실행은 통과했습니다."
 
-#: ../../index.rst:439
+#: ../../index.rst:455
 msgid ""
 "Eight Traffic dashboards on one SQLite node with its console, in headless "
 "Chromium 155 (``benchmarks/results/console-8-dashboards-2026-10-15.md``, "
@@ -2034,63 +2073,63 @@ msgstr ""
 "155(``benchmarks/results/console-8-dashboards-2026-10-15.md``, 2026-10-15 "
 "기록). 결과: PASS"
 
-#: ../../index.rst:443 ../../index.rst:712
+#: ../../index.rst:459 ../../index.rst:728
 msgid "Measure"
 msgstr "항목"
 
-#: ../../index.rst:444 ../../index.rst:713
+#: ../../index.rst:460 ../../index.rst:729
 msgid "Value"
 msgstr "값"
 
-#: ../../index.rst:445
+#: ../../index.rst:461
 msgid "Data-plane requests"
 msgstr "데이터 플레인 요청"
 
-#: ../../index.rst:446
+#: ../../index.rst:462
 msgid "6,000 in 30.0 s (200 per second, one connection per request)"
 msgstr "30.0초 동안 6,000개(초당 200개, 요청마다 연결 하나)"
 
-#: ../../index.rst:447
+#: ../../index.rst:463
 msgid "Answered"
 msgstr "응답"
 
-#: ../../index.rst:448
+#: ../../index.rst:464
 msgid "6,000: 200 x 1,200, 401 x 3,000, 403 x 600, 404 x 600, 500 x 600"
 msgstr "6,000개: 200 x 1,200, 401 x 3,000, 403 x 600, 404 x 600, 500 x 600"
 
-#: ../../index.rst:449
+#: ../../index.rst:465
 msgid "Errors (no reply)"
 msgstr "오류(응답 없음)"
 
-#: ../../index.rst:450 ../../index.rst:758 ../../index.rst:767
-#: ../../index.rst:776 ../../index.rst:785 ../../index.rst:794
-#: ../../index.rst:803 ../../index.rst:812 ../../index.rst:821
-#: ../../index.rst:830
+#: ../../index.rst:466 ../../index.rst:774 ../../index.rst:783
+#: ../../index.rst:792 ../../index.rst:801 ../../index.rst:810
+#: ../../index.rst:819 ../../index.rst:828 ../../index.rst:837
+#: ../../index.rst:846
 msgid "0"
 msgstr "0"
 
-#: ../../index.rst:451
+#: ../../index.rst:467
 msgid "Latency p50 / p90 / p99 / max"
 msgstr "지연 p50 / p90 / p99 / 최대"
 
-#: ../../index.rst:452
+#: ../../index.rst:468
 msgid "246 / 311 / 373 / 552 us (connect included)"
 msgstr "246 / 311 / 373 / 552 us (연결 시간 포함)"
 
-#: ../../index.rst:453
+#: ../../index.rst:469
 msgid ""
 "Daemon resident memory at start, with 8 dashboards, after the traffic"
 msgstr "데몬 상주 메모리: 시작 시, 대시보드 8개 연결 시, 트래픽 후"
 
-#: ../../index.rst:454
+#: ../../index.rst:470
 msgid "36,152 KiB; 38,028 KiB; 41,496 KiB"
 msgstr "36,152 KiB; 38,028 KiB; 41,496 KiB"
 
-#: ../../index.rst:455
+#: ../../index.rst:471
 msgid "Dashboards"
 msgstr "대시보드"
 
-#: ../../index.rst:456
+#: ../../index.rst:472
 msgid ""
 "3 administrator sessions and 5 wall displays; each received 134 to 139 "
 "``stats`` deltas and ended with the same totals, with no exception, "
@@ -2099,15 +2138,15 @@ msgstr ""
 "관리자 세션 3개와 벽면 디스플레이 5개. 각각 ``stats`` 델타를 134에서 139개 받았고 모두 같은 합계로 끝났으며, "
 "예외, 콘솔 오류, Content-Security-Policy 위반은 없었음"
 
-#: ../../index.rst:458
+#: ../../index.rst:474
 msgid "Empirical Evaluation"
 msgstr "실측 평가"
 
-#: ../../index.rst:461
+#: ../../index.rst:477
 msgid "Method"
 msgstr "방법"
 
-#: ../../index.rst:464
+#: ../../index.rst:480
 msgid ""
 "Three harnesses, run through ``cargo xtask bench``, measure Sibuna. The "
 "*primitive* suite times the operations of the request path in seven timed "
@@ -2133,7 +2172,7 @@ msgstr ""
 "동작하든 고정 속도로 보내는 개방 루프 생성기를 사용하고, 각 요청의 시간을 보내기로 예정된 시각부터 재므로 데몬 안에서 대기한 "
 "시간은 데몬의 몫으로 계산됩니다 [#method-sources]_."
 
-#: ../../index.rst:466
+#: ../../index.rst:482
 msgid ""
 "The runs were recorded on 15 October 2026 on one host: an AMD Ryzen 9 "
 "5950X (16 cores, 32 threads) running Linux 7.0.0-28. The daemon ran on "
@@ -2147,11 +2186,11 @@ msgstr ""
 "8부터 15(다른 CCD)에서, 기본 연산 측정 모음은 CPU 4에서 실행했습니다. 데몬은 SQLite와 콘솔을 컴파일해 넣은 기본 "
 "릴리스 빌드였으며, 저장소 없이 메모리에서 실행했습니다."
 
-#: ../../index.rst:468
+#: ../../index.rst:484
 msgid "Measurement scope"
 msgstr "측정 범위"
 
-#: ../../index.rst:470
+#: ../../index.rst:486
 msgid ""
 "Every run uses one host over loopback: no TLS, no wide-area network, no "
 "real browsers. The harnesses do not count allocations; the "
@@ -2163,11 +2202,11 @@ msgstr ""
 "세지 않으며, 할당 없는 요청 경로는 그 대신 정상 상태 테스트로 확인합니다. 하니스는 SHA-256으로 식별한 릴리스 바이너리를 "
 "수정 없이 실행합니다. 이 호스트에서 얻은 순위가 다른 호스트에서도 같은 순위를 뜻하지는 않습니다."
 
-#: ../../index.rst:472
+#: ../../index.rst:488
 msgid "Primitive Latencies"
 msgstr "기본 연산 지연"
 
-#: ../../index.rst:475
+#: ../../index.rst:491
 msgid ""
 "Primitive timings of Sibuna in nanoseconds per operation on one Ryzen 9 "
 "5950X core: the median of seven batches, with the fastest and slowest "
@@ -2178,272 +2217,272 @@ msgstr ""
 "배치, 가장 느린 배치(``benchmarks/results/primitives-latest.md``, 생성 "
 "2026-10-15T22:34:59Z)"
 
-#: ../../index.rst:479
+#: ../../index.rst:495
 msgid "Subsystem"
 msgstr "하위 시스템"
 
-#: ../../index.rst:481
+#: ../../index.rst:497
 msgid "Median"
 msgstr "중앙값"
 
-#: ../../index.rst:482
+#: ../../index.rst:498
 msgid "Min-max"
 msgstr "최소-최대"
 
-#: ../../index.rst:483 ../../index.rst:487
+#: ../../index.rst:499 ../../index.rst:503
 msgid "Proof of work"
 msgstr "작업 증명"
 
-#: ../../index.rst:484
+#: ../../index.rst:500
 msgid "Hashcash verify, 16 bits"
 msgstr "Hashcash 검증, 16비트"
 
-#: ../../index.rst:485
+#: ../../index.rst:501
 msgid "70.2"
 msgstr "70.2"
 
-#: ../../index.rst:486
+#: ../../index.rst:502
 msgid "69.9-71.0"
 msgstr "69.9-71.0"
 
-#: ../../index.rst:488
+#: ../../index.rst:504
 msgid "PoSW verify, depth 13, 16 openings"
 msgstr "PoSW 검증, 깊이 13, 개방 16개"
 
-#: ../../index.rst:489
+#: ../../index.rst:505
 msgid "22,272.4"
 msgstr "22,272.4"
 
-#: ../../index.rst:490
+#: ../../index.rst:506
 msgid "22,257.0-22,316.4"
 msgstr "22,257.0-22,316.4"
 
-#: ../../index.rst:491 ../../index.rst:495
+#: ../../index.rst:507 ../../index.rst:511
 msgid "Bot matcher"
 msgstr "봇 매처"
 
-#: ../../index.rst:492
+#: ../../index.rst:508
 msgid "Aho-Corasick, 40 signatures"
 msgstr "Aho-Corasick, 시그니처 40개"
 
-#: ../../index.rst:493
+#: ../../index.rst:509
 msgid "55.7"
 msgstr "55.7"
 
-#: ../../index.rst:494
+#: ../../index.rst:510
 msgid "55.3-57.2"
 msgstr "55.3-57.2"
 
-#: ../../index.rst:496
+#: ../../index.rst:512
 msgid "Sequential substring search, 40 signatures (for reference)"
 msgstr "순차 부분 문자열 검색, 시그니처 40개(참고용)"
 
-#: ../../index.rst:497
+#: ../../index.rst:513
 msgid "763.0"
 msgstr "763.0"
 
-#: ../../index.rst:498
+#: ../../index.rst:514
 msgid "762.2-763.5"
 msgstr "762.2-763.5"
 
-#: ../../index.rst:499 ../../index.rst:503
+#: ../../index.rst:515 ../../index.rst:519
 msgid "IP classifier"
 msgstr "IP 분류기"
 
-#: ../../index.rst:500
+#: ../../index.rst:516
 msgid "IPv4 CIDR lookup"
 msgstr "IPv4 CIDR 조회"
 
-#: ../../index.rst:501
+#: ../../index.rst:517
 msgid "32.0"
 msgstr "32.0"
 
-#: ../../index.rst:502
+#: ../../index.rst:518
 msgid "31.8-32.2"
 msgstr "31.8-32.2"
 
-#: ../../index.rst:504
+#: ../../index.rst:520
 msgid "IPv6 CIDR lookup"
 msgstr "IPv6 CIDR 조회"
 
-#: ../../index.rst:505
+#: ../../index.rst:521
 msgid "79.3"
 msgstr "79.3"
 
-#: ../../index.rst:506
+#: ../../index.rst:522
 msgid "78.5-79.6"
 msgstr "78.5-79.6"
 
-#: ../../index.rst:507 ../../index.rst:511
+#: ../../index.rst:523 ../../index.rst:527
 msgid "Token"
 msgstr "토큰"
 
-#: ../../index.rst:508
+#: ../../index.rst:524
 msgid "Keyed BLAKE3 session token"
 msgstr "키 기반 BLAKE3 세션 토큰"
 
-#: ../../index.rst:509
+#: ../../index.rst:525
 msgid "155.8"
 msgstr "155.8"
 
-#: ../../index.rst:510
+#: ../../index.rst:526
 msgid "155.3-156.4"
 msgstr "155.3-156.4"
 
-#: ../../index.rst:512
+#: ../../index.rst:528
 msgid "Ed25519 session token"
 msgstr "Ed25519 세션 토큰"
 
-#: ../../index.rst:513
+#: ../../index.rst:529
 msgid "40,587.5"
 msgstr "40,587.5"
 
-#: ../../index.rst:514
+#: ../../index.rst:530
 msgid "40,544.6-40,631.1"
 msgstr "40,544.6-40,631.1"
 
-#: ../../index.rst:515
+#: ../../index.rst:531
 msgid "Spent set"
 msgstr "사용 완료 집합"
 
-#: ../../index.rst:516
+#: ../../index.rst:532
 msgid "Robin Hood spend and look up"
 msgstr "Robin Hood 사용 처리와 조회"
 
-#: ../../index.rst:517
+#: ../../index.rst:533
 msgid "21.0"
 msgstr "21.0"
 
-#: ../../index.rst:518
+#: ../../index.rst:534
 msgid "20.8-21.3"
 msgstr "20.8-21.3"
 
-#: ../../index.rst:519 ../../index.rst:523 ../../index.rst:527
-#: ../../index.rst:531
+#: ../../index.rst:535 ../../index.rst:539 ../../index.rst:543
+#: ../../index.rst:547
 msgid "Rate limiter"
 msgstr "속도 제한기"
 
-#: ../../index.rst:520
+#: ../../index.rst:536
 msgid "GCRA, hashed client"
 msgstr "GCRA, 해시된 클라이언트"
 
-#: ../../index.rst:521
+#: ../../index.rst:537
 msgid "6.2"
 msgstr "6.2"
 
-#: ../../index.rst:522
+#: ../../index.rst:538
 msgid "6.1-6.3"
 msgstr "6.1-6.3"
 
-#: ../../index.rst:524
+#: ../../index.rst:540
 msgid "GCRA, four rule scopes, hashed client"
 msgstr "GCRA, 규칙 범위 4개, 해시된 클라이언트"
 
-#: ../../index.rst:525
+#: ../../index.rst:541
 msgid "6.3"
 msgstr "6.3"
 
-#: ../../index.rst:526
+#: ../../index.rst:542
 msgid "6.2-6.4"
 msgstr "6.2-6.4"
 
-#: ../../index.rst:528
+#: ../../index.rst:544
 msgid "GCRA, client as bytes (keyed hash included)"
 msgstr "GCRA, 바이트 형태의 클라이언트(키 기반 해시 포함)"
 
-#: ../../index.rst:529
+#: ../../index.rst:545
 msgid "12.8"
 msgstr "12.8"
 
-#: ../../index.rst:530
+#: ../../index.rst:546
 msgid "12.7-12.8"
 msgstr "12.7-12.8"
 
-#: ../../index.rst:532
+#: ../../index.rst:548
 msgid "GCRA, four rule scopes, client as bytes"
 msgstr "GCRA, 규칙 범위 4개, 바이트 형태의 클라이언트"
 
-#: ../../index.rst:533
+#: ../../index.rst:549
 msgid "13.1"
 msgstr "13.1"
 
-#: ../../index.rst:534
+#: ../../index.rst:550
 msgid "13.0-13.2"
 msgstr "13.0-13.2"
 
-#: ../../index.rst:535
+#: ../../index.rst:551
 msgid "HTTP parser"
 msgstr "HTTP 파서"
 
-#: ../../index.rst:536
+#: ../../index.rst:552
 msgid "Zero-copy request and cookie"
 msgstr "제로 카피 요청과 쿠키"
 
-#: ../../index.rst:537
+#: ../../index.rst:553
 msgid "132.5"
 msgstr "132.5"
 
-#: ../../index.rst:538
+#: ../../index.rst:554
 msgid "132.3-133.2"
 msgstr "132.3-133.2"
 
-#: ../../index.rst:539 ../../index.rst:543
+#: ../../index.rst:555 ../../index.rst:559
 msgid "Policy engine"
 msgstr "정책 엔진"
 
-#: ../../index.rst:540
+#: ../../index.rst:556
 msgid "Full classification, Shield profile"
 msgstr "전체 분류, Shield 프로파일"
 
-#: ../../index.rst:541
+#: ../../index.rst:557
 msgid "790.8"
 msgstr "790.8"
 
-#: ../../index.rst:542
+#: ../../index.rst:558
 msgid "787.2-793.1"
 msgstr "787.2-793.1"
 
-#: ../../index.rst:544
+#: ../../index.rst:560
 msgid "Classification, Gate profile"
 msgstr "분류, Gate 프로파일"
 
-#: ../../index.rst:545
+#: ../../index.rst:561
 msgid "75.9"
 msgstr "75.9"
 
-#: ../../index.rst:546
+#: ../../index.rst:562
 msgid "75.6-76.1"
 msgstr "75.6-76.1"
 
-#: ../../index.rst:547 ../../index.rst:551
+#: ../../index.rst:563 ../../index.rst:567
 msgid "WAF"
 msgstr "WAF"
 
-#: ../../index.rst:548
+#: ../../index.rst:564
 msgid "8 KiB body, semantic scan"
 msgstr "8 KiB 본문, 의미 기반 스캔"
 
-#: ../../index.rst:549
+#: ../../index.rst:565
 msgid "12,784.3"
 msgstr "12,784.3"
 
-#: ../../index.rst:550
+#: ../../index.rst:566
 msgid "12,771.5-12,809.2"
 msgstr "12,771.5-12,809.2"
 
-#: ../../index.rst:552
+#: ../../index.rst:568
 msgid "8 KiB body, SQL injection audited"
 msgstr "8 KiB 본문, SQL 인젝션 감사 모드"
 
-#: ../../index.rst:553
+#: ../../index.rst:569
 msgid "15,485.4"
 msgstr "15,485.4"
 
-#: ../../index.rst:554
+#: ../../index.rst:570
 msgid "15,460.9-15,530.1"
 msgstr "15,460.9-15,530.1"
 
-#: ../../index.rst:556
+#: ../../index.rst:572
 msgid ""
 "The spreads are narrow: no batch of any row lies more than 4.2% from its "
 "row's median [#spread]_. The daemon uses the rows on a hashed client, "
@@ -2456,11 +2495,11 @@ msgstr ""
 "클라이언트를 한 번 해시하므로 해시된 클라이언트 행을 사용합니다. 원시 바이트를 넘기는 행은 검사마다 그 키 기반 해시를 "
 "포함합니다. 타이머는 개별 연산이 아니라 배치 전체를 감싸므로, 이 표는 연산별 백분위를 보고하지 않습니다."
 
-#: ../../index.rst:560
+#: ../../index.rst:576
 msgid "Whole Products"
 msgstr "전체 제품"
 
-#: ../../index.rst:563
+#: ../../index.rst:579
 msgid ""
 "Sibuna under ``wrk``: requests per second, latency in microseconds, CPU "
 "time per request in microseconds and peak resident memory; medians of "
@@ -2471,353 +2510,353 @@ msgstr ""
 "메모리. 실행 3회의 중앙값(``benchmarks/results/product-latest.md``, 생성 "
 "2026-10-15T23:15:24Z)"
 
-#: ../../index.rst:567 ../../index.rst:742 ../../index.rst:941
+#: ../../index.rst:583 ../../index.rst:758 ../../index.rst:957
 msgid "Mode"
 msgstr "모드"
 
-#: ../../index.rst:568
+#: ../../index.rst:584
 msgid "Surface"
 msgstr "운영 구성"
 
-#: ../../index.rst:569
+#: ../../index.rst:585
 msgid "Workload (status)"
 msgstr "워크로드(상태)"
 
-#: ../../index.rst:570
+#: ../../index.rst:586
 msgid "req/s"
 msgstr "req/s"
 
-#: ../../index.rst:571 ../../index.rst:745
+#: ../../index.rst:587 ../../index.rst:761
 msgid "p50"
 msgstr "p50"
 
-#: ../../index.rst:572 ../../index.rst:747
+#: ../../index.rst:588 ../../index.rst:763
 msgid "p99"
 msgstr "p99"
 
-#: ../../index.rst:573
+#: ../../index.rst:589
 msgid "CPU"
 msgstr "CPU"
 
-#: ../../index.rst:574
+#: ../../index.rst:590
 msgid "Peak KiB"
 msgstr "최대 KiB"
 
-#: ../../index.rst:575 ../../index.rst:583 ../../index.rst:591
-#: ../../index.rst:599 ../../index.rst:607 ../../index.rst:615
-#: ../../index.rst:623 ../../index.rst:631 ../../index.rst:751
-#: ../../index.rst:760 ../../index.rst:769 ../../index.rst:778
-#: ../../index.rst:787 ../../index.rst:947 ../../index.rst:953
-#: ../../index.rst:959 ../../index.rst:965
+#: ../../index.rst:591 ../../index.rst:599 ../../index.rst:607
+#: ../../index.rst:615 ../../index.rst:623 ../../index.rst:631
+#: ../../index.rst:639 ../../index.rst:647 ../../index.rst:767
+#: ../../index.rst:776 ../../index.rst:785 ../../index.rst:794
+#: ../../index.rst:803 ../../index.rst:963 ../../index.rst:969
+#: ../../index.rst:975 ../../index.rst:981
 msgid "forward auth"
 msgstr "forward-auth"
 
-#: ../../index.rst:576 ../../index.rst:584 ../../index.rst:592
-#: ../../index.rst:600 ../../index.rst:640 ../../index.rst:648
-#: ../../index.rst:656 ../../index.rst:664
+#: ../../index.rst:592 ../../index.rst:600 ../../index.rst:608
+#: ../../index.rst:616 ../../index.rst:656 ../../index.rst:664
+#: ../../index.rst:672 ../../index.rst:680
 msgid "Gate"
 msgstr "Gate"
 
-#: ../../index.rst:577 ../../index.rst:609 ../../index.rst:641
-#: ../../index.rst:673
+#: ../../index.rst:593 ../../index.rst:625 ../../index.rst:657
+#: ../../index.rst:689
 msgid "``admitted`` (200)"
 msgstr "``admitted`` (200)"
 
-#: ../../index.rst:578
+#: ../../index.rst:594
 msgid "211,345"
 msgstr "211,345"
 
-#: ../../index.rst:579 ../../index.rst:603 ../../index.rst:627
-#: ../../index.rst:699
+#: ../../index.rst:595 ../../index.rst:619 ../../index.rst:643
+#: ../../index.rst:715
 msgid "151"
 msgstr "151"
 
-#: ../../index.rst:580 ../../index.rst:596 ../../index.rst:604
-#: ../../index.rst:628
+#: ../../index.rst:596 ../../index.rst:612 ../../index.rst:620
+#: ../../index.rst:644
 msgid "305"
 msgstr "305"
 
-#: ../../index.rst:581 ../../index.rst:605
+#: ../../index.rst:597 ../../index.rst:621
 msgid "11.84"
 msgstr "11.84"
 
-#: ../../index.rst:582
+#: ../../index.rst:598
 msgid "15,912"
 msgstr "15,912"
 
-#: ../../index.rst:585 ../../index.rst:617
+#: ../../index.rst:601 ../../index.rst:633
 msgid "``challenged`` (401)"
 msgstr "``challenged`` (401)"
 
-#: ../../index.rst:586
+#: ../../index.rst:602
 msgid "198,315"
 msgstr "198,315"
 
-#: ../../index.rst:587 ../../index.rst:651
+#: ../../index.rst:603 ../../index.rst:667
 msgid "160"
 msgstr "160"
 
-#: ../../index.rst:588
+#: ../../index.rst:604
 msgid "326"
 msgstr "326"
 
-#: ../../index.rst:589
+#: ../../index.rst:605
 msgid "13.15"
 msgstr "13.15"
 
-#: ../../index.rst:590 ../../index.rst:598 ../../index.rst:606
+#: ../../index.rst:606 ../../index.rst:614 ../../index.rst:622
 msgid "16,176"
 msgstr "16,176"
 
-#: ../../index.rst:593 ../../index.rst:625 ../../index.rst:657
-#: ../../index.rst:689
+#: ../../index.rst:609 ../../index.rst:641 ../../index.rst:673
+#: ../../index.rst:705
 msgid "``allowed_static`` (200)"
 msgstr "``allowed_static`` (200)"
 
-#: ../../index.rst:594
+#: ../../index.rst:610
 msgid "211,053"
 msgstr "211,053"
 
-#: ../../index.rst:595 ../../index.rst:611 ../../index.rst:635
+#: ../../index.rst:611 ../../index.rst:627 ../../index.rst:651
 msgid "152"
 msgstr "152"
 
-#: ../../index.rst:597
+#: ../../index.rst:613
 msgid "11.73"
 msgstr "11.73"
 
-#: ../../index.rst:601 ../../index.rst:665
+#: ../../index.rst:617 ../../index.rst:681
 msgid "``attack`` (200)"
 msgstr "``attack`` (200)"
 
-#: ../../index.rst:602
+#: ../../index.rst:618
 msgid "211,618"
 msgstr "211,618"
 
-#: ../../index.rst:608 ../../index.rst:616 ../../index.rst:624
-#: ../../index.rst:632 ../../index.rst:672 ../../index.rst:680
-#: ../../index.rst:688 ../../index.rst:696
+#: ../../index.rst:624 ../../index.rst:632 ../../index.rst:640
+#: ../../index.rst:648 ../../index.rst:688 ../../index.rst:696
+#: ../../index.rst:704 ../../index.rst:712
 msgid "Shield"
 msgstr "Shield"
 
-#: ../../index.rst:610
+#: ../../index.rst:626
 msgid "208,101"
 msgstr "208,101"
 
-#: ../../index.rst:612 ../../index.rst:950
+#: ../../index.rst:628 ../../index.rst:966
 msgid "308"
 msgstr "308"
 
-#: ../../index.rst:613
+#: ../../index.rst:629
 msgid "12.87"
 msgstr "12.87"
 
-#: ../../index.rst:614
+#: ../../index.rst:630
 msgid "15,928"
 msgstr "15,928"
 
-#: ../../index.rst:618
+#: ../../index.rst:634
 msgid "197,532"
 msgstr "197,532"
 
-#: ../../index.rst:619
+#: ../../index.rst:635
 msgid "161"
 msgstr "161"
 
-#: ../../index.rst:620
+#: ../../index.rst:636
 msgid "327"
 msgstr "327"
 
-#: ../../index.rst:621
+#: ../../index.rst:637
 msgid "13.77"
 msgstr "13.77"
 
-#: ../../index.rst:622 ../../index.rst:630 ../../index.rst:638
+#: ../../index.rst:638 ../../index.rst:646 ../../index.rst:654
 msgid "16,192"
 msgstr "16,192"
 
-#: ../../index.rst:626
+#: ../../index.rst:642
 msgid "211,636"
 msgstr "211,636"
 
-#: ../../index.rst:629
+#: ../../index.rst:645
 msgid "11.78"
 msgstr "11.78"
 
-#: ../../index.rst:633 ../../index.rst:697
+#: ../../index.rst:649 ../../index.rst:713
 msgid "``attack`` (403)"
 msgstr "``attack`` (403)"
 
-#: ../../index.rst:634
+#: ../../index.rst:650
 msgid "210,549"
 msgstr "210,549"
 
-#: ../../index.rst:636
+#: ../../index.rst:652
 msgid "307"
 msgstr "307"
 
-#: ../../index.rst:637
+#: ../../index.rst:653
 msgid "12.32"
 msgstr "12.32"
 
-#: ../../index.rst:639 ../../index.rst:647 ../../index.rst:655
-#: ../../index.rst:663 ../../index.rst:671 ../../index.rst:679
-#: ../../index.rst:687 ../../index.rst:695 ../../index.rst:796
-#: ../../index.rst:805 ../../index.rst:814 ../../index.rst:823
-#: ../../index.rst:832 ../../index.rst:971 ../../index.rst:977
-#: ../../index.rst:983 ../../index.rst:989
+#: ../../index.rst:655 ../../index.rst:663 ../../index.rst:671
+#: ../../index.rst:679 ../../index.rst:687 ../../index.rst:695
+#: ../../index.rst:703 ../../index.rst:711 ../../index.rst:812
+#: ../../index.rst:821 ../../index.rst:830 ../../index.rst:839
+#: ../../index.rst:848 ../../index.rst:987 ../../index.rst:993
+#: ../../index.rst:999 ../../index.rst:1005
 msgid "reverse proxy"
 msgstr "리버스 프록시"
 
-#: ../../index.rst:642
+#: ../../index.rst:658
 msgid "142,498"
 msgstr "142,498"
 
-#: ../../index.rst:643
+#: ../../index.rst:659
 msgid "427"
 msgstr "427"
 
-#: ../../index.rst:644
+#: ../../index.rst:660
 msgid "768"
 msgstr "768"
 
-#: ../../index.rst:645
+#: ../../index.rst:661
 msgid "27.68"
 msgstr "27.68"
 
-#: ../../index.rst:646
+#: ../../index.rst:662
 msgid "15,896"
 msgstr "15,896"
 
-#: ../../index.rst:649 ../../index.rst:681
+#: ../../index.rst:665 ../../index.rst:697
 msgid "``challenged`` (200)"
 msgstr "``challenged`` (200)"
 
-#: ../../index.rst:650
+#: ../../index.rst:666
 msgid "199,465"
 msgstr "199,465"
 
-#: ../../index.rst:652
+#: ../../index.rst:668
 msgid "324"
 msgstr "324"
 
-#: ../../index.rst:653
+#: ../../index.rst:669
 msgid "12.98"
 msgstr "12.98"
 
-#: ../../index.rst:654
+#: ../../index.rst:670
 msgid "16,160"
 msgstr "16,160"
 
-#: ../../index.rst:658
+#: ../../index.rst:674
 msgid "147,303"
 msgstr "147,303"
 
-#: ../../index.rst:659
+#: ../../index.rst:675
 msgid "411"
 msgstr "411"
 
-#: ../../index.rst:660
+#: ../../index.rst:676
 msgid "759"
 msgstr "759"
 
-#: ../../index.rst:661
+#: ../../index.rst:677
 msgid "26.88"
 msgstr "26.88"
 
-#: ../../index.rst:662
+#: ../../index.rst:678
 msgid "16,324"
 msgstr "16,324"
 
-#: ../../index.rst:666
+#: ../../index.rst:682
 msgid "143,900"
 msgstr "143,900"
 
-#: ../../index.rst:667
+#: ../../index.rst:683
 msgid "422"
 msgstr "422"
 
-#: ../../index.rst:668
+#: ../../index.rst:684
 msgid "745"
 msgstr "745"
 
-#: ../../index.rst:669
+#: ../../index.rst:685
 msgid "27.67"
 msgstr "27.67"
 
-#: ../../index.rst:670
+#: ../../index.rst:686
 msgid "16,348"
 msgstr "16,348"
 
-#: ../../index.rst:674
+#: ../../index.rst:690
 msgid "138,965"
 msgstr "138,965"
 
-#: ../../index.rst:675
+#: ../../index.rst:691
 msgid "438"
 msgstr "438"
 
-#: ../../index.rst:676
+#: ../../index.rst:692
 msgid "857"
 msgstr "857"
 
-#: ../../index.rst:677
+#: ../../index.rst:693
 msgid "28.57"
 msgstr "28.57"
 
-#: ../../index.rst:678
+#: ../../index.rst:694
 msgid "16,064"
 msgstr "16,064"
 
-#: ../../index.rst:682
+#: ../../index.rst:698
 msgid "195,188"
 msgstr "195,188"
 
-#: ../../index.rst:683
+#: ../../index.rst:699
 msgid "162"
 msgstr "162"
 
-#: ../../index.rst:684 ../../index.rst:980
+#: ../../index.rst:700 ../../index.rst:996
 msgid "328"
 msgstr "328"
 
-#: ../../index.rst:685
+#: ../../index.rst:701
 msgid "13.73"
 msgstr "13.73"
 
-#: ../../index.rst:686 ../../index.rst:694 ../../index.rst:702
+#: ../../index.rst:702 ../../index.rst:710 ../../index.rst:718
 msgid "16,328"
 msgstr "16,328"
 
-#: ../../index.rst:690
+#: ../../index.rst:706
 msgid "145,673"
 msgstr "145,673"
 
-#: ../../index.rst:691
+#: ../../index.rst:707
 msgid "415"
 msgstr "415"
 
-#: ../../index.rst:692
+#: ../../index.rst:708
 msgid "746"
 msgstr "746"
 
-#: ../../index.rst:693
+#: ../../index.rst:709
 msgid "27.27"
 msgstr "27.27"
 
-#: ../../index.rst:698
+#: ../../index.rst:714
 msgid "209,507"
 msgstr "209,507"
 
-#: ../../index.rst:700 ../../index.rst:968 ../../index.rst:992
+#: ../../index.rst:716 ../../index.rst:984 ../../index.rst:1008
 msgid "306"
 msgstr "306"
 
-#: ../../index.rst:701
+#: ../../index.rst:717
 msgid "12.17"
 msgstr "12.17"
 
-#: ../../index.rst:704
+#: ../../index.rst:720
 msgid ""
 "In forward-auth mode the ingress asks Sibuna whether to admit a request, "
 "and there is no origin; every workload lies between 197,532 and 211,636 "
@@ -2838,7 +2877,7 @@ msgstr ""
 "Sibuna가 직접 응답하는 요청(챌린지, 그리고 Shield의 공격 거부)은 여전히 초당 약 195,000에서 210,000 "
 "요청으로 처리됩니다. 최대 상주 메모리는 모든 워크로드에서 15,896에서 16,348 KiB 사이입니다 [#product]_."
 
-#: ../../index.rst:706
+#: ../../index.rst:722
 msgid ""
 "A few answers in about two million in three reverse-proxy rows were "
 "``503``: ``wrk`` reconnected before a closing connection had given back "
@@ -2850,7 +2889,7 @@ msgstr ""
 "자리를 돌려주기 전에 ``wrk``\\ 가 다시 연결했기 때문입니다. 이제 데몬은 연결을 닫는 응답을 쓰기 전에 자리를 돌려줍니다. "
 "이 결과 파일들은 그 수정보다 먼저 기록되었습니다."
 
-#: ../../index.rst:708
+#: ../../index.rst:724
 msgid ""
 "Footprint of the Sibuna daemon (``product-latest.json`` and "
 "``primitives-latest.json``, 15 October 2026, as tabulated in book Part "
@@ -2859,71 +2898,71 @@ msgstr ""
 "Sibuna 데몬의 자원 사용량(``product-latest.json``\\ 과 ``primitives-latest.json``, "
 "2026년 10월 15일, 기술 안내서 제VIII부의 표)"
 
-#: ../../index.rst:714
+#: ../../index.rst:730
 msgid "Daemon binary, default build with SQLite and the console"
 msgstr "데몬 바이너리, SQLite와 콘솔을 포함한 기본 빌드"
 
-#: ../../index.rst:715
+#: ../../index.rst:731
 msgid "49,113,856 bytes"
 msgstr "49,113,856바이트"
 
-#: ../../index.rst:716
+#: ../../index.rst:732
 msgid "Idle resident memory, product runs"
 msgstr "유휴 상주 메모리, 전체 제품 실행"
 
-#: ../../index.rst:717
+#: ../../index.rst:733
 msgid "5,592 to 5,788 KiB"
 msgstr "5,592~5,788 KiB"
 
-#: ../../index.rst:718
+#: ../../index.rst:734
 msgid "Peak resident memory during a workload"
 msgstr "워크로드 중 최대 상주 메모리"
 
-#: ../../index.rst:719
+#: ../../index.rst:735
 msgid "15,896 to 16,348 KiB"
 msgstr "15,896~16,348 KiB"
 
-#: ../../index.rst:720
+#: ../../index.rst:736
 msgid "Resident memory after the workloads"
 msgstr "워크로드 이후 상주 메모리"
 
-#: ../../index.rst:721
+#: ../../index.rst:737
 msgid "16,176 to 16,348 KiB"
 msgstr "16,176~16,348 KiB"
 
-#: ../../index.rst:722
+#: ../../index.rst:738
 msgid "Policy engine tables"
 msgstr "정책 엔진 테이블"
 
-#: ../../index.rst:723
+#: ../../index.rst:739
 msgid "209,052 bytes"
 msgstr "209,052바이트"
 
-#: ../../index.rst:724
+#: ../../index.rst:740
 msgid "Bot signature table"
 msgstr "봇 시그니처 테이블"
 
-#: ../../index.rst:725
+#: ../../index.rst:741
 msgid "42,244 bytes"
 msgstr "42,244바이트"
 
-#: ../../index.rst:726
+#: ../../index.rst:742
 msgid "WAF signature table"
 msgstr "WAF 시그니처 테이블"
 
-#: ../../index.rst:727
+#: ../../index.rst:743
 msgid "164,908 bytes"
 msgstr "164,908바이트"
 
-#: ../../index.rst:728
+#: ../../index.rst:744
 msgid "Browser prover (WebAssembly)"
 msgstr "브라우저 증명자(WebAssembly)"
 
-#: ../../index.rst:729
+#: ../../index.rst:745
 msgid "14,744 bytes"
 msgstr "14,744바이트"
 
-#: ../../index.rst:731
+#: ../../index.rst:747
 msgid ""
 "A later change to the release profile drops the bundled SQLite's debug "
 "information, about 13 MB of the 49 MB by the note in the build manifest; "
@@ -2933,11 +2972,11 @@ msgstr ""
 "이후 릴리스 프로필을 바꾸어 번들된 SQLite의 디버그 정보를 제거했습니다. 빌드 매니페스트의 메모에 따르면 49 MB 가운데 약 "
 "13 MB입니다. 결과 파일은 그 뒤로 다시 생성하지 않았으므로 측정한 크기를 그대로 인용합니다 [#binary]_."
 
-#: ../../index.rst:733
+#: ../../index.rst:749
 msgid "Latency at Equal Offered Load"
 msgstr "같은 제공 부하에서의 지연"
 
-#: ../../index.rst:736
+#: ../../index.rst:752
 msgid ""
 "``wrk`` keeps 64 requests in flight, so the request rate depends on the "
 "daemon, and ``wrk``'s percentiles leave out the requests it did not send "
@@ -2948,7 +2987,7 @@ msgstr ""
 "백분위에는 응답을 기다리는 동안 보내지 못한 요청이 빠집니다. 개방 루프 하니스는 그 대신 제공 요청률을 고정하고 모든 지연을 "
 "데몬의 몫으로 계산합니다. 방문자가 실제로 겪는 것이 바로 이 지연입니다."
 
-#: ../../index.rst:738
+#: ../../index.rst:754
 msgid ""
 "Sibuna, Shield, admitted requests at fixed offered rates; latency in "
 "microseconds and CPU time per request, medians of three 10-second runs "
@@ -2957,254 +2996,254 @@ msgstr ""
 "Sibuna Shield, 고정된 제공 요청률에서 허용된 요청: 지연(마이크로초)과 요청당 CPU 시간, 10초 실행 3회의 "
 "중앙값(``benchmarks/results/latency-latest.md``, 생성 2026-10-15T23:07:14Z)"
 
-#: ../../index.rst:743
+#: ../../index.rst:759
 msgid "Offered req/s"
 msgstr "제공 req/s"
 
-#: ../../index.rst:744
+#: ../../index.rst:760
 msgid "Achieved req/s"
 msgstr "달성 req/s"
 
-#: ../../index.rst:746
+#: ../../index.rst:762
 msgid "p90"
 msgstr "p90"
 
-#: ../../index.rst:748
+#: ../../index.rst:764
 msgid "p99.9"
 msgstr "p99.9"
 
-#: ../../index.rst:749
+#: ../../index.rst:765
 msgid "Errors"
 msgstr "오류"
 
-#: ../../index.rst:750
+#: ../../index.rst:766
 msgid "CPU us"
 msgstr "CPU us"
 
-#: ../../index.rst:752 ../../index.rst:753 ../../index.rst:797
-#: ../../index.rst:798
+#: ../../index.rst:768 ../../index.rst:769 ../../index.rst:813
+#: ../../index.rst:814
 msgid "10,000"
 msgstr "10,000"
 
-#: ../../index.rst:754 ../../index.rst:774
+#: ../../index.rst:770 ../../index.rst:790
 msgid "30"
 msgstr "30"
 
-#: ../../index.rst:755
+#: ../../index.rst:771
 msgid "32"
 msgstr "32"
 
-#: ../../index.rst:756
+#: ../../index.rst:772
 msgid "37"
 msgstr "37"
 
-#: ../../index.rst:757 ../../index.rst:810
+#: ../../index.rst:773 ../../index.rst:826
 msgid "58"
 msgstr "58"
 
-#: ../../index.rst:759
+#: ../../index.rst:775
 msgid "16.92"
 msgstr "16.92"
 
-#: ../../index.rst:761 ../../index.rst:762 ../../index.rst:806
-#: ../../index.rst:807
+#: ../../index.rst:777 ../../index.rst:778 ../../index.rst:822
+#: ../../index.rst:823
 msgid "25,000"
 msgstr "25,000"
 
-#: ../../index.rst:763
+#: ../../index.rst:779
 msgid "28"
 msgstr "28"
 
-#: ../../index.rst:764
+#: ../../index.rst:780
 msgid "31"
 msgstr "31"
 
-#: ../../index.rst:765
+#: ../../index.rst:781
 msgid "34"
 msgstr "34"
 
-#: ../../index.rst:766
+#: ../../index.rst:782
 msgid "45"
 msgstr "45"
 
-#: ../../index.rst:768
+#: ../../index.rst:784
 msgid "15.83"
 msgstr "15.83"
 
-#: ../../index.rst:770 ../../index.rst:771 ../../index.rst:815
-#: ../../index.rst:816
+#: ../../index.rst:786 ../../index.rst:787 ../../index.rst:831
+#: ../../index.rst:832
 msgid "50,000"
 msgstr "50,000"
 
-#: ../../index.rst:772 ../../index.rst:790
+#: ../../index.rst:788 ../../index.rst:806
 msgid "25"
 msgstr "25"
 
-#: ../../index.rst:773
+#: ../../index.rst:789
 msgid "27"
 msgstr "27"
 
-#: ../../index.rst:775
+#: ../../index.rst:791
 msgid "40"
 msgstr "40"
 
-#: ../../index.rst:777
+#: ../../index.rst:793
 msgid "13.83"
 msgstr "13.83"
 
-#: ../../index.rst:779 ../../index.rst:824
+#: ../../index.rst:795 ../../index.rst:840
 msgid "100,000"
 msgstr "100,000"
 
-#: ../../index.rst:780
+#: ../../index.rst:796
 msgid "99,998"
 msgstr "99,998"
 
-#: ../../index.rst:781
+#: ../../index.rst:797
 msgid "24"
 msgstr "24"
 
-#: ../../index.rst:782
+#: ../../index.rst:798
 msgid "26"
 msgstr "26"
 
-#: ../../index.rst:783
+#: ../../index.rst:799
 msgid "41"
 msgstr "41"
 
-#: ../../index.rst:784
+#: ../../index.rst:800
 msgid "62"
 msgstr "62"
 
-#: ../../index.rst:786
+#: ../../index.rst:802
 msgid "13.48"
 msgstr "13.48"
 
-#: ../../index.rst:788 ../../index.rst:833
+#: ../../index.rst:804 ../../index.rst:849
 msgid "150,000"
 msgstr "150,000"
 
-#: ../../index.rst:789
+#: ../../index.rst:805
 msgid "149,996"
 msgstr "149,996"
 
-#: ../../index.rst:791
+#: ../../index.rst:807
 msgid "36"
 msgstr "36"
 
-#: ../../index.rst:792 ../../index.rst:808
+#: ../../index.rst:808 ../../index.rst:824
 msgid "51"
 msgstr "51"
 
-#: ../../index.rst:793 ../../index.rst:820
+#: ../../index.rst:809 ../../index.rst:836
 msgid "74"
 msgstr "74"
 
-#: ../../index.rst:795
+#: ../../index.rst:811
 msgid "14.16"
 msgstr "14.16"
 
-#: ../../index.rst:799
+#: ../../index.rst:815
 msgid "56"
 msgstr "56"
 
-#: ../../index.rst:800
+#: ../../index.rst:816
 msgid "61"
 msgstr "61"
 
-#: ../../index.rst:801
+#: ../../index.rst:817
 msgid "65"
 msgstr "65"
 
-#: ../../index.rst:802
+#: ../../index.rst:818
 msgid "76"
 msgstr "76"
 
-#: ../../index.rst:804
+#: ../../index.rst:820
 msgid "32.25"
 msgstr "32.25"
 
-#: ../../index.rst:809
+#: ../../index.rst:825
 msgid "54"
 msgstr "54"
 
-#: ../../index.rst:811
+#: ../../index.rst:827
 msgid "72"
 msgstr "72"
 
-#: ../../index.rst:813
+#: ../../index.rst:829
 msgid "28.63"
 msgstr "28.63"
 
-#: ../../index.rst:817
+#: ../../index.rst:833
 msgid "47"
 msgstr "47"
 
-#: ../../index.rst:818
+#: ../../index.rst:834
 msgid "50"
 msgstr "50"
 
-#: ../../index.rst:819
+#: ../../index.rst:835
 msgid "60"
 msgstr "60"
 
-#: ../../index.rst:822
+#: ../../index.rst:838
 msgid "27.45"
 msgstr "27.45"
 
-#: ../../index.rst:825
+#: ../../index.rst:841
 msgid "99,996"
 msgstr "99,996"
 
-#: ../../index.rst:826
+#: ../../index.rst:842
 msgid "55"
 msgstr "55"
 
-#: ../../index.rst:827
+#: ../../index.rst:843
 msgid "75"
 msgstr "75"
 
-#: ../../index.rst:828
+#: ../../index.rst:844
 msgid "100"
 msgstr "100"
 
-#: ../../index.rst:829
+#: ../../index.rst:845
 msgid "150"
 msgstr "150"
 
-#: ../../index.rst:831
+#: ../../index.rst:847
 msgid "28.42"
 msgstr "28.42"
 
-#: ../../index.rst:834
+#: ../../index.rst:850
 msgid "134,344"
 msgstr "134,344"
 
-#: ../../index.rst:835
+#: ../../index.rst:851
 msgid "583,934"
 msgstr "583,934"
 
-#: ../../index.rst:836
+#: ../../index.rst:852
 msgid "1,544,160"
 msgstr "1,544,160"
 
-#: ../../index.rst:837
+#: ../../index.rst:853
 msgid "1,906,273"
 msgstr "1,906,273"
 
-#: ../../index.rst:838
+#: ../../index.rst:854
 msgid "1,967,134"
 msgstr "1,967,134"
 
-#: ../../index.rst:839
+#: ../../index.rst:855
 msgid "4"
 msgstr "4"
 
-#: ../../index.rst:840
+#: ../../index.rst:856
 msgid "29.22"
 msgstr "29.22"
 
-#: ../../index.rst:842
+#: ../../index.rst:858
 msgid ""
 "In forward-auth mode the p99.9 stays below 75 us up to 150,000 requests "
 "per second. In reverse-proxy mode, with the origin in the path, the p99 "
@@ -3221,11 +3260,11 @@ msgstr ""
 "``wrk``\\ 가 측정한 138,965에 가깝습니다. 그리고 지연은 초 단위까지 늘어납니다. 용량을 넘어선 개방 루프 시험이라면 "
 "마땅히 보여야 할 모습입니다. 그 행의 오류 네 개는 과부하 중에 발생했습니다 [#latency]_."
 
-#: ../../index.rst:846
+#: ../../index.rst:862
 msgid "What the Measurement Changed"
 msgstr "측정이 바꾼 설계"
 
-#: ../../index.rst:849
+#: ../../index.rst:865
 msgid ""
 "The latency harness changed the design of the connection threads. In its "
 "first runs, with 64 connections each closed by the daemon after 4,096 "
@@ -3249,7 +3288,7 @@ msgstr ""
 "대기한 스레드는 끝나므로, 버스트가 지나간 뒤에 스택이 메모리에 상주한 채 남지 않습니다. 수정 후 초당 100,000 요청에서 "
 "p99.9는 forward-auth 모드에서 62 us, 리버스 프록시 모드에서 150 us입니다 [#thread-reuse]_."
 
-#: ../../index.rst:851
+#: ../../index.rst:867
 msgid ""
 "A rare, periodic stall moves the far tail long before it moves p99. At "
 "100,000 requests per second over 64 connections, each connection lasts "
@@ -3264,11 +3303,11 @@ msgstr ""
 "시작되고 끝납니다. 요청 100만 개를 보내는 실행에서 상위 0.1%는 요청 1,000개뿐이므로, 스레드 교체마다 지연된 요청이 몇 "
 "개씩만 있어도 이를 채우기에 충분합니다. 이런 결함을 보려면 p99.9와 모든 요청에 대한 타이머가 필요합니다."
 
-#: ../../index.rst:853
+#: ../../index.rst:869
 msgid "Key Takeaways"
 msgstr "핵심 요약"
 
-#: ../../index.rst:856
+#: ../../index.rst:872
 msgid ""
 "*Classification below a microsecond.* In the Gate profile the policy "
 "engine classifies a browser request in 75.9 ns; with full inspection in "
@@ -3277,7 +3316,7 @@ msgstr ""
 "*마이크로초 미만의 분류.* Gate 프로필에서 정책 엔진은 브라우저 요청 하나를 75.9 ns에 분류합니다. Shield "
 "프로필에서 전체 검사를 하면 790.8 ns가 걸립니다."
 
-#: ../../index.rst:857
+#: ../../index.rst:873
 msgid ""
 "*Symmetric verification.* A keyed-BLAKE3 session token verifies in 155.8 "
 "ns, against 40,587.5 ns for an Ed25519 token: about 260 times less work "
@@ -3286,7 +3325,7 @@ msgstr ""
 "*대칭 검증.* 키 기반 BLAKE3 세션 토큰은 155.8 ns에 검증되고, Ed25519 토큰은 40,587.5 ns가 "
 "걸립니다. 하나의 신뢰 도메인 안에서 같은 무결성을 약 260분의 1의 작업으로 얻습니다."
 
-#: ../../index.rst:858
+#: ../../index.rst:874
 msgid ""
 "*A small, steady footprint.* About 200,000 forward-auth requests per "
 "second on four CPUs, with peak resident memory near 16 MiB in every "
@@ -3295,7 +3334,7 @@ msgstr ""
 "*작고 안정된 자원 사용량.* CPU 네 개에서 초당 약 200,000 forward-auth 요청을 처리하며, 최대 상주 메모리는 "
 "모든 워크로드에서 16 MiB 근처이고 유휴 시에는 6 MiB 미만입니다."
 
-#: ../../index.rst:859
+#: ../../index.rst:875
 msgid ""
 "*Tails need open-loop measurement.* The thread-turnover stall was "
 "invisible to the closed-loop harness and obvious at p99.9 under an "
@@ -3304,11 +3343,11 @@ msgstr ""
 "*꼬리 지연에는 개방 루프 측정이 필요합니다.* 스레드 교체로 인한 멈춤은 폐쇄 루프 하니스에서는 보이지 않았지만, 개방 루프 "
 "생성기 아래의 p99.9에서는 뚜렷하게 드러났습니다."
 
-#: ../../index.rst:861
+#: ../../index.rst:877
 msgid "Market Comparison: Sibuna and Its Neighbours"
 msgstr "시장 비교: Sibuna와 이웃 도구"
 
-#: ../../index.rst:864
+#: ../../index.rst:880
 msgid ""
 "We compare Sibuna with the tools an operator is most likely to weigh "
 "against it. The facts about the other products were read from their "
@@ -3323,243 +3362,243 @@ msgstr ""
 "[#prior-art]_. 이 제품들은 저마다 사용자에게 충분한 가치를 제공하며, 우리 하니스가 측정하지 않는 장점을 지닌 설계를 "
 "선택했습니다. 여기서는 순위가 아니라 아키텍처의 차이를 설명합니다."
 
-#: ../../index.rst:866
+#: ../../index.rst:882
 msgid ""
 "Feature comparison (book Part II; facts about other products read from "
 "public documentation in September 2026, the JA4 row in October 2026)"
 msgstr ""
 "기능 비교(기술 안내서 제II부. 다른 제품에 관한 사실은 2026년 9월, JA4 행은 2026년 10월에 공개 문서에서 확인)"
 
-#: ../../index.rst:870
+#: ../../index.rst:886
 msgid "Feature"
 msgstr "기능"
 
-#: ../../index.rst:871
+#: ../../index.rst:887
 msgid "Sibuna 1.0.0-beta.2"
 msgstr "Sibuna 1.0.0-beta.2"
 
-#: ../../index.rst:872
+#: ../../index.rst:888
 msgid "Anubis 1.27"
 msgstr "Anubis 1.27"
 
-#: ../../index.rst:873
+#: ../../index.rst:889
 msgid "SafeLine CE 9"
 msgstr "SafeLine CE 9"
 
-#: ../../index.rst:874
+#: ../../index.rst:890
 msgid "Cloudflare WAF"
 msgstr "Cloudflare WAF"
 
-#: ../../index.rst:875
+#: ../../index.rst:891
 msgid "Runs as"
 msgstr "실행 형태"
 
-#: ../../index.rst:876
+#: ../../index.rst:892
 msgid ""
 "One binary; reverse proxy or forward auth; optional SQLite file or shared "
 "PostgreSQL database"
 msgstr ""
 "바이너리 하나; 리버스 프록시 또는 forward-auth; 선택적으로 SQLite 파일 또는 공유 PostgreSQL 데이터베이스"
 
-#: ../../index.rst:877
+#: ../../index.rst:893
 msgid "One Go binary; reverse proxy or forward auth"
 msgstr "Go 바이너리 하나; 리버스 프록시 또는 forward-auth"
 
-#: ../../index.rst:878
+#: ../../index.rst:894
 msgid ""
 "Seven Docker containers (tengine, detector, mgt, luigi, fvm, chaos, "
 "PostgreSQL)"
 msgstr ""
 "Docker 컨테이너 일곱 개(tengine, detector, mgt, luigi, fvm, chaos, PostgreSQL)"
 
-#: ../../index.rst:879
+#: ../../index.rst:895
 msgid "Hosted network; DNS points at Cloudflare"
 msgstr "호스팅형 네트워크; DNS가 Cloudflare를 가리킴"
 
-#: ../../index.rst:880
+#: ../../index.rst:896
 msgid "Runtime"
 msgstr "런타임"
 
-#: ../../index.rst:881
+#: ../../index.rst:897
 msgid ""
 "Native code, no garbage collector; no third-party dependency when storage "
 "is off"
 msgstr "네이티브 코드, 가비지 컬렉터 없음; 저장소를 끄면 타사 의존성 없음"
 
-#: ../../index.rst:882
+#: ../../index.rst:898
 msgid "Go, garbage collected"
 msgstr "Go, 가비지 컬렉션 사용"
 
-#: ../../index.rst:883
+#: ../../index.rst:899
 msgid "C/C++ proxy and detector, Go management, PostgreSQL"
 msgstr "C/C++ 프록시와 탐지기, Go 관리 코드, PostgreSQL"
 
-#: ../../index.rst:884
+#: ../../index.rst:900
 msgid "Proprietary edge software"
 msgstr "독점 엣지 소프트웨어"
 
-#: ../../index.rst:885
+#: ../../index.rst:901
 msgid "Licence"
 msgstr "라이선스"
 
-#: ../../index.rst:886
+#: ../../index.rst:902
 msgid "LGPL-3.0-or-later"
 msgstr "LGPL-3.0-or-later"
 
-#: ../../index.rst:887
+#: ../../index.rst:903
 msgid "MIT"
 msgstr "MIT"
 
-#: ../../index.rst:888
+#: ../../index.rst:904
 msgid "GPL-3.0 management code; closed detector images"
 msgstr "GPL-3.0 관리 코드; 비공개 탐지기 이미지"
 
-#: ../../index.rst:889
+#: ../../index.rst:905
 msgid "Proprietary service"
 msgstr "독점 서비스"
 
-#: ../../index.rst:890
+#: ../../index.rst:906
 msgid "Proof-of-work admission"
 msgstr "작업 증명 요청 허용"
 
-#: ../../index.rst:891
+#: ../../index.rst:907
 msgid ""
 "Hashcash (bit-level) and Cohen-Pietrzak sequential work, chosen per rule"
 msgstr "Hashcash(비트 단위)와 Cohen-Pietrzak 순차 작업, 규칙마다 선택"
 
-#: ../../index.rst:892
+#: ../../index.rst:908
 msgid "SHA-256 Hashcash in hex nibbles; non-work challenges"
 msgstr "16진수 니블 단위의 SHA-256 Hashcash; 작업이 없는 챌린지"
 
-#: ../../index.rst:893
+#: ../../index.rst:909
 msgid "JavaScript challenge and CAPTCHA; not work-bound"
 msgstr "JavaScript 챌린지와 CAPTCHA; 작업 증명 방식 아님"
 
-#: ../../index.rst:894
+#: ../../index.rst:910
 msgid "Managed challenge, JS challenge, Turnstile"
 msgstr "관리형 챌린지, JS 챌린지, Turnstile"
 
-#: ../../index.rst:895
+#: ../../index.rst:911
 msgid "Challenge state on the server"
 msgstr "서버의 챌린지 상태"
 
-#: ../../index.rst:896
+#: ../../index.rst:912
 msgid "None until solved; solved tags in a fixed Robin Hood table"
 msgstr "풀리기 전에는 없음; 풀린 태그는 고정 Robin Hood 테이블에 저장"
 
-#: ../../index.rst:897
+#: ../../index.rst:913
 msgid "Store backend: memory, bbolt, Valkey or S3"
 msgstr "저장소 백엔드: memory, bbolt, Valkey 또는 S3"
 
-#: ../../index.rst:898
+#: ../../index.rst:914
 msgid "Managed by the stack"
 msgstr "스택이 관리"
 
-#: ../../index.rst:899
+#: ../../index.rst:915
 msgid "Managed by Cloudflare"
 msgstr "Cloudflare가 관리"
 
-#: ../../index.rst:900
+#: ../../index.rst:916
 msgid "Session token"
 msgstr "세션 토큰"
 
-#: ../../index.rst:901
+#: ../../index.rst:917
 msgid ""
 "Keyed BLAKE3, 75 characters, bound to the work paid; Ed25519 optional"
 msgstr "키 기반 BLAKE3, 75자, 치른 작업에 묶임; 선택적으로 Ed25519"
 
-#: ../../index.rst:902
+#: ../../index.rst:918
 msgid "JSON Web Token signed with Ed25519; HS512 optional"
 msgstr "Ed25519로 서명한 JSON Web Token; 선택적으로 HS512"
 
-#: ../../index.rst:903
+#: ../../index.rst:919
 msgid "Cookie issued by the stack"
 msgstr "스택이 발급하는 쿠키"
 
-#: ../../index.rst:904
+#: ../../index.rst:920
 msgid "``cf_clearance`` cookie"
 msgstr "``cf_clearance`` 쿠키"
 
-#: ../../index.rst:906
+#: ../../index.rst:922
 msgid ""
 "Shield: tagged automaton plus structural tokenizers, first 8 KiB of body"
 msgstr "Shield: 태그가 붙은 오토마톤과 구조 토크나이저, 본문의 처음 8 KiB"
 
-#: ../../index.rst:907
+#: ../../index.rst:923
 msgid "None"
 msgstr "없음"
 
-#: ../../index.rst:908
+#: ../../index.rst:924
 msgid "Semantic analysis over OWASP categories"
 msgstr "OWASP 범주에 대한 의미 분석"
 
-#: ../../index.rst:909
+#: ../../index.rst:925
 msgid "Managed rulesets (Pro and above)"
 msgstr "관리형 규칙 집합(Pro 이상)"
 
-#: ../../index.rst:910
+#: ../../index.rst:926
 msgid "TLS fingerprint (JA4)"
 msgstr "TLS 지문(JA4)"
 
-#: ../../index.rst:911
+#: ../../index.rst:927
 msgid ""
 "Rules match a JA4 value that a trusted ingress forwards; not computed by "
 "Sibuna"
 msgstr "신뢰할 수 있는 인그레스가 전달하는 JA4 값을 규칙으로 비교; Sibuna는 계산하지 않음"
 
-#: ../../index.rst:912
+#: ../../index.rst:928
 msgid ""
 "Not documented; policies may reference the HTTP fingerprint JA4H, which "
 "Anubis computes"
 msgstr "문서화되지 않음; 정책에서 Anubis가 계산하는 HTTP 지문 JA4H를 참조할 수 있음"
 
-#: ../../index.rst:913
+#: ../../index.rst:929
 msgid ""
 "Computed at its own TLS termination; custom rules and a built-in deny list"
 msgstr "자체 TLS 종료 지점에서 계산; 사용자 지정 규칙과 내장 거부 목록"
 
-#: ../../index.rst:914
+#: ../../index.rst:930
 msgid ""
 "JA3 and JA4 in custom rules and analytics (Enterprise with Bot Management)"
 msgstr "사용자 지정 규칙과 분석에서 JA3, JA4 사용(Enterprise, Bot Management 포함)"
 
-#: ../../index.rst:915
+#: ../../index.rst:931
 msgid "Shared state"
 msgstr "공유 상태"
 
-#: ../../index.rst:916
+#: ../../index.rst:932
 msgid "One PostgreSQL database for policy, reputation and forensics"
 msgstr "정책, 평판, 포렌식을 담는 PostgreSQL 데이터베이스 하나"
 
-#: ../../index.rst:917
+#: ../../index.rst:933
 msgid "Shared signing key; shared Valkey store"
 msgstr "공유 서명 키; 공유 Valkey 저장소"
 
-#: ../../index.rst:918
+#: ../../index.rst:934
 msgid "One stack per host"
 msgstr "호스트당 스택 하나"
 
-#: ../../index.rst:919
+#: ../../index.rst:935
 msgid "Global anycast network"
 msgstr "전역 애니캐스트 네트워크"
 
-#: ../../index.rst:920
+#: ../../index.rst:936
 msgid "TLS termination"
 msgstr "TLS 종료"
 
-#: ../../index.rst:921 ../../index.rst:922
+#: ../../index.rst:937 ../../index.rst:938
 msgid "No (ingress)"
 msgstr "아니요(인그레스)"
 
-#: ../../index.rst:923 ../../index.rst:924
+#: ../../index.rst:939 ../../index.rst:940
 msgid "Yes"
 msgstr "예"
 
-#: ../../index.rst:928
+#: ../../index.rst:944
 msgid "Measured Comparison With Anubis"
 msgstr "Anubis와의 측정 비교"
 
-#: ../../index.rst:931
+#: ../../index.rst:947
 msgid ""
 "We measured the official Anubis v1.27.0 release binary beside Sibuna with "
 "the harness of :ref:`whole-products`: the same four workloads, the same "
@@ -3576,11 +3615,11 @@ msgstr ""
 "그리고 원본 서버로 ``caddy respond``\\ 를 사용했습니다 [#comparison]_. 여기서 Sibuna는 "
 "Shield 운영 구성으로 실행하므로 모든 페이로드도 검사하지만, Anubis는 페이로드를 검사하지 않습니다."
 
-#: ../../index.rst:933
+#: ../../index.rst:949
 msgid "Reading these rows"
 msgstr "이 행을 읽는 법"
 
-#: ../../index.rst:935
+#: ../../index.rst:951
 msgid ""
 "These numbers describe four workloads on one machine, not every "
 "deployment, and several rows are not like for like. In forward-auth mode "
@@ -3601,7 +3640,7 @@ msgstr ""
 "이유로 다른 선택을 했습니다. 이 측정이 실제로 보여 주는 것은, 작고 상한이 있는 요청 경로가 방어자에게 요청 허용을 싸게 만들 "
 "수 있다는 점입니다."
 
-#: ../../index.rst:937
+#: ../../index.rst:953
 msgid ""
 "Sibuna (Shield) and Anubis 1.27.0 under ``wrk``: requests per second and "
 "p99 latency in microseconds, medians of three five-second runs "
@@ -3612,151 +3651,151 @@ msgstr ""
 "3회의 중앙값(``benchmarks/results/comparison-latest.md``). 따로 표시하지 않은 상태 코드는 "
 "200이며, Shield는 공격을 403으로 거부합니다."
 
-#: ../../index.rst:943
+#: ../../index.rst:959
 msgid "Sibuna req/s"
 msgstr "Sibuna req/s"
 
-#: ../../index.rst:944
+#: ../../index.rst:960
 msgid "Sibuna p99"
 msgstr "Sibuna p99"
 
-#: ../../index.rst:945
+#: ../../index.rst:961
 msgid "Anubis req/s"
 msgstr "Anubis req/s"
 
-#: ../../index.rst:946
+#: ../../index.rst:962
 msgid "Anubis p99"
 msgstr "Anubis p99"
 
-#: ../../index.rst:948 ../../index.rst:972
+#: ../../index.rst:964 ../../index.rst:988
 msgid "``admitted``"
 msgstr "``admitted``"
 
-#: ../../index.rst:949
+#: ../../index.rst:965
 msgid "208,635"
 msgstr "208,635"
 
-#: ../../index.rst:951
+#: ../../index.rst:967
 msgid "36,509"
 msgstr "36,509"
 
-#: ../../index.rst:952
+#: ../../index.rst:968
 msgid "7,477"
 msgstr "7,477"
 
-#: ../../index.rst:954 ../../index.rst:978
+#: ../../index.rst:970 ../../index.rst:994
 msgid "``challenged``"
 msgstr "``challenged``"
 
-#: ../../index.rst:955
+#: ../../index.rst:971
 msgid "193,087"
 msgstr "193,087"
 
-#: ../../index.rst:956
+#: ../../index.rst:972
 msgid "342"
 msgstr "342"
 
-#: ../../index.rst:957
+#: ../../index.rst:973
 msgid "113,170"
 msgstr "113,170"
 
-#: ../../index.rst:958
+#: ../../index.rst:974
 msgid "3,781"
 msgstr "3,781"
 
-#: ../../index.rst:960 ../../index.rst:984
+#: ../../index.rst:976 ../../index.rst:1000
 msgid "``allowed_static``"
 msgstr "``allowed_static``"
 
-#: ../../index.rst:961
+#: ../../index.rst:977
 msgid "212,444"
 msgstr "212,444"
 
-#: ../../index.rst:962
+#: ../../index.rst:978
 msgid "304"
 msgstr "304"
 
-#: ../../index.rst:963
+#: ../../index.rst:979
 msgid "89,904"
 msgstr "89,904"
 
-#: ../../index.rst:964
+#: ../../index.rst:980
 msgid "4,547"
 msgstr "4,547"
 
-#: ../../index.rst:966 ../../index.rst:990
+#: ../../index.rst:982 ../../index.rst:1006
 msgid "``attack``"
 msgstr "``attack``"
 
-#: ../../index.rst:967
+#: ../../index.rst:983
 msgid "211,347 (403)"
 msgstr "211,347 (403)"
 
-#: ../../index.rst:969
+#: ../../index.rst:985
 msgid "36,853"
 msgstr "36,853"
 
-#: ../../index.rst:970
+#: ../../index.rst:986
 msgid "7,283"
 msgstr "7,283"
 
-#: ../../index.rst:973
+#: ../../index.rst:989
 msgid "103,298"
 msgstr "103,298"
 
-#: ../../index.rst:974
+#: ../../index.rst:990
 msgid "3,321"
 msgstr "3,321"
 
-#: ../../index.rst:975
+#: ../../index.rst:991
 msgid "19,398"
 msgstr "19,398"
 
-#: ../../index.rst:976
+#: ../../index.rst:992
 msgid "11,062"
 msgstr "11,062"
 
-#: ../../index.rst:979
+#: ../../index.rst:995
 msgid "197,327"
 msgstr "197,327"
 
-#: ../../index.rst:981
+#: ../../index.rst:997
 msgid "28,842"
 msgstr "28,842"
 
-#: ../../index.rst:982
+#: ../../index.rst:998
 msgid "9,546"
 msgstr "9,546"
 
-#: ../../index.rst:985
+#: ../../index.rst:1001
 msgid "106,819"
 msgstr "106,819"
 
-#: ../../index.rst:986
+#: ../../index.rst:1002
 msgid "3,316"
 msgstr "3,316"
 
-#: ../../index.rst:987
+#: ../../index.rst:1003
 msgid "28,862"
 msgstr "28,862"
 
-#: ../../index.rst:988
+#: ../../index.rst:1004
 msgid "30,124"
 msgstr "30,124"
 
-#: ../../index.rst:991
+#: ../../index.rst:1007
 msgid "210,483 (403)"
 msgstr "210,483 (403)"
 
-#: ../../index.rst:993
+#: ../../index.rst:1009
 msgid "23,399"
 msgstr "23,399"
 
-#: ../../index.rst:994
+#: ../../index.rst:1010
 msgid "14,124"
 msgstr "14,124"
 
-#: ../../index.rst:996
+#: ../../index.rst:1012
 msgid ""
 "Anubis spends 106 us of CPU per admitted request in forward-auth mode, "
 "where Sibuna spends 13; its peak resident memory was about 32 MiB in "
@@ -3772,7 +3811,7 @@ msgstr ""
 "Sibuna의 프록시 행은 부하 생성기와 CPU를 공유하는 원본 서버에 막힙니다. :ref:`whole-products`\\ 의 더 "
 "가벼운 스텁 원본 서버를 쓰면 같은 행이 초당 약 139,000 요청에 이릅니다."
 
-#: ../../index.rst:998
+#: ../../index.rst:1014
 msgid ""
 "Admission operations per second on two CPUs, median of seven batches "
 "(``benchmarks/results/admission-latest.md``). Anubis runs once with each "
@@ -3782,111 +3821,111 @@ msgstr ""
 "중앙값(``benchmarks/results/admission-latest.md``). Anubis는 토큰 방식마다 한 번씩 "
 "실행합니다."
 
-#: ../../index.rst:1002
+#: ../../index.rst:1018
 msgid "Product (token)"
 msgstr "제품(토큰)"
 
-#: ../../index.rst:1003
+#: ../../index.rst:1019
 msgid "Session check"
 msgstr "세션 확인"
 
-#: ../../index.rst:1004
+#: ../../index.rst:1020
 msgid "Unauthenticated"
 msgstr "미인증 확인"
 
-#: ../../index.rst:1005
+#: ../../index.rst:1021
 msgid "Bootstrap"
 msgstr "챌린지 초기화"
 
-#: ../../index.rst:1006
+#: ../../index.rst:1022
 msgid "Proof verification"
 msgstr "증명 검증"
 
-#: ../../index.rst:1007
+#: ../../index.rst:1023
 msgid "Resident memory"
 msgstr "상주 메모리"
 
-#: ../../index.rst:1008
+#: ../../index.rst:1024
 msgid "Sibuna (keyed BLAKE3)"
 msgstr "Sibuna(키 기반 BLAKE3)"
 
-#: ../../index.rst:1009
+#: ../../index.rst:1025
 msgid "88,104"
 msgstr "88,104"
 
-#: ../../index.rst:1010
+#: ../../index.rst:1026
 msgid "78,997"
 msgstr "78,997"
 
-#: ../../index.rst:1011
+#: ../../index.rst:1027
 msgid "42,664"
 msgstr "42,664"
 
-#: ../../index.rst:1012
+#: ../../index.rst:1028
 msgid "57,924"
 msgstr "57,924"
 
-#: ../../index.rst:1013
+#: ../../index.rst:1029
 msgid "7.6 MiB"
 msgstr "7.6 MiB"
 
-#: ../../index.rst:1014
+#: ../../index.rst:1030
 msgid "Anubis (Ed25519)"
 msgstr "Anubis(Ed25519)"
 
-#: ../../index.rst:1015
+#: ../../index.rst:1031
 msgid "10,951"
 msgstr "10,951"
 
-#: ../../index.rst:1016
+#: ../../index.rst:1032
 msgid "28,619"
 msgstr "28,619"
 
-#: ../../index.rst:1017
+#: ../../index.rst:1033
 msgid "7,893"
 msgstr "7,893"
 
-#: ../../index.rst:1018
+#: ../../index.rst:1034
 msgid "12,668"
 msgstr "12,668"
 
-#: ../../index.rst:1019
+#: ../../index.rst:1035
 msgid "32.6 MiB"
 msgstr "32.6 MiB"
 
-#: ../../index.rst:1020
+#: ../../index.rst:1036
 msgid "Anubis (HS512)"
 msgstr "Anubis(HS512)"
 
-#: ../../index.rst:1021
+#: ../../index.rst:1037
 msgid "16,976"
 msgstr "16,976"
 
-#: ../../index.rst:1022
+#: ../../index.rst:1038
 msgid "27,785"
 msgstr "27,785"
 
-#: ../../index.rst:1023
+#: ../../index.rst:1039
 msgid "7,952"
 msgstr "7,952"
 
-#: ../../index.rst:1024
+#: ../../index.rst:1040
 msgid "19,261"
 msgstr "19,261"
 
-#: ../../index.rst:1025
+#: ../../index.rst:1041
 msgid "29.1 MiB"
 msgstr "29.1 MiB"
 
-#: ../../index.rst:1027
+#: ../../index.rst:1043
 msgid "Detailed Architectural Comparison"
 msgstr "아키텍처 상세 비교"
 
-#: ../../index.rst:1030
+#: ../../index.rst:1046
 msgid "SafeLine (Chaitin Technology)"
 msgstr "SafeLine(Chaitin Technology)"
 
-#: ../../index.rst:1033
+#: ../../index.rst:1049
 msgid ""
 "SafeLine carries the semantic idea of libinjection into a complete "
 "product with a management console, and its vendor reports detection rates "
@@ -3898,7 +3937,7 @@ msgstr ""
 "71.65%(균형 모드)와 76.17%(엄격 모드), 오탐률 0.07%와 0.22%를 보고합니다 [#safeline]_. 이는 탐지 "
 "품질의 측정값이며, Sibuna는 자기 엔진에 대해 이런 측정값을 공개하지 않았습니다."
 
-#: ../../index.rst:1035
+#: ../../index.rst:1051
 msgid ""
 "*Deployment.* The community edition ships as seven Docker containers on a "
 "Linux host with at least one CPU core, 1 GB of memory and 5 GB of disk. "
@@ -3907,13 +3946,13 @@ msgstr ""
 "*배포.* 커뮤니티 에디션은 CPU 코어 1개, 메모리 1 GB, 디스크 5 GB 이상인 Linux 호스트에서 Docker 컨테이너 "
 "일곱 개로 제공됩니다. TLS를 직접 종료하며, Sibuna는 그렇게 하지 않습니다."
 
-#: ../../index.rst:1036
+#: ../../index.rst:1052
 msgid ""
 "*State.* It keeps its attack log in PostgreSQL within the stack, one "
 "stack per host."
 msgstr "*상태.* 공격 로그를 스택 안의 PostgreSQL에 보관하며, 호스트당 스택 하나입니다."
 
-#: ../../index.rst:1037
+#: ../../index.rst:1053
 msgid ""
 "*Where Sibuna differs.* Sibuna is one binary that starts with an optional "
 "SQLite file, and a cluster shares one PostgreSQL database that the "
@@ -3925,11 +3964,11 @@ msgstr ""
 "운영하고 있을 수 있는 PostgreSQL 데이터베이스 하나를 공유합니다. 전체 제품 실행에서 유휴 상주 메모리는 5,592에서 "
 "5,788 KiB였습니다. 우리 호스트에는 Docker 데몬이 없어 SafeLine을 실행하지 않았으므로, 성능은 비교하지 않습니다."
 
-#: ../../index.rst:1039
+#: ../../index.rst:1055
 msgid "Anubis and Coraza"
 msgstr "Anubis와 Coraza"
 
-#: ../../index.rst:1042
+#: ../../index.rst:1058
 msgid ""
 "The proof-of-work interstitial became common in 2025, when scraper "
 "traffic for language-model training made ordinary origins expensive to "
@@ -3946,7 +3985,7 @@ msgstr ""
 "보관합니다. Coraza는 ModSecurity 규칙 언어(SecLang)를 구현하고 OWASP Core Rule Set을 "
 "실행합니다. 이런 게이트 옆에 규칙 기반 검사를 더하는 한 가지 방법입니다."
 
-#: ../../index.rst:1044
+#: ../../index.rst:1060
 msgid ""
 "*Where the work goes.* Anubis and Sibuna Gate both make the client pay "
 "before the origin does anything. Sibuna adds a second tier of sequential "
@@ -3957,7 +3996,7 @@ msgstr ""
 "치르게 합니다. Sibuna는 더 강한 게이트가 필요한 경로를 위해 규칙마다 선택하는 두 번째 계층인 순차 작업을 더하며, 세션은 "
 "얼마만큼의 작업을 치렀는지 기억합니다."
 
-#: ../../index.rst:1045
+#: ../../index.rst:1061
 msgid ""
 "*What the server remembers.* Anubis stores challenges; Sibuna issues a "
 "self-authenticating record and remembers only solved tags, in a fixed "
@@ -3968,7 +4007,7 @@ msgstr ""
 "크기 테이블에 기억합니다(정리 3). 기본 토큰은 대칭 방식이라 검증 비용이 더 낮고, 양자 공격자에게도 제곱 수준의 속도 향상만 "
 "허용합니다."
 
-#: ../../index.rst:1046
+#: ../../index.rst:1062
 msgid ""
 "*Inspection.* Sibuna Shield performs its own structural inspection in the "
 "same pass as admission, so one process and one parser serve both roles. "
@@ -3985,7 +4024,7 @@ msgstr ""
 "직접 소유하고 검토하는 편을 택했습니다. Sibuna가 Core Rule Set 호환성을 더한다면, 먼저 설계 기록에서 지원할 부분 "
 "집합을 명시할 것입니다 [#crs]_."
 
-#: ../../index.rst:1047
+#: ../../index.rst:1063
 msgid ""
 "*Measurement.* On one host under the same load, Sibuna answered more than "
 "five times as many admitted requests in forward-auth mode with a lower "
@@ -3994,11 +4033,11 @@ msgstr ""
 "*측정.* 같은 부하에서 호스트 한 대로 측정했을 때 Sibuna는 forward-auth 모드에서 허용된 요청을 다섯 배 넘게 "
 "처리했으며, p99는 더 낮았고 요청당 CPU는 약 8분의 1이었습니다(:ref:`anubis-comparison`)."
 
-#: ../../index.rst:1049
+#: ../../index.rst:1065
 msgid "Cloud Edge WAFs (Cloudflare and Others)"
 msgstr "클라우드 엣지 WAF(Cloudflare 등)"
 
-#: ../../index.rst:1052
+#: ../../index.rst:1068
 msgid ""
 "Hosted edges place inspection, rate limiting and bot scoring in many "
 "points of presence with a global control plane. They absorb volumetric "
@@ -4010,7 +4049,7 @@ msgstr ""
 "트래픽 공격을 흡수하며, 운영자 쪽 하드웨어도 필요하지 않습니다. Sibuna의 클러스터 배포는 그 형태, 즉 로컬 불변 스냅숏을 "
 "공급하는 공유 정책 평면을 빌리면서도 셀프 호스팅을 유지합니다."
 
-#: ../../index.rst:1054
+#: ../../index.rst:1070
 msgid ""
 "*Data residency.* A hosted WAF terminates the operator's TLS and sees "
 "request payloads on shared infrastructure, which can conflict with "
@@ -4019,7 +4058,7 @@ msgstr ""
 "*데이터 레지던시.* 호스팅형 WAF는 운영자의 TLS를 종료하고 공유 인프라에서 요청 페이로드를 보므로, 데이터 레지던시 요구 "
 "사항과 충돌할 수 있습니다."
 
-#: ../../index.rst:1055
+#: ../../index.rst:1071
 msgid ""
 "*Plans and quotas.* Features are tied to plans: Cloudflare's published "
 "quotas allow 5, 20, 100 and 1,000 custom rules and 1, 2, 5 and 100 "
@@ -4029,7 +4068,7 @@ msgstr ""
 "Business, Enterprise 요금제에서 사용자 지정 규칙은 각각 5, 20, 100, 1,000개, 속도 제한 규칙은 각각 "
 "1, 2, 5, 100개입니다."
 
-#: ../../index.rst:1056
+#: ../../index.rst:1072
 msgid ""
 "*Where Sibuna differs.* Sibuna runs on the operator's own machines with "
 "no per-request fee, and its policy changes reach every node on the next "
@@ -4042,11 +4081,11 @@ msgstr ""
 "500 ms)에 모든 노드에 도달합니다. 대규모 네트워크 트래픽 공격을 완화하지 않고, 학습된 모델로 봇 점수를 매기지 않으며, "
 "TLS를 종료하지도 않습니다. 이런 기능이 필요한 배포라면 여전히 Sibuna 앞에 인그레스나 엣지 네트워크를 두어야 합니다."
 
-#: ../../index.rst:1058
+#: ../../index.rst:1074
 msgid "Implementation: Small Crates and Few Dependencies"
 msgstr "구현: 작은 크레이트와 적은 의존성"
 
-#: ../../index.rst:1061
+#: ../../index.rst:1077
 msgid ""
 "Sibuna is written in Rust, as a workspace of small crates whose "
 "dependencies point one way: reusable libraries, then a core of "
@@ -4058,7 +4097,7 @@ msgstr ""
 "라이브러리, 그다음 설정과 진단을 담은 코어, 그다음 애플리케이션 라이브러리, 마지막으로 데몬과 브라우저 증명자 순입니다. "
 "운영자에게 중요한 엔지니어링 선택 세 가지를 간단히 기록합니다 [#sid-0010]_."
 
-#: ../../index.rst:1063
+#: ../../index.rst:1079
 msgid ""
 "*Few dependencies.* We treat every third-party library as a liability: it "
 "must be reviewed, updated and trusted. The data plane uses none. Hashing, "
@@ -4084,7 +4123,7 @@ msgstr ""
 "시점에 크레이트 13개를 씁니다. TLS 클라이언트를 직접 작성하면 Sibuna의 데이터 평면보다 큰, 보안에 결정적인 프로젝트가 "
 "되기 때문입니다 [#rustls]_. 저장소와 콘솔이 없는 빌드에는 타사 의존성이 전혀 없습니다."
 
-#: ../../index.rst:1066
+#: ../../index.rst:1082
 msgid ""
 "A layered graph. The daemon uses policy, challenge, net and storage. "
 "Policy uses patterns, cidr, json and core. Challenge uses crypto, pow, "
@@ -4097,87 +4136,101 @@ msgstr ""
 "net은 http와 core를 사용합니다. storage는 policy와 core를 사용하며 sqlx를 가져옵니다. 브라우저 "
 "증명자는 pow를 사용합니다. pow와 http는 crypto를 사용하고, geoip는 inflate와 crypto를 사용합니다."
 
-#: ../../index.rst:1066
+#: ../../index.rst:1082
 msgid ""
 "digraph crates {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.18, ranksep=0.5, "
-"fontname=\"Helvetica\", fontsize=9, newrank=true];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.14, "
+"ranksep=0.42, pad=0.1, fontname=\"Helvetica\", fontsize=8.5, "
+"fontcolor=\"#475569\"];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=9, color=\"#0369a1\", fillcolor=\"#f0f9ff\", "
-"fontcolor=\"#0f172a\", height=0.32];\n"
-"  edge [color=\"#94a3b8\", arrowsize=0.55];\n"
-"  sibuna [label=\"sibuna (daemon)\", fillcolor=\"#ecfdf5\", "
-"color=\"#047857\", style=\"rounded,filled,bold\"];\n"
-"  wasm [label=\"browser prover (WebAssembly)\", fillcolor=\"#ecfdf5\", "
-"color=\"#047857\"];\n"
-"  storage [label=\"storage (sqlx)\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
-"  policy [fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
-"  challenge [fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
-"  net [fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
-"  core [fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
+"fontsize=9, fontcolor=\"#172033\", color=\"#0369a1\", "
+"fillcolor=\"#f0f9ff\", penwidth=1.0, height=0.3, width=0.6, "
+"margin=\"0.08,0.03\"];\n"
+"  edge [color=\"#94a3b8\", arrowsize=0.5, penwidth=0.9];\n"
+"\n"
+"  sibuna [label=\"sibuna (daemon)\", color=\"#15803d\", "
+"fillcolor=\"#bbf7d0\", penwidth=1.6];\n"
+"  wasm [label=\"browser prover (WebAssembly)\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\"];\n"
+"  storage [label=\"storage (sqlx)\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
+"  policy [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
+"  challenge [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
+"  net [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
+"  core [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
 "  subgraph cluster_reusable {\n"
 "    label=\"reusable libraries, no third-party code\"; labelloc=b; "
-"style=\"dashed,rounded\"; color=\"#94a3b8\"; fontcolor=\"#64748b\";\n"
-"    patterns; cidr; json; store; pow; http; geoip;\n"
-"    crypto; encoding; inflate;\n"
+"labeljust=r; style=\"dashed,rounded,filled\"; color=\"#7dd3fc\"; "
+"fillcolor=\"#fafdff\"; margin=10;\n"
+"    geoip; inflate; cidr; json; patterns; http; encoding; crypto; pow; "
+"store;\n"
 "  }\n"
-"  { rank=same; sibuna; wasm; }\n"
-"  { rank=same; policy; challenge; net; core; }\n"
-"  { rank=same; patterns; cidr; json; store; pow; http; geoip; }\n"
-"  { rank=same; crypto; encoding; inflate; }\n"
-"  sibuna -> storage; sibuna -> policy; sibuna -> challenge; sibuna -> "
-"net;\n"
+"  { rank=same; wasm; sibuna; }\n"
+"  { rank=same; policy; core; net; challenge; }\n"
+"  { rank=same; geoip; cidr; json; patterns; http; pow; }\n"
+"  { rank=same; inflate; encoding; crypto; store; }\n"
+"\n"
+"  sibuna -> policy; sibuna -> storage; sibuna -> net; sibuna -> "
+"challenge;\n"
 "  storage -> policy; storage -> core;\n"
-"  policy -> patterns; policy -> cidr; policy -> json; policy -> core;\n"
-"  challenge -> store; challenge -> pow; challenge -> crypto; challenge -> "
-"encoding;\n"
-"  net -> http; net -> core;\n"
-"  wasm -> pow;\n"
-"  pow -> crypto; http -> crypto; http -> encoding; geoip -> inflate; "
-"geoip -> crypto;\n"
+"  policy -> cidr; policy -> json; policy -> patterns; policy -> core;\n"
+"  core -> net [dir=back];\n"
+"  net -> http;\n"
+"  http -> encoding; http -> crypto;\n"
+"  geoip -> inflate; geoip -> crypto;\n"
+"  challenge -> encoding; challenge -> crypto; challenge -> pow; challenge "
+"-> store;\n"
+"  pow -> crypto;\n"
+"  wasm -> pow [color=\"#15803d\"];\n"
 "}"
 msgstr ""
 "digraph crates {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.18, ranksep=0.5, "
-"fontname=\"Helvetica\", fontsize=9, newrank=true];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.14, "
+"ranksep=0.42, pad=0.1, fontname=\"Helvetica\", fontsize=8.5, "
+"fontcolor=\"#475569\"];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=9, color=\"#0369a1\", fillcolor=\"#f0f9ff\", "
-"fontcolor=\"#0f172a\", height=0.32];\n"
-"  edge [color=\"#94a3b8\", arrowsize=0.55];\n"
-"  sibuna [label=\"sibuna (데몬)\", fillcolor=\"#ecfdf5\", "
-"color=\"#047857\", style=\"rounded,filled,bold\"];\n"
-"  wasm [label=\"브라우저 증명자 (WebAssembly)\", fillcolor=\"#ecfdf5\", "
-"color=\"#047857\"];\n"
-"  storage [label=\"storage (sqlx)\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
-"  policy [fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
-"  challenge [fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
-"  net [fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
-"  core [fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
+"fontsize=9, fontcolor=\"#172033\", color=\"#0369a1\", "
+"fillcolor=\"#f0f9ff\", penwidth=1.0, height=0.3, width=0.6, "
+"margin=\"0.08,0.03\"];\n"
+"  edge [color=\"#94a3b8\", arrowsize=0.5, penwidth=0.9];\n"
+"\n"
+"  sibuna [label=\"sibuna (데몬)\", color=\"#15803d\", "
+"fillcolor=\"#bbf7d0\", penwidth=1.6];\n"
+"  wasm [label=\"브라우저 증명자 (WebAssembly)\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\"];\n"
+"  storage [label=\"storage (sqlx)\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
+"  policy [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
+"  challenge [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
+"  net [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
+"  core [color=\"#6d28d9\", fillcolor=\"#f5f3ff\"];\n"
 "  subgraph cluster_reusable {\n"
-"    label=\"재사용 가능한 라이브러리, 타사 코드 없음\"; labelloc=b; "
-"style=\"dashed,rounded\"; color=\"#94a3b8\"; fontcolor=\"#64748b\";\n"
-"    patterns; cidr; json; store; pow; http; geoip;\n"
-"    crypto; encoding; inflate;\n"
+"    label=\"재사용 가능한 라이브러리, 타사 코드 없음\"; labelloc=b; labeljust=r; "
+"style=\"dashed,rounded,filled\"; color=\"#7dd3fc\"; "
+"fillcolor=\"#fafdff\"; margin=10;\n"
+"    geoip; inflate; cidr; json; patterns; http; encoding; crypto; pow; "
+"store;\n"
 "  }\n"
-"  { rank=same; sibuna; wasm; }\n"
-"  { rank=same; policy; challenge; net; core; }\n"
-"  { rank=same; patterns; cidr; json; store; pow; http; geoip; }\n"
-"  { rank=same; crypto; encoding; inflate; }\n"
-"  sibuna -> storage; sibuna -> policy; sibuna -> challenge; sibuna -> "
-"net;\n"
+"  { rank=same; wasm; sibuna; }\n"
+"  { rank=same; policy; core; net; challenge; }\n"
+"  { rank=same; geoip; cidr; json; patterns; http; pow; }\n"
+"  { rank=same; inflate; encoding; crypto; store; }\n"
+"\n"
+"  sibuna -> policy; sibuna -> storage; sibuna -> net; sibuna -> "
+"challenge;\n"
 "  storage -> policy; storage -> core;\n"
-"  policy -> patterns; policy -> cidr; policy -> json; policy -> core;\n"
-"  challenge -> store; challenge -> pow; challenge -> crypto; challenge -> "
-"encoding;\n"
-"  net -> http; net -> core;\n"
-"  wasm -> pow;\n"
-"  pow -> crypto; http -> crypto; http -> encoding; geoip -> inflate; "
-"geoip -> crypto;\n"
+"  policy -> cidr; policy -> json; policy -> patterns; policy -> core;\n"
+"  core -> net [dir=back];\n"
+"  net -> http;\n"
+"  http -> encoding; http -> crypto;\n"
+"  geoip -> inflate; geoip -> crypto;\n"
+"  challenge -> encoding; challenge -> crypto; challenge -> pow; challenge "
+"-> store;\n"
+"  pow -> crypto;\n"
+"  wasm -> pow [color=\"#15803d\"];\n"
 "}"
 
-#: ../../index.rst:1066
+#: ../../index.rst:1082
 msgid ""
 "The libraries of Sibuna, simplified (after SID 0010). Arrows point from a "
 "library to what it uses. Reusable libraries depend on no application "
@@ -4188,7 +4241,7 @@ msgstr ""
 "향합니다. 재사용 가능한 라이브러리는 어떤 애플리케이션 라이브러리에도 의존하지 않으며, 타사 코드를 가져오는 것은 저장소 "
 "라이브러리와 콘솔 라이브러리뿐입니다."
 
-#: ../../index.rst:1098
+#: ../../index.rst:1118
 msgid ""
 "*Memory safety.* Code that bypasses the compiler's memory-safety checks "
 "is denied by default, and a module that needs it must opt in by name and "
@@ -4212,7 +4265,7 @@ msgstr ""
 "[#ring]_. 그 밖의 곳에서는 직접 작성한 메모리 관리가 했을 일을 소유권이 대신합니다. 파싱된 요청은 버퍼보다 오래 살 수 "
 "없고, 엔진은 마지막으로 읽는 쪽과 함께 해제되며, 소켓은 어떤 스레드든 아직 닿을 수 있는 동안에는 닫힐 수 없습니다."
 
-#: ../../index.rst:1100
+#: ../../index.rst:1120
 msgid ""
 "*Discipline and tests.* A function body has at most 70 logical lines and "
 "a file at most 1,408 lines, enforced by a checker. Library code returns "
@@ -4229,17 +4282,17 @@ msgstr ""
 "700개를 더 실행합니다. 콘솔 인터페이스에는 골든 픽스처를 포함해 테스트 298개가 있으며, 브라우저 검사는 헤드리스 "
 "Chromium으로 중간 페이지와 모든 콘솔 페이지를 거쳐 갑니다 [#tests]_."
 
-#: ../../index.rst:1102
+#: ../../index.rst:1122
 msgid "Limitations and Open Work"
 msgstr "한계와 남은 과제"
 
-#: ../../index.rst:1105
+#: ../../index.rst:1125
 msgid ""
 "We list what this paper does not establish, so that no claim is read more "
 "widely than its evidence."
 msgstr "어떤 주장도 근거보다 넓게 읽히지 않도록, 이 백서가 입증하지 않는 것을 나열합니다."
 
-#: ../../index.rst:1107
+#: ../../index.rst:1127
 msgid ""
 "*One measured neighbour.* We measured Anubis on one host "
 "(:ref:`anubis-comparison`). We have measured neither SafeLine nor a "
@@ -4248,7 +4301,7 @@ msgstr ""
 "*측정한 비교 대상은 하나.* Anubis는 호스트 한 대에서 측정했습니다(:ref:`anubis-comparison`). "
 "SafeLine과 호스팅형 WAF는 측정하지 않았습니다."
 
-#: ../../index.rst:1108
+#: ../../index.rst:1128
 msgid ""
 "*No cluster under load.* A functional test runs three nodes on one "
 "PostgreSQL database (SID 0011, committed), but no harness drives several "
@@ -4257,7 +4310,7 @@ msgstr ""
 "*부하 상태의 클러스터 측정 없음.* 기능 테스트는 PostgreSQL 데이터베이스 하나에서 노드 세 개를 실행하지만(SID "
 "0011, Committed), 여러 노드에 부하를 거는 하니스는 없습니다."
 
-#: ../../index.rst:1109
+#: ../../index.rst:1129
 msgid ""
 "*PostgreSQL needs a source build.* The release executables have SQLite "
 "storage and the console but no PostgreSQL support; a cluster builds "
@@ -4266,7 +4319,7 @@ msgstr ""
 "*PostgreSQL은 소스 빌드 필요.* 릴리스 실행 파일에는 SQLite 저장소와 콘솔이 있지만 PostgreSQL 지원은 "
 "없습니다. 클러스터에서는 ``postgres-tls`` 기능을 켜고 Sibuna를 빌드합니다."
 
-#: ../../index.rst:1110
+#: ../../index.rst:1130
 msgid ""
 "*The console's isolation gate* with eight active dashboards under load "
 "has not been run (:ref:`console`)."
@@ -4274,7 +4327,7 @@ msgstr ""
 "*콘솔의 격리 관문*\\ 은 아직 실행하지 않았습니다. 부하 아래에서 활성 대시보드 8개로 측정하는 "
 "관문입니다(:ref:`console`)."
 
-#: ../../index.rst:1111
+#: ../../index.rst:1131
 msgid ""
 "*Loopback only.* No measurement covers TLS, a wide-area network or real "
 "browsers under load; a deployment should measure its own path."
@@ -4282,7 +4335,7 @@ msgstr ""
 "*루프백만 측정.* TLS, 광역 네트워크, 부하 아래의 실제 브라우저를 다룬 측정은 없습니다. 배포에서는 자기 경로를 직접 "
 "측정해야 합니다."
 
-#: ../../index.rst:1112
+#: ../../index.rst:1132
 msgid ""
 "*Bounded inspection.* Shield is a heuristic inspector of the first 8 KiB "
 "of a body, not a full SQL or HTML parser, and forward-auth inspection "
@@ -4291,7 +4344,7 @@ msgstr ""
 "*상한이 있는 검사.* Shield는 본문의 처음 8 KiB를 보는 휴리스틱 검사기이며, 완전한 SQL 파서나 HTML 파서가 "
 "아닙니다. forward-auth 검사는 인그레스가 보내는 바이트만 봅니다."
 
-#: ../../index.rst:1113
+#: ../../index.rst:1133
 msgid ""
 "*Protocol scope.* Sibuna speaks HTTP/1.0 and HTTP/1.1; it has no HTTP/2 "
 "and no inbound TLS termination."
@@ -4299,7 +4352,7 @@ msgstr ""
 "*프로토콜 범위.* Sibuna는 HTTP/1.0과 HTTP/1.1을 지원하며, HTTP/2와 인바운드 TLS 종료는 지원하지 "
 "않습니다."
 
-#: ../../index.rst:1114
+#: ../../index.rst:1134
 msgid ""
 "*TLS fingerprints come from the ingress.* Sibuna cannot compute JA4 "
 "itself. A fingerprint is only as trustworthy as the ingress that writes "
@@ -4311,7 +4364,7 @@ msgstr ""
 "수 있으며, 그 인그레스는 클라이언트가 보낸 사본을 반드시 덮어써야 합니다. 클라이언트는 특화된 라이브러리로 브라우저의 핸드셰이크를 "
 "흉내 낼 수 있으므로, JA4는 자동화의 비용을 높일 뿐 신원을 증명하지는 않습니다 [#ja4]_."
 
-#: ../../index.rst:1115
+#: ../../index.rst:1135
 msgid ""
 "*Cryptographic assurance.* The sequential-work tier rests on published "
 "proofs in the random-oracle model; our concrete protocol has tests "
@@ -4320,7 +4373,7 @@ msgstr ""
 "*암호학적 보증.* 순차 작업 계층은 랜덤 오라클 모델에서 발표된 증명에 기댑니다. 우리의 구체적인 프로토콜에는 참조 라벨러와 "
 "대조하는 테스트가 있을 뿐, 독립적인 암호학 감사는 없습니다."
 
-#: ../../index.rst:1116
+#: ../../index.rst:1136
 msgid ""
 "*One machine.* Every number was taken on one AMD Ryzen 9 5950X. A ranking "
 "on this host is not a ranking on another."
@@ -4328,11 +4381,11 @@ msgstr ""
 "*머신 한 대.* 모든 수치는 AMD Ryzen 9 5950X 한 대에서 얻었습니다. 이 호스트에서의 순위가 다른 호스트에서의 "
 "순위는 아닙니다."
 
-#: ../../index.rst:1118
+#: ../../index.rst:1138
 msgid "Conclusion"
 msgstr "결론"
 
-#: ../../index.rst:1121
+#: ../../index.rst:1141
 msgid ""
 "Web defense has often grown by accretion: interpreted runtimes, "
 "containers, regular-expression rule sets and external stores piled in "
@@ -4342,7 +4395,7 @@ msgstr ""
 "웹 방어는 흔히 덧붙이는 방식으로 자라 왔습니다. 인터프리터 런타임, 컨테이너, 정규 표현식 규칙 집합, 외부 저장소가 애플리케이션 "
 "앞에 겹겹이 쌓였습니다. Sibuna에서 우리는 몇 가지 단순한 아이디어를 길잡이로 삼아 반대 방향을 시도했습니다."
 
-#: ../../index.rst:1123
+#: ../../index.rst:1143
 msgid ""
 "make the sender pay for admission with verifiable work, keep the server's "
 "check cheap and stateless, and let a session remember how much work it "
@@ -4351,13 +4404,13 @@ msgstr ""
 "송신자가 검증 가능한 작업으로 요청 허용의 대가를 치르게 하고, 서버의 검사는 싸고 상태 없이 유지하며, 세션이 자신이 치른 "
 "작업량을 기억하게 합니다."
 
-#: ../../index.rst:1124
+#: ../../index.rst:1144
 msgid ""
 "inspect by structure in linear time, in the same pass as admission, so "
 "that no session can bypass inspection;"
 msgstr "요청 허용과 같은 패스에서 구조에 따라 선형 시간에 검사해, 어떤 세션도 검사를 우회할 수 없게 합니다."
 
-#: ../../index.rst:1125
+#: ../../index.rst:1145
 msgid ""
 "respect the machine: one buffer per connection, no allocation on the "
 "request path, bounded tables with keyed placement, and threads that are "
@@ -4366,14 +4419,14 @@ msgstr ""
 "머신을 존중합니다. 연결당 버퍼 하나, 할당 없는 요청 경로, 키 기반 배치를 쓰는 크기 제한 테이블, 새로 만들지 않고 재사용하는 "
 "스레드가 그 방법입니다."
 
-#: ../../index.rst:1126
+#: ../../index.rst:1146
 msgid ""
 "let a mature database own durable shared state, behind one storage thread "
 "that the request path never waits on."
 msgstr ""
 "성숙한 데이터베이스가 영속 공유 상태를 맡게 하고, 그 앞에는 요청 경로가 결코 기다리지 않는 저장소 스레드 하나를 둡니다."
 
-#: ../../index.rst:1128
+#: ../../index.rst:1148
 msgid ""
 "On one 16-core machine, these choices let Sibuna serve more than 200,000 "
 "admitted requests per second in forward-auth mode on four CPUs, with "
@@ -4391,11 +4444,11 @@ msgstr ""
 "우리는 자체 합의 프로토콜을 제거했고, 그 사실을 분명히 밝힙니다. 그 대가로 시스템은 더 작아졌고 데이터 평면에는 타사 의존성이 "
 "없습니다. 측정할 것이 아직 많이 남아 있으며, 그것이 정확히 무엇인지 밝히려고 노력했습니다."
 
-#: ../../index.rst:1130
+#: ../../index.rst:1150
 msgid "Sources and Reproduction"
 msgstr "출처와 재현"
 
-#: ../../index.rst:1133
+#: ../../index.rst:1153
 msgid ""
 "Every number in this paper comes from a committed result file of the "
 "Sibuna repository, from a Sibuna Discussion (SID) record, or from the "
@@ -4410,7 +4463,7 @@ msgstr ""
 "``cargo xtask bench product``, ``cargo xtask bench latency``\\ 가 기록하며, "
 "``benchmarks/results/README.md``\\ 에 각 파일의 명령, CPU 집합, 출처가 정리되어 있습니다."
 
-#: ../../index.rst:1135
+#: ../../index.rst:1155
 msgid ""
 "``benchmarks/results/primitives-latest.md``, ``product-latest.md``, "
 "``latency-latest.md`` and their ``.json`` files; "
@@ -4420,7 +4473,7 @@ msgstr ""
 "``latency-latest.md``\\ 와 각각의 ``.json`` 파일, "
 "``console-8-dashboards-2026-10-15.md``."
 
-#: ../../index.rst:1136
+#: ../../index.rst:1156
 msgid ""
 "SID 0002 (foundation architecture and its revision notes), SID 0004 (the "
 "Shield surface), SID 0006 (mathematical foundations), SID 0007 (the "
@@ -4434,7 +4487,7 @@ msgstr ""
 "0011(sqlx를 통한 저장소), SID 0012(콘솔 TLS), SID 0013(콘솔 저장소), SID 0014(인그레스에서 "
 "받는 JA4 지문)."
 
-#: ../../index.rst:1137
+#: ../../index.rst:1157
 msgid ""
 "The Sibuna book, ``docs/book/``: Part I (the cost of a request), Part II "
 "(prior art), Part III (cryptography), Part IV (the protocol), Part V "
@@ -4445,7 +4498,7 @@ msgstr ""
 "제IV부(프로토콜), 제V부(무할당 엔지니어링), 제VI부(오토마톤과 의미 기반 방화벽), 제VIII부(실측 평가), "
 "제IX부(운영)."
 
-#: ../../index.rst:1138
+#: ../../index.rst:1158
 msgid ""
 "The primary literature: Back, Hashcash (1997); Cohen and Pietrzak, Simple "
 "Proofs of Sequential Work (EUROCRYPT 2018); Blocki, Lee and Zhou, On the "
@@ -4459,11 +4512,11 @@ msgstr ""
 "Corasick, Efficient String Matching (1975); Celis, Robin Hood Hashing "
 "(1986); ATM Forum의 Generic Cell Rate Algorithm (1996)."
 
-#: ../../index.rst:1142
+#: ../../index.rst:1162
 msgid "Notes"
 msgstr "주석"
 
-#: ../../index.rst:1144
+#: ../../index.rst:1164
 msgid ""
 "Book Part I, \"Admission Is an Economic Decision\". The inequality is a "
 "capacity model, not a measurement; it omits bandwidth, connection state "
@@ -4472,7 +4525,7 @@ msgstr ""
 "기술 안내서 제I부, \"요청 허용은 경제적 결정입니다\". 이 부등식은 측정이 아니라 용량 모델이며, 대역폭, 연결 상태, "
 "클라이언트 지연을 고려하지 않습니다."
 
-#: ../../index.rst:1145
+#: ../../index.rst:1165
 msgid ""
 "SID 0002, \"Decision\"; book Part II, \"Three Ideas in One Binary\"; book "
 "Part VI, \"The Declarative Policy Engine\". The per-rule example, the "
@@ -4483,13 +4536,13 @@ msgstr ""
 "제VI부, \"선언형 정책 엔진\". 규칙별 예, 요구 티켓, 작업 수준 세션은 기술 안내서 제IV부에서, 적응형 기준값은 기술 "
 "안내서 제IV부와 SID 0006(개정 노트, Part H)에서 가져왔습니다."
 
-#: ../../index.rst:1146
+#: ../../index.rst:1166
 msgid ""
 "Book Part V, \"One Thread per Connection, Bounded\" and \"One Buffer per "
 "Connection\"."
 msgstr "기술 안내서 제V부, \"연결당 스레드 하나, 개수는 제한\" 및 \"연결당 버퍼 하나\"."
 
-#: ../../index.rst:1147
+#: ../../index.rst:1167
 msgid ""
 "Book Part V, \"The Connection Loop\"; "
 "``cmd/sibuna/tests/steady_state.rs`` and "
@@ -4498,7 +4551,7 @@ msgstr ""
 "기술 안내서 제V부, \"연결 루프\"; ``cmd/sibuna/tests/steady_state.rs``\\ 와 "
 "``crates/net/tests/steady_state.rs``."
 
-#: ../../index.rst:1148
+#: ../../index.rst:1168
 msgid ""
 "SID 0010, \"Concurrency model\" and \"Rationale and alternatives\"; SID "
 "0002, \"Request contract\" and its revision notes (connections per "
@@ -4507,7 +4560,7 @@ msgstr ""
 "SID 0010, \"Concurrency model\" 및 \"Rationale and alternatives\"; SID "
 "0002, \"Request contract\" 및 개정 노트(주소당 연결 수, IPv6 접두사, 스트라이프 방식의 원본 서버 풀)."
 
-#: ../../index.rst:1149
+#: ../../index.rst:1169
 msgid ""
 "``benchmarks/results/primitives-latest.md`` (55.7 and 763.0 ns); the "
 "table size from ``primitives-latest.json`` as given in book Part VIII, "
@@ -4517,7 +4570,7 @@ msgstr ""
 "기술 안내서 제VIII부 \"자원 사용량\"에 실린 ``primitives-latest.json``\\ 의 값; SID 0006, "
 "Part F 및 바이트 클래스에 관한 개정 노트."
 
-#: ../../index.rst:1150
+#: ../../index.rst:1170
 msgid ""
 "SID 0006, Part D (Definition 22, Theorem 23); SID 0004, revision notes "
 "(keyed placement, ``--rate-table-cells``); "
@@ -4527,7 +4580,7 @@ msgstr ""
 "``--rate-table-cells``); ``benchmarks/results/primitives-latest.md`` "
 "(``gcra_check_hashed``)."
 
-#: ../../index.rst:1151
+#: ../../index.rst:1171
 msgid ""
 "Book Part III (Lemma 3 and Lemma 4, wire formats); book Part V, \"The "
 "Robin Hood Spent Set\"; SID 0006, Part E (Lemma 28); "
@@ -4538,7 +4591,7 @@ msgstr ""
 "SID 0006, Part E (Lemma 28); ``benchmarks/results/primitives-latest.md`` "
 "(``robin_hood_spend_and_lookup``)."
 
-#: ../../index.rst:1152
+#: ../../index.rst:1172
 msgid ""
 "SID 0004, \"Revision note (2026-09-07)\" and \"Verification\"; book Part "
 "VI, \"A Lesson in False Positives\"."
@@ -4546,7 +4599,7 @@ msgstr ""
 "SID 0004, \"Revision note (2026-09-07)\" 및 \"Verification\"; 기술 안내서 제VI부, "
 "\"오탐의 교훈\"."
 
-#: ../../index.rst:1153
+#: ../../index.rst:1173
 msgid ""
 "``benchmarks/results/primitives-latest.md`` (``8kb_body_semantic_scan``, "
 "``8kb_body_sqli_audit_other_enforce``); SID 0004, revision note "
@@ -4556,7 +4609,7 @@ msgstr ""
 "``8kb_body_sqli_audit_other_enforce``); SID 0004, 개정 노트 \"inspection "
 "modes\"; 기술 안내서 제VIII부, \"WAF 검사\"."
 
-#: ../../index.rst:1154
+#: ../../index.rst:1174
 msgid ""
 "SID 0014, \"Specification\" and \"Security and operational "
 "considerations\"; book Part IX, \"JA4 Fingerprints From the Ingress\"; "
@@ -4566,7 +4619,7 @@ msgstr ""
 "considerations\"; 기술 안내서 제IX부, \"인그레스에서 받는 JA4 지문\"; "
 "``.github/release-notes.txt``."
 
-#: ../../index.rst:1155
+#: ../../index.rst:1175
 msgid ""
 "SID 0002, revision notes (forwarded identity; cookie values); SID 0004, "
 "revision notes (keyed placement, ban table, measured costs, zeroed "
@@ -4580,14 +4633,14 @@ msgstr ""
 "이력(보안 검토, 2026-10-15); ``benchmarks/results/primitives-latest.md`` "
 "(``gcra_check``\\ 와 ``gcra_check_hashed``)."
 
-#: ../../index.rst:1156
+#: ../../index.rst:1176
 msgid ""
 "Book Part III, \"Hashcash: The Mathematics of Tier One\"; book Part I, "
 "\"Hash Search as a Random Variable\"."
 msgstr ""
 "기술 안내서 제III부, \"Hashcash: 첫 번째 계층의 수학\"; 기술 안내서 제I부, \"확률변수로 보는 해시 탐색\"."
 
-#: ../../index.rst:1157
+#: ../../index.rst:1177
 msgid ""
 "Book Part III, \"Proof of Sequential Work: Tier Two\", \"Prover Memory\" "
 "and \"Parameters Are Not Timings\"; SID 0006, Part B and its "
@@ -4596,14 +4649,14 @@ msgstr ""
 "기술 안내서 제III부, \"순차 작업 증명: 두 번째 계층\", \"증명자의 메모리\", \"매개변수는 시간이 아닙니다\"; "
 "SID 0006, Part B 및 2026-09-07의 구현 검토."
 
-#: ../../index.rst:1158
+#: ../../index.rst:1178
 msgid ""
 "Book Part IV, \"The Challenge Round Trip\" and \"The Session Cookie\"; "
 "SID 0010, \"The browser solver\"."
 msgstr ""
 "기술 안내서 제IV부, \"챌린지 왕복\" 및 \"세션 쿠키\"; SID 0010, \"The browser solver\"."
 
-#: ../../index.rst:1159
+#: ../../index.rst:1179
 msgid ""
 "``benchmarks/results/primitives-latest.md``; the WebAssembly size from "
 "``primitives-latest.json`` as given in book Part VIII, \"Footprint\"; "
@@ -4616,7 +4669,7 @@ msgstr ""
 "0010, 기준 3 (Chromium 155, ``cargo xtask browser``); SHA 명령어의 실행 시점 감지는 "
 "SID 0006, 개정 노트(Part A부터 C까지)."
 
-#: ../../index.rst:1160
+#: ../../index.rst:1180
 msgid ""
 "SID 0011, \"Abstract\", \"Motivation and scope\" and \"Why PostgreSQL for "
 "clusters\"; SID 0005 describes the earlier replicated design."
@@ -4624,7 +4677,7 @@ msgstr ""
 "SID 0011, \"Abstract\", \"Motivation and scope\", \"Why PostgreSQL for "
 "clusters\"; 이전의 복제 설계는 SID 0005가 설명합니다."
 
-#: ../../index.rst:1161
+#: ../../index.rst:1181
 msgid ""
 "SID 0011, \"The storage thread\", \"Policy revision\" and \"Incidents and "
 "campaigns\"."
@@ -4632,7 +4685,7 @@ msgstr ""
 "SID 0011, \"The storage thread\", \"Policy revision\", \"Incidents and "
 "campaigns\"."
 
-#: ../../index.rst:1162
+#: ../../index.rst:1182
 msgid ""
 "SID 0011, \"Schema and migrations\" and its review history (transport "
 "security); SID 0013, \"Abstract\"."
@@ -4640,7 +4693,7 @@ msgstr ""
 "SID 0011, \"Schema and migrations\" 및 검토 이력(전송 보안); SID 0013, "
 "\"Abstract\"."
 
-#: ../../index.rst:1163
+#: ../../index.rst:1183
 msgid ""
 "SID 0011, \"Security and operational considerations\" and \"Acceptance "
 "criteria and implementation status\" (criterion 2, "
@@ -4654,7 +4707,7 @@ msgstr ""
 "\"Known limitations\"; SID 0002, \"Authentication and work\" (노드에 묶인 챌린지 "
 "키); 기술 안내서 제VIII부, \"측정하지 않은 것\"."
 
-#: ../../index.rst:1164
+#: ../../index.rst:1184
 msgid ""
 "SID 0007, \"Abstract\" and its revision notes (listener admission, "
 "interface module, GeoIP and passwords); SID 0010, review history (console "
@@ -4666,7 +4719,7 @@ msgstr ""
 "0010, 검토 이력(콘솔 포팅, TOTP); SID 0012; SID 0013. 격리 측정은 SID 0010의 검토 이력(콘솔 "
 "포팅)에 있으며, 기술 안내서 제VIII부 \"콘솔 오버헤드\"는 이 기록이 그 결과 파일을 명시하지 않는다고 적습니다."
 
-#: ../../index.rst:1165
+#: ../../index.rst:1185
 msgid ""
 "SID 0007, review history (Rust port, consolidation; daemon integration), "
 "which records 719,406 bytes before the JA4 fields of SID 0014. The size "
@@ -4681,7 +4734,7 @@ msgstr ""
 "-- -C link-arg=--compress-relocations``)으로 빌드한 모듈의 크기이며, 압축 크기는 ``gzip "
 "-9``\\ 로 압축한 값입니다."
 
-#: ../../index.rst:1166
+#: ../../index.rst:1186
 msgid ""
 "``benchmarks/results/README.md``, \"Method\" and \"Provenance and "
 "limits\" (rustc 1.99.0; the daemon is ``cargo build --release -p "
@@ -4691,14 +4744,14 @@ msgstr ""
 "(rustc 1.99.0, 데몬은 ``cargo build --release -p sibuna``, 49,113,856바이트); "
 "기술 안내서 제VIII부, \"방법론\"."
 
-#: ../../index.rst:1167
+#: ../../index.rst:1187
 msgid ""
 "Book Part VIII, \"Primitive Latencies\", computed from "
 "``primitives-latest.json``."
 msgstr ""
 "기술 안내서 제VIII부, \"기본 연산 지연\". ``primitives-latest.json``\\ 에서 계산했습니다."
 
-#: ../../index.rst:1168
+#: ../../index.rst:1188
 msgid ""
 "``benchmarks/results/product-latest.md``; CPUs busy from "
 "``cores_busy_median`` in ``product-latest.json``; the ``503`` answers and "
@@ -4709,7 +4762,7 @@ msgstr ""
 "``product-latest.json``\\ 의 ``cores_busy_median``; ``503`` 응답과 그 수정은 "
 "``benchmarks/results/README.md``\\ 와 SID 0002, 개정 노트(버그 수정)."
 
-#: ../../index.rst:1169
+#: ../../index.rst:1189
 msgid ""
 "Book Part VIII, \"Footprint\"; the root ``Cargo.toml``, profile "
 "``[profile.release.package.libsqlite3-sys]``."
@@ -4717,7 +4770,7 @@ msgstr ""
 "기술 안내서 제VIII부, \"자원 사용량\"; 루트 ``Cargo.toml``\\ 의 프로필 "
 "``[profile.release.package.libsqlite3-sys]``."
 
-#: ../../index.rst:1170
+#: ../../index.rst:1190
 msgid ""
 "``benchmarks/results/latency-latest.md``; the rows at 25,000 requests per "
 "second and the reverse-proxy rows at 150,000 are in that file."
@@ -4725,7 +4778,7 @@ msgstr ""
 "``benchmarks/results/latency-latest.md``. 초당 25,000 요청의 행과 초당 150,000 요청의 "
 "리버스 프록시 행은 이 파일에 있습니다."
 
-#: ../../index.rst:1171
+#: ../../index.rst:1191
 msgid ""
 "SID 0002, revision note (performance, connection threads reused); book "
 "Part VIII, \"What the Measurement Changed\"; "
@@ -4734,7 +4787,7 @@ msgstr ""
 "SID 0002, 개정 노트(성능, 연결 스레드 재사용); 기술 안내서 제VIII부, \"측정이 바꾼 설계\"; "
 "``benchmarks/results/latency-latest.md``."
 
-#: ../../index.rst:1172
+#: ../../index.rst:1192
 msgid ""
 "``benchmarks/results/comparison-latest.md`` and ``admission-latest.md``, "
 "recorded on 16 October 2026 with ``cargo xtask bench product --anubis`` "
@@ -4746,7 +4799,7 @@ msgstr ""
 "bench admission --anubis``\\ 로 기록했습니다. 기술 안내서 제VIII부 \"Sibuna와 Anubis\"에 "
 "방법과 두 제품의 모든 차이가 나와 있습니다."
 
-#: ../../index.rst:1173
+#: ../../index.rst:1193
 msgid ""
 "SID 0010, \"Acceptance criteria and implementation status\" (criteria 1, "
 "3 and 5), which recorded about 2,100 workspace tests and 290 interface "
@@ -4757,7 +4810,7 @@ msgstr ""
 "이 기록은 SID 0014 이전에 워크스페이스 테스트 약 2,100개와 인터페이스 테스트 290개를 기록했습니다. "
 "1.0.0-beta.2의 개수는 ``cargo test --workspace -- --list``\\ 에서 얻었습니다."
 
-#: ../../index.rst:1174
+#: ../../index.rst:1194
 msgid ""
 "Book Part II, \"Feature Comparison\" and \"Interstitials and Edges\"; the "
 "Sibuna licence is the workspace's ``license`` in ``Cargo.toml``."
@@ -4765,30 +4818,30 @@ msgstr ""
 "기술 안내서 제II부, \"기능 비교\" 및 \"중간 페이지와 엣지\"; Sibuna의 라이선스는 ``Cargo.toml``\\ 에 "
 "있는 워크스페이스의 ``license``\\ 입니다."
 
-#: ../../index.rst:1175
+#: ../../index.rst:1195
 msgid ""
 "Book Part VIII, \"Not Measured\": vendor-reported figures checked in "
 "September 2026."
 msgstr "기술 안내서 제VIII부, \"측정하지 않은 것\": 공급사가 보고한 수치이며, 2026년 9월에 확인했습니다."
 
-#: ../../index.rst:1176
+#: ../../index.rst:1196
 msgid "SID 0010, \"The OWASP Core Rule Set\"."
 msgstr "SID 0010, \"The OWASP Core Rule Set\"."
 
-#: ../../index.rst:1177
+#: ../../index.rst:1197
 msgid ""
 "SID 0010, \"Workspace\", \"Dependency policy\" and \"Engineering "
 "standards\"."
 msgstr ""
 "SID 0010, \"Workspace\", \"Dependency policy\", \"Engineering standards\"."
 
-#: ../../index.rst:1178
+#: ../../index.rst:1198
 msgid ""
 "SID 0011, \"Why sqlx\"; ``Cargo.toml``, where each third-party crate "
 "carries its reason."
 msgstr "SID 0011, \"Why sqlx\"; 타사 크레이트마다 채택 이유를 적어 둔 ``Cargo.toml``."
 
-#: ../../index.rst:1179
+#: ../../index.rst:1199
 msgid ""
 "SID 0012, \"Specification\", \"Rationale and alternatives\" and review "
 "history (PostgreSQL TLS built)."
@@ -4796,7 +4849,7 @@ msgstr ""
 "SID 0012, \"Specification\", \"Rationale and alternatives\" 및 검토 "
 "이력(PostgreSQL TLS 구현)."
 
-#: ../../index.rst:1180
+#: ../../index.rst:1200
 msgid ""
 "SID 0010, review history (security review, 2026-10-15): the standard "
 "bounded channel against the Vyukov ring, ``tests/timing.rs``. The opt-in "
