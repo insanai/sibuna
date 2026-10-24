@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-24 10:43+0000\n"
+"POT-Creation-Date: 2026-10-24 12:05+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -332,9 +332,9 @@ msgid ""
 msgstr ""
 "연결 하나의 64 KiB 읽기 버퍼입니다. 이미 처리한 부분 뒤에 요청 헤드(최대 16 KiB), 본문 앞부분, 대기 중인 바이트로 "
 "이루어진 아직 읽지 않은 구간이 있고, 그 뒤는 빈 공간입니다. 메서드, 경로, 쿼리, 헤더, 쿠키는 헤드의 슬라이스이고, "
-"request.body는 본문 앞부분의 슬라이스이며, ctx.pending은 대기 중인 바이트를 담습니다. 프록시는 이 바이트를 원본 "
-"서버로 먼저 보냅니다. 응답 후 reader.consume(head_len + body_len)이 구간의 시작을 대기 중인 바이트로 "
-"옮깁니다."
+"request.body는 본문 앞부분의 슬라이스이며, ctx.pending은 대기 중인 바이트를 담습니다. 프록시는 이 바이트를 "
+"원본 서버로 먼저 보냅니다. 응답 후 reader.consume(head_len + body_len)이 구간의 시작을 대기 중인 "
+"바이트로 옮깁니다."
 
 #: ../../zero-allocation.rst:98
 msgid ""
@@ -1511,7 +1511,7 @@ msgstr ""
 "삽입은 먼저 아무것도 바꾸지 않고 밀어내기 경로를 모의 실행하여(``can_insert``), 횟수가 제한된 밀어내기가 살아 있는 "
 "태그를 잃지 않고 성공할 수 있는지 확인합니다."
 
-#: ../../zero-allocation.rst:462 ../../zero-allocation.rst:682
+#: ../../zero-allocation.rst:462 ../../zero-allocation.rst:685
 msgid "Invariant"
 msgstr "불변식"
 
@@ -1590,10 +1590,10 @@ msgid ""
 "an arrival halfway between multiples of 200 ms is refused, and one at "
 "each multiple of 200 ms finds TAT exactly on the line and is admitted."
 msgstr ""
-"T = 200 ms, tau = 800 ms일 때 도착 시각에 따른 TAT를 그린 차트입니다. t = 0에 도착한 다섯 개는 허용되고, "
-"그동안 TAT는 0에서 1000 ms로 올라갑니다. t = 0의 여섯 번째 도착 시점의 TAT 1000 ms는 t + tau 선보다 "
-"위에 있으므로 거부됩니다. 그 뒤로 200 ms의 배수 사이 한가운데에 도착한 요청은 거부되고, 200 ms의 배수마다 도착한 요청은 "
-"TAT가 정확히 선 위에 놓이므로 허용됩니다."
+"T = 200 ms, tau = 800 ms일 때 도착 시각에 따른 TAT를 그린 차트입니다. t = 0에 도착한 다섯 개는 "
+"허용되고, 그동안 TAT는 0에서 1000 ms로 올라갑니다. t = 0의 여섯 번째 도착 시점의 TAT 1000 ms는 t + "
+"tau 선보다 위에 있으므로 거부됩니다. 그 뒤로 200 ms의 배수 사이 한가운데에 도착한 요청은 거부되고, 200 ms의 "
+"배수마다 도착한 요청은 TAT가 정확히 선 위에 놓이므로 허용됩니다."
 
 #: ../../zero-allocation.rst:484
 msgid ""
@@ -2003,60 +2003,78 @@ msgstr ""
 #: ../../zero-allocation.rst:618
 msgid ""
 "digraph engine_publication {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.8];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.45, "
+"ranksep=0.55, pad=0.1];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, margin=\"0.12,0.06\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
 "\n"
 "  storage [label=\"Storage thread\\nbuild Engine v2\\noff the request "
-"path\"];\n"
+"path\", color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
 "  slot [label=\"EngineSlot\\nRwLock<Arc<Engine>>\\ngeneration: "
-"AtomicU64\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  v2 [label=\"Engine v2\\n(published)\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  v1 [label=\"Engine v1\\nfreed when the last\\ncache lets go\", "
-"fillcolor=\"#fef2f2\", color=\"#b91c1c\"];\n"
+"AtomicU64\", color=\"#172033\", fillcolor=\"#ffffff\", penwidth=1.6];\n"
+"  v2 [label=\"Engine v2\\n(published)\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\"];\n"
 "  a [label=\"Connection thread A\\nEngineCache\\ngeneration 2\"];\n"
 "  b [label=\"Connection thread B\\nEngineCache\\ngeneration 1\"];\n"
+"  v1 [label=\"Engine v1\\nfreed when the last\\ncache lets go\", "
+"color=\"#94a3b8\", fillcolor=\"#f8fafc\", fontcolor=\"#475569\", "
+"style=\"rounded,filled,dashed\"];\n"
 "\n"
-"  storage -> slot [label=\"publish: swap the Arc\\nunder the write "
-"lock,\\ngeneration += 1 (Release)\"];\n"
-"  slot -> v2 [label=\"holds\"];\n"
-"  a -> slot [label=\"refresh: load generation\\n(Acquire); equal, no "
-"clone\"];\n"
-"  a -> v2 [label=\"Arc\"];\n"
-"  b -> slot [label=\"generation moved:\\nread lock, clone Arc\", "
-"style=dashed];\n"
-"  b -> v1 [label=\"Arc until\\nnext refresh\"];\n"
+"  { rank=same; slot; v2; }\n"
+"  { rank=same; a; b; v1; }\n"
+"\n"
+"  storage -> slot [label=\" publish: swap the Arc\\n under the write "
+"lock,\\n generation += 1 (Release)\", color=\"#b45309\", "
+"fontcolor=\"#92400e\", penwidth=1.4];\n"
+"  slot -> v2 [label=\"holds\", color=\"#15803d\", fontcolor=\"#15803d\", "
+"penwidth=1.4, minlen=3];\n"
+"  slot -> a [dir=back, label=\"refresh: load generation\\n(Acquire); "
+"equal, no clone \"];\n"
+"  v2 -> a [dir=back, label=\" Arc\", color=\"#15803d\", "
+"fontcolor=\"#15803d\"];\n"
+"  slot -> b [dir=back, label=\" generation moved:\\n read lock, clone "
+"Arc\", style=dashed];\n"
+"  b -> v1 [label=\"Arc until\\nnext refresh\", color=\"#94a3b8\", "
+"minlen=2];\n"
 "}"
 msgstr ""
 "digraph engine_publication {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.8];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.45, "
+"ranksep=0.55, pad=0.1];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, margin=\"0.12,0.06\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
 "\n"
-"  storage [label=\"저장소 스레드\\nEngine v2 생성\\n(요청 경로 밖)\"];\n"
-"  slot [label=\"EngineSlot\\nRwLock<Arc<Engine>>\\ngeneration: "
-"AtomicU64\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  v2 [label=\"Engine v2\\n(게시됨)\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  v1 [label=\"Engine v1\\n마지막 캐시가\\n놓으면 해제\", fillcolor=\"#fef2f2\", "
-"color=\"#b91c1c\"];\n"
+"  storage [label=\"저장소 스레드\\nEngine v2 생성\\n(요청 경로 밖)\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
+"  slot [label=\"EngineSlot\\nRwLock<Arc<Engine>>\\ngeneration: AtomicU64\", "
+"color=\"#172033\", fillcolor=\"#ffffff\", penwidth=1.6];\n"
+"  v2 [label=\"Engine v2\\n(게시됨)\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\"];\n"
 "  a [label=\"연결 스레드 A\\nEngineCache\\n세대 2\"];\n"
 "  b [label=\"연결 스레드 B\\nEngineCache\\n세대 1\"];\n"
+"  v1 [label=\"Engine v1\\n마지막 캐시가\\n놓으면 해제\", color=\"#94a3b8\", "
+"fillcolor=\"#f8fafc\", fontcolor=\"#475569\", "
+"style=\"rounded,filled,dashed\"];\n"
 "\n"
-"  storage -> slot [label=\"게시: 쓰기 락을 잡고\\nArc 교체,\\ngeneration += 1 "
-"(Release)\"];\n"
-"  slot -> v2 [label=\"보유\"];\n"
-"  a -> slot [label=\"갱신: generation 읽기\\n(Acquire), 같으면 복제 없음\"];\n"
-"  a -> v2 [label=\"Arc\"];\n"
-"  b -> slot [label=\"세대 변경:\\n읽기 락, Arc 복제\", style=dashed];\n"
-"  b -> v1 [label=\"다음 갱신까지\\nArc 보유\"];\n"
+"  { rank=same; slot; v2; }\n"
+"  { rank=same; a; b; v1; }\n"
+"\n"
+"  storage -> slot [label=\" 게시: 쓰기 락을 잡고\\n Arc 교체,\\n generation += 1 "
+"(Release)\", color=\"#b45309\", fontcolor=\"#92400e\", penwidth=1.4];\n"
+"  slot -> v2 [label=\"보유\", color=\"#15803d\", fontcolor=\"#15803d\", "
+"penwidth=1.4, minlen=3];\n"
+"  slot -> a [dir=back, label=\"갱신: generation 읽기\\n(Acquire), 같으면 복제 없음 "
+"\"];\n"
+"  v2 -> a [dir=back, label=\" Arc\", color=\"#15803d\", "
+"fontcolor=\"#15803d\"];\n"
+"  slot -> b [dir=back, label=\" 세대 변경:\\n 읽기 락, Arc 복제\", style=dashed];\n"
+"  b -> v1 [label=\"다음 갱신까지\\nArc 보유\", color=\"#94a3b8\", minlen=2];\n"
 "}"
 
 #: ../../zero-allocation.rst:618
@@ -2069,11 +2087,11 @@ msgstr ""
 "엔진 게시. 저장소 스레드가 완성된 엔진을 게시하고 세대를 올립니다. 각 연결은 acquire 읽기 한 번으로 세대를 확인하고, "
 "게시가 일어난 뒤에만 게시된 Arc를 복제합니다. 옛 엔진은 그 엔진을 가진 마지막 캐시가 놓아줄 때 해제됩니다."
 
-#: ../../zero-allocation.rst:641
+#: ../../zero-allocation.rst:644
 msgid "Implementation: ``EngineSlot::publish`` and ``EngineCache::refresh``"
 msgstr "구현: ``EngineSlot::publish``\\ 와 ``EngineCache::refresh``"
 
-#: ../../zero-allocation.rst:643
+#: ../../zero-allocation.rst:646
 msgid ""
 "Publication of a complete engine, and one connection's view of it. In "
 "``cmd/sibuna/src/slot.rs`` (crate ``sibuna``)."
@@ -2081,7 +2099,7 @@ msgstr ""
 "완성된 엔진의 게시와, 연결 하나가 그 엔진을 보는 방식입니다. ``cmd/sibuna/src/slot.rs``\\ (crate "
 "``sibuna``)에 있습니다."
 
-#: ../../zero-allocation.rst:645
+#: ../../zero-allocation.rst:648
 msgid ""
 "pub struct EngineSlot {\n"
 "    current: RwLock<Arc<Engine>>,\n"
@@ -2154,7 +2172,7 @@ msgstr ""
 "    self.engine.get_or_insert_with(|| slot.load())\n"
 "}"
 
-#: ../../zero-allocation.rst:680
+#: ../../zero-allocation.rst:683
 msgid ""
 "The generation is stored with release ordering after the engine is in "
 "place, and loaded with acquire ordering: a reader that sees a new "
@@ -2171,7 +2189,7 @@ msgstr ""
 "새로운 엔진을 더 오래된 세대 번호 아래에 캐시하게 되고, 다음 갱신 때 불일치를 알아차려 다시 읽습니다. 읽는 쪽은 요청 하나 "
 "동안 엔진 하나만큼 늦을 수는 있어도, 절반만 만들어진 엔진을 볼 수는 없습니다. 슬롯에는 완성된 엔진만 저장되기 때문입니다."
 
-#: ../../zero-allocation.rst:684
+#: ../../zero-allocation.rst:687
 msgid ""
 "Every engine a request reads is complete, and no engine is freed while "
 "any request or connection cache holds it. The first holds because an "
@@ -2183,7 +2201,7 @@ msgstr ""
 "첫째는 ``publish``\\ 가 저장하기 전에 엔진이 완전히 만들어지기 때문에 성립하고, 둘째는 모든 읽는 쪽이 "
 "``Arc``\\ 를 가지며 엔진은 마지막 ``Arc``\\ 와 함께만 버려지기 때문에 성립합니다."
 
-#: ../../zero-allocation.rst:686
+#: ../../zero-allocation.rst:689
 msgid ""
 "Why a cache and not simply a lock? SID 0010 asked us to measure the read "
 "cost with 16 threads and choose between ``RwLock<Arc<Engine>>`` and a "
@@ -2197,61 +2215,61 @@ msgstr ""
 "읽으면 락 워드와 참조 카운트를 건드리는데, 이 둘은 모든 코어가 쓰기를 하는 캐시 라인 두 개입니다. 반면 세대는 게시할 때 한 "
 "번 쓰이고 그 밖에는 읽히기만 하므로, 각 코어가 자기 사본을 유지합니다."
 
-#: ../../zero-allocation.rst:688
+#: ../../zero-allocation.rst:691
 msgid ""
 "Cost of one engine read, Ryzen 9 5950X, 16 threads reading in a loop "
 "(October 2026)"
 msgstr "엔진 읽기 한 번의 비용, Ryzen 9 5950X, 루프에서 읽는 스레드 16개(2026년 10월)"
 
-#: ../../zero-allocation.rst:691
+#: ../../zero-allocation.rst:694
 msgid "Reader"
 msgstr "읽기 방식"
 
-#: ../../zero-allocation.rst:692
+#: ../../zero-allocation.rst:695
 msgid "1 thread"
 msgstr "스레드 1개"
 
-#: ../../zero-allocation.rst:693
+#: ../../zero-allocation.rst:696
 msgid "16 threads"
 msgstr "스레드 16개"
 
-#: ../../zero-allocation.rst:694
+#: ../../zero-allocation.rst:697
 msgid "``RwLock`` read guard only"
 msgstr "``RwLock`` 읽기 가드만"
 
-#: ../../zero-allocation.rst:695
+#: ../../zero-allocation.rst:698
 msgid "4.2 ns"
 msgstr "4.2 ns"
 
-#: ../../zero-allocation.rst:696
+#: ../../zero-allocation.rst:699
 msgid "752 ns"
 msgstr "752 ns"
 
-#: ../../zero-allocation.rst:697
+#: ../../zero-allocation.rst:700
 msgid "``RwLock`` read and ``Arc`` clone"
 msgstr "``RwLock`` 읽기와 ``Arc`` 복제"
 
-#: ../../zero-allocation.rst:698
+#: ../../zero-allocation.rst:701
 msgid "7.6 ns"
 msgstr "7.6 ns"
 
-#: ../../zero-allocation.rst:699
+#: ../../zero-allocation.rst:702
 msgid "833 ns"
 msgstr "833 ns"
 
-#: ../../zero-allocation.rst:700
+#: ../../zero-allocation.rst:703
 msgid "generation check with a cached ``Arc``"
 msgstr "캐시된 ``Arc``\\ 로 세대 확인"
 
-#: ../../zero-allocation.rst:701
+#: ../../zero-allocation.rst:704
 msgid "0.8 ns"
 msgstr "0.8 ns"
 
-#: ../../zero-allocation.rst:702
+#: ../../zero-allocation.rst:705
 msgid "1.8 ns"
 msgstr "1.8 ns"
 
-#: ../../zero-allocation.rst:704
+#: ../../zero-allocation.rst:707
 msgid ""
 "Under contention the cached read is more than 400 times cheaper than the "
 "lock, so the request path uses the cache and the ``RwLock`` only on the "
@@ -2270,11 +2288,11 @@ msgstr ""
 "KiB이며(``benchmarks/results/primitives-latest.json``\\ 의 "
 "``engine_bytes``), 규칙 128개, 128바이트 규칙 이름, 트라이 노드 8,192개를 담을 용량이 있습니다."
 
-#: ../../zero-allocation.rst:706
+#: ../../zero-allocation.rst:709
 msgid "Why ``Arc`` and not reader counts"
 msgstr "읽는 쪽 카운트가 아니라 ``Arc``\\ 인 이유"
 
-#: ../../zero-allocation.rst:708
+#: ../../zero-allocation.rst:711
 msgid ""
 "The fixed-memory alternative keeps two engine slots, each with a reader "
 "count and its own allocation arena. A request pins a slot by incrementing "
@@ -2293,7 +2311,7 @@ msgstr ""
 "슬롯의 아레나를 초기화하고 그 안에 다시 만듭니다. 따라서 재구성 시점에 걸쳐 슬롯을 붙잡고 있는 읽는 쪽은 빌더를 막으며, 모든 "
 "요청이 프록시 I/O를 시작하기 전에 슬롯을 놓지 않으면 느린 원본 서버가 다음 게시를 멈춰 세울 것입니다."
 
-#: ../../zero-allocation.rst:710
+#: ../../zero-allocation.rst:713
 msgid ""
 "``Arc`` reference counting needs none of this. The storage thread builds "
 "a fresh ``Engine`` from each snapshot and publishes it; nothing is "
@@ -2313,11 +2331,11 @@ msgstr ""
 "엔진을 빌리고, 응답 경로는 연결 컨텍스트 전체를 가변으로 빌려야 하기 때문입니다. 몇 시간 동안 살아 있을 수 있는 업그레이드된 "
 "연결은 프록시되기 전에 캐시한 엔진을 놓아줍니다."
 
-#: ../../zero-allocation.rst:712
+#: ../../zero-allocation.rst:715
 msgid "Exercise 5.2"
 msgstr "연습 문제 5.2"
 
-#: ../../zero-allocation.rst:714
+#: ../../zero-allocation.rst:717
 msgid ""
 "Using the GCRA theorem, compute the maximum number of requests a single "
 "client can get through in the first 3 seconds after being idle, for "
@@ -2328,11 +2346,11 @@ msgstr ""
 "하나가 처음 3초 동안 통과시킬 수 있는 요청의 최대 수를 계산하세요. 고정 10초 윈도 카운터, 그리고 엄밀한 슬라이딩 윈도 "
 "로그와 비교하세요."
 
-#: ../../zero-allocation.rst:716
+#: ../../zero-allocation.rst:719
 msgid "Explain the invariant"
 msgstr "불변식 설명하기"
 
-#: ../../zero-allocation.rst:718
+#: ../../zero-allocation.rst:721
 msgid ""
 "Explain why an expired Robin Hood entry can be overwritten only by a key "
 "with a distance at least as large, using a three-slot example."

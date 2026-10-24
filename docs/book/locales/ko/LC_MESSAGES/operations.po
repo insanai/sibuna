@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-10-24 12:05+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -34,8 +34,8 @@ msgstr ""
 msgid "Surfaces and Configuration"
 msgstr "운영 구성과 설정"
 
-#: ../../operations.rst:9 ../../operations.rst:313 ../../operations.rst:528
-#: ../../operations.rst:557 ../../operations.rst:696
+#: ../../operations.rst:9 ../../operations.rst:313 ../../operations.rst:533
+#: ../../operations.rst:562 ../../operations.rst:700
 msgid "Objectives"
 msgstr "학습 목표"
 
@@ -1617,65 +1617,97 @@ msgstr ""
 #: ../../operations.rst:321
 msgid ""
 "digraph shield_routing {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.7];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.35, "
+"ranksep=0.38, pad=0.1];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.4, height=0.42, "
+"margin=\"0.1,0.05\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8.5, "
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
 "\n"
-"  request [label=\"Request\"];\n"
-"  limits [label=\"Local bans\\nand rate limit\"];\n"
-"  policy [label=\"Inspection\\nand policy\"];\n"
-"  deny [label=\"Deny\", fillcolor=\"#fef2f2\", color=\"#b91c1c\"];\n"
-"  origin [label=\"Origin / auth\\nsuccess\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  session [label=\"Session MAC\\nif challenged\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
-"  puzzle [label=\"Issue puzzle\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
+"  request [label=\"Request\", color=\"#172033\", fillcolor=\"#ffffff\"];\n"
+"  limits [label=\"Local bans\\nand rate limit\", shape=hexagon, "
+"style=filled, margin=\"0.02,0.04\"];\n"
+"  policy [label=\"Inspection\\nand policy\", shape=hexagon, style=filled, "
+"margin=\"0.02,0.04\"];\n"
+"  session [label=\"Session MAC\\nif challenged\", shape=hexagon, "
+"style=filled, color=\"#b45309\", fillcolor=\"#fffbeb\", "
+"margin=\"0.02,0.04\"];\n"
+"  deny [label=\"Deny\", color=\"#b91c1c\", fillcolor=\"#fef2f2\", "
+"penwidth=1.4];\n"
+"  origin [label=\"Origin / auth\\nsuccess\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\", penwidth=1.4];\n"
+"  puzzle [label=\"Issue puzzle\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\", penwidth=1.4];\n"
+"\n"
+"  { rank=same; deny; session; }\n"
+"  { rank=same; origin; puzzle; }\n"
+"  deny -> session [style=invis, minlen=2];\n"
+"  origin -> puzzle [style=invis];\n"
 "\n"
 "  request -> limits;\n"
-"  limits -> policy [label=\"within limits\"];\n"
-"  policy -> deny [label=\"DENY\"];\n"
-"  policy -> session [label=\"CHALLENGE\"];\n"
-"  session -> origin [label=\"valid\"];\n"
-"  session -> puzzle [label=\"missing / invalid\"];\n"
-"  policy -> origin [label=\"ALLOW\"];\n"
+"  limits -> policy [label=\" within limits\"];\n"
+"  policy -> deny [label=\"DENY \", color=\"#b91c1c\", "
+"fontcolor=\"#b91c1c\", fontname=\"Helvetica-Bold\"];\n"
+"  policy -> origin [label=\" ALLOW\", color=\"#15803d\", "
+"fontcolor=\"#15803d\", fontname=\"Helvetica-Bold\"];\n"
+"  policy -> session [label=\" CHALLENGE\", color=\"#b45309\", "
+"fontcolor=\"#b45309\", fontname=\"Helvetica-Bold\"];\n"
+"  session -> origin [label=\"valid \", color=\"#15803d\", "
+"fontcolor=\"#15803d\"];\n"
+"  session -> puzzle [label=\" missing / invalid\", color=\"#b45309\", "
+"fontcolor=\"#b45309\"];\n"
 "}"
 msgstr ""
 "digraph shield_routing {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.7];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.35, "
+"ranksep=0.38, pad=0.1];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.4, height=0.42, "
+"margin=\"0.1,0.05\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8.5, "
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
 "\n"
-"  request [label=\"요청\"];\n"
-"  limits [label=\"로컬 차단과\\n속도 제한\"];\n"
-"  policy [label=\"검사와\\n정책\"];\n"
-"  deny [label=\"거부\", fillcolor=\"#fef2f2\", color=\"#b91c1c\"];\n"
-"  origin [label=\"원본 서버 /\\n인증 성공\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  session [label=\"챌린지 시\\n세션 MAC 확인\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
-"  puzzle [label=\"퍼즐 발급\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
+"  request [label=\"요청\", color=\"#172033\", fillcolor=\"#ffffff\"];\n"
+"  limits [label=\"로컬 차단과\\n속도 제한\", shape=hexagon, style=filled, "
+"margin=\"0.02,0.04\"];\n"
+"  policy [label=\"검사와\\n정책\", shape=hexagon, style=filled, "
+"margin=\"0.02,0.04\"];\n"
+"  session [label=\"챌린지 시\\n세션 MAC 확인\", shape=hexagon, style=filled, "
+"color=\"#b45309\", fillcolor=\"#fffbeb\", margin=\"0.02,0.04\"];\n"
+"  deny [label=\"거부\", color=\"#b91c1c\", fillcolor=\"#fef2f2\", "
+"penwidth=1.4];\n"
+"  origin [label=\"원본 서버 /\\n인증 성공\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\", penwidth=1.4];\n"
+"  puzzle [label=\"퍼즐 발급\", color=\"#b45309\", fillcolor=\"#fffbeb\", "
+"penwidth=1.4];\n"
+"\n"
+"  { rank=same; deny; session; }\n"
+"  { rank=same; origin; puzzle; }\n"
+"  deny -> session [style=invis, minlen=2];\n"
+"  origin -> puzzle [style=invis];\n"
 "\n"
 "  request -> limits;\n"
-"  limits -> policy [label=\"제한 이내\"];\n"
-"  policy -> deny [label=\"DENY\"];\n"
-"  policy -> session [label=\"CHALLENGE\"];\n"
-"  session -> origin [label=\"유효\"];\n"
-"  session -> puzzle [label=\"없음 / 무효\"];\n"
-"  policy -> origin [label=\"ALLOW\"];\n"
+"  limits -> policy [label=\" 제한 이내\"];\n"
+"  policy -> deny [label=\"DENY \", color=\"#b91c1c\", "
+"fontcolor=\"#b91c1c\", fontname=\"Helvetica-Bold\"];\n"
+"  policy -> origin [label=\" ALLOW\", color=\"#15803d\", "
+"fontcolor=\"#15803d\", fontname=\"Helvetica-Bold\"];\n"
+"  policy -> session [label=\" CHALLENGE\", color=\"#b45309\", "
+"fontcolor=\"#b45309\", fontname=\"Helvetica-Bold\"];\n"
+"  session -> origin [label=\"유효 \", color=\"#15803d\", "
+"fontcolor=\"#15803d\"];\n"
+"  session -> puzzle [label=\" 없음 / 무효\", color=\"#b45309\", "
+"fontcolor=\"#b45309\"];\n"
 "}"
 
 #: ../../operations.rst:321
 msgid "Request routing on the Shield surface"
 msgstr "Shield 운영 구성의 요청 라우팅"
 
-#: ../../operations.rst:346
+#: ../../operations.rst:351
 msgid ""
 "sibuna --port 80 --upstream-host 127.0.0.1 --upstream-port 3000 \\\n"
 "       --secret-file /etc/sibuna/secret --difficulty 16 --algorithm posw"
@@ -1683,7 +1715,7 @@ msgstr ""
 "sibuna --port 80 --upstream-host 127.0.0.1 --upstream-port 3000 \\\n"
 "       --secret-file /etc/sibuna/secret --difficulty 16 --algorithm posw"
 
-#: ../../operations.rst:351
+#: ../../operations.rst:356
 msgid ""
 "Admitted requests reach the origin with ``X-Forwarded-For``, "
 "``X-Forwarded-Proto``, ``X-Real-IP``, ``X-Sibuna-Status`` and "
@@ -1710,7 +1742,7 @@ msgstr ""
 "읽어야 하며, 가장 왼쪽 항목에서 읽으면 안 됩니다. 원본 서버가 받는 경로는 정책이 판정한 정규형입니다(SID 0009). "
 "정규형이 없는 경로에는 ``400``\\ 으로 응답합니다."
 
-#: ../../operations.rst:353
+#: ../../operations.rst:358
 msgid ""
 "HTTP/1.1 WebSocket upgrades pass through admission and policy checks "
 "before the origin's handshake is accepted. Subprotocol and extension "
@@ -1737,7 +1769,7 @@ msgstr ""
 "중계를 끝냅니다. 핸드셰이크 이후의 프레임은 WAF 검사 입력이 아닙니다. HTTPS/WSS는 Sibuna의 비공개 HTTP/1.1 "
 "리스너 앞에서 TLS를 종료하는 인그레스를 사용합니다. Sibuna는 브라우저 TLS를 직접 종료하지 않습니다."
 
-#: ../../operations.rst:355
+#: ../../operations.rst:360
 msgid ""
 "The ingress can negotiate HTTP/2 with browsers and forward HTTP/1.1 to "
 "Sibuna. Native HTTP/2 support in Sibuna is deferred to a later update; "
@@ -1748,7 +1780,7 @@ msgstr ""
 "HTTP/2 지원은 이후 업데이트로 미뤄졌습니다. 이 구성은 네이티브 gRPC 같은 애플리케이션에 종단 간 HTTP/2 의미론을 "
 "제공하지 않습니다."
 
-#: ../../operations.rst:357
+#: ../../operations.rst:362
 msgid ""
 "Content-Length request bodies stream through fixed buffers, preserving "
 "bytes and MIME headers. Multipart uploads retain boundaries, repeated "
@@ -1776,7 +1808,7 @@ msgstr ""
 "유지합니다. 모호하거나 형식이 잘못된 MIME 메타데이터는 텍스트 검사로 돌아갑니다. 멀티파트 파싱은 같은 접두사 안에서 파트 "
 "32개와 파트당 헤더 2 KiB로 제한되며, 구분자 뒤의 RFC 2046 전송 패딩을 허용합니다."
 
-#: ../../operations.rst:359
+#: ../../operations.rst:364
 msgid ""
 "This is upload compatibility, not file validation or malware scanning. "
 "The backend must enforce accepted media types rather than trust a "
@@ -1811,11 +1843,11 @@ msgstr ""
 "끝나면 닫히며 풀로 돌아가지 않습니다. ``100-continue``\\ 를 기다리는 클라이언트는 본문을 보내기 전에 로컬에서 이를 "
 "받습니다. 지원하지 않는 Expect 값은 417을 받습니다. Expect 헤더는 백엔드로 전달하기 전에 소비됩니다."
 
-#: ../../operations.rst:361
+#: ../../operations.rst:366
 msgid "Forward Auth Behind an Ingress"
 msgstr "인그레스 뒤의 forward-auth"
 
-#: ../../operations.rst:364
+#: ../../operations.rst:369
 msgid ""
 "In ``--mode forward_auth`` the daemon answers the ingress's subrequest "
 "with ``200`` (plus the audit headers ``X-Sibuna-Status``, "
@@ -1841,7 +1873,7 @@ msgstr ""
 "경우에는 ``400``\\ 으로 거부합니다. 데몬 내부 경로는 항상 실제 요청 URI를 사용합니다. forward-auth는 "
 "인그레스가 생략한 본문을 검사하지 않습니다."
 
-#: ../../operations.rst:366
+#: ../../operations.rst:371
 msgid ""
 "map $http_upgrade $sibuna_connection_upgrade {\n"
 "    default upgrade;\n"
@@ -1963,7 +1995,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../operations.rst:427
+#: ../../operations.rst:432
 msgid ""
 "example.com {\n"
 "    handle /__sibuna/* {\n"
@@ -1997,7 +2029,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../operations.rst:444
+#: ../../operations.rst:449
 msgid ""
 "The ``/__sibuna/*`` namespace (interstitial, challenge, verify, solver "
 "assets) must reach the daemon directly in both recipes. The nginx error "
@@ -2033,11 +2065,11 @@ msgstr ""
 "설정하세요. 예제는 라우팅 논리를 보여 줍니다. 저장소는 아직 이 구성 예를 실제 인그레스에서 테스트하지 않습니다. 구성 예가 "
 "의존하는 전달 메타데이터 규칙은 ``sibuna-http``\\ 의 단위 테스트가 다룹니다."
 
-#: ../../operations.rst:446
+#: ../../operations.rst:451
 msgid "JA4 Fingerprints From the Ingress"
 msgstr "인그레스에서 받는 JA4 지문"
 
-#: ../../operations.rst:449
+#: ../../operations.rst:454
 msgid ""
 "A JA4 fingerprint summarises how a client opens a TLS connection. It is "
 "computed from the client's first handshake message, the ClientHello. The "
@@ -2054,7 +2086,7 @@ msgstr ""
 "다릅니다. 그래서 JA4는 어떤 클라이언트든 마음대로 쓸 수 있는 ``User-Agent`` 값보다 강한 신호입니다(SID "
 "0014). JA4는 FoxIO가 정의했습니다. 지문은 36문자이며, ``_``\\ 로 이어진 세 부분으로 이루어집니다."
 
-#: ../../operations.rst:451
+#: ../../operations.rst:456
 msgid ""
 "t13d1516h2_8daaf6152771_02713d6af862\n"
 "^^^^^^^^^^ ^^^^^^^^^^^^ ^^^^^^^^^^^^\n"
@@ -2078,7 +2110,7 @@ msgstr ""
 "c  정렬한 확장과 서명 알고리즘의\n"
 "   12자리 소문자 16진수 해시"
 
-#: ../../operations.rst:464
+#: ../../operations.rst:469
 msgid ""
 "Only the component that terminates TLS sees the ClientHello, so only it "
 "can compute JA4. Sibuna does not terminate TLS: it serves plain HTTP/1.1 "
@@ -2092,7 +2124,7 @@ msgstr ""
 "HTTP/3로 통신하는 것은 인그레스입니다. 여러 인그레스가 이미 JA4를 계산합니다. 그래서 우리는 인그레스가 지문을 계산해 요청 "
 "헤더로 보내게 하고, Sibuna는 그 헤더에서 지문을 읽습니다."
 
-#: ../../operations.rst:466
+#: ../../operations.rst:471
 msgid ""
 "``--ja4-header <name>`` names that header. It is off by default and has "
 "no default name; we always name the header the ingress uses. Sibuna "
@@ -2108,7 +2140,7 @@ msgstr ""
 "``X-Sibuna-*``, ``Forwarded``, 그리고 ``-`` 대신 ``_``\\ 를 쓴 형태)은 거부합니다. 옵션을 "
 "지정하면 시작 배너에 ``JA4: from cf-ja4 (trusted)`` 같은 줄이 출력됩니다."
 
-#: ../../operations.rst:468
+#: ../../operations.rst:473
 msgid ""
 "The header is read only when forwarded fields are trusted. This is the "
 "decision that governs ``X-Forwarded-For``: ``--trust-forwarded``, or "
@@ -2129,7 +2161,7 @@ msgstr ""
 "``sibuna_ja4_invalid_total``\\ 은 헤더 형식이 잘못되었거나 반복된 요청을 셉니다. 신뢰하지 않는 피어의 "
 "요청은 어느 카운터도 올리지 않습니다."
 
-#: ../../operations.rst:470
+#: ../../operations.rst:475
 msgid ""
 "In reverse-proxy mode, the origin sees the header only when Sibuna trusts "
 "it. Without trust, Sibuna removes every field of that name from the "
@@ -2145,11 +2177,11 @@ msgstr ""
 "바뀌지 않고 전달되며, ``_``\\ 를 쓴 별칭은 여전히 제거됩니다. ``--ja4-header``\\ 가 없으면 그 이름의 "
 "필드는 평범한 필드입니다."
 
-#: ../../operations.rst:472
+#: ../../operations.rst:477
 msgid "The ingress must own the header"
 msgstr "헤더는 인그레스가 직접 써야 합니다"
 
-#: ../../operations.rst:474
+#: ../../operations.rst:479
 msgid ""
 "A fingerprint is only as trustworthy as the ingress that wrote it. Sibuna "
 "cannot tell a value the ingress computed from a value the client sent. "
@@ -2162,7 +2194,7 @@ msgstr ""
 "없습니다. 따라서 인그레스는 Sibuna에 도달하는 모든 경로에서 클라이언트가 보낸 헤더 사본을 덮어쓰거나 제거해야 합니다. "
 "``X-Forwarded-For``\\ 와 마찬가지로, Sibuna의 리스너는 인그레스의 연결만 받아들여야 합니다."
 
-#: ../../operations.rst:476
+#: ../../operations.rst:481
 msgid ""
 "**Cloudflare.** The managed transform \"Add bot protection headers\" adds "
 "``cf-ja4`` to the request sent to the origin, beside ``cf-bot-score``, "
@@ -2176,11 +2208,11 @@ msgstr ""
 "Cloudflare와 Sibuna 사이의 인그레스는 이 필드를 바꾸지 않고 그대로 전달해야 합니다. 다음 명령으로 Sibuna를 "
 "시작합니다."
 
-#: ../../operations.rst:478
+#: ../../operations.rst:483
 msgid "sibuna --ja4-header cf-ja4 --trust-forwarded -s /etc/sibuna/secret"
 msgstr "sibuna --ja4-header cf-ja4 --trust-forwarded -s /etc/sibuna/secret"
 
-#: ../../operations.rst:482
+#: ../../operations.rst:487
 msgid ""
 "The ingress in front of Sibuna must accept connections from Cloudflare's "
 "addresses alone; otherwise a client can bypass Cloudflare and send its "
@@ -2189,7 +2221,7 @@ msgstr ""
 "Sibuna 앞의 인그레스는 Cloudflare의 주소에서 오는 연결만 받아들여야 합니다. 그렇지 않으면 클라이언트가 "
 "Cloudflare를 우회해 자신의 ``cf-ja4``\\ 를 보낼 수 있습니다."
 
-#: ../../operations.rst:484
+#: ../../operations.rst:489
 msgid ""
 "**nginx.** FoxIO's ``ja4-nginx-module`` computes JA4 inside nginx and "
 "exposes it as ``$http_ssl_ja4``. It needs nginx 1.26 or later with the "
@@ -2204,7 +2236,7 @@ msgstr ""
 "``proxy_set_header``\\ 는 클라이언트가 보낸 같은 이름의 필드를 대체하므로, Sibuna에 도달하는 각 "
 "location이 헤더를 직접 설정합니다."
 
-#: ../../operations.rst:486
+#: ../../operations.rst:491
 msgid ""
 "# Reverse proxy: Sibuna runs with --ja4-header x-ja4 --trust-forwarded\n"
 "location / {\n"
@@ -2236,7 +2268,7 @@ msgstr ""
 "    # ... 위 forward-auth 구성 예의 나머지 필드\n"
 "}"
 
-#: ../../operations.rst:503
+#: ../../operations.rst:508
 msgid ""
 "In the forward-auth recipe, the same ``proxy_set_header X-JA4 "
 "$http_ssl_ja4;`` line belongs in ``@sibuna_challenge`` and in ``location "
@@ -2247,7 +2279,7 @@ msgstr ""
 "``@sibuna_challenge``\\ 와 ``location /__sibuna/``\\ 에도 들어가야 합니다. 이 줄을 빠뜨린 "
 "location은 클라이언트가 보낸 ``X-JA4``\\ 를 그대로 Sibuna에 넘기고, Sibuna는 그 값을 신뢰합니다."
 
-#: ../../operations.rst:505
+#: ../../operations.rst:510
 msgid ""
 "**Apache Traffic Server.** The ``ja4_fingerprint`` plugin is enabled by "
 "the line ``ja4_fingerprint.so`` in ``plugin.config``. It has no options. "
@@ -2265,7 +2297,7 @@ msgstr ""
 "``ja4`` 필드를 플러그인이 대체하는지 밝히지 않습니다. 값을 신뢰하기 전에, 우리가 쓰는 버전에서 이를 확인하거나 플러그인이 "
 "자기 필드를 추가하기 전에 클라이언트의 필드를 제거해야 합니다."
 
-#: ../../operations.rst:507
+#: ../../operations.rst:512
 msgid ""
 "A rule matches a fingerprint with the ``ja4`` field (Part X, Policy "
 "Schema). The value is either a whole fingerprint, which must be equal, or "
@@ -2280,7 +2312,7 @@ msgstr ""
 "요청은 ``ja4`` 규칙과 절대 일치하지 않습니다. 로더는 대문자로 쓴 ``T13D*``\\ 처럼 어떤 지문과도 일치할 수 없는 "
 "패턴을 ``INVALID POLICY JA4``\\ 로 거부합니다. 비교는 바이트 단위로 이루어지며 메모리를 할당하지 않습니다."
 
-#: ../../operations.rst:509
+#: ../../operations.rst:514
 msgid ""
 "{ \"rules\": [\n"
 "    { \"name\": \"deny-known-scanner\", \"action\": \"DENY\",\n"
@@ -2308,7 +2340,7 @@ msgstr ""
 "      \"action\": \"CHALLENGE\" }\n"
 "] }"
 
-#: ../../operations.rst:521
+#: ../../operations.rst:526
 msgid ""
 "The first rule denies one fingerprint exactly; the value is an example, "
 "not a known scanner. The next two add weight to the request's score "
@@ -2336,7 +2368,7 @@ msgstr ""
 "브라우저의 ClientHello를 흉내 낼 수 있습니다. JA4는 자동화의 비용을 높일 뿐 신원을 증명하지 않습니다. 같은 이유로 "
 "Sibuna는 차단과 평판을 지문이 아니라 항상 주소를 키로 관리합니다."
 
-#: ../../operations.rst:523
+#: ../../operations.rst:528
 msgid ""
 "Incidents (WAF denials, honeypot hits and audit findings) record the "
 "fingerprint of their request when it carried one, in the column "
@@ -2352,17 +2384,17 @@ msgstr ""
 "받습니다. 관리 규칙 편집기에는 ``policies.ja4_pattern``\\ 에 저장되는 JA4 필드가 있고, 정책 테스트 "
 "양식은 지문을 입력받습니다."
 
-#: ../../operations.rst:525
+#: ../../operations.rst:530
 msgid "Declarative Policy"
 msgstr "선언형 정책"
 
-#: ../../operations.rst:530
+#: ../../operations.rst:535
 msgid ""
 "Write a policy file with rules, weights, thresholds, IP rules, and the "
 "WAF switch."
 msgstr "규칙, 가중치, 임계값, IP 규칙, WAF 스위치를 담은 정책 파일을 작성합니다."
 
-#: ../../operations.rst:532
+#: ../../operations.rst:537
 msgid ""
 "{\n"
 "  \"default_action\": \"CHALLENGE\",\n"
@@ -2416,7 +2448,7 @@ msgstr ""
 "  ]\n"
 "}"
 
-#: ../../operations.rst:552
+#: ../../operations.rst:557
 msgid ""
 "The loader fails closed: an unknown key, a misspelled action, a malformed "
 "address or an out-of-range number rejects the whole file, the diagnostic "
@@ -2444,11 +2476,11 @@ msgstr ""
 "``--ja4-header``\\ 가 필요합니다(\"인그레스에서 받는 JA4 지문\" 참조). 경로 패턴은 정규형의 요청 경로와 "
 "일치시키므로(SID 0003), 패턴도 그 형식으로 써야 합니다."
 
-#: ../../operations.rst:554
+#: ../../operations.rst:559
 msgid "Persistent Storage and Clustering"
 msgstr "영속 저장소와 클러스터"
 
-#: ../../operations.rst:559
+#: ../../operations.rst:564
 msgid ""
 "Enable SQLite or PostgreSQL storage, add a dynamic policy and a ban with "
 "SQL, query incident forensics, understand campaign clustering, and run "
@@ -2457,7 +2489,7 @@ msgstr ""
 "SQLite 또는 PostgreSQL 저장소를 켜고, SQL로 동적 정책과 차단을 추가하고, 인시던트 포렌식을 질의하고, 캠페인 "
 "군집화를 이해하고, PostgreSQL 데이터베이스 하나로 여러 노드를 실행합니다."
 
-#: ../../operations.rst:562
+#: ../../operations.rst:567
 msgid ""
 "Request threads push incidents into an MPSC ring of 512 slots. The "
 "storage thread pops them, writes batches through sqlx to the SQLite file "
@@ -2473,88 +2505,94 @@ msgstr ""
 "게시하고, 요청 스레드가 이를 읽습니다. 다른 클러스터 노드는 PostgreSQL 데이터베이스를 공유하며 NOTIFY "
 "sibuna_policy를 받습니다."
 
-#: ../../operations.rst:562
+#: ../../operations.rst:567
 msgid ""
 "digraph storage_architecture {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.7];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.8, "
+"ranksep=0.42, pad=0.1];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"fontsize=9, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.7, height=0.45, "
+"margin=\"0.1,0.05\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.7];\n"
 "\n"
-"  workers [label=\"Request threads\\n(hot path)\"];\n"
-"  ring [label=\"MPSC ring\\n512 incidents\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
+"  workers [label=\"Request threads\\n(hot path)\", color=\"#172033\", "
+"fillcolor=\"#ffffff\", penwidth=1.6, width=3.0];\n"
+"  ring [label=\"MPSC ring\\n512 incidents\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
+"  publish [label=\"EngineSlot::publish\\nArc swap\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
 "  thread [label=\"Storage thread (tokio)\\ndrain + poll\"];\n"
-"  db [label=\"sqlx: SQLite file\\nor PostgreSQL\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
+"  rebuild [label=\"Rebuild engine\\noff the hot path\"];\n"
+"  db [label=\"sqlx: SQLite file\\nor PostgreSQL\", shape=cylinder, "
+"style=filled, color=\"#15803d\", fillcolor=\"#f0fdf4\", height=0.62];\n"
 "  tables [label=\"policies, "
 "ip_reputation,\\nsecurity_incidents,\\nfull-text index\", "
-"fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
-"  rebuild [label=\"Rebuild engine\\noff the hot path\"];\n"
-"  publish [label=\"EngineSlot::publish\\nArc swap\", "
-"fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  others [label=\"Other cluster\\nnodes\"];\n"
+"color=\"#15803d\", fillcolor=\"#f0fdf4\"];\n"
+"  others [label=\"Other cluster\\nnodes\", color=\"#64748b\", "
+"fillcolor=\"#ffffff\", style=\"rounded,filled,dashed\", width=1.7];\n"
 "\n"
-"  { rank=same; workers; others; }\n"
 "  { rank=same; ring; publish; }\n"
 "  { rank=same; thread; rebuild; }\n"
 "  { rank=same; db; tables; }\n"
 "\n"
-"  workers -> ring [label=\"push\"];\n"
-"  ring -> thread [label=\"pop\"];\n"
-"  thread -> db [label=\"batched SQL\"];\n"
+"  workers -> ring [label=\" push\"];\n"
+"  ring -> thread [label=\" pop\"];\n"
+"  thread -> db [label=\" batched SQL\"];\n"
 "  db -> tables;\n"
-"  tables -> rebuild [label=\"revision changed?\"];\n"
-"  rebuild -> publish;\n"
-"  publish -> workers [label=\"new rules\"];\n"
-"  db -> others [dir=both, label=\"shared PostgreSQL,\\nNOTIFY "
-"sibuna_policy\"];\n"
+"  rebuild -> tables [dir=back, label=\" revision changed?\"];\n"
+"  publish -> rebuild [dir=back];\n"
+"  workers -> publish [dir=back, label=\" new rules\"];\n"
+"  db -> others [dir=both, style=dashed, label=\" shared PostgreSQL,\\n "
+"NOTIFY sibuna_policy\"];\n"
 "}"
 msgstr ""
 "digraph storage_architecture {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.7];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.8, "
+"ranksep=0.42, pad=0.1];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"fontsize=9, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.7, height=0.45, "
+"margin=\"0.1,0.05\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.7];\n"
 "\n"
-"  workers [label=\"요청 스레드\\n(핫 패스)\"];\n"
-"  ring [label=\"MPSC 링\\n인시던트 512개\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
+"  workers [label=\"요청 스레드\\n(핫 패스)\", color=\"#172033\", "
+"fillcolor=\"#ffffff\", penwidth=1.6, width=3.0];\n"
+"  ring [label=\"MPSC 링\\n인시던트 512개\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
+"  publish [label=\"EngineSlot::publish\\nArc 교체\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
 "  thread [label=\"저장소 스레드(tokio)\\n비우기 + 폴링\"];\n"
-"  db [label=\"sqlx: SQLite 파일\\n또는 PostgreSQL\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  tables [label=\"policies, ip_reputation,\\nsecurity_incidents,\\n전문 검색 "
-"인덱스\", fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
 "  rebuild [label=\"핫 패스 밖에서\\n엔진 재구성\"];\n"
-"  publish [label=\"EngineSlot::publish\\nArc 교체\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
-"  others [label=\"다른 클러스터\\n노드\"];\n"
+"  db [label=\"sqlx: SQLite 파일\\n또는 PostgreSQL\", shape=cylinder, "
+"style=filled, color=\"#15803d\", fillcolor=\"#f0fdf4\", height=0.62];\n"
+"  tables [label=\"policies, ip_reputation,\\nsecurity_incidents,\\n전문 검색 "
+"인덱스\", color=\"#15803d\", fillcolor=\"#f0fdf4\"];\n"
+"  others [label=\"다른 클러스터\\n노드\", color=\"#64748b\", fillcolor=\"#ffffff\", "
+"style=\"rounded,filled,dashed\", width=1.7];\n"
 "\n"
-"  { rank=same; workers; others; }\n"
 "  { rank=same; ring; publish; }\n"
 "  { rank=same; thread; rebuild; }\n"
 "  { rank=same; db; tables; }\n"
 "\n"
-"  workers -> ring [label=\"넣기\"];\n"
-"  ring -> thread [label=\"꺼내기\"];\n"
-"  thread -> db [label=\"일괄 SQL\"];\n"
+"  workers -> ring [label=\" 넣기\"];\n"
+"  ring -> thread [label=\" 꺼내기\"];\n"
+"  thread -> db [label=\" 일괄 SQL\"];\n"
 "  db -> tables;\n"
-"  tables -> rebuild [label=\"리비전 변경?\"];\n"
-"  rebuild -> publish;\n"
-"  publish -> workers [label=\"새 규칙\"];\n"
-"  db -> others [dir=both, label=\"공유 PostgreSQL,\\nNOTIFY "
+"  rebuild -> tables [dir=back, label=\" 리비전 변경?\"];\n"
+"  publish -> rebuild [dir=back];\n"
+"  workers -> publish [dir=back, label=\" 새 규칙\"];\n"
+"  db -> others [dir=both, style=dashed, label=\" 공유 PostgreSQL,\\n NOTIFY "
 "sibuna_policy\"];\n"
 "}"
 
-#: ../../operations.rst:562
+#: ../../operations.rst:567
 msgid "The storage architecture: workers never block on the database"
 msgstr "저장소 아키텍처: 워커는 데이터베이스를 기다리며 멈추지 않습니다"
 
-#: ../../operations.rst:594
+#: ../../operations.rst:598
 msgid ""
 "``--data-dir /var/lib/sibuna`` opens the SQLite file "
 "``/var/lib/sibuna/sibuna.db`` (WAL mode, ``synchronous=NORMAL``, a busy "
@@ -2578,37 +2616,37 @@ msgstr ""
 "때), 그리고 평판 항목이 만료될 때, 이 스레드는 정책 파일과 데이터베이스로 엔진을 다시 만들어 게시합니다. 요청은 SQL을 "
 "기다리지 않습니다. 재구성은 로드 전후에 리비전을 읽고, 그 사이에 쓰기 작업이 커밋되었으면 후보를 버립니다."
 
-#: ../../operations.rst:596
+#: ../../operations.rst:600
 msgid "Schema"
 msgstr "스키마"
 
-#: ../../operations.rst:599
+#: ../../operations.rst:603
 msgid "Core tables"
 msgstr "핵심 테이블"
 
-#: ../../operations.rst:603
+#: ../../operations.rst:607
 msgid "Table"
 msgstr "테이블"
 
-#: ../../operations.rst:604
+#: ../../operations.rst:608
 msgid "Purpose and key"
 msgstr "용도와 키"
 
-#: ../../operations.rst:605
+#: ../../operations.rst:609
 msgid "``policy_revision``"
 msgstr "``policy_revision``"
 
-#: ../../operations.rst:606
+#: ../../operations.rst:610
 msgid ""
 "The policy revision, one row; triggers on the three policy tables advance "
 "it."
 msgstr "정책 리비전, 한 행. 세 정책 테이블의 트리거가 이 값을 올립니다."
 
-#: ../../operations.rst:607
+#: ../../operations.rst:611
 msgid "``policies``"
 msgstr "``policies``"
 
-#: ../../operations.rst:608
+#: ../../operations.rst:612
 msgid ""
 "Ordered dynamic rules, keyed by ``id``. The nullable ``ja4_pattern`` "
 "holds a rule's JA4 criterion, at most 37 bytes."
@@ -2616,37 +2654,37 @@ msgstr ""
 "순서가 있는 동적 규칙, 키는 ``id``. null 허용 ``ja4_pattern``\\ 은 규칙의 JA4 조건을 최대 "
 "37바이트로 담습니다."
 
-#: ../../operations.rst:609
+#: ../../operations.rst:613
 msgid "``policy_inspection``"
 msgstr "``policy_inspection``"
 
-#: ../../operations.rst:610
+#: ../../operations.rst:614
 msgid "The stored WAF mode per category, one row."
 msgstr "범주별로 저장된 WAF 모드, 한 행."
 
-#: ../../operations.rst:611
+#: ../../operations.rst:615
 msgid "``ip_reputation``"
 msgstr "``ip_reputation``"
 
-#: ../../operations.rst:612
+#: ../../operations.rst:616
 msgid "Scores, hit counts and expiry, keyed by address or prefix."
 msgstr "점수, 적중 수, 만료, 키는 주소 또는 접두사."
 
-#: ../../operations.rst:613
+#: ../../operations.rst:617
 msgid "``incident_receipts``"
 msgstr "``incident_receipts``"
 
-#: ../../operations.rst:614
+#: ../../operations.rst:618
 msgid ""
 "Each node's durable incident receipt (the next sequence after its last "
 "committed batch), keyed by node."
 msgstr "각 노드의 영속 인시던트 영수증(마지막으로 커밋된 묶음 다음의 시퀀스), 키는 노드."
 
-#: ../../operations.rst:615
+#: ../../operations.rst:619
 msgid "``security_incidents``"
 msgstr "``security_incidents``"
 
-#: ../../operations.rst:616
+#: ../../operations.rst:620
 msgid ""
 "One bounded event record with its 64-component embedding (256 bytes), "
 "keyed by ``node_id << 40 | sequence``. The nullable ``ja4`` holds the "
@@ -2655,11 +2693,11 @@ msgstr ""
 "64개 성분 임베딩(256바이트)을 포함한 제한된 크기의 이벤트 기록 하나, 키는 ``node_id << 40 | "
 "sequence``. null 허용 ``ja4``\\ 는 요청의 JA4 지문을 정확히 36바이트로 담습니다."
 
-#: ../../operations.rst:617
+#: ../../operations.rst:621
 msgid "``incidents_fts``"
 msgstr "``incidents_fts``"
 
-#: ../../operations.rst:618
+#: ../../operations.rst:622
 msgid ""
 "On SQLite: an FTS5 table over the canonical tokens of paths and payloads. "
 "On PostgreSQL the same tokens are the ``tsvector`` column ``search`` of "
@@ -2668,15 +2706,15 @@ msgstr ""
 "SQLite에서는 경로와 페이로드의 정규 토큰에 대한 FTS5 테이블입니다. PostgreSQL에서는 같은 토큰을 "
 "``security_incidents``\\ 의 ``tsvector`` 열 ``search``\\ 에 담고 GIN 인덱스를 둡니다."
 
-#: ../../operations.rst:619
+#: ../../operations.rst:623
 msgid "``sibuna_schema``"
 msgstr "``sibuna_schema``"
 
-#: ../../operations.rst:620
+#: ../../operations.rst:624
 msgid "Every applied migration, keyed by component and version."
 msgstr "적용된 모든 마이그레이션, 키는 구성 요소와 버전."
 
-#: ../../operations.rst:622
+#: ../../operations.rst:626
 msgid ""
 "The core schema is ``crates/storage/src/schema.rs``, written once per "
 "dialect. With the console the component ``console`` adds 33 tables whose "
@@ -2700,11 +2738,11 @@ msgstr ""
 "이고 ``CHECK`` 제약 조건이 Rust 타입을 그대로 반영하므로, 데몬이 표현할 수 없는 행은 데이터베이스가 거부합니다. "
 "열거형 값은 소문자로 저장됩니다. ``'DENY'``\\ 를 직접 쓰면 거부됩니다."
 
-#: ../../operations.rst:624
+#: ../../operations.rst:628
 msgid "Operating It"
 msgstr "운영 방법"
 
-#: ../../operations.rst:627
+#: ../../operations.rst:631
 msgid ""
 "Use the ``sqlite3`` shell on ``sibuna.db`` (WAL mode lets it read while "
 "the daemon runs), or ``psql`` on the cluster database:"
@@ -2712,7 +2750,7 @@ msgstr ""
 "``sibuna.db``\\ 에는 ``sqlite3`` 셸을 사용하고(WAL 모드 덕분에 데몬이 실행 중일 때도 읽을 수 "
 "있습니다), 클러스터 데이터베이스에는 ``psql``\\ 을 사용하세요:"
 
-#: ../../operations.rst:629
+#: ../../operations.rst:633
 msgid ""
 "-- Add a dynamic rule; every node rebuilds on its next tick.\n"
 "INSERT INTO policies (id, name, priority, path_pattern, action, "
@@ -2756,7 +2794,7 @@ msgstr ""
 "FROM incidents_fts f JOIN security_incidents s ON s.id = f.rowid\n"
 "WHERE incidents_fts MATCH 'union' ORDER BY rank LIMIT 20;"
 
-#: ../../operations.rst:647
+#: ../../operations.rst:651
 msgid ""
 "The statements are written for SQLite. On PostgreSQL, ``enabled`` is "
 "``TRUE``, the time is ``CAST(extract(epoch FROM now()) AS BIGINT)`` "
@@ -2776,7 +2814,7 @@ msgstr ""
 "않습니다. PostgreSQL에서는 리비전 트리거가 ``NOTIFY sibuna_policy``\\ 도 발행하므로 다른 노드가 즉시 "
 "틱을 실행합니다. 보장은 여전히 폴링이 제공합니다."
 
-#: ../../operations.rst:649
+#: ../../operations.rst:653
 msgid ""
 "Scores at or below :math:`-50` become ``deny`` prefixes in the trie, "
 "scores at or above :math:`50` become ``allow``, and ``banned_until`` "
@@ -2788,11 +2826,11 @@ msgstr ""
 "되며, ``banned_until``\\ 은 차단 기간의 끝을 정합니다. 허니팟 적중은 :math:`-100` 기록을 자동으로 "
 "삽입하므로, 공유 PostgreSQL 데이터베이스를 쓰면 한 노드에서 걸린 함정이 모든 노드에서 그 주소를 차단합니다."
 
-#: ../../operations.rst:651
+#: ../../operations.rst:655
 msgid "A Transaction Receipt Makes Retry Safe"
 msgstr "트랜잭션 영수증으로 안전하게 재시도하기"
 
-#: ../../operations.rst:654
+#: ../../operations.rst:658
 msgid ""
 "The storage thread collects at most 32 pending records and builds one SQL "
 "transaction. The transaction inserts incidents, updates the full-text "
@@ -2806,11 +2844,11 @@ msgstr ""
 "``incident_receipts``\\ 의 한 행이 있습니다. 데이터를 바꾸는 모든 문장은 이 영수증으로 보호됩니다. 트랜잭션은 "
 "영수증을 마지막에 올리며, 절대 되돌리지 않습니다."
 
-#: ../../operations.rst:656
+#: ../../operations.rst:660
 msgid "Worked example: the acknowledgement disappears"
 msgstr "풀이 예제: 확인 응답이 사라지는 경우"
 
-#: ../../operations.rst:658
+#: ../../operations.rst:662
 msgid ""
 "Suppose issuer 2 prepares sequences 101 through 132, ending at receipt "
 "133. The database commits all records and receipt 133, then the "
@@ -2826,7 +2864,7 @@ msgstr ""
 "시도합니다. 영수증이 이미 133이므로 보호된 쓰기는 아무것도 하지 않습니다. 인시던트도, 허니팟 적중 수도 두 번 늘지 않습니다. "
 "원래 트랜잭션이 롤백되었다면 이전 영수증이 남아 있으므로 재시도가 모든 쓰기를 한 번 적용합니다."
 
-#: ../../operations.rst:660
+#: ../../operations.rst:664
 msgid ""
 "A failed commit retains the pending batch in memory and increments "
 "``incident_write_failures``. The tick still attempts policy polling. A "
@@ -2842,11 +2880,11 @@ msgstr ""
 "큐에 있던 데이터를 잃을 수 있습니다. 이는 크기가 제한된 비동기 포렌식 경로이지, 큐에 넣는 순간 영속성이 보장되는 메시지 큐가 "
 "아닙니다."
 
-#: ../../operations.rst:662
+#: ../../operations.rst:666
 msgid "Exercise 9.1"
 msgstr "연습 문제 9.1"
 
-#: ../../operations.rst:664
+#: ../../operations.rst:668
 msgid ""
 "Move the receipt update outside the data transaction. Construct one crash "
 "schedule that duplicates a reputation effect and another that loses an "
@@ -2855,11 +2893,11 @@ msgstr ""
 "영수증 갱신을 데이터 트랜잭션 밖으로 옮겨 보세요. 평판 효과가 중복되는 크래시 시나리오 하나와 인시던트가 사라지는 크래시 시나리오 "
 "하나를 구성해 보세요."
 
-#: ../../operations.rst:666
+#: ../../operations.rst:670
 msgid "Campaign Clustering"
 msgstr "캠페인 군집화"
 
-#: ../../operations.rst:669
+#: ../../operations.rst:673
 msgid ""
 "Each incident payload is embedded as a 64-dimensional unit vector by the "
 "hashing trick over byte trigrams (digits folded, case folded) and stored "
@@ -2882,11 +2920,11 @@ msgstr ""
 "인시던트는 비교하지 않습니다. 유사도는 휴리스틱입니다. 회귀 테스트 예제는 관련된 SQL 페이로드를 한 그룹으로 묶지만, 모든 공격 "
 "쌍이 같은 캠페인에 속한다고 보장하지는 않습니다. 실행되는 모델도 없고 학습하는 것도 없습니다."
 
-#: ../../operations.rst:671
+#: ../../operations.rst:675
 msgid "Clustering"
 msgstr "클러스터"
 
-#: ../../operations.rst:674
+#: ../../operations.rst:678
 msgid ""
 "A cluster is a set of nodes that share one PostgreSQL database. Build "
 "with the ``postgres-tls`` feature (``cargo build --release -p sibuna "
@@ -2897,7 +2935,7 @@ msgstr ""
 "빌드하고(``cargo build --release -p sibuna --features postgres-tls``, "
 "``postgres``\\ 를 포함합니다), 각 구성원을 데이터베이스와 고유한 노드 id로 시작합니다:"
 
-#: ../../operations.rst:676
+#: ../../operations.rst:680
 msgid ""
 "sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 \\\n"
 "       --secret-file /etc/sibuna/secret"
@@ -2905,7 +2943,7 @@ msgstr ""
 "sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 \\\n"
 "       --secret-file /etc/sibuna/secret"
 
-#: ../../operations.rst:681
+#: ../../operations.rst:685
 msgid ""
 "Every member must use the same master secret and a unique "
 "``--cluster-node`` from 1 to 8,388,607. The URL file holds one "
@@ -2928,7 +2966,7 @@ msgstr ""
 "``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``. "
 "서버에서는 ``pg_hba.conf``\\ 의 ``hostssl`` 줄로만 TCP를 받습니다."
 
-#: ../../operations.rst:684
+#: ../../operations.rst:688
 msgid ""
 "At startup the daemon prints one line about the database connection. With "
 "``verify-full`` it says that the certificate and host name are verified. "
@@ -2951,7 +2989,7 @@ msgstr ""
 "``sslrootcert``\\ 는 우리 인증 기관을 시스템 신뢰 저장소에 추가할 뿐, 시스템의 인증 기관을 제거하지는 "
 "않습니다(SID 0011, SID 0012)."
 
-#: ../../operations.rst:686
+#: ../../operations.rst:690
 msgid ""
 "Sibuna does not replicate a database of its own and elects no leader. "
 "Replication, failover and backups are PostgreSQL's (streaming "
@@ -2975,11 +3013,11 @@ msgstr ""
 "console policies export``\\ 와 ``sibuna console policies import``\\ 로 옮기며, "
 "포렌식 기록은 이전되지 않습니다."
 
-#: ../../operations.rst:688
+#: ../../operations.rst:692
 msgid "Cluster Challenge Routing"
 msgstr "클러스터 챌린지 라우팅"
 
-#: ../../operations.rst:691
+#: ../../operations.rst:695
 msgid ""
 "Challenge keys are bound to ``--cluster-node``; keep challenge issuance "
 "and verification on the same member. Tokens use the shared seed and work "
@@ -2997,11 +3035,11 @@ msgstr ""
 "않습니다(``crates/storage/tests/multi_node.rs``, SID 0011 기준 2. "
 "``SIBUNA_TEST_DATABASE_URL``\\ 을 설정하면 실행됩니다)."
 
-#: ../../operations.rst:693
+#: ../../operations.rst:697
 msgid "Packaging"
 msgstr "패키징"
 
-#: ../../operations.rst:698
+#: ../../operations.rst:702
 msgid ""
 "Install and verify a release package, run Sibuna as a service, in a "
 "container or under Kubernetes, and build the binary ourselves."
@@ -3009,7 +3047,7 @@ msgstr ""
 "릴리스 패키지를 설치하고 검증하며, Sibuna를 서비스로, 컨테이너에서, 또는 Kubernetes에서 실행하고, 바이너리를 직접 "
 "빌드합니다."
 
-#: ../../operations.rst:700
+#: ../../operations.rst:704
 msgid ""
 "Every release on GitHub carries the same executable for each platform, "
 "built from the release tag with the default features: SQLite storage and "
@@ -3018,19 +3056,19 @@ msgstr ""
 "GitHub의 모든 릴리스에는 플랫폼마다 같은 실행 파일이 들어 있습니다. 이 실행 파일은 릴리스 태그에서 기본 기능(SQLite "
 "저장소와 콘솔)으로 빌드됩니다. PostgreSQL 클러스터에는 직접 빌드한 바이너리가 필요합니다(아래 참조)."
 
-#: ../../operations.rst:706
+#: ../../operations.rst:710
 msgid "Platform"
 msgstr "플랫폼"
 
-#: ../../operations.rst:707
+#: ../../operations.rst:711
 msgid "Release assets"
 msgstr "릴리스 파일"
 
-#: ../../operations.rst:708
+#: ../../operations.rst:712
 msgid "Linux x86-64, ARM64"
 msgstr "Linux x86-64, ARM64"
 
-#: ../../operations.rst:709
+#: ../../operations.rst:713
 msgid ""
 "``sibuna-linux-amd64.tar.gz`` and ``sibuna-linux-arm64.tar.gz`` hold a "
 "static musl executable that runs on any distribution. "
@@ -3045,11 +3083,11 @@ msgstr ""
 "``sibuna-<version>-1.aarch64.rpm``\\ 은 이 실행 파일을 systemd 서비스와 함께 설치하고, "
 "Arch Linux에서는 ``sibuna-bin-<version>-1-x86_64.pkg.tar.zst``\\ 가 같은 일을 합니다."
 
-#: ../../operations.rst:710
+#: ../../operations.rst:714
 msgid "macOS arm64, x86-64"
 msgstr "macOS arm64, x86-64"
 
-#: ../../operations.rst:711
+#: ../../operations.rst:715
 msgid ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, for macOS "
 "12 or later."
@@ -3057,11 +3095,11 @@ msgstr ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``. macOS 12 "
 "이상용입니다."
 
-#: ../../operations.rst:712
+#: ../../operations.rst:716
 msgid "Windows x86-64"
 msgstr "Windows x86-64"
 
-#: ../../operations.rst:713
+#: ../../operations.rst:717
 msgid ""
 "``sibuna-windows-amd64.zip`` holds ``sibuna.exe``, for Windows 10 or "
 "Server 2016 or later."
@@ -3069,21 +3107,21 @@ msgstr ""
 "``sibuna-windows-amd64.zip``\\ 에는 ``sibuna.exe``\\ 가 들어 있습니다. Windows 10 "
 "또는 Server 2016 이상용입니다."
 
-#: ../../operations.rst:714
+#: ../../operations.rst:718
 msgid "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 msgstr "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 
-#: ../../operations.rst:715
+#: ../../operations.rst:719
 msgid ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg`` and ``sibuna-<version>.tgz``."
 msgstr ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg``\\ 와 ``sibuna-<version>.tgz``."
 
-#: ../../operations.rst:716
+#: ../../operations.rst:720
 msgid "Homebrew, Kubernetes, containers"
 msgstr "Homebrew, Kubernetes, 컨테이너"
 
-#: ../../operations.rst:717
+#: ../../operations.rst:721
 msgid ""
 "``sibuna.rb``, ``helm-sibuna-<version>.tgz``, and the image "
 "``ghcr.io/insanai/sibuna:<version>`` for amd64 and arm64, whose digest is "
@@ -3093,15 +3131,15 @@ msgstr ""
 "``ghcr.io/insanai/sibuna:<version>``. 이미지의 다이제스트는 ``IMAGE-DIGEST.txt``\\ "
 "에 있습니다."
 
-#: ../../operations.rst:718
+#: ../../operations.rst:722
 msgid "Source"
 msgstr "소스"
 
-#: ../../operations.rst:719
+#: ../../operations.rst:723
 msgid "``sibuna-<version>-source.tar.gz``."
 msgstr "``sibuna-<version>-source.tar.gz``."
 
-#: ../../operations.rst:721
+#: ../../operations.rst:725
 msgid ""
 "Each archive and package carries ``LICENSE``, ``NOTICE``, ``LICENSES/`` "
 "(with ``THIRD-PARTY-RUST.txt``, the crates in the executable), "
@@ -3119,14 +3157,14 @@ msgstr ""
 "파일을 각자의 플랫폼에서 시작해 보고, Debian, Fedora, Arch Linux, FreeBSD, OpenBSD에서 패키지를 "
 "설치, 재설치, 제거해 봅니다."
 
-#: ../../operations.rst:723
+#: ../../operations.rst:727
 msgid ""
 "The assets are not signed. We check a download against ``SHA256SUMS`` "
 "from the same release before we install it:"
 msgstr ""
 "릴리스 파일에는 서명이 없습니다. 설치하기 전에 내려받은 파일을 같은 릴리스의 ``SHA256SUMS``\\ 와 대조해 확인합니다:"
 
-#: ../../operations.rst:725
+#: ../../operations.rst:729
 msgid ""
 "sha256sum --ignore-missing -c SHA256SUMS          # Linux\n"
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
@@ -3136,7 +3174,7 @@ msgstr ""
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
 "sha256 -C SHA256SUMS sibuna-1.0.0-beta.2.tgz      # OpenBSD"
 
-#: ../../operations.rst:731
+#: ../../operations.rst:735
 msgid ""
 "On macOS a browser download carries a quarantine attribute that stops an "
 "unsigned executable; ``xattr -d com.apple.quarantine sibuna`` removes it "
@@ -3145,11 +3183,11 @@ msgstr ""
 "macOS에서 브라우저로 내려받은 파일에는 서명되지 않은 실행 파일을 막는 격리 속성이 붙습니다. 확인을 마친 뒤 ``xattr "
 "-d com.apple.quarantine sibuna``\\ 로 이 속성을 제거합니다."
 
-#: ../../operations.rst:733
+#: ../../operations.rst:737
 msgid "The systemd service"
 msgstr "systemd 서비스"
 
-#: ../../operations.rst:736
+#: ../../operations.rst:740
 msgid ""
 "The Debian, RPM and Arch packages install ``/usr/bin/sibuna``, the unit "
 "``sibuna.service``, the account ``sibuna`` (through "
@@ -3163,7 +3201,7 @@ msgstr ""
 "``/usr/lib/sibuna/seed.sh``, 설정 파일 ``/etc/sibuna/service.env``\\ 를 설치합니다. "
 "설치만으로는 아무것도 시작되지 않습니다. 설정 파일에 원본 서버를 IP 리터럴로 지정하고 서비스를 시작합니다:"
 
-#: ../../operations.rst:738
+#: ../../operations.rst:742
 msgid ""
 "sudoedit /etc/sibuna/service.env      # SIBUNA_UPSTREAM_HOST, "
 "SIBUNA_UPSTREAM_PORT\n"
@@ -3175,7 +3213,7 @@ msgstr ""
 "sudo systemctl enable --now sibuna\n"
 "curl -s http://127.0.0.1:8080/__sibuna/health"
 
-#: ../../operations.rst:744
+#: ../../operations.rst:748
 msgid ""
 "The service listens on ``127.0.0.1:8080`` until ``SIBUNA_HOST`` and "
 "``SIBUNA_PORT`` say otherwise. ``SIBUNA_OPTIONS`` passes further options, "
@@ -3198,7 +3236,7 @@ msgstr ""
 "읽기 전용으로 두고(``ProtectSystem=strict``), 비공개 ``/tmp``\\ 와 장치를 쓰며, 새 권한 획득을 "
 "막습니다(no new privileges)."
 
-#: ../../operations.rst:746
+#: ../../operations.rst:750
 msgid ""
 "An upgrade keeps the settings file, the seed and the state, and does not "
 "restart the service; we restart it after a backup. Removal stops and "
@@ -3208,7 +3246,7 @@ msgstr ""
 "업그레이드는 설정 파일, 시드, 상태를 유지하며 서비스를 재시작하지 않습니다. 서비스는 백업한 뒤 직접 재시작합니다. 제거는 "
 "서비스를 중지하고 비활성화하지만 계정, 시드, 설정, 상태는 남겨 둡니다. 이것들은 호스트를 폐기할 때 직접 삭제합니다."
 
-#: ../../operations.rst:748
+#: ../../operations.rst:752
 msgid ""
 "The FreeBSD and OpenBSD packages install only ``/usr/local/bin/sibuna`` "
 "and its documents (``pkg add``, or ``pkg_add -D unsigned`` for a package "
@@ -3220,11 +3258,11 @@ msgstr ""
 "add``, 또는 OpenBSD 미러 밖에서 받은 패키지라면 ``pkg_add -D unsigned``). 서비스, 계정, 상태는 "
 "만들지 않습니다. 데몬은 비특권 사용자로, 전용 시드와 데이터 디렉터리를 두고 실행합니다."
 
-#: ../../operations.rst:750
+#: ../../operations.rst:754
 msgid "Homebrew"
 msgstr "Homebrew"
 
-#: ../../operations.rst:753
+#: ../../operations.rst:757
 msgid ""
 "``sibuna.rb`` installs the release archive for the machine: macOS or "
 "Linux, arm64 or x86-64. It does not build from source, because Homebrew's "
@@ -3239,7 +3277,7 @@ msgstr ""
 "때문입니다. 아카이브에는 릴리스 워크플로가 이미 확인한 실행 파일이 들어 있습니다. Homebrew는 탭에서만 포뮬러를 설치하므로, "
 "포뮬러를 로컬 탭에 넣습니다:"
 
-#: ../../operations.rst:755
+#: ../../operations.rst:759
 msgid ""
 "brew tap-new \"$USER/local\"\n"
 "cp sibuna.rb \"$(brew "
@@ -3251,7 +3289,7 @@ msgstr ""
 "--repository)/Library/Taps/$USER/homebrew-local/Formula/\"\n"
 "brew install \"$USER/local/sibuna\""
 
-#: ../../operations.rst:761
+#: ../../operations.rst:765
 msgid ""
 "The formula starts no service. Its caveats show how to create a seed; its "
 "test starts the daemon twice on the same data directory."
@@ -3259,11 +3297,11 @@ msgstr ""
 "포뮬러는 서비스를 시작하지 않습니다. 포뮬러의 주의 사항(caveats)은 시드를 만드는 방법을 보여 주고, 테스트는 같은 데이터 "
 "디렉터리에서 데몬을 두 번 시작합니다."
 
-#: ../../operations.rst:763
+#: ../../operations.rst:767
 msgid "Containers and Kubernetes"
 msgstr "컨테이너와 Kubernetes"
 
-#: ../../operations.rst:766
+#: ../../operations.rst:770
 msgid ""
 "The image ``ghcr.io/insanai/sibuna:<version>`` holds the static "
 "executable on a distroless base: CA certificates, user 65532, no shell "
@@ -3277,7 +3315,7 @@ msgstr ""
 "데몬 옵션입니다. 릴리스 워크플로는 이 이미지를 capability 없이 읽기 전용으로 실행하되, 시드는 읽기 전용으로 마운트하고 "
 "상태용 볼륨을 붙이며, 한 번 재시작해 봅니다:"
 
-#: ../../operations.rst:768
+#: ../../operations.rst:772
 msgid ""
 "docker run -d --read-only --cap-drop=ALL --security-opt=no-new-privileges "
 "\\\n"
@@ -3297,7 +3335,7 @@ msgstr ""
 "/var/lib/sibuna/data \\\n"
 "  --upstream-host 10.0.0.5 --upstream-port 3000"
 
-#: ../../operations.rst:776
+#: ../../operations.rst:780
 msgid ""
 "The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. "
 "It requires a Secret that we create (``secret.existingSecret``, key "
@@ -3325,7 +3363,7 @@ msgstr ""
 "``upstream.host``\\ 는 IP 리터럴이어야 하며, ``extraArgs``\\ 는 추가 데몬 옵션을 전달합니다. "
 "워크플로는 Restricted 표준을 강제하는 kind 클러스터에서 차트를 설치, 업그레이드, 제거해 봅니다."
 
-#: ../../operations.rst:778
+#: ../../operations.rst:782
 msgid ""
 "kubectl -n sibuna create secret generic sibuna-admission "
 "--from-file=admission.seed\n"
@@ -3341,15 +3379,15 @@ msgstr ""
 "  --set secret.existingSecret=sibuna-admission \\\n"
 "  --set upstream.host=10.0.0.5 --set upstream.port=3000"
 
-#: ../../operations.rst:785
+#: ../../operations.rst:789
 msgid "Building from source"
 msgstr "소스에서 빌드하기"
 
-#: ../../operations.rst:788
+#: ../../operations.rst:792
 msgid "Rust 1.94 or later builds the workspace; the releases use Rust 1.99."
 msgstr "워크스페이스는 Rust 1.94 이상으로 빌드할 수 있습니다. 릴리스는 Rust 1.99를 사용합니다."
 
-#: ../../operations.rst:790
+#: ../../operations.rst:794
 msgid ""
 "``cargo build --release -p sibuna`` produces ``target/release/sibuna`` "
 "with the default features: SQLite storage and the console. sqlx bundles "
@@ -3366,7 +3404,7 @@ msgstr ""
 "wasm32-unknown-unknown``\\ 이 필요합니다. ``SIBUNA_POW_WASM=<path>``\\ 와 "
 "``SIBUNA_CONSOLE_WASM=<path>``\\ 를 지정하면 대신 미리 빌드한 모듈을 내장합니다."
 
-#: ../../operations.rst:791
+#: ../../operations.rst:795
 msgid ""
 "``cargo build --release -p sibuna --no-default-features`` produces the "
 "in-memory firewall with no external crate at all; ``--data-dir`` and "
@@ -3378,7 +3416,7 @@ msgstr ""
 "``StorageDisabled``\\ 로, ``sibuna console``\\ 은 ``CONSOLEBUILD``\\ 로 "
 "거부됩니다."
 
-#: ../../operations.rst:792
+#: ../../operations.rst:796
 msgid ""
 "``cargo build --release -p sibuna --features postgres-tls`` adds "
 "PostgreSQL clusters with verified TLS to the database. It needs no "
@@ -3387,7 +3425,7 @@ msgstr ""
 "``cargo build --release -p sibuna --features postgres-tls``\\ 는 데이터베이스와의 "
 "연결에 검증된 TLS를 쓰는 PostgreSQL 클러스터 지원을 추가합니다. OpenSSL은 필요하지 않습니다."
 
-#: ../../operations.rst:793
+#: ../../operations.rst:797
 msgid ""
 "The static Linux executables of the releases come from ``cargo build "
 "--release --locked -p sibuna --target x86_64-unknown-linux-musl`` (or "
@@ -3399,7 +3437,7 @@ msgstr ""
 "--locked -p sibuna --target x86_64-unknown-linux-musl`` (또는 "
 "``aarch64-unknown-linux-musl``)로 빌드한 것입니다."
 
-#: ../../operations.rst:795
+#: ../../operations.rst:799
 msgid ""
 "The release profile uses fat LTO and one codegen unit. The workflow "
 "builds the two WebAssembly modules once and passes them to every "
@@ -3411,7 +3449,7 @@ msgstr ""
 "플랫폼에 전달하므로, 한 릴리스의 모든 실행 파일은 바이트 단위로 동일한 모듈을 내장합니다. 의존성이 바뀌면 ``cargo "
 "xtask licenses``\\ 로 ``LICENSES/THIRD-PARTY-RUST.txt``\\ 를 다시 생성합니다."
 
-#: ../../operations.rst:797
+#: ../../operations.rst:801
 msgid ""
 "On Windows the daemon stops on Ctrl+C, Ctrl+Break and console close "
 "events; it does not run as a Windows service. Windows files have no mode "
@@ -3425,11 +3463,11 @@ msgstr ""
 "URL 파일을 거부할 수 없습니다. 이런 파일은 ACL로 접근을 제한합니다. 콘솔의 메모리와 CPU 게이지는 ``/proc``\\ "
 "에서 읽으므로 다른 시스템에서는 사용할 수 없습니다."
 
-#: ../../operations.rst:799
+#: ../../operations.rst:803
 msgid "Exercise 9.2"
 msgstr "연습 문제 9.2"
 
-#: ../../operations.rst:801
+#: ../../operations.rst:805
 msgid ""
 "Write the policy file and the ``ip_reputation`` rows needed so that a "
 "staging network (``10.20.0.0/16``) bypasses challenges, ``/admin/*`` "
@@ -3440,7 +3478,7 @@ msgstr ""
 "20을 요구하며, ``X-Partner-Key``\\ 로 식별되는 파트너 스크레이퍼는 10초당 요청 30개로 허용되도록 정책 파일과 "
 "``ip_reputation`` 행을 작성하세요."
 
-#: ../../operations.rst:803
+#: ../../operations.rst:807
 msgid ""
 "Hint: The daemon flags set the per-client limit every request meets "
 "first; a rule can carry a quota of its own in ``limits``."
@@ -3448,11 +3486,11 @@ msgstr ""
 "힌트: 데몬 플래그는 모든 요청이 가장 먼저 만나는 클라이언트별 제한을 설정합니다. 규칙은 ``limits``\\ 에 자체 할당량을 "
 "둘 수 있습니다."
 
-#: ../../operations.rst:805
+#: ../../operations.rst:809
 msgid "Explain the invariant"
 msgstr "불변식 설명하기"
 
-#: ../../operations.rst:807
+#: ../../operations.rst:811
 msgid ""
 "Explain to an operator why adding a row to ``policies`` takes effect "
 "without a restart and without a request ever waiting, in terms of the "

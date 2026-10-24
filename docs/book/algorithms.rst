@@ -41,24 +41,24 @@ A state is stored as its row offset in one flat table, so a step is one add and 
    :alt: A trie from the root through G and GP to the GPTBot match state, and through C and Cl to the ClaudeBot match state; dashed failure edges lead from GP and Cl back to the root.
 
    digraph aho_corasick {
-     graph [rankdir=LR, bgcolor="transparent", nodesep=0.5];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fillcolor="#e8f0fe", color="#1d4ed8"];
-     edge [fontname="Helvetica", fontsize=10, color="#6b7280"];
-     root [label="Root (0)"];
-     g [label="G"];
-     gp [label="GP"];
-     gptbot [label="GPTBot", fillcolor="#fde8e8", color="#b91c1c"];
-     c [label="C"];
-     cl [label="Cl"];
-     claudebot [label="ClaudeBot", fillcolor="#fde8e8", color="#b91c1c"];
+     graph [rankdir=LR, bgcolor="transparent", nodesep=0.55, ranksep=0.5, pad=0.12];
+     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, fontcolor="#172033", color="#1e40af", fillcolor="#eff6ff", penwidth=1.1, height=0.4, margin="0.12,0.05"];
+     edge [fontname="Courier-Bold", fontsize=10, fontcolor="#1e40af", color="#64748b", arrowsize=0.65, penwidth=1.1];
+     root [label="Root (0)", fillcolor="#ffffff", color="#172033", penwidth=1.4];
+     g [label="G", group=top];
+     gp [label="GP", group=top];
+     gptbot [label="GPTBot", group=top, fillcolor="#fef2f2", color="#b91c1c", peripheries=2];
+     c [label="C", group=bottom];
+     cl [label="Cl", group=bottom];
+     claudebot [label="ClaudeBot", group=bottom, fillcolor="#fef2f2", color="#b91c1c", peripheries=2];
      root -> g [label="g"];
      g -> gp [label="p"];
      gp -> gptbot [label="tbot"];
      root -> c [label="c"];
      c -> cl [label="l"];
      cl -> claudebot [label="audebot"];
-     gp -> root [label="fail", style=dashed, color="#d97706", fontcolor="#d97706", constraint=false];
-     cl -> root [label="fail", style=dashed, color="#d97706", fontcolor="#d97706", constraint=false];
+     root:n -> gp:n [dir=back, label="fail", style=dashed, color="#d97706", fontcolor="#b45309", fontname="Helvetica", fontsize=8.5];
+     root:s -> cl:s [dir=back, label="fail", style=dashed, color="#d97706", fontcolor="#b45309", fontname="Helvetica", fontsize=8.5];
    }
 
 The automaton's state budget is a run-time option. The policy engine reserves at most one root plus the sum of all signature lengths, a safe upper bound on trie states. This avoids historically oversized fixed tables while retaining a dense transition for every byte class. Each pattern carries a small category tag (0 to 63, so a set of tags is one 64-bit word). Case folding uses a 256-entry byte-class table built with the automaton: both cases of a letter share a class, and bytes that occur in no pattern share one class, so a table row is as wide as the number of distinct pattern bytes plus one rather than 256. Exact engine sizes and the comparison with sequential substring search are recorded in Part VIII. The latter uses the same patterns and any-match semantics.

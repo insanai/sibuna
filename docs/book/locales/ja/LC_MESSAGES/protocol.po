@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-10-24 12:05+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -33,8 +33,8 @@ msgstr ""
 msgid "The Challenge Round Trip"
 msgstr "チャレンジの往復"
 
-#: ../../protocol.rst:9 ../../protocol.rst:72 ../../protocol.rst:135
-#: ../../protocol.rst:186
+#: ../../protocol.rst:9 ../../protocol.rst:84 ../../protocol.rst:147
+#: ../../protocol.rst:198
 msgid "Objectives"
 msgstr "この章の学習目標"
 
@@ -51,81 +51,116 @@ msgstr ""
 msgid ""
 "A loop of eight steps: browser navigation, interstitial (HTTP 200), GET "
 "/__sibuna/challenge.json?need=, stateless id (payload + tag), Web Worker "
-"solving with the WASM or JS prover, POST /__sibuna/verify with the nonce or "
-"proof, verify, spent set and mint MAC token, Set-Cookie then reload, and "
-"back to the navigation with a session."
+"solving with the WASM or JS prover, POST /__sibuna/verify with the nonce "
+"or proof, verify, spent set and mint MAC token, Set-Cookie then reload, "
+"and back to the navigation with a session."
 msgstr ""
 "八つのステップからなるループです。ブラウザーのページ遷移、中間ページ（HTTP 200）、GET "
 "/__sibuna/challenge.json?need=、状態を持たないID（ペイロード + タグ）、WASMまたはJSの証明器によるWeb "
-"Workerでの解答、nonceまたは証明を付けたPOST /__sibuna/verify、検証と使用済み集合とMACトークンの発行、"
-"Set-Cookieと再読み込みを経て、セッションを持ってページ遷移に戻ります。"
+"Workerでの解答、nonceまたは証明を付けたPOST "
+"/__sibuna/verify、検証と使用済み集合とMACトークンの発行、Set-Cookieと再読み込みを経て、セッションを持ってページ遷移に戻ります。"
 
 #: ../../protocol.rst:14
 msgid ""
 "digraph round_trip {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.7];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.55, "
+"ranksep=0.26, pad=0.1, fontname=\"Helvetica\", fontsize=10, "
+"fontcolor=\"#172033\"];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.7, height=0.44, group=b, "
+"margin=\"0.12,0.06\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8.5, "
+"fontcolor=\"#475569\", arrowsize=0.65, penwidth=1.1];\n"
 "\n"
-"  nav [label=\"Browser\\nnavigation\"];\n"
-"  page [label=\"Interstitial\\n(HTTP 200)\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
-"  fetch [label=\"GET /__sibuna/\\nchallenge.json?need=\"];\n"
-"  record [label=\"Stateless id:\\npayload + tag\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  worker [label=\"Web Worker\\nWASM / JS prover\"];\n"
-"  verify [label=\"POST /__sibuna/verify\"];\n"
-"  mint [label=\"Verify, spent set,\\nmint MAC token\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  cookie [label=\"Set-Cookie\\nthen reload\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
+"  subgraph cluster_browser {\n"
+"    label=<<b>Browser</b>>; labeljust=l; style=\"rounded,filled\"; "
+"color=\"#bfdbfe\"; fillcolor=\"#f8fbff\"; margin=12;\n"
+"    nav [label=\"Browser\\nnavigation\"];\n"
+"    fetch [label=\"GET /__sibuna/\\nchallenge.json?need=\"];\n"
+"    worker [label=\"Web Worker\\nWASM / JS prover\"];\n"
+"    verify [label=\"POST /__sibuna/verify\"];\n"
+"    cookie [label=\"Set-Cookie\\nthen reload\"];\n"
+"  }\n"
+"  subgraph cluster_sibuna {\n"
+"    label=<<b>Sibuna</b>>; labeljust=r; style=\"rounded,filled\"; "
+"color=\"#bbf7d0\"; fillcolor=\"#f7fdf9\"; margin=12;\n"
+"    node [color=\"#15803d\", fillcolor=\"#f0fdf4\", group=s];\n"
+"    page [label=\"Interstitial\\n(HTTP 200)\"];\n"
+"    record [label=\"Stateless id:\\npayload + tag\"];\n"
+"    mint [label=\"Verify, spent set,\\nmint MAC token\"];\n"
+"  }\n"
 "\n"
-"  { rank=same; nav; page; fetch; record; }\n"
-"  { rank=same; cookie; mint; verify; worker; }\n"
+"  { rank=same; nav; page; }\n"
+"  { rank=same; fetch; record; }\n"
+"  { rank=same; verify; mint; }\n"
 "\n"
-"  nav -> page -> fetch -> record;\n"
+"  nav -> page;\n"
+"  page -> fetch;\n"
+"  fetch -> record;\n"
+"  page -> record -> mint [style=invis];\n"
 "  record -> worker [label=\" solve\"];\n"
-"  cookie -> mint -> verify [dir=back];\n"
-"  verify -> worker [dir=back, label=\"nonce or proof\"];\n"
-"  nav -> cookie [dir=back, label=\" session\"];\n"
+"  worker -> verify [label=\" nonce or proof\"];\n"
+"  verify -> mint;\n"
+"  mint -> cookie;\n"
+"  cookie -> nav [taillabel=\"session\", labelangle=-35, "
+"labeldistance=3.2, constraint=false, tailport=w, headport=w, minlen=1, "
+"color=\"#15803d\", fontcolor=\"#15803d\", style=dashed];\n"
 "}"
 msgstr ""
 "digraph round_trip {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.7];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.55, "
+"ranksep=0.26, pad=0.1, fontname=\"Helvetica\", fontsize=10, "
+"fontcolor=\"#172033\"];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.7, height=0.44, group=b, "
+"margin=\"0.12,0.06\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8.5, "
+"fontcolor=\"#475569\", arrowsize=0.65, penwidth=1.1];\n"
 "\n"
-"  nav [label=\"ブラウザーの\\nページ遷移\"];\n"
-"  page [label=\"中間ページ\\n(HTTP 200)\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  fetch [label=\"GET /__sibuna/\\nchallenge.json?need=\"];\n"
-"  record [label=\"状態を持たないID：\\nペイロード + タグ\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  worker [label=\"Web Worker\\nWASM / JSの証明器\"];\n"
-"  verify [label=\"POST /__sibuna/verify\"];\n"
-"  mint [label=\"検証、使用済み集合、\\nMACトークンの発行\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  cookie [label=\"Set-Cookie\\nの後に再読み込み\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
+"  subgraph cluster_browser {\n"
+"    label=<<b>ブラウザー</b>>; labeljust=l; style=\"rounded,filled\"; "
+"color=\"#bfdbfe\"; fillcolor=\"#f8fbff\"; margin=12;\n"
+"    nav [label=\"ブラウザーの\\nページ遷移\"];\n"
+"    fetch [label=\"GET /__sibuna/\\nchallenge.json?need=\"];\n"
+"    worker [label=\"Web Worker\\nWASM / JSの証明器\"];\n"
+"    verify [label=\"POST /__sibuna/verify\"];\n"
+"    cookie [label=\"Set-Cookie\\nの後に再読み込み\"];\n"
+"  }\n"
+"  subgraph cluster_sibuna {\n"
+"    label=<<b>Sibuna</b>>; labeljust=r; style=\"rounded,filled\"; "
+"color=\"#bbf7d0\"; fillcolor=\"#f7fdf9\"; margin=12;\n"
+"    node [color=\"#15803d\", fillcolor=\"#f0fdf4\", group=s];\n"
+"    page [label=\"中間ページ\\n(HTTP 200)\"];\n"
+"    record [label=\"状態を持たないID：\\nペイロード + タグ\"];\n"
+"    mint [label=\"検証、使用済み集合、\\nMACトークンの発行\"];\n"
+"  }\n"
 "\n"
-"  { rank=same; nav; page; fetch; record; }\n"
-"  { rank=same; cookie; mint; verify; worker; }\n"
+"  { rank=same; nav; page; }\n"
+"  { rank=same; fetch; record; }\n"
+"  { rank=same; verify; mint; }\n"
 "\n"
-"  nav -> page -> fetch -> record;\n"
+"  nav -> page;\n"
+"  page -> fetch;\n"
+"  fetch -> record;\n"
+"  page -> record -> mint [style=invis];\n"
 "  record -> worker [label=\" 解く\"];\n"
-"  cookie -> mint -> verify [dir=back];\n"
-"  verify -> worker [dir=back, label=\"nonceまたは証明\"];\n"
-"  nav -> cookie [dir=back, label=\" セッション\"];\n"
+"  worker -> verify [label=\" nonceまたは証明\"];\n"
+"  verify -> mint;\n"
+"  mint -> cookie;\n"
+"  cookie -> nav [taillabel=\"セッション\", labelangle=-35, labeldistance=3.2, "
+"constraint=false, tailport=w, headport=w, minlen=1, color=\"#15803d\", "
+"fontcolor=\"#15803d\", style=dashed];\n"
 "}"
 
 #: ../../protocol.rst:14
-msgid "The challenge round trip."
-msgstr "チャレンジの往復。"
+msgid ""
+"The challenge round trip. Steps on the left run in the browser, steps on "
+"the right in Sibuna."
+msgstr "チャレンジの往復。左側の手順はブラウザーで、右側の手順はSibunaで実行されます。"
 
-#: ../../protocol.rst:41
+#: ../../protocol.rst:53
 msgid ""
 "A navigation with no valid session reaches the policy engine and is "
 "classified ``CHALLENGE``. Because the request accepts ``text/html``, the "
@@ -144,7 +179,7 @@ msgstr ""
 "*要件チケット*\\ "
 "を運びます。これは、この判断が要求するチャレンジ（アルゴリズム、作業ビット、開示数）とルールのハッシュを、専用に導出した鍵による鍵付きBLAKE3タグでこのクライアント向けに封印したもので、チャレンジの有効期間一つ分だけ有効です。"
 
-#: ../../protocol.rst:42
+#: ../../protocol.rst:54
 msgid ""
 "The interstitial fetches ``GET /__sibuna/challenge.json?path=<original "
 "URL>&need=<ticket>``. A valid ticket decides the challenge: the work is "
@@ -167,11 +202,11 @@ msgstr ""
 "0009）。8 KiBより長いURLは切り詰めずに\\ ``414``\\ で拒否し、正規形を持たないパスは\\ ``400``\\ "
 "で拒否します。チケットは助言にすぎません。許可の判断では依然としてセッションの作業レベルを確認するので、再送や偽造したチケットは保有者に作業を課すだけです。"
 
-#: ../../protocol.rst:43
+#: ../../protocol.rst:55
 msgid "The response is the challenge record:"
 msgstr "応答はチャレンジレコードです。"
 
-#: ../../protocol.rst:45
+#: ../../protocol.rst:57
 msgid ""
 "{\"id\":\"AQEND...70 "
 "chars\",\"algorithm\":\"posw\",\"difficulty\":13,\"challenges\":16,\"expires_at\":1757241234}"
@@ -179,7 +214,7 @@ msgstr ""
 "{\"id\":\"AQEND...70 "
 "chars\",\"algorithm\":\"posw\",\"difficulty\":13,\"challenges\":16,\"expires_at\":1757241234}"
 
-#: ../../protocol.rst:49
+#: ../../protocol.rst:61
 msgid ""
 "For ``hashcash``, ``difficulty`` is the bit count and ``challenges`` is "
 "``0``."
@@ -187,31 +222,33 @@ msgstr ""
 "``hashcash``\\ では、\\ ``difficulty``\\ はビット数で、\\ ``challenges``\\ は\\ "
 "``0``\\ です。"
 
-#: ../../protocol.rst:50
+#: ../../protocol.rst:62
 msgid ""
 "A Web Worker solves it with the WebAssembly module, or the JavaScript "
 "prover if WebAssembly is unavailable (Part VII), and posts either"
 msgstr ""
-"Web WorkerがWebAssemblyモジュールで、"
-"あるいはWebAssemblyが使えなければJavaScriptの証明器で（第VII部）これを解き、次のいずれか"
+"Web "
+"WorkerがWebAssemblyモジュールで、あるいはWebAssemblyが使えなければJavaScriptの証明器で（第VII部）これを解き、次のいずれか"
 
-#: ../../protocol.rst:52
+#: ../../protocol.rst:64
 msgid "{\"challenge_id\":\"...\",\"nonce\":\"90766\"}"
 msgstr "{\"challenge_id\":\"...\",\"nonce\":\"90766\"}"
 
-#: ../../protocol.rst:56
+#: ../../protocol.rst:68
 msgid "or"
 msgstr "または"
 
-#: ../../protocol.rst:58
-msgid "{\"challenge_id\":\"...\",\"proof\":\"<base64url, 32(1 + t(n+1)) bytes>\"}"
-msgstr "{\"challenge_id\":\"...\",\"proof\":\"<base64url, 32(1 + t(n+1)) bytes>\"}"
+#: ../../protocol.rst:70
+msgid ""
+"{\"challenge_id\":\"...\",\"proof\":\"<base64url, 32(1 + t(n+1)) bytes>\"}"
+msgstr ""
+"{\"challenge_id\":\"...\",\"proof\":\"<base64url, 32(1 + t(n+1)) bytes>\"}"
 
-#: ../../protocol.rst:62
+#: ../../protocol.rst:74
 msgid "to ``POST /__sibuna/verify``."
 msgstr "を\\ ``POST /__sibuna/verify``\\ に送信します。"
 
-#: ../../protocol.rst:63
+#: ../../protocol.rst:75
 msgid ""
 "On success the server answers ``200 {\"status\":\"ok\"}`` with a "
 "``Set-Cookie`` header, and the page reloads its original location. Every "
@@ -220,40 +257,40 @@ msgstr ""
 "成功すると、サーバーは\\ ``Set-Cookie``\\ ヘッダー付きの\\ ``200 {\"status\":\"ok\"}``\\ "
 "で応答し、ページは元の場所を再読み込みします。以後のリクエストはすべてCookieを運び、ポリシーの評価の前に許可されます。"
 
-#: ../../protocol.rst:65
+#: ../../protocol.rst:77
 msgid "Why the path travels with the challenge"
 msgstr "パスがチャレンジとともに送られる理由"
 
-#: ../../protocol.rst:67
+#: ../../protocol.rst:79
 msgid ""
-"The interstitial is served at the protected URL, so the browser knows where "
-"it is. Sending the path lets the server pick the *per-rule* difficulty and "
-"algorithm (a checkout route may demand 20 work bits of sequential work "
-"while a blog demands 16 bits of Hashcash) and binds the rule hash into the "
-"token, where ``X-Sibuna-Rule-Hash`` reports it upstream."
+"The interstitial is served at the protected URL, so the browser knows "
+"where it is. Sending the path lets the server pick the *per-rule* "
+"difficulty and algorithm (a checkout route may demand 20 work bits of "
+"sequential work while a blog demands 16 bits of Hashcash) and binds the "
+"rule hash into the token, where ``X-Sibuna-Rule-Hash`` reports it "
+"upstream."
 msgstr ""
 "中間ページは保護されたURLで配信されるので、ブラウザーは自分がどこにいるかを知っています。パスを送ることで、サーバーは\\ *ルールごとの*\\ "
-"難易度とアルゴリズムを選べます（決済のルートは20作業ビットの逐次作業を要求し、ブログは16ビットのHashcashを要求する、といった具合です）。"
-"さらにルールのハッシュをトークンに結び付け、\\ ``X-Sibuna-Rule-Hash``\\ がそれを上流に伝えます。"
+"難易度とアルゴリズムを選べます（決済のルートは20作業ビットの逐次作業を要求し、ブログは16ビットのHashcashを要求する、といった具合です）。さらにルールのハッシュをトークンに結び付け、\\ "
+"``X-Sibuna-Rule-Hash``\\ がそれを上流に伝えます。"
 
-#: ../../protocol.rst:69
+#: ../../protocol.rst:81
 msgid "The Stateless Challenge Record"
 msgstr "状態を持たないチャレンジレコード"
 
-#: ../../protocol.rst:74
+#: ../../protocol.rst:86
 msgid ""
 "Read the challenge encoder, understand every field's purpose, and see how "
 "the per-challenge nonce is derived without an entropy syscall on the hot "
 "path."
 msgstr ""
-"チャレンジのエンコーダーを読み、各フィールドの目的を理解し、"
-"ホットパスでエントロピーのシステムコールを使わずにチャレンジごとのnonceを導く方法を確かめます。"
+"チャレンジのエンコーダーを読み、各フィールドの目的を理解し、ホットパスでエントロピーのシステムコールを使わずにチャレンジごとのnonceを導く方法を確かめます。"
 
-#: ../../protocol.rst:76
+#: ../../protocol.rst:88
 msgid "Implementation: ``Coordinator::create_challenge_with_spec``"
 msgstr "実装：\\ ``Coordinator::create_challenge_with_spec``"
 
-#: ../../protocol.rst:78
+#: ../../protocol.rst:90
 msgid ""
 "Builds the 36-byte payload, tags it under the challenge key, and "
 "base64url-encodes the 52 bytes into a 70-character identifier. In "
@@ -263,7 +300,7 @@ msgstr ""
 "``crates/challenge/src/coordinator.rs``\\ （クレート\\ ``sibuna-challenge``\\ "
 "）にあります。"
 
-#: ../../protocol.rst:80
+#: ../../protocol.rst:92
 msgid ""
 "pub fn create_challenge_with_spec(\n"
 "    &self,\n"
@@ -275,7 +312,8 @@ msgid ""
 ") -> Challenge {\n"
 "    self.adaptive.observe(now.saturating_mul(1000));\n"
 "    let effective = ChallengeSpec {\n"
-"        difficulty: spec.difficulty.saturating_add(self.adaptive.bump()),\n"
+"        difficulty: "
+"spec.difficulty.saturating_add(self.adaptive.bump()),\n"
 "        ..spec\n"
 "    };\n"
 "    let fingerprint = self.fingerprint(client_ip, user_agent);\n"
@@ -297,7 +335,8 @@ msgid ""
 "    payload[28..36].copy_from_slice(&rule_hash.to_le_bytes());\n"
 "    let mut raw = [0u8; ID_RAW_LEN];\n"
 "    raw[..ID_PAYLOAD_LEN].copy_from_slice(&payload);\n"
-"    raw[ID_PAYLOAD_LEN..].copy_from_slice(&self.challenge_tag(&payload));\n"
+"    "
+"raw[ID_PAYLOAD_LEN..].copy_from_slice(&self.challenge_tag(&payload));\n"
 "\n"
 "    Challenge {\n"
 "        id: encoded::encode(&raw),\n"
@@ -318,7 +357,8 @@ msgstr ""
 ") -> Challenge {\n"
 "    self.adaptive.observe(now.saturating_mul(1000));\n"
 "    let effective = ChallengeSpec {\n"
-"        difficulty: spec.difficulty.saturating_add(self.adaptive.bump()),\n"
+"        difficulty: "
+"spec.difficulty.saturating_add(self.adaptive.bump()),\n"
 "        ..spec\n"
 "    };\n"
 "    let fingerprint = self.fingerprint(client_ip, user_agent);\n"
@@ -340,7 +380,8 @@ msgstr ""
 "    payload[28..36].copy_from_slice(&rule_hash.to_le_bytes());\n"
 "    let mut raw = [0u8; ID_RAW_LEN];\n"
 "    raw[..ID_PAYLOAD_LEN].copy_from_slice(&payload);\n"
-"    raw[ID_PAYLOAD_LEN..].copy_from_slice(&self.challenge_tag(&payload));\n"
+"    "
+"raw[ID_PAYLOAD_LEN..].copy_from_slice(&self.challenge_tag(&payload));\n"
 "\n"
 "    Challenge {\n"
 "        id: encoded::encode(&raw),\n"
@@ -351,7 +392,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../protocol.rst:124
+#: ../../protocol.rst:136
 msgid ""
 "The identifier is an ``Encoded<70>``: the text lives in an array of "
 "exactly its length, so issuing a challenge never allocates. "
@@ -365,11 +406,11 @@ msgstr ""
 "は作業ビットを層ごとの単位に対応付けます。Hashcashのビット（最大64）か、PoSWの深さ（\\ ``difficulty - 3``\\ "
 "を4から24の範囲に収めた値）です。"
 
-#: ../../protocol.rst:126
+#: ../../protocol.rst:138
 msgid "Three details deserve attention:"
 msgstr "注目すべき点が三つあります。"
 
-#: ../../protocol.rst:128
+#: ../../protocol.rst:140
 msgid ""
 "*Adaptive difficulty.* The coordinator keeps an exponentially weighted "
 "moving average of the challenge issue rate in three atomics. Above a "
@@ -380,18 +421,18 @@ msgstr ""
 "*適応的な難易度。*\\ "
 "コーディネーターは、チャレンジの発行率の指数加重移動平均を三つのアトミック変数で保持します。毎秒50チャレンジという基準を超えると、発行率が2倍になるごとに作業ビットを一つ加え、最大で六つまで加えます。大量アクセスは指数的に多くを支払い、静かなトラフィックは基本コストのままです。"
 
-#: ../../protocol.rst:129
+#: ../../protocol.rst:141
 msgid ""
-"*The nonce is a PRF output*, keyed by the challenge key over a counter, the "
-"clock, and the fingerprint. It is unique (counter) and unpredictable (key), "
-"so an adversary cannot precompute solutions for identifiers it has not been "
-"issued, and the hot path never calls into the operating system for entropy."
+"*The nonce is a PRF output*, keyed by the challenge key over a counter, "
+"the clock, and the fingerprint. It is unique (counter) and unpredictable "
+"(key), so an adversary cannot precompute solutions for identifiers it has "
+"not been issued, and the hot path never calls into the operating system "
+"for entropy."
 msgstr ""
-"*nonceはPRFの出力です。*\\ チャレンジ鍵を鍵とし、カウンター、時刻、フィンガープリントから計算します。"
-"nonceは一意（カウンターによる）で予測不能（鍵による）なので、敵対者は発行されていない識別子の解答を事前に計算できません。また、"
-"ホットパスでオペレーティングシステムにエントロピーを求めることもありません。"
+"*nonceはPRFの出力です。*\\ "
+"チャレンジ鍵を鍵とし、カウンター、時刻、フィンガープリントから計算します。nonceは一意（カウンターによる）で予測不能（鍵による）なので、敵対者は発行されていない識別子の解答を事前に計算できません。また、ホットパスでオペレーティングシステムにエントロピーを求めることもありません。"
 
-#: ../../protocol.rst:130
+#: ../../protocol.rst:142
 msgid ""
 "*Difficulty travels inside the tag.* A client cannot lower the difficulty "
 "by editing the record: the tag would fail before any proof is examined."
@@ -399,11 +440,11 @@ msgstr ""
 "*難易度はタグの中に含まれます。*\\ "
 "クライアントがレコードを書き換えて難易度を下げることはできません。証明を調べる前に、タグの確認で失敗するからです。"
 
-#: ../../protocol.rst:132
+#: ../../protocol.rst:144
 msgid "Verification Order and Single Use"
 msgstr "検証の順序と一回限りの使用"
 
-#: ../../protocol.rst:137
+#: ../../protocol.rst:149
 msgid ""
 "Understand why the cheap checks run before the proof, why the challenge "
 "is marked spent only after the proof is valid, and how two concurrent "
@@ -411,11 +452,11 @@ msgid ""
 msgstr ""
 "安価な確認が証明より先に行われる理由、証明が有効になってから初めてチャレンジを使用済みにする理由、同じ解答の二つの同時提出がどう解決されるかを理解します。"
 
-#: ../../protocol.rst:139
+#: ../../protocol.rst:151
 msgid "Implementation: ``Coordinator::verify_and_mint``"
 msgstr "実装：\\ ``Coordinator::verify_and_mint``"
 
-#: ../../protocol.rst:141
+#: ../../protocol.rst:153
 msgid ""
 "Decodes and authenticates the identifier, checks age and client binding, "
 "verifies the proof for the recorded tier, records the tag as spent, and "
@@ -426,7 +467,7 @@ msgstr ""
 "``crates/challenge/src/coordinator.rs``\\ （クレート\\ ``sibuna-challenge``\\ "
 "）にあります。"
 
-#: ../../protocol.rst:143
+#: ../../protocol.rst:155
 msgid ""
 "pub fn verify_and_mint(\n"
 "    &self,\n"
@@ -504,7 +545,7 @@ msgstr ""
 "    })\n"
 "}"
 
-#: ../../protocol.rst:179
+#: ../../protocol.rst:191
 msgid ""
 "The order is deliberate. Tag, age, and binding are constant-time checks "
 "that reject garbage before any hashing. A wrong proof must not consume "
@@ -523,7 +564,7 @@ msgstr ""
 "60``\\ （\\ ``CLOCK_SKEW_SECONDS``\\ "
 "は60）は、時計が1分より進んでいるノードが発行したレコードを拒否します。そうしなければ、チャレンジの寿命が延びてしまいます。"
 
-#: ../../protocol.rst:181
+#: ../../protocol.rst:193
 msgid ""
 "Errors surface to the client as ``400`` with an Elm-style diagnostic "
 "(Part X): each ``VerifyError`` converts into "
@@ -538,21 +579,21 @@ msgstr ""
 "``FINGERPRINT MISMATCH``\\ 、\\ ``WRONG SOLUTION TYPE``\\ 、\\ ``MALFORMED "
 "CHALLENGE``\\ が含まれることを確認します。"
 
-#: ../../protocol.rst:183
+#: ../../protocol.rst:195
 msgid "The Session Cookie"
 msgstr "セッションCookie"
 
-#: ../../protocol.rst:188
+#: ../../protocol.rst:200
 msgid ""
 "Read the keyed-hash token, understand the cookie attributes, and explain "
 "the client binding."
 msgstr "鍵付きハッシュのトークンを読み、Cookieの属性を理解し、クライアントへの結び付きを説明します。"
 
-#: ../../protocol.rst:190
+#: ../../protocol.rst:202
 msgid "Implementation: ``token::mac::mint`` and ``token::mac::verify``"
 msgstr "実装：\\ ``token::mac::mint``\\ と\\ ``token::mac::verify``"
 
-#: ../../protocol.rst:192
+#: ../../protocol.rst:204
 msgid ""
 "Serialises the 40-byte payload, appends the first 16 bytes of keyed "
 "BLAKE3 over it, and verifies with a constant-time comparison. In "
@@ -563,7 +604,7 @@ msgstr ""
 "``crates/challenge/src/token/mac.rs``\\ （クレート\\ ``sibuna-challenge``\\ "
 "）にあります。\\ ``Coordinator::verify_cookie``\\ がクライアントのフィンガープリントを渡して呼び出します。"
 
-#: ../../protocol.rst:194
+#: ../../protocol.rst:206
 msgid ""
 "pub fn verify(\n"
 "    key: &[u8; 32],\n"
@@ -580,8 +621,8 @@ msgid ""
 "    let (payload, given) = raw.split_at(PAYLOAD_LEN);\n"
 "    let mut bytes = [0u8; PAYLOAD_LEN];\n"
 "    bytes.copy_from_slice(payload);\n"
-"    // Constant time: an early exit would tell a forger how many tag bytes "
-"were right.\n"
+"    // Constant time: an early exit would tell a forger how many tag "
+"bytes were right.\n"
 "    if !ct::eq(&tag(key, &bytes), given) {\n"
 "        return Err(TokenError::InvalidTokenSignature);\n"
 "    }\n"
@@ -614,7 +655,7 @@ msgstr ""
 "    Ok(payload)\n"
 "}"
 
-#: ../../protocol.rst:219
+#: ../../protocol.rst:231
 msgid ""
 "The tag is checked before the payload is parsed: a payload of another "
 "version is refused with ``TokenError::InvalidEncoding`` only once it is "
@@ -623,11 +664,11 @@ msgstr ""
 "タグはペイロードをパースする前に確認します。別のバージョンのペイロードは、本物であると分かった後で初めて\\ "
 "``TokenError::InvalidEncoding``\\ で拒否されます。偽造したペイロードがパーサーに届くことはありません。"
 
-#: ../../protocol.rst:221
+#: ../../protocol.rst:233
 msgid "The cookie is emitted as"
 msgstr "Cookieは次の形で出力されます。"
 
-#: ../../protocol.rst:223
+#: ../../protocol.rst:235
 msgid ""
 "Set-Cookie: __sibuna_token=<75 chars>; Path=/; Max-Age=86400; HttpOnly;\n"
 "    SameSite=Lax[; Secure]"
@@ -635,7 +676,7 @@ msgstr ""
 "Set-Cookie: __sibuna_token=<75 chars>; Path=/; Max-Age=86400; HttpOnly;\n"
 "    SameSite=Lax[; Secure]"
 
-#: ../../protocol.rst:228
+#: ../../protocol.rst:240
 msgid ""
 "``HttpOnly`` keeps it out of page scripts, ``SameSite=Lax`` stops "
 "cross-site replay while allowing top-level navigation, and ``Secure`` is "
@@ -652,52 +693,50 @@ msgstr ""
 "``TokenError::TokenBoundAddressMismatch``\\ で失敗します。エンドツーエンドテスト「the cookie "
 "is bound to the client identity」がまさにその経路を確かめます。"
 
-#: ../../protocol.rst:230
+#: ../../protocol.rst:242
 msgid ""
 "The payload begins with a version byte and the *work level* the holder "
 "paid: the mechanism (Hashcash or PoSW) and the work bits actually solved, "
 "including any load-adaptive bump. A session clears a challenge only when "
 "its level reaches what the route demands, computed from the rule's "
 "difficulty through the same clamping the challenge itself applies. Levels "
-"are ordered, not named: a cookie earned at 24 bits also covers every 16-bit "
-"route, while a 16-bit cookie presented to a 24-bit route falls through to "
-"the stronger interstitial and the new cookie replaces the old one. "
-"``rule_hash`` remains the audit identity of the rule that issued the "
-"challenge; it is reported upstream, never used for admission. WAF findings "
-"and explicit denials are never cleared by a session. The end-to-end test \"a "
-"session earned on a cheaper route does not admit a route that demands more "
-"work\" exercises both directions."
+"are ordered, not named: a cookie earned at 24 bits also covers every "
+"16-bit route, while a 16-bit cookie presented to a 24-bit route falls "
+"through to the stronger interstitial and the new cookie replaces the old "
+"one. ``rule_hash`` remains the audit identity of the rule that issued the "
+"challenge; it is reported upstream, never used for admission. WAF "
+"findings and explicit denials are never cleared by a session. The "
+"end-to-end test \"a session earned on a cheaper route does not admit a "
+"route that demands more work\" exercises both directions."
 msgstr ""
-"ペイロードは、バージョンのバイトと、保有者が支払った\\ *作業レベル*\\ で始まります。"
-"作業レベルは方式（HashcashまたはPoSW）と実際に解いた作業ビットで、負荷に応じた上乗せも含みます。セッションがチャレンジを免除されるのは、"
-"そのレベルがルートの要求に達するときだけです。要求は、チャレンジ自身と同じ範囲の制限を通してルールの難易度から計算します。"
-"レベルには名前ではなく順序があります。24ビットで得たCookieは16ビットのルートもすべて満たしますが、"
-"24ビットのルートに16ビットのCookieを示すと、より強い中間ページに回され、新しいCookieが古いものを置き換えます。\\ "
-"``rule_hash``\\ は引き続き、チャレンジを発行したルールを監査のために識別するものです。上流には伝えますが、許可の判断には使いません。"
-"WAFの検出と明示的な拒否は、セッションによって免除されることはありません。エンドツーエンドテスト「a session earned on a "
-"cheaper route does not admit a route that demands more work」が両方向を確かめます。"
+"ペイロードは、バージョンのバイトと、保有者が支払った\\ *作業レベル*\\ "
+"で始まります。作業レベルは方式（HashcashまたはPoSW）と実際に解いた作業ビットで、負荷に応じた上乗せも含みます。セッションがチャレンジを免除されるのは、そのレベルがルートの要求に達するときだけです。要求は、チャレンジ自身と同じ範囲の制限を通してルールの難易度から計算します。レベルには名前ではなく順序があります。24ビットで得たCookieは16ビットのルートもすべて満たしますが、24ビットのルートに16ビットのCookieを示すと、より強い中間ページに回され、新しいCookieが古いものを置き換えます。\\ "
+"``rule_hash``\\ "
+"は引き続き、チャレンジを発行したルールを監査のために識別するものです。上流には伝えますが、許可の判断には使いません。WAFの検出と明示的な拒否は、セッションによって免除されることはありません。エンドツーエンドテスト「a "
+"session earned on a cheaper route does not admit a route that demands "
+"more work」が両方向を確かめます。"
 
-#: ../../protocol.rst:232
+#: ../../protocol.rst:244
 msgid "Forwarded addresses"
 msgstr "転送されたアドレス"
 
-#: ../../protocol.rst:235
+#: ../../protocol.rst:247
 msgid ""
-"Behind an ingress the client address arrives in ``X-Forwarded-For``. Sibuna "
-"trusts that header only with ``--trust-forwarded`` (implied in forward-auth "
-"mode). A reverse proxy exposed directly to the internet must leave it off, "
-"or any client could pick its own binding and its own rate-limit bucket."
+"Behind an ingress the client address arrives in ``X-Forwarded-For``. "
+"Sibuna trusts that header only with ``--trust-forwarded`` (implied in "
+"forward-auth mode). A reverse proxy exposed directly to the internet must "
+"leave it off, or any client could pick its own binding and its own "
+"rate-limit bucket."
 msgstr ""
-"イングレスの背後では、クライアントのアドレスは\\ ``X-Forwarded-For``\\ で届きます。Sibunaがこのヘッダーを信頼するのは\\ "
-"``--trust-forwarded``\\ を指定したときだけです（forward-authモードでは暗黙に有効です）。"
-"インターネットに直接公開するリバースプロキシでは無効にしておかなければなりません。そうしないと、"
-"どのクライアントも自分の結び付きとレート制限のバケットを自由に選べてしまいます。"
+"イングレスの背後では、クライアントのアドレスは\\ ``X-Forwarded-For``\\ "
+"で届きます。Sibunaがこのヘッダーを信頼するのは\\ ``--trust-forwarded``\\ "
+"を指定したときだけです（forward-authモードでは暗黙に有効です）。インターネットに直接公開するリバースプロキシでは無効にしておかなければなりません。そうしないと、どのクライアントも自分の結び付きとレート制限のバケットを自由に選べてしまいます。"
 
-#: ../../protocol.rst:237
+#: ../../protocol.rst:249
 msgid "Exercise 4.1"
 msgstr "演習4.1"
 
-#: ../../protocol.rst:239
+#: ../../protocol.rst:251
 msgid ""
 "Sketch the sequence of two browsers behind one NAT address with identical "
 "User-Agents. Which checks do they share, which do they not, and what "
@@ -705,11 +744,11 @@ msgid ""
 msgstr ""
 "一つのNATアドレスの背後にある、User-Agentが同一の二つのブラウザーのシーケンスを描いてください。両者が共有する確認と共有しない確認はどれでしょうか。そのNATの背後にいる攻撃者が、もう一方のブラウザーのCookieを再利用するには何が必要でしょうか。"
 
-#: ../../protocol.rst:241
+#: ../../protocol.rst:253
 msgid "Explain the invariant"
 msgstr "不変条件を説明してください"
 
-#: ../../protocol.rst:243
+#: ../../protocol.rst:255
 msgid ""
 "Explain to an operator why the daemon does not \"remember\" outstanding "
 "challenges and why that is a security feature rather than a shortcut."

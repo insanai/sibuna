@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-10-24 12:05+0000\n"
 "PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,8 +36,8 @@ msgstr ""
 msgid "Surfaces and Configuration"
 msgstr "الأوضاع والإعداد"
 
-#: ../../operations.rst:9 ../../operations.rst:313 ../../operations.rst:528
-#: ../../operations.rst:557 ../../operations.rst:696
+#: ../../operations.rst:9 ../../operations.rst:313 ../../operations.rst:533
+#: ../../operations.rst:562 ../../operations.rst:700
 msgid "Objectives"
 msgstr "الأهداف"
 
@@ -1778,66 +1778,98 @@ msgstr ""
 #: ../../operations.rst:321
 msgid ""
 "digraph shield_routing {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.7];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.35, "
+"ranksep=0.38, pad=0.1];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.4, height=0.42, "
+"margin=\"0.1,0.05\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8.5, "
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
 "\n"
-"  request [label=\"Request\"];\n"
-"  limits [label=\"Local bans\\nand rate limit\"];\n"
-"  policy [label=\"Inspection\\nand policy\"];\n"
-"  deny [label=\"Deny\", fillcolor=\"#fef2f2\", color=\"#b91c1c\"];\n"
-"  origin [label=\"Origin / auth\\nsuccess\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  session [label=\"Session MAC\\nif challenged\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
-"  puzzle [label=\"Issue puzzle\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
+"  request [label=\"Request\", color=\"#172033\", fillcolor=\"#ffffff\"];\n"
+"  limits [label=\"Local bans\\nand rate limit\", shape=hexagon, "
+"style=filled, margin=\"0.02,0.04\"];\n"
+"  policy [label=\"Inspection\\nand policy\", shape=hexagon, style=filled, "
+"margin=\"0.02,0.04\"];\n"
+"  session [label=\"Session MAC\\nif challenged\", shape=hexagon, "
+"style=filled, color=\"#b45309\", fillcolor=\"#fffbeb\", "
+"margin=\"0.02,0.04\"];\n"
+"  deny [label=\"Deny\", color=\"#b91c1c\", fillcolor=\"#fef2f2\", "
+"penwidth=1.4];\n"
+"  origin [label=\"Origin / auth\\nsuccess\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\", penwidth=1.4];\n"
+"  puzzle [label=\"Issue puzzle\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\", penwidth=1.4];\n"
+"\n"
+"  { rank=same; deny; session; }\n"
+"  { rank=same; origin; puzzle; }\n"
+"  deny -> session [style=invis, minlen=2];\n"
+"  origin -> puzzle [style=invis];\n"
 "\n"
 "  request -> limits;\n"
-"  limits -> policy [label=\"within limits\"];\n"
-"  policy -> deny [label=\"DENY\"];\n"
-"  policy -> session [label=\"CHALLENGE\"];\n"
-"  session -> origin [label=\"valid\"];\n"
-"  session -> puzzle [label=\"missing / invalid\"];\n"
-"  policy -> origin [label=\"ALLOW\"];\n"
+"  limits -> policy [label=\" within limits\"];\n"
+"  policy -> deny [label=\"DENY \", color=\"#b91c1c\", "
+"fontcolor=\"#b91c1c\", fontname=\"Helvetica-Bold\"];\n"
+"  policy -> origin [label=\" ALLOW\", color=\"#15803d\", "
+"fontcolor=\"#15803d\", fontname=\"Helvetica-Bold\"];\n"
+"  policy -> session [label=\" CHALLENGE\", color=\"#b45309\", "
+"fontcolor=\"#b45309\", fontname=\"Helvetica-Bold\"];\n"
+"  session -> origin [label=\"valid \", color=\"#15803d\", "
+"fontcolor=\"#15803d\"];\n"
+"  session -> puzzle [label=\" missing / invalid\", color=\"#b45309\", "
+"fontcolor=\"#b45309\"];\n"
 "}"
 msgstr ""
 "digraph shield_routing {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.7];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Noto Sans "
-"Arabic\", fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Noto Sans Arabic\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.35, "
+"ranksep=0.38, pad=0.1];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.4, height=0.42, "
+"margin=\"0.1,0.05\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8.5, "
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
 "\n"
-"  request [label=\"الطلب\"];\n"
-"  limits [label=\"الحظر المحلي\\nوحد المعدل\"];\n"
-"  policy [label=\"الفحص\\nوالسياسة\"];\n"
-"  deny [label=\"الرفض\", fillcolor=\"#fef2f2\", color=\"#b91c1c\"];\n"
-"  origin [label=\"الخادم الأصلي أو\\nنجاح المصادقة\", "
-"fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
-"  session [label=\"MAC\\nرمز الجلسة\\nعند التحدي\", "
-"fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  puzzle [label=\"إصدار لغز\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
+"  request [label=\"الطلب\", color=\"#172033\", fillcolor=\"#ffffff\"];\n"
+"  limits [label=\"الحظر المحلي\\nوحد المعدل\", shape=hexagon, "
+"style=filled, margin=\"0.02,0.04\"];\n"
+"  policy [label=\"الفحص\\nوالسياسة\", shape=hexagon, style=filled, "
+"margin=\"0.02,0.04\"];\n"
+"  session [label=\"MAC\\nرمز الجلسة\\nعند التحدي\", shape=hexagon, "
+"style=filled, color=\"#b45309\", fillcolor=\"#fffbeb\", "
+"margin=\"0.02,0.04\"];\n"
+"  deny [label=\"الرفض\", color=\"#b91c1c\", fillcolor=\"#fef2f2\", "
+"penwidth=1.4];\n"
+"  origin [label=\"الخادم الأصلي أو\\nنجاح المصادقة\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\", penwidth=1.4];\n"
+"  puzzle [label=\"إصدار لغز\", color=\"#b45309\", fillcolor=\"#fffbeb\", "
+"penwidth=1.4];\n"
+"\n"
+"  { rank=same; deny; session; }\n"
+"  { rank=same; origin; puzzle; }\n"
+"  deny -> session [style=invis, minlen=2];\n"
+"  origin -> puzzle [style=invis];\n"
 "\n"
 "  request -> limits;\n"
-"  limits -> policy [label=\"ضمن الحدود\"];\n"
-"  policy -> deny [label=\"DENY\"];\n"
-"  policy -> session [label=\"CHALLENGE\"];\n"
-"  session -> origin [label=\"صالحة\"];\n"
-"  session -> puzzle [label=\"غائبة أو غير صالحة\"];\n"
-"  policy -> origin [label=\"ALLOW\"];\n"
+"  limits -> policy [label=\" ضمن الحدود\"];\n"
+"  policy -> deny [label=\"DENY \", color=\"#b91c1c\", "
+"fontcolor=\"#b91c1c\", fontname=\"Helvetica-Bold\"];\n"
+"  policy -> origin [label=\" ALLOW\", color=\"#15803d\", "
+"fontcolor=\"#15803d\", fontname=\"Helvetica-Bold\"];\n"
+"  policy -> session [label=\" CHALLENGE\", color=\"#b45309\", "
+"fontcolor=\"#b45309\", fontname=\"Helvetica-Bold\"];\n"
+"  session -> origin [label=\"صالحة \", color=\"#15803d\", "
+"fontcolor=\"#15803d\"];\n"
+"  session -> puzzle [label=\" غائبة أو غير صالحة\", color=\"#b45309\", "
+"fontcolor=\"#b45309\"];\n"
 "}"
 
 #: ../../operations.rst:321
 msgid "Request routing on the Shield surface"
 msgstr "توجيه الطلبات في وضع Shield"
 
-#: ../../operations.rst:346
+#: ../../operations.rst:351
 msgid ""
 "sibuna --port 80 --upstream-host 127.0.0.1 --upstream-port 3000 \\\n"
 "       --secret-file /etc/sibuna/secret --difficulty 16 --algorithm posw"
@@ -1845,7 +1877,7 @@ msgstr ""
 "sibuna --port 80 --upstream-host 127.0.0.1 --upstream-port 3000 \\\n"
 "       --secret-file /etc/sibuna/secret --difficulty 16 --algorithm posw"
 
-#: ../../operations.rst:351
+#: ../../operations.rst:356
 msgid ""
 "Admitted requests reach the origin with ``X-Forwarded-For``, "
 "``X-Forwarded-Proto``, ``X-Real-IP``, ``X-Sibuna-Status`` and "
@@ -1875,7 +1907,7 @@ msgstr ""
 "المسار الذي يستلمه الخادم الأصلي هو الصيغة المعيارية التي حكمت عليها "
 "السياسة (SID 0009)؛ والمسار الذي لا صيغة معيارية له يُجاب بالرمز ``400``."
 
-#: ../../operations.rst:353
+#: ../../operations.rst:358
 msgid ""
 "HTTP/1.1 WebSocket upgrades pass through admission and policy checks "
 "before the origin's handshake is accepted. Subprotocol and extension "
@@ -1907,7 +1939,7 @@ msgstr ""
 "ينهي TLS أمام مستمع HTTP/1.1 الخاص بـ Sibuna؛ ولا ينهي Sibuna نفسه TLS "
 "المتصفح."
 
-#: ../../operations.rst:355
+#: ../../operations.rst:360
 msgid ""
 "The ingress can negotiate HTTP/2 with browsers and forward HTTP/1.1 to "
 "Sibuna. Native HTTP/2 support in Sibuna is deferred to a later update; "
@@ -1918,7 +1950,7 @@ msgstr ""
 "Sibuna. أُرجئ دعم HTTP/2 الأصلي في Sibuna إلى تحديث لاحق؛ ولا يوفر هذا "
 "الترتيب دلالات HTTP/2 من طرف إلى طرف لتطبيقات مثل gRPC الأصلي."
 
-#: ../../operations.rst:357
+#: ../../operations.rst:362
 msgid ""
 "Content-Length request bodies stream through fixed buffers, preserving "
 "bytes and MIME headers. Multipart uploads retain boundaries, repeated "
@@ -1952,7 +1984,7 @@ msgstr ""
 "المتعددة بـ 32 جزءًا و2 KiB من الترويسات لكل جزء ضمن البادئة نفسها، ويقبل "
 "حشو النقل الذي يجيزه RFC 2046 بعد الفاصل."
 
-#: ../../operations.rst:359
+#: ../../operations.rst:364
 msgid ""
 "This is upload compatibility, not file validation or malware scanning. "
 "The backend must enforce accepted media types rather than trust a "
@@ -1994,11 +2026,11 @@ msgstr ""
 "إرسال الجسم؛ وتتلقى التوقعات غير المدعومة الرمز 417. وتُستهلك ترويسة "
 "Expect قبل التمرير إلى الخادم الخلفي."
 
-#: ../../operations.rst:361
+#: ../../operations.rst:366
 msgid "Forward Auth Behind an Ingress"
 msgstr "Forward Auth خلف وكيل دخول"
 
-#: ../../operations.rst:364
+#: ../../operations.rst:369
 msgid ""
 "In ``--mode forward_auth`` the daemon answers the ingress's subrequest "
 "with ``200`` (plus the audit headers ``X-Sibuna-Status``, "
@@ -2027,7 +2059,7 @@ msgstr ""
 "``400``. تستخدم المسارات الداخلية للبرنامج الخدمي دائمًا URI الطلب "
 "الفعلي. ولا يفحص Forward-auth جسمًا يحذفه وكيل الدخول."
 
-#: ../../operations.rst:366
+#: ../../operations.rst:371
 msgid ""
 "map $http_upgrade $sibuna_connection_upgrade {\n"
 "    default upgrade;\n"
@@ -2149,7 +2181,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../operations.rst:427
+#: ../../operations.rst:432
 msgid ""
 "example.com {\n"
 "    handle /__sibuna/* {\n"
@@ -2183,7 +2215,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../operations.rst:444
+#: ../../operations.rst:449
 msgid ""
 "The ``/__sibuna/*`` namespace (interstitial, challenge, verify, solver "
 "assets) must reach the daemon directly in both recipes. The nginx error "
@@ -2226,11 +2258,11 @@ msgstr ""
 "الوصفية الممررة التي تعتمد عليها فتغطيها اختبارات الوحدات في "
 "``sibuna-http``."
 
-#: ../../operations.rst:446
+#: ../../operations.rst:451
 msgid "JA4 Fingerprints From the Ingress"
 msgstr "بصمات JA4 من وكيل الدخول"
 
-#: ../../operations.rst:449
+#: ../../operations.rst:454
 msgid ""
 "A JA4 fingerprint summarises how a client opens a TLS connection. It is "
 "computed from the client's first handshake message, the ClientHello. The "
@@ -2249,7 +2281,7 @@ msgstr ""
 "يكتبها كما يشاء (SID 0014). عرّفت FoxIO بصمة JA4. للبصمة 36 محرفًا في "
 "ثلاثة أجزاء يصل بينها ``_``:"
 
-#: ../../operations.rst:451
+#: ../../operations.rst:456
 msgid ""
 "t13d1516h2_8daaf6152771_02713d6af862\n"
 "^^^^^^^^^^ ^^^^^^^^^^^^ ^^^^^^^^^^^^\n"
@@ -2274,7 +2306,7 @@ msgstr ""
 "c  ⁧تجزئة من 12 محرفًا ست عشريًا بأحرف صغيرة للامتدادات⁩\n"
 "   ⁧ولخوارزميات التوقيع، بعد فرزها⁩"
 
-#: ../../operations.rst:464
+#: ../../operations.rst:469
 msgid ""
 "Only the component that terminates TLS sees the ClientHello, so only it "
 "can compute JA4. Sibuna does not terminate TLS: it serves plain HTTP/1.1 "
@@ -2289,7 +2321,7 @@ msgstr ""
 "وكلاء الدخول JA4 بالفعل. لذلك ندع وكيل الدخول يحسب البصمة ويرسلها في "
 "ترويسة طلب، ويقرؤها Sibuna من هناك."
 
-#: ../../operations.rst:466
+#: ../../operations.rst:471
 msgid ""
 "``--ja4-header <name>`` names that header. It is off by default and has "
 "no default name; we always name the header the ingress uses. Sibuna "
@@ -2306,7 +2338,7 @@ msgstr ""
 "``X-Sibuna-*`` و\\ ``Forwarded``، وكذلك مع ``_`` بدل ``-``). عندما يُضبط "
 "الخيار، تطبع رسالة البدء سطرًا مثل ``JA4: from cf-ja4 (trusted)``."
 
-#: ../../operations.rst:468
+#: ../../operations.rst:473
 msgid ""
 "The header is read only when forwarded fields are trusted. This is the "
 "decision that governs ``X-Forwarded-For``: ``--trust-forwarded``, or "
@@ -2329,7 +2361,7 @@ msgstr ""
 "ترويستها معيبة أو مكررة. ولا يزيد الطلب الآتي من نظير غير موثوق أيًّا من "
 "العدادين."
 
-#: ../../operations.rst:470
+#: ../../operations.rst:475
 msgid ""
 "In reverse-proxy mode, the origin sees the header only when Sibuna trusts "
 "it. Without trust, Sibuna removes every field of that name from the "
@@ -2347,11 +2379,11 @@ msgstr ""
 "``_`` محذوفًا. ومن دون ``--ja4-header``، يكون الحقل الذي يحمل ذلك الاسم "
 "حقلًا عاديًا."
 
-#: ../../operations.rst:472
+#: ../../operations.rst:477
 msgid "The ingress must own the header"
 msgstr "يجب أن يملك وكيل الدخول الترويسة"
 
-#: ../../operations.rst:474
+#: ../../operations.rst:479
 msgid ""
 "A fingerprint is only as trustworthy as the ingress that wrote it. Sibuna "
 "cannot tell a value the ingress computed from a value the client sent. "
@@ -2366,7 +2398,7 @@ msgstr ""
 "مسار يصل إلى Sibuna. ويجب ألا يقبل مستمع Sibuna الاتصالات إلا من وكيل "
 "الدخول وحده، كما في ``X-Forwarded-For``."
 
-#: ../../operations.rst:476
+#: ../../operations.rst:481
 msgid ""
 "**Cloudflare.** The managed transform \"Add bot protection headers\" adds "
 "``cf-ja4`` to the request sent to the origin, beside ``cf-bot-score``, "
@@ -2380,11 +2412,11 @@ msgstr ""
 "Management. ويجب على أي وكيل دخول بين Cloudflare وSibuna أن يمرر الحقل "
 "دون تغيير. نشغّل Sibuna بالأمر:"
 
-#: ../../operations.rst:478
+#: ../../operations.rst:483
 msgid "sibuna --ja4-header cf-ja4 --trust-forwarded -s /etc/sibuna/secret"
 msgstr "sibuna --ja4-header cf-ja4 --trust-forwarded -s /etc/sibuna/secret"
 
-#: ../../operations.rst:482
+#: ../../operations.rst:487
 msgid ""
 "The ingress in front of Sibuna must accept connections from Cloudflare's "
 "addresses alone; otherwise a client can bypass Cloudflare and send its "
@@ -2394,7 +2426,7 @@ msgstr ""
 "Cloudflare وحدها؛ وإلا استطاع العميل أن يتجاوز Cloudflare ويرسل "
 "``cf-ja4`` الخاص به."
 
-#: ../../operations.rst:484
+#: ../../operations.rst:489
 msgid ""
 "**nginx.** FoxIO's ``ja4-nginx-module`` computes JA4 inside nginx and "
 "exposes it as ``$http_ssl_ja4``. It needs nginx 1.26 or later with the "
@@ -2409,7 +2441,7 @@ msgstr ""
 "``proxy_set_header`` حقل العميل الذي يحمل الاسم نفسه، لذلك تضبط كل كتلة "
 "location تصل إلى Sibuna الترويسة بنفسها:"
 
-#: ../../operations.rst:486
+#: ../../operations.rst:491
 msgid ""
 "# Reverse proxy: Sibuna runs with --ja4-header x-ja4 --trust-forwarded\n"
 "location / {\n"
@@ -2442,7 +2474,7 @@ msgstr ""
 "    # ⁧... بقية حقول وصفة forward auth أعلاه⁩\n"
 "}"
 
-#: ../../operations.rst:503
+#: ../../operations.rst:508
 msgid ""
 "In the forward-auth recipe, the same ``proxy_set_header X-JA4 "
 "$http_ssl_ja4;`` line belongs in ``@sibuna_challenge`` and in ``location "
@@ -2454,7 +2486,7 @@ msgstr ""
 "أيضًا. فكتلة location التي تُغفله تمرر ``X-JA4`` الخاص بالعميل إلى "
 "Sibuna، الذي يثق به."
 
-#: ../../operations.rst:505
+#: ../../operations.rst:510
 msgid ""
 "**Apache Traffic Server.** The ``ja4_fingerprint`` plugin is enabled by "
 "the line ``ja4_fingerprint.so`` in ``plugin.config``. It has no options. "
@@ -2473,7 +2505,7 @@ msgstr ""
 "الذي أرسله العميل. لذلك يجب أن نتحقق من ذلك في الإصدار الذي نستخدمه، أو "
 "أن نحذف حقل العميل قبل أن يضيف المكون الإضافي حقله، قبل أن نثق بالقيمة."
 
-#: ../../operations.rst:507
+#: ../../operations.rst:512
 msgid ""
 "A rule matches a fingerprint with the ``ja4`` field (Part X, Policy "
 "Schema). The value is either a whole fingerprint, which must be equal, or "
@@ -2490,7 +2522,7 @@ msgstr ""
 "لا يمكن أن تطابقه أي بصمة، مثل ``T13D*`` بأحرف كبيرة، مع ``INVALID POLICY "
 "JA4``. وتقارن المطابقة البايتات ولا تخصص أي ذاكرة."
 
-#: ../../operations.rst:509
+#: ../../operations.rst:514
 msgid ""
 "{ \"rules\": [\n"
 "    { \"name\": \"deny-known-scanner\", \"action\": \"DENY\",\n"
@@ -2518,7 +2550,7 @@ msgstr ""
 "      \"action\": \"CHALLENGE\" }\n"
 "] }"
 
-#: ../../operations.rst:521
+#: ../../operations.rst:526
 msgid ""
 "The first rule denies one fingerprint exactly; the value is an example, "
 "not a known scanner. The next two add weight to the request's score "
@@ -2550,7 +2582,7 @@ msgstr ""
 "لكنه لا يثبت الهوية. وللسبب نفسه يبقي Sibuna الحظر والسمعة مرتبطين "
 "بالعنوان، لا بالبصمة أبدًا."
 
-#: ../../operations.rst:523
+#: ../../operations.rst:528
 msgid ""
 "Incidents (WAF denials, honeypot hits and audit findings) record the "
 "fingerprint of their request when it carried one, in the column "
@@ -2567,18 +2599,18 @@ msgstr ""
 "المُدارة حقل JA4 يُخزن في ``policies.ja4_pattern``، ويقبل نموذج اختبار "
 "السياسة بصمة."
 
-#: ../../operations.rst:525
+#: ../../operations.rst:530
 msgid "Declarative Policy"
 msgstr "السياسة التصريحية"
 
-#: ../../operations.rst:530
+#: ../../operations.rst:535
 msgid ""
 "Write a policy file with rules, weights, thresholds, IP rules, and the "
 "WAF switch."
 msgstr ""
 "اكتب ملف سياسة يضم القواعد، والأوزان، والعتبات، وقواعد IP، ومفتاح WAF."
 
-#: ../../operations.rst:532
+#: ../../operations.rst:537
 msgid ""
 "{\n"
 "  \"default_action\": \"CHALLENGE\",\n"
@@ -2632,7 +2664,7 @@ msgstr ""
 "  ]\n"
 "}"
 
-#: ../../operations.rst:552
+#: ../../operations.rst:557
 msgid ""
 "The loader fails closed: an unknown key, a misspelled action, a malformed "
 "address or an out-of-range number rejects the whole file, the diagnostic "
@@ -2662,11 +2694,11 @@ msgstr ""
 "وكيل الدخول\"). تطابق أنماط المسارات مسار الطلب في صيغته المعيارية (SID "
 "0003)، لذلك يجب أن يُكتب النمط بتلك الصيغة."
 
-#: ../../operations.rst:554
+#: ../../operations.rst:559
 msgid "Persistent Storage and Clustering"
 msgstr "التخزين الدائم والعنقدة"
 
-#: ../../operations.rst:559
+#: ../../operations.rst:564
 msgid ""
 "Enable SQLite or PostgreSQL storage, add a dynamic policy and a ban with "
 "SQL, query incident forensics, understand campaign clustering, and run "
@@ -2676,7 +2708,7 @@ msgstr ""
 "SQL، واستعلم عن الأدلة الجنائية للحوادث، وافهم تجميع الحملات، وشغّل عدة "
 "عقد على قاعدة بيانات PostgreSQL واحدة."
 
-#: ../../operations.rst:562
+#: ../../operations.rst:567
 msgid ""
 "Request threads push incidents into an MPSC ring of 512 slots. The "
 "storage thread pops them, writes batches through sqlx to the SQLite file "
@@ -2693,88 +2725,94 @@ msgstr ""
 "Arc تقرؤه خيوط الطلبات. وتتشارك عقد العنقود الأخرى قاعدة بيانات "
 "PostgreSQL وتتلقى NOTIFY sibuna_policy."
 
-#: ../../operations.rst:562
+#: ../../operations.rst:567
 msgid ""
 "digraph storage_architecture {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.7];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.8, "
+"ranksep=0.42, pad=0.1];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"fontsize=9, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.7, height=0.45, "
+"margin=\"0.1,0.05\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.7];\n"
 "\n"
-"  workers [label=\"Request threads\\n(hot path)\"];\n"
-"  ring [label=\"MPSC ring\\n512 incidents\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
+"  workers [label=\"Request threads\\n(hot path)\", color=\"#172033\", "
+"fillcolor=\"#ffffff\", penwidth=1.6, width=3.0];\n"
+"  ring [label=\"MPSC ring\\n512 incidents\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
+"  publish [label=\"EngineSlot::publish\\nArc swap\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
 "  thread [label=\"Storage thread (tokio)\\ndrain + poll\"];\n"
-"  db [label=\"sqlx: SQLite file\\nor PostgreSQL\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
+"  rebuild [label=\"Rebuild engine\\noff the hot path\"];\n"
+"  db [label=\"sqlx: SQLite file\\nor PostgreSQL\", shape=cylinder, "
+"style=filled, color=\"#15803d\", fillcolor=\"#f0fdf4\", height=0.62];\n"
 "  tables [label=\"policies, "
 "ip_reputation,\\nsecurity_incidents,\\nfull-text index\", "
-"fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
-"  rebuild [label=\"Rebuild engine\\noff the hot path\"];\n"
-"  publish [label=\"EngineSlot::publish\\nArc swap\", "
-"fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  others [label=\"Other cluster\\nnodes\"];\n"
+"color=\"#15803d\", fillcolor=\"#f0fdf4\"];\n"
+"  others [label=\"Other cluster\\nnodes\", color=\"#64748b\", "
+"fillcolor=\"#ffffff\", style=\"rounded,filled,dashed\", width=1.7];\n"
 "\n"
-"  { rank=same; workers; others; }\n"
 "  { rank=same; ring; publish; }\n"
 "  { rank=same; thread; rebuild; }\n"
 "  { rank=same; db; tables; }\n"
 "\n"
-"  workers -> ring [label=\"push\"];\n"
-"  ring -> thread [label=\"pop\"];\n"
-"  thread -> db [label=\"batched SQL\"];\n"
+"  workers -> ring [label=\" push\"];\n"
+"  ring -> thread [label=\" pop\"];\n"
+"  thread -> db [label=\" batched SQL\"];\n"
 "  db -> tables;\n"
-"  tables -> rebuild [label=\"revision changed?\"];\n"
-"  rebuild -> publish;\n"
-"  publish -> workers [label=\"new rules\"];\n"
-"  db -> others [dir=both, label=\"shared PostgreSQL,\\nNOTIFY "
-"sibuna_policy\"];\n"
+"  rebuild -> tables [dir=back, label=\" revision changed?\"];\n"
+"  publish -> rebuild [dir=back];\n"
+"  workers -> publish [dir=back, label=\" new rules\"];\n"
+"  db -> others [dir=both, style=dashed, label=\" shared PostgreSQL,\\n "
+"NOTIFY sibuna_policy\"];\n"
 "}"
 msgstr ""
 "digraph storage_architecture {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.7];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Noto Sans "
-"Arabic\", fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Noto Sans Arabic\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.8, "
+"ranksep=0.42, pad=0.1];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=9, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.7, height=0.45, "
+"margin=\"0.1,0.05\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.7];\n"
 "\n"
-"  workers [label=\"خيوط الطلبات\\nفي المسار الساخن\"];\n"
-"  ring [label=\"MPSC\\nحلقة تسع 512 حادثًا\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
+"  workers [label=\"خيوط الطلبات\\nفي المسار الساخن\", color=\"#172033\", "
+"fillcolor=\"#ffffff\", penwidth=1.6, width=3.0];\n"
+"  ring [label=\"MPSC\\nحلقة تسع 512 حادثًا\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
+"  publish [label=\"EngineSlot::publish\\nتبديل المؤشر\\nArc\", "
+"color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
 "  thread [label=\"خيط التخزين\\n(tokio)\\nتفريغ واستطلاع\"];\n"
-"  db [label=\"sqlx\\nSQLite / PostgreSQL\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  tables [label=\"policies, ip_reputation,\\nsecurity_incidents,\\nفهرس "
-"النص الكامل\", fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
 "  rebuild [label=\"إعادة بناء المحرك\\nخارج المسار الساخن\"];\n"
-"  publish [label=\"EngineSlot::publish\\nتبديل المؤشر الحالي\\nArc\", "
-"fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  others [label=\"عقد العنقود\\nالأخرى\"];\n"
+"  db [label=\"sqlx\\nSQLite / PostgreSQL\", shape=cylinder, style=filled, "
+"color=\"#15803d\", fillcolor=\"#f0fdf4\", height=0.62];\n"
+"  tables [label=\"policies, ip_reputation,\\nsecurity_incidents,\\nفهرس "
+"النص الكامل\", color=\"#15803d\", fillcolor=\"#f0fdf4\"];\n"
+"  others [label=\"عقد العنقود\\nالأخرى\", color=\"#64748b\", "
+"fillcolor=\"#ffffff\", style=\"rounded,filled,dashed\", width=1.7];\n"
 "\n"
-"  { rank=same; workers; others; }\n"
 "  { rank=same; ring; publish; }\n"
 "  { rank=same; thread; rebuild; }\n"
 "  { rank=same; db; tables; }\n"
 "\n"
-"  workers -> ring [label=\"دفع\"];\n"
-"  ring -> thread [label=\"سحب\"];\n"
-"  thread -> db [label=\"SQL\\nتعليمات مجمعة\"];\n"
+"  workers -> ring [label=\" دفع\"];\n"
+"  ring -> thread [label=\" سحب\"];\n"
+"  thread -> db [label=\" SQL\\n تعليمات مجمعة\"];\n"
 "  db -> tables;\n"
-"  tables -> rebuild [label=\"تغيرت المراجعة\"];\n"
-"  rebuild -> publish;\n"
-"  publish -> workers [label=\"قواعد جديدة\"];\n"
-"  db -> others [dir=both, label=\"PostgreSQL\\nقاعدة مشتركة\\nNOTIFY "
-"sibuna_policy\"];\n"
+"  rebuild -> tables [dir=back, label=\" هل تغيرت المراجعة؟\"];\n"
+"  publish -> rebuild [dir=back];\n"
+"  workers -> publish [dir=back, label=\" قواعد جديدة\"];\n"
+"  db -> others [dir=both, style=dashed, label=\" قاعدة مشتركة\\n "
+"PostgreSQL\\n NOTIFY sibuna_policy\"];\n"
 "}"
 
-#: ../../operations.rst:562
+#: ../../operations.rst:567
 msgid "The storage architecture: workers never block on the database"
 msgstr "معمارية التخزين: لا يتوقف العمال أبدًا انتظارًا لقاعدة البيانات"
 
-#: ../../operations.rst:594
+#: ../../operations.rst:598
 msgid ""
 "``--data-dir /var/lib/sibuna`` opens the SQLite file "
 "``/var/lib/sibuna/sibuna.db`` (WAL mode, ``synchronous=NORMAL``, a busy "
@@ -2800,27 +2838,27 @@ msgstr ""
 "ولا تنتظر الطلبات SQL أبدًا. تقرأ إعادة البناء المراجعة قبل التحميل "
 "وبعده، وتُسقط مرشحها إذا ثبّت كاتبٌ معاملةً بينهما."
 
-#: ../../operations.rst:596
+#: ../../operations.rst:600
 msgid "Schema"
 msgstr "المخطط"
 
-#: ../../operations.rst:599
+#: ../../operations.rst:603
 msgid "Core tables"
 msgstr "الجداول الأساسية"
 
-#: ../../operations.rst:603
+#: ../../operations.rst:607
 msgid "Table"
 msgstr "الجدول"
 
-#: ../../operations.rst:604
+#: ../../operations.rst:608
 msgid "Purpose and key"
 msgstr "الغرض والمفتاح"
 
-#: ../../operations.rst:605
+#: ../../operations.rst:609
 msgid "``policy_revision``"
 msgstr "``policy_revision``"
 
-#: ../../operations.rst:606
+#: ../../operations.rst:610
 msgid ""
 "The policy revision, one row; triggers on the three policy tables advance "
 "it."
@@ -2828,11 +2866,11 @@ msgstr ""
 "مراجعة السياسة، صف واحد؛ وتقدّمها المشغلات (triggers) على جداول السياسة "
 "الثلاثة."
 
-#: ../../operations.rst:607
+#: ../../operations.rst:611
 msgid "``policies``"
 msgstr "``policies``"
 
-#: ../../operations.rst:608
+#: ../../operations.rst:612
 msgid ""
 "Ordered dynamic rules, keyed by ``id``. The nullable ``ja4_pattern`` "
 "holds a rule's JA4 criterion, at most 37 bytes."
@@ -2840,27 +2878,27 @@ msgstr ""
 "قواعد ديناميكية مرتبة، مفتاحها ``id``. ويحمل ``ja4_pattern`` القابل "
 "للقيمة NULL معيار JA4 للقاعدة، بطول 37 بايت على الأكثر."
 
-#: ../../operations.rst:609
+#: ../../operations.rst:613
 msgid "``policy_inspection``"
 msgstr "``policy_inspection``"
 
-#: ../../operations.rst:610
+#: ../../operations.rst:614
 msgid "The stored WAF mode per category, one row."
 msgstr "وضع WAF المخزن لكل فئة، صف واحد."
 
-#: ../../operations.rst:611
+#: ../../operations.rst:615
 msgid "``ip_reputation``"
 msgstr "``ip_reputation``"
 
-#: ../../operations.rst:612
+#: ../../operations.rst:616
 msgid "Scores, hit counts and expiry, keyed by address or prefix."
 msgstr "الدرجات وأعداد الإصابات والانتهاء، مفتاحها العنوان أو البادئة."
 
-#: ../../operations.rst:613
+#: ../../operations.rst:617
 msgid "``incident_receipts``"
 msgstr "``incident_receipts``"
 
-#: ../../operations.rst:614
+#: ../../operations.rst:618
 msgid ""
 "Each node's durable incident receipt (the next sequence after its last "
 "committed batch), keyed by node."
@@ -2868,11 +2906,11 @@ msgstr ""
 "إيصال الحوادث الدائم لكل عقدة (التسلسل التالي بعد آخر دفعة مثبَّتة لها)، "
 "مفتاحه العقدة."
 
-#: ../../operations.rst:615
+#: ../../operations.rst:619
 msgid "``security_incidents``"
 msgstr "``security_incidents``"
 
-#: ../../operations.rst:616
+#: ../../operations.rst:620
 msgid ""
 "One bounded event record with its 64-component embedding (256 bytes), "
 "keyed by ``node_id << 40 | sequence``. The nullable ``ja4`` holds the "
@@ -2882,11 +2920,11 @@ msgstr ""
 "40 | sequence``. ويحمل ``ja4`` القابل للقيمة NULL بصمة JA4 للطلب، بطول 36 "
 "بايت بالضبط."
 
-#: ../../operations.rst:617
+#: ../../operations.rst:621
 msgid "``incidents_fts``"
 msgstr "``incidents_fts``"
 
-#: ../../operations.rst:618
+#: ../../operations.rst:622
 msgid ""
 "On SQLite: an FTS5 table over the canonical tokens of paths and payloads. "
 "On PostgreSQL the same tokens are the ``tsvector`` column ``search`` of "
@@ -2896,15 +2934,15 @@ msgstr ""
 "والحمولات. وفي PostgreSQL تكون الوحدات نفسها هي العمود ``search`` من "
 "النوع ``tsvector`` في ``security_incidents`` مع فهرس GIN."
 
-#: ../../operations.rst:619
+#: ../../operations.rst:623
 msgid "``sibuna_schema``"
 msgstr "``sibuna_schema``"
 
-#: ../../operations.rst:620
+#: ../../operations.rst:624
 msgid "Every applied migration, keyed by component and version."
 msgstr "كل ترحيل مطبق، مفتاحه المكون والإصدار."
 
-#: ../../operations.rst:622
+#: ../../operations.rst:626
 msgid ""
 "The core schema is ``crates/storage/src/schema.rs``, written once per "
 "dialect. With the console the component ``console`` adds 33 tables whose "
@@ -2930,11 +2968,11 @@ msgstr ""
 "لذلك ترفض قاعدة البيانات صفًا لا يستطيع البرنامج الخدمي تمثيله. تُخزن "
 "القيم المعدّدة بأحرف صغيرة: الكتابة المباشرة لـ ``'DENY'`` تُرفض."
 
-#: ../../operations.rst:624
+#: ../../operations.rst:628
 msgid "Operating It"
 msgstr "تشغيله"
 
-#: ../../operations.rst:627
+#: ../../operations.rst:631
 msgid ""
 "Use the ``sqlite3`` shell on ``sibuna.db`` (WAL mode lets it read while "
 "the daemon runs), or ``psql`` on the cluster database:"
@@ -2942,7 +2980,7 @@ msgstr ""
 "استخدم صدفة ``sqlite3`` على ``sibuna.db`` (يتيح وضع WAL القراءة أثناء عمل "
 "البرنامج الخدمي)، أو ``psql`` على قاعدة بيانات العنقود:"
 
-#: ../../operations.rst:629
+#: ../../operations.rst:633
 msgid ""
 "-- Add a dynamic rule; every node rebuilds on its next tick.\n"
 "INSERT INTO policies (id, name, priority, path_pattern, action, "
@@ -2986,7 +3024,7 @@ msgstr ""
 "FROM incidents_fts f JOIN security_incidents s ON s.id = f.rowid\n"
 "WHERE incidents_fts MATCH 'union' ORDER BY rank LIMIT 20;"
 
-#: ../../operations.rst:647
+#: ../../operations.rst:651
 msgid ""
 "The statements are written for SQLite. On PostgreSQL, ``enabled`` is "
 "``TRUE``, the time is ``CAST(extract(epoch FROM now()) AS BIGINT)`` "
@@ -3007,7 +3045,7 @@ msgstr ""
 "مشغل المراجعة أيضًا ``NOTIFY sibuna_policy``، فتتقدم العقد الأخرى فورًا؛ "
 "ويبقى الاستطلاع هو الضمان."
 
-#: ../../operations.rst:649
+#: ../../operations.rst:653
 msgid ""
 "Scores at or below :math:`-50` become ``deny`` prefixes in the trie, "
 "scores at or above :math:`50` become ``allow``, and ``banned_until`` "
@@ -3021,11 +3059,11 @@ msgstr ""
 "تلقائيًا، لذلك مع قاعدة بيانات PostgreSQL مشتركة، يحظر الفخ الذي يُستثار "
 "على عقدة واحدة العنوانَ على العقد كلها."
 
-#: ../../operations.rst:651
+#: ../../operations.rst:655
 msgid "A Transaction Receipt Makes Retry Safe"
 msgstr "إيصال المعاملة يجعل إعادة المحاولة آمنة"
 
-#: ../../operations.rst:654
+#: ../../operations.rst:658
 msgid ""
 "The storage thread collects at most 32 pending records and builds one SQL "
 "transaction. The transaction inserts incidents, updates the full-text "
@@ -3040,11 +3078,11 @@ msgstr ""
 "``incident_receipts``. كل تعليمة تغير البيانات محروسة بذلك الإيصال؛ "
 "وتقدّمه المعاملة في النهاية، ولا ترجعه إلى الوراء أبدًا."
 
-#: ../../operations.rst:656
+#: ../../operations.rst:660
 msgid "Worked example: the acknowledgement disappears"
 msgstr "مثال محلول: الإقرار يختفي"
 
-#: ../../operations.rst:658
+#: ../../operations.rst:662
 msgid ""
 "Suppose issuer 2 prepares sequences 101 through 132, ending at receipt "
 "133. The database commits all records and receipt 133, then the "
@@ -3063,7 +3101,7 @@ msgstr ""
 "المعاملة الأصلية، يبقى الإيصال القديم وتطبق إعادة المحاولة كل الكتابات "
 "مرة واحدة."
 
-#: ../../operations.rst:660
+#: ../../operations.rst:664
 msgid ""
 "A failed commit retains the pending batch in memory and increments "
 "``incident_write_failures``. The tick still attempts policy polling. A "
@@ -3081,11 +3119,11 @@ msgstr ""
 "الطابور: هذا مسار جنائي غير متزامن محدود، وليس طابور رسائل دائمًا لحظة "
 "الإدراج."
 
-#: ../../operations.rst:662
+#: ../../operations.rst:666
 msgid "Exercise 9.1"
 msgstr "تمرين 9.1"
 
-#: ../../operations.rst:664
+#: ../../operations.rst:668
 msgid ""
 "Move the receipt update outside the data transaction. Construct one crash "
 "schedule that duplicates a reputation effect and another that loses an "
@@ -3094,11 +3132,11 @@ msgstr ""
 "انقل تحديث الإيصال إلى خارج معاملة البيانات. صمّم تسلسلًا للانهيارات "
 "يضاعف أثر سمعة، وتسلسلًا آخر يُضيّع حادثًا."
 
-#: ../../operations.rst:666
+#: ../../operations.rst:670
 msgid "Campaign Clustering"
 msgstr "تجميع الحملات"
 
-#: ../../operations.rst:669
+#: ../../operations.rst:673
 msgid ""
 "Each incident payload is embedded as a 64-dimensional unit vector by the "
 "hashing trick over byte trigrams (digits folded, case folded) and stored "
@@ -3124,11 +3162,11 @@ msgstr ""
 "SQL المترابطة، لكن ذلك لا يضمن أن كل زوج من الهجمات يشترك في حملة. لا "
 "يعمل أي نموذج ولا يُدرَّب شيء."
 
-#: ../../operations.rst:671
+#: ../../operations.rst:675
 msgid "Clustering"
 msgstr "العنقدة"
 
-#: ../../operations.rst:674
+#: ../../operations.rst:678
 msgid ""
 "A cluster is a set of nodes that share one PostgreSQL database. Build "
 "with the ``postgres-tls`` feature (``cargo build --release -p sibuna "
@@ -3140,7 +3178,7 @@ msgstr ""
 "postgres-tls``؛ وهي تتضمن ``postgres``) وابدأ كل عضو بقاعدة البيانات "
 "ومعرف عقدة خاص به:"
 
-#: ../../operations.rst:676
+#: ../../operations.rst:680
 msgid ""
 "sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 \\\n"
 "       --secret-file /etc/sibuna/secret"
@@ -3148,7 +3186,7 @@ msgstr ""
 "sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 \\\n"
 "       --secret-file /etc/sibuna/secret"
 
-#: ../../operations.rst:681
+#: ../../operations.rst:685
 msgid ""
 "Every member must use the same master secret and a unique "
 "``--cluster-node`` from 1 to 8,388,607. The URL file holds one "
@@ -3174,7 +3212,7 @@ msgstr ""
 "``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``. "
 "وعلى الخادم لا نقبل TCP إلا عبر أسطر ``hostssl`` في ``pg_hba.conf``."
 
-#: ../../operations.rst:684
+#: ../../operations.rst:688
 msgid ""
 "At startup the daemon prints one line about the database connection. With "
 "``verify-full`` it says that the certificate and host name are verified. "
@@ -3199,7 +3237,7 @@ msgstr ""
 "شهادة الخادم. يضيف ``sslrootcert`` سلطتنا إلى مخزن الثقة في النظام؛ ولا "
 "يزيل سلطات النظام (SID 0011، SID 0012)."
 
-#: ../../operations.rst:686
+#: ../../operations.rst:690
 msgid ""
 "Sibuna does not replicate a database of its own and elects no leader. "
 "Replication, failover and backups are PostgreSQL's (streaming "
@@ -3226,11 +3264,11 @@ msgstr ""
 "السياسات عبر ``sibuna console policies export`` و\\ ``sibuna console "
 "policies import``، ولا يُرحَّل التاريخ الجنائي."
 
-#: ../../operations.rst:688
+#: ../../operations.rst:692
 msgid "Cluster Challenge Routing"
 msgstr "توجيه التحديات في العنقود"
 
-#: ../../operations.rst:691
+#: ../../operations.rst:695
 msgid ""
 "Challenge keys are bound to ``--cluster-node``; keep challenge issuance "
 "and verification on the same member. Tokens use the shared seed and work "
@@ -3250,11 +3288,11 @@ msgstr ""
 "(``crates/storage/tests/multi_node.rs``، المعيار 2 من SID 0011؛ ويجري عند "
 "ضبط ``SIBUNA_TEST_DATABASE_URL``)."
 
-#: ../../operations.rst:693
+#: ../../operations.rst:697
 msgid "Packaging"
 msgstr "التحزيم"
 
-#: ../../operations.rst:698
+#: ../../operations.rst:702
 msgid ""
 "Install and verify a release package, run Sibuna as a service, in a "
 "container or under Kubernetes, and build the binary ourselves."
@@ -3262,7 +3300,7 @@ msgstr ""
 "نثبّت حزمة إصدار ونتحقق منها، ونشغّل Sibuna خدمةً، أو في حاوية، أو تحت "
 "Kubernetes، ونبني الملف التنفيذي بأنفسنا."
 
-#: ../../operations.rst:700
+#: ../../operations.rst:704
 msgid ""
 "Every release on GitHub carries the same executable for each platform, "
 "built from the release tag with the default features: SQLite storage and "
@@ -3272,19 +3310,19 @@ msgstr ""
 "الإصدار بالميزات الافتراضية: تخزين SQLite ووحدة التحكم. أما عناقيد "
 "PostgreSQL فتحتاج إلى بناء خاص بنا (انظر أدناه)."
 
-#: ../../operations.rst:706
+#: ../../operations.rst:710
 msgid "Platform"
 msgstr "المنصة"
 
-#: ../../operations.rst:707
+#: ../../operations.rst:711
 msgid "Release assets"
 msgstr "ملفات الإصدار"
 
-#: ../../operations.rst:708
+#: ../../operations.rst:712
 msgid "Linux x86-64, ARM64"
 msgstr "Linux x86-64، ARM64"
 
-#: ../../operations.rst:709
+#: ../../operations.rst:713
 msgid ""
 "``sibuna-linux-amd64.tar.gz`` and ``sibuna-linux-arm64.tar.gz`` hold a "
 "static musl executable that runs on any distribution. "
@@ -3300,11 +3338,11 @@ msgstr ""
 "مع خدمة systemd؛ وتفعل ``sibuna-bin-<version>-1-x86_64.pkg.tar.zst`` ذلك "
 "على Arch Linux."
 
-#: ../../operations.rst:710
+#: ../../operations.rst:714
 msgid "macOS arm64, x86-64"
 msgstr "macOS arm64، x86-64"
 
-#: ../../operations.rst:711
+#: ../../operations.rst:715
 msgid ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, for macOS "
 "12 or later."
@@ -3312,11 +3350,11 @@ msgstr ""
 "``sibuna-macos-arm64.tar.gz`` و\\ ``sibuna-macos-amd64.tar.gz``، لنظام "
 "macOS 12 أو أحدث."
 
-#: ../../operations.rst:712
+#: ../../operations.rst:716
 msgid "Windows x86-64"
 msgstr "Windows x86-64"
 
-#: ../../operations.rst:713
+#: ../../operations.rst:717
 msgid ""
 "``sibuna-windows-amd64.zip`` holds ``sibuna.exe``, for Windows 10 or "
 "Server 2016 or later."
@@ -3324,21 +3362,21 @@ msgstr ""
 "يحمل ``sibuna-windows-amd64.zip`` الملف ``sibuna.exe``، لنظام Windows 10 "
 "أو Server 2016 أو أحدث."
 
-#: ../../operations.rst:714
+#: ../../operations.rst:718
 msgid "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 msgstr "FreeBSD 15.1، OpenBSD 7.9 (amd64)"
 
-#: ../../operations.rst:715
+#: ../../operations.rst:719
 msgid ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg`` and ``sibuna-<version>.tgz``."
 msgstr ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg`` و\\ ``sibuna-<version>.tgz``."
 
-#: ../../operations.rst:716
+#: ../../operations.rst:720
 msgid "Homebrew, Kubernetes, containers"
 msgstr "Homebrew وKubernetes والحاويات"
 
-#: ../../operations.rst:717
+#: ../../operations.rst:721
 msgid ""
 "``sibuna.rb``, ``helm-sibuna-<version>.tgz``, and the image "
 "``ghcr.io/insanai/sibuna:<version>`` for amd64 and arm64, whose digest is "
@@ -3348,15 +3386,15 @@ msgstr ""
 "``ghcr.io/insanai/sibuna:<version>`` لمعماريتي amd64 وarm64، وخلاصتها في "
 "``IMAGE-DIGEST.txt``."
 
-#: ../../operations.rst:718
+#: ../../operations.rst:722
 msgid "Source"
 msgstr "المصدر"
 
-#: ../../operations.rst:719
+#: ../../operations.rst:723
 msgid "``sibuna-<version>-source.tar.gz``."
 msgstr "``sibuna-<version>-source.tar.gz``."
 
-#: ../../operations.rst:721
+#: ../../operations.rst:725
 msgid ""
 "Each archive and package carries ``LICENSE``, ``NOTICE``, ``LICENSES/`` "
 "(with ``THIRD-PARTY-RUST.txt``, the crates in the executable), "
@@ -3376,7 +3414,7 @@ msgstr ""
 "أي شيء، ويثبّت الحزم ويعيد تثبيتها ويزيلها على Debian وFedora وArch Linux "
 "وFreeBSD وOpenBSD."
 
-#: ../../operations.rst:723
+#: ../../operations.rst:727
 msgid ""
 "The assets are not signed. We check a download against ``SHA256SUMS`` "
 "from the same release before we install it:"
@@ -3384,7 +3422,7 @@ msgstr ""
 "ملفات الإصدار غير موقعة. نتحقق من الملف المنزَّل مقابل ``SHA256SUMS`` من "
 "الإصدار نفسه قبل أن نثبته:"
 
-#: ../../operations.rst:725
+#: ../../operations.rst:729
 msgid ""
 "sha256sum --ignore-missing -c SHA256SUMS          # Linux\n"
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
@@ -3394,7 +3432,7 @@ msgstr ""
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
 "sha256 -C SHA256SUMS sibuna-1.0.0-beta.2.tgz      # OpenBSD"
 
-#: ../../operations.rst:731
+#: ../../operations.rst:735
 msgid ""
 "On macOS a browser download carries a quarantine attribute that stops an "
 "unsigned executable; ``xattr -d com.apple.quarantine sibuna`` removes it "
@@ -3403,11 +3441,11 @@ msgstr ""
 "على macOS، يحمل الملف المنزَّل عبر المتصفح سمة حجر صحي توقف أي ملف تنفيذي "
 "غير موقع؛ ويزيلها ``xattr -d com.apple.quarantine sibuna`` بعد التحقق."
 
-#: ../../operations.rst:733
+#: ../../operations.rst:737
 msgid "The systemd service"
 msgstr "خدمة systemd"
 
-#: ../../operations.rst:736
+#: ../../operations.rst:740
 msgid ""
 "The Debian, RPM and Arch packages install ``/usr/bin/sibuna``, the unit "
 "``sibuna.service``, the account ``sibuna`` (through "
@@ -3422,7 +3460,7 @@ msgstr ""
 "``/etc/sibuna/service.env``. ولا يبدأ التثبيت أي شيء. نضبط الخادم الأصلي، "
 "بعنوان IP صريح، في ملف الإعدادات ثم نبدأ الخدمة:"
 
-#: ../../operations.rst:738
+#: ../../operations.rst:742
 msgid ""
 "sudoedit /etc/sibuna/service.env      # SIBUNA_UPSTREAM_HOST, "
 "SIBUNA_UPSTREAM_PORT\n"
@@ -3434,7 +3472,7 @@ msgstr ""
 "sudo systemctl enable --now sibuna\n"
 "curl -s http://127.0.0.1:8080/__sibuna/health"
 
-#: ../../operations.rst:744
+#: ../../operations.rst:748
 msgid ""
 "The service listens on ``127.0.0.1:8080`` until ``SIBUNA_HOST`` and "
 "``SIBUNA_PORT`` say otherwise. ``SIBUNA_OPTIONS`` passes further options, "
@@ -3458,7 +3496,7 @@ msgstr ""
 "دون قدرات (capabilities)، مع نظام ملفات للقراءة فقط "
 "(``ProtectSystem=strict``)، و\\ ``/tmp`` وأجهزة خاصة، ودون امتيازات جديدة."
 
-#: ../../operations.rst:746
+#: ../../operations.rst:750
 msgid ""
 "An upgrade keeps the settings file, the seed and the state, and does not "
 "restart the service; we restart it after a backup. Removal stops and "
@@ -3470,7 +3508,7 @@ msgstr ""
 "وتعطلها، لكنها تحتفظ بالحساب والبذرة والإعدادات والحالة، ونحذفها بأنفسنا "
 "عندما نُخرج المضيف من الخدمة."
 
-#: ../../operations.rst:748
+#: ../../operations.rst:752
 msgid ""
 "The FreeBSD and OpenBSD packages install only ``/usr/local/bin/sibuna`` "
 "and its documents (``pkg add``, or ``pkg_add -D unsigned`` for a package "
@@ -3483,11 +3521,11 @@ msgstr ""
 "ولا تنشئ خدمة ولا حسابًا ولا حالة: نشغّل البرنامج الخدمي بمستخدم بلا "
 "امتيازات مع بذرة ودليل بيانات خاصين."
 
-#: ../../operations.rst:750
+#: ../../operations.rst:754
 msgid "Homebrew"
 msgstr "Homebrew"
 
-#: ../../operations.rst:753
+#: ../../operations.rst:757
 msgid ""
 "``sibuna.rb`` installs the release archive for the machine: macOS or "
 "Linux, arm64 or x86-64. It does not build from source, because Homebrew's "
@@ -3503,7 +3541,7 @@ msgstr ""
 "الإصدار. لا يثبّت Homebrew الصيغ إلا من المستودعات (taps)، لذا نضع الصيغة "
 "في مستودع محلي:"
 
-#: ../../operations.rst:755
+#: ../../operations.rst:759
 msgid ""
 "brew tap-new \"$USER/local\"\n"
 "cp sibuna.rb \"$(brew "
@@ -3515,7 +3553,7 @@ msgstr ""
 "--repository)/Library/Taps/$USER/homebrew-local/Formula/\"\n"
 "brew install \"$USER/local/sibuna\""
 
-#: ../../operations.rst:761
+#: ../../operations.rst:765
 msgid ""
 "The formula starts no service. Its caveats show how to create a seed; its "
 "test starts the daemon twice on the same data directory."
@@ -3523,11 +3561,11 @@ msgstr ""
 "لا تبدأ الصيغة أي خدمة. تبين ملاحظاتها كيف ننشئ بذرة؛ ويشغّل اختبارها "
 "البرنامج الخدمي مرتين على دليل البيانات نفسه."
 
-#: ../../operations.rst:763
+#: ../../operations.rst:767
 msgid "Containers and Kubernetes"
 msgstr "الحاويات وKubernetes"
 
-#: ../../operations.rst:766
+#: ../../operations.rst:770
 msgid ""
 "The image ``ghcr.io/insanai/sibuna:<version>`` holds the static "
 "executable on a distroless base: CA certificates, user 65532, no shell "
@@ -3542,7 +3580,7 @@ msgstr ""
 "سير عمل الإصدار للقراءة فقط، دون قدرات، مع بذرة مركّبة للقراءة فقط ووحدة "
 "تخزين للحالة، ثم يعيد تشغيلها مرة واحدة:"
 
-#: ../../operations.rst:768
+#: ../../operations.rst:772
 msgid ""
 "docker run -d --read-only --cap-drop=ALL --security-opt=no-new-privileges "
 "\\\n"
@@ -3562,7 +3600,7 @@ msgstr ""
 "/var/lib/sibuna/data \\\n"
 "  --upstream-host 10.0.0.5 --upstream-port 3000"
 
-#: ../../operations.rst:776
+#: ../../operations.rst:780
 msgid ""
 "The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. "
 "It requires a Secret that we create (``secret.existingSecret``, key "
@@ -3593,7 +3631,7 @@ msgstr ""
 "ويمرر ``extraArgs`` خيارات إضافية للبرنامج الخدمي. ويثبّت سير العمل "
 "المخطط ويرقّيه ويزيله في عنقود kind يفرض معيار Restricted."
 
-#: ../../operations.rst:778
+#: ../../operations.rst:782
 msgid ""
 "kubectl -n sibuna create secret generic sibuna-admission "
 "--from-file=admission.seed\n"
@@ -3609,15 +3647,15 @@ msgstr ""
 "  --set secret.existingSecret=sibuna-admission \\\n"
 "  --set upstream.host=10.0.0.5 --set upstream.port=3000"
 
-#: ../../operations.rst:785
+#: ../../operations.rst:789
 msgid "Building from source"
 msgstr "البناء من المصدر"
 
-#: ../../operations.rst:788
+#: ../../operations.rst:792
 msgid "Rust 1.94 or later builds the workspace; the releases use Rust 1.99."
 msgstr "يبني Rust 1.94 أو أحدث مساحة العمل؛ وتستخدم الإصدارات Rust 1.99."
 
-#: ../../operations.rst:790
+#: ../../operations.rst:794
 msgid ""
 "``cargo build --release -p sibuna`` produces ``target/release/sibuna`` "
 "with the default features: SQLite storage and the console. sqlx bundles "
@@ -3635,7 +3673,7 @@ msgstr ""
 "wasm32-unknown-unknown``؛ ويضمّن ``SIBUNA_POW_WASM=<path>`` و\\ "
 "``SIBUNA_CONSOLE_WASM=<path>`` وحدات مبنية مسبقًا بدلًا من ذلك."
 
-#: ../../operations.rst:791
+#: ../../operations.rst:795
 msgid ""
 "``cargo build --release -p sibuna --no-default-features`` produces the "
 "in-memory firewall with no external crate at all; ``--data-dir`` and "
@@ -3647,7 +3685,7 @@ msgstr ""
 "``--data-dir`` و\\ ``--database-url`` عند البدء بالخطأ "
 "``StorageDisabled``، ويُرفض ``sibuna console`` بالخطأ ``CONSOLEBUILD``."
 
-#: ../../operations.rst:792
+#: ../../operations.rst:796
 msgid ""
 "``cargo build --release -p sibuna --features postgres-tls`` adds "
 "PostgreSQL clusters with verified TLS to the database. It needs no "
@@ -3656,7 +3694,7 @@ msgstr ""
 "يضيف ``cargo build --release -p sibuna --features postgres-tls`` عناقيد "
 "PostgreSQL مع TLS متحقق منه إلى قاعدة البيانات. ولا يحتاج إلى OpenSSL."
 
-#: ../../operations.rst:793
+#: ../../operations.rst:797
 msgid ""
 "The static Linux executables of the releases come from ``cargo build "
 "--release --locked -p sibuna --target x86_64-unknown-linux-musl`` (or "
@@ -3668,7 +3706,7 @@ msgstr ""
 "``aarch64-unknown-linux-musl``) مع ``musl-gcc`` مترجمًا لـ C "
 "(``CC_x86_64_unknown_linux_musl=musl-gcc``)."
 
-#: ../../operations.rst:795
+#: ../../operations.rst:799
 msgid ""
 "The release profile uses fat LTO and one codegen unit. The workflow "
 "builds the two WebAssembly modules once and passes them to every "
@@ -3681,7 +3719,7 @@ msgstr ""
 "التنفيذية لإصدار ما وحدات متطابقة بايتًا ببايت. ويعيد ``cargo xtask "
 "licenses`` توليد ``LICENSES/THIRD-PARTY-RUST.txt`` بعد تغير أي اعتمادية."
 
-#: ../../operations.rst:797
+#: ../../operations.rst:801
 msgid ""
 "On Windows the daemon stops on Ctrl+C, Ctrl+Break and console close "
 "events; it does not run as a Windows service. Windows files have no mode "
@@ -3696,11 +3734,11 @@ msgstr ""
 "لقاعدة بيانات قد يقرؤه آخرون: نقيّد هذه الملفات بقوائم ACL. وتُقرأ مقاييس "
 "الذاكرة وCPU في وحدة التحكم من ``/proc``، ولا تتوفر على الأنظمة الأخرى."
 
-#: ../../operations.rst:799
+#: ../../operations.rst:803
 msgid "Exercise 9.2"
 msgstr "تمرين 9.2"
 
-#: ../../operations.rst:801
+#: ../../operations.rst:805
 msgid ""
 "Write the policy file and the ``ip_reputation`` rows needed so that a "
 "staging network (``10.20.0.0/16``) bypasses challenges, ``/admin/*`` "
@@ -3712,7 +3750,7 @@ msgstr ""
 "المتسلسل، وتُقبل أداة كشط تابعة لشريك تُعرف بالترويسة ``X-Partner-Key`` "
 "بمعدل 30 طلبًا لكل 10 ثوانٍ."
 
-#: ../../operations.rst:803
+#: ../../operations.rst:807
 msgid ""
 "Hint: The daemon flags set the per-client limit every request meets "
 "first; a rule can carry a quota of its own in ``limits``."
@@ -3720,11 +3758,11 @@ msgstr ""
 "تلميح: تضبط خيارات البرنامج الخدمي الحدَّ الخاص بكل عميل، وهو أول حد يمر "
 "به كل طلب؛ ويمكن أن تحمل القاعدة حصة خاصة بها في ``limits``."
 
-#: ../../operations.rst:805
+#: ../../operations.rst:809
 msgid "Explain the invariant"
 msgstr "اشرح اللامتغير"
 
-#: ../../operations.rst:807
+#: ../../operations.rst:811
 msgid ""
 "Explain to an operator why adding a row to ``policies`` takes effect "
 "without a restart and without a request ever waiting, in terms of the "

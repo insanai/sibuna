@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-24 10:43+0000\n"
+"POT-Creation-Date: 2026-10-24 12:05+0000\n"
 "PO-Revision-Date: 2026-10-16 05:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -321,10 +321,10 @@ msgid ""
 "the response, reader.consume(head_len + body_len) moves the start of the "
 "window to the pending bytes."
 msgstr ""
-"一个连接的 64 KiB 读缓冲区：先是已处理的部分，然后是尚未读取的窗口，依次为请求头部（最多 16 KiB）、"
-"请求体前缀和待处理字节，最后是空闲空间。方法、路径、查询、请求头和 Cookie 是头部的切片，"
-"request.body 是请求体前缀的切片，ctx.pending 保存待处理字节，代理会先把它们发送给源站。"
-"响应之后，reader.consume(head_len + body_len) 把窗口的起点移到待处理字节处。"
+"一个连接的 64 KiB 读缓冲区：先是已处理的部分，然后是尚未读取的窗口，依次为请求头部（最多 16 "
+"KiB）、请求体前缀和待处理字节，最后是空闲空间。方法、路径、查询、请求头和 Cookie 是头部的切片，request.body "
+"是请求体前缀的切片，ctx.pending 保存待处理字节，代理会先把它们发送给源站。响应之后，reader.consume(head_len + "
+"body_len) 把窗口的起点移到待处理字节处。"
 
 #: ../../zero-allocation.rst:98
 msgid ""
@@ -1458,7 +1458,7 @@ msgid ""
 msgstr ""
 "过期槽的规则是其中微妙的部分：只有距离自己初始位置至少同样远的键，才能原地覆盖一个过期条目，否则一个探测会越过该槽的后来键将提前停止并丢失。被挤走的过期条目直接丢弃。不需要清扫线程。插入时先在不改变任何内容的情况下模拟挤占路径（``can_insert``），确认有界的挤占可以成功且不会丢失任何存活的标签。"
 
-#: ../../zero-allocation.rst:462 ../../zero-allocation.rst:682
+#: ../../zero-allocation.rst:462 ../../zero-allocation.rst:685
 msgid "Invariant"
 msgstr "不变量"
 
@@ -1534,10 +1534,9 @@ msgid ""
 "an arrival halfway between multiples of 200 ms is refused, and one at "
 "each multiple of 200 ms finds TAT exactly on the line and is admitted."
 msgstr ""
-"T = 200 ms、tau = 800 ms 时 TAT 随到达时间变化的图。t = 0 时的五次到达被准入，TAT "
-"从 0 升至 1000 ms；t = 0 时的第六次到达发现 TAT 为 1000 ms，高于直线 t + tau，"
-"因而被拒绝。此后，位于两个 200 ms 整数倍正中间的到达被拒绝，而恰好位于 200 ms 整数倍处的到达发现 "
-"TAT 正好落在直线上，因而被准入。"
+"T = 200 ms、tau = 800 ms 时 TAT 随到达时间变化的图。t = 0 时的五次到达被准入，TAT 从 0 升至 1000 "
+"ms；t = 0 时的第六次到达发现 TAT 为 1000 ms，高于直线 t + tau，因而被拒绝。此后，位于两个 200 ms "
+"整数倍正中间的到达被拒绝，而恰好位于 200 ms 整数倍处的到达发现 TAT 正好落在直线上，因而被准入。"
 
 #: ../../zero-allocation.rst:484
 msgid ""
@@ -1545,8 +1544,8 @@ msgid ""
 "every 200 ms. An arrival is admitted when the TAT it finds lies on or "
 "below the line :math:`t + \\tau`."
 msgstr ""
-"限额为每秒 5 次时的 GCRA 准入：先是五次突发，然后每 200 ms 一次。到达时若 TAT 位于直线 "
-":math:`t + \\tau` 上或其下方，就会被准入。"
+"限额为每秒 5 次时的 GCRA 准入：先是五次突发，然后每 200 ms 一次。到达时若 TAT 位于直线 :math:`t + \\tau` "
+"上或其下方，就会被准入。"
 
 #: ../../zero-allocation.rst:486
 msgid "Worked example: five per second by hand"
@@ -1937,60 +1936,78 @@ msgstr ""
 #: ../../zero-allocation.rst:618
 msgid ""
 "digraph engine_publication {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.8];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.45, "
+"ranksep=0.55, pad=0.1];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, margin=\"0.12,0.06\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
 "\n"
 "  storage [label=\"Storage thread\\nbuild Engine v2\\noff the request "
-"path\"];\n"
+"path\", color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
 "  slot [label=\"EngineSlot\\nRwLock<Arc<Engine>>\\ngeneration: "
-"AtomicU64\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  v2 [label=\"Engine v2\\n(published)\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  v1 [label=\"Engine v1\\nfreed when the last\\ncache lets go\", "
-"fillcolor=\"#fef2f2\", color=\"#b91c1c\"];\n"
+"AtomicU64\", color=\"#172033\", fillcolor=\"#ffffff\", penwidth=1.6];\n"
+"  v2 [label=\"Engine v2\\n(published)\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\"];\n"
 "  a [label=\"Connection thread A\\nEngineCache\\ngeneration 2\"];\n"
 "  b [label=\"Connection thread B\\nEngineCache\\ngeneration 1\"];\n"
+"  v1 [label=\"Engine v1\\nfreed when the last\\ncache lets go\", "
+"color=\"#94a3b8\", fillcolor=\"#f8fafc\", fontcolor=\"#475569\", "
+"style=\"rounded,filled,dashed\"];\n"
 "\n"
-"  storage -> slot [label=\"publish: swap the Arc\\nunder the write "
-"lock,\\ngeneration += 1 (Release)\"];\n"
-"  slot -> v2 [label=\"holds\"];\n"
-"  a -> slot [label=\"refresh: load generation\\n(Acquire); equal, no "
-"clone\"];\n"
-"  a -> v2 [label=\"Arc\"];\n"
-"  b -> slot [label=\"generation moved:\\nread lock, clone Arc\", "
-"style=dashed];\n"
-"  b -> v1 [label=\"Arc until\\nnext refresh\"];\n"
+"  { rank=same; slot; v2; }\n"
+"  { rank=same; a; b; v1; }\n"
+"\n"
+"  storage -> slot [label=\" publish: swap the Arc\\n under the write "
+"lock,\\n generation += 1 (Release)\", color=\"#b45309\", "
+"fontcolor=\"#92400e\", penwidth=1.4];\n"
+"  slot -> v2 [label=\"holds\", color=\"#15803d\", fontcolor=\"#15803d\", "
+"penwidth=1.4, minlen=3];\n"
+"  slot -> a [dir=back, label=\"refresh: load generation\\n(Acquire); "
+"equal, no clone \"];\n"
+"  v2 -> a [dir=back, label=\" Arc\", color=\"#15803d\", "
+"fontcolor=\"#15803d\"];\n"
+"  slot -> b [dir=back, label=\" generation moved:\\n read lock, clone "
+"Arc\", style=dashed];\n"
+"  b -> v1 [label=\"Arc until\\nnext refresh\", color=\"#94a3b8\", "
+"minlen=2];\n"
 "}"
 msgstr ""
 "digraph engine_publication {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.8];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.45, "
+"ranksep=0.55, pad=0.1];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, margin=\"0.12,0.06\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
 "\n"
-"  storage [label=\"存储线程\\n在请求路径之外\\n构建 Engine v2\"];\n"
+"  storage [label=\"存储线程\\n在请求路径之外\\n构建 Engine v2\", color=\"#b45309\", "
+"fillcolor=\"#fffbeb\"];\n"
 "  slot [label=\"EngineSlot\\nRwLock<Arc<Engine>>\\ngeneration: "
-"AtomicU64\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  v2 [label=\"Engine v2\\n（已发布）\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  v1 [label=\"Engine v1\\n最后一个缓存\\n放手时释放\", fillcolor=\"#fef2f2\", "
-"color=\"#b91c1c\"];\n"
+"AtomicU64\", color=\"#172033\", fillcolor=\"#ffffff\", penwidth=1.6];\n"
+"  v2 [label=\"Engine v2\\n（已发布）\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\"];\n"
 "  a [label=\"连接线程 A\\nEngineCache\\n代次 2\"];\n"
 "  b [label=\"连接线程 B\\nEngineCache\\n代次 1\"];\n"
+"  v1 [label=\"Engine v1\\n最后一个缓存\\n放手时释放\", color=\"#94a3b8\", "
+"fillcolor=\"#f8fafc\", fontcolor=\"#475569\", "
+"style=\"rounded,filled,dashed\"];\n"
 "\n"
-"  storage -> slot [label=\"发布：在写锁下\\n交换 Arc，\\ngeneration += 1 "
-"(Release)\"];\n"
-"  slot -> v2 [label=\"持有\"];\n"
-"  a -> slot [label=\"刷新：加载 generation\\n(Acquire)；相等则不克隆\"];\n"
-"  a -> v2 [label=\"Arc\"];\n"
-"  b -> slot [label=\"generation 已变：\\n获取读锁，克隆 Arc\", style=dashed];\n"
-"  b -> v1 [label=\"Arc 保留到\\n下次刷新\"];\n"
+"  { rank=same; slot; v2; }\n"
+"  { rank=same; a; b; v1; }\n"
+"\n"
+"  storage -> slot [label=\" 发布：在写锁下\\n 交换 Arc，\\n generation += 1 "
+"(Release)\", color=\"#b45309\", fontcolor=\"#92400e\", penwidth=1.4];\n"
+"  slot -> v2 [label=\"持有\", color=\"#15803d\", fontcolor=\"#15803d\", "
+"penwidth=1.4, minlen=3];\n"
+"  slot -> a [dir=back, label=\"刷新：加载 generation\\n(Acquire)；相等则不克隆 \"];\n"
+"  v2 -> a [dir=back, label=\" Arc\", color=\"#15803d\", "
+"fontcolor=\"#15803d\"];\n"
+"  slot -> b [dir=back, label=\" generation 已变：\\n 获取读锁，克隆 Arc\", "
+"style=dashed];\n"
+"  b -> v1 [label=\"Arc 保留到\\n下次刷新\", color=\"#94a3b8\", minlen=2];\n"
 "}"
 
 #: ../../zero-allocation.rst:618
@@ -2003,18 +2020,18 @@ msgstr ""
 "引擎发布。存储线程发布一个完整的引擎并推进代次；每个连接用一次 acquire 加载检查代次，只有在发生发布之后才克隆已发布的 "
 "Arc。旧引擎在最后一个持有它的缓存放手时被释放。"
 
-#: ../../zero-allocation.rst:641
+#: ../../zero-allocation.rst:644
 msgid "Implementation: ``EngineSlot::publish`` and ``EngineCache::refresh``"
 msgstr "实现：``EngineSlot::publish`` 和 ``EngineCache::refresh``"
 
-#: ../../zero-allocation.rst:643
+#: ../../zero-allocation.rst:646
 msgid ""
 "Publication of a complete engine, and one connection's view of it. In "
 "``cmd/sibuna/src/slot.rs`` (crate ``sibuna``)."
 msgstr ""
 "完整引擎的发布，以及一个连接对它的视图。位于 ``cmd/sibuna/src/slot.rs``\\ （crate ``sibuna``）。"
 
-#: ../../zero-allocation.rst:645
+#: ../../zero-allocation.rst:648
 msgid ""
 "pub struct EngineSlot {\n"
 "    current: RwLock<Arc<Engine>>,\n"
@@ -2087,7 +2104,7 @@ msgstr ""
 "    self.engine.get_or_insert_with(|| slot.load())\n"
 "}"
 
-#: ../../zero-allocation.rst:680
+#: ../../zero-allocation.rst:683
 msgid ""
 "The generation is stored with release ordering after the engine is in "
 "place, and loaded with acquire ordering: a reader that sees a new "
@@ -2102,7 +2119,7 @@ msgstr ""
 "代次在引擎就位之后以 release 顺序存储，并以 acquire "
 "顺序加载：看到新代次的读者也能看到在它之前存入的引擎。注释中提到的竞争是良性的。如果一次发布恰好发生在读者加载代次和克隆之间，读者会把较新的引擎缓存在较旧的代次下，下一次刷新时会发现不匹配并重新加载。读者可能在一个请求中晚一个引擎；但它永远看不到构建了一半的引擎，因为存入槽中的只有完整的引擎。"
 
-#: ../../zero-allocation.rst:684
+#: ../../zero-allocation.rst:687
 msgid ""
 "Every engine a request reads is complete, and no engine is freed while "
 "any request or connection cache holds it. The first holds because an "
@@ -2113,7 +2130,7 @@ msgstr ""
 "请求读取的每个引擎都是完整的，并且只要还有任何请求或连接缓存持有某个引擎，它就不会被释放。前者成立，是因为引擎在 ``publish`` "
 "存储它之前已经完全构建好；后者成立，是因为每个读者都持有一个 ``Arc``，而引擎只会随最后一个 ``Arc`` 一起被丢弃。"
 
-#: ../../zero-allocation.rst:686
+#: ../../zero-allocation.rst:689
 msgid ""
 "Why a cache and not simply a lock? SID 0010 asked us to measure the read "
 "cost with 16 threads and choose between ``RwLock<Arc<Engine>>`` and a "
@@ -2126,61 +2143,61 @@ msgstr ""
 "和安全 Rust "
 "中的一种无锁方案之间作出选择。通过锁读取要访问锁字和引用计数，这两条缓存行每个核心都会写入。相比之下，代次每次发布只写一次，其余时间只被读取，因此每个核心都能保留自己的副本："
 
-#: ../../zero-allocation.rst:688
+#: ../../zero-allocation.rst:691
 msgid ""
 "Cost of one engine read, Ryzen 9 5950X, 16 threads reading in a loop "
 "(October 2026)"
 msgstr "一次引擎读取的成本，Ryzen 9 5950X，16 个线程循环读取（2026 年 10 月）"
 
-#: ../../zero-allocation.rst:691
+#: ../../zero-allocation.rst:694
 msgid "Reader"
 msgstr "读取方式"
 
-#: ../../zero-allocation.rst:692
+#: ../../zero-allocation.rst:695
 msgid "1 thread"
 msgstr "1 个线程"
 
-#: ../../zero-allocation.rst:693
+#: ../../zero-allocation.rst:696
 msgid "16 threads"
 msgstr "16 个线程"
 
-#: ../../zero-allocation.rst:694
+#: ../../zero-allocation.rst:697
 msgid "``RwLock`` read guard only"
 msgstr "仅 ``RwLock`` 读守卫"
 
-#: ../../zero-allocation.rst:695
+#: ../../zero-allocation.rst:698
 msgid "4.2 ns"
 msgstr "4.2 ns"
 
-#: ../../zero-allocation.rst:696
+#: ../../zero-allocation.rst:699
 msgid "752 ns"
 msgstr "752 ns"
 
-#: ../../zero-allocation.rst:697
+#: ../../zero-allocation.rst:700
 msgid "``RwLock`` read and ``Arc`` clone"
 msgstr "``RwLock`` 读取加 ``Arc`` 克隆"
 
-#: ../../zero-allocation.rst:698
+#: ../../zero-allocation.rst:701
 msgid "7.6 ns"
 msgstr "7.6 ns"
 
-#: ../../zero-allocation.rst:699
+#: ../../zero-allocation.rst:702
 msgid "833 ns"
 msgstr "833 ns"
 
-#: ../../zero-allocation.rst:700
+#: ../../zero-allocation.rst:703
 msgid "generation check with a cached ``Arc``"
 msgstr "用缓存的 ``Arc`` 检查代次"
 
-#: ../../zero-allocation.rst:701
+#: ../../zero-allocation.rst:704
 msgid "0.8 ns"
 msgstr "0.8 ns"
 
-#: ../../zero-allocation.rst:702
+#: ../../zero-allocation.rst:705
 msgid "1.8 ns"
 msgstr "1.8 ns"
 
-#: ../../zero-allocation.rst:704
+#: ../../zero-allocation.rst:707
 msgid ""
 "Under contention the cached read is more than 400 times cheaper than the "
 "lock, so the request path uses the cache and the ``RwLock`` only on the "
@@ -2198,11 +2215,11 @@ msgstr ""
 "字节，约 204 KiB 的紧凑堆表（``benchmarks/results/primitives-latest.json`` 中的 "
 "``engine_bytes``），可容纳 128 条规则、128 字节的规则名称和 8,192 个字典树节点。"
 
-#: ../../zero-allocation.rst:706
+#: ../../zero-allocation.rst:709
 msgid "Why ``Arc`` and not reader counts"
 msgstr "为什么用 ``Arc`` 而不是读者计数"
 
-#: ../../zero-allocation.rst:708
+#: ../../zero-allocation.rst:711
 msgid ""
 "The fixed-memory alternative keeps two engine slots, each with a reader "
 "count and its own allocation arena. A request pins a slot by incrementing "
@@ -2218,7 +2235,7 @@ msgstr ""
 "固定内存的替代方案保留两个引擎槽，每个槽有一个读者计数和自己的内存分配区（arena）。请求通过递增计数并重新检查槽指针来固定一个槽，而且两个原子操作都必须是顺序一致的，才能消除写者在读者加载和递增之间进行交换的竞争。构建者交换指针，然后自旋等待旧槽的读者全部退出，再重置该槽的内存区并在其中重建。因此，一个在重建期间持有槽的读者会阻塞构建者；除非每个请求都在代理 "
 "I/O 开始之前释放它的槽，否则一个慢速源站会拖住下一次发布。"
 
-#: ../../zero-allocation.rst:710
+#: ../../zero-allocation.rst:713
 msgid ""
 "``Arc`` reference counting needs none of this. The storage thread builds "
 "a fresh ``Engine`` from each snapshot and publishes it; nothing is "
@@ -2237,11 +2254,11 @@ msgstr ""
 "128 "
 "字节的缓冲区，以结束一次借用：决策通过连接的缓存借用引擎，而响应路径需要以可变方式访问整个连接上下文。一个可能存活数小时的升级连接，在被代理之前会释放它缓存的引擎。"
 
-#: ../../zero-allocation.rst:712
+#: ../../zero-allocation.rst:715
 msgid "Exercise 5.2"
 msgstr "练习 5.2"
 
-#: ../../zero-allocation.rst:714
+#: ../../zero-allocation.rst:717
 msgid ""
 "Using the GCRA theorem, compute the maximum number of requests a single "
 "client can get through in the first 3 seconds after being idle, for "
@@ -2251,11 +2268,11 @@ msgstr ""
 "利用 GCRA 定理，计算在 ``--rate-limit 100 --rate-window 10`` 下，单个客户端在空闲之后的前 3 "
 "秒内最多能通过多少个请求。与固定 10 秒窗口计数器以及真正的滑动窗口日志进行比较。"
 
-#: ../../zero-allocation.rst:716
+#: ../../zero-allocation.rst:719
 msgid "Explain the invariant"
 msgstr "解释这个不变量"
 
-#: ../../zero-allocation.rst:718
+#: ../../zero-allocation.rst:721
 msgid ""
 "Explain why an expired Robin Hood entry can be overwritten only by a key "
 "with a distance at least as large, using a three-slot example."

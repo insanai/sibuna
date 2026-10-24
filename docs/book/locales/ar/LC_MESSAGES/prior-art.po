@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-10-24 12:05+0000\n"
 "PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -129,117 +129,178 @@ msgstr ""
 #: ../../prior-art.rst:21
 msgid ""
 "digraph lineage {\n"
-"  rankdir=TB;\n"
-"  node [shape=box, fontname=\"Helvetica\", fontsize=10];\n"
-"  edge [fontname=\"Helvetica\", fontsize=9];\n"
-"  subgraph puzzles {\n"
-"    rank=same;\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, "
+"compound=true, nodesep=0.3, ranksep=0.2, pad=0.1, fontname=\"Helvetica\", "
+"fontsize=9.5, fontcolor=\"#172033\"];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=9, fontcolor=\"#172033\", fillcolor=\"#ffffff\", penwidth=1.0, "
+"width=1.35, height=0.4, margin=\"0.08,0.04\"];\n"
+"  edge [color=\"#94a3b8\", arrowsize=0.55, penwidth=1.0];\n"
+"\n"
+"  subgraph cluster_puzzles {\n"
+"    label=<<b>Client puzzles and<br/>sequential work</b>>; "
+"style=\"rounded,filled\"; color=\"#fde68a\"; fillcolor=\"#fffdf5\"; "
+"margin=10;\n"
+"    node [color=\"#d6a35c\"];\n"
 "    dwork [label=\"Dwork-Naor\\n1992\"];\n"
-"    hashcash [label=\"Hashcash\\n1997\"];\n"
+"    hashcash [label=\"Hashcash\\n1997\", color=\"#b45309\", "
+"fillcolor=\"#fde68a\", penwidth=1.3];\n"
 "    juels [label=\"Juels-Brainard\\n1999\"];\n"
 "    mahmoody [label=\"Mahmoody et al.\\n2013\"];\n"
-"    cohen [label=\"Cohen-Pietrzak\\n2018\"];\n"
-"    blocki [label=\"Blocki-Lee-Zhou\\n2021\"];\n"
+"    cohen [label=\"Cohen-Pietrzak\\n2018\", color=\"#b45309\", "
+"fillcolor=\"#fde68a\", penwidth=1.3];\n"
+"    blocki [label=\"Blocki-Lee-Zhou\\n2021\", color=\"#b45309\", "
+"fillcolor=\"#fde68a\", penwidth=1.3];\n"
 "  }\n"
-"  subgraph systems {\n"
-"    rank=same;\n"
-"    aho [label=\"Aho-Corasick\\n1975\"];\n"
-"    modsec [label=\"ModSecurity, CRS\\n2002\"];\n"
-"    libinj [label=\"libinjection\\n2012\"];\n"
-"    hyperscan [label=\"Hyperscan\\n2019\"];\n"
-"    gcra [label=\"GCRA\\nATM Forum 1996\"];\n"
-"  }\n"
-"  subgraph products {\n"
-"    rank=same;\n"
+"  subgraph cluster_products {\n"
+"    label=<<b>Products in<br/>the same space</b>>; "
+"style=\"rounded,filled\"; color=\"#ddd6fe\"; fillcolor=\"#fbfaff\"; "
+"margin=10;\n"
+"    node [color=\"#6d28d9\", fillcolor=\"#ddd6fe\", penwidth=1.3];\n"
+"    p0 [style=invis, label=\"\"];\n"
+"    p1 [style=invis, label=\"\"];\n"
 "    anubis [label=\"Anubis\\ninterstitial\"];\n"
-"    safeline [label=\"SafeLine\\nsemantic WAF\"];\n"
 "    cloudflare [label=\"Cloudflare\\nhosted edge\"];\n"
+"    safeline [label=\"SafeLine\\nsemantic WAF\"];\n"
 "  }\n"
-"  sibuna [label=\"Sibuna\\nGate, Shield, Edge\", style=\"filled,bold\"];\n"
-"  dwork -> hashcash -> juels -> mahmoody -> cohen -> blocki;\n"
-"  modsec -> libinj;\n"
-"  aho -> hyperscan;\n"
-"  dwork -> aho [style=invis];\n"
-"  aho -> anubis [style=invis];\n"
-"  hashcash -> anubis;\n"
-"  libinj -> safeline;\n"
-"  hashcash -> sibuna;\n"
-"  cohen -> sibuna;\n"
-"  blocki -> sibuna;\n"
-"  aho -> sibuna;\n"
-"  libinj -> sibuna;\n"
-"  gcra -> sibuna;\n"
-"  anubis -> sibuna;\n"
-"  safeline -> sibuna;\n"
-"  cloudflare -> sibuna;\n"
+"  subgraph cluster_systems {\n"
+"    label=<<b>Algorithms and<br/>systems</b>>; style=\"rounded,filled\"; "
+"color=\"#bfdbfe\"; fillcolor=\"#f8fbff\"; margin=10;\n"
+"    node [color=\"#7c9cd6\"];\n"
+"    aho [label=\"Aho-Corasick\\n1975\", color=\"#1e40af\", "
+"fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
+"    gcra [label=\"GCRA\\nATM Forum 1996\", color=\"#1e40af\", "
+"fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
+"    modsec [label=\"ModSecurity, CRS\\n2002\"];\n"
+"    libinj [label=\"libinjection\\n2012\", color=\"#1e40af\", "
+"fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
+"    hyperscan [label=\"Hyperscan\\n2019\"];\n"
+"  }\n"
+"  sibuna [label=<<b>Sibuna</b><br/><font point-size=\"9\">Gate, Shield, "
+"Edge</font>>, fontsize=11, color=\"#15803d\", fillcolor=\"#bbf7d0\", "
+"penwidth=1.8, width=2.2, height=0.5];\n"
+"\n"
+"  dwork -> hashcash -> juels -> mahmoody -> cohen -> blocki "
+"[color=\"#d6a35c\"];\n"
+"  aho -> gcra [style=invis];\n"
+"  gcra -> modsec [style=invis];\n"
+"  modsec -> libinj [color=\"#7c9cd6\"];\n"
+"  libinj -> hyperscan [style=invis];\n"
+"  aho -> hyperscan [color=\"#7c9cd6\", constraint=false];\n"
+"  hashcash -> anubis [color=\"#d6a35c\", constraint=false];\n"
+"  libinj -> safeline [color=\"#7c9cd6\", constraint=false];\n"
+"  { rank=same; dwork; p0; aho; }\n"
+"  { rank=same; hashcash; p1; gcra; }\n"
+"  { rank=same; juels; anubis; modsec; }\n"
+"  { rank=same; mahmoody; cloudflare; libinj; }\n"
+"  { rank=same; cohen; safeline; hyperscan; }\n"
+"  p0 -> p1 -> anubis -> cloudflare -> safeline [style=invis];\n"
+"\n"
+"  blocki -> sibuna [ltail=cluster_puzzles, color=\"#b45309\", "
+"penwidth=1.3, minlen=2];\n"
+"  safeline -> sibuna [ltail=cluster_products, color=\"#6d28d9\", "
+"penwidth=1.3, minlen=2];\n"
+"  hyperscan -> sibuna [ltail=cluster_systems, color=\"#1e40af\", "
+"penwidth=1.3, minlen=2];\n"
 "}"
 msgstr ""
 "digraph lineage {\n"
-"  rankdir=TB;\n"
-"  node [shape=box, fontname=\"Noto Sans Arabic\", fontsize=10];\n"
-"  edge [fontname=\"Noto Sans Arabic\", fontsize=9];\n"
-"  subgraph puzzles {\n"
-"    rank=same;\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, "
+"compound=true, nodesep=0.3, ranksep=0.2, pad=0.1, fontname=\"Helvetica\", "
+"fontsize=9.5, fontcolor=\"#172033\"];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=9, fontcolor=\"#172033\", fillcolor=\"#ffffff\", penwidth=1.0, "
+"width=1.35, height=0.4, margin=\"0.08,0.04\"];\n"
+"  edge [color=\"#94a3b8\", arrowsize=0.55, penwidth=1.0];\n"
+"\n"
+"  subgraph cluster_puzzles {\n"
+"    label=<<b>الألغاز والعمل المتسلسل</b>>; style=\"rounded,filled\"; "
+"color=\"#fde68a\"; fillcolor=\"#fffdf5\"; margin=10;\n"
+"    node [color=\"#d6a35c\"];\n"
 "    dwork [label=\"Dwork-Naor\\n1992\"];\n"
-"    hashcash [label=\"Hashcash\\n1997\"];\n"
+"    hashcash [label=\"Hashcash\\n1997\", color=\"#b45309\", "
+"fillcolor=\"#fde68a\", penwidth=1.3];\n"
 "    juels [label=\"Juels-Brainard\\n1999\"];\n"
 "    mahmoody [label=\"Mahmoody et al.\\n2013\"];\n"
-"    cohen [label=\"Cohen-Pietrzak\\n2018\"];\n"
-"    blocki [label=\"Blocki-Lee-Zhou\\n2021\"];\n"
+"    cohen [label=\"Cohen-Pietrzak\\n2018\", color=\"#b45309\", "
+"fillcolor=\"#fde68a\", penwidth=1.3];\n"
+"    blocki [label=\"Blocki-Lee-Zhou\\n2021\", color=\"#b45309\", "
+"fillcolor=\"#fde68a\", penwidth=1.3];\n"
 "  }\n"
-"  subgraph systems {\n"
-"    rank=same;\n"
-"    aho [label=\"Aho-Corasick\\n1975\"];\n"
-"    modsec [label=\"ModSecurity, CRS\\n2002\"];\n"
-"    libinj [label=\"libinjection\\n2012\"];\n"
-"    hyperscan [label=\"Hyperscan\\n2019\"];\n"
-"    gcra [label=\"GCRA\\nATM Forum 1996\"];\n"
-"  }\n"
-"  subgraph products {\n"
-"    rank=same;\n"
+"  subgraph cluster_products {\n"
+"    label=<<b>المنتجات في الفضاء نفسه</b>>; style=\"rounded,filled\"; "
+"color=\"#ddd6fe\"; fillcolor=\"#fbfaff\"; margin=10;\n"
+"    node [color=\"#6d28d9\", fillcolor=\"#ddd6fe\", penwidth=1.3];\n"
+"    p0 [style=invis, label=\"\"];\n"
+"    p1 [style=invis, label=\"\"];\n"
 "    anubis [label=\"Anubis\\nصفحة وسيطة\"];\n"
-"    safeline [label=\"SafeLine\\nجدار ناري دلالي\"];\n"
 "    cloudflare [label=\"Cloudflare\\nحافة مستضافة\"];\n"
+"    safeline [label=\"SafeLine\\nجدار ناري دلالي\"];\n"
 "  }\n"
-"  sibuna [label=\"Sibuna\\nGate, Shield, Edge\", style=\"filled,bold\"];\n"
-"  dwork -> hashcash -> juels -> mahmoody -> cohen -> blocki;\n"
-"  modsec -> libinj;\n"
-"  aho -> hyperscan;\n"
-"  dwork -> aho [style=invis];\n"
-"  aho -> anubis [style=invis];\n"
-"  hashcash -> anubis;\n"
-"  libinj -> safeline;\n"
-"  hashcash -> sibuna;\n"
-"  cohen -> sibuna;\n"
-"  blocki -> sibuna;\n"
-"  aho -> sibuna;\n"
-"  libinj -> sibuna;\n"
-"  gcra -> sibuna;\n"
-"  anubis -> sibuna;\n"
-"  safeline -> sibuna;\n"
-"  cloudflare -> sibuna;\n"
+"  subgraph cluster_systems {\n"
+"    label=<<b>الخوارزميات والأنظمة</b>>; style=\"rounded,filled\"; "
+"color=\"#bfdbfe\"; fillcolor=\"#f8fbff\"; margin=10;\n"
+"    node [color=\"#7c9cd6\"];\n"
+"    aho [label=\"Aho-Corasick\\n1975\", color=\"#1e40af\", "
+"fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
+"    gcra [label=\"GCRA\\nATM Forum 1996\", color=\"#1e40af\", "
+"fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
+"    modsec [label=\"ModSecurity, CRS\\n2002\"];\n"
+"    libinj [label=\"libinjection\\n2012\", color=\"#1e40af\", "
+"fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
+"    hyperscan [label=\"Hyperscan\\n2019\"];\n"
+"  }\n"
+"  sibuna [label=<<b>Sibuna</b><br/><font point-size=\"9\">Gate, Shield, "
+"Edge</font>>, fontsize=11, color=\"#15803d\", fillcolor=\"#bbf7d0\", "
+"penwidth=1.8, width=2.2, height=0.5];\n"
+"\n"
+"  dwork -> hashcash -> juels -> mahmoody -> cohen -> blocki "
+"[color=\"#d6a35c\"];\n"
+"  aho -> gcra [style=invis];\n"
+"  gcra -> modsec [style=invis];\n"
+"  modsec -> libinj [color=\"#7c9cd6\"];\n"
+"  libinj -> hyperscan [style=invis];\n"
+"  aho -> hyperscan [color=\"#7c9cd6\", constraint=false];\n"
+"  hashcash -> anubis [color=\"#d6a35c\", constraint=false];\n"
+"  libinj -> safeline [color=\"#7c9cd6\", constraint=false];\n"
+"  { rank=same; dwork; p0; aho; }\n"
+"  { rank=same; hashcash; p1; gcra; }\n"
+"  { rank=same; juels; anubis; modsec; }\n"
+"  { rank=same; mahmoody; cloudflare; libinj; }\n"
+"  { rank=same; cohen; safeline; hyperscan; }\n"
+"  p0 -> p1 -> anubis -> cloudflare -> safeline [style=invis];\n"
+"\n"
+"  blocki -> sibuna [ltail=cluster_puzzles, color=\"#b45309\", "
+"penwidth=1.3, minlen=2];\n"
+"  safeline -> sibuna [ltail=cluster_products, color=\"#6d28d9\", "
+"penwidth=1.3, minlen=2];\n"
+"  hyperscan -> sibuna [ltail=cluster_systems, color=\"#1e40af\", "
+"penwidth=1.3, minlen=2];\n"
 "}"
 
 #: ../../prior-art.rst:21
 msgid ""
-"Lineage of the ideas Sibuna combines. The top row is the cryptography of "
-"client puzzles and sequential work, the middle row the algorithms and "
-"systems Sibuna builds on, and the third row the products in the same "
-"space; arrows are direct descent. An earlier storage design drew on "
-"Multi-Paxos (Lamport 1998; SID 0005); Sibuna now stores its state in "
-"SQLite or PostgreSQL (SID 0011)."
+"Lineage of the ideas Sibuna combines. The left column is the cryptography "
+"of client puzzles and sequential work, the right column the algorithms "
+"and systems Sibuna builds on, and the middle column the products in the "
+"same space; time runs downward. Thin arrows are direct descent, and the "
+"filled boxes are the ideas Sibuna takes directly. An earlier storage "
+"design drew on Multi-Paxos (Lamport 1998; SID 0005); Sibuna now stores "
+"its state in SQLite or PostgreSQL (SID 0011)."
 msgstr ""
-"نسب الأفكار التي يجمعها Sibuna. الصف العلوي هو تشفير ألغاز العملاء والعمل "
-"المتسلسل، والصف الأوسط الخوارزميات والأنظمة التي يبني عليها Sibuna، والصف "
-"الثالث المنتجات في الفضاء نفسه؛ وتدل الأسهم على انحدار مباشر. وقد استند "
-"تصميم تخزين سابق إلى Multi-Paxos (Lamport 1998؛ SID 0005)؛ أما الآن فيخزن "
-"Sibuna حالته في SQLite أو PostgreSQL (SID 0011)."
+"نسب الأفكار التي يجمعها Sibuna. العمود الأيسر هو تشفير ألغاز العملاء "
+"والعمل المتسلسل، والعمود الأيمن الخوارزميات والأنظمة التي يبني عليها "
+"Sibuna، والعمود الأوسط المنتجات في الفضاء نفسه؛ ويجري الزمن نحو الأسفل. "
+"وتدل الأسهم الرفيعة على انحدار مباشر، والمربعات المظلّلة هي الأفكار التي "
+"يأخذها Sibuna مباشرة. وقد استند تصميم تخزين سابق إلى Multi-Paxos (Lamport "
+"1998؛ SID 0005)؛ أما الآن فيخزن Sibuna حالته في SQLite أو PostgreSQL (SID "
+"0011)."
 
-#: ../../prior-art.rst:70
+#: ../../prior-art.rst:79
 msgid "Application Firewalls"
 msgstr "جدران حماية التطبيقات"
 
-#: ../../prior-art.rst:73
+#: ../../prior-art.rst:82
 msgid ""
 "The first generation of web application firewalls matched request bytes "
 "against regular expressions. ModSecurity (2002) and the OWASP Core Rule "
@@ -267,11 +328,11 @@ msgstr ""
 "الجزء السادس لماذا اختار Sibuna آلة كثيفة مع مقسِّمات بنيوية صغيرة، بدل "
 "التعبيرات النمطية أو محرك SIMD، للحقول القصيرة التي يفحصها."
 
-#: ../../prior-art.rst:75
+#: ../../prior-art.rst:84
 msgid "Interstitials and Edges"
 msgstr "الصفحات الوسيطة وشبكات الحافة"
 
-#: ../../prior-art.rst:78
+#: ../../prior-art.rst:87
 msgid ""
 "The proof-of-work interstitial in front of a website became common in "
 "2025, when scraper traffic feeding language-model training made ordinary "
@@ -290,7 +351,7 @@ msgstr ""
 "عديم الحالة، ورمز متماثل، ومستوى عمل ثانٍ؛ وتسجل المقارنة أدناه مواضع "
 "الاختلاف بينهما."
 
-#: ../../prior-art.rst:80
+#: ../../prior-art.rst:89
 msgid ""
 "At the other end of the scale, hosted edges such as Cloudflare place "
 "inspection, rate limiting, and bot scoring in hundreds of points of "
@@ -309,11 +370,11 @@ msgstr ""
 "قاعدة بيانات PostgreSQL واحدة يتشاركها عنقود) يقرؤها خيط تخزين خارج مسار "
 "الطلب، بدل استدعاء خدمة."
 
-#: ../../prior-art.rst:82
+#: ../../prior-art.rst:91
 msgid "Three Ideas in One Binary"
 msgstr "ثلاث أفكار في ملف تنفيذي واحد"
 
-#: ../../prior-art.rst:85
+#: ../../prior-art.rst:94
 msgid ""
 "Sibuna combines a browser work challenge for admission, bounded "
 "application-payload inspection, and a shared control plane that publishes "
@@ -324,71 +385,71 @@ msgstr ""
 "ومستوى تحكم مشتركًا ينشر لقطات سياسة محلية. وGate وShield هما وضعا "
 "المنتج؛ أما التخزين والنشر الموزع فخياران لأي منهما."
 
-#: ../../prior-art.rst:91
+#: ../../prior-art.rst:100
 msgid "**Property**"
 msgstr "**الخاصية**"
 
-#: ../../prior-art.rst:92
+#: ../../prior-art.rst:101
 msgid "**Gate**"
 msgstr "**Gate**"
 
-#: ../../prior-art.rst:93
+#: ../../prior-art.rst:102
 msgid "**Shield**"
 msgstr "**Shield**"
 
-#: ../../prior-art.rst:94
+#: ../../prior-art.rst:103
 msgid "Admission"
 msgstr "القبول"
 
-#: ../../prior-art.rst:95
+#: ../../prior-art.rst:104
 msgid "Native Hashcash or sequential-work verification"
 msgstr "تحقق أصلي من Hashcash أو العمل المتسلسل"
 
-#: ../../prior-art.rst:96 ../../prior-art.rst:99 ../../prior-art.rst:102
+#: ../../prior-art.rst:105 ../../prior-art.rst:108 ../../prior-art.rst:111
 msgid "Same"
 msgstr "نفسه"
 
-#: ../../prior-art.rst:97
+#: ../../prior-art.rst:106
 msgid "Session"
 msgstr "الجلسة"
 
-#: ../../prior-art.rst:98
+#: ../../prior-art.rst:107
 msgid "Keyed BLAKE3; optional Ed25519"
 msgstr "BLAKE3 ذو مفتاح؛ Ed25519 اختياري"
 
-#: ../../prior-art.rst:100
+#: ../../prior-art.rst:109
 msgid "Local controls"
 msgstr "الضوابط المحلية"
 
-#: ../../prior-art.rst:101
+#: ../../prior-art.rst:110
 msgid "Rules, CIDRs, GCRA, bans"
 msgstr "قواعد، ونطاقات CIDR، وGCRA، وحظر"
 
-#: ../../prior-art.rst:103
+#: ../../prior-art.rst:112
 msgid "Inspection"
 msgstr "الفحص"
 
-#: ../../prior-art.rst:104
+#: ../../prior-art.rst:113
 msgid "Disabled"
 msgstr "معطل"
 
-#: ../../prior-art.rst:105
+#: ../../prior-art.rst:114
 msgid "Bounded signatures and structural tokenizers"
 msgstr "توقيعات محدودة ومقسِّمات بنيوية"
 
-#: ../../prior-art.rst:106
+#: ../../prior-art.rst:115
 msgid "State"
 msgstr "الحالة"
 
-#: ../../prior-art.rst:107
+#: ../../prior-art.rst:116
 msgid "Optional persistent policy and reputation, shared across a cluster"
 msgstr "سياسة وسمعة دائمتان اختياريتان، مشتركتان عبر العنقود"
 
-#: ../../prior-art.rst:108
+#: ../../prior-art.rst:117
 msgid "Also inspection forensics"
 msgstr "وأدلة الفحص الجنائية أيضًا"
 
-#: ../../prior-art.rst:110
+#: ../../prior-art.rst:119
 msgid ""
 "The browser solver compiles from the same proof sources as the native "
 "verifier. Dense literal matching avoids backtracking and keeps scan work "
@@ -405,11 +466,11 @@ msgstr ""
 "أمثلية خوارزمية مطلقة: فالترويسات القصيرة، والأجسام الطويلة، وتنوع "
 "الأنماط، وعدد النوى، وحجم الذاكرة المخبئية كلها تغير الموازنات."
 
-#: ../../prior-art.rst:112
+#: ../../prior-art.rst:121
 msgid "Design constraints adopted"
 msgstr "قيود التصميم المعتمدة"
 
-#: ../../prior-art.rst:114
+#: ../../prior-art.rst:123
 msgid ""
 "No heap allocation on the request path; every table has a fixed capacity "
 "and a stated saturation behaviour."
@@ -417,20 +478,20 @@ msgstr ""
 "لا تخصيص على الكومة في مسار الطلب؛ ولكل جدول سعة ثابتة وسلوك محدد عند "
 "الامتلاء."
 
-#: ../../prior-art.rst:115
+#: ../../prior-art.rst:124
 msgid ""
 "Issuing a challenge writes nothing; only a paid-for solution occupies "
 "memory."
 msgstr "إصدار التحدي لا يكتب شيئًا؛ ولا يشغل الذاكرة إلا حل دُفع ثمنه."
 
-#: ../../prior-art.rst:116
+#: ../../prior-art.rst:125
 msgid ""
 "A session admits; it never exempts a request from inspection or an "
 "explicit denial."
 msgstr ""
 "الجلسة تمنح القبول؛ لكنها لا تعفي الطلب أبدًا من الفحص ولا من رفض صريح."
 
-#: ../../prior-art.rst:117
+#: ../../prior-art.rst:126
 msgid ""
 "Every claimed number is either measured by a committed harness or "
 "labelled as a model."
@@ -438,18 +499,18 @@ msgstr ""
 "كل رقم مُعلَن إما مقيس بأداة قياس مودَعة في المستودع، وإما موسوم بأنه "
 "نموذج."
 
-#: ../../prior-art.rst:118
+#: ../../prior-art.rst:127
 msgid ""
 "Cryptographic choices cite a venue and a proof, and state their quantum "
 "posture."
 msgstr ""
 "تستشهد الخيارات التشفيرية بمنشور وبرهان، وتذكر موقفها من الحوسبة الكمومية."
 
-#: ../../prior-art.rst:120
+#: ../../prior-art.rst:129
 msgid "Feature Comparison"
 msgstr "مقارنة الميزات"
 
-#: ../../prior-art.rst:123
+#: ../../prior-art.rst:132
 msgid ""
 "The four tables below compare Sibuna with the three tools most often "
 "mentioned alongside it. Facts about the other products were read from "
@@ -477,40 +538,40 @@ msgstr ""
 "مقابل سجل تغييرات Anubis (1.21.0 و1.26.0)، وملاحظات إصدار SafeLine "
 "(8.10.0 و9.2.0)، وصفحة Cloudflare \"JA3/JA4 fingerprint\"."
 
-#: ../../prior-art.rst:125
+#: ../../prior-art.rst:134
 msgid "Feature comparison, part 1: deployment"
 msgstr "مقارنة الميزات، القسم 1: النشر"
 
-#: ../../prior-art.rst:130 ../../prior-art.rst:161 ../../prior-art.rst:202
-#: ../../prior-art.rst:238
+#: ../../prior-art.rst:139 ../../prior-art.rst:170 ../../prior-art.rst:211
+#: ../../prior-art.rst:247
 msgid "Feature"
 msgstr "الميزة"
 
-#: ../../prior-art.rst:131 ../../prior-art.rst:162 ../../prior-art.rst:203
-#: ../../prior-art.rst:239
+#: ../../prior-art.rst:140 ../../prior-art.rst:171 ../../prior-art.rst:212
+#: ../../prior-art.rst:248
 msgid "Sibuna"
 msgstr "Sibuna"
 
-#: ../../prior-art.rst:132 ../../prior-art.rst:163 ../../prior-art.rst:204
-#: ../../prior-art.rst:240
+#: ../../prior-art.rst:141 ../../prior-art.rst:172 ../../prior-art.rst:213
+#: ../../prior-art.rst:249
 msgid "Anubis 1.27"
 msgstr "Anubis 1.27"
 
-#: ../../prior-art.rst:133 ../../prior-art.rst:164 ../../prior-art.rst:205
-#: ../../prior-art.rst:241
+#: ../../prior-art.rst:142 ../../prior-art.rst:173 ../../prior-art.rst:214
+#: ../../prior-art.rst:250
 msgid "SafeLine CE 9"
 msgstr "SafeLine CE 9"
 
-#: ../../prior-art.rst:134 ../../prior-art.rst:165 ../../prior-art.rst:206
-#: ../../prior-art.rst:242
+#: ../../prior-art.rst:143 ../../prior-art.rst:174 ../../prior-art.rst:215
+#: ../../prior-art.rst:251
 msgid "Cloudflare WAF"
 msgstr "Cloudflare WAF"
 
-#: ../../prior-art.rst:135
+#: ../../prior-art.rst:144
 msgid "Runs as"
 msgstr "طريقة التشغيل"
 
-#: ../../prior-art.rst:136
+#: ../../prior-art.rst:145
 msgid ""
 "One binary; reverse proxy or forward auth; optional SQLite file or shared "
 "PostgreSQL database"
@@ -518,11 +579,11 @@ msgstr ""
 "ملف تنفيذي واحد؛ وكيل عكسي أو forward auth؛ ملف SQLite اختياري أو قاعدة "
 "بيانات PostgreSQL مشتركة"
 
-#: ../../prior-art.rst:137
+#: ../../prior-art.rst:146
 msgid "One Go binary; reverse proxy or forward auth"
 msgstr "ملف تنفيذي واحد بـ Go؛ وكيل عكسي أو forward auth"
 
-#: ../../prior-art.rst:138
+#: ../../prior-art.rst:147
 msgid ""
 "Seven Docker containers (tengine, detector, mgt, luigi, fvm, chaos, "
 "PostgreSQL)"
@@ -530,55 +591,55 @@ msgstr ""
 "سبع حاويات Docker (tengine، وdetector، وmgt، وluigi، وfvm، وchaos، "
 "وPostgreSQL)"
 
-#: ../../prior-art.rst:139
+#: ../../prior-art.rst:148
 msgid "Hosted network; DNS points at Cloudflare"
 msgstr "شبكة مستضافة؛ يشير DNS إلى Cloudflare"
 
-#: ../../prior-art.rst:140
+#: ../../prior-art.rst:149
 msgid "Language, runtime"
 msgstr "اللغة وبيئة التشغيل"
 
-#: ../../prior-art.rst:141
+#: ../../prior-art.rst:150
 msgid "Rust, no garbage collector; no external crate when storage is off"
 msgstr "Rust، بلا جامع نفايات؛ وبلا حزم خارجية عند تعطيل التخزين"
 
-#: ../../prior-art.rst:142
+#: ../../prior-art.rst:151
 msgid "Go, garbage collected"
 msgstr "Go، مع جمع النفايات"
 
-#: ../../prior-art.rst:143
+#: ../../prior-art.rst:152
 msgid "C/C++ proxy and detector, Go management, PostgreSQL"
 msgstr "وكيل وكاشف بـ C/C++، وإدارة بـ Go، وPostgreSQL"
 
-#: ../../prior-art.rst:144
+#: ../../prior-art.rst:153
 msgid "Proprietary edge software"
 msgstr "برمجيات حافة مملوكة"
 
-#: ../../prior-art.rst:145
+#: ../../prior-art.rst:154
 msgid "Licence"
 msgstr "الرخصة"
 
-#: ../../prior-art.rst:146
+#: ../../prior-art.rst:155
 msgid "LGPL-3.0-or-later"
 msgstr "LGPL-3.0-or-later"
 
-#: ../../prior-art.rst:147
+#: ../../prior-art.rst:156
 msgid "MIT"
 msgstr "MIT"
 
-#: ../../prior-art.rst:148
+#: ../../prior-art.rst:157
 msgid "GPL-3.0 management code; closed detector images"
 msgstr "شفرة إدارة بترخيص GPL-3.0؛ صور كاشف مغلقة"
 
-#: ../../prior-art.rst:149
+#: ../../prior-art.rst:158
 msgid "Proprietary service"
 msgstr "خدمة مملوكة"
 
-#: ../../prior-art.rst:150
+#: ../../prior-art.rst:159
 msgid "Host footprint"
 msgstr "الأثر على المضيف"
 
-#: ../../prior-art.rst:151
+#: ../../prior-art.rst:160
 msgid ""
 "35.7 MiB binary (``benchmarks/results/comparison-latest.json``); 5.9 MiB "
 "idle RSS (``benchmarks/results/primitives-latest.json``); at most 16.0 "
@@ -589,29 +650,29 @@ msgstr ""
 "(``benchmarks/results/primitives-latest.json``)؛ و16.0 MiB على الأكثر "
 "ذروةً لـ RSS تحت الحمل (``benchmarks/results/product-latest.md``)"
 
-#: ../../prior-art.rst:152
+#: ../../prior-art.rst:161
 msgid "38.1 MiB binary; 21 MiB idle RSS; Linux fixture, console off"
 msgstr ""
 "ملف تنفيذي بحجم 38.1 MiB؛ و21 MiB من RSS في الخمول؛ بيئة اختبار Linux، "
 "ووحدة التحكم معطلة"
 
-#: ../../prior-art.rst:153
+#: ../../prior-art.rst:162
 msgid "1 CPU core, 1 GB RAM, 5 GB disk minimum, Docker 20.10+"
 msgstr "1 نواة CPU، و1 GB من RAM، و5 GB من القرص حدًا أدنى، وDocker 20.10+"
 
-#: ../../prior-art.rst:154
+#: ../../prior-art.rst:163
 msgid "None on premises"
 msgstr "لا شيء محليًا"
 
-#: ../../prior-art.rst:156
+#: ../../prior-art.rst:165
 msgid "Feature comparison, part 2: admission and sessions"
 msgstr "مقارنة الميزات، القسم 2: القبول والجلسات"
 
-#: ../../prior-art.rst:166
+#: ../../prior-art.rst:175
 msgid "Proof-of-work admission"
 msgstr "القبول بإثبات العمل"
 
-#: ../../prior-art.rst:167
+#: ../../prior-art.rst:176
 msgid ""
 "Hashcash (bit-level) and Cohen-Pietrzak sequential work, chosen per rule; "
 "WebAssembly with JavaScript fallback"
@@ -619,7 +680,7 @@ msgstr ""
 "Hashcash (على مستوى البتات) والعمل المتسلسل لـ Cohen-Pietrzak، يُختار لكل "
 "قاعدة؛ WebAssembly مع بديل JavaScript"
 
-#: ../../prior-art.rst:168
+#: ../../prior-art.rst:177
 msgid ""
 "SHA-256 Hashcash in hex nibbles (``fast``, ``slow``); non-work "
 "``metarefresh`` and ``preact`` challenges"
@@ -627,11 +688,11 @@ msgstr ""
 "Hashcash بـ SHA-256 بأنصاف بايت ست عشرية (``fast``، و\\ ``slow``)؛ وتحديا "
 "``metarefresh`` و\\ ``preact`` بلا عمل"
 
-#: ../../prior-art.rst:169
+#: ../../prior-art.rst:178
 msgid "JavaScript anti-bot challenge and CAPTCHA; not work-bound"
 msgstr "تحدي JavaScript لمكافحة الروبوتات وCAPTCHA؛ غير مشروط بالعمل"
 
-#: ../../prior-art.rst:170
+#: ../../prior-art.rst:179
 msgid ""
 "Managed challenge, JS challenge, Turnstile; Bot Fight Mode issues a "
 "compute challenge"
@@ -639,31 +700,31 @@ msgstr ""
 "Managed challenge، وJS challenge، وTurnstile؛ يصدر Bot Fight Mode تحديًا "
 "حسابيًا"
 
-#: ../../prior-art.rst:171
+#: ../../prior-art.rst:180
 msgid "Challenge state on the server"
 msgstr "حالة التحدي على الخادم"
 
-#: ../../prior-art.rst:172
+#: ../../prior-art.rst:181
 msgid "None until solved; solved tags in a fixed Robin Hood table"
 msgstr "لا شيء حتى الحل؛ الوسوم المحلولة في جدول Robin Hood ثابت"
 
-#: ../../prior-art.rst:173
+#: ../../prior-art.rst:182
 msgid "Store backend: memory, bbolt, Valkey, or S3"
 msgstr "خلفية التخزين: الذاكرة، أو bbolt، أو Valkey، أو S3"
 
-#: ../../prior-art.rst:174
+#: ../../prior-art.rst:183
 msgid "Managed by the stack"
 msgstr "تديرها المجموعة البرمجية"
 
-#: ../../prior-art.rst:175
+#: ../../prior-art.rst:184
 msgid "Managed by Cloudflare"
 msgstr "تديرها Cloudflare"
 
-#: ../../prior-art.rst:176
+#: ../../prior-art.rst:185
 msgid "Session token"
 msgstr "رمز الجلسة"
 
-#: ../../prior-art.rst:177
+#: ../../prior-art.rst:186
 msgid ""
 "Keyed BLAKE3 tag, 75-character cookie bound to the work paid; Ed25519 "
 "optional"
@@ -671,39 +732,39 @@ msgstr ""
 "وسم BLAKE3 ذو مفتاح، وملف تعريف ارتباط من 75 محرفًا مربوط بالعمل المدفوع؛ "
 "Ed25519 اختياري"
 
-#: ../../prior-art.rst:178
+#: ../../prior-art.rst:187
 msgid "JSON Web Token signed with Ed25519; HS512 optional"
 msgstr "JSON Web Token موقع بـ Ed25519؛ HS512 اختياري"
 
-#: ../../prior-art.rst:179
+#: ../../prior-art.rst:188
 msgid "Cookie issued by the stack"
 msgstr "ملف تعريف ارتباط تصدره المجموعة البرمجية"
 
-#: ../../prior-art.rst:180
+#: ../../prior-art.rst:189
 msgid "``cf_clearance`` cookie"
 msgstr "ملف تعريف الارتباط ``cf_clearance``"
 
-#: ../../prior-art.rst:181
+#: ../../prior-art.rst:190
 msgid "Post-quantum posture of the default token"
 msgstr "موقف الرمز الافتراضي من الحوسبة الكمومية"
 
-#: ../../prior-art.rst:182
+#: ../../prior-art.rst:191
 msgid "Symmetric: only Grover's quadratic speedup applies"
 msgstr "متماثل: لا ينطبق إلا تسارع Grover التربيعي"
 
-#: ../../prior-art.rst:183
+#: ../../prior-art.rst:192
 msgid "Ed25519: broken by Shor's algorithm"
 msgstr "Ed25519: تكسره خوارزمية Shor"
 
-#: ../../prior-art.rst:184 ../../prior-art.rst:185
+#: ../../prior-art.rst:193 ../../prior-art.rst:194
 msgid "Not documented"
 msgstr "غير موثق"
 
-#: ../../prior-art.rst:186
+#: ../../prior-art.rst:195
 msgid "Policy language"
 msgstr "لغة السياسة"
 
-#: ../../prior-art.rst:187
+#: ../../prior-art.rst:196
 msgid ""
 "JSON rules: path, User-Agent, headers, IPv4/IPv6 CIDR, JA4 fingerprint; "
 "ALLOW, DENY, CHALLENGE, WEIGH with thresholds; dynamic rules from the "
@@ -713,7 +774,7 @@ msgstr ""
 "وبصمة JA4؛ ALLOW وDENY وCHALLENGE وWEIGH مع عتبات؛ قواعد ديناميكية من "
 "قاعدة البيانات"
 
-#: ../../prior-art.rst:188
+#: ../../prior-art.rst:197
 msgid ""
 "YAML/JSON bots: regex on UA, path, headers; CIDR; CEL expressions; WEIGH "
 "with thresholds"
@@ -721,20 +782,20 @@ msgstr ""
 "روبوتات YAML/JSON: تعبيرات نمطية على UA والمسار والترويسات؛ CIDR؛ تعبيرات "
 "CEL؛ WEIGH مع عتبات"
 
-#: ../../prior-art.rst:189
+#: ../../prior-art.rst:198
 msgid "Console-defined custom rules, ACLs, IP groups"
 msgstr "قواعد مخصصة تُعرّف في وحدة التحكم، وACLs، ومجموعات IP"
 
-#: ../../prior-art.rst:190
+#: ../../prior-art.rst:199
 msgid ""
 "Rules language expressions; *5 / 20 / 100 / 1000 custom rules by plan*"
 msgstr "تعبيرات لغة القواعد؛ *5 / 20 / 100 / 1000 قاعدة مخصصة حسب الخطة*"
 
-#: ../../prior-art.rst:191
+#: ../../prior-art.rst:200
 msgid "TLS fingerprint (JA4)"
 msgstr "بصمة TLS (JA4)"
 
-#: ../../prior-art.rst:192
+#: ../../prior-art.rst:201
 msgid ""
 "Rules match a JA4 fingerprint exactly or by prefix; a trusted ingress "
 "computes it and forwards it in a header (``--ja4-header``); Sibuna does "
@@ -743,7 +804,7 @@ msgstr ""
 "تطابق القواعد بصمة JA4 مطابقة تامة أو بالبادئة؛ يحسبها وكيل دخول موثوق "
 "ويمررها في ترويسة (``--ja4-header``)؛ ولا يحسبها Sibuna"
 
-#: ../../prior-art.rst:193
+#: ../../prior-art.rst:202
 msgid ""
 "Not documented; policies may reference the HTTP fingerprint JA4H, which "
 "Anubis computes and adds as the header ``X-Http-Fingerprint-JA4H``"
@@ -751,7 +812,7 @@ msgstr ""
 "غير موثق؛ يمكن للسياسات أن تشير إلى بصمة HTTP المسماة JA4H، التي يحسبها "
 "Anubis ويضيفها في الترويسة ``X-Http-Fingerprint-JA4H``"
 
-#: ../../prior-art.rst:194
+#: ../../prior-art.rst:203
 msgid ""
 "Computed at its own TLS termination; shown in attack details; custom "
 "rules match it (equals, not equals); a built-in rule denies fingerprints "
@@ -761,7 +822,7 @@ msgstr ""
 "المخصصة (يساوي، لا يساوي)؛ وترفض قاعدة مدمجة البصمات المدرجة في معلوماته "
 "عن بصمات JA4 الخبيثة"
 
-#: ../../prior-art.rst:195
+#: ../../prior-art.rst:204
 msgid ""
 "JA3 and JA4 fingerprints in WAF custom rules and analytics *(Enterprise "
 "with Bot Management)*"
@@ -769,28 +830,28 @@ msgstr ""
 "بصمات JA3 وJA4 في قواعد WAF المخصصة والتحليلات *(Enterprise مع Bot "
 "Management)*"
 
-#: ../../prior-art.rst:197
+#: ../../prior-art.rst:206
 msgid "Feature comparison, part 3: inspection and state"
 msgstr "مقارنة الميزات، القسم 3: الفحص والحالة"
 
-#: ../../prior-art.rst:207
+#: ../../prior-art.rst:216
 msgid "SQLi, XSS, RCE, traversal inspection"
 msgstr "فحص SQLi وXSS وRCE والاجتياز"
 
-#: ../../prior-art.rst:208
+#: ../../prior-art.rst:217
 msgid ""
 "Shield: tagged automaton plus structural tokenizers, first 8 KB of body"
 msgstr "Shield: آلة موسومة مع مقسِّمات بنيوية، وأول 8 KB من الجسم"
 
-#: ../../prior-art.rst:209 ../../prior-art.rst:255
+#: ../../prior-art.rst:218 ../../prior-art.rst:264
 msgid "\\-"
 msgstr "\\-"
 
-#: ../../prior-art.rst:210
+#: ../../prior-art.rst:219
 msgid "Semantic analysis engine over OWASP categories, also SSRF, XXE, CRLF"
 msgstr "محرك تحليل دلالي على فئات OWASP، وأيضًا SSRF وXXE وCRLF"
 
-#: ../../prior-art.rst:211
+#: ../../prior-art.rst:220
 msgid ""
 "Managed rulesets *(Pro and above)*; OWASP Core Ruleset; attack score "
 "*(Business and above)*"
@@ -798,75 +859,75 @@ msgstr ""
 "مجموعات قواعد مُدارة *(Pro وما فوق)*؛ OWASP Core Ruleset؛ درجة الهجوم "
 "*(Business وما فوق)*"
 
-#: ../../prior-art.rst:212
+#: ../../prior-art.rst:221
 msgid "Rate limiting"
 msgstr "تحديد المعدل"
 
-#: ../../prior-art.rst:213
+#: ../../prior-art.rst:222
 msgid "GCRA per client, local to a node"
 msgstr "GCRA لكل عميل، محلي للعقدة"
 
-#: ../../prior-art.rst:214
+#: ../../prior-art.rst:223
 msgid "\\- (system load is exposed to CEL rules)"
 msgstr "\\- (يُعرض حمل النظام لقواعد CEL)"
 
-#: ../../prior-art.rst:215
+#: ../../prior-art.rst:224
 msgid "Per IP, path, session"
 msgstr "لكل IP ومسار وجلسة"
 
-#: ../../prior-art.rst:216
+#: ../../prior-art.rst:225
 msgid "*1 / 2 / 5 / 100 rules by plan*; IP-only keys below Enterprise"
 msgstr "*1 / 2 / 5 / 100 قاعدة حسب الخطة*؛ مفاتيح IP فقط دون Enterprise"
 
-#: ../../prior-art.rst:217
+#: ../../prior-art.rst:226
 msgid "Bans and reputation"
 msgstr "الحظر والسمعة"
 
-#: ../../prior-art.rst:218
+#: ../../prior-art.rst:227
 msgid ""
 "Honeypot bans; reputation trie loaded from the reputation table shared "
 "across the cluster"
 msgstr "حظر المصيدة؛ شجرة سمعة تُحمّل من جدول السمعة المشترك عبر العنقود"
 
-#: ../../prior-art.rst:219
+#: ../../prior-art.rst:228
 msgid "DNSBL; ASN and GeoIP through Thoth *(paid, closed)*"
 msgstr "DNSBL؛ ASN وGeoIP عبر Thoth *(مدفوع، مغلق)*"
 
-#: ../../prior-art.rst:220
+#: ../../prior-art.rst:229
 msgid "IP groups and blacklists; threat intelligence *(Pro)*"
 msgstr "مجموعات IP وقوائم سوداء؛ معلومات التهديدات *(Pro)*"
 
-#: ../../prior-art.rst:221
+#: ../../prior-art.rst:230
 msgid "IP lists; managed lists and bot score *(Enterprise)*"
 msgstr "قوائم IP؛ قوائم مُدارة ودرجة الروبوت *(Enterprise)*"
 
-#: ../../prior-art.rst:222
+#: ../../prior-art.rst:231
 msgid "Forensics"
 msgstr "الأدلة الجنائية"
 
-#: ../../prior-art.rst:223
+#: ../../prior-art.rst:232
 msgid ""
 "SQLite or PostgreSQL: full-text search over incidents, vector campaign "
 "clustering"
 msgstr "SQLite أو PostgreSQL: بحث نصي كامل في الحوادث، وتجميع متجهي للحملات"
 
-#: ../../prior-art.rst:224
+#: ../../prior-art.rst:233
 msgid "Prometheus metrics only"
 msgstr "مقاييس Prometheus فقط"
 
-#: ../../prior-art.rst:225
+#: ../../prior-art.rst:234
 msgid "PostgreSQL attack log with console"
 msgstr "سجل هجمات في PostgreSQL مع وحدة تحكم"
 
-#: ../../prior-art.rst:226
+#: ../../prior-art.rst:235
 msgid "Security Events; sampled on Free"
 msgstr "Security Events؛ بعينات في خطة Free"
 
-#: ../../prior-art.rst:227
+#: ../../prior-art.rst:236
 msgid "Multi-node"
 msgstr "العقد المتعددة"
 
-#: ../../prior-art.rst:228
+#: ../../prior-art.rst:237
 msgid ""
 "One PostgreSQL database shared by every node for policy and reputation; "
 "shared seed; sticky challenge verification"
@@ -874,84 +935,84 @@ msgstr ""
 "قاعدة بيانات PostgreSQL واحدة تتشاركها كل العقد للسياسة والسمعة؛ بذرة "
 "مشتركة؛ تحقق من التحدي مثبت على العقدة المُصدرة"
 
-#: ../../prior-art.rst:229
+#: ../../prior-art.rst:238
 msgid "Shared signing key; shared Valkey store"
 msgstr "مفتاح توقيع مشترك؛ مخزن Valkey مشترك"
 
-#: ../../prior-art.rst:230
+#: ../../prior-art.rst:239
 msgid "One stack per host"
 msgstr "مجموعة واحدة لكل مضيف"
 
-#: ../../prior-art.rst:231
+#: ../../prior-art.rst:240
 msgid "Global anycast"
 msgstr "Anycast عالمي"
 
-#: ../../prior-art.rst:233
+#: ../../prior-art.rst:242
 msgid "Feature comparison, part 4: operations"
 msgstr "مقارنة الميزات، القسم 4: التشغيل"
 
-#: ../../prior-art.rst:243
+#: ../../prior-art.rst:252
 msgid "Metrics"
 msgstr "المقاييس"
 
-#: ../../prior-art.rst:244
+#: ../../prior-art.rst:253
 msgid "Prometheus at ``/__sibuna/metrics``"
 msgstr "Prometheus على ``/__sibuna/metrics``"
 
-#: ../../prior-art.rst:245
+#: ../../prior-art.rst:254
 msgid "Prometheus on a separate port"
 msgstr "Prometheus على منفذ منفصل"
 
-#: ../../prior-art.rst:246
+#: ../../prior-art.rst:255
 msgid "Console dashboards"
 msgstr "لوحات وحدة التحكم"
 
-#: ../../prior-art.rst:247
+#: ../../prior-art.rst:256
 msgid "Dashboard and analytics"
 msgstr "لوحة معلومات وتحليلات"
 
-#: ../../prior-art.rst:248
+#: ../../prior-art.rst:257
 msgid "TLS termination"
 msgstr "إنهاء TLS"
 
-#: ../../prior-art.rst:249 ../../prior-art.rst:250
+#: ../../prior-art.rst:258 ../../prior-art.rst:259
 msgid "\\- (ingress)"
 msgstr "\\- (وكيل الدخول)"
 
-#: ../../prior-art.rst:251 ../../prior-art.rst:252 ../../prior-art.rst:256
-#: ../../prior-art.rst:257 ../../prior-art.rst:260
+#: ../../prior-art.rst:260 ../../prior-art.rst:261 ../../prior-art.rst:265
+#: ../../prior-art.rst:266 ../../prior-art.rst:269
 msgid "**Yes**"
 msgstr "**نعم**"
 
-#: ../../prior-art.rst:253
+#: ../../prior-art.rst:262
 msgid "Management console"
 msgstr "وحدة تحكم الإدارة"
 
-#: ../../prior-art.rst:254
+#: ../../prior-art.rst:263
 msgid "Opt-in; SID 0007 Committed"
 msgstr "تُفعَّل اختياريًا؛ SID 0007 بحالة Committed"
 
-#: ../../prior-art.rst:258
+#: ../../prior-art.rst:267
 msgid "Measured on the benchmark host"
 msgstr "مقيس على مضيف قياس الأداء"
 
-#: ../../prior-art.rst:259
+#: ../../prior-art.rst:268
 msgid "**Yes** (Part VIII)"
 msgstr "**نعم** (الجزء الثامن)"
 
-#: ../../prior-art.rst:261
+#: ../../prior-art.rst:270
 msgid "\\- (Docker only)"
 msgstr "\\- (Docker فقط)"
 
-#: ../../prior-art.rst:262
+#: ../../prior-art.rst:271
 msgid "\\- (hosted)"
 msgstr "\\- (مستضاف)"
 
-#: ../../prior-art.rst:264
+#: ../../prior-art.rst:273
 msgid "Three differences carry most of the weight in a selection decision."
 msgstr "تحمل ثلاثة فروق معظم الوزن في قرار الاختيار."
 
-#: ../../prior-art.rst:266
+#: ../../prior-art.rst:275
 msgid ""
 "*Where the work goes.* Anubis and Sibuna Gate make the *client* pay "
 "before the origin does anything. SafeLine and Cloudflare inspect first "
@@ -964,7 +1025,7 @@ msgstr ""
 "وموقفهما الافتراضي هو القبول ثم التصفية. يفعل Sibuna Shield الأمرين بهذا "
 "الترتيب: قد يرفض الفحص طلبًا يحمل جلسة صالحة بالفعل."
 
-#: ../../prior-art.rst:267
+#: ../../prior-art.rst:276
 msgid ""
 "*What the server remembers.* Anubis keeps challenge state in a store "
 "(memory, bbolt, Valkey, or S3) and signs a JSON Web Token with Ed25519; "
@@ -978,7 +1039,7 @@ msgstr ""
 "سجلات الهجمات في PostgreSQL؛ ويحفظ Cloudflare كل شيء، مع رؤية بالعينات في "
 "خطة Free."
 
-#: ../../prior-art.rst:268
+#: ../../prior-art.rst:277
 msgid ""
 "*What an operator has to run.* Sibuna is one binary with an optional "
 "SQLite file, or a PostgreSQL database shared by a cluster; Anubis is one "
@@ -992,11 +1053,11 @@ msgstr ""
 "واحدة على الأقل، وغيغابايت واحد من الذاكرة، وخمسة غيغابايتات من القرص؛ "
 "وCloudflare تغيير في DNS واشتراك."
 
-#: ../../prior-art.rst:270
+#: ../../prior-art.rst:279
 msgid "Current product boundary"
 msgstr "حدود المنتج الحالية"
 
-#: ../../prior-art.rst:273
+#: ../../prior-art.rst:282
 msgid ""
 "Sibuna leaves ingress TLS termination to the deployment proxy and does "
 "not score bots with a trained model or publish paid signatures. It "
@@ -1019,11 +1080,11 @@ msgstr ""
 "الأداء، مع ثماني لوحات معلومات نشطة تحت الحمل، فلم يُقس بعد؛ ويسجل الجزء "
 "الثامن ما قيس."
 
-#: ../../prior-art.rst:275
+#: ../../prior-art.rst:284
 msgid "Exercise 2.1"
 msgstr "تمرين 2.1"
 
-#: ../../prior-art.rst:277
+#: ../../prior-art.rst:286
 msgid ""
 "Explain why compiling one verifier source to native code and WebAssembly "
 "reduces protocol drift. Which properties still require independent "
@@ -1033,11 +1094,11 @@ msgstr ""
 "انحراف البروتوكول. ما الخصائص التي ما زالت تتطلب اختبارًا مستقلًا أو "
 "مراجعة تشفيرية؟"
 
-#: ../../prior-art.rst:279
+#: ../../prior-art.rst:288
 msgid "Exercise 2.2"
 msgstr "تمرين 2.2"
 
-#: ../../prior-art.rst:281
+#: ../../prior-art.rst:290
 msgid ""
 "Using only the comparison tables, write down the smallest deployment that "
 "gives a static site (a) a proof-of-work gate, (b) SQL-injection "
@@ -1047,15 +1108,15 @@ msgstr ""
 "بوابة إثبات عمل، و(b) فحصًا لحقن SQL، و(c) حظرًا على مستوى العنقود. ما "
 "الصفوف التي فرضت كل اختيار؟"
 
-#: ../../prior-art.rst:283
+#: ../../prior-art.rst:292
 msgid "Hint: Start from the \"runs as\" and \"multi-node\" rows."
 msgstr "تلميح: ابدأ بصفّي \"طريقة التشغيل\" و\"العقد المتعددة\"."
 
-#: ../../prior-art.rst:285
+#: ../../prior-art.rst:294
 msgid "Explain the invariant"
 msgstr "اشرح اللامتغير"
 
-#: ../../prior-art.rst:287
+#: ../../prior-art.rst:296
 msgid ""
 "Describe how Gate, Shield, and optional shared storage divide admission, "
 "inspection and policy distribution. Then name one row of the comparison "

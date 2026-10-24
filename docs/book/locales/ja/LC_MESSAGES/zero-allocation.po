@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-24 10:43+0000\n"
+"POT-Creation-Date: 2026-10-24 12:05+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -320,7 +320,10 @@ msgid ""
 "holds the pending bytes, which the proxy sends to the origin first. After "
 "the response, reader.consume(head_len + body_len) moves the start of the "
 "window to the pending bytes."
-msgstr "一つの接続が持つ64 KiBの読み込みバッファーです。処理済みの部分の後に、リクエストのヘッダー部（最大16 KiB）、ボディーの先頭部分、保留分のバイトからなる未読の範囲が続き、その後が空き領域です。メソッド、パス、クエリ、ヘッダー、Cookieはヘッダー部のスライス、request.bodyはボディーの先頭部分のスライスです。ctx.pendingは保留分のバイトを保持し、プロキシはそれを先にオリジンへ送ります。応答の後、reader.consume(head_len + body_len)が範囲の先頭を保留分のバイトへ移します。"
+msgstr ""
+"一つの接続が持つ64 KiBの読み込みバッファーです。処理済みの部分の後に、リクエストのヘッダー部（最大16 "
+"KiB）、ボディーの先頭部分、保留分のバイトからなる未読の範囲が続き、その後が空き領域です。メソッド、パス、クエリ、ヘッダー、Cookieはヘッダー部のスライス、request.bodyはボディーの先頭部分のスライスです。ctx.pendingは保留分のバイトを保持し、プロキシはそれを先にオリジンへ送ります。応答の後、reader.consume(head_len "
+"+ body_len)が範囲の先頭を保留分のバイトへ移します。"
 
 #: ../../zero-allocation.rst:98
 msgid ""
@@ -1482,7 +1485,7 @@ msgstr ""
 "微妙なのは期限切れのスロットの規則です。期限切れの項目をその場で上書きできるのは、ホーム位置からの距離が少なくとも同じだけあるキーだけです。そうしないと、そのスロットを越えて探査する後のキーが早く止まってしまい、見失われます。押しのけられた期限切れの項目は単に捨てられます。掃除のスレッドは必要ありません。挿入ではまず、何も変更せずに押しのけの経路をシミュレートし（\\ "
 "``can_insert``\\ ）、有効なタグを失わずに上限内の押しのけで成功できることを確認します。"
 
-#: ../../zero-allocation.rst:462 ../../zero-allocation.rst:682
+#: ../../zero-allocation.rst:462 ../../zero-allocation.rst:685
 msgid "Invariant"
 msgstr "不変条件"
 
@@ -1562,14 +1565,20 @@ msgid ""
 "at t = 0 finds 1000 ms above the line t + tau and is refused. Afterwards "
 "an arrival halfway between multiples of 200 ms is refused, and one at "
 "each multiple of 200 ms finds TAT exactly on the line and is admitted."
-msgstr "T = 200 ms、tau = 800 msでの、到着時刻に対するTATのグラフです。t = 0での5件の到着は許可され、その間にTATは0から1000 msまで上がります。t = 0での6件目は、TATが1000 msで直線t + tauより上にあるので拒否されます。その後は、200 msの倍数のちょうど中間での到着は拒否され、200 msの各倍数での到着はTATがちょうど直線上にあるので許可されます。"
+msgstr ""
+"T = 200 ms、tau = 800 msでの、到着時刻に対するTATのグラフです。t = "
+"0での5件の到着は許可され、その間にTATは0から1000 msまで上がります。t = 0での6件目は、TATが1000 msで直線t + "
+"tauより上にあるので拒否されます。その後は、200 msの倍数のちょうど中間での到着は拒否され、200 "
+"msの各倍数での到着はTATがちょうど直線上にあるので許可されます。"
 
 #: ../../zero-allocation.rst:484
 msgid ""
 "GCRA admission for a limit of 5 per second: a burst of five, then one "
 "every 200 ms. An arrival is admitted when the TAT it finds lies on or "
 "below the line :math:`t + \\tau`."
-msgstr "毎秒5件の上限でのGCRAによる許可：5件のバーストの後、200 msごとに1件。到着時のTATが直線\\ :math:`t + \\tau`\\ 上かその下にあれば、その到着は許可されます。"
+msgstr ""
+"毎秒5件の上限でのGCRAによる許可：5件のバーストの後、200 msごとに1件。到着時のTATが直線\\ :math:`t + \\tau`\\ "
+"上かその下にあれば、その到着は許可されます。"
 
 #: ../../zero-allocation.rst:486
 msgid "Worked example: five per second by hand"
@@ -1964,60 +1973,80 @@ msgstr ""
 #: ../../zero-allocation.rst:618
 msgid ""
 "digraph engine_publication {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.8];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.45, "
+"ranksep=0.55, pad=0.1];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, margin=\"0.12,0.06\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
 "\n"
 "  storage [label=\"Storage thread\\nbuild Engine v2\\noff the request "
-"path\"];\n"
+"path\", color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
 "  slot [label=\"EngineSlot\\nRwLock<Arc<Engine>>\\ngeneration: "
-"AtomicU64\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  v2 [label=\"Engine v2\\n(published)\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  v1 [label=\"Engine v1\\nfreed when the last\\ncache lets go\", "
-"fillcolor=\"#fef2f2\", color=\"#b91c1c\"];\n"
+"AtomicU64\", color=\"#172033\", fillcolor=\"#ffffff\", penwidth=1.6];\n"
+"  v2 [label=\"Engine v2\\n(published)\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\"];\n"
 "  a [label=\"Connection thread A\\nEngineCache\\ngeneration 2\"];\n"
 "  b [label=\"Connection thread B\\nEngineCache\\ngeneration 1\"];\n"
+"  v1 [label=\"Engine v1\\nfreed when the last\\ncache lets go\", "
+"color=\"#94a3b8\", fillcolor=\"#f8fafc\", fontcolor=\"#475569\", "
+"style=\"rounded,filled,dashed\"];\n"
 "\n"
-"  storage -> slot [label=\"publish: swap the Arc\\nunder the write "
-"lock,\\ngeneration += 1 (Release)\"];\n"
-"  slot -> v2 [label=\"holds\"];\n"
-"  a -> slot [label=\"refresh: load generation\\n(Acquire); equal, no "
-"clone\"];\n"
-"  a -> v2 [label=\"Arc\"];\n"
-"  b -> slot [label=\"generation moved:\\nread lock, clone Arc\", "
-"style=dashed];\n"
-"  b -> v1 [label=\"Arc until\\nnext refresh\"];\n"
+"  { rank=same; slot; v2; }\n"
+"  { rank=same; a; b; v1; }\n"
+"\n"
+"  storage -> slot [label=\" publish: swap the Arc\\n under the write "
+"lock,\\n generation += 1 (Release)\", color=\"#b45309\", "
+"fontcolor=\"#92400e\", penwidth=1.4];\n"
+"  slot -> v2 [label=\"holds\", color=\"#15803d\", fontcolor=\"#15803d\", "
+"penwidth=1.4, minlen=3];\n"
+"  slot -> a [dir=back, label=\"refresh: load generation\\n(Acquire); "
+"equal, no clone \"];\n"
+"  v2 -> a [dir=back, label=\" Arc\", color=\"#15803d\", "
+"fontcolor=\"#15803d\"];\n"
+"  slot -> b [dir=back, label=\" generation moved:\\n read lock, clone "
+"Arc\", style=dashed];\n"
+"  b -> v1 [label=\"Arc until\\nnext refresh\", color=\"#94a3b8\", "
+"minlen=2];\n"
 "}"
 msgstr ""
 "digraph engine_publication {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.8];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.45, "
+"ranksep=0.55, pad=0.1];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, margin=\"0.12,0.06\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
 "\n"
-"  storage [label=\"ストレージスレッド\\nリクエスト経路の外で\\nEngine v2を構築\"];\n"
+"  storage [label=\"ストレージスレッド\\nリクエスト経路の外で\\nEngine v2を構築\", "
+"color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
 "  slot [label=\"EngineSlot\\nRwLock<Arc<Engine>>\\ngeneration: "
-"AtomicU64\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  v2 [label=\"Engine v2\\n（公開済み）\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  v1 [label=\"Engine v1\\n最後のキャッシュが\\n手放すと解放\", fillcolor=\"#fef2f2\", "
-"color=\"#b91c1c\"];\n"
+"AtomicU64\", color=\"#172033\", fillcolor=\"#ffffff\", penwidth=1.6];\n"
+"  v2 [label=\"Engine v2\\n（公開済み）\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\"];\n"
 "  a [label=\"接続スレッドA\\nEngineCache\\n世代2\"];\n"
 "  b [label=\"接続スレッドB\\nEngineCache\\n世代1\"];\n"
+"  v1 [label=\"Engine v1\\n最後のキャッシュが\\n手放すと解放\", color=\"#94a3b8\", "
+"fillcolor=\"#f8fafc\", fontcolor=\"#475569\", "
+"style=\"rounded,filled,dashed\"];\n"
 "\n"
-"  storage -> slot [label=\"publish：書き込みロックの下で\\nArcを交換、\\ngeneration += 1 "
-"(Release)\"];\n"
-"  slot -> v2 [label=\"保持\"];\n"
-"  a -> slot [label=\"refresh：世代を読み込む\\n(Acquire)。同じならクローンなし\"];\n"
-"  a -> v2 [label=\"Arc\"];\n"
-"  b -> slot [label=\"世代が進んだ：\\n読み込みロック、Arcをクローン\", style=dashed];\n"
-"  b -> v1 [label=\"次の更新まで\\nArc\"];\n"
+"  { rank=same; slot; v2; }\n"
+"  { rank=same; a; b; v1; }\n"
+"\n"
+"  storage -> slot [label=\" publish：\\n 書き込みロックの下でArcを交換、\\n generation "
+"+= 1 (Release)\", color=\"#b45309\", fontcolor=\"#92400e\", "
+"penwidth=1.4];\n"
+"  slot -> v2 [label=\"保持\", color=\"#15803d\", fontcolor=\"#15803d\", "
+"penwidth=1.4, minlen=3];\n"
+"  slot -> a [dir=back, label=\"refresh：世代を読み込む\\n(Acquire)。同じなら\\nクローンなし "
+"\"];\n"
+"  v2 -> a [dir=back, label=\" Arc\", color=\"#15803d\", "
+"fontcolor=\"#15803d\"];\n"
+"  slot -> b [dir=back, label=\" 世代が進んだ：\\n 読み込みロック、\\n Arcをクローン\", "
+"style=dashed];\n"
+"  b -> v1 [label=\"次の更新まで\\nArc\", color=\"#94a3b8\", minlen=2];\n"
 "}"
 
 #: ../../zero-allocation.rst:618
@@ -2029,11 +2058,11 @@ msgid ""
 msgstr ""
 "エンジンの公開。ストレージスレッドは完成したエンジンを公開し、世代を進めます。各接続は一回のacquireロードで世代を確認し、公開があった後でだけ公開されたArcを複製します。古いエンジンは、それを保持する最後のキャッシュが手放したときに解放されます。"
 
-#: ../../zero-allocation.rst:641
+#: ../../zero-allocation.rst:644
 msgid "Implementation: ``EngineSlot::publish`` and ``EngineCache::refresh``"
 msgstr "実装：\\ ``EngineSlot::publish``\\ と\\ ``EngineCache::refresh``"
 
-#: ../../zero-allocation.rst:643
+#: ../../zero-allocation.rst:646
 msgid ""
 "Publication of a complete engine, and one connection's view of it. In "
 "``cmd/sibuna/src/slot.rs`` (crate ``sibuna``)."
@@ -2041,7 +2070,7 @@ msgstr ""
 "完成したエンジンの公開と、一つの接続から見たその姿です。\\ ``cmd/sibuna/src/slot.rs``\\ （クレート\\ "
 "``sibuna``\\ ）にあります。"
 
-#: ../../zero-allocation.rst:645
+#: ../../zero-allocation.rst:648
 msgid ""
 "pub struct EngineSlot {\n"
 "    current: RwLock<Arc<Engine>>,\n"
@@ -2114,7 +2143,7 @@ msgstr ""
 "    self.engine.get_or_insert_with(|| slot.load())\n"
 "}"
 
-#: ../../zero-allocation.rst:680
+#: ../../zero-allocation.rst:683
 msgid ""
 "The generation is stored with release ordering after the engine is in "
 "place, and loaded with acquire ordering: a reader that sees a new "
@@ -2128,7 +2157,7 @@ msgid ""
 msgstr ""
 "世代は、エンジンを配置した後にreleaseの順序付けで格納し、acquireの順序付けでロードします。新しい世代を見た読み手は、その前に格納されたエンジンも見ます。コメントで名指しした競合は無害です。読み手が世代をロードしてから複製するまでの間に公開が起きると、読み手は新しいエンジンを古い世代番号の下でキャッシュし、次の更新で不一致に気づいて再びロードします。読み手は一件のリクエストの間、エンジン一つ分遅れることがありますが、作りかけのエンジンを見ることは決してありません。スロットに格納されるのは完成したエンジンだけだからです。"
 
-#: ../../zero-allocation.rst:684
+#: ../../zero-allocation.rst:687
 msgid ""
 "Every engine a request reads is complete, and no engine is freed while "
 "any request or connection cache holds it. The first holds because an "
@@ -2140,7 +2169,7 @@ msgstr ""
 "``publish``\\ が格納する前にエンジンが完全に構築されるから成り立ちます。後者は、すべての読み手が\\ ``Arc``\\ "
 "を保持し、エンジンは最後の\\ ``Arc``\\ とともにだけ破棄されるから成り立ちます。"
 
-#: ../../zero-allocation.rst:686
+#: ../../zero-allocation.rst:689
 msgid ""
 "Why a cache and not simply a lock? SID 0010 asked us to measure the read "
 "cost with 16 threads and choose between ``RwLock<Arc<Engine>>`` and a "
@@ -2153,61 +2182,61 @@ msgstr ""
 "``RwLock<Arc<Engine>>``\\ "
 "と安全なRustによるロックフリーの代替案のどちらかを選ぶよう求めました。ロック経由の読み込みは、ロックの語と参照カウントという、すべてのコアが書き込む二つのキャッシュラインに触れます。これに対し世代は、公開のたびに一度書かれるだけで、それ以外は読まれるだけなので、各コアが自分のコピーを保持できます。"
 
-#: ../../zero-allocation.rst:688
+#: ../../zero-allocation.rst:691
 msgid ""
 "Cost of one engine read, Ryzen 9 5950X, 16 threads reading in a loop "
 "(October 2026)"
 msgstr "エンジンの読み込み一回のコスト、Ryzen 9 5950X、16スレッドがループで読み込み（2026年10月）"
 
-#: ../../zero-allocation.rst:691
+#: ../../zero-allocation.rst:694
 msgid "Reader"
 msgstr "読み手"
 
-#: ../../zero-allocation.rst:692
+#: ../../zero-allocation.rst:695
 msgid "1 thread"
 msgstr "1スレッド"
 
-#: ../../zero-allocation.rst:693
+#: ../../zero-allocation.rst:696
 msgid "16 threads"
 msgstr "16スレッド"
 
-#: ../../zero-allocation.rst:694
+#: ../../zero-allocation.rst:697
 msgid "``RwLock`` read guard only"
 msgstr "``RwLock``\\ の読み込みガードのみ"
 
-#: ../../zero-allocation.rst:695
+#: ../../zero-allocation.rst:698
 msgid "4.2 ns"
 msgstr "4.2 ns"
 
-#: ../../zero-allocation.rst:696
+#: ../../zero-allocation.rst:699
 msgid "752 ns"
 msgstr "752 ns"
 
-#: ../../zero-allocation.rst:697
+#: ../../zero-allocation.rst:700
 msgid "``RwLock`` read and ``Arc`` clone"
 msgstr "``RwLock``\\ の読み込みと\\ ``Arc``\\ の複製"
 
-#: ../../zero-allocation.rst:698
+#: ../../zero-allocation.rst:701
 msgid "7.6 ns"
 msgstr "7.6 ns"
 
-#: ../../zero-allocation.rst:699
+#: ../../zero-allocation.rst:702
 msgid "833 ns"
 msgstr "833 ns"
 
-#: ../../zero-allocation.rst:700
+#: ../../zero-allocation.rst:703
 msgid "generation check with a cached ``Arc``"
 msgstr "キャッシュした\\ ``Arc``\\ での世代の確認"
 
-#: ../../zero-allocation.rst:701
+#: ../../zero-allocation.rst:704
 msgid "0.8 ns"
 msgstr "0.8 ns"
 
-#: ../../zero-allocation.rst:702
+#: ../../zero-allocation.rst:705
 msgid "1.8 ns"
 msgstr "1.8 ns"
 
-#: ../../zero-allocation.rst:704
+#: ../../zero-allocation.rst:707
 msgid ""
 "Under contention the cached read is more than 400 times cheaper than the "
 "lock, so the request path uses the cache and the ``RwLock`` only on the "
@@ -2226,11 +2255,11 @@ msgstr ""
 "KiBです（\\ ``benchmarks/results/primitives-latest.json``\\ の\\ "
 "``engine_bytes``\\ ）。128個のルール、128バイトのルール名、8,192個のトライのノードを収められます。"
 
-#: ../../zero-allocation.rst:706
+#: ../../zero-allocation.rst:709
 msgid "Why ``Arc`` and not reader counts"
 msgstr "読み手のカウントではなく\\ ``Arc``\\ を使う理由"
 
-#: ../../zero-allocation.rst:708
+#: ../../zero-allocation.rst:711
 msgid ""
 "The fixed-memory alternative keeps two engine slots, each with a reader "
 "count and its own allocation arena. A request pins a slot by incrementing "
@@ -2245,7 +2274,7 @@ msgid ""
 msgstr ""
 "固定メモリによる代替案は、エンジンのスロットを二つ持ち、それぞれに読み手のカウントと専用のアロケーションアリーナを持たせます。リクエストはカウントを増やしてスロットのポインターを再確認することでスロットを固定します。読み手のロードと増加の間に書き手が入れ替える競合を閉じるには、両方のアトミック操作が逐次一貫でなければなりません。構築側はポインターを入れ替え、古いスロットの読み手がいなくなるまでスピンしてから、そのスロットのアリーナをリセットして再構築します。したがって、再構築をまたいでスロットを保持する読み手は構築側をブロックします。プロキシの入出力が始まる前にすべてのリクエストがスロットを手放さない限り、遅いオリジンが次の公開を停滞させてしまいます。"
 
-#: ../../zero-allocation.rst:710
+#: ../../zero-allocation.rst:713
 msgid ""
 "``Arc`` reference counting needs none of this. The storage thread builds "
 "a fresh ``Engine`` from each snapshot and publishes it; nothing is "
@@ -2262,11 +2291,11 @@ msgstr ""
 "を構築して公開します。何も再利用しないので、予備のスロットもアリーナのリセットもスピンもありません。\\ ``publish``\\ "
 "が読み手を待つことはありません。古いエンジンは最後の保持者が手放すまで生きるだけで、遅いオリジンが遅らせられるのはその時点だけで、次の公開は遅らせられません。判定は借用を終えるために、一致したルール名を128バイトのバッファーにコピーします。判断は接続のキャッシュを通してエンジンを借用しており、応答の経路は接続のコンテキスト全体を可変で必要とするからです。何時間も生き得るアップグレードした接続は、プロキシする前にキャッシュしたエンジンを手放します。"
 
-#: ../../zero-allocation.rst:712
+#: ../../zero-allocation.rst:715
 msgid "Exercise 5.2"
 msgstr "演習5.2"
 
-#: ../../zero-allocation.rst:714
+#: ../../zero-allocation.rst:717
 msgid ""
 "Using the GCRA theorem, compute the maximum number of requests a single "
 "client can get through in the first 3 seconds after being idle, for "
@@ -2276,11 +2305,11 @@ msgstr ""
 "GCRAの定理を使って、\\ ``--rate-limit 100 --rate-window 10``\\ "
 "のとき、アイドル状態の後の最初の3秒間に一つのクライアントが通せるリクエストの最大数を計算してください。10秒の固定窓のカウンター、および本来のスライディングウィンドウのログと比べてください。"
 
-#: ../../zero-allocation.rst:716
+#: ../../zero-allocation.rst:719
 msgid "Explain the invariant"
 msgstr "不変条件を説明してください"
 
-#: ../../zero-allocation.rst:718
+#: ../../zero-allocation.rst:721
 msgid ""
 "Explain why an expired Robin Hood entry can be overwritten only by a key "
 "with a distance at least as large, using a three-slot example."

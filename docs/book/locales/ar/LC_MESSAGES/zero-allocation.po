@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-24 10:43+0000\n"
+"POT-Creation-Date: 2026-10-24 12:05+0000\n"
 "PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -351,11 +351,11 @@ msgid ""
 "the response, reader.consume(head_len + body_len) moves the start of the "
 "window to the pending bytes."
 msgstr ""
-"مخزن القراءة لاتصال واحد، وسعته 64 KiB: جزء مخدوم، ثم النافذة غير المقروءة "
-"المؤلفة من رأس الطلب (16 KiB على الأكثر) وبادئة الجسم والبايتات المعلقة، ثم "
-"مساحة حرة. الطريقة والمسار والاستعلام والترويسات وملفات تعريف الارتباط "
-"مقاطع من الرأس، وrequest.body مقطع من بادئة الجسم، وctx.pending يحمل "
-"البايتات المعلقة التي يرسلها الوكيل إلى الخادم الأصلي أولًا. وبعد "
+"مخزن القراءة لاتصال واحد، وسعته 64 KiB: جزء مخدوم، ثم النافذة غير "
+"المقروءة المؤلفة من رأس الطلب (16 KiB على الأكثر) وبادئة الجسم والبايتات "
+"المعلقة، ثم مساحة حرة. الطريقة والمسار والاستعلام والترويسات وملفات تعريف "
+"الارتباط مقاطع من الرأس، وrequest.body مقطع من بادئة الجسم، وctx.pending "
+"يحمل البايتات المعلقة التي يرسلها الوكيل إلى الخادم الأصلي أولًا. وبعد "
 "الاستجابة، ينقل reader.consume(head_len + body_len) بداية النافذة إلى "
 "البايتات المعلقة."
 
@@ -1598,7 +1598,7 @@ msgstr ""
 "أولًا مسار الإزاحة دون تغيير أي شيء (``can_insert``) ويتحقق من أن الإزاحة "
 "المحدودة يمكن أن تنجح دون فقد وسم حي."
 
-#: ../../zero-allocation.rst:462 ../../zero-allocation.rst:682
+#: ../../zero-allocation.rst:462 ../../zero-allocation.rst:685
 msgid "Invariant"
 msgstr "اللامتغير"
 
@@ -1682,10 +1682,10 @@ msgid ""
 "each multiple of 200 ms finds TAT exactly on the line and is admitted."
 msgstr ""
 "مخطط لقيمة TAT مقابل زمن الوصول عند T = 200 ms وtau = 800 ms. تُقبل خمسة "
-"طلبات تصل عند t = 0 بينما ترتفع TAT من 0 إلى 1000 ms؛ ويجد طلب سادس عند t = "
-"0 قيمة TAT البالغة 1000 ms فوق الخط t + tau فيُرفض. وبعد ذلك يُرفض الطلب "
-"الذي يصل في منتصف المسافة بين مضاعفين متتاليين لـ 200 ms، ويجد الطلب الذي "
-"يصل عند كل مضاعف لـ 200 ms قيمة TAT على الخط تمامًا فيُقبل."
+"طلبات تصل عند t = 0 بينما ترتفع TAT من 0 إلى 1000 ms؛ ويجد طلب سادس عند t "
+"= 0 قيمة TAT البالغة 1000 ms فوق الخط t + tau فيُرفض. وبعد ذلك يُرفض "
+"الطلب الذي يصل في منتصف المسافة بين مضاعفين متتاليين لـ 200 ms، ويجد "
+"الطلب الذي يصل عند كل مضاعف لـ 200 ms قيمة TAT على الخط تمامًا فيُقبل."
 
 #: ../../zero-allocation.rst:484
 msgid ""
@@ -1693,9 +1693,9 @@ msgid ""
 "every 200 ms. An arrival is admitted when the TAT it finds lies on or "
 "below the line :math:`t + \\tau`."
 msgstr ""
-"القبول في GCRA لحد قدره 5 في الثانية: دفعة من خمسة طلبات، ثم طلب كل 200 ms. "
-"يُقبل الطلب الواصل إذا كانت قيمة TAT التي يجدها على الخط :math:`t + \\tau` "
-"أو تحته."
+"القبول في GCRA لحد قدره 5 في الثانية: دفعة من خمسة طلبات، ثم طلب كل 200 "
+"ms. يُقبل الطلب الواصل إذا كانت قيمة TAT التي يجدها على الخط :math:`t + "
+"\\tau` أو تحته."
 
 #: ../../zero-allocation.rst:486
 msgid "Worked example: five per second by hand"
@@ -2118,62 +2118,81 @@ msgstr ""
 #: ../../zero-allocation.rst:618
 msgid ""
 "digraph engine_publication {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.8];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.45, "
+"ranksep=0.55, pad=0.1];\n"
 "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, margin=\"0.12,0.06\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
 "\n"
 "  storage [label=\"Storage thread\\nbuild Engine v2\\noff the request "
-"path\"];\n"
+"path\", color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
 "  slot [label=\"EngineSlot\\nRwLock<Arc<Engine>>\\ngeneration: "
-"AtomicU64\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  v2 [label=\"Engine v2\\n(published)\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  v1 [label=\"Engine v1\\nfreed when the last\\ncache lets go\", "
-"fillcolor=\"#fef2f2\", color=\"#b91c1c\"];\n"
+"AtomicU64\", color=\"#172033\", fillcolor=\"#ffffff\", penwidth=1.6];\n"
+"  v2 [label=\"Engine v2\\n(published)\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\"];\n"
 "  a [label=\"Connection thread A\\nEngineCache\\ngeneration 2\"];\n"
 "  b [label=\"Connection thread B\\nEngineCache\\ngeneration 1\"];\n"
+"  v1 [label=\"Engine v1\\nfreed when the last\\ncache lets go\", "
+"color=\"#94a3b8\", fillcolor=\"#f8fafc\", fontcolor=\"#475569\", "
+"style=\"rounded,filled,dashed\"];\n"
 "\n"
-"  storage -> slot [label=\"publish: swap the Arc\\nunder the write "
-"lock,\\ngeneration += 1 (Release)\"];\n"
-"  slot -> v2 [label=\"holds\"];\n"
-"  a -> slot [label=\"refresh: load generation\\n(Acquire); equal, no "
-"clone\"];\n"
-"  a -> v2 [label=\"Arc\"];\n"
-"  b -> slot [label=\"generation moved:\\nread lock, clone Arc\", "
-"style=dashed];\n"
-"  b -> v1 [label=\"Arc until\\nnext refresh\"];\n"
+"  { rank=same; slot; v2; }\n"
+"  { rank=same; a; b; v1; }\n"
+"\n"
+"  storage -> slot [label=\" publish: swap the Arc\\n under the write "
+"lock,\\n generation += 1 (Release)\", color=\"#b45309\", "
+"fontcolor=\"#92400e\", penwidth=1.4];\n"
+"  slot -> v2 [label=\"holds\", color=\"#15803d\", fontcolor=\"#15803d\", "
+"penwidth=1.4, minlen=3];\n"
+"  slot -> a [dir=back, label=\"refresh: load generation\\n(Acquire); "
+"equal, no clone \"];\n"
+"  v2 -> a [dir=back, label=\" Arc\", color=\"#15803d\", "
+"fontcolor=\"#15803d\"];\n"
+"  slot -> b [dir=back, label=\" generation moved:\\n read lock, clone "
+"Arc\", style=dashed];\n"
+"  b -> v1 [label=\"Arc until\\nnext refresh\", color=\"#94a3b8\", "
+"minlen=2];\n"
 "}"
 msgstr ""
 "digraph engine_publication {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.8];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Noto Sans "
-"Arabic\", fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
-"fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Noto Sans Arabic\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.45, "
+"ranksep=0.55, pad=0.1];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, margin=\"0.12,0.06\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
+"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
 "\n"
-"  storage [label=\"خيط التخزين\\nيبني\\nEngine v2\\nخارج مسار الطلب\"];\n"
+"  storage [label=\"خيط التخزين يبني\\nEngine v2\\nخارج مسار الطلب\", "
+"color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
 "  slot [label=\"EngineSlot\\nRwLock<Arc<Engine>>\\ngeneration: "
-"AtomicU64\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  v2 [label=\"Engine v2\\nمنشور\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  v1 [label=\"Engine v1\\nيُحرَّر عندما تتخلى عنه\\nآخر ذاكرة مؤقتة\", "
-"fillcolor=\"#fef2f2\", color=\"#b91c1c\"];\n"
+"AtomicU64\", color=\"#172033\", fillcolor=\"#ffffff\", penwidth=1.6];\n"
+"  v2 [label=\"Engine v2\\nمنشور\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\"];\n"
 "  a [label=\"خيط الاتصال\\nA\\nEngineCache\\nالجيل 2\"];\n"
 "  b [label=\"خيط الاتصال\\nB\\nEngineCache\\nالجيل 1\"];\n"
+"  v1 [label=\"Engine v1\\nيُحرَّر عندما تتخلى عنه\\nآخر ذاكرة مؤقتة\", "
+"color=\"#94a3b8\", fillcolor=\"#f8fafc\", fontcolor=\"#475569\", "
+"style=\"rounded,filled,dashed\"];\n"
 "\n"
-"  storage -> slot [label=\"النشر بتبديل المؤشر\\nArc\\nتحت قفل "
-"الكتابة\\ngeneration += 1 (Release)\"];\n"
-"  slot -> v2 [label=\"يحمل\"];\n"
-"  a -> slot [label=\"التحديث: تحميل الجيل\\n(Acquire)\\nمتساوٍ، بلا "
-"نسخ\"];\n"
-"  a -> v2 [label=\"Arc\"];\n"
-"  b -> slot [label=\"تغيّر الجيل\\nقفل قراءة ونسخ المؤشر\\nArc\", "
-"style=dashed];\n"
-"  b -> v1 [label=\"Arc\\nحتى التحديث التالي\"];\n"
+"  { rank=same; slot; v2; }\n"
+"  { rank=same; a; b; v1; }\n"
+"\n"
+"  storage -> slot [label=\" النشر بتبديل المؤشر\\n Arc\\n تحت قفل "
+"الكتابة\\n generation += 1 (Release)\", color=\"#b45309\", "
+"fontcolor=\"#92400e\", penwidth=1.4];\n"
+"  slot -> v2 [label=\"يحمل\", color=\"#15803d\", fontcolor=\"#15803d\", "
+"penwidth=1.4, minlen=3];\n"
+"  slot -> a [dir=back, label=\"التحديث: تحميل الجيل \\n(Acquire) "
+"\\nمتساوٍ، بلا نسخ \"];\n"
+"  v2 -> a [dir=back, label=\" Arc\", color=\"#15803d\", "
+"fontcolor=\"#15803d\"];\n"
+"  slot -> b [dir=back, label=\" تغيّر الجيل\\n قفل قراءة ونسخ المؤشر\\n "
+"Arc\", style=dashed];\n"
+"  b -> v1 [label=\"Arc\\nحتى التحديث التالي\", color=\"#94a3b8\", "
+"minlen=2];\n"
 "}"
 
 #: ../../zero-allocation.rst:618
@@ -2187,11 +2206,11 @@ msgstr ""
 "الجيل بتحميل acquire واحد، ولا ينسخ Arc المنشور إلا بعد نشر جديد. يُحرَّر "
 "المحرك القديم عندما تتخلى عنه آخر ذاكرة مؤقتة تحمله."
 
-#: ../../zero-allocation.rst:641
+#: ../../zero-allocation.rst:644
 msgid "Implementation: ``EngineSlot::publish`` and ``EngineCache::refresh``"
 msgstr "التنفيذ: ``EngineSlot::publish`` و\\ ``EngineCache::refresh``"
 
-#: ../../zero-allocation.rst:643
+#: ../../zero-allocation.rst:646
 msgid ""
 "Publication of a complete engine, and one connection's view of it. In "
 "``cmd/sibuna/src/slot.rs`` (crate ``sibuna``)."
@@ -2199,7 +2218,7 @@ msgstr ""
 "نشر محرك كامل، ورؤية اتصال واحد له. في ``cmd/sibuna/src/slot.rs`` (الحزمة "
 "``sibuna``)."
 
-#: ../../zero-allocation.rst:645
+#: ../../zero-allocation.rst:648
 msgid ""
 "pub struct EngineSlot {\n"
 "    current: RwLock<Arc<Engine>>,\n"
@@ -2272,7 +2291,7 @@ msgstr ""
 "    self.engine.get_or_insert_with(|| slot.load())\n"
 "}"
 
-#: ../../zero-allocation.rst:680
+#: ../../zero-allocation.rst:683
 msgid ""
 "The generation is stored with release ordering after the engine is in "
 "place, and loaded with acquire ordering: a reader that sees a new "
@@ -2292,7 +2311,7 @@ msgstr ""
 "واحدًا لطلب واحد؛ لكنه لا يستطيع أبدًا أن يرى محركًا نصف مبني، لأن الموضع "
 "لا يُخزَّن فيه إلا محركات كاملة."
 
-#: ../../zero-allocation.rst:684
+#: ../../zero-allocation.rst:687
 msgid ""
 "Every engine a request reads is complete, and no engine is freed while "
 "any request or connection cache holds it. The first holds because an "
@@ -2305,7 +2324,7 @@ msgstr ""
 "``publish``؛ ويصح الثاني لأن كل قارئ يحمل ``Arc``، ولا يُسقط المحرك إلا "
 "مع آخر ``Arc`` له."
 
-#: ../../zero-allocation.rst:686
+#: ../../zero-allocation.rst:689
 msgid ""
 "Why a cache and not simply a lock? SID 0010 asked us to measure the read "
 "cost with 16 threads and choose between ``RwLock<Arc<Engine>>`` and a "
@@ -2320,7 +2339,7 @@ msgstr ""
 "سطرا ذاكرة مخبئية تكتب فيهما كل نواة. أما الجيل فيُكتب مرة واحدة لكل نشر "
 "ويُقرأ فقط في غير ذلك، فتحتفظ كل نواة بنسختها منه:"
 
-#: ../../zero-allocation.rst:688
+#: ../../zero-allocation.rst:691
 msgid ""
 "Cost of one engine read, Ryzen 9 5950X, 16 threads reading in a loop "
 "(October 2026)"
@@ -2328,55 +2347,55 @@ msgstr ""
 "تكلفة قراءة واحدة للمحرك، Ryzen 9 5950X، و16 خيطًا تقرأ في حلقة (أكتوبر "
 "2026)"
 
-#: ../../zero-allocation.rst:691
+#: ../../zero-allocation.rst:694
 msgid "Reader"
 msgstr "القارئ"
 
-#: ../../zero-allocation.rst:692
+#: ../../zero-allocation.rst:695
 msgid "1 thread"
 msgstr "خيط واحد"
 
-#: ../../zero-allocation.rst:693
+#: ../../zero-allocation.rst:696
 msgid "16 threads"
 msgstr "16 خيطًا"
 
-#: ../../zero-allocation.rst:694
+#: ../../zero-allocation.rst:697
 msgid "``RwLock`` read guard only"
 msgstr "حارس القراءة لـ ``RwLock`` فقط"
 
-#: ../../zero-allocation.rst:695
+#: ../../zero-allocation.rst:698
 msgid "4.2 ns"
 msgstr "4.2 ns"
 
-#: ../../zero-allocation.rst:696
+#: ../../zero-allocation.rst:699
 msgid "752 ns"
 msgstr "752 ns"
 
-#: ../../zero-allocation.rst:697
+#: ../../zero-allocation.rst:700
 msgid "``RwLock`` read and ``Arc`` clone"
 msgstr "قراءة ``RwLock`` ونسخ ``Arc``"
 
-#: ../../zero-allocation.rst:698
+#: ../../zero-allocation.rst:701
 msgid "7.6 ns"
 msgstr "7.6 ns"
 
-#: ../../zero-allocation.rst:699
+#: ../../zero-allocation.rst:702
 msgid "833 ns"
 msgstr "833 ns"
 
-#: ../../zero-allocation.rst:700
+#: ../../zero-allocation.rst:703
 msgid "generation check with a cached ``Arc``"
 msgstr "فحص الجيل مع ``Arc`` مخزَّن مؤقتًا"
 
-#: ../../zero-allocation.rst:701
+#: ../../zero-allocation.rst:704
 msgid "0.8 ns"
 msgstr "0.8 ns"
 
-#: ../../zero-allocation.rst:702
+#: ../../zero-allocation.rst:705
 msgid "1.8 ns"
 msgstr "1.8 ns"
 
-#: ../../zero-allocation.rst:704
+#: ../../zero-allocation.rst:707
 msgid ""
 "Under contention the cached read is more than 400 times cheaper than the "
 "lock, so the request path uses the cache and the ``RwLock`` only on the "
@@ -2398,11 +2417,11 @@ msgstr ""
 "``benchmarks/results/primitives-latest.json``)، مع سعة لـ 128 قاعدة، "
 "وأسماء قواعد من 128 بايت، و8,192 عقدة في الشجرة."
 
-#: ../../zero-allocation.rst:706
+#: ../../zero-allocation.rst:709
 msgid "Why ``Arc`` and not reader counts"
 msgstr "لماذا ``Arc`` وليس عدادات القراء"
 
-#: ../../zero-allocation.rst:708
+#: ../../zero-allocation.rst:711
 msgid ""
 "The fixed-memory alternative keeps two engine slots, each with a reader "
 "count and its own allocation arena. A request pins a slot by incrementing "
@@ -2424,7 +2443,7 @@ msgstr ""
 "الباني، وكان الخادم الأصلي البطيء سيعطل النشر التالي ما لم يحرر كل طلب "
 "موضعه قبل بدء عمليات الإدخال والإخراج في الوكيل."
 
-#: ../../zero-allocation.rst:710
+#: ../../zero-allocation.rst:713
 msgid ""
 "``Arc`` reference counting needs none of this. The storage thread builds "
 "a fresh ``Engine`` from each snapshot and publishes it; nothing is "
@@ -2447,11 +2466,11 @@ msgstr ""
 "سياق الاتصال كاملًا قابلًا للتعديل. والاتصال المُرقّى، الذي قد يعيش "
 "ساعات، يحرر محركه المخزَّن مؤقتًا قبل تمريره عبر الوكيل."
 
-#: ../../zero-allocation.rst:712
+#: ../../zero-allocation.rst:715
 msgid "Exercise 5.2"
 msgstr "تمرين 5.2"
 
-#: ../../zero-allocation.rst:714
+#: ../../zero-allocation.rst:717
 msgid ""
 "Using the GCRA theorem, compute the maximum number of requests a single "
 "client can get through in the first 3 seconds after being idle, for "
@@ -2462,11 +2481,11 @@ msgstr ""
 "أول 3 ثوانٍ بعد خموله، مع ``--rate-limit 100 --rate-window 10``. قارن ذلك "
 "بعداد نافذة ثابتة من 10 ثوانٍ وبسجل نافذة منزلقة حقيقي."
 
-#: ../../zero-allocation.rst:716
+#: ../../zero-allocation.rst:719
 msgid "Explain the invariant"
 msgstr "اشرح اللامتغير"
 
-#: ../../zero-allocation.rst:718
+#: ../../zero-allocation.rst:721
 msgid ""
 "Explain why an expired Robin Hood entry can be overwritten only by a key "
 "with a distance at least as large, using a three-slot example."

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-10-24 12:05+0000\n"
 "PO-Revision-Date: 2026-10-16 05:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -23,15 +23,18 @@ msgstr "第 IV 部分：Sibuna 协议"
 
 #: ../../protocol.rst:4
 msgid ""
-"We specify the wire protocol as implemented: the interstitial round trip, the stateless challenge record, both solution formats, verification order, single-use enforcement, and the session cookie."
-msgstr "我们按实际实现来规定线路协议：验证中间页的往返过程、无状态挑战记录、两种解答格式、验证顺序、一次性使用的强制执行，以及会话 Cookie。"
+"We specify the wire protocol as implemented: the interstitial round trip, "
+"the stateless challenge record, both solution formats, verification "
+"order, single-use enforcement, and the session cookie."
+msgstr ""
+"我们按实际实现来规定线路协议：验证中间页的往返过程、无状态挑战记录、两种解答格式、验证顺序、一次性使用的强制执行，以及会话 Cookie。"
 
 #: ../../protocol.rst:6
 msgid "The Challenge Round Trip"
 msgstr "挑战的往返过程"
 
-#: ../../protocol.rst:9 ../../protocol.rst:72 ../../protocol.rst:135
-#: ../../protocol.rst:186
+#: ../../protocol.rst:9 ../../protocol.rst:84 ../../protocol.rst:147
+#: ../../protocol.rst:198
 msgid "Objectives"
 msgstr "学习目标"
 
@@ -47,65 +50,117 @@ msgstr ""
 
 #: ../../protocol.rst:14
 msgid ""
-"A loop of eight steps: browser navigation, interstitial (HTTP 200), GET /__sibuna/challenge.json?need=, stateless id (payload + tag), Web Worker solving with the WASM or JS prover, POST /__sibuna/verify with the nonce or proof, verify, spent set and mint MAC token, Set-Cookie then reload, and back to the navigation with a session."
+"A loop of eight steps: browser navigation, interstitial (HTTP 200), GET "
+"/__sibuna/challenge.json?need=, stateless id (payload + tag), Web Worker "
+"solving with the WASM or JS prover, POST /__sibuna/verify with the nonce "
+"or proof, verify, spent set and mint MAC token, Set-Cookie then reload, "
+"and back to the navigation with a session."
 msgstr ""
-"一个八步循环：浏览器导航；验证中间页（HTTP 200）；GET /__sibuna/challenge.json?need=；无状态 ID（载荷 + 标签）；Web Worker 用 WASM 或 JS 证明器求解；携带 nonce 或证明的 POST /__sibuna/verify；验证、写入已用集合并签发 MAC 令牌；Set-Cookie 后重新加载；最后带着会话回到导航。"
+"一个八步循环：浏览器导航；验证中间页（HTTP 200）；GET /__sibuna/challenge.json?need=；无状态 ID（载荷 "
+"+ 标签）；Web Worker 用 WASM 或 JS 证明器求解；携带 nonce 或证明的 POST "
+"/__sibuna/verify；验证、写入已用集合并签发 MAC 令牌；Set-Cookie 后重新加载；最后带着会话回到导航。"
 
 #: ../../protocol.rst:14
 msgid ""
 "digraph round_trip {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.7];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, fontcolor=\"#64748b\"];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.55, "
+"ranksep=0.26, pad=0.1, fontname=\"Helvetica\", fontsize=10, "
+"fontcolor=\"#172033\"];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.7, height=0.44, group=b, "
+"margin=\"0.12,0.06\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8.5, "
+"fontcolor=\"#475569\", arrowsize=0.65, penwidth=1.1];\n"
 "\n"
-"  nav [label=\"Browser\\nnavigation\"];\n"
-"  page [label=\"Interstitial\\n(HTTP 200)\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  fetch [label=\"GET /__sibuna/\\nchallenge.json?need=\"];\n"
-"  record [label=\"Stateless id:\\npayload + tag\", fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
-"  worker [label=\"Web Worker\\nWASM / JS prover\"];\n"
-"  verify [label=\"POST /__sibuna/verify\"];\n"
-"  mint [label=\"Verify, spent set,\\nmint MAC token\", fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
-"  cookie [label=\"Set-Cookie\\nthen reload\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
+"  subgraph cluster_browser {\n"
+"    label=<<b>Browser</b>>; labeljust=l; style=\"rounded,filled\"; "
+"color=\"#bfdbfe\"; fillcolor=\"#f8fbff\"; margin=12;\n"
+"    nav [label=\"Browser\\nnavigation\"];\n"
+"    fetch [label=\"GET /__sibuna/\\nchallenge.json?need=\"];\n"
+"    worker [label=\"Web Worker\\nWASM / JS prover\"];\n"
+"    verify [label=\"POST /__sibuna/verify\"];\n"
+"    cookie [label=\"Set-Cookie\\nthen reload\"];\n"
+"  }\n"
+"  subgraph cluster_sibuna {\n"
+"    label=<<b>Sibuna</b>>; labeljust=r; style=\"rounded,filled\"; "
+"color=\"#bbf7d0\"; fillcolor=\"#f7fdf9\"; margin=12;\n"
+"    node [color=\"#15803d\", fillcolor=\"#f0fdf4\", group=s];\n"
+"    page [label=\"Interstitial\\n(HTTP 200)\"];\n"
+"    record [label=\"Stateless id:\\npayload + tag\"];\n"
+"    mint [label=\"Verify, spent set,\\nmint MAC token\"];\n"
+"  }\n"
 "\n"
-"  { rank=same; nav; page; fetch; record; }\n"
-"  { rank=same; cookie; mint; verify; worker; }\n"
+"  { rank=same; nav; page; }\n"
+"  { rank=same; fetch; record; }\n"
+"  { rank=same; verify; mint; }\n"
 "\n"
-"  nav -> page -> fetch -> record;\n"
+"  nav -> page;\n"
+"  page -> fetch;\n"
+"  fetch -> record;\n"
+"  page -> record -> mint [style=invis];\n"
 "  record -> worker [label=\" solve\"];\n"
-"  cookie -> mint -> verify [dir=back];\n"
-"  verify -> worker [dir=back, label=\"nonce or proof\"];\n"
-"  nav -> cookie [dir=back, label=\" session\"];\n"
+"  worker -> verify [label=\" nonce or proof\"];\n"
+"  verify -> mint;\n"
+"  mint -> cookie;\n"
+"  cookie -> nav [taillabel=\"session\", labelangle=-35, "
+"labeldistance=3.2, constraint=false, tailport=w, headport=w, minlen=1, "
+"color=\"#15803d\", fontcolor=\"#15803d\", style=dashed];\n"
 "}"
 msgstr ""
 "digraph round_trip {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.7];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, fontcolor=\"#64748b\"];\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.55, "
+"ranksep=0.26, pad=0.1, fontname=\"Helvetica\", fontsize=10, "
+"fontcolor=\"#172033\"];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.7, height=0.44, group=b, "
+"margin=\"0.12,0.06\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8.5, "
+"fontcolor=\"#475569\", arrowsize=0.65, penwidth=1.1];\n"
 "\n"
-"  nav [label=\"浏览器\\n导航\"];\n"
-"  page [label=\"验证中间页\\n(HTTP 200)\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  fetch [label=\"GET /__sibuna/\\nchallenge.json?need=\"];\n"
-"  record [label=\"无状态 ID：\\n载荷 + 标签\", fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
-"  worker [label=\"Web Worker\\nWASM / JS 证明器\"];\n"
-"  verify [label=\"POST /__sibuna/verify\"];\n"
-"  mint [label=\"验证、已用集合、\\n签发 MAC 令牌\", fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
-"  cookie [label=\"Set-Cookie\\n然后重新加载\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
+"  subgraph cluster_browser {\n"
+"    label=<<b>浏览器</b>>; labeljust=l; style=\"rounded,filled\"; "
+"color=\"#bfdbfe\"; fillcolor=\"#f8fbff\"; margin=12;\n"
+"    nav [label=\"浏览器\\n导航\"];\n"
+"    fetch [label=\"GET /__sibuna/\\nchallenge.json?need=\"];\n"
+"    worker [label=\"Web Worker\\nWASM / JS 证明器\"];\n"
+"    verify [label=\"POST /__sibuna/verify\"];\n"
+"    cookie [label=\"Set-Cookie\\n然后重新加载\"];\n"
+"  }\n"
+"  subgraph cluster_sibuna {\n"
+"    label=<<b>Sibuna</b>>; labeljust=r; style=\"rounded,filled\"; "
+"color=\"#bbf7d0\"; fillcolor=\"#f7fdf9\"; margin=12;\n"
+"    node [color=\"#15803d\", fillcolor=\"#f0fdf4\", group=s];\n"
+"    page [label=\"验证中间页\\n(HTTP 200)\"];\n"
+"    record [label=\"无状态 ID：\\n载荷 + 标签\"];\n"
+"    mint [label=\"验证、已用集合、\\n签发 MAC 令牌\"];\n"
+"  }\n"
 "\n"
-"  { rank=same; nav; page; fetch; record; }\n"
-"  { rank=same; cookie; mint; verify; worker; }\n"
+"  { rank=same; nav; page; }\n"
+"  { rank=same; fetch; record; }\n"
+"  { rank=same; verify; mint; }\n"
 "\n"
-"  nav -> page -> fetch -> record;\n"
+"  nav -> page;\n"
+"  page -> fetch;\n"
+"  fetch -> record;\n"
+"  page -> record -> mint [style=invis];\n"
 "  record -> worker [label=\" 求解\"];\n"
-"  cookie -> mint -> verify [dir=back];\n"
-"  verify -> worker [dir=back, label=\"nonce 或证明\"];\n"
-"  nav -> cookie [dir=back, label=\" 会话\"];\n"
+"  worker -> verify [label=\" nonce 或证明\"];\n"
+"  verify -> mint;\n"
+"  mint -> cookie;\n"
+"  cookie -> nav [taillabel=\"会话\", labelangle=-35, labeldistance=3.2, "
+"constraint=false, tailport=w, headport=w, minlen=1, color=\"#15803d\", "
+"fontcolor=\"#15803d\", style=dashed];\n"
 "}"
 
 #: ../../protocol.rst:14
-msgid "The challenge round trip."
-msgstr "挑战的往返过程。"
+msgid ""
+"The challenge round trip. Steps on the left run in the browser, steps on "
+"the right in Sibuna."
+msgstr "挑战的往返过程。左侧的步骤在浏览器中运行，右侧的步骤在 Sibuna 中运行。"
 
-#: ../../protocol.rst:41
+#: ../../protocol.rst:53
 msgid ""
 "A navigation with no valid session reaches the policy engine and is "
 "classified ``CHALLENGE``. Because the request accepts ``text/html``, the "
@@ -123,7 +178,7 @@ msgstr ""
 "*要求票据*：即这个决策所要求的挑战（算法、工作比特、揭示数）和规则的哈希，用该客户端自己的派生密钥计算带密钥 BLAKE3 "
 "标签加以封装，在一个挑战有效期内有效。"
 
-#: ../../protocol.rst:42
+#: ../../protocol.rst:54
 msgid ""
 "The interstitial fetches ``GET /__sibuna/challenge.json?path=<original "
 "URL>&need=<ticket>``. A valid ticket decides the challenge: the work is "
@@ -146,23 +201,25 @@ msgstr ""
 "``414`` 拒绝，绝不截断；没有规范形式的路径以 ``400`` "
 "拒绝。票据只是建议性的：准入仍然检查会话的工作等级，因此重放或伪造的票据只会让其持有者多付出工作。"
 
-#: ../../protocol.rst:43
+#: ../../protocol.rst:55
 msgid "The response is the challenge record:"
 msgstr "响应是挑战记录："
 
-#: ../../protocol.rst:45
+#: ../../protocol.rst:57
 msgid ""
-"{\"id\":\"AQEND...70 chars\",\"algorithm\":\"posw\",\"difficulty\":13,\"challenges\":16,\"expires_at\":1757241234}"
+"{\"id\":\"AQEND...70 "
+"chars\",\"algorithm\":\"posw\",\"difficulty\":13,\"challenges\":16,\"expires_at\":1757241234}"
 msgstr ""
-"{\"id\":\"AQEND...70 chars\",\"algorithm\":\"posw\",\"difficulty\":13,\"challenges\":16,\"expires_at\":1757241234}"
+"{\"id\":\"AQEND...70 "
+"chars\",\"algorithm\":\"posw\",\"difficulty\":13,\"challenges\":16,\"expires_at\":1757241234}"
 
-#: ../../protocol.rst:49
+#: ../../protocol.rst:61
 msgid ""
 "For ``hashcash``, ``difficulty`` is the bit count and ``challenges`` is "
 "``0``."
 msgstr "对于 ``hashcash``，``difficulty`` 是比特数，``challenges`` 为 ``0``。"
 
-#: ../../protocol.rst:50
+#: ../../protocol.rst:62
 msgid ""
 "A Web Worker solves it with the WebAssembly module, or the JavaScript "
 "prover if WebAssembly is unavailable (Part VII), and posts either"
@@ -170,23 +227,25 @@ msgstr ""
 "一个 Web Worker 用 WebAssembly 模块求解它；如果 WebAssembly 不可用，则使用 JavaScript 证明器（第 "
 "VII 部分）。然后它把以下两者之一"
 
-#: ../../protocol.rst:52
+#: ../../protocol.rst:64
 msgid "{\"challenge_id\":\"...\",\"nonce\":\"90766\"}"
 msgstr "{\"challenge_id\":\"...\",\"nonce\":\"90766\"}"
 
-#: ../../protocol.rst:56
+#: ../../protocol.rst:68
 msgid "or"
 msgstr "或"
 
-#: ../../protocol.rst:58
-msgid "{\"challenge_id\":\"...\",\"proof\":\"<base64url, 32(1 + t(n+1)) bytes>\"}"
-msgstr "{\"challenge_id\":\"...\",\"proof\":\"<base64url, 32(1 + t(n+1)) bytes>\"}"
+#: ../../protocol.rst:70
+msgid ""
+"{\"challenge_id\":\"...\",\"proof\":\"<base64url, 32(1 + t(n+1)) bytes>\"}"
+msgstr ""
+"{\"challenge_id\":\"...\",\"proof\":\"<base64url, 32(1 + t(n+1)) bytes>\"}"
 
-#: ../../protocol.rst:62
+#: ../../protocol.rst:74
 msgid "to ``POST /__sibuna/verify``."
 msgstr "提交到 ``POST /__sibuna/verify``。"
 
-#: ../../protocol.rst:63
+#: ../../protocol.rst:75
 msgid ""
 "On success the server answers ``200 {\"status\":\"ok\"}`` with a "
 "``Set-Cookie`` header, and the page reloads its original location. Every "
@@ -195,11 +254,11 @@ msgstr ""
 "成功时，服务器返回 ``200 {\"status\":\"ok\"}`` 并带上 ``Set-Cookie`` "
 "响应头，页面随后重新加载原来的地址。之后的每个请求都携带这个 Cookie，并在策略评估之前被准入。"
 
-#: ../../protocol.rst:65
+#: ../../protocol.rst:77
 msgid "Why the path travels with the challenge"
 msgstr "为什么路径要随挑战一起传递"
 
-#: ../../protocol.rst:67
+#: ../../protocol.rst:79
 msgid ""
 "The interstitial is served at the protected URL, so the browser knows "
 "where it is. Sending the path lets the server pick the *per-rule* "
@@ -212,22 +271,22 @@ msgstr ""
 "个工作比特的顺序工作量，而博客只要求 16 比特的 Hashcash），并把规则哈希绑定进令牌，再由 ``X-Sibuna-Rule-Hash`` "
 "把它报告给上游。"
 
-#: ../../protocol.rst:69
+#: ../../protocol.rst:81
 msgid "The Stateless Challenge Record"
 msgstr "无状态挑战记录"
 
-#: ../../protocol.rst:74
+#: ../../protocol.rst:86
 msgid ""
 "Read the challenge encoder, understand every field's purpose, and see how "
 "the per-challenge nonce is derived without an entropy syscall on the hot "
 "path."
 msgstr "阅读挑战编码器，理解每个字段的用途，并了解如何在热路径上不通过熵系统调用来派生每个挑战的 nonce。"
 
-#: ../../protocol.rst:76
+#: ../../protocol.rst:88
 msgid "Implementation: ``Coordinator::create_challenge_with_spec``"
 msgstr "实现：``Coordinator::create_challenge_with_spec``"
 
-#: ../../protocol.rst:78
+#: ../../protocol.rst:90
 msgid ""
 "Builds the 36-byte payload, tags it under the challenge key, and "
 "base64url-encodes the 52 bytes into a 70-character identifier. In "
@@ -236,7 +295,7 @@ msgstr ""
 "构建 36 字节的载荷，用挑战密钥为它计算标签，并把这 52 字节进行 base64url 编码，得到 70 字符的标识符。位于 "
 "``crates/challenge/src/coordinator.rs``\\ （crate ``sibuna-challenge``）。"
 
-#: ../../protocol.rst:80
+#: ../../protocol.rst:92
 msgid ""
 "pub fn create_challenge_with_spec(\n"
 "    &self,\n"
@@ -248,7 +307,8 @@ msgid ""
 ") -> Challenge {\n"
 "    self.adaptive.observe(now.saturating_mul(1000));\n"
 "    let effective = ChallengeSpec {\n"
-"        difficulty: spec.difficulty.saturating_add(self.adaptive.bump()),\n"
+"        difficulty: "
+"spec.difficulty.saturating_add(self.adaptive.bump()),\n"
 "        ..spec\n"
 "    };\n"
 "    let fingerprint = self.fingerprint(client_ip, user_agent);\n"
@@ -265,11 +325,13 @@ msgid ""
 "    payload[3] = challenges;\n"
 "    payload[4..12].copy_from_slice(&now.to_le_bytes());\n"
 "    payload[12..20].copy_from_slice(&fingerprint.to_le_bytes());\n"
-"    payload[20..28].copy_from_slice(&self.next_nonce(now, fingerprint).to_le_bytes());\n"
+"    payload[20..28].copy_from_slice(&self.next_nonce(now, "
+"fingerprint).to_le_bytes());\n"
 "    payload[28..36].copy_from_slice(&rule_hash.to_le_bytes());\n"
 "    let mut raw = [0u8; ID_RAW_LEN];\n"
 "    raw[..ID_PAYLOAD_LEN].copy_from_slice(&payload);\n"
-"    raw[ID_PAYLOAD_LEN..].copy_from_slice(&self.challenge_tag(&payload));\n"
+"    "
+"raw[ID_PAYLOAD_LEN..].copy_from_slice(&self.challenge_tag(&payload));\n"
 "\n"
 "    Challenge {\n"
 "        id: encoded::encode(&raw),\n"
@@ -290,7 +352,8 @@ msgstr ""
 ") -> Challenge {\n"
 "    self.adaptive.observe(now.saturating_mul(1000));\n"
 "    let effective = ChallengeSpec {\n"
-"        difficulty: spec.difficulty.saturating_add(self.adaptive.bump()),\n"
+"        difficulty: "
+"spec.difficulty.saturating_add(self.adaptive.bump()),\n"
 "        ..spec\n"
 "    };\n"
 "    let fingerprint = self.fingerprint(client_ip, user_agent);\n"
@@ -307,11 +370,13 @@ msgstr ""
 "    payload[3] = challenges;\n"
 "    payload[4..12].copy_from_slice(&now.to_le_bytes());\n"
 "    payload[12..20].copy_from_slice(&fingerprint.to_le_bytes());\n"
-"    payload[20..28].copy_from_slice(&self.next_nonce(now, fingerprint).to_le_bytes());\n"
+"    payload[20..28].copy_from_slice(&self.next_nonce(now, "
+"fingerprint).to_le_bytes());\n"
 "    payload[28..36].copy_from_slice(&rule_hash.to_le_bytes());\n"
 "    let mut raw = [0u8; ID_RAW_LEN];\n"
 "    raw[..ID_PAYLOAD_LEN].copy_from_slice(&payload);\n"
-"    raw[ID_PAYLOAD_LEN..].copy_from_slice(&self.challenge_tag(&payload));\n"
+"    "
+"raw[ID_PAYLOAD_LEN..].copy_from_slice(&self.challenge_tag(&payload));\n"
 "\n"
 "    Challenge {\n"
 "        id: encoded::encode(&raw),\n"
@@ -322,7 +387,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../protocol.rst:124
+#: ../../protocol.rst:136
 msgid ""
 "The identifier is an ``Encoded<70>``: the text lives in an array of "
 "exactly its length, so issuing a challenge never allocates. "
@@ -335,11 +400,11 @@ msgstr ""
 "把工作比特映射为各层自己的单位，即 Hashcash 比特数（最多 64）或 PoSW 深度（``difficulty - 3``，限制在 4 到 "
 "24 之间）。"
 
-#: ../../protocol.rst:126
+#: ../../protocol.rst:138
 msgid "Three details deserve attention:"
 msgstr "有三个细节值得注意："
 
-#: ../../protocol.rst:128
+#: ../../protocol.rst:140
 msgid ""
 "*Adaptive difficulty.* The coordinator keeps an exponentially weighted "
 "moving average of the challenge issue rate in three atomics. Above a "
@@ -350,7 +415,7 @@ msgstr ""
 "*自适应难度。* 协调器用三个原子变量保存挑战签发速率的指数加权移动平均。速率超过每秒 50 "
 "次挑战的基线后，速率每翻一倍就增加一个工作比特，最多增加六个。洪泛流量需要付出指数级增长的代价，而平静的流量保持基础成本。"
 
-#: ../../protocol.rst:129
+#: ../../protocol.rst:141
 msgid ""
 "*The nonce is a PRF output*, keyed by the challenge key over a counter, "
 "the clock, and the fingerprint. It is unique (counter) and unpredictable "
@@ -361,28 +426,28 @@ msgstr ""
 "*nonce 是 PRF "
 "的输出*，以挑战密钥为密钥，对一个计数器、时钟和指纹计算得出。它是唯一的（来自计数器）且不可预测的（来自密钥），因此对手无法为尚未签发给它的标识符预先计算解答，热路径也从不为获取熵而调用操作系统。"
 
-#: ../../protocol.rst:130
+#: ../../protocol.rst:142
 msgid ""
 "*Difficulty travels inside the tag.* A client cannot lower the difficulty "
 "by editing the record: the tag would fail before any proof is examined."
 msgstr "*难度包含在标签之内。* 客户端无法通过编辑记录来降低难度：在检查任何证明之前，标签校验就会失败。"
 
-#: ../../protocol.rst:132
+#: ../../protocol.rst:144
 msgid "Verification Order and Single Use"
 msgstr "验证顺序与一次性使用"
 
-#: ../../protocol.rst:137
+#: ../../protocol.rst:149
 msgid ""
 "Understand why the cheap checks run before the proof, why the challenge "
 "is marked spent only after the proof is valid, and how two concurrent "
 "submissions of one solution are resolved."
 msgstr "理解为什么低成本的检查要在证明之前执行，为什么只有在证明有效之后才把挑战标记为已用，以及同一个解答的两次并发提交如何解决。"
 
-#: ../../protocol.rst:139
+#: ../../protocol.rst:151
 msgid "Implementation: ``Coordinator::verify_and_mint``"
 msgstr "实现：``Coordinator::verify_and_mint``"
 
-#: ../../protocol.rst:141
+#: ../../protocol.rst:153
 msgid ""
 "Decodes and authenticates the identifier, checks age and client binding, "
 "verifies the proof for the recorded tier, records the tag as spent, and "
@@ -392,7 +457,7 @@ msgstr ""
 "解码并认证标识符，检查时效和客户端绑定，按记录的层验证证明，把标签记为已用，然后签发会话令牌。位于 "
 "``crates/challenge/src/coordinator.rs``\\ （crate ``sibuna-challenge``）。"
 
-#: ../../protocol.rst:143
+#: ../../protocol.rst:155
 msgid ""
 "pub fn verify_and_mint(\n"
 "    &self,\n"
@@ -403,15 +468,18 @@ msgid ""
 "    now: u64,\n"
 ") -> Result<Verified, VerifyError> {\n"
 "    let record = self.decode(challenge_id)?;\n"
-"    let expires_at = record.issued_at.saturating_add(u64::from(self.challenge_ttl));\n"
-"    if now > expires_at || record.issued_at > now.saturating_add(CLOCK_SKEW_SECONDS) {\n"
+"    let expires_at = "
+"record.issued_at.saturating_add(u64::from(self.challenge_ttl));\n"
+"    if now > expires_at || record.issued_at > "
+"now.saturating_add(CLOCK_SKEW_SECONDS) {\n"
 "        return Err(VerifyError::ChallengeExpired);\n"
 "    }\n"
 "    if record.fingerprint != self.fingerprint(client_ip, user_agent) {\n"
 "        return Err(VerifyError::FingerprintMismatch);\n"
 "    }\n"
 "    check_solution(challenge_id, &record, solution)?;\n"
-"    self.spent.mark_spent(&record.tag, expires_at, now).map_err(|error| match error {\n"
+"    self.spent.mark_spent(&record.tag, expires_at, now).map_err(|error| "
+"match error {\n"
 "        SpendError::DoubleSpend => VerifyError::DoubleSpendAttempt,\n"
 "        SpendError::Full => VerifyError::StoreFull,\n"
 "    })?;\n"
@@ -420,7 +488,8 @@ msgid ""
 "        bits: record.algorithm.work_bits(record.difficulty),\n"
 "    };\n"
 "    Ok(Verified {\n"
-"        token: self.mint_token(now, record.rule_hash, record.fingerprint, work),\n"
+"        token: self.mint_token(now, record.rule_hash, record.fingerprint, "
+"work),\n"
 "        algorithm: record.algorithm,\n"
 "        difficulty: record.difficulty,\n"
 "        challenges: record.challenges,\n"
@@ -437,15 +506,18 @@ msgstr ""
 "    now: u64,\n"
 ") -> Result<Verified, VerifyError> {\n"
 "    let record = self.decode(challenge_id)?;\n"
-"    let expires_at = record.issued_at.saturating_add(u64::from(self.challenge_ttl));\n"
-"    if now > expires_at || record.issued_at > now.saturating_add(CLOCK_SKEW_SECONDS) {\n"
+"    let expires_at = "
+"record.issued_at.saturating_add(u64::from(self.challenge_ttl));\n"
+"    if now > expires_at || record.issued_at > "
+"now.saturating_add(CLOCK_SKEW_SECONDS) {\n"
 "        return Err(VerifyError::ChallengeExpired);\n"
 "    }\n"
 "    if record.fingerprint != self.fingerprint(client_ip, user_agent) {\n"
 "        return Err(VerifyError::FingerprintMismatch);\n"
 "    }\n"
 "    check_solution(challenge_id, &record, solution)?;\n"
-"    self.spent.mark_spent(&record.tag, expires_at, now).map_err(|error| match error {\n"
+"    self.spent.mark_spent(&record.tag, expires_at, now).map_err(|error| "
+"match error {\n"
 "        SpendError::DoubleSpend => VerifyError::DoubleSpendAttempt,\n"
 "        SpendError::Full => VerifyError::StoreFull,\n"
 "    })?;\n"
@@ -454,7 +526,8 @@ msgstr ""
 "        bits: record.algorithm.work_bits(record.difficulty),\n"
 "    };\n"
 "    Ok(Verified {\n"
-"        token: self.mint_token(now, record.rule_hash, record.fingerprint, work),\n"
+"        token: self.mint_token(now, record.rule_hash, record.fingerprint, "
+"work),\n"
 "        algorithm: record.algorithm,\n"
 "        difficulty: record.difficulty,\n"
 "        challenges: record.challenges,\n"
@@ -462,7 +535,7 @@ msgstr ""
 "    })\n"
 "}"
 
-#: ../../protocol.rst:179
+#: ../../protocol.rst:191
 msgid ""
 "The order is deliberate. Tag, age, and binding are constant-time checks "
 "that reject garbage before any hashing. A wrong proof must not consume "
@@ -480,7 +553,7 @@ msgstr ""
 "``issued_at > now + 60``\\ （``CLOCK_SKEW_SECONDS`` 为 "
 "60）拒绝由时钟超前一分钟以上的节点签发的记录，否则这类记录会延长挑战的寿命。"
 
-#: ../../protocol.rst:181
+#: ../../protocol.rst:193
 msgid ""
 "Errors surface to the client as ``400`` with an Elm-style diagnostic "
 "(Part X): each ``VerifyError`` converts into "
@@ -494,21 +567,21 @@ msgstr ""
 "SPEND``、``FINGERPRINT MISMATCH``、``WRONG SOLUTION TYPE`` 和 ``MALFORMED "
 "CHALLENGE`` 进行断言。"
 
-#: ../../protocol.rst:183
+#: ../../protocol.rst:195
 msgid "The Session Cookie"
 msgstr "会话 Cookie"
 
-#: ../../protocol.rst:188
+#: ../../protocol.rst:200
 msgid ""
 "Read the keyed-hash token, understand the cookie attributes, and explain "
 "the client binding."
 msgstr "阅读带密钥哈希令牌，理解 Cookie 的各个属性，并解释客户端绑定。"
 
-#: ../../protocol.rst:190
+#: ../../protocol.rst:202
 msgid "Implementation: ``token::mac::mint`` and ``token::mac::verify``"
 msgstr "实现：``token::mac::mint`` 和 ``token::mac::verify``"
 
-#: ../../protocol.rst:192
+#: ../../protocol.rst:204
 msgid ""
 "Serialises the 40-byte payload, appends the first 16 bytes of keyed "
 "BLAKE3 over it, and verifies with a constant-time comparison. In "
@@ -519,7 +592,7 @@ msgstr ""
 "``crates/challenge/src/token/mac.rs``\\ （crate "
 "``sibuna-challenge``）。``Coordinator::verify_cookie`` 用客户端的指纹调用它。"
 
-#: ../../protocol.rst:194
+#: ../../protocol.rst:206
 msgid ""
 "pub fn verify(\n"
 "    key: &[u8; 32],\n"
@@ -531,11 +604,13 @@ msgid ""
 "        return Err(TokenError::InvalidTokenLength);\n"
 "    }\n"
 "    let raw: [u8; RAW_LEN] =\n"
-"        encoded::decode::<RAW_LEN, TOKEN_LEN>(text).ok_or(TokenError::InvalidEncoding)?;\n"
+"        encoded::decode::<RAW_LEN, "
+"TOKEN_LEN>(text).ok_or(TokenError::InvalidEncoding)?;\n"
 "    let (payload, given) = raw.split_at(PAYLOAD_LEN);\n"
 "    let mut bytes = [0u8; PAYLOAD_LEN];\n"
 "    bytes.copy_from_slice(payload);\n"
-"    // Constant time: an early exit would tell a forger how many tag bytes were right.\n"
+"    // Constant time: an early exit would tell a forger how many tag "
+"bytes were right.\n"
 "    if !ct::eq(&tag(key, &bytes), given) {\n"
 "        return Err(TokenError::InvalidTokenSignature);\n"
 "    }\n"
@@ -554,7 +629,8 @@ msgstr ""
 "        return Err(TokenError::InvalidTokenLength);\n"
 "    }\n"
 "    let raw: [u8; RAW_LEN] =\n"
-"        encoded::decode::<RAW_LEN, TOKEN_LEN>(text).ok_or(TokenError::InvalidEncoding)?;\n"
+"        encoded::decode::<RAW_LEN, "
+"TOKEN_LEN>(text).ok_or(TokenError::InvalidEncoding)?;\n"
 "    let (payload, given) = raw.split_at(PAYLOAD_LEN);\n"
 "    let mut bytes = [0u8; PAYLOAD_LEN];\n"
 "    bytes.copy_from_slice(payload);\n"
@@ -567,7 +643,7 @@ msgstr ""
 "    Ok(payload)\n"
 "}"
 
-#: ../../protocol.rst:219
+#: ../../protocol.rst:231
 msgid ""
 "The tag is checked before the payload is parsed: a payload of another "
 "version is refused with ``TokenError::InvalidEncoding`` only once it is "
@@ -576,11 +652,11 @@ msgstr ""
 "标签在解析载荷之前检查：只有在确认载荷真实之后，其他版本的载荷才会以 ``TokenError::InvalidEncoding`` "
 "被拒绝，而伪造的载荷永远到不了解析器。"
 
-#: ../../protocol.rst:221
+#: ../../protocol.rst:233
 msgid "The cookie is emitted as"
 msgstr "Cookie 以如下形式发出："
 
-#: ../../protocol.rst:223
+#: ../../protocol.rst:235
 msgid ""
 "Set-Cookie: __sibuna_token=<75 chars>; Path=/; Max-Age=86400; HttpOnly;\n"
 "    SameSite=Lax[; Secure]"
@@ -588,7 +664,7 @@ msgstr ""
 "Set-Cookie: __sibuna_token=<75 chars>; Path=/; Max-Age=86400; HttpOnly;\n"
 "    SameSite=Lax[; Secure]"
 
-#: ../../protocol.rst:228
+#: ../../protocol.rst:240
 msgid ""
 "``HttpOnly`` keeps it out of page scripts, ``SameSite=Lax`` stops "
 "cross-site replay while allowing top-level navigation, and ``Secure`` is "
@@ -603,17 +679,34 @@ msgstr ""
 "的带密钥指纹，复制到另一台机器上的 Cookie 会以 ``TokenError::TokenBoundAddressMismatch`` "
 "失败；端到端测试“Cookie 与客户端身份绑定”正是检验这条路径。"
 
-#: ../../protocol.rst:230
+#: ../../protocol.rst:242
 msgid ""
-"The payload begins with a version byte and the *work level* the holder paid: the mechanism (Hashcash or PoSW) and the work bits actually solved, including any load-adaptive bump. A session clears a challenge only when its level reaches what the route demands, computed from the rule's difficulty through the same clamping the challenge itself applies. Levels are ordered, not named: a cookie earned at 24 bits also covers every 16-bit route, while a 16-bit cookie presented to a 24-bit route falls through to the stronger interstitial and the new cookie replaces the old one. ``rule_hash`` remains the audit identity of the rule that issued the challenge; it is reported upstream, never used for admission. WAF findings and explicit denials are never cleared by a session. The end-to-end test \"a session earned on a cheaper route does not admit a route that demands more work\" exercises both directions."
+"The payload begins with a version byte and the *work level* the holder "
+"paid: the mechanism (Hashcash or PoSW) and the work bits actually solved, "
+"including any load-adaptive bump. A session clears a challenge only when "
+"its level reaches what the route demands, computed from the rule's "
+"difficulty through the same clamping the challenge itself applies. Levels "
+"are ordered, not named: a cookie earned at 24 bits also covers every "
+"16-bit route, while a 16-bit cookie presented to a 24-bit route falls "
+"through to the stronger interstitial and the new cookie replaces the old "
+"one. ``rule_hash`` remains the audit identity of the rule that issued the "
+"challenge; it is reported upstream, never used for admission. WAF "
+"findings and explicit denials are never cleared by a session. The "
+"end-to-end test \"a session earned on a cheaper route does not admit a "
+"route that demands more work\" exercises both directions."
 msgstr ""
-"载荷以一个版本字节和持有者付出的 *工作等级* 开头：即机制（Hashcash 或 PoSW）以及实际求解的工作比特，包括任何随负载自适应增加的部分。只有当会话的等级达到路由的要求时，会话才能免除挑战；路由的要求由规则的难度经过与挑战本身相同的限幅计算得出。等级是有序的，而不是按名称区分：以 24 比特获得的 Cookie 也覆盖所有 16 比特的路由，而 16 比特的 Cookie 出现在 24 比特的路由上时，会落入要求更高的验证中间页，新的 Cookie 将替换旧的。``rule_hash`` 仍然是签发该挑战的规则的审计标识；它被报告给上游，但从不用于准入。会话绝不会免除 WAF 检出结果和明确的拒绝。端到端测试“在成本较低的路由上获得的会话不能准入要求更多工作的路由”检验了两个方向。"
+"载荷以一个版本字节和持有者付出的 *工作等级* 开头：即机制（Hashcash 或 "
+"PoSW）以及实际求解的工作比特，包括任何随负载自适应增加的部分。只有当会话的等级达到路由的要求时，会话才能免除挑战；路由的要求由规则的难度经过与挑战本身相同的限幅计算得出。等级是有序的，而不是按名称区分：以 "
+"24 比特获得的 Cookie 也覆盖所有 16 比特的路由，而 16 比特的 Cookie 出现在 24 "
+"比特的路由上时，会落入要求更高的验证中间页，新的 Cookie 将替换旧的。``rule_hash`` "
+"仍然是签发该挑战的规则的审计标识；它被报告给上游，但从不用于准入。会话绝不会免除 WAF "
+"检出结果和明确的拒绝。端到端测试“在成本较低的路由上获得的会话不能准入要求更多工作的路由”检验了两个方向。"
 
-#: ../../protocol.rst:232
+#: ../../protocol.rst:244
 msgid "Forwarded addresses"
 msgstr "转发的地址"
 
-#: ../../protocol.rst:235
+#: ../../protocol.rst:247
 msgid ""
 "Behind an ingress the client address arrives in ``X-Forwarded-For``. "
 "Sibuna trusts that header only with ``--trust-forwarded`` (implied in "
@@ -625,11 +718,11 @@ msgstr ""
 "时（forward-auth 模式下默认隐含），Sibuna "
 "才信任这个请求头。直接暴露在互联网上的反向代理必须关闭它，否则任何客户端都可以自己选择绑定和速率限制桶。"
 
-#: ../../protocol.rst:237
+#: ../../protocol.rst:249
 msgid "Exercise 4.1"
 msgstr "练习 4.1"
 
-#: ../../protocol.rst:239
+#: ../../protocol.rst:251
 msgid ""
 "Sketch the sequence of two browsers behind one NAT address with identical "
 "User-Agents. Which checks do they share, which do they not, and what "
@@ -638,11 +731,11 @@ msgstr ""
 "画出位于同一个 NAT 地址之后、User-Agent 相同的两个浏览器的交互序列。它们共享哪些检查，不共享哪些检查？位于该 NAT "
 "之后的攻击者需要什么才能复用另一个浏览器的 Cookie？"
 
-#: ../../protocol.rst:241
+#: ../../protocol.rst:253
 msgid "Explain the invariant"
 msgstr "解释这个不变量"
 
-#: ../../protocol.rst:243
+#: ../../protocol.rst:255
 msgid ""
 "Explain to an operator why the daemon does not \"remember\" outstanding "
 "challenges and why that is a security feature rather than a shortcut."

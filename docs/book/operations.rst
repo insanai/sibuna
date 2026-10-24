@@ -322,25 +322,30 @@ Reverse Proxy
    :alt: A request passes local bans and the rate limit, then inspection and policy. A DENY goes to Deny. An ALLOW goes to the origin or an auth success. A CHALLENGE checks the session MAC: a valid session goes to the origin, a missing or invalid one leads to a new puzzle.
 
    digraph shield_routing {
-     graph [rankdir=LR, bgcolor="transparent", nodesep=0.5, ranksep=0.7];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, fillcolor="#eff6ff", color="#1e40af", fontcolor="#172033"];
-     edge [color="#64748b", fontname="Helvetica", fontsize=9, fontcolor="#64748b"];
+     graph [rankdir=TB, bgcolor="transparent", newrank=true, nodesep=0.35, ranksep=0.38, pad=0.1];
+     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9.5, fontcolor="#172033", color="#1e40af", fillcolor="#eff6ff", penwidth=1.1, width=1.4, height=0.42, margin="0.1,0.05"];
+     edge [color="#64748b", fontname="Helvetica", fontsize=8.5, fontcolor="#475569", arrowsize=0.6, penwidth=1.1];
 
-     request [label="Request"];
-     limits [label="Local bans\nand rate limit"];
-     policy [label="Inspection\nand policy"];
-     deny [label="Deny", fillcolor="#fef2f2", color="#b91c1c"];
-     origin [label="Origin / auth\nsuccess", fillcolor="#f0fdf4", color="#15803d"];
-     session [label="Session MAC\nif challenged", fillcolor="#fffbeb", color="#b45309"];
-     puzzle [label="Issue puzzle", fillcolor="#fffbeb", color="#b45309"];
+     request [label="Request", color="#172033", fillcolor="#ffffff"];
+     limits [label="Local bans\nand rate limit", shape=hexagon, style=filled, margin="0.02,0.04"];
+     policy [label="Inspection\nand policy", shape=hexagon, style=filled, margin="0.02,0.04"];
+     session [label="Session MAC\nif challenged", shape=hexagon, style=filled, color="#b45309", fillcolor="#fffbeb", margin="0.02,0.04"];
+     deny [label="Deny", color="#b91c1c", fillcolor="#fef2f2", penwidth=1.4];
+     origin [label="Origin / auth\nsuccess", color="#15803d", fillcolor="#f0fdf4", penwidth=1.4];
+     puzzle [label="Issue puzzle", color="#b45309", fillcolor="#fffbeb", penwidth=1.4];
+
+     { rank=same; deny; session; }
+     { rank=same; origin; puzzle; }
+     deny -> session [style=invis, minlen=2];
+     origin -> puzzle [style=invis];
 
      request -> limits;
-     limits -> policy [label="within limits"];
-     policy -> deny [label="DENY"];
-     policy -> session [label="CHALLENGE"];
-     session -> origin [label="valid"];
-     session -> puzzle [label="missing / invalid"];
-     policy -> origin [label="ALLOW"];
+     limits -> policy [label=" within limits"];
+     policy -> deny [label="DENY ", color="#b91c1c", fontcolor="#b91c1c", fontname="Helvetica-Bold"];
+     policy -> origin [label=" ALLOW", color="#15803d", fontcolor="#15803d", fontname="Helvetica-Bold"];
+     policy -> session [label=" CHALLENGE", color="#b45309", fontcolor="#b45309", fontname="Helvetica-Bold"];
+     session -> origin [label="valid ", color="#15803d", fontcolor="#15803d"];
+     session -> puzzle [label=" missing / invalid", color="#b45309", fontcolor="#b45309"];
    }
 
 .. code-block:: sh
@@ -563,32 +568,31 @@ Persistent Storage and Clustering
    :alt: Request threads push incidents into an MPSC ring of 512 slots. The storage thread pops them, writes batches through sqlx to the SQLite file or the PostgreSQL database holding policies, ip_reputation, security_incidents and the full-text index. When the policy revision changes it rebuilds the engine and publishes it as an Arc, which the request threads read. Other cluster nodes share the PostgreSQL database and hear NOTIFY sibuna_policy.
 
    digraph storage_architecture {
-     graph [rankdir=LR, bgcolor="transparent", nodesep=0.5, ranksep=0.7];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, fillcolor="#eff6ff", color="#1e40af", fontcolor="#172033"];
-     edge [color="#64748b", fontname="Helvetica", fontsize=9, fontcolor="#64748b"];
+     graph [rankdir=TB, bgcolor="transparent", newrank=true, nodesep=0.8, ranksep=0.42, pad=0.1];
+     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9, fontcolor="#172033", color="#1e40af", fillcolor="#eff6ff", penwidth=1.1, width=1.7, height=0.45, margin="0.1,0.05"];
+     edge [color="#64748b", fontname="Helvetica", fontsize=8, fontcolor="#475569", arrowsize=0.6, penwidth=1.7];
 
-     workers [label="Request threads\n(hot path)"];
-     ring [label="MPSC ring\n512 incidents", fillcolor="#fffbeb", color="#b45309"];
+     workers [label="Request threads\n(hot path)", color="#172033", fillcolor="#ffffff", penwidth=1.6, width=3.0];
+     ring [label="MPSC ring\n512 incidents", color="#b45309", fillcolor="#fffbeb"];
+     publish [label="EngineSlot::publish\nArc swap", color="#b45309", fillcolor="#fffbeb"];
      thread [label="Storage thread (tokio)\ndrain + poll"];
-     db [label="sqlx: SQLite file\nor PostgreSQL", fillcolor="#f0fdf4", color="#15803d"];
-     tables [label="policies, ip_reputation,\nsecurity_incidents,\nfull-text index", fillcolor="#f0fdf4", color="#15803d"];
      rebuild [label="Rebuild engine\noff the hot path"];
-     publish [label="EngineSlot::publish\nArc swap", fillcolor="#fffbeb", color="#b45309"];
-     others [label="Other cluster\nnodes"];
+     db [label="sqlx: SQLite file\nor PostgreSQL", shape=cylinder, style=filled, color="#15803d", fillcolor="#f0fdf4", height=0.62];
+     tables [label="policies, ip_reputation,\nsecurity_incidents,\nfull-text index", color="#15803d", fillcolor="#f0fdf4"];
+     others [label="Other cluster\nnodes", color="#64748b", fillcolor="#ffffff", style="rounded,filled,dashed", width=1.7];
 
-     { rank=same; workers; others; }
      { rank=same; ring; publish; }
      { rank=same; thread; rebuild; }
      { rank=same; db; tables; }
 
-     workers -> ring [label="push"];
-     ring -> thread [label="pop"];
-     thread -> db [label="batched SQL"];
+     workers -> ring [label=" push"];
+     ring -> thread [label=" pop"];
+     thread -> db [label=" batched SQL"];
      db -> tables;
-     tables -> rebuild [label="revision changed?"];
-     rebuild -> publish;
-     publish -> workers [label="new rules"];
-     db -> others [dir=both, label="shared PostgreSQL,\nNOTIFY sibuna_policy"];
+     rebuild -> tables [dir=back, label=" revision changed?"];
+     publish -> rebuild [dir=back];
+     workers -> publish [dir=back, label=" new rules"];
+     db -> others [dir=both, style=dashed, label=" shared PostgreSQL,\n NOTIFY sibuna_policy"];
    }
 
 ``--data-dir /var/lib/sibuna`` opens the SQLite file ``/var/lib/sibuna/sibuna.db`` (WAL mode, ``synchronous=NORMAL``, a busy timeout) and starts the storage thread. ``--database-url`` (or ``--database-url-file``) connects to a PostgreSQL database instead. The storage thread owns a single-threaded tokio runtime and a small connection pool; it is the only place that runs SQL. On start, whenever the policy revision changes (a write to ``policies``, ``ip_reputation`` or ``policy_inspection``), and when a reputation entry expires, the thread rebuilds the engine from the policy file plus the database and publishes it; requests never wait on SQL. A rebuild reads the revision before and after loading, and discards its candidate if a writer committed in between.

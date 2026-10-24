@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-10-24 12:05+0000\n"
 "PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,8 +36,8 @@ msgstr ""
 msgid "The Challenge Round Trip"
 msgstr "دورة التحدي"
 
-#: ../../protocol.rst:9 ../../protocol.rst:72 ../../protocol.rst:135
-#: ../../protocol.rst:186
+#: ../../protocol.rst:9 ../../protocol.rst:84 ../../protocol.rst:147
+#: ../../protocol.rst:198
 msgid "Objectives"
 msgstr "الأهداف"
 
@@ -70,72 +70,106 @@ msgstr ""
 #: ../../protocol.rst:14
 msgid ""
 "digraph round_trip {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.7];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.55, "
+"ranksep=0.26, pad=0.1, fontname=\"Helvetica\", fontsize=10, "
 "fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.7, height=0.44, group=b, "
+"margin=\"0.12,0.06\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8.5, "
+"fontcolor=\"#475569\", arrowsize=0.65, penwidth=1.1];\n"
 "\n"
-"  nav [label=\"Browser\\nnavigation\"];\n"
-"  page [label=\"Interstitial\\n(HTTP 200)\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
-"  fetch [label=\"GET /__sibuna/\\nchallenge.json?need=\"];\n"
-"  record [label=\"Stateless id:\\npayload + tag\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  worker [label=\"Web Worker\\nWASM / JS prover\"];\n"
-"  verify [label=\"POST /__sibuna/verify\"];\n"
-"  mint [label=\"Verify, spent set,\\nmint MAC token\", "
-"fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
-"  cookie [label=\"Set-Cookie\\nthen reload\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
+"  subgraph cluster_browser {\n"
+"    label=<<b>Browser</b>>; labeljust=l; style=\"rounded,filled\"; "
+"color=\"#bfdbfe\"; fillcolor=\"#f8fbff\"; margin=12;\n"
+"    nav [label=\"Browser\\nnavigation\"];\n"
+"    fetch [label=\"GET /__sibuna/\\nchallenge.json?need=\"];\n"
+"    worker [label=\"Web Worker\\nWASM / JS prover\"];\n"
+"    verify [label=\"POST /__sibuna/verify\"];\n"
+"    cookie [label=\"Set-Cookie\\nthen reload\"];\n"
+"  }\n"
+"  subgraph cluster_sibuna {\n"
+"    label=<<b>Sibuna</b>>; labeljust=r; style=\"rounded,filled\"; "
+"color=\"#bbf7d0\"; fillcolor=\"#f7fdf9\"; margin=12;\n"
+"    node [color=\"#15803d\", fillcolor=\"#f0fdf4\", group=s];\n"
+"    page [label=\"Interstitial\\n(HTTP 200)\"];\n"
+"    record [label=\"Stateless id:\\npayload + tag\"];\n"
+"    mint [label=\"Verify, spent set,\\nmint MAC token\"];\n"
+"  }\n"
 "\n"
-"  { rank=same; nav; page; fetch; record; }\n"
-"  { rank=same; cookie; mint; verify; worker; }\n"
+"  { rank=same; nav; page; }\n"
+"  { rank=same; fetch; record; }\n"
+"  { rank=same; verify; mint; }\n"
 "\n"
-"  nav -> page -> fetch -> record;\n"
+"  nav -> page;\n"
+"  page -> fetch;\n"
+"  fetch -> record;\n"
+"  page -> record -> mint [style=invis];\n"
 "  record -> worker [label=\" solve\"];\n"
-"  cookie -> mint -> verify [dir=back];\n"
-"  verify -> worker [dir=back, label=\"nonce or proof\"];\n"
-"  nav -> cookie [dir=back, label=\" session\"];\n"
+"  worker -> verify [label=\" nonce or proof\"];\n"
+"  verify -> mint;\n"
+"  mint -> cookie;\n"
+"  cookie -> nav [taillabel=\"session\", labelangle=-35, "
+"labeldistance=3.2, constraint=false, tailport=w, headport=w, minlen=1, "
+"color=\"#15803d\", fontcolor=\"#15803d\", style=dashed];\n"
 "}"
 msgstr ""
 "digraph round_trip {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.5, ranksep=0.7];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Noto Sans "
-"Arabic\", fontsize=10, fillcolor=\"#eff6ff\", color=\"#1e40af\", "
+"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.55, "
+"ranksep=0.26, pad=0.1, fontname=\"Helvetica\", fontsize=10, "
 "fontcolor=\"#172033\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Noto Sans Arabic\", fontsize=9, "
-"fontcolor=\"#64748b\"];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, width=1.7, height=0.44, group=b, "
+"margin=\"0.12,0.06\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8.5, "
+"fontcolor=\"#475569\", arrowsize=0.65, penwidth=1.1];\n"
 "\n"
-"  nav [label=\"تنقل\\nالمتصفح\"];\n"
-"  page [label=\"الصفحة الوسيطة\\n(HTTP 200)\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
-"  fetch [label=\"GET /__sibuna/\\nchallenge.json?need=\"];\n"
-"  record [label=\"معرّف عديم الحالة\\nحمولة + وسم\", "
-"fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
-"  worker [label=\"Web Worker\\nمُبرهِن\\nWASM / JS\"];\n"
-"  verify [label=\"POST /__sibuna/verify\"];\n"
-"  mint [label=\"التحقق والحلول المُنفَقة\\nوإصدار رمز\\nMAC\", "
-"fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
-"  cookie [label=\"Set-Cookie\\nثم إعادة التحميل\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
+"  subgraph cluster_browser {\n"
+"    label=<<b>المتصفح</b>>; labeljust=l; style=\"rounded,filled\"; "
+"color=\"#bfdbfe\"; fillcolor=\"#f8fbff\"; margin=12;\n"
+"    nav [label=\"تنقل\\nالمتصفح\"];\n"
+"    fetch [label=\"GET /__sibuna/\\nchallenge.json?need=\"];\n"
+"    worker [label=\"Web Worker\\nمُبرهِن\\nWASM / JS\"];\n"
+"    verify [label=\"POST /__sibuna/verify\"];\n"
+"    cookie [label=\"Set-Cookie\\nثم إعادة التحميل\"];\n"
+"  }\n"
+"  subgraph cluster_sibuna {\n"
+"    label=<<b>Sibuna</b>>; labeljust=r; style=\"rounded,filled\"; "
+"color=\"#bbf7d0\"; fillcolor=\"#f7fdf9\"; margin=12;\n"
+"    node [color=\"#15803d\", fillcolor=\"#f0fdf4\", group=s];\n"
+"    page [label=\"الصفحة الوسيطة\\n(HTTP 200)\"];\n"
+"    record [label=\"معرّف عديم الحالة\\nحمولة + وسم\"];\n"
+"    mint [label=\"التحقق والحلول المُنفَقة\\nوإصدار رمز\\nMAC\"];\n"
+"  }\n"
 "\n"
-"  { rank=same; nav; page; fetch; record; }\n"
-"  { rank=same; cookie; mint; verify; worker; }\n"
+"  { rank=same; nav; page; }\n"
+"  { rank=same; fetch; record; }\n"
+"  { rank=same; verify; mint; }\n"
 "\n"
-"  nav -> page -> fetch -> record;\n"
+"  nav -> page;\n"
+"  page -> fetch;\n"
+"  fetch -> record;\n"
+"  page -> record -> mint [style=invis];\n"
 "  record -> worker [label=\" الحل\"];\n"
-"  cookie -> mint -> verify [dir=back];\n"
-"  verify -> worker [dir=back, label=\"قيمة مؤقتة أو إثبات\"];\n"
-"  nav -> cookie [dir=back, label=\" جلسة\"];\n"
+"  worker -> verify [label=\" قيمة مؤقتة أو إثبات\"];\n"
+"  verify -> mint;\n"
+"  mint -> cookie;\n"
+"  cookie -> nav [taillabel=\"جلسة\", labelangle=-35, labeldistance=3.2, "
+"constraint=false, tailport=w, headport=w, minlen=1, color=\"#15803d\", "
+"fontcolor=\"#15803d\", style=dashed];\n"
 "}"
 
 #: ../../protocol.rst:14
-msgid "The challenge round trip."
-msgstr "دورة التحدي."
+msgid ""
+"The challenge round trip. Steps on the left run in the browser, steps on "
+"the right in Sibuna."
+msgstr ""
+"دورة التحدي. تجري الخطوات التي على اليسار في المتصفح، والتي على اليمين في "
+"Sibuna."
 
-#: ../../protocol.rst:41
+#: ../../protocol.rst:53
 msgid ""
 "A navigation with no valid session reaches the policy engine and is "
 "classified ``CHALLENGE``. Because the request accepts ``text/html``, the "
@@ -156,7 +190,7 @@ msgstr ""
 "مختومة لهذا العميل بوسم BLAKE3 ذي مفتاح بمفتاحها المشتق الخاص، وصالحة مدة "
 "عمر تحدٍّ واحد."
 
-#: ../../protocol.rst:42
+#: ../../protocol.rst:54
 msgid ""
 "The interstitial fetches ``GET /__sibuna/challenge.json?path=<original "
 "URL>&need=<ticket>``. A valid ticket decides the challenge: the work is "
@@ -183,11 +217,11 @@ msgstr ""
 "له صيغة قياسية بالحالة ``400``. والتذكرة استرشادية: يظل القبول يفحص مستوى "
 "عمل الجلسة، فلا تكلف التذكرة المعادة أو المزورة حاملها إلا عملًا."
 
-#: ../../protocol.rst:43
+#: ../../protocol.rst:55
 msgid "The response is the challenge record:"
 msgstr "الاستجابة هي سجل التحدي:"
 
-#: ../../protocol.rst:45
+#: ../../protocol.rst:57
 msgid ""
 "{\"id\":\"AQEND...70 "
 "chars\",\"algorithm\":\"posw\",\"difficulty\":13,\"challenges\":16,\"expires_at\":1757241234}"
@@ -195,7 +229,7 @@ msgstr ""
 "{\"id\":\"AQEND...70 "
 "chars\",\"algorithm\":\"posw\",\"difficulty\":13,\"challenges\":16,\"expires_at\":1757241234}"
 
-#: ../../protocol.rst:49
+#: ../../protocol.rst:61
 msgid ""
 "For ``hashcash``, ``difficulty`` is the bit count and ``challenges`` is "
 "``0``."
@@ -203,7 +237,7 @@ msgstr ""
 "بالنسبة إلى ``hashcash``، يمثل ``difficulty`` عدد البتات، ويساوي "
 "``challenges`` القيمة ``0``."
 
-#: ../../protocol.rst:50
+#: ../../protocol.rst:62
 msgid ""
 "A Web Worker solves it with the WebAssembly module, or the JavaScript "
 "prover if WebAssembly is unavailable (Part VII), and posts either"
@@ -211,25 +245,25 @@ msgstr ""
 "يحله Web Worker بوحدة WebAssembly، أو بمُبرهِن JavaScript إذا لم تتوفر "
 "WebAssembly (الجزء السابع)، ويرسل إما"
 
-#: ../../protocol.rst:52
+#: ../../protocol.rst:64
 msgid "{\"challenge_id\":\"...\",\"nonce\":\"90766\"}"
 msgstr "{\"challenge_id\":\"...\",\"nonce\":\"90766\"}"
 
-#: ../../protocol.rst:56
+#: ../../protocol.rst:68
 msgid "or"
 msgstr "أو"
 
-#: ../../protocol.rst:58
+#: ../../protocol.rst:70
 msgid ""
 "{\"challenge_id\":\"...\",\"proof\":\"<base64url, 32(1 + t(n+1)) bytes>\"}"
 msgstr ""
 "{\"challenge_id\":\"...\",\"proof\":\"<base64url, 32(1 + t(n+1)) bytes>\"}"
 
-#: ../../protocol.rst:62
+#: ../../protocol.rst:74
 msgid "to ``POST /__sibuna/verify``."
 msgstr "إلى ``POST /__sibuna/verify``."
 
-#: ../../protocol.rst:63
+#: ../../protocol.rst:75
 msgid ""
 "On success the server answers ``200 {\"status\":\"ok\"}`` with a "
 "``Set-Cookie`` header, and the page reloads its original location. Every "
@@ -239,11 +273,11 @@ msgstr ""
 "``Set-Cookie``، وتعيد الصفحة تحميل موقعها الأصلي. يحمل كل طلب لاحق ملف "
 "تعريف الارتباط، ويُقبل قبل تقييم السياسة."
 
-#: ../../protocol.rst:65
+#: ../../protocol.rst:77
 msgid "Why the path travels with the challenge"
 msgstr "لماذا يرافق المسار التحدي"
 
-#: ../../protocol.rst:67
+#: ../../protocol.rst:79
 msgid ""
 "The interstitial is served at the protected URL, so the browser knows "
 "where it is. Sending the path lets the server pick the *per-rule* "
@@ -258,11 +292,11 @@ msgstr ""
 "Hashcash)، ويربط تجزئة القاعدة بالرمز، حيث تنقلها ``X-Sibuna-Rule-Hash`` "
 "إلى الخادم الأصلي."
 
-#: ../../protocol.rst:69
+#: ../../protocol.rst:81
 msgid "The Stateless Challenge Record"
 msgstr "سجل التحدي عديم الحالة"
 
-#: ../../protocol.rst:74
+#: ../../protocol.rst:86
 msgid ""
 "Read the challenge encoder, understand every field's purpose, and see how "
 "the per-challenge nonce is derived without an entropy syscall on the hot "
@@ -271,11 +305,11 @@ msgstr ""
 "اقرأ مرمِّز التحدي، وافهم غرض كل حقل، وانظر كيف تُشتق القيمة المؤقتة لكل "
 "تحدٍّ من دون استدعاء نظام لجلب العشوائية في المسار الساخن."
 
-#: ../../protocol.rst:76
+#: ../../protocol.rst:88
 msgid "Implementation: ``Coordinator::create_challenge_with_spec``"
 msgstr "التنفيذ: ``Coordinator::create_challenge_with_spec``"
 
-#: ../../protocol.rst:78
+#: ../../protocol.rst:90
 msgid ""
 "Builds the 36-byte payload, tags it under the challenge key, and "
 "base64url-encodes the 52 bytes into a 70-character identifier. In "
@@ -285,7 +319,7 @@ msgstr ""
 "52 بترميز base64url إلى معرف من 70 محرفًا. في "
 "``crates/challenge/src/coordinator.rs`` (الحزمة ``sibuna-challenge``)."
 
-#: ../../protocol.rst:80
+#: ../../protocol.rst:92
 msgid ""
 "pub fn create_challenge_with_spec(\n"
 "    &self,\n"
@@ -377,7 +411,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../protocol.rst:124
+#: ../../protocol.rst:136
 msgid ""
 "The identifier is an ``Encoded<70>``: the text lives in an array of "
 "exactly its length, so issuing a challenge never allocates. "
@@ -390,11 +424,11 @@ msgstr ""
 "العمل إلى وحدة المستوى نفسه: بتات Hashcash (64 على الأكثر)، أو عمق PoSW "
 "(``difficulty - 3``، محصورًا بين 4 و24)."
 
-#: ../../protocol.rst:126
+#: ../../protocol.rst:138
 msgid "Three details deserve attention:"
 msgstr "تستحق ثلاثة تفاصيل الانتباه:"
 
-#: ../../protocol.rst:128
+#: ../../protocol.rst:140
 msgid ""
 "*Adaptive difficulty.* The coordinator keeps an exponentially weighted "
 "moving average of the challenge issue rate in three atomics. Above a "
@@ -407,7 +441,7 @@ msgstr ""
 "مضاعفة للمعدل بت عمل واحدًا، بحد أقصى ستة. يدفع الإغراق تكلفة تزداد "
 "أسيًا، بينما تحتفظ الحركة الهادئة بالتكلفة الأساسية."
 
-#: ../../protocol.rst:129
+#: ../../protocol.rst:141
 msgid ""
 "*The nonce is a PRF output*, keyed by the challenge key over a counter, "
 "the clock, and the fingerprint. It is unique (counter) and unpredictable "
@@ -420,7 +454,7 @@ msgstr ""
 "الخصم حساب حلول مسبقًا لمعرفات لم تُصدر له، ولا يستدعي المسار الساخن نظام "
 "التشغيل أبدًا للحصول على العشوائية."
 
-#: ../../protocol.rst:130
+#: ../../protocol.rst:142
 msgid ""
 "*Difficulty travels inside the tag.* A client cannot lower the difficulty "
 "by editing the record: the tag would fail before any proof is examined."
@@ -428,11 +462,11 @@ msgstr ""
 "*الوسم يغطي الصعوبة.* لا يستطيع العميل خفض الصعوبة بتعديل السجل: فسيفشل "
 "الوسم قبل فحص أي إثبات."
 
-#: ../../protocol.rst:132
+#: ../../protocol.rst:144
 msgid "Verification Order and Single Use"
 msgstr "ترتيب التحقق والاستخدام الواحد"
 
-#: ../../protocol.rst:137
+#: ../../protocol.rst:149
 msgid ""
 "Understand why the cheap checks run before the proof, why the challenge "
 "is marked spent only after the proof is valid, and how two concurrent "
@@ -441,11 +475,11 @@ msgstr ""
 "افهم لماذا تسبق الفحوص الرخيصة الإثبات، ولماذا لا يُسجَّل التحدي مُنفَقًا "
 "إلا بعد ثبوت صلاحية الإثبات، وكيف يُحسم تقديمان متزامنان للحل نفسه."
 
-#: ../../protocol.rst:139
+#: ../../protocol.rst:151
 msgid "Implementation: ``Coordinator::verify_and_mint``"
 msgstr "التنفيذ: ``Coordinator::verify_and_mint``"
 
-#: ../../protocol.rst:141
+#: ../../protocol.rst:153
 msgid ""
 "Decodes and authenticates the identifier, checks age and client binding, "
 "verifies the proof for the recorded tier, records the tag as spent, and "
@@ -456,7 +490,7 @@ msgstr ""
 "الإثبات للمستوى المسجل، ويسجل الوسم مُنفَقًا، ويصدر رمز الجلسة. في "
 "``crates/challenge/src/coordinator.rs`` (الحزمة ``sibuna-challenge``)."
 
-#: ../../protocol.rst:143
+#: ../../protocol.rst:155
 msgid ""
 "pub fn verify_and_mint(\n"
 "    &self,\n"
@@ -534,7 +568,7 @@ msgstr ""
 "    })\n"
 "}"
 
-#: ../../protocol.rst:179
+#: ../../protocol.rst:191
 msgid ""
 "The order is deliberate. Tag, age, and binding are constant-time checks "
 "that reject garbage before any hashing. A wrong proof must not consume "
@@ -555,7 +589,7 @@ msgstr ""
 "(قيمة ``CLOCK_SKEW_SECONDS`` هي 60) السجلات الصادرة عن عقدة تتقدم ساعتها "
 "بأكثر من دقيقة، وإلا لأطالت هذه السجلات عمر التحدي."
 
-#: ../../protocol.rst:181
+#: ../../protocol.rst:193
 msgid ""
 "Errors surface to the client as ``400`` with an Elm-style diagnostic "
 "(Part X): each ``VerifyError`` converts into "
@@ -570,11 +604,11 @@ msgstr ""
 "SPEND`` و\\ ``FINGERPRINT MISMATCH`` و\\ ``WRONG SOLUTION TYPE`` و\\ "
 "``MALFORMED CHALLENGE`` في جسم الاستجابة."
 
-#: ../../protocol.rst:183
+#: ../../protocol.rst:195
 msgid "The Session Cookie"
 msgstr "ملف تعريف ارتباط الجلسة"
 
-#: ../../protocol.rst:188
+#: ../../protocol.rst:200
 msgid ""
 "Read the keyed-hash token, understand the cookie attributes, and explain "
 "the client binding."
@@ -582,11 +616,11 @@ msgstr ""
 "اقرأ الرمز القائم على التجزئة ذات المفتاح، وافهم سمات ملف تعريف الارتباط، "
 "واشرح الارتباط بالعميل."
 
-#: ../../protocol.rst:190
+#: ../../protocol.rst:202
 msgid "Implementation: ``token::mac::mint`` and ``token::mac::verify``"
 msgstr "التنفيذ: ``token::mac::mint`` و\\ ``token::mac::verify``"
 
-#: ../../protocol.rst:192
+#: ../../protocol.rst:204
 msgid ""
 "Serialises the 40-byte payload, appends the first 16 bytes of keyed "
 "BLAKE3 over it, and verifies with a constant-time comparison. In "
@@ -598,7 +632,7 @@ msgstr ""
 "``crates/challenge/src/token/mac.rs`` (الحزمة ``sibuna-challenge``). "
 "تستدعيه ``Coordinator::verify_cookie`` ببصمة العميل."
 
-#: ../../protocol.rst:194
+#: ../../protocol.rst:206
 msgid ""
 "pub fn verify(\n"
 "    key: &[u8; 32],\n"
@@ -649,7 +683,7 @@ msgstr ""
 "    Ok(payload)\n"
 "}"
 
-#: ../../protocol.rst:219
+#: ../../protocol.rst:231
 msgid ""
 "The tag is checked before the payload is parsed: a payload of another "
 "version is refused with ``TokenError::InvalidEncoding`` only once it is "
@@ -659,11 +693,11 @@ msgstr ""
 "``TokenError::InvalidEncoding`` إلا بعد التأكد من أصالتها، ولا تصل "
 "الحمولة المزورة إلى المحلل أبدًا."
 
-#: ../../protocol.rst:221
+#: ../../protocol.rst:233
 msgid "The cookie is emitted as"
 msgstr "يُصدر ملف تعريف الارتباط على النحو التالي"
 
-#: ../../protocol.rst:223
+#: ../../protocol.rst:235
 msgid ""
 "Set-Cookie: __sibuna_token=<75 chars>; Path=/; Max-Age=86400; HttpOnly;\n"
 "    SameSite=Lax[; Secure]"
@@ -671,7 +705,7 @@ msgstr ""
 "Set-Cookie: __sibuna_token=<75 chars>; Path=/; Max-Age=86400; HttpOnly;\n"
 "    SameSite=Lax[; Secure]"
 
-#: ../../protocol.rst:228
+#: ../../protocol.rst:240
 msgid ""
 "``HttpOnly`` keeps it out of page scripts, ``SameSite=Lax`` stops "
 "cross-site replay while allowing top-level navigation, and ``Secure`` is "
@@ -689,7 +723,7 @@ msgstr ""
 "``TokenError::TokenBoundAddressMismatch``؛ ويختبر اختبار الطرف إلى الطرف "
 "\"the cookie is bound to the client identity\" هذا المسار تحديدًا."
 
-#: ../../protocol.rst:230
+#: ../../protocol.rst:242
 msgid ""
 "The payload begins with a version byte and the *work level* the holder "
 "paid: the mechanism (Hashcash or PoSW) and the work bits actually solved, "
@@ -718,11 +752,11 @@ msgstr ""
 "cheaper route does not admit a route that demands more work\" الاتجاهين "
 "كليهما."
 
-#: ../../protocol.rst:232
+#: ../../protocol.rst:244
 msgid "Forwarded addresses"
 msgstr "العناوين الممررة"
 
-#: ../../protocol.rst:235
+#: ../../protocol.rst:247
 msgid ""
 "Behind an ingress the client address arrives in ``X-Forwarded-For``. "
 "Sibuna trusts that header only with ``--trust-forwarded`` (implied in "
@@ -735,11 +769,11 @@ msgstr ""
 "forward-auth). يجب أن يبقيه الوكيل العكسي المكشوف مباشرة للإنترنت معطلًا، "
 "وإلا استطاع أي عميل اختيار ارتباطه ودلو حد المعدل الخاص به."
 
-#: ../../protocol.rst:237
+#: ../../protocol.rst:249
 msgid "Exercise 4.1"
 msgstr "تمرين 4.1"
 
-#: ../../protocol.rst:239
+#: ../../protocol.rst:251
 msgid ""
 "Sketch the sequence of two browsers behind one NAT address with identical "
 "User-Agents. Which checks do they share, which do they not, and what "
@@ -749,11 +783,11 @@ msgstr ""
 "التي يشتركان فيها، وما التي لا يشتركان فيها، وماذا يحتاج مهاجم على ذلك "
 "NAT لإعادة استخدام ملف تعريف ارتباط المتصفح الآخر؟"
 
-#: ../../protocol.rst:241
+#: ../../protocol.rst:253
 msgid "Explain the invariant"
 msgstr "اشرح اللامتغير"
 
-#: ../../protocol.rst:243
+#: ../../protocol.rst:255
 msgid ""
 "Explain to an operator why the daemon does not \"remember\" outstanding "
 "challenges and why that is a security feature rather than a shortcut."
