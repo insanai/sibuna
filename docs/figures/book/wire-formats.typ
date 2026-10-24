@@ -11,12 +11,12 @@
 #let challenge = (
   ("ver", 1, "header"), ("alg", 1, "header"), ("diff", 1, "header"), ("t", 1, "header"),
   ("issued_at", 8, "payload"), ("fingerprint", 8, "payload"), ("nonce", 8, "payload"),
-  ("rule_hash", 8, "payload"), ("BLAKE3 tag", 16, "tag"),
+  ("rule_hash", 8, "payload"), ("tag", 16, "tag"),
 )
 #let session = (
   ("ver", 1, "header"), ("alg", 1, "header"), ("bits", 1, "header"), ("res", 5, "header"),
   ("timestamp", 8, "payload"), ("expiry", 8, "payload"), ("rule_hash", 8, "payload"),
-  ("fingerprint", 8, "payload"), ("BLAKE3 tag", 16, "tag"),
+  ("fingerprint", 8, "payload"), ("tag", 16, "tag"),
 )
 
 #let colours = (
@@ -31,7 +31,9 @@
 #let record(y, title, fields, characters) = {
   import cetz.draw: *
   let height = 0.78
-  content((0, y + 1.4), anchor: "south-west", text(weight: "bold", title))
+  let total = fields.map(field => width(field.at(1))).sum()
+  content((start-x(0, total), y + 1.4), anchor: start-anchor("south"),
+    text(weight: "bold", title))
   let x = 0
   let offset = 0
   let payload-end = 0
@@ -39,7 +41,11 @@
     let (paper, edge) = colours.at(kind)
     let dx = width(bytes)
     rect((x, y), (x + dx, y + height), fill: paper, stroke: 0.7pt + edge)
-    content((x + dx / 2, y + height / 2), text(font: mono-fonts, size: 7.4pt, name))
+    // The tag is named in words; the other fields by their names in the code.
+    let label = if kind == "tag" { text(size: 8pt, w.tag-field) } else {
+      text(size: 8pt, code(name))
+    }
+    content((x + dx / 2, y + height / 2), label)
     content((x, y + height + 0.16), anchor: "south", text(size: 6.5pt, fill: muted, str(offset)))
     if kind != "tag" { payload-end = x + dx }
     x += dx
@@ -51,8 +57,8 @@
   let brace(from, to, label, paint) = {
     cetz.decorations.flat-brace((to, y - 0.1), (from, y - 0.1), amplitude: 0.22,
       stroke: 0.7pt + paint)
-    content(((from + to) / 2, y - 0.42), anchor: "north",
-      text(size: 8pt, fill: paint.darken(10%), label))
+    content(((from + to) / 2, y - 0.42), anchor: "north", box(width: (to - from) * 1cm,
+      align(center, text(size: 8pt, fill: paint.darken(10%), label))))
   }
   brace(0, payload-end, phrase(w.payload, (n: str(payload-bytes))), blue)
   brace(payload-end, x, phrase(w.tag, (n: "16")), amber)

@@ -51,9 +51,9 @@
   let bracket(from, to, label, option, paint) = {
     let (a, b, top) = (x(from), x(to) + size, y(from) - 0.4)
     line((a, top), (a, top - 0.12), (b, top - 0.12), (b, top), stroke: 0.8pt + paint)
-    content(((a + b) / 2, top - 0.28), anchor: "north", box(width: (b - a + 0.3) * 1cm,
+    content(((a + b) / 2, top - 0.28), anchor: "north", box(width: calc.max(b - a + 0.3, 2.0) * 1cm,
       align(center, text(size: 8pt, fill: paint.darken(10%), label) + linebreak()
-        + text(font: mono-fonts, size: 7pt, fill: paint.darken(10%), option))))
+        + text(size: 7pt, fill: paint.darken(10%), code(option)))))
   }
   bracket(0, 3, w.daemons, "--cpus 0-3", blue)
   bracket(4, 4, w.primitive, "--cpu 4", amber)

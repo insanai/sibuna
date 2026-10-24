@@ -17,6 +17,7 @@ challenge = "Challenge identifier"
 session = "Session token"
 payload = "{n}-byte payload"
 tag = "{n}-byte keyed tag"
+tag-field = "BLAKE3 tag"
 total = "{bytes} bytes in all, sent as {characters} URL-safe base64 characters"
 
 [open-loop]

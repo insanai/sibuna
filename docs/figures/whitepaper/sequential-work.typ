@@ -13,7 +13,8 @@
   import cetz.draw: *
   rect((x, y - height), (x + width, y), radius: 0.18, fill: paper,
     stroke: 0.7pt + paint.lighten(45%))
-  content((x + 0.3, y - 0.22), anchor: "north-west", text(size: 8.5pt, weight: "bold",
+  content((start-x(x + 0.3, x + width - 0.3), y - 0.22), anchor: start-anchor("north"),
+    text(size: 8.5pt, weight: "bold",
     fill: paint.darken(10%), title))
 }
 

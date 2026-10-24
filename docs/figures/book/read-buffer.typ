@@ -42,7 +42,8 @@
     stroke: 0.7pt + ink)
   content(((head + end) / 2, height + 0.5), anchor: "south",
     text(size: 8pt, [#code("reader.buffered()") #w.window]))
-  content((0, height + 1.15), anchor: "south-west", text(weight: "bold", w.buffer))
+  content((start-x(0, last), height + 1.15), anchor: start-anchor("south"),
+    text(weight: "bold", w.buffer))
 
   // Lengths below.
   let span(from, to, y, label) = {

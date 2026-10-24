@@ -44,6 +44,10 @@
 // The Typst language of a guidedog language code such as "zh_CN".
 #let text-lang = lang.split("_").at(0)
 
+// Whether text runs from right to left. The drawings keep their geometry (time and byte
+// offsets grow to the right); titles move to the right edge.
+#let rtl = text-lang in ("ar", "fa", "he", "ur")
+
 // ---- Words ---------------------------------------------------------------------------
 
 #let english = toml("words/en.toml")
@@ -107,6 +111,11 @@
   set text(font: fonts, size: 9pt, fill: ink, lang: text-lang, hyphenate: false,
     top-edge: "ascender", bottom-edge: "descender")
   set par(leading: 0.3em)
+  // Noto Sans Arabic's ascender and descender are far apart, which spaces its lines
+  // twice as wide as Latin ones; fixed edges give Arabic an even, moderate line height
+  // with room for its dots.
+  set text(top-edge: 0.95em, bottom-edge: -0.4em) if rtl
+  set par(leading: 0.45em) if rtl
   show raw: set text(font: mono-fonts, size: 1.0em)
   block(fill: white, radius: 5pt, inset: (x: 14pt, y: 12pt), body)
 }
@@ -115,7 +124,15 @@
 #let small(body) = text(size: 7.5pt, body)
 #let caps(body) = text(size: 7.5pt, weight: "semibold", body)
 #let note(body) = text(size: 7.5pt, fill: muted, body)
-#let code(body) = text(font: mono-fonts, size: 0.92em, body)
+// Code and Latin values (numbers with units, options) keep their own order inside
+// right-to-left text: the box isolates them from the surrounding paragraph.
+#let code(body) = box(text(font: mono-fonts, size: 0.92em, dir: ltr, body))
+#let latin(body) = box(text(dir: ltr, body))
+
+// The anchor and x position of a title at the start of a span from `left` to `right`:
+// the left end, or the right end in right-to-left text.
+#let start-anchor(vertical) = vertical + if rtl { "-east" } else { "-west" }
+#let start-x(left, right) = if rtl { right } else { left }
 
 // ---- Legends ---------------------------------------------------------------------------
 

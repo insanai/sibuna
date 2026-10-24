@@ -78,7 +78,8 @@
     }
   }
   content(p(25, 400), anchor: "west", text(size: 8pt, fill: green.darken(10%), w.burst))
-  content(p(20, 1080), anchor: "south-west", text(size: 8pt, fill: red.darken(10%), w.sixth))
+  content(p(30, 1450), anchor: "west", text(size: 8pt, fill: red.darken(10%), w.sixth))
+  line(p(28, 1410), p(6, 1060), stroke: 0.5pt + red.darken(10%))
   content(p(215, 940), anchor: "north-west",
     box(width: 4.2cm, text(size: 7.5pt, fill: ink, phrase(w.example, (refused: num(100),
       admitted: num(200), tat: num(1000), early: num(900), limit: num(1000))))))

@@ -16,12 +16,12 @@
   import cetz.draw: *
   let (width, height) = (15.4, 3.1)
   rect((0, y - height), (width, y), radius: 0.18, fill: paper, stroke: 0.7pt + paint.lighten(45%))
-  content((0.3, y - 0.22), anchor: "north-west", text(size: 8.5pt, weight: "bold",
+  content((start-x(0.3, width - 0.3), y - 0.22), anchor: start-anchor("north"), text(size: 8.5pt, weight: "bold",
     fill: paint.darken(10%), title))
   // The two parties.
   let party(x, label) = {
     rect((x, y - 1.75), (x + 4.4, y - 0.7), radius: 0.12, fill: white, stroke: 0.8pt + paint)
-    content((x + 2.2, y - 1.22), box(width: 4.2cm, align(center, text(size: 8pt, label))))
+    content((x + 2.2, y - 1.22), box(width: 3.9cm, align(center, text(size: 8pt, label))))
   }
   party(0.3, sender)
   party(10.7, defender)

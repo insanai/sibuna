@@ -64,7 +64,7 @@
   for (i, label) in decades.enumerate() {
     let gx = x(calc.pow(10, i))
     line((gx, 0.15), (gx, bottom - 0.05), stroke: 0.4pt + faint.darken(8%))
-    content((gx, 0.36), anchor: "base", small(text(fill: muted, label)))
+    content((gx, 0.36), anchor: "base", small(text(fill: muted, latin(label))))
   }
 
   for (i, (implementation, workload, group)) in rows.enumerate() {
@@ -76,12 +76,12 @@
       stroke: 0.6pt + edge)
     line((x(run.ns_per_op_min), y), (x(run.ns_per_op_max), y), stroke: 0.9pt + ink)
     content((x(run.ns_per_op_max) + 0.12, y), anchor: "west",
-      text(size: 7.5pt, fill: edge.darken(20%), duration(run.ns_per_op_median)))
+      text(size: 7.5pt, fill: edge.darken(20%), latin(duration(run.ns_per_op_median))))
   }
   line((x0, 0.15), (x0, bottom - 0.05), stroke: 0.7pt + muted)
 
 }),
   legend(..("work", "match", "token", "state", "request").map(group =>
     (swatch-box(..paints.at(group)), w.groups.at(group)))),
-  note(phrase(w.source, (date: data.meta.date.slice(0, 10), cpu: data.meta.cpu))),
+  note(phrase(w.source, (date: latin(data.meta.date.slice(0, 10)), cpu: data.meta.cpu))),
 )
