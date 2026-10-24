@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-24 12:05+0000\n"
+"POT-Creation-Date: 2026-10-24 13:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -35,7 +35,7 @@ msgid "Surfaces and Configuration"
 msgstr "운영 구성과 설정"
 
 #: ../../operations.rst:9 ../../operations.rst:313 ../../operations.rst:533
-#: ../../operations.rst:562 ../../operations.rst:700
+#: ../../operations.rst:562 ../../operations.rst:701
 msgid "Objectives"
 msgstr "학습 목표"
 
@@ -2570,8 +2570,8 @@ msgstr ""
 "style=filled, color=\"#15803d\", fillcolor=\"#f0fdf4\", height=0.62];\n"
 "  tables [label=\"policies, ip_reputation,\\nsecurity_incidents,\\n전문 검색 "
 "인덱스\", color=\"#15803d\", fillcolor=\"#f0fdf4\"];\n"
-"  others [label=\"다른 클러스터\\n노드\", color=\"#64748b\", fillcolor=\"#ffffff\", "
-"style=\"rounded,filled,dashed\", width=1.7];\n"
+"  others [label=\"다른 클러스터\\n노드\", color=\"#64748b\", "
+"fillcolor=\"#ffffff\", style=\"rounded,filled,dashed\", width=1.7];\n"
 "\n"
 "  { rank=same; ring; publish; }\n"
 "  { rank=same; thread; rebuild; }\n"
@@ -2950,23 +2950,28 @@ msgid ""
 "``postgres://`` URL and must be readable by its owner only; the banner "
 "never prints the URL. Writes go to the PostgreSQL primary. Each node's "
 "storage thread sees the committed revision change (by ``NOTIFY`` or by "
-"polling) and rebuilds its engine. Nodes reach the shared database across "
-"the network, so we encrypt and verify that connection. We give the server "
-"a certificate signed by our own certificate authority, and we name that "
-"authority in the URL: "
+"polling) and rebuilds its engine."
+msgstr ""
+"모든 구성원은 같은 마스터 비밀 값과 1에서 8,388,607 사이의 고유한 ``--cluster-node``\\ 를 사용해야 합니다. "
+"URL 파일은 ``postgres://`` URL 하나를 담으며 소유자만 읽을 수 있어야 합니다. 배너는 URL을 절대 출력하지 "
+"않습니다. 쓰기는 PostgreSQL 주 서버로 갑니다. 각 노드의 저장소 스레드는 커밋된 리비전 변경을 (``NOTIFY`` 또는 "
+"폴링으로) 감지하고 엔진을 다시 만듭니다."
+
+#: ../../operations.rst:687
+msgid ""
+"Nodes reach the shared database across the network, so we encrypt and "
+"verify that connection. We give the server a certificate signed by our "
+"own certificate authority, and we name that authority in the URL: "
 "``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``. "
 "On the server we accept TCP only through ``hostssl`` lines in "
 "``pg_hba.conf``."
 msgstr ""
-"모든 구성원은 같은 마스터 비밀 값과 1에서 8,388,607 사이의 고유한 ``--cluster-node``\\ 를 사용해야 "
-"합니다. URL 파일은 ``postgres://`` URL 하나를 담으며 소유자만 읽을 수 있어야 합니다. 배너는 URL을 절대 "
-"출력하지 않습니다. 쓰기는 PostgreSQL 주 서버로 갑니다. 각 노드의 저장소 스레드는 커밋된 리비전 변경을 "
-"(``NOTIFY`` 또는 폴링으로) 감지하고 엔진을 다시 만듭니다. 노드는 네트워크를 거쳐 공유 데이터베이스에 접근하므로 그 "
-"연결을 암호화하고 검증합니다. 서버에는 자체 인증 기관이 서명한 인증서를 주고, URL에 그 인증 기관을 지정합니다: "
+"노드는 네트워크를 거쳐 공유 데이터베이스에 접근하므로 그 연결을 암호화하고 검증합니다. 서버에는 자체 인증 기관이 서명한 인증서를 "
+"주고, URL에 그 인증 기관을 지정합니다: "
 "``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``. "
 "서버에서는 ``pg_hba.conf``\\ 의 ``hostssl`` 줄로만 TCP를 받습니다."
 
-#: ../../operations.rst:688
+#: ../../operations.rst:689
 msgid ""
 "At startup the daemon prints one line about the database connection. With "
 "``verify-full`` it says that the certificate and host name are verified. "
@@ -2989,7 +2994,7 @@ msgstr ""
 "``sslrootcert``\\ 는 우리 인증 기관을 시스템 신뢰 저장소에 추가할 뿐, 시스템의 인증 기관을 제거하지는 "
 "않습니다(SID 0011, SID 0012)."
 
-#: ../../operations.rst:690
+#: ../../operations.rst:691
 msgid ""
 "Sibuna does not replicate a database of its own and elects no leader. "
 "Replication, failover and backups are PostgreSQL's (streaming "
@@ -3013,11 +3018,11 @@ msgstr ""
 "console policies export``\\ 와 ``sibuna console policies import``\\ 로 옮기며, "
 "포렌식 기록은 이전되지 않습니다."
 
-#: ../../operations.rst:692
+#: ../../operations.rst:693
 msgid "Cluster Challenge Routing"
 msgstr "클러스터 챌린지 라우팅"
 
-#: ../../operations.rst:695
+#: ../../operations.rst:696
 msgid ""
 "Challenge keys are bound to ``--cluster-node``; keep challenge issuance "
 "and verification on the same member. Tokens use the shared seed and work "
@@ -3035,11 +3040,11 @@ msgstr ""
 "않습니다(``crates/storage/tests/multi_node.rs``, SID 0011 기준 2. "
 "``SIBUNA_TEST_DATABASE_URL``\\ 을 설정하면 실행됩니다)."
 
-#: ../../operations.rst:697
+#: ../../operations.rst:698
 msgid "Packaging"
 msgstr "패키징"
 
-#: ../../operations.rst:702
+#: ../../operations.rst:703
 msgid ""
 "Install and verify a release package, run Sibuna as a service, in a "
 "container or under Kubernetes, and build the binary ourselves."
@@ -3047,7 +3052,7 @@ msgstr ""
 "릴리스 패키지를 설치하고 검증하며, Sibuna를 서비스로, 컨테이너에서, 또는 Kubernetes에서 실행하고, 바이너리를 직접 "
 "빌드합니다."
 
-#: ../../operations.rst:704
+#: ../../operations.rst:705
 msgid ""
 "Every release on GitHub carries the same executable for each platform, "
 "built from the release tag with the default features: SQLite storage and "
@@ -3056,19 +3061,19 @@ msgstr ""
 "GitHub의 모든 릴리스에는 플랫폼마다 같은 실행 파일이 들어 있습니다. 이 실행 파일은 릴리스 태그에서 기본 기능(SQLite "
 "저장소와 콘솔)으로 빌드됩니다. PostgreSQL 클러스터에는 직접 빌드한 바이너리가 필요합니다(아래 참조)."
 
-#: ../../operations.rst:710
+#: ../../operations.rst:711
 msgid "Platform"
 msgstr "플랫폼"
 
-#: ../../operations.rst:711
+#: ../../operations.rst:712
 msgid "Release assets"
 msgstr "릴리스 파일"
 
-#: ../../operations.rst:712
+#: ../../operations.rst:713
 msgid "Linux x86-64, ARM64"
 msgstr "Linux x86-64, ARM64"
 
-#: ../../operations.rst:713
+#: ../../operations.rst:714
 msgid ""
 "``sibuna-linux-amd64.tar.gz`` and ``sibuna-linux-arm64.tar.gz`` hold a "
 "static musl executable that runs on any distribution. "
@@ -3083,11 +3088,11 @@ msgstr ""
 "``sibuna-<version>-1.aarch64.rpm``\\ 은 이 실행 파일을 systemd 서비스와 함께 설치하고, "
 "Arch Linux에서는 ``sibuna-bin-<version>-1-x86_64.pkg.tar.zst``\\ 가 같은 일을 합니다."
 
-#: ../../operations.rst:714
+#: ../../operations.rst:715
 msgid "macOS arm64, x86-64"
 msgstr "macOS arm64, x86-64"
 
-#: ../../operations.rst:715
+#: ../../operations.rst:716
 msgid ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, for macOS "
 "12 or later."
@@ -3095,11 +3100,11 @@ msgstr ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``. macOS 12 "
 "이상용입니다."
 
-#: ../../operations.rst:716
+#: ../../operations.rst:717
 msgid "Windows x86-64"
 msgstr "Windows x86-64"
 
-#: ../../operations.rst:717
+#: ../../operations.rst:718
 msgid ""
 "``sibuna-windows-amd64.zip`` holds ``sibuna.exe``, for Windows 10 or "
 "Server 2016 or later."
@@ -3107,21 +3112,21 @@ msgstr ""
 "``sibuna-windows-amd64.zip``\\ 에는 ``sibuna.exe``\\ 가 들어 있습니다. Windows 10 "
 "또는 Server 2016 이상용입니다."
 
-#: ../../operations.rst:718
+#: ../../operations.rst:719
 msgid "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 msgstr "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 
-#: ../../operations.rst:719
+#: ../../operations.rst:720
 msgid ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg`` and ``sibuna-<version>.tgz``."
 msgstr ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg``\\ 와 ``sibuna-<version>.tgz``."
 
-#: ../../operations.rst:720
+#: ../../operations.rst:721
 msgid "Homebrew, Kubernetes, containers"
 msgstr "Homebrew, Kubernetes, 컨테이너"
 
-#: ../../operations.rst:721
+#: ../../operations.rst:722
 msgid ""
 "``sibuna.rb``, ``helm-sibuna-<version>.tgz``, and the image "
 "``ghcr.io/insanai/sibuna:<version>`` for amd64 and arm64, whose digest is "
@@ -3131,15 +3136,15 @@ msgstr ""
 "``ghcr.io/insanai/sibuna:<version>``. 이미지의 다이제스트는 ``IMAGE-DIGEST.txt``\\ "
 "에 있습니다."
 
-#: ../../operations.rst:722
+#: ../../operations.rst:723
 msgid "Source"
 msgstr "소스"
 
-#: ../../operations.rst:723
+#: ../../operations.rst:724
 msgid "``sibuna-<version>-source.tar.gz``."
 msgstr "``sibuna-<version>-source.tar.gz``."
 
-#: ../../operations.rst:725
+#: ../../operations.rst:726
 msgid ""
 "Each archive and package carries ``LICENSE``, ``NOTICE``, ``LICENSES/`` "
 "(with ``THIRD-PARTY-RUST.txt``, the crates in the executable), "
@@ -3157,14 +3162,14 @@ msgstr ""
 "파일을 각자의 플랫폼에서 시작해 보고, Debian, Fedora, Arch Linux, FreeBSD, OpenBSD에서 패키지를 "
 "설치, 재설치, 제거해 봅니다."
 
-#: ../../operations.rst:727
+#: ../../operations.rst:728
 msgid ""
 "The assets are not signed. We check a download against ``SHA256SUMS`` "
 "from the same release before we install it:"
 msgstr ""
 "릴리스 파일에는 서명이 없습니다. 설치하기 전에 내려받은 파일을 같은 릴리스의 ``SHA256SUMS``\\ 와 대조해 확인합니다:"
 
-#: ../../operations.rst:729
+#: ../../operations.rst:730
 msgid ""
 "sha256sum --ignore-missing -c SHA256SUMS          # Linux\n"
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
@@ -3174,7 +3179,7 @@ msgstr ""
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
 "sha256 -C SHA256SUMS sibuna-1.0.0-beta.2.tgz      # OpenBSD"
 
-#: ../../operations.rst:735
+#: ../../operations.rst:736
 msgid ""
 "On macOS a browser download carries a quarantine attribute that stops an "
 "unsigned executable; ``xattr -d com.apple.quarantine sibuna`` removes it "
@@ -3183,11 +3188,11 @@ msgstr ""
 "macOS에서 브라우저로 내려받은 파일에는 서명되지 않은 실행 파일을 막는 격리 속성이 붙습니다. 확인을 마친 뒤 ``xattr "
 "-d com.apple.quarantine sibuna``\\ 로 이 속성을 제거합니다."
 
-#: ../../operations.rst:737
+#: ../../operations.rst:738
 msgid "The systemd service"
 msgstr "systemd 서비스"
 
-#: ../../operations.rst:740
+#: ../../operations.rst:741
 msgid ""
 "The Debian, RPM and Arch packages install ``/usr/bin/sibuna``, the unit "
 "``sibuna.service``, the account ``sibuna`` (through "
@@ -3201,7 +3206,7 @@ msgstr ""
 "``/usr/lib/sibuna/seed.sh``, 설정 파일 ``/etc/sibuna/service.env``\\ 를 설치합니다. "
 "설치만으로는 아무것도 시작되지 않습니다. 설정 파일에 원본 서버를 IP 리터럴로 지정하고 서비스를 시작합니다:"
 
-#: ../../operations.rst:742
+#: ../../operations.rst:743
 msgid ""
 "sudoedit /etc/sibuna/service.env      # SIBUNA_UPSTREAM_HOST, "
 "SIBUNA_UPSTREAM_PORT\n"
@@ -3213,7 +3218,7 @@ msgstr ""
 "sudo systemctl enable --now sibuna\n"
 "curl -s http://127.0.0.1:8080/__sibuna/health"
 
-#: ../../operations.rst:748
+#: ../../operations.rst:749
 msgid ""
 "The service listens on ``127.0.0.1:8080`` until ``SIBUNA_HOST`` and "
 "``SIBUNA_PORT`` say otherwise. ``SIBUNA_OPTIONS`` passes further options, "
@@ -3236,7 +3241,7 @@ msgstr ""
 "읽기 전용으로 두고(``ProtectSystem=strict``), 비공개 ``/tmp``\\ 와 장치를 쓰며, 새 권한 획득을 "
 "막습니다(no new privileges)."
 
-#: ../../operations.rst:750
+#: ../../operations.rst:751
 msgid ""
 "An upgrade keeps the settings file, the seed and the state, and does not "
 "restart the service; we restart it after a backup. Removal stops and "
@@ -3246,7 +3251,7 @@ msgstr ""
 "업그레이드는 설정 파일, 시드, 상태를 유지하며 서비스를 재시작하지 않습니다. 서비스는 백업한 뒤 직접 재시작합니다. 제거는 "
 "서비스를 중지하고 비활성화하지만 계정, 시드, 설정, 상태는 남겨 둡니다. 이것들은 호스트를 폐기할 때 직접 삭제합니다."
 
-#: ../../operations.rst:752
+#: ../../operations.rst:753
 msgid ""
 "The FreeBSD and OpenBSD packages install only ``/usr/local/bin/sibuna`` "
 "and its documents (``pkg add``, or ``pkg_add -D unsigned`` for a package "
@@ -3258,11 +3263,11 @@ msgstr ""
 "add``, 또는 OpenBSD 미러 밖에서 받은 패키지라면 ``pkg_add -D unsigned``). 서비스, 계정, 상태는 "
 "만들지 않습니다. 데몬은 비특권 사용자로, 전용 시드와 데이터 디렉터리를 두고 실행합니다."
 
-#: ../../operations.rst:754
+#: ../../operations.rst:755
 msgid "Homebrew"
 msgstr "Homebrew"
 
-#: ../../operations.rst:757
+#: ../../operations.rst:758
 msgid ""
 "``sibuna.rb`` installs the release archive for the machine: macOS or "
 "Linux, arm64 or x86-64. It does not build from source, because Homebrew's "
@@ -3277,7 +3282,7 @@ msgstr ""
 "때문입니다. 아카이브에는 릴리스 워크플로가 이미 확인한 실행 파일이 들어 있습니다. Homebrew는 탭에서만 포뮬러를 설치하므로, "
 "포뮬러를 로컬 탭에 넣습니다:"
 
-#: ../../operations.rst:759
+#: ../../operations.rst:760
 msgid ""
 "brew tap-new \"$USER/local\"\n"
 "cp sibuna.rb \"$(brew "
@@ -3289,7 +3294,7 @@ msgstr ""
 "--repository)/Library/Taps/$USER/homebrew-local/Formula/\"\n"
 "brew install \"$USER/local/sibuna\""
 
-#: ../../operations.rst:765
+#: ../../operations.rst:766
 msgid ""
 "The formula starts no service. Its caveats show how to create a seed; its "
 "test starts the daemon twice on the same data directory."
@@ -3297,11 +3302,11 @@ msgstr ""
 "포뮬러는 서비스를 시작하지 않습니다. 포뮬러의 주의 사항(caveats)은 시드를 만드는 방법을 보여 주고, 테스트는 같은 데이터 "
 "디렉터리에서 데몬을 두 번 시작합니다."
 
-#: ../../operations.rst:767
+#: ../../operations.rst:768
 msgid "Containers and Kubernetes"
 msgstr "컨테이너와 Kubernetes"
 
-#: ../../operations.rst:770
+#: ../../operations.rst:771
 msgid ""
 "The image ``ghcr.io/insanai/sibuna:<version>`` holds the static "
 "executable on a distroless base: CA certificates, user 65532, no shell "
@@ -3315,7 +3320,7 @@ msgstr ""
 "데몬 옵션입니다. 릴리스 워크플로는 이 이미지를 capability 없이 읽기 전용으로 실행하되, 시드는 읽기 전용으로 마운트하고 "
 "상태용 볼륨을 붙이며, 한 번 재시작해 봅니다:"
 
-#: ../../operations.rst:772
+#: ../../operations.rst:773
 msgid ""
 "docker run -d --read-only --cap-drop=ALL --security-opt=no-new-privileges "
 "\\\n"
@@ -3335,7 +3340,7 @@ msgstr ""
 "/var/lib/sibuna/data \\\n"
 "  --upstream-host 10.0.0.5 --upstream-port 3000"
 
-#: ../../operations.rst:780
+#: ../../operations.rst:781
 msgid ""
 "The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. "
 "It requires a Secret that we create (``secret.existingSecret``, key "
@@ -3363,7 +3368,7 @@ msgstr ""
 "``upstream.host``\\ 는 IP 리터럴이어야 하며, ``extraArgs``\\ 는 추가 데몬 옵션을 전달합니다. "
 "워크플로는 Restricted 표준을 강제하는 kind 클러스터에서 차트를 설치, 업그레이드, 제거해 봅니다."
 
-#: ../../operations.rst:782
+#: ../../operations.rst:783
 msgid ""
 "kubectl -n sibuna create secret generic sibuna-admission "
 "--from-file=admission.seed\n"
@@ -3379,15 +3384,15 @@ msgstr ""
 "  --set secret.existingSecret=sibuna-admission \\\n"
 "  --set upstream.host=10.0.0.5 --set upstream.port=3000"
 
-#: ../../operations.rst:789
+#: ../../operations.rst:790
 msgid "Building from source"
 msgstr "소스에서 빌드하기"
 
-#: ../../operations.rst:792
+#: ../../operations.rst:793
 msgid "Rust 1.94 or later builds the workspace; the releases use Rust 1.99."
 msgstr "워크스페이스는 Rust 1.94 이상으로 빌드할 수 있습니다. 릴리스는 Rust 1.99를 사용합니다."
 
-#: ../../operations.rst:794
+#: ../../operations.rst:795
 msgid ""
 "``cargo build --release -p sibuna`` produces ``target/release/sibuna`` "
 "with the default features: SQLite storage and the console. sqlx bundles "
@@ -3404,7 +3409,7 @@ msgstr ""
 "wasm32-unknown-unknown``\\ 이 필요합니다. ``SIBUNA_POW_WASM=<path>``\\ 와 "
 "``SIBUNA_CONSOLE_WASM=<path>``\\ 를 지정하면 대신 미리 빌드한 모듈을 내장합니다."
 
-#: ../../operations.rst:795
+#: ../../operations.rst:796
 msgid ""
 "``cargo build --release -p sibuna --no-default-features`` produces the "
 "in-memory firewall with no external crate at all; ``--data-dir`` and "
@@ -3416,7 +3421,7 @@ msgstr ""
 "``StorageDisabled``\\ 로, ``sibuna console``\\ 은 ``CONSOLEBUILD``\\ 로 "
 "거부됩니다."
 
-#: ../../operations.rst:796
+#: ../../operations.rst:797
 msgid ""
 "``cargo build --release -p sibuna --features postgres-tls`` adds "
 "PostgreSQL clusters with verified TLS to the database. It needs no "
@@ -3425,7 +3430,7 @@ msgstr ""
 "``cargo build --release -p sibuna --features postgres-tls``\\ 는 데이터베이스와의 "
 "연결에 검증된 TLS를 쓰는 PostgreSQL 클러스터 지원을 추가합니다. OpenSSL은 필요하지 않습니다."
 
-#: ../../operations.rst:797
+#: ../../operations.rst:798
 msgid ""
 "The static Linux executables of the releases come from ``cargo build "
 "--release --locked -p sibuna --target x86_64-unknown-linux-musl`` (or "
@@ -3437,7 +3442,7 @@ msgstr ""
 "--locked -p sibuna --target x86_64-unknown-linux-musl`` (또는 "
 "``aarch64-unknown-linux-musl``)로 빌드한 것입니다."
 
-#: ../../operations.rst:799
+#: ../../operations.rst:800
 msgid ""
 "The release profile uses fat LTO and one codegen unit. The workflow "
 "builds the two WebAssembly modules once and passes them to every "
@@ -3449,7 +3454,7 @@ msgstr ""
 "플랫폼에 전달하므로, 한 릴리스의 모든 실행 파일은 바이트 단위로 동일한 모듈을 내장합니다. 의존성이 바뀌면 ``cargo "
 "xtask licenses``\\ 로 ``LICENSES/THIRD-PARTY-RUST.txt``\\ 를 다시 생성합니다."
 
-#: ../../operations.rst:801
+#: ../../operations.rst:802
 msgid ""
 "On Windows the daemon stops on Ctrl+C, Ctrl+Break and console close "
 "events; it does not run as a Windows service. Windows files have no mode "
@@ -3463,11 +3468,11 @@ msgstr ""
 "URL 파일을 거부할 수 없습니다. 이런 파일은 ACL로 접근을 제한합니다. 콘솔의 메모리와 CPU 게이지는 ``/proc``\\ "
 "에서 읽으므로 다른 시스템에서는 사용할 수 없습니다."
 
-#: ../../operations.rst:803
+#: ../../operations.rst:804
 msgid "Exercise 9.2"
 msgstr "연습 문제 9.2"
 
-#: ../../operations.rst:805
+#: ../../operations.rst:806
 msgid ""
 "Write the policy file and the ``ip_reputation`` rows needed so that a "
 "staging network (``10.20.0.0/16``) bypasses challenges, ``/admin/*`` "
@@ -3478,7 +3483,7 @@ msgstr ""
 "20을 요구하며, ``X-Partner-Key``\\ 로 식별되는 파트너 스크레이퍼는 10초당 요청 30개로 허용되도록 정책 파일과 "
 "``ip_reputation`` 행을 작성하세요."
 
-#: ../../operations.rst:807
+#: ../../operations.rst:808
 msgid ""
 "Hint: The daemon flags set the per-client limit every request meets "
 "first; a rule can carry a quota of its own in ``limits``."
@@ -3486,11 +3491,11 @@ msgstr ""
 "힌트: 데몬 플래그는 모든 요청이 가장 먼저 만나는 클라이언트별 제한을 설정합니다. 규칙은 ``limits``\\ 에 자체 할당량을 "
 "둘 수 있습니다."
 
-#: ../../operations.rst:809
+#: ../../operations.rst:810
 msgid "Explain the invariant"
 msgstr "불변식 설명하기"
 
-#: ../../operations.rst:811
+#: ../../operations.rst:812
 msgid ""
 "Explain to an operator why adding a row to ``policies`` takes effect "
 "without a restart and without a request ever waiting, in terms of the "

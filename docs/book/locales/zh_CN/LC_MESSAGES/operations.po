@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-24 12:05+0000\n"
+"POT-Creation-Date: 2026-10-24 13:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:31+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -35,7 +35,7 @@ msgid "Surfaces and Configuration"
 msgstr "形态与配置"
 
 #: ../../operations.rst:9 ../../operations.rst:313 ../../operations.rst:533
-#: ../../operations.rst:562 ../../operations.rst:700
+#: ../../operations.rst:562 ../../operations.rst:701
 msgid "Objectives"
 msgstr "学习目标"
 
@@ -2830,23 +2830,26 @@ msgid ""
 "``postgres://`` URL and must be readable by its owner only; the banner "
 "never prints the URL. Writes go to the PostgreSQL primary. Each node's "
 "storage thread sees the committed revision change (by ``NOTIFY`` or by "
-"polling) and rebuilds its engine. Nodes reach the shared database across "
-"the network, so we encrypt and verify that connection. We give the server "
-"a certificate signed by our own certificate authority, and we name that "
-"authority in the URL: "
+"polling) and rebuilds its engine."
+msgstr ""
+"每个成员都必须使用相同的主密钥，以及一个唯一的、取值 1 到 8,388,607 的 ``--cluster-node``。URL 文件保存一个 "
+"``postgres://`` URL，并且必须只有其所有者可读；启动横幅从不打印 URL。写入发往 PostgreSQL "
+"主库。每个节点的存储线程看到已提交的修订版本变化（通过 ``NOTIFY`` 或轮询）后重建自己的引擎。"
+
+#: ../../operations.rst:687
+msgid ""
+"Nodes reach the shared database across the network, so we encrypt and "
+"verify that connection. We give the server a certificate signed by our "
+"own certificate authority, and we name that authority in the URL: "
 "``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``. "
 "On the server we accept TCP only through ``hostssl`` lines in "
 "``pg_hba.conf``."
 msgstr ""
-"每个成员都必须使用相同的主密钥，以及一个唯一的、取值 1 到 8,388,607 的 ``--cluster-node``。URL 文件保存一个 "
-"``postgres://`` URL，并且必须只有其所有者可读；启动横幅从不打印 URL。写入发往 PostgreSQL "
-"主库。每个节点的存储线程看到已提交的修订版本变化（通过 ``NOTIFY`` "
-"或轮询）后重建自己的引擎。节点通过网络访问共享数据库，因此我们对这条连接进行加密和验证。我们为服务器颁发一张由自己的证书颁发机构签名的证书，并在 "
-"URL "
+"节点通过网络访问共享数据库，因此我们对这条连接进行加密和验证。我们为服务器颁发一张由自己的证书颁发机构签名的证书，并在 URL "
 "中指定该机构：``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``。在服务器上，我们只通过 "
 "``pg_hba.conf`` 中的 ``hostssl`` 行接受 TCP 连接。"
 
-#: ../../operations.rst:688
+#: ../../operations.rst:689
 msgid ""
 "At startup the daemon prints one line about the database connection. With "
 "``verify-full`` it says that the certificate and host name are verified. "
@@ -2868,7 +2871,7 @@ msgstr ""
 "``sslrootcert``，以及 URL 中的主机是否是服务器证书中的名称。``sslrootcert`` "
 "把我们的证书颁发机构添加到系统信任存储中；它不会移除系统的证书颁发机构（SID 0011，SID 0012）。"
 
-#: ../../operations.rst:690
+#: ../../operations.rst:691
 msgid ""
 "Sibuna does not replicate a database of its own and elects no leader. "
 "Replication, failover and backups are PostgreSQL's (streaming "
@@ -2890,11 +2893,11 @@ msgstr ""
 "的数据目录（SID 0005）不会被读取；策略通过 ``sibuna console policies export`` 和 ``sibuna "
 "console policies import`` 迁移，取证历史不会迁移。"
 
-#: ../../operations.rst:692
+#: ../../operations.rst:693
 msgid "Cluster Challenge Routing"
 msgstr "集群中的挑战路由"
 
-#: ../../operations.rst:695
+#: ../../operations.rst:696
 msgid ""
 "Challenge keys are bound to ``--cluster-node``; keep challenge issuance "
 "and verification on the same member. Tokens use the shared seed and work "
@@ -2911,17 +2914,17 @@ msgstr ""
 "上运行三个节点时，直接写入的策略行会在一个节拍内到达全部三个节点，一个节点上的蜜罐封禁会到达其他节点，事件标识符也从不冲突（``crates/storage/tests/multi_node.rs``，SID "
 "0011 标准 2；设置 ``SIBUNA_TEST_DATABASE_URL`` 时运行）。"
 
-#: ../../operations.rst:697
+#: ../../operations.rst:698
 msgid "Packaging"
 msgstr "打包"
 
-#: ../../operations.rst:702
+#: ../../operations.rst:703
 msgid ""
 "Install and verify a release package, run Sibuna as a service, in a "
 "container or under Kubernetes, and build the binary ourselves."
 msgstr "安装并校验发行版软件包，把 Sibuna 作为服务运行、在容器中运行或在 Kubernetes 下运行，并自己构建可执行文件。"
 
-#: ../../operations.rst:704
+#: ../../operations.rst:705
 msgid ""
 "Every release on GitHub carries the same executable for each platform, "
 "built from the release tag with the default features: SQLite storage and "
@@ -2930,19 +2933,19 @@ msgstr ""
 "GitHub 上的每个发行版都为每个平台提供相同的可执行文件，它们从发行标签以默认特性构建：SQLite 存储和控制台。PostgreSQL "
 "集群需要我们自己构建（见下文）。"
 
-#: ../../operations.rst:710
+#: ../../operations.rst:711
 msgid "Platform"
 msgstr "平台"
 
-#: ../../operations.rst:711
+#: ../../operations.rst:712
 msgid "Release assets"
 msgstr "发行版文件"
 
-#: ../../operations.rst:712
+#: ../../operations.rst:713
 msgid "Linux x86-64, ARM64"
 msgstr "Linux x86-64, ARM64"
 
-#: ../../operations.rst:713
+#: ../../operations.rst:714
 msgid ""
 "``sibuna-linux-amd64.tar.gz`` and ``sibuna-linux-arm64.tar.gz`` hold a "
 "static musl executable that runs on any distribution. "
@@ -2957,11 +2960,11 @@ msgstr ""
 "和 ``sibuna-<version>-1.aarch64.rpm`` 会连同一个 systemd "
 "服务一起安装它；``sibuna-bin-<version>-1-x86_64.pkg.tar.zst`` 在 Arch Linux 上做同样的事。"
 
-#: ../../operations.rst:714
+#: ../../operations.rst:715
 msgid "macOS arm64, x86-64"
 msgstr "macOS arm64, x86-64"
 
-#: ../../operations.rst:715
+#: ../../operations.rst:716
 msgid ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, for macOS "
 "12 or later."
@@ -2969,11 +2972,11 @@ msgstr ""
 "``sibuna-macos-arm64.tar.gz``、``sibuna-macos-amd64.tar.gz``，适用于 macOS 12 "
 "或更高版本。"
 
-#: ../../operations.rst:716
+#: ../../operations.rst:717
 msgid "Windows x86-64"
 msgstr "Windows x86-64"
 
-#: ../../operations.rst:717
+#: ../../operations.rst:718
 msgid ""
 "``sibuna-windows-amd64.zip`` holds ``sibuna.exe``, for Windows 10 or "
 "Server 2016 or later."
@@ -2981,21 +2984,21 @@ msgstr ""
 "``sibuna-windows-amd64.zip`` 包含 ``sibuna.exe``，适用于 Windows 10 或 Server "
 "2016 及更高版本。"
 
-#: ../../operations.rst:718
+#: ../../operations.rst:719
 msgid "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 msgstr "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 
-#: ../../operations.rst:719
+#: ../../operations.rst:720
 msgid ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg`` and ``sibuna-<version>.tgz``."
 msgstr ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg`` 和 ``sibuna-<version>.tgz``。"
 
-#: ../../operations.rst:720
+#: ../../operations.rst:721
 msgid "Homebrew, Kubernetes, containers"
 msgstr "Homebrew、Kubernetes、容器"
 
-#: ../../operations.rst:721
+#: ../../operations.rst:722
 msgid ""
 "``sibuna.rb``, ``helm-sibuna-<version>.tgz``, and the image "
 "``ghcr.io/insanai/sibuna:<version>`` for amd64 and arm64, whose digest is "
@@ -3004,15 +3007,15 @@ msgstr ""
 "``sibuna.rb``、``helm-sibuna-<version>.tgz``，以及适用于 amd64 和 arm64 的镜像 "
 "``ghcr.io/insanai/sibuna:<version>``，其摘要记录在 ``IMAGE-DIGEST.txt`` 中。"
 
-#: ../../operations.rst:722
+#: ../../operations.rst:723
 msgid "Source"
 msgstr "源码"
 
-#: ../../operations.rst:723
+#: ../../operations.rst:724
 msgid "``sibuna-<version>-source.tar.gz``."
 msgstr "``sibuna-<version>-source.tar.gz``。"
 
-#: ../../operations.rst:725
+#: ../../operations.rst:726
 msgid ""
 "Each archive and package carries ``LICENSE``, ``NOTICE``, ``LICENSES/`` "
 "(with ``THIRD-PARTY-RUST.txt``, the crates in the executable), "
@@ -3029,13 +3032,13 @@ msgstr ""
 "WebAssembly 模块的 SHA-256。发布工作流在发布任何内容之前，会在每个可执行文件自己的平台上启动它，并在 "
 "Debian、Fedora、Arch Linux、FreeBSD 和 OpenBSD 上安装、重新安装和移除这些软件包。"
 
-#: ../../operations.rst:727
+#: ../../operations.rst:728
 msgid ""
 "The assets are not signed. We check a download against ``SHA256SUMS`` "
 "from the same release before we install it:"
 msgstr "这些文件没有签名。安装之前，我们用同一发行版中的 ``SHA256SUMS`` 校验下载的文件："
 
-#: ../../operations.rst:729
+#: ../../operations.rst:730
 msgid ""
 "sha256sum --ignore-missing -c SHA256SUMS          # Linux\n"
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
@@ -3045,7 +3048,7 @@ msgstr ""
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
 "sha256 -C SHA256SUMS sibuna-1.0.0-beta.2.tgz      # OpenBSD"
 
-#: ../../operations.rst:735
+#: ../../operations.rst:736
 msgid ""
 "On macOS a browser download carries a quarantine attribute that stops an "
 "unsigned executable; ``xattr -d com.apple.quarantine sibuna`` removes it "
@@ -3054,11 +3057,11 @@ msgstr ""
 "在 macOS 上，通过浏览器下载的文件带有隔离属性，它会阻止未签名的可执行文件运行；校验之后，``xattr -d "
 "com.apple.quarantine sibuna`` 可以移除该属性。"
 
-#: ../../operations.rst:737
+#: ../../operations.rst:738
 msgid "The systemd service"
 msgstr "systemd 服务"
 
-#: ../../operations.rst:740
+#: ../../operations.rst:741
 msgid ""
 "The Debian, RPM and Arch packages install ``/usr/bin/sibuna``, the unit "
 "``sibuna.service``, the account ``sibuna`` (through "
@@ -3072,7 +3075,7 @@ msgstr ""
 "``/usr/lib/sibuna/seed.sh`` 和设置文件 "
 "``/etc/sibuna/service.env``。安装不会启动任何东西。我们在设置文件中设置源站（一个 IP 地址字面量），然后启动服务："
 
-#: ../../operations.rst:742
+#: ../../operations.rst:743
 msgid ""
 "sudoedit /etc/sibuna/service.env      # SIBUNA_UPSTREAM_HOST, "
 "SIBUNA_UPSTREAM_PORT\n"
@@ -3084,7 +3087,7 @@ msgstr ""
 "sudo systemctl enable --now sibuna\n"
 "curl -s http://127.0.0.1:8080/__sibuna/health"
 
-#: ../../operations.rst:748
+#: ../../operations.rst:749
 msgid ""
 "The service listens on ``127.0.0.1:8080`` until ``SIBUNA_HOST`` and "
 "``SIBUNA_PORT`` say otherwise. ``SIBUNA_OPTIONS`` passes further options, "
@@ -3105,7 +3108,7 @@ msgstr ""
 "``/var/lib/sibuna`` 中，这是一个权限为 0700 的目录。该单元运行时不带任何 "
 "capabilities，系统只读（``ProtectSystem=strict``），``/tmp`` 和设备是私有的，并且不能获得新权限。"
 
-#: ../../operations.rst:750
+#: ../../operations.rst:751
 msgid ""
 "An upgrade keeps the settings file, the seed and the state, and does not "
 "restart the service; we restart it after a backup. Removal stops and "
@@ -3114,7 +3117,7 @@ msgid ""
 msgstr ""
 "升级会保留设置文件、种子和状态，并且不会重启服务；我们在备份之后再重启它。卸载会停止并禁用服务，但保留账户、种子、设置和状态；我们在让主机退役时自己删除它们。"
 
-#: ../../operations.rst:752
+#: ../../operations.rst:753
 msgid ""
 "The FreeBSD and OpenBSD packages install only ``/usr/local/bin/sibuna`` "
 "and its documents (``pkg add``, or ``pkg_add -D unsigned`` for a package "
@@ -3126,11 +3129,11 @@ msgstr ""
 "add``；对于不是来自 OpenBSD 镜像站点的软件包，使用 ``pkg_add -D "
 "unsigned``）。它们不创建服务、账户或状态：我们以一个非特权用户运行守护进程，并为它配置私有的种子和数据目录。"
 
-#: ../../operations.rst:754
+#: ../../operations.rst:755
 msgid "Homebrew"
 msgstr "Homebrew"
 
-#: ../../operations.rst:757
+#: ../../operations.rst:758
 msgid ""
 "``sibuna.rb`` installs the release archive for the machine: macOS or "
 "Linux, arm64 or x86-64. It does not build from source, because Homebrew's "
@@ -3144,7 +3147,7 @@ msgstr ""
 "模块需要它；压缩包中是发布工作流已经检查过的可执行文件。Homebrew 只从 tap 安装 formula，因此我们把这个 formula "
 "放进一个本地 tap："
 
-#: ../../operations.rst:759
+#: ../../operations.rst:760
 msgid ""
 "brew tap-new \"$USER/local\"\n"
 "cp sibuna.rb \"$(brew "
@@ -3156,17 +3159,17 @@ msgstr ""
 "--repository)/Library/Taps/$USER/homebrew-local/Formula/\"\n"
 "brew install \"$USER/local/sibuna\""
 
-#: ../../operations.rst:765
+#: ../../operations.rst:766
 msgid ""
 "The formula starts no service. Its caveats show how to create a seed; its "
 "test starts the daemon twice on the same data directory."
 msgstr "这个 formula 不启动任何服务。它的 caveats 说明了如何创建种子；它的测试在同一个数据目录上两次启动守护进程。"
 
-#: ../../operations.rst:767
+#: ../../operations.rst:768
 msgid "Containers and Kubernetes"
 msgstr "容器和 Kubernetes"
 
-#: ../../operations.rst:770
+#: ../../operations.rst:771
 msgid ""
 "The image ``ghcr.io/insanai/sibuna:<version>`` holds the static "
 "executable on a distroless base: CA certificates, user 65532, no shell "
@@ -3180,7 +3183,7 @@ msgstr ""
 "``sibuna``，因此参数就是守护进程的选项。发布工作流以只读方式运行它，不带任何 "
 "capabilities，以只读方式挂载种子，并为状态挂载一个卷，然后把它重启一次："
 
-#: ../../operations.rst:772
+#: ../../operations.rst:773
 msgid ""
 "docker run -d --read-only --cap-drop=ALL --security-opt=no-new-privileges "
 "\\\n"
@@ -3200,7 +3203,7 @@ msgstr ""
 "/var/lib/sibuna/data \\\n"
 "  --upstream-host 10.0.0.5 --upstream-port 3000"
 
-#: ../../operations.rst:780
+#: ../../operations.rst:781
 msgid ""
 "The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. "
 "It requires a Secret that we create (``secret.existingSecret``, key "
@@ -3227,7 +3230,7 @@ msgstr ""
 "放行客户端和源站。``upstream.host`` 必须是一个 IP 地址字面量，``extraArgs`` "
 "传递更多守护进程选项。工作流在一个强制执行 Restricted 标准的 kind 集群中安装、升级和卸载该 chart。"
 
-#: ../../operations.rst:782
+#: ../../operations.rst:783
 msgid ""
 "kubectl -n sibuna create secret generic sibuna-admission "
 "--from-file=admission.seed\n"
@@ -3243,15 +3246,15 @@ msgstr ""
 "  --set secret.existingSecret=sibuna-admission \\\n"
 "  --set upstream.host=10.0.0.5 --set upstream.port=3000"
 
-#: ../../operations.rst:789
+#: ../../operations.rst:790
 msgid "Building from source"
 msgstr "从源码构建"
 
-#: ../../operations.rst:792
+#: ../../operations.rst:793
 msgid "Rust 1.94 or later builds the workspace; the releases use Rust 1.99."
 msgstr "Rust 1.94 或更高版本可以构建该工作区；发行版使用 Rust 1.99。"
 
-#: ../../operations.rst:794
+#: ../../operations.rst:795
 msgid ""
 "``cargo build --release -p sibuna`` produces ``target/release/sibuna`` "
 "with the default features: SQLite storage and the console. sqlx bundles "
@@ -3267,7 +3270,7 @@ msgstr ""
 "add wasm32-unknown-unknown``；``SIBUNA_POW_WASM=<path>`` 和 "
 "``SIBUNA_CONSOLE_WASM=<path>`` 可以改为嵌入预先构建的模块。"
 
-#: ../../operations.rst:795
+#: ../../operations.rst:796
 msgid ""
 "``cargo build --release -p sibuna --no-default-features`` produces the "
 "in-memory firewall with no external crate at all; ``--data-dir`` and "
@@ -3278,7 +3281,7 @@ msgstr ""
 "的内存型防火墙；此时 ``--data-dir`` 和 ``--database-url`` 会在启动时以 ``StorageDisabled`` "
 "被拒绝，``sibuna console`` 则以 ``CONSOLEBUILD`` 被拒绝。"
 
-#: ../../operations.rst:796
+#: ../../operations.rst:797
 msgid ""
 "``cargo build --release -p sibuna --features postgres-tls`` adds "
 "PostgreSQL clusters with verified TLS to the database. It needs no "
@@ -3287,7 +3290,7 @@ msgstr ""
 "``cargo build --release -p sibuna --features postgres-tls`` 增加 PostgreSQL "
 "集群支持，并对数据库连接使用经过验证的 TLS。它不需要 OpenSSL。"
 
-#: ../../operations.rst:797
+#: ../../operations.rst:798
 msgid ""
 "The static Linux executables of the releases come from ``cargo build "
 "--release --locked -p sibuna --target x86_64-unknown-linux-musl`` (or "
@@ -3298,7 +3301,7 @@ msgstr ""
 "x86_64-unknown-linux-musl``\\ （或 ``aarch64-unknown-linux-musl``），并以 "
 "``musl-gcc`` 作为 C 编译器（``CC_x86_64_unknown_linux_musl=musl-gcc``）。"
 
-#: ../../operations.rst:799
+#: ../../operations.rst:800
 msgid ""
 "The release profile uses fat LTO and one codegen unit. The workflow "
 "builds the two WebAssembly modules once and passes them to every "
@@ -3310,7 +3313,7 @@ msgstr ""
 "模块，并把它们传给每个平台，因此同一发行版的所有可执行文件都嵌入逐字节相同的模块。依赖变化之后，``cargo xtask licenses`` "
 "会重新生成 ``LICENSES/THIRD-PARTY-RUST.txt``。"
 
-#: ../../operations.rst:801
+#: ../../operations.rst:802
 msgid ""
 "On Windows the daemon stops on Ctrl+C, Ctrl+Break and console close "
 "events; it does not run as a Windows service. Windows files have no mode "
@@ -3323,11 +3326,11 @@ msgstr ""
 "服务运行。Windows 文件没有权限位，因此 Sibuna 无法拒绝其他人可能读取的密钥文件、凭据文件或数据库 URL 文件：我们用 ACL "
 "限制这些文件的访问。控制台的内存和 CPU 仪表读取自 ``/proc``，在其他系统上不可用。"
 
-#: ../../operations.rst:803
+#: ../../operations.rst:804
 msgid "Exercise 9.2"
 msgstr "练习 9.2"
 
-#: ../../operations.rst:805
+#: ../../operations.rst:806
 msgid ""
 "Write the policy file and the ``ip_reputation`` rows needed so that a "
 "staging network (``10.20.0.0/16``) bypasses challenges, ``/admin/*`` "
@@ -3337,17 +3340,17 @@ msgstr ""
 "编写策略文件和所需的 ``ip_reputation`` 行，使预发布网络（``10.20.0.0/16``）绕过挑战，``/admin/*`` "
 "要求 20 个工作比特的顺序工作量，并以每 10 秒 30 个请求的速率准入一个由 ``X-Partner-Key`` 标识的合作伙伴爬虫。"
 
-#: ../../operations.rst:807
+#: ../../operations.rst:808
 msgid ""
 "Hint: The daemon flags set the per-client limit every request meets "
 "first; a rule can carry a quota of its own in ``limits``."
 msgstr "提示：守护进程的选项设定了每个请求首先要满足的按客户端限制；规则可以在 ``limits`` 中携带自己的配额。"
 
-#: ../../operations.rst:809
+#: ../../operations.rst:810
 msgid "Explain the invariant"
 msgstr "解释这个不变量"
 
-#: ../../operations.rst:811
+#: ../../operations.rst:812
 msgid ""
 "Explain to an operator why adding a row to ``policies`` takes effect "
 "without a restart and without a request ever waiting, in terms of the "

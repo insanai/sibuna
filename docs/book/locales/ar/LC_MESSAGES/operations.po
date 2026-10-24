@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-24 12:05+0000\n"
+"POT-Creation-Date: 2026-10-24 13:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -37,7 +37,7 @@ msgid "Surfaces and Configuration"
 msgstr "الأوضاع والإعداد"
 
 #: ../../operations.rst:9 ../../operations.rst:313 ../../operations.rst:533
-#: ../../operations.rst:562 ../../operations.rst:700
+#: ../../operations.rst:562 ../../operations.rst:701
 msgid "Objectives"
 msgstr "الأهداف"
 
@@ -3193,26 +3193,30 @@ msgid ""
 "``postgres://`` URL and must be readable by its owner only; the banner "
 "never prints the URL. Writes go to the PostgreSQL primary. Each node's "
 "storage thread sees the committed revision change (by ``NOTIFY`` or by "
-"polling) and rebuilds its engine. Nodes reach the shared database across "
-"the network, so we encrypt and verify that connection. We give the server "
-"a certificate signed by our own certificate authority, and we name that "
-"authority in the URL: "
+"polling) and rebuilds its engine."
+msgstr ""
+"يجب أن يستخدم كل عضو السر الرئيسي نفسه وقيمة ``--cluster-node`` فريدة من 1 "
+"إلى 8,388,607. يحمل ملف URL عنوان ``postgres://`` واحدًا ويجب ألا يقرأه إلا "
+"مالكه؛ ولا تطبع رسالة البدء عنوان URL أبدًا. تذهب الكتابات إلى خادم "
+"PostgreSQL الأساسي. يرى خيط التخزين في كل عقدة تغير المراجعة المثبَّتة (عبر "
+"``NOTIFY`` أو بالاستطلاع) ويعيد بناء محركه."
+
+#: ../../operations.rst:687
+msgid ""
+"Nodes reach the shared database across the network, so we encrypt and "
+"verify that connection. We give the server a certificate signed by our "
+"own certificate authority, and we name that authority in the URL: "
 "``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``. "
 "On the server we accept TCP only through ``hostssl`` lines in "
 "``pg_hba.conf``."
 msgstr ""
-"يجب أن يستخدم كل عضو السر الرئيسي نفسه وقيمة ``--cluster-node`` فريدة من "
-"1 إلى 8,388,607. يحمل ملف URL عنوان ``postgres://`` واحدًا ويجب ألا يقرأه "
-"إلا مالكه؛ ولا تطبع رسالة البدء عنوان URL أبدًا. تذهب الكتابات إلى خادم "
-"PostgreSQL الأساسي. يرى خيط التخزين في كل عقدة تغير المراجعة المثبَّتة "
-"(عبر ``NOTIFY`` أو بالاستطلاع) ويعيد بناء محركه. تصل العقد إلى قاعدة "
-"البيانات المشتركة عبر الشبكة، لذلك نشفّر ذلك الاتصال ونتحقق منه. نمنح "
-"الخادم شهادة موقعة من سلطة الشهادات الخاصة بنا، ونسمي تلك السلطة في عنوان "
-"URL: "
+"تصل العقد إلى قاعدة البيانات المشتركة عبر الشبكة، لذلك نشفّر ذلك الاتصال "
+"ونتحقق منه. نمنح الخادم شهادة موقعة من سلطة الشهادات الخاصة بنا، ونسمي تلك "
+"السلطة في عنوان URL: "
 "``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``. "
 "وعلى الخادم لا نقبل TCP إلا عبر أسطر ``hostssl`` في ``pg_hba.conf``."
 
-#: ../../operations.rst:688
+#: ../../operations.rst:689
 msgid ""
 "At startup the daemon prints one line about the database connection. With "
 "``verify-full`` it says that the certificate and host name are verified. "
@@ -3237,7 +3241,7 @@ msgstr ""
 "شهادة الخادم. يضيف ``sslrootcert`` سلطتنا إلى مخزن الثقة في النظام؛ ولا "
 "يزيل سلطات النظام (SID 0011، SID 0012)."
 
-#: ../../operations.rst:690
+#: ../../operations.rst:691
 msgid ""
 "Sibuna does not replicate a database of its own and elects no leader. "
 "Replication, failover and backups are PostgreSQL's (streaming "
@@ -3264,11 +3268,11 @@ msgstr ""
 "السياسات عبر ``sibuna console policies export`` و\\ ``sibuna console "
 "policies import``، ولا يُرحَّل التاريخ الجنائي."
 
-#: ../../operations.rst:692
+#: ../../operations.rst:693
 msgid "Cluster Challenge Routing"
 msgstr "توجيه التحديات في العنقود"
 
-#: ../../operations.rst:695
+#: ../../operations.rst:696
 msgid ""
 "Challenge keys are bound to ``--cluster-node``; keep challenge issuance "
 "and verification on the same member. Tokens use the shared seed and work "
@@ -3288,11 +3292,11 @@ msgstr ""
 "(``crates/storage/tests/multi_node.rs``، المعيار 2 من SID 0011؛ ويجري عند "
 "ضبط ``SIBUNA_TEST_DATABASE_URL``)."
 
-#: ../../operations.rst:697
+#: ../../operations.rst:698
 msgid "Packaging"
 msgstr "التحزيم"
 
-#: ../../operations.rst:702
+#: ../../operations.rst:703
 msgid ""
 "Install and verify a release package, run Sibuna as a service, in a "
 "container or under Kubernetes, and build the binary ourselves."
@@ -3300,7 +3304,7 @@ msgstr ""
 "نثبّت حزمة إصدار ونتحقق منها، ونشغّل Sibuna خدمةً، أو في حاوية، أو تحت "
 "Kubernetes، ونبني الملف التنفيذي بأنفسنا."
 
-#: ../../operations.rst:704
+#: ../../operations.rst:705
 msgid ""
 "Every release on GitHub carries the same executable for each platform, "
 "built from the release tag with the default features: SQLite storage and "
@@ -3310,19 +3314,19 @@ msgstr ""
 "الإصدار بالميزات الافتراضية: تخزين SQLite ووحدة التحكم. أما عناقيد "
 "PostgreSQL فتحتاج إلى بناء خاص بنا (انظر أدناه)."
 
-#: ../../operations.rst:710
+#: ../../operations.rst:711
 msgid "Platform"
 msgstr "المنصة"
 
-#: ../../operations.rst:711
+#: ../../operations.rst:712
 msgid "Release assets"
 msgstr "ملفات الإصدار"
 
-#: ../../operations.rst:712
+#: ../../operations.rst:713
 msgid "Linux x86-64, ARM64"
 msgstr "Linux x86-64، ARM64"
 
-#: ../../operations.rst:713
+#: ../../operations.rst:714
 msgid ""
 "``sibuna-linux-amd64.tar.gz`` and ``sibuna-linux-arm64.tar.gz`` hold a "
 "static musl executable that runs on any distribution. "
@@ -3338,11 +3342,11 @@ msgstr ""
 "مع خدمة systemd؛ وتفعل ``sibuna-bin-<version>-1-x86_64.pkg.tar.zst`` ذلك "
 "على Arch Linux."
 
-#: ../../operations.rst:714
+#: ../../operations.rst:715
 msgid "macOS arm64, x86-64"
 msgstr "macOS arm64، x86-64"
 
-#: ../../operations.rst:715
+#: ../../operations.rst:716
 msgid ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, for macOS "
 "12 or later."
@@ -3350,11 +3354,11 @@ msgstr ""
 "``sibuna-macos-arm64.tar.gz`` و\\ ``sibuna-macos-amd64.tar.gz``، لنظام "
 "macOS 12 أو أحدث."
 
-#: ../../operations.rst:716
+#: ../../operations.rst:717
 msgid "Windows x86-64"
 msgstr "Windows x86-64"
 
-#: ../../operations.rst:717
+#: ../../operations.rst:718
 msgid ""
 "``sibuna-windows-amd64.zip`` holds ``sibuna.exe``, for Windows 10 or "
 "Server 2016 or later."
@@ -3362,21 +3366,21 @@ msgstr ""
 "يحمل ``sibuna-windows-amd64.zip`` الملف ``sibuna.exe``، لنظام Windows 10 "
 "أو Server 2016 أو أحدث."
 
-#: ../../operations.rst:718
+#: ../../operations.rst:719
 msgid "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 msgstr "FreeBSD 15.1، OpenBSD 7.9 (amd64)"
 
-#: ../../operations.rst:719
+#: ../../operations.rst:720
 msgid ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg`` and ``sibuna-<version>.tgz``."
 msgstr ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg`` و\\ ``sibuna-<version>.tgz``."
 
-#: ../../operations.rst:720
+#: ../../operations.rst:721
 msgid "Homebrew, Kubernetes, containers"
 msgstr "Homebrew وKubernetes والحاويات"
 
-#: ../../operations.rst:721
+#: ../../operations.rst:722
 msgid ""
 "``sibuna.rb``, ``helm-sibuna-<version>.tgz``, and the image "
 "``ghcr.io/insanai/sibuna:<version>`` for amd64 and arm64, whose digest is "
@@ -3386,15 +3390,15 @@ msgstr ""
 "``ghcr.io/insanai/sibuna:<version>`` لمعماريتي amd64 وarm64، وخلاصتها في "
 "``IMAGE-DIGEST.txt``."
 
-#: ../../operations.rst:722
+#: ../../operations.rst:723
 msgid "Source"
 msgstr "المصدر"
 
-#: ../../operations.rst:723
+#: ../../operations.rst:724
 msgid "``sibuna-<version>-source.tar.gz``."
 msgstr "``sibuna-<version>-source.tar.gz``."
 
-#: ../../operations.rst:725
+#: ../../operations.rst:726
 msgid ""
 "Each archive and package carries ``LICENSE``, ``NOTICE``, ``LICENSES/`` "
 "(with ``THIRD-PARTY-RUST.txt``, the crates in the executable), "
@@ -3414,7 +3418,7 @@ msgstr ""
 "أي شيء، ويثبّت الحزم ويعيد تثبيتها ويزيلها على Debian وFedora وArch Linux "
 "وFreeBSD وOpenBSD."
 
-#: ../../operations.rst:727
+#: ../../operations.rst:728
 msgid ""
 "The assets are not signed. We check a download against ``SHA256SUMS`` "
 "from the same release before we install it:"
@@ -3422,7 +3426,7 @@ msgstr ""
 "ملفات الإصدار غير موقعة. نتحقق من الملف المنزَّل مقابل ``SHA256SUMS`` من "
 "الإصدار نفسه قبل أن نثبته:"
 
-#: ../../operations.rst:729
+#: ../../operations.rst:730
 msgid ""
 "sha256sum --ignore-missing -c SHA256SUMS          # Linux\n"
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
@@ -3432,7 +3436,7 @@ msgstr ""
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
 "sha256 -C SHA256SUMS sibuna-1.0.0-beta.2.tgz      # OpenBSD"
 
-#: ../../operations.rst:735
+#: ../../operations.rst:736
 msgid ""
 "On macOS a browser download carries a quarantine attribute that stops an "
 "unsigned executable; ``xattr -d com.apple.quarantine sibuna`` removes it "
@@ -3441,11 +3445,11 @@ msgstr ""
 "على macOS، يحمل الملف المنزَّل عبر المتصفح سمة حجر صحي توقف أي ملف تنفيذي "
 "غير موقع؛ ويزيلها ``xattr -d com.apple.quarantine sibuna`` بعد التحقق."
 
-#: ../../operations.rst:737
+#: ../../operations.rst:738
 msgid "The systemd service"
 msgstr "خدمة systemd"
 
-#: ../../operations.rst:740
+#: ../../operations.rst:741
 msgid ""
 "The Debian, RPM and Arch packages install ``/usr/bin/sibuna``, the unit "
 "``sibuna.service``, the account ``sibuna`` (through "
@@ -3460,7 +3464,7 @@ msgstr ""
 "``/etc/sibuna/service.env``. ولا يبدأ التثبيت أي شيء. نضبط الخادم الأصلي، "
 "بعنوان IP صريح، في ملف الإعدادات ثم نبدأ الخدمة:"
 
-#: ../../operations.rst:742
+#: ../../operations.rst:743
 msgid ""
 "sudoedit /etc/sibuna/service.env      # SIBUNA_UPSTREAM_HOST, "
 "SIBUNA_UPSTREAM_PORT\n"
@@ -3472,7 +3476,7 @@ msgstr ""
 "sudo systemctl enable --now sibuna\n"
 "curl -s http://127.0.0.1:8080/__sibuna/health"
 
-#: ../../operations.rst:748
+#: ../../operations.rst:749
 msgid ""
 "The service listens on ``127.0.0.1:8080`` until ``SIBUNA_HOST`` and "
 "``SIBUNA_PORT`` say otherwise. ``SIBUNA_OPTIONS`` passes further options, "
@@ -3496,7 +3500,7 @@ msgstr ""
 "دون قدرات (capabilities)، مع نظام ملفات للقراءة فقط "
 "(``ProtectSystem=strict``)، و\\ ``/tmp`` وأجهزة خاصة، ودون امتيازات جديدة."
 
-#: ../../operations.rst:750
+#: ../../operations.rst:751
 msgid ""
 "An upgrade keeps the settings file, the seed and the state, and does not "
 "restart the service; we restart it after a backup. Removal stops and "
@@ -3508,7 +3512,7 @@ msgstr ""
 "وتعطلها، لكنها تحتفظ بالحساب والبذرة والإعدادات والحالة، ونحذفها بأنفسنا "
 "عندما نُخرج المضيف من الخدمة."
 
-#: ../../operations.rst:752
+#: ../../operations.rst:753
 msgid ""
 "The FreeBSD and OpenBSD packages install only ``/usr/local/bin/sibuna`` "
 "and its documents (``pkg add``, or ``pkg_add -D unsigned`` for a package "
@@ -3521,11 +3525,11 @@ msgstr ""
 "ولا تنشئ خدمة ولا حسابًا ولا حالة: نشغّل البرنامج الخدمي بمستخدم بلا "
 "امتيازات مع بذرة ودليل بيانات خاصين."
 
-#: ../../operations.rst:754
+#: ../../operations.rst:755
 msgid "Homebrew"
 msgstr "Homebrew"
 
-#: ../../operations.rst:757
+#: ../../operations.rst:758
 msgid ""
 "``sibuna.rb`` installs the release archive for the machine: macOS or "
 "Linux, arm64 or x86-64. It does not build from source, because Homebrew's "
@@ -3541,7 +3545,7 @@ msgstr ""
 "الإصدار. لا يثبّت Homebrew الصيغ إلا من المستودعات (taps)، لذا نضع الصيغة "
 "في مستودع محلي:"
 
-#: ../../operations.rst:759
+#: ../../operations.rst:760
 msgid ""
 "brew tap-new \"$USER/local\"\n"
 "cp sibuna.rb \"$(brew "
@@ -3553,7 +3557,7 @@ msgstr ""
 "--repository)/Library/Taps/$USER/homebrew-local/Formula/\"\n"
 "brew install \"$USER/local/sibuna\""
 
-#: ../../operations.rst:765
+#: ../../operations.rst:766
 msgid ""
 "The formula starts no service. Its caveats show how to create a seed; its "
 "test starts the daemon twice on the same data directory."
@@ -3561,11 +3565,11 @@ msgstr ""
 "لا تبدأ الصيغة أي خدمة. تبين ملاحظاتها كيف ننشئ بذرة؛ ويشغّل اختبارها "
 "البرنامج الخدمي مرتين على دليل البيانات نفسه."
 
-#: ../../operations.rst:767
+#: ../../operations.rst:768
 msgid "Containers and Kubernetes"
 msgstr "الحاويات وKubernetes"
 
-#: ../../operations.rst:770
+#: ../../operations.rst:771
 msgid ""
 "The image ``ghcr.io/insanai/sibuna:<version>`` holds the static "
 "executable on a distroless base: CA certificates, user 65532, no shell "
@@ -3580,7 +3584,7 @@ msgstr ""
 "سير عمل الإصدار للقراءة فقط، دون قدرات، مع بذرة مركّبة للقراءة فقط ووحدة "
 "تخزين للحالة، ثم يعيد تشغيلها مرة واحدة:"
 
-#: ../../operations.rst:772
+#: ../../operations.rst:773
 msgid ""
 "docker run -d --read-only --cap-drop=ALL --security-opt=no-new-privileges "
 "\\\n"
@@ -3600,7 +3604,7 @@ msgstr ""
 "/var/lib/sibuna/data \\\n"
 "  --upstream-host 10.0.0.5 --upstream-port 3000"
 
-#: ../../operations.rst:780
+#: ../../operations.rst:781
 msgid ""
 "The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. "
 "It requires a Secret that we create (``secret.existingSecret``, key "
@@ -3631,7 +3635,7 @@ msgstr ""
 "ويمرر ``extraArgs`` خيارات إضافية للبرنامج الخدمي. ويثبّت سير العمل "
 "المخطط ويرقّيه ويزيله في عنقود kind يفرض معيار Restricted."
 
-#: ../../operations.rst:782
+#: ../../operations.rst:783
 msgid ""
 "kubectl -n sibuna create secret generic sibuna-admission "
 "--from-file=admission.seed\n"
@@ -3647,15 +3651,15 @@ msgstr ""
 "  --set secret.existingSecret=sibuna-admission \\\n"
 "  --set upstream.host=10.0.0.5 --set upstream.port=3000"
 
-#: ../../operations.rst:789
+#: ../../operations.rst:790
 msgid "Building from source"
 msgstr "البناء من المصدر"
 
-#: ../../operations.rst:792
+#: ../../operations.rst:793
 msgid "Rust 1.94 or later builds the workspace; the releases use Rust 1.99."
 msgstr "يبني Rust 1.94 أو أحدث مساحة العمل؛ وتستخدم الإصدارات Rust 1.99."
 
-#: ../../operations.rst:794
+#: ../../operations.rst:795
 msgid ""
 "``cargo build --release -p sibuna`` produces ``target/release/sibuna`` "
 "with the default features: SQLite storage and the console. sqlx bundles "
@@ -3673,7 +3677,7 @@ msgstr ""
 "wasm32-unknown-unknown``؛ ويضمّن ``SIBUNA_POW_WASM=<path>`` و\\ "
 "``SIBUNA_CONSOLE_WASM=<path>`` وحدات مبنية مسبقًا بدلًا من ذلك."
 
-#: ../../operations.rst:795
+#: ../../operations.rst:796
 msgid ""
 "``cargo build --release -p sibuna --no-default-features`` produces the "
 "in-memory firewall with no external crate at all; ``--data-dir`` and "
@@ -3685,7 +3689,7 @@ msgstr ""
 "``--data-dir`` و\\ ``--database-url`` عند البدء بالخطأ "
 "``StorageDisabled``، ويُرفض ``sibuna console`` بالخطأ ``CONSOLEBUILD``."
 
-#: ../../operations.rst:796
+#: ../../operations.rst:797
 msgid ""
 "``cargo build --release -p sibuna --features postgres-tls`` adds "
 "PostgreSQL clusters with verified TLS to the database. It needs no "
@@ -3694,7 +3698,7 @@ msgstr ""
 "يضيف ``cargo build --release -p sibuna --features postgres-tls`` عناقيد "
 "PostgreSQL مع TLS متحقق منه إلى قاعدة البيانات. ولا يحتاج إلى OpenSSL."
 
-#: ../../operations.rst:797
+#: ../../operations.rst:798
 msgid ""
 "The static Linux executables of the releases come from ``cargo build "
 "--release --locked -p sibuna --target x86_64-unknown-linux-musl`` (or "
@@ -3706,7 +3710,7 @@ msgstr ""
 "``aarch64-unknown-linux-musl``) مع ``musl-gcc`` مترجمًا لـ C "
 "(``CC_x86_64_unknown_linux_musl=musl-gcc``)."
 
-#: ../../operations.rst:799
+#: ../../operations.rst:800
 msgid ""
 "The release profile uses fat LTO and one codegen unit. The workflow "
 "builds the two WebAssembly modules once and passes them to every "
@@ -3719,7 +3723,7 @@ msgstr ""
 "التنفيذية لإصدار ما وحدات متطابقة بايتًا ببايت. ويعيد ``cargo xtask "
 "licenses`` توليد ``LICENSES/THIRD-PARTY-RUST.txt`` بعد تغير أي اعتمادية."
 
-#: ../../operations.rst:801
+#: ../../operations.rst:802
 msgid ""
 "On Windows the daemon stops on Ctrl+C, Ctrl+Break and console close "
 "events; it does not run as a Windows service. Windows files have no mode "
@@ -3734,11 +3738,11 @@ msgstr ""
 "لقاعدة بيانات قد يقرؤه آخرون: نقيّد هذه الملفات بقوائم ACL. وتُقرأ مقاييس "
 "الذاكرة وCPU في وحدة التحكم من ``/proc``، ولا تتوفر على الأنظمة الأخرى."
 
-#: ../../operations.rst:803
+#: ../../operations.rst:804
 msgid "Exercise 9.2"
 msgstr "تمرين 9.2"
 
-#: ../../operations.rst:805
+#: ../../operations.rst:806
 msgid ""
 "Write the policy file and the ``ip_reputation`` rows needed so that a "
 "staging network (``10.20.0.0/16``) bypasses challenges, ``/admin/*`` "
@@ -3750,7 +3754,7 @@ msgstr ""
 "المتسلسل، وتُقبل أداة كشط تابعة لشريك تُعرف بالترويسة ``X-Partner-Key`` "
 "بمعدل 30 طلبًا لكل 10 ثوانٍ."
 
-#: ../../operations.rst:807
+#: ../../operations.rst:808
 msgid ""
 "Hint: The daemon flags set the per-client limit every request meets "
 "first; a rule can carry a quota of its own in ``limits``."
@@ -3758,11 +3762,11 @@ msgstr ""
 "تلميح: تضبط خيارات البرنامج الخدمي الحدَّ الخاص بكل عميل، وهو أول حد يمر "
 "به كل طلب؛ ويمكن أن تحمل القاعدة حصة خاصة بها في ``limits``."
 
-#: ../../operations.rst:809
+#: ../../operations.rst:810
 msgid "Explain the invariant"
 msgstr "اشرح اللامتغير"
 
-#: ../../operations.rst:811
+#: ../../operations.rst:812
 msgid ""
 "Explain to an operator why adding a row to ``policies`` takes effect "
 "without a restart and without a request ever waiting, in terms of the "

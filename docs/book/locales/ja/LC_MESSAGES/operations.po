@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-24 12:05+0000\n"
+"POT-Creation-Date: 2026-10-24 13:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -34,7 +34,7 @@ msgid "Surfaces and Configuration"
 msgstr "運用構成と設定"
 
 #: ../../operations.rst:9 ../../operations.rst:313 ../../operations.rst:533
-#: ../../operations.rst:562 ../../operations.rst:700
+#: ../../operations.rst:562 ../../operations.rst:701
 msgid "Objectives"
 msgstr "この章の学習目標"
 
@@ -2836,23 +2836,27 @@ msgid ""
 "``postgres://`` URL and must be readable by its owner only; the banner "
 "never prints the URL. Writes go to the PostgreSQL primary. Each node's "
 "storage thread sees the committed revision change (by ``NOTIFY`` or by "
-"polling) and rebuilds its engine. Nodes reach the shared database across "
-"the network, so we encrypt and verify that connection. We give the server "
-"a certificate signed by our own certificate authority, and we name that "
-"authority in the URL: "
-"``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``. "
-"On the server we accept TCP only through ``hostssl`` lines in "
-"``pg_hba.conf``."
+"polling) and rebuilds its engine."
 msgstr ""
 "すべてのメンバーは同じマスターシークレットと、1から8,388,607の一意な\\ ``--cluster-node``\\ "
 "を使わなければなりません。URLファイルは\\ ``postgres://``\\ "
 "のURLを一つ持ち、所有者だけが読めなければなりません。バナーがURLを表示することはありません。書き込みはPostgreSQLのプライマリーに送られます。各ノードのストレージスレッドは、コミットされたリビジョンの変化を（\\ "
-"``NOTIFY``\\ "
-"またはポーリングで）見て、エンジンを再構築します。ノードはネットワーク越しに共有データベースに到達するので、その接続を暗号化して検証します。サーバーには自分たちの認証局が署名した証明書を与え、URLでその認証局を指定します。\\ "
+"``NOTIFY``\\ またはポーリングで）見て、エンジンを再構築します。"
+
+#: ../../operations.rst:687
+msgid ""
+"Nodes reach the shared database across the network, so we encrypt and "
+"verify that connection. We give the server a certificate signed by our "
+"own certificate authority, and we name that authority in the URL: "
+"``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``. "
+"On the server we accept TCP only through ``hostssl`` lines in "
+"``pg_hba.conf``."
+msgstr ""
+"ノードはネットワーク越しに共有データベースに到達するので、その接続を暗号化して検証します。サーバーには自分たちの認証局が署名した証明書を与え、URLでその認証局を指定します。\\ "
 "``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``\\ "
 "です。サーバーでは、\\ ``pg_hba.conf``\\ の\\ ``hostssl``\\ 行を通してだけTCPを受け付けます。"
 
-#: ../../operations.rst:688
+#: ../../operations.rst:689
 msgid ""
 "At startup the daemon prints one line about the database connection. With "
 "``verify-full`` it says that the certificate and host name are verified. "
@@ -2876,7 +2880,7 @@ msgstr ""
 "``sslrootcert``\\ はシステムのトラストストアに自分たちの認証局を加えますが、システムの認証局を取り除くことはしません（SID "
 "0011、SID 0012）。"
 
-#: ../../operations.rst:690
+#: ../../operations.rst:691
 msgid ""
 "Sibuna does not replicate a database of its own and elects no leader. "
 "Replication, failover and backups are PostgreSQL's (streaming "
@@ -2897,11 +2901,11 @@ msgstr ""
 "0005）は読みません。ポリシーは\\ ``sibuna console policies export``\\ と\\ ``sibuna "
 "console policies import``\\ で移し、フォレンジックの履歴は移行しません。"
 
-#: ../../operations.rst:692
+#: ../../operations.rst:693
 msgid "Cluster Challenge Routing"
 msgstr "クラスターでのチャレンジのルーティング"
 
-#: ../../operations.rst:695
+#: ../../operations.rst:696
 msgid ""
 "Challenge keys are bound to ``--cluster-node``; keep challenge issuance "
 "and verification on the same member. Tokens use the shared seed and work "
@@ -2917,18 +2921,18 @@ msgstr ""
 "``crates/storage/tests/multi_node.rs``\\ 、SID 0011の基準2。\\ "
 "``SIBUNA_TEST_DATABASE_URL``\\ を設定すると実行されます）。"
 
-#: ../../operations.rst:697
+#: ../../operations.rst:698
 msgid "Packaging"
 msgstr "パッケージング"
 
-#: ../../operations.rst:702
+#: ../../operations.rst:703
 msgid ""
 "Install and verify a release package, run Sibuna as a service, in a "
 "container or under Kubernetes, and build the binary ourselves."
 msgstr ""
 "リリースパッケージをインストールして検証し、Sibunaをサービスとして、コンテナーで、またはKubernetesの下で実行し、バイナリを自分たちでビルドします。"
 
-#: ../../operations.rst:704
+#: ../../operations.rst:705
 msgid ""
 "Every release on GitHub carries the same executable for each platform, "
 "built from the release tag with the default features: SQLite storage and "
@@ -2936,19 +2940,19 @@ msgid ""
 msgstr ""
 "GitHubのどのリリースにも、プラットフォームごとに同じ実行ファイルが含まれます。これはリリースタグから既定のフィーチャー（SQLiteストレージとコンソール）でビルドしたものです。PostgreSQLのクラスターには、自分たちでビルドしたものが必要です（後述）。"
 
-#: ../../operations.rst:710
+#: ../../operations.rst:711
 msgid "Platform"
 msgstr "プラットフォーム"
 
-#: ../../operations.rst:711
+#: ../../operations.rst:712
 msgid "Release assets"
 msgstr "リリースアセット"
 
-#: ../../operations.rst:712
+#: ../../operations.rst:713
 msgid "Linux x86-64, ARM64"
 msgstr "Linux x86-64、ARM64"
 
-#: ../../operations.rst:713
+#: ../../operations.rst:714
 msgid ""
 "``sibuna-linux-amd64.tar.gz`` and ``sibuna-linux-arm64.tar.gz`` hold a "
 "static musl executable that runs on any distribution. "
@@ -2964,11 +2968,11 @@ msgstr ""
 "``sibuna-<version>-1.aarch64.rpm``\\ は、それをsystemdサービスとともにインストールします。Arch "
 "Linuxでは\\ ``sibuna-bin-<version>-1-x86_64.pkg.tar.zst``\\ が同じことをします。"
 
-#: ../../operations.rst:714
+#: ../../operations.rst:715
 msgid "macOS arm64, x86-64"
 msgstr "macOS arm64、x86-64"
 
-#: ../../operations.rst:715
+#: ../../operations.rst:716
 msgid ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, for macOS "
 "12 or later."
@@ -2976,11 +2980,11 @@ msgstr ""
 "``sibuna-macos-arm64.tar.gz``\\ 、\\ ``sibuna-macos-amd64.tar.gz``\\ "
 "。macOS 12以降に対応します。"
 
-#: ../../operations.rst:716
+#: ../../operations.rst:717
 msgid "Windows x86-64"
 msgstr "Windows x86-64"
 
-#: ../../operations.rst:717
+#: ../../operations.rst:718
 msgid ""
 "``sibuna-windows-amd64.zip`` holds ``sibuna.exe``, for Windows 10 or "
 "Server 2016 or later."
@@ -2988,22 +2992,22 @@ msgstr ""
 "``sibuna-windows-amd64.zip``\\ には\\ ``sibuna.exe``\\ が入っています。Windows "
 "10またはServer 2016以降に対応します。"
 
-#: ../../operations.rst:718
+#: ../../operations.rst:719
 msgid "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 msgstr "FreeBSD 15.1、OpenBSD 7.9（amd64）"
 
-#: ../../operations.rst:719
+#: ../../operations.rst:720
 msgid ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg`` and ``sibuna-<version>.tgz``."
 msgstr ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg``\\ と\\ "
 "``sibuna-<version>.tgz``\\ 。"
 
-#: ../../operations.rst:720
+#: ../../operations.rst:721
 msgid "Homebrew, Kubernetes, containers"
 msgstr "Homebrew、Kubernetes、コンテナー"
 
-#: ../../operations.rst:721
+#: ../../operations.rst:722
 msgid ""
 "``sibuna.rb``, ``helm-sibuna-<version>.tgz``, and the image "
 "``ghcr.io/insanai/sibuna:<version>`` for amd64 and arm64, whose digest is "
@@ -3013,15 +3017,15 @@ msgstr ""
 "、そしてamd64とarm64向けのイメージ\\ ``ghcr.io/insanai/sibuna:<version>``\\ "
 "。イメージのダイジェストは\\ ``IMAGE-DIGEST.txt``\\ にあります。"
 
-#: ../../operations.rst:722
+#: ../../operations.rst:723
 msgid "Source"
 msgstr "ソース"
 
-#: ../../operations.rst:723
+#: ../../operations.rst:724
 msgid "``sibuna-<version>-source.tar.gz``."
 msgstr "``sibuna-<version>-source.tar.gz``\\ 。"
 
-#: ../../operations.rst:725
+#: ../../operations.rst:726
 msgid ""
 "Each archive and package carries ``LICENSE``, ``NOTICE``, ``LICENSES/`` "
 "(with ``THIRD-PARTY-RUST.txt``, the crates in the executable), "
@@ -3038,14 +3042,14 @@ msgstr ""
 "が入っています。このマニフェストは、バージョン、コミット、Rustのターゲット、コンパイラーのバージョン、フィーチャー、そして実行ファイルとその二つのWebAssemblyモジュールのSHA-256を記録します。リリースワークフローは、何かを公開する前にすべての実行ファイルをそれぞれのプラットフォームで起動し、Debian、Fedora、Arch "
 "Linux、FreeBSD、OpenBSDでパッケージのインストール、再インストール、削除を行います。"
 
-#: ../../operations.rst:727
+#: ../../operations.rst:728
 msgid ""
 "The assets are not signed. We check a download against ``SHA256SUMS`` "
 "from the same release before we install it:"
 msgstr ""
 "アセットには署名がありません。インストールする前に、ダウンロードしたものを同じリリースの\\ ``SHA256SUMS``\\ と照合します。"
 
-#: ../../operations.rst:729
+#: ../../operations.rst:730
 msgid ""
 "sha256sum --ignore-missing -c SHA256SUMS          # Linux\n"
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
@@ -3055,7 +3059,7 @@ msgstr ""
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
 "sha256 -C SHA256SUMS sibuna-1.0.0-beta.2.tgz      # OpenBSD"
 
-#: ../../operations.rst:735
+#: ../../operations.rst:736
 msgid ""
 "On macOS a browser download carries a quarantine attribute that stops an "
 "unsigned executable; ``xattr -d com.apple.quarantine sibuna`` removes it "
@@ -3064,11 +3068,11 @@ msgstr ""
 "macOSでは、ブラウザーでダウンロードしたファイルに隔離属性が付き、これが署名のない実行ファイルを止めます。照合の後、\\ ``xattr -d "
 "com.apple.quarantine sibuna``\\ でこの属性を取り除きます。"
 
-#: ../../operations.rst:737
+#: ../../operations.rst:738
 msgid "The systemd service"
 msgstr "systemdサービス"
 
-#: ../../operations.rst:740
+#: ../../operations.rst:741
 msgid ""
 "The Debian, RPM and Arch packages install ``/usr/bin/sibuna``, the unit "
 "``sibuna.service``, the account ``sibuna`` (through "
@@ -3083,7 +3087,7 @@ msgstr ""
 "``/etc/sibuna/service.env``\\ "
 "をインストールします。インストールしても何も起動しません。設定ファイルにオリジンをIPリテラルで設定し、サービスを起動します。"
 
-#: ../../operations.rst:742
+#: ../../operations.rst:743
 msgid ""
 "sudoedit /etc/sibuna/service.env      # SIBUNA_UPSTREAM_HOST, "
 "SIBUNA_UPSTREAM_PORT\n"
@@ -3095,7 +3099,7 @@ msgstr ""
 "sudo systemctl enable --now sibuna\n"
 "curl -s http://127.0.0.1:8080/__sibuna/health"
 
-#: ../../operations.rst:748
+#: ../../operations.rst:749
 msgid ""
 "The service listens on ``127.0.0.1:8080`` until ``SIBUNA_HOST`` and "
 "``SIBUNA_PORT`` say otherwise. ``SIBUNA_OPTIONS`` passes further options, "
@@ -3117,7 +3121,7 @@ msgstr ""
 "``/var/lib/sibuna``\\ に保存します。ユニットは、ケーパビリティなし、読み取り専用のシステム（\\ "
 "``ProtectSystem=strict``\\ ）、プライベートな\\ ``/tmp``\\ とデバイス、新しい特権なしで動きます。"
 
-#: ../../operations.rst:750
+#: ../../operations.rst:751
 msgid ""
 "An upgrade keeps the settings file, the seed and the state, and does not "
 "restart the service; we restart it after a backup. Removal stops and "
@@ -3126,7 +3130,7 @@ msgid ""
 msgstr ""
 "アップグレードは設定ファイル、シード、状態を保ち、サービスを再起動しません。バックアップの後で自分たちで再起動します。削除はサービスを停止して無効にしますが、アカウント、シード、設定、状態は残します。これらはホストを退役させるときに自分たちで削除します。"
 
-#: ../../operations.rst:752
+#: ../../operations.rst:753
 msgid ""
 "The FreeBSD and OpenBSD packages install only ``/usr/local/bin/sibuna`` "
 "and its documents (``pkg add``, or ``pkg_add -D unsigned`` for a package "
@@ -3139,11 +3143,11 @@ msgstr ""
 "unsigned``\\ "
 "）。サービス、アカウント、状態は作成しません。デーモンは、専用のシードとデータディレクトリを持つ特権のないユーザーで実行します。"
 
-#: ../../operations.rst:754
+#: ../../operations.rst:755
 msgid "Homebrew"
 msgstr "Homebrew"
 
-#: ../../operations.rst:757
+#: ../../operations.rst:758
 msgid ""
 "``sibuna.rb`` installs the release archive for the machine: macOS or "
 "Linux, arm64 or x86-64. It does not build from source, because Homebrew's "
@@ -3157,7 +3161,7 @@ msgstr ""
 "``wasm32-unknown-unknown``\\ "
 "向けの標準ライブラリがなく、埋め込む二つのWebAssemblyモジュールのビルドにはそれが必要だからです。アーカイブには、リリースワークフローが確認済みの実行ファイルが入っています。Homebrewはtapからしかformulaをインストールしないので、formulaをローカルのtapに置きます。"
 
-#: ../../operations.rst:759
+#: ../../operations.rst:760
 msgid ""
 "brew tap-new \"$USER/local\"\n"
 "cp sibuna.rb \"$(brew "
@@ -3169,18 +3173,18 @@ msgstr ""
 "--repository)/Library/Taps/$USER/homebrew-local/Formula/\"\n"
 "brew install \"$USER/local/sibuna\""
 
-#: ../../operations.rst:765
+#: ../../operations.rst:766
 msgid ""
 "The formula starts no service. Its caveats show how to create a seed; its "
 "test starts the daemon twice on the same data directory."
 msgstr ""
 "このformulaはサービスを起動しません。注意書き（caveats）はシードの作り方を示し、テストは同じデータディレクトリでデーモンを2回起動します。"
 
-#: ../../operations.rst:767
+#: ../../operations.rst:768
 msgid "Containers and Kubernetes"
 msgstr "コンテナーとKubernetes"
 
-#: ../../operations.rst:770
+#: ../../operations.rst:771
 msgid ""
 "The image ``ghcr.io/insanai/sibuna:<version>`` holds the static "
 "executable on a distroless base: CA certificates, user 65532, no shell "
@@ -3194,7 +3198,7 @@ msgstr ""
 "``sibuna``\\ "
 "なので、引数はデーモンのオプションです。リリースワークフローはこのイメージを、読み取り専用、ケーパビリティなしで、シードを読み取り専用でマウントし、状態用のボリュームを付けて実行し、1回再起動します。"
 
-#: ../../operations.rst:772
+#: ../../operations.rst:773
 msgid ""
 "docker run -d --read-only --cap-drop=ALL --security-opt=no-new-privileges "
 "\\\n"
@@ -3214,7 +3218,7 @@ msgstr ""
 "/var/lib/sibuna/data \\\n"
 "  --upstream-host 10.0.0.5 --upstream-port 3000"
 
-#: ../../operations.rst:780
+#: ../../operations.rst:781
 msgid ""
 "The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. "
 "It requires a Secret that we create (``secret.existingSecret``, key "
@@ -3245,7 +3249,7 @@ msgstr ""
 "はIPリテラルでなければならず、\\ ``extraArgs``\\ "
 "は追加のデーモンオプションを渡します。ワークフローは、Restricted標準を強制するkindクラスターで、チャートのインストール、アップグレード、アンインストールを行います。"
 
-#: ../../operations.rst:782
+#: ../../operations.rst:783
 msgid ""
 "kubectl -n sibuna create secret generic sibuna-admission "
 "--from-file=admission.seed\n"
@@ -3261,15 +3265,15 @@ msgstr ""
 "  --set secret.existingSecret=sibuna-admission \\\n"
 "  --set upstream.host=10.0.0.5 --set upstream.port=3000"
 
-#: ../../operations.rst:789
+#: ../../operations.rst:790
 msgid "Building from source"
 msgstr "ソースからビルドする"
 
-#: ../../operations.rst:792
+#: ../../operations.rst:793
 msgid "Rust 1.94 or later builds the workspace; the releases use Rust 1.99."
 msgstr "ワークスペースはRust 1.94以降でビルドできます。リリースはRust 1.99を使います。"
 
-#: ../../operations.rst:794
+#: ../../operations.rst:795
 msgid ""
 "``cargo build --release -p sibuna`` produces ``target/release/sibuna`` "
 "with the default features: SQLite storage and the console. sqlx bundles "
@@ -3286,7 +3290,7 @@ msgstr ""
 "``SIBUNA_POW_WASM=<path>``\\ と\\ ``SIBUNA_CONSOLE_WASM=<path>``\\ "
 "を指定すると、代わりにビルド済みのモジュールを埋め込みます。"
 
-#: ../../operations.rst:795
+#: ../../operations.rst:796
 msgid ""
 "``cargo build --release -p sibuna --no-default-features`` produces the "
 "in-memory firewall with no external crate at all; ``--data-dir`` and "
@@ -3298,7 +3302,7 @@ msgstr ""
 "``--database-url``\\ は起動時に\\ ``StorageDisabled``\\ で、\\ ``sibuna "
 "console``\\ は\\ ``CONSOLEBUILD``\\ で拒否されます。"
 
-#: ../../operations.rst:796
+#: ../../operations.rst:797
 msgid ""
 "``cargo build --release -p sibuna --features postgres-tls`` adds "
 "PostgreSQL clusters with verified TLS to the database. It needs no "
@@ -3307,7 +3311,7 @@ msgstr ""
 "``cargo build --release -p sibuna --features postgres-tls``\\ "
 "は、データベースへの検証付きTLSを備えたPostgreSQLのクラスターを加えます。OpenSSLは必要ありません。"
 
-#: ../../operations.rst:797
+#: ../../operations.rst:798
 msgid ""
 "The static Linux executables of the releases come from ``cargo build "
 "--release --locked -p sibuna --target x86_64-unknown-linux-musl`` (or "
@@ -3319,7 +3323,7 @@ msgstr ""
 "--locked -p sibuna --target x86_64-unknown-linux-musl``\\ （または\\ "
 "``aarch64-unknown-linux-musl``\\ ）でビルドしたものです。"
 
-#: ../../operations.rst:799
+#: ../../operations.rst:800
 msgid ""
 "The release profile uses fat LTO and one codegen unit. The workflow "
 "builds the two WebAssembly modules once and passes them to every "
@@ -3332,7 +3336,7 @@ msgstr ""
 "``cargo xtask licenses``\\ で\\ ``LICENSES/THIRD-PARTY-RUST.txt``\\ "
 "を再生成します。"
 
-#: ../../operations.rst:801
+#: ../../operations.rst:802
 msgid ""
 "On Windows the daemon stops on Ctrl+C, Ctrl+Break and console close "
 "events; it does not run as a Windows service. Windows files have no mode "
@@ -3344,11 +3348,11 @@ msgstr ""
 "Windowsでは、デーモンはCtrl+C、Ctrl+Break、コンソールを閉じるイベントで停止します。Windowsサービスとしては動きません。Windowsのファイルにはモードビットがないので、Sibunaは他者が読めるかもしれない鍵、認証情報、データベースURLのファイルを拒否できません。これらのファイルはACLで制限します。コンソールのメモリとCPUのゲージは\\ "
 "``/proc``\\ から読むので、他のシステムでは使えません。"
 
-#: ../../operations.rst:803
+#: ../../operations.rst:804
 msgid "Exercise 9.2"
 msgstr "演習9.2"
 
-#: ../../operations.rst:805
+#: ../../operations.rst:806
 msgid ""
 "Write the policy file and the ``ip_reputation`` rows needed so that a "
 "staging network (``10.20.0.0/16``) bypasses challenges, ``/admin/*`` "
@@ -3360,7 +3364,7 @@ msgstr ""
 "で識別するパートナーのスクレイパーを10秒あたり30リクエストで許可するために必要な、ポリシーファイルと\\ "
 "``ip_reputation``\\ の行を書いてください。"
 
-#: ../../operations.rst:807
+#: ../../operations.rst:808
 msgid ""
 "Hint: The daemon flags set the per-client limit every request meets "
 "first; a rule can carry a quota of its own in ``limits``."
@@ -3368,11 +3372,11 @@ msgstr ""
 "ヒント：デーモンのフラグは、すべてのリクエストが最初に通るクライアントごとの制限を設定します。ルールは\\ ``limits``\\ "
 "で専用のクォータを持てます。"
 
-#: ../../operations.rst:809
+#: ../../operations.rst:810
 msgid "Explain the invariant"
 msgstr "不変条件を説明してください"
 
-#: ../../operations.rst:811
+#: ../../operations.rst:812
 msgid ""
 "Explain to an operator why adding a row to ``policies`` takes effect "
 "without a restart and without a request ever waiting, in terms of the "

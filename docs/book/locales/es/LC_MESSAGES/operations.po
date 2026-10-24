@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-24 12:05+0000\n"
+"POT-Creation-Date: 2026-10-24 13:43+0000\n"
 "PO-Revision-Date: 2026-10-16 05:19+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -37,7 +37,7 @@ msgid "Surfaces and Configuration"
 msgstr "Modos de protección y configuración"
 
 #: ../../operations.rst:9 ../../operations.rst:313 ../../operations.rst:533
-#: ../../operations.rst:562 ../../operations.rst:700
+#: ../../operations.rst:562 ../../operations.rst:701
 msgid "Objectives"
 msgstr "Objetivos"
 
@@ -3403,29 +3403,33 @@ msgid ""
 "``postgres://`` URL and must be readable by its owner only; the banner "
 "never prints the URL. Writes go to the PostgreSQL primary. Each node's "
 "storage thread sees the committed revision change (by ``NOTIFY`` or by "
-"polling) and rebuilds its engine. Nodes reach the shared database across "
-"the network, so we encrypt and verify that connection. We give the server "
-"a certificate signed by our own certificate authority, and we name that "
-"authority in the URL: "
+"polling) and rebuilds its engine."
+msgstr ""
+"Todos los miembros deben usar el mismo secreto maestro y un "
+"``--cluster-node`` único de 1 a 8.388.607. El archivo de la URL contiene "
+"una URL ``postgres://`` y solo debe poder leerlo su propietario; el banner "
+"nunca imprime la URL. Las escrituras van al primario de PostgreSQL. El hilo "
+"de almacenamiento de cada nodo ve el cambio de la revisión confirmada "
+"(mediante ``NOTIFY`` o por sondeo) y reconstruye su motor."
+
+#: ../../operations.rst:687
+msgid ""
+"Nodes reach the shared database across the network, so we encrypt and "
+"verify that connection. We give the server a certificate signed by our "
+"own certificate authority, and we name that authority in the URL: "
 "``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``. "
 "On the server we accept TCP only through ``hostssl`` lines in "
 "``pg_hba.conf``."
 msgstr ""
-"Todos los miembros deben usar el mismo secreto maestro y un "
-"``--cluster-node`` único de 1 a 8.388.607. El archivo de la URL contiene "
-"una URL ``postgres://`` y solo debe poder leerlo su propietario; el "
-"banner nunca imprime la URL. Las escrituras van al primario de "
-"PostgreSQL. El hilo de almacenamiento de cada nodo ve el cambio de la "
-"revisión confirmada (mediante ``NOTIFY`` o por sondeo) y reconstruye su "
-"motor. Los nodos acceden a la base de datos compartida a través de la "
-"red, así que ciframos y verificamos esa conexión. Damos al servidor un "
-"certificado firmado por nuestra propia autoridad de certificación, y "
-"nombramos esa autoridad en la URL: "
+"Los nodos acceden a la base de datos compartida a través de la red, así que "
+"ciframos y verificamos esa conexión. Damos al servidor un certificado "
+"firmado por nuestra propia autoridad de certificación, y nombramos esa "
+"autoridad en la URL: "
 "``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``. "
 "En el servidor aceptamos TCP solo mediante líneas ``hostssl`` en "
 "``pg_hba.conf``."
 
-#: ../../operations.rst:688
+#: ../../operations.rst:689
 msgid ""
 "At startup the daemon prints one line about the database connection. With "
 "``verify-full`` it says that the certificate and host name are verified. "
@@ -3452,7 +3456,7 @@ msgstr ""
 "nuestra autoridad al almacén de confianza del sistema; no elimina las "
 "autoridades del sistema (SID 0011, SID 0012)."
 
-#: ../../operations.rst:690
+#: ../../operations.rst:691
 msgid ""
 "Sibuna does not replicate a database of its own and elects no leader. "
 "Replication, failover and backups are PostgreSQL's (streaming "
@@ -3482,11 +3486,11 @@ msgstr ""
 "políticas se trasladan con ``sibuna console policies export`` y ``sibuna "
 "console policies import``, y el historial forense no se migra."
 
-#: ../../operations.rst:692
+#: ../../operations.rst:693
 msgid "Cluster Challenge Routing"
 msgstr "Enrutamiento de desafíos en el clúster"
 
-#: ../../operations.rst:695
+#: ../../operations.rst:696
 msgid ""
 "Challenge keys are bound to ``--cluster-node``; keep challenge issuance "
 "and verification on the same member. Tokens use the shared seed and work "
@@ -3508,11 +3512,11 @@ msgstr ""
 "(``crates/storage/tests/multi_node.rs``, criterio 2 de SID 0011; se "
 "ejecuta cuando se define ``SIBUNA_TEST_DATABASE_URL``)."
 
-#: ../../operations.rst:697
+#: ../../operations.rst:698
 msgid "Packaging"
 msgstr "Empaquetado"
 
-#: ../../operations.rst:702
+#: ../../operations.rst:703
 msgid ""
 "Install and verify a release package, run Sibuna as a service, in a "
 "container or under Kubernetes, and build the binary ourselves."
@@ -3521,7 +3525,7 @@ msgstr ""
 "Sibuna como servicio, en un contenedor o en Kubernetes, y compilamos el "
 "binario nosotros mismos."
 
-#: ../../operations.rst:704
+#: ../../operations.rst:705
 msgid ""
 "Every release on GitHub carries the same executable for each platform, "
 "built from the release tag with the default features: SQLite storage and "
@@ -3532,19 +3536,19 @@ msgstr ""
 "por defecto: almacenamiento SQLite y la consola. Los clústeres PostgreSQL "
 "necesitan una compilación propia (más abajo)."
 
-#: ../../operations.rst:710
+#: ../../operations.rst:711
 msgid "Platform"
 msgstr "Plataforma"
 
-#: ../../operations.rst:711
+#: ../../operations.rst:712
 msgid "Release assets"
 msgstr "Archivos de la versión"
 
-#: ../../operations.rst:712
+#: ../../operations.rst:713
 msgid "Linux x86-64, ARM64"
 msgstr "Linux x86-64, ARM64"
 
-#: ../../operations.rst:713
+#: ../../operations.rst:714
 msgid ""
 "``sibuna-linux-amd64.tar.gz`` and ``sibuna-linux-arm64.tar.gz`` hold a "
 "static musl executable that runs on any distribution. "
@@ -3560,11 +3564,11 @@ msgstr ""
 "instalan con un servicio systemd; "
 "``sibuna-bin-<version>-1-x86_64.pkg.tar.zst`` hace lo mismo en Arch Linux."
 
-#: ../../operations.rst:714
+#: ../../operations.rst:715
 msgid "macOS arm64, x86-64"
 msgstr "macOS arm64, x86-64"
 
-#: ../../operations.rst:715
+#: ../../operations.rst:716
 msgid ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, for macOS "
 "12 or later."
@@ -3572,11 +3576,11 @@ msgstr ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, para macOS "
 "12 o posterior."
 
-#: ../../operations.rst:716
+#: ../../operations.rst:717
 msgid "Windows x86-64"
 msgstr "Windows x86-64"
 
-#: ../../operations.rst:717
+#: ../../operations.rst:718
 msgid ""
 "``sibuna-windows-amd64.zip`` holds ``sibuna.exe``, for Windows 10 or "
 "Server 2016 or later."
@@ -3584,21 +3588,21 @@ msgstr ""
 "``sibuna-windows-amd64.zip`` contiene ``sibuna.exe``, para Windows 10 o "
 "Server 2016 o posterior."
 
-#: ../../operations.rst:718
+#: ../../operations.rst:719
 msgid "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 msgstr "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 
-#: ../../operations.rst:719
+#: ../../operations.rst:720
 msgid ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg`` and ``sibuna-<version>.tgz``."
 msgstr ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg`` y ``sibuna-<version>.tgz``."
 
-#: ../../operations.rst:720
+#: ../../operations.rst:721
 msgid "Homebrew, Kubernetes, containers"
 msgstr "Homebrew, Kubernetes, contenedores"
 
-#: ../../operations.rst:721
+#: ../../operations.rst:722
 msgid ""
 "``sibuna.rb``, ``helm-sibuna-<version>.tgz``, and the image "
 "``ghcr.io/insanai/sibuna:<version>`` for amd64 and arm64, whose digest is "
@@ -3608,15 +3612,15 @@ msgstr ""
 "``ghcr.io/insanai/sibuna:<version>`` para amd64 y arm64, cuyo digest está "
 "en ``IMAGE-DIGEST.txt``."
 
-#: ../../operations.rst:722
+#: ../../operations.rst:723
 msgid "Source"
 msgstr "Fuentes"
 
-#: ../../operations.rst:723
+#: ../../operations.rst:724
 msgid "``sibuna-<version>-source.tar.gz``."
 msgstr "``sibuna-<version>-source.tar.gz``."
 
-#: ../../operations.rst:725
+#: ../../operations.rst:726
 msgid ""
 "Each archive and package carries ``LICENSE``, ``NOTICE``, ``LICENSES/`` "
 "(with ``THIRD-PARTY-RUST.txt``, the crates in the executable), "
@@ -3636,7 +3640,7 @@ msgstr ""
 "en su propia plataforma antes de publicar nada, e instala, reinstala y "
 "elimina los paquetes en Debian, Fedora, Arch Linux, FreeBSD y OpenBSD."
 
-#: ../../operations.rst:727
+#: ../../operations.rst:728
 msgid ""
 "The assets are not signed. We check a download against ``SHA256SUMS`` "
 "from the same release before we install it:"
@@ -3644,7 +3648,7 @@ msgstr ""
 "Los archivos no están firmados. Comprobamos cada descarga contra "
 "``SHA256SUMS`` de la misma versión antes de instalarla:"
 
-#: ../../operations.rst:729
+#: ../../operations.rst:730
 msgid ""
 "sha256sum --ignore-missing -c SHA256SUMS          # Linux\n"
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
@@ -3654,7 +3658,7 @@ msgstr ""
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
 "sha256 -C SHA256SUMS sibuna-1.0.0-beta.2.tgz      # OpenBSD"
 
-#: ../../operations.rst:735
+#: ../../operations.rst:736
 msgid ""
 "On macOS a browser download carries a quarantine attribute that stops an "
 "unsigned executable; ``xattr -d com.apple.quarantine sibuna`` removes it "
@@ -3664,11 +3668,11 @@ msgstr ""
 "cuarentena que bloquea un ejecutable sin firmar; ``xattr -d "
 "com.apple.quarantine sibuna`` lo elimina después de la comprobación."
 
-#: ../../operations.rst:737
+#: ../../operations.rst:738
 msgid "The systemd service"
 msgstr "El servicio systemd"
 
-#: ../../operations.rst:740
+#: ../../operations.rst:741
 msgid ""
 "The Debian, RPM and Arch packages install ``/usr/bin/sibuna``, the unit "
 "``sibuna.service``, the account ``sibuna`` (through "
@@ -3683,7 +3687,7 @@ msgstr ""
 "``/etc/sibuna/service.env``. La instalación no arranca nada. Fijamos el "
 "origen, un literal IP, en el archivo de ajustes y arrancamos el servicio:"
 
-#: ../../operations.rst:742
+#: ../../operations.rst:743
 msgid ""
 "sudoedit /etc/sibuna/service.env      # SIBUNA_UPSTREAM_HOST, "
 "SIBUNA_UPSTREAM_PORT\n"
@@ -3695,7 +3699,7 @@ msgstr ""
 "sudo systemctl enable --now sibuna\n"
 "curl -s http://127.0.0.1:8080/__sibuna/health"
 
-#: ../../operations.rst:748
+#: ../../operations.rst:749
 msgid ""
 "The service listens on ``127.0.0.1:8080`` until ``SIBUNA_HOST`` and "
 "``SIBUNA_PORT`` say otherwise. ``SIBUNA_OPTIONS`` passes further options, "
@@ -3721,7 +3725,7 @@ msgstr ""
 "(``ProtectSystem=strict``), ``/tmp`` y dispositivos privados, y sin "
 "nuevos privilegios."
 
-#: ../../operations.rst:750
+#: ../../operations.rst:751
 msgid ""
 "An upgrade keeps the settings file, the seed and the state, and does not "
 "restart the service; we restart it after a backup. Removal stops and "
@@ -3734,7 +3738,7 @@ msgstr ""
 "conserva la cuenta, la semilla, los ajustes y el estado, que borramos "
 "nosotros mismos cuando retiramos el host."
 
-#: ../../operations.rst:752
+#: ../../operations.rst:753
 msgid ""
 "The FreeBSD and OpenBSD packages install only ``/usr/local/bin/sibuna`` "
 "and its documents (``pkg add``, or ``pkg_add -D unsigned`` for a package "
@@ -3748,11 +3752,11 @@ msgstr ""
 "cuenta ni estado: ejecutamos el daemon como un usuario sin privilegios, "
 "con una semilla y un directorio de datos privados."
 
-#: ../../operations.rst:754
+#: ../../operations.rst:755
 msgid "Homebrew"
 msgstr "Homebrew"
 
-#: ../../operations.rst:757
+#: ../../operations.rst:758
 msgid ""
 "``sibuna.rb`` installs the release archive for the machine: macOS or "
 "Linux, arm64 or x86-64. It does not build from source, because Homebrew's "
@@ -3769,7 +3773,7 @@ msgstr ""
 "que el flujo de trabajo de publicación ya comprobó. Homebrew solo instala "
 "fórmulas desde taps, así que ponemos la fórmula en un tap local:"
 
-#: ../../operations.rst:759
+#: ../../operations.rst:760
 msgid ""
 "brew tap-new \"$USER/local\"\n"
 "cp sibuna.rb \"$(brew "
@@ -3781,7 +3785,7 @@ msgstr ""
 "--repository)/Library/Taps/$USER/homebrew-local/Formula/\"\n"
 "brew install \"$USER/local/sibuna\""
 
-#: ../../operations.rst:765
+#: ../../operations.rst:766
 msgid ""
 "The formula starts no service. Its caveats show how to create a seed; its "
 "test starts the daemon twice on the same data directory."
@@ -3790,11 +3794,11 @@ msgstr ""
 "muestran cómo crear una semilla; su prueba arranca el daemon dos veces "
 "sobre el mismo directorio de datos."
 
-#: ../../operations.rst:767
+#: ../../operations.rst:768
 msgid "Containers and Kubernetes"
 msgstr "Contenedores y Kubernetes"
 
-#: ../../operations.rst:770
+#: ../../operations.rst:771
 msgid ""
 "The image ``ghcr.io/insanai/sibuna:<version>`` holds the static "
 "executable on a distroless base: CA certificates, user 65532, no shell "
@@ -3811,7 +3815,7 @@ msgstr ""
 "montada en solo lectura y un volumen para el estado, y la reinicia una "
 "vez:"
 
-#: ../../operations.rst:772
+#: ../../operations.rst:773
 msgid ""
 "docker run -d --read-only --cap-drop=ALL --security-opt=no-new-privileges "
 "\\\n"
@@ -3831,7 +3835,7 @@ msgstr ""
 "/var/lib/sibuna/data \\\n"
 "  --upstream-host 10.0.0.5 --upstream-port 3000"
 
-#: ../../operations.rst:780
+#: ../../operations.rst:781
 msgid ""
 "The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. "
 "It requires a Secret that we create (``secret.existingSecret``, key "
@@ -3865,7 +3869,7 @@ msgstr ""
 "actualiza y desinstala el chart en un clúster kind que aplica el estándar "
 "Restricted."
 
-#: ../../operations.rst:782
+#: ../../operations.rst:783
 msgid ""
 "kubectl -n sibuna create secret generic sibuna-admission "
 "--from-file=admission.seed\n"
@@ -3881,17 +3885,17 @@ msgstr ""
 "  --set secret.existingSecret=sibuna-admission \\\n"
 "  --set upstream.host=10.0.0.5 --set upstream.port=3000"
 
-#: ../../operations.rst:789
+#: ../../operations.rst:790
 msgid "Building from source"
 msgstr "Compilar desde las fuentes"
 
-#: ../../operations.rst:792
+#: ../../operations.rst:793
 msgid "Rust 1.94 or later builds the workspace; the releases use Rust 1.99."
 msgstr ""
 "Rust 1.94 o posterior compila el workspace; las versiones publicadas usan "
 "Rust 1.99."
 
-#: ../../operations.rst:794
+#: ../../operations.rst:795
 msgid ""
 "``cargo build --release -p sibuna`` produces ``target/release/sibuna`` "
 "with the default features: SQLite storage and the console. sqlx bundles "
@@ -3911,7 +3915,7 @@ msgstr ""
 "``SIBUNA_CONSOLE_WASM=<path>`` incorporan en su lugar módulos "
 "precompilados."
 
-#: ../../operations.rst:795
+#: ../../operations.rst:796
 msgid ""
 "``cargo build --release -p sibuna --no-default-features`` produces the "
 "in-memory firewall with no external crate at all; ``--data-dir`` and "
@@ -3923,7 +3927,7 @@ msgstr ""
 "``--database-url`` se rechazan entonces al arrancar con "
 "``StorageDisabled``, y ``sibuna console`` con ``CONSOLEBUILD``."
 
-#: ../../operations.rst:796
+#: ../../operations.rst:797
 msgid ""
 "``cargo build --release -p sibuna --features postgres-tls`` adds "
 "PostgreSQL clusters with verified TLS to the database. It needs no "
@@ -3933,7 +3937,7 @@ msgstr ""
 "clústeres PostgreSQL con TLS verificado hacia la base de datos. No "
 "necesita OpenSSL."
 
-#: ../../operations.rst:797
+#: ../../operations.rst:798
 msgid ""
 "The static Linux executables of the releases come from ``cargo build "
 "--release --locked -p sibuna --target x86_64-unknown-linux-musl`` (or "
@@ -3946,7 +3950,7 @@ msgstr ""
 "``musl-gcc`` como compilador de C "
 "(``CC_x86_64_unknown_linux_musl=musl-gcc``)."
 
-#: ../../operations.rst:799
+#: ../../operations.rst:800
 msgid ""
 "The release profile uses fat LTO and one codegen unit. The workflow "
 "builds the two WebAssembly modules once and passes them to every "
@@ -3961,7 +3965,7 @@ msgstr ""
 "licenses`` regenera ``LICENSES/THIRD-PARTY-RUST.txt`` cuando cambia una "
 "dependencia."
 
-#: ../../operations.rst:801
+#: ../../operations.rst:802
 msgid ""
 "On Windows the daemon stops on Ctrl+C, Ctrl+Break and console close "
 "events; it does not run as a Windows service. Windows files have no mode "
@@ -3978,11 +3982,11 @@ msgstr ""
 "indicadores de memoria y CPU de la consola se leen de ``/proc`` y no "
 "están disponibles en otros sistemas."
 
-#: ../../operations.rst:803
+#: ../../operations.rst:804
 msgid "Exercise 9.2"
 msgstr "Ejercicio 9.2"
 
-#: ../../operations.rst:805
+#: ../../operations.rst:806
 msgid ""
 "Write the policy file and the ``ip_reputation`` rows needed so that a "
 "staging network (``10.20.0.0/16``) bypasses challenges, ``/admin/*`` "
@@ -3995,7 +3999,7 @@ msgstr ""
 "de un socio identificado por ``X-Partner-Key`` se admita a 30 peticiones "
 "cada 10 segundos."
 
-#: ../../operations.rst:807
+#: ../../operations.rst:808
 msgid ""
 "Hint: The daemon flags set the per-client limit every request meets "
 "first; a rule can carry a quota of its own in ``limits``."
@@ -4004,11 +4008,11 @@ msgstr ""
 "petición encuentra primero; una regla puede llevar una cuota propia en "
 "``limits``."
 
-#: ../../operations.rst:809
+#: ../../operations.rst:810
 msgid "Explain the invariant"
 msgstr "Explica el invariante"
 
-#: ../../operations.rst:811
+#: ../../operations.rst:812
 msgid ""
 "Explain to an operator why adding a row to ``policies`` takes effect "
 "without a restart and without a request ever waiting, in terms of the "
