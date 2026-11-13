@@ -26,8 +26,9 @@ def package(output):
     note = (f'Corresponding source of Sibuna {release}\n'
             f'Repository: https://github.com/insanai/sibuna/tree/v{release}\n'
             f'Commit: {commit}\n\n'
-            'Build (Rust 1.94 or later, with the wasm32-unknown-unknown target):\n'
-            '  cargo build --release --locked -p sibuna\n'
+            'Build (minimum Rust 1.94; release compiler Rust 1.100.0):\n'
+            '  rustup toolchain install 1.100.0 --profile minimal --target wasm32-unknown-unknown\n'
+            '  cargo +1.100.0 build --release --locked -p sibuna\n'
             'Crate versions are pinned by Cargo.lock; their licenses are listed in\n'
             'LICENSES/THIRD-PARTY-RUST.txt.\n').encode()
     output.mkdir(parents=True, exist_ok=True)

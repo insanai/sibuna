@@ -135,8 +135,8 @@ msgstr ""
 "풍부합니다. 우리가 얻는 쓸모 있는 결과는 비용과 한계를 구호 뒤에 숨기지 않고 살펴보고, 시험하고, 바꿀 수 있는 시스템입니다."
 
 #: ../../preface.rst:20
-msgid "Edition for Sibuna 1.0.0-beta.2, October 2026"
-msgstr "Sibuna 1.0.0-beta.2판, 2026년 10월"
+msgid "Edition for Sibuna 1.0.0-beta.3, November 2026"
+msgstr "Sibuna 1.0.0-beta.3판, 2026년 11월"
 
 #: ../../preface.rst:22
 msgid ""

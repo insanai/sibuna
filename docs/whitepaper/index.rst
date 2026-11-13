@@ -3,7 +3,7 @@ Sibuna: Architecture, Algorithms, and Empirical Foundations of Work-Bound Web De
 
 .. only:: html
 
-   **Vikrant Rathore**, with assistance from Ronak Rathore and Kanak Rathore. Insan AI. Whitepaper, October 2026, for Sibuna 1.0.0-beta.2.
+   **Vikrant Rathore**, with assistance from Ronak Rathore and Kanak Rathore. Insan AI. Whitepaper, November 2026, for Sibuna 1.0.0-beta.3.
 
 .. topic:: Abstract
 
@@ -446,7 +446,7 @@ Sibuna includes an opt-in management console: authenticated dashboards with live
      server -> tls [label="verified\ncertificates"];
    }
 
-The console's defining constraint is isolation from the request path. It may read the data plane's counters and its database and write the database, but it never enters a request thread, never allocates on one, and never holds a lock a connection thread needs. Its listener admits at most 96 connections, of which 16 are reserved for HTTP, 64 may be browser streams and 16 peer streams. In 1.0.0-beta.2 the complete interface module measures 724,311 bytes (272,441 bytes compressed with gzip). That is below the ceiling of 768 KiB, which the build enforces, and above the review threshold of 640 KiB, which SID 0007 records for review [#console-size]_.
+The console's defining constraint is isolation from the request path. It may read the data plane's counters and its database and write the database, but it never enters a request thread, never allocates on one, and never holds a lock a connection thread needs. Its listener admits at most 96 connections, of which 16 are reserved for HTTP, 64 may be browser streams and 16 peer streams. In 1.0.0-beta.3 the complete interface module measures 724,330 bytes (272,568 bytes compressed with gzip). That is below the ceiling of 768 KiB, which the build enforces, and above the review threshold of 640 KiB, which SID 0007 records for review [#console-size]_.
 
 The console makes outbound TLS connections for long-lived peer streams, webhooks and GeoIP downloads. Certificates are verified against the system roots or an operator's CA file, host-name verification cannot be disabled, plain HTTP is allowed only to literal loopback addresses, and a certificate error never falls back to plaintext. Sibuna still terminates no inbound TLS; that remains the job of the ingress.
 
@@ -884,7 +884,7 @@ We compare Sibuna with the tools an operator is most likely to weigh against it.
    :widths: 16 24 20 20 20
 
    * - Feature
-     - Sibuna 1.0.0-beta.2
+     - Sibuna 1.0.0-beta.3
      - Anubis 1.27
      - SafeLine CE 9
      - Cloudflare WAF
@@ -1117,7 +1117,7 @@ Sibuna is written in Rust, as a workspace of small crates whose dependencies poi
 
 *Memory safety.* Code that bypasses the compiler's memory-safety checks is denied by default, and a module that needs it must opt in by name and justify each use in a comment. A few modules do: the paths that use the processor's SHA instructions, one write that wipes secrets, the declarations of a few C library functions for signal handling, the exports of the two WebAssembly modules, and the ring that carries incidents to the storage thread. The ring is the one place where we kept such code for speed, and only after a measurement: the standard library's bounded channel cost 20 to 45% more per push with 16 producers [#ring]_. Elsewhere ownership does the work that hand-written memory management would otherwise do: a parsed request cannot outlive its buffer, an engine is freed with its last reader, and a socket cannot be closed while any thread can still reach it.
 
-*Discipline and tests.* A function body has at most 70 logical lines and a file at most 1,408 lines, enforced by a checker. Library code returns structured errors and never prints, and every error a user sees names its location, shows an excerpt, and gives a hint. The workspace suite of 1.0.0-beta.2 runs about 2,200 tests on SQLite and about 700 more against PostgreSQL; the console's interface has 298 tests, including golden fixtures; and browser checks drive headless Chromium through the interstitial and through every console page [#tests]_.
+*Discipline and tests.* A function body has at most 70 logical lines and a file at most 1,408 lines, enforced by a checker. Library code returns structured errors and never prints, and every error a user sees names its location, shows an excerpt, and gives a hint. The workspace suite of 1.0.0-beta.3 runs about 2,200 tests on SQLite and about 700 more against PostgreSQL; the console's interface has 298 tests, including golden fixtures; and browser checks drive headless Chromium through the interstitial and through every console page [#tests]_.
 
 Limitations and Open Work
 -------------------------
@@ -1182,7 +1182,7 @@ Every number in this paper comes from a committed result file of the Sibuna repo
 .. [#schema] SID 0011, "Schema and migrations" and its review history (transport security); SID 0013, "Abstract".
 .. [#gave-up] SID 0011, "Security and operational considerations" and "Acceptance criteria and implementation status" (criterion 2, ``crates/storage/tests/multi_node.rs``); ``.github/release-notes.txt``, "Known limitations"; SID 0002, "Authentication and work" (node-bound challenge keys); book Part VIII, "Not Measured".
 .. [#console-sources] SID 0007, "Abstract" and its revision notes (listener admission, interface module, GeoIP and passwords); SID 0010, review history (console port, TOTP); SID 0012; SID 0013. The isolation measurement is in SID 0010's review history (console port); book Part VIII, "Console Overhead", notes that the record names no result file for it.
-.. [#console-size] SID 0007, review history (Rust port, consolidation; daemon integration), which records 719,406 bytes before the JA4 fields of SID 0014. The size for 1.0.0-beta.2 is of the module built as the daemon's build script builds it (``cargo rustc --lib -p sibuna-console-ui --target wasm32-unknown-unknown --profile wasm -- -C link-arg=--compress-relocations``), compressed with ``gzip -9``.
+.. [#console-size] SID 0007, review history (Rust port, consolidation; daemon integration), which records 719,406 bytes before the JA4 fields of SID 0014. The size for 1.0.0-beta.3 is of the module built as the daemon's build script builds it (``cargo rustc --lib -p sibuna-console-ui --target wasm32-unknown-unknown --profile wasm -- -C link-arg=--compress-relocations``), compressed with ``gzip -9``.
 .. [#method-sources] ``benchmarks/results/README.md``, "Method" and "Provenance and limits" (rustc 1.99.0; the daemon is ``cargo build --release -p sibuna``, 49,113,856 bytes); book Part VIII, "Methodology".
 .. [#spread] Book Part VIII, "Primitive Latencies", computed from ``primitives-latest.json``.
 .. [#product] ``benchmarks/results/product-latest.md``; CPUs busy from ``cores_busy_median`` in ``product-latest.json``; the ``503`` answers and their fix from ``benchmarks/results/README.md`` and SID 0002, revision note (bug fix).
@@ -1190,7 +1190,7 @@ Every number in this paper comes from a committed result file of the Sibuna repo
 .. [#latency] ``benchmarks/results/latency-latest.md``; the rows at 25,000 requests per second and the reverse-proxy rows at 150,000 are in that file.
 .. [#thread-reuse] SID 0002, revision note (performance, connection threads reused); book Part VIII, "What the Measurement Changed"; ``benchmarks/results/latency-latest.md``.
 .. [#comparison] ``benchmarks/results/comparison-latest.md`` and ``admission-latest.md``, recorded on 16 October 2026 with ``cargo xtask bench product --anubis`` and ``cargo xtask bench admission --anubis``; book Part VIII, "Sibuna and Anubis", lists the method and every difference between the products.
-.. [#tests] SID 0010, "Acceptance criteria and implementation status" (criteria 1, 3 and 5), which recorded about 2,100 workspace tests and 290 interface tests before SID 0014; the counts for 1.0.0-beta.2 are from ``cargo test --workspace -- --list``.
+.. [#tests] SID 0010, "Acceptance criteria and implementation status" (criteria 1, 3 and 5), which recorded about 2,100 workspace tests and 290 interface tests before SID 0014; the counts for 1.0.0-beta.3 are from ``cargo test --workspace -- --list``.
 .. [#prior-art] Book Part II, "Feature Comparison" and "Interstitials and Edges"; the Sibuna licence is the workspace's ``license`` in ``Cargo.toml``.
 .. [#safeline] Book Part VIII, "Not Measured": vendor-reported figures checked in September 2026.
 .. [#crs] SID 0010, "The OWASP Core Rule Set".

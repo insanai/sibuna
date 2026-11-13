@@ -41,7 +41,7 @@
 
 ## 빠른 시작
 
-플랫폼에 맞는 [릴리스를 다운로드하세요](https://github.com/insanai/sibuna/releases/tag/v1.0.0-beta.2). 기본 패키지에는 저장소와 콘솔 지원이 포함됩니다. 콘솔은 `--console` 옵션으로 시작합니다.
+플랫폼에 맞는 [릴리스를 다운로드하세요](https://github.com/insanai/sibuna/releases/tag/v1.0.0-beta.3). 기본 패키지에는 저장소와 콘솔 지원이 포함됩니다. 콘솔은 `--console` 옵션으로 시작합니다.
 
 | 플랫폼 | 패키지 | 요구 사항 |
 | --- | --- | --- |
@@ -50,8 +50,8 @@
 | macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 12 이상 |
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 12 이상 |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2016 이상; 네이티브 `sibuna.exe` |
-| FreeBSD x86-64 | `sibuna-1.0.0-beta.2-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI 패키지 |
-| OpenBSD x86-64 | `sibuna-1.0.0-beta.2.tgz` | OpenBSD 7.9; CLI 패키지 |
+| FreeBSD x86-64 | `sibuna-1.0.0-beta.3-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI 패키지 |
+| OpenBSD x86-64 | `sibuna-1.0.0-beta.3.tgz` | OpenBSD 7.9; CLI 패키지 |
 
 이번 릴리스는 베타 릴리스입니다. macOS 빌드에는 서명이 없습니다. 각 패키지에는 라이선스, 소스 링크와 빌드 명세가 포함됩니다. 사용하기 전에 `SHA256SUMS`로 압축 파일을 검증하세요.
 
@@ -68,8 +68,8 @@ sibuna --version
 Linux x86-64에서 앱이 3000번 포트로 요청을 받는 경우:
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.2/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.2/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.3/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.3/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)

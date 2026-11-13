@@ -2356,3 +2356,19 @@ msgid ""
 "with a distance at least as large, using a three-slot example."
 msgstr ""
 "만료된 Robin Hood 항목은 거리가 적어도 그만큼 큰 키로만 덮어쓸 수 있는 이유를 슬롯 세 개짜리 예로 설명하세요."
+
+
+msgid "Allocator selection"
+msgstr "할당자 선택"
+
+
+msgid "Rust 1.100 stabilizes the core ``Allocator`` API and allocator parameters for ``Vec`` and ``Box`` (`release notes <https://blog.rust-lang.org/2026/11/12/Rust-1.100.0/>`_). We can choose an allocator for one collection without replacing the process allocator. We gain no request-path allocation saving from this API: our warm requests already allocate nothing, as checked by ``cmd/sibuna/tests/steady_state.rs`` and ``crates/net/tests/steady_state.rs``. The proxy allocates its three buffers once per connection and reuses them. The limiter and spent set also allocate their tables once; their zeroed allocations let untouched pages remain nonresident, as checked by ``crates/store/tests/resident.rs``."
+msgstr "Rust 1.100은 ``Allocator`` API의 핵심과 ``Vec``, ``Box``의 할당자 매개변수를 안정화합니다(`릴리스 노트 <https://blog.rust-lang.org/2026/11/12/Rust-1.100.0/>`_). 우리는 프로세스의 할당자를 교체하지 않고 개별 컬렉션의 할당자를 선택할 수 있습니다. 이 API로 요청 경로의 할당을 더 줄일 수는 없습니다. 준비된 연결의 요청은 이미 메모리를 할당하지 않으며, ``cmd/sibuna/tests/steady_state.rs``와 ``crates/net/tests/steady_state.rs``가 이를 검사합니다. 프록시는 연결마다 세 버퍼를 한 번 할당하고 재사용합니다. 제한기와 사용된 증명 집합도 테이블을 한 번만 할당합니다. 0으로 초기화하는 할당 덕분에 건드리지 않은 페이지는 상주하지 않아도 되며, ``crates/store/tests/resident.rs``가 이를 검사합니다."
+
+
+msgid "We would first measure policy snapshot construction and console JSON parsing when investigating an allocator change. Their temporary collections allocate off the request path, but a collection's allocator does not automatically govern its elements' allocations. Our JSON tree also owns escaped strings through ``Cow<str>``, whose owned form is ``String``; ``String`` has no allocator parameter in Rust 1.100. ``Arc::new_in`` remains unstable in this release (`API documentation <https://doc.rust-lang.org/1.100.0/std/sync/struct.Arc.html#method.new_in>`_). Published engines remain shared through ``Arc`` until their last reader releases them, so a rebuild cannot reset memory that an older engine still uses. An arena would need to preserve those lifetimes and the parser's input bounds."
+msgstr "할당자 변경을 조사할 때 우리는 먼저 정책 스냅샷 구성과 콘솔 JSON 파싱을 측정합니다. 임시 컬렉션은 요청 경로 밖에서 메모리를 할당하지만 컬렉션의 할당자가 요소의 할당까지 자동으로 관리하지는 않습니다. JSON 트리는 이스케이프된 문자열도 ``Cow<str>``를 통해 소유하며, 소유 형태는 ``String``입니다. Rust 1.100의 ``String``에는 할당자 매개변수가 없습니다. ``Arc::new_in``도 이 릴리스에서는 여전히 불안정합니다(`API 문서 <https://doc.rust-lang.org/1.100.0/std/sync/struct.Arc.html#method.new_in>`_). 게시한 엔진은 마지막 읽기 사용자가 해제할 때까지 ``Arc``로 공유되므로 재구성 중에 이전 엔진이 아직 사용하는 메모리를 초기화할 수 없습니다. 아레나는 이러한 수명과 파서의 입력 한도를 보존해야 합니다."
+
+
+msgid "We retain the console WebAssembly module's existing ``WipeOnFree`` global allocator in ``cmd/console-ui/src/abi.rs``. It erases freed blocks, including the old block after a reallocation. Choosing ``System`` directly for a collection would bypass that erasure. The proof-of-work WebAssembly module has no heap allocator, and Argon2 already uses a caller-owned, reused workspace. We therefore keep the existing allocators and Rust 1.94 compatibility until a measured workload justifies a change. A candidate must improve latency or resident memory while preserving erasure, bounded input handling and the allocation-free request path."
+msgstr "우리는 ``cmd/console-ui/src/abi.rs``에 있는 콘솔 WebAssembly 모듈의 기존 전역 할당자 ``WipeOnFree``를 유지합니다. 이 할당자는 재할당 후의 이전 블록을 포함하여 해제하는 블록을 지웁니다. 컬렉션에 ``System``을 직접 선택하면 이 지우기를 우회합니다. 작업 증명 WebAssembly 모듈에는 힙 할당자가 없고, Argon2도 호출자가 소유하는 작업 공간을 이미 재사용합니다. 따라서 측정한 작업 부하가 변경을 정당화할 때까지 기존 할당자와 Rust 1.94 호환성을 유지합니다. 후보는 지우기, 한도가 있는 입력 처리, 할당 없는 요청 경로를 보존하면서 지연 시간이나 상주 메모리를 개선해야 합니다."

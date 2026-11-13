@@ -2277,3 +2277,19 @@ msgid ""
 "Explain why an expired Robin Hood entry can be overwritten only by a key "
 "with a distance at least as large, using a three-slot example."
 msgstr "用一个三槽的例子解释，为什么一个过期的 Robin Hood 条目只能被距离至少同样大的键覆盖。"
+
+
+msgid "Allocator selection"
+msgstr "分配器的选择"
+
+
+msgid "Rust 1.100 stabilizes the core ``Allocator`` API and allocator parameters for ``Vec`` and ``Box`` (`release notes <https://blog.rust-lang.org/2026/11/12/Rust-1.100.0/>`_). We can choose an allocator for one collection without replacing the process allocator. We gain no request-path allocation saving from this API: our warm requests already allocate nothing, as checked by ``cmd/sibuna/tests/steady_state.rs`` and ``crates/net/tests/steady_state.rs``. The proxy allocates its three buffers once per connection and reuses them. The limiter and spent set also allocate their tables once; their zeroed allocations let untouched pages remain nonresident, as checked by ``crates/store/tests/resident.rs``."
+msgstr "Rust 1.100 稳定了 ``Allocator`` API 的核心部分以及 ``Vec`` 和 ``Box`` 的分配器参数（`发行说明 <https://blog.rust-lang.org/2026/11/12/Rust-1.100.0/>`_）。我们可以为单个集合选择分配器，而不替换整个进程的分配器。这项 API 无法再减少请求路径的分配：预热后的请求已经不分配内存，``cmd/sibuna/tests/steady_state.rs`` 和 ``crates/net/tests/steady_state.rs`` 对此进行检查。代理为每个连接分配一次三个缓冲区，并重复使用它们。限流器和已用证明集合也只分配一次表；清零分配使未触及的页面不必驻留内存，``crates/store/tests/resident.rs`` 对此进行检查。"
+
+
+msgid "We would first measure policy snapshot construction and console JSON parsing when investigating an allocator change. Their temporary collections allocate off the request path, but a collection's allocator does not automatically govern its elements' allocations. Our JSON tree also owns escaped strings through ``Cow<str>``, whose owned form is ``String``; ``String`` has no allocator parameter in Rust 1.100. ``Arc::new_in`` remains unstable in this release (`API documentation <https://doc.rust-lang.org/1.100.0/std/sync/struct.Arc.html#method.new_in>`_). Published engines remain shared through ``Arc`` until their last reader releases them, so a rebuild cannot reset memory that an older engine still uses. An arena would need to preserve those lifetimes and the parser's input bounds."
+msgstr "研究分配器变更时，我们会先测量策略快照的构建和控制台的 JSON 解析。它们的临时集合在请求路径之外分配内存，但集合的分配器不会自动控制其元素的分配。我们的 JSON 树还通过 ``Cow<str>`` 拥有包含转义的字符串，其拥有形式为 ``String``；Rust 1.100 的 ``String`` 没有分配器参数。``Arc::new_in`` 在此版本中仍不稳定（`API 文档 <https://doc.rust-lang.org/1.100.0/std/sync/struct.Arc.html#method.new_in>`_）。已发布的引擎通过 ``Arc`` 共享，直到最后一个读取者释放它们，因此重建不能重置旧引擎仍在使用的内存。内存区域分配器必须保留这些生命周期和解析器的输入边界。"
+
+
+msgid "We retain the console WebAssembly module's existing ``WipeOnFree`` global allocator in ``cmd/console-ui/src/abi.rs``. It erases freed blocks, including the old block after a reallocation. Choosing ``System`` directly for a collection would bypass that erasure. The proof-of-work WebAssembly module has no heap allocator, and Argon2 already uses a caller-owned, reused workspace. We therefore keep the existing allocators and Rust 1.94 compatibility until a measured workload justifies a change. A candidate must improve latency or resident memory while preserving erasure, bounded input handling and the allocation-free request path."
+msgstr "我们保留控制台 WebAssembly 模块在 ``cmd/console-ui/src/abi.rs`` 中现有的全局分配器 ``WipeOnFree``。它会擦除释放的内存块，包括重新分配后的旧块。直接为集合选择 ``System`` 会绕过这项擦除。工作量证明 WebAssembly 模块没有堆分配器，Argon2 也已经使用调用者拥有且可重复使用的工作区。因此，我们保留现有分配器和 Rust 1.94 兼容性，直到测量到的工作负载能够证明变更合理。候选方案必须改善延迟或驻留内存，同时保留擦除、有界输入处理和不分配内存的请求路径。"

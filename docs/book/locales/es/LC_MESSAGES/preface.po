@@ -163,8 +163,8 @@ msgstr ""
 "cambiarse sin esconderlos tras un eslogan."
 
 #: ../../preface.rst:20
-msgid "Edition for Sibuna 1.0.0-beta.2, October 2026"
-msgstr "Edición para Sibuna 1.0.0-beta.2, octubre de 2026"
+msgid "Edition for Sibuna 1.0.0-beta.3, November 2026"
+msgstr "Edición para Sibuna 1.0.0-beta.3, noviembre de 2026"
 
 #: ../../preface.rst:22
 msgid ""

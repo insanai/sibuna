@@ -123,8 +123,8 @@ msgstr ""
 "テストし、変更できるシステムです。"
 
 #: ../../preface.rst:20
-msgid "Edition for Sibuna 1.0.0-beta.2, October 2026"
-msgstr "Sibuna 1.0.0-beta.2対応版、2026年10月"
+msgid "Edition for Sibuna 1.0.0-beta.3, November 2026"
+msgstr "Sibuna 1.0.0-beta.3対応版、2026年11月"
 
 #: ../../preface.rst:22
 msgid ""

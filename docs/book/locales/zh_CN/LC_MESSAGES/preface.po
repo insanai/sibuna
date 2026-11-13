@@ -113,8 +113,8 @@ msgstr ""
 "这是一本讲实现的书，并不声称计算谜题能够消除自动化流量。客户端可以购买算力，地址可以共享，应用语法也比任何有界检测器所能覆盖的更丰富。有用的成果是这样一个系统：它的成本和局限可以被审视、测试和修改，而不必藏在口号背后。"
 
 #: ../../preface.rst:20
-msgid "Edition for Sibuna 1.0.0-beta.2, October 2026"
-msgstr "适用于 Sibuna 1.0.0-beta.2 的版本，2026 年 10 月"
+msgid "Edition for Sibuna 1.0.0-beta.3, November 2026"
+msgstr "适用于 Sibuna 1.0.0-beta.3 的版本，2026 年 11 月"
 
 #: ../../preface.rst:22
 msgid ""

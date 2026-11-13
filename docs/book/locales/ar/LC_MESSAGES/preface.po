@@ -149,8 +149,8 @@ msgstr ""
 "يمكن فحص تكاليفه وحدوده واختبارها وتغييرها دون إخفائها وراء شعار."
 
 #: ../../preface.rst:20
-msgid "Edition for Sibuna 1.0.0-beta.2, October 2026"
-msgstr "طبعة لإصدار Sibuna 1.0.0-beta.2، أكتوبر 2026"
+msgid "Edition for Sibuna 1.0.0-beta.3, November 2026"
+msgstr "طبعة لإصدار Sibuna 1.0.0-beta.3، نوفمبر 2026"
 
 #: ../../preface.rst:22
 msgid ""

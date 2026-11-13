@@ -43,7 +43,7 @@
 
 ## بدء سريع
 
-[نزّل إصدارًا](https://github.com/insanai/sibuna/releases/tag/v1.0.0-beta.2) لمنصتك. تشمل الحزمة الافتراضية دعم التخزين ووحدة التحكم. تبدأ وحدة التحكم مع `--console`.
+[نزّل إصدارًا](https://github.com/insanai/sibuna/releases/tag/v1.0.0-beta.3) لمنصتك. تشمل الحزمة الافتراضية دعم التخزين ووحدة التحكم. تبدأ وحدة التحكم مع `--console`.
 
 | المنصة | الحزمة | المتطلبات |
 | --- | --- | --- |
@@ -52,8 +52,8 @@
 | macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 12 أو أحدث |
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 12 أو أحدث |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2016 أو أحدث؛ `sibuna.exe` أصلي |
-| FreeBSD x86-64 | `sibuna-1.0.0-beta.2-freebsd-15.1-amd64.pkg` | FreeBSD 15.1؛ حزمة CLI |
-| OpenBSD x86-64 | `sibuna-1.0.0-beta.2.tgz` | OpenBSD 7.9؛ حزمة CLI |
+| FreeBSD x86-64 | `sibuna-1.0.0-beta.3-freebsd-15.1-amd64.pkg` | FreeBSD 15.1؛ حزمة CLI |
+| OpenBSD x86-64 | `sibuna-1.0.0-beta.3.tgz` | OpenBSD 7.9؛ حزمة CLI |
 
 هذا إصدار تجريبي (beta). بناءات macOS غير موقعة. تتضمن كل حزمة الرخص، وروابط المصدر، وبيان البناء. تحقق من الأرشيف مقابل `SHA256SUMS` قبل استخدامه.
 
@@ -76,8 +76,8 @@ sibuna --version
 <div dir="ltr">
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.2/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.2/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.3/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.3/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)

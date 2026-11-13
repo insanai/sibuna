@@ -41,7 +41,7 @@
 
 ## 快速入门
 
-[下载适合所用平台的发行版](https://github.com/insanai/sibuna/releases/tag/v1.0.0-beta.2)。默认安装包包含存储和控制台支持。控制台通过 `--console` 启动。
+[下载适合所用平台的发行版](https://github.com/insanai/sibuna/releases/tag/v1.0.0-beta.3)。默认安装包包含存储和控制台支持。控制台通过 `--console` 启动。
 
 | 平台 | 安装包 | 要求 |
 | --- | --- | --- |
@@ -50,8 +50,8 @@
 | macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 12 或更高版本 |
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 12 或更高版本 |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2016 或更高版本；原生 `sibuna.exe` |
-| FreeBSD x86-64 | `sibuna-1.0.0-beta.2-freebsd-15.1-amd64.pkg` | FreeBSD 15.1；CLI 软件包 |
-| OpenBSD x86-64 | `sibuna-1.0.0-beta.2.tgz` | OpenBSD 7.9；CLI 软件包 |
+| FreeBSD x86-64 | `sibuna-1.0.0-beta.3-freebsd-15.1-amd64.pkg` | FreeBSD 15.1；CLI 软件包 |
+| OpenBSD x86-64 | `sibuna-1.0.0-beta.3.tgz` | OpenBSD 7.9；CLI 软件包 |
 
 这是一个测试版（beta）发行版。macOS 构建未签名。每个安装包都包含许可证、源码链接和构建清单。使用前，请对照 `SHA256SUMS` 校验压缩包。
 
@@ -68,8 +68,8 @@ sibuna --version
 在 Linux x86-64 上，假设应用监听 3000 端口：
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.2/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.2/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.3/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.3/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)
