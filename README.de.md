@@ -119,14 +119,14 @@ Windows-ACLs.
 
 ### Aus dem Quellcode bauen
 
-Wir bauen und testen mit **Rust 1.99**. Browser-Löser und Konsolenoberfläche sind in Rust
+Wir bauen und testen mit **Rust 1.100**. Browser-Löser und Konsolenoberfläche sind in Rust
 geschrieben und zu WebAssembly kompiliert; der Build braucht weder Node noch npm.
 
 ```sh
 git clone https://github.com/insanai/sibuna.git
 cd sibuna
-rustup target add wasm32-unknown-unknown
-cargo build --release -p sibuna
+rustup toolchain install 1.100.0 --profile minimal --target wasm32-unknown-unknown
+cargo +1.100.0 build --release -p sibuna
 ```
 
 Die ausführbare Datei liegt unter `target/release/sibuna`. Es speichert seinen Zustand mit `--data-dir`

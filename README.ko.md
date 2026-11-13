@@ -86,13 +86,13 @@ Windows에서는 ZIP을 풀고 PowerShell에서 `.\sibuna.exe --help`를 실행�
 
 ### 소스에서 빌드하기
 
-**Rust 1.99**로 빌드하고 테스트합니다. 브라우저 솔버와 콘솔 인터페이스는 WebAssembly로 컴파일한 Rust 코드입니다. 빌드에는 Node나 npm이 필요하지 않습니다.
+**Rust 1.100**로 빌드하고 테스트합니다. 브라우저 솔버와 콘솔 인터페이스는 WebAssembly로 컴파일한 Rust 코드입니다. 빌드에는 Node나 npm이 필요하지 않습니다.
 
 ```sh
 git clone https://github.com/insanai/sibuna.git
 cd sibuna
-rustup target add wasm32-unknown-unknown
-cargo build --release -p sibuna
+rustup toolchain install 1.100.0 --profile minimal --target wasm32-unknown-unknown
+cargo +1.100.0 build --release -p sibuna
 ```
 
 실행 파일은 `target/release/sibuna`입니다. `--data-dir`을 지정하면 상태를 SQLite에 저장합니다. 클러스터 빌드는 `--features postgres-tls`를 사용하며, `--database-url-file`과 `--cluster-node`로 하나의 PostgreSQL 데이터베이스를 공유합니다. 테스트, 린트, 크기 검사는 [CONTRIBUTING.md](CONTRIBUTING.md)를 참고하세요.

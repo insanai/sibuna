@@ -86,13 +86,13 @@ tar -xzf sibuna-linux-amd64.tar.gz
 
 ### 从源码构建
 
-我们使用 **Rust 1.99** 进行构建和测试。浏览器求解器和控制台界面由 Rust 编译为 WebAssembly；构建不需要 Node 或 npm。
+我们使用 **Rust 1.100** 进行构建和测试。浏览器求解器和控制台界面由 Rust 编译为 WebAssembly；构建不需要 Node 或 npm。
 
 ```sh
 git clone https://github.com/insanai/sibuna.git
 cd sibuna
-rustup target add wasm32-unknown-unknown
-cargo build --release -p sibuna
+rustup toolchain install 1.100.0 --profile minimal --target wasm32-unknown-unknown
+cargo +1.100.0 build --release -p sibuna
 ```
 
 可执行文件位于 `target/release/sibuna`。它通过 `--data-dir` 将状态存储在 SQLite 中。集群构建使用 `--features postgres-tls`，并通过 `--database-url-file` 和 `--cluster-node` 共享同一个 PostgreSQL 数据库。测试、lint 和大小检查见 [CONTRIBUTING.md](CONTRIBUTING.md)。

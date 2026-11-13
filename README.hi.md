@@ -86,13 +86,13 @@ Windows पर ZIP को extract करें और PowerShell में `.\si
 
 ### स्रोत से बिल्ड करें
 
-हम **Rust 1.99** के साथ बिल्ड और परीक्षण करते हैं। ब्राउज़र सॉल्वर और कंसोल इंटरफ़ेस WebAssembly में कंपाइल किया गया Rust कोड हैं; बिल्ड के लिए Node या npm की ज़रूरत नहीं होती।
+हम **Rust 1.100** के साथ बिल्ड और परीक्षण करते हैं। ब्राउज़र सॉल्वर और कंसोल इंटरफ़ेस WebAssembly में कंपाइल किया गया Rust कोड हैं; बिल्ड के लिए Node या npm की ज़रूरत नहीं होती।
 
 ```sh
 git clone https://github.com/insanai/sibuna.git
 cd sibuna
-rustup target add wasm32-unknown-unknown
-cargo build --release -p sibuna
+rustup toolchain install 1.100.0 --profile minimal --target wasm32-unknown-unknown
+cargo +1.100.0 build --release -p sibuna
 ```
 
 बाइनरी `target/release/sibuna` है। `--data-dir` के साथ यह अपनी अवस्था SQLite में संग्रहीत करती है। क्लस्टर बिल्ड `--features postgres-tls` का उपयोग करते हैं और `--database-url-file` तथा `--cluster-node` के ज़रिए एक PostgreSQL डेटाबेस साझा करते हैं। परीक्षण, lint और आकार की जाँच के लिए [CONTRIBUTING.md](CONTRIBUTING.md) देखें।

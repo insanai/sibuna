@@ -790,7 +790,8 @@ The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. It requ
 Building from source
 ~~~~~~~~~~~~~~~~~~~~
 
-Rust 1.94 or later builds the workspace; the releases use Rust 1.99.
+We build and test with Rust 1.100; Rust 1.94 remains the minimum supported version.
+We install the release toolchain with ``rustup toolchain install 1.100.0 --profile minimal --target wasm32-unknown-unknown`` and select it with ``cargo +1.100.0`` in the commands below.
 
 - ``cargo build --release -p sibuna`` produces ``target/release/sibuna`` with the default features: SQLite storage and the console. sqlx bundles SQLite, and ``ring`` (rustls) needs a C compiler at build time; the binary links the system C runtime dynamically. The build script also builds the WebAssembly solver and console interface, which needs ``rustup target add wasm32-unknown-unknown``; ``SIBUNA_POW_WASM=<path>`` and ``SIBUNA_CONSOLE_WASM=<path>`` embed prebuilt modules instead.
 - ``cargo build --release -p sibuna --no-default-features`` produces the in-memory firewall with no external crate at all; ``--data-dir`` and ``--database-url`` are then refused at start with ``StorageDisabled``, and ``sibuna console`` with ``CONSOLEBUILD``.

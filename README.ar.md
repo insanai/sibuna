@@ -96,15 +96,15 @@ tar -xzf sibuna-linux-amd64.tar.gz
 
 ### البناء من المصدر
 
-نبني ونختبر باستخدام **Rust 1.99**. برنامج حل الألغاز في المتصفح وواجهة وحدة التحكم مكتوبان بلغة Rust ومترجمان إلى WebAssembly؛ ولا يحتاج البناء إلى Node أو npm.
+نبني ونختبر باستخدام **Rust 1.100**. برنامج حل الألغاز في المتصفح وواجهة وحدة التحكم مكتوبان بلغة Rust ومترجمان إلى WebAssembly؛ ولا يحتاج البناء إلى Node أو npm.
 
 <div dir="ltr">
 
 ```sh
 git clone https://github.com/insanai/sibuna.git
 cd sibuna
-rustup target add wasm32-unknown-unknown
-cargo build --release -p sibuna
+rustup toolchain install 1.100.0 --profile minimal --target wasm32-unknown-unknown
+cargo +1.100.0 build --release -p sibuna
 ```
 
 </div>

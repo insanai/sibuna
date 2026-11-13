@@ -106,14 +106,14 @@ Use Ctrl+C to stop it. Restrict access to seed, credential and data files with W
 
 ### Build from source
 
-We build and test with **Rust 1.99**. The browser solver and the console interface are Rust
-compiled to WebAssembly; the build does not need Node or npm.
+We build and test with **Rust 1.100**; the minimum supported version remains Rust 1.94.
+The browser solver and the console interface are Rust compiled to WebAssembly; the build does not need Node or npm.
 
 ```sh
 git clone https://github.com/insanai/sibuna.git
 cd sibuna
-rustup target add wasm32-unknown-unknown
-cargo build --release -p sibuna
+rustup toolchain install 1.100.0 --profile minimal --target wasm32-unknown-unknown
+cargo +1.100.0 build --release -p sibuna
 ```
 
 The executable is `target/release/sibuna`. It stores state in SQLite with `--data-dir`.

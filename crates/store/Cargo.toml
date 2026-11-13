@@ -8,7 +8,7 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 
-[dependencies]
+[dev-dependencies]
 sibuna-crypto = { workspace = true }
 
 [lints]

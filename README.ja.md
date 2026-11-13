@@ -86,13 +86,13 @@ WindowsではZIPを展開し、PowerShellで`.\sibuna.exe --help`を実行しま
 
 ### ソースからビルドする
 
-ビルドとテストには**Rust 1.99**を使っています。ブラウザーのソルバーとコンソールのインターフェースは、WebAssemblyにコンパイルしたRustです。ビルドにNodeやnpmは必要ありません。
+ビルドとテストには**Rust 1.100**を使っています。ブラウザーのソルバーとコンソールのインターフェースは、WebAssemblyにコンパイルしたRustです。ビルドにNodeやnpmは必要ありません。
 
 ```sh
 git clone https://github.com/insanai/sibuna.git
 cd sibuna
-rustup target add wasm32-unknown-unknown
-cargo build --release -p sibuna
+rustup toolchain install 1.100.0 --profile minimal --target wasm32-unknown-unknown
+cargo +1.100.0 build --release -p sibuna
 ```
 
 実行ファイルは`target/release/sibuna`です。`--data-dir`を指定すると、状態をSQLiteに保存します。クラスター版は`--features postgres-tls`でビルドし、`--database-url-file`と`--cluster-node`を使って1つのPostgreSQLデータベースを共有します。テスト、lint、サイズの検査は[CONTRIBUTING.md](CONTRIBUTING.md)を参照してください。

@@ -53,6 +53,29 @@ Threads come from a ``TaskPool`` (``cmd/sibuna/src/tasks.rs``), a fixed table of
 
 Memory is bounded the same way. A connection thread holds its 64 KiB read buffer and 16 KiB write buffer on its stack, and a 40 KiB proxy workspace on the heap, allocated once when the connection starts. The worst case is therefore a known number rather than a function of how many sockets a client can open. The idle reaper (below) closes connections that stop sending, so a slow client cannot pin a thread past ``--idle-timeout``.
 
+Allocator selection
+~~~~~~~~~~~~~~~~~~~
+
+Rust 1.100 stabilizes the core ``Allocator`` API and allocator parameters for ``Vec`` and ``Box`` (`release notes <https://blog.rust-lang.org/2026/11/12/Rust-1.100.0/>`_).
+We can choose an allocator for one collection without replacing the process allocator.
+We gain no request-path allocation saving from this API: our warm requests already allocate nothing, as checked by ``cmd/sibuna/tests/steady_state.rs`` and ``crates/net/tests/steady_state.rs``.
+The proxy allocates its three buffers once per connection and reuses them.
+The limiter and spent set also allocate their tables once; their zeroed allocations let untouched pages remain nonresident, as checked by ``crates/store/tests/resident.rs``.
+
+We would first measure policy snapshot construction and console JSON parsing when investigating an allocator change.
+Their temporary collections allocate off the request path, but a collection's allocator does not automatically govern its elements' allocations.
+Our JSON tree also owns escaped strings through ``Cow<str>``, whose owned form is ``String``; ``String`` has no allocator parameter in Rust 1.100.
+``Arc::new_in`` remains unstable in this release (`API documentation <https://doc.rust-lang.org/1.100.0/std/sync/struct.Arc.html#method.new_in>`_).
+Published engines remain shared through ``Arc`` until their last reader releases them, so a rebuild cannot reset memory that an older engine still uses.
+An arena would need to preserve those lifetimes and the parser's input bounds.
+
+We retain the console WebAssembly module's existing ``WipeOnFree`` global allocator in ``cmd/console-ui/src/abi.rs``.
+It erases freed blocks, including the old block after a reallocation.
+Choosing ``System`` directly for a collection would bypass that erasure.
+The proof-of-work WebAssembly module has no heap allocator, and Argon2 already uses a caller-owned, reused workspace.
+We therefore keep the existing allocators and Rust 1.94 compatibility until a measured workload justifies a change.
+A candidate must improve latency or resident memory while preserving erasure, bounded input handling and the allocation-free request path.
+
 One Buffer per Connection
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -117,14 +117,14 @@ con ACL de Windows.
 
 ### Compilar desde las fuentes
 
-Compilamos y probamos con **Rust 1.99**. El solucionador de navegador y la interfaz de la
+Compilamos y probamos con **Rust 1.100**. El solucionador de navegador y la interfaz de la
 consola son Rust compilado a WebAssembly; la compilación no necesita Node ni npm.
 
 ```sh
 git clone https://github.com/insanai/sibuna.git
 cd sibuna
-rustup target add wasm32-unknown-unknown
-cargo build --release -p sibuna
+rustup toolchain install 1.100.0 --profile minimal --target wasm32-unknown-unknown
+cargo +1.100.0 build --release -p sibuna
 ```
 
 El ejecutable es `target/release/sibuna`. Guarda el estado en SQLite con `--data-dir`.
