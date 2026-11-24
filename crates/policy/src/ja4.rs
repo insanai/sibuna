@@ -1,6 +1,6 @@
 //! JA4 TLS fingerprints that a trusted ingress forwards in a request header (SID 0014).
 //!
-//! Sibuna never sees the TLS handshake, so it cannot compute JA4 itself. It accepts the
+//! The HTTP firewall accepts the
 //! value an ingress computed, when the value has the JA4 form, and policy rules match it
 //! exactly or by prefix. A JA4 fingerprint has three parts joined by `_`:
 //!

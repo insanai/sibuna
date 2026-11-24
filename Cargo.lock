@@ -1102,6 +1102,17 @@ name = "sibuna-json"
 version = "1.0.0-beta.3"
 
 [[package]]
+name = "sibuna-lb"
+version = "1.0.0-beta.3"
+dependencies = [
+ "sibuna-crypto",
+ "sibuna-encoding",
+ "sibuna-json",
+ "sibuna-policy",
+ "sibuna-store",
+]
+
+[[package]]
 name = "sibuna-net"
 version = "1.0.0-beta.3"
 dependencies = [
