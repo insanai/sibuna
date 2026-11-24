@@ -332,6 +332,8 @@ For a binary upgrade the old process accepts until the replacement has validated
 
 A UDP listener handle contains no user-space affinity mappings. Preserving a live UDP flow across binary replacement requires a single reader for each datagram and a handoff of its owner, upstream socket and return path, or compatible stateless backend routing. Until we demonstrate one of these paths, the documented upgrade for stateful UDP is to drain or expire its mappings before cutover.
 
+On Linux a simpler cutover is implemented. With ``global.reuse_port`` every listener sets ``SO_REUSEPORT``, the replacement binds the same addresses while the old process serves, and the old process drains on SIGTERM. No descriptor is passed and no supervisor is needed. The cost is one that descriptor passing would avoid: a connection in the accept queue of the old listener at the instant it closes is reset. In our test with a new connection for each request no request failed in 15 cutovers. A UDP mapping and a QUIC connection do not survive, as described above. The operations chapter gives the commands.
+
 .. typst-diagram::
    :caption: Proposed TCP listener cutover on Unix. The old workers drain accepted sockets.
    :alt: The supervisor waits for the replacement to acknowledge readiness before moving TCP admission.
@@ -671,7 +673,7 @@ Beside HAProxy 3.0.11 on one host, TCP forwarding reached 97% to 103% of HAProxy
 
 Kapteko's experiment shows that a kernel socket costs about 3.4 KiB before any buffer, and that state per idle unit decides how far one host scales. A forwarded TCP stream here holds two kernel sockets and one relay record. On the thread path an HTTP connection also held a thread and its stack, which measured about 145 KiB of resident memory per connection at 2,048 connections. On the workers of SID 0016 an idle HTTP connection holds about 0.4 KiB in the process and a WebSocket tunnel about 2 KiB, so both paths now scale with kernel socket memory. Kernel bypass would remove the socket cost. We do not plan it, because it would also remove the host network stack that the design keeps.
 
-Cooperative platform-specific batching, the ten-million-flow experiment, peer forwarding, replicated state, mmap spill, database authority, binary listener handoff, plugins and console management remain proposed work. The following evidence is required to qualify the full design.
+Cooperative platform-specific batching, the ten-million-flow experiment, peer forwarding, replicated state, mmap spill, database authority, descriptor passing for the listener handoff, plugins and console management remain proposed work. The following evidence is required to qualify the full design.
 
 #. Compare legacy CLI behavior on the existing HTTP suite. Check that equivalent JSON and JLV produce the same topology. Reject missing references, stale database edits, incompatible listener changes and exhausted evaluation budgets while the last valid revision continues serving.
 #. Exercise partial writes, half-closes, fragmented ClientHello, UDP expiry, lost replies and failed backend connects. Record open sockets and buffer leases before and after each test. Run the same cases through each advertised OS backend.
