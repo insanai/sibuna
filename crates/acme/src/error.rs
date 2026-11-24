@@ -8,7 +8,7 @@ use std::fmt;
 /// only: what the authority sent is filtered before it gets here.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Error {
-    /// `ACME001` to `ACME008`.
+    /// `ACME001` to `ACME011`.
     pub code: &'static str,
     /// The title in upper case, for example `VALIDATION FAILED`.
     pub title: &'static str,
@@ -77,7 +77,8 @@ impl Error {
             "VALIDATION FAILED",
             message.into(),
             "Point the DNS record of the name at this node, and let the authority reach \
-             port 80 (HTTP-01) or port 443 (TLS-ALPN-01) from the Internet.",
+             port 80 (HTTP-01) or port 443 (TLS-ALPN-01) from the Internet. With DNS-01, \
+             check that the provider writes the TXT record into the public zone.",
         )
     }
 
@@ -98,6 +99,41 @@ impl Error {
             "CERTIFICATE REJECTED",
             message.into(),
             "Check the clock of this node. The daemon orders the certificate again later.",
+        )
+    }
+}
+
+impl Error {
+    /// `ACME009`: the DNS provider could not write or remove the record.
+    pub fn provider(message: impl Into<String>) -> Self {
+        Self::new(
+            "ACME009",
+            "DNS PROVIDER FAILED",
+            message.into(),
+            "Run the hook by hand with the same arguments. With `rfc2136`, check the TSIG \
+             key and the update policy of the zone.",
+        )
+    }
+
+    /// `ACME010`: the authoritative servers did not show the record in time.
+    pub fn not_visible(message: impl Into<String>) -> Self {
+        Self::new(
+            "ACME010",
+            "RECORD NOT VISIBLE",
+            message.into(),
+            "Raise `global.acme.dns.timeout`. Set `global.acme.dns.check` to false when \
+             this node cannot reach the public servers of the zone.",
+        )
+    }
+
+    /// `ACME011`: the local authority could not be created, read or used.
+    pub fn local(message: impl Into<String>) -> Self {
+        Self::new(
+            "ACME011",
+            "LOCAL AUTHORITY FAILED",
+            message.into(),
+            "Check the directory `local` under `global.acme.storage`. Remove a damaged \
+             `intermediate.pem`; the daemon writes a new one.",
         )
     }
 }

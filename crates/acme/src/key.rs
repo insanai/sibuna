@@ -40,6 +40,15 @@ fn key_failure(what: &str) -> Error {
     Error::unexpected(format!("The P-256 key could not be {what}."))
 }
 
+/// Eight bytes from the system's random source, for a serial number. Fails only when
+/// that source does.
+pub fn random_serial() -> Result<u64, Error> {
+    use ring::rand::SecureRandom as _;
+    let mut bytes = [0; 8];
+    SystemRandom::new().fill(&mut bytes).map_err(|_| key_failure("given a serial number"))?;
+    Ok(u64::from_be_bytes(bytes))
+}
+
 impl KeyPair {
     /// Draws a new key from the system's random source. Fails only when that source does.
     pub fn generate() -> Result<Self, Error> {

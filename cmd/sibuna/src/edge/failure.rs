@@ -44,9 +44,17 @@ pub(super) fn classify(file: Option<&str>, error: &io::Error) -> Failure {
         ),
         _ if lower.contains("is an internal name") => (
             "name not public",
-            "A public certificate authority validates a name over the Internet. Use a public \
-             DNS name, or serve this name with `crt` and a certificate of your own, or set \
+            "A public certificate authority validates a name over the Internet. Remove \
+             `issuer: \"acme\"` from the frontend, or set `issuer: \"internal\"`: the local \
+             authority of the daemon then issues for the name. Or set \
              `global.acme.directory` to an authority of your own.",
+        ),
+        _ if lower.contains("is a wildcard, which needs the dns challenge") => (
+            "wildcard needs dns",
+            "An authority proves a wildcard through a TXT record. Name a provider: \
+             `global: { acme: { dns: { hook: \"/etc/sibuna/dns-hook\" } } }`, or \
+             `dns: { rfc2136: { server: \"IP:PORT\", key_name: \"NAME\", key_file: \"FILE\" } }`. \
+             For an internal wildcard set `issuer: \"internal\"` on the frontend.",
         ),
         _ if names_a_certificate(&lower) => (
             "certificate not loaded",
@@ -121,6 +129,11 @@ mod tests {
         let internal = "tls.auto: `localhost` is an internal name; a public certificate \
                         authority cannot validate it";
         assert_eq!(title(None, InvalidData, internal), "name not public");
+        let wildcard = "tls.auto: `*.example.org` is a wildcard, which needs the DNS \
+                        challenge; set global.acme.dns";
+        assert_eq!(title(None, InvalidData, wildcard), "wildcard needs dns");
+        let failure = classify(None, &io::Error::new(InvalidData, internal));
+        assert!(failure.hint.contains("issuer: \"internal\""));
         let missing = "/nonexistent/sibuna/edge.jlv";
         assert_eq!(title(Some(missing), NotFound, "No such file"), "configuration file not found");
         let failure = classify(None, &io::Error::new(AddrInUse, "in use"));

@@ -143,6 +143,9 @@ struct Managed {
     /// The first `auto` name: its certificate is the default of a listener without a
     /// certificate from a file.
     first: String,
+    /// The first IP address under `auto`. A client that connects to an address sends no
+    /// server name, so this certificate answers a handshake without one.
+    address: Option<String>,
     tables: Tables,
 }
 
@@ -155,13 +158,31 @@ impl std::fmt::Debug for Managed {
 impl Managed {
     fn new(names: &[String]) -> Option<Self> {
         let first = names.first()?.clone();
-        Some(Self { names: names.iter().cloned().collect(), first, tables: Tables::default() })
+        let address = names.iter().find(|name| sibuna_lb::is_address(name)).cloned();
+        let names = names.iter().cloned().collect();
+        Some(Self { names, first, address, tables: Tables::default() })
     }
 
-    /// The automatic certificate of `name`, when the listener manages the name and a
-    /// certificate exists.
-    fn certificate(&self, name: &str) -> Option<Arc<CertifiedKey>> {
+    /// The automatic certificate with exactly the name `name`, when the listener
+    /// manages the name and a certificate exists.
+    fn exact(&self, name: &str) -> Option<Arc<CertifiedKey>> {
         self.names.contains(name).then(|| self.tables.get()?.certificate(name)).flatten()
+    }
+
+    /// The automatic certificate for the host `name`: that of the name itself, or else
+    /// that of the wildcard one label above it. `*.example.org` serves `a.example.org`,
+    /// and neither `a.b.example.org` nor `example.org`.
+    fn certificate(&self, name: &str) -> Option<Arc<CertifiedKey>> {
+        self.exact(name).or_else(|| {
+            let (_, parent) = name.split_once('.')?;
+            self.exact(&format!("*.{parent}"))
+        })
+    }
+
+    /// The certificate for a handshake without a server name: that of the first
+    /// address under `auto`.
+    fn for_address(&self) -> Option<Arc<CertifiedKey>> {
+        self.exact(self.address.as_deref()?)
     }
 
     /// The TLS-ALPN-01 answer for `name`, while an order validates it.
@@ -214,11 +235,18 @@ impl Certificates {
     /// a file, or else the certificate of the first `auto` name.
     fn fallback(&self) -> Option<Arc<CertifiedKey>> {
         let managed = self.managed.as_ref();
-        self.default.clone().or_else(|| managed.and_then(|m| m.certificate(&m.first)))
+        self.default.clone().or_else(|| managed.and_then(|m| m.exact(&m.first)))
+    }
+
+    /// The certificate for a handshake without a server name: that of the first IP
+    /// address under `auto`, or else the fallback.
+    fn unnamed(&self) -> Option<Arc<CertifiedKey>> {
+        let managed = self.managed.as_ref();
+        managed.and_then(Managed::for_address).or_else(|| self.fallback())
     }
 
     fn select(&self, name: Option<&str>) -> Option<Arc<CertifiedKey>> {
-        let Some(name) = name else { return self.fallback() };
+        let Some(name) = name else { return self.unnamed() };
         let name = name.trim_end_matches('.').to_ascii_lowercase();
         // An automatic certificate wins over a file once it exists (SID 0021).
         if let Some(found) = self.managed.as_ref().and_then(|m| m.certificate(&name)) {

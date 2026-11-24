@@ -204,6 +204,8 @@ We need no file to balance load. One command serves HTTP on port 8080 and spread
      - The contact address of the ACME account.
    * - ``--acme-storage DIR``
      - The directory of keys and certificates. The default is ``/var/lib/sibuna/acme``.
+   * - ``--acme-dns-hook PROGRAM``
+     - The program that answers the DNS-01 challenge, which a wildcard ``--domain`` needs (section *Automatic HTTPS*).
    * - ``--health PATH|tcp``
      - Probe each server with ``GET PATH``, or with a TCP connect.
    * - ``--firewall off|gate|shield``
@@ -448,7 +450,7 @@ To rotate a certificate we replace the file and send SIGHUP. A new handshake use
 Automatic HTTPS
 ~~~~~~~~~~~~~~~
 
-We need no certificate file for a public name. We list the name under ``auto`` and Sibuna obtains its certificate from Let's Encrypt, serves it, and renews it. This is the whole file for two names.
+We need no certificate file. We list a name under ``auto`` and Sibuna obtains its certificate, serves it, and renews it. A public name gets its certificate from Let's Encrypt. A wildcard does too, through DNS. An internal name or an IP address gets one from an authority that Sibuna keeps itself. This is the whole file for two public names.
 
 .. code-block:: text
 
@@ -510,13 +512,19 @@ Every option has a default. We change one in ``global.acme``.
      - The directory of the account key, the certificates and their keys.
    * - ``challenge``
      - ``"auto"``
-     - ``"http-01"``, ``"tls-alpn-01"``, or ``"auto"``. ``"auto"`` starts with HTTP-01 when the file has a plain HTTP frontend and with TLS-ALPN-01 otherwise. After a failed attempt it takes the other one.
+     - ``"http-01"``, ``"tls-alpn-01"``, ``"dns-01"``, or ``"auto"``. ``"auto"`` starts with HTTP-01 when the file has a plain HTTP frontend and with TLS-ALPN-01 otherwise. After a failed attempt it takes the other one. A wildcard always uses DNS-01.
    * - ``ca_file``
      - the system trust store
      - PEM roots for the connection to the authority. A private authority needs it.
    * - ``redirect``
      - ``true``
      - Redirect plain HTTP requests for the ``auto`` names to HTTPS.
+   * - ``dns``
+     - none
+     - The provider of the DNS-01 challenge, described under *Wildcards and DNS-01*.
+   * - ``internal``
+     - ``{ lifetime: 43200 }``
+     - The lifetime of a certificate of the local authority in seconds, from 10 to 172800.
 
 By using an authority we accept its terms of service, as with any ACME client.
 
@@ -540,7 +548,111 @@ A restart loads the stored certificates and orders nothing while they are fresh.
 
 **Staging first.** Let's Encrypt limits the certificates per name and week. While we test a setup we use ``directory: "letsencrypt-staging"``. Its certificates are not trusted by browsers and its limits are generous. We remove the line when the setup works. The production certificates are then ordered at once, because each authority has its own subdirectory.
 
-**Names that are not public.** A public authority cannot validate ``localhost``, a name without a dot, or a name under ``.local``, ``.internal``, ``.lan``, ``.test``, ``.example`` and the like. With one of the two Let's Encrypt directories the check of the file refuses such a name and says so. We then serve the name with ``crt`` and a certificate of our own, or we name an authority of our own in ``directory``. An IP address and a wildcard name are refused under ``auto`` with every directory.
+**Wildcards and DNS-01.** A wildcard name covers every host one label below it. ``*.example.org`` serves ``a.example.org``. It serves neither ``a.b.example.org`` nor ``example.org``, so we list ``example.org`` beside it when we want both. An authority proves a wildcard through DNS only: it looks up a TXT record that we must write. We tell Sibuna how to write it, and that is the one extra line.
+
+.. code-block:: text
+
+   fn edge() -> Map<Value> {
+       return {
+           global: { acme: { dns: { hook: "/etc/sibuna/dns-hook" } } },
+           frontends: { web: { binds: ["0.0.0.0:443"], tls: { auto: ["example.org", "*.example.org"] } } },
+           backends: { app: { servers: ["10.0.0.1:80"] } },
+       }
+   }
+
+.. code-block:: text
+
+   Sibuna                         DNS provider              certificate authority
+     | -- order *.example.org ------------------------------------> |
+     | <------------------------------------------- token --------- |
+     | -- hook present _acme-challenge.example.org. VALUE --> |     |
+     | -- TXT? --> each authoritative server of the zone      |     |
+     | <-- VALUE, from all of them                            |     |
+     | -- ready ---------------------------------------------------> |
+     |                                    TXT? <---------------------|
+     | <------------------------------------------- certificate ---- |
+     | -- hook cleanup _acme-challenge.example.org. VALUE --> |
+
+There are two providers. We name exactly one.
+
+- ``hook`` is the path of a program of ours. Sibuna runs it without a shell as ``PROGRAM present RECORD VALUE`` and later as ``PROGRAM cleanup RECORD VALUE``. RECORD is the name of the TXT record with a final dot, and VALUE is its text. The same values are in the variables ``SIBUNA_ACME_ACTION``, ``SIBUNA_ACME_RECORD``, ``SIBUNA_ACME_VALUE`` and ``SIBUNA_ACME_NAME``. The program has the environment of the daemon, where we put its credentials. Exit status 0 means done. The program has 60 seconds. On a failure the diagnostic shows the end of what it wrote. A script written for the ``exec`` provider of lego works unchanged, and any DNS service with a command line tool or an HTTP interface is three lines of script away.
+- ``rfc2136`` sends a dynamic update to the server of the zone, which BIND, Knot, PowerDNS and many hosted services accept. The update is signed with a TSIG key (HMAC-SHA256) when we name one. The secret is in a file, in base64 on one line, never in the topology.
+
+.. code-block:: text
+
+   global: { acme: { dns: { rfc2136: { server: "192.0.2.53:53", key_name: "sibuna.", key_file: "/etc/sibuna/tsig.key" } } } },
+
+Before Sibuna tells the authority to look, it asks every authoritative name server of the zone for the record itself, and waits until all that answer show it. It follows a CNAME at ``_acme-challenge`` to the zone where the record really lives. The record is removed when the order ends, also after a failure, and at the next start when the daemon died in between.
+
+.. list-table:: Members of ``global.acme.dns``
+   :header-rows: 1
+   :widths: 16 26 58
+
+   * - Member
+     - Default
+     - Meaning
+   * - ``hook``
+     - none
+     - The program that writes and removes the record.
+   * - ``rfc2136``
+     - none
+     - ``server`` (``"IP:PORT"``), ``key_name`` with ``key_file``, and ``zone``. Without ``zone`` Sibuna finds the zone from its SOA record.
+   * - ``check``
+     - ``true``
+     - Wait until the authoritative servers show the record. ``false`` skips this, for a zone whose public servers this host cannot reach.
+   * - ``timeout``
+     - ``120``
+     - The longest wait for the check, in seconds.
+   * - ``wait``
+     - ``0``
+     - Seconds to wait after the provider returned. With ``check: false`` this is the whole wait.
+   * - ``resolver``
+     - the first ``nameserver`` of ``/etc/resolv.conf``
+     - The resolver that finds the zone and its name servers, as ``"IP:PORT"``.
+   * - ``servers``
+     - the name servers of the zone
+     - The servers to ask, as a list of ``"IP:PORT"``, in place of the search.
+
+``challenge: "dns-01"`` uses DNS for every name, not only for wildcards. A host with no open port 80 and 443 can then have a public certificate. A name and its wildcard are two certificates that use the same record one after the other.
+
+**Internal names and the local authority.** A public authority cannot validate ``localhost``, a name without a dot, a name under ``.local``, ``.internal``, ``.lan``, ``.test``, ``.home.arpa`` and the like, or an IP address. For these names Sibuna is its own certificate authority. We write the name under ``auto`` like any other, and nothing else.
+
+.. code-block:: text
+
+   frontends: { web: { binds: ["0.0.0.0:443"], tls: { auto: ["localhost", "intranet.corp.internal", "10.0.0.5"] } } },
+
+.. code-block:: text
+
+   name under auto          issuer
+   -----------------------  -------------------------------------------
+   example.org              the ACME authority (Let's Encrypt)
+   localhost, db.internal   the local authority
+   10.0.0.5, ::1            the local authority
+   any name, with           the local authority
+     issuer: "internal"
+
+At the first internal name Sibuna creates a root certificate, valid for ten years, and an intermediate that it replaces every few days. Both live in the directory ``local`` of the storage, with keys of mode 0600. Each name gets a certificate of 12 hours, renewed every 8 hours by the same thread, with no restart. Several nodes that share the storage use one root. One frontend may mix public and internal names. ``tls: { auto: ["www.example.org"], issuer: "internal" }`` sends a public name to the local authority, for a staging host or a private network. ``issuer: "acme"`` with an internal name is refused when the file is checked, with a hint. With a ``directory`` of our own, internal names go to that authority, and addresses still to the local one.
+
+A client that connects to an IP address sends no server name. Such a handshake receives the certificate of the first address under ``auto``, and that certificate lists every address under ``auto``.
+
+A client trusts these certificates once it trusts the root. Sibuna never changes a trust store. It shows us the root, and we install it where we want it.
+
+.. code-block:: sh
+
+   sibuna ctl /run/sibuna/edge.sock show ca > sibuna-root.crt
+
+   curl --cacert sibuna-root.crt https://localhost/                      # one command, no installation
+
+   # Debian, Ubuntu
+   sudo cp sibuna-root.crt /usr/local/share/ca-certificates/sibuna-root.crt && sudo update-ca-certificates
+   # Fedora, RHEL
+   sudo cp sibuna-root.crt /etc/pki/ca-trust/source/anchors/ && sudo update-ca-trust
+   # macOS
+   sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain sibuna-root.crt
+   # Windows, in an administrator shell
+   certutil -addstore -f Root sibuna-root.crt
+
+The lines of ``show ca`` that start with ``#`` name the file and its expiry. The rest is the PEM text, which every tool above reads. Firefox and Java keep trust stores of their own. Whoever can read ``local/root.pem`` in the storage can sign for any name towards the clients that trust this root, so we install the root only on machines we control, and we protect the storage like a private key.
 
 **Looking at the state.** The admin socket lists the certificates.
 
@@ -550,11 +662,13 @@ A restart loads the stored certificates and orders nothing while they are fresh.
 
 .. code-block:: text
 
-   name            issuer expires              renews               state error
-   example.org     R11    2027-02-22T10:00:00Z 2027-01-23T10:00:00Z ready -
-   www.example.org -      -                    2026-11-24T10:04:00Z retry VALIDATION FAILED (ACME005)
+   name            via     issuer                                expires              renews               state error
+   *.example.org   dns-01  R11                                   2027-02-22T10:00:00Z 2027-01-23T10:00:00Z ready -
+   example.org     http-01 R11                                   2027-02-22T10:00:00Z 2027-01-23T10:00:00Z ready -
+   localhost       local   Sibuna_Local_Authority_-_Intermediate 2026-11-24T22:00:00Z 2026-11-24T18:00:00Z ready -
+   www.example.org http-01 -                                     -                    2026-11-24T10:04:00Z retry VALIDATION FAILED (ACME005)
 
-``state`` is ``pending`` before the first attempt, ``ordering`` during an order, ``waiting`` while another node holds the lock, ``retry`` after a failure, and ``ready`` otherwise. ``renews`` is the time of the next order. ``show stats`` and the metrics endpoint add four series: ``sibuna_edge_acme_certificates_managed``, ``sibuna_edge_acme_certificates_served``, ``sibuna_edge_acme_nearest_expiry_seconds`` and ``sibuna_edge_acme_failures_total``. An alert on the third one tells us when renewal has been failing for too long.
+``via`` says how the certificate is obtained: the challenge, or ``local`` for the local authority. ``state`` is ``pending`` before the first attempt, ``ordering`` during an order, ``waiting`` while another node holds the lock, ``retry`` after a failure, and ``ready`` otherwise. ``renews`` is the time of the next order. ``show stats`` and the metrics endpoint add four series: ``sibuna_edge_acme_certificates_managed``, ``sibuna_edge_acme_certificates_served``, ``sibuna_edge_acme_nearest_expiry_seconds`` and ``sibuna_edge_acme_failures_total``. An alert on the third one tells us when renewal has been failing for too long.
 
 **Troubleshooting.** Each failure is written to standard error with a code, the reason of the authority and a hint.
 
@@ -594,8 +708,36 @@ A restart loads the stored certificates and orders nothing while they are fresh.
    * - ``ACME008``
      - certificate rejected
      - The clock of this node. The certificate does not name the host, has expired, or does not fit the key.
+   * - ``ACME009``
+     - DNS provider failed
+     - The hook, run by hand with the arguments that the message shows. With ``rfc2136``: the TSIG key and the update policy of the zone.
+   * - ``ACME010``
+     - record not visible
+     - The name servers that the message lists. Raise ``dns.timeout``, or set ``dns.check`` to ``false`` when this host cannot reach them.
+   * - ``ACME011``
+     - local authority failed
+     - The directory ``local`` in the storage: its owner, its mode, and a damaged file.
 
 A reload may add and remove ``auto`` names. A new name is ordered at once, and a removed name is no longer renewed or served. Changing ``global.acme``, or adding the first ``auto`` name to a daemon that has none, needs a restart. A certificate from ``crt`` and ``auto`` names may share a listener. For a name that both cover, the automatic certificate serves once it exists.
+
+**Coming from Caddy.** The behaviour follows Caddy's automatic HTTPS, with these differences.
+
+.. list-table:: Caddy and Sibuna
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Caddy
+     - Sibuna
+   * - A site address turns HTTPS on.
+     - We write the names under ``auto``, because a frontend binds addresses.
+   * - ``tls internal``
+     - ``issuer: "internal"``. Internal names and addresses need neither.
+   * - A DNS provider is a module compiled into the server.
+     - A hook program or an RFC 2136 update. No build step, and no vendor module.
+   * - The root is installed into the trust store at the first start.
+     - Never. ``show ca`` prints the root, and we install it.
+   * - On-demand TLS, a second issuer, ``acme_server``.
+     - Not available.
 
 Sibuna has no authority of its own for internal names, issues no certificate at the first handshake of an unknown name, and does not solve the DNS-01 challenge, so it obtains no wildcard certificates. For these cases we keep using ``crt``.
 
@@ -1265,7 +1407,9 @@ A deployment takes one server out of rotation, replaces it, and returns it. For 
    * - ``show stats``
      - The series of the edge in the Prometheus text format: requests, bytes and times per frontend and per server, the flow table, the access log and the PROXY protocol.
    * - ``show certs``
-     - One line per name of automatic HTTPS: the issuer, the expiry, the next renewal, the state and the last failure (section *Automatic HTTPS*).
+     - One line per name of automatic HTTPS: how it is obtained, the issuer, the expiry, the next renewal, the state and the last failure (section *Automatic HTTPS*).
+   * - ``show ca``
+     - The root certificate of the local authority as PEM, with its file and its expiry in comment lines. We install it in the clients of internal names.
    * - ``show info``
      - The version, the process, the file, the number of reloads, the watcher, the flows, the drops, the number of run-time changes, and the servers of the file that a command removed.
    * - ``set server POOL/NAME state ready|drain``
