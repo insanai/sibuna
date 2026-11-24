@@ -26,6 +26,8 @@ const IDLE: Duration = Duration::from_millis(200);
 /// The longest time written lines stay in the buffer.
 const FLUSH_EVERY: Duration = Duration::from_secs(1);
 
+// The queue holds entries in place. A box would cost an allocation per request.
+#[allow(clippy::large_enum_variant)]
 enum Message {
     Entry(Entry),
     /// Write what is queued and end.
