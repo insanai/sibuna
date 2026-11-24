@@ -104,6 +104,27 @@ The body
 
 The runtime reads body frames until it holds 64 KiB of head and body together, or the body ends. This is the amount a worker buffers. The decision sees those bytes. If the body is longer, the decision is told so, and the rest streams to the server after admission. The framing toward the server follows the decision's head: a length when the client declared one or the body ended inside the buffer, and chunked coding otherwise.
 
+HTTP/2 and HTTP/3 servers, and gRPC
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A pool with ``http_version`` 2 or 3 has one shared session per server (SID 0015). The thread path reaches it through a loopback listener that translates HTTP/1.1. An in-process exchange does not: the runtime looks the server up in the directory of those sessions and sends the request on the session itself. The request and the response then stream side by side, and trailers pass in both directions.
+
+This is what gRPC needs, so three more rules apply.
+
+#. The request field ``TE: trailers`` is restored toward the server. The translation removes it, because HTTP/1.1 scopes it to one connection.
+#. For a request with a content type of ``application/grpc``, the decision does not wait for the body. It sees the bytes that have arrived. A call may send one message and wait for the answer before it sends the next, so waiting would stall it.
+#. Trailers end the exchange. The server's load is recorded when they are read.
+
+.. code-block:: rust
+
+   impl Ingress {
+       /// Names the HTTP/2 and HTTP/3 servers of the egress.
+       pub fn attach(&self, directory: Directory);
+   }
+   impl Egress {
+       pub fn directory(&self) -> Directory;
+   }
+
 Server connections
 ~~~~~~~~~~~~~~~~~~
 
@@ -189,6 +210,12 @@ Acceptance criteria and implementation status
    * - HTTP/2 throughput rises by at least 15% with no failed request
      - met
      - See the table below
+   * - Every kind of gRPC call works through the binary
+     - met
+     - ``cmd/sibuna/tests/edge_grpc.rs`` runs unary, server-streaming, client-streaming and bidirectional calls, a 300,000-byte message and a call that fails at once, with the firewall off, with an exempt route under ``shield``, and under ``gate`` with a policy rule. ``crates/ingress/tests/grpc.rs`` checks that the server sees HTTP/2 with ``TE: trailers`` and one session.
+   * - A real gRPC implementation interoperates
+     - met
+     - grpc-go 1.x client and server through the binary: 200 unary health checks, a ``NotFound`` status, a server stream, and 50 turns on one bidirectional reflection stream
 
 Requests per second on eight processors, ten streams per connection, before and after:
 
@@ -248,7 +275,9 @@ Known gaps
 #. WebSockets over HTTP/2 and HTTP/1.1 over TLS keep the socket pair.
 #. The per-client connection bound does not see HTTP/2 streams.
 #. The runtime uses at most eight threads. The worker count option of SID 0016 does not set it.
-#. Response trailers pass, which gRPC needs, and a test covers them. The request field ``TE: trailers`` is removed by the translation, and no test runs a real gRPC client and server through the edge. We do not claim gRPC support until one does.
+#. gRPC from a cleartext HTTP/2 client is not accepted. The frontend must terminate TLS.
+#. A gRPC stream that is silent for 60 seconds is closed. The bound should follow a per-pool timeout.
+#. A gRPC call toward an HTTP/1.1 pool cannot work, because HTTP/1.1 servers do not speak gRPC. It is forwarded and fails at the server.
 
 Open questions
 --------------
@@ -260,6 +289,7 @@ Review history
 --------------
 
 - 2026-11-24. Initial draft and implementation in one pass, after measuring where an HTTP/2 request spends its time.
+- 2026-11-24. gRPC. A first attempt through the HTTP/1.1 listener of the egress could not work: that hop drops trailers that are not announced, removes ``TE``, and cannot interleave. The runtime now sends to the HTTP/2 and HTTP/3 sessions directly. A run with grpc-go showed two things an operator must know, which the book now says: the default policy challenges a gRPC client, and the default request limiter stops it after 100 calls. HTTP/3 servers now also pass response trailers.
 - 2026-11-24. Second review, with tests for streamed responses. Server-sent events pass through unbuffered on both HTTP/1.1 paths. Response trailers pass on this path. The trailer test found a defect: a response that ended with trailers did not return its server connection to the pool. It does now.
 - 2026-11-24. Author's review of the implementation. It found that a response body had no deadline: a server that stopped inside a body held its stream until the client gave up. The stall bound and its test were added. It also recorded the known gaps above, of which the missing per-client bound and the fixed timeouts are the ones that matter for production.
 

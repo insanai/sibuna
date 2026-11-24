@@ -465,6 +465,38 @@ With the workers on, a request of an HTTP/2 or HTTP/3 client is decided on the t
 
 An idle HTTP/2 or HTTP/3 connection gives up its flow slot after ``idle_timeout``, and after 60 s at the earliest. HTTP/2 connections are also probed with PING every 20 s. An HTTP/2 client may open a WebSocket with extended CONNECT (RFC 8441), which Sibuna carries as an HTTP/1.1 upgrade. Other CONNECT tunnels are refused.
 
+gRPC
+~~~~
+
+gRPC needs HTTP/2 from the client to the server, with trailers. We give it a TLS frontend and a backend with ``"http_version": "2"``. A request of an HTTP/2 or HTTP/3 client then reaches the HTTP/2 server on a shared session, with no HTTP/1.1 step between them. Unary, server-streaming, client-streaming and bidirectional calls all work, and all calls to one server share one connection.
+
+.. code-block:: json
+
+   {
+     "http": {"surface": "shield", "rate_limit": "off"},
+     "frontends": {
+       "api": {
+         "proto": "http", "binds": ["0.0.0.0:443"],
+         "tls": {"crt": "/etc/sibuna/certs/"},
+         "routes": [{"path_prefix": "/orders.Orders/", "backend": "orders", "firewall": false}],
+         "default_backend": "site"
+       }
+     },
+     "backends": {
+       "orders": {"mode": "http", "http_version": "2",
+                  "servers": [{"name": "o1", "addr": "10.20.0.31:50051"}]},
+       "site": {"mode": "http", "servers": [{"name": "s1", "addr": "10.20.0.8:8040"}]}
+     }
+   }
+
+Three settings matter for a gRPC service.
+
+- A gRPC client cannot solve a browser challenge. We exempt the service with ``"firewall": false`` on its route, as above, or we allow its paths with a policy rule. The service then relies on its own authentication.
+- The per-client request limiter counts every call, also on an exempt route. Its default of 100 requests per window is far too low for a service client. We raise ``rate_limit`` or turn it off.
+- A stream that is silent for 60 s is closed, in either direction of the response. Long-lived streams need application messages more often than that.
+
+The decision sees the request head and the message bytes that have arrived with it. It does not wait for more, because a call may wait for an answer before it sends its next message. gRPC over cleartext HTTP/2 from the client is not accepted: the frontend must terminate TLS. A server pool may speak cleartext HTTP/2 or HTTP/2 over TLS.
+
 Servers that speak TLS, HTTP/2 or HTTP/3
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
