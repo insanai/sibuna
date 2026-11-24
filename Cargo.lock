@@ -1528,6 +1528,7 @@ dependencies = [
  "sibuna-crypto",
  "sibuna-encoding",
  "sibuna-lb",
+ "sibuna-net",
  "sibuna-reactor",
  "sibuna-tls",
  "tokio",

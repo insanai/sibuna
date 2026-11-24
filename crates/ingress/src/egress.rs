@@ -40,6 +40,9 @@ use tokio_rustls::TlsConnector;
 use crate::Error;
 use crate::bridge::{Body, error};
 
+/// The longest wait for a connection or a handshake where no pool gives a bound: the
+/// TLS tunnel of an HTTP/1.1 pool, and a session that is opened again inside an
+/// exchange. A direct send opens its session within the `connect_timeout` of its pool.
 const CONNECT: Duration = Duration::from_secs(5);
 
 type Http3 = h3::client::SendRequest<h3_quinn::OpenStreams, Bytes>;
@@ -216,7 +219,7 @@ impl Origin {
 
     async fn serve(self: Arc<Self>, mut stream: TcpStream) -> Result<(), Error> {
         if let Mode::Tunnel(tls) = &self.mode {
-            let tcp = self.connect().await?;
+            let tcp = self.connect(CONNECT).await?;
             let mut origin = timeout(CONNECT, tls.connect(self.name.clone(), tcp)).await??;
             tokio::io::copy_bidirectional(&mut stream, &mut origin).await?;
             return Ok(());
@@ -238,8 +241,8 @@ impl Origin {
         Ok(())
     }
 
-    async fn connect(&self) -> Result<TcpStream, Error> {
-        let tcp = timeout(CONNECT, TcpStream::connect(self.addr)).await??;
+    async fn connect(&self, bound: Duration) -> Result<TcpStream, Error> {
+        let tcp = timeout(bound, TcpStream::connect(self.addr)).await??;
         tcp.set_nodelay(true)?;
         Ok(tcp)
     }
@@ -255,10 +258,11 @@ impl Origin {
         match &self.mode {
             Mode::Tunnel(_) => Ok(()),
             Mode::Http2 { tls, session } => {
-                timeout(bound, self.http2(tls.as_ref(), session)).await?.map(drop)
+                timeout(bound, self.http2(tls.as_ref(), session, bound)).await?.map(drop)
             }
             Mode::Http3 { endpoint, session } => {
-                timeout(bound, self.open_http3(endpoint, session, false)).await?.map(drop)
+                let opening = self.open_http3(endpoint, session, false, bound);
+                timeout(bound, opening).await?.map(drop)
             }
         }
     }
@@ -274,7 +278,7 @@ impl Origin {
             Mode::Http2 { tls, session } => {
                 let scheme = if tls.is_some() { "https" } else { "http" };
                 let request = multiplexed(request, scheme, Version::HTTP_2)?;
-                let mut sender = self.http2(tls.as_ref(), session).await?;
+                let mut sender = self.http2(tls.as_ref(), session, CONNECT).await?;
                 sender.send_request(request).await?.map(|b| b.map_err(Error::from).boxed_unsync())
             }
             Mode::Http3 { endpoint, session } => {
@@ -291,16 +295,17 @@ impl Origin {
         &self,
         tls: Option<&TlsConnector>,
         session: &Mutex<Option<http2::SendRequest<Body>>>,
+        bound: Duration,
     ) -> Result<http2::SendRequest<Body>, Error> {
         let mut session = session.lock().await;
         if let Some(sender) = session.as_ref().filter(|sender| !sender.is_closed()) {
             return Ok(sender.clone());
         }
-        let tcp = self.connect().await?;
+        let tcp = self.connect(bound).await?;
         let builder = http2::Builder::new(TokioExecutor::new());
         let sender = match tls {
             Some(tls) => {
-                let stream = timeout(CONNECT, tls.connect(self.name.clone(), tcp)).await??;
+                let stream = timeout(bound, tls.connect(self.name.clone(), tcp)).await??;
                 let (sender, connection) = builder.handshake(TokioIo::new(stream)).await?;
                 tokio::spawn(connection);
                 sender
@@ -321,13 +326,14 @@ impl Origin {
         endpoint: &quinn::Endpoint,
         session: &Mutex<Option<Http3>>,
         fresh: bool,
+        bound: Duration,
     ) -> Result<Http3, Error> {
         let mut session = session.lock().await;
         if let Some(sender) = session.as_ref().filter(|_| !fresh) {
             return Ok(sender.clone());
         }
         let name = self.name.to_str();
-        let connection = timeout(CONNECT, endpoint.connect(self.addr, &name)?).await??;
+        let connection = timeout(bound, endpoint.connect(self.addr, &name)?).await??;
         let (mut driver, sender) = h3::client::new(h3_quinn::Connection::new(connection)).await?;
         tokio::spawn(async move {
             let _ = driver.wait_idle().await;
@@ -345,10 +351,13 @@ impl Origin {
         let (parts, mut upload) = request.into_parts();
         let head = Request::from_parts(parts, ());
         // Opening a stream sends nothing of the body, so a closed connection is retried.
-        let mut sender = self.open_http3(endpoint, session, false).await?;
+        let mut sender = self.open_http3(endpoint, session, false, CONNECT).await?;
         let stream = match sender.send_request(head.clone()).await {
             Ok(stream) => stream,
-            Err(_) => self.open_http3(endpoint, session, true).await?.send_request(head).await?,
+            Err(_) => {
+                let mut fresh = self.open_http3(endpoint, session, true, CONNECT).await?;
+                fresh.send_request(head).await?
+            }
         };
         let (mut send, mut receive) = stream.split();
         tokio::spawn(async move {
@@ -462,5 +471,45 @@ impl rustls::client::danger::ServerCertVerifier for Unverified {
 
     fn supported_verify_schemes(&self) -> Vec<rustls::SignatureScheme> {
         self.0.signature_verification_algorithms.supported_schemes()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::time::Instant;
+
+    use super::*;
+
+    /// A listener whose accept queue is full, so that a connect to it never completes.
+    fn blackhole() -> (std::net::TcpListener, Vec<std::net::TcpStream>) {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let mut held = Vec::new();
+        for _ in 0..4096 {
+            match std::net::TcpStream::connect_timeout(&address, Duration::from_millis(300)) {
+                Ok(stream) => held.push(stream),
+                Err(_) => return (listener, held),
+            }
+        }
+        panic!("the accept queue of {address} never filled");
+    }
+
+    #[test]
+    fn a_session_opens_within_the_bound_of_its_pool_and_not_a_fixed_one() {
+        let (listener, _held) = blackhole();
+        let options = OriginOptions { version: OriginVersion::Http2, tls: None };
+        let origin = Origin::new(listener.local_addr().unwrap(), &options).unwrap();
+        let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+        let waited = |bound: Duration| {
+            let started = Instant::now();
+            assert!(runtime.block_on(origin.ready(bound)).is_err());
+            started.elapsed()
+        };
+        // A short bound ends the wait early.
+        let short = waited(Duration::from_millis(300));
+        assert!(short < Duration::from_secs(2), "{short:?}");
+        // A bound above the five seconds of `CONNECT` is honoured in full (SID 0019).
+        let long = waited(Duration::from_millis(5600));
+        assert!(long >= Duration::from_millis(5500) && long < Duration::from_secs(8), "{long:?}");
     }
 }

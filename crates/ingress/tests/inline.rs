@@ -479,3 +479,73 @@ fn a_response_carries_the_fields_of_its_route_and_the_sticky_cookie() {
     let cookie = cookie.unwrap_or_else(|| panic!("{fields:?}"));
     assert!(cookie.ends_with("; Path=/; HttpOnly; SameSite=Lax; Secure"), "{cookie}");
 }
+
+/// One POST over HTTP/2 without a declared length. Its body is `pieces` pieces of `size`
+/// bytes, sent `pause` apart. Returns the status and the body of the answer.
+async fn upload(vip: SocketAddr, pieces: usize, size: usize, pause: Duration) -> (u16, String) {
+    let tcp = tokio::net::TcpStream::connect(vip).await.unwrap();
+    let tls = tokio_rustls::TlsConnector::from(Arc::new(client(b"h2")))
+        .connect("localhost".try_into().unwrap(), tcp)
+        .await
+        .unwrap();
+    let (mut tx, conn) =
+        hyper::client::conn::http2::handshake(TokioExecutor::new(), TokioIo::new(tls))
+            .await
+            .unwrap();
+    tokio::spawn(conn);
+    let (send, receive) = tokio::sync::mpsc::channel::<Bytes>(1);
+    let frames = futures_util::stream::unfold(receive, |mut receive| async move {
+        let piece = receive.recv().await?;
+        Some((Ok::<_, std::convert::Infallible>(hyper::body::Frame::data(piece)), receive))
+    });
+    tokio::spawn(async move {
+        for _ in 0..pieces {
+            if send.send(Bytes::from(vec![b'x'; size])).await.is_err() {
+                break;
+            }
+            tokio::time::sleep(pause).await;
+        }
+    });
+    let url = format!("https://localhost:{}/order", vip.port());
+    let body = http_body_util::StreamBody::new(Box::pin(frames));
+    let request = Request::post(url).body(body).unwrap();
+    let response = tx.send_request(request).await.unwrap();
+    let status = response.status().as_u16();
+    let body = response.into_body().collect().await.map(|body| body.to_bytes());
+    (status, String::from_utf8(body.unwrap_or_default().to_vec()).unwrap())
+}
+
+/// Runs one upload against an edge with the members `frontend` and `pool`.
+fn uploaded(frontend: &str, pool: &str, pieces: usize, pause: Duration) -> (u16, String) {
+    let Bench { vip, mut edge, ingress, .. } = setup_full("", frontend, pool);
+    let runner = std::thread::spawn(move || {
+        let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+        let upload = upload(vip, pieces, 50_000, pause);
+        rt.block_on(async { tokio::time::timeout(Duration::from_secs(15), upload).await })
+    });
+    while !runner.is_finished() {
+        edge.step().unwrap();
+        for (bind, stream, permit) in edge.accepted_http() {
+            ingress.accept(bind, stream, permit);
+        }
+    }
+    runner.join().unwrap().unwrap()
+}
+
+#[test]
+fn a_body_of_unknown_length_is_bounded_beyond_the_decision_prefix() {
+    // The decision sees the first 64 KiB. The bound is passed in the part that streams.
+    let pause = Duration::from_millis(20);
+    let (status, _) = uploaded(r#""max_body":"120k","#, "", 3, pause);
+    assert_eq!(status, 413);
+    let (status, body) = uploaded(r#""max_body":"160k","#, "", 3, pause);
+    assert_eq!((status, body.as_str()), (200, "POST /order HTTP/1.1 marked=true body=150000"));
+}
+
+#[test]
+fn an_upload_that_moves_is_not_the_silence_of_the_server() {
+    // The upload takes 1.2 seconds, three times the response bound of the test pool.
+    let pause = Duration::from_millis(200);
+    let (status, body) = uploaded("", "", 6, pause);
+    assert_eq!((status, body.as_str()), (200, "POST /order HTTP/1.1 marked=true body=300000"));
+}
