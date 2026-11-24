@@ -118,6 +118,7 @@ pub mod connect;
 mod duplex;
 mod fields;
 pub mod idle;
+pub mod machine;
 pub mod outbound;
 pub mod peers;
 mod pool;
