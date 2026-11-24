@@ -405,6 +405,9 @@ impl Driver {
         self.publish(name, entry, Some(CertificateState::Ordering));
         let issued = match source {
             Source::Acme(ready) => {
+                // A record whose cleanup failed last time goes first: the order below
+                // remembers its own record in the same place.
+                self.clean(ready, name);
                 let issued = self.order(ready, name, entry.failures);
                 self.shared.withdraw();
                 self.clean(ready, name);

@@ -77,7 +77,8 @@ impl Error {
             "VALIDATION FAILED",
             message.into(),
             "Point the DNS record of the name at this node, and let the authority reach \
-             port 80 (HTTP-01) or port 443 (TLS-ALPN-01) from the Internet.",
+             port 80 (HTTP-01) or port 443 (TLS-ALPN-01) from the Internet. With DNS-01, \
+             check that the provider writes the TXT record into the public zone.",
         )
     }
 
