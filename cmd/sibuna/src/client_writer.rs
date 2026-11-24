@@ -51,6 +51,62 @@ pub(crate) struct Tally {
     pub first: Option<Instant>,
 }
 
+/// Finds the status of the final head in a response that arrives in pieces (SID 0020).
+/// Informational heads other than 101 are passed over, wherever the pieces are cut.
+#[derive(Clone, Copy, Debug, Default)]
+pub(crate) struct StatusScan {
+    /// The first bytes of the head whose status is not yet known.
+    lead: [u8; STATUS_END],
+    lead_len: usize,
+    /// Inside an informational head, looking for its blank line in `tail`.
+    interim: bool,
+    tail: u32,
+}
+
+impl StatusScan {
+    /// Reads the next piece. Returns the final status once its twelve bytes are in, and
+    /// zero before that. A response that does not begin with an HTTP/1.x head has none.
+    pub(crate) fn feed(&mut self, data: &[u8]) -> u16 {
+        let mut rest = data;
+        while !rest.is_empty() {
+            if self.interim {
+                let Some(end) = self.end_of_head(rest) else { return 0 };
+                (self.interim, self.lead_len) = (false, 0);
+                rest = rest.get(end..).unwrap_or_default();
+                continue;
+            }
+            if self.lead_len >= STATUS_END {
+                return 0;
+            }
+            let take = rest.len().min(STATUS_END - self.lead_len);
+            self.lead[self.lead_len..self.lead_len + take].copy_from_slice(&rest[..take]);
+            self.lead_len += take;
+            rest = &rest[take..];
+            if self.lead_len < STATUS_END {
+                return 0;
+            }
+            let status = status_of(&self.lead);
+            if !(100..200).contains(&status) || status == 101 {
+                return status;
+            }
+            // The status line may hold the first bytes of the blank line.
+            (self.interim, self.tail) = (true, 0);
+        }
+        0
+    }
+
+    /// The index after the blank line of the informational head, when `data` holds it.
+    fn end_of_head(&mut self, data: &[u8]) -> Option<usize> {
+        for (index, &byte) in data.iter().enumerate() {
+            self.tail = (self.tail << 8) | u32::from(byte);
+            if self.tail == BLANK_LINE {
+                return Some(index + 1);
+            }
+        }
+        None
+    }
+}
+
 /// A writer that drops response bodies while a HEAD request is served.
 #[derive(Debug)]
 pub(crate) struct ClientWriter<W> {
@@ -59,11 +115,9 @@ pub(crate) struct ClientWriter<W> {
     head_request: bool,
     phase: Phase,
     tally: Tally,
-    /// The first bytes of the head whose status is not yet known.
-    lead: [u8; STATUS_END],
-    lead_len: usize,
+    scan: StatusScan,
     /// The policy whose HSTS field the final head of this response must carry, until
-    /// that head has begun (SID 0019).
+    /// the status line of that head has passed (SID 0019).
     own: Option<Arc<RoutePolicy>>,
 }
 
@@ -76,8 +130,7 @@ impl<W: Write> ClientWriter<W> {
             head_request: false,
             phase: FRESH_HEAD,
             tally: Tally::default(),
-            lead: [0; STATUS_END],
-            lead_len: 0,
+            scan: StatusScan::default(),
             own: None,
         }
     }
@@ -90,31 +143,29 @@ impl<W: Write> ClientWriter<W> {
         self.own = policy;
     }
 
-    /// Passes `data`, which holds the end of a status line or none, and adds the HSTS
-    /// field after the status line of a final head.
-    fn write_with_own(&mut self, data: &[u8]) -> io::Result<()> {
-        let Some(end) = data.iter().position(|&byte| byte == b'\n') else {
-            return self.pass(data);
-        };
-        // An interim head is written in one piece and is not final: it passes whole, and
-        // the next write begins the next head.
-        let status = status_of(data);
-        if self.lead_len == 0 && (100..200).contains(&status) && status != 101 {
-            return self.pass(data);
+    /// Passes `data` line by line until the status line of the final head has passed,
+    /// and adds the HSTS field after it. Interim heads pass as they are.
+    fn write_with_own(&mut self, mut data: &[u8]) -> io::Result<()> {
+        while self.own.is_some() && !data.is_empty() {
+            let end = data.iter().position(|&byte| byte == b'\n').map_or(data.len(), |at| at + 1);
+            let (line, rest) = data.split_at(end);
+            self.pass(line)?;
+            data = rest;
+            if self.tally.status == 101 {
+                // The answer to an upgrade is that of the server and starts another
+                // protocol. No path edits it, so it gets no field of ours either.
+                self.own = None;
+            } else if self.tally.status != 0 && line.ends_with(b"\n") {
+                // The status is known from the first twelve bytes of its line, so the
+                // first line end after it is the end of the final status line.
+                if let Some(policy) = self.own.take()
+                    && !carries_hsts(data)
+                {
+                    self.pass(&policy.hsts)?;
+                }
+            }
         }
-        let (line, rest) = data.split_at(end + 1);
-        self.pass(line)?;
-        if self.tally.status == 101 {
-            // The answer to an upgrade is that of the server and starts another
-            // protocol. No path edits it, so it gets no field of ours either.
-            self.own = None;
-        } else if self.tally.status != 0
-            && let Some(policy) = self.own.take()
-            && !carries_hsts(rest)
-        {
-            self.pass(&policy.hsts)?;
-        }
-        self.pass(rest)
+        self.pass(data)
     }
 
     fn pass(&mut self, data: &[u8]) -> io::Result<()> {
@@ -133,7 +184,7 @@ impl<W: Write> ClientWriter<W> {
         self.head_request = head_request;
         self.phase = FRESH_HEAD;
         self.tally = Tally::default();
-        self.lead_len = 0;
+        self.scan = StatusScan::default();
         self.own = None;
     }
 
@@ -142,25 +193,14 @@ impl<W: Write> ClientWriter<W> {
         self.tally
     }
 
-    /// Counts `data` and reads the status from the first twelve bytes of a head. An
-    /// informational head ends within the write that completed its status (each is
-    /// written in one piece), so the next write begins the next head.
+    /// Counts `data` and looks for the status of the final head in it.
     fn note(&mut self, data: &[u8]) {
         self.tally.bytes += data.len() as u64;
-        if self.tally.status != 0 || self.lead_len >= STATUS_END || data.is_empty() {
+        if self.tally.status != 0 {
             return;
         }
-        let take = data.len().min(STATUS_END - self.lead_len);
-        self.lead[self.lead_len..self.lead_len + take].copy_from_slice(&data[..take]);
-        self.lead_len += take;
-        if self.lead_len < STATUS_END {
-            return;
-        }
-        let status = status_of(&self.lead);
-        if (100..200).contains(&status) && status != 101 {
-            self.lead_len = 0;
-        } else {
-            self.tally.status = status;
+        self.tally.status = self.scan.feed(data);
+        if self.tally.status != 0 {
             self.tally.first = Some(Instant::now());
         }
     }
@@ -252,6 +292,29 @@ mod tests {
         assert_eq!(status_of(b"junk"), 0);
     }
 
+    #[test]
+    fn the_final_status_is_found_wherever_the_pieces_are_cut() {
+        let response =
+            b"HTTP/1.1 100 Continue\r\n\r\nHTTP/1.1 103 Early Hints\r\nLink: <a>\r\n\r\n\
+            HTTP/1.1 404 Not Found\r\ncontent-length: 2\r\n\r\nno";
+        for cut in 0..response.len() {
+            for second in [cut, (cut + 7).min(response.len())] {
+                let mut scan = StatusScan::default();
+                let pieces = [&response[..cut], &response[cut..second], &response[second..]];
+                let found =
+                    pieces.iter().map(|piece| scan.feed(piece)).find(|&status| status != 0);
+                assert_eq!(found, Some(404), "cut at {cut} and {second}");
+            }
+        }
+        let mut scan = StatusScan::default();
+        assert_eq!(scan.feed(b"HTTP/1.1 101 Switching Protocols\r\n\r\n"), 101);
+        let mut scan = StatusScan::default();
+        assert_eq!(scan.feed(b"HTTP/1.1 100 Continue\r\n\r\n"), 0, "no final head yet");
+        assert_eq!(scan.feed(b"HTTP/1.1 200 OK\r\n\r\n"), 200);
+        let mut scan = StatusScan::default();
+        assert_eq!((scan.feed(b"a chunk of a body"), scan.feed(b"HTTP/1.1 200 OK")), (0, 0));
+    }
+
     const PAGE: &[u8] = b"HTTP/1.1 403 Forbidden\r\nContent-Length: 9\r\n\r\nForbidden";
 
     /// What a writer with the HSTS field of a policy makes of `writes`.
@@ -271,17 +334,19 @@ mod tests {
     #[test]
     fn our_own_answers_carry_hsts_once_after_the_status_line() {
         let hsts = "Strict-Transport-Security: max-age=600\r\n";
-        // A page written in one piece, in several, and for HEAD.
         let page = format!("HTTP/1.1 403 Forbidden\r\n{hsts}Content-Length: 9\r\n\r\nForbidden");
-        assert_eq!(with_own(false, &[PAGE]), page);
-        assert_eq!(with_own(false, &[&PAGE[..5], &PAGE[5..30], &PAGE[30..]]), page);
         assert_eq!(with_own(true, &[PAGE]), page[..page.len() - 9]);
-        // An interim head is passed as it is. The final head has the field.
-        let interim: &[u8] = b"HTTP/1.1 100 Continue\r\n\r\n";
-        assert_eq!(
-            with_own(false, &[interim, PAGE]),
-            format!("HTTP/1.1 100 Continue\r\n\r\n{page}")
-        );
+        // An interim head passes as it is and the final head has the field, wherever
+        // the pieces are cut.
+        let interim = "HTTP/1.1 100 Continue\r\n\r\n";
+        let sent = [interim.as_bytes(), PAGE].concat();
+        let wanted = format!("{interim}{page}");
+        for cut in 0..=sent.len() {
+            for second in [cut, (cut + 5).min(sent.len())] {
+                let pieces = [&sent[..cut], &sent[cut..second], &sent[second..]];
+                assert_eq!(with_own(false, &pieces), wanted, "cut at {cut} and {second}");
+            }
+        }
         // A relayed head that brings the field keeps its own, whatever its spelling.
         let relayed: &[u8] = b"HTTP/1.1 200 OK\r\nstrict-transport-security: max-age=1\r\n\r\n";
         assert_eq!(with_own(false, &[relayed]).as_bytes(), relayed);

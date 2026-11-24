@@ -336,6 +336,7 @@ impl Edge {
             loads.prune();
             Ok(())
         })??;
+        self.stats.retire(pool, name);
         self.stop_unused_probes();
         Ok(())
     }

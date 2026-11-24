@@ -12,7 +12,6 @@ mod http;
 #[cfg(feature = "https")]
 mod inline;
 mod probe;
-mod proxy_stage;
 mod quick;
 mod watch;
 mod workers;
@@ -126,11 +125,27 @@ struct Serving {
     admin_socket: Option<String>,
     /// How long a shutdown waits for established flows (`global.shutdown_timeout`).
     shutdown_timeout: Duration,
+    /// How long a shutdown serves on while readiness answers 503 (`global.drain_delay`).
+    drain_delay: Duration,
     started: Instant,
     reloads: u64,
     /// The counters of SID 0020, for `show stats`.
     observe: Arc<crate::access::Observe>,
+    /// The drain commands shared with the peers of the mesh (SID 0022).
+    drains: Drains,
 }
+
+/// The drain commands on their way to the peers and from them.
+#[derive(Default)]
+struct Drains {
+    /// Where a command of this node's operator goes. `None` without a mesh.
+    feed: Option<sibuna_lb::DrainFeed>,
+    /// The commands of the operators of other nodes, from the mesh thread.
+    remote: Option<mpsc::Receiver<(String, String, bool)>>,
+}
+
+/// The commands of peers applied in one turn of the edge worker.
+const REMOTE_DRAINS_PER_STEP: usize = 64;
 
 impl Serving {
     /// Applies a checked revision and returns the log line. A drain stays while the
@@ -141,10 +156,12 @@ impl Serving {
         }
         let watch = revision.config.watch();
         let shutdown_timeout = revision.config.shutdown_timeout();
+        let drain_delay = revision.config.drain_delay();
         let before = self.edge.change_count();
         reload(&mut self.edge, self.http.as_mut(), &mut self.adapters, revision)?;
         self.reloads += 1;
         self.shutdown_timeout = shutdown_timeout;
+        self.drain_delay = drain_delay;
         self.watch(watch)?;
         let kept = self.edge.change_count();
         let mut line = "Sibuna edge routes reloaded".to_owned();
@@ -164,6 +181,29 @@ impl Serving {
     fn watch(&self, interval: Option<Duration>) -> io::Result<()> {
         let pending = Arc::clone(&self.pending);
         self.watcher.set(interval, &self.source, move |source| offer(source, &pending))
+    }
+
+    /// Follows the mesh: applies the drain commands of the peers and the routing regime.
+    fn follow(&mut self, mesh: Option<&sibuna_lb::Mesh>, current: &mut sibuna_lb::Regime) {
+        let commands = self.drains.remote.iter().flat_map(mpsc::Receiver::try_iter);
+        for (pool, name, drained) in commands.take(REMOTE_DRAINS_PER_STEP) {
+            let state = if drained {
+                sibuna_lb::ServerState::Drain
+            } else {
+                sibuna_lb::ServerState::Ready
+            };
+            // A server that this node does not have is another node's concern.
+            if self.edge.set_server_state(&pool, &name, state).is_ok() {
+                let word = state.word();
+                note(format_args!("EDGE010: mesh: set server {pool}/{name} state {word}"));
+            }
+        }
+        let Some(regime) = mesh.map(sibuna_lb::Mesh::regime) else { return };
+        if *current != regime {
+            self.edge.set_regime(regime);
+            note(format_args!("Sibuna edge routing regime: {regime:?}"));
+            *current = regime;
+        }
     }
 
     /// Applies the revision that the signal thread or the watcher left, if any.
@@ -202,8 +242,12 @@ impl Serving {
             Command::ShowStats => Ok(self.stats()),
             Command::ShowCerts => Ok(self.certs()),
             Command::Help => Ok(control::USAGE.to_owned()),
-            Command::State { pool, name, state } => {
-                edge.set_server_state(&pool, &name, state).map(done)
+            Command::State { pool, name, state, local } => {
+                edge.set_server_state(&pool, &name, state)?;
+                if let (false, Some(feed)) = (local, &self.drains.feed) {
+                    feed.publish(&pool, &name, state == sibuna_lb::ServerState::Drain);
+                }
+                Ok(String::new())
             }
             Command::Weight { pool, name, weight } => {
                 edge.set_server_weight(&pool, &name, weight).map(done)
@@ -321,31 +365,31 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let admin_socket = config.admin_socket().map(str::to_owned);
     let takeover = config.reuse_port();
     let watch = config.watch();
-    let shutdown_timeout = config.shutdown_timeout();
+    let (shutdown_timeout, drain_delay) = (config.shutdown_timeout(), config.drain_delay());
     let mut current = sibuna_lb::Regime::Standalone;
     let edge = Edge::bind(config)?;
     let http = http.map(|p| http::Http::start(p, &edge, secret)).transpose()?;
-    join(http.as_ref(), &adapters, mesh.as_ref());
+    let drains = join(http.as_ref(), &adapters, mesh.as_ref());
     let observed = http::observe(http.as_ref(), observe_options, &edge)?;
     let (jobs, inbox) = mpsc::channel();
     let _admin = match &admin_socket {
         Some(path) => Some(admin::Admin::start(path, takeover, Arc::clone(&source), jobs)?),
         None => None,
     };
-    let watcher = Watcher::new();
-    let started = Instant::now();
     let mut serving = Serving {
         edge,
         http,
         adapters,
         source,
         pending,
-        watcher,
+        watcher: Watcher::new(),
         admin_socket,
         shutdown_timeout,
-        started,
+        drain_delay,
+        started: Instant::now(),
         reloads: 0,
         observe: observed.shared(),
+        drains,
     };
     serving.watch(watch)?;
     serving.announce();
@@ -355,37 +399,54 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         for job in inbox.try_iter().take(COMMANDS_PER_STEP) {
             serving.answer(job);
         }
-        if let Some(mesh) = &mesh {
-            let regime = mesh.regime();
-            if current != regime {
-                serving.edge.set_regime(regime);
-                note(format_args!("Sibuna edge routing regime: {regime:?}"));
-                current = regime;
-            }
-        }
+        serving.follow(mesh.as_ref(), &mut current);
         step(&mut serving.edge, serving.http.as_ref())?;
     }
-    drop(mesh);
     observed.drain();
-    let Serving { mut edge, http, shutdown_timeout, .. } = serving;
-    edge.drain();
-    if let Some(http) = &http {
-        http.drain();
+    serving.linger()?;
+    drop(mesh);
+    serving.stop()
+}
+
+impl Serving {
+    /// Serves on for `global.drain_delay` after readiness turned to 503, so that a
+    /// balancer in front stops sending before the listeners close (SID 0020).
+    fn linger(&mut self) -> io::Result<()> {
+        if self.drain_delay.is_zero() {
+            return Ok(());
+        }
+        let delay = self.drain_delay;
+        note(format_args!("Sibuna edge draining: not ready, serving for {delay:?}"));
+        let until = Instant::now() + self.drain_delay;
+        while Instant::now() < until {
+            step(&mut self.edge, self.http.as_ref())?;
+        }
+        Ok(())
     }
-    let deadline = Instant::now() + shutdown_timeout;
-    while edge.active() > 0 && Instant::now() < deadline {
-        step(&mut edge, http.as_ref())?;
+
+    /// Stops the listeners and waits for the established flows, at most
+    /// `global.shutdown_timeout`.
+    fn stop(self) -> io::Result<()> {
+        let Serving { mut edge, http, shutdown_timeout, .. } = self;
+        edge.drain();
+        if let Some(http) = &http {
+            http.drain();
+        }
+        let deadline = Instant::now() + shutdown_timeout;
+        while edge.active() > 0 && Instant::now() < deadline {
+            step(&mut edge, http.as_ref())?;
+        }
+        let (forced, drops) = (edge.active(), edge.dropped());
+        note(format_args!("Sibuna edge stopped: {forced} forced closes, {drops} drops"));
+        Ok(())
     }
-    let (forced, drops) = (edge.active(), edge.dropped());
-    note(format_args!("Sibuna edge stopped: {forced} forced closes, {drops} drops"));
-    Ok(())
 }
 
 fn step(edge: &mut Edge, http: Option<&http::Http>) -> io::Result<()> {
     edge.step()?;
     if let Some(http) = http {
-        for (bind, stream, permit) in edge.accepted_http() {
-            http.accept(bind, stream, permit);
+        for accepted in edge.accepted() {
+            http.accept(accepted);
         }
     }
     Ok(())
@@ -400,19 +461,21 @@ fn reload(
     match (http, revision.http) {
         (None, None) => edge.reload(revision.config),
         (Some(http), Some(prepared)) if http.compatible(&prepared) => {
+            let log = http.plan_log(&prepared)?;
             adapt(adapters, &mut revision.config)?;
             edge.reload(revision.config)?;
             // The engine follows the routes at once. A request decided under the old
             // engine in between is routed by the old revision (SID 0018). The adapters
             // of that revision close last.
-            http.reload(prepared);
+            http.reload(prepared, log);
             commit(adapters);
             // A reload may have started the first adapters.
             attach(Some(http), adapters);
             Ok(())
         }
         _ => Err(io::Error::other(
-            "changing HTTP firewall settings or TLS listeners requires a restart",
+            "changing HTTP firewall settings, TLS listeners, observability.listen or the \
+             access log queue requires a restart",
         )),
     }
 }
@@ -462,12 +525,20 @@ fn commit(adapters: &mut Adapters) {
 }
 
 /// Joins the started parts of the edge: the HTTP runtime learns the multiplexed
-/// servers of the adapters, and the firewall and the mesh share bans (SID 0022).
-fn join(http: Option<&http::Http>, adapters: &Adapters, mesh: Option<&sibuna_lb::Mesh>) {
+/// servers of the adapters, and the daemon shares bans and drain commands with the mesh
+/// (SID 0022).
+fn join(http: Option<&http::Http>, adapters: &Adapters, mesh: Option<&sibuna_lb::Mesh>) -> Drains {
     attach(http, adapters);
-    if let (Some(http), Some(mesh)) = (http, mesh) {
+    let Some(mesh) = mesh else { return Drains::default() };
+    if let Some(http) = http {
         http.share_bans(mesh);
     }
+    let (commands, remote) = mpsc::sync_channel(1024);
+    // The mesh thread never waits for the edge worker. A full queue drops the command.
+    let sink = move |pool: &str, name: &str, drained: bool| {
+        let _ = commands.try_send((pool.to_owned(), name.to_owned(), drained));
+    };
+    Drains { feed: mesh.share_drains(Box::new(sink)), remote: Some(remote) }
 }
 
 /// Writes one line to standard error. A daemon whose standard error was closed, by a

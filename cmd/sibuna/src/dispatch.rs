@@ -495,6 +495,7 @@ fn refuse_proxy_error<W: Write>(ctx: &mut Ctx<'_, W>, error: ProxyError) -> io::
     if error != ProxyError::BodyTooLarge {
         ctx.server.metrics.upstream_errors.bump();
     }
+    crate::access::relay_failed(ctx);
     answer_proxy_error(ctx.writer, error)?;
     Ok(false)
 }

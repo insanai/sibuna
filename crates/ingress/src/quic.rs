@@ -142,6 +142,8 @@ async fn request(
 ) -> Result<(), Error> {
     let (mut send, recv) = stream.split();
     let Some(_admitted) = admitted else {
+        let status = StatusCode::SERVICE_UNAVAILABLE;
+        lane.note_refusal(hyper::Version::HTTP_3, req.method(), req.uri(), status);
         let busy = Response::builder().status(StatusCode::SERVICE_UNAVAILABLE).body(())?;
         send.send_response(busy).await?;
         send.finish().await?;
@@ -152,6 +154,7 @@ async fn request(
         let status = if supported { StatusCode::CONTINUE } else { StatusCode::EXPECTATION_FAILED };
         send.send_response(Response::builder().status(status).body(())?).await?;
         if !supported {
+            lane.note_refusal(hyper::Version::HTTP_3, req.method(), req.uri(), status);
             send.finish().await?;
             return Ok(());
         }

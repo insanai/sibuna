@@ -51,6 +51,8 @@ pub struct MeshConfig {
     pub key_file: String,
     /// Bans travel to the peers (`mesh.replicate_bans`, SID 0022).
     pub replicate_bans: bool,
+    /// Drain commands travel to the peers (`mesh.replicate_drains`, SID 0022).
+    pub replicate_drains: bool,
 }
 
 impl MeshConfig {
@@ -75,8 +77,9 @@ impl MeshConfig {
         }
         peers.sort();
         let replicate_bans = field(r.take_bool("replicate_bans"))?.unwrap_or(true);
+        let replicate_drains = field(r.take_bool("replicate_drains"))?.unwrap_or(true);
         field(r.finish())?;
-        Ok(Self { listen, peers, key_file, replicate_bans })
+        Ok(Self { listen, peers, key_file, replicate_bans, replicate_drains })
     }
 }
 
@@ -97,8 +100,8 @@ struct Peer {
     samples: [Duration; 8],
     count: usize,
     cursor: usize,
-    /// The bans still to send to this peer since it returned.
-    walk: Vec<bans::Ban>,
+    /// What is still to send to this peer since it returned, for each replicated map.
+    walks: [Vec<bans::Ban>; 2],
     /// The peer returned and is owed a walk of the bans in effect.
     returned: bool,
 }
@@ -115,7 +118,7 @@ impl Peer {
             samples: [Duration::ZERO; 8],
             count: 0,
             cursor: 0,
-            walk: Vec::new(),
+            walks: Default::default(),
             returned: false,
         }
     }
@@ -184,11 +187,19 @@ struct Monitor {
     peers: Vec<Peer>,
     sequence: u64,
     samples: Vec<Duration>,
-    replica: Option<Replica>,
+    /// The replicated maps that are on, indexed as the walks of a peer are.
+    replicas: Vec<Replica>,
 }
 
 /// Applies a ban that a peer issued: the client key and the Unix second it ends.
 pub type BanSink = Box<dyn Fn(&[u8], u64) + Send + Sync>;
+
+/// Applies a drain command that a peer issued: the pool, the server and whether the
+/// server is drained.
+pub type DrainSink = Box<dyn Fn(&str, &str, bool) + Send + Sync>;
+
+/// What the mesh thread calls with a key and the number it now holds for it.
+type Sink = Box<dyn Fn(&[u8], u64) + Send + Sync>;
 
 /// Hands the bans this node issues to the mesh thread. Cloning is cheap.
 #[derive(Clone)]
@@ -209,145 +220,244 @@ impl BanFeed {
     }
 }
 
-/// The bans in flight between the firewall and the peers (SID 0022).
+/// Hands the drain commands of this node's operator to the mesh thread.
+#[derive(Clone)]
+pub struct DrainFeed(BanFeed);
+
+impl DrainFeed {
+    /// Tells the peers that the operator drained `pool/name`, or returned it to
+    /// rotation, now. The later command wins on every node. Never blocks.
+    pub fn publish(&self, pool: &str, name: &str, drained: bool) {
+        let key = format!("{pool}/{name}");
+        self.0.publish(key.as_bytes(), bans::drain_value(unix_ms(), drained));
+    }
+}
+
+/// What a replicated map holds, which decides how a received number is admitted.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Holds {
+    /// Clients and the Unix second their ban ends.
+    Bans,
+    /// Servers and the number of the operator's last command.
+    Drains,
+}
+
+impl Holds {
+    const ALL: [Self; 2] = [Self::Bans, Self::Drains];
+
+    fn kind(self) -> u8 {
+        match self {
+            Self::Bans => bans::KIND,
+            Self::Drains => bans::KIND_DRAIN,
+        }
+    }
+}
+
+/// One replicated map in flight between the daemon and the peers (SID 0022).
 struct Replica {
+    holds: Holds,
     log: bans::Log,
     inbox: Receiver<bans::Ban>,
-    sink: Arc<OnceLock<BanSink>>,
+    sink: Arc<OnceLock<Sink>>,
     counters: Arc<BanCounters>,
     swept: Instant,
     scratch: Vec<bans::Ban>,
-    /// The bans learned before the firewall gave its sink have been applied to it.
+    /// What was learned before the daemon gave its sink has been applied to it.
     caught_up: bool,
 }
 
-/// The bans a node takes from the firewall in one turn of the mesh thread.
+impl Replica {
+    fn start(holds: Holds, capacity: usize) -> (Self, BanFeed, Arc<OnceLock<Sink>>) {
+        let (queue, inbox) = std::sync::mpsc::sync_channel(INBOX);
+        let (sink, counters) = (Arc::new(OnceLock::new()), Arc::new(BanCounters::default()));
+        let replica = Self {
+            holds,
+            log: bans::Log::new(capacity),
+            inbox,
+            sink: Arc::clone(&sink),
+            counters: Arc::clone(&counters),
+            swept: Instant::now(),
+            scratch: Vec::new(),
+            caught_up: false,
+        };
+        (replica, BanFeed { queue, counters }, sink)
+    }
+
+    /// Merges one entry, from this node (`own`) or from a peer, and returns the number
+    /// the map now holds when the merge changed it.
+    fn merge(&mut self, key: &[u8], value: u64) -> Result<Option<u64>, ()> {
+        match self.holds {
+            Holds::Bans => self.log.merge(key, value, unix_now()),
+            Holds::Drains => match bans::admit_drain(value, unix_ms()) {
+                Some(value) => self.log.keep_larger(key, value),
+                None => Err(()),
+            },
+        }
+    }
+
+    /// What a returning peer is sent: every ban in effect, or every drain command.
+    fn everything(&self) -> Vec<bans::Ban> {
+        match self.holds {
+            Holds::Bans => self.log.walk(unix_now()),
+            Holds::Drains => self.log.all(),
+        }
+    }
+
+    /// Applies what was learned before the sink was given, once, then takes what the
+    /// daemon issued and owes its sends.
+    fn take_issued(&mut self, at: Instant) {
+        if !self.caught_up
+            && let Some(sink) = self.sink.get()
+        {
+            for (key, value) in self.everything() {
+                sink(&key, value);
+            }
+            self.caught_up = true;
+        }
+        let issued: Vec<bans::Ban> = self.inbox.try_iter().take(INBOX_TURN).collect();
+        for (key, value) in issued {
+            match self.merge(&key, value) {
+                Ok(Some(_)) => self.log.owe(&key, at),
+                Ok(None) => {}
+                Err(()) => BanCounters::add(&self.counters.dropped, 1),
+            }
+        }
+    }
+
+    /// Merges the entries of an authentic datagram and applies those that are news.
+    fn learn(&mut self, mut heard: Vec<bans::Ban>) -> Vec<bans::Ban> {
+        BanCounters::add(&self.counters.received, heard.len());
+        for (key, value) in heard.drain(..) {
+            match self.merge(&key, value) {
+                Ok(Some(value)) => {
+                    // Without a sink yet, the entry waits in the map (see `take_issued`).
+                    if self.caught_up
+                        && let Some(sink) = self.sink.get()
+                    {
+                        sink(&key, value);
+                    }
+                    BanCounters::add(&self.counters.applied, 1);
+                }
+                Ok(None) => {}
+                Err(()) => BanCounters::add(&self.counters.dropped, 1),
+            }
+        }
+        heard
+    }
+}
+
+/// The entries a node takes from the daemon in one turn of the mesh thread.
 const INBOX_TURN: usize = 256;
-/// The bans waiting between the firewall and the mesh thread.
+/// The entries waiting between the daemon and the mesh thread.
 const INBOX: usize = 1024;
 /// The datagrams of a walk sent to one peer in one period.
 const WALK_TURN: usize = 8;
 /// How often ended bans are forgotten.
 const SWEEP: Duration = Duration::from_secs(10);
+/// The drain commands a node remembers.
+const DRAINS: usize = 4096;
 
 fn unix_now() -> u64 {
+    unix_ms() / 1000
+}
+
+fn unix_ms() -> u64 {
     let elapsed = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
-    elapsed.map_or(0, |elapsed| elapsed.as_secs())
+    elapsed.map_or(0, |elapsed| elapsed.as_millis() as u64)
 }
 
 impl Monitor {
-    /// The first bytes of a ban datagram from this node.
-    fn ban_header(&mut self) -> [u8; bans::HEADER] {
+    /// The first bytes of a datagram of the given kind from this node.
+    fn header(&mut self, kind: u8) -> [u8; bans::HEADER] {
         self.sequence = self.sequence.wrapping_add(1);
         let mut header = [0; bans::HEADER];
-        header[..4].copy_from_slice(&[b'S', b'E', 1, bans::KIND]);
+        header[..4].copy_from_slice(&[b'S', b'E', 1, kind]);
         header[4..20].copy_from_slice(&self.boot);
         header[20..28].copy_from_slice(&self.sequence.to_be_bytes());
         header
     }
 
-    /// Takes the bans the firewall issued and sends those that are due to every peer.
-    fn replicate(&mut self, at: Instant) {
-        let Some(replica) = &mut self.replica else { return };
-        let now = unix_now();
-        // The mesh may hear bans before the firewall is ready to take them. They are
-        // remembered, and applied here once.
-        if !replica.caught_up
-            && let Some(sink) = replica.sink.get()
-        {
-            for (client, until) in replica.log.walk(now) {
-                sink(&client, until);
+    /// Sends `entries` to the peer at `to`, or to every peer, in as many datagrams as
+    /// they need but at most `limit`. Returns how many entries each receiver was sent.
+    fn send(
+        &mut self,
+        kind: u8,
+        entries: &mut Vec<bans::Ban>,
+        to: Option<SocketAddr>,
+        limit: usize,
+    ) -> usize {
+        let mut sent = 0;
+        for _ in 0..limit {
+            if entries.is_empty() {
+                break;
             }
-            replica.caught_up = true;
-        }
-        for (client, until) in replica.inbox.try_iter().take(INBOX_TURN) {
-            if replica.log.issue(&client, until, now, at).is_err() {
-                BanCounters::add(&replica.counters.dropped, 1);
-            }
-        }
-        let mut due = std::mem::take(&mut replica.scratch);
-        replica.log.due(at, &mut due);
-        while !due.is_empty() {
-            let header = self.ban_header();
-            let before = due.len();
-            let wire = bans::encode(&self.key, &header, &mut due);
-            if due.len() == before {
-                // A ban that fits no datagram cannot leave. It is dropped, not retried.
-                due.pop();
+            let header = self.header(kind);
+            let before = entries.len();
+            let wire = bans::encode(&self.key, &header, entries);
+            if entries.len() == before {
+                // An entry that fits no datagram cannot leave. It is dropped, not retried.
+                entries.pop();
                 continue;
             }
-            let counters = self.replica.as_ref().map(|replica| replica.counters.clone());
-            for peer in &self.peers {
-                if self.socket.send_to(&wire, peer.addr).is_ok()
-                    && let Some(counters) = &counters
-                {
-                    BanCounters::add(&counters.sent, before - due.len());
-                }
+            let receivers = self.peers.iter().map(|peer| peer.addr);
+            for address in receivers.filter(|address| to.is_none_or(|to| to == *address)) {
+                let _ = self.socket.send_to(&wire, address);
             }
+            sent += before - entries.len();
         }
-        if let Some(replica) = &mut self.replica {
-            replica.scratch = due;
+        sent
+    }
+
+    /// Takes what the daemon issued and sends what is due to every peer.
+    fn replicate(&mut self, at: Instant) {
+        for index in 0..self.replicas.len() {
+            let replica = &mut self.replicas[index];
+            replica.take_issued(at);
+            let mut due = std::mem::take(&mut replica.scratch);
+            replica.log.due(at, &mut due);
+            let (kind, counters) = (replica.holds.kind(), replica.counters.clone());
+            let sent = self.send(kind, &mut due, None, usize::MAX);
+            BanCounters::add(&counters.sent, sent * self.peers.len());
+            due.clear();
+            self.replicas[index].scratch = due;
         }
     }
 
     /// Once in a period: starts the walk of a peer that returned, continues the walks
     /// under way, and forgets the bans that have ended.
     fn walk(&mut self, at: Instant) {
-        let Some(replica) = &mut self.replica else { return };
-        let now = unix_now();
-        if at.duration_since(replica.swept) >= SWEEP {
-            replica.log.expire(now);
-            replica.swept = at;
-        }
-        replica.counters.known.store(replica.log.len() as u64, Ordering::Relaxed);
-        let counters = replica.counters.clone();
-        for index in 0..self.peers.len() {
-            if std::mem::take(&mut self.peers[index].returned)
-                && let Some(replica) = &self.replica
-            {
-                self.peers[index].walk = replica.log.walk(now);
+        for index in 0..self.replicas.len() {
+            let replica = &mut self.replicas[index];
+            if replica.holds == Holds::Bans && at.duration_since(replica.swept) >= SWEEP {
+                replica.log.expire(unix_now());
+                replica.swept = at;
             }
-            for _ in 0..WALK_TURN {
-                if self.peers[index].walk.is_empty() {
-                    break;
+            replica.counters.known.store(replica.log.len() as u64, Ordering::Relaxed);
+        }
+        for peer in 0..self.peers.len() {
+            let returned = std::mem::take(&mut self.peers[peer].returned);
+            for index in 0..self.replicas.len() {
+                if returned {
+                    self.peers[peer].walks[index] = self.replicas[index].everything();
                 }
-                let header = self.ban_header();
-                let peer = &mut self.peers[index];
-                let before = peer.walk.len();
-                let wire = bans::encode(&self.key, &header, &mut peer.walk);
-                if peer.walk.len() == before {
-                    peer.walk.pop();
-                    continue;
-                }
-                if self.socket.send_to(&wire, peer.addr).is_ok() {
-                    BanCounters::add(&counters.sent, before - peer.walk.len());
-                }
+                let mut walk = std::mem::take(&mut self.peers[peer].walks[index]);
+                let (kind, to) = (self.replicas[index].holds.kind(), self.peers[peer].addr);
+                let sent = self.send(kind, &mut walk, Some(to), WALK_TURN);
+                BanCounters::add(&self.replicas[index].counters.sent, sent);
+                self.peers[peer].walks[index] = walk;
             }
         }
     }
 
-    /// Merges the bans of a datagram from a peer and applies those that are news.
+    /// Reads a datagram of a replicated map from a peer.
     fn learn(&mut self, wire: &[u8]) {
-        let Some(replica) = &mut self.replica else { return };
+        let kind = wire.get(3).copied();
+        let Some(replica) = self.replicas.iter_mut().find(|r| Some(r.holds.kind()) == kind) else {
+            return;
+        };
         let mut heard = std::mem::take(&mut replica.scratch);
         if bans::decode(&self.key, wire, &mut heard) {
-            let now = unix_now();
-            BanCounters::add(&replica.counters.received, heard.len());
-            for (client, until) in heard.drain(..) {
-                match replica.log.merge(&client, until, now) {
-                    Ok(Some(until)) => {
-                        // Without a sink yet, the ban waits in the map (see `replicate`).
-                        if replica.caught_up
-                            && let Some(sink) = replica.sink.get()
-                        {
-                            sink(&client, until);
-                        }
-                        BanCounters::add(&replica.counters.applied, 1);
-                    }
-                    Ok(None) => {}
-                    Err(()) => BanCounters::add(&replica.counters.dropped, 1),
-                }
-            }
+            heard = replica.learn(heard);
         }
         heard.clear();
         replica.scratch = heard;
@@ -382,7 +492,7 @@ impl Monitor {
         if length < 44 || wire[..3] != [b'S', b'E', 1] {
             return;
         }
-        if wire[3] == bans::KIND {
+        if Holds::ALL.iter().any(|holds| holds.kind() == wire[3]) {
             self.learn(&wire[..length]);
             return;
         }
@@ -428,7 +538,8 @@ pub struct Mesh {
     state: Arc<AtomicU8>,
     stop: Arc<AtomicBool>,
     thread: Option<JoinHandle<()>>,
-    bans: Option<(BanFeed, Arc<OnceLock<BanSink>>)>,
+    bans: Option<(BanFeed, Arc<OnceLock<Sink>>)>,
+    drains: Option<(BanFeed, Arc<OnceLock<Sink>>)>,
 }
 
 impl Mesh {
@@ -438,22 +549,16 @@ impl Mesh {
         socket.set_read_timeout(Some(Duration::from_millis(50)))?;
         socket.set_write_timeout(Some(Duration::from_millis(10)))?;
         let key = blake3::derive_key("sibuna/edge-mesh/probe/v1", secret);
-        let (replica, bans) = if spec.replicate_bans {
-            let (queue, inbox) = std::sync::mpsc::sync_channel(INBOX);
-            let (sink, counters) = (Arc::new(OnceLock::new()), Arc::new(BanCounters::default()));
-            let replica = Replica {
-                log: bans::Log::new(bans::CAPACITY),
-                inbox,
-                sink: Arc::clone(&sink),
-                counters: Arc::clone(&counters),
-                swept: Instant::now(),
-                scratch: Vec::new(),
-                caught_up: false,
-            };
-            (Some(replica), Some((BanFeed { queue, counters }, sink)))
-        } else {
-            (None, None)
+        let mut replicas = Vec::new();
+        let mut share = |on: bool, holds: Holds, capacity: usize| {
+            on.then(|| {
+                let (replica, feed, sink) = Replica::start(holds, capacity);
+                replicas.push(replica);
+                (feed, sink)
+            })
         };
+        let bans = share(spec.replicate_bans, Holds::Bans, bans::CAPACITY);
+        let drains = share(spec.replicate_drains, Holds::Drains, DRAINS);
         let mut monitor = Monitor {
             socket,
             key,
@@ -461,7 +566,7 @@ impl Mesh {
             sequence: 0,
             peers: spec.peers.iter().copied().map(Peer::new).collect(),
             samples: Vec::with_capacity(8 * spec.peers.len()),
-            replica,
+            replicas,
         };
         let state = Arc::new(AtomicU8::new(0));
         let stop = Arc::new(AtomicBool::new(false));
@@ -480,7 +585,7 @@ impl Mesh {
                 monitor.receive();
             }
         })?;
-        Ok(Self { state, stop, thread: Some(thread), bans })
+        Ok(Self { state, stop, thread: Some(thread), bans, drains })
     }
 
     /// The hand-over of bans to the peers, and where bans from the peers are applied.
@@ -491,7 +596,21 @@ impl Mesh {
         Some(feed.clone())
     }
 
-    /// What replication did so far. `None` when `mesh.replicate_bans` is off.
+    /// The hand-over of the operator's drain commands to the peers, and where the
+    /// commands of the peers are applied. `None` when `mesh.replicate_drains` is off.
+    /// The first sink stays.
+    pub fn share_drains(&self, sink: DrainSink) -> Option<DrainFeed> {
+        let (feed, slot) = self.drains.as_ref()?;
+        let _ = slot.set(Box::new(move |key, value| {
+            let Ok(key) = std::str::from_utf8(key) else { return };
+            if let Some((pool, name)) = key.split_once('/') {
+                sink(pool, name, value & 1 == 1);
+            }
+        }));
+        Some(DrainFeed(feed.clone()))
+    }
+
+    /// What the replication of bans did so far. `None` when `mesh.replicate_bans` is off.
     pub fn ban_counters(&self) -> Option<Arc<BanCounters>> {
         self.bans.as_ref().map(|(feed, _)| Arc::clone(&feed.counters))
     }
@@ -559,6 +678,7 @@ mod tests {
             peers: vec![peer.local_addr().expect("peer")],
             key_file: String::new(),
             replicate_bans: true,
+            replicate_drains: true,
         };
         let secret = [7; 32];
         let mesh = Mesh::start(&spec, &secret, [9; 16]).expect("start");
@@ -602,6 +722,7 @@ mod tests {
             peers,
             key_file: String::new(),
             replicate_bans: true,
+            replicate_drains: true,
         };
         let mesh = Mesh::start(&spec, &[7; 32], [boot; 16]).expect("start");
         let heard = Heard::default();
@@ -666,6 +787,56 @@ mod tests {
         drop(second);
         let (_again, _, heard) = node(&roster, 1, 4);
         assert_eq!(wait_for(&heard, 1), [(b"203.0.113.7".to_vec(), until)]);
+    }
+
+    type Drains = Arc<std::sync::Mutex<Vec<(String, bool)>>>;
+
+    fn drains_of(mesh: &Mesh) -> (DrainFeed, Drains) {
+        let heard = Drains::default();
+        let record = Arc::clone(&heard);
+        let feed = mesh
+            .share_drains(Box::new(move |pool, name, drained| {
+                record.lock().expect("lock").push((format!("{pool}/{name}"), drained));
+            }))
+            .expect("replication is on");
+        (feed, heard)
+    }
+
+    fn wait_for_drains(heard: &Drains, count: usize) -> Vec<(String, bool)> {
+        let deadline = Instant::now() + Duration::from_secs(5);
+        loop {
+            let seen = heard.lock().expect("lock").clone();
+            if seen.len() >= count || Instant::now() >= deadline {
+                return seen;
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    }
+
+    #[test]
+    fn a_drain_and_its_end_reach_the_peers_and_a_node_that_restarts_learns_the_last() {
+        let roster = roster();
+        let (first, _, _) = node(&roster, 0, 1);
+        let (second, _, _) = node(&roster, 1, 2);
+        let (feed, own) = drains_of(&first);
+        let (_, heard) = drains_of(&second);
+        feed.publish("app", "a", true);
+        assert_eq!(wait_for_drains(&heard, 1), [("app/a".to_owned(), true)]);
+        std::thread::sleep(Duration::from_millis(5));
+        feed.publish("app", "a", false);
+        feed.publish("app", "b", true);
+        let seen = wait_for_drains(&heard, 3);
+        assert_eq!(seen.len(), 3, "{seen:?}");
+        assert!(seen.contains(&("app/a".to_owned(), false)));
+        assert!(seen.contains(&("app/b".to_owned(), true)));
+        assert!(own.lock().expect("lock").is_empty());
+        // A node that restarts learns the last command for each server, not the history.
+        drop(second);
+        let (again, _, _) = node(&roster, 1, 5);
+        let (_, late) = drains_of(&again);
+        let mut seen = wait_for_drains(&late, 2);
+        seen.sort();
+        assert_eq!(seen, [("app/a".to_owned(), false), ("app/b".to_owned(), true)]);
     }
 
     #[test]

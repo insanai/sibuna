@@ -1342,9 +1342,12 @@ version = "1.0.0-beta.3"
 dependencies = [
  "bytes",
  "futures-util",
+ "h3",
+ "h3-quinn",
  "http-body-util",
  "hyper",
  "hyper-util",
+ "quinn",
  "rustls",
  "sibuna-acme",
  "sibuna-challenge",
