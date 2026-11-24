@@ -332,6 +332,15 @@ impl Http {
         })
     }
 
+    /// Tells automatic HTTPS that the listeners serve. Orders start now, so a daemon
+    /// that fails to start asks the authority for nothing (SID 0021).
+    #[cfg(feature = "https")]
+    pub fn listening(&self) {
+        if let Some(automatic) = &self.automatic {
+            automatic.allow_orders();
+        }
+    }
+
     /// The certificate thread of automatic HTTPS, when the daemon started one.
     #[cfg(feature = "https")]
     pub fn automatic(&self) -> Option<&Arc<sibuna_ingress::Automatic>> {

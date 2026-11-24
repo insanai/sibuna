@@ -222,6 +222,15 @@ impl Serving {
         }
     }
 
+    /// Says that the listeners serve. Automatic HTTPS places its orders from now on.
+    fn announce(&self) {
+        eprintln!("Sibuna edge listeners ready");
+        #[cfg(feature = "https")]
+        if let Some(http) = &self.http {
+            http.listening();
+        }
+    }
+
     /// The answer to `show stats`: the counters of SID 0020 and of automatic HTTPS.
     fn stats(&self) -> String {
         #[cfg_attr(not(feature = "https"), allow(unused_mut))]
@@ -339,7 +348,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         observe: observed.shared(),
     };
     serving.watch(watch)?;
-    eprintln!("Sibuna edge listeners ready");
+    serving.announce();
     while !shutdown.is_requested() {
         observed.reopen_log_when(&rotate);
         serving.take_pending();

@@ -178,7 +178,8 @@ impl Driver {
                 Some(entry) => entry,
                 None => self.adopt(ready, name),
             };
-            if entry.next_attempt <= now() {
+            let ordering = self.shared.ordering.load(Ordering::Acquire);
+            if ordering && entry.next_attempt <= now() {
                 self.attempt(ready, name, &mut entry);
                 std::thread::sleep(PACE);
             }

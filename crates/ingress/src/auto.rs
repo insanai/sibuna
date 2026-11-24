@@ -147,6 +147,8 @@ pub(crate) struct Shared {
     woken: Mutex<bool>,
     wake: Condvar,
     stopping: AtomicBool,
+    /// Whether orders may start. Until then the thread only loads stored certificates.
+    ordering: AtomicBool,
 }
 
 impl Shared {
@@ -163,6 +165,7 @@ impl Shared {
             woken: Mutex::new(false),
             wake: Condvar::new(),
             stopping: AtomicBool::new(false),
+            ordering: AtomicBool::new(false),
         }
     }
 
@@ -250,8 +253,8 @@ pub struct Automatic {
 }
 
 impl Automatic {
-    /// Starts the thread `edge-acme`. It loads the stored certificates, then orders and
-    /// renews in the background. This call opens no socket and no file, and fails only
+    /// Starts the thread `edge-acme`. It loads the stored certificates. After
+    /// [`Automatic::allow_orders`] it orders and renews in the background. This call opens no socket and no file, and fails only
     /// when the thread cannot be spawned.
     pub fn start(config: AutomaticHttps, report: Notify) -> io::Result<Self> {
         let shared = Arc::new(Shared::new(config));
@@ -264,6 +267,14 @@ impl Automatic {
 
     pub(crate) fn shared(&self) -> &Arc<Shared> {
         &self.shared
+    }
+
+    /// Lets the thread place orders. The daemon calls this once its listeners serve. A
+    /// daemon that fails to start has then asked the authority for nothing, so a start
+    /// that is tried again and again does not spend the limits of the authority.
+    pub fn allow_orders(&self) {
+        self.shared.ordering.store(true, Ordering::Release);
+        self.shared.notify();
     }
 
     /// The `global.acme` options this instance runs with.
