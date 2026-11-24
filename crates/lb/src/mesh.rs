@@ -84,6 +84,8 @@ struct Peer {
     sent: Option<Instant>,
     seen: Option<Instant>,
     responded: Option<Instant>,
+    /// The boot nonce and highest sequence of the probes this peer sent, and when.
+    probes: Option<([u8; 16], u64, Instant)>,
     samples: [Duration; 8],
     count: usize,
     cursor: usize,
@@ -97,9 +99,41 @@ impl Peer {
             sent: None,
             seen: None,
             responded: None,
+            probes: None,
             samples: [Duration::ZERO; 8],
             count: 0,
             cursor: 0,
+        }
+    }
+
+    /// Decides whether an authenticated probe deserves a response.
+    ///
+    /// A peer numbers its probes upwards under one boot nonce, so a recorded probe is
+    /// answered once and its replay is ignored. A probe under another nonce is a restart
+    /// or a replay from an earlier run. We answer those at a limited rate of their own,
+    /// so they cannot starve the live sequence, and adopt the nonce once the old one has
+    /// been silent for three periods.
+    fn answers(&mut self, boot: [u8; 16], seq: u64, now: Instant) -> bool {
+        match self.probes {
+            Some((current, highest, _)) if current == boot => {
+                if seq <= highest {
+                    return false;
+                }
+                self.probes = Some((boot, seq, now));
+                true
+            }
+            Some((_, _, seen)) if now.duration_since(seen) < 3 * PERIOD => {
+                let allowed =
+                    self.responded.is_none_or(|then| now.duration_since(then) >= PERIOD / 2);
+                if allowed {
+                    self.responded = Some(now);
+                }
+                allowed
+            }
+            _ => {
+                self.probes = Some((boot, seq, now));
+                true
+            }
         }
     }
 
@@ -167,14 +201,15 @@ impl Monitor {
         }
         let now = Instant::now();
         match wire[3] {
-            1 if peer.responded.is_none_or(|then| now.duration_since(then) >= PERIOD / 2) => {
+            1 => {
                 let (Some(nonce), Some(seq)) = (wire[4..].first_chunk(), wire[20..].first_chunk())
                 else {
                     return;
                 };
-                let response = frame(&self.key, 2, nonce, u64::from_be_bytes(*seq));
-                if self.socket.send_to(&response, source).is_ok() {
-                    peer.responded = Some(now);
+                let seq = u64::from_be_bytes(*seq);
+                if peer.answers(*nonce, seq, now) {
+                    let response = frame(&self.key, 2, nonce, seq);
+                    let _ = self.socket.send_to(&response, source);
                 }
             }
             2 if wire[4..20] == self.boot && wire[20..28] == peer.challenge.to_be_bytes() => {
@@ -261,6 +296,25 @@ mod tests {
         }
         assert_eq!(Regime::Regional.step(None), Regime::Standalone);
         assert_eq!(Regime::Regional.step(Some(Duration::from_millis(8))), Regime::WideArea);
+    }
+
+    #[test]
+    fn replayed_probes_are_ignored_and_cannot_starve_the_live_sequence() {
+        let mut peer = Peer::new("127.0.0.1:9".parse().expect("address"));
+        let start = Instant::now();
+        let (live, old) = ([1; 16], [2; 16]);
+        assert!(peer.answers(live, 5, start));
+        assert!(!peer.answers(live, 5, start));
+        assert!(!peer.answers(live, 4, start));
+        // Replays from an earlier run share one limited budget.
+        assert!(peer.answers(old, 90, start));
+        assert!(!peer.answers(old, 91, start));
+        assert!(peer.answers(live, 6, start));
+        // A restarted peer is adopted once the old nonce has been silent.
+        let later = start + 3 * PERIOD;
+        assert!(peer.answers(old, 92, later));
+        assert!(!peer.answers(old, 92, later));
+        assert!(peer.answers(old, 93, later));
     }
 
     #[test]
