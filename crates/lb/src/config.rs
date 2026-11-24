@@ -36,6 +36,8 @@ pub(crate) struct Frontend {
     pub firewall: bool,
     /// The WebSocket rule of requests without a matching route.
     pub websocket: Option<std::sync::Arc<crate::WebSocketRule>>,
+    /// The policy of requests without a matching route (SID 0019).
+    pub policy: std::sync::Arc<crate::RoutePolicy>,
     pub rate: Option<sibuna_store::limiter::Limits>,
     pub pool: std::sync::Arc<str>,
     pub timeout: Duration,
@@ -247,7 +249,8 @@ impl Config {
             Some(_) => return Err(invalid(format!("{path}: invalid TCP inspection mode"))),
             None => None,
         };
-        let (tls, firewall, websocket, http_rules) = http_frontend(&mut r, proto, &self.pools)?;
+        let (tls, firewall, websocket, http_rules, policy) =
+            http_frontend(&mut r, proto, &self.pools)?;
         let http_rules: std::sync::Arc<[_]> = http_rules.into();
         let binds = field(r.take_array("binds"))?.ok_or_else(|| invalid(r.missing("binds")))?;
         if binds.is_empty() || self.listeners.len() + binds.len() > 128 {
@@ -263,6 +266,7 @@ impl Config {
                 http_rules: http_rules.clone(),
                 firewall,
                 websocket: websocket.clone(),
+                policy: policy.clone(),
                 pool: pool.as_str().into(),
                 timeout,
                 inspect: inspect.clone(),
@@ -314,8 +318,13 @@ fn default_workers() -> usize {
 }
 
 type Tunnels = Option<std::sync::Arc<crate::WebSocketRule>>;
-type HttpFrontend =
-    (Option<std::sync::Arc<crate::TlsOptions>>, bool, Tunnels, Vec<crate::http::Rule>);
+type HttpFrontend = (
+    Option<std::sync::Arc<crate::TlsOptions>>,
+    bool,
+    Tunnels,
+    Vec<crate::http::Rule>,
+    std::sync::Arc<crate::RoutePolicy>,
+);
 
 /// Reads the options that only an HTTP frontend has: TLS, the firewall switch and routes.
 fn http_frontend(
@@ -324,7 +333,7 @@ fn http_frontend(
     pools: &BTreeMap<String, Backend>,
 ) -> Result<HttpFrontend> {
     if proto != Protocol::Http {
-        return Ok((None, true, None, Vec::new()));
+        return Ok((None, true, None, Vec::new(), std::sync::Arc::default()));
     }
     let tls = field(r.take_object("tls"))?
         .map(crate::TlsOptions::parse)
@@ -333,8 +342,10 @@ fn http_frontend(
     let firewall = field(r.take_bool("firewall"))?.unwrap_or(true);
     let websocket =
         field(r.take_object("websocket"))?.map(crate::WebSocketRule::parse).transpose()?;
-    let rules = crate::http::rules(r, pools, firewall, websocket.as_ref())?;
-    Ok((tls, firewall, websocket, rules))
+    let policy = crate::RoutePolicy::parse(r, &std::sync::Arc::default(), tls.is_some())?;
+    let base = (&policy, tls.is_some());
+    let rules = crate::http::rules(r, pools, firewall, websocket.as_ref(), base)?;
+    Ok((tls, firewall, websocket, rules, policy))
 }
 
 fn overlaps(a: SocketAddr, b: SocketAddr) -> bool {

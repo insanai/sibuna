@@ -20,10 +20,12 @@ mod mesh;
 pub use mesh::{Mesh, MeshConfig, Regime};
 mod pool;
 mod proxy;
+mod route;
 mod rules;
 mod sticky;
 mod tcp;
 mod traffic;
+pub use route::{FieldEdit, Redirect, RoutePolicy};
 pub use traffic::{Passive, PoolPolicy, Sticky};
 
 use std::collections::{BTreeMap, HashMap, VecDeque};

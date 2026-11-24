@@ -293,6 +293,7 @@ pub(crate) struct Rule {
     pool: Arc<str>,
     firewall: bool,
     websocket: Option<Arc<crate::WebSocketRule>>,
+    policy: Arc<crate::RoutePolicy>,
 }
 
 impl Rule {
@@ -303,7 +304,7 @@ impl Rule {
 }
 
 /// The host of an authority without its port and trailing dot.
-fn bare_host(host: &[u8]) -> &[u8] {
+pub(crate) fn bare_host(host: &[u8]) -> &[u8] {
     // A bracketed IPv6 literal keeps its colons.
     let end = if host.first() == Some(&b'[') {
         host.iter().position(|b| *b == b']').map_or(host.len(), |i| i + 1)
@@ -319,6 +320,7 @@ pub(crate) fn rules(
     pools: &BTreeMap<String, Backend>,
     firewall: bool,
     websocket: Option<&Arc<crate::WebSocketRule>>,
+    (policy, tls): (&Arc<crate::RoutePolicy>, bool),
 ) -> io::Result<Vec<Rule>> {
     let mut rules = Vec::new();
     let entries = field(r.take_array("routes"))?.unwrap_or_default();
@@ -349,8 +351,9 @@ pub(crate) fn rules(
             Some(rule) => Some(crate::WebSocketRule::parse(rule)?),
             None => websocket.cloned(),
         };
+        let policy = crate::RoutePolicy::parse(&mut row, policy, tls)?;
         field(row.finish())?;
-        rules.push(Rule { host, path, pool: pool.into(), firewall, websocket });
+        rules.push(Rule { host, path, pool: pool.into(), firewall, websocket, policy });
     }
     Ok(rules)
 }
@@ -360,11 +363,24 @@ struct Frontend {
     rules: Arc<[Rule]>,
     firewall: bool,
     websocket: Option<Arc<crate::WebSocketRule>>,
+    policy: Arc<crate::RoutePolicy>,
 }
 
 impl Frontend {
     fn bypasses(&self) -> bool {
         !self.firewall || self.rules.iter().any(|rule| !rule.firewall)
+    }
+
+    /// Whether the frontend or one of its routes has a policy of SID 0019.
+    fn has_policy(&self) -> bool {
+        !self.policy.is_default() || self.rules.iter().any(|rule| !rule.policy.is_default())
+    }
+
+    /// The policy of a request: that of the first matching route, or that of the
+    /// frontend.
+    fn policy(&self, host: &[u8], path: &[u8]) -> &Arc<crate::RoutePolicy> {
+        let host = bare_host(host);
+        self.rules.iter().find(|r| r.matches(host, path)).map_or(&self.policy, |r| &r.policy)
     }
 }
 
@@ -379,6 +395,8 @@ struct Table {
     bypasses: bool,
     /// The key of the sticky cookies (SID 0019).
     sticky: crate::sticky::Key,
+    /// Some frontend or route has a policy of SID 0019, so requests need the lookup.
+    policied: bool,
 }
 
 impl Table {
@@ -413,11 +431,13 @@ impl HttpRoutes {
                     rules: f.http_rules.clone(),
                     firewall: f.firewall,
                     websocket: f.websocket.clone(),
+                    policy: f.policy.clone(),
                 };
                 (*addr, front)
             })
             .collect();
         state.bypasses = state.fronts.values().any(Frontend::bypasses);
+        state.policied = state.fronts.values().any(Frontend::has_policy);
         state.pools = config
             .pools
             .extract_if(.., |_, p| p.protocol == Protocol::Http)
@@ -449,6 +469,22 @@ impl HttpRoutes {
         let Some(front) = table.front(vip) else { return true };
         let host = bare_host(host);
         front.rules.iter().find(|r| r.matches(host, path)).map_or(front.firewall, |r| r.firewall)
+    }
+
+    /// The policy of this request (SID 0019): that of the first matching route, or that
+    /// of the frontend. `None` when no frontend of the table has a policy, which is the
+    /// usual case and costs one lock.
+    pub fn policy(
+        &self,
+        vip: SocketAddr,
+        host: &[u8],
+        path: &[u8],
+    ) -> Option<Arc<crate::RoutePolicy>> {
+        let table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        if !table.policied {
+            return None;
+        }
+        Some(Arc::clone(table.front(vip)?.policy(host, path)))
     }
 
     /// The WebSocket rule of this request: that of the first matching route, or that of

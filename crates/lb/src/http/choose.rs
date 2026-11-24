@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 use super::{HttpRoutes, Table, bare_host};
 use crate::pool::{Pool, Ticket, Tried, Wish};
 use crate::sticky::{self, Key};
-use crate::{PoolPolicy, Regime, Sticky};
+use crate::{PoolPolicy, Regime, RoutePolicy, Sticky};
 
 /// One request, as far as routing reads it. Fill it with struct-update syntax:
 /// `Query { vip, peer, host, path, ..Query::default() }`.
@@ -55,12 +55,9 @@ impl HttpRoutes {
         }
         let front = table.front(query.vip)?;
         let host = bare_host(query.host);
-        let pool = front
-            .rules
-            .iter()
-            .find(|r| r.matches(host, query.path))
-            .map_or(&front.pool, |r| &r.pool)
-            .clone();
+        let rule = front.rules.iter().find(|r| r.matches(host, query.path));
+        let pool = rule.map_or(&front.pool, |r| &r.pool).clone();
+        let route = rule.map_or(&front.policy, |r| &r.policy).clone();
         let regime = table.regime.unwrap_or(Regime::Standalone);
         let Table { pools, sticky: key, .. } = &mut *table;
         let servers = pools.get_mut(pool.as_ref())?;
@@ -79,7 +76,7 @@ impl HttpRoutes {
             tried: Tried::default(),
         };
         let cookie = cookie_line(servers, key, &again, &ticket, presented);
-        Some(HttpTarget { ticket, policy, again, cookie })
+        Some(HttpTarget { ticket, policy, again, cookie, route })
     }
 
     /// Reserves a place on another server of the pool of `failed`, for the same request
@@ -108,7 +105,7 @@ impl HttpRoutes {
         let again = Again { pool: Arc::clone(&again.pool), tried, ..*again };
         // The client moves with its request: the cookie names the new server.
         let cookie = cookie_line(servers, key, &again, &ticket, None);
-        Some(HttpTarget { ticket, policy, again, cookie })
+        Some(HttpTarget { ticket, policy, again, cookie, route: Arc::clone(&failed.route) })
     }
 }
 
@@ -160,6 +157,8 @@ pub struct HttpTarget {
     again: Again,
     /// A `Set-Cookie` line for the response, or nothing.
     cookie: Box<[u8]>,
+    /// The policy of the frontend or route that the request matched.
+    route: Arc<RoutePolicy>,
 }
 
 impl HttpTarget {
@@ -188,6 +187,19 @@ impl HttpTarget {
     /// as one when the pool counts server errors.
     pub fn answered(&self, status: u16) {
         self.ticket.answered(self.policy.passive.as_ref(), status, Instant::now());
+    }
+
+    /// The policy of the frontend or route that the request matched (SID 0019).
+    pub fn route(&self) -> &RoutePolicy {
+        &self.route
+    }
+
+    /// The field lines that the response to the client must carry besides those of the
+    /// server: the lines the route sets, HSTS on a TLS frontend, and the sticky cookie.
+    /// Each block is empty or a run of complete lines.
+    pub fn response_lines(&self) -> [&[u8]; 3] {
+        let hsts: &[u8] = if self.again.secure { &self.route.hsts } else { b"" };
+        [&self.route.response_headers.append, hsts, &self.cookie]
     }
 
     /// A complete `Set-Cookie` field line that the response to the client must carry,
