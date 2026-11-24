@@ -298,32 +298,41 @@ fn rate_limited_clients_cannot_allocate_an_extra_udp_mapping() {
     assert!(matches!(error.kind(), std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut));
 }
 
+/// Accepts connections until one carries `ok`. Probes carry no payload.
+fn expect_payload(origin: &TcpListener) -> bool {
+    for _ in 0..4 {
+        let mut body = [0; 2];
+        if accept(origin).read_exact(&mut body).is_ok() {
+            assert_eq!(&body, b"ok");
+            return true;
+        }
+    }
+    false
+}
+
 #[test]
-fn tcp_health_requires_rise_before_the_origin_receives_traffic() {
-    let endpoint = tcp();
-    let addr = endpoint.local_addr().unwrap();
+fn tcp_health_serves_at_once_and_restores_an_origin_after_rise() {
+    let origin = tcp();
+    let addr = origin.local_addr().unwrap();
     let vip = tcp().local_addr().unwrap();
-    let health = r#""health_check":{"kind":"tcp","interval":"100ms","rise":2},"servers""#;
-    let doc = json("tcp", vip, &[addr], 2).replace("\"servers\"", health);
-    drop(endpoint);
+    let health = r#""health_check":{"kind":"tcp","interval":"100ms","rise":2,"fall":2},"servers""#;
+    let doc = json("tcp", vip, &[addr], 4).replace("\"servers\"", health);
     let _worker = Worker::start(Config::parse(doc.as_bytes()).unwrap());
-    let mut early = client(vip);
-    assert_eq!(early.read(&mut [0]).unwrap(), 0);
+    // A checked server starts in service. It does not wait for its first probes.
+    let mut first = client(vip);
+    first.write_all(b"ok").unwrap();
+    assert!(expect_payload(&origin));
+    drop((first, origin));
+    // Two failed probes take the server out, so a client is refused without a connect.
+    thread::sleep(Duration::from_millis(600));
+    assert_eq!(client(vip).read(&mut [0]).unwrap(), 0);
     let origin = TcpListener::bind(addr).unwrap();
-    drop(accept(&origin));
-    drop(accept(&origin));
-    // The third probe starts after the second success has been published.
-    drop(accept(&origin));
-    let mut live = client(vip);
-    live.write_all(b"ok").unwrap();
-    // Probes can race with the live connect. They carry no payload.
     let deadline = std::time::Instant::now() + WAIT;
     loop {
-        assert!(std::time::Instant::now() < deadline);
-        let mut connection = accept(&origin);
-        let mut body = [0; 2];
-        if connection.read_exact(&mut body).is_ok() {
-            assert_eq!(&body, b"ok");
+        assert!(std::time::Instant::now() < deadline, "the origin never returned to service");
+        let mut live = client(vip);
+        let _ = live.write_all(b"ok");
+        if expect_payload(&origin) {
             break;
         }
     }
