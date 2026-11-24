@@ -267,7 +267,7 @@ The third rule exists for a proxy on the same host. Its requests arrive from the
 
 The solver assets, the challenge routes and the honeypot stay public, because clients need them.
 
-The separate listener is one thread. It serves one request per connection, reads at most 4,096 bytes of head within two seconds, and answers ``GET`` and ``HEAD`` for ``/health``, ``/ready`` and ``/metrics``, with or without the ``/__sibuna`` prefix. Another method is answered 501 and another path 404. It also runs without any HTTP frontend, where it is the only way to read the counters.
+The separate listener is one thread, in the module ``probe``. It serves one request per connection, reads at most 4,096 bytes of head within two seconds, and answers ``GET`` and ``HEAD`` for ``/health``, ``/ready`` and ``/metrics``, with or without the ``/__sibuna`` prefix. Another method is answered 501 and another path 404. It also runs without any HTTP frontend. The admin socket of SID 0018 prints the same series of the edge with ``show stats``.
 
 Trusted proxies
 ~~~~~~~~~~~~~~~
@@ -386,8 +386,8 @@ Implemented on the branch ``sid-0020-observability``. Every criterion has a test
      - ``edge_observe.rs``: ``each_request_is_one_line_with_its_server_status_and_times``
    * - A failed server is a 502 line without ``ttfb_ms`` and one failure of that server.
      - ``edge_observe.rs``: ``a_failed_server_is_logged_as_502_without_a_first_byte_and_counted``
-   * - The in-process path reports each forwarded exchange once, with status, body bytes, first byte and protocol.
-     - ``crates/ingress/tests/inline.rs``
+   * - The in-process path reports each forwarded exchange once, with status, body bytes, first byte and protocol, on a pooled HTTP/1.1 connection and on a shared HTTP/2 session.
+     - ``crates/ingress/tests/inline.rs``, ``crates/ingress/tests/grpc.rs``, ``cmd/sibuna/tests/edge_observe_h2.rs``
    * - A full queue drops and counts. Written plus dropped is offered. The request path does not wait.
      - ``access::sink::tests::every_offered_entry_is_written_or_counted_as_dropped``
    * - A line is ASCII JSON, and a request cannot forge a second line.
@@ -406,10 +406,12 @@ Implemented on the branch ``sid-0020-observability``. Every criterion has a test
      - ``edge_observe.rs``: ``a_proxy_frontend_takes_the_client_from_the_header_and_refuses_the_rest``, ``crates/lb/src/proxy_header.rs``, ``edge::proxy_stage::tests``
    * - A descriptor limit below the need prints the warning with its hint, and the process still starts.
      - ``edge_observe.rs``: ``a_descriptor_limit_below_the_need_is_reported_with_a_hint``, ``edge::fdlimit::tests``
+   * - ``sibuna ctl SOCKET show stats`` prints the series of the edge.
+     - ``edge_observe.rs``: ``the_admin_socket_prints_the_series_of_the_edge``
    * - A bad ``observability`` object is refused by ``sibuna check``.
      - ``edge_observe.rs``: ``a_check_of_the_file_reports_a_bad_observability_object``
 
-The access log on the in-process path is tested at the interface of the ingress crate and not through the binary. See the first known gap.
+``cmd/sibuna/tests/edge_observe_h2.rs`` drives HTTP/2 over TLS through the binary and reads the log: one request to an HTTP/1.1 pool, and six gRPC calls on the shared session of an HTTP/2 pool. ``crates/ingress/tests/grpc.rs`` and ``tests/inline.rs`` check the report on both send paths, including an exchange that trailers end.
 
 Formal model
 ~~~~~~~~~~~~
@@ -438,7 +440,10 @@ The parser of the PROXY header is a bounded scan without state. Its unit tests c
 Known gaps
 ~~~~~~~~~~
 
-#. No test drives HTTP/2 or HTTP/3 through the binary and reads the log file. The report is tested in the ingress crate, and the entry in the binary, but not both together.
+#. No test drives HTTP/3 through the binary and reads the log file. HTTP/2 is tested through the binary on both send paths, and HTTP/3 at the interface of the ingress crate.
+#. No test sends a PROXY header to a TLS frontend. The stage, the header and the place under the client bound are each tested, but not that combination.
+#. A server that ``sibuna ctl`` adds at run time (SID 0018) gets counters and its name in the log, but no test covers it. A server that a command removed keeps its series until the next reload.
+#. A request that is decided just before a reload and routed by the retired revision (SID 0018) is counted under the server of the same pool and address in the new revision, or under none.
 #. ``bytes_in`` is an estimate: the parsed head plus the declared body. For a chunked body on the thread path it counts the buffered part only. ``bytes_out`` on the in-process path counts body bytes and not the head.
 #. A request that the protocol runtime refuses before the decision, such as an HTTP/2 request that does not translate, is not logged. A connection that is refused admission (503) is not logged either.
 #. On the thread path the writer cannot tell a server's own 502 or 504 from ours. Such a response has no ``ttfb_ms`` and counts as a failure of the server.
@@ -468,6 +473,7 @@ Review history
 
 - 2026-11-24. Initial draft, from the findings of a read-only production audit.
 - 2026-11-24. Design review before the implementation. The look at a PROXY header grew from 232 to 536 bytes, because a version 2 header carries extensions. ``Completion`` lost its duration, which the binary measures from the dispatch. A trusted proxy became exempt from the per-client connection bound. The internal routes gained the rule on forwarding fields, for a proxy on the same host.
+- 2026-11-24. Merge with SID 0018 and the later sections of SID 0017. The separate listener is now the module ``probe``, because ``admin`` names the admin socket. The report covers the direct sends to HTTP/2 and HTTP/3 servers, and trailers end an exchange. A TLS connection takes its place under the client bound once, by the address of the PROXY header when it has one, and a trusted proxy is exempt. The admin socket gained ``show stats``. A test through the binary found that a server behind an adapter had no name in the log, because a reservation names the adapter; the lookup now uses that address.
 - 2026-11-24. Implementation review. The separate listener closed over unread request bytes, and the reset could destroy its response; it now reads what arrived before it closes. It answers 501 to other methods, because the response writer has no 405. The warning of the descriptor limit is printed before the ready line. The acceptance table and the known gaps were written from the code and the tests.
 
 References
