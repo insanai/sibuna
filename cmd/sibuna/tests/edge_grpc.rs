@@ -35,13 +35,14 @@ impl Drop for Daemon {
 }
 
 /// Starts an edge with a TLS frontend in front of an HTTP/2 pool. `http` holds the
-/// members of the `http` object and `routes` the routes of the frontend.
-fn start(origin: SocketAddr, http: &str, routes: &str) -> Daemon {
+/// members of the `http` object, `routes` the routes of the frontend and `pool` further
+/// members of the backend.
+fn start(origin: SocketAddr, http: &str, routes: &str, pool: &str) -> Daemon {
     // A port that was free a moment ago may be taken by a test that runs beside this
     // one. The listener is then chosen again.
     let mut failure = String::new();
     for _ in 0..5 {
-        match try_start(origin, http, routes) {
+        match try_start(origin, http, routes, pool) {
             Ok(daemon) => return daemon,
             Err(line) => failure = line,
         }
@@ -49,7 +50,7 @@ fn start(origin: SocketAddr, http: &str, routes: &str) -> Daemon {
     panic!("the edge did not start: {failure}");
 }
 
-fn try_start(origin: SocketAddr, http: &str, routes: &str) -> Result<Daemon, String> {
+fn try_start(origin: SocketAddr, http: &str, routes: &str, pool: &str) -> Result<Daemon, String> {
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
     let name = format!("sibuna-grpc-{}-{}.json", std::process::id(), vip.port());
     let path = std::env::temp_dir().join(name);
@@ -59,7 +60,7 @@ fn try_start(origin: SocketAddr, http: &str, routes: &str) -> Result<Daemon, Str
         "frontends":{{"web":{{"proto":"http","binds":["{vip}"],
           "tls":{{"cert_file":"{cert}","key_file":"{key}"}},{routes}
           "default_backend":"grpc"}}}},
-        "backends":{{"grpc":{{"mode":"http","http_version":"2",
+        "backends":{{"grpc":{{"mode":"http","http_version":"2",{pool}
           "servers":[{{"name":"g1","addr":"{origin}"}}]}}}}}}"#
     );
     fs::write(&path, source).unwrap();
@@ -86,7 +87,7 @@ fn run(http: &str, routes: &str) {
         .unwrap();
     let connections = Arc::new(AtomicUsize::new(0));
     let origin = server(&runtime, connections.clone());
-    let daemon = start(origin, http, routes);
+    let daemon = start(origin, http, routes, "");
     runtime.block_on(async {
         tokio::time::timeout(Duration::from_secs(20), calls(daemon.vip)).await.unwrap();
     });
@@ -128,7 +129,7 @@ fn the_client_bound_counts_each_tls_connection_once() {
         .build()
         .unwrap();
     let origin = server(&runtime, Arc::new(AtomicUsize::new(0)));
-    let daemon = start(origin, r#""surface":"off","max_connections_per_ip":2"#, "");
+    let daemon = start(origin, r#""surface":"off","max_connections_per_ip":2"#, "", "");
     runtime.block_on(async {
         let first = handshakes(daemon.vip).await;
         let second = handshakes(daemon.vip).await;
@@ -149,5 +150,26 @@ fn the_client_bound_counts_each_tls_connection_once() {
         drop(first);
         tokio::time::sleep(Duration::from_millis(200)).await;
         tokio::time::timeout(Duration::from_secs(20), calls(daemon.vip)).await.unwrap();
+    });
+}
+
+#[test]
+fn response_timeout_ends_a_silent_stream_and_spares_a_slow_conversation() {
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(2)
+        .enable_all()
+        .build()
+        .unwrap();
+    let origin = server(&runtime, Arc::new(AtomicUsize::new(0)));
+    let daemon = start(origin, r#""surface":"off""#, "", r#""response_timeout":"1s","#);
+    runtime.block_on(async {
+        let run = async {
+            // A message every 400 ms for 2.4 s: longer than the bound, never silent for it.
+            support::slow_conversation(daemon.vip, 6, Duration::from_millis(400)).await;
+            let silent = support::silence(daemon.vip).await;
+            assert!(silent >= Duration::from_millis(900), "ended after {silent:?}");
+            assert!(silent < Duration::from_secs(5), "ended after {silent:?}");
+        };
+        tokio::time::timeout(Duration::from_secs(20), run).await.unwrap();
     });
 }

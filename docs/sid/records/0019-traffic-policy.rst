@@ -454,7 +454,7 @@ Known gaps
 #. A request that is refused with 413 closes its connection without reading the body. A client that is still writing may see a reset before it reads the answer.
 #. A 413 from a worker during a streamed body counts in ``upstream_errors``.
 #. No test of the binary runs over TLS. ``Secure``, HSTS and the in-process edits are tested in the lb and ingress crates only.
-#. Source stickiness on TCP and UDP pools follows from the shared reservation and has no test of its own. The bounds of a direct send to an HTTP/2 or HTTP/3 server have no test of their own either: the gRPC test moves its first call from a dead server, and otherwise runs with the default bounds.
+#. Source stickiness on TCP and UDP pools follows from the shared reservation and has no test of its own. On a direct send to an HTTP/2 server one test through the binary sets ``response_timeout`` to 1 s: a gRPC call on which nobody speaks is cut after that time, and a conversation with a message every 400 ms outlives it. ``connect_timeout`` on a direct send has no test, and there it cannot exceed the 5 s that the egress allows for opening a session.
 #. Passive health counts with relaxed atomics. Two workers that report at once may delay an ejection by one failure.
 #. Two pools that name the same server address share its load counters, as in SID 0015, and therefore its ejection and its ramp.
 #. The policy lookup, the firewall switch and the choice of a server each take the lock of the routing table. A topology without any policy pays the lock and nothing else.
