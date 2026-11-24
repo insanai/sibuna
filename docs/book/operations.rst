@@ -536,6 +536,122 @@ TCP inspection and PROXY v2
 
 A frontend may set ``"tcp_inspect": "tls_client_hello"``, define ``acls`` with exact ``sni`` or ``alpn`` matches or a ``ja4_prefix`` pattern such as ``t13d*``, and list ordered ``deny`` or ``use_backend`` rules. The worker closes malformed or incomplete handshakes after a bounded inspection of up to 32 KiB and a default deadline of two seconds. A complete hello with no matching rule uses the default pool. Enable ``"proxy_v2": {"enabled": true}`` on a TCP pool only when its servers accept a PROXY v2 address header before the stream. We can add ``"tlv_sni": true`` or ``"tlv_ja4": true`` inside ``proxy_v2`` to forward inspected metadata. SNI uses the AUTHORITY type (0x02). Sibuna uses the custom type 0xe0 for the 36 ASCII bytes of JA4. The origin must agree on this type.
 
+Observing the edge
+~~~~~~~~~~~~~~~~~~
+
+An edge writes an access log, counts each request per frontend and per server, and answers a readiness probe. SID 0020 specifies all of it. We describe the file in JLV here. The JSON file has the same members.
+
+.. code-block:: text
+
+   fn edge() -> Map<Value> {
+       return {
+           observability: {
+               access_log: { output: "/var/log/sibuna/access.log", queue: 8192 },
+               internal_allow: ["127.0.0.0/8", "::1/128", "10.20.0.0/24"],
+               listen: "10.20.0.5:9100",
+           },
+           frontends: {
+               web: {
+                   proto: "http",
+                   binds: ["0.0.0.0:80"],
+                   trusted_proxies: ["198.51.100.0/24"],
+                   default_backend: "site",
+               },
+           },
+           backends: {
+               site: { mode: "http", servers: [{ name: "s1", addr: "10.20.0.11:3000" }] },
+           },
+       }
+   }
+
+.. list-table:: The ``observability`` object and the two frontend options
+   :header-rows: 1
+   :widths: 30 20 50
+
+   * - Member
+     - Default
+     - Meaning
+   * - ``access_log.output``
+     - no log
+     - A file path, ``"stdout"`` or ``"stderr"``. The file is created with mode 0640 and appended to.
+   * - ``access_log.format``
+     - ``"json"``
+     - The only format: one JSON object per line.
+   * - ``access_log.queue``
+     - 8192
+     - Entries that may wait for the writer, from 64 to 1048576.
+   * - ``internal_allow``
+     - ``["127.0.0.0/8", "::1/128"]``
+     - The networks that may read ``/__sibuna/health``, ``/__sibuna/ready`` and ``/__sibuna/metrics`` on the HTTP frontends. At most 64. An empty list closes the three routes.
+   * - ``listen``
+     - none
+     - An address of a separate listener for ``/health``, ``/ready`` and ``/metrics``.
+   * - ``trusted_proxies`` on an ``http`` frontend
+     - ``[]``
+     - The networks of the proxies in front of this frontend. At most 64.
+   * - ``proxy_protocol`` on an ``http`` frontend
+     - ``false``
+     - Every connection must begin with a PROXY header, version 1 or 2. Needs ``trusted_proxies``.
+
+**The access log.** Each HTTP request writes one line when its response ends. The members are always these, in this order:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 22 78
+
+   * - Member
+     - Value
+   * - ``time``
+     - When the request was dispatched, in UTC with milliseconds.
+   * - ``client``
+     - The address the request was judged by.
+   * - ``frontend``
+     - The name of the frontend, or ``-``.
+   * - ``protocol``
+     - ``http/1.1``, ``https``, ``h2`` or ``h3``.
+   * - ``method``, ``host``, ``path``
+     - As sent. The path is in normal form and has no query. A request that did not parse has ``-``.
+   * - ``status``
+     - The status sent to the client. 0 when the client left before a response.
+   * - ``bytes_in``, ``bytes_out``
+     - Request and response bytes. ``bytes_in`` is an estimate.
+   * - ``duration_ms``
+     - From the dispatch to the end of the response.
+   * - ``ttfb_ms``
+     - The wait for the first byte of the server, or ``null`` when no server answered.
+   * - ``backend``, ``server``
+     - The pool and the server the request was sent to, or ``-``.
+   * - ``verdict``
+     - ``pass``, ``deny``, ``challenge``, ``rate_limited``, ``banned``, ``internal`` or ``-``.
+
+.. code-block:: json
+
+   {"time":"2026-11-24T10:15:02.418Z","client":"203.0.113.7","frontend":"web","protocol":"http/1.1","method":"GET","host":"www.example.com","path":"/index.html","status":200,"bytes_in":112,"bytes_out":5310,"duration_ms":3.184,"ttfb_ms":2.907,"backend":"app","server":"app-2","verdict":"pass"}
+
+A worker never waits for the log. It puts the entry in a bounded queue, and one thread formats and writes. When the queue is full the entry is dropped and ``sibuna_edge_access_log_dropped_total`` counts it. To rotate the file we rename it and send SIGHUP. Sibuna opens the path again within about a second. TCP and UDP flows are counted and not logged.
+
+**Metrics.** The metrics text has the process counters and then the series of the edge: requests by status class, bytes and a duration histogram per frontend; requests, failures, a response time histogram and ``sibuna_edge_server_up`` per server; the flow table (``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``, ``sibuna_edge_drops_total``); and the counters of the log and of the PROXY protocol. Counters follow a name across a reload.
+
+**Readiness.** ``/__sibuna/ready`` answers 200 with ``{"status":"ready"}``. From the start of a shutdown it answers 503 with ``{"status":"draining"}``. ``/__sibuna/health`` only says that the process runs. We point a load balancer in front of Sibuna at the readiness answer.
+
+**Who may read them.** On an HTTP frontend the three routes answer only a client inside ``internal_allow`` whose request carries no ``X-Forwarded-For``, ``X-Real-IP`` or ``Forwarded`` field. Everyone else receives the 404 of an unknown route. The default is the loopback network, so a probe from another host needs its network in the list, or the separate listener. The listener at ``listen`` applies no list of its own. Its address is its access control, so we bind it to a management network.
+
+**Clients behind a proxy.** Without ``trusted_proxies`` the client is the socket peer and ``X-Forwarded-For`` is ignored. With it, a request whose socket peer is inside the list is judged by the address its proxy recorded: we walk ``X-Forwarded-For`` from the right and take the first address that is not a trusted proxy. An entry the client wrote itself stands to the left of that address and is never read. The address is the client for bans, the request limiter, policy rules and the log. With ``proxy_protocol: true`` the frontend takes the client from the PROXY header instead. A connection from outside ``trusted_proxies``, or without a whole valid header in its first packet, is closed.
+
+**The descriptor limit.** At startup Sibuna compares the limit on open files with what the topology can use: two per flow, two per HTTP connection, and 512. It raises the soft limit as far as the hard limit allows. When that is not enough it prints a warning with the numbers and a hint, and starts anyway:
+
+.. code-block:: text
+
+   -- DESCRIPTOR LIMIT TOO LOW ------------------------------------ edge.jlv
+
+   This topology can use 18944 file descriptors, but the process may open 4096.
+
+   global.max_flows = 8192, http.max_connections = 1024
+   need = 2 * 8192 + 2 * 1024 + 512 = 18944
+
+   Hint: Raise the limit (`LimitNOFILE=18944` in the systemd unit, or `ulimit -n 18944`),
+   or lower `global.max_flows` and `http.max_connections`.
+
 Writing the topology in JLV
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -581,7 +697,7 @@ We check the module with ``sibuna check -f edge.jlv`` and run it with ``sibuna -
 Reload, drain and shutdown
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-On Unix we replace the file and send SIGHUP. Sibuna prepares the whole revision first: the topology, the policy, the certificates and the server adapters. A valid revision updates routing for new flows. Established TCP streams, UDP mappings and running HTTP exchanges keep their server. A handshake still awaiting inspection is closed at the policy boundary. A rejected revision leaves the serving one untouched, and the log line ``EDGE002`` says why. We remove a server from its pool to drain it. Changing listener addresses, the HTTP surface, the firewall limits, the challenge seed or the mesh roster takes a restart. Shutdown stops admitting new flows, sends GOAWAY on HTTP/2 and HTTP/3, and gives active flows up to five seconds to finish.
+On Unix we replace the file and send SIGHUP. Sibuna prepares the whole revision first: the topology, the policy, the certificates and the server adapters. A valid revision updates routing for new flows. Established TCP streams, UDP mappings and running HTTP exchanges keep their server. A handshake still awaiting inspection is closed at the policy boundary. A rejected revision leaves the serving one untouched, and the log line ``EDGE002`` says why. We remove a server from its pool to drain it. Changing listener addresses, the HTTP surface, the firewall limits, the ``observability`` object, the challenge seed or the mesh roster takes a restart. The frontend options ``trusted_proxies`` and ``proxy_protocol`` follow a reload. SIGHUP also reopens the access log. Shutdown stops admitting new flows, sends GOAWAY on HTTP/2 and HTTP/3, and gives active flows up to five seconds to finish.
 
 Several nodes
 ~~~~~~~~~~~~~
