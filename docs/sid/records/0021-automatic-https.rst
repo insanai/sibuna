@@ -77,7 +77,7 @@ The frontend ``web`` terminates TLS with certificates that the daemon obtains. T
      - none
      - One host name, or a list of 1 to 64 host names. The daemon obtains one certificate for each name. With ``auto`` the keys ``crt`` and ``cert_file`` become optional. A certificate from a file serves a managed name until the first automatic certificate for that name exists.
 
-A name is written in lower or upper case and stored in lower case. It is a DNS name of at most 253 bytes with at least two labels. A wildcard is refused, because the two challenges of this record cannot prove a wildcard. One name may appear on several frontends. It is ordered once.
+A name is written in lower or upper case and stored in lower case. It is a DNS name of at most 253 bytes. An IP address is refused. A wildcard is refused, because the two challenges of this record cannot prove a wildcard. One name may appear on several frontends. It is ordered once.
 
 .. list-table:: The ``global.acme`` object
    :header-rows: 1
@@ -112,19 +112,17 @@ Using the authority means accepting its terms of service. The daemon sends ``ter
 Public and internal names
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A name is *internal* when a public authority cannot or must not validate it: ``localhost``, a name that ends in ``.localhost``, ``.local``, ``.internal``, ``.home.arpa``, ``.test``, ``.example`` or ``.invalid``, a name of one label, and an IP address. With ``"letsencrypt"`` or ``"letsencrypt-staging"`` an internal name in ``auto`` is rejected when the file is checked.
+A name is *internal* when a public authority cannot or must not validate it: ``localhost``, a name that ends in ``.localhost``, ``.local``, ``.internal``, ``.home.arpa``, ``.test``, ``.example`` or ``.invalid``, ``.lan``, and a name of one label. With ``"letsencrypt"`` or ``"letsencrypt-staging"`` an internal name in ``auto`` is rejected when the file is checked.
 
 .. code-block:: text
 
-   -- NAME NOT PUBLIC (ACME007) ------------------------------------------------
+   -- NAME NOT PUBLIC (EDGE001) -----------------------------------------------
 
-   frontends.web.tls.auto: `intranet.local` is an internal name. A public certificate
-   authority cannot validate it.
+   edge.jlv: tls.auto: `intranet.local` is an internal name; a public certificate authority cannot validate it.
 
-   Hint: Serve this name with a certificate from a file: `tls: { crt: "site.pem" }`. A
-   private ACME authority is named with `global.acme.directory` and `ca_file`.
+   Hint: A public certificate authority validates a name over the Internet. Use a public DNS name, or serve this name with `crt` and a certificate of your own, or set `global.acme.directory` to an authority of your own.
 
-With a directory URL of the operator's own, every well-formed name is accepted. The operator's authority decides what it validates. Caddy issues certificates for internal names from a local authority of its own. We leave that out and say so in the message and under "Known gaps".
+The failure belongs to the file, so it carries the code ``EDGE001`` of every startup failure, with a title and a hint of its own. With a directory URL of the operator's own, every well-formed name is accepted. The operator's authority decides what it validates. Caddy issues certificates for internal names from a local authority of its own. We leave that out and say so in the message and under "Known gaps".
 
 The quick start
 ~~~~~~~~~~~~~~~
@@ -163,8 +161,6 @@ The crate ``sibuna-acme`` (``crates/acme``) holds the protocol and no I/O. It de
      - The order state machine.
    * - ``schedule``
      - The renewal time and the retry delay.
-   * - ``names``
-     - Checking and classifying host names.
    * - ``store``
      - The layout of the storage directory, file modes and the lock.
 
@@ -225,7 +221,11 @@ Storage and the lock
 
 A file is written under a temporary name in its directory and renamed, so a reader never sees half a file. The key is written before the certificate. A reader that finds a certificate without a matching key ignores both.
 
-Before a node orders a certificate it creates the lock file of the name with ``O_EXCL``. When the file exists, another node is at work. The node waits 15 seconds and reads the storage again. It finds the new certificate there, or it finds the lock gone. A lock older than 15 minutes is stale, because an order ends within five. A stale lock is removed and taken. The account key has a lock of the same kind, so two nodes that start together register one account.
+Before a node orders a certificate it creates the lock file of the name with ``O_EXCL``. When the file exists, another node is at work. The node waits 15 seconds and reads the storage again. It finds the new certificate there, or it finds the lock gone. A lock older than 15 minutes is stale, because an order ends within five. A stale lock is removed and taken. The account key is written under a temporary name and linked into place only when no key is there, so two nodes that start together register one account.
+
+The lock file names its writer: the host name, the process number, and the moment the process first took a lock. A daemon that stops in the middle of an order leaves its lock behind. The next start on the same host sees that the writer is gone and takes the lock at once. On another host, or without ``/proc``, the age of the lock decides.
+
+A takeover with ``global.reuse_port`` runs two processes on one storage directory for a short time. They are two nodes in the sense of this section. The new process loads what the old one stored. When the old one is in the middle of an order, the new one waits for the lock and then loads the result.
 
 At a start the daemon loads every stored certificate of its names before it orders anything. A restart therefore sends nothing to the authority while the certificates are fresh.
 
@@ -247,12 +247,18 @@ The driver owns a table from name to certificate. The resolver of each listener 
 
 A reload (SIGHUP, ``reload``, the watcher) builds new resolvers that refer to the same table. A reload may add and remove ``auto`` names. Changing ``global.acme``, and adding the first ``auto`` name to a node that had none, take a restart, like every other change of a TLS listener (SID 0015).
 
-A handshake for a managed name without a certificate fails with a TLS alert when the listener has no certificate from a file. A handshake without a server name, or for an unknown name, receives the first certificate from a file, or else the certificate of the first ``auto`` name, unless ``strict_sni`` refuses it.
+A managed name without a certificate of its own is treated like an unknown name. A handshake without a server name, or for an unknown name, receives the first certificate from a file, or else the certificate of the first ``auto`` name, unless ``strict_sni`` refuses it. When neither exists the handshake fails with a TLS alert. The names of a host are checked in ``sibuna-lb`` (``crates/lb/src/acme.rs``), which reads the file. The client crate takes the names as given.
+
+The daemon places no order before its listeners serve. ``Automatic::start`` starts the thread, which loads the stored certificates. ``Automatic::allow_orders`` lets it order, and the daemon calls it after the line ``Sibuna edge listeners ready``. A daemon that fails to start has then asked the authority for nothing.
 
 The redirect
 ~~~~~~~~~~~~
 
 A request that arrives without TLS, whose ``Host`` is a managed name, and that is no challenge, is answered ``308 Permanent Redirect`` to ``https://HOST/PATH?QUERY``. The port of the TLS frontend is added when it is not 443. The redirect is decided before the firewall, as the challenge answer is. ``global.acme.redirect: false`` turns it off.
+
+The challenge answer and the redirect are one hook at the top of the request routing (``cmd/sibuna/src/acme.rs``, called from ``route`` in ``dispatch.rs``), so every request path passes it: the thread path, the event-driven workers, and HTTP/2 and HTTP/3. Both answers are written through the writer of the request, so the access log and the counters of SID 0020 record them with their status, 200 and 308. The challenge path is not under ``/__sibuna/``, so the allow-list of the internal routes does not apply to it.
+
+A configurable redirect from HTTP to HTTPS, as the traffic work plans it, composes in this order: the challenge answer first, then the automatic redirect for managed names, then the configured rules for every request that is left. With ``redirect: false`` the configured rules alone decide. The two never answer the same request, because the automatic one returns before the routing rules are read.
 
 The admin command
 ~~~~~~~~~~~~~~~~~
@@ -262,9 +268,11 @@ The admin command
    $ sibuna ctl /run/sibuna/edge.sock show certs
    name            issuer  expires               renews                state  error
    example.org     R11     2027-02-22T10:00:00Z  2027-01-23T10:00:00Z  ready  -
-   www.example.org -       -                     2026-11-24T10:04:00Z  retry  CA REFUSED (ACME003)
+   www.example.org -       -                     2026-11-24T10:04:00Z  retry  AUTHORITY REFUSED (ACME003)
 
-``state`` is ``ready`` with a served certificate that is not due, ``ordering`` during an order, ``waiting`` for the lock of another node, ``retry`` after a failure, and ``pending`` before the first attempt. ``renews`` is the time of the next attempt. The command changes nothing and is not logged. Without an ``auto`` name it answers with the header alone.
+``state`` is ``ready`` with a served certificate that is not due, ``ordering`` during an order, ``waiting`` for the lock of another node, ``retry`` after a failure, and ``pending`` before the first attempt. ``renews`` is the time of the next attempt. The command changes nothing and is not logged. Without an ``auto`` name it answers with the header alone. A space in the name of an issuer is written as an underscore, so a script can split a line at spaces.
+
+``show stats`` and the metrics routes of SID 0020 carry four series: ``sibuna_edge_acme_certificates_managed``, ``sibuna_edge_acme_certificates_served``, ``sibuna_edge_acme_failures_total``, and ``sibuna_edge_acme_nearest_expiry_seconds``, which is absent while no certificate is served.
 
 Failures
 ~~~~~~~~
@@ -298,12 +306,12 @@ Every failure is a diagnostic on standard error with a code, a title, the name, 
      - A response broke the protocol or a bound, or the order ran out of budget or time.
    * - ``ACME007``
      - NAME NOT PUBLIC
-     - An internal name with a public authority. Reported when the file is checked.
+     - Not used. An internal name with a public authority is a failure of the file. It is reported when the file is checked, as ``NAME NOT PUBLIC (EDGE001)``.
    * - ``ACME008``
      - CERTIFICATE REJECTED
      - The issued certificate does not name the host, does not match the key, or is not valid now.
 
-A success is one line: ``ACME: example.org: certificate obtained, expires 2027-02-22T10:00:00Z``.
+A success is one line: ``ACME000: certificate for example.org obtained, valid until 2027-02-22T10:00:00Z``. The verb is ``renewed`` for a renewal and ``loaded from storage`` after a start.
 
 Comparison with Caddy
 ~~~~~~~~~~~~~~~~~~~~~
@@ -428,7 +436,7 @@ Files without ``auto`` keep their meaning. ``sibuna lb --tls PEM`` keeps its mea
 Acceptance criteria and implementation status
 ---------------------------------------------
 
-The record is a design. The table lists the evidence we require.
+The record is implemented on the branch ``sid-0021-automatic-https``. The table lists the evidence.
 
 .. list-table:: Evidence
    :header-rows: 1
@@ -437,19 +445,29 @@ The record is a design. The table lists the evidence we require.
    * - Criterion
      - Evidence
    * - JWS, thumbprint and CSR are correct.
-     - Unit tests with the vectors of RFC 7638 and RFC 7515, and ``openssl req -verify`` on the CSR when ``openssl`` is installed.
+     - ``crates/acme/src/jws.rs`` and ``csr.rs``: unit tests with the vectors of RFC 7638 and RFC 7515, and ``openssl req -verify`` on the CSR when ``openssl`` is installed.
    * - The order machine follows RFC 8555 and ends.
-     - Unit tests that drive it with scripted responses, including ``badNonce``, an invalid authorization and an exhausted budget. The Lean model.
+     - ``crates/acme/src/order/tests.rs``: 14 tests that drive the machine with scripted responses, including ``badNonce``, ``orderNotReady``, an authorization that is already valid, an invalid authorization, a rate limit, answers that break a bound and an exhausted budget. The Lean model.
    * - Renewal precedes expiry. The delay is bounded and monotone.
-     - Unit tests and the Lean model.
+     - ``crates/acme/src/schedule.rs`` and the Lean model.
+   * - Storage is private, atomic and shared.
+     - ``crates/acme/src/store.rs``: modes, a reload of what was saved, the retry state, one holder of a lock, a stale lock, and the lock of a process that is gone.
+   * - The configuration has defaults and refuses what cannot work.
+     - ``crates/lb/src/acme.rs`` and ``crates/lb/src/quick.rs``; ``cmd/sibuna/src/edge/quick.rs`` for ``--tls auto``; ``cmd/sibuna/src/edge/failure.rs`` for the internal name.
+   * - Only a sound chain is served, and the tables answer challenges and the redirect.
+     - ``crates/ingress/src/auto.rs`` and ``auto/driver.rs``; ``cmd/sibuna/src/acme.rs`` for the ``Location`` header, the table of ``show certs`` and header injection.
    * - A certificate is obtained and served without a restart, by both challenges.
-     - A test with a fake authority inside the test and the ``sibuna`` binary.
+     - ``cmd/sibuna/tests/edge_acme.rs`` with the authority of ``tests/support/acme_authority.rs``. It runs the ``sibuna`` binary. The authority validates by connecting back, with HTTP-01 in the first test and TLS-ALPN-01 in the second, and rejects the first nonce.
    * - A renewal installs the new certificate.
-     - The same test with a short lifetime.
+     - The first test: a lifetime of 12 seconds, and a TLS client that sees a second certificate with no restart and no reload.
    * - A failure keeps the listener and the old certificate.
-     - A test whose authority refuses.
+     - The first test: a reload adds a name that the authority refuses. ``show certs`` reports ``retry`` with the code, the log has the hint, and the first name keeps its certificate.
+   * - Redirect, access log, metrics, file modes.
+     - The first test: 308 with the port of the TLS frontend, another host served as before, both answers in the access log, the series in ``show stats``, keys with mode 0600.
+   * - A restart reuses the stored certificate.
+     - The second test: the same certificate after a restart, one order in all, the line ``loaded from storage``.
    * - The client works with a real ACME server.
-     - A run against Pebble, recorded here.
+     - Two runs against Pebble 2.10.3, recorded under "Interoperation with Pebble".
 
 Known gaps
 ~~~~~~~~~~
@@ -461,12 +479,57 @@ Known gaps
 #. No ACME Renewal Information (RFC 9773), no revocation, no OCSP stapling for automatic certificates.
 #. Keys are ECDSA P-256 only.
 #. A changed ``email`` does not update an existing account.
-#. The lock compares the modification time of a file with the clock of the node. Nodes whose clocks differ by more than ten minutes may order twice.
+#. The lock compares the modification time of a file with the clock of the node. Nodes whose clocks differ by more than ten minutes may order twice. Two containers with one host name and separate process tables may also order twice, because each takes the other's process for gone. A double order costs one certificate and corrupts nothing.
+#. One certificate per name. A frontend with many names of one registered domain spends the weekly limit of Let's Encrypt for that domain faster than one certificate with many names would.
+#. The certificate thread is not supervised. If it panics, the served certificates stay and nothing is renewed until a restart. ``show certs`` then shows a renewal time in the past.
+#. A stored certificate that has expired is not served after a restart. A running daemon keeps serving the certificate it has, also past its expiry.
+#. ``sibuna lb`` has no flag for ``ca_file``, ``challenge`` and ``redirect``. A private authority needs a file.
+#. The answers of automatic HTTPS have the verdict ``-`` in the access log. They have no verdict word of their own.
+#. With TLS-ALPN-01 and several nodes, the authority must reach the node that placed the order. Only HTTP-01 is answered by every node.
+#. The translated catalogs of the book do not have the new section yet.
 
 Formal model
 ~~~~~~~~~~~~
 
 ``docs/sid/assets/automatic-https.lean`` models four things with Lean 4.19.0. The order machine is a phase and a budget. An answer is good, a repetition, a skip over the challenge, or bad. We prove that a step never moves a phase backwards, that every step of a live order takes budget or ends the order, that an order of budget :math:`n` is over after :math:`n + 1` steps whatever the authority answers, and that ``Done`` is entered only from ``Download``. For the schedule we prove that the renewal time lies in :math:`[b, e)` for :math:`b < e`. For the retry delay we prove that it is at least the first delay, at most one day, and monotone in the number of failures. For the table we prove that a failed order leaves the served certificate unchanged, that a served name never loses its certificate, and that the expiry of a served certificate never decreases. The JSON, the signatures, the sockets and the files are outside the model. Tests cover them.
+
+Interoperation with Pebble
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We ran the ``sibuna`` binary of this branch against Pebble 2.10.3, the test authority of Let's Encrypt, on the loopback addresses of one machine on 2026-11-24. Pebble was built in a scratch ``GOPATH`` outside the repository. Nothing left the machine and no real authority was contacted.
+
+Pebble ran with ``PEBBLE_VA_ALWAYS_VALID=0``, so it validated every name itself, with ``PEBBLE_VA_NOSLEEP=1``, and with ``PEBBLE_WFE_NONCEREJECT=30``, so it rejected about three good nonces in ten. Its configuration listened on ``127.0.0.1:24000``, validated HTTP-01 on port 25002 and TLS-ALPN-01 on port 25001, and gave the default profile a ``validityPeriod`` of 30 seconds, which makes a renewal due after 20. The edge ran from a JLV file with ``directory: "https://localhost:24000/dir"``, ``ca_file`` set to ``test/certs/pebble.minica.pem`` of the Pebble source, an ``email``, and the names ``sibuna-a.localhost`` and ``sibuna-b.localhost``, which the resolver of the machine maps to the loopback addresses. The TLS frontend bound ``127.0.0.1:25001`` and ``[::1]:25001``.
+
+.. list-table:: Two runs of 46 seconds each
+   :header-rows: 1
+   :widths: 22 39 39
+
+   * - Observation
+     - ``challenge: "http-01"``, plain frontend on port 25002
+     - ``challenge: "tls-alpn-01"``, no plain frontend
+   * - First certificates
+     - Both names ``ready`` within 14 seconds.
+     - Both names ``ready`` within 14 seconds.
+   * - Served chain
+     - ``openssl s_client -CAfile`` with the root of Pebble's management port: ``Verify return code: 0 (ok)`` for both names.
+     - The same.
+   * - Renewal
+     - Each name served a new serial 30 seconds later, with no restart and no reload. The log has ``renewed`` for both.
+     - The same. One name was renewed twice.
+   * - Certificates issued by Pebble
+     - 5
+     - 5
+   * - ``badNonce`` retries
+     - 8 requests to the challenge, finalize and certificate endpoints for 5 certificates.
+     - 5 requests to ``newAccount`` for one account, 9 to finalize for 5 certificates.
+   * - Redirect
+     - ``308 Permanent Redirect`` on port 25002.
+     - Not applicable.
+   * - Failures
+     - ``sibuna_edge_acme_failures_total 0``
+     - ``sibuna_edge_acme_failures_total 0``
+
+The first attempt at this run found two defects, which the implementation review below records: an order placed by a daemon that then failed to start, and the lock file that this daemon left behind.
 
 Open questions
 --------------
@@ -480,6 +543,9 @@ Review history
 
 - 2026-11-24. Initial draft: ``tls.auto`` and ``global.acme``, a client crate without I/O, both challenges, storage with a lock, renewal at two thirds, exponential retry, a table behind the resolver.
 - 2026-11-24. Author's review of the design. It found six faults and changed the record for each. The retry delay lived in memory only, so a daemon in a restart loop would have ordered at every start and exhausted the limits of the authority; the failure count and the next attempt are now stored beside the certificate. The draft answered the challenge on plain frontends only; an authority that follows a redirect to port 443 would have missed it, so every HTTP frontend answers, before the redirect. The draft did not say when a challenge answer leaves the table; it now leaves when the order ends. The machine had no path for an authorization that is already valid, which Pebble and Let's Encrypt both return; it now skips to ``Finalize``, and the Lean model has that step. A ``Retry-After`` of the authority was taken as it came, so the authority could park an order; it is now clamped to 30 seconds. The number of authorizations of an order was unbounded; it is now exactly one. The review also recorded two gaps: a changed e-mail address, and the lock's dependence on the clocks of the nodes.
+
+- 2026-11-24. Author's review of the implementation, with the tests and the Pebble run as instruments. It found seven defects and fixed each. (1) The time limit of an order was built outside the runtime of the thread, so the thread panicked at its first order; the binary test found it, and the limit is now built inside. (2) The thread ordered as soon as it started, before the listeners were bound. A daemon whose start failed for another reason had already asked the authority, so a unit that restarts every five seconds would have spent the limits of the authority; the Pebble run found it, and orders now wait for ``Automatic::allow_orders``. (3) The same daemon left its lock file, and the next start would have waited 15 minutes for it to age; the lock now names its writer, and a writer that is gone on this host loses the lock at once. (4) The record said that a managed name without a certificate fails the handshake. The code serves the default certificate as for any unknown name, which is what SID 0015 does without ``strict_sni``; the record now says so. (5) The TLS library checks a certificate it is given, and refuses the critical extension of the TLS-ALPN-01 certificate; that certificate is now handed over without the check, and a unit test covers it. (6) The diagnostic of a failure ran two sentences together when the reason of the authority had no full stop. (7) ``ACME007`` was a code of the client for a failure that only the file can have; it is now a failure of the file with a title and a hint of its own. The review also added the seven gaps that end the list above.
+- 2026-11-24. Merge with ``main`` after SID 0020, the takeover of ``global.reuse_port`` and the bound on TLS connections per client. Three files conflicted, all by adjacent additions, and both sides were kept: ``crates/lb/src/config.rs`` (the ``acme`` field beside ``reuse_port`` and ``observe``), and the two index files of the records. A validation connection of TLS-ALPN-01 takes a place under the client bound like any TLS connection and gives it back when the handshake ends; it is refused only when the address of the authority already holds ``max_connections_per_ip`` connections. The record gained the sections on the access log, the metrics and the takeover.
 
 References
 ----------
@@ -498,3 +564,5 @@ References
 
    2026-11-24: prediscussion -> discussion. First draft by the author; open
    for discussion before implementation
+   2026-11-24: implemented on the branch sid-0021-automatic-https; the record
+   stays in discussion until the branch is reviewed and merged
