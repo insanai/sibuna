@@ -248,6 +248,7 @@ Known gaps
 #. WebSockets over HTTP/2 and HTTP/1.1 over TLS keep the socket pair.
 #. The per-client connection bound does not see HTTP/2 streams.
 #. The runtime uses at most eight threads. The worker count option of SID 0016 does not set it.
+#. Response trailers pass, which gRPC needs, and a test covers them. The request field ``TE: trailers`` is removed by the translation, and no test runs a real gRPC client and server through the edge. We do not claim gRPC support until one does.
 
 Open questions
 --------------
@@ -259,6 +260,7 @@ Review history
 --------------
 
 - 2026-11-24. Initial draft and implementation in one pass, after measuring where an HTTP/2 request spends its time.
+- 2026-11-24. Second review, with tests for streamed responses. Server-sent events pass through unbuffered on both HTTP/1.1 paths. Response trailers pass on this path. The trailer test found a defect: a response that ended with trailers did not return its server connection to the pool. It does now.
 - 2026-11-24. Author's review of the implementation. It found that a response body had no deadline: a server that stopped inside a body held its stream until the client gave up. The stall bound and its test were added. It also recorded the known gaps above, of which the missing per-client bound and the fixed timeouts are the ones that matter for production.
 
 References
