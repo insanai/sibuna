@@ -79,7 +79,10 @@ bytes.workspace = true
 futures-util.workspace = true
 http-body-util.workspace = true
 hyper = { workspace = true, features = ["client", "http2"] }
+h3.workspace = true
+h3-quinn.workspace = true
 hyper-util.workspace = true
+quinn.workspace = true
 rustls.workspace = true
 tokio-rustls.workspace = true
 tokio = { workspace = true, features = ["rt-multi-thread", "net", "time", "sync", "macros", "io-util"] }
