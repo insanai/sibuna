@@ -14,6 +14,7 @@
 use sibuna_http::chunked::{Decoder, LAST_CHUNK, write_chunk};
 use sibuna_http::{Method, Request};
 
+use crate::edit::HeadEdit;
 use crate::fields::find_blank_line;
 use crate::proxy::{Audit, ProxyError, Upload};
 use crate::relay::client_head_error;
@@ -246,12 +247,29 @@ impl ResponseRelay {
         out: &mut Vec<u8>,
         on_head: &mut dyn FnMut(u16, &[u8]),
     ) -> Result<(usize, Fed), ProxyError> {
+        self.feed_edited(input, out, on_head, &HeadEdit::default())
+    }
+
+    /// As [`ResponseRelay::feed`], and applies `edit` to the final head before it reaches
+    /// `out` (SID 0019). Informational heads and the head of an accepted upgrade pass
+    /// unedited.
+    ///
+    /// # Errors
+    ///
+    /// As [`ResponseRelay::feed`].
+    pub fn feed_edited(
+        &mut self,
+        input: &[u8],
+        out: &mut Vec<u8>,
+        on_head: &mut dyn FnMut(u16, &[u8]),
+        edit: &HeadEdit<'_>,
+    ) -> Result<(usize, Fed), ProxyError> {
         self.received |= !input.is_empty();
         let mut used = 0;
         loop {
             let rest = input.get(used..).unwrap_or_default();
             let step = match self.state {
-                State::Head => self.head(rest, out, on_head)?,
+                State::Head => self.head(rest, out, on_head, edit)?,
                 State::Length(left) => Self::data(rest, out, left, State::Length, State::Finished),
                 State::ChunkData(left) => {
                     Self::data(rest, out, left, State::ChunkData, State::ChunkEnd)
@@ -317,6 +335,7 @@ impl ResponseRelay {
         input: &[u8],
         out: &mut Vec<u8>,
         on_head: &mut dyn FnMut(u16, &[u8]),
+        edit: &HeadEdit<'_>,
     ) -> Result<Option<(usize, State)>, ProxyError> {
         let from = self.scanned.min(input.len());
         let Some(index) = input.get(from..).and_then(find_blank_line) else {
@@ -349,7 +368,9 @@ impl ResponseRelay {
             parse_response_head(head, self.head_request).ok_or(ProxyError::UpstreamReadFailed)?;
         on_head(parsed.status, head);
         self.keep = self.client_keep_alive && parsed.framing != Framing::UntilClose;
+        let start = out.len();
         write_client_head(out, head, self.keep).map_err(client_head_error)?;
+        edit.apply(out, start);
         self.status = parsed.status;
         let framed = matches!(parsed.framing, Framing::Length(_) | Framing::Chunked);
         self.origin_keep = parsed.keep_alive && framed;

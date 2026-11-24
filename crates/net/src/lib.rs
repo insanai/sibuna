@@ -116,6 +116,7 @@
 pub mod buffered;
 pub mod connect;
 mod duplex;
+mod edit;
 mod fields;
 pub mod idle;
 pub mod machine;
@@ -128,6 +129,7 @@ mod request;
 mod response;
 mod upgrade;
 
+pub use edit::HeadEdit;
 pub use idle::{Activity, IdleTable, Lease, reaper_interval};
 pub use pool::Pool;
 pub use proxy::{

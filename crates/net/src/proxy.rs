@@ -159,6 +159,9 @@ pub struct Audit<'a> {
     /// blank line included) for evidence capture. The callee bounds and redacts it (see
     /// `sibuna_core::incident_heads::response_head`).
     pub response_head: Option<HeadSink<'a>>,
+    /// Fields to drop from and to append to the final response head for the client
+    /// (SID 0019). The default changes nothing.
+    pub response_edit: crate::HeadEdit<'a>,
 }
 
 impl Default for Audit<'_> {
@@ -173,6 +176,7 @@ impl Default for Audit<'_> {
             scheme: b"http",
             response_status: None,
             response_head: None,
+            response_edit: crate::HeadEdit::default(),
         }
     }
 }
