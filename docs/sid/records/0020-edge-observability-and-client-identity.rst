@@ -190,7 +190,7 @@ The dispatch of SID 0002 is one function for all paths. At its end it captures t
    * - Event-driven worker
      - A response of Sibuna's own is settled where the request was decided. An admitted request moves its entry to the connection record. The entry is settled when the exchange finishes, when Sibuna answers for a failed server, or when the connection closes inside the exchange.
    * - In process (HTTP/2, HTTP/3)
-     - A response of Sibuna's own is settled in the decision. An admitted request gives the protocol runtime a ``Report``. The runtime calls it once with the status, the body bytes and the two times, when the body ends or is dropped.
+     - A response of Sibuna's own is settled in the decision. An admitted request gives the protocol runtime a ``Report``. The runtime calls it once with the status, the body bytes and the wait for the response head, when the body ends or is dropped. The binary measures the whole duration itself.
 
 The ingress crate does not depend on the binary. Its interface of SID 0017 gains one trait and two fields:
 
@@ -200,7 +200,6 @@ The ingress crate does not depend on the binary. Its interface of SID 0017 gains
        pub status: u16,                  // 0 when the client left before a response head
        pub bytes_out: u64,               // response body bytes
        pub first_byte: Option<Duration>, // from the send to the response head
-       pub elapsed: Duration,
    }
 
    pub trait Report: Send + 'static {
@@ -268,7 +267,7 @@ The third rule exists for a proxy on the same host. Its requests arrive from the
 
 The solver assets, the challenge routes and the honeypot stay public, because clients need them.
 
-The separate listener is one thread. It serves one request per connection, reads at most 4,096 bytes of head within two seconds, and answers ``GET /health``, ``/ready`` and ``/metrics``. It also runs without any HTTP frontend, where it is the only way to read the counters.
+The separate listener is one thread. It serves one request per connection, reads at most 4,096 bytes of head within two seconds, and answers ``GET`` and ``HEAD`` for ``/health``, ``/ready`` and ``/metrics``, with or without the ``/__sibuna`` prefix. Another method is answered 501 and another path 404. It also runs without any HTTP frontend, where it is the only way to read the counters.
 
 Trusted proxies
 ~~~~~~~~~~~~~~~
@@ -284,20 +283,22 @@ The PROXY protocol
 
 A frontend with ``proxy_protocol: true`` sends each accepted connection through a stage before TLS or HTTP. The stage is one thread with one poller. It holds at most 4,096 connections, each for at most five seconds.
 
-When a connection becomes readable, the stage looks at the first bytes without taking them (``MSG_PEEK``, at most 232 bytes) and parses them:
+When a connection becomes readable, the stage looks at the first bytes without taking them (``MSG_PEEK``, at most 536 bytes) and parses them:
 
 .. code-block:: text
 
    v1  "PROXY TCP4 <src> <dst> <sport> <dport>\r\n"   at most 107 bytes
        "PROXY TCP6 ..."   "PROXY UNKNOWN ...\r\n"
    v2  12 signature bytes, version and command, family and protocol,
-       a 16-bit length, then addresses and extensions   at most 16 + 216 bytes
+       a 16-bit length, then addresses and extensions   at most 16 + 520 bytes
 
 The parser is one function over a byte slice with three results: a header of ``n`` bytes with a source address, a header of ``n`` bytes without one (``UNKNOWN`` or ``LOCAL``), or a refusal. A complete header must be inside the first look. This is the rule of HAProxy's own receiver and of the protocol text, which requires a sender to write the header in one piece. The stage then reads exactly ``n`` bytes, so the first byte of TLS or HTTP is the next one.
 
 A connection is closed and counted when its socket peer is not a trusted proxy, when the header is malformed, incomplete or longer than the bound, or when the five seconds pass. A v1 address must be canonical: no leading zeros, a port from 0 to 65535 without a sign. A v2 header must have version 2, a known command, and a length that covers its address block.
 
-The source address replaces the socket peer for everything that follows: the connection bounds, the trusted-proxy walk and the log. A header without a source keeps the socket peer.
+The source address replaces the socket peer for everything that follows: the connection bounds, the trusted-proxy walk, the allow-list of the internal routes and the log. A header without a source keeps the socket peer.
+
+The bound of 536 bytes is the 16 fixed bytes, the largest address block (216 bytes, for the Unix family, which we accept and ignore) and 304 bytes of extensions. A sender that adds longer extensions, such as a full TLS client certificate, is refused.
 
 The descriptor limit
 ~~~~~~~~~~~~~~~~~~~~
@@ -373,17 +374,88 @@ The ingress interface gains fields, so code that builds an ``Offer`` or a ``Forw
 Acceptance criteria and implementation status
 ---------------------------------------------
 
-To be filled in by the implementation.
+Implemented on the branch ``sid-0020-observability``. Every criterion has a test that runs in ``cargo test --workspace``.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 46 54
+
+   * - Criterion
+     - Test
+   * - A request on the event-driven path and on the thread path writes one line with every field. The query is absent. A request that does not parse is logged.
+     - ``edge_observe.rs``: ``each_request_is_one_line_with_its_server_status_and_times``
+   * - A failed server is a 502 line without ``ttfb_ms`` and one failure of that server.
+     - ``edge_observe.rs``: ``a_failed_server_is_logged_as_502_without_a_first_byte_and_counted``
+   * - The in-process path reports each forwarded exchange once, with status, body bytes, first byte and protocol.
+     - ``crates/ingress/tests/inline.rs``
+   * - A full queue drops and counts. Written plus dropped is offered. The request path does not wait.
+     - ``access::sink::tests::every_offered_entry_is_written_or_counted_as_dropped``
+   * - A line is ASCII JSON, and a request cannot forge a second line.
+     - ``access::sink::tests::a_request_cannot_forge_a_second_line``
+   * - SIGHUP reopens the file after a rotation.
+     - ``edge_observe.rs``: ``sighup_reopens_the_log_after_a_rotation``, and ``access::sink::tests::a_reopen_follows_a_rotated_file_and_splits_no_line``
+   * - The series exist per frontend and per server, and survive a reload by name.
+     - ``crates/lb/tests/observe.rs``, ``crates/lb/src/stats.rs``
+   * - The internal routes answer the allow-list only, and never a forwarded request.
+     - ``edge_observe.rs``: ``the_internal_routes_answer_the_allow_list_only``
+   * - Readiness is 200, then 503 from the start of a drain, while a request in flight still ends and is logged.
+     - ``edge_observe.rs``: ``the_separate_listener_reports_readiness_until_the_node_drains``, and ``edge::admin::tests``
+   * - A trusted proxy names the client for the log and the request limiter. A forged left entry is ignored. Without the option the field is ignored.
+     - ``edge_observe.rs``: ``a_trusted_proxy_names_the_client_for_the_log_and_the_limits``
+   * - PROXY versions 1 and 2 name the client. No header, a malformed header and an untrusted peer close the connection.
+     - ``edge_observe.rs``: ``a_proxy_frontend_takes_the_client_from_the_header_and_refuses_the_rest``, ``crates/lb/src/proxy_header.rs``, ``edge::proxy_stage::tests``
+   * - A descriptor limit below the need prints the warning with its hint, and the process still starts.
+     - ``edge_observe.rs``: ``a_descriptor_limit_below_the_need_is_reported_with_a_hint``, ``edge::fdlimit::tests``
+   * - A bad ``observability`` object is refused by ``sibuna check``.
+     - ``edge_observe.rs``: ``a_check_of_the_file_reports_a_bad_observability_object``
+
+The access log on the in-process path is tested at the interface of the ingress crate and not through the binary. See the first known gap.
 
 Formal model
 ~~~~~~~~~~~~
 
-To be filled in by the implementation.
+``docs/sid/assets/edge-observability.lean`` models the two algorithms of this record and is checked with Lean 4 core.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Theorem
+     - Statement
+   * - ``step_keeps_the_bound``, ``run_keeps_the_bound``
+     - The queue never holds more than its capacity.
+   * - ``offer_adds_one``, ``write_adds_none``, ``run_accounts_for_every_offer``
+     - Written, queued and dropped together are the number of offers. No entry is lost or counted twice.
+   * - ``room_means_no_drop``
+     - An offer to a queue with room is not dropped.
+   * - ``forged_entries_are_never_read``, ``client_ignores_the_left``
+     - When trusted proxies appended their entries after the client's address, the walk answers that address, whatever stands to its left.
+   * - ``walk_answers``
+     - A field with at least one entry always names a client.
+
+The parser of the PROXY header is a bounded scan without state. Its unit tests cover it, and we did not model it.
 
 Known gaps
 ~~~~~~~~~~
 
-To be filled in by the implementation review.
+#. No test drives HTTP/2 or HTTP/3 through the binary and reads the log file. The report is tested in the ingress crate, and the entry in the binary, but not both together.
+#. ``bytes_in`` is an estimate: the parsed head plus the declared body. For a chunked body on the thread path it counts the buffered part only. ``bytes_out`` on the in-process path counts body bytes and not the head.
+#. A request that the protocol runtime refuses before the decision, such as an HTTP/2 request that does not translate, is not logged. A connection that is refused admission (503) is not logged either.
+#. On the thread path the writer cannot tell a server's own 502 or 504 from ours. Such a response has no ``ttfb_ms`` and counts as a failure of the server.
+#. On the thread path an interim head (1xx) that is split across two writes loses the final status, which is then logged as 0.
+#. HTTP/1.1 over TLS is labelled ``https``. Its requests use the socket pair, where the negotiated protocol is not known.
+#. The frontend rate limit ``rate_limit.conn_per_10s`` counts the proxy behind a trusted proxy.
+#. TCP frontends do not accept the PROXY protocol, and TCP and UDP flows have counters but no log line.
+#. There is no gauge of active requests per server.
+#. A request on an edge takes one more lock of the routing table, to find its frontend.
+#. Readiness turns 503 when the drain begins, and the listeners stop in the same moment. There is no delay in which a load balancer in front could see the 503 first.
+#. The separate listener is one thread. A client that sends nothing delays the next probe by up to two seconds.
+#. The PROXY stage runs on every edge with an HTTP frontend, also when no frontend uses it. It wakes four times per second.
+#. A PROXY header that names a source inside ``trusted_proxies`` makes that source a trusted proxy for the forwarded field. This is the intended chain, but it is not tested.
+#. A change of the ``observability`` object needs a restart. SIGHUP reports the HTTP options as incompatible and keeps the old ones.
+#. The log is reopened within about one second of SIGHUP, not at once. Lines written in between go to the old file.
+#. The descriptor need is a rule of thumb. It does not count the idle server connections above 512 or the mesh.
+#. ``tests/e2e.rs`` has a test, ``proxied_responses_keep_the_client_connection_open_for_the_next_request``, that fails about once in eight runs. It fails as often on ``main`` before this branch. It is not fixed here.
 
 Open questions
 --------------
@@ -395,6 +467,8 @@ Review history
 --------------
 
 - 2026-11-24. Initial draft, from the findings of a read-only production audit.
+- 2026-11-24. Design review before the implementation. The look at a PROXY header grew from 232 to 536 bytes, because a version 2 header carries extensions. ``Completion`` lost its duration, which the binary measures from the dispatch. A trusted proxy became exempt from the per-client connection bound. The internal routes gained the rule on forwarding fields, for a proxy on the same host.
+- 2026-11-24. Implementation review. The separate listener closed over unread request bytes, and the reset could destroy its response; it now reads what arrived before it closes. It answers 501 to other methods, because the response writer has no 405. The warning of the descriptor limit is printed before the ready line. The acceptance table and the known gaps were written from the code and the tests.
 
 References
 ----------
