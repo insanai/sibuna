@@ -82,7 +82,8 @@ fn start(origin: SocketAddr) -> Daemon {
 
 fn try_start(origin: SocketAddr) -> Result<Daemon, String> {
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
-    let name = format!("sibuna-client-cert-{}-{}.json", std::process::id(), vip.port());
+    let name =
+        format!("sibuna-client-cert-{}-{}-{}.json", std::process::id(), serial(), vip.port());
     let path = std::env::temp_dir().join(name);
     let (cert, key) = (data("tls", "localhost.pem"), data("tls", "localhost.key"));
     let ca = data("ingress", "client-ca.pem");
@@ -199,4 +200,12 @@ fn a_verified_certificate_is_named_to_the_server_and_cannot_be_forged() {
         };
         tokio::time::timeout(Duration::from_secs(20), run).await.unwrap();
     });
+}
+
+/// A number that no other call in this process is given. Two tests may be given the
+/// same free port one after the other, and their files must not share a name.
+fn serial() -> usize {
+    use std::sync::atomic::{AtomicUsize as Counter, Ordering as Order};
+    static NEXT: Counter = Counter::new(0);
+    NEXT.fetch_add(1, Order::Relaxed)
 }

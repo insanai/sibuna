@@ -59,7 +59,7 @@ fn request(vip: SocketAddr) -> bool {
 fn a_new_process_takes_over_the_address_while_requests_keep_arriving() {
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
     let origin = origin();
-    let stem = format!("sibuna-takeover-{}-{}", std::process::id(), vip.port());
+    let stem = format!("sibuna-takeover-{}-{}-{}", std::process::id(), serial(), vip.port());
     let path = std::env::temp_dir().join(format!("{stem}.json"));
     let socket = std::env::temp_dir().join(format!("{stem}.sock"));
     let source = format!(
@@ -125,7 +125,8 @@ fn a_new_process_takes_over_the_address_while_requests_keep_arriving() {
 fn a_frontend_with_http3_is_taken_over_too() {
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
     let origin = origin();
-    let name = format!("sibuna-takeover-h3-{}-{}.json", std::process::id(), vip.port());
+    let name =
+        format!("sibuna-takeover-h3-{}-{}-{}.json", std::process::id(), serial(), vip.port());
     let path = std::env::temp_dir().join(name);
     let data = concat!(env!("CARGO_MANIFEST_DIR"), "/../../crates/tls/tests/data");
     let source = format!(
@@ -159,7 +160,7 @@ fn a_frontend_with_http3_is_taken_over_too() {
 fn without_reuse_port_a_second_process_is_refused() {
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
     let origin = origin();
-    let name = format!("sibuna-single-{}-{}.json", std::process::id(), vip.port());
+    let name = format!("sibuna-single-{}-{}-{}.json", std::process::id(), serial(), vip.port());
     let path = std::env::temp_dir().join(name);
     let source = format!(
         r#"{{"http":{{"surface":"off"}},
@@ -175,4 +176,12 @@ fn without_reuse_port_a_second_process_is_refused() {
     let _ = first.kill();
     let _ = first.wait();
     let _ = fs::remove_file(&path);
+}
+
+/// A number that no other call in this process is given. Two tests may be given the
+/// same free port one after the other, and their files must not share a name.
+fn serial() -> usize {
+    use std::sync::atomic::{AtomicUsize as Counter, Ordering as Order};
+    static NEXT: Counter = Counter::new(0);
+    NEXT.fetch_add(1, Order::Relaxed)
 }

@@ -43,7 +43,7 @@ fn start(origin: SocketAddr, event_loop: bool) -> Daemon {
 
 fn try_start(origin: SocketAddr, event_loop: bool) -> Result<Daemon, String> {
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
-    let name = format!("sibuna-stream-{}-{}.json", std::process::id(), vip.port());
+    let name = format!("sibuna-stream-{}-{}-{}.json", std::process::id(), serial(), vip.port());
     let path = std::env::temp_dir().join(name);
     let source = format!(
         r#"{{"http":{{"surface":"off","event_loop":{event_loop}}},
@@ -118,4 +118,12 @@ fn server_sent_events_reach_the_client_one_by_one() {
         drop(send);
         read_until(&mut client, &mut seen, "0\r\n\r\n");
     }
+}
+
+/// A number that no other call in this process is given. Two tests may be given the
+/// same free port one after the other, and their files must not share a name.
+fn serial() -> usize {
+    use std::sync::atomic::{AtomicUsize as Counter, Ordering as Order};
+    static NEXT: Counter = Counter::new(0);
+    NEXT.fetch_add(1, Order::Relaxed)
 }

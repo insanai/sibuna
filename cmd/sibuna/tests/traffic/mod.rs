@@ -85,7 +85,7 @@ impl Topology {
 
     fn write(&self, event_loop: bool) -> Files {
         let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
-        let stem = format!("sibuna-traffic-{}-{}", std::process::id(), vip.port());
+        let stem = format!("sibuna-traffic-{}-{}-{}", std::process::id(), serial(), vip.port());
         let file = |extension: &str| std::env::temp_dir().join(format!("{stem}.{extension}"));
         let files = Files { path: file("json"), socket: file("sock"), log: file("log"), vip };
         fs::write(&files.path, self.source(&files, event_loop)).unwrap();
@@ -472,4 +472,12 @@ pub fn blackhole() -> Blackhole {
         }
     }
     panic!("the accept queue of {address} never filled");
+}
+
+/// A number that no other call in this process is given. Two tests may be given the
+/// same free port one after the other, and their files must not share a name.
+fn serial() -> usize {
+    use std::sync::atomic::{AtomicUsize as Counter, Ordering as Order};
+    static NEXT: Counter = Counter::new(0);
+    NEXT.fetch_add(1, Order::Relaxed)
 }

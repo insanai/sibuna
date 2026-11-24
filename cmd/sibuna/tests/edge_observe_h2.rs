@@ -72,7 +72,7 @@ fn start(origin: SocketAddr, pool: &str) -> Daemon {
 
 fn try_start(origin: SocketAddr, pool: &str) -> Result<Daemon, String> {
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
-    let name = format!("sibuna-observe-h2-{}-{}", std::process::id(), vip.port());
+    let name = format!("sibuna-observe-h2-{}-{}-{}", std::process::id(), serial(), vip.port());
     let directory = std::env::temp_dir().join(name);
     fs::create_dir_all(&directory).unwrap();
     let (cert, key) = (fixture("localhost.pem"), fixture("localhost.key"));
@@ -208,4 +208,12 @@ fn grpc_calls_on_a_shared_http2_session_are_logged_one_line_each() {
     // The stream of forty messages of 100 bytes, each with a prefix of five.
     let stream = lines.iter().find(|line| field(line, "path") == "/echo.Echo/Stream").unwrap();
     assert_eq!(field(stream, "bytes_out"), "4200", "{stream}");
+}
+
+/// A number that no other call in this process is given. Two tests may be given the
+/// same free port one after the other, and their files must not share a name.
+fn serial() -> usize {
+    use std::sync::atomic::{AtomicUsize as Counter, Ordering as Order};
+    static NEXT: Counter = Counter::new(0);
+    NEXT.fetch_add(1, Order::Relaxed)
 }
