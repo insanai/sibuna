@@ -76,18 +76,17 @@ pub(super) struct Http {
 }
 
 impl Http {
-    pub fn start(prepared: Prepared, edge: &Edge) -> io::Result<Self> {
+    pub fn start(prepared: Prepared, edge: &Edge, secret: Option<&str>) -> io::Result<Self> {
         let mut config = Config {
             waf: prepared.options.shield,
             secret_file: prepared.options.secret_file.clone(),
             ..Config::default()
         };
-        let secret = std::env::var("SIBUNA_SECRET").ok();
         let seed = if let Some(seed) = prepared.seed {
             config.secret_seed = Some(*seed.as_bytes());
             seed
         } else {
-            crate::cli::resolve_secret(&mut config, secret.as_deref())
+            crate::cli::resolve_secret(&mut config, secret)
                 .map_err(|()| io::Error::other("cannot load HTTP challenge seed"))?
         };
         let mut server = Server::new(Options {

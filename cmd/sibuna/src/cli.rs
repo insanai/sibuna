@@ -49,7 +49,7 @@ pub fn run(args: &[String], secret: Option<&str>) -> ExitCode {
             _ => {}
         }
     }
-    if let Some(code) = crate::edge::command(args) {
+    if let Some(code) = crate::edge::command(args, secret) {
         return code;
     }
     let daemon_args = if args.first().is_some_and(|arg| arg == "console") {

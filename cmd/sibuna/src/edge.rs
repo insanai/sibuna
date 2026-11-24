@@ -12,14 +12,14 @@ use sibuna_lb::{Config, Edge};
 
 use crate::signals::{self, Shutdown};
 
-pub(crate) fn command(args: &[String]) -> Option<ExitCode> {
+pub(crate) fn command(args: &[String], secret: Option<&str>) -> Option<ExitCode> {
     let path = match args {
         [option, path] if option == "--config-file" => path,
         [check, option, path] if check == "check" && option == "-f" => path,
         _ => return None,
     };
     let result = load(path).and_then(|config| {
-        if args[0] == "check" { Ok(()) } else { serve(path.to_owned(), config) }
+        if args[0] == "check" { Ok(()) } else { serve(path.to_owned(), config, secret) }
     });
     Some(match result {
         Ok(()) => ExitCode::SUCCESS,
@@ -59,7 +59,7 @@ fn topology(path: &str) -> io::Result<Config> {
     Config::parse(&bytes)
 }
 
-fn serve(path: String, revision: Revision) -> io::Result<()> {
+fn serve(path: String, revision: Revision, secret: Option<&str>) -> io::Result<()> {
     let shutdown = Shutdown::new();
     let pending = Arc::new(Mutex::new(None));
     let slot = Arc::clone(&pending);
@@ -72,7 +72,7 @@ fn serve(path: String, revision: Revision) -> io::Result<()> {
     let mesh = config.mesh().map(start_mesh).transpose()?;
     let mut current = sibuna_lb::Regime::Standalone;
     let mut edge = Edge::bind(config)?;
-    let mut http = http.map(|p| http::Http::start(p, &edge)).transpose()?;
+    let mut http = http.map(|p| http::Http::start(p, &edge, secret)).transpose()?;
     eprintln!("Sibuna edge listeners ready");
     while !shutdown.is_requested() {
         let next = pending.lock().unwrap_or_else(std::sync::PoisonError::into_inner).take();
