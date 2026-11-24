@@ -289,6 +289,7 @@ Review history
 --------------
 
 - 2026-11-24. Initial draft and implementation in one pass, after measuring where an HTTP/2 request spends its time.
+- 2026-11-24. Client certificates. The decision now receives the fingerprint of a verified client certificate with each offer, and the handoff socket carries it too, so the server reads the same ``X-Client-Cert-SHA256`` field over HTTP/1.1, HTTP/2 and HTTP/3. A test through the binary covers HTTP/1.1 and HTTP/2 with a forged field. HTTP/3 has no test.
 - 2026-11-24. The per-client bound. In-process exchanges had left HTTP/2 clients outside ``max_connections_per_ip``. The bound moved to the accept of the TLS connection, with a test through the binary.
 - 2026-11-24. gRPC. A first attempt through the HTTP/1.1 listener of the egress could not work: that hop drops trailers that are not announced, removes ``TE``, and cannot interleave. The runtime now sends to the HTTP/2 and HTTP/3 sessions directly. A run with grpc-go showed two things an operator must know, which the book now says: the default policy challenges a gRPC client, and the default request limiter stops it after 100 calls. HTTP/3 servers now also pass response trailers.
 - 2026-11-24. Second review, with tests for streamed responses. Server-sent events pass through unbuffered on both HTTP/1.1 paths. Response trailers pass on this path. The trailer test found a defect: a response that ended with trailers did not return its server connection to the pool. It does now.

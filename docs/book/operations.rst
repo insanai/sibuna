@@ -421,7 +421,9 @@ A ``tls`` object takes three more members, all optional.
      - ``"required"``
      - With ``client_ca``: ``"optional"`` also admits a client that presents no certificate. A certificate that is presented must still verify.
 
-The cipher suites are those of the TLS library, all with forward secrecy and authenticated encryption, and are not configurable. The servers do not learn the identity of a verified client yet.
+The cipher suites are those of the TLS library, all with forward secrecy and authenticated encryption, and are not configurable.
+
+When a client presents a certificate that verifies, the servers receive its identity in the request field ``X-Client-Cert-SHA256``: the SHA-256 digest of the certificate, in 64 lower-case hexadecimal digits. This is the value that ``openssl x509 -in client.pem -outform DER | sha256sum`` prints. A server keeps a list of the digests it accepts, or maps each digest to an account. Sibuna removes every field of that name from the request of a client, also when it is spelled with ``_``, so a server may trust the field as Sibuna's statement. A request without the field came from a client without a certificate. We do not pass the certificate itself or its subject name yet.
 
 To staple an OCSP response we put it as a DER file beside the certificate, with ``.ocsp`` added to the certificate's file name, as HAProxy does. We do not fetch or check the response: the tool that renews the certificate refreshes the file and sends SIGHUP.
 
