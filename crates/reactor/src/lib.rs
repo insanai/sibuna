@@ -42,6 +42,7 @@
 //! ```
 
 mod poll;
+mod rlimit;
 mod slab;
 mod wheel;
 
@@ -51,6 +52,7 @@ use std::net::TcpStream;
 pub use poll::{
     CAN_START_CONNECT, Handle, Poller, READ, WRITE, Wake, Waker, handle, start_connect,
 };
+pub use rlimit::{DescriptorLimit, descriptor_limit, set_descriptor_limit};
 pub use slab::Slab;
 pub use wheel::Wheel;
 
