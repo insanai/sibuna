@@ -1,8 +1,11 @@
 //! Edge-mode startup, reload at batch boundaries and bounded shutdown.
 
+mod admin;
+mod fdlimit;
 mod http;
 #[cfg(feature = "https")]
 mod inline;
+mod proxy_stage;
 mod workers;
 
 use std::fs::File;
@@ -71,20 +74,34 @@ fn serve(path: String, revision: Revision, secret: Option<&str>) -> io::Result<(
     let shutdown = Shutdown::new();
     let pending = Arc::new(Mutex::new(None));
     let slot = Arc::clone(&pending);
-    signals::install_edge(Arc::clone(&shutdown), move || match load(&path) {
-        Ok(next) => *slot.lock().unwrap_or_else(std::sync::PoisonError::into_inner) = Some(next),
-        Err(error) => eprintln!("EDGE002: keeping current routes: {error}"),
+    fdlimit::check(&path, fdlimit::Demand::of(&revision.config));
+    // SIGHUP also reopens the access log, whether or not the new topology loads.
+    let rotate = Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let rotated = Arc::clone(&rotate);
+    signals::install_edge(Arc::clone(&shutdown), move || {
+        rotated.store(true, std::sync::atomic::Ordering::Release);
+        match load(&path) {
+            Ok(next) => {
+                *slot.lock().unwrap_or_else(std::sync::PoisonError::into_inner) = Some(next);
+            }
+            Err(error) => eprintln!("EDGE002: keeping current routes: {error}"),
+        }
     })
     .map_err(io::Error::other)?;
     let Revision { mut config, http } = revision;
+    let observe_options = config.observe().clone();
     let mut adapters = Adapters::default();
     adapt(&mut adapters, &mut config)?;
     let mesh = config.mesh().map(start_mesh).transpose()?;
     let mut current = sibuna_lb::Regime::Standalone;
     let mut edge = Edge::bind(config)?;
     let mut http = http.map(|p| http::Http::start(p, &edge, secret)).transpose()?;
+    let observed = http::observe(http.as_ref(), observe_options, &edge)?;
     eprintln!("Sibuna edge listeners ready");
     while !shutdown.is_requested() {
+        if rotate.swap(false, std::sync::atomic::Ordering::AcqRel) {
+            observed.reopen_log();
+        }
         let next = pending.lock().unwrap_or_else(std::sync::PoisonError::into_inner).take();
         if let Some(next) = next {
             match reload(&mut edge, http.as_mut(), &mut adapters, next) {
@@ -103,6 +120,7 @@ fn serve(path: String, revision: Revision, secret: Option<&str>) -> io::Result<(
         step(&mut edge, http.as_ref())?;
     }
     drop(mesh);
+    observed.drain();
     edge.drain();
     if let Some(http) = &http {
         http.drain();

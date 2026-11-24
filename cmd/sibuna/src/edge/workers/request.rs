@@ -27,6 +27,8 @@ pub(super) struct Scratch {
     pub activity: Activity,
     /// The normal forms of the request path and of a forwarded path.
     pub paths: Box<[u8]>,
+    /// What the access log learns of the request being decided (SID 0020).
+    pub trace: crate::access::Trace,
 }
 
 impl Scratch {
@@ -37,6 +39,7 @@ impl Scratch {
             defer: Defer::default(),
             activity: Activity::new(),
             paths: vec![0; MAX_HEAD_BYTES].into_boxed_slice(),
+            trace: crate::access::Trace::default(),
         }
     }
 }
@@ -74,13 +77,20 @@ pub(super) fn advance(server: &Server, conn: &mut Conn, scratch: &mut Scratch) -
         activity: &scratch.activity,
         last: *served + 1 >= MAX_REQUESTS_PER_CONNECTION,
         admission: admission.take(),
+        trace: &mut scratch.trace,
     };
     let step = decide(&mut link, buffer, reading, peer.as_bytes(), &mut scratch.paths);
+    let tally = link.writer.tally();
     *admission = link.admission.take();
     match step {
         Step::Answered { keep, used } => match scratch.defer.plan.take() {
+            // The entry of an admitted request stays in the scratch for the worker.
             Some(plan) => Step::Admitted { plan, used },
-            None => Step::Answered { keep, used },
+            None => {
+                let (trace, ingress) = (&mut scratch.trace, Some(*ingress));
+                crate::access::settle_written(server, trace, tally, ingress, peer.as_bytes());
+                Step::Answered { keep, used }
+            }
         },
         other => other,
     }
@@ -167,11 +177,15 @@ pub(super) fn truncated(server: &Server, conn: &mut Conn, scratch: &mut Scratch)
         activity: &scratch.activity,
         last: true,
         admission: admission.take(),
+        trace: &mut scratch.trace,
     };
     let head = buffer.data.get(..reading.head_len).unwrap_or_default();
     let declared = if reading.decoder.is_some() { UNKNOWN_LENGTH } else { 0 };
     connection::reject_body(head, &mut link, peer.as_bytes(), declared, BodyFault::Truncated);
+    let tally = link.writer.tally();
     *admission = link.admission.take();
+    let (trace, ingress) = (&mut scratch.trace, Some(*ingress));
+    crate::access::settle_written(server, trace, tally, ingress, peer.as_bytes());
 }
 
 /// The length of the head once its blank line arrived. An error is a head over the limit.

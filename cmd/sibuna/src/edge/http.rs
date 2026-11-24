@@ -3,16 +3,17 @@
 use std::collections::BTreeMap;
 use std::io;
 use std::net::{SocketAddr, TcpStream};
-use std::sync::{Arc, atomic::Ordering};
+use std::sync::{Arc, RwLock, atomic::Ordering};
 use std::thread::JoinHandle;
 
 use sibuna_core::{Config, Metrics};
 use sibuna_lb::{Edge, FlowPermit, HttpOptions, TlsOptions};
 use sibuna_policy::{Engine, loader::Diagnostic};
 
+use crate::access::{AccessLog, Observe};
 use crate::connection::Ingress;
 use crate::recipe::Recipe;
-use crate::server::{Hooks, Options, Server, admit, start_reaper};
+use crate::server::{Hooks, Options, Server, admit_within, start_reaper};
 use crate::slot::EngineSlot;
 
 use super::workers::{Incoming, Timeouts, Workers};
@@ -22,6 +23,7 @@ const ALLOW_ALL: &[u8] = br#"{"rules":[{"name":"load-balancer","path":"/*","acti
 
 pub(super) struct Prepared {
     options: HttpOptions,
+    observe: sibuna_lb::ObserveOptions,
     seed: Option<sibuna_challenge::Seed>,
     engine: Engine,
     binds: BTreeMap<SocketAddr, Arc<TlsOptions>>,
@@ -63,6 +65,7 @@ impl Prepared {
             .collect::<io::Result<_>>()?;
         Ok(Some(Self {
             options,
+            observe: topology.observe().clone(),
             seed,
             engine,
             binds,
@@ -95,8 +98,113 @@ pub(super) struct Http {
     workers: Option<Arc<Workers>>,
     options: HttpOptions,
     binds: BTreeMap<SocketAddr, Arc<TlsOptions>>,
+    /// Hands accepted connections to their request path. Shared with the PROXY stage.
+    dispatcher: Arc<Dispatcher>,
+    /// Reads the PROXY header of frontends that require one (SID 0020).
+    stage: Option<super::proxy_stage::Stage>,
+    observe: Arc<Observe>,
+}
+
+/// What it takes to hand an accepted connection to its request path.
+pub(super) struct Dispatcher {
+    server: Arc<Server>,
+    workers: Option<Arc<Workers>>,
+    #[cfg_attr(not(feature = "https"), allow(dead_code))]
+    binds: BTreeMap<SocketAddr, Arc<TlsOptions>>,
+    /// The TLS front. Emptied when the server stops.
     #[cfg(feature = "https")]
-    ingress: Option<sibuna_ingress::Ingress>,
+    ingress: RwLock<Option<sibuna_ingress::Ingress>>,
+    #[cfg(not(feature = "https"))]
+    ingress: RwLock<Option<std::convert::Infallible>>,
+}
+
+impl Dispatcher {
+    /// The frontend behind the listener `bind`.
+    pub fn frontend(&self, bind: SocketAddr) -> Option<Arc<sibuna_lb::FrontendInfo>> {
+        self.server.edge_routes.as_ref()?.frontend(bind)
+    }
+
+    /// Starts TLS or HTTP on an accepted connection. `client` is the source of its PROXY
+    /// header, when it had one, and then replaces the socket peer.
+    pub fn deliver(
+        &self,
+        bind: SocketAddr,
+        stream: TcpStream,
+        permit: FlowPermit,
+        client: Option<SocketAddr>,
+    ) {
+        #[cfg(feature = "https")]
+        if self.binds.contains_key(&bind) {
+            let ingress = self.ingress.read().unwrap_or_else(std::sync::PoisonError::into_inner);
+            if let Some(ingress) = ingress.as_ref() {
+                ingress.accept_from(bind, stream, permit, client);
+                return;
+            }
+        }
+        let _ = bind;
+        let (Ok(peer), Ok(vip)) = (stream.peer_addr(), stream.local_addr()) else { return };
+        let ingress = ingress_of(&self.server, client.unwrap_or(peer), vip, false);
+        serve(&self.server, self.workers.as_deref(), stream, ingress, Some(permit));
+    }
+}
+
+/// The client side of a connection from `peer` to the listener `vip`. A peer that the
+/// frontend trusts as a proxy is exempt from the per-client connection bound.
+fn ingress_of(server: &Server, peer: SocketAddr, vip: SocketAddr, secure: bool) -> Ingress {
+    let trusted = server
+        .edge_routes
+        .as_ref()
+        .and_then(|routes| routes.frontend(vip))
+        .is_some_and(|front| front.trusts(peer.ip()));
+    Ingress { peer, vip, secure, trusted }
+}
+
+/// Starts the access log, when the topology has one, and the counters beside it.
+fn start_observe(options: &sibuna_lb::ObserveOptions, edge: &Edge) -> io::Result<Arc<Observe>> {
+    let log = options.access_log.as_ref().map(AccessLog::start).transpose()?;
+    Ok(Arc::new(Observe::new(options.clone(), log, edge.stats())))
+}
+
+/// What the edge observes, with or without an HTTP frontend (SID 0020).
+pub(super) struct Observed {
+    observe: Arc<Observe>,
+    _admin: Option<super::admin::Admin>,
+}
+
+impl Observed {
+    /// Reopens the access log file, for log rotation.
+    pub fn reopen_log(&self) {
+        if let Some(log) = &self.observe.log {
+            log.reopen();
+        }
+    }
+
+    /// Turns the readiness answer to 503.
+    pub fn drain(&self) {
+        self.observe.draining.store(true, Ordering::Release);
+    }
+}
+
+/// Starts the separate listener, when the topology has one, and returns the handle of
+/// everything observed. A topology without an HTTP frontend has counters and no log.
+pub(super) fn observe(
+    http: Option<&Http>,
+    options: sibuna_lb::ObserveOptions,
+    edge: &Edge,
+) -> io::Result<Observed> {
+    let listen = options.listen;
+    let observe = match http {
+        Some(http) => http.observe.clone(),
+        None => Arc::new(Observe::new(options, None, edge.stats())),
+    };
+    let admin = listen
+        .map(|address| {
+            let server = http.map(|http| http.server.clone());
+            let sources = super::admin::Sources { observe: observe.clone(), server };
+            super::admin::Admin::start(address, sources)
+        })
+        .transpose()?;
+    Ok(Observed { observe, _admin: admin })
 }
 
 impl Http {
@@ -118,6 +226,8 @@ impl Http {
         });
         server.edge_routes = Some(edge.http_routes());
         server.unlimited = prepared.options.rate_limit.is_none();
+        let observe = start_observe(&prepared.observe, edge)?;
+        server.observe = Some(observe.clone());
         let server = Arc::new(server);
         let workers = start_workers(&server, &prepared.options)?;
         #[cfg(feature = "https")]
@@ -127,7 +237,7 @@ impl Http {
             let web = server.clone();
             let pool = workers.clone();
             let handler = Arc::new(move |stream, peer, vip| {
-                let ingress = Ingress { peer, vip, secure: true };
+                let ingress = ingress_of(&web, peer, vip, true);
                 serve(&web, pool.as_deref(), stream, ingress, None);
             });
             let limits = sibuna_ingress::Limits {
@@ -151,14 +261,24 @@ impl Http {
             )?)
         };
         let reaper = start_reaper(&server)?;
+        #[cfg(not(feature = "https"))]
+        let ingress = None;
+        let dispatcher = Arc::new(Dispatcher {
+            server: server.clone(),
+            workers: workers.clone(),
+            binds: prepared.binds.clone(),
+            ingress: RwLock::new(ingress),
+        });
+        let stage = super::proxy_stage::Stage::start(dispatcher.clone(), observe.clone())?;
         Ok(Self {
             server,
             reaper,
             workers,
             options: prepared.options,
             binds: prepared.binds,
-            #[cfg(feature = "https")]
-            ingress,
+            dispatcher,
+            stage: Some(stage),
+            observe,
         })
     }
 
@@ -167,13 +287,15 @@ impl Http {
             workers.drain();
         }
         #[cfg(feature = "https")]
-        if let Some(ingress) = &self.ingress {
+        if let Some(ingress) = self.dispatcher.ingress.read().unwrap_or_else(poisoned).as_ref() {
             ingress.drain();
         }
+        self.observe.draining.store(true, Ordering::Release);
     }
 
     pub fn compatible(&self, next: &Prepared) -> bool {
         self.options == next.options
+            && self.observe.options == next.observe
             && self.binds == next.binds
             && next.seed.as_ref().is_none_or(|seed| {
                 self.server.config.secret_seed.as_ref() == Some(seed.as_bytes())
@@ -181,25 +303,27 @@ impl Http {
     }
     pub fn reload(&mut self, prepared: Prepared) {
         #[cfg(feature = "https")]
-        if let Some(ingress) = &mut self.ingress {
+        if let Some(ingress) = self.dispatcher.ingress.write().unwrap_or_else(poisoned).as_mut() {
             ingress.reload(prepared.identities);
         }
         self.server.slot.publish(prepared.engine);
     }
 
     pub fn accept(&self, bind: SocketAddr, stream: TcpStream, permit: FlowPermit) {
-        #[cfg(feature = "https")]
-        if self.binds.contains_key(&bind)
-            && let Some(ingress) = &self.ingress
+        // A PROXY frontend reads its header first, off this thread.
+        if let Some(stage) = &self.stage
+            && self.dispatcher.frontend(bind).is_some_and(|front| front.proxy_protocol)
         {
-            ingress.accept(bind, stream, permit);
+            stage.submit(bind, stream, permit);
             return;
         }
-        let _ = bind;
-        let (Ok(peer), Ok(vip)) = (stream.peer_addr(), stream.local_addr()) else { return };
-        let ingress = Ingress { peer, vip, secure: false };
-        serve(&self.server, self.workers.as_deref(), stream, ingress, Some(permit));
+        self.dispatcher.deliver(bind, stream, permit, None);
     }
+}
+
+/// The value of a lock whose holder panicked. The values here stay consistent.
+fn poisoned<T>(error: std::sync::PoisonError<T>) -> T {
+    error.into_inner()
 }
 
 /// Starts the event-driven workers when the topology asks for them and the platform has
@@ -244,7 +368,9 @@ fn launch(server: &Arc<Server>, stream: TcpStream, ingress: Ingress, permit: Opt
         if server_ref.is_stopping() {
             return;
         }
-        let Some(admission) = admit(&server_ref, &stream, ingress.peer.ip()) else { return };
+        let bound = ingress.connection_bound(&server_ref);
+        let peer = ingress.peer.ip();
+        let Some(admission) = admit_within(&server_ref, &stream, peer, bound) else { return };
         sibuna_net::connect::set_no_delay(&stream);
         crate::connection::serve_from(&server_ref, &stream, admission, Some(ingress));
     });
@@ -256,11 +382,12 @@ fn launch(server: &Arc<Server>, stream: TcpStream, ingress: Ingress, permit: Opt
 impl Drop for Http {
     fn drop(&mut self) {
         self.server.stopping.store(true, Ordering::Release);
+        // The stage holds the dispatcher. It ends first, so nothing is delivered later.
+        drop(self.stage.take());
         if let Some(workers) = &self.workers {
             workers.stop();
         }
-        #[cfg(feature = "https")]
-        drop(self.ingress.take());
+        *self.dispatcher.ingress.write().unwrap_or_else(poisoned) = None;
         self.server.idle.shutdown();
         self.server.pool.shutdown();
         self.server.tasks.join();
@@ -268,5 +395,9 @@ impl Drop for Http {
             let _ = reaper.join();
         }
         self.server.pool.drain();
+        // Every request path has ended. Write the lines that are queued.
+        if let Some(log) = &self.observe.log {
+            log.close();
+        }
     }
 }
