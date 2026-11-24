@@ -29,6 +29,19 @@ impl Drop for Daemon {
 }
 
 fn start(origin: SocketAddr, event_loop: bool) -> Daemon {
+    // A port that was free a moment ago may be taken by a test that runs beside this
+    // one. The listener is then chosen again.
+    let mut failure = String::new();
+    for _ in 0..5 {
+        match try_start(origin, event_loop) {
+            Ok(daemon) => return daemon,
+            Err(line) => failure = line,
+        }
+    }
+    panic!("the edge did not start: {failure}");
+}
+
+fn try_start(origin: SocketAddr, event_loop: bool) -> Result<Daemon, String> {
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
     let name = format!("sibuna-stream-{}-{}.json", std::process::id(), vip.port());
     let path = std::env::temp_dir().join(name);
@@ -42,8 +55,13 @@ fn start(origin: SocketAddr, event_loop: bool) -> Daemon {
         Command::new(BIN).arg("--config-file").arg(&path).stderr(Stdio::piped()).spawn().unwrap();
     let mut line = String::new();
     BufReader::new(child.stderr.take().unwrap()).read_line(&mut line).unwrap();
-    assert!(line.contains("ready"), "{line}");
-    Daemon { child, path, vip }
+    if !line.contains("ready") {
+        let _ = child.kill();
+        let _ = child.wait();
+        let _ = fs::remove_file(&path);
+        return Err(line);
+    }
+    Ok(Daemon { child, path, vip })
 }
 
 /// A server of events. It sends the next event only when the test asks for it.
