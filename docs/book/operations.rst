@@ -348,7 +348,7 @@ An HTTP frontend selects a backend for each request, also for later requests on 
      }
    }
 
-Sibuna keeps the client's ``Host`` field and sets ``X-Forwarded-For``, ``X-Forwarded-Proto`` and ``X-Real-IP`` from the connection it terminated. A client cannot supply these fields. An application that reads ``X-Forwarded-For`` must list the Sibuna node as a trusted proxy.
+Sibuna keeps the client's ``Host`` field and sets ``X-Forwarded-For``, ``X-Forwarded-Proto`` and ``X-Real-IP`` from the connection it terminated. It also sets ``X-Forwarded-Host`` to the ``Host`` of the request and ``X-Forwarded-Port`` to the port of the listener. A client cannot supply these fields. An application that reads ``X-Forwarded-For`` must list the Sibuna node as a trusted proxy.
 
 Turning the firewall on and off
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -491,7 +491,7 @@ The firewall always relays HTTP/1.1. For the other cases an adapter inside the d
 Scheduling and health checks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A standalone pool defaults to weighted least connections. With ``"balance": {"kind": "p2c_pewma"}`` we compare two eligible servers using their active flows, weights and observed latency. ``"bounded_maglev"`` hashes the client to a server and stays within a load factor. A server marked ``"backup": true`` becomes eligible when the primary servers are unavailable or full. ``max_flows`` on a server caps its concurrent flows. A failed connect suppresses that server for two seconds.
+A standalone pool defaults to weighted least connections. With ``"balance": {"kind": "round_robin"}`` each server takes its turn in proportion to its weight, whatever its open connections. With ``"p2c_pewma"`` we compare two eligible servers using their active flows, weights and observed latency. ``"bounded_maglev"`` hashes the client to a server and stays within a load factor. A server marked ``"backup": true`` becomes eligible when the primary servers are unavailable or full. ``max_flows`` on a server caps its concurrent flows. A failed connect suppresses that server for two seconds.
 
 A TCP or HTTP pool can check its servers actively.
 
@@ -501,6 +501,150 @@ A TCP or HTTP pool can check its servers actively.
                      "expect_status": 200, "timeout": "2s", "interval": "5s", "rise": 2, "fall": 3}}
 
 ``"kind": "tcp"`` passes when the connect completes. ``"kind": "http"`` sends ``GET`` and passes on a 2xx or 3xx status, or on ``expect_status`` alone. A server starts in service, as in HAProxy. It leaves after ``fall`` failed probes and returns after ``rise`` passed ones. A reload keeps the status of every address. Probes of a TLS, HTTP/2 or HTTP/3 pool travel through its adapter, so they test the same path as a request.
+
+An HTTP pool also learns from live requests. This is *passive health*, and it is on by default. Three consecutive response timeouts eject a server for ten seconds. An ejected server takes no new request while another server of the pool can serve. If every server is ejected the pool uses them all, because a slow answer is better than none.
+
+.. code-block:: text
+
+   passive_health: { failures: 3, ejection: "10s", http_5xx: false }
+
+``failures`` is the number of consecutive failures, from 1 to 100. ``ejection`` is how long the server stays out. With ``http_5xx: true`` a response with status 500, 502, 503 or 504 counts as a failure too. Any other complete response sets the count back to zero. ``passive_health: "off"`` keeps every server in rotation.
+
+A server that returns after it was down, or that a reload adds to a pool, can start gently. With ``slow_start: "30s"`` its weight grows from almost nothing to its configured weight over thirty seconds. The default is off, as in HAProxy and nginx: only we know how long our application takes to warm up. Servers that start together with the edge do not ramp.
+
+Timeouts and failover
+~~~~~~~~~~~~~~~~~~~~~
+
+Each HTTP pool bounds its own waits. The client has its bound, ``http.idle_timeout``, and the two do not replace each other.
+
+.. list-table:: Timeouts of an HTTP pool
+   :header-rows: 1
+   :widths: 24 14 62
+
+   * - Member
+     - Default
+     - Meaning
+   * - ``connect_timeout``
+     - ``"5s"``
+     - The longest wait for a TCP connection to one server.
+   * - ``response_timeout``
+     - ``"60s"``
+     - The longest silence of a server that owes us bytes: before the response head, and between two pieces of the body. The client then receives 504.
+   * - ``retries``
+     - ``2``
+     - How many other servers one request may try, from 0 to 8.
+
+.. code-block:: text
+
+   backends: {
+       reports: {
+           mode: "http",
+           connect_timeout: "2s",
+           response_timeout: "5m",
+           retries: 1,
+           servers: [{ name: "r1", addr: "10.20.0.21:8080" }, { name: "r2", addr: "10.20.0.22:8080" }],
+       },
+   }
+
+``response_timeout`` bounds silence, not the whole exchange. A download of an hour passes as long as the server keeps sending. A slow upload is the client's affair and stays under ``http.idle_timeout``.
+
+When a server cannot be reached, the request moves to another server of the pool. The server received nothing, so this is safe for every method, also for ``POST``. After a byte of the request was sent, only a ``GET``, ``HEAD`` or ``OPTIONS`` request that fits the request buffer is sent again. A request never tries the same server twice. ``retries: 0`` turns failover off, and the client then receives 502 at once.
+
+Sticky sessions
+~~~~~~~~~~~~~~~
+
+An application that keeps a session in the memory of one server needs every request of a client on that server. A pool offers two ways.
+
+.. code-block:: text
+
+   sticky: "cookie"
+   sticky: { kind: "cookie", cookie: "srv" }
+   sticky: "source"
+
+With ``"cookie"`` the first response to a client carries a cookie, ``sibuna_srv`` unless we name it. The cookie is ``HttpOnly`` and ``SameSite=Lax``, and ``Secure`` on a frontend with TLS. Its value is a keyed hash, not the name of the server, so a client cannot aim at a server of its choice. The key comes from ``http.secret_file``. Nodes that share the file accept each other's cookies. Without the file the key is new at each start, and the clients are balanced once more.
+
+With ``"source"`` the client address selects the server, without its port. No cookie is set, so this also serves clients that keep no cookies and TCP or UDP pools. When a server leaves, only its clients move, and they return when it returns. All clients behind one NAT address share a server.
+
+In both cases a sticky server that is down, full or ejected gives way: the request is balanced as usual, and with a cookie the client receives the cookie of the server that answered.
+
+Redirects, headers and body limits
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A frontend carries a small HTTP policy. Each route can state its own, and a route keeps every member that it does not state.
+
+.. list-table:: Policy members of a frontend or route
+   :header-rows: 1
+   :widths: 24 14 62
+
+   * - Member
+     - Default
+     - Meaning
+   * - ``redirect_https``
+     - ``false``
+     - ``true`` answers every cleartext request with 308 and the same host, path and query under ``https://``. ``301`` uses that status. ``{status: 308, port: 8443}`` names another port. Only on a frontend without ``tls``.
+   * - ``hsts``
+     - ``false``
+     - ``true`` adds ``Strict-Transport-Security: max-age=31536000`` to the responses of the servers. ``{max_age: 600, include_subdomains: true, preload: false}`` sets the parts. Only on a frontend with ``tls``.
+   * - ``request_headers``
+     - none
+     - ``{set: {...}, remove: [...]}`` for the request that goes to the server.
+   * - ``response_headers``
+     - none
+     - The same for the response that goes to the client.
+   * - ``max_body``
+     - none
+     - The largest request body: a number of bytes, or ``"64k"``, ``"10m"``, ``"1g"``. A larger request receives 413. ``"off"`` on a route lifts the limit of its frontend.
+
+.. code-block:: text
+
+   fn security() -> Map<Value> {
+       return {
+           set: { "X-Frame-Options": "DENY", "X-Content-Type-Options": "nosniff" },
+           remove: ["Server", "X-Powered-By"],
+       }
+   }
+
+   fn edge() -> Map<Value> {
+       return {
+           frontends: {
+               plain: {
+                   proto: "http",
+                   binds: ["0.0.0.0:80"],
+                   default_backend: "app",
+                   redirect_https: true,
+                   routes: [{ path_prefix: "/.well-known/acme-challenge/", backend: "app",
+                              redirect_https: false }],
+               },
+               web: {
+                   proto: "http",
+                   binds: ["0.0.0.0:443"],
+                   tls: { crt: "/etc/sibuna/certs/" },
+                   default_backend: "app",
+                   hsts: { max_age: 31536000, include_subdomains: true },
+                   max_body: "10m",
+                   response_headers: security(),
+                   request_headers: { set: { "X-Edge": "sibuna" } },
+                   routes: [{ path_prefix: "/upload/", backend: "app", max_body: "1g" }],
+               },
+           },
+           backends: {
+               app: {
+                   mode: "http",
+                   sticky: "cookie",
+                   balance: { kind: "round_robin" },
+                   servers: [{ name: "a1", addr: "10.20.0.8:8080" }, { name: "a2", addr: "10.20.0.9:8080" }],
+               },
+           },
+       }
+   }
+
+The redirect is decided before the firewall, so a cleartext request is never challenged first. The route for ``/.well-known/acme-challenge/`` above keeps certificate validation over port 80 working.
+
+``set`` replaces a field: every field of that name is dropped and ours is added. ``remove`` drops a field. A value is fixed text of at most 1024 printable characters. The checker refuses the names that frame a message, such as ``Host``, ``Content-Length`` and ``Connection``, and on requests the forwarding fields that Sibuna writes itself. A request field that we set or remove is also dropped when the client spells it with ``_`` for ``-``.
+
+The edits apply to exchanges with a server. Sibuna's own pages, such as a challenge or a 502, do not carry them.
+
+In JSON the members have the same names: ``"redirect_https": true``, ``"max_body": "10m"``, ``"sticky": {"kind": "cookie", "cookie": "srv"}``.
 
 WebSockets
 ~~~~~~~~~~
@@ -665,6 +809,32 @@ Coming from HAProxy
      - ``"proto": "tcp", "tcp_inspect": "tls_client_hello"`` with ``acls`` and ``rules``
    * - ``balance leastconn``, ``weight``, ``maxconn``, ``backup``
      - ``least_connections`` (default), ``weight``, ``max_flows``, ``backup``
+   * - ``balance roundrobin``
+     - ``"balance": {"kind": "round_robin"}``
+   * - ``balance source``
+     - ``"sticky": "source"``
+   * - ``cookie SRV insert indirect nocache httponly secure``
+     - ``"sticky": {"kind": "cookie", "cookie": "SRV"}``. The value is a keyed hash, not the server name.
+   * - ``timeout connect 5s``, ``timeout server 60s``
+     - ``"connect_timeout": "5s"``, ``"response_timeout": "60s"`` on the backend (these are the defaults)
+   * - ``retries 2`` with ``option redispatch``
+     - ``"retries": 2`` (default). Each retry goes to another server.
+   * - ``observe layer7``, ``error-limit 3``, ``on-error mark-down``
+     - ``"passive_health": {"failures": 3, "ejection": "10s", "http_5xx": true}``
+   * - ``server s1 ... slowstart 30s``
+     - ``"slow_start": "30s"`` on the backend
+   * - ``http-request redirect scheme https code 308 unless { ssl_fc }``
+     - ``"redirect_https": true`` on the cleartext frontend
+   * - ``http-response set-header Strict-Transport-Security max-age=31536000``
+     - ``"hsts": true`` on the TLS frontend
+   * - ``http-request set-header X-Edge sibuna``, ``http-request del-header X-Debug``
+     - ``"request_headers": {"set": {"X-Edge": "sibuna"}, "remove": ["X-Debug"]}``
+   * - ``http-response set-header``, ``http-response del-header Server``
+     - ``"response_headers": {"set": {...}, "remove": ["Server"]}``
+   * - ``http-request deny deny_status 413 if { req.body_size gt 10m }``
+     - ``"max_body": "10m"``
+   * - ``http-request set-header X-Forwarded-Host %[req.hdr(host)]``, ``X-Forwarded-Port %[dst_port]``
+     - Always on for HTTP frontends
    * - ``option httpchk GET /health`` and ``check inter 2s rise 2 fall 3``
      - ``"health_check": {"kind": "http", "path": "/health", "interval": "2s", "rise": 2, "fall": 3}``
    * - ``server s1 10.0.0.1:8443 ssl verify required ca-file ca.pem sni str(api.internal) alpn h2``
@@ -673,7 +843,7 @@ Coming from HAProxy
      - ``"proxy_v2": {"enabled": true}`` on a TCP pool
    * - ``option forwardfor``
      - Always on for HTTP frontends
-   * - ``timeout client``, ``timeout server``, ``timeout tunnel``
+   * - ``timeout client``, ``timeout tunnel``
      - ``http.idle_timeout``, ``http.websocket_idle_timeout``, ``session_timeout`` on TCP and UDP frontends
    * - ``stick-table ... conn_rate``, ``http_req_rate``
      - ``rate_limit`` on a frontend, ``http.rate_limit``
@@ -683,7 +853,7 @@ Coming from HAProxy
 Limits of this version
 ~~~~~~~~~~~~~~~~~~~~~~
 
-On Linux the HTTP firewall serves connections on event-driven workers, one per processor, up to ``http.max_connections``. A connection that waits holds a small record and no buffer. On other platforms, and with ``event_loop`` ``false``, each HTTP/1.1 connection and each HTTP/2 or HTTP/3 exchange has a thread of its own, up to 8192 at a time. A WebSocket to a pool with ``http_version`` 2 or 3 answers 501. HTTP/3 clients cannot open WebSockets, and browsers fall back to HTTP/1.1 or HTTP/2 for them. Server addresses are numeric. Request headers are limited to 16 KiB on HTTP/2 and HTTP/3. Sticky sessions by cookie, response compression, caching and header rewriting are not provided. SID 0015 lists the parts of the design that remain proposals: the shared-memory spill cache, database-backed topology, replicated bans, peer forwarding, binary handoff, plugins and the fleet console.
+On Linux the HTTP firewall serves connections on event-driven workers, one per processor, up to ``http.max_connections``. A connection that waits holds a small record and no buffer. On other platforms, and with ``event_loop`` ``false``, each HTTP/1.1 connection and each HTTP/2 or HTTP/3 exchange has a thread of its own, up to 8192 at a time. A WebSocket to a pool with ``http_version`` 2 or 3 answers 501. HTTP/3 clients cannot open WebSockets, and browsers fall back to HTTP/1.1 or HTTP/2 for them. Server addresses are numeric. Request headers are limited to 16 KiB on HTTP/2 and HTTP/3. Response compression and caching are not provided. Header edits set fixed values: there are no patterns or variables. With ``event_loop`` ``false`` an HTTP/1.1 connection has the choice of the server, sticky sessions, the redirect, the header edits and the limit on a declared body, but not ``connect_timeout``, ``response_timeout``, failover to another server or passive health. A request body without a declared length is bounded by ``max_body`` on the event-driven workers only. SID 0019 lists the remaining gaps. SID 0015 lists the parts of the design that remain proposals: the shared-memory spill cache, database-backed topology, replicated bans, peer forwarding, binary handoff, plugins and the fleet console.
 
 
 Console Preview
