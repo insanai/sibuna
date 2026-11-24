@@ -1,8 +1,8 @@
-# A sample unit for the edge load balancer (SID 0018). The packages do not install it.
-# Copy it to /etc/systemd/system/, put the topology in /etc/sibuna/edge.jlv with
+# The edge load balancer (SID 0018). The packages install this unit beside sibuna.service
+# and start neither. Put the topology in /etc/sibuna/edge.jlv, with
 #   global: { admin_socket: "/run/sibuna/edge.sock" }
-# and run `systemctl enable --now sibuna-edge`. `systemctl reload sibuna-edge` checks the
-# file and applies it without dropping flows.
+# for `sibuna ctl`, and run `systemctl enable --now sibuna-edge`.
+# `systemctl reload sibuna-edge` checks the file and applies it without dropping flows.
 [Unit]
 Description=Sibuna edge load balancer
 Documentation=https://insanai.github.io/sibuna/ https://github.com/insanai/sibuna
