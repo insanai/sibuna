@@ -275,7 +275,7 @@ The design is implemented for edge mode on Linux. The classic listener and other
 #. Beside HAProxy on the host of SID 0015, plaintext HTTP at 256 connections reaches at least 85% of HAProxy's throughput, with a 99th percentile below 5 ms. **Met.** 229,139 against 243,864 requests per second, which is 94%, with a 99th percentile of 2.60 ms.
 #. 20,000 idle keep-alive connections hold less than 100 MiB of resident memory. **Met.** They added 8 MiB.
 #. 10,000 concurrent WebSockets exchange messages on one node. **Met.** They held 27 MiB of resident memory and every echo was correct.
-#. A slow header, a slow body, a slow reader and a silent server are each closed by their deadline, and the other connections of the worker keep their latency. **Partly met.** Tests cover the slow header, the silent server, the idle connection and the idle tunnel. The slow body and the slow reader use the same deadline code and have no test of their own. The latency of other connections under such clients was not measured.
+#. A slow header, a slow body, a slow reader and a silent server are each closed by their deadline, and the other connections of the worker keep their latency. **Met.** Tests cover the slow header, the slow body, the slow reader, the silent server, the idle connection and the idle tunnel. The slow-body and slow-reader test runs one worker and checks that another connection of that worker answers within 500 ms meanwhile.
 #. On three nodes with a mesh, clients keep being served while one node stops and returns, and a WebSocket through a surviving node stays open. **Met.** ``benchmarks/results/edge-workers-2026-11-24.md`` holds the record.
 
 Formal model
@@ -313,13 +313,11 @@ The kernel, socket readiness, the HTTP grammar, generation wrap-around and Rust 
 Known gaps
 ~~~~~~~~~~
 
-#. HTTP/2 reaches 53% to 58% of HAProxy. Each stream crosses a socket pair between the protocol runtime and a worker. Terminating HTTP/2 on the workers would remove it.
+#. HTTP/2 reached 53% to 58% of HAProxy, because each stream crossed a socket pair between the protocol runtime and a worker. SID 0017 removes that hop for HTTP/2 and HTTP/3 requests.
 #. The route table is behind one mutex, which every request takes once to select a server. Throughput scaled from 68,000 requests per second on one processor to 227,000 on eight, so the lock is not the bound yet. It will be on larger machines.
 #. A pool with ``http_version`` 2 or 3 cannot receive a WebSocket.
 #. A request that is not safe to repeat and meets a stale pooled socket answers 502. The worker watches idle sockets, so this needs a server that closes in the instant of reuse.
-#. A silent server answers 502, as on the thread path. A 504 would say more.
 #. The telemetry hooks of the console do not run on the workers. Edge mode has no console, so nothing is lost today.
-#. The worker count is not configurable. It follows the processors the process may use.
 
 Open questions
 --------------
@@ -332,6 +330,7 @@ Review history
 
 - 2026-11-24. Initial draft: per-core loops, a synchronous decision, sans-I/O relays, per-worker pools.
 - 2026-11-24. Implementation and its review. Three-node tests and the load tests found two defects, both fixed: a tunnel kept an empty 64 KiB request buffer for its whole life, and vectors kept the capacity of their largest burst. With them 10,000 tunnels held 106 MiB; without them 27 MiB. The review also moved the protocol-free parts into ``sibuna-reactor``, added the counters, changed the per-turn byte budget into a bound on reads and rounds per event, and recorded the known gaps above. WebSocket toward HTTP/2 pools was specified and is not implemented; the specification now says so.
+- 2026-11-24. Second review, after comparing with HAProxy and Envoy. A silent server now answers 504 on the workers. ``http.workers`` sets the worker count. A test covers the slow-body and slow-reader deadlines and checks that other connections of the same worker are not delayed. Those three items left the known gaps.
 - 2026-11-24. Author's review before promotion. It added the ordering invariant for pipelined requests, the three early endings of an exchange (a response before the end of an upload, a half-closed client, a failed client), the retention of the encoded request for a retry, fault isolation by connection, the per-turn byte budget, the counters, and the scope of the ``websocket`` route options. It replaced a claim that decisions are cheap with their bounds.
 
 References
