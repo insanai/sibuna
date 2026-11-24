@@ -255,6 +255,7 @@ fn each_request_is_one_line_with_its_server_status_and_times() {
             ("client", "127.0.0.1"),
             ("frontend", "web"),
             ("protocol", "http/1.1"),
+            ("scheme", "http"),
             ("method", "GET"),
             ("host", "www.example.com"),
             ("path", "/index.html"),
@@ -640,5 +641,63 @@ fn a_request_in_flight_is_in_the_active_gauge_of_its_server() {
         daemon.lines(2);
         let after = get(daemon.vip, "/__sibuna/metrics", "");
         assert!(after.contains(&format!("{gauge} 0\n")), "({event_loop}) {after}");
+    });
+}
+
+/// An origin that answers every connection with `response` and closes.
+fn answering(response: &'static [u8]) -> SocketAddr {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    std::thread::spawn(move || {
+        for mut socket in listener.incoming().flatten() {
+            let mut head = [0u8; 2048];
+            let _ = socket.read(&mut head);
+            let _ = socket.write_all(response);
+        }
+    });
+    address
+}
+
+#[test]
+fn a_502_of_the_server_itself_is_a_response_and_not_a_failure() {
+    let response =
+        b"HTTP/1.1 502 Bad Gateway\r\ncontent-length: 3\r\nconnection: close\r\n\r\nbad";
+    both(|event_loop| {
+        let daemon = start(answering(response), event_loop, &Extra::default());
+        assert_eq!(status(&get(daemon.vip, "/", "")), 502);
+        let line = &daemon.lines(1)[0];
+        assert_eq!(field(line, "status"), "502", "{line}");
+        assert_ne!(field(line, "ttfb_ms"), "null", "({event_loop}) the server answered: {line}");
+        let metrics = get(daemon.vip, "/__sibuna/metrics", "");
+        let failures = "sibuna_edge_server_failures_total{backend=\"app\",server=\"a\"} 0\n";
+        assert!(metrics.contains(failures), "({event_loop}) {metrics}");
+    });
+}
+
+#[test]
+fn an_interim_head_cut_in_two_does_not_hide_the_final_status() {
+    // The interim head ends in a second write, after a pause.
+    fn origin() -> SocketAddr {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        std::thread::spawn(move || {
+            for mut socket in listener.incoming().flatten() {
+                let mut head = [0u8; 2048];
+                let _ = socket.read(&mut head);
+                let _ = socket.write_all(b"HTTP/1.1 103 Early Hints\r\nLink: </a.css>");
+                std::thread::sleep(Duration::from_millis(150));
+                let rest = b"; rel=preload\r\n\r\nHTTP/1.1 201 Created\r\ncontent-length: 2\r\n\
+                    connection: close\r\n\r\nok";
+                let _ = socket.write_all(rest);
+            }
+        });
+        address
+    }
+    both(|event_loop| {
+        let daemon = start(origin(), event_loop, &Extra::default());
+        let answer = get(daemon.vip, "/", "");
+        assert!(answer.ends_with("ok"), "({event_loop}) {answer}");
+        let line = &daemon.lines(1)[0];
+        assert_eq!(field(line, "status"), "201", "({event_loop}) {line}");
     });
 }

@@ -220,6 +220,7 @@ fn an_http2_request_to_an_http11_pool_is_logged_with_its_server_and_times() {
         ("client", "127.0.0.1"),
         ("frontend", "web"),
         ("protocol", "h2"),
+        ("scheme", "https"),
         ("method", "GET"),
         ("path", "/page"),
         ("status", "200"),

@@ -483,6 +483,7 @@ pub(crate) fn forward<W: Write>(
 /// Counts a failed exchange and answers it. The connection closes after the answer.
 fn refuse_proxy_error<W: Write>(ctx: &mut Ctx<'_, W>, error: ProxyError) -> io::Result<bool> {
     ctx.server.metrics.upstream_errors.bump();
+    crate::access::relay_failed(ctx);
     answer_proxy_error(ctx.writer, error)?;
     Ok(false)
 }

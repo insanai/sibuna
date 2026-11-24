@@ -342,6 +342,11 @@ pub(crate) fn format_json(entry: &Entry, out: &mut Vec<u8>) {
     write_string(entry.frontend.as_ref().map_or("-", |front| &front.name).as_bytes(), out);
     out.extend_from_slice(b",\"protocol\":");
     write_string(entry.protocol.as_bytes(), out);
+    out.extend_from_slice(if entry.secure {
+        b",\"scheme\":\"https\""
+    } else {
+        b",\"scheme\":\"http\""
+    });
     out.extend_from_slice(b",\"method\":");
     write_string(entry.method(), out);
     out.extend_from_slice(b",\"host\":");
@@ -457,14 +462,15 @@ mod tests {
         assert_eq!(
             line(&entry),
             "{\"time\":\"2026-11-24T10:15:02.418Z\",\"client\":\"203.0.113.7\",\
-             \"frontend\":\"-\",\"protocol\":\"http/1.1\",\"method\":\"GET\",\
+             \"frontend\":\"-\",\"protocol\":\"http/1.1\",\"scheme\":\"http\",\
+             \"method\":\"GET\",\
              \"host\":\"www.example.com\",\"path\":\"/index.html\",\"status\":200,\
              \"bytes_in\":112,\"bytes_out\":5310,\"duration_ms\":3.184,\"ttfb_ms\":null,\
              \"backend\":\"-\",\"server\":\"-\",\"verdict\":\"pass\"}\n"
         );
         entry.first_byte = Some(Duration::from_micros(2907));
         assert!(line(&entry).contains("\"ttfb_ms\":2.907,"));
-        assert_eq!(line(&entry).matches("\":").count(), 15, "fifteen fields");
+        assert_eq!(line(&entry).matches("\":").count(), 16, "sixteen fields");
         assert_parses(&line(&entry));
     }
 

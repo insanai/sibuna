@@ -48,6 +48,62 @@ pub(crate) struct Tally {
     pub first: Option<Instant>,
 }
 
+/// Finds the status of the final head in a response that arrives in pieces (SID 0020).
+/// Informational heads other than 101 are passed over, wherever the pieces are cut.
+#[derive(Clone, Copy, Debug, Default)]
+pub(crate) struct StatusScan {
+    /// The first bytes of the head whose status is not yet known.
+    lead: [u8; STATUS_END],
+    lead_len: usize,
+    /// Inside an informational head, looking for its blank line in `tail`.
+    interim: bool,
+    tail: u32,
+}
+
+impl StatusScan {
+    /// Reads the next piece. Returns the final status once its twelve bytes are in, and
+    /// zero before that. A response that does not begin with an HTTP/1.x head has none.
+    pub(crate) fn feed(&mut self, data: &[u8]) -> u16 {
+        let mut rest = data;
+        while !rest.is_empty() {
+            if self.interim {
+                let Some(end) = self.end_of_head(rest) else { return 0 };
+                (self.interim, self.lead_len) = (false, 0);
+                rest = rest.get(end..).unwrap_or_default();
+                continue;
+            }
+            if self.lead_len >= STATUS_END {
+                return 0;
+            }
+            let take = rest.len().min(STATUS_END - self.lead_len);
+            self.lead[self.lead_len..self.lead_len + take].copy_from_slice(&rest[..take]);
+            self.lead_len += take;
+            rest = &rest[take..];
+            if self.lead_len < STATUS_END {
+                return 0;
+            }
+            let status = status_of(&self.lead);
+            if !(100..200).contains(&status) || status == 101 {
+                return status;
+            }
+            // The status line may hold the first bytes of the blank line.
+            (self.interim, self.tail) = (true, 0);
+        }
+        0
+    }
+
+    /// The index after the blank line of the informational head, when `data` holds it.
+    fn end_of_head(&mut self, data: &[u8]) -> Option<usize> {
+        for (index, &byte) in data.iter().enumerate() {
+            self.tail = (self.tail << 8) | u32::from(byte);
+            if self.tail == BLANK_LINE {
+                return Some(index + 1);
+            }
+        }
+        None
+    }
+}
+
 /// A writer that drops response bodies while a HEAD request is served.
 #[derive(Debug)]
 pub(crate) struct ClientWriter<W> {
@@ -56,9 +112,7 @@ pub(crate) struct ClientWriter<W> {
     head_request: bool,
     phase: Phase,
     tally: Tally,
-    /// The first bytes of the head whose status is not yet known.
-    lead: [u8; STATUS_END],
-    lead_len: usize,
+    scan: StatusScan,
 }
 
 impl<W: Write> ClientWriter<W> {
@@ -70,8 +124,7 @@ impl<W: Write> ClientWriter<W> {
             head_request: false,
             phase: FRESH_HEAD,
             tally: Tally::default(),
-            lead: [0; STATUS_END],
-            lead_len: 0,
+            scan: StatusScan::default(),
         }
     }
 
@@ -80,7 +133,7 @@ impl<W: Write> ClientWriter<W> {
         self.head_request = head_request;
         self.phase = FRESH_HEAD;
         self.tally = Tally::default();
-        self.lead_len = 0;
+        self.scan = StatusScan::default();
     }
 
     /// What was written since [`ClientWriter::begin_response`].
@@ -88,25 +141,14 @@ impl<W: Write> ClientWriter<W> {
         self.tally
     }
 
-    /// Counts `data` and reads the status from the first twelve bytes of a head. An
-    /// informational head ends within the write that completed its status (each is
-    /// written in one piece), so the next write begins the next head.
+    /// Counts `data` and looks for the status of the final head in it.
     fn note(&mut self, data: &[u8]) {
         self.tally.bytes += data.len() as u64;
-        if self.tally.status != 0 || self.lead_len >= STATUS_END || data.is_empty() {
+        if self.tally.status != 0 {
             return;
         }
-        let take = data.len().min(STATUS_END - self.lead_len);
-        self.lead[self.lead_len..self.lead_len + take].copy_from_slice(&data[..take]);
-        self.lead_len += take;
-        if self.lead_len < STATUS_END {
-            return;
-        }
-        let status = status_of(&self.lead);
-        if (100..200).contains(&status) && status != 101 {
-            self.lead_len = 0;
-        } else {
-            self.tally.status = status;
+        self.tally.status = self.scan.feed(data);
+        if self.tally.status != 0 {
             self.tally.first = Some(Instant::now());
         }
     }
@@ -192,6 +234,29 @@ mod tests {
         assert_eq!((tally.status, tally.bytes), (200, 19), "a dropped body is not counted");
         assert_eq!(status_of(b"HTTP/1.1 2x0 "), 0);
         assert_eq!(status_of(b"junk"), 0);
+    }
+
+    #[test]
+    fn the_final_status_is_found_wherever_the_pieces_are_cut() {
+        let response =
+            b"HTTP/1.1 100 Continue\r\n\r\nHTTP/1.1 103 Early Hints\r\nLink: <a>\r\n\r\n\
+            HTTP/1.1 404 Not Found\r\ncontent-length: 2\r\n\r\nno";
+        for cut in 0..response.len() {
+            for second in [cut, (cut + 7).min(response.len())] {
+                let mut scan = StatusScan::default();
+                let pieces = [&response[..cut], &response[cut..second], &response[second..]];
+                let found =
+                    pieces.iter().map(|piece| scan.feed(piece)).find(|&status| status != 0);
+                assert_eq!(found, Some(404), "cut at {cut} and {second}");
+            }
+        }
+        let mut scan = StatusScan::default();
+        assert_eq!(scan.feed(b"HTTP/1.1 101 Switching Protocols\r\n\r\n"), 101);
+        let mut scan = StatusScan::default();
+        assert_eq!(scan.feed(b"HTTP/1.1 100 Continue\r\n\r\n"), 0, "no final head yet");
+        assert_eq!(scan.feed(b"HTTP/1.1 200 OK\r\n\r\n"), 200);
+        let mut scan = StatusScan::default();
+        assert_eq!((scan.feed(b"a chunk of a body"), scan.feed(b"HTTP/1.1 200 OK")), (0, 0));
     }
 
     const PAGE: &[u8] = b"HTTP/1.1 403 Forbidden\r\nContent-Length: 9\r\n\r\nForbidden";

@@ -173,6 +173,12 @@ pub(crate) struct Entry {
     /// The place of the request in the active gauge of `server`.
     active: Option<ActiveRequest>,
     pub protocol: &'static str,
+    /// The client reached a TLS frontend.
+    pub secure: bool,
+    /// Sibuna answered for a server that failed, so a 502 or 504 is its own.
+    pub failed: bool,
+    /// Finds the status in the pieces of a relayed response.
+    pub scan: crate::client_writer::StatusScan,
     pub verdict: &'static str,
     /// The status sent to the client, or zero.
     pub status: u16,
@@ -200,6 +206,9 @@ impl Entry {
             server: None,
             active: None,
             protocol,
+            secure: false,
+            failed: false,
+            scan: crate::client_writer::StatusScan::default(),
             verdict: "-",
             status: 0,
             bytes_in: 0,
@@ -267,6 +276,8 @@ pub(crate) struct Trace {
     /// The server the request was sent to, and the request in its active gauge.
     pub server: Option<ServerInfo>,
     active: Option<ActiveRequest>,
+    /// The relay to the server failed and Sibuna answered itself.
+    pub failed: bool,
     /// The entry of the request, from the end of its dispatch until it is settled.
     pub entry: Option<Entry>,
 }
@@ -281,6 +292,7 @@ impl Trace {
         self.verdict = "-";
         self.server = None;
         self.active = None;
+        self.failed = false;
         self.entry = None;
         self.front = match (&server.edge_routes, ingress) {
             (Some(routes), Some(ingress)) => routes.frontend(ingress.vip),
@@ -301,13 +313,10 @@ pub(crate) fn verdict_name(outcome: Outcome) -> &'static str {
     }
 }
 
-/// The protocol of a request whose path does not name one.
-fn protocol_of(trace: &Trace, ingress: Option<Ingress>) -> &'static str {
-    match (trace.protocol, ingress) {
-        ("", Some(ingress)) if ingress.secure => "https",
-        ("", _) => "http/1.1",
-        (named, _) => named,
-    }
+/// The protocol of a request: HTTP/1.1 unless the path names another. Whether TLS
+/// carried it is the `scheme` field.
+fn protocol_of(trace: &Trace) -> &'static str {
+    if trace.protocol.is_empty() { "http/1.1" } else { trace.protocol }
 }
 
 /// Finds the client of `request` among its forwarded entries, when the socket peer is a
@@ -357,7 +366,10 @@ pub(crate) fn capture<W>(ctx: &mut Ctx<'_, W>) {
         frontend: trace.front.take(),
         server: trace.server.take(),
         active: trace.active.take(),
-        protocol: protocol_of(trace, ctx.ingress),
+        protocol: protocol_of(trace),
+        secure: ctx.ingress.is_some_and(|ingress| ingress.secure),
+        failed: std::mem::take(&mut trace.failed),
+        scan: crate::client_writer::StatusScan::default(),
         verdict,
         status: 0,
         bytes_in: (line + head + body) as u64,
@@ -432,6 +444,7 @@ pub(crate) fn refused(server: &Server, refused: &sibuna_ingress::Refused<'_>) {
     let mut peer = crate::connection::PeerText::default();
     peer.format(Some(refused.peer));
     let mut entry = Entry::unparsed(peer.as_bytes(), front, refused.protocol);
+    entry.secure = true;
     if observe.log().is_some() {
         let (host, method, path) = (refused.host, refused.method, refused.path);
         entry.set_text(peer.as_bytes(), host.as_bytes(), method.as_bytes(), path.as_bytes());
@@ -459,23 +472,27 @@ pub(crate) fn settle_written(
                 (Some(routes), Some(ingress)) => routes.frontend(ingress.vip),
                 _ => None,
             };
-            Some(Entry::unparsed(peer, front, protocol_of(trace, ingress)))
+            let mut entry = Entry::unparsed(peer, front, protocol_of(trace));
+            entry.secure = ingress.is_some_and(|ingress| ingress.secure);
+            Some(entry)
         }
         None => None,
     };
     let Some(mut entry) = entry else { return };
     entry.status = tally.status;
     entry.bytes_out = tally.bytes;
-    if entry.server.is_some() && tally.status != 0 && !own_gateway_error(tally.status) {
+    // A 502 or 504 of the server itself is a response like any other. Only when the
+    // relay failed did Sibuna write the status, and then the server gave no first byte.
+    let own = entry.failed && matches!(tally.status, 502 | 504);
+    if entry.server.is_some() && tally.status != 0 && !own {
         entry.first_byte = tally.first.map(|at| at.saturating_duration_since(entry.started));
     }
     observe.settle(entry, Instant::now());
 }
 
-/// True for the statuses Sibuna answers itself when a server fails. On the
-/// thread-per-connection path the writer cannot tell them from a server's own.
-fn own_gateway_error(status: u16) -> bool {
-    matches!(status, 502 | 504)
+/// Notes that the relay of an admitted request failed, so the answer is Sibuna's own.
+pub(crate) fn relay_failed<W>(ctx: &mut Ctx<'_, W>) {
+    ctx.trace.failed = true;
 }
 
 /// True when the request may read the health, readiness and metrics routes. The daemon
