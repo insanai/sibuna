@@ -8,8 +8,8 @@ mod config;
 mod health;
 mod http;
 pub use http::{
-    HttpOptions, HttpRoutes, HttpTarget, OriginOptions, OriginTls, OriginVersion, TlsOptions,
-    TlsVersion, valid_authority,
+    HttpOptions, HttpRoutes, HttpTarget, OriginOptions, OriginTls, OriginVersion, Query,
+    TlsOptions, TlsVersion, valid_authority,
 };
 mod websocket;
 pub use websocket::{TunnelPermit, TunnelRefusal, WebSocketRule};
@@ -23,11 +23,16 @@ mod pool;
 mod proxy;
 mod quick;
 pub use quick::{QuickProtocol, QuickStart};
+mod route;
 mod rules;
 mod runtime;
 pub use runtime::{RuntimeError, ServerState, ServerStatus};
+mod sticky;
 mod tcp;
+mod traffic;
 pub use observe::{AccessLogOptions, Forwarded, FrontendInfo, LogOutput, ObserveOptions};
+pub use route::{FieldEdit, Redirect, RoutePolicy};
+pub use traffic::{Passive, PoolPolicy, Sticky};
 mod proxy_header;
 pub use proxy_header::{MAX_PROXY_HEADER, ProxyHeader, ProxyHeaderError, parse_proxy_header};
 mod stats;

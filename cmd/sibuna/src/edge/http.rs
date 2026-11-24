@@ -240,6 +240,8 @@ impl Http {
             crate::cli::resolve_secret(&mut config, secret)
                 .map_err(|()| io::Error::other("cannot load HTTP challenge seed"))?
         };
+        // Sticky cookies of nodes that share the seed name the same servers (SID 0019).
+        edge.http_routes().set_sticky_seed(seed.as_bytes());
         let mut server = Server::new(Options {
             config,
             seed,
@@ -404,7 +406,6 @@ fn ingress_limits(options: &HttpOptions, share_address: bool) -> sibuna_ingress:
     sibuna_ingress::Limits {
         exchanges: options.max_connections as usize,
         idle: std::time::Duration::from_secs(idle),
-        response: std::time::Duration::from_secs(60),
         share_address,
     }
 }

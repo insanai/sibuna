@@ -11,7 +11,10 @@ use sibuna_json::ObjectReader;
 
 use crate::Regime;
 use crate::config::{Backend, Config, Protocol, field, invalid, required};
-use crate::pool::{Loads, Pool, Ticket};
+use crate::pool::{Loads, Pool};
+
+mod choose;
+pub use choose::{HttpTarget, Query};
 
 /// Node-local settings shared by HTTP frontends.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -339,6 +342,7 @@ pub(crate) struct Rule {
     pool: Arc<str>,
     firewall: bool,
     websocket: Option<Arc<crate::WebSocketRule>>,
+    policy: Arc<crate::RoutePolicy>,
 }
 
 impl Rule {
@@ -357,7 +361,7 @@ fn has_prefix(path: &[u8], prefix: &[u8]) -> bool {
 }
 
 /// The host of an authority without its port and trailing dot.
-fn bare_host(host: &[u8]) -> &[u8] {
+pub(crate) fn bare_host(host: &[u8]) -> &[u8] {
     // A bracketed IPv6 literal keeps its colons.
     let end = if host.first() == Some(&b'[') {
         host.iter().position(|b| *b == b']').map_or(host.len(), |i| i + 1)
@@ -373,6 +377,7 @@ pub(crate) fn rules(
     pools: &BTreeMap<String, Backend>,
     firewall: bool,
     websocket: Option<&Arc<crate::WebSocketRule>>,
+    (policy, tls): (&Arc<crate::RoutePolicy>, bool),
 ) -> io::Result<Vec<Rule>> {
     let mut rules = Vec::new();
     let entries = field(r.take_array("routes"))?.unwrap_or_default();
@@ -403,8 +408,9 @@ pub(crate) fn rules(
             Some(rule) => Some(crate::WebSocketRule::parse(rule)?),
             None => websocket.cloned(),
         };
+        let policy = crate::RoutePolicy::parse(&mut row, policy, tls)?;
         field(row.finish())?;
-        rules.push(Rule { host, path, pool: pool.into(), firewall, websocket });
+        rules.push(Rule { host, path, pool: pool.into(), firewall, websocket, policy });
     }
     Ok(rules)
 }
@@ -414,12 +420,25 @@ struct Frontend {
     rules: Arc<[Rule]>,
     firewall: bool,
     websocket: Option<Arc<crate::WebSocketRule>>,
+    policy: Arc<crate::RoutePolicy>,
     info: Arc<crate::FrontendInfo>,
 }
 
 impl Frontend {
     fn bypasses(&self) -> bool {
         !self.firewall || self.rules.iter().any(|rule| !rule.firewall)
+    }
+
+    /// Whether the frontend or one of its routes has a policy of SID 0019.
+    fn has_policy(&self) -> bool {
+        !self.policy.is_default() || self.rules.iter().any(|rule| !rule.policy.is_default())
+    }
+
+    /// The policy of a request: that of the first matching route, or that of the
+    /// frontend.
+    fn policy(&self, host: &[u8], path: &[u8]) -> &Arc<crate::RoutePolicy> {
+        let host = bare_host(host);
+        self.rules.iter().find(|r| r.matches(host, path)).map_or(&self.policy, |r| &r.policy)
     }
 }
 
@@ -434,6 +453,10 @@ struct Table {
     regime: Option<Regime>,
     /// Some frontend or route turns the firewall off, so requests need the lookup.
     bypasses: bool,
+    /// The key of the sticky cookies (SID 0019).
+    sticky: crate::sticky::Key,
+    /// Some frontend or route has a policy of SID 0019, so requests need the lookup.
+    policied: bool,
     /// The routes of the revision before this one, for requests decided under it.
     previous: Option<Retired>,
 }
@@ -496,12 +519,14 @@ impl HttpRoutes {
                     rules: f.http_rules.clone(),
                     firewall: f.firewall,
                     websocket: f.websocket.clone(),
+                    policy: f.policy.clone(),
                     info: f.info.clone(),
                 };
                 (*addr, front)
             })
             .collect();
         state.bypasses = state.fronts.values().any(Frontend::bypasses);
+        state.policied = state.fronts.values().any(Frontend::has_policy);
         state.servers = config
             .pools
             .iter()
@@ -514,6 +539,14 @@ impl HttpRoutes {
             .map(|(name, p)| (name, Pool::new(p, &mut state.loads)))
             .collect();
         state.loads.prune();
+    }
+
+    /// Derives the key of the sticky cookies from `seed`, the challenge seed of the
+    /// node (SID 0019). Nodes that share the seed accept each other's cookies. Without
+    /// this call the key is random and lasts as long as the process.
+    pub fn set_sticky_seed(&self, seed: &[u8]) {
+        let mut table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        table.sticky = crate::sticky::Key::derive(seed);
     }
 
     /// Runs `visit` on the HTTP pools and their loads, under the lock of the table.
@@ -543,6 +576,22 @@ impl HttpRoutes {
         front.rules.iter().find(|r| r.matches(host, path)).map_or(front.firewall, |r| r.firewall)
     }
 
+    /// The policy of this request (SID 0019): that of the first matching route, or that
+    /// of the frontend. `None` when no frontend of the table has a policy, which is the
+    /// usual case and costs one lock.
+    pub fn policy(
+        &self,
+        vip: SocketAddr,
+        host: &[u8],
+        path: &[u8],
+    ) -> Option<Arc<crate::RoutePolicy>> {
+        let table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        if !table.policied {
+            return None;
+        }
+        Some(Arc::clone(table.front(vip)?.policy(host, path)))
+    }
+
     /// The WebSocket rule of this request: that of the first matching route, or that of
     /// the frontend. `None` when no rule applies.
     pub fn websocket(
@@ -561,6 +610,8 @@ impl HttpRoutes {
     }
 
     /// Selects an eligible HTTP origin for the validated authority and normalized path.
+    /// This is [`HttpRoutes::choose`] for a request without cookies on a cleartext
+    /// frontend.
     pub fn select(
         &self,
         vip: SocketAddr,
@@ -569,34 +620,7 @@ impl HttpRoutes {
         path: &[u8],
         policy_revision: u64,
     ) -> Option<HttpTarget> {
-        let mut table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
-        let table = &mut *table;
-        let now = Instant::now();
-        let regime = table.regime.unwrap_or(Regime::Standalone);
-        // A request decided just before a reload is routed by the revision it was
-        // decided under. A revision older than that is refused.
-        let (fronts, pools) = if policy_revision == table.revision {
-            (&table.fronts, &mut table.pools)
-        } else {
-            let retired = table.previous.as_mut()?;
-            if retired.revision != policy_revision || now >= retired.until {
-                return None;
-            }
-            (&retired.fronts, &mut retired.pools)
-        };
-        let front = front_of(fronts, vip)?;
-        let host = bare_host(host);
-        let pool = front
-            .rules
-            .iter()
-            .find(|r| r.matches(host, path))
-            .map_or(&front.pool, |r| &r.pool)
-            .clone();
-        let ticket = pools.get_mut(pool.as_ref())?.reserve(now, peer, vip, regime)?;
-        let info = table.servers.get(pool.as_ref()).and_then(|servers| {
-            servers.iter().find(|(addr, _)| *addr == ticket.addr).map(|(_, info)| info.clone())
-        });
-        Some(HttpTarget(ticket, info))
+        self.choose(&Query { vip, peer, host, path, policy_revision, ..Query::default() })
     }
 
     /// Notes the counters of a server that joined `pool` at run time (SID 0020).
@@ -612,28 +636,6 @@ impl HttpRoutes {
     pub fn frontend(&self, vip: SocketAddr) -> Option<Arc<crate::FrontendInfo>> {
         let table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
         table.front(vip).map(|front| front.info.clone())
-    }
-}
-
-/// An admitted HTTP exchange. Dropping it returns the backend's capacity.
-pub struct HttpTarget(Ticket, Option<crate::ServerInfo>);
-
-impl HttpTarget {
-    /// The names and the counters of the chosen server (SID 0020).
-    pub fn server(&self) -> Option<&crate::ServerInfo> {
-        self.1.as_ref()
-    }
-    /// The numeric HTTP/1.1 origin.
-    pub fn address(&self) -> SocketAddr {
-        self.0.addr
-    }
-    /// Records an origin connection failure for subsequent admissions.
-    pub fn failed(&self) {
-        self.0.failed(Instant::now());
-    }
-    /// Records the duration of a completed exchange.
-    pub fn completed(&self, start: Instant) {
-        self.0.observe(start, Instant::now());
     }
 }
 

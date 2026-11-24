@@ -24,6 +24,7 @@ Discussion reading order
    records/0016-event-driven-http-workers
    records/0017-in-process-exchanges
    records/0018-simple-setup-and-runtime-configuration
+   records/0019-traffic-policy
    records/0020-edge-observability-and-client-identity
 
 .. sid-generated-end

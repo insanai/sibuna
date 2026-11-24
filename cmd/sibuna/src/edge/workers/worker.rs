@@ -8,7 +8,6 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, mpsc};
 use std::time::{Duration, Instant};
 
-use sibuna_net::CONNECT_TIMEOUT;
 use sibuna_reactor::{
     Io, Poller, READ, Slab, WRITE, Waker, Wheel, handle, read_once as read, write_once as write,
 };
@@ -389,9 +388,12 @@ impl Worker {
         let mut origin = None;
         if let Some(exchange) = exchange {
             if exchange.connecting {
-                (timeout, since) = (CONNECT_TIMEOUT, exchange.connect_since);
+                (timeout, since) = (exchange.target.connect_timeout(), exchange.connect_since);
             } else if exchange.tunnel {
                 timeout = self.timeouts.tunnel;
+            } else if exchange.awaits_server(conn.backlog()) {
+                // The server owes us bytes: its own bound applies (SID 0019).
+                timeout = exchange.target.response_timeout();
             }
             let reads = !exchange.connecting && conn.backlog() < HIGH_WATER;
             let writes = exchange.connecting || exchange.backlog() > 0;

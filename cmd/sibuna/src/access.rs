@@ -350,6 +350,10 @@ impl sibuna_ingress::Report for Pending {
         entry.first_byte = completion.first_byte.map(|wait| decided + wait);
         observe.settle(entry, Instant::now());
     }
+
+    fn moved(&mut self, target: &sibuna_lb::HttpTarget) {
+        self.entry.server = target.server().cloned();
+    }
 }
 
 /// Settles the request that a response writer answered: Sibuna's own response on every

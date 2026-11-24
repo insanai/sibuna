@@ -343,7 +343,15 @@ pub(crate) fn relay_response<R: Read, W: Write + ?Sized>(
     }
     audit.report(parsed.status, head);
     let keep = client_keep_alive && parsed.framing != Framing::UntilClose;
-    write_client_head(client, head, keep).map_err(client_head_error)?;
+    if audit.response_edit.is_empty() {
+        write_client_head(client, head, keep).map_err(client_head_error)?;
+    } else {
+        // An edited head is built in memory first, because the edit reads it whole.
+        let mut edited = Vec::with_capacity(head.len() + 128);
+        write_client_head(&mut edited, head, keep).map_err(client_head_error)?;
+        audit.response_edit.apply(&mut edited, 0);
+        client.write_all(&edited).map_err(|_| ProxyError::ClientFailed)?;
+    }
     origin.consume(head_length);
     match parsed.framing {
         Framing::None => {}

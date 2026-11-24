@@ -9,11 +9,16 @@ use std::time::{Duration, Instant};
 
 use crate::config::{Backend, Protocol, Scheduler, Server};
 
+mod extra;
+pub(crate) use extra::{Tried, Wish};
+
 #[derive(Default)]
 struct Load {
     active: AtomicUsize,
     latency: Mutex<Option<(Instant, u64)>>,
     retry_after: Mutex<Option<Instant>>,
+    /// The state that SID 0019 keeps for a server.
+    extra: extra::State,
 }
 
 impl Load {
@@ -86,22 +91,24 @@ impl Target {
 }
 
 impl Target {
-    fn preferred_to(&self, other: &Self) -> bool {
-        let score = |target: &Self, weight: u32| {
+    fn preferred_to(&self, other: &Self, ramping: bool) -> bool {
+        let score = |target: &Self, weight: u64| {
             let scale = u128::from(weight);
             (
                 target.load.active.load(Ordering::Relaxed) as u128 * scale,
                 u128::from(target.admitted) * scale,
             )
         };
-        (self.server.backup, score(self, other.server.weight))
-            < (other.server.backup, score(other, self.server.weight))
+        (self.server.backup, score(self, other.weight(ramping)))
+            < (other.server.backup, score(other, self.weight(ramping)))
     }
 }
 
 pub(crate) struct Pool {
     targets: Vec<Target>,
     scheduler: Scheduler,
+    /// The traffic options of SID 0019.
+    pub policy: Arc<crate::PoolPolicy>,
     pub proxy_v2: Option<crate::proxy::Spec>,
     choices: RandomState,
     protocol: Protocol,
@@ -121,6 +128,7 @@ impl Pool {
         Self {
             targets,
             scheduler: backend.scheduler,
+            policy: backend.policy,
             proxy_v2: backend.proxy_v2,
             choices: RandomState::new(),
             protocol,
@@ -137,6 +145,19 @@ impl Pool {
         vip: SocketAddr,
         regime: crate::Regime,
     ) -> Option<Ticket> {
+        self.reserve_with(now, peer, vip, regime, &Wish::default())
+    }
+
+    /// Reserves a place on a server that `wish` allows (SID 0019).
+    pub fn reserve_with(
+        &mut self,
+        now: Instant,
+        peer: SocketAddr,
+        vip: SocketAddr,
+        regime: crate::Regime,
+        wish: &Wish<'_>,
+    ) -> Option<Ticket> {
+        let ramping = self.ramp(now);
         let available = |target: &Target| {
             target.server.addr != vip
                 && !target.drained
@@ -148,7 +169,11 @@ impl Pool {
                     .lock()
                     .unwrap_or_else(PoisonError::into_inner)
                     .is_none_or(|deadline| deadline <= now)
+                && wish.allows(target)
         };
+        // Passive health keeps a server out only while another can serve (SID 0019).
+        let spared = self.targets.iter().any(|t| available(t) && !t.load.extra.is_ejected(now));
+        let available = |t: &Target| available(t) && !(spared && t.load.extra.is_ejected(now));
         let prefer_local = regime == crate::Regime::WideArea
             && self.targets.iter().any(|t| !t.server.remote && available(t));
         let eligible = |t: &Target| available(t) && !(prefer_local && t.server.remote);
@@ -157,7 +182,7 @@ impl Pool {
             Scheduler::Adaptive(table) => {
                 ((regime != crate::Regime::Standalone).then_some(table), true)
             }
-            Scheduler::LeastConnections => (None, false),
+            Scheduler::LeastConnections | Scheduler::RoundRobin => (None, false),
             Scheduler::PeakEwma => (None, true),
         };
         let primary = table.and_then(|table| {
@@ -165,13 +190,19 @@ impl Pool {
             let primary = &self.targets[index];
             let load: usize =
                 self.targets.iter().map(|target| target.load.active.load(Ordering::Relaxed)).sum();
-            let desired = (load + 1) as u64 * u64::from(primary.server.weight);
-            let bound =
-                (desired * u64::from(table.factor)).div_ceil(u64::from(table.weight) * 100);
+            let desired = (load + 1) as u64 * primary.weight(ramping);
+            let bound = (desired * u64::from(table.factor))
+                .div_ceil(u64::from(table.weight) * 100 * extra::SCALE);
             (eligible(primary) && (primary.load.active.load(Ordering::Relaxed) as u64) < bound)
                 .then_some(index)
         });
-        let index = primary.or_else(|| {
+        // A sticky server serves its client whenever it is eligible (SID 0019).
+        let sticky = wish.sticky.or_else(|| self.home(wish.client.unwrap_or(peer.ip())));
+        let sticky = sticky.filter(|&index| self.targets.get(index).is_some_and(eligible));
+        let index = sticky.or(primary).or_else(|| {
+            if matches!(self.scheduler, Scheduler::RoundRobin) {
+                return self.in_turn(ramping, eligible);
+            }
             if peak {
                 return self.choose_two(now, peer, vip, eligible);
             }
@@ -179,7 +210,9 @@ impl Pool {
                 .iter()
                 .enumerate()
                 .filter(|(_, t)| eligible(t))
-                .reduce(|best, next| if next.1.preferred_to(best.1) { next } else { best })
+                .reduce(
+                    |best, next| if next.1.preferred_to(best.1, ramping) { next } else { best },
+                )
                 .map(|(i, _)| i)
         })?;
         let target = &mut self.targets[index];
@@ -220,10 +253,12 @@ impl Pool {
             return Some(choices[a]);
         }
         let b = (a + 1 + ((hash >> 32) as usize) % (count - 1)) % count;
+        let ramping = self.policy.slow_start.is_some();
         let cost = |i: usize| {
             let t = &self.targets[choices[i]];
-            (t.load.active.load(Ordering::Relaxed) as u64 + 1) * t.load.estimate(now) * 65535
-                / u64::from(t.server.weight)
+            let work = (t.load.active.load(Ordering::Relaxed) as u128 + 1)
+                * u128::from(t.load.estimate(now));
+            work * 65535 * u128::from(extra::SCALE) / u128::from(t.weight(ramping))
         };
         Some(choices[if cost(a) <= cost(b) { a } else { b }])
     }
