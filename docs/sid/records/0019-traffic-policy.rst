@@ -1,7 +1,7 @@
 :sid-number: 0019
 :sid-title: Traffic Management and HTTP Policy for the Edge
-:sid-state: discussion
-:sid-status: Open for Discussion
+:sid-state: accepted
+:sid-status: Accepted
 :sid-type: Architectural Specification
 :sid-authors: ["Vikrant Rathore"]
 :sid-created: 2026-11-24
@@ -595,3 +595,11 @@ References
 - Envoy: outlier detection and the panic threshold.
 - RFC 6797, HTTP Strict Transport Security. RFC 9110, section 15.4.9 (308) and section 15.5.14 (413).
 - D. Thaler and C. Ravishankar, "Using name-based mappings to increase hit rates", 1998 (rendezvous hashing).
+
+.. rubric:: Lifecycle event
+
+::
+
+   2026-11-24: discussion -> accepted. Three reviews converged; every acceptance
+   criterion is met on all three request paths and the remaining gaps are
+   recorded

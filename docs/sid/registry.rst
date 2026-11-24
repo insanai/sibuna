@@ -68,7 +68,7 @@ Discussion registry
      - discussion
    * - 0019
      - :doc:`records/0019-traffic-policy`
-     - discussion
+     - accepted
    * - 0020
      - :doc:`records/0020-edge-observability-and-client-identity`
      - accepted
