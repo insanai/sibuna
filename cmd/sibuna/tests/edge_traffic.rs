@@ -11,7 +11,7 @@ use std::net::{Shutdown, TcpStream};
 use std::sync::atomic::Ordering;
 use std::time::{Duration, Instant};
 
-use traffic::{Origin, Topology, blackhole, both, get, get_with, post, refused, request};
+use traffic::{Origin, Topology, blackhole, both, get, get_with, logged, post, refused, request};
 
 #[test]
 fn a_slow_server_has_its_own_bound_and_not_the_client_idle_timeout() {
@@ -444,4 +444,131 @@ fn a_server_that_returns_takes_few_requests_while_it_ramps() {
     // Without a slow start it takes its half at once, and more to catch up.
     let direct = share(health);
     assert!(direct >= 10, "{direct}");
+}
+
+/// The names of the servers that answer `count` requests for `/who`.
+fn names(edge: &traffic::Edge, count: usize, fields: &str) -> BTreeSet<String> {
+    (0..count).map(|_| get_with(edge, "/who", fields).text()).collect()
+}
+
+#[test]
+fn a_drained_server_gives_up_its_sticky_clients_and_takes_no_moved_request() {
+    let origins = [Origin::start("s0"), Origin::start("s1"), Origin::start("s2")];
+    let servers = origins.each_ref().map(|origin| origin.address);
+    both(|event_loop| {
+        // A cookie names a server. Once that server drains, the client gets another.
+        let edge = Topology::new(&servers).backend(r#""sticky":"cookie","#).start(event_loop);
+        let first = get(&edge, "/who");
+        let pair = sticky_pair(&first, "sibuna_srv").expect("a cookie");
+        let cookie = format!("Cookie: {pair}\r\n");
+        assert_eq!(names(&edge, 4, &cookie), BTreeSet::from([first.text()]));
+        edge.ctl(&format!("set server app/{} state drain", first.text()));
+        let moved = get_with(&edge, "/who", &cookie);
+        assert_ne!(moved.text(), first.text());
+        assert_ne!(sticky_pair(&moved, "sibuna_srv").expect("a new cookie"), pair);
+        // The old cookie is honoured again when the drain ends.
+        edge.ctl(&format!("set server app/{} state ready", first.text()));
+        assert_eq!(names(&edge, 4, &cookie), BTreeSet::from([first.text()]));
+
+        // A client address has one server. While that drains, it has one other.
+        let edge = Topology::new(&servers).backend(r#""sticky":"source","#).start(event_loop);
+        let home = get(&edge, "/who").text();
+        edge.ctl(&format!("set server app/{home} state drain"));
+        let away = names(&edge, 8, "");
+        assert!(away.len() == 1 && !away.contains(&home), "{away:?}");
+        edge.ctl(&format!("set server app/{home} state ready"));
+        assert_eq!(names(&edge, 8, ""), BTreeSet::from([home]));
+    });
+    // A request that leaves a dead server passes over a drained one. The pool has the
+    // dead server `s0` before the origins that call themselves `s0` and `s1`.
+    let pool = [refused(), servers[0], servers[1]];
+    let edge = Topology::new(&pool).start(true);
+    edge.ctl("set server app/s1 state drain");
+    assert_eq!(names(&edge, 4, ""), BTreeSet::from(["s1".to_owned()]));
+}
+
+#[test]
+fn a_server_added_at_run_time_ramps_like_one_that_returns() {
+    let steady = Origin::start("steady");
+    let added = Origin::start("added");
+    // The share of the added server in twenty requests, just after it was added.
+    let share = |members: &str| {
+        let edge = Topology::new(&[steady.address]).backend(members).start(true);
+        assert_eq!(get(&edge, "/who").text(), "steady");
+        edge.ctl(&format!("add server app/new {}", added.address));
+        let later = answers(&edge, 20);
+        assert!(later.iter().all(|(status, _)| *status == 200), "{later:?}");
+        later.iter().filter(|(_, name)| name == "added").count()
+    };
+    let ramped = share(r#""balance":{"kind":"round_robin"},"slow_start":"30s","#);
+    assert!(ramped <= 2, "{ramped}");
+    let direct = share(r#""balance":{"kind":"round_robin"},"#);
+    assert_eq!(direct, 10);
+}
+
+#[test]
+fn a_moved_request_is_logged_and_counted_once_under_the_server_that_answered() {
+    let good = Origin::start("good");
+    let edge = Topology::new(&[refused(), good.address]).start(true);
+    let answer = post(&edge, "/length", b"twelve bytes");
+    assert_eq!((answer.status(), answer.text()), (200, "12".into()));
+    let line = &edge.log_lines(1)[0];
+    assert_eq!((logged(line, "status"), logged(line, "server")), ("200", "s1"), "{line}");
+    assert_ne!(logged(line, "ttfb_ms"), "null", "{line}");
+    let metrics = get(&edge, "/__sibuna/metrics").text();
+    for series in [
+        "sibuna_edge_server_failures_total{backend=\"app\",server=\"s0\"} 1\n",
+        "sibuna_edge_server_failures_total{backend=\"app\",server=\"s1\"} 0\n",
+        "sibuna_edge_server_requests_total{backend=\"app\",server=\"s0\",code=\"2xx\"} 0\n",
+        "sibuna_edge_server_requests_total{backend=\"app\",server=\"s0\",code=\"5xx\"} 0\n",
+        "sibuna_edge_server_requests_total{backend=\"app\",server=\"s1\",code=\"2xx\"} 1\n",
+        "sibuna_edge_frontend_requests_total{frontend=\"web\",code=\"2xx\"} 1\n",
+    ] {
+        assert!(metrics.contains(series), "{series} is missing:\n{metrics}");
+    }
+}
+
+#[test]
+fn a_redirect_and_a_refused_body_are_in_the_access_log() {
+    let origin = Origin::start("a");
+    both(|event_loop| {
+        let members = r#""redirect_https":true,
+            "routes":[{"path_prefix":"/up","backend":"app","redirect_https":false,
+                       "max_body":8}],"#;
+        let edge = Topology::new(&[origin.address]).frontend(members).start(event_loop);
+        assert_eq!(get(&edge, "/page").status(), 308);
+        assert_eq!(post(&edge, "/up/length", b"twelve bytes").status(), 413);
+        let lines = edge.log_lines(2);
+        for (line, status, path) in [(&lines[0], "308", "/page"), (&lines[1], "413", "/up/length")]
+        {
+            let seen = (logged(line, "status"), logged(line, "path"), logged(line, "server"));
+            assert_eq!(seen, (status, path, "-"), "{line} ({event_loop})");
+            assert_eq!(logged(line, "frontend"), "web", "{line}");
+        }
+    });
+}
+
+#[test]
+fn source_stickiness_follows_the_client_that_a_trusted_proxy_names() {
+    let origins = [Origin::start("a"), Origin::start("b"), Origin::start("c")];
+    let servers = origins.each_ref().map(|origin| origin.address);
+    let client = |last: u8| format!("X-Forwarded-For: 203.0.113.{last}\r\n");
+    both(|event_loop| {
+        let edge = Topology::new(&servers)
+            .frontend(r#""trusted_proxies":["127.0.0.0/8"],"#)
+            .backend(r#""sticky":"source","#)
+            .start(event_loop);
+        // Every request has the same socket peer. The clients behind it differ.
+        let spread: BTreeSet<String> =
+            (1..=24).flat_map(|last| names(&edge, 1, &client(last))).collect();
+        assert!(spread.len() > 1, "{spread:?} ({event_loop})");
+        for last in 1..=4 {
+            assert_eq!(names(&edge, 4, &client(last)).len(), 1, "{last} ({event_loop})");
+        }
+        // Without the option the field is ignored: the socket peer is the client.
+        let edge = Topology::new(&servers).backend(r#""sticky":"source","#).start(event_loop);
+        let spread: BTreeSet<String> =
+            (1..=24).flat_map(|last| names(&edge, 1, &client(last))).collect();
+        assert_eq!(spread.len(), 1, "{spread:?} ({event_loop})");
+    });
 }

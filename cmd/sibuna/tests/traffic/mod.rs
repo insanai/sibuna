@@ -6,7 +6,7 @@ use std::fs;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::PathBuf;
-use std::process::{Child, Command, Stdio};
+use std::process::{Child, ChildStderr, Command, Stdio};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::time::Duration;
@@ -65,47 +65,73 @@ impl Topology {
         self
     }
 
-    fn source(&self, vip: SocketAddr, event_loop: bool) -> String {
+    fn source(&self, files: &Files, event_loop: bool) -> String {
         format!(
-            r#"{{"http":{{"surface":"off","event_loop":{event_loop}{}}},
-            "frontends":{{"web":{{"proto":"http","binds":["{vip}"],{}
+            r#"{{"global":{{"admin_socket":"{}"}},
+            "observability":{{"access_log":{{"output":"{}"}}}},
+            "http":{{"surface":"off","event_loop":{event_loop}{}}},
+            "frontends":{{"web":{{"proto":"http","binds":["{}"],{}
             "default_backend":"app"}}}},
             "backends":{{"app":{{"mode":"http",{}"servers":[{}]}}}}}}"#,
+            files.socket.display(),
+            files.log.display(),
             self.http,
+            files.vip,
             self.frontend,
             self.backend,
             self.servers.join(",")
         )
     }
 
-    fn write(&self, event_loop: bool) -> (PathBuf, SocketAddr) {
+    fn write(&self, event_loop: bool) -> Files {
         let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
-        let name = format!("sibuna-traffic-{}-{}.json", std::process::id(), vip.port());
-        let path = std::env::temp_dir().join(name);
-        fs::write(&path, self.source(vip, event_loop)).unwrap();
-        (path, vip)
+        let stem = format!("sibuna-traffic-{}-{}", std::process::id(), vip.port());
+        let file = |extension: &str| std::env::temp_dir().join(format!("{stem}.{extension}"));
+        let files = Files { path: file("json"), socket: file("sock"), log: file("log"), vip };
+        fs::write(&files.path, self.source(&files, event_loop)).unwrap();
+        files
     }
 
     /// Starts the edge binary on this topology and waits until it listens.
     pub fn start(&self, event_loop: bool) -> Edge {
-        let (path, vip) = self.write(event_loop);
+        // A port that was free a moment ago may be taken by a test that runs beside
+        // this one. The listener is then chosen again.
+        let mut failure = String::new();
+        for _ in 0..5 {
+            match self.try_start(event_loop) {
+                Ok(edge) => return edge,
+                Err(line) => failure = line,
+            }
+        }
+        panic!("the edge did not start: {failure}");
+    }
+
+    fn try_start(&self, event_loop: bool) -> Result<Edge, String> {
+        let files = self.write(event_loop);
         let mut child = Command::new(BIN)
             .arg("--config-file")
-            .arg(&path)
+            .arg(&files.path)
             .stderr(Stdio::piped())
             .spawn()
             .unwrap();
+        let mut stderr = BufReader::new(child.stderr.take().unwrap());
         let mut line = String::new();
-        BufReader::new(child.stderr.take().unwrap()).read_line(&mut line).unwrap();
-        assert!(line.contains("ready"), "{line}");
-        Edge { child, path, vip }
+        stderr.read_line(&mut line).unwrap();
+        if !line.contains("ready") {
+            let _ = child.kill();
+            let _ = child.wait();
+            files.remove();
+            return Err(line);
+        }
+        let vip = files.vip;
+        Ok(Edge { child, _stderr: stderr, files, vip })
     }
 
     /// Runs `sibuna check -f` on this topology and returns its diagnostic on failure.
     pub fn check(&self) -> Result<(), String> {
-        let (path, _) = self.write(true);
-        let output = Command::new(BIN).args(["check", "-f"]).arg(&path).output().unwrap();
-        let _ = fs::remove_file(&path);
+        let files = self.write(true);
+        let output = Command::new(BIN).args(["check", "-f"]).arg(&files.path).output().unwrap();
+        files.remove();
         if output.status.success() {
             Ok(())
         } else {
@@ -114,10 +140,28 @@ impl Topology {
     }
 }
 
-/// A running edge. Dropping it stops the process and removes its file.
+/// The files and the listener of one edge.
+struct Files {
+    path: PathBuf,
+    socket: PathBuf,
+    log: PathBuf,
+    vip: SocketAddr,
+}
+
+impl Files {
+    fn remove(&self) {
+        for file in [&self.path, &self.socket, &self.log] {
+            let _ = fs::remove_file(file);
+        }
+    }
+}
+
+/// A running edge. Dropping it stops the process and removes its files.
 pub struct Edge {
     child: Child,
-    path: PathBuf,
+    /// Kept open, so that a later message of the child does not fail its write.
+    _stderr: BufReader<ChildStderr>,
+    files: Files,
     pub vip: SocketAddr,
 }
 
@@ -129,13 +173,46 @@ impl Edge {
         stream.set_write_timeout(Some(WAIT)).unwrap();
         BufReader::new(stream)
     }
+
+    /// Runs `sibuna ctl` with `command` on the admin socket and returns its output.
+    pub fn ctl(&self, command: &str) -> String {
+        let mut ctl = Command::new(BIN);
+        ctl.arg("ctl").arg(&self.files.socket).args(command.split(' '));
+        let output = ctl.output().unwrap();
+        let diagnostics = String::from_utf8_lossy(&output.stderr);
+        assert!(output.status.success(), "`{command}` failed: {diagnostics}");
+        String::from_utf8_lossy(&output.stdout).into_owned()
+    }
+
+    /// Waits for `count` lines of the access log and returns them.
+    pub fn log_lines(&self, count: usize) -> Vec<String> {
+        let deadline = std::time::Instant::now() + WAIT;
+        loop {
+            let text = fs::read_to_string(&self.files.log).unwrap_or_default();
+            let lines: Vec<String> = text.lines().map(str::to_owned).collect();
+            if lines.len() >= count || std::time::Instant::now() >= deadline {
+                assert_eq!(lines.len(), count, "{text}");
+                return lines;
+            }
+            std::thread::sleep(Duration::from_millis(20));
+        }
+    }
+}
+
+/// The value of the member `name` of one line of the access log.
+pub fn logged<'a>(line: &'a str, name: &str) -> &'a str {
+    let key = format!("\"{name}\":");
+    let start = line.find(&key).unwrap_or_else(|| panic!("{name} in {line}")) + key.len();
+    let rest = &line[start..];
+    let end = rest.find([',', '}']).unwrap();
+    rest[..end].trim_matches('"')
 }
 
 impl Drop for Edge {
     fn drop(&mut self) {
         let _ = self.child.kill();
         let _ = self.child.wait();
-        let _ = fs::remove_file(&self.path);
+        self.files.remove();
     }
 }
 
