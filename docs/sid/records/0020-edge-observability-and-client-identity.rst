@@ -399,7 +399,7 @@ Implemented on the branch ``sid-0020-observability``. Every criterion has a test
    * - The internal routes answer the allow-list only, and never a forwarded request.
      - ``edge_observe.rs``: ``the_internal_routes_answer_the_allow_list_only``
    * - Readiness is 200, then 503 from the start of a drain, while a request in flight still ends and is logged.
-     - ``edge_observe.rs``: ``the_separate_listener_reports_readiness_until_the_node_drains``, and ``edge::admin::tests``
+     - ``edge_observe.rs``: ``the_separate_listener_reports_readiness_until_the_node_drains``, and ``edge::probe::tests``
    * - A trusted proxy names the client for the log and the request limiter. A forged left entry is ignored. Without the option the field is ignored.
      - ``edge_observe.rs``: ``a_trusted_proxy_names_the_client_for_the_log_and_the_limits``
    * - PROXY versions 1 and 2 name the client. No header, a malformed header and an untrusted peer close the connection.

@@ -33,13 +33,13 @@ pub(super) struct Sources {
 }
 
 /// The running listener. Dropping it stops the thread.
-pub(super) struct Admin {
+pub(super) struct Probe {
     stop: Arc<AtomicBool>,
     address: SocketAddr,
     thread: Option<JoinHandle<()>>,
 }
 
-impl Admin {
+impl Probe {
     /// Binds `address` and starts the thread.
     ///
     /// # Errors
@@ -54,7 +54,7 @@ impl Admin {
         let stop = Arc::new(AtomicBool::new(false));
         let flag = stop.clone();
         let thread = std::thread::Builder::new()
-            .name("edge-admin".into())
+            .name("edge-probe".into())
             .spawn(move || run(&listener, &sources, &flag))?;
         Ok(Self { stop, address, thread: Some(thread) })
     }
@@ -66,7 +66,7 @@ impl Admin {
     }
 }
 
-impl Drop for Admin {
+impl Drop for Probe {
     fn drop(&mut self) {
         self.stop.store(true, Ordering::Release);
         if let Some(thread) = self.thread.take() {
@@ -173,12 +173,12 @@ mod tests {
 
     use super::*;
 
-    fn admin() -> (Admin, Arc<Observe>) {
+    fn probe() -> (Probe, Arc<Observe>) {
         let options = ObserveOptions::default();
         let observe = Arc::new(Observe::new(options, None, Arc::new(Stats::default())));
         let sources = Sources { observe: observe.clone(), server: None };
-        let admin = Admin::start("127.0.0.1:0".parse().unwrap(), sources).unwrap();
-        (admin, observe)
+        let probe = Probe::start("127.0.0.1:0".parse().unwrap(), sources).unwrap();
+        (probe, observe)
     }
 
     fn get(address: SocketAddr, request: &str) -> String {
@@ -191,8 +191,8 @@ mod tests {
 
     #[test]
     fn the_listener_answers_health_readiness_and_metrics() {
-        let (admin, observe) = admin();
-        let address = admin.address();
+        let (probe, observe) = probe();
+        let address = probe.address();
         let health = get(address, "GET /health HTTP/1.1\r\nHost: x\r\n\r\n");
         assert!(health.starts_with("HTTP/1.1 200 ") && health.contains("\"status\":\"ok\""));
         let ready = get(address, "GET /ready HTTP/1.1\r\n\r\n");
@@ -211,8 +211,8 @@ mod tests {
 
     #[test]
     fn the_listener_refuses_what_it_does_not_serve() {
-        let (admin, _observe) = admin();
-        let address = admin.address();
+        let (probe, _observe) = probe();
+        let address = probe.address();
         assert!(get(address, "GET /nothing HTTP/1.1\r\n\r\n").starts_with("HTTP/1.1 404 "));
         assert!(get(address, "POST /metrics HTTP/1.1\r\n\r\n").starts_with("HTTP/1.1 501 "));
         // A head without an end is refused once it is as long as the bound.

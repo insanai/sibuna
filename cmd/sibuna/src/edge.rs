@@ -1,10 +1,10 @@
 //! Edge-mode startup, reload at batch boundaries and bounded shutdown.
 
-mod admin;
 mod fdlimit;
 mod http;
 #[cfg(feature = "https")]
 mod inline;
+mod probe;
 mod proxy_stage;
 mod workers;
 

@@ -168,7 +168,7 @@ fn start_observe(options: &sibuna_lb::ObserveOptions, edge: &Edge) -> io::Result
 /// What the edge observes, with or without an HTTP frontend (SID 0020).
 pub(super) struct Observed {
     observe: Arc<Observe>,
-    _admin: Option<super::admin::Admin>,
+    _probe: Option<super::probe::Probe>,
 }
 
 impl Observed {
@@ -197,14 +197,14 @@ pub(super) fn observe(
         Some(http) => http.observe.clone(),
         None => Arc::new(Observe::new(options, None, edge.stats())),
     };
-    let admin = listen
+    let probe = listen
         .map(|address| {
             let server = http.map(|http| http.server.clone());
-            let sources = super::admin::Sources { observe: observe.clone(), server };
-            super::admin::Admin::start(address, sources)
+            let sources = super::probe::Sources { observe: observe.clone(), server };
+            super::probe::Probe::start(address, sources)
         })
         .transpose()?;
-    Ok(Observed { observe, _admin: admin })
+    Ok(Observed { observe, _probe: probe })
 }
 
 impl Http {
