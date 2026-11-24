@@ -168,7 +168,15 @@ impl Store {
     /// Opens the store of the authority at `directory` under `storage`, and creates its
     /// directories with mode 0700. Fails with `ACME001` when they cannot be created.
     pub fn open(storage: &Path, directory: &str) -> Result<Self, Error> {
-        let root = storage.join(authority_id(directory));
+        Self::open_at(storage.join(authority_id(directory)))
+    }
+
+    /// Opens the store of the local authority under `storage`: the directory `local`.
+    pub fn open_local(storage: &Path) -> Result<Self, Error> {
+        Self::open_at(storage.join(crate::local::DIRECTORY))
+    }
+
+    fn open_at(root: PathBuf) -> Result<Self, Error> {
         for path in [root.join("certs"), root.join("locks")] {
             create_private_dir(&path).map_err(|error| failure(&path, error))?;
         }

@@ -70,6 +70,31 @@ fn failure(path: &Path, what: impl std::fmt::Display) -> Error {
     Error::local(format!("{}: {what}.", path.display()))
 }
 
+/// The root certificate of a local authority, for the operator who installs it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Root {
+    /// The path of the file to install in clients.
+    pub path: PathBuf,
+    /// The certificate as PEM.
+    pub pem: String,
+    /// The validity and the name of the certificate.
+    pub fields: x509::Certificate,
+}
+
+/// Reads the root certificate under `storage` and creates nothing. Returns `None`
+/// when no local authority exists there yet. Fails with `ACME011` when the file cannot
+/// be read or holds no certificate.
+pub fn read_root(storage: &Path) -> Result<Option<Root>, Error> {
+    let path = storage.join(DIRECTORY).join("root.crt");
+    let Some(pem) = read_bounded(&path).map_err(|error| failure(&path, error.message))? else {
+        return Ok(None);
+    };
+    let fields = pem::decode("CERTIFICATE", &pem)
+        .and_then(|blocks| x509::read(blocks.first()?))
+        .ok_or_else(|| failure(&path, "the file holds no certificate"))?;
+    Ok(Some(Root { path, pem, fields }))
+}
+
 /// The local authority of one storage directory.
 #[derive(Debug)]
 pub struct LocalAuthority {
@@ -171,7 +196,9 @@ impl LocalAuthority {
     /// Issues a certificate for a TLS server. `names` are its DNS names and IP
     /// addresses, the first of which is also its common name. It is valid for
     /// `lifetime` seconds from one minute before `now`, and never longer than the
-    /// intermediate that signs it. Fails with `ACME011`, or for no name.
+    /// intermediate that signs it. A lifetime under two minutes starts half of itself
+    /// early instead, so that two thirds of the validity lie ahead. Fails with
+    /// `ACME011`, or for no name.
     pub fn issue(&self, names: &[&str], lifetime: u64, now: u64) -> Result<Issued, Error> {
         let Some(subject) = names.first() else {
             return Err(Error::local("A certificate needs a name."));
@@ -184,7 +211,7 @@ impl LocalAuthority {
             issuer: INTERMEDIATE_NAME,
             subject,
             names,
-            not_before: now.saturating_sub(BACKDATE),
+            not_before: now.saturating_sub(BACKDATE.min(lifetime / 2)),
             not_after: wanted.min(intermediate.fields.not_after),
             serial: random_serial()?,
             server: true,
@@ -262,6 +289,17 @@ mod tests {
         assert_eq!((chain[0].not_before, chain[0].not_after), (NOW - 60, NOW + 43_200));
         assert_eq!(chain[1].not_after, NOW + INTERMEDIATE_LIFETIME);
         assert_eq!(authority.issue(&[], 60, NOW).unwrap_err().code, "ACME011");
+        // A short lifetime is renewed inside its life: at two thirds of the validity.
+        let short = tests::chain(&authority.issue(&["localhost"], 10, NOW).unwrap());
+        assert_eq!((short[0].not_before, short[0].not_after), (NOW - 5, NOW + 10));
+        assert_eq!(schedule::renew_at(short[0].not_before, short[0].not_after), NOW + 5);
+        let root = read_root(&scratch.0).unwrap().unwrap();
+        assert_eq!(
+            (root.fields.issuer.as_str(), root.pem),
+            (ROOT_NAME, authority.root_pem().unwrap())
+        );
+        assert_eq!(root.fields.not_after, NOW + ROOT_LIFETIME);
+        assert_eq!(read_root(&scratch.0.join("nothing")).unwrap(), None);
     }
 
     #[test]
