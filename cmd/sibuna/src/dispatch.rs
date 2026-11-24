@@ -121,6 +121,10 @@ fn route<'c, W: Write>(ctx: &mut Ctx<'c, W>, spare: &'c mut [u8]) -> io::Result<
             return rate_limited(ctx, rate, 0);
         }
     }
+    // The policy of the frontend or route may answer at once (SID 0019).
+    if let Some(answered) = crate::traffic::intercept(ctx) {
+        return answered;
+    }
     // A frontend or route with `"firewall": false` only balances load: no policy,
     // challenge or WAF decision applies to it. Bans and the request limiter above do.
     if let (Some(routes), Some(ingress)) = (&server.edge_routes, ctx.ingress)
@@ -459,10 +463,11 @@ pub(crate) fn forward<W: Write>(
             },
             response_status: status_sink,
             response_head: head_sink,
+            ..crate::traffic::audit(&ctx.request, ctx.ingress, selected.as_ref())
         },
         keep_alive: ctx.keep_alive,
     };
-    let relayed = relay(&server.pool, ctx.workspace, exchange, selected);
+    let relayed = relay(&server.pool, ctx.workspace, exchange, selected.as_ref());
     telemetry::admitted_complete(ctx, origin_status, origin.as_ref());
     // The tunnel has ended by now, so its place under the rule is free.
     drop(tunnel);
@@ -495,6 +500,8 @@ pub(crate) struct Plan {
     pub keep_alive: bool,
     /// The place of an upgrade under its WebSocket rule, held while the exchange lives.
     pub tunnel: Option<sibuna_lb::TunnelPermit>,
+    /// The body bytes that were buffered with the head, for `max_body` (SID 0019).
+    pub body_seen: u64,
 }
 
 /// Plans an admitted request in place of relaying it: encodes the origin request and
@@ -527,12 +534,16 @@ fn plan<W: Write>(
         },
         response_status: None,
         response_head: None,
+        // The response edit is unused here: a worker edits the head when it relays it.
+        ..crate::traffic::audit(&ctx.request, ctx.ingress, Some(&target))
     };
     let Some(defer) = ctx.defer.as_deref_mut() else { return Ok(false) };
     defer.wire.clear();
     match sibuna_net::machine::encode_request(&mut defer.wire, &ctx.request, ctx.upload, &audit) {
         Ok(outbound) => {
-            defer.plan = Some(Plan { target, outbound, keep_alive: ctx.keep_alive, tunnel });
+            let body_seen = ctx.request.body.len() as u64;
+            let keep_alive = ctx.keep_alive;
+            defer.plan = Some(Plan { target, outbound, keep_alive, tunnel, body_seen });
             Ok(ctx.keep_alive)
         }
         Err(error) => refuse_proxy_error(ctx, error),
@@ -572,8 +583,7 @@ fn select_origin<W>(ctx: &Ctx<'_, W>) -> Result<Selected, Status> {
         None => None,
     };
     let tunnel = tunnel.transpose()?;
-    routes
-        .select(i.vip, i.peer, host, path, ctx.cache.generation())
+    crate::traffic::choose(ctx, routes, i)
         .map(|target| (Some(target), tunnel))
         .ok_or(Status::ServiceUnavailable)
 }
@@ -582,7 +592,7 @@ fn relay<W: Write>(
     pool: &sibuna_net::Pool,
     workspace: &mut sibuna_net::Workspace,
     exchange: Exchange<'_, W>,
-    selected: Option<sibuna_lb::HttpTarget>,
+    selected: Option<&sibuna_lb::HttpTarget>,
 ) -> Result<bool, ProxyError> {
     if let Some(target) = selected {
         let start = std::time::Instant::now();

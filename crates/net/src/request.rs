@@ -64,6 +64,15 @@ fn is_dropped(request: &Request<'_>, name: &[u8], audit: &Audit<'_>) -> bool {
         || same_field_name(name, CLIENT_CERT)
         || is_untrusted_ja4(name, audit)
         || (nominated(request, name) && !name.eq_ignore_ascii_case(b"host"))
+        || is_edited_out(name, audit)
+}
+
+/// True when the request edit of `audit` drops `name` (SID 0019). An alias with `_` for
+/// `-` goes too, so a client cannot keep a field the operator sets or removes.
+fn is_edited_out(name: &[u8], audit: &Audit<'_>) -> bool {
+    let removed = audit.request_edit.remove;
+    removed.iter().any(|wanted| same_field_name(name, wanted.as_bytes()))
+        && !name.eq_ignore_ascii_case(b"host")
 }
 
 /// True when `name` spells the JA4 field of `audit` and is not a trusted exact spelling.
@@ -161,6 +170,19 @@ fn write_audit<W: Write + ?Sized>(
         out.write_all(value)?;
         out.write_all(b"\r\n")?;
     }
+    if !audit.forwarded_host.is_empty() {
+        out.write_all(b"X-Forwarded-Host: ")?;
+        out.write_all(audit.forwarded_host)?;
+        out.write_all(b"\r\n")?;
+    }
+    if audit.forwarded_port != 0 {
+        out.write_all(b"X-Forwarded-Port: ")?;
+        write_decimal(out, u64::from(audit.forwarded_port))?;
+        out.write_all(b"\r\n")?;
+    }
+    for block in audit.request_edit.append {
+        out.write_all(block)?;
+    }
     out.write_all(b"\r\n")
 }
 
@@ -205,7 +227,7 @@ mod tests {
 
     use super::*;
 
-    fn audit() -> Audit<'static> {
+    fn audit<'a>() -> Audit<'a> {
         Audit {
             client_ip: b"203.0.113.4",
             peer: b"203.0.113.4",
@@ -332,6 +354,37 @@ mod tests {
         out.clear();
         write_request_head(&mut out, &request, &Upload::None, &audit(), false).unwrap();
         assert!(contains(&out, b"t13d") && contains(&out, b"forged"));
+    }
+
+    #[test]
+    fn the_addressed_host_and_port_are_forwarded_and_the_edit_is_applied() {
+        let raw = b"GET / HTTP/1.1\r\nHost: shop.example:8443\r\nX-Forwarded-Host: evil\r\n\
+            X-Forwarded-Port: 1\r\nX-Tenant: forged\r\nx_tenant: forged\r\nX-Debug: 1\r\n\
+            Accept: */*\r\n\r\n";
+        let request = parse_request(raw).unwrap();
+        let remove: [Box<str>; 3] = ["x-tenant".into(), "x-debug".into(), "host".into()];
+        let edited = Audit {
+            forwarded_host: b"shop.example:8443",
+            forwarded_port: 8443,
+            request_edit: crate::HeadEdit {
+                remove: &remove,
+                append: [b"X-Tenant: blue\r\n", b"", b""],
+            },
+            ..audit()
+        };
+        let mut out = Vec::new();
+        write_request_head(&mut out, &request, &Upload::None, &edited, false).unwrap();
+        let expected = b"GET / HTTP/1.1\r\nHost: shop.example:8443\r\nAccept: */*\r\n\
+            Connection: keep-alive\r\nX-Forwarded-For: 203.0.113.4\r\n\
+            X-Forwarded-Proto: http\r\nX-Real-IP: 203.0.113.4\r\nX-Sibuna-Status: PASS\r\n\
+            X-Sibuna-Rule: default/allow\r\nX-Forwarded-Host: shop.example:8443\r\n\
+            X-Forwarded-Port: 8443\r\nX-Tenant: blue\r\n\r\n";
+        assert_eq!(String::from_utf8_lossy(&out), String::from_utf8_lossy(expected));
+        // Without them the head is as before: no forwarded host or port is written.
+        out.clear();
+        write_request_head(&mut out, &request, &Upload::None, &audit(), false).unwrap();
+        assert!(!contains(&out, b"X-Forwarded-Host") && !contains(&out, b"X-Forwarded-Port"));
+        assert!(contains(&out, b"X-Tenant: forged\r\nx_tenant: forged\r\n"));
     }
 
     #[test]

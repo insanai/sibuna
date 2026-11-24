@@ -46,7 +46,6 @@ const BUFFER: usize = 64 * 1024;
 const IDLE_PER_ADDRESS: usize = 256;
 /// How long a server connection may stay idle.
 const IDLE_ORIGIN: Duration = Duration::from_secs(30);
-const CONNECT: Duration = Duration::from_secs(5);
 
 /// One request as the firewall sees it.
 #[derive(Clone, Copy, Debug)]
@@ -106,12 +105,28 @@ pub struct Completion {
 pub trait Report: Send + 'static {
     /// Takes the outcome. It must not wait: it runs on a thread of the protocol runtime.
     fn done(self: Box<Self>, completion: &Completion);
+
+    /// The request moved to the server of `target` after its first server could not be
+    /// reached (SID 0019). The outcome that follows is that of `target`. The default
+    /// ignores the move.
+    fn moved(&mut self, target: &HttpTarget) {
+        let _ = target;
+    }
 }
 
 /// Carries a [`Report`] through an exchange and delivers it when dropped.
 struct Reporter {
     report: Option<Box<dyn Report>>,
     completion: Completion,
+}
+
+impl Reporter {
+    /// Tells the report that the request is now with the server of `target`.
+    fn moved(&mut self, target: &HttpTarget) {
+        if let Some(report) = self.report.as_mut() {
+            report.moved(target);
+        }
+    }
 }
 
 impl Drop for Reporter {
@@ -126,6 +141,14 @@ impl Drop for Reporter {
 pub trait Decide: Send + Sync + 'static {
     /// Judges one request.
     fn decide(&self, offer: &Offer<'_>) -> Verdict;
+
+    /// Reserves another server for a request whose connect to `failed` did not succeed
+    /// (SID 0019). The server received nothing, so any request may move. Returns `None`
+    /// when no other server may be tried; this is the default.
+    fn retry(&self, failed: &HttpTarget) -> Option<HttpTarget> {
+        let _ = failed;
+        None
+    }
 }
 
 type Sender = SendRequest<Body>;
@@ -136,13 +159,11 @@ pub(crate) struct Inline {
     idle: Mutex<HashMap<SocketAddr, Vec<(Sender, Instant)>>>,
     /// The HTTP/2 and HTTP/3 servers that are reached without an HTTP/1.1 hop.
     direct: OnceLock<Directory>,
-    /// The longest wait for a server's response head.
-    timeout: Duration,
 }
 
 impl Inline {
-    pub fn new(decide: Arc<dyn Decide>, timeout: Duration) -> Arc<Self> {
-        Arc::new(Self { decide, idle: Mutex::default(), direct: OnceLock::new(), timeout })
+    pub fn new(decide: Arc<dyn Decide>) -> Arc<Self> {
+        Arc::new(Self { decide, idle: Mutex::default(), direct: OnceLock::new() })
     }
 
     /// Names the multiplexed servers. The first directory stays.
@@ -175,8 +196,9 @@ impl Inline {
         }
     }
 
-    async fn open(&self, address: SocketAddr) -> Result<Sender, Error> {
-        let stream = timeout(CONNECT, tokio::net::TcpStream::connect(address)).await??;
+    /// Connects to `address` within `bound`, the connect timeout of the server's pool.
+    async fn open(&self, address: SocketAddr, bound: Duration) -> Result<Sender, Error> {
+        let stream = timeout(bound, tokio::net::TcpStream::connect(address)).await??;
         stream.set_nodelay(true)?;
         let (sender, connection) =
             hyper::client::conn::http1::handshake(TokioIo::new(stream)).await?;
@@ -340,83 +362,124 @@ impl HttpBody for Prefixed {
 
 /// Why an exchange with a server failed before its response head.
 enum Fault {
-    /// The server could not be reached.
+    /// The server could not be reached. It received nothing.
     Connect,
     /// The connection failed, or the server answered nothing usable.
     Exchange,
+    /// The server stayed silent for its response bound.
+    Silent,
 }
 
-async fn fresh(
-    inline: &Inline,
-    address: SocketAddr,
+/// Sends `request` on `sender` and waits for the response head, at most `limit`.
+async fn ask(
+    sender: &mut Sender,
     request: Request<Body>,
-) -> Result<(Sender, Response<Incoming>), Fault> {
-    let mut sender = inline.open(address).await.map_err(|_| Fault::Connect)?;
-    let response = sender.send_request(request).await.map_err(|_| Fault::Exchange)?;
-    Ok((sender, response))
+    limit: Duration,
+) -> Result<Response<Incoming>, Fault> {
+    match timeout(limit, sender.send_request(request)).await {
+        Ok(Ok(response)) => Ok(response),
+        Ok(Err(_)) => Err(Fault::Exchange),
+        Err(_) => Err(Fault::Silent),
+    }
 }
 
+/// Opens a connection for the request of `target`. A server that cannot be reached is
+/// marked, and the request moves to another server of its pool while the firewall offers
+/// one: nothing was sent, so no server can have acted on the request.
+async fn fresh(inline: &Inline, target: &mut HttpTarget) -> Result<Sender, Fault> {
+    loop {
+        if let Ok(sender) = inline.open(target.address(), target.connect_timeout()).await {
+            return Ok(sender);
+        }
+        target.failed();
+        // The old reservation is dropped here, which gives its place back.
+        *target = inline.decide.retry(target).ok_or(Fault::Connect)?;
+    }
+}
+
+/// One request and its response head over a pooled or a fresh connection.
 async fn attempt(
     inline: &Inline,
-    address: SocketAddr,
+    target: &mut HttpTarget,
     request: Request<Body>,
     retryable: bool,
 ) -> Result<(Sender, Response<Incoming>), Fault> {
-    let Some(mut sender) = inline.take(address) else {
-        return fresh(inline, address, request).await;
-    };
-    if sender.ready().await.is_err() {
-        return fresh(inline, address, request).await;
+    let mut pooled = inline.take(target.address());
+    if let Some(sender) = pooled.as_mut()
+        && sender.ready().await.is_err()
+    {
+        pooled = None;
     }
+    let Some(mut sender) = pooled else {
+        let mut sender = fresh(inline, target).await?;
+        let response = ask(&mut sender, request, target.response_timeout()).await?;
+        return Ok((sender, response));
+    };
+    let limit = target.response_timeout();
     if !retryable {
-        let response = sender.send_request(request).await.map_err(|_| Fault::Exchange)?;
+        let response = ask(&mut sender, request, limit).await?;
         return Ok((sender, response));
     }
     let (parts, body) = request.into_parts();
     let again = Request::from_parts(parts.clone(), empty());
-    match sender.send_request(Request::from_parts(parts, body)).await {
+    match ask(&mut sender, Request::from_parts(parts, body), limit).await {
         Ok(response) => Ok((sender, response)),
+        Err(Fault::Silent) => Err(Fault::Silent),
         // The server closed the idle connection. It answered nothing, and the request
         // is safe to send again.
-        Err(_) => fresh(inline, address, again).await,
+        Err(_) => {
+            let mut sender = fresh(inline, target).await?;
+            let response = ask(&mut sender, again, target.response_timeout()).await?;
+            Ok((sender, response))
+        }
     }
 }
 
-/// Sends an admitted request to its server and returns the response.
+/// Sends an admitted request to its server and returns the response. The bounds are
+/// those of the server's pool (SID 0019): `connect_timeout` for the connection and
+/// `response_timeout` for the response head and for each further piece of the body.
 async fn send(
     inline: &Arc<Inline>,
     forward: Forward,
     body: Body,
     sending: Sending,
 ) -> Response<Body> {
-    let Forward { target, head, guard, report } = forward;
+    let Forward { mut target, head, guard, report } = forward;
     let mut reporter = Reporter { report, completion: Completion::default() };
     let Some(mut request) = parse_request(&head, body) else {
         return refuse(&mut reporter, StatusCode::BAD_GATEWAY);
     };
-    let address = target.address();
     let started = Instant::now();
-    let origin = inline.direct.get().and_then(|directory| directory.find(address));
-    if let Some(origin) = origin {
+    let multiplexed = inline.direct.get().and_then(|directory| directory.find(target.address()));
+    if let Some(origin) = multiplexed {
         if sending.trailers {
             request.headers_mut().insert(header::TE, HeaderValue::from_static("trailers"));
         }
+        let address = target.address();
         let inline = Arc::clone(inline);
         let done = Done { inline, address, sender: None, target, started, reporter };
-        return direct(&origin, request, done, guard).await;
+        return direct(origin, request, done, guard).await;
     }
-    let retryable = sending.retryable;
-    let sent = timeout(inline.timeout, attempt(inline, address, request, retryable)).await;
+    let first = target.address();
+    let sent = attempt(inline, &mut target, request, sending.retryable).await;
+    if target.address() != first {
+        reporter.moved(&target);
+    }
     let (sender, mut response) = match sent {
-        Ok(Ok(exchange)) => exchange,
-        Ok(Err(Fault::Connect)) => {
-            target.failed();
+        Ok(exchange) => exchange,
+        // Every server that was tried is marked already.
+        Err(Fault::Connect | Fault::Exchange) => {
             return refuse(&mut reporter, StatusCode::BAD_GATEWAY);
         }
-        Ok(Err(Fault::Exchange)) => return refuse(&mut reporter, StatusCode::BAD_GATEWAY),
-        Err(_) => return refuse(&mut reporter, StatusCode::GATEWAY_TIMEOUT),
+        Err(Fault::Silent) => {
+            target.timed_out();
+            return refuse(&mut reporter, StatusCode::GATEWAY_TIMEOUT);
+        }
     };
+    // The request may have moved, so the server is read after the attempt.
+    let address = target.address();
     strip_hop_fields(response.headers_mut());
+    edit_response(response.headers_mut(), &target);
     let (parts, body) = response.into_parts();
     reporter.completion.status = parts.status.as_u16();
     reporter.completion.first_byte = Some(started.elapsed());
@@ -434,29 +497,55 @@ fn refuse(reporter: &mut Reporter, status: StatusCode) -> Response<Body> {
 
 /// Sends an admitted request on the shared session of an HTTP/2 or HTTP/3 server. The
 /// request and the response stream side by side, and trailers pass both ways.
+///
+/// The bounds are those of the server's pool (SID 0019). A server whose session cannot
+/// be opened received nothing, so the request moves to another server of the pool while
+/// the firewall offers one.
 async fn direct(
-    origin: &Origin,
+    mut origin: Arc<Origin>,
     request: Request<Body>,
     mut done: Done,
     guard: Box<dyn Any + Send>,
 ) -> Response<Body> {
-    let limit = done.inline.timeout;
+    while origin.ready(done.target.connect_timeout()).await.is_err() {
+        done.target.failed();
+        let next = done.inline.decide.retry(&done.target);
+        let found = next.and_then(|target| {
+            let origin = done.inline.direct.get()?.find(target.address())?;
+            Some((target, origin))
+        });
+        let Some((target, next)) = found else {
+            return refuse(&mut done.reporter, StatusCode::BAD_GATEWAY);
+        };
+        // The old reservation is dropped here, which gives its place back.
+        done.target = target;
+        done.address = done.target.address();
+        done.reporter.moved(&done.target);
+        origin = next;
+    }
+    let limit = done.target.response_timeout();
     let mut response = match timeout(limit, origin.exchange(request)).await {
         Ok(Ok(response)) => response,
         Ok(Err(_)) => {
             done.target.failed();
             return refuse(&mut done.reporter, StatusCode::BAD_GATEWAY);
         }
-        Err(_) => return refuse(&mut done.reporter, StatusCode::GATEWAY_TIMEOUT),
+        Err(_) => {
+            done.target.timed_out();
+            return refuse(&mut done.reporter, StatusCode::GATEWAY_TIMEOUT);
+        }
     };
     strip_hop_fields(response.headers_mut());
+    edit_response(response.headers_mut(), &done.target);
     let (parts, body) = response.into_parts();
     done.reporter.completion.status = parts.status.as_u16();
     done.reporter.completion.first_byte = Some(done.started.elapsed());
     Response::from_parts(parts, track(body, done, guard))
 }
 
-/// Wraps a response body so that its end finishes the exchange.
+/// Wraps a response body so that its end finishes the exchange. The server may stay
+/// silent between two pieces of the body for the `response_timeout` of its pool. This
+/// is also the bound on the silence of a gRPC stream.
 fn track<B>(body: B, done: Done, guard: Box<dyn Any + Send>) -> Body
 where
     B: HttpBody<Data = Bytes> + Send + Unpin + 'static,
@@ -466,9 +555,27 @@ where
         done.finish();
         return empty();
     }
-    let limit = done.inline.timeout;
+    let limit = done.target.response_timeout();
     let stall = Box::pin(tokio::time::sleep(limit));
     Tracked { body, done: Some(done), _guard: guard, stall, limit, waiting: false }.boxed_unsync()
+}
+
+/// Applies the policy of the route to the response fields (SID 0019): drops the names
+/// the route removes, then adds its lines, HSTS and the sticky cookie.
+fn edit_response(headers: &mut header::HeaderMap, target: &HttpTarget) {
+    for name in target.route().response_remove() {
+        // A name was checked when the topology was read. One that the library refuses
+        // cannot be present either.
+        if let Ok(name) = HeaderName::from_bytes(name.as_bytes()) {
+            headers.remove(name);
+        }
+    }
+    for (name, value) in target.response_lines().into_iter().flat_map(fields) {
+        let name = HeaderName::from_bytes(name);
+        if let (Ok(name), Ok(value)) = (name, HeaderValue::from_bytes(value)) {
+            headers.append(name, value);
+        }
+    }
 }
 
 /// What a finished exchange gives back.
@@ -487,6 +594,7 @@ impl Done {
     /// Records the exchange and returns the server connection to the pool.
     fn finish(self) {
         self.target.completed(self.started);
+        self.target.answered(self.reporter.completion.status);
         if let Some(sender) = self.sender {
             self.inline.give(self.address, sender);
         }
@@ -530,7 +638,9 @@ where
             }
             if self.stall.as_mut().poll(cx).is_ready() {
                 // Dropping the exchange closes the server connection.
-                self.done = None;
+                if let Some(done) = self.done.take() {
+                    done.target.timed_out();
+                }
                 return Poll::Ready(Some(Err("the server stopped sending".into())));
             }
             return Poll::Pending;

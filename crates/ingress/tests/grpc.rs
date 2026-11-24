@@ -23,6 +23,10 @@ use support::{calls, fixture, server};
 struct Admit {
     routes: HttpRoutes,
     decisions: AtomicUsize,
+    /// Requests that asked for another server (SID 0019).
+    retries: AtomicUsize,
+    /// Moves that the runtime told a report of (SID 0019).
+    moves: Arc<AtomicUsize>,
     /// What the runtime reported of each call (SID 0020).
     reports: Arc<Mutex<Vec<(&'static str, Completion)>>>,
 }
@@ -30,12 +34,18 @@ struct Admit {
 /// Notes the outcome of one call.
 struct Note {
     reports: Arc<Mutex<Vec<(&'static str, Completion)>>>,
+    moves: Arc<AtomicUsize>,
     protocol: &'static str,
 }
 
 impl Report for Note {
     fn done(self: Box<Self>, completion: &Completion) {
         self.reports.lock().unwrap().push((self.protocol, *completion));
+    }
+
+    fn moved(&mut self, target: &sibuna_lb::HttpTarget) {
+        let _ = target;
+        self.moves.fetch_add(1, Ordering::SeqCst);
     }
 }
 
@@ -51,13 +61,22 @@ impl Decide for Admit {
                 self.routes.select(offer.vip, offer.peer, host, path, revision)
             })
             .unwrap();
-        let note = Note { reports: self.reports.clone(), protocol: offer.protocol };
+        let note = Note {
+            reports: self.reports.clone(),
+            moves: self.moves.clone(),
+            protocol: offer.protocol,
+        };
         Verdict::Forward(Forward {
             target,
             head: offer.head.to_vec(),
             guard: Box::new(()),
             report: Some(Box::new(note)),
         })
+    }
+
+    fn retry(&self, failed: &sibuna_lb::HttpTarget) -> Option<sibuna_lb::HttpTarget> {
+        self.retries.fetch_add(1, Ordering::SeqCst);
+        self.routes.retry(failed)
     }
 }
 
@@ -71,10 +90,14 @@ fn every_kind_of_grpc_call_crosses_the_edge_to_an_http2_pool() {
     let connections = Arc::new(AtomicUsize::new(0));
     let origin = server(&servers, connections.clone());
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    // Nothing listens on the first server. The first call finds its session closed and
+    // moves to the second server before it sent a byte (SID 0019).
+    let dead = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
     let topology = format!(
         r#"{{"frontends":{{"web":{{"proto":"http","binds":["{vip}"],
         "default_backend":"grpc"}}}},"backends":{{"grpc":{{"mode":"http","http_version":"2",
-        "servers":[{{"name":"origin","addr":"{origin}"}}]}}}}}}"#
+        "servers":[{{"name":"dead","addr":"{dead}"}},
+        {{"name":"origin","addr":"{origin}"}}]}}}}}}"#
     );
     let mut config = Config::parse(topology.as_bytes()).unwrap();
     let mut egress = Egress::new().unwrap();
@@ -94,6 +117,8 @@ fn every_kind_of_grpc_call_crosses_the_edge_to_an_http2_pool() {
     let admit = Arc::new(Admit {
         routes: edge.http_routes(),
         decisions: AtomicUsize::new(0),
+        retries: AtomicUsize::new(0),
+        moves: Arc::default(),
         reports: Arc::default(),
     });
     let identities = [(vip, Identity::load(&tls).unwrap())].into();
@@ -116,11 +141,18 @@ fn every_kind_of_grpc_call_crosses_the_edge_to_an_http2_pool() {
     }
     runner.join().unwrap();
     assert_eq!(admit.decisions.load(Ordering::SeqCst), 6);
+    // The dead server was tried once and then marked. Its call was told of the move.
+    assert_eq!(admit.retries.load(Ordering::SeqCst), 1);
+    assert_eq!(admit.moves.load(Ordering::SeqCst), 1);
     // No call crossed the socket pair, and all of them shared one HTTP/2 session.
     assert_eq!(handoffs.load(Ordering::SeqCst), 0);
     assert_eq!(connections.load(Ordering::SeqCst), 1);
-    // Every call on the shared session is reported once, when its trailers or its end
-    // passed, with the status and the wait for the response head (SID 0020).
+    assert_reports(&admit);
+}
+
+/// Every call on the shared session is reported once, when its trailers or its end
+/// passed, with the status and the wait for the response head (SID 0020).
+fn assert_reports(admit: &Admit) {
     let deadline = std::time::Instant::now() + Duration::from_secs(5);
     while admit.reports.lock().unwrap().len() < 6 && std::time::Instant::now() < deadline {
         std::thread::sleep(Duration::from_millis(10));

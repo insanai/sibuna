@@ -7,6 +7,7 @@
 //!     |
 //!     +-- GET /.well-known/acme-challenge/TOKEN, answer known --> 200, the answer
 //!     +-- plain HTTP, Host is a managed name ------------------> 308, https://HOST/...
+//!     |     (unless the route states `redirect_https` itself: SID 0019 then decides)
 //!     +-- anything else ---------------------------------------> the firewall
 //! ```
 //!
@@ -19,6 +20,7 @@ use std::io::{self, Write};
 use sibuna_core::diagnostic;
 use sibuna_http::response::{self, Extra, Status};
 use sibuna_ingress::{Automatic, CertificateStatus, Event};
+use sibuna_lb::RoutePolicy;
 
 use crate::context::Ctx;
 use crate::telemetry::{self, Outcome};
@@ -53,42 +55,25 @@ pub(crate) fn intercept<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<Option<boo
         return Ok(None);
     }
     let Some(port) = automatic.redirect_port(host) else { return Ok(None) };
-    let Some(header) = location(host, port, ctx.request.path, ctx.request.query) else {
+    let (path, query) = (ctx.request.path, ctx.request.query);
+    // Where the operator states `redirect_https`, that statement decides (SID 0019):
+    // `false` keeps the request on HTTP, and a redirect of its own is answered by the
+    // traffic policy, with its status and port.
+    let routes = ctx.server.edge_routes.as_ref();
+    let stated = routes.and_then(|routes| routes.policy(ingress.vip, host, path));
+    if stated.is_some_and(|policy| policy.keeps_http || policy.redirect_https.is_some()) {
         return Ok(None);
-    };
-    telemetry::record_outcome(ctx, Outcome::Other, Status::PermanentRedirect.code());
-    let extra = Extra { headers: &header, keep_alive: ctx.keep_alive, ..Extra::default() };
-    let content_type = b"text/plain; charset=utf-8";
-    response::write_response(ctx.writer, Status::PermanentRedirect, content_type, b"", extra)?;
-    Ok(Some(ctx.keep_alive))
+    }
+    if !is_header_safe(path) || !is_header_safe(query) {
+        return Ok(None);
+    }
+    crate::traffic::redirect(ctx, &RoutePolicy::redirect_to(port)).map(Some)
 }
 
-/// The header line `Location: https://NAME[:PORT]PATH[?QUERY]`. The name is the host
-/// without its port. Returns `None` for a target that is too long or holds a byte that
-/// cannot stand in a header.
-fn location(host: &[u8], port: u16, path: &[u8], query: &[u8]) -> Option<Vec<u8>> {
-    let plain = |bytes: &[u8]| bytes.iter().all(|byte| (0x21..0x7f).contains(byte));
-    let name = match host.iter().rposition(|byte| *byte == b':') {
-        Some(colon) => &host[..colon],
-        None => host,
-    };
-    let length = name.len() + path.len() + query.len();
-    if length > MAX_LOCATION || !plain(name) || !plain(path) || !plain(query) {
-        return None;
-    }
-    let mut line = Vec::with_capacity(length + 32);
-    line.extend_from_slice(b"Location: https://");
-    line.extend_from_slice(name);
-    if port != 443 {
-        line.extend_from_slice(format!(":{port}").as_bytes());
-    }
-    line.extend_from_slice(path);
-    if !query.is_empty() {
-        line.push(b'?');
-        line.extend_from_slice(query);
-    }
-    line.extend_from_slice(b"\r\n");
-    Some(line)
+/// Whether `bytes` may stand in the `Location` of a redirect: printable ASCII without
+/// a space, and not too long. Any other target is left to the firewall.
+fn is_header_safe(bytes: &[u8]) -> bool {
+    bytes.len() <= MAX_LOCATION && bytes.iter().all(|byte| (0x21..0x7f).contains(byte))
 }
 
 /// Writes an event of the certificate thread to standard error: one line for a
@@ -189,29 +174,12 @@ mod tests {
 
     use super::*;
 
-    fn text(host: &str, port: u16, path: &str, query: &str) -> Option<String> {
-        location(host.as_bytes(), port, path.as_bytes(), query.as_bytes())
-            .map(|line| String::from_utf8(line).unwrap())
-    }
-
-    #[test]
-    fn the_location_keeps_the_path_and_the_query() {
-        assert_eq!(
-            text("example.org", 443, "/a/b", "x=1&y=2").as_deref(),
-            Some("Location: https://example.org/a/b?x=1&y=2\r\n")
-        );
-        assert_eq!(
-            text("example.org:80", 8443, "/", "").as_deref(),
-            Some("Location: https://example.org:8443/\r\n")
-        );
-    }
-
     #[test]
     fn a_target_that_cannot_stand_in_a_header_is_not_redirected() {
-        assert_eq!(text("example.org", 443, "/a\r\nSet-Cookie: x", ""), None);
-        assert_eq!(text("example.org", 443, "/a b", ""), None);
-        assert_eq!(text("example.org", 443, "/", "q=\x7f"), None);
-        assert_eq!(text("example.org", 443, &"/".repeat(MAX_LOCATION), ""), None);
+        assert!(is_header_safe(b"/a/b") && is_header_safe(b"x=1&y=2") && is_header_safe(b""));
+        assert!(!is_header_safe(b"/a\r\nSet-Cookie: x"));
+        assert!(!is_header_safe(b"/a b") && !is_header_safe(b"q=\x7f"));
+        assert!(!is_header_safe("/".repeat(MAX_LOCATION + 1).as_bytes()));
     }
 
     #[test]

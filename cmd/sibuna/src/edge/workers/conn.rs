@@ -138,12 +138,21 @@ pub(super) struct Exchange {
     pub up_eof: bool,
     /// The place under a WebSocket rule, given back when the exchange ends.
     pub _permit: Option<sibuna_lb::TunnelPermit>,
+    /// Body bytes taken from the client so far, for `max_body` (SID 0019).
+    pub uploaded: u64,
 }
 
 impl Exchange {
     /// Bytes the server has not taken yet.
     pub fn backlog(&self) -> usize {
         self.wire.len() - self.wire_sent
+    }
+
+    /// True when the exchange waits for the server and not for the client: the request
+    /// body is complete and the client has taken every response byte, of which
+    /// `client_backlog` remain. The server's response bound applies then (SID 0019).
+    pub fn awaits_server(&self, client_backlog: usize) -> bool {
+        !self.connecting && !self.tunnel && self.upload.is_done() && client_backlog == 0
     }
 }
 

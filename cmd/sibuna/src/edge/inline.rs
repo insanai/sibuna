@@ -64,6 +64,10 @@ impl Decide for Decision {
             Err(_) => judge(&self.server, offer, &mut Scratch::new()),
         })
     }
+
+    fn retry(&self, failed: &sibuna_lb::HttpTarget) -> Option<sibuna_lb::HttpTarget> {
+        self.server.edge_routes.as_ref()?.retry(failed)
+    }
 }
 
 fn judge(server: &Server, offer: &Offer<'_>, scratch: &mut Scratch) -> Verdict {

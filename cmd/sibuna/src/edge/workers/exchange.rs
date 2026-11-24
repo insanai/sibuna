@@ -13,6 +13,8 @@ use super::worker::{KEPT_CAPACITY, KIND_ORIGIN, Side, Worker, key};
 use crate::client_writer::ClientWriter;
 use crate::dispatch::{Plan, answer_proxy_error};
 
+mod failover;
+
 /// Idle server sockets kept for one address, and by one worker.
 const IDLE_PER_ADDRESS: usize = 64;
 const IDLE_PER_WORKER: usize = 1024;
@@ -33,7 +35,7 @@ enum Next {
 impl Worker {
     /// Starts the exchange of an admitted request.
     pub fn begin(&mut self, index: u32, plan: Plan, wire: Vec<u8>) {
-        let Plan { target, outbound, keep_alive, tunnel: permit } = plan;
+        let Plan { target, outbound, keep_alive, tunnel: permit, body_seen } = plan;
         let address = target.address();
         let exchange = Exchange {
             origin: None,
@@ -56,6 +58,7 @@ impl Worker {
             tunnel: false,
             up_eof: false,
             _permit: permit,
+            uploaded: body_seen,
         };
         let Some(conn) = self.conns.at(index) else { return };
         conn.activity = self.now;
@@ -74,13 +77,12 @@ impl Worker {
             }),
         };
         let now = self.now;
-        let Some(exchange) = self.conns.at(index).and_then(|conn| conn.exchange.as_deref_mut())
-        else {
+        let Some(at) = origin else {
+            self.connect_failed(index);
             return;
         };
-        let Some(at) = origin else {
-            exchange.target.failed();
-            self.answer(index, ProxyError::UpstreamUnreachable);
+        let Some(exchange) = self.conns.at(index).and_then(|conn| conn.exchange.as_deref_mut())
+        else {
             return;
         };
         let metrics = &self.server.metrics;
@@ -188,8 +190,7 @@ impl Worker {
             }
             Ok(None) => false,
             _ => {
-                exchange.target.failed();
-                self.answer(index, ProxyError::UpstreamUnreachable);
+                self.connect_failed(index);
                 false
             }
         }
@@ -218,7 +219,8 @@ impl Worker {
         match exchange.upload.feed(held, &mut exchange.wire) {
             Ok(used) => {
                 buffer.consume(used);
-                true
+                exchange.uploaded += used as u64;
+                self.within_body_bound(index)
             }
             Err(error) => {
                 self.fail(index, error);
@@ -294,16 +296,22 @@ impl Worker {
             super::trace::count(&mut conn.trace, count);
             return Next::Rest;
         }
+        let edit = crate::traffic::response_edit(Some(&exchange.target));
         let before = conn.output.len();
         let fed = if exchange.inbound.is_empty() {
-            let fed = exchange.relay.feed(bytes, &mut conn.output, &mut |_, _| {});
+            let fed = exchange.relay.feed_edited(bytes, &mut conn.output, &mut |_, _| {}, &edit);
             if let Ok((used, _)) = fed {
                 exchange.inbound.extend_from_slice(bytes.get(used..).unwrap_or_default());
             }
             fed
         } else {
             exchange.inbound.extend_from_slice(bytes);
-            let fed = exchange.relay.feed(&exchange.inbound, &mut conn.output, &mut |_, _| {});
+            let fed = exchange.relay.feed_edited(
+                &exchange.inbound,
+                &mut conn.output,
+                &mut |_, _| {},
+                &edit,
+            );
             if let Ok((used, _)) = fed {
                 exchange.inbound.drain(..used);
             }
@@ -355,7 +363,8 @@ impl Worker {
     }
 
     /// The server socket failed. A request that may be sent again and has seen no response
-    /// byte goes to a fresh connection once. Returns false: the socket is gone.
+    /// byte goes to a fresh connection once, and then to another server. Returns false:
+    /// the socket is gone.
     fn origin_lost(&mut self, index: u32) -> bool {
         let Some(exchange) = self.conns.at(index).and_then(|conn| conn.exchange.as_deref_mut())
         else {
@@ -366,6 +375,11 @@ impl Worker {
         if !again {
             if !exchange.pooled {
                 exchange.target.failed();
+            }
+            // The server answered nothing, and the request is safe and still held whole,
+            // so another server may serve it (SID 0019).
+            if unanswered && exchange.retryable && self.move_on(index) {
+                return false;
             }
             self.fail(index, ProxyError::UpstreamReadFailed);
             return false;
@@ -389,6 +403,7 @@ impl Worker {
         let Some(exchange) = conn.exchange.take() else { return Next::Rest };
         super::trace::settle(&self.server, &mut conn.trace, self.now);
         exchange.target.completed(exchange.started);
+        exchange.target.answered(exchange.relay.status());
         let whole = exchange.upload.is_done() && exchange.inbound.is_empty();
         let keep = outcome.client_keep
             && exchange.keep_alive
@@ -470,13 +485,18 @@ impl Worker {
 
     /// The deadline of a connection passed.
     pub fn expire(&mut self, index: u32) {
-        let Some(exchange) = self.conns.at(index).and_then(|conn| conn.exchange.as_deref()) else {
+        let conn = self.conns.at(index);
+        let backlog = conn.as_ref().map_or(0, |conn| conn.backlog());
+        let Some(exchange) = conn.and_then(|conn| conn.exchange.as_deref()) else {
             self.close(index);
             return;
         };
+        if exchange.awaits_server(backlog) {
+            // The server owed bytes and sent none for its bound (SID 0019).
+            exchange.target.timed_out();
+        }
         if exchange.connecting {
-            exchange.target.failed();
-            self.answer(index, ProxyError::UpstreamUnreachable);
+            self.connect_failed(index);
         } else if exchange.relay.responded() || exchange.tunnel {
             self.close(index);
         } else {

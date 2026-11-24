@@ -44,6 +44,8 @@ pub(crate) struct Frontend {
     pub firewall: bool,
     /// The WebSocket rule of requests without a matching route.
     pub websocket: Option<std::sync::Arc<crate::WebSocketRule>>,
+    /// The policy of requests without a matching route (SID 0019).
+    pub policy: std::sync::Arc<crate::RoutePolicy>,
     pub rate: Option<sibuna_store::limiter::Limits>,
     pub pool: std::sync::Arc<str>,
     pub timeout: Duration,
@@ -59,6 +61,8 @@ pub(crate) struct Backend {
     pub proxy_v2: Option<crate::proxy::Spec>,
     pub health: Option<crate::health::Spec>,
     pub origin: Option<std::sync::Arc<crate::OriginOptions>>,
+    /// The traffic options of SID 0019.
+    pub policy: std::sync::Arc<crate::PoolPolicy>,
 }
 
 pub(crate) struct Server {
@@ -329,7 +333,8 @@ impl Config {
             Some(_) => return Err(invalid(format!("{path}: invalid TCP inspection mode"))),
             None => None,
         };
-        let (tls, firewall, websocket, http_rules) = http_frontend(&mut r, proto, &self.pools)?;
+        let (tls, firewall, websocket, http_rules, policy) =
+            http_frontend(&mut r, proto, &self.pools)?;
         let http_rules: std::sync::Arc<[_]> = http_rules.into();
         let info = crate::FrontendInfo::parse(&mut r, name, proto == Protocol::Http)?;
         let info = std::sync::Arc::new(info);
@@ -347,6 +352,7 @@ impl Config {
                 http_rules: http_rules.clone(),
                 firewall,
                 websocket: websocket.clone(),
+                policy: policy.clone(),
                 pool: pool.as_str().into(),
                 timeout,
                 inspect: inspect.clone(),
@@ -448,8 +454,13 @@ fn default_workers() -> usize {
 }
 
 type Tunnels = Option<std::sync::Arc<crate::WebSocketRule>>;
-type HttpFrontend =
-    (Option<std::sync::Arc<crate::TlsOptions>>, bool, Tunnels, Vec<crate::http::Rule>);
+type HttpFrontend = (
+    Option<std::sync::Arc<crate::TlsOptions>>,
+    bool,
+    Tunnels,
+    Vec<crate::http::Rule>,
+    std::sync::Arc<crate::RoutePolicy>,
+);
 
 /// Reads the options that only an HTTP frontend has: TLS, the firewall switch and routes.
 fn http_frontend(
@@ -458,7 +469,7 @@ fn http_frontend(
     pools: &BTreeMap<String, Backend>,
 ) -> Result<HttpFrontend> {
     if proto != Protocol::Http {
-        return Ok((None, true, None, Vec::new()));
+        return Ok((None, true, None, Vec::new(), std::sync::Arc::default()));
     }
     let tls = field(r.take_object("tls"))?
         .map(crate::TlsOptions::parse)
@@ -467,8 +478,10 @@ fn http_frontend(
     let firewall = field(r.take_bool("firewall"))?.unwrap_or(true);
     let websocket =
         field(r.take_object("websocket"))?.map(crate::WebSocketRule::parse).transpose()?;
-    let rules = crate::http::rules(r, pools, firewall, websocket.as_ref())?;
-    Ok((tls, firewall, websocket, rules))
+    let policy = crate::RoutePolicy::parse(r, &std::sync::Arc::default(), tls.is_some())?;
+    let base = (&policy, tls.is_some());
+    let rules = crate::http::rules(r, pools, firewall, websocket.as_ref(), base)?;
+    Ok((tls, firewall, websocket, rules, policy))
 }
 
 /// Whether a server at `addr` in a pool of `protocol` would be the listener `bind`.
@@ -546,17 +559,23 @@ impl Backend {
             .flatten();
         let origin =
             if protocol == Protocol::Http { crate::OriginOptions::parse(&mut r)? } else { None };
+        let policy = std::sync::Arc::new(crate::PoolPolicy::parse(&mut r, protocol)?);
         let scheduler = scheduler(&mut r, mesh, &mut servers)?;
         field(r.finish())?;
-        Ok(Self { protocol, servers, scheduler, proxy_v2, health, origin })
+        Ok(Self { protocol, servers, scheduler, proxy_v2, health, origin, policy })
     }
 }
 
 pub(crate) enum Scheduler {
     LeastConnections,
     PeakEwma,
-    Maglev { table: crate::maglev::Table, peak_fallback: bool },
+    Maglev {
+        table: crate::maglev::Table,
+        peak_fallback: bool,
+    },
     Adaptive(crate::maglev::Table),
+    /// Each server in turn, in proportion to its weight (SID 0019).
+    RoundRobin,
 }
 
 fn scheduler(
@@ -576,6 +595,7 @@ fn scheduler(
     let scheduler = match kind.as_str() {
         "least_connections" => Scheduler::LeastConnections,
         "p2c_pewma" => Scheduler::PeakEwma,
+        "round_robin" => Scheduler::RoundRobin,
         "bounded_maglev" => {
             let peak_fallback = match field(balance.take_str("fallback"))? {
                 None => false,

@@ -244,6 +244,25 @@ impl Origin {
         Ok(tcp)
     }
 
+    /// Opens the shared session of this server when it is not open, within `bound`
+    /// (SID 0019). Nothing of a request is sent, so a caller whose server is not ready
+    /// may move its request to another server.
+    ///
+    /// # Errors
+    ///
+    /// The server could not be reached, or the handshake failed or took too long.
+    pub(crate) async fn ready(&self, bound: Duration) -> Result<(), Error> {
+        match &self.mode {
+            Mode::Tunnel(_) => Ok(()),
+            Mode::Http2 { tls, session } => {
+                timeout(bound, self.http2(tls.as_ref(), session)).await?.map(drop)
+            }
+            Mode::Http3 { endpoint, session } => {
+                timeout(bound, self.open_http3(endpoint, session, false)).await?.map(drop)
+            }
+        }
+    }
+
     /// Sends one request, given in its HTTP/1.1 form with a `Host` field, on the shared
     /// session of this server. The response body streams.
     pub(crate) async fn exchange(&self, request: Request<Body>) -> Result<Response<Body>, Error> {

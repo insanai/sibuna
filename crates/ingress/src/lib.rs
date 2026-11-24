@@ -67,8 +67,6 @@ pub struct Limits {
     pub exchanges: usize,
     /// How long a multiplexed connection may stay open without an exchange.
     pub idle: Duration,
-    /// The longest wait for a server's response head on an in-process exchange.
-    pub response: Duration,
     /// The HTTP/3 sockets share their address, so a process that replaces this one can
     /// bind it while this one still serves.
     pub share_address: bool,
@@ -76,12 +74,7 @@ pub struct Limits {
 
 impl Default for Limits {
     fn default() -> Self {
-        Self {
-            exchanges: 1024,
-            idle: Duration::from_secs(60),
-            response: Duration::from_secs(60),
-            share_address: false,
-        }
+        Self { exchanges: 1024, idle: Duration::from_secs(60), share_address: false }
     }
 }
 
@@ -166,7 +159,7 @@ impl Ingress {
         decide: Option<Arc<dyn Decide>>,
         limits: Limits,
     ) -> io::Result<Self> {
-        let inline = decide.map(|decide| inline::Inline::new(decide, limits.response));
+        let inline = decide.map(inline::Inline::new);
         let threads = std::thread::available_parallelism().map_or(2, |n| n.get().clamp(2, 8));
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .worker_threads(threads)

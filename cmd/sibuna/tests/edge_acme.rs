@@ -56,8 +56,9 @@ struct Setup<'a> {
     home: &'a Path,
     /// The `auto` names.
     names: &'a [&'a str],
-    /// Whether the file has a plain HTTP frontend.
-    plain: bool,
+    /// The plain HTTP frontend, when the file has one: more members of it, each with a
+    /// trailing comma.
+    plain: Option<&'a str>,
     /// More members of `global.acme`, each with a leading comma.
     acme: &'a str,
 }
@@ -118,10 +119,11 @@ impl Daemon {
 fn topology(setup: &Setup<'_>, tls: SocketAddr, plain: SocketAddr, socket: &Path) -> String {
     let names: Vec<String> = setup.names.iter().map(|name| format!("\"{name}\"")).collect();
     let plain_frontend = match setup.plain {
-        true => {
-            format!(r#","plain":{{"proto":"http","binds":["{plain}"],"default_backend":"app"}}"#)
+        Some(members) => {
+            let rest = format!(r#"{members}"default_backend":"app""#);
+            format!(r#","plain":{{"proto":"http","binds":["{plain}"],{rest}}}"#)
         }
-        false => String::new(),
+        None => String::new(),
     };
     format!(
         r#"{{"global":{{"admin_socket":"{socket}",
@@ -265,7 +267,7 @@ fn a_certificate_is_obtained_served_renewed_and_kept_through_a_failure() {
         origin: origin(),
         home: &home,
         names: &[SITE],
-        plain: true,
+        plain: Some(""),
         acme: r#","challenge":"http-01""#,
     };
     let daemon = start(&setup);
@@ -339,7 +341,7 @@ fn tls_alpn_01_needs_no_plain_frontend_and_a_restart_reuses_the_certificate() {
         origin: origin(),
         home: &home,
         names: &[SITE],
-        plain: false,
+        plain: None,
         acme: "",
     };
     let daemon = start(&setup);
@@ -358,4 +360,41 @@ fn tls_alpn_01_needs_no_plain_frontend_and_a_restart_reuses_the_certificate() {
     });
     assert!(!log.contains("obtained"), "{log}");
     assert_eq!(authority.order_count.load(Ordering::Relaxed), 1);
+}
+
+#[test]
+fn the_redirect_of_the_traffic_policy_and_the_automatic_one_compose() {
+    let authority = Authority::start();
+    let home = home("redirects");
+    // The plain frontend redirects everything with 301 (SID 0019), except two prefixes.
+    let members = r#""redirect_https":301,
+        "routes":[{"path_prefix":"/keep","backend":"app","redirect_https":false},
+                  {"path_prefix":"/auto","backend":"app","max_body":"1m"}],"#;
+    let setup = Setup {
+        authority: &authority,
+        origin: origin(),
+        home: &home,
+        names: &[SITE],
+        plain: Some(members),
+        acme: r#","challenge":"http-01""#,
+    };
+    let daemon = start(&setup);
+    // The authority validates over the frontend that redirects: the challenge is
+    // answered before the redirect of the traffic policy.
+    wait_for("the certificate", 30, || issued(&daemon, SITE));
+    assert_eq!(*authority.validated.lock().unwrap(), ["http-01"]);
+    let foreign = get(daemon.plain, SITE, "/.well-known/acme-challenge/abc");
+    assert!(foreign.starts_with("HTTP/1.1 200 "), "{foreign}");
+
+    // A stated redirect answers once, with its own status and port.
+    let stated = get(daemon.plain, SITE, "/x?y=1");
+    assert!(stated.starts_with("HTTP/1.1 301 "), "{stated}");
+    assert!(stated.contains(&format!("Location: https://{SITE}/x?y=1\r\n")), "{stated}");
+    assert_eq!(stated.matches("Location:").count(), 1);
+    // `redirect_https: false` is the operator's choice: the request stays on HTTP.
+    assert!(get(daemon.plain, SITE, "/keep/it").ends_with("ok"));
+    // A route that states nothing about the redirect inherits the one of its frontend.
+    assert!(get(daemon.plain, SITE, "/auto/x").starts_with("HTTP/1.1 301 "));
+    // Another host has the stated redirect only.
+    assert!(get(daemon.plain, "other.example.test", "/").starts_with("HTTP/1.1 301 "));
 }

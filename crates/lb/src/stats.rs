@@ -140,6 +140,13 @@ impl ServerStats {
         }
     }
 
+    /// Counts a request that this server did not answer and that moved to another
+    /// server of the pool (SID 0019). The request itself is counted once, under the
+    /// server that ends it.
+    pub fn record_failover(&self) {
+        self.failures.fetch_add(1, Ordering::Relaxed);
+    }
+
     /// The number of requests that ended without a response of this server.
     pub fn failure_count(&self) -> u64 {
         self.failures.load(Ordering::Relaxed)
