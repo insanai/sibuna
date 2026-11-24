@@ -1,0 +1,24 @@
+[package]
+name = "jlv-compiler"
+description = "JLV/1 name, type and stage checking and lowering against a registry given as data."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[package.metadata.jlv]
+tier = "domain"
+
+[dependencies]
+gd-report.workspace = true
+jlv-core.workspace = true
+jlv-lang.workspace = true
+jlv-syntax.workspace = true
+
+[dev-dependencies]
+gd-json.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,14 @@
+JLV language kernel for Sibuna
+Copyright (C) 2026 Vikrant Rathore
+Main author: Vikrant Rathore.
+With assistance from Ronak Rathore and Kanak Rathore.
+
+The author licenses this copy of the six JLV kernel crates under the GNU
+Lesser General Public License, version 3 or (at your option) any later version.
+The license and incorporated GPL text accompany Sibuna in LICENSES/LGPL-3.0.txt
+and LICENSES/GPL-3.0.txt. This software comes without warranty.
+
+Source: https://github.com/insanai/jlavideploy
+Revision: 46ea61f7344c0309abc0dfa850b9ae24f15874c9
+The src trees are copied verbatim. The workspace manifest selects the kernel
+and its pinned dependencies for the Sibuna distribution.

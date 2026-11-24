@@ -1,0 +1,19 @@
+[package]
+name = "jlv-syntax"
+description = "The one JLV/1 lexer and parser: source AST and spans."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[package.metadata.jlv]
+tier = "kernel"
+
+[dependencies]
+jlv-core.workspace = true
+jlv-lang.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,20 @@
+[package]
+name = "jlv-lang"
+description = "The JLV/1 semantic kernel: values, types, pure evaluation, budgets and encoding."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[package.metadata.jlv]
+tier = "kernel"
+
+[dependencies]
+gd-json.workspace = true
+gd-sha.workspace = true
+jlv-core.workspace = true
+
+[lints]
+workspace = true

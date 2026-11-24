@@ -1,0 +1,20 @@
+[package]
+name = "jlv-model"
+description = "The frozen typed IR: resources, references, schemas, desired graphs and recipes."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[package.metadata.jlv]
+tier = "contract"
+
+[dependencies]
+gd-json.workspace = true
+jlv-core.workspace = true
+jlv-lang.workspace = true
+
+[lints]
+workspace = true

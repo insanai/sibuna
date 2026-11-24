@@ -1,0 +1,42 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "1.0.0-beta.1"
+edition = "2024"
+license = "LGPL-3.0-or-later"
+rust-version = "1.100"
+authors = ["Vikrant Rathore"]
+repository = "https://github.com/insanai/jlavideploy"
+
+[workspace.dependencies]
+jlv-core = { path = "crates/jlv-core" }
+jlv-lang = { path = "crates/jlv-lang" }
+jlv-syntax = { path = "crates/jlv-syntax" }
+jlv-model = { path = "crates/jlv-model" }
+jlv-compiler = { path = "crates/jlv-compiler" }
+jlv-stdlib = { path = "crates/jlv-stdlib" }
+gd-report = { git = "https://github.com/insanai/guidedog", tag = "v1.0.0-beta.15" }
+gd-sha = { git = "https://github.com/insanai/guidedog", tag = "v1.0.0-beta.15" }
+gd-json = { git = "https://github.com/insanai/guidedog", tag = "v1.0.0-beta.15" }
+rand_core = { version = "0.9.5", features = ["os_rng"] }
+
+[workspace.lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
+missing_debug_implementations = "warn"
+missing_docs = "warn"
+# jlavideploy has no foreign-function modules, so unsafe code is denied everywhere.
+unsafe_code = "deny"
+
+[workspace.lints.clippy]
+too_many_lines = "warn"
+unwrap_used = "warn"
+undocumented_unsafe_blocks = "warn"
+
+# Cargo's own lints. The gate's `-D warnings` reaches only rustc and Clippy, so the
+# lints that keep the manifests honest are denied here.
+[workspace.lints.cargo]
+unused_dependencies = "deny"
+unused_workspace_dependencies = "deny"
+unused_workspace_package_fields = "deny"

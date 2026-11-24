@@ -1,0 +1,25 @@
+[package]
+name = "jlv-core"
+description = "Typed identifiers, source spans, limits and structured problems for jlavideploy."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[package.metadata.jlv]
+tier = "core"
+
+[dependencies]
+gd-json.workspace = true
+gd-report.workspace = true
+gd-sha.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+# Windows has no /dev/urandom. Reuse the workspace's OS RNG adapter, which calls the
+# platform's cryptographic generator without adding foreign-function code here.
+rand_core.workspace = true
+
+[lints]
+workspace = true
