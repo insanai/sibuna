@@ -8,8 +8,8 @@ use std::sync::{Arc, Mutex, mpsc};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
-use crate::poll::{Poller, READ, WRITE, Wake, Waker, handle};
 use crate::pool::Ticket;
+use sibuna_reactor::{Poller, READ, WRITE, Wake, Waker, handle};
 
 type Job = (u64, SocketAddr, Instant);
 

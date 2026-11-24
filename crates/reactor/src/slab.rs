@@ -5,15 +5,23 @@
 //! slot grows each time it is vacated, so a stale event finds no record.
 
 /// Records of one kind, owned by one worker.
-pub(super) struct Slab<T> {
+#[derive(Debug)]
+pub struct Slab<T> {
     slots: Vec<Slot<T>>,
     free: Vec<u32>,
     live: usize,
 }
 
+#[derive(Debug)]
 struct Slot<T> {
     generation: u32,
     value: Option<T>,
+}
+
+impl<T> Default for Slab<T> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<T> Slab<T> {
@@ -62,9 +70,13 @@ impl<T> Slab<T> {
     }
 
     /// The number of records.
-    #[cfg(test)]
     pub fn len(&self) -> usize {
         self.live
+    }
+
+    /// True when the table holds no record.
+    pub fn is_empty(&self) -> bool {
+        self.live == 0
     }
 
     /// The indices of all records.

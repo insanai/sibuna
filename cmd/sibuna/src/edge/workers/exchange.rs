@@ -3,11 +3,11 @@
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use sibuna_lb::poll::{READ, handle, start_connect};
 use sibuna_net::ProxyError;
 use sibuna_net::machine::{Fed, Outcome, ResponseRelay};
+use sibuna_reactor::{Io, READ, handle, read_once as read, start_connect, write_once as write};
 
-use super::conn::{BUFFER, Exchange, HIGH_WATER, Io, Origin, read, write};
+use super::conn::{BUFFER, Exchange, HIGH_WATER, Origin};
 use super::worker::{KIND_ORIGIN, Side, Worker, key};
 use crate::client_writer::ClientWriter;
 use crate::dispatch::{Plan, answer_proxy_error};

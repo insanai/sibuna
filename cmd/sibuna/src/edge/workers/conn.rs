@@ -1,7 +1,6 @@
 //! The records of an event-driven worker: client connections, exchanges and server
 //! sockets (SID 0016).
 
-use std::io::{self, Read, Write};
 use std::net::{SocketAddr, TcpStream};
 use std::time::Instant;
 
@@ -152,45 +151,4 @@ pub(super) struct Origin {
     pub owner: Option<u32>,
     /// When the socket became idle.
     pub since: Instant,
-}
-
-/// The result of one non-blocking read or write.
-pub(super) enum Io {
-    Bytes(usize),
-    /// The socket has nothing to give or no room to take.
-    Blocked,
-    /// End of stream.
-    Closed,
-    Failed,
-}
-
-/// Reads once.
-pub(super) fn read(mut stream: &TcpStream, buffer: &mut [u8]) -> Io {
-    loop {
-        return match stream.read(buffer) {
-            Ok(0) if buffer.is_empty() => Io::Blocked,
-            Ok(0) => Io::Closed,
-            Ok(count) => Io::Bytes(count),
-            Err(error) => match error.kind() {
-                io::ErrorKind::Interrupted => continue,
-                io::ErrorKind::WouldBlock => Io::Blocked,
-                _ => Io::Failed,
-            },
-        };
-    }
-}
-
-/// Writes once.
-pub(super) fn write(mut stream: &TcpStream, bytes: &[u8]) -> Io {
-    loop {
-        return match stream.write(bytes) {
-            Ok(0) => Io::Failed,
-            Ok(count) => Io::Bytes(count),
-            Err(error) => match error.kind() {
-                io::ErrorKind::Interrupted => continue,
-                io::ErrorKind::WouldBlock => Io::Blocked,
-                _ => Io::Failed,
-            },
-        };
-    }
 }

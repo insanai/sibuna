@@ -9,7 +9,8 @@ use std::time::{Duration, Instant};
 const SLOTS: u64 = 512;
 
 /// A hashed timer wheel.
-pub(super) struct Wheel {
+#[derive(Debug)]
+pub struct Wheel {
     slots: Vec<Vec<(u32, u32)>>,
     start: Instant,
     /// The last second whose slot was emptied.

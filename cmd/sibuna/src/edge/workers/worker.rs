@@ -8,13 +8,13 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, mpsc};
 use std::time::{Duration, Instant};
 
-use sibuna_lb::poll::{Poller, READ, WRITE, Waker, handle};
 use sibuna_net::CONNECT_TIMEOUT;
+use sibuna_reactor::{
+    Io, Poller, READ, Slab, WRITE, Waker, Wheel, handle, read_once as read, write_once as write,
+};
 
-use super::conn::{BUFFER, Buffer, Conn, HIGH_WATER, Io, Origin, Reading, read, write};
+use super::conn::{BUFFER, Buffer, Conn, HIGH_WATER, Origin, Reading};
 use super::request::{self, Scratch, Step};
-use super::slab::Slab;
-use super::wheel::Wheel;
 use super::{Incoming, Shared, Timeouts};
 use crate::connection::{MAX_REQUESTS_PER_CONNECTION, PeerText};
 use crate::server::{Server, admit};

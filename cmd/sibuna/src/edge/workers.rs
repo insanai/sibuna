@@ -7,8 +7,6 @@
 mod conn;
 mod exchange;
 mod request;
-mod slab;
-mod wheel;
 mod worker;
 
 use std::io;
@@ -19,7 +17,7 @@ use std::thread::JoinHandle;
 use std::time::Duration;
 
 use sibuna_lb::FlowPermit;
-use sibuna_lb::poll::{Wake, Waker};
+use sibuna_reactor::{Wake, Waker};
 
 use crate::connection::Ingress;
 use crate::server::Server;
@@ -62,7 +60,7 @@ pub(super) struct Workers {
 
 impl Workers {
     /// True when this platform can run the workers.
-    pub const SUPPORTED: bool = sibuna_lb::poll::CAN_START_CONNECT;
+    pub const SUPPORTED: bool = sibuna_reactor::CAN_START_CONNECT;
 
     /// Starts `count` workers for `server`.
     pub fn start(server: &Arc<Server>, count: usize, timeouts: Timeouts) -> io::Result<Self> {

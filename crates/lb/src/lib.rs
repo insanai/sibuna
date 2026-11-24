@@ -16,7 +16,6 @@ mod ja4;
 mod maglev;
 mod mesh;
 pub use mesh::{Mesh, MeshConfig, Regime};
-pub mod poll;
 mod pool;
 mod proxy;
 mod rules;
@@ -29,8 +28,8 @@ use std::time::{Duration, Instant};
 
 pub use config::Config;
 use config::{Frontend, Protocol, invalid};
-use poll::{Poller, READ, Waker, handle};
 use pool::{Loads, Pool, Ticket};
+use sibuna_reactor::{Poller, READ, Waker, handle};
 use tcp::{Connect, Connectors, Relays, Stream, transient};
 
 enum Socket {
