@@ -8,6 +8,7 @@ repository.workspace = true
 license.workspace = true
 
 [dependencies]
+sibuna-acme.workspace = true
 sibuna-lb.workspace = true
 sibuna-tls.workspace = true
 sibuna-encoding.workspace = true

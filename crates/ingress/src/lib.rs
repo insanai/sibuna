@@ -1,6 +1,7 @@
 //! Native TLS/HTTP2 and QUIC/HTTP3 listeners. Each request enters the same HTTP/1.1
 //! firewall with the authenticated transport's peer address and the original listener.
 
+mod auto;
 mod bridge;
 mod certs;
 mod egress;
@@ -26,6 +27,7 @@ use tokio::sync::{Semaphore, watch};
 use tokio::time::timeout;
 use tokio_rustls::TlsAcceptor;
 
+pub use auto::{Automatic, CertificateState, CertificateStatus, Event, Notify};
 use bridge::Lane;
 pub use egress::{Directory, Egress};
 use handoff::Handoff;
@@ -63,6 +65,8 @@ impl Default for Limits {
 pub struct Identity {
     tcp: Arc<rustls::ServerConfig>,
     quic: Option<quinn::ServerConfig>,
+    /// Where the tables of automatic HTTPS go, for a listener with `auto` names.
+    managed: Option<certs::Tables>,
 }
 
 impl Identity {
@@ -70,6 +74,7 @@ impl Identity {
     /// leaf certificate. The error names the file that failed.
     pub fn load(spec: &TlsOptions) -> Result<Self, Error> {
         let certificates = Arc::new(certs::Certificates::load(spec)?);
+        let managed = certificates.tables();
         let provider = Arc::new(rustls::crypto::ring::default_provider());
         let versions: &[&rustls::SupportedProtocolVersion] = match spec.min_version {
             TlsVersion::V12 => rustls::DEFAULT_VERSIONS,
@@ -99,7 +104,19 @@ impl Identity {
             None
         };
         config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
-        Ok(Self { tcp: Arc::new(config), quic })
+        if managed.is_some() {
+            // Offered last: only a certificate authority asks for it (RFC 8737).
+            config.alpn_protocols.push(auto::ACME_TLS.to_vec());
+        }
+        Ok(Self { tcp: Arc::new(config), quic, managed })
+    }
+
+    /// Lets the handshakes of this identity read the certificates of `automatic`
+    /// (SID 0021). Without `auto` names this does nothing. The first call stays.
+    pub fn manage(&self, automatic: &Automatic) {
+        if let Some(tables) = &self.managed {
+            let _ = tables.set(Arc::clone(automatic.shared()));
+        }
     }
 }
 
@@ -240,7 +257,12 @@ impl Ingress {
             let _permit = (permit, held);
             let Ok(stream) = tokio::net::TcpStream::from_std(stream) else { return };
             let Ok(Ok(tls)) = timeout(DEADLINE, acceptor.accept(stream)).await else { return };
-            if tls.get_ref().1.alpn_protocol() == Some(b"h2") {
+            let protocol = tls.get_ref().1.alpn_protocol();
+            if protocol == Some(auto::ACME_TLS) {
+                // A TLS-ALPN-01 validation ends with the handshake. It carries no request.
+                return;
+            }
+            if protocol == Some(b"h2") {
                 session.http2(tls).await;
             } else {
                 session.http1(tls).await;
