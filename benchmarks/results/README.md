@@ -1,6 +1,6 @@
 # Benchmark results
 
-This directory holds Sibuna's latest measurements, and one comparison with Anubis. Every file is written by `cargo xtask bench`; nothing here is edited by hand except this README. Part VIII of the book presents and discusses these files.
+This directory holds Sibuna's latest measurements, and one comparison with Anubis. Every file is written by `cargo xtask bench`; nothing here is edited by hand except this README and the dated records. Part VIII of the book presents and discusses these files.
 
 | Command | What it measures | Files |
 | --- | --- | --- |
@@ -10,6 +10,7 @@ This directory holds Sibuna's latest measurements, and one comparison with Anubi
 | `cargo xtask bench product --anubis <path>` | The whole-product workloads with Anubis as a further product | `comparison-latest.json`, `comparison-latest.md` |
 | `cargo xtask bench admission --anubis <path>` | Admission operations per second of Sibuna and Anubis | `admission-latest.json`, `admission-latest.md` |
 | `sibuna-browser dashboards` | A functional console run with eight live dashboards | `console-8-dashboards-2026-10-15.md` |
+| by hand | The edge load balancer beside HAProxy: TCP, HTTP, TLS and HTTP/2, one run | `edge-haproxy-2026-11-24.md` |
 
 The `.md` files are the summaries; the `.json` files hold every repetition, the machine and the revision. Git keeps the history, so we keep only the latest files.
 
