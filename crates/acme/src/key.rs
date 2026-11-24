@@ -82,8 +82,8 @@ impl KeyPair {
         self.fixed.public_key().as_ref()
     }
 
-    /// The public key as a DER `SubjectPublicKeyInfo`.
-    pub(crate) fn subject_public_key_info(&self) -> Vec<u8> {
+    /// The public key as a DER `SubjectPublicKeyInfo`, as a certificate carries it.
+    pub fn subject_public_key_info(&self) -> Vec<u8> {
         let algorithm = der::sequence(&[
             &der::element(der::OID, EC_PUBLIC_KEY),
             &der::element(der::OID, PRIME256V1),

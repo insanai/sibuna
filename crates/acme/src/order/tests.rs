@@ -200,9 +200,8 @@ impl Authority {
                 } else {
                     ""
                 };
-                format!(
-                    r#"{{"type":"{kind}","url":"{BASE}/challenge/{kind}","token":"tok_-9"{error}}}"#
-                )
+                let url = format!("{BASE}/challenge/{kind}");
+                format!(r#"{{"type":"{kind}","url":"{url}","token":"tok_-9"{error}}}"#)
             })
             .collect();
         let body = format!(r#"{{"status":"{status}","challenges":[{}]}}"#, challenges.join(","));
