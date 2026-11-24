@@ -122,6 +122,18 @@ impl HttpTarget {
         self.ticket.observe(start, Instant::now());
     }
 
+    /// Records that the server stayed silent for its response bound. Consecutive
+    /// failures eject the server under the passive health of its pool (SID 0019).
+    pub fn timed_out(&self) {
+        self.ticket.timed_out(self.policy.passive.as_ref(), Instant::now());
+    }
+
+    /// Records a complete response with `status`. It ends a run of failures, or counts
+    /// as one when the pool counts server errors.
+    pub fn answered(&self, status: u16) {
+        self.ticket.answered(self.policy.passive.as_ref(), status, Instant::now());
+    }
+
     /// The longest wait for a connection to the server (`connect_timeout` of its pool).
     pub fn connect_timeout(&self) -> Duration {
         self.policy.connect_timeout

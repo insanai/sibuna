@@ -17,6 +17,8 @@ struct Load {
     active: AtomicUsize,
     latency: Mutex<Option<(Instant, u64)>>,
     retry_after: Mutex<Option<Instant>>,
+    /// The state that SID 0019 keeps for a server.
+    extra: extra::State,
 }
 
 impl Load {
@@ -140,6 +142,9 @@ impl Pool {
                     .is_none_or(|deadline| deadline <= now)
                 && wish.allows(target)
         };
+        // Passive health keeps a server out only while another can serve (SID 0019).
+        let spared = self.targets.iter().any(|t| available(t) && !t.load.extra.is_ejected(now));
+        let available = |t: &Target| available(t) && !(spared && t.load.extra.is_ejected(now));
         let prefer_local = regime == crate::Regime::WideArea
             && self.targets.iter().any(|t| !t.server.remote && available(t));
         let eligible = |t: &Target| available(t) && !(prefer_local && t.server.remote);

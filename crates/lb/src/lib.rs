@@ -23,7 +23,7 @@ mod proxy;
 mod rules;
 mod tcp;
 mod traffic;
-pub use traffic::PoolPolicy;
+pub use traffic::{Passive, PoolPolicy};
 
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::io;
