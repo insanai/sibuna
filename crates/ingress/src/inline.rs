@@ -531,7 +531,7 @@ async fn send(
     let flow = Arc::clone(&sending.flow);
     let body = Watched { body, flow, room: target.route().max_body }.boxed_unsync();
     let Some(mut request) = parse_request(&head, body) else {
-        return refuse(&mut reporter, StatusCode::BAD_GATEWAY);
+        return refuse(&mut reporter, &target, StatusCode::BAD_GATEWAY);
     };
     let started = Instant::now();
     let multiplexed = inline.direct.get().and_then(|directory| directory.find(target.address()));
@@ -553,14 +553,16 @@ async fn send(
         Ok(exchange) => exchange,
         // Every server that was tried is marked already.
         Err(Fault::Connect | Fault::Exchange) => {
-            return refuse(&mut reporter, StatusCode::BAD_GATEWAY);
+            return refuse(&mut reporter, &target, StatusCode::BAD_GATEWAY);
         }
         Err(Fault::Silent) => {
             target.timed_out();
-            return refuse(&mut reporter, StatusCode::GATEWAY_TIMEOUT);
+            return refuse(&mut reporter, &target, StatusCode::GATEWAY_TIMEOUT);
         }
         // The client sent too much. The server is not at fault.
-        Err(Fault::TooLarge) => return refuse(&mut reporter, StatusCode::PAYLOAD_TOO_LARGE),
+        Err(Fault::TooLarge) => {
+            return refuse(&mut reporter, &target, StatusCode::PAYLOAD_TOO_LARGE);
+        }
     };
     // The request may have moved, so the server is read after the attempt.
     let address = target.address();
@@ -576,9 +578,26 @@ async fn send(
 
 /// A response of our own for a failed server. The reporter is dropped by the caller, and
 /// then delivers this status.
-fn refuse(reporter: &mut Reporter, status: StatusCode) -> Response<Body> {
+///
+/// A browser reads this answer too, so it carries the HSTS field of its route on a TLS
+/// frontend (SID 0019). It carries neither the other fields of the route nor the sticky
+/// cookie: those describe the response of a server.
+fn refuse(reporter: &mut Reporter, target: &HttpTarget, status: StatusCode) -> Response<Body> {
     reporter.completion.status = status.as_u16();
-    error(status)
+    let mut response = error(status);
+    let [_, hsts, _] = target.response_lines();
+    append_lines(response.headers_mut(), hsts);
+    response
+}
+
+/// Appends the field lines `lines` of an HTTP/1.1 head to `headers`.
+fn append_lines(headers: &mut header::HeaderMap, lines: &[u8]) {
+    for (name, value) in fields(lines) {
+        let name = HeaderName::from_bytes(name);
+        if let (Ok(name), Ok(value)) = (name, HeaderValue::from_bytes(value)) {
+            headers.append(name, value);
+        }
+    }
 }
 
 /// Moves the exchange of `done` to another server of its pool that has a shared
@@ -615,7 +634,7 @@ async fn direct(
         while origin.ready(done.target.connect_timeout()).await.is_err() {
             done.target.failed();
             let Some(next) = advance(&mut done) else {
-                return refuse(&mut done.reporter, StatusCode::BAD_GATEWAY);
+                return refuse(&mut done.reporter, &done.target, StatusCode::BAD_GATEWAY);
             };
             (origin, retried) = (next, false);
         }
@@ -625,12 +644,12 @@ async fn direct(
         match flow.bounded(origin.exchange(request), limit).await {
             Some(Ok(response)) => break response,
             Some(Err(_)) if flow.is_over() => {
-                return refuse(&mut done.reporter, StatusCode::PAYLOAD_TOO_LARGE);
+                return refuse(&mut done.reporter, &done.target, StatusCode::PAYLOAD_TOO_LARGE);
             }
             Some(Err(_)) => {}
             None => {
                 done.target.timed_out();
-                return refuse(&mut done.reporter, StatusCode::GATEWAY_TIMEOUT);
+                return refuse(&mut done.reporter, &done.target, StatusCode::GATEWAY_TIMEOUT);
             }
         }
         // The session was shared, like a connection from a pool: its loss alone says
@@ -644,7 +663,7 @@ async fn direct(
         done.target.failed();
         let next = if recovery == Recovery::Move { advance(&mut done) } else { None };
         let Some(next) = next else {
-            return refuse(&mut done.reporter, StatusCode::BAD_GATEWAY);
+            return refuse(&mut done.reporter, &done.target, StatusCode::BAD_GATEWAY);
         };
         (origin, retried) = (next, false);
     };
@@ -683,11 +702,8 @@ fn edit_response(headers: &mut header::HeaderMap, target: &HttpTarget) {
             headers.remove(name);
         }
     }
-    for (name, value) in target.response_lines().into_iter().flat_map(fields) {
-        let name = HeaderName::from_bytes(name);
-        if let (Ok(name), Ok(value)) = (name, HeaderValue::from_bytes(value)) {
-            headers.append(name, value);
-        }
+    for lines in target.response_lines() {
+        append_lines(headers, lines);
     }
 }
 

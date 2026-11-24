@@ -128,6 +128,7 @@ fn answer(
         }
     };
     link.writer.begin_response(request.method == Method::Head);
+    link.writer.set_own(crate::traffic::own_policy(link.server, link.ingress, &request));
     if connection::has_repeated_host(&request) {
         connection::reject_repeated_host(link);
         return;

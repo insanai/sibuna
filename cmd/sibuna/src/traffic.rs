@@ -5,6 +5,7 @@
 
 use std::io::{self, Read, Write};
 use std::net::{Shutdown, SocketAddr, TcpStream};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use sibuna_http::Request;
@@ -46,6 +47,21 @@ pub(crate) fn linger(mut stream: &TcpStream) {
             Ok(count) => left = left.saturating_sub(count),
         }
     }
+}
+
+/// The policy whose HSTS field Sibuna's own answers to `request` carry: that of the
+/// route, on a TLS frontend, when it has the field. The path is the one the client
+/// wrote, because an answer may be due before the path has its normal form.
+pub(crate) fn own_policy(
+    server: &Server,
+    ingress: Option<Ingress>,
+    request: &Request<'_>,
+) -> Option<Arc<RoutePolicy>> {
+    let ingress = ingress.filter(|ingress| ingress.secure)?;
+    let routes = server.edge_routes.as_ref()?;
+    let host = request.header(b"host").unwrap_or_default();
+    let policy = routes.policy(ingress.vip, host, request.path)?;
+    (!policy.hsts.is_empty()).then_some(policy)
 }
 
 /// The most `Cookie` fields of one request that are searched for the sticky cookie.

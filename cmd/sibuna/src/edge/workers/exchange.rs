@@ -478,6 +478,8 @@ impl Worker {
         let Some(exchange) = conn.exchange.take() else { return };
         let mut writer = ClientWriter::new(&mut conn.output);
         writer.begin_response(exchange.head_request);
+        let hsts = conn.ingress.secure && !exchange.target.route().hsts.is_empty();
+        writer.set_own(hsts.then(|| exchange.target.route_shared()));
         // Writing to a vector cannot fail.
         let _ = page(&mut writer);
         let tally = writer.tally();

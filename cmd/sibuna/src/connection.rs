@@ -205,6 +205,7 @@ fn serve_one<W: Write>(
         };
         // Every response to HEAD, Sibuna's own included, is a head without a body.
         link.writer.begin_response(request.method == Method::Head);
+        link.writer.set_own(crate::traffic::own_policy(link.server, link.ingress, &request));
         if has_repeated_host(&request) {
             return reject_repeated_host(link);
         }

@@ -13,7 +13,10 @@
 //! so the filter changes nothing for them.
 
 use std::io::{self, Write};
+use std::sync::Arc;
 use std::time::Instant;
+
+use sibuna_lb::RoutePolicy;
 
 /// Where the writer is in the current HEAD response.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -59,6 +62,9 @@ pub(crate) struct ClientWriter<W> {
     /// The first bytes of the head whose status is not yet known.
     lead: [u8; STATUS_END],
     lead_len: usize,
+    /// The policy whose HSTS field the final head of this response must carry, until
+    /// that head has begun (SID 0019).
+    own: Option<Arc<RoutePolicy>>,
 }
 
 impl<W: Write> ClientWriter<W> {
@@ -72,7 +78,50 @@ impl<W: Write> ClientWriter<W> {
             tally: Tally::default(),
             lead: [0; STATUS_END],
             lead_len: 0,
+            own: None,
         }
+    }
+
+    /// Makes the final head of this response carry the HSTS field of `policy`, unless
+    /// the head brings one. Sibuna's own answers have none, so a browser on a TLS
+    /// frontend learns the rule from a challenge page or an error as well (SID 0019).
+    /// A relayed response whose head was edited brings the field and is left alone.
+    pub(crate) fn set_own(&mut self, policy: Option<Arc<RoutePolicy>>) {
+        self.own = policy;
+    }
+
+    /// Passes `data`, which holds the end of a status line or none, and adds the HSTS
+    /// field after the status line of a final head.
+    fn write_with_own(&mut self, data: &[u8]) -> io::Result<()> {
+        let Some(end) = data.iter().position(|&byte| byte == b'\n') else {
+            return self.pass(data);
+        };
+        // An interim head is written in one piece and is not final: it passes whole, and
+        // the next write begins the next head.
+        let status = status_of(data);
+        if self.lead_len == 0 && (100..200).contains(&status) && status != 101 {
+            return self.pass(data);
+        }
+        let (line, rest) = data.split_at(end + 1);
+        self.pass(line)?;
+        if self.tally.status != 0
+            && let Some(policy) = self.own.take()
+            && !carries_hsts(rest)
+        {
+            self.pass(&policy.hsts)?;
+        }
+        self.pass(rest)
+    }
+
+    fn pass(&mut self, data: &[u8]) -> io::Result<()> {
+        if !self.head_request {
+            self.note(data);
+            return self.inner.write_all(data);
+        }
+        let head = self.head_bytes(data);
+        let passed = data.get(..head).unwrap_or_default();
+        self.note(passed);
+        self.inner.write_all(passed)
     }
 
     /// Starts the response to a new request; `head_request` says it is HEAD.
@@ -81,6 +130,7 @@ impl<W: Write> ClientWriter<W> {
         self.phase = FRESH_HEAD;
         self.tally = Tally::default();
         self.lead_len = 0;
+        self.own = None;
     }
 
     /// What was written since [`ClientWriter::begin_response`].
@@ -139,19 +189,23 @@ impl<W: Write> Write for ClientWriter<W> {
     }
 
     fn write_all(&mut self, data: &[u8]) -> io::Result<()> {
-        if !self.head_request {
-            self.note(data);
-            return self.inner.write_all(data);
+        if self.own.is_some() {
+            return self.write_with_own(data);
         }
-        let head = self.head_bytes(data);
-        let passed = data.get(..head).unwrap_or_default();
-        self.note(passed);
-        self.inner.write_all(passed)
+        self.pass(data)
     }
 
     fn flush(&mut self) -> io::Result<()> {
         self.inner.flush()
     }
+}
+
+/// True when `fields` holds a `Strict-Transport-Security` line.
+fn carries_hsts(fields: &[u8]) -> bool {
+    const NAME: &[u8] = b"strict-transport-security:";
+    fields
+        .split(|&byte| byte == b'\n')
+        .any(|line| line.get(..NAME.len()).is_some_and(|start| start.eq_ignore_ascii_case(NAME)))
 }
 
 /// The status in the first bytes of a response head (`HTTP/1.1 200`), or zero when they
@@ -195,6 +249,39 @@ mod tests {
     }
 
     const PAGE: &[u8] = b"HTTP/1.1 403 Forbidden\r\nContent-Length: 9\r\n\r\nForbidden";
+
+    /// What a writer with the HSTS field of a policy makes of `writes`.
+    fn with_own(head_request: bool, writes: &[&[u8]]) -> String {
+        let line = b"Strict-Transport-Security: max-age=600\r\n";
+        let mut policy = RoutePolicy::default();
+        policy.hsts = line.to_vec().into();
+        let mut writer = ClientWriter::new(Vec::new());
+        writer.begin_response(head_request);
+        writer.set_own(Some(Arc::new(policy)));
+        for piece in writes {
+            writer.write_all(piece).unwrap();
+        }
+        String::from_utf8(writer.inner).unwrap()
+    }
+
+    #[test]
+    fn our_own_answers_carry_hsts_once_after_the_status_line() {
+        let hsts = "Strict-Transport-Security: max-age=600\r\n";
+        // A page written in one piece, in several, and for HEAD.
+        let page = format!("HTTP/1.1 403 Forbidden\r\n{hsts}Content-Length: 9\r\n\r\nForbidden");
+        assert_eq!(with_own(false, &[PAGE]), page);
+        assert_eq!(with_own(false, &[&PAGE[..5], &PAGE[5..30], &PAGE[30..]]), page);
+        assert_eq!(with_own(true, &[PAGE]), page[..page.len() - 9]);
+        // An interim head is passed as it is. The final head has the field.
+        let interim: &[u8] = b"HTTP/1.1 100 Continue\r\n\r\n";
+        assert_eq!(
+            with_own(false, &[interim, PAGE]),
+            format!("HTTP/1.1 100 Continue\r\n\r\n{page}")
+        );
+        // A relayed head that brings the field keeps its own, whatever its spelling.
+        let relayed: &[u8] = b"HTTP/1.1 200 OK\r\nstrict-transport-security: max-age=1\r\n\r\n";
+        assert_eq!(with_own(false, &[relayed]).as_bytes(), relayed);
+    }
 
     #[test]
     fn head_responses_keep_their_head_and_lose_their_body() {
