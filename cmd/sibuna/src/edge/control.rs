@@ -19,7 +19,7 @@ show servers
 show info
 show stats
 show certs
-set server POOL/NAME state ready|drain
+set server POOL/NAME state ready|drain [local]
 set server POOL/NAME weight N
 add server POOL/NAME IP:PORT [weight N]
 del server POOL/NAME
@@ -41,6 +41,8 @@ pub(super) enum Command {
         pool: String,
         name: String,
         state: ServerState,
+        /// The command stays on this node. Without it a mesh carries it to the peers.
+        local: bool,
     },
     Weight {
         pool: String,
@@ -151,7 +153,11 @@ pub(super) fn parse(line: &str) -> Result<Command, RuntimeError> {
         ["reload"] => Ok(Command::Reload),
         ["set", "server", server, "state", word] => {
             let (pool, name) = target(server)?;
-            Ok(Command::State { pool, name, state: state(word)? })
+            Ok(Command::State { pool, name, state: state(word)?, local: false })
+        }
+        ["set", "server", server, "state", word, "local"] => {
+            let (pool, name) = target(server)?;
+            Ok(Command::State { pool, name, state: state(word)?, local: true })
         }
         ["set", "server", server, "weight", word] => {
             let (pool, name) = target(server)?;
@@ -322,7 +328,7 @@ mod tests {
         assert_eq!(parse("show certs"), Ok(Command::ShowCerts));
         assert_eq!(parse("reload"), Ok(Command::Reload));
         let (pool, name) = server("app", "10.0.0.1:80");
-        let drain = Command::State { pool, name, state: ServerState::Drain };
+        let drain = Command::State { pool, name, state: ServerState::Drain, local: false };
         assert_eq!(parse("set server app/10.0.0.1:80 state drain"), Ok(drain.clone()));
         assert_eq!(parse("set server app/10.0.0.1:80 state maint"), Ok(drain));
         let (pool, name) = server("app", "a/b");

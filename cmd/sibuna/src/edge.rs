@@ -130,7 +130,21 @@ struct Serving {
     reloads: u64,
     /// The counters of SID 0020, for `show stats`.
     observe: Arc<crate::access::Observe>,
+    /// The drain commands shared with the peers of the mesh (SID 0022).
+    drains: Drains,
 }
+
+/// The drain commands on their way to the peers and from them.
+#[derive(Default)]
+struct Drains {
+    /// Where a command of this node's operator goes. `None` without a mesh.
+    feed: Option<sibuna_lb::DrainFeed>,
+    /// The commands of the operators of other nodes, from the mesh thread.
+    remote: Option<mpsc::Receiver<(String, String, bool)>>,
+}
+
+/// The commands of peers applied in one turn of the edge worker.
+const REMOTE_DRAINS_PER_STEP: usize = 64;
 
 impl Serving {
     /// Applies a checked revision and returns the log line. A drain stays while the
@@ -164,6 +178,29 @@ impl Serving {
     fn watch(&self, interval: Option<Duration>) -> io::Result<()> {
         let pending = Arc::clone(&self.pending);
         self.watcher.set(interval, &self.source, move |source| offer(source, &pending))
+    }
+
+    /// Follows the mesh: applies the drain commands of the peers and the routing regime.
+    fn follow(&mut self, mesh: Option<&sibuna_lb::Mesh>, current: &mut sibuna_lb::Regime) {
+        let commands = self.drains.remote.iter().flat_map(mpsc::Receiver::try_iter);
+        for (pool, name, drained) in commands.take(REMOTE_DRAINS_PER_STEP) {
+            let state = if drained {
+                sibuna_lb::ServerState::Drain
+            } else {
+                sibuna_lb::ServerState::Ready
+            };
+            // A server that this node does not have is another node's concern.
+            if self.edge.set_server_state(&pool, &name, state).is_ok() {
+                let word = state.word();
+                note(format_args!("EDGE010: mesh: set server {pool}/{name} state {word}"));
+            }
+        }
+        let Some(regime) = mesh.map(sibuna_lb::Mesh::regime) else { return };
+        if *current != regime {
+            self.edge.set_regime(regime);
+            note(format_args!("Sibuna edge routing regime: {regime:?}"));
+            *current = regime;
+        }
     }
 
     /// Applies the revision that the signal thread or the watcher left, if any.
@@ -202,8 +239,12 @@ impl Serving {
             Command::ShowStats => Ok(self.stats()),
             Command::ShowCerts => Ok(self.certs()),
             Command::Help => Ok(control::USAGE.to_owned()),
-            Command::State { pool, name, state } => {
-                edge.set_server_state(&pool, &name, state).map(done)
+            Command::State { pool, name, state, local } => {
+                edge.set_server_state(&pool, &name, state)?;
+                if let (false, Some(feed)) = (local, &self.drains.feed) {
+                    feed.publish(&pool, &name, state == sibuna_lb::ServerState::Drain);
+                }
+                Ok(String::new())
             }
             Command::Weight { pool, name, weight } => {
                 edge.set_server_weight(&pool, &name, weight).map(done)
@@ -325,7 +366,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let mut current = sibuna_lb::Regime::Standalone;
     let edge = Edge::bind(config)?;
     let http = http.map(|p| http::Http::start(p, &edge, secret)).transpose()?;
-    join(http.as_ref(), &adapters, mesh.as_ref());
+    let drains = join(http.as_ref(), &adapters, mesh.as_ref());
     let observed = http::observe(http.as_ref(), observe_options, &edge)?;
     let (jobs, inbox) = mpsc::channel();
     let _admin = match &admin_socket {
@@ -346,6 +387,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         started,
         reloads: 0,
         observe: observed.shared(),
+        drains,
     };
     serving.watch(watch)?;
     serving.announce();
@@ -355,14 +397,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         for job in inbox.try_iter().take(COMMANDS_PER_STEP) {
             serving.answer(job);
         }
-        if let Some(mesh) = &mesh {
-            let regime = mesh.regime();
-            if current != regime {
-                serving.edge.set_regime(regime);
-                note(format_args!("Sibuna edge routing regime: {regime:?}"));
-                current = regime;
-            }
-        }
+        serving.follow(mesh.as_ref(), &mut current);
         step(&mut serving.edge, serving.http.as_ref())?;
     }
     drop(mesh);
@@ -462,12 +497,20 @@ fn commit(adapters: &mut Adapters) {
 }
 
 /// Joins the started parts of the edge: the HTTP runtime learns the multiplexed
-/// servers of the adapters, and the firewall and the mesh share bans (SID 0022).
-fn join(http: Option<&http::Http>, adapters: &Adapters, mesh: Option<&sibuna_lb::Mesh>) {
+/// servers of the adapters, and the daemon shares bans and drain commands with the mesh
+/// (SID 0022).
+fn join(http: Option<&http::Http>, adapters: &Adapters, mesh: Option<&sibuna_lb::Mesh>) -> Drains {
     attach(http, adapters);
-    if let (Some(http), Some(mesh)) = (http, mesh) {
+    let Some(mesh) = mesh else { return Drains::default() };
+    if let Some(http) = http {
         http.share_bans(mesh);
     }
+    let (commands, remote) = mpsc::sync_channel(1024);
+    // The mesh thread never waits for the edge worker. A full queue drops the command.
+    let sink = move |pool: &str, name: &str, drained: bool| {
+        let _ = commands.try_send((pool.to_owned(), name.to_owned(), drained));
+    };
+    Drains { feed: mesh.share_drains(Box::new(sink)), remote: Some(remote) }
 }
 
 /// Writes one line to standard error. A daemon whose standard error was closed, by a

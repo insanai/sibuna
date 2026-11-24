@@ -1,4 +1,5 @@
-//! A ban issued by one edge node is in effect on its peers (SID 0022).
+//! A ban issued by one edge node, and a drain commanded on one, hold on its peers
+//! (SID 0022).
 #![cfg(unix)]
 #![allow(clippy::unwrap_used)]
 
@@ -82,6 +83,38 @@ impl Cluster {
         }
     }
 
+    /// The admin socket of the node at `index`.
+    fn socket(&self, index: usize) -> PathBuf {
+        self.directory.join(format!("n{index}.sock"))
+    }
+
+    /// Runs one admin command on the node at `index` and returns its answer.
+    fn ctl(&self, index: usize, words: &[&str]) -> String {
+        let output =
+            Command::new(BIN).arg("ctl").arg(self.socket(index)).args(words).output().unwrap();
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        String::from_utf8(output.stdout).unwrap()
+    }
+
+    /// The state of the one server, as the node at `index` shows it.
+    fn state(&self, index: usize) -> String {
+        let table = self.ctl(index, &["show", "servers"]);
+        let row = table.lines().nth(1).unwrap_or_default();
+        row.split_whitespace().nth(3).unwrap_or_default().to_owned()
+    }
+
+    /// Waits until the node at `index` shows the server in `state`.
+    fn shows(&self, index: usize, state: &str) -> bool {
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while Instant::now() < deadline {
+            if self.state(index) == state {
+                return true;
+            }
+            std::thread::sleep(Duration::from_millis(30));
+        }
+        false
+    }
+
     /// Starts the node at `index`. `Err` holds its first line when it did not start.
     fn start(&self, index: usize) -> Result<Node, String> {
         let peers: Vec<String> = self
@@ -92,11 +125,13 @@ impl Cluster {
             .map(|(_, peer)| format!("\"{peer}\""))
             .collect();
         let source = format!(
-            r#"{{"mesh":{{"listen":"{}","peers":[{}],"key_file":"{}"}},
+            r#"{{"global":{{"admin_socket":"{}"}},
+            "mesh":{{"listen":"{}","peers":[{}],"key_file":"{}"}},
             "observability":{{"listen":"{}"}},
             "http":{{"surface":"shield","rate_limit":"off"}},
             "frontends":{{"web":{{"proto":"http","binds":["{}"],"default_backend":"app"}}}},
             "backends":{{"app":{{"mode":"http","servers":[{{"name":"a","addr":"{}"}}]}}}}}}"#,
+            self.socket(index).display(),
             self.mesh[index],
             peers.join(","),
             self.key.display(),
@@ -209,5 +244,35 @@ fn a_ban_on_one_node_holds_on_its_peers_and_on_a_node_that_restarts() {
     assert_eq!(series(issuer, "sibuna_edge_mesh_bans_known"), 1);
     assert_eq!(series(cluster.probes[1], "sibuna_edge_mesh_bans_applied_total"), 1);
     assert_eq!(series(cluster.probes[2], "sibuna_edge_mesh_bans_applied_total"), 1);
+    drop(third);
+}
+
+#[test]
+fn a_drain_commanded_on_one_node_holds_on_its_peers_unless_it_is_local() {
+    let (cluster, mut nodes) = cluster(3);
+    for index in 0..3 {
+        assert_eq!(cluster.state(index), "ready");
+    }
+    // One command drains the server on every node.
+    cluster.ctl(0, &["set", "server", "app/a", "state", "drain"]);
+    for index in 0..3 {
+        assert!(cluster.shows(index, "drain"), "node {index}");
+    }
+    // A local command stays on its node.
+    cluster.ctl(1, &["set", "server", "app/a", "state", "ready", "local"]);
+    std::thread::sleep(Duration::from_millis(1500));
+    assert_eq!(cluster.state(1), "ready");
+    assert_eq!(cluster.state(0), "drain");
+    assert_eq!(cluster.state(2), "drain");
+    // A node that restarts would return the server to rotation by itself. It learns
+    // the drain from its peers.
+    drop(nodes.pop());
+    let third = cluster.start(2).unwrap();
+    assert!(cluster.shows(2, "drain"));
+    // The later command wins everywhere, also on the node that had its own.
+    cluster.ctl(2, &["set", "server", "app/a", "state", "ready"]);
+    for index in 0..3 {
+        assert!(cluster.shows(index, "ready"), "node {index}");
+    }
     drop(third);
 }
