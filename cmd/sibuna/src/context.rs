@@ -51,6 +51,7 @@ use crate::slot::EngineCache;
 /// read buffer or the peer text, so a context cannot outlive the bytes it describes.
 pub(crate) struct Ctx<'c, W> {
     pub server: &'c Server,
+    pub ingress: Option<crate::connection::Ingress>,
     pub stream: &'c TcpStream,
     pub writer: &'c mut W,
     pub workspace: &'c mut Workspace,
@@ -114,6 +115,7 @@ impl<'c, W: Write> Ctx<'c, W> {
         let internal = request.path.starts_with(b"/__sibuna/");
         Ctx {
             server,
+            ingress: link.ingress,
             stream: link.stream,
             writer: &mut link.writer,
             workspace: &mut link.workspace,

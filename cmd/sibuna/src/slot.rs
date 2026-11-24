@@ -215,6 +215,11 @@ impl EngineCache {
         self.published.get_or_insert_with(|| slot.load_published())
     }
 
+    /// The policy publication used for this request.
+    pub(crate) fn generation(&self) -> u64 {
+        self.generation
+    }
+
     /// Releases the cached engine, so a long-lived exchange (an upgraded connection) does
     /// not keep an old snapshot alive. The next refresh loads the current one.
     pub fn release(&mut self) {

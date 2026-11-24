@@ -79,6 +79,7 @@ pub struct Options {
 
 /// The state every connection thread shares.
 pub struct Server {
+    pub(crate) edge_routes: Option<sibuna_lb::HttpRoutes>,
     pub(crate) config: Config,
     pub(crate) slot: Arc<EngineSlot>,
     pub(crate) coordinator: Coordinator,
@@ -131,6 +132,7 @@ impl Server {
         let ban_slots = usize::try_from(config.ban_table_slots).unwrap_or(usize::MAX);
         let capacity = Config::MAX_CONNECTIONS_LIMIT as usize;
         Server {
+            edge_routes: None,
             max_connections: AtomicU32::new(config.max_connections),
             peers: PeerTable::with_ipv6_prefix(config.ipv6_prefix),
             config,
@@ -316,7 +318,7 @@ impl Drop for Running {
 }
 
 /// Starts the idle reaper when a timeout is configured.
-fn start_reaper(server: &Arc<Server>) -> io::Result<Option<JoinHandle<()>>> {
+pub(crate) fn start_reaper(server: &Arc<Server>) -> io::Result<Option<JoinHandle<()>>> {
     let config = &server.config;
     let (http, websocket) = (config.idle_timeout_seconds, config.websocket_idle_timeout_seconds);
     if sibuna_net::reaper_interval(http, websocket).is_none() {
@@ -375,7 +377,7 @@ fn accept_loop(server: &Arc<Server>, listener: &TcpListener) {
 
 /// Takes a place for a connection from `peer` under the global and the per-client bounds,
 /// or answers 503 and returns `None`.
-fn admit(server: &Arc<Server>, stream: &TcpStream, peer: IpAddr) -> Option<Admitted> {
+pub(crate) fn admit(server: &Arc<Server>, stream: &TcpStream, peer: IpAddr) -> Option<Admitted> {
     let limit = server.max_connections.load(Ordering::Relaxed);
     if server.connections.fetch_add(1, Ordering::Relaxed) >= limit {
         server.connections.fetch_sub(1, Ordering::Relaxed);

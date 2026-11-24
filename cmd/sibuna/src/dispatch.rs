@@ -63,6 +63,10 @@ pub(crate) fn dispatch<'c, W: Write>(
 fn route<'c, W: Write>(ctx: &mut Ctx<'c, W>, spare: &'c mut [u8]) -> io::Result<bool> {
     let server = ctx.server;
     server.metrics.requests.bump();
+    if ctx.ingress.is_some() && edge_host(ctx).is_err() {
+        response::write_text(ctx.writer, Status::BadRequest, b"Invalid Host", false)?;
+        return Ok(false);
+    }
     if !ctx.internal && !restore_authorization_target(ctx, spare)? {
         return Ok(false);
     }
@@ -371,6 +375,13 @@ pub(crate) fn forward<W: Write>(
     if is_forward_auth(&server.config) {
         return forward_auth(ctx, status, rule_name, rule_hash);
     }
+    let selected = match select_origin(ctx) {
+        Ok(selected) => selected,
+        Err(status) => {
+            response::write_text(ctx.writer, status, status.reason().as_bytes(), false)?;
+            return Ok(false);
+        }
+    };
     server.metrics.proxied.bump();
     if ctx.request.header(b"upgrade").is_some() {
         // An upgraded connection may live for hours; it must not pin this snapshot.
@@ -409,13 +420,17 @@ pub(crate) fn forward<W: Write>(
             ja4_header: config.ja4_header.as_deref().unwrap_or_default().as_bytes(),
             status: status.as_bytes(),
             rule: rule_name.as_bytes(),
-            scheme: forwarded::scheme(&ctx.request, config.trusts_forwarded()).as_bytes(),
+            scheme: if ctx.ingress.is_some_and(|i| i.secure) {
+                b"https"
+            } else {
+                forwarded::scheme(&ctx.request, config.trusts_forwarded()).as_bytes()
+            },
             response_status: status_sink,
             response_head: head_sink,
         },
         keep_alive: ctx.keep_alive,
     };
-    let relayed = sibuna_net::stream_proxy(&server.pool, ctx.workspace, exchange);
+    let relayed = relay(&server.pool, ctx.workspace, exchange, selected);
     telemetry::admitted_complete(ctx, origin_status, origin.as_ref());
     match relayed {
         Ok(keep) => Ok(keep),
@@ -424,6 +439,47 @@ pub(crate) fn forward<W: Write>(
             answer_proxy_error(ctx.writer, error)?;
             Ok(false)
         }
+    }
+}
+
+fn edge_host<'a, W>(ctx: &'a Ctx<'_, W>) -> Result<&'a [u8], Status> {
+    let mut hosts = ctx.request.headers().iter().filter(|h| h.name.eq_ignore_ascii_case(b"host"));
+    let host = hosts.next().map_or(&[][..], |h| h.value);
+    if hosts.next().is_some()
+        || (host.is_empty() && ctx.request.version == sibuna_http::Version::Http11)
+        || (!host.is_empty() && !sibuna_lb::valid_authority(host))
+    {
+        return Err(Status::BadRequest);
+    }
+    Ok(host)
+}
+
+fn select_origin<W>(ctx: &Ctx<'_, W>) -> Result<Option<sibuna_lb::HttpTarget>, Status> {
+    let (Some(routes), Some(i)) = (&ctx.server.edge_routes, ctx.ingress) else { return Ok(None) };
+    let host = ctx.request.header(b"host").unwrap_or_default();
+    routes
+        .select(i.vip, i.peer, host, ctx.request.path, ctx.cache.generation())
+        .map(Some)
+        .ok_or(Status::ServiceUnavailable)
+}
+
+fn relay<W: Write>(
+    pool: &sibuna_net::Pool,
+    workspace: &mut sibuna_net::Workspace,
+    exchange: Exchange<'_, W>,
+    selected: Option<sibuna_lb::HttpTarget>,
+) -> Result<bool, ProxyError> {
+    if let Some(target) = selected {
+        let start = std::time::Instant::now();
+        let result = sibuna_net::stream_proxy_to(pool, workspace, exchange, target.address());
+        match &result {
+            Ok(_) => target.completed(start),
+            Err(ProxyError::UpstreamUnreachable) => target.failed(),
+            _ => {}
+        }
+        result
+    } else {
+        sibuna_net::stream_proxy(pool, workspace, exchange)
     }
 }
 

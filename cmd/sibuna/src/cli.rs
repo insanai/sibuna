@@ -289,13 +289,14 @@ fn print_console_banner(daemon: &Daemon) {
 /// Secret precedence: `--secret-file`, then `SIBUNA_SECRET`, then a random per-process seed
 /// (tokens then die with the process, which is fine for a single node but wrong for a
 /// cluster, so the banner warns).
-fn resolve_secret(config: &mut Config, secret: Option<&str>) -> Result<Seed, ()> {
+pub(crate) fn resolve_secret(config: &mut Config, secret: Option<&str>) -> Result<Seed, ()> {
     let seed = if let Some(path) = &config.secret_file {
-        let content = read_bounded(path, SECRET_FILE_BYTES).map_err(|error| {
-            report(&format!("Cannot open secret file {path}: {}", error_name(&error)));
-        })?;
-        Seed::parse(&content).map_err(|_| {
-            report(&format!("Secret file {path} must hold 64 hex characters or 32 raw bytes"));
+        read_seed(path).map_err(|error| {
+            if error.kind() == io::ErrorKind::InvalidData {
+                report(&format!("Secret file {path} must hold 64 hex characters or 32 raw bytes"));
+            } else {
+                report(&format!("Cannot open secret file {path}: {}", error_name(&error)));
+            }
         })?
     } else if let Some(text) = secret {
         let seed = Seed::parse(text.as_bytes()).map_err(|_| {
@@ -312,6 +313,17 @@ fn resolve_secret(config: &mut Config, secret: Option<&str>) -> Result<Seed, ()>
     Ok(seed)
 }
 
+/// Checks the entire challenge seed file before publishing a configuration.
+pub(crate) fn read_seed(path: &str) -> io::Result<Seed> {
+    let bytes = read_bounded(path, SECRET_FILE_BYTES + 1)?;
+    if bytes.len() as u64 <= SECRET_FILE_BYTES
+        && let Ok(seed) = Seed::parse(&bytes)
+    {
+        return Ok(seed);
+    }
+    Err(io::Error::new(io::ErrorKind::InvalidData, "expected 64 hex characters or 32 raw bytes"))
+}
+
 /// Reads 32 bytes from the operating system's random source.
 fn random_seed() -> io::Result<[u8; SEED_LEN]> {
     let mut seed = [0u8; SEED_LEN];
@@ -320,7 +332,7 @@ fn random_seed() -> io::Result<[u8; SEED_LEN]> {
 }
 
 /// Reads at most `limit` bytes of the file at `path`.
-fn read_bounded(path: &str, limit: u64) -> io::Result<Vec<u8>> {
+pub(crate) fn read_bounded(path: &str, limit: u64) -> io::Result<Vec<u8>> {
     let mut content = Vec::new();
     File::open(path)?.take(limit).read_to_end(&mut content)?;
     Ok(content)

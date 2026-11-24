@@ -1,5 +1,7 @@
 //! Edge-mode startup, reload at batch boundaries and bounded shutdown.
 
+mod http;
+
 use std::fs::File;
 use std::io::{self, Read};
 use std::process::ExitCode;
@@ -30,7 +32,17 @@ pub(crate) fn command(args: &[String]) -> Option<ExitCode> {
     })
 }
 
-fn load(path: &str) -> io::Result<Config> {
+struct Revision {
+    config: Config,
+    http: Option<http::Prepared>,
+}
+
+fn load(path: &str) -> io::Result<Revision> {
+    let config = topology(path)?;
+    let http = http::Prepared::load(&config)?;
+    Ok(Revision { config, http })
+}
+fn topology(path: &str) -> io::Result<Config> {
     let mut bytes = Vec::new();
     File::open(path)?
         .take(Config::DOCUMENT_LIMITS.max_input_bytes as u64 + 1)
@@ -47,7 +59,7 @@ fn load(path: &str) -> io::Result<Config> {
     Config::parse(&bytes)
 }
 
-fn serve(path: String, config: Config) -> io::Result<()> {
+fn serve(path: String, revision: Revision) -> io::Result<()> {
     let shutdown = Shutdown::new();
     let pending = Arc::new(Mutex::new(None));
     let slot = Arc::clone(&pending);
@@ -56,14 +68,16 @@ fn serve(path: String, config: Config) -> io::Result<()> {
         Err(error) => eprintln!("EDGE002: keeping current routes: {error}"),
     })
     .map_err(io::Error::other)?;
+    let Revision { config, http } = revision;
     let mesh = config.mesh().map(start_mesh).transpose()?;
     let mut current = sibuna_lb::Regime::Standalone;
     let mut edge = Edge::bind(config)?;
+    let mut http = http.map(|p| http::Http::start(p, &edge)).transpose()?;
     eprintln!("Sibuna edge listeners ready");
     while !shutdown.is_requested() {
         let next = pending.lock().unwrap_or_else(std::sync::PoisonError::into_inner).take();
         if let Some(next) = next {
-            match edge.reload(next) {
+            match reload(&mut edge, http.as_mut(), next) {
                 Ok(()) => eprintln!("Sibuna edge routes reloaded"),
                 Err(error) => eprintln!("EDGE002: keeping current routes: {error}"),
             }
@@ -76,15 +90,43 @@ fn serve(path: String, config: Config) -> io::Result<()> {
                 current = regime;
             }
         }
-        edge.step()?;
+        step(&mut edge, http.as_ref())?;
     }
+    drop(mesh);
     edge.drain();
+    if let Some(http) = &http {
+        http.drain();
+    }
     let deadline = Instant::now() + Duration::from_secs(5);
     while edge.active() > 0 && Instant::now() < deadline {
-        edge.step()?;
+        step(&mut edge, http.as_ref())?;
     }
     eprintln!("Sibuna edge stopped: {} forced closes, {} drops", edge.active(), edge.dropped());
     Ok(())
+}
+
+fn step(edge: &mut Edge, http: Option<&http::Http>) -> io::Result<()> {
+    edge.step()?;
+    if let Some(http) = http {
+        for (bind, stream, permit) in edge.accepted_http() {
+            http.accept(bind, stream, permit);
+        }
+    }
+    Ok(())
+}
+
+fn reload(edge: &mut Edge, http: Option<&mut http::Http>, revision: Revision) -> io::Result<()> {
+    match (http, revision.http) {
+        (None, None) => edge.reload(revision.config),
+        (Some(http), Some(prepared)) if http.compatible(&prepared) => {
+            edge.reload(revision.config)?;
+            http.reload(prepared);
+            Ok(())
+        }
+        _ => Err(io::Error::other(
+            "changing HTTP firewall settings or TLS listeners requires a restart",
+        )),
+    }
 }
 
 fn start_mesh(spec: &sibuna_lb::MeshConfig) -> io::Result<sibuna_lb::Mesh> {

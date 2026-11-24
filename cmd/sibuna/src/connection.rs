@@ -34,8 +34,16 @@ pub const UNKNOWN_LENGTH: usize = usize::MAX;
 const WRITE_BUFFER: usize = 16 * 1024;
 
 /// The client side of a connection that outlives each request.
+#[derive(Clone, Copy)]
+pub(crate) struct Ingress {
+    pub peer: SocketAddr,
+    pub vip: SocketAddr,
+    pub secure: bool,
+}
+
 pub(crate) struct Link<'c, W> {
     pub server: &'c Server,
+    pub ingress: Option<Ingress>,
     pub stream: &'c TcpStream,
     pub writer: W,
     pub workspace: Workspace,
@@ -52,6 +60,15 @@ pub(crate) struct Link<'c, W> {
 /// bound. `admission` is given back before the response that closes the connection, and at
 /// the latest when this returns.
 pub fn serve(server: &Server, stream: &TcpStream, admission: Admitted) {
+    serve_from(server, stream, admission, None);
+}
+
+pub(crate) fn serve_from(
+    server: &Server,
+    stream: &TcpStream,
+    admission: Admitted,
+    ingress: Option<Ingress>,
+) {
     let Some(lease) = server.idle.register(stream) else { return };
     if server.is_stopping() {
         return;
@@ -64,9 +81,10 @@ pub fn serve(server: &Server, stream: &TcpStream, admission: Admitted) {
     let mut path_buffer = [0u8; MAX_HEAD_BYTES];
     let mut reader = Reader::new(stream, &mut read_buffer[..]);
     let mut peer = PeerText::default();
-    peer.format(stream.peer_addr().ok());
+    peer.format(ingress.map(|i| i.peer).or_else(|| stream.peer_addr().ok()));
     let mut link = Link {
         server,
+        ingress,
         stream,
         writer: ClientWriter::new(Writer::new(stream, &mut write_buffer[..])),
         workspace: Workspace::new(),
