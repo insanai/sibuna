@@ -19,6 +19,7 @@ use crate::Error;
 
 const MAX_PEM: usize = 256 * 1024;
 const MAX_BUNDLES: usize = 256;
+const MAX_OCSP: usize = 64 * 1024;
 
 /// Reads a PEM file of at most 256 KiB.
 fn pem(path: &Path) -> io::Result<Vec<u8>> {
@@ -46,8 +47,50 @@ fn bundle(path: &Path, chain: &[u8], key: &[u8]) -> Result<Arc<CertifiedKey>, Er
     }
     let key = PrivateKeyDer::from_pem_slice(key).map_err(|e| named(path, e))?;
     let provider = rustls::crypto::ring::default_provider();
-    let certified = CertifiedKey::from_der(certs, key, &provider).map_err(|e| named(path, e))?;
+    let mut certified =
+        CertifiedKey::from_der(certs, key, &provider).map_err(|e| named(path, e))?;
+    certified.ocsp = stapled(path)?;
     Ok(Arc::new(certified))
+}
+
+/// The OCSP response to staple to a certificate: the DER file `<certificate>.ocsp`, when
+/// it exists, as in HAProxy. Whoever renews the certificate refreshes this file and
+/// reloads. We do not fetch or check the response.
+fn stapled(certificate: &Path) -> Result<Option<Vec<u8>>, Error> {
+    let mut name = certificate.as_os_str().to_owned();
+    name.push(".ocsp");
+    let path = Path::new(&name);
+    let file = match std::fs::File::open(path) {
+        Ok(file) => file,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => return Err(named(path, error)),
+    };
+    let mut bytes = Vec::new();
+    file.take(MAX_OCSP as u64 + 1).read_to_end(&mut bytes).map_err(|e| named(path, e))?;
+    if bytes.is_empty() || bytes.len() > MAX_OCSP {
+        return Err(named(path, "an OCSP response has 1 to 65536 bytes"));
+    }
+    Ok(Some(bytes))
+}
+
+/// Builds the verifier of client certificates from a PEM file of CA certificates.
+pub(crate) fn client_verifier(
+    spec: &TlsOptions,
+    provider: Arc<rustls::crypto::CryptoProvider>,
+) -> Result<Option<Arc<dyn rustls::server::danger::ClientCertVerifier>>, Error> {
+    let Some(file) = &spec.client_ca else { return Ok(None) };
+    let path = Path::new(file);
+    let mut roots = rustls::RootCertStore::empty();
+    for certificate in CertificateDer::pem_slice_iter(&pem(path)?) {
+        roots.add(certificate.map_err(|e| named(path, e))?).map_err(|e| named(path, e))?;
+    }
+    if roots.is_empty() {
+        return Err(named(path, "no CA certificate found"));
+    }
+    let builder =
+        rustls::server::WebPkiClientVerifier::builder_with_provider(Arc::new(roots), provider);
+    let builder = if spec.client_optional { builder.allow_unauthenticated() } else { builder };
+    Ok(Some(builder.build().map_err(|e| named(path, e))?))
 }
 
 /// The bundle paths named by `crt`, directories expanded to their sorted `*.pem` files.
@@ -214,8 +257,7 @@ mod tests {
             crt: Vec::new(),
             cert_file: Some(fixture("localhost.pem")),
             key_file: Some(fixture("localhost.key")),
-            strict_sni: false,
-            http3: false,
+            ..TlsOptions::default()
         }
     }
 
@@ -263,5 +305,26 @@ mod tests {
         spec.key_file = Some(fixture("ca.pem"));
         let error = Certificates::load(&spec).unwrap_err().to_string();
         assert!(error.contains("localhost.pem"), "{error}");
+    }
+
+    #[test]
+    fn an_ocsp_file_beside_a_bundle_is_stapled() {
+        let dir = std::env::temp_dir().join(format!("sibuna-ocsp-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let bundle = dir.join("site.pem");
+        let mut pem = std::fs::read(fixture("localhost.pem")).unwrap();
+        pem.extend(std::fs::read(fixture("localhost.key")).unwrap());
+        std::fs::write(&bundle, pem).unwrap();
+        let spec =
+            TlsOptions { crt: vec![bundle.to_str().unwrap().to_owned()], ..TlsOptions::default() };
+        assert_eq!(Certificates::load(&spec).unwrap().select(None).unwrap().ocsp, None);
+        std::fs::write(dir.join("site.pem.ocsp"), b"response").unwrap();
+        let stapled = Certificates::load(&spec).unwrap().select(None).unwrap();
+        assert_eq!(stapled.ocsp.as_deref(), Some(&b"response"[..]));
+        // An empty file is a mistake, not a response.
+        std::fs::write(dir.join("site.pem.ocsp"), b"").unwrap();
+        let error = Certificates::load(&spec).err().unwrap().to_string();
+        assert!(error.contains("site.pem.ocsp"), "{error}");
+        std::fs::remove_dir_all(&dir).unwrap();
     }
 }

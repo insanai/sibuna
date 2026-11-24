@@ -19,7 +19,7 @@ use hyper::header::HeaderValue;
 use hyper::server::conn::http2;
 use hyper::service::service_fn;
 use hyper_util::rt::{TokioExecutor, TokioIo, TokioTimer};
-use sibuna_lb::{FlowBudget, FlowPermit, TlsOptions};
+use sibuna_lb::{FlowBudget, FlowPermit, TlsOptions, TlsVersion};
 use tokio::io::AsyncWriteExt;
 use tokio::runtime::Runtime;
 use tokio::sync::{Semaphore, watch};
@@ -70,12 +70,18 @@ impl Identity {
     /// leaf certificate. The error names the file that failed.
     pub fn load(spec: &TlsOptions) -> Result<Self, Error> {
         let certificates = Arc::new(certs::Certificates::load(spec)?);
-        let mut config = rustls::ServerConfig::builder_with_provider(Arc::new(
-            rustls::crypto::ring::default_provider(),
-        ))
-        .with_safe_default_protocol_versions()?
-        .with_no_client_auth()
-        .with_cert_resolver(certificates);
+        let provider = Arc::new(rustls::crypto::ring::default_provider());
+        let versions: &[&rustls::SupportedProtocolVersion] = match spec.min_version {
+            TlsVersion::V12 => rustls::DEFAULT_VERSIONS,
+            TlsVersion::V13 => &[&rustls::version::TLS13],
+        };
+        let builder = rustls::ServerConfig::builder_with_provider(provider.clone())
+            .with_protocol_versions(versions)?;
+        let builder = match certs::client_verifier(spec, provider)? {
+            Some(verifier) => builder.with_client_cert_verifier(verifier),
+            None => builder.with_no_client_auth(),
+        };
+        let mut config = builder.with_cert_resolver(certificates);
         let quic = if spec.http3 {
             let mut tls = config.clone();
             tls.alpn_protocols = vec![b"h3".to_vec()];

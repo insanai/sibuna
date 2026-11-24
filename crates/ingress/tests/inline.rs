@@ -177,8 +177,8 @@ fn setup() -> Bench {
         crt: Vec::new(),
         cert_file: Some(fixture("localhost.pem")),
         key_file: Some(fixture("localhost.key")),
-        strict_sni: false,
         http3: true,
+        ..TlsOptions::default()
     };
     let identity = Identity::load(&tls).unwrap();
     let handoffs = Arc::new(AtomicUsize::new(0));
