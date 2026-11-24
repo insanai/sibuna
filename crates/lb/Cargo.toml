@@ -1,6 +1,6 @@
 [package]
 name = "sibuna-lb"
-description = "Sibuna TCP and UDP edge routing"
+description = "Sibuna TCP, UDP and HTTP edge routing"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

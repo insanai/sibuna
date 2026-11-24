@@ -1,4 +1,4 @@
-//! A bounded TCP and UDP load balancer. Each [`Edge`] owns its sockets and reservations.
+//! A bounded TCP, UDP and HTTP load balancer. Each [`Edge`] owns its worker sockets.
 //! Prepare a [`Config`] off the worker, bind all listeners, then call [`Edge::step`] in
 //! the worker loop. Replacing the routing configuration preserves established flows.
 
@@ -126,7 +126,7 @@ impl Edge {
         self.http.clone()
     }
 
-    /// Takes accepted plaintext sockets for the HTTP firewall.
+    /// Takes accepted HTTP sockets for plaintext dispatch or TLS negotiation.
     pub fn accepted_http(&mut self) -> impl Iterator<Item = (SocketAddr, TcpStream, FlowPermit)> {
         self.http_pending.drain(..)
     }
