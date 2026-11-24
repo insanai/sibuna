@@ -1,8 +1,11 @@
-//! The bans a node remembers for its peers, and their datagram (SID 0022).
+//! What a node remembers for its peers, and its datagram (SID 0022).
 //!
-//! The state is a map from client keys to the Unix second a ban ends. Merging takes the
-//! later end, so a datagram may arrive twice, late or out of order. Nothing here touches
-//! a socket: the mesh thread owns the map and sends what [`Log::due`] and a walk hand it.
+//! The state is a map from keys to numbers, and merging keeps the larger number, so a
+//! datagram may arrive twice, late or out of order. For a ban the key is a client and
+//! the number is the Unix second the ban ends. For a drain the key is a server and the
+//! number is the time of the operator's command with the state in its lowest bit, so the
+//! later command wins. Nothing here touches a socket: the mesh thread owns the map and
+//! sends what [`Log::due`] and a walk hand it.
 
 use std::collections::{HashMap, VecDeque};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -10,8 +13,8 @@ use std::time::{Duration, Instant};
 
 use sibuna_crypto::{blake3, ct};
 
-/// The longest client key a datagram carries.
-pub(super) const MAX_KEY: usize = 64;
+/// The longest key a datagram carries: a pool name, a stroke and a server name.
+pub(super) const MAX_KEY: usize = 129;
 /// The longest datagram. It fits one packet on every path.
 pub(super) const MAX_DATAGRAM: usize = 1200;
 /// The bans a node remembers.
@@ -23,6 +26,21 @@ pub(super) const HEADER: usize = 28;
 const TAG: usize = 16;
 /// The kind byte of a ban datagram.
 pub(super) const KIND: u8 = 3;
+/// The kind byte of a drain datagram.
+pub(super) const KIND_DRAIN: u8 = 4;
+/// A drain stamped further ahead of the receiver's clock than this is refused.
+pub(super) const AHEAD_MS: u64 = 60_000;
+
+/// The number of a drain command: its Unix millisecond, and the state in the lowest bit.
+pub(super) fn drain_value(stamp_ms: u64, drained: bool) -> u64 {
+    (stamp_ms << 1) | u64::from(drained)
+}
+
+/// A received drain as it may be merged: `None` when its stamp is too far ahead, which
+/// would let one node with a wrong clock overrule every later command.
+pub(super) fn admit_drain(value: u64, now_ms: u64) -> Option<u64> {
+    ((value >> 1) <= now_ms.saturating_add(AHEAD_MS)).then_some(value)
+}
 /// When a ban is sent again after its first send.
 const RESENDS: [Duration; 2] = [Duration::from_secs(1), Duration::from_secs(4)];
 
@@ -78,34 +96,46 @@ impl Log {
         if until <= now || key.is_empty() || key.len() > MAX_KEY {
             return Ok(None);
         }
-        let until = until.min(now.saturating_add(HORIZON));
-        if let Some(known) = self.ends.get_mut(key) {
-            if *known >= until {
-                return Ok(None);
-            }
-            *known = until;
-            return Ok(Some(until));
-        }
         if self.ends.len() >= self.capacity {
             self.expire(now);
-            if self.ends.len() >= self.capacity {
-                return Err(());
-            }
         }
-        self.ends.insert(key.into(), until);
-        Ok(Some(until))
+        self.keep_larger(key, until.min(now.saturating_add(HORIZON)))
     }
 
-    /// Merges a ban that this node issued and owes its three sends, the first at once.
+    /// Keeps the larger of `value` and what the map holds for `key`, and returns the
+    /// value when it is the larger one.
     ///
     /// # Errors
     ///
-    /// As [`Log::merge`].
-    pub fn issue(&mut self, key: &[u8], until: u64, now: u64, at: Instant) -> Result<(), ()> {
-        if self.merge(key, until, now)?.is_some() && self.owed[0].len() < self.capacity {
+    /// `Err(())` when the map is full and the key is new.
+    pub fn keep_larger(&mut self, key: &[u8], value: u64) -> Result<Option<u64>, ()> {
+        if key.is_empty() || key.len() > MAX_KEY {
+            return Ok(None);
+        }
+        if let Some(known) = self.ends.get_mut(key) {
+            if *known >= value {
+                return Ok(None);
+            }
+            *known = value;
+            return Ok(Some(value));
+        }
+        if self.ends.len() >= self.capacity {
+            return Err(());
+        }
+        self.ends.insert(key.into(), value);
+        Ok(Some(value))
+    }
+
+    /// Owes the three sends of `key`, the first at once.
+    pub fn owe(&mut self, key: &[u8], at: Instant) {
+        if self.owed[0].len() < self.capacity {
             self.owed[0].push_back((at, key.into()));
         }
-        Ok(())
+    }
+
+    /// Everything the map holds, for a peer that returns.
+    pub fn all(&self) -> Vec<Ban> {
+        self.ends.iter().map(|(key, value)| (key.clone(), *value)).collect()
     }
 
     /// Moves the bans whose send is due into `out`, and owes each its next send.
@@ -248,7 +278,12 @@ mod tests {
     fn an_issued_ban_is_due_three_times_and_a_learned_one_never() {
         let mut log = Log::new(8);
         let start = Instant::now();
-        log.issue(b"a", 900, 100, start).unwrap();
+        let issue = |log: &mut Log, until: u64| {
+            if log.merge(b"a", until, 100).unwrap().is_some() {
+                log.owe(b"a", start);
+            }
+        };
+        issue(&mut log, 900);
         log.merge(b"learned", 900, 100).unwrap();
         let mut out = Vec::new();
         log.due(start, &mut out);
@@ -263,10 +298,10 @@ mod tests {
         log.due(start + Duration::from_secs(60), &mut out);
         assert_eq!(out.len(), 2);
         // The same end issued again owes nothing; a later end owes three sends again.
-        log.issue(b"a", 900, 100, start).unwrap();
+        issue(&mut log, 900);
         log.due(start + Duration::from_secs(60), &mut out);
         assert_eq!(out.len(), 2);
-        log.issue(b"a", 950, 100, start).unwrap();
+        issue(&mut log, 950);
         log.due(start, &mut out);
         assert_eq!(out.last(), Some(&(Box::from(&b"a"[..]), 950)));
     }
@@ -326,5 +361,41 @@ mod tests {
             assert!(decode(&KEY, &body, &mut read));
             assert!(read.len() <= 1, "{count} {length}");
         }
+    }
+}
+
+#[cfg(test)]
+mod drain_tests {
+    use super::*;
+
+    #[test]
+    fn the_later_command_wins_whatever_the_order_of_arrival() {
+        let drain = drain_value(1_000, true);
+        let ready = drain_value(2_000, false);
+        for order in [[drain, ready], [ready, drain]] {
+            let mut log = Log::new(4);
+            for value in order {
+                log.keep_larger(b"app/a", value).unwrap();
+            }
+            assert_eq!(log.all(), [(Box::from(&b"app/a"[..]), ready)]);
+        }
+        // Two commands in the same millisecond agree on every node: the drain wins.
+        assert!(drain_value(5, true) > drain_value(5, false));
+    }
+
+    #[test]
+    fn a_stamp_far_ahead_of_the_clock_is_refused() {
+        let now = 1_000_000;
+        assert_eq!(admit_drain(drain_value(now, true), now), Some(drain_value(now, true)));
+        assert!(admit_drain(drain_value(now + AHEAD_MS, false), now).is_some());
+        assert!(admit_drain(drain_value(now + AHEAD_MS + 1, false), now).is_none());
+    }
+
+    #[test]
+    fn a_full_map_refuses_a_new_key_and_still_updates_a_known_one() {
+        let mut log = Log::new(1);
+        log.keep_larger(b"app/a", 2).unwrap();
+        assert_eq!(log.keep_larger(b"app/b", 9), Err(()));
+        assert_eq!(log.keep_larger(b"app/a", 9), Ok(Some(9)));
     }
 }

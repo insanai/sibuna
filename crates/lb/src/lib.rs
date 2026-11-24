@@ -21,7 +21,7 @@ mod hello;
 mod ja4;
 mod maglev;
 mod mesh;
-pub use mesh::{BanCounters, BanFeed, BanSink, Mesh, MeshConfig, Regime};
+pub use mesh::{BanCounters, BanFeed, BanSink, DrainFeed, DrainSink, Mesh, MeshConfig, Regime};
 mod observe;
 mod pool;
 mod proxy;
