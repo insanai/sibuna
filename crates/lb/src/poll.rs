@@ -13,35 +13,44 @@
 use std::collections::HashMap;
 use std::io;
 #[cfg(unix)]
-use std::os::fd::{AsRawFd, RawFd as Handle};
+use std::os::fd::AsRawFd;
+#[cfg(unix)]
+pub use std::os::fd::RawFd as Handle;
 #[cfg(windows)]
 use std::os::windows::io::{AsRawSocket, RawSocket};
 
+/// The platform's socket handle.
 #[cfg(windows)]
-pub(crate) type Handle = usize;
+pub type Handle = usize;
 
+/// The handle a socket is registered by.
 #[cfg(unix)]
-pub(crate) fn handle(socket: &impl AsRawFd) -> Handle {
+pub fn handle(socket: &impl AsRawFd) -> Handle {
     socket.as_raw_fd()
 }
 
+/// The handle a socket is registered by.
 #[cfg(windows)]
-pub(crate) fn handle(socket: &impl AsRawSocket) -> Handle {
+pub fn handle(socket: &impl AsRawSocket) -> Handle {
     let socket: RawSocket = socket.as_raw_socket();
     socket as usize
 }
 
+/// Interest in readable data, a hang-up or an error.
 #[cfg(unix)]
-pub(crate) const READ: i16 = 1;
+pub const READ: i16 = 1;
+/// Interest in room to write.
 #[cfg(unix)]
-pub(crate) const WRITE: i16 = 4;
+pub const WRITE: i16 = 4;
+/// Interest in readable data, a hang-up or an error.
 #[cfg(windows)]
-pub(crate) const READ: i16 = 0x0100;
+pub const READ: i16 = 0x0100;
+/// Interest in room to write.
 #[cfg(windows)]
-pub(crate) const WRITE: i16 = 0x0010;
+pub const WRITE: i16 = 0x0010;
 
 /// The registered sockets of one worker and the key reported for each.
-pub(crate) struct Poller<K> {
+pub struct Poller<K> {
     entries: HashMap<Handle, (i16, K)>,
     backend: backend::Backend,
 }
@@ -276,13 +285,13 @@ mod backend {
 }
 
 /// Wakes a worker that is waiting in its poller. Any thread may hold a [`Wake`].
-pub(crate) struct Waker {
+pub struct Waker {
     receiver: std::net::UdpSocket,
 }
 
 /// The sending half of a [`Waker`].
 #[derive(Clone)]
-pub(crate) struct Wake(std::sync::Arc<std::net::UdpSocket>);
+pub struct Wake(std::sync::Arc<std::net::UdpSocket>);
 
 impl Waker {
     /// Creates a connected loopback datagram pair. Only the paired sender can deliver.
@@ -312,5 +321,147 @@ impl Wake {
     /// Requests a wake-up. A full socket buffer already holds one, so a failure is ignored.
     pub fn wake(&self) {
         let _ = self.0.send(&[1]);
+    }
+}
+
+/// Starts a TCP connection without waiting for it. The returned socket is non-blocking.
+/// It becomes writable when the connection completes or fails, and
+/// [`std::net::TcpStream::take_error`] then tells which.
+///
+/// # Errors
+///
+/// The operating system's error when the socket cannot be created or the connection is
+/// refused at once, and [`io::ErrorKind::Unsupported`] on a platform without this call.
+pub fn start_connect(address: std::net::SocketAddr) -> io::Result<std::net::TcpStream> {
+    connecting::start(address)
+}
+
+/// True when [`start_connect`] works on this platform.
+pub const CAN_START_CONNECT: bool = cfg!(any(target_os = "linux", target_os = "android"));
+
+#[cfg(any(target_os = "linux", target_os = "android"))]
+mod connecting {
+    use std::io;
+    use std::net::{SocketAddr, TcpStream};
+    use std::os::fd::{AsRawFd, FromRawFd, OwnedFd};
+
+    const AF_INET: i32 = 2;
+    const AF_INET6: i32 = 10;
+    const SOCK_STREAM: i32 = 1;
+    const SOCK_NONBLOCK: i32 = 0x800;
+    const SOCK_CLOEXEC: i32 = 0x80000;
+    const EINPROGRESS: i32 = 115;
+
+    #[repr(C)]
+    struct V4 {
+        family: u16,
+        port: [u8; 2],
+        address: [u8; 4],
+        zero: [u8; 8],
+    }
+
+    #[repr(C)]
+    struct V6 {
+        family: u16,
+        port: [u8; 2],
+        flow: u32,
+        address: [u8; 16],
+        scope: u32,
+    }
+
+    unsafe extern "C" {
+        fn socket(domain: i32, kind: i32, protocol: i32) -> i32;
+        fn connect(fd: i32, address: *const u8, length: u32) -> i32;
+    }
+
+    pub(super) fn start(address: SocketAddr) -> io::Result<TcpStream> {
+        let domain = if address.is_ipv4() { AF_INET } else { AF_INET6 };
+        // SAFETY: `socket` takes three integers and returns a descriptor or -1.
+        let fd = unsafe { socket(domain, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0) };
+        if fd < 0 {
+            return Err(io::Error::last_os_error());
+        }
+        // SAFETY: `fd` is a descriptor the call above just returned, owned by nobody else.
+        let owned = unsafe { OwnedFd::from_raw_fd(fd) };
+        let result = match address {
+            SocketAddr::V4(v4) => {
+                let raw = V4 {
+                    family: AF_INET as u16,
+                    port: v4.port().to_be_bytes(),
+                    address: v4.ip().octets(),
+                    zero: [0; 8],
+                };
+                // SAFETY: `raw` is a live `sockaddr_in` of the length passed, and the
+                // kernel copies it before the call returns.
+                unsafe { connect(owned.as_raw_fd(), (&raw const raw).cast(), 16) }
+            }
+            SocketAddr::V6(v6) => {
+                let raw = V6 {
+                    family: AF_INET6 as u16,
+                    port: v6.port().to_be_bytes(),
+                    flow: v6.flowinfo().to_be(),
+                    address: v6.ip().octets(),
+                    scope: v6.scope_id(),
+                };
+                // SAFETY: `raw` is a live `sockaddr_in6` of the length passed, and the
+                // kernel copies it before the call returns.
+                unsafe { connect(owned.as_raw_fd(), (&raw const raw).cast(), 28) }
+            }
+        };
+        if result != 0 {
+            let error = io::Error::last_os_error();
+            if error.raw_os_error() != Some(EINPROGRESS) {
+                return Err(error);
+            }
+        }
+        Ok(TcpStream::from(owned))
+    }
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "android")))]
+mod connecting {
+    use std::io;
+    use std::net::{SocketAddr, TcpStream};
+
+    pub(super) fn start(_address: SocketAddr) -> io::Result<TcpStream> {
+        Err(io::ErrorKind::Unsupported.into())
+    }
+}
+
+#[cfg(all(test, any(target_os = "linux", target_os = "android")))]
+mod tests {
+    use std::io::{Read, Write};
+    use std::net::TcpListener;
+
+    use super::*;
+
+    #[test]
+    fn a_started_connect_completes_and_a_refused_one_reports_its_error() {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
+        let address = listener.local_addr().expect("address");
+        let mut stream = start_connect(address).expect("start");
+        let mut poller = Poller::new().expect("poller");
+        poller.set(handle(&stream), WRITE, 1u8).expect("register");
+        let mut ready = Vec::new();
+        poller.wait(2_000, &mut ready).expect("wait");
+        assert_eq!(ready, [1]);
+        assert!(stream.take_error().expect("status").is_none());
+        let (mut accepted, _) = listener.accept().expect("accept");
+        stream.write_all(b"ping").expect("write");
+        let mut bytes = [0; 4];
+        accepted.read_exact(&mut bytes).expect("read");
+        assert_eq!(&bytes, b"ping");
+
+        drop(listener);
+        drop(accepted);
+        let refused = match start_connect(address) {
+            Err(_) => return,
+            Ok(stream) => stream,
+        };
+        let mut poller = Poller::new().expect("poller");
+        poller.set(handle(&refused), WRITE, 2u8).expect("register");
+        ready.clear();
+        poller.wait(2_000, &mut ready).expect("wait");
+        assert!(refused.take_error().expect("status").is_some() || refused.peer_addr().is_err());
     }
 }

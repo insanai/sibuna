@@ -16,7 +16,7 @@ mod ja4;
 mod maglev;
 mod mesh;
 pub use mesh::{Mesh, MeshConfig, Regime};
-mod poll;
+pub mod poll;
 mod pool;
 mod proxy;
 mod rules;
