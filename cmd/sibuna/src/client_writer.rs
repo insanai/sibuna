@@ -104,7 +104,11 @@ impl<W: Write> ClientWriter<W> {
         }
         let (line, rest) = data.split_at(end + 1);
         self.pass(line)?;
-        if self.tally.status != 0
+        if self.tally.status == 101 {
+            // The answer to an upgrade is that of the server and starts another
+            // protocol. No path edits it, so it gets no field of ours either.
+            self.own = None;
+        } else if self.tally.status != 0
             && let Some(policy) = self.own.take()
             && !carries_hsts(rest)
         {
@@ -281,6 +285,9 @@ mod tests {
         // A relayed head that brings the field keeps its own, whatever its spelling.
         let relayed: &[u8] = b"HTTP/1.1 200 OK\r\nstrict-transport-security: max-age=1\r\n\r\n";
         assert_eq!(with_own(false, &[relayed]).as_bytes(), relayed);
+        // The answer to an upgrade is the server's and is left as it is.
+        let upgrade: &[u8] = b"HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\n\r\n";
+        assert_eq!(with_own(false, &[upgrade]).as_bytes(), upgrade);
     }
 
     #[test]
