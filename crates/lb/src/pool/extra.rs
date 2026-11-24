@@ -108,19 +108,24 @@ impl Pool {
 
 impl Pool {
     /// The server that source stickiness gives `client`: the nearest server of the pool
-    /// that is neither a backup nor drained, whether or not it can serve now. `None`
-    /// when the pool is not sticky by source.
+    /// that is `eligible` and not a backup. `None` when the pool is not sticky by
+    /// source, and when only backups are eligible.
     ///
-    /// A drain lasts until an operator ends it, so the clients of a drained server get
-    /// one other server each and keep it. The other clients stay where they are.
-    pub(super) fn home(&self, client: std::net::IpAddr) -> Option<usize> {
+    /// The ranking is a rendezvous hash, so the clients of a server that is drained,
+    /// down, ejected or full get one other server each and keep it until their own
+    /// returns. The other clients stay where they are.
+    pub(super) fn home(
+        &self,
+        client: std::net::IpAddr,
+        eligible: impl Fn(&Target) -> bool,
+    ) -> Option<usize> {
         if self.policy.sticky != Some(Sticky::Source) {
             return None;
         }
         let client = sticky::client_bytes(client);
         let distance =
             |target: &Target| sticky::distance(&client, &target.server.name, target.server.weight);
-        let stays = |target: &Target| !target.server.backup && !target.drained;
+        let stays = |target: &Target| !target.server.backup && eligible(target);
         let servers = self.targets.iter().enumerate().filter(|(_, target)| stays(target));
         servers
             .map(|(index, target)| (index, distance(target)))

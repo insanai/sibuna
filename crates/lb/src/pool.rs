@@ -197,8 +197,8 @@ impl Pool {
                 .then_some(index)
         });
         // A sticky server serves its client whenever it is eligible (SID 0019).
-        let sticky = wish.sticky.or_else(|| self.home(wish.client.unwrap_or(peer.ip())));
-        let sticky = sticky.filter(|&index| self.targets.get(index).is_some_and(eligible));
+        let sticky = wish.sticky.filter(|&index| self.targets.get(index).is_some_and(eligible));
+        let sticky = sticky.or_else(|| self.home(wish.client.unwrap_or(peer.ip()), eligible));
         let index = sticky.or(primary).or_else(|| {
             if matches!(self.scheduler, Scheduler::RoundRobin) {
                 return self.in_turn(ramping, eligible);
