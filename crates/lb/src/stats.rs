@@ -212,6 +212,58 @@ pub struct Stats {
     flows_active: AtomicU64,
     flows_limit: AtomicU64,
     drops: AtomicU64,
+    proxy_accepted: AtomicU64,
+    proxy_rejected: AtomicU64,
+    refused: [AtomicU64; Refusal::ALL.len()],
+}
+
+/// Why a connection or a request was refused before the firewall decided on it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Refusal {
+    /// The client opened connections faster than `rate_limit.conn_per_10s` allows.
+    RateLimit,
+    /// The node holds `global.max_flows` flows.
+    FlowLimit,
+    /// The node drains and accepts nothing new.
+    Draining,
+    /// The node holds `http.max_connections` HTTP connections.
+    ConnectionLimit,
+    /// The client holds `http.max_connections_per_ip` HTTP connections.
+    ClientLimit,
+    /// No thread was free to serve the connection.
+    TaskLimit,
+    /// The node runs as many HTTP/2 and HTTP/3 requests as it may.
+    ExchangeLimit,
+    /// The protocol runtime found the request malformed or unsupported.
+    BadRequest,
+}
+
+impl Refusal {
+    /// Every reason, in the order of the series.
+    pub const ALL: [Refusal; 8] = [
+        Refusal::RateLimit,
+        Refusal::FlowLimit,
+        Refusal::Draining,
+        Refusal::ConnectionLimit,
+        Refusal::ClientLimit,
+        Refusal::TaskLimit,
+        Refusal::ExchangeLimit,
+        Refusal::BadRequest,
+    ];
+
+    /// The value of the `reason` label.
+    pub fn name(self) -> &'static str {
+        match self {
+            Refusal::RateLimit => "rate_limit",
+            Refusal::FlowLimit => "flow_limit",
+            Refusal::Draining => "draining",
+            Refusal::ConnectionLimit => "connection_limit",
+            Refusal::ClientLimit => "client_limit",
+            Refusal::TaskLimit => "task_limit",
+            Refusal::ExchangeLimit => "exchange_limit",
+            Refusal::BadRequest => "bad_request",
+        }
+    }
 }
 
 impl Stats {
@@ -264,6 +316,23 @@ impl Stats {
         servers.retain(|(backend, name), _| !(&**backend == pool && &**name == server));
     }
 
+    /// Counts one refusal by its reason.
+    pub fn refuse(&self, reason: Refusal) {
+        self.refused[reason as usize].fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// The number of refusals for `reason`.
+    pub fn refusal_count(&self, reason: Refusal) -> u64 {
+        self.refused[reason as usize].load(Ordering::Relaxed)
+    }
+
+    /// Counts a connection of a PROXY frontend: one that sent a valid header, or one
+    /// that was closed.
+    pub fn count_proxy(&self, accepted: bool) {
+        let counter = if accepted { &self.proxy_accepted } else { &self.proxy_rejected };
+        counter.fetch_add(1, Ordering::Relaxed);
+    }
+
     /// Publishes the size of the flow table and the drop counter of the edge.
     pub fn set_flows(&self, active: usize, drops: u64) {
         self.flows_active.store(active as u64, Ordering::Relaxed);
@@ -280,9 +349,16 @@ impl Stats {
             ("sibuna_edge_flows_active", "gauge", &self.flows_active),
             ("sibuna_edge_flows_limit", "gauge", &self.flows_limit),
             ("sibuna_edge_drops_total", "counter", &self.drops),
+            ("sibuna_edge_proxy_protocol_accepted_total", "counter", &self.proxy_accepted),
+            ("sibuna_edge_proxy_protocol_rejected_total", "counter", &self.proxy_rejected),
         ];
         for (name, kind, value) in gauges {
             writeln!(out, "# TYPE {name} {kind}\n{name} {}", value.load(Ordering::Relaxed))?;
+        }
+        out.write_str("# TYPE sibuna_edge_refused_total counter\n")?;
+        for reason in Refusal::ALL {
+            let count = self.refusal_count(reason);
+            writeln!(out, "sibuna_edge_refused_total{{reason=\"{}\"}} {count}", reason.name())?;
         }
         let fronts = self.fronts.lock().unwrap_or_else(PoisonError::into_inner).clone();
         write_fronts(out, &fronts)?;

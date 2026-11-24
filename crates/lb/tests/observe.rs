@@ -88,7 +88,12 @@ fn a_frontend_names_its_proxies_and_the_proxy_protocol_needs_them() {
         free()
     );
     let found = Config::parse(tcp.as_bytes()).err().unwrap().to_string();
-    assert!(found.contains("need an HTTP frontend"), "{found}");
+    assert!(found.contains("reads trusted_proxies only with proxy_protocol"), "{found}");
+    let udp = tcp.replace("\"tcp\"", "\"udp\"");
+    let found = Config::parse(udp.as_bytes()).err().unwrap().to_string();
+    assert!(found.contains("need an HTTP or a TCP frontend"), "{found}");
+    let both = tcp.replace("\"proxy_protocol\":false", "\"proxy_protocol\":true");
+    Config::parse(both.as_bytes()).unwrap();
 }
 
 #[test]

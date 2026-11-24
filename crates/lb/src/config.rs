@@ -346,7 +346,7 @@ impl Config {
         let (tls, firewall, websocket, http_rules, policy) =
             http_frontend(&mut r, proto, &self.pools)?;
         let http_rules: std::sync::Arc<[_]> = http_rules.into();
-        let info = crate::FrontendInfo::parse(&mut r, name, proto == Protocol::Http)?;
+        let info = crate::FrontendInfo::parse(&mut r, name, proto)?;
         let info = std::sync::Arc::new(info);
         let binds = field(r.take_array("binds"))?.ok_or_else(|| invalid(r.missing("binds")))?;
         if binds.is_empty() || self.listeners.len() + binds.len() > 128 {
