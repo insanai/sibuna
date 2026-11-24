@@ -4,6 +4,7 @@
 mod admin;
 mod control;
 mod ctl;
+mod failure;
 mod http;
 mod quick;
 mod watch;
@@ -40,9 +41,7 @@ pub(crate) fn command(args: &[String], secret: Option<&str>) -> Option<ExitCode>
     Some(match result {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
-            eprintln!(
-                "EDGE001: {path}: {error}\nHint: check the edge configuration and listener binds."
-            );
+            failure::report(Some(path), &error);
             ExitCode::FAILURE
         }
     })
@@ -117,6 +116,8 @@ struct Serving {
     watcher: Watcher,
     /// The path of the admin socket. A reload cannot change it.
     admin_socket: Option<String>,
+    /// How long a shutdown waits for established flows (`global.shutdown_timeout`).
+    shutdown_timeout: Duration,
     started: Instant,
     reloads: u64,
 }
@@ -129,9 +130,11 @@ impl Serving {
             return Err(io::Error::other("changing global.admin_socket requires a restart"));
         }
         let watch = revision.config.watch();
+        let shutdown_timeout = revision.config.shutdown_timeout();
         let before = self.edge.change_count();
         reload(&mut self.edge, self.http.as_mut(), &mut self.adapters, revision)?;
         self.reloads += 1;
+        self.shutdown_timeout = shutdown_timeout;
         self.watch(watch)?;
         let kept = self.edge.change_count();
         let mut line = "Sibuna edge routes reloaded".to_owned();
@@ -252,6 +255,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let mesh = config.mesh().map(start_mesh).transpose()?;
     let admin_socket = config.admin_socket().map(str::to_owned);
     let watch = config.watch();
+    let shutdown_timeout = config.shutdown_timeout();
     let mut current = sibuna_lb::Regime::Standalone;
     let edge = Edge::bind(config)?;
     let http = http.map(|p| http::Http::start(p, &edge, secret)).transpose()?;
@@ -270,6 +274,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         pending,
         watcher,
         admin_socket,
+        shutdown_timeout,
         started,
         reloads: 0,
     };
@@ -291,12 +296,12 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         step(&mut serving.edge, serving.http.as_ref())?;
     }
     drop(mesh);
-    let Serving { mut edge, http, .. } = serving;
+    let Serving { mut edge, http, shutdown_timeout, .. } = serving;
     edge.drain();
     if let Some(http) = &http {
         http.drain();
     }
-    let deadline = Instant::now() + Duration::from_secs(5);
+    let deadline = Instant::now() + shutdown_timeout;
     while edge.active() > 0 && Instant::now() < deadline {
         step(&mut edge, http.as_ref())?;
     }
@@ -325,8 +330,11 @@ fn reload(
         (Some(http), Some(prepared)) if http.compatible(&prepared) => {
             adapt(adapters, &mut revision.config)?;
             edge.reload(revision.config)?;
-            commit(adapters);
+            // The engine follows the routes at once. A request decided under the old
+            // engine in between is routed by the old revision (SID 0018). The adapters
+            // of that revision close last.
             http.reload(prepared);
+            commit(adapters);
             Ok(())
         }
         _ => Err(io::Error::other(

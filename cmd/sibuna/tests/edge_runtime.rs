@@ -311,3 +311,103 @@ fn the_printed_configuration_passes_the_check() {
     assert!(!refused.status.success());
     assert!(String::from_utf8_lossy(&refused.stderr).contains("-- MISSING ADDRESS "));
 }
+
+/// Sends requests on new connections until `stop` is set and counts the answers that
+/// are not 200.
+fn load(vip: SocketAddr, stop: &std::sync::atomic::AtomicBool) -> (usize, usize) {
+    let (mut sent, mut failed) = (0, 0);
+    while !stop.load(std::sync::atomic::Ordering::Relaxed) {
+        let mut client = TcpStream::connect_timeout(&vip, WAIT).unwrap();
+        client.set_read_timeout(Some(WAIT)).unwrap();
+        client.write_all(b"GET / HTTP/1.1\r\nHost: example\r\nConnection: close\r\n\r\n").unwrap();
+        let mut answer = String::new();
+        let _ = client.read_to_string(&mut answer);
+        sent += 1;
+        failed += usize::from(!answer.starts_with("HTTP/1.1 200"));
+    }
+    (sent, failed)
+}
+
+#[test]
+fn reloads_and_commands_under_load_fail_no_request() {
+    let (a, b) = (origin('a'), origin('b'));
+    let vip = free_address();
+    let (socket, file) = (temporary("sock", vip), temporary(extension(), vip));
+    topology(&file, vip, &socket, &[a, b], "");
+    let args = ["--config-file", file.to_str().unwrap()];
+    let _daemon = Daemon::start(&args, vec![socket.clone(), file.clone()]);
+    let stop = std::sync::atomic::AtomicBool::new(false);
+    let (sent, failed) = std::thread::scope(|scope| {
+        let clients: Vec<_> = (0..4).map(|_| scope.spawn(|| load(vip, &stop))).collect();
+        // The commands stay inside the rate of the socket: a burst of 20, then 10 a second.
+        let mut failures = Vec::new();
+        for round in 0..30 {
+            let state = if round % 2 == 0 { "drain" } else { "ready" };
+            for command in ["reload".to_owned(), format!("set server app/a state {state}")] {
+                let (ok, _, diagnostics) = ctl(&socket, &command);
+                failures.extend((!ok).then_some(diagnostics));
+                std::thread::sleep(Duration::from_millis(if round < 8 { 0 } else { 110 }));
+            }
+        }
+        stop.store(true, std::sync::atomic::Ordering::Relaxed);
+        assert!(failures.is_empty(), "{failures:?}");
+        let counts = clients.into_iter().map(|client| client.join().unwrap());
+        counts.fold((0, 0), |sum, count| (sum.0 + count.0, sum.1 + count.1))
+    });
+    assert!(sent > 100, "only {sent} requests were sent");
+    assert_eq!(failed, 0, "{failed} of {sent} requests failed during reloads");
+}
+
+#[test]
+fn startup_failures_are_explained_with_a_hint() {
+    let stderr = |args: &[&str]| {
+        let output = Command::new(BIN).args(args).output().unwrap();
+        assert!(!output.status.success());
+        String::from_utf8_lossy(&output.stderr).into_owned()
+    };
+    let taken = TcpListener::bind("127.0.0.1:0").unwrap();
+    let vip = taken.local_addr().unwrap().to_string();
+    let in_use = stderr(&["lb", "--bind", &vip, "--server", "127.0.0.1:9"]);
+    assert!(in_use.contains("-- ADDRESS IN USE (EDGE001) "), "{in_use}");
+    assert!(in_use.contains(&vip) && in_use.contains("Hint: Another process"), "{in_use}");
+    let missing = stderr(&["--config-file", "/nonexistent/sibuna/edge.jlv"]);
+    assert!(missing.contains("-- CONFIGURATION FILE NOT FOUND (EDGE001) "), "{missing}");
+    assert!(missing.contains("Hint: Check the path"), "{missing}");
+    let free = free_address().to_string();
+    let args =
+        ["lb", "--bind", &free, "--server", "127.0.0.1:9", "--tls", "/nonexistent/site.pem"];
+    let certificate = stderr(&args);
+    if cfg!(feature = "https") {
+        assert!(certificate.contains("-- CERTIFICATE NOT LOADED (EDGE001) "), "{certificate}");
+    }
+    let file = temporary("json", free_address());
+    fs::write(&file, r#"{"frontends":{}}"#).unwrap();
+    let invalid = stderr(&["check", "-f", file.to_str().unwrap()]);
+    let _ = fs::remove_file(&file);
+    assert!(invalid.contains("-- INVALID CONFIGURATION (EDGE001) "), "{invalid}");
+}
+
+#[test]
+fn shutdown_waits_for_flows_as_long_as_the_file_says() {
+    // An origin that accepts and never answers keeps one flow open.
+    let silent = TcpListener::bind("127.0.0.1:0").unwrap();
+    let vip = free_address();
+    let file = temporary("json", vip);
+    let document = format!(
+        r#"{{"global":{{"shutdown_timeout":"1s"}},
+            "frontends":{{"raw":{{"proto":"tcp","binds":["{vip}"]}}}},
+            "backends":{{"pool":{{"mode":"tcp","servers":["{}"]}}}}}}"#,
+        silent.local_addr().unwrap()
+    );
+    fs::write(&file, document).unwrap();
+    let daemon = Daemon::start(&["--config-file", file.to_str().unwrap()], vec![file.clone()]);
+    let _client = TcpStream::connect_timeout(&vip, WAIT).unwrap();
+    let _held = silent.accept().unwrap();
+    let pid = daemon.child.id().to_string();
+    let asked = std::time::Instant::now();
+    assert!(Command::new("kill").args(["-TERM", &pid]).status().unwrap().success());
+    let line = daemon.log("Sibuna edge stopped");
+    assert!(line.contains("1 forced closes"), "{line}");
+    let waited = asked.elapsed();
+    assert!((900..3000).contains(&waited.as_millis()), "waited {waited:?}");
+}

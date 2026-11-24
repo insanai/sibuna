@@ -166,11 +166,10 @@ pub(super) fn run(args: &[String], secret: Option<&str>) -> ExitCode {
     });
     match served {
         Ok(()) => ExitCode::SUCCESS,
-        Err(error) => fail(
-            "quick start refused",
-            &format!("The edge cannot serve this topology: {error}."),
-            "Check the addresses and files, or print the topology with `--print-config`.",
-        ),
+        Err(error) => {
+            super::failure::report(None, &error);
+            ExitCode::FAILURE
+        }
     }
 }
 
