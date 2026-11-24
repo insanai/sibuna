@@ -20,6 +20,7 @@ use sibuna_lb::FlowBudget;
 #[derive(Clone)]
 pub(super) struct Shared {
     pub handoff: Arc<Handoff>,
+    pub inline: Option<Arc<crate::inline::Inline>>,
     pub capacity: Arc<Semaphore>,
     pub idle: Duration,
 }
@@ -64,7 +65,7 @@ async fn connection(
     let mut builder = h3::server::builder();
     builder.max_field_section_size(MAX_HEAD);
     let mut http = builder.build(h3_quinn::Connection::new(conn.clone())).await?;
-    let lane = Lane::new(shared.handoff, conn.remote_address(), vip);
+    let lane = Lane::new(shared.handoff, shared.inline, conn.remote_address(), vip);
     let mut check = tokio::time::interval(IDLE_CHECK);
     let mut draining = false;
     loop {

@@ -94,9 +94,14 @@ fn setup_with(
     let identity = Identity::load(&tls).unwrap();
     let connections = Arc::new(AtomicUsize::new(0));
     let handler = firewall(vip, connections.clone());
-    let ingress =
-        Ingress::start([(vip, identity)].into(), edge.flow_budget(), handler, Limits::default())
-            .unwrap();
+    let ingress = Ingress::start(
+        [(vip, identity)].into(),
+        edge.flow_budget(),
+        handler,
+        None,
+        Limits::default(),
+    )
+    .unwrap();
     (vip, edge, ingress, connections)
 }
 

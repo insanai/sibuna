@@ -5,6 +5,7 @@ mod bridge;
 mod certs;
 mod egress;
 mod handoff;
+mod inline;
 mod quic;
 mod tunnel;
 
@@ -28,6 +29,7 @@ use tokio_rustls::TlsAcceptor;
 use bridge::Lane;
 pub use egress::Egress;
 use handoff::Handoff;
+pub use inline::{Decide, Forward, Offer, Verdict};
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
 /// Hands one connection to the firewall with its client peer and public destination.
@@ -47,11 +49,13 @@ pub struct Limits {
     pub exchanges: usize,
     /// How long a multiplexed connection may stay open without an exchange.
     pub idle: Duration,
+    /// The longest wait for a server's response head on an in-process exchange.
+    pub response: Duration,
 }
 
 impl Default for Limits {
     fn default() -> Self {
-        Self { exchanges: 1024, idle: Duration::from_secs(60) }
+        Self { exchanges: 1024, idle: Duration::from_secs(60), response: Duration::from_secs(60) }
     }
 }
 
@@ -99,6 +103,7 @@ pub struct Ingress {
     listeners: BTreeMap<SocketAddr, TlsAcceptor>,
     endpoints: BTreeMap<SocketAddr, quinn::Endpoint>,
     handoff: Arc<Handoff>,
+    inline: Option<Arc<inline::Inline>>,
     capacity: Arc<Semaphore>,
     idle: Duration,
     drain: watch::Sender<()>,
@@ -110,8 +115,10 @@ impl Ingress {
         identities: BTreeMap<SocketAddr, Identity>,
         budget: FlowBudget,
         handler: Handler,
+        decide: Option<Arc<dyn Decide>>,
         limits: Limits,
     ) -> io::Result<Self> {
+        let inline = decide.map(|decide| inline::Inline::new(decide, limits.response));
         let threads = std::thread::available_parallelism().map_or(2, |n| n.get().clamp(2, 8));
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .worker_threads(threads)
@@ -135,6 +142,7 @@ impl Ingress {
                         budget.clone(),
                         quic::Shared {
                             handoff: handoff.clone(),
+                            inline: inline.clone(),
                             capacity: capacity.clone(),
                             idle: limits.idle,
                         },
@@ -145,7 +153,8 @@ impl Ingress {
             }
             handoff
         };
-        Ok(Self { runtime, listeners, endpoints, handoff, capacity, idle: limits.idle, drain })
+        let idle = limits.idle;
+        Ok(Self { runtime, listeners, endpoints, handoff, inline, capacity, idle, drain })
     }
 
     /// Sends GOAWAY on live sessions so clients can direct new requests to another node.
@@ -174,6 +183,7 @@ impl Ingress {
         let _ = stream.set_nodelay(true);
         let session = Session {
             handoff: self.handoff.clone(),
+            inline: self.inline.clone(),
             capacity: self.capacity.clone(),
             drain: self.drain.subscribe(),
             idle: self.idle,
@@ -204,6 +214,7 @@ type Tls = tokio_rustls::server::TlsStream<tokio::net::TcpStream>;
 /// What one accepted TLS connection needs to reach the firewall.
 struct Session {
     handoff: Arc<Handoff>,
+    inline: Option<Arc<inline::Inline>>,
     capacity: Arc<Semaphore>,
     drain: watch::Receiver<()>,
     idle: Duration,
@@ -237,7 +248,7 @@ impl Session {
     }
 
     async fn http2(mut self, tls: Tls) {
-        let lane = Lane::new(self.handoff, self.peer, self.vip);
+        let lane = Lane::new(self.handoff, self.inline, self.peer, self.vip);
         let (capacity, alt_svc) = (self.capacity, self.alt_svc);
         let exchanges = lane.clone();
         let service = service_fn(move |request| {
