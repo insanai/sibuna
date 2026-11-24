@@ -35,6 +35,12 @@ def next : Phase → Phase
   | .finalize => .pollOrder | .pollOrder => .download | .download => .done
   | .done => .done | .failed => .failed
 
+/-- The phase after an authorization that is already valid. Elsewhere a skip is a good
+answer. -/
+def skipped : Phase → Phase
+  | .authorization => .finalize
+  | p => next p
+
 /-- An order that sends nothing more. -/
 def terminal (p : Phase) : Bool := p == .done || p == .failed
 
@@ -44,6 +50,7 @@ def repeats (p : Phase) : Bool := !terminal p
 /-- What the authority answered, as far as the machine cares. -/
 inductive Reply where
   | good      -- the phase is complete
+  | skip      -- the authorization is already valid: no challenge is needed
   | again     -- pending, processing or badNonce: repeat
   | bad       -- an error, an invalid object or a broken bound
   deriving DecidableEq, Repr
@@ -62,6 +69,7 @@ def step (o : Order) (r : Reply) : Order :=
     | b + 1 =>
       match r with
       | .good => { phase := next o.phase, budget := b }
+      | .skip => { phase := skipped o.phase, budget := b }
       | .again => { phase := o.phase, budget := b }
       | .bad => { phase := .failed, budget := b }
 
@@ -72,6 +80,9 @@ def run (o : Order) : List Reply → Order
 
 theorem rank_next (p : Phase) : rank p ≤ rank (next p) := by
   cases p <;> simp [rank, next]
+
+theorem rank_skipped (p : Phase) : rank p ≤ rank (skipped p) := by
+  cases p <;> simp [rank, skipped, next]
 
 theorem rank_le_failed (p : Phase) : rank p ≤ rank .failed := by
   cases p <;> simp [rank]
@@ -85,6 +96,7 @@ theorem step_forward (o : Order) (r : Reply) : rank o.phase ≤ rank (step o r).
     · exact rank_le_failed _
     · cases r
       · exact rank_next _
+      · exact rank_skipped _
       · exact Nat.le_refl _
       · exact rank_le_failed _
 
@@ -135,8 +147,9 @@ theorem run_ends (replies : List Reply) :
         omega
 
 /-- `done` is entered from `download` by a good answer, and from nowhere else. -/
+-- (A skip in `download` is a good answer.)
 theorem done_from_download (o : Order) (r : Reply) (h : (step o r).phase = .done) :
-    o.phase = .done ∨ (o.phase = .download ∧ r = .good) := by
+    o.phase = .done ∨ (o.phase = .download ∧ (r = .good ∨ r = .skip)) := by
   unfold step at h
   split at h
   · left; exact h
@@ -145,8 +158,11 @@ theorem done_from_download (o : Order) (r : Reply) (h : (step o r).phase = .done
     · simp at h
     · cases r
       · right
-        refine ⟨?_, rfl⟩
+        refine ⟨?_, Or.inl rfl⟩
         cases hp : o.phase <;> simp [hp, next, terminal] at h live ⊢
+      · right
+        refine ⟨?_, Or.inr rfl⟩
+        cases hp : o.phase <;> simp [hp, next, skipped, terminal] at h live ⊢
       · left; exact h
       · simp at h
 

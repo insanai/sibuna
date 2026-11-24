@@ -193,7 +193,7 @@ The state machine is the algorithm of this record. The caller gives it the respo
    * - ``Failed(error)``
      - The order ended without a certificate.
 
-A phase moves forward only. A phase that polls stays where it is while the authority answers ``pending`` or ``processing``. Every request takes one unit from a budget of 48 requests, and an order without budget fails. A response with the error ``badNonce`` is repeated with the fresh nonce and takes budget like any request. The account is registered with ``newAccount`` once in the life of the process. The authority answers with the existing account when the key is known to it.
+A phase moves forward only. A phase that polls stays where it is while the authority answers ``pending`` or ``processing``. An authorization that the authority already holds as valid skips from ``Authorization`` to ``Finalize``. We order one name, so an order has one authorization. Any other number is an unexpected answer. A wait that the authority asks for with ``Retry-After`` is clamped to 1 to 30 seconds. Without the header the waits are 1, 2, 4 and then 8 seconds. Every request takes one unit from a budget of 48 requests, and an order without budget fails. A response with the error ``badNonce`` is repeated with the fresh nonce and takes budget like any request. The account is registered with ``newAccount`` once in the life of the process. The authority answers with the existing account when the key is known to it.
 
 The caller owns the clock, the sockets and the files. The driver in ``crates/ingress`` sends the requests with hyper over rustls, with a limit of 10 seconds to connect, 30 seconds for one exchange, 128 KiB for one response, and five minutes for one order.
 
@@ -208,6 +208,8 @@ The key authorization of a token is the token, a dot, and the thumbprint of the 
 
 Either challenge is enough. The operator opens port 80, port 443, or both.
 
+The challenge is answered on every HTTP frontend, with and without TLS, and before the redirect. An authority that follows a redirect from port 80 to port 443 still finds the answer. The driver removes the answer of a challenge from its table when the order ends, however it ends.
+
 Storage and the lock
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -218,6 +220,7 @@ Storage and the lock
        account.key                               mode 0600, PKCS#8 PEM
        certs/example.org/cert.pem                the chain, leaf first
        certs/example.org/key.pem                 mode 0600
+       certs/example.org/retry                   the failure count and the next attempt
        locks/example.org.lock
 
 A file is written under a temporary name in its directory and renamed, so a reader never sees half a file. The key is written before the certificate. A reader that finds a certificate without a matching key ignores both.
@@ -232,6 +235,8 @@ Renewal and retry
 A certificate that is valid from :math:`b` to :math:`e` is renewed at :math:`b + \lfloor 2(e-b)/3 \rfloor`, that is when one third of its life remains. This is Caddy's rule. A certificate of 90 days is renewed after 60. The driver sleeps until the earliest due time, at most one hour.
 
 After :math:`n` consecutive failures for a name the next attempt is :math:`\min(120 \cdot 2^{n-1}, 86400)` seconds later: two minutes, four, eight, and from the eleventh failure on one day. When the authority answers 429 with ``Retry-After``, the delay is the larger of the two, still at most one day. The first hour holds at most five attempts for a name, which is the limit of Let's Encrypt for failed validations. Orders run one at a time, with at least one second between two orders.
+
+The failure count and the time of the next attempt are written to the file ``retry`` of the name. A daemon that restarts reads it and waits. Without this file a daemon in a restart loop would order at every start and exhaust the limits of the authority. A success removes the file.
 
 While a renewal fails, the old certificate keeps serving, also after it expired. An expired certificate is the authority's and the client's matter to refuse. A listener without it would refuse everybody.
 
@@ -455,11 +460,13 @@ Known gaps
 #. One authority, no external account binding.
 #. No ACME Renewal Information (RFC 9773), no revocation, no OCSP stapling for automatic certificates.
 #. Keys are ECDSA P-256 only.
+#. A changed ``email`` does not update an existing account.
+#. The lock compares the modification time of a file with the clock of the node. Nodes whose clocks differ by more than ten minutes may order twice.
 
 Formal model
 ~~~~~~~~~~~~
 
-``docs/sid/assets/automatic-https.lean`` models four things with Lean 4.19.0. The order machine is a phase and a budget. We prove that a step never moves a phase backwards, that every step of a live order takes budget or ends the order, that an order of budget :math:`n` is over after :math:`n + 1` steps whatever the authority answers, and that ``Done`` is entered only from ``Download``. For the schedule we prove that the renewal time lies in :math:`[b, e)` for :math:`b < e`. For the retry delay we prove that it is at least the first delay, at most one day, and monotone in the number of failures. For the table we prove that a failed order leaves the served certificate unchanged, that a served name never loses its certificate, and that the expiry of a served certificate never decreases. The JSON, the signatures, the sockets and the files are outside the model. Tests cover them.
+``docs/sid/assets/automatic-https.lean`` models four things with Lean 4.19.0. The order machine is a phase and a budget. An answer is good, a repetition, a skip over the challenge, or bad. We prove that a step never moves a phase backwards, that every step of a live order takes budget or ends the order, that an order of budget :math:`n` is over after :math:`n + 1` steps whatever the authority answers, and that ``Done`` is entered only from ``Download``. For the schedule we prove that the renewal time lies in :math:`[b, e)` for :math:`b < e`. For the retry delay we prove that it is at least the first delay, at most one day, and monotone in the number of failures. For the table we prove that a failed order leaves the served certificate unchanged, that a served name never loses its certificate, and that the expiry of a served certificate never decreases. The JSON, the signatures, the sockets and the files are outside the model. Tests cover them.
 
 Open questions
 --------------
@@ -472,6 +479,7 @@ Review history
 --------------
 
 - 2026-11-24. Initial draft: ``tls.auto`` and ``global.acme``, a client crate without I/O, both challenges, storage with a lock, renewal at two thirds, exponential retry, a table behind the resolver.
+- 2026-11-24. Author's review of the design. It found six faults and changed the record for each. The retry delay lived in memory only, so a daemon in a restart loop would have ordered at every start and exhausted the limits of the authority; the failure count and the next attempt are now stored beside the certificate. The draft answered the challenge on plain frontends only; an authority that follows a redirect to port 443 would have missed it, so every HTTP frontend answers, before the redirect. The draft did not say when a challenge answer leaves the table; it now leaves when the order ends. The machine had no path for an authorization that is already valid, which Pebble and Let's Encrypt both return; it now skips to ``Finalize``, and the Lean model has that step. A ``Retry-After`` of the authority was taken as it came, so the authority could park an order; it is now clamped to 30 seconds. The number of authorizations of an order was unbounded; it is now exactly one. The review also recorded two gaps: a changed e-mail address, and the lock's dependence on the clocks of the nodes.
 
 References
 ----------
