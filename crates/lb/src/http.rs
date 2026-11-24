@@ -422,6 +422,16 @@ impl HttpRoutes {
         state.loads.prune();
     }
 
+    /// Runs `visit` on the HTTP pools and their loads, under the lock of the table.
+    pub(crate) fn with_pools<R>(
+        &self,
+        visit: impl FnOnce(&mut BTreeMap<String, Pool>, &mut Loads) -> R,
+    ) -> R {
+        let mut table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        let table = &mut *table;
+        visit(&mut table.pools, &mut table.loads)
+    }
+
     pub(crate) fn set_regime(&self, regime: Regime) {
         self.0.lock().unwrap_or_else(PoisonError::into_inner).regime = Some(regime);
     }

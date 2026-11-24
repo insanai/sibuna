@@ -21,6 +21,8 @@ pub use mesh::{Mesh, MeshConfig, Regime};
 mod pool;
 mod proxy;
 mod rules;
+mod runtime;
+pub use runtime::{RuntimeError, ServerState, ServerStatus};
 mod tcp;
 
 use std::collections::{BTreeMap, HashMap, VecDeque};
@@ -221,6 +223,8 @@ impl Edge {
 
     /// Replaces routes for new admissions at a batch boundary. A changed bind set
     /// requires a restart. A rejected revision leaves the serving revision intact.
+    /// Run-time weights, additions and removals give way to the file. A drain stays
+    /// while the file still has a server of that pool, name and address (SID 0018).
     pub fn reload(&mut self, mut config: Config) -> io::Result<()> {
         if self.mesh != config.mesh {
             return Err(invalid(
@@ -231,6 +235,7 @@ impl Edge {
             return Err(invalid("changing frontend binds requires a drained restart"));
         }
         self.checks.configure(&mut config)?;
+        let drained = self.drained_servers();
         self.budget.configure(&config);
         self.udp_limit = config.udp_limit;
         self.http.publish(&mut config);
@@ -240,6 +245,7 @@ impl Edge {
             .map(|(name, pool)| (name, Pool::new(pool, &mut self.loads)))
             .collect();
         self.loads.prune();
+        self.keep_drained(drained);
         for (listener, route) in self.listeners.iter_mut().zip(config.listeners.into_values()) {
             listener.route = route;
         }
