@@ -134,6 +134,32 @@ impl Checks {
                 server.healthy = Some(Arc::clone(status));
             }
         }
+        self.publish(next)
+    }
+
+    /// Starts the probe of a server added at run time and returns its status, which
+    /// begins in service. An address that is already probed keeps its status.
+    pub fn watch(&mut self, addr: SocketAddr, spec: &Spec) -> io::Result<Arc<AtomicBool>> {
+        let key = (addr, spec.clone());
+        let status = self.inherit(&key);
+        let mut next = self.current.clone();
+        next.insert(key, Arc::clone(&status));
+        self.publish(next)?;
+        Ok(status)
+    }
+
+    /// Stops the probes that `used` no longer names, after a server was removed.
+    pub fn retain(&mut self, used: impl Fn(SocketAddr, &Spec) -> bool) {
+        let mut next = self.current.clone();
+        next.retain(|(addr, spec), _| used(*addr, spec));
+        if next.len() != self.current.len() {
+            // The lanes exist, because a probe was running. Publishing cannot fail then.
+            let _ = self.publish(next);
+        }
+    }
+
+    /// Makes `next` the probed set: starts the lanes on first use and deals the jobs.
+    fn publish(&mut self, next: BTreeMap<(SocketAddr, Spec), Arc<AtomicBool>>) -> io::Result<()> {
         if !next.is_empty() && self.lanes.is_empty() {
             let mut lanes = Self::default();
             for _ in 0..4 {

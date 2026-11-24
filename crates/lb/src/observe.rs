@@ -135,7 +135,11 @@ fn networks(items: &[Value<'_>], path: &str) -> io::Result<Vec<Prefix>> {
 pub(crate) fn server_infos(
     servers: &[crate::config::Server],
 ) -> Vec<(SocketAddr, crate::ServerInfo)> {
-    servers.iter().filter_map(|server| Some((server.addr, server.info.clone()?))).collect()
+    // A reservation names the adapter of a server that has one.
+    servers
+        .iter()
+        .filter_map(|server| Some((server.via.unwrap_or(server.addr), server.info.clone()?)))
+        .collect()
 }
 
 /// What a request path knows about the frontend it serves.

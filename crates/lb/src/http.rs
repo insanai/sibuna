@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 use std::io;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex, PoisonError};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use sibuna_json::ObjectReader;
 
@@ -143,8 +143,18 @@ impl HttpOptions {
     }
 }
 
+/// The lowest TLS version a listener offers.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum TlsVersion {
+    /// TLS 1.2 and TLS 1.3.
+    #[default]
+    V12,
+    /// TLS 1.3 only.
+    V13,
+}
+
 /// TLS and optional QUIC termination on one HTTP listener address.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct TlsOptions {
     /// Combined PEM files, or directories of them, in the order given. Each file holds a
     /// certificate chain, leaf first, and its private key. The first certificate is the
@@ -158,6 +168,14 @@ pub struct TlsOptions {
     pub strict_sni: bool,
     /// Also bind UDP on this address for HTTP/3.
     pub http3: bool,
+    /// The lowest TLS version offered. HTTP/3 always uses TLS 1.3.
+    pub min_version: TlsVersion,
+    /// A PEM file of CA certificates. When set, a client must present a certificate that
+    /// one of them signed.
+    pub client_ca: Option<String>,
+    /// With `client_ca`: also accept a client that presents no certificate. A certificate
+    /// that is presented must still verify.
+    pub client_optional: bool,
 }
 
 impl TlsOptions {
@@ -192,8 +210,38 @@ impl TlsOptions {
         }
         let strict_sni = field(r.take_bool("strict_sni"))?.unwrap_or(false);
         let http3 = field(r.take_bool("http3"))?.unwrap_or(false);
+        let min_version = match field(r.take_str("min_version"))? {
+            None | Some("1.2") => TlsVersion::V12,
+            Some("1.3") => TlsVersion::V13,
+            Some(_) => {
+                let path = r.field_path("min_version");
+                return Err(invalid(format!("{path}: expected \"1.2\" or \"1.3\"")));
+            }
+        };
+        let client_ca = field(r.take_str("client_ca"))?.map(str::to_owned);
+        let client_optional = match (field(r.take_str("client_auth"))?, &client_ca) {
+            (None | Some("required"), _) => false,
+            (Some("optional"), Some(_)) => true,
+            (Some("optional"), None) => {
+                let path = r.field_path("client_auth");
+                return Err(invalid(format!("{path}: \"optional\" needs client_ca")));
+            }
+            (Some(_), _) => {
+                let path = r.field_path("client_auth");
+                return Err(invalid(format!("{path}: expected \"required\" or \"optional\"")));
+            }
+        };
         field(r.finish())?;
-        Ok(Self { crt, cert_file, key_file, strict_sni, http3 })
+        Ok(Self {
+            crt,
+            cert_file,
+            key_file,
+            strict_sni,
+            http3,
+            min_version,
+            client_ca,
+            client_optional,
+        })
     }
 }
 
@@ -296,8 +344,16 @@ pub(crate) struct Rule {
 impl Rule {
     fn matches(&self, host: &[u8], path: &[u8]) -> bool {
         self.host.as_ref().is_none_or(|h| host.eq_ignore_ascii_case(h.as_bytes()))
-            && self.path.as_ref().is_none_or(|p| path.starts_with(p.as_bytes()))
+            && self.path.as_ref().is_none_or(|p| has_prefix(path, p.as_bytes()))
     }
+}
+
+/// Whether `path` lies under `prefix`. A prefix ends at a segment boundary: `/public`
+/// covers `/public` and `/public/x`, and not `/public-admin`. Otherwise a route that
+/// turns the firewall off for one tree would turn it off for its neighbours.
+fn has_prefix(path: &[u8], prefix: &[u8]) -> bool {
+    let Some(rest) = path.strip_prefix(prefix) else { return false };
+    prefix.ends_with(b"/") || matches!(rest.first(), None | Some(b'/' | b'?'))
 }
 
 /// The host of an authority without its port and trailing dot.
@@ -378,19 +434,40 @@ struct Table {
     regime: Option<Regime>,
     /// Some frontend or route turns the firewall off, so requests need the lookup.
     bypasses: bool,
+    /// The routes of the revision before this one, for requests decided under it.
+    previous: Option<Retired>,
+}
+
+/// How long the routes of a replaced revision still serve the requests that the policy
+/// of that revision admitted. A decision takes far less.
+const RETIRE_AFTER: Duration = Duration::from_secs(10);
+
+/// The routes and pools of the revision that a reload replaced. A request is decided
+/// under one policy generation and routed a moment later. When a reload falls between
+/// the two, the request is routed by the revision it was decided under, not refused.
+struct Retired {
+    revision: u64,
+    fronts: BTreeMap<SocketAddr, Frontend>,
+    pools: BTreeMap<String, Pool>,
+    until: Instant,
+}
+
+/// The frontend that serves `vip`: its own listener, or the wildcard one of its port.
+fn front_of(fronts: &BTreeMap<SocketAddr, Frontend>, vip: SocketAddr) -> Option<&Frontend> {
+    let wildcard = SocketAddr::new(
+        if vip.is_ipv4() {
+            std::net::Ipv4Addr::UNSPECIFIED.into()
+        } else {
+            std::net::Ipv6Addr::UNSPECIFIED.into()
+        },
+        vip.port(),
+    );
+    fronts.get(&vip).or_else(|| fronts.get(&wildcard))
 }
 
 impl Table {
     fn front(&self, vip: SocketAddr) -> Option<&Frontend> {
-        let wildcard = SocketAddr::new(
-            if vip.is_ipv4() {
-                std::net::Ipv4Addr::UNSPECIFIED.into()
-            } else {
-                std::net::Ipv6Addr::UNSPECIFIED.into()
-            },
-            vip.port(),
-        );
-        self.fronts.get(&vip).or_else(|| self.fronts.get(&wildcard))
+        front_of(&self.fronts, vip)
     }
 }
 
@@ -401,6 +478,13 @@ pub struct HttpRoutes(Arc<Mutex<Table>>);
 impl HttpRoutes {
     pub(crate) fn publish(&self, config: &mut Config) {
         let mut state = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        let retired = Retired {
+            revision: state.revision,
+            fronts: std::mem::take(&mut state.fronts),
+            pools: std::mem::take(&mut state.pools),
+            until: Instant::now() + RETIRE_AFTER,
+        };
+        state.previous = Some(retired);
         state.revision = state.revision.wrapping_add(1);
         state.fronts = config
             .listeners
@@ -430,6 +514,16 @@ impl HttpRoutes {
             .map(|(name, p)| (name, Pool::new(p, &mut state.loads)))
             .collect();
         state.loads.prune();
+    }
+
+    /// Runs `visit` on the HTTP pools and their loads, under the lock of the table.
+    pub(crate) fn with_pools<R>(
+        &self,
+        visit: impl FnOnce(&mut BTreeMap<String, Pool>, &mut Loads) -> R,
+    ) -> R {
+        let mut table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        let table = &mut *table;
+        visit(&mut table.pools, &mut table.loads)
     }
 
     pub(crate) fn set_regime(&self, regime: Regime) {
@@ -476,10 +570,21 @@ impl HttpRoutes {
         policy_revision: u64,
     ) -> Option<HttpTarget> {
         let mut table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
-        if policy_revision != table.revision {
-            return None;
-        }
-        let front = table.front(vip)?;
+        let table = &mut *table;
+        let now = Instant::now();
+        let regime = table.regime.unwrap_or(Regime::Standalone);
+        // A request decided just before a reload is routed by the revision it was
+        // decided under. A revision older than that is refused.
+        let (fronts, pools) = if policy_revision == table.revision {
+            (&table.fronts, &mut table.pools)
+        } else {
+            let retired = table.previous.as_mut()?;
+            if retired.revision != policy_revision || now >= retired.until {
+                return None;
+            }
+            (&retired.fronts, &mut retired.pools)
+        };
+        let front = front_of(fronts, vip)?;
         let host = bare_host(host);
         let pool = front
             .rules
@@ -487,13 +592,19 @@ impl HttpRoutes {
             .find(|r| r.matches(host, path))
             .map_or(&front.pool, |r| &r.pool)
             .clone();
-        let regime = table.regime.unwrap_or(Regime::Standalone);
-        let ticket =
-            table.pools.get_mut(pool.as_ref())?.reserve(Instant::now(), peer, vip, regime)?;
+        let ticket = pools.get_mut(pool.as_ref())?.reserve(now, peer, vip, regime)?;
         let info = table.servers.get(pool.as_ref()).and_then(|servers| {
             servers.iter().find(|(addr, _)| *addr == ticket.addr).map(|(_, info)| info.clone())
         });
         Some(HttpTarget(ticket, info))
+    }
+
+    /// Notes the counters of a server that joined `pool` at run time (SID 0020).
+    pub(crate) fn enlist(&self, pool: &str, addr: SocketAddr, info: crate::ServerInfo) {
+        let mut table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        let servers = table.servers.entry(pool.to_owned()).or_default();
+        servers.retain(|(known, _)| *known != addr);
+        servers.push((addr, info));
     }
 
     /// The name, the counters and the trusted proxies of the frontend behind `vip`
@@ -523,5 +634,55 @@ impl HttpTarget {
     /// Records the duration of a completed exchange.
     pub fn completed(&self, start: Instant) {
         self.0.observe(start, Instant::now());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{TlsOptions, TlsVersion, has_prefix};
+    use crate::config::Config;
+
+    fn tls_of(members: &str) -> std::io::Result<TlsOptions> {
+        let source = format!(
+            r#"{{"frontends":{{"web":{{"proto":"http","binds":["127.0.0.1:1"],
+            "tls":{{"crt":"site.pem"{members}}},"default_backend":"app"}}}},
+            "backends":{{"app":{{"mode":"http",
+            "servers":[{{"name":"a","addr":"127.0.0.1:2"}}]}}}}}}"#
+        );
+        let config = Config::parse(source.as_bytes())?;
+        Ok(config.tls().values().next().map(|tls| (**tls).clone()).unwrap_or_default())
+    }
+
+    #[test]
+    fn a_listener_reads_its_tls_policy() {
+        let plain = tls_of("").unwrap();
+        assert_eq!((plain.min_version, plain.client_ca, plain.client_optional), {
+            (TlsVersion::V12, None, false)
+        });
+        let strict = tls_of(r#","min_version":"1.3","client_ca":"ca.pem""#).unwrap();
+        assert_eq!(strict.min_version, TlsVersion::V13);
+        assert_eq!(strict.client_ca.as_deref(), Some("ca.pem"));
+        assert!(!strict.client_optional);
+        let open = tls_of(r#","client_ca":"ca.pem","client_auth":"optional""#).unwrap();
+        assert!(open.client_optional);
+        for bad in [
+            r#","min_version":"1.1""#,
+            r#","client_auth":"optional""#,
+            r#","client_ca":"ca.pem","client_auth":"sometimes""#,
+        ] {
+            assert!(tls_of(bad).is_err(), "{bad}");
+        }
+    }
+
+    #[test]
+    fn a_path_prefix_ends_at_a_segment_boundary() {
+        assert!(has_prefix(b"/public", b"/public"));
+        assert!(has_prefix(b"/public/a.css", b"/public"));
+        assert!(has_prefix(b"/public?x=1", b"/public"));
+        assert!(!has_prefix(b"/public-admin", b"/public"));
+        assert!(!has_prefix(b"/publicity", b"/public"));
+        assert!(has_prefix(b"/api/v1", b"/api/"));
+        assert!(!has_prefix(b"/api", b"/api/"));
+        assert!(has_prefix(b"/anything", b"/"));
     }
 }

@@ -214,6 +214,16 @@ impl Stats {
         self.flows_limit.store(config.limit as u64, Ordering::Relaxed);
     }
 
+    /// The counters of a server that joins `pool` at run time (SID 0018). A name that
+    /// was counted before continues.
+    pub(crate) fn enlist(&self, pool: &str, server: &crate::config::Server) -> ServerInfo {
+        let mut servers = self.servers.lock().unwrap_or_else(PoisonError::into_inner);
+        let key = (Arc::<str>::from(pool), Arc::<str>::from(server.name.as_str()));
+        let stats = servers.entry(key.clone()).or_default().clone();
+        stats.set_health(server.healthy.clone());
+        ServerInfo { backend: key.0, server: key.1, stats }
+    }
+
     /// Publishes the size of the flow table and the drop counter of the edge.
     pub fn set_flows(&self, active: usize, drops: u64) {
         self.flows_active.store(active as u64, Ordering::Relaxed);

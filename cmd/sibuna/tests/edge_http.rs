@@ -35,6 +35,24 @@ fn start(origin: SocketAddr, event_loop: bool, options: &str) -> Daemon {
 
 /// As [`start`], with extra members `front` for the frontend.
 fn start_with(origin: SocketAddr, event_loop: bool, options: &str, front: &str) -> Daemon {
+    // A port that was free a moment ago may be taken by a test that runs beside this
+    // one. The listener is then chosen again.
+    let mut failure = String::new();
+    for _ in 0..5 {
+        match try_start_with(origin, event_loop, options, front) {
+            Ok(daemon) => return daemon,
+            Err(line) => failure = line,
+        }
+    }
+    panic!("the edge did not start: {failure}");
+}
+
+fn try_start_with(
+    origin: SocketAddr,
+    event_loop: bool,
+    options: &str,
+    front: &str,
+) -> Result<Daemon, String> {
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
     let path = std::env::temp_dir().join(format!(
         "sibuna-http-{}-{}.json",
@@ -51,8 +69,13 @@ fn start_with(origin: SocketAddr, event_loop: bool, options: &str, front: &str) 
         Command::new(BIN).arg("--config-file").arg(&path).stderr(Stdio::piped()).spawn().unwrap();
     let mut line = String::new();
     BufReader::new(child.stderr.take().unwrap()).read_line(&mut line).unwrap();
-    assert!(line.contains("ready"), "{line}");
-    Daemon { child, path, vip }
+    if !line.contains("ready") {
+        let _ = child.kill();
+        let _ = child.wait();
+        let _ = fs::remove_file(&path);
+        return Err(line);
+    }
+    Ok(Daemon { child, path, vip })
 }
 
 /// One parsed message head and its body.
@@ -484,5 +507,19 @@ fn a_slow_body_and_a_slow_reader_lose_the_connection_while_others_are_served() {
         }
         assert!(got < (1 << 20) + 200, "{event_loop}");
         assert!(started.elapsed() < Duration::from_secs(10), "{event_loop}");
+    });
+}
+
+#[test]
+fn a_load_balancer_without_a_firewall_has_no_honeypot() {
+    both(|event_loop| {
+        let daemon = start(origin(), event_loop, "");
+        let mut client = connect(&daemon);
+        send(&mut client, b"GET /__sibuna/honeypot HTTP/1.1\r\nHost: a\r\n\r\n");
+        assert_eq!(read_message(&mut client, false).unwrap().status(), 404, "{event_loop}");
+        // The client is not banned: its next request reaches the server.
+        let mut client = connect(&daemon);
+        send(&mut client, b"GET /after HTTP/1.1\r\nHost: a\r\n\r\n");
+        assert_eq!(read_message(&mut client, false).unwrap().status(), 200, "{event_loop}");
     });
 }

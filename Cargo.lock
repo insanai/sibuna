@@ -1340,6 +1340,12 @@ checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
 name = "sibuna"
 version = "1.0.0-beta.3"
 dependencies = [
+ "bytes",
+ "futures-util",
+ "http-body-util",
+ "hyper",
+ "hyper-util",
+ "rustls",
  "sibuna-challenge",
  "sibuna-cidr",
  "sibuna-console",
@@ -1360,6 +1366,8 @@ dependencies = [
  "sibuna-reactor",
  "sibuna-storage",
  "sibuna-store",
+ "tokio",
+ "tokio-rustls",
 ]
 
 [[package]]

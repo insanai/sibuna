@@ -34,6 +34,12 @@ pub(crate) fn report(message: &str) {
 /// Runs the daemon with `args` (without the program name) and `secret` (the value of
 /// `SIBUNA_SECRET`, if set) until SIGINT or SIGTERM. Returns the process exit status.
 pub fn run(args: &[String], secret: Option<&str>) -> ExitCode {
+    // `lb` and `ctl` have options and help of their own (SID 0018).
+    if args.first().is_some_and(|word| word == "lb" || word == "ctl")
+        && let Some(code) = crate::edge::command(args, secret)
+    {
+        return code;
+    }
     for arg in args {
         match arg.as_str() {
             "--help" => {

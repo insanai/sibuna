@@ -13,7 +13,7 @@ use sibuna_policy::{Engine, loader::Diagnostic};
 use crate::access::{AccessLog, Observe};
 use crate::connection::Ingress;
 use crate::recipe::Recipe;
-use crate::server::{Hooks, Options, Server, admit_within, start_reaper};
+use crate::server::{Hooks, Options, Server, admit_handoff, admit_within, start_reaper};
 use crate::slot::EngineSlot;
 
 use super::workers::{Incoming, Timeouts, Workers};
@@ -137,7 +137,18 @@ impl Dispatcher {
         if self.binds.contains_key(&bind) {
             let ingress = self.ingress.read().unwrap_or_else(std::sync::PoisonError::into_inner);
             if let Some(ingress) = ingress.as_ref() {
-                ingress.accept_from(bind, stream, permit, client);
+                // The client bound counts the TLS connection once, whatever it carries,
+                // by the address the client was resolved to. A trusted proxy is exempt.
+                let (Ok(peer), Ok(vip)) = (stream.peer_addr(), stream.local_addr()) else {
+                    return;
+                };
+                let from = ingress_of(&self.server, client.unwrap_or(peer), vip, true);
+                let bound = from.connection_bound(&self.server);
+                let Some(place) = crate::server::admit_secure(&self.server, from.peer.ip(), bound)
+                else {
+                    return;
+                };
+                ingress.accept_from(bind, stream, permit, Box::new(place), client);
                 return;
             }
         }
@@ -172,11 +183,18 @@ pub(super) struct Observed {
 }
 
 impl Observed {
-    /// Reopens the access log file, for log rotation.
-    pub fn reopen_log(&self) {
-        if let Some(log) = &self.observe.log {
+    /// Reopens the access log file, for log rotation, when `asked` is set, and clears it.
+    pub fn reopen_log_when(&self, asked: &std::sync::atomic::AtomicBool) {
+        if asked.swap(false, Ordering::AcqRel)
+            && let Some(log) = &self.observe.log
+        {
             log.reopen();
         }
+    }
+
+    /// The counters and the log, for the admin socket.
+    pub fn shared(&self) -> Arc<Observe> {
+        self.observe.clone()
     }
 
     /// Turns the readiness answer to 503.
@@ -228,6 +246,7 @@ impl Http {
         server.unlimited = prepared.options.rate_limit.is_none();
         let observe = start_observe(&prepared.observe, edge)?;
         server.observe = Some(observe.clone());
+        server.balances_only = !prepared.options.firewall;
         let server = Arc::new(server);
         let workers = start_workers(&server, &prepared.options)?;
         #[cfg(feature = "https")]
@@ -263,12 +282,11 @@ impl Http {
         let reaper = start_reaper(&server)?;
         #[cfg(not(feature = "https"))]
         let ingress = None;
-        let dispatcher = Arc::new(Dispatcher {
-            server: server.clone(),
-            workers: workers.clone(),
-            binds: prepared.binds.clone(),
-            ingress: RwLock::new(ingress),
-        });
+        let binds = prepared.binds.clone();
+        let (server_ref, pool) = (server.clone(), workers.clone());
+        let ingress = RwLock::new(ingress);
+        let dispatcher =
+            Arc::new(Dispatcher { server: server_ref, workers: pool, binds, ingress });
         let stage = super::proxy_stage::Stage::start(dispatcher.clone(), observe.clone())?;
         Ok(Self {
             server,
@@ -280,6 +298,14 @@ impl Http {
             stage: Some(stage),
             observe,
         })
+    }
+
+    /// Names the multiplexed servers of the adapters to the protocol runtime.
+    #[cfg(feature = "https")]
+    pub fn attach(&self, directory: sibuna_ingress::Directory) {
+        if let Some(ingress) = self.dispatcher.ingress.read().unwrap_or_else(poisoned).as_ref() {
+            ingress.attach(directory);
+        }
     }
 
     pub fn drain(&self) {
@@ -368,9 +394,14 @@ fn launch(server: &Arc<Server>, stream: TcpStream, ingress: Ingress, permit: Opt
         if server_ref.is_stopping() {
             return;
         }
-        let bound = ingress.connection_bound(&server_ref);
-        let peer = ingress.peer.ip();
-        let Some(admission) = admit_within(&server_ref, &stream, peer, bound) else { return };
+        let admission = if ingress.secure {
+            admit_handoff(&server_ref)
+        } else {
+            let bound = ingress.connection_bound(&server_ref);
+            let peer = ingress.peer.ip();
+            let Some(admission) = admit_within(&server_ref, &stream, peer, bound) else { return };
+            admission
+        };
         sibuna_net::connect::set_no_delay(&stream);
         crate::connection::serve_from(&server_ref, &stream, admission, Some(ingress));
     });

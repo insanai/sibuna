@@ -53,6 +53,13 @@ fn origin(connections: Arc<AtomicUsize>) -> SocketAddr {
             std::thread::spawn(move || {
                 let mut reader = BufReader::new(stream.try_clone().unwrap());
                 while let Some(answer) = read_request(&mut reader) {
+                    if answer.starts_with("POST /grpc") {
+                        let reply = "HTTP/1.1 200 OK\r\nContent-Type: application/grpc\r\n\
+                            Trailer: grpc-status\r\nTransfer-Encoding: chunked\r\n\r\n\
+                            5\r\nhello\r\n0\r\ngrpc-status: 0\r\n\r\n";
+                        stream.write_all(reply.as_bytes()).unwrap();
+                        continue;
+                    }
                     if answer.starts_with("GET /silent") {
                         std::thread::sleep(Duration::from_secs(5));
                         return;
@@ -200,8 +207,8 @@ fn setup() -> Bench {
         crt: Vec::new(),
         cert_file: Some(fixture("localhost.pem")),
         key_file: Some(fixture("localhost.key")),
-        strict_sni: false,
         http3: true,
+        ..TlsOptions::default()
     };
     let identity = Identity::load(&tls).unwrap();
     let handoffs = Arc::new(AtomicUsize::new(0));
@@ -258,6 +265,17 @@ async fn http2(vip: SocketAddr) {
     assert_eq!(response.status(), 403);
     assert!(!response.headers().contains_key("connection"));
     assert_eq!(response.into_body().collect().await.unwrap().to_bytes(), "denied");
+    // Trailers of the response follow its body, as gRPC needs.
+    let req = Request::post(url("/grpc"))
+        .header("content-type", "application/grpc")
+        .header("te", "trailers")
+        .body(Full::new(Bytes::from_static(b"ping")))
+        .unwrap();
+    let response = tx.send_request(req).await.unwrap();
+    assert_eq!(response.status(), 200);
+    let collected = response.into_body().collect().await.unwrap();
+    assert_eq!(collected.trailers().map(|t| t["grpc-status"].clone()).unwrap(), "0");
+    assert_eq!(collected.to_bytes(), "hello");
     // A server that answers nothing is a 504, and one that stops inside a body ends the
     // stream with an error. Neither holds the stream longer than the limit.
     let req = Request::get(url("/silent")).body(Full::new(Bytes::new())).unwrap();
@@ -309,7 +327,7 @@ fn a_multiplexed_request_is_decided_in_process_and_sent_on_a_pooled_connection()
         }
     }
     runner.join().unwrap();
-    assert_eq!(gate.decisions.load(Ordering::SeqCst), 8);
+    assert_eq!(gate.decisions.load(Ordering::SeqCst), 9);
     // No request crossed the socket pair. The sequential requests shared a connection,
     // and each failed exchange spent the one it had.
     assert_eq!(handoffs.load(Ordering::SeqCst), 0);
@@ -321,11 +339,11 @@ fn a_multiplexed_request_is_decided_in_process_and_sent_on_a_pooled_connection()
 fn assert_reports(gate: &Gate) {
     // A report follows the end of its body, which the runtime may see after the client.
     let deadline = std::time::Instant::now() + Duration::from_secs(5);
-    while gate.reports.lock().unwrap().len() < 7 && std::time::Instant::now() < deadline {
+    while gate.reports.lock().unwrap().len() < 8 && std::time::Instant::now() < deadline {
         std::thread::sleep(Duration::from_millis(10));
     }
     let reports = gate.reports.lock().unwrap();
-    assert_eq!(reports.len(), 7, "one per forwarded request, none for the refused one");
+    assert_eq!(reports.len(), 8, "one per forwarded request, none for the refused one");
     let of = |path: &str| -> Vec<&Outcome> { reports.iter().filter(|r| r.0 == path).collect() };
     let routed = of("/route?q=1");
     assert_eq!(routed.len(), 3);
@@ -336,6 +354,9 @@ fn assert_reports(gate: &Gate) {
     }
     let (_, _, upload) = of("/upload")[0];
     assert_eq!((upload.status, upload.bytes_out), (200, 45));
+    // Trailers end an exchange: it is reported with the body bytes before them.
+    let (_, _, grpc) = of("/grpc")[0];
+    assert_eq!((grpc.status, grpc.bytes_out), (200, 5));
     // A silent server is our 504 and never sent a first byte.
     let (_, _, silent) = of("/silent")[0];
     assert_eq!((silent.status, silent.first_byte), (504, None));
