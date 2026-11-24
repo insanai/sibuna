@@ -1,0 +1,18 @@
+[package]
+name = "sibuna-acme"
+description = "An ACME client without network I/O for Sibuna: JWS, CSR, the order state machine and the certificate store (SID 0021)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+ring = { workspace = true }
+sibuna-crypto = { workspace = true }
+sibuna-encoding = { workspace = true }
+sibuna-json = { workspace = true }
+
+[lints]
+workspace = true
