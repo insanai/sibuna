@@ -285,6 +285,10 @@ impl Pool {
 
     /// Appends one status per server, in the pool's order.
     pub fn statuses(&self, pool: &str, out: &mut Vec<crate::ServerStatus>) {
+        let now = Instant::now();
+        // The ramp weights are stored by a reservation. An idle pool is brought up to
+        // date here, so that the answer is that of this moment.
+        let ramping = self.ramp(now);
         out.extend(self.targets.iter().map(|target| crate::ServerStatus {
             pool: pool.to_owned(),
             name: target.server.name.clone(),
@@ -300,6 +304,8 @@ impl Pool {
             backup: target.server.backup,
             added: target.added,
             reweighted: target.file_weight.is_some(),
+            ejected: target.load.extra.ejected_for(now),
+            ramp: target.ramp_percent(ramping),
         }));
     }
 

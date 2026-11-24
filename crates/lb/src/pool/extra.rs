@@ -227,6 +227,17 @@ impl Target {
         if ramped == 0 { u64::from(self.server.weight) * SCALE } else { u64::from(ramped) }
     }
 
+    /// The share of its weight that the server has in its slow start, in percent, or
+    /// `None` when it is not in a ramp.
+    pub(super) fn ramp_percent(&self, ramping: bool) -> Option<u8> {
+        let ramped = u64::from(self.load.extra.ramped.load(Ordering::Relaxed));
+        if !ramping || ramped == 0 {
+            return None;
+        }
+        let full = u64::from(self.server.weight.max(1)) * SCALE;
+        Some((ramped * 100 / full).min(99) as u8)
+    }
+
     /// Whether the server is in service: healthy, not drained (SID 0018), not marked by
     /// a failed connect and not ejected. A full server and a server the request already
     /// tried are in service.
@@ -269,8 +280,18 @@ impl State {
         false
     }
 
+    /// How long passive health still keeps the server out at `now`.
+    pub fn ejected_for(&self, now: Instant) -> Option<Duration> {
+        if !self.ejected.load(Ordering::Relaxed) {
+            return None;
+        }
+        let until = self.ejected_until.lock().unwrap_or_else(PoisonError::into_inner);
+        until.and_then(|until| until.checked_duration_since(now)).filter(|left| !left.is_zero())
+    }
+
     /// Counts one outcome of a request under `rule` and ejects the server at the limit.
-    fn record(&self, rule: &Passive, failed: bool, now: Instant) {
+    /// Returns whether this outcome ejected the server.
+    fn record(&self, rule: &Passive, failed: bool, now: Instant) -> bool {
         // Two workers may count at once. A lost update delays an ejection by one
         // failure, which passive health tolerates.
         let (count, eject) = rule.step(self.failures.load(Ordering::Relaxed), failed);
@@ -280,22 +301,20 @@ impl State {
             *until = Some(now + rule.ejection);
             self.ejected.store(true, Ordering::Relaxed);
         }
+        eject
     }
 }
 
 impl Ticket {
-    /// The server stayed silent for its response bound.
-    pub fn timed_out(&self, rule: Option<&Passive>, now: Instant) {
-        if let Some(rule) = rule {
-            self.load.extra.record(rule, true, now);
-        }
+    /// The server stayed silent for its response bound. Returns whether this ejected it.
+    pub fn timed_out(&self, rule: Option<&Passive>, now: Instant) -> bool {
+        rule.is_some_and(|rule| self.load.extra.record(rule, true, now))
     }
 
-    /// The server sent a complete response with `status`.
-    pub fn answered(&self, rule: Option<&Passive>, status: u16, now: Instant) {
-        if let Some(rule) = rule {
-            self.load.extra.record(rule, rule.counts(status), now);
-        }
+    /// The server sent a complete response with `status`. Returns whether this ejected
+    /// it.
+    pub fn answered(&self, rule: Option<&Passive>, status: u16, now: Instant) -> bool {
+        rule.is_some_and(|rule| self.load.extra.record(rule, rule.counts(status), now))
     }
 }
 

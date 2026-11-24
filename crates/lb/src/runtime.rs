@@ -6,6 +6,7 @@
 
 use std::fmt;
 use std::net::SocketAddr;
+use std::time::Duration;
 
 use crate::Edge;
 use crate::config::{Server, is_listener};
@@ -58,6 +59,11 @@ pub struct ServerStatus {
     pub added: bool,
     /// A command replaced the weight that the file gave.
     pub reweighted: bool,
+    /// How long passive health still keeps the server out, or `None` (SID 0019).
+    pub ejected: Option<Duration>,
+    /// The share of its weight that a server in slow start has now, in percent, or
+    /// `None` outside a ramp (SID 0019).
+    pub ramp: Option<u8>,
 }
 
 /// Why a run-time change was refused. Nothing changed.
