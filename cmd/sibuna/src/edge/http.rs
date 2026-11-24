@@ -118,6 +118,7 @@ impl Http {
         });
         server.edge_routes = Some(edge.http_routes());
         server.unlimited = prepared.options.rate_limit.is_none();
+        server.balances_only = !prepared.options.firewall;
         let server = Arc::new(server);
         let workers = start_workers(&server, &prepared.options)?;
         #[cfg(feature = "https")]

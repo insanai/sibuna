@@ -486,3 +486,17 @@ fn a_slow_body_and_a_slow_reader_lose_the_connection_while_others_are_served() {
         assert!(started.elapsed() < Duration::from_secs(10), "{event_loop}");
     });
 }
+
+#[test]
+fn a_load_balancer_without_a_firewall_has_no_honeypot() {
+    both(|event_loop| {
+        let daemon = start(origin(), event_loop, "");
+        let mut client = connect(&daemon);
+        send(&mut client, b"GET /__sibuna/honeypot HTTP/1.1\r\nHost: a\r\n\r\n");
+        assert_eq!(read_message(&mut client, false).unwrap().status(), 404, "{event_loop}");
+        // The client is not banned: its next request reaches the server.
+        let mut client = connect(&daemon);
+        send(&mut client, b"GET /after HTTP/1.1\r\nHost: a\r\n\r\n");
+        assert_eq!(read_message(&mut client, false).unwrap().status(), 200, "{event_loop}");
+    });
+}
