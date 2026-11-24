@@ -230,6 +230,17 @@ pub fn get_with(edge: &Edge, path: &str, fields: &str) -> Message {
     read_message(&mut client, false).expect("a response")
 }
 
+/// Sends `POST path` with `body` on a new connection and returns the response.
+pub fn post(edge: &Edge, path: &str, body: &[u8]) -> Message {
+    let mut client = edge.connect();
+    let length = body.len();
+    let head =
+        format!("POST {path} HTTP/1.1\r\nHost: app.example\r\nContent-Length: {length}\r\n\r\n");
+    request(&mut client, head.as_bytes());
+    request(&mut client, body);
+    read_message(&mut client, false).expect("a response")
+}
+
 /// Sends `GET path` on a new connection and returns the response.
 pub fn get(edge: &Edge, path: &str) -> Message {
     get_with(edge, path, "")
@@ -250,8 +261,19 @@ pub struct Origin {
     pub connections: Arc<AtomicUsize>,
     /// Requests answered so far.
     pub requests: Arc<AtomicUsize>,
-    /// While true, every request but `/health` waits `stall` and then answers.
+    /// While true, every request but `/health` waits three seconds and then answers.
     pub stalled: Arc<AtomicBool>,
+    /// While true, the server reads a request and closes without an answer.
+    pub closing: Arc<AtomicBool>,
+}
+
+/// The switches and counters a server thread shares with its test.
+#[derive(Clone, Default)]
+struct Shared {
+    connections: Arc<AtomicUsize>,
+    requests: Arc<AtomicUsize>,
+    stalled: Arc<AtomicBool>,
+    closing: Arc<AtomicBool>,
 }
 
 impl Origin {
@@ -276,20 +298,21 @@ impl Origin {
     }
 
     fn serve(name: &str, listener: TcpListener) -> Self {
+        let shared = Shared::default();
         let origin = Self {
             address: listener.local_addr().unwrap(),
             name: name.to_owned(),
-            connections: Arc::default(),
-            requests: Arc::default(),
-            stalled: Arc::default(),
+            connections: shared.connections.clone(),
+            requests: shared.requests.clone(),
+            stalled: shared.stalled.clone(),
+            closing: shared.closing.clone(),
         };
-        let shared = (origin.connections.clone(), origin.requests.clone(), origin.stalled.clone());
         let name = name.to_owned();
         std::thread::spawn(move || {
             for socket in listener.incoming().map_while(Result::ok) {
-                shared.0.fetch_add(1, Ordering::SeqCst);
-                let (name, requests, stalled) = (name.clone(), shared.1.clone(), shared.2.clone());
-                std::thread::spawn(move || serve_origin(socket, &name, &requests, &stalled));
+                shared.connections.fetch_add(1, Ordering::SeqCst);
+                let (name, shared) = (name.clone(), shared.clone());
+                std::thread::spawn(move || serve_origin(socket, &name, &shared));
             }
         });
         origin
@@ -301,12 +324,16 @@ pub fn refused() -> SocketAddr {
     TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap()
 }
 
-fn serve_origin(socket: TcpStream, name: &str, requests: &AtomicUsize, stalled: &AtomicBool) {
+fn serve_origin(socket: TcpStream, name: &str, shared: &Shared) {
     let mut writer = socket.try_clone().unwrap();
     let mut reader = BufReader::new(socket);
     while let Some(message) = read_message(&mut reader, false) {
         let path = message.path().to_owned();
-        if stalled.load(Ordering::SeqCst) && path != "/health" {
+        if shared.closing.load(Ordering::SeqCst) {
+            shared.requests.fetch_add(1, Ordering::SeqCst);
+            return;
+        }
+        if shared.stalled.load(Ordering::SeqCst) && path != "/health" {
             std::thread::sleep(Duration::from_secs(3));
         }
         let mut status = 200;
@@ -328,7 +355,7 @@ fn serve_origin(socket: TcpStream, name: &str, requests: &AtomicUsize, stalled: 
         } else {
             name.to_owned()
         };
-        requests.fetch_add(1, Ordering::SeqCst);
+        shared.requests.fetch_add(1, Ordering::SeqCst);
         let sent = write!(
             writer,
             "HTTP/1.1 {status} Status\r\n{extra}Content-Length: {}\r\n\r\n{body}",

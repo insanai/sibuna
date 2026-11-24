@@ -13,6 +13,8 @@ use super::worker::{KEPT_CAPACITY, KIND_ORIGIN, Side, Worker, key};
 use crate::client_writer::ClientWriter;
 use crate::dispatch::{Plan, answer_proxy_error};
 
+mod failover;
+
 /// Idle server sockets kept for one address, and by one worker.
 const IDLE_PER_ADDRESS: usize = 64;
 const IDLE_PER_WORKER: usize = 1024;
@@ -74,13 +76,12 @@ impl Worker {
             }),
         };
         let now = self.now;
-        let Some(exchange) = self.conns.at(index).and_then(|conn| conn.exchange.as_deref_mut())
-        else {
+        let Some(at) = origin else {
+            self.connect_failed(index);
             return;
         };
-        let Some(at) = origin else {
-            exchange.target.failed();
-            self.answer(index, ProxyError::UpstreamUnreachable);
+        let Some(exchange) = self.conns.at(index).and_then(|conn| conn.exchange.as_deref_mut())
+        else {
             return;
         };
         let metrics = &self.server.metrics;
@@ -188,8 +189,7 @@ impl Worker {
             }
             Ok(None) => false,
             _ => {
-                exchange.target.failed();
-                self.answer(index, ProxyError::UpstreamUnreachable);
+                self.connect_failed(index);
                 false
             }
         }
@@ -352,7 +352,8 @@ impl Worker {
     }
 
     /// The server socket failed. A request that may be sent again and has seen no response
-    /// byte goes to a fresh connection once. Returns false: the socket is gone.
+    /// byte goes to a fresh connection once, and then to another server. Returns false:
+    /// the socket is gone.
     fn origin_lost(&mut self, index: u32) -> bool {
         let Some(exchange) = self.conns.at(index).and_then(|conn| conn.exchange.as_deref_mut())
         else {
@@ -363,6 +364,11 @@ impl Worker {
         if !again {
             if !exchange.pooled {
                 exchange.target.failed();
+            }
+            // The server answered nothing, and the request is safe and still held whole,
+            // so another server may serve it (SID 0019).
+            if unanswered && exchange.retryable && self.move_on(index) {
+                return false;
             }
             self.fail(index, ProxyError::UpstreamReadFailed);
             return false;
@@ -470,8 +476,7 @@ impl Worker {
             return;
         };
         if exchange.connecting {
-            exchange.target.failed();
-            self.answer(index, ProxyError::UpstreamUnreachable);
+            self.connect_failed(index);
         } else if exchange.relay.responded() || exchange.tunnel {
             self.close(index);
         } else {
