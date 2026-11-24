@@ -24,6 +24,9 @@ Glossary
    Edge
       A Sibuna deployment with ``--data-dir`` (a SQLite file on one node), or with ``--database-url`` and ``--cluster-node`` (one PostgreSQL database shared by a cluster), giving persistent policies, shared reputation, and incident forensics to either surface.
 
+   Edge mode
+      The daemon started with ``--config-file``. It forwards TCP and UDP, terminates TLS, HTTP/2 and HTTP/3, and routes HTTP requests to server pools, with the firewall on the routes that ask for it. It is unrelated to the storage sense of *Edge* above.
+
    Engine slot
       The place where the published policy engine lives, as a reference-counted pointer. Workers hold a reference while classifying; the storage thread builds a new engine off the request path and publishes it by pointer swap, and the old engine is freed when its last reader releases it.
 

@@ -873,6 +873,82 @@ The eight-dashboard run checks function, not overhead. ``sibuna-browser dashboar
 
 The tiles were read every two seconds during the traffic and 3 seconds after it. Every dashboard ended with the same totals (Requests 6,000, Admitted 2,400, Challenged 3,000, Policy denied 600, Origin 4xx 600, Origin 5xx 600), received 134 to 139 ``stats`` deltas, kept its WebSocket open, and reported no exception, console error or Content-Security-Policy violation. Eight browser subscribers are well under the console's limit of 64. The daemon of this run has SQLite storage and the console, unlike the in-memory daemons of the product harness, so its resident memory is not comparable with theirs.
 
+Edge Load Balancing and HAProxy
+-------------------------------
+
+.. admonition:: Objectives
+
+   By the end of this chapter, we should be able to say where the edge load balancer matches HAProxy, where it does not, and which part of the design explains each difference.
+
+We ran Sibuna's edge mode beside HAProxy 3.0.11 on one host over loopback. Two origins had four CPUs, the proxy eight and the load generator four. Both proxies used eight threads and least connections, and both terminated TLS with the same ECDSA certificate. The record is ``benchmarks/results/edge-haproxy-2026-11-24.md``. It is one manual run of eight seconds per cell, not a repeated measurement, so we read differences of a few percent as noise.
+
+.. list-table:: Requests per second through each proxy. ``tcp`` forwards the HTTP byte stream through a TCP frontend. ``off`` is ``http.surface``.
+   :header-rows: 1
+   :widths: 16 14 18 18 18 16
+
+   * - Workload
+     - Connections
+     - HAProxy
+     - Sibuna ``off``
+     - Sibuna ``shield``
+     - Sibuna / HAProxy
+   * - tcp
+     - 256
+     - 237,451
+     - 230,181
+     -
+     - 0.97
+   * - tcp
+     - 2,048
+     - 183,887
+     - 184,890
+     -
+     - 1.01
+   * - http
+     - 16
+     - 140,003
+     - 135,488
+     - 140,064
+     - 0.97
+   * - http
+     - 256
+     - 242,695
+     - 143,405
+     - 145,434
+     - 0.59
+   * - http
+     - 2,048
+     - 172,950
+     - 132,752
+     - 137,037
+     - 0.77
+   * - https
+     - 256
+     - 166,407
+     - 88,785
+     - 83,962
+     - 0.53
+   * - h2, 10 streams
+     - 16
+     - 195,808
+     - 72,602
+     - 69,169
+     - 0.37
+   * - h2, 10 streams
+     - 256
+     - 167,124
+     - 64,555
+     - 61,849
+     - 0.39
+
+TCP forwarding equals HAProxy. The relay threads wait with epoll and move bytes between two sockets, which is what HAProxy does. Sibuna held 2,048 streams in 9 MiB of resident memory, against 51 MiB.
+
+HTTP equals HAProxy at 16 connections and falls behind from 256. The HTTP firewall serves each connection on a thread of its own with blocking reads. At 256 connections it made 2.9 context switches per request and spent four fifths of its CPU time in the kernel. The 99th percentile was 16 ms, against 2.3 ms. An event loop pays one wake-up for many ready sockets. A thread per connection pays one for each.
+
+TLS and HTTP/2 fall further behind. A separate runtime terminates them and hands each connection or exchange to a firewall thread over a socket pair, so every request crosses one more socket and one more thread. The firewall itself is not the cost: gate and shield with an allow-all policy ran as fast as ``off``.
+
+The measurement says where the next work lies. Moving the HTTP/1.1 relay of the firewall onto the event-driven workers would remove the context switches and the handoff together. SID 0015 records this as open work.
+
 Not Measured
 ------------
 

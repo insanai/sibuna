@@ -1130,7 +1130,7 @@ We list what this paper does not establish, so that no claim is read more widely
 - *The console's isolation gate* with eight active dashboards under load has not been run (:ref:`console`).
 - *Loopback only.* No measurement covers TLS, a wide-area network or real browsers under load; a deployment should measure its own path.
 - *Bounded inspection.* Shield is a heuristic inspector of the first 8 KiB of a body, not a full SQL or HTML parser, and forward-auth inspection sees only the bytes the ingress sends.
-- *Protocol scope.* The private firewall listener speaks HTTP/1.0 and HTTP/1.1. HTTP edge frontends also terminate HTTP/2 over TLS and HTTP/3 over QUIC and forward each admitted request to an HTTP/1.1 origin.
+- *Protocol scope.* The private firewall listener speaks HTTP/1.0 and HTTP/1.1. HTTP edge frontends also terminate HTTP/1.1 and HTTP/2 over TLS and HTTP/3 over QUIC, and forward each request to an HTTP/1.1, HTTP/2 or HTTP/3 server.
 - *TLS fingerprints.* TCP passthrough can compute JA4 from a visible ClientHello. On an HTTP firewall behind a separate TLS ingress we rely on its forwarded fingerprint. A fingerprint is only as trustworthy as the ingress that writes it, and that ingress must overwrite any copy a client sent. A client can imitate a browser's handshake with specialised libraries, so JA4 raises the cost of automation; it does not prove identity [#ja4]_.
 - *Cryptographic assurance.* The sequential-work tier rests on published proofs in the random-oracle model; our concrete protocol has tests against a reference labeller, not an independent cryptographic audit.
 - *One machine.* Every number was taken on one AMD Ryzen 9 5950X. A ranking on this host is not a ranking on another.

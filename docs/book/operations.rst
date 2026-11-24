@@ -17,89 +17,10 @@ Choosing a Surface
 - *Shield* (default, ``--shield``, alias ``--waf``): Gate plus the semantic firewall.
 - *Distributed deployment* (an option for either surface): ``--data-dir`` keeps policies, reputation and forensics in a local SQLite file; ``--database-url`` with ``--cluster-node`` connects several nodes to one PostgreSQL database (SID 0011).
 
-TCP, UDP and HTTP edge listeners
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Edge mode
+~~~~~~~~~
 
-We can run the daemon as an edge load balancer with a JSON file or a JLV/2 module. Each frontend binds one or more numeric socket addresses and names a backend pool of the same protocol. A UDP frontend binds a specific local IP so replies use the same address that the client contacted. For request-level routing we use an HTTP frontend and select the gate or shield.
-
-.. code-block:: json
-
-   {
-     "global": {"max_flows": 1024},
-     "frontends": {
-       "tls": {"proto": "tcp", "binds": ["127.0.0.1:8443"], "default_backend": "app"},
-       "dns": {"proto": "udp", "binds": ["127.0.0.1:8053"], "default_backend": "nameservers",
-               "session_timeout": "10s", "udp_defense": {"mode": "rate_limit", "threshold_pps": 200}}
-     },
-     "backends": {
-       "app": {"mode": "tcp", "servers": [
-         {"name": "a", "addr": "127.0.0.1:9001", "weight": 2, "max_flows": 100},
-         {"name": "b", "addr": "127.0.0.1:9002", "weight": 1, "max_flows": 50}
-       ]},
-       "nameservers": {"mode": "udp", "balance": {"kind": "bounded_maglev"},
-                       "servers": [{"name": "ns1", "addr": "127.0.0.1:9053"}]}
-     }
-   }
-
-We save this document as ``edge.json``, check it and start the listeners.
-
-.. code-block:: sh
-
-   sibuna check -f edge.json
-   sibuna --config-file edge.json
-
-We can expose HTTP/2 on TCP and HTTP/3 on UDP with one certificate. The default build includes the ``https`` feature. In this example the certificate covers ``api.example.org``. We install the PEM chain and matching private key at the paths below. Both origins speak plaintext HTTP/1.1.
-
-.. code-block:: json
-
-   {
-     "http": {"surface": "shield"},
-     "frontends": {
-       "web": {
-         "proto": "http", "binds": ["0.0.0.0:8443"],
-         "tls": {"cert_file": "/etc/sibuna/web.pem", "key_file": "/etc/sibuna/web.key", "http3": true},
-         "routes": [{"host": "api.example.org", "path_prefix": "/v1/", "backend": "api"}],
-         "default_backend": "site"
-       }
-     },
-     "backends": {
-       "api": {"mode": "http", "servers": [{"name": "api1", "addr": "127.0.0.1:9100"}]},
-       "site": {"mode": "http", "servers": [{"name": "site1", "addr": "127.0.0.1:9200"}]}
-     }
-   }
-
-Each admitted request uses the first matching route. We compare DNS names without case or port and match a literal prefix of the normalized path. A prefix of ``/v1/`` matches ``/v1/item``. We can omit the ``tls`` object on a separate bind to accept plaintext HTTP/1.1. TLS listeners negotiate ``h2`` on TCP and optionally ``h3`` on UDP. We can test them with ``curl --http2`` and ``curl --http3-only``. Challenge cookies issued over native TLS carry the Secure attribute. When HTTP/3 is enabled, the HTTP/2 response advertises the same public port with Alt-Svc so browsers can discover it.
-
-The optional ``http.policy_file`` loads a Sibuna policy. The optional ``http.secret_file`` holds the challenge seed shared by the nodes. A reload checks the new routes, policy and certificate before use. We can rotate the certificate and key at their configured paths. Changes to the listener set, HTTP surface or challenge seed require a restart. HTTP/2 clients that send Expect receive 417 and can retry without the header. HTTP/3 accepts 100-continue. CONNECT tunnels require a separate frontend.
-
-We can also write a pool once and generate its servers from a list of ports. We save this module as ``edge.jlv``.
-
-.. code-block:: text
-
-   import { text } from jlv.std.foundation
-
-   fn server(port: Int) -> Map<Value> {
-       return { name: "node-${port}", addr: "127.0.0.1:${port}" }
-   }
-
-   fn edge() -> Map<Value> {
-       return {
-           frontends: { api: { proto: "tcp", binds: ["127.0.0.1:8443"], default_backend: "app" } },
-           backends: { app: { mode: text.lower("TCP"), servers: [for port in [9001, 9002]: server(port)] } },
-       }
-   }
-
-We check the module with ``sibuna check -f edge.jlv`` and run it with ``sibuna --config-file edge.jlv``. Sibuna evaluates one module at startup and on reload. It makes the pure ``jlv.std.foundation`` functions available. The source and expanded document each have a 256 KiB limit. Evaluation has one million steps. Both file formats pass through the same topology checks.
-
-The checker rejects unknown keys, duplicate server identities and invalid routes. Startup binds every listener before it announces readiness. One packet worker serves up to 8,192 active flows across all listeners. Pending handshakes and TCP connects count toward that limit. A full worker refuses new flows. Per-server caps apply within the node. A dropped or expired flow releases its reservation. We budget two file descriptors per established TCP stream and one upstream descriptor per UDP mapping, in addition to listeners, probes and pending connections. The operating system must allow the daemon to open that many descriptors.
-
-A standalone pool defaults to weighted least connections. With ``"balance": {"kind": "p2c_pewma"}`` we compare two eligible servers using their active flows, weights and observed latency. We measure TCP connect time or time to the first UDP reply. A server marked ``"backup": true`` becomes eligible when the primary servers are unavailable or full. A failed TCP connect suppresses that server for two seconds. We can enable active checking on a TCP pool with ``"health_check": {"kind": "tcp", "timeout": "500ms", "interval": "2s", "rise": 2, "fall": 3}``. A checked server enters service after the configured number of consecutive successes. UDP mappings keep a connected upstream socket for each client and listener. Their response budget permits three times the received bytes with a bounded burst. The optional UDP packet budget covers each source IPv4 address or IPv6 /64. TCP accepts support ``"rate_limit": {"conn_per_10s": 200}`` on the frontend.
-
-A frontend may set ``"tcp_inspect": "tls_client_hello"``, define ``acls`` with exact ``sni`` or ``alpn`` matches or a ``ja4_prefix`` pattern such as ``t13d*``, and list ordered ``deny`` or ``use_backend`` rules. The worker closes malformed or incomplete handshakes after a bounded inspection of up to 32 KiB and a default deadline of two seconds. A complete hello with no matching rule uses the default pool. Enable ``"proxy_v2": {"enabled": true}`` on a TCP pool only when its servers accept a PROXY v2 address header before the stream. We can add ``"tlv_sni": true`` or ``"tlv_ja4": true`` inside ``proxy_v2`` to forward inspected metadata. SNI uses the AUTHORITY type (0x02). Sibuna uses the custom type 0xe0 for the 36 ASCII bytes of JA4. The origin must agree on this type.
-
-On Unix we can replace the file and send SIGHUP. A valid revision updates routing for new flows. Established streams and UDP mappings keep their origin. A handshake still awaiting inspection is closed at the policy boundary. A rejected revision leaves existing routes in service. We remove a server from its pool to drain it. Changing listener addresses or the mesh roster takes a restart. Shutdown stops admitting new flows and gives active flows up to five seconds to finish.
-
-For several nodes we can add a top-level ``mesh`` object with a unicast ``listen`` address, a list of ``peers`` as numeric UDP socket addresses, and a ``key_file`` containing the same 32 random binary bytes on each node. We provision this key on the management network and restart nodes when rotating it. Peers exchange authenticated challenges every half second. Pools with no explicit scheduler choose two candidates while standalone and use a deterministic weighted Maglev table once a peer responds. The wide-area regime prefers eligible local servers over servers marked ``"remote": true``. At least three missed probe periods expire a peer. Each node makes its own health and admission decisions. Keeping established flows on their owning node across a routing change requires upstream flow steering.
+With ``--config-file`` the daemon runs as an edge load balancer. It forwards TCP and UDP, terminates TLS, HTTP/2 and HTTP/3, and applies the gate or shield to the HTTP names that need it. The chapter *Edge Load Balancing* below describes the file.
 
 Command-Line Reference
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -242,6 +163,489 @@ The table lists every option of ``sibuna --help``. Ranges are those the parser e
 .. admonition:: The master secret
 
    Without ``--secret-file`` or ``SIBUNA_SECRET`` the daemon draws a random seed, and the banner prints "random (set --secret-file)". Tokens and challenges then die with the process, and a cluster whose nodes hold different seeds will reject each other's cookies. Generate one with ``head -c 32 /dev/urandom | xxd -p -c 64 > /etc/sibuna/secret`` and mode 0600.
+
+Edge Load Balancing
+-------------------
+
+.. admonition:: Objectives
+
+   By the end of this chapter, we should be able to write an edge topology in JSON or JLV, forward TCP and UDP, terminate TLS with HAProxy-style PEM bundles, route HTTP by host name and path to HTTP/1.1, HTTP/2 and HTTP/3 servers, turn the firewall on or off per name, limit rates, check server health, and reload the file without dropping flows.
+
+Frontends, backends and servers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The vocabulary follows HAProxy. A *frontend* binds one or more numeric socket addresses. A *backend* is a pool of *servers*. A frontend names a default backend of its own protocol. There are three protocols.
+
+.. list-table:: Frontend protocols
+   :header-rows: 1
+   :widths: 12 44 44
+
+   * - ``proto``
+     - What Sibuna does
+     - Firewall
+   * - ``tcp``
+     - Relays bytes to one server for the life of the connection. It can read a visible TLS ClientHello first.
+     - None. Connection rate limits and SNI, ALPN or JA4 rules apply.
+   * - ``udp``
+     - Maps each client address to one server and relays datagrams both ways.
+     - None. Packet rate limits and a response budget apply.
+   * - ``http``
+     - Parses each request, selects a backend by host name and path, and relays the exchange.
+     - Gate or shield, or none, chosen per frontend and per route.
+
+The semantic firewall inspects HTTP requests. It never runs on a TCP or UDP frontend, because those streams are opaque to Sibuna.
+
+.. graphviz::
+   :caption: The path of a flow through the edge. Only HTTP requests meet the firewall, and a route can skip it.
+   :alt: TCP streams go from the worker to relay threads and TCP servers. UDP datagrams go from the worker to UDP servers. HTTP connections pass optional TLS termination, then the firewall or a bypass, then route selection, and reach HTTP/1.1 servers directly or HTTP/2, HTTP/3 and TLS servers through an adapter.
+
+   digraph edge_paths {
+     graph [rankdir=LR, bgcolor="transparent", fontname="Helvetica", fontsize=9, nodesep=0.25, ranksep=0.45];
+     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fillcolor="#eff6ff", color="#1e40af", penwidth=1.0, margin="0.1,0.05"];
+     edge [color="#64748b", fontname="Helvetica", fontsize=7.5, fontcolor="#475569", arrowsize=0.6];
+
+     worker [label="Edge worker\naccept, admission,\nUDP mappings"];
+     relay [label="Relay threads\n(epoll)", fillcolor="#f0fdf4", color="#15803d"];
+     tls [label="TLS, HTTP/2, HTTP/3\ntermination", fillcolor="#f5f3ff", color="#6d28d9"];
+     fw [label="HTTP firewall\ngate or shield", fillcolor="#fffbeb", color="#b45309"];
+     route [label="Route by host\nand path"];
+     adapter [label="Origin adapter\nTLS, HTTP/2, HTTP/3", fillcolor="#f5f3ff", color="#6d28d9"];
+     tcp [label="TCP servers", fillcolor="#ffffff"];
+     udp [label="UDP servers", fillcolor="#ffffff"];
+     h1 [label="HTTP/1.1 servers", fillcolor="#ffffff"];
+     hx [label="TLS, HTTP/2 and\nHTTP/3 servers", fillcolor="#ffffff"];
+
+     worker -> relay [label="tcp"];
+     relay -> tcp;
+     worker -> udp [label="udp"];
+     worker -> tls [label="http + tls"];
+     worker -> fw [label="http"];
+     tls -> fw;
+     fw -> route [label="admitted"];
+     worker -> route [style=dashed, label="firewall: false"];
+     route -> h1;
+     route -> adapter;
+     adapter -> hx;
+   }
+
+A first topology
+~~~~~~~~~~~~~~~~
+
+This file forwards one TCP port and one UDP port.
+
+.. code-block:: json
+
+   {
+     "global": {"max_flows": 8192},
+     "frontends": {
+       "ssh": {"proto": "tcp", "binds": ["0.0.0.0:2222"], "default_backend": "forge_ssh",
+               "session_timeout": "1h"},
+       "dns": {"proto": "udp", "binds": ["192.0.2.10:53"], "default_backend": "nameservers",
+               "session_timeout": "10s", "udp_defense": {"mode": "rate_limit", "threshold_pps": 200}}
+     },
+     "backends": {
+       "forge_ssh": {"mode": "tcp", "servers": [
+         {"name": "a", "addr": "10.20.0.8:22", "weight": 2, "max_flows": 100},
+         {"name": "b", "addr": "10.20.0.9:22", "weight": 1, "max_flows": 50}
+       ]},
+       "nameservers": {"mode": "udp", "balance": {"kind": "bounded_maglev"},
+                       "servers": [{"name": "ns1", "addr": "10.20.0.53:53"}]}
+     }
+   }
+
+We save it as ``edge.json``, check it and start the listeners.
+
+.. code-block:: sh
+
+   sibuna check -f edge.json
+   sibuna --config-file edge.json
+
+The checker rejects unknown keys, duplicate server identities, missing backends and invalid routes. It also loads every certificate and CA file. Startup binds every listener before it announces readiness. A UDP frontend binds a specific local IP, so replies leave from the address the client contacted. Durations are whole numbers with ``ms``, ``s``, ``m`` or ``h``, up to one day.
+
+Global limits
+~~~~~~~~~~~~~
+
+.. list-table:: The ``global`` object
+   :header-rows: 1
+   :widths: 22 16 62
+
+   * - Key
+     - Default
+     - Meaning
+   * - ``max_flows``
+     - ``8192``
+     - Client connections and UDP mappings on the node, 1 to 1,000,000. Pending handshakes and TCP connects count. A full table refuses new flows.
+   * - ``max_udp_flows``
+     - half or all
+     - The share of the table that UDP mappings may take. The default is half of ``max_flows`` beside TCP or HTTP frontends, and all of it on a UDP-only node.
+   * - ``workers``
+     - ``"auto"``
+     - Relay threads for established TCP streams, 1 to 64. ``"auto"`` is one per CPU, up to eight.
+
+One worker thread accepts connections, inspects handshakes and owns the UDP mappings. Established TCP streams move to the relay threads. On Linux every thread waits with epoll, so an idle flow costs no CPU time. We budget two file descriptors for each TCP stream and one for each UDP mapping. The operating system must allow the daemon that many descriptors (``LimitNOFILE`` under systemd).
+
+UDP sources are not validated, so a flood of spoofed addresses could fill the table. The separate UDP ceiling keeps TCP and HTTP clients admitted. When the UDP share is full, a new client replaces the oldest mapping that no server has answered.
+
+TLS certificates
+~~~~~~~~~~~~~~~~
+
+An HTTP frontend terminates TLS when it has a ``tls`` object. The ``crt`` key works as it does in HAProxy. Each entry is a PEM file that holds the certificate chain, leaf first, followed by its private key. An entry may also be a directory. We then load every ``*.pem`` file in it, in name order.
+
+.. code-block:: json
+
+   {
+     "frontends": {
+       "web": {
+         "proto": "http", "binds": ["0.0.0.0:443"],
+         "tls": {"crt": ["/etc/sibuna/certs/forge.example.org.pem", "/etc/sibuna/certs/"],
+                 "http3": true},
+         "default_backend": "site"
+       }
+     },
+     "backends": {"site": {"mode": "http", "servers": [{"name": "s1", "addr": "10.20.0.8:8040"}]}}
+   }
+
+We can use the file that HAProxy uses, or build one from separate files.
+
+.. code-block:: sh
+
+   cat fullchain.pem privkey.pem > /etc/sibuna/certs/forge.example.org.pem
+   chmod 600 /etc/sibuna/certs/forge.example.org.pem
+
+The first certificate loaded is the default. The DNS names in each leaf certificate select among the others by the server name of the handshake. An exact name wins over a wildcard such as ``*.example.org``. A handshake that names no certificate receives the default one. With ``"strict_sni": true`` it is refused instead. We may still give ``cert_file`` and ``key_file`` as two separate files. Each file is limited to 256 KiB and a listener to 256 certificates. A key that does not match its certificate fails the check, and the message names the file.
+
+A TLS listener offers ``h2`` and ``http/1.1`` by ALPN. HTTP/1.1 over TLS behaves like the plain listener: keep-alive and WebSocket upgrades work. With ``"http3": true`` we also bind the same port on UDP, and HTTP/2 responses advertise it with Alt-Svc. We can test the three protocols with ``curl --http1.1``, ``curl --http2`` and ``curl --http3-only``. Challenge cookies issued over TLS carry the Secure attribute.
+
+To rotate a certificate we replace the file and send SIGHUP. A new handshake uses the new certificate. An established session keeps the one it started with. A reload with a bad file changes nothing.
+
+HTTP routing by name and path
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An HTTP frontend selects a backend for each request, also for later requests on one keep-alive connection and for each stream of an HTTP/2 or HTTP/3 connection. The first matching route wins. A route gives a ``host``, a ``path_prefix``, or both. We compare host names without case or port and match a literal prefix of the normalized path. Requests that match no route use ``default_backend``.
+
+.. code-block:: json
+
+   {
+     "http": {"surface": "shield", "policy_file": "/etc/sibuna/policy.json",
+              "idle_timeout": "1h", "websocket_idle_timeout": "1h"},
+     "frontends": {
+       "web": {
+         "proto": "http", "binds": ["0.0.0.0:443"],
+         "tls": {"crt": "/etc/sibuna/certs/"},
+         "routes": [
+           {"host": "forge.example.org", "backend": "forge", "firewall": false},
+           {"host": "ci.example.org", "path_prefix": "/api/runner/", "backend": "ci", "firewall": false},
+           {"host": "ci.example.org", "backend": "ci"}
+         ],
+         "default_backend": "site"
+       }
+     },
+     "backends": {
+       "forge": {"mode": "http", "health_check": {"kind": "http", "path": "/api/v1/health"},
+                 "servers": [{"name": "f1", "addr": "10.20.0.8:8040"}, {"name": "f2", "addr": "10.20.0.9:8040"}]},
+       "ci": {"mode": "http", "servers": [{"name": "c1", "addr": "10.20.0.10:8050"}]},
+       "site": {"mode": "http", "servers": [{"name": "s1", "addr": "10.20.0.11:3000"}]}
+     }
+   }
+
+Sibuna keeps the client's ``Host`` field and sets ``X-Forwarded-For``, ``X-Forwarded-Proto`` and ``X-Real-IP`` from the connection it terminated. A client cannot supply these fields. An application that reads ``X-Forwarded-For`` must list the Sibuna node as a trusted proxy.
+
+Turning the firewall on and off
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A browser can solve a proof-of-work challenge. Git, curl, a CI runner and an API client cannot. We therefore choose where the firewall applies.
+
+- ``"http": {"surface": "off"}`` makes the node a plain load balancer. Every well-formed request is routed. There is no challenge, no policy file and no default rate limit.
+- ``"surface": "gate"`` or ``"shield"`` (the default) enables the firewall. A frontend then takes ``"firewall": false`` to exempt its requests, and each route takes ``"firewall": true`` or ``false`` to decide for its name or path. A route without the key follows its frontend.
+
+A request on a route without the firewall skips the policy, the challenge and the semantic inspection. Sibuna still parses and validates the request, enforces the connection limits and timeouts, honours existing bans, and applies ``http.rate_limit`` when we set a number. The audit fields report the rule ``load-balancer`` for it.
+
+Rate limiting
+~~~~~~~~~~~~~
+
+Each protocol has its own limiter. All of them count per source IPv4 address or IPv6 /64.
+
+.. list-table:: Where rates are limited
+   :header-rows: 1
+   :widths: 30 34 36
+
+   * - Setting
+     - Applies to
+     - Effect
+   * - ``rate_limit: {"conn_per_10s": 200}`` on a ``tcp`` or ``http`` frontend
+     - New connections, also QUIC connections on that address
+     - Further connections are closed until the rate falls.
+   * - ``udp_defense: {"mode": "rate_limit", "threshold_pps": 200}`` on a ``udp`` frontend
+     - Datagrams per second
+     - Further datagrams are dropped.
+   * - ``http.rate_limit`` and ``http.rate_window``
+     - Requests per window on every HTTP frontend
+     - 429 with Retry-After. The default is 100 per 10 s. ``"off"`` disables it.
+   * - A ``rate`` in a policy rule
+     - Requests that match the rule
+     - 429, and a ban when the rule asks for one. Only routes with the firewall evaluate it.
+   * - ``http.max_connections_per_ip``
+     - Concurrent connections of one client
+     - Further connections are refused. The default is 64.
+
+A UDP mapping may also send at most three times the bytes it received, with a bounded burst, so a spoofed source cannot use a server as an amplifier.
+
+The ``http`` object
+~~~~~~~~~~~~~~~~~~~
+
+.. list-table:: HTTP firewall settings in edge mode
+   :header-rows: 1
+   :widths: 30 16 54
+
+   * - Key
+     - Default
+     - Meaning
+   * - ``surface``
+     - ``shield``
+     - ``off``, ``gate`` or ``shield``
+   * - ``policy_file``
+     - unset
+     - A Sibuna policy. It needs ``gate`` or ``shield``.
+   * - ``secret_file``
+     - unset
+     - The challenge seed shared by the nodes of a cluster
+   * - ``rate_limit``
+     - ``100``
+     - Requests per window and client, 1 to 1,000,000, or ``"off"``. With ``surface`` ``off`` the default is ``"off"``.
+   * - ``rate_window``
+     - ``10s``
+     - The length of the rate window
+   * - ``max_connections``
+     - ``1024``
+     - Concurrent HTTP/1.1 connections and HTTP/2 or HTTP/3 exchanges, up to 8192
+   * - ``max_connections_per_ip``
+     - ``64``
+     - The same bound for one client address
+   * - ``idle_timeout``
+     - ``15s``
+     - The longest silence on a connection or from a server. Raise it for long transfers.
+   * - ``websocket_idle_timeout``
+     - ``300s``
+     - The longest silence on an upgraded connection
+
+An idle HTTP/2 or HTTP/3 connection gives up its flow slot after ``idle_timeout``, and after 60 s at the earliest. HTTP/2 connections are also probed with PING every 20 s. CONNECT tunnels are refused.
+
+Servers that speak TLS, HTTP/2 or HTTP/3
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A backend speaks cleartext HTTP/1.1 unless we say otherwise. ``http_version`` selects ``"1.1"``, ``"2"`` or ``"3"``. A ``tls`` object makes the connection to the servers a TLS connection.
+
+.. code-block:: json
+
+   {
+     "backends": {
+       "api": {"mode": "http", "http_version": "2",
+               "tls": {"ca_file": "/etc/sibuna/internal-ca.pem", "sni": "api.internal"},
+               "servers": [{"name": "a1", "addr": "10.20.1.11:8443"}]},
+       "media": {"mode": "http", "http_version": "3", "tls": {"sni": "media.internal"},
+                 "servers": [{"name": "m1", "addr": "10.20.2.11:443"}]},
+       "legacy": {"mode": "http", "tls": {"verify": false},
+                  "servers": [{"name": "l1", "addr": "10.20.3.11:8443"}]},
+       "grpcweb": {"mode": "http", "http_version": "2",
+                   "servers": [{"name": "g1", "addr": "10.20.4.11:8080"}]}
+     }
+   }
+
+.. list-table:: Server protocols
+   :header-rows: 1
+   :widths: 22 18 60
+
+   * - ``http_version``
+     - ``tls``
+     - Connection to each server
+   * - ``"1.1"`` (default)
+     - absent
+     - Cleartext HTTP/1.1 with keep-alive. No adapter is involved.
+   * - ``"1.1"``
+     - present
+     - HTTP/1.1 inside TLS. WebSocket upgrades pass.
+   * - ``"2"``
+     - present
+     - One HTTP/2 session per server, negotiated by ALPN. Each request is a stream.
+   * - ``"2"``
+     - absent
+     - Cleartext HTTP/2 with prior knowledge (h2c)
+   * - ``"3"``
+     - required
+     - One QUIC connection per server. Each request is a stream.
+
+By default we verify the server certificate against the system roots, or against ``ca_file`` when it is set. The name checked is ``sni``, or the server's IP address without it. ``"verify": false`` accepts any certificate. We use it only on a network we trust.
+
+The firewall always relays HTTP/1.1. For the other cases an adapter inside the daemon listens on a loopback port for each server and translates. HTTP/2 and HTTP/3 servers cannot receive an HTTP/1.1 upgrade, so a WebSocket request to them answers 501. A local process that connects to an adapter port reaches the server it could already reach directly.
+
+Scheduling and health checks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A standalone pool defaults to weighted least connections. With ``"balance": {"kind": "p2c_pewma"}`` we compare two eligible servers using their active flows, weights and observed latency. ``"bounded_maglev"`` hashes the client to a server and stays within a load factor. A server marked ``"backup": true`` becomes eligible when the primary servers are unavailable or full. ``max_flows`` on a server caps its concurrent flows. A failed connect suppresses that server for two seconds.
+
+A TCP or HTTP pool can check its servers actively.
+
+.. code-block:: json
+
+   {"health_check": {"kind": "http", "path": "/healthz", "host": "ci.example.org",
+                     "expect_status": 200, "timeout": "2s", "interval": "5s", "rise": 2, "fall": 3}}
+
+``"kind": "tcp"`` passes when the connect completes. ``"kind": "http"`` sends ``GET`` and passes on a 2xx or 3xx status, or on ``expect_status`` alone. A server starts in service, as in HAProxy. It leaves after ``fall`` failed probes and returns after ``rise`` passed ones. A reload keeps the status of every address. Probes of a TLS, HTTP/2 or HTTP/3 pool travel through its adapter, so they test the same path as a request.
+
+TCP inspection and PROXY v2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A frontend may set ``"tcp_inspect": "tls_client_hello"``, define ``acls`` with exact ``sni`` or ``alpn`` matches or a ``ja4_prefix`` pattern such as ``t13d*``, and list ordered ``deny`` or ``use_backend`` rules. The worker closes malformed or incomplete handshakes after a bounded inspection of up to 32 KiB and a default deadline of two seconds. A complete hello with no matching rule uses the default pool. Enable ``"proxy_v2": {"enabled": true}`` on a TCP pool only when its servers accept a PROXY v2 address header before the stream. We can add ``"tlv_sni": true`` or ``"tlv_ja4": true`` inside ``proxy_v2`` to forward inspected metadata. SNI uses the AUTHORITY type (0x02). Sibuna uses the custom type 0xe0 for the 36 ASCII bytes of JA4. The origin must agree on this type.
+
+Writing the topology in JLV
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+JLV is the configuration language of jlavideploy and jlavici. A file that ends in ``.jlv`` is a JLV/2 module with a function ``edge`` that returns the same document as the JSON file. We write a pool once and generate its servers.
+
+.. code-block:: text
+
+   import { text } from jlv.std.foundation
+
+   fn server(i: Int) -> Map<Value> {
+       return { name: "forge-${i}", addr: "10.20.0.${i}:8040" }
+   }
+
+   fn web(name: Text, pool: Text, guarded: Bool) -> Map<Value> {
+       return { host: name, backend: pool, firewall: guarded }
+   }
+
+   fn edge() -> Map<Value> {
+       return {
+           http: { surface: "shield", idle_timeout: "1h" },
+           frontends: {
+               web: {
+                   proto: "http",
+                   binds: ["0.0.0.0:443"],
+                   tls: { crt: "/etc/sibuna/certs/" },
+                   routes: [web("forge.example.org", "forge", false)],
+                   default_backend: "site",
+               },
+           },
+           backends: {
+               forge: {
+                   mode: text.lower("HTTP"),
+                   health_check: { kind: "http", path: "/api/v1/health" },
+                   servers: [for i in [8, 9]: server(i)],
+               },
+               site: { mode: "http", servers: [{ name: "s1", addr: "10.20.0.11:3000" }] },
+           },
+       }
+   }
+
+We check the module with ``sibuna check -f edge.jlv`` and run it with ``sibuna --config-file edge.jlv``. Sibuna compiles and evaluates the module at startup and at each reload, off the packet path. An error names the line and column. The pure ``jlv.std.foundation`` functions are available. One module is evaluated. It cannot import other files, read the environment or perform I/O. The source and the expanded document each have a 256 KiB limit, and evaluation has one million steps. Both formats pass through the same topology checks. A build without the ``jlv`` feature accepts JSON only.
+
+Reload, drain and shutdown
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+On Unix we replace the file and send SIGHUP. Sibuna prepares the whole revision first: the topology, the policy, the certificates and the server adapters. A valid revision updates routing for new flows. Established TCP streams, UDP mappings and running HTTP exchanges keep their server. A handshake still awaiting inspection is closed at the policy boundary. A rejected revision leaves the serving one untouched, and the log line ``EDGE002`` says why. We remove a server from its pool to drain it. Changing listener addresses, the HTTP surface, the firewall limits, the challenge seed or the mesh roster takes a restart. Shutdown stops admitting new flows, sends GOAWAY on HTTP/2 and HTTP/3, and gives active flows up to five seconds to finish.
+
+Several nodes
+~~~~~~~~~~~~~
+
+For several nodes we can add a top-level ``mesh`` object with a unicast ``listen`` address, a list of ``peers`` as numeric UDP socket addresses, and a ``key_file`` containing the same 32 random binary bytes on each node. We provision this key on the management network and restart nodes when rotating it. Peers exchange authenticated challenges every half second. Pools with no explicit scheduler choose two candidates while standalone and use a deterministic weighted Maglev table once a peer responds. The wide-area regime prefers eligible local servers over servers marked ``"remote": true``. At least three missed probe periods expire a peer. Each node makes its own health and admission decisions. Keeping established flows on their owning node across a routing change requires upstream flow steering.
+
+Hosting jlavi, jlavideploy and jlavici
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The three sibling projects serve cleartext HTTP/1.1 and leave TLS to a proxy. One Sibuna node can serve all three names on port 443 and pass Git over SSH as TCP.
+
+.. list-table:: What each project needs from the edge
+   :header-rows: 1
+   :widths: 16 20 64
+
+   * - Project
+     - Server
+     - Needs
+   * - jlavi
+     - ``10.20.0.8:8040``
+     - WebSocket on ``/live``, Git and large-file transfers of an hour, health at ``/api/v1/health``, ``trusted_proxies`` naming the Sibuna node, and TCP passthrough to ``sshd``. Several processes may share one pool.
+   * - jlavideploy
+     - ``10.20.0.9:7420``
+     - WebSocket on ``/live``, long polls of 30 s, bodies up to 64 MiB, health at ``/healthz``. It reads no forwarded field.
+   * - jlavici
+     - ``10.20.0.10:8050``
+     - Long polls of 25 s, chunk uploads of 16 MiB, large downloads, health at ``/healthz``. One coordinator only, so one server. The public URL must be the name the edge serves.
+
+.. code-block:: json
+
+   {
+     "global": {"max_flows": 16384},
+     "http": {"surface": "shield", "idle_timeout": "1h", "websocket_idle_timeout": "1h",
+              "max_connections": 4096, "max_connections_per_ip": 256},
+     "frontends": {
+       "web": {
+         "proto": "http", "binds": ["0.0.0.0:443"],
+         "tls": {"crt": "/etc/sibuna/certs/", "http3": true},
+         "firewall": false,
+         "routes": [
+           {"host": "forge.example.org", "backend": "jlavi"},
+           {"host": "deploy.example.org", "backend": "jlavideploy"},
+           {"host": "ci.example.org", "backend": "jlavici"}
+         ],
+         "default_backend": "jlavi"
+       },
+       "git_ssh": {"proto": "tcp", "binds": ["0.0.0.0:2222"], "default_backend": "jlavi_ssh",
+                   "session_timeout": "1h", "rate_limit": {"conn_per_10s": 60}}
+     },
+     "backends": {
+       "jlavi": {"mode": "http", "health_check": {"kind": "http", "path": "/api/v1/health"},
+                 "servers": [{"name": "forge-1", "addr": "10.20.0.8:8040"}]},
+       "jlavideploy": {"mode": "http", "health_check": {"kind": "http", "path": "/healthz"},
+                       "servers": [{"name": "deploy-1", "addr": "10.20.0.9:7420"}]},
+       "jlavici": {"mode": "http", "health_check": {"kind": "http", "path": "/healthz"},
+                   "servers": [{"name": "ci-1", "addr": "10.20.0.10:8050"}]},
+       "jlavi_ssh": {"mode": "tcp", "servers": [{"name": "forge-1", "addr": "10.20.0.8:22"}]}
+     }
+   }
+
+The names carry no firewall here, because their clients are Git, curl and runners. To protect the browser pages of a project, we give its route ``"firewall": true`` and exempt the API paths with earlier routes. Each application sets its public URL to the HTTPS name. jlavi lists the Sibuna node in ``trusted_proxies``. A runner key that pins the certificate's public key stays valid as long as we keep the same private key when we renew.
+
+Coming from HAProxy
+~~~~~~~~~~~~~~~~~~~
+
+.. list-table:: HAProxy directives and their edge equivalents
+   :header-rows: 1
+   :widths: 44 56
+
+   * - HAProxy
+     - Sibuna edge
+   * - ``bind :443 ssl crt /etc/haproxy/certs/ alpn h2,http/1.1``
+     - ``"binds": ["0.0.0.0:443"], "tls": {"crt": "/etc/sibuna/certs/"}``
+   * - ``bind quic4@:443 ssl crt ... alpn h3``
+     - ``"tls": {"crt": ..., "http3": true}``
+   * - ``use_backend api if { hdr(host) -i api.example.org }``
+     - ``"routes": [{"host": "api.example.org", "backend": "api"}]``
+   * - ``use_backend api if { path_beg /v1/ }``
+     - ``{"path_prefix": "/v1/", "backend": "api"}``
+   * - ``mode tcp`` with ``req.ssl_sni``
+     - ``"proto": "tcp", "tcp_inspect": "tls_client_hello"`` with ``acls`` and ``rules``
+   * - ``balance leastconn``, ``weight``, ``maxconn``, ``backup``
+     - ``least_connections`` (default), ``weight``, ``max_flows``, ``backup``
+   * - ``option httpchk GET /health`` and ``check inter 2s rise 2 fall 3``
+     - ``"health_check": {"kind": "http", "path": "/health", "interval": "2s", "rise": 2, "fall": 3}``
+   * - ``server s1 10.0.0.1:8443 ssl verify required ca-file ca.pem sni str(api.internal) alpn h2``
+     - ``"http_version": "2", "tls": {"ca_file": "ca.pem", "sni": "api.internal"}``
+   * - ``server s1 ... send-proxy-v2``
+     - ``"proxy_v2": {"enabled": true}`` on a TCP pool
+   * - ``option forwardfor``
+     - Always on for HTTP frontends
+   * - ``timeout client``, ``timeout server``, ``timeout tunnel``
+     - ``http.idle_timeout``, ``http.websocket_idle_timeout``, ``session_timeout`` on TCP and UDP frontends
+   * - ``stick-table ... conn_rate``, ``http_req_rate``
+     - ``rate_limit`` on a frontend, ``http.rate_limit``
+   * - ``reload`` (new process)
+     - SIGHUP (same process, flows kept)
+
+Limits of this version
+~~~~~~~~~~~~~~~~~~~~~~
+
+The HTTP firewall serves each HTTP/1.1 connection and each HTTP/2 or HTTP/3 exchange on a thread of its own, up to 8192 at a time. TCP and UDP forwarding have no such bound. Server addresses are numeric. Request headers are limited to 16 KiB on HTTP/2 and HTTP/3. Sticky sessions by cookie, response compression, caching and header rewriting are not provided. SID 0015 lists the parts of the design that remain proposals: the shared-memory spill cache, database-backed topology, replicated bans, peer forwarding, binary handoff, plugins and the fleet console.
+
 
 Console Preview
 ---------------

@@ -38,6 +38,42 @@ Run
    sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 -s /etc/sibuna/secret
    head -c 32 /dev/urandom | xxd -p -c 64 > /etc/sibuna/secret
 
+Edge load balancer
+------------------
+
+.. code-block:: sh
+
+   sibuna check -f edge.json          # or edge.jlv: validate topology, certificates, CA files
+   sibuna --config-file edge.json     # serve TCP, UDP and HTTP frontends
+   kill -HUP "$(pidof sibuna)"        # reload routes, policy and certificates in place
+   cat fullchain.pem privkey.pem > /etc/sibuna/certs/site.pem   # one HAProxy-style bundle
+
+.. code-block:: json
+
+   {
+     "http": {"surface": "shield", "rate_limit": 100, "rate_window": "10s", "idle_timeout": "15s"},
+     "frontends": {
+       "web": {"proto": "http", "binds": ["0.0.0.0:443"],
+               "tls": {"crt": "/etc/sibuna/certs/", "http3": true},
+               "routes": [{"host": "api.example.org", "backend": "api", "firewall": false}],
+               "default_backend": "site"},
+       "raw": {"proto": "tcp", "binds": ["0.0.0.0:2222"], "default_backend": "ssh",
+               "rate_limit": {"conn_per_10s": 60}},
+       "dns": {"proto": "udp", "binds": ["192.0.2.10:53"], "default_backend": "ns",
+               "udp_defense": {"mode": "rate_limit", "threshold_pps": 200}}
+     },
+     "backends": {
+       "site": {"mode": "http", "servers": [{"name": "s1", "addr": "10.0.0.11:3000"}]},
+       "api": {"mode": "http", "http_version": "2", "tls": {"sni": "api.internal"},
+               "health_check": {"kind": "http", "path": "/healthz"},
+               "servers": [{"name": "a1", "addr": "10.0.0.21:8443"}]},
+       "ssh": {"mode": "tcp", "servers": [{"name": "g1", "addr": "10.0.0.8:22"}]},
+       "ns": {"mode": "udp", "servers": [{"name": "n1", "addr": "10.0.0.53:53"}]}
+     }
+   }
+
+``"http": {"surface": "off"}`` gives a load balancer with no firewall. TCP and UDP frontends never use the firewall.
+
 Console (opt-in preview)
 ------------------------
 
