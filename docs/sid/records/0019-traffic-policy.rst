@@ -207,7 +207,7 @@ Failover
      select -> fail [label="none left"];
    }
 
-The reservation of a request remembers the servers it tried. ``HttpRoutes::retry`` takes a failed reservation and returns a reservation on another server of the same pool, or nothing. It refuses when the attempts are spent, when the routing table changed since the first selection, and when no untried server is eligible. The failed server is marked as before, so later requests avoid it for two seconds.
+The reservation of a request remembers the servers it tried. ``HttpRoutes::retry`` takes a failed reservation and returns a reservation on another server of the same pool, or nothing. It refuses when the attempts are spent, when the revision that routed the request no longer serves (a reload retires a revision and SID 0018 keeps it for ten seconds), and when no untried server is eligible. The failed server is marked as before, so later requests avoid it for two seconds.
 
 A connect failure is a refused connection, an unreachable address or the connect timeout. For it the method of the request does not matter, because the server received nothing. After a byte was sent, only a request that SID 0016 calls retryable is sent again. A pooled socket that the server closed is first replaced by a fresh connection to the same server, as before. If that fails too, the request moves on.
 
@@ -382,6 +382,9 @@ Implemented on the branch ``sid-0019-traffic-policy``. Unit tests stand beside t
    * - HTTP policy
      - Done, with gaps 1 to 4
      - Binary, both paths: redirect with 308 and 301, a route that opts out, a kept connection; header edits on both sides, with the client's ``_`` alias dropped; ``X-Forwarded-Host`` and ``X-Forwarded-Port``; 413 for a declared body. Workers: 413 for a chunked body, buffered and streamed. In-process: response fields set and removed.
+   * - Integration with SID 0017, 0018 and 0020
+     - Done, with gaps 7 and 13 to 15
+     - Binary, both paths: a drained server gives up its cookie and its source clients and gets them back; a redirect and a 413 are in the access log; behind a trusted proxy the forwarded client selects the server. Workers: a moved request passes over a drained server; a server added with ``add server`` takes at most 2 of 20 requests while it ramps; a moved request is one log line and one count under the server that answered, with one failure on the server it left.
    * - Round robin
      - Done
      - Routing: equal weights cycle, weights 5, 1, 1 give 50, 10, 10 in 70 turns without a run of five, backups last. Binary, both paths: nine requests visit three servers three times each.
@@ -423,6 +426,25 @@ Formal model
 
 The model takes the scheduler as an arbitrary function. It does not model the round robin credits, the rendezvous ranking or concurrency: the routing table is one lock, so reservations are sequential.
 
+Integration with SID 0017, SID 0018, SID 0020 and SID 0021
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The branch was merged with the direct sends of SID 0017, the run-time changes of SID 0018 and the observability of SID 0020. These rules follow.
+
+**Drained servers (SID 0018).** A drained server takes no new request: not by the scheduler, not by a sticky cookie, not by source stickiness and not by failover. Source stickiness leaves drained servers out of its ranking, so each client of a drained server has one other server until the drain ends. A cookie that names a drained server is replaced by the cookie of the server that answered, and is honoured again after the drain. A server whose drain ends has been out of service, so it ramps when the pool has a ``slow_start``.
+
+**Servers added at run time (SID 0018).** ``add server`` joins a pool that has servers, so the new server ramps like one that a reload adds. Its sticky token is derived from its name, as for a server of the file.
+
+**Retired revisions (SID 0018).** A request is chosen, and moved on a failure, under the routing revision it was decided under, for as long as that revision serves.
+
+**Direct sends (SID 0017).** A request to an HTTP/2 or HTTP/3 server has the same bounds as one to an HTTP/1.1 server. ``connect_timeout`` bounds the opening of the shared session. A server whose session cannot be opened received nothing, so the request moves to another server of the pool. ``response_timeout`` bounds the wait for the response head and the silence of the server between two pieces of the body. It thereby replaces the fixed 60 seconds of SID 0017 as the bound on a silent gRPC stream. Timeouts and statuses are reported to passive health, and the response edits and the sticky cookie apply.
+
+**One line, one count (SID 0020).** A request that moved is logged once and counted once, under the server that ended it. Each server that it left counts one failure in ``sibuna_edge_server_failures_total`` and no request. A redirect and a 413 are answers of our own: they are logged with their status and without a server.
+
+**The client of source stickiness (SID 0020).** Behind ``trusted_proxies`` the client is the address that the proxy recorded, the same address that the access log and the limits use. Without the option it is the socket peer. TCP and UDP pools have no forwarded address and use the socket peer.
+
+**The automatic redirect of SID 0021.** ``redirect_https`` is an explicit member of a cleartext frontend or route. It is self-contained: ``RoutePolicy::redirect_https`` holds it and ``traffic::intercept`` answers it, after the ban table and the request limiter and before the firewall. It knows nothing of managed names. The two redirects write the same answer for the same request, so a name that has both is redirected once, by whichever is asked first. Two points need care in SID 0021. An HTTP-01 challenge under ``/.well-known/acme-challenge/`` must be answered before ``traffic::intercept``, or the frontend needs a route for that prefix with ``redirect_https: false``; otherwise a frontend with ``redirect_https: true`` redirects the challenge. And ``redirect_https: false`` on a route is an explicit choice of the operator that the automatic redirect should respect.
+
 Known gaps
 ~~~~~~~~~~
 
@@ -432,12 +454,15 @@ Known gaps
 #. A request that is refused with 413 closes its connection without reading the body. A client that is still writing may see a reset before it reads the answer.
 #. A 413 from a worker during a streamed body counts in ``upstream_errors``.
 #. No test of the binary runs over TLS. ``Secure``, HSTS and the in-process edits are tested in the lb and ingress crates only.
-#. Source stickiness on TCP and UDP pools follows from the shared reservation and has no test of its own.
+#. Source stickiness on TCP and UDP pools follows from the shared reservation and has no test of its own. The bounds of a direct send to an HTTP/2 or HTTP/3 server have no test of their own either: the gRPC test moves its first call from a dead server, and otherwise runs with the default bounds.
 #. Passive health counts with relaxed atomics. Two workers that report at once may delay an ejection by one failure.
 #. Two pools that name the same server address share its load counters, as in SID 0015, and therefore its ejection and its ramp.
 #. The policy lookup, the firewall switch and the choice of a server each take the lock of the routing table. A topology without any policy pays the lock and nothing else.
 #. Source stickiness ranks every server of the pool for each request: one hash and one integer logarithm per server, on at most 128 servers.
-#. Nothing reports ejections, ramps or failovers to the operator beyond the worker counter ``origin_retries``. SID 0020 owns the metrics.
+#. Nothing reports ejections and ramps to the operator. A failover shows in the worker counter ``origin_retries`` and in the failure counter of the server that was left. ``show servers`` of SID 0018 does not show an ejected or a ramping server.
+#. On a direct send to an HTTP/2 or HTTP/3 server a request moves only when the shared session cannot be opened. A session that fails after the request was sent answers 502, also for a safe request.
+#. Source stickiness gives the clients of a drained server one other server each. The clients of a server that is down or ejected are balanced as usual until it returns.
+#. A run-time change of a weight restarts no ramp.
 #. The branch was not benchmarked. The hot path of a topology without the new options gains one boxed allocation per request and one comparison per head.
 
 Open questions
@@ -453,6 +478,7 @@ Review history
 - 2026-11-24. Initial draft, written from the audit of the edge before its first production use.
 - 2026-11-24. Review of the design before the implementation. The response bound was first one bound for the whole exchange on a worker; it would have let a slow upload hold a slot for 60 seconds, so it now applies only while the server owes bytes. Passive health first ejected without regard to the rest of the pool; the panic rule was added so that a pool of one slow server keeps serving. The cookie first carried the server name; it is now a keyed hash. The redirect first offered 302 and 307; only the permanent statuses 308 and 301 remain, because a temporary redirect to HTTPS is a mistake.
 - 2026-11-24. Review of the implementation. Found and fixed: the in-process path bounded one attempt by the sum of both timeouts and so tried a refused server for too long; the fixed-point logarithm of the rendezvous ranking overflowed; a chunked body was counted from the admission only, so the buffered part escaped ``max_body``; our HSTS field stood beside that of the server; a client could keep a request field that an edit removes by spelling it with ``_``. The slow-start text claimed that least connections ignores the ramp for sequential traffic; the code divides by the weight in the tie-break too, and the text now says so. The gaps that remain are listed in "Known gaps".
+- 2026-11-24. Merge with ``main``, which had gained SID 0018, SID 0020 and the direct sends of SID 0017. The section on integration records the rules. Found and fixed in the merge: eligibility for slow start ignored a drain; source stickiness kept ranking a drained server and read the socket peer behind a trusted proxy; a moved request stayed in the log under the server it had left; the direct send had the fixed bounds of SID 0017 and no failover.
 
 References
 ----------
