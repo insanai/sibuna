@@ -378,7 +378,8 @@ fn failures_of_the_origin_become_502_and_slow_clients_lose_the_connection() {
         let mut client = connect(&daemon);
         send(&mut client, b"GET /silent HTTP/1.1\r\nHost: a\r\n\r\n");
         let silent = read_message(&mut client, false);
-        let wanted = if event_loop { 504 } else { 502 };
+        // Both paths bound the wait for the head by the response timeout of the pool.
+        let wanted = 504;
         assert!(silent.is_none_or(|response| response.status() == wanted), "{event_loop}");
         // A head that never ends is cut off, however slowly its bytes keep coming.
         let mut client = connect(&daemon);
