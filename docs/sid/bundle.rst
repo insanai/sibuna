@@ -27,5 +27,6 @@ Discussion reading order
    records/0019-traffic-policy
    records/0020-edge-observability-and-client-identity
    records/0021-automatic-https
+   records/0022-replicated-bans
 
 .. sid-generated-end
