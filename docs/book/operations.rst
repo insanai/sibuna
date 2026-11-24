@@ -20,7 +20,7 @@ Choosing a Surface
 Edge mode
 ~~~~~~~~~
 
-With ``--config-file`` the daemon runs as an edge load balancer. It forwards TCP and UDP, terminates TLS, HTTP/2 and HTTP/3, and applies the gate or shield to the HTTP names that need it. The chapter *Edge Load Balancing* below describes the file.
+With ``--config-file`` the daemon runs as an edge load balancer. It forwards TCP and UDP, terminates TLS, HTTP/2 and HTTP/3, and applies the gate or shield to the HTTP names that need it. ``sibuna lb`` starts the same load balancer from a few options, without a file, and ``sibuna ctl`` changes its servers while it runs. The chapter *Edge Load Balancing* below describes the commands and the file.
 
 Command-Line Reference
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -169,7 +169,64 @@ Edge Load Balancing
 
 .. admonition:: Objectives
 
-   By the end of this chapter, we should be able to write an edge topology in JSON or JLV, forward TCP and UDP, terminate TLS with HAProxy-style PEM bundles, route HTTP by host name and path to HTTP/1.1, HTTP/2 and HTTP/3 servers, turn the firewall on or off per name, limit rates, check server health, and reload the file without dropping flows.
+   By the end of this chapter, we should be able to start a load balancer with one command, write an edge topology in JLV, forward TCP and UDP, terminate TLS with HAProxy-style PEM bundles, route HTTP by host name and path to HTTP/1.1, HTTP/2 and HTTP/3 servers, turn the firewall on or off per name, limit rates, check server health, drain and add servers while the daemon runs, and reload the file without dropping flows.
+
+Starting with one command
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We need no file to balance load. One command serves HTTP on port 8080 and spreads the requests over two servers.
+
+.. code-block:: sh
+
+   sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
+
+``--bind`` and ``--server`` take numeric addresses and may repeat. ``:8080`` means every IPv4 address of the host. The firewall is off, so the command is a plain load balancer. The other options are few.
+
+.. list-table:: Options of ``sibuna lb``
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Option
+     - Meaning
+   * - ``--proto http|tcp|udp``
+     - The protocol of the listener and the servers. The default is ``http``.
+   * - ``--tls PEM``
+     - Terminate TLS with a combined PEM file, or with every ``*.pem`` file of a directory.
+   * - ``--health PATH|tcp``
+     - Probe each server with ``GET PATH``, or with a TCP connect.
+   * - ``--firewall off|gate|shield``
+     - The HTTP surface. The default is ``off``.
+   * - ``--admin SOCKET``
+     - Open the admin socket at this path for ``sibuna ctl``.
+   * - ``--print-config``
+     - Print the equivalent configuration and exit.
+   * - ``--format jlv|json``
+     - The printed format. The default is JLV.
+
+A port below 1024 needs the capability ``CAP_NET_BIND_SERVICE``. The packaged unit ``sibuna-edge.service`` grants it and runs the file ``/etc/sibuna/edge.jlv``. The section *Changing servers at run time* describes the unit.
+
+When the setup has proved itself we move it to a file. The same command with ``--print-config`` prints the module.
+
+.. code-block:: sh
+
+   sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80 --print-config > edge.jlv
+   sibuna check -f edge.jlv
+   sibuna --config-file edge.jlv
+
+.. code-block:: text
+
+   // Written by `sibuna lb --print-config`. Check it with `sibuna check -f edge.jlv`.
+   fn edge() -> Map<Value> {
+       return {
+           http: { surface: "off" },
+           frontends: { web: { binds: ["0.0.0.0:8080"] } },
+           backends: { app: { servers: ["10.0.0.1:80", "10.0.0.2:80"] } },
+       }
+   }
+
+The quick start and the file are one mechanism. The command writes this document in memory and passes it through the checks of a file, so the printed module serves exactly what the command served. With three or more servers on one port the module lists the hosts once and generates the servers: ``servers: [for host in hosts: "${host}:80"]``. Every build prints JLV. A build without the ``jlv`` feature cannot load it and prints JSON by default.
+
+This file is also the smallest one. A frontend without ``proto`` and a backend without ``mode`` speak HTTP. A frontend without ``default_backend`` takes the only backend of its protocol. A server written as a string is named by its address.
 
 Frontends, backends and servers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -231,34 +288,51 @@ The semantic firewall inspects HTTP requests. It never runs on a TCP or UDP fron
 A first topology
 ~~~~~~~~~~~~~~~~
 
-This file forwards one TCP port and one UDP port.
+This module forwards one TCP port and one UDP port.
 
-.. code-block:: json
+.. code-block:: text
 
-   {
-     "global": {"max_flows": 8192},
-     "frontends": {
-       "ssh": {"proto": "tcp", "binds": ["0.0.0.0:2222"], "default_backend": "forge_ssh",
-               "session_timeout": "1h"},
-       "dns": {"proto": "udp", "binds": ["192.0.2.10:53"], "default_backend": "nameservers",
-               "session_timeout": "10s", "udp_defense": {"mode": "rate_limit", "threshold_pps": 200}}
-     },
-     "backends": {
-       "forge_ssh": {"mode": "tcp", "servers": [
-         {"name": "a", "addr": "10.20.0.8:22", "weight": 2, "max_flows": 100},
-         {"name": "b", "addr": "10.20.0.9:22", "weight": 1, "max_flows": 50}
-       ]},
-       "nameservers": {"mode": "udp", "balance": {"kind": "bounded_maglev"},
-                       "servers": [{"name": "ns1", "addr": "10.20.0.53:53"}]}
-     }
+   fn edge() -> Map<Value> {
+       return {
+           global: { max_flows: 8192 },
+           frontends: {
+               ssh: { proto: "tcp", binds: ["0.0.0.0:2222"], session_timeout: "1h" },
+               dns: {
+                   proto: "udp", binds: ["192.0.2.10:53"], session_timeout: "10s",
+                   udp_defense: { mode: "rate_limit", threshold_pps: 200 },
+               },
+           },
+           backends: {
+               forge_ssh: { mode: "tcp", servers: [
+                   { name: "a", addr: "10.20.0.8:22", weight: 2, max_flows: 100 },
+                   { name: "b", addr: "10.20.0.9:22", weight: 1, max_flows: 50 },
+               ] },
+               nameservers: {
+                   mode: "udp", balance: { kind: "bounded_maglev" },
+                   servers: ["10.20.0.53:53"],
+               },
+           },
+       }
    }
 
-We save it as ``edge.json``, check it and start the listeners.
+We save it as ``edge.jlv``, check it and start the listeners.
 
 .. code-block:: sh
 
-   sibuna check -f edge.json
-   sibuna --config-file edge.json
+   sibuna check -f edge.jlv
+   sibuna --config-file edge.jlv
+
+The document that ``edge`` returns is the configuration. The same document written as JSON in a file that ends in ``.json`` is accepted too, and the JSON examples of this chapter show that form. A JSON object is also a JLV map, so each of them becomes a module when we put it after ``return``. We teach JLV, because a module can name a value once and generate the rest. The section *Writing the topology in JLV* shows how.
+
+A failure to start is explained. The diagnostic has a title, the cause and a hint, and carries the code ``EDGE001``. An address in use, a port that needs a capability, a certificate that cannot be read, a missing file and an invalid key each have their own.
+
+.. code-block:: text
+
+   -- ADDRESS IN USE (EDGE001) ------------------------------------------------
+
+   listener Http 0.0.0.0:8080: Address already in use (os error 98).
+
+   Hint: Another process listens on this address. Find it with `ss -ltnp`, stop it, or change `binds`.
 
 The checker rejects unknown keys, duplicate server identities, missing backends and invalid routes. It also loads every certificate and CA file. Startup binds every listener before it announces readiness. A UDP frontend binds a specific local IP, so replies leave from the address the client contacted. Durations are whole numbers with ``ms``, ``s``, ``m`` or ``h``, up to one day.
 
@@ -281,6 +355,15 @@ Global limits
    * - ``workers``
      - ``"auto"``
      - Relay threads for established TCP streams, 1 to 64. ``"auto"`` is one per CPU, up to eight.
+   * - ``admin_socket``
+     - none
+     - The path of the admin socket for ``sibuna ctl``, at most 86 bytes. Without the key no socket is opened. Changing it takes a restart.
+   * - ``watch``
+     - none
+     - Look at the file at this interval, ``1s`` to ``1h``, and reload it when it changed.
+   * - ``shutdown_timeout``
+     - ``"5s"``
+     - How long a shutdown waits for established flows before it closes them, up to ``1h``. A reload may change it.
 
 One worker thread accepts connections, inspects handshakes and owns the UDP mappings. Established TCP streams move to the relay threads. On Linux every thread waits with epoll, so an idle flow costs no CPU time. We budget two file descriptors for each TCP stream and one for each UDP mapping. The operating system must allow the daemon that many descriptors (``LimitNOFILE`` under systemd).
 
@@ -574,7 +657,95 @@ We check the module with ``sibuna check -f edge.jlv`` and run it with ``sibuna -
 Reload, drain and shutdown
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-On Unix we replace the file and send SIGHUP. Sibuna prepares the whole revision first: the topology, the policy, the certificates and the server adapters. A valid revision updates routing for new flows. Established TCP streams, UDP mappings and running HTTP exchanges keep their server. A handshake still awaiting inspection is closed at the policy boundary. A rejected revision leaves the serving one untouched, and the log line ``EDGE002`` says why. We remove a server from its pool to drain it. Changing listener addresses, the HTTP surface, the firewall limits, the challenge seed or the mesh roster takes a restart. Shutdown stops admitting new flows, sends GOAWAY on HTTP/2 and HTTP/3, and gives active flows up to five seconds to finish.
+On Unix we replace the file and send SIGHUP. Sibuna prepares the whole revision first: the topology, the policy, the certificates and the server adapters. A valid revision updates routing for new flows. Established TCP streams, UDP mappings and running HTTP exchanges keep their server. A handshake still awaiting inspection is closed at the policy boundary. A rejected revision leaves the serving one untouched, and the log line ``EDGE002`` says why. To take one server out of rotation we drain it through the admin socket, as the next section shows. Changing listener addresses, the HTTP surface, the firewall limits, the challenge seed or the mesh roster takes a restart. Shutdown stops admitting new flows, sends GOAWAY on HTTP/2 and HTTP/3, and gives active flows the time of ``global.shutdown_timeout`` to finish, five seconds by default. The last log line counts the flows that were closed by force.
+
+A reload fails no request. The firewall decides a request under one policy and selects its server a moment later. When a reload falls between the two, the request is routed by the revision it was decided under. The daemon keeps the replaced revision for ten seconds for this purpose.
+
+With ``global.watch`` the daemon reloads the file by itself. It looks at the modification time and the length of the file at the given interval, and loads the file when both differ from the last load and have been the same for two looks. The second condition waits for a writer to finish. A rejected file is logged once and not tried again until it changes. The watcher is off by default. After a reviewed edit, ``sibuna check -f`` followed by SIGHUP or ``sibuna ctl SOCKET reload`` shows us the result. The watcher suits a file that a deployment tool replaces by rename.
+
+Changing servers at run time
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A deployment takes one server out of rotation, replaces it, and returns it. For this we need no edit of the file. The daemon opens a local admin socket when the file names one, and ``sibuna ctl`` sends it one command.
+
+.. code-block:: text
+
+   fn edge() -> Map<Value> {
+       return {
+           global: { admin_socket: "/run/sibuna/edge.sock" },
+           frontends: { web: { binds: ["0.0.0.0:8080"] } },
+           backends: { app: { servers: ["10.0.0.1:80", "10.0.0.2:80"] } },
+       }
+   }
+
+.. code-block:: text
+
+   $ sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain
+   $ sibuna ctl /run/sibuna/edge.sock add server app/blue 10.0.0.3:80 weight 2
+   $ sibuna ctl /run/sibuna/edge.sock show servers
+   pool name        address     state weight flows health changed
+   app  10.0.0.1:80 10.0.0.1:80 drain 1      4     -      state
+   app  10.0.0.2:80 10.0.0.2:80 ready 1      9     -      -
+   app  blue        10.0.0.3:80 ready 2      0     -      added
+
+.. list-table:: Commands of ``sibuna ctl SOCKET``
+   :header-rows: 1
+   :widths: 46 54
+
+   * - Command
+     - Effect
+   * - ``show servers``
+     - One line per server. The column ``changed`` holds ``-`` for a server that is served as the file describes it, ``added`` for one that a command added, and ``state`` or ``weight`` for a changed field.
+   * - ``show info``
+     - The version, the process, the file, the number of reloads, the watcher, the flows, the drops, the number of run-time changes, and the servers of the file that a command removed.
+   * - ``set server POOL/NAME state ready|drain``
+     - ``drain`` stops new flows to the server. Its health probes continue. ``ready`` admits it again. ``maint`` is accepted as another word for ``drain``.
+   * - ``set server POOL/NAME weight N``
+     - Sets the weight, 1 to 65,535.
+   * - ``add server POOL/NAME IP:PORT [weight N]``
+     - Adds a server. It takes the health check of its pool and starts in service. The name has 1 to 64 letters, digits and ``. _ : [ ] -``.
+   * - ``del server POOL/NAME``
+     - Removes a server. The last server of a pool stays. We drain it instead.
+   * - ``reload``
+     - Loads the file and applies it, as SIGHUP does, and prints the result or the reason for which the file was rejected.
+   * - ``help``
+     - Lists the commands.
+
+A command applies to new flows only. An established TCP stream, a UDP mapping and a running HTTP exchange keep their server, as they do across a reload. ``sibuna ctl`` exits with status 0 on success. On failure it exits with status 1 and prints a diagnostic with a code from ``ADM001`` to ``ADM010`` and a hint, and nothing has changed.
+
+The file stays the authority. Run-time changes live in memory, as an overlay on the last accepted revision, and the daemon never writes the file. The table says what happens to each change.
+
+.. list-table:: Run-time changes and the file
+   :header-rows: 1
+   :widths: 28 30 20 22
+
+   * - Change
+     - Successful reload
+     - Rejected reload
+     - Restart
+   * - ``state drain``
+     - Kept, while the file still has a server of that pool, name and address
+     - Kept
+     - Lost
+   * - ``weight``, ``add server``, ``del server``
+     - Replaced by the file
+     - Kept
+     - Lost
+
+A weight, an addition and a removal are topology, and the file can express them. The run-time form is a rehearsal. To keep the change we edit the module: a server added with ``add server app/blue 10.0.0.3:80`` becomes a new element of ``servers``, or a new host of the list that a comprehension reads. A drain is different. It says that somebody is working on a machine, and the file has no key for it. A reload must not return that machine to rotation, so a drain passes the reload. It ends when we say ``ready``, when the file drops the server or gives its name another address, or when the daemon restarts. The log line of a reload states what it did: ``Sibuna edge routes reloaded: 1 drain kept, 2 run-time changes replaced by the file``.
+
+Two kinds of pool change their servers and weights only by reload. A pool with ``bounded_maglev``, and the default pool of a node with a ``mesh``, place clients by a table that every node builds from the file. A pool with ``http_version`` or ``tls`` reaches its servers through adapters that a reload prepares. ``drain`` works for every pool. A command acts on one node. On several nodes we send it to each.
+
+The socket is a Unix socket with mode 0600, so only the user of the daemon can connect. Whoever can connect can direct traffic to an address of his choice. There is no TCP listener for administration. A connection carries one line of at most 512 bytes, and the daemon accepts a burst of 20 commands and 10 per second after it. Each command that changes state is logged with the code ``EDGE010``. A daemon that ``sibuna lb`` started has no file, so ``reload`` and SIGHUP are refused, and its run-time changes last until it stops.
+
+Under systemd the Linux packages install the unit ``sibuna-edge.service`` beside ``sibuna.service`` and start neither. It runs ``sibuna --config-file /etc/sibuna/edge.jlv`` as the account ``sibuna`` with the one capability ``CAP_NET_BIND_SERVICE``, so it can bind ports 80 and 443. It raises the descriptor limit to 65,536, gives the daemon ``/run/sibuna`` for the admin socket, restarts it after a failure, and keeps the hardening of ``sibuna.service``. ``systemctl reload sibuna-edge`` checks the file and sends SIGHUP.
+
+.. code-block:: sh
+
+   sibuna lb --bind :443 --tls /etc/sibuna/certs/ --server 10.0.0.1:80 --server 10.0.0.2:80 \
+       --admin /run/sibuna/edge.sock --print-config | sudo tee /etc/sibuna/edge.jlv
+   sudo systemctl enable --now sibuna-edge
+   sudo -u sibuna sibuna ctl /run/sibuna/edge.sock show servers
 
 Several nodes
 ~~~~~~~~~~~~~
@@ -671,12 +842,24 @@ Coming from HAProxy
    * - ``stick-table ... conn_rate``, ``http_req_rate``
      - ``rate_limit`` on a frontend, ``http.rate_limit``
    * - ``reload`` (new process)
-     - SIGHUP (same process, flows kept)
+     - SIGHUP or ``sibuna ctl SOCKET reload`` (same process, flows kept)
+   * - ``stats socket /run/haproxy.sock mode 600 level admin``
+     - ``"global": {"admin_socket": "/run/sibuna/edge.sock"}``
+   * - ``echo "show servers state" | socat stdio /run/haproxy.sock``
+     - ``sibuna ctl /run/sibuna/edge.sock show servers``
+   * - ``set server app/s1 state drain``, ``state maint``, ``state ready``
+     - ``set server app/s1 state drain``, ``state ready``
+   * - ``set server app/s1 weight 10``
+     - ``set server app/s1 weight 10``
+   * - ``add server app/s3 10.0.0.3:80``, ``del server app/s3``
+     - ``add server app/s3 10.0.0.3:80``, ``del server app/s3``
+   * - ``server-state-file`` with ``load-server-state-from-file``
+     - Not needed for drains, which pass a reload. Other run-time changes are made durable in the file.
 
 Limits of this version
 ~~~~~~~~~~~~~~~~~~~~~~
 
-On Linux the HTTP firewall serves connections on event-driven workers, one per processor, up to ``http.max_connections``. A connection that waits holds a small record and no buffer. On other platforms, and with ``event_loop`` ``false``, each HTTP/1.1 connection and each HTTP/2 or HTTP/3 exchange has a thread of its own, up to 8192 at a time. A WebSocket to a pool with ``http_version`` 2 or 3 answers 501. HTTP/3 clients cannot open WebSockets, and browsers fall back to HTTP/1.1 or HTTP/2 for them. Server addresses are numeric. Request headers are limited to 16 KiB on HTTP/2 and HTTP/3. Sticky sessions by cookie, response compression, caching and header rewriting are not provided. SID 0015 lists the parts of the design that remain proposals: the shared-memory spill cache, database-backed topology, replicated bans, peer forwarding, binary handoff, plugins and the fleet console.
+On Linux the HTTP firewall serves connections on event-driven workers, one per processor, up to ``http.max_connections``. A connection that waits holds a small record and no buffer. On other platforms, and with ``event_loop`` ``false``, each HTTP/1.1 connection and each HTTP/2 or HTTP/3 exchange has a thread of its own, up to 8192 at a time. A WebSocket to a pool with ``http_version`` 2 or 3 answers 501. HTTP/3 clients cannot open WebSockets, and browsers fall back to HTTP/1.1 or HTTP/2 for them. Server addresses are numeric. The admin socket changes servers only: frontends, routes, certificates and policy change by reload. Run-time changes do not survive a restart. Request headers are limited to 16 KiB on HTTP/2 and HTTP/3. Sticky sessions by cookie, response compression, caching and header rewriting are not provided. SID 0015 lists the parts of the design that remain proposals: the shared-memory spill cache, database-backed topology, replicated bans, peer forwarding, binary handoff, plugins and the fleet console.
 
 
 Console Preview
