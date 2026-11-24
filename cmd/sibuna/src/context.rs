@@ -57,6 +57,8 @@ pub(crate) struct Ctx<'c, W> {
     pub workspace: &'c mut Workspace,
     pub cache: &'c mut EngineCache,
     pub activity: &'c Activity,
+    /// Where an event-driven worker receives the plan of an admitted request.
+    pub defer: Option<&'c mut crate::dispatch::Defer>,
     pub request: Request<'c>,
     /// Bytes read after the buffered body: a pipelined request, or the start of a streamed
     /// upload or upgraded connection.
@@ -118,9 +120,10 @@ impl<'c, W: Write> Ctx<'c, W> {
             ingress: link.ingress,
             stream: link.stream,
             writer: &mut link.writer,
-            workspace: &mut link.workspace,
-            cache: &mut link.cache,
+            workspace: &mut *link.workspace,
+            cache: &mut *link.cache,
             activity: link.activity,
+            defer: link.defer.as_deref_mut(),
             request,
             pending: &[],
             upload: Upload::None,

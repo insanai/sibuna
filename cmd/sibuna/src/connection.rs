@@ -46,8 +46,10 @@ pub(crate) struct Link<'c, W> {
     pub ingress: Option<Ingress>,
     pub stream: &'c TcpStream,
     pub writer: W,
-    pub workspace: Workspace,
-    pub cache: EngineCache,
+    pub workspace: &'c mut Workspace,
+    pub cache: &'c mut EngineCache,
+    /// Set by an event-driven worker: an admitted request is planned, not relayed.
+    pub defer: Option<&'c mut crate::dispatch::Defer>,
     pub activity: &'c sibuna_net::Activity,
     /// The last request this connection may serve: its response announces the close.
     pub last: bool,
@@ -82,13 +84,15 @@ pub(crate) fn serve_from(
     let mut reader = Reader::new(stream, &mut read_buffer[..]);
     let mut peer = PeerText::default();
     peer.format(ingress.map(|i| i.peer).or_else(|| stream.peer_addr().ok()));
+    let (mut workspace, mut cache) = (Workspace::new(), EngineCache::new());
     let mut link = Link {
         server,
         ingress,
         stream,
         writer: ClientWriter::new(Writer::new(stream, &mut write_buffer[..])),
-        workspace: Workspace::new(),
-        cache: EngineCache::new(),
+        workspace: &mut workspace,
+        cache: &mut cache,
+        defer: None,
         activity: lease.activity(),
         last: false,
         admission: Some(admission),
@@ -146,7 +150,7 @@ fn read_head(reader: &mut Reader<'_, &TcpStream>) -> Head {
     }
 }
 
-fn find_blank_line(bytes: &[u8]) -> Option<usize> {
+pub(crate) fn find_blank_line(bytes: &[u8]) -> Option<usize> {
     bytes.windows(4).position(|window| window == b"\r\n\r\n")
 }
 
@@ -215,7 +219,8 @@ fn serve_with_body<W: Write>(
         Ok(body) => body,
         Err(fault) => {
             let declared = if chunked { UNKNOWN_LENGTH } else { declared };
-            return reject_body(reader, link, peer, head_len, declared, fault);
+            let head = reader.buffered().get(..head_len).unwrap_or_default();
+            return reject_body(head, link, peer, declared, fault);
         }
     };
     let bytes = reader.buffered();
@@ -232,7 +237,7 @@ fn serve_with_body<W: Write>(
 
 /// Puts the request path in normal form, then dispatches the request. A path without a
 /// normal form is answered 400 and the connection closed.
-fn dispatch<W: Write>(
+pub(crate) fn dispatch<W: Write>(
     link: &mut Link<'_, W>,
     request: Request<'_>,
     pending: &[u8],
@@ -254,7 +259,7 @@ fn dispatch<W: Write>(
 
 /// Why a body could not be buffered.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum BodyFault {
+pub(crate) enum BodyFault {
     Truncated,
     Malformed,
 }
@@ -307,7 +312,7 @@ fn buffer_chunked(
 }
 
 /// Answers a head that does not parse.
-fn reject_head<W: Write>(link: &mut Link<'_, W>, error: ParseError) -> bool {
+pub(crate) fn reject_head<W: Write>(link: &mut Link<'_, W>, error: ParseError) -> bool {
     link.server.metrics.parse_errors.bump();
     let writer = &mut link.writer;
     let _ = if error == ParseError::UnsupportedTransferEncoding {
@@ -322,29 +327,27 @@ fn reject_head<W: Write>(link: &mut Link<'_, W>, error: ParseError) -> bool {
 /// True when `request` has more than one `Host` field. RFC 9112 section 3.2 requires a 400:
 /// recipients disagree on which one counts, and a `Connection` field naming `host` once
 /// made the proxy drop both.
-fn has_repeated_host(request: &Request<'_>) -> bool {
+pub(crate) fn has_repeated_host(request: &Request<'_>) -> bool {
     let mut hosts = request.headers().iter().filter(|h| h.name.eq_ignore_ascii_case(b"host"));
     hosts.next().is_some() && hosts.next().is_some()
 }
 
 /// Answers a request with more than one `Host` field.
-fn reject_repeated_host<W: Write>(link: &mut Link<'_, W>) -> bool {
+pub(crate) fn reject_repeated_host<W: Write>(link: &mut Link<'_, W>) -> bool {
     link.server.metrics.parse_errors.bump();
     let _ = response::write_400(&mut link.writer, b"Malformed HTTP request: repeated Host field");
     false
 }
 
 /// The head identifies an external request even when its body is incomplete or malformed.
-fn reject_body<W: Write>(
-    reader: &Reader<'_, &TcpStream>,
+pub(crate) fn reject_body<W: Write>(
+    head: &[u8],
     link: &mut Link<'_, W>,
     peer: &[u8],
-    head_len: usize,
     declared: usize,
     fault: BodyFault,
 ) -> bool {
-    let bytes = reader.buffered();
-    if let Ok(request) = parse_request(bytes.get(..head_len).unwrap_or_default()) {
+    if let Ok(request) = parse_request(head) {
         let mut ctx = Ctx::new(link, request, peer, declared);
         crate::telemetry::record_outcome(&mut ctx, crate::telemetry::Outcome::Other, 400);
         crate::telemetry::observe_rejected_body(&ctx);
@@ -356,7 +359,7 @@ fn reject_body<W: Write>(
 /// A client may wait for 100 Continue before sending any body. We complete that exchange
 /// locally; policy still checks the buffered prefix before any body reaches the origin.
 /// Returns false when the expectation is refused (417).
-fn expect_continue<W: Write>(
+pub(crate) fn expect_continue<W: Write>(
     link: &mut Link<'_, W>,
     request: &Request<'_>,
     declared: usize,

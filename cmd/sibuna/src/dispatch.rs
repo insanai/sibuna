@@ -402,6 +402,9 @@ pub(crate) fn forward<W: Write>(
         }
     };
     server.metrics.proxied.bump();
+    if ctx.defer.is_some() {
+        return plan(ctx, status, rule_name, selected);
+    }
     if ctx.request.header(b"upgrade").is_some() {
         // An upgraded connection may live for hours; it must not pin this snapshot.
         ctx.cache.release();
@@ -451,13 +454,72 @@ pub(crate) fn forward<W: Write>(
     };
     let relayed = relay(&server.pool, ctx.workspace, exchange, selected);
     telemetry::admitted_complete(ctx, origin_status, origin.as_ref());
-    match relayed {
-        Ok(keep) => Ok(keep),
-        Err(error) => {
-            server.metrics.upstream_errors.bump();
-            answer_proxy_error(ctx.writer, error)?;
-            Ok(false)
+    relayed.or_else(|error| refuse_proxy_error(ctx, error))
+}
+
+/// Counts a failed exchange and answers it. The connection closes after the answer.
+fn refuse_proxy_error<W: Write>(ctx: &mut Ctx<'_, W>, error: ProxyError) -> io::Result<bool> {
+    ctx.server.metrics.upstream_errors.bump();
+    answer_proxy_error(ctx.writer, error)?;
+    Ok(false)
+}
+
+/// The scratch space an event-driven worker lends to a dispatch (SID 0016).
+#[derive(Default)]
+pub(crate) struct Defer {
+    /// The origin request of the admitted request: its head and buffered body.
+    pub wire: Vec<u8>,
+    /// Set when the request was admitted.
+    pub plan: Option<Plan>,
+}
+
+/// What a worker needs to carry out an admitted request.
+pub(crate) struct Plan {
+    /// The server reservation. It records the outcome and is released when dropped.
+    pub target: sibuna_lb::HttpTarget,
+    /// The framing of the request and what remains of its body.
+    pub outbound: sibuna_net::machine::Outbound,
+    /// The client asked to keep its connection.
+    pub keep_alive: bool,
+}
+
+/// Plans an admitted request in place of relaying it: encodes the origin request and
+/// hands the reservation to the worker. A request without a selected server is refused.
+fn plan<W: Write>(
+    ctx: &mut Ctx<'_, W>,
+    status: &str,
+    rule_name: &str,
+    selected: Option<sibuna_lb::HttpTarget>,
+) -> io::Result<bool> {
+    let Some(target) = selected else {
+        let status = Status::ServiceUnavailable;
+        response::write_text(ctx.writer, status, status.reason().as_bytes(), false)?;
+        return Ok(false);
+    };
+    let config = &ctx.server.config;
+    let audit = Audit {
+        client_ip: ctx.client_ip,
+        peer: ctx.peer,
+        trusts_forwarded: config.trusts_forwarded(),
+        ja4_header: config.ja4_header.as_deref().unwrap_or_default().as_bytes(),
+        status: status.as_bytes(),
+        rule: rule_name.as_bytes(),
+        scheme: if ctx.ingress.is_some_and(|i| i.secure) {
+            b"https"
+        } else {
+            forwarded::scheme(&ctx.request, config.trusts_forwarded()).as_bytes()
+        },
+        response_status: None,
+        response_head: None,
+    };
+    let Some(defer) = ctx.defer.as_deref_mut() else { return Ok(false) };
+    defer.wire.clear();
+    match sibuna_net::machine::encode_request(&mut defer.wire, &ctx.request, ctx.upload, &audit) {
+        Ok(outbound) => {
+            defer.plan = Some(Plan { target, outbound, keep_alive: ctx.keep_alive });
+            Ok(ctx.keep_alive)
         }
+        Err(error) => refuse_proxy_error(ctx, error),
     }
 }
 
@@ -502,7 +564,7 @@ fn relay<W: Write>(
     }
 }
 
-fn answer_proxy_error<W: Write>(writer: &mut W, error: ProxyError) -> io::Result<()> {
+pub(crate) fn answer_proxy_error<W: Write>(writer: &mut W, error: ProxyError) -> io::Result<()> {
     match error {
         ProxyError::InvalidUpgrade => response::write_400(writer, b"Invalid upgrade"),
         ProxyError::UpstreamUnreachable => {
