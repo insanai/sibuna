@@ -3,9 +3,9 @@
 //!
 //! The policy itself is read and kept by `sibuna_lb`. This module joins it to a request.
 
-use std::io::{self, Write};
-use std::net::SocketAddr;
-use std::time::Instant;
+use std::io::{self, Read, Write};
+use std::net::{Shutdown, SocketAddr, TcpStream};
+use std::time::{Duration, Instant};
 
 use sibuna_http::Request;
 use sibuna_http::response::{self, Status};
@@ -16,6 +16,37 @@ use crate::connection::{Ingress, UNKNOWN_LENGTH};
 use crate::context::Ctx;
 use crate::server::Server;
 use crate::telemetry::{self, Outcome};
+
+/// How long a connection whose body we refused may keep sending before it is closed.
+pub(crate) const LINGER_TIME: Duration = Duration::from_secs(2);
+/// How many bytes of a refused body are discarded before the connection is closed.
+pub(crate) const LINGER_BYTES: usize = 1 << 20;
+
+/// True when `status` is our answer to a request body that is too large. The client
+/// may still be sending that body.
+pub(crate) fn refused_body(status: u16) -> bool {
+    status == 413
+}
+
+/// Discards what the client still sends after an answer that refused its body, for at
+/// most [`LINGER_TIME`] and [`LINGER_BYTES`]. Closing over unread bytes resets the
+/// connection, and the reset can destroy the answer on its way.
+pub(crate) fn linger(mut stream: &TcpStream) {
+    let _ = stream.shutdown(Shutdown::Write);
+    let until = Instant::now() + LINGER_TIME;
+    let mut block = [0u8; 4096];
+    let mut left = LINGER_BYTES;
+    while left > 0 {
+        let wait = until.saturating_duration_since(Instant::now());
+        if wait.is_zero() || stream.set_read_timeout(Some(wait)).is_err() {
+            break;
+        }
+        match stream.read(&mut block) {
+            Ok(0) | Err(_) => break,
+            Ok(count) => left = left.saturating_sub(count),
+        }
+    }
+}
 
 /// The most `Cookie` fields of one request that are searched for the sticky cookie.
 const MAX_COOKIE_FIELDS: usize = 8;

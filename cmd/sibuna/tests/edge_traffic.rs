@@ -385,6 +385,9 @@ fn a_body_above_max_body_is_answered_with_413() {
         let before = origin.requests.load(Ordering::SeqCst);
         assert_eq!(chunked(&edge, &chunk, 101, false).status(), 413);
         assert_eq!(origin.requests.load(Ordering::SeqCst), before);
+        // The refusal is the fault of the client: no server error is counted.
+        let metrics = get(&edge, "/__sibuna/metrics").text();
+        assert!(metrics.contains("sibuna_upstream_errors_total 0\n"), "({event_loop})\n{metrics}");
     });
 }
 
@@ -612,5 +615,28 @@ fn source_stickiness_follows_the_client_that_a_trusted_proxy_names() {
         let spread: BTreeSet<String> =
             (1..=24).flat_map(|last| names(&edge, 1, &client(last))).collect();
         assert_eq!(spread.len(), 1, "{spread:?} ({event_loop})");
+    });
+}
+
+#[test]
+fn a_client_that_still_sends_a_refused_body_reads_the_413() {
+    let origin = Origin::start("a");
+    both(|event_loop| {
+        let edge =
+            Topology::new(&[origin.address]).frontend(r#""max_body":16,"#).start(event_loop);
+        let mut client = edge.connect();
+        let head = "POST /length HTTP/1.1\r\nHost: app.example\r\nContent-Length: 400000\r\n\r\n";
+        request(&mut client, head.as_bytes());
+        // The answer is on its way while the body is still written. A close over unread
+        // bytes would reset the connection and lose the answer.
+        for _ in 0..100 {
+            request(&mut client, &[b'x'; 4000]);
+            std::thread::sleep(Duration::from_millis(2));
+        }
+        let answer = traffic::read_message(&mut client, false).expect("the answer, not a reset");
+        assert_eq!(answer.status(), 413, "({event_loop})");
+        // The refusal is the client's fault: no server error is counted.
+        let metrics = get(&edge, "/__sibuna/metrics").text();
+        assert!(metrics.contains("sibuna_upstream_errors_total 0\n"), "({event_loop})\n{metrics}");
     });
 }

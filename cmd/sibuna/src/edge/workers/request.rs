@@ -10,7 +10,7 @@ use sibuna_http::response::{self, Status};
 use sibuna_http::{Method, parse_request};
 use sibuna_net::{Activity, Upload, Workspace};
 
-use super::conn::{Buffer, Conn, Reading};
+use super::conn::{Buffer, Conn, Linger, Reading};
 use crate::client_writer::ClientWriter;
 use crate::connection::{
     self, BodyFault, Link, MAX_HEAD_BYTES, MAX_REQUESTS_PER_CONNECTION, UNKNOWN_LENGTH,
@@ -64,7 +64,8 @@ struct Framed {
 /// Reads as much of the next request as the input holds and dispatches it when it is
 /// complete. The caller guarantees that the connection has an input buffer.
 pub(super) fn advance(server: &Server, conn: &mut Conn, scratch: &mut Scratch) -> Step {
-    let Conn { stream, ingress, peer, admission, input, output, reading, served, .. } = conn;
+    let Conn { stream, ingress, peer, admission, input, output, reading, served, linger, .. } =
+        conn;
     let Some(buffer) = input.as_mut() else { return Step::Wait };
     let mut link = Link {
         server,
@@ -89,6 +90,9 @@ pub(super) fn advance(server: &Server, conn: &mut Conn, scratch: &mut Scratch) -
             None => {
                 let (trace, ingress) = (&mut scratch.trace, Some(*ingress));
                 crate::access::settle_written(server, trace, tally, ingress, peer.as_bytes());
+                if crate::traffic::refused_body(tally.status) && !keep {
+                    *linger = Linger::Wanted;
+                }
                 Step::Answered { keep, used }
             }
         },

@@ -8,7 +8,7 @@ use sibuna_net::ProxyError;
 use sibuna_net::machine::{Fed, Outcome, ResponseRelay};
 use sibuna_reactor::{Io, READ, handle, read_once as read, start_connect, write_once as write};
 
-use super::conn::{BUFFER, Exchange, HIGH_WATER, Origin};
+use super::conn::{BUFFER, Exchange, HIGH_WATER, Linger, Origin};
 use super::worker::{KEPT_CAPACITY, KIND_ORIGIN, Side, Worker, key};
 use crate::client_writer::ClientWriter;
 use crate::dispatch::{Plan, answer_proxy_error};
@@ -473,7 +473,6 @@ impl Worker {
 
     /// Ends the exchange with a page of Sibuna's own and closes after it.
     fn respond(&mut self, index: u32, page: impl FnOnce(&mut Page<'_>) -> std::io::Result<()>) {
-        self.server.metrics.upstream_errors.bump();
         let now = self.now;
         let Some(conn) = self.conns.at(index) else { return };
         let Some(exchange) = conn.exchange.take() else { return };
@@ -481,7 +480,14 @@ impl Worker {
         writer.begin_response(exchange.head_request);
         // Writing to a vector cannot fail.
         let _ = page(&mut writer);
-        super::trace::answered(&self.server, &mut conn.trace, writer.tally(), now);
+        let tally = writer.tally();
+        if crate::traffic::refused_body(tally.status) {
+            // The client sent too much. No server failed, and the client may still send.
+            conn.linger = Linger::Wanted;
+        } else {
+            self.server.metrics.upstream_errors.bump();
+        }
+        super::trace::answered(&self.server, &mut conn.trace, tally, now);
         conn.closing = true;
         conn.activity = now;
         if let Some(at) = exchange.origin {

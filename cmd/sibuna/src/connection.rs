@@ -121,6 +121,9 @@ pub(crate) fn serve_from(
         let tally = link.writer.tally();
         crate::access::settle_written(server, link.trace, tally, ingress, peer.as_bytes());
         if !keep {
+            if crate::traffic::refused_body(tally.status) {
+                crate::traffic::linger(stream);
+            }
             break;
         }
         lease.touch();
