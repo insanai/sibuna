@@ -299,3 +299,62 @@ fn a_websocket_over_http2_becomes_an_http11_upgrade_and_a_byte_tunnel() {
     // Each tunnel has a firewall connection of its own.
     assert_eq!(connections.load(Ordering::SeqCst), 2);
 }
+
+/// A place under a bound of concurrent connections. Dropping it frees the place.
+struct Place(Arc<AtomicUsize>);
+
+impl Drop for Place {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, Ordering::SeqCst);
+    }
+}
+
+async fn quic_connection(vip: SocketAddr) -> Result<(quinn::Endpoint, quinn::Connection), ()> {
+    let mut endpoint = quinn::Endpoint::client("127.0.0.1:0".parse().unwrap()).unwrap();
+    let crypto = quinn::crypto::rustls::QuicClientConfig::try_from(client(b"h3")).unwrap();
+    endpoint.set_default_client_config(quinn::ClientConfig::new(Arc::new(crypto)));
+    let conn = endpoint.connect(vip, "localhost").unwrap().await.map_err(|_| ())?;
+    Ok((endpoint, conn))
+}
+
+#[test]
+fn the_admission_bounds_quic_connections_and_frees_a_place_when_one_ends() {
+    let (vip, mut edge, ingress, _) = setup();
+    let open = Arc::new(AtomicUsize::new(0));
+    let counter = open.clone();
+    ingress.guard(Arc::new(move |_, dest| {
+        assert_eq!(dest, vip);
+        if counter.fetch_add(1, Ordering::SeqCst) >= 2 {
+            counter.fetch_sub(1, Ordering::SeqCst);
+            return None;
+        }
+        Some(Box::new(Place(counter.clone())) as Box<dyn std::any::Any + Send>)
+    }));
+    let runner = std::thread::spawn(move || {
+        let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+        rt.block_on(async {
+            tokio::time::timeout(Duration::from_secs(8), async {
+                let first = quic_connection(vip).await.unwrap();
+                let _second = quic_connection(vip).await.unwrap();
+                assert!(quic_connection(vip).await.is_err(), "a third connection opened");
+                first.1.close(0u32.into(), b"done");
+                first.0.wait_idle().await;
+                // The place of the closed connection is free again, a moment later.
+                for _ in 0..50 {
+                    if quic_connection(vip).await.is_ok() {
+                        return;
+                    }
+                    tokio::time::sleep(Duration::from_millis(20)).await;
+                }
+                panic!("the place of a closed connection was not freed");
+            })
+            .await
+            .unwrap();
+        });
+    });
+    while !runner.is_finished() {
+        edge.step().unwrap();
+    }
+    runner.join().unwrap();
+    assert!(open.load(Ordering::SeqCst) <= 2);
+}

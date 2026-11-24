@@ -41,6 +41,12 @@ pub type Fingerprint = [u8; 32];
 pub type Handler =
     Arc<dyn Fn(TcpStream, SocketAddr, SocketAddr, Option<Fingerprint>) + Send + Sync>;
 
+/// Decides whether a QUIC connection from a client address to a listener may open.
+/// The value it returns is held, and dropped when the connection ends. `None` refuses
+/// the connection. The call must return at once.
+pub type Admit =
+    Arc<dyn Fn(SocketAddr, SocketAddr) -> Option<Box<dyn std::any::Any + Send>> + Send + Sync>;
+
 /// The fingerprint of the first certificate of a chain the handshake verified.
 fn fingerprint(chain: Option<&[rustls::pki_types::CertificateDer<'_>]>) -> Option<Fingerprint> {
     chain?.first().map(|leaf| sibuna_crypto::sha256::Sha256::digest(leaf))
@@ -131,6 +137,7 @@ pub struct Ingress {
     capacity: Arc<Semaphore>,
     idle: Duration,
     drain: watch::Sender<()>,
+    admit: Arc<std::sync::OnceLock<Admit>>,
 }
 
 impl Ingress {
@@ -153,6 +160,7 @@ impl Ingress {
         let mut endpoints = BTreeMap::new();
         let capacity = Arc::new(Semaphore::new(limits.exchanges));
         let (drain, _) = watch::channel(());
+        let admit = Arc::new(std::sync::OnceLock::new());
         let handoff = {
             let _enter = runtime.enter();
             let handoff = Handoff::start(handler)?;
@@ -169,6 +177,7 @@ impl Ingress {
                             inline: inline.clone(),
                             capacity: capacity.clone(),
                             idle: limits.idle,
+                            admit: admit.clone(),
                         },
                         drain.subscribe(),
                     ));
@@ -178,7 +187,7 @@ impl Ingress {
             handoff
         };
         let idle = limits.idle;
-        Ok(Self { runtime, listeners, endpoints, handoff, inline, capacity, idle, drain })
+        Ok(Self { runtime, listeners, endpoints, handoff, inline, capacity, idle, drain, admit })
     }
 
     /// Names the HTTP/2 and HTTP/3 servers of the egress. In-process exchanges then
@@ -187,6 +196,13 @@ impl Ingress {
         if let Some(inline) = &self.inline {
             inline.attach(directory);
         }
+    }
+
+    /// Sets the admission of QUIC connections, which this runtime accepts itself: the
+    /// place where the firewall counts a client's connections. TCP connections are
+    /// admitted by the caller of [`Ingress::accept`]. The first admission stays.
+    pub fn guard(&self, admit: Admit) {
+        let _ = self.admit.set(admit);
     }
 
     /// Sends GOAWAY on live sessions so clients can direct new requests to another node.

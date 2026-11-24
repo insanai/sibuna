@@ -23,6 +23,8 @@ pub(super) struct Shared {
     pub inline: Option<Arc<crate::inline::Inline>>,
     pub capacity: Arc<Semaphore>,
     pub idle: Duration,
+    /// The admission of a connection, once the firewall has set it.
+    pub admit: Arc<std::sync::OnceLock<crate::Admit>>,
 }
 
 /// Opens the HTTP/3 endpoint of one listener. With `shared` the socket may share its
@@ -64,10 +66,19 @@ pub(super) async fn serve(
         if let Some(ip) = incoming.local_ip() {
             vip.set_ip(ip);
         }
+        // A client over its bound is refused before the handshake costs anything.
+        let place = match shared.admit.get().map(|admit| admit(incoming.remote_address(), vip)) {
+            Some(None) => {
+                incoming.refuse();
+                continue;
+            }
+            Some(place) => place,
+            None => None,
+        };
         let shared = shared.clone();
         let drain = drain.clone();
         tokio::spawn(async move {
-            let _slot = slot;
+            let _held = (slot, place);
             if let Ok(Ok(conn)) = timeout(DEADLINE, incoming).await {
                 let _ = connection(conn, vip, shared, drain).await;
             }
