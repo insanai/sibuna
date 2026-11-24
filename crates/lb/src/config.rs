@@ -18,6 +18,7 @@ pub struct Config {
     pub(crate) workers: usize,
     pub(crate) admin_socket: Option<String>,
     pub(crate) watch: Option<Duration>,
+    pub(crate) shutdown_timeout: Duration,
     pub(crate) http: crate::HttpOptions,
     pub(crate) mesh: Option<crate::MeshConfig>,
     pub(crate) listeners: BTreeMap<(Protocol, SocketAddr), Frontend>,
@@ -164,6 +165,11 @@ impl Config {
         self.watch
     }
 
+    /// How long a shutdown waits for established flows (`global.shutdown_timeout`).
+    pub fn shutdown_timeout(&self) -> Duration {
+        self.shutdown_timeout
+    }
+
     /// Static peer configuration, when the operator enabled RTT-based routing.
     pub fn mesh(&self) -> Option<&crate::MeshConfig> {
         self.mesh.as_ref()
@@ -174,7 +180,8 @@ impl Config {
     pub fn parse(bytes: &[u8]) -> Result<Self> {
         let value = field(sibuna_json::parse_with_limits(bytes, &Self::DOCUMENT_LIMITS))?;
         let mut root = field(ObjectReader::new(&value))?;
-        let Global { limit, udp_limit, workers, admin_socket, watch } = global(&mut root)?;
+        let Global { limit, udp_limit, workers, admin_socket, watch, shutdown_timeout } =
+            global(&mut root)?;
         let mesh = field(root.take_object("mesh"))?.map(crate::MeshConfig::parse).transpose()?;
         let http = field(root.take_object("http"))?.map(crate::HttpOptions::parse).transpose()?;
         let explicit_http = http.is_some();
@@ -186,6 +193,7 @@ impl Config {
             workers,
             admin_socket,
             watch,
+            shutdown_timeout,
             mesh,
             http,
             pools: BTreeMap::new(),
@@ -316,6 +324,7 @@ struct Global {
     workers: usize,
     admin_socket: Option<String>,
     watch: Option<Duration>,
+    shutdown_timeout: Duration,
 }
 
 /// Reads `global`: the flow table size, the optional UDP share, the relay threads, the
@@ -326,7 +335,13 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
     let mut workers = default_workers();
     let mut admin_socket = None;
     let mut watch = None;
+    let mut shutdown_timeout = Duration::from_secs(5);
     if let Some(mut global) = field(root.take_object("global"))? {
+        if let Some(text) = field(global.take_str("shutdown_timeout"))? {
+            shutdown_timeout = duration(text)
+                .filter(|d| *d <= Duration::from_secs(3600))
+                .ok_or_else(|| invalid("global.shutdown_timeout must be a duration up to 1h"))?;
+        }
         limit = number(&mut global, "max_flows", limit, MAX_FLOWS)?;
         admin_socket = match field(global.take_str("admin_socket"))? {
             Some("") => return Err(invalid("global.admin_socket must be a path")),
@@ -355,7 +370,7 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
         };
         field(global.finish())?;
     }
-    Ok(Global { limit, udp_limit, workers, admin_socket, watch })
+    Ok(Global { limit, udp_limit, workers, admin_socket, watch, shutdown_timeout })
 }
 
 /// One relay thread per available CPU, up to eight.

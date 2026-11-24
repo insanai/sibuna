@@ -161,14 +161,18 @@ impl Edge {
         let (waker, wake) = Waker::new()?;
         poll.set(handle(waker.socket()), READ, Ready::Wake)?;
         for (bind, route) in config.listeners {
+            // The error names the listener, so the operator knows which bind failed.
+            let named = |error: io::Error| {
+                io::Error::new(error.kind(), format!("listener {:?} {}: {error}", bind.0, bind.1))
+            };
             let socket = match bind.0 {
                 Protocol::Tcp | Protocol::Http => {
-                    let socket = TcpListener::bind(bind.1)?;
+                    let socket = TcpListener::bind(bind.1).map_err(named)?;
                     socket.set_nonblocking(true)?;
                     Socket::Tcp(socket)
                 }
                 Protocol::Udp => {
-                    let socket = UdpSocket::bind(bind.1)?;
+                    let socket = UdpSocket::bind(bind.1).map_err(named)?;
                     socket.set_nonblocking(true)?;
                     Socket::Udp(socket)
                 }
