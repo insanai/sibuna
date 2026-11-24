@@ -174,7 +174,8 @@ fn tcp_pools_take_the_same_commands() {
     let vip = vip();
     let source = format!(
         r#"{{"frontends":{{"ssh":{{"proto":"tcp","binds":["{vip}"]}}}},
-            "backends":{{"shells":{{"mode":"tcp","servers":["127.0.0.1:9101","127.0.0.1:9102"]}}}}}}"#
+            "backends":{{"shells":{{"mode":"tcp",
+                "servers":["127.0.0.1:9101","127.0.0.1:9102"]}}}}}}"#
     );
     let mut edge = Edge::bind(Config::parse(source.as_bytes()).unwrap()).unwrap();
     edge.set_server_state("shells", "127.0.0.1:9101", ServerState::Drain).unwrap();
