@@ -412,3 +412,37 @@ fn a_websocket_rule_checks_the_origin_and_bounds_the_tunnels_of_a_client() {
         assert!(reopened, "{event_loop}");
     });
 }
+
+#[test]
+fn an_idle_connection_closes_at_its_timeout_and_a_tunnel_at_its_own() {
+    both(|event_loop| {
+        let options = r#","idle_timeout":"1s","websocket_idle_timeout":"3s""#;
+        let daemon = start(origin(), event_loop, options);
+        let mut idle = connect(&daemon);
+        send(&mut idle, b"GET /first HTTP/1.1\r\nHost: a\r\n\r\n");
+        assert_eq!(read_message(&mut idle, false).unwrap().status(), 200);
+        let mut tunnel = connect(&daemon);
+        let offer = format!(
+            "GET /live HTTP/1.1\r\nHost: a\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\
+             Sec-WebSocket-Version: 13\r\nSec-WebSocket-Key: {KEY}\r\n\
+             Sec-WebSocket-Protocol: anahita.live.v1\r\n\r\n"
+        );
+        send(&mut tunnel, offer.as_bytes());
+        assert_eq!(read_message(&mut tunnel, true).unwrap().status(), 101);
+        let started = Instant::now();
+        // The idle connection ends first. The quiet tunnel outlives it.
+        assert!(read_message(&mut idle, false).is_none(), "{event_loop}");
+        let idle_for = started.elapsed();
+        assert!(idle_for < Duration::from_secs(4), "{event_loop} {idle_for:?}");
+        send(&mut tunnel, b"still here");
+        let mut echo = [0; 10];
+        tunnel.read_exact(&mut echo).unwrap();
+        assert_eq!(&echo, b"still here", "{event_loop}");
+        let mut rest = Vec::new();
+        let _ = tunnel.read_to_end(&mut rest);
+        let quiet_for = started.elapsed();
+        assert!(rest.is_empty(), "{event_loop}");
+        assert!(quiet_for > Duration::from_secs(3), "{event_loop} {quiet_for:?}");
+        assert!(quiet_for < Duration::from_secs(8), "{event_loop} {quiet_for:?}");
+    });
+}
