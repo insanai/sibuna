@@ -19,6 +19,8 @@ pub struct Config {
     pub(crate) admin_socket: Option<String>,
     pub(crate) watch: Option<Duration>,
     pub(crate) shutdown_timeout: Duration,
+    /// Listeners share their address, so a new process can bind it (`global.reuse_port`).
+    pub(crate) reuse_port: bool,
     pub(crate) http: crate::HttpOptions,
     pub(crate) mesh: Option<crate::MeshConfig>,
     pub(crate) listeners: BTreeMap<(Protocol, SocketAddr), Frontend>,
@@ -165,6 +167,12 @@ impl Config {
         self.watch
     }
 
+    /// Whether the listeners share their address with other processes of the same user
+    /// (`global.reuse_port`).
+    pub fn reuse_port(&self) -> bool {
+        self.reuse_port
+    }
+
     /// How long a shutdown waits for established flows (`global.shutdown_timeout`).
     pub fn shutdown_timeout(&self) -> Duration {
         self.shutdown_timeout
@@ -180,8 +188,15 @@ impl Config {
     pub fn parse(bytes: &[u8]) -> Result<Self> {
         let value = field(sibuna_json::parse_with_limits(bytes, &Self::DOCUMENT_LIMITS))?;
         let mut root = field(ObjectReader::new(&value))?;
-        let Global { limit, udp_limit, workers, admin_socket, watch, shutdown_timeout } =
-            global(&mut root)?;
+        let Global {
+            limit,
+            udp_limit,
+            workers,
+            admin_socket,
+            watch,
+            shutdown_timeout,
+            reuse_port,
+        } = global(&mut root)?;
         let mesh = field(root.take_object("mesh"))?.map(crate::MeshConfig::parse).transpose()?;
         let http = field(root.take_object("http"))?.map(crate::HttpOptions::parse).transpose()?;
         let explicit_http = http.is_some();
@@ -194,6 +209,7 @@ impl Config {
             admin_socket,
             watch,
             shutdown_timeout,
+            reuse_port,
             mesh,
             http,
             pools: BTreeMap::new(),
@@ -325,6 +341,7 @@ struct Global {
     admin_socket: Option<String>,
     watch: Option<Duration>,
     shutdown_timeout: Duration,
+    reuse_port: bool,
 }
 
 /// Reads `global`: the flow table size, the optional UDP share, the relay threads, the
@@ -336,11 +353,16 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
     let mut admin_socket = None;
     let mut watch = None;
     let mut shutdown_timeout = Duration::from_secs(5);
+    let mut reuse_port = false;
     if let Some(mut global) = field(root.take_object("global"))? {
         if let Some(text) = field(global.take_str("shutdown_timeout"))? {
             shutdown_timeout = duration(text)
                 .filter(|d| *d <= Duration::from_secs(3600))
                 .ok_or_else(|| invalid("global.shutdown_timeout must be a duration up to 1h"))?;
+        }
+        reuse_port = field(global.take_bool("reuse_port"))?.unwrap_or(false);
+        if reuse_port && !sibuna_reactor::CAN_SHARE_ADDRESS {
+            return Err(invalid("global.reuse_port needs Linux"));
         }
         limit = number(&mut global, "max_flows", limit, MAX_FLOWS)?;
         admin_socket = match field(global.take_str("admin_socket"))? {
@@ -370,7 +392,7 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
         };
         field(global.finish())?;
     }
-    Ok(Global { limit, udp_limit, workers, admin_socket, watch, shutdown_timeout })
+    Ok(Global { limit, udp_limit, workers, admin_socket, watch, shutdown_timeout, reuse_port })
 }
 
 /// One relay thread per available CPU, up to eight.

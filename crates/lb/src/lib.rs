@@ -131,6 +131,37 @@ pub struct Edge {
     drops: u64,
 }
 
+/// Opens the socket of one listener. With `shared` it may share its address with
+/// another process (`global.reuse_port`). The error names the listener, so the
+/// operator knows which bind failed.
+fn open_listener(protocol: Protocol, address: SocketAddr, shared: bool) -> io::Result<Socket> {
+    let named = |error: io::Error| {
+        io::Error::new(error.kind(), format!("listener {protocol:?} {address}: {error}"))
+    };
+    match protocol {
+        Protocol::Tcp | Protocol::Http => {
+            let socket = if shared {
+                sibuna_reactor::listen_shared(address)
+            } else {
+                TcpListener::bind(address)
+            }
+            .map_err(named)?;
+            socket.set_nonblocking(true)?;
+            Ok(Socket::Tcp(socket))
+        }
+        Protocol::Udp => {
+            let socket = if shared {
+                sibuna_reactor::bind_shared(address)
+            } else {
+                UdpSocket::bind(address)
+            }
+            .map_err(named)?;
+            socket.set_nonblocking(true)?;
+            Ok(Socket::Udp(socket))
+        }
+    }
+}
+
 impl Edge {
     /// Shares admission with QUIC listeners.
     pub fn flow_budget(&self) -> FlowBudget {
@@ -161,22 +192,7 @@ impl Edge {
         let (waker, wake) = Waker::new()?;
         poll.set(handle(waker.socket()), READ, Ready::Wake)?;
         for (bind, route) in config.listeners {
-            // The error names the listener, so the operator knows which bind failed.
-            let named = |error: io::Error| {
-                io::Error::new(error.kind(), format!("listener {:?} {}: {error}", bind.0, bind.1))
-            };
-            let socket = match bind.0 {
-                Protocol::Tcp | Protocol::Http => {
-                    let socket = TcpListener::bind(bind.1).map_err(named)?;
-                    socket.set_nonblocking(true)?;
-                    Socket::Tcp(socket)
-                }
-                Protocol::Udp => {
-                    let socket = UdpSocket::bind(bind.1).map_err(named)?;
-                    socket.set_nonblocking(true)?;
-                    Socket::Udp(socket)
-                }
-            };
+            let socket = open_listener(bind.0, bind.1, config.reuse_port)?;
             let fd = match &socket {
                 Socket::Tcp(socket) => handle(socket),
                 Socket::Udp(socket) => handle(socket),
