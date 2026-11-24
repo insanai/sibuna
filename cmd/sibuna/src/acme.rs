@@ -83,13 +83,16 @@ pub(crate) fn log(event: &Event) {
     match event {
         Event::Obtained { name, not_after, renewed } => {
             let verb = if *renewed { "renewed" } else { "obtained" };
-            eprintln!("ACME000: certificate for {name} {verb}, valid until {}", time(*not_after));
+            crate::edge::note(format_args!(
+                "ACME000: certificate for {name} {verb}, valid until {}",
+                time(*not_after)
+            ));
         }
         Event::Loaded { name, not_after } => {
-            eprintln!(
+            crate::edge::note(format_args!(
                 "ACME000: certificate for {name} loaded from storage, valid until {}",
                 time(*not_after)
-            );
+            ));
         }
         Event::Failed { name, error, retry_at } => {
             let subject = match name {
@@ -105,7 +108,7 @@ pub(crate) fn log(event: &Event) {
             );
             let mut text = String::new();
             let _ = diagnostic::render(&mut text, &title, &message, &error.hint);
-            eprint!("{text}");
+            crate::edge::note(format_args!("{}", text.trim_end_matches('\n')));
         }
     }
 }

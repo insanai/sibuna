@@ -42,6 +42,8 @@ pub(crate) struct Observe {
     /// Connections of PROXY frontends that sent a valid header, and those closed.
     pub proxy_accepted: AtomicU64,
     pub proxy_rejected: AtomicU64,
+    /// What the replication of bans over the mesh did (SID 0022), once it runs.
+    pub mesh_bans: std::sync::OnceLock<Arc<sibuna_lb::BanCounters>>,
 }
 
 impl Observe {
@@ -54,6 +56,7 @@ impl Observe {
             draining: AtomicBool::new(false),
             proxy_accepted: AtomicU64::new(0),
             proxy_rejected: AtomicU64::new(0),
+            mesh_bans: std::sync::OnceLock::new(),
         }
     }
 
@@ -100,6 +103,19 @@ impl Observe {
         ];
         for (name, kind, value) in series {
             let _ = writeln!(out, "# TYPE {name} {kind}\n{name} {value}");
+        }
+        if let Some(bans) = self.mesh_bans.get() {
+            let series = [
+                ("sibuna_edge_mesh_bans_sent_total", "counter", &bans.sent),
+                ("sibuna_edge_mesh_bans_received_total", "counter", &bans.received),
+                ("sibuna_edge_mesh_bans_applied_total", "counter", &bans.applied),
+                ("sibuna_edge_mesh_bans_dropped_total", "counter", &bans.dropped),
+                ("sibuna_edge_mesh_bans_known", "gauge", &bans.known),
+            ];
+            for (name, kind, value) in series {
+                let value = value.load(Ordering::Relaxed);
+                let _ = writeln!(out, "# TYPE {name} {kind}\n{name} {value}");
+            }
         }
     }
 }
