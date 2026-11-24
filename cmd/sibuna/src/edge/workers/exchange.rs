@@ -3,6 +3,7 @@
 use std::net::SocketAddr;
 use std::time::Duration;
 
+use sibuna_http::response::{self, Status};
 use sibuna_net::ProxyError;
 use sibuna_net::machine::{Fed, Outcome, ResponseRelay};
 use sibuna_reactor::{Io, READ, handle, read_once as read, start_connect, write_once as write};
@@ -17,6 +18,9 @@ const IDLE_PER_ADDRESS: usize = 64;
 const IDLE_PER_WORKER: usize = 1024;
 /// How long a server socket may stay idle.
 const IDLE_ORIGIN: Duration = Duration::from_secs(30);
+
+/// The writer of a page of Sibuna's own.
+type Page<'o> = ClientWriter<&'o mut Vec<u8>>;
 
 /// What became of the exchange after a step.
 enum Next {
@@ -438,6 +442,11 @@ impl Worker {
 
     /// Answers the client with Sibuna's page for `error` and closes after it.
     fn answer(&mut self, index: u32, error: ProxyError) {
+        self.respond(index, |writer| answer_proxy_error(writer, error));
+    }
+
+    /// Ends the exchange with a page of Sibuna's own and closes after it.
+    fn respond(&mut self, index: u32, page: impl FnOnce(&mut Page<'_>) -> std::io::Result<()>) {
         self.server.metrics.upstream_errors.bump();
         let now = self.now;
         let Some(conn) = self.conns.at(index) else { return };
@@ -445,7 +454,7 @@ impl Worker {
         let mut writer = ClientWriter::new(&mut conn.output);
         writer.begin_response(exchange.head_request);
         // Writing to a vector cannot fail.
-        let _ = answer_proxy_error(&mut writer, error);
+        let _ = page(&mut writer);
         conn.closing = true;
         conn.activity = now;
         if let Some(at) = exchange.origin {
@@ -463,8 +472,13 @@ impl Worker {
         if exchange.connecting {
             exchange.target.failed();
             self.answer(index, ProxyError::UpstreamUnreachable);
+        } else if exchange.relay.responded() || exchange.tunnel {
+            self.close(index);
         } else {
-            self.fail(index, ProxyError::UpstreamReadFailed);
+            self.respond(index, |writer| {
+                let text = b"Gateway Timeout: the server did not answer in time";
+                response::write_text(writer, Status::GatewayTimeout, text, false)
+            });
         }
         if self.flush_client(index) {
             self.sync(index);

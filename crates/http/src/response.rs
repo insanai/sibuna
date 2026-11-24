@@ -53,6 +53,8 @@ pub enum Status {
     BadGateway,
     /// 503.
     ServiceUnavailable,
+    /// The server did not answer in time.
+    GatewayTimeout,
 }
 
 impl Status {
@@ -74,6 +76,7 @@ impl Status {
             Status::NotImplemented => 501,
             Status::BadGateway => 502,
             Status::ServiceUnavailable => 503,
+            Status::GatewayTimeout => 504,
         }
     }
 
@@ -95,6 +98,7 @@ impl Status {
             Status::NotImplemented => "Not Implemented",
             Status::BadGateway => "Bad Gateway",
             Status::ServiceUnavailable => "Service Unavailable",
+            Status::GatewayTimeout => "Gateway Timeout",
         }
     }
 }
@@ -403,6 +407,7 @@ mod tests {
             (Status::NotImplemented, "501 Not Implemented"),
             (Status::BadGateway, "502 Bad Gateway"),
             (Status::ServiceUnavailable, "503 Service Unavailable"),
+            (Status::GatewayTimeout, "504 Gateway Timeout"),
         ];
         for (status, line) in statuses {
             assert_eq!(format!("{} {}", status.code(), status.reason()), line);

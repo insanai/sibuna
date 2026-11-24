@@ -206,7 +206,11 @@ fn start_workers(server: &Arc<Server>, options: &HttpOptions) -> io::Result<Opti
         idle: seconds(options.idle_timeout_seconds),
         tunnel: seconds(options.websocket_idle_timeout_seconds),
     };
-    Ok(Some(Arc::new(Workers::start(server, Workers::default_count(), timeouts)?)))
+    Ok(Some(Arc::new(Workers::start(
+        server,
+        options.workers.unwrap_or_else(Workers::default_count),
+        timeouts,
+    )?)))
 }
 
 /// Serves a connection on a worker, or on a thread of its own.

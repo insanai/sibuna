@@ -39,6 +39,8 @@ pub struct HttpOptions {
     pub websocket_idle_timeout_seconds: u32,
     /// Serve HTTP on event-driven workers (SID 0016) where the platform has them.
     pub event_loop: bool,
+    /// The number of event-driven workers. `None` uses one per processor.
+    pub workers: Option<usize>,
 }
 
 impl Default for HttpOptions {
@@ -55,6 +57,7 @@ impl Default for HttpOptions {
             idle_timeout_seconds: 15,
             websocket_idle_timeout_seconds: 300,
             event_loop: true,
+            workers: None,
         }
     }
 }
@@ -117,6 +120,11 @@ impl HttpOptions {
         if !event_loop && max_connections as usize > Self::MAX_THREADS {
             return Err(invalid("http.max_connections above 8192 needs http.event_loop"));
         }
+        let workers = match field(r.take_u64("workers"))? {
+            None => None,
+            Some(count) if (1..=64).contains(&count) => Some(count as usize),
+            Some(_) => return Err(invalid("http.workers must be in 1..=64")),
+        };
         field(r.finish())?;
         Ok(Self {
             firewall,
@@ -130,6 +138,7 @@ impl HttpOptions {
             idle_timeout_seconds,
             websocket_idle_timeout_seconds,
             event_loop,
+            workers,
         })
     }
 }

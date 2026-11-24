@@ -354,7 +354,8 @@ fn failures_of_the_origin_become_502_and_slow_clients_lose_the_connection() {
         let mut client = connect(&daemon);
         send(&mut client, b"GET /silent HTTP/1.1\r\nHost: a\r\n\r\n");
         let silent = read_message(&mut client, false);
-        assert!(silent.is_none_or(|response| response.status() == 502), "{event_loop}");
+        let wanted = if event_loop { 504 } else { 502 };
+        assert!(silent.is_none_or(|response| response.status() == wanted), "{event_loop}");
         // A head that never ends is cut off, however slowly its bytes keep coming.
         let mut client = connect(&daemon);
         send(&mut client, b"GET /slow HTTP/1.1\r\nHost: a\r\n");
@@ -444,5 +445,44 @@ fn an_idle_connection_closes_at_its_timeout_and_a_tunnel_at_its_own() {
         assert!(rest.is_empty(), "{event_loop}");
         assert!(quiet_for > Duration::from_secs(3), "{event_loop} {quiet_for:?}");
         assert!(quiet_for < Duration::from_secs(8), "{event_loop} {quiet_for:?}");
+    });
+}
+
+#[test]
+fn a_slow_body_and_a_slow_reader_lose_the_connection_while_others_are_served() {
+    both(|event_loop| {
+        let daemon = start(origin(), event_loop, r#","idle_timeout":"1s","workers":1"#);
+        let started = Instant::now();
+        // A body that never completes.
+        let mut slow_body = connect(&daemon);
+        send(
+            &mut slow_body,
+            b"POST /echo HTTP/1.1\r\nHost: a\r\nContent-Length: 100000\r\n\r\nabc",
+        );
+        // A client that asks for a megabyte and never reads it.
+        let mut slow_reader = connect(&daemon);
+        send(&mut slow_reader, b"GET /big HTTP/1.1\r\nHost: a\r\n\r\n");
+        // Meanwhile the same worker serves others without delay.
+        let mut worst = Duration::ZERO;
+        while started.elapsed() < Duration::from_secs(3) {
+            let asked = Instant::now();
+            let mut client = connect(&daemon);
+            send(&mut client, b"GET /quick HTTP/1.1\r\nHost: a\r\n\r\n");
+            assert_eq!(read_message(&mut client, false).unwrap().body, b"/quick");
+            worst = worst.max(asked.elapsed());
+            std::thread::sleep(Duration::from_millis(20));
+        }
+        assert!(worst < Duration::from_millis(500), "{event_loop} {worst:?}");
+        // Both slow clients were cut off by now.
+        let mut rest = Vec::new();
+        let _ = slow_body.read_to_end(&mut rest);
+        assert!(started.elapsed() < Duration::from_secs(8), "{event_loop}");
+        let mut got = 0;
+        let mut block = [0; 65536];
+        while let Ok(count @ 1..) = slow_reader.read(&mut block) {
+            got += count;
+        }
+        assert!(got < (1 << 20) + 200, "{event_loop}");
+        assert!(started.elapsed() < Duration::from_secs(10), "{event_loop}");
     });
 }
