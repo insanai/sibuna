@@ -131,6 +131,6 @@ pub use idle::{Activity, IdleTable, Lease, reaper_interval};
 pub use pool::Pool;
 pub use proxy::{
     Audit, CONNECT_TIMEOUT, Client, Exchange, HeadSink, ProxyError, Upload, Workspace,
-    stream_proxy,
+    stream_proxy, stream_proxy_to,
 };
 pub use response::{Framing, MAX_RESPONSE_HEAD, ResponseHead, parse_response_head};

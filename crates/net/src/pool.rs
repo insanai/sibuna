@@ -11,7 +11,7 @@
 
 use std::cell::Cell;
 use std::io;
-use std::net::TcpStream;
+use std::net::{SocketAddr, TcpStream};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError, TryLockError};
 
@@ -20,11 +20,17 @@ const STRIPES: usize = 16;
 /// Sockets per stripe.
 const STRIPE_CAPACITY: usize = Pool::CAPACITY / STRIPES;
 
+#[derive(Debug)]
+struct IdleSocket {
+    address: Option<SocketAddr>,
+    stream: Arc<TcpStream>,
+}
+
 /// One stripe on a cache line of its own, so threads on different stripes do not contend.
 #[repr(align(128))]
 #[derive(Debug, Default)]
 struct Stripe {
-    sockets: Mutex<Vec<Arc<TcpStream>>>,
+    sockets: Mutex<Vec<IdleSocket>>,
 }
 
 /// A fixed-capacity pool of idle origin sockets.
@@ -92,11 +98,15 @@ impl Pool {
     /// and the next one is tried; each is looked at once, so the work is bounded by
     /// [`Pool::CAPACITY`].
     pub fn take(&self) -> Option<Arc<TcpStream>> {
+        self.take_matching(None)
+    }
+
+    pub(crate) fn take_matching(&self, address: Option<SocketAddr>) -> Option<Arc<TcpStream>> {
         if self.is_stopping() {
             return None;
         }
         let home = home_stripe();
-        while let Some(socket) = self.pop(home) {
+        while let Some(socket) = self.pop(home, address) {
             if is_idle(&socket) {
                 return Some(socket);
             }
@@ -107,24 +117,33 @@ impl Pool {
 
     /// Removes a pooled socket: from the home stripe, else from any other stripe not locked
     /// at the moment.
-    fn pop(&self, home: usize) -> Option<Arc<TcpStream>> {
-        if let Some(socket) = self.stripe(home).and_then(|stripe| lock(&stripe.sockets).pop()) {
+    fn pop(&self, home: usize, address: Option<SocketAddr>) -> Option<Arc<TcpStream>> {
+        let take = |sockets: &mut Vec<IdleSocket>| {
+            let pos = sockets.iter().rposition(|s| s.address == address)?;
+            Some(sockets.swap_remove(pos).stream)
+        };
+        if let Some(socket) = self.stripe(home).and_then(|stripe| take(&mut lock(&stripe.sockets)))
+        {
             return Some(socket);
         }
         (1..STRIPES).find_map(|offset| {
             let stripe = self.stripe((home + offset) % STRIPES)?;
-            try_lock(&stripe.sockets)?.pop()
+            take(&mut *try_lock(&stripe.sockets)?)
         })
     }
 
     /// Returns a reusable origin socket. It is closed instead when the pool is full or
     /// stopping.
     pub fn give(&self, socket: Arc<TcpStream>) {
+        self.give_for(socket, None);
+    }
+
+    pub(crate) fn give_for(&self, socket: Arc<TcpStream>, address: Option<SocketAddr>) {
         if self.is_stopping() {
             return;
         }
         let home = home_stripe();
-        let mut socket = Some(socket);
+        let mut socket = Some(IdleSocket { stream: socket, address });
         for offset in 0..STRIPES {
             let Some(stripe) = self.stripe((home + offset) % STRIPES) else { continue };
             let guard =
@@ -214,6 +233,22 @@ mod tests {
             count += 1;
         }
         assert_eq!(count, Pool::CAPACITY);
+    }
+
+    #[test]
+    fn fixed_and_routed_origins_only_reuse_their_own_connections() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let mut peers = Vec::new();
+        let pool = Pool::new();
+        let routed = socket(&listener, &mut peers);
+        pool.give_for(routed.clone(), Some(address));
+        assert!(pool.take().is_none());
+        assert!(pool.take_matching(Some("127.0.0.1:1".parse().unwrap())).is_none());
+        let fixed = socket(&listener, &mut peers);
+        pool.give(fixed.clone());
+        assert!(Arc::ptr_eq(&pool.take_matching(Some(address)).unwrap(), &routed));
+        assert!(Arc::ptr_eq(&pool.take().unwrap(), &fixed));
     }
 
     #[test]

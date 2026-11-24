@@ -272,7 +272,26 @@ impl Workspace {
 pub fn stream_proxy<W: Write>(
     pool: &Pool,
     workspace: &mut Workspace,
+    exchange: Exchange<'_, W>,
+) -> Result<bool, ProxyError> {
+    proxy(pool, workspace, exchange, None)
+}
+
+/// Relays an exchange to the selected numeric origin. Reuses only sockets for that origin.
+pub fn stream_proxy_to<W: Write>(
+    pool: &Pool,
+    workspace: &mut Workspace,
+    exchange: Exchange<'_, W>,
+    origin: SocketAddr,
+) -> Result<bool, ProxyError> {
+    proxy(pool, workspace, exchange, Some(origin))
+}
+
+fn proxy<W: Write>(
+    pool: &Pool,
+    workspace: &mut Workspace,
     mut exchange: Exchange<'_, W>,
+    address: Option<SocketAddr>,
 ) -> Result<bool, ProxyError> {
     let request = exchange.request;
     let handshake = upgrade::offered(request).map_err(|_| ProxyError::InvalidUpgrade)?;
@@ -284,11 +303,13 @@ pub fn stream_proxy<W: Write>(
     for attempt in 0..2 {
         // A retry always connects afresh: after an idle period every pooled socket may be
         // stale, and a second stale one would fail the request.
-        let pooled = if attempt == 0 { pool.take() } else { None };
+        let pooled = if attempt == 0 { pool.take_matching(address) } else { None };
         let was_pooled = pooled.is_some();
         let origin = match pooled {
             Some(origin) => origin,
-            None => connect_upstream(pool, exchange.upstream_host, exchange.upstream_port)?,
+            None => {
+                connect_upstream(pool, address, exchange.upstream_host, exchange.upstream_port)?
+            }
         };
         // The reaper may cut this socket while the exchange stalls; it is detached before the
         // socket is closed or pooled.
@@ -302,7 +323,7 @@ pub fn stream_proxy<W: Write>(
         match outcome {
             Ok(relayed) => {
                 if relayed.origin_reusable && poolable {
-                    pool.give(origin);
+                    pool.give_for(origin, address);
                 }
                 return Ok(relayed.client_keep && buffered);
             }
@@ -327,12 +348,23 @@ pub fn stream_proxy<W: Write>(
 }
 
 /// Connects to the origin with a bounded wait and Nagle's algorithm off.
-fn connect_upstream(pool: &Pool, host: &str, port: u16) -> Result<Arc<TcpStream>, ProxyError> {
+fn connect_upstream(
+    pool: &Pool,
+    address: Option<SocketAddr>,
+    host: &str,
+    port: u16,
+) -> Result<Arc<TcpStream>, ProxyError> {
     if pool.is_stopping() {
         return Err(ProxyError::UpstreamUnreachable);
     }
-    let ip: IpAddr = host.parse().map_err(|_| ProxyError::UpstreamUnreachable)?;
-    let stream = TcpStream::connect_timeout(&SocketAddr::new(ip, port), CONNECT_TIMEOUT)
+    let addr = match address {
+        Some(addr) => addr,
+        None => SocketAddr::new(
+            host.parse::<IpAddr>().map_err(|_| ProxyError::UpstreamUnreachable)?,
+            port,
+        ),
+    };
+    let stream = TcpStream::connect_timeout(&addr, CONNECT_TIMEOUT)
         .map_err(|_| ProxyError::UpstreamUnreachable)?;
     crate::connect::set_no_delay(&stream);
     Ok(Arc::new(stream))
