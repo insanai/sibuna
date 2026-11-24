@@ -169,7 +169,7 @@ Edge Load Balancing
 
 .. admonition:: Objectives
 
-   By the end of this chapter, we should be able to start a load balancer with one command, write an edge topology in JLV, forward TCP and UDP, terminate TLS with HAProxy-style PEM bundles, route HTTP by host name and path to HTTP/1.1, HTTP/2 and HTTP/3 servers, turn the firewall on or off per name, limit rates, check server health, drain and add servers while the daemon runs, and reload the file without dropping flows.
+   By the end of this chapter, we should be able to start a load balancer with one command, write an edge topology in JLV, forward TCP and UDP, terminate TLS with HAProxy-style PEM bundles or with certificates that Sibuna obtains itself, route HTTP by host name and path to HTTP/1.1, HTTP/2 and HTTP/3 servers, turn the firewall on or off per name, limit rates, check server health, drain and add servers while the daemon runs, and reload the file without dropping flows.
 
 Starting with one command
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -192,6 +192,18 @@ We need no file to balance load. One command serves HTTP on port 8080 and spread
      - The protocol of the listener and the servers. The default is ``http``.
    * - ``--tls PEM``
      - Terminate TLS with a combined PEM file, or with every ``*.pem`` file of a directory.
+   * - ``--tls auto``
+     - Obtain and renew the certificate of each ``--domain`` (section *Automatic HTTPS*). Without ``--bind`` the listener is ``0.0.0.0:443``.
+   * - ``--domain NAME``
+     - A host name for ``--tls auto``. May repeat.
+   * - ``--http IP:PORT|off``
+     - With ``--tls auto``: the plain listener that answers the challenge and redirects to HTTPS. The default is port 80 on the address of each ``--bind``. ``off`` leaves it out.
+   * - ``--acme-directory D``
+     - ``letsencrypt`` (the default), ``letsencrypt-staging``, or a directory URL.
+   * - ``--acme-email ADDRESS``
+     - The contact address of the ACME account.
+   * - ``--acme-storage DIR``
+     - The directory of keys and certificates. The default is ``/var/lib/sibuna/acme``.
    * - ``--health PATH|tcp``
      - Probe each server with ``GET PATH``, or with a TCP connect.
    * - ``--firewall off|gate|shield``
@@ -425,9 +437,163 @@ The cipher suites are those of the TLS library, all with forward secrecy and aut
 
 To staple an OCSP response we put it as a DER file beside the certificate, with ``.ocsp`` added to the certificate's file name, as HAProxy does. We do not fetch or check the response: the tool that renews the certificate refreshes the file and sends SIGHUP.
 
-An ACME client such as certbot or acme.sh fits the same way. Its deploy hook writes the combined PEM file into the ``crt`` directory and sends SIGHUP. For the HTTP-01 challenge we route ``/.well-known/acme-challenge/`` to the client's own listener with ``"firewall": false``.
+The next section lets Sibuna obtain and renew certificates itself. An external ACME client such as certbot or acme.sh also fits. Its deploy hook writes the combined PEM file into the ``crt`` directory and sends SIGHUP. For the HTTP-01 challenge we route ``/.well-known/acme-challenge/`` to the client's own listener with ``"firewall": false``.
 
 To rotate a certificate we replace the file and send SIGHUP. A new handshake uses the new certificate. An established session keeps the one it started with. A reload with a bad file changes nothing.
+
+Automatic HTTPS
+~~~~~~~~~~~~~~~
+
+We need no certificate file for a public name. We list the name under ``auto`` and Sibuna obtains its certificate from Let's Encrypt, serves it, and renews it. This is the whole file for two names.
+
+.. code-block:: text
+
+   fn edge() -> Map<Value> {
+       return {
+           frontends: {
+               web: { binds: ["0.0.0.0:443"], tls: { auto: ["example.org", "www.example.org"] } },
+               plain: { binds: ["0.0.0.0:80"] },
+           },
+           backends: { app: { servers: ["10.0.0.1:80", "10.0.0.2:80"] } },
+       }
+   }
+
+One command does the same without a file. It listens on port 443 and on port 80.
+
+.. code-block:: sh
+
+   sibuna lb --tls auto --domain example.org --domain www.example.org --server 10.0.0.1:80
+
+The certificate authority speaks the ACME protocol (RFC 8555). It checks that we control each name, and it does so by connecting to us.
+
+.. code-block:: text
+
+   certificate authority                         Sibuna
+        |  <----------- order for example.org ----  |   thread edge-acme
+        |  ---- GET http://example.org/.well-known/acme-challenge/TOKEN --->  port 80
+        |  <----------- TOKEN.THUMBPRINT ---------  |   answered before the firewall
+        |  ------------ certificate ------------->  |   stored, then served on port 443
+
+So three things must hold before the first start.
+
+- Each name has a public DNS record that points at this host.
+- Port 80 or port 443 of the host is reachable from the Internet. Port 80 serves the HTTP-01 challenge and port 443 serves the TLS-ALPN-01 challenge. One of the two is enough.
+- The daemon's user can write the storage directory.
+
+The work happens on a thread of its own. A listener never waits for the authority, and a failure never stops a listener. Until the first certificate arrives, a handshake for the name receives the default certificate of the listener, or fails when the listener has none. A new certificate serves the next handshake. We send no SIGHUP and restart nothing.
+
+Every option has a default. We change one in ``global.acme``.
+
+.. code-block:: text
+
+   global: { acme: { directory: "letsencrypt-staging", email: "ops@example.org" } },
+
+.. list-table:: Members of ``global.acme``
+   :header-rows: 1
+   :widths: 16 26 58
+
+   * - Member
+     - Default
+     - Meaning
+   * - ``directory``
+     - ``"letsencrypt"``
+     - The authority: ``"letsencrypt"``, ``"letsencrypt-staging"``, or the ``https`` URL of another ACME directory.
+   * - ``email``
+     - none
+     - The contact address of the account. The authority may write to it before a certificate expires.
+   * - ``storage``
+     - ``"/var/lib/sibuna/acme"``
+     - The directory of the account key, the certificates and their keys.
+   * - ``challenge``
+     - ``"auto"``
+     - ``"http-01"``, ``"tls-alpn-01"``, or ``"auto"``. ``"auto"`` starts with HTTP-01 when the file has a plain HTTP frontend and with TLS-ALPN-01 otherwise. After a failed attempt it takes the other one.
+   * - ``ca_file``
+     - the system trust store
+     - PEM roots for the connection to the authority. A private authority needs it.
+   * - ``redirect``
+     - ``true``
+     - Redirect plain HTTP requests for the ``auto`` names to HTTPS.
+
+By using an authority we accept its terms of service, as with any ACME client.
+
+**The redirect.** A plain HTTP request whose ``Host`` is an ``auto`` name receives ``308 Permanent Redirect`` to ``https://`` with the same host, path and query. The port of the TLS frontend is added when it is not 443. Requests for other hosts are served as before. The challenge answer and the redirect are written before any firewall decision, so a ban or a challenge page cannot keep the authority out. Both appear in the access log like any other answer. ``redirect: false`` turns the redirect off. The challenge is still answered.
+
+**Storage.** The directory holds one subdirectory per authority. Keys have mode 0600 and directories mode 0700.
+
+.. code-block:: text
+
+   /var/lib/sibuna/acme/
+     acme-v02.api.letsencrypt.org-directory/
+       account.key
+       certs/example.org/cert.pem      the chain, leaf first
+       certs/example.org/key.pem
+       certs/example.org/retry         the failure count and the next attempt
+       locks/example.org.lock
+
+A restart loads the stored certificates and orders nothing while they are fresh. The packaged unit ``sibuna-edge.service`` creates ``/var/lib/sibuna`` for the service account. Several nodes may share the directory. The node that orders a name holds its lock file, and the others wait and then load the result. Every node answers the HTTP-01 challenge of every other node, because the answer depends only on the token and on the shared account key. With TLS-ALPN-01 the authority must reach the node that placed the order.
+
+**Renewal and retry.** We renew a certificate when two thirds of its lifetime have passed. For a certificate of 90 days that is 30 days before it expires. After a failure we try again after 2 minutes, then 4, then 8, and so on, up to once a day. When the authority names a waiting time we wait at least that long. The delay survives a restart. The old certificate serves in the meantime. One order runs at a time, with a second between two orders, and the daemon places no order before its listeners serve.
+
+**Staging first.** Let's Encrypt limits the certificates per name and week. While we test a setup we use ``directory: "letsencrypt-staging"``. Its certificates are not trusted by browsers and its limits are generous. We remove the line when the setup works. The production certificates are then ordered at once, because each authority has its own subdirectory.
+
+**Names that are not public.** A public authority cannot validate ``localhost``, a name without a dot, or a name under ``.local``, ``.internal``, ``.lan``, ``.test``, ``.example`` and the like. With one of the two Let's Encrypt directories the check of the file refuses such a name and says so. We then serve the name with ``crt`` and a certificate of our own, or we name an authority of our own in ``directory``. An IP address and a wildcard name are refused under ``auto`` with every directory.
+
+**Looking at the state.** The admin socket lists the certificates.
+
+.. code-block:: sh
+
+   sibuna ctl /run/sibuna/edge.sock show certs
+
+.. code-block:: text
+
+   name            issuer expires              renews               state error
+   example.org     R11    2027-02-22T10:00:00Z 2027-01-23T10:00:00Z ready -
+   www.example.org -      -                    2026-11-24T10:04:00Z retry VALIDATION FAILED (ACME005)
+
+``state`` is ``pending`` before the first attempt, ``ordering`` during an order, ``waiting`` while another node holds the lock, ``retry`` after a failure, and ``ready`` otherwise. ``renews`` is the time of the next order. ``show stats`` and the metrics endpoint add four series: ``sibuna_edge_acme_certificates_managed``, ``sibuna_edge_acme_certificates_served``, ``sibuna_edge_acme_nearest_expiry_seconds`` and ``sibuna_edge_acme_failures_total``. An alert on the third one tells us when renewal has been failing for too long.
+
+**Troubleshooting.** Each failure is written to standard error with a code, the reason of the authority and a hint.
+
+.. code-block:: text
+
+   -- VALIDATION FAILED (ACME005) ----------------------------------------------
+
+   No new certificate for `www.example.org`. The authority could not validate the name with http-01: 203.0.113.9: Connection refused. The listeners keep serving. Next attempt at 2026-11-24T10:04:00Z.
+
+   Hint: Point the DNS record of the name at this node, and let the authority reach port 80 (HTTP-01) or port 443 (TLS-ALPN-01) from the Internet.
+
+.. list-table:: Failures of automatic HTTPS
+   :header-rows: 1
+   :widths: 14 30 56
+
+   * - Code
+     - Title
+     - What to check
+   * - ``ACME001``
+     - storage not writable
+     - The daemon's user must own ``global.acme.storage`` and be able to write it.
+   * - ``ACME002``
+     - authority unreachable
+     - Outbound HTTPS to the directory, DNS on this host, and ``ca_file`` for a private authority.
+   * - ``ACME003``
+     - authority refused
+     - The reason that the authority gave. It may refuse the name or the account.
+   * - ``ACME004``
+     - rate limited
+     - Nothing. We wait as long as the authority asks. Use the staging directory for tests.
+   * - ``ACME005``
+     - validation failed
+     - The DNS record of the name, and port 80 or 443 from the Internet to this host.
+   * - ``ACME006``
+     - unexpected answer
+     - The directory URL. The authority answered outside the protocol or beyond our bounds.
+   * - ``ACME008``
+     - certificate rejected
+     - The clock of this node. The certificate does not name the host, has expired, or does not fit the key.
+
+A reload may add and remove ``auto`` names. A new name is ordered at once, and a removed name is no longer renewed or served. Changing ``global.acme``, or adding the first ``auto`` name to a daemon that has none, needs a restart. A certificate from ``crt`` and ``auto`` names may share a listener. For a name that both cover, the automatic certificate serves once it exists.
+
+Sibuna has no authority of its own for internal names, issues no certificate at the first handshake of an unknown name, and does not solve the DNS-01 challenge, so it obtains no wildcard certificates. For these cases we keep using ``crt``.
 
 HTTP routing by name and path
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -896,6 +1062,8 @@ A deployment takes one server out of rotation, replaces it, and returns it. For 
      - One line per server. The column ``changed`` holds ``-`` for a server that is served as the file describes it, ``added`` for one that a command added, and ``state`` or ``weight`` for a changed field.
    * - ``show stats``
      - The series of the edge in the Prometheus text format: requests, bytes and times per frontend and per server, the flow table, the access log and the PROXY protocol.
+   * - ``show certs``
+     - One line per name of automatic HTTPS: the issuer, the expiry, the next renewal, the state and the last failure (section *Automatic HTTPS*).
    * - ``show info``
      - The version, the process, the file, the number of reloads, the watcher, the flows, the drops, the number of run-time changes, and the servers of the file that a command removed.
    * - ``set server POOL/NAME state ready|drain``

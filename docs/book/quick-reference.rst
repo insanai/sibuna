@@ -45,10 +45,12 @@ Edge load balancer
 
    sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80   # no file needed
    sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
+   sibuna lb --tls auto --domain example.org --server 10.0.0.1:80     # automatic HTTPS (ACME)
    sibuna check -f edge.jlv           # or edge.json: validate topology, certificates, CA files
    sibuna --config-file edge.jlv      # serve TCP, UDP and HTTP frontends
    kill -HUP "$(pidof sibuna)"        # reload routes, policy and certificates in place
    sibuna ctl /run/sibuna/edge.sock show servers                      # needs global.admin_socket
+   sibuna ctl /run/sibuna/edge.sock show certs                        # certificates of tls.auto
    sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain   # or ready
    sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 weight 5
    sibuna ctl /run/sibuna/edge.sock add server app/blue 10.0.0.3:80
