@@ -31,7 +31,7 @@ pub use auto::{Automatic, CertificateState, CertificateStatus, Event, Notify};
 use bridge::Lane;
 pub use egress::{Directory, Egress};
 use handoff::Handoff;
-pub use inline::{Completion, Decide, Forward, Offer, Report, Verdict};
+pub use inline::{Completion, Decide, Forward, Offer, Refused, Report, Verdict};
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
 /// The SHA-256 digest of the certificate a client proved to hold in the TLS handshake.
