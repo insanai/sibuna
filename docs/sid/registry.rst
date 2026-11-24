@@ -71,7 +71,7 @@ Discussion registry
      - discussion
    * - 0020
      - :doc:`records/0020-edge-observability-and-client-identity`
-     - discussion
+     - accepted
    * - 0021
      - :doc:`records/0021-automatic-https`
      - discussion
