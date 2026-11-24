@@ -62,6 +62,8 @@ def contents(extracted):
             files.append({'src': str(path), 'dst': '/usr/share/doc/sibuna/LICENSES/' + relative})
     files += [
         {'src': str(LINUX / 'sibuna.service'), 'dst': '/usr/lib/systemd/system/sibuna.service'},
+        {'src': str(LINUX / 'sibuna-edge.service'),
+         'dst': '/usr/lib/systemd/system/sibuna-edge.service'},
         {'src': str(LINUX / 'sibuna.sysusers'), 'dst': '/usr/lib/sysusers.d/sibuna.conf'},
         {'src': str(LINUX / 'seed.sh'), 'dst': '/usr/lib/sibuna/seed.sh',
          'file_info': {'mode': 0o755}},

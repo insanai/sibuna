@@ -43,9 +43,17 @@ Edge load balancer
 
 .. code-block:: sh
 
-   sibuna check -f edge.json          # or edge.jlv: validate topology, certificates, CA files
-   sibuna --config-file edge.json     # serve TCP, UDP and HTTP frontends
+   sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80   # no file needed
+   sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
+   sibuna check -f edge.jlv           # or edge.json: validate topology, certificates, CA files
+   sibuna --config-file edge.jlv      # serve TCP, UDP and HTTP frontends
    kill -HUP "$(pidof sibuna)"        # reload routes, policy and certificates in place
+   sibuna ctl /run/sibuna/edge.sock show servers                      # needs global.admin_socket
+   sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain   # or ready
+   sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 weight 5
+   sibuna ctl /run/sibuna/edge.sock add server app/blue 10.0.0.3:80
+   sibuna ctl /run/sibuna/edge.sock del server app/blue
+   sibuna ctl /run/sibuna/edge.sock reload                            # as SIGHUP, with the result
    cat fullchain.pem privkey.pem > /etc/sibuna/certs/site.pem   # one HAProxy-style bundle
 
 .. code-block:: json

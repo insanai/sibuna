@@ -1,0 +1,120 @@
+//! Startup failures of the edge as diagnostics: a title, what happened, and a hint that
+//! says how to repair the common causes. Every one carries the code `EDGE001`.
+
+use std::io;
+use std::path::Path;
+
+use sibuna_core::diagnostic;
+
+/// A startup failure, classified for the operator.
+#[derive(Debug, PartialEq, Eq)]
+pub(super) struct Failure {
+    pub title: &'static str,
+    pub message: String,
+    pub hint: &'static str,
+}
+
+/// Classifies `error`, which stopped the edge from starting. `file` is the configuration
+/// file, or `None` for a quick start.
+pub(super) fn classify(file: Option<&str>, error: &io::Error) -> Failure {
+    let text = error.to_string();
+    let lower = text.to_ascii_lowercase();
+    if let Some(path) = file.filter(|path| !Path::new(path).exists()) {
+        return Failure {
+            title: "configuration file not found",
+            message: format!("There is no file at `{path}`."),
+            hint: "Check the path after `--config-file`. `sibuna lb ... --print-config` \
+                   writes a first file.",
+        };
+    }
+    let (title, hint) = match error.kind() {
+        io::ErrorKind::AddrInUse => (
+            "address in use",
+            "Another process listens on this address. Find it with `ss -ltnp`, stop it, or \
+             change `binds`.",
+        ),
+        io::ErrorKind::AddrNotAvailable => (
+            "address not available",
+            "A listener binds an address of this host. Use 0.0.0.0 for every IPv4 address.",
+        ),
+        io::ErrorKind::PermissionDenied if !names_a_file(&lower) => (
+            "permission denied",
+            "A port below 1024 needs the capability CAP_NET_BIND_SERVICE or the root user. \
+             The unit sibuna-edge.service grants the capability.",
+        ),
+        _ if names_a_certificate(&lower) => (
+            "certificate not loaded",
+            "Each `crt` entry is one PEM file with the certificate chain, leaf first, then \
+             its key: `cat fullchain.pem privkey.pem > site.pem`. The daemon's user must be \
+             able to read it.",
+        ),
+        io::ErrorKind::InvalidData => (
+            "invalid configuration",
+            "Correct the key that the message names and run `sibuna check -f FILE`.",
+        ),
+        io::ErrorKind::NotFound | io::ErrorKind::PermissionDenied => (
+            "file not readable",
+            "Check that the file exists and that the daemon's user can read it.",
+        ),
+        _ => ("edge not started", "Check the edge configuration and the listener addresses."),
+    };
+    let subject = file.map_or(String::new(), |path| format!("{path}: "));
+    Failure { title, message: format!("{subject}{text}."), hint }
+}
+
+fn names_a_file(lower: &str) -> bool {
+    lower.contains('/') || names_a_certificate(lower)
+}
+
+fn names_a_certificate(lower: &str) -> bool {
+    [".pem", ".crt", ".key", "certificate", "private key"].iter().any(|word| lower.contains(word))
+}
+
+/// Prints the diagnostic of `error` to standard error.
+pub(super) fn report(file: Option<&str>, error: &io::Error) {
+    let failure = classify(file, error);
+    let mut text = String::new();
+    let title = format!("{} (EDGE001)", failure.title);
+    let _ = diagnostic::render(&mut text, &title, &failure.message, failure.hint);
+    eprint!("{text}");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn title(file: Option<&str>, kind: io::ErrorKind, text: &str) -> &'static str {
+        classify(file, &io::Error::new(kind, text)).title
+    }
+
+    #[test]
+    fn common_startup_failures_have_their_own_title_and_hint() {
+        use io::ErrorKind::{AddrInUse, InvalidData, NotFound, Other, PermissionDenied};
+        assert_eq!(
+            title(None, AddrInUse, "http 0.0.0.0:80: Address already in use"),
+            "address in use"
+        );
+        assert_eq!(
+            title(None, PermissionDenied, "http 0.0.0.0:80: Permission denied"),
+            "permission denied"
+        );
+        assert_eq!(
+            title(None, Other, "/etc/certs/site.pem: No such file"),
+            "certificate not loaded"
+        );
+        assert_eq!(
+            title(None, PermissionDenied, "/etc/x/site.key: Permission denied"),
+            "certificate not loaded"
+        );
+        assert_eq!(
+            title(None, PermissionDenied, "/etc/sibuna/policy.json: denied"),
+            "file not readable"
+        );
+        assert_eq!(title(None, InvalidData, "frontends.web: no binds"), "invalid configuration");
+        assert_eq!(title(None, Other, "something else"), "edge not started");
+        let missing = "/nonexistent/sibuna/edge.jlv";
+        assert_eq!(title(Some(missing), NotFound, "No such file"), "configuration file not found");
+        let failure = classify(None, &io::Error::new(AddrInUse, "in use"));
+        assert!(failure.hint.contains("ss -ltnp"));
+    }
+}

@@ -63,5 +63,8 @@ Discussion registry
    * - 0017
      - :doc:`records/0017-in-process-exchanges`
      - discussion
+   * - 0018
+     - :doc:`records/0018-simple-setup-and-runtime-configuration`
+     - discussion
 
 .. sid-generated-end

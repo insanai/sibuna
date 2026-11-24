@@ -8,7 +8,7 @@ case "${1:-}" in
     *) if [ "$1" -gt 0 ]; then exit 0; fi ;;
 esac
 if [ -d /run/systemd/system ]; then
-    systemctl stop sibuna.service || true
-    systemctl disable sibuna.service || true
+    systemctl stop sibuna.service sibuna-edge.service || true
+    systemctl disable sibuna.service sibuna-edge.service || true
 fi
 # State, the admission seed and the service account are kept on removal and purge.

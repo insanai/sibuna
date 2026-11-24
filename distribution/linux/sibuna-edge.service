@@ -1,0 +1,53 @@
+# The edge load balancer (SID 0018). The packages install this unit beside sibuna.service
+# and start neither. Put the topology in /etc/sibuna/edge.jlv, with
+#   global: { admin_socket: "/run/sibuna/edge.sock" }
+# for `sibuna ctl`, and run `systemctl enable --now sibuna-edge`.
+# `systemctl reload sibuna-edge` checks the file and applies it without dropping flows.
+[Unit]
+Description=Sibuna edge load balancer
+Documentation=https://insanai.github.io/sibuna/ https://github.com/insanai/sibuna
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sibuna
+Group=sibuna
+# /run/sibuna holds the admin socket. Only the service account reaches it:
+#   sudo -u sibuna sibuna ctl /run/sibuna/edge.sock show servers
+RuntimeDirectory=sibuna
+RuntimeDirectoryMode=0700
+UMask=0077
+ExecStartPre=/usr/bin/sibuna check -f /etc/sibuna/edge.jlv
+ExecStart=/usr/bin/sibuna --config-file /etc/sibuna/edge.jlv
+ExecReload=/usr/bin/sibuna check -f /etc/sibuna/edge.jlv
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+# Two descriptors for each TCP stream and one for each UDP mapping (global.max_flows).
+LimitNOFILE=65536
+# Ports below 1024 need this capability and nothing else.
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target
