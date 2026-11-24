@@ -98,6 +98,17 @@ Replication needs no setting. It runs whenever the topology has a ``mesh`` and a
        }
    }
 
+Drain commands
+~~~~~~~~~~~~~~
+
+An operator drains a server before maintenance with ``set server POOL/NAME state drain``. In a cluster the command would have to be given on every node, and a node that restarts would return the server to rotation by itself. The mesh therefore carries the command as it carries a ban.
+
+The state is a second map, from ``POOL/NAME`` to a number. The number is the Unix millisecond of the command, shifted left by one bit, with the state in the lowest bit: 1 for drained and 0 for ready. The merge keeps the larger number. The later command therefore wins on every node, whatever the order of arrival, and of two commands in one millisecond the drain wins everywhere. The datagram has the form of a ban datagram with kind 4. A key holds at most 129 bytes: two names of 64 bytes and a stroke.
+
+A command is sent three times as a ban is, and a returning peer receives the last command for every server. A node refuses a number whose time lies more than 60 seconds ahead of its own clock. Without that bound one node with a wrong clock could overrule every later command. The map holds at most 4,096 servers and nothing in it ends. When it is full, the command for a new server stays local.
+
+A received command is applied by the edge worker as a local command is, at most 64 in a turn, and logged as ``EDGE010: mesh: set server ...``. A node that does not have the server ignores the command. ``set server POOL/NAME state drain local`` keeps a command on its node. ``mesh.replicate_drains: false`` turns the sharing off. Weights, added servers and removed servers are not shared.
+
 Observation
 ~~~~~~~~~~~
 
@@ -158,6 +169,19 @@ Acceptance criteria and implementation status
      - The map, the queue and the sends stay within their bounds.
      - Met in unit tests for the map and the size of a datagram. The queue and the sends of a walk are bounded by construction and have no test under load.
 
+The drain commands have their own row.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 6 54 40
+
+   * - #
+     - Criterion
+     - Status
+   * - 6
+     - A drain commanded on one node holds on its peers and on a node that restarts, the later command wins, and a local command stays local.
+     - Met. ``cmd/sibuna/tests/edge_mesh_bans.rs`` drains a server on one of three processes, returns it on another with ``local``, restarts the third, and ends the drain from the third. Unit tests cover the order of arrival, the bound on the clock and a full map.
+
 Formal model
 ------------
 
@@ -181,6 +205,10 @@ Known gaps
 #. A walk copies the map once for the returning peer, up to 65,536 entries.
 #. The test of three processes runs on one host over loopback. It has not run on separate hosts.
 #. Replication runs in edge mode only. The daemon mode of the firewall has no mesh.
+#. The map of drain commands never forgets a server. A cluster that names more than 4,096 servers over its life, counting removed ones, keeps later commands local until its nodes restart.
+#. Drain commands have no metrics of their own. Their effect shows in ``show servers`` and in the log.
+#. A node whose clock is more than 60 seconds behind its peers has its commands overruled by their earlier ones. A node whose clock is more than 60 seconds ahead has its commands refused by its peers.
+#. The Lean model covers the merge, which drains share with bans. It does not model the stamp or the bound on the clock.
 
 Open questions
 --------------
@@ -192,6 +220,7 @@ Review history
 --------------
 
 - 2026-11-24. Initial draft.
+- 2026-11-24. Drain commands added on the same datagram and merge, after the question of what else a cluster must share. Configuration is not shared: every node reads its own file.
 - 2026-11-24. Implementation and its review. The review found two faults. The mesh thread starts before the firewall, so a walk could arrive before the firewall could take bans: the bans were merged and never applied. The mesh now remembers them and applies them once the firewall has given its sink. The test of three processes then showed that a restarted node died: the daemon wrote the routing regime to a standard error that nobody read, and ``eprintln!`` ends a process there. The lines of the running edge are now written without that, and the test closes the pipe on purpose.
 
 References

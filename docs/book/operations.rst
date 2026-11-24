@@ -1181,6 +1181,8 @@ A node tells its peers the client and the time the ban ends, three times over fi
 
 Three things stay local. Lifting a ban on one node lifts it there only. Bans that the policy file configures are not sent, so the file must be the same on every node. The request limiters count on each node by itself. The nodes must use the same ``ipv6_prefix`` and keep their clocks within a few seconds. ``mesh.replicate_bans: false`` turns the sharing off.
 
+A drain travels the same way. ``sibuna ctl SOCKET set server app/a state drain`` on any node takes the server out of rotation on every node, and ``state ready`` returns it everywhere. The later command wins. A node that restarts learns the drains in effect from its peers, so it does not send clients to a server under maintenance. Adding the word ``local`` keeps a command on its node, and ``mesh.replicate_drains: false`` turns the sharing off. Weights and added or removed servers are not shared: we give those commands on each node, or change the file of each node.
+
 The sticky cookie of a pool needs no sharing, but it needs the same ``http.secret_file`` on every node. Without that file each node draws its own secret and does not recognise the cookie of another.
 
 Replacing the binary without closing the port
