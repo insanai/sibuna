@@ -23,7 +23,9 @@ const MAX_BUNDLES: usize = 256;
 /// Reads a PEM file of at most 256 KiB.
 fn pem(path: &Path) -> io::Result<Vec<u8>> {
     let mut bytes = Vec::new();
-    std::fs::File::open(path)?.take(MAX_PEM as u64 + 1).read_to_end(&mut bytes)?;
+    let named = |error: io::Error| io::Error::new(error.kind(), named(path, error));
+    let file = std::fs::File::open(path).map_err(named)?;
+    file.take(MAX_PEM as u64 + 1).read_to_end(&mut bytes).map_err(named)?;
     if bytes.len() > MAX_PEM {
         return Err(io::Error::other(format!("{}: TLS PEM exceeds 256 KiB", path.display())));
     }
