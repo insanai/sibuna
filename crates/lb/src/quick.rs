@@ -55,6 +55,8 @@ pub struct QuickAutomatic {
     pub email: Option<String>,
     /// `global.acme.storage`, when it is not the default.
     pub storage: Option<String>,
+    /// `global.acme.dns.hook`: the program that answers the DNS-01 challenge.
+    pub dns_hook: Option<String>,
 }
 
 impl QuickAutomatic {
@@ -62,7 +64,14 @@ impl QuickAutomatic {
     fn acme(&self) -> Vec<(&'static str, Node)> {
         let keys =
             [("directory", &self.directory), ("email", &self.email), ("storage", &self.storage)];
-        keys.into_iter().filter_map(|(key, value)| Some((key, text(value.as_ref()?)))).collect()
+        let mut members: Vec<_> = keys
+            .into_iter()
+            .filter_map(|(key, value)| Some((key, text(value.as_ref()?))))
+            .collect();
+        if let Some(hook) = &self.dns_hook {
+            members.push(("dns", Node::Map(vec![("hook", text(hook))])));
+        }
+        members
     }
 }
 

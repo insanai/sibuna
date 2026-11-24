@@ -182,6 +182,9 @@ pub struct TlsOptions {
     /// Host names whose certificates the daemon obtains and renews itself (SID 0021), in
     /// lower case. With a name here `crt` and `cert_file` are optional.
     pub auto: Vec<String>,
+    /// Who issues for the `auto` names. `None` chooses by name: a public name goes to
+    /// the ACME authority, an internal name and an IP address to the local authority.
+    pub issuer: Option<crate::AcmeIssuer>,
 }
 
 impl TlsOptions {
@@ -209,6 +212,10 @@ impl TlsOptions {
             return Err(invalid(format!("{}: cert_file and key_file go together", r.path())));
         }
         let auto = crate::acme::names(&mut r)?;
+        let issuer = crate::acme::issuer(&mut r)?;
+        if issuer.is_some() && auto.is_empty() {
+            return Err(invalid(format!("{}: issuer needs auto names", r.path())));
+        }
         if crt.is_empty() && cert_file.is_none() && auto.is_empty() {
             return Err(invalid(format!(
                 "{}: expected crt (combined PEM), cert_file with key_file, or auto (host names)",
@@ -249,6 +256,7 @@ impl TlsOptions {
             client_ca,
             client_optional,
             auto,
+            issuer,
         })
     }
 }
