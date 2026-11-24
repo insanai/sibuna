@@ -1,6 +1,8 @@
 //! Edge-mode startup, reload at batch boundaries and bounded shutdown.
 
 mod http;
+#[cfg(feature = "https")]
+mod inline;
 mod workers;
 
 use std::fs::File;

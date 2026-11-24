@@ -409,6 +409,8 @@ pub(crate) fn forward<W: Write>(
         // An upgraded connection may live for hours; it must not pin this snapshot.
         ctx.cache.release();
     }
+    // Only a planned request has no client socket, and it returned above.
+    let Some(stream) = ctx.stream else { return Ok(false) };
     let config = &server.config;
     let mut origin_status = 0u16;
     let status_sink = telemetry::origin_status_sink(ctx, &mut origin_status);
@@ -425,7 +427,7 @@ pub(crate) fn forward<W: Write>(
         if capturing { Some(&mut capture) } else { None };
     let exchange = Exchange {
         client: Client {
-            stream: ctx.stream,
+            stream,
             pending: ctx.pending,
             writer: &mut *ctx.writer,
             activity: Some(ctx.activity),
