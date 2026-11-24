@@ -245,8 +245,11 @@ fn each_request_is_one_line_with_its_server_status_and_times() {
 #[test]
 fn a_failed_server_is_logged_as_502_without_a_first_byte_and_counted() {
     both(|event_loop| {
-        // Nothing listens at the origin address.
-        let daemon = start(free(), event_loop, &Extra::default());
+        // Nothing listens at the origin address. A port that was free a moment ago may
+        // be taken by a test beside this one, so we name a loopback address that no test
+        // binds.
+        let dead = "127.83.7.9:9".parse().unwrap();
+        let daemon = start(dead, event_loop, &Extra::default());
         assert_eq!(status(&get(daemon.vip, "/gone", "")), 502);
         let line = &daemon.lines(1)[0];
         assert_eq!(field(line, "status"), "502", "{line}");

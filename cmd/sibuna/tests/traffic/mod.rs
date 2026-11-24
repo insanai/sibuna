@@ -400,9 +400,14 @@ impl Origin {
     }
 }
 
-/// An address that nothing listens on: a connect to it is refused.
+/// An address that nothing listens on: a connect to it is refused. Each call names
+/// another loopback address that no test binds. A port that was free a moment ago would
+/// not do: a test beside this one may take it.
 pub fn refused() -> SocketAddr {
-    TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap()
+    static NEXT: std::sync::atomic::AtomicU16 = std::sync::atomic::AtomicU16::new(1);
+    let serial = NEXT.fetch_add(1, Ordering::Relaxed);
+    let [high, low] = serial.to_be_bytes();
+    SocketAddr::from(([127, 84, high, low], 9))
 }
 
 fn serve_origin(socket: TcpStream, name: &str, shared: &Shared) {
