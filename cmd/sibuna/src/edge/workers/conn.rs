@@ -134,6 +134,8 @@ pub(super) struct Exchange {
     pub tunnel: bool,
     /// One side of a tunnel ended. The other receives what is pending, then both close.
     pub up_eof: bool,
+    /// The place under a WebSocket rule, given back when the exchange ends.
+    pub _permit: Option<sibuna_lb::TunnelPermit>,
 }
 
 impl Exchange {

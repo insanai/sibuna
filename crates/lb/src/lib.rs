@@ -11,6 +11,8 @@ pub use http::{
     HttpOptions, HttpRoutes, HttpTarget, OriginOptions, OriginTls, OriginVersion, TlsOptions,
     valid_authority,
 };
+mod websocket;
+pub use websocket::{TunnelPermit, TunnelRefusal, WebSocketRule};
 mod hello;
 mod ja4;
 mod maglev;

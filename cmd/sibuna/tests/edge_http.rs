@@ -30,6 +30,11 @@ impl Drop for Daemon {
 
 /// Starts an edge without the firewall in front of `origin`.
 fn start(origin: SocketAddr, event_loop: bool, options: &str) -> Daemon {
+    start_with(origin, event_loop, options, "")
+}
+
+/// As [`start`], with extra members `front` for the frontend.
+fn start_with(origin: SocketAddr, event_loop: bool, options: &str, front: &str) -> Daemon {
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
     let path = std::env::temp_dir().join(format!(
         "sibuna-http-{}-{}.json",
@@ -38,7 +43,7 @@ fn start(origin: SocketAddr, event_loop: bool, options: &str) -> Daemon {
     ));
     let source = format!(
         r#"{{"http":{{"surface":"off","event_loop":{event_loop}{options}}},
-        "frontends":{{"web":{{"proto":"http","binds":["{vip}"],"default_backend":"app"}}}},
+        "frontends":{{"web":{{"proto":"http","binds":["{vip}"],{front}"default_backend":"app"}}}},
         "backends":{{"app":{{"mode":"http","servers":[{{"name":"a","addr":"{origin}"}}]}}}}}}"#
     );
     fs::write(&path, source).unwrap();
@@ -365,5 +370,45 @@ fn failures_of_the_origin_become_502_and_slow_clients_lose_the_connection() {
         if event_loop {
             assert!(rest.is_empty(), "{:?}", String::from_utf8_lossy(&rest));
         }
+    });
+}
+
+#[test]
+fn a_websocket_rule_checks_the_origin_and_bounds_the_tunnels_of_a_client() {
+    both(|event_loop| {
+        let rule = r#""websocket":{"origins":["https://app.example.org"],"max_per_ip":2},"#;
+        let daemon = start_with(origin(), event_loop, "", rule);
+        let offer = |origin: &str| {
+            format!(
+                "GET /live HTTP/1.1\r\nHost: a\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\
+                 Sec-WebSocket-Version: 13\r\nSec-WebSocket-Key: {KEY}\r\n{origin}\
+                 Sec-WebSocket-Protocol: anahita.live.v1\r\n\r\n"
+            )
+        };
+        let open = |origin: &str| {
+            let mut client = connect(&daemon);
+            send(&mut client, offer(origin).as_bytes());
+            let status = read_message(&mut client, false).unwrap().status();
+            (client, status)
+        };
+        assert_eq!(open("").1, 403, "{event_loop}");
+        assert_eq!(open("Origin: https://evil.example\r\n").1, 403, "{event_loop}");
+        let good = "Origin: https://app.example.org\r\n";
+        let (first, status) = open(good);
+        assert_eq!(status, 101, "{event_loop}");
+        let (_second, status) = open(good);
+        assert_eq!(status, 101, "{event_loop}");
+        assert_eq!(open(good).1, 429, "{event_loop}");
+        // An ordinary request is not a tunnel and needs no origin.
+        let mut client = connect(&daemon);
+        send(&mut client, b"GET /plain HTTP/1.1\r\nHost: a\r\n\r\n");
+        assert_eq!(read_message(&mut client, false).unwrap().status(), 200);
+        // A closed tunnel gives its place back.
+        drop(first);
+        let reopened = (0..40).any(|_| {
+            std::thread::sleep(Duration::from_millis(50));
+            open(good).1 == 101
+        });
+        assert!(reopened, "{event_loop}");
     });
 }

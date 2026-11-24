@@ -281,6 +281,7 @@ pub(crate) struct Rule {
     path: Option<String>,
     pool: Arc<str>,
     firewall: bool,
+    websocket: Option<Arc<crate::WebSocketRule>>,
 }
 
 impl Rule {
@@ -306,6 +307,7 @@ pub(crate) fn rules(
     r: &mut ObjectReader<'_, '_>,
     pools: &BTreeMap<String, Backend>,
     firewall: bool,
+    websocket: Option<&Arc<crate::WebSocketRule>>,
 ) -> io::Result<Vec<Rule>> {
     let mut rules = Vec::new();
     let entries = field(r.take_array("routes"))?.unwrap_or_default();
@@ -331,8 +333,13 @@ pub(crate) fn rules(
         if !pools.get(&pool).is_some_and(|p| p.protocol == Protocol::Http) {
             return Err(invalid(format!("{}: unknown HTTP backend {pool}", row.path())));
         }
+        // A route without a rule of its own keeps the rule of its frontend.
+        let websocket = match field(row.take_object("websocket"))? {
+            Some(rule) => Some(crate::WebSocketRule::parse(rule)?),
+            None => websocket.cloned(),
+        };
         field(row.finish())?;
-        rules.push(Rule { host, path, pool: pool.into(), firewall });
+        rules.push(Rule { host, path, pool: pool.into(), firewall, websocket });
     }
     Ok(rules)
 }
@@ -341,6 +348,7 @@ struct Frontend {
     pool: Arc<str>,
     rules: Arc<[Rule]>,
     firewall: bool,
+    websocket: Option<Arc<crate::WebSocketRule>>,
 }
 
 impl Frontend {
@@ -391,6 +399,7 @@ impl HttpRoutes {
                     pool: f.pool.clone(),
                     rules: f.http_rules.clone(),
                     firewall: f.firewall,
+                    websocket: f.websocket.clone(),
                 };
                 (*addr, front)
             })
@@ -419,6 +428,23 @@ impl HttpRoutes {
         let Some(front) = table.front(vip) else { return true };
         let host = bare_host(host);
         front.rules.iter().find(|r| r.matches(host, path)).map_or(front.firewall, |r| r.firewall)
+    }
+
+    /// The WebSocket rule of this request: that of the first matching route, or that of
+    /// the frontend. `None` when no rule applies.
+    pub fn websocket(
+        &self,
+        vip: SocketAddr,
+        host: &[u8],
+        path: &[u8],
+    ) -> Option<Arc<crate::WebSocketRule>> {
+        let table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        let front = table.front(vip)?;
+        let host = bare_host(host);
+        match front.rules.iter().find(|r| r.matches(host, path)) {
+            Some(rule) => rule.websocket.clone(),
+            None => front.websocket.clone(),
+        }
     }
 
     /// Selects an eligible HTTP origin for the validated authority and normalized path.

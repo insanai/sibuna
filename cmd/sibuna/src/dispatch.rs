@@ -394,7 +394,7 @@ pub(crate) fn forward<W: Write>(
     if is_forward_auth(&server.config) {
         return forward_auth(ctx, status, rule_name, rule_hash);
     }
-    let selected = match select_origin(ctx) {
+    let (selected, tunnel) = match select_origin(ctx) {
         Ok(selected) => selected,
         Err(status) => {
             response::write_text(ctx.writer, status, status.reason().as_bytes(), false)?;
@@ -403,7 +403,7 @@ pub(crate) fn forward<W: Write>(
     };
     server.metrics.proxied.bump();
     if ctx.defer.is_some() {
-        return plan(ctx, status, rule_name, selected);
+        return plan(ctx, status, rule_name, selected, tunnel);
     }
     if ctx.request.header(b"upgrade").is_some() {
         // An upgraded connection may live for hours; it must not pin this snapshot.
@@ -454,6 +454,8 @@ pub(crate) fn forward<W: Write>(
     };
     let relayed = relay(&server.pool, ctx.workspace, exchange, selected);
     telemetry::admitted_complete(ctx, origin_status, origin.as_ref());
+    // The tunnel has ended by now, so its place under the rule is free.
+    drop(tunnel);
     relayed.or_else(|error| refuse_proxy_error(ctx, error))
 }
 
@@ -481,6 +483,8 @@ pub(crate) struct Plan {
     pub outbound: sibuna_net::machine::Outbound,
     /// The client asked to keep its connection.
     pub keep_alive: bool,
+    /// The place of an upgrade under its WebSocket rule, held while the exchange lives.
+    pub tunnel: Option<sibuna_lb::TunnelPermit>,
 }
 
 /// Plans an admitted request in place of relaying it: encodes the origin request and
@@ -490,6 +494,7 @@ fn plan<W: Write>(
     status: &str,
     rule_name: &str,
     selected: Option<sibuna_lb::HttpTarget>,
+    tunnel: Option<sibuna_lb::TunnelPermit>,
 ) -> io::Result<bool> {
     let Some(target) = selected else {
         let status = Status::ServiceUnavailable;
@@ -516,7 +521,7 @@ fn plan<W: Write>(
     defer.wire.clear();
     match sibuna_net::machine::encode_request(&mut defer.wire, &ctx.request, ctx.upload, &audit) {
         Ok(outbound) => {
-            defer.plan = Some(Plan { target, outbound, keep_alive: ctx.keep_alive });
+            defer.plan = Some(Plan { target, outbound, keep_alive: ctx.keep_alive, tunnel });
             Ok(ctx.keep_alive)
         }
         Err(error) => refuse_proxy_error(ctx, error),
@@ -535,12 +540,30 @@ fn edge_host<'a, W>(ctx: &'a Ctx<'_, W>) -> Result<&'a [u8], Status> {
     Ok(host)
 }
 
-fn select_origin<W>(ctx: &Ctx<'_, W>) -> Result<Option<sibuna_lb::HttpTarget>, Status> {
-    let (Some(routes), Some(i)) = (&ctx.server.edge_routes, ctx.ingress) else { return Ok(None) };
+/// The server of an admitted request and, for an upgrade, its place under the tunnel rule.
+type Selected = (Option<sibuna_lb::HttpTarget>, Option<sibuna_lb::TunnelPermit>);
+
+fn select_origin<W>(ctx: &Ctx<'_, W>) -> Result<Selected, Status> {
+    let (Some(routes), Some(i)) = (&ctx.server.edge_routes, ctx.ingress) else {
+        return Ok((None, None));
+    };
     let host = ctx.request.header(b"host").unwrap_or_default();
+    let path = ctx.request.path;
+    // The rule applies whether or not the route uses the firewall.
+    let tunnel = match ctx.request.header(b"upgrade") {
+        Some(_) => routes.websocket(i.vip, host, path).map(|rule| {
+            let client = ctx.client_address.unwrap_or(i.peer.ip());
+            rule.admit(ctx.request.header(b"origin"), client).map_err(|refusal| match refusal {
+                sibuna_lb::TunnelRefusal::Origin => Status::Forbidden,
+                sibuna_lb::TunnelRefusal::Limit => Status::TooManyRequests,
+            })
+        }),
+        None => None,
+    };
+    let tunnel = tunnel.transpose()?;
     routes
-        .select(i.vip, i.peer, host, ctx.request.path, ctx.cache.generation())
-        .map(Some)
+        .select(i.vip, i.peer, host, path, ctx.cache.generation())
+        .map(|target| (Some(target), tunnel))
         .ok_or(Status::ServiceUnavailable)
 }
 

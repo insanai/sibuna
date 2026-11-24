@@ -29,7 +29,7 @@ enum Next {
 impl Worker {
     /// Starts the exchange of an admitted request.
     pub fn begin(&mut self, index: u32, plan: Plan, wire: Vec<u8>) {
-        let Plan { target, outbound, keep_alive } = plan;
+        let Plan { target, outbound, keep_alive, tunnel: permit } = plan;
         let address = target.address();
         let exchange = Exchange {
             origin: None,
@@ -51,6 +51,7 @@ impl Worker {
             connecting: false,
             tunnel: false,
             up_eof: false,
+            _permit: permit,
         };
         let Some(conn) = self.conns.at(index) else { return };
         conn.activity = self.now;
