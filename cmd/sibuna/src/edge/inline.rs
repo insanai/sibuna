@@ -65,6 +65,10 @@ impl Decide for Decision {
         })
     }
 
+    fn refused(&self, refused: &sibuna_ingress::Refused<'_>) {
+        crate::access::refused(&self.server, refused);
+    }
+
     fn retry(&self, failed: &sibuna_lb::HttpTarget) -> Option<sibuna_lb::HttpTarget> {
         self.server.edge_routes.as_ref()?.retry(failed)
     }

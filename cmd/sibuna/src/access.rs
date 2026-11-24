@@ -10,7 +10,7 @@ mod sink;
 
 use std::io::{self, Write};
 use std::net::IpAddr;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, OnceLock, PoisonError, RwLock};
 use std::time::{Duration, Instant};
 
@@ -39,9 +39,6 @@ pub(crate) struct Observe {
     pub stats: Arc<Stats>,
     /// The node stopped taking new work. Release on store, acquire on load.
     pub draining: AtomicBool,
-    /// Connections of PROXY frontends that sent a valid header, and those closed.
-    pub proxy_accepted: AtomicU64,
-    pub proxy_rejected: AtomicU64,
 }
 
 impl Observe {
@@ -52,8 +49,6 @@ impl Observe {
             log: log.map(OnceLock::from).unwrap_or_default(),
             stats,
             draining: AtomicBool::new(false),
-            proxy_accepted: AtomicU64::new(0),
-            proxy_rejected: AtomicU64::new(0),
         }
     }
 
@@ -140,16 +135,6 @@ impl Observe {
             ("sibuna_edge_access_log_written_total", "counter", written),
             ("sibuna_edge_access_log_dropped_total", "counter", dropped),
             ("sibuna_edge_access_log_errors_total", "counter", errors),
-            (
-                "sibuna_edge_proxy_protocol_accepted_total",
-                "counter",
-                self.proxy_accepted.load(Ordering::Relaxed),
-            ),
-            (
-                "sibuna_edge_proxy_protocol_rejected_total",
-                "counter",
-                self.proxy_rejected.load(Ordering::Relaxed),
-            ),
         ];
         for (name, kind, value) in series {
             let _ = writeln!(out, "# TYPE {name} {kind}\n{name} {value}");
@@ -415,6 +400,28 @@ impl sibuna_ingress::Report for Pending {
         self.entry.server = target.server().cloned();
         self.entry.active = self.entry.server.as_ref().map(ServerInfo::begin_request);
     }
+}
+
+/// Counts and logs a request that the protocol runtime answered before any decision:
+/// the node ran as many requests as it may, or the request was malformed.
+#[cfg(feature = "https")]
+pub(crate) fn refused(server: &Server, refused: &sibuna_ingress::Refused<'_>) {
+    let Some(observe) = &server.observe else { return };
+    let reason = match refused.status {
+        503 => sibuna_lb::Refusal::ExchangeLimit,
+        _ => sibuna_lb::Refusal::BadRequest,
+    };
+    observe.stats.refuse(reason);
+    let front = server.edge_routes.as_ref().and_then(|routes| routes.frontend(refused.vip));
+    let mut peer = crate::connection::PeerText::default();
+    peer.format(Some(refused.peer));
+    let mut entry = Entry::unparsed(peer.as_bytes(), front, refused.protocol);
+    if observe.log().is_some() {
+        let (host, method, path) = (refused.host, refused.method, refused.path);
+        entry.set_text(peer.as_bytes(), host.as_bytes(), method.as_bytes(), path.as_bytes());
+    }
+    entry.status = refused.status;
+    observe.settle(entry, Instant::now());
 }
 
 /// Settles the request that a response writer answered: Sibuna's own response on every

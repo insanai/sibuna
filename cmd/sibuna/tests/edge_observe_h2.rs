@@ -29,6 +29,8 @@ struct Daemon {
     _stderr: BufReader<ChildStderr>,
     directory: PathBuf,
     vip: SocketAddr,
+    /// The separate listener for the metrics.
+    admin: SocketAddr,
 }
 
 impl Drop for Daemon {
@@ -55,14 +57,29 @@ impl Daemon {
     }
 }
 
+/// What a test topology adds to the smallest one.
+#[derive(Clone, Copy, Default)]
+struct Extra<'a> {
+    /// Members of the pool, each with a trailing comma.
+    pool: &'a str,
+    /// Members of the frontend, each with a trailing comma.
+    front: &'a str,
+    /// Members of the `http` object, each with a leading comma.
+    http: &'a str,
+}
+
 /// Starts an edge with a TLS frontend and an access log in front of `origin`. `pool`
 /// holds extra members of the pool, each with a trailing comma.
 fn start(origin: SocketAddr, pool: &str) -> Daemon {
+    start_with(origin, Extra { pool, ..Extra::default() })
+}
+
+fn start_with(origin: SocketAddr, extra: Extra<'_>) -> Daemon {
     // A port that was free a moment ago may be taken by a test that runs beside this
-    // one. The listener is then chosen again.
+    // one. The listeners are then chosen again.
     let mut failure = String::new();
     for _ in 0..5 {
-        match try_start(origin, pool) {
+        match try_start(origin, extra) {
             Ok(daemon) => return daemon,
             Err(line) => failure = line,
         }
@@ -70,16 +87,21 @@ fn start(origin: SocketAddr, pool: &str) -> Daemon {
     panic!("the edge did not start: {failure}");
 }
 
-fn try_start(origin: SocketAddr, pool: &str) -> Result<Daemon, String> {
-    let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
-    let name = format!("sibuna-observe-h2-{}-{}", std::process::id(), vip.port());
+fn try_start(origin: SocketAddr, extra: Extra<'_>) -> Result<Daemon, String> {
+    let free = || TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    let (vip, admin) = (free(), free());
+    // Two tests that run side by side may draw the same free port.
+    static NEXT: AtomicUsize = AtomicUsize::new(0);
+    let serial = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let name = format!("sibuna-observe-h2-{}-{}-{serial}", std::process::id(), vip.port());
+    let Extra { pool, front, http } = extra;
     let directory = std::env::temp_dir().join(name);
     fs::create_dir_all(&directory).unwrap();
     let (cert, key) = (fixture("localhost.pem"), fixture("localhost.key"));
     let source = format!(
-        r#"{{"http":{{"surface":"off"}},
-        "observability":{{"access_log":{{"output":"{}"}}}},
-        "frontends":{{"web":{{"proto":"http","binds":["{vip}"],
+        r#"{{"http":{{"surface":"off"{http}}},
+        "observability":{{"access_log":{{"output":"{}"}},"listen":"{admin}"}},
+        "frontends":{{"web":{{"proto":"http","binds":["{vip}"],{front}
           "tls":{{"cert_file":"{cert}","key_file":"{key}"}},"default_backend":"app"}}}},
         "backends":{{"app":{{"mode":"http",{pool}
           "servers":[{{"name":"a","addr":"{origin}"}}]}}}}}}"#,
@@ -101,11 +123,42 @@ fn try_start(origin: SocketAddr, pool: &str) -> Result<Daemon, String> {
         let _ = fs::remove_dir_all(&directory);
         return Err(line);
     }
-    Ok(Daemon { child, _stderr: stderr, directory, vip })
+    Ok(Daemon { child, _stderr: stderr, directory, vip, admin })
 }
 
 /// An HTTP/1.1 origin that answers every request with `hello`.
 fn origin() -> SocketAddr {
+    slow_origin(Duration::ZERO)
+}
+
+/// The metrics text of the separate listener.
+fn metrics(daemon: &Daemon) -> String {
+    use std::io::Read;
+
+    let mut stream = std::net::TcpStream::connect(daemon.admin).unwrap();
+    stream.set_read_timeout(Some(WAIT)).unwrap();
+    stream.write_all(b"GET /metrics HTTP/1.1\r\nHost: x\r\n\r\n").unwrap();
+    let mut text = String::new();
+    let _ = stream.read_to_string(&mut text);
+    text
+}
+
+/// One request on `client`: its status.
+async fn fetch(
+    client: &mut hyper::client::conn::http2::SendRequest<
+        http_body_util::combinators::UnsyncBoxBody<Bytes, std::convert::Infallible>,
+    >,
+    request: hyper::http::request::Builder,
+) -> u16 {
+    let request = request.body(Empty::<Bytes>::new().boxed_unsync()).unwrap();
+    let response = client.send_request(request).await.unwrap();
+    let status = response.status().as_u16();
+    let _ = response.into_body().collect().await;
+    status
+}
+
+/// As [`origin`], with a wait of `delay` before each answer.
+fn slow_origin(delay: Duration) -> SocketAddr {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let address = listener.local_addr().unwrap();
     std::thread::spawn(move || {
@@ -121,6 +174,7 @@ fn origin() -> SocketAddr {
                     if line != "\r\n" {
                         continue;
                     }
+                    std::thread::sleep(delay);
                     let response = b"HTTP/1.1 200 OK\r\ncontent-length: 5\r\n\r\nhello";
                     if socket.write_all(response).is_err() {
                         return;
@@ -208,4 +262,78 @@ fn grpc_calls_on_a_shared_http2_session_are_logged_one_line_each() {
     // The stream of forty messages of 100 bytes, each with a prefix of five.
     let stream = lines.iter().find(|line| field(line, "path") == "/echo.Echo/Stream").unwrap();
     assert_eq!(field(stream, "bytes_out"), "4200", "{stream}");
+}
+
+#[test]
+fn a_request_that_the_runtime_refuses_is_logged_and_counted_by_reason() {
+    let extra = Extra { http: r#","max_connections":1"#, ..Extra::default() };
+    let daemon = start_with(slow_origin(Duration::from_millis(700)), extra);
+    let vip = daemon.vip;
+    runtime().block_on(async {
+        let exchange = async {
+            let mut client = connect(vip).await;
+            let url = move |path: &str| format!("https://localhost:{}{path}", vip.port());
+            // An expectation that no server can meet is answered before any decision.
+            let odd = Request::get(url("/odd")).header("expect", "200-ok");
+            assert_eq!(fetch(&mut client, odd).await, 417);
+            // The node may run one request. A second one beside it is refused.
+            let (mut beside, slow_url) = (client.clone(), url("/slow"));
+            let slow =
+                tokio::spawn(async move { fetch(&mut beside, Request::get(slow_url)).await });
+            tokio::time::sleep(Duration::from_millis(250)).await;
+            let second = Request::get(format!("https://localhost:{}/second", vip.port()));
+            assert_eq!(fetch(&mut client, second).await, 503);
+            assert_eq!(slow.await.unwrap(), 200);
+        };
+        tokio::time::timeout(WAIT, exchange).await.unwrap();
+    });
+    let lines = daemon.lines(3);
+    let line = |path: &str| lines.iter().find(|line| field(line, "path") == path).unwrap();
+    for (path, status) in [("/odd", "417"), ("/second", "503")] {
+        let refused = line(path);
+        for (name, value) in [
+            ("status", status),
+            ("protocol", "h2"),
+            ("method", "GET"),
+            ("client", "127.0.0.1"),
+            ("frontend", "web"),
+            ("server", "-"),
+            ("verdict", "-"),
+        ] {
+            assert_eq!(field(refused, name), value, "{name} in {refused}");
+        }
+    }
+    assert_eq!(field(line("/slow"), "status"), "200");
+    let text = metrics(&daemon);
+    assert!(text.contains("sibuna_edge_refused_total{reason=\"bad_request\"} 1\n"), "{text}");
+    assert!(text.contains("sibuna_edge_refused_total{reason=\"exchange_limit\"} 1\n"), "{text}");
+    let class = "sibuna_edge_frontend_requests_total{frontend=\"web\",code=\"5xx\"} 1\n";
+    assert!(text.contains(class), "{text}");
+}
+
+#[test]
+fn a_proxy_header_before_tls_names_the_client_of_an_http2_request() {
+    let front = r#""trusted_proxies":["127.0.0.0/8"],"proxy_protocol":true,"#;
+    let daemon = start_with(origin(), Extra { front, ..Extra::default() });
+    let vip = daemon.vip;
+    runtime().block_on(async {
+        let exchange = async {
+            let header = b"PROXY TCP4 203.0.113.7 192.0.2.1 51234 443\r\n";
+            let mut client = support::connect_after(vip, header).await;
+            let url = format!("https://localhost:{}/proxied", vip.port());
+            assert_eq!(fetch(&mut client, Request::get(url)).await, 200);
+            // Without the header the TLS handshake is not even read.
+            assert!(support::handshakes(vip).await.is_none());
+        };
+        tokio::time::timeout(WAIT, exchange).await.unwrap();
+    });
+    let line = &daemon.lines(1)[0];
+    for (name, value) in
+        [("client", "203.0.113.7"), ("protocol", "h2"), ("path", "/proxied"), ("status", "200")]
+    {
+        assert_eq!(field(line, name), value, "{name} in {line}");
+    }
+    let text = metrics(&daemon);
+    assert!(text.contains("sibuna_edge_proxy_protocol_accepted_total 1\n"), "{text}");
+    assert!(text.contains("sibuna_edge_proxy_protocol_rejected_total 1\n"), "{text}");
 }

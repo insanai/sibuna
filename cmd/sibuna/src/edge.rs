@@ -12,7 +12,6 @@ mod http;
 #[cfg(feature = "https")]
 mod inline;
 mod probe;
-mod proxy_stage;
 mod quick;
 mod watch;
 mod workers;
@@ -413,8 +412,8 @@ impl Serving {
 fn step(edge: &mut Edge, http: Option<&http::Http>) -> io::Result<()> {
     edge.step()?;
     if let Some(http) = http {
-        for (bind, stream, permit) in edge.accepted_http() {
-            http.accept(bind, stream, permit);
+        for accepted in edge.accepted() {
+            http.accept(accepted);
         }
     }
     Ok(())

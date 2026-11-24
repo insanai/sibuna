@@ -108,10 +108,8 @@ pub(super) struct Http {
     workers: Option<Arc<Workers>>,
     options: HttpOptions,
     binds: BTreeMap<SocketAddr, Arc<TlsOptions>>,
-    /// Hands accepted connections to their request path. Shared with the PROXY stage.
+    /// Hands accepted connections to their request path.
     dispatcher: Arc<Dispatcher>,
-    /// Reads the PROXY header of frontends that require one (SID 0020).
-    stage: Option<super::proxy_stage::Stage>,
     observe: Arc<Observe>,
 }
 
@@ -142,11 +140,6 @@ pub(super) struct Dispatcher {
 }
 
 impl Dispatcher {
-    /// The frontend behind the listener `bind`.
-    pub fn frontend(&self, bind: SocketAddr) -> Option<Arc<sibuna_lb::FrontendInfo>> {
-        self.server.edge_routes.as_ref()?.frontend(bind)
-    }
-
     /// Starts TLS or HTTP on an accepted connection. `client` is the source of its PROXY
     /// header, when it had one, and then replaces the socket peer.
     pub fn deliver(
@@ -309,14 +302,12 @@ impl Http {
         let ingress = RwLock::new(ingress);
         let (web, pool) = (server.clone(), workers.clone());
         let dispatcher = Arc::new(Dispatcher { server: web, workers: pool, binds, ingress });
-        let stage = super::proxy_stage::Stage::start(dispatcher.clone(), observe.clone())?;
         Ok(Self {
             reaper,
             workers,
             options: prepared.options,
             binds: prepared.binds,
             dispatcher,
-            stage: Some(stage),
             observe,
             server,
         })
@@ -389,15 +380,11 @@ impl Http {
         self.server.slot.publish(prepared.engine);
     }
 
-    pub fn accept(&self, bind: SocketAddr, stream: TcpStream, permit: FlowPermit) {
-        // A PROXY frontend reads its header first, off this thread.
-        if let Some(stage) = &self.stage
-            && self.dispatcher.frontend(bind).is_some_and(|front| front.proxy_protocol)
-        {
-            stage.submit(bind, stream, permit);
-            return;
-        }
-        self.dispatcher.deliver(bind, stream, permit, None);
+    /// Starts TLS or HTTP on an accepted connection. The edge has taken its PROXY
+    /// header already, when the frontend reads one (SID 0020).
+    pub fn accept(&self, accepted: sibuna_lb::Accepted) {
+        let sibuna_lb::Accepted { bind, stream, permit, client } = accepted;
+        self.dispatcher.deliver(bind, stream, permit, client);
     }
 }
 
@@ -484,14 +471,13 @@ fn launch(server: &Arc<Server>, stream: TcpStream, ingress: Ingress, permit: Opt
     });
     if task.is_err() {
         server.metrics.overloaded.bump();
+        server.count_refusal(sibuna_lb::Refusal::TaskLimit);
     }
 }
 
 impl Drop for Http {
     fn drop(&mut self) {
         self.server.stopping.store(true, Ordering::Release);
-        // The stage holds the dispatcher. It ends first, so nothing is delivered later.
-        drop(self.stage.take());
         if let Some(workers) = &self.workers {
             workers.stop();
         }
