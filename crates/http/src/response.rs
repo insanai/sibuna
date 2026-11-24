@@ -27,6 +27,8 @@ pub enum Status {
     Ok,
     /// 302.
     Found,
+    /// 308.
+    PermanentRedirect,
     /// 400.
     BadRequest,
     /// 401.
@@ -63,6 +65,7 @@ impl Status {
         match self {
             Status::Ok => 200,
             Status::Found => 302,
+            Status::PermanentRedirect => 308,
             Status::BadRequest => 400,
             Status::Unauthorized => 401,
             Status::Forbidden => 403,
@@ -85,6 +88,7 @@ impl Status {
         match self {
             Status::Ok => "OK",
             Status::Found => "Found",
+            Status::PermanentRedirect => "Permanent Redirect",
             Status::BadRequest => "Bad Request",
             Status::Unauthorized => "Unauthorized",
             Status::Forbidden => "Forbidden",
@@ -394,6 +398,7 @@ mod tests {
         let statuses = [
             (Status::Ok, "200 OK"),
             (Status::Found, "302 Found"),
+            (Status::PermanentRedirect, "308 Permanent Redirect"),
             (Status::BadRequest, "400 Bad Request"),
             (Status::Unauthorized, "401 Unauthorized"),
             (Status::Forbidden, "403 Forbidden"),
