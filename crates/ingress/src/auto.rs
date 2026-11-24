@@ -14,6 +14,7 @@
 //! the certificate authority.
 
 mod client;
+mod dns;
 mod driver;
 
 use std::collections::{BTreeMap, HashMap};
@@ -24,7 +25,7 @@ use std::time::Duration;
 
 use rustls::sign::CertifiedKey;
 use sibuna_acme::{Challenge, ChallengeKind, Error as AcmeError, KeyPair, x509};
-use sibuna_lb::{AcmeOptions, AutomaticHttps};
+use sibuna_lb::{AcmeOptions, AutoName, AutomaticHttps};
 
 /// The ALPN protocol of the TLS-ALPN-01 challenge (RFC 8737).
 pub(crate) const ACME_TLS: &[u8] = b"acme-tls/1";
@@ -49,6 +50,13 @@ pub enum Event {
         name: String,
         /// The expiry, in seconds since 1970.
         not_after: u64,
+    },
+    /// The DNS-01 record of an order could not be removed. The order is not affected.
+    CleanupFailed {
+        /// The name of the certificate.
+        name: String,
+        /// What failed, with a hint.
+        error: AcmeError,
     },
     /// An attempt failed. The served certificate, if any, stays.
     Failed {
@@ -97,6 +105,8 @@ impl CertificateState {
 pub struct CertificateStatus {
     /// The managed name.
     pub name: String,
+    /// How the certificate is obtained: `http-01`, `tls-alpn-01`, `dns-01` or `local`.
+    pub via: &'static str,
     /// The issuer of the served certificate.
     pub issuer: Option<String>,
     /// The expiry of the served certificate, in seconds since 1970.
@@ -113,6 +123,7 @@ impl CertificateStatus {
     fn pending(name: &str) -> Self {
         Self {
             name: name.to_owned(),
+            via: "-",
             issuer: None,
             not_after: None,
             next_attempt: None,
@@ -133,9 +144,9 @@ fn write<T>(lock: &RwLock<T>) -> std::sync::RwLockWriteGuard<'_, T> {
 /// The tables. The thread writes them. Handshakes, requests and the admin socket read.
 pub(crate) struct Shared {
     pub options: AcmeOptions,
-    /// The managed names with the port of their TLS frontend, and whether the topology
-    /// has a plain HTTP frontend. A reload replaces both.
-    wanted: RwLock<(BTreeMap<String, u16>, bool)>,
+    /// The managed names, and whether the topology has a plain HTTP frontend. A reload
+    /// replaces both.
+    wanted: RwLock<(BTreeMap<String, AutoName>, bool)>,
     certificates: RwLock<HashMap<String, Arc<CertifiedKey>>>,
     alpn_answers: RwLock<HashMap<String, Arc<CertifiedKey>>>,
     http_answers: RwLock<HashMap<String, String>>,
@@ -155,7 +166,7 @@ impl Shared {
     fn new(config: AutomaticHttps) -> Self {
         Self {
             options: config.options,
-            wanted: RwLock::new((config.names.into_iter().collect(), config.plain_frontend)),
+            wanted: RwLock::new((by_name(config.names), config.plain_frontend)),
             certificates: RwLock::default(),
             alpn_answers: RwLock::default(),
             http_answers: RwLock::default(),
@@ -179,8 +190,23 @@ impl Shared {
         read(&self.alpn_answers).get(name).cloned()
     }
 
-    fn names(&self) -> Vec<String> {
-        read(&self.wanted).0.keys().cloned().collect()
+    fn names(&self) -> Vec<AutoName> {
+        read(&self.wanted).0.values().cloned().collect()
+    }
+
+    /// Sleeps for `time` in short steps. Returns false when the daemon stops meanwhile.
+    fn pause(&self, time: Duration) -> bool {
+        let end = std::time::Instant::now() + time;
+        loop {
+            if self.stopping.load(Ordering::Acquire) {
+                return false;
+            }
+            let left = end.saturating_duration_since(std::time::Instant::now());
+            if left.is_zero() {
+                return true;
+            }
+            std::thread::sleep(left.min(Duration::from_millis(200)));
+        }
     }
 
     fn has_plain_frontend(&self) -> bool {
@@ -209,6 +235,8 @@ impl Shared {
                 let answer = driver::certified(vec![certificate], &key, false)?;
                 write(&self.alpn_answers).insert(challenge.name.clone(), answer);
             }
+            // The driver answers DNS-01 through the provider, not through a listener.
+            ChallengeKind::Dns01 => {}
         }
         Ok(())
     }
@@ -220,10 +248,11 @@ impl Shared {
     }
 
     /// Drops the certificates and the status of names that are no longer managed.
-    fn forget_except(&self, names: &[String]) {
-        write(&self.certificates).retain(|name, _| names.contains(name));
+    fn forget_except(&self, names: &[AutoName]) {
+        let wanted = |name: &String| names.iter().any(|known| known.name == *name);
+        write(&self.certificates).retain(|name, _| wanted(name));
         let mut all = self.status.lock().unwrap_or_else(PoisonError::into_inner);
-        all.retain(|name, _| names.contains(name));
+        all.retain(|name, _| wanted(name));
     }
 
     fn set_status(&self, status: CertificateStatus) {
@@ -245,6 +274,20 @@ impl Shared {
         *self.woken.lock().unwrap_or_else(PoisonError::into_inner) = true;
         self.wake.notify_all();
     }
+}
+
+fn by_name(names: Vec<AutoName>) -> BTreeMap<String, AutoName> {
+    names.into_iter().map(|name| (name.name.clone(), name)).collect()
+}
+
+/// The host of a `Host` header without its port, in lower case. An IPv6 address loses
+/// its brackets.
+fn host_name(host: &str) -> String {
+    let name = match host.strip_prefix('[').and_then(|rest| rest.split_once(']')) {
+        Some((address, _)) => address,
+        None => host.rsplit_once(':').map_or(host, |(name, _)| name),
+    };
+    name.trim_end_matches('.').to_ascii_lowercase()
 }
 
 /// Automatic HTTPS of one daemon. Dropping it stops the thread after its current step.
@@ -282,10 +325,10 @@ impl Automatic {
         &self.shared.options
     }
 
-    /// Replaces the managed names after a reload: each name with the port of its TLS
-    /// frontend. New names are ordered. Names that left are no longer renewed.
-    pub fn set_names(&self, names: Vec<(String, u16)>, plain_frontend: bool) {
-        *write(&self.shared.wanted) = (names.into_iter().collect(), plain_frontend);
+    /// Replaces the managed names after a reload. New names are ordered. Names that
+    /// left are no longer renewed.
+    pub fn set_names(&self, names: Vec<AutoName>, plain_frontend: bool) {
+        *write(&self.shared.wanted) = (by_name(names), plain_frontend);
         self.shared.notify();
     }
 
@@ -307,13 +350,28 @@ impl Automatic {
         Some(format!("{token}.{thumbprint}"))
     }
 
-    /// The port of the TLS frontend of `host`, when `host` is a managed name. `host` is
-    /// the value of a `Host` header and may carry a port.
+    /// The port of the TLS frontend of `host`, when `host` is a managed name or a
+    /// managed wildcard covers it. `host` is the value of a `Host` header and may carry
+    /// a port.
     fn port_of(&self, host: &[u8]) -> Option<u16> {
-        let host = std::str::from_utf8(host).ok()?;
-        let name = host.rsplit_once(':').map_or(host, |(name, _)| name);
-        let name = name.trim_end_matches('.').to_ascii_lowercase();
-        read(&self.shared.wanted).0.get(&name).copied()
+        let name = host_name(std::str::from_utf8(host).ok()?);
+        let wanted = read(&self.shared.wanted);
+        let exact = wanted.0.get(&name);
+        let covering = || {
+            let (_, parent) = name.split_once('.')?;
+            wanted.0.get(&format!("*.{parent}"))
+        };
+        exact.or_else(covering).map(|found| found.port)
+    }
+
+    /// The root of the local authority, when the daemon manages a name that it issues
+    /// for: the path of the file, the PEM text and the fields. Fails when the file
+    /// cannot be read.
+    pub fn local_root(&self) -> Result<Option<sibuna_acme::local::Root>, AcmeError> {
+        if !self.shared.names().iter().any(|name| name.local) {
+            return Ok(None);
+        }
+        sibuna_acme::local::read_root(std::path::Path::new(&self.shared.options.storage))
     }
 
     /// The port to redirect a plain HTTP request for `host` to, when `host` is a managed
@@ -329,7 +387,8 @@ impl Automatic {
         names
             .iter()
             .map(|name| {
-                known.get(name).cloned().unwrap_or_else(|| CertificateStatus::pending(name))
+                let pending = || CertificateStatus::pending(&name.name);
+                known.get(&name.name).cloned().unwrap_or_else(pending)
             })
             .collect()
     }
@@ -351,10 +410,19 @@ impl Drop for Automatic {
 mod tests {
     use super::*;
 
+    fn name(name: &str, port: u16) -> AutoName {
+        AutoName { name: name.to_owned(), port, local: false }
+    }
+
     fn automatic(redirect: bool) -> Automatic {
         let config = AutomaticHttps {
             options: AcmeOptions { redirect, ..AcmeOptions::default() },
-            names: vec![("example.org".to_owned(), 443), ("alt.example.org".to_owned(), 8443)],
+            names: vec![
+                name("example.org", 443),
+                name("alt.example.org", 8443),
+                name("*.wild.example", 9443),
+                name("::1", 7443),
+            ],
             plain_frontend: true,
         };
         // No thread: these tests read the tables only.
@@ -395,7 +463,14 @@ mod tests {
         assert_eq!(on.redirect_port(b"ALT.example.org.:8080"), Some(8443));
         assert_eq!(on.redirect_port(b"unknown.example"), None);
         assert_eq!(automatic(false).redirect_port(b"example.org"), None);
-        on.set_names(vec![("new.example.org".to_owned(), 443)], false);
+        // A wildcard covers one label. An address is found with and without a port.
+        assert_eq!(on.redirect_port(b"a.wild.example:80"), Some(9443));
+        assert_eq!(on.redirect_port(b"a.b.wild.example"), None);
+        assert_eq!(on.redirect_port(b"wild.example"), None);
+        assert_eq!(on.redirect_port(b"[::1]:8080"), Some(7443));
+        assert_eq!(on.redirect_port(b"[::1]"), Some(7443));
+        assert!(on.local_root().is_ok_and(|root| root.is_none()));
+        on.set_names(vec![name("new.example.org", 443)], false);
         assert_eq!(on.redirect_port(b"example.org"), None);
         assert_eq!(on.status().len(), 1);
         assert_eq!(on.status()[0].state, CertificateState::Pending);
