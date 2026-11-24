@@ -4,6 +4,7 @@
 use std::collections::BTreeMap;
 use std::io;
 use std::net::SocketAddr;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
@@ -501,7 +502,27 @@ impl Table {
 
 /// A shared view of the current HTTP routing table. Each exchange chooses its origin afresh.
 #[derive(Clone, Default)]
-pub struct HttpRoutes(Arc<Mutex<Table>>);
+pub struct HttpRoutes(Arc<Shared>);
+
+/// The routing table and what a request may read of it without the lock.
+///
+/// Most topologies have no policy of SID 0019 and no route that turns the firewall
+/// off. Their requests ask both questions, and the two flags answer them without the
+/// lock of the table, which the choice of a server then takes once.
+#[derive(Default)]
+struct Shared {
+    table: Mutex<Table>,
+    /// A copy of `Table::bypasses`, stored while the lock is held.
+    bypasses: AtomicBool,
+    /// A copy of `Table::policied`, stored while the lock is held.
+    policied: AtomicBool,
+}
+
+impl Shared {
+    fn lock(&self) -> std::sync::LockResult<std::sync::MutexGuard<'_, Table>> {
+        self.table.lock()
+    }
+}
 
 impl HttpRoutes {
     pub(crate) fn publish(&self, config: &mut Config) {
@@ -532,6 +553,10 @@ impl HttpRoutes {
             .collect();
         state.bypasses = state.fronts.values().any(Frontend::bypasses);
         state.policied = state.fronts.values().any(Frontend::has_policy);
+        // A request that reads a flag just before this point is answered by the old
+        // table, as if it had arrived a moment earlier.
+        self.0.bypasses.store(state.bypasses, Ordering::Release);
+        self.0.policied.store(state.policied, Ordering::Release);
         state.servers = config
             .pools
             .iter()
@@ -572,10 +597,10 @@ impl HttpRoutes {
     /// turn it off (`"firewall": false`), which leaves plain load balancing. A request
     /// for an unknown listener keeps the firewall.
     pub fn firewall_applies(&self, vip: SocketAddr, host: &[u8], path: &[u8]) -> bool {
-        let table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
-        if !table.bypasses {
+        if !self.0.bypasses.load(Ordering::Acquire) {
             return true;
         }
+        let table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
         let Some(front) = table.front(vip) else { return true };
         let host = bare_host(host);
         front.rules.iter().find(|r| r.matches(host, path)).map_or(front.firewall, |r| r.firewall)
@@ -583,17 +608,17 @@ impl HttpRoutes {
 
     /// The policy of this request (SID 0019): that of the first matching route, or that
     /// of the frontend. `None` when no frontend of the table has a policy, which is the
-    /// usual case and costs one lock.
+    /// usual case and takes no lock.
     pub fn policy(
         &self,
         vip: SocketAddr,
         host: &[u8],
         path: &[u8],
     ) -> Option<Arc<crate::RoutePolicy>> {
-        let table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
-        if !table.policied {
+        if !self.0.policied.load(Ordering::Acquire) {
             return None;
         }
+        let table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
         Some(Arc::clone(table.front(vip)?.policy(host, path)))
     }
 
