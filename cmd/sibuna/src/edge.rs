@@ -83,6 +83,7 @@ fn serve(path: String, revision: Revision, secret: Option<&str>) -> io::Result<(
     let mut current = sibuna_lb::Regime::Standalone;
     let mut edge = Edge::bind(config)?;
     let mut http = http.map(|p| http::Http::start(p, &edge, secret)).transpose()?;
+    attach(http.as_ref(), &adapters);
     eprintln!("Sibuna edge listeners ready");
     while !shutdown.is_requested() {
         let next = pending.lock().unwrap_or_else(std::sync::PoisonError::into_inner).take();
@@ -138,6 +139,8 @@ fn reload(
             edge.reload(revision.config)?;
             commit(adapters);
             http.reload(prepared);
+            // A reload may have started the first adapters.
+            attach(Some(http), adapters);
             Ok(())
         }
         _ => Err(io::Error::other(
@@ -167,6 +170,17 @@ fn adapt(adapters: &mut Adapters, config: &mut Config) -> io::Result<()> {
     }
     #[cfg(not(feature = "https"))]
     Err(io::Error::other("TLS, HTTP/2 and HTTP/3 origins require the https feature"))
+}
+
+/// Lets requests of HTTP/2 and HTTP/3 clients reach the HTTP/2 and HTTP/3 servers of
+/// the adapters without an HTTP/1.1 hop (SID 0017).
+fn attach(http: Option<&http::Http>, adapters: &Adapters) {
+    #[cfg(feature = "https")]
+    if let (Some(http), Some(egress)) = (http, adapters) {
+        http.attach(egress.directory());
+    }
+    #[cfg(not(feature = "https"))]
+    let _ = (http, adapters);
 }
 
 /// Closes the adapters that the reloaded topology no longer uses.

@@ -163,6 +163,14 @@ impl Http {
         })
     }
 
+    /// Names the multiplexed servers of the adapters to the protocol runtime.
+    #[cfg(feature = "https")]
+    pub fn attach(&self, directory: sibuna_ingress::Directory) {
+        if let Some(ingress) = &self.ingress {
+            ingress.attach(directory);
+        }
+    }
+
     pub fn drain(&self) {
         if let Some(workers) = &self.workers {
             workers.drain();
