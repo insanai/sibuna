@@ -3,8 +3,9 @@
 
 use std::io;
 use std::net::{SocketAddr, UdpSocket};
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
+use std::sync::mpsc::{Receiver, SyncSender, TrySendError};
+use std::sync::{Arc, OnceLock};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
@@ -12,6 +13,10 @@ use sibuna_crypto::{blake3, ct};
 use sibuna_json::ObjectReader;
 
 use crate::config::{address, field, invalid, required};
+
+mod bans;
+
+pub use bans::Counters as BanCounters;
 
 /// The routing regime selected at the most recent probe interval.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -44,6 +49,8 @@ pub struct MeshConfig {
     peers: Vec<SocketAddr>,
     /// Path to the operator-provisioned 32-byte binary group key.
     pub key_file: String,
+    /// Bans travel to the peers (`mesh.replicate_bans`, SID 0022).
+    pub replicate_bans: bool,
 }
 
 impl MeshConfig {
@@ -67,8 +74,9 @@ impl MeshConfig {
             peers.push(peer);
         }
         peers.sort();
+        let replicate_bans = field(r.take_bool("replicate_bans"))?.unwrap_or(true);
         field(r.finish())?;
-        Ok(Self { listen, peers, key_file })
+        Ok(Self { listen, peers, key_file, replicate_bans })
     }
 }
 
@@ -89,6 +97,10 @@ struct Peer {
     samples: [Duration; 8],
     count: usize,
     cursor: usize,
+    /// The bans still to send to this peer since it returned.
+    walk: Vec<bans::Ban>,
+    /// The peer returned and is owed a walk of the bans in effect.
+    returned: bool,
 }
 
 impl Peer {
@@ -103,6 +115,8 @@ impl Peer {
             samples: [Duration::ZERO; 8],
             count: 0,
             cursor: 0,
+            walk: Vec::new(),
+            returned: false,
         }
     }
 
@@ -138,6 +152,10 @@ impl Peer {
     }
 
     fn observe(&mut self, now: Instant, rtt: Duration) {
+        // A peer that answers after a silence missed what was sent meanwhile.
+        if self.seen.is_none_or(|seen| now.duration_since(seen) >= 3 * PERIOD) {
+            self.returned = true;
+        }
         self.samples[self.cursor] = rtt;
         self.count = (self.count + 1).min(8);
         self.cursor = (self.cursor + 1) % 8;
@@ -166,6 +184,174 @@ struct Monitor {
     peers: Vec<Peer>,
     sequence: u64,
     samples: Vec<Duration>,
+    replica: Option<Replica>,
+}
+
+/// Applies a ban that a peer issued: the client key and the Unix second it ends.
+pub type BanSink = Box<dyn Fn(&[u8], u64) + Send + Sync>;
+
+/// Hands the bans this node issues to the mesh thread. Cloning is cheap.
+#[derive(Clone)]
+pub struct BanFeed {
+    queue: SyncSender<bans::Ban>,
+    counters: Arc<BanCounters>,
+}
+
+impl BanFeed {
+    /// Tells the peers that `client` is banned until the Unix second `until`. Never
+    /// blocks: when the queue is full the ban stays local and is counted as dropped.
+    pub fn publish(&self, client: &[u8], until: u64) {
+        if client.len() > bans::MAX_KEY
+            || matches!(self.queue.try_send((client.into(), until)), Err(TrySendError::Full(_)))
+        {
+            BanCounters::add(&self.counters.dropped, 1);
+        }
+    }
+}
+
+/// The bans in flight between the firewall and the peers (SID 0022).
+struct Replica {
+    log: bans::Log,
+    inbox: Receiver<bans::Ban>,
+    sink: Arc<OnceLock<BanSink>>,
+    counters: Arc<BanCounters>,
+    swept: Instant,
+    scratch: Vec<bans::Ban>,
+    /// The bans learned before the firewall gave its sink have been applied to it.
+    caught_up: bool,
+}
+
+/// The bans a node takes from the firewall in one turn of the mesh thread.
+const INBOX_TURN: usize = 256;
+/// The bans waiting between the firewall and the mesh thread.
+const INBOX: usize = 1024;
+/// The datagrams of a walk sent to one peer in one period.
+const WALK_TURN: usize = 8;
+/// How often ended bans are forgotten.
+const SWEEP: Duration = Duration::from_secs(10);
+
+fn unix_now() -> u64 {
+    let elapsed = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
+    elapsed.map_or(0, |elapsed| elapsed.as_secs())
+}
+
+impl Monitor {
+    /// The first bytes of a ban datagram from this node.
+    fn ban_header(&mut self) -> [u8; bans::HEADER] {
+        self.sequence = self.sequence.wrapping_add(1);
+        let mut header = [0; bans::HEADER];
+        header[..4].copy_from_slice(&[b'S', b'E', 1, bans::KIND]);
+        header[4..20].copy_from_slice(&self.boot);
+        header[20..28].copy_from_slice(&self.sequence.to_be_bytes());
+        header
+    }
+
+    /// Takes the bans the firewall issued and sends those that are due to every peer.
+    fn replicate(&mut self, at: Instant) {
+        let Some(replica) = &mut self.replica else { return };
+        let now = unix_now();
+        // The mesh may hear bans before the firewall is ready to take them. They are
+        // remembered, and applied here once.
+        if !replica.caught_up
+            && let Some(sink) = replica.sink.get()
+        {
+            for (client, until) in replica.log.walk(now) {
+                sink(&client, until);
+            }
+            replica.caught_up = true;
+        }
+        for (client, until) in replica.inbox.try_iter().take(INBOX_TURN) {
+            if replica.log.issue(&client, until, now, at).is_err() {
+                BanCounters::add(&replica.counters.dropped, 1);
+            }
+        }
+        let mut due = std::mem::take(&mut replica.scratch);
+        replica.log.due(at, &mut due);
+        while !due.is_empty() {
+            let header = self.ban_header();
+            let before = due.len();
+            let wire = bans::encode(&self.key, &header, &mut due);
+            if due.len() == before {
+                // A ban that fits no datagram cannot leave. It is dropped, not retried.
+                due.pop();
+                continue;
+            }
+            let counters = self.replica.as_ref().map(|replica| replica.counters.clone());
+            for peer in &self.peers {
+                if self.socket.send_to(&wire, peer.addr).is_ok()
+                    && let Some(counters) = &counters
+                {
+                    BanCounters::add(&counters.sent, before - due.len());
+                }
+            }
+        }
+        if let Some(replica) = &mut self.replica {
+            replica.scratch = due;
+        }
+    }
+
+    /// Once in a period: starts the walk of a peer that returned, continues the walks
+    /// under way, and forgets the bans that have ended.
+    fn walk(&mut self, at: Instant) {
+        let Some(replica) = &mut self.replica else { return };
+        let now = unix_now();
+        if at.duration_since(replica.swept) >= SWEEP {
+            replica.log.expire(now);
+            replica.swept = at;
+        }
+        replica.counters.known.store(replica.log.len() as u64, Ordering::Relaxed);
+        let counters = replica.counters.clone();
+        for index in 0..self.peers.len() {
+            if std::mem::take(&mut self.peers[index].returned)
+                && let Some(replica) = &self.replica
+            {
+                self.peers[index].walk = replica.log.walk(now);
+            }
+            for _ in 0..WALK_TURN {
+                if self.peers[index].walk.is_empty() {
+                    break;
+                }
+                let header = self.ban_header();
+                let peer = &mut self.peers[index];
+                let before = peer.walk.len();
+                let wire = bans::encode(&self.key, &header, &mut peer.walk);
+                if peer.walk.len() == before {
+                    peer.walk.pop();
+                    continue;
+                }
+                if self.socket.send_to(&wire, peer.addr).is_ok() {
+                    BanCounters::add(&counters.sent, before - peer.walk.len());
+                }
+            }
+        }
+    }
+
+    /// Merges the bans of a datagram from a peer and applies those that are news.
+    fn learn(&mut self, wire: &[u8]) {
+        let Some(replica) = &mut self.replica else { return };
+        let mut heard = std::mem::take(&mut replica.scratch);
+        if bans::decode(&self.key, wire, &mut heard) {
+            let now = unix_now();
+            BanCounters::add(&replica.counters.received, heard.len());
+            for (client, until) in heard.drain(..) {
+                match replica.log.merge(&client, until, now) {
+                    Ok(Some(until)) => {
+                        // Without a sink yet, the ban waits in the map (see `replicate`).
+                        if replica.caught_up
+                            && let Some(sink) = replica.sink.get()
+                        {
+                            sink(&client, until);
+                        }
+                        BanCounters::add(&replica.counters.applied, 1);
+                    }
+                    Ok(None) => {}
+                    Err(()) => BanCounters::add(&replica.counters.dropped, 1),
+                }
+            }
+        }
+        heard.clear();
+        replica.scratch = heard;
+    }
 }
 
 impl Monitor {
@@ -185,16 +371,25 @@ impl Monitor {
         }
         self.samples.sort_unstable();
         let rank = (self.samples.len() * 95).div_ceil(100);
+        self.walk(now);
         current.step(rank.checked_sub(1).map(|i| self.samples[i]))
     }
 
     fn receive(&mut self) {
-        let mut wire = [0; 45];
-        let Ok((44, source)) = self.socket.recv_from(&mut wire) else { return };
-        let Some(peer) = self.peers.iter_mut().find(|p| p.addr == source) else { return };
-        if wire[..3] != [b'S', b'E', 1] {
+        let mut wire = [0; bans::MAX_DATAGRAM + 1];
+        let Ok((length, source)) = self.socket.recv_from(&mut wire) else { return };
+        let Some(index) = self.peers.iter().position(|p| p.addr == source) else { return };
+        if length < 44 || wire[..3] != [b'S', b'E', 1] {
             return;
         }
+        if wire[3] == bans::KIND {
+            self.learn(&wire[..length]);
+            return;
+        }
+        if length != 44 {
+            return;
+        }
+        let peer = &mut self.peers[index];
         let mac = blake3::keyed_hash(&self.key, &wire[..28]);
         if !ct::eq(&wire[28..44], &mac[..16]) {
             return;
@@ -207,7 +402,13 @@ impl Monitor {
                     return;
                 };
                 let seq = u64::from_be_bytes(*seq);
-                if peer.answers(*nonce, seq, now) {
+                let before = peer.probes.map(|(boot, _, _)| boot);
+                let answers = peer.answers(*nonce, seq, now);
+                // A new boot nonce is a peer that restarted with an empty table.
+                if peer.probes.map(|(boot, _, _)| boot) != before {
+                    peer.returned = true;
+                }
+                if answers {
                     let response = frame(&self.key, 2, nonce, seq);
                     let _ = self.socket.send_to(&response, source);
                 }
@@ -227,6 +428,7 @@ pub struct Mesh {
     state: Arc<AtomicU8>,
     stop: Arc<AtomicBool>,
     thread: Option<JoinHandle<()>>,
+    bans: Option<(BanFeed, Arc<OnceLock<BanSink>>)>,
 }
 
 impl Mesh {
@@ -236,6 +438,22 @@ impl Mesh {
         socket.set_read_timeout(Some(Duration::from_millis(50)))?;
         socket.set_write_timeout(Some(Duration::from_millis(10)))?;
         let key = blake3::derive_key("sibuna/edge-mesh/probe/v1", secret);
+        let (replica, bans) = if spec.replicate_bans {
+            let (queue, inbox) = std::sync::mpsc::sync_channel(INBOX);
+            let (sink, counters) = (Arc::new(OnceLock::new()), Arc::new(BanCounters::default()));
+            let replica = Replica {
+                log: bans::Log::new(bans::CAPACITY),
+                inbox,
+                sink: Arc::clone(&sink),
+                counters: Arc::clone(&counters),
+                swept: Instant::now(),
+                scratch: Vec::new(),
+                caught_up: false,
+            };
+            (Some(replica), Some((BanFeed { queue, counters }, sink)))
+        } else {
+            (None, None)
+        };
         let mut monitor = Monitor {
             socket,
             key,
@@ -243,6 +461,7 @@ impl Mesh {
             sequence: 0,
             peers: spec.peers.iter().copied().map(Peer::new).collect(),
             samples: Vec::with_capacity(8 * spec.peers.len()),
+            replica,
         };
         let state = Arc::new(AtomicU8::new(0));
         let stop = Arc::new(AtomicBool::new(false));
@@ -257,10 +476,24 @@ impl Mesh {
                     published.store(current as u8, Ordering::Relaxed);
                     next = now + PERIOD;
                 }
+                monitor.replicate(now);
                 monitor.receive();
             }
         })?;
-        Ok(Self { state, stop, thread: Some(thread) })
+        Ok(Self { state, stop, thread: Some(thread), bans })
+    }
+
+    /// The hand-over of bans to the peers, and where bans from the peers are applied.
+    /// `None` when `mesh.replicate_bans` is off. The first sink stays.
+    pub fn share_bans(&self, sink: BanSink) -> Option<BanFeed> {
+        let (feed, slot) = self.bans.as_ref()?;
+        let _ = slot.set(sink);
+        Some(feed.clone())
+    }
+
+    /// What replication did so far. `None` when `mesh.replicate_bans` is off.
+    pub fn ban_counters(&self) -> Option<Arc<BanCounters>> {
+        self.bans.as_ref().map(|(feed, _)| Arc::clone(&feed.counters))
     }
 
     /// Reads the regime without a lock or network operation.
@@ -325,6 +558,7 @@ mod tests {
             listen,
             peers: vec![peer.local_addr().expect("peer")],
             key_file: String::new(),
+            replicate_bans: true,
         };
         let secret = [7; 32];
         let mesh = Mesh::start(&spec, &secret, [9; 16]).expect("start");
@@ -350,5 +584,109 @@ mod tests {
             peer.send_to(&wire, listen).expect("stale reply");
         }
         assert_eq!(mesh.regime(), Regime::Standalone);
+    }
+    /// Three free loopback UDP addresses, held until the meshes bind them.
+    fn roster() -> Vec<SocketAddr> {
+        let sockets: Vec<UdpSocket> =
+            (0..3).map(|_| UdpSocket::bind("127.0.0.1:0").expect("fixture")).collect();
+        sockets.iter().map(|socket| socket.local_addr().expect("bind")).collect()
+    }
+
+    type Heard = Arc<std::sync::Mutex<Vec<(Vec<u8>, u64)>>>;
+
+    /// Starts the node at `index` of `roster` and records the bans it learns.
+    fn node(roster: &[SocketAddr], index: usize, boot: u8) -> (Mesh, BanFeed, Heard) {
+        let peers = roster.iter().copied().filter(|peer| *peer != roster[index]).collect();
+        let spec = MeshConfig {
+            listen: roster[index],
+            peers,
+            key_file: String::new(),
+            replicate_bans: true,
+        };
+        let mesh = Mesh::start(&spec, &[7; 32], [boot; 16]).expect("start");
+        let heard = Heard::default();
+        let record = Arc::clone(&heard);
+        let feed = mesh
+            .share_bans(Box::new(move |client, until| {
+                record.lock().expect("lock").push((client.to_vec(), until));
+            }))
+            .expect("replication is on");
+        (mesh, feed, heard)
+    }
+
+    fn wait_for(heard: &Heard, count: usize) -> Vec<(Vec<u8>, u64)> {
+        let deadline = Instant::now() + Duration::from_secs(5);
+        loop {
+            let seen = heard.lock().expect("lock").clone();
+            if seen.len() >= count || Instant::now() >= deadline {
+                return seen;
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    }
+
+    #[test]
+    fn a_ban_reaches_the_peers_once_and_a_node_that_starts_later_learns_it() {
+        let roster = roster();
+        let until = unix_now() + 600;
+        let (first, feed, own) = node(&roster, 0, 1);
+        let (second, _, heard) = node(&roster, 1, 2);
+        feed.publish(b"203.0.113.7", until);
+        assert_eq!(wait_for(&heard, 1), [(b"203.0.113.7".to_vec(), until)]);
+        // The three sends are one ban: the peer applies it once, and the issuer never
+        // applies its own.
+        std::thread::sleep(Duration::from_millis(1300));
+        assert_eq!(heard.lock().expect("lock").len(), 1);
+        assert!(own.lock().expect("lock").is_empty());
+        let counters = second.ban_counters().expect("counters");
+        assert_eq!(counters.applied.load(Ordering::Relaxed), 1);
+        assert!(counters.received.load(Ordering::Relaxed) >= 2);
+        // A ban that has ended is not sent on.
+        feed.publish(b"203.0.113.8", unix_now().saturating_sub(5));
+        // The third node starts after every send of the ban. It learns it from a walk,
+        // from a node that issued it and from one that only learned it.
+        std::thread::sleep(Duration::from_secs(4));
+        drop(first);
+        let (_third, _, late) = node(&roster, 2, 3);
+        assert_eq!(wait_for(&late, 1), [(b"203.0.113.7".to_vec(), until)]);
+        std::thread::sleep(Duration::from_millis(700));
+        assert_eq!(late.lock().expect("lock").len(), 1);
+    }
+
+    #[test]
+    fn a_node_that_restarts_at_once_learns_the_bans_in_effect() {
+        let roster = roster();
+        let until = unix_now() + 600;
+        let (_first, feed, _) = node(&roster, 0, 1);
+        let (second, _, heard) = node(&roster, 1, 2);
+        feed.publish(b"203.0.113.7", until);
+        assert_eq!(wait_for(&heard, 1).len(), 1);
+        // Every send of the ban is over before the peer restarts with an empty table.
+        std::thread::sleep(Duration::from_millis(5500));
+        drop(second);
+        let (_again, _, heard) = node(&roster, 1, 4);
+        assert_eq!(wait_for(&heard, 1), [(b"203.0.113.7".to_vec(), until)]);
+    }
+
+    #[test]
+    fn a_ban_from_outside_the_roster_or_under_another_key_is_ignored() {
+        let roster = roster();
+        let (_mesh, _, heard) = node(&roster, 0, 1);
+        let until = unix_now() + 600;
+        let mut header = [0; bans::HEADER];
+        header[..4].copy_from_slice(&[b'S', b'E', 1, bans::KIND]);
+        let key = blake3::derive_key("sibuna/edge-mesh/probe/v1", &[7; 32]);
+        let good = bans::encode(&key, &header, &mut vec![(Box::from(&b"a"[..]), until)]);
+        let forged = bans::encode(&[9; 32], &header, &mut vec![(Box::from(&b"b"[..]), until)]);
+        // A stranger with the right key is not a peer.
+        let stranger = UdpSocket::bind("127.0.0.1:0").expect("fixture");
+        stranger.send_to(&good, roster[0]).expect("send");
+        // A peer address with a wrong key is not authentic.
+        let peer = UdpSocket::bind(roster[1]).expect("peer address");
+        peer.send_to(&forged, roster[0]).expect("send");
+        std::thread::sleep(Duration::from_millis(300));
+        assert!(heard.lock().expect("lock").is_empty());
+        peer.send_to(&good, roster[0]).expect("send");
+        assert_eq!(wait_for(&heard, 1), [(b"a".to_vec(), until)]);
     }
 }
