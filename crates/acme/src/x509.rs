@@ -1,6 +1,8 @@
 //! Certificates: reading the few fields that renewal needs, and writing the self-signed
 //! certificate of the TLS-ALPN-01 challenge (RFC 8737).
 
+use std::net::IpAddr;
+
 use sibuna_crypto::sha256::Sha256;
 
 use crate::error::printable;
@@ -17,6 +19,22 @@ const COMMON_NAME: &[u8] = &[0x55, 0x04, 0x03];
 const ORGANIZATION: &[u8] = &[0x55, 0x04, 0x0a];
 /// `id-pe-acmeIdentifier`, 1.3.6.1.5.5.7.1.31.
 const ACME_IDENTIFIER: &[u8] = &[0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x01, 0x1f];
+/// `subjectKeyIdentifier`, 2.5.29.14.
+const SUBJECT_KEY_ID: &[u8] = &[0x55, 0x1d, 0x0e];
+/// `keyUsage`, 2.5.29.15.
+const KEY_USAGE: &[u8] = &[0x55, 0x1d, 0x0f];
+/// `authorityKeyIdentifier`, 2.5.29.35.
+const AUTHORITY_KEY_ID: &[u8] = &[0x55, 0x1d, 0x23];
+/// `extKeyUsage`, 2.5.29.37.
+const EXT_KEY_USAGE: &[u8] = &[0x55, 0x1d, 0x25];
+/// `id-kp-serverAuth`, 1.3.6.1.5.5.7.3.1.
+const SERVER_AUTH: &[u8] = &[0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x03, 0x01];
+/// The key usage of an authority: keyCertSign and cRLSign.
+const USAGE_AUTHORITY: &[u8] = &[0x03, 0x02, 0x01, 0x06];
+/// The key usage of a server with an ECDSA key: digitalSignature.
+const USAGE_SERVER: &[u8] = &[0x03, 0x02, 0x07, 0x80];
+/// The `iPAddress` choice of a general name.
+const IP_ADDRESS: u8 = 0x87;
 /// DER `BOOLEAN TRUE`.
 const TRUE: &[u8] = &[0x01, 0x01, 0xff];
 /// The `dNSName` choice of a general name.
@@ -33,7 +51,8 @@ pub struct Certificate {
     pub not_after: u64,
     /// The common name of the issuer, or its organization. Printable ASCII.
     pub issuer: String,
-    /// The DNS names of the subjectAltName extension.
+    /// The DNS names and the IP addresses of the subjectAltName extension. An address
+    /// is in the text form of [`std::net::IpAddr`].
     pub names: Vec<String>,
 }
 
@@ -114,15 +133,31 @@ pub(crate) fn alt_names(extensions: &[u8]) -> Vec<String> {
             {
                 names.push(name.to_owned());
             }
+            if tag == IP_ADDRESS {
+                let address = match name.len() {
+                    4 => <[u8; 4]>::try_from(name).ok().map(IpAddr::from),
+                    16 => <[u8; 16]>::try_from(name).ok().map(IpAddr::from),
+                    _ => None,
+                };
+                names.extend(address.map(|address| address.to_string()));
+            }
         }
     }
     names
 }
 
-/// The DER subjectAltName extension for DNS names.
+/// One general name: an `iPAddress` for the text of an address, else a `dNSName`.
+fn general_name(name: &str) -> Vec<u8> {
+    match name.parse::<IpAddr>() {
+        Ok(IpAddr::V4(address)) => der::element(IP_ADDRESS, &address.octets()),
+        Ok(IpAddr::V6(address)) => der::element(IP_ADDRESS, &address.octets()),
+        Err(_) => der::element(DNS_NAME, name.as_bytes()),
+    }
+}
+
+/// The DER subjectAltName extension for DNS names and IP addresses.
 pub(crate) fn subject_alt_name(names: &[&str]) -> Vec<u8> {
-    let general: Vec<u8> =
-        names.iter().flat_map(|name| der::element(DNS_NAME, name.as_bytes())).collect();
+    let general: Vec<u8> = names.iter().flat_map(|name| general_name(name)).collect();
     let value = der::element(der::SEQUENCE, &general);
     der::sequence(&[
         &der::element(der::OID, SUBJECT_ALT_NAME),
@@ -137,7 +172,8 @@ pub struct Template<'a> {
     pub issuer: &'a str,
     /// The common name of the subject.
     pub subject: &'a str,
-    /// The DNS names of the subjectAltName extension. May be empty for an authority.
+    /// The names of the subjectAltName extension. The text of an IP address becomes an
+    /// `iPAddress` entry, anything else a `dNSName`. May be empty for an authority.
     pub names: &'a [&'a str],
     /// The start of the validity, in seconds since 1970.
     pub not_before: u64,
@@ -145,8 +181,18 @@ pub struct Template<'a> {
     pub not_after: u64,
     /// The serial number.
     pub serial: u64,
-    /// Mark the certificate as a certificate authority.
+    /// Mark the certificate as a certificate authority: basicConstraints and the key
+    /// usage keyCertSign and cRLSign, both critical.
     pub authority: bool,
+    /// With `authority`: how many authorities may follow below this one.
+    pub path_len: Option<u8>,
+    /// Mark the certificate as that of a TLS server: the key usage digitalSignature,
+    /// critical, and the extended key usage serverAuth.
+    pub server: bool,
+    /// Add the subject key identifier, [`key_id`] of the subject's key.
+    pub subject_key_id: bool,
+    /// The authority key identifier: [`key_id`] of the issuer's key.
+    pub authority_key_id: Option<[u8; 20]>,
     /// The digest of the critical acmeIdentifier extension of TLS-ALPN-01.
     pub acme_identifier: Option<[u8; 32]>,
 }
@@ -159,15 +205,41 @@ fn common_name(text: &str) -> Vec<u8> {
     der::sequence(&[&der::constructed(der::SET, &[&pair])])
 }
 
-fn extensions(template: &Template<'_>) -> Vec<u8> {
+/// The identifier of a public key in the key identifier extensions: the first 160 bits
+/// of the SHA-256 digest of its DER `SubjectPublicKeyInfo` (RFC 7093, method 4).
+pub fn key_id(subject_public_key_info: &[u8]) -> [u8; 20] {
+    let digest = Sha256::digest(subject_public_key_info);
+    let mut id = [0; 20];
+    id.copy_from_slice(&digest[..20]);
+    id
+}
+
+/// One extension: its type, the critical flag, and the DER of its value.
+fn extension(oid: &[u8], critical: bool, value: &[u8]) -> Vec<u8> {
+    let flag: &[u8] = if critical { TRUE } else { &[] };
+    der::sequence(&[&der::element(der::OID, oid), flag, &der::element(der::OCTET_STRING, value)])
+}
+
+fn extensions(template: &Template<'_>, subject_key: &[u8]) -> Vec<u8> {
     let mut list = Vec::new();
     if template.authority {
-        let value = der::sequence(&[TRUE]);
-        list.extend(der::sequence(&[
-            &der::element(der::OID, BASIC_CONSTRAINTS),
-            TRUE,
-            &der::element(der::OCTET_STRING, &value),
-        ]));
+        let length = template.path_len.map(|length| der::integer(&[length]));
+        let value = der::sequence(&[TRUE, length.as_deref().unwrap_or_default()]);
+        list.extend(extension(BASIC_CONSTRAINTS, true, &value));
+        list.extend(extension(KEY_USAGE, true, USAGE_AUTHORITY));
+    }
+    if template.server {
+        list.extend(extension(KEY_USAGE, true, USAGE_SERVER));
+        let purposes = der::sequence(&[&der::element(der::OID, SERVER_AUTH)]);
+        list.extend(extension(EXT_KEY_USAGE, false, &purposes));
+    }
+    if template.subject_key_id {
+        let value = der::element(der::OCTET_STRING, &key_id(subject_key));
+        list.extend(extension(SUBJECT_KEY_ID, false, &value));
+    }
+    if let Some(id) = template.authority_key_id {
+        let value = der::sequence(&[&der::element(0x80, &id)]);
+        list.extend(extension(AUTHORITY_KEY_ID, false, &value));
     }
     if !template.names.is_empty() {
         list.extend(subject_alt_name(template.names));
@@ -201,7 +273,7 @@ pub fn write(
         &validity,
         &common_name(template.subject),
         subject_key,
-        &extensions(template),
+        &extensions(template, subject_key),
     ]);
     signer.sign_der(&tbs)
 }
@@ -222,8 +294,8 @@ pub fn challenge_certificate(
         not_before: now.saturating_sub(3600),
         not_after: now.saturating_add(CHALLENGE_LIFETIME),
         serial: now,
-        authority: false,
         acme_identifier: Some(Sha256::digest(key_authorization.as_bytes())),
+        ..Template::default()
     };
     write(&template, &key.subject_public_key_info(), key)
 }
