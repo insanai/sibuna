@@ -378,9 +378,13 @@ impl HttpBody for Tracked {
             return Poll::Pending;
         }
         self.waiting = false;
-        // A length-framed body is complete before its consumer polls for the end.
-        let ended = matches!(frame, Poll::Ready(None))
-            || (matches!(frame, Poll::Ready(Some(Ok(_)))) && self.body.is_end_stream());
+        // A length-framed body is complete before its consumer polls for the end, and
+        // trailers are the last frame: the consumer does not poll again after them.
+        let ended = match &frame {
+            Poll::Ready(None) => true,
+            Poll::Ready(Some(Ok(last))) => last.is_trailers() || self.body.is_end_stream(),
+            _ => false,
+        };
         if ended && let Some(done) = self.done.take() {
             done.finish();
         }

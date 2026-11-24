@@ -51,6 +51,13 @@ fn origin(connections: Arc<AtomicUsize>) -> SocketAddr {
             std::thread::spawn(move || {
                 let mut reader = BufReader::new(stream.try_clone().unwrap());
                 while let Some(answer) = read_request(&mut reader) {
+                    if answer.starts_with("POST /grpc") {
+                        let reply = "HTTP/1.1 200 OK\r\nContent-Type: application/grpc\r\n\
+                            Trailer: grpc-status\r\nTransfer-Encoding: chunked\r\n\r\n\
+                            5\r\nhello\r\n0\r\ngrpc-status: 0\r\n\r\n";
+                        stream.write_all(reply.as_bytes()).unwrap();
+                        continue;
+                    }
                     if answer.starts_with("GET /silent") {
                         std::thread::sleep(Duration::from_secs(5));
                         return;
@@ -224,6 +231,17 @@ async fn http2(vip: SocketAddr) {
     assert_eq!(response.status(), 403);
     assert!(!response.headers().contains_key("connection"));
     assert_eq!(response.into_body().collect().await.unwrap().to_bytes(), "denied");
+    // Trailers of the response follow its body, as gRPC needs.
+    let req = Request::post(url("/grpc"))
+        .header("content-type", "application/grpc")
+        .header("te", "trailers")
+        .body(Full::new(Bytes::from_static(b"ping")))
+        .unwrap();
+    let response = tx.send_request(req).await.unwrap();
+    assert_eq!(response.status(), 200);
+    let collected = response.into_body().collect().await.unwrap();
+    assert_eq!(collected.trailers().map(|t| t["grpc-status"].clone()).unwrap(), "0");
+    assert_eq!(collected.to_bytes(), "hello");
     // A server that answers nothing is a 504, and one that stops inside a body ends the
     // stream with an error. Neither holds the stream longer than the limit.
     let req = Request::get(url("/silent")).body(Full::new(Bytes::new())).unwrap();
@@ -275,7 +293,7 @@ fn a_multiplexed_request_is_decided_in_process_and_sent_on_a_pooled_connection()
         }
     }
     runner.join().unwrap();
-    assert_eq!(gate.decisions.load(Ordering::SeqCst), 8);
+    assert_eq!(gate.decisions.load(Ordering::SeqCst), 9);
     // No request crossed the socket pair. The sequential requests shared a connection,
     // and each failed exchange spent the one it had.
     assert_eq!(handoffs.load(Ordering::SeqCst), 0);
