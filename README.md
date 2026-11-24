@@ -35,6 +35,7 @@ Use access rules and local rate limits to control what those clients can request
 - **Native packages:** Linux, macOS, Windows, FreeBSD and OpenBSD. The browser solver uses WebAssembly.
 - **Browser challenges:** proof of sequential work (default) or Hashcash, followed by a signed session.
 - **Access policies:** allow, challenge, weigh or deny requests by address, path, headers and User-Agent.
+- **Edge load balancing.** We can forward TCP and UDP or terminate HTTP/2 and HTTP/3, apply the gate or shield, and route each request to an HTTP/1.1 origin.
 - **TLS fingerprints:** match the JA4 fingerprint that a trusted ingress forwards, exactly or by prefix.
 - **Application inspection:** built-in checks for SQL injection, XSS, path traversal and command injection.
 - **Local rate limits:** control bursts and sustained traffic, with optional limits per rule.
@@ -203,7 +204,7 @@ The [book](https://insanai.github.io/sibuna/book/) explains their responsibiliti
 
 ### Deployment limits
 
-Sibuna uses HTTP/1.1 on its private listener. Your ingress handles public TLS and HTTP/2.
+The private listener uses HTTP/1.1 behind an external ingress. In edge mode we can terminate HTTP/2 and HTTP/3 in Sibuna and forward to HTTP/1.1 origin pools.
 Forward-auth inspects the metadata supplied by the ingress. In reverse-proxy mode, the
 built-in inspector covers the first 8 KiB of a body. Uploads stream to your app.
 WebSocket messages are relayed without inspection. The inspector is a heuristic, not a full

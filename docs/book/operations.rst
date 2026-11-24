@@ -17,10 +17,10 @@ Choosing a Surface
 - *Shield* (default, ``--shield``, alias ``--waf``): Gate plus the semantic firewall.
 - *Distributed deployment* (an option for either surface): ``--data-dir`` keeps policies, reputation and forensics in a local SQLite file; ``--database-url`` with ``--cluster-node`` connects several nodes to one PostgreSQL database (SID 0011).
 
-TCP and UDP edge listeners
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+TCP, UDP and HTTP edge listeners
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We can run the daemon as an L4 load balancer with a JSON file or a JLV/2 module. Each frontend binds one or more numeric socket addresses and names a backend pool of the same protocol. A UDP frontend binds a specific local IP so replies use the same address that the client contacted. For HTTP inspection we can point a TCP pool at a separate Sibuna gate or shield instance.
+We can run the daemon as an edge load balancer with a JSON file or a JLV/2 module. Each frontend binds one or more numeric socket addresses and names a backend pool of the same protocol. A UDP frontend binds a specific local IP so replies use the same address that the client contacted. For request-level routing we use an HTTP frontend and select the gate or shield.
 
 .. code-block:: json
 
@@ -47,6 +47,30 @@ We save this document as ``edge.json``, check it and start the listeners.
 
    sibuna check -f edge.json
    sibuna --config-file edge.json
+
+We can expose HTTP/2 on TCP and HTTP/3 on UDP with one certificate. The default build includes the ``https`` feature. In this example the certificate covers ``api.example.org``. We install the PEM chain and matching private key at the paths below. Both origins speak plaintext HTTP/1.1.
+
+.. code-block:: json
+
+   {
+     "http": {"surface": "shield"},
+     "frontends": {
+       "web": {
+         "proto": "http", "binds": ["0.0.0.0:8443"],
+         "tls": {"cert_file": "/etc/sibuna/web.pem", "key_file": "/etc/sibuna/web.key", "http3": true},
+         "routes": [{"host": "api.example.org", "path_prefix": "/v1/", "backend": "api"}],
+         "default_backend": "site"
+       }
+     },
+     "backends": {
+       "api": {"mode": "http", "servers": [{"name": "api1", "addr": "127.0.0.1:9100"}]},
+       "site": {"mode": "http", "servers": [{"name": "site1", "addr": "127.0.0.1:9200"}]}
+     }
+   }
+
+Each admitted request uses the first matching route. We compare DNS names without case or port and match a literal prefix of the normalized path. A prefix of ``/v1/`` matches ``/v1/item``. We can omit the ``tls`` object on a separate bind to accept plaintext HTTP/1.1. TLS listeners negotiate ``h2`` on TCP and optionally ``h3`` on UDP. We can test them with ``curl --http2`` and ``curl --http3-only``. When HTTP/3 is enabled, the HTTP/2 response advertises the same public port with Alt-Svc so browsers can discover it.
+
+The optional ``http.policy_file`` loads a Sibuna policy. The optional ``http.secret_file`` holds the challenge seed shared by the nodes. A reload checks the new routes, policy and certificate before use. We can rotate the certificate and key at their configured paths. Changes to the listener set, HTTP surface or challenge seed require a restart. HTTP/2 clients that send Expect receive 417 and can retry without the header. HTTP/3 accepts 100-continue. CONNECT tunnels require a separate frontend.
 
 We can also write a pool once and generate its servers from a list of ports. We save this module as ``edge.jlv``.
 
@@ -91,7 +115,7 @@ The table lists every option of ``sibuna --help``. Ranges are those the parser e
      - Meaning
    * - ``--config-file``
      - unset
-     - Start the TCP and UDP edge listeners from a JSON or JLV file. We can validate the file offline with ``sibuna check -f``.
+     - Start the TCP, UDP and HTTP edge listeners from a JSON or JLV file. We can validate the file offline with ``sibuna check -f``.
    * - ``--port, -p``
      - ``8080``
      - Listening port, 1 to 65535
@@ -334,7 +358,7 @@ The optional ``--console-location <latitude,longitude>`` declares this node's po
 
 Policy previews build a private candidate including configured file rules. Saves compare the expected revision and require confirmation of a field comparison. Historical reverts compare against the current rule and create a new revision. Committed and locally applied revisions are distinct. Audit details retain bounded decision changes and the effective acting role. Matcher values are redacted and old records with missing context remain explicitly absent. Drain, resume and clear-local-bans require a command preview. A command that arrives while another one runs on the node is refused with ``503`` ``CONSOLENODE`` instead of queueing. Inspect the durable receipt after a lost response before retrying; a committed intent alone does not establish that the runtime effect finished.
 
-For remote operation, use an HTTPS proxy and configure ``--console-origin``, ``--console-behind-proxy``, explicit ``--console-trusted-proxy`` CIDRs, and ``--console-key-file``. The key file contains 64 hexadecimal characters, has owner-only permissions and protects stored second-factor secrets; retain it across restarts separately from the challenge seed. The configured HTTPS origin and proxy allowlist are mandatory for off-loopback access. Sibuna terminates no inbound TLS on the console listener either; the console uses TLS only for its outbound connections, through rustls (SID 0012).
+For remote operation, use an HTTPS proxy and configure ``--console-origin``, ``--console-behind-proxy``, explicit ``--console-trusted-proxy`` CIDRs, and ``--console-key-file``. The key file contains 64 hexadecimal characters, has owner-only permissions and protects stored second-factor secrets; retain it across restarts separately from the challenge seed. The configured HTTPS origin and proxy allowlist are mandatory for off-loopback access. The console listener uses plaintext HTTP; the console uses TLS only for its outbound connections, through rustls (SID 0012).
 
 The native CLI accesses the running console through the same authorization and storage contracts. It reads credentials from private files, not command-line values:
 
@@ -418,7 +442,7 @@ Reverse Proxy
 
 Admitted requests reach the origin with ``X-Forwarded-For``, ``X-Forwarded-Proto``, ``X-Real-IP``, ``X-Sibuna-Status`` and ``X-Sibuna-Rule`` headers. Hop-by-hop headers, the fields Sibuna writes itself and the alternative forwarding fields (``Forwarded``, ``X-Forwarded-Host``, ``X-Forwarded-Port``) are stripped, also when a client spells their names with underscores (``X_Forwarded_For``). ``X-Real-IP`` is the client the request was judged by. ``X-Forwarded-For`` is the socket peer alone, never a client-written entry; when forwarded identity is trusted, it is the received chain followed by the socket peer. Origins must therefore read the client from ``X-Real-IP`` or from the right of ``X-Forwarded-For``, never from its leftmost entry. The path the origin receives is the normal form that policy judged (SID 0009); a path without a normal form is answered ``400``.
 
-HTTP/1.1 WebSocket upgrades pass through admission and policy checks before the origin's handshake is accepted. Subprotocol and extension negotiation remains end-to-end. Two threads relay bytes, one per direction, each with one fixed buffer, including prefetched bytes and half-closes; an upgraded connection therefore holds two threads, and the number of connection threads can reach twice ``--max-connections`` when every connection is upgraded. Upgraded sockets remain within the normal connection quota and shutdown registry, but use ``--websocket-idle-timeout`` (300 seconds by default) independently of the HTTP idle deadline. Traffic in either direction refreshes that bound, but a peer that accepts no byte for the whole period ends the relay, however busy the other direction is. Frames after the handshake are not WAF inspection inputs. HTTPS/WSS uses a TLS-terminating ingress in front of Sibuna's private HTTP/1.1 listener; Sibuna does not terminate browser TLS itself.
+HTTP/1.1 WebSocket upgrades pass through admission and policy checks before the origin's handshake is accepted. Subprotocol and extension negotiation remains end-to-end. Two threads relay bytes, one per direction, each with one fixed buffer, including prefetched bytes and half-closes; an upgraded connection therefore holds two threads, and the number of connection threads can reach twice ``--max-connections`` when every connection is upgraded. Upgraded sockets remain within the normal connection quota and shutdown registry, but use ``--websocket-idle-timeout`` (300 seconds by default) independently of the HTTP idle deadline. Traffic in either direction refreshes that bound, but a peer that accepts no byte for the whole period ends the relay, however busy the other direction is. Frames after the handshake are not WAF inspection inputs. For WSS we use an external TLS ingress that forwards the HTTP/1.1 upgrade to Sibuna. The native HTTP/2 and HTTP/3 listeners handle ordinary HTTP exchanges.
 
 The ingress can negotiate HTTP/2 with browsers and forward HTTP/1.1 to Sibuna. Native HTTP/2 support in Sibuna is deferred to a later update; this arrangement does not provide end-to-end HTTP/2 semantics for applications such as native gRPC.
 

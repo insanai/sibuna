@@ -1,5 +1,5 @@
 :sid-number: 0015
-:sid-title: Sibuna Edge: Distributed TCP/UDP Load Balancer, Mmap State Engine, and Adaptive Cluster Fabric
+:sid-title: Sibuna Edge: TCP, UDP and HTTP Load Balancing
 :sid-state: discussion
 :sid-status: Open for Discussion
 :sid-type: Architectural Specification
@@ -7,25 +7,25 @@
 :sid-created: 2026-11-24
 :sid-updated: 2026-11-24
 :sid-discussion: No external discussion URL assigned
-:sid-summary: Proposes TCP and UDP backend pools alongside the HTTP firewall, bounded worker state, revisioned configuration and three peer-routing regimes. Defines the evidence needed for deployment.
+:sid-summary: Specifies TCP and UDP forwarding, HTTP/2 and HTTP/3 termination, HTTP/1.1 origin pools and distributed routing. Records implementation and qualification evidence.
 :sid-labels: ["architecture","load-balancer","network","ddos","mathematics"]
 
-Sibuna Edge: Distributed TCP/UDP Load Balancer, Mmap State Engine, and Adaptive Cluster Fabric
-==============================================================================================
+Sibuna Edge: TCP, UDP and HTTP Load Balancing
+=============================================
 
 Abstract
 --------
 
-Sibuna now offers an edge mode that proxies TCP streams and UDP datagrams to named backend pools. We can drain a server for maintenance while established TCP streams finish on their original server. The existing HTTP gate and shield would remain available on HTTP frontends.
+We route TCP streams, UDP datagrams and HTTP requests to named pools. An HTTP frontend can accept plaintext HTTP/1.1 or terminate HTTP/2 over TLS and HTTP/3 over QUIC. We apply the gate or shield before selecting an HTTP/1.1 origin for each admitted request. We can drain a server while established TCP streams and in-flight HTTP exchanges finish.
 
-The decision for discussion is whether to adopt worker-owned flows and an immutable routing configuration as the common basis for standalone, regional and multi-region deployments. The mmap cache, JLV/2 frontend, peer forwarding and plugin tiers build on that boundary. The Lean artifact covers selected properties of the design. Capacity, latency and continuity during upgrades require implementation evidence.
+The decision for discussion is whether to adopt worker-owned flows and an immutable routing configuration as the common basis for standalone, regional and multi-region deployments. We use that boundary for JSON and JLV/2 routing today. The proposed mmap cache, peer forwarding and plugin tiers build on it. The Lean artifact covers selected properties of the design. Capacity, latency and continuity during upgrades require implementation evidence.
 
 Motivation and scope
 --------------------
 
 The HTTP firewall uses a thread-per-connection runtime and one upstream address (SID 0002 and SID 0010). The edge listener serves multiple origin pools and can inspect a visible TLS ClientHello before selecting a TCP origin. SID 0014 remains the source of the trusted-header contract when an external ingress terminates TLS.
 
-We keep the host network stack for routing, socket ownership and coexistence with other services. Routers and routing daemons remain responsible for anycast announcements and ECMP. We target large numbers of idle flows with a thread per assigned core and fixed worker budgets. Ten million connections is a capacity experiment. Full HTTP/2 or HTTP/3 termination and mandatory kernel bypass are outside this proposal.
+We keep the host network stack for routing, socket ownership and coexistence with other services. Routers and routing daemons remain responsible for anycast announcements and ECMP. We target large numbers of idle flows with a thread per assigned core and fixed worker budgets. Ten million connections is a capacity experiment. We include HTTP/2 and HTTP/3 termination in the edge. Kernel bypass remains optional.
 
 Specification
 -------------
@@ -282,6 +282,15 @@ The following design example includes proposed features. The operations chapter 
        }
    }
 
+HTTP admission and origin selection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A TCP or UDP frontend selects an origin for the life of a flow. An HTTP frontend selects an origin for each admitted request, including later requests on one keep-alive connection and separate streams on one multiplexed connection. We evaluate ordered routes against the validated authority and normalized path. Both predicates must match when both are present. The first matching route selects a pool. The default pool handles the remaining requests. A reservation lasts until the origin exchange ends. If a reload intervenes between a policy decision and its backend reservation, we return 503 so that an old decision cannot authorize a new route.
+
+With a TLS identity on a frontend, we negotiate HTTP/2 over TCP. We can enable HTTP/3 on the same numeric UDP port. We use rustls for TLS, Hyper for HTTP/2 and Quinn with h3 for HTTP/3. Each stream enters the existing HTTP firewall and reaches its selected origin as HTTP/1.1. The transport supplies the client address and the scheme used in forwarded headers. Client-supplied headers confer no trust. We validate the certificate and key before publishing a reload. Established TLS sessions keep the identity used at their handshake.
+
+We allocate one node-wide flow slot per client connection or UDP mapping. Multiplexed ingress also limits concurrent streams to 32 per connection and 128 active exchanges per node. We hand each exchange to the synchronous firewall over a private loopback socket pair and stream its body with backpressure. A capacity measurement must include the two descriptors for this handoff, the origin connection, TLS or QUIC state and the firewall thread. CONNECT and extended CONNECT require a separate tunnel policy. HTTP/1.1 WebSocket upgrade remains available on the plaintext frontend.
+
 File and database authority
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -401,7 +410,7 @@ A storage worker owns the fixed-size file mapping. Packet workers may enqueue bo
 Backend selection and cluster routing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A new flow first filters out unhealthy, draining and administratively disabled servers. In standalone mode the worker compares two eligible candidates using in-flight load and a peak-weighted moving latency estimate. In a regional mesh we propose a 65,537-entry Maglev table built from a revision with stable server IDs, ordering and hash parameters. A primary lookup takes constant work. A full fallback scan costs up to one probe per eligible backend. Exhaustion returns an admission failure.
+A new flow first filters out unhealthy, draining and administratively disabled servers. In standalone mode the default scheduler uses weighted least connections. We can select power-of-two choices with a peak-weighted moving latency estimate. In a regional mesh we propose a 65,537-entry Maglev table built from a revision with stable server IDs, ordering and hash parameters. A primary lookup takes constant work. A full fallback scan costs up to one probe per eligible backend. Exhaustion returns an admission failure.
 
 A hard node-local backend limit requires an atomic reservation or disjoint worker quotas whose sum fits the limit. We release a reservation on connect failure, timeout or close. Independent nodes can observe different health and load. A fleet-wide hard cap would require a quota allocation protocol.
 
@@ -439,7 +448,7 @@ Admission and extension points
 
 Each frontend applies the checks its protocol supports. The proposed stages are kernel listener admission, local address and ban checks, protocol-specific address validation, packet and byte rate limits, bounded handshake inspection, flow and cache admission, and HTTP gate or shield processing. We measure the cost of each stage on the target host. An application-level filter can shed work only after the traffic reaches the host.
 
-For TCP passthrough we bound both the ClientHello prefix and the time allowed to assemble it. Rules can use visible SNI, advertised ALPN or a JA4 fingerprint. Each frontend must define a fallback for absent, encrypted or incomplete metadata. We replay the buffered bytes exactly once to the origin. JA4 describes a handshake and has no authority as a client credential. We accept inbound PROXY v2 metadata only on listeners restricted to trusted senders. Outbound TLVs require agreement with the origin on their code, format and length.
+For TCP passthrough we bound both the ClientHello prefix and the time allowed to assemble it. Rules can use visible SNI, advertised ALPN or a JA4 fingerprint. Each frontend must define a fallback for absent, encrypted or incomplete metadata. On an accepted TLS passthrough flow we replay the buffered bytes exactly once to the origin. JA4 describes a handshake and has no authority as a client credential. We accept inbound PROXY v2 metadata only on listeners restricted to trusted senders. Outbound TLVs require agreement with the origin on their code, format and length.
 
 For ordinary UDP we use bounded mappings, idle expiry and per-prefix packet and byte budgets. We restrict replies to the selected upstream and account for response amplification. A generic UDP client cannot echo a private cookie. QUIC passthrough leaves Retry to the endpoint unless edge and origin explicitly share the token validation and original connection ID contract. We must test interoperability and the pre-validation amplification limit before enabling edge-generated Retry.
 
@@ -607,9 +616,11 @@ Keeping an external load balancer gives us operationally mature L4 routing today
 
 Kernel bypass could give us packet-level steering for established TCP flows. Cooperative socket I/O keeps the existing deployment model and leaves routing with the host. That choice limits what a proxy can recover after ECMP moves an established flow.
 
+Kapteko's experiment measures how many separately addressable web servers a process can represent. We measure established client flows and the work of forwarding them to origins. We record listener count, live connections, active requests, process memory and kernel socket memory separately.
+
 A transactional database is appropriate for durable configuration and audit records. A bounded mmap cache serves a different workload in which we can discard entries and recover on a miss. We can deploy the RAM tier alone until measurements justify disk spill.
 
-Canonical JSON gives us a self-contained configuration path. Reusing JLV/2 would add generation and validation tools shared with jlavideploy and jlavici. It also adds a compiler to build, bound and distribute.
+Canonical JSON gives us a self-contained configuration path. Reusing JLV/2 adds generation and validation tools shared with jlavideploy and jlavici. It also adds a compiler to build, bound and distribute.
 
 Compatibility and rollout
 -------------------------
@@ -621,11 +632,13 @@ We propose bringing up one node and one canary frontend first. Check admission, 
 Implementation evidence
 -----------------------
 
-The initial Rust implementation in ``crates/lb`` serves opt-in TCP and UDP frontends from JSON or JLV. It includes node-local caps, weighted least connections, power-of-two choices with peak EWMA, bounded-load Maglev, TCP probing, SNI, ALPN and native TCP JA4 routing, PROXY v2 with optional authority and JA4 TLVs, UDP affinity, RTT-based mesh regime selection and in-process route reload. The operations chapter documents the configuration accepted by this version.
+The Rust implementation serves opt-in TCP, UDP and HTTP frontends from JSON or JLV. It includes node-local caps, weighted least connections, power-of-two choices with peak EWMA, bounded-load Maglev, TCP probing, SNI, ALPN and native TCP JA4 routing, PROXY v2 with optional authority and JA4 TLVs, UDP affinity, RTT-based mesh regime selection and in-process route reload. The operations chapter documents the configuration accepted by this version.
 
 On Linux 7.0 x86-64 with Rust 1.100 and an increased descriptor limit, we exercised 8,192 simultaneous TCP streams and, in a separate run, 8,192 UDP mappings against a loopback echo server. Each flow exchanged data. At the configured ceiling the daemon refused the next flow and the first flow still exchanged data. In a four-process loopback mesh each node forwarded a UDP request and reply. After three nodes stopped, the surviving node reverted to standalone.
 
-This worker rebuilds a level-triggered poll set and scans flow deadlines each turn. Its configured ceiling is 8,192 flows. Cooperative platform-specific batching, the ten-million-flow experiment, peer forwarding, replicated state, mmap spill, database authority, plugins and console management remain proposed work. The following evidence is required to qualify the full design.
+On two Linux 7.0 x86-64 machines we used curl with certificate verification to negotiate HTTP/2 and HTTP/3 in both directions. Each node forwarded requests to an HTTP/1.1 origin on the other machine. We checked the origin's HTTP version, client address, scheme and 2 MiB request bodies. A denied route returned 403 on all three HTTP versions. On a single HTTP/1.1 connection we reached the remote origin and then the local origin by changing the path. Both nodes also forwarded raw TCP and UDP. A reload with a mismatched key preserved the serving identity. A valid rotation changed the certificate presented by both HTTP/2 and HTTP/3. When one node stopped, its peer returned to standalone and continued serving HTTP/3. The restarted node rejoined the mesh.
+
+This worker rebuilds a level-triggered poll set and scans flow deadlines each turn. Its configured ceiling is 8,192 flows. Cooperative platform-specific batching, the ten-million-flow experiment, peer forwarding, replicated state, mmap spill, database authority, binary listener handoff, plugins and console management remain proposed work. The following evidence is required to qualify the full design.
 
 #. Compare legacy CLI behavior on the existing HTTP suite. Check that equivalent JSON and JLV produce the same topology. Reject missing references, stale database edits, incompatible listener changes and exhausted evaluation budgets while the last valid revision continues serving.
 #. Exercise partial writes, half-closes, fragmented ClientHello, UDP expiry, lost replies and failed backend connects. Record open sockets and buffer leases before and after each test. Run the same cases through each advertised OS backend.
@@ -651,6 +664,8 @@ Review history
 
 References
 ----------
+
+- Kapteko, `15 million web servers on one VM <https://kapteko.com/15-million-webservers/>`_ (2026).
 
 - SID 0001 (process), SID 0002 (foundation), SID 0006 (formal models), SID 0007 (console), SID 0010 (Rust port), SID 0011 (storage), SID 0013 (console storage) and SID 0014 (trusted JA4).
 - Jlavideploy JDD 0004 and JDD 0016 describe the JLV language. The jlavici workflow proposal illustrates the shared configuration model.
