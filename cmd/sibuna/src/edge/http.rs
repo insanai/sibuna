@@ -167,7 +167,7 @@ fn ingress_of(server: &Server, peer: SocketAddr, vip: SocketAddr, secure: bool) 
         .as_ref()
         .and_then(|routes| routes.frontend(vip))
         .is_some_and(|front| front.trusts(peer.ip()));
-    Ingress { peer, vip, secure, trusted }
+    Ingress { peer, vip, secure, cert: None, trusted }
 }
 
 /// Starts the access log, when the topology has one, and the counters beside it.
@@ -255,8 +255,8 @@ impl Http {
         } else {
             let web = server.clone();
             let pool = workers.clone();
-            let handler = Arc::new(move |stream, peer, vip| {
-                let ingress = ingress_of(&web, peer, vip, true);
+            let handler = Arc::new(move |stream, peer, vip, cert| {
+                let ingress = Ingress { cert, ..ingress_of(&web, peer, vip, true) };
                 serve(&web, pool.as_deref(), stream, ingress, None);
             });
             let limits = sibuna_ingress::Limits {

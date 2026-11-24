@@ -39,6 +39,9 @@ pub(crate) struct Ingress {
     pub peer: SocketAddr,
     pub vip: SocketAddr,
     pub secure: bool,
+    /// The SHA-256 digest of the certificate the client proved to hold, on a frontend
+    /// with `tls.client_ca`.
+    pub cert: Option<[u8; 32]>,
     /// The socket peer is a proxy the frontend trusts, so the per-client connection
     /// bound does not apply to it (SID 0020).
     pub trusted: bool,
