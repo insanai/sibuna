@@ -11,6 +11,7 @@ This directory holds Sibuna's latest measurements, and one comparison with Anubi
 | `cargo xtask bench admission --anubis <path>` | Admission operations per second of Sibuna and Anubis | `admission-latest.json`, `admission-latest.md` |
 | `sibuna-browser dashboards` | A functional console run with eight live dashboards | `console-8-dashboards-2026-10-15.md` |
 | by hand | The edge load balancer beside HAProxy: TCP, HTTP, TLS and HTTP/2, one run | `edge-haproxy-2026-11-24.md` |
+| by hand | Edge HTTP on event-driven workers: throughput, memory, processors and a three-node failure test, one run | `edge-workers-2026-11-24.md` |
 
 The `.md` files are the summaries; the `.json` files hold every repetition, the machine and the revision. Git keeps the history, so we keep only the latest files.
 
