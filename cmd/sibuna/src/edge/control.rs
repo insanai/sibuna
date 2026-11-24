@@ -241,7 +241,10 @@ fn changed(server: &ServerStatus) -> String {
 
 /// Writes the table of `show servers`: a header and one aligned line per server.
 pub(super) fn render_servers(servers: &[ServerStatus]) -> String {
-    let header = ["pool", "name", "address", "state", "weight", "flows", "health", "changed"];
+    let header = [
+        "pool", "name", "address", "state", "weight", "flows", "health", "ejected", "ramp",
+        "changed",
+    ];
     let mut rows = vec![header.map(str::to_owned)];
     for server in servers {
         let health = match server.healthy {
@@ -257,10 +260,13 @@ pub(super) fn render_servers(servers: &[ServerStatus]) -> String {
             server.weight.to_string(),
             server.flows.to_string(),
             health.to_owned(),
+            // The time passive health still keeps the server out, rounded up.
+            server.ejected.map_or("-".to_owned(), |left| format!("{}s", left.as_secs() + 1)),
+            server.ramp.map_or("-".to_owned(), |percent| format!("{percent}%")),
             changed(server),
         ]);
     }
-    let mut widths = [0; 8];
+    let mut widths = [0; 10];
     for row in &rows {
         for (width, cell) in widths.iter_mut().zip(row) {
             *width = (*width).max(cell.len());
@@ -375,7 +381,7 @@ mod tests {
 
     #[test]
     fn the_table_marks_what_changed() {
-        let server = |name: &str, state, added, reweighted| ServerStatus {
+        let server = |name: &str, state, added, reweighted: bool| ServerStatus {
             pool: "app".to_owned(),
             name: name.to_owned(),
             addr: "10.0.0.1:80".parse().unwrap(),
@@ -386,6 +392,9 @@ mod tests {
             backup: false,
             added,
             reweighted,
+            // The first server is ejected for 6.2 more seconds, the second ramps.
+            ejected: reweighted.then_some(Duration::from_millis(6200)),
+            ramp: added.then_some(40),
         };
         let table = render_servers(&[
             server("a", ServerState::Drain, false, true),
@@ -393,10 +402,14 @@ mod tests {
             server("c", ServerState::Ready, false, false),
         ]);
         let lines: Vec<&str> = table.lines().collect();
-        assert_eq!(lines[0], "pool name address     state weight flows health changed");
-        assert_eq!(lines[1], "app  a    10.0.0.1:80 drain 2      4     up     state,weight");
-        assert_eq!(lines[2], "app  blue 10.0.0.1:80 ready 2      4     up     added");
-        assert_eq!(lines[3], "app  c    10.0.0.1:80 ready 2      4     up     -");
+        let head = "pool name address     state weight flows health ejected ramp changed";
+        assert_eq!(lines[0], head);
+        assert_eq!(
+            lines[1],
+            "app  a    10.0.0.1:80 drain 2      4     up     7s      -    state,weight"
+        );
+        assert_eq!(lines[2], "app  blue 10.0.0.1:80 ready 2      4     up     -       40%  added");
+        assert_eq!(lines[3], "app  c    10.0.0.1:80 ready 2      4     up     -       -    -");
     }
 
     #[test]

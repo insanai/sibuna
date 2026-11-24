@@ -11,7 +11,9 @@ use std::net::{Shutdown, TcpStream};
 use std::sync::atomic::Ordering;
 use std::time::{Duration, Instant};
 
-use traffic::{Origin, Topology, blackhole, both, get, get_with, logged, post, refused, request};
+use traffic::{
+    Origin, Topology, blackhole, both, get, get_with, logged, post, refused, request, shown,
+};
 
 #[test]
 fn a_slow_server_has_its_own_bound_and_not_the_client_idle_timeout() {
@@ -189,6 +191,18 @@ fn a_server_that_stops_answering_is_ejected_after_consecutive_timeouts() {
         let later = answers(&edge, 10);
         assert!(later.iter().all(|answer| *answer == (200, "good".into())), "{later:?}");
         assert!(started.elapsed() < Duration::from_secs(1), "{:?}", started.elapsed());
+        // The operator sees the ejection, how long it lasts, and its count.
+        let left = shown(&edge, "s0", "ejected");
+        let seconds: u64 = left.trim_end_matches('s').parse().unwrap_or_else(|_| panic!("{left}"));
+        assert!((20..=30).contains(&seconds), "{left}");
+        assert_eq!(shown(&edge, "s1", "ejected"), "-");
+        let metrics = get(&edge, "/__sibuna/metrics").text();
+        for series in [
+            "sibuna_edge_server_ejections_total{backend=\"app\",server=\"s0\"} 1\n",
+            "sibuna_edge_server_ejections_total{backend=\"app\",server=\"s1\"} 0\n",
+        ] {
+            assert!(metrics.contains(series), "{series} is missing:\n{metrics}");
+        }
 
         // A pool of one server keeps serving: there is nothing to eject it for.
         let edge = Topology::new(&[silent.address]).backend(members).start(event_loop);
@@ -474,6 +488,10 @@ fn a_server_that_returns_takes_few_requests_while_it_ramps() {
             std::thread::sleep(Duration::from_millis(1200));
             let later = answers(&edge, 20);
             assert!(later.iter().all(|(status, _)| *status == 200), "{later:?}");
+            // The operator sees the ramp while it lasts, as a share of the weight.
+            let ramp = shown(&edge, "s0", "ramp");
+            assert_eq!(ramp.ends_with('%'), members.contains("slow_start"), "{ramp}");
+            assert_eq!(shown(&edge, "s1", "ramp"), "-");
             later.iter().filter(|(_, name)| name == "returning").count()
         };
         let health = r#""response_timeout":"1s","passive_health":{"failures":1,"ejection":"1s"},"#;
@@ -563,6 +581,9 @@ fn a_moved_request_is_logged_and_counted_once_under_the_server_that_answered() {
         for series in [
             "sibuna_edge_server_failures_total{backend=\"app\",server=\"s0\"} 1\n",
             "sibuna_edge_server_failures_total{backend=\"app\",server=\"s1\"} 0\n",
+            "sibuna_edge_server_failovers_total{backend=\"app\",server=\"s0\"} 1\n",
+            "sibuna_edge_server_failovers_total{backend=\"app\",server=\"s1\"} 0\n",
+            "sibuna_origin_retries_total 1\n",
             "sibuna_edge_server_requests_total{backend=\"app\",server=\"s0\",code=\"2xx\"} 0\n",
             "sibuna_edge_server_requests_total{backend=\"app\",server=\"s0\",code=\"5xx\"} 0\n",
             "sibuna_edge_server_requests_total{backend=\"app\",server=\"s1\",code=\"2xx\"} 1\n",

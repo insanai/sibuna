@@ -85,7 +85,10 @@ impl Topology {
 
     fn write(&self, event_loop: bool) -> Files {
         let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
-        let stem = format!("sibuna-traffic-{}-{}", std::process::id(), vip.port());
+        // The serial keeps two starts of one process apart, whatever port each one got.
+        static SERIAL: AtomicUsize = AtomicUsize::new(0);
+        let serial = SERIAL.fetch_add(1, Ordering::Relaxed);
+        let stem = format!("sibuna-traffic-{}-{serial}-{}", std::process::id(), vip.port());
         let file = |extension: &str| std::env::temp_dir().join(format!("{stem}.{extension}"));
         let files = Files { path: file("json"), socket: file("sock"), log: file("log"), vip };
         fs::write(&files.path, self.source(&files, event_loop)).unwrap();
@@ -197,6 +200,16 @@ impl Edge {
             std::thread::sleep(Duration::from_millis(20));
         }
     }
+}
+
+/// The cell under `column` in the row of the server `name` in `show servers`.
+pub fn shown(edge: &Edge, name: &str, column: &str) -> String {
+    let table = edge.ctl("show servers");
+    let mut lines = table.lines().map(|line| line.split_whitespace().collect::<Vec<_>>());
+    let index = lines.next().and_then(|head| head.iter().position(|cell| *cell == column));
+    let row = lines.find(|row| row.get(1) == Some(&name));
+    let cell = index.zip(row).and_then(|(index, row)| row.get(index).copied());
+    cell.unwrap_or_else(|| panic!("no {column} of {name} in\n{table}")).to_owned()
 }
 
 /// The value of the member `name` of one line of the access log.
