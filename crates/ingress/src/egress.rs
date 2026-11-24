@@ -44,9 +44,32 @@ const CONNECT: Duration = Duration::from_secs(5);
 
 type Http3 = h3::client::SendRequest<h3_quinn::OpenStreams, Bytes>;
 
+/// The HTTP/2 and HTTP/3 servers behind the loopback listeners, by listener address.
+/// The in-process path (SID 0017) looks a server up here and sends to it directly, so a
+/// request of an HTTP/2 client reaches an HTTP/2 server without an HTTP/1.1 hop.
+#[derive(Clone, Default)]
+pub struct Directory(Arc<std::sync::RwLock<HashMap<SocketAddr, Arc<Origin>>>>);
+
+impl Directory {
+    /// The multiplexed server behind the listener at `gateway`, if there is one.
+    pub(crate) fn find(&self, gateway: SocketAddr) -> Option<Arc<Origin>> {
+        self.0.read().unwrap_or_else(std::sync::PoisonError::into_inner).get(&gateway).cloned()
+    }
+
+    fn publish(&self, gateways: &HashMap<(SocketAddr, OriginOptions), Gateway>) {
+        let listed = gateways
+            .values()
+            .filter(|gateway| !matches!(gateway.origin.mode, Mode::Tunnel(_)))
+            .map(|gateway| (gateway.address, gateway.origin.clone()))
+            .collect();
+        *self.0.write().unwrap_or_else(std::sync::PoisonError::into_inner) = listed;
+    }
+}
+
 /// The protocol runtime and one loopback listener for each adapted server.
 pub struct Egress {
     runtime: Runtime,
+    directory: Directory,
     gateways: HashMap<(SocketAddr, OriginOptions), Gateway>,
     /// The servers of the last configured topology, kept until it is committed.
     wanted: Vec<(SocketAddr, Arc<OriginOptions>)>,
@@ -54,6 +77,7 @@ pub struct Egress {
 
 struct Gateway {
     address: SocketAddr,
+    origin: Arc<Origin>,
     acceptor: tokio::task::JoinHandle<()>,
 }
 
@@ -73,7 +97,13 @@ impl Egress {
             .thread_name("edge-origin")
             .enable_all()
             .build()?;
-        Ok(Self { runtime, gateways: HashMap::new(), wanted: Vec::new() })
+        let directory = Directory::default();
+        Ok(Self { runtime, directory, gateways: HashMap::new(), wanted: Vec::new() })
+    }
+
+    /// The directory of the multiplexed servers. It follows every later configuration.
+    pub fn directory(&self) -> Directory {
+        self.directory.clone()
     }
 
     /// Gives every server in [`Config::origins`] an adapter and routes its pool through
@@ -90,6 +120,7 @@ impl Egress {
             }
         }
         self.gateways.extend(created);
+        self.directory.publish(&self.gateways);
         let gateways = &self.gateways;
         config.route_through(|addr, options| {
             gateways.get(&(addr, options.clone())).map(|gateway| gateway.address)
@@ -104,6 +135,7 @@ impl Egress {
         let wanted = &self.wanted;
         self.gateways
             .retain(|(addr, options), _| wanted.iter().any(|(a, o)| a == addr && **o == *options));
+        self.directory.publish(&self.gateways);
     }
 
     fn start(&self, addr: SocketAddr, options: &OriginOptions) -> Result<Gateway, Error> {
@@ -113,8 +145,8 @@ impl Egress {
         listener.set_nonblocking(true)?;
         let listener = TcpListener::from_std(listener)?;
         let address = listener.local_addr()?;
-        let acceptor = tokio::spawn(accept(listener, origin));
-        Ok(Gateway { address, acceptor })
+        let acceptor = tokio::spawn(accept(listener, origin.clone()));
+        Ok(Gateway { address, origin, acceptor })
     }
 }
 
@@ -139,12 +171,12 @@ enum Mode {
     /// HTTP/1.1 over TLS: relay the firewall's bytes inside a TLS session.
     Tunnel(TlsConnector),
     /// One HTTP/2 session shared by all exchanges, over TLS or in cleartext.
-    Http2 { tls: Option<TlsConnector>, session: Mutex<Option<http2::SendRequest<Incoming>>> },
+    Http2 { tls: Option<TlsConnector>, session: Mutex<Option<http2::SendRequest<Body>>> },
     /// One QUIC connection shared by all exchanges.
     Http3 { endpoint: quinn::Endpoint, session: Mutex<Option<Http3>> },
 }
 
-struct Origin {
+pub(crate) struct Origin {
     addr: SocketAddr,
     name: ServerName<'static>,
     mode: Mode,
@@ -192,6 +224,8 @@ impl Origin {
         let service = service_fn(move |request| {
             let origin = self.clone();
             async move {
+                let request =
+                    request.map(|body: Incoming| body.map_err(Error::from).boxed_unsync());
                 let answer = origin.exchange(request).await;
                 Ok::<_, std::convert::Infallible>(
                     answer.unwrap_or_else(|_| error(StatusCode::BAD_GATEWAY)),
@@ -210,7 +244,9 @@ impl Origin {
         Ok(tcp)
     }
 
-    async fn exchange(&self, request: Request<Incoming>) -> Result<Response<Body>, Error> {
+    /// Sends one request, given in its HTTP/1.1 form with a `Host` field, on the shared
+    /// session of this server. The response body streams.
+    pub(crate) async fn exchange(&self, request: Request<Body>) -> Result<Response<Body>, Error> {
         if request.headers().contains_key(header::UPGRADE) {
             return Ok(error(StatusCode::NOT_IMPLEMENTED));
         }
@@ -235,8 +271,8 @@ impl Origin {
     async fn http2(
         &self,
         tls: Option<&TlsConnector>,
-        session: &Mutex<Option<http2::SendRequest<Incoming>>>,
-    ) -> Result<http2::SendRequest<Incoming>, Error> {
+        session: &Mutex<Option<http2::SendRequest<Body>>>,
+    ) -> Result<http2::SendRequest<Body>, Error> {
         let mut session = session.lock().await;
         if let Some(sender) = session.as_ref().filter(|sender| !sender.is_closed()) {
             return Ok(sender.clone());
@@ -285,7 +321,7 @@ impl Origin {
         &self,
         endpoint: &quinn::Endpoint,
         session: &Mutex<Option<Http3>>,
-        request: Request<Incoming>,
+        request: Request<Body>,
     ) -> Result<Response<Body>, Error> {
         let (parts, mut upload) = request.into_parts();
         let head = Request::from_parts(parts, ());
@@ -307,14 +343,18 @@ impl Origin {
             let _ = send.finish().await;
         });
         let (parts, ()) = receive.recv_response().await?.into_parts();
-        let frames = futures_util::stream::try_unfold(receive, |mut receive| async move {
-            match receive.recv_data().await? {
-                Some(mut data) => {
-                    let chunk = data.copy_to_bytes(data.remaining());
-                    Ok::<_, Error>(Some((Frame::data(chunk), receive)))
-                }
-                None => Ok(None),
+        // The state says whether the trailers, which end a response, were passed on.
+        let state = (receive, false);
+        let frames = futures_util::stream::try_unfold(state, |(mut receive, ended)| async move {
+            if ended {
+                return Ok::<_, Error>(None);
             }
+            if let Some(mut data) = receive.recv_data().await? {
+                let chunk = data.copy_to_bytes(data.remaining());
+                return Ok(Some((Frame::data(chunk), (receive, false))));
+            }
+            let trailers = receive.recv_trailers().await?;
+            Ok(trailers.map(|trailers| (Frame::trailers(trailers), (receive, true))))
         });
         Ok(Response::from_parts(parts, StreamBody::new(frames).boxed_unsync()))
     }
@@ -323,10 +363,10 @@ impl Origin {
 /// Rewrites the firewall's HTTP/1.1 request for a multiplexed origin: the `Host` field
 /// becomes the authority and the connection fields go.
 fn multiplexed(
-    request: Request<Incoming>,
+    request: Request<Body>,
     scheme: &str,
     version: Version,
-) -> Result<Request<Incoming>, Error> {
+) -> Result<Request<Body>, Error> {
     let (mut parts, body) = request.into_parts();
     let host = parts.headers.remove(header::HOST).ok_or("the request has no Host field")?;
     let path = parts.uri.path_and_query().map_or("/", |path| path.as_str());

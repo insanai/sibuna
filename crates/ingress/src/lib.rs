@@ -27,7 +27,7 @@ use tokio::time::timeout;
 use tokio_rustls::TlsAcceptor;
 
 use bridge::Lane;
-pub use egress::Egress;
+pub use egress::{Directory, Egress};
 use handoff::Handoff;
 pub use inline::{Decide, Forward, Offer, Verdict};
 
@@ -161,6 +161,14 @@ impl Ingress {
         };
         let idle = limits.idle;
         Ok(Self { runtime, listeners, endpoints, handoff, inline, capacity, idle, drain })
+    }
+
+    /// Names the HTTP/2 and HTTP/3 servers of the egress. In-process exchanges then
+    /// reach them without an HTTP/1.1 hop. The first directory stays.
+    pub fn attach(&self, directory: Directory) {
+        if let Some(inline) = &self.inline {
+            inline.attach(directory);
+        }
     }
 
     /// Sends GOAWAY on live sessions so clients can direct new requests to another node.

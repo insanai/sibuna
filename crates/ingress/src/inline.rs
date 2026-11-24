@@ -21,11 +21,12 @@ use std::collections::HashMap;
 use std::future::Future;
 use std::net::SocketAddr;
 use std::pin::Pin;
-use std::sync::{Arc, Mutex, PoisonError};
+use std::sync::{Arc, Mutex, OnceLock, PoisonError};
 use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
 
 use bytes::Bytes;
+use futures_util::FutureExt;
 use http_body_util::{BodyExt, Full};
 use hyper::body::{Body as HttpBody, Frame, Incoming, SizeHint};
 use hyper::client::conn::http1::SendRequest;
@@ -36,6 +37,7 @@ use sibuna_lb::HttpTarget;
 use tokio::time::timeout;
 
 use crate::bridge::{Body, empty, error, strip_hop_fields};
+use crate::egress::{Directory, Origin};
 use crate::{DEADLINE, Error};
 
 /// The request bytes the firewall judges: one head and the start of the body.
@@ -93,13 +95,20 @@ type Sender = SendRequest<Body>;
 pub(crate) struct Inline {
     decide: Arc<dyn Decide>,
     idle: Mutex<HashMap<SocketAddr, Vec<(Sender, Instant)>>>,
+    /// The HTTP/2 and HTTP/3 servers that are reached without an HTTP/1.1 hop.
+    direct: OnceLock<Directory>,
     /// The longest wait for a server's response head.
     timeout: Duration,
 }
 
 impl Inline {
     pub fn new(decide: Arc<dyn Decide>, timeout: Duration) -> Arc<Self> {
-        Arc::new(Self { decide, idle: Mutex::default(), timeout })
+        Arc::new(Self { decide, idle: Mutex::default(), direct: OnceLock::new(), timeout })
+    }
+
+    /// Names the multiplexed servers. The first directory stays.
+    pub fn attach(&self, directory: Directory) {
+        let _ = self.direct.set(directory);
     }
 
     fn take(&self, address: SocketAddr) -> Option<Sender> {
@@ -140,9 +149,12 @@ impl Inline {
 }
 
 /// Decides one translated request and, when it is admitted, forwards it.
+///
+/// `trailers` says that the client sent `TE: trailers`, which the translation removed.
 pub(crate) async fn exchange(
     inline: &Arc<Inline>,
     req: Request<Body>,
+    trailers: bool,
     peer: SocketAddr,
     vip: SocketAddr,
 ) -> Response<Body> {
@@ -150,7 +162,14 @@ pub(crate) async fn exchange(
     let mut head = Vec::with_capacity(512);
     render(&parts, &mut head);
     let budget = BUFFER.saturating_sub(head.len());
-    let Ok(Ok((prefix, ended))) = timeout(DEADLINE, buffer(&mut body, budget)).await else {
+    // A gRPC call may send a message and wait for the answer before it sends more, so
+    // its decision cannot wait for the body. The decision sees what has arrived.
+    let buffered = if is_grpc(&parts.headers) {
+        Ok(arrived(&mut body, budget))
+    } else {
+        timeout(DEADLINE, buffer(&mut body, budget)).await
+    };
+    let Ok(Ok((prefix, ended))) = buffered else {
         return error(StatusCode::BAD_REQUEST);
     };
     let seen = prefix.len().min(budget);
@@ -177,7 +196,7 @@ pub(crate) async fn exchange(
             } else {
                 Prefixed { first: prefix, rest: body }.boxed_unsync()
             };
-            send(inline, forward, body, retryable).await
+            send(inline, forward, body, Sending { retryable, trailers }).await
         }
     }
 }
@@ -196,6 +215,40 @@ fn render(parts: &hyper::http::request::Parts, out: &mut Vec<u8>) {
         out.extend_from_slice(b"\r\n");
     }
     out.extend_from_slice(b"\r\n");
+}
+
+/// Whether the request is a gRPC call.
+fn is_grpc(headers: &hyper::HeaderMap) -> bool {
+    headers
+        .get(header::CONTENT_TYPE)
+        .is_some_and(|kind| kind.as_bytes().starts_with(b"application/grpc"))
+}
+
+/// Takes the body frames that have already arrived, up to `budget` bytes, without
+/// waiting. Returns the bytes and whether the body ended.
+fn arrived(body: &mut Body, budget: usize) -> Result<(Vec<u8>, bool), Error> {
+    let mut held = Vec::new();
+    while held.len() < budget && !body.is_end_stream() {
+        match body.frame().now_or_never() {
+            None => return Ok((held, false)),
+            Some(None) => return Ok((held, true)),
+            Some(Some(frame)) => {
+                if let Ok(data) = frame?.into_data() {
+                    held.extend_from_slice(&data);
+                }
+            }
+        }
+    }
+    Ok((held, body.is_end_stream()))
+}
+
+/// How an admitted request is sent.
+#[derive(Clone, Copy)]
+struct Sending {
+    /// The request may be sent again on a fresh connection.
+    retryable: bool,
+    /// The client accepts trailers.
+    trailers: bool,
 }
 
 /// Reads body frames until `budget` bytes are held or the body ends. Returns the bytes
@@ -292,14 +345,23 @@ async fn send(
     inline: &Arc<Inline>,
     forward: Forward,
     body: Body,
-    retryable: bool,
+    sending: Sending,
 ) -> Response<Body> {
     let Forward { target, head, guard } = forward;
-    let Some(request) = parse_request(&head, body) else {
+    let Some(mut request) = parse_request(&head, body) else {
         return error(StatusCode::BAD_GATEWAY);
     };
     let address = target.address();
     let started = Instant::now();
+    let origin = inline.direct.get().and_then(|directory| directory.find(address));
+    if let Some(origin) = origin {
+        if sending.trailers {
+            request.headers_mut().insert(header::TE, HeaderValue::from_static("trailers"));
+        }
+        let done = Done { inline: Arc::clone(inline), address, sender: None, target, started };
+        return direct(&origin, request, done, guard).await;
+    }
+    let retryable = sending.retryable;
     let sent = timeout(inline.timeout, attempt(inline, address, request, retryable)).await;
     let (sender, mut response) = match sent {
         Ok(Ok(exchange)) => exchange,
@@ -312,32 +374,65 @@ async fn send(
     };
     strip_hop_fields(response.headers_mut());
     let (parts, body) = response.into_parts();
-    let done =
-        Done { inline: Arc::clone(inline), address, sender, target, started, _guard: guard };
+    let sender = Some(sender);
+    let done = Done { inline: Arc::clone(inline), address, sender, target, started };
+    Response::from_parts(parts, track(body, done, guard))
+}
+
+/// Sends an admitted request on the shared session of an HTTP/2 or HTTP/3 server. The
+/// request and the response stream side by side, and trailers pass both ways.
+async fn direct(
+    origin: &Origin,
+    request: Request<Body>,
+    done: Done,
+    guard: Box<dyn Any + Send>,
+) -> Response<Body> {
+    let limit = done.inline.timeout;
+    let mut response = match timeout(limit, origin.exchange(request)).await {
+        Ok(Ok(response)) => response,
+        Ok(Err(_)) => {
+            done.target.failed();
+            return error(StatusCode::BAD_GATEWAY);
+        }
+        Err(_) => return error(StatusCode::GATEWAY_TIMEOUT),
+    };
+    strip_hop_fields(response.headers_mut());
+    let (parts, body) = response.into_parts();
+    Response::from_parts(parts, track(body, done, guard))
+}
+
+/// Wraps a response body so that its end finishes the exchange.
+fn track<B>(body: B, done: Done, guard: Box<dyn Any + Send>) -> Body
+where
+    B: HttpBody<Data = Bytes> + Send + Unpin + 'static,
+    B::Error: Into<Error>,
+{
     if body.is_end_stream() {
         done.finish();
-        return Response::from_parts(parts, empty());
+        return empty();
     }
-    let stall = Box::pin(tokio::time::sleep(inline.timeout));
-    let tracked = Tracked { body, done: Some(done), stall, limit: inline.timeout, waiting: false };
-    Response::from_parts(parts, tracked.boxed_unsync())
+    let limit = done.inline.timeout;
+    let stall = Box::pin(tokio::time::sleep(limit));
+    Tracked { body, done: Some(done), _guard: guard, stall, limit, waiting: false }.boxed_unsync()
 }
 
 /// What a finished exchange gives back.
 struct Done {
     inline: Arc<Inline>,
     address: SocketAddr,
-    sender: Sender,
+    /// The HTTP/1.1 connection of the exchange. A shared session has none to return.
+    sender: Option<Sender>,
     target: HttpTarget,
     started: Instant,
-    _guard: Box<dyn Any + Send>,
 }
 
 impl Done {
     /// Records the exchange and returns the server connection to the pool.
     fn finish(self) {
         self.target.completed(self.started);
-        self.inline.give(self.address, self.sender);
+        if let Some(sender) = self.sender {
+            self.inline.give(self.address, sender);
+        }
     }
 }
 
@@ -346,16 +441,22 @@ impl Done {
 ///
 /// The server must keep sending: a wait for its next frame is bounded. A wait for the
 /// client to take a frame is not counted, because the body is then not polled.
-struct Tracked {
-    body: Incoming,
+struct Tracked<B> {
+    body: B,
     done: Option<Done>,
+    /// What the decision asked to keep until the exchange is over.
+    _guard: Box<dyn Any + Send>,
     stall: Pin<Box<tokio::time::Sleep>>,
     limit: Duration,
     /// The last poll found the server silent, and `stall` runs.
     waiting: bool,
 }
 
-impl HttpBody for Tracked {
+impl<B> HttpBody for Tracked<B>
+where
+    B: HttpBody<Data = Bytes> + Unpin,
+    B::Error: Into<Error>,
+{
     type Data = Bytes;
     type Error = Error;
 
@@ -388,7 +489,7 @@ impl HttpBody for Tracked {
         if ended && let Some(done) = self.done.take() {
             done.finish();
         }
-        frame.map_err(Error::from)
+        frame.map_err(Into::into)
     }
 
     fn is_end_stream(&self) -> bool {
