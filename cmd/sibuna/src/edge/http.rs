@@ -28,7 +28,7 @@ impl Prepared {
     pub fn load(topology: &sibuna_lb::Config) -> io::Result<Option<Self>> {
         let Some(options) = topology.http().cloned() else { return Ok(None) };
         let seed = options.secret_file.as_deref().map(crate::cli::read_seed).transpose()?;
-        let config = Config { waf: options.shield, ..Config::default() };
+        let config = firewall_config(&options);
         let bytes = options
             .policy_file
             .as_deref()
@@ -66,6 +66,22 @@ impl Prepared {
     }
 }
 
+/// The firewall configuration of an edge topology. Fields without an edge option keep
+/// the daemon's defaults.
+fn firewall_config(options: &HttpOptions) -> Config {
+    Config {
+        waf: options.shield,
+        secret_file: options.secret_file.clone(),
+        rate_limit: options.rate_limit.unwrap_or(u32::MAX),
+        rate_window_seconds: options.rate_window_seconds,
+        max_connections: options.max_connections,
+        max_connections_per_ip: options.max_connections_per_ip,
+        idle_timeout_seconds: options.idle_timeout_seconds,
+        websocket_idle_timeout_seconds: options.websocket_idle_timeout_seconds,
+        ..Config::default()
+    }
+}
+
 pub(super) struct Http {
     server: Arc<Server>,
     reaper: Option<JoinHandle<()>>,
@@ -77,11 +93,7 @@ pub(super) struct Http {
 
 impl Http {
     pub fn start(prepared: Prepared, edge: &Edge, secret: Option<&str>) -> io::Result<Self> {
-        let mut config = Config {
-            waf: prepared.options.shield,
-            secret_file: prepared.options.secret_file.clone(),
-            ..Config::default()
-        };
+        let mut config = firewall_config(&prepared.options);
         let seed = if let Some(seed) = prepared.seed {
             config.secret_seed = Some(*seed.as_bytes());
             seed
@@ -97,6 +109,7 @@ impl Http {
             hooks: Hooks::default(),
         });
         server.edge_routes = Some(edge.http_routes());
+        server.unlimited = prepared.options.rate_limit.is_none();
         let server = Arc::new(server);
         #[cfg(feature = "https")]
         let ingress = if prepared.identities.is_empty() {
@@ -106,7 +119,18 @@ impl Http {
             let handler = Arc::new(move |stream, peer, vip| {
                 launch(&web, stream, Ingress { peer, vip, secure: true }, None);
             });
-            Some(sibuna_ingress::Ingress::start(prepared.identities, edge.flow_budget(), handler)?)
+            let limits = sibuna_ingress::Limits {
+                exchanges: prepared.options.max_connections as usize,
+                idle: std::time::Duration::from_secs(u64::from(
+                    prepared.options.idle_timeout_seconds.max(60),
+                )),
+            };
+            Some(sibuna_ingress::Ingress::start(
+                prepared.identities,
+                edge.flow_budget(),
+                handler,
+                limits,
+            )?)
         };
         let reaper = start_reaper(&server)?;
         Ok(Self {

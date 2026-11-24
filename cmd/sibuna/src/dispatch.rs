@@ -105,9 +105,12 @@ fn route<'c, W: Write>(ctx: &mut Ctx<'c, W>, spare: &'c mut [u8]) -> io::Result<
         rate: server.config.rate_limit,
         window_ms: server.config.rate_window_seconds.saturating_mul(1000),
     };
-    let rate = check_rate(ctx, &server.rate_limiter, DEFAULT_SCOPE, limits);
-    if rate.limited {
-        return rate_limited(ctx, rate, 0);
+    // An edge topology may leave pacing to the policy rules (`http.rate_limit: "off"`).
+    if !server.unlimited {
+        let rate = check_rate(ctx, &server.rate_limiter, DEFAULT_SCOPE, limits);
+        if rate.limited {
+            return rate_limited(ctx, rate, 0);
+        }
     }
     apply_policy(ctx)
 }

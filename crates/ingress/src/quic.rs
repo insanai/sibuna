@@ -2,6 +2,7 @@
 
 use std::net::SocketAddr;
 use std::sync::Arc;
+use std::time::Duration;
 
 use bytes::{Buf, Bytes};
 use http_body_util::{BodyExt, Full, StreamBody};
@@ -10,15 +11,24 @@ use hyper::{Request, Response, StatusCode, header};
 use tokio::sync::{Semaphore, watch};
 use tokio::time::timeout;
 
-use crate::{DEADLINE, Error, Handler, MAX_HEAD, bridge};
+use crate::bridge::{self, Admitted, Lane};
+use crate::handoff::Handoff;
+use crate::{DEADLINE, Error, IDLE_CHECK, MAX_HEAD};
 use sibuna_lb::FlowBudget;
+
+/// What every QUIC connection of the node shares.
+#[derive(Clone)]
+pub(super) struct Shared {
+    pub handoff: Arc<Handoff>,
+    pub capacity: Arc<Semaphore>,
+    pub idle: Duration,
+}
 
 pub(super) async fn serve(
     endpoint: quinn::Endpoint,
     bind: SocketAddr,
     budget: FlowBudget,
-    handler: Handler,
-    capacity: Arc<Semaphore>,
+    shared: Shared,
     drain: watch::Receiver<()>,
 ) {
     while let Some(incoming) = endpoint.accept().await {
@@ -34,13 +44,12 @@ pub(super) async fn serve(
         if let Some(ip) = incoming.local_ip() {
             vip.set_ip(ip);
         }
-        let handler = handler.clone();
-        let capacity = capacity.clone();
+        let shared = shared.clone();
         let drain = drain.clone();
         tokio::spawn(async move {
             let _slot = slot;
             if let Ok(Ok(conn)) = timeout(DEADLINE, incoming).await {
-                let _ = connection(conn, vip, handler, capacity, drain).await;
+                let _ = connection(conn, vip, shared, drain).await;
             }
         });
     }
@@ -49,13 +58,14 @@ pub(super) async fn serve(
 async fn connection(
     conn: quinn::Connection,
     vip: SocketAddr,
-    handler: Handler,
-    capacity: Arc<Semaphore>,
+    shared: Shared,
     mut drain: watch::Receiver<()>,
 ) -> Result<(), Error> {
     let mut builder = h3::server::builder();
     builder.max_field_section_size(MAX_HEAD);
     let mut http = builder.build(h3_quinn::Connection::new(conn.clone())).await?;
+    let lane = Lane::new(shared.handoff, conn.remote_address(), vip);
+    let mut check = tokio::time::interval(IDLE_CHECK);
     let mut draining = false;
     loop {
         let resolver = tokio::select! {
@@ -64,22 +74,26 @@ async fn connection(
                 draining = true;
                 continue;
             }
+            // A client that keeps the transport alive without requests gives up its slot.
+            _ = check.tick() => {
+                if lane.quiet_for() >= shared.idle {
+                    conn.close(0u32.into(), b"idle");
+                    break;
+                }
+                continue;
+            }
             next = http.accept() => match next? {
                 Some(resolver) => resolver,
                 None => break,
             }
         };
-        let handler = handler.clone();
-        let peer = conn.remote_address();
-        let Ok(slot) = capacity.clone().try_acquire_owned() else {
-            drop(resolver);
-            continue;
-        };
+        let admitted = Admitted::reserve(&lane, &shared.capacity);
+        let lane = lane.clone();
         tokio::spawn(async move {
             let Ok(Ok((req, stream))) = timeout(DEADLINE, resolver.resolve_request()).await else {
                 return;
             };
-            let _ = request(req, stream, handler, peer, vip, slot).await;
+            let _ = request(req, stream, &lane, admitted).await;
         });
     }
     Ok(())
@@ -88,17 +102,18 @@ async fn connection(
 async fn request(
     mut req: Request<()>,
     stream: h3::server::RequestStream<h3_quinn::BidiStream<Bytes>, Bytes>,
-    handler: Handler,
-    peer: SocketAddr,
-    vip: SocketAddr,
-    _slot: tokio::sync::OwnedSemaphorePermit,
+    lane: &Arc<Lane>,
+    admitted: Option<Admitted>,
 ) -> Result<(), Error> {
     let (mut send, recv) = stream.split();
+    let Some(_admitted) = admitted else {
+        let busy = Response::builder().status(StatusCode::SERVICE_UNAVAILABLE).body(())?;
+        send.send_response(busy).await?;
+        send.finish().await?;
+        return Ok(());
+    };
     if req.headers().contains_key(header::EXPECT) {
-        let mut expects = req.headers().get_all(header::EXPECT).iter();
-        let supported =
-            expects.next().is_some_and(|v| v.as_bytes().eq_ignore_ascii_case(b"100-continue"))
-                && expects.next().is_none();
+        let supported = bridge::expectation_supported(req.headers());
         let status = if supported { StatusCode::CONTINUE } else { StatusCode::EXPECTATION_FAILED };
         send.send_response(Response::builder().status(status).body(())?).await?;
         if !supported {
@@ -108,7 +123,7 @@ async fn request(
         req.headers_mut().remove(header::EXPECT);
     }
     let body = upload(recv).await?;
-    let response = bridge::exchange(req.map(|()| body), handler, peer, vip).await;
+    let response = bridge::exchange(req.map(|()| body), lane).await;
     let (parts, mut body) = response.into_parts();
     send.send_response(Response::from_parts(parts, ())).await?;
     while let Some(frame) = body.frame().await {

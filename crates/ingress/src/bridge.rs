@@ -1,30 +1,199 @@
 //! Translate one multiplexed request into one framed HTTP/1.1 firewall exchange.
-//! The private connected pair carries bytes. Its peer never supplies the client's identity.
+//!
+//! Each client connection owns a [`Lane`]: a few private keep-alive connections to the
+//! firewall, all carrying that client's address. A safe request without a body may reuse
+//! an idle connection. Every other request opens its own, so a request is never replayed
+//! after the firewall may have seen it.
 
 use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::pin::Pin;
-use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, Mutex, PoisonError};
 use std::task::{Context, Poll};
+use std::time::{Duration, Instant};
 
 use bytes::Bytes;
 use http_body_util::{BodyExt, Full, combinators::UnsyncBoxBody};
 use hyper::body::{Body as HttpBody, Frame, Incoming, SizeHint};
+use hyper::client::conn::http1::SendRequest;
 use hyper::header::{self, HeaderMap, HeaderValue};
-use hyper::{Request, Response, StatusCode, Version};
+use hyper::{Method, Request, Response, StatusCode, Version};
 use hyper_util::rt::TokioIo;
-use tokio::net::{TcpListener, TcpSocket};
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
-use tokio::time::timeout;
 
-use crate::{DEADLINE, Error, Handler};
+use crate::Error;
+use crate::handoff::Handoff;
 
 pub(super) type Body = UnsyncBoxBody<Bytes, Error>;
+
+/// An idle firewall connection is reused only this soon after its last response, well
+/// inside the firewall's shortest idle timeout.
+const REUSE: Duration = Duration::from_millis(500);
+const MAX_IDLE: usize = 8;
+
+/// The firewall connections and activity of one client connection.
+pub(super) struct Lane {
+    handoff: Arc<Handoff>,
+    peer: SocketAddr,
+    vip: SocketAddr,
+    idle: Mutex<Vec<(SendRequest<Body>, Instant)>>,
+    in_flight: AtomicUsize,
+    quiet_since: Mutex<Instant>,
+}
+
+impl Lane {
+    pub fn new(handoff: Arc<Handoff>, peer: SocketAddr, vip: SocketAddr) -> Arc<Self> {
+        Arc::new(Self {
+            handoff,
+            peer,
+            vip,
+            idle: Mutex::new(Vec::new()),
+            in_flight: AtomicUsize::new(0),
+            quiet_since: Mutex::new(Instant::now()),
+        })
+    }
+
+    /// How long the connection has had no exchange in flight. Zero while one is running.
+    pub fn quiet_for(&self) -> Duration {
+        if self.in_flight.load(Ordering::Acquire) != 0 {
+            return Duration::ZERO;
+        }
+        self.quiet_since.lock().unwrap_or_else(PoisonError::into_inner).elapsed()
+    }
+
+    fn take(&self) -> Option<SendRequest<Body>> {
+        let mut idle = self.idle.lock().unwrap_or_else(PoisonError::into_inner);
+        while let Some((sender, since)) = idle.pop() {
+            if since.elapsed() < REUSE && !sender.is_closed() {
+                return Some(sender);
+            }
+        }
+        None
+    }
+
+    fn give(&self, sender: SendRequest<Body>) {
+        let mut idle = self.idle.lock().unwrap_or_else(PoisonError::into_inner);
+        idle.retain(|(sender, since)| since.elapsed() < REUSE && !sender.is_closed());
+        if idle.len() < MAX_IDLE && !sender.is_closed() {
+            idle.push((sender, Instant::now()));
+        }
+    }
+
+    async fn open(&self) -> Result<SendRequest<Body>, Error> {
+        let stream = self.handoff.open(self.peer, self.vip).await?;
+        let (sender, conn) = hyper::client::conn::http1::handshake(TokioIo::new(stream)).await?;
+        tokio::spawn(async move {
+            let _ = conn.await;
+        });
+        Ok(sender)
+    }
+
+    async fn forward(self: &Arc<Self>, req: Request<Body>) -> Result<Response<Body>, Error> {
+        let safe = matches!(*req.method(), Method::GET | Method::HEAD | Method::OPTIONS)
+            && req.body().is_end_stream();
+        let mut pooled = if safe { self.take() } else { None };
+        // The dispatcher finishes the previous exchange before it accepts another.
+        if let Some(sender) = &mut pooled
+            && sender.ready().await.is_err()
+        {
+            pooled = None;
+        }
+        let (sender, mut res) = match pooled {
+            None => {
+                let mut sender = self.open().await?;
+                let res = sender.send_request(req).await?;
+                (sender, res)
+            }
+            Some(mut sender) => {
+                let (parts, body) = req.into_parts();
+                let again = Request::from_parts(parts.clone(), empty());
+                match sender.send_request(Request::from_parts(parts, body)).await {
+                    Ok(res) => (sender, res),
+                    // The firewall closed the idle connection. Nothing was answered.
+                    Err(_) => {
+                        let mut sender = self.open().await?;
+                        let res = sender.send_request(again).await?;
+                        (sender, res)
+                    }
+                }
+            }
+        };
+        strip_hop_fields(res.headers_mut());
+        let (parts, body) = res.into_parts();
+        let body = if body.is_end_stream() {
+            self.give(sender);
+            body.map_err(Error::from).boxed_unsync()
+        } else {
+            Reusable { body, back: Some((Arc::clone(self), sender)) }.boxed_unsync()
+        };
+        Ok(Response::from_parts(parts, body))
+    }
+}
+
+fn empty() -> Body {
+    Full::new(Bytes::new()).map_err(|e: Infallible| match e {}).boxed_unsync()
+}
+
+/// Returns the firewall connection to its lane once the response body has ended.
+struct Reusable {
+    body: Incoming,
+    back: Option<(Arc<Lane>, SendRequest<Body>)>,
+}
+
+impl HttpBody for Reusable {
+    type Data = Bytes;
+    type Error = Error;
+
+    fn poll_frame(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Option<Result<Frame<Bytes>, Error>>> {
+        let frame = Pin::new(&mut self.body).poll_frame(cx);
+        // A length-framed body is complete before its consumer polls for the end.
+        let ended = matches!(frame, Poll::Ready(None))
+            || (matches!(frame, Poll::Ready(Some(Ok(_)))) && self.body.is_end_stream());
+        if ended && let Some((lane, sender)) = self.back.take() {
+            lane.give(sender);
+        }
+        frame.map_err(Error::from)
+    }
+
+    fn is_end_stream(&self) -> bool {
+        self.body.is_end_stream()
+    }
+
+    fn size_hint(&self) -> SizeHint {
+        self.body.size_hint()
+    }
+}
+
+/// One admitted exchange. Dropping it returns the slot and stamps the lane's quiet time.
+pub(super) struct Admitted {
+    lane: Arc<Lane>,
+    _slot: OwnedSemaphorePermit,
+}
+
+impl Admitted {
+    /// Takes one of the node's exchange slots, or `None` when all are in use.
+    pub fn reserve(lane: &Arc<Lane>, capacity: &Arc<Semaphore>) -> Option<Self> {
+        let slot = Arc::clone(capacity).try_acquire_owned().ok()?;
+        lane.in_flight.fetch_add(1, Ordering::AcqRel);
+        Some(Self { lane: Arc::clone(lane), _slot: slot })
+    }
+}
+
+impl Drop for Admitted {
+    fn drop(&mut self) {
+        *self.lane.quiet_since.lock().unwrap_or_else(PoisonError::into_inner) = Instant::now();
+        self.lane.in_flight.fetch_sub(1, Ordering::AcqRel);
+    }
+}
 
 // Keep the exchange admitted until Hyper has consumed or cancelled the response body.
 struct ResponseBody {
     body: Body,
-    _slot: OwnedSemaphorePermit,
+    _admitted: Admitted,
 }
 
 impl HttpBody for ResponseBody {
@@ -48,51 +217,51 @@ impl HttpBody for ResponseBody {
 }
 
 pub(super) fn error(status: StatusCode) -> Response<Body> {
-    let mut response =
-        Response::new(Full::new(Bytes::new()).map_err(|e: Infallible| match e {}).boxed_unsync());
+    let mut response = Response::new(empty());
     *response.status_mut() = status;
     response
 }
 
-pub(super) async fn h2(
-    req: Request<Incoming>,
-    handler: Handler,
-    peer: SocketAddr,
-    vip: SocketAddr,
-    capacity: Arc<Semaphore>,
-    advertise_quic: bool,
-) -> Result<Response<Body>, Infallible> {
-    let Ok(slot) = capacity.try_acquire_owned() else {
-        return Ok(error(StatusCode::SERVICE_UNAVAILABLE));
-    };
-    if req.headers().contains_key(header::EXPECT) {
-        return Ok(error(StatusCode::EXPECTATION_FAILED));
-    }
-    let req = req.map(|b| b.map_err(Error::from).boxed_unsync());
-    let port = req.uri().port_u16().unwrap_or(443);
-    let mut response = exchange(req, handler, peer, vip).await;
-    if advertise_quic && let Ok(value) = HeaderValue::from_str(&format!("h3=\":{port}\"")) {
-        response.headers_mut().insert(header::ALT_SVC, value);
-    }
-    Ok(response.map(|body| ResponseBody { body, _slot: slot }.boxed_unsync()))
+/// Whether the request's `Expect` fields are exactly one `100-continue`, or absent.
+pub(super) fn expectation_supported(headers: &HeaderMap) -> bool {
+    let mut expects = headers.get_all(header::EXPECT).iter();
+    expects.next().is_none_or(|v| v.as_bytes().eq_ignore_ascii_case(b"100-continue"))
+        && expects.next().is_none()
 }
 
-pub(super) async fn exchange(
-    req: Request<Body>,
-    handler: Handler,
-    peer: SocketAddr,
-    vip: SocketAddr,
-) -> Response<Body> {
+pub(super) async fn h2(
+    mut req: Request<Incoming>,
+    lane: Arc<Lane>,
+    capacity: Arc<Semaphore>,
+    alt_svc: Option<HeaderValue>,
+) -> Result<Response<Body>, Infallible> {
+    let Some(admitted) = Admitted::reserve(&lane, &capacity) else {
+        return Ok(error(StatusCode::SERVICE_UNAVAILABLE));
+    };
+    if !expectation_supported(req.headers()) {
+        return Ok(error(StatusCode::EXPECTATION_FAILED));
+    }
+    // HTTP/2 has no interim-response handshake here. The final response answers it.
+    req.headers_mut().remove(header::EXPECT);
+    let req = req.map(|b| b.map_err(Error::from).boxed_unsync());
+    let mut response = exchange(req, &lane).await;
+    if let Some(value) = alt_svc {
+        response.headers_mut().insert(header::ALT_SVC, value);
+    }
+    Ok(response.map(|body| ResponseBody { body, _admitted: admitted }.boxed_unsync()))
+}
+
+pub(super) async fn exchange(req: Request<Body>, lane: &Arc<Lane>) -> Response<Body> {
     let req = match translate(req) {
         Ok(r) => r,
         Err(code) => return error(code),
     };
-    forward(req, handler, peer, vip).await.unwrap_or_else(|_| error(StatusCode::BAD_GATEWAY))
+    lane.forward(req).await.unwrap_or_else(|_| error(StatusCode::BAD_GATEWAY))
 }
 
 fn translate(req: Request<Body>) -> Result<Request<Body>, StatusCode> {
     let (mut p, body) = req.into_parts();
-    if p.method == hyper::Method::CONNECT {
+    if p.method == Method::CONNECT {
         return Err(StatusCode::NOT_IMPLEMENTED);
     }
     if p.uri.scheme_str() != Some("https") {
@@ -139,7 +308,6 @@ fn translate(req: Request<Body>) -> Result<Request<Body>, StatusCode> {
             HeaderValue::from_bytes(&combined).map_err(|_| StatusCode::BAD_REQUEST)?,
         );
     }
-    p.headers.insert(header::CONNECTION, HeaderValue::from_static("close"));
     p.uri = p
         .uri
         .path_and_query()
@@ -165,36 +333,6 @@ fn strip_hop_fields(headers: &mut HeaderMap) {
     for name in ["connection", "keep-alive", "proxy-connection", "transfer-encoding", "upgrade"] {
         headers.remove(name);
     }
-}
-
-async fn forward(
-    req: Request<Body>,
-    handler: Handler,
-    peer: SocketAddr,
-    vip: SocketAddr,
-) -> Result<Response<Body>, Error> {
-    let local = SocketAddr::from(([127, 0, 0, 1], 0));
-    let listener = TcpListener::bind(local).await?;
-    let caller = TcpSocket::new_v4()?;
-    caller.bind(local)?;
-    let expected = caller.local_addr()?;
-    let (client, (server, source)) = timeout(DEADLINE, async {
-        tokio::try_join!(caller.connect(listener.local_addr()?), listener.accept())
-    })
-    .await??;
-    if source != expected {
-        return Err("private HTTP handoff peer mismatch".into());
-    }
-    let socket = server.into_std()?;
-    socket.set_nonblocking(false)?;
-    tokio::task::spawn_blocking(move || handler(socket, peer, vip));
-    let (mut sender, conn) = hyper::client::conn::http1::handshake(TokioIo::new(client)).await?;
-    tokio::spawn(async move {
-        let _ = conn.await;
-    });
-    let mut res = sender.send_request(req).await?;
-    strip_hop_fields(res.headers_mut());
-    Ok(res.map(|b| b.map_err(Error::from).boxed_unsync()))
 }
 
 #[cfg(test)]

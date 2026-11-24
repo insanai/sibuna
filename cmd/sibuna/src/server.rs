@@ -80,6 +80,8 @@ pub struct Options {
 /// The state every connection thread shares.
 pub struct Server {
     pub(crate) edge_routes: Option<sibuna_lb::HttpRoutes>,
+    /// The default per-client request limiter is off (edge mode only).
+    pub(crate) unlimited: bool,
     pub(crate) config: Config,
     pub(crate) slot: Arc<EngineSlot>,
     pub(crate) coordinator: Coordinator,
@@ -133,6 +135,7 @@ impl Server {
         let capacity = Config::MAX_CONNECTIONS_LIMIT as usize;
         Server {
             edge_routes: None,
+            unlimited: false,
             max_connections: AtomicU32::new(config.max_connections),
             peers: PeerTable::with_ipv6_prefix(config.ipv6_prefix),
             config,

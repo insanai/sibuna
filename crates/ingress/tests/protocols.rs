@@ -5,6 +5,7 @@ use std::io::{BufRead, BufReader, Write};
 use std::net::{SocketAddr, TcpListener};
 use std::path::Path;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 
 use bytes::{Buf, Bytes};
@@ -12,7 +13,7 @@ use http_body_util::{BodyExt, Empty};
 use hyper::Request;
 use hyper_util::rt::{TokioExecutor, TokioIo};
 use rustls::pki_types::{CertificateDer, pem::PemObject};
-use sibuna_ingress::{Handler, Identity, Ingress};
+use sibuna_ingress::{Handler, Identity, Ingress, Limits};
 use sibuna_lb::{Config, Edge, TlsOptions};
 
 fn fixture(name: &str) -> String {
@@ -38,30 +39,38 @@ fn client(alpn: &[u8]) -> rustls::ClientConfig {
     config
 }
 
-fn firewall(vip: SocketAddr) -> Handler {
+/// A keep-alive HTTP/1.1 stub. It counts the connections it serves and answers each
+/// request on its own thread, as the firewall does.
+fn firewall(vip: SocketAddr, connections: Arc<AtomicUsize>) -> Handler {
     Arc::new(move |mut stream, peer, dest| {
         assert_eq!(dest, vip);
         assert_eq!(peer.ip(), vip.ip());
-        let mut reader = BufReader::new(&stream);
-        let mut line = String::new();
-        reader.read_line(&mut line).unwrap();
-        assert_eq!(line, "GET /route?q=1 HTTP/1.1\r\n");
-        let mut headers = Vec::new();
-        for line in reader.lines() {
-            let line = line.unwrap();
-            if line.is_empty() {
-                break;
+        connections.fetch_add(1, Ordering::SeqCst);
+        std::thread::spawn(move || {
+            let mut reader = BufReader::new(stream.try_clone().unwrap());
+            loop {
+                let mut line = String::new();
+                if reader.read_line(&mut line).unwrap_or(0) == 0 {
+                    return;
+                }
+                assert_eq!(line, "GET /route?q=1 HTTP/1.1\r\n");
+                let mut headers = Vec::new();
+                loop {
+                    let mut line = String::new();
+                    reader.read_line(&mut line).unwrap();
+                    if line == "\r\n" {
+                        break;
+                    }
+                    headers.push(line.trim_end().to_ascii_lowercase());
+                }
+                assert!(headers.contains(&format!("host: localhost:{}", vip.port())));
+                stream.write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok").unwrap();
             }
-            headers.push(line.to_ascii_lowercase());
-        }
-        assert!(headers.contains(&format!("host: localhost:{}", vip.port())));
-        stream
-            .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok")
-            .unwrap();
+        });
     })
 }
 
-fn setup() -> (SocketAddr, Edge, Ingress) {
+fn setup() -> (SocketAddr, Edge, Ingress, Arc<AtomicUsize>) {
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
     let topology = format!(
         r#"{{"frontends":{{"web":{{"proto":"http","binds":["{vip}"],
@@ -70,14 +79,19 @@ fn setup() -> (SocketAddr, Edge, Ingress) {
     );
     let edge = Edge::bind(Config::parse(topology.as_bytes()).unwrap()).unwrap();
     let tls = TlsOptions {
-        cert_file: fixture("localhost.pem"),
-        key_file: fixture("localhost.key"),
+        crt: Vec::new(),
+        cert_file: Some(fixture("localhost.pem")),
+        key_file: Some(fixture("localhost.key")),
+        strict_sni: false,
         http3: true,
     };
     let identity = Identity::load(&tls).unwrap();
+    let connections = Arc::new(AtomicUsize::new(0));
+    let handler = firewall(vip, connections.clone());
     let ingress =
-        Ingress::start([(vip, identity)].into(), edge.flow_budget(), firewall(vip)).unwrap();
-    (vip, edge, ingress)
+        Ingress::start([(vip, identity)].into(), edge.flow_budget(), handler, Limits::default())
+            .unwrap();
+    (vip, edge, ingress, connections)
 }
 
 async fn http2(vip: SocketAddr) {
@@ -104,6 +118,24 @@ async fn http2(vip: SocketAddr) {
     }
 }
 
+/// HTTP/1.1 over TLS reaches the firewall as the same bytes on one connection.
+async fn http1(vip: SocketAddr) {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    let tcp = tokio::net::TcpStream::connect(vip).await.unwrap();
+    let mut tls = tokio_rustls::TlsConnector::from(Arc::new(client(b"http/1.1")))
+        .connect("localhost".try_into().unwrap(), tcp)
+        .await
+        .unwrap();
+    assert_eq!(tls.get_ref().1.alpn_protocol(), Some(&b"http/1.1"[..]));
+    let request = format!("GET /route?q=1 HTTP/1.1\r\nHost: localhost:{}\r\n\r\n", vip.port());
+    for _ in 0..2 {
+        tls.write_all(request.as_bytes()).await.unwrap();
+        let mut answer = [0; 40];
+        tls.read_exact(&mut answer).await.unwrap();
+        assert!(answer.ends_with(b"\r\n\r\nok"));
+    }
+}
+
 async fn http3(vip: SocketAddr) {
     let mut endpoint = quinn::Endpoint::client("127.0.0.1:0".parse().unwrap()).unwrap();
     let crypto = quinn::crypto::rustls::QuicClientConfig::try_from(client(b"h3")).unwrap();
@@ -126,14 +158,15 @@ async fn http3(vip: SocketAddr) {
 }
 
 #[test]
-fn both_protocols_reuse_the_client_session_and_dispatch_each_request() {
-    let (vip, mut edge, ingress) = setup();
+fn every_protocol_reuses_the_client_session_and_one_firewall_connection() {
+    let (vip, mut edge, ingress, connections) = setup();
     let runner = std::thread::spawn(move || {
         let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
         rt.block_on(async {
             tokio::time::timeout(Duration::from_secs(8), async {
                 http2(vip).await;
                 http3(vip).await;
+                http1(vip).await;
             })
             .await
             .unwrap();
@@ -146,4 +179,6 @@ fn both_protocols_reuse_the_client_session_and_dispatch_each_request() {
         }
     }
     runner.join().unwrap();
+    // Each client connection reused one firewall connection for its two requests.
+    assert_eq!(connections.load(Ordering::SeqCst), 3);
 }

@@ -22,16 +22,42 @@ pub struct HttpOptions {
     pub policy_file: Option<String>,
     /// Optional shared challenge seed for a cluster.
     pub secret_file: Option<String>,
+    /// Requests per window for each client. `None` turns the default limiter off.
+    pub rate_limit: Option<u32>,
+    /// The length of the rate window in seconds.
+    pub rate_window_seconds: u64,
+    /// Concurrent HTTP/1.1 connections and multiplexed exchanges served.
+    pub max_connections: u32,
+    /// Concurrent connections and exchanges for one client address.
+    pub max_connections_per_ip: u32,
+    /// The longest silence on an HTTP connection, in seconds.
+    pub idle_timeout_seconds: u32,
+    /// The longest silence on an upgraded connection, in seconds.
+    pub websocket_idle_timeout_seconds: u32,
 }
 
 impl Default for HttpOptions {
     fn default() -> Self {
-        Self { shield: true, policy_file: None, secret_file: None }
+        Self {
+            shield: true,
+            policy_file: None,
+            secret_file: None,
+            rate_limit: Some(100),
+            rate_window_seconds: 10,
+            max_connections: 1024,
+            max_connections_per_ip: 64,
+            idle_timeout_seconds: 15,
+            websocket_idle_timeout_seconds: 300,
+        }
     }
 }
 
 impl HttpOptions {
+    /// The most connections the thread-per-connection firewall serves.
+    pub const MAX_CONNECTIONS: usize = 8192;
+
     pub(crate) fn parse(mut r: ObjectReader<'_, '_>) -> io::Result<Self> {
+        let defaults = Self::default();
         let shield = match field(r.take_str("surface"))?.unwrap_or("shield") {
             "shield" => true,
             "gate" => false,
@@ -39,29 +65,105 @@ impl HttpOptions {
         };
         let policy_file = field(r.take_str("policy_file"))?.map(str::to_owned);
         let secret_file = field(r.take_str("secret_file"))?.map(str::to_owned);
+        let rate_limit = match r.take("rate_limit") {
+            None => defaults.rate_limit,
+            Some(value) if value.as_str() == Some("off") => None,
+            Some(value) => match value.as_number().and_then(|n| n.as_u64().ok()) {
+                Some(n) if (1..=1_000_000).contains(&n) => Some(n as u32),
+                _ => return Err(invalid("http.rate_limit must be off or in 1..=1000000")),
+            },
+        };
+        let seconds = |r: &mut ObjectReader<'_, '_>, key: &str, default: u32| {
+            match field(r.take_str(key))? {
+                None => Ok(default),
+                Some(text) => crate::config::duration(text)
+                    .filter(|d| d.subsec_nanos() == 0)
+                    .map(|d| d.as_secs() as u32)
+                    .ok_or_else(|| invalid(format!("{}: expected whole seconds", r.field_path(key)))),
+            }
+        };
+        let rate_window_seconds = u64::from(seconds(&mut r, "rate_window", 10)?);
+        let idle_timeout_seconds = seconds(&mut r, "idle_timeout", defaults.idle_timeout_seconds)?;
+        let websocket_idle_timeout_seconds =
+            seconds(&mut r, "websocket_idle_timeout", defaults.websocket_idle_timeout_seconds)?;
+        let max_connections = crate::config::number(
+            &mut r,
+            "max_connections",
+            defaults.max_connections as usize,
+            Self::MAX_CONNECTIONS,
+        )? as u32;
+        let max_connections_per_ip = crate::config::number(
+            &mut r,
+            "max_connections_per_ip",
+            defaults.max_connections_per_ip as usize,
+            Self::MAX_CONNECTIONS,
+        )? as u32;
         field(r.finish())?;
-        Ok(Self { shield, policy_file, secret_file })
+        Ok(Self {
+            shield,
+            policy_file,
+            secret_file,
+            rate_limit,
+            rate_window_seconds,
+            max_connections,
+            max_connections_per_ip,
+            idle_timeout_seconds,
+            websocket_idle_timeout_seconds,
+        })
     }
 }
 
 /// TLS and optional QUIC termination on one HTTP listener address.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TlsOptions {
-    /// PEM certificate chain, leaf first.
-    pub cert_file: String,
-    /// PEM private key matching the leaf certificate.
-    pub key_file: String,
+    /// Combined PEM files, or directories of them, in the order given. Each file holds a
+    /// certificate chain, leaf first, and its private key. The first certificate is the
+    /// default. The server name of a handshake selects among the others.
+    pub crt: Vec<String>,
+    /// A PEM certificate chain, leaf first, with its key in `key_file`.
+    pub cert_file: Option<String>,
+    /// The PEM private key matching the leaf of `cert_file`.
+    pub key_file: Option<String>,
+    /// Refuse a handshake whose server name matches no certificate.
+    pub strict_sni: bool,
     /// Also bind UDP on this address for HTTP/3.
     pub http3: bool,
 }
 
 impl TlsOptions {
     pub(crate) fn parse(mut r: ObjectReader<'_, '_>) -> io::Result<Self> {
-        let cert_file = required(&mut r, "cert_file")?;
-        let key_file = required(&mut r, "key_file")?;
+        let crt = match r.take("crt") {
+            None => Vec::new(),
+            Some(value) => match (value.as_str(), value.as_array()) {
+                (Some(path), _) => vec![path.to_owned()],
+                (_, Some(paths)) if (1..=64).contains(&paths.len()) => paths
+                    .iter()
+                    .map(|path| path.as_str().map(str::to_owned))
+                    .collect::<Option<Vec<_>>>()
+                    .ok_or_else(|| invalid(format!("{}: expected paths", r.field_path("crt"))))?,
+                _ => {
+                    return Err(invalid(format!(
+                        "{}: expected a path or a list of 1 to 64 paths",
+                        r.field_path("crt")
+                    )));
+                }
+            },
+        };
+        let cert_file = field(r.take_str("cert_file"))?.map(str::to_owned);
+        let key_file = field(r.take_str("key_file"))?.map(str::to_owned);
+        if cert_file.is_some() != key_file.is_some() {
+            return Err(invalid(format!("{}: cert_file and key_file go together", r.path())));
+        }
+        if crt.is_empty() && cert_file.is_none() {
+            return Err(invalid(format!(
+                "{}: expected crt (combined PEM) or cert_file with key_file",
+                r.path()
+            )));
+        }
+        let strict_sni = field(r.take_bool("strict_sni"))?.unwrap_or(false);
         let http3 = field(r.take_bool("http3"))?.unwrap_or(false);
         field(r.finish())?;
-        Ok(Self { cert_file, key_file, http3 })
+        Ok(Self { crt, cert_file, key_file, strict_sni, http3 })
     }
 }
 
