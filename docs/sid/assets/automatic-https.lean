@@ -1,12 +1,15 @@
 /-!
 # Formal Model of Automatic HTTPS (SID 0021)
 
-A model of the four algorithms of SID 0021, checked with Lean 4.19.0.
+A model of the algorithms of SID 0021, checked with Lean 4.19.0.
 
 1. Order: a phase moves forward only, every step of a live order takes budget or ends it, and an order is over after a bounded number of steps whatever the authority answers.
 2. Renewal: the renewal time of a certificate lies after its issue and strictly before its expiry.
 3. Retry: the delay after a failure is at least the first delay, at most one day, and monotone in the number of consecutive failures.
 4. Installing: a failed order leaves the served certificate unchanged, a served name keeps a certificate, and the expiry of a served certificate never decreases.
+5. Issuer: every name has one issuer, a public authority is never asked for an internal name or an address, and no name is refused when the frontend states no issuer.
+6. Wildcard: `*.parent` covers a host of exactly one more label, neither the parent nor a deeper host, and an exact certificate wins over a wildcard, which wins over a file.
+7. Propagation: the check of DNS-01 asks a bounded number of times, pauses no longer than the timeout in total, and succeeds when the record shows in time.
 
 Times are natural numbers of seconds. The JSON documents, the signatures, the sockets and the files are outside the model. Tests cover them.
 -/
@@ -294,5 +297,180 @@ theorem installed_is_sound (served : Option Cert) (c t : Cert)
       cases h; exact hc.1
     · have same := Option.some.inj h
       rw [← same]; exact hs s rfl
+
+/-! ## Part E: The issuer of a name -/
+
+/-- What an `auto` name is. -/
+inductive NameKind where
+  | publicName | internalName | address
+  deriving DecidableEq, Repr
+
+/-- `tls.issuer` of the frontend. -/
+inductive Setting where
+  | absent | acme | internal
+  deriving DecidableEq, Repr
+
+/-- Who issues, or the refusal of the configuration check. -/
+inductive Issuer where
+  | acme | localAuthority | refused
+  deriving DecidableEq, Repr
+
+/-- The choice of SID 0021. `publicDirectory` says that `global.acme.directory` is a public authority. -/
+def choose (publicDirectory : Bool) : Setting → NameKind → Issuer
+  | .internal, _ => .localAuthority
+  | .acme, .address => .refused
+  | .acme, .internalName => if publicDirectory then .refused else .acme
+  | .acme, .publicName => .acme
+  | .absent, .address => .localAuthority
+  | .absent, .internalName => if publicDirectory then .localAuthority else .acme
+  | .absent, .publicName => .acme
+
+/-- Without a stated issuer no name is refused: `auto: ["localhost"]` works with no other setting. -/
+theorem absent_never_refuses (d : Bool) (k : NameKind) : choose d .absent k ≠ .refused := by
+  cases d <;> cases k <;> simp [choose]
+
+/-- A public authority is never asked for an internal name or an address. -/
+theorem public_authority_gets_public_names_only (s : Setting) (k : NameKind)
+    (h : choose true s k = .acme) : k = .publicName := by
+  cases s <;> cases k <;> simp [choose] at h <;> rfl
+
+/-- No ACME authority is asked for an address, whatever the directory. -/
+theorem address_never_ordered (d : Bool) (s : Setting) : choose d s .address ≠ .acme := by
+  cases d <;> cases s <;> simp [choose]
+
+/-- `issuer: "internal"` always means the local authority. -/
+theorem internal_setting_is_local (d : Bool) (k : NameKind) :
+    choose d .internal k = .localAuthority := by
+  cases k <;> rfl
+
+/-- A public name goes to the ACME authority unless the frontend says `internal`. -/
+theorem public_name_is_ordered (d : Bool) (s : Setting) (h : s ≠ .internal) :
+    choose d s .publicName = .acme := by
+  cases s
+  · rfl
+  · rfl
+  · exact absurd rfl h
+
+/-! ## Part F: Wildcards -/
+
+/-- A host name as its labels, the leftmost first. -/
+abbrev Host := List String
+
+/-- Whether the wildcard `*.parent` covers `host`: the host is one label and then the parent. -/
+def covers (parent host : Host) : Bool :=
+  match host with
+  | [] => false
+  | _ :: rest => decide (rest = parent)
+
+/-- `*.example.org` covers `a.example.org`. -/
+theorem covers_one_label (label : String) (parent : Host) :
+    covers parent (label :: parent) = true := by
+  simp [covers]
+
+/-- `*.example.org` does not cover `example.org`. -/
+theorem covers_not_parent (parent : Host) : covers parent parent = false := by
+  cases parent with
+  | nil => rfl
+  | cons head tail =>
+    simp only [covers, decide_eq_false_iff_not]
+    intro same
+    have lengths := congrArg List.length same
+    simp at lengths
+
+/-- `*.example.org` does not cover `a.b.example.org`. -/
+theorem covers_not_two_labels (a b : String) (parent : Host) :
+    covers parent (a :: b :: parent) = false := by
+  simp only [covers, decide_eq_false_iff_not]
+  intro same
+  have lengths := congrArg List.length same
+  simp at lengths
+
+/-- A covered host has exactly one label more than the parent. -/
+theorem covered_length (parent host : Host) (h : covers parent host = true) :
+    host.length = parent.length + 1 := by
+  cases host with
+  | nil => simp [covers] at h
+  | cons head rest =>
+    simp only [covers, decide_eq_true_eq] at h
+    simp [h]
+
+/-- The certificate of a handshake: the automatic certificate of the exact name, else that of the wildcard, else the one from a file. -/
+def selectCert (exact wildcard file : Option Cert) : Option Cert :=
+  match exact, wildcard with
+  | some c, _ => some c
+  | none, some c => some c
+  | none, none => file
+
+/-- An exact automatic certificate wins. -/
+theorem exact_wins (c : Cert) (wildcard file : Option Cert) :
+    selectCert (some c) wildcard file = some c := rfl
+
+/-- Without an exact one, the automatic wildcard wins over the file. -/
+theorem wildcard_wins_over_file (c : Cert) (file : Option Cert) :
+    selectCert none (some c) file = some c := rfl
+
+/-- Without an automatic certificate the file decides, as before SID 0021. -/
+theorem file_decides_otherwise (file : Option Cert) : selectCert none none file = file := rfl
+
+/-! ## Part G: The propagation check of DNS-01 -/
+
+/-- The rounds of the check: one at once, and one after each pause that fits into the timeout. -/
+def rounds (timeout pause : Nat) : Nat := timeout / pause + 1
+
+/-- Asks round after round. Returns whether the record showed, and the rounds that were asked. `visible n` says whether every server shows the record in round `n`. -/
+def check (visible : Nat → Bool) : (fuel asked : Nat) → Bool × Nat
+  | 0, asked => (false, asked)
+  | fuel + 1, asked => if visible asked then (true, asked + 1) else check visible fuel (asked + 1)
+
+/-- The check asks at most as many times as it has rounds. -/
+theorem check_bounded (visible : Nat → Bool) (fuel asked : Nat) :
+    (check visible fuel asked).2 ≤ asked + fuel := by
+  induction fuel generalizing asked with
+  | zero => simp [check]
+  | succ n ih =>
+    simp only [check]
+    split
+    · simp
+    · have := ih (asked + 1)
+      omega
+
+/-- With the timeout of the configuration the check asks at most `timeout / pause + 1` times. -/
+theorem check_asks_at_most (visible : Nat → Bool) (timeout pause : Nat) :
+    (check visible (rounds timeout pause) 0).2 ≤ timeout / pause + 1 := by
+  have := check_bounded visible (rounds timeout pause) 0
+  simp only [rounds] at *
+  omega
+
+/-- The pauses between the rounds take no longer than the timeout in total. -/
+theorem pauses_fit_the_timeout (timeout pause : Nat) :
+    (rounds timeout pause - 1) * pause ≤ timeout := by
+  simp only [rounds, Nat.add_sub_cancel]
+  exact Nat.div_mul_le_self timeout pause
+
+/-- A record that shows in a round the check reaches is found. -/
+theorem check_finds (visible : Nat → Bool) (fuel asked n : Nat)
+    (shown : visible n = true) (after : asked ≤ n) (inTime : n < asked + fuel) :
+    (check visible fuel asked).1 = true := by
+  induction fuel generalizing asked with
+  | zero => omega
+  | succ k ih =>
+    simp only [check]
+    split
+    · rfl
+    · rename_i hidden
+      have differs : asked ≠ n := by
+        intro same
+        rw [same] at hidden
+        exact hidden shown
+      exact ih (asked + 1) (by omega) (by omega)
+
+/-- A record that never shows fails the check: the authority is not asked to validate. -/
+theorem check_fails_when_hidden (visible : Nat → Bool) (fuel asked : Nat)
+    (hidden : ∀ n, visible n = false) : (check visible fuel asked).1 = false := by
+  induction fuel generalizing asked with
+  | zero => rfl
+  | succ k ih =>
+    simp only [check, hidden asked]
+    exact ih (asked + 1)
 
 end SibunaAcme
