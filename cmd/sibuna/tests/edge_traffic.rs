@@ -397,3 +397,25 @@ fn the_policy_members_are_checked_when_the_file_is_read() {
     }
     assert_eq!(Topology::new(&[origin]).frontend(r#""max_body":"10m","#).check(), Ok(()));
 }
+
+#[test]
+fn round_robin_serves_each_server_in_turn() {
+    let origins = [Origin::start("a"), Origin::start("b"), Origin::start("c")];
+    let servers = origins.each_ref().map(|origin| origin.address);
+    both(|event_loop| {
+        let members = r#""balance":{"kind":"round_robin"},"#;
+        let edge = Topology::new(&servers).backend(members).start(event_loop);
+        let names: Vec<String> = (0..9).map(|_| get(&edge, "/who").text()).collect();
+        for window in names.chunks(3) {
+            let distinct: BTreeSet<&String> = window.iter().collect();
+            assert_eq!(distinct.len(), 3, "{names:?}");
+        }
+        // A weight of three gives three turns in five.
+        let edge = Topology::new(&servers[..2])
+            .backend(members)
+            .server(0, format!(r#"{{"name":"s0","addr":"{}","weight":3}}"#, servers[0]))
+            .start(event_loop);
+        let names: Vec<String> = (0..12).map(|_| get(&edge, "/who").text()).collect();
+        assert_eq!(names.iter().filter(|name| *name == "a").count(), 9, "{names:?}");
+    });
+}
