@@ -5,7 +5,7 @@ use std::sync::{Arc, PoisonError};
 use std::time::{Duration, Instant};
 
 use super::{HttpRoutes, bare_host};
-use crate::pool::Ticket;
+use crate::pool::{Ticket, Tried, Wish};
 use crate::{PoolPolicy, Regime};
 
 /// One request, as far as routing reads it. Fill it with struct-update syntax:
@@ -49,16 +49,61 @@ impl HttpRoutes {
             .map_or(&front.pool, |r| &r.pool)
             .clone();
         let regime = table.regime.unwrap_or(Regime::Standalone);
-        let pool = table.pools.get_mut(pool.as_ref())?;
-        let ticket = pool.reserve(Instant::now(), query.peer, query.vip, regime)?;
-        Some(HttpTarget { ticket, policy: Arc::clone(&pool.policy) })
+        let servers = table.pools.get_mut(pool.as_ref())?;
+        let ticket = servers.reserve(Instant::now(), query.peer, query.vip, regime)?;
+        let policy = Arc::clone(&servers.policy);
+        let again = Again {
+            pool,
+            vip: query.vip,
+            peer: query.peer,
+            revision: query.policy_revision,
+            tried: Tried::default(),
+        };
+        Some(HttpTarget { ticket, policy, again })
     }
+
+    /// Reserves a place on another server of the pool of `failed`, for the same request
+    /// (SID 0019). The caller drops `failed` when it takes the new reservation.
+    ///
+    /// Returns `None` when the request spent the `retries` of its pool, when the routing
+    /// table changed since the request was first routed, and when no server that the
+    /// request has not tried is eligible. A request therefore tries no server twice and
+    /// at most `retries + 1` servers.
+    pub fn retry(&self, failed: &HttpTarget) -> Option<HttpTarget> {
+        let again = &failed.again;
+        if again.tried.len() >= usize::from(failed.policy.retries) {
+            return None;
+        }
+        let mut table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        if again.revision != table.revision {
+            return None;
+        }
+        let regime = table.regime.unwrap_or(Regime::Standalone);
+        let servers = table.pools.get_mut(again.pool.as_ref())?;
+        let tried = again.tried.with(&failed.ticket);
+        let wish = Wish { tried: Some(&tried) };
+        let ticket = servers.reserve_with(Instant::now(), again.peer, again.vip, regime, &wish)?;
+        let policy = Arc::clone(&servers.policy);
+        let again = Again { pool: Arc::clone(&again.pool), tried, ..*again };
+        Some(HttpTarget { ticket, policy, again })
+    }
+}
+
+/// What a reservation remembers so that its request can move to another server.
+struct Again {
+    pool: Arc<str>,
+    vip: SocketAddr,
+    peer: SocketAddr,
+    revision: u64,
+    /// The servers tried before the current one.
+    tried: Tried,
 }
 
 /// An admitted HTTP exchange. Dropping it returns the backend's capacity.
 pub struct HttpTarget {
     ticket: Ticket,
     policy: Arc<PoolPolicy>,
+    again: Again,
 }
 
 impl HttpTarget {

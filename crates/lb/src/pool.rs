@@ -9,6 +9,9 @@ use std::time::{Duration, Instant};
 
 use crate::config::{Backend, Protocol, Scheduler, Server};
 
+mod extra;
+pub(crate) use extra::{Tried, Wish};
+
 #[derive(Default)]
 struct Load {
     active: AtomicUsize,
@@ -113,6 +116,18 @@ impl Pool {
         vip: SocketAddr,
         regime: crate::Regime,
     ) -> Option<Ticket> {
+        self.reserve_with(now, peer, vip, regime, &Wish::default())
+    }
+
+    /// Reserves a place on a server that `wish` allows (SID 0019).
+    pub fn reserve_with(
+        &mut self,
+        now: Instant,
+        peer: SocketAddr,
+        vip: SocketAddr,
+        regime: crate::Regime,
+        wish: &Wish<'_>,
+    ) -> Option<Ticket> {
         let available = |target: &Target| {
             target.server.addr != vip
                 && target.server.healthy.as_ref().is_none_or(|h| h.load(Ordering::Relaxed))
@@ -123,6 +138,7 @@ impl Pool {
                     .lock()
                     .unwrap_or_else(PoisonError::into_inner)
                     .is_none_or(|deadline| deadline <= now)
+                && wish.allows(target)
         };
         let prefer_local = regime == crate::Regime::WideArea
             && self.targets.iter().any(|t| !t.server.remote && available(t));
