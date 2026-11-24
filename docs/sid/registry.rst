@@ -63,5 +63,8 @@ Discussion registry
    * - 0017
      - :doc:`records/0017-in-process-exchanges`
      - discussion
+   * - 0020
+     - :doc:`records/0020-edge-observability-and-client-identity`
+     - discussion
 
 .. sid-generated-end

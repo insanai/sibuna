@@ -23,5 +23,6 @@ Discussion reading order
    records/0015-distributed-edge-load-balancer
    records/0016-event-driven-http-workers
    records/0017-in-process-exchanges
+   records/0020-edge-observability-and-client-identity
 
 .. sid-generated-end
