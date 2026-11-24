@@ -813,7 +813,7 @@ A TCP or HTTP pool can check its servers actively.
 
 ``"kind": "tcp"`` passes when the connect completes. ``"kind": "http"`` sends ``GET`` and passes on a 2xx or 3xx status, or on ``expect_status`` alone. A server starts in service, as in HAProxy. It leaves after ``fall`` failed probes and returns after ``rise`` passed ones. A reload keeps the status of every address. Probes of a TLS, HTTP/2 or HTTP/3 pool travel through its adapter, so they test the same path as a request.
 
-An HTTP pool also learns from live requests. This is *passive health*, and it is on by default. Three consecutive response timeouts eject a server for ten seconds. An ejected server takes no new request while another server of the pool can serve. If every server is ejected the pool uses them all, because a slow answer is better than none.
+An HTTP pool also learns from live requests. This is *passive health*, and it is on by default. Three consecutive response timeouts eject a server for ten seconds. An ejected server takes no new request while another server of the pool can serve. If every server is ejected the pool uses them all, because a slow answer is better than none. ``show servers`` names an ejected server and the time left, and ``sibuna_edge_server_ejections_total`` counts the ejections of each server.
 
 .. code-block:: text
 
@@ -861,7 +861,9 @@ Each HTTP pool bounds its own waits. The client has its bound, ``http.idle_timeo
 
 When a server cannot be reached, the request moves to another server of the pool. The server received nothing, so this is safe for every method, also for ``POST``. After a byte of the request was sent, only a ``GET``, ``HEAD`` or ``OPTIONS`` request that fits the request buffer is sent again. A request never tries the same server twice, and never a drained one. ``retries: 0`` turns failover off, and the client then receives 502 at once.
 
-A request that moved is one line of the access log and one request in the counters, under the server that answered it. Each server it left counts one in ``sibuna_edge_server_failures_total``. A redirect and a 413 of our own are logged without a server.
+A request to an HTTP/2 or HTTP/3 server also moves when the shared session to the server fails before a response head, if the request is safe and has no body. The session is first opened again to the same server, once.
+
+A request that moved is one line of the access log and one request in the counters, under the server that answered it. Each server it left counts one in ``sibuna_edge_server_failures_total`` and one in ``sibuna_edge_server_failovers_total``. The log line has no field for the move: we find moved requests by the failover count of the server they left. A redirect and a 413 of our own are logged without a server.
 
 Sticky sessions
 ~~~~~~~~~~~~~~~
@@ -878,7 +880,7 @@ With ``"cookie"`` the first response to a client carries a cookie, ``sibuna_srv`
 
 With ``"source"`` the client address selects the server, without its port. No cookie is set, so this also serves clients that keep no cookies and TCP or UDP pools. When a server leaves, only its clients move, and they return when it returns. All clients behind one NAT address share a server.
 
-In both cases a sticky server that is down, full, ejected or drained gives way: the request is balanced as usual, and with a cookie the client receives the cookie of the server that answered. While a server is drained, each of its ``"source"`` clients has one other server and returns when the drain ends.
+A cookie whose server is down, full, ejected or drained gives way: the request is balanced as usual, and the client receives the cookie of the server that answered. With ``"source"`` each client of a server that is down, full, ejected or drained has one other server, and returns when its own server does.
 
 Behind ``trusted_proxies`` the client address of ``"source"`` is the one the proxy recorded, as for the access log and the limits. Without that option it is the socket peer, so all requests of one proxy would share a server.
 
@@ -899,7 +901,7 @@ A frontend carries a small HTTP policy. Each route can state its own, and a rout
      - ``true`` answers every cleartext request with 308 and the same host, path and query under ``https://``. ``301`` uses that status. ``{status: 308, port: 8443}`` names another port. Only on a frontend without ``tls``.
    * - ``hsts``
      - ``false``
-     - ``true`` adds ``Strict-Transport-Security: max-age=31536000`` to the responses of the servers. ``{max_age: 600, include_subdomains: true, preload: false}`` sets the parts. Only on a frontend with ``tls``.
+     - ``true`` adds ``Strict-Transport-Security: max-age=31536000`` to the responses of the servers and to our own answers: a redirect, a challenge page, a refusal and an error. ``{max_age: 600, include_subdomains: true, preload: false}`` sets the parts. Only on a frontend with ``tls``.
    * - ``request_headers``
      - none
      - ``{set: {...}, remove: [...]}`` for the request that goes to the server.
@@ -908,7 +910,7 @@ A frontend carries a small HTTP policy. Each route can state its own, and a rout
      - The same for the response that goes to the client.
    * - ``max_body``
      - none
-     - The largest request body: a number of bytes, or ``"64k"``, ``"10m"``, ``"1g"``. A larger request receives 413. ``"off"`` on a route lifts the limit of its frontend.
+     - The largest request body: a number of bytes, or ``"64k"``, ``"10m"``, ``"1g"``. A larger request receives 413, also when its length is not declared and the limit is passed while the body streams. After a 413 we read and discard what the client still sends, for at most 2 seconds and 1 MiB, so that the client can read the answer. ``"off"`` on a route lifts the limit of its frontend.
 
 .. code-block:: text
 
@@ -1089,7 +1091,7 @@ An edge writes an access log, counts each request per frontend and per server, a
 
 A worker never waits for the log. It puts the entry in a bounded queue, and one thread formats and writes. When the queue is full the entry is dropped and ``sibuna_edge_access_log_dropped_total`` counts it. To rotate the file we rename it and send SIGHUP. Sibuna opens the path again within about a second. TCP and UDP flows are counted and not logged.
 
-**Metrics.** The metrics text has the process counters and then the series of the edge: requests by status class, bytes and a duration histogram per frontend; requests, failures, a response time histogram and ``sibuna_edge_server_up`` per server; the flow table (``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``, ``sibuna_edge_drops_total``); and the counters of the log and of the PROXY protocol. Counters follow a name across a reload.
+**Metrics.** The metrics text has the process counters and then the series of the edge: requests by status class, bytes and a duration histogram per frontend; requests, failures, failovers, ejections, a response time histogram and ``sibuna_edge_server_up`` per server; the flow table (``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``, ``sibuna_edge_drops_total``); and the counters of the log and of the PROXY protocol. Counters follow a name across a reload.
 
 **Readiness.** ``/__sibuna/ready`` answers 200 with ``{"status":"ready"}``. From the start of a shutdown it answers 503 with ``{"status":"draining"}``. ``/__sibuna/health`` only says that the process runs. We point a load balancer in front of Sibuna at the readiness answer.
 
@@ -1218,10 +1220,10 @@ A deployment takes one server out of rotation, replaces it, and returns it. For 
    $ sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain
    $ sibuna ctl /run/sibuna/edge.sock add server app/blue 10.0.0.3:80 weight 2
    $ sibuna ctl /run/sibuna/edge.sock show servers
-   pool name        address     state weight flows health changed
-   app  10.0.0.1:80 10.0.0.1:80 drain 1      4     -      state
-   app  10.0.0.2:80 10.0.0.2:80 ready 1      9     -      -
-   app  blue        10.0.0.3:80 ready 2      0     -      added
+   pool name        address     state weight flows health ejected ramp changed
+   app  10.0.0.1:80 10.0.0.1:80 drain 1      4     -      -       -    state
+   app  10.0.0.2:80 10.0.0.2:80 ready 1      9     -      7s      -    -
+   app  blue        10.0.0.3:80 ready 2      0     -      -       40%  added
 
 .. list-table:: Commands of ``sibuna ctl SOCKET``
    :header-rows: 1
@@ -1230,7 +1232,7 @@ A deployment takes one server out of rotation, replaces it, and returns it. For 
    * - Command
      - Effect
    * - ``show servers``
-     - One line per server. The column ``changed`` holds ``-`` for a server that is served as the file describes it, ``added`` for one that a command added, and ``state`` or ``weight`` for a changed field.
+     - One line per server. ``ejected`` is the time passive health still keeps the server out, and ``ramp`` is the share of its weight that a server in slow start has now. The column ``changed`` holds ``-`` for a server that is served as the file describes it, ``added`` for one that a command added, and ``state`` or ``weight`` for a changed field.
    * - ``show stats``
      - The series of the edge in the Prometheus text format: requests, bytes and times per frontend and per server, the flow table, the access log and the PROXY protocol.
    * - ``show certs``
@@ -1424,7 +1426,7 @@ Coming from HAProxy
 Limits of this version
 ~~~~~~~~~~~~~~~~~~~~~~
 
-On Linux the HTTP firewall serves connections on event-driven workers, one per processor, up to ``http.max_connections``. A connection that waits holds a small record and no buffer. On other platforms, and with ``event_loop`` ``false``, each HTTP/1.1 connection and each HTTP/2 or HTTP/3 exchange has a thread of its own, up to 8192 at a time. A WebSocket to a pool with ``http_version`` 2 or 3 answers 501. HTTP/3 clients cannot open WebSockets, and browsers fall back to HTTP/1.1 or HTTP/2 for them. Server addresses are numeric. The admin socket changes servers only: frontends, routes, certificates and policy change by reload. Run-time changes do not survive a restart. Request headers are limited to 16 KiB on HTTP/2 and HTTP/3. Response compression and caching are not provided. Header edits set fixed values: there are no patterns or variables. With ``event_loop`` ``false`` an HTTP/1.1 connection has the choice of the server, sticky sessions, the redirect, the header edits and the limit on a declared body, but not ``connect_timeout``, ``response_timeout``, failover to another server or passive health. A request body without a declared length is bounded by ``max_body`` on the event-driven workers only. SID 0019 lists the remaining gaps. SID 0015 lists the parts of the design that remain proposals: the shared-memory spill cache, database-backed topology, replicated bans, peer forwarding, binary handoff, plugins and the fleet console.
+On Linux the HTTP firewall serves connections on event-driven workers, one per processor, up to ``http.max_connections``. A connection that waits holds a small record and no buffer. On other platforms, and with ``event_loop`` ``false``, each HTTP/1.1 connection and each HTTP/2 or HTTP/3 exchange has a thread of its own, up to 8192 at a time. A WebSocket to a pool with ``http_version`` 2 or 3 answers 501. HTTP/3 clients cannot open WebSockets, and browsers fall back to HTTP/1.1 or HTTP/2 for them. Server addresses are numeric. The admin socket changes servers only: frontends, routes, certificates and policy change by reload. Run-time changes do not survive a restart. Request headers are limited to 16 KiB on HTTP/2 and HTTP/3. Response compression and caching are not provided. Header edits set fixed values: there are no patterns or variables. With ``event_loop`` ``false`` a connection has the same traffic rules as on the workers: the timeouts of the pool, failover, passive health, sticky sessions, the redirect, the header edits and ``max_body``. Two details differ. A client that goes away while its server is silent is noticed when the server answers or its bound ends. A chunked body is counted by ``max_body`` without its chunk framing. Our own answers carry HSTS but neither the header edits nor the sticky cookie, and the answer to a WebSocket upgrade is not edited. SID 0019 lists the remaining gaps. SID 0015 lists the parts of the design that remain proposals: the shared-memory spill cache, database-backed topology, replicated bans, peer forwarding, binary handoff, plugins and the fleet console.
 
 
 Console Preview
