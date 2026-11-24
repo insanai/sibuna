@@ -294,7 +294,7 @@ pub(crate) fn handle_verify<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<()> {
         config.cookie_name.as_bytes(),
         verified.token.as_str().as_bytes(),
         verified.ttl_seconds,
-        config.secure_cookie,
+        config.secure_cookie || ctx.ingress.is_some_and(|i| i.secure),
     )
     .map_err(io::Error::other)?;
     let extra = Extra { headers: cookie, keep_alive: keep, ..Extra::default() };

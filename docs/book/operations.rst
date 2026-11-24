@@ -68,7 +68,7 @@ We can expose HTTP/2 on TCP and HTTP/3 on UDP with one certificate. The default 
      }
    }
 
-Each admitted request uses the first matching route. We compare DNS names without case or port and match a literal prefix of the normalized path. A prefix of ``/v1/`` matches ``/v1/item``. We can omit the ``tls`` object on a separate bind to accept plaintext HTTP/1.1. TLS listeners negotiate ``h2`` on TCP and optionally ``h3`` on UDP. We can test them with ``curl --http2`` and ``curl --http3-only``. When HTTP/3 is enabled, the HTTP/2 response advertises the same public port with Alt-Svc so browsers can discover it.
+Each admitted request uses the first matching route. We compare DNS names without case or port and match a literal prefix of the normalized path. A prefix of ``/v1/`` matches ``/v1/item``. We can omit the ``tls`` object on a separate bind to accept plaintext HTTP/1.1. TLS listeners negotiate ``h2`` on TCP and optionally ``h3`` on UDP. We can test them with ``curl --http2`` and ``curl --http3-only``. Challenge cookies issued over native TLS carry the Secure attribute. When HTTP/3 is enabled, the HTTP/2 response advertises the same public port with Alt-Svc so browsers can discover it.
 
 The optional ``http.policy_file`` loads a Sibuna policy. The optional ``http.secret_file`` holds the challenge seed shared by the nodes. A reload checks the new routes, policy and certificate before use. We can rotate the certificate and key at their configured paths. Changes to the listener set, HTTP surface or challenge seed require a restart. HTTP/2 clients that send Expect receive 417 and can retry without the header. HTTP/3 accepts 100-continue. CONNECT tunnels require a separate frontend.
 
