@@ -82,6 +82,9 @@ pub struct Server {
     pub(crate) edge_routes: Option<sibuna_lb::HttpRoutes>,
     /// The access log, the counters and the access control of an edge (SID 0020).
     pub(crate) observe: Option<Arc<crate::access::Observe>>,
+    /// Automatic HTTPS of an edge (SID 0021): challenge answers and managed names.
+    #[cfg(feature = "https")]
+    pub(crate) automatic: Option<Arc<sibuna_ingress::Automatic>>,
     /// The default per-client request limiter is off (edge mode only).
     pub(crate) unlimited: bool,
     /// The firewall is off for the whole edge (`http.surface: "off"`).
@@ -140,6 +143,8 @@ impl Server {
         Server {
             edge_routes: None,
             observe: None,
+            #[cfg(feature = "https")]
+            automatic: None,
             unlimited: false,
             balances_only: false,
             max_connections: AtomicU32::new(config.max_connections),

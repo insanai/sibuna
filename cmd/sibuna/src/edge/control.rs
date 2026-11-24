@@ -18,6 +18,7 @@ pub(super) const USAGE: &str = "\
 show servers
 show info
 show stats
+show certs
 set server POOL/NAME state ready|drain
 set server POOL/NAME weight N
 add server POOL/NAME IP:PORT [weight N]
@@ -32,18 +33,39 @@ pub(super) enum Command {
     ShowServers,
     ShowInfo,
     ShowStats,
+    /// The certificates of automatic HTTPS (SID 0021).
+    ShowCerts,
     Help,
     Reload,
-    State { pool: String, name: String, state: ServerState },
-    Weight { pool: String, name: String, weight: u32 },
-    Add { pool: String, name: String, addr: SocketAddr, weight: u32 },
-    Del { pool: String, name: String },
+    State {
+        pool: String,
+        name: String,
+        state: ServerState,
+    },
+    Weight {
+        pool: String,
+        name: String,
+        weight: u32,
+    },
+    Add {
+        pool: String,
+        name: String,
+        addr: SocketAddr,
+        weight: u32,
+    },
+    Del {
+        pool: String,
+        name: String,
+    },
 }
 
 impl Command {
     /// Whether the command changes what is served. Such a command is logged.
     pub fn changes(&self) -> bool {
-        !matches!(self, Self::ShowServers | Self::ShowInfo | Self::ShowStats | Self::Help)
+        !matches!(
+            self,
+            Self::ShowServers | Self::ShowInfo | Self::ShowStats | Self::ShowCerts | Self::Help
+        )
     }
 }
 
@@ -124,6 +146,7 @@ pub(super) fn parse(line: &str) -> Result<Command, RuntimeError> {
         ["show", "servers"] => Ok(Command::ShowServers),
         ["show", "info"] => Ok(Command::ShowInfo),
         ["show", "stats"] => Ok(Command::ShowStats),
+        ["show", "certs"] => Ok(Command::ShowCerts),
         ["help"] => Ok(Command::Help),
         ["reload"] => Ok(Command::Reload),
         ["set", "server", server, "state", word] => {
@@ -296,6 +319,7 @@ mod tests {
         assert_eq!(parse("show servers"), Ok(Command::ShowServers));
         assert_eq!(parse("  show   info "), Ok(Command::ShowInfo));
         assert_eq!(parse("show stats"), Ok(Command::ShowStats));
+        assert_eq!(parse("show certs"), Ok(Command::ShowCerts));
         assert_eq!(parse("reload"), Ok(Command::Reload));
         let (pool, name) = server("app", "10.0.0.1:80");
         let drain = Command::State { pool, name, state: ServerState::Drain };

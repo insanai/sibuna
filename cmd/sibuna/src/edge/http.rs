@@ -29,6 +29,9 @@ pub(super) struct Prepared {
     binds: BTreeMap<SocketAddr, Arc<TlsOptions>>,
     #[cfg(feature = "https")]
     identities: BTreeMap<SocketAddr, sibuna_ingress::Identity>,
+    /// The `auto` names and `global.acme` (SID 0021).
+    #[cfg(feature = "https")]
+    automatic: Option<sibuna_lb::AutomaticHttps>,
 }
 
 impl Prepared {
@@ -71,6 +74,8 @@ impl Prepared {
             binds,
             #[cfg(feature = "https")]
             identities,
+            #[cfg(feature = "https")]
+            automatic: topology.automatic_https(),
         }))
     }
 }
@@ -103,6 +108,33 @@ pub(super) struct Http {
     /// Reads the PROXY header of frontends that require one (SID 0020).
     stage: Option<super::proxy_stage::Stage>,
     observe: Arc<Observe>,
+    /// The certificate thread of automatic HTTPS (SID 0021).
+    #[cfg(feature = "https")]
+    automatic: Option<Arc<sibuna_ingress::Automatic>>,
+}
+
+/// The bounds of the TLS front: as many exchanges as connections, and an idle time of
+/// at least a minute.
+#[cfg(feature = "https")]
+fn ingress_limits(options: &HttpOptions) -> sibuna_ingress::Limits {
+    sibuna_ingress::Limits {
+        exchanges: options.max_connections as usize,
+        idle: std::time::Duration::from_secs(u64::from(options.idle_timeout_seconds.max(60))),
+        response: std::time::Duration::from_secs(60),
+    }
+}
+
+/// Whether two revisions terminate TLS alike. The `auto` names are left out: a reload
+/// may change them (SID 0021).
+fn same_listeners(
+    running: &BTreeMap<SocketAddr, Arc<TlsOptions>>,
+    next: &BTreeMap<SocketAddr, Arc<TlsOptions>>,
+) -> bool {
+    let fixed = |tls: &TlsOptions| TlsOptions { auto: Vec::new(), ..tls.clone() };
+    running.len() == next.len()
+        && running.iter().zip(next).all(|((bind, tls), (next_bind, next_tls))| {
+            bind == next_bind && fixed(tls) == fixed(next_tls)
+        })
 }
 
 /// What it takes to hand an accepted connection to its request path.
@@ -247,6 +279,10 @@ impl Http {
         let observe = start_observe(&prepared.observe, edge)?;
         server.observe = Some(observe.clone());
         server.balances_only = !prepared.options.firewall;
+        #[cfg(feature = "https")]
+        {
+            server.automatic = super::automatic::start(prepared.automatic, &prepared.identities)?;
+        }
         let server = Arc::new(server);
         let workers = start_workers(&server, &prepared.options)?;
         #[cfg(feature = "https")]
@@ -259,13 +295,7 @@ impl Http {
                 let ingress = ingress_of(&web, peer, vip, true);
                 serve(&web, pool.as_deref(), stream, ingress, None);
             });
-            let limits = sibuna_ingress::Limits {
-                exchanges: prepared.options.max_connections as usize,
-                idle: std::time::Duration::from_secs(u64::from(
-                    prepared.options.idle_timeout_seconds.max(60),
-                )),
-                response: std::time::Duration::from_secs(60),
-            };
+            let limits = ingress_limits(&prepared.options);
             // Without the workers every request path is the blocking one.
             let decide = workers.is_some().then(|| {
                 Arc::new(super::inline::Decision { server: server.clone() })
@@ -289,7 +319,6 @@ impl Http {
             Arc::new(Dispatcher { server: server_ref, workers: pool, binds, ingress });
         let stage = super::proxy_stage::Stage::start(dispatcher.clone(), observe.clone())?;
         Ok(Self {
-            server,
             reaper,
             workers,
             options: prepared.options,
@@ -297,7 +326,16 @@ impl Http {
             dispatcher,
             stage: Some(stage),
             observe,
+            #[cfg(feature = "https")]
+            automatic: server.automatic.clone(),
+            server,
         })
+    }
+
+    /// The certificate thread of automatic HTTPS, when the daemon started one.
+    #[cfg(feature = "https")]
+    pub fn automatic(&self) -> Option<&Arc<sibuna_ingress::Automatic>> {
+        self.automatic.as_ref()
     }
 
     /// Names the multiplexed servers of the adapters to the protocol runtime.
@@ -320,14 +358,24 @@ impl Http {
     }
 
     pub fn compatible(&self, next: &Prepared) -> bool {
+        #[cfg(feature = "https")]
+        if !super::automatic::compatible(self.automatic.as_ref(), next.automatic.as_ref()) {
+            return false;
+        }
         self.options == next.options
             && self.observe.options == next.observe
-            && self.binds == next.binds
+            && same_listeners(&self.binds, &next.binds)
             && next.seed.as_ref().is_none_or(|seed| {
                 self.server.config.secret_seed.as_ref() == Some(seed.as_bytes())
             })
     }
     pub fn reload(&mut self, prepared: Prepared) {
+        #[cfg(feature = "https")]
+        super::automatic::reload(
+            self.automatic.as_ref(),
+            prepared.automatic,
+            &prepared.identities,
+        );
         #[cfg(feature = "https")]
         if let Some(ingress) = self.dispatcher.ingress.write().unwrap_or_else(poisoned).as_mut() {
             ingress.reload(prepared.identities);

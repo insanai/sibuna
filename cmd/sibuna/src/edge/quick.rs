@@ -12,11 +12,19 @@ use super::watch::Source;
 /// The usage of `sibuna lb`, shown by `--help` and in hints.
 const USAGE: &str = "\
 sibuna lb --bind IP:PORT --server IP:PORT [--server IP:PORT]... [options]
+sibuna lb --tls auto --domain NAME [--domain NAME]... --server IP:PORT [options]
 
   --bind IP:PORT        Listen here. `:8080` means 0.0.0.0:8080. May repeat.
   --server IP:PORT      Balance over this server. May repeat.
   --proto http|tcp|udp  The protocol (default: http)
   --tls PEM             Terminate TLS with this combined PEM file or directory
+  --tls auto            Obtain and renew the certificates of each --domain (ACME)
+  --domain NAME         A host name for --tls auto. May repeat.
+  --http IP:PORT|off    With --tls auto: the plain listener that answers the
+                        challenge and redirects to HTTPS (default: port 80)
+  --acme-directory D    letsencrypt (default), letsencrypt-staging or a URL
+  --acme-email ADDRESS  The contact address of the ACME account
+  --acme-storage DIR    Keys and certificates (default: /var/lib/sibuna/acme)
   --health PATH|tcp     Probe each server: GET PATH, or a TCP connect
   --firewall MODE       off | gate | shield (default: off, a plain load balancer)
   --admin SOCKET        Open the admin socket for `sibuna ctl SOCKET ...`
@@ -68,8 +76,57 @@ fn address(option: &str, value: &str) -> Result<SocketAddr, Mistake> {
     })
 }
 
+/// What `--http` asked for, with `--tls auto`.
+#[derive(Default)]
+enum PlainListener {
+    /// Port 80 on each address of a `--bind`.
+    #[default]
+    Standard,
+    Off,
+    At(Vec<SocketAddr>),
+}
+
+/// Completes a quick start with `--tls auto`: the default bind, the plain listeners,
+/// and the checks that the options fit together.
+fn complete(start: &mut QuickStart, plain: PlainListener) -> Result<(), Mistake> {
+    let hint = "sibuna lb --tls auto --domain example.org --server 10.0.0.1:80";
+    let automatic = start.tls.as_deref() == Some("auto");
+    if !automatic {
+        if start.automatic.domains.is_empty() {
+            return Ok(());
+        }
+        let message = "`--domain` names a certificate to obtain, which needs `--tls auto`.";
+        return Err(mistake("missing option", message.to_owned(), hint));
+    }
+    start.tls = None;
+    if start.automatic.domains.is_empty() {
+        let message = "`--tls auto` needs at least one `--domain`.".to_owned();
+        return Err(mistake("missing domain", message, hint));
+    }
+    if start.protocol != QuickProtocol::Http {
+        let message = "`--tls auto` serves HTTPS, so the protocol is http.".to_owned();
+        return Err(mistake("invalid protocol", message, hint));
+    }
+    if start.binds.is_empty() {
+        start.binds.push(SocketAddr::from(([0, 0, 0, 0], 443)));
+    }
+    start.automatic.http_binds = match plain {
+        PlainListener::Off => Vec::new(),
+        PlainListener::At(binds) => binds,
+        PlainListener::Standard => {
+            let mut binds: Vec<_> =
+                start.binds.iter().map(|bind| SocketAddr::new(bind.ip(), 80)).collect();
+            binds.dedup();
+            binds.retain(|plain| !start.binds.contains(plain));
+            binds
+        }
+    };
+    Ok(())
+}
+
 fn parse(args: &[String]) -> Result<Request, Mistake> {
     let mut start = QuickStart::default();
+    let mut plain = PlainListener::default();
     let mut format = DEFAULT_FORMAT;
     let mut print = false;
     let mut args = args.iter();
@@ -91,6 +148,20 @@ fn parse(args: &[String]) -> Result<Request, Mistake> {
             "--bind" => start.binds.push(address(option, value()?)?),
             "--server" => start.servers.push(address(option, value()?)?),
             "--tls" => start.tls = Some(value()?.to_owned()),
+            "--domain" => start.automatic.domains.push(value()?.to_owned()),
+            "--http" => {
+                plain = match (value()?, plain) {
+                    ("off", _) => PlainListener::Off,
+                    (bind, PlainListener::At(mut binds)) => {
+                        binds.push(address("--bind", bind)?);
+                        PlainListener::At(binds)
+                    }
+                    (bind, _) => PlainListener::At(vec![address("--bind", bind)?]),
+                }
+            }
+            "--acme-directory" => start.automatic.directory = Some(value()?.to_owned()),
+            "--acme-email" => start.automatic.email = Some(value()?.to_owned()),
+            "--acme-storage" => start.automatic.storage = Some(value()?.to_owned()),
             "--health" => start.health = Some(value()?.to_owned()),
             "--firewall" => start.surface = value()?.to_owned(),
             "--admin" => start.admin_socket = Some(value()?.to_owned()),
@@ -102,6 +173,7 @@ fn parse(args: &[String]) -> Result<Request, Mistake> {
             }
         }
     }
+    complete(&mut start, plain)?;
     if start.binds.is_empty() || start.servers.is_empty() {
         return Err(mistake(
             "missing address",
@@ -236,8 +308,35 @@ mod tests {
             health: Some("/healthz".to_owned()),
             surface: "gate".to_owned(),
             admin_socket: Some("/tmp/a.sock".to_owned()),
+            automatic: sibuna_lb::QuickAutomatic::default(),
         };
         assert_eq!(start, expected);
+    }
+
+    #[test]
+    fn tls_auto_needs_only_a_domain_and_a_server() {
+        let line = "--tls auto --domain example.org --domain www.example.org --server 10.0.0.1:80";
+        let Ok(Request::Serve(start)) = request(line) else { panic!("expected a topology") };
+        assert_eq!(start.tls, None);
+        assert_eq!(start.binds, ["0.0.0.0:443".parse().unwrap()]);
+        assert_eq!(start.automatic.domains, ["example.org", "www.example.org"]);
+        assert_eq!(start.automatic.http_binds, ["0.0.0.0:80".parse().unwrap()]);
+        let line = "--tls auto --domain example.org --server 10.0.0.1:80 --bind [::1]:8443 \
+                    --http :8080 --acme-directory letsencrypt-staging --acme-email a@example.org \
+                    --acme-storage /tmp/acme";
+        let Ok(Request::Serve(start)) = request(line) else { panic!("expected a topology") };
+        assert_eq!(start.automatic.http_binds, ["0.0.0.0:8080".parse().unwrap()]);
+        assert_eq!(start.automatic.directory.as_deref(), Some("letsencrypt-staging"));
+        assert_eq!(start.automatic.email.as_deref(), Some("a@example.org"));
+        assert_eq!(start.automatic.storage.as_deref(), Some("/tmp/acme"));
+        let off = "--tls auto --domain example.org --server 10.0.0.1:80 --http off";
+        let Ok(Request::Serve(start)) = request(off) else { panic!("expected a topology") };
+        assert!(start.automatic.http_binds.is_empty());
+        let title = |line: &str| request(line).unwrap_err().title;
+        assert_eq!(title("--tls auto --server 10.0.0.1:80"), "missing domain");
+        assert_eq!(title("--bind :80 --domain a.example --server 10.0.0.1:80"), "missing option");
+        let tcp = "--tls auto --domain a.example --server 10.0.0.1:80 --proto tcp";
+        assert_eq!(title(tcp), "invalid protocol");
     }
 
     #[test]

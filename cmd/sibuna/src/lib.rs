@@ -142,6 +142,8 @@
 //! cookie falls through to the challenge, unexplained.
 
 mod access;
+#[cfg(feature = "https")]
+mod acme;
 pub mod assets;
 mod challenge;
 pub mod cli;

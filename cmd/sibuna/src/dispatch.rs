@@ -71,6 +71,11 @@ fn route<'c, W: Write>(ctx: &mut Ctx<'c, W>, spare: &'c mut [u8]) -> io::Result<
         response::write_text(ctx.writer, Status::BadRequest, b"Invalid Host", false)?;
         return Ok(false);
     }
+    // An ACME challenge and the redirect to HTTPS come before any decision (SID 0021).
+    #[cfg(feature = "https")]
+    if let Some(keep) = crate::acme::intercept(ctx)? {
+        return Ok(keep);
+    }
     if !ctx.internal && !restore_authorization_target(ctx, spare)? {
         return Ok(false);
     }

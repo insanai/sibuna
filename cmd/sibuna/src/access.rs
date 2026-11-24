@@ -431,6 +431,10 @@ pub(crate) fn metrics_text(server: Option<&Server>, observe: &Observe) -> String
         let _ = server.metrics.write_prometheus(&mut text);
     }
     observe.write_prometheus(&mut text);
+    #[cfg(feature = "https")]
+    if let Some(automatic) = server.and_then(|server| server.automatic.as_ref()) {
+        crate::acme::write_metrics(automatic, crate::acme::unix_now(), &mut text);
+    }
     text
 }
 
