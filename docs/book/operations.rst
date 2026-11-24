@@ -861,7 +861,7 @@ With ``global.reuse_port`` ``true`` we upgrade Sibuna, or change a setting that 
 
 The new process binds the same addresses while the old one serves, and the kernel gives each new connection to one of them. On SIGTERM the old process stops accepting and waits up to ``shutdown_timeout`` for its established flows. The new process takes the admin socket when it starts, and the old process leaves that socket alone when it stops.
 
-A connection that reaches the old process in the instant it closes its listener is reset, and the client connects again. In our test with a client that opens a new connection for every request, no request failed in 15 takeovers. HTTP/3 listeners do not share their address yet: with ``"http3": true`` on a frontend the new process is refused with ADDRESS IN USE, and that node is upgraded by a restart. Without ``reuse_port`` a second process on the same address is refused with ADDRESS IN USE, which protects against starting the service twice by mistake.
+A connection that reaches the old process in the instant it closes its listener is reset, and the client connects again. In our test with a client that opens a new connection for every request, no request failed in 15 takeovers. An HTTP/3 connection does not survive the takeover: the kernel may hand its packets to the other process, which does not know the connection, and the client then connects again. Connections over TCP are not affected. Without ``reuse_port`` a second process on the same address is refused with ADDRESS IN USE, which protects against starting the service twice by mistake.
 
 Changing servers at run time
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

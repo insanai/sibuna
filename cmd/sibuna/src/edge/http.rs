@@ -27,6 +27,9 @@ pub(super) struct Prepared {
     seed: Option<sibuna_challenge::Seed>,
     engine: Engine,
     binds: BTreeMap<SocketAddr, Arc<TlsOptions>>,
+    /// The listeners share their address with a replacing process (`global.reuse_port`).
+    #[cfg(feature = "https")]
+    share_address: bool,
     #[cfg(feature = "https")]
     identities: BTreeMap<SocketAddr, sibuna_ingress::Identity>,
 }
@@ -69,6 +72,8 @@ impl Prepared {
             seed,
             engine,
             binds,
+            #[cfg(feature = "https")]
+            share_address: topology.reuse_port(),
             #[cfg(feature = "https")]
             identities,
         }))
@@ -259,13 +264,7 @@ impl Http {
                 let ingress = Ingress { cert, ..ingress_of(&web, peer, vip, true) };
                 serve(&web, pool.as_deref(), stream, ingress, None);
             });
-            let limits = sibuna_ingress::Limits {
-                exchanges: prepared.options.max_connections as usize,
-                idle: std::time::Duration::from_secs(u64::from(
-                    prepared.options.idle_timeout_seconds.max(60),
-                )),
-                response: std::time::Duration::from_secs(60),
-            };
+            let limits = ingress_limits(&prepared.options, prepared.share_address);
             // Without the workers every request path is the blocking one.
             let decide = workers.is_some().then(|| {
                 Arc::new(super::inline::Decision { server: server.clone() })
@@ -381,6 +380,18 @@ fn serve(
     match workers {
         Some(workers) => workers.submit(Incoming { stream, ingress, permit }),
         None => launch(server, stream, ingress, permit),
+    }
+}
+
+/// The bounds of the TLS, HTTP/2 and HTTP/3 runtime for this topology.
+#[cfg(feature = "https")]
+fn ingress_limits(options: &HttpOptions, share_address: bool) -> sibuna_ingress::Limits {
+    let idle = u64::from(options.idle_timeout_seconds.max(60));
+    sibuna_ingress::Limits {
+        exchanges: options.max_connections as usize,
+        idle: std::time::Duration::from_secs(idle),
+        response: std::time::Duration::from_secs(60),
+        share_address,
     }
 }
 
