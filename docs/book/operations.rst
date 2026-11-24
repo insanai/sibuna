@@ -1162,6 +1162,27 @@ A reload fails no request. The firewall decides a request under one policy and s
 
 With ``global.watch`` the daemon reloads the file by itself. It looks at the modification time and the length of the file at the given interval, and loads the file when both differ from the last load and have been the same for two looks. The second condition waits for a writer to finish. A rejected file is logged once and not tried again until it changes. The watcher is off by default. After a reviewed edit, ``sibuna check -f`` followed by SIGHUP or ``sibuna ctl SOCKET reload`` shows us the result. The watcher suits a file that a deployment tool replaces by rename.
 
+Bans across a cluster
+~~~~~~~~~~~~~~~~~~~~~
+
+Several edge nodes behind one name share their clients. With a ``mesh`` in the topology they also share their bans: a client that one node bans, in the honeypot or by a rule quota, is refused by every node within a second. No setting is needed.
+
+.. code-block:: text
+
+   mesh: {
+       listen: "10.0.0.1:7946",
+       peers: ["10.0.0.2:7946", "10.0.0.3:7946"],
+       key_file: "/etc/sibuna/mesh.key",
+   },
+
+Each node names its own address under ``listen`` and the other nodes under ``peers``. The key file holds 32 random bytes, the same on every node, readable by the daemon alone: ``head -c 32 /dev/urandom > /etc/sibuna/mesh.key``. A holder of the key can ban any client on every node.
+
+A node tells its peers the client and the time the ban ends, three times over five seconds, in a datagram signed with the key. A peer keeps the later end. A node that restarts, or that was cut off, receives all bans in effect from each peer when it returns. ``sibuna ctl SOCKET show stats`` shows the series ``sibuna_edge_mesh_bans_sent_total``, ``_received_total``, ``_applied_total``, ``_dropped_total`` and ``sibuna_edge_mesh_bans_known``.
+
+Three things stay local. Lifting a ban on one node lifts it there only. Bans that the policy file configures are not sent, so the file must be the same on every node. The request limiters count on each node by itself. The nodes must use the same ``ipv6_prefix`` and keep their clocks within a few seconds. ``mesh.replicate_bans: false`` turns the sharing off.
+
+The sticky cookie of a pool needs no sharing, but it needs the same ``http.secret_file`` on every node. Without that file each node draws its own secret and does not recognise the cookie of another.
+
 Replacing the binary without closing the port
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

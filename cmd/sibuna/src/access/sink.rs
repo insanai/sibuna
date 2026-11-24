@@ -301,7 +301,9 @@ impl Writer {
         let due = self.reported.is_none_or(|at| at.elapsed() >= Duration::from_secs(60));
         if due && !matches!(self.output, LogOutput::Stderr) {
             self.reported = Some(Instant::now());
-            eprintln!("EDGE010: access log: {error}\nHint: check the disk and the log path.");
+            crate::edge::note(format_args!(
+                "EDGE010: access log: {error}\nHint: check the disk and the log path."
+            ));
         }
     }
 

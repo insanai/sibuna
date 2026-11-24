@@ -39,6 +39,8 @@ pub(crate) struct Observe {
     pub stats: Arc<Stats>,
     /// The node stopped taking new work. Release on store, acquire on load.
     pub draining: AtomicBool,
+    /// What the replication of bans over the mesh did (SID 0022), once it runs.
+    pub mesh_bans: OnceLock<Arc<sibuna_lb::BanCounters>>,
 }
 
 impl Observe {
@@ -49,6 +51,7 @@ impl Observe {
             log: log.map(OnceLock::from).unwrap_or_default(),
             stats,
             draining: AtomicBool::new(false),
+            mesh_bans: OnceLock::new(),
         }
     }
 
@@ -138,6 +141,19 @@ impl Observe {
         ];
         for (name, kind, value) in series {
             let _ = writeln!(out, "# TYPE {name} {kind}\n{name} {value}");
+        }
+        if let Some(bans) = self.mesh_bans.get() {
+            let series = [
+                ("sibuna_edge_mesh_bans_sent_total", "counter", &bans.sent),
+                ("sibuna_edge_mesh_bans_received_total", "counter", &bans.received),
+                ("sibuna_edge_mesh_bans_applied_total", "counter", &bans.applied),
+                ("sibuna_edge_mesh_bans_dropped_total", "counter", &bans.dropped),
+                ("sibuna_edge_mesh_bans_known", "gauge", &bans.known),
+            ];
+            for (name, kind, value) in series {
+                let value = value.load(Ordering::Relaxed);
+                let _ = writeln!(out, "# TYPE {name} {kind}\n{name} {value}");
+            }
         }
     }
 }
