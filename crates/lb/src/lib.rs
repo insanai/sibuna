@@ -26,7 +26,7 @@ mod observe;
 mod pool;
 mod proxy;
 mod quick;
-pub use quick::{QuickProtocol, QuickStart};
+pub use quick::{QuickAutomatic, QuickProtocol, QuickStart};
 mod rules;
 mod runtime;
 pub use runtime::{RuntimeError, ServerState, ServerStatus};

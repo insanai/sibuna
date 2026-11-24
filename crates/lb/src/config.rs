@@ -265,9 +265,16 @@ impl Config {
                 return Err(invalid(format!("HTTP/3 bind {addr} overlaps a UDP listener")));
             }
         }
-        for (name, backend) in &config.pools {
+        config.check_servers()?;
+        config.check_automatic_https()?;
+        Ok(config)
+    }
+
+    /// Refuses a server whose address is one of our own listeners.
+    fn check_servers(&self) -> Result<()> {
+        for (name, backend) in &self.pools {
             for server in &backend.servers {
-                let mut binds = config.listeners.keys();
+                let mut binds = self.listeners.keys();
                 if binds.any(|&bind| is_listener(bind, backend.protocol, server.addr)) {
                     return Err(invalid(format!(
                         "backends.{name}: {} is a frontend",
@@ -276,8 +283,7 @@ impl Config {
                 }
             }
         }
-        config.check_automatic_https()?;
-        Ok(config)
+        Ok(())
     }
 
     /// The backend of a frontend that names none: the only one of its protocol.
