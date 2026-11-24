@@ -135,7 +135,6 @@ impl Http {
                 idle: std::time::Duration::from_secs(u64::from(
                     prepared.options.idle_timeout_seconds.max(60),
                 )),
-                response: std::time::Duration::from_secs(60),
             };
             // Without the workers every request path is the blocking one.
             let decide = workers.is_some().then(|| {

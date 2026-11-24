@@ -44,7 +44,6 @@ const BUFFER: usize = 64 * 1024;
 const IDLE_PER_ADDRESS: usize = 256;
 /// How long a server connection may stay idle.
 const IDLE_ORIGIN: Duration = Duration::from_secs(30);
-const CONNECT: Duration = Duration::from_secs(5);
 
 /// One request as the firewall sees it.
 #[derive(Clone, Copy, Debug)]
@@ -93,13 +92,11 @@ type Sender = SendRequest<Body>;
 pub(crate) struct Inline {
     decide: Arc<dyn Decide>,
     idle: Mutex<HashMap<SocketAddr, Vec<(Sender, Instant)>>>,
-    /// The longest wait for a server's response head.
-    timeout: Duration,
 }
 
 impl Inline {
-    pub fn new(decide: Arc<dyn Decide>, timeout: Duration) -> Arc<Self> {
-        Arc::new(Self { decide, idle: Mutex::default(), timeout })
+    pub fn new(decide: Arc<dyn Decide>) -> Arc<Self> {
+        Arc::new(Self { decide, idle: Mutex::default() })
     }
 
     fn take(&self, address: SocketAddr) -> Option<Sender> {
@@ -127,8 +124,9 @@ impl Inline {
         }
     }
 
-    async fn open(&self, address: SocketAddr) -> Result<Sender, Error> {
-        let stream = timeout(CONNECT, tokio::net::TcpStream::connect(address)).await??;
+    /// Connects to `address` within `bound`, the connect timeout of the server's pool.
+    async fn open(&self, address: SocketAddr, bound: Duration) -> Result<Sender, Error> {
+        let stream = timeout(bound, tokio::net::TcpStream::connect(address)).await??;
         stream.set_nodelay(true)?;
         let (sender, connection) =
             hyper::client::conn::http1::handshake(TokioIo::new(stream)).await?;
@@ -245,49 +243,74 @@ impl HttpBody for Prefixed {
 
 /// Why an exchange with a server failed before its response head.
 enum Fault {
-    /// The server could not be reached.
+    /// The server could not be reached. It received nothing.
     Connect,
     /// The connection failed, or the server answered nothing usable.
     Exchange,
+    /// The server stayed silent for its response bound.
+    Silent,
 }
 
-async fn fresh(
-    inline: &Inline,
-    address: SocketAddr,
+/// Sends `request` on `sender` and waits for the response head, at most `limit`.
+async fn ask(
+    sender: &mut Sender,
     request: Request<Body>,
-) -> Result<(Sender, Response<Incoming>), Fault> {
-    let mut sender = inline.open(address).await.map_err(|_| Fault::Connect)?;
-    let response = sender.send_request(request).await.map_err(|_| Fault::Exchange)?;
-    Ok((sender, response))
+    limit: Duration,
+) -> Result<Response<Incoming>, Fault> {
+    match timeout(limit, sender.send_request(request)).await {
+        Ok(Ok(response)) => Ok(response),
+        Ok(Err(_)) => Err(Fault::Exchange),
+        Err(_) => Err(Fault::Silent),
+    }
 }
 
+/// Opens a connection to the server of `target` within the connect bound of its pool.
+async fn fresh(inline: &Inline, target: &HttpTarget) -> Result<Sender, Fault> {
+    let opened = inline.open(target.address(), target.connect_timeout()).await;
+    opened.map_err(|_| Fault::Connect)
+}
+
+/// One request and its response head over a pooled or a fresh connection.
 async fn attempt(
     inline: &Inline,
-    address: SocketAddr,
+    target: &HttpTarget,
     request: Request<Body>,
     retryable: bool,
 ) -> Result<(Sender, Response<Incoming>), Fault> {
-    let Some(mut sender) = inline.take(address) else {
-        return fresh(inline, address, request).await;
-    };
-    if sender.ready().await.is_err() {
-        return fresh(inline, address, request).await;
+    let limit = target.response_timeout();
+    let mut pooled = inline.take(target.address());
+    if let Some(sender) = pooled.as_mut()
+        && sender.ready().await.is_err()
+    {
+        pooled = None;
     }
+    let Some(mut sender) = pooled else {
+        let mut sender = fresh(inline, target).await?;
+        let response = ask(&mut sender, request, limit).await?;
+        return Ok((sender, response));
+    };
     if !retryable {
-        let response = sender.send_request(request).await.map_err(|_| Fault::Exchange)?;
+        let response = ask(&mut sender, request, limit).await?;
         return Ok((sender, response));
     }
     let (parts, body) = request.into_parts();
     let again = Request::from_parts(parts.clone(), empty());
-    match sender.send_request(Request::from_parts(parts, body)).await {
+    match ask(&mut sender, Request::from_parts(parts, body), limit).await {
         Ok(response) => Ok((sender, response)),
+        Err(Fault::Silent) => Err(Fault::Silent),
         // The server closed the idle connection. It answered nothing, and the request
         // is safe to send again.
-        Err(_) => fresh(inline, address, again).await,
+        Err(_) => {
+            let mut sender = fresh(inline, target).await?;
+            let response = ask(&mut sender, again, limit).await?;
+            Ok((sender, response))
+        }
     }
 }
 
-/// Sends an admitted request to its server and returns the response.
+/// Sends an admitted request to its server and returns the response. The bounds are
+/// those of the server's pool (SID 0019): `connect_timeout` for the connection and
+/// `response_timeout` for the response head and for each further piece of the body.
 async fn send(
     inline: &Arc<Inline>,
     forward: Forward,
@@ -300,15 +323,15 @@ async fn send(
     };
     let address = target.address();
     let started = Instant::now();
-    let sent = timeout(inline.timeout, attempt(inline, address, request, retryable)).await;
-    let (sender, mut response) = match sent {
-        Ok(Ok(exchange)) => exchange,
-        Ok(Err(Fault::Connect)) => {
+    let limit = target.response_timeout();
+    let (sender, mut response) = match attempt(inline, &target, request, retryable).await {
+        Ok(exchange) => exchange,
+        Err(Fault::Connect) => {
             target.failed();
             return error(StatusCode::BAD_GATEWAY);
         }
-        Ok(Err(Fault::Exchange)) => return error(StatusCode::BAD_GATEWAY),
-        Err(_) => return error(StatusCode::GATEWAY_TIMEOUT),
+        Err(Fault::Exchange) => return error(StatusCode::BAD_GATEWAY),
+        Err(Fault::Silent) => return error(StatusCode::GATEWAY_TIMEOUT),
     };
     strip_hop_fields(response.headers_mut());
     let (parts, body) = response.into_parts();
@@ -318,8 +341,8 @@ async fn send(
         done.finish();
         return Response::from_parts(parts, empty());
     }
-    let stall = Box::pin(tokio::time::sleep(inline.timeout));
-    let tracked = Tracked { body, done: Some(done), stall, limit: inline.timeout, waiting: false };
+    let stall = Box::pin(tokio::time::sleep(limit));
+    let tracked = Tracked { body, done: Some(done), stall, limit, waiting: false };
     Response::from_parts(parts, tracked.boxed_unsync())
 }
 

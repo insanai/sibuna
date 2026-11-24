@@ -163,7 +163,7 @@ fn setup() -> Bench {
     let topology = format!(
         r#"{{"frontends":{{"web":{{"proto":"http","binds":["{vip}"],
         "default_backend":"pool"}}}},"backends":{{"pool":{{"mode":"http",
-        "servers":[{{"name":"origin","addr":"{server}"}}]}}}}}}"#
+        "response_timeout":"400ms","servers":[{{"name":"origin","addr":"{server}"}}]}}}}}}"#
     );
     let edge = Edge::bind(Config::parse(topology.as_bytes()).unwrap()).unwrap();
     let tls = TlsOptions {
@@ -185,7 +185,7 @@ fn setup() -> Bench {
         edge.flow_budget(),
         handler,
         Some(gate.clone()),
-        Limits { response: Duration::from_millis(400), ..Limits::default() },
+        Limits::default(),
     )
     .unwrap();
     Bench { vip, edge, ingress, gate, origins, handoffs }
