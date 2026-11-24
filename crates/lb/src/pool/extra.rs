@@ -297,10 +297,22 @@ impl State {
     /// Counts one outcome of a request under `rule` and ejects the server at the limit.
     /// Returns whether this outcome ejected the server.
     fn record(&self, rule: &Passive, failed: bool, now: Instant) -> bool {
-        // Two workers may count at once. A lost update delays an ejection by one
-        // failure, which passive health tolerates.
-        let (count, eject) = rule.step(self.failures.load(Ordering::Relaxed), failed);
-        self.failures.store(count, Ordering::Relaxed);
+        // Two workers may count at once. The update is repeated until it applies to the
+        // count it read, so no failure is lost and exactly one report ejects.
+        let mut count = self.failures.load(Ordering::Acquire);
+        let eject = loop {
+            let (next, eject) = rule.step(count, failed);
+            let swap = self.failures.compare_exchange_weak(
+                count,
+                next,
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            );
+            match swap {
+                Ok(_) => break eject,
+                Err(seen) => count = seen,
+            }
+        };
         if eject {
             let mut until = self.ejected_until.lock().unwrap_or_else(PoisonError::into_inner);
             *until = Some(now + rule.ejection);
@@ -326,6 +338,28 @@ impl Ticket {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn concurrent_failure_reports_lose_no_count() {
+        let rule = Passive { failures: 5, ejection: Duration::from_secs(1), http_5xx: false };
+        let state = State::default();
+        let now = Instant::now();
+        let ejections = std::sync::atomic::AtomicUsize::new(0);
+        std::thread::scope(|scope| {
+            for _ in 0..8 {
+                scope.spawn(|| {
+                    for _ in 0..5_000 {
+                        if state.record(&rule, true, now) {
+                            ejections.fetch_add(1, Ordering::Relaxed);
+                        }
+                    }
+                });
+            }
+        });
+        // Forty thousand failures in runs of five: each fifth report ejects, and none
+        // is lost between two threads.
+        assert_eq!(ejections.load(Ordering::Relaxed), 8_000);
+    }
 
     #[test]
     fn the_ramp_weight_grows_to_the_full_weight_and_is_never_zero() {
