@@ -66,5 +66,8 @@ Discussion registry
    * - 0018
      - :doc:`records/0018-simple-setup-and-runtime-configuration`
      - discussion
+   * - 0021
+     - :doc:`records/0021-automatic-https`
+     - discussion
 
 .. sid-generated-end
