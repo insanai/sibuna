@@ -63,5 +63,8 @@ Discussion registry
    * - 0017
      - :doc:`records/0017-in-process-exchanges`
      - discussion
+   * - 0019
+     - :doc:`records/0019-traffic-policy`
+     - discussion
 
 .. sid-generated-end
