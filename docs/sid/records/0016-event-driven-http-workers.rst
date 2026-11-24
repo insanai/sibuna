@@ -47,7 +47,7 @@ Invariants
 Workers and connection ownership
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The edge starts ``global.workers`` HTTP workers, one per CPU up to eight by default. The edge worker of SID 0015 accepts connections, applies the frontend's connection rate limit and the flow budget, and assigns each connection to the HTTP worker with the fewest connections. The protocol runtime assigns its handoffs the same way, and passes the client address and the listener with each one. The assignment crosses threads once, through a queue and a wake-up.
+The edge starts one HTTP worker for each processor the process may use, up to 64. The edge worker of SID 0015 accepts connections, applies the frontend's connection rate limit and the flow budget, and assigns each connection to the HTTP worker with the fewest connections. The protocol runtime assigns its handoffs the same way, and passes the client address and the listener with each one. The assignment crosses threads once, through a queue and a wake-up.
 
 .. graphviz::
    :caption: Ownership. One thread accepts, the HTTP workers own connections and server sockets, and nothing is shared on the request path except the admission tables.
@@ -151,9 +151,9 @@ Each worker keeps its own idle sockets, at most 64 per server address and 1,024 
 Buffers and backpressure
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-A worker pools 64 KiB buffers. A connection holds one while a request or an exchange is in flight and two during a tunnel. The worker reads from a socket only while the buffer toward the other side is below its high-water mark of 64 KiB. Level-triggered readiness would spin on a socket we refuse to read, so the worker clears the read interest of a paused socket and restores it when the buffer drains. In the steady state of a keep-alive exchange no interest changes: the client socket stays registered for reading, and so does the pooled server socket.
+A worker pools 64 KiB request buffers. A connection holds one only while it has unprocessed request bytes. A socket is read into the worker's own block first when the connection holds no buffer, so a connection that waits, a tunnel included, holds none. Response bytes and server-bound bytes wait in vectors that are released when they empty. The worker reads from a socket only while the buffer toward the other side is below its high-water mark of 64 KiB. Level-triggered readiness would spin on a socket we refuse to read, so the worker clears the read interest of a paused socket and restores it when the buffer drains. In the steady state of a keep-alive exchange no interest changes: the client socket stays registered for reading, and so does the pooled server socket.
 
-A worker serves at most 64 KiB of one connection per turn before it serves the next ready connection, so a bulk transfer cannot starve small requests.
+One readiness event reads each socket of a connection at most once, 64 KiB at most, and causes at most eight rounds of work. The worker then serves the next ready connection, so a bulk transfer or a long pipeline cannot starve small requests.
 
 Deadlines
 ~~~~~~~~~
@@ -191,21 +191,21 @@ WebSocket
 
 The firewall judges the upgrade request like any other request: bans, limits, policy and the challenge of its route apply. The handshake must be a well-formed version 13 offer. The 101 must carry the matching accept key. ``Sec-WebSocket-Protocol`` and ``Sec-WebSocket-Extensions`` pass unchanged in both directions, so subprotocols and permessage-deflate work. After the 101 Sibuna does not parse frames. This is also what hosted firewalls do: the rules run on the handshake.
 
-A route may carry ``"websocket": {"origins": ["https://app.example.org"], "max_per_ip": 16}``. With ``origins``, an upgrade whose ``Origin`` field is absent or not listed is refused with 403. This stops cross-site WebSocket hijacking for applications that authenticate by cookie. ``max_per_ip`` bounds the concurrent tunnels of one client on that frontend, and a client over it receives 429. Both checks apply whether or not the route uses the firewall.
+A frontend or a route may carry ``"websocket": {"origins": ["https://app.example.org"], "max_per_ip": 16}``. With ``origins``, an upgrade whose ``Origin`` field is absent or not listed is refused with 403. This stops cross-site WebSocket hijacking for applications that authenticate by cookie. ``max_per_ip`` bounds the concurrent tunnels of one client on that frontend, and a client over it receives 429. Both checks apply whether or not the route uses the firewall.
 
-HTTP/2 clients may open WebSockets with extended CONNECT (RFC 8441). The protocol runtime advertises the setting, translates such a stream to an HTTP/1.1 upgrade on its handoff, and pipes the stream's data. A pool with ``http_version`` ``"2"`` receives the upgrade as extended CONNECT. HTTP/3 pools and HTTP/3 clients do not carry WebSockets. No browser ships RFC 9220, and browsers fall back to HTTP/1.1.
+HTTP/2 clients may open WebSockets with extended CONNECT (RFC 8441). The protocol runtime advertises the setting, translates such a stream to an HTTP/1.1 upgrade on its handoff, and pipes the stream's data. A pool with ``http_version`` ``"2"`` or ``"3"`` does not receive WebSockets yet and answers 501. HTTP/3 clients do not carry WebSockets. No browser ships RFC 9220, and browsers fall back to HTTP/1.1.
 
 Faults, shutdown and reload
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A panic while a worker serves one connection is caught. The worker closes that connection, counts the fault and continues.
 
-A reload changes nothing for a connection in flight. The next request on a keep-alive connection uses the new routes. On shutdown a worker closes idle connections at once, lets exchanges finish within the drain period of five seconds, and then closes the rest, tunnels included. A tunnel receives no close frame from Sibuna, because Sibuna does not speak the framing.
+A reload changes nothing for a connection in flight. The next request on a keep-alive connection uses the new routes. On shutdown a worker closes idle connections at once, lets exchanges finish within the drain period of five seconds, and then closes the rest, tunnels included. When one side of a tunnel ends its stream, the worker delivers the bytes already received to the other side and closes both. A tunnel receives no close frame from Sibuna, because Sibuna does not speak the framing.
 
 Observability
 ~~~~~~~~~~~~~
 
-``/__sibuna/metrics`` gains counters summed over the workers: open connections, open tunnels, server sockets reused and opened, stale sockets retried, connections closed by each deadline, and faults.
+``/__sibuna/metrics`` gains counters summed over the workers: ``tunnels_opened``, ``origin_reused``, ``origin_connects``, ``origin_retries``, ``deadline_closes`` and ``worker_faults``. Open connections are the existing connection count.
 
 Worked example
 ~~~~~~~~~~~~~~
@@ -247,15 +247,79 @@ The configuration is unchanged except for the higher ceiling of ``http.max_conne
 Acceptance criteria and implementation status
 ---------------------------------------------
 
-This record is a proposal. Nothing in it is implemented yet.
+The design is implemented for edge mode on Linux. The classic listener and other platforms keep the thread path.
 
-#. The differential tests pass for the response relay, the upload relay and the request encoder.
-#. The existing edge tests pass on both paths.
-#. Beside HAProxy on the host of SID 0015, plaintext HTTP at 256 connections reaches at least 85% of HAProxy's throughput, with a 99th percentile below 5 ms.
-#. 20,000 idle keep-alive connections hold less than 100 MiB of resident memory.
-#. 10,000 concurrent WebSockets exchange messages on one node.
-#. A slow header, a slow body, a slow reader and a silent server are each closed by their deadline, and the other connections of the worker keep their latency.
-#. On three nodes with a mesh, clients keep being served while one node stops and returns, and a WebSocket through a surviving node stays open.
+.. list-table:: Where the design lives
+   :header-rows: 1
+   :widths: 34 66
+
+   * - Part
+     - Code
+   * - Poller, waker, record table, timer wheel, non-blocking connect
+     - ``crates/reactor`` (``sibuna-reactor``), standard library only
+   * - Request encoder, upload relay, response relay
+     - ``crates/net/src/machine.rs``
+   * - Planned exchange in place of a blocking relay
+     - ``Defer`` and ``Plan`` in ``cmd/sibuna/src/dispatch.rs``
+   * - Worker, connection states, server pool, tunnels
+     - ``cmd/sibuna/src/edge/workers``
+   * - WebSocket rules
+     - ``crates/lb/src/websocket.rs``
+   * - WebSocket over HTTP/2
+     - ``crates/ingress/src/tunnel.rs``
+   * - Formal model
+     - ``docs/sid/assets/event-driven-http-workers.lean``
+
+#. The differential tests pass for the response relay, the upload relay and the request encoder. **Met.** The response relay agrees with the blocking relay on 150,000 mutated responses, each fed whole, in random pieces and one byte at a time.
+#. The existing edge tests pass on both paths. **Met.** ``cmd/sibuna/tests/edge_http.rs`` also runs pipelining, every response framing, streamed uploads, WebSocket tunnels, WebSocket rules, server failures and the deadlines on both paths.
+#. Beside HAProxy on the host of SID 0015, plaintext HTTP at 256 connections reaches at least 85% of HAProxy's throughput, with a 99th percentile below 5 ms. **Met.** 229,139 against 243,864 requests per second, which is 94%, with a 99th percentile of 2.60 ms.
+#. 20,000 idle keep-alive connections hold less than 100 MiB of resident memory. **Met.** They added 8 MiB.
+#. 10,000 concurrent WebSockets exchange messages on one node. **Met.** They held 27 MiB of resident memory and every echo was correct.
+#. A slow header, a slow body, a slow reader and a silent server are each closed by their deadline, and the other connections of the worker keep their latency. **Partly met.** Tests cover the slow header, the silent server, the idle connection and the idle tunnel. The slow body and the slow reader use the same deadline code and have no test of their own. The latency of other connections under such clients was not measured.
+#. On three nodes with a mesh, clients keep being served while one node stops and returns, and a WebSocket through a surviving node stays open. **Met.** ``benchmarks/results/edge-workers-2026-11-24.md`` holds the record.
+
+Formal model
+~~~~~~~~~~~~
+
+The companion file is ``docs/sid/assets/event-driven-http-workers.lean``. From the repository root we check it with Lean 4.19.0.
+
+.. code-block:: console
+
+   lean docs/sid/assets/event-driven-http-workers.lean
+
+.. list-table:: What the model proves
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Theorem
+     - Statement
+   * - ``stale_key_never_answers``
+     - A readiness key issued for a record does not match after that record was removed, whatever happens to its slot afterwards.
+   * - ``arm_after_turned``, ``arm_within_one_turn``, ``slot_is_unique_within_a_turn``
+     - A timer entry is filed under a second that has not turned, within one turn of the wheel, and seconds within one turn have distinct slots. So every entry fires, and at the second it was filed under.
+   * - ``arm_not_early``, ``far_deadline_makes_progress``
+     - A deadline inside the wheel does not fire early. A deadline beyond it fires at the last slot and is armed again.
+   * - ``backlog_bounded``
+     - With reads only below the high-water mark :math:`H`, a read of at most :math:`B` bytes and framing of at most :math:`g` bytes, the bytes held for a peer stay below :math:`H + B + g`.
+   * - ``upload_conserves``, ``upload_never_exceeds``
+     - A body with a declared length forwards exactly that many bytes, in any pieces.
+   * - ``assign_keeps_balance``
+     - Giving each new connection to a worker at the minimum keeps all workers within one connection of the minimum.
+   * - ``rounds_bounded``
+     - One event causes at most the budgeted number of rounds.
+
+The kernel, socket readiness, the HTTP grammar, generation wrap-around and Rust memory safety are outside the model. The differential tests cover the HTTP grammar.
+
+Known gaps
+~~~~~~~~~~
+
+#. HTTP/2 reaches 53% to 58% of HAProxy. Each stream crosses a socket pair between the protocol runtime and a worker. Terminating HTTP/2 on the workers would remove it.
+#. The route table is behind one mutex, which every request takes once to select a server. Throughput scaled from 68,000 requests per second on one processor to 227,000 on eight, so the lock is not the bound yet. It will be on larger machines.
+#. A pool with ``http_version`` 2 or 3 cannot receive a WebSocket.
+#. A request that is not safe to repeat and meets a stale pooled socket answers 502. The worker watches idle sockets, so this needs a server that closes in the instant of reuse.
+#. A silent server answers 502, as on the thread path. A 504 would say more.
+#. The telemetry hooks of the console do not run on the workers. Edge mode has no console, so nothing is lost today.
+#. The worker count is not configurable. It follows the processors the process may use.
 
 Open questions
 --------------
@@ -267,6 +331,7 @@ Review history
 --------------
 
 - 2026-11-24. Initial draft: per-core loops, a synchronous decision, sans-I/O relays, per-worker pools.
+- 2026-11-24. Implementation and its review. Three-node tests and the load tests found two defects, both fixed: a tunnel kept an empty 64 KiB request buffer for its whole life, and vectors kept the capacity of their largest burst. With them 10,000 tunnels held 106 MiB; without them 27 MiB. The review also moved the protocol-free parts into ``sibuna-reactor``, added the counters, changed the per-turn byte budget into a bound on reads and rounds per event, and recorded the known gaps above. WebSocket toward HTTP/2 pools was specified and is not implemented; the specification now says so.
 - 2026-11-24. Author's review before promotion. It added the ordering invariant for pipelined requests, the three early endings of an exchange (a response before the end of an upload, a half-closed client, a failed client), the retention of the encoded request for a retry, fault isolation by connection, the per-turn byte budget, the counters, and the scope of the ``websocket`` route options. It replaced a claim that decisions are cheap with their bounds.
 
 References
@@ -281,6 +346,7 @@ References
 - Kettle, "HTTP/1.1 must die: the desync endgame", https://portswigger.net/research/http1-must-die
 - Kapteko, "15 million web servers", https://kapteko.com/15-million-webservers/
 - RFC 6455, RFC 8441, RFC 9112, RFC 9220.
+- ``benchmarks/results/edge-workers-2026-11-24.md``.
 
 .. rubric:: Lifecycle event
 
