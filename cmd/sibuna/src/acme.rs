@@ -81,6 +81,18 @@ fn is_header_safe(bytes: &[u8]) -> bool {
 pub(crate) fn log(event: &Event) {
     let time = sibuna_acme::format_rfc3339;
     match event {
+        Event::CleanupFailed { name, error } => {
+            let title = format!("{} ({})", error.title, error.code);
+            let reason = error.message.trim_end();
+            let message = format!(
+                "The TXT record of the DNS-01 challenge for `{name}` was not removed. \
+                 {reason} The certificate is not affected. The daemon removes the record \
+                 at the next attempt for the name."
+            );
+            let mut text = String::new();
+            let _ = diagnostic::render(&mut text, &title, &message, &error.hint);
+            eprint!("{text}");
+        }
         Event::Obtained { name, not_after, renewed } => {
             let verb = if *renewed { "renewed" } else { "obtained" };
             eprintln!("ACME000: certificate for {name} {verb}, valid until {}", time(*not_after));
@@ -113,11 +125,12 @@ pub(crate) fn log(event: &Event) {
 /// The answer to `show certs`: one line per managed name under a header.
 pub(crate) fn render_certs(certificates: &[CertificateStatus]) -> String {
     let time = |seconds: Option<u64>| seconds.map_or("-".to_owned(), sibuna_acme::format_rfc3339);
-    let header = ["name", "issuer", "expires", "renews", "state", "error"];
+    let header = ["name", "via", "issuer", "expires", "renews", "state", "error"];
     let mut rows = vec![header.map(str::to_owned)];
     for certificate in certificates {
         rows.push([
             certificate.name.clone(),
+            certificate.via.to_owned(),
             // One word per column: a script splits the line at spaces.
             certificate
                 .issuer
@@ -129,7 +142,7 @@ pub(crate) fn render_certs(certificates: &[CertificateStatus]) -> String {
             certificate.error.clone().unwrap_or_else(|| "-".to_owned()),
         ]);
     }
-    let mut widths = [0; 6];
+    let mut widths = [0; 7];
     for row in &rows {
         for (width, cell) in widths.iter_mut().zip(row) {
             *width = (*width).max(cell.len());
@@ -186,6 +199,7 @@ mod tests {
     fn show_certs_is_a_table_with_one_word_per_column() {
         let ready = CertificateStatus {
             name: "example.org".to_owned(),
+            via: "dns-01",
             issuer: Some("Test Authority".to_owned()),
             not_after: Some(1_800_000_000),
             next_attempt: Some(1_799_000_000),
@@ -194,6 +208,7 @@ mod tests {
         };
         let failing = CertificateStatus {
             name: "b.example.org".to_owned(),
+            via: "local",
             issuer: None,
             not_after: None,
             next_attempt: Some(1_799_000_120),
@@ -209,6 +224,7 @@ mod tests {
             words,
             [
                 "example.org",
+                "dns-01",
                 "Test_Authority",
                 "2027-01-15T08:00:00Z",
                 "2027-01-03T18:13:20Z",
