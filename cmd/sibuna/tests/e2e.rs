@@ -344,8 +344,9 @@ fn keep_alive_serves_multiple_internal_requests_on_one_connection() {
     assert!(response.contains("Connection: close"));
 }
 
-#[test]
-fn proxied_responses_keep_the_client_connection_open_for_the_next_request() {
+/// Sends two requests on one client connection and returns the sequence numbers the
+/// origin gave them. A sequence counts the requests on one origin socket.
+fn two_requests_on_one_connection() -> Vec<u32> {
     let raw = b"GET /robots.txt HTTP/1.1\r\nHost: t\r\nX-Forwarded-For: 203.0.113.61\r\n\r\n\
         GET /robots.txt HTTP/1.1\r\nHost: t\r\nX-Forwarded-For: 203.0.113.61\r\n\
         Connection: close\r\n\r\n";
@@ -356,16 +357,29 @@ fn proxied_responses_keep_the_client_connection_open_for_the_next_request() {
     assert!(text.contains("Connection: keep-alive"));
     assert!(text.contains("Connection: close"));
     assert!(text.contains("X-Origin: stub"));
-    // The second request reused the pooled origin socket: its sequence is one more.
-    let sequences: Vec<u32> = text
-        .match_indices("X-Origin-Seq: ")
+    text.match_indices("X-Origin-Seq: ")
         .map(|(at, marker)| {
             let rest = &text[at + marker.len()..];
             rest[..rest.find('\r').unwrap()].parse().unwrap()
         })
-        .collect();
-    assert_eq!(sequences.len(), 2);
-    assert_eq!(sequences[0] + 1, sequences[1]);
+        .collect()
+}
+
+#[test]
+fn proxied_responses_keep_the_client_connection_open_for_the_next_request() {
+    // The second request reuses the pooled origin socket: its sequence is one more. The
+    // tests that run beside this one share the proxy and its pool, and one of them may
+    // take the idle socket between our two requests. We then look again.
+    let mut seen = Vec::new();
+    for _ in 0..10 {
+        let sequences = two_requests_on_one_connection();
+        assert_eq!(sequences.len(), 2);
+        if sequences[0] + 1 == sequences[1] {
+            return;
+        }
+        seen.push(sequences);
+    }
+    panic!("the origin socket was never reused: {seen:?}");
 }
 
 #[test]
