@@ -36,9 +36,10 @@ const FRAMING: [&str; 9] = [
 ];
 
 /// Request fields that Sibuna writes itself. A request edit may not name them.
-const OWN_REQUEST: [&str; 9] = [
+const OWN_REQUEST: [&str; 10] = [
     "expect",
     "forwarded",
+    "x-client-cert-sha256",
     "x-forwarded-for",
     "x-forwarded-host",
     "x-forwarded-port",
