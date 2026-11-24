@@ -351,6 +351,7 @@ async fn send(
     let address = target.address();
     let limit = target.response_timeout();
     strip_hop_fields(response.headers_mut());
+    edit_response(response.headers_mut(), &target);
     let (parts, body) = response.into_parts();
     let status = parts.status.as_u16();
     let inline = Arc::clone(inline);
@@ -362,6 +363,24 @@ async fn send(
     let stall = Box::pin(tokio::time::sleep(limit));
     let tracked = Tracked { body, done: Some(done), stall, limit, waiting: false };
     Response::from_parts(parts, tracked.boxed_unsync())
+}
+
+/// Applies the policy of the route to the response fields (SID 0019): drops the names
+/// the route removes, then adds its lines, HSTS and the sticky cookie.
+fn edit_response(headers: &mut header::HeaderMap, target: &HttpTarget) {
+    for name in &target.route().response_headers.remove {
+        // A name was checked when the topology was read. One that the library refuses
+        // cannot be present either.
+        if let Ok(name) = HeaderName::from_bytes(name.as_bytes()) {
+            headers.remove(name);
+        }
+    }
+    for (name, value) in target.response_lines().into_iter().flat_map(fields) {
+        let name = HeaderName::from_bytes(name);
+        if let (Ok(name), Ok(value)) = (name, HeaderValue::from_bytes(value)) {
+            headers.append(name, value);
+        }
+    }
 }
 
 /// What a finished exchange gives back.
