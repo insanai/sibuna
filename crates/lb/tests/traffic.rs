@@ -1,8 +1,10 @@
-//! Traffic management of SID 0019 at the routing interface: failover.
+//! Traffic management of SID 0019 at the routing interface: failover, passive health and
+//! slow start.
 #![allow(clippy::unwrap_used)]
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::net::{SocketAddr, TcpListener};
+use std::time::Duration;
 
 use sibuna_lb::{Config, Edge, HttpRoutes, Query};
 
@@ -10,6 +12,11 @@ use sibuna_lb::{Config, Edge, HttpRoutes, Query};
 /// 9400. `backend` holds extra members of the pool, each with a trailing comma.
 fn edge(servers: usize, backend: &str) -> (Edge, SocketAddr) {
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    (Edge::bind(topology(vip, servers, backend)).unwrap(), vip)
+}
+
+/// The topology of [`edge`] for the listener `vip`.
+fn topology(vip: SocketAddr, servers: usize, backend: &str) -> Config {
     let rows: Vec<String> = (0..servers)
         .map(|i| format!(r#"{{"name":"s{i}","addr":"127.0.0.1:{}"}}"#, 9400 + i))
         .collect();
@@ -18,7 +25,7 @@ fn edge(servers: usize, backend: &str) -> (Edge, SocketAddr) {
         "backends":{{"app":{{"mode":"http",{backend}"servers":[{}]}}}}}}"#,
         rows.join(",")
     );
-    (Edge::bind(Config::parse(source.as_bytes()).unwrap()).unwrap(), vip)
+    Config::parse(source.as_bytes()).unwrap()
 }
 
 fn query(vip: SocketAddr) -> Query<'static> {
@@ -68,14 +75,8 @@ fn a_retry_holds_one_place_and_ends_at_a_reload() {
     let third = routes.retry(&second).unwrap();
     assert_ne!(third.address(), second.address());
     // A new publication of the routes ends the retries of older requests.
-    let source = format!(
-        r#"{{"frontends":{{"web":{{"proto":"http","binds":["{vip}"],"default_backend":"app"}}}},
-        "backends":{{"app":{{"mode":"http","servers":[
-        {{"name":"s0","addr":"127.0.0.1:9400"}},{{"name":"s1","addr":"127.0.0.1:9401"}},
-        {{"name":"s2","addr":"127.0.0.1:9402"}}]}}}}}}"#
-    );
     let request = routes.choose(&query(vip)).unwrap();
-    edge.reload(Config::parse(source.as_bytes()).unwrap()).unwrap();
+    edge.reload(topology(vip, 3, "")).unwrap();
     assert!(routes.retry(&request).is_none());
 }
 
@@ -112,7 +113,7 @@ fn consecutive_response_timeouts_eject_a_server_until_the_ejection_ends() {
     // The second consecutive timeout ejects the server.
     on_port(&routes, vip, 9400).timed_out();
     assert_eq!(ports(&routes, vip, 12), BTreeSet::from([9401, 9402]));
-    std::thread::sleep(std::time::Duration::from_millis(350));
+    std::thread::sleep(Duration::from_millis(350));
     assert_eq!(ports(&routes, vip, 12).len(), 3);
 }
 
@@ -155,4 +156,55 @@ fn a_pool_whose_servers_are_all_ejected_still_serves() {
     target.failed();
     drop(target);
     assert!(routes.choose(&query(vip)).is_none());
+}
+
+/// Holds `count` reservations at once and returns how many each port serves.
+fn shares(routes: &HttpRoutes, vip: SocketAddr, count: usize) -> BTreeMap<u16, usize> {
+    let held: Vec<_> = (0..count).map(|_| routes.choose(&query(vip)).unwrap()).collect();
+    let mut shares = BTreeMap::new();
+    for target in &held {
+        *shares.entry(target.address().port()).or_default() += 1;
+    }
+    shares
+}
+
+#[test]
+fn a_server_that_returns_ramps_up_to_its_share() {
+    let backend = r#""slow_start":"2s","passive_health":{"failures":1,"ejection":"100ms"},"#;
+    let (edge, vip) = edge(2, backend);
+    let routes = edge.http_routes();
+    // Servers that start together share at once.
+    assert_eq!(shares(&routes, vip, 100), BTreeMap::from([(9400, 50), (9401, 50)]));
+    on_port(&routes, vip, 9400).timed_out();
+    assert_eq!(shares(&routes, vip, 10), BTreeMap::from([(9401, 10)]));
+    std::thread::sleep(Duration::from_millis(150));
+    // Back in service, the server starts with a small part of its weight.
+    let early = shares(&routes, vip, 100)[&9400];
+    assert!((1..=15).contains(&early), "{early}");
+    std::thread::sleep(Duration::from_millis(1000));
+    let middle = shares(&routes, vip, 100)[&9400];
+    assert!(middle > early && middle < 45, "{early} {middle}");
+    std::thread::sleep(Duration::from_millis(1100));
+    assert_eq!(shares(&routes, vip, 100)[&9400], 50);
+}
+
+#[test]
+fn a_server_added_by_a_reload_ramps_and_the_others_keep_their_weight() {
+    let backend = r#""slow_start":"5s","#;
+    let (mut edge, vip) = edge(2, backend);
+    let routes = edge.http_routes();
+    assert_eq!(shares(&routes, vip, 100), BTreeMap::from([(9400, 50), (9401, 50)]));
+    edge.reload(topology(vip, 3, backend)).unwrap();
+    let query = Query { policy_revision: 2, ..query(vip) };
+    let held: Vec<_> = (0..90).map(|_| routes.choose(&query).unwrap()).collect();
+    let added = held.iter().filter(|target| target.address().port() == 9402).count();
+    assert!((1..=10).contains(&added), "{added}");
+    // Without the option the added server takes a third at once.
+    let (mut edge, vip) = self::edge(2, "");
+    let routes = edge.http_routes();
+    assert_eq!(shares(&routes, vip, 10).len(), 2);
+    edge.reload(topology(vip, 3, "")).unwrap();
+    let query = Query { policy_revision: 2, ..self::query(vip) };
+    let held: Vec<_> = (0..90).map(|_| routes.choose(&query).unwrap()).collect();
+    assert_eq!(held.iter().filter(|target| target.address().port() == 9402).count(), 30);
 }

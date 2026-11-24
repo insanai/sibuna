@@ -1,13 +1,13 @@
-//! What SID 0019 adds to admission: the servers a request already tried, and passive
-//! health.
+//! What SID 0019 adds to admission: the servers a request already tried, passive
+//! health and slow start.
 //!
 //! The state of a server lives in its [`Load`], which a reload keeps for every address.
 
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
-use super::{Load, Target, Ticket};
+use super::{Load, Pool, Target, Ticket};
 use crate::Passive;
 
 /// The servers one request has tried. A retry never selects one of them again.
@@ -56,6 +56,105 @@ pub(super) struct State {
     /// reads one atomic and takes no lock.
     ejected: AtomicBool,
     ejected_until: Mutex<Option<Instant>>,
+    /// When the server last entered service, for slow start.
+    service: Mutex<Service>,
+    /// The weight of a server in its ramp, in units of 1/[`SCALE`]. Zero outside a ramp.
+    ramped: AtomicU32,
+}
+
+/// What slow start has seen of a server.
+#[derive(Default)]
+struct Service {
+    /// A reservation has looked at the server before.
+    seen: bool,
+    /// The server was out of service when it was last looked at.
+    down: bool,
+    /// The start of the current ramp.
+    since: Option<Instant>,
+}
+
+/// Weights are compared in units of 1/256 of a configured weight, so that a server of
+/// weight 1 ramps in 256 steps.
+pub(super) const SCALE: u64 = 256;
+
+/// The weight of a server of configured weight `weight` that entered service `elapsed`
+/// ago, with a ramp of `ramp`, in units of 1/[`SCALE`].
+///
+/// The result is at least 1, never above `weight * SCALE`, and never decreases as
+/// `elapsed` grows. After the ramp it is `weight * SCALE`.
+pub(crate) fn ramp_weight(weight: u32, elapsed: Duration, ramp: Duration) -> u64 {
+    let full = u64::from(weight.max(1)) * SCALE;
+    if elapsed >= ramp {
+        return full;
+    }
+    // A ramp is at most one day and a weight at most 65535, so the product fits.
+    let (elapsed, ramp) = (elapsed.as_millis() as u64, ramp.as_millis() as u64);
+    (full * elapsed / ramp.max(1)).max(1)
+}
+
+impl State {
+    /// Looks at the server for slow start and stores its weight for this moment. `up`
+    /// says whether the server is in service. `veteran` says whether the pool had a
+    /// server before this one was first seen, which makes this one an addition.
+    fn observe(&self, weight: u32, ramp: Duration, now: Instant, up: bool, veteran: bool) {
+        let mut service = self.service.lock().unwrap_or_else(PoisonError::into_inner);
+        let added = !service.seen && veteran;
+        service.seen = true;
+        if !up {
+            service.down = true;
+            return;
+        }
+        if service.down || added {
+            service.since = Some(now);
+            service.down = false;
+        }
+        let elapsed = service.since.map(|since| now.saturating_duration_since(since));
+        let ramped = match elapsed {
+            Some(elapsed) if elapsed < ramp => ramp_weight(weight, elapsed, ramp) as u32,
+            _ => {
+                service.since = None;
+                0
+            }
+        };
+        self.ramped.store(ramped, Ordering::Relaxed);
+    }
+
+    fn seen(&self) -> bool {
+        self.service.lock().unwrap_or_else(PoisonError::into_inner).seen
+    }
+}
+
+impl Target {
+    /// The weight of the server in units of 1/[`SCALE`]. While `ramping`, a server in
+    /// its slow start has the reduced weight that [`Pool::ramp`] stored.
+    pub(super) fn weight(&self, ramping: bool) -> u64 {
+        let ramped = if ramping { self.load.extra.ramped.load(Ordering::Relaxed) } else { 0 };
+        if ramped == 0 { u64::from(self.server.weight) * SCALE } else { u64::from(ramped) }
+    }
+
+    /// Whether the server is in service: healthy, not marked by a failed connect and not
+    /// ejected. A full server and a server the request already tried are in service.
+    fn in_service(&self, now: Instant) -> bool {
+        let marked = self.load.retry_after.lock().unwrap_or_else(PoisonError::into_inner);
+        self.server.healthy.as_ref().is_none_or(|healthy| healthy.load(Ordering::Relaxed))
+            && marked.is_none_or(|deadline| deadline <= now)
+            && !self.load.extra.is_ejected(now)
+    }
+}
+
+impl Pool {
+    /// Brings the slow-start weights of the servers up to `now`. Returns whether the
+    /// pool has a slow start at all.
+    pub(super) fn ramp(&self, now: Instant) -> bool {
+        let Some(ramp) = self.policy.slow_start else { return false };
+        // Servers that are first seen together started together: none of them ramps.
+        let veteran = self.targets.iter().any(|target| target.load.extra.seen());
+        for target in &self.targets {
+            let up = target.in_service(now);
+            target.load.extra.observe(target.server.weight, ramp, now, up, veteran);
+        }
+        true
+    }
 }
 
 impl State {
@@ -100,5 +199,61 @@ impl Ticket {
         if let Some(rule) = rule {
             self.load.extra.record(rule, rule.counts(status), now);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_ramp_weight_grows_to_the_full_weight_and_is_never_zero() {
+        let ramp = Duration::from_secs(30);
+        let at = |weight, millis| ramp_weight(weight, Duration::from_millis(millis), ramp);
+        assert_eq!(at(1, 0), 1);
+        assert_eq!(at(1, 15_000), 128);
+        assert_eq!(at(1, 30_000), 256);
+        assert_eq!(at(1, 90_000), 256);
+        assert_eq!(at(10, 3_000), 256);
+        assert_eq!(at(65535, 29_999), 65535 * 256 * 29_999 / 30_000);
+        for weight in [1, 2, 7, 100, 65535] {
+            let mut last = 0;
+            for millis in (0..=31_000).step_by(250) {
+                let now = at(weight, millis);
+                assert!(
+                    now >= last.max(1) && now <= u64::from(weight) * SCALE,
+                    "{weight} {millis}"
+                );
+                last = now;
+            }
+            assert_eq!(last, u64::from(weight) * SCALE);
+        }
+        // A ramp shorter than a millisecond is over at once.
+        assert_eq!(ramp_weight(3, Duration::ZERO, Duration::ZERO), 3 * SCALE);
+    }
+
+    #[test]
+    fn a_server_ramps_when_it_returns_and_when_it_is_added_but_not_at_the_start() {
+        let ramp = Duration::from_secs(10);
+        let start = Instant::now();
+        let state = State::default();
+        let weight = || state.ramped.load(Ordering::Relaxed);
+        // First seen with the rest of its pool: full weight.
+        state.observe(2, ramp, start, true, false);
+        assert_eq!(weight(), 0);
+        // Out of service, then back: the ramp starts when it is seen again.
+        state.observe(2, ramp, start + Duration::from_secs(1), false, true);
+        state.observe(2, ramp, start + Duration::from_secs(5), true, true);
+        assert_eq!(weight(), 1);
+        state.observe(2, ramp, start + Duration::from_secs(10), true, true);
+        assert_eq!(weight(), 256);
+        state.observe(2, ramp, start + Duration::from_secs(15), true, true);
+        assert_eq!(weight(), 0);
+        // A server first seen in a pool that had servers is an addition.
+        let added = State::default();
+        added.observe(1, ramp, start, true, true);
+        assert_eq!(added.ramped.load(Ordering::Relaxed), 1);
+        added.observe(1, ramp, start + Duration::from_secs(5), true, true);
+        assert_eq!(added.ramped.load(Ordering::Relaxed), 128);
     }
 }

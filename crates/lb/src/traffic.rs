@@ -95,6 +95,8 @@ pub struct PoolPolicy {
     pub retries: u8,
     /// Passive health, or `None` when it is off.
     pub passive: Option<Passive>,
+    /// The ramp of a server that returns or is added, or `None` for full weight at once.
+    pub slow_start: Option<Duration>,
 }
 
 impl Default for PoolPolicy {
@@ -104,6 +106,7 @@ impl Default for PoolPolicy {
             response_timeout: Duration::from_secs(60),
             retries: 2,
             passive: Some(Passive::default()),
+            slow_start: None,
         }
     }
 }
@@ -136,6 +139,16 @@ impl PoolPolicy {
                 )));
             }
         }
+        policy.slow_start = match field(r.take_str("slow_start"))? {
+            None => None,
+            Some(text) => Some(duration(text).ok_or_else(|| {
+                invalid(format!(
+                    "{}: expected a duration such as \"30s\", found {text:?}. Hint: leave \
+                     the member out for full weight at once.",
+                    r.field_path("slow_start")
+                ))
+            })?),
+        };
         policy.passive = Passive::parse(r, http)?;
         // A TCP or UDP pool has no response to judge, so it has no passive health.
         if !http {
@@ -217,6 +230,17 @@ mod tests {
             assert!(parse(bad, Protocol::Http).is_err(), "{bad}");
         }
         assert!(parse(r#"{"passive_health":"off"}"#, Protocol::Tcp).is_err());
+    }
+
+    #[test]
+    fn slow_start_is_off_by_default_and_serves_every_protocol() {
+        assert_eq!(parse("{}", Protocol::Http).unwrap().slow_start, None);
+        for protocol in [Protocol::Http, Protocol::Tcp, Protocol::Udp] {
+            let policy = parse(r#"{"slow_start":"30s"}"#, protocol).unwrap();
+            assert_eq!(policy.slow_start, Some(Duration::from_secs(30)));
+        }
+        assert!(parse(r#"{"slow_start":"0s"}"#, Protocol::Http).is_err());
+        assert!(parse(r#"{"slow_start":true}"#, Protocol::Http).is_err());
     }
 
     #[test]

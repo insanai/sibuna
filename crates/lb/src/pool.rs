@@ -71,16 +71,16 @@ struct Target {
 }
 
 impl Target {
-    fn preferred_to(&self, other: &Self) -> bool {
-        let score = |target: &Self, weight: u32| {
+    fn preferred_to(&self, other: &Self, ramping: bool) -> bool {
+        let score = |target: &Self, weight: u64| {
             let scale = u128::from(weight);
             (
                 target.load.active.load(Ordering::Relaxed) as u128 * scale,
                 u128::from(target.admitted) * scale,
             )
         };
-        (self.server.backup, score(self, other.server.weight))
-            < (other.server.backup, score(other, self.server.weight))
+        (self.server.backup, score(self, other.weight(ramping)))
+            < (other.server.backup, score(other, self.weight(ramping)))
     }
 }
 
@@ -130,6 +130,7 @@ impl Pool {
         regime: crate::Regime,
         wish: &Wish<'_>,
     ) -> Option<Ticket> {
+        let ramping = self.ramp(now);
         let available = |target: &Target| {
             target.server.addr != vip
                 && target.server.healthy.as_ref().is_none_or(|h| h.load(Ordering::Relaxed))
@@ -161,9 +162,9 @@ impl Pool {
             let primary = &self.targets[index];
             let load: usize =
                 self.targets.iter().map(|target| target.load.active.load(Ordering::Relaxed)).sum();
-            let desired = (load + 1) as u64 * u64::from(primary.server.weight);
-            let bound =
-                (desired * u64::from(table.factor)).div_ceil(u64::from(table.weight) * 100);
+            let desired = (load + 1) as u64 * primary.weight(ramping);
+            let bound = (desired * u64::from(table.factor))
+                .div_ceil(u64::from(table.weight) * 100 * extra::SCALE);
             (eligible(primary) && (primary.load.active.load(Ordering::Relaxed) as u64) < bound)
                 .then_some(index)
         });
@@ -175,7 +176,9 @@ impl Pool {
                 .iter()
                 .enumerate()
                 .filter(|(_, t)| eligible(t))
-                .reduce(|best, next| if next.1.preferred_to(best.1) { next } else { best })
+                .reduce(
+                    |best, next| if next.1.preferred_to(best.1, ramping) { next } else { best },
+                )
                 .map(|(i, _)| i)
         })?;
         let target = &mut self.targets[index];
@@ -216,10 +219,12 @@ impl Pool {
             return Some(choices[a]);
         }
         let b = (a + 1 + ((hash >> 32) as usize) % (count - 1)) % count;
+        let ramping = self.policy.slow_start.is_some();
         let cost = |i: usize| {
             let t = &self.targets[choices[i]];
-            (t.load.active.load(Ordering::Relaxed) as u64 + 1) * t.load.estimate(now) * 65535
-                / u64::from(t.server.weight)
+            let work = (t.load.active.load(Ordering::Relaxed) as u128 + 1)
+                * u128::from(t.load.estimate(now));
+            work * 65535 * u128::from(extra::SCALE) / u128::from(t.weight(ramping))
         };
         Some(choices[if cost(a) <= cost(b) { a } else { b }])
     }
