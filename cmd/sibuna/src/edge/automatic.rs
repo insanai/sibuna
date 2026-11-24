@@ -18,10 +18,19 @@ pub(super) fn start(
     identities: &BTreeMap<SocketAddr, Identity>,
 ) -> io::Result<Option<Arc<Automatic>>> {
     let Some(config) = config else { return Ok(None) };
+    // The line names an authority only when a name goes to it.
+    let local = config.names.iter().filter(|name| name.local).count();
+    let ordered = config.names.len() - local;
+    let mut sources = Vec::new();
+    if ordered > 0 {
+        sources.push(format!("{ordered} name(s) from {}", config.options.directory));
+    }
+    if local > 0 {
+        sources.push(format!("{local} name(s) from the local authority"));
+    }
     super::note(format_args!(
-        "Sibuna edge: automatic HTTPS for {} name(s) from {}, storage {}",
-        config.names.len(),
-        config.options.directory,
+        "Sibuna edge: automatic HTTPS for {}, storage {}",
+        sources.join(" and "),
         config.options.storage
     ));
     let automatic = Arc::new(Automatic::start(config, Arc::new(crate::acme::log))?);

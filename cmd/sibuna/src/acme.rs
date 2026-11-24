@@ -81,6 +81,18 @@ fn is_header_safe(bytes: &[u8]) -> bool {
 pub(crate) fn log(event: &Event) {
     let time = sibuna_acme::format_rfc3339;
     match event {
+        Event::CleanupFailed { name, error } => {
+            let title = format!("{} ({})", error.title, error.code);
+            let reason = error.message.trim_end();
+            let message = format!(
+                "The TXT record of the DNS-01 challenge for `{name}` was not removed. \
+                 {reason} The certificate is not affected. The daemon removes the record \
+                 at the next attempt for the name."
+            );
+            let mut text = String::new();
+            let _ = diagnostic::render(&mut text, &title, &message, &error.hint);
+            crate::edge::note(format_args!("{}", text.trim_end_matches('\n')));
+        }
         Event::Obtained { name, not_after, renewed } => {
             let verb = if *renewed { "renewed" } else { "obtained" };
             crate::edge::note(format_args!(
@@ -113,14 +125,38 @@ pub(crate) fn log(event: &Event) {
     }
 }
 
+/// The answer to `show ca`. The lines that start with `#` say where the root is and
+/// how long it is valid. The rest is the PEM text, so that
+/// `sibuna ctl SOCKET show ca > root.crt` writes a file that every tool reads.
+pub(crate) fn render_ca(
+    root: Option<Result<Option<sibuna_acme::local::Root>, sibuna_acme::Error>>,
+) -> String {
+    let none = "# no local authority: no `auto` name of this daemon is an internal name, \
+                an IP address or under `issuer: \"internal\"`\n";
+    match root {
+        None | Some(Ok(None)) => none.to_owned(),
+        Some(Err(error)) => format!("# {} ({}): {}\n", error.title, error.code, error.message),
+        Some(Ok(Some(root))) => format!(
+            "# root certificate of the local authority: {}\n# file: {}\n# valid until: {}\n\
+             # install this file in the trust store of each client; see the book, \
+             \"Automatic HTTPS\"\n{}",
+            root.fields.issuer,
+            root.path.display(),
+            sibuna_acme::format_rfc3339(root.fields.not_after),
+            root.pem
+        ),
+    }
+}
+
 /// The answer to `show certs`: one line per managed name under a header.
 pub(crate) fn render_certs(certificates: &[CertificateStatus]) -> String {
     let time = |seconds: Option<u64>| seconds.map_or("-".to_owned(), sibuna_acme::format_rfc3339);
-    let header = ["name", "issuer", "expires", "renews", "state", "error"];
+    let header = ["name", "via", "issuer", "expires", "renews", "state", "error"];
     let mut rows = vec![header.map(str::to_owned)];
     for certificate in certificates {
         rows.push([
             certificate.name.clone(),
+            certificate.via.to_owned(),
             // One word per column: a script splits the line at spaces.
             certificate
                 .issuer
@@ -132,7 +168,7 @@ pub(crate) fn render_certs(certificates: &[CertificateStatus]) -> String {
             certificate.error.clone().unwrap_or_else(|| "-".to_owned()),
         ]);
     }
-    let mut widths = [0; 6];
+    let mut widths = [0; 7];
     for row in &rows {
         for (width, cell) in widths.iter_mut().zip(row) {
             *width = (*width).max(cell.len());
@@ -189,6 +225,7 @@ mod tests {
     fn show_certs_is_a_table_with_one_word_per_column() {
         let ready = CertificateStatus {
             name: "example.org".to_owned(),
+            via: "dns-01",
             issuer: Some("Test Authority".to_owned()),
             not_after: Some(1_800_000_000),
             next_attempt: Some(1_799_000_000),
@@ -197,6 +234,7 @@ mod tests {
         };
         let failing = CertificateStatus {
             name: "b.example.org".to_owned(),
+            via: "local",
             issuer: None,
             not_after: None,
             next_attempt: Some(1_799_000_120),
@@ -212,6 +250,7 @@ mod tests {
             words,
             [
                 "example.org",
+                "dns-01",
                 "Test_Authority",
                 "2027-01-15T08:00:00Z",
                 "2027-01-03T18:13:20Z",

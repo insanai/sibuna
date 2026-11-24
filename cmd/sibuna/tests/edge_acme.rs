@@ -1,6 +1,10 @@
 //! Automatic HTTPS of the edge against a certificate authority inside the test
 //! (SID 0021): the daemon obtains, serves, renews and keeps certificates, with no
-//! restart and no reload in between.
+//! restart and no reload in between. A wildcard is proved with DNS-01 at a DNS server
+//! inside the test. Internal names and addresses come from the local authority.
+//!
+//! The hook of the DNS-01 tests is a shell script that the test writes into its own
+//! directory. It is test data, not a tool of the repository.
 #![cfg(all(feature = "https", unix))]
 #![allow(clippy::unwrap_used)]
 
@@ -17,7 +21,9 @@ use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use authority::{Authority, ISSUER, peer_certificate};
+use authority::{Authority, ISSUER, connect_trusting, peer_certificate};
+use sibuna_acme::dns::TsigKey;
+use sibuna_acme::dns::server::{Entry, Server};
 
 const BIN: &str = env!("CARGO_BIN_EXE_sibuna");
 const SITE: &str = "site.example.test";
@@ -49,6 +55,7 @@ fn free_address() -> SocketAddr {
 }
 
 /// What a test chooses about the topology.
+#[derive(Clone, Copy)]
 struct Setup<'a> {
     authority: &'a Authority,
     origin: SocketAddr,
@@ -61,6 +68,12 @@ struct Setup<'a> {
     plain: Option<&'a str>,
     /// More members of `global.acme`, each with a leading comma.
     acme: &'a str,
+    /// More members of the `tls` object, each with a leading comma.
+    tls: &'a str,
+    /// Name the test authority as `global.acme.directory`. Without it the directory is
+    /// the default, Let's Encrypt, which a test never contacts: every name must then go
+    /// to the local authority.
+    directory: bool,
 }
 
 /// A running edge. Dropping it stops the process.
@@ -118,6 +131,14 @@ impl Daemon {
 /// The topology as a file: a TLS frontend with `auto` names, and a plain one on demand.
 fn topology(setup: &Setup<'_>, tls: SocketAddr, plain: SocketAddr, socket: &Path) -> String {
     let names: Vec<String> = setup.names.iter().map(|name| format!("\"{name}\"")).collect();
+    let local = |name: &&str| sibuna_lb::is_address(name) || sibuna_lb::is_internal_name(name);
+    let never_public =
+        setup.tls.contains(r#""issuer":"internal""#) || setup.names.iter().all(local);
+    assert!(setup.directory || never_public, "a test must not ask a public authority");
+    let directory = match setup.directory {
+        true => format!(r#""directory":"{}","#, setup.authority.directory),
+        false => String::new(),
+    };
     let plain_frontend = match setup.plain {
         Some(members) => {
             let rest = format!(r#"{members}"default_backend":"app""#);
@@ -127,14 +148,14 @@ fn topology(setup: &Setup<'_>, tls: SocketAddr, plain: SocketAddr, socket: &Path
     };
     format!(
         r#"{{"global":{{"admin_socket":"{socket}",
-          "acme":{{"directory":"{directory}","storage":"{storage}"{acme}}}}},
+          "acme":{{{directory}"storage":"{storage}"{acme}}}}},
         "http":{{"surface":"off"}},
         "observability":{{"access_log":{{"output":"{log}"}}}},
         "frontends":{{"web":{{"proto":"http","binds":["{tls}"],
-          "tls":{{"auto":[{names}]}},"default_backend":"app"}}{plain_frontend}}},
+          "tls":{{"auto":[{names}]{more}}},"default_backend":"app"}}{plain_frontend}}},
         "backends":{{"app":{{"mode":"http","servers":[{{"name":"a","addr":"{origin}"}}]}}}}}}"#,
         socket = socket.display(),
-        directory = setup.authority.directory,
+        more = setup.tls,
         storage = setup.home.join("acme").display(),
         acme = setup.acme,
         log = setup.home.join("access.log").display(),
@@ -269,6 +290,8 @@ fn a_certificate_is_obtained_served_renewed_and_kept_through_a_failure() {
         names: &[SITE],
         plain: Some(""),
         acme: r#","challenge":"http-01""#,
+        tls: "",
+        directory: true,
     };
     let daemon = start(&setup);
     let first = wait_for("the first certificate", 30, || issued(&daemon, SITE));
@@ -292,8 +315,9 @@ fn a_certificate_is_obtained_served_renewed_and_kept_through_a_failure() {
     let log = wait_for("the log line", 5, || Some(daemon.log()).filter(|l| l.contains("renewed")));
     assert!(log.contains(&format!("certificate for {SITE} obtained")), "{log}");
     let row =
-        wait_for("the ready state", 10, || Some(daemon.row(SITE)).filter(|row| row[4] == "ready"));
-    assert_eq!((row[1].as_str(), row[5].as_str()), ("Sibuna_Test_Authority", "-"), "{row:?}");
+        wait_for("the ready state", 10, || Some(daemon.row(SITE)).filter(|row| row[5] == "ready"));
+    assert_eq!(row[1..3], ["http-01", "Sibuna_Test_Authority"], "{row:?}");
+    assert_eq!(row[6], "-", "{row:?}");
     let stats = daemon.ctl("show stats");
     assert!(stats.contains("sibuna_edge_acme_certificates_managed 1\n"), "{stats}");
     assert!(stats.contains("sibuna_edge_acme_certificates_served 1\n"), "{stats}");
@@ -321,9 +345,9 @@ fn a_certificate_is_obtained_served_renewed_and_kept_through_a_failure() {
     fs::write(&daemon.file, topology(&grown, daemon.tls, daemon.plain, &daemon.socket)).unwrap();
     daemon.ctl("reload");
     let row = wait_for("the failure", 30, || {
-        Some(daemon.row("refused.example.test")).filter(|row| row[4] == "retry")
+        Some(daemon.row("refused.example.test")).filter(|row| row[5] == "retry")
     });
-    assert!(row[5..].join(" ").contains("ACME"), "{row:?}");
+    assert!(row[6..].join(" ").contains("ACME"), "{row:?}");
     let log = daemon.log();
     assert!(log.contains("Hint: ") && log.contains("refused.example.test"), "{log}");
     assert_eq!(issued(&daemon, SITE), Some(second));
@@ -343,6 +367,8 @@ fn tls_alpn_01_needs_no_plain_frontend_and_a_restart_reuses_the_certificate() {
         names: &[SITE],
         plain: None,
         acme: "",
+        tls: "",
+        directory: true,
     };
     let daemon = start(&setup);
     let first = wait_for("the certificate", 30, || issued(&daemon, SITE));
@@ -377,6 +403,8 @@ fn the_redirect_of_the_traffic_policy_and_the_automatic_one_compose() {
         names: &[SITE],
         plain: Some(members),
         acme: r#","challenge":"http-01""#,
+        tls: "",
+        directory: true,
     };
     let daemon = start(&setup);
     // The authority validates over the frontend that redirects: the challenge is
@@ -397,4 +425,406 @@ fn the_redirect_of_the_traffic_policy_and_the_automatic_one_compose() {
     assert!(get(daemon.plain, SITE, "/auto/x").starts_with("HTTP/1.1 301 "));
     // Another host has the stated redirect only.
     assert!(get(daemon.plain, "other.example.test", "/").starts_with("HTTP/1.1 301 "));
+}
+
+/// Writes an executable script into `home` and returns its path.
+fn script(home: &Path, name: &str, body: &str) -> PathBuf {
+    let path = home.join(name);
+    fs::write(&path, format!("#!/bin/sh\n{body}\n")).unwrap();
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
+    path
+}
+
+/// The issuer and the names of the certificate that the edge serves for `host`.
+fn served(daemon: &Daemon, host: &str) -> Option<(String, Vec<String>)> {
+    let fields = sibuna_acme::x509::read(&peer_certificate(daemon.tls, host, None)?)?;
+    Some((fields.issuer, fields.names))
+}
+
+#[test]
+fn a_wildcard_is_proved_with_dns_01_through_a_hook_and_serves_one_label() {
+    let authority = Authority::start();
+    let dns = Server::start_local().unwrap();
+    *authority.dns_server.lock().unwrap() = Some(dns.address);
+    let home = home("dns-hook");
+    // The hook keeps the records in a file that the DNS server of the test reads.
+    let (records, log) = (home.join("records"), home.join("hook.log"));
+    dns.with(|table| table.txt_file = Some(records.clone()));
+    let body = format!(
+        "echo \"$1 $2\" >> {log}\ncase \"$1\" in\n  present) echo \"$2 $3\" >> {records} ;;\n  \
+         cleanup) grep -v -F \"$2 $3\" {records} > {records}.new; mv {records}.new {records} ;;\n\
+         esac",
+        log = log.display(),
+        records = records.display()
+    );
+    let hook = script(&home, "dns-hook", &body);
+    let acme = format!(
+        r#","challenge":"dns-01","dns":{{"hook":"{}","servers":["{}"],"timeout":20}}"#,
+        hook.display(),
+        dns.address
+    );
+    // The name and its wildcard share the record `_acme-challenge.apex.example.test`.
+    let (apex, wildcard) = ("apex.example.test", "*.apex.example.test");
+    let setup = Setup {
+        authority: &authority,
+        origin: origin(),
+        home: &home,
+        names: &[apex, wildcard],
+        plain: None,
+        acme: &acme,
+        tls: "",
+        directory: true,
+    };
+    let daemon = start(&setup);
+    let wild = (ISSUER.to_owned(), vec![wildcard.to_owned()]);
+    let found = wait_for("the wildcard certificate", 60, || {
+        served(&daemon, "a.apex.example.test").filter(|found| *found == wild)
+    });
+    assert_eq!(found.1, [wildcard]);
+    // The wildcard serves one label. The name itself has its own certificate, and two
+    // labels fall to the certificate of the first name: not to the wildcard.
+    let exact = wait_for("the exact certificate", 60, || {
+        served(&daemon, apex).filter(|found| found.1 == [apex])
+    });
+    assert_eq!(served(&daemon, "a.b.apex.example.test"), Some(exact));
+    assert_eq!(served(&daemon, "B.Apex.Example.Test"), Some(wild));
+    assert!(get_secure(daemon.tls, "www.apex.example.test").ends_with("ok"));
+    assert_eq!(*authority.validated.lock().unwrap(), ["dns-01", "dns-01"]);
+    // Each order presented its value and removed it: no record is left.
+    let owner = "_acme-challenge.apex.example.test.";
+    let expected = format!("present {owner}\ncleanup {owner}\n").repeat(2);
+    assert_eq!(fs::read_to_string(&log).unwrap(), expected);
+    assert_eq!(fs::read_to_string(&records).unwrap(), "");
+    let mut stored = Vec::new();
+    files(&home.join("acme"), &mut stored);
+    assert!(!stored.iter().any(|path| path.ends_with("dns")), "{stored:?}");
+    assert!(stored.iter().any(|path| path.ends_with("certs/_.apex.example.test/cert.pem")));
+    let row = daemon.row(wildcard);
+    assert_eq!(row[1..3], ["dns-01", "Sibuna_Test_Authority"], "{row:?}");
+}
+
+#[test]
+fn a_dynamic_update_signed_with_tsig_proves_a_wildcard() {
+    let authority = Authority::start();
+    let dns = Server::start_local().unwrap();
+    *authority.dns_server.lock().unwrap() = Some(dns.address);
+    let home = home("dns-update");
+    let secret = "c2lidW5hLXRzaWctdGVzdC1zZWNyZXQtMDEyMzQ1Njc=";
+    let key_file = home.join("tsig.key");
+    fs::write(&key_file, format!("{secret}\n")).unwrap();
+    dns.with(|table| {
+        table.add("example.test", Entry::Soa);
+        table.key = TsigKey::parse("sibuna-key", secret);
+    });
+    let acme = format!(
+        r#","dns":{{"rfc2136":{{"server":"{address}","key_name":"sibuna-key.",
+            "key_file":"{key}","zone":"example.test"}},"servers":["{address}"],"timeout":20}}"#,
+        address = dns.address,
+        key = key_file.display()
+    );
+    let wildcard = "*.dyn.example.test";
+    let setup = Setup {
+        authority: &authority,
+        origin: origin(),
+        home: &home,
+        names: &[wildcard],
+        plain: None,
+        acme: &acme,
+        tls: "",
+        directory: true,
+    };
+    let daemon = start(&setup);
+    let found = wait_for("the wildcard certificate", 60, || {
+        served(&daemon, "a.dyn.example.test").filter(|found| found.0 == ISSUER)
+    });
+    assert_eq!(found.1, [wildcard]);
+    assert_eq!(*authority.validated.lock().unwrap(), ["dns-01"]);
+    // One signed update added the record and one removed it.
+    let owner = "_acme-challenge.dyn.example.test";
+    let updates = wait_for("the cleanup", 10, || {
+        Some(dns.with(|table| table.updates.clone())).filter(|updates| updates.len() == 2)
+    });
+    assert_eq!((updates[0].0.as_str(), updates[0].2), (owner, false));
+    assert_eq!((updates[1].0.as_str(), updates[1].2), (owner, true));
+    assert_eq!(updates[0].1, updates[1].1);
+    assert!(dns.with(|table| table.texts(owner)).is_empty());
+    // The secret of the key is in no line of the log.
+    assert!(!daemon.log().contains(secret));
+}
+
+#[test]
+fn a_failing_provider_and_an_invisible_record_are_reported_with_hints() {
+    let authority = Authority::start();
+    let dns = Server::start_local().unwrap();
+    *authority.dns_server.lock().unwrap() = Some(dns.address);
+    let wildcard = "*.fail.example.test";
+    let row_of = |daemon: &Daemon| {
+        wait_for("the failure", 60, || Some(daemon.row(wildcard)).filter(|row| row[5] == "retry"))
+    };
+
+    // A hook that fails: its status and the end of its output are in the diagnostic.
+    let home_one = home("dns-fail");
+    let hook = script(&home_one, "dns-hook", "echo 'the token is wrong' >&2\nexit 7");
+    let acme = format!(r#","dns":{{"hook":"{}","servers":["{}"]}}"#, hook.display(), dns.address);
+    let setup = Setup {
+        authority: &authority,
+        origin: origin(),
+        home: &home_one,
+        names: &[wildcard],
+        plain: None,
+        acme: &acme,
+        tls: "",
+        directory: true,
+    };
+    let daemon = start(&setup);
+    let row = row_of(&daemon);
+    assert_eq!(row[6..].join(" "), "DNS PROVIDER FAILED (ACME009)", "{row:?}");
+    let log = wait_for("the diagnostic", 10, || {
+        Some(daemon.log()).filter(|log| log.contains("ended with the status 7"))
+    });
+    assert!(log.contains("the token is wrong") && log.contains("Hint: Run the hook by hand"));
+    assert!(log.contains("present _acme-challenge.fail.example.test."), "{log}");
+    // The cleanup of the failed order ran and failed too. It is reported on its own.
+    assert!(log.contains("was not removed"), "{log}");
+    assert!(authority.validated.lock().unwrap().is_empty());
+    drop(daemon);
+
+    // A hook that writes nothing: the record never shows at the server, and the
+    // daemon says so after the timeout, without asking the authority to validate.
+    let home_two = home("dns-invisible");
+    let log_file = home_two.join("hook.log");
+    let hook = script(&home_two, "dns-hook", &format!("echo \"$1\" >> {}", log_file.display()));
+    let acme = format!(
+        r#","dns":{{"hook":"{}","servers":["{}"],"timeout":3}}"#,
+        hook.display(),
+        dns.address
+    );
+    let setup = Setup { home: &home_two, acme: &acme, ..setup };
+    let daemon = start(&setup);
+    let row = row_of(&daemon);
+    assert_eq!(row[6..].join(" "), "RECORD NOT VISIBLE (ACME010)", "{row:?}");
+    let log = wait_for("the diagnostic", 10, || {
+        Some(daemon.log()).filter(|log| log.contains("RECORD NOT VISIBLE"))
+    });
+    assert!(log.contains(&dns.address.to_string()), "{log}");
+    assert!(log.contains("Hint: Raise `global.acme.dns.timeout`"), "{log}");
+    // The record was removed after the failure as well.
+    assert_eq!(fs::read_to_string(&log_file).unwrap(), "present\ncleanup\n");
+    assert!(authority.validated.lock().unwrap().is_empty());
+}
+
+/// The PEM text of `show ca`, and the path in its comment lines.
+fn local_root(daemon: &Daemon) -> (String, PathBuf) {
+    let text = daemon.ctl("show ca");
+    let path = text.lines().find_map(|line| line.strip_prefix("# file: "));
+    let path = PathBuf::from(path.unwrap_or_else(|| panic!("no root in\n{text}")));
+    let pem: String =
+        text.lines().filter(|line| !line.starts_with('#')).collect::<Vec<_>>().join("\n");
+    (pem, path)
+}
+
+/// One request inside TLS from a client that trusts `root` alone. `name` is a host
+/// name or an address. Returns the answer, or the reason the handshake failed.
+fn get_trusting(address: SocketAddr, name: &str, root: &str) -> Result<String, String> {
+    let (mut session, mut socket) = connect_trusting(address, name, root)?;
+    let mut stream = rustls::Stream::new(&mut session, &mut socket);
+    let request = format!("GET / HTTP/1.1\r\nHost: {name}\r\nConnection: close\r\n\r\n");
+    stream.write_all(request.as_bytes()).map_err(|error| error.to_string())?;
+    let mut answer = String::new();
+    let _ = stream.read_to_string(&mut answer);
+    Ok(answer)
+}
+
+/// The leaf that the edge serves to a client that trusts `root` alone.
+fn trusted_leaf(address: SocketAddr, name: &str, root: &str) -> Option<Vec<u8>> {
+    let (session, _socket) = connect_trusting(address, name, root).ok()?;
+    Some(session.peer_certificates()?.first()?.to_vec())
+}
+
+#[test]
+fn internal_names_and_addresses_are_served_from_the_local_authority() {
+    let authority = Authority::start();
+    let (other_home, home) = (home("local-second"), home("local"));
+    // No directory, no issuer: the names alone choose the local authority.
+    let setup = Setup {
+        authority: &authority,
+        origin: origin(),
+        home: &home,
+        names: &["localhost", "127.0.0.1", "*.corp.internal"],
+        plain: Some(""),
+        acme: "",
+        tls: "",
+        directory: false,
+    };
+    let daemon = start(&setup);
+    wait_for("the certificates", 30, || {
+        let ready = |name: &str| daemon.row(name)[5] == "ready";
+        (ready("localhost") && ready("127.0.0.1") && ready("*.corp.internal")).then_some(())
+    });
+    let (root, path) = local_root(&daemon);
+    assert_eq!(path, home.join("acme/local/root.crt"));
+    assert_eq!(fs::read_to_string(&path).unwrap().trim_end(), root.trim_end());
+    assert_eq!(mode(&home.join("acme/local/root.pem")), 0o600);
+    assert_eq!(mode(&home.join("acme/local/intermediate.pem")), 0o600);
+    // A client that trusts the root alone accepts the name, the address, which it
+    // names without a server name, and one label under the wildcard.
+    for name in ["localhost", "127.0.0.1", "db.corp.internal"] {
+        let answer = get_trusting(daemon.tls, name, &root);
+        assert!(answer.as_ref().is_ok_and(|answer| answer.ends_with("ok")), "{name}: {answer:?}");
+    }
+    // Another name is not in the certificate, and another root does not verify.
+    assert!(get_trusting(daemon.tls, "other.internal", &root).is_err());
+    let foreign = sibuna_acme::local::LocalAuthority::open(&other_home.join("foreign"), 0);
+    let foreign = foreign.unwrap().root_pem().unwrap();
+    assert!(get_trusting(daemon.tls, "localhost", &foreign).is_err());
+    let line = "automatic HTTPS for 3 name(s) from the local authority, storage";
+    assert!(daemon.log().contains(line), "{}", daemon.log());
+    let row = daemon.row("localhost");
+    assert_eq!(row[1..3], ["local", "Sibuna_Local_Authority_-_Intermediate"], "{row:?}");
+    // The redirect and the metrics are those of any managed name.
+    let moved = get(daemon.plain, "localhost", "/x");
+    assert!(moved.starts_with("HTTP/1.1 308 "), "{moved}");
+    assert!(daemon.ctl("show stats").contains("sibuna_edge_acme_certificates_served 3\n"));
+    // No account and no directory of a public authority exist: nobody was asked.
+    let entries: Vec<_> = fs::read_dir(home.join("acme")).unwrap().flatten().collect();
+    assert_eq!(entries.len(), 1, "{entries:?}");
+    assert_eq!(authority.order_count.load(Ordering::Relaxed), 0);
+
+    // A second node on the same storage uses the same root and the stored leaves.
+    let leaf = trusted_leaf(daemon.tls, "localhost", &root).unwrap();
+    std::os::unix::fs::symlink(home.join("acme"), other_home.join("acme")).unwrap();
+    let second = start(&Setup { home: &other_home, ..setup });
+    wait_for("the second node", 30, || {
+        (second.row("localhost")[5] == "ready" && second.row("127.0.0.1")[5] == "ready")
+            .then_some(())
+    });
+    assert_eq!(local_root(&second).0, root);
+    assert_eq!(trusted_leaf(second.tls, "localhost", &root), Some(leaf.clone()));
+    assert!(get_trusting(second.tls, "127.0.0.1", &root).is_ok());
+    drop(second);
+    drop(daemon);
+
+    // A restart reuses the root and the leaf.
+    let daemon = start(&setup);
+    let again =
+        wait_for("the stored certificate", 30, || trusted_leaf(daemon.tls, "localhost", &root));
+    assert_eq!(again, leaf);
+    assert_eq!(local_root(&daemon).0, root);
+    let log = wait_for("the log line", 5, || {
+        Some(daemon.log()).filter(|log| log.contains("localhost loaded from storage"))
+    });
+    assert!(!log.contains("obtained"), "{log}");
+}
+
+#[test]
+fn a_local_certificate_is_renewed_without_a_restart_and_an_address_is_added_by_a_reload() {
+    let authority = Authority::start();
+    let home = home("local-renew");
+    // A leaf of twelve seconds is due after two thirds of its validity.
+    let setup = Setup {
+        authority: &authority,
+        origin: origin(),
+        home: &home,
+        names: &["127.0.0.1"],
+        plain: None,
+        acme: r#","internal":{"lifetime":12}"#,
+        tls: "",
+        directory: false,
+    };
+    let daemon = start(&setup);
+    wait_for("the certificate", 30, || (daemon.row("127.0.0.1")[5] == "ready").then_some(()));
+    let (root, _) = local_root(&daemon);
+    let first = trusted_leaf(daemon.tls, "127.0.0.1", &root).unwrap();
+    let second = wait_for("the renewal", 40, || {
+        trusted_leaf(daemon.tls, "127.0.0.1", &root).filter(|leaf| *leaf != first)
+    });
+    assert_eq!(local_root(&daemon).0, root);
+    let log = wait_for("the log line", 5, || Some(daemon.log()).filter(|l| l.contains("renewed")));
+    assert!(log.contains("certificate for 127.0.0.1 obtained"), "{log}");
+
+    // A reload adds an address. The certificate without a server name lists both.
+    let grown = Setup { names: &["127.0.0.1", "127.0.0.2"], ..setup };
+    fs::write(&daemon.file, topology(&grown, daemon.tls, daemon.plain, &daemon.socket)).unwrap();
+    daemon.ctl("reload");
+    let both = wait_for("the certificate of both addresses", 40, || {
+        let leaf = trusted_leaf(daemon.tls, "127.0.0.1", &root).filter(|leaf| *leaf != second)?;
+        let names = sibuna_acme::x509::read(&leaf)?.names;
+        (names.contains(&"127.0.0.1".to_owned()) && names.contains(&"127.0.0.2".to_owned()))
+            .then_some(leaf)
+    });
+    assert!(!both.is_empty());
+    assert!(connect_trusting(daemon.tls, "127.0.0.2", &root).is_ok());
+}
+
+#[test]
+fn one_frontend_mixes_both_issuers_and_a_public_name_can_be_forced_internal() {
+    // The test authority issues for the name, the local authority for the address.
+    let authority = Authority::start();
+    let home_one = home("mixed");
+    let setup = Setup {
+        authority: &authority,
+        origin: origin(),
+        home: &home_one,
+        names: &[SITE, "127.0.0.1"],
+        plain: None,
+        acme: "",
+        tls: "",
+        directory: true,
+    };
+    let daemon = start(&setup);
+    wait_for("the certificate of the authority", 30, || issued(&daemon, SITE));
+    wait_for("the local certificate", 30, || {
+        (daemon.row("127.0.0.1")[5] == "ready").then_some(())
+    });
+    let (root, _) = local_root(&daemon);
+    assert!(
+        get_trusting(daemon.tls, "127.0.0.1", &root).is_ok_and(|answer| answer.ends_with("ok"))
+    );
+    // The local root does not vouch for the certificate of the other authority.
+    assert!(get_trusting(daemon.tls, SITE, &root).is_err());
+    assert_eq!(daemon.row(SITE)[1..3], ["tls-alpn-01", "Sibuna_Test_Authority"]);
+    assert_eq!(daemon.row("127.0.0.1")[1], "local");
+    assert_eq!(authority.order_count.load(Ordering::Relaxed), 1);
+    drop(daemon);
+
+    // `issuer: "internal"` sends a public name to the local authority.
+    let home_two = home("forced");
+    let forced = Setup {
+        home: &home_two,
+        names: &["www.example.org"],
+        tls: r#","issuer":"internal""#,
+        directory: false,
+        ..setup
+    };
+    let daemon = start(&forced);
+    wait_for("the certificate", 30, || {
+        (daemon.row("www.example.org")[5] == "ready").then_some(())
+    });
+    let (root, _) = local_root(&daemon);
+    let answer = get_trusting(daemon.tls, "www.example.org", &root);
+    assert!(answer.is_ok_and(|answer| answer.ends_with("ok")));
+    assert_eq!(authority.order_count.load(Ordering::Relaxed), 1);
+}
+
+#[test]
+fn the_check_refuses_an_internal_name_for_acme_and_a_wildcard_without_dns() {
+    let home = home("check");
+    let check = |tls: &str| {
+        let file = home.join("edge.json");
+        let text = format!(
+            r#"{{"frontends":{{"web":{{"binds":["127.0.0.1:8443"],"tls":{tls}}}}},
+               "backends":{{"app":{{"servers":["127.0.0.1:8080"]}}}}}}"#
+        );
+        fs::write(&file, text).unwrap();
+        let output = Command::new(BIN).arg("check").arg("-f").arg(&file).output().unwrap();
+        (output.status.success(), String::from_utf8_lossy(&output.stderr).into_owned())
+    };
+    let (ok, text) = check(r#"{"auto":["localhost"],"issuer":"acme"}"#);
+    assert!(!ok && text.contains("NAME NOT PUBLIC"), "{text}");
+    assert!(text.contains("Hint: ") && text.contains("issuer: \"internal\""), "{text}");
+    let (ok, text) = check(r#"{"auto":["*.example.org"]}"#);
+    assert!(!ok && text.contains("WILDCARD NEEDS DNS"), "{text}");
+    assert!(text.contains("dns: { hook:"), "{text}");
+    let (ok, text) = check(r#"{"auto":["localhost","10.1.2.3","*.corp.internal"]}"#);
+    assert!(ok, "{text}");
 }

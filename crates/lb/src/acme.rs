@@ -1,11 +1,15 @@
 //! The configuration of automatic HTTPS (SID 0021): the `auto` names of a TLS frontend
 //! and the `global.acme` object. Nothing here opens a socket or a file.
 
+mod dns;
+
 use std::collections::BTreeMap;
 use std::io;
+use std::net::IpAddr;
 
 use sibuna_json::ObjectReader;
 
+pub use self::dns::{DnsConfig, DnsProvider};
 use crate::config::{Config, Protocol, field, invalid};
 
 /// The production directory of Let's Encrypt, the default authority.
@@ -26,7 +30,21 @@ pub enum AcmeChallenge {
     Http01,
     /// TLS-ALPN-01 only.
     TlsAlpn01,
+    /// DNS-01 for every name. A wildcard uses DNS-01 whatever this says.
+    Dns01,
 }
+
+/// `tls.issuer`: who issues the certificates of the `auto` names of a frontend.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum AcmeIssuer {
+    /// The ACME authority of `global.acme`.
+    Acme,
+    /// The local authority that the daemon keeps in its storage directory.
+    Internal,
+}
+
+/// The default lifetime of a certificate of the local authority, in seconds: 12 hours.
+pub const INTERNAL_LIFETIME: u64 = 43_200;
 
 /// The `global.acme` object. Every key has a default.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -43,6 +61,10 @@ pub struct AcmeOptions {
     pub ca_file: Option<String>,
     /// Redirect plain HTTP requests for managed names to HTTPS.
     pub redirect: bool,
+    /// The provider of the DNS-01 challenge. A wildcard from an ACME authority needs it.
+    pub dns: Option<DnsConfig>,
+    /// The lifetime of a certificate of the local authority, in seconds.
+    pub internal_lifetime: u64,
 }
 
 impl Default for AcmeOptions {
@@ -54,6 +76,8 @@ impl Default for AcmeOptions {
             challenge: AcmeChallenge::Auto,
             ca_file: None,
             redirect: true,
+            dns: None,
+            internal_lifetime: INTERNAL_LIFETIME,
         }
     }
 }
@@ -92,17 +116,67 @@ impl AcmeOptions {
             None | Some("auto") => AcmeChallenge::Auto,
             Some("http-01") => AcmeChallenge::Http01,
             Some("tls-alpn-01") => AcmeChallenge::TlsAlpn01,
+            Some("dns-01") => AcmeChallenge::Dns01,
             Some(_) => {
                 return Err(invalid(
-                    "global.acme.challenge: expected \"auto\", \"http-01\" or \"tls-alpn-01\"",
+                    "global.acme.challenge: expected \"auto\", \"http-01\", \"tls-alpn-01\" \
+                     or \"dns-01\"",
                 ));
             }
         };
         let ca_file = field(r.take_str("ca_file"))?.map(str::to_owned);
         let redirect = field(r.take_bool("redirect"))?.unwrap_or(defaults.redirect);
+        let dns = field(r.take_object("dns"))?.map(DnsConfig::parse).transpose()?;
+        let internal_lifetime = internal_lifetime(&mut r)?;
         field(r.finish())?;
-        Ok(Self { directory, email, storage, challenge, ca_file, redirect })
+        Ok(Self {
+            directory,
+            email,
+            storage,
+            challenge,
+            ca_file,
+            redirect,
+            dns,
+            internal_lifetime,
+        })
     }
+}
+
+/// Reads `global.acme.internal: { lifetime: SECONDS }`.
+fn internal_lifetime(r: &mut ObjectReader<'_, '_>) -> io::Result<u64> {
+    let Some(mut internal) = field(r.take_object("internal"))? else {
+        return Ok(INTERNAL_LIFETIME);
+    };
+    let path = internal.field_path("lifetime");
+    let lifetime = match field(internal.take_u64("lifetime"))? {
+        None => INTERNAL_LIFETIME,
+        Some(seconds) if (10..=172_800).contains(&seconds) => seconds,
+        Some(_) => return Err(invalid(format!("{path}: expected 10 to 172800 seconds"))),
+    };
+    field(internal.finish())?;
+    Ok(lifetime)
+}
+
+/// Reads `tls.issuer`.
+pub(crate) fn issuer(r: &mut ObjectReader<'_, '_>) -> io::Result<Option<AcmeIssuer>> {
+    let path = r.field_path("issuer");
+    match field(r.take_str("issuer"))? {
+        None => Ok(None),
+        Some("acme") => Ok(Some(AcmeIssuer::Acme)),
+        Some("internal") => Ok(Some(AcmeIssuer::Internal)),
+        Some(_) => Err(invalid(format!("{path}: expected \"acme\" or \"internal\""))),
+    }
+}
+
+/// The address that an `auto` name spells, with or without the brackets of IPv6.
+fn address(name: &str) -> Option<IpAddr> {
+    let bare = name.strip_prefix('[').and_then(|rest| rest.strip_suffix(']')).unwrap_or(name);
+    bare.parse().ok()
+}
+
+/// Whether an `auto` name is an IP address.
+pub fn is_address(name: &str) -> bool {
+    name.parse::<IpAddr>().is_ok()
 }
 
 /// Whether `url` may be an ACME directory: `https`, or `http` to this host.
@@ -141,7 +215,9 @@ pub fn is_internal_name(name: &str) -> bool {
         })
 }
 
-/// Reads `tls.auto`: one host name or a list of them, stored in lower case.
+/// Reads `tls.auto`: one name or a list of them. A name is a host name, a wildcard
+/// `*.NAME` or an IP address. Host names are stored in lower case and addresses in
+/// their usual text form.
 pub(crate) fn names(r: &mut ObjectReader<'_, '_>) -> io::Result<Vec<String>> {
     let path = r.field_path("auto");
     let listed: Vec<&str> = match r.take("auto") {
@@ -162,15 +238,15 @@ pub(crate) fn names(r: &mut ObjectReader<'_, '_>) -> io::Result<Vec<String>> {
     };
     let mut names = Vec::with_capacity(listed.len());
     for name in listed {
-        let name = name.to_ascii_lowercase();
-        if name.starts_with("*.") {
+        let name = match address(name) {
+            Some(address) => address.to_string(),
+            None => name.to_ascii_lowercase(),
+        };
+        let host = name.strip_prefix("*.").unwrap_or(&name);
+        if !is_address(&name) && !crate::hello::valid_host(host) {
             return Err(invalid(format!(
-                "{path}: `{name}` is a wildcard, which needs the DNS challenge; list the \
-                 host names, or serve the wildcard from a file with crt"
+                "{path}: `{name}` is not a host name, a wildcard `*.NAME` or an IP address"
             )));
-        }
-        if name.parse::<std::net::IpAddr>().is_ok() || !crate::hello::valid_host(&name) {
-            return Err(invalid(format!("{path}: `{name}` is not a DNS host name")));
         }
         if !names.contains(&name) {
             names.push(name);
@@ -179,64 +255,127 @@ pub(crate) fn names(r: &mut ObjectReader<'_, '_>) -> io::Result<Vec<String>> {
     Ok(names)
 }
 
+/// One managed name.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AutoName {
+    /// The host name, the wildcard `*.NAME` or the IP address.
+    pub name: String,
+    /// The port of the first TLS frontend that lists the name.
+    pub port: u16,
+    /// Whether the local authority issues the certificate, and not the ACME authority.
+    pub local: bool,
+}
+
 /// What the daemon needs to run automatic HTTPS for a topology.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AutomaticHttps {
     /// The `global.acme` object, or its defaults.
     pub options: AcmeOptions,
-    /// Every managed name with the port of its first TLS frontend, sorted by name.
-    pub names: Vec<(String, u16)>,
+    /// Every managed name, sorted by name.
+    pub names: Vec<AutoName>,
     /// Whether the topology has an HTTP frontend without TLS, for HTTP-01 and the
     /// redirect.
     pub plain_frontend: bool,
 }
 
+/// Whether the local authority issues for `name` on a frontend with `issuer`: when the
+/// frontend says so, and else for an address and for an internal name that the public
+/// authority would refuse.
+fn is_local(name: &str, issuer: Option<AcmeIssuer>, options: &AcmeOptions) -> bool {
+    match issuer {
+        Some(AcmeIssuer::Internal) => true,
+        Some(AcmeIssuer::Acme) => false,
+        None => is_address(name) || (options.is_public() && is_internal_name(name)),
+    }
+}
+
 impl Config {
-    /// Automatic HTTPS of this topology, when a TLS frontend has an `auto` name.
-    pub fn automatic_https(&self) -> Option<AutomaticHttps> {
-        let mut names = BTreeMap::new();
+    /// Every `auto` name of every TLS frontend with its port and its issuer, and
+    /// whether the topology has a plain HTTP frontend.
+    fn auto_names(&self) -> (Vec<AutoName>, bool) {
+        let options = self.acme.clone().unwrap_or_default();
+        let mut names = Vec::new();
         let mut plain_frontend = false;
         for ((protocol, addr), frontend) in &self.listeners {
             match &frontend.tls {
-                Some(tls) => {
-                    for name in &tls.auto {
-                        names.entry(name.clone()).or_insert(addr.port());
-                    }
-                }
+                Some(tls) => names.extend(tls.auto.iter().map(|name| AutoName {
+                    name: name.clone(),
+                    port: addr.port(),
+                    local: is_local(name, tls.issuer, &options),
+                })),
                 None => plain_frontend |= *protocol == Protocol::Http,
             }
         }
+        (names, plain_frontend)
+    }
+
+    /// Automatic HTTPS of this topology, when a TLS frontend has an `auto` name.
+    pub fn automatic_https(&self) -> Option<AutomaticHttps> {
+        let (listed, plain_frontend) = self.auto_names();
+        let mut names = BTreeMap::new();
+        for entry in listed {
+            names.entry(entry.name.clone()).or_insert(entry);
+        }
         (!names.is_empty()).then(|| AutomaticHttps {
             options: self.acme.clone().unwrap_or_default(),
-            names: names.into_iter().collect(),
+            names: names.into_values().collect(),
             plain_frontend,
         })
     }
 
-    /// Checks `global.acme` against the frontends: the object needs an `auto` name, and
-    /// a public authority takes no internal name.
+    /// Checks `global.acme` against the frontends: the object needs an `auto` name, a
+    /// name has one issuer, a public authority takes no internal name, and a wildcard
+    /// from an ACME authority needs a DNS provider.
     pub(crate) fn check_automatic_https(&self) -> io::Result<()> {
-        let Some(automatic) = self.automatic_https() else {
+        let (names, _) = self.auto_names();
+        if names.is_empty() {
             return match self.acme {
                 Some(_) => Err(invalid("global.acme requires a frontend with tls.auto names")),
                 None => Ok(()),
             };
-        };
-        if !automatic.options.is_public() {
-            return Ok(());
         }
-        match automatic.names.iter().find(|(name, _)| is_internal_name(name)) {
-            Some((name, _)) => Err(invalid(format!(
-                "tls.auto: `{name}` is an internal name; a public certificate authority \
-                 cannot validate it"
-            ))),
-            None => Ok(()),
+        let options = self.acme.clone().unwrap_or_default();
+        for entry in &names {
+            let name = &entry.name;
+            if names.iter().any(|other| other.name == *name && other.local != entry.local) {
+                return Err(invalid(format!(
+                    "tls.auto: `{name}` has two issuers; give its frontends the same \
+                     tls.issuer"
+                )));
+            }
+            if entry.local {
+                continue;
+            }
+            if is_address(name) {
+                return Err(invalid(format!(
+                    "tls.auto: the IP address `{name}` is an internal name; an ACME \
+                     certificate authority is not asked for it"
+                )));
+            }
+            if options.is_public() && is_internal_name(name) {
+                return Err(invalid(format!(
+                    "tls.auto: `{name}` is an internal name; a public certificate authority \
+                     cannot validate it"
+                )));
+            }
+            if name.starts_with("*.") && options.dns.is_none() {
+                return Err(invalid(format!(
+                    "tls.auto: `{name}` is a wildcard, which needs the DNS challenge; set \
+                     global.acme.dns"
+                )));
+            }
+            if options.challenge == AcmeChallenge::Dns01 && options.dns.is_none() {
+                return Err(invalid("global.acme.challenge: \"dns-01\" needs global.acme.dns"));
+            }
         }
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::net::SocketAddr;
+
     use super::*;
 
     fn parse(tls: &str, global: &str) -> io::Result<Config> {
@@ -246,6 +385,16 @@ mod tests {
                "backends":{{"app":{{"servers":["10.0.0.1:80"]}}}}}}"#
         );
         Config::parse(document.as_bytes())
+    }
+
+    fn public(name: &str, port: u16) -> AutoName {
+        AutoName { name: name.to_owned(), port, local: false }
+    }
+
+    fn names(tls: &str, global: &str) -> Vec<(String, bool)> {
+        let automatic = parse(tls, global).ok().and_then(|config| config.automatic_https());
+        let names = automatic.map(|automatic| automatic.names).unwrap_or_default();
+        names.into_iter().map(|entry| (entry.name, entry.local)).collect()
     }
 
     fn reason(tls: &str, global: &str) -> String {
@@ -258,7 +407,7 @@ mod tests {
         let automatic = config.ok().and_then(|config| config.automatic_https());
         let expected = AutomaticHttps {
             options: AcmeOptions::default(),
-            names: vec![("example.org".to_owned(), 443), ("www.example.org".to_owned(), 443)],
+            names: vec![public("example.org", 443), public("www.example.org", 443)],
             plain_frontend: true,
         };
         assert_eq!(automatic, Some(expected));
@@ -284,6 +433,7 @@ mod tests {
             challenge: AcmeChallenge::TlsAlpn01,
             ca_file: Some("/etc/ca.pem".to_owned()),
             redirect: false,
+            ..AcmeOptions::default()
         };
         assert_eq!(options, Some(expected));
         let staging = r#""global":{"acme":{"directory":"letsencrypt-staging"}},"#;
@@ -293,25 +443,129 @@ mod tests {
     }
 
     #[test]
-    fn internal_names_are_refused_for_a_public_authority_only() {
+    fn the_issuer_follows_the_name() {
         for name in ["localhost", "intranet", "a.local", "db.internal", "x.home.arpa", "a.test"] {
             assert!(is_internal_name(name), "{name}");
-            let text = reason(&format!(r#"{{"auto":["{name}"]}}"#), "");
-            assert!(text.contains("is an internal name"), "{name}: {text}");
         }
         for name in ["example.org", "local.example.org", "mylocal.org", "internal.io"] {
             assert!(!is_internal_name(name), "{name}");
         }
+        // With no setting: a public name goes to ACME, an internal name and an address
+        // to the local authority.
+        let auto = r#"{"auto":["example.org","localhost","*.Internal","127.0.0.1","[::1]"]}"#;
+        let expected = [
+            ("*.internal", true),
+            ("127.0.0.1", true),
+            ("::1", true),
+            ("example.org", false),
+            ("localhost", true),
+        ];
+        let found = names(auto, "");
+        let found: Vec<_> = found.iter().map(|(name, local)| (name.as_str(), *local)).collect();
+        assert_eq!(found, expected);
+        // A directory of the operator's own takes internal names. An address stays local.
         let private = r#""global":{"acme":{"directory":"http://127.0.0.1:14000/dir"}},"#;
-        assert!(parse(r#"{"auto":["localhost"]}"#, private).is_ok());
+        let found = names(r#"{"auto":["localhost","10.0.0.1"]}"#, private);
+        assert_eq!(found, [("10.0.0.1".to_owned(), true), ("localhost".to_owned(), false)]);
+        // The override, both ways.
+        let forced = names(r#"{"auto":["example.org"],"issuer":"internal"}"#, "");
+        assert_eq!(forced, [("example.org".to_owned(), true)]);
+        let text = reason(r#"{"auto":["localhost"],"issuer":"acme"}"#, "");
+        assert!(text.contains("`localhost` is an internal name"), "{text}");
+        let text = reason(r#"{"auto":["192.0.2.1"],"issuer":"acme"}"#, private);
+        assert!(text.contains("IP address `192.0.2.1` is an internal name"), "{text}");
+        assert!(
+            names(r#"{"auto":["db.internal"],"issuer":"acme"}"#, private)
+                == [("db.internal".to_owned(), false)]
+        );
+        let text = reason(r#"{"auto":["a.example"],"issuer":"local"}"#, "");
+        assert!(text.contains("expected \"acme\" or \"internal\""), "{text}");
+        assert!(
+            reason(r#"{"crt":"a.pem","issuer":"internal"}"#, "").contains("issuer needs auto")
+        );
+    }
+
+    #[test]
+    fn a_name_on_two_frontends_has_one_issuer() {
+        let document = r#"{"frontends":{
+            "a":{"binds":["0.0.0.0:443"],"tls":{"auto":["example.org"]}},
+            "b":{"binds":["0.0.0.0:8443"],"tls":{"auto":["example.org"],"issuer":"internal"}}},
+            "backends":{"app":{"servers":["10.0.0.1:80"]}}}"#;
+        let text = Config::parse(document.as_bytes()).err().map(|e| e.to_string());
+        assert!(text.unwrap_or_default().contains("has two issuers"));
+    }
+
+    #[test]
+    fn a_wildcard_needs_a_dns_provider_unless_it_is_local() {
+        let text = reason(r#"{"auto":["*.example.org"]}"#, "");
+        assert!(text.contains("is a wildcard, which needs the DNS challenge"), "{text}");
+        assert_eq!(names(r#"{"auto":["*.example.org"],"issuer":"internal"}"#, "").len(), 1);
+        assert_eq!(names(r#"{"auto":["*.corp.internal"]}"#, "").len(), 1);
+        let hook = r#""global":{"acme":{"dns":{"hook":"/etc/sibuna/dns-hook"}}},"#;
+        let config = parse(r#"{"auto":["*.example.org"]}"#, hook).ok();
+        let dns = config.and_then(|c| c.automatic_https()).and_then(|a| a.options.dns);
+        let expected = DnsConfig {
+            provider: DnsProvider::Hook("/etc/sibuna/dns-hook".to_owned()),
+            check: true,
+            timeout: 120,
+            wait: 0,
+            resolver: None,
+            servers: Vec::new(),
+        };
+        assert_eq!(dns, Some(expected));
+        let text =
+            reason(r#"{"auto":["example.org"]}"#, r#""global":{"acme":{"challenge":"dns-01"}},"#);
+        assert!(text.contains("\"dns-01\" needs global.acme.dns"), "{text}");
+    }
+
+    #[test]
+    fn every_dns_key_is_read() {
+        let global = r#""global":{"acme":{"challenge":"dns-01","internal":{"lifetime":600},
+            "dns":{"rfc2136":{"server":"192.0.2.53:53","key_name":"Sibuna.","key_file":"/k",
+            "zone":"Example.org."},"check":false,"timeout":30,"wait":5,
+            "resolver":"[2001:db8::1]:53","servers":["192.0.2.1:53","192.0.2.2:5353"]}}},"#;
+        let options = parse(r#"{"auto":["example.org"]}"#, global).ok().and_then(|c| c.acme);
+        let options = options.unwrap_or_default();
+        let dns = options.dns.clone().map(|dns| (dns.provider, dns.check, dns.timeout, dns.wait));
+        let provider = DnsProvider::Rfc2136 {
+            server: SocketAddr::from(([192, 0, 2, 53], 53)),
+            key: Some(("Sibuna.".to_owned(), "/k".to_owned())),
+            zone: Some("example.org".to_owned()),
+        };
+        assert_eq!(dns, Some((provider, false, 30, 5)));
+        let dns = options.dns.unwrap_or_else(|| unreachable!());
+        assert_eq!(dns.resolver.map(|r| r.port()), Some(53));
+        assert_eq!(dns.servers.len(), 2);
+        assert_eq!((options.challenge, options.internal_lifetime), (AcmeChallenge::Dns01, 600));
+        let wrong = |members: &str| {
+            let global = format!(r#""global":{{"acme":{{{members}}}}},"#);
+            reason(r#"{"auto":["example.org"]}"#, &global)
+        };
+        assert!(wrong(r#""dns":{}"#).contains("expected one provider"));
+        assert!(
+            wrong(r#""dns":{"hook":"/h","rfc2136":{"server":"1.2.3.4:53"}}"#)
+                .contains("one provider")
+        );
+        assert!(wrong(r#""dns":{"rfc2136":{}}"#).contains("needs the \"IP:PORT\""));
+        assert!(wrong(r#""dns":{"rfc2136":{"server":"ns.example.org"}}"#).contains("IP:PORT"));
+        assert!(
+            wrong(r#""dns":{"rfc2136":{"server":"1.2.3.4:53","key_name":"k"}}"#)
+                .contains("go together")
+        );
+        assert!(wrong(r#""dns":{"hook":"/h","timeout":0}"#).contains("1 to 3600"));
+        assert!(wrong(r#""dns":{"hook":"/h","wait":3601}"#).contains("0 to 3600"));
+        assert!(wrong(r#""dns":{"hook":"/h","servers":[]}"#).contains("1 to 8 servers"));
+        assert!(wrong(r#""dns":{"hook":"/h","token":"x"}"#).contains("token"));
+        assert!(wrong(r#""internal":{"lifetime":5}"#).contains("10 to 172800"));
     }
 
     #[test]
     fn mistakes_are_named() {
         let auto = |value: &str| reason(&format!(r#"{{"auto":{value}}}"#), "");
         assert!(auto(r#"["*.example.org"]"#).contains("wildcard"));
-        assert!(auto(r#"["192.0.2.1"]"#).contains("not a DNS host name"));
-        assert!(auto(r#"["bad_name.example.org"]"#).contains("not a DNS host name"));
+        assert!(auto(r#"["a.*.example.org"]"#).contains("is not a host name"));
+        assert!(auto(r#"["*"]"#).contains("is not a host name"));
+        assert!(auto(r#"["bad_name.example.org"]"#).contains("is not a host name"));
         assert!(auto("[]").contains("1 to 64 host names"));
         assert!(auto("[7]").contains("expected host names"));
         assert!(reason("{}", "").contains("or auto (host names)"));
@@ -324,7 +578,7 @@ mod tests {
         assert!(acme(r#""directory":"http://ca.example/dir""#).contains("loopback"));
         assert!(acme(r#""directory":"ftp://x""#).contains("https URL"));
         assert!(acme(r#""email":"nobody""#).contains("e-mail"));
-        assert!(acme(r#""challenge":"dns-01""#).contains("http-01"));
+        assert!(acme(r#""challenge":"dns""#).contains("http-01"));
         assert!(acme(r#""storage":"""#).contains("directory"));
         assert!(acme(r#""staging":true"#).contains("staging"));
         let unused = r#""global":{"acme":{}},"#;
@@ -339,6 +593,6 @@ mod tests {
             "backends":{"app":{"servers":["10.0.0.1:80"]}}}"#;
         let automatic = Config::parse(document.as_bytes()).ok().and_then(|c| c.automatic_https());
         assert_eq!(automatic.as_ref().map(|a| a.plain_frontend), Some(false));
-        assert_eq!(automatic.map(|a| a.names), Some(vec![("example.org".to_owned(), 8443)]));
+        assert_eq!(automatic.map(|a| a.names), Some(vec![public("example.org", 8443)]));
     }
 }

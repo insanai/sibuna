@@ -50,7 +50,9 @@ Edge load balancer
    sibuna --config-file edge.jlv      # serve TCP, UDP and HTTP frontends
    kill -HUP "$(pidof sibuna)"        # reload routes, policy and certificates in place
    sibuna ctl /run/sibuna/edge.sock show servers                      # needs global.admin_socket
+   sibuna lb --tls auto --domain localhost --server 10.0.0.1:80       # the same from the local authority
    sibuna ctl /run/sibuna/edge.sock show certs                        # certificates of tls.auto
+   sibuna ctl /run/sibuna/edge.sock show ca > sibuna-root.crt         # the root to install in clients
    sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain   # or ready
    sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 weight 5
    sibuna ctl /run/sibuna/edge.sock add server app/blue 10.0.0.3:80

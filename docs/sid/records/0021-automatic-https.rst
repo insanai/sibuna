@@ -7,7 +7,7 @@
 :sid-created: 2026-11-24
 :sid-updated: 2026-11-24
 :sid-discussion: No external discussion URL assigned
-:sid-summary: Obtains and renews the certificates of an edge frontend through ACME when the operator names the hosts, answers HTTP-01 and TLS-ALPN-01 challenges in the daemon, installs each certificate for new handshakes without a reload, and redirects HTTP to HTTPS for the managed names.
+:sid-summary: Obtains and renews the certificates of an edge frontend through ACME when the operator names the hosts, answers HTTP-01, TLS-ALPN-01 and DNS-01 challenges in the daemon, issues for internal names and IP addresses from a local authority, installs each certificate for new handshakes without a reload, and redirects HTTP to HTTPS for the managed names.
 :sid-labels: ["architecture","load-balancer","tls","operations"]
 
 Automatic HTTPS
@@ -342,11 +342,23 @@ Comparison with Caddy
      - differs
      - A fixed first choice, and the other type after a failure.
    * - DNS challenge and wildcard certificates.
+     - same
+     - ``auto: ["*.example.org"]`` with ``global.acme.dns``. Caddy needs a build with a provider module. We run a hook program or send an RFC 2136 update, and have no vendor module.
+   * - The DNS challenge checks propagation, with a timeout, a delay, resolvers and an override domain.
+     - differs
+     - ``check``, ``timeout``, ``wait``, ``resolver`` and ``servers``. We follow a CNAME delegation in the check. We have no ``dns_challenge_override_domain``: the provider receives the name of the challenge.
+   * - Local HTTPS: a local authority for ``localhost``, internal names and IP addresses, chosen by the name.
+     - same
+     - ``auto: ["localhost"]`` needs no other setting. A root of 10 years, an intermediate of 7 days and leaves of 12 hours, as in Caddy.
+   * - ``tls internal`` forces the local authority.
+     - same
+     - ``tls: { auto: [...], issuer: "internal" }``.
+   * - The root is installed into the system trust store at the first start, and ``caddy trust`` and ``caddy untrust`` do it by hand.
+     - differs
+     - We never touch a trust store. ``sibuna ctl SOCKET show ca`` prints the root, and the book shows the command of each system.
+   * - The local authority is an ACME server for other machines (``acme_server``).
      - missing
-     - No DNS provider interface exists.
-   * - Local HTTPS: a local authority for ``localhost`` and internal names.
-     - missing
-     - Internal names are rejected with a hint to use ``crt``.
+     - The local authority issues for this daemon only.
    * - On-demand TLS.
      - missing
      - Names come from the file.
@@ -397,6 +409,183 @@ A node has the public address 203.0.113.10. The DNS records of ``example.org`` a
 #. The driver checks the chain against the key and the name, writes both files, installs the certificate and removes the lock. The log has one line. The next handshake for ``example.org`` receives the certificate.
 #. One second later the same happens for ``www.example.org``.
 #. Sixty days later the driver wakes, takes the lock and renews.
+
+DNS-01, wildcards and the local authority
+-----------------------------------------
+
+This section extends the record. It closes the first two known gaps of the first part: a wildcard name, which needs the DNS-01 challenge, and an internal name, which no public authority validates.
+
+The issuer of a name
+~~~~~~~~~~~~~~~~~~~~
+
+Every ``auto`` name has one issuer. The daemon chooses it from the name, as Caddy does.
+
+.. code-block:: text
+
+   name under auto          tls.issuer absent          "acme"                  "internal"
+   -----------------------  -------------------------  ----------------------  ---------------
+   public DNS name          ACME authority             ACME authority          local authority
+   internal DNS name        local authority  [1]       ACME, or refused  [2]   local authority
+   IP address               local authority            refused                 local authority
+
+   [1] With a directory of the operator's own, an internal name goes to that directory,
+       as in the first part. The operator's authority decides what it validates.
+   [2] Refused with a public directory (Let's Encrypt). Accepted with the operator's own.
+
+``tls.issuer`` is a member of the ``tls`` object beside ``auto``. Absent, the table's first column applies, and this is the form we teach: ``tls: { auto: ["localhost"] }`` works with no other setting. ``"internal"`` forces the local authority for every name of the frontend, also for a public-looking one. ``"acme"`` forces the ACME authority. An internal name with ``"acme"`` and a public directory is refused when the file is checked, with the title ``NAME NOT PUBLIC`` and a hint that names ``issuer: "internal"``. An IP address with ``"acme"`` is refused in the same way. One name on two frontends must have one issuer.
+
+An internal name is defined as in the first part. An IP address is internal whatever its range: Let's Encrypt issues for no IP address through this client, and a certificate for a public address from the local authority is still useful to clients that trust it.
+
+Wildcards
+~~~~~~~~~
+
+``auto`` accepts ``*.example.org``: one label ``*`` followed by a DNS name. The certificate serves ``a.example.org``. It does not serve ``a.b.example.org`` and it does not serve ``example.org``. An exact ``auto`` name wins over a wildcard, and a wildcard ``auto`` name wins over a certificate from a file, once its certificate exists. The redirect and the HTTP-01 answer treat a host that a wildcard covers as a managed name.
+
+One certificate still has one name. ``example.org`` and ``*.example.org`` are two orders. Both use the record ``_acme-challenge.example.org`` when both use DNS-01. Orders run one at a time, each presents its own value and removes only that value, so the two never need two values at once. We keep this and say so, instead of ordering both names in one certificate.
+
+A wildcard that goes to an ACME authority needs DNS-01, so it needs ``global.acme.dns``. Without it the file is refused with the title ``WILDCARD NEEDS DNS`` and a hint that shows the two providers. A wildcard for the local authority needs nothing.
+
+The DNS-01 challenge
+~~~~~~~~~~~~~~~~~~~~
+
+The authority looks up the TXT record ``_acme-challenge.NAME``, where NAME is the name without ``*.``. Its value is the base64url SHA-256 digest of the key authorization (RFC 8555, section 8.4). We write the record through a *provider*, wait until the authoritative servers show it, tell the authority, and remove the record when the order ends.
+
+.. code-block:: text
+
+   Present(dns-01)
+     |  write "presented" file  (owner, value)        so a crash can be cleaned up
+     |  provider present owner value
+     |  wait `wait` seconds
+     |  check: every authoritative server shows the value   (at most `timeout` seconds)
+     v
+   Respond ... order ends, with or without a certificate
+     |  provider cleanup owner value
+     |  remove "presented" file
+
+``global.acme.challenge`` gains the value ``"dns-01"``. It then applies to every ACME name, also to names without a wildcard. This serves hosts with no open port 80 or 443. With ``"auto"``, a wildcard uses DNS-01 and every other name uses HTTP-01 or TLS-ALPN-01 as before. With ``"http-01"`` or ``"tls-alpn-01"`` a wildcard still uses DNS-01, because nothing else can prove it.
+
+.. list-table:: The ``global.acme.dns`` object
+   :header-rows: 1
+   :widths: 18 18 64
+
+   * - Key
+     - Default
+     - Meaning
+   * - ``hook``
+     - none
+     - The path of a program that writes and removes the record. One of ``hook`` and ``rfc2136`` is required.
+   * - ``rfc2136``
+     - none
+     - An object: ``server`` (``"IP:PORT"``, required), ``key_name`` and ``key_file`` (the TSIG key, both or neither), ``zone`` (the zone to update; found from the SOA record when absent).
+   * - ``check``
+     - ``true``
+     - Wait until every authoritative server of the zone shows the record. ``false`` skips the check, for a zone whose public servers we cannot reach (split horizon).
+   * - ``timeout``
+     - ``120``
+     - The longest wait for the check, in seconds, from 1 to 3600.
+   * - ``wait``
+     - ``0``
+     - Seconds to wait after the provider returned and before the check, from 0 to 3600. With ``check: false`` this is the whole wait.
+   * - ``resolver``
+     - the first ``nameserver`` of ``/etc/resolv.conf``
+     - ``"IP:PORT"`` of the recursive resolver that finds the zone and its servers.
+   * - ``servers``
+     - the servers of the NS records
+     - A list of 1 to 8 ``"IP:PORT"``: the authoritative servers to ask, in place of the search. This serves a hidden primary, a split horizon with a reachable inner server, and a test.
+
+The smallest forms are these.
+
+.. code-block:: text
+
+   global: { acme: { dns: { hook: "/etc/sibuna/dns-hook" } } },
+   global: { acme: { dns: { rfc2136: { server: "192.0.2.53:53", key_name: "sibuna.", key_file: "/etc/sibuna/tsig.key" } } } },
+
+**The hook program.** We run the program directly, with no shell, as ``HOOK present RECORD VALUE`` and ``HOOK cleanup RECORD VALUE``. RECORD is the owner of the record with a final dot, for example ``_acme-challenge.example.org.``, and VALUE is the text of the TXT record. These are the arguments of the ``exec`` provider of lego in its default mode, so an existing script for it works unchanged, and a wrapper of three lines adapts a hook of acme.sh or certbot. The same three values are in the environment as ``SIBUNA_ACME_ACTION``, ``SIBUNA_ACME_RECORD`` and ``SIBUNA_ACME_VALUE``, with ``SIBUNA_ACME_NAME`` for the ``auto`` name. The program inherits the environment of the daemon, which is where it finds its credentials. Standard input is closed. Exit status 0 means done. Any other status, or a signal, fails the attempt. We wait at most 60 seconds and then kill the program. We keep the last 1024 bytes that it wrote to standard output and the last 1024 bytes that it wrote to standard error, and show them, made printable, in the diagnostic. We stop the program itself. A child that the program started may live on, and we do not wait for its output. The value of a TXT record is public, so nothing secret reaches the log through us. What the script prints is the operator's own.
+
+**RFC 2136.** We send a dynamic update to ``server``: add one TXT record with a TTL of 60 seconds, or delete exactly that record. A delete names the record data, so the value of another order stays. With a TSIG key the update is signed with HMAC-SHA256 (RFC 8945) and the MAC of the answer is checked. ``key_file`` holds the secret in base64 on one line. The secret is never in the topology. Without a key the update is sent unsigned, for a server that trusts our address. The update goes over UDP, and over TCP when the answer is truncated or the message exceeds 1232 bytes. Each try waits 5 seconds, and we try three times. This covers BIND, Knot, PowerDNS and the hosted services that speak RFC 2136, without one vendor interface.
+
+We add no built-in provider for a vendor's HTTP interface. Each one is a format of its own, with its own failures, and the hook reaches all of them on the first day. A vendor provider can be added later behind the same two operations without changing this record's shape.
+
+**The check.** A recursive resolver answers from its cache and from one server. The authority asks the authoritative servers. So we ask them too.
+
+#. Follow CNAME records from ``_acme-challenge.NAME``, at most 8, through the resolver. The last owner is where the record must be. This is the delegation of validation to another zone. The provider is still called with the first owner, the one in the challenge: a hook that follows the delegation itself must resolve it itself, and with ``rfc2136`` we set ``zone`` and write into the delegated zone only when the first owner lies in it. We say so under the gaps.
+#. Find the zone: ask the resolver for the SOA record of the owner, then of each parent, until one answers with a SOA record for the asked name.
+#. Ask the resolver for the NS records of the zone and for the addresses of each server. We use at most 8 servers and 4 addresses of each.
+#. Ask each address for the TXT record, without recursion, over UDP and over TCP when truncated.
+#. The record is visible when every server that answers shows the value, and at least one answers.
+#. Repeat every 2 seconds until ``timeout``.
+
+When the time is over, the attempt fails with ``ACME010`` and the usual retry delay. The diagnostic names the servers that did not show the value.
+
+Every DNS message we read is bounded: at most 65535 bytes over TCP and 4096 over UDP, at most 64 records read from a message, at most 16 compression pointers followed in a name, names of at most 255 bytes. A message that breaks a bound or the format is an answer we did not get. Nothing in a message can make the daemon panic or loop. The identifier and the question of an answer must be those of our query.
+
+**Cleanup.** Before the provider is called, the daemon writes the file ``certs/NAME/dns`` with the owner and the value. It removes the file after ``cleanup`` succeeded. When an order ends, with or without a certificate, cleanup runs. When the daemon starts and finds the file, it runs cleanup first: the process died in between. A cleanup that fails is reported with ``ACME009`` and does not fail the order, and the file stays, so the next attempt for the name cleans up again.
+
+.. list-table:: New failures
+   :header-rows: 1
+   :widths: 12 24 64
+
+   * - Code
+     - Title
+     - Cause and hint
+   * - ``ACME009``
+     - DNS PROVIDER FAILED
+     - The hook exited with a status other than 0 or ran too long, or the server refused the update. The message has the status, or the response code, and the end of the output. The hint says to run the hook by hand with the same arguments, or to check the TSIG key and the update policy of the zone.
+   * - ``ACME010``
+     - RECORD NOT VISIBLE
+     - The authoritative servers did not all show the record in time. The hint says to raise ``timeout``, or to set ``check: false`` when the public servers of the zone cannot be reached from this node.
+   * - ``ACME011``
+     - LOCAL AUTHORITY FAILED
+     - The root or the intermediate of the local authority could not be created, read or used. The hint names the storage directory.
+
+The local authority
+~~~~~~~~~~~~~~~~~~~
+
+The local authority is a certificate authority that the daemon creates and keeps in its storage directory. It has a root and an intermediate, as Caddy's internal issuer has.
+
+.. code-block:: text
+
+   STORAGE/local/
+     root.pem            the root certificate and its key, mode 0600, valid 10 years
+     root.crt            the root certificate alone, the file to install in clients
+     intermediate.pem    the intermediate and its key, mode 0600, valid 7 days
+     certs/NAME/...      leaves, as for an ACME authority
+     locks/NAME.lock
+
+.. list-table:: The certificates of the local authority
+   :header-rows: 1
+   :widths: 16 16 68
+
+   * - Certificate
+     - Lifetime
+     - Contents
+   * - Root
+     - 10 years
+     - ``Sibuna Local Authority - Root``. basicConstraints CA with path length 1, critical. keyUsage keyCertSign and cRLSign, critical. Subject key identifier.
+   * - Intermediate
+     - 7 days
+     - ``Sibuna Local Authority - Intermediate``. basicConstraints CA with path length 0, critical. keyUsage as the root. Subject and authority key identifiers.
+   * - Leaf
+     - 12 hours
+     - The name as common name. subjectAltName with dNSName or iPAddress entries. keyUsage digitalSignature, critical. extendedKeyUsage serverAuth. Authority key identifier. The served chain is the leaf and the intermediate.
+
+Keys are ECDSA P-256. A serial number is 8 bytes from the random source of the system. A validity starts one minute before the time of issue, for clients whose clock is a little behind. A leaf with a lifetime under two minutes starts half its lifetime early instead, so that its renewal time lies ahead. A leaf never outlives the intermediate that signed it.
+
+The root is created once, under a temporary name, and linked into place only when no root is there. Two nodes that start together on shared storage therefore end with one root, as with the account key. The intermediate is replaced when two thirds of its life have passed, or when it would end before a new leaf. A replacement is one rename. A leaf carries the intermediate that signed it, so a leaf of the old intermediate stays valid.
+
+Leaves are issued and renewed by the same thread, with the same schedule, lock and retry as ACME certificates: renewal at two thirds of the lifetime, which is every 8 hours, and an install with no reload. Issuing needs no network. ``global.acme.internal: { lifetime: SECONDS }`` changes the lifetime of a leaf, from 10 seconds to 2 days. The default is 43200.
+
+We add no name constraints to the root. A constraint to the configured names would have to change with every reload, and clients differ in how they treat constraints on a root. The cost is stated under Security: whoever reads ``root.pem`` can issue for any name to the clients that trust this root.
+
+**IP addresses.** ``auto`` accepts an IPv4 or IPv6 address. A client that connects to an address sends no server name. A handshake without a server name therefore receives, in this order: the certificate of the first IP address under ``auto`` of the listener, the first certificate from a file, the certificate of the first ``auto`` name. A leaf for an IP address lists every IP address that the daemon manages, so one listener with several addresses serves all of them without a server name. When a reload adds an address, the leaves of the addresses are issued again at once.
+
+**Trust.** A client trusts a leaf when the root is in its trust store. The daemon never touches a trust store. ``sibuna ctl SOCKET show ca`` prints the path of ``root.crt``, the validity and the PEM text. The book shows how to install the file on Linux, macOS and Windows, and how to pass it to curl. We leave automatic installation out: it needs the rights of an administrator, differs per system, and must never happen silently.
+
+**Security.** ``root.pem`` and ``intermediate.pem`` have mode 0600 in a directory of mode 0700. A reader of the root key can impersonate any site to every client that installed the root. The root is therefore for machines we control, which is the purpose of an internal name. A node that needs no internal name creates no authority: the files appear with the first internal name.
+
+``show certs`` gains the column ``via``: ``http-01``, ``tls-alpn-01``, ``dns-01`` or ``local``. The issuer column shows the issuer of the served certificate, which is the intermediate of the local authority or that of the ACME authority.
+
+The quick start gains ``--acme-dns-hook PROGRAM``. ``sibuna lb --tls auto --domain localhost --server ADDR`` needs no flag: the name is internal. The RFC 2136 provider needs a file.
 
 Rationale and alternatives
 --------------------------
@@ -469,13 +658,45 @@ The record is implemented on the branch ``sid-0021-automatic-https``. The table 
    * - A restart reuses the stored certificate.
      - The second test: the same certificate after a restart, one order in all, the line ``loaded from storage``.
    * - The client works with a real ACME server.
-     - Two runs against Pebble 2.10.3, recorded under "Interoperation with Pebble".
+     - Three runs against Pebble 2.10.3, recorded under "Interoperation with Pebble".
+   * - DNS messages are written and read with bounds.
+     - ``crates/acme/src/dns/wire.rs``: a query, an answer with compression pointers, addresses, truncation, every prefix and 6 values at every byte of an answer, pointer loops, forward pointers, a chain of 17 pointers, reserved label types, a name over 255 bytes, a message that claims 196605 records.
+   * - TSIG and the update are those of another implementation.
+     - ``crates/acme/src/dns/tsig.rs`` and ``update.rs``: the unsigned update, the signed update, its MAC and the signed answer are compared byte by byte with messages produced by miekg/dns 1.1.62, the library of CoreDNS and of Pebble. RFC 8945 has no test vector. A wrong secret, a wrong key name, a changed response code, a late answer, an unsigned answer and the error BADKEY are refused.
+   * - The hook contract holds.
+     - ``crates/acme/src/dns/tests.rs``: three arguments and four variables, closed standard input, a status of 3 with the end of 400 lines of output and no control character, a program stopped after its timeout, a program that does not exist.
+   * - The record is remembered until its cleanup succeeded.
+     - ``the_solver_remembers_the_record_until_its_cleanup_succeeded``: a failed cleanup keeps the file, a failed present keeps it, a new process removes the record of a dead one.
+   * - The check asks the authoritative servers.
+     - ``crates/acme/src/dns/tests.rs`` with the server of ``dns/server.rs``: the zone by SOA, the servers by NS and A, a CNAME delegation into another zone, a loop of aliases, another value of the same owner, the fall to TCP, one server of two without the record, a silent server, an answer to another question, and the failure that names the servers.
+   * - A wildcard is obtained with DNS-01 and serves one label.
+     - ``cmd/sibuna/tests/edge_acme.rs``: the binary with a hook and with a signed update against a DNS server and an authority inside the test, which validates by asking that server. A name and its wildcard share one record. ``a.apex`` gets the wildcard, ``apex`` its own certificate, ``a.b.apex`` not the wildcard. No record is left.
+   * - Provider failures have a code and a hint.
+     - ``a_failing_provider_and_an_invisible_record_are_reported_with_hints``: ACME009 with the status and the output, ACME010 with the server, the cleanup after both, and no validation asked of the authority.
+   * - The local authority writes correct certificates.
+     - ``crates/acme/src/local.rs``: ``openssl verify -x509_strict -purpose sslserver`` accepts the chain with the root, for a host name and for an IP address, and refuses it for another name and without the intermediate. File modes, one root for two openers, the replacement of the intermediate, a leaf that ends with its issuer, a damaged root that is reported and kept.
+   * - Internal names and addresses are served with no setting.
+     - ``internal_names_and_addresses_are_served_from_the_local_authority``: a rustls client that trusts only the root of ``show ca`` accepts ``localhost``, ``127.0.0.1`` without a server name and a host under ``*.corp.internal``; it refuses another name and another root. No ACME directory exists in the storage. A second node on the same storage and a restart serve the same root and the same leaf.
+   * - Local renewal, a new address, both issuers, the override.
+     - The two tests after it: a leaf of 12 seconds is replaced with no restart; a reload adds ``127.0.0.2`` and the certificate without a server name lists both; one frontend serves a name of the test authority and an address of the local one; ``issuer: "internal"`` serves ``www.example.org`` from the local root.
+   * - The check refuses what cannot work.
+     - ``the_check_refuses_an_internal_name_for_acme_and_a_wildcard_without_dns`` runs ``sibuna check``: NAME NOT PUBLIC and WILDCARD NEEDS DNS, each with its hint.
 
 Known gaps
 ~~~~~~~~~~
 
-#. No DNS-01 challenge and no wildcard certificate.
-#. No local authority for internal names.
+#. DNS-01 has two providers, the hook and RFC 2136. No vendor interface is built in.
+#. The provider is called with the owner of the challenge, not with the target of a CNAME delegation. The check follows the delegation. A hook must resolve it itself, and ``rfc2136`` writes the first owner into ``zone``.
+#. The search for the zone and its servers is tested inside the crate only, with a server on a loopback port. The tests through the binary and the run against Pebble name the servers with ``servers``, because the search asks port 53.
+#. The check asks every address of every name server, also an IPv6 address on a node without IPv6. Such a server does not answer and is left out. A zone whose servers all fail to answer fails the check.
+#. A hook that runs too long is stopped. A process that the hook started is not.
+#. An unsigned RFC 2136 update trusts the answer by the address and the identifier only. Use a TSIG key outside a loopback or a trusted link.
+#. A record that was presented for a name is cleaned at the start and at the next attempt for that name. When the name leaves the file before that, the record stays.
+#. The local authority has no name constraints, no revocation and no automatic installation of its root.
+#. A leaf of the local authority that was stored under another root, because the storage lost ``root.pem``, is served until its renewal, at most 8 hours with the default lifetime.
+#. ``root.crt`` has mode 0600 like every file of the storage. ``show ca`` prints it for a user who may use the admin socket.
+#. The local authority is not an ACME server for other machines.
+#. ``sibuna lb`` has ``--acme-dns-hook`` only. The RFC 2136 provider, ``issuer`` and the check settings need a file.
 #. No issuance on demand.
 #. One authority, no external account binding.
 #. No ACME Renewal Information (RFC 9773), no revocation, no OCSP stapling for automatic certificates.
@@ -493,7 +714,7 @@ Known gaps
 Formal model
 ~~~~~~~~~~~~
 
-``docs/sid/assets/automatic-https.lean`` models four things with Lean 4.19.0. The order machine is a phase and a budget. An answer is good, a repetition, a skip over the challenge, or bad. We prove that a step never moves a phase backwards, that every step of a live order takes budget or ends the order, that an order of budget :math:`n` is over after :math:`n + 1` steps whatever the authority answers, and that ``Done`` is entered only from ``Download``. For the schedule we prove that the renewal time lies in :math:`[b, e)` for :math:`b < e`. For the retry delay we prove that it is at least the first delay, at most one day, and monotone in the number of failures. For the table we prove that a failed order leaves the served certificate unchanged, that a served name never loses its certificate, and that the expiry of a served certificate never decreases. The JSON, the signatures, the sockets and the files are outside the model. Tests cover them.
+``docs/sid/assets/automatic-https.lean`` models seven things with Lean 4.19.0. The order machine is a phase and a budget. An answer is good, a repetition, a skip over the challenge, or bad. We prove that a step never moves a phase backwards, that every step of a live order takes budget or ends the order, that an order of budget :math:`n` is over after :math:`n + 1` steps whatever the authority answers, and that ``Done`` is entered only from ``Download``. For the schedule we prove that the renewal time lies in :math:`[b, e)` for :math:`b < e`. For the retry delay we prove that it is at least the first delay, at most one day, and monotone in the number of failures. For the table we prove that a failed order leaves the served certificate unchanged, that a served name never loses its certificate, and that the expiry of a served certificate never decreases. For the issuer we prove that no name is refused when the frontend states no issuer, that a public authority receives public names only, that no ACME authority is asked for an address, and that ``internal`` always means the local authority. For wildcards, with a host as its list of labels, we prove that ``*.parent`` covers a host of one more label, that it covers neither the parent nor a host of two more labels, that a covered host has exactly one label more, and that the choice among an exact certificate, a wildcard and a file takes them in this order. For the propagation check we prove that it asks at most :math:`\lfloor t / p \rfloor + 1` times for a timeout :math:`t` and a pause :math:`p`, that its pauses sum to at most :math:`t`, that a record which shows in a round the check reaches is found, and that a record which never shows fails the check. The JSON, the DNS messages, the signatures, the sockets and the files are outside the model. Tests cover them.
 
 Interoperation with Pebble
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -533,11 +754,30 @@ Pebble ran with ``PEBBLE_VA_ALWAYS_VALID=0``, so it validated every name itself,
 
 The first attempt at this run found two defects, which the implementation review below records: an order placed by a daemon that then failed to start, and the lock file that this daemon left behind.
 
+A third run on the same day used DNS-01. ``pebble-challtestsrv`` of the same Pebble release was the DNS server, on ``127.0.0.1:25053``, with its management interface on ``127.0.0.1:25055``, and Pebble resolved through it (``-dnsserver``). The hook of the run was a script of the scratch directory that posts ``set-txt`` and ``clear-txt`` to the management interface. The file named ``challenge: "dns-01"``, the hook, ``servers: ["127.0.0.1:25053"]`` and the names ``*.wild.example.com``, ``wild.example.com`` and ``127.0.0.1``. The test server does not answer SOA and NS questions, so the search for the zone was not part of this run.
+
+.. list-table:: One run of 50 seconds with DNS-01
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Observation
+     - Result
+   * - First certificates
+     - All three names ``ready`` within 16 seconds: two with ``dns-01`` from ``Pebble Intermediate CA``, the address with ``local``.
+   * - Served chains
+     - ``openssl s_client -CAfile`` with Pebble's root and ``-verify_hostname``: ``Verify return code: 0 (ok)`` for ``a.wild.example.com``, which received the certificate of ``*.wild.example.com``, and for ``wild.example.com``. With the root of ``show ca``, no server name and ``-verify_ip 127.0.0.1``: 0 (ok). ``curl --cacert`` with that root verified the address too.
+   * - The record
+     - The hook ran ``present`` and ``cleanup`` once for each order, both for ``_acme-challenge.wild.example.com.``.
+   * - Renewal
+     - With a lifetime of 40 seconds both ACME names were renewed with new serials, with no restart. Pebble validated with ``dns-01`` four times and issued four certificates.
+   * - Failures
+     - None.
+
 Open questions
 --------------
 
-#. Should a DNS provider interface be added for wildcards?
-#. Should a local authority serve internal names, as in Caddy?
+#. Should the root of the local authority be installed by a command of ours?
+#. Should a vendor provider for DNS be built in?
 #. Should ``show certs`` have a command that renews a name at once?
 
 Review history
@@ -550,6 +790,12 @@ Review history
 - 2026-11-24. Merge with ``main`` after SID 0020, the takeover of ``global.reuse_port`` and the bound on TLS connections per client. Three files conflicted, all by adjacent additions, and both sides were kept: ``crates/lb/src/config.rs`` (the ``acme`` field beside ``reuse_port`` and ``observe``), and the two index files of the records. A validation connection of TLS-ALPN-01 takes a place under the client bound like any TLS connection and gives it back when the handshake ends; it is refused only when the address of the authority already holds ``max_connections_per_ip`` connections. The record gained the sections on the access log, the metrics and the takeover.
 - 2026-11-24. Second merge with ``main``, after the client certificate field, the takeover of HTTP/3 and the per-client bound on QUIC connections. Three files conflicted and both sides were kept. In ``crates/ingress/src/lib.rs`` the TLS-ALPN-01 handshake ends before the fingerprint of a client certificate is taken, and the choice between HTTP/2 and HTTP/1.1 follows as on ``main``. In ``cmd/sibuna/src/edge/http.rs`` both branches had moved the limits of the TLS front into a function ``ingress_limits``; the one of ``main`` stays, with its ``share_address``. ``Cargo.lock`` lists the dependencies of both. The QUIC listener of a frontend with ``auto`` names uses the same resolver, so HTTP/3 serves the automatic certificate too.
 - 2026-11-24. Third merge with ``main``, after SID 0019. One file conflicted, ``crates/lb/src/lib.rs``, by adjacent lines: the export of ``QuickAutomatic`` and the new module ``route`` both stay. The merge also joined the two redirects as the section "The redirect" describes: ``RoutePolicy`` gained ``keeps_http`` and ``redirect_to``, ``traffic::redirect`` became visible to the crate, the automatic redirect lost its own writer, and the status 308 that this record had added to ``sibuna-http`` was dropped again. A third binary test covers a frontend with ``redirect_https: 301``, a route with ``redirect_https: false`` and a managed name together.
+
+- 2026-11-24. Second part, first draft: ``tls.issuer``, wildcards, DNS-01 with a hook and RFC 2136, the check at the authoritative servers, the local authority.
+- 2026-11-24. Author's review of the second part before implementation. It found seven faults and changed the draft for each. The draft ordered ``example.org`` and ``*.example.org`` in one certificate, which needs two values on one record at once and a provider that can hold both; one certificate per name with a delete that names the value needs neither. The draft cleaned up only at the end of an order; a daemon killed in between would have left a record for ever, so the presented record is written to the storage first and cleaned at the next start. The draft trusted the answer of an RFC 2136 server by its response code; a forged answer could have reported success, so the MAC of the answer is checked. The draft asked the recursive resolver for the TXT record; its cache would have hidden a record that is not there yet, or shown one that only one server has, so every authoritative server is asked. The draft gave the leaf of the local authority 12 hours and the intermediate 7 days with no rule between them; a leaf signed in the last hours would have outlived its issuer, so a leaf ends with the intermediate and the intermediate is replaced early. The draft let a handshake without a server name fall to the first file certificate; a frontend that names an IP address would never have served it, so the IP certificate comes first and lists all managed addresses. The draft printed the root through a new subcommand that read the storage directory; that needs the rights of the daemon's user anyway, so the admin socket answers it and no second path to the key directory exists.
+- 2026-11-24. Author's review of the implementation of the second part, with the tests and the Pebble run as instruments. It found nine defects and fixed each. (1) A name that could not be written left its first labels in the message; ``write_name`` now removes them, and a test compares the buffer. (2) The end of the hook's output was cut where it mattered: both streams were joined and the end was dropped; each stream now keeps its own last 1024 bytes, standard output first. (3) The tests of the hook failed now and then with "Text file busy", because a program started by one test thread held the script of another for a moment; the tests that write a script or start a program take one lock. (4) The certificate of a leaf with a short lifetime was due before it was issued, because the validity started a minute early; a short leaf now starts half its lifetime early. (5) The daemon announced "from Let's Encrypt" for names that all go to the local authority; the line now names each source with its count, and a node with internal names only opens no ACME account. (6) A record whose cleanup had failed was forgotten by the next order, which stores its own record in the same file; the next attempt now cleans first. (7) The cleanup of a leftover record ran without the lock of the name, so on shared storage it could have removed the record of another node's running order; it now takes the lock and leaves the record when it cannot. (8) The check of the test that trusts "another root" used the intermediate, which a verifier accepts as an anchor; it now uses a root of another authority. (9) The hint of a failed validation named ports only; it now names the TXT record for DNS-01. The review also recorded the gaps 3 to 12 above.
+- 2026-11-24. Fourth merge with ``main``, after SID 0022 and the function ``note`` for the lines of the running edge. No file conflicted. The new diagnostic of a failed cleanup is written through ``note``, like the other lines of the certificate thread.
+- 2026-11-24. Fifth merge with ``main``, after the ``local`` word of ``set server``. One file conflicted, ``cmd/sibuna/src/edge/control.rs``, in the usage text: the line ``show ca`` and the new form of ``set server`` both stay.
 
 References
 ----------

@@ -19,6 +19,7 @@ show servers
 show info
 show stats
 show certs
+show ca
 set server POOL/NAME state ready|drain [local]
 set server POOL/NAME weight N
 add server POOL/NAME IP:PORT [weight N]
@@ -35,6 +36,8 @@ pub(super) enum Command {
     ShowStats,
     /// The certificates of automatic HTTPS (SID 0021).
     ShowCerts,
+    /// The root certificate of the local authority (SID 0021).
+    ShowCa,
     Help,
     Reload,
     State {
@@ -66,7 +69,12 @@ impl Command {
     pub fn changes(&self) -> bool {
         !matches!(
             self,
-            Self::ShowServers | Self::ShowInfo | Self::ShowStats | Self::ShowCerts | Self::Help
+            Self::ShowServers
+                | Self::ShowInfo
+                | Self::ShowStats
+                | Self::ShowCerts
+                | Self::ShowCa
+                | Self::Help
         )
     }
 }
@@ -149,6 +157,7 @@ pub(super) fn parse(line: &str) -> Result<Command, RuntimeError> {
         ["show", "info"] => Ok(Command::ShowInfo),
         ["show", "stats"] => Ok(Command::ShowStats),
         ["show", "certs"] => Ok(Command::ShowCerts),
+        ["show", "ca"] => Ok(Command::ShowCa),
         ["help"] => Ok(Command::Help),
         ["reload"] => Ok(Command::Reload),
         ["set", "server", server, "state", word] => {
@@ -326,6 +335,7 @@ mod tests {
         assert_eq!(parse("  show   info "), Ok(Command::ShowInfo));
         assert_eq!(parse("show stats"), Ok(Command::ShowStats));
         assert_eq!(parse("show certs"), Ok(Command::ShowCerts));
+        assert_eq!(parse("show ca"), Ok(Command::ShowCa));
         assert_eq!(parse("reload"), Ok(Command::Reload));
         let (pool, name) = server("app", "10.0.0.1:80");
         let drain = Command::State { pool, name, state: ServerState::Drain, local: false };
