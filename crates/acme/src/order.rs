@@ -81,6 +81,8 @@ pub enum ChallengeKind {
     Http01,
     /// A certificate on port 443 for the protocol `acme-tls/1`.
     TlsAlpn01,
+    /// A TXT record `_acme-challenge.NAME`. The only type that proves a wildcard.
+    Dns01,
 }
 
 impl ChallengeKind {
@@ -89,14 +91,16 @@ impl ChallengeKind {
         match self {
             Self::Http01 => "http-01",
             Self::TlsAlpn01 => "tls-alpn-01",
+            Self::Dns01 => "dns-01",
         }
     }
 
-    /// The other type.
+    /// The other type that a listener of ours can answer. DNS-01 has no other.
     pub fn other(self) -> Self {
         match self {
             Self::Http01 => Self::TlsAlpn01,
             Self::TlsAlpn01 => Self::Http01,
+            Self::Dns01 => Self::Dns01,
         }
     }
 }
@@ -112,6 +116,21 @@ pub struct Challenge {
     pub token: String,
     /// The token, a dot and the thumbprint of the account key.
     pub key_authorization: String,
+}
+
+impl Challenge {
+    /// The owner of the TXT record of DNS-01, without a final dot: `_acme-challenge.`
+    /// and the name without its `*.` (RFC 8555, section 8.4).
+    pub fn dns_owner(&self) -> String {
+        format!("_acme-challenge.{}", self.name.strip_prefix("*.").unwrap_or(&self.name))
+    }
+
+    /// The text of the TXT record of DNS-01: the SHA-256 digest of the key
+    /// authorization in base64url.
+    pub fn dns_value(&self) -> String {
+        let digest = sibuna_crypto::sha256::Sha256::digest(self.key_authorization.as_bytes());
+        jws::base64url(&digest)
+    }
 }
 
 /// An issued certificate.

@@ -84,7 +84,7 @@ fn failure(path: &Path, error: impl std::fmt::Display) -> Error {
 }
 
 /// Creates a directory and its parents, readable by the owner only.
-fn create_private_dir(path: &Path) -> io::Result<()> {
+pub(crate) fn create_private_dir(path: &Path) -> io::Result<()> {
     let mut builder = fs::DirBuilder::new();
     builder.recursive(true);
     #[cfg(unix)]
@@ -96,7 +96,7 @@ fn create_private_dir(path: &Path) -> io::Result<()> {
 }
 
 /// Opens a new file that only the owner may read. Fails when the file exists.
-fn create_private_file(path: &Path) -> io::Result<File> {
+pub(crate) fn create_private_file(path: &Path) -> io::Result<File> {
     let mut options = OpenOptions::new();
     options.write(true).create_new(true);
     #[cfg(unix)]
@@ -108,7 +108,7 @@ fn create_private_file(path: &Path) -> io::Result<File> {
 }
 
 /// Reads a file of at most [`MAX_FILE`] bytes. A missing file is `None`.
-fn read_bounded(path: &Path) -> Result<Option<String>, Error> {
+pub(crate) fn read_bounded(path: &Path) -> Result<Option<String>, Error> {
     let file = match File::open(path) {
         Ok(file) => file,
         Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
@@ -123,14 +123,14 @@ fn read_bounded(path: &Path) -> Result<Option<String>, Error> {
 }
 
 /// The temporary name beside `path`, unique to this process.
-fn temporary(path: &Path) -> PathBuf {
+pub(crate) fn temporary(path: &Path) -> PathBuf {
     let mut name = path.as_os_str().to_owned();
     name.push(format!(".tmp-{}", std::process::id()));
     PathBuf::from(name)
 }
 
 /// Writes a private file under a temporary name and gives it its final name.
-fn write_private(path: &Path, text: &str) -> Result<(), Error> {
+pub(crate) fn write_private(path: &Path, text: &str) -> Result<(), Error> {
     let temporary = temporary(path);
     let _ = fs::remove_file(&temporary);
     let written = create_private_file(&temporary).and_then(|mut file| {
@@ -145,15 +145,23 @@ fn write_private(path: &Path, text: &str) -> Result<(), Error> {
 }
 
 /// Checks that a name is safe as a path component: a lower-case DNS name.
-fn component(name: &str) -> Result<&str, Error> {
+///
+/// A wildcard `*.example.org` is stored as `_.example.org`, and the colons of an IPv6
+/// address as underscores. No host name has an underscore, so the names stay apart.
+fn component(name: &str) -> Result<String, Error> {
+    let stored = match name.strip_prefix("*.") {
+        Some(parent) => format!("_.{parent}"),
+        None => name.replace(':', "_"),
+    };
     let safe = !name.is_empty()
         && name.len() <= 253
         && !name.starts_with('.')
         && !name.contains("..")
-        && name
+        && !name.contains('_')
+        && stored
             .bytes()
-            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b"-.".contains(&b));
-    if safe { Ok(name) } else { Err(Error::storage(format!("`{name}` is no stored name."))) }
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b"-._".contains(&b));
+    if safe { Ok(stored) } else { Err(Error::storage(format!("`{name}` is no stored name."))) }
 }
 
 impl Store {
@@ -226,6 +234,29 @@ impl Store {
         create_private_dir(&dir).map_err(|error| failure(&dir, error))?;
         write_private(&dir.join("key.pem"), &key.to_pem())?;
         write_private(&dir.join("cert.pem"), chain_pem)
+    }
+
+    /// The DNS-01 record that an order of `name` presented and has not removed yet:
+    /// its owner and its value. A daemon that died in between finds it at its start.
+    pub fn load_presented(&self, name: &str) -> Option<(String, String)> {
+        let path = self.name_dir(name).ok()?.join("dns");
+        let text = read_bounded(&path).ok()??;
+        let (owner, value) = text.trim().split_once(' ')?;
+        Some((owner.to_owned(), value.to_owned()))
+    }
+
+    /// Records that the DNS-01 record `owner` with `value` is about to be presented.
+    pub fn save_presented(&self, name: &str, owner: &str, value: &str) -> Result<(), Error> {
+        let dir = self.name_dir(name)?;
+        create_private_dir(&dir).map_err(|error| failure(&dir, error))?;
+        write_private(&dir.join("dns"), &format!("{owner} {value}\n"))
+    }
+
+    /// Forgets the presented record of `name` after its cleanup.
+    pub fn clear_presented(&self, name: &str) {
+        if let Ok(dir) = self.name_dir(name) {
+            let _ = fs::remove_file(dir.join("dns"));
+        }
     }
 
     /// The retry state of `name`, if a failure left one. An unreadable file is no state.
@@ -452,6 +483,26 @@ mod tests {
         assert_eq!(scratch.store().load_retry("example.org"), Some(retry));
         store.clear_retry("example.org");
         assert_eq!(store.load_retry("example.org"), None);
+    }
+
+    #[test]
+    fn wildcards_addresses_and_presented_records_have_files_of_their_own() {
+        let scratch = Scratch::new("names");
+        let store = scratch.store();
+        assert_eq!(component("*.example.org").unwrap(), "_.example.org");
+        assert_eq!(component("2001:db8::1").unwrap(), "2001_db8__1");
+        assert_eq!(component("127.0.0.1").unwrap(), "127.0.0.1");
+        for bad in ["", "../x", "a/b", "_.example.org", "A.example"] {
+            assert!(component(bad).is_err(), "{bad}");
+        }
+        assert_eq!(store.load_presented("*.example.org"), None);
+        store.save_presented("*.example.org", "_acme-challenge.example.org", "abc-_1").unwrap();
+        let found = store.load_presented("*.example.org").unwrap();
+        assert_eq!(found, ("_acme-challenge.example.org".to_owned(), "abc-_1".to_owned()));
+        assert_eq!(store.load_presented("example.org"), None);
+        store.clear_presented("*.example.org");
+        assert_eq!(store.load_presented("*.example.org"), None);
+        assert!(store.lock("*.example.org").unwrap().is_some());
     }
 
     #[test]
