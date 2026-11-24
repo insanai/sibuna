@@ -250,14 +250,15 @@ impl Store {
         }
     }
 
-    /// Takes the lock of `name`. Returns `None` while another node holds it. A lock older
-    /// than [`STALE_LOCK`] is removed and taken.
+    /// Takes the lock of `name`. Returns `None` while another node holds it. A lock is
+    /// removed and taken when it is older than [`STALE_LOCK`], or when the process that
+    /// wrote it on this host is gone.
     pub fn lock(&self, name: &str) -> Result<Option<Lock>, Error> {
         let path = self.root.join("locks").join(format!("{}.lock", component(name)?));
         for _ in 0..2 {
             match create_private_file(&path) {
                 Ok(mut file) => {
-                    let _ = writeln!(file, "{}", std::process::id());
+                    let _ = writeln!(file, "{}", Holder::this());
                     return Ok(Some(Lock { path }));
                 }
                 Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
@@ -267,12 +268,70 @@ impl Store {
                 .and_then(|meta| meta.modified())
                 .ok()
                 .and_then(|modified| SystemTime::now().duration_since(modified).ok());
-            if age.is_none_or(|age| age < STALE_LOCK) {
+            let abandoned = read_bounded(&path)
+                .ok()
+                .flatten()
+                .is_some_and(|text| Holder::parse(&text).is_some_and(|holder| holder.is_gone()));
+            if !abandoned && age.is_none_or(|age| age < STALE_LOCK) {
                 return Ok(None);
             }
             let _ = fs::remove_file(&path);
         }
         Ok(None)
+    }
+}
+
+/// Who wrote a lock file: the host, the process, and the moment the process first took
+/// a lock. A daemon that stops in the middle of an order leaves its lock behind. The
+/// next start on the same host sees that the writer is gone and does not wait.
+#[derive(Debug, PartialEq, Eq)]
+struct Holder {
+    host: String,
+    process: u32,
+    started: u128,
+}
+
+impl Holder {
+    /// This process.
+    fn this() -> Self {
+        static STARTED: std::sync::OnceLock<u128> = std::sync::OnceLock::new();
+        let started = *STARTED.get_or_init(|| {
+            let since = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH);
+            since.map_or(0, |since| since.as_nanos())
+        });
+        let host = fs::read_to_string("/proc/sys/kernel/hostname").unwrap_or_default();
+        let host = host.trim();
+        // An empty host name would shift the words of the file.
+        let host = if host.is_empty() { "-" } else { host };
+        Self { host: host.to_owned(), process: std::process::id(), started }
+    }
+
+    fn parse(text: &str) -> Option<Self> {
+        let mut words = text.split_ascii_whitespace();
+        let host = words.next()?.to_owned();
+        let process = words.next()?.parse().ok()?;
+        let started = words.next()?.parse().ok()?;
+        Some(Self { host, process, started })
+    }
+
+    /// Whether the writer ran on this host and no longer runs. Without a host name or
+    /// without `/proc` we cannot tell, and the age of the lock decides.
+    fn is_gone(&self) -> bool {
+        let this = Self::this();
+        if this.host == "-" || self.host != this.host || !Path::new("/proc/self").exists() {
+            return false;
+        }
+        if self.process == this.process {
+            // The number of an earlier process, as in a container that starts again.
+            return self.started != this.started;
+        }
+        !Path::new("/proc").join(self.process.to_string()).exists()
+    }
+}
+
+impl std::fmt::Display for Holder {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} {} {}", self.host, self.process, self.started)
     }
 }
 
@@ -409,6 +468,26 @@ mod tests {
         File::options().write(true).open(&again.path).unwrap().set_modified(old).unwrap();
         std::mem::forget(again);
         assert!(store.lock("example.org").unwrap().is_some());
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn a_lock_of_a_process_that_is_gone_is_taken_at_once() {
+        let scratch = Scratch::new("gone");
+        let store = scratch.store();
+        let path = store.root.join("locks").join("example.org.lock");
+        let this = Holder::this();
+        let leave = |holder: &Holder| fs::write(&path, holder.to_string()).unwrap();
+        // No process has this number.
+        leave(&Holder { host: this.host.clone(), process: u32::MAX, started: 1 });
+        drop(store.lock("example.org").unwrap().unwrap());
+        // Our number, from an earlier start.
+        leave(&Holder { host: this.host.clone(), process: this.process, started: 1 });
+        drop(store.lock("example.org").unwrap().unwrap());
+        // Another host: we cannot see its processes.
+        leave(&Holder { host: "elsewhere".to_owned(), process: u32::MAX, started: 1 });
+        assert!(store.lock("example.org").unwrap().is_none());
+        assert_eq!(Holder::parse(&this.to_string()), Some(this));
     }
 
     #[test]
