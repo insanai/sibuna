@@ -135,6 +135,25 @@ pub fn fixture(name: &str) -> String {
     root.join("../../crates/tls/tests/data").join(name).to_str().unwrap().to_owned()
 }
 
+/// Whether a new TLS connection to the edge completes its handshake.
+pub async fn handshakes(
+    vip: SocketAddr,
+) -> Option<tokio_rustls::client::TlsStream<tokio::net::TcpStream>> {
+    let mut trust = rustls::RootCertStore::empty();
+    trust.add(CertificateDer::from_pem_file(fixture("ca.pem")).unwrap()).unwrap();
+    let mut config = rustls::ClientConfig::builder_with_provider(Arc::new(
+        rustls::crypto::ring::default_provider(),
+    ))
+    .with_safe_default_protocol_versions()
+    .unwrap()
+    .with_root_certificates(trust)
+    .with_no_client_auth();
+    config.alpn_protocols = vec![b"h2".to_vec()];
+    let tcp = tokio::net::TcpStream::connect(vip).await.ok()?;
+    let connector = tokio_rustls::TlsConnector::from(Arc::new(config));
+    connector.connect("localhost".try_into().unwrap(), tcp).await.ok()
+}
+
 /// A gRPC client connection: HTTP/2 over TLS to the edge.
 pub async fn connect(vip: SocketAddr) -> hyper::client::conn::http2::SendRequest<Body> {
     let mut trust = rustls::RootCertStore::empty();

@@ -406,6 +406,32 @@ pub(crate) fn admit(server: &Arc<Server>, stream: &TcpStream, peer: IpAddr) -> O
     }
 }
 
+/// Takes a place for a TLS connection from `peer`, or returns `None`. Nothing is
+/// written: a client that has not finished its handshake could not read a refusal.
+pub(crate) fn admit_secure(server: &Arc<Server>, peer: IpAddr) -> Option<Admitted> {
+    let limit = server.max_connections.load(Ordering::Relaxed);
+    if server.connections.fetch_add(1, Ordering::Relaxed) >= limit {
+        server.connections.fetch_sub(1, Ordering::Relaxed);
+        server.metrics.overloaded.bump();
+        return None;
+    }
+    match server.peers.admit(peer, server.config.max_connections_per_ip) {
+        Ok(ticket) => Some(Admitted { server: Arc::clone(server), ticket: Some(ticket) }),
+        Err(_) => {
+            server.connections.fetch_sub(1, Ordering::Relaxed);
+            server.metrics.overloaded.bump();
+            None
+        }
+    }
+}
+
+/// The place of a connection that the TLS front hands over. Its client was counted
+/// when the TLS connection was accepted, so it takes no place under the client bound.
+pub(crate) fn admit_handoff(server: &Arc<Server>) -> Admitted {
+    server.connections.fetch_add(1, Ordering::Relaxed);
+    Admitted { server: Arc::clone(server), ticket: None }
+}
+
 /// A connection's places in the global and the per-client bounds, released when it is
 /// dropped: when its thread ends, however it ends, or when its task never starts.
 /// A connection's place under the global and per-client bounds, given back when dropped.

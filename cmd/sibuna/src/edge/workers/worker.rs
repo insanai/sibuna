@@ -17,7 +17,7 @@ use super::conn::{BUFFER, Buffer, Conn, HIGH_WATER, Origin, Reading};
 use super::request::{self, Scratch, Step};
 use super::{Incoming, Shared, Timeouts};
 use crate::connection::{MAX_REQUESTS_PER_CONNECTION, PeerText};
-use crate::server::{Server, admit};
+use crate::server::{Server, admit, admit_handoff};
 
 const KIND_WAKE: u64 = 0;
 pub(super) const KIND_CLIENT: u64 = 1;
@@ -156,8 +156,13 @@ impl Worker {
         if self.draining || stream.set_nonblocking(true).is_err() {
             return false;
         }
-        let Some(admission) = admit(&self.server, &stream, ingress.peer.ip()) else {
-            return false;
+        let admission = if ingress.secure {
+            admit_handoff(&self.server)
+        } else {
+            let Some(admission) = admit(&self.server, &stream, ingress.peer.ip()) else {
+                return false;
+            };
+            admission
         };
         // A socket pair from the TLS front refuses this option. It needs none.
         let _ = stream.set_nodelay(true);

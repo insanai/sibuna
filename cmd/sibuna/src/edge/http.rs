@@ -12,7 +12,7 @@ use sibuna_policy::{Engine, loader::Diagnostic};
 
 use crate::connection::Ingress;
 use crate::recipe::Recipe;
-use crate::server::{Hooks, Options, Server, admit, start_reaper};
+use crate::server::{Hooks, Options, Server, admit, admit_handoff, start_reaper};
 use crate::slot::EngineSlot;
 
 use super::workers::{Incoming, Timeouts, Workers};
@@ -201,7 +201,12 @@ impl Http {
         if self.binds.contains_key(&bind)
             && let Some(ingress) = &self.ingress
         {
-            ingress.accept(bind, stream, permit);
+            // The client bound counts the TLS connection once, whatever it carries.
+            let Ok(peer) = stream.peer_addr() else { return };
+            let Some(place) = crate::server::admit_secure(&self.server, peer.ip()) else {
+                return;
+            };
+            ingress.accept_held(bind, stream, permit, Box::new(place));
             return;
         }
         let _ = bind;
@@ -253,7 +258,12 @@ fn launch(server: &Arc<Server>, stream: TcpStream, ingress: Ingress, permit: Opt
         if server_ref.is_stopping() {
             return;
         }
-        let Some(admission) = admit(&server_ref, &stream, ingress.peer.ip()) else { return };
+        let admission = if ingress.secure {
+            admit_handoff(&server_ref)
+        } else {
+            let Some(admission) = admit(&server_ref, &stream, ingress.peer.ip()) else { return };
+            admission
+        };
         sibuna_net::connect::set_no_delay(&stream);
         crate::connection::serve_from(&server_ref, &stream, admission, Some(ingress));
     });

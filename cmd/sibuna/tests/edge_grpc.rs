@@ -16,7 +16,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 
-use support::{calls, fixture, server};
+use support::{calls, fixture, handshakes, server};
 
 const BIN: &str = env!("CARGO_BIN_EXE_sibuna");
 
@@ -37,6 +37,19 @@ impl Drop for Daemon {
 /// Starts an edge with a TLS frontend in front of an HTTP/2 pool. `http` holds the
 /// members of the `http` object and `routes` the routes of the frontend.
 fn start(origin: SocketAddr, http: &str, routes: &str) -> Daemon {
+    // A port that was free a moment ago may be taken by a test that runs beside this
+    // one. The listener is then chosen again.
+    let mut failure = String::new();
+    for _ in 0..5 {
+        match try_start(origin, http, routes) {
+            Ok(daemon) => return daemon,
+            Err(line) => failure = line,
+        }
+    }
+    panic!("the edge did not start: {failure}");
+}
+
+fn try_start(origin: SocketAddr, http: &str, routes: &str) -> Result<Daemon, String> {
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
     let name = format!("sibuna-grpc-{}-{}.json", std::process::id(), vip.port());
     let path = std::env::temp_dir().join(name);
@@ -54,8 +67,13 @@ fn start(origin: SocketAddr, http: &str, routes: &str) -> Daemon {
         Command::new(BIN).arg("--config-file").arg(&path).stderr(Stdio::piped()).spawn().unwrap();
     let mut line = String::new();
     BufReader::new(child.stderr.take().unwrap()).read_line(&mut line).unwrap();
-    assert!(line.contains("ready"), "{line}");
-    Daemon { child, path, vip }
+    if !line.contains("ready") {
+        let _ = child.kill();
+        let _ = child.wait();
+        let _ = fs::remove_file(&path);
+        return Err(line);
+    }
+    Ok(Daemon { child, path, vip })
 }
 
 /// Runs every kind of call through an edge with the given settings. All calls must
@@ -100,4 +118,36 @@ fn grpc_calls_cross_the_gate_when_a_policy_rule_allows_the_service() {
     );
     run(&http, "");
     let _ = fs::remove_file(&policy);
+}
+
+#[test]
+fn the_client_bound_counts_each_tls_connection_once() {
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(2)
+        .enable_all()
+        .build()
+        .unwrap();
+    let origin = server(&runtime, Arc::new(AtomicUsize::new(0)));
+    let daemon = start(origin, r#""surface":"off","max_connections_per_ip":2"#, "");
+    runtime.block_on(async {
+        let first = handshakes(daemon.vip).await;
+        let second = handshakes(daemon.vip).await;
+        assert!(first.is_some() && second.is_some());
+        // The third connection of this client is closed before its handshake.
+        assert!(handshakes(daemon.vip).await.is_none());
+        // Many streams on an admitted connection take no further place.
+        drop(second);
+        let mut admitted = false;
+        for _ in 0..40 {
+            tokio::time::sleep(Duration::from_millis(50)).await;
+            if handshakes(daemon.vip).await.is_some() {
+                admitted = true;
+                break;
+            }
+        }
+        assert!(admitted, "a closed connection gives its place back");
+        drop(first);
+        tokio::time::sleep(Duration::from_millis(200)).await;
+        tokio::time::timeout(Duration::from_secs(20), calls(daemon.vip)).await.unwrap();
+    });
 }
