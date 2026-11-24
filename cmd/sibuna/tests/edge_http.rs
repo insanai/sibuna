@@ -44,7 +44,8 @@ fn start_with(origin: SocketAddr, event_loop: bool, options: &str, front: &str) 
     let source = format!(
         r#"{{"http":{{"surface":"off","event_loop":{event_loop}{options}}},
         "frontends":{{"web":{{"proto":"http","binds":["{vip}"],{front}"default_backend":"app"}}}},
-        "backends":{{"app":{{"mode":"http","servers":[{{"name":"a","addr":"{origin}"}}]}}}}}}"#
+        "backends":{{"app":{{"mode":"http","response_timeout":"2s",
+        "servers":[{{"name":"a","addr":"{origin}"}}]}}}}}}"#
     );
     fs::write(&path, source).unwrap();
     let mut child =

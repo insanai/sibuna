@@ -143,6 +143,13 @@ impl Exchange {
     pub fn backlog(&self) -> usize {
         self.wire.len() - self.wire_sent
     }
+
+    /// True when the exchange waits for the server and not for the client: the request
+    /// body is complete and the client has taken every response byte, of which
+    /// `client_backlog` remain. The server's response bound applies then (SID 0019).
+    pub fn awaits_server(&self, client_backlog: usize) -> bool {
+        !self.connecting && !self.tunnel && self.upload.is_done() && client_backlog == 0
+    }
 }
 
 /// One server socket: serving an exchange, or idle in the pool.
