@@ -83,7 +83,8 @@ fn a_frontend_names_its_proxies_and_the_proxy_protocol_needs_them() {
     let tcp = format!(
         r#"{{"frontends":{{"db":{{"proto":"tcp","binds":["{}"],"proxy_protocol":false,
         "trusted_proxies":["10.0.0.0/8"],"default_backend":"db"}}}},
-        "backends":{{"db":{{"mode":"tcp","servers":[{{"name":"a","addr":"127.0.0.1:9200"}}]}}}}}}"#,
+        "backends":{{"db":{{"mode":"tcp",
+        "servers":[{{"name":"a","addr":"127.0.0.1:9200"}}]}}}}}}"#,
         free()
     );
     let found = Config::parse(tcp.as_bytes()).err().unwrap().to_string();
