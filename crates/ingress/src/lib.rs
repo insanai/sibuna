@@ -6,6 +6,7 @@ mod certs;
 mod egress;
 mod handoff;
 mod quic;
+mod tunnel;
 
 use std::collections::BTreeMap;
 use std::io;
@@ -247,6 +248,8 @@ impl Session {
             .timer(TokioTimer::new())
             .keep_alive_interval(Some(Duration::from_secs(20)))
             .keep_alive_timeout(Duration::from_secs(10))
+            // Extended CONNECT carries WebSocket over one stream (RFC 8441).
+            .enable_connect_protocol()
             .max_concurrent_streams(MAX_STREAMS)
             .max_header_list_size(MAX_HEAD as u32);
         let connection = protocol.serve_connection(TokioIo::new(tls), service);

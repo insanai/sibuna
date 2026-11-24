@@ -10,6 +10,7 @@ license.workspace = true
 [dependencies]
 sibuna-lb.workspace = true
 sibuna-tls.workspace = true
+sibuna-encoding.workspace = true
 bytes.workspace = true
 futures-util.workspace = true
 hyper.workspace = true

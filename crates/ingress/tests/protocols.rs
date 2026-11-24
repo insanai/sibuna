@@ -71,6 +71,12 @@ fn firewall(vip: SocketAddr, connections: Arc<AtomicUsize>) -> Handler {
 }
 
 fn setup() -> (SocketAddr, Edge, Ingress, Arc<AtomicUsize>) {
+    setup_with(firewall)
+}
+
+fn setup_with(
+    firewall: fn(SocketAddr, Arc<AtomicUsize>) -> Handler,
+) -> (SocketAddr, Edge, Ingress, Arc<AtomicUsize>) {
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
     let topology = format!(
         r#"{{"frontends":{{"web":{{"proto":"http","binds":["{vip}"],
@@ -181,4 +187,110 @@ fn every_protocol_reuses_the_client_session_and_one_firewall_connection() {
     runner.join().unwrap();
     // Each client connection reused one firewall connection for its two requests.
     assert_eq!(connections.load(Ordering::SeqCst), 3);
+}
+
+/// A firewall that accepts a WebSocket upgrade and then echoes the tunnel.
+fn upgrading(_vip: SocketAddr, connections: Arc<AtomicUsize>) -> Handler {
+    Arc::new(move |mut stream, _, _| {
+        connections.fetch_add(1, Ordering::SeqCst);
+        std::thread::spawn(move || {
+            let mut reader = BufReader::new(stream.try_clone().unwrap());
+            let mut head = Vec::new();
+            loop {
+                let mut line = String::new();
+                reader.read_line(&mut line).unwrap();
+                if line == "\r\n" {
+                    break;
+                }
+                head.push(line.trim_end().to_ascii_lowercase());
+            }
+            assert_eq!(head[0], "get /live?room=1 http/1.1");
+            for field in ["upgrade: websocket", "connection: upgrade", "sec-websocket-version: 13"]
+            {
+                assert!(head.iter().any(|line| line == field), "{field} in {head:?}");
+            }
+            assert!(head.iter().any(|line| line.starts_with("sec-websocket-key: ")));
+            assert!(head.contains(&"sec-websocket-protocol: anahita.live.v1".to_owned()));
+            if head.contains(&"origin: https://evil.example".to_owned()) {
+                stream
+                    .write_all(b"HTTP/1.1 403 Forbidden\r\nContent-Length: 2\r\n\r\nno")
+                    .unwrap();
+                return;
+            }
+            stream
+                .write_all(
+                    b"HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\n\
+                      Connection: Upgrade\r\nSec-WebSocket-Accept: unchecked\r\n\
+                      Sec-WebSocket-Protocol: anahita.live.v1\r\n\r\n",
+                )
+                .unwrap();
+            let mut block = [0; 4096];
+            while let Ok(count @ 1..) = std::io::Read::read(&mut reader, &mut block) {
+                stream.write_all(&block[..count]).unwrap();
+            }
+        });
+    })
+}
+
+async fn websocket(vip: SocketAddr) {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    let tcp = tokio::net::TcpStream::connect(vip).await.unwrap();
+    let tls = tokio_rustls::TlsConnector::from(Arc::new(client(b"h2")))
+        .connect("localhost".try_into().unwrap(), tcp)
+        .await
+        .unwrap();
+    let (mut tx, conn) =
+        hyper::client::conn::http2::handshake(TokioExecutor::new(), TokioIo::new(tls))
+            .await
+            .unwrap();
+    tokio::spawn(conn);
+    let offer = |origin: &'static str| {
+        Request::connect(format!("https://localhost:{}/live?room=1", vip.port()))
+            .extension(hyper::ext::Protocol::from_static("websocket"))
+            .header("origin", origin)
+            .header("sec-websocket-protocol", "anahita.live.v1")
+            .body(Empty::<Bytes>::new())
+            .unwrap()
+    };
+    // The server announces extended CONNECT in its settings, which arrive after the
+    // handshake. A first ordinary exchange waits for them.
+    tokio::time::sleep(Duration::from_millis(100)).await;
+    let refused = tx.send_request(offer("https://evil.example")).await.unwrap();
+    assert_eq!(refused.status(), 403);
+    let accepted = tx.send_request(offer("https://app.example")).await.unwrap();
+    assert_eq!(accepted.status(), 200);
+    assert_eq!(accepted.headers()["sec-websocket-protocol"], "anahita.live.v1");
+    assert!(!accepted.headers().contains_key("sec-websocket-accept"));
+    let mut tunnel = TokioIo::new(hyper::upgrade::on(accepted).await.unwrap());
+    let payload: Vec<u8> = (0..300_000usize).map(|i| (i % 251) as u8).collect();
+    let (mut reader, mut writer) = tokio::io::split(&mut tunnel);
+    let send = async {
+        writer.write_all(&payload).await.unwrap();
+        writer.flush().await.unwrap();
+    };
+    let mut echoed = vec![0; payload.len()];
+    let receive = reader.read_exact(&mut echoed);
+    let (_, received) = tokio::join!(send, receive);
+    received.unwrap();
+    assert!(echoed == payload);
+}
+
+#[test]
+fn a_websocket_over_http2_becomes_an_http11_upgrade_and_a_byte_tunnel() {
+    let (vip, mut edge, ingress, connections) = setup_with(upgrading);
+    let runner = std::thread::spawn(move || {
+        let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+        rt.block_on(async {
+            tokio::time::timeout(Duration::from_secs(8), websocket(vip)).await.unwrap();
+        });
+    });
+    while !runner.is_finished() {
+        edge.step().unwrap();
+        for (bind, stream, permit) in edge.accepted_http() {
+            ingress.accept(bind, stream, permit);
+        }
+    }
+    runner.join().unwrap();
+    // Each tunnel has a firewall connection of its own.
+    assert_eq!(connections.load(Ordering::SeqCst), 2);
 }

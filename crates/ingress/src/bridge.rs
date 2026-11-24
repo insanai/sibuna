@@ -33,7 +33,7 @@ const REUSE: Duration = Duration::from_millis(500);
 const MAX_IDLE: usize = 8;
 
 /// The firewall connections and activity of one client connection.
-pub(super) struct Lane {
+pub(crate) struct Lane {
     handoff: Arc<Handoff>,
     peer: SocketAddr,
     vip: SocketAddr,
@@ -78,6 +78,11 @@ impl Lane {
         if idle.len() < MAX_IDLE && !sender.is_closed() {
             idle.push((sender, Instant::now()));
         }
+    }
+
+    /// Opens a firewall connection of its own for a tunnel.
+    pub(crate) async fn pipe(&self) -> Result<crate::handoff::Pipe, Error> {
+        Ok(self.handoff.open(self.peer, self.vip).await?)
     }
 
     async fn open(&self) -> Result<SendRequest<Body>, Error> {
@@ -131,7 +136,7 @@ impl Lane {
     }
 }
 
-fn empty() -> Body {
+pub(crate) fn empty() -> Body {
     Full::new(Bytes::new()).map_err(|e: Infallible| match e {}).boxed_unsync()
 }
 
@@ -169,7 +174,7 @@ impl HttpBody for Reusable {
 }
 
 /// One admitted exchange. Dropping it returns the slot and stamps the lane's quiet time.
-pub(super) struct Admitted {
+pub(crate) struct Admitted {
     lane: Arc<Lane>,
     _slot: OwnedSemaphorePermit,
 }
@@ -241,6 +246,9 @@ pub(super) async fn h2(
     if !expectation_supported(req.headers()) {
         return Ok(error(StatusCode::EXPECTATION_FAILED));
     }
+    if crate::tunnel::is_websocket(&req) {
+        return Ok(crate::tunnel::open(req, &lane, admitted).await);
+    }
     // HTTP/2 has no interim-response handshake here. The final response answers it.
     req.headers_mut().remove(header::EXPECT);
     let req = req.map(|b| b.map_err(Error::from).boxed_unsync());
@@ -259,7 +267,7 @@ pub(super) async fn exchange(req: Request<Body>, lane: &Arc<Lane>) -> Response<B
     lane.forward(req).await.unwrap_or_else(|_| error(StatusCode::BAD_GATEWAY))
 }
 
-fn translate(req: Request<Body>) -> Result<Request<Body>, StatusCode> {
+pub(crate) fn translate(req: Request<Body>) -> Result<Request<Body>, StatusCode> {
     let (mut p, body) = req.into_parts();
     if p.method == Method::CONNECT {
         return Err(StatusCode::NOT_IMPLEMENTED);
@@ -319,7 +327,7 @@ fn translate(req: Request<Body>) -> Result<Request<Body>, StatusCode> {
     Ok(Request::from_parts(p, body))
 }
 
-fn strip_hop_fields(headers: &mut HeaderMap) {
+pub(crate) fn strip_hop_fields(headers: &mut HeaderMap) {
     let names: Vec<_> = headers
         .get_all(header::CONNECTION)
         .iter()
