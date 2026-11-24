@@ -15,6 +15,7 @@ sibuna-encoding.workspace = true
 sibuna-crypto = { workspace = true }
 sibuna-json = { workspace = true }
 sibuna-reactor = { workspace = true }
+sibuna-cidr = { workspace = true }
 
 [lints]
 workspace = true

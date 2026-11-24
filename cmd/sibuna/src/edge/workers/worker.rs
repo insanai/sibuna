@@ -17,7 +17,7 @@ use super::conn::{BUFFER, Buffer, Conn, HIGH_WATER, Origin, Reading};
 use super::request::{self, Scratch, Step};
 use super::{Incoming, Shared, Timeouts};
 use crate::connection::{MAX_REQUESTS_PER_CONNECTION, PeerText};
-use crate::server::{Server, admit, admit_handoff};
+use crate::server::{Server, admit_handoff, admit_within};
 
 const KIND_WAKE: u64 = 0;
 pub(super) const KIND_CLIENT: u64 = 1;
@@ -159,7 +159,9 @@ impl Worker {
         let admission = if ingress.secure {
             admit_handoff(&self.server)
         } else {
-            let Some(admission) = admit(&self.server, &stream, ingress.peer.ip()) else {
+            let bound = ingress.connection_bound(&self.server);
+            let peer = ingress.peer.ip();
+            let Some(admission) = admit_within(&self.server, &stream, peer, bound) else {
                 return false;
             };
             admission
@@ -185,6 +187,7 @@ impl Worker {
             armed: self.now,
             read_closed: false,
             closing: false,
+            trace: None,
         };
         let (index, _) = self.conns.insert(conn);
         self.sync(index);
@@ -292,6 +295,7 @@ impl Worker {
                     conn.closing |= !keep || self.draining;
                 }
                 Step::Admitted { plan, used } => {
+                    conn.trace = self.scratch.trace.entry.take();
                     Self::next_request(conn, used, self.now);
                     let wire = std::mem::replace(
                         &mut self.scratch.defer.wire,
@@ -416,6 +420,8 @@ impl Worker {
     pub fn close(&mut self, index: u32) {
         let Some(mut conn) = self.conns.remove(index) else { return };
         self.load.fetch_sub(1, Ordering::Relaxed);
+        // A tunnel, or an exchange cut short, is logged when its connection closes.
+        super::trace::settle(&self.server, &mut conn.trace, self.now);
         self.poll.remove(handle(&conn.stream));
         if let Some(exchange) = conn.exchange.take() {
             if let Some(origin) = exchange.origin {

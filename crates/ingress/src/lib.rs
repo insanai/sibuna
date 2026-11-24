@@ -29,7 +29,7 @@ use tokio_rustls::TlsAcceptor;
 use bridge::Lane;
 pub use egress::{Directory, Egress};
 use handoff::Handoff;
-pub use inline::{Decide, Forward, Offer, Verdict};
+pub use inline::{Completion, Decide, Forward, Offer, Report, Verdict};
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
 /// Hands one connection to the firewall with its client peer and public destination.
@@ -201,8 +201,22 @@ impl Ingress {
         permit: FlowPermit,
         held: Box<dyn std::any::Any + Send>,
     ) {
+        self.accept_from(bind, stream, permit, held, None);
+    }
+
+    /// As [`Ingress::accept_held`], for a connection whose client address is known from
+    /// a PROXY header (SID 0020). `client` then replaces the socket peer.
+    pub fn accept_from(
+        &self,
+        bind: SocketAddr,
+        stream: TcpStream,
+        permit: FlowPermit,
+        held: Box<dyn std::any::Any + Send>,
+        client: Option<SocketAddr>,
+    ) {
         let Some(acceptor) = self.listeners.get(&bind).cloned() else { return };
         let (Ok(peer), Ok(vip)) = (stream.peer_addr(), stream.local_addr()) else { return };
+        let peer = client.unwrap_or(peer);
         if stream.set_nonblocking(true).is_err() {
             return;
         }

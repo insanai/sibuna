@@ -5,9 +5,12 @@ mod admin;
 mod control;
 mod ctl;
 mod failure;
+mod fdlimit;
 mod http;
 #[cfg(feature = "https")]
 mod inline;
+mod probe;
+mod proxy_stage;
 mod quick;
 mod watch;
 mod workers;
@@ -15,6 +18,7 @@ mod workers;
 use std::fs::File;
 use std::io::{self, Read};
 use std::process::ExitCode;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, PoisonError, mpsc};
 use std::time::{Duration, Instant};
 
@@ -122,6 +126,8 @@ struct Serving {
     shutdown_timeout: Duration,
     started: Instant,
     reloads: u64,
+    /// The counters of SID 0020, for `show stats`.
+    observe: Arc<crate::access::Observe>,
 }
 
 impl Serving {
@@ -191,6 +197,7 @@ impl Serving {
         match command {
             Command::ShowServers => Ok(control::render_servers(&edge.servers())),
             Command::ShowInfo => Ok(self.info()),
+            Command::ShowStats => Ok(crate::access::metrics_text(None, &self.observe)),
             Command::Help => Ok(control::USAGE.to_owned()),
             Command::State { pool, name, state } => {
                 edge.set_server_state(&pool, &name, state).map(done)
@@ -241,6 +248,28 @@ impl Serving {
     }
 }
 
+/// Checks the descriptor limit and installs the signal handlers of an edge. SIGHUP
+/// offers the source again. It also sets the returned flag, which asks for the access
+/// log to be reopened, whether or not the new topology loads (SID 0020).
+fn prepare(
+    shutdown: &Arc<Shutdown>,
+    source: &Arc<Source>,
+    pending: &Pending,
+    config: &Config,
+) -> io::Result<Arc<AtomicBool>> {
+    let described = source.path().unwrap_or("quick start");
+    fdlimit::check(described, fdlimit::Demand::of(config));
+    let rotate = Arc::new(AtomicBool::new(false));
+    let rotated = Arc::clone(&rotate);
+    let (hup_source, slot) = (Arc::clone(source), Arc::clone(pending));
+    signals::install_edge(Arc::clone(shutdown), move || {
+        rotated.store(true, Ordering::Release);
+        offer(&hup_source, &slot);
+    })
+    .map_err(io::Error::other)?;
+    Ok(rotate)
+}
+
 /// The most admin commands applied between two readiness batches.
 const COMMANDS_PER_STEP: usize = 16;
 
@@ -248,10 +277,9 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let shutdown = Shutdown::new();
     let source = Arc::new(source);
     let pending = Pending::default();
-    let (hup_source, slot) = (Arc::clone(&source), Arc::clone(&pending));
-    signals::install_edge(Arc::clone(&shutdown), move || offer(&hup_source, &slot))
-        .map_err(io::Error::other)?;
+    let rotate = prepare(&shutdown, &source, &pending, &revision.config)?;
     let Revision { mut config, http } = revision;
+    let observe_options = config.observe().clone();
     let mut adapters = Adapters::default();
     adapt(&mut adapters, &mut config)?;
     let mesh = config.mesh().map(start_mesh).transpose()?;
@@ -263,6 +291,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let edge = Edge::bind(config)?;
     let http = http.map(|p| http::Http::start(p, &edge, secret)).transpose()?;
     attach(http.as_ref(), &adapters);
+    let observed = http::observe(http.as_ref(), observe_options, &edge)?;
     let (jobs, inbox) = mpsc::channel();
     let _admin = match &admin_socket {
         Some(path) => Some(admin::Admin::start(path, takeover, Arc::clone(&source), jobs)?),
@@ -281,10 +310,12 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         shutdown_timeout,
         started,
         reloads: 0,
+        observe: observed.shared(),
     };
     serving.watch(watch)?;
     eprintln!("Sibuna edge listeners ready");
     while !shutdown.is_requested() {
+        observed.reopen_log_when(&rotate);
         serving.take_pending();
         for job in inbox.try_iter().take(COMMANDS_PER_STEP) {
             serving.answer(job);
@@ -300,6 +331,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         step(&mut serving.edge, serving.http.as_ref())?;
     }
     drop(mesh);
+    observed.drain();
     let Serving { mut edge, http, shutdown_timeout, .. } = serving;
     edge.drain();
     if let Some(http) = &http {

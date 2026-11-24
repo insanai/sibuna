@@ -33,6 +33,8 @@ struct Scratch {
     paths: Box<[u8]>,
     /// Sibuna's own response, when it answers.
     output: Vec<u8>,
+    /// What the access log learns of the request being decided (SID 0020).
+    trace: crate::access::Trace,
 }
 
 impl Scratch {
@@ -44,6 +46,7 @@ impl Scratch {
             activity: Activity::new(),
             paths: vec![0; MAX_HEAD_BYTES].into_boxed_slice(),
             output: Vec::new(),
+            trace: crate::access::Trace::default(),
         }
     }
 }
@@ -64,14 +67,16 @@ impl Decide for Decision {
 }
 
 fn judge(server: &Server, offer: &Offer<'_>, scratch: &mut Scratch) -> Verdict {
-    let Scratch { workspace, cache, defer, activity, paths, output } = scratch;
+    let Scratch { workspace, cache, defer, activity, paths, output, trace } = scratch;
     output.clear();
     defer.plan = None;
+    trace.protocol = offer.protocol;
     let mut peer = PeerText::default();
     peer.format(Some(offer.peer));
+    let ingress = Ingress { peer: offer.peer, vip: offer.vip, secure: true, trusted: false };
     let mut link = Link {
         server,
-        ingress: Some(Ingress { peer: offer.peer, vip: offer.vip, secure: true }),
+        ingress: Some(ingress),
         stream: None,
         writer: ClientWriter::new(&mut *output),
         workspace,
@@ -80,16 +85,20 @@ fn judge(server: &Server, offer: &Offer<'_>, scratch: &mut Scratch) -> Verdict {
         activity,
         last: false,
         admission: None,
+        trace: &mut *trace,
     };
     answer(&mut link, offer, peer.as_bytes(), paths);
+    let tally = link.writer.tally();
     drop(link);
     let Some(plan) = defer.plan.take() else {
+        crate::access::settle_written(server, trace, tally, Some(ingress), peer.as_bytes());
         return Verdict::Answer(std::mem::take(output));
     };
     // The runtime sends the body itself, so it takes the head alone.
     let end = connection::find_blank_line(&defer.wire).map_or(defer.wire.len(), |at| at + 4);
     let head = defer.wire.get(..end).unwrap_or_default().to_vec();
-    Verdict::Forward(Forward { target: plan.target, head, guard: Box::new(plan.tunnel) })
+    let report = crate::access::report(server, trace);
+    Verdict::Forward(Forward { target: plan.target, head, guard: Box::new(plan.tunnel), report })
 }
 
 /// Runs the checks of the connection loop on one request and dispatches it. The response,

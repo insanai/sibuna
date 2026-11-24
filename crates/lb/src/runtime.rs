@@ -300,6 +300,10 @@ impl Edge {
             })?;
             server.healthy = Some(status);
         }
+        // The new server is counted and named in the access log like the others.
+        let info = self.stats.enlist(pool, &server);
+        self.http.enlist(pool, addr, info.clone());
+        server.info = Some(info);
         self.in_pool(pool, |servers, loads| servers.add(server, loads))
     }
 

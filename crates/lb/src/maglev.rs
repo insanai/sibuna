@@ -82,6 +82,7 @@ mod tests {
             remote: false,
             via: None,
             healthy: None,
+            info: None,
         };
         let servers = [make("alpha", 1, false), make("beta", 3, false), make("gamma", 5, true)];
         let table = Table::build(&servers, 125).expect("two primaries");

@@ -22,6 +22,7 @@ pub struct Config {
     /// Listeners share their address, so a new process can bind it (`global.reuse_port`).
     pub(crate) reuse_port: bool,
     pub(crate) http: crate::HttpOptions,
+    pub(crate) observe: crate::ObserveOptions,
     pub(crate) mesh: Option<crate::MeshConfig>,
     pub(crate) listeners: BTreeMap<(Protocol, SocketAddr), Frontend>,
     pub(crate) pools: BTreeMap<String, Backend>,
@@ -45,6 +46,8 @@ pub(crate) struct Frontend {
     pub pool: std::sync::Arc<str>,
     pub timeout: Duration,
     pub inspect: Option<(Duration, std::sync::Arc<[crate::rules::Rule]>)>,
+    /// The name, the counters and the trusted proxies of the frontend (SID 0020).
+    pub info: std::sync::Arc<crate::FrontendInfo>,
 }
 
 pub(crate) struct Backend {
@@ -66,6 +69,8 @@ pub(crate) struct Server {
     /// The local protocol adapter that reaches this server, when its pool needs one.
     pub via: Option<SocketAddr>,
     pub healthy: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
+    /// The names and the counters of the server, set when an edge adopts the topology.
+    pub info: Option<crate::ServerInfo>,
 }
 
 pub(crate) fn invalid(message: impl std::fmt::Display) -> Error {
@@ -157,6 +162,17 @@ impl Config {
         Ok(())
     }
 
+    /// The access log, the access control of the internal routes and the separate
+    /// listener (SID 0020).
+    pub fn observe(&self) -> &crate::ObserveOptions {
+        &self.observe
+    }
+
+    /// The size of the flow table (`global.max_flows`).
+    pub fn max_flows(&self) -> usize {
+        self.limit
+    }
+
     /// The path of the admin socket (`global.admin_socket`), when the operator asked for one.
     pub fn admin_socket(&self) -> Option<&str> {
         self.admin_socket.as_deref()
@@ -201,6 +217,10 @@ impl Config {
         let http = field(root.take_object("http"))?.map(crate::HttpOptions::parse).transpose()?;
         let explicit_http = http.is_some();
         let http = http.unwrap_or_default();
+        let observe = field(root.take_object("observability"))?
+            .map(crate::ObserveOptions::parse)
+            .transpose()?
+            .unwrap_or_default();
         let adaptive = mesh.is_some();
         let mut config = Self {
             limit,
@@ -212,6 +232,7 @@ impl Config {
             reuse_port,
             mesh,
             http,
+            observe,
             pools: BTreeMap::new(),
             listeners: BTreeMap::new(),
         };
@@ -299,6 +320,8 @@ impl Config {
         };
         let (tls, firewall, websocket, http_rules) = http_frontend(&mut r, proto, &self.pools)?;
         let http_rules: std::sync::Arc<[_]> = http_rules.into();
+        let info = crate::FrontendInfo::parse(&mut r, name, proto == Protocol::Http)?;
+        let info = std::sync::Arc::new(info);
         let binds = field(r.take_array("binds"))?.ok_or_else(|| invalid(r.missing("binds")))?;
         if binds.is_empty() || self.listeners.len() + binds.len() > 128 {
             return Err(invalid(format!("{path}: expected 1 to 128 binds in total")));
@@ -317,6 +340,7 @@ impl Config {
                 timeout,
                 inspect: inspect.clone(),
                 rate,
+                info: info.clone(),
             };
             if self.listeners.keys().any(|&(p, bound)| {
                 (p == Protocol::Udp) == (proto == Protocol::Udp) && overlaps(bound, addr)
@@ -572,6 +596,7 @@ impl Server {
             remote: false,
             via: None,
             healthy: None,
+            info: None,
         }
     }
 
@@ -603,7 +628,17 @@ impl Server {
         let remote = field(r.take_bool("remote"))?.unwrap_or(false);
         let backup = field(r.take_bool("backup"))?.unwrap_or(false);
         field(r.finish())?;
-        Ok(Self { name, addr, limit, weight, backup, remote, via: None, healthy: None })
+        Ok(Self {
+            name,
+            addr,
+            limit,
+            weight,
+            backup,
+            remote,
+            via: None,
+            healthy: None,
+            info: None,
+        })
     }
 }
 
