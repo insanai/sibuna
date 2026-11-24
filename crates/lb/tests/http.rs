@@ -36,3 +36,30 @@ fn routes_bind_each_request_to_its_policy_generation_and_release_capacity() {
     assert_eq!(select(b"api.example", b"/api/foo", 2).unwrap().address().port(), 9300);
     assert_eq!(live.address().port(), 9100);
 }
+
+#[test]
+fn tcp_and_validated_quic_connections_share_frontend_limits() {
+    let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    let source = format!(
+        r#"{{
+        "global":{{"max_flows":2}},
+        "frontends":{{"web":{{"proto":"http","binds":["{vip}"],
+        "tls":{{"cert_file":"web.pem","key_file":"web.key","http3":true}},
+        "rate_limit":{{"conn_per_10s":1}},"default_backend":"app"}}}},
+        "backends":{{"app":{{"mode":"http","servers":[{{"name":"a","addr":"127.0.0.1:9200"}}]}}}}
+    }}"#
+    );
+    let mut edge = Edge::bind(Config::parse(source.as_bytes()).unwrap()).unwrap();
+    let client = std::net::TcpStream::connect(vip).unwrap();
+    edge.step().unwrap();
+    let (_, socket, permit) = edge.accepted_http().next().unwrap();
+    let budget = edge.flow_budget();
+    assert!(budget.reserve_quic(vip, client.local_addr().unwrap()).is_none());
+    let quic = budget.reserve_quic(vip, "192.0.2.1:1234".parse().unwrap()).unwrap();
+    assert_eq!(edge.active(), 2);
+    assert!(budget.reserve_quic(vip, "192.0.2.2:1234".parse().unwrap()).is_none());
+    drop((socket, permit, quic));
+    assert_eq!(edge.active(), 0);
+    edge.drain();
+    assert!(budget.reserve_quic(vip, "192.0.2.3:1234".parse().unwrap()).is_none());
+}
