@@ -419,3 +419,28 @@ fn round_robin_serves_each_server_in_turn() {
         assert_eq!(names.iter().filter(|name| *name == "a").count(), 9, "{names:?}");
     });
 }
+
+#[test]
+fn a_server_that_returns_takes_few_requests_while_it_ramps() {
+    let returning = Origin::start("returning");
+    let steady = Origin::start("steady");
+    let servers = [returning.address, steady.address];
+    // The share of the returning server in twenty requests, just after its ejection ends.
+    let share = |members: &str| {
+        let edge = Topology::new(&servers).backend(members).start(true);
+        returning.stalled.store(true, Ordering::SeqCst);
+        let failed = answers(&edge, 2).iter().filter(|(status, _)| *status == 504).count();
+        assert_eq!(failed, 1);
+        returning.stalled.store(false, Ordering::SeqCst);
+        std::thread::sleep(Duration::from_millis(1200));
+        let later = answers(&edge, 20);
+        assert!(later.iter().all(|(status, _)| *status == 200), "{later:?}");
+        later.iter().filter(|(_, name)| name == "returning").count()
+    };
+    let health = r#""response_timeout":"1s","passive_health":{"failures":1,"ejection":"1s"},"#;
+    let ramped = share(&format!(r#"{health}"slow_start":"30s","#));
+    assert!(ramped <= 2, "{ramped}");
+    // Without a slow start it takes its half at once, and more to catch up.
+    let direct = share(health);
+    assert!(direct >= 10, "{direct}");
+}
