@@ -7,7 +7,7 @@
 :sid-created: 2026-11-24
 :sid-updated: 2026-11-24
 :sid-discussion: No external discussion URL assigned
-:sid-summary: Specifies TCP and UDP forwarding, HTTP/2 and HTTP/3 termination, HTTP/1.1 origin pools and distributed routing. Records implementation and qualification evidence.
+:sid-summary: Specifies TCP and UDP forwarding, TLS, HTTP/2 and HTTP/3 termination, HTTP/1.1, HTTP/2 and HTTP/3 origin pools, per-route firewall selection and distributed routing. Records implementation and qualification evidence.
 :sid-labels: ["architecture","load-balancer","network","ddos","mathematics"]
 
 Sibuna Edge: TCP, UDP and HTTP Load Balancing
@@ -16,7 +16,7 @@ Sibuna Edge: TCP, UDP and HTTP Load Balancing
 Abstract
 --------
 
-We route TCP streams, UDP datagrams and HTTP requests to named pools. An HTTP frontend can accept plaintext HTTP/1.1 or terminate HTTP/2 over TLS and HTTP/3 over QUIC. We apply the gate or shield before selecting an HTTP/1.1 origin for each admitted request. We can drain a server while established TCP streams and in-flight HTTP exchanges finish.
+We route TCP streams, UDP datagrams and HTTP requests to named pools. An HTTP frontend can accept plaintext HTTP/1.1 or terminate TLS for HTTP/1.1 and HTTP/2, and QUIC for HTTP/3. We apply the gate or shield to the routes that ask for it and select an origin for each request. An origin pool speaks HTTP/1.1, HTTP/2 or HTTP/3, in cleartext or over TLS. We can drain a server while established TCP streams and in-flight HTTP exchanges finish.
 
 The decision for discussion is whether to adopt worker-owned flows and an immutable routing configuration as the common basis for standalone, regional and multi-region deployments. We use that boundary for JSON and JLV/2 routing today. The proposed mmap cache, peer forwarding and plugin tiers build on it. The Lean artifact covers selected properties of the design. Capacity, latency and continuity during upgrades require implementation evidence.
 
@@ -289,7 +289,32 @@ A TCP or UDP frontend selects an origin for the life of a flow. An HTTP frontend
 
 With a TLS identity on a frontend, we negotiate HTTP/2 over TCP. We can enable HTTP/3 on the same numeric UDP port. We use rustls for TLS, Hyper for HTTP/2 and Quinn with h3 for HTTP/3. Each stream enters the existing HTTP firewall and reaches its selected origin as HTTP/1.1. The transport supplies the client address and the scheme used in forwarded headers. Client-supplied headers confer no trust. We validate the certificate and key before publishing a reload. Established TLS sessions keep the identity used at their handshake.
 
-We allocate one node-wide flow slot per client connection or UDP mapping. Multiplexed ingress also limits concurrent streams to 32 per connection and 128 active exchanges per node. We hand each exchange to the synchronous firewall over a private loopback socket pair and stream its body with backpressure. A capacity measurement must include the two descriptors for this handoff, the origin connection, TLS or QUIC state and the firewall thread. CONNECT and extended CONNECT require a separate tunnel policy. HTTP/1.1 WebSocket upgrade remains available on the plaintext frontend.
+We allocate one node-wide flow slot per client connection or UDP mapping. UDP mappings take at most ``global.max_udp_flows`` of the table, because their sources are not validated. Multiplexed ingress limits concurrent streams to 32 per connection, and all HTTP exchanges on the node to ``http.max_connections``. An exchange over the limit receives 503. Each client connection keeps a lane of loopback connections to the synchronous firewall. A lane reuses a connection for the next bodiless request, so a busy HTTP/2 or HTTP/3 connection does not open a socket pair per exchange. One loopback listener serves all handoffs and gives a connection only to the task that registered its source address. An idle multiplexed connection is closed after ``http.idle_timeout`` and releases its flow slot. HTTP/1.1 over TLS is a byte pipe to the firewall, so keep-alive and WebSocket upgrade behave as on the plaintext frontend. CONNECT and extended CONNECT require a separate tunnel policy.
+
+Certificates
+^^^^^^^^^^^^
+
+A TLS listener loads ``crt`` entries as HAProxy does. An entry is a PEM file with the chain and its private key, or a directory of such files. The first bundle is the default certificate. The DNS names of each leaf select the others by server name, exact names before wildcards. ``strict_sni`` refuses a handshake that names no certificate. The pair ``cert_file`` and ``key_file`` remains valid. We check that each key matches its certificate before a revision is published.
+
+Firewall selection
+^^^^^^^^^^^^^^^^^^
+
+The firewall inspects HTTP only. A TCP or UDP frontend never invokes it. ``http.surface`` takes ``off``, ``gate`` or ``shield``. With ``off`` the node is a load balancer: it parses, limits and routes requests and issues no challenge. With the firewall on, a frontend or a route may set ``firewall`` to ``false``. Such a request skips the policy, the challenge and the semantic inspection. It keeps protocol validation, connection limits, bans and the request limiter. This serves clients that cannot solve a challenge, such as Git, package managers and CI runners, beside browser names on the same listener.
+
+Rate limits
+^^^^^^^^^^^
+
+We limit at four places, each keyed by the source IPv4 address or IPv6 /64. A TCP or HTTP frontend limits new connections with ``rate_limit.conn_per_10s``. A UDP frontend limits datagrams with ``udp_defense.threshold_pps`` and bounds replies to three times the received bytes. The HTTP firewall limits requests with ``http.rate_limit`` per ``http.rate_window``, and ``"off"`` disables that limiter. A policy rule can carry its own rate for the requests it matches. ``http.max_connections_per_ip`` bounds concurrent connections of one client. Limits are node-local. A cluster shares bans and reputation through the database of SID 0011, and replicated edge limits remain proposed.
+
+Origin protocols
+^^^^^^^^^^^^^^^^
+
+An HTTP pool sets ``http_version`` to ``1.1``, ``2`` or ``3`` and an optional ``tls`` object with ``verify``, ``ca_file`` and ``sni``. The firewall relays HTTP/1.1. For a cleartext HTTP/1.1 pool it connects to the server directly. For the other pools an adapter in the daemon listens on a loopback port per server. It tunnels HTTP/1.1 through TLS, or translates each exchange to a stream of one shared HTTP/2 session or QUIC connection. Health probes use the adapter, so they exercise the path of a request. A reload starts the adapters of the new revision first and closes unused ones after the revision serves. Server certificates are verified against the system roots or ``ca_file`` unless ``verify`` is ``false``.
+
+Health
+^^^^^^
+
+A TCP or HTTP pool can probe its servers by TCP connect or by an HTTP ``GET``. A server starts in service, leaves after ``fall`` failures and returns after ``rise`` successes. A reload keeps the status of each address.
 
 File and database authority
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -632,13 +657,21 @@ We propose bringing up one node and one canary frontend first. Check admission, 
 Implementation evidence
 -----------------------
 
-The Rust implementation serves opt-in TCP, UDP and HTTP frontends from JSON or JLV. It includes node-local caps, weighted least connections, power-of-two choices with peak EWMA, bounded-load Maglev, TCP probing, SNI, ALPN and native TCP JA4 routing, PROXY v2 with optional authority and JA4 TLVs, UDP affinity, RTT-based mesh regime selection and in-process route reload. The operations chapter documents the configuration accepted by this version.
+The Rust implementation serves opt-in TCP, UDP and HTTP frontends from JSON or JLV. It includes node-local caps, weighted least connections, power-of-two choices with peak EWMA, bounded-load Maglev, TCP and HTTP probing, SNI, ALPN and native TCP JA4 routing, PROXY v2 with optional authority and JA4 TLVs, UDP affinity, RTT-based mesh regime selection and in-process route reload. HTTP frontends load HAProxy-style PEM bundles, select certificates by server name, serve HTTP/1.1 and HTTP/2 over TLS and HTTP/3 over QUIC, and reach HTTP/1.1, HTTP/2 and HTTP/3 servers in cleartext or over TLS. The firewall can be switched off for the node, a frontend or a route. The operations chapter of the book documents the configuration accepted by this version.
+
+The worker keeps every socket registered with epoll on Linux and with poll elsewhere. It hands established TCP streams to relay threads. A turn costs time in proportion to the ready sockets, and a deadline sweep runs every 100 ms. The flow table is configurable up to one million entries. Its default remains 8,192.
 
 On Linux 7.0 x86-64 with Rust 1.100 and an increased descriptor limit, we exercised 8,192 simultaneous TCP streams and, in a separate run, 8,192 UDP mappings against a loopback echo server. Each flow exchanged data. At the configured ceiling the daemon refused the next flow and the first flow still exchanged data. In a four-process loopback mesh each node forwarded a UDP request and reply. After three nodes stopped, the surviving node reverted to standalone.
 
 On two Linux 7.0 x86-64 machines we used curl with certificate verification to negotiate HTTP/2 and HTTP/3 in both directions. Each node forwarded requests to an HTTP/1.1 origin on the other machine. We checked the origin's HTTP version, client address, scheme and 2 MiB request bodies. A denied route returned 403 on all three HTTP versions. On a single HTTP/1.1 connection we reached the remote origin and then the local origin by changing the path. Both nodes also forwarded raw TCP and UDP. A reload with a mismatched key preserved the serving identity. A valid rotation changed the certificate presented by both HTTP/2 and HTTP/3. When one node stopped, its peer returned to standalone and continued serving HTTP/3. The restarted node rejoined the mesh.
 
-This worker rebuilds a level-triggered poll set and scans flow deadlines each turn. Its configured ceiling is 8,192 flows. Cooperative platform-specific batching, the ten-million-flow experiment, peer forwarding, replicated state, mmap spill, database authority, binary listener handoff, plugins and console management remain proposed work. The following evidence is required to qualify the full design.
+On one machine we chained two daemons. The first, configured in JLV, routed three host names to pools with ``http_version`` 1.1, 2 and 3 over verified TLS. The second terminated TLS, HTTP/2 and HTTP/3 with a ``crt`` bundle and ran with ``surface`` ``off``. Requests, a 941-byte body and a 250 MB body passed on all three paths. A route with the firewall on answered 401 while its neighbours answered 200. Editing the JLV file and sending SIGHUP swapped which name was guarded. A module that failed topology checks and a module with a syntax error were rejected with a message, and the serving routes stayed.
+
+Beside HAProxy 3.0.11 on one host, TCP forwarding reached 97% to 103% of HAProxy's throughput with less memory. Plaintext HTTP reached 97% at 16 connections and 59% to 77% at 256 and 2,048. TLS reached 53% to 70% and HTTP/2 37% to 39%. ``benchmarks/results/edge-haproxy-2026-11-24.md`` holds the record. The HTTP firewall serves each connection or exchange on a thread, and this is the cause: it made 2.9 context switches per request at 256 connections. An event-driven HTTP relay on the edge workers is the largest open performance item.
+
+Kapteko's experiment shows that a kernel socket costs about 3.4 KiB before any buffer, and that state per idle unit decides how far one host scales. A forwarded TCP stream here holds two kernel sockets and one relay record. An HTTP connection also holds a thread and its stack, which measured about 145 KiB of resident memory per connection at 2,048 connections. The TCP path therefore scales with kernel memory, and the HTTP path with threads. Kernel bypass would remove the socket cost and is not justified until the HTTP path stops being the bound.
+
+Cooperative platform-specific batching, the ten-million-flow experiment, the event-driven HTTP relay, peer forwarding, replicated state, mmap spill, database authority, binary listener handoff, plugins and console management remain proposed work. The following evidence is required to qualify the full design.
 
 #. Compare legacy CLI behavior on the existing HTTP suite. Check that equivalent JSON and JLV produce the same topology. Reject missing references, stale database edits, incompatible listener changes and exhausted evaluation budgets while the last valid revision continues serving.
 #. Exercise partial writes, half-closes, fragmented ClientHello, UDP expiry, lost replies and failed backend connects. Record open sockets and buffer leases before and after each test. Run the same cases through each advertised OS backend.
@@ -660,6 +693,7 @@ Review history
 --------------
 
 - 2026-11-24. Initial proposal for cooperative socket I/O, bounded state, JLV/2 configuration, adaptive cluster routing, plugin hooks and console changes.
+- 2026-11-24. Implementation review added PEM bundles, HTTP/1.1 over TLS, TLS, HTTP/2 and HTTP/3 origins, HTTP probes, per-route firewall selection, the UDP share of the flow table, relay threads on epoll and a comparison with HAProxy.
 - 2026-11-24. Pre-promotion review corrected flow memory accounting, narrowed upgrade and concurrency claims, checked the Lean file with version 4.19.0 and identified the implementation evidence required for deployment.
 
 References
