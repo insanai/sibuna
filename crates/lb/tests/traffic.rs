@@ -208,3 +208,99 @@ fn a_server_added_by_a_reload_ramps_and_the_others_keep_their_weight() {
     let held: Vec<_> = (0..90).map(|_| routes.choose(&query).unwrap()).collect();
     assert_eq!(held.iter().filter(|target| target.address().port() == 9402).count(), 30);
 }
+
+/// The value of the cookie that `line`, a `Set-Cookie` field line, sets.
+fn cookie_of(line: &[u8]) -> String {
+    let text = std::str::from_utf8(line).unwrap();
+    let pair = text.strip_prefix("Set-Cookie: ").unwrap().split(';').next().unwrap();
+    pair.to_owned()
+}
+
+#[test]
+fn a_cookie_keeps_a_client_on_its_server_and_names_no_server() {
+    let (edge, vip) = edge(4, r#""sticky":"cookie","#);
+    let routes = edge.http_routes();
+    let first = routes.choose(&query(vip)).unwrap();
+    let line = String::from_utf8(first.cookie_line().to_vec()).unwrap();
+    assert!(line.starts_with("Set-Cookie: sibuna_srv="), "{line}");
+    assert!(line.ends_with("; Path=/; HttpOnly; SameSite=Lax\r\n"), "{line}");
+    let pair = cookie_of(first.cookie_line());
+    let token = pair.strip_prefix("sibuna_srv=").unwrap();
+    assert!(token.len() == 16 && token.bytes().all(|b| b.is_ascii_hexdigit()), "{token}");
+    assert!(!line.contains("s0") && !line.contains("940"), "{line}");
+    // With the cookie every request reaches that server, and no cookie is set again.
+    let field = format!("theme=dark; {pair}");
+    let cookies = [field.as_bytes()];
+    let sticky = Query { cookies: &cookies, ..query(vip) };
+    let held: Vec<_> = (0..40).map(|_| routes.choose(&sticky).unwrap()).collect();
+    assert!(held.iter().all(|target| target.address() == first.address()));
+    assert!(held.iter().all(|target| target.cookie_line().is_empty()));
+    // Without it the same requests spread over the pool.
+    assert!(shares(&routes, vip, 40).len() >= 3);
+    // A token the edge did not issue selects nothing. The client gets a real one.
+    let forged = [&b"sibuna_srv=0123456789abcdef"[..]];
+    let target = routes.choose(&Query { cookies: &forged, ..query(vip) }).unwrap();
+    assert!(target.cookie_line().starts_with(b"Set-Cookie: sibuna_srv="));
+    // On a TLS frontend the cookie is Secure.
+    let secure = routes.choose(&Query { secure: true, ..query(vip) }).unwrap();
+    assert!(secure.cookie_line().ends_with(b"; SameSite=Lax; Secure\r\n"));
+}
+
+#[test]
+fn a_sticky_server_that_is_down_gives_way_and_the_cookie_follows() {
+    let backend = r#""sticky":{"kind":"cookie","cookie":"srv"},
+        "passive_health":{"failures":1,"ejection":"300ms"},"#;
+    let (edge, vip) = edge(3, backend);
+    let routes = edge.http_routes();
+    let first = routes.choose(&query(vip)).unwrap();
+    let pair = cookie_of(first.cookie_line());
+    assert!(pair.starts_with("srv="), "{pair}");
+    let cookies = [pair.as_bytes()];
+    let sticky = Query { cookies: &cookies, ..query(vip) };
+    first.timed_out();
+    // The server is ejected: the request is balanced normally and gets a new cookie.
+    let moved = routes.choose(&sticky).unwrap();
+    assert_ne!(moved.address(), first.address());
+    let other = cookie_of(moved.cookie_line());
+    assert!(other.starts_with("srv=") && other != pair, "{other}");
+    // A request that fails over also takes the cookie of the server it ends on.
+    let again = routes.retry(&moved).unwrap();
+    assert!(!again.cookie_line().is_empty() && cookie_of(again.cookie_line()) != other);
+    // When the ejection ends the old cookie works again.
+    std::thread::sleep(Duration::from_millis(350));
+    let back = routes.choose(&sticky).unwrap();
+    assert_eq!(back.address(), first.address());
+    assert!(back.cookie_line().is_empty());
+}
+
+#[test]
+fn a_client_address_keeps_its_server_whatever_its_port() {
+    let backend = r#""sticky":"source","passive_health":{"failures":1,"ejection":"300ms"},"#;
+    let (edge, vip) = edge(4, backend);
+    let routes = edge.http_routes();
+    let from = |host: u8, port: u16| Query {
+        peer: SocketAddr::from(([198, 51, 100, host], port)),
+        ..query(vip)
+    };
+    let mut homes = BTreeMap::new();
+    for host in 0..=255u8 {
+        let held: Vec<_> =
+            (0..6u16).map(|port| routes.choose(&from(host, 1024 + port * 977)).unwrap()).collect();
+        assert!(held.iter().all(|target| target.address() == held[0].address()), "{host}");
+        assert!(held[0].cookie_line().is_empty());
+        homes.insert(host, held[0].address().port());
+    }
+    let used: BTreeSet<u16> = homes.values().copied().collect();
+    assert_eq!(used.len(), 4, "{homes:?}");
+    // The clients of a server that goes down are balanced. The others stay.
+    let lost = homes[&0];
+    routes.choose(&from(0, 5000)).unwrap().timed_out();
+    for (&host, &home) in &homes {
+        let port = routes.choose(&from(host, 6000)).unwrap().address().port();
+        assert_eq!(port == home, home != lost, "{host}");
+    }
+    std::thread::sleep(Duration::from_millis(350));
+    for (&host, &home) in &homes {
+        assert_eq!(routes.choose(&from(host, 7000)).unwrap().address().port(), home);
+    }
+}

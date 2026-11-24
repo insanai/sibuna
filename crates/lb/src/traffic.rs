@@ -82,6 +82,65 @@ impl Passive {
     }
 }
 
+/// How the requests of one client are kept on one server.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Sticky {
+    /// The edge gives the client a cookie that names its server. HTTP pools only.
+    Cookie {
+        /// The name of the cookie.
+        name: Box<str>,
+    },
+    /// The client address, without its port, selects the server.
+    Source,
+}
+
+/// The name of the sticky cookie when the pool gives none.
+const COOKIE: &str = "sibuna_srv";
+
+impl Sticky {
+    /// Reads `sticky`: `"off"`, `"cookie"`, `"source"`, or an object with `kind` and,
+    /// for a cookie, its name in `cookie`.
+    fn parse(r: &mut ObjectReader<'_, '_>, http: bool) -> io::Result<Option<Self>> {
+        let Some(value) = r.take("sticky") else { return Ok(None) };
+        let path = r.field_path("sticky");
+        let hint = "Hint: write \"cookie\", \"source\" or \"off\", or an object such as \
+                    {\"kind\": \"cookie\", \"cookie\": \"srv\"}.";
+        let (kind, name) = match value.as_str() {
+            Some(kind) => (kind.to_owned(), None),
+            None => {
+                let mut rule =
+                    field(ObjectReader::with_path(value, path.clone())).map_err(|_| {
+                        invalid(format!("{path}: expected a text or an object. {hint}"))
+                    })?;
+                let kind = crate::config::required(&mut rule, "kind")?;
+                let name = field(rule.take_str("cookie"))?.map(str::to_owned);
+                field(rule.finish())?;
+                (kind, name)
+            }
+        };
+        if name.is_some() && kind != "cookie" {
+            return Err(invalid(format!("{path}.cookie: only the kind \"cookie\" has a name")));
+        }
+        match kind.as_str() {
+            "off" => Ok(None),
+            "source" => Ok(Some(Self::Source)),
+            "cookie" if !http => Err(http_only(r, "sticky")),
+            "cookie" => {
+                let name = name.unwrap_or_else(|| COOKIE.to_owned());
+                let token = |b: u8| b.is_ascii_alphanumeric() || b"-_.".contains(&b);
+                if name.is_empty() || name.len() > 64 || !name.bytes().all(token) {
+                    return Err(invalid(format!(
+                        "{path}.cookie: expected 1 to 64 letters, digits, `-`, `_` or `.`, \
+                         found {name:?}. Hint: leave the member out for {COOKIE:?}."
+                    )));
+                }
+                Ok(Some(Self::Cookie { name: name.into() }))
+            }
+            other => Err(invalid(format!("{path}: unknown kind {other:?}. {hint}"))),
+        }
+    }
+}
+
 /// The traffic options of one pool. Fill it with struct-update syntax:
 /// `PoolPolicy { retries: 0, ..PoolPolicy::default() }`.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -97,6 +156,8 @@ pub struct PoolPolicy {
     pub passive: Option<Passive>,
     /// The ramp of a server that returns or is added, or `None` for full weight at once.
     pub slow_start: Option<Duration>,
+    /// Sticky sessions, or `None` when every request is balanced afresh.
+    pub sticky: Option<Sticky>,
 }
 
 impl Default for PoolPolicy {
@@ -107,6 +168,7 @@ impl Default for PoolPolicy {
             retries: 2,
             passive: Some(Passive::default()),
             slow_start: None,
+            sticky: None,
         }
     }
 }
@@ -149,6 +211,7 @@ impl PoolPolicy {
                 ))
             })?),
         };
+        policy.sticky = Sticky::parse(r, http)?;
         policy.passive = Passive::parse(r, http)?;
         // A TCP or UDP pool has no response to judge, so it has no passive health.
         if !http {
@@ -230,6 +293,33 @@ mod tests {
             assert!(parse(bad, Protocol::Http).is_err(), "{bad}");
         }
         assert!(parse(r#"{"passive_health":"off"}"#, Protocol::Tcp).is_err());
+    }
+
+    #[test]
+    fn sticky_is_off_by_default_and_a_cookie_needs_an_http_pool() {
+        let sticky = |source: &str, protocol| parse(source, protocol).map(|policy| policy.sticky);
+        assert_eq!(sticky("{}", Protocol::Http).unwrap(), None);
+        assert_eq!(sticky(r#"{"sticky":"off"}"#, Protocol::Http).unwrap(), None);
+        assert_eq!(sticky(r#"{"sticky":"source"}"#, Protocol::Tcp).unwrap(), Some(Sticky::Source));
+        let named = Some(Sticky::Cookie { name: "sibuna_srv".into() });
+        assert_eq!(sticky(r#"{"sticky":"cookie"}"#, Protocol::Http).unwrap(), named);
+        let own = r#"{"sticky":{"kind":"cookie","cookie":"srv"}}"#;
+        assert_eq!(
+            sticky(own, Protocol::Http).unwrap(),
+            Some(Sticky::Cookie { name: "srv".into() })
+        );
+        assert!(sticky(r#"{"sticky":"cookie"}"#, Protocol::Tcp).is_err());
+        for bad in [
+            r#"{"sticky":"ip"}"#,
+            r#"{"sticky":true}"#,
+            r#"{"sticky":{"kind":"cookie","cookie":"a b"}}"#,
+            r#"{"sticky":{"kind":"cookie","cookie":""}}"#,
+            r#"{"sticky":{"kind":"source","cookie":"srv"}}"#,
+            r#"{"sticky":{"kind":"cookie","name":"srv"}}"#,
+        ] {
+            let error = sticky(bad, Protocol::Http).unwrap_err().to_string();
+            assert!(error.contains("sticky"), "{bad}: {error}");
+        }
     }
 
     #[test]

@@ -377,6 +377,8 @@ struct Table {
     regime: Option<Regime>,
     /// Some frontend or route turns the firewall off, so requests need the lookup.
     bypasses: bool,
+    /// The key of the sticky cookies (SID 0019).
+    sticky: crate::sticky::Key,
 }
 
 impl Table {
@@ -422,6 +424,14 @@ impl HttpRoutes {
             .map(|(name, p)| (name, Pool::new(p, &mut state.loads)))
             .collect();
         state.loads.prune();
+    }
+
+    /// Derives the key of the sticky cookies from `seed`, the challenge seed of the
+    /// node (SID 0019). Nodes that share the seed accept each other's cookies. Without
+    /// this call the key is random and lasts as long as the process.
+    pub fn set_sticky_seed(&self, seed: &[u8]) {
+        let mut table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        table.sticky = crate::sticky::Key::derive(seed);
     }
 
     pub(crate) fn set_regime(&self, regime: Regime) {

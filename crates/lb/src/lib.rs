@@ -21,9 +21,10 @@ pub use mesh::{Mesh, MeshConfig, Regime};
 mod pool;
 mod proxy;
 mod rules;
+mod sticky;
 mod tcp;
 mod traffic;
-pub use traffic::{Passive, PoolPolicy};
+pub use traffic::{Passive, PoolPolicy, Sticky};
 
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::io;

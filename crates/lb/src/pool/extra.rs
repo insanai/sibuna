@@ -8,7 +8,8 @@ use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
 use super::{Load, Pool, Target, Ticket};
-use crate::Passive;
+use crate::sticky::{self, Key, Token};
+use crate::{Passive, Sticky};
 
 /// The servers one request has tried. A retry never selects one of them again.
 #[derive(Default)]
@@ -38,6 +39,8 @@ impl Tried {
 pub(crate) struct Wish<'a> {
     /// Servers that must not be selected.
     pub tried: Option<&'a Tried>,
+    /// The server the client's cookie names. It is used only when it is eligible.
+    pub sticky: Option<usize>,
 }
 
 impl Wish<'_> {
@@ -60,6 +63,55 @@ pub(super) struct State {
     service: Mutex<Service>,
     /// The weight of a server in its ramp, in units of 1/[`SCALE`]. Zero outside a ramp.
     ramped: AtomicU32,
+    /// The sticky token of the server, with a mark of the key and names it was made from.
+    token: Mutex<(u64, Token)>,
+}
+
+impl Pool {
+    /// The server that source stickiness gives the client `peer`: the nearest server of
+    /// the pool that is not a backup, whether or not it can serve now. `None` when the
+    /// pool is not sticky by source.
+    pub(super) fn home(&self, peer: std::net::SocketAddr) -> Option<usize> {
+        if self.policy.sticky != Some(Sticky::Source) {
+            return None;
+        }
+        let client = sticky::client_bytes(peer.ip());
+        let distance =
+            |target: &Target| sticky::distance(&client, &target.server.name, target.server.weight);
+        let servers = self.targets.iter().enumerate().filter(|(_, target)| !target.server.backup);
+        servers
+            .map(|(index, target)| (index, distance(target)))
+            .reduce(|best, next| if next.1.nearer_than(&best.1) { next } else { best })
+            .map(|(index, _)| index)
+    }
+
+    /// The server whose sticky token under `key` is `presented`, for the pool `name`.
+    pub(crate) fn holder(&self, key: &Key, name: &str, presented: &[u8]) -> Option<usize> {
+        self.targets
+            .iter()
+            .position(|target| sibuna_crypto::ct::eq(&target.token(key, name), presented))
+    }
+
+    /// The sticky token of the server that `ticket` reserved.
+    pub(crate) fn token_of(&self, key: &Key, name: &str, ticket: &Ticket) -> Option<Token> {
+        let target = self.targets.iter().find(|target| Arc::ptr_eq(&target.load, &ticket.load))?;
+        Some(target.token(key, name))
+    }
+}
+
+impl Target {
+    /// The sticky token of the server in the pool `pool`. It is computed once for each
+    /// key and pair of names.
+    fn token(&self, key: &Key, pool: &str) -> Token {
+        let names = sibuna_crypto::wyhash::hash(pool.len() as u64, pool.as_bytes());
+        let names = sibuna_crypto::wyhash::hash(names, self.server.name.as_bytes());
+        let mark = (key.tag ^ names) | 1;
+        let mut cached = self.load.extra.token.lock().unwrap_or_else(PoisonError::into_inner);
+        if cached.0 != mark {
+            *cached = (mark, key.token(pool, &self.server.name));
+        }
+        cached.1
+    }
 }
 
 /// What slow start has seen of a server.

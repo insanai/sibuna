@@ -4,9 +4,10 @@ use std::net::{Ipv4Addr, SocketAddr};
 use std::sync::{Arc, PoisonError};
 use std::time::{Duration, Instant};
 
-use super::{HttpRoutes, bare_host};
-use crate::pool::{Ticket, Tried, Wish};
-use crate::{PoolPolicy, Regime};
+use super::{HttpRoutes, Table, bare_host};
+use crate::pool::{Pool, Ticket, Tried, Wish};
+use crate::sticky::{self, Key};
+use crate::{PoolPolicy, Regime, Sticky};
 
 /// One request, as far as routing reads it. Fill it with struct-update syntax:
 /// `Query { vip, peer, host, path, ..Query::default() }`.
@@ -22,12 +23,24 @@ pub struct Query<'a> {
     pub path: &'a [u8],
     /// The publication of the routing table that the firewall decision used.
     pub policy_revision: u64,
+    /// The values of the `Cookie` fields of the request.
+    pub cookies: &'a [&'a [u8]],
+    /// The client reached a TLS frontend.
+    pub secure: bool,
 }
 
 impl Default for Query<'_> {
     fn default() -> Self {
         let nowhere = SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0));
-        Self { vip: nowhere, peer: nowhere, host: b"", path: b"", policy_revision: 0 }
+        Self {
+            vip: nowhere,
+            peer: nowhere,
+            host: b"",
+            path: b"",
+            policy_revision: 0,
+            cookies: &[],
+            secure: false,
+        }
     }
 }
 
@@ -49,17 +62,24 @@ impl HttpRoutes {
             .map_or(&front.pool, |r| &r.pool)
             .clone();
         let regime = table.regime.unwrap_or(Regime::Standalone);
-        let servers = table.pools.get_mut(pool.as_ref())?;
-        let ticket = servers.reserve(Instant::now(), query.peer, query.vip, regime)?;
+        let Table { pools, sticky: key, .. } = &mut *table;
+        let servers = pools.get_mut(pool.as_ref())?;
         let policy = Arc::clone(&servers.policy);
+        let presented =
+            cookie_name(&policy).and_then(|name| sticky::presented(query.cookies, name));
+        let holder = presented.and_then(|token| servers.holder(key, &pool, token));
+        let wish = Wish { sticky: holder, ..Wish::default() };
+        let ticket = servers.reserve_with(Instant::now(), query.peer, query.vip, regime, &wish)?;
         let again = Again {
             pool,
             vip: query.vip,
             peer: query.peer,
             revision: query.policy_revision,
+            secure: query.secure,
             tried: Tried::default(),
         };
-        Some(HttpTarget { ticket, policy, again })
+        let cookie = cookie_line(servers, key, &again, &ticket, presented);
+        Some(HttpTarget { ticket, policy, again, cookie })
     }
 
     /// Reserves a place on another server of the pool of `failed`, for the same request
@@ -79,14 +99,46 @@ impl HttpRoutes {
             return None;
         }
         let regime = table.regime.unwrap_or(Regime::Standalone);
-        let servers = table.pools.get_mut(again.pool.as_ref())?;
+        let Table { pools, sticky: key, .. } = &mut *table;
+        let servers = pools.get_mut(again.pool.as_ref())?;
         let tried = again.tried.with(&failed.ticket);
-        let wish = Wish { tried: Some(&tried) };
+        let wish = Wish { tried: Some(&tried), ..Wish::default() };
         let ticket = servers.reserve_with(Instant::now(), again.peer, again.vip, regime, &wish)?;
         let policy = Arc::clone(&servers.policy);
         let again = Again { pool: Arc::clone(&again.pool), tried, ..*again };
-        Some(HttpTarget { ticket, policy, again })
+        // The client moves with its request: the cookie names the new server.
+        let cookie = cookie_line(servers, key, &again, &ticket, None);
+        Some(HttpTarget { ticket, policy, again, cookie })
     }
+}
+
+/// The name of the sticky cookie of a pool, when it has one.
+fn cookie_name(policy: &PoolPolicy) -> Option<&str> {
+    match &policy.sticky {
+        Some(Sticky::Cookie { name }) => Some(name),
+        Some(Sticky::Source) | None => None,
+    }
+}
+
+/// The `Set-Cookie` line that tells the client the server of `ticket`. It is empty when
+/// the pool has no sticky cookie and when the client `presented` the token of that
+/// server already.
+fn cookie_line(
+    servers: &Pool,
+    key: &Key,
+    again: &Again,
+    ticket: &Ticket,
+    presented: Option<&[u8]>,
+) -> Box<[u8]> {
+    let mut line = Vec::new();
+    let token = cookie_name(&servers.policy)
+        .and_then(|name| Some((name, servers.token_of(key, &again.pool, ticket)?)));
+    if let Some((name, token)) = token
+        && presented != Some(&token[..])
+    {
+        sticky::write_cookie(&mut line, name, &token, again.secure);
+    }
+    line.into()
 }
 
 /// What a reservation remembers so that its request can move to another server.
@@ -95,6 +147,8 @@ struct Again {
     vip: SocketAddr,
     peer: SocketAddr,
     revision: u64,
+    /// The client reached a TLS frontend.
+    secure: bool,
     /// The servers tried before the current one.
     tried: Tried,
 }
@@ -104,6 +158,8 @@ pub struct HttpTarget {
     ticket: Ticket,
     policy: Arc<PoolPolicy>,
     again: Again,
+    /// A `Set-Cookie` line for the response, or nothing.
+    cookie: Box<[u8]>,
 }
 
 impl HttpTarget {
@@ -132,6 +188,12 @@ impl HttpTarget {
     /// as one when the pool counts server errors.
     pub fn answered(&self, status: u16) {
         self.ticket.answered(self.policy.passive.as_ref(), status, Instant::now());
+    }
+
+    /// A complete `Set-Cookie` field line that the response to the client must carry,
+    /// or an empty text. It gives the client the sticky cookie of this server.
+    pub fn cookie_line(&self) -> &[u8] {
+        &self.cookie
     }
 
     /// The longest wait for a connection to the server (`connect_timeout` of its pool).

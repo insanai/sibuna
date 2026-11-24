@@ -168,7 +168,10 @@ impl Pool {
             (eligible(primary) && (primary.load.active.load(Ordering::Relaxed) as u64) < bound)
                 .then_some(index)
         });
-        let index = primary.or_else(|| {
+        // A sticky server serves its client whenever it is eligible (SID 0019).
+        let sticky = wish.sticky.or_else(|| self.home(peer));
+        let sticky = sticky.filter(|&index| self.targets.get(index).is_some_and(eligible));
+        let index = sticky.or(primary).or_else(|| {
             if peak {
                 return self.choose_two(now, peer, vip, eligible);
             }
