@@ -8,8 +8,8 @@ mod config;
 mod health;
 mod http;
 pub use http::{
-    HttpOptions, HttpRoutes, HttpTarget, OriginOptions, OriginTls, OriginVersion, TlsOptions,
-    valid_authority,
+    HttpOptions, HttpRoutes, HttpTarget, OriginOptions, OriginTls, OriginVersion, Query,
+    TlsOptions, valid_authority,
 };
 mod websocket;
 pub use websocket::{TunnelPermit, TunnelRefusal, WebSocketRule};
@@ -22,6 +22,8 @@ mod pool;
 mod proxy;
 mod rules;
 mod tcp;
+mod traffic;
+pub use traffic::PoolPolicy;
 
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::io;

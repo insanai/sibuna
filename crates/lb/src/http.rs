@@ -5,13 +5,15 @@ use std::collections::BTreeMap;
 use std::io;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex, PoisonError};
-use std::time::Instant;
 
 use sibuna_json::ObjectReader;
 
 use crate::Regime;
 use crate::config::{Backend, Config, Protocol, field, invalid, required};
-use crate::pool::{Loads, Pool, Ticket};
+use crate::pool::{Loads, Pool};
+
+mod choose;
+pub use choose::{HttpTarget, Query};
 
 /// Node-local settings shared by HTTP frontends.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -457,6 +459,8 @@ impl HttpRoutes {
     }
 
     /// Selects an eligible HTTP origin for the validated authority and normalized path.
+    /// This is [`HttpRoutes::choose`] for a request without cookies on a cleartext
+    /// frontend.
     pub fn select(
         &self,
         vip: SocketAddr,
@@ -465,41 +469,6 @@ impl HttpRoutes {
         path: &[u8],
         policy_revision: u64,
     ) -> Option<HttpTarget> {
-        let mut table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
-        if policy_revision != table.revision {
-            return None;
-        }
-        let front = table.front(vip)?;
-        let host = bare_host(host);
-        let pool = front
-            .rules
-            .iter()
-            .find(|r| r.matches(host, path))
-            .map_or(&front.pool, |r| &r.pool)
-            .clone();
-        let regime = table.regime.unwrap_or(Regime::Standalone);
-        table
-            .pools
-            .get_mut(pool.as_ref())?
-            .reserve(Instant::now(), peer, vip, regime)
-            .map(HttpTarget)
-    }
-}
-
-/// An admitted HTTP exchange. Dropping it returns the backend's capacity.
-pub struct HttpTarget(Ticket);
-
-impl HttpTarget {
-    /// The numeric HTTP/1.1 origin.
-    pub fn address(&self) -> SocketAddr {
-        self.0.addr
-    }
-    /// Records an origin connection failure for subsequent admissions.
-    pub fn failed(&self) {
-        self.0.failed(Instant::now());
-    }
-    /// Records the duration of a completed exchange.
-    pub fn completed(&self, start: Instant) {
-        self.0.observe(start, Instant::now());
+        self.choose(&Query { vip, peer, host, path, policy_revision, ..Query::default() })
     }
 }

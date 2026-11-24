@@ -82,6 +82,8 @@ impl Target {
 pub(crate) struct Pool {
     targets: Vec<Target>,
     scheduler: Scheduler,
+    /// The traffic options of SID 0019.
+    pub policy: Arc<crate::PoolPolicy>,
     pub proxy_v2: Option<crate::proxy::Spec>,
     choices: RandomState,
 }
@@ -98,6 +100,7 @@ impl Pool {
         Self {
             targets,
             scheduler: backend.scheduler,
+            policy: backend.policy,
             proxy_v2: backend.proxy_v2,
             choices: RandomState::new(),
         }

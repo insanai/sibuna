@@ -49,6 +49,8 @@ pub(crate) struct Backend {
     pub proxy_v2: Option<crate::proxy::Spec>,
     pub health: Option<crate::health::Spec>,
     pub origin: Option<std::sync::Arc<crate::OriginOptions>>,
+    /// The traffic options of SID 0019.
+    pub policy: std::sync::Arc<crate::PoolPolicy>,
 }
 
 pub(crate) struct Server {
@@ -400,9 +402,10 @@ impl Backend {
             .flatten();
         let origin =
             if protocol == Protocol::Http { crate::OriginOptions::parse(&mut r)? } else { None };
+        let policy = std::sync::Arc::new(crate::PoolPolicy::parse(&mut r, protocol)?);
         let scheduler = scheduler(&mut r, mesh, &mut servers)?;
         field(r.finish())?;
-        Ok(Self { protocol, servers, scheduler, proxy_v2, health, origin })
+        Ok(Self { protocol, servers, scheduler, proxy_v2, health, origin, policy })
     }
 }
 
