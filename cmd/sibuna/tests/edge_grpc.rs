@@ -52,7 +52,11 @@ fn start(origin: SocketAddr, http: &str, routes: &str, pool: &str) -> Daemon {
 
 fn try_start(origin: SocketAddr, http: &str, routes: &str, pool: &str) -> Result<Daemon, String> {
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
-    let name = format!("sibuna-grpc-{}-{}.json", std::process::id(), vip.port());
+    // Two tests of this process may be given the same port, one after the other. The
+    // serial keeps the file of one from replacing the file of the other.
+    static SERIAL: AtomicUsize = AtomicUsize::new(0);
+    let serial = SERIAL.fetch_add(1, Ordering::Relaxed);
+    let name = format!("sibuna-grpc-{}-{serial}-{}.json", std::process::id(), vip.port());
     let path = std::env::temp_dir().join(name);
     let (cert, key) = (fixture("localhost.pem"), fixture("localhost.key"));
     let source = format!(

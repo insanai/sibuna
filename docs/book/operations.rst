@@ -212,6 +212,8 @@ We need no file to balance load. One command serves HTTP on port 8080 and spread
      - The HTTP surface. The default is ``off``.
    * - ``--admin SOCKET``
      - Open the admin socket at this path for ``sibuna ctl``.
+   * - ``--access-log PATH|stdout``
+     - Write one JSON line per HTTP request to this file or to standard output (section *Observing the edge*). Without the option nothing is logged.
    * - ``--print-config``
      - Print the equivalent configuration and exit.
    * - ``--format jlv|json``
@@ -795,7 +797,7 @@ Each protocol has its own limiter. All of them count per source IPv4 address or 
      - Effect
    * - ``rate_limit: {"conn_per_10s": 200}`` on a ``tcp`` or ``http`` frontend
      - New connections, also QUIC connections on that address
-     - Further connections are closed until the rate falls.
+     - Further connections are closed until the rate falls. A connection from a proxy in ``trusted_proxies`` is not counted. With ``proxy_protocol`` the client that the header names is counted.
    * - ``udp_defense: {"mode": "rate_limit", "threshold_pps": 200}`` on a ``udp`` frontend
      - Datagrams per second
      - Further datagrams are dropped.
@@ -1187,12 +1189,15 @@ An edge writes an access log, counts each request per frontend and per server, a
    * - ``listen``
      - none
      - An address of a separate listener for ``/health``, ``/ready`` and ``/metrics``.
-   * - ``trusted_proxies`` on an ``http`` frontend
+   * - ``trusted_proxies`` on an ``http`` or ``tcp`` frontend
      - ``[]``
-     - The networks of the proxies in front of this frontend. At most 64.
-   * - ``proxy_protocol`` on an ``http`` frontend
+     - The networks of the proxies in front of this frontend. At most 64. A ``tcp`` frontend reads it only with ``proxy_protocol``.
+   * - ``proxy_protocol`` on an ``http`` or ``tcp`` frontend
      - ``false``
      - Every connection must begin with a PROXY header, version 1 or 2. Needs ``trusted_proxies``.
+   * - ``global.drain_delay``
+     - ``0s``
+     - How long a shutdown keeps serving while readiness answers 503, before the listeners stop. At most ``10m``.
 
 **The access log.** Each HTTP request writes one line when its response ends. The members are always these, in this order:
 
@@ -1209,13 +1214,15 @@ An edge writes an access log, counts each request per frontend and per server, a
    * - ``frontend``
      - The name of the frontend, or ``-``.
    * - ``protocol``
-     - ``http/1.1``, ``https``, ``h2`` or ``h3``.
+     - ``http/1.1``, ``h2`` or ``h3``.
+   * - ``scheme``
+     - ``https`` when the client reached a TLS frontend, else ``http``.
    * - ``method``, ``host``, ``path``
      - As sent. The path is in normal form and has no query. A request that did not parse has ``-``.
    * - ``status``
      - The status sent to the client. 0 when the client left before a response.
    * - ``bytes_in``, ``bytes_out``
-     - Request and response bytes. ``bytes_in`` is an estimate.
+     - Request and response bytes. For ``http/1.1``, ``bytes_out`` is every byte written towards the client before TLS. For ``h2`` and ``h3`` it is the response body alone. ``bytes_in`` is the parsed head plus the declared body length, and for a body without a length only the part buffered for the decision.
    * - ``duration_ms``
      - From the dispatch to the end of the response.
    * - ``ttfb_ms``
@@ -1227,17 +1234,35 @@ An edge writes an access log, counts each request per frontend and per server, a
 
 .. code-block:: json
 
-   {"time":"2026-11-24T10:15:02.418Z","client":"203.0.113.7","frontend":"web","protocol":"http/1.1","method":"GET","host":"www.example.com","path":"/index.html","status":200,"bytes_in":112,"bytes_out":5310,"duration_ms":3.184,"ttfb_ms":2.907,"backend":"app","server":"app-2","verdict":"pass"}
+   {"time":"2026-11-24T10:15:02.418Z","client":"203.0.113.7","frontend":"web","protocol":"http/1.1","scheme":"http","method":"GET","host":"www.example.com","path":"/index.html","status":200,"bytes_in":112,"bytes_out":5310,"duration_ms":3.184,"ttfb_ms":2.907,"backend":"app","server":"app-2","verdict":"pass"}
 
 A worker never waits for the log. It puts the entry in a bounded queue, and one thread formats and writes. When the queue is full the entry is dropped and ``sibuna_edge_access_log_dropped_total`` counts it. To rotate the file we rename it and send SIGHUP. Sibuna opens the path again within about a second. TCP and UDP flows are counted and not logged.
 
-**Metrics.** The metrics text has the process counters and then the series of the edge: requests by status class, bytes and a duration histogram per frontend; requests, failures, a response time histogram and ``sibuna_edge_server_up`` per server; the flow table (``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``, ``sibuna_edge_drops_total``); and the counters of the log and of the PROXY protocol. Counters follow a name across a reload.
+There is no log unless we configure one. A reload may change ``output``, remove the ``access_log`` object or add it, and may change ``internal_allow``. The new file is opened first, and a path that cannot be opened refuses the reload. ``listen`` and the ``queue`` of a running log need a restart.
+
+A request that Sibuna refuses before the firewall decides is logged too, with verdict ``-``: an HTTP/2 or HTTP/3 request above the request bound (503), or one that is malformed (400, 417, 501).
+
+**Metrics.** The metrics text has the process counters and then the series of the edge: requests by status class, bytes and a duration histogram per frontend; requests, failures, a response time histogram and ``sibuna_edge_server_up`` and the gauge ``sibuna_edge_server_active_requests`` per server; ``sibuna_edge_refused_total`` by ``reason`` (``rate_limit``, ``flow_limit``, ``draining``, ``connection_limit``, ``client_limit``, ``task_limit``, ``exchange_limit``, ``bad_request``); the flow table (``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``, ``sibuna_edge_drops_total``); and the counters of the log and of the PROXY protocol. Counters follow a name across a reload. A server that ``sibuna ctl`` adds is counted at once, and one that it removes loses its series at once.
 
 **Readiness.** ``/__sibuna/ready`` answers 200 with ``{"status":"ready"}``. From the start of a shutdown it answers 503 with ``{"status":"draining"}``. ``/__sibuna/health`` only says that the process runs. We point a load balancer in front of Sibuna at the readiness answer.
 
+**Draining behind a balancer.** With ``global.drain_delay`` a shutdown has three steps. First readiness answers 503 while Sibuna still accepts and serves, for the time of the delay. Then the listeners stop, and established flows have ``global.shutdown_timeout`` to finish. Then the process ends. We set the delay a little longer than the time the balancer in front needs to see the 503: its probe interval times its failure threshold. For a probe every 5 seconds and 2 failures, ``drain_delay: "12s"`` is enough. The default is zero, because without a balancer in front the delay only slows every stop. The service manager must allow the sum of the two times before it kills the process (``TimeoutStopSec`` in a systemd unit).
+
+.. code-block:: text
+
+   global { drain_delay: "12s", shutdown_timeout: "30s" }
+
 **Who may read them.** On an HTTP frontend the three routes answer only a client inside ``internal_allow`` whose request carries no ``X-Forwarded-For``, ``X-Real-IP`` or ``Forwarded`` field. Everyone else receives the 404 of an unknown route. The default is the loopback network, so a probe from another host needs its network in the list, or the separate listener. The listener at ``listen`` applies no list of its own. Its address is its access control, so we bind it to a management network.
 
-**Clients behind a proxy.** Without ``trusted_proxies`` the client is the socket peer and ``X-Forwarded-For`` is ignored. With it, a request whose socket peer is inside the list is judged by the address its proxy recorded: we walk ``X-Forwarded-For`` from the right and take the first address that is not a trusted proxy. An entry the client wrote itself stands to the left of that address and is never read. The address is the client for bans, the request limiter, policy rules and the log. With ``proxy_protocol: true`` the frontend takes the client from the PROXY header instead. A connection from outside ``trusted_proxies``, or without a whole valid header in its first packet, is closed.
+**Clients behind a proxy.** Without ``trusted_proxies`` the client is the socket peer and ``X-Forwarded-For`` is ignored. With it, a request whose socket peer is inside the list is judged by the address its proxy recorded: we walk ``X-Forwarded-For`` from the right and take the first address that is not a trusted proxy. An entry the client wrote itself stands to the left of that address and is never read. The address is the client for bans, the request limiter, policy rules and the log. With ``proxy_protocol: true`` the frontend takes the client from the PROXY header instead. A connection from outside ``trusted_proxies``, or without a whole valid header in its first packet, is closed. The header may stand before a TLS handshake.
+
+A ``tcp`` frontend reads the PROXY header in the same way. The client it names then drives ``rate_limit.conn_per_10s``, the choice of the server, ``sticky: "source"``, and the PROXY header that a pool with ``proxy_v2`` sends on to its server. So a chain of balancers keeps the client address from end to end:
+
+.. code-block:: text
+
+   frontends { db { proto: "tcp", binds: ["0.0.0.0:5432"],
+                    trusted_proxies: ["10.0.0.0/24"], proxy_protocol: true,
+                    default_backend: "db" } }
 
 **The descriptor limit.** At startup Sibuna compares the limit on open files with what the topology can use: two per flow, two per HTTP connection, and 512. It raises the soft limit as far as the hard limit allows. When that is not enough it prints a warning with the numbers and a hint, and starts anyway:
 
@@ -1298,7 +1323,7 @@ We check the module with ``sibuna check -f edge.jlv`` and run it with ``sibuna -
 Reload, drain and shutdown
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-On Unix we replace the file and send SIGHUP. Sibuna prepares the whole revision first: the topology, the policy, the certificates and the server adapters. A valid revision updates routing for new flows. Established TCP streams, UDP mappings and running HTTP exchanges keep their server. A handshake still awaiting inspection is closed at the policy boundary. A rejected revision leaves the serving one untouched, and the log line ``EDGE002`` says why. To take one server out of rotation we drain it through the admin socket, as the next section shows. Changing listener addresses, the HTTP surface, the firewall limits, the ``observability`` object, the challenge seed or the mesh roster takes a restart. The frontend options ``trusted_proxies`` and ``proxy_protocol`` follow a reload. SIGHUP also reopens the access log. Shutdown stops admitting new flows, sends GOAWAY on HTTP/2 and HTTP/3, and gives active flows the time of ``global.shutdown_timeout`` to finish, five seconds by default. The last log line counts the flows that were closed by force.
+On Unix we replace the file and send SIGHUP. Sibuna prepares the whole revision first: the topology, the policy, the certificates and the server adapters. A valid revision updates routing for new flows. Established TCP streams, UDP mappings and running HTTP exchanges keep their server. A handshake still awaiting inspection is closed at the policy boundary. A rejected revision leaves the serving one untouched, and the log line ``EDGE002`` says why. To take one server out of rotation we drain it through the admin socket, as the next section shows. Changing listener addresses, the HTTP surface, the firewall limits, ``observability.listen``, the queue of a running access log, the challenge seed or the mesh roster takes a restart. The output of the access log, ``internal_allow``, ``global.drain_delay`` and the frontend options ``trusted_proxies`` and ``proxy_protocol`` follow a reload. SIGHUP also reopens the access log. Shutdown first serves on for ``global.drain_delay`` while readiness answers 503, when that is set. Then it stops admitting new flows, sends GOAWAY on HTTP/2 and HTTP/3, and gives active flows the time of ``global.shutdown_timeout`` to finish, five seconds by default. The last log line counts the flows that were closed by force.
 
 A reload fails no request. The firewall decides a request under one policy and selects its server a moment later. When a reload falls between the two, the request is routed by the revision it was decided under. The daemon keeps the replaced revision for ten seconds for this purpose.
 
@@ -1323,6 +1348,8 @@ A node tells its peers the client and the time the ban ends, three times over fi
 
 Three things stay local. Lifting a ban on one node lifts it there only. Bans that the policy file configures are not sent, so the file must be the same on every node. The request limiters count on each node by itself. The nodes must use the same ``ipv6_prefix`` and keep their clocks within a few seconds. ``mesh.replicate_bans: false`` turns the sharing off.
 
+A drain travels the same way. ``sibuna ctl SOCKET set server app/a state drain`` on any node takes the server out of rotation on every node, and ``state ready`` returns it everywhere. The later command wins. A node that restarts learns the drains in effect from its peers, so it does not send clients to a server under maintenance. Adding the word ``local`` keeps a command on its node, and ``mesh.replicate_drains: false`` turns the sharing off. Weights and added or removed servers are not shared: we give those commands on each node, or change the file of each node.
+
 The sticky cookie of a pool needs no sharing, but it needs the same ``http.secret_file`` on every node. Without that file each node draws its own secret and does not recognise the cookie of another.
 
 Replacing the binary without closing the port
@@ -1337,6 +1364,8 @@ With ``global.reuse_port`` ``true`` we upgrade Sibuna, or change a setting that 
    kill -TERM "$OLD_PID"                                         # drains, then stops
 
 The new process binds the same addresses while the old one serves, and the kernel gives each new connection to one of them. On SIGTERM the old process stops accepting and waits up to ``shutdown_timeout`` for its established flows. The new process takes the admin socket when it starts, and the old process leaves that socket alone when it stops.
+
+A takeover needs no ``global.drain_delay``: nothing in front has to notice, because the new process already accepts. With a delay the old process keeps accepting its share of new connections for that time, and only then stops. We set a delay for the other case, a node that leaves the pool of a balancer in front.
 
 A connection that reaches the old process in the instant it closes its listener is reset, and the client connects again. In our test with a client that opens a new connection for every request, no request failed in 15 takeovers. An HTTP/3 connection does not survive the takeover: the kernel may hand its packets to the other process, which does not know the connection, and the client then connects again. Connections over TCP are not affected. Without ``reuse_port`` a second process on the same address is refused with ADDRESS IN USE, which protects against starting the service twice by mistake.
 

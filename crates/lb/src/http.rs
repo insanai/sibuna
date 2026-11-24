@@ -485,6 +485,8 @@ struct Retired {
     revision: u64,
     fronts: BTreeMap<SocketAddr, Frontend>,
     pools: BTreeMap<String, Pool>,
+    /// The names and counters of the servers of `pools` (SID 0020).
+    servers: BTreeMap<String, Vec<(SocketAddr, crate::ServerInfo)>>,
     until: Instant,
 }
 
@@ -518,6 +520,7 @@ impl HttpRoutes {
             revision: state.revision,
             fronts: std::mem::take(&mut state.fronts),
             pools: std::mem::take(&mut state.pools),
+            servers: std::mem::take(&mut state.servers),
             until: Instant::now() + RETIRE_AFTER,
         };
         state.previous = Some(retired);

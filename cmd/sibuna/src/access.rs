@@ -10,15 +10,15 @@ mod sink;
 
 use std::io::{self, Write};
 use std::net::IpAddr;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, OnceLock, PoisonError, RwLock};
 use std::time::{Duration, Instant};
 
 use sibuna_http::Request;
 use sibuna_http::response::{self, Extra, Status};
-use sibuna_lb::{Forwarded, FrontendInfo, ObserveOptions, ServerInfo, Stats};
+use sibuna_lb::{ActiveRequest, Forwarded, FrontendInfo, ObserveOptions, ServerInfo, Stats};
 
-pub(crate) use self::sink::AccessLog;
+pub(crate) use self::sink::{AccessLog, Change};
 use crate::client_writer::Tally;
 use crate::connection::{Ingress, UNKNOWN_LENGTH};
 use crate::context::Ctx;
@@ -31,32 +31,78 @@ const MAX_PATH: usize = 1024;
 
 /// What an edge server shares for observation.
 pub(crate) struct Observe {
-    /// Who may read the internal routes.
-    pub options: ObserveOptions,
-    /// The access log, when the topology has one.
-    pub log: Option<AccessLog>,
+    /// Who may read the internal routes. A reload replaces them.
+    options: RwLock<ObserveOptions>,
+    /// The access log, from the first revision that asks for one.
+    log: OnceLock<AccessLog>,
     /// The counters of the frontends and servers.
     pub stats: Arc<Stats>,
     /// The node stopped taking new work. Release on store, acquire on load.
     pub draining: AtomicBool,
-    /// Connections of PROXY frontends that sent a valid header, and those closed.
-    pub proxy_accepted: AtomicU64,
-    pub proxy_rejected: AtomicU64,
     /// What the replication of bans over the mesh did (SID 0022), once it runs.
-    pub mesh_bans: std::sync::OnceLock<Arc<sibuna_lb::BanCounters>>,
+    pub mesh_bans: OnceLock<Arc<sibuna_lb::BanCounters>>,
 }
 
 impl Observe {
     /// The shared state of one edge server, with the log already open.
     pub(crate) fn new(options: ObserveOptions, log: Option<AccessLog>, stats: Arc<Stats>) -> Self {
         Self {
-            options,
-            log,
+            options: RwLock::new(options),
+            log: log.map(OnceLock::from).unwrap_or_default(),
             stats,
             draining: AtomicBool::new(false),
-            proxy_accepted: AtomicU64::new(0),
-            proxy_rejected: AtomicU64::new(0),
-            mesh_bans: std::sync::OnceLock::new(),
+            mesh_bans: OnceLock::new(),
+        }
+    }
+
+    /// The access log, while the topology asks for one.
+    pub(crate) fn log(&self) -> Option<&AccessLog> {
+        self.log.get().filter(|log| log.is_on())
+    }
+
+    /// True when `address` may read the internal routes.
+    pub(crate) fn allows(&self, address: IpAddr) -> bool {
+        self.options.read().unwrap_or_else(PoisonError::into_inner).allows(address)
+    }
+
+    /// True when a reload can move to `next`. The separate listener and the length of
+    /// a running log queue are fixed when the process starts.
+    pub(crate) fn compatible(&self, next: &ObserveOptions) -> bool {
+        let options = self.options.read().unwrap_or_else(PoisonError::into_inner);
+        let queue = match (self.log.get(), &next.access_log) {
+            (Some(log), Some(asked)) => log.queue() == asked.queue,
+            _ => true,
+        };
+        options.listen == next.listen && queue
+    }
+
+    /// Prepares the access log of `next`. See [`AccessLog::plan`].
+    ///
+    /// # Errors
+    ///
+    /// The error of opening the new log file or of starting the writer thread.
+    pub(crate) fn plan(&self, next: &ObserveOptions) -> io::Result<Change> {
+        AccessLog::plan(self.log.get(), next.access_log.as_ref())
+    }
+
+    /// Moves to the options of a reloaded topology, with the log change of
+    /// [`Observe::plan`].
+    pub(crate) fn apply(&self, next: ObserveOptions, change: Change) {
+        change.apply(&self.log);
+        *self.options.write().unwrap_or_else(PoisonError::into_inner) = next;
+    }
+
+    /// Asks the writer to reopen the log file, for log rotation.
+    pub(crate) fn reopen_log(&self) {
+        if let Some(log) = self.log.get() {
+            log.reopen();
+        }
+    }
+
+    /// Writes the queued lines and ends the writer.
+    pub(crate) fn close_log(&self) {
+        if let Some(log) = self.log.get() {
+            log.close();
         }
     }
 
@@ -68,13 +114,15 @@ impl Observe {
     /// Ends an entry at `now`: counts it and offers it to the log. Never waits.
     pub(crate) fn settle(&self, mut entry: Entry, now: Instant) {
         entry.elapsed = now.saturating_duration_since(entry.started);
+        // The request has ended. Its line may wait in the queue.
+        entry.active = None;
         if let Some(front) = &entry.frontend {
             front.stats.record(entry.status, entry.bytes_in, entry.bytes_out, entry.elapsed);
         }
         if let Some(server) = &entry.server {
             server.stats.record(entry.status, entry.first_byte);
         }
-        if let Some(log) = &self.log {
+        if let Some(log) = self.log() {
             log.offer(entry);
         }
     }
@@ -84,22 +132,12 @@ impl Observe {
         use std::fmt::Write as _;
         // Writing to a string cannot fail.
         let _ = self.stats.write_prometheus(out);
-        let (written, dropped, errors) = self.log.as_ref().map_or((0, 0, 0), AccessLog::counts);
+        let (written, dropped, errors) = self.log.get().map_or((0, 0, 0), AccessLog::counts);
         let series = [
             ("sibuna_edge_ready", "gauge", u64::from(self.is_ready())),
             ("sibuna_edge_access_log_written_total", "counter", written),
             ("sibuna_edge_access_log_dropped_total", "counter", dropped),
             ("sibuna_edge_access_log_errors_total", "counter", errors),
-            (
-                "sibuna_edge_proxy_protocol_accepted_total",
-                "counter",
-                self.proxy_accepted.load(Ordering::Relaxed),
-            ),
-            (
-                "sibuna_edge_proxy_protocol_rejected_total",
-                "counter",
-                self.proxy_rejected.load(Ordering::Relaxed),
-            ),
         ];
         for (name, kind, value) in series {
             let _ = writeln!(out, "# TYPE {name} {kind}\n{name} {value}");
@@ -132,7 +170,15 @@ pub(crate) struct Entry {
     cuts: [u16; 3],
     pub frontend: Option<Arc<FrontendInfo>>,
     pub server: Option<ServerInfo>,
+    /// The place of the request in the active gauge of `server`.
+    active: Option<ActiveRequest>,
     pub protocol: &'static str,
+    /// The client reached a TLS frontend.
+    pub secure: bool,
+    /// Sibuna answered for a server that failed, so a 502 or 504 is its own.
+    pub failed: bool,
+    /// Finds the status in the pieces of a relayed response.
+    pub scan: crate::client_writer::StatusScan,
     pub verdict: &'static str,
     /// The status sent to the client, or zero.
     pub status: u16,
@@ -158,7 +204,11 @@ impl Entry {
             cuts: [0; 3],
             frontend,
             server: None,
+            active: None,
             protocol,
+            secure: false,
+            failed: false,
+            scan: crate::client_writer::StatusScan::default(),
             verdict: "-",
             status: 0,
             bytes_in: 0,
@@ -223,8 +273,11 @@ pub(crate) struct Trace {
     pub protocol: &'static str,
     /// The frontend the request arrived on.
     pub front: Option<Arc<FrontendInfo>>,
-    /// The server the request was sent to.
+    /// The server the request was sent to, and the request in its active gauge.
     pub server: Option<ServerInfo>,
+    active: Option<ActiveRequest>,
+    /// The relay to the server failed and Sibuna answered itself.
+    pub failed: bool,
     /// The entry of the request, from the end of its dispatch until it is settled.
     pub entry: Option<Entry>,
 }
@@ -238,6 +291,8 @@ impl Trace {
         self.started = Some(Instant::now());
         self.verdict = "-";
         self.server = None;
+        self.active = None;
+        self.failed = false;
         self.entry = None;
         self.front = match (&server.edge_routes, ingress) {
             (Some(routes), Some(ingress)) => routes.frontend(ingress.vip),
@@ -258,13 +313,10 @@ pub(crate) fn verdict_name(outcome: Outcome) -> &'static str {
     }
 }
 
-/// The protocol of a request whose path does not name one.
-fn protocol_of(trace: &Trace, ingress: Option<Ingress>) -> &'static str {
-    match (trace.protocol, ingress) {
-        ("", Some(ingress)) if ingress.secure => "https",
-        ("", _) => "http/1.1",
-        (named, _) => named,
-    }
+/// The protocol of a request: HTTP/1.1 unless the path names another. Whether TLS
+/// carried it is the `scheme` field.
+fn protocol_of(trace: &Trace) -> &'static str {
+    if trace.protocol.is_empty() { "http/1.1" } else { trace.protocol }
 }
 
 /// Finds the client of `request` among its forwarded entries, when the socket peer is a
@@ -313,7 +365,11 @@ pub(crate) fn capture<W>(ctx: &mut Ctx<'_, W>) {
         cuts: [0; 3],
         frontend: trace.front.take(),
         server: trace.server.take(),
-        protocol: protocol_of(trace, ctx.ingress),
+        active: trace.active.take(),
+        protocol: protocol_of(trace),
+        secure: ctx.ingress.is_some_and(|ingress| ingress.secure),
+        failed: std::mem::take(&mut trace.failed),
+        scan: crate::client_writer::StatusScan::default(),
         verdict,
         status: 0,
         bytes_in: (line + head + body) as u64,
@@ -321,7 +377,7 @@ pub(crate) fn capture<W>(ctx: &mut Ctx<'_, W>) {
         first_byte: None,
         elapsed: Duration::ZERO,
     };
-    if observe.log.is_some() {
+    if observe.log().is_some() {
         let host = request.header(b"host").unwrap_or_default();
         entry.set_text(ctx.client_ip, host, request.method_text, request.path);
     }
@@ -332,6 +388,7 @@ pub(crate) fn capture<W>(ctx: &mut Ctx<'_, W>) {
 pub(crate) fn selected<W>(ctx: &mut Ctx<'_, W>, target: Option<&sibuna_lb::HttpTarget>) {
     if ctx.server.observe.is_some() {
         ctx.trace.server = target.and_then(|target| target.server().cloned());
+        ctx.trace.active = ctx.trace.server.as_ref().map(ServerInfo::begin_request);
     }
 }
 
@@ -369,7 +426,31 @@ impl sibuna_ingress::Report for Pending {
 
     fn moved(&mut self, target: &sibuna_lb::HttpTarget) {
         self.entry.server = target.server().cloned();
+        self.entry.active = self.entry.server.as_ref().map(ServerInfo::begin_request);
     }
+}
+
+/// Counts and logs a request that the protocol runtime answered before any decision:
+/// the node ran as many requests as it may, or the request was malformed.
+#[cfg(feature = "https")]
+pub(crate) fn refused(server: &Server, refused: &sibuna_ingress::Refused<'_>) {
+    let Some(observe) = &server.observe else { return };
+    let reason = match refused.status {
+        503 => sibuna_lb::Refusal::ExchangeLimit,
+        _ => sibuna_lb::Refusal::BadRequest,
+    };
+    observe.stats.refuse(reason);
+    let front = server.edge_routes.as_ref().and_then(|routes| routes.frontend(refused.vip));
+    let mut peer = crate::connection::PeerText::default();
+    peer.format(Some(refused.peer));
+    let mut entry = Entry::unparsed(peer.as_bytes(), front, refused.protocol);
+    entry.secure = true;
+    if observe.log().is_some() {
+        let (host, method, path) = (refused.host, refused.method, refused.path);
+        entry.set_text(peer.as_bytes(), host.as_bytes(), method.as_bytes(), path.as_bytes());
+    }
+    entry.status = refused.status;
+    observe.settle(entry, Instant::now());
 }
 
 /// Settles the request that a response writer answered: Sibuna's own response on every
@@ -391,23 +472,27 @@ pub(crate) fn settle_written(
                 (Some(routes), Some(ingress)) => routes.frontend(ingress.vip),
                 _ => None,
             };
-            Some(Entry::unparsed(peer, front, protocol_of(trace, ingress)))
+            let mut entry = Entry::unparsed(peer, front, protocol_of(trace));
+            entry.secure = ingress.is_some_and(|ingress| ingress.secure);
+            Some(entry)
         }
         None => None,
     };
     let Some(mut entry) = entry else { return };
     entry.status = tally.status;
     entry.bytes_out = tally.bytes;
-    if entry.server.is_some() && tally.status != 0 && !own_gateway_error(tally.status) {
+    // A 502 or 504 of the server itself is a response like any other. Only when the
+    // relay failed did Sibuna write the status, and then the server gave no first byte.
+    let own = entry.failed && matches!(tally.status, 502 | 504);
+    if entry.server.is_some() && tally.status != 0 && !own {
         entry.first_byte = tally.first.map(|at| at.saturating_duration_since(entry.started));
     }
     observe.settle(entry, Instant::now());
 }
 
-/// True for the statuses Sibuna answers itself when a server fails. On the
-/// thread-per-connection path the writer cannot tell them from a server's own.
-fn own_gateway_error(status: u16) -> bool {
-    matches!(status, 502 | 504)
+/// Notes that the relay of an admitted request failed, so the answer is Sibuna's own.
+pub(crate) fn relay_failed<W>(ctx: &mut Ctx<'_, W>) {
+    ctx.trace.failed = true;
 }
 
 /// True when the request may read the health, readiness and metrics routes. The daemon
@@ -416,7 +501,7 @@ fn own_gateway_error(status: u16) -> bool {
 pub(crate) fn may_inspect<W>(ctx: &Ctx<'_, W>) -> bool {
     let Some(observe) = &ctx.server.observe else { return true };
     let peer = sibuna_cidr::parse_ip(ctx.peer).ok();
-    let inside = |address: Option<IpAddr>| address.is_some_and(|a| observe.options.allows(a));
+    let inside = |address: Option<IpAddr>| address.is_some_and(|a| observe.allows(a));
     let forwarded = ctx.request.headers().iter().any(|header| {
         [&b"x-forwarded-for"[..], b"x-real-ip", b"forwarded"]
             .iter()

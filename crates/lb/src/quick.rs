@@ -38,6 +38,8 @@ pub struct QuickStart {
     pub surface: String,
     /// The path of the admin socket.
     pub admin_socket: Option<String>,
+    /// Where the access log goes (SID 0020): a file path, `stdout` or `stderr`.
+    pub access_log: Option<String>,
     /// Automatic HTTPS (SID 0021), when it has a domain.
     pub automatic: QuickAutomatic,
 }
@@ -86,6 +88,7 @@ impl Default for QuickStart {
             health: None,
             surface: "off".to_owned(),
             admin_socket: None,
+            access_log: None,
             automatic: QuickAutomatic::default(),
         }
     }
@@ -181,6 +184,10 @@ impl QuickStart {
         }
         if protocol.is_none() {
             members.push(("http", Node::Map(vec![("surface", text(&self.surface))])));
+        }
+        if let Some(output) = &self.access_log {
+            let log = Node::Map(vec![("output", text(output))]);
+            members.push(("observability", Node::Map(vec![("access_log", log)])));
         }
         let mut web = Vec::new();
         let mut app = Vec::new();
@@ -333,6 +340,11 @@ mod tests {
         start.admin_socket = Some("/run/sibuna/edge.sock".to_owned());
         let config = start.config().unwrap();
         assert_eq!(config.admin_socket(), Some("/run/sibuna/edge.sock"));
+        assert!(config.observe().access_log.is_none(), "no log unless asked");
+        start.access_log = Some("stdout".to_owned());
+        let log = start.config().unwrap().observe().access_log.clone().unwrap();
+        assert_eq!(log.output, crate::LogOutput::Stdout);
+        assert!(start.jlv().contains("access_log"), "{}", start.jlv());
         assert!(config.http().is_some_and(|http| http.firewall && !http.shield));
         for protocol in [QuickProtocol::Tcp, QuickProtocol::Udp] {
             let mut start = quick(&["10.0.0.1:53"]);
