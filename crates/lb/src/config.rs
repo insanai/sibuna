@@ -12,6 +12,7 @@ pub(crate) const MAX_FLOWS: usize = 8192;
 /// The parsed topology. Create one with [`Config::parse`].
 pub struct Config {
     pub(crate) limit: usize,
+    pub(crate) http: crate::HttpOptions,
     pub(crate) mesh: Option<crate::MeshConfig>,
     pub(crate) listeners: BTreeMap<(Protocol, SocketAddr), Frontend>,
     pub(crate) pools: BTreeMap<String, Backend>,
@@ -20,10 +21,13 @@ pub struct Config {
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialOrd, PartialEq)]
 pub(crate) enum Protocol {
     Tcp,
+    Http,
     Udp,
 }
 
 pub(crate) struct Frontend {
+    pub tls: Option<std::sync::Arc<crate::TlsOptions>>,
+    pub http_rules: std::sync::Arc<[crate::http::Rule]>,
     pub rate: Option<sibuna_store::limiter::Limits>,
     pub pool: std::sync::Arc<str>,
     pub timeout: Duration,
@@ -63,8 +67,9 @@ pub(crate) fn required<'a>(r: &mut ObjectReader<'_, 'a>, key: &str) -> Result<St
 fn protocol(r: &mut ObjectReader<'_, '_>, key: &str) -> Result<Protocol> {
     match required(r, key)?.as_str() {
         "tcp" => Ok(Protocol::Tcp),
+        "http" => Ok(Protocol::Http),
         "udp" => Ok(Protocol::Udp),
-        _ => Err(invalid(format!("{} must be tcp or udp", r.field_path(key)))),
+        _ => Err(invalid(format!("{} must be http, tcp or udp", r.field_path(key)))),
     }
 }
 
@@ -97,6 +102,16 @@ impl Config {
         max_depth: 16,
     };
 
+    /// HTTP firewall settings when at least one HTTP frontend is present.
+    pub fn http(&self) -> Option<&crate::HttpOptions> {
+        self.listeners.keys().any(|(proto, _)| *proto == Protocol::Http).then_some(&self.http)
+    }
+
+    /// TLS frontends and their listener addresses, for the protocol adapter.
+    pub fn tls(&self) -> BTreeMap<SocketAddr, std::sync::Arc<crate::TlsOptions>> {
+        self.listeners.iter().filter_map(|((_, addr), f)| Some((*addr, f.tls.clone()?))).collect()
+    }
+
     /// Static peer configuration, when the operator enabled RTT-based routing.
     pub fn mesh(&self) -> Option<&crate::MeshConfig> {
         self.mesh.as_ref()
@@ -113,8 +128,12 @@ impl Config {
             field(global.finish())?;
         }
         let mesh = field(root.take_object("mesh"))?.map(crate::MeshConfig::parse).transpose()?;
+        let http = field(root.take_object("http"))?.map(crate::HttpOptions::parse).transpose()?;
+        let explicit_http = http.is_some();
+        let http = http.unwrap_or_default();
         let adaptive = mesh.is_some();
-        let mut config = Self { limit, mesh, pools: BTreeMap::new(), listeners: BTreeMap::new() };
+        let mut config =
+            Self { limit, mesh, http, pools: BTreeMap::new(), listeners: BTreeMap::new() };
         for (name, value) in named(&mut root, "backends")? {
             config.pools.insert(name.into(), Backend::parse(name, value, adaptive)?);
         }
@@ -122,10 +141,24 @@ impl Config {
             config.add_frontend(name, value)?;
         }
         field(root.finish())?;
+        if explicit_http && config.http().is_none() {
+            return Err(invalid("http settings require an HTTP frontend"));
+        }
+        for (addr, tls) in config.tls() {
+            if tls.http3
+                && (config
+                    .listeners
+                    .keys()
+                    .any(|(p, a)| *p == Protocol::Udp && overlaps(*a, addr))
+                    || config.mesh.as_ref().is_some_and(|m| overlaps(m.listen, addr)))
+            {
+                return Err(invalid(format!("HTTP/3 bind {addr} overlaps a UDP listener")));
+            }
+        }
         for (name, backend) in &config.pools {
             for server in &backend.servers {
                 if config.listeners.keys().any(|&(proto, bind)| {
-                    proto == backend.protocol
+                    (proto == Protocol::Udp) == (backend.protocol == Protocol::Udp)
                         && (bind == server.addr
                             || (server.addr.ip().is_loopback() && overlaps(bind, server.addr)))
                 }) {
@@ -148,7 +181,11 @@ impl Config {
             return Err(invalid(format!("{path}: no matching {proto:?} backend named {pool}")));
         }
         let rate = frontend_rate(&mut r, proto)?;
-        let timeout = match field(r.take_str("session_timeout"))? {
+        let timeout_field = field(r.take_str("session_timeout"))?;
+        if proto == Protocol::Http && timeout_field.is_some() {
+            return Err(invalid("HTTP deadlines belong to the HTTP firewall"));
+        }
+        let timeout = match timeout_field {
             None => Duration::from_secs(30),
             Some(s) => duration(s).ok_or_else(|| invalid(format!("{path}: invalid timeout")))?,
         };
@@ -162,6 +199,20 @@ impl Config {
             Some(_) => return Err(invalid(format!("{path}: invalid TCP inspection mode"))),
             None => None,
         };
+        let tls = if proto == Protocol::Http {
+            field(r.take_object("tls"))?
+                .map(crate::TlsOptions::parse)
+                .transpose()?
+                .map(std::sync::Arc::new)
+        } else {
+            None
+        };
+        let http_rules = if proto == Protocol::Http {
+            crate::http::rules(&mut r, &self.pools)?
+        } else {
+            Vec::new()
+        };
+        let http_rules: std::sync::Arc<[_]> = http_rules.into();
         let binds = field(r.take_array("binds"))?.ok_or_else(|| invalid(r.missing("binds")))?;
         if binds.is_empty() || self.listeners.len() + binds.len() > 128 {
             return Err(invalid(format!("{path}: expected 1 to 128 binds in total")));
@@ -171,9 +222,17 @@ impl Config {
             if proto == Protocol::Udp && addr.ip().is_unspecified() {
                 return Err(invalid(format!("{path}: bind UDP to a specific local IP")));
             }
-            let listener =
-                Frontend { pool: pool.as_str().into(), timeout, inspect: inspect.clone(), rate };
-            if self.listeners.keys().any(|&(p, bound)| p == proto && overlaps(bound, addr)) {
+            let listener = Frontend {
+                tls: tls.clone(),
+                http_rules: http_rules.clone(),
+                pool: pool.as_str().into(),
+                timeout,
+                inspect: inspect.clone(),
+                rate,
+            };
+            if self.listeners.keys().any(|&(p, bound)| {
+                (p == Protocol::Udp) == (proto == Protocol::Udp) && overlaps(bound, addr)
+            }) {
                 return Err(invalid(format!("{path}: overlapping listener {addr}")));
             }
             if self.mesh.as_ref().is_some_and(|mesh| proto == Protocol::Udp && mesh.listen == addr)
@@ -322,7 +381,7 @@ fn frontend_rate(
     proto: Protocol,
 ) -> Result<Option<sibuna_store::limiter::Limits>> {
     let (key, count, window_ms) = match proto {
-        Protocol::Tcp => ("rate_limit", "conn_per_10s", 10_000),
+        Protocol::Tcp | Protocol::Http => ("rate_limit", "conn_per_10s", 10_000),
         Protocol::Udp => ("udp_defense", "threshold_pps", 1_000),
     };
     let Some(mut options) = field(r.take_object(key))? else { return Ok(None) };

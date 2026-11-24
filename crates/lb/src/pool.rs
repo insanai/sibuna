@@ -1,24 +1,25 @@
 //! Single-owner admission. A ticket holds the reservation across configuration revisions.
 
-use std::cell::Cell;
 use std::collections::HashMap;
 use std::hash::{BuildHasher, RandomState};
 use std::net::SocketAddr;
-use std::rc::{Rc, Weak};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, Mutex, PoisonError, Weak};
 use std::time::{Duration, Instant};
 
 use crate::config::{Backend, Protocol, Scheduler, Server};
 
 #[derive(Default)]
 struct Load {
-    active: Cell<usize>,
-    latency: Cell<Option<(Instant, u64)>>,
-    retry_after: Cell<Option<Instant>>,
+    active: AtomicUsize,
+    latency: Mutex<Option<(Instant, u64)>>,
+    retry_after: Mutex<Option<Instant>>,
 }
 
 impl Load {
     fn estimate(&self, now: Instant) -> u64 {
-        let Some((last, peak)) = self.latency.get() else { return 1000 };
+        let sample = *self.latency.lock().unwrap_or_else(PoisonError::into_inner);
+        let Some((last, peak)) = sample else { return 1000 };
         // Let an unused origin recover from an old spike. The resting estimate is 1 ms.
         let age = now.saturating_duration_since(last).as_secs().min(32);
         1000u64.saturating_add_signed(((peak as i64) - 1000) >> age)
@@ -27,24 +28,25 @@ impl Load {
 
 pub(crate) struct Ticket {
     pub addr: SocketAddr,
-    load: Rc<Load>,
+    load: Arc<Load>,
 }
 
 impl Ticket {
     pub fn observe(&self, start: Instant, now: Instant) {
         let sample = now.saturating_duration_since(start).as_micros().clamp(1, 60_000_000) as u64;
         let peak = sample.max((7 * self.load.estimate(now) + sample) / 8);
-        self.load.latency.set(Some((now, peak)));
+        *self.load.latency.lock().unwrap_or_else(PoisonError::into_inner) = Some((now, peak));
     }
 
     pub fn failed(&self, now: Instant) {
-        self.load.retry_after.set(Some(now + Duration::from_secs(2)));
+        *self.load.retry_after.lock().unwrap_or_else(PoisonError::into_inner) =
+            Some(now + Duration::from_secs(2));
     }
 }
 
 impl Drop for Ticket {
     fn drop(&mut self) {
-        self.load.active.set(self.load.active.get() - 1);
+        self.load.active.fetch_sub(1, Ordering::Relaxed);
     }
 }
 
@@ -59,7 +61,7 @@ impl Loads {
 
 struct Target {
     server: Server,
-    load: Rc<Load>,
+    load: Arc<Load>,
     admitted: u64,
 }
 
@@ -67,7 +69,10 @@ impl Target {
     fn preferred_to(&self, other: &Self) -> bool {
         let score = |target: &Self, weight: u32| {
             let scale = u128::from(weight);
-            (target.load.active.get() as u128 * scale, u128::from(target.admitted) * scale)
+            (
+                target.load.active.load(Ordering::Relaxed) as u128 * scale,
+                u128::from(target.admitted) * scale,
+            )
         };
         (self.server.backup, score(self, other.server.weight))
             < (other.server.backup, score(other, self.server.weight))
@@ -87,7 +92,7 @@ impl Pool {
         for server in backend.servers {
             let slot = loads.0.entry((backend.protocol, server.addr)).or_default();
             let load = slot.upgrade().unwrap_or_default();
-            *slot = Rc::downgrade(&load);
+            *slot = Arc::downgrade(&load);
             targets.push(Target { server, load, admitted: 0 });
         }
         Self {
@@ -107,13 +112,14 @@ impl Pool {
     ) -> Option<Ticket> {
         let available = |target: &Target| {
             target.server.addr != vip
+                && target.server.healthy.as_ref().is_none_or(|h| h.load(Ordering::Relaxed))
+                && target.load.active.load(Ordering::Relaxed) < target.server.limit
                 && target
-                    .server
-                    .healthy
-                    .as_ref()
-                    .is_none_or(|h| h.load(std::sync::atomic::Ordering::Relaxed))
-                && target.load.active.get() < target.server.limit
-                && target.load.retry_after.get().is_none_or(|deadline| deadline <= now)
+                    .load
+                    .retry_after
+                    .lock()
+                    .unwrap_or_else(PoisonError::into_inner)
+                    .is_none_or(|deadline| deadline <= now)
         };
         let prefer_local = regime == crate::Regime::WideArea
             && self.targets.iter().any(|t| !t.server.remote && available(t));
@@ -129,11 +135,13 @@ impl Pool {
         let primary = table.and_then(|table| {
             let index = table.primary(peer, vip);
             let primary = &self.targets[index];
-            let load: usize = self.targets.iter().map(|target| target.load.active.get()).sum();
+            let load: usize =
+                self.targets.iter().map(|target| target.load.active.load(Ordering::Relaxed)).sum();
             let desired = (load + 1) as u64 * u64::from(primary.server.weight);
             let bound =
                 (desired * u64::from(table.factor)).div_ceil(u64::from(table.weight) * 100);
-            (eligible(primary) && (primary.load.active.get() as u64) < bound).then_some(index)
+            (eligible(primary) && (primary.load.active.load(Ordering::Relaxed) as u64) < bound)
+                .then_some(index)
         });
         let index = primary.or_else(|| {
             if peak {
@@ -147,9 +155,9 @@ impl Pool {
                 .map(|(i, _)| i)
         })?;
         let target = &mut self.targets[index];
-        target.load.active.set(target.load.active.get() + 1);
+        target.load.active.fetch_add(1, Ordering::Relaxed);
         target.admitted = target.admitted.saturating_add(1);
-        Some(Ticket { addr: target.server.addr, load: Rc::clone(&target.load) })
+        Some(Ticket { addr: target.server.addr, load: Arc::clone(&target.load) })
     }
 
     fn choose_two(
@@ -184,7 +192,7 @@ impl Pool {
         let b = (a + 1 + ((hash >> 32) as usize) % (count - 1)) % count;
         let cost = |i: usize| {
             let t = &self.targets[choices[i]];
-            (t.load.active.get() as u64 + 1) * t.load.estimate(now) * 65535
+            (t.load.active.load(Ordering::Relaxed) as u64 + 1) * t.load.estimate(now) * 65535
                 / u64::from(t.server.weight)
         };
         Some(choices[if cost(a) <= cost(b) { a } else { b }])

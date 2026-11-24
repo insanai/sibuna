@@ -12,7 +12,7 @@ use sibuna_lb::{Config, Edge};
 const WAIT: Duration = Duration::from_secs(3);
 
 enum Command {
-    Reload(Config, Sender<bool>),
+    Reload(Box<Config>, Sender<bool>),
     Stop,
 }
 
@@ -32,7 +32,7 @@ impl Worker {
                 match input.try_recv() {
                     Ok(Command::Stop) | Err(mpsc::TryRecvError::Disconnected) => break,
                     Ok(Command::Reload(config, reply)) => {
-                        reply.send(edge.reload(config).is_ok()).unwrap();
+                        reply.send(edge.reload(*config).is_ok()).unwrap();
                     }
                     Err(mpsc::TryRecvError::Empty) => {}
                 }
@@ -45,7 +45,7 @@ impl Worker {
 
     fn reload(&self, config: Config) -> bool {
         let (tx, rx) = mpsc::channel();
-        self.commands.send(Command::Reload(config, tx)).unwrap();
+        self.commands.send(Command::Reload(Box::new(config), tx)).unwrap();
         rx.recv_timeout(WAIT).unwrap()
     }
 }

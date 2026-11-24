@@ -108,6 +108,7 @@ pub(crate) fn transient(error: &io::Error) -> bool {
 }
 
 pub(crate) struct Stream {
+    _permit: crate::FlowPermit,
     pub client: TcpStream,
     pub origin: TcpStream,
     _ticket: Ticket,
@@ -119,6 +120,7 @@ pub(crate) struct Stream {
 
 impl Stream {
     pub fn new(
+        permit: crate::FlowPermit,
         client: TcpStream,
         origin: TcpStream,
         ticket: Ticket,
@@ -129,6 +131,7 @@ impl Stream {
         origin.set_nonblocking(true)?;
         let stalled = (!pending.is_empty()).then(Instant::now);
         Ok(Self {
+            _permit: permit,
             client,
             origin,
             _ticket: ticket,

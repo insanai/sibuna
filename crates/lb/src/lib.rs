@@ -2,8 +2,12 @@
 //! Prepare a [`Config`] off the worker, bind all listeners, then call [`Edge::step`] in
 //! the worker loop. Replacing the routing configuration preserves established flows.
 
+mod budget;
+pub use budget::{FlowBudget, FlowPermit};
 mod config;
 mod health;
+mod http;
+pub use http::{HttpOptions, HttpRoutes, HttpTarget, TlsOptions, valid_authority};
 mod hello;
 mod ja4;
 mod maglev;
@@ -49,6 +53,7 @@ enum Ready {
 }
 
 struct Opening {
+    permit: FlowPermit,
     vip: SocketAddr,
     client: TcpStream,
     peer: SocketAddr,
@@ -74,6 +79,7 @@ struct Pending {
 }
 
 struct DatagramFlow {
+    _permit: FlowPermit,
     first_request: Option<Instant>,
     origin: UdpSocket,
     ticket: Ticket,
@@ -85,6 +91,9 @@ struct DatagramFlow {
 
 /// A single-owner packet worker with bounded flows and a separate TCP connector queue.
 pub struct Edge {
+    http: HttpRoutes,
+    budget: FlowBudget,
+    http_pending: Vec<(SocketAddr, TcpStream, FlowPermit)>,
     mesh: Option<MeshConfig>,
     regime: Regime,
     binds: Vec<Bind>,
@@ -92,15 +101,12 @@ pub struct Edge {
     pools: BTreeMap<String, Pool>,
     loads: Loads,
     checks: health::Checks,
-    limit: usize,
     poll: Poller<Ready>,
     events: Vec<Ready>,
     tcp: HashMap<u64, Stream>,
     pending: HashMap<u64, Pending>,
     inspecting: HashMap<u64, Inspecting>,
     revision: u64,
-    limiter: sibuna_store::limiter::RateLimiter,
-    epoch: Instant,
     udp: HashMap<Client, DatagramFlow>,
     connectors: Connectors,
     next_id: u64,
@@ -110,16 +116,34 @@ pub struct Edge {
 }
 
 impl Edge {
+    /// Shares admission with QUIC listeners.
+    pub fn flow_budget(&self) -> FlowBudget {
+        self.budget.clone()
+    }
+
+    /// Shares the HTTP request scheduler with the firewall.
+    pub fn http_routes(&self) -> HttpRoutes {
+        self.http.clone()
+    }
+
+    /// Takes accepted plaintext sockets for the HTTP firewall.
+    pub fn accepted_http(&mut self) -> impl Iterator<Item = (SocketAddr, TcpStream, FlowPermit)> {
+        self.http_pending.drain(..)
+    }
+
     /// Binds every configured listener before starting the worker. A failure releases
     /// any listeners already bound.
     pub fn bind(mut config: Config) -> io::Result<Self> {
         let mut checks = health::Checks::default();
         checks.configure(&mut config)?;
+        let http = HttpRoutes::default();
+        http.publish(&mut config);
+        let budget = FlowBudget::new(&config);
         let mut binds = Vec::new();
         let mut listeners = Vec::new();
         for (bind, route) in config.listeners {
             let socket = match bind.0 {
-                Protocol::Tcp => {
+                Protocol::Tcp | Protocol::Http => {
                     let socket = TcpListener::bind(bind.1)?;
                     socket.set_nonblocking(true)?;
                     Socket::Tcp(socket)
@@ -140,6 +164,9 @@ impl Edge {
             .map(|(name, pool)| (name, Pool::new(pool, &mut loads)))
             .collect();
         Ok(Self {
+            http,
+            budget,
+            http_pending: Vec::new(),
             mesh: config.mesh,
             regime: Regime::Standalone,
             binds,
@@ -147,15 +174,12 @@ impl Edge {
             pools,
             loads,
             checks,
-            limit: config.limit,
             poll: Poller::new(),
             events: Vec::new(),
             tcp: HashMap::new(),
             pending: HashMap::new(),
             inspecting: HashMap::new(),
             revision: 0,
-            epoch: Instant::now(),
-            limiter: sibuna_store::limiter::RateLimiter::with_cells(65536),
             udp: HashMap::new(),
             connectors: Connectors::start()?,
             next_id: 0,
@@ -168,6 +192,7 @@ impl Edge {
     /// Applies a new measurement to future admissions. Existing flows keep their origin.
     pub fn set_regime(&mut self, regime: Regime) {
         self.regime = regime;
+        self.http.set_regime(regime);
     }
 
     /// Replaces routes for new admissions at a batch boundary. A changed bind set
@@ -182,6 +207,8 @@ impl Edge {
             return Err(invalid("changing frontend binds requires a drained restart"));
         }
         self.checks.configure(&mut config)?;
+        self.budget.configure(&config);
+        self.http.publish(&mut config);
         self.pools = config
             .pools
             .into_iter()
@@ -196,18 +223,18 @@ impl Edge {
         self.drops = self.drops.saturating_add(self.inspecting.len() as u64);
         self.inspecting.clear();
         self.revision = self.revision.wrapping_add(1);
-        self.limit = config.limit;
         Ok(())
     }
 
     /// Stops admitting new flows. Existing mappings and streams may finish.
     pub fn drain(&mut self) {
         self.draining = true;
+        self.budget.drain();
     }
 
     /// Counts established flows and reserved TCP connects.
     pub fn active(&self) -> usize {
-        self.udp.len() + self.tcp.len() + self.pending.len() + self.inspecting.len()
+        self.budget.active()
     }
 
     /// Counts discarded datagrams and refused admissions.
@@ -316,14 +343,20 @@ impl Edge {
     }
 
     fn accept(&mut self, listener: usize, client: TcpStream, peer: SocketAddr) -> bool {
-        if self.draining || self.active() >= self.limit || !self.allowed(listener, peer) {
+        if self.draining || !self.allowed(listener, peer) {
             return false;
+        }
+        let Some(permit) = self.budget.reserve() else { return false };
+        if self.binds[listener].0 == Protocol::Http {
+            self.http_pending.push((self.binds[listener].1, client, permit));
+            return true;
         }
         let route = &self.listeners[listener].route;
         self.next_id = self.next_id.wrapping_add(1);
         let id = self.next_id;
         let Ok(vip) = client.local_addr() else { return false };
         let mut opening = Opening {
+            permit,
             vip,
             client,
             peer,
@@ -413,6 +446,7 @@ impl Edge {
                 Ok(origin) => {
                     pending.ticket.observe(pending.started, now);
                     if let Ok(stream) = Stream::new(
+                        pending.opening.permit,
                         pending.opening.client,
                         origin,
                         pending.ticket,
@@ -451,15 +485,7 @@ impl Edge {
 
     fn allowed(&self, listener: usize, peer: SocketAddr) -> bool {
         let Some(rate) = self.listeners[listener].route.rate else { return true };
-        let now = self.epoch.elapsed().as_micros() as u64;
-        match peer.ip().to_canonical() {
-            std::net::IpAddr::V4(ip) => {
-                !self.limiter.check_scoped(&ip.octets(), listener as u64, now, rate).limited
-            }
-            std::net::IpAddr::V6(ip) => {
-                !self.limiter.check_scoped(&ip.octets()[..8], listener as u64, now, rate).limited
-            }
-        }
+        self.budget.allowed(listener, peer, rate)
     }
 
     fn forward(&mut self, key: Client, size: usize) -> bool {
@@ -468,14 +494,16 @@ impl Edge {
         }
         let now = Instant::now();
         if !self.udp.contains_key(&key) {
-            if self.draining || self.active() >= self.limit {
+            if self.draining {
                 return false;
             }
+            let Some(permit) = self.budget.reserve() else { return false };
             let Some(ticket) = self.reserve(key.0, key.1) else { return false };
             let Ok(origin) = connected_udp(ticket.addr) else { return false };
             self.udp.insert(
                 key,
                 DatagramFlow {
+                    _permit: permit,
                     origin,
                     ticket,
                     first_request: Some(now),
