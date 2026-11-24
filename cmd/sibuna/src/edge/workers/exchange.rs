@@ -79,6 +79,12 @@ impl Worker {
             self.answer(index, ProxyError::UpstreamUnreachable);
             return;
         };
+        let metrics = &self.server.metrics;
+        if pooled.is_some() {
+            metrics.origin_reused.bump()
+        } else {
+            metrics.origin_connects.bump()
+        }
         exchange.origin = Some(at);
         exchange.pooled = pooled.is_some();
         exchange.connecting = pooled.is_none();
@@ -305,6 +311,7 @@ impl Worker {
             Ok((_, Fed::More)) => Next::Rest,
             Ok((_, Fed::Done(outcome))) => self.finish(index, outcome),
             Ok((_, Fed::Upgraded)) => {
+                self.server.metrics.tunnels_opened.bump();
                 exchange.tunnel = true;
                 exchange.wire.clear();
                 exchange.wire_sent = 0;
@@ -357,6 +364,7 @@ impl Worker {
             return false;
         }
         exchange.retried = true;
+        self.server.metrics.origin_retries.bump();
         exchange.wire_sent = 0;
         let address = exchange.target.address();
         if let Some(at) = exchange.origin.take() {

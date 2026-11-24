@@ -105,10 +105,22 @@ pub struct Metrics {
     /// Requests from a trusted forwarder whose JA4 header was malformed or repeated; they
     /// are judged without a fingerprint.
     pub ja4_invalid: Counter,
+    /// Upgraded connections that became tunnels on an event-driven worker (SID 0016).
+    pub tunnels_opened: Counter,
+    /// Exchanges of a worker that reused an idle server socket.
+    pub origin_reused: Counter,
+    /// Exchanges of a worker that opened a server connection.
+    pub origin_connects: Counter,
+    /// Requests sent again because an idle server socket had closed.
+    pub origin_retries: Counter,
+    /// Connections a worker closed because a deadline passed.
+    pub deadline_closes: Counter,
+    /// Connections a worker closed after a fault in its own code.
+    pub worker_faults: Counter,
 }
 
 /// The number of counters in [`Metrics`].
-pub const COUNTER_COUNT: usize = 24;
+pub const COUNTER_COUNT: usize = 30;
 
 /// The number of counters the Zig daemon exposed; the ones after them are new in the port.
 pub const ZIG_COUNTER_COUNT: usize = 18;
@@ -142,6 +154,12 @@ impl Metrics {
             ("rate_evictions", &self.rate_evictions),
             ("ja4_present", &self.ja4_present),
             ("ja4_invalid", &self.ja4_invalid),
+            ("tunnels_opened", &self.tunnels_opened),
+            ("origin_reused", &self.origin_reused),
+            ("origin_connects", &self.origin_connects),
+            ("origin_retries", &self.origin_retries),
+            ("deadline_closes", &self.deadline_closes),
+            ("worker_faults", &self.worker_faults),
         ]
     }
 

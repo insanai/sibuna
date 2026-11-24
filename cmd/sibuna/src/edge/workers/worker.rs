@@ -190,7 +190,7 @@ impl Worker {
     pub fn guarded(&mut self, index: u32, side: Side) {
         let result = catch_unwind(AssertUnwindSafe(|| self.drive(index, side)));
         if result.is_err() {
-            self.server.metrics.upstream_errors.bump();
+            self.server.metrics.worker_faults.bump();
             let _ = catch_unwind(AssertUnwindSafe(|| self.close(index)));
         }
     }
@@ -450,6 +450,7 @@ impl Worker {
         for &(index, generation) in due.iter() {
             let Some(conn) = self.conns.current(index, generation) else { continue };
             if self.now >= conn.deadline {
+                self.server.metrics.deadline_closes.bump();
                 self.expire(index);
             } else {
                 conn.armed = self.wheel.arm(index, generation, conn.deadline);
