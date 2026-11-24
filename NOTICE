@@ -19,8 +19,8 @@ The Guidedog libraries used by the compiler also carry LGPL-3.0-or-later.
 
 Bundled third-party materials in the default release:
 
-- Rust crates linked into the executable (sqlx with SQLite, tokio, rustls with
-  ring and the system trust store, and their dependencies): each under its own
+- Rust crates linked into the executable (sqlx with SQLite, tokio, hyper, h3, Quinn,
+  rustls with ring and the system trust store, and their dependencies): each under its own
   license. The complete list of crates, versions and licenses for a release
   is in LICENSES/THIRD-PARTY-RUST.txt, generated with `cargo xtask licenses`.
 - SQLite: public domain; sqlite.org/copyright.html. Compiled from the

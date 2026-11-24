@@ -58,7 +58,7 @@ def manifest(binary, package):
         'target': target,
         'rustc': subprocess.check_output(['rustc', '--version'], text=True).strip(),
         'profile': 'release',
-        'features': ['sqlite', 'console', 'jlv'],
+        'features': ['sqlite', 'console', 'jlv', 'https'],
         'binary_sha256': sha256(binary),
         'wasm_sha256': wasm,
         'license': 'LGPL-3.0-or-later',
