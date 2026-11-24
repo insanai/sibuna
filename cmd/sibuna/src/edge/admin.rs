@@ -26,12 +26,20 @@ pub(super) struct Job {
 pub(super) struct Admin {
     #[cfg(unix)]
     path: std::path::PathBuf,
+    /// The device and inode of the socket file we created.
+    #[cfg(unix)]
+    identity: Option<(u64, u64)>,
 }
 
 #[cfg(not(unix))]
 impl Admin {
     /// Refuses: the admin socket is a Unix socket.
-    pub fn start(_path: &str, _source: Arc<Source>, _jobs: Sender<Job>) -> io::Result<Self> {
+    pub fn start(
+        _path: &str,
+        _takeover: bool,
+        _source: Arc<Source>,
+        _jobs: Sender<Job>,
+    ) -> io::Result<Self> {
         Err(io::Error::new(io::ErrorKind::Unsupported, "global.admin_socket needs a Unix system"))
     }
 }
@@ -39,6 +47,10 @@ impl Admin {
 #[cfg(unix)]
 impl Drop for Admin {
     fn drop(&mut self) {
+        // A daemon that replaced this one owns the path now. We remove our file only.
+        if unix::identity(&self.path) != self.identity {
+            return;
+        }
         let _ = std::fs::remove_file(&self.path);
     }
 }
@@ -48,15 +60,24 @@ impl Admin {
     /// Binds the socket at `path` and starts the thread that serves it. Fails when the
     /// path is taken by a live daemon or by a file that is no socket, or when the
     /// directory cannot be written.
-    pub fn start(path: &str, source: Arc<Source>, jobs: Sender<Job>) -> io::Result<Self> {
+    ///
+    /// With `takeover` a live daemon does not stop us: we take the path from it. This is
+    /// the start of a daemon that replaces a running one (`global.reuse_port`).
+    pub fn start(
+        path: &str,
+        takeover: bool,
+        source: Arc<Source>,
+        jobs: Sender<Job>,
+    ) -> io::Result<Self> {
         let path = std::path::PathBuf::from(path);
-        let listener = unix::listen(&path).map_err(|error| {
+        let listener = unix::listen(&path, takeover).map_err(|error| {
             io::Error::new(error.kind(), format!("admin socket {}: {error}", path.display()))
         })?;
         std::thread::Builder::new()
             .name("edge-admin".into())
             .spawn(move || unix::serve(&listener, &source, &jobs))?;
-        Ok(Self { path })
+        let identity = unix::identity(&path);
+        Ok(Self { path, identity })
     }
 }
 
@@ -86,7 +107,7 @@ mod unix {
 
     /// Binds the socket so that it is never reachable with a mode wider than 0600: in a
     /// private directory first, then renamed to `path`. A stale socket file is replaced.
-    pub(super) fn listen(path: &Path) -> io::Result<UnixListener> {
+    pub(super) fn listen(path: &Path, takeover: bool) -> io::Result<UnixListener> {
         match fs::symlink_metadata(path) {
             Err(error) if error.kind() == io::ErrorKind::NotFound => {}
             Err(error) => return Err(error),
@@ -96,7 +117,7 @@ mod unix {
                     "the path holds a file that is not a socket",
                 ));
             }
-            Ok(_) if UnixStream::connect(path).is_ok() => {
+            Ok(_) if !takeover && UnixStream::connect(path).is_ok() => {
                 return Err(io::Error::new(
                     io::ErrorKind::AddrInUse,
                     "another daemon answers on this socket",
@@ -129,6 +150,12 @@ mod unix {
         let _ = fs::remove_file(&bound);
         let _ = fs::remove_dir(&private);
         result
+    }
+
+    /// The device and inode of the file at `path`, which tell our socket from a later one.
+    pub(super) fn identity(path: &Path) -> Option<(u64, u64)> {
+        use std::os::unix::fs::MetadataExt;
+        fs::symlink_metadata(path).ok().map(|found| (found.dev(), found.ino()))
     }
 
     /// Serves one connection after another until the process ends.

@@ -256,6 +256,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     adapt(&mut adapters, &mut config)?;
     let mesh = config.mesh().map(start_mesh).transpose()?;
     let admin_socket = config.admin_socket().map(str::to_owned);
+    let takeover = config.reuse_port();
     let watch = config.watch();
     let shutdown_timeout = config.shutdown_timeout();
     let mut current = sibuna_lb::Regime::Standalone;
@@ -264,7 +265,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     attach(http.as_ref(), &adapters);
     let (jobs, inbox) = mpsc::channel();
     let _admin = match &admin_socket {
-        Some(path) => Some(admin::Admin::start(path, Arc::clone(&source), jobs)?),
+        Some(path) => Some(admin::Admin::start(path, takeover, Arc::clone(&source), jobs)?),
         None => None,
     };
     let watcher = Watcher::new();
