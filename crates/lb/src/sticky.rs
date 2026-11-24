@@ -44,8 +44,8 @@ impl Key {
         hasher.update(server.as_bytes());
         let digest = hasher.finalize();
         let mut token = [0; TOKEN_LEN];
-        for (pair, byte) in token.chunks_exact_mut(2).zip(digest) {
-            pair.copy_from_slice(&[hex(byte >> 4), hex(byte & 15)]);
+        for (pair, byte) in token.as_chunks_mut::<2>().0.iter_mut().zip(digest) {
+            *pair = [hex(byte >> 4), hex(byte & 15)];
         }
         token
     }
@@ -56,8 +56,8 @@ impl Default for Key {
     fn default() -> Self {
         let random = RandomState::new();
         let mut bytes = [0; blake3::KEY_LEN];
-        for (index, chunk) in bytes.chunks_exact_mut(8).enumerate() {
-            chunk.copy_from_slice(&random.hash_one(index).to_le_bytes());
+        for (index, chunk) in bytes.as_chunks_mut::<8>().0.iter_mut().enumerate() {
+            *chunk = random.hash_one(index).to_le_bytes();
         }
         Self::new(bytes)
     }

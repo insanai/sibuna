@@ -429,7 +429,6 @@ pub(crate) fn forward<W: Write>(
     };
     let head_sink: Option<sibuna_net::HeadSink<'_>> =
         if capturing { Some(&mut capture) } else { None };
-    let (forwarded_host, forwarded_port) = crate::traffic::addressed(&ctx.request, ctx.ingress);
     let exchange = Exchange {
         client: Client {
             stream,
@@ -456,10 +455,7 @@ pub(crate) fn forward<W: Write>(
             },
             response_status: status_sink,
             response_head: head_sink,
-            response_edit: crate::traffic::response_edit(selected.as_ref()),
-            request_edit: crate::traffic::request_edit(selected.as_ref()),
-            forwarded_host,
-            forwarded_port,
+            ..crate::traffic::audit(&ctx.request, ctx.ingress, selected.as_ref())
         },
         keep_alive: ctx.keep_alive,
     };
@@ -515,7 +511,6 @@ fn plan<W: Write>(
         return Ok(false);
     };
     let config = &ctx.server.config;
-    let (forwarded_host, forwarded_port) = crate::traffic::addressed(&ctx.request, ctx.ingress);
     let audit = Audit {
         client_ip: ctx.client_ip,
         peer: ctx.peer,
@@ -530,11 +525,8 @@ fn plan<W: Write>(
         },
         response_status: None,
         response_head: None,
-        // A worker edits the response itself, when it relays the head.
-        response_edit: sibuna_net::HeadEdit::default(),
-        request_edit: crate::traffic::request_edit(Some(&target)),
-        forwarded_host,
-        forwarded_port,
+        // The response edit is unused here: a worker edits the head when it relays it.
+        ..crate::traffic::audit(&ctx.request, ctx.ingress, Some(&target))
     };
     let Some(defer) = ctx.defer.as_deref_mut() else { return Ok(false) };
     defer.wire.clear();

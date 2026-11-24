@@ -8,7 +8,7 @@ use std::io::{self, Write};
 use sibuna_http::Request;
 use sibuna_http::response::{self, Status};
 use sibuna_lb::{HttpRoutes, HttpTarget, Query, RoutePolicy};
-use sibuna_net::HeadEdit;
+use sibuna_net::{Audit, HeadEdit};
 
 use crate::connection::{Ingress, UNKNOWN_LENGTH};
 use crate::context::Ctx;
@@ -94,11 +94,32 @@ pub(crate) fn choose<W>(
     })
 }
 
-/// The edit of the request head that goes to the server of `target`.
-pub(crate) fn request_edit(target: Option<&HttpTarget>) -> HeadEdit<'_> {
-    let Some(target) = target else { return HeadEdit::default() };
-    let edit = &target.route().request_headers;
-    HeadEdit { remove: &edit.remove, append: [&edit.append, b"", b""] }
+/// The fields of an [`Audit`] that SID 0019 fills for a request on its way to the
+/// server of `target`: the edits of both heads and the host and port that the client
+/// addressed. The other fields have their defaults, so a caller writes
+/// `Audit { client_ip, .., ..traffic::audit(request, ingress, target) }`.
+///
+/// Outside the edge there is no `ingress`: no host or port is forwarded then.
+pub(crate) fn audit<'a>(
+    request: &Request<'a>,
+    ingress: Option<Ingress>,
+    target: Option<&'a HttpTarget>,
+) -> Audit<'a> {
+    let request_edit = target.map_or_else(HeadEdit::default, |target| {
+        let edit = &target.route().request_headers;
+        HeadEdit { remove: &edit.remove, append: [&edit.append, b"", b""] }
+    });
+    let (forwarded_host, forwarded_port) = match ingress {
+        Some(ingress) => (request.header(b"host").unwrap_or_default(), ingress.vip.port()),
+        None => (&b""[..], 0),
+    };
+    Audit {
+        request_edit,
+        response_edit: response_edit(target),
+        forwarded_host,
+        forwarded_port,
+        ..Audit::default()
+    }
 }
 
 /// The edit of the response head that goes to the client: the fields of the route, HSTS
@@ -106,13 +127,4 @@ pub(crate) fn request_edit(target: Option<&HttpTarget>) -> HeadEdit<'_> {
 pub(crate) fn response_edit(target: Option<&HttpTarget>) -> HeadEdit<'_> {
     let Some(target) = target else { return HeadEdit::default() };
     HeadEdit { remove: target.route().response_remove(), append: target.response_lines() }
-}
-
-/// The host and port that the client addressed, for `X-Forwarded-Host` and
-/// `X-Forwarded-Port`. Empty and zero outside the edge, where they are not written.
-pub(crate) fn addressed<'a>(request: &Request<'a>, ingress: Option<Ingress>) -> (&'a [u8], u16) {
-    match ingress {
-        Some(ingress) => (request.header(b"host").unwrap_or_default(), ingress.vip.port()),
-        None => (b"", 0),
-    }
 }

@@ -433,7 +433,8 @@ mod tests {
 
     #[test]
     fn an_edit_sets_and_removes_fields_and_refuses_framing() {
-        let source = r#"{"request_headers":{"set":{"X-Tenant":"a b"},"remove":["X-Debug","x-tenant"]},
+        let source = r#"{"request_headers":{"set":{"X-Tenant":"a b"},
+                "remove":["X-Debug","x-tenant"]},
             "response_headers":{"set":{"X-Frame-Options":"DENY"},"remove":["Server"]}}"#;
         let policy = parse(source, false).unwrap();
         let names =

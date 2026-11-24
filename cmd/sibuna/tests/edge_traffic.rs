@@ -272,7 +272,8 @@ fn a_cleartext_frontend_redirects_to_https_and_a_route_may_opt_out() {
     both(|event_loop| {
         let members = r#""redirect_https":true,
             "routes":[{"path_prefix":"/plain","backend":"app","redirect_https":false},
-                      {"path_prefix":"/old","backend":"app","redirect_https":{"status":301,"port":8443}}],"#;
+                      {"path_prefix":"/old","backend":"app",
+                       "redirect_https":{"status":301,"port":8443}}],"#;
         let edge = Topology::new(&[origin.address]).frontend(members).start(event_loop);
         let before = origin.requests.load(Ordering::SeqCst);
         let answer = get(&edge, "/a/b?x=1&y=2");

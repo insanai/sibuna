@@ -353,10 +353,8 @@ fn weighted(backend: &str, servers: &[(u32, bool)]) -> (Edge, SocketAddr) {
         .iter()
         .enumerate()
         .map(|(i, (weight, backup))| {
-            let port = 9400 + i;
-            format!(
-                r#"{{"name":"s{i}","addr":"127.0.0.1:{port}","weight":{weight},"backup":{backup}}}"#
-            )
+            let addr = format!("127.0.0.1:{}", 9400 + i);
+            format!(r#"{{"name":"s{i}","addr":"{addr}","weight":{weight},"backup":{backup}}}"#)
         })
         .collect();
     let source = format!(

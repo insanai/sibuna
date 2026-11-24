@@ -67,14 +67,14 @@ impl HttpRoutes {
         let holder = presented.and_then(|token| servers.holder(key, &pool, token));
         let wish = Wish { sticky: holder, ..Wish::default() };
         let ticket = servers.reserve_with(Instant::now(), query.peer, query.vip, regime, &wish)?;
-        let again = Again {
+        let again = Box::new(Again {
             pool,
             vip: query.vip,
             peer: query.peer,
             revision: query.policy_revision,
             secure: query.secure,
             tried: Tried::default(),
-        };
+        });
         let cookie = cookie_line(servers, key, &again, &ticket, presented);
         Some(HttpTarget { ticket, policy, again, cookie, route })
     }
@@ -102,7 +102,7 @@ impl HttpRoutes {
         let wish = Wish { tried: Some(&tried), ..Wish::default() };
         let ticket = servers.reserve_with(Instant::now(), again.peer, again.vip, regime, &wish)?;
         let policy = Arc::clone(&servers.policy);
-        let again = Again { pool: Arc::clone(&again.pool), tried, ..*again };
+        let again = Box::new(Again { pool: Arc::clone(&again.pool), tried, ..**again });
         // The client moves with its request: the cookie names the new server.
         let cookie = cookie_line(servers, key, &again, &ticket, None);
         Some(HttpTarget { ticket, policy, again, cookie, route: Arc::clone(&failed.route) })
@@ -154,7 +154,8 @@ struct Again {
 pub struct HttpTarget {
     ticket: Ticket,
     policy: Arc<PoolPolicy>,
-    again: Again,
+    /// Boxed, so that a reservation stays small where it is moved around.
+    again: Box<Again>,
     /// A `Set-Cookie` line for the response, or nothing.
     cookie: Box<[u8]>,
     /// The policy of the frontend or route that the request matched.
