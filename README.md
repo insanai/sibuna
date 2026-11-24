@@ -35,7 +35,7 @@ Use access rules and local rate limits to control what those clients can request
 - **Native packages:** Linux, macOS, Windows, FreeBSD and OpenBSD. The browser solver uses WebAssembly.
 - **Browser challenges:** proof of sequential work (default) or Hashcash, followed by a signed session.
 - **Access policies:** allow, challenge, weigh or deny requests by address, path, headers and User-Agent.
-- **Edge load balancing.** We can forward TCP and UDP, terminate TLS with HAProxy-style PEM bundles, serve HTTP/1.1, HTTP/2 and HTTP/3, and route each request by host name and path to HTTP/1.1, HTTP/2 or HTTP/3 servers. The gate or shield applies to the names that need it, or to none.
+- **Edge load balancing.** We can forward TCP and UDP, terminate TLS with HAProxy-style PEM bundles, serve HTTP/1.1, HTTP/2 and HTTP/3, and route each request by host name and path to HTTP/1.1, HTTP/2 or HTTP/3 servers. The gate or shield applies to the names that need it, or to none. On Linux, HTTP connections and WebSocket tunnels are served by event-driven workers, one per processor, so a waiting connection costs a small record and not a thread.
 - **TLS fingerprints:** match the JA4 fingerprint that a trusted ingress forwards, exactly or by prefix.
 - **Application inspection:** built-in checks for SQL injection, XSS, path traversal and command injection.
 - **Local rate limits:** control bursts and sustained traffic, with optional limits per rule.

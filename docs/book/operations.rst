@@ -417,7 +417,7 @@ The ``http`` object
      - The length of the rate window
    * - ``max_connections``
      - ``1024``
-     - Concurrent HTTP/1.1 connections and HTTP/2 or HTTP/3 exchanges, up to 8192
+     - Concurrent HTTP/1.1 connections and HTTP/2 or HTTP/3 exchanges, up to 1,000,000. Without the event-driven workers the bound is 8192.
    * - ``max_connections_per_ip``
      - ``64``
      - The same bound for one client address
@@ -427,8 +427,11 @@ The ``http`` object
    * - ``websocket_idle_timeout``
      - ``300s``
      - The longest silence on an upgraded connection
+   * - ``event_loop``
+     - ``true``
+     - Serve HTTP on event-driven workers, one per processor (SID 0016). ``false`` serves each connection on a thread of its own. Platforms other than Linux always use threads.
 
-An idle HTTP/2 or HTTP/3 connection gives up its flow slot after ``idle_timeout``, and after 60 s at the earliest. HTTP/2 connections are also probed with PING every 20 s. CONNECT tunnels are refused.
+An idle HTTP/2 or HTTP/3 connection gives up its flow slot after ``idle_timeout``, and after 60 s at the earliest. HTTP/2 connections are also probed with PING every 20 s. An HTTP/2 client may open a WebSocket with extended CONNECT (RFC 8441), which Sibuna carries as an HTTP/1.1 upgrade. Other CONNECT tunnels are refused.
 
 Servers that speak TLS, HTTP/2 or HTTP/3
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -491,6 +494,35 @@ A TCP or HTTP pool can check its servers actively.
                      "expect_status": 200, "timeout": "2s", "interval": "5s", "rise": 2, "fall": 3}}
 
 ``"kind": "tcp"`` passes when the connect completes. ``"kind": "http"`` sends ``GET`` and passes on a 2xx or 3xx status, or on ``expect_status`` alone. A server starts in service, as in HAProxy. It leaves after ``fall`` failed probes and returns after ``rise`` passed ones. A reload keeps the status of every address. Probes of a TLS, HTTP/2 or HTTP/3 pool travel through its adapter, so they test the same path as a request.
+
+WebSockets
+~~~~~~~~~~
+
+A WebSocket begins as an HTTP request, and Sibuna judges that request like any other: bans, limits, the policy and the semantic firewall apply to the handshake. The offer must be a well-formed version 13 handshake, and the server's 101 must carry the matching accept key. ``Sec-WebSocket-Protocol`` and ``Sec-WebSocket-Extensions`` pass unchanged, so subprotocols and compression are negotiated end to end. After the 101 Sibuna relays bytes and does not parse frames. A tunnel costs a record and two sockets, not a thread.
+
+A frontend or a route may carry a ``websocket`` object. A route without one keeps the rule of its frontend.
+
+.. code-block:: json
+
+   {"routes": [{"path_prefix": "/api/live", "backend": "app",
+                "websocket": {"origins": ["https://app.example.org"], "max_per_ip": 16}}]}
+
+.. list-table:: WebSocket rule
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Key
+     - Meaning
+   * - ``origins``
+     - The origins that may open a tunnel, each a scheme, a host and an optional port. An upgrade whose ``Origin`` field is absent or not listed answers 403. A browser sends a site's cookies with a handshake from any page, so an application that authenticates by cookie needs this check.
+   * - ``max_per_ip``
+     - The most concurrent tunnels of one client address under this rule. A client over it answers 429. A reload starts the count again for new tunnels.
+
+Both checks apply whether or not the route uses the firewall. A browser cannot solve a challenge inside a WebSocket handshake. If a policy challenges the page, the page's session cookie admits the handshake. For a client that is not a browser we allow the tunnel's path in the policy.
+
+Three timers matter. ``websocket_idle_timeout`` closes a tunnel on which neither side sent a byte for that long, so we set it above the application's ping interval. ``idle_timeout`` bounds the handshake. A shutdown closes tunnels after the drain period of five seconds, and Sibuna sends no close frame, because it does not speak the framing. Clients must reconnect, as they must after any network fault.
+
+A tunnel stays on the server that accepted it. An application that keeps its live state in one process, such as a hub of connected clients, therefore needs a pool with one server, or a broker behind its servers.
 
 TCP inspection and PROXY v2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -644,7 +676,7 @@ Coming from HAProxy
 Limits of this version
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The HTTP firewall serves each HTTP/1.1 connection and each HTTP/2 or HTTP/3 exchange on a thread of its own, up to 8192 at a time. TCP and UDP forwarding have no such bound. Server addresses are numeric. Request headers are limited to 16 KiB on HTTP/2 and HTTP/3. Sticky sessions by cookie, response compression, caching and header rewriting are not provided. SID 0015 lists the parts of the design that remain proposals: the shared-memory spill cache, database-backed topology, replicated bans, peer forwarding, binary handoff, plugins and the fleet console.
+On Linux the HTTP firewall serves connections on event-driven workers, one per processor, up to ``http.max_connections``. A connection that waits holds a small record and no buffer. On other platforms, and with ``event_loop`` ``false``, each HTTP/1.1 connection and each HTTP/2 or HTTP/3 exchange has a thread of its own, up to 8192 at a time. A WebSocket to a pool with ``http_version`` 2 or 3 answers 501. HTTP/3 clients cannot open WebSockets, and browsers fall back to HTTP/1.1 or HTTP/2 for them. Server addresses are numeric. Request headers are limited to 16 KiB on HTTP/2 and HTTP/3. Sticky sessions by cookie, response compression, caching and header rewriting are not provided. SID 0015 lists the parts of the design that remain proposals: the shared-memory spill cache, database-backed topology, replicated bans, peer forwarding, binary handoff, plugins and the fleet console.
 
 
 Console Preview

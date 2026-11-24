@@ -947,7 +947,62 @@ HTTP equals HAProxy at 16 connections and falls behind from 256. The HTTP firewa
 
 TLS and HTTP/2 fall further behind. A separate runtime terminates them and hands each connection or exchange to a firewall thread over a socket pair, so every request crosses one more socket and one more thread. The firewall itself is not the cost: gate and shield with an allow-all policy ran as fast as ``off``.
 
-The measurement says where the next work lies. Moving the HTTP/1.1 relay of the firewall onto the event-driven workers would remove the context switches and the handoff together. SID 0015 records this as open work.
+The measurement said where the next work lay, and SID 0016 did that work. Edge mode now serves HTTP on event-driven workers: one thread per processor, each with its own poller, connections and server sockets. The table above is the record of the thread path, which remains available with ``"http": {"event_loop": false}``. The next table repeats the HTTP cells on the same host. Its record is ``benchmarks/results/edge-workers-2026-11-24.md``.
+
+.. list-table:: Requests per second on the thread path and on the event-driven workers.
+   :header-rows: 1
+   :widths: 18 14 17 17 17 17
+
+   * - Workload
+     - Connections
+     - HAProxy
+     - Sibuna threads
+     - Sibuna workers
+     - Workers / HAProxy
+   * - http
+     - 16
+     - 139,618
+     - 135,435
+     - 162,810
+     - 1.17
+   * - http
+     - 256
+     - 243,864
+     - 143,311
+     - 229,139
+     - 0.94
+   * - http
+     - 2,048
+     - 163,491
+     - 133,301
+     - 176,448
+     - 1.08
+   * - https
+     - 256
+     - 166,407
+     - 88,785
+     - 146,874
+     - 0.88
+   * - h2, 10 streams
+     - 16
+     - 195,808
+     - 72,602
+     - 103,903
+     - 0.53
+   * - h2, 10 streams
+     - 256
+     - 167,124
+     - 64,555
+     - 96,977
+     - 0.58
+
+Plaintext HTTP now runs between 94% and 117% of HAProxy. The 99th percentile at 256 connections fell from 16.15 ms to 2.60 ms, against 1.47 ms for HAProxy. TLS reaches 88%. HTTP/2 improved by half and is still the furthest behind, because each stream crosses a socket pair between the protocol runtime and a worker.
+
+Memory changed more than throughput. A connection no longer has a thread. In a run without load, 20,000 idle keep-alive connections raised the resident memory of the process from 7 MiB to 15 MiB, and 10,000 open WebSocket tunnels held 27 MiB. The thread count stayed at 35 throughout. These figures exclude the kernel's socket memory.
+
+The workers use the processors they are given. Confined to one, two, four and eight processors, the daemon served 68,000, 92,000, 176,000 and 227,000 plaintext requests per second at 256 connections.
+
+On three hosts we ran three nodes with a mesh and held 300 WebSocket tunnels through each. Stopping an origin failed 10 of about 114,000 requests before its health check removed it. Killing a node, reloading a node and stopping a node failed no request through the other nodes, and every tunnel through a surviving node stayed open.
 
 Not Measured
 ------------
