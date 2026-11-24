@@ -17,6 +17,8 @@ const MAX_FIELDS: usize = 32;
 const MAX_VALUE: usize = 1024;
 /// The largest `max_body`: one tebibyte.
 const MAX_BODY: u64 = 1 << 40;
+/// The name of the HSTS field, in lower case.
+const HSTS: &str = "strict-transport-security";
 /// The `max-age` of `"hsts": true`: one year.
 const HSTS_YEAR: u64 = 31_536_000;
 
@@ -77,12 +79,22 @@ pub struct RoutePolicy {
     pub response_headers: FieldEdit,
     /// The largest request body in bytes. A larger request is answered with 413.
     pub max_body: Option<u64>,
+    /// The names dropped from a response: those of `response_headers`, and the HSTS
+    /// field of the server when we write our own.
+    response_remove: Box<[Box<str>]>,
 }
 
 impl RoutePolicy {
     /// True when the policy changes nothing.
     pub fn is_default(&self) -> bool {
         *self == Self::default()
+    }
+
+    /// The names of the fields that are dropped from the response of a server. When the
+    /// policy writes HSTS, the HSTS field of the server is among them, so that a client
+    /// reads one policy.
+    pub fn response_remove(&self) -> &[Box<str>] {
+        &self.response_remove
     }
 
     /// Appends the location of the HTTPS redirect for a request to `host` (the `Host`
@@ -149,7 +161,15 @@ impl RoutePolicy {
             policy.max_body = max_body(value, &r.field_path("max_body"))?;
             stated = true;
         }
-        Ok(if stated { Arc::new(policy) } else { Arc::clone(base) })
+        if !stated {
+            return Ok(Arc::clone(base));
+        }
+        let mut remove = policy.response_headers.remove.to_vec();
+        if !policy.hsts.is_empty() && !remove.iter().any(|name| **name == *HSTS) {
+            remove.push(HSTS.into());
+        }
+        policy.response_remove = remove.into();
+        Ok(Arc::new(policy))
     }
 }
 
@@ -393,6 +413,13 @@ mod tests {
             |source: &str| String::from_utf8(parse(source, true).unwrap().hsts.to_vec()).unwrap();
         assert_eq!(line(r#"{"hsts":true}"#), "Strict-Transport-Security: max-age=31536000\r\n");
         assert_eq!(line(r#"{"hsts":false}"#), "");
+        // Our HSTS replaces that of the server. A route that turns it off keeps both out
+        // of the edit.
+        let on = parse(r#"{"hsts":true,"response_headers":{"remove":["Server"]}}"#, true).unwrap();
+        let removed: Vec<&str> = on.response_remove().iter().map(|name| &**name).collect();
+        assert_eq!(removed, ["server", "strict-transport-security"]);
+        let off = parse_over(r#"{"hsts":false}"#, &on, true).unwrap();
+        assert_eq!(off.response_remove().len(), 1);
         let full = r#"{"hsts":{"max_age":600,"include_subdomains":true,"preload":true}}"#;
         assert_eq!(
             line(full),

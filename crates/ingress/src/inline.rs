@@ -368,7 +368,7 @@ async fn send(
 /// Applies the policy of the route to the response fields (SID 0019): drops the names
 /// the route removes, then adds its lines, HSTS and the sticky cookie.
 fn edit_response(headers: &mut header::HeaderMap, target: &HttpTarget) {
-    for name in &target.route().response_headers.remove {
+    for name in target.route().response_remove() {
         // A name was checked when the topology was read. One that the library refuses
         // cannot be present either.
         if let Ok(name) = HeaderName::from_bytes(name.as_bytes()) {

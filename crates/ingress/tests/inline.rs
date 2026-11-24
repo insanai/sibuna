@@ -14,7 +14,7 @@ use hyper::Request;
 use hyper_util::rt::{TokioExecutor, TokioIo};
 use rustls::pki_types::{CertificateDer, pem::PemObject};
 use sibuna_ingress::{Decide, Forward, Handler, Identity, Ingress, Limits, Offer, Verdict};
-use sibuna_lb::{Config, Edge, HttpRoutes, TlsOptions};
+use sibuna_lb::{Config, Edge, HttpRoutes, Query, TlsOptions};
 
 fn fixture(name: &str) -> String {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -62,8 +62,10 @@ fn origin(connections: Arc<AtomicUsize>) -> SocketAddr {
                         std::thread::sleep(Duration::from_secs(5));
                         return;
                     }
-                    let head =
-                        format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n", answer.len());
+                    let head = format!(
+                        "HTTP/1.1 200 OK\r\nServer: origin\r\nContent-Length: {}\r\n\r\n",
+                        answer.len()
+                    );
                     stream.write_all(head.as_bytes()).unwrap();
                     stream.write_all(answer.as_bytes()).unwrap();
                 }
@@ -127,13 +129,15 @@ impl Decide for Gate {
         let host = format!("localhost:{}", offer.vip.port());
         let target = (0..4)
             .find_map(|revision| {
-                self.routes.select(
-                    offer.vip,
-                    offer.peer,
-                    host.as_bytes(),
-                    path.as_bytes(),
-                    revision,
-                )
+                self.routes.choose(&Query {
+                    vip: offer.vip,
+                    peer: offer.peer,
+                    host: host.as_bytes(),
+                    path: path.as_bytes(),
+                    policy_revision: revision,
+                    secure: true,
+                    ..Query::default()
+                })
             })
             .unwrap();
         let framing = match offer.declared {
@@ -168,12 +172,18 @@ fn setup() -> Bench {
 
 /// As [`setup`], with the JSON rows `before` in front of the live server of the pool.
 fn setup_with(before: &str) -> Bench {
+    setup_full(before, "", "")
+}
+
+/// As [`setup_with`], with the members `frontend` and `pool` in the frontend and in the
+/// pool, each with a trailing comma.
+fn setup_full(before: &str, frontend: &str, pool: &str) -> Bench {
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
     let origins = Arc::new(AtomicUsize::new(0));
     let server = origin(origins.clone());
     let topology = format!(
-        r#"{{"frontends":{{"web":{{"proto":"http","binds":["{vip}"],
-        "default_backend":"pool"}}}},"backends":{{"pool":{{"mode":"http",
+        r#"{{"frontends":{{"web":{{"proto":"http","binds":["{vip}"],{frontend}
+        "default_backend":"pool"}}}},"backends":{{"pool":{{"mode":"http",{pool}
         "response_timeout":"400ms",
         "servers":[{before}{{"name":"origin","addr":"{server}"}}]}}}}}}"#
     );
@@ -342,4 +352,48 @@ fn a_refused_connect_moves_the_request_to_the_next_server() {
     assert_eq!(runner.join().unwrap().unwrap(), "POST /order HTTP/1.1 marked=true body=5000");
     assert_eq!(gate.retries.load(Ordering::SeqCst), 2);
     assert_eq!(origins.load(Ordering::SeqCst), 1);
+}
+
+/// One GET over HTTP/2. Returns the response fields as `name: value` lines.
+async fn fields(vip: SocketAddr) -> Vec<String> {
+    let tcp = tokio::net::TcpStream::connect(vip).await.unwrap();
+    let tls = tokio_rustls::TlsConnector::from(Arc::new(client(b"h2")))
+        .connect("localhost".try_into().unwrap(), tcp)
+        .await
+        .unwrap();
+    let (mut tx, conn) =
+        hyper::client::conn::http2::handshake(TokioExecutor::new(), TokioIo::new(tls))
+            .await
+            .unwrap();
+    tokio::spawn(conn);
+    let url = format!("https://localhost:{}/page", vip.port());
+    let req = Request::get(url).body(Full::new(Bytes::new())).unwrap();
+    let response = tx.send_request(req).await.unwrap();
+    assert_eq!(response.status(), 200);
+    let line = |(name, value): (&hyper::header::HeaderName, &hyper::header::HeaderValue)| {
+        format!("{name}: {}", value.to_str().unwrap())
+    };
+    response.headers().iter().map(line).collect()
+}
+
+#[test]
+fn a_response_carries_the_fields_of_its_route_and_the_sticky_cookie() {
+    let frontend = r#""response_headers":{"set":{"X-Frame-Options":"DENY"},"remove":["Server"]},"#;
+    let Bench { vip, mut edge, ingress, .. } = setup_full("", frontend, r#""sticky":"cookie","#);
+    let runner = std::thread::spawn(move || {
+        let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+        rt.block_on(async { tokio::time::timeout(Duration::from_secs(8), fields(vip)).await })
+    });
+    while !runner.is_finished() {
+        edge.step().unwrap();
+        for (bind, stream, permit) in edge.accepted_http() {
+            ingress.accept(bind, stream, permit);
+        }
+    }
+    let fields = runner.join().unwrap().unwrap();
+    assert!(fields.contains(&"x-frame-options: DENY".to_owned()), "{fields:?}");
+    assert!(!fields.iter().any(|field| field.starts_with("server:")), "{fields:?}");
+    let cookie = fields.iter().find(|field| field.starts_with("set-cookie: sibuna_srv="));
+    let cookie = cookie.unwrap_or_else(|| panic!("{fields:?}"));
+    assert!(cookie.ends_with("; Path=/; HttpOnly; SameSite=Lax; Secure"), "{cookie}");
 }

@@ -105,7 +105,7 @@ pub(crate) fn request_edit(target: Option<&HttpTarget>) -> HeadEdit<'_> {
 /// and the sticky cookie.
 pub(crate) fn response_edit(target: Option<&HttpTarget>) -> HeadEdit<'_> {
     let Some(target) = target else { return HeadEdit::default() };
-    HeadEdit { remove: &target.route().response_headers.remove, append: target.response_lines() }
+    HeadEdit { remove: target.route().response_remove(), append: target.response_lines() }
 }
 
 /// The host and port that the client addressed, for `X-Forwarded-Host` and
