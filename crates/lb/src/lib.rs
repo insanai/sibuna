@@ -19,21 +19,24 @@ mod proxy;
 mod rules;
 mod tcp;
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::io;
 use std::net::{SocketAddr, TcpListener, TcpStream, UdpSocket};
 use std::time::{Duration, Instant};
 
 pub use config::Config;
 use config::{Frontend, Protocol, invalid};
-use poll::{Poller, READ, handle};
+use poll::{Poller, READ, Waker, handle};
 use pool::{Loads, Pool, Ticket};
-use tcp::{Connectors, Stream, transient};
+use tcp::{Connect, Connectors, Relays, Stream, transient};
 
 enum Socket {
     Tcp(TcpListener),
     Udp(UdpSocket),
 }
+
+/// How often the worker looks for expired mappings, inspections and paused listeners.
+const SWEEP: Duration = Duration::from_millis(100);
 
 struct Listener {
     paused_until: Option<Instant>,
@@ -48,8 +51,8 @@ type Client = (usize, SocketAddr);
 enum Ready {
     Listener(usize),
     Hello(u64),
-    Tcp(u64),
     Udp(Client),
+    Wake,
 }
 
 struct Opening {
@@ -102,12 +105,17 @@ pub struct Edge {
     loads: Loads,
     checks: health::Checks,
     poll: Poller<Ready>,
+    waker: Waker,
+    relays: Relays,
+    swept: Instant,
     events: Vec<Ready>,
-    tcp: HashMap<u64, Stream>,
     pending: HashMap<u64, Pending>,
     inspecting: HashMap<u64, Inspecting>,
     revision: u64,
     udp: HashMap<Client, DatagramFlow>,
+    udp_limit: usize,
+    // Mappings in creation order. Under pressure the oldest one without a reply goes first.
+    unanswered: VecDeque<Client>,
     connectors: Connectors,
     next_id: u64,
     buffer: Box<[u8]>,
@@ -141,6 +149,9 @@ impl Edge {
         let budget = FlowBudget::new(&config);
         let mut binds = Vec::new();
         let mut listeners = Vec::new();
+        let mut poll = Poller::new()?;
+        let (waker, wake) = Waker::new()?;
+        poll.set(handle(waker.socket()), READ, Ready::Wake)?;
         for (bind, route) in config.listeners {
             let socket = match bind.0 {
                 Protocol::Tcp | Protocol::Http => {
@@ -154,6 +165,11 @@ impl Edge {
                     Socket::Udp(socket)
                 }
             };
+            let fd = match &socket {
+                Socket::Tcp(socket) => handle(socket),
+                Socket::Udp(socket) => handle(socket),
+            };
+            poll.set(fd, READ, Ready::Listener(listeners.len()))?;
             binds.push(bind);
             listeners.push(Listener { socket, route, paused_until: None });
         }
@@ -174,14 +190,18 @@ impl Edge {
             pools,
             loads,
             checks,
-            poll: Poller::new(),
+            poll,
+            waker,
+            relays: Relays::start(config.workers)?,
+            swept: Instant::now(),
             events: Vec::new(),
-            tcp: HashMap::new(),
             pending: HashMap::new(),
             inspecting: HashMap::new(),
             revision: 0,
             udp: HashMap::new(),
-            connectors: Connectors::start()?,
+            udp_limit: config.udp_limit,
+            unanswered: VecDeque::new(),
+            connectors: Connectors::start(&wake)?,
             next_id: 0,
             buffer: vec![0; 65536].into_boxed_slice(),
             draining: false,
@@ -208,6 +228,7 @@ impl Edge {
         }
         self.checks.configure(&mut config)?;
         self.budget.configure(&config);
+        self.udp_limit = config.udp_limit;
         self.http.publish(&mut config);
         self.pools = config
             .pools
@@ -221,7 +242,9 @@ impl Edge {
         // A partially inspected handshake has no upstream yet. Drop it at a policy
         // boundary so old ACLs can never select a pool from the new revision.
         self.drops = self.drops.saturating_add(self.inspecting.len() as u64);
-        self.inspecting.clear();
+        for (_, flow) in self.inspecting.drain() {
+            self.poll.remove(handle(&flow.opening.client));
+        }
         self.revision = self.revision.wrapping_add(1);
         Ok(())
     }
@@ -243,62 +266,81 @@ impl Edge {
     }
 
     /// Processes one readiness batch, waiting for at most 25 ms. Individual flow
-    /// errors release that flow. Poll and listener failures are reported to the caller.
+    /// errors release that flow. Only a failure of the poller is reported to the caller.
     pub fn step(&mut self) -> io::Result<()> {
         let now = Instant::now();
         self.finish_connects(now);
-        self.tcp.retain(|_, stream| !stream.expired(now));
-        self.udp.retain(|_, flow| now.duration_since(flow.last) < flow.timeout);
-        self.inspecting.retain(|_, flow| now < flow.deadline);
-        self.poll.clear();
-        for (&id, flow) in &self.inspecting {
-            self.poll.add(handle(&flow.opening.client), READ, Ready::Hello(id));
+        if now.saturating_duration_since(self.swept) >= SWEEP {
+            self.swept = now;
+            self.sweep(now);
         }
-        for (id, listener) in self.listeners.iter().enumerate() {
-            if listener.paused_until.is_some_and(|deadline| now < deadline) {
-                continue;
-            }
-            let fd = match &listener.socket {
-                Socket::Tcp(socket) => handle(socket),
-                Socket::Udp(socket) => handle(socket),
-            };
-            self.poll.add(fd, READ, Ready::Listener(id));
-        }
-        for (&id, stream) in &self.tcp {
-            let (client, origin) = stream.interests();
-            self.poll.add(handle(&stream.client), client, Ready::Tcp(id));
-            self.poll.add(handle(&stream.origin), origin, Ready::Tcp(id));
-        }
-        for (&key, flow) in &self.udp {
-            self.poll.add(handle(&flow.origin), READ, Ready::Udp(key));
-        }
-        self.poll.wait(if self.pending.is_empty() { 25 } else { 1 })?;
         self.events.clear();
-        self.events.extend(self.poll.ready());
+        self.poll.wait(25, &mut self.events)?;
         for index in 0..self.events.len() {
             match self.events[index] {
-                Ready::Listener(id) => self.receive(id)?,
+                Ready::Listener(id) => self.receive(id),
                 Ready::Udp(key) => self.reply(key),
+                Ready::Wake => self.waker.drain(),
                 Ready::Hello(id) => {
                     if !self.inspect(id) {
                         self.drops = self.drops.saturating_add(1);
                     }
                 }
-                Ready::Tcp(id) => {
-                    if let Some(flow) = self.tcp.get_mut(&id)
-                        && !flow.relay(&mut self.buffer[..16384]).unwrap_or(false)
-                    {
-                        self.tcp.remove(&id);
-                    }
-                }
             }
+        }
+        if self.events.iter().any(|event| matches!(event, Ready::Wake)) {
+            self.finish_connects(Instant::now());
         }
         Ok(())
     }
 
-    fn receive(&mut self, id: usize) -> io::Result<()> {
-        // Limit a busy listener to one batch so established streams also make progress.
-        for _ in 0..32 {
+    /// Releases expired mappings and inspections and resumes paused listeners.
+    fn sweep(&mut self, now: Instant) {
+        let poll = &mut self.poll;
+        self.udp.retain(|_, flow| {
+            let keep = now.saturating_duration_since(flow.last) < flow.timeout;
+            if !keep {
+                poll.remove(handle(&flow.origin));
+            }
+            keep
+        });
+        self.inspecting.retain(|_, flow| {
+            let keep = now < flow.deadline;
+            if !keep {
+                poll.remove(handle(&flow.opening.client));
+            }
+            keep
+        });
+        if self.unanswered.len() > 2 * self.udp.len() + 1024 {
+            let udp = &self.udp;
+            self.unanswered
+                .retain(|key| udp.get(key).is_some_and(|flow| flow.first_request.is_some()));
+        }
+        for (id, listener) in self.listeners.iter_mut().enumerate() {
+            if listener.paused_until.is_some_and(|deadline| now >= deadline) {
+                let fd = match &listener.socket {
+                    Socket::Tcp(socket) => handle(socket),
+                    Socket::Udp(socket) => handle(socket),
+                };
+                if poll.set(fd, READ, Ready::Listener(id)).is_ok() {
+                    listener.paused_until = None;
+                }
+            }
+        }
+    }
+
+    fn pause(&mut self, id: usize) {
+        let listener = &mut self.listeners[id];
+        listener.paused_until = Some(Instant::now() + Duration::from_millis(50));
+        self.poll.remove(match &listener.socket {
+            Socket::Tcp(socket) => handle(socket),
+            Socket::Udp(socket) => handle(socket),
+        });
+    }
+
+    fn receive(&mut self, id: usize) {
+        // Limit a busy listener to one batch so other sockets also make progress.
+        for _ in 0..64 {
             let result = match &self.listeners[id].socket {
                 Socket::Tcp(socket) => {
                     socket.accept().map(|(client, peer)| self.accept(id, client, peer))
@@ -311,25 +353,15 @@ impl Edge {
                 Ok(false) => self.drops = self.drops.saturating_add(1),
                 Ok(true) => {}
                 Err(error) if transient(&error) => break,
-                Err(error)
-                    if matches!(
-                        error.kind(),
-                        io::ErrorKind::ConnectionAborted
-                            | io::ErrorKind::ConnectionReset
-                            | io::ErrorKind::ConnectionRefused
-                    ) =>
-                {
-                    self.drops = self.drops.saturating_add(1);
-                }
                 Err(error) if resource_pressure(&error) => {
-                    self.listeners[id].paused_until =
-                        Some(Instant::now() + Duration::from_millis(50));
+                    self.pause(id);
                     break;
                 }
-                Err(error) => return Err(error),
+                // Every other error belongs to one connection or datagram. The listener
+                // stays in service.
+                Err(_) => self.drops = self.drops.saturating_add(1),
             }
         }
-        Ok(())
     }
 
     fn reserve(&mut self, id: usize, peer: SocketAddr) -> Option<Ticket> {
@@ -368,6 +400,9 @@ impl Edge {
             if opening.client.set_nonblocking(true).is_err() {
                 return false;
             }
+            if self.poll.set(handle(&opening.client), READ, Ready::Hello(id)).is_err() {
+                return false;
+            }
             self.inspecting.insert(
                 id,
                 Inspecting {
@@ -393,12 +428,12 @@ impl Edge {
             Ok(false) => return true,
             Err(error) if transient(&error) => return true,
             Err(_) => {
-                self.inspecting.remove(&id);
+                self.finish_inspection(id);
                 return false;
             }
             Ok(true) => {}
         }
-        let Some(mut flow) = self.inspecting.remove(&id) else { return false };
+        let Some(mut flow) = self.finish_inspection(id) else { return false };
         let wire = std::mem::take(&mut flow.input.wire);
         let Some(hello) = flow.input.hello() else { return false };
         let Some(pool) = rules::select(&flow.rules, &hello, &flow.opening.pool) else {
@@ -413,6 +448,14 @@ impl Edge {
         };
         flow.opening.prefix = prefix;
         self.connect(id, flow.opening)
+    }
+
+    /// Takes an inspection out of the worker's poller. The relay thread registers the
+    /// client socket in its own poller once the origin is connected.
+    fn finish_inspection(&mut self, id: u64) -> Option<Inspecting> {
+        let flow = self.inspecting.remove(&id)?;
+        self.poll.remove(handle(&flow.opening.client));
+        Some(flow)
     }
 
     fn connect(&mut self, id: u64, opening: Opening) -> bool {
@@ -443,7 +486,7 @@ impl Edge {
         while let Ok((id, result)) = self.connectors.done.try_recv() {
             let Some(mut pending) = self.pending.remove(&id) else { continue };
             match result {
-                Ok(origin) => {
+                Connect::Ready(origin) => {
                     pending.ticket.observe(pending.started, now);
                     if let Ok(stream) = Stream::new(
                         pending.opening.permit,
@@ -453,11 +496,13 @@ impl Edge {
                         pending.opening.timeout,
                         pending.opening.prefix,
                     ) {
-                        self.tcp.insert(id, stream);
+                        self.relays.submit(stream);
                         continue;
                     }
                 }
-                Err(_) => {
+                // A connect that expired in the queue says nothing about the origin.
+                Connect::Expired => {}
+                Connect::Failed => {
                     pending.ticket.failed(now);
                     if pending.attempts < 3
                         && now < pending.deadline
@@ -497,9 +542,26 @@ impl Edge {
             if self.draining {
                 return false;
             }
-            let Some(permit) = self.budget.reserve() else { return false };
+            // Datagram sources are not validated. A separate ceiling keeps spoofed
+            // sources from taking the slots of TCP and HTTP clients, and a full table
+            // gives up the oldest mapping that no origin has answered.
+            if self.udp.len() >= self.udp_limit && !self.evict_unanswered() {
+                return false;
+            }
+            let permit = match self.budget.reserve() {
+                Some(permit) => permit,
+                None if self.evict_unanswered() => match self.budget.reserve() {
+                    Some(permit) => permit,
+                    None => return false,
+                },
+                None => return false,
+            };
             let Some(ticket) = self.reserve(key.0, key.1) else { return false };
             let Ok(origin) = connected_udp(ticket.addr) else { return false };
+            if self.poll.set(handle(&origin), READ, Ready::Udp(key)).is_err() {
+                return false;
+            }
+            self.unanswered.push_back(key);
             self.udp.insert(
                 key,
                 DatagramFlow {
@@ -527,10 +589,27 @@ impl Edge {
             }
             Err(error) if transient(&error) => false,
             _ => {
-                self.udp.remove(&key);
+                self.close_mapping(key);
                 false
             }
         }
+    }
+
+    fn close_mapping(&mut self, key: Client) {
+        if let Some(flow) = self.udp.remove(&key) {
+            self.poll.remove(handle(&flow.origin));
+        }
+    }
+
+    fn evict_unanswered(&mut self) -> bool {
+        while let Some(key) = self.unanswered.pop_front() {
+            if self.udp.get(&key).is_some_and(|flow| flow.first_request.is_some()) {
+                self.close_mapping(key);
+                self.drops = self.drops.saturating_add(1);
+                return true;
+            }
+        }
+        false
     }
 
     fn reply(&mut self, key: Client) {
@@ -551,9 +630,7 @@ impl Edge {
             }
             Ok(_) => {}
             Err(error) if transient(&error) => return,
-            Err(_) => {
-                self.udp.remove(&key);
-            }
+            Err(_) => self.close_mapping(key),
         }
         self.drops = self.drops.saturating_add(1);
     }

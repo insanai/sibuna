@@ -2,39 +2,63 @@
 
 use std::io::{self, Read, Write};
 use std::net::{Shutdown, SocketAddr, TcpStream};
+use std::collections::HashMap;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, mpsc};
+use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
-use crate::poll::{READ, WRITE};
+use crate::poll::{Poller, READ, WRITE, Wake, Waker, handle};
 use crate::pool::Ticket;
 
 type Job = (u64, SocketAddr, Instant);
 
+/// The result of one queued connect.
+pub(crate) enum Connect {
+    /// The origin accepted the connection.
+    Ready(TcpStream),
+    /// The origin refused or did not answer in time.
+    Failed,
+    /// The deadline passed in the queue. Nothing is known about the origin.
+    Expired,
+}
+
+/// Blocking connects run on these threads so the packet worker never waits for an origin.
 pub(crate) struct Connectors {
     tx: mpsc::SyncSender<Job>,
-    pub done: mpsc::Receiver<(u64, io::Result<TcpStream>)>,
+    pub done: mpsc::Receiver<(u64, Connect)>,
 }
 
 impl Connectors {
-    pub fn start() -> io::Result<Self> {
-        let (tx, jobs) = mpsc::sync_channel::<Job>(64);
+    const THREADS: usize = 16;
+    const QUEUE: usize = 4096;
+
+    pub fn start(wake: &Wake) -> io::Result<Self> {
+        let (tx, jobs) = mpsc::sync_channel::<Job>(Self::QUEUE);
         let (completed, done) = mpsc::channel();
         let jobs = Arc::new(Mutex::new(jobs));
-        for _ in 0..4 {
+        for _ in 0..Self::THREADS {
             let jobs = Arc::clone(&jobs);
             let completed = completed.clone();
+            let wake = wake.clone();
             std::thread::Builder::new().name("edge-connect".into()).spawn(move || {
                 loop {
                     let job =
                         jobs.lock().unwrap_or_else(std::sync::PoisonError::into_inner).recv();
                     let Ok((id, addr, deadline)) = job else { break };
                     let result = match deadline.checked_duration_since(Instant::now()) {
-                        Some(left) if !left.is_zero() => TcpStream::connect_timeout(&addr, left),
-                        _ => Err(io::ErrorKind::TimedOut.into()),
+                        Some(left) if !left.is_zero() => {
+                            match TcpStream::connect_timeout(&addr, left) {
+                                Ok(stream) => Connect::Ready(stream),
+                                Err(_) => Connect::Failed,
+                            }
+                        }
+                        _ => Connect::Expired,
                     };
                     if completed.send((id, result)).is_err() {
                         break;
                     }
+                    wake.wake();
                 }
             })?;
         }
@@ -142,7 +166,19 @@ impl Stream {
         })
     }
 
-    pub fn interests(&self) -> (i16, i16) {
+    /// Registers both sockets for the events this stream can use now.
+    fn sync(&self, poll: &mut Poller<u64>, key: u64) -> io::Result<()> {
+        let (client, origin) = self.interests();
+        poll.set(handle(&self.client), client, key)?;
+        poll.set(handle(&self.origin), origin, key)
+    }
+
+    fn forget(&self, poll: &mut Poller<u64>) {
+        poll.remove(handle(&self.client));
+        poll.remove(handle(&self.origin));
+    }
+
+    fn interests(&self) -> (i16, i16) {
         let interest = |out: &Direction, incoming: &Direction| {
             let read = !out.eof && out.pending.is_empty();
             (i16::from(read) * READ) | (i16::from(!incoming.pending.is_empty()) * WRITE)
@@ -164,5 +200,134 @@ impl Stream {
             self.last = Instant::now();
         }
         Ok(!(self.up.eof && self.down.eof))
+    }
+}
+
+struct Worker {
+    tx: Option<mpsc::Sender<Stream>>,
+    wake: Wake,
+    load: Arc<AtomicUsize>,
+    thread: Option<JoinHandle<()>>,
+}
+
+/// Relay threads. Each owns a poller and the established streams assigned to it.
+pub(crate) struct Relays {
+    workers: Vec<Worker>,
+}
+
+impl Relays {
+    /// Starts `count` relay threads.
+    pub fn start(count: usize) -> io::Result<Self> {
+        let mut workers = Vec::with_capacity(count);
+        for index in 0..count.max(1) {
+            let (tx, rx) = mpsc::channel();
+            let (waker, wake) = Waker::new()?;
+            let load = Arc::new(AtomicUsize::new(0));
+            let counter = Arc::clone(&load);
+            let mut poll = Poller::new()?;
+            poll.set(handle(waker.socket()), READ, WAKE)?;
+            let thread = std::thread::Builder::new()
+                .name(format!("edge-relay-{index}"))
+                .spawn(move || relay_loop(poll, &waker, &rx, &counter))?;
+            workers.push(Worker { tx: Some(tx), wake, load, thread: Some(thread) });
+        }
+        Ok(Self { workers })
+    }
+
+    /// Hands an established stream to the least loaded relay thread.
+    pub fn submit(&self, stream: Stream) {
+        let Some(worker) = self.workers.iter().min_by_key(|w| w.load.load(Ordering::Relaxed))
+        else {
+            return;
+        };
+        worker.load.fetch_add(1, Ordering::Relaxed);
+        if let Some(tx) = &worker.tx
+            && tx.send(stream).is_ok()
+        {
+            worker.wake.wake();
+        }
+    }
+}
+
+impl Drop for Relays {
+    fn drop(&mut self) {
+        for worker in &mut self.workers {
+            worker.tx = None;
+            worker.wake.wake();
+        }
+        for worker in &mut self.workers {
+            if let Some(thread) = worker.thread.take() {
+                let _ = thread.join();
+            }
+        }
+    }
+}
+
+const WAKE: u64 = 0;
+const SWEEP: Duration = Duration::from_millis(100);
+
+fn relay_loop(
+    mut poll: Poller<u64>,
+    waker: &Waker,
+    incoming: &mpsc::Receiver<Stream>,
+    load: &AtomicUsize,
+) {
+    let mut streams: HashMap<u64, Stream> = HashMap::new();
+    let mut ready = Vec::new();
+    let mut scratch = vec![0u8; 65536].into_boxed_slice();
+    let mut next_id = WAKE;
+    let mut swept = Instant::now();
+    loop {
+        ready.clear();
+        if poll.wait(SWEEP.as_millis() as i32, &mut ready).is_err() {
+            // Without readiness the thread cannot serve its streams. Back off and retry.
+            std::thread::sleep(SWEEP);
+        }
+        for &key in &ready {
+            if key != WAKE {
+                advance(&mut streams, &mut poll, key, &mut scratch, load);
+                continue;
+            }
+            waker.drain();
+            loop {
+                match incoming.try_recv() {
+                    Ok(stream) => {
+                        next_id = next_id.wrapping_add(1).max(1);
+                        streams.insert(next_id, stream);
+                        // The prefix or early client bytes may already be writable.
+                        advance(&mut streams, &mut poll, next_id, &mut scratch, load);
+                    }
+                    Err(mpsc::TryRecvError::Empty) => break,
+                    Err(mpsc::TryRecvError::Disconnected) => return,
+                }
+            }
+        }
+        let now = Instant::now();
+        if now.saturating_duration_since(swept) >= SWEEP {
+            swept = now;
+            streams.retain(|_, stream| {
+                let keep = !stream.expired(now);
+                if !keep {
+                    stream.forget(&mut poll);
+                    load.fetch_sub(1, Ordering::Relaxed);
+                }
+                keep
+            });
+        }
+    }
+}
+
+fn advance(
+    streams: &mut HashMap<u64, Stream>,
+    poll: &mut Poller<u64>,
+    key: u64,
+    scratch: &mut [u8],
+    load: &AtomicUsize,
+) {
+    let Some(stream) = streams.get_mut(&key) else { return };
+    let open = stream.relay(scratch).unwrap_or(false) && stream.sync(poll, key).is_ok();
+    if !open && let Some(stream) = streams.remove(&key) {
+        stream.forget(poll);
+        load.fetch_sub(1, Ordering::Relaxed);
     }
 }

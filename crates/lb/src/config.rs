@@ -7,11 +7,15 @@ use std::time::Duration;
 
 use sibuna_json::{Object, ObjectReader, Value};
 
-pub(crate) const MAX_FLOWS: usize = 8192;
+/// The largest configurable flow table. The descriptor limit of the process bounds it first.
+pub(crate) const MAX_FLOWS: usize = 1_000_000;
+const MAX_WORKERS: usize = 64;
 
 /// The parsed topology. Create one with [`Config::parse`].
 pub struct Config {
     pub(crate) limit: usize,
+    pub(crate) udp_limit: usize,
+    pub(crate) workers: usize,
     pub(crate) http: crate::HttpOptions,
     pub(crate) mesh: Option<crate::MeshConfig>,
     pub(crate) listeners: BTreeMap<(Protocol, SocketAddr), Frontend>,
@@ -122,9 +126,24 @@ impl Config {
     pub fn parse(bytes: &[u8]) -> Result<Self> {
         let value = field(sibuna_json::parse_with_limits(bytes, &Self::DOCUMENT_LIMITS))?;
         let mut root = field(ObjectReader::new(&value))?;
-        let mut limit = 1024;
+        let mut limit = 8192;
+        let mut udp_limit = None;
+        let mut workers = default_workers();
         if let Some(mut global) = field(root.take_object("global"))? {
             limit = number(&mut global, "max_flows", limit, MAX_FLOWS)?;
+            workers = match global.take("workers") {
+                None => workers,
+                Some(value) if value.as_str() == Some("auto") => workers,
+                Some(value) => match value.as_number().and_then(|n| n.as_u64().ok()) {
+                    Some(n) if (1..=MAX_WORKERS as u64).contains(&n) => n as usize,
+                    _ => return Err(invalid("global.workers must be auto or in 1..=64")),
+                },
+            };
+            udp_limit = match field(global.take_u64("max_udp_flows"))? {
+                None => None,
+                Some(n) if n > 0 && n <= limit as u64 => Some(n as usize),
+                Some(_) => return Err(invalid("global.max_udp_flows must be in 1..=max_flows")),
+            };
             field(global.finish())?;
         }
         let mesh = field(root.take_object("mesh"))?.map(crate::MeshConfig::parse).transpose()?;
@@ -132,8 +151,15 @@ impl Config {
         let explicit_http = http.is_some();
         let http = http.unwrap_or_default();
         let adaptive = mesh.is_some();
-        let mut config =
-            Self { limit, mesh, http, pools: BTreeMap::new(), listeners: BTreeMap::new() };
+        let mut config = Self {
+            limit,
+            udp_limit: limit,
+            workers,
+            mesh,
+            http,
+            pools: BTreeMap::new(),
+            listeners: BTreeMap::new(),
+        };
         for (name, value) in named(&mut root, "backends")? {
             config.pools.insert(name.into(), Backend::parse(name, value, adaptive)?);
         }
@@ -141,6 +167,10 @@ impl Config {
             config.add_frontend(name, value)?;
         }
         field(root.finish())?;
+        // Datagram sources are unvalidated. Beside stream listeners they share the table
+        // only up to half, unless the operator sets the ceiling.
+        let mixed = config.listeners.keys().any(|(proto, _)| *proto != Protocol::Udp);
+        config.udp_limit = udp_limit.unwrap_or(if mixed { limit.div_ceil(2) } else { limit });
         if explicit_http && config.http().is_none() {
             return Err(invalid("http settings require an HTTP frontend"));
         }
@@ -243,6 +273,11 @@ impl Config {
         }
         field(r.finish())
     }
+}
+
+/// One relay thread per available CPU, up to eight.
+fn default_workers() -> usize {
+    std::thread::available_parallelism().map_or(1, |n| n.get().min(8))
 }
 
 fn overlaps(a: SocketAddr, b: SocketAddr) -> bool {
