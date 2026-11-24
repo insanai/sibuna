@@ -120,6 +120,41 @@ fn a_new_process_takes_over_the_address_while_requests_keep_arriving() {
     let _ = fs::remove_file(&socket);
 }
 
+#[cfg(feature = "https")]
+#[test]
+fn a_frontend_with_http3_is_taken_over_too() {
+    let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    let origin = origin();
+    let name = format!("sibuna-takeover-h3-{}-{}.json", std::process::id(), vip.port());
+    let path = std::env::temp_dir().join(name);
+    let data = concat!(env!("CARGO_MANIFEST_DIR"), "/../../crates/tls/tests/data");
+    let source = format!(
+        r#"{{"global":{{"reuse_port":true,"shutdown_timeout":"1s"}},
+        "http":{{"surface":"off"}},
+        "frontends":{{"web":{{"proto":"http","binds":["{vip}"],
+          "tls":{{"cert_file":"{data}/localhost.pem","key_file":"{data}/localhost.key",
+                 "http3":true}},
+          "default_backend":"app"}}}},
+        "backends":{{"app":{{"mode":"http","servers":[{{"name":"a","addr":"{origin}"}}]}}}}}}"#
+    );
+    fs::write(&path, source).unwrap();
+    let mut old = start(&path);
+    // The UDP socket of HTTP/3 shares its address as the TCP listener does, so the new
+    // process starts.
+    let mut new = start(&path);
+    let status = Command::new("kill").arg("-TERM").arg(old.id().to_string()).status().unwrap();
+    assert!(status.success());
+    let deadline = Instant::now() + Duration::from_secs(8);
+    while old.try_wait().unwrap().is_none() {
+        assert!(Instant::now() < deadline, "the old process did not stop");
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    assert!(TcpStream::connect(vip).is_ok());
+    let _ = new.kill();
+    let _ = new.wait();
+    let _ = fs::remove_file(&path);
+}
+
 #[test]
 fn without_reuse_port_a_second_process_is_refused() {
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();

@@ -82,4 +82,4 @@ hyper = { workspace = true, features = ["client", "http2"] }
 hyper-util.workspace = true
 rustls.workspace = true
 tokio-rustls.workspace = true
-tokio = { workspace = true, features = ["rt-multi-thread", "net", "time", "sync", "macros"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "net", "time", "sync", "macros", "io-util"] }

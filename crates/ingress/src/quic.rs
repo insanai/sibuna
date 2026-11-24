@@ -23,6 +23,27 @@ pub(super) struct Shared {
     pub inline: Option<Arc<crate::inline::Inline>>,
     pub capacity: Arc<Semaphore>,
     pub idle: Duration,
+    /// The admission of a connection, once the firewall has set it.
+    pub admit: Arc<std::sync::OnceLock<crate::Admit>>,
+}
+
+/// Opens the HTTP/3 endpoint of one listener. With `shared` the socket may share its
+/// address with the socket of another process. Must run inside the runtime.
+pub(crate) fn listen(
+    config: quinn::ServerConfig,
+    vip: SocketAddr,
+    shared: bool,
+) -> std::io::Result<quinn::Endpoint> {
+    if !shared {
+        return quinn::Endpoint::server(config, vip);
+    }
+    let socket = sibuna_reactor::bind_shared(vip)?;
+    quinn::Endpoint::new(
+        quinn::EndpointConfig::default(),
+        Some(config),
+        socket,
+        Arc::new(quinn::TokioRuntime),
+    )
 }
 
 pub(super) async fn serve(
@@ -45,10 +66,19 @@ pub(super) async fn serve(
         if let Some(ip) = incoming.local_ip() {
             vip.set_ip(ip);
         }
+        // A client over its bound is refused before the handshake costs anything.
+        let place = match shared.admit.get().map(|admit| admit(incoming.remote_address(), vip)) {
+            Some(None) => {
+                incoming.refuse();
+                continue;
+            }
+            Some(place) => place,
+            None => None,
+        };
         let shared = shared.clone();
         let drain = drain.clone();
         tokio::spawn(async move {
-            let _slot = slot;
+            let _held = (slot, place);
             if let Ok(Ok(conn)) = timeout(DEADLINE, incoming).await {
                 let _ = connection(conn, vip, shared, drain).await;
             }
@@ -65,7 +95,11 @@ async fn connection(
     let mut builder = h3::server::builder();
     builder.max_field_section_size(MAX_HEAD);
     let mut http = builder.build(h3_quinn::Connection::new(conn.clone())).await?;
-    let lane = Lane::new(shared.handoff, shared.inline, conn.remote_address(), vip);
+    let chain = conn.peer_identity().and_then(|identity| {
+        identity.downcast::<Vec<rustls::pki_types::CertificateDer<'static>>>().ok()
+    });
+    let cert = crate::fingerprint(chain.as_ref().map(|chain| chain.as_slice()));
+    let lane = Lane::new(shared.handoff, shared.inline, conn.remote_address(), vip, cert);
     let mut check = tokio::time::interval(IDLE_CHECK);
     let mut draining = false;
     loop {

@@ -34,9 +34,25 @@ use handoff::Handoff;
 pub use inline::{Completion, Decide, Forward, Offer, Report, Verdict};
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
-/// Hands one connection to the firewall with its client peer and public destination.
+/// The SHA-256 digest of the certificate a client proved to hold in the TLS handshake.
+pub type Fingerprint = [u8; 32];
+
+/// Hands one connection to the firewall with its client peer, its public destination
+/// and the fingerprint of the client's verified certificate, when it presented one.
 /// The call must return at once. The firewall serves the socket on its own thread.
-pub type Handler = Arc<dyn Fn(TcpStream, SocketAddr, SocketAddr) + Send + Sync>;
+pub type Handler =
+    Arc<dyn Fn(TcpStream, SocketAddr, SocketAddr, Option<Fingerprint>) + Send + Sync>;
+
+/// Decides whether a QUIC connection from a client address to a listener may open.
+/// The value it returns is held, and dropped when the connection ends. `None` refuses
+/// the connection. The call must return at once.
+pub type Admit =
+    Arc<dyn Fn(SocketAddr, SocketAddr) -> Option<Box<dyn std::any::Any + Send>> + Send + Sync>;
+
+/// The fingerprint of the first certificate of a chain the handshake verified.
+fn fingerprint(chain: Option<&[rustls::pki_types::CertificateDer<'_>]>) -> Option<Fingerprint> {
+    chain?.first().map(|leaf| sibuna_crypto::sha256::Sha256::digest(leaf))
+}
 
 const DEADLINE: Duration = Duration::from_secs(15);
 const MAX_HEAD: u64 = 16 * 1024;
@@ -53,11 +69,19 @@ pub struct Limits {
     pub idle: Duration,
     /// The longest wait for a server's response head on an in-process exchange.
     pub response: Duration,
+    /// The HTTP/3 sockets share their address, so a process that replaces this one can
+    /// bind it while this one still serves.
+    pub share_address: bool,
 }
 
 impl Default for Limits {
     fn default() -> Self {
-        Self { exchanges: 1024, idle: Duration::from_secs(60), response: Duration::from_secs(60) }
+        Self {
+            exchanges: 1024,
+            idle: Duration::from_secs(60),
+            response: Duration::from_secs(60),
+            share_address: false,
+        }
     }
 }
 
@@ -130,6 +154,7 @@ pub struct Ingress {
     capacity: Arc<Semaphore>,
     idle: Duration,
     drain: watch::Sender<()>,
+    admit: Arc<std::sync::OnceLock<Admit>>,
 }
 
 impl Ingress {
@@ -152,12 +177,13 @@ impl Ingress {
         let mut endpoints = BTreeMap::new();
         let capacity = Arc::new(Semaphore::new(limits.exchanges));
         let (drain, _) = watch::channel(());
+        let admit = Arc::new(std::sync::OnceLock::new());
         let handoff = {
             let _enter = runtime.enter();
             let handoff = Handoff::start(handler)?;
             for (vip, identity) in identities {
                 if let Some(config) = identity.quic {
-                    let endpoint = quinn::Endpoint::server(config, vip)?;
+                    let endpoint = quic::listen(config, vip, limits.share_address)?;
                     endpoints.insert(vip, endpoint.clone());
                     runtime.spawn(quic::serve(
                         endpoint,
@@ -168,6 +194,7 @@ impl Ingress {
                             inline: inline.clone(),
                             capacity: capacity.clone(),
                             idle: limits.idle,
+                            admit: admit.clone(),
                         },
                         drain.subscribe(),
                     ));
@@ -177,7 +204,7 @@ impl Ingress {
             handoff
         };
         let idle = limits.idle;
-        Ok(Self { runtime, listeners, endpoints, handoff, inline, capacity, idle, drain })
+        Ok(Self { runtime, listeners, endpoints, handoff, inline, capacity, idle, drain, admit })
     }
 
     /// Names the HTTP/2 and HTTP/3 servers of the egress. In-process exchanges then
@@ -186,6 +213,13 @@ impl Ingress {
         if let Some(inline) = &self.inline {
             inline.attach(directory);
         }
+    }
+
+    /// Sets the admission of QUIC connections, which this runtime accepts itself: the
+    /// place where the firewall counts a client's connections. TCP connections are
+    /// admitted by the caller of [`Ingress::accept`]. The first admission stays.
+    pub fn guard(&self, admit: Admit) {
+        let _ = self.admit.set(admit);
     }
 
     /// Sends GOAWAY on live sessions so clients can direct new requests to another node.
@@ -252,17 +286,19 @@ impl Ingress {
                 .flatten(),
             peer,
             vip,
+            cert: None,
         };
         self.runtime.spawn(async move {
             let _permit = (permit, held);
             let Ok(stream) = tokio::net::TcpStream::from_std(stream) else { return };
             let Ok(Ok(tls)) = timeout(DEADLINE, acceptor.accept(stream)).await else { return };
-            let protocol = tls.get_ref().1.alpn_protocol();
-            if protocol == Some(auto::ACME_TLS) {
+            if tls.get_ref().1.alpn_protocol() == Some(auto::ACME_TLS) {
                 // A TLS-ALPN-01 validation ends with the handshake. It carries no request.
                 return;
             }
-            if protocol == Some(b"h2") {
+            let mut session = session;
+            session.cert = fingerprint(tls.get_ref().1.peer_certificates());
+            if tls.get_ref().1.alpn_protocol() == Some(b"h2") {
                 session.http2(tls).await;
             } else {
                 session.http1(tls).await;
@@ -283,13 +319,17 @@ struct Session {
     alt_svc: Option<HeaderValue>,
     peer: SocketAddr,
     vip: SocketAddr,
+    /// The client's verified certificate, known after the handshake.
+    cert: Option<Fingerprint>,
 }
 
 impl Session {
     /// Relays the decrypted bytes to the firewall, which speaks HTTP/1.1 itself:
     /// keep-alive, pipelined requests and WebSocket upgrades behave as on a plain listener.
     async fn http1(self, tls: Tls) {
-        let Ok(mut firewall) = self.handoff.open(self.peer, self.vip).await else { return };
+        let Ok(mut firewall) = self.handoff.open(self.peer, self.vip, self.cert).await else {
+            return;
+        };
         let (mut client_read, mut client_write) = tokio::io::split(tls);
         let (mut firewall_read, mut firewall_write) = firewall.split();
         let up = async {
@@ -310,7 +350,7 @@ impl Session {
     }
 
     async fn http2(mut self, tls: Tls) {
-        let lane = Lane::new(self.handoff, self.inline, self.peer, self.vip);
+        let lane = Lane::new(self.handoff, self.inline, self.peer, self.vip, self.cert);
         let (capacity, alt_svc) = (self.capacity, self.alt_svc);
         let exchanges = lane.clone();
         let service = service_fn(move |request| {

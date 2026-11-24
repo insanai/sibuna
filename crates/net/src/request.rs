@@ -51,12 +51,17 @@ fn same_field_name(name: &[u8], wanted: &[u8]) -> bool {
     name.len() == wanted.len() && name.iter().zip(wanted).all(|(&a, &b)| fold(a) == fold(b))
 }
 
+/// The field that names the client's verified certificate (see [`Audit::client_cert`]).
+const CLIENT_CERT: &[u8] = b"x-client-cert-sha256";
+
 /// True when a request field is not forwarded: a hop-by-hop or Sibuna field (see
-/// [`is_hop_by_hop`]), a JA4 field the origin must not trust (see [`Audit::ja4_header`]), or
-/// one the client's `Connection` field nominates. `Host` is always forwarded: a client
-/// cannot nominate it away and deliver a request without one.
+/// [`is_hop_by_hop`]), the client certificate field, a JA4 field the origin must not
+/// trust (see [`Audit::ja4_header`]), or one the client's `Connection` field nominates.
+/// `Host` is always forwarded: a client cannot nominate it away and deliver a request
+/// without one.
 fn is_dropped(request: &Request<'_>, name: &[u8], audit: &Audit<'_>) -> bool {
     is_hop_by_hop(name)
+        || same_field_name(name, CLIENT_CERT)
         || is_untrusted_ja4(name, audit)
         || (nominated(request, name) && !name.eq_ignore_ascii_case(b"host"))
 }
@@ -122,6 +127,8 @@ pub(crate) fn write_request_head<W: Write + ?Sized>(
     write_audit(out, request, audit)
 }
 
+const HEX: [u8; 16] = *b"0123456789abcdef";
+
 /// Writes the audit fields and the blank line that ends the head (see [`Audit`]).
 fn write_audit<W: Write + ?Sized>(
     out: &mut W,
@@ -134,6 +141,15 @@ fn write_audit<W: Write + ?Sized>(
     }
     out.write_all(audit.peer)?;
     out.write_all(b"\r\n")?;
+    if let Some(digest) = audit.client_cert {
+        let mut text = [0u8; 64];
+        for (pair, byte) in text.as_chunks_mut::<2>().0.iter_mut().zip(digest) {
+            *pair = [HEX[usize::from(byte >> 4)], HEX[usize::from(byte & 15)]];
+        }
+        out.write_all(b"X-Client-Cert-SHA256: ")?;
+        out.write_all(&text)?;
+        out.write_all(b"\r\n")?;
+    }
     let fields: [(&[u8], &[u8]); 4] = [
         (b"X-Forwarded-Proto: ", audit.scheme),
         (b"X-Real-IP: ", audit.client_ip),
@@ -237,6 +253,28 @@ mod tests {
 
     /// A trusted chain is passed on in field order, the socket peer appended; the client
     /// the request was judged by is `X-Real-IP`.
+    #[test]
+    fn the_client_certificate_field_is_ours_alone() {
+        let forged = b"GET / HTTP/1.1\r\nHost: a\r\nX-Client-Cert-SHA256: aa\r\n\
+            x_client_cert_sha256: bb\r\n\r\n";
+        let request = parse_request(forged).unwrap();
+        let mut out = Vec::new();
+        write_request_head(&mut out, &request, &Upload::None, &audit(), false).unwrap();
+        let text = String::from_utf8(out).unwrap().to_ascii_lowercase();
+        assert!(!text.contains("client"), "{text}");
+
+        let mut digest = [0u8; 32];
+        digest[0] = 0xab;
+        digest[31] = 0x0f;
+        let proven = Audit { client_cert: Some(digest), ..audit() };
+        let mut out = Vec::new();
+        write_request_head(&mut out, &request, &Upload::None, &proven, false).unwrap();
+        let text = String::from_utf8(out).unwrap();
+        let field = format!("X-Client-Cert-SHA256: ab{}0f\r\n", "00".repeat(30));
+        assert_eq!(text.matches("lient").count(), 1, "{text}");
+        assert!(text.contains(&field), "{text}");
+    }
+
     #[test]
     fn a_trusted_chain_reaches_the_origin_followed_by_the_socket_peer() {
         let request = parse_request(CHAINED).unwrap();

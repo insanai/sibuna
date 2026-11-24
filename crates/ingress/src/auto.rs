@@ -254,8 +254,8 @@ pub struct Automatic {
 
 impl Automatic {
     /// Starts the thread `edge-acme`. It loads the stored certificates. After
-    /// [`Automatic::allow_orders`] it orders and renews in the background. This call opens no socket and no file, and fails only
-    /// when the thread cannot be spawned.
+    /// [`Automatic::allow_orders`] it orders and renews in the background. This call
+    /// opens no socket and no file, and fails only when the thread cannot be spawned.
     pub fn start(config: AutomaticHttps, report: Notify) -> io::Result<Self> {
         let shared = Arc::new(Shared::new(config));
         let thread = Arc::clone(&shared);

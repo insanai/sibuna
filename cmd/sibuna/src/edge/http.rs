@@ -27,6 +27,9 @@ pub(super) struct Prepared {
     seed: Option<sibuna_challenge::Seed>,
     engine: Engine,
     binds: BTreeMap<SocketAddr, Arc<TlsOptions>>,
+    /// The listeners share their address with a replacing process (`global.reuse_port`).
+    #[cfg(feature = "https")]
+    share_address: bool,
     #[cfg(feature = "https")]
     identities: BTreeMap<SocketAddr, sibuna_ingress::Identity>,
     /// The `auto` names and `global.acme` (SID 0021).
@@ -73,6 +76,8 @@ impl Prepared {
             engine,
             binds,
             #[cfg(feature = "https")]
+            share_address: topology.reuse_port(),
+            #[cfg(feature = "https")]
             identities,
             #[cfg(feature = "https")]
             automatic: topology.automatic_https(),
@@ -108,20 +113,6 @@ pub(super) struct Http {
     /// Reads the PROXY header of frontends that require one (SID 0020).
     stage: Option<super::proxy_stage::Stage>,
     observe: Arc<Observe>,
-    /// The certificate thread of automatic HTTPS (SID 0021).
-    #[cfg(feature = "https")]
-    automatic: Option<Arc<sibuna_ingress::Automatic>>,
-}
-
-/// The bounds of the TLS front: as many exchanges as connections, and an idle time of
-/// at least a minute.
-#[cfg(feature = "https")]
-fn ingress_limits(options: &HttpOptions) -> sibuna_ingress::Limits {
-    sibuna_ingress::Limits {
-        exchanges: options.max_connections as usize,
-        idle: std::time::Duration::from_secs(u64::from(options.idle_timeout_seconds.max(60))),
-        response: std::time::Duration::from_secs(60),
-    }
 }
 
 /// Whether two revisions terminate TLS alike. The `auto` names are left out: a reload
@@ -199,7 +190,7 @@ fn ingress_of(server: &Server, peer: SocketAddr, vip: SocketAddr, secure: bool) 
         .as_ref()
         .and_then(|routes| routes.frontend(vip))
         .is_some_and(|front| front.trusts(peer.ip()));
-    Ingress { peer, vip, secure, trusted }
+    Ingress { peer, vip, secure, cert: None, trusted }
 }
 
 /// Starts the access log, when the topology has one, and the counters beside it.
@@ -291,32 +282,33 @@ impl Http {
         } else {
             let web = server.clone();
             let pool = workers.clone();
-            let handler = Arc::new(move |stream, peer, vip| {
-                let ingress = ingress_of(&web, peer, vip, true);
+            let handler = Arc::new(move |stream, peer, vip, cert| {
+                let ingress = Ingress { cert, ..ingress_of(&web, peer, vip, true) };
                 serve(&web, pool.as_deref(), stream, ingress, None);
             });
-            let limits = ingress_limits(&prepared.options);
+            let limits = ingress_limits(&prepared.options, prepared.share_address);
             // Without the workers every request path is the blocking one.
             let decide = workers.is_some().then(|| {
                 Arc::new(super::inline::Decision { server: server.clone() })
                     as Arc<dyn sibuna_ingress::Decide>
             });
-            Some(sibuna_ingress::Ingress::start(
+            let ingress = sibuna_ingress::Ingress::start(
                 prepared.identities,
                 edge.flow_budget(),
                 handler,
                 decide,
                 limits,
-            )?)
+            )?;
+            ingress.guard(quic_admission(server.clone()));
+            Some(ingress)
         };
         let reaper = start_reaper(&server)?;
         #[cfg(not(feature = "https"))]
         let ingress = None;
         let binds = prepared.binds.clone();
-        let (server_ref, pool) = (server.clone(), workers.clone());
         let ingress = RwLock::new(ingress);
-        let dispatcher =
-            Arc::new(Dispatcher { server: server_ref, workers: pool, binds, ingress });
+        let (web, pool) = (server.clone(), workers.clone());
+        let dispatcher = Arc::new(Dispatcher { server: web, workers: pool, binds, ingress });
         let stage = super::proxy_stage::Stage::start(dispatcher.clone(), observe.clone())?;
         Ok(Self {
             reaper,
@@ -326,8 +318,6 @@ impl Http {
             dispatcher,
             stage: Some(stage),
             observe,
-            #[cfg(feature = "https")]
-            automatic: server.automatic.clone(),
             server,
         })
     }
@@ -336,7 +326,7 @@ impl Http {
     /// that fails to start asks the authority for nothing (SID 0021).
     #[cfg(feature = "https")]
     pub fn listening(&self) {
-        if let Some(automatic) = &self.automatic {
+        if let Some(automatic) = self.automatic() {
             automatic.allow_orders();
         }
     }
@@ -344,7 +334,7 @@ impl Http {
     /// The certificate thread of automatic HTTPS, when the daemon started one.
     #[cfg(feature = "https")]
     pub fn automatic(&self) -> Option<&Arc<sibuna_ingress::Automatic>> {
-        self.automatic.as_ref()
+        self.server.automatic.as_ref()
     }
 
     /// Names the multiplexed servers of the adapters to the protocol runtime.
@@ -368,7 +358,7 @@ impl Http {
 
     pub fn compatible(&self, next: &Prepared) -> bool {
         #[cfg(feature = "https")]
-        if !super::automatic::compatible(self.automatic.as_ref(), next.automatic.as_ref()) {
+        if !super::automatic::compatible(self.automatic(), next.automatic.as_ref()) {
             return false;
         }
         self.options == next.options
@@ -380,11 +370,7 @@ impl Http {
     }
     pub fn reload(&mut self, prepared: Prepared) {
         #[cfg(feature = "https")]
-        super::automatic::reload(
-            self.automatic.as_ref(),
-            prepared.automatic,
-            &prepared.identities,
-        );
+        super::automatic::reload(self.automatic(), prepared.automatic, &prepared.identities);
         #[cfg(feature = "https")]
         if let Some(ingress) = self.dispatcher.ingress.write().unwrap_or_else(poisoned).as_mut() {
             ingress.reload(prepared.identities);
@@ -438,6 +424,30 @@ fn serve(
     match workers {
         Some(workers) => workers.submit(Incoming { stream, ingress, permit }),
         None => launch(server, stream, ingress, permit),
+    }
+}
+
+/// Counts each QUIC connection once under the node bound and the client bound, as a
+/// TLS connection is counted when it is accepted.
+#[cfg(feature = "https")]
+fn quic_admission(server: Arc<Server>) -> sibuna_ingress::Admit {
+    Arc::new(move |peer, vip| {
+        let from = ingress_of(&server, peer, vip, true);
+        let bound = from.connection_bound(&server);
+        let place = crate::server::admit_secure(&server, peer.ip(), bound)?;
+        Some(Box::new(place) as Box<dyn std::any::Any + Send>)
+    })
+}
+
+/// The bounds of the TLS, HTTP/2 and HTTP/3 runtime for this topology.
+#[cfg(feature = "https")]
+fn ingress_limits(options: &HttpOptions, share_address: bool) -> sibuna_ingress::Limits {
+    let idle = u64::from(options.idle_timeout_seconds.max(60));
+    sibuna_ingress::Limits {
+        exchanges: options.max_connections as usize,
+        idle: std::time::Duration::from_secs(idle),
+        response: std::time::Duration::from_secs(60),
+        share_address,
     }
 }
 

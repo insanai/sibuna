@@ -61,6 +61,8 @@ pub struct Offer<'a> {
     pub declared: Option<u64>,
     /// The client address of the terminated transport.
     pub peer: SocketAddr,
+    /// The fingerprint of the certificate the client proved to hold, if any.
+    pub client_cert: Option<crate::Fingerprint>,
     /// The listener the client reached.
     pub vip: SocketAddr,
     /// The protocol the client speaks: `h2` or `h3`.
@@ -192,7 +194,7 @@ pub(crate) async fn exchange(
     inline: &Arc<Inline>,
     req: Request<Body>,
     trailers: bool,
-    peer: SocketAddr,
+    (peer, client_cert): (SocketAddr, Option<crate::Fingerprint>),
     vip: SocketAddr,
     protocol: &'static str,
 ) -> Response<Body> {
@@ -221,6 +223,7 @@ pub(crate) async fn exchange(
         body_complete: ended && seen == prefix.len(),
         declared,
         peer,
+        client_cert,
         vip,
         protocol,
     };

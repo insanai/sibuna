@@ -73,7 +73,13 @@ fn judge(server: &Server, offer: &Offer<'_>, scratch: &mut Scratch) -> Verdict {
     trace.protocol = offer.protocol;
     let mut peer = PeerText::default();
     peer.format(Some(offer.peer));
-    let ingress = Ingress { peer: offer.peer, vip: offer.vip, secure: true, trusted: false };
+    let ingress = Ingress {
+        peer: offer.peer,
+        vip: offer.vip,
+        secure: true,
+        cert: offer.client_cert,
+        trusted: false,
+    };
     let mut link = Link {
         server,
         ingress: Some(ingress),

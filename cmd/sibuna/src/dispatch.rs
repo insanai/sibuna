@@ -449,6 +449,7 @@ pub(crate) fn forward<W: Write>(
             peer: ctx.peer,
             trusts_forwarded: config.trusts_forwarded(),
             ja4_header: config.ja4_header.as_deref().unwrap_or_default().as_bytes(),
+            client_cert: ctx.ingress.and_then(|i| i.cert),
             status: status.as_bytes(),
             rule: rule_name.as_bytes(),
             scheme: if ctx.ingress.is_some_and(|i| i.secure) {
@@ -516,6 +517,7 @@ fn plan<W: Write>(
         peer: ctx.peer,
         trusts_forwarded: config.trusts_forwarded(),
         ja4_header: config.ja4_header.as_deref().unwrap_or_default().as_bytes(),
+        client_cert: ctx.ingress.and_then(|i| i.cert),
         status: status.as_bytes(),
         rule: rule_name.as_bytes(),
         scheme: if ctx.ingress.is_some_and(|i| i.secure) {
