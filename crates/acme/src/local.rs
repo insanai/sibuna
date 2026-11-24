@@ -320,6 +320,7 @@ mod tests {
     /// intermediate. Skipped when `openssl` is not installed.
     #[test]
     fn openssl_verifies_the_chain_with_the_root() {
+        let _spawn = crate::SPAWN.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         let scratch = Scratch::new();
         let now =
             std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
