@@ -146,6 +146,11 @@ pub struct Audit<'a> {
     /// a client cannot hand the origin a fingerprint under Sibuna's name; with trust only
     /// the exact spelling passes, never an alias with `_` for `-`.
     pub ja4_header: &'a [u8],
+    /// The SHA-256 digest of the certificate a client proved to hold during the TLS
+    /// handshake, written as `X-Client-Cert-SHA256` in lower-case hexadecimal. A field of
+    /// that name in the request is always dropped, so the origin reads this field as
+    /// Sibuna's statement and never as the client's.
+    pub client_cert: Option<[u8; 32]>,
     /// The admission status, written as `X-Sibuna-Status`.
     pub status: &'a [u8],
     /// The deciding rule, written as `X-Sibuna-Rule`.
@@ -168,6 +173,7 @@ impl Default for Audit<'_> {
             peer: b"",
             trusts_forwarded: false,
             ja4_header: b"",
+            client_cert: None,
             status: b"",
             rule: b"",
             scheme: b"http",
