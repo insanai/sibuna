@@ -419,6 +419,7 @@ struct Frontend {
     rules: Arc<[Rule]>,
     firewall: bool,
     websocket: Option<Arc<crate::WebSocketRule>>,
+    info: Arc<crate::FrontendInfo>,
 }
 
 impl Frontend {
@@ -432,6 +433,8 @@ struct Table {
     revision: u64,
     fronts: BTreeMap<SocketAddr, Frontend>,
     pools: BTreeMap<String, Pool>,
+    /// The names and counters of each pool's servers, by address (SID 0020).
+    servers: BTreeMap<String, Vec<(SocketAddr, crate::ServerInfo)>>,
     loads: Loads,
     regime: Option<Regime>,
     /// Some frontend or route turns the firewall off, so requests need the lookup.
@@ -498,11 +501,18 @@ impl HttpRoutes {
                     rules: f.http_rules.clone(),
                     firewall: f.firewall,
                     websocket: f.websocket.clone(),
+                    info: f.info.clone(),
                 };
                 (*addr, front)
             })
             .collect();
         state.bypasses = state.fronts.values().any(Frontend::bypasses);
+        state.servers = config
+            .pools
+            .iter()
+            .filter(|(_, pool)| pool.protocol == Protocol::Http)
+            .map(|(name, pool)| (name.clone(), crate::observe::server_infos(&pool.servers)))
+            .collect();
         state.pools = config
             .pools
             .extract_if(.., |_, p| p.protocol == Protocol::Http)
@@ -587,14 +597,37 @@ impl HttpRoutes {
             .find(|r| r.matches(host, path))
             .map_or(&front.pool, |r| &r.pool)
             .clone();
-        pools.get_mut(pool.as_ref())?.reserve(now, peer, vip, regime).map(HttpTarget)
+        let ticket = pools.get_mut(pool.as_ref())?.reserve(now, peer, vip, regime)?;
+        let info = table.servers.get(pool.as_ref()).and_then(|servers| {
+            servers.iter().find(|(addr, _)| *addr == ticket.addr).map(|(_, info)| info.clone())
+        });
+        Some(HttpTarget(ticket, info))
+    }
+
+    /// Notes the counters of a server that joined `pool` at run time (SID 0020).
+    pub(crate) fn enlist(&self, pool: &str, addr: SocketAddr, info: crate::ServerInfo) {
+        let mut table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        let servers = table.servers.entry(pool.to_owned()).or_default();
+        servers.retain(|(known, _)| *known != addr);
+        servers.push((addr, info));
+    }
+
+    /// The name, the counters and the trusted proxies of the frontend behind `vip`
+    /// (SID 0020), or `None` for an unknown listener.
+    pub fn frontend(&self, vip: SocketAddr) -> Option<Arc<crate::FrontendInfo>> {
+        let table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        table.front(vip).map(|front| front.info.clone())
     }
 }
 
 /// An admitted HTTP exchange. Dropping it returns the backend's capacity.
-pub struct HttpTarget(Ticket);
+pub struct HttpTarget(Ticket, Option<crate::ServerInfo>);
 
 impl HttpTarget {
+    /// The names and the counters of the chosen server (SID 0020).
+    pub fn server(&self) -> Option<&crate::ServerInfo> {
+        self.1.as_ref()
+    }
     /// The numeric HTTP/1.1 origin.
     pub fn address(&self) -> SocketAddr {
         self.0.addr

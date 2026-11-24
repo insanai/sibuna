@@ -87,6 +87,8 @@ pub(crate) struct Ctx<'c, W> {
     pub keep_alive: bool,
     /// The route identity, taken before any trusted authorization-target rewrite.
     pub internal: bool,
+    /// What the access log and the counters learn of this request (SID 0020).
+    pub trace: &'c mut crate::access::Trace,
     /// What the console tracks for this request: its counted outcome and held-back audit
     /// findings.
     #[cfg(feature = "console")]
@@ -103,7 +105,9 @@ impl<'c, W: Write> Ctx<'c, W> {
     ) -> Ctx<'c, W> {
         let now_ms = unix_ms();
         let server = link.server;
-        let (client_ip, client_address) = resolve_client(server, &request, peer);
+        link.trace.begin(server, link.ingress);
+        let front = link.trace.front.as_deref();
+        let (client_ip, client_address) = resolve_client(server, front, &request, peer);
         let client_key = ClientKey::new(client_ip, client_address, server.config.ipv6_prefix);
         let client_hash = server.client_hasher.hash(client_key.as_bytes());
         let user_agent = request.header(b"user-agent").unwrap_or_default();
@@ -138,6 +142,7 @@ impl<'c, W: Write> Ctx<'c, W> {
             now_ms,
             keep_alive,
             internal,
+            trace: &mut *link.trace,
             #[cfg(feature = "console")]
             console: crate::telemetry::RequestState::default(),
         }
@@ -149,9 +154,18 @@ impl<'c, W: Write> Ctx<'c, W> {
 /// peer. Counts an untrusted entry in `forwarded_invalid`.
 fn resolve_client<'c>(
     server: &Server,
+    front: Option<&sibuna_lb::FrontendInfo>,
     request: &Request<'c>,
     peer: &'c [u8],
 ) -> (&'c [u8], Option<IpAddr>) {
+    // An edge frontend names the proxies it trusts (SID 0020).
+    if let Some(front) = front {
+        let peer_address = sibuna_cidr::parse_ip(peer).ok();
+        return match crate::access::forwarded_client(server, front, request, peer_address) {
+            Some((text, address)) => (text, Some(address)),
+            None => (peer, peer_address),
+        };
+    }
     if server.config.trusts_forwarded() {
         let hops = usize::from(server.config.trusted_hops);
         if let Some(forwarded) = forwarded_entry(request, hops) {

@@ -291,8 +291,10 @@ impl Worker {
         let bytes = self.block.get(..count).unwrap_or_default();
         if exchange.tunnel {
             conn.output.extend_from_slice(bytes);
+            super::trace::count(&mut conn.trace, count);
             return Next::Rest;
         }
+        let before = conn.output.len();
         let fed = if exchange.inbound.is_empty() {
             let fed = exchange.relay.feed(bytes, &mut conn.output, &mut |_, _| {});
             if let Ok((used, _)) = fed {
@@ -307,6 +309,7 @@ impl Worker {
             }
             fed
         };
+        super::trace::received(&mut conn.trace, &conn.output, before, self.now);
         match fed {
             Ok((_, Fed::More)) if exchange.inbound.len() > 2 * BUFFER => {
                 self.fail(index, ProxyError::UpstreamReadFailed);
@@ -384,6 +387,7 @@ impl Worker {
         let draining = self.draining;
         let Some(conn) = self.conns.at(index) else { return Next::Rest };
         let Some(exchange) = conn.exchange.take() else { return Next::Rest };
+        super::trace::settle(&self.server, &mut conn.trace, self.now);
         exchange.target.completed(exchange.started);
         let whole = exchange.upload.is_done() && exchange.inbound.is_empty();
         let keep = outcome.client_keep
@@ -455,6 +459,7 @@ impl Worker {
         writer.begin_response(exchange.head_request);
         // Writing to a vector cannot fail.
         let _ = page(&mut writer);
+        super::trace::answered(&self.server, &mut conn.trace, writer.tally(), now);
         conn.closing = true;
         conn.activity = now;
         if let Some(at) = exchange.origin {

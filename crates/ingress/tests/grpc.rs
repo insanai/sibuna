@@ -8,12 +8,13 @@
 mod support;
 
 use std::net::TcpListener;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use sibuna_ingress::{
-    Decide, Egress, Forward, Handler, Identity, Ingress, Limits, Offer, Verdict,
+    Completion, Decide, Egress, Forward, Handler, Identity, Ingress, Limits, Offer, Report,
+    Verdict,
 };
 use sibuna_lb::{Config, Edge, HttpRoutes, TlsOptions};
 use support::{calls, fixture, server};
@@ -22,6 +23,20 @@ use support::{calls, fixture, server};
 struct Admit {
     routes: HttpRoutes,
     decisions: AtomicUsize,
+    /// What the runtime reported of each call (SID 0020).
+    reports: Arc<Mutex<Vec<(&'static str, Completion)>>>,
+}
+
+/// Notes the outcome of one call.
+struct Note {
+    reports: Arc<Mutex<Vec<(&'static str, Completion)>>>,
+    protocol: &'static str,
+}
+
+impl Report for Note {
+    fn done(self: Box<Self>, completion: &Completion) {
+        self.reports.lock().unwrap().push((self.protocol, *completion));
+    }
 }
 
 impl Decide for Admit {
@@ -36,7 +51,13 @@ impl Decide for Admit {
                 self.routes.select(offer.vip, offer.peer, host, path, revision)
             })
             .unwrap();
-        Verdict::Forward(Forward { target, head: offer.head.to_vec(), guard: Box::new(()) })
+        let note = Note { reports: self.reports.clone(), protocol: offer.protocol };
+        Verdict::Forward(Forward {
+            target,
+            head: offer.head.to_vec(),
+            guard: Box::new(()),
+            report: Some(Box::new(note)),
+        })
     }
 }
 
@@ -70,7 +91,11 @@ fn every_kind_of_grpc_call_crosses_the_edge_to_an_http2_pool() {
     let handler: Handler = Arc::new(move |_, _, _| {
         counted.fetch_add(1, Ordering::SeqCst);
     });
-    let admit = Arc::new(Admit { routes: edge.http_routes(), decisions: AtomicUsize::new(0) });
+    let admit = Arc::new(Admit {
+        routes: edge.http_routes(),
+        decisions: AtomicUsize::new(0),
+        reports: Arc::default(),
+    });
     let identities = [(vip, Identity::load(&tls).unwrap())].into();
     let budget = edge.flow_budget();
     let ingress =
@@ -94,4 +119,17 @@ fn every_kind_of_grpc_call_crosses_the_edge_to_an_http2_pool() {
     // No call crossed the socket pair, and all of them shared one HTTP/2 session.
     assert_eq!(handoffs.load(Ordering::SeqCst), 0);
     assert_eq!(connections.load(Ordering::SeqCst), 1);
+    // Every call on the shared session is reported once, when its trailers or its end
+    // passed, with the status and the wait for the response head (SID 0020).
+    let deadline = std::time::Instant::now() + Duration::from_secs(5);
+    while admit.reports.lock().unwrap().len() < 6 && std::time::Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    let reports = admit.reports.lock().unwrap();
+    assert_eq!(reports.len(), 6, "{reports:?}");
+    for (protocol, completion) in reports.iter() {
+        assert_eq!((*protocol, completion.status), ("h2", 200), "{completion:?}");
+        assert!(completion.first_byte.is_some(), "{completion:?}");
+    }
+    assert!(reports.iter().any(|(_, completion)| completion.bytes_out > 0), "{reports:?}");
 }

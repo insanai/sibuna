@@ -4,8 +4,8 @@
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{SocketAddr, TcpListener};
 use std::path::Path;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use bytes::{Buf, Bytes};
@@ -13,7 +13,9 @@ use http_body_util::{BodyExt, Full};
 use hyper::Request;
 use hyper_util::rt::{TokioExecutor, TokioIo};
 use rustls::pki_types::{CertificateDer, pem::PemObject};
-use sibuna_ingress::{Decide, Forward, Handler, Identity, Ingress, Limits, Offer, Verdict};
+use sibuna_ingress::{
+    Completion, Decide, Forward, Handler, Identity, Ingress, Limits, Offer, Report, Verdict,
+};
 use sibuna_lb::{Config, Edge, HttpRoutes, TlsOptions};
 
 fn fixture(name: &str) -> String {
@@ -117,6 +119,24 @@ fn read_request(reader: &mut BufReader<std::net::TcpStream>) -> Option<String> {
 struct Gate {
     routes: HttpRoutes,
     decisions: AtomicUsize,
+    /// What the runtime reported of each forwarded exchange (SID 0020).
+    reports: Arc<Mutex<Vec<Outcome>>>,
+}
+
+/// The path and protocol of a forwarded request, and what became of it.
+type Outcome = (String, &'static str, Completion);
+
+/// Notes the outcome of one forwarded exchange.
+struct Note {
+    reports: Arc<Mutex<Vec<Outcome>>>,
+    path: String,
+    protocol: &'static str,
+}
+
+impl Report for Note {
+    fn done(self: Box<Self>, completion: &Completion) {
+        self.reports.lock().unwrap().push((self.path, self.protocol, *completion));
+    }
 }
 
 impl Decide for Gate {
@@ -150,7 +170,17 @@ impl Decide for Gate {
         let head = format!(
             "{line}\r\nHost: origin\r\nX-Decided: yes\r\nConnection: keep-alive\r\n{framing}\r\n"
         );
-        Verdict::Forward(Forward { target, head: head.into_bytes(), guard: Box::new(()) })
+        let note = Note {
+            reports: self.reports.clone(),
+            path: path.to_owned(),
+            protocol: offer.protocol,
+        };
+        Verdict::Forward(Forward {
+            target,
+            head: head.into_bytes(),
+            guard: Box::new(()),
+            report: Some(Box::new(note)),
+        })
     }
 }
 
@@ -186,7 +216,11 @@ fn setup() -> Bench {
     let handler: Handler = Arc::new(move |_, _, _| {
         counted.fetch_add(1, Ordering::SeqCst);
     });
-    let gate = Arc::new(Gate { routes: edge.http_routes(), decisions: AtomicUsize::new(0) });
+    let gate = Arc::new(Gate {
+        routes: edge.http_routes(),
+        decisions: AtomicUsize::new(0),
+        reports: Arc::default(),
+    });
     let ingress = Ingress::start(
         [(vip, identity)].into(),
         edge.flow_budget(),
@@ -298,4 +332,37 @@ fn a_multiplexed_request_is_decided_in_process_and_sent_on_a_pooled_connection()
     // and each failed exchange spent the one it had.
     assert_eq!(handoffs.load(Ordering::SeqCst), 0);
     assert_eq!(origins.load(Ordering::SeqCst), 3);
+    assert_reports(&gate);
+}
+
+/// Every forwarded exchange is reported once, with its status, body bytes and wait.
+fn assert_reports(gate: &Gate) {
+    // A report follows the end of its body, which the runtime may see after the client.
+    let deadline = std::time::Instant::now() + Duration::from_secs(5);
+    while gate.reports.lock().unwrap().len() < 8 && std::time::Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    let reports = gate.reports.lock().unwrap();
+    assert_eq!(reports.len(), 8, "one per forwarded request, none for the refused one");
+    let of = |path: &str| -> Vec<&Outcome> { reports.iter().filter(|r| r.0 == path).collect() };
+    let routed = of("/route?q=1");
+    assert_eq!(routed.len(), 3);
+    for (_, protocol, completion) in routed {
+        assert_eq!(*protocol, "h2");
+        assert_eq!((completion.status, completion.bytes_out), (200, 42));
+        assert!(completion.first_byte.is_some());
+    }
+    let (_, _, upload) = of("/upload")[0];
+    assert_eq!((upload.status, upload.bytes_out), (200, 45));
+    // Trailers end an exchange: it is reported with the body bytes before them.
+    let (_, _, grpc) = of("/grpc")[0];
+    assert_eq!((grpc.status, grpc.bytes_out), (200, 5));
+    // A silent server is our 504 and never sent a first byte.
+    let (_, _, silent) = of("/silent")[0];
+    assert_eq!((silent.status, silent.first_byte), (504, None));
+    // A response cut short is reported when its body is dropped.
+    let (_, _, stall) = of("/stall")[0];
+    assert_eq!(stall.status, 200);
+    let (_, protocol, stream) = of("/stream")[0];
+    assert_eq!((*protocol, stream.status, stream.bytes_out), ("h3", 200, 45));
 }

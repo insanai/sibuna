@@ -17,6 +17,7 @@ pub(super) const MAX_LINE: usize = 512;
 pub(super) const USAGE: &str = "\
 show servers
 show info
+show stats
 set server POOL/NAME state ready|drain
 set server POOL/NAME weight N
 add server POOL/NAME IP:PORT [weight N]
@@ -30,6 +31,7 @@ help
 pub(super) enum Command {
     ShowServers,
     ShowInfo,
+    ShowStats,
     Help,
     Reload,
     State { pool: String, name: String, state: ServerState },
@@ -41,7 +43,7 @@ pub(super) enum Command {
 impl Command {
     /// Whether the command changes what is served. Such a command is logged.
     pub fn changes(&self) -> bool {
-        !matches!(self, Self::ShowServers | Self::ShowInfo | Self::Help)
+        !matches!(self, Self::ShowServers | Self::ShowInfo | Self::ShowStats | Self::Help)
     }
 }
 
@@ -121,6 +123,7 @@ pub(super) fn parse(line: &str) -> Result<Command, RuntimeError> {
     match &words[..count] {
         ["show", "servers"] => Ok(Command::ShowServers),
         ["show", "info"] => Ok(Command::ShowInfo),
+        ["show", "stats"] => Ok(Command::ShowStats),
         ["help"] => Ok(Command::Help),
         ["reload"] => Ok(Command::Reload),
         ["set", "server", server, "state", word] => {
@@ -292,6 +295,7 @@ mod tests {
         let server = |pool: &str, name: &str| (pool.to_owned(), name.to_owned());
         assert_eq!(parse("show servers"), Ok(Command::ShowServers));
         assert_eq!(parse("  show   info "), Ok(Command::ShowInfo));
+        assert_eq!(parse("show stats"), Ok(Command::ShowStats));
         assert_eq!(parse("reload"), Ok(Command::Reload));
         let (pool, name) = server("app", "10.0.0.1:80");
         let drain = Command::State { pool, name, state: ServerState::Drain };

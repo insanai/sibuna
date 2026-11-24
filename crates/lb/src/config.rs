@@ -19,7 +19,10 @@ pub struct Config {
     pub(crate) admin_socket: Option<String>,
     pub(crate) watch: Option<Duration>,
     pub(crate) shutdown_timeout: Duration,
+    /// Listeners share their address, so a new process can bind it (`global.reuse_port`).
+    pub(crate) reuse_port: bool,
     pub(crate) http: crate::HttpOptions,
+    pub(crate) observe: crate::ObserveOptions,
     /// The `global.acme` object of automatic HTTPS (SID 0021).
     pub(crate) acme: Option<crate::AcmeOptions>,
     pub(crate) mesh: Option<crate::MeshConfig>,
@@ -45,6 +48,8 @@ pub(crate) struct Frontend {
     pub pool: std::sync::Arc<str>,
     pub timeout: Duration,
     pub inspect: Option<(Duration, std::sync::Arc<[crate::rules::Rule]>)>,
+    /// The name, the counters and the trusted proxies of the frontend (SID 0020).
+    pub info: std::sync::Arc<crate::FrontendInfo>,
 }
 
 pub(crate) struct Backend {
@@ -66,6 +71,8 @@ pub(crate) struct Server {
     /// The local protocol adapter that reaches this server, when its pool needs one.
     pub via: Option<SocketAddr>,
     pub healthy: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
+    /// The names and the counters of the server, set when an edge adopts the topology.
+    pub info: Option<crate::ServerInfo>,
 }
 
 pub(crate) fn invalid(message: impl std::fmt::Display) -> Error {
@@ -157,6 +164,17 @@ impl Config {
         Ok(())
     }
 
+    /// The access log, the access control of the internal routes and the separate
+    /// listener (SID 0020).
+    pub fn observe(&self) -> &crate::ObserveOptions {
+        &self.observe
+    }
+
+    /// The size of the flow table (`global.max_flows`).
+    pub fn max_flows(&self) -> usize {
+        self.limit
+    }
+
     /// The path of the admin socket (`global.admin_socket`), when the operator asked for one.
     pub fn admin_socket(&self) -> Option<&str> {
         self.admin_socket.as_deref()
@@ -165,6 +183,12 @@ impl Config {
     /// How often the daemon looks at its file for a change (`global.watch`), if at all.
     pub fn watch(&self) -> Option<Duration> {
         self.watch
+    }
+
+    /// Whether the listeners share their address with other processes of the same user
+    /// (`global.reuse_port`).
+    pub fn reuse_port(&self) -> bool {
+        self.reuse_port
     }
 
     /// How long a shutdown waits for established flows (`global.shutdown_timeout`).
@@ -182,12 +206,24 @@ impl Config {
     pub fn parse(bytes: &[u8]) -> Result<Self> {
         let value = field(sibuna_json::parse_with_limits(bytes, &Self::DOCUMENT_LIMITS))?;
         let mut root = field(ObjectReader::new(&value))?;
-        let Global { limit, udp_limit, workers, admin_socket, watch, shutdown_timeout, acme } =
-            global(&mut root)?;
+        let Global {
+            limit,
+            udp_limit,
+            workers,
+            admin_socket,
+            watch,
+            shutdown_timeout,
+            reuse_port,
+            acme,
+        } = global(&mut root)?;
         let mesh = field(root.take_object("mesh"))?.map(crate::MeshConfig::parse).transpose()?;
         let http = field(root.take_object("http"))?.map(crate::HttpOptions::parse).transpose()?;
         let explicit_http = http.is_some();
         let http = http.unwrap_or_default();
+        let observe = field(root.take_object("observability"))?
+            .map(crate::ObserveOptions::parse)
+            .transpose()?
+            .unwrap_or_default();
         let adaptive = mesh.is_some();
         let mut config = Self {
             limit,
@@ -196,8 +232,10 @@ impl Config {
             admin_socket,
             watch,
             shutdown_timeout,
+            reuse_port,
             mesh,
             http,
+            observe,
             acme,
             pools: BTreeMap::new(),
             listeners: BTreeMap::new(),
@@ -287,6 +325,8 @@ impl Config {
         };
         let (tls, firewall, websocket, http_rules) = http_frontend(&mut r, proto, &self.pools)?;
         let http_rules: std::sync::Arc<[_]> = http_rules.into();
+        let info = crate::FrontendInfo::parse(&mut r, name, proto == Protocol::Http)?;
+        let info = std::sync::Arc::new(info);
         let binds = field(r.take_array("binds"))?.ok_or_else(|| invalid(r.missing("binds")))?;
         if binds.is_empty() || self.listeners.len() + binds.len() > 128 {
             return Err(invalid(format!("{path}: expected 1 to 128 binds in total")));
@@ -305,6 +345,7 @@ impl Config {
                 timeout,
                 inspect: inspect.clone(),
                 rate,
+                info: info.clone(),
             };
             if self.listeners.keys().any(|&(p, bound)| {
                 (p == Protocol::Udp) == (proto == Protocol::Udp) && overlaps(bound, addr)
@@ -329,6 +370,7 @@ struct Global {
     admin_socket: Option<String>,
     watch: Option<Duration>,
     shutdown_timeout: Duration,
+    reuse_port: bool,
     acme: Option<crate::AcmeOptions>,
 }
 
@@ -341,6 +383,7 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
     let mut admin_socket = None;
     let mut watch = None;
     let mut shutdown_timeout = Duration::from_secs(5);
+    let mut reuse_port = false;
     let mut acme = None;
     if let Some(mut global) = field(root.take_object("global"))? {
         acme = field(global.take_object("acme"))?.map(crate::AcmeOptions::parse).transpose()?;
@@ -348,6 +391,10 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
             shutdown_timeout = duration(text)
                 .filter(|d| *d <= Duration::from_secs(3600))
                 .ok_or_else(|| invalid("global.shutdown_timeout must be a duration up to 1h"))?;
+        }
+        reuse_port = field(global.take_bool("reuse_port"))?.unwrap_or(false);
+        if reuse_port && !sibuna_reactor::CAN_SHARE_ADDRESS {
+            return Err(invalid("global.reuse_port needs Linux"));
         }
         limit = number(&mut global, "max_flows", limit, MAX_FLOWS)?;
         admin_socket = match field(global.take_str("admin_socket"))? {
@@ -377,7 +424,16 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
         };
         field(global.finish())?;
     }
-    Ok(Global { limit, udp_limit, workers, admin_socket, watch, shutdown_timeout, acme })
+    Ok(Global {
+        limit,
+        udp_limit,
+        workers,
+        admin_socket,
+        watch,
+        shutdown_timeout,
+        reuse_port,
+        acme,
+    })
 }
 
 /// One relay thread per available CPU, up to eight.
@@ -557,6 +613,7 @@ impl Server {
             remote: false,
             via: None,
             healthy: None,
+            info: None,
         }
     }
 
@@ -588,7 +645,17 @@ impl Server {
         let remote = field(r.take_bool("remote"))?.unwrap_or(false);
         let backup = field(r.take_bool("backup"))?.unwrap_or(false);
         field(r.finish())?;
-        Ok(Self { name, addr, limit, weight, backup, remote, via: None, healthy: None })
+        Ok(Self {
+            name,
+            addr,
+            limit,
+            weight,
+            backup,
+            remote,
+            via: None,
+            healthy: None,
+            info: None,
+        })
     }
 }
 

@@ -66,6 +66,9 @@ Discussion registry
    * - 0018
      - :doc:`records/0018-simple-setup-and-runtime-configuration`
      - discussion
+   * - 0020
+     - :doc:`records/0020-edge-observability-and-client-identity`
+     - discussion
    * - 0021
      - :doc:`records/0021-automatic-https`
      - discussion

@@ -22,6 +22,7 @@ mod ja4;
 mod maglev;
 mod mesh;
 pub use mesh::{Mesh, MeshConfig, Regime};
+mod observe;
 mod pool;
 mod proxy;
 mod quick;
@@ -30,6 +31,11 @@ mod rules;
 mod runtime;
 pub use runtime::{RuntimeError, ServerState, ServerStatus};
 mod tcp;
+pub use observe::{AccessLogOptions, Forwarded, FrontendInfo, LogOutput, ObserveOptions};
+mod proxy_header;
+pub use proxy_header::{MAX_PROXY_HEADER, ProxyHeader, ProxyHeaderError, parse_proxy_header};
+mod stats;
+pub use stats::{FrontendStats, Histogram, ServerInfo, ServerStats, Stats};
 
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::io;
@@ -107,6 +113,7 @@ struct DatagramFlow {
 /// A single-owner packet worker with bounded flows and a separate TCP connector queue.
 pub struct Edge {
     http: HttpRoutes,
+    stats: std::sync::Arc<Stats>,
     budget: FlowBudget,
     http_pending: Vec<(SocketAddr, TcpStream, FlowPermit)>,
     mesh: Option<MeshConfig>,
@@ -135,6 +142,37 @@ pub struct Edge {
     drops: u64,
 }
 
+/// Opens the socket of one listener. With `shared` it may share its address with
+/// another process (`global.reuse_port`). The error names the listener, so the
+/// operator knows which bind failed.
+fn open_listener(protocol: Protocol, address: SocketAddr, shared: bool) -> io::Result<Socket> {
+    let named = |error: io::Error| {
+        io::Error::new(error.kind(), format!("listener {protocol:?} {address}: {error}"))
+    };
+    match protocol {
+        Protocol::Tcp | Protocol::Http => {
+            let socket = if shared {
+                sibuna_reactor::listen_shared(address)
+            } else {
+                TcpListener::bind(address)
+            }
+            .map_err(named)?;
+            socket.set_nonblocking(true)?;
+            Ok(Socket::Tcp(socket))
+        }
+        Protocol::Udp => {
+            let socket = if shared {
+                sibuna_reactor::bind_shared(address)
+            } else {
+                UdpSocket::bind(address)
+            }
+            .map_err(named)?;
+            socket.set_nonblocking(true)?;
+            Ok(Socket::Udp(socket))
+        }
+    }
+}
+
 impl Edge {
     /// Shares admission with QUIC listeners.
     pub fn flow_budget(&self) -> FlowBudget {
@@ -144,6 +182,12 @@ impl Edge {
     /// Shares the HTTP request scheduler with the firewall.
     pub fn http_routes(&self) -> HttpRoutes {
         self.http.clone()
+    }
+
+    /// Shares the counters of the frontends and servers (SID 0020). The flow gauges in
+    /// them are refreshed by each [`Edge::step`].
+    pub fn stats(&self) -> std::sync::Arc<Stats> {
+        self.stats.clone()
     }
 
     /// Takes accepted HTTP sockets for plaintext dispatch or TLS negotiation.
@@ -156,6 +200,8 @@ impl Edge {
     pub fn bind(mut config: Config) -> io::Result<Self> {
         let mut checks = health::Checks::default();
         checks.configure(&mut config)?;
+        let stats = std::sync::Arc::new(Stats::default());
+        stats.adopt(&mut config);
         let http = HttpRoutes::default();
         http.publish(&mut config);
         let budget = FlowBudget::new(&config);
@@ -165,22 +211,7 @@ impl Edge {
         let (waker, wake) = Waker::new()?;
         poll.set(handle(waker.socket()), READ, Ready::Wake)?;
         for (bind, route) in config.listeners {
-            // The error names the listener, so the operator knows which bind failed.
-            let named = |error: io::Error| {
-                io::Error::new(error.kind(), format!("listener {:?} {}: {error}", bind.0, bind.1))
-            };
-            let socket = match bind.0 {
-                Protocol::Tcp | Protocol::Http => {
-                    let socket = TcpListener::bind(bind.1).map_err(named)?;
-                    socket.set_nonblocking(true)?;
-                    Socket::Tcp(socket)
-                }
-                Protocol::Udp => {
-                    let socket = UdpSocket::bind(bind.1).map_err(named)?;
-                    socket.set_nonblocking(true)?;
-                    Socket::Udp(socket)
-                }
-            };
+            let socket = open_listener(bind.0, bind.1, config.reuse_port)?;
             let fd = match &socket {
                 Socket::Tcp(socket) => handle(socket),
                 Socket::Udp(socket) => handle(socket),
@@ -197,6 +228,7 @@ impl Edge {
             .collect();
         Ok(Self {
             http,
+            stats,
             budget,
             http_pending: Vec::new(),
             mesh: config.mesh,
@@ -245,6 +277,7 @@ impl Edge {
             return Err(invalid("changing frontend binds requires a drained restart"));
         }
         self.checks.configure(&mut config)?;
+        self.stats.adopt(&mut config);
         let drained = self.drained_servers();
         self.budget.configure(&config);
         self.udp_limit = config.udp_limit;
@@ -293,6 +326,7 @@ impl Edge {
         if now.saturating_duration_since(self.swept) >= SWEEP {
             self.swept = now;
             self.sweep(now);
+            self.stats.set_flows(self.budget.active(), self.drops);
         }
         self.events.clear();
         self.poll.wait(25, &mut self.events)?;
@@ -399,6 +433,7 @@ impl Edge {
             return false;
         }
         let Some(permit) = self.budget.reserve() else { return false };
+        self.listeners[listener].route.info.stats.flow();
         if self.binds[listener].0 == Protocol::Http {
             self.http_pending.push((self.binds[listener].1, client, permit));
             return true;
@@ -582,6 +617,7 @@ impl Edge {
                 return false;
             }
             self.unanswered.push_back(key);
+            self.listeners[key.0].route.info.stats.flow();
             self.udp.insert(
                 key,
                 DatagramFlow {
