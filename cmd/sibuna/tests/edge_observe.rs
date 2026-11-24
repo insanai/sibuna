@@ -67,6 +67,8 @@ struct Extra<'a> {
     observe: &'a str,
     /// Members of the frontend, each with a trailing comma.
     front: &'a str,
+    /// Members of the document, each with a trailing comma.
+    root: &'a str,
 }
 
 fn topology(origin: SocketAddr, event_loop: bool, extra: &Extra<'_>) -> (PathBuf, SocketAddr) {
@@ -75,9 +77,9 @@ fn topology(origin: SocketAddr, event_loop: bool, extra: &Extra<'_>) -> (PathBuf
         std::env::temp_dir().join(format!("sibuna-observe-{}-{}", std::process::id(), vip.port()));
     fs::create_dir_all(&directory).unwrap();
     let log = directory.join("access.log");
-    let (http, observe, front) = (extra.http, extra.observe, extra.front);
+    let (http, observe, front, root) = (extra.http, extra.observe, extra.front, extra.root);
     let source = format!(
-        r#"{{"http":{{"surface":"off","event_loop":{event_loop}{http}}},
+        r#"{{{root}"http":{{"surface":"off","event_loop":{event_loop}{http}}},
         "observability":{{"access_log":{{"output":"{}"}}{observe}}},
         "frontends":{{"web":{{"proto":"http","binds":["{vip}"],{front}"default_backend":"app"}}}},
         "backends":{{"app":{{"mode":"http","servers":[{{"name":"a","addr":"{origin}"}}]}}}}}}"#,
@@ -88,6 +90,19 @@ fn topology(origin: SocketAddr, event_loop: bool, extra: &Extra<'_>) -> (PathBuf
 }
 
 fn start(origin: SocketAddr, event_loop: bool, extra: &Extra<'_>) -> Daemon {
+    // A port that was free a moment ago may be taken by a test that runs beside this
+    // one. The listener is then chosen again.
+    let mut failure = String::new();
+    for _ in 0..5 {
+        match try_start(origin, event_loop, extra) {
+            Ok(daemon) => return daemon,
+            Err(line) => failure = line,
+        }
+    }
+    panic!("the edge did not start: {failure}");
+}
+
+fn try_start(origin: SocketAddr, event_loop: bool, extra: &Extra<'_>) -> Result<Daemon, String> {
     let (directory, vip) = topology(origin, event_loop, extra);
     let mut child = Command::new(BIN)
         .arg("--config-file")
@@ -98,8 +113,13 @@ fn start(origin: SocketAddr, event_loop: bool, extra: &Extra<'_>) -> Daemon {
     let mut stderr = BufReader::new(child.stderr.take().unwrap());
     let mut line = String::new();
     stderr.read_line(&mut line).unwrap();
-    assert!(line.contains("ready"), "{line}");
-    Daemon { child, _stderr: stderr, directory, vip }
+    if !line.contains("ready") {
+        let _ = child.kill();
+        let _ = child.wait();
+        let _ = fs::remove_dir_all(&directory);
+        return Err(line);
+    }
+    Ok(Daemon { child, _stderr: stderr, directory, vip })
 }
 
 /// An origin that answers every request with `hello`, after `delay`.
@@ -433,4 +453,25 @@ fn a_check_of_the_file_reports_a_bad_observability_object() {
     let _ = fs::remove_dir_all(directory);
     assert!(!output.status.success());
     assert!(text.contains("observability.internal_allow: expected a network"), "{text}");
+}
+
+#[test]
+fn the_admin_socket_prints_the_series_of_the_edge() {
+    let socket = std::env::temp_dir().join(format!("sibuna-observe-{}.sock", std::process::id()));
+    let root = format!(r#""global":{{"admin_socket":"{}"}},"#, socket.display());
+    let daemon = start(origin(Duration::ZERO), true, &Extra { root: &root, ..Extra::default() });
+    assert_eq!(status(&get(daemon.vip, "/counted", "")), 200);
+    daemon.lines(1);
+    let output =
+        Command::new(BIN).arg("ctl").arg(&socket).args(["show", "stats"]).output().unwrap();
+    let text = String::from_utf8_lossy(&output.stdout).into_owned();
+    assert!(output.status.success(), "{text}");
+    for series in [
+        "sibuna_edge_ready 1\n",
+        "sibuna_edge_frontend_requests_total{frontend=\"web\",code=\"2xx\"} 1\n",
+        "sibuna_edge_server_requests_total{backend=\"app\",server=\"a\",code=\"2xx\"} 1\n",
+        "sibuna_edge_access_log_written_total 1\n",
+    ] {
+        assert!(text.contains(series), "{series} is missing:\n{text}");
+    }
 }
