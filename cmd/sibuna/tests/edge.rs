@@ -88,17 +88,7 @@ fn edge() -> Map<Value> {{
     });
 }
 
-fn exercise_reload(extension: &str, document: impl Fn(SocketAddr, SocketAddr) -> String) {
-    let listener = || TcpListener::bind("127.0.0.1:0").unwrap();
-    let first = listener();
-    let second = listener();
-    let vip = listener().local_addr().unwrap();
-    let path = std::env::temp_dir().join(format!(
-        "sibuna-edge-{}-{}.{extension}",
-        std::process::id(),
-        vip.port()
-    ));
-    fs::write(&path, document(vip, first.local_addr().unwrap())).unwrap();
+fn start(path: PathBuf) -> (Daemon, mpsc::Receiver<String>) {
     assert!(Command::new(BIN).args(["check", "-f"]).arg(&path).status().unwrap().success());
     let mut child =
         Command::new(BIN).arg("--config-file").arg(&path).stderr(Stdio::piped()).spawn().unwrap();
@@ -113,6 +103,21 @@ fn exercise_reload(extension: &str, document: impl Fn(SocketAddr, SocketAddr) ->
         }
     });
     assert!(lines.recv_timeout(WAIT).unwrap().contains("ready"));
+    (daemon, lines)
+}
+
+fn exercise_reload(extension: &str, document: impl Fn(SocketAddr, SocketAddr) -> String) {
+    let listener = || TcpListener::bind("127.0.0.1:0").unwrap();
+    let first = listener();
+    let second = listener();
+    let vip = listener().local_addr().unwrap();
+    let path = std::env::temp_dir().join(format!(
+        "sibuna-edge-{}-{}.{extension}",
+        std::process::id(),
+        vip.port()
+    ));
+    fs::write(&path, document(vip, first.local_addr().unwrap())).unwrap();
+    let (daemon, lines) = start(path);
     fs::write(&daemon.path, "{}").unwrap();
     daemon.signal("-HUP");
     assert!(lines.recv_timeout(WAIT).unwrap().contains("keeping current routes"));
@@ -123,4 +128,84 @@ fn exercise_reload(extension: &str, document: impl Fn(SocketAddr, SocketAddr) ->
     read_tag(vip, &second, 2);
     daemon.signal("-TERM");
     assert!(lines.recv_timeout(WAIT).unwrap().contains("0 forced closes"));
+}
+
+fn serve_tag(listener: TcpListener, tag: u8) -> std::thread::JoinHandle<()> {
+    std::thread::spawn(move || {
+        let (mut socket, _) = listener.accept().unwrap();
+        socket.set_read_timeout(Some(WAIT)).unwrap();
+        let mut lines = BufReader::new(&socket).lines();
+        let request = lines.next().unwrap().unwrap();
+        assert!(request.ends_with(" HTTP/1.1"));
+        let headers: Vec<_> = lines.map(Result::unwrap).take_while(|s| !s.is_empty()).collect();
+        assert!(headers.iter().any(|h| h.eq_ignore_ascii_case("X-Real-IP: 127.0.0.1")));
+        socket.write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 1\r\n\r\n").unwrap();
+        socket.write_all(&[tag]).unwrap();
+    })
+}
+
+fn get(client: &mut BufReader<TcpStream>, path: &str) -> (u16, Vec<u8>) {
+    write!(client.get_mut(), "GET {path} HTTP/1.1\r\nHost: api.example\r\n\r\n").unwrap();
+    let mut line = String::new();
+    client.read_line(&mut line).unwrap();
+    let status = line.split_ascii_whitespace().nth(1).unwrap().parse().unwrap();
+    let mut length = None;
+    loop {
+        line.clear();
+        assert_ne!(client.read_line(&mut line).unwrap(), 0);
+        if line == "\r\n" {
+            break;
+        }
+        let (name, value) = line.split_once(':').unwrap();
+        if name.eq_ignore_ascii_case("Content-Length") {
+            length = Some(value.trim().parse::<usize>().unwrap());
+        }
+    }
+    let mut bytes = vec![0; length.unwrap()];
+    client.read_exact(&mut bytes).unwrap();
+    (status, bytes)
+}
+
+#[test]
+fn firewall_routes_each_admitted_request_on_a_persistent_connection() {
+    let listener = || TcpListener::bind("127.0.0.1:0").unwrap();
+    let vip = listener().local_addr().unwrap();
+    let a = listener();
+    let b = listener();
+    let first = a.local_addr().unwrap();
+    let second = b.local_addr().unwrap();
+    let path = std::env::temp_dir().join(format!(
+        "sibuna-web-{}-{}.json",
+        std::process::id(),
+        vip.port()
+    ));
+    let policy = path.with_extension("policy.json");
+    fs::write(
+        &policy,
+        r#"{"rules":[{"name":"test","path":"/read/*","action":"ALLOW"},
+        {"name":"private","path":"/blocked","action":"DENY"}]}"#,
+    )
+    .unwrap();
+    let source = format!(
+        r#"{{
+        "http":{{"policy_file":"{}"}},
+        "frontends":{{"web":{{"proto":"http","binds":["{vip}"],"default_backend":"a",
+        "routes":[{{"host":"api.example","path_prefix":"/read/b","backend":"b"}}]}}}},
+        "backends":{{"a":{{"mode":"http","servers":[{{"name":"one","addr":"{first}"}}]}},
+        "b":{{"mode":"http","servers":[{{"name":"two","addr":"{second}"}}]}}}}
+    }}"#,
+        policy.display()
+    );
+    fs::write(&path, source).unwrap();
+    let (_daemon, _) = start(path);
+    fs::remove_file(policy).unwrap();
+    let a = serve_tag(a, b'A');
+    let b = serve_tag(b, b'B');
+    let mut client = BufReader::new(TcpStream::connect(vip).unwrap());
+    client.get_ref().set_read_timeout(Some(WAIT)).unwrap();
+    assert_eq!(get(&mut client, "/read/a"), (200, b"A".to_vec()));
+    assert_eq!(get(&mut client, "/read/b"), (200, b"B".to_vec()));
+    assert_eq!(get(&mut client, "/blocked").0, 403);
+    a.join().unwrap();
+    b.join().unwrap();
 }
