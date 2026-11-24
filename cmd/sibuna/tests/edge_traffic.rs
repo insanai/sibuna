@@ -136,3 +136,54 @@ fn after_bytes_were_sent_only_a_safe_buffered_request_moves() {
     assert_eq!(closing.requests.load(Ordering::SeqCst), 2);
     assert_eq!(good.requests.load(Ordering::SeqCst), 1);
 }
+
+/// Sends `count` requests one after another and returns their statuses and bodies.
+fn answers(edge: &traffic::Edge, count: usize) -> Vec<(u16, String)> {
+    (0..count)
+        .map(|_| {
+            let answer = get(edge, "/who");
+            (answer.status(), answer.text())
+        })
+        .collect()
+}
+
+#[test]
+fn a_server_that_stops_answering_is_ejected_after_consecutive_timeouts() {
+    let silent = Origin::start("silent");
+    silent.stalled.store(true, Ordering::SeqCst);
+    let good = Origin::start("good");
+    let members = r#""response_timeout":"1s","passive_health":{"failures":2,"ejection":"30s"},"#;
+    let edge = Topology::new(&[silent.address, good.address]).backend(members).start(true);
+    // Requests alternate between the two servers until the silent one has failed twice.
+    let first = answers(&edge, 4);
+    let timeouts = first.iter().filter(|(status, _)| *status == 504).count();
+    assert_eq!(timeouts, 2, "{first:?}");
+    // From then on the pool serves from the other server alone, without a wait.
+    let started = Instant::now();
+    let later = answers(&edge, 10);
+    assert!(later.iter().all(|answer| *answer == (200, "good".into())), "{later:?}");
+    assert!(started.elapsed() < Duration::from_secs(1), "{:?}", started.elapsed());
+
+    // A pool of one server keeps serving: there is nothing to eject it for.
+    let edge = Topology::new(&[silent.address]).backend(members).start(true);
+    assert_eq!(answers(&edge, 3).iter().filter(|(status, _)| *status == 504).count(), 3);
+    silent.stalled.store(false, Ordering::SeqCst);
+    assert_eq!(get(&edge, "/who").text(), "silent");
+}
+
+#[test]
+fn server_errors_eject_only_when_the_pool_counts_them() {
+    let failing = Origin::start("failing");
+    failing.failing.store(true, Ordering::SeqCst);
+    let good = Origin::start("good");
+    let servers = [failing.address, good.address];
+    // By default a 503 of the server is relayed and counts nothing.
+    let edge = Topology::new(&servers).start(true);
+    let relayed = answers(&edge, 10);
+    assert_eq!(relayed.iter().filter(|(status, _)| *status == 503).count(), 5, "{relayed:?}");
+    let members = r#""passive_health":{"failures":2,"http_5xx":true},"#;
+    let edge = Topology::new(&servers).backend(members).start(true);
+    let counted = answers(&edge, 12);
+    assert_eq!(counted.iter().filter(|(status, _)| *status == 503).count(), 2, "{counted:?}");
+    assert!(counted[4..].iter().all(|answer| *answer == (200, "good".into())), "{counted:?}");
+}

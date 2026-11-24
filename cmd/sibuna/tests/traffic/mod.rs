@@ -265,6 +265,8 @@ pub struct Origin {
     pub stalled: Arc<AtomicBool>,
     /// While true, the server reads a request and closes without an answer.
     pub closing: Arc<AtomicBool>,
+    /// While true, every answer has status 503.
+    pub failing: Arc<AtomicBool>,
 }
 
 /// The switches and counters a server thread shares with its test.
@@ -274,6 +276,7 @@ struct Shared {
     requests: Arc<AtomicUsize>,
     stalled: Arc<AtomicBool>,
     closing: Arc<AtomicBool>,
+    failing: Arc<AtomicBool>,
 }
 
 impl Origin {
@@ -306,6 +309,7 @@ impl Origin {
             requests: shared.requests.clone(),
             stalled: shared.stalled.clone(),
             closing: shared.closing.clone(),
+            failing: shared.failing.clone(),
         };
         let name = name.to_owned();
         std::thread::spawn(move || {
@@ -336,7 +340,7 @@ fn serve_origin(socket: TcpStream, name: &str, shared: &Shared) {
         if shared.stalled.load(Ordering::SeqCst) && path != "/health" {
             std::thread::sleep(Duration::from_secs(3));
         }
-        let mut status = 200;
+        let mut status = if shared.failing.load(Ordering::SeqCst) { 503 } else { 200 };
         let mut extra = "";
         let body = if let Some(millis) = path.strip_prefix("/slow/") {
             std::thread::sleep(Duration::from_millis(millis.parse().unwrap()));

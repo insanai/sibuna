@@ -391,6 +391,7 @@ impl Worker {
         let Some(conn) = self.conns.at(index) else { return Next::Rest };
         let Some(exchange) = conn.exchange.take() else { return Next::Rest };
         exchange.target.completed(exchange.started);
+        exchange.target.answered(exchange.relay.status());
         let whole = exchange.upload.is_done() && exchange.inbound.is_empty();
         let keep = outcome.client_keep
             && exchange.keep_alive
@@ -471,10 +472,16 @@ impl Worker {
 
     /// The deadline of a connection passed.
     pub fn expire(&mut self, index: u32) {
-        let Some(exchange) = self.conns.at(index).and_then(|conn| conn.exchange.as_deref()) else {
+        let conn = self.conns.at(index);
+        let backlog = conn.as_ref().map_or(0, |conn| conn.backlog());
+        let Some(exchange) = conn.and_then(|conn| conn.exchange.as_deref()) else {
             self.close(index);
             return;
         };
+        if exchange.awaits_server(backlog) {
+            // The server owed bytes and sent none for its bound (SID 0019).
+            exchange.target.timed_out();
+        }
         if exchange.connecting {
             self.connect_failed(index);
         } else if exchange.relay.responded() || exchange.tunnel {

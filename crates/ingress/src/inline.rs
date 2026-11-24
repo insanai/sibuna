@@ -342,15 +342,19 @@ async fn send(
         Ok(exchange) => exchange,
         // Every server that was tried is marked already.
         Err(Fault::Connect | Fault::Exchange) => return error(StatusCode::BAD_GATEWAY),
-        Err(Fault::Silent) => return error(StatusCode::GATEWAY_TIMEOUT),
+        Err(Fault::Silent) => {
+            target.timed_out();
+            return error(StatusCode::GATEWAY_TIMEOUT);
+        }
     };
     // The request may have moved, so the server is read after the attempt.
     let address = target.address();
     let limit = target.response_timeout();
     strip_hop_fields(response.headers_mut());
     let (parts, body) = response.into_parts();
-    let done =
-        Done { inline: Arc::clone(inline), address, sender, target, started, _guard: guard };
+    let status = parts.status.as_u16();
+    let inline = Arc::clone(inline);
+    let done = Done { inline, address, sender, target, started, status, _guard: guard };
     if body.is_end_stream() {
         done.finish();
         return Response::from_parts(parts, empty());
@@ -367,6 +371,8 @@ struct Done {
     sender: Sender,
     target: HttpTarget,
     started: Instant,
+    /// The status of the response, for the passive health of the pool.
+    status: u16,
     _guard: Box<dyn Any + Send>,
 }
 
@@ -374,6 +380,7 @@ impl Done {
     /// Records the exchange and returns the server connection to the pool.
     fn finish(self) {
         self.target.completed(self.started);
+        self.target.answered(self.status);
         self.inline.give(self.address, self.sender);
     }
 }
@@ -409,7 +416,9 @@ impl HttpBody for Tracked {
             }
             if self.stall.as_mut().poll(cx).is_ready() {
                 // Dropping the exchange closes the server connection.
-                self.done = None;
+                if let Some(done) = self.done.take() {
+                    done.target.timed_out();
+                }
                 return Poll::Ready(Some(Err("the server stopped sending".into())));
             }
             return Poll::Pending;
