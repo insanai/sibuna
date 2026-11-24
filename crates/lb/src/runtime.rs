@@ -63,7 +63,7 @@ pub struct ServerStatus {
 /// Why a run-time change was refused. Nothing changed.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RuntimeError {
-    /// A stable code, `ADM003` to `ADM007`.
+    /// A stable code. The edge produces `ADM003` to `ADM007`, the admin socket the others.
     pub code: &'static str,
     /// A short title in upper case.
     pub title: &'static str,

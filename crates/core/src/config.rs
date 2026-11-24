@@ -405,6 +405,8 @@ pub const HELP: &str = "\
 Usage: sibuna [options]
        sibuna --config-file <edge.json|edge.jlv>
        sibuna check -f <edge.json|edge.jlv>
+       sibuna lb --bind <ip:port> --server <ip:port> [--help]
+       sibuna ctl <admin-socket> <command>
 
 Network:
   --port, -p <port>            Listening port (default: 8080)
