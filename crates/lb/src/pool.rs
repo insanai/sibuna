@@ -157,7 +157,9 @@ impl Pool {
         let target = &mut self.targets[index];
         target.load.active.fetch_add(1, Ordering::Relaxed);
         target.admitted = target.admitted.saturating_add(1);
-        Some(Ticket { addr: target.server.addr, load: Arc::clone(&target.load) })
+        // An HTTP exchange enters the pool's protocol adapter when it has one.
+        let addr = target.server.via.unwrap_or(target.server.addr);
+        Some(Ticket { addr, load: Arc::clone(&target.load) })
     }
 
     fn choose_two(

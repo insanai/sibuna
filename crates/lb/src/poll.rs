@@ -170,7 +170,12 @@ mod backend {
             // SAFETY: the buffer holds BATCH initialized events and is exclusively
             // borrowed for the call. The kernel writes at most BATCH entries.
             let count = unsafe {
-                epoll_wait(self.epoll.as_raw_fd(), self.events.as_mut_ptr(), BATCH as i32, timeout_ms)
+                epoll_wait(
+                    self.epoll.as_raw_fd(),
+                    self.events.as_mut_ptr(),
+                    BATCH as i32,
+                    timeout_ms,
+                )
             };
             if count < 0 {
                 return super::interrupted_is_ready(io::Error::last_os_error());
@@ -240,9 +245,11 @@ mod backend {
         ) -> io::Result<()> {
             if self.dirty {
                 self.sockets.clear();
-                self.sockets.extend(
-                    entries.map(|(handle, events)| PollFd { handle, events, returned: 0 }),
-                );
+                self.sockets.extend(entries.map(|(handle, events)| PollFd {
+                    handle,
+                    events,
+                    returned: 0,
+                }));
                 self.dirty = false;
             }
             if self.sockets.is_empty() {

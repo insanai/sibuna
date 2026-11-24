@@ -15,6 +15,9 @@ use crate::recipe::Recipe;
 use crate::server::{Hooks, Options, Server, admit, start_reaper};
 use crate::slot::EngineSlot;
 
+/// The policy of `http.surface: "off"`.
+const ALLOW_ALL: &[u8] = br#"{"rules":[{"name":"load-balancer","path":"/*","action":"ALLOW"}]}"#;
+
 pub(super) struct Prepared {
     options: HttpOptions,
     seed: Option<sibuna_challenge::Seed>,
@@ -29,17 +32,18 @@ impl Prepared {
         let Some(options) = topology.http().cloned() else { return Ok(None) };
         let seed = options.secret_file.as_deref().map(crate::cli::read_seed).transpose()?;
         let config = firewall_config(&options);
-        let bytes = options
-            .policy_file
-            .as_deref()
-            .map(|path| {
+        let bytes = match options.policy_file.as_deref() {
+            Some(path) => {
                 let bytes = crate::cli::read_bounded(path, 256 * 1024 + 1)?;
                 if bytes.len() > 256 * 1024 {
                     return Err(io::Error::other("HTTP policy exceeds 256 KiB"));
                 }
-                Ok(bytes)
-            })
-            .transpose()?;
+                Some(bytes)
+            }
+            // A pure load balancer admits every well-formed request.
+            None if !options.firewall => Some(ALLOW_ALL.to_vec()),
+            None => None,
+        };
         let engine = Recipe::new(&config, bytes)
             .base_engine(&mut Diagnostic::default())
             .map_err(io::Error::other)?;

@@ -18,8 +18,13 @@ pub(crate) fn command(args: &[String], secret: Option<&str>) -> Option<ExitCode>
         [check, option, path] if check == "check" && option == "-f" => path,
         _ => return None,
     };
-    let result = load(path).and_then(|config| {
-        if args[0] == "check" { Ok(()) } else { serve(path.to_owned(), config, secret) }
+    let result = load(path).and_then(|mut revision| {
+        if args[0] == "check" {
+            // Build the origin adapters too, so a bad CA file fails the check.
+            adapt(&mut Adapters::default(), &mut revision.config)
+        } else {
+            serve(path.to_owned(), revision, secret)
+        }
     });
     Some(match result {
         Ok(()) => ExitCode::SUCCESS,
@@ -68,7 +73,9 @@ fn serve(path: String, revision: Revision, secret: Option<&str>) -> io::Result<(
         Err(error) => eprintln!("EDGE002: keeping current routes: {error}"),
     })
     .map_err(io::Error::other)?;
-    let Revision { config, http } = revision;
+    let Revision { mut config, http } = revision;
+    let mut adapters = Adapters::default();
+    adapt(&mut adapters, &mut config)?;
     let mesh = config.mesh().map(start_mesh).transpose()?;
     let mut current = sibuna_lb::Regime::Standalone;
     let mut edge = Edge::bind(config)?;
@@ -77,7 +84,7 @@ fn serve(path: String, revision: Revision, secret: Option<&str>) -> io::Result<(
     while !shutdown.is_requested() {
         let next = pending.lock().unwrap_or_else(std::sync::PoisonError::into_inner).take();
         if let Some(next) = next {
-            match reload(&mut edge, http.as_mut(), next) {
+            match reload(&mut edge, http.as_mut(), &mut adapters, next) {
                 Ok(()) => eprintln!("Sibuna edge routes reloaded"),
                 Err(error) => eprintln!("EDGE002: keeping current routes: {error}"),
             }
@@ -115,11 +122,18 @@ fn step(edge: &mut Edge, http: Option<&http::Http>) -> io::Result<()> {
     Ok(())
 }
 
-fn reload(edge: &mut Edge, http: Option<&mut http::Http>, revision: Revision) -> io::Result<()> {
+fn reload(
+    edge: &mut Edge,
+    http: Option<&mut http::Http>,
+    adapters: &mut Adapters,
+    mut revision: Revision,
+) -> io::Result<()> {
     match (http, revision.http) {
         (None, None) => edge.reload(revision.config),
         (Some(http), Some(prepared)) if http.compatible(&prepared) => {
+            adapt(adapters, &mut revision.config)?;
             edge.reload(revision.config)?;
+            commit(adapters);
             http.reload(prepared);
             Ok(())
         }
@@ -127,6 +141,39 @@ fn reload(edge: &mut Edge, http: Option<&mut http::Http>, revision: Revision) ->
             "changing HTTP firewall settings or TLS listeners requires a restart",
         )),
     }
+}
+
+/// The protocol adapters towards TLS, HTTP/2 and HTTP/3 origins, started on first use.
+#[cfg(feature = "https")]
+type Adapters = Option<sibuna_ingress::Egress>;
+#[cfg(not(feature = "https"))]
+type Adapters = Option<std::convert::Infallible>;
+
+/// Routes each pool with `http_version` or `tls` through its adapters.
+fn adapt(adapters: &mut Adapters, config: &mut Config) -> io::Result<()> {
+    if adapters.is_none() && config.origins().is_empty() {
+        return Ok(());
+    }
+    #[cfg(feature = "https")]
+    {
+        let egress = match adapters {
+            Some(egress) => egress,
+            None => adapters.insert(sibuna_ingress::Egress::new()?),
+        };
+        egress.configure(config).map_err(io::Error::other)
+    }
+    #[cfg(not(feature = "https"))]
+    Err(io::Error::other("TLS, HTTP/2 and HTTP/3 origins require the https feature"))
+}
+
+/// Closes the adapters that the reloaded topology no longer uses.
+fn commit(adapters: &mut Adapters) {
+    #[cfg(feature = "https")]
+    if let Some(egress) = adapters {
+        egress.commit();
+    }
+    #[cfg(not(feature = "https"))]
+    let _ = adapters;
 }
 
 fn start_mesh(spec: &sibuna_lb::MeshConfig) -> io::Result<sibuna_lb::Mesh> {

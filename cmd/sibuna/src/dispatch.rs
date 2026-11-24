@@ -60,6 +60,9 @@ pub(crate) fn dispatch<'c, W: Write>(
     result
 }
 
+/// The rule name reported for a request on a route without the firewall.
+const BYPASS_RULE: &str = "load-balancer";
+
 fn route<'c, W: Write>(ctx: &mut Ctx<'c, W>, spare: &'c mut [u8]) -> io::Result<bool> {
     let server = ctx.server;
     server.metrics.requests.bump();
@@ -111,6 +114,19 @@ fn route<'c, W: Write>(ctx: &mut Ctx<'c, W>, spare: &'c mut [u8]) -> io::Result<
         if rate.limited {
             return rate_limited(ctx, rate, 0);
         }
+    }
+    // A frontend or route with `"firewall": false` only balances load: no policy,
+    // challenge or WAF decision applies to it. Bans and the request limiter above do.
+    if let (Some(routes), Some(ingress)) = (&server.edge_routes, ctx.ingress)
+        && !routes.firewall_applies(
+            ingress.vip,
+            ctx.request.header(b"host").unwrap_or_default(),
+            ctx.request.path,
+        )
+    {
+        // Origin selection checks that the routes belong to the current publication.
+        ctx.cache.refresh(&server.slot);
+        return forward(ctx, "PASS", BYPASS_RULE, sibuna_challenge::rule_hash(BYPASS_RULE));
     }
     apply_policy(ctx)
 }

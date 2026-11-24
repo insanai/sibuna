@@ -1,6 +1,6 @@
 [package]
 name = "sibuna-ingress"
-description = "HTTP/2 and HTTP/3 server transports for the Sibuna HTTP firewall"
+description = "TLS, HTTP/2 and HTTP/3 transports between clients, the Sibuna HTTP firewall and origins"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,6 +9,7 @@ license.workspace = true
 
 [dependencies]
 sibuna-lb.workspace = true
+sibuna-tls.workspace = true
 bytes.workspace = true
 futures-util.workspace = true
 hyper.workspace = true

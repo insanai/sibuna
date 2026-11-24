@@ -16,6 +16,9 @@ use crate::pool::{Loads, Pool, Ticket};
 /// Node-local settings shared by HTTP frontends.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct HttpOptions {
+    /// Apply the admission policy. When false the frontend only balances load: every
+    /// well-formed request is routed, with no challenge and no policy file.
+    pub firewall: bool,
     /// Run the semantic firewall as well as admission.
     pub shield: bool,
     /// The existing Sibuna JSON firewall policy.
@@ -39,6 +42,7 @@ pub struct HttpOptions {
 impl Default for HttpOptions {
     fn default() -> Self {
         Self {
+            firewall: true,
             shield: true,
             policy_file: None,
             secret_file: None,
@@ -58,29 +62,35 @@ impl HttpOptions {
 
     pub(crate) fn parse(mut r: ObjectReader<'_, '_>) -> io::Result<Self> {
         let defaults = Self::default();
-        let shield = match field(r.take_str("surface"))?.unwrap_or("shield") {
-            "shield" => true,
-            "gate" => false,
-            _ => return Err(invalid("http.surface must be gate or shield")),
+        let (firewall, shield) = match field(r.take_str("surface"))?.unwrap_or("shield") {
+            "shield" => (true, true),
+            "gate" => (true, false),
+            "off" => (false, false),
+            _ => return Err(invalid("http.surface must be off, gate or shield")),
         };
         let policy_file = field(r.take_str("policy_file"))?.map(str::to_owned);
+        if !firewall && policy_file.is_some() {
+            return Err(invalid("http.surface off takes no policy_file; use gate or shield"));
+        }
         let secret_file = field(r.take_str("secret_file"))?.map(str::to_owned);
+        // Without the firewall the default per-client limiter is off unless requested.
+        let rate_default = if firewall { defaults.rate_limit } else { None };
         let rate_limit = match r.take("rate_limit") {
-            None => defaults.rate_limit,
+            None => rate_default,
             Some(value) if value.as_str() == Some("off") => None,
             Some(value) => match value.as_number().and_then(|n| n.as_u64().ok()) {
                 Some(n) if (1..=1_000_000).contains(&n) => Some(n as u32),
                 _ => return Err(invalid("http.rate_limit must be off or in 1..=1000000")),
             },
         };
-        let seconds = |r: &mut ObjectReader<'_, '_>, key: &str, default: u32| {
-            match field(r.take_str(key))? {
-                None => Ok(default),
-                Some(text) => crate::config::duration(text)
-                    .filter(|d| d.subsec_nanos() == 0)
-                    .map(|d| d.as_secs() as u32)
-                    .ok_or_else(|| invalid(format!("{}: expected whole seconds", r.field_path(key)))),
-            }
+        let seconds = |r: &mut ObjectReader<'_, '_>, key: &str, default: u32| match field(
+            r.take_str(key),
+        )? {
+            None => Ok(default),
+            Some(text) => crate::config::duration(text)
+                .filter(|d| d.subsec_nanos() == 0)
+                .map(|d| d.as_secs() as u32)
+                .ok_or_else(|| invalid(format!("{}: expected whole seconds", r.field_path(key)))),
         };
         let rate_window_seconds = u64::from(seconds(&mut r, "rate_window", 10)?);
         let idle_timeout_seconds = seconds(&mut r, "idle_timeout", defaults.idle_timeout_seconds)?;
@@ -100,6 +110,7 @@ impl HttpOptions {
         )? as u32;
         field(r.finish())?;
         Ok(Self {
+            firewall,
             shield,
             policy_file,
             secret_file,
@@ -167,6 +178,78 @@ impl TlsOptions {
     }
 }
 
+/// The HTTP version spoken to the servers of a pool.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum OriginVersion {
+    /// HTTP/1.1 with keep-alive.
+    Http1,
+    /// HTTP/2, over TLS with ALPN or in cleartext with prior knowledge.
+    Http2,
+    /// HTTP/3 over QUIC.
+    Http3,
+}
+
+/// TLS towards the servers of a pool.
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct OriginTls {
+    /// Check the server certificate and its name. Turn this off only on a trusted network.
+    pub verify: bool,
+    /// PEM trust anchors that replace the system roots.
+    pub ca_file: Option<String>,
+    /// The name to send as SNI and to verify. Defaults to the server's IP address.
+    pub server_name: Option<String>,
+}
+
+/// How the firewall's HTTP/1.1 exchange reaches the servers of a pool. A pool without
+/// these options speaks cleartext HTTP/1.1 and needs no adapter.
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct OriginOptions {
+    /// The protocol version on the origin connection.
+    pub version: OriginVersion,
+    /// TLS settings, or `None` for cleartext.
+    pub tls: Option<OriginTls>,
+}
+
+impl OriginOptions {
+    /// Reads `http_version` and `tls` of an HTTP pool. Returns `None` for the default.
+    pub(crate) fn parse(r: &mut ObjectReader<'_, '_>) -> io::Result<Option<Arc<Self>>> {
+        let version = match field(r.take_str("http_version"))? {
+            None | Some("1.1") => OriginVersion::Http1,
+            Some("2") => OriginVersion::Http2,
+            Some("3") => OriginVersion::Http3,
+            Some(_) => {
+                return Err(invalid(format!(
+                    "{}: expected \"1.1\", \"2\" or \"3\"",
+                    r.field_path("http_version")
+                )));
+            }
+        };
+        let tls = match field(r.take_object("tls"))? {
+            None => None,
+            Some(mut tls) => {
+                let verify = field(tls.take_bool("verify"))?.unwrap_or(true);
+                let ca_file = field(tls.take_str("ca_file"))?.map(str::to_owned);
+                let server_name = field(tls.take_str("sni"))?.map(str::to_owned);
+                if server_name.as_deref().is_some_and(|name| !crate::hello::valid_host(name)) {
+                    return Err(invalid(format!(
+                        "{}: expected a DNS name",
+                        tls.field_path("sni")
+                    )));
+                }
+                field(tls.finish())?;
+                Some(OriginTls { verify, ca_file, server_name })
+            }
+        };
+        if version == OriginVersion::Http3 && tls.is_none() {
+            return Err(invalid(format!("{}: HTTP/3 servers need a tls section", r.path())));
+        }
+        if version == OriginVersion::Http1 && tls.is_none() {
+            return Ok(None);
+        }
+        Ok(Some(Arc::new(Self { version, tls })))
+    }
+}
+
 /// Checks a DNS name, IPv4 address or bracketed IPv6 literal with an optional numeric port.
 pub fn valid_authority(bytes: &[u8]) -> bool {
     let Ok(value) = std::str::from_utf8(bytes) else { return false };
@@ -187,11 +270,32 @@ pub(crate) struct Rule {
     host: Option<String>,
     path: Option<String>,
     pool: Arc<str>,
+    firewall: bool,
+}
+
+impl Rule {
+    fn matches(&self, host: &[u8], path: &[u8]) -> bool {
+        self.host.as_ref().is_none_or(|h| host.eq_ignore_ascii_case(h.as_bytes()))
+            && self.path.as_ref().is_none_or(|p| path.starts_with(p.as_bytes()))
+    }
+}
+
+/// The host of an authority without its port and trailing dot.
+fn bare_host(host: &[u8]) -> &[u8] {
+    // A bracketed IPv6 literal keeps its colons.
+    let end = if host.first() == Some(&b'[') {
+        host.iter().position(|b| *b == b']').map_or(host.len(), |i| i + 1)
+    } else {
+        host.iter().position(|b| *b == b':').unwrap_or(host.len())
+    };
+    let host = &host[..end];
+    host.strip_suffix(b".").unwrap_or(host)
 }
 
 pub(crate) fn rules(
     r: &mut ObjectReader<'_, '_>,
     pools: &BTreeMap<String, Backend>,
+    firewall: bool,
 ) -> io::Result<Vec<Rule>> {
     let mut rules = Vec::new();
     let entries = field(r.take_array("routes"))?.unwrap_or_default();
@@ -204,6 +308,7 @@ pub(crate) fn rules(
         let host = field(row.take_str("host"))?.map(str::to_ascii_lowercase);
         let path = field(row.take_str("path_prefix"))?.map(str::to_owned);
         let pool = required(&mut row, "backend")?;
+        let firewall = field(row.take_bool("firewall"))?.unwrap_or(firewall);
         if host.as_deref().is_some_and(|h| !crate::hello::valid_host(h))
             || path.as_deref().is_some_and(|p| !p.starts_with('/') || p.contains(['?', '#']))
             || (host.is_none() && path.is_none())
@@ -217,7 +322,7 @@ pub(crate) fn rules(
             return Err(invalid(format!("{}: unknown HTTP backend {pool}", row.path())));
         }
         field(row.finish())?;
-        rules.push(Rule { host, path, pool: pool.into() });
+        rules.push(Rule { host, path, pool: pool.into(), firewall });
     }
     Ok(rules)
 }
@@ -225,6 +330,13 @@ pub(crate) fn rules(
 struct Frontend {
     pool: Arc<str>,
     rules: Arc<[Rule]>,
+    firewall: bool,
+}
+
+impl Frontend {
+    fn bypasses(&self) -> bool {
+        !self.firewall || self.rules.iter().any(|rule| !rule.firewall)
+    }
 }
 
 #[derive(Default)]
@@ -234,6 +346,22 @@ struct Table {
     pools: BTreeMap<String, Pool>,
     loads: Loads,
     regime: Option<Regime>,
+    /// Some frontend or route turns the firewall off, so requests need the lookup.
+    bypasses: bool,
+}
+
+impl Table {
+    fn front(&self, vip: SocketAddr) -> Option<&Frontend> {
+        let wildcard = SocketAddr::new(
+            if vip.is_ipv4() {
+                std::net::Ipv4Addr::UNSPECIFIED.into()
+            } else {
+                std::net::Ipv6Addr::UNSPECIFIED.into()
+            },
+            vip.port(),
+        );
+        self.fronts.get(&vip).or_else(|| self.fronts.get(&wildcard))
+    }
 }
 
 /// A shared view of the current HTTP routing table. Each exchange chooses its origin afresh.
@@ -249,9 +377,15 @@ impl HttpRoutes {
             .iter()
             .filter(|((p, _), _)| *p == Protocol::Http)
             .map(|((_, addr), f)| {
-                (*addr, Frontend { pool: f.pool.clone(), rules: f.http_rules.clone() })
+                let front = Frontend {
+                    pool: f.pool.clone(),
+                    rules: f.http_rules.clone(),
+                    firewall: f.firewall,
+                };
+                (*addr, front)
             })
             .collect();
+        state.bypasses = state.fronts.values().any(Frontend::bypasses);
         state.pools = config
             .pools
             .extract_if(.., |_, p| p.protocol == Protocol::Http)
@@ -262,6 +396,19 @@ impl HttpRoutes {
 
     pub(crate) fn set_regime(&self, regime: Regime) {
         self.0.lock().unwrap_or_else(PoisonError::into_inner).regime = Some(regime);
+    }
+
+    /// Whether the firewall applies to this request. A frontend or a matching route may
+    /// turn it off (`"firewall": false`), which leaves plain load balancing. A request
+    /// for an unknown listener keeps the firewall.
+    pub fn firewall_applies(&self, vip: SocketAddr, host: &[u8], path: &[u8]) -> bool {
+        let table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        if !table.bypasses {
+            return true;
+        }
+        let Some(front) = table.front(vip) else { return true };
+        let host = bare_host(host);
+        front.rules.iter().find(|r| r.matches(host, path)).map_or(front.firewall, |r| r.firewall)
     }
 
     /// Selects an eligible HTTP origin for the validated authority and normalized path.
@@ -277,24 +424,12 @@ impl HttpRoutes {
         if policy_revision != table.revision {
             return None;
         }
-        let wildcard = SocketAddr::new(
-            if vip.is_ipv4() {
-                std::net::Ipv4Addr::UNSPECIFIED.into()
-            } else {
-                std::net::Ipv6Addr::UNSPECIFIED.into()
-            },
-            vip.port(),
-        );
-        let front = table.fronts.get(&vip).or_else(|| table.fronts.get(&wildcard))?;
-        let host = host.iter().position(|b| *b == b':').map_or(host, |i| &host[..i]);
-        let host = host.strip_suffix(b".").unwrap_or(host);
+        let front = table.front(vip)?;
+        let host = bare_host(host);
         let pool = front
             .rules
             .iter()
-            .find(|r| {
-                r.host.as_ref().is_none_or(|h| host.eq_ignore_ascii_case(h.as_bytes()))
-                    && r.path.as_ref().is_none_or(|p| path.starts_with(p.as_bytes()))
-            })
+            .find(|r| r.matches(host, path))
             .map_or(&front.pool, |r| &r.pool)
             .clone();
         let regime = table.regime.unwrap_or(Regime::Standalone);

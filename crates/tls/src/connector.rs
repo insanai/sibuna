@@ -44,6 +44,12 @@ impl Connector {
         Ok(Connector { config: Arc::new(config), root_count })
     }
 
+    /// The shared client configuration, for a caller that drives the handshake with its
+    /// own runtime. Certificate and host-name verification stay as configured here.
+    pub fn client_config(&self) -> Arc<ClientConfig> {
+        Arc::clone(&self.config)
+    }
+
     /// The number of trust anchors loaded.
     pub fn root_count(&self) -> usize {
         self.root_count

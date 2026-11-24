@@ -7,7 +7,10 @@ pub use budget::{FlowBudget, FlowPermit};
 mod config;
 mod health;
 mod http;
-pub use http::{HttpOptions, HttpRoutes, HttpTarget, TlsOptions, valid_authority};
+pub use http::{
+    HttpOptions, HttpRoutes, HttpTarget, OriginOptions, OriginTls, OriginVersion, TlsOptions,
+    valid_authority,
+};
 mod hello;
 mod ja4;
 mod maglev;

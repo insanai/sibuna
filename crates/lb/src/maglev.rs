@@ -80,6 +80,7 @@ mod tests {
             limit: 20,
             backup,
             remote: false,
+            via: None,
             healthy: None,
         };
         let servers = [make("alpha", 1, false), make("beta", 3, false), make("gamma", 5, true)];

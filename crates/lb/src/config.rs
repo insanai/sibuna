@@ -32,6 +32,8 @@ pub(crate) enum Protocol {
 pub(crate) struct Frontend {
     pub tls: Option<std::sync::Arc<crate::TlsOptions>>,
     pub http_rules: std::sync::Arc<[crate::http::Rule]>,
+    /// Whether requests without a matching route pass the HTTP firewall.
+    pub firewall: bool,
     pub rate: Option<sibuna_store::limiter::Limits>,
     pub pool: std::sync::Arc<str>,
     pub timeout: Duration,
@@ -44,6 +46,7 @@ pub(crate) struct Backend {
     pub scheduler: Scheduler,
     pub proxy_v2: Option<crate::proxy::Spec>,
     pub health: Option<crate::health::Spec>,
+    pub origin: Option<std::sync::Arc<crate::OriginOptions>>,
 }
 
 pub(crate) struct Server {
@@ -53,6 +56,8 @@ pub(crate) struct Server {
     pub limit: usize,
     pub backup: bool,
     pub remote: bool,
+    /// The local protocol adapter that reaches this server, when its pool needs one.
+    pub via: Option<SocketAddr>,
     pub healthy: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
 }
 
@@ -116,6 +121,34 @@ impl Config {
         self.listeners.iter().filter_map(|((_, addr), f)| Some((*addr, f.tls.clone()?))).collect()
     }
 
+    /// The servers that need a protocol adapter, each with its pool's origin options.
+    pub fn origins(&self) -> Vec<(SocketAddr, std::sync::Arc<crate::OriginOptions>)> {
+        let mut origins = Vec::new();
+        for pool in self.pools.values() {
+            if let Some(options) = &pool.origin {
+                origins.extend(pool.servers.iter().map(|s| (s.addr, options.clone())));
+            }
+        }
+        origins
+    }
+
+    /// Routes each server from [`Config::origins`] through the adapter address that
+    /// `adapter` returns for it. Fails when a server has no adapter.
+    pub fn route_through(
+        &mut self,
+        adapter: impl Fn(SocketAddr, &crate::OriginOptions) -> Option<SocketAddr>,
+    ) -> Result<()> {
+        for (name, pool) in &mut self.pools {
+            let Some(options) = &pool.origin else { continue };
+            for server in &mut pool.servers {
+                server.via = Some(adapter(server.addr, options).ok_or_else(|| {
+                    invalid(format!("backends.{name}: no protocol adapter for {}", server.addr))
+                })?);
+            }
+        }
+        Ok(())
+    }
+
     /// Static peer configuration, when the operator enabled RTT-based routing.
     pub fn mesh(&self) -> Option<&crate::MeshConfig> {
         self.mesh.as_ref()
@@ -126,26 +159,7 @@ impl Config {
     pub fn parse(bytes: &[u8]) -> Result<Self> {
         let value = field(sibuna_json::parse_with_limits(bytes, &Self::DOCUMENT_LIMITS))?;
         let mut root = field(ObjectReader::new(&value))?;
-        let mut limit = 8192;
-        let mut udp_limit = None;
-        let mut workers = default_workers();
-        if let Some(mut global) = field(root.take_object("global"))? {
-            limit = number(&mut global, "max_flows", limit, MAX_FLOWS)?;
-            workers = match global.take("workers") {
-                None => workers,
-                Some(value) if value.as_str() == Some("auto") => workers,
-                Some(value) => match value.as_number().and_then(|n| n.as_u64().ok()) {
-                    Some(n) if (1..=MAX_WORKERS as u64).contains(&n) => n as usize,
-                    _ => return Err(invalid("global.workers must be auto or in 1..=64")),
-                },
-            };
-            udp_limit = match field(global.take_u64("max_udp_flows"))? {
-                None => None,
-                Some(n) if n > 0 && n <= limit as u64 => Some(n as usize),
-                Some(_) => return Err(invalid("global.max_udp_flows must be in 1..=max_flows")),
-            };
-            field(global.finish())?;
-        }
+        let (limit, udp_limit, workers) = global(&mut root)?;
         let mesh = field(root.take_object("mesh"))?.map(crate::MeshConfig::parse).transpose()?;
         let http = field(root.take_object("http"))?.map(crate::HttpOptions::parse).transpose()?;
         let explicit_http = http.is_some();
@@ -229,19 +243,7 @@ impl Config {
             Some(_) => return Err(invalid(format!("{path}: invalid TCP inspection mode"))),
             None => None,
         };
-        let tls = if proto == Protocol::Http {
-            field(r.take_object("tls"))?
-                .map(crate::TlsOptions::parse)
-                .transpose()?
-                .map(std::sync::Arc::new)
-        } else {
-            None
-        };
-        let http_rules = if proto == Protocol::Http {
-            crate::http::rules(&mut r, &self.pools)?
-        } else {
-            Vec::new()
-        };
+        let (tls, firewall, http_rules) = http_frontend(&mut r, proto, &self.pools)?;
         let http_rules: std::sync::Arc<[_]> = http_rules.into();
         let binds = field(r.take_array("binds"))?.ok_or_else(|| invalid(r.missing("binds")))?;
         if binds.is_empty() || self.listeners.len() + binds.len() > 128 {
@@ -255,6 +257,7 @@ impl Config {
             let listener = Frontend {
                 tls: tls.clone(),
                 http_rules: http_rules.clone(),
+                firewall,
                 pool: pool.as_str().into(),
                 timeout,
                 inspect: inspect.clone(),
@@ -275,9 +278,54 @@ impl Config {
     }
 }
 
+/// Reads `global`: the flow table size, the optional UDP share and the relay threads.
+fn global(root: &mut ObjectReader<'_, '_>) -> Result<(usize, Option<usize>, usize)> {
+    let mut limit = 8192;
+    let mut udp_limit = None;
+    let mut workers = default_workers();
+    if let Some(mut global) = field(root.take_object("global"))? {
+        limit = number(&mut global, "max_flows", limit, MAX_FLOWS)?;
+        workers = match global.take("workers") {
+            None => workers,
+            Some(value) if value.as_str() == Some("auto") => workers,
+            Some(value) => match value.as_number().and_then(|n| n.as_u64().ok()) {
+                Some(n) if (1..=MAX_WORKERS as u64).contains(&n) => n as usize,
+                _ => return Err(invalid("global.workers must be auto or in 1..=64")),
+            },
+        };
+        udp_limit = match field(global.take_u64("max_udp_flows"))? {
+            None => None,
+            Some(n) if n > 0 && n <= limit as u64 => Some(n as usize),
+            Some(_) => return Err(invalid("global.max_udp_flows must be in 1..=max_flows")),
+        };
+        field(global.finish())?;
+    }
+    Ok((limit, udp_limit, workers))
+}
+
 /// One relay thread per available CPU, up to eight.
 fn default_workers() -> usize {
     std::thread::available_parallelism().map_or(1, |n| n.get().min(8))
+}
+
+type HttpFrontend = (Option<std::sync::Arc<crate::TlsOptions>>, bool, Vec<crate::http::Rule>);
+
+/// Reads the options that only an HTTP frontend has: TLS, the firewall switch and routes.
+fn http_frontend(
+    r: &mut ObjectReader<'_, '_>,
+    proto: Protocol,
+    pools: &BTreeMap<String, Backend>,
+) -> Result<HttpFrontend> {
+    if proto != Protocol::Http {
+        return Ok((None, true, Vec::new()));
+    }
+    let tls = field(r.take_object("tls"))?
+        .map(crate::TlsOptions::parse)
+        .transpose()?
+        .map(std::sync::Arc::new);
+    let firewall = field(r.take_bool("firewall"))?.unwrap_or(true);
+    let rules = crate::http::rules(r, pools, firewall)?;
+    Ok((tls, firewall, rules))
 }
 
 fn overlaps(a: SocketAddr, b: SocketAddr) -> bool {
@@ -294,12 +342,20 @@ pub(crate) fn address(text: &str, path: &str) -> Result<SocketAddr> {
         .ok_or_else(|| invalid(format!("{path}: expected numeric IP:port, found {text:?}")))
 }
 
+/// Parses a positive duration of at most one day: digits with `ms`, `s`, `m` or `h`.
 pub(crate) fn duration(text: &str) -> Option<Duration> {
     let (digits, multiplier) = if let Some(ms) = text.strip_suffix("ms") {
         (ms, 1)
+    } else if let Some(seconds) = text.strip_suffix('s') {
+        (seconds, 1000)
+    } else if let Some(minutes) = text.strip_suffix('m') {
+        (minutes, 60_000)
     } else {
-        (text.strip_suffix('s')?, 1000)
+        (text.strip_suffix('h')?, 3_600_000)
     };
+    if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
+        return None;
+    }
     let millis = digits.parse::<u64>().ok()?.checked_mul(multiplier)?;
     (1..=86_400_000).contains(&millis).then(|| Duration::from_millis(millis))
 }
@@ -325,16 +381,21 @@ impl Backend {
         }
         let health =
             field(r.take_object("health_check"))?.map(crate::health::Spec::parse).transpose()?;
+        if protocol == Protocol::Tcp && health.as_ref().is_some_and(|spec| spec.is_http()) {
+            return Err(invalid(format!("{path}: HTTP probes require an HTTP pool")));
+        }
         if protocol == Protocol::Udp && health.is_some() {
-            return Err(invalid(format!("{path}: TCP probes require a TCP pool")));
+            return Err(invalid(format!("{path}: health probes require a TCP or HTTP pool")));
         }
         let proxy_v2 = field(r.take_object("proxy_v2"))?
             .map(|r| crate::proxy::Spec::parse(r, protocol))
             .transpose()?
             .flatten();
+        let origin =
+            if protocol == Protocol::Http { crate::OriginOptions::parse(&mut r)? } else { None };
         let scheduler = scheduler(&mut r, mesh, &mut servers)?;
         field(r.finish())?;
-        Ok(Self { protocol, servers, scheduler, proxy_v2, health })
+        Ok(Self { protocol, servers, scheduler, proxy_v2, health, origin })
     }
 }
 
@@ -407,7 +468,7 @@ impl Server {
         let remote = field(r.take_bool("remote"))?.unwrap_or(false);
         let backup = field(r.take_bool("backup"))?.unwrap_or(false);
         field(r.finish())?;
-        Ok(Self { name, addr, limit, weight, backup, remote, healthy: None })
+        Ok(Self { name, addr, limit, weight, backup, remote, via: None, healthy: None })
     }
 }
 

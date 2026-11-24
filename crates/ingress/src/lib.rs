@@ -3,6 +3,7 @@
 
 mod bridge;
 mod certs;
+mod egress;
 mod handoff;
 mod quic;
 
@@ -24,6 +25,7 @@ use tokio::time::timeout;
 use tokio_rustls::TlsAcceptor;
 
 use bridge::Lane;
+pub use egress::Egress;
 use handoff::Handoff;
 
 type Error = Box<dyn std::error::Error + Send + Sync>;

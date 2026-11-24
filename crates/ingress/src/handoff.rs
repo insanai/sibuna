@@ -77,7 +77,8 @@ async fn accept(listener: TcpListener, waiting: Arc<Waiting>) {
     loop {
         match listener.accept().await {
             Ok((stream, source)) => {
-                let waiter = waiting.lock().unwrap_or_else(PoisonError::into_inner).remove(&source);
+                let waiter =
+                    waiting.lock().unwrap_or_else(PoisonError::into_inner).remove(&source);
                 // A connection nobody registered is closed by dropping it.
                 if let Some(waiter) = waiter {
                     let _ = waiter.send(stream);

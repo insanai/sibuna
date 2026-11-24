@@ -25,7 +25,7 @@ use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 use crate::Error;
 use crate::handoff::Handoff;
 
-pub(super) type Body = UnsyncBoxBody<Bytes, Error>;
+pub(crate) type Body = UnsyncBoxBody<Bytes, Error>;
 
 /// An idle firewall connection is reused only this soon after its last response, well
 /// inside the firewall's shortest idle timeout.
@@ -216,7 +216,7 @@ impl HttpBody for ResponseBody {
     }
 }
 
-pub(super) fn error(status: StatusCode) -> Response<Body> {
+pub(crate) fn error(status: StatusCode) -> Response<Body> {
     let mut response = Response::new(empty());
     *response.status_mut() = status;
     response
