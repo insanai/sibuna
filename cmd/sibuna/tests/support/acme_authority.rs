@@ -1,6 +1,7 @@
 //! A certificate authority for tests: the ACME endpoints of RFC 8555 over plain HTTP on
 //! the loopback address. It validates a name by connecting back to the daemon, with
-//! HTTP-01 or with TLS-ALPN-01 (RFC 8737), and signs with a key of its own.
+//! HTTP-01 or with TLS-ALPN-01 (RFC 8737), or by asking a DNS server of the test for the
+//! TXT record of DNS-01, and signs with a key of its own.
 //!
 //! It does not verify the signature of a request. The client's requests are checked by
 //! the unit tests of `sibuna-acme` and by the run against Pebble (SID 0021).
@@ -13,6 +14,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier};
 use rustls::pki_types::{CertificateDer, ServerName, UnixTime};
+use sibuna_acme::dns::{transport, wire};
 use sibuna_acme::{KeyPair, csr, jws, pem, x509};
 use sibuna_crypto::sha256::Sha256;
 use sibuna_encoding::base64;
@@ -39,6 +41,8 @@ pub struct Authority {
     pub http_port: AtomicU16,
     /// The daemon's TLS port, where TLS-ALPN-01 is validated.
     pub tls_port: AtomicU16,
+    /// The DNS server that DNS-01 is validated at. Without one DNS-01 fails.
+    pub dns_server: Mutex<Option<SocketAddr>>,
     /// The lifetime of the next certificate, in seconds.
     pub lifetime: AtomicU64,
     /// Refuse the next orders with `rejectedIdentifier`.
@@ -114,6 +118,7 @@ impl Authority {
             root_pem: pem::encode("CERTIFICATE", &root),
             http_port: AtomicU16::new(0),
             tls_port: AtomicU16::new(0),
+            dns_server: Mutex::default(),
             lifetime: AtomicU64::new(3600),
             refuse: AtomicBool::new(false),
             order_count: AtomicUsize::new(0),
@@ -276,9 +281,17 @@ impl Authority {
             let url = format!("{base}/chall/{id}/{kind}");
             format!(r#"{{"type":"{kind}","url":"{url}","token":"{token}","status":"{status}"}}"#)
         };
-        let identifier = format!(r#"{{"type":"dns","value":"{name}"}}"#);
-        let challenges = format!("[{},{}]", challenge("http-01"), challenge("tls-alpn-01"));
-        let members = format!(r#""identifier":{identifier},"challenges":{challenges}"#);
+        // A wildcard is proved with DNS-01 only, at the name without `*.` (RFC 8555).
+        let (challenges, wildcard) = match name.strip_prefix("*.") {
+            Some(_) => (format!("[{}]", challenge("dns-01")), r#""wildcard":true,"#),
+            None => {
+                let all = ["http-01", "tls-alpn-01", "dns-01"].map(challenge);
+                (format!("[{}]", all.join(",")), "")
+            }
+        };
+        let base = name.strip_prefix("*.").unwrap_or(name);
+        let identifier = format!(r#"{{"type":"dns","value":"{base}"}}"#);
+        let members = format!(r#"{wildcard}"identifier":{identifier},"challenges":{challenges}"#);
         Answer::json(200, format!(r#"{{"status":"{status}",{members}}}"#))
     }
 
@@ -295,6 +308,7 @@ impl Authority {
         let valid = match kind {
             "http-01" => self.validate_http(&name, &token, &expected),
             "tls-alpn-01" => self.validate_alpn(&name, &expected),
+            "dns-01" => self.validate_dns(&name, &expected),
             _ => false,
         };
         if valid {
@@ -322,6 +336,23 @@ impl Authority {
         let _ = socket.read_to_string(&mut answer);
         answer.starts_with("HTTP/1.1 200")
             && answer.split_once("\r\n\r\n").is_some_and(|(_, body)| body == expected)
+    }
+
+    /// Asks the DNS server of the test for the TXT record `_acme-challenge.NAME` and
+    /// compares it with the digest of the key authorization.
+    fn validate_dns(&self, name: &str, expected: &str) -> bool {
+        let Some(server) = *self.dns_server.lock().unwrap() else { return false };
+        let owner = format!("_acme-challenge.{}", name.strip_prefix("*.").unwrap_or(name));
+        let value = jws::base64url(&Sha256::digest(expected.as_bytes()));
+        let request = wire::query(7, &owner, wire::TYPE_TXT, false).unwrap();
+        let Ok(answer) = transport::exchange(server, &request, Duration::from_secs(3)) else {
+            return false;
+        };
+        wire::parse(&answer).is_some_and(|message| {
+            message.answers().iter().any(
+                |record| matches!(&record.data, wire::Data::Txt(text) if text == value.as_bytes()),
+            )
+        })
     }
 
     /// Opens a TLS session with the protocol `acme-tls/1` and reads the certificate.
@@ -441,6 +472,36 @@ pub fn connect(
         session.complete_io(&mut socket).ok()?;
     }
     Some((session, socket))
+}
+
+/// A TLS session with `address` that trusts the PEM root `root_pem` and nothing else.
+/// `name` is a host name or an IP address. For an address the client sends no server
+/// name, as every TLS client does. Fails with the reason of the TLS library when the
+/// chain does not lead to the root or does not name `name`.
+pub fn connect_trusting(
+    address: SocketAddr,
+    name: &str,
+    root_pem: &str,
+) -> Result<(rustls::ClientConnection, TcpStream), String> {
+    let mut roots = rustls::RootCertStore::empty();
+    for root in pem::decode("CERTIFICATE", root_pem).unwrap_or_default() {
+        roots.add(CertificateDer::from(root)).map_err(|error| error.to_string())?;
+    }
+    let provider = Arc::new(rustls::crypto::ring::default_provider());
+    let config = rustls::ClientConfig::builder_with_provider(provider)
+        .with_safe_default_protocol_versions()
+        .map_err(|error| error.to_string())?
+        .with_root_certificates(roots)
+        .with_no_client_auth();
+    let server = ServerName::try_from(name.to_owned()).map_err(|error| error.to_string())?;
+    let mut session = rustls::ClientConnection::new(Arc::new(config), server)
+        .map_err(|error| error.to_string())?;
+    let mut socket = TcpStream::connect(address).map_err(|error| error.to_string())?;
+    socket.set_read_timeout(Some(Duration::from_secs(5))).map_err(|error| error.to_string())?;
+    while session.is_handshaking() {
+        session.complete_io(&mut socket).map_err(|error| error.to_string())?;
+    }
+    Ok((session, socket))
 }
 
 /// The leaf certificate that `address` serves for the host `name`, in DER.

@@ -75,6 +75,8 @@ workspace = true
 # The gRPC test drives the binary with an HTTP/2 client over TLS. These crates are
 # already in the build through sibuna-ingress; no test needs a crate of its own.
 [dev-dependencies]
+# The tests of DNS-01 run the small authoritative DNS server of the crate.
+sibuna-acme = { workspace = true, features = ["test-server"] }
 bytes.workspace = true
 futures-util.workspace = true
 http-body-util.workspace = true
