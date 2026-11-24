@@ -1513,6 +1513,7 @@ dependencies = [
  "hyper-util",
  "quinn",
  "rustls",
+ "sibuna-crypto",
  "sibuna-encoding",
  "sibuna-lb",
  "sibuna-tls",

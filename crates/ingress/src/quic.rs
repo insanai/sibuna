@@ -65,7 +65,11 @@ async fn connection(
     let mut builder = h3::server::builder();
     builder.max_field_section_size(MAX_HEAD);
     let mut http = builder.build(h3_quinn::Connection::new(conn.clone())).await?;
-    let lane = Lane::new(shared.handoff, shared.inline, conn.remote_address(), vip);
+    let chain = conn.peer_identity().and_then(|identity| {
+        identity.downcast::<Vec<rustls::pki_types::CertificateDer<'static>>>().ok()
+    });
+    let cert = crate::fingerprint(chain.as_ref().map(|chain| chain.as_slice()));
+    let lane = Lane::new(shared.handoff, shared.inline, conn.remote_address(), vip, cert);
     let mut check = tokio::time::interval(IDLE_CHECK);
     let mut draining = false;
     loop {

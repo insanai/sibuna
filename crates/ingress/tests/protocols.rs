@@ -42,7 +42,7 @@ fn client(alpn: &[u8]) -> rustls::ClientConfig {
 /// A keep-alive HTTP/1.1 stub. It counts the connections it serves and answers each
 /// request on its own thread, as the firewall does.
 fn firewall(vip: SocketAddr, connections: Arc<AtomicUsize>) -> Handler {
-    Arc::new(move |mut stream, peer, dest| {
+    Arc::new(move |mut stream, peer, dest, _| {
         assert_eq!(dest, vip);
         assert_eq!(peer.ip(), vip.ip());
         connections.fetch_add(1, Ordering::SeqCst);
@@ -196,7 +196,7 @@ fn every_protocol_reuses_the_client_session_and_one_firewall_connection() {
 
 /// A firewall that accepts a WebSocket upgrade and then echoes the tunnel.
 fn upgrading(_vip: SocketAddr, connections: Arc<AtomicUsize>) -> Handler {
-    Arc::new(move |mut stream, _, _| {
+    Arc::new(move |mut stream, _, _, _| {
         connections.fetch_add(1, Ordering::SeqCst);
         std::thread::spawn(move || {
             let mut reader = BufReader::new(stream.try_clone().unwrap());

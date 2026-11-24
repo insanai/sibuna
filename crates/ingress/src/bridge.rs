@@ -39,6 +39,8 @@ pub(crate) struct Lane {
     inline: Option<Arc<crate::inline::Inline>>,
     peer: SocketAddr,
     vip: SocketAddr,
+    /// The client's verified certificate.
+    cert: Option<crate::Fingerprint>,
     idle: Mutex<Vec<(SendRequest<Body>, Instant)>>,
     in_flight: AtomicUsize,
     quiet_since: Mutex<Instant>,
@@ -50,12 +52,14 @@ impl Lane {
         inline: Option<Arc<crate::inline::Inline>>,
         peer: SocketAddr,
         vip: SocketAddr,
+        cert: Option<crate::Fingerprint>,
     ) -> Arc<Self> {
         Arc::new(Self {
             handoff,
             inline,
             peer,
             vip,
+            cert,
             idle: Mutex::new(Vec::new()),
             in_flight: AtomicUsize::new(0),
             quiet_since: Mutex::new(Instant::now()),
@@ -63,6 +67,11 @@ impl Lane {
     }
 
     /// How long the connection has had no exchange in flight. Zero while one is running.
+    /// The client of this connection: its address and its verified certificate.
+    pub(crate) fn client(&self) -> (SocketAddr, Option<crate::Fingerprint>) {
+        (self.peer, self.cert)
+    }
+
     pub fn quiet_for(&self) -> Duration {
         if self.in_flight.load(Ordering::Acquire) != 0 {
             return Duration::ZERO;
@@ -90,11 +99,11 @@ impl Lane {
 
     /// Opens a firewall connection of its own for a tunnel.
     pub(crate) async fn pipe(&self) -> Result<crate::handoff::Pipe, Error> {
-        Ok(self.handoff.open(self.peer, self.vip).await?)
+        Ok(self.handoff.open(self.peer, self.vip, self.cert).await?)
     }
 
     async fn open(&self) -> Result<SendRequest<Body>, Error> {
-        let stream = self.handoff.open(self.peer, self.vip).await?;
+        let stream = self.handoff.open(self.peer, self.vip, self.cert).await?;
         let (sender, conn) = hyper::client::conn::http1::handshake(TokioIo::new(stream)).await?;
         tokio::spawn(async move {
             let _ = conn.await;
@@ -282,7 +291,7 @@ pub(super) async fn exchange(req: Request<Body>, lane: &Arc<Lane>) -> Response<B
     };
     if let Some(inline) = &lane.inline {
         let exchange =
-            crate::inline::exchange(inline, req, trailers, lane.peer, lane.vip, protocol);
+            crate::inline::exchange(inline, req, trailers, lane.client(), lane.vip, protocol);
         return exchange.await;
     }
     lane.forward(req).await.unwrap_or_else(|_| error(StatusCode::BAD_GATEWAY))

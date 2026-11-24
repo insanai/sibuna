@@ -32,9 +32,19 @@ use handoff::Handoff;
 pub use inline::{Completion, Decide, Forward, Offer, Report, Verdict};
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
-/// Hands one connection to the firewall with its client peer and public destination.
+/// The SHA-256 digest of the certificate a client proved to hold in the TLS handshake.
+pub type Fingerprint = [u8; 32];
+
+/// Hands one connection to the firewall with its client peer, its public destination
+/// and the fingerprint of the client's verified certificate, when it presented one.
 /// The call must return at once. The firewall serves the socket on its own thread.
-pub type Handler = Arc<dyn Fn(TcpStream, SocketAddr, SocketAddr) + Send + Sync>;
+pub type Handler =
+    Arc<dyn Fn(TcpStream, SocketAddr, SocketAddr, Option<Fingerprint>) + Send + Sync>;
+
+/// The fingerprint of the first certificate of a chain the handshake verified.
+fn fingerprint(chain: Option<&[rustls::pki_types::CertificateDer<'_>]>) -> Option<Fingerprint> {
+    chain?.first().map(|leaf| sibuna_crypto::sha256::Sha256::digest(leaf))
+}
 
 const DEADLINE: Duration = Duration::from_secs(15);
 const MAX_HEAD: u64 = 16 * 1024;
@@ -235,11 +245,14 @@ impl Ingress {
                 .flatten(),
             peer,
             vip,
+            cert: None,
         };
         self.runtime.spawn(async move {
             let _permit = (permit, held);
             let Ok(stream) = tokio::net::TcpStream::from_std(stream) else { return };
             let Ok(Ok(tls)) = timeout(DEADLINE, acceptor.accept(stream)).await else { return };
+            let mut session = session;
+            session.cert = fingerprint(tls.get_ref().1.peer_certificates());
             if tls.get_ref().1.alpn_protocol() == Some(b"h2") {
                 session.http2(tls).await;
             } else {
@@ -261,13 +274,17 @@ struct Session {
     alt_svc: Option<HeaderValue>,
     peer: SocketAddr,
     vip: SocketAddr,
+    /// The client's verified certificate, known after the handshake.
+    cert: Option<Fingerprint>,
 }
 
 impl Session {
     /// Relays the decrypted bytes to the firewall, which speaks HTTP/1.1 itself:
     /// keep-alive, pipelined requests and WebSocket upgrades behave as on a plain listener.
     async fn http1(self, tls: Tls) {
-        let Ok(mut firewall) = self.handoff.open(self.peer, self.vip).await else { return };
+        let Ok(mut firewall) = self.handoff.open(self.peer, self.vip, self.cert).await else {
+            return;
+        };
         let (mut client_read, mut client_write) = tokio::io::split(tls);
         let (mut firewall_read, mut firewall_write) = firewall.split();
         let up = async {
@@ -288,7 +305,7 @@ impl Session {
     }
 
     async fn http2(mut self, tls: Tls) {
-        let lane = Lane::new(self.handoff, self.inline, self.peer, self.vip);
+        let lane = Lane::new(self.handoff, self.inline, self.peer, self.vip, self.cert);
         let (capacity, alt_svc) = (self.capacity, self.alt_svc);
         let exchanges = lane.clone();
         let service = service_fn(move |request| {

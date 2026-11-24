@@ -213,7 +213,7 @@ fn setup() -> Bench {
     let identity = Identity::load(&tls).unwrap();
     let handoffs = Arc::new(AtomicUsize::new(0));
     let counted = handoffs.clone();
-    let handler: Handler = Arc::new(move |_, _, _| {
+    let handler: Handler = Arc::new(move |_, _, _, _| {
         counted.fetch_add(1, Ordering::SeqCst);
     });
     let gate = Arc::new(Gate {

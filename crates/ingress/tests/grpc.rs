@@ -88,7 +88,7 @@ fn every_kind_of_grpc_call_crosses_the_edge_to_an_http2_pool() {
     };
     let handoffs = Arc::new(AtomicUsize::new(0));
     let counted = handoffs.clone();
-    let handler: Handler = Arc::new(move |_, _, _| {
+    let handler: Handler = Arc::new(move |_, _, _, _| {
         counted.fetch_add(1, Ordering::SeqCst);
     });
     let admit = Arc::new(Admit {

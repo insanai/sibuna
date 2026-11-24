@@ -41,7 +41,12 @@ impl Handoff {
     /// Opens a connection whose far end the firewall serves for `peer` on `vip`.
     #[cfg(unix)]
     #[allow(clippy::unused_async)] // The loopback variant awaits its acceptor.
-    pub async fn open(&self, peer: SocketAddr, vip: SocketAddr) -> io::Result<Pipe> {
+    pub async fn open(
+        &self,
+        peer: SocketAddr,
+        vip: SocketAddr,
+        cert: Option<crate::Fingerprint>,
+    ) -> io::Result<Pipe> {
         use std::os::fd::OwnedFd;
         use std::os::unix::net::UnixStream;
 
@@ -51,15 +56,20 @@ impl Handoff {
         // The firewall reads, writes, shuts down and sets timeouts, which every stream
         // socket supports. It takes the client address from `peer`, never from the socket.
         let far = std::net::TcpStream::from(OwnedFd::from(far));
-        (self.handler)(far, peer, vip);
+        (self.handler)(far, peer, vip, cert);
         Ok(near)
     }
 
     /// Opens a connection whose far end the firewall serves for `peer` on `vip`.
     #[cfg(not(unix))]
-    pub async fn open(&self, peer: SocketAddr, vip: SocketAddr) -> io::Result<Pipe> {
+    pub async fn open(
+        &self,
+        peer: SocketAddr,
+        vip: SocketAddr,
+        cert: Option<crate::Fingerprint>,
+    ) -> io::Result<Pipe> {
         let (near, far) = self.loopback.pair().await?;
-        (self.handler)(far, peer, vip);
+        (self.handler)(far, peer, vip, cert);
         Ok(near)
     }
 }
