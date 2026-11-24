@@ -162,6 +162,13 @@ pub struct Audit<'a> {
     /// Fields to drop from and to append to the final response head for the client
     /// (SID 0019). The default changes nothing.
     pub response_edit: crate::HeadEdit<'a>,
+    /// Fields to drop from the client's request and to append to the request head for
+    /// the origin (SID 0019). A name also matches with `_` written for `-`.
+    pub request_edit: crate::HeadEdit<'a>,
+    /// The `Host` the client addressed, written as `X-Forwarded-Host`. Empty writes none.
+    pub forwarded_host: &'a [u8],
+    /// The port the client reached, written as `X-Forwarded-Port`. Zero writes none.
+    pub forwarded_port: u16,
 }
 
 impl Default for Audit<'_> {
@@ -177,6 +184,9 @@ impl Default for Audit<'_> {
             response_status: None,
             response_head: None,
             response_edit: crate::HeadEdit::default(),
+            request_edit: crate::HeadEdit::default(),
+            forwarded_host: b"",
+            forwarded_port: 0,
         }
     }
 }

@@ -17,7 +17,7 @@ pub struct HeadEdit<'a> {
     /// Names of fields to drop, compared without regard to case.
     pub remove: &'a [Box<str>],
     /// Blocks of field lines written after the fields that were kept.
-    pub append: [&'a [u8]; 2],
+    pub append: [&'a [u8]; 3],
 }
 
 impl HeadEdit<'_> {
@@ -75,7 +75,7 @@ mod tests {
         let remove = ["server".into(), "X-POWERED-BY".into()];
         let edit = HeadEdit {
             remove: &remove,
-            append: [b"X-Frame-Options: DENY\r\n", b"Set-Cookie: s=2; Path=/\r\n"],
+            append: [b"X-Frame-Options: DENY\r\n", b"", b"Set-Cookie: s=2; Path=/\r\n"],
         };
         let mut out = b"earlier bytes".to_vec();
         let start = out.len();
@@ -93,14 +93,14 @@ mod tests {
         HeadEdit::default().apply(&mut out, 0);
         assert_eq!(out, HEAD);
         let remove = ["server".into()];
-        let edit = HeadEdit { remove: &remove, append: [b"", b""] };
+        let edit = HeadEdit { remove: &remove, ..HeadEdit::default() };
         assert!(!edit.is_empty() && HeadEdit::default().is_empty());
         let mut partial = b"HTTP/1.1 200 OK\r\nServer: x\r\n".to_vec();
         edit.apply(&mut partial, 0);
         assert_eq!(partial, b"HTTP/1.1 200 OK\r\nServer: x\r\n");
         // The first line is never a field, whatever it looks like.
         let odd = ["http/1.1 200 ok".into(), "get /a".into()];
-        let edit = HeadEdit { remove: &odd, append: [b"", b""] };
+        let edit = HeadEdit { remove: &odd, ..HeadEdit::default() };
         let mut request = b"GET /a:b HTTP/1.1\r\nHost: h\r\n\r\n".to_vec();
         edit.apply(&mut request, 0);
         assert_eq!(request, b"GET /a:b HTTP/1.1\r\nHost: h\r\n\r\n");
