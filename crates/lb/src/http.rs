@@ -37,6 +37,8 @@ pub struct HttpOptions {
     pub idle_timeout_seconds: u32,
     /// The longest silence on an upgraded connection, in seconds.
     pub websocket_idle_timeout_seconds: u32,
+    /// Serve HTTP on event-driven workers (SID 0016) where the platform has them.
+    pub event_loop: bool,
 }
 
 impl Default for HttpOptions {
@@ -52,13 +54,16 @@ impl Default for HttpOptions {
             max_connections_per_ip: 64,
             idle_timeout_seconds: 15,
             websocket_idle_timeout_seconds: 300,
+            event_loop: true,
         }
     }
 }
 
 impl HttpOptions {
+    /// The most connections the event-driven workers serve: the size of the flow table.
+    pub const MAX_CONNECTIONS: usize = 1_000_000;
     /// The most connections the thread-per-connection firewall serves.
-    pub const MAX_CONNECTIONS: usize = 8192;
+    pub const MAX_THREADS: usize = 8192;
 
     pub(crate) fn parse(mut r: ObjectReader<'_, '_>) -> io::Result<Self> {
         let defaults = Self::default();
@@ -108,6 +113,10 @@ impl HttpOptions {
             defaults.max_connections_per_ip as usize,
             Self::MAX_CONNECTIONS,
         )? as u32;
+        let event_loop = field(r.take_bool("event_loop"))?.unwrap_or(defaults.event_loop);
+        if !event_loop && max_connections as usize > Self::MAX_THREADS {
+            return Err(invalid("http.max_connections above 8192 needs http.event_loop"));
+        }
         field(r.finish())?;
         Ok(Self {
             firewall,
@@ -120,6 +129,7 @@ impl HttpOptions {
             max_connections_per_ip,
             idle_timeout_seconds,
             websocket_idle_timeout_seconds,
+            event_loop,
         })
     }
 }

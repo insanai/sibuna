@@ -15,6 +15,8 @@ use crate::recipe::Recipe;
 use crate::server::{Hooks, Options, Server, admit, start_reaper};
 use crate::slot::EngineSlot;
 
+use super::workers::{Incoming, Timeouts, Workers};
+
 /// The policy of `http.surface: "off"`.
 const ALLOW_ALL: &[u8] = br#"{"rules":[{"name":"load-balancer","path":"/*","action":"ALLOW"}]}"#;
 
@@ -89,6 +91,8 @@ fn firewall_config(options: &HttpOptions) -> Config {
 pub(super) struct Http {
     server: Arc<Server>,
     reaper: Option<JoinHandle<()>>,
+    /// The event-driven workers. Without them each connection has a thread.
+    workers: Option<Arc<Workers>>,
     options: HttpOptions,
     binds: BTreeMap<SocketAddr, Arc<TlsOptions>>,
     #[cfg(feature = "https")]
@@ -115,13 +119,16 @@ impl Http {
         server.edge_routes = Some(edge.http_routes());
         server.unlimited = prepared.options.rate_limit.is_none();
         let server = Arc::new(server);
+        let workers = start_workers(&server, &prepared.options)?;
         #[cfg(feature = "https")]
         let ingress = if prepared.identities.is_empty() {
             None
         } else {
             let web = server.clone();
+            let pool = workers.clone();
             let handler = Arc::new(move |stream, peer, vip| {
-                launch(&web, stream, Ingress { peer, vip, secure: true }, None);
+                let ingress = Ingress { peer, vip, secure: true };
+                serve(&web, pool.as_deref(), stream, ingress, None);
             });
             let limits = sibuna_ingress::Limits {
                 exchanges: prepared.options.max_connections as usize,
@@ -140,6 +147,7 @@ impl Http {
         Ok(Self {
             server,
             reaper,
+            workers,
             options: prepared.options,
             binds: prepared.binds,
             #[cfg(feature = "https")]
@@ -148,6 +156,9 @@ impl Http {
     }
 
     pub fn drain(&self) {
+        if let Some(workers) = &self.workers {
+            workers.drain();
+        }
         #[cfg(feature = "https")]
         if let Some(ingress) = &self.ingress {
             ingress.drain();
@@ -179,7 +190,36 @@ impl Http {
         }
         let _ = bind;
         let (Ok(peer), Ok(vip)) = (stream.peer_addr(), stream.local_addr()) else { return };
-        launch(&self.server, stream, Ingress { peer, vip, secure: false }, Some(permit));
+        let ingress = Ingress { peer, vip, secure: false };
+        serve(&self.server, self.workers.as_deref(), stream, ingress, Some(permit));
+    }
+}
+
+/// Starts the event-driven workers when the topology asks for them and the platform has
+/// them.
+fn start_workers(server: &Arc<Server>, options: &HttpOptions) -> io::Result<Option<Arc<Workers>>> {
+    if !options.event_loop || !Workers::SUPPORTED {
+        return Ok(None);
+    }
+    let seconds = |seconds: u32| std::time::Duration::from_secs(u64::from(seconds.max(1)));
+    let timeouts = Timeouts {
+        idle: seconds(options.idle_timeout_seconds),
+        tunnel: seconds(options.websocket_idle_timeout_seconds),
+    };
+    Ok(Some(Arc::new(Workers::start(server, Workers::default_count(), timeouts)?)))
+}
+
+/// Serves a connection on a worker, or on a thread of its own.
+fn serve(
+    server: &Arc<Server>,
+    workers: Option<&Workers>,
+    stream: TcpStream,
+    ingress: Ingress,
+    permit: Option<FlowPermit>,
+) {
+    match workers {
+        Some(workers) => workers.submit(Incoming { stream, ingress, permit }),
+        None => launch(server, stream, ingress, permit),
     }
 }
 
@@ -205,6 +245,9 @@ fn launch(server: &Arc<Server>, stream: TcpStream, ingress: Ingress, permit: Opt
 impl Drop for Http {
     fn drop(&mut self) {
         self.server.stopping.store(true, Ordering::Release);
+        if let Some(workers) = &self.workers {
+            workers.stop();
+        }
         #[cfg(feature = "https")]
         drop(self.ingress.take());
         self.server.idle.shutdown();

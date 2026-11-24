@@ -1,6 +1,7 @@
 //! Edge-mode startup, reload at batch boundaries and bounded shutdown.
 
 mod http;
+mod workers;
 
 use std::fs::File;
 use std::io::{self, Read};
