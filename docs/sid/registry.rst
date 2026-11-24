@@ -57,5 +57,8 @@ Discussion registry
    * - 0015
      - :doc:`records/0015-distributed-edge-load-balancer`
      - discussion
+   * - 0016
+     - :doc:`records/0016-event-driven-http-workers`
+     - discussion
 
 .. sid-generated-end
