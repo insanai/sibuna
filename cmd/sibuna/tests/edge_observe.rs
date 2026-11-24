@@ -73,8 +73,12 @@ struct Extra<'a> {
 
 fn topology(origin: SocketAddr, event_loop: bool, extra: &Extra<'_>) -> (PathBuf, SocketAddr) {
     let vip = free();
-    let directory =
-        std::env::temp_dir().join(format!("sibuna-observe-{}-{}", std::process::id(), vip.port()));
+    // Two tests that run side by side may draw the same free port, so the port alone
+    // does not make the name unique.
+    static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+    let serial = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let name = format!("sibuna-observe-{}-{}-{serial}", std::process::id(), vip.port());
+    let directory = std::env::temp_dir().join(name);
     fs::create_dir_all(&directory).unwrap();
     let log = directory.join("access.log");
     let (http, observe, front, root) = (extra.http, extra.observe, extra.front, extra.root);
