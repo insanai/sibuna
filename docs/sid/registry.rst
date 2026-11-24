@@ -72,5 +72,8 @@ Discussion registry
    * - 0020
      - :doc:`records/0020-edge-observability-and-client-identity`
      - discussion
+   * - 0021
+     - :doc:`records/0021-automatic-https`
+     - discussion
 
 .. sid-generated-end

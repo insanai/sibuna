@@ -179,6 +179,9 @@ pub struct TlsOptions {
     /// With `client_ca`: also accept a client that presents no certificate. A certificate
     /// that is presented must still verify.
     pub client_optional: bool,
+    /// Host names whose certificates the daemon obtains and renews itself (SID 0021), in
+    /// lower case. With a name here `crt` and `cert_file` are optional.
+    pub auto: Vec<String>,
 }
 
 impl TlsOptions {
@@ -205,9 +208,10 @@ impl TlsOptions {
         if cert_file.is_some() != key_file.is_some() {
             return Err(invalid(format!("{}: cert_file and key_file go together", r.path())));
         }
-        if crt.is_empty() && cert_file.is_none() {
+        let auto = crate::acme::names(&mut r)?;
+        if crt.is_empty() && cert_file.is_none() && auto.is_empty() {
             return Err(invalid(format!(
-                "{}: expected crt (combined PEM) or cert_file with key_file",
+                "{}: expected crt (combined PEM), cert_file with key_file, or auto (host names)",
                 r.path()
             )));
         }
@@ -244,6 +248,7 @@ impl TlsOptions {
             min_version,
             client_ca,
             client_optional,
+            auto,
         })
     }
 }

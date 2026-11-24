@@ -32,6 +32,9 @@ pub(super) struct Prepared {
     share_address: bool,
     #[cfg(feature = "https")]
     identities: BTreeMap<SocketAddr, sibuna_ingress::Identity>,
+    /// The `auto` names and `global.acme` (SID 0021).
+    #[cfg(feature = "https")]
+    automatic: Option<sibuna_lb::AutomaticHttps>,
 }
 
 impl Prepared {
@@ -76,6 +79,8 @@ impl Prepared {
             share_address: topology.reuse_port(),
             #[cfg(feature = "https")]
             identities,
+            #[cfg(feature = "https")]
+            automatic: topology.automatic_https(),
         }))
     }
 }
@@ -108,6 +113,19 @@ pub(super) struct Http {
     /// Reads the PROXY header of frontends that require one (SID 0020).
     stage: Option<super::proxy_stage::Stage>,
     observe: Arc<Observe>,
+}
+
+/// Whether two revisions terminate TLS alike. The `auto` names are left out: a reload
+/// may change them (SID 0021).
+fn same_listeners(
+    running: &BTreeMap<SocketAddr, Arc<TlsOptions>>,
+    next: &BTreeMap<SocketAddr, Arc<TlsOptions>>,
+) -> bool {
+    let fixed = |tls: &TlsOptions| TlsOptions { auto: Vec::new(), ..tls.clone() };
+    running.len() == next.len()
+        && running.iter().zip(next).all(|((bind, tls), (next_bind, next_tls))| {
+            bind == next_bind && fixed(tls) == fixed(next_tls)
+        })
 }
 
 /// What it takes to hand an accepted connection to its request path.
@@ -254,6 +272,10 @@ impl Http {
         let observe = start_observe(&prepared.observe, edge)?;
         server.observe = Some(observe.clone());
         server.balances_only = !prepared.options.firewall;
+        #[cfg(feature = "https")]
+        {
+            server.automatic = super::automatic::start(prepared.automatic, &prepared.identities)?;
+        }
         let server = Arc::new(server);
         let workers = start_workers(&server, &prepared.options)?;
         #[cfg(feature = "https")]
@@ -286,13 +308,11 @@ impl Http {
         #[cfg(not(feature = "https"))]
         let ingress = None;
         let binds = prepared.binds.clone();
-        let (server_ref, pool) = (server.clone(), workers.clone());
         let ingress = RwLock::new(ingress);
-        let dispatcher =
-            Arc::new(Dispatcher { server: server_ref, workers: pool, binds, ingress });
+        let (web, pool) = (server.clone(), workers.clone());
+        let dispatcher = Arc::new(Dispatcher { server: web, workers: pool, binds, ingress });
         let stage = super::proxy_stage::Stage::start(dispatcher.clone(), observe.clone())?;
         Ok(Self {
-            server,
             reaper,
             workers,
             options: prepared.options,
@@ -300,7 +320,23 @@ impl Http {
             dispatcher,
             stage: Some(stage),
             observe,
+            server,
         })
+    }
+
+    /// Tells automatic HTTPS that the listeners serve. Orders start now, so a daemon
+    /// that fails to start asks the authority for nothing (SID 0021).
+    #[cfg(feature = "https")]
+    pub fn listening(&self) {
+        if let Some(automatic) = self.automatic() {
+            automatic.allow_orders();
+        }
+    }
+
+    /// The certificate thread of automatic HTTPS, when the daemon started one.
+    #[cfg(feature = "https")]
+    pub fn automatic(&self) -> Option<&Arc<sibuna_ingress::Automatic>> {
+        self.server.automatic.as_ref()
     }
 
     /// Names the multiplexed servers of the adapters to the protocol runtime.
@@ -323,14 +359,20 @@ impl Http {
     }
 
     pub fn compatible(&self, next: &Prepared) -> bool {
+        #[cfg(feature = "https")]
+        if !super::automatic::compatible(self.automatic(), next.automatic.as_ref()) {
+            return false;
+        }
         self.options == next.options
             && self.observe.options == next.observe
-            && self.binds == next.binds
+            && same_listeners(&self.binds, &next.binds)
             && next.seed.as_ref().is_none_or(|seed| {
                 self.server.config.secret_seed.as_ref() == Some(seed.as_bytes())
             })
     }
     pub fn reload(&mut self, prepared: Prepared) {
+        #[cfg(feature = "https")]
+        super::automatic::reload(self.automatic(), prepared.automatic, &prepared.identities);
         #[cfg(feature = "https")]
         if let Some(ingress) = self.dispatcher.ingress.write().unwrap_or_else(poisoned).as_mut() {
             ingress.reload(prepared.identities);

@@ -42,8 +42,9 @@ pub(crate) fn intercept<W: Write>(ctx: &mut Ctx<'_, W>) -> Option<io::Result<boo
     Some(written.map(|()| false))
 }
 
-/// Answers with the redirect to the HTTPS location of the request.
-fn redirect<W: Write>(ctx: &mut Ctx<'_, W>, policy: &RoutePolicy) -> io::Result<bool> {
+/// Answers with the redirect to the HTTPS location of the request. The automatic
+/// redirect of SID 0021 writes its answer here too, so the two are the same answer.
+pub(crate) fn redirect<W: Write>(ctx: &mut Ctx<'_, W>, policy: &RoutePolicy) -> io::Result<bool> {
     let status = policy.redirect_https.map_or(308, |redirect| redirect.status);
     let host = ctx.request.header(b"host").unwrap_or_default();
     if host.is_empty() {

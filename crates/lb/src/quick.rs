@@ -38,6 +38,32 @@ pub struct QuickStart {
     pub surface: String,
     /// The path of the admin socket.
     pub admin_socket: Option<String>,
+    /// Automatic HTTPS (SID 0021), when it has a domain.
+    pub automatic: QuickAutomatic,
+}
+
+/// Automatic HTTPS of the quick start: `--tls auto --domain NAME`.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct QuickAutomatic {
+    /// The host names to obtain certificates for. Empty turns automatic HTTPS off.
+    pub domains: Vec<String>,
+    /// The plain HTTP listeners that answer the challenge and redirect to HTTPS.
+    pub http_binds: Vec<SocketAddr>,
+    /// `global.acme.directory`, when it is not the default.
+    pub directory: Option<String>,
+    /// `global.acme.email`.
+    pub email: Option<String>,
+    /// `global.acme.storage`, when it is not the default.
+    pub storage: Option<String>,
+}
+
+impl QuickAutomatic {
+    /// The members of `global.acme` that differ from their defaults.
+    fn acme(&self) -> Vec<(&'static str, Node)> {
+        let keys =
+            [("directory", &self.directory), ("email", &self.email), ("storage", &self.storage)];
+        keys.into_iter().filter_map(|(key, value)| Some((key, text(value.as_ref()?)))).collect()
+    }
 }
 
 impl Default for QuickStart {
@@ -51,6 +77,7 @@ impl Default for QuickStart {
             health: None,
             surface: "off".to_owned(),
             admin_socket: None,
+            automatic: QuickAutomatic::default(),
         }
     }
 }
@@ -132,8 +159,16 @@ impl QuickStart {
             QuickProtocol::Udp => Some("udp"),
         };
         let mut members = Vec::new();
+        let mut global = Vec::new();
         if let Some(path) = &self.admin_socket {
-            members.push(("global", Node::Map(vec![("admin_socket", text(path))])));
+            global.push(("admin_socket", text(path)));
+        }
+        let automatic = &self.automatic;
+        if !automatic.domains.is_empty() && !automatic.acme().is_empty() {
+            global.push(("acme", Node::Map(automatic.acme())));
+        }
+        if !global.is_empty() {
+            members.push(("global", Node::Map(global)));
         }
         if protocol.is_none() {
             members.push(("http", Node::Map(vec![("surface", text(&self.surface))])));
@@ -145,8 +180,15 @@ impl QuickStart {
             app.push(("mode", text(protocol)));
         }
         web.push(("binds", Node::List(self.binds.iter().map(|b| text(b.to_string())).collect())));
+        let mut tls = Vec::new();
+        if !automatic.domains.is_empty() {
+            tls.push(("auto", Node::List(automatic.domains.iter().map(text).collect())));
+        }
         if let Some(path) = &self.tls {
-            web.push(("tls", Node::Map(vec![("crt", text(path))])));
+            tls.push(("crt", text(path)));
+        }
+        if !tls.is_empty() {
+            web.push(("tls", Node::Map(tls)));
         }
         match self.health.as_deref() {
             None => {}
@@ -157,7 +199,12 @@ impl QuickStart {
             }
         }
         app.push(("servers", servers));
-        members.push(("frontends", Node::Map(vec![("web", Node::Map(web))])));
+        let mut frontends = vec![("web", Node::Map(web))];
+        if !automatic.domains.is_empty() && !automatic.http_binds.is_empty() {
+            let binds = automatic.http_binds.iter().map(|bind| text(bind.to_string())).collect();
+            frontends.push(("plain", Node::Map(vec![("binds", Node::List(binds))])));
+        }
+        members.push(("frontends", Node::Map(frontends)));
         members.push(("backends", Node::Map(vec![("app", Node::Map(app))])));
         members
     }
@@ -298,6 +345,32 @@ mod tests {
         let mut surface = quick(&["10.0.0.1:80"]);
         surface.surface = "loud".to_owned();
         assert!(reason(surface).contains("off, gate or shield"));
+    }
+
+    #[test]
+    fn automatic_https_adds_the_names_and_a_plain_frontend() {
+        let mut start = quick(&["10.0.0.1:80"]);
+        start.binds = vec!["0.0.0.0:443".parse().unwrap()];
+        start.automatic.domains = vec!["example.org".to_owned(), "www.example.org".to_owned()];
+        start.automatic.http_binds = vec!["0.0.0.0:80".parse().unwrap()];
+        let module = start.jlv();
+        let frontends = "        frontends: { web: { binds: [\"0.0.0.0:443\"], tls: { auto: \
+                         [\"example.org\", \"www.example.org\"] } }, plain: { binds: \
+                         [\"0.0.0.0:80\"] } },\n";
+        assert!(module.contains(frontends), "{module}");
+        assert!(!module.contains("global"), "{module}");
+        let automatic = start.config().unwrap().automatic_https().unwrap();
+        assert_eq!(automatic.names.len(), 2);
+        assert!(automatic.plain_frontend && automatic.options == crate::AcmeOptions::default());
+        start.automatic.directory = Some("letsencrypt-staging".to_owned());
+        start.automatic.email = Some("ops@example.org".to_owned());
+        start.automatic.http_binds.clear();
+        let json = start.json();
+        let acme = r#""acme": {"directory": "letsencrypt-staging", "email": "ops@example.org"}"#;
+        assert!(json.contains(acme), "{json}");
+        let automatic = start.config().unwrap().automatic_https().unwrap();
+        assert_eq!(automatic.options.directory, crate::LETSENCRYPT_STAGING);
+        assert!(!automatic.plain_frontend);
     }
 
     #[test]

@@ -42,6 +42,12 @@ pub(super) fn classify(file: Option<&str>, error: &io::Error) -> Failure {
             "A port below 1024 needs the capability CAP_NET_BIND_SERVICE or the root user. \
              The unit sibuna-edge.service grants the capability.",
         ),
+        _ if lower.contains("is an internal name") => (
+            "name not public",
+            "A public certificate authority validates a name over the Internet. Use a public \
+             DNS name, or serve this name with `crt` and a certificate of your own, or set \
+             `global.acme.directory` to an authority of your own.",
+        ),
         _ if names_a_certificate(&lower) => (
             "certificate not loaded",
             "Each `crt` entry is one PEM file with the certificate chain, leaf first, then \
@@ -112,6 +118,9 @@ mod tests {
         );
         assert_eq!(title(None, InvalidData, "frontends.web: no binds"), "invalid configuration");
         assert_eq!(title(None, Other, "something else"), "edge not started");
+        let internal = "tls.auto: `localhost` is an internal name; a public certificate \
+                        authority cannot validate it";
+        assert_eq!(title(None, InvalidData, internal), "name not public");
         let missing = "/nonexistent/sibuna/edge.jlv";
         assert_eq!(title(Some(missing), NotFound, "No such file"), "configuration file not found");
         let failure = classify(None, &io::Error::new(AddrInUse, "in use"));

@@ -2,6 +2,8 @@
 //! the admin socket and the file watcher of SID 0018 live in the submodules.
 
 mod admin;
+#[cfg(feature = "https")]
+mod automatic;
 mod control;
 mod ctl;
 mod failure;
@@ -197,7 +199,8 @@ impl Serving {
         match command {
             Command::ShowServers => Ok(control::render_servers(&edge.servers())),
             Command::ShowInfo => Ok(self.info()),
-            Command::ShowStats => Ok(crate::access::metrics_text(None, &self.observe)),
+            Command::ShowStats => Ok(self.stats()),
+            Command::ShowCerts => Ok(self.certs()),
             Command::Help => Ok(control::USAGE.to_owned()),
             Command::State { pool, name, state } => {
                 edge.set_server_state(&pool, &name, state).map(done)
@@ -217,6 +220,38 @@ impl Serving {
                 Ok(format!("{line}\n"))
             }
         }
+    }
+
+    /// Says that the listeners serve. Automatic HTTPS places its orders from now on.
+    fn announce(&self) {
+        eprintln!("Sibuna edge listeners ready");
+        #[cfg(feature = "https")]
+        if let Some(http) = &self.http {
+            http.listening();
+        }
+    }
+
+    /// The answer to `show stats`: the counters of SID 0020 and of automatic HTTPS.
+    fn stats(&self) -> String {
+        #[cfg_attr(not(feature = "https"), allow(unused_mut))]
+        let mut text = crate::access::metrics_text(None, &self.observe);
+        #[cfg(feature = "https")]
+        if let Some(automatic) = self.http.as_ref().and_then(http::Http::automatic) {
+            crate::acme::write_metrics(automatic, crate::acme::unix_now(), &mut text);
+        }
+        text
+    }
+
+    /// The answer to `show certs`: the certificates of automatic HTTPS (SID 0021).
+    /// Without automatic HTTPS the table has its header only.
+    fn certs(&self) -> String {
+        #[cfg(feature = "https")]
+        {
+            let automatic = self.http.as_ref().and_then(http::Http::automatic);
+            crate::acme::render_certs(&automatic.map(|a| a.status()).unwrap_or_default())
+        }
+        #[cfg(not(feature = "https"))]
+        "name issuer expires renews state error\n".to_owned()
     }
 
     /// The answer to `show info`: one `key: value` per line.
@@ -313,7 +348,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         observe: observed.shared(),
     };
     serving.watch(watch)?;
-    eprintln!("Sibuna edge listeners ready");
+    serving.announce();
     while !shutdown.is_requested() {
         observed.reopen_log_when(&rotate);
         serving.take_pending();

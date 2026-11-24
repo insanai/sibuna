@@ -72,6 +72,9 @@ pub struct FieldEdit {
 pub struct RoutePolicy {
     /// Answer a cleartext request with a redirect to HTTPS.
     pub redirect_https: Option<Redirect>,
+    /// The operator wrote `redirect_https: false`. The request stays on HTTP, and the
+    /// automatic redirect of SID 0021 leaves it alone as well.
+    pub keeps_http: bool,
     /// The `Strict-Transport-Security` line for responses on a TLS frontend, or empty.
     pub hsts: Box<[u8]>,
     /// The edit of the request that goes to the server.
@@ -86,6 +89,12 @@ pub struct RoutePolicy {
 }
 
 impl RoutePolicy {
+    /// A policy that only redirects to HTTPS on `port` with status 308: the automatic
+    /// redirect of SID 0021, which then writes the answer of `redirect_https`.
+    pub fn redirect_to(port: u16) -> Self {
+        Self { redirect_https: Some(Redirect { status: 308, port }), ..Self::default() }
+    }
+
     /// True when the policy changes nothing.
     pub fn is_default(&self) -> bool {
         *self == Self::default()
@@ -131,6 +140,7 @@ impl RoutePolicy {
         if let Some(value) = r.take("redirect_https") {
             let path = r.field_path("redirect_https");
             policy.redirect_https = redirect(value, &path)?;
+            policy.keeps_http = policy.redirect_https.is_none();
             if tls && policy.redirect_https.is_some() {
                 return Err(invalid(format!(
                     "{path}: this frontend already serves HTTPS. Hint: put the redirect on \
@@ -373,6 +383,10 @@ mod tests {
         let to = |status, port| Some(Redirect { status, port });
         assert_eq!(redirect(r#"{"redirect_https":true}"#).unwrap(), to(308, 443));
         assert_eq!(redirect(r#"{"redirect_https":false}"#).unwrap(), None);
+        let keeps = |source: &str| parse(source, false).unwrap().keeps_http;
+        assert!(keeps(r#"{"redirect_https":false}"#));
+        assert!(!keeps(r#"{"redirect_https":true}"#) && !keeps(r#"{"max_body":"1k"}"#));
+        assert_eq!(RoutePolicy::redirect_to(8443).redirect_https, to(308, 8443));
         assert_eq!(redirect(r#"{"redirect_https":301}"#).unwrap(), to(301, 443));
         assert_eq!(redirect(r#"{"redirect_https":{"port":8443}}"#).unwrap(), to(308, 8443));
         let both = r#"{"redirect_https":{"status":301,"port":444}}"#;

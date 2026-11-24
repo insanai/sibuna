@@ -20,7 +20,7 @@ path = "src/main.rs"
 
 [features]
 default = ["sqlite", "console", "jlv", "https"]
-https = ["dep:sibuna-ingress"]
+https = ["dep:sibuna-ingress", "dep:sibuna-acme"]
 jlv = ["dep:sibuna-jlv"]
 # Persistent storage (SID 0011). Without either backend the daemon is the in-memory
 # firewall and depends on no external crate.
@@ -45,6 +45,7 @@ console = [
 
 [dependencies]
 sibuna-ingress = { workspace = true, optional = true }
+sibuna-acme = { workspace = true, optional = true }
 sibuna-cidr = { workspace = true }
 sibuna-crypto = { workspace = true }
 sibuna-encoding = { workspace = true }

@@ -2,6 +2,10 @@
 //! Prepare a [`Config`] off the worker, bind all listeners, then call [`Edge::step`] in
 //! the worker loop. Replacing the routing configuration preserves established flows.
 
+mod acme;
+pub use acme::{
+    AcmeChallenge, AcmeOptions, AutomaticHttps, LETSENCRYPT, LETSENCRYPT_STAGING, is_internal_name,
+};
 mod budget;
 pub use budget::{FlowBudget, FlowPermit};
 mod config;
@@ -22,7 +26,7 @@ mod observe;
 mod pool;
 mod proxy;
 mod quick;
-pub use quick::{QuickProtocol, QuickStart};
+pub use quick::{QuickAutomatic, QuickProtocol, QuickStart};
 mod route;
 mod rules;
 mod runtime;

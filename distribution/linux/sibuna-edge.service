@@ -17,6 +17,10 @@ Group=sibuna
 #   sudo -u sibuna sibuna ctl /run/sibuna/edge.sock show servers
 RuntimeDirectory=sibuna
 RuntimeDirectoryMode=0700
+# /var/lib/sibuna holds the account key and the certificates of automatic HTTPS
+# (tls.auto, default storage /var/lib/sibuna/acme).
+StateDirectory=sibuna
+StateDirectoryMode=0700
 UMask=0077
 ExecStartPre=/usr/bin/sibuna check -f /etc/sibuna/edge.jlv
 ExecStart=/usr/bin/sibuna --config-file /etc/sibuna/edge.jlv

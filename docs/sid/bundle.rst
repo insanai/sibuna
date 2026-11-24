@@ -26,5 +26,6 @@ Discussion reading order
    records/0018-simple-setup-and-runtime-configuration
    records/0019-traffic-policy
    records/0020-edge-observability-and-client-identity
+   records/0021-automatic-https
 
 .. sid-generated-end

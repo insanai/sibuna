@@ -23,6 +23,8 @@ pub struct Config {
     pub(crate) reuse_port: bool,
     pub(crate) http: crate::HttpOptions,
     pub(crate) observe: crate::ObserveOptions,
+    /// The `global.acme` object of automatic HTTPS (SID 0021).
+    pub(crate) acme: Option<crate::AcmeOptions>,
     pub(crate) mesh: Option<crate::MeshConfig>,
     pub(crate) listeners: BTreeMap<(Protocol, SocketAddr), Frontend>,
     pub(crate) pools: BTreeMap<String, Backend>,
@@ -216,6 +218,7 @@ impl Config {
             watch,
             shutdown_timeout,
             reuse_port,
+            acme,
         } = global(&mut root)?;
         let mesh = field(root.take_object("mesh"))?.map(crate::MeshConfig::parse).transpose()?;
         let http = field(root.take_object("http"))?.map(crate::HttpOptions::parse).transpose()?;
@@ -237,6 +240,7 @@ impl Config {
             mesh,
             http,
             observe,
+            acme,
             pools: BTreeMap::new(),
             listeners: BTreeMap::new(),
         };
@@ -265,9 +269,16 @@ impl Config {
                 return Err(invalid(format!("HTTP/3 bind {addr} overlaps a UDP listener")));
             }
         }
-        for (name, backend) in &config.pools {
+        config.check_servers()?;
+        config.check_automatic_https()?;
+        Ok(config)
+    }
+
+    /// Refuses a server whose address is one of our own listeners.
+    fn check_servers(&self) -> Result<()> {
+        for (name, backend) in &self.pools {
             for server in &backend.servers {
-                let mut binds = config.listeners.keys();
+                let mut binds = self.listeners.keys();
                 if binds.any(|&bind| is_listener(bind, backend.protocol, server.addr)) {
                     return Err(invalid(format!(
                         "backends.{name}: {} is a frontend",
@@ -276,7 +287,7 @@ impl Config {
                 }
             }
         }
-        Ok(config)
+        Ok(())
     }
 
     /// The backend of a frontend that names none: the only one of its protocol.
@@ -372,6 +383,7 @@ struct Global {
     watch: Option<Duration>,
     shutdown_timeout: Duration,
     reuse_port: bool,
+    acme: Option<crate::AcmeOptions>,
 }
 
 /// Reads `global`: the flow table size, the optional UDP share, the relay threads, the
@@ -384,7 +396,9 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
     let mut watch = None;
     let mut shutdown_timeout = Duration::from_secs(5);
     let mut reuse_port = false;
+    let mut acme = None;
     if let Some(mut global) = field(root.take_object("global"))? {
+        acme = field(global.take_object("acme"))?.map(crate::AcmeOptions::parse).transpose()?;
         if let Some(text) = field(global.take_str("shutdown_timeout"))? {
             shutdown_timeout = duration(text)
                 .filter(|d| *d <= Duration::from_secs(3600))
@@ -422,7 +436,16 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
         };
         field(global.finish())?;
     }
-    Ok(Global { limit, udp_limit, workers, admin_socket, watch, shutdown_timeout, reuse_port })
+    Ok(Global {
+        limit,
+        udp_limit,
+        workers,
+        admin_socket,
+        watch,
+        shutdown_timeout,
+        reuse_port,
+        acme,
+    })
 }
 
 /// One relay thread per available CPU, up to eight.

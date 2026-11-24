@@ -5,10 +5,10 @@
 //! certificate. The DNS names in each leaf select a bundle by the server name of the
 //! handshake, exact names before wildcards.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io::{self, Read};
 use std::path::Path;
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
 use rustls::pki_types::{CertificateDer, PrivateKeyDer, pem::PemObject};
 use rustls::server::{ClientHello, ResolvesServerCert};
@@ -16,6 +16,7 @@ use rustls::sign::CertifiedKey;
 use sibuna_lb::TlsOptions;
 
 use crate::Error;
+use crate::auto::{ACME_TLS, Shared};
 
 const MAX_PEM: usize = 256 * 1024;
 const MAX_BUNDLES: usize = 256;
@@ -125,10 +126,49 @@ fn bundle_paths(crt: &[String]) -> Result<Vec<std::path::PathBuf>, Error> {
 /// certificate, or refuses the handshake under `strict_sni`.
 #[derive(Debug)]
 pub(crate) struct Certificates {
-    default: Arc<CertifiedKey>,
+    default: Option<Arc<CertifiedKey>>,
     exact: HashMap<String, Arc<CertifiedKey>>,
     wildcard: HashMap<String, Arc<CertifiedKey>>,
     strict: bool,
+    managed: Option<Managed>,
+}
+
+/// Where the tables of automatic HTTPS arrive once the daemon runs (SID 0021). An
+/// identity is checked before the daemon exists, so the reference is set later.
+pub(crate) type Tables = Arc<OnceLock<Arc<Shared>>>;
+
+/// The `auto` names of a listener and the tables that hold their certificates.
+struct Managed {
+    names: HashSet<String>,
+    /// The first `auto` name: its certificate is the default of a listener without a
+    /// certificate from a file.
+    first: String,
+    tables: Tables,
+}
+
+impl std::fmt::Debug for Managed {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Managed").field("names", &self.names).finish_non_exhaustive()
+    }
+}
+
+impl Managed {
+    fn new(names: &[String]) -> Option<Self> {
+        let first = names.first()?.clone();
+        Some(Self { names: names.iter().cloned().collect(), first, tables: Tables::default() })
+    }
+
+    /// The automatic certificate of `name`, when the listener manages the name and a
+    /// certificate exists.
+    fn certificate(&self, name: &str) -> Option<Arc<CertifiedKey>> {
+        self.names.contains(name).then(|| self.tables.get()?.certificate(name)).flatten()
+    }
+
+    /// The TLS-ALPN-01 answer for `name`, while an order validates it.
+    fn answer(&self, name: &str) -> Option<Arc<CertifiedKey>> {
+        let name = name.trim_end_matches('.').to_ascii_lowercase();
+        self.names.contains(&name).then(|| self.tables.get()?.alpn_answer(&name)).flatten()
+    }
 }
 
 impl Certificates {
@@ -143,7 +183,11 @@ impl Certificates {
             let bytes = pem(&path)?;
             bundles.push(bundle(&path, &bytes, &bytes)?);
         }
-        let default = bundles.first().cloned().ok_or("a TLS listener needs a certificate")?;
+        let managed = Managed::new(&spec.auto);
+        let default = bundles.first().cloned();
+        if default.is_none() && managed.is_none() {
+            return Err("a TLS listener needs a certificate".into());
+        }
         let mut exact = HashMap::new();
         let mut wildcard = HashMap::new();
         for certified in &bundles {
@@ -157,12 +201,29 @@ impl Certificates {
                 };
             }
         }
-        Ok(Self { default, exact, wildcard, strict: spec.strict_sni })
+        Ok(Self { default, exact, wildcard, strict: spec.strict_sni, managed })
+    }
+
+    /// Where [`crate::Identity::manage`] puts the tables of automatic HTTPS, when the
+    /// listener has `auto` names.
+    pub fn tables(&self) -> Option<Tables> {
+        self.managed.as_ref().map(|managed| managed.tables.clone())
+    }
+
+    /// The certificate for a handshake that names no host we know: the first one from
+    /// a file, or else the certificate of the first `auto` name.
+    fn fallback(&self) -> Option<Arc<CertifiedKey>> {
+        let managed = self.managed.as_ref();
+        self.default.clone().or_else(|| managed.and_then(|m| m.certificate(&m.first)))
     }
 
     fn select(&self, name: Option<&str>) -> Option<Arc<CertifiedKey>> {
-        let Some(name) = name else { return Some(self.default.clone()) };
+        let Some(name) = name else { return self.fallback() };
         let name = name.trim_end_matches('.').to_ascii_lowercase();
+        // An automatic certificate wins over a file once it exists (SID 0021).
+        if let Some(found) = self.managed.as_ref().and_then(|m| m.certificate(&name)) {
+            return Some(found);
+        }
         if let Some(found) = self.exact.get(&name) {
             return Some(found.clone());
         }
@@ -171,12 +232,17 @@ impl Certificates {
         {
             return Some(found.clone());
         }
-        (!self.strict).then(|| self.default.clone())
+        if self.strict { None } else { self.fallback() }
     }
 }
 
 impl ResolvesServerCert for Certificates {
     fn resolve(&self, hello: ClientHello<'_>) -> Option<Arc<CertifiedKey>> {
+        // A certificate authority validates a name with TLS-ALPN-01 (RFC 8737): it gets
+        // the challenge certificate and nothing else.
+        if hello.alpn().is_some_and(|mut offered| offered.any(|protocol| protocol == ACME_TLS)) {
+            return self.managed.as_ref()?.answer(hello.server_name()?);
+        }
         self.select(hello.server_name())
     }
 }

@@ -1346,6 +1346,7 @@ dependencies = [
  "hyper",
  "hyper-util",
  "rustls",
+ "sibuna-acme",
  "sibuna-challenge",
  "sibuna-cidr",
  "sibuna-console",
@@ -1368,6 +1369,16 @@ dependencies = [
  "sibuna-store",
  "tokio",
  "tokio-rustls",
+]
+
+[[package]]
+name = "sibuna-acme"
+version = "1.0.0-beta.3"
+dependencies = [
+ "ring",
+ "sibuna-crypto",
+ "sibuna-encoding",
+ "sibuna-json",
 ]
 
 [[package]]
@@ -1513,6 +1524,7 @@ dependencies = [
  "hyper-util",
  "quinn",
  "rustls",
+ "sibuna-acme",
  "sibuna-crypto",
  "sibuna-encoding",
  "sibuna-lb",
