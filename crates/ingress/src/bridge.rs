@@ -268,12 +268,18 @@ pub(super) async fn h2(
 }
 
 pub(super) async fn exchange(req: Request<Body>, lane: &Arc<Lane>) -> Response<Body> {
+    // The translation writes the request as HTTP/1.1, so the client's protocol is read first.
+    let protocol = match req.version() {
+        Version::HTTP_3 => "h3",
+        Version::HTTP_2 => "h2",
+        _ => "http/1.1",
+    };
     let req = match translate(req) {
         Ok(r) => r,
         Err(code) => return error(code),
     };
     if let Some(inline) = &lane.inline {
-        return crate::inline::exchange(inline, req, lane.peer, lane.vip).await;
+        return crate::inline::exchange(inline, req, lane.peer, lane.vip, protocol).await;
     }
     lane.forward(req).await.unwrap_or_else(|_| error(StatusCode::BAD_GATEWAY))
 }

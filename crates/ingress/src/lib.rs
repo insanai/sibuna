@@ -29,7 +29,7 @@ use tokio_rustls::TlsAcceptor;
 use bridge::Lane;
 pub use egress::Egress;
 use handoff::Handoff;
-pub use inline::{Decide, Forward, Offer, Verdict};
+pub use inline::{Completion, Decide, Forward, Offer, Report, Verdict};
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
 /// Hands one connection to the firewall with its client peer and public destination.
@@ -175,8 +175,21 @@ impl Ingress {
     /// Starts a TLS session on a socket accepted by this listener. The negotiated
     /// protocol selects HTTP/2 or HTTP/1.1. The permit lasts as long as the connection.
     pub fn accept(&self, bind: SocketAddr, stream: TcpStream, permit: FlowPermit) {
+        self.accept_from(bind, stream, permit, None);
+    }
+
+    /// As [`Ingress::accept`], for a connection whose client address is known from a
+    /// PROXY header (SID 0020). `client` then replaces the socket peer.
+    pub fn accept_from(
+        &self,
+        bind: SocketAddr,
+        stream: TcpStream,
+        permit: FlowPermit,
+        client: Option<SocketAddr>,
+    ) {
         let Some(acceptor) = self.listeners.get(&bind).cloned() else { return };
         let (Ok(peer), Ok(vip)) = (stream.peer_addr(), stream.local_addr()) else { return };
+        let peer = client.unwrap_or(peer);
         if stream.set_nonblocking(true).is_err() {
             return;
         }

@@ -61,6 +61,8 @@ pub struct Offer<'a> {
     pub peer: SocketAddr,
     /// The listener the client reached.
     pub vip: SocketAddr,
+    /// The protocol the client speaks: `h2` or `h3`.
+    pub protocol: &'static str,
 }
 
 /// What the firewall decided.
@@ -79,6 +81,41 @@ pub struct Forward {
     pub head: Vec<u8>,
     /// Whatever else must live as long as the exchange, such as a place under a limit.
     pub guard: Box<dyn Any + Send>,
+    /// Told once what became of the exchange (SID 0020).
+    pub report: Option<Box<dyn Report>>,
+}
+
+/// What became of a forwarded exchange.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Completion {
+    /// The status sent to the client: the server's, or 502 or 504 of our own. Zero when
+    /// the exchange ended before a response head.
+    pub status: u16,
+    /// The response body bytes handed to the client's stream.
+    pub bytes_out: u64,
+    /// The wait for the server's response head, or `None` when it sent none.
+    pub first_byte: Option<Duration>,
+}
+
+/// Receives the outcome of a forwarded exchange, for an access log and counters. It is
+/// called once: when the response body ends, or when it is dropped before its end.
+pub trait Report: Send + 'static {
+    /// Takes the outcome. It must not wait: it runs on a thread of the protocol runtime.
+    fn done(self: Box<Self>, completion: &Completion);
+}
+
+/// Carries a [`Report`] through an exchange and delivers it when dropped.
+struct Reporter {
+    report: Option<Box<dyn Report>>,
+    completion: Completion,
+}
+
+impl Drop for Reporter {
+    fn drop(&mut self) {
+        if let Some(report) = self.report.take() {
+            report.done(&self.completion);
+        }
+    }
 }
 
 /// The firewall decision. It must not wait: it runs on a thread of the protocol runtime.
@@ -145,6 +182,7 @@ pub(crate) async fn exchange(
     req: Request<Body>,
     peer: SocketAddr,
     vip: SocketAddr,
+    protocol: &'static str,
 ) -> Response<Body> {
     let (parts, mut body) = req.into_parts();
     let mut head = Vec::with_capacity(512);
@@ -165,6 +203,7 @@ pub(crate) async fn exchange(
         declared,
         peer,
         vip,
+        protocol,
     };
     match inline.decide.decide(&offer) {
         Verdict::Answer(bytes) => answer(&bytes),
@@ -294,9 +333,15 @@ async fn send(
     body: Body,
     retryable: bool,
 ) -> Response<Body> {
-    let Forward { target, head, guard } = forward;
+    let Forward { target, head, guard, report } = forward;
+    let mut reporter = Reporter { report, completion: Completion::default() };
+    // A response of our own for a failed server. The reporter is dropped with it.
+    let mut refuse = |status: StatusCode| {
+        reporter.completion.status = status.as_u16();
+        error(status)
+    };
     let Some(request) = parse_request(&head, body) else {
-        return error(StatusCode::BAD_GATEWAY);
+        return refuse(StatusCode::BAD_GATEWAY);
     };
     let address = target.address();
     let started = Instant::now();
@@ -305,15 +350,24 @@ async fn send(
         Ok(Ok(exchange)) => exchange,
         Ok(Err(Fault::Connect)) => {
             target.failed();
-            return error(StatusCode::BAD_GATEWAY);
+            return refuse(StatusCode::BAD_GATEWAY);
         }
-        Ok(Err(Fault::Exchange)) => return error(StatusCode::BAD_GATEWAY),
-        Err(_) => return error(StatusCode::GATEWAY_TIMEOUT),
+        Ok(Err(Fault::Exchange)) => return refuse(StatusCode::BAD_GATEWAY),
+        Err(_) => return refuse(StatusCode::GATEWAY_TIMEOUT),
     };
     strip_hop_fields(response.headers_mut());
     let (parts, body) = response.into_parts();
-    let done =
-        Done { inline: Arc::clone(inline), address, sender, target, started, _guard: guard };
+    reporter.completion.status = parts.status.as_u16();
+    reporter.completion.first_byte = Some(started.elapsed());
+    let done = Done {
+        inline: Arc::clone(inline),
+        address,
+        sender,
+        target,
+        started,
+        _guard: guard,
+        reporter,
+    };
     if body.is_end_stream() {
         done.finish();
         return Response::from_parts(parts, empty());
@@ -331,6 +385,8 @@ struct Done {
     target: HttpTarget,
     started: Instant,
     _guard: Box<dyn Any + Send>,
+    /// Delivers the outcome when the exchange is dropped, finished or not.
+    reporter: Reporter,
 }
 
 impl Done {
@@ -379,6 +435,11 @@ impl HttpBody for Tracked {
         }
         self.waiting = false;
         // A length-framed body is complete before its consumer polls for the end.
+        if let (Poll::Ready(Some(Ok(frame))), Some(done)) = (&frame, self.done.as_mut())
+            && let Some(data) = frame.data_ref()
+        {
+            done.reporter.completion.bytes_out += data.len() as u64;
+        }
         let ended = matches!(frame, Poll::Ready(None))
             || (matches!(frame, Poll::Ready(Some(Ok(_)))) && self.body.is_end_stream());
         if ended && let Some(done) = self.done.take() {
