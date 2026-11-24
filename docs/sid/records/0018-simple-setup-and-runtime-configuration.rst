@@ -7,7 +7,7 @@
 :sid-created: 2026-11-24
 :sid-updated: 2026-11-24
 :sid-discussion: No external discussion URL assigned
-:sid-summary: Starts the edge load balancer with one command and no file, prints the equivalent JLV module, and changes servers at run time through a local admin socket while the file stays the authority.
+:sid-summary: Starts the edge load balancer with one command and no file, prints the equivalent JLV module, changes servers at run time through a local admin socket while the file stays the authority, and makes a reload fail no request.
 :sid-labels: ["architecture","load-balancer","operations","configuration"]
 
 Simple Setup and Run-Time Configuration of the Edge
@@ -118,10 +118,13 @@ Two keys join the ``global`` object.
      - Meaning
    * - ``admin_socket``
      - none
-     - The path of the admin socket. Without it no socket is opened. Changing the path takes a restart.
+     - The path of the admin socket, at most 86 bytes. Without it no socket is opened. Changing the path takes a restart.
    * - ``watch``
      - none
      - A duration of 1 s to 1 h. The daemon looks at the file at this interval and reloads it when it changed. A reload may turn the watcher on, off or change its interval.
+   * - ``shutdown_timeout``
+     - ``"5s"``
+     - How long a shutdown waits for established flows before it closes them, up to 1 h. SID 0015 fixed this at five seconds.
 
 The admin socket
 ~~~~~~~~~~~~~~~~
@@ -154,8 +157,10 @@ A connection carries one command. The client sends one line of at most 512 bytes
      - Removes a server from a pool. Its established flows finish. The last server of a pool cannot be removed. We drain it instead.
    * - ``reload``
      - Loads the file and applies it, as SIGHUP does. The answer is ``ok`` after the new revision serves, or the reason for which it was rejected.
+   * - ``help``
+     - Lists the commands.
 
-``set server ... weight``, ``add server`` and ``del server`` are refused for two kinds of pool. A pool with ``bounded_maglev``, or any pool of a node with a ``mesh``, places clients by a table that every node builds from the file. A node that changed its table alone would send a client to a different server than its peers do. A pool with ``http_version`` or ``tls`` reaches its servers through protocol adapters that a reload prepares. For both kinds we edit the file and reload. ``drain`` works for every pool, because each node already excludes servers by its own health checks.
+``set server ... weight``, ``add server`` and ``del server`` are refused for two kinds of pool. A pool with ``bounded_maglev``, and the default pool of a node with a ``mesh``, place clients by a table that every node builds from the file. A node that changed its table alone would send a client to a different server than its peers do. A pool with ``http_version`` or ``tls`` reaches its servers through protocol adapters that a reload prepares. For both kinds we edit the file and reload. ``drain`` works for every pool, because each node already excludes servers by its own health checks.
 
 HAProxy distinguishes ``drain`` from ``maint`` by session persistence and by health checks. The edge has no persistence that a drain could honor, so one state suffices.
 
@@ -269,6 +274,48 @@ Every load records the stamp it read, whoever asked for it. After SIGHUP or ``re
 
 The watcher is off by default. A signal or ``sibuna ctl SOCKET reload`` after ``sibuna check -f`` is the safer habit: the operator sees the result. The watcher suits a file that a deployment tool replaces by rename.
 
+A reload fails no request
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+SID 0015 binds each HTTP request to a policy generation. The firewall decides the request under the engine of generation :math:`n`, and the route table then selects a server only if its revision is also :math:`n`. A reload publishes the routes of revision :math:`n+1` and then the engine of generation :math:`n+1`. A request whose decision began before the reload and whose selection came after it met a table of another revision and was answered 503. A test of 49,522 requests during 30 reloads counted 32 such answers.
+
+The route table now keeps the routes and pools of the revision that a reload replaced, for ten seconds. A request of generation :math:`n` that arrives at a table of revision :math:`n+1` is routed by the kept revision :math:`n`. The invariant of SID 0015 holds in a stronger form: a request is routed by the revision it was decided under, where before it was refused. A request two revisions behind is still refused. The kept pools share the load records of the serving pools, so the flow counts of a server stay whole. The protocol adapters of the replaced revision close after the engine is published, not before.
+
+A run-time command changes no revision, so it cannot cause this refusal.
+
+Startup failures
+~~~~~~~~~~~~~~~~
+
+A failure to start prints a diagnostic with a title rule, the cause and a hint. All carry the code ``EDGE001``, which the single line of SID 0015 had.
+
+.. list-table:: Startup diagnostics
+   :header-rows: 1
+   :widths: 34 66
+
+   * - Title
+     - Cause and hint
+   * - ``CONFIGURATION FILE NOT FOUND``
+     - The path after ``--config-file`` or ``check -f`` holds no file. The hint names ``--print-config``.
+   * - ``ADDRESS IN USE``
+     - A listener address is taken. The message names the listener. The hint names ``ss -ltnp``.
+   * - ``ADDRESS NOT AVAILABLE``
+     - A listener address is not an address of the host.
+   * - ``PERMISSION DENIED``
+     - A bind was refused. The hint names ``CAP_NET_BIND_SERVICE`` and the packaged unit.
+   * - ``CERTIFICATE NOT LOADED``
+     - A PEM file is missing, unreadable or malformed. The hint shows how to build a combined PEM file.
+   * - ``INVALID CONFIGURATION``
+     - The topology checks rejected a key, which the message names.
+   * - ``FILE NOT READABLE``
+     - Another file of the topology, such as the policy, is missing or unreadable.
+   * - ``EDGE NOT STARTED``
+     - Any other cause.
+
+The systemd unit
+~~~~~~~~~~~~~~~~
+
+The Linux packages install ``sibuna-edge.service`` beside ``sibuna.service`` and start neither. The unit of the classic listener has an empty capability set and cannot bind port 80 or 443. The edge unit runs ``sibuna --config-file /etc/sibuna/edge.jlv`` as the account ``sibuna`` with the ambient capability ``CAP_NET_BIND_SERVICE`` and no other. It sets ``LimitNOFILE=65536``, ``RuntimeDirectory=sibuna`` with mode 0700 for the admin socket, ``Restart=on-failure`` after five seconds, and the hardening options of the existing unit. ``ExecStartPre`` and the first ``ExecReload`` run ``sibuna check -f``, and the second ``ExecReload`` sends SIGHUP, so a file that fails the check is neither started nor applied.
+
 The client
 ~~~~~~~~~~
 
@@ -330,7 +377,51 @@ Existing files, the ``--config-file`` option, ``sibuna check -f`` and SIGHUP kee
 Acceptance criteria and implementation status
 ---------------------------------------------
 
-This is a proposal. Nothing is implemented yet. We require unit tests for the document writer, the command parser and the pool operations, and a test that starts the binary, serves through the quick start, and exercises drain, add, remove, weight and the reload rule through ``sibuna ctl``.
+The record is implemented on Linux as specified. The table lists the evidence.
+
+.. list-table:: Evidence
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Criterion
+     - Evidence
+   * - The quick start and the file are one mechanism.
+     - ``QuickStart::config`` parses the JSON form with ``Config::parse``. ``crates/jlv/tests/quick.rs`` compiles the printed modules, with and without a comprehension, and with a path that needs escaping. ``the_printed_configuration_passes_the_check`` passes the printed module to ``sibuna check -f``.
+   * - One command serves traffic without a file.
+     - ``the_quick_start_serves_without_a_file_and_takes_commands`` starts ``sibuna lb``, sends requests and reads the tags of two servers.
+   * - Drain, weight, add and remove apply to new flows only.
+     - ``crates/lb/tests/runtime.rs`` holds exchanges across each change and checks which server they and the next ones have. The binary test repeats it through ``sibuna ctl``.
+   * - A reload returns to the file and keeps drains.
+     - ``a_reload_returns_to_the_file_and_keeps_the_drain`` drains, weighs and adds, reloads through the socket, rejects a broken file, and reloads by SIGHUP a file that moves the drained name to another address.
+   * - Every bad input is answered and changes nothing.
+     - ``mistakes_on_the_socket_are_answered_and_change_nothing`` receives ``ADM001`` to ``ADM008``, sends a line of 600 bytes on a raw socket, and starts a second daemon on the same socket path. Unit tests cover the parser, the wire form and the token bucket.
+   * - The socket has mode 0600.
+     - The quick-start test reads the mode of the socket file.
+   * - One edit causes one reload.
+     - ``the_watcher_reloads_a_replaced_file_once`` replaces the file, waits for the reload and finds one reload after two more intervals.
+   * - A reload fails no request.
+     - ``reloads_and_commands_under_load_fail_no_request`` runs four clients during 30 reloads and 30 drains. It failed with 32 of 49,522 requests before the change and passed with about 50,000 requests in each of three runs after it. ``a_request_decided_before_a_reload_is_routed_by_its_revision`` checks the rule in the library.
+   * - Shutdown waits as long as the file says.
+     - ``shutdown_waits_for_flows_as_long_as_the_file_says`` holds one flow open with a one-second timeout and measures the wait.
+   * - Startup failures are explained.
+     - ``startup_failures_are_explained_with_a_hint`` provokes an address in use, a missing file, a missing certificate and an invalid file.
+
+Known gaps
+~~~~~~~~~~
+
+#. The admin socket changes servers only. Frontends, routes, certificates, limits and policy change by reload.
+#. Run-time changes do not survive a restart. A drain cannot be written in the file.
+#. Pools placed by a Maglev table and pools behind protocol adapters take ``drain`` only.
+#. A server name with a space, and a pool name with a slash, cannot be written in a command. Such servers are changed in the file.
+#. The path of the socket is limited to 86 bytes, because the private directory lengthens the path that is bound.
+#. During the ten seconds after a reload, a request of the replaced generation is routed by the pools of the replaced revision. A drain commanded in those seconds does not reach those pools. The lookups for the firewall switch and the WebSocket rule of such a request read the new revision.
+#. Two reloads within the decision time of one request still refuse that request.
+#. A server added at run time starts in service before its first health probe, as a server of the file does.
+#. The watcher compares the modification time and the length. Two writes of equal length within the resolution of the file system's clock look like one.
+#. ``show servers`` has one text form.
+#. The admin socket and the rename of a bound socket are tested on Linux only. Other systems than Unix have no admin socket.
+#. The package scripts list the new unit. No package was built or installed in this work.
+#. The chapter of the book teaches JLV in its first sections and in every new section. Its older examples of single keys remain JSON, which is also valid JLV after ``return``.
 
 Formal model
 ~~~~~~~~~~~~
@@ -343,12 +434,15 @@ Open questions
 #. Should the file have a ``state`` key for a server, so that a drain can be made durable in the source?
 #. Should ``show servers`` have a JSON form?
 #. Should a mesh carry a drain to the other nodes?
+#. Should the socket accept changes to routes, so that a canary needs no reload?
 
 Review history
 --------------
 
 - 2026-11-24. Initial draft: quick start through the file parser, shorter defaults, a Unix admin socket with one command per connection, run-time changes replaced by a reload.
 - 2026-11-24. Author's review of the design. It found seven faults and changed the record for each. A reload returned a drained server to rotation; drains now pass a reload. Setting the socket's mode after ``bind`` left a window; the socket is now bound in a private directory and renamed. ``reload`` reported only in the log; it is now synchronous. A run-time weight would have rebuilt a Maglev table on one node of a mesh; such pools now change only by reload, as do pools behind protocol adapters. ``maint`` had no meaning apart from ``drain``; it is now a synonym. The watcher could load a half-written file and reload twice after SIGHUP; it now waits for a stable stamp and shares the stamp of the last load. ``del server`` could empty a pool; the last server now stays. The review also added the error table, the bounds on names, the behavior without a file, and the decision on the formal model.
+- 2026-11-24. Implementation and its review. The owner asked that JLV be the form we teach; the quick start prints JLV, and the first topology of the book is a module. The review of the implementation found six defects, all fixed. The private directory made the bound path longer than the final one, and a long path failed with an obscure error; the path is now limited to 86 bytes with a message that says so. Closing the socket with unread input reset the client before it read an error; the daemon now ends its answer and takes the rest of the input for a moment. The rate limit answered before it read the line, with the same effect; it now reads first. ``reload`` in a daemon without a file advised to check a file; it has its own hint. Adding and removing servers left load records until the next reload; removal now prunes them. The mesh rule was stated for every pool of a mesh node; it holds for pools placed by a table. The review added ``help`` and recorded the known gaps.
+- 2026-11-24. Production audit. Four findings were taken into this record: the 503 answers of a reload under load, which were measured and removed; the fixed shutdown time, now ``global.shutdown_timeout``; the single line of a startup failure, now a diagnostic per cause; and the missing unit for edge mode, now packaged.
 
 References
 ----------
