@@ -8,7 +8,7 @@ use sibuna_net::ProxyError;
 use sibuna_net::machine::{Fed, Outcome, ResponseRelay};
 use sibuna_reactor::{Io, READ, handle, read_once as read, start_connect, write_once as write};
 
-use super::conn::{BUFFER, Exchange, HIGH_WATER, Origin};
+use super::conn::{BUFFER, Exchange, HIGH_WATER, Linger, Origin};
 use super::worker::{KEPT_CAPACITY, KIND_ORIGIN, Side, Worker, key};
 use crate::client_writer::ClientWriter;
 use crate::dispatch::{Plan, answer_proxy_error};
@@ -371,14 +371,21 @@ impl Worker {
             return false;
         };
         let unanswered = matches!(exchange.relay.end_of_stream(), Err(ProxyError::UpstreamClosed));
-        let again = unanswered && exchange.pooled && exchange.retryable && !exchange.retried;
-        if !again {
+        let lost = sibuna_net::Lost {
+            unanswered,
+            pooled: exchange.pooled,
+            retryable: exchange.retryable,
+            retried: exchange.retried,
+        };
+        // The rule is shared with the thread path (SID 0019).
+        let recovery = sibuna_net::recover(lost);
+        if recovery != sibuna_net::Recovery::Reconnect {
             if !exchange.pooled {
                 exchange.target.failed();
             }
             // The server answered nothing, and the request is safe and still held whole,
-            // so another server may serve it (SID 0019).
-            if unanswered && exchange.retryable && self.move_on(index) {
+            // so another server may serve it.
+            if recovery == sibuna_net::Recovery::Move && self.move_on(index) {
                 return false;
             }
             self.fail(index, ProxyError::UpstreamReadFailed);
@@ -466,15 +473,23 @@ impl Worker {
 
     /// Ends the exchange with a page of Sibuna's own and closes after it.
     fn respond(&mut self, index: u32, page: impl FnOnce(&mut Page<'_>) -> std::io::Result<()>) {
-        self.server.metrics.upstream_errors.bump();
         let now = self.now;
         let Some(conn) = self.conns.at(index) else { return };
         let Some(exchange) = conn.exchange.take() else { return };
         let mut writer = ClientWriter::new(&mut conn.output);
         writer.begin_response(exchange.head_request);
+        let hsts = conn.ingress.secure && !exchange.target.route().hsts.is_empty();
+        writer.set_own(hsts.then(|| exchange.target.route_shared()));
         // Writing to a vector cannot fail.
         let _ = page(&mut writer);
-        super::trace::answered(&self.server, &mut conn.trace, writer.tally(), now);
+        let tally = writer.tally();
+        if crate::traffic::refused_body(tally.status) {
+            // The client sent too much. No server failed, and the client may still send.
+            conn.linger = Linger::Wanted;
+        } else {
+            self.server.metrics.upstream_errors.bump();
+        }
+        super::trace::answered(&self.server, &mut conn.trace, tally, now);
         conn.closing = true;
         conn.activity = now;
         if let Some(at) = exchange.origin {

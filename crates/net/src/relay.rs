@@ -46,8 +46,21 @@ impl Progress<'_> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Moved {
     ReadFailed,
+    /// The source sent nothing for the read timeout of its socket.
+    Silent,
     WriteFailed,
     EndOfStream,
+}
+
+/// True when a read ended at the read timeout of its socket.
+fn is_timeout(error: &ReadError) -> bool {
+    use std::io::ErrorKind::{TimedOut, WouldBlock};
+    matches!(error, ReadError::Io(error) if matches!(error.kind(), TimedOut | WouldBlock))
+}
+
+/// The error of a failed origin read after the response head was relayed.
+fn body_read_error(error: &ReadError) -> ProxyError {
+    if is_timeout(error) { ProxyError::UpstreamStalled } else { ProxyError::UpstreamTruncated }
 }
 
 /// Forwards up to `limit` bytes the source already holds. When it holds none, flushes the
@@ -63,6 +76,7 @@ pub(crate) fn step<R: Read, W: Write + ?Sized>(
         match source.fill_more() {
             Ok(_) => {}
             Err(ReadError::EndOfStream) => return Err(Moved::EndOfStream),
+            Err(error) if is_timeout(&error) => return Err(Moved::Silent),
             Err(_) => return Err(Moved::ReadFailed),
         }
     }
@@ -85,6 +99,7 @@ pub(crate) fn copy_exact<R: Read, W: Write + ?Sized>(
     while left > 0 {
         let moved = step(origin, client, left).map_err(|moved| match moved {
             Moved::WriteFailed => ProxyError::ClientFailed,
+            Moved::Silent => ProxyError::UpstreamStalled,
             Moved::ReadFailed | Moved::EndOfStream => ProxyError::UpstreamTruncated,
         })?;
         progress.touch();
@@ -104,6 +119,7 @@ pub(crate) fn copy_remaining<R: Read, W: Write + ?Sized>(
             Ok(_) => progress.touch(),
             Err(Moved::EndOfStream) => return Ok(()),
             Err(Moved::WriteFailed) => return Err(ProxyError::ClientFailed),
+            Err(Moved::Silent) => return Err(ProxyError::UpstreamStalled),
             Err(Moved::ReadFailed) => return Err(ProxyError::UpstreamTruncated),
         }
     }
@@ -126,7 +142,7 @@ fn buffer_line<R: Read, W: Write + ?Sized>(
             return Err(ProxyError::UpstreamTruncated);
         }
         client.flush().map_err(|_| ProxyError::ClientFailed)?;
-        origin.fill_more().map_err(|_| ProxyError::UpstreamTruncated)?;
+        origin.fill_more().map_err(|error| body_read_error(&error))?;
         progress.touch();
     }
 }
@@ -201,7 +217,7 @@ pub(crate) fn relay_body<R: Read, W: Write + ?Sized>(
     while left > 0 {
         let moved = step(client, origin, left).map_err(|moved| match moved {
             Moved::WriteFailed => ProxyError::UpstreamWriteFailed,
-            Moved::ReadFailed | Moved::EndOfStream => ProxyError::ClientFailed,
+            Moved::ReadFailed | Moved::Silent | Moved::EndOfStream => ProxyError::ClientFailed,
         })?;
         left -= moved as u64;
         credit += moved;
@@ -216,18 +232,25 @@ pub(crate) fn relay_body<R: Read, W: Write + ?Sized>(
 /// Sends the rest of a chunked request body. Each read is decoded in place and forwarded as
 /// one canonical chunk, so chunk boundaries at the origin follow arrival, never the client's
 /// choice (SID 0009). The last chunk is written only when the body ends; a framing error
-/// leaves the origin with a truncated body.
+/// leaves the origin with a truncated body. So does a body of more than `room` decoded
+/// bytes, which ends with [`ProxyError::BodyTooLarge`] (SID 0019).
 pub(crate) fn relay_chunked_body<R: Read, W: Write + ?Sized>(
     client: &mut Reader<'_, R>,
     origin: &mut W,
     decoder: &mut Decoder,
     progress: Progress<'_>,
+    room: Option<u64>,
 ) -> Result<(), ProxyError> {
     let mut credit = 0;
+    let mut carried = 0u64;
     loop {
         let raw = client.buffered_mut();
         let decoded = decoder.decode(raw).map_err(|_| ProxyError::MalformedRequestBody)?;
         let data = raw.get(..decoded.output).unwrap_or_default();
+        carried += data.len() as u64;
+        if room.is_some_and(|room| carried > room) {
+            return Err(ProxyError::BodyTooLarge);
+        }
         write_chunk(origin, data).map_err(|_| ProxyError::UpstreamWriteFailed)?;
         client.consume(decoded.consumed);
         credit += decoded.consumed;
@@ -254,6 +277,8 @@ pub(crate) struct Relayed {
     /// The origin socket is at a clean message boundary and may be pooled for another
     /// request (see [`relay_response`]).
     pub(crate) origin_reusable: bool,
+    /// The status of the final response head; 101 for an accepted upgrade.
+    pub(crate) status: u16,
 }
 
 /// Buffers origin bytes until the blank line; returns the head length. The search resumes
@@ -278,6 +303,7 @@ pub(crate) fn read_response_head<R: Read>(
         match origin.fill(length + 1) {
             Ok(()) => progress.touch(),
             Err(ReadError::EndOfStream) if length == 0 => return Err(ProxyError::UpstreamClosed),
+            Err(error) if is_timeout(&error) => return Err(ProxyError::UpstreamSilent),
             Err(_) => return Err(ProxyError::UpstreamReadFailed),
         }
     }
@@ -327,6 +353,7 @@ pub(crate) fn client_head_error(error: std::io::Error) -> ProxyError {
 /// hand them to the next user of the pool as its response. Bodyless responses (HEAD, 204,
 /// 304) are never pooled, because an origin that wrongly sends a body after them does so
 /// after an unknown delay, which no check at this point can see.
+#[cfg(test)]
 pub(crate) fn relay_response<R: Read, W: Write + ?Sized>(
     origin: &mut Reader<'_, R>,
     client: &mut W,
@@ -334,6 +361,21 @@ pub(crate) fn relay_response<R: Read, W: Write + ?Sized>(
     client_keep_alive: bool,
     audit: &mut Audit<'_>,
     progress: Progress<'_>,
+) -> Result<Relayed, ProxyError> {
+    let edit = audit.response_edit;
+    relay_response_edited(origin, client, head_request, client_keep_alive, audit, progress, &edit)
+}
+
+/// As [`relay_response`], with the edit of the response head given apart from `audit`.
+/// A caller whose server may change gives the edit of the server that answered.
+pub(crate) fn relay_response_edited<R: Read, W: Write + ?Sized>(
+    origin: &mut Reader<'_, R>,
+    client: &mut W,
+    head_request: bool,
+    client_keep_alive: bool,
+    audit: &mut Audit<'_>,
+    progress: Progress<'_>,
+    edit: &crate::HeadEdit<'_>,
 ) -> Result<Relayed, ProxyError> {
     let head_length = final_response_head(origin, client, progress)?;
     let head = origin.buffered().get(..head_length).unwrap_or_default();
@@ -343,13 +385,13 @@ pub(crate) fn relay_response<R: Read, W: Write + ?Sized>(
     }
     audit.report(parsed.status, head);
     let keep = client_keep_alive && parsed.framing != Framing::UntilClose;
-    if audit.response_edit.is_empty() {
+    if edit.is_empty() {
         write_client_head(client, head, keep).map_err(client_head_error)?;
     } else {
         // An edited head is built in memory first, because the edit reads it whole.
         let mut edited = Vec::with_capacity(head.len() + 128);
         write_client_head(&mut edited, head, keep).map_err(client_head_error)?;
-        audit.response_edit.apply(&mut edited, 0);
+        edit.apply(&mut edited, 0);
         client.write_all(&edited).map_err(|_| ProxyError::ClientFailed)?;
     }
     origin.consume(head_length);
@@ -362,7 +404,7 @@ pub(crate) fn relay_response<R: Read, W: Write + ?Sized>(
     client.flush().map_err(|_| ProxyError::ClientFailed)?;
     let framed = matches!(parsed.framing, Framing::Length(_) | Framing::Chunked);
     let origin_reusable = parsed.keep_alive && framed && origin.buffered_len() == 0;
-    Ok(Relayed { client_keep: keep, origin_reusable })
+    Ok(Relayed { client_keep: keep, origin_reusable, status: parsed.status })
 }
 
 #[cfg(test)]

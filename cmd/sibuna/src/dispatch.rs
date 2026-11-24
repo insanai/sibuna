@@ -422,13 +422,12 @@ pub(crate) fn forward<W: Write>(
     if ctx.defer.is_some() {
         return plan(ctx, status, rule_name, selected, tunnel);
     }
-    if ctx.request.header(b"upgrade").is_some() {
-        // An upgraded connection may live for hours; it must not pin this snapshot.
-        ctx.cache.release();
-    }
+    release_for_upgrade(ctx);
     // Only a planned request has no client socket, and it returned above.
     let Some(stream) = ctx.stream else { return Ok(false) };
     let config = &server.config;
+    // The policy outlives the reservation, which changes when the request moves.
+    let policy = selected.as_ref().map(sibuna_lb::HttpTarget::route_shared);
     let mut origin_status = 0u16;
     let status_sink = telemetry::origin_status_sink(ctx, &mut origin_status);
     // A capture buffer only when audit findings wait for the origin's head (console).
@@ -469,20 +468,33 @@ pub(crate) fn forward<W: Write>(
             },
             response_status: status_sink,
             response_head: head_sink,
-            ..crate::traffic::audit(&ctx.request, ctx.ingress, selected.as_ref())
+            ..crate::traffic::audit(&ctx.request, ctx.ingress, policy.as_deref())
         },
         keep_alive: ctx.keep_alive,
     };
-    let relayed = relay(&server.pool, ctx.workspace, exchange, selected.as_ref());
+    let (relayed, ended) = relay(server, ctx.workspace, exchange, selected);
+    // The log names the server that ended the request (SID 0020).
+    crate::access::selected(ctx, ended.as_ref());
     telemetry::admitted_complete(ctx, origin_status, origin.as_ref());
     // The tunnel has ended by now, so its place under the rule is free.
     drop(tunnel);
     relayed.or_else(|error| refuse_proxy_error(ctx, error))
 }
 
+/// Lets go of the policy snapshot before an upgrade. An upgraded connection may live for
+/// hours; it must not pin the snapshot.
+fn release_for_upgrade<W>(ctx: &mut Ctx<'_, W>) {
+    if ctx.request.header(b"upgrade").is_some() {
+        ctx.cache.release();
+    }
+}
+
 /// Counts a failed exchange and answers it. The connection closes after the answer.
 fn refuse_proxy_error<W: Write>(ctx: &mut Ctx<'_, W>, error: ProxyError) -> io::Result<bool> {
-    ctx.server.metrics.upstream_errors.bump();
+    // A body above the bound of its route is the client's fault, not the server's.
+    if error != ProxyError::BodyTooLarge {
+        ctx.server.metrics.upstream_errors.bump();
+    }
     crate::access::relay_failed(ctx);
     answer_proxy_error(ctx.writer, error)?;
     Ok(false)
@@ -542,7 +554,7 @@ fn plan<W: Write>(
         response_status: None,
         response_head: None,
         // The response edit is unused here: a worker edits the head when it relays it.
-        ..crate::traffic::audit(&ctx.request, ctx.ingress, Some(&target))
+        ..crate::traffic::audit(&ctx.request, ctx.ingress, Some(target.route()))
     };
     let Some(defer) = ctx.defer.as_deref_mut() else { return Ok(false) };
     defer.wire.clear();
@@ -595,24 +607,23 @@ fn select_origin<W>(ctx: &Ctx<'_, W>) -> Result<Selected, Status> {
         .ok_or(Status::ServiceUnavailable)
 }
 
+/// Relays an admitted request on the thread path. A request with a reservation goes
+/// to its server under the bounds of the pool and moves to another server when that one
+/// fails (SID 0019). Returns the outcome and the reservation of the last server.
 fn relay<W: Write>(
-    pool: &sibuna_net::Pool,
+    server: &crate::server::Server,
     workspace: &mut sibuna_net::Workspace,
     exchange: Exchange<'_, W>,
-    selected: Option<&sibuna_lb::HttpTarget>,
-) -> Result<bool, ProxyError> {
-    if let Some(target) = selected {
-        let start = std::time::Instant::now();
-        let result = sibuna_net::stream_proxy_to(pool, workspace, exchange, target.address());
-        match &result {
-            Ok(_) => target.completed(start),
-            Err(ProxyError::UpstreamUnreachable) => target.failed(),
-            _ => {}
-        }
-        result
-    } else {
-        sibuna_net::stream_proxy(pool, workspace, exchange)
-    }
+    selected: Option<sibuna_lb::HttpTarget>,
+) -> (Result<bool, ProxyError>, Option<sibuna_lb::HttpTarget>) {
+    let Some(target) = selected else {
+        return (sibuna_net::stream_proxy(&server.pool, workspace, exchange), None);
+    };
+    let start = std::time::Instant::now();
+    let mut route = crate::traffic::Moving::new(server, target);
+    let result = sibuna_net::stream_proxy_routed(&server.pool, workspace, exchange, &mut route);
+    let ended = route.settle(&result, start);
+    (result, Some(ended))
 }
 
 pub(crate) fn answer_proxy_error<W: Write>(writer: &mut W, error: ProxyError) -> io::Result<()> {
@@ -627,9 +638,18 @@ pub(crate) fn answer_proxy_error<W: Write>(writer: &mut W, error: ProxyError) ->
         ProxyError::MalformedRequestBody => {
             response::write_400(writer, b"Malformed chunked request body")
         }
+        ProxyError::UpstreamSilent => {
+            let text = b"Gateway Timeout: the server did not answer in time";
+            response::write_text(writer, Status::GatewayTimeout, text, false)
+        }
+        ProxyError::BodyTooLarge => {
+            let status = Status::PayloadTooLarge;
+            response::write_text(writer, status, status.reason().as_bytes(), false)
+        }
         ProxyError::UpstreamWriteFailed
         | ProxyError::UpstreamClosed
         | ProxyError::UpstreamTruncated
+        | ProxyError::UpstreamStalled
         | ProxyError::ClientFailed => Ok(()),
     }
 }

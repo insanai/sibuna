@@ -21,6 +21,7 @@ use std::collections::HashMap;
 use std::future::Future;
 use std::net::SocketAddr;
 use std::pin::Pin;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock, PoisonError};
 use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
@@ -34,6 +35,7 @@ use hyper::header::{self, HeaderName, HeaderValue};
 use hyper::{Method, Request, Response, StatusCode, Version};
 use hyper_util::rt::TokioIo;
 use sibuna_lb::HttpTarget;
+use sibuna_net::{Lost, Recovery};
 use tokio::time::timeout;
 
 use crate::bridge::{Body, empty, error, strip_hop_fields};
@@ -294,7 +296,8 @@ pub(crate) async fn exchange(
             } else {
                 Prefixed { first: prefix, rest: body }.boxed_unsync()
             };
-            send(inline, forward, body, Sending { retryable, trailers }).await
+            let flow = Arc::default();
+            send(inline, forward, body, Sending { retryable, trailers, flow }).await
         }
     }
 }
@@ -341,12 +344,85 @@ fn arrived(body: &mut Body, budget: usize) -> Result<(Vec<u8>, bool), Error> {
 }
 
 /// How an admitted request is sent.
-#[derive(Clone, Copy)]
 struct Sending {
     /// The request may be sent again on a fresh connection.
     retryable: bool,
     /// The client accepts trailers.
     trailers: bool,
+    /// What the upload of the request has done so far.
+    flow: Arc<Flow>,
+}
+
+/// The progress of one upload, shared by the request body and the wait for the server.
+#[derive(Default)]
+struct Flow {
+    /// Body bytes that the connection to the server has taken.
+    moved: AtomicU64,
+    /// The body passed the `max_body` of its route.
+    over: AtomicBool,
+}
+
+impl Flow {
+    fn is_over(&self) -> bool {
+        self.over.load(Ordering::Relaxed)
+    }
+
+    /// Waits for `exchange`, which sends a request and yields the response head. Returns
+    /// `None` when `limit` passed without the head and without a byte of the upload
+    /// taken. An upload that moves is not the silence of the server (SID 0019), so a
+    /// long upload does not end at the response bound.
+    async fn bounded<F: Future>(&self, exchange: F, limit: Duration) -> Option<F::Output> {
+        tokio::pin!(exchange);
+        let mut seen = self.moved.load(Ordering::Relaxed);
+        loop {
+            if let Ok(output) = timeout(limit, &mut exchange).await {
+                return Some(output);
+            }
+            let moved = self.moved.load(Ordering::Relaxed);
+            if moved == seen {
+                return None;
+            }
+            seen = moved;
+        }
+    }
+}
+
+/// A request body that reports its progress and ends with an error when it carries more
+/// than `room` bytes (SID 0019). The error resets the request to the server.
+struct Watched {
+    body: Body,
+    flow: Arc<Flow>,
+    room: Option<u64>,
+}
+
+impl HttpBody for Watched {
+    type Data = Bytes;
+    type Error = Error;
+
+    fn poll_frame(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Option<Result<Frame<Bytes>, Error>>> {
+        let frame = Pin::new(&mut self.body).poll_frame(cx);
+        if let Poll::Ready(Some(Ok(frame))) = &frame
+            && let Some(data) = frame.data_ref()
+        {
+            let moved = self.flow.moved.fetch_add(data.len() as u64, Ordering::Relaxed);
+            if self.room.is_some_and(|room| moved + data.len() as u64 > room) {
+                self.flow.over.store(true, Ordering::Relaxed);
+                return Poll::Ready(Some(Err("the request body is too large".into())));
+            }
+        }
+        frame
+    }
+
+    fn is_end_stream(&self) -> bool {
+        self.body.is_end_stream()
+    }
+
+    fn size_hint(&self) -> SizeHint {
+        self.body.size_hint()
+    }
 }
 
 /// Reads body frames until `budget` bytes are held or the body ends. Returns the bytes
@@ -402,18 +478,23 @@ enum Fault {
     Exchange,
     /// The server stayed silent for its response bound.
     Silent,
+    /// The request body passed the `max_body` of its route.
+    TooLarge,
 }
 
-/// Sends `request` on `sender` and waits for the response head, at most `limit`.
+/// Sends `request` on `sender` and waits for the response head. The server may stay
+/// silent for `limit` while the upload does not move either.
 async fn ask(
     sender: &mut Sender,
     request: Request<Body>,
     limit: Duration,
+    flow: &Flow,
 ) -> Result<Response<Incoming>, Fault> {
-    match timeout(limit, sender.send_request(request)).await {
-        Ok(Ok(response)) => Ok(response),
-        Ok(Err(_)) => Err(Fault::Exchange),
-        Err(_) => Err(Fault::Silent),
+    match flow.bounded(sender.send_request(request), limit).await {
+        Some(Ok(response)) => Ok(response),
+        Some(Err(_)) if flow.is_over() => Err(Fault::TooLarge),
+        Some(Err(_)) => Err(Fault::Exchange),
+        None => Err(Fault::Silent),
     }
 }
 
@@ -436,8 +517,9 @@ async fn attempt(
     inline: &Inline,
     target: &mut HttpTarget,
     request: Request<Body>,
-    retryable: bool,
+    sending: &Sending,
 ) -> Result<(Sender, Response<Incoming>), Fault> {
+    let (retryable, flow) = (sending.retryable, &*sending.flow);
     let mut pooled = inline.take(target.address());
     if let Some(sender) = pooled.as_mut()
         && sender.ready().await.is_err()
@@ -446,24 +528,24 @@ async fn attempt(
     }
     let Some(mut sender) = pooled else {
         let mut sender = fresh(inline, target).await?;
-        let response = ask(&mut sender, request, target.response_timeout()).await?;
+        let response = ask(&mut sender, request, target.response_timeout(), flow).await?;
         return Ok((sender, response));
     };
     let limit = target.response_timeout();
     if !retryable {
-        let response = ask(&mut sender, request, limit).await?;
+        let response = ask(&mut sender, request, limit, flow).await?;
         return Ok((sender, response));
     }
     let (parts, body) = request.into_parts();
     let again = Request::from_parts(parts.clone(), empty());
-    match ask(&mut sender, Request::from_parts(parts, body), limit).await {
+    match ask(&mut sender, Request::from_parts(parts, body), limit, flow).await {
         Ok(response) => Ok((sender, response)),
-        Err(Fault::Silent) => Err(Fault::Silent),
+        Err(fault @ (Fault::Silent | Fault::TooLarge)) => Err(fault),
         // The server closed the idle connection. It answered nothing, and the request
         // is safe to send again.
         Err(_) => {
             let mut sender = fresh(inline, target).await?;
-            let response = ask(&mut sender, again, target.response_timeout()).await?;
+            let response = ask(&mut sender, again, target.response_timeout(), flow).await?;
             Ok((sender, response))
         }
     }
@@ -480,8 +562,10 @@ async fn send(
 ) -> Response<Body> {
     let Forward { mut target, head, guard, report } = forward;
     let mut reporter = Reporter { report, completion: Completion::default() };
+    let flow = Arc::clone(&sending.flow);
+    let body = Watched { body, flow, room: target.route().max_body }.boxed_unsync();
     let Some(mut request) = parse_request(&head, body) else {
-        return refuse(&mut reporter, StatusCode::BAD_GATEWAY);
+        return refuse(&mut reporter, &target, StatusCode::BAD_GATEWAY);
     };
     let started = Instant::now();
     let multiplexed = inline.direct.get().and_then(|directory| directory.find(target.address()));
@@ -492,10 +576,10 @@ async fn send(
         let address = target.address();
         let inline = Arc::clone(inline);
         let done = Done { inline, address, sender: None, target, started, reporter };
-        return direct(origin, request, done, guard).await;
+        return direct(origin, request, done, (guard, sending)).await;
     }
     let first = target.address();
-    let sent = attempt(inline, &mut target, request, sending.retryable).await;
+    let sent = attempt(inline, &mut target, request, &sending).await;
     if target.address() != first {
         reporter.moved(&target);
     }
@@ -503,11 +587,15 @@ async fn send(
         Ok(exchange) => exchange,
         // Every server that was tried is marked already.
         Err(Fault::Connect | Fault::Exchange) => {
-            return refuse(&mut reporter, StatusCode::BAD_GATEWAY);
+            return refuse(&mut reporter, &target, StatusCode::BAD_GATEWAY);
         }
         Err(Fault::Silent) => {
             target.timed_out();
-            return refuse(&mut reporter, StatusCode::GATEWAY_TIMEOUT);
+            return refuse(&mut reporter, &target, StatusCode::GATEWAY_TIMEOUT);
+        }
+        // The client sent too much. The server is not at fault.
+        Err(Fault::TooLarge) => {
+            return refuse(&mut reporter, &target, StatusCode::PAYLOAD_TOO_LARGE);
         }
     };
     // The request may have moved, so the server is read after the attempt.
@@ -524,9 +612,38 @@ async fn send(
 
 /// A response of our own for a failed server. The reporter is dropped by the caller, and
 /// then delivers this status.
-fn refuse(reporter: &mut Reporter, status: StatusCode) -> Response<Body> {
+///
+/// A browser reads this answer too, so it carries the HSTS field of its route on a TLS
+/// frontend (SID 0019). It carries neither the other fields of the route nor the sticky
+/// cookie: those describe the response of a server.
+fn refuse(reporter: &mut Reporter, target: &HttpTarget, status: StatusCode) -> Response<Body> {
     reporter.completion.status = status.as_u16();
-    error(status)
+    let mut response = error(status);
+    let [_, hsts, _] = target.response_lines();
+    append_lines(response.headers_mut(), hsts);
+    response
+}
+
+/// Appends the field lines `lines` of an HTTP/1.1 head to `headers`.
+fn append_lines(headers: &mut header::HeaderMap, lines: &[u8]) {
+    for (name, value) in fields(lines) {
+        let name = HeaderName::from_bytes(name);
+        if let (Ok(name), Ok(value)) = (name, HeaderValue::from_bytes(value)) {
+            headers.append(name, value);
+        }
+    }
+}
+
+/// Moves the exchange of `done` to another server of its pool that has a shared
+/// session, and returns that server. `None` when the firewall offers no such server.
+fn advance(done: &mut Done) -> Option<Arc<Origin>> {
+    let target = done.inline.decide.retry(&done.target)?;
+    let origin = done.inline.direct.get()?.find(target.address())?;
+    // The old reservation is dropped here, which gives its place back.
+    done.target = target;
+    done.address = done.target.address();
+    done.reporter.moved(&done.target);
+    Some(origin)
 }
 
 /// Sends an admitted request on the shared session of an HTTP/2 or HTTP/3 server. The
@@ -534,40 +651,55 @@ fn refuse(reporter: &mut Reporter, status: StatusCode) -> Response<Body> {
 ///
 /// The bounds are those of the server's pool (SID 0019). A server whose session cannot
 /// be opened received nothing, so the request moves to another server of the pool while
-/// the firewall offers one.
+/// the firewall offers one. A session that fails after the request was sent and before
+/// a response head arrived is tried once more, and then the request moves, when it is
+/// safe and has no body: the rule of `sibuna_net::recover`, as on the other paths.
 async fn direct(
     mut origin: Arc<Origin>,
     request: Request<Body>,
     mut done: Done,
-    guard: Box<dyn Any + Send>,
+    (guard, sending): (Box<dyn Any + Send>, Sending),
 ) -> Response<Body> {
-    while origin.ready(done.target.connect_timeout()).await.is_err() {
-        done.target.failed();
-        let next = done.inline.decide.retry(&done.target);
-        let found = next.and_then(|target| {
-            let origin = done.inline.direct.get()?.find(target.address())?;
-            Some((target, origin))
-        });
-        let Some((target, next)) = found else {
-            return refuse(&mut done.reporter, StatusCode::BAD_GATEWAY);
-        };
-        // The old reservation is dropped here, which gives its place back.
-        done.target = target;
-        done.address = done.target.address();
-        done.reporter.moved(&done.target);
-        origin = next;
-    }
-    let limit = done.target.response_timeout();
-    let mut response = match timeout(limit, origin.exchange(request)).await {
-        Ok(Ok(response)) => response,
-        Ok(Err(_)) => {
+    let flow = Arc::clone(&sending.flow);
+    let (parts, body) = request.into_parts();
+    let mut body = Some(body);
+    let mut retried = false;
+    let mut response = loop {
+        while origin.ready(done.target.connect_timeout()).await.is_err() {
             done.target.failed();
-            return refuse(&mut done.reporter, StatusCode::BAD_GATEWAY);
+            let Some(next) = advance(&mut done) else {
+                return refuse(&mut done.reporter, &done.target, StatusCode::BAD_GATEWAY);
+            };
+            (origin, retried) = (next, false);
         }
-        Err(_) => {
-            done.target.timed_out();
-            return refuse(&mut done.reporter, StatusCode::GATEWAY_TIMEOUT);
+        let limit = done.target.response_timeout();
+        // Only a request without a body is sent twice, so a second attempt has none.
+        let request = Request::from_parts(parts.clone(), body.take().unwrap_or_else(empty));
+        match flow.bounded(origin.exchange(request), limit).await {
+            Some(Ok(response)) => break response,
+            Some(Err(_)) if flow.is_over() => {
+                return refuse(&mut done.reporter, &done.target, StatusCode::PAYLOAD_TOO_LARGE);
+            }
+            Some(Err(_)) => {}
+            None => {
+                done.target.timed_out();
+                return refuse(&mut done.reporter, &done.target, StatusCode::GATEWAY_TIMEOUT);
+            }
         }
+        // The session was shared, like a connection from a pool: its loss alone says
+        // nothing about the server, so the first loss opens a new session.
+        let lost = Lost { unanswered: true, pooled: true, retryable: sending.retryable, retried };
+        let recovery = sibuna_net::recover(lost);
+        if recovery == Recovery::Reconnect {
+            retried = true;
+            continue;
+        }
+        done.target.failed();
+        let next = if recovery == Recovery::Move { advance(&mut done) } else { None };
+        let Some(next) = next else {
+            return refuse(&mut done.reporter, &done.target, StatusCode::BAD_GATEWAY);
+        };
+        (origin, retried) = (next, false);
     };
     strip_hop_fields(response.headers_mut());
     edit_response(response.headers_mut(), &done.target);
@@ -604,11 +736,8 @@ fn edit_response(headers: &mut header::HeaderMap, target: &HttpTarget) {
             headers.remove(name);
         }
     }
-    for (name, value) in target.response_lines().into_iter().flat_map(fields) {
-        let name = HeaderName::from_bytes(name);
-        if let (Ok(name), Ok(value)) = (name, HeaderValue::from_bytes(value)) {
-            headers.append(name, value);
-        }
+    for lines in target.response_lines() {
+        append_lines(headers, lines);
     }
 }
 

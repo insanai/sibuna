@@ -2,14 +2,16 @@
 //! and a reload returns the topology to the file while drains stay.
 #![allow(clippy::unwrap_used)]
 
-use std::net::{SocketAddr, TcpListener};
+mod free;
+
+use std::net::SocketAddr;
 
 use sibuna_lb::{Config, Edge, HttpTarget, ServerState, ServerStatus};
 
 const PEER: &str = "127.0.0.1:1024";
 
 fn vip() -> SocketAddr {
-    TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap()
+    free::tcp()
 }
 
 /// One HTTP frontend before the pool `app`, whose servers are named `a`, `b`, ...

@@ -141,13 +141,13 @@ fn the_quick_start_serves_without_a_file_and_takes_commands() {
     done(&socket, &format!("set server app/{a} state drain"));
     assert_eq!(tags(vip, 4), "bbbb");
     let drained = row(&socket, &a.to_string());
-    assert_eq!((drained[3].as_str(), drained[7].as_str()), ("drain", "state"));
+    assert_eq!((drained[3].as_str(), drained[9].as_str()), ("drain", "state"));
 
     done(&socket, &format!("add server app/blue {c} weight 2"));
     done(&socket, &format!("del server app/{b}"));
     assert_eq!(tags(vip, 3), "ccc");
     assert_eq!(row(&socket, "blue")[2..5], [c.to_string(), "ready".into(), "2".into()]);
-    assert_eq!(row(&socket, "blue")[7], "added");
+    assert_eq!(row(&socket, "blue")[9], "added");
 
     done(&socket, &format!("set server app/{a} state ready"));
     done(&socket, "set server app/blue weight 1");
@@ -241,7 +241,7 @@ fn a_reload_returns_to_the_file_and_keeps_the_drain() {
     done(&socket, "set server app/a state drain");
     done(&socket, "set server app/b weight 9");
     done(&socket, &format!("add server app/blue {c}"));
-    assert_eq!(row(&socket, "b")[7], "weight");
+    assert_eq!(row(&socket, "b")[9], "weight");
     let reloaded = done(&socket, "reload");
     assert!(
         reloaded.contains("1 drain kept, 2 run-time changes replaced by the file"),
@@ -249,7 +249,7 @@ fn a_reload_returns_to_the_file_and_keeps_the_drain() {
     );
     daemon.log("routes reloaded");
     assert_eq!(row(&socket, "a")[3], "drain");
-    assert_eq!((row(&socket, "b")[4].as_str(), row(&socket, "b")[7].as_str()), ("1", "-"));
+    assert_eq!((row(&socket, "b")[4].as_str(), row(&socket, "b")[9].as_str()), ("1", "-"));
     assert!(!done(&socket, "show servers").contains("blue"));
     assert_eq!(tags(vip, 3), "bbb");
 

@@ -121,6 +121,9 @@ pub(crate) fn serve_from(
         let tally = link.writer.tally();
         crate::access::settle_written(server, link.trace, tally, ingress, peer.as_bytes());
         if !keep {
+            if crate::traffic::refused_body(tally.status) {
+                crate::traffic::linger(stream);
+            }
             break;
         }
         lease.touch();
@@ -202,6 +205,7 @@ fn serve_one<W: Write>(
         };
         // Every response to HEAD, Sibuna's own included, is a head without a body.
         link.writer.begin_response(request.method == Method::Head);
+        link.writer.set_own(crate::traffic::own_policy(link.server, link.ingress, &request));
         if has_repeated_host(&request) {
             return reject_repeated_host(link);
         }

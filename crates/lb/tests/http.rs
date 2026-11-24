@@ -1,7 +1,9 @@
 //! Request-level routing, load reservations and revision boundaries.
 #![allow(clippy::unwrap_used)]
 
-use std::net::{SocketAddr, TcpListener};
+mod free;
+
+use std::net::SocketAddr;
 
 use sibuna_lb::{Config, Edge};
 
@@ -19,7 +21,7 @@ fn topology(vip: SocketAddr, api: u16) -> Config {
 
 #[test]
 fn routes_bind_each_request_to_its_policy_generation_and_release_capacity() {
-    let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    let vip = free::tcp();
     let peer = "127.0.0.1:1024".parse().unwrap();
     let mut edge = Edge::bind(topology(vip, 9100)).unwrap();
     let routes = edge.http_routes();
@@ -39,7 +41,7 @@ fn routes_bind_each_request_to_its_policy_generation_and_release_capacity() {
 
 #[test]
 fn tcp_and_validated_quic_connections_share_frontend_limits() {
-    let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    let vip = free::tcp();
     let source = format!(
         r#"{{
         "global":{{"max_flows":2}},

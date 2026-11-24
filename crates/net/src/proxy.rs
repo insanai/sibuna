@@ -23,10 +23,11 @@ use crate::idle::Activity;
 use crate::pool::Pool;
 use crate::relay::{
     Progress, Relayed, client_head_error, final_response_head, relay_body, relay_chunked_body,
-    relay_response,
+    relay_response_edited,
 };
 use crate::request::write_request_head;
 use crate::response::{MAX_RESPONSE_HEAD, parse_response_head, write_response_fields};
+use crate::route::{Bounds, Lost, Recovery, Route, recover};
 use crate::upgrade::{self, Handshake};
 
 /// How long a connection to the origin may take, as in the Zig daemon.
@@ -62,6 +63,15 @@ pub enum ProxyError {
     /// The rest of a chunked request body broke the chunk grammar; the origin got no last
     /// chunk, so it sees a truncated body, never a complete altered one: answer 400.
     MalformedRequestBody,
+    /// The origin sent no response byte within the response bound of its route
+    /// (SID 0019): answer 504.
+    UpstreamSilent,
+    /// The origin went silent for the response bound after its head was relayed. The
+    /// exchange is aborted like [`ProxyError::UpstreamTruncated`].
+    UpstreamStalled,
+    /// A request body without a declared length passed the bound of its route
+    /// (SID 0019). The origin got no last chunk: answer 413.
+    BodyTooLarge,
 }
 
 impl fmt::Display for ProxyError {
@@ -75,6 +85,9 @@ impl fmt::Display for ProxyError {
             ProxyError::UpstreamTruncated => "upstream response truncated",
             ProxyError::ClientFailed => "client connection failed",
             ProxyError::MalformedRequestBody => "malformed chunked request body",
+            ProxyError::UpstreamSilent => "upstream did not answer in time",
+            ProxyError::UpstreamStalled => "upstream stopped sending",
+            ProxyError::BodyTooLarge => "request body too large",
         })
     }
 }
@@ -294,7 +307,7 @@ pub fn stream_proxy<W: Write>(
     workspace: &mut Workspace,
     exchange: Exchange<'_, W>,
 ) -> Result<bool, ProxyError> {
-    proxy(pool, workspace, exchange, None)
+    proxy(pool, workspace, exchange, Via::Fixed(None))
 }
 
 /// Relays an exchange to the selected numeric origin. Reuses only sockets for that origin.
@@ -304,14 +317,65 @@ pub fn stream_proxy_to<W: Write>(
     exchange: Exchange<'_, W>,
     origin: SocketAddr,
 ) -> Result<bool, ProxyError> {
-    proxy(pool, workspace, exchange, Some(origin))
+    proxy(pool, workspace, exchange, Via::Fixed(Some(origin)))
+}
+
+/// Relays an exchange to the server of `route` (SID 0019). The bounds are those of the
+/// route. A request whose server cannot have acted on it moves to the next server the
+/// route offers: after a failed connect any request, after a lost connection one that
+/// [`recover`] allows.
+///
+/// # Errors
+///
+/// As [`stream_proxy`], and [`ProxyError::UpstreamSilent`], [`ProxyError::UpstreamStalled`]
+/// and [`ProxyError::BodyTooLarge`] for the bounds of the route.
+pub fn stream_proxy_routed<W: Write>(
+    pool: &Pool,
+    workspace: &mut Workspace,
+    exchange: Exchange<'_, W>,
+    route: &mut dyn Route,
+) -> Result<bool, ProxyError> {
+    proxy(pool, workspace, exchange, Via::Route(route))
+}
+
+/// Where an exchange goes.
+enum Via<'r> {
+    /// The given address, or the origin the exchange names.
+    Fixed(Option<SocketAddr>),
+    /// The servers of a route, one after another.
+    Route(&'r mut dyn Route),
+}
+
+impl Via<'_> {
+    fn address(&self) -> Option<SocketAddr> {
+        match self {
+            Via::Fixed(address) => *address,
+            Via::Route(route) => Some(route.address()),
+        }
+    }
+
+    fn bounds(&self) -> Bounds {
+        match self {
+            Via::Fixed(_) => Bounds::default(),
+            Via::Route(route) => route.bounds(),
+        }
+    }
+
+    /// Marks the server and asks for another. False when the exchange has no route.
+    fn leave(&mut self, mark: bool) -> bool {
+        let Via::Route(route) = self else { return false };
+        if mark {
+            route.unreachable();
+        }
+        route.advance()
+    }
 }
 
 fn proxy<W: Write>(
     pool: &Pool,
     workspace: &mut Workspace,
     mut exchange: Exchange<'_, W>,
-    address: Option<SocketAddr>,
+    mut via: Via<'_>,
 ) -> Result<bool, ProxyError> {
     let request = exchange.request;
     let handshake = upgrade::offered(request).map_err(|_| ProxyError::InvalidUpgrade)?;
@@ -320,74 +384,110 @@ fn proxy<W: Write>(
     let retryable = safe && buffered;
     let poolable = !exchange.upload.carries_body();
     let activity = exchange.client.activity;
-    for attempt in 0..2 {
-        // A retry always connects afresh: after an idle period every pooled socket may be
-        // stale, and a second stale one would fail the request.
-        let pooled = if attempt == 0 { pool.take_matching(address) } else { None };
+    if pool.is_stopping() {
+        return Err(ProxyError::UpstreamUnreachable);
+    }
+    // A retry on the same server always connects afresh: after an idle period every
+    // pooled socket may be stale, and a second stale one would fail the request.
+    let mut retried = false;
+    loop {
+        let (address, bounds) = (via.address(), via.bounds());
+        let pooled = if retried { None } else { pool.take_matching(address) };
         let was_pooled = pooled.is_some();
-        let origin = match pooled {
-            Some(origin) => origin,
-            None => {
-                connect_upstream(pool, address, exchange.upstream_host, exchange.upstream_port)?
-            }
+        let connected = pooled.map_or_else(|| connect_upstream(address, &exchange, &bounds), Ok);
+        let origin = match connected {
+            Ok(origin) => origin,
+            // Nothing was sent, so any request may go to another server.
+            Err(_) if via.leave(true) => continue,
+            Err(error) => return Err(error),
         };
         // The reaper may cut this socket while the exchange stalls; it is detached before the
         // socket is closed or pooled.
         if let Some(activity) = activity {
             activity.attach_peer(&origin);
         }
-        let outcome = exchange_once(&origin, workspace, &mut exchange, handshake.as_ref());
+        let stage = Stage { handshake: handshake.as_ref(), bounds, via: &mut via };
+        let outcome = exchange_once(&origin, workspace, &mut exchange, stage);
         if let Some(activity) = activity {
             activity.detach_peer();
         }
-        match outcome {
+        let error = match outcome {
             Ok(relayed) => {
                 if relayed.origin_reusable && poolable {
                     pool.give_for(origin, address);
                 }
                 return Ok(relayed.client_keep && buffered);
             }
-            Err(error) => {
-                drop(origin);
-                let stale = was_pooled
-                    && retryable
-                    && matches!(
-                        error,
-                        ProxyError::UpstreamClosed | ProxyError::UpstreamWriteFailed
-                    );
-                if !stale {
-                    return Err(match error {
-                        ProxyError::UpstreamClosed => ProxyError::UpstreamReadFailed,
-                        other => other,
-                    });
-                }
+            Err(error) => error,
+        };
+        drop(origin);
+        let unanswered =
+            matches!(error, ProxyError::UpstreamClosed | ProxyError::UpstreamWriteFailed);
+        let lost = Lost { unanswered, pooled: was_pooled, retryable, retried };
+        match recover(lost) {
+            Recovery::Reconnect => retried = true,
+            // A fresh connection that failed before an answer speaks against the server.
+            Recovery::Move if via.leave(!was_pooled) => retried = false,
+            Recovery::Move | Recovery::Fail => {
+                return Err(match error {
+                    ProxyError::UpstreamClosed => ProxyError::UpstreamReadFailed,
+                    other => other,
+                });
             }
         }
     }
-    Err(ProxyError::UpstreamReadFailed)
 }
 
 /// Connects to the origin with a bounded wait and Nagle's algorithm off.
-fn connect_upstream(
-    pool: &Pool,
+fn connect_upstream<W>(
     address: Option<SocketAddr>,
-    host: &str,
-    port: u16,
+    exchange: &Exchange<'_, W>,
+    bounds: &Bounds,
 ) -> Result<Arc<TcpStream>, ProxyError> {
-    if pool.is_stopping() {
-        return Err(ProxyError::UpstreamUnreachable);
-    }
     let addr = match address {
         Some(addr) => addr,
         None => SocketAddr::new(
-            host.parse::<IpAddr>().map_err(|_| ProxyError::UpstreamUnreachable)?,
-            port,
+            exchange
+                .upstream_host
+                .parse::<IpAddr>()
+                .map_err(|_| ProxyError::UpstreamUnreachable)?,
+            exchange.upstream_port,
         ),
     };
-    let stream = TcpStream::connect_timeout(&addr, CONNECT_TIMEOUT)
+    let stream = TcpStream::connect_timeout(&addr, bounds.connect)
         .map_err(|_| ProxyError::UpstreamUnreachable)?;
     crate::connect::set_no_delay(&stream);
     Ok(Arc::new(stream))
+}
+
+/// What one attempt of an exchange needs besides the exchange.
+struct Stage<'s, 'r> {
+    handshake: Option<&'s Handshake>,
+    bounds: Bounds,
+    via: &'s mut Via<'r>,
+}
+
+/// Lifts the idle deadline of the client connection while the server owes bytes, and
+/// restores it when dropped. The response bound of the route applies instead.
+struct Waiting<'a>(Option<&'a Activity>);
+
+impl<'a> Waiting<'a> {
+    fn begin(activity: Option<&'a Activity>, bounds: &Bounds) -> Self {
+        let activity = activity.filter(|_| bounds.response.is_some());
+        if let Some(activity) = activity {
+            activity.set_timeout_ms(u64::MAX);
+        }
+        Self(activity)
+    }
+}
+
+impl Drop for Waiting<'_> {
+    fn drop(&mut self) {
+        if let Some(activity) = self.0 {
+            activity.touch();
+            activity.set_timeout_ms(0);
+        }
+    }
 }
 
 /// One request and response over one origin socket.
@@ -395,29 +495,48 @@ fn exchange_once<W: Write>(
     origin: &TcpStream,
     workspace: &mut Workspace,
     exchange: &mut Exchange<'_, W>,
-    handshake: Option<&Handshake>,
+    stage: Stage<'_, '_>,
 ) -> Result<Relayed, ProxyError> {
     let Workspace { origin_read, origin_write, upload } = workspace;
+    let Stage { handshake, bounds, via } = stage;
     let progress = Progress { activity: exchange.client.activity };
-    send_request(origin, origin_write, upload, exchange, handshake.is_some(), progress)?;
+    // A pooled socket may carry the bound of an earlier route.
+    let _ = origin.set_read_timeout(bounds.response);
+    send_request(origin, origin_write, upload, exchange, handshake.is_some(), progress, &bounds)?;
+    let waiting = Waiting::begin(exchange.client.activity, &bounds);
     let mut reader = Reader::new(origin, origin_read);
     if let Some(offered) = handshake {
         let length = final_response_head(&mut reader, exchange.client.writer, progress)?;
         let head = reader.buffered().get(..length).unwrap_or_default();
         let parsed = parse_response_head(head, false).ok_or(ProxyError::UpstreamReadFailed)?;
         if parsed.status == 101 {
+            // A tunnel has the idle bound of an upgrade, not that of a response.
+            drop(waiting);
+            let _ = origin.set_read_timeout(None);
+            if let Via::Route(route) = via {
+                route.responded(101);
+            }
             return relay_upgrade(exchange, origin, reader, length, offered, upload);
         }
     }
     let head_request = exchange.request.method == Method::Head;
-    relay_response(
+    let edit = match &*via {
+        Via::Fixed(_) => exchange.audit.response_edit,
+        Via::Route(route) => route.response_edit(),
+    };
+    let relayed = relay_response_edited(
         &mut reader,
         exchange.client.writer,
         head_request,
         exchange.keep_alive,
         &mut exchange.audit,
         progress,
-    )
+        &edit,
+    )?;
+    if let Via::Route(route) = via {
+        route.responded(relayed.status);
+    }
+    Ok(relayed)
 }
 
 /// Writes the request head and body to the origin and flushes it.
@@ -428,6 +547,7 @@ fn send_request<W: Write>(
     exchange: &Exchange<'_, W>,
     switching: bool,
     progress: Progress<'_>,
+    bounds: &Bounds,
 ) -> Result<(), ProxyError> {
     let request = exchange.request;
     let mut writer = Writer::new(origin, write_buffer);
@@ -454,7 +574,8 @@ fn send_request<W: Write>(
                 // Copies the pending framing in without waiting for the client.
                 source.fill_more().map_err(|_| ProxyError::ClientFailed)?;
             }
-            relay_chunked_body(&mut source, &mut writer, &mut decoder, progress)?;
+            let room = bounds.max_body.map(|max| max.saturating_sub(request.body.len() as u64));
+            relay_chunked_body(&mut source, &mut writer, &mut decoder, progress, room)?;
         }
     }
     writer.flush().map_err(failed)
@@ -489,5 +610,5 @@ fn relay_upgrade<W: Write>(
     };
     duplex::relay(client.stream, client.pending, origin, reader, upload_buffer, options)
         .map_err(|_| ProxyError::ClientFailed)?;
-    Ok(Relayed { client_keep: false, origin_reusable: false })
+    Ok(Relayed { client_keep: false, origin_reusable: false, status: 101 })
 }

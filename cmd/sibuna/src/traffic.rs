@@ -3,16 +3,66 @@
 //!
 //! The policy itself is read and kept by `sibuna_lb`. This module joins it to a request.
 
-use std::io::{self, Write};
+use std::io::{self, Read, Write};
+use std::net::{Shutdown, SocketAddr, TcpStream};
+use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use sibuna_http::Request;
 use sibuna_http::response::{self, Status};
 use sibuna_lb::{HttpRoutes, HttpTarget, Query, RoutePolicy};
-use sibuna_net::{Audit, HeadEdit};
+use sibuna_net::{Audit, Bounds, HeadEdit, ProxyError};
 
 use crate::connection::{Ingress, UNKNOWN_LENGTH};
 use crate::context::Ctx;
+use crate::server::Server;
 use crate::telemetry::{self, Outcome};
+
+/// How long a connection whose body we refused may keep sending before it is closed.
+pub(crate) const LINGER_TIME: Duration = Duration::from_secs(2);
+/// How many bytes of a refused body are discarded before the connection is closed.
+pub(crate) const LINGER_BYTES: usize = 1 << 20;
+
+/// True when `status` is our answer to a request body that is too large. The client
+/// may still be sending that body.
+pub(crate) fn refused_body(status: u16) -> bool {
+    status == 413
+}
+
+/// Discards what the client still sends after an answer that refused its body, for at
+/// most [`LINGER_TIME`] and [`LINGER_BYTES`]. Closing over unread bytes resets the
+/// connection, and the reset can destroy the answer on its way.
+pub(crate) fn linger(mut stream: &TcpStream) {
+    let _ = stream.shutdown(Shutdown::Write);
+    let until = Instant::now() + LINGER_TIME;
+    let mut block = [0u8; 4096];
+    let mut left = LINGER_BYTES;
+    while left > 0 {
+        let wait = until.saturating_duration_since(Instant::now());
+        if wait.is_zero() || stream.set_read_timeout(Some(wait)).is_err() {
+            break;
+        }
+        match stream.read(&mut block) {
+            Ok(0) | Err(_) => break,
+            Ok(count) => left = left.saturating_sub(count),
+        }
+    }
+}
+
+/// The policy whose HSTS field Sibuna's own answers to `request` carry: that of the
+/// route, on a TLS frontend, when it has the field. The path is the one the client
+/// wrote, because an answer may be due before the path has its normal form.
+pub(crate) fn own_policy(
+    server: &Server,
+    ingress: Option<Ingress>,
+    request: &Request<'_>,
+) -> Option<Arc<RoutePolicy>> {
+    let ingress = ingress.filter(|ingress| ingress.secure)?;
+    let routes = server.edge_routes.as_ref()?;
+    let host = request.header(b"host").unwrap_or_default();
+    let policy = routes.policy(ingress.vip, host, request.path)?;
+    (!policy.hsts.is_empty()).then_some(policy)
+}
 
 /// The most `Cookie` fields of one request that are searched for the sticky cookie.
 const MAX_COOKIE_FIELDS: usize = 8;
@@ -97,32 +147,27 @@ pub(crate) fn choose<W>(
     })
 }
 
-/// The fields of an [`Audit`] that SID 0019 fills for a request on its way to the
-/// server of `target`: the edits of both heads and the host and port that the client
+/// The fields of an [`Audit`] that SID 0019 fills for a request under the policy
+/// `route`: the edit of the request head and the host and port that the client
 /// addressed. The other fields have their defaults, so a caller writes
-/// `Audit { client_ip, .., ..traffic::audit(request, ingress, target) }`.
+/// `Audit { client_ip, .., ..traffic::audit(request, ingress, route) }`. The edit of the
+/// response head depends on the server that answers, so the relay asks for it later.
 ///
 /// Outside the edge there is no `ingress`: no host or port is forwarded then.
 pub(crate) fn audit<'a>(
     request: &Request<'a>,
     ingress: Option<Ingress>,
-    target: Option<&'a HttpTarget>,
+    route: Option<&'a RoutePolicy>,
 ) -> Audit<'a> {
-    let request_edit = target.map_or_else(HeadEdit::default, |target| {
-        let edit = &target.route().request_headers;
+    let request_edit = route.map_or_else(HeadEdit::default, |route| {
+        let edit = &route.request_headers;
         HeadEdit { remove: &edit.remove, append: [&edit.append, b"", b""] }
     });
     let (forwarded_host, forwarded_port) = match ingress {
         Some(ingress) => (request.header(b"host").unwrap_or_default(), ingress.vip.port()),
         None => (&b""[..], 0),
     };
-    Audit {
-        request_edit,
-        response_edit: response_edit(target),
-        forwarded_host,
-        forwarded_port,
-        ..Audit::default()
-    }
+    Audit { request_edit, forwarded_host, forwarded_port, ..Audit::default() }
 }
 
 /// The edit of the response head that goes to the client: the fields of the route, HSTS
@@ -130,4 +175,71 @@ pub(crate) fn audit<'a>(
 pub(crate) fn response_edit(target: Option<&HttpTarget>) -> HeadEdit<'_> {
     let Some(target) = target else { return HeadEdit::default() };
     HeadEdit { remove: target.route().response_remove(), append: target.response_lines() }
+}
+
+/// The servers of one request on the thread path (SID 0019): the reservation, and the
+/// way to another server of the pool when this one fails.
+pub(crate) struct Moving<'s> {
+    server: &'s Server,
+    target: HttpTarget,
+    /// The status of the final response head, or zero.
+    status: u16,
+}
+
+impl<'s> Moving<'s> {
+    /// Starts with the server that the dispatch chose.
+    pub(crate) fn new(server: &'s Server, target: HttpTarget) -> Self {
+        Self { server, target, status: 0 }
+    }
+
+    /// Reports the end of the exchange, which began at `start`, to the load figures and
+    /// to the passive health of the pool. Returns the reservation of the last server.
+    pub(crate) fn settle(self, result: &Result<bool, ProxyError>, start: Instant) -> HttpTarget {
+        match result {
+            Ok(_) => {
+                self.target.completed(start);
+                self.target.answered(self.status);
+            }
+            Err(ProxyError::UpstreamSilent | ProxyError::UpstreamStalled) => {
+                self.target.timed_out();
+            }
+            Err(_) => {}
+        }
+        self.target
+    }
+}
+
+impl sibuna_net::Route for Moving<'_> {
+    fn address(&self) -> SocketAddr {
+        self.target.address()
+    }
+
+    fn bounds(&self) -> Bounds {
+        Bounds {
+            connect: self.target.connect_timeout(),
+            response: Some(self.target.response_timeout()),
+            max_body: self.target.route().max_body,
+        }
+    }
+
+    fn response_edit(&self) -> HeadEdit<'_> {
+        response_edit(Some(&self.target))
+    }
+
+    fn unreachable(&mut self) {
+        self.target.failed();
+    }
+
+    fn advance(&mut self) -> bool {
+        let next = self.server.edge_routes.as_ref().and_then(|routes| routes.retry(&self.target));
+        let Some(next) = next else { return false };
+        // Dropping the old reservation gives its place on the failed server back.
+        self.target = next;
+        self.server.metrics.origin_retries.bump();
+        true
+    }
+
+    fn responded(&mut self, status: u16) {
+        self.status = status;
+    }
 }

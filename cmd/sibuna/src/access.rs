@@ -481,9 +481,9 @@ pub(crate) fn settle_written(
     let Some(mut entry) = entry else { return };
     entry.status = tally.status;
     entry.bytes_out = tally.bytes;
-    // A 502 or 504 of the server itself is a response like any other. Only when the
+    // A 413, 502 or 504 of the server itself is a response like any other. Only when the
     // relay failed did Sibuna write the status, and then the server gave no first byte.
-    let own = entry.failed && matches!(tally.status, 502 | 504);
+    let own = entry.failed && matches!(tally.status, 413 | 502 | 504);
     if entry.server.is_some() && tally.status != 0 && !own {
         entry.first_byte = tally.first.map(|at| at.saturating_duration_since(entry.started));
     }

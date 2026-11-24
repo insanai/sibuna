@@ -10,6 +10,7 @@ license.workspace = true
 [dependencies]
 sibuna-acme.workspace = true
 sibuna-lb.workspace = true
+sibuna-net.workspace = true
 sibuna-tls.workspace = true
 sibuna-encoding.workspace = true
 sibuna-crypto.workspace = true

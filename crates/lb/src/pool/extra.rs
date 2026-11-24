@@ -108,19 +108,24 @@ impl Pool {
 
 impl Pool {
     /// The server that source stickiness gives `client`: the nearest server of the pool
-    /// that is neither a backup nor drained, whether or not it can serve now. `None`
-    /// when the pool is not sticky by source.
+    /// that is `eligible` and not a backup. `None` when the pool is not sticky by
+    /// source, and when only backups are eligible.
     ///
-    /// A drain lasts until an operator ends it, so the clients of a drained server get
-    /// one other server each and keep it. The other clients stay where they are.
-    pub(super) fn home(&self, client: std::net::IpAddr) -> Option<usize> {
+    /// The ranking is a rendezvous hash, so the clients of a server that is drained,
+    /// down, ejected or full get one other server each and keep it until their own
+    /// returns. The other clients stay where they are.
+    pub(super) fn home(
+        &self,
+        client: std::net::IpAddr,
+        eligible: impl Fn(&Target) -> bool,
+    ) -> Option<usize> {
         if self.policy.sticky != Some(Sticky::Source) {
             return None;
         }
         let client = sticky::client_bytes(client);
         let distance =
-            |target: &Target| sticky::distance(&client, &target.server.name, target.server.weight);
-        let stays = |target: &Target| !target.server.backup && !target.drained;
+            |target: &Target| sticky::distance(&client, target.rank_seed, target.server.weight);
+        let stays = |target: &Target| !target.server.backup && eligible(target);
         let servers = self.targets.iter().enumerate().filter(|(_, target)| stays(target));
         servers
             .map(|(index, target)| (index, distance(target)))
@@ -227,6 +232,17 @@ impl Target {
         if ramped == 0 { u64::from(self.server.weight) * SCALE } else { u64::from(ramped) }
     }
 
+    /// The share of its weight that the server has in its slow start, in percent, or
+    /// `None` when it is not in a ramp.
+    pub(super) fn ramp_percent(&self, ramping: bool) -> Option<u8> {
+        let ramped = u64::from(self.load.extra.ramped.load(Ordering::Relaxed));
+        if !ramping || ramped == 0 {
+            return None;
+        }
+        let full = u64::from(self.server.weight.max(1)) * SCALE;
+        Some((ramped * 100 / full).min(99) as u8)
+    }
+
     /// Whether the server is in service: healthy, not drained (SID 0018), not marked by
     /// a failed connect and not ejected. A full server and a server the request already
     /// tried are in service.
@@ -269,39 +285,81 @@ impl State {
         false
     }
 
+    /// How long passive health still keeps the server out at `now`.
+    pub fn ejected_for(&self, now: Instant) -> Option<Duration> {
+        if !self.ejected.load(Ordering::Relaxed) {
+            return None;
+        }
+        let until = self.ejected_until.lock().unwrap_or_else(PoisonError::into_inner);
+        until.and_then(|until| until.checked_duration_since(now)).filter(|left| !left.is_zero())
+    }
+
     /// Counts one outcome of a request under `rule` and ejects the server at the limit.
-    fn record(&self, rule: &Passive, failed: bool, now: Instant) {
-        // Two workers may count at once. A lost update delays an ejection by one
-        // failure, which passive health tolerates.
-        let (count, eject) = rule.step(self.failures.load(Ordering::Relaxed), failed);
-        self.failures.store(count, Ordering::Relaxed);
+    /// Returns whether this outcome ejected the server.
+    fn record(&self, rule: &Passive, failed: bool, now: Instant) -> bool {
+        // Two workers may count at once. The update is repeated until it applies to the
+        // count it read, so no failure is lost and exactly one report ejects.
+        let mut count = self.failures.load(Ordering::Acquire);
+        let eject = loop {
+            let (next, eject) = rule.step(count, failed);
+            let swap = self.failures.compare_exchange_weak(
+                count,
+                next,
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            );
+            match swap {
+                Ok(_) => break eject,
+                Err(seen) => count = seen,
+            }
+        };
         if eject {
             let mut until = self.ejected_until.lock().unwrap_or_else(PoisonError::into_inner);
             *until = Some(now + rule.ejection);
             self.ejected.store(true, Ordering::Relaxed);
         }
+        eject
     }
 }
 
 impl Ticket {
-    /// The server stayed silent for its response bound.
-    pub fn timed_out(&self, rule: Option<&Passive>, now: Instant) {
-        if let Some(rule) = rule {
-            self.load.extra.record(rule, true, now);
-        }
+    /// The server stayed silent for its response bound. Returns whether this ejected it.
+    pub fn timed_out(&self, rule: Option<&Passive>, now: Instant) -> bool {
+        rule.is_some_and(|rule| self.load.extra.record(rule, true, now))
     }
 
-    /// The server sent a complete response with `status`.
-    pub fn answered(&self, rule: Option<&Passive>, status: u16, now: Instant) {
-        if let Some(rule) = rule {
-            self.load.extra.record(rule, rule.counts(status), now);
-        }
+    /// The server sent a complete response with `status`. Returns whether this ejected
+    /// it.
+    pub fn answered(&self, rule: Option<&Passive>, status: u16, now: Instant) -> bool {
+        rule.is_some_and(|rule| self.load.extra.record(rule, rule.counts(status), now))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn concurrent_failure_reports_lose_no_count() {
+        let rule = Passive { failures: 5, ejection: Duration::from_secs(1), http_5xx: false };
+        let state = State::default();
+        let now = Instant::now();
+        let ejections = std::sync::atomic::AtomicUsize::new(0);
+        std::thread::scope(|scope| {
+            for _ in 0..8 {
+                scope.spawn(|| {
+                    for _ in 0..5_000 {
+                        if state.record(&rule, true, now) {
+                            ejections.fetch_add(1, Ordering::Relaxed);
+                        }
+                    }
+                });
+            }
+        });
+        // Forty thousand failures in runs of five: each fifth report ejects, and none
+        // is lost between two threads.
+        assert_eq!(ejections.load(Ordering::Relaxed), 8_000);
+    }
 
     #[test]
     fn the_ramp_weight_grows_to_the_full_weight_and_is_never_zero() {

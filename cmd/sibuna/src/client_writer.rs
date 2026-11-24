@@ -13,7 +13,10 @@
 //! so the filter changes nothing for them.
 
 use std::io::{self, Write};
+use std::sync::Arc;
 use std::time::Instant;
+
+use sibuna_lb::RoutePolicy;
 
 /// Where the writer is in the current HEAD response.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -113,6 +116,9 @@ pub(crate) struct ClientWriter<W> {
     phase: Phase,
     tally: Tally,
     scan: StatusScan,
+    /// The policy whose HSTS field the final head of this response must carry, until
+    /// the status line of that head has passed (SID 0019).
+    own: Option<Arc<RoutePolicy>>,
 }
 
 impl<W: Write> ClientWriter<W> {
@@ -125,7 +131,52 @@ impl<W: Write> ClientWriter<W> {
             phase: FRESH_HEAD,
             tally: Tally::default(),
             scan: StatusScan::default(),
+            own: None,
         }
+    }
+
+    /// Makes the final head of this response carry the HSTS field of `policy`, unless
+    /// the head brings one. Sibuna's own answers have none, so a browser on a TLS
+    /// frontend learns the rule from a challenge page or an error as well (SID 0019).
+    /// A relayed response whose head was edited brings the field and is left alone.
+    pub(crate) fn set_own(&mut self, policy: Option<Arc<RoutePolicy>>) {
+        self.own = policy;
+    }
+
+    /// Passes `data` line by line until the status line of the final head has passed,
+    /// and adds the HSTS field after it. Interim heads pass as they are.
+    fn write_with_own(&mut self, mut data: &[u8]) -> io::Result<()> {
+        while self.own.is_some() && !data.is_empty() {
+            let end = data.iter().position(|&byte| byte == b'\n').map_or(data.len(), |at| at + 1);
+            let (line, rest) = data.split_at(end);
+            self.pass(line)?;
+            data = rest;
+            if self.tally.status == 101 {
+                // The answer to an upgrade is that of the server and starts another
+                // protocol. No path edits it, so it gets no field of ours either.
+                self.own = None;
+            } else if self.tally.status != 0 && line.ends_with(b"\n") {
+                // The status is known from the first twelve bytes of its line, so the
+                // first line end after it is the end of the final status line.
+                if let Some(policy) = self.own.take()
+                    && !carries_hsts(data)
+                {
+                    self.pass(&policy.hsts)?;
+                }
+            }
+        }
+        self.pass(data)
+    }
+
+    fn pass(&mut self, data: &[u8]) -> io::Result<()> {
+        if !self.head_request {
+            self.note(data);
+            return self.inner.write_all(data);
+        }
+        let head = self.head_bytes(data);
+        let passed = data.get(..head).unwrap_or_default();
+        self.note(passed);
+        self.inner.write_all(passed)
     }
 
     /// Starts the response to a new request; `head_request` says it is HEAD.
@@ -134,6 +185,7 @@ impl<W: Write> ClientWriter<W> {
         self.phase = FRESH_HEAD;
         self.tally = Tally::default();
         self.scan = StatusScan::default();
+        self.own = None;
     }
 
     /// What was written since [`ClientWriter::begin_response`].
@@ -181,19 +233,23 @@ impl<W: Write> Write for ClientWriter<W> {
     }
 
     fn write_all(&mut self, data: &[u8]) -> io::Result<()> {
-        if !self.head_request {
-            self.note(data);
-            return self.inner.write_all(data);
+        if self.own.is_some() {
+            return self.write_with_own(data);
         }
-        let head = self.head_bytes(data);
-        let passed = data.get(..head).unwrap_or_default();
-        self.note(passed);
-        self.inner.write_all(passed)
+        self.pass(data)
     }
 
     fn flush(&mut self) -> io::Result<()> {
         self.inner.flush()
     }
+}
+
+/// True when `fields` holds a `Strict-Transport-Security` line.
+fn carries_hsts(fields: &[u8]) -> bool {
+    const NAME: &[u8] = b"strict-transport-security:";
+    fields
+        .split(|&byte| byte == b'\n')
+        .any(|line| line.get(..NAME.len()).is_some_and(|start| start.eq_ignore_ascii_case(NAME)))
 }
 
 /// The status in the first bytes of a response head (`HTTP/1.1 200`), or zero when they
@@ -260,6 +316,44 @@ mod tests {
     }
 
     const PAGE: &[u8] = b"HTTP/1.1 403 Forbidden\r\nContent-Length: 9\r\n\r\nForbidden";
+
+    /// What a writer with the HSTS field of a policy makes of `writes`.
+    fn with_own(head_request: bool, writes: &[&[u8]]) -> String {
+        let line = b"Strict-Transport-Security: max-age=600\r\n";
+        let mut policy = RoutePolicy::default();
+        policy.hsts = line.to_vec().into();
+        let mut writer = ClientWriter::new(Vec::new());
+        writer.begin_response(head_request);
+        writer.set_own(Some(Arc::new(policy)));
+        for piece in writes {
+            writer.write_all(piece).unwrap();
+        }
+        String::from_utf8(writer.inner).unwrap()
+    }
+
+    #[test]
+    fn our_own_answers_carry_hsts_once_after_the_status_line() {
+        let hsts = "Strict-Transport-Security: max-age=600\r\n";
+        let page = format!("HTTP/1.1 403 Forbidden\r\n{hsts}Content-Length: 9\r\n\r\nForbidden");
+        assert_eq!(with_own(true, &[PAGE]), page[..page.len() - 9]);
+        // An interim head passes as it is and the final head has the field, wherever
+        // the pieces are cut.
+        let interim = "HTTP/1.1 100 Continue\r\n\r\n";
+        let sent = [interim.as_bytes(), PAGE].concat();
+        let wanted = format!("{interim}{page}");
+        for cut in 0..=sent.len() {
+            for second in [cut, (cut + 5).min(sent.len())] {
+                let pieces = [&sent[..cut], &sent[cut..second], &sent[second..]];
+                assert_eq!(with_own(false, &pieces), wanted, "cut at {cut} and {second}");
+            }
+        }
+        // A relayed head that brings the field keeps its own, whatever its spelling.
+        let relayed: &[u8] = b"HTTP/1.1 200 OK\r\nstrict-transport-security: max-age=1\r\n\r\n";
+        assert_eq!(with_own(false, &[relayed]).as_bytes(), relayed);
+        // The answer to an upgrade is the server's and is left as it is.
+        let upgrade: &[u8] = b"HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\n\r\n";
+        assert_eq!(with_own(false, &[upgrade]).as_bytes(), upgrade);
+    }
 
     #[test]
     fn head_responses_keep_their_head_and_lose_their_body() {

@@ -66,6 +66,18 @@ pub(super) struct Reading {
     pub credit: usize,
 }
 
+/// How a connection ends after an answer that refused its request body.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(super) enum Linger {
+    /// The connection closes when its output is written.
+    #[default]
+    No,
+    /// The answer refused a body that the client may still be sending.
+    Wanted,
+    /// The output is written. This many more bytes of the client are discarded.
+    Draining(usize),
+}
+
 /// One client connection.
 pub(super) struct Conn {
     pub stream: TcpStream,
@@ -91,6 +103,8 @@ pub(super) struct Conn {
     pub read_closed: bool,
     /// Close once the output is written.
     pub closing: bool,
+    /// Whether the close waits for the client to stop sending (SID 0019).
+    pub linger: Linger,
     /// The access log entry of the exchange in flight (SID 0020).
     pub trace: Option<crate::access::Entry>,
 }

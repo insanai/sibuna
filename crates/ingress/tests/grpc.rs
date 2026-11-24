@@ -7,7 +7,8 @@
 #[path = "support/grpc.rs"]
 mod support;
 
-use std::net::TcpListener;
+use std::future::Future;
+use std::net::{SocketAddr, TcpListener};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -80,29 +81,28 @@ impl Decide for Admit {
     }
 }
 
-#[test]
-fn every_kind_of_grpc_call_crosses_the_edge_to_an_http2_pool() {
-    let servers = tokio::runtime::Builder::new_multi_thread()
-        .worker_threads(2)
-        .enable_all()
-        .build()
-        .unwrap();
-    let connections = Arc::new(AtomicUsize::new(0));
-    let origin = server(&servers, connections.clone());
+/// An edge with one TLS frontend and one HTTP/2 pool, and what its tests count.
+struct Bench {
+    vip: SocketAddr,
+    edge: Edge,
+    ingress: Ingress,
+    admit: Arc<Admit>,
+    handoffs: Arc<AtomicUsize>,
+    _egress: Egress,
+}
+
+/// Starts an edge whose pool has the servers `servers`, a list of JSON objects.
+fn bench(servers: &str) -> Bench {
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
-    // Nothing listens on the first server. The first call finds its session closed and
-    // moves to the second server before it sent a byte (SID 0019).
-    let dead = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
     let topology = format!(
         r#"{{"frontends":{{"web":{{"proto":"http","binds":["{vip}"],
         "default_backend":"grpc"}}}},"backends":{{"grpc":{{"mode":"http","http_version":"2",
-        "servers":[{{"name":"dead","addr":"{dead}"}},
-        {{"name":"origin","addr":"{origin}"}}]}}}}}}"#
+        "servers":[{servers}]}}}}}}"#
     );
     let mut config = Config::parse(topology.as_bytes()).unwrap();
     let mut egress = Egress::new().unwrap();
     egress.configure(&mut config).unwrap();
-    let mut edge = Edge::bind(config).unwrap();
+    let edge = Edge::bind(config).unwrap();
     egress.commit();
     let tls = TlsOptions {
         cert_file: Some(fixture("localhost.pem")),
@@ -127,19 +127,50 @@ fn every_kind_of_grpc_call_crosses_the_edge_to_an_http2_pool() {
         Ingress::start(identities, budget, handler, Some(admit.clone()), Limits::default())
             .unwrap();
     ingress.attach(egress.directory());
-    let runner = std::thread::spawn(move || {
-        let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
-        rt.block_on(async {
-            tokio::time::timeout(Duration::from_secs(20), calls(vip)).await.unwrap();
+    Bench { vip, edge, ingress, admit, handoffs, _egress: egress }
+}
+
+impl Bench {
+    /// Steps the edge until `client` ends, and returns what it returned.
+    fn run<T, F>(&mut self, client: F) -> T
+    where
+        T: Send + 'static,
+        F: Future<Output = T> + Send + 'static,
+    {
+        let runner = std::thread::spawn(move || {
+            let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+            rt.block_on(async {
+                tokio::time::timeout(Duration::from_secs(20), client).await.unwrap()
+            })
         });
-    });
-    while !runner.is_finished() {
-        edge.step().unwrap();
-        for (bind, stream, permit) in edge.accepted_http() {
-            ingress.accept(bind, stream, permit);
+        while !runner.is_finished() {
+            self.edge.step().unwrap();
+            for (bind, stream, permit) in self.edge.accepted_http() {
+                self.ingress.accept(bind, stream, permit);
+            }
         }
+        runner.join().unwrap()
     }
-    runner.join().unwrap();
+}
+
+fn servers_runtime() -> tokio::runtime::Runtime {
+    tokio::runtime::Builder::new_multi_thread().worker_threads(2).enable_all().build().unwrap()
+}
+
+#[test]
+fn every_kind_of_grpc_call_crosses_the_edge_to_an_http2_pool() {
+    let servers = servers_runtime();
+    let connections = Arc::new(AtomicUsize::new(0));
+    let origin = server(&servers, connections.clone());
+    // Nothing listens on the first server. The first call finds its session closed and
+    // moves to the second server before it sent a byte (SID 0019).
+    let dead = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    let mut bench = bench(&format!(
+        r#"{{"name":"dead","addr":"{dead}"}},{{"name":"origin","addr":"{origin}"}}"#
+    ));
+    let vip = bench.vip;
+    bench.run(calls(vip));
+    let Bench { admit, handoffs, .. } = &bench;
     assert_eq!(admit.decisions.load(Ordering::SeqCst), 6);
     // The dead server was tried once and then marked. Its call was told of the move.
     assert_eq!(admit.retries.load(Ordering::SeqCst), 1);
@@ -147,7 +178,7 @@ fn every_kind_of_grpc_call_crosses_the_edge_to_an_http2_pool() {
     // No call crossed the socket pair, and all of them shared one HTTP/2 session.
     assert_eq!(handoffs.load(Ordering::SeqCst), 0);
     assert_eq!(connections.load(Ordering::SeqCst), 1);
-    assert_reports(&admit);
+    assert_reports(admit);
 }
 
 /// Every call on the shared session is reported once, when its trailers or its end
@@ -164,4 +195,55 @@ fn assert_reports(admit: &Admit) {
         assert!(completion.first_byte.is_some(), "{completion:?}");
     }
     assert!(reports.iter().any(|(_, completion)| completion.bytes_out > 0), "{reports:?}");
+}
+
+/// A server that completes the HTTP/2 preface and closes the connection soon after,
+/// before it answers anything. It counts its connections.
+fn breaker(runtime: &tokio::runtime::Runtime, connections: Arc<AtomicUsize>) -> SocketAddr {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    listener.set_nonblocking(true).unwrap();
+    runtime.spawn(async move {
+        use tokio::io::AsyncWriteExt;
+        let listener = tokio::net::TcpListener::from_std(listener).unwrap();
+        loop {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            connections.fetch_add(1, Ordering::SeqCst);
+            tokio::spawn(async move {
+                // An empty SETTINGS frame is the whole server preface.
+                let _ = socket.write_all(&[0, 0, 0, 4, 0, 0, 0, 0, 0]).await;
+                tokio::time::sleep(Duration::from_millis(300)).await;
+            });
+        }
+    });
+    address
+}
+
+#[test]
+fn a_safe_request_moves_when_its_session_fails_after_the_send() {
+    let servers = servers_runtime();
+    let (broken, good) = (Arc::new(AtomicUsize::new(0)), Arc::new(AtomicUsize::new(0)));
+    let first = breaker(&servers, broken.clone());
+    let second = server(&servers, good.clone());
+    let mut bench = bench(&format!(
+        r#"{{"name":"breaker","addr":"{first}"}},{{"name":"origin","addr":"{second}"}}"#
+    ));
+    let vip = bench.vip;
+    let status = bench.run(async move {
+        let mut sender = support::connect(vip).await;
+        let url = format!("https://localhost:{}/echo.Echo/Missing", vip.port());
+        let empty = http_body_util::Empty::<bytes::Bytes>::new();
+        let body = http_body_util::BodyExt::boxed_unsync(empty);
+        let request = hyper::Request::get(url).body(body).unwrap();
+        let response = sender.send_request(request).await.unwrap();
+        (response.status().as_u16(), response.headers().contains_key("x-version"))
+    });
+    // The answer is that of the second server, not our 502.
+    assert_eq!(status, (200, true));
+    // The first server lost the request on its shared session and on a fresh one. Only
+    // then did the request move, once.
+    assert_eq!(broken.load(Ordering::SeqCst), 2);
+    assert_eq!(bench.admit.retries.load(Ordering::SeqCst), 1);
+    assert_eq!(bench.admit.moves.load(Ordering::SeqCst), 1);
+    assert_eq!(good.load(Ordering::SeqCst), 1);
 }

@@ -74,6 +74,8 @@ struct Target {
     added: bool,
     /// The weight the file gave, when a command replaced it.
     file_weight: Option<u32>,
+    /// The part of the rendezvous ranking that depends on the name alone (SID 0019).
+    rank_seed: u64,
 }
 
 impl Target {
@@ -81,7 +83,16 @@ impl Target {
         let slot = loads.0.entry((protocol, server.addr)).or_default();
         let load = slot.upgrade().unwrap_or_default();
         *slot = Arc::downgrade(&load);
-        Self { server, load, admitted: 0, drained: false, added: false, file_weight: None }
+        let rank_seed = crate::sticky::rank_seed(&server.name);
+        Self {
+            server,
+            load,
+            admitted: 0,
+            drained: false,
+            added: false,
+            file_weight: None,
+            rank_seed,
+        }
     }
 
     /// Whether a command changed this server since the file was loaded.
@@ -197,8 +208,8 @@ impl Pool {
                 .then_some(index)
         });
         // A sticky server serves its client whenever it is eligible (SID 0019).
-        let sticky = wish.sticky.or_else(|| self.home(wish.client.unwrap_or(peer.ip())));
-        let sticky = sticky.filter(|&index| self.targets.get(index).is_some_and(eligible));
+        let sticky = wish.sticky.filter(|&index| self.targets.get(index).is_some_and(eligible));
+        let sticky = sticky.or_else(|| self.home(wish.client.unwrap_or(peer.ip()), eligible));
         let index = sticky.or(primary).or_else(|| {
             if matches!(self.scheduler, Scheduler::RoundRobin) {
                 return self.in_turn(ramping, eligible);
@@ -285,6 +296,10 @@ impl Pool {
 
     /// Appends one status per server, in the pool's order.
     pub fn statuses(&self, pool: &str, out: &mut Vec<crate::ServerStatus>) {
+        let now = Instant::now();
+        // The ramp weights are stored by a reservation. An idle pool is brought up to
+        // date here, so that the answer is that of this moment.
+        let ramping = self.ramp(now);
         out.extend(self.targets.iter().map(|target| crate::ServerStatus {
             pool: pool.to_owned(),
             name: target.server.name.clone(),
@@ -300,6 +315,8 @@ impl Pool {
             backup: target.server.backup,
             added: target.added,
             reweighted: target.file_weight.is_some(),
+            ejected: target.load.extra.ejected_for(now),
+            ramp: target.ramp_percent(ramping),
         }));
     }
 

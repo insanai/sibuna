@@ -6,6 +6,7 @@
 
 mod conn;
 mod exchange;
+mod linger;
 mod request;
 mod trace;
 mod worker;

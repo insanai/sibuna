@@ -12,7 +12,7 @@ use sibuna_reactor::{
     Io, Poller, READ, Slab, WRITE, Waker, Wheel, handle, read_once as read, write_once as write,
 };
 
-use super::conn::{BUFFER, Buffer, Conn, HIGH_WATER, Origin, Reading};
+use super::conn::{BUFFER, Buffer, Conn, HIGH_WATER, Linger, Origin, Reading};
 use super::request::{self, Scratch, Step};
 use super::{Incoming, Shared, Timeouts};
 use crate::connection::{MAX_REQUESTS_PER_CONNECTION, PeerText};
@@ -186,6 +186,7 @@ impl Worker {
             armed: self.now,
             read_closed: false,
             closing: false,
+            linger: Linger::No,
             trace: None,
         };
         let (index, _) = self.conns.insert(conn);
@@ -225,6 +226,9 @@ impl Worker {
     /// Reads the client once. Returns false when the connection was closed.
     fn read_client(&mut self, index: u32) -> bool {
         let Some(conn) = self.conns.at(index) else { return false };
+        if let Linger::Draining(left) = conn.linger {
+            return self.drain(index, left);
+        }
         if conn.read_closed || conn.closing {
             return true;
         }
@@ -365,7 +369,11 @@ impl Worker {
                 }
             }
         }
-        if conn.closing && conn.backlog() == 0 {
+        if conn.closing && conn.backlog() == 0 && !matches!(conn.linger, Linger::Draining(_)) {
+            // A refused body is drained before the close (SID 0019).
+            if self.begin_linger(index) {
+                return true;
+            }
             self.close(index);
             return false;
         }
@@ -379,11 +387,12 @@ impl Worker {
         let full = conn.input.as_ref().is_some_and(|buffer| buffer.len == buffer.data.len());
         let exchange = conn.exchange.as_deref();
         let room = exchange.map_or(conn.backlog(), |exchange| exchange.backlog()) < HIGH_WATER;
-        let reads = !conn.read_closed && !conn.closing && !full && room;
+        let draining = matches!(conn.linger, Linger::Draining(_));
+        let reads = draining || (!conn.read_closed && !conn.closing && !full && room);
         let events = (i16::from(reads) * READ) | (i16::from(conn.backlog() > 0) * WRITE);
         let registered =
             self.poll.set(handle(&conn.stream), events, key(KIND_CLIENT, index, generation));
-        let mut timeout = self.timeouts.idle;
+        let mut timeout = if draining { crate::traffic::LINGER_TIME } else { self.timeouts.idle };
         let mut since = conn.activity;
         let mut origin = None;
         if let Some(exchange) = exchange {

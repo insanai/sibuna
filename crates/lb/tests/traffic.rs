@@ -2,8 +2,10 @@
 //! slow start.
 #![allow(clippy::unwrap_used)]
 
+mod free;
+
 use std::collections::{BTreeMap, BTreeSet};
-use std::net::{SocketAddr, TcpListener};
+use std::net::SocketAddr;
 use std::time::Duration;
 
 use sibuna_lb::{Config, Edge, HttpRoutes, Query};
@@ -11,7 +13,7 @@ use sibuna_lb::{Config, Edge, HttpRoutes, Query};
 /// An edge with one HTTP frontend and one pool `app` of `servers` servers on ports from
 /// 9400. `backend` holds extra members of the pool, each with a trailing comma.
 fn edge(servers: usize, backend: &str) -> (Edge, SocketAddr) {
-    let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    let vip = free::tcp();
     (Edge::bind(topology(vip, servers, backend)).unwrap(), vip)
 }
 
@@ -296,13 +298,22 @@ fn a_client_address_keeps_its_server_whatever_its_port() {
     }
     let used: BTreeSet<u16> = homes.values().copied().collect();
     assert_eq!(used.len(), 4, "{homes:?}");
-    // The clients of a server that goes down are balanced. The others stay.
+    // Each client of a server that is ejected gets one other server and keeps it. The
+    // other clients stay where they are.
     let lost = homes[&0];
     routes.choose(&from(0, 5000)).unwrap().timed_out();
+    let mut refuges = BTreeSet::new();
     for (&host, &home) in &homes {
         let port = routes.choose(&from(host, 6000)).unwrap().address().port();
         assert_eq!(port == home, home != lost, "{host}");
+        let again = routes.choose(&from(host, 6500)).unwrap().address().port();
+        assert_eq!(again, port, "{host}");
+        if home == lost {
+            refuges.insert(port);
+        }
     }
+    // The clients of the lost server are spread over the three that remain.
+    assert_eq!(refuges.len(), 3, "{refuges:?}");
     std::thread::sleep(Duration::from_millis(350));
     for (&host, &home) in &homes {
         assert_eq!(routes.choose(&from(host, 7000)).unwrap().address().port(), home);
@@ -311,7 +322,7 @@ fn a_client_address_keeps_its_server_whatever_its_port() {
 
 #[test]
 fn a_request_carries_the_policy_of_its_route_or_of_its_frontend() {
-    let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    let vip = free::tcp();
     let source = format!(
         r#"{{"frontends":{{"web":{{"proto":"http","binds":["{vip}"],"default_backend":"app",
             "tls":{{"cert_file":"web.pem","key_file":"web.key"}},
@@ -352,7 +363,7 @@ fn a_request_carries_the_policy_of_its_route_or_of_its_frontend() {
 
 /// An edge whose pool `app` has the given `(weight, backup)` servers on ports from 9400.
 fn weighted(backend: &str, servers: &[(u32, bool)]) -> (Edge, SocketAddr) {
-    let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    let vip = free::tcp();
     let rows: Vec<String> = servers
         .iter()
         .enumerate()

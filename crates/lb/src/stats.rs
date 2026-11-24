@@ -122,6 +122,10 @@ impl FrontendStats {
 pub struct ServerStats {
     requests: Classes,
     failures: AtomicU64,
+    /// Requests that left this server for another one (SID 0019).
+    failovers: AtomicU64,
+    /// Times passive health ejected this server (SID 0019).
+    ejections: AtomicU64,
     response: Histogram,
     /// HTTP requests that chose this server and have not ended.
     active: AtomicU64,
@@ -147,6 +151,22 @@ impl ServerStats {
     /// server that ends it.
     pub fn record_failover(&self) {
         self.failures.fetch_add(1, Ordering::Relaxed);
+        self.failovers.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// Counts one ejection of this server by passive health (SID 0019).
+    pub fn record_ejection(&self) {
+        self.ejections.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// The number of requests that left this server for another one.
+    pub fn failover_count(&self) -> u64 {
+        self.failovers.load(Ordering::Relaxed)
+    }
+
+    /// The number of times passive health ejected this server.
+    pub fn ejection_count(&self) -> u64 {
+        self.ejections.load(Ordering::Relaxed)
     }
 
     /// The number of requests that ended without a response of this server.
@@ -395,6 +415,8 @@ fn write_fronts(out: &mut impl Write, fronts: &Fronts) -> fmt::Result {
 fn write_servers(out: &mut impl Write, servers: &Servers) -> fmt::Result {
     out.write_str("# TYPE sibuna_edge_server_requests_total counter\n")?;
     out.write_str("# TYPE sibuna_edge_server_failures_total counter\n")?;
+    out.write_str("# TYPE sibuna_edge_server_failovers_total counter\n")?;
+    out.write_str("# TYPE sibuna_edge_server_ejections_total counter\n")?;
     out.write_str("# TYPE sibuna_edge_server_up gauge\n")?;
     out.write_str("# TYPE sibuna_edge_server_active_requests gauge\n")?;
     out.write_str("# TYPE sibuna_edge_server_response_seconds histogram\n")?;
@@ -408,6 +430,9 @@ fn write_servers(out: &mut impl Write, servers: &Servers) -> fmt::Result {
         stats.requests.write(out, "sibuna_edge_server_requests_total", &labels)?;
         let failures = stats.failure_count();
         writeln!(out, "sibuna_edge_server_failures_total{{{labels}}} {failures}")?;
+        let (moved, ejected) = (stats.failover_count(), stats.ejection_count());
+        writeln!(out, "sibuna_edge_server_failovers_total{{{labels}}} {moved}")?;
+        writeln!(out, "sibuna_edge_server_ejections_total{{{labels}}} {ejected}")?;
         writeln!(out, "sibuna_edge_server_up{{{labels}}} {}", u8::from(stats.is_up()))?;
         let active = stats.active_count();
         writeln!(out, "sibuna_edge_server_active_requests{{{labels}}} {active}")?;

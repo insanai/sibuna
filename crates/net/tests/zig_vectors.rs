@@ -148,6 +148,10 @@ fn result_text(result: Result<bool, ProxyError>) -> String {
                 ProxyError::UpstreamTruncated => "UpstreamTruncated",
                 ProxyError::ClientFailed => "ClientWriteFailed",
                 ProxyError::MalformedRequestBody => "MalformedRequestBody",
+                // The bounds of a route (SID 0019) have no Zig counterpart.
+                ProxyError::UpstreamSilent => "UpstreamSilent",
+                ProxyError::UpstreamStalled => "UpstreamStalled",
+                ProxyError::BodyTooLarge => "BodyTooLarge",
             };
             format!("err {name}")
         }

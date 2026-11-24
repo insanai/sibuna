@@ -239,18 +239,37 @@ impl HttpTarget {
     /// Records that the server stayed silent for its response bound. Consecutive
     /// failures eject the server under the passive health of its pool (SID 0019).
     pub fn timed_out(&self) {
-        self.ticket.timed_out(self.policy.passive.as_ref(), Instant::now());
+        let ejected = self.ticket.timed_out(self.policy.passive.as_ref(), Instant::now());
+        self.count_ejection(ejected);
+    }
+
+    fn count_ejection(&self, ejected: bool) {
+        if let (true, Some(info)) = (ejected, &self.again.info) {
+            info.stats.record_ejection();
+        }
+    }
+
+    /// How many servers the request left before this one (SID 0019).
+    pub fn move_count(&self) -> usize {
+        self.again.tried.len()
     }
 
     /// Records a complete response with `status`. It ends a run of failures, or counts
     /// as one when the pool counts server errors.
     pub fn answered(&self, status: u16) {
-        self.ticket.answered(self.policy.passive.as_ref(), status, Instant::now());
+        let ejected = self.ticket.answered(self.policy.passive.as_ref(), status, Instant::now());
+        self.count_ejection(ejected);
     }
 
     /// The policy of the frontend or route that the request matched (SID 0019).
     pub fn route(&self) -> &RoutePolicy {
         &self.route
+    }
+
+    /// The same policy, shared. It outlives this reservation, so a caller can keep it
+    /// while the request moves to another server.
+    pub fn route_shared(&self) -> Arc<RoutePolicy> {
+        Arc::clone(&self.route)
     }
 
     /// The field lines that the response to the client must carry besides those of the

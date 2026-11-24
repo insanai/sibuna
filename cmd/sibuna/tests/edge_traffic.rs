@@ -11,56 +11,73 @@ use std::net::{Shutdown, TcpStream};
 use std::sync::atomic::Ordering;
 use std::time::{Duration, Instant};
 
-use traffic::{Origin, Topology, blackhole, both, get, get_with, logged, post, refused, request};
+use traffic::{
+    Origin, Topology, blackhole, both, get, get_with, logged, post, refused, request, shown,
+};
 
 #[test]
 fn a_slow_server_has_its_own_bound_and_not_the_client_idle_timeout() {
-    let origin = Origin::start("a");
-    // The client idle timeout is far shorter than the answer takes.
-    let edge = Topology::new(&[origin.address]).http(r#","idle_timeout":"1s""#).start(true);
-    let started = Instant::now();
-    let answer = get(&edge, "/slow/2500");
-    assert_eq!((answer.status(), answer.text()), (200, "slept".into()));
-    assert!(started.elapsed() >= Duration::from_millis(2500));
+    both(|event_loop| {
+        let origin = Origin::start("a");
+        // The client idle timeout is far shorter than the answer takes.
+        let edge =
+            Topology::new(&[origin.address]).http(r#","idle_timeout":"1s""#).start(event_loop);
+        let started = Instant::now();
+        let answer = get(&edge, "/slow/2500");
+        assert_eq!((answer.status(), answer.text()), (200, "slept".into()));
+        assert!(started.elapsed() >= Duration::from_millis(2500));
 
-    // A pool with a short bound answers 504 soon after it.
-    let edge = Topology::new(&[origin.address]).backend(r#""response_timeout":"1s","#).start(true);
-    let started = Instant::now();
-    assert_eq!(get(&edge, "/slow/6000").status(), 504);
-    let waited = started.elapsed();
-    assert!(waited >= Duration::from_secs(1) && waited < Duration::from_secs(4), "{waited:?}");
-    // The bound is on silence. A quick answer on the same pool is unaffected.
-    assert_eq!(get(&edge, "/who").text(), "a");
+        // A pool with a short bound answers 504 soon after it.
+        let edge = Topology::new(&[origin.address])
+            .backend(r#""response_timeout":"1s","#)
+            .start(event_loop);
+        let started = Instant::now();
+        assert_eq!(get(&edge, "/slow/6000").status(), 504);
+        let waited = started.elapsed();
+        assert!(waited >= Duration::from_secs(1) && waited < Duration::from_secs(4), "{waited:?}");
+        // The bound is on silence. A quick answer on the same pool is unaffected.
+        assert_eq!(get(&edge, "/who").text(), "a");
+    });
 }
 
 #[test]
 fn a_slow_upload_keeps_the_client_bound_whatever_the_server_bound_is() {
-    let origin = Origin::start("a");
-    let edge = Topology::new(&[origin.address])
-        .http(r#","idle_timeout":"1s""#)
-        .backend(r#""response_timeout":"30s","#)
-        .start(true);
-    let started = Instant::now();
-    let mut client = edge.connect();
-    request(&mut client, b"POST /who HTTP/1.1\r\nHost: a\r\nContent-Length: 100000\r\n\r\nabc");
-    let mut rest = Vec::new();
-    let _ = std::io::Read::read_to_end(&mut client, &mut rest);
-    // The client owed the body, so its own bound of one second ended the wait.
-    assert!(started.elapsed() < Duration::from_secs(6), "{:?}", started.elapsed());
-    let _ = client.get_ref().shutdown(Shutdown::Both);
+    both(|event_loop| {
+        let origin = Origin::start("a");
+        let edge = Topology::new(&[origin.address])
+            .http(r#","idle_timeout":"1s""#)
+            .backend(r#""response_timeout":"30s","#)
+            .start(event_loop);
+        let started = Instant::now();
+        let mut client = edge.connect();
+        request(
+            &mut client,
+            b"POST /who HTTP/1.1\r\nHost: a\r\nContent-Length: 100000\r\n\r\nabc",
+        );
+        let mut rest = Vec::new();
+        let _ = std::io::Read::read_to_end(&mut client, &mut rest);
+        // The client owed the body, so its own bound of one second ended the wait.
+        assert!(started.elapsed() < Duration::from_secs(6), "{:?}", started.elapsed());
+        let _ = client.get_ref().shutdown(Shutdown::Both);
+    });
 }
 
 #[test]
 fn a_connect_that_hangs_ends_at_the_connect_timeout_of_the_pool() {
-    let hole = blackhole();
-    let edge = Topology::new(&[hole.address])
-        .backend(r#""connect_timeout":"1s","retries":0,"#)
-        .start(true);
-    let started = Instant::now();
-    assert_eq!(get(&edge, "/who").status(), 502);
-    let waited = started.elapsed();
-    // The fixed bound was five seconds.
-    assert!(waited >= Duration::from_millis(900) && waited < Duration::from_secs(4), "{waited:?}");
+    both(|event_loop| {
+        let hole = blackhole();
+        let edge = Topology::new(&[hole.address])
+            .backend(r#""connect_timeout":"1s","retries":0,"#)
+            .start(event_loop);
+        let started = Instant::now();
+        assert_eq!(get(&edge, "/who").status(), 502);
+        let waited = started.elapsed();
+        // The fixed bound was five seconds.
+        assert!(
+            waited >= Duration::from_millis(900) && waited < Duration::from_secs(4),
+            "{waited:?}"
+        );
+    });
 }
 
 #[test]
@@ -82,61 +99,67 @@ fn the_traffic_members_are_checked_when_the_file_is_read() {
 
 #[test]
 fn a_failed_connect_moves_any_request_to_another_server() {
-    let good = Origin::start("good");
-    // Least connections tries the servers in the order of the file, so the dead one is
-    // selected first.
-    let edge = Topology::new(&[refused(), good.address]).start(true);
-    let answer = post(&edge, "/length", b"twelve bytes");
-    assert_eq!((answer.status(), answer.text()), (200, "12".into()));
-    assert_eq!(good.requests.load(Ordering::SeqCst), 1);
+    both(|event_loop| {
+        let good = Origin::start("good");
+        // Least connections tries the servers in the order of the file, so the dead one is
+        // selected first.
+        let edge = Topology::new(&[refused(), good.address]).start(event_loop);
+        let answer = post(&edge, "/length", b"twelve bytes");
+        assert_eq!((answer.status(), answer.text()), (200, "12".into()));
+        assert_eq!(good.requests.load(Ordering::SeqCst), 1);
 
-    // A connect that hangs moves on at the connect bound of the pool.
-    let hole = blackhole();
-    let edge = Topology::new(&[hole.address, good.address])
-        .backend(r#""connect_timeout":"1s","#)
-        .start(true);
-    let started = Instant::now();
-    assert_eq!(get(&edge, "/who").text(), "good");
-    assert!(started.elapsed() < Duration::from_secs(4), "{:?}", started.elapsed());
+        // A connect that hangs moves on at the connect bound of the pool.
+        let hole = blackhole();
+        let edge = Topology::new(&[hole.address, good.address])
+            .backend(r#""connect_timeout":"1s","#)
+            .start(event_loop);
+        let started = Instant::now();
+        assert_eq!(get(&edge, "/who").text(), "good");
+        assert!(started.elapsed() < Duration::from_secs(4), "{:?}", started.elapsed());
+    });
 }
 
 #[test]
 fn a_request_tries_at_most_its_retries_and_no_server_twice() {
-    let good = Origin::start("good");
-    let servers = [refused(), refused(), refused(), good.address];
-    // The default allows two other servers: three dead ones exhaust it.
-    let edge = Topology::new(&servers).start(true);
-    assert_eq!(get(&edge, "/who").status(), 502);
-    assert_eq!(good.requests.load(Ordering::SeqCst), 0);
-    let edge = Topology::new(&servers).backend(r#""retries":3,"#).start(true);
-    assert_eq!(get(&edge, "/who").text(), "good");
-    // Without retries the first failure is final.
-    let edge = Topology::new(&servers[2..]).backend(r#""retries":0,"#).start(true);
-    assert_eq!(get(&edge, "/who").status(), 502);
-    // A pool of dead servers ends once each was tried, whatever the retries allow.
-    let edge = Topology::new(&servers[..2]).backend(r#""retries":8,"#).start(true);
-    assert_eq!(get(&edge, "/who").status(), 502);
+    both(|event_loop| {
+        let good = Origin::start("good");
+        let servers = [refused(), refused(), refused(), good.address];
+        // The default allows two other servers: three dead ones exhaust it.
+        let edge = Topology::new(&servers).start(event_loop);
+        assert_eq!(get(&edge, "/who").status(), 502);
+        assert_eq!(good.requests.load(Ordering::SeqCst), 0);
+        let edge = Topology::new(&servers).backend(r#""retries":3,"#).start(event_loop);
+        assert_eq!(get(&edge, "/who").text(), "good");
+        // Without retries the first failure is final.
+        let edge = Topology::new(&servers[2..]).backend(r#""retries":0,"#).start(event_loop);
+        assert_eq!(get(&edge, "/who").status(), 502);
+        // A pool of dead servers ends once each was tried, whatever the retries allow.
+        let edge = Topology::new(&servers[..2]).backend(r#""retries":8,"#).start(event_loop);
+        assert_eq!(get(&edge, "/who").status(), 502);
+    });
 }
 
 #[test]
 fn after_bytes_were_sent_only_a_safe_buffered_request_moves() {
-    let closing = Origin::start("closing");
-    closing.closing.store(true, Ordering::SeqCst);
-    let good = Origin::start("good");
-    let edge = Topology::new(&[closing.address, good.address]).start(true);
-    // The first server read the GET and closed without an answer. The request is safe
-    // and was held whole, so the second server serves it.
-    let answer = get(&edge, "/who");
-    assert_eq!((answer.status(), answer.text()), (200, "good".into()));
-    assert_eq!(closing.requests.load(Ordering::SeqCst), 1);
-    // The failure marked the first server for two seconds. Wait until it is selected
-    // again. Both servers have admitted one request, so the first is chosen.
-    std::thread::sleep(Duration::from_millis(2200));
-    // The first server read the POST and closed. It may have acted, so nothing is sent
-    // to the second server.
-    assert_eq!(post(&edge, "/length", b"abc").status(), 502);
-    assert_eq!(closing.requests.load(Ordering::SeqCst), 2);
-    assert_eq!(good.requests.load(Ordering::SeqCst), 1);
+    both(|event_loop| {
+        let closing = Origin::start("closing");
+        closing.closing.store(true, Ordering::SeqCst);
+        let good = Origin::start("good");
+        let edge = Topology::new(&[closing.address, good.address]).start(event_loop);
+        // The first server read the GET and closed without an answer. The request is safe
+        // and was held whole, so the second server serves it.
+        let answer = get(&edge, "/who");
+        assert_eq!((answer.status(), answer.text()), (200, "good".into()));
+        assert_eq!(closing.requests.load(Ordering::SeqCst), 1);
+        // The failure marked the first server for two seconds. Wait until it is selected
+        // again. Both servers have admitted one request, so the first is chosen.
+        std::thread::sleep(Duration::from_millis(2200));
+        // The first server read the POST and closed. It may have acted, so nothing is sent
+        // to the second server.
+        assert_eq!(post(&edge, "/length", b"abc").status(), 502);
+        assert_eq!(closing.requests.load(Ordering::SeqCst), 2);
+        assert_eq!(good.requests.load(Ordering::SeqCst), 1);
+    });
 }
 
 /// Sends `count` requests one after another and returns their statuses and bodies.
@@ -151,43 +174,61 @@ fn answers(edge: &traffic::Edge, count: usize) -> Vec<(u16, String)> {
 
 #[test]
 fn a_server_that_stops_answering_is_ejected_after_consecutive_timeouts() {
-    let silent = Origin::start("silent");
-    silent.stalled.store(true, Ordering::SeqCst);
-    let good = Origin::start("good");
-    let members = r#""response_timeout":"1s","passive_health":{"failures":2,"ejection":"30s"},"#;
-    let edge = Topology::new(&[silent.address, good.address]).backend(members).start(true);
-    // Requests alternate between the two servers until the silent one has failed twice.
-    let first = answers(&edge, 4);
-    let timeouts = first.iter().filter(|(status, _)| *status == 504).count();
-    assert_eq!(timeouts, 2, "{first:?}");
-    // From then on the pool serves from the other server alone, without a wait.
-    let started = Instant::now();
-    let later = answers(&edge, 10);
-    assert!(later.iter().all(|answer| *answer == (200, "good".into())), "{later:?}");
-    assert!(started.elapsed() < Duration::from_secs(1), "{:?}", started.elapsed());
+    both(|event_loop| {
+        let silent = Origin::start("silent");
+        silent.stalled.store(true, Ordering::SeqCst);
+        let good = Origin::start("good");
+        let members =
+            r#""response_timeout":"1s","passive_health":{"failures":2,"ejection":"30s"},"#;
+        let edge =
+            Topology::new(&[silent.address, good.address]).backend(members).start(event_loop);
+        // Requests alternate between the two servers until the silent one has failed twice.
+        let first = answers(&edge, 4);
+        let timeouts = first.iter().filter(|(status, _)| *status == 504).count();
+        assert_eq!(timeouts, 2, "{first:?}");
+        // From then on the pool serves from the other server alone, without a wait.
+        let started = Instant::now();
+        let later = answers(&edge, 10);
+        assert!(later.iter().all(|answer| *answer == (200, "good".into())), "{later:?}");
+        assert!(started.elapsed() < Duration::from_secs(1), "{:?}", started.elapsed());
+        // The operator sees the ejection, how long it lasts, and its count.
+        let left = shown(&edge, "s0", "ejected");
+        let seconds: u64 = left.trim_end_matches('s').parse().unwrap_or_else(|_| panic!("{left}"));
+        assert!((20..=30).contains(&seconds), "{left}");
+        assert_eq!(shown(&edge, "s1", "ejected"), "-");
+        let metrics = get(&edge, "/__sibuna/metrics").text();
+        for series in [
+            "sibuna_edge_server_ejections_total{backend=\"app\",server=\"s0\"} 1\n",
+            "sibuna_edge_server_ejections_total{backend=\"app\",server=\"s1\"} 0\n",
+        ] {
+            assert!(metrics.contains(series), "{series} is missing:\n{metrics}");
+        }
 
-    // A pool of one server keeps serving: there is nothing to eject it for.
-    let edge = Topology::new(&[silent.address]).backend(members).start(true);
-    assert_eq!(answers(&edge, 3).iter().filter(|(status, _)| *status == 504).count(), 3);
-    silent.stalled.store(false, Ordering::SeqCst);
-    assert_eq!(get(&edge, "/who").text(), "silent");
+        // A pool of one server keeps serving: there is nothing to eject it for.
+        let edge = Topology::new(&[silent.address]).backend(members).start(event_loop);
+        assert_eq!(answers(&edge, 3).iter().filter(|(status, _)| *status == 504).count(), 3);
+        silent.stalled.store(false, Ordering::SeqCst);
+        assert_eq!(get(&edge, "/who").text(), "silent");
+    });
 }
 
 #[test]
 fn server_errors_eject_only_when_the_pool_counts_them() {
-    let failing = Origin::start("failing");
-    failing.failing.store(true, Ordering::SeqCst);
-    let good = Origin::start("good");
-    let servers = [failing.address, good.address];
-    // By default a 503 of the server is relayed and counts nothing.
-    let edge = Topology::new(&servers).start(true);
-    let relayed = answers(&edge, 10);
-    assert_eq!(relayed.iter().filter(|(status, _)| *status == 503).count(), 5, "{relayed:?}");
-    let members = r#""passive_health":{"failures":2,"http_5xx":true},"#;
-    let edge = Topology::new(&servers).backend(members).start(true);
-    let counted = answers(&edge, 12);
-    assert_eq!(counted.iter().filter(|(status, _)| *status == 503).count(), 2, "{counted:?}");
-    assert!(counted[4..].iter().all(|answer| *answer == (200, "good".into())), "{counted:?}");
+    both(|event_loop| {
+        let failing = Origin::start("failing");
+        failing.failing.store(true, Ordering::SeqCst);
+        let good = Origin::start("good");
+        let servers = [failing.address, good.address];
+        // By default a 503 of the server is relayed and counts nothing.
+        let edge = Topology::new(&servers).start(event_loop);
+        let relayed = answers(&edge, 10);
+        assert_eq!(relayed.iter().filter(|(status, _)| *status == 503).count(), 5, "{relayed:?}");
+        let members = r#""passive_health":{"failures":2,"http_5xx":true},"#;
+        let edge = Topology::new(&servers).backend(members).start(event_loop);
+        let counted = answers(&edge, 12);
+        assert_eq!(counted.iter().filter(|(status, _)| *status == 503).count(), 2, "{counted:?}");
+        assert!(counted[4..].iter().all(|answer| *answer == (200, "good".into())), "{counted:?}");
+    });
 }
 
 /// The `name=value` pair of the sticky cookie that `answer` sets, if it sets one.
@@ -229,27 +270,30 @@ fn a_cookie_keeps_a_client_on_the_server_it_was_given() {
 
 #[test]
 fn a_sticky_server_that_fails_gives_way_to_normal_selection() {
-    let silent = Origin::start("silent");
-    let good = Origin::start("good");
-    let members = r#""sticky":{"kind":"cookie","cookie":"srv"},"response_timeout":"1s",
+    both(|event_loop| {
+        let silent = Origin::start("silent");
+        let good = Origin::start("good");
+        let members = r#""sticky":{"kind":"cookie","cookie":"srv"},"response_timeout":"1s",
         "passive_health":{"failures":1,"ejection":"30s"},"#;
-    let edge = Topology::new(&[silent.address, good.address]).backend(members).start(true);
-    // Find the cookie of the server that will fail.
-    let pair = (0..8)
-        .find_map(|_| {
-            let answer = get(&edge, "/who");
-            (answer.text() == "silent").then(|| sticky_pair(&answer, "srv").unwrap())
-        })
-        .expect("a request on the first server");
-    let cookie = format!("Cookie: {pair}\r\n");
-    assert_eq!(get_with(&edge, "/who", &cookie).text(), "silent");
-    silent.stalled.store(true, Ordering::SeqCst);
-    assert_eq!(get_with(&edge, "/who", &cookie).status(), 504);
-    // The server is ejected. Its client is served by the other and gets its cookie.
-    let moved = get_with(&edge, "/who", &cookie);
-    assert_eq!((moved.status(), moved.text()), (200, "good".into()));
-    let other = sticky_pair(&moved, "srv").expect("a new cookie");
-    assert_ne!(other, pair);
+        let edge =
+            Topology::new(&[silent.address, good.address]).backend(members).start(event_loop);
+        // Find the cookie of the server that will fail.
+        let pair = (0..8)
+            .find_map(|_| {
+                let answer = get(&edge, "/who");
+                (answer.text() == "silent").then(|| sticky_pair(&answer, "srv").unwrap())
+            })
+            .expect("a request on the first server");
+        let cookie = format!("Cookie: {pair}\r\n");
+        assert_eq!(get_with(&edge, "/who", &cookie).text(), "silent");
+        silent.stalled.store(true, Ordering::SeqCst);
+        assert_eq!(get_with(&edge, "/who", &cookie).status(), 504);
+        // The server is ejected. Its client is served by the other and gets its cookie.
+        let moved = get_with(&edge, "/who", &cookie);
+        assert_eq!((moved.status(), moved.text()), (200, "good".into()));
+        let other = sticky_pair(&moved, "srv").expect("a new cookie");
+        assert_ne!(other, pair);
+    });
 }
 
 #[test]
@@ -340,18 +384,25 @@ fn a_body_above_max_body_is_answered_with_413() {
         assert_eq!(post(&edge, "/upload/length", &[b'x'; 1025]).status(), 413);
         assert_eq!(get(&edge, "/who").text(), "a");
     });
-    // A chunked body has no declared length. One that ends inside the request buffer is
-    // measured exactly before it is admitted.
-    let edge = Topology::new(&[origin.address]).frontend(r#""max_body":"4k","#).start(true);
-    let chunk = format!("400\r\n{}\r\n", "x".repeat(1024));
-    assert_eq!(chunked(&edge, &chunk, 4, true).text(), "4096");
-    assert_eq!(chunked(&edge, &chunk, 5, true).status(), 413);
-    // A longer one is admitted when the buffer is full. A worker counts the rest as it
-    // arrives, and answers when the bound is passed.
-    let edge = Topology::new(&[origin.address]).frontend(r#""max_body":"100k","#).start(true);
-    let before = origin.requests.load(Ordering::SeqCst);
-    assert_eq!(chunked(&edge, &chunk, 101, false).status(), 413);
-    assert_eq!(origin.requests.load(Ordering::SeqCst), before);
+    both(|event_loop| {
+        // A chunked body has no declared length. One that ends inside the request buffer is
+        // measured exactly before it is admitted.
+        let edge =
+            Topology::new(&[origin.address]).frontend(r#""max_body":"4k","#).start(event_loop);
+        let chunk = format!("400\r\n{}\r\n", "x".repeat(1024));
+        assert_eq!(chunked(&edge, &chunk, 4, true).text(), "4096");
+        assert_eq!(chunked(&edge, &chunk, 5, true).status(), 413);
+        // A longer one is admitted when the buffer is full. The rest is counted as it
+        // arrives, and the answer comes when the bound is passed.
+        let edge =
+            Topology::new(&[origin.address]).frontend(r#""max_body":"100k","#).start(event_loop);
+        let before = origin.requests.load(Ordering::SeqCst);
+        assert_eq!(chunked(&edge, &chunk, 101, false).status(), 413);
+        assert_eq!(origin.requests.load(Ordering::SeqCst), before);
+        // The refusal is the fault of the client: no server error is counted.
+        let metrics = get(&edge, "/__sibuna/metrics").text();
+        assert!(metrics.contains("sibuna_upstream_errors_total 0\n"), "({event_loop})\n{metrics}");
+    });
 }
 
 /// Posts `count` copies of `chunk` to `/length` as a chunked body, with its end when
@@ -423,27 +474,33 @@ fn round_robin_serves_each_server_in_turn() {
 
 #[test]
 fn a_server_that_returns_takes_few_requests_while_it_ramps() {
-    let returning = Origin::start("returning");
-    let steady = Origin::start("steady");
-    let servers = [returning.address, steady.address];
-    // The share of the returning server in twenty requests, just after its ejection ends.
-    let share = |members: &str| {
-        let edge = Topology::new(&servers).backend(members).start(true);
-        returning.stalled.store(true, Ordering::SeqCst);
-        let failed = answers(&edge, 2).iter().filter(|(status, _)| *status == 504).count();
-        assert_eq!(failed, 1);
-        returning.stalled.store(false, Ordering::SeqCst);
-        std::thread::sleep(Duration::from_millis(1200));
-        let later = answers(&edge, 20);
-        assert!(later.iter().all(|(status, _)| *status == 200), "{later:?}");
-        later.iter().filter(|(_, name)| name == "returning").count()
-    };
-    let health = r#""response_timeout":"1s","passive_health":{"failures":1,"ejection":"1s"},"#;
-    let ramped = share(&format!(r#"{health}"slow_start":"30s","#));
-    assert!(ramped <= 2, "{ramped}");
-    // Without a slow start it takes its half at once, and more to catch up.
-    let direct = share(health);
-    assert!(direct >= 10, "{direct}");
+    both(|event_loop| {
+        let returning = Origin::start("returning");
+        let steady = Origin::start("steady");
+        let servers = [returning.address, steady.address];
+        // The share of the returning server in twenty requests, just after its ejection ends.
+        let share = |members: &str| {
+            let edge = Topology::new(&servers).backend(members).start(event_loop);
+            returning.stalled.store(true, Ordering::SeqCst);
+            let failed = answers(&edge, 2).iter().filter(|(status, _)| *status == 504).count();
+            assert_eq!(failed, 1);
+            returning.stalled.store(false, Ordering::SeqCst);
+            std::thread::sleep(Duration::from_millis(1200));
+            let later = answers(&edge, 20);
+            assert!(later.iter().all(|(status, _)| *status == 200), "{later:?}");
+            // The operator sees the ramp while it lasts, as a share of the weight.
+            let ramp = shown(&edge, "s0", "ramp");
+            assert_eq!(ramp.ends_with('%'), members.contains("slow_start"), "{ramp}");
+            assert_eq!(shown(&edge, "s1", "ramp"), "-");
+            later.iter().filter(|(_, name)| name == "returning").count()
+        };
+        let health = r#""response_timeout":"1s","passive_health":{"failures":1,"ejection":"1s"},"#;
+        let ramped = share(&format!(r#"{health}"slow_start":"30s","#));
+        assert!(ramped <= 2, "{ramped}");
+        // Without a slow start it takes its half at once, and more to catch up.
+        let direct = share(health);
+        assert!(direct >= 10, "{direct}");
+    });
 }
 
 /// The names of the servers that answer `count` requests for `/who`.
@@ -479,53 +536,62 @@ fn a_drained_server_gives_up_its_sticky_clients_and_takes_no_moved_request() {
         edge.ctl(&format!("set server app/{home} state ready"));
         assert_eq!(names(&edge, 8, ""), BTreeSet::from([home]));
     });
-    // A request that leaves a dead server passes over a drained one. The pool has the
-    // dead server `s0` before the origins that call themselves `s0` and `s1`.
-    let pool = [refused(), servers[0], servers[1]];
-    let edge = Topology::new(&pool).start(true);
-    edge.ctl("set server app/s1 state drain");
-    assert_eq!(names(&edge, 4, ""), BTreeSet::from(["s1".to_owned()]));
+    both(|event_loop| {
+        // A request that leaves a dead server passes over a drained one. The pool has the
+        // dead server `s0` before the origins that call themselves `s0` and `s1`.
+        let pool = [refused(), servers[0], servers[1]];
+        let edge = Topology::new(&pool).start(event_loop);
+        edge.ctl("set server app/s1 state drain");
+        assert_eq!(names(&edge, 4, ""), BTreeSet::from(["s1".to_owned()]));
+    });
 }
 
 #[test]
 fn a_server_added_at_run_time_ramps_like_one_that_returns() {
-    let steady = Origin::start("steady");
-    let added = Origin::start("added");
-    // The share of the added server in twenty requests, just after it was added.
-    let share = |members: &str| {
-        let edge = Topology::new(&[steady.address]).backend(members).start(true);
-        assert_eq!(get(&edge, "/who").text(), "steady");
-        edge.ctl(&format!("add server app/new {}", added.address));
-        let later = answers(&edge, 20);
-        assert!(later.iter().all(|(status, _)| *status == 200), "{later:?}");
-        later.iter().filter(|(_, name)| name == "added").count()
-    };
-    let ramped = share(r#""balance":{"kind":"round_robin"},"slow_start":"30s","#);
-    assert!(ramped <= 2, "{ramped}");
-    let direct = share(r#""balance":{"kind":"round_robin"},"#);
-    assert_eq!(direct, 10);
+    both(|event_loop| {
+        let steady = Origin::start("steady");
+        let added = Origin::start("added");
+        // The share of the added server in twenty requests, just after it was added.
+        let share = |members: &str| {
+            let edge = Topology::new(&[steady.address]).backend(members).start(event_loop);
+            assert_eq!(get(&edge, "/who").text(), "steady");
+            edge.ctl(&format!("add server app/new {}", added.address));
+            let later = answers(&edge, 20);
+            assert!(later.iter().all(|(status, _)| *status == 200), "{later:?}");
+            later.iter().filter(|(_, name)| name == "added").count()
+        };
+        let ramped = share(r#""balance":{"kind":"round_robin"},"slow_start":"30s","#);
+        assert!(ramped <= 2, "{ramped}");
+        let direct = share(r#""balance":{"kind":"round_robin"},"#);
+        assert_eq!(direct, 10);
+    });
 }
 
 #[test]
 fn a_moved_request_is_logged_and_counted_once_under_the_server_that_answered() {
-    let good = Origin::start("good");
-    let edge = Topology::new(&[refused(), good.address]).start(true);
-    let answer = post(&edge, "/length", b"twelve bytes");
-    assert_eq!((answer.status(), answer.text()), (200, "12".into()));
-    let line = &edge.log_lines(1)[0];
-    assert_eq!((logged(line, "status"), logged(line, "server")), ("200", "s1"), "{line}");
-    assert_ne!(logged(line, "ttfb_ms"), "null", "{line}");
-    let metrics = get(&edge, "/__sibuna/metrics").text();
-    for series in [
-        "sibuna_edge_server_failures_total{backend=\"app\",server=\"s0\"} 1\n",
-        "sibuna_edge_server_failures_total{backend=\"app\",server=\"s1\"} 0\n",
-        "sibuna_edge_server_requests_total{backend=\"app\",server=\"s0\",code=\"2xx\"} 0\n",
-        "sibuna_edge_server_requests_total{backend=\"app\",server=\"s0\",code=\"5xx\"} 0\n",
-        "sibuna_edge_server_requests_total{backend=\"app\",server=\"s1\",code=\"2xx\"} 1\n",
-        "sibuna_edge_frontend_requests_total{frontend=\"web\",code=\"2xx\"} 1\n",
-    ] {
-        assert!(metrics.contains(series), "{series} is missing:\n{metrics}");
-    }
+    both(|event_loop| {
+        let good = Origin::start("good");
+        let edge = Topology::new(&[refused(), good.address]).start(event_loop);
+        let answer = post(&edge, "/length", b"twelve bytes");
+        assert_eq!((answer.status(), answer.text()), (200, "12".into()));
+        let line = &edge.log_lines(1)[0];
+        assert_eq!((logged(line, "status"), logged(line, "server")), ("200", "s1"), "{line}");
+        assert_ne!(logged(line, "ttfb_ms"), "null", "{line}");
+        let metrics = get(&edge, "/__sibuna/metrics").text();
+        for series in [
+            "sibuna_edge_server_failures_total{backend=\"app\",server=\"s0\"} 1\n",
+            "sibuna_edge_server_failures_total{backend=\"app\",server=\"s1\"} 0\n",
+            "sibuna_edge_server_failovers_total{backend=\"app\",server=\"s0\"} 1\n",
+            "sibuna_edge_server_failovers_total{backend=\"app\",server=\"s1\"} 0\n",
+            "sibuna_origin_retries_total 1\n",
+            "sibuna_edge_server_requests_total{backend=\"app\",server=\"s0\",code=\"2xx\"} 0\n",
+            "sibuna_edge_server_requests_total{backend=\"app\",server=\"s0\",code=\"5xx\"} 0\n",
+            "sibuna_edge_server_requests_total{backend=\"app\",server=\"s1\",code=\"2xx\"} 1\n",
+            "sibuna_edge_frontend_requests_total{frontend=\"web\",code=\"2xx\"} 1\n",
+        ] {
+            assert!(metrics.contains(series), "{series} is missing:\n{metrics}");
+        }
+    });
 }
 
 #[test]
@@ -570,5 +636,28 @@ fn source_stickiness_follows_the_client_that_a_trusted_proxy_names() {
         let spread: BTreeSet<String> =
             (1..=24).flat_map(|last| names(&edge, 1, &client(last))).collect();
         assert_eq!(spread.len(), 1, "{spread:?} ({event_loop})");
+    });
+}
+
+#[test]
+fn a_client_that_still_sends_a_refused_body_reads_the_413() {
+    let origin = Origin::start("a");
+    both(|event_loop| {
+        let edge =
+            Topology::new(&[origin.address]).frontend(r#""max_body":16,"#).start(event_loop);
+        let mut client = edge.connect();
+        let head = "POST /length HTTP/1.1\r\nHost: app.example\r\nContent-Length: 400000\r\n\r\n";
+        request(&mut client, head.as_bytes());
+        // The answer is on its way while the body is still written. A close over unread
+        // bytes would reset the connection and lose the answer.
+        for _ in 0..100 {
+            request(&mut client, &[b'x'; 4000]);
+            std::thread::sleep(Duration::from_millis(2));
+        }
+        let answer = traffic::read_message(&mut client, false).expect("the answer, not a reset");
+        assert_eq!(answer.status(), 413, "({event_loop})");
+        // The refusal is the client's fault: no server error is counted.
+        let metrics = get(&edge, "/__sibuna/metrics").text();
+        assert!(metrics.contains("sibuna_upstream_errors_total 0\n"), "({event_loop})\n{metrics}");
     });
 }
