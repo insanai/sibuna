@@ -147,8 +147,12 @@ fn every_kind_of_grpc_call_crosses_the_edge_to_an_http2_pool() {
     // No call crossed the socket pair, and all of them shared one HTTP/2 session.
     assert_eq!(handoffs.load(Ordering::SeqCst), 0);
     assert_eq!(connections.load(Ordering::SeqCst), 1);
-    // Every call on the shared session is reported once, when its trailers or its end
-    // passed, with the status and the wait for the response head (SID 0020).
+    assert_reports(&admit);
+}
+
+/// Every call on the shared session is reported once, when its trailers or its end
+/// passed, with the status and the wait for the response head (SID 0020).
+fn assert_reports(admit: &Admit) {
     let deadline = std::time::Instant::now() + Duration::from_secs(5);
     while admit.reports.lock().unwrap().len() < 6 && std::time::Instant::now() < deadline {
         std::thread::sleep(Duration::from_millis(10));
