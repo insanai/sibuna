@@ -107,3 +107,15 @@ The kernel's per-thread counters, read before and after six seconds at 256 conne
 | h2 | Sibuna | 595,838 | 17.8 s | 27.3 s | 75.7 us |
 
 On plaintext HTTP Sibuna spends less CPU per request than HAProxy. It serves fewer requests because its workers sleep more: they used 81% of the eight CPUs and HAProxy 99%. On TLS and HTTP/2 a second group of threads does about half of the work or more. That group terminates TLS and HTTP/2 and then writes each request as HTTP/1.1 text into a socket pair, which a worker reads and parses again. The HTX documentation of HAProxy describes the same design in its own history: its first HTTP/2 support converted HTTP/2 to HTTP/1, which "was terribly unefficient because it required two parsing passes". HAProxy now keeps one internal message form and runs TLS, HTTP/2 and the server connection of a stream on one thread.
+
+## In-process exchanges
+
+SID 0017 removes the socket pair for HTTP/2 and HTTP/3 requests: the protocol runtime calls the firewall decision and sends the request to its server itself. The same host, the same settings, ten streams per connection, requests per second:
+
+| Connections | Socket pair | In process | Change | In process / HAProxy | In process / Envoy |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 16 | 102,774 | 140,728 | +37% | 0.70 | 1.73 |
+| 256 | 97,271 | 119,084 | +22% | 0.71 | 1.72 |
+| 2,048 | 80,277 | 96,136 | +20% | 0.83 | 1.65 |
+
+No request failed. The 99th percentile at 256 connections fell from 128.86 ms to 113.48 ms. Resident memory at 2,048 connections fell from 771 MiB to 592 MiB. With `surface` `shield` the 16-connection cell served 138,824 requests per second. HTTPS over HTTP/1.1 does not use this path and did not change: 82,975, 146,396 and 122,281 requests per second.

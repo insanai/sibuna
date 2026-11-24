@@ -430,6 +430,13 @@ The ``http`` object
    * - ``event_loop``
      - ``true``
      - Serve HTTP on event-driven workers, one per processor (SID 0016). ``false`` serves each connection on a thread of its own. Platforms other than Linux always use threads.
+   * - ``workers``
+     - one per processor
+     - The number of event-driven workers, from 1 to 64
+
+A server that sends nothing within the timeout answers 504. A server that cannot be reached, or that fails inside an exchange, answers 502.
+
+With the workers on, a request of an HTTP/2 or HTTP/3 client is decided on the thread that decoded it and goes to its server from there (SID 0017). The response head must arrive within 60 s, and the body must keep arriving.
 
 An idle HTTP/2 or HTTP/3 connection gives up its flow slot after ``idle_timeout``, and after 60 s at the earliest. HTTP/2 connections are also probed with PING every 20 s. An HTTP/2 client may open a WebSocket with extended CONNECT (RFC 8441), which Sibuna carries as an HTTP/1.1 upgrade. Other CONNECT tunnels are refused.
 
