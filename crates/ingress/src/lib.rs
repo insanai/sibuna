@@ -19,7 +19,7 @@ use hyper::header::HeaderValue;
 use hyper::server::conn::http2;
 use hyper::service::service_fn;
 use hyper_util::rt::{TokioExecutor, TokioIo, TokioTimer};
-use sibuna_lb::{FlowBudget, FlowPermit, TlsOptions};
+use sibuna_lb::{FlowBudget, FlowPermit, TlsOptions, TlsVersion};
 use tokio::io::AsyncWriteExt;
 use tokio::runtime::Runtime;
 use tokio::sync::{Semaphore, watch};
@@ -27,9 +27,9 @@ use tokio::time::timeout;
 use tokio_rustls::TlsAcceptor;
 
 use bridge::Lane;
-pub use egress::Egress;
+pub use egress::{Directory, Egress};
 use handoff::Handoff;
-pub use inline::{Decide, Forward, Offer, Verdict};
+pub use inline::{Completion, Decide, Forward, Offer, Report, Verdict};
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
 /// Hands one connection to the firewall with its client peer and public destination.
@@ -68,12 +68,18 @@ impl Identity {
     /// leaf certificate. The error names the file that failed.
     pub fn load(spec: &TlsOptions) -> Result<Self, Error> {
         let certificates = Arc::new(certs::Certificates::load(spec)?);
-        let mut config = rustls::ServerConfig::builder_with_provider(Arc::new(
-            rustls::crypto::ring::default_provider(),
-        ))
-        .with_safe_default_protocol_versions()?
-        .with_no_client_auth()
-        .with_cert_resolver(certificates);
+        let provider = Arc::new(rustls::crypto::ring::default_provider());
+        let versions: &[&rustls::SupportedProtocolVersion] = match spec.min_version {
+            TlsVersion::V12 => rustls::DEFAULT_VERSIONS,
+            TlsVersion::V13 => &[&rustls::version::TLS13],
+        };
+        let builder = rustls::ServerConfig::builder_with_provider(provider.clone())
+            .with_protocol_versions(versions)?;
+        let builder = match certs::client_verifier(spec, provider)? {
+            Some(verifier) => builder.with_client_cert_verifier(verifier),
+            None => builder.with_no_client_auth(),
+        };
+        let mut config = builder.with_cert_resolver(certificates);
         let quic = if spec.http3 {
             let mut tls = config.clone();
             tls.alpn_protocols = vec![b"h3".to_vec()];
@@ -155,6 +161,14 @@ impl Ingress {
         Ok(Self { runtime, listeners, endpoints, handoff, inline, capacity, idle, drain })
     }
 
+    /// Names the HTTP/2 and HTTP/3 servers of the egress. In-process exchanges then
+    /// reach them without an HTTP/1.1 hop. The first directory stays.
+    pub fn attach(&self, directory: Directory) {
+        if let Some(inline) = &self.inline {
+            inline.attach(directory);
+        }
+    }
+
     /// Sends GOAWAY on live sessions so clients can direct new requests to another node.
     pub fn drain(&self) {
         self.drain.send_replace(());
@@ -173,8 +187,34 @@ impl Ingress {
     /// Starts a TLS session on a socket accepted by this listener. The negotiated
     /// protocol selects HTTP/2 or HTTP/1.1. The permit lasts as long as the connection.
     pub fn accept(&self, bind: SocketAddr, stream: TcpStream, permit: FlowPermit) {
+        self.accept_held(bind, stream, permit, Box::new(()));
+    }
+
+    /// As [`Ingress::accept`]. `held` lives as long as the connection: the caller's
+    /// place under a bound of its own, for example.
+    pub fn accept_held(
+        &self,
+        bind: SocketAddr,
+        stream: TcpStream,
+        permit: FlowPermit,
+        held: Box<dyn std::any::Any + Send>,
+    ) {
+        self.accept_from(bind, stream, permit, held, None);
+    }
+
+    /// As [`Ingress::accept_held`], for a connection whose client address is known from
+    /// a PROXY header (SID 0020). `client` then replaces the socket peer.
+    pub fn accept_from(
+        &self,
+        bind: SocketAddr,
+        stream: TcpStream,
+        permit: FlowPermit,
+        held: Box<dyn std::any::Any + Send>,
+        client: Option<SocketAddr>,
+    ) {
         let Some(acceptor) = self.listeners.get(&bind).cloned() else { return };
         let (Ok(peer), Ok(vip)) = (stream.peer_addr(), stream.local_addr()) else { return };
+        let peer = client.unwrap_or(peer);
         if stream.set_nonblocking(true).is_err() {
             return;
         }
@@ -195,7 +235,7 @@ impl Ingress {
             vip,
         };
         self.runtime.spawn(async move {
-            let _permit = permit;
+            let _permit = (permit, held);
             let Ok(stream) = tokio::net::TcpStream::from_std(stream) else { return };
             let Ok(Ok(tls)) = timeout(DEADLINE, acceptor.accept(stream)).await else { return };
             if tls.get_ref().1.alpn_protocol() == Some(b"h2") {

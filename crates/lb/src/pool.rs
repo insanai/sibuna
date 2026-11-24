@@ -68,6 +68,26 @@ struct Target {
     server: Server,
     load: Arc<Load>,
     admitted: u64,
+    /// An operator took the server out of rotation for new flows (SID 0018).
+    drained: bool,
+    /// A command added the server; the file does not have it.
+    added: bool,
+    /// The weight the file gave, when a command replaced it.
+    file_weight: Option<u32>,
+}
+
+impl Target {
+    fn new(server: Server, protocol: Protocol, loads: &mut Loads) -> Self {
+        let slot = loads.0.entry((protocol, server.addr)).or_default();
+        let load = slot.upgrade().unwrap_or_default();
+        *slot = Arc::downgrade(&load);
+        Self { server, load, admitted: 0, drained: false, added: false, file_weight: None }
+    }
+
+    /// Whether a command changed this server since the file was loaded.
+    fn changed(&self) -> bool {
+        self.drained || self.added || self.file_weight.is_some()
+    }
 }
 
 impl Target {
@@ -91,23 +111,30 @@ pub(crate) struct Pool {
     pub policy: Arc<crate::PoolPolicy>,
     pub proxy_v2: Option<crate::proxy::Spec>,
     choices: RandomState,
+    protocol: Protocol,
+    /// The probe that every server of the pool has, also one added at run time.
+    pub health: Option<crate::health::Spec>,
+    /// The servers are reached through protocol adapters that only a reload prepares.
+    adapted: bool,
+    /// Names of the file's servers that a command removed.
+    pub removed: Vec<String>,
 }
 
 impl Pool {
     pub fn new(backend: Backend, loads: &mut Loads) -> Self {
-        let mut targets = Vec::with_capacity(backend.servers.len());
-        for server in backend.servers {
-            let slot = loads.0.entry((backend.protocol, server.addr)).or_default();
-            let load = slot.upgrade().unwrap_or_default();
-            *slot = Arc::downgrade(&load);
-            targets.push(Target { server, load, admitted: 0 });
-        }
+        let protocol = backend.protocol;
+        let targets =
+            backend.servers.into_iter().map(|s| Target::new(s, protocol, loads)).collect();
         Self {
             targets,
             scheduler: backend.scheduler,
             policy: backend.policy,
             proxy_v2: backend.proxy_v2,
             choices: RandomState::new(),
+            protocol,
+            health: backend.health,
+            adapted: backend.origin.is_some(),
+            removed: Vec::new(),
         }
     }
 
@@ -133,6 +160,7 @@ impl Pool {
         let ramping = self.ramp(now);
         let available = |target: &Target| {
             target.server.addr != vip
+                && !target.drained
                 && target.server.healthy.as_ref().is_none_or(|h| h.load(Ordering::Relaxed))
                 && target.load.active.load(Ordering::Relaxed) < target.server.limit
                 && target
@@ -169,7 +197,7 @@ impl Pool {
                 .then_some(index)
         });
         // A sticky server serves its client whenever it is eligible (SID 0019).
-        let sticky = wish.sticky.or_else(|| self.home(peer));
+        let sticky = wish.sticky.or_else(|| self.home(wish.client.unwrap_or(peer.ip())));
         let sticky = sticky.filter(|&index| self.targets.get(index).is_some_and(eligible));
         let index = sticky.or(primary).or_else(|| {
             if matches!(self.scheduler, Scheduler::RoundRobin) {
@@ -233,5 +261,123 @@ impl Pool {
             work * 65535 * u128::from(extra::SCALE) / u128::from(t.weight(ramping))
         };
         Some(choices[if cost(a) <= cost(b) { a } else { b }])
+    }
+}
+
+/// The run-time view and the run-time changes of SID 0018. Each change applies to
+/// reservations made after it. A [`Ticket`] already issued keeps its server.
+impl Pool {
+    /// The protocol of the pool's servers.
+    pub fn protocol(&self) -> Protocol {
+        self.protocol
+    }
+
+    /// Why the membership and the weights of this pool change only by reload, if they do.
+    pub fn fixed(&self) -> Option<&'static str> {
+        match self.scheduler {
+            Scheduler::Maglev { .. } | Scheduler::Adaptive(_) => {
+                Some("places clients by a table that every node builds from the file")
+            }
+            _ if self.adapted => Some("reaches its servers through protocol adapters"),
+            _ => None,
+        }
+    }
+
+    /// Appends one status per server, in the pool's order.
+    pub fn statuses(&self, pool: &str, out: &mut Vec<crate::ServerStatus>) {
+        out.extend(self.targets.iter().map(|target| crate::ServerStatus {
+            pool: pool.to_owned(),
+            name: target.server.name.clone(),
+            addr: target.server.addr,
+            state: if target.drained {
+                crate::ServerState::Drain
+            } else {
+                crate::ServerState::Ready
+            },
+            weight: target.server.weight,
+            flows: target.load.active.load(Ordering::Relaxed),
+            healthy: target.server.healthy.as_ref().map(|h| h.load(Ordering::Relaxed)),
+            backup: target.server.backup,
+            added: target.added,
+            reweighted: target.file_weight.is_some(),
+        }));
+    }
+
+    /// The names of the servers, for a "did you mean" hint.
+    pub fn names(&self) -> impl Iterator<Item = &str> {
+        self.targets.iter().map(|target| target.server.name.as_str())
+    }
+
+    /// Counts the servers a command changed and the servers a command removed.
+    pub fn change_count(&self) -> usize {
+        self.targets.iter().filter(|target| target.changed()).count() + self.removed.len()
+    }
+
+    /// The drained servers by name and address, to carry them over a reload.
+    pub fn drained(&self) -> impl Iterator<Item = (&str, SocketAddr)> {
+        let drained = self.targets.iter().filter(|target| target.drained);
+        drained.map(|target| (target.server.name.as_str(), target.server.addr))
+    }
+
+    /// The probe targets of the pool's servers: the address a probe connects to.
+    pub fn probed(&self) -> impl Iterator<Item = SocketAddr> {
+        self.targets.iter().map(|target| target.server.via.unwrap_or(target.server.addr))
+    }
+
+    /// Drains or readmits a server. Returns false when the pool has no such server.
+    pub fn set_drained(&mut self, name: &str, drained: bool) -> bool {
+        let target = self.targets.iter_mut().find(|target| target.server.name == name);
+        target.map(|target| target.drained = drained).is_some()
+    }
+
+    /// Drains the server again after a reload, when the file still has it at `addr`.
+    pub fn keep_drained(&mut self, name: &str, addr: SocketAddr) -> bool {
+        let target = self.targets.iter_mut().find(|t| t.server.name == name);
+        let same = target.filter(|target| target.server.addr == addr);
+        same.map(|target| target.drained = true).is_some()
+    }
+
+    /// Sets a weight. Returns false when the pool has no such server.
+    pub fn set_weight(&mut self, name: &str, weight: u32) -> bool {
+        let Some(target) = self.targets.iter_mut().find(|t| t.server.name == name) else {
+            return false;
+        };
+        let file = target.file_weight.unwrap_or(target.server.weight);
+        target.server.weight = weight;
+        // Setting the file's weight again leaves nothing changed.
+        target.file_weight = (weight != file && !target.added).then_some(file);
+        true
+    }
+
+    /// Whether a server has this name or this address.
+    pub fn holds(&self, name: &str, addr: SocketAddr) -> bool {
+        self.targets.iter().any(|t| t.server.name == name || t.server.addr == addr)
+    }
+
+    /// The number of servers.
+    pub fn server_count(&self) -> usize {
+        self.targets.len()
+    }
+
+    /// Adds a server that the caller has validated against the pool and the listeners.
+    pub fn add(&mut self, server: Server, loads: &mut Loads) {
+        // The name of a removed server of the file is served again, as an addition.
+        let restored = self.removed.iter().position(|name| *name == server.name);
+        if let Some(index) = restored {
+            self.removed.swap_remove(index);
+        }
+        let mut target = Target::new(server, self.protocol, loads);
+        target.added = true;
+        self.targets.push(target);
+    }
+
+    /// Removes a server and returns its address. Its tickets stay valid.
+    pub fn remove(&mut self, name: &str) -> Option<SocketAddr> {
+        let index = self.targets.iter().position(|target| target.server.name == name)?;
+        let target = self.targets.remove(index);
+        if !target.added {
+            self.removed.push(target.server.name);
+        }
+        Some(target.server.addr)
     }
 }

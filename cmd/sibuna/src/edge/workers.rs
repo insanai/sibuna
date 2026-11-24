@@ -7,6 +7,7 @@
 mod conn;
 mod exchange;
 mod request;
+mod trace;
 mod worker;
 
 use std::io;

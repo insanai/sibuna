@@ -141,6 +141,7 @@
 //! an error explanation only where Zig sent one (a rejected solution); an invalid session
 //! cookie falls through to the challenge, unexplained.
 
+mod access;
 pub mod assets;
 mod challenge;
 pub mod cli;

@@ -41,6 +41,9 @@ pub(crate) struct Wish<'a> {
     pub tried: Option<&'a Tried>,
     /// The server the client's cookie names. It is used only when it is eligible.
     pub sticky: Option<usize>,
+    /// The client address behind trusted proxies, for source stickiness. Without it
+    /// the address of the transport is the client.
+    pub client: Option<std::net::IpAddr>,
 }
 
 impl Wish<'_> {
@@ -104,17 +107,21 @@ impl Pool {
 }
 
 impl Pool {
-    /// The server that source stickiness gives the client `peer`: the nearest server of
-    /// the pool that is not a backup, whether or not it can serve now. `None` when the
-    /// pool is not sticky by source.
-    pub(super) fn home(&self, peer: std::net::SocketAddr) -> Option<usize> {
+    /// The server that source stickiness gives `client`: the nearest server of the pool
+    /// that is neither a backup nor drained, whether or not it can serve now. `None`
+    /// when the pool is not sticky by source.
+    ///
+    /// A drain lasts until an operator ends it, so the clients of a drained server get
+    /// one other server each and keep it. The other clients stay where they are.
+    pub(super) fn home(&self, client: std::net::IpAddr) -> Option<usize> {
         if self.policy.sticky != Some(Sticky::Source) {
             return None;
         }
-        let client = sticky::client_bytes(peer.ip());
+        let client = sticky::client_bytes(client);
         let distance =
             |target: &Target| sticky::distance(&client, &target.server.name, target.server.weight);
-        let servers = self.targets.iter().enumerate().filter(|(_, target)| !target.server.backup);
+        let stays = |target: &Target| !target.server.backup && !target.drained;
+        let servers = self.targets.iter().enumerate().filter(|(_, target)| stays(target));
         servers
             .map(|(index, target)| (index, distance(target)))
             .reduce(|best, next| if next.1.nearer_than(&best.1) { next } else { best })
@@ -220,13 +227,15 @@ impl Target {
         if ramped == 0 { u64::from(self.server.weight) * SCALE } else { u64::from(ramped) }
     }
 
-    /// Whether the server is in service: healthy, not marked by a failed connect and not
-    /// ejected. A full server and a server the request already tried are in service.
+    /// Whether the server is in service: healthy, not drained (SID 0018), not marked by
+    /// a failed connect and not ejected. A full server and a server the request already
+    /// tried are in service.
     fn in_service(&self, now: Instant) -> bool {
         let marked = self.load.retry_after.lock().unwrap_or_else(PoisonError::into_inner);
         self.server.healthy.as_ref().is_none_or(|healthy| healthy.load(Ordering::Relaxed))
             && marked.is_none_or(|deadline| deadline <= now)
             && !self.load.extra.is_ejected(now)
+            && !self.drained
     }
 }
 

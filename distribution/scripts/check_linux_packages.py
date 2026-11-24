@@ -30,6 +30,7 @@ for image, pattern, install, reinstall, remove in cases:
 /usr/bin/sibuna --version
 getent passwd sibuna
 test -f /usr/lib/systemd/system/sibuna.service
+test -f /usr/lib/systemd/system/sibuna-edge.service
 test -f /usr/lib/sysusers.d/sibuna.conf
 test -f /usr/share/doc/sibuna/SECURITY.md
 test -f /usr/share/doc/sibuna/LICENSES/LGPL-3.0.txt

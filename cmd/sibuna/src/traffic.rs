@@ -91,6 +91,8 @@ pub(crate) fn choose<W>(
         policy_revision: ctx.cache.generation(),
         cookies: cookies.get(..count).unwrap_or_default(),
         secure: ingress.secure,
+        // The address that trusted proxies resolved (SID 0020), not the socket peer.
+        client: ctx.client_address,
     })
 }
 

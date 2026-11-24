@@ -465,3 +465,110 @@ mod tests {
         assert!(refused.take_error().expect("status").is_some() || refused.peer_addr().is_err());
     }
 }
+
+/// Binds a TCP listener that shares its address with other listeners of the same user
+/// (`SO_REUSEPORT`). A new process can then bind the address while the old one still
+/// serves, which is how a binary is replaced without closing the port.
+///
+/// # Errors
+///
+/// The operating system's error when the socket cannot be created, bound or listened
+/// on, and [`io::ErrorKind::Unsupported`] on a platform without this call.
+pub fn listen_shared(address: std::net::SocketAddr) -> io::Result<std::net::TcpListener> {
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    return sharing::bind(address, sharing::SOCK_STREAM).map(std::net::TcpListener::from);
+    #[cfg(not(any(target_os = "linux", target_os = "android")))]
+    Err(io::Error::new(io::ErrorKind::Unsupported, format!("{address}: no shared listeners")))
+}
+
+/// Binds a UDP socket that shares its address, as [`listen_shared`] does for TCP.
+///
+/// # Errors
+///
+/// As [`listen_shared`].
+pub fn bind_shared(address: std::net::SocketAddr) -> io::Result<std::net::UdpSocket> {
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    return sharing::bind(address, sharing::SOCK_DGRAM).map(std::net::UdpSocket::from);
+    #[cfg(not(any(target_os = "linux", target_os = "android")))]
+    Err(io::Error::new(io::ErrorKind::Unsupported, format!("{address}: no shared listeners")))
+}
+
+/// True when [`listen_shared`] and [`bind_shared`] work on this platform.
+pub const CAN_SHARE_ADDRESS: bool = cfg!(any(target_os = "linux", target_os = "android"));
+
+#[cfg(any(target_os = "linux", target_os = "android"))]
+mod sharing {
+    use std::io;
+    use std::net::SocketAddr;
+    use std::os::fd::{AsRawFd, FromRawFd, OwnedFd};
+
+    const AF_INET: u16 = 2;
+    const AF_INET6: u16 = 10;
+    pub(super) const SOCK_STREAM: i32 = 1;
+    pub(super) const SOCK_DGRAM: i32 = 2;
+    const SOCK_CLOEXEC: i32 = 0x80000;
+    const SOL_SOCKET: i32 = 1;
+    const SO_REUSEADDR: i32 = 2;
+    const SO_REUSEPORT: i32 = 15;
+    /// The kernel lowers this to its own limit (`net.core.somaxconn`).
+    const BACKLOG: i32 = 4096;
+
+    unsafe extern "C" {
+        fn socket(domain: i32, kind: i32, protocol: i32) -> i32;
+        fn setsockopt(fd: i32, level: i32, name: i32, value: *const u8, length: u32) -> i32;
+        #[link_name = "bind"]
+        fn bind_socket(fd: i32, address: *const u8, length: u32) -> i32;
+        fn listen(fd: i32, backlog: i32) -> i32;
+    }
+
+    /// The bytes of a `sockaddr_in` or `sockaddr_in6` and their count.
+    fn raw(address: SocketAddr) -> ([u8; 28], u32) {
+        let mut bytes = [0u8; 28];
+        match address {
+            SocketAddr::V4(v4) => {
+                bytes[..2].copy_from_slice(&AF_INET.to_ne_bytes());
+                bytes[2..4].copy_from_slice(&v4.port().to_be_bytes());
+                bytes[4..8].copy_from_slice(&v4.ip().octets());
+                (bytes, 16)
+            }
+            SocketAddr::V6(v6) => {
+                bytes[..2].copy_from_slice(&AF_INET6.to_ne_bytes());
+                bytes[2..4].copy_from_slice(&v6.port().to_be_bytes());
+                bytes[4..8].copy_from_slice(&v6.flowinfo().to_be_bytes());
+                bytes[8..24].copy_from_slice(&v6.ip().octets());
+                bytes[24..28].copy_from_slice(&v6.scope_id().to_ne_bytes());
+                (bytes, 28)
+            }
+        }
+    }
+
+    fn checked(result: i32) -> io::Result<()> {
+        if result == 0 { Ok(()) } else { Err(io::Error::last_os_error()) }
+    }
+
+    pub(super) fn bind(address: SocketAddr, kind: i32) -> io::Result<OwnedFd> {
+        let domain = i32::from(if address.is_ipv4() { AF_INET } else { AF_INET6 });
+        // SAFETY: `socket` takes three integers and returns a descriptor or -1.
+        let fd = unsafe { socket(domain, kind | SOCK_CLOEXEC, 0) };
+        if fd < 0 {
+            return Err(io::Error::last_os_error());
+        }
+        // SAFETY: `fd` is a descriptor the call above just returned, owned by nobody else.
+        let owned = unsafe { OwnedFd::from_raw_fd(fd) };
+        let on = 1i32.to_ne_bytes();
+        for option in [SO_REUSEADDR, SO_REUSEPORT] {
+            // SAFETY: `on` is four live bytes, the length passed, and the kernel copies
+            // them before the call returns.
+            checked(unsafe { setsockopt(owned.as_raw_fd(), SOL_SOCKET, option, on.as_ptr(), 4) })?;
+        }
+        let (bytes, length) = raw(address);
+        // SAFETY: `bytes` holds a socket address of `length` bytes, and the kernel
+        // copies it before the call returns.
+        checked(unsafe { bind_socket(owned.as_raw_fd(), bytes.as_ptr(), length) })?;
+        if kind == SOCK_STREAM {
+            // SAFETY: `listen` takes a descriptor and an integer.
+            checked(unsafe { listen(owned.as_raw_fd(), BACKLOG) })?;
+        }
+        Ok(owned)
+    }
+}

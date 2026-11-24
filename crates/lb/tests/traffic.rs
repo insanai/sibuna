@@ -63,7 +63,7 @@ fn a_request_tries_no_server_twice_and_at_most_its_retries() {
 }
 
 #[test]
-fn a_retry_holds_one_place_and_ends_at_a_reload() {
+fn a_retry_holds_one_place_and_ends_with_its_revision() {
     let backend = r#""retries":8,"#;
     let (mut edge, vip) = edge(3, backend);
     let routes = edge.http_routes();
@@ -74,10 +74,14 @@ fn a_retry_holds_one_place_and_ends_at_a_reload() {
     drop(first);
     let third = routes.retry(&second).unwrap();
     assert_ne!(third.address(), second.address());
-    // A new publication of the routes ends the retries of older requests.
+    // A reload retires the revision of a request, which still serves it for a moment
+    // (SID 0018). The reload after that one ends its retries.
     let request = routes.choose(&query(vip)).unwrap();
-    edge.reload(topology(vip, 3, "")).unwrap();
-    assert!(routes.retry(&request).is_none());
+    edge.reload(topology(vip, 3, backend)).unwrap();
+    let moved = routes.retry(&request).unwrap();
+    assert_ne!(moved.address(), request.address());
+    edge.reload(topology(vip, 3, backend)).unwrap();
+    assert!(routes.retry(&moved).is_none());
 }
 
 /// Reserves and releases `count` requests and returns the ports that served them.

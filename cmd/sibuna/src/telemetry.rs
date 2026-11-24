@@ -98,6 +98,7 @@ pub(crate) fn record_outcome<W>(ctx: &mut Ctx<'_, W>, outcome: Outcome, status: 
 /// Counts the outcome; once per external request.
 #[inline]
 pub(crate) fn count_outcome<W>(ctx: &mut Ctx<'_, W>, outcome: Outcome) {
+    ctx.trace.verdict = crate::access::verdict_name(outcome);
     #[cfg(feature = "console")]
     seams::count_outcome(ctx, outcome);
     #[cfg(not(feature = "console"))]

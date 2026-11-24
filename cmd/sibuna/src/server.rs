@@ -80,8 +80,12 @@ pub struct Options {
 /// The state every connection thread shares.
 pub struct Server {
     pub(crate) edge_routes: Option<sibuna_lb::HttpRoutes>,
+    /// The access log, the counters and the access control of an edge (SID 0020).
+    pub(crate) observe: Option<Arc<crate::access::Observe>>,
     /// The default per-client request limiter is off (edge mode only).
     pub(crate) unlimited: bool,
+    /// The firewall is off for the whole edge (`http.surface: "off"`).
+    pub(crate) balances_only: bool,
     pub(crate) config: Config,
     pub(crate) slot: Arc<EngineSlot>,
     pub(crate) coordinator: Coordinator,
@@ -135,7 +139,9 @@ impl Server {
         let capacity = Config::MAX_CONNECTIONS_LIMIT as usize;
         Server {
             edge_routes: None,
+            observe: None,
             unlimited: false,
+            balances_only: false,
             max_connections: AtomicU32::new(config.max_connections),
             peers: PeerTable::with_ipv6_prefix(config.ipv6_prefix),
             config,
@@ -381,6 +387,17 @@ fn accept_loop(server: &Arc<Server>, listener: &TcpListener) {
 /// Takes a place for a connection from `peer` under the global and the per-client bounds,
 /// or answers 503 and returns `None`.
 pub(crate) fn admit(server: &Arc<Server>, stream: &TcpStream, peer: IpAddr) -> Option<Admitted> {
+    admit_within(server, stream, peer, server.config.max_connections_per_ip)
+}
+
+/// As [`admit`], with `per_client` as the bound for the client at `peer`. An edge passes
+/// `u32::MAX` for a trusted proxy, whose connections carry many clients (SID 0020).
+pub(crate) fn admit_within(
+    server: &Arc<Server>,
+    stream: &TcpStream,
+    peer: IpAddr,
+    per_client: u32,
+) -> Option<Admitted> {
     let limit = server.max_connections.load(Ordering::Relaxed);
     if server.connections.fetch_add(1, Ordering::Relaxed) >= limit {
         server.connections.fetch_sub(1, Ordering::Relaxed);
@@ -388,7 +405,7 @@ pub(crate) fn admit(server: &Arc<Server>, stream: &TcpStream, peer: IpAddr) -> O
         reject(server, stream, "Service Unavailable: connection limit reached");
         return None;
     }
-    match server.peers.admit(peer, server.config.max_connections_per_ip) {
+    match server.peers.admit(peer, per_client) {
         Ok(ticket) => Some(Admitted { server: Arc::clone(server), ticket: Some(ticket) }),
         Err(_) => {
             server.connections.fetch_sub(1, Ordering::Relaxed);
@@ -401,6 +418,38 @@ pub(crate) fn admit(server: &Arc<Server>, stream: &TcpStream, peer: IpAddr) -> O
             None
         }
     }
+}
+
+/// Takes a place for a TLS connection from `peer`, or returns `None`. Nothing is
+/// written: a client that has not finished its handshake could not read a refusal.
+/// `per_client` is the bound for the client at `peer`, as in [`admit_within`].
+#[cfg_attr(not(feature = "https"), allow(dead_code))]
+pub(crate) fn admit_secure(
+    server: &Arc<Server>,
+    peer: IpAddr,
+    per_client: u32,
+) -> Option<Admitted> {
+    let limit = server.max_connections.load(Ordering::Relaxed);
+    if server.connections.fetch_add(1, Ordering::Relaxed) >= limit {
+        server.connections.fetch_sub(1, Ordering::Relaxed);
+        server.metrics.overloaded.bump();
+        return None;
+    }
+    match server.peers.admit(peer, per_client) {
+        Ok(ticket) => Some(Admitted { server: Arc::clone(server), ticket: Some(ticket) }),
+        Err(_) => {
+            server.connections.fetch_sub(1, Ordering::Relaxed);
+            server.metrics.overloaded.bump();
+            None
+        }
+    }
+}
+
+/// The place of a connection that the TLS front hands over. Its client was counted
+/// when the TLS connection was accepted, so it takes no place under the client bound.
+pub(crate) fn admit_handoff(server: &Arc<Server>) -> Admitted {
+    server.connections.fetch_add(1, Ordering::Relaxed);
+    Admitted { server: Arc::clone(server), ticket: None }
 }
 
 /// A connection's places in the global and the per-client bounds, released when it is

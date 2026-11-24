@@ -26,17 +26,19 @@ impl Worker {
 
     /// Gives the exchange a reservation on a server it has not tried and starts a
     /// connection to it. Returns false when the pool has no such server, when the
-    /// request spent its retries, and when the routing table changed meanwhile. The
+    /// request spent its retries, and when its routing revision no longer serves. The
     /// exchange is then unchanged.
     pub(super) fn move_on(&mut self, index: u32) -> bool {
         let server = Arc::clone(&self.server);
         let Some(routes) = server.edge_routes.as_ref() else { return false };
-        let Some(exchange) = self.conns.at(index).and_then(|conn| conn.exchange.as_deref_mut())
-        else {
-            return false;
-        };
+        let Some(conn) = self.conns.at(index) else { return false };
+        let Some(exchange) = conn.exchange.as_deref_mut() else { return false };
         let Some(next) = routes.retry(&exchange.target) else { return false };
         let address = next.address();
+        // The access log names the server that ends the request (SID 0020).
+        if let Some(entry) = conn.trace.as_mut() {
+            entry.server = next.server().cloned();
+        }
         // Dropping the old reservation gives its place on the failed server back.
         exchange.target = next;
         exchange.wire_sent = 0;

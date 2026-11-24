@@ -16,7 +16,13 @@ pub struct Config {
     pub(crate) limit: usize,
     pub(crate) udp_limit: usize,
     pub(crate) workers: usize,
+    pub(crate) admin_socket: Option<String>,
+    pub(crate) watch: Option<Duration>,
+    pub(crate) shutdown_timeout: Duration,
+    /// Listeners share their address, so a new process can bind it (`global.reuse_port`).
+    pub(crate) reuse_port: bool,
     pub(crate) http: crate::HttpOptions,
+    pub(crate) observe: crate::ObserveOptions,
     pub(crate) mesh: Option<crate::MeshConfig>,
     pub(crate) listeners: BTreeMap<(Protocol, SocketAddr), Frontend>,
     pub(crate) pools: BTreeMap<String, Backend>,
@@ -42,6 +48,8 @@ pub(crate) struct Frontend {
     pub pool: std::sync::Arc<str>,
     pub timeout: Duration,
     pub inspect: Option<(Duration, std::sync::Arc<[crate::rules::Rule]>)>,
+    /// The name, the counters and the trusted proxies of the frontend (SID 0020).
+    pub info: std::sync::Arc<crate::FrontendInfo>,
 }
 
 pub(crate) struct Backend {
@@ -65,6 +73,8 @@ pub(crate) struct Server {
     /// The local protocol adapter that reaches this server, when its pool needs one.
     pub via: Option<SocketAddr>,
     pub healthy: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
+    /// The names and the counters of the server, set when an edge adopts the topology.
+    pub info: Option<crate::ServerInfo>,
 }
 
 pub(crate) fn invalid(message: impl std::fmt::Display) -> Error {
@@ -79,12 +89,13 @@ pub(crate) fn required<'a>(r: &mut ObjectReader<'_, 'a>, key: &str) -> Result<St
     field(r.take_str(key))?.map(str::to_owned).ok_or_else(|| invalid(r.missing(key)))
 }
 
+/// Reads a protocol. A frontend or a backend without one speaks HTTP (SID 0018).
 fn protocol(r: &mut ObjectReader<'_, '_>, key: &str) -> Result<Protocol> {
-    match required(r, key)?.as_str() {
-        "tcp" => Ok(Protocol::Tcp),
-        "http" => Ok(Protocol::Http),
-        "udp" => Ok(Protocol::Udp),
-        _ => Err(invalid(format!("{} must be http, tcp or udp", r.field_path(key)))),
+    match field(r.take_str(key))? {
+        Some("tcp") => Ok(Protocol::Tcp),
+        None | Some("http") => Ok(Protocol::Http),
+        Some("udp") => Ok(Protocol::Udp),
+        Some(_) => Err(invalid(format!("{} must be http, tcp or udp", r.field_path(key)))),
     }
 }
 
@@ -155,6 +166,38 @@ impl Config {
         Ok(())
     }
 
+    /// The access log, the access control of the internal routes and the separate
+    /// listener (SID 0020).
+    pub fn observe(&self) -> &crate::ObserveOptions {
+        &self.observe
+    }
+
+    /// The size of the flow table (`global.max_flows`).
+    pub fn max_flows(&self) -> usize {
+        self.limit
+    }
+
+    /// The path of the admin socket (`global.admin_socket`), when the operator asked for one.
+    pub fn admin_socket(&self) -> Option<&str> {
+        self.admin_socket.as_deref()
+    }
+
+    /// How often the daemon looks at its file for a change (`global.watch`), if at all.
+    pub fn watch(&self) -> Option<Duration> {
+        self.watch
+    }
+
+    /// Whether the listeners share their address with other processes of the same user
+    /// (`global.reuse_port`).
+    pub fn reuse_port(&self) -> bool {
+        self.reuse_port
+    }
+
+    /// How long a shutdown waits for established flows (`global.shutdown_timeout`).
+    pub fn shutdown_timeout(&self) -> Duration {
+        self.shutdown_timeout
+    }
+
     /// Static peer configuration, when the operator enabled RTT-based routing.
     pub fn mesh(&self) -> Option<&crate::MeshConfig> {
         self.mesh.as_ref()
@@ -165,18 +208,35 @@ impl Config {
     pub fn parse(bytes: &[u8]) -> Result<Self> {
         let value = field(sibuna_json::parse_with_limits(bytes, &Self::DOCUMENT_LIMITS))?;
         let mut root = field(ObjectReader::new(&value))?;
-        let (limit, udp_limit, workers) = global(&mut root)?;
+        let Global {
+            limit,
+            udp_limit,
+            workers,
+            admin_socket,
+            watch,
+            shutdown_timeout,
+            reuse_port,
+        } = global(&mut root)?;
         let mesh = field(root.take_object("mesh"))?.map(crate::MeshConfig::parse).transpose()?;
         let http = field(root.take_object("http"))?.map(crate::HttpOptions::parse).transpose()?;
         let explicit_http = http.is_some();
         let http = http.unwrap_or_default();
+        let observe = field(root.take_object("observability"))?
+            .map(crate::ObserveOptions::parse)
+            .transpose()?
+            .unwrap_or_default();
         let adaptive = mesh.is_some();
         let mut config = Self {
             limit,
             udp_limit: limit,
             workers,
+            admin_socket,
+            watch,
+            shutdown_timeout,
+            reuse_port,
             mesh,
             http,
+            observe,
             pools: BTreeMap::new(),
             listeners: BTreeMap::new(),
         };
@@ -207,11 +267,8 @@ impl Config {
         }
         for (name, backend) in &config.pools {
             for server in &backend.servers {
-                if config.listeners.keys().any(|&(proto, bind)| {
-                    (proto == Protocol::Udp) == (backend.protocol == Protocol::Udp)
-                        && (bind == server.addr
-                            || (server.addr.ip().is_loopback() && overlaps(bind, server.addr)))
-                }) {
+                let mut binds = config.listeners.keys();
+                if binds.any(|&bind| is_listener(bind, backend.protocol, server.addr)) {
                     return Err(invalid(format!(
                         "backends.{name}: {} is a frontend",
                         server.addr
@@ -222,11 +279,27 @@ impl Config {
         Ok(config)
     }
 
+    /// The backend of a frontend that names none: the only one of its protocol.
+    fn only_backend(&self, proto: Protocol, path: &str) -> Result<String> {
+        let mut matching = self.pools.iter().filter(|(_, pool)| pool.protocol == proto);
+        match (matching.next(), matching.next()) {
+            (Some((name, _)), None) => Ok(name.clone()),
+            (None, _) => Err(invalid(format!("{path}: no {proto:?} backend to serve it"))),
+            (Some((first, _)), Some((second, _))) => Err(invalid(format!(
+                "{path}: default_backend is required with several {proto:?} backends \
+                 ({first}, {second}, ...)"
+            ))),
+        }
+    }
+
     fn add_frontend(&mut self, name: &str, value: &Value<'_>) -> Result<()> {
         let path = format!("frontends.{name}");
         let mut r = field(ObjectReader::with_path(value, path.clone()))?;
         let proto = protocol(&mut r, "proto")?;
-        let pool = required(&mut r, "default_backend")?;
+        let pool = match field(r.take_str("default_backend"))? {
+            Some(pool) => pool.to_owned(),
+            None => self.only_backend(proto, &path)?,
+        };
         if self.pools.get(&pool).is_none_or(|b| b.protocol != proto) {
             return Err(invalid(format!("{path}: no matching {proto:?} backend named {pool}")));
         }
@@ -252,6 +325,8 @@ impl Config {
         let (tls, firewall, websocket, http_rules, policy) =
             http_frontend(&mut r, proto, &self.pools)?;
         let http_rules: std::sync::Arc<[_]> = http_rules.into();
+        let info = crate::FrontendInfo::parse(&mut r, name, proto == Protocol::Http)?;
+        let info = std::sync::Arc::new(info);
         let binds = field(r.take_array("binds"))?.ok_or_else(|| invalid(r.missing("binds")))?;
         if binds.is_empty() || self.listeners.len() + binds.len() > 128 {
             return Err(invalid(format!("{path}: expected 1 to 128 binds in total")));
@@ -271,6 +346,7 @@ impl Config {
                 timeout,
                 inspect: inspect.clone(),
                 rate,
+                info: info.clone(),
             };
             if self.listeners.keys().any(|&(p, bound)| {
                 (p == Protocol::Udp) == (proto == Protocol::Udp) && overlaps(bound, addr)
@@ -287,13 +363,50 @@ impl Config {
     }
 }
 
-/// Reads `global`: the flow table size, the optional UDP share and the relay threads.
-fn global(root: &mut ObjectReader<'_, '_>) -> Result<(usize, Option<usize>, usize)> {
+/// The `global` object.
+struct Global {
+    limit: usize,
+    udp_limit: Option<usize>,
+    workers: usize,
+    admin_socket: Option<String>,
+    watch: Option<Duration>,
+    shutdown_timeout: Duration,
+    reuse_port: bool,
+}
+
+/// Reads `global`: the flow table size, the optional UDP share, the relay threads, the
+/// admin socket and the file watcher.
+fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
     let mut limit = 8192;
     let mut udp_limit = None;
     let mut workers = default_workers();
+    let mut admin_socket = None;
+    let mut watch = None;
+    let mut shutdown_timeout = Duration::from_secs(5);
+    let mut reuse_port = false;
     if let Some(mut global) = field(root.take_object("global"))? {
+        if let Some(text) = field(global.take_str("shutdown_timeout"))? {
+            shutdown_timeout = duration(text)
+                .filter(|d| *d <= Duration::from_secs(3600))
+                .ok_or_else(|| invalid("global.shutdown_timeout must be a duration up to 1h"))?;
+        }
+        reuse_port = field(global.take_bool("reuse_port"))?.unwrap_or(false);
+        if reuse_port && !sibuna_reactor::CAN_SHARE_ADDRESS {
+            return Err(invalid("global.reuse_port needs Linux"));
+        }
         limit = number(&mut global, "max_flows", limit, MAX_FLOWS)?;
+        admin_socket = match field(global.take_str("admin_socket"))? {
+            Some("") => return Err(invalid("global.admin_socket must be a path")),
+            path => path.map(str::to_owned),
+        };
+        watch = match field(global.take_str("watch"))? {
+            None => None,
+            Some(text) => Some(
+                duration(text)
+                    .filter(|d| (1..=3600).contains(&d.as_secs()))
+                    .ok_or_else(|| invalid("global.watch must be a duration from 1s to 1h"))?,
+            ),
+        };
         workers = match global.take("workers") {
             None => workers,
             Some(value) if value.as_str() == Some("auto") => workers,
@@ -309,7 +422,7 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<(usize, Option<usize>, usiz
         };
         field(global.finish())?;
     }
-    Ok((limit, udp_limit, workers))
+    Ok(Global { limit, udp_limit, workers, admin_socket, watch, shutdown_timeout, reuse_port })
 }
 
 /// One relay thread per available CPU, up to eight.
@@ -346,6 +459,16 @@ fn http_frontend(
     let base = (&policy, tls.is_some());
     let rules = crate::http::rules(r, pools, firewall, websocket.as_ref(), base)?;
     Ok((tls, firewall, websocket, rules, policy))
+}
+
+/// Whether a server at `addr` in a pool of `protocol` would be the listener `bind`.
+pub(crate) fn is_listener(
+    bind: (Protocol, SocketAddr),
+    protocol: Protocol,
+    addr: SocketAddr,
+) -> bool {
+    (bind.0 == Protocol::Udp) == (protocol == Protocol::Udp)
+        && (bind.1 == addr || (addr.ip().is_loopback() && overlaps(bind.1, addr)))
 }
 
 fn overlaps(a: SocketAddr, b: SocketAddr) -> bool {
@@ -479,23 +602,63 @@ fn scheduler(
 }
 
 impl Server {
+    /// The largest weight of a server.
+    pub const MAX_WEIGHT: u32 = 65535;
+
+    /// A server with the defaults of the file: no flow limit, primary, local.
+    pub fn new(name: String, addr: SocketAddr, weight: u32) -> Self {
+        Self {
+            name,
+            addr,
+            weight,
+            limit: MAX_FLOWS,
+            backup: false,
+            remote: false,
+            via: None,
+            healthy: None,
+            info: None,
+        }
+    }
+
+    /// Whether a flow may be sent to `addr`: a unicast address that names one host.
+    pub fn routable(addr: SocketAddr) -> bool {
+        addr.port() != 0
+            && addr.ip() != std::net::Ipv4Addr::BROADCAST
+            && !addr.ip().is_unspecified()
+            && !addr.ip().is_multicast()
+    }
+
     fn parse(value: &Value<'_>, path: String) -> Result<Self> {
+        // The short form (SID 0018): an address alone, which is also the name.
+        if let Some(text) = value.as_str() {
+            let addr = address(text, &path)?;
+            if !Self::routable(addr) {
+                return Err(invalid(format!("{path}: expected unicast server")));
+            }
+            return Ok(Self::new(addr.to_string(), addr, 1));
+        }
         let mut r = field(ObjectReader::with_path(value, path))?;
         let name = required(&mut r, "name")?;
         let addr = address(&required(&mut r, "addr")?, r.path())?;
-        if name.is_empty()
-            || addr.ip() == std::net::Ipv4Addr::BROADCAST
-            || addr.ip().is_unspecified()
-            || addr.ip().is_multicast()
-        {
+        if name.is_empty() || !Self::routable(addr) {
             return Err(invalid(format!("{}: expected named unicast server", r.path())));
         }
-        let weight = number(&mut r, "weight", 1, 65535)? as u32;
+        let weight = number(&mut r, "weight", 1, Self::MAX_WEIGHT as usize)? as u32;
         let limit = number(&mut r, "max_flows", MAX_FLOWS, MAX_FLOWS)?;
         let remote = field(r.take_bool("remote"))?.unwrap_or(false);
         let backup = field(r.take_bool("backup"))?.unwrap_or(false);
         field(r.finish())?;
-        Ok(Self { name, addr, limit, weight, backup, remote, via: None, healthy: None })
+        Ok(Self {
+            name,
+            addr,
+            limit,
+            weight,
+            backup,
+            remote,
+            via: None,
+            healthy: None,
+            info: None,
+        })
     }
 }
 

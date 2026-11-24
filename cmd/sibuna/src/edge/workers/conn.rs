@@ -91,6 +91,8 @@ pub(super) struct Conn {
     pub read_closed: bool,
     /// Close once the output is written.
     pub closing: bool,
+    /// The access log entry of the exchange in flight (SID 0020).
+    pub trace: Option<crate::access::Entry>,
 }
 
 impl Conn {

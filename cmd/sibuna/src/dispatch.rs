@@ -57,6 +57,7 @@ pub(crate) fn dispatch<'c, W: Write>(
     let result = route(ctx, spare);
     // Every parsed external request gets one selected outcome, even on an early error.
     telemetry::finish(ctx);
+    crate::access::capture(ctx);
     result
 }
 
@@ -406,6 +407,7 @@ pub(crate) fn forward<W: Write>(
         }
     };
     server.metrics.proxied.bump();
+    crate::access::selected(ctx, selected.as_ref());
     if ctx.defer.is_some() {
         return plan(ctx, status, rule_name, selected, tunnel);
     }

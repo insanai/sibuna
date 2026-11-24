@@ -39,6 +39,16 @@ pub(crate) struct Ingress {
     pub peer: SocketAddr,
     pub vip: SocketAddr,
     pub secure: bool,
+    /// The socket peer is a proxy the frontend trusts, so the per-client connection
+    /// bound does not apply to it (SID 0020).
+    pub trusted: bool,
+}
+
+impl Ingress {
+    /// The per-client connection bound of this connection.
+    pub(crate) fn connection_bound(&self, server: &Server) -> u32 {
+        if self.trusted { u32::MAX } else { server.config.max_connections_per_ip }
+    }
 }
 
 pub(crate) struct Link<'c, W> {
@@ -57,6 +67,8 @@ pub(crate) struct Link<'c, W> {
     /// The connection's place under the connection bounds; dropped (given back) when a
     /// response will end the connection, before it is written.
     pub admission: Option<Admitted>,
+    /// What the access log and the counters learn of the current request (SID 0020).
+    pub trace: &'c mut crate::access::Trace,
 }
 
 /// Serves one accepted connection until it closes, fails, is reaped or reaches the request
@@ -86,6 +98,7 @@ pub(crate) fn serve_from(
     let mut peer = PeerText::default();
     peer.format(ingress.map(|i| i.peer).or_else(|| stream.peer_addr().ok()));
     let (mut workspace, mut cache) = (Workspace::new(), EngineCache::new());
+    let mut trace = crate::access::Trace::default();
     let mut link = Link {
         server,
         ingress,
@@ -97,10 +110,14 @@ pub(crate) fn serve_from(
         activity: lease.activity(),
         last: false,
         admission: Some(admission),
+        trace: &mut trace,
     };
     for served in 0..MAX_REQUESTS_PER_CONNECTION {
         link.last = served + 1 == MAX_REQUESTS_PER_CONNECTION;
-        if !serve_one(&mut reader, &mut link, peer.as_bytes(), &mut path_buffer) {
+        let keep = serve_one(&mut reader, &mut link, peer.as_bytes(), &mut path_buffer);
+        let tally = link.writer.tally();
+        crate::access::settle_written(server, link.trace, tally, ingress, peer.as_bytes());
+        if !keep {
             break;
         }
         lease.touch();

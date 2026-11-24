@@ -41,8 +41,15 @@ pub(crate) fn handle_internal<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<()> 
             crate::challenge::handle_verify(ctx)
         }
         b"/__sibuna/honeypot" => honeypot(ctx),
+        // An edge answers these to its allow-list only (SID 0020).
+        b"/__sibuna/health" | b"/__sibuna/metrics" | b"/__sibuna/ready"
+            if !crate::access::may_inspect(ctx) =>
+        {
+            response::write_text(ctx.writer, Status::NotFound, b"Not Found", keep)
+        }
         b"/__sibuna/health" => health(ctx),
         b"/__sibuna/metrics" => metrics(ctx),
+        b"/__sibuna/ready" if ctx.server.observe.is_some() => crate::access::ready(ctx),
         _ => response::write_text(ctx.writer, Status::NotFound, b"Not Found", keep),
     }
 }
@@ -56,6 +63,18 @@ pub(crate) fn handle_internal<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<()> 
 /// `sibuna_honeypot_refused_total`.
 fn honeypot<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<()> {
     let server = ctx.server;
+    // A frontend that only balances load has no firewall, so it has no trap either.
+    let trapless = server.balances_only
+        || match (&server.edge_routes, ctx.ingress) {
+            (Some(routes), Some(ingress)) => {
+                let host = ctx.request.header(b"host").unwrap_or_default();
+                !routes.firewall_applies(ingress.vip, host, ctx.request.path)
+            }
+            _ => false,
+        };
+    if trapless {
+        return response::write_text(ctx.writer, Status::NotFound, b"Not Found", ctx.keep_alive);
+    }
     if !is_top_level_request(&ctx.request) {
         server.metrics.honeypot_refused.bump();
         return response::write_text(ctx.writer, Status::NotFound, b"Not Found", ctx.keep_alive);
@@ -98,10 +117,22 @@ fn health<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<()> {
 }
 
 fn metrics<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<()> {
+    let content_type = b"text/plain; version=0.0.4";
+    if let Some(observe) = &ctx.server.observe {
+        // An edge adds the series of its frontends and servers, which have no fixed size.
+        let text = crate::access::metrics_text(Some(ctx.server), observe);
+        let extra = Extra { keep_alive: ctx.keep_alive, ..Extra::default() };
+        return response::write_response(
+            ctx.writer,
+            Status::Ok,
+            content_type,
+            text.as_bytes(),
+            extra,
+        );
+    }
     let mut text = FixedText::<4096>::new();
     ctx.server.metrics.write_prometheus(&mut text).map_err(|_| io::Error::other("metrics"))?;
     let extra = Extra { keep_alive: ctx.keep_alive, ..Extra::default() };
-    let content_type = b"text/plain; version=0.0.4";
     response::write_response(ctx.writer, Status::Ok, content_type, text.as_bytes(), extra)
 }
 
