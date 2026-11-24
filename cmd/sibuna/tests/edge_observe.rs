@@ -19,6 +19,8 @@ struct Daemon {
     _stderr: BufReader<ChildStderr>,
     directory: PathBuf,
     vip: SocketAddr,
+    /// The separate listener, when the topology asked for one.
+    admin: SocketAddr,
 }
 
 impl Drop for Daemon {
@@ -36,9 +38,14 @@ impl Daemon {
 
     /// Waits for `count` log lines and returns them.
     fn lines(&self, count: usize) -> Vec<String> {
+        self.lines_of("access.log", count)
+    }
+
+    /// Waits for `count` lines in the log file `name` and returns them.
+    fn lines_of(&self, name: &str, count: usize) -> Vec<String> {
         let deadline = Instant::now() + WAIT;
         loop {
-            let text = fs::read_to_string(self.log_path()).unwrap_or_default();
+            let text = fs::read_to_string(self.directory.join(name)).unwrap_or_default();
             let lines: Vec<String> = text.lines().map(str::to_owned).collect();
             if lines.len() >= count || Instant::now() >= deadline {
                 assert_eq!(lines.len(), count, "{text}");
@@ -48,11 +55,23 @@ impl Daemon {
         }
     }
 
+    /// Writes the topology again, as `extra` describes it, and asks for a reload.
+    fn reload(&self, origin: SocketAddr, extra: &Extra<'_>) {
+        let text = source(&self.directory, self.vip, self.admin, origin, true, extra);
+        fs::write(self.directory.join("edge.json"), text).unwrap();
+        self.signal("-HUP");
+        // The loop of the edge sees the signal within its own step.
+        std::thread::sleep(Duration::from_millis(600));
+    }
+
     fn signal(&self, signal: &str) {
         let pid = self.child.id().to_string();
         assert!(Command::new("kill").args([signal, &pid]).status().unwrap().success());
     }
 }
+
+/// An address where no test listens, so a connect to it is refused.
+const DEAD: &str = "127.83.7.9:9";
 
 fn free() -> SocketAddr {
     TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap()
@@ -69,10 +88,43 @@ struct Extra<'a> {
     front: &'a str,
     /// Members of the document, each with a trailing comma.
     root: &'a str,
+    /// The separate listener is opened, on a port chosen at each start.
+    listen: bool,
+    /// The file name of the log. Empty is `access.log`, and `-` is no log.
+    log: &'a str,
 }
 
-fn topology(origin: SocketAddr, event_loop: bool, extra: &Extra<'_>) -> (PathBuf, SocketAddr) {
-    let vip = free();
+/// The text of the topology file.
+fn source(
+    directory: &std::path::Path,
+    vip: SocketAddr,
+    admin: SocketAddr,
+    origin: SocketAddr,
+    event_loop: bool,
+    extra: &Extra<'_>,
+) -> String {
+    let (http, observe, front, root) = (extra.http, extra.observe, extra.front, extra.root);
+    let name = if extra.log.is_empty() { "access.log" } else { extra.log };
+    let mut members = format!(r#""access_log":{{"output":"{}"}}"#, directory.join(name).display());
+    if extra.log == "-" {
+        // The members of a test begin with a comma, so one member stays in front.
+        members = r#""internal_allow":["127.0.0.0/8","::1/128"]"#.to_owned();
+    }
+    let listen = if extra.listen { format!(r#","listen":"{admin}""#) } else { String::new() };
+    format!(
+        r#"{{{root}"http":{{"surface":"off","event_loop":{event_loop}{http}}},
+        "observability":{{{members}{listen}{observe}}},
+        "frontends":{{"web":{{"proto":"http","binds":["{vip}"],{front}"default_backend":"app"}}}},
+        "backends":{{"app":{{"mode":"http","servers":[{{"name":"a","addr":"{origin}"}}]}}}}}}"#
+    )
+}
+
+fn topology(
+    origin: SocketAddr,
+    event_loop: bool,
+    extra: &Extra<'_>,
+) -> (PathBuf, SocketAddr, SocketAddr) {
+    let (vip, admin) = (free(), free());
     // Two tests that run side by side may draw the same free port, so the port alone
     // does not make the name unique.
     static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
@@ -80,17 +132,9 @@ fn topology(origin: SocketAddr, event_loop: bool, extra: &Extra<'_>) -> (PathBuf
     let name = format!("sibuna-observe-{}-{}-{serial}", std::process::id(), vip.port());
     let directory = std::env::temp_dir().join(name);
     fs::create_dir_all(&directory).unwrap();
-    let log = directory.join("access.log");
-    let (http, observe, front, root) = (extra.http, extra.observe, extra.front, extra.root);
-    let source = format!(
-        r#"{{{root}"http":{{"surface":"off","event_loop":{event_loop}{http}}},
-        "observability":{{"access_log":{{"output":"{}"}}{observe}}},
-        "frontends":{{"web":{{"proto":"http","binds":["{vip}"],{front}"default_backend":"app"}}}},
-        "backends":{{"app":{{"mode":"http","servers":[{{"name":"a","addr":"{origin}"}}]}}}}}}"#,
-        log.display()
-    );
-    fs::write(directory.join("edge.json"), source).unwrap();
-    (directory, vip)
+    let text = source(&directory, vip, admin, origin, event_loop, extra);
+    fs::write(directory.join("edge.json"), text).unwrap();
+    (directory, vip, admin)
 }
 
 fn start(origin: SocketAddr, event_loop: bool, extra: &Extra<'_>) -> Daemon {
@@ -107,7 +151,7 @@ fn start(origin: SocketAddr, event_loop: bool, extra: &Extra<'_>) -> Daemon {
 }
 
 fn try_start(origin: SocketAddr, event_loop: bool, extra: &Extra<'_>) -> Result<Daemon, String> {
-    let (directory, vip) = topology(origin, event_loop, extra);
+    let (directory, vip, admin) = topology(origin, event_loop, extra);
     let mut child = Command::new(BIN)
         .arg("--config-file")
         .arg(directory.join("edge.json"))
@@ -123,7 +167,7 @@ fn try_start(origin: SocketAddr, event_loop: bool, extra: &Extra<'_>) -> Result<
         let _ = fs::remove_dir_all(&directory);
         return Err(line);
     }
-    Ok(Daemon { child, _stderr: stderr, directory, vip })
+    Ok(Daemon { child, _stderr: stderr, directory, vip, admin })
 }
 
 /// An origin that answers every request with `hello`, after `delay`.
@@ -299,10 +343,9 @@ fn the_internal_routes_answer_the_allow_list_only() {
 
 #[test]
 fn the_separate_listener_reports_readiness_until_the_node_drains() {
-    let admin = free();
-    let observe = format!(r#","listen":"{admin}""#);
-    let extra = Extra { observe: &observe, ..Extra::default() };
+    let extra = Extra { listen: true, ..Extra::default() };
     let daemon = start(origin(Duration::from_millis(1500)), true, &extra);
+    let admin = daemon.admin;
     assert_eq!(status(&get(admin, "/ready", "")), 200);
     assert!(get(admin, "/metrics", "").contains("sibuna_edge_ready 1\n"));
     // A request in flight keeps the node alive while it drains.
@@ -420,7 +463,7 @@ fn sighup_reopens_the_log_after_a_rotation() {
 
 #[test]
 fn a_descriptor_limit_below_the_need_is_reported_with_a_hint() {
-    let (directory, _vip) = topology(free(), true, &Extra::default());
+    let (directory, _vip, _admin) = topology(DEAD.parse().unwrap(), true, &Extra::default());
     // The hard limit is lowered too, so the process cannot raise its own.
     let mut child = Command::new("sh")
         .args(["-c", "ulimit -n 300 && exec \"$0\" --config-file \"$1\"", BIN])
@@ -437,7 +480,7 @@ fn a_descriptor_limit_below_the_need_is_reported_with_a_hint() {
         }
         text.push_str(&line);
     }
-    let daemon = Daemon { child, _stderr: stderr, directory, vip: free() };
+    let daemon = Daemon { child, _stderr: stderr, directory, vip: free(), admin: free() };
     assert!(text.contains("-- DESCRIPTOR LIMIT TOO LOW -"), "{text}");
     assert!(
         text.contains("can use 18944 file descriptors, but the process may open 300."),
@@ -449,8 +492,8 @@ fn a_descriptor_limit_below_the_need_is_reported_with_a_hint() {
 
 #[test]
 fn a_check_of_the_file_reports_a_bad_observability_object() {
-    let (directory, _vip) = topology(
-        free(),
+    let (directory, _vip, _admin) = topology(
+        DEAD.parse().unwrap(),
         true,
         &Extra { observe: r#","internal_allow":["ten"]"#, ..Extra::default() },
     );
@@ -465,6 +508,7 @@ fn a_check_of_the_file_reports_a_bad_observability_object() {
 #[test]
 fn the_admin_socket_prints_the_series_of_the_edge() {
     let socket = std::env::temp_dir().join(format!("sibuna-observe-{}.sock", std::process::id()));
+    let _ = fs::remove_file(&socket);
     let root = format!(r#""global":{{"admin_socket":"{}"}},"#, socket.display());
     let daemon = start(origin(Duration::ZERO), true, &Extra { root: &root, ..Extra::default() });
     assert_eq!(status(&get(daemon.vip, "/counted", "")), 200);
@@ -481,4 +525,120 @@ fn the_admin_socket_prints_the_series_of_the_edge() {
     ] {
         assert!(text.contains(series), "{series} is missing:\n{text}");
     }
+}
+
+/// Asks the separate listener until its readiness answer has `wanted`.
+fn readiness(admin: SocketAddr, wanted: u16) -> String {
+    let deadline = Instant::now() + Duration::from_secs(2);
+    let mut answer = get(admin, "/ready", "");
+    while status(&answer) != wanted && Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(20));
+        answer = get(admin, "/ready", "");
+    }
+    answer
+}
+
+#[test]
+fn a_drain_delay_keeps_serving_while_readiness_says_no() {
+    let root = r#""global":{"drain_delay":"1500ms","shutdown_timeout":"2s"},"#;
+    let extra = Extra { listen: true, root, ..Extra::default() };
+    let mut daemon = start(origin(Duration::ZERO), true, &extra);
+    assert_eq!(status(&get(daemon.vip, "/before", "")), 200);
+    let asked = Instant::now();
+    daemon.signal("-TERM");
+    assert_eq!(status(&readiness(daemon.admin, 503)), 503);
+    // The balancer in front has not noticed yet. Its requests are still served.
+    for _ in 0..3 {
+        assert_eq!(status(&get(daemon.vip, "/during", "")), 200);
+    }
+    assert!(asked.elapsed() < Duration::from_millis(1400), "the test was too slow to tell");
+    // Then the listeners stop and the process ends.
+    let deadline = Instant::now() + WAIT;
+    while daemon.child.try_wait().unwrap().is_none() && Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    assert!(daemon.child.try_wait().unwrap().is_some(), "the edge did not stop");
+    assert!(asked.elapsed() >= Duration::from_millis(1500), "it stopped before the delay");
+    assert!(TcpStream::connect(daemon.vip).is_err());
+    assert_eq!(daemon.lines(4).len(), 4);
+}
+
+#[test]
+fn a_reload_moves_the_log_and_changes_who_reads_the_internal_routes() {
+    let server = origin(Duration::ZERO);
+    let daemon = start(server, true, &Extra::default());
+    assert_eq!(status(&get(daemon.vip, "/first", "")), 200);
+    assert_eq!(status(&get(daemon.vip, "/__sibuna/health", "")), 200);
+    daemon.lines(2);
+    // Another file, and a list without this host.
+    let closed = r#","internal_allow":["10.0.0.0/8"]"#;
+    daemon.reload(server, &Extra { log: "second.log", observe: closed, ..Extra::default() });
+    assert_eq!(status(&get(daemon.vip, "/second", "")), 200);
+    assert_eq!(status(&get(daemon.vip, "/__sibuna/health", "")), 404);
+    let lines = daemon.lines_of("second.log", 2);
+    assert_eq!(field(&lines[0], "path"), "/second", "{}", lines[0]);
+    assert_eq!(daemon.lines(2).len(), 2, "the first file is left alone");
+    // No log at all: nothing is written, and the routes are open again.
+    daemon.reload(server, &Extra { log: "-", ..Extra::default() });
+    assert_eq!(status(&get(daemon.vip, "/third", "")), 200);
+    let metrics = get(daemon.vip, "/__sibuna/metrics", "");
+    assert!(metrics.contains("sibuna_edge_access_log_written_total 4\n"), "{metrics}");
+    // The log comes back on the first file.
+    daemon.reload(server, &Extra::default());
+    assert_eq!(status(&get(daemon.vip, "/fourth", "")), 200);
+    let lines = daemon.lines(3);
+    assert_eq!(field(&lines[2], "path"), "/fourth", "{}", lines[2]);
+    assert_eq!(daemon.lines_of("second.log", 2).len(), 2);
+}
+
+#[test]
+fn a_log_added_by_a_reload_starts_and_a_new_listener_needs_a_restart() {
+    let server = origin(Duration::ZERO);
+    let daemon = start(server, true, &Extra { log: "-", ..Extra::default() });
+    assert_eq!(status(&get(daemon.vip, "/unlogged", "")), 200);
+    daemon.reload(server, &Extra::default());
+    assert_eq!(status(&get(daemon.vip, "/logged", "")), 200);
+    let line = &daemon.lines(1)[0];
+    assert_eq!(field(line, "path"), "/logged", "{line}");
+    // The separate listener is bound when the process starts. The reload is refused
+    // as a whole, so the log stays where it is.
+    daemon.reload(server, &Extra { listen: true, log: "other.log", ..Extra::default() });
+    assert_eq!(status(&get(daemon.vip, "/kept", "")), 200);
+    assert_eq!(field(&daemon.lines(2)[1], "path"), "/kept");
+    assert!(TcpStream::connect(daemon.admin).is_err());
+    assert!(!daemon.directory.join("other.log").exists());
+}
+
+#[test]
+fn the_forwarded_field_is_read_only_when_the_proxy_header_names_a_trusted_source() {
+    let front = r#""trusted_proxies":["127.0.0.0/8"],"proxy_protocol":true,"#;
+    let daemon = start(origin(Duration::ZERO), true, &Extra { front, ..Extra::default() });
+    let request = "GET / HTTP/1.1\r\nHost: x\r\nX-Forwarded-For: 198.51.100.5\r\n\
+        Connection: close\r\n\r\n";
+    // The header names another proxy we trust, so the field of that proxy counts.
+    let inner = format!("PROXY TCP4 127.0.0.9 192.0.2.1 51234 443\r\n{request}");
+    assert_eq!(status(&exchange(daemon.vip, inner.as_bytes())), 200);
+    // The header names a client. What that client wrote in the field is ignored.
+    let outer = format!("PROXY TCP4 203.0.113.7 192.0.2.1 51234 443\r\n{request}");
+    assert_eq!(status(&exchange(daemon.vip, outer.as_bytes())), 200);
+    let lines = daemon.lines(2);
+    assert_eq!(field(&lines[0], "client"), "198.51.100.5", "{}", lines[0]);
+    assert_eq!(field(&lines[1], "client"), "203.0.113.7", "{}", lines[1]);
+}
+
+#[test]
+fn a_request_in_flight_is_in_the_active_gauge_of_its_server() {
+    both(|event_loop| {
+        let daemon = start(origin(Duration::from_millis(900)), event_loop, &Extra::default());
+        let gauge = "sibuna_edge_server_active_requests{backend=\"app\",server=\"a\"}";
+        let vip = daemon.vip;
+        let slow = std::thread::spawn(move || get(vip, "/slow", ""));
+        std::thread::sleep(Duration::from_millis(300));
+        let during = get(daemon.vip, "/__sibuna/metrics", "");
+        assert!(during.contains(&format!("{gauge} 1\n")), "({event_loop}) {during}");
+        assert_eq!(status(&slow.join().unwrap()), 200);
+        daemon.lines(2);
+        let after = get(daemon.vip, "/__sibuna/metrics", "");
+        assert!(after.contains(&format!("{gauge} 0\n")), "({event_loop}) {after}");
+    });
 }

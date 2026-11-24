@@ -208,10 +208,8 @@ pub(super) struct Observed {
 impl Observed {
     /// Reopens the access log file, for log rotation, when `asked` is set, and clears it.
     pub fn reopen_log_when(&self, asked: &std::sync::atomic::AtomicBool) {
-        if asked.swap(false, Ordering::AcqRel)
-            && let Some(log) = &self.observe.log
-        {
-            log.reopen();
+        if asked.swap(false, Ordering::AcqRel) {
+            self.observe.reopen_log();
         }
     }
 
@@ -364,13 +362,24 @@ impl Http {
             return false;
         }
         self.options == next.options
-            && self.observe.options == next.observe
+            && self.observe.compatible(&next.observe)
             && same_listeners(&self.binds, &next.binds)
             && next.seed.as_ref().is_none_or(|seed| {
                 self.server.config.secret_seed.as_ref() == Some(seed.as_bytes())
             })
     }
-    pub fn reload(&mut self, prepared: Prepared) {
+
+    /// Opens what the access log of `next` needs, before anything is reloaded.
+    ///
+    /// # Errors
+    ///
+    /// The error of opening the new log file or of starting the writer thread.
+    pub fn plan_log(&self, next: &Prepared) -> io::Result<crate::access::Change> {
+        self.observe.plan(&next.observe)
+    }
+
+    pub fn reload(&mut self, prepared: Prepared, log: crate::access::Change) {
+        self.observe.apply(prepared.observe, log);
         #[cfg(feature = "https")]
         super::automatic::reload(self.automatic(), prepared.automatic, &prepared.identities);
         #[cfg(feature = "https")]
@@ -495,8 +504,6 @@ impl Drop for Http {
         }
         self.server.pool.drain();
         // Every request path has ended. Write the lines that are queued.
-        if let Some(log) = &self.observe.log {
-            log.close();
-        }
+        self.observe.close_log();
     }
 }

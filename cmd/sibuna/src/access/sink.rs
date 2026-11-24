@@ -13,7 +13,7 @@ use std::fs::{File, OpenOptions};
 use std::io::{self, BufWriter, Write};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError, SyncSender, TrySendError};
-use std::sync::{Arc, Mutex, PoisonError};
+use std::sync::{Arc, Mutex, OnceLock, PoisonError};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
@@ -39,6 +39,36 @@ struct Counters {
     errors: AtomicU64,
     /// Reopen the file before the next line.
     reopen: AtomicBool,
+    /// Entries are offered. A reload that removes the log clears it.
+    on: AtomicBool,
+    /// The destination a reload opened, until the writer takes it.
+    swap: Mutex<Option<(LogOutput, Target)>>,
+}
+
+enum Step {
+    Keep,
+    Off,
+    To(LogOutput, Target),
+    Start(Box<AccessLog>),
+}
+
+/// A change of the access log that a reload prepared. Whatever can fail has happened,
+/// so applying it cannot fail.
+pub(crate) struct Change(Step);
+
+impl Change {
+    /// Applies the change to the log in `slot`, starting the log when it is the first.
+    pub(crate) fn apply(self, slot: &OnceLock<AccessLog>) {
+        match (self.0, slot.get()) {
+            (Step::Off, Some(log)) => log.counters.on.store(false, Ordering::Release),
+            (Step::To(output, target), Some(log)) => log.retarget(output, target),
+            (Step::Start(log), None) => {
+                // The slot was empty a moment ago and only a reload fills it.
+                let _ = slot.set(*log);
+            }
+            (Step::Keep | Step::Off | Step::To(..) | Step::Start(_), _) => {}
+        }
+    }
 }
 
 /// The sending side of the access log. Dropping it writes what is queued.
@@ -46,6 +76,10 @@ pub(crate) struct AccessLog {
     sender: SyncSender<Message>,
     counters: Arc<Counters>,
     thread: Mutex<Option<JoinHandle<()>>>,
+    /// The length of the queue. It is fixed when the log starts.
+    queue: usize,
+    /// Where the lines go now.
+    output: Mutex<LogOutput>,
 }
 
 impl AccessLog {
@@ -57,7 +91,7 @@ impl AccessLog {
     pub(crate) fn start(options: &AccessLogOptions) -> io::Result<Self> {
         let target = Target::open(&options.output)?;
         let (sender, receiver) = mpsc::sync_channel(options.queue);
-        let counters = Arc::new(Counters::default());
+        let counters = Arc::new(Counters { on: AtomicBool::new(true), ..Counters::default() });
         let writer = Writer {
             out: BufWriter::with_capacity(64 * 1024, target),
             output: options.output.clone(),
@@ -69,7 +103,61 @@ impl AccessLog {
         let thread = std::thread::Builder::new()
             .name("edge-access-log".into())
             .spawn(move || writer.run(&receiver))?;
-        Ok(Self { sender, counters, thread: Mutex::new(Some(thread)) })
+        let output = Mutex::new(options.output.clone());
+        Ok(Self {
+            sender,
+            counters,
+            thread: Mutex::new(Some(thread)),
+            queue: options.queue,
+            output,
+        })
+    }
+
+    /// Prepares the change from the `running` log to what `next` asks for: opens a new
+    /// destination, or starts the log when none runs.
+    ///
+    /// # Errors
+    ///
+    /// The error of opening the new file, with its path, or of starting the thread.
+    pub(crate) fn plan(
+        running: Option<&AccessLog>,
+        next: Option<&AccessLogOptions>,
+    ) -> io::Result<Change> {
+        let step = match (running, next) {
+            (None, None) => Step::Keep,
+            (Some(_), None) => Step::Off,
+            (Some(log), Some(options)) if log.is_on() && log.writes_to(&options.output) => {
+                Step::Keep
+            }
+            (Some(_), Some(options)) => {
+                Step::To(options.output.clone(), Target::open(&options.output)?)
+            }
+            (None, Some(options)) => Step::Start(Box::new(AccessLog::start(options)?)),
+        };
+        Ok(Change(step))
+    }
+
+    /// True while entries are offered.
+    pub(crate) fn is_on(&self) -> bool {
+        self.counters.on.load(Ordering::Acquire)
+    }
+
+    /// The length of the queue.
+    pub(crate) fn queue(&self) -> usize {
+        self.queue
+    }
+
+    fn writes_to(&self, output: &LogOutput) -> bool {
+        *self.output.lock().unwrap_or_else(PoisonError::into_inner) == *output
+    }
+
+    /// Hands an open destination to the writer, which switches between two lines.
+    fn retarget(&self, output: LogOutput, target: Target) {
+        *self.output.lock().unwrap_or_else(PoisonError::into_inner) = output.clone();
+        *self.counters.swap.lock().unwrap_or_else(PoisonError::into_inner) =
+            Some((output, target));
+        self.counters.reopen.store(true, Ordering::Release);
+        self.counters.on.store(true, Ordering::Release);
     }
 
     /// Offers one entry. A full queue drops it and counts the drop. Never waits.
@@ -220,6 +308,13 @@ impl Writer {
     /// Reopens a file destination between two lines, for log rotation.
     fn reopen_if_asked(&mut self) {
         if !self.counters.reopen.swap(false, Ordering::AcqRel) {
+            return;
+        }
+        let next = self.counters.swap.lock().unwrap_or_else(PoisonError::into_inner).take();
+        if let Some((output, target)) = next {
+            self.flush();
+            self.out = BufWriter::with_capacity(64 * 1024, target);
+            self.output = output;
             return;
         }
         if !matches!(self.output, LogOutput::File(_)) {

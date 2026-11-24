@@ -10,15 +10,15 @@ mod sink;
 
 use std::io::{self, Write};
 use std::net::IpAddr;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::{Arc, OnceLock, PoisonError, RwLock};
 use std::time::{Duration, Instant};
 
 use sibuna_http::Request;
 use sibuna_http::response::{self, Extra, Status};
-use sibuna_lb::{Forwarded, FrontendInfo, ObserveOptions, ServerInfo, Stats};
+use sibuna_lb::{ActiveRequest, Forwarded, FrontendInfo, ObserveOptions, ServerInfo, Stats};
 
-pub(crate) use self::sink::AccessLog;
+pub(crate) use self::sink::{AccessLog, Change};
 use crate::client_writer::Tally;
 use crate::connection::{Ingress, UNKNOWN_LENGTH};
 use crate::context::Ctx;
@@ -31,10 +31,10 @@ const MAX_PATH: usize = 1024;
 
 /// What an edge server shares for observation.
 pub(crate) struct Observe {
-    /// Who may read the internal routes.
-    pub options: ObserveOptions,
-    /// The access log, when the topology has one.
-    pub log: Option<AccessLog>,
+    /// Who may read the internal routes. A reload replaces them.
+    options: RwLock<ObserveOptions>,
+    /// The access log, from the first revision that asks for one.
+    log: OnceLock<AccessLog>,
     /// The counters of the frontends and servers.
     pub stats: Arc<Stats>,
     /// The node stopped taking new work. Release on store, acquire on load.
@@ -48,12 +48,63 @@ impl Observe {
     /// The shared state of one edge server, with the log already open.
     pub(crate) fn new(options: ObserveOptions, log: Option<AccessLog>, stats: Arc<Stats>) -> Self {
         Self {
-            options,
-            log,
+            options: RwLock::new(options),
+            log: log.map(OnceLock::from).unwrap_or_default(),
             stats,
             draining: AtomicBool::new(false),
             proxy_accepted: AtomicU64::new(0),
             proxy_rejected: AtomicU64::new(0),
+        }
+    }
+
+    /// The access log, while the topology asks for one.
+    pub(crate) fn log(&self) -> Option<&AccessLog> {
+        self.log.get().filter(|log| log.is_on())
+    }
+
+    /// True when `address` may read the internal routes.
+    pub(crate) fn allows(&self, address: IpAddr) -> bool {
+        self.options.read().unwrap_or_else(PoisonError::into_inner).allows(address)
+    }
+
+    /// True when a reload can move to `next`. The separate listener and the length of
+    /// a running log queue are fixed when the process starts.
+    pub(crate) fn compatible(&self, next: &ObserveOptions) -> bool {
+        let options = self.options.read().unwrap_or_else(PoisonError::into_inner);
+        let queue = match (self.log.get(), &next.access_log) {
+            (Some(log), Some(asked)) => log.queue() == asked.queue,
+            _ => true,
+        };
+        options.listen == next.listen && queue
+    }
+
+    /// Prepares the access log of `next`. See [`AccessLog::plan`].
+    ///
+    /// # Errors
+    ///
+    /// The error of opening the new log file or of starting the writer thread.
+    pub(crate) fn plan(&self, next: &ObserveOptions) -> io::Result<Change> {
+        AccessLog::plan(self.log.get(), next.access_log.as_ref())
+    }
+
+    /// Moves to the options of a reloaded topology, with the log change of
+    /// [`Observe::plan`].
+    pub(crate) fn apply(&self, next: ObserveOptions, change: Change) {
+        change.apply(&self.log);
+        *self.options.write().unwrap_or_else(PoisonError::into_inner) = next;
+    }
+
+    /// Asks the writer to reopen the log file, for log rotation.
+    pub(crate) fn reopen_log(&self) {
+        if let Some(log) = self.log.get() {
+            log.reopen();
+        }
+    }
+
+    /// Writes the queued lines and ends the writer.
+    pub(crate) fn close_log(&self) {
+        if let Some(log) = self.log.get() {
+            log.close();
         }
     }
 
@@ -65,13 +116,15 @@ impl Observe {
     /// Ends an entry at `now`: counts it and offers it to the log. Never waits.
     pub(crate) fn settle(&self, mut entry: Entry, now: Instant) {
         entry.elapsed = now.saturating_duration_since(entry.started);
+        // The request has ended. Its line may wait in the queue.
+        entry.active = None;
         if let Some(front) = &entry.frontend {
             front.stats.record(entry.status, entry.bytes_in, entry.bytes_out, entry.elapsed);
         }
         if let Some(server) = &entry.server {
             server.stats.record(entry.status, entry.first_byte);
         }
-        if let Some(log) = &self.log {
+        if let Some(log) = self.log() {
             log.offer(entry);
         }
     }
@@ -81,7 +134,7 @@ impl Observe {
         use std::fmt::Write as _;
         // Writing to a string cannot fail.
         let _ = self.stats.write_prometheus(out);
-        let (written, dropped, errors) = self.log.as_ref().map_or((0, 0, 0), AccessLog::counts);
+        let (written, dropped, errors) = self.log.get().map_or((0, 0, 0), AccessLog::counts);
         let series = [
             ("sibuna_edge_ready", "gauge", u64::from(self.is_ready())),
             ("sibuna_edge_access_log_written_total", "counter", written),
@@ -116,6 +169,8 @@ pub(crate) struct Entry {
     cuts: [u16; 3],
     pub frontend: Option<Arc<FrontendInfo>>,
     pub server: Option<ServerInfo>,
+    /// The place of the request in the active gauge of `server`.
+    active: Option<ActiveRequest>,
     pub protocol: &'static str,
     pub verdict: &'static str,
     /// The status sent to the client, or zero.
@@ -142,6 +197,7 @@ impl Entry {
             cuts: [0; 3],
             frontend,
             server: None,
+            active: None,
             protocol,
             verdict: "-",
             status: 0,
@@ -207,8 +263,9 @@ pub(crate) struct Trace {
     pub protocol: &'static str,
     /// The frontend the request arrived on.
     pub front: Option<Arc<FrontendInfo>>,
-    /// The server the request was sent to.
+    /// The server the request was sent to, and the request in its active gauge.
     pub server: Option<ServerInfo>,
+    active: Option<ActiveRequest>,
     /// The entry of the request, from the end of its dispatch until it is settled.
     pub entry: Option<Entry>,
 }
@@ -222,6 +279,7 @@ impl Trace {
         self.started = Some(Instant::now());
         self.verdict = "-";
         self.server = None;
+        self.active = None;
         self.entry = None;
         self.front = match (&server.edge_routes, ingress) {
             (Some(routes), Some(ingress)) => routes.frontend(ingress.vip),
@@ -297,6 +355,7 @@ pub(crate) fn capture<W>(ctx: &mut Ctx<'_, W>) {
         cuts: [0; 3],
         frontend: trace.front.take(),
         server: trace.server.take(),
+        active: trace.active.take(),
         protocol: protocol_of(trace, ctx.ingress),
         verdict,
         status: 0,
@@ -305,7 +364,7 @@ pub(crate) fn capture<W>(ctx: &mut Ctx<'_, W>) {
         first_byte: None,
         elapsed: Duration::ZERO,
     };
-    if observe.log.is_some() {
+    if observe.log().is_some() {
         let host = request.header(b"host").unwrap_or_default();
         entry.set_text(ctx.client_ip, host, request.method_text, request.path);
     }
@@ -316,6 +375,7 @@ pub(crate) fn capture<W>(ctx: &mut Ctx<'_, W>) {
 pub(crate) fn selected<W>(ctx: &mut Ctx<'_, W>, target: Option<&sibuna_lb::HttpTarget>) {
     if ctx.server.observe.is_some() {
         ctx.trace.server = target.and_then(|target| target.server().cloned());
+        ctx.trace.active = ctx.trace.server.as_ref().map(ServerInfo::begin_request);
     }
 }
 
@@ -353,6 +413,7 @@ impl sibuna_ingress::Report for Pending {
 
     fn moved(&mut self, target: &sibuna_lb::HttpTarget) {
         self.entry.server = target.server().cloned();
+        self.entry.active = self.entry.server.as_ref().map(ServerInfo::begin_request);
     }
 }
 
@@ -400,7 +461,7 @@ fn own_gateway_error(status: u16) -> bool {
 pub(crate) fn may_inspect<W>(ctx: &Ctx<'_, W>) -> bool {
     let Some(observe) = &ctx.server.observe else { return true };
     let peer = sibuna_cidr::parse_ip(ctx.peer).ok();
-    let inside = |address: Option<IpAddr>| address.is_some_and(|a| observe.options.allows(a));
+    let inside = |address: Option<IpAddr>| address.is_some_and(|a| observe.allows(a));
     let forwarded = ctx.request.headers().iter().any(|header| {
         [&b"x-forwarded-for"[..], b"x-real-ip", b"forwarded"]
             .iter()
