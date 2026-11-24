@@ -143,8 +143,18 @@ impl HttpOptions {
     }
 }
 
+/// The lowest TLS version a listener offers.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum TlsVersion {
+    /// TLS 1.2 and TLS 1.3.
+    #[default]
+    V12,
+    /// TLS 1.3 only.
+    V13,
+}
+
 /// TLS and optional QUIC termination on one HTTP listener address.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct TlsOptions {
     /// Combined PEM files, or directories of them, in the order given. Each file holds a
     /// certificate chain, leaf first, and its private key. The first certificate is the
@@ -158,6 +168,14 @@ pub struct TlsOptions {
     pub strict_sni: bool,
     /// Also bind UDP on this address for HTTP/3.
     pub http3: bool,
+    /// The lowest TLS version offered. HTTP/3 always uses TLS 1.3.
+    pub min_version: TlsVersion,
+    /// A PEM file of CA certificates. When set, a client must present a certificate that
+    /// one of them signed.
+    pub client_ca: Option<String>,
+    /// With `client_ca`: also accept a client that presents no certificate. A certificate
+    /// that is presented must still verify.
+    pub client_optional: bool,
 }
 
 impl TlsOptions {
@@ -192,8 +210,38 @@ impl TlsOptions {
         }
         let strict_sni = field(r.take_bool("strict_sni"))?.unwrap_or(false);
         let http3 = field(r.take_bool("http3"))?.unwrap_or(false);
+        let min_version = match field(r.take_str("min_version"))? {
+            None | Some("1.2") => TlsVersion::V12,
+            Some("1.3") => TlsVersion::V13,
+            Some(_) => {
+                let path = r.field_path("min_version");
+                return Err(invalid(format!("{path}: expected \"1.2\" or \"1.3\"")));
+            }
+        };
+        let client_ca = field(r.take_str("client_ca"))?.map(str::to_owned);
+        let client_optional = match (field(r.take_str("client_auth"))?, &client_ca) {
+            (None | Some("required"), _) => false,
+            (Some("optional"), Some(_)) => true,
+            (Some("optional"), None) => {
+                let path = r.field_path("client_auth");
+                return Err(invalid(format!("{path}: \"optional\" needs client_ca")));
+            }
+            (Some(_), _) => {
+                let path = r.field_path("client_auth");
+                return Err(invalid(format!("{path}: expected \"required\" or \"optional\"")));
+            }
+        };
         field(r.finish())?;
-        Ok(Self { crt, cert_file, key_file, strict_sni, http3 })
+        Ok(Self {
+            crt,
+            cert_file,
+            key_file,
+            strict_sni,
+            http3,
+            min_version,
+            client_ca,
+            client_optional,
+        })
     }
 }
 
@@ -296,8 +344,16 @@ pub(crate) struct Rule {
 impl Rule {
     fn matches(&self, host: &[u8], path: &[u8]) -> bool {
         self.host.as_ref().is_none_or(|h| host.eq_ignore_ascii_case(h.as_bytes()))
-            && self.path.as_ref().is_none_or(|p| path.starts_with(p.as_bytes()))
+            && self.path.as_ref().is_none_or(|p| has_prefix(path, p.as_bytes()))
     }
+}
+
+/// Whether `path` lies under `prefix`. A prefix ends at a segment boundary: `/public`
+/// covers `/public` and `/public/x`, and not `/public-admin`. Otherwise a route that
+/// turns the firewall off for one tree would turn it off for its neighbours.
+fn has_prefix(path: &[u8], prefix: &[u8]) -> bool {
+    let Some(rest) = path.strip_prefix(prefix) else { return false };
+    prefix.ends_with(b"/") || matches!(rest.first(), None | Some(b'/' | b'?'))
 }
 
 /// The host of an authority without its port and trailing dot.
@@ -545,5 +601,55 @@ impl HttpTarget {
     /// Records the duration of a completed exchange.
     pub fn completed(&self, start: Instant) {
         self.0.observe(start, Instant::now());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{TlsOptions, TlsVersion, has_prefix};
+    use crate::config::Config;
+
+    fn tls_of(members: &str) -> std::io::Result<TlsOptions> {
+        let source = format!(
+            r#"{{"frontends":{{"web":{{"proto":"http","binds":["127.0.0.1:1"],
+            "tls":{{"crt":"site.pem"{members}}},"default_backend":"app"}}}},
+            "backends":{{"app":{{"mode":"http",
+            "servers":[{{"name":"a","addr":"127.0.0.1:2"}}]}}}}}}"#
+        );
+        let config = Config::parse(source.as_bytes())?;
+        Ok(config.tls().values().next().map(|tls| (**tls).clone()).unwrap_or_default())
+    }
+
+    #[test]
+    fn a_listener_reads_its_tls_policy() {
+        let plain = tls_of("").unwrap();
+        assert_eq!((plain.min_version, plain.client_ca, plain.client_optional), {
+            (TlsVersion::V12, None, false)
+        });
+        let strict = tls_of(r#","min_version":"1.3","client_ca":"ca.pem""#).unwrap();
+        assert_eq!(strict.min_version, TlsVersion::V13);
+        assert_eq!(strict.client_ca.as_deref(), Some("ca.pem"));
+        assert!(!strict.client_optional);
+        let open = tls_of(r#","client_ca":"ca.pem","client_auth":"optional""#).unwrap();
+        assert!(open.client_optional);
+        for bad in [
+            r#","min_version":"1.1""#,
+            r#","client_auth":"optional""#,
+            r#","client_ca":"ca.pem","client_auth":"sometimes""#,
+        ] {
+            assert!(tls_of(bad).is_err(), "{bad}");
+        }
+    }
+
+    #[test]
+    fn a_path_prefix_ends_at_a_segment_boundary() {
+        assert!(has_prefix(b"/public", b"/public"));
+        assert!(has_prefix(b"/public/a.css", b"/public"));
+        assert!(has_prefix(b"/public?x=1", b"/public"));
+        assert!(!has_prefix(b"/public-admin", b"/public"));
+        assert!(!has_prefix(b"/publicity", b"/public"));
+        assert!(has_prefix(b"/api/v1", b"/api/"));
+        assert!(!has_prefix(b"/api", b"/api/"));
+        assert!(has_prefix(b"/anything", b"/"));
     }
 }

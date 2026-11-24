@@ -6,6 +6,8 @@ mod control;
 mod ctl;
 mod failure;
 mod http;
+#[cfg(feature = "https")]
+mod inline;
 mod quick;
 mod watch;
 mod workers;

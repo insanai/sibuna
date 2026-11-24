@@ -52,7 +52,7 @@ use crate::slot::EngineCache;
 pub(crate) struct Ctx<'c, W> {
     pub server: &'c Server,
     pub ingress: Option<crate::connection::Ingress>,
-    pub stream: &'c TcpStream,
+    pub stream: Option<&'c TcpStream>,
     pub writer: &'c mut W,
     pub workspace: &'c mut Workspace,
     pub cache: &'c mut EngineCache,

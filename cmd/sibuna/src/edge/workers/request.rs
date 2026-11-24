@@ -66,7 +66,7 @@ pub(super) fn advance(server: &Server, conn: &mut Conn, scratch: &mut Scratch) -
     let mut link = Link {
         server,
         ingress: Some(*ingress),
-        stream,
+        stream: Some(stream),
         writer: ClientWriter::new(&mut *output),
         workspace: &mut scratch.workspace,
         cache: &mut scratch.cache,
@@ -159,7 +159,7 @@ pub(super) fn truncated(server: &Server, conn: &mut Conn, scratch: &mut Scratch)
     let mut link = Link {
         server,
         ingress: Some(*ingress),
-        stream,
+        stream: Some(stream),
         writer: ClientWriter::new(&mut *output),
         workspace: &mut scratch.workspace,
         cache: &mut scratch.cache,

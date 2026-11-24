@@ -399,12 +399,37 @@ The first certificate loaded is the default. The DNS names in each leaf certific
 
 A TLS listener offers ``h2`` and ``http/1.1`` by ALPN. HTTP/1.1 over TLS behaves like the plain listener: keep-alive and WebSocket upgrades work. With ``"http3": true`` we also bind the same port on UDP, and HTTP/2 responses advertise it with Alt-Svc. We can test the three protocols with ``curl --http1.1``, ``curl --http2`` and ``curl --http3-only``. Challenge cookies issued over TLS carry the Secure attribute.
 
+A ``tls`` object takes three more members, all optional.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 20 60
+
+   * - Member
+     - Default
+     - Meaning
+   * - ``min_version``
+     - ``"1.2"``
+     - The lowest TLS version offered. ``"1.3"`` refuses TLS 1.2 clients. HTTP/3 always uses TLS 1.3.
+   * - ``client_ca``
+     - none
+     - A PEM file of CA certificates. A client must then present a certificate that one of them signed.
+   * - ``client_auth``
+     - ``"required"``
+     - With ``client_ca``: ``"optional"`` also admits a client that presents no certificate. A certificate that is presented must still verify.
+
+The cipher suites are those of the TLS library, all with forward secrecy and authenticated encryption, and are not configurable. The servers do not learn the identity of a verified client yet.
+
+To staple an OCSP response we put it as a DER file beside the certificate, with ``.ocsp`` added to the certificate's file name, as HAProxy does. We do not fetch or check the response: the tool that renews the certificate refreshes the file and sends SIGHUP.
+
+An ACME client such as certbot or acme.sh fits the same way. Its deploy hook writes the combined PEM file into the ``crt`` directory and sends SIGHUP. For the HTTP-01 challenge we route ``/.well-known/acme-challenge/`` to the client's own listener with ``"firewall": false``.
+
 To rotate a certificate we replace the file and send SIGHUP. A new handshake uses the new certificate. An established session keeps the one it started with. A reload with a bad file changes nothing.
 
 HTTP routing by name and path
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-An HTTP frontend selects a backend for each request, also for later requests on one keep-alive connection and for each stream of an HTTP/2 or HTTP/3 connection. The first matching route wins. A route gives a ``host``, a ``path_prefix``, or both. We compare host names without case or port and match a literal prefix of the normalized path. Requests that match no route use ``default_backend``.
+An HTTP frontend selects a backend for each request, also for later requests on one keep-alive connection and for each stream of an HTTP/2 or HTTP/3 connection. The first matching route wins. A route gives a ``host``, a ``path_prefix``, or both. We compare host names without case or port and match a prefix of the normalized path that ends at a segment boundary: ``/public`` covers ``/public`` and ``/public/x``, and not ``/public-admin``. A prefix that ends in ``/`` is matched as written. Requests that match no route use ``default_backend``.
 
 .. code-block:: json
 
@@ -513,6 +538,13 @@ The ``http`` object
    * - ``event_loop``
      - ``true``
      - Serve HTTP on event-driven workers, one per processor (SID 0016). ``false`` serves each connection on a thread of its own. Platforms other than Linux always use threads.
+   * - ``workers``
+     - one per processor
+     - The number of event-driven workers, from 1 to 64
+
+A server that sends nothing within the timeout answers 504. A server that cannot be reached, or that fails inside an exchange, answers 502.
+
+With the workers on, a request of an HTTP/2 or HTTP/3 client is decided on the thread that decoded it and goes to its server from there (SID 0017). The response head must arrive within 60 s, and the body must keep arriving.
 
 An idle HTTP/2 or HTTP/3 connection gives up its flow slot after ``idle_timeout``, and after 60 s at the earliest. HTTP/2 connections are also probed with PING every 20 s. An HTTP/2 client may open a WebSocket with extended CONNECT (RFC 8441), which Sibuna carries as an HTTP/1.1 upgrade. Other CONNECT tunnels are refused.
 

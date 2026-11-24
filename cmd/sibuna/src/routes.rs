@@ -56,6 +56,18 @@ pub(crate) fn handle_internal<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<()> 
 /// `sibuna_honeypot_refused_total`.
 fn honeypot<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<()> {
     let server = ctx.server;
+    // A frontend that only balances load has no firewall, so it has no trap either.
+    let trapless = server.balances_only
+        || match (&server.edge_routes, ctx.ingress) {
+            (Some(routes), Some(ingress)) => {
+                let host = ctx.request.header(b"host").unwrap_or_default();
+                !routes.firewall_applies(ingress.vip, host, ctx.request.path)
+            }
+            _ => false,
+        };
+    if trapless {
+        return response::write_text(ctx.writer, Status::NotFound, b"Not Found", ctx.keep_alive);
+    }
     if !is_top_level_request(&ctx.request) {
         server.metrics.honeypot_refused.bump();
         return response::write_text(ctx.writer, Status::NotFound, b"Not Found", ctx.keep_alive);

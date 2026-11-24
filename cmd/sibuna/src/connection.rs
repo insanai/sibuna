@@ -44,7 +44,8 @@ pub(crate) struct Ingress {
 pub(crate) struct Link<'c, W> {
     pub server: &'c Server,
     pub ingress: Option<Ingress>,
-    pub stream: &'c TcpStream,
+    /// The client socket. An in-process exchange has none: its request is planned.
+    pub stream: Option<&'c TcpStream>,
     pub writer: W,
     pub workspace: &'c mut Workspace,
     pub cache: &'c mut EngineCache,
@@ -88,7 +89,7 @@ pub(crate) fn serve_from(
     let mut link = Link {
         server,
         ingress,
-        stream,
+        stream: Some(stream),
         writer: ClientWriter::new(Writer::new(stream, &mut write_buffer[..])),
         workspace: &mut workspace,
         cache: &mut cache,

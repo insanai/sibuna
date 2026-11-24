@@ -35,6 +35,8 @@ const MAX_IDLE: usize = 8;
 /// The firewall connections and activity of one client connection.
 pub(crate) struct Lane {
     handoff: Arc<Handoff>,
+    /// The in-process path. Without it each exchange crosses a socket pair.
+    inline: Option<Arc<crate::inline::Inline>>,
     peer: SocketAddr,
     vip: SocketAddr,
     idle: Mutex<Vec<(SendRequest<Body>, Instant)>>,
@@ -43,9 +45,15 @@ pub(crate) struct Lane {
 }
 
 impl Lane {
-    pub fn new(handoff: Arc<Handoff>, peer: SocketAddr, vip: SocketAddr) -> Arc<Self> {
+    pub fn new(
+        handoff: Arc<Handoff>,
+        inline: Option<Arc<crate::inline::Inline>>,
+        peer: SocketAddr,
+        vip: SocketAddr,
+    ) -> Arc<Self> {
         Arc::new(Self {
             handoff,
+            inline,
             peer,
             vip,
             idle: Mutex::new(Vec::new()),
@@ -264,6 +272,9 @@ pub(super) async fn exchange(req: Request<Body>, lane: &Arc<Lane>) -> Response<B
         Ok(r) => r,
         Err(code) => return error(code),
     };
+    if let Some(inline) = &lane.inline {
+        return crate::inline::exchange(inline, req, lane.peer, lane.vip).await;
+    }
     lane.forward(req).await.unwrap_or_else(|_| error(StatusCode::BAD_GATEWAY))
 }
 

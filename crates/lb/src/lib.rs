@@ -9,7 +9,7 @@ mod health;
 mod http;
 pub use http::{
     HttpOptions, HttpRoutes, HttpTarget, OriginOptions, OriginTls, OriginVersion, TlsOptions,
-    valid_authority,
+    TlsVersion, valid_authority,
 };
 mod websocket;
 pub use websocket::{TunnelPermit, TunnelRefusal, WebSocketRule};

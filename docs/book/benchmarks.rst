@@ -1002,6 +1002,8 @@ Memory changed more than throughput. A connection no longer has a thread. In a r
 
 In a later run on the same host we added Envoy 1.40.2 with eight worker threads. Sibuna served 2.9 to 3.2 times Envoy's plaintext requests, 1.7 to 2.4 times its TLS requests and 1.3 to 1.4 times its HTTP/2 requests. The record holds the table, the Envoy settings and the CPU time per request of each thread group. That last table explains the HTTP/2 gap to HAProxy: on plaintext Sibuna spends 28 us of CPU per request against 32 us for HAProxy, but on HTTP/2 it spends 76 us, of which the TLS and HTTP/2 runtime takes 46 us before a worker sees the request.
 
+We then removed the hop that the last table shows (SID 0017): an HTTP/2 or HTTP/3 request is decided on the thread that decoded it. HTTP/2 rose to 140,728, 119,084 and 96,136 requests per second at 16, 256 and 2,048 connections, which is 20% to 37% more, 1.6 to 1.7 times Envoy and 70% to 83% of HAProxy. No request failed.
+
 The workers use the processors they are given. Confined to one, two, four and eight processors, the daemon served 68,000, 92,000, 176,000 and 227,000 plaintext requests per second at 256 connections.
 
 On three hosts we ran three nodes with a mesh and held 300 WebSocket tunnels through each. Stopping an origin failed 10 of about 114,000 requests before its health check removed it. Killing a node, reloading a node and stopping a node failed no request through the other nodes, and every tunnel through a surviving node stayed open.

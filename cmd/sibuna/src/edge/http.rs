@@ -118,6 +118,7 @@ impl Http {
         });
         server.edge_routes = Some(edge.http_routes());
         server.unlimited = prepared.options.rate_limit.is_none();
+        server.balances_only = !prepared.options.firewall;
         let server = Arc::new(server);
         let workers = start_workers(&server, &prepared.options)?;
         #[cfg(feature = "https")]
@@ -135,11 +136,18 @@ impl Http {
                 idle: std::time::Duration::from_secs(u64::from(
                     prepared.options.idle_timeout_seconds.max(60),
                 )),
+                response: std::time::Duration::from_secs(60),
             };
+            // Without the workers every request path is the blocking one.
+            let decide = workers.is_some().then(|| {
+                Arc::new(super::inline::Decision { server: server.clone() })
+                    as Arc<dyn sibuna_ingress::Decide>
+            });
             Some(sibuna_ingress::Ingress::start(
                 prepared.identities,
                 edge.flow_budget(),
                 handler,
+                decide,
                 limits,
             )?)
         };
