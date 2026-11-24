@@ -518,7 +518,7 @@ Every option has a default. We change one in ``global.acme``.
 
 By using an authority we accept its terms of service, as with any ACME client.
 
-**The redirect.** A plain HTTP request whose ``Host`` is an ``auto`` name receives ``308 Permanent Redirect`` to ``https://`` with the same host, path and query. The port of the TLS frontend is added when it is not 443. Requests for other hosts are served as before. The challenge answer and the redirect are written before any firewall decision, so a ban or a challenge page cannot keep the authority out. Both appear in the access log like any other answer. ``redirect: false`` turns the redirect off. The challenge is still answered.
+**The redirect.** A plain HTTP request whose ``Host`` is an ``auto`` name receives ``308 Permanent Redirect`` to ``https://`` with the same host, path and query. The port of the TLS frontend is added when it is not 443. Requests for other hosts are served as before. The challenge answer and the redirect are written before any firewall decision, so a ban or a challenge page cannot keep the authority out. Both appear in the access log like any other answer. ``redirect: false`` turns the redirect off. The challenge is still answered. Where a frontend or route states ``redirect_https`` itself, that statement decides: ``redirect_https: false`` keeps its requests on HTTP, and a stated redirect answers with its own status and port. The challenge is answered before either redirect, so the authority can validate over a frontend that redirects everything.
 
 **Storage.** The directory holds one subdirectory per authority. Keys have mode 0600 and directories mode 0700.
 
