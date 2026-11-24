@@ -20,5 +20,6 @@ Discussion reading order
    records/0012-console-tls
    records/0013-console-storage
    records/0014-ja4-from-ingress
+   records/XXXXX-distributed-edge-load-balancer
 
 .. sid-generated-end

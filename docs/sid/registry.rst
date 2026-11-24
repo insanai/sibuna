@@ -54,5 +54,8 @@ Discussion registry
    * - 0014
      - :doc:`records/0014-ja4-from-ingress`
      - committed
+   * - XXXXX
+     - :doc:`records/XXXXX-distributed-edge-load-balancer`
+     - prediscussion
 
 .. sid-generated-end
