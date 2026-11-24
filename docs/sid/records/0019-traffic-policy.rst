@@ -82,7 +82,7 @@ A pool (an entry of ``backends``) takes these members. All are optional.
      - A duration. A server that returns or is added ramps up to its weight over this time.
    * - ``sticky``
      - none
-     - ``"cookie"``, ``"source"``, or an object with ``kind`` and, for a cookie, ``cookie`` (the name, ``sibuna_srv``).
+     - ``"cookie"``, ``"source"``, ``"off"``, or an object with ``kind`` and, for a cookie, ``cookie`` (the name, ``sibuna_srv``). A cookie needs an HTTP pool.
    * - ``balance.kind``
      - as before
      - Also ``"round_robin"``.
@@ -98,49 +98,63 @@ A frontend, and each of its routes, takes these members. A route without a membe
      - Meaning
    * - ``redirect_https``
      - false
-     - ``true``, or an object with ``status`` (308; also 301, 302, 307) and ``port`` (443). Only on a frontend without TLS.
+     - ``true`` (status 308), ``301``, ``308``, or an object with ``status`` (308 or 301) and ``port`` (443). Only on a frontend without TLS.
    * - ``hsts``
      - false
      - ``true``, or an object with ``max_age`` in seconds (31536000), ``include_subdomains`` and ``preload``. Only on a frontend with TLS.
    * - ``request_headers``
      - none
-     - An object with ``set`` (name to value) and ``remove`` (a list of names), applied to the request for the server.
+     - An object with ``set`` (name to value) and ``remove`` (a list of names), applied to the request for the server. At most 32 names, and values of at most 1024 bytes.
    * - ``response_headers``
      - none
      - The same, applied to the response for the client.
    * - ``max_body``
      - none
-     - A size in bytes, or text with ``k``, ``m`` or ``g``. A larger request body answers 413.
+     - A size in bytes, or text with ``k``, ``m`` or ``g`` (powers of 1024), or ``"off"``. A larger request body answers 413.
 
 In JLV:
 
 .. code-block:: text
 
-   module //:edge.jlv
-
-   pub fn edge() -> Map<Value> =
-     ({
-       "frontends": {
-         "plain": {"proto": "http", "binds": ["0.0.0.0:80"],
-                   "default_backend": "app", "redirect_https": true},
-         "web": {"proto": "http", "binds": ["0.0.0.0:443"],
-                 "tls": {"crt": "/etc/sibuna/tls"},
-                 "default_backend": "app",
-                 "hsts": true,
-                 "max_body": "10m",
-                 "response_headers": {"set": {"X-Frame-Options": "DENY"},
-                                      "remove": ["Server"]}}
-       },
-       "backends": {
-         "app": {"mode": "http",
-                 "response_timeout": "120s",
-                 "slow_start": "30s",
-                 "sticky": "cookie",
-                 "balance": {"kind": "round_robin"},
-                 "servers": [{"name": "a", "addr": "10.0.0.2:8080"},
-                             {"name": "b", "addr": "10.0.0.3:8080"}]}
+   fn edge() -> Map<Value> {
+       return {
+           frontends: {
+               plain: {
+                   proto: "http",
+                   binds: ["0.0.0.0:80"],
+                   default_backend: "app",
+                   redirect_https: true,
+               },
+               web: {
+                   proto: "http",
+                   binds: ["0.0.0.0:443"],
+                   tls: { crt: "/etc/sibuna/certs/" },
+                   default_backend: "app",
+                   hsts: true,
+                   max_body: "10m",
+                   response_headers: {
+                       set: { "X-Frame-Options": "DENY" },
+                       remove: ["Server"],
+                   },
+               },
+           },
+           backends: {
+               app: {
+                   mode: "http",
+                   response_timeout: "120s",
+                   slow_start: "30s",
+                   sticky: "cookie",
+                   balance: { kind: "round_robin" },
+                   servers: [
+                       { name: "a", addr: "10.0.0.2:8080" },
+                       { name: "b", addr: "10.0.0.3:8080" },
+                   ],
+               },
+           },
        }
-     }: Map<Value>)
+   }
+
+The same document in JSON is accepted as before.
 
 Timeouts
 ~~~~~~~~
@@ -217,7 +231,9 @@ With ``slow_start`` set to a ramp :math:`R`, a server that entered service :math
 
 where :math:`W` is its configured weight. Every scheduler compares servers by ratios of weights, so the common factor 256 changes nothing for servers at full weight and gives a server of weight 1 a ramp of 256 steps.
 
-A server enters service when it is first seen in a pool that already had servers, and when it is eligible again after it was unhealthy or ejected. Servers present when the process starts do not ramp. Round robin gives a ramping server exactly its reduced share. Least connections and the latency-aware scheduler prefer an idle server whatever its weight, so there the ramp limits the server only under concurrent load, as in HAProxy.
+A server enters service when it is first seen in a pool that already had servers, and when it is eligible again after it was unhealthy or ejected. Servers that are first seen together, as at the start of the process, do not ramp. Every scheduler divides by the effective weight: round robin gives a ramping server its reduced share of turns, least connections compares connections and admitted requests per unit of weight, and the latency-aware scheduler divides its cost by the weight. A sticky server is used whatever its ramp, because its clients are already its own.
+
+The ramp starts when a reservation first sees the server in service again, not when the health probe does. A pool without traffic therefore starts the ramp at its next request.
 
 The default is off, as in HAProxy, nginx and Envoy. A ramp that is too short does nothing and one that is too long wastes a healthy server, and only the operator knows how long the application takes to warm up.
 
@@ -234,14 +250,16 @@ with ``Secure`` on a frontend with TLS. The cookie has no lifetime: it ends with
 
 **By source address.** The servers are ranked for the client address, without the port, by weighted rendezvous hashing in integer arithmetic. The first server of the ranking is used when it is eligible. When a server leaves, only its clients move, and they return when it returns. The hash is not keyed, so every node ranks alike.
 
-In both kinds a server that is down, drained, full or already tried falls back to the normal selection.
+In both kinds a server that is down, drained, full, ejected or already tried falls back to the normal selection. A request that was moved by cookie stickiness to another server, or that failed over, receives the cookie of the server that answered. Source stickiness is a property of the pool, so TCP and UDP pools accept it too.
 
 HTTP policy
 ~~~~~~~~~~~
 
 The redirect and the body limit are decided after the ban table and the request limiter and before the firewall policy, so that a cleartext request is never challenged. The redirect goes to ``https://`` and the host of the request, with the configured port when it is not 443, and the path and query as they were sent. A request without a usable host answers 400.
 
-A request that declares a body longer than ``max_body`` answers 413 before any byte goes to a server. A chunked body that grows past the limit while a worker streams it ends the exchange: 413 when no response began, a closed connection otherwise.
+A request that declares a body longer than ``max_body`` answers 413 before any byte goes to a server, and the connection closes because the body was not read. A chunked body that ends inside the request buffer of 64 KiB is measured exactly in the same way. A longer chunked body is admitted when the buffer is full, and a worker counts the rest as it arrives, with its chunk framing. When the count passes the limit the exchange ends: 413 when no response began, a closed connection otherwise.
+
+HSTS is one field line, written on every response that a server gives on a TLS frontend. It replaces a ``Strict-Transport-Security`` field of the server, so that a client reads one policy. A redirect keeps the connection open when the request has no body.
 
 Header edits are prepared when the topology is parsed: a list of names to drop and one block of lines to append. ``set`` drops the name and appends the line. Names that carry framing or that Sibuna writes are refused at parse time: ``Host``, ``Content-Length``, ``Transfer-Encoding``, ``Connection``, ``Upgrade``, ``TE``, ``Trailer``, ``Keep-Alive``, the ``Proxy-`` fields, and on requests the ``X-Forwarded-``, ``X-Real-IP`` and ``X-Sibuna-`` fields.
 
@@ -264,7 +282,7 @@ The lb crate gains plain data and a few verbs.
        pub peer: SocketAddr,
        pub host: &'a [u8],
        pub path: &'a [u8],
-       pub cookies: &'a [u8],          // the Cookie field, or empty
+       pub cookies: &'a [&'a [u8]],    // the values of the Cookie fields
        pub secure: bool,               // the frontend terminates TLS
        pub policy_revision: u64,
    }
@@ -280,10 +298,18 @@ The lb crate gains plain data and a few verbs.
        pub fn response_timeout(&self) -> Duration;
        pub fn timed_out(&self);            // a response timeout
        pub fn answered(&self, status: u16); // a complete response
-       pub fn edits(&self) -> ...;         // header edits and the cookie to set
+       pub fn route(&self) -> &RoutePolicy; // the policy of the matched route
+       pub fn response_lines(&self) -> [&[u8]; 3]; // route fields, HSTS, cookie
    }
 
-``HttpRoutes::select`` stays and calls ``choose``.
+   pub struct HeadEdit<'a> {           // sibuna_net: one edit of a head
+       pub remove: &'a [Box<str>],
+       pub append: [&'a [u8]; 3],
+   }
+
+``HttpRoutes::select`` stays and calls ``choose``. ``sibuna_net::Audit`` gains ``request_edit``, ``response_edit``, ``forwarded_host`` and ``forwarded_port``, all with defaults that write nothing. ``ResponseRelay::feed_edited`` is ``feed`` with an edit of the final head.
+
+All state of this record that belongs to a server (the failure count, the ejection, the ramp, the round robin credit and the cached cookie token) lives beside the load counters of SID 0015, which a reload keeps for every address.
 
 Worked example
 ~~~~~~~~~~~~~~
@@ -310,9 +336,9 @@ Security and operational considerations
 
 Failover multiplies load on the servers that remain. The bound of ``retries`` and the two-second mark on a failed server keep a dead server from costing more than one connect per request for long. A request that fails over keeps the reservation of one server at a time, so flow limits hold.
 
-Header values are checked when the file is parsed: visible ASCII, spaces and tabs, at most 512 bytes, and no line break, so an edit cannot split a response. The list of refused names keeps an edit from altering framing.
+Header values are checked when the file is parsed: visible ASCII, spaces and tabs, at most 1024 bytes, and no line break, so an edit cannot split a response. A request field that an edit sets or removes is also dropped when the client spells it with ``_`` for ``-``, because CGI and WSGI servers read both spellings as one variable. The list of refused names keeps an edit from altering framing.
 
-The sticky token is compared in full with each server of the pool. An unknown token is ignored, not an error, so a cookie left from an older topology does no harm. The token of a server changes when the seed changes, and every client is then balanced anew.
+The sticky token is compared in constant time with each server of the pool. The token of a server is computed once and kept beside its load counters. An unknown token is ignored, not an error, so a cookie left from an older topology does no harm. The token of a server changes when the seed changes, and every client is then balanced anew.
 
 ``max_body`` is a limit of the edge, checked before the firewall policy. It does not replace the buffer limit of the firewall, which bounds what is inspected.
 
@@ -329,17 +355,90 @@ A topology of SID 0015 to SID 0017 parses unchanged. Four behaviours change with
 Acceptance criteria and implementation status
 ---------------------------------------------
 
-To be filled in when the implementation is reviewed.
+Implemented on the branch ``sid-0019-traffic-policy``. Unit tests stand beside the code. ``crates/lb/tests/traffic.rs`` tests the routing interface, ``crates/ingress/tests/inline.rs`` the in-process path, and ``cmd/sibuna/tests/edge_traffic.rs`` the real binary. "Both paths" below means the event-driven workers and the thread path.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 22 14 64
+
+   * - Criterion
+     - Status
+     - Evidence
+   * - Timeouts of the pool
+     - Done
+     - Binary: a server that answers after 2.5 s is served although the client idle timeout is 1 s; a short ``response_timeout`` answers 504; a slow upload keeps the client bound; a connect that hangs ends at ``connect_timeout``. In-process: a silent server answers 504 at the pool bound.
+   * - Failover
+     - Done
+     - Binary: a refused connect moves a POST to another server; at most ``retries`` other servers and none twice; after bytes were sent only a safe buffered request moves. In-process: two refused connects, then the body reaches the third server once.
+   * - Passive health
+     - Done
+     - Binary: a silent server is ejected after its consecutive timeouts and the pool then answers at once; a pool of one server keeps serving; 503 responses count only with ``http_5xx``.
+   * - Slow start
+     - Done
+     - Routing: a returning server and a server added by a reload ramp, servers that start together do not. Binary: a returning server takes at most 2 of 20 requests at the start of a 30 s ramp, and at least 10 without the option.
+   * - Sticky sessions
+     - Done
+     - Binary, both paths: the cookie beside the cookie of the application, nine requests on one server, a forged token replaced; source stickiness over twelve connections. Workers: a sticky server that is ejected gives way and the cookie follows. In-process: the cookie is ``Secure``.
+   * - HTTP policy
+     - Done, with gaps 1 to 4
+     - Binary, both paths: redirect with 308 and 301, a route that opts out, a kept connection; header edits on both sides, with the client's ``_`` alias dropped; ``X-Forwarded-Host`` and ``X-Forwarded-Port``; 413 for a declared body. Workers: 413 for a chunked body, buffered and streamed. In-process: response fields set and removed.
+   * - Round robin
+     - Done
+     - Routing: equal weights cycle, weights 5, 1, 1 give 50, 10, 10 in 70 turns without a run of five, backups last. Binary, both paths: nine requests visit three servers three times each.
+   * - Configuration
+     - Done
+     - Every member has a default. ``sibuna check -f`` reports each malformed member with a hint.
 
 Formal model
 ~~~~~~~~~~~~
 
-``docs/sid/assets/traffic-policy.lean`` will model failover, the slow-start weight, the sticky choice and the panic rule.
+``docs/sid/assets/traffic-policy.lean`` models the four rules that bound what a pool does. It is checked with Lean 4 core (``lean traffic-policy.lean``, version 4.19.0).
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Theorem
+     - Statement
+   * - ``failover_is_bounded``
+     - Failover is a total function of its budget, and tries at most ``retries`` servers beyond the first.
+   * - ``failover_tries_no_server_twice``
+     - The servers tried are distinct, whatever the scheduler offers.
+   * - ``no_retries_no_failover``
+     - With ``retries`` 0 the request stays on its first server.
+   * - ``ramp_weight_is_positive``, ``ramp_weight_is_bounded``
+     - A ramping server has at least one unit of weight and at most its configured weight.
+   * - ``ramp_weight_is_monotone``
+     - The weight never decreases as time passes.
+   * - ``ramp_weight_is_full_after_the_ramp``
+     - After the ramp the weight is the configured weight.
+   * - ``chosen_is_eligible``
+     - Whatever is chosen is eligible, given that the scheduler chooses so. Stickiness never selects a server that cannot serve.
+   * - ``eligible_sticky_server_is_chosen``, ``ineligible_sticky_server_gives_way``
+     - A sticky server is used exactly when it is eligible. Otherwise the choice is the normal one.
+   * - ``count_stays_below_the_limit``, ``success_clears_the_count``, ``ejects_exactly_at_the_limit``
+     - Only ``failures`` consecutive failures eject a server.
+   * - ``ejection_never_empties_a_pool``, ``ejected_servers_wait``
+     - Passive health never leaves available servers without a candidate, and an ejected server waits while another is available.
+
+The model takes the scheduler as an arbitrary function. It does not model the round robin credits, the rendezvous ranking or concurrency: the routing table is one lock, so reservations are sequential.
 
 Known gaps
 ~~~~~~~~~~
 
-To be filled in when the implementation is reviewed.
+#. The thread path (``http.event_loop: false``) has the choice of the server, sticky sessions, the redirect, the declared body limit and the header edits. It does not have the timeouts of the pool, failover to another server, the reports to passive health, or the limit on a chunked body that is longer than the request buffer.
+#. The in-process path does not bound a body without a declared length beyond the prefix that the decision is shown. Its ``response_timeout`` also covers the time its server takes to read the request body.
+#. Sibuna's own answers (challenge pages, refusals, 502 and 504) carry neither HSTS, nor the response edits, nor the sticky cookie. The response to an upgrade (101) is not edited either.
+#. A request that is refused with 413 closes its connection without reading the body. A client that is still writing may see a reset before it reads the answer.
+#. A 413 from a worker during a streamed body counts in ``upstream_errors``.
+#. No test of the binary runs over TLS. ``Secure``, HSTS and the in-process edits are tested in the lb and ingress crates only.
+#. Source stickiness on TCP and UDP pools follows from the shared reservation and has no test of its own.
+#. Passive health counts with relaxed atomics. Two workers that report at once may delay an ejection by one failure.
+#. Two pools that name the same server address share its load counters, as in SID 0015, and therefore its ejection and its ramp.
+#. The policy lookup, the firewall switch and the choice of a server each take the lock of the routing table. A topology without any policy pays the lock and nothing else.
+#. Source stickiness ranks every server of the pool for each request: one hash and one integer logarithm per server, on at most 128 servers.
+#. Nothing reports ejections, ramps or failovers to the operator beyond the worker counter ``origin_retries``. SID 0020 owns the metrics.
+#. The branch was not benchmarked. The hot path of a topology without the new options gains one boxed allocation per request and one comparison per head.
 
 Open questions
 --------------
@@ -352,6 +451,8 @@ Review history
 --------------
 
 - 2026-11-24. Initial draft, written from the audit of the edge before its first production use.
+- 2026-11-24. Review of the design before the implementation. The response bound was first one bound for the whole exchange on a worker; it would have let a slow upload hold a slot for 60 seconds, so it now applies only while the server owes bytes. Passive health first ejected without regard to the rest of the pool; the panic rule was added so that a pool of one slow server keeps serving. The cookie first carried the server name; it is now a keyed hash. The redirect first offered 302 and 307; only the permanent statuses 308 and 301 remain, because a temporary redirect to HTTPS is a mistake.
+- 2026-11-24. Review of the implementation. Found and fixed: the in-process path bounded one attempt by the sum of both timeouts and so tried a refused server for too long; the fixed-point logarithm of the rendezvous ranking overflowed; a chunked body was counted from the admission only, so the buffered part escaped ``max_body``; our HSTS field stood beside that of the server; a client could keep a request field that an edit removes by spelling it with ``_``. The slow-start text claimed that least connections ignores the ramp for sequential traffic; the code divides by the weight in the tie-break too, and the text now says so. The gaps that remain are listed in "Known gaps".
 
 References
 ----------
