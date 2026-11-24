@@ -8,7 +8,7 @@ use sibuna_net::machine::{Fed, Outcome, ResponseRelay};
 use sibuna_reactor::{Io, READ, handle, read_once as read, start_connect, write_once as write};
 
 use super::conn::{BUFFER, Exchange, HIGH_WATER, Origin};
-use super::worker::{KIND_ORIGIN, Side, Worker, key};
+use super::worker::{KEPT_CAPACITY, KIND_ORIGIN, Side, Worker, key};
 use crate::client_writer::ClientWriter;
 use crate::dispatch::{Plan, answer_proxy_error};
 
@@ -240,6 +240,9 @@ impl Worker {
             if exchange.backlog() == 0 && (exchange.tunnel || !exchange.retryable) {
                 exchange.wire.clear();
                 exchange.wire_sent = 0;
+                if exchange.wire.capacity() > KEPT_CAPACITY {
+                    exchange.wire = Vec::new();
+                }
             }
         }
         if exchange.tunnel && exchange.up_eof && exchange.backlog() == 0 {

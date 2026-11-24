@@ -29,8 +29,9 @@ const SPARE_BUFFERS: usize = 128;
 const BODY_CREDIT: usize = 16 * 1024;
 /// Rounds of work one event may cause, so that one connection cannot hold the worker.
 const ROUNDS: usize = 8;
-/// An output vector larger than this is released when it empties.
-const LARGE_OUTPUT: usize = 256 * 1024;
+/// A vector that grew beyond this is released when it empties, so that a connection
+/// between two bursts holds no memory for the last one.
+pub(super) const KEPT_CAPACITY: usize = 16 * 1024;
 
 /// The key a socket is registered by: its kind, the generation and index of its record.
 pub(super) fn key(kind: u64, index: u32, generation: u32) -> u64 {
@@ -210,6 +211,7 @@ impl Worker {
                 break;
             }
         }
+        self.trim(index);
         self.sync(index);
     }
 
@@ -308,6 +310,18 @@ impl Worker {
         }
     }
 
+    /// Gives an empty request buffer back, so that a connection that waits holds none.
+    fn trim(&mut self, index: u32) {
+        let Some(conn) = self.conns.at(index) else { return };
+        if !conn.has_input()
+            && let Some(mut buffer) = conn.input.take()
+            && self.buffers.len() < SPARE_BUFFERS
+        {
+            buffer.len = 0;
+            self.buffers.push(buffer);
+        }
+    }
+
     fn next_request(conn: &mut Conn, used: usize, now: Instant) {
         if let Some(buffer) = conn.input.as_mut() {
             buffer.consume(used);
@@ -338,7 +352,7 @@ impl Worker {
             if conn.backlog() == 0 {
                 conn.sent = 0;
                 conn.output.clear();
-                if conn.output.capacity() > LARGE_OUTPUT {
+                if conn.output.capacity() > KEPT_CAPACITY {
                     conn.output = Vec::new();
                 }
             }
