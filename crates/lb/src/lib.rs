@@ -40,7 +40,7 @@ pub use traffic::{Passive, PoolPolicy, Sticky};
 mod proxy_header;
 pub use proxy_header::{MAX_PROXY_HEADER, ProxyHeader, ProxyHeaderError, parse_proxy_header};
 mod stats;
-pub use stats::{FrontendStats, Histogram, ServerInfo, ServerStats, Stats};
+pub use stats::{ActiveRequest, FrontendStats, Histogram, ServerInfo, ServerStats, Stats};
 
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::io;

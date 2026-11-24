@@ -155,3 +155,74 @@ fn an_accepted_connection_is_a_flow_of_its_frontend() {
     assert!(text.contains("sibuna_edge_frontend_flows_total{frontend=\"web\"} 1\n"), "{text}");
     assert!(text.contains("sibuna_edge_flows_active 1\n"), "{text}");
 }
+
+fn metrics(edge: &Edge) -> String {
+    let mut text = String::new();
+    edge.stats().write_prometheus(&mut text).unwrap();
+    text
+}
+
+#[test]
+fn a_server_added_at_run_time_is_counted_and_a_removed_one_loses_its_series() {
+    let vip = free();
+    let mut edge = Edge::bind(topology(vip, "", "", "a").unwrap()).unwrap();
+    let routes = edge.http_routes();
+    edge.add_server("app", "blue", "127.0.0.1:9201".parse().unwrap(), 1).unwrap();
+    // Some client is placed on the new server, and its request is counted under it.
+    let found = (1024..1280).find_map(|port| {
+        let peer = SocketAddr::from(([127, 0, 0, 1], port));
+        let target = routes.select(vip, peer, b"x", b"/", 1)?;
+        let server = target.server()?.clone();
+        (&*server.server == "blue").then_some(server)
+    });
+    let blue = found.expect("no client was placed on the added server");
+    assert_eq!(&*blue.backend, "app");
+    blue.stats.record(200, Some(Duration::from_millis(1)));
+    let text = metrics(&edge);
+    assert!(text.contains("server=\"blue\",code=\"2xx\"} 1\n"), "{text}");
+    // A removed server loses its series at once, not at the next reload.
+    edge.remove_server("app", "a").unwrap();
+    let text = metrics(&edge);
+    assert!(!text.contains("server=\"a\""), "{text}");
+    assert!(text.contains("server=\"blue\""), "{text}");
+}
+
+#[test]
+fn a_request_is_active_on_its_server_until_it_is_dropped() {
+    let vip = free();
+    let edge = Edge::bind(topology(vip, "", "", "a").unwrap()).unwrap();
+    let peer = "127.0.0.1:1024".parse().unwrap();
+    let target = edge.http_routes().select(vip, peer, b"x", b"/", 1).unwrap();
+    let server = target.server().unwrap().clone();
+    let gauge = "sibuna_edge_server_active_requests{backend=\"app\",server=\"a\"}";
+    let (first, second) = (server.begin_request(), server.begin_request());
+    assert!(metrics(&edge).contains(&format!("{gauge} 2\n")));
+    drop(first);
+    assert_eq!(server.stats.active_count(), 1);
+    drop(second);
+    assert!(metrics(&edge).contains(&format!("{gauge} 0\n")));
+}
+
+#[test]
+fn a_request_of_a_retired_revision_is_counted_under_the_server_it_used() {
+    let vip = free();
+    let peer = "127.0.0.1:1024".parse().unwrap();
+    let mut edge = Edge::bind(topology(vip, "", "", "a").unwrap()).unwrap();
+    let routes = edge.http_routes();
+    // The reload renames the server. A request decided under revision 1 still names `a`.
+    edge.reload(topology(vip, "", "", "b").unwrap()).unwrap();
+    let old = routes.select(vip, peer, b"x", b"/", 1).unwrap();
+    assert_eq!(&*old.server().unwrap().server, "a");
+    let new = routes.select(vip, peer, b"x", b"/", 2).unwrap();
+    assert_eq!(&*new.server().unwrap().server, "b");
+}
+
+#[test]
+fn the_drain_delay_is_read_and_bounded() {
+    let config = topology(free(), "", "", "a").unwrap();
+    assert_eq!(config.drain_delay(), Duration::ZERO);
+    let config = topology(free(), r#""global":{"drain_delay":"15s"},"#, "", "a").unwrap();
+    assert_eq!(config.drain_delay(), Duration::from_secs(15));
+    let found = refusal(r#""global":{"drain_delay":"11m"},"#, "");
+    assert!(found.contains("global.drain_delay must be a duration up to 10m"), "{found}");
+}

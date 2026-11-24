@@ -123,6 +123,8 @@ pub struct ServerStats {
     requests: Classes,
     failures: AtomicU64,
     response: Histogram,
+    /// HTTP requests that chose this server and have not ended.
+    active: AtomicU64,
     /// The flag of the health checker. A pool without checks has none.
     health: Mutex<Option<Arc<AtomicBool>>>,
 }
@@ -152,6 +154,11 @@ impl ServerStats {
         self.failures.load(Ordering::Relaxed)
     }
 
+    /// The number of HTTP requests that chose this server and have not ended.
+    pub fn active_count(&self) -> u64 {
+        self.active.load(Ordering::Relaxed)
+    }
+
     /// True when the last health check passed, or the pool has no check.
     pub fn is_up(&self) -> bool {
         let health = self.health.lock().unwrap_or_else(PoisonError::into_inner);
@@ -172,6 +179,25 @@ pub struct ServerInfo {
     pub server: Arc<str>,
     /// The counters of the server.
     pub stats: Arc<ServerStats>,
+}
+
+impl ServerInfo {
+    /// Counts a request that chose this server as active until the result is dropped.
+    pub fn begin_request(&self) -> ActiveRequest {
+        self.stats.active.fetch_add(1, Ordering::Relaxed);
+        ActiveRequest(Arc::clone(&self.stats))
+    }
+}
+
+/// One request in the active gauge of its server. Dropping it ends the count, however
+/// the request ended.
+#[derive(Debug)]
+pub struct ActiveRequest(Arc<ServerStats>);
+
+impl Drop for ActiveRequest {
+    fn drop(&mut self) {
+        self.0.active.fetch_sub(1, Ordering::Relaxed);
+    }
 }
 
 type Fronts = BTreeMap<Arc<str>, Arc<FrontendStats>>;
@@ -231,6 +257,13 @@ impl Stats {
         ServerInfo { backend: key.0, server: key.1, stats }
     }
 
+    /// Forgets the series of a server that left `pool` at run time (SID 0018). Requests
+    /// that still hold its counters end without a series.
+    pub(crate) fn retire(&self, pool: &str, server: &str) {
+        let mut servers = self.servers.lock().unwrap_or_else(PoisonError::into_inner);
+        servers.retain(|(backend, name), _| !(&**backend == pool && &**name == server));
+    }
+
     /// Publishes the size of the flow table and the drop counter of the edge.
     pub fn set_flows(&self, active: usize, drops: u64) {
         self.flows_active.store(active as u64, Ordering::Relaxed);
@@ -287,6 +320,7 @@ fn write_servers(out: &mut impl Write, servers: &Servers) -> fmt::Result {
     out.write_str("# TYPE sibuna_edge_server_requests_total counter\n")?;
     out.write_str("# TYPE sibuna_edge_server_failures_total counter\n")?;
     out.write_str("# TYPE sibuna_edge_server_up gauge\n")?;
+    out.write_str("# TYPE sibuna_edge_server_active_requests gauge\n")?;
     out.write_str("# TYPE sibuna_edge_server_response_seconds histogram\n")?;
     let mut labels = String::new();
     for ((backend, server), stats) in servers {
@@ -299,6 +333,8 @@ fn write_servers(out: &mut impl Write, servers: &Servers) -> fmt::Result {
         let failures = stats.failure_count();
         writeln!(out, "sibuna_edge_server_failures_total{{{labels}}} {failures}")?;
         writeln!(out, "sibuna_edge_server_up{{{labels}}} {}", u8::from(stats.is_up()))?;
+        let active = stats.active_count();
+        writeln!(out, "sibuna_edge_server_active_requests{{{labels}}} {active}")?;
         stats.response.write(out, "sibuna_edge_server_response_seconds", &labels)?;
     }
     Ok(())

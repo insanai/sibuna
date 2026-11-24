@@ -19,6 +19,8 @@ pub struct Config {
     pub(crate) admin_socket: Option<String>,
     pub(crate) watch: Option<Duration>,
     pub(crate) shutdown_timeout: Duration,
+    /// How long the node answers "not ready" before it stops accepting (SID 0020).
+    pub(crate) drain_delay: Duration,
     /// Listeners share their address, so a new process can bind it (`global.reuse_port`).
     pub(crate) reuse_port: bool,
     pub(crate) http: crate::HttpOptions,
@@ -200,6 +202,12 @@ impl Config {
         self.shutdown_timeout
     }
 
+    /// How long a shutdown keeps serving while readiness answers 503, before the
+    /// listeners stop (`global.drain_delay`). Zero by default.
+    pub fn drain_delay(&self) -> Duration {
+        self.drain_delay
+    }
+
     /// Static peer configuration, when the operator enabled RTT-based routing.
     pub fn mesh(&self) -> Option<&crate::MeshConfig> {
         self.mesh.as_ref()
@@ -217,6 +225,7 @@ impl Config {
             admin_socket,
             watch,
             shutdown_timeout,
+            drain_delay,
             reuse_port,
             acme,
         } = global(&mut root)?;
@@ -236,6 +245,7 @@ impl Config {
             admin_socket,
             watch,
             shutdown_timeout,
+            drain_delay,
             reuse_port,
             mesh,
             http,
@@ -382,6 +392,7 @@ struct Global {
     admin_socket: Option<String>,
     watch: Option<Duration>,
     shutdown_timeout: Duration,
+    drain_delay: Duration,
     reuse_port: bool,
     acme: Option<crate::AcmeOptions>,
 }
@@ -395,6 +406,7 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
     let mut admin_socket = None;
     let mut watch = None;
     let mut shutdown_timeout = Duration::from_secs(5);
+    let mut drain_delay = Duration::ZERO;
     let mut reuse_port = false;
     let mut acme = None;
     if let Some(mut global) = field(root.take_object("global"))? {
@@ -403,6 +415,11 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
             shutdown_timeout = duration(text)
                 .filter(|d| *d <= Duration::from_secs(3600))
                 .ok_or_else(|| invalid("global.shutdown_timeout must be a duration up to 1h"))?;
+        }
+        if let Some(text) = field(global.take_str("drain_delay"))? {
+            drain_delay = duration(text)
+                .filter(|d| *d <= Duration::from_secs(600))
+                .ok_or_else(|| invalid("global.drain_delay must be a duration up to 10m"))?;
         }
         reuse_port = field(global.take_bool("reuse_port"))?.unwrap_or(false);
         if reuse_port && !sibuna_reactor::CAN_SHARE_ADDRESS {
@@ -443,6 +460,7 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
         admin_socket,
         watch,
         shutdown_timeout,
+        drain_delay,
         reuse_port,
         acme,
     })
