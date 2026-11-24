@@ -353,7 +353,7 @@ fn serve_origin(socket: TcpStream, name: &str, shared: &Shared) {
             format!("{}\n{}", message.start, lines.collect::<String>())
         } else if path == "/length" {
             message.body.len().to_string()
-        } else if path == "/cookie" {
+        } else if path.ends_with("/cookie") {
             extra = "Set-Cookie: app=1\r\nServer: origin/1\r\nX-Debug: on\r\n";
             name.to_owned()
         } else {

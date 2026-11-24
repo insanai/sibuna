@@ -136,6 +136,8 @@ pub(super) struct Exchange {
     pub up_eof: bool,
     /// The place under a WebSocket rule, given back when the exchange ends.
     pub _permit: Option<sibuna_lb::TunnelPermit>,
+    /// Body bytes taken from the client so far, for `max_body` (SID 0019).
+    pub uploaded: u64,
 }
 
 impl Exchange {

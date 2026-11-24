@@ -35,7 +35,7 @@ enum Next {
 impl Worker {
     /// Starts the exchange of an admitted request.
     pub fn begin(&mut self, index: u32, plan: Plan, wire: Vec<u8>) {
-        let Plan { target, outbound, keep_alive, tunnel: permit } = plan;
+        let Plan { target, outbound, keep_alive, tunnel: permit, body_seen } = plan;
         let address = target.address();
         let exchange = Exchange {
             origin: None,
@@ -58,6 +58,7 @@ impl Worker {
             tunnel: false,
             up_eof: false,
             _permit: permit,
+            uploaded: body_seen,
         };
         let Some(conn) = self.conns.at(index) else { return };
         conn.activity = self.now;
@@ -218,7 +219,8 @@ impl Worker {
         match exchange.upload.feed(held, &mut exchange.wire) {
             Ok(used) => {
                 buffer.consume(used);
-                true
+                exchange.uploaded += used as u64;
+                self.within_body_bound(index)
             }
             Err(error) => {
                 self.fail(index, error);
@@ -293,15 +295,21 @@ impl Worker {
             conn.output.extend_from_slice(bytes);
             return Next::Rest;
         }
+        let edit = crate::traffic::response_edit(Some(&exchange.target));
         let fed = if exchange.inbound.is_empty() {
-            let fed = exchange.relay.feed(bytes, &mut conn.output, &mut |_, _| {});
+            let fed = exchange.relay.feed_edited(bytes, &mut conn.output, &mut |_, _| {}, &edit);
             if let Ok((used, _)) = fed {
                 exchange.inbound.extend_from_slice(bytes.get(used..).unwrap_or_default());
             }
             fed
         } else {
             exchange.inbound.extend_from_slice(bytes);
-            let fed = exchange.relay.feed(&exchange.inbound, &mut conn.output, &mut |_, _| {});
+            let fed = exchange.relay.feed_edited(
+                &exchange.inbound,
+                &mut conn.output,
+                &mut |_, _| {},
+                &edit,
+            );
             if let Ok((used, _)) = fed {
                 exchange.inbound.drain(..used);
             }

@@ -164,6 +164,7 @@ pub mod signals;
 pub mod slot;
 pub mod tasks;
 mod telemetry;
+mod traffic;
 
 pub use challenge::extract_json_string;
 pub use daemon::{Daemon, DaemonOptions, StartError};

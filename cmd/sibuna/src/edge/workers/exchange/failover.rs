@@ -50,3 +50,32 @@ impl Worker {
         true
     }
 }
+
+impl Worker {
+    /// Checks the body bytes taken so far against `max_body` of the route (SID 0019).
+    /// A body of declared length was checked before it was admitted, so this bounds a
+    /// chunked body, measured with its chunk framing. Returns false when the exchange
+    /// ended: the client gets 413 unless a response began, and the connection closes.
+    pub(super) fn within_body_bound(&mut self, index: u32) -> bool {
+        let Some(conn) = self.conns.at(index) else { return false };
+        let Some(exchange) = conn.exchange.as_deref() else { return false };
+        let Some(max) = exchange.target.route().max_body else { return true };
+        if exchange.uploaded <= max {
+            return true;
+        }
+        if exchange.relay.responded() || exchange.tunnel {
+            self.close(index);
+        } else {
+            let status = sibuna_http::response::Status::PayloadTooLarge;
+            self.respond(index, |writer| {
+                sibuna_http::response::write_text(
+                    writer,
+                    status,
+                    status.reason().as_bytes(),
+                    false,
+                )
+            });
+        }
+        false
+    }
+}

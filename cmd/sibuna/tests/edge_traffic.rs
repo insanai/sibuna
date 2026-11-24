@@ -5,11 +5,13 @@
 
 mod traffic;
 
+use std::collections::BTreeSet;
+use std::io::Write;
 use std::net::{Shutdown, TcpStream};
 use std::sync::atomic::Ordering;
 use std::time::{Duration, Instant};
 
-use traffic::{Origin, Topology, blackhole, both, get, post, refused, request};
+use traffic::{Origin, Topology, blackhole, both, get, get_with, post, refused, request};
 
 #[test]
 fn a_slow_server_has_its_own_bound_and_not_the_client_idle_timeout() {
@@ -186,4 +188,212 @@ fn server_errors_eject_only_when_the_pool_counts_them() {
     let counted = answers(&edge, 12);
     assert_eq!(counted.iter().filter(|(status, _)| *status == 503).count(), 2, "{counted:?}");
     assert!(counted[4..].iter().all(|answer| *answer == (200, "good".into())), "{counted:?}");
+}
+
+/// The `name=value` pair of the sticky cookie that `answer` sets, if it sets one.
+fn sticky_pair(answer: &traffic::Message, name: &str) -> Option<String> {
+    let prefix = format!("{name}=");
+    let line = answer.fields("set-cookie").find(|line| line.starts_with(&prefix))?;
+    Some(line.split(';').next().unwrap_or_default().to_owned())
+}
+
+#[test]
+fn a_cookie_keeps_a_client_on_the_server_it_was_given() {
+    let origins = [Origin::start("a"), Origin::start("b"), Origin::start("c")];
+    let servers = origins.each_ref().map(|origin| origin.address);
+    both(|event_loop| {
+        let edge = Topology::new(&servers).backend(r#""sticky":"cookie","#).start(event_loop);
+        // The first answer carries our cookie beside the cookie of the application.
+        let first = get(&edge, "/cookie");
+        let line = first.fields("set-cookie").find(|line| line.starts_with("sibuna_srv="));
+        let line = line.expect("the sticky cookie").to_owned();
+        assert!(line.ends_with("; Path=/; HttpOnly; SameSite=Lax"), "{line}");
+        assert!(first.fields("set-cookie").any(|line| line == "app=1"));
+        let pair = sticky_pair(&first, "sibuna_srv").unwrap();
+        let name = first.text();
+        // With the cookie every request reaches that server and no cookie is set again.
+        let cookie = format!("Cookie: theme=dark; {pair}\r\n");
+        for _ in 0..9 {
+            let answer = get_with(&edge, "/who", &cookie);
+            assert_eq!(answer.text(), name);
+            assert_eq!(sticky_pair(&answer, "sibuna_srv"), None);
+        }
+        // Without it the requests are balanced over the pool.
+        let spread: BTreeSet<String> = (0..9).map(|_| get(&edge, "/who").text()).collect();
+        assert!(spread.len() >= 2, "{spread:?}");
+        // A token we did not issue selects nothing and is replaced.
+        let forged = get_with(&edge, "/who", "Cookie: sibuna_srv=0123456789abcdef\r\n");
+        assert!(sticky_pair(&forged, "sibuna_srv").is_some());
+    });
+}
+
+#[test]
+fn a_sticky_server_that_fails_gives_way_to_normal_selection() {
+    let silent = Origin::start("silent");
+    let good = Origin::start("good");
+    let members = r#""sticky":{"kind":"cookie","cookie":"srv"},"response_timeout":"1s",
+        "passive_health":{"failures":1,"ejection":"30s"},"#;
+    let edge = Topology::new(&[silent.address, good.address]).backend(members).start(true);
+    // Find the cookie of the server that will fail.
+    let pair = (0..8)
+        .find_map(|_| {
+            let answer = get(&edge, "/who");
+            (answer.text() == "silent").then(|| sticky_pair(&answer, "srv").unwrap())
+        })
+        .expect("a request on the first server");
+    let cookie = format!("Cookie: {pair}\r\n");
+    assert_eq!(get_with(&edge, "/who", &cookie).text(), "silent");
+    silent.stalled.store(true, Ordering::SeqCst);
+    assert_eq!(get_with(&edge, "/who", &cookie).status(), 504);
+    // The server is ejected. Its client is served by the other and gets its cookie.
+    let moved = get_with(&edge, "/who", &cookie);
+    assert_eq!((moved.status(), moved.text()), (200, "good".into()));
+    let other = sticky_pair(&moved, "srv").expect("a new cookie");
+    assert_ne!(other, pair);
+}
+
+#[test]
+fn a_client_address_keeps_its_server_without_a_cookie() {
+    let origins = [Origin::start("a"), Origin::start("b"), Origin::start("c")];
+    let servers = origins.each_ref().map(|origin| origin.address);
+    both(|event_loop| {
+        let edge = Topology::new(&servers).backend(r#""sticky":"source","#).start(event_loop);
+        // Every connection has another client port and the same client address.
+        let answers: Vec<_> = (0..12).map(|_| get(&edge, "/who")).collect();
+        let names: BTreeSet<String> = answers.iter().map(traffic::Message::text).collect();
+        assert_eq!(names.len(), 1, "{names:?}");
+        assert!(answers.iter().all(|answer| answer.field("set-cookie").is_none()));
+    });
+}
+
+#[test]
+fn a_cleartext_frontend_redirects_to_https_and_a_route_may_opt_out() {
+    let origin = Origin::start("a");
+    both(|event_loop| {
+        let members = r#""redirect_https":true,
+            "routes":[{"path_prefix":"/plain","backend":"app","redirect_https":false},
+                      {"path_prefix":"/old","backend":"app","redirect_https":{"status":301,"port":8443}}],"#;
+        let edge = Topology::new(&[origin.address]).frontend(members).start(event_loop);
+        let before = origin.requests.load(Ordering::SeqCst);
+        let answer = get(&edge, "/a/b?x=1&y=2");
+        assert_eq!(answer.status(), 308, "{}", answer.start);
+        assert_eq!(answer.field("location"), Some("https://app.example/a/b?x=1&y=2"));
+        assert!(answer.body.is_empty());
+        let answer = get(&edge, "/old/page");
+        assert_eq!(answer.status(), 301, "{}", answer.start);
+        assert_eq!(answer.field("location"), Some("https://app.example:8443/old/page"));
+        // A redirected request never reaches a server.
+        assert_eq!(origin.requests.load(Ordering::SeqCst), before);
+        assert_eq!(get(&edge, "/plain/who").text(), "a");
+        // The connection stays usable after a redirect without a body.
+        let mut client = edge.connect();
+        for _ in 0..2 {
+            request(&mut client, b"GET /x HTTP/1.1\r\nHost: app.example\r\n\r\n");
+            assert_eq!(traffic::read_message(&mut client, false).unwrap().status(), 308);
+        }
+    });
+}
+
+#[test]
+fn header_edits_and_the_forwarded_host_and_port_reach_both_sides() {
+    let origin = Origin::start("a");
+    both(|event_loop| {
+        let members = r#""request_headers":{"set":{"X-Tenant":"blue"},"remove":["X-Debug"]},
+            "response_headers":{"set":{"X-Frame-Options":"DENY"},"remove":["Server","X-Debug"]},
+            "routes":[{"path_prefix":"/raw","backend":"app",
+                       "request_headers":{},"response_headers":{}}],"#;
+        let edge = Topology::new(&[origin.address]).frontend(members).start(event_loop);
+        let sent =
+            "X-Tenant: forged\r\nx_tenant: forged\r\nX-Debug: 1\r\nX-Forwarded-Host: evil\r\n";
+        let head = get_with(&edge, "/head", sent).text();
+        assert!(head.contains("X-Tenant: blue\n"), "{head}");
+        assert!(!head.contains("forged") && !head.contains("X-Debug"), "{head}");
+        assert!(head.contains("X-Forwarded-Host: app.example\n"), "{head}");
+        assert!(head.contains(&format!("X-Forwarded-Port: {}\n", edge.vip.port())), "{head}");
+        assert!(!head.contains("evil"), "{head}");
+        let answer = get(&edge, "/cookie");
+        assert_eq!(answer.field("x-frame-options"), Some("DENY"));
+        assert_eq!(answer.field("server"), None);
+        assert_eq!(answer.field("x-debug"), None);
+        assert_eq!(answer.field("set-cookie"), Some("app=1"));
+        assert_eq!(answer.text(), "a");
+        // A route that states empty edits has none.
+        let raw = get_with(&edge, "/raw/cookie", "X-Debug: 1\r\n");
+        assert_eq!(raw.field("server"), Some("origin/1"));
+        assert_eq!(raw.field("x-frame-options"), None);
+    });
+}
+
+#[test]
+fn a_body_above_max_body_is_answered_with_413() {
+    let origin = Origin::start("a");
+    both(|event_loop| {
+        let members = r#""max_body":16,
+            "routes":[{"path_prefix":"/upload","backend":"app","max_body":"1k"}],"#;
+        let edge = Topology::new(&[origin.address]).frontend(members).start(event_loop);
+        assert_eq!(post(&edge, "/length", &[b'x'; 16]).text(), "16");
+        let before = origin.requests.load(Ordering::SeqCst);
+        assert_eq!(post(&edge, "/length", &[b'x'; 17]).status(), 413);
+        assert_eq!(origin.requests.load(Ordering::SeqCst), before);
+        assert_eq!(post(&edge, "/upload/length", &[b'x'; 1024]).status(), 200);
+        assert_eq!(post(&edge, "/upload/length", &[b'x'; 1025]).status(), 413);
+        assert_eq!(get(&edge, "/who").text(), "a");
+    });
+    // A chunked body has no declared length. One that ends inside the request buffer is
+    // measured exactly before it is admitted.
+    let edge = Topology::new(&[origin.address]).frontend(r#""max_body":"4k","#).start(true);
+    let chunk = format!("400\r\n{}\r\n", "x".repeat(1024));
+    assert_eq!(chunked(&edge, &chunk, 4, true).text(), "4096");
+    assert_eq!(chunked(&edge, &chunk, 5, true).status(), 413);
+    // A longer one is admitted when the buffer is full. A worker counts the rest as it
+    // arrives, and answers when the bound is passed.
+    let edge = Topology::new(&[origin.address]).frontend(r#""max_body":"100k","#).start(true);
+    let before = origin.requests.load(Ordering::SeqCst);
+    assert_eq!(chunked(&edge, &chunk, 101, false).status(), 413);
+    assert_eq!(origin.requests.load(Ordering::SeqCst), before);
+}
+
+/// Posts `count` copies of `chunk` to `/length` as a chunked body, with its end when
+/// `ended`, and returns the answer.
+fn chunked(edge: &traffic::Edge, chunk: &str, count: usize, ended: bool) -> traffic::Message {
+    let mut client = edge.connect();
+    let head = "POST /length HTTP/1.1\r\nHost: app.example\r\nTransfer-Encoding: chunked\r\n\r\n";
+    request(&mut client, head.as_bytes());
+    for sent in 0..count {
+        // The last chunks go slowly, so that few bytes are unread when the edge answers.
+        if sent + 3 >= count {
+            std::thread::sleep(Duration::from_millis(60));
+        }
+        if client.get_mut().write_all(chunk.as_bytes()).is_err() {
+            break;
+        }
+    }
+    if ended {
+        let _ = client.get_mut().write_all(b"0\r\n\r\n");
+    }
+    traffic::read_message(&mut client, false).expect("an answer")
+}
+
+#[test]
+fn the_policy_members_are_checked_when_the_file_is_read() {
+    let origin = refused();
+    for (members, expected) in [
+        (r#""hsts":true,"#, "cleartext"),
+        (r#""redirect_https":302,"#, "301 or 308"),
+        (r#""max_body":"big","#, "max_body"),
+        (r#""request_headers":{"set":{"Host":"x"}},"#, "cannot be edited"),
+        (r#""response_headers":{"set":{"X-A":"a\r\nb"}},"#, "line break"),
+    ] {
+        let error = Topology::new(&[origin]).frontend(members).check().unwrap_err();
+        assert!(error.contains(expected), "{members}: {error}");
+        assert!(error.contains("Hint:"), "{members}: {error}");
+    }
+    for (members, expected) in [
+        (r#""sticky":"ip","#, "unknown kind"),
+        (r#""sticky":{"kind":"cookie","cookie":"a b"},"#, "cookie"),
+    ] {
+        let error = Topology::new(&[origin]).backend(members).check().unwrap_err();
+        assert!(error.contains(expected) && error.contains("Hint:"), "{members}: {error}");
+    }
+    assert_eq!(Topology::new(&[origin]).frontend(r#""max_body":"10m","#).check(), Ok(()));
 }
