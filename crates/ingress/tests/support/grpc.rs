@@ -300,3 +300,32 @@ pub async fn calls(vip: SocketAddr) {
     assert_eq!(response.headers()["grpc-message"], "no such thing");
     assert!(response.into_body().collect().await.unwrap().to_bytes().is_empty());
 }
+
+/// A bidirectional call of `turns` messages with `pause` before each. Every message
+/// must come back.
+pub async fn slow_conversation(vip: SocketAddr, turns: usize, pause: Duration) {
+    let mut client = connect(vip).await;
+    let mut call = Call::start(&mut client, vip, "Chat", Some(b"turn 0")).await;
+    assert_eq!(call.receive().await, "turn 0");
+    for turn in 1..turns {
+        tokio::time::sleep(pause).await;
+        let text = format!("turn {turn}");
+        call.send(text.as_bytes()).await;
+        assert_eq!(call.receive().await, text);
+    }
+    call.finish();
+    assert_eq!(call.status().await, "0");
+}
+
+/// Opens a call on which neither side sends a message, and returns how long it took
+/// until the response ended. It must end without a status: the call was cut.
+pub async fn silence(vip: SocketAddr) -> Duration {
+    let mut client = connect(vip).await;
+    let mut call = Call::start(&mut client, vip, "Collect", None).await;
+    let started = std::time::Instant::now();
+    match call.response.body_mut().frame().await {
+        None | Some(Err(_)) => {}
+        Some(Ok(frame)) => panic!("a silent call received {frame:?}"),
+    }
+    started.elapsed()
+}
