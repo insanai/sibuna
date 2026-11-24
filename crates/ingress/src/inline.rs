@@ -493,4 +493,37 @@ mod tests {
         assert!(!response.headers().contains_key("connection"));
         assert_eq!(answer(b"garbage").status(), 502);
     }
+
+    /// The firewall writes these heads, so they are well formed. A damaged one must
+    /// still end in a refusal, never in a panic.
+    #[test]
+    fn damaged_heads_are_refused_without_a_panic() {
+        let request = b"POST /v1/items?a=b HTTP/1.1\r\nHost: example.org\r\n\
+            X-Real-IP: 192.0.2.1\r\nContent-Length: 3\r\n\r\n";
+        let page = b"HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\n\
+            Content-Length: 6\r\n\r\ndenied";
+        let mut state = 0x9e37_79b9_7f4a_7c15_u64;
+        let mut next = move || {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            state
+        };
+        for _ in 0..20_000 {
+            for original in [&request[..], &page[..]] {
+                let mut bytes = original.to_vec();
+                for _ in 0..=next() % 3 {
+                    let at = (next() % bytes.len() as u64) as usize;
+                    match next() % 3 {
+                        0 => bytes[at] = next() as u8,
+                        1 => bytes.truncate(at.max(1)),
+                        _ => bytes.insert(at, next() as u8),
+                    }
+                }
+                let _ = parse_request(&bytes, empty());
+                let status = answer(&bytes).status();
+                assert!(status.as_u16() >= 100, "{status}");
+            }
+        }
+    }
 }
