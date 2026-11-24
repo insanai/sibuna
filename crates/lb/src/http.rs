@@ -296,8 +296,16 @@ pub(crate) struct Rule {
 impl Rule {
     fn matches(&self, host: &[u8], path: &[u8]) -> bool {
         self.host.as_ref().is_none_or(|h| host.eq_ignore_ascii_case(h.as_bytes()))
-            && self.path.as_ref().is_none_or(|p| path.starts_with(p.as_bytes()))
+            && self.path.as_ref().is_none_or(|p| has_prefix(path, p.as_bytes()))
     }
+}
+
+/// Whether `path` lies under `prefix`. A prefix ends at a segment boundary: `/public`
+/// covers `/public` and `/public/x`, and not `/public-admin`. Otherwise a route that
+/// turns the firewall off for one tree would turn it off for its neighbours.
+fn has_prefix(path: &[u8], prefix: &[u8]) -> bool {
+    let Some(rest) = path.strip_prefix(prefix) else { return false };
+    prefix.ends_with(b"/") || matches!(rest.first(), None | Some(b'/' | b'?'))
 }
 
 /// The host of an authority without its port and trailing dot.
@@ -501,5 +509,22 @@ impl HttpTarget {
     /// Records the duration of a completed exchange.
     pub fn completed(&self, start: Instant) {
         self.0.observe(start, Instant::now());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::has_prefix;
+
+    #[test]
+    fn a_path_prefix_ends_at_a_segment_boundary() {
+        assert!(has_prefix(b"/public", b"/public"));
+        assert!(has_prefix(b"/public/a.css", b"/public"));
+        assert!(has_prefix(b"/public?x=1", b"/public"));
+        assert!(!has_prefix(b"/public-admin", b"/public"));
+        assert!(!has_prefix(b"/publicity", b"/public"));
+        assert!(has_prefix(b"/api/v1", b"/api/"));
+        assert!(!has_prefix(b"/api", b"/api/"));
+        assert!(has_prefix(b"/anything", b"/"));
     }
 }
