@@ -30,13 +30,14 @@ mod time;
 
 pub mod csr;
 pub mod jws;
+pub mod local;
 pub mod pem;
 pub mod schedule;
 pub mod store;
 pub mod x509;
 
 pub use error::Error;
-pub use key::KeyPair;
+pub use key::{KeyPair, random_serial};
 pub use order::{
     Account, Action, Challenge, ChallengeKind, Issued, Method, Order, OrderOptions, Request,
     Response, obtain,
