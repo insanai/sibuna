@@ -22,5 +22,6 @@ Discussion reading order
    records/0014-ja4-from-ingress
    records/0015-distributed-edge-load-balancer
    records/0016-event-driven-http-workers
+   records/0018-simple-setup-and-runtime-configuration
 
 .. sid-generated-end

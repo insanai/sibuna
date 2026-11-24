@@ -60,5 +60,8 @@ Discussion registry
    * - 0016
      - :doc:`records/0016-event-driven-http-workers`
      - discussion
+   * - 0018
+     - :doc:`records/0018-simple-setup-and-runtime-configuration`
+     - discussion
 
 .. sid-generated-end
