@@ -18,12 +18,12 @@ pub(super) fn start(
     identities: &BTreeMap<SocketAddr, Identity>,
 ) -> io::Result<Option<Arc<Automatic>>> {
     let Some(config) = config else { return Ok(None) };
-    eprintln!(
+    super::note(format_args!(
         "Sibuna edge: automatic HTTPS for {} name(s) from {}, storage {}",
         config.names.len(),
         config.options.directory,
         config.options.storage
-    );
+    ));
     let automatic = Arc::new(Automatic::start(config, Arc::new(crate::acme::log))?);
     manage(&automatic, identities);
     Ok(Some(automatic))

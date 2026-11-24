@@ -89,7 +89,7 @@ type Pending = Arc<Mutex<Option<Revision>>>;
 fn offer(source: &Source, pending: &Pending) {
     match source.load() {
         Ok(next) => *pending.lock().unwrap_or_else(PoisonError::into_inner) = Some(next),
-        Err(error) => eprintln!("EDGE002: keeping current routes: {error}"),
+        Err(error) => note(format_args!("EDGE002: keeping current routes: {error}")),
     }
 }
 
@@ -171,8 +171,8 @@ impl Serving {
         let next = self.pending.lock().unwrap_or_else(PoisonError::into_inner).take();
         if let Some(next) = next {
             match self.reload(next) {
-                Ok(line) => eprintln!("{line}"),
-                Err(error) => eprintln!("EDGE002: keeping current routes: {error}"),
+                Ok(line) => note(format_args!("{line}")),
+                Err(error) => note(format_args!("EDGE002: keeping current routes: {error}")),
             }
         }
     }
@@ -183,7 +183,7 @@ impl Serving {
         let changes = command.changes();
         let answer = self.run(command, revision);
         if changes && answer.is_ok() {
-            eprintln!("EDGE010: admin: {line}");
+            note(format_args!("EDGE010: admin: {line}"));
         }
         // The client may have given up. Its answer is then dropped.
         let _ = reply.try_send(answer);
@@ -216,7 +216,7 @@ impl Serving {
                 let revision = revision
                     .ok_or_else(|| reload_rejected(io::Error::other("the file was not loaded")))?;
                 let line = self.reload(revision).map_err(reload_rejected)?;
-                eprintln!("{line}");
+                note(format_args!("{line}"));
                 Ok(format!("{line}\n"))
             }
         }
@@ -224,7 +224,7 @@ impl Serving {
 
     /// Says that the listeners serve. Automatic HTTPS places its orders from now on.
     fn announce(&self) {
-        eprintln!("Sibuna edge listeners ready");
+        note(format_args!("Sibuna edge listeners ready"));
         #[cfg(feature = "https")]
         if let Some(http) = &self.http {
             http.listening();
@@ -325,7 +325,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let mut current = sibuna_lb::Regime::Standalone;
     let edge = Edge::bind(config)?;
     let http = http.map(|p| http::Http::start(p, &edge, secret)).transpose()?;
-    attach(http.as_ref(), &adapters);
+    join(http.as_ref(), &adapters, mesh.as_ref());
     let observed = http::observe(http.as_ref(), observe_options, &edge)?;
     let (jobs, inbox) = mpsc::channel();
     let _admin = match &admin_socket {
@@ -359,7 +359,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
             let regime = mesh.regime();
             if current != regime {
                 serving.edge.set_regime(regime);
-                eprintln!("Sibuna edge routing regime: {regime:?}");
+                note(format_args!("Sibuna edge routing regime: {regime:?}"));
                 current = regime;
             }
         }
@@ -376,7 +376,8 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     while edge.active() > 0 && Instant::now() < deadline {
         step(&mut edge, http.as_ref())?;
     }
-    eprintln!("Sibuna edge stopped: {} forced closes, {} drops", edge.active(), edge.dropped());
+    let (forced, drops) = (edge.active(), edge.dropped());
+    note(format_args!("Sibuna edge stopped: {forced} forced closes, {drops} drops"));
     Ok(())
 }
 
@@ -458,6 +459,23 @@ fn commit(adapters: &mut Adapters) {
     }
     #[cfg(not(feature = "https"))]
     let _ = adapters;
+}
+
+/// Joins the started parts of the edge: the HTTP runtime learns the multiplexed
+/// servers of the adapters, and the firewall and the mesh share bans (SID 0022).
+fn join(http: Option<&http::Http>, adapters: &Adapters, mesh: Option<&sibuna_lb::Mesh>) {
+    attach(http, adapters);
+    if let (Some(http), Some(mesh)) = (http, mesh) {
+        http.share_bans(mesh);
+    }
+}
+
+/// Writes one line to standard error. A daemon whose standard error was closed, by a
+/// supervisor that went away or a pipe that nobody reads, keeps serving: the line is
+/// lost and nothing else happens. `eprintln!` would end the process there.
+pub(crate) fn note(line: std::fmt::Arguments<'_>) {
+    use std::io::Write as _;
+    let _ = writeln!(io::stderr().lock(), "{line}");
 }
 
 fn start_mesh(spec: &sibuna_lb::MeshConfig) -> io::Result<sibuna_lb::Mesh> {

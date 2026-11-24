@@ -333,6 +333,26 @@ impl Http {
         }
     }
 
+    /// Shares bans with the peers of the mesh (SID 0022): a ban issued here goes to them,
+    /// and a ban they issued enters the ban table here.
+    pub fn share_bans(&self, mesh: &sibuna_lb::Mesh) {
+        let server = self.server.clone();
+        let sink = Box::new(move |client: &[u8], until: u64| {
+            let elapsed = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
+            let now = elapsed.map_or(0, |elapsed| elapsed.as_secs());
+            let hash = server.client_hasher.hash(client);
+            if server.bans.ban_hashed(hash, until, now).is_err() {
+                server.metrics.bans_refused.bump();
+            }
+        });
+        if let Some(feed) = mesh.share_bans(sink) {
+            let _ = self.server.ban_feed.set(feed);
+        }
+        if let Some(counters) = mesh.ban_counters() {
+            let _ = self.observe.mesh_bans.set(counters);
+        }
+    }
+
     /// The certificate thread of automatic HTTPS, when the daemon started one.
     #[cfg(feature = "https")]
     pub fn automatic(&self) -> Option<&Arc<sibuna_ingress::Automatic>> {

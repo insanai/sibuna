@@ -75,5 +75,8 @@ Discussion registry
    * - 0021
      - :doc:`records/0021-automatic-https`
      - discussion
+   * - 0022
+     - :doc:`records/0022-replicated-bans`
+     - discussion
 
 .. sid-generated-end

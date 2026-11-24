@@ -163,6 +163,12 @@ pub(crate) fn ban_client<W: Write>(ctx: &Ctx<'_, W>, until: u64) -> bool {
     match ctx.server.bans.ban_hashed(ctx.client_hash, until, ctx.now) {
         Ok(()) => {
             metrics.bans_issued.bump();
+            if let Some(feed) = ctx.server.ban_feed.get() {
+                let prefix = ctx.server.config.ipv6_prefix;
+                let key =
+                    crate::context::ClientKey::new(ctx.client_ip, ctx.client_address, prefix);
+                feed.publish(key.as_bytes(), until);
+            }
             true
         }
         Err(_) => {
