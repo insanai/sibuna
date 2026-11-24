@@ -72,6 +72,27 @@ impl Lane {
         (self.peer, self.cert)
     }
 
+    /// Reports a request that is answered with `status` before any decision (SID 0020).
+    /// Only the in-process path has someone to tell.
+    pub(crate) fn note_refusal(
+        &self,
+        version: Version,
+        method: &Method,
+        uri: &hyper::Uri,
+        status: StatusCode,
+    ) {
+        let Some(inline) = &self.inline else { return };
+        inline.refused(&crate::Refused {
+            peer: self.peer,
+            vip: self.vip,
+            protocol: protocol_name(version),
+            status: status.as_u16(),
+            method: method.as_str(),
+            host: uri.host().unwrap_or_default(),
+            path: uri.path(),
+        });
+    }
+
     pub fn quiet_for(&self) -> Duration {
         if self.in_flight.load(Ordering::Acquire) != 0 {
             return Duration::ZERO;
@@ -257,11 +278,15 @@ pub(super) async fn h2(
     capacity: Arc<Semaphore>,
     alt_svc: Option<HeaderValue>,
 ) -> Result<Response<Body>, Infallible> {
+    let refuse = |status| {
+        lane.note_refusal(req.version(), req.method(), req.uri(), status);
+        Ok(error(status))
+    };
     let Some(admitted) = Admitted::reserve(&lane, &capacity) else {
-        return Ok(error(StatusCode::SERVICE_UNAVAILABLE));
+        return refuse(StatusCode::SERVICE_UNAVAILABLE);
     };
     if !expectation_supported(req.headers()) {
-        return Ok(error(StatusCode::EXPECTATION_FAILED));
+        return refuse(StatusCode::EXPECTATION_FAILED);
     }
     if crate::tunnel::is_websocket(&req) {
         return Ok(crate::tunnel::open(req, &lane, admitted).await);
@@ -278,16 +303,18 @@ pub(super) async fn h2(
 
 pub(super) async fn exchange(req: Request<Body>, lane: &Arc<Lane>) -> Response<Body> {
     // The translation writes the request as HTTP/1.1, so the client's protocol is read first.
-    let protocol = match req.version() {
-        Version::HTTP_3 => "h3",
-        Version::HTTP_2 => "h2",
-        _ => "http/1.1",
-    };
+    let version = req.version();
+    let protocol = protocol_name(version);
+    // A request that the translation refuses is reported with what it asked for.
+    let (method, uri) = (req.method().clone(), req.uri().clone());
     // The translation removes TE, which HTTP/1.1 scopes to one connection.
     let trailers = req.headers().get(header::TE).is_some_and(|te| te == "trailers");
     let req = match translate(req) {
         Ok(r) => r,
-        Err(code) => return error(code),
+        Err(code) => {
+            lane.note_refusal(version, &method, &uri, code);
+            return error(code);
+        }
     };
     if let Some(inline) = &lane.inline {
         let exchange =
@@ -295,6 +322,15 @@ pub(super) async fn exchange(req: Request<Body>, lane: &Arc<Lane>) -> Response<B
         return exchange.await;
     }
     lane.forward(req).await.unwrap_or_else(|_| error(StatusCode::BAD_GATEWAY))
+}
+
+/// The name of the protocol a client speaks, as the access log writes it.
+fn protocol_name(version: Version) -> &'static str {
+    match version {
+        Version::HTTP_3 => "h3",
+        Version::HTTP_2 => "h2",
+        _ => "http/1.1",
+    }
 }
 
 pub(crate) fn translate(req: Request<Body>) -> Result<Request<Body>, StatusCode> {

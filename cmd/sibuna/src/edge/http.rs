@@ -108,10 +108,8 @@ pub(super) struct Http {
     workers: Option<Arc<Workers>>,
     options: HttpOptions,
     binds: BTreeMap<SocketAddr, Arc<TlsOptions>>,
-    /// Hands accepted connections to their request path. Shared with the PROXY stage.
+    /// Hands accepted connections to their request path.
     dispatcher: Arc<Dispatcher>,
-    /// Reads the PROXY header of frontends that require one (SID 0020).
-    stage: Option<super::proxy_stage::Stage>,
     observe: Arc<Observe>,
 }
 
@@ -142,11 +140,6 @@ pub(super) struct Dispatcher {
 }
 
 impl Dispatcher {
-    /// The frontend behind the listener `bind`.
-    pub fn frontend(&self, bind: SocketAddr) -> Option<Arc<sibuna_lb::FrontendInfo>> {
-        self.server.edge_routes.as_ref()?.frontend(bind)
-    }
-
     /// Starts TLS or HTTP on an accepted connection. `client` is the source of its PROXY
     /// header, when it had one, and then replaces the socket peer.
     pub fn deliver(
@@ -208,10 +201,8 @@ pub(super) struct Observed {
 impl Observed {
     /// Reopens the access log file, for log rotation, when `asked` is set, and clears it.
     pub fn reopen_log_when(&self, asked: &std::sync::atomic::AtomicBool) {
-        if asked.swap(false, Ordering::AcqRel)
-            && let Some(log) = &self.observe.log
-        {
-            log.reopen();
+        if asked.swap(false, Ordering::AcqRel) {
+            self.observe.reopen_log();
         }
     }
 
@@ -311,14 +302,12 @@ impl Http {
         let ingress = RwLock::new(ingress);
         let (web, pool) = (server.clone(), workers.clone());
         let dispatcher = Arc::new(Dispatcher { server: web, workers: pool, binds, ingress });
-        let stage = super::proxy_stage::Stage::start(dispatcher.clone(), observe.clone())?;
         Ok(Self {
             reaper,
             workers,
             options: prepared.options,
             binds: prepared.binds,
             dispatcher,
-            stage: Some(stage),
             observe,
             server,
         })
@@ -384,13 +373,24 @@ impl Http {
             return false;
         }
         self.options == next.options
-            && self.observe.options == next.observe
+            && self.observe.compatible(&next.observe)
             && same_listeners(&self.binds, &next.binds)
             && next.seed.as_ref().is_none_or(|seed| {
                 self.server.config.secret_seed.as_ref() == Some(seed.as_bytes())
             })
     }
-    pub fn reload(&mut self, prepared: Prepared) {
+
+    /// Opens what the access log of `next` needs, before anything is reloaded.
+    ///
+    /// # Errors
+    ///
+    /// The error of opening the new log file or of starting the writer thread.
+    pub fn plan_log(&self, next: &Prepared) -> io::Result<crate::access::Change> {
+        self.observe.plan(&next.observe)
+    }
+
+    pub fn reload(&mut self, prepared: Prepared, log: crate::access::Change) {
+        self.observe.apply(prepared.observe, log);
         #[cfg(feature = "https")]
         super::automatic::reload(self.automatic(), prepared.automatic, &prepared.identities);
         #[cfg(feature = "https")]
@@ -400,15 +400,11 @@ impl Http {
         self.server.slot.publish(prepared.engine);
     }
 
-    pub fn accept(&self, bind: SocketAddr, stream: TcpStream, permit: FlowPermit) {
-        // A PROXY frontend reads its header first, off this thread.
-        if let Some(stage) = &self.stage
-            && self.dispatcher.frontend(bind).is_some_and(|front| front.proxy_protocol)
-        {
-            stage.submit(bind, stream, permit);
-            return;
-        }
-        self.dispatcher.deliver(bind, stream, permit, None);
+    /// Starts TLS or HTTP on an accepted connection. The edge has taken its PROXY
+    /// header already, when the frontend reads one (SID 0020).
+    pub fn accept(&self, accepted: sibuna_lb::Accepted) {
+        let sibuna_lb::Accepted { bind, stream, permit, client } = accepted;
+        self.dispatcher.deliver(bind, stream, permit, client);
     }
 }
 
@@ -495,14 +491,13 @@ fn launch(server: &Arc<Server>, stream: TcpStream, ingress: Ingress, permit: Opt
     });
     if task.is_err() {
         server.metrics.overloaded.bump();
+        server.count_refusal(sibuna_lb::Refusal::TaskLimit);
     }
 }
 
 impl Drop for Http {
     fn drop(&mut self) {
         self.server.stopping.store(true, Ordering::Release);
-        // The stage holds the dispatcher. It ends first, so nothing is delivered later.
-        drop(self.stage.take());
         if let Some(workers) = &self.workers {
             workers.stop();
         }
@@ -515,8 +510,6 @@ impl Drop for Http {
         }
         self.server.pool.drain();
         // Every request path has ended. Write the lines that are queued.
-        if let Some(log) = &self.observe.log {
-            log.close();
-        }
+        self.observe.close_log();
     }
 }

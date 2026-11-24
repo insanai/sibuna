@@ -1,7 +1,7 @@
 :sid-number: 0020
 :sid-title: Edge Observability and Client Identity
-:sid-state: discussion
-:sid-status: Open for Discussion
+:sid-state: accepted
+:sid-status: Accepted
 :sid-type: Architectural Specification
 :sid-authors: ["Vikrant Rathore"]
 :sid-created: 2026-11-24
@@ -18,7 +18,7 @@ Abstract
 
 An operator of the edge load balancer of SID 0015 cannot yet answer three questions. Which server answered this request, with what status, and how fast? Is this node ready for traffic? Who is the client, when a content network or a cloud balancer stands in front? This record answers them.
 
-We add one access log line per HTTP request, written by one thread from a bounded queue. We add counters and latency histograms per frontend and per server, the health state of each server, and the flow counters of the node. We add a readiness route that turns to 503 when the node drains. We close the health, readiness and metrics routes to everyone outside an allow-list, which is the loopback network by default, and we offer a separate listener for them. We let a frontend name the proxies it trusts, so that ``X-Forwarded-For`` from them names the client, and we let a frontend require the PROXY protocol, version 1 or 2. At startup we compare the descriptor limit of the process with what the topology can use, raise the soft limit when the hard limit allows it, and warn when it does not.
+We add one access log line per HTTP request, written by one thread from a bounded queue. We add counters and latency histograms per frontend and per server, the health state of each server, and the flow counters of the node. We add a readiness route that turns to 503 when the node drains. We close the health, readiness and metrics routes to everyone outside an allow-list, which is the loopback network by default, and we offer a separate listener for them. We let a frontend name the proxies it trusts, so that ``X-Forwarded-For`` from them names the client, and we let an HTTP or a TCP frontend require the PROXY protocol, version 1 or 2. A shutdown can serve on for a configured time while readiness answers 503. At startup we compare the descriptor limit of the process with what the topology can use, raise the soft limit when the hard limit allows it, and warn when it does not.
 
 Motivation and scope
 --------------------
@@ -76,7 +76,7 @@ Invariants
 Configuration
 ~~~~~~~~~~~~~
 
-The topology gains one object at its root and two options on an HTTP frontend. In JLV:
+The topology gains one object at its root, one key in ``global`` and two options on a frontend. In JLV:
 
 .. code-block:: text
 
@@ -88,6 +88,7 @@ The topology gains one object at its root and two options on an HTTP frontend. I
      internal_allow: ["127.0.0.0/8", "::1/128"]
      listen: "127.0.0.1:9180"
    }
+   global { drain_delay: "10s" }
 
 .. list-table::
    :header-rows: 1
@@ -111,14 +112,19 @@ The topology gains one object at its root and two options on an HTTP frontend. I
    * - ``observability.listen``
      - none
      - A numeric ``IP:port`` for a separate listener that serves ``/health``, ``/ready`` and ``/metrics``. It applies no allow-list of its own: its bind address is its access control.
+   * - ``global.drain_delay``
+     - ``0s``
+     - How long a shutdown keeps serving while readiness answers 503, before the listeners stop. At most ``10m``.
    * - ``frontends.<name>.trusted_proxies``
      - ``[]``
-     - HTTP frontends only. The networks of the proxies in front of this frontend, at most 64.
+     - HTTP and TCP frontends. The networks of the proxies in front of this frontend, at most 64. A TCP frontend reads it only with ``proxy_protocol``.
    * - ``frontends.<name>.proxy_protocol``
      - ``false``
-     - HTTP frontends only. Every connection must begin with a PROXY header, version 1 or 2. It needs a non-empty ``trusted_proxies``.
+     - HTTP and TCP frontends. Every connection must begin with a PROXY header, version 1 or 2. It needs a non-empty ``trusted_proxies``.
 
-A change of the ``observability`` object needs a restart, as other node-wide settings do. The frontend options follow a reload.
+A reload changes the output of the access log, turns the log on and off, and replaces ``internal_allow``. The new file is opened before anything is reloaded, so a path that cannot be opened refuses the reload as a whole. The writer changes the file between two lines. Two settings are fixed when the process starts: ``observability.listen``, because its socket is bound once, and the ``queue`` of a running log, because the channel has its length from its creation. A reload that changes one of them is refused, and the node keeps its routes. The frontend options and ``global.drain_delay`` follow a reload.
+
+The default is no log. A line per request costs disk and holds client addresses, so we do not write one unasked. The quick start takes ``--access-log PATH|stdout|stderr`` and prints the same ``observability`` object with ``--print-config``.
 
 The access log
 ~~~~~~~~~~~~~~
@@ -146,7 +152,9 @@ The fields are fixed. Their order is the order below.
    * - ``frontend``
      - The name of the frontend, or ``-`` when the listener is unknown.
    * - ``protocol``
-     - ``http/1.1``, ``h2`` or ``h3``. A request that reached a worker through the TLS relay of SID 0015 is ``https``.
+     - ``http/1.1``, ``h2`` or ``h3``.
+   * - ``scheme``
+     - ``https`` when the client reached a TLS frontend, else ``http``.
    * - ``method``
      - The request method, or ``-`` for a request that did not parse.
    * - ``host``
@@ -156,9 +164,9 @@ The fields are fixed. Their order is the order below.
    * - ``status``
      - The status sent to the client. ``0`` when the exchange ended before a status.
    * - ``bytes_in``
-     - The size of the request head as parsed plus the body length that the request declared. For a body without a length, the bytes buffered for the decision.
+     - See the table of byte counts below.
    * - ``bytes_out``
-     - The response bytes written towards the client, head included, as HTTP/1.1. For ``h2`` and ``h3`` the body bytes.
+     - See the table of byte counts below.
    * - ``duration_ms``
      - From the dispatch of the request to the end of the response, in milliseconds with three decimals.
    * - ``ttfb_ms``
@@ -169,6 +177,25 @@ The fields are fixed. Their order is the order below.
      - The server name, or ``-``.
    * - ``verdict``
      - What the firewall decided: ``pass``, ``deny``, ``challenge``, ``rate_limited``, ``banned``, ``internal`` for a reserved route, or ``-`` when the request was refused before the decision.
+
+The byte counts are exact where the path sees the bytes, and say so where it does not:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 22 39 39
+
+   * - Client protocol
+     - ``bytes_in``
+     - ``bytes_out``
+   * - ``http/1.1``
+     - The head as parsed: the request line, and each field with its separator and line end. A field that the client folded or padded counts in its parsed form. Plus the body length that the request declared. For a body without a length (chunked), only the part that was buffered for the decision.
+     - Exact: every byte written towards the client before TLS, with heads, interim heads and chunk framing. The body of a response to HEAD, which is dropped, is not counted.
+   * - ``h2``, ``h3``
+     - The head as its HTTP/1.1 translation, plus the declared body length, or the buffered part without one. Not the compressed frames.
+     - Exact for the body: the response data bytes. The head and the frames are not counted.
+   * - Refused before the decision
+     - 0
+     - 0 for ``h2`` and ``h3``. Exact for ``http/1.1``.
 
 Strings are escaped as JSON. Bytes outside printable ASCII are written as ``\u00XX``, so a line is always ASCII and one line.
 
@@ -186,7 +213,7 @@ The dispatch of SID 0002 is one function for all paths. At its end it captures t
    * - Path
      - Where the entry is settled
    * - Thread per connection
-     - After each request, from the response writer of the connection. The writer counts the bytes and reads the status from the first twelve bytes of the final head.
+     - After each request, from the response writer of the connection. The writer counts the bytes and reads the status from the first twelve bytes of the final head. It passes over interim heads wherever the writes cut them. When the relay to the server failed, the dispatch says so, and only then is a 502 or 504 Sibuna's own.
    * - Event-driven worker
      - A response of Sibuna's own is settled where the request was decided. An admitted request moves its entry to the connection record. The entry is settled when the exchange finishes, when Sibuna answers for a failed server, or when the connection closes inside the exchange.
    * - In process (HTTP/2, HTTP/3)
@@ -209,6 +236,8 @@ The ingress crate does not depend on the binary. Its interface of SID 0017 gains
    // Offer gains `protocol: &'static str`; Forward gains `report: Option<Box<dyn Report>>`.
 
 A request that does not parse has no context. The paths that own a response writer log it with the client, the status and ``-`` for the fields they do not know.
+
+The protocol runtime answers some requests before any decision: 503 when the node runs as many HTTP/2 and HTTP/3 requests as it may, 417 for an expectation it cannot meet, 400 or 501 for a request that does not translate to HTTP/1.1, and 400 for a body that does not arrive. The trait ``Decide`` gains ``refused(&Refused)``, with the client, the listener, the protocol, the status, the method, the authority and the path. The binary counts the refusal by its reason and writes a line with verdict ``-``. This hook exists on the in-process path. Without the event-driven workers a TLS request crosses a socket pair, and the runtime's own refusals there are neither logged nor counted.
 
 Counters
 ~~~~~~~~
@@ -241,6 +270,10 @@ The metrics route and the separate listener write the process counters of SID 00
      - A histogram of ``ttfb_ms``.
    * - ``sibuna_edge_server_up{backend,server}``
      - 1 when the last health check passed or the pool has none, else 0.
+   * - ``sibuna_edge_server_active_requests{backend,server}``
+     - HTTP requests that chose the server and have not ended. A request that moved to another server (SID 0019) counts under the one it moved to.
+   * - ``sibuna_edge_refused_total{reason}``
+     - Connections and requests refused before the firewall decided. See the reasons below.
    * - ``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``, ``sibuna_edge_drops_total``
      - The flow table of the node.
    * - ``sibuna_edge_ready``
@@ -252,10 +285,52 @@ The metrics route and the separate listener write the process counters of SID 00
 
 The histograms have fixed bounds: 1, 2.5, 5, 10, 25, 50, 100, 250, 500 ms, 1, 2.5, 5, 10 and 30 s.
 
+.. list-table::
+   :header-rows: 1
+   :widths: 24 76
+
+   * - ``reason``
+     - What was refused
+   * - ``rate_limit``
+     - A TCP connection of a client above ``rate_limit.conn_per_10s``.
+   * - ``flow_limit``
+     - A TCP connection when the node holds ``global.max_flows`` flows.
+   * - ``draining``
+     - A TCP connection that arrived while the listeners stop.
+   * - ``connection_limit``
+     - An HTTP connection above ``http.max_connections``.
+   * - ``client_limit``
+     - An HTTP connection above ``http.max_connections_per_ip`` of its client.
+   * - ``task_limit``
+     - An HTTP connection for which no thread was free, on the thread path.
+   * - ``exchange_limit``
+     - An HTTP/2 or HTTP/3 request above the request bound of the runtime (503).
+   * - ``bad_request``
+     - An HTTP/2 or HTTP/3 request that the runtime answered 400, 417 or 501.
+
+A refused connection has no request line, so it has a counter and no log line. A refused request has both. UDP datagrams that a limit drops are in ``sibuna_edge_drops_total`` without a reason.
+
+A server that ``sibuna ctl`` adds at run time gets its series at once. A server that a command removes loses its series at once. A request that was decided before a reload and is routed by the retired revision (SID 0018) is counted under the server of that revision, by name: the retired revision keeps its own table of names.
+
 Readiness and access control
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``/__sibuna/ready`` answers 200 with ``{"status":"ready"}`` while the node serves, and 503 with ``{"status":"draining"}`` after a shutdown or drain began. ``/__sibuna/health`` stays a liveness answer.
+
+A shutdown has three steps:
+
+.. code-block:: text
+
+   SIGTERM
+     |  readiness answers 503; listeners accept; requests are served
+     |<------------ global.drain_delay (default 0s) ------------>|
+     |  listeners stop; established flows and requests finish
+     |<------------ global.shutdown_timeout (default 5s) ------->|
+     v  what is still open is closed; the process ends
+
+The delay exists for a balancer in front that learns of the drain from the readiness answer. It should be a little longer than the probe interval times the failure threshold of that balancer. The default is zero, because without such a balancer the delay only makes every stop slower. The longest time from the signal to the end of the process is the sum of the two settings.
+
+When a new process takes the port over with ``reuse_port`` (SID 0018), nothing in front needs to notice, and the delay can stay zero. With a delay, the old and the new process both accept during it, and the kernel shares new connections between them.
 
 In edge mode the three routes answer only when all of the following hold. Otherwise the answer is the 404 of an unknown route.
 
@@ -267,7 +342,7 @@ The third rule exists for a proxy on the same host. Its requests arrive from the
 
 The solver assets, the challenge routes and the honeypot stay public, because clients need them.
 
-The separate listener is one thread, in the module ``probe``. It serves one request per connection, reads at most 4,096 bytes of head within two seconds, and answers ``GET`` and ``HEAD`` for ``/health``, ``/ready`` and ``/metrics``, with or without the ``/__sibuna`` prefix. Another method is answered 501 and another path 404. It also runs without any HTTP frontend. The admin socket of SID 0018 prints the same series of the edge with ``show stats``.
+The separate listener is the module ``probe``. One thread accepts. Up to eight connections are served at once, each on a short-lived thread, so that a client that sends nothing does not delay a health check. A ninth is served by the accepting thread itself, which bounds the threads. Each connection carries one request. The listener reads at most 4,096 bytes of head within two seconds, and answers ``GET`` and ``HEAD`` for ``/health``, ``/ready`` and ``/metrics``, with or without the ``/__sibuna`` prefix. Another method is answered 501 and another path 404. It also runs without any HTTP frontend. The admin socket of SID 0018 prints the same series of the edge with ``show stats``.
 
 Trusted proxies
 ~~~~~~~~~~~~~~~
@@ -278,12 +353,14 @@ Each proxy appends the address it received the request from. The entries a clien
 
 The chosen address is the client for the ban table, the request limiter, policy rules, the challenge fingerprint and the log. The per-client connection bound of the firewall counts socket peers, so it does not apply to a connection from a trusted proxy.
 
+The connection rate of a frontend, ``rate_limit.conn_per_10s``, has the same rule. A connection whose socket peer is a trusted proxy is not counted: the proxy carries the connections of many clients, and one budget for all of them would throttle them together. An HTTP connection through such a proxy does not name one client, so nothing replaces the count there; the request limiter counts each client by its forwarded address. With the PROXY protocol the connection does name its client, and the rate counts that client.
+
 The PROXY protocol
 ~~~~~~~~~~~~~~~~~~
 
-A frontend with ``proxy_protocol: true`` sends each accepted connection through a stage before TLS or HTTP. The stage is one thread with one poller. It holds at most 4,096 connections, each for at most five seconds.
+A frontend with ``proxy_protocol: true`` holds each accepted connection until its header arrives. This happens in the worker of the load balancer crate, which accepts the connection, so HTTP and TCP frontends share it and no extra thread exists. The worker holds at most 4,096 such connections, each for at most five seconds, and each holds a flow permit.
 
-When a connection becomes readable, the stage looks at the first bytes without taking them (``MSG_PEEK``, at most 536 bytes) and parses them:
+When a connection becomes readable, the worker looks at the first bytes without taking them (``MSG_PEEK``, at most 536 bytes) and parses them:
 
 .. code-block:: text
 
@@ -292,11 +369,13 @@ When a connection becomes readable, the stage looks at the first bytes without t
    v2  12 signature bytes, version and command, family and protocol,
        a 16-bit length, then addresses and extensions   at most 16 + 520 bytes
 
-The parser is one function over a byte slice with three results: a header of ``n`` bytes with a source address, a header of ``n`` bytes without one (``UNKNOWN`` or ``LOCAL``), or a refusal. A complete header must be inside the first look. This is the rule of HAProxy's own receiver and of the protocol text, which requires a sender to write the header in one piece. The stage then reads exactly ``n`` bytes, so the first byte of TLS or HTTP is the next one.
+The parser is one function over a byte slice with three results: a header of ``n`` bytes with a source address, a header of ``n`` bytes without one (``UNKNOWN`` or ``LOCAL``), or a refusal. A complete header must be inside the first look. This is the rule of HAProxy's own receiver and of the protocol text, which requires a sender to write the header in one piece. The worker then reads exactly ``n`` bytes, so the first byte of TLS, HTTP or the TCP payload is the next one.
 
 A connection is closed and counted when its socket peer is not a trusted proxy, when the header is malformed, incomplete or longer than the bound, or when the five seconds pass. A v1 address must be canonical: no leading zeros, a port from 0 to 65535 without a sign. A v2 header must have version 2, a known command, and a length that covers its address block.
 
-The source address replaces the socket peer for everything that follows: the connection bounds, the trusted-proxy walk, the allow-list of the internal routes and the log. A header without a source keeps the socket peer.
+The source address replaces the socket peer for everything that follows. On an HTTP frontend that is the connection rate, the connection bounds, the trusted-proxy walk, the allow-list of the internal routes and the log. On a TCP frontend it is the connection rate, the choice of the server, source stickiness (SID 0019, ``sticky: "source"``) and the PROXY header that a pool with ``proxy_v2`` sends to its server. A header without a source keeps the socket peer.
+
+A source inside ``trusted_proxies`` is itself a trusted proxy. Its ``X-Forwarded-For`` is then read, and its connections are not rate limited. A source outside the list is a client, and what it wrote in the field is ignored.
 
 The bound of 536 bytes is the 16 fixed bytes, the largest address block (216 bytes, for the Unix family, which we accept and ignore) and 304 bytes of extensions. A sender that adds longer extensions, such as a full TLS client certificate, is refused.
 
@@ -309,7 +388,7 @@ A flow uses two descriptors: one to the client and one to the server. At startup
 
    need = 2 \cdot max\_flows + 2 \cdot http.max\_connections + 512
 
-where the HTTP term is zero without an HTTP frontend, and 512 covers listeners, idle server connections, files and threads. When the soft limit is below the need, we raise it to the smaller of the need and the hard limit. When it is still below, we print a warning and continue:
+where the HTTP term is zero without an HTTP frontend. The 512 hold what has a fixed bound: at most 128 listeners, at most 256 idle server connections of the thread path, the one socket of the mesh, and the files and pollers of the threads. A compile-time assertion keeps these inside the reserve. When the soft limit is below the need, we raise it to the smaller of the need and the hard limit. When it is still below, we print a warning and continue:
 
 .. code-block:: text
 
@@ -332,7 +411,7 @@ A content network at 198.51.100.0/24 reaches the frontend ``web``. A client at 2
 
 .. code-block:: json
 
-   {"time":"2026-11-24T10:15:02.418Z","client":"203.0.113.7","frontend":"web","protocol":"http/1.1","method":"GET","host":"www.example.com","path":"/index.html","status":200,"bytes_in":112,"bytes_out":5310,"duration_ms":3.184,"ttfb_ms":2.907,"backend":"app","server":"app-2","verdict":"pass"}
+   {"time":"2026-11-24T10:15:02.418Z","client":"203.0.113.7","frontend":"web","protocol":"http/1.1","scheme":"http","method":"GET","host":"www.example.com","path":"/index.html","status":200,"bytes_in":112,"bytes_out":5310,"duration_ms":3.184,"ttfb_ms":2.907,"backend":"app","server":"app-2","verdict":"pass"}
 
 Rationale and alternatives
 --------------------------
@@ -349,6 +428,10 @@ Rationale and alternatives
 
 **Only a separate listener for health and metrics.** It is the cleanest control. Many deployments probe the data port, though, so we keep the routes there and close them by default.
 
+**A stage thread for the PROXY header.** The first implementation read the header on a thread of the binary, for HTTP frontends only. The worker of the load balancer already owns a poller and already holds connections for the TLS hello of SID 0015, so the header moved there. TCP frontends gained the protocol, and the thread is gone.
+
+**The TLS version in the log.** We considered a ``tls`` field with the negotiated version. The handler interface of the protocol runtime does not carry it, and every caller would change. The ``scheme`` field says what every path knows. The version stays future work.
+
 **Reading a PROXY header across several reads.** It would need a buffer in front of TLS, which takes its bytes from the socket. Peeking keeps the socket the only buffer.
 
 Security and operational considerations
@@ -358,11 +441,11 @@ The log holds client addresses and paths. Its file is created with mode 0640 and
 
 A trusted proxy is trusted completely: it can name any client. The list must hold only networks whose every host is a proxy of ours.
 
-The PROXY stage holds a flow permit for each waiting connection, so it cannot exceed the flow table, and its own bound of 4,096 keeps a flood of silent connections from filling the table for five seconds each.
+A connection that waits for its PROXY header holds a flow permit, so the waiting connections cannot exceed the flow table, and their own bound of 4,096 keeps a flood of silent connections from filling the table for five seconds each.
 
 The metrics text grows with the topology: about 3 KiB per server and per frontend. It is built per request and not cached.
 
-The frontend rate limit of SID 0015 (``rate_limit.conn_per_10s``) counts connections by socket peer. Behind a trusted proxy it counts the proxy. An operator leaves it off on such a frontend, or uses the PROXY protocol, after which the peer is the client.
+The frontend rate limit of SID 0015 (``rate_limit.conn_per_10s``) does not count a trusted proxy and counts the client of a PROXY header. A frontend behind a proxy that sends only ``X-Forwarded-For`` therefore has no connection rate for the clients of that proxy. The request limiter of the firewall is the limit there.
 
 Backwards compatibility
 -----------------------
@@ -371,10 +454,12 @@ In edge mode ``/__sibuna/health`` and ``/__sibuna/metrics`` now answer 404 to cl
 
 The ingress interface gains fields, so code that builds an ``Offer`` or a ``Forward`` names them.
 
+The log gained the field ``scheme`` after ``protocol``, and HTTP/1.1 over TLS is now ``"protocol":"http/1.1","scheme":"https"`` where the first implementation wrote ``"protocol":"https"``. A consumer that matched ``https`` in ``protocol`` reads ``scheme`` instead.
+
 Acceptance criteria and implementation status
 ---------------------------------------------
 
-Implemented on the branch ``sid-0020-observability``. Every criterion has a test that runs in ``cargo test --workspace``.
+Implemented on the branch ``sid-0020-observability``. Every criterion has a test that runs in ``cargo test --workspace``. The tests in ``edge_*.rs`` start the binary.
 
 .. list-table::
    :header-rows: 1
@@ -403,13 +488,36 @@ Implemented on the branch ``sid-0020-observability``. Every criterion has a test
    * - A trusted proxy names the client for the log and the request limiter. A forged left entry is ignored. Without the option the field is ignored.
      - ``edge_observe.rs``: ``a_trusted_proxy_names_the_client_for_the_log_and_the_limits``
    * - PROXY versions 1 and 2 name the client. No header, a malformed header and an untrusted peer close the connection.
-     - ``edge_observe.rs``: ``a_proxy_frontend_takes_the_client_from_the_header_and_refuses_the_rest``, ``crates/lb/src/proxy_header.rs``, ``edge::proxy_stage::tests``
+     - ``edge_observe.rs``: ``a_proxy_frontend_takes_the_client_from_the_header_and_refuses_the_rest``, ``crates/lb/src/proxy_header.rs``
    * - A descriptor limit below the need prints the warning with its hint, and the process still starts.
      - ``edge_observe.rs``: ``a_descriptor_limit_below_the_need_is_reported_with_a_hint``, ``edge::fdlimit::tests``
    * - ``sibuna ctl SOCKET show stats`` prints the series of the edge.
      - ``edge_observe.rs``: ``the_admin_socket_prints_the_series_of_the_edge``
    * - A bad ``observability`` object is refused by ``sibuna check``.
      - ``edge_observe.rs``: ``a_check_of_the_file_reports_a_bad_observability_object``
+
+   * - HTTP/3 through the binary: the log line (``h3``, status, body bytes, server), the client certificate digest and a forged field, the per-client bound for QUIC connections, and a gRPC call to an HTTP/2 pool.
+     - ``edge_http3.rs``, four tests
+   * - A PROXY header before the TLS handshake names the client of an HTTP/2 request. Without it the handshake is not read.
+     - ``edge_observe_h2.rs``: ``a_proxy_header_before_tls_names_the_client_of_an_http2_request``
+   * - A PROXY source inside ``trusted_proxies`` lets its forwarded field count. A source outside does not.
+     - ``edge_observe.rs``: ``the_forwarded_field_is_read_only_when_the_proxy_header_names_a_trusted_source``
+   * - A TCP frontend takes the client from the header. The client drives the connection rate, source stickiness and the header for the server. The proxy is not rate limited.
+     - ``crates/lb/tests/proxy_frontend.rs``, four tests
+   * - A request that the runtime refuses before the decision (417, and 503 at the request bound) is one line and one count by reason.
+     - ``edge_observe_h2.rs``: ``a_request_that_the_runtime_refuses_is_logged_and_counted_by_reason``
+   * - A 502 of the server itself has ``ttfb_ms`` and is no failure, on both paths. An interim head cut in two keeps the final status, on both paths and for every cut.
+     - ``edge_observe.rs``: ``a_502_of_the_server_itself_is_a_response_and_not_a_failure``, ``an_interim_head_cut_in_two_does_not_hide_the_final_status``, and ``client_writer::tests::the_final_status_is_found_wherever_the_pieces_are_cut``
+   * - A request in flight is in the active gauge of its server, on both paths. A server added at run time is counted, a removed one loses its series, and a request of a retired revision keeps the name of its server.
+     - ``edge_observe.rs``: ``a_request_in_flight_is_in_the_active_gauge_of_its_server``, and ``crates/lb/tests/observe.rs``
+   * - With ``global.drain_delay`` a shutdown answers 503 on readiness and still serves new requests, then stops.
+     - ``edge_observe.rs``: ``a_drain_delay_keeps_serving_while_readiness_says_no``
+   * - A reload moves the log to another file, turns it off and on, starts a log that did not exist, and replaces ``internal_allow``. A changed ``listen`` refuses the reload as a whole.
+     - ``edge_observe.rs``: ``a_reload_moves_the_log_and_changes_who_reads_the_internal_routes``, ``a_log_added_by_a_reload_starts_and_a_new_listener_needs_a_restart``
+   * - Silent clients of the separate listener do not delay the next probe.
+     - ``edge::probe::tests::the_listener_refuses_what_it_does_not_serve``
+   * - ``sibuna lb --access-log`` sets the log, and refuses it for TCP and UDP.
+     - ``edge::quick::tests``, ``crates/lb/src/quick.rs``
 
 ``cmd/sibuna/tests/edge_observe_h2.rs`` drives HTTP/2 over TLS through the binary and reads the log: one request to an HTTP/1.1 pool, and six gRPC calls on the shared session of an HTTP/2 pool. ``crates/ingress/tests/grpc.rs`` and ``tests/inline.rs`` check the report on both send paths, including an exchange that trailers end.
 
@@ -440,33 +548,23 @@ The parser of the PROXY header is a bounded scan without state. Its unit tests c
 Known gaps
 ~~~~~~~~~~
 
-#. No test drives HTTP/3 through the binary and reads the log file. HTTP/2 is tested through the binary on both send paths, and HTTP/3 at the interface of the ingress crate.
-#. No test sends a PROXY header to a TLS frontend. The stage, the header and the place under the client bound are each tested, but not that combination.
-#. A server that ``sibuna ctl`` adds at run time (SID 0018) gets counters and its name in the log, but no test covers it. A server that a command removed keeps its series until the next reload.
-#. A request that is decided just before a reload and routed by the retired revision (SID 0018) is counted under the server of the same pool and address in the new revision, or under none.
-#. ``bytes_in`` is an estimate: the parsed head plus the declared body. For a chunked body on the thread path it counts the buffered part only. ``bytes_out`` on the in-process path counts body bytes and not the head.
-#. A request that the protocol runtime refuses before the decision, such as an HTTP/2 request that does not translate, is not logged. A connection that is refused admission (503) is not logged either.
-#. On the thread path the writer cannot tell a server's own 502 or 504 from ours. Such a response has no ``ttfb_ms`` and counts as a failure of the server.
-#. On the thread path an interim head (1xx) that is split across two writes loses the final status, which is then logged as 0.
-#. HTTP/1.1 over TLS is labelled ``https``. Its requests use the socket pair, where the negotiated protocol is not known.
-#. The frontend rate limit ``rate_limit.conn_per_10s`` counts the proxy behind a trusted proxy.
-#. TCP frontends do not accept the PROXY protocol, and TCP and UDP flows have counters but no log line.
-#. There is no gauge of active requests per server.
-#. A request on an edge takes one more lock of the routing table, to find its frontend.
-#. Readiness turns 503 when the drain begins, and the listeners stop in the same moment. There is no delay in which a load balancer in front could see the 503 first.
-#. The separate listener is one thread. A client that sends nothing delays the next probe by up to two seconds.
-#. The PROXY stage runs on every edge with an HTTP frontend, also when no frontend uses it. It wakes four times per second.
-#. A PROXY header that names a source inside ``trusted_proxies`` makes that source a trusted proxy for the forwarded field. This is the intended chain, but it is not tested.
-#. A change of the ``observability`` object needs a restart. SIGHUP reports the HTTP options as incompatible and keeps the old ones.
+#. ``bytes_in`` is not the wire size. It is the parsed head plus the declared body, and for a body without a length only the buffered part. ``bytes_out`` of ``h2`` and ``h3`` is the body alone. The table of byte counts states each case. Exact wire counts need counters in the TLS and framing layers of the protocol runtime.
+#. The log has no TLS version. See the rationale.
+#. Without the event-driven workers, a request of a TLS client that the protocol runtime refuses before the decision is neither logged nor counted. The workers are the default where the platform has them.
+#. A refused connection is counted by reason but has no log line, and UDP drops have no reason label.
+#. TCP and UDP flows have counters and no log line. A line per closed TCP flow needs the byte counts of the relay threads and a way from the worker of the load balancer to the log of the binary. It is future work.
+#. A frontend behind a proxy that sends only ``X-Forwarded-For`` has no connection rate per client. This is a decision, explained under *Trusted proxies*.
+#. ``observability.listen`` and the ``queue`` of a running log need a restart. A topology without an HTTP frontend ignores a changed ``observability`` object on reload.
 #. The log is reopened within about one second of SIGHUP, not at once. Lines written in between go to the old file.
-#. The descriptor need is a rule of thumb. It does not count the idle server connections above 512 or the mesh.
+#. The descriptor need does not count the idle server connections of the event-driven workers, which have no configured bound. They reuse the two descriptors per HTTP connection that the need counts, while those connections are open.
+#. A request on an edge takes one more lock of the routing table, to find its frontend.
+#. A second SIGTERM does not cut ``global.drain_delay`` short.
 #. ``tests/e2e.rs`` has a test, ``proxied_responses_keep_the_client_connection_open_for_the_next_request``, that fails about once in eight runs. It fails as often on ``main`` before this branch. It is not fixed here.
 
 Open questions
 --------------
 
-#. Should the access log be on by default, to standard output, when the process runs under a service manager?
-#. Should a TCP frontend accept the PROXY protocol, so that chained balancers keep the client address?
+None. Two earlier questions are decided. The access log stays off unless configured, and the quick start has ``--access-log``. A TCP frontend accepts the PROXY protocol.
 
 Review history
 --------------
@@ -476,6 +574,8 @@ Review history
 - 2026-11-24. Merge with SID 0018 and the later sections of SID 0017. The separate listener is now the module ``probe``, because ``admin`` names the admin socket. The report covers the direct sends to HTTP/2 and HTTP/3 servers, and trailers end an exchange. A TLS connection takes its place under the client bound once, by the address of the PROXY header when it has one, and a trusted proxy is exempt. The admin socket gained ``show stats``. A test through the binary found that a server behind an adapter had no name in the log, because a reservation names the adapter; the lookup now uses that address.
 - 2026-11-24. Implementation review. The separate listener closed over unread request bytes, and the reset could destroy its response; it now reads what arrived before it closes. It answers 501 to other methods, because the response writer has no 405. The warning of the descriptor limit is printed before the ready line. The acceptance table and the known gaps were written from the code and the tests.
 
+- 2026-11-24. Production readiness. HTTP/3 is tested through the binary, with no defect found. The PROXY header moved from a stage thread of the binary into the worker of the load balancer, and TCP frontends read it. The connection rate stopped counting trusted proxies and counts the client of a PROXY header. Refusals before the decision are counted by reason, and refused requests are logged. The status scan passes over interim heads wherever the pieces are cut, on both HTTP/1.1 paths. A server's own 502 or 504 is told from ours by the result of the relay. The log gained ``scheme``, and ``https`` left ``protocol``. Servers gained an active gauge, a removed server loses its series at once, and a retired revision keeps its server names. ``global.drain_delay`` was added. A reload changes the log output and ``internal_allow``. The separate listener serves eight clients at once. The quick start gained ``--access-log``. The state moved to accepted: every acceptance criterion has a passing test, and the remaining gaps are listed with their reasons.
+
 References
 ----------
 
@@ -483,3 +583,10 @@ References
 - The PROXY protocol, versions 1 and 2, ``doc/proxy-protocol.txt`` of HAProxy.
 - RFC 7239, Forwarded HTTP Extension, section 8 on trusting forwarded addresses.
 - Prometheus text exposition format, version 0.0.4.
+
+.. rubric:: Lifecycle event
+
+::
+
+   2026-11-24: discussion -> accepted. Implemented with a passing test for every
+   acceptance criterion; the remaining gaps are listed with their reasons

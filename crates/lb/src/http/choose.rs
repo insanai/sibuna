@@ -147,6 +147,7 @@ impl<'t> View<'t> {
         if retired.revision != revision || now >= retired.until {
             return None;
         }
+        let infos = &retired.servers;
         Some(Self { fronts: &retired.fronts, pools: &mut retired.pools, key, infos })
     }
 }

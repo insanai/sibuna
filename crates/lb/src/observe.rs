@@ -167,17 +167,30 @@ pub enum Forwarded<'a> {
 }
 
 impl FrontendInfo {
-    /// Reads `trusted_proxies` and `proxy_protocol` of the frontend `name`. Both exist on
-    /// HTTP frontends only.
-    pub(crate) fn parse(r: &mut ObjectReader<'_, '_>, name: &str, http: bool) -> io::Result<Self> {
+    /// Reads `trusted_proxies` and `proxy_protocol` of the frontend `name`. A UDP
+    /// frontend has neither, and a TCP frontend has both or neither: without the header
+    /// a TCP connection says nothing about its client.
+    pub(crate) fn parse(
+        r: &mut ObjectReader<'_, '_>,
+        name: &str,
+        protocol: crate::config::Protocol,
+    ) -> io::Result<Self> {
+        use crate::config::Protocol;
+
         let trusted = match field(r.take_array("trusted_proxies"))? {
             Some(items) => networks(items, &r.field_path("trusted_proxies"))?,
             None => Vec::new(),
         };
         let proxy_protocol = field(r.take_bool("proxy_protocol"))?.unwrap_or(false);
-        if !http && (proxy_protocol || !trusted.is_empty()) {
+        if protocol == Protocol::Udp && (proxy_protocol || !trusted.is_empty()) {
             return Err(invalid(format!(
-                "{}: trusted_proxies and proxy_protocol need an HTTP frontend",
+                "{}: trusted_proxies and proxy_protocol need an HTTP or a TCP frontend",
+                r.path()
+            )));
+        }
+        if protocol == Protocol::Tcp && !proxy_protocol && !trusted.is_empty() {
+            return Err(invalid(format!(
+                "{}: a TCP frontend reads trusted_proxies only with proxy_protocol",
                 r.path()
             )));
         }

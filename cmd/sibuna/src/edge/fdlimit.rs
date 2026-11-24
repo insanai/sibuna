@@ -8,8 +8,13 @@ use std::fmt::Write as _;
 
 use sibuna_reactor::DescriptorLimit;
 
-/// Descriptors beside the flows: listeners, idle server connections, files and threads.
+/// Descriptors beside the flows. The reserve holds what has a fixed bound: at most 128
+/// listeners, the idle server connections of the thread-per-connection path, the one
+/// socket of the mesh, and the files and pollers of the threads.
 const RESERVE: u64 = 512;
+
+// The fixed bounds must fit, with room for the files and pollers.
+const _: () = assert!(sibuna_net::Pool::CAPACITY as u64 + 128 + 1 + 64 <= RESERVE);
 
 /// The sizes of a topology that decide its descriptor use.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

@@ -156,6 +156,14 @@ pub async fn handshakes(
 
 /// A gRPC client connection: HTTP/2 over TLS to the edge.
 pub async fn connect(vip: SocketAddr) -> hyper::client::conn::http2::SendRequest<Body> {
+    connect_after(vip, b"").await
+}
+
+/// As [`connect`], with `preface` written before the TLS handshake: a PROXY header.
+pub async fn connect_after(
+    vip: SocketAddr,
+    preface: &[u8],
+) -> hyper::client::conn::http2::SendRequest<Body> {
     let mut trust = rustls::RootCertStore::empty();
     trust.add(CertificateDer::from_pem_file(fixture("ca.pem")).unwrap()).unwrap();
     let mut config = rustls::ClientConfig::builder_with_provider(Arc::new(
@@ -166,7 +174,8 @@ pub async fn connect(vip: SocketAddr) -> hyper::client::conn::http2::SendRequest
     .with_root_certificates(trust)
     .with_no_client_auth();
     config.alpn_protocols = vec![b"h2".to_vec()];
-    let tcp = tokio::net::TcpStream::connect(vip).await.unwrap();
+    let mut tcp = tokio::net::TcpStream::connect(vip).await.unwrap();
+    tokio::io::AsyncWriteExt::write_all(&mut tcp, preface).await.unwrap();
     let tls = tokio_rustls::TlsConnector::from(Arc::new(config))
         .connect("localhost".try_into().unwrap(), tcp)
         .await

@@ -40,7 +40,9 @@ pub use traffic::{Passive, PoolPolicy, Sticky};
 mod proxy_header;
 pub use proxy_header::{MAX_PROXY_HEADER, ProxyHeader, ProxyHeaderError, parse_proxy_header};
 mod stats;
-pub use stats::{FrontendStats, Histogram, ServerInfo, ServerStats, Stats};
+pub use stats::{
+    ActiveRequest, FrontendStats, Histogram, Refusal, ServerInfo, ServerStats, Stats,
+};
 
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::io;
@@ -58,6 +60,10 @@ enum Socket {
     Udp(UdpSocket),
 }
 
+/// The longest wait for the PROXY header of a connection (SID 0020).
+const PROXY_PATIENCE: Duration = Duration::from_secs(5);
+/// The most connections that wait for their PROXY header at once.
+const MAX_AWAITING: usize = 4096;
 /// How often the worker looks for expired mappings, inspections and paused listeners.
 const SWEEP: Duration = Duration::from_millis(100);
 
@@ -74,8 +80,30 @@ type Client = (usize, SocketAddr);
 enum Ready {
     Listener(usize),
     Hello(u64),
+    Proxy(u64),
     Udp(Client),
     Wake,
+}
+
+/// A connection of a PROXY frontend that has not sent its header yet (SID 0020).
+struct Awaiting {
+    bind: Bind,
+    client: TcpStream,
+    peer: SocketAddr,
+    permit: FlowPermit,
+    deadline: Instant,
+}
+
+/// An accepted connection of an HTTP frontend, for plaintext dispatch or TLS negotiation.
+pub struct Accepted {
+    /// The listener the connection arrived on.
+    pub bind: SocketAddr,
+    /// The connection. The PROXY header, if the frontend reads one, is taken already.
+    pub stream: TcpStream,
+    /// The flow slot of the connection.
+    pub permit: FlowPermit,
+    /// The client that the PROXY header named (SID 0020). It replaces the socket peer.
+    pub client: Option<SocketAddr>,
 }
 
 struct Opening {
@@ -120,7 +148,8 @@ pub struct Edge {
     http: HttpRoutes,
     stats: std::sync::Arc<Stats>,
     budget: FlowBudget,
-    http_pending: Vec<(SocketAddr, TcpStream, FlowPermit)>,
+    http_pending: Vec<Accepted>,
+    awaiting: HashMap<u64, Awaiting>,
     mesh: Option<MeshConfig>,
     regime: Regime,
     binds: Vec<Bind>,
@@ -196,8 +225,14 @@ impl Edge {
     }
 
     /// Takes accepted HTTP sockets for plaintext dispatch or TLS negotiation.
-    pub fn accepted_http(&mut self) -> impl Iterator<Item = (SocketAddr, TcpStream, FlowPermit)> {
+    pub fn accepted(&mut self) -> impl Iterator<Item = Accepted> {
         self.http_pending.drain(..)
+    }
+
+    /// As [`Edge::accepted`], without the client of a PROXY header. A caller whose
+    /// frontends read no such header loses nothing.
+    pub fn accepted_http(&mut self) -> impl Iterator<Item = (SocketAddr, TcpStream, FlowPermit)> {
+        self.accepted().map(|accepted| (accepted.bind, accepted.stream, accepted.permit))
     }
 
     /// Binds every configured listener before starting the worker. A failure releases
@@ -236,6 +271,7 @@ impl Edge {
             stats,
             budget,
             http_pending: Vec::new(),
+            awaiting: HashMap::new(),
             mesh: config.mesh,
             regime: Regime::Standalone,
             binds,
@@ -345,6 +381,11 @@ impl Edge {
                         self.drops = self.drops.saturating_add(1);
                     }
                 }
+                Ready::Proxy(id) => {
+                    if !self.read_header(id) {
+                        self.drops = self.drops.saturating_add(1);
+                    }
+                }
             }
         }
         if self.events.iter().any(|event| matches!(event, Ready::Wake)) {
@@ -367,6 +408,15 @@ impl Edge {
             let keep = now < flow.deadline;
             if !keep {
                 poll.remove(handle(&flow.opening.client));
+            }
+            keep
+        });
+        let stats = &self.stats;
+        self.awaiting.retain(|_, flow| {
+            let keep = now < flow.deadline;
+            if !keep {
+                poll.remove(handle(&flow.client));
+                stats.count_proxy(false);
             }
             keep
         });
@@ -434,13 +484,93 @@ impl Edge {
     }
 
     fn accept(&mut self, listener: usize, client: TcpStream, peer: SocketAddr) -> bool {
-        if self.draining || !self.allowed(listener, peer) {
-            return false;
+        if self.draining {
+            return self.refuse(Refusal::Draining);
         }
-        let Some(permit) = self.budget.reserve() else { return false };
+        let info = &self.listeners[listener].route.info;
+        let trusted = info.trusts(peer.ip());
+        if info.proxy_protocol {
+            return self.await_header(listener, client, peer, trusted);
+        }
+        // A trusted proxy carries the connections of many clients, so the connection
+        // rate is not counted against it (SID 0020).
+        if !trusted && !self.allowed(listener, peer) {
+            return self.refuse(Refusal::RateLimit);
+        }
+        let Some(permit) = self.budget.reserve() else { return self.refuse(Refusal::FlowLimit) };
+        self.admit(listener, client, peer, permit, None)
+    }
+
+    fn refuse(&self, reason: Refusal) -> bool {
+        self.stats.refuse(reason);
+        false
+    }
+
+    /// Holds a connection of a PROXY frontend until its header arrives. A peer that the
+    /// frontend does not trust may not send one, so its connection closes.
+    fn await_header(
+        &mut self,
+        listener: usize,
+        client: TcpStream,
+        peer: SocketAddr,
+        trusted: bool,
+    ) -> bool {
+        let room = trusted && self.awaiting.len() < MAX_AWAITING;
+        let permit = if room { self.budget.reserve() } else { None };
+        self.next_id = self.next_id.wrapping_add(1);
+        let id = self.next_id;
+        let registered = permit.is_some()
+            && client.set_nonblocking(true).is_ok()
+            && self.poll.set(handle(&client), READ, Ready::Proxy(id)).is_ok();
+        let Some(permit) = permit.filter(|_| registered) else {
+            self.stats.count_proxy(false);
+            return false;
+        };
+        let deadline = Instant::now() + PROXY_PATIENCE;
+        let bind = self.binds[listener];
+        self.awaiting.insert(id, Awaiting { bind, client, peer, permit, deadline });
+        true
+    }
+
+    /// Looks at a readable connection of a PROXY frontend. With a whole header the
+    /// connection goes on under the client address that the header names.
+    fn read_header(&mut self, id: u64) -> bool {
+        let Some(flow) = self.awaiting.get(&id) else { return true };
+        let look = proxy_header::take_header(&flow.client);
+        if look == proxy_header::Look::Wait {
+            return true;
+        }
+        let Some(flow) = self.awaiting.remove(&id) else { return true };
+        self.poll.remove(handle(&flow.client));
+        // A reload may have removed the listener meanwhile.
+        let listener = self.binds.iter().position(|bind| *bind == flow.bind);
+        let (proxy_header::Look::Header(source), Some(listener)) = (look, listener) else {
+            self.stats.count_proxy(false);
+            return false;
+        };
+        self.stats.count_proxy(true);
+        let client = source.unwrap_or(flow.peer);
+        let trusted = self.listeners[listener].route.info.trusts(client.ip());
+        if !trusted && !self.allowed(listener, client) {
+            return self.refuse(Refusal::RateLimit);
+        }
+        self.admit(listener, flow.client, client, flow.permit, source)
+    }
+
+    /// Starts the flow of an admitted connection. `peer` is its client: the socket peer,
+    /// or the source that a PROXY header `named`.
+    fn admit(
+        &mut self,
+        listener: usize,
+        client: TcpStream,
+        peer: SocketAddr,
+        permit: FlowPermit,
+        named: Option<SocketAddr>,
+    ) -> bool {
         self.listeners[listener].route.info.stats.flow();
         if self.binds[listener].0 == Protocol::Http {
-            self.http_pending.push((self.binds[listener].1, client, permit));
+            let bind = self.binds[listener].1;
+            self.http_pending.push(Accepted { bind, stream: client, permit, client: named });
             return true;
         }
         let route = &self.listeners[listener].route;

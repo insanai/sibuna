@@ -12,7 +12,6 @@ mod http;
 #[cfg(feature = "https")]
 mod inline;
 mod probe;
-mod proxy_stage;
 mod quick;
 mod watch;
 mod workers;
@@ -126,6 +125,8 @@ struct Serving {
     admin_socket: Option<String>,
     /// How long a shutdown waits for established flows (`global.shutdown_timeout`).
     shutdown_timeout: Duration,
+    /// How long a shutdown serves on while readiness answers 503 (`global.drain_delay`).
+    drain_delay: Duration,
     started: Instant,
     reloads: u64,
     /// The counters of SID 0020, for `show stats`.
@@ -155,10 +156,12 @@ impl Serving {
         }
         let watch = revision.config.watch();
         let shutdown_timeout = revision.config.shutdown_timeout();
+        let drain_delay = revision.config.drain_delay();
         let before = self.edge.change_count();
         reload(&mut self.edge, self.http.as_mut(), &mut self.adapters, revision)?;
         self.reloads += 1;
         self.shutdown_timeout = shutdown_timeout;
+        self.drain_delay = drain_delay;
         self.watch(watch)?;
         let kept = self.edge.change_count();
         let mut line = "Sibuna edge routes reloaded".to_owned();
@@ -362,7 +365,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let admin_socket = config.admin_socket().map(str::to_owned);
     let takeover = config.reuse_port();
     let watch = config.watch();
-    let shutdown_timeout = config.shutdown_timeout();
+    let (shutdown_timeout, drain_delay) = (config.shutdown_timeout(), config.drain_delay());
     let mut current = sibuna_lb::Regime::Standalone;
     let edge = Edge::bind(config)?;
     let http = http.map(|p| http::Http::start(p, &edge, secret)).transpose()?;
@@ -373,18 +376,17 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         Some(path) => Some(admin::Admin::start(path, takeover, Arc::clone(&source), jobs)?),
         None => None,
     };
-    let watcher = Watcher::new();
-    let started = Instant::now();
     let mut serving = Serving {
         edge,
         http,
         adapters,
         source,
         pending,
-        watcher,
+        watcher: Watcher::new(),
         admin_socket,
         shutdown_timeout,
-        started,
+        drain_delay,
+        started: Instant::now(),
         reloads: 0,
         observe: observed.shared(),
         drains,
@@ -400,27 +402,51 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         serving.follow(mesh.as_ref(), &mut current);
         step(&mut serving.edge, serving.http.as_ref())?;
     }
-    drop(mesh);
     observed.drain();
-    let Serving { mut edge, http, shutdown_timeout, .. } = serving;
-    edge.drain();
-    if let Some(http) = &http {
-        http.drain();
+    serving.linger()?;
+    drop(mesh);
+    serving.stop()
+}
+
+impl Serving {
+    /// Serves on for `global.drain_delay` after readiness turned to 503, so that a
+    /// balancer in front stops sending before the listeners close (SID 0020).
+    fn linger(&mut self) -> io::Result<()> {
+        if self.drain_delay.is_zero() {
+            return Ok(());
+        }
+        let delay = self.drain_delay;
+        note(format_args!("Sibuna edge draining: not ready, serving for {delay:?}"));
+        let until = Instant::now() + self.drain_delay;
+        while Instant::now() < until {
+            step(&mut self.edge, self.http.as_ref())?;
+        }
+        Ok(())
     }
-    let deadline = Instant::now() + shutdown_timeout;
-    while edge.active() > 0 && Instant::now() < deadline {
-        step(&mut edge, http.as_ref())?;
+
+    /// Stops the listeners and waits for the established flows, at most
+    /// `global.shutdown_timeout`.
+    fn stop(self) -> io::Result<()> {
+        let Serving { mut edge, http, shutdown_timeout, .. } = self;
+        edge.drain();
+        if let Some(http) = &http {
+            http.drain();
+        }
+        let deadline = Instant::now() + shutdown_timeout;
+        while edge.active() > 0 && Instant::now() < deadline {
+            step(&mut edge, http.as_ref())?;
+        }
+        let (forced, drops) = (edge.active(), edge.dropped());
+        note(format_args!("Sibuna edge stopped: {forced} forced closes, {drops} drops"));
+        Ok(())
     }
-    let (forced, drops) = (edge.active(), edge.dropped());
-    note(format_args!("Sibuna edge stopped: {forced} forced closes, {drops} drops"));
-    Ok(())
 }
 
 fn step(edge: &mut Edge, http: Option<&http::Http>) -> io::Result<()> {
     edge.step()?;
     if let Some(http) = http {
-        for (bind, stream, permit) in edge.accepted_http() {
-            http.accept(bind, stream, permit);
+        for accepted in edge.accepted() {
+            http.accept(accepted);
         }
     }
     Ok(())
@@ -435,19 +461,21 @@ fn reload(
     match (http, revision.http) {
         (None, None) => edge.reload(revision.config),
         (Some(http), Some(prepared)) if http.compatible(&prepared) => {
+            let log = http.plan_log(&prepared)?;
             adapt(adapters, &mut revision.config)?;
             edge.reload(revision.config)?;
             // The engine follows the routes at once. A request decided under the old
             // engine in between is routed by the old revision (SID 0018). The adapters
             // of that revision close last.
-            http.reload(prepared);
+            http.reload(prepared, log);
             commit(adapters);
             // A reload may have started the first adapters.
             attach(Some(http), adapters);
             Ok(())
         }
         _ => Err(io::Error::other(
-            "changing HTTP firewall settings or TLS listeners requires a restart",
+            "changing HTTP firewall settings, TLS listeners, observability.listen or the \
+             access log queue requires a restart",
         )),
     }
 }

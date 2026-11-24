@@ -137,10 +137,35 @@ impl Drop for Reporter {
     }
 }
 
+/// A request that the protocol runtime answered itself, before any decision (SID 0020).
+#[derive(Clone, Copy, Debug)]
+pub struct Refused<'a> {
+    /// The client address of the terminated transport.
+    pub peer: SocketAddr,
+    /// The listener the client reached.
+    pub vip: SocketAddr,
+    /// The protocol the client speaks: `h2` or `h3`.
+    pub protocol: &'static str,
+    /// The status of the answer.
+    pub status: u16,
+    /// The request method.
+    pub method: &'a str,
+    /// The authority of the request, or the empty string.
+    pub host: &'a str,
+    /// The path of the request, without its query.
+    pub path: &'a str,
+}
+
 /// The firewall decision. It must not wait: it runs on a thread of the protocol runtime.
 pub trait Decide: Send + Sync + 'static {
     /// Judges one request.
     fn decide(&self, offer: &Offer<'_>) -> Verdict;
+
+    /// Told of a request that the runtime answered before a decision: the node runs as
+    /// many requests as it may, or the request is malformed. The default ignores it.
+    fn refused(&self, refused: &Refused<'_>) {
+        let _ = refused;
+    }
 
     /// Reserves another server for a request whose connect to `failed` did not succeed
     /// (SID 0019). The server received nothing, so any request may move. Returns `None`
@@ -164,6 +189,11 @@ pub(crate) struct Inline {
 impl Inline {
     pub fn new(decide: Arc<dyn Decide>) -> Arc<Self> {
         Arc::new(Self { decide, idle: Mutex::default(), direct: OnceLock::new() })
+    }
+
+    /// Tells the owner of the decision of a request answered before any decision.
+    pub(crate) fn refused(&self, refused: &Refused<'_>) {
+        self.decide.refused(refused);
     }
 
     /// Names the multiplexed servers. The first directory stays.
@@ -232,6 +262,10 @@ pub(crate) async fn exchange(
         timeout(DEADLINE, buffer(&mut body, budget)).await
     };
     let Ok(Ok((prefix, ended))) = buffered else {
+        let host = parts.headers.get(header::HOST).and_then(|host| host.to_str().ok());
+        let (method, path) = (parts.method.as_str(), parts.uri.path());
+        let host = host.unwrap_or_default();
+        inline.refused(&Refused { peer, vip, protocol, status: 400, method, host, path });
         return error(StatusCode::BAD_REQUEST);
     };
     let seen = prefix.len().min(budget);

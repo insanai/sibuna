@@ -143,6 +143,97 @@ fn parse_v2(bytes: &[u8]) -> Result<ProxyHeader, ProxyHeaderError> {
     Ok(ProxyHeader { length, source })
 }
 
+/// What became of a connection that must begin with a PROXY header.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum Look {
+    /// A whole header was taken. The client address is its source, when it names one.
+    Header(Option<SocketAddr>),
+    /// Nothing arrived yet.
+    Wait,
+    /// The connection sent no valid header in one piece.
+    Refuse,
+}
+
+/// Looks at the first bytes of the non-blocking `stream` without taking them. When they
+/// hold a whole PROXY header, takes exactly the header, so that the first byte of TLS
+/// or of the application is the next one read.
+///
+/// The header must be whole in the first look. A sender writes it in one piece, and
+/// HAProxy's own receiver has the same rule. So the socket stays the only buffer.
+pub(crate) fn take_header(mut stream: &std::net::TcpStream) -> Look {
+    use std::io::{ErrorKind, Read};
+
+    let mut bytes = [0u8; MAX_PROXY_HEADER];
+    let seen = match stream.peek(&mut bytes) {
+        Ok(0) => return Look::Refuse,
+        Ok(seen) => seen,
+        Err(error) if matches!(error.kind(), ErrorKind::WouldBlock | ErrorKind::Interrupted) => {
+            return Look::Wait;
+        }
+        Err(_) => return Look::Refuse,
+    };
+    let Ok(header) = parse_proxy_header(&bytes[..seen]) else { return Look::Refuse };
+    // The bytes were just seen, so this read does not wait.
+    match stream.read_exact(&mut bytes[..header.length]) {
+        Ok(()) => Look::Header(header.source),
+        Err(_) => Look::Refuse,
+    }
+}
+
+#[cfg(test)]
+mod socket_tests {
+    use std::io::{Read, Write};
+    use std::net::{TcpListener, TcpStream};
+    use std::time::Duration;
+
+    use super::{Look, take_header};
+
+    fn pair() -> (TcpStream, TcpStream) {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let client = TcpStream::connect(listener.local_addr().unwrap()).unwrap();
+        let (server, _) = listener.accept().unwrap();
+        server.set_nonblocking(true).unwrap();
+        (client, server)
+    }
+
+    fn settle(server: &TcpStream) -> Look {
+        // Loopback delivery is quick but not instant.
+        for _ in 0..200 {
+            match take_header(server) {
+                Look::Wait => std::thread::sleep(Duration::from_millis(5)),
+                other => return other,
+            }
+        }
+        Look::Wait
+    }
+
+    #[test]
+    fn exactly_the_header_is_taken_and_the_rest_stays() {
+        let (mut client, server) = pair();
+        client
+            .write_all(b"PROXY TCP4 203.0.113.7 192.0.2.1 51234 443\r\nGET / HTTP/1.1\r\n")
+            .unwrap();
+        assert_eq!(settle(&server), Look::Header(Some("203.0.113.7:51234".parse().unwrap())));
+        let mut rest = [0u8; 64];
+        let count = (&server).read(&mut rest).unwrap();
+        assert_eq!(&rest[..count], b"GET / HTTP/1.1\r\n");
+    }
+
+    #[test]
+    fn a_connection_without_a_whole_valid_header_is_refused() {
+        let (mut client, server) = pair();
+        assert_eq!(take_header(&server), Look::Wait, "nothing arrived yet");
+        client.write_all(b"GET / HTTP/1.1\r\n\r\n").unwrap();
+        assert_eq!(settle(&server), Look::Refuse);
+        let (mut client, server) = pair();
+        client.write_all(b"PROXY TCP4 203.0.113.7").unwrap();
+        assert_eq!(settle(&server), Look::Refuse, "a header in pieces");
+        let (client, server) = pair();
+        drop(client);
+        assert_eq!(settle(&server), Look::Refuse, "a closed connection");
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::ProxyHeaderError::{Incomplete, Malformed, TooLong};
