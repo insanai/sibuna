@@ -1,13 +1,15 @@
 //! The options and counters of SID 0020 through the public interface.
 #![allow(clippy::unwrap_used)]
 
-use std::net::{SocketAddr, TcpListener};
+mod free;
+
+use std::net::SocketAddr;
 use std::time::Duration;
 
 use sibuna_lb::{Config, Edge, LogOutput};
 
 fn free() -> SocketAddr {
-    TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap()
+    free::tcp()
 }
 
 fn topology(vip: SocketAddr, root: &str, frontend: &str, server: &str) -> std::io::Result<Config> {
