@@ -364,6 +364,9 @@ Global limits
    * - ``shutdown_timeout``
      - ``"5s"``
      - How long a shutdown waits for established flows before it closes them, up to ``1h``. A reload may change it.
+   * - ``reuse_port``
+     - ``false``
+     - Listeners share their address with other Sibuna processes of the same user, so a new process can start before the old one stops. Linux only. Changing it takes a restart.
 
 One worker thread accepts connections, inspects handshakes and owns the UDP mappings. Established TCP streams move to the relay threads. On Linux every thread waits with epoll, so an idle flow costs no CPU time. We budget two file descriptors for each TCP stream and one for each UDP mapping. The operating system must allow the daemon that many descriptors (``LimitNOFILE`` under systemd).
 
@@ -726,6 +729,21 @@ On Unix we replace the file and send SIGHUP. Sibuna prepares the whole revision 
 A reload fails no request. The firewall decides a request under one policy and selects its server a moment later. When a reload falls between the two, the request is routed by the revision it was decided under. The daemon keeps the replaced revision for ten seconds for this purpose.
 
 With ``global.watch`` the daemon reloads the file by itself. It looks at the modification time and the length of the file at the given interval, and loads the file when both differ from the last load and have been the same for two looks. The second condition waits for a writer to finish. A rejected file is logged once and not tried again until it changes. The watcher is off by default. After a reviewed edit, ``sibuna check -f`` followed by SIGHUP or ``sibuna ctl SOCKET reload`` shows us the result. The watcher suits a file that a deployment tool replaces by rename.
+
+Replacing the binary without closing the port
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+With ``global.reuse_port`` ``true`` we upgrade Sibuna, or change a setting that needs a restart, without a moment in which the port is closed.
+
+.. code-block:: sh
+
+   /opt/sibuna/new/sibuna check -f /etc/sibuna/edge.jlv
+   /opt/sibuna/new/sibuna --config-file /etc/sibuna/edge.jlv &   # binds the same addresses
+   kill -TERM "$OLD_PID"                                         # drains, then stops
+
+The new process binds the same addresses while the old one serves, and the kernel gives each new connection to one of them. On SIGTERM the old process stops accepting and waits up to ``shutdown_timeout`` for its established flows. The new process takes the admin socket when it starts, and the old process leaves that socket alone when it stops.
+
+A connection that reaches the old process in the instant it closes its listener is reset, and the client connects again. In our test with a client that opens a new connection for every request, no request failed in 15 takeovers. HTTP/3 listeners do not share their address yet: with ``"http3": true`` on a frontend the new process is refused with ADDRESS IN USE, and that node is upgraded by a restart. Without ``reuse_port`` a second process on the same address is refused with ADDRESS IN USE, which protects against starting the service twice by mistake.
 
 Changing servers at run time
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

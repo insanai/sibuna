@@ -178,7 +178,7 @@ The translation that defends against request smuggling is unchanged and still ru
 
 The decision runs on a runtime thread, so a slow decision delays the other streams of that thread. The decision is bounded by the limits of SID 0003 and SID 0004 and performs no I/O.
 
-The node-wide bound on concurrent exchanges and the bound of 32 streams per connection apply as before. The per-client connection bound of the firewall counted socket pairs. It does not apply to in-process exchanges; the TLS connection itself is still counted by the flow budget.
+The node-wide bound on concurrent exchanges and the bound of 32 streams per connection apply as before. The per-client connection bound of the firewall counted socket pairs. It now counts the TLS connection itself, once, when it is accepted, whatever the connection carries. A connection over the bound is closed before its handshake. The socket pairs that remain, for HTTP/1.1 over TLS and for WebSockets, take no place of their own.
 
 Backwards compatibility
 -----------------------
@@ -273,7 +273,7 @@ Known gaps
 #. The response bounds are fixed at 60 seconds. They should follow a per-pool timeout once pools have one.
 #. The idle pool is one lock for all runtime threads. At 120,000 requests per second it did not show in the measurements.
 #. WebSockets over HTTP/2 and HTTP/1.1 over TLS keep the socket pair.
-#. The per-client connection bound does not see HTTP/2 streams.
+#. The per-client connection bound counts each TLS connection once. It does not count QUIC connections.
 #. The runtime uses at most eight threads. The worker count option of SID 0016 does not set it.
 #. gRPC from a cleartext HTTP/2 client is not accepted. The frontend must terminate TLS.
 #. A gRPC stream that is silent for 60 seconds is closed. The bound should follow a per-pool timeout.
@@ -289,6 +289,7 @@ Review history
 --------------
 
 - 2026-11-24. Initial draft and implementation in one pass, after measuring where an HTTP/2 request spends its time.
+- 2026-11-24. The per-client bound. In-process exchanges had left HTTP/2 clients outside ``max_connections_per_ip``. The bound moved to the accept of the TLS connection, with a test through the binary.
 - 2026-11-24. gRPC. A first attempt through the HTTP/1.1 listener of the egress could not work: that hop drops trailers that are not announced, removes ``TE``, and cannot interleave. The runtime now sends to the HTTP/2 and HTTP/3 sessions directly. A run with grpc-go showed two things an operator must know, which the book now says: the default policy challenges a gRPC client, and the default request limiter stops it after 100 calls. HTTP/3 servers now also pass response trailers.
 - 2026-11-24. Second review, with tests for streamed responses. Server-sent events pass through unbuffered on both HTTP/1.1 paths. Response trailers pass on this path. The trailer test found a defect: a response that ended with trailers did not return its server connection to the pool. It does now.
 - 2026-11-24. Author's review of the implementation. It found that a response body had no deadline: a server that stopped inside a body held its stream until the client gave up. The stall bound and its test were added. It also recorded the known gaps above, of which the missing per-client bound and the fixed timeouts are the ones that matter for production.
