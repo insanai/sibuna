@@ -1,21 +1,14 @@
 /-!
 # Formal Verification of Sibuna Edge Load Balancer Primitives
 
-Accompanying Lean 4 specification and machine-checked proofs for the draft SID
-`XXXXX-distributed-edge-load-balancer`:
+Models for the Sibuna Edge architectural discussion, checked with Lean 4.19.0.
 
-1. **Part A (`BoundedLoadScheduler`)**: Maglev probe bounds, strict per-backend capacity
-   safety, pigeonhole work-conserving liveness, and Peak-EWMA monotonic penalty steering.
-2. **Part B (`MmapKvStore`)**: Optimistic Seqlock tear-free reader linearizability,
-   two-tier RAM + `mmap` disk saturation memory bounds (zero OOM / zero crash under
-   arbitrary adversarial streams), and W-TinyLFU one-hit-wonder anti-pollution.
-3. **Part C (`ClusterCrdt`)**: Delta-state CRDT join-semilattice laws (commutativity,
-   associativity, idempotence, monotonicity), hysteresis regime stability, and 1-hop
-   Consistent Peer Forwarding (CPF) loop freedom.
-4. **Part D (`DdosDefense`)**: Zero state allocation prior to stateless UDP HMAC cookie
-   verification and strict CPU budget dominance of multi-stage early-drop filtering.
+1. Scheduling bounds a table index and sequential admissions to a vector of backend loads.
+2. Cache transitions check generation arithmetic, bound two occupancy counters, and compare supplied frequency estimates.
+3. Cluster transitions merge three maxima, retain a regime inside a deadband, and limit peer forwarding to one hop.
+4. Admission preserves a session count for an invalid cookie and compares two packet cost expressions.
 
-Verified with Lean 4.19.0 (zero external dependencies, zero `sorry`).
+Rust memory ordering, storage failures, network delivery and cryptographic verification are outside these models.
 -/
 
 namespace SibunaEdge
@@ -199,7 +192,7 @@ theorem findAvailable_some_of_under_capacity
 def pewmaCost (alpha sample prev penalty : Nat) : Nat :=
   alpha * sample + (256 - alpha) * prev + penalty
 
-/-- Theorem 3 (Peak-EWMA Monotonicity): higher RTT sample or error penalty strictly raises cost. -/
+/-- Theorem 3 (Peak-EWMA Monotonicity): increasing the sample or penalty cannot lower cost. -/
 theorem pewmaCost_mono
     (alpha s1 s2 prev p1 p2 : Nat)
     (hSample : s1 ≤ s2) (hPenalty : p1 ≤ p2) :
@@ -210,7 +203,7 @@ theorem pewmaCost_mono
 
 end BoundedLoadScheduler
 
-/-! ## Part B: Ultrafast Seqlock + W-TinyLFU Memory-Mapped KV Store -/
+/-! ## Part B: Sequence Validation and Cache Admission -/
 
 section MmapKvStore
 
@@ -231,7 +224,7 @@ theorem seqlock_rejects_inflight_write (seq : Nat) (hEven : seq % 2 = 0) (anyAft
   have hOdd : (seq + 1) % 2 = 1 := by omega
   simp [hOdd]
 
-/-- Lemma 4b: Any completed write changes the sequence generation, rejecting torn reads. -/
+/-- Lemma 4b: A completed write advances the modeled generation by two. -/
 theorem seqlock_rejects_torn_write (seq : Nat) :
     seqReadValid seq (seqEndWrite (seqBeginWrite seq)) = false := by
   unfold seqReadValid seqEndWrite seqBeginWrite
@@ -274,7 +267,7 @@ def kvStep (b : KvBounds) (s : KvOccupancy) (candFreq victimFreq : Nat) : KvOccu
     -- Both tiers full: W-TinyLFU admits strictly hotter key by overwriting victim in-place.
     { s with replaced := s.replaced + 1 }
   else
-    -- Saturation shedding: 1-hit DDoS flood key dropped in O(1) without eviction or crash.
+    -- Saturation shedding: 1-hit DDoS flood key dropped in O(1) without replacement.
     { s with shed := s.shed + 1 }
 
 theorem kvStep_preserves_bounds
@@ -296,8 +289,7 @@ def kvRun (b : KvBounds) (s : KvOccupancy) : List (Nat × Nat) → KvOccupancy
   | [] => s
   | (cf, vf) :: rest => kvRun b (kvStep b s cf vf) rest
 
-/-- Theorem 5 (Zero-Crash Saturation & Strict Memory Bound): under any packet flood `trace`,
-    RAM and `mmap` usage stay strictly within `KvBounds`. -/
+/-- Theorem 5: a finite trace preserves the RAM and mmap slot-count bounds. -/
 theorem kvRun_preserves_bounds
     (b : KvBounds) (trace : List (Nat × Nat)) (s : KvOccupancy) (h : KvBounded b s) :
     KvBounded b (kvRun b s trace) := by
@@ -444,7 +436,7 @@ structure UdpGateState where
   cookieChallengesSent : Nat
   deriving Repr, DecidableEq
 
-/-- Stateless cookie tag verification model (`BLAKE3_keyed(secret, clientIp || epoch)`). -/
+/-- Session admission after the caller supplies a cookie validity decision. -/
 def udpHandleFirstPacket
     (st : UdpGateState) (cookieValid : Bool) (sessionCap : Nat) : UdpGateState :=
   if cookieValid then
