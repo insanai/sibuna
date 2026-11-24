@@ -201,6 +201,7 @@ impl Serving {
             Command::ShowInfo => Ok(self.info()),
             Command::ShowStats => Ok(self.stats()),
             Command::ShowCerts => Ok(self.certs()),
+            Command::ShowCa => Ok(self.ca()),
             Command::Help => Ok(control::USAGE.to_owned()),
             Command::State { pool, name, state } => {
                 edge.set_server_state(&pool, &name, state).map(done)
@@ -251,7 +252,19 @@ impl Serving {
             crate::acme::render_certs(&automatic.map(|a| a.status()).unwrap_or_default())
         }
         #[cfg(not(feature = "https"))]
-        "name issuer expires renews state error\n".to_owned()
+        "name via issuer expires renews state error\n".to_owned()
+    }
+
+    /// The answer to `show ca`: where the root of the local authority is, and its PEM
+    /// text, for the operator who installs it in clients (SID 0021).
+    fn ca(&self) -> String {
+        #[cfg(feature = "https")]
+        {
+            let automatic = self.http.as_ref().and_then(http::Http::automatic);
+            crate::acme::render_ca(automatic.map(|automatic| automatic.local_root()))
+        }
+        #[cfg(not(feature = "https"))]
+        "# no local authority: this build has no TLS\n".to_owned()
     }
 
     /// The answer to `show info`: one `key: value` per line.

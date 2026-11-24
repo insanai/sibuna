@@ -91,7 +91,7 @@ pub(crate) fn log(event: &Event) {
             );
             let mut text = String::new();
             let _ = diagnostic::render(&mut text, &title, &message, &error.hint);
-            eprint!("{text}");
+            crate::edge::note(format_args!("{}", text.trim_end_matches('\n')));
         }
         Event::Obtained { name, not_after, renewed } => {
             let verb = if *renewed { "renewed" } else { "obtained" };
@@ -122,6 +122,29 @@ pub(crate) fn log(event: &Event) {
             let _ = diagnostic::render(&mut text, &title, &message, &error.hint);
             crate::edge::note(format_args!("{}", text.trim_end_matches('\n')));
         }
+    }
+}
+
+/// The answer to `show ca`. The lines that start with `#` say where the root is and
+/// how long it is valid. The rest is the PEM text, so that
+/// `sibuna ctl SOCKET show ca > root.crt` writes a file that every tool reads.
+pub(crate) fn render_ca(
+    root: Option<Result<Option<sibuna_acme::local::Root>, sibuna_acme::Error>>,
+) -> String {
+    let none = "# no local authority: no `auto` name of this daemon is an internal name, \
+                an IP address or under `issuer: \"internal\"`\n";
+    match root {
+        None | Some(Ok(None)) => none.to_owned(),
+        Some(Err(error)) => format!("# {} ({}): {}\n", error.title, error.code, error.message),
+        Some(Ok(Some(root))) => format!(
+            "# root certificate of the local authority: {}\n# file: {}\n# valid until: {}\n\
+             # install this file in the trust store of each client; see the book, \
+             \"Automatic HTTPS\"\n{}",
+            root.fields.issuer,
+            root.path.display(),
+            sibuna_acme::format_rfc3339(root.fields.not_after),
+            root.pem
+        ),
     }
 }
 

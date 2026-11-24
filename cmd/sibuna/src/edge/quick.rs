@@ -25,6 +25,7 @@ sibuna lb --tls auto --domain NAME [--domain NAME]... --server IP:PORT [options]
   --acme-directory D    letsencrypt (default), letsencrypt-staging or a URL
   --acme-email ADDRESS  The contact address of the ACME account
   --acme-storage DIR    Keys and certificates (default: /var/lib/sibuna/acme)
+  --acme-dns-hook PROG  The program that answers DNS-01, for a wildcard --domain
   --health PATH|tcp     Probe each server: GET PATH, or a TCP connect
   --firewall MODE       off | gate | shield (default: off, a plain load balancer)
   --admin SOCKET        Open the admin socket for `sibuna ctl SOCKET ...`
@@ -162,6 +163,7 @@ fn parse(args: &[String]) -> Result<Request, Mistake> {
             "--acme-directory" => start.automatic.directory = Some(value()?.to_owned()),
             "--acme-email" => start.automatic.email = Some(value()?.to_owned()),
             "--acme-storage" => start.automatic.storage = Some(value()?.to_owned()),
+            "--acme-dns-hook" => start.automatic.dns_hook = Some(value()?.to_owned()),
             "--health" => start.health = Some(value()?.to_owned()),
             "--firewall" => start.surface = value()?.to_owned(),
             "--admin" => start.admin_socket = Some(value()?.to_owned()),
