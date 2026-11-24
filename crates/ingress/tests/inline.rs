@@ -110,6 +110,7 @@ fn read_request(reader: &mut BufReader<std::net::TcpStream>) -> Option<String> {
 struct Gate {
     routes: HttpRoutes,
     decisions: AtomicUsize,
+    retries: AtomicUsize,
 }
 
 impl Decide for Gate {
@@ -145,6 +146,11 @@ impl Decide for Gate {
         );
         Verdict::Forward(Forward { target, head: head.into_bytes(), guard: Box::new(()) })
     }
+
+    fn retry(&self, failed: &sibuna_lb::HttpTarget) -> Option<sibuna_lb::HttpTarget> {
+        self.retries.fetch_add(1, Ordering::SeqCst);
+        self.routes.retry(failed)
+    }
 }
 
 struct Bench {
@@ -157,13 +163,19 @@ struct Bench {
 }
 
 fn setup() -> Bench {
+    setup_with("")
+}
+
+/// As [`setup`], with the JSON rows `before` in front of the live server of the pool.
+fn setup_with(before: &str) -> Bench {
     let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
     let origins = Arc::new(AtomicUsize::new(0));
     let server = origin(origins.clone());
     let topology = format!(
         r#"{{"frontends":{{"web":{{"proto":"http","binds":["{vip}"],
         "default_backend":"pool"}}}},"backends":{{"pool":{{"mode":"http",
-        "response_timeout":"400ms","servers":[{{"name":"origin","addr":"{server}"}}]}}}}}}"#
+        "response_timeout":"400ms",
+        "servers":[{before}{{"name":"origin","addr":"{server}"}}]}}}}}}"#
     );
     let edge = Edge::bind(Config::parse(topology.as_bytes()).unwrap()).unwrap();
     let tls = TlsOptions {
@@ -179,7 +191,11 @@ fn setup() -> Bench {
     let handler: Handler = Arc::new(move |_, _, _| {
         counted.fetch_add(1, Ordering::SeqCst);
     });
-    let gate = Arc::new(Gate { routes: edge.http_routes(), decisions: AtomicUsize::new(0) });
+    let gate = Arc::new(Gate {
+        routes: edge.http_routes(),
+        decisions: AtomicUsize::new(0),
+        retries: AtomicUsize::new(0),
+    });
     let ingress = Ingress::start(
         [(vip, identity)].into(),
         edge.flow_budget(),
@@ -280,4 +296,50 @@ fn a_multiplexed_request_is_decided_in_process_and_sent_on_a_pooled_connection()
     // and each failed exchange spent the one it had.
     assert_eq!(handoffs.load(Ordering::SeqCst), 0);
     assert_eq!(origins.load(Ordering::SeqCst), 3);
+}
+
+/// One POST over HTTP/2 with a body.
+async fn post(vip: SocketAddr) -> String {
+    let tcp = tokio::net::TcpStream::connect(vip).await.unwrap();
+    let tls = tokio_rustls::TlsConnector::from(Arc::new(client(b"h2")))
+        .connect("localhost".try_into().unwrap(), tcp)
+        .await
+        .unwrap();
+    let (mut tx, conn) =
+        hyper::client::conn::http2::handshake(TokioExecutor::new(), TokioIo::new(tls))
+            .await
+            .unwrap();
+    tokio::spawn(conn);
+    let url = format!("https://localhost:{}/order", vip.port());
+    let req = Request::post(url).body(Full::new(Bytes::from(vec![b'x'; 5000]))).unwrap();
+    let response = tx.send_request(req).await.unwrap();
+    assert_eq!(response.status(), 200);
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    String::from_utf8(body.to_vec()).unwrap()
+}
+
+#[test]
+fn a_refused_connect_moves_the_request_to_the_next_server() {
+    // Two addresses that nothing listens on come before the live server.
+    let dead = || TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    let before = format!(
+        r#"{{"name":"dead1","addr":"{}"}},{{"name":"dead2","addr":"{}"}},"#,
+        dead(),
+        dead()
+    );
+    let Bench { vip, mut edge, ingress, gate, origins, .. } = setup_with(&before);
+    let runner = std::thread::spawn(move || {
+        let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+        rt.block_on(async { tokio::time::timeout(Duration::from_secs(8), post(vip)).await })
+    });
+    while !runner.is_finished() {
+        edge.step().unwrap();
+        for (bind, stream, permit) in edge.accepted_http() {
+            ingress.accept(bind, stream, permit);
+        }
+    }
+    // The body reached the third server once, after two refused connects.
+    assert_eq!(runner.join().unwrap().unwrap(), "POST /order HTTP/1.1 marked=true body=5000");
+    assert_eq!(gate.retries.load(Ordering::SeqCst), 2);
+    assert_eq!(origins.load(Ordering::SeqCst), 1);
 }

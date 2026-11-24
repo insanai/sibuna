@@ -84,6 +84,14 @@ pub struct Forward {
 pub trait Decide: Send + Sync + 'static {
     /// Judges one request.
     fn decide(&self, offer: &Offer<'_>) -> Verdict;
+
+    /// Reserves another server for a request whose connect to `failed` did not succeed
+    /// (SID 0019). The server received nothing, so any request may move. Returns `None`
+    /// when no other server may be tried; this is the default.
+    fn retry(&self, failed: &HttpTarget) -> Option<HttpTarget> {
+        let _ = failed;
+        None
+    }
 }
 
 type Sender = SendRequest<Body>;
@@ -264,20 +272,27 @@ async fn ask(
     }
 }
 
-/// Opens a connection to the server of `target` within the connect bound of its pool.
-async fn fresh(inline: &Inline, target: &HttpTarget) -> Result<Sender, Fault> {
-    let opened = inline.open(target.address(), target.connect_timeout()).await;
-    opened.map_err(|_| Fault::Connect)
+/// Opens a connection for the request of `target`. A server that cannot be reached is
+/// marked, and the request moves to another server of its pool while the firewall offers
+/// one: nothing was sent, so no server can have acted on the request.
+async fn fresh(inline: &Inline, target: &mut HttpTarget) -> Result<Sender, Fault> {
+    loop {
+        if let Ok(sender) = inline.open(target.address(), target.connect_timeout()).await {
+            return Ok(sender);
+        }
+        target.failed();
+        // The old reservation is dropped here, which gives its place back.
+        *target = inline.decide.retry(target).ok_or(Fault::Connect)?;
+    }
 }
 
 /// One request and its response head over a pooled or a fresh connection.
 async fn attempt(
     inline: &Inline,
-    target: &HttpTarget,
+    target: &mut HttpTarget,
     request: Request<Body>,
     retryable: bool,
 ) -> Result<(Sender, Response<Incoming>), Fault> {
-    let limit = target.response_timeout();
     let mut pooled = inline.take(target.address());
     if let Some(sender) = pooled.as_mut()
         && sender.ready().await.is_err()
@@ -286,9 +301,10 @@ async fn attempt(
     }
     let Some(mut sender) = pooled else {
         let mut sender = fresh(inline, target).await?;
-        let response = ask(&mut sender, request, limit).await?;
+        let response = ask(&mut sender, request, target.response_timeout()).await?;
         return Ok((sender, response));
     };
+    let limit = target.response_timeout();
     if !retryable {
         let response = ask(&mut sender, request, limit).await?;
         return Ok((sender, response));
@@ -302,7 +318,7 @@ async fn attempt(
         // is safe to send again.
         Err(_) => {
             let mut sender = fresh(inline, target).await?;
-            let response = ask(&mut sender, again, limit).await?;
+            let response = ask(&mut sender, again, target.response_timeout()).await?;
             Ok((sender, response))
         }
     }
@@ -317,22 +333,20 @@ async fn send(
     body: Body,
     retryable: bool,
 ) -> Response<Body> {
-    let Forward { target, head, guard } = forward;
+    let Forward { mut target, head, guard } = forward;
     let Some(request) = parse_request(&head, body) else {
         return error(StatusCode::BAD_GATEWAY);
     };
-    let address = target.address();
     let started = Instant::now();
-    let limit = target.response_timeout();
-    let (sender, mut response) = match attempt(inline, &target, request, retryable).await {
+    let (sender, mut response) = match attempt(inline, &mut target, request, retryable).await {
         Ok(exchange) => exchange,
-        Err(Fault::Connect) => {
-            target.failed();
-            return error(StatusCode::BAD_GATEWAY);
-        }
-        Err(Fault::Exchange) => return error(StatusCode::BAD_GATEWAY),
+        // Every server that was tried is marked already.
+        Err(Fault::Connect | Fault::Exchange) => return error(StatusCode::BAD_GATEWAY),
         Err(Fault::Silent) => return error(StatusCode::GATEWAY_TIMEOUT),
     };
+    // The request may have moved, so the server is read after the attempt.
+    let address = target.address();
+    let limit = target.response_timeout();
     strip_hop_fields(response.headers_mut());
     let (parts, body) = response.into_parts();
     let done =
