@@ -85,6 +85,8 @@ pub struct Server {
     /// Automatic HTTPS of an edge (SID 0021): challenge answers and managed names.
     #[cfg(feature = "https")]
     pub(crate) automatic: Option<Arc<sibuna_ingress::Automatic>>,
+    /// Hands each ban to the peers of the edge mesh (SID 0022), once the mesh shares.
+    pub(crate) ban_feed: std::sync::OnceLock<sibuna_lb::BanFeed>,
     /// The default per-client request limiter is off (edge mode only).
     pub(crate) unlimited: bool,
     /// The firewall is off for the whole edge (`http.surface: "off"`).
@@ -145,6 +147,7 @@ impl Server {
             observe: None,
             #[cfg(feature = "https")]
             automatic: None,
+            ban_feed: std::sync::OnceLock::new(),
             unlimited: false,
             balances_only: false,
             max_connections: AtomicU32::new(config.max_connections),

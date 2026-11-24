@@ -76,10 +76,13 @@ pub(super) fn check(path: &str, demand: Demand) {
     };
     let now = sibuna_reactor::descriptor_limit().map_or(limit.soft, |limit| limit.soft);
     if raised && now >= need {
-        eprintln!("Sibuna edge raised the descriptor limit from {} to {now}", limit.soft);
+        super::note(format_args!(
+            "Sibuna edge raised the descriptor limit from {} to {now}",
+            limit.soft
+        ));
         return;
     }
-    eprint!("{}", warning(path, demand, now));
+    super::note(format_args!("{}", warning(path, demand, now).trim_end_matches('\n')));
 }
 
 /// The warning for a process that may open `available` descriptors.
