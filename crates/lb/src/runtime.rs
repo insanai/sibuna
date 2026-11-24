@@ -307,7 +307,7 @@ impl Edge {
     /// for an unknown server and `ADM007` for the last server of a pool or a pool that
     /// changes only by reload.
     pub fn remove_server(&mut self, pool: &str, name: &str) -> Result<(), RuntimeError> {
-        self.in_pool(pool, |servers, _| {
+        self.in_pool(pool, |servers, loads| {
             if let Some(reason) = servers.fixed() {
                 return Err(fixed(pool, reason));
             }
@@ -321,6 +321,9 @@ impl Edge {
                 ));
             }
             servers.remove(name);
+            // Forget the load records that no server and no flow holds any more, so
+            // that adding and removing servers for months keeps the table small.
+            loads.prune();
             Ok(())
         })??;
         self.stop_unused_probes();
