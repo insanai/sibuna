@@ -25,6 +25,25 @@ pub(super) struct Shared {
     pub idle: Duration,
 }
 
+/// Opens the HTTP/3 endpoint of one listener. With `shared` the socket may share its
+/// address with the socket of another process. Must run inside the runtime.
+pub(crate) fn listen(
+    config: quinn::ServerConfig,
+    vip: SocketAddr,
+    shared: bool,
+) -> std::io::Result<quinn::Endpoint> {
+    if !shared {
+        return quinn::Endpoint::server(config, vip);
+    }
+    let socket = sibuna_reactor::bind_shared(vip)?;
+    quinn::Endpoint::new(
+        quinn::EndpointConfig::default(),
+        Some(config),
+        socket,
+        Arc::new(quinn::TokioRuntime),
+    )
+}
+
 pub(super) async fn serve(
     endpoint: quinn::Endpoint,
     bind: SocketAddr,

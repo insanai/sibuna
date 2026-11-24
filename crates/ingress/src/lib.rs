@@ -61,11 +61,19 @@ pub struct Limits {
     pub idle: Duration,
     /// The longest wait for a server's response head on an in-process exchange.
     pub response: Duration,
+    /// The HTTP/3 sockets share their address, so a process that replaces this one can
+    /// bind it while this one still serves.
+    pub share_address: bool,
 }
 
 impl Default for Limits {
     fn default() -> Self {
-        Self { exchanges: 1024, idle: Duration::from_secs(60), response: Duration::from_secs(60) }
+        Self {
+            exchanges: 1024,
+            idle: Duration::from_secs(60),
+            response: Duration::from_secs(60),
+            share_address: false,
+        }
     }
 }
 
@@ -150,7 +158,7 @@ impl Ingress {
             let handoff = Handoff::start(handler)?;
             for (vip, identity) in identities {
                 if let Some(config) = identity.quic {
-                    let endpoint = quinn::Endpoint::server(config, vip)?;
+                    let endpoint = quic::listen(config, vip, limits.share_address)?;
                     endpoints.insert(vip, endpoint.clone());
                     runtime.spawn(quic::serve(
                         endpoint,
