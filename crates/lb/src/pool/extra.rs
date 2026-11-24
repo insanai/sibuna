@@ -124,7 +124,7 @@ impl Pool {
         }
         let client = sticky::client_bytes(client);
         let distance =
-            |target: &Target| sticky::distance(&client, &target.server.name, target.server.weight);
+            |target: &Target| sticky::distance(&client, target.rank_seed, target.server.weight);
         let stays = |target: &Target| !target.server.backup && eligible(target);
         let servers = self.targets.iter().enumerate().filter(|(_, target)| stays(target));
         servers

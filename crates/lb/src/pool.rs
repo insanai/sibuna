@@ -74,6 +74,8 @@ struct Target {
     added: bool,
     /// The weight the file gave, when a command replaced it.
     file_weight: Option<u32>,
+    /// The part of the rendezvous ranking that depends on the name alone (SID 0019).
+    rank_seed: u64,
 }
 
 impl Target {
@@ -81,7 +83,16 @@ impl Target {
         let slot = loads.0.entry((protocol, server.addr)).or_default();
         let load = slot.upgrade().unwrap_or_default();
         *slot = Arc::downgrade(&load);
-        Self { server, load, admitted: 0, drained: false, added: false, file_weight: None }
+        let rank_seed = crate::sticky::rank_seed(&server.name);
+        Self {
+            server,
+            load,
+            admitted: 0,
+            drained: false,
+            added: false,
+            file_weight: None,
+            rank_seed,
+        }
     }
 
     /// Whether a command changed this server since the file was loaded.

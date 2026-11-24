@@ -108,11 +108,19 @@ pub(crate) fn client_bytes(address: IpAddr) -> [u8; 16] {
 /// Each server draws a uniform number from the client and its own name. The classic
 /// rule picks the largest `-weight / ln(draw)`. We compare `-log2(draw) / weight`
 /// instead, in integers, so that every node ranks alike whatever its processor.
-pub(crate) fn distance(client: &[u8; 16], server: &str, weight: u32) -> Distance {
-    let draw = wyhash::hash(wyhash::hash(3, server.as_bytes()), client);
+///
+/// `seed` is the [`rank_seed`] of the server. It is computed once for each server, so
+/// that ranking a pool costs one hash per server and not two.
+pub(crate) fn distance(client: &[u8; 16], seed: u64, weight: u32) -> Distance {
+    let draw = wyhash::hash(seed, client);
     // `draw | 1` keeps the logarithm defined. 64 - log2 is positive and at most 64.
     let cost = (64 << 16) - log2_q16(draw | 1);
     Distance { cost, weight: u64::from(weight.max(1)) }
+}
+
+/// The part of a server's draw that depends on its name alone.
+pub(crate) fn rank_seed(server: &str) -> u64 {
+    wyhash::hash(3, server.as_bytes())
 }
 
 /// A cost divided by a weight, compared without division.
@@ -204,8 +212,12 @@ mod tests {
         let address = client_bytes(IpAddr::from(client.to_be_bytes()));
         let mut best = 0;
         for index in 1..servers.len() {
-            let candidate = distance(&address, servers[index].0, servers[index].1);
-            if candidate.nearer_than(&distance(&address, servers[best].0, servers[best].1)) {
+            let candidate = distance(&address, rank_seed(servers[index].0), servers[index].1);
+            if candidate.nearer_than(&distance(
+                &address,
+                rank_seed(servers[best].0),
+                servers[best].1,
+            )) {
                 best = index;
             }
         }
