@@ -252,6 +252,12 @@ impl HttpTarget {
         &self.route
     }
 
+    /// The same policy, shared. It outlives this reservation, so a caller can keep it
+    /// while the request moves to another server.
+    pub fn route_shared(&self) -> Arc<RoutePolicy> {
+        Arc::clone(&self.route)
+    }
+
     /// The field lines that the response to the client must carry besides those of the
     /// server: the lines the route sets, HSTS on a TLS frontend, and the sticky cookie.
     /// Each block is empty or a run of complete lines.

@@ -371,14 +371,21 @@ impl Worker {
             return false;
         };
         let unanswered = matches!(exchange.relay.end_of_stream(), Err(ProxyError::UpstreamClosed));
-        let again = unanswered && exchange.pooled && exchange.retryable && !exchange.retried;
-        if !again {
+        let lost = sibuna_net::Lost {
+            unanswered,
+            pooled: exchange.pooled,
+            retryable: exchange.retryable,
+            retried: exchange.retried,
+        };
+        // The rule is shared with the thread path (SID 0019).
+        let recovery = sibuna_net::recover(lost);
+        if recovery != sibuna_net::Recovery::Reconnect {
             if !exchange.pooled {
                 exchange.target.failed();
             }
             // The server answered nothing, and the request is safe and still held whole,
-            // so another server may serve it (SID 0019).
-            if unanswered && exchange.retryable && self.move_on(index) {
+            // so another server may serve it.
+            if recovery == sibuna_net::Recovery::Move && self.move_on(index) {
                 return false;
             }
             self.fail(index, ProxyError::UpstreamReadFailed);
