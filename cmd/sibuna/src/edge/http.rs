@@ -270,13 +270,15 @@ impl Http {
                 Arc::new(super::inline::Decision { server: server.clone() })
                     as Arc<dyn sibuna_ingress::Decide>
             });
-            Some(sibuna_ingress::Ingress::start(
+            let ingress = sibuna_ingress::Ingress::start(
                 prepared.identities,
                 edge.flow_budget(),
                 handler,
                 decide,
                 limits,
-            )?)
+            )?;
+            ingress.guard(quic_admission(server.clone()));
+            Some(ingress)
         };
         let reaper = start_reaper(&server)?;
         #[cfg(not(feature = "https"))]
@@ -381,6 +383,18 @@ fn serve(
         Some(workers) => workers.submit(Incoming { stream, ingress, permit }),
         None => launch(server, stream, ingress, permit),
     }
+}
+
+/// Counts each QUIC connection once under the node bound and the client bound, as a
+/// TLS connection is counted when it is accepted.
+#[cfg(feature = "https")]
+fn quic_admission(server: Arc<Server>) -> sibuna_ingress::Admit {
+    Arc::new(move |peer, vip| {
+        let from = ingress_of(&server, peer, vip, true);
+        let bound = from.connection_bound(&server);
+        let place = crate::server::admit_secure(&server, peer.ip(), bound)?;
+        Some(Box::new(place) as Box<dyn std::any::Any + Send>)
+    })
 }
 
 /// The bounds of the TLS, HTTP/2 and HTTP/3 runtime for this topology.

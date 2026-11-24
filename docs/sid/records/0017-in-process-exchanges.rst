@@ -273,7 +273,7 @@ Known gaps
 #. The response bounds are fixed at 60 seconds. They should follow a per-pool timeout once pools have one.
 #. The idle pool is one lock for all runtime threads. At 120,000 requests per second it did not show in the measurements.
 #. WebSockets over HTTP/2 and HTTP/1.1 over TLS keep the socket pair.
-#. The per-client connection bound counts each TLS connection once. It does not count QUIC connections.
+#. The per-client connection bound counts each TLS connection and each QUIC connection once. The test of the QUIC bound is at the interface of the protocol runtime, not through the binary.
 #. The runtime uses at most eight threads. The worker count option of SID 0016 does not set it.
 #. gRPC from a cleartext HTTP/2 client is not accepted. The frontend must terminate TLS.
 #. A gRPC stream that is silent for 60 seconds is closed. The bound should follow a per-pool timeout.
@@ -289,6 +289,7 @@ Review history
 --------------
 
 - 2026-11-24. Initial draft and implementation in one pass, after measuring where an HTTP/2 request spends its time.
+- 2026-11-24. The per-client bound for QUIC. The protocol runtime accepts QUIC connections itself, so the firewall gives it an admission function (``Ingress::guard``). A connection over the bound is refused before its handshake, and its place is freed when it ends.
 - 2026-11-24. Client certificates. The decision now receives the fingerprint of a verified client certificate with each offer, and the handoff socket carries it too, so the server reads the same ``X-Client-Cert-SHA256`` field over HTTP/1.1, HTTP/2 and HTTP/3. A test through the binary covers HTTP/1.1 and HTTP/2 with a forged field. HTTP/3 has no test.
 - 2026-11-24. The per-client bound. In-process exchanges had left HTTP/2 clients outside ``max_connections_per_ip``. The bound moved to the accept of the TLS connection, with a test through the binary.
 - 2026-11-24. gRPC. A first attempt through the HTTP/1.1 listener of the egress could not work: that hop drops trailers that are not announced, removes ``TE``, and cannot interleave. The runtime now sends to the HTTP/2 and HTTP/3 sessions directly. A run with grpc-go showed two things an operator must know, which the book now says: the default policy challenges a gRPC client, and the default request limiter stops it after 100 calls. HTTP/3 servers now also pass response trailers.
