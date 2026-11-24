@@ -154,7 +154,7 @@ impl Pool {
             Scheduler::Adaptive(table) => {
                 ((regime != crate::Regime::Standalone).then_some(table), true)
             }
-            Scheduler::LeastConnections => (None, false),
+            Scheduler::LeastConnections | Scheduler::RoundRobin => (None, false),
             Scheduler::PeakEwma => (None, true),
         };
         let primary = table.and_then(|table| {
@@ -172,6 +172,9 @@ impl Pool {
         let sticky = wish.sticky.or_else(|| self.home(peer));
         let sticky = sticky.filter(|&index| self.targets.get(index).is_some_and(eligible));
         let index = sticky.or(primary).or_else(|| {
+            if matches!(self.scheduler, Scheduler::RoundRobin) {
+                return self.in_turn(ramping, eligible);
+            }
             if peak {
                 return self.choose_two(now, peer, vip, eligible);
             }

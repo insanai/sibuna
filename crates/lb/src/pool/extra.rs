@@ -3,7 +3,7 @@
 //!
 //! The state of a server lives in its [`Load`], which a reload keeps for every address.
 
-use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU32, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
@@ -65,6 +65,42 @@ pub(super) struct State {
     ramped: AtomicU32,
     /// The sticky token of the server, with a mark of the key and names it was made from.
     token: Mutex<(u64, Token)>,
+    /// The credit of the server in round robin.
+    credit: AtomicI64,
+}
+
+impl Pool {
+    /// Round robin: the next server in turn among those `eligible`, in proportion to
+    /// the weights. Backups take turns only when no other server is eligible.
+    ///
+    /// This is the smooth weighted round robin of nginx. Each eligible server gains its
+    /// weight in credit, the server with the most credit is chosen, and it pays the sum
+    /// of the weights. Over one sum of weights each server is chosen its weight in
+    /// times, and the choices of a heavy server are spread out, not bunched.
+    pub(super) fn in_turn(
+        &self,
+        ramping: bool,
+        eligible: impl Fn(&Target) -> bool,
+    ) -> Option<usize> {
+        let backups = !self.targets.iter().any(|t| eligible(t) && !t.server.backup);
+        let mut total = 0;
+        let mut best: Option<(usize, i64)> = None;
+        for (index, target) in self.targets.iter().enumerate() {
+            if !eligible(target) || target.server.backup != backups {
+                continue;
+            }
+            // A weight is at most 65535 * 256, so credits stay far inside an i64.
+            let weight = target.weight(ramping) as i64;
+            let credit = target.load.extra.credit.fetch_add(weight, Ordering::Relaxed) + weight;
+            total += weight;
+            if best.is_none_or(|(_, most)| credit > most) {
+                best = Some((index, credit));
+            }
+        }
+        let (index, _) = best?;
+        self.targets.get(index)?.load.extra.credit.fetch_sub(total, Ordering::Relaxed);
+        Some(index)
+    }
 }
 
 impl Pool {

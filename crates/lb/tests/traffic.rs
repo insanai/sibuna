@@ -304,3 +304,119 @@ fn a_client_address_keeps_its_server_whatever_its_port() {
         assert_eq!(routes.choose(&from(host, 7000)).unwrap().address().port(), home);
     }
 }
+
+#[test]
+fn a_request_carries_the_policy_of_its_route_or_of_its_frontend() {
+    let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    let source = format!(
+        r#"{{"frontends":{{"web":{{"proto":"http","binds":["{vip}"],"default_backend":"app",
+            "tls":{{"cert_file":"web.pem","key_file":"web.key"}},
+            "hsts":{{"max_age":600}},"max_body":"1m",
+            "response_headers":{{"set":{{"X-Frame-Options":"DENY"}},"remove":["Server"]}},
+            "routes":[{{"path_prefix":"/api","backend":"app","hsts":false,"max_body":"off",
+                        "request_headers":{{"set":{{"X-Api":"1"}}}}}}]}}}},
+        "backends":{{"app":{{"mode":"http","sticky":"cookie","servers":[
+            {{"name":"s0","addr":"127.0.0.1:9400"}}]}}}}}}"#
+    );
+    let edge = Edge::bind(Config::parse(source.as_bytes()).unwrap()).unwrap();
+    let routes = edge.http_routes();
+    let page = routes.policy(vip, b"app.example", b"/").unwrap();
+    assert_eq!(page.max_body, Some(1 << 20));
+    let api = routes.policy(vip, b"app.example:443", b"/api/v1").unwrap();
+    assert_eq!(api.max_body, None);
+    assert_eq!(&*api.request_headers.append, b"X-Api: 1\r\n");
+    // A route keeps what it does not state.
+    assert_eq!(api.response_headers, page.response_headers);
+    assert!(routes.policy("127.0.0.1:1".parse().unwrap(), b"app.example", b"/").is_none());
+    // On the TLS frontend a response carries the fields of the route, HSTS and the cookie.
+    let secure = Query { secure: true, ..query(vip) };
+    let target = routes.choose(&secure).unwrap();
+    let [set, hsts, cookie] = target.response_lines();
+    assert_eq!(set, b"X-Frame-Options: DENY\r\n");
+    assert_eq!(hsts, b"Strict-Transport-Security: max-age=600\r\n");
+    assert!(cookie.starts_with(b"Set-Cookie: sibuna_srv=") && cookie.ends_with(b"; Secure\r\n"));
+    assert_eq!(target.route().max_body, Some(1 << 20));
+    let target = routes.choose(&Query { path: b"/api/v1", ..secure }).unwrap();
+    assert!(target.response_lines()[1].is_empty());
+    // A failover keeps the policy of the request.
+    let cleartext = routes.choose(&query(vip)).unwrap();
+    assert!(cleartext.response_lines()[1].is_empty());
+    // An edge without any policy answers the lookup with nothing.
+    let (plain, vip) = self::edge(1, "");
+    assert!(plain.http_routes().policy(vip, b"app.example", b"/").is_none());
+}
+
+/// An edge whose pool `app` has the given `(weight, backup)` servers on ports from 9400.
+fn weighted(backend: &str, servers: &[(u32, bool)]) -> (Edge, SocketAddr) {
+    let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    let rows: Vec<String> = servers
+        .iter()
+        .enumerate()
+        .map(|(i, (weight, backup))| {
+            let port = 9400 + i;
+            format!(
+                r#"{{"name":"s{i}","addr":"127.0.0.1:{port}","weight":{weight},"backup":{backup}}}"#
+            )
+        })
+        .collect();
+    let source = format!(
+        r#"{{"frontends":{{"web":{{"proto":"http","binds":["{vip}"],"default_backend":"app"}}}},
+        "backends":{{"app":{{"mode":"http",{backend}"servers":[{}]}}}}}}"#,
+        rows.join(",")
+    );
+    (Edge::bind(Config::parse(source.as_bytes()).unwrap()).unwrap(), vip)
+}
+
+/// The ports of `count` requests, each released before the next.
+fn turns(routes: &HttpRoutes, vip: SocketAddr, count: usize) -> Vec<u16> {
+    (0..count).map(|_| routes.choose(&query(vip)).unwrap().address().port()).collect()
+}
+
+#[test]
+fn round_robin_takes_each_server_in_turn_by_weight() {
+    let balance = r#""balance":{"kind":"round_robin"},"#;
+    let (edge, vip) = weighted(balance, &[(1, false), (1, false), (1, false)]);
+    let routes = edge.http_routes();
+    let order = turns(&routes, vip, 12);
+    for window in order.chunks(3) {
+        let distinct: BTreeSet<u16> = window.iter().copied().collect();
+        assert_eq!(distinct.len(), 3, "{order:?}");
+    }
+    assert_eq!(order[..3], order[3..6]);
+    // Connections that stay open do not change the turn, as they would under least
+    // connections.
+    let held: Vec<_> = (0..20).map(|_| on_port(&routes, vip, 9400)).collect();
+    let order = turns(&routes, vip, 9);
+    assert_eq!(order.iter().filter(|port| **port == 9400).count(), 3, "{order:?}");
+    drop(held);
+
+    // Weights 5, 1 and 1: seven turns hold five, one and one, and the heavy server is
+    // not served five times in a row.
+    let (edge, vip) = weighted(balance, &[(5, false), (1, false), (1, false)]);
+    let routes = edge.http_routes();
+    let order = turns(&routes, vip, 70);
+    let count = |port: u16| order.iter().filter(|p| **p == port).count();
+    assert_eq!((count(9400), count(9401), count(9402)), (50, 10, 10), "{order:?}");
+    assert!(!order.windows(5).any(|run| run.iter().all(|port| *port == 9400)), "{order:?}");
+}
+
+#[test]
+fn round_robin_skips_a_server_that_is_out_and_keeps_backups_for_last() {
+    let backend = r#""balance":{"kind":"round_robin"},
+        "passive_health":{"failures":1,"ejection":"300ms"},"#;
+    let (edge, vip) = weighted(backend, &[(1, false), (1, false), (1, true)]);
+    let routes = edge.http_routes();
+    let order: BTreeSet<u16> = turns(&routes, vip, 12).into_iter().collect();
+    assert_eq!(order, BTreeSet::from([9400, 9401]));
+    on_port(&routes, vip, 9400).timed_out();
+    assert_eq!(turns(&routes, vip, 6), [9401; 6]);
+    on_port(&routes, vip, 9401).timed_out();
+    // Both are ejected, so both serve again: the backup is for servers that are down.
+    std::thread::sleep(Duration::from_millis(350));
+    let order: BTreeSet<u16> = turns(&routes, vip, 6).into_iter().collect();
+    assert_eq!(order, BTreeSet::from([9400, 9401]));
+    // A request that fails over from both reaches the backup.
+    let first = routes.choose(&query(vip)).unwrap();
+    let second = routes.retry(&first).unwrap();
+    assert_eq!(routes.retry(&second).unwrap().address().port(), 9402);
+}

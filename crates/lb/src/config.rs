@@ -423,8 +423,13 @@ impl Backend {
 pub(crate) enum Scheduler {
     LeastConnections,
     PeakEwma,
-    Maglev { table: crate::maglev::Table, peak_fallback: bool },
+    Maglev {
+        table: crate::maglev::Table,
+        peak_fallback: bool,
+    },
     Adaptive(crate::maglev::Table),
+    /// Each server in turn, in proportion to its weight (SID 0019).
+    RoundRobin,
 }
 
 fn scheduler(
@@ -444,6 +449,7 @@ fn scheduler(
     let scheduler = match kind.as_str() {
         "least_connections" => Scheduler::LeastConnections,
         "p2c_pewma" => Scheduler::PeakEwma,
+        "round_robin" => Scheduler::RoundRobin,
         "bounded_maglev" => {
             let peak_fallback = match field(balance.take_str("fallback"))? {
                 None => false,
