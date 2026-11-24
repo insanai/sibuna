@@ -141,6 +141,24 @@ fn a_reload_returns_to_the_file_and_keeps_drains() {
 }
 
 #[test]
+fn a_request_decided_before_a_reload_is_routed_by_its_revision() {
+    let vip = vip();
+    let mut edge = Edge::bind(topology(vip, &[9101], "")).unwrap();
+    edge.reload(topology(vip, &[9201], "")).unwrap();
+    // The policy of revision 1 admitted this request. The reload came before its route.
+    assert_eq!(ports(&hold(&edge, vip, 1, 1)), [9101]);
+    assert_eq!(ports(&hold(&edge, vip, 2, 1)), [9201]);
+    edge.reload(topology(vip, &[9301], "")).unwrap();
+    let routes = edge.http_routes();
+    let select = |revision| routes.select(vip, PEER.parse().unwrap(), b"example", b"/", revision);
+    // Only the revision just replaced is kept. An older decision is refused.
+    assert!(select(1).is_none());
+    assert_eq!(select(2).unwrap().address().port(), 9201);
+    assert_eq!(select(3).unwrap().address().port(), 9301);
+    assert!(select(4).is_none());
+}
+
+#[test]
 fn a_table_placed_pool_changes_only_by_reload_but_drains() {
     let vip = vip();
     let options = r#""balance":{"kind":"bounded_maglev"},"#;
@@ -208,5 +226,9 @@ fn the_shortest_file_names_only_binds_and_servers() {
     assert_eq!(config.watch(), Some(std::time::Duration::from_secs(2)));
     assert!(global(r#""watch":"500ms""#).is_err());
     assert!(global(r#""watch":"2h""#).is_err());
+    assert_eq!(config.shutdown_timeout(), std::time::Duration::from_secs(5));
+    let patient = global(r#""shutdown_timeout":"30s""#).unwrap();
+    assert_eq!(patient.shutdown_timeout(), std::time::Duration::from_secs(30));
+    assert!(global(r#""shutdown_timeout":"2h""#).is_err());
     assert!(global(r#""admin_socket":"""#).is_err());
 }

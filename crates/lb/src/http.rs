@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 use std::io;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex, PoisonError};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use sibuna_json::ObjectReader;
 
@@ -375,19 +375,40 @@ struct Table {
     regime: Option<Regime>,
     /// Some frontend or route turns the firewall off, so requests need the lookup.
     bypasses: bool,
+    /// The routes of the revision before this one, for requests decided under it.
+    previous: Option<Retired>,
+}
+
+/// How long the routes of a replaced revision still serve the requests that the policy
+/// of that revision admitted. A decision takes far less.
+const RETIRE_AFTER: Duration = Duration::from_secs(10);
+
+/// The routes and pools of the revision that a reload replaced. A request is decided
+/// under one policy generation and routed a moment later. When a reload falls between
+/// the two, the request is routed by the revision it was decided under, not refused.
+struct Retired {
+    revision: u64,
+    fronts: BTreeMap<SocketAddr, Frontend>,
+    pools: BTreeMap<String, Pool>,
+    until: Instant,
+}
+
+/// The frontend that serves `vip`: its own listener, or the wildcard one of its port.
+fn front_of(fronts: &BTreeMap<SocketAddr, Frontend>, vip: SocketAddr) -> Option<&Frontend> {
+    let wildcard = SocketAddr::new(
+        if vip.is_ipv4() {
+            std::net::Ipv4Addr::UNSPECIFIED.into()
+        } else {
+            std::net::Ipv6Addr::UNSPECIFIED.into()
+        },
+        vip.port(),
+    );
+    fronts.get(&vip).or_else(|| fronts.get(&wildcard))
 }
 
 impl Table {
     fn front(&self, vip: SocketAddr) -> Option<&Frontend> {
-        let wildcard = SocketAddr::new(
-            if vip.is_ipv4() {
-                std::net::Ipv4Addr::UNSPECIFIED.into()
-            } else {
-                std::net::Ipv6Addr::UNSPECIFIED.into()
-            },
-            vip.port(),
-        );
-        self.fronts.get(&vip).or_else(|| self.fronts.get(&wildcard))
+        front_of(&self.fronts, vip)
     }
 }
 
@@ -398,6 +419,13 @@ pub struct HttpRoutes(Arc<Mutex<Table>>);
 impl HttpRoutes {
     pub(crate) fn publish(&self, config: &mut Config) {
         let mut state = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        let retired = Retired {
+            revision: state.revision,
+            fronts: std::mem::take(&mut state.fronts),
+            pools: std::mem::take(&mut state.pools),
+            until: Instant::now() + RETIRE_AFTER,
+        };
+        state.previous = Some(retired);
         state.revision = state.revision.wrapping_add(1);
         state.fronts = config
             .listeners
@@ -476,10 +504,21 @@ impl HttpRoutes {
         policy_revision: u64,
     ) -> Option<HttpTarget> {
         let mut table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
-        if policy_revision != table.revision {
-            return None;
-        }
-        let front = table.front(vip)?;
+        let table = &mut *table;
+        let now = Instant::now();
+        let regime = table.regime.unwrap_or(Regime::Standalone);
+        // A request decided just before a reload is routed by the revision it was
+        // decided under. A revision older than that is refused.
+        let (fronts, pools) = if policy_revision == table.revision {
+            (&table.fronts, &mut table.pools)
+        } else {
+            let retired = table.previous.as_mut()?;
+            if retired.revision != policy_revision || now >= retired.until {
+                return None;
+            }
+            (&retired.fronts, &mut retired.pools)
+        };
+        let front = front_of(fronts, vip)?;
         let host = bare_host(host);
         let pool = front
             .rules
@@ -487,12 +526,7 @@ impl HttpRoutes {
             .find(|r| r.matches(host, path))
             .map_or(&front.pool, |r| &r.pool)
             .clone();
-        let regime = table.regime.unwrap_or(Regime::Standalone);
-        table
-            .pools
-            .get_mut(pool.as_ref())?
-            .reserve(Instant::now(), peer, vip, regime)
-            .map(HttpTarget)
+        pools.get_mut(pool.as_ref())?.reserve(now, peer, vip, regime).map(HttpTarget)
     }
 }
 
