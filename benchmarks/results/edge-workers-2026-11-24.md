@@ -76,3 +76,34 @@ Three nodes on three hosts ran with a mesh, `surface` `shield`, a TLS frontend a
 | Reload with a broken file | The node logged `EDGE002`, kept its routes and failed no request. |
 | One node stopped with SIGTERM | It closed its tunnels after the drain period. Tunnels through the remaining node stayed open. The remaining node reported the standalone regime, and the regional regime again when the others returned. |
 | Rule check | A WebSocket offer with a foreign `Origin` received 403. A WebSocket over TLS opened and echoed. |
+
+## Three proxies in one run
+
+A later run on the same host measured HAProxy 3.0.11, Envoy 1.40.2 and Sibuna one after the other, each with eight threads on the same eight CPUs, least-connections or least-request balancing, and the same certificate. Sibuna ran with `surface` `off` and `http.max_connections` 100,000. Envoy ran with `--concurrency 8`, request ids and dynamic router statistics off, and circuit breakers raised out of the way. Requests per second:
+
+| Workload | Connections | HAProxy | Envoy | Sibuna | Sibuna / HAProxy | Sibuna / Envoy |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| http | 16 | 143,153 | 50,624 | 161,847 | 1.13 | 3.20 |
+| http | 256 | 245,317 | 69,996 | 226,782 | 0.92 | 3.24 |
+| http | 2,048 | 174,563 | 59,820 | 172,319 | 0.99 | 2.88 |
+| https | 16 | 107,938 | 52,497 | 86,858 | 0.80 | 1.65 |
+| https | 256 | 166,343 | 63,293 | 149,456 | 0.90 | 2.36 |
+| https | 2,048 | 130,514 | 51,241 | 122,280 | 0.94 | 2.39 |
+| h2, 10 streams | 16 | 200,619 | 81,320 | 102,774 | 0.51 | 1.26 |
+| h2, 10 streams | 256 | 167,262 | 69,054 | 97,271 | 0.58 | 1.41 |
+| h2, 10 streams | 2,048 | 115,585 | 58,245 | 80,277 | 0.69 | 1.38 |
+
+No request failed in any HTTP/2 cell. The 99th percentile at 256 connections: plaintext 1.46 ms, 5.44 ms and 2.60 ms for HAProxy, Envoy and Sibuna; TLS 5.05 ms, 5.97 ms and 4.14 ms; HTTP/2 54.86 ms, 89.71 ms and 128.86 ms. Resident memory at 2,048 plaintext connections: 72 MiB, 142 MiB and 38 MiB.
+
+## Where the processor time goes
+
+The kernel's per-thread counters, read before and after six seconds at 256 connections, give the CPU time per request by thread group.
+
+| Workload | Proxy | Requests | Worker threads | TLS runtime threads | CPU per request |
+| --- | --- | ---: | ---: | ---: | ---: |
+| http | HAProxy | 1,500,099 | 47.6 s | | 31.7 us |
+| http | Sibuna | 1,381,527 | 38.8 s | | 28.1 us |
+| https | Sibuna | 937,012 | 21.0 s | 18.8 s | 42.5 us |
+| h2 | Sibuna | 595,838 | 17.8 s | 27.3 s | 75.7 us |
+
+On plaintext HTTP Sibuna spends less CPU per request than HAProxy. It serves fewer requests because its workers sleep more: they used 81% of the eight CPUs and HAProxy 99%. On TLS and HTTP/2 a second group of threads does about half of the work or more. That group terminates TLS and HTTP/2 and then writes each request as HTTP/1.1 text into a socket pair, which a worker reads and parses again. The HTX documentation of HAProxy describes the same design in its own history: its first HTTP/2 support converted HTTP/2 to HTTP/1, which "was terribly unefficient because it required two parsing passes". HAProxy now keeps one internal message form and runs TLS, HTTP/2 and the server connection of a stream on one thread.
