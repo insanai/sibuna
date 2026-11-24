@@ -1,0 +1,20 @@
+[package]
+name = "sibuna-jlv"
+description = "Bounded JLV configuration evaluation for Sibuna edge listeners"
+version.workspace = true
+edition.workspace = true
+rust-version = "1.100"
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+jlv-core.workspace = true
+jlv-compiler.workspace = true
+jlv-lang.workspace = true
+jlv-stdlib.workspace = true
+sibuna-lb.workspace = true
+sibuna-json.workspace = true
+
+[lints]
+workspace = true

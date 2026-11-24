@@ -17,6 +17,66 @@ Choosing a Surface
 - *Shield* (default, ``--shield``, alias ``--waf``): Gate plus the semantic firewall.
 - *Distributed deployment* (an option for either surface): ``--data-dir`` keeps policies, reputation and forensics in a local SQLite file; ``--database-url`` with ``--cluster-node`` connects several nodes to one PostgreSQL database (SID 0011).
 
+TCP and UDP edge listeners
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We can run the daemon as an L4 load balancer with a JSON file or a JLV/2 module. Each frontend binds one or more numeric socket addresses and names a backend pool of the same protocol. A UDP frontend binds a specific local IP so replies use the same address that the client contacted. For HTTP inspection we can point a TCP pool at a separate Sibuna gate or shield instance.
+
+.. code-block:: json
+
+   {
+     "global": {"max_flows": 1024},
+     "frontends": {
+       "tls": {"proto": "tcp", "binds": ["127.0.0.1:8443"], "default_backend": "app"},
+       "dns": {"proto": "udp", "binds": ["127.0.0.1:8053"], "default_backend": "nameservers",
+               "session_timeout": "10s", "udp_defense": {"mode": "rate_limit", "threshold_pps": 200}}
+     },
+     "backends": {
+       "app": {"mode": "tcp", "servers": [
+         {"name": "a", "addr": "127.0.0.1:9001", "weight": 2, "max_flows": 100},
+         {"name": "b", "addr": "127.0.0.1:9002", "weight": 1, "max_flows": 50}
+       ]},
+       "nameservers": {"mode": "udp", "balance": {"kind": "bounded_maglev"},
+                       "servers": [{"name": "ns1", "addr": "127.0.0.1:9053"}]}
+     }
+   }
+
+We save this document as ``edge.json``, check it and start the listeners.
+
+.. code-block:: sh
+
+   sibuna check -f edge.json
+   sibuna --config-file edge.json
+
+We can also write a pool once and generate its servers from a list of ports. We save this module as ``edge.jlv``.
+
+.. code-block:: text
+
+   import { text } from jlv.std.foundation
+
+   fn server(port: Int) -> Map<Value> {
+       return { name: "node-${port}", addr: "127.0.0.1:${port}" }
+   }
+
+   fn edge() -> Map<Value> {
+       return {
+           frontends: { api: { proto: "tcp", binds: ["127.0.0.1:8443"], default_backend: "app" } },
+           backends: { app: { mode: text.lower("TCP"), servers: [for port in [9001, 9002]: server(port)] } },
+       }
+   }
+
+We check the module with ``sibuna check -f edge.jlv`` and run it with ``sibuna --config-file edge.jlv``. Sibuna evaluates one module at startup and on reload. It makes the pure ``jlv.std.foundation`` functions available. The source and expanded document each have a 256 KiB limit. Evaluation has one million steps. Both file formats pass through the same topology checks.
+
+The checker rejects unknown keys, duplicate server identities and invalid routes. Startup binds every listener before it announces readiness. One packet worker serves up to 8,192 active flows across all listeners. Pending handshakes and TCP connects count toward that limit. A full worker refuses new flows. Per-server caps apply within the node. A dropped or expired flow releases its reservation. We budget two file descriptors per established TCP stream and one upstream descriptor per UDP mapping, in addition to listeners, probes and pending connections. The operating system must allow the daemon to open that many descriptors.
+
+A standalone pool defaults to weighted least connections. With ``"balance": {"kind": "p2c_pewma"}`` we compare two eligible servers using their active flows, weights and observed latency. We measure TCP connect time or time to the first UDP reply. A server marked ``"backup": true`` becomes eligible when the primary servers are unavailable or full. A failed TCP connect suppresses that server for two seconds. We can enable active checking on a TCP pool with ``"health_check": {"kind": "tcp", "timeout": "500ms", "interval": "2s", "rise": 2, "fall": 3}``. A checked server enters service after the configured number of consecutive successes. UDP mappings keep a connected upstream socket for each client and listener. Their response budget permits three times the received bytes with a bounded burst. The optional UDP packet budget covers each source IPv4 address or IPv6 /64. TCP accepts support ``"rate_limit": {"conn_per_10s": 200}`` on the frontend.
+
+A frontend may set ``"tcp_inspect": "tls_client_hello"``, define ``acls`` with exact ``sni`` or ``alpn`` matches or a ``ja4_prefix`` pattern such as ``t13d*``, and list ordered ``deny`` or ``use_backend`` rules. The worker closes malformed or incomplete handshakes after a bounded inspection of up to 32 KiB and a default deadline of two seconds. A complete hello with no matching rule uses the default pool. Enable ``"proxy_v2": {"enabled": true}`` on a TCP pool only when its servers accept a PROXY v2 address header before the stream. We can add ``"tlv_sni": true`` or ``"tlv_ja4": true`` inside ``proxy_v2`` to forward inspected metadata. SNI uses the AUTHORITY type (0x02). Sibuna uses the custom type 0xe0 for the 36 ASCII bytes of JA4. The origin must agree on this type.
+
+On Unix we can replace the file and send SIGHUP. A valid revision updates routing for new flows. Established streams and UDP mappings keep their origin. A handshake still awaiting inspection is closed at the policy boundary. A rejected revision leaves existing routes in service. We remove a server from its pool to drain it. Changing listener addresses or the mesh roster takes a restart. Shutdown stops admitting new flows and gives active flows up to five seconds to finish.
+
+For several nodes we can add a top-level ``mesh`` object with a unicast ``listen`` address, a list of ``peers`` as numeric UDP socket addresses, and a ``key_file`` containing the same 32 random binary bytes on each node. We provision this key on the management network and restart nodes when rotating it. Peers exchange authenticated challenges every half second. Pools with no explicit scheduler choose two candidates while standalone and use a deterministic weighted Maglev table once a peer responds. The wide-area regime prefers eligible local servers over servers marked ``"remote": true``. At least three missed probe periods expire a peer. Each node makes its own health and admission decisions. Keeping established flows on their owning node across a routing change requires upstream flow steering.
+
 Command-Line Reference
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -29,6 +89,9 @@ The table lists every option of ``sibuna --help``. Ranges are those the parser e
    * - Flag
      - Default
      - Meaning
+   * - ``--config-file``
+     - unset
+     - Start the TCP and UDP edge listeners from a JSON or JLV file. We can validate the file offline with ``sibuna check -f``.
    * - ``--port, -p``
      - ``8080``
      - Listening port, 1 to 65535
@@ -466,7 +529,7 @@ A JA4 fingerprint summarises how a client opens a TLS connection. It is computed
    c  a 12-digit lowercase hexadecimal hash of the sorted extensions
       and signature algorithms
 
-Only the component that terminates TLS sees the ClientHello, so only it can compute JA4. Sibuna does not terminate TLS: it serves plain HTTP/1.1 behind an ingress, and the ingress speaks TLS, HTTP/2 and HTTP/3 with browsers. Several ingresses compute JA4 already. We therefore let the ingress compute the fingerprint and send it in a request header, and Sibuna reads it from there.
+A TCP edge frontend can compute JA4 from a visible ClientHello during passthrough. When we run the HTTP firewall behind a TLS ingress, the ingress sees that handshake and Sibuna receives HTTP/1.1. We can configure the trusted ingress to compute JA4 and send the fingerprint to the firewall in a request header.
 
 ``--ja4-header <name>`` names that header. It is off by default and has no default name; we always name the header the ingress uses. Sibuna stores the name in lower case and matches it without regard to case. It refuses the names of fields it writes or strips itself (``X-Forwarded-*``, ``X-Real-IP``, ``X-Sibuna-*`` and ``Forwarded``, also with ``_`` for ``-``). When the option is set, the startup banner prints a line such as ``JA4: from cf-ja4 (trusted)``.
 
@@ -790,7 +853,7 @@ The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. It requ
 Building from source
 ~~~~~~~~~~~~~~~~~~~~
 
-We build and test with Rust 1.100; Rust 1.94 remains the minimum supported version.
+We build and test with Rust 1.100. The default build includes the JLV compiler and requires Rust 1.100. We can build the JSON-only daemon with Rust 1.94 using ``cargo build -p sibuna --no-default-features``. We add ``--features sqlite,console`` to include SQLite and the console.
 
 We install the release toolchain with ``rustup toolchain install 1.100.0 --profile minimal --target wasm32-unknown-unknown`` and select it with ``cargo +1.100.0`` in the commands below.
 

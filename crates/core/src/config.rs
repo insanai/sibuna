@@ -403,6 +403,8 @@ impl fmt::Debug for Config {
 /// when the console is compiled in.
 pub const HELP: &str = "\
 Usage: sibuna [options]
+       sibuna --config-file <edge.json|edge.jlv>
+       sibuna check -f <edge.json|edge.jlv>
 
 Network:
   --port, -p <port>            Listening port (default: 8080)

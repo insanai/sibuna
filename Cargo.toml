@@ -1,6 +1,7 @@
 [workspace]
 resolver = "3"
 members = ["crates/*", "cmd/*", "tools/*"]
+exclude = ["vendor/jlv"]
 default-members = ["crates/*", "cmd/sibuna", "tools/*"]
 
 [workspace.package]
@@ -27,6 +28,8 @@ sibuna-geoip = { path = "crates/geoip", version = "1.0.0-beta.3" }
 sibuna-core = { path = "crates/core", version = "1.0.0-beta.3" }
 sibuna-policy = { path = "crates/policy", version = "1.0.0-beta.3" }
 sibuna-challenge = { path = "crates/challenge", version = "1.0.0-beta.3" }
+sibuna-jlv = { path = "crates/jlv", version = "1.0.0-beta.3" }
+sibuna-lb = { path = "crates/lb", version = "1.0.0-beta.3" }
 sibuna-net = { path = "crates/net", version = "1.0.0-beta.3" }
 sibuna-storage = { path = "crates/storage", version = "1.0.0-beta.3", default-features = false }
 sibuna-html = { path = "crates/html", version = "1.0.0-beta.3", default-features = false }
@@ -35,6 +38,12 @@ sibuna-serve = { path = "crates/serve", version = "1.0.0-beta.3" }
 sibuna-tls = { path = "crates/tls", version = "1.0.0-beta.3" }
 sibuna-console-storage = { path = "crates/console-storage", version = "1.0.0-beta.3", default-features = false }
 sibuna-console = { path = "crates/console", version = "1.0.0-beta.3", default-features = false }
+
+# The LGPL JLV kernel runs only while loading an edge configuration (SID 0015).
+jlv-compiler = { path = "vendor/jlv/crates/jlv-compiler" }
+jlv-core = { path = "vendor/jlv/crates/jlv-core" }
+jlv-lang = { path = "vendor/jlv/crates/jlv-lang" }
+jlv-stdlib = { path = "vendor/jlv/crates/jlv-stdlib" }
 
 # External crates. Each one is admitted by a design record and confined to one crate.
 # sqlx: SQL storage for SQLite (single node) and PostgreSQL (clusters); SID 0011. Used without

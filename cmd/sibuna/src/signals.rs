@@ -23,6 +23,8 @@
 
 use std::sync::{Arc, Condvar, Mutex, PoisonError};
 
+const SIGHUP: i32 = 1;
+
 /// A one-way stop request that threads can wait for.
 #[derive(Debug, Default)]
 pub struct Shutdown {
@@ -90,12 +92,33 @@ impl std::error::Error for SignalError {}
 ///
 /// Fails with [`SignalError`] when the mask cannot be set or the thread cannot start.
 pub fn install(shutdown: Arc<Shutdown>) -> Result<(), SignalError> {
-    imp::block()?;
+    start_waiter(shutdown, None)
+}
+
+/// Also observes SIGHUP on Unix, running the reload callback on the signal waiter.
+pub(crate) fn install_edge(
+    shutdown: Arc<Shutdown>,
+    reload: impl Fn() + Send + 'static,
+) -> Result<(), SignalError> {
+    start_waiter(shutdown, Some(Box::new(reload)))
+}
+
+fn start_waiter(
+    shutdown: Arc<Shutdown>,
+    reload: Option<Box<dyn Fn() + Send>>,
+) -> Result<(), SignalError> {
+    imp::block(reload.is_some())?;
     std::thread::Builder::new()
         .name("sibuna-signals".into())
         .spawn(move || {
-            while imp::wait() {
-                shutdown.request();
+            while let Some(signal) = imp::wait(reload.is_some()) {
+                if signal == SIGHUP
+                    && let Some(callback) = &reload
+                {
+                    callback();
+                } else {
+                    shutdown.request();
+                }
             }
         })
         .map_err(SignalError::Thread)?;
@@ -139,8 +162,8 @@ mod imp {
         fn sigwait(set: *const SigSet, signal: *mut c_int) -> c_int;
     }
 
-    /// The set {SIGINT, SIGTERM}.
-    fn stop_signals() -> SigSet {
+    /// The stop signals, plus SIGHUP when edge configuration reload is enabled.
+    fn stop_signals(reload: bool) -> SigSet {
         let mut set = SigSet { bits: [0; 16] };
         // SAFETY: `set` is a valid, writable `sigset_t`-sized buffer owned by this frame;
         // both functions only write inside it and cannot fail for these signal numbers.
@@ -148,26 +171,29 @@ mod imp {
             sigemptyset(&mut set);
             sigaddset(&mut set, SIGINT);
             sigaddset(&mut set, SIGTERM);
+            if reload {
+                sigaddset(&mut set, super::SIGHUP);
+            }
         }
         set
     }
 
-    pub(super) fn block() -> Result<(), SignalError> {
-        let set = stop_signals();
+    pub(super) fn block(reload: bool) -> Result<(), SignalError> {
+        let set = stop_signals(reload);
         // SAFETY: `set` is an initialised signal set and the old-mask pointer may be null;
         // `pthread_sigmask` changes only the calling thread's mask.
         let status = unsafe { pthread_sigmask(SIG_BLOCK, &set, std::ptr::null_mut()) };
         if status == 0 { Ok(()) } else { Err(SignalError::Mask(status)) }
     }
 
-    /// Waits for SIGINT or SIGTERM; returns false only if waiting failed.
-    pub(super) fn wait() -> bool {
-        let set = stop_signals();
+    /// Returns the selected signal, or None when the wait failed.
+    pub(super) fn wait(reload: bool) -> Option<i32> {
+        let set = stop_signals(reload);
         let mut received: c_int = 0;
         // SAFETY: `set` is an initialised signal set blocked in every thread (see `block`),
         // and `received` is a valid place for the signal number.
         let status = unsafe { sigwait(&set, &mut received) };
-        status == 0
+        (status == 0).then_some(received)
     }
 }
 
@@ -214,7 +240,7 @@ mod imp {
         1
     }
 
-    pub(super) fn block() -> Result<(), SignalError> {
+    pub(super) fn block(_reload: bool) -> Result<(), SignalError> {
         // SAFETY: `on_control` matches `PHANDLER_ROUTINE` (an `extern "system"` function of a
         // `DWORD` returning `BOOL`) and, being a function item, lives as long as the
         // process; registering it has no other precondition.
@@ -228,13 +254,13 @@ mod imp {
     }
 
     /// Waits for a control event; never fails.
-    pub(super) fn wait() -> bool {
+    pub(super) fn wait(_reload: bool) -> Option<i32> {
         let mut pending = PENDING.lock().unwrap_or_else(PoisonError::into_inner);
         while *pending == 0 {
             pending = WAKE.wait(pending).unwrap_or_else(PoisonError::into_inner);
         }
         *pending -= 1;
-        true
+        Some(15)
     }
 }
 
@@ -248,12 +274,12 @@ mod imp {
 mod imp {
     use super::SignalError;
 
-    pub(super) fn block() -> Result<(), SignalError> {
+    pub(super) fn block(_reload: bool) -> Result<(), SignalError> {
         Ok(())
     }
 
-    pub(super) fn wait() -> bool {
-        false
+    pub(super) fn wait(_reload: bool) -> Option<i32> {
+        None
     }
 }
 

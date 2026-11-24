@@ -49,6 +49,9 @@ pub fn run(args: &[String], secret: Option<&str>) -> ExitCode {
             _ => {}
         }
     }
+    if let Some(code) = crate::edge::command(args) {
+        return code;
+    }
     let daemon_args = if args.first().is_some_and(|arg| arg == "console") {
         match console_subcommand(args.get(1..).unwrap_or_default()) {
             Ok(rest) => rest,

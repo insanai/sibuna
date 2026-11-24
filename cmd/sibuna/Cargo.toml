@@ -19,7 +19,8 @@ name = "sibuna"
 path = "src/main.rs"
 
 [features]
-default = ["sqlite", "console"]
+default = ["sqlite", "console", "jlv"]
+jlv = ["dep:sibuna-jlv"]
 # Persistent storage (SID 0011). Without either backend the daemon is the in-memory
 # firewall and depends on no external crate.
 sqlite = ["storage", "sibuna-storage/sqlite", "sibuna-console?/sqlite"]
@@ -50,6 +51,8 @@ sibuna-store = { workspace = true }
 sibuna-core = { workspace = true }
 sibuna-policy = { workspace = true }
 sibuna-challenge = { workspace = true }
+sibuna-lb = { workspace = true }
+sibuna-jlv = { workspace = true, optional = true }
 sibuna-net = { workspace = true }
 sibuna-pow = { workspace = true }
 sibuna-storage = { workspace = true, optional = true }

@@ -151,6 +151,7 @@ pub mod console;
 mod context;
 pub mod daemon;
 mod dispatch;
+mod edge;
 mod incidents;
 mod pages;
 #[cfg(feature = "storage")]

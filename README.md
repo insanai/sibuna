@@ -106,7 +106,7 @@ Use Ctrl+C to stop it. Restrict access to seed, credential and data files with W
 
 ### Build from source
 
-We build and test with **Rust 1.100**; the minimum supported version remains Rust 1.94.
+We build and test with **Rust 1.100**, which the default JLV compiler requires. We can build the JSON-only daemon on Rust 1.94 with `--no-default-features` and select `sqlite,console` as needed.
 The browser solver and the console interface are Rust compiled to WebAssembly; the build does not need Node or npm.
 
 ```sh

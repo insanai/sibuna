@@ -2,8 +2,7 @@
 """Bundle the tracked source of the checked-out commit as sibuna-<version>-source.tar.gz.
 
 The bundle is `git archive` of HEAD under `sibuna-<version>/` plus SOURCE.txt, which names
-the commit and the build command. Crates are fetched from crates.io at build time as
-Cargo.lock pins them (`cargo build --locked`); they are not vendored.
+the commit and the build command. The JLV kernel is bundled. Cargo.lock pins registry and git dependencies.
 """
 import argparse
 import io
@@ -26,7 +25,7 @@ def package(output):
     note = (f'Corresponding source of Sibuna {release}\n'
             f'Repository: https://github.com/insanai/sibuna/tree/v{release}\n'
             f'Commit: {commit}\n\n'
-            'Build (minimum Rust 1.94; release compiler Rust 1.100.0):\n'
+            'Build (release compiler Rust 1.100.0, including JLV):\n'
             '  rustup toolchain install 1.100.0 --profile minimal --target wasm32-unknown-unknown\n'
             '  cargo +1.100.0 build --release --locked -p sibuna\n'
             'Crate versions are pinned by Cargo.lock; their licenses are listed in\n'

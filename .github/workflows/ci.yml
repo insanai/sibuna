@@ -127,9 +127,9 @@ jobs:
           rustup default 1.94.0
       - name: Build the workspace (test code may use newer type inference)
         run: |
-          cargo build --workspace --locked
+          cargo build --workspace --exclude sibuna-jlv --no-default-features --features sibuna/sqlite,sibuna/console --locked
           cargo build -p sibuna --locked --no-default-features
-          cargo build -p sibuna --locked --features postgres-tls
+          cargo build -p sibuna --locked --no-default-features --features sqlite,console,postgres-tls
   distribution:
     name: Distribution recipes
     runs-on: ubuntu-24.04
