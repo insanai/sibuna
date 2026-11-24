@@ -1,13 +1,15 @@
 //! The separate listener for health, readiness and metrics (SID 0020).
 //!
-//! One thread serves one request per connection. It reads a bounded head within a bounded
-//! time, so a slow client delays the next one by at most two seconds. Its bind address is
-//! its access control: it applies no allow-list of its own.
+//! Each connection carries one request. Up to eight connections are served at once, each
+//! on a short-lived thread, so a slow client does not delay a health check. A ninth is
+//! served by the listener thread itself, which bounds the threads. Each read has a
+//! bounded head and a bounded time. The bind address is the access control of the
+//! listener: it applies no allow-list of its own.
 
 use std::io::{self, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
@@ -23,6 +25,8 @@ const MAX_HEAD: usize = 4096;
 const PATIENCE: Duration = Duration::from_secs(2);
 /// Connections served per wake, so that a stop is seen.
 const BATCH: usize = 64;
+/// The most connections served beside the listener thread.
+const HELPERS: usize = 8;
 
 /// What the listener reports on.
 pub(super) struct Sources {
@@ -53,6 +57,7 @@ impl Probe {
         let address = listener.local_addr()?;
         let stop = Arc::new(AtomicBool::new(false));
         let flag = stop.clone();
+        let sources = Arc::new(sources);
         let thread = std::thread::Builder::new()
             .name("edge-probe".into())
             .spawn(move || run(&listener, &sources, &flag))?;
@@ -75,7 +80,28 @@ impl Drop for Probe {
     }
 }
 
-fn run(listener: &TcpListener, sources: &Sources, stop: &AtomicBool) {
+/// Serves `stream` on a thread of its own while fewer than [`HELPERS`] run, and on
+/// this thread otherwise.
+fn hand(stream: TcpStream, sources: &Arc<Sources>, busy: &Arc<AtomicUsize>) {
+    if busy.fetch_add(1, Ordering::AcqRel) >= HELPERS {
+        busy.fetch_sub(1, Ordering::AcqRel);
+        // A failed exchange concerns that client only.
+        let _ = serve(&stream, sources);
+        return;
+    }
+    let (shared, count) = (sources.clone(), busy.clone());
+    let spawned = std::thread::Builder::new().name("edge-probe-client".into()).spawn(move || {
+        let _ = serve(&stream, &shared);
+        count.fetch_sub(1, Ordering::AcqRel);
+    });
+    if spawned.is_err() {
+        // The connection closed with the thread that never ran.
+        busy.fetch_sub(1, Ordering::AcqRel);
+    }
+}
+
+fn run(listener: &TcpListener, sources: &Arc<Sources>, stop: &AtomicBool) {
+    let busy = Arc::new(AtomicUsize::new(0));
     let mut poll = Poller::new().ok();
     if let Some(poll) = poll.as_mut()
         && poll.set(handle(listener), READ, ()).is_err()
@@ -92,8 +118,7 @@ fn run(listener: &TcpListener, sources: &Sources, stop: &AtomicBool) {
         }
         for _ in 0..BATCH {
             let Ok((stream, _)) = listener.accept() else { break };
-            // A failed exchange concerns that client only.
-            let _ = serve(&stream, sources);
+            hand(stream, sources, &busy);
         }
     }
 }
@@ -218,11 +243,12 @@ mod tests {
         // A head without an end is refused once it is as long as the bound.
         let endless = format!("GET /health HTTP/1.1\r\nx: {}", "a".repeat(MAX_HEAD));
         assert!(get(address, &endless).starts_with("HTTP/1.1 400 "));
-        // A client that sends nothing is cut off, and the next client is served.
-        let silent = TcpStream::connect(address).unwrap();
+        // Clients that send nothing do not delay the next one.
+        let silent: Vec<_> = (0..4).map(|_| TcpStream::connect(address).unwrap()).collect();
+        std::thread::sleep(Duration::from_millis(100));
         let started = std::time::Instant::now();
         assert!(get(address, "GET /ready HTTP/1.1\r\n\r\n").starts_with("HTTP/1.1 200 "));
-        assert!(started.elapsed() < Duration::from_secs(5));
+        assert!(started.elapsed() < PATIENCE / 2, "{:?}", started.elapsed());
         drop(silent);
     }
 }
