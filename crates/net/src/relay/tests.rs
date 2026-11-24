@@ -165,7 +165,7 @@ fn uploads_refresh_activity_per_credit_and_rechunk_per_read() {
     let mut source = Reader::new(Pieces { data: chunked, step: 5 }, &mut storage);
     let mut origin = Vec::new();
     let mut decoder = Decoder::new();
-    relay_chunked_body(&mut source, &mut origin, &mut decoder, progress).unwrap();
+    relay_chunked_body(&mut source, &mut origin, &mut decoder, progress, None).unwrap();
     // Each read is decoded and re-sent as one canonical chunk; extensions and the trailer
     // stay behind, and so do the bytes after the body.
     let sent = text(&origin);
@@ -182,7 +182,7 @@ fn uploads_refresh_activity_per_credit_and_rechunk_per_read() {
     let mut source = Reader::new(&b"3\r\nabc\r\n2 \r\nde\r\n0\r\n\r\n"[..], &mut storage);
     let mut origin = Vec::new();
     let mut decoder = Decoder::new();
-    let result = relay_chunked_body(&mut source, &mut origin, &mut decoder, progress);
+    let result = relay_chunked_body(&mut source, &mut origin, &mut decoder, progress, None);
     assert_eq!(result, Err(ProxyError::MalformedRequestBody));
     assert!(!origin.ends_with(LAST_CHUNK));
 }
@@ -403,7 +403,7 @@ fn fuzz_rechunked_uploads_agree_with_a_one_shot_decode() {
         let mut origin = Vec::new();
         let mut decoder = Decoder::new();
         let progress = Progress { activity: None };
-        let result = relay_chunked_body(&mut source, &mut origin, &mut decoder, progress);
+        let result = relay_chunked_body(&mut source, &mut origin, &mut decoder, progress, None);
         let mut sent = origin.clone();
         let mut check = Decoder::new();
         let step = check.decode(&mut sent).expect("Sibuna's own framing is canonical");
