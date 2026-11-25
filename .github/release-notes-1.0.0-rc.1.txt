@@ -1,0 +1,15 @@
+Sibuna 1.0.0-rc.1 is the first release candidate for 1.0. The edge load balancer joins the existing firewall, forward-auth service and operator console in the sibuna executable.
+
+We can start an HTTP edge with two origins:
+
+    sibuna lb --bind :8080 --server 127.0.0.1:9001 --server 127.0.0.1:9002
+
+Use --print-config to save the equivalent JLV configuration and sibuna check -f FILE to validate it. The default build includes the LGPL-licensed JLV compiler. All source builds require Rust 1.100.
+
+The edge routes TCP streams, UDP datagrams and individual HTTP requests. It can terminate TLS and QUIC, receive HTTP/2 and HTTP/3, and forward to HTTP/1.1 origins. Operators can also configure HTTP/2 or HTTP/3 origin pools. The firewall can be enabled per route.
+
+A mesh can distribute a checked configuration from one node. A peer reports "queued" once its file is installed and its revision is waiting for the worker. Use "show servers" to verify the active routes. SQLite is included in the release binary. PostgreSQL support requires a source build with the postgres-tls feature.
+
+Live listener and UDP mapping handoff is available on Linux. The ten-million-flow target and the fifty-million-key spill-cache experiment are still unqualified. SID 0015 records the tested scope and the remaining experiments.
+
+The assets attached to this release are listed in SHA256SUMS. The OpenBSD 7.9 amd64 package is optional and appears only when its native build and package checks pass. The release candidate can be evaluated alongside the current public beta.

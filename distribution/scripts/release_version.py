@@ -27,6 +27,10 @@ def check(binary=None):
     ref = os.environ.get('GITHUB_REF', '')
     if ref.startswith('refs/tags/') and ref != f'refs/tags/v{expected}':
         raise SystemExit(f'release-version: tag {ref} does not match version {expected}')
+    if '-rc.' in expected:
+        notes = ROOT / '.github' / f'release-notes-{expected}.txt'
+        if not notes.is_file() or not notes.read_text().startswith(f'Sibuna {expected} '):
+            raise SystemExit(f'release-version: write release notes for {expected} in {notes.name}')
     chart = CHART.read_text()
     for field in ('version', 'appVersion'):
         value = re.search(r'^' + field + r':\s*"?([^"\s]+)"?\s*$', chart, re.MULTILINE)
