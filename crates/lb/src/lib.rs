@@ -212,6 +212,18 @@ pub struct Edge {
     peering: Option<Box<forward::Peering>>,
 }
 
+/// Gives `cluster` the roster of the mesh and publishes the HTTP routes of `config`
+/// with it (SID 0025).
+fn publish_routes(config: &mut Config, cluster: &ClusterState) -> HttpRoutes {
+    if let Some(mesh) = &config.mesh {
+        cluster.set_roster(mesh.listen(), mesh.peers(), mesh.replicate_shares);
+    }
+    let http = HttpRoutes::default();
+    http.share_cluster(cluster.clone());
+    http.publish(config);
+    http
+}
+
 /// Opens the socket of one listener. With `shared` it may share its address with
 /// another process (`global.reuse_port`). The error names the listener, so the
 /// operator knows which bind failed.
@@ -320,12 +332,7 @@ impl Edge {
         checks.configure(&mut config)?;
         let stats = std::sync::Arc::new(Stats::default());
         stats.adopt(&mut config);
-        if let Some(mesh) = &config.mesh {
-            cluster.set_roster(mesh.listen(), mesh.peers(), mesh.replicate_shares);
-        }
-        let http = HttpRoutes::default();
-        http.share_cluster(cluster.clone());
-        http.publish(&mut config);
+        let http = publish_routes(&mut config, &cluster);
         let budget = FlowBudget::new(&config);
         let mut binds = Vec::new();
         let mut listeners = Vec::new();
