@@ -2,7 +2,7 @@
 //! names drives the connection rate, source stickiness and the header for the server.
 #![allow(clippy::unwrap_used)]
 
-use std::io::{Read, Write};
+use std::io::{ErrorKind, Read, Write};
 use std::net::{Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -90,8 +90,11 @@ fn accepted(origin: &TcpListener, patience: Duration) -> Option<TcpStream> {
 fn send(vip: SocketAddr, header: &str) -> TcpStream {
     let mut stream = TcpStream::connect_timeout(&vip, WAIT).unwrap();
     stream.set_read_timeout(Some(WAIT)).unwrap();
-    stream.write_all(format!("{header}ping").as_bytes()).unwrap();
-    stream.shutdown(Shutdown::Write).unwrap();
+    // A refused connection may already be closed when the client writes or sends FIN.
+    let sent = stream.write_all(format!("{header}ping").as_bytes());
+    if let Err(error) = sent.and_then(|()| stream.shutdown(Shutdown::Write)) {
+        assert!(disconnected(error.kind()), "sending request: {error}");
+    }
     stream
 }
 
@@ -99,9 +102,22 @@ fn v1(source: &str, port: u16) -> String {
     format!("PROXY TCP4 {source} 192.0.2.1 {port} 443\r\n")
 }
 
+fn disconnected(kind: ErrorKind) -> bool {
+    matches!(
+        kind,
+        ErrorKind::BrokenPipe
+            | ErrorKind::ConnectionReset
+            | ErrorKind::NotConnected
+            | ErrorKind::ConnectionAborted
+    )
+}
+
 /// True when the edge closed `stream` without a byte.
 fn is_closed(mut stream: TcpStream) -> bool {
-    matches!(stream.read(&mut [0]), Ok(0) | Err(_))
+    match stream.read(&mut [0]) {
+        Ok(n) => n == 0,
+        Err(error) => disconnected(error.kind()),
+    }
 }
 
 #[test]
