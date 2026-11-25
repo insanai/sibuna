@@ -1,7 +1,7 @@
 The Sibuna Book
 ===============
 
-The mathematics and engineering of web defense.
+The mathematics and engineering of load balancing and web defense.
 
 .. toctree::
    :maxdepth: 2
@@ -15,6 +15,8 @@ The mathematics and engineering of web defense.
    zero-allocation
    algorithms
    wasm-engine
+   edge
+   cluster
    benchmarks
    operations
    reference
