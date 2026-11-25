@@ -256,3 +256,31 @@ fn a_cache_in_memory_works_and_says_that_it_does_not_persist() {
     assert!(cache.flush().is_ok());
     assert!(load_memory_cache(&Options { size: 1, ..OPTIONS }).is_err());
 }
+
+#[cfg(unix)]
+#[test]
+fn what_lies_at_the_name_of_the_new_file_is_removed_and_not_written_through() {
+    let scratch = Scratch::new();
+    let precious = scratch.0.join("precious");
+    fs::write(&precious, b"keep me").unwrap();
+    std::os::unix::fs::symlink(&precious, beside(&scratch.file())).unwrap();
+    let (_cache, report) = load_cache(&scratch.file(), &OPTIONS, NOW).unwrap();
+    assert_eq!(report.outcome, Outcome::Created);
+    assert_eq!(fs::read(&precious).unwrap(), b"keep me");
+    assert!(fs::symlink_metadata(scratch.file()).unwrap().file_type().is_file());
+    assert!(!beside(&scratch.file()).exists());
+}
+
+#[cfg(unix)]
+#[test]
+fn a_lock_on_a_file_that_lost_its_name_does_not_open_the_cache() {
+    let scratch = Scratch::new();
+    seed(&scratch.file());
+    // We open the file, and before we lock it another process puts a new file there.
+    let stale = open_private(&scratch.file(), false).unwrap();
+    fs::rename(scratch.file(), scratch.0.join("moved")).unwrap();
+    fs::write(scratch.file(), b"").unwrap();
+    let stale = lock(&scratch.file(), stale).unwrap();
+    assert!(!names(&scratch.file(), &stale));
+    assert!(names(&scratch.0.join("moved"), &stale));
+}

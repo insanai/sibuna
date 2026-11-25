@@ -128,9 +128,16 @@ pub fn load_memory_cache(options: &Options) -> io::Result<Cache> {
     Cache::new(store, geometry, fresh_salt(options.size), options.max_ttl)
 }
 
-fn open_private(path: &Path) -> io::Result<File> {
+/// Opens `path` for its owner alone. With `new` the file must not exist, and a
+/// symbolic link in its place is not followed.
+fn open_private(path: &Path, new: bool) -> io::Result<File> {
     let mut options = OpenOptions::new();
-    options.read(true).write(true).create(true).truncate(false);
+    options.read(true).write(true).truncate(false);
+    if new {
+        options.create_new(true);
+    } else {
+        options.create(true);
+    }
     #[cfg(unix)]
     {
         use std::os::unix::fs::OpenOptionsExt;
@@ -140,14 +147,39 @@ fn open_private(path: &Path) -> io::Result<File> {
     options.open(path)
 }
 
-/// Opens `path` and takes its lock without waiting.
-fn open_locked(path: &Path) -> Result<File, Error> {
-    let file = open_private(path).map_err(|error| Error::io(path, "open", error))?;
+/// Takes the lock of `file` without waiting.
+fn lock(path: &Path, file: File) -> Result<File, Error> {
     match file.try_lock() {
         Ok(()) => Ok(file),
         Err(std::fs::TryLockError::WouldBlock) => Err(Error::busy(path)),
         Err(std::fs::TryLockError::Error(error)) => Err(Error::io(path, "lock", error)),
     }
+}
+
+/// Whether `path` still names `file`.
+#[cfg(unix)]
+fn names(path: &Path, file: &File) -> bool {
+    use std::os::unix::fs::MetadataExt;
+    let (Ok(held), Ok(named)) = (file.metadata(), std::fs::metadata(path)) else {
+        return false;
+    };
+    held.dev() == named.dev() && held.ino() == named.ino()
+}
+
+/// Whether `path` still names `file`. This platform cannot tell.
+#[cfg(not(unix))]
+fn names(_path: &Path, _file: &File) -> bool {
+    true
+}
+
+/// Opens `path` and takes its lock without waiting.
+///
+/// Another process may have renamed a new file over the path between our open and
+/// our lock. Then we hold the lock of a file without a name, and the cache is in use.
+fn open_locked(path: &Path) -> Result<File, Error> {
+    let file = open_private(path, false).map_err(|error| Error::io(path, "open", error))?;
+    let file = lock(path, file)?;
+    if names(path, &file) { Ok(file) } else { Err(Error::busy(path)) }
 }
 
 /// Reads the first bytes of `file` into `start`. Returns how many there were.
@@ -208,11 +240,22 @@ fn beside(path: &Path) -> PathBuf {
 /// never names a half-made file. Returns the locked new file and its header.
 fn create(path: &Path, geometry: Geometry, now: u64) -> Result<(File, Header), Error> {
     let building = beside(path);
-    let file = open_locked(&building)?;
-    let salt = fresh_salt(now);
     let fail = |error| Error::io(path, "create", error);
-    fill(&file, geometry, salt, now).map_err(fail)?;
-    std::fs::rename(&building, path).map_err(fail)?;
+    // The caller holds the lock of `path`, so no other process builds here now. What
+    // lies at the name is left over from a start that failed. We remove the name and
+    // do not write through it: it may be a link.
+    match std::fs::remove_file(&building) {
+        Err(error) if error.kind() != io::ErrorKind::NotFound => return Err(fail(error)),
+        _ => {}
+    }
+    let file = lock(path, open_private(&building, true).map_err(fail)?)?;
+    let salt = fresh_salt(now);
+    let made = fill(&file, geometry, salt, now).and_then(|()| std::fs::rename(&building, path));
+    if let Err(error) = made {
+        // A half-made file of up to the whole size must not stay on a full disk.
+        let _ = std::fs::remove_file(&building);
+        return Err(fail(error));
+    }
     Ok((file, Header { geometry, file_len: geometry.file_len(), salt }))
 }
 
