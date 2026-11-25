@@ -217,3 +217,78 @@ fn a_cluster_without_the_forward_object_behaves_as_before() {
         assert!(cluster.series(node, "sibuna_edge_flows_active").is_some());
     }
 }
+
+/// The median and the 99th percentile of `samples`, in microseconds.
+fn summary(mut samples: Vec<Duration>) -> (f64, f64) {
+    samples.sort_unstable();
+    let at = |share: f64| samples[((samples.len() - 1) as f64 * share) as usize];
+    (at(0.5).as_secs_f64() * 1e6, at(0.99).as_secs_f64() * 1e6)
+}
+
+/// The time of each of `count` runs of `once`.
+fn timed(count: usize, mut once: impl FnMut()) -> Vec<Duration> {
+    (0..count)
+        .map(|_| {
+            let start = Instant::now();
+            once();
+            start.elapsed()
+        })
+        .collect()
+}
+
+/// Sends `total` bytes through an echoing connection and reads them back. Returns the
+/// MiB per second.
+fn throughput(mut greeting: Greeting, total: usize) -> f64 {
+    let mut writer = greeting.stream.try_clone().unwrap();
+    greeting.stream.set_read_timeout(Some(Duration::from_secs(30))).unwrap();
+    let start = Instant::now();
+    let sender = std::thread::spawn(move || {
+        let block = vec![5u8; 1 << 16];
+        for _ in 0..total / block.len() {
+            writer.write_all(&block).unwrap();
+        }
+    });
+    let mut block = vec![0u8; 1 << 16];
+    let mut left = total;
+    while left > 0 {
+        left -= greeting.stream.read(&mut block).unwrap();
+    }
+    sender.join().unwrap();
+    total as f64 / f64::from(1 << 20) / start.elapsed().as_secs_f64()
+}
+
+/// The cost of the forwarding hop on loopback: the same client, the same owner and the
+/// same server, once through the owner and once through the other node. Run it with
+/// `cargo test --release -p sibuna --test edge_forward -- --ignored --nocapture`.
+#[test]
+#[ignore = "a measurement, not a check"]
+fn measure_the_cost_of_the_forwarding_hop() {
+    let (cluster, _nodes) = cluster(2, Some(""));
+    let owner = cluster.owner(&[0, 1]);
+    for (path, entry) in [("direct", owner), ("forwarded", 1 - owner)] {
+        let connects = timed(2000, || {
+            assert_eq!(Greeting::of(cluster.db[entry]).map(|greeting| greeting.node), Some(owner));
+        });
+        let mut stream = Greeting::of(cluster.db[entry]).unwrap();
+        let echoes = timed(20_000, || assert!(stream.echoes(&[1u8; 64])));
+        let rate = throughput(Greeting::of(cluster.db[entry]).unwrap(), 1 << 30);
+        let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
+        let datagrams = timed(20_000, || {
+            let answer = udp_answer(&socket, cluster.dns[entry], &[1u8; 64]);
+            assert_eq!(answer.map(|answer| answer.0), Some(owner));
+        });
+        let requests = timed(2000, || {
+            assert_eq!(http_body(cluster.web[entry]), format!("n{owner} 127.0.0.1"));
+        });
+        for (what, samples) in [
+            ("tcp connect and first line", connects),
+            ("tcp echo of 64 bytes", echoes),
+            ("udp question and answer", datagrams),
+            ("http request on a new connection", requests),
+        ] {
+            let (median, tail) = summary(samples);
+            println!("{path:9} {what:34} median {median:8.1} us  p99 {tail:8.1} us");
+        }
+        println!("{path:9} tcp echo of 1 GiB                  {rate:8.0} MiB/s");
+    }
+}
