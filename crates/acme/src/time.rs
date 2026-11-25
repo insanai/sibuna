@@ -85,6 +85,13 @@ pub(crate) fn format_utc_time(seconds: u64) -> String {
     format!("{year:02}{:02}{:02}{:02}{:02}{:02}Z", c.month, c.day, c.hour, c.minute, c.second)
 }
 
+/// Writes a time as the content of a DER `GeneralizedTime`: `YYYYMMDDHHMMSSZ`.
+#[cfg(any(test, feature = "test-server"))]
+pub(crate) fn format_generalized_time(seconds: u64) -> String {
+    let c = Civil::from_unix(seconds);
+    format!("{:04}{:02}{:02}{:02}{:02}{:02}Z", c.year, c.month, c.day, c.hour, c.minute, c.second)
+}
+
 /// Reads the content of a DER `UTCTime` (`two_digit_year`) or `GeneralizedTime`, in the
 /// form that certificates use: no fraction, and the zone `Z`.
 pub(crate) fn parse_der_time(text: &[u8], two_digit_year: bool) -> Option<u64> {

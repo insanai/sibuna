@@ -8,7 +8,7 @@ use std::fmt;
 /// only: what the authority sent is filtered before it gets here.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Error {
-    /// `ACME001` to `ACME012`.
+    /// `ACME001` to `ACME014`.
     pub code: &'static str,
     /// The title in upper case, for example `VALIDATION FAILED`.
     pub title: &'static str,
@@ -148,6 +148,19 @@ impl Error {
             "Set `eab: { kid, key_file }` for this authority with the key identifier and \
              the base64url key that the authority gave you. A binding is used once: ask \
              for a new one when the account was created before.",
+        )
+    }
+}
+
+impl Error {
+    /// `ACME013`: the OCSP responder did not answer, or its answer cannot be stapled.
+    pub fn stapling(message: impl Into<String>) -> Self {
+        Self::new(
+            "ACME013",
+            "NO OCSP RESPONSE",
+            message.into(),
+            "The certificate is served without a stapled response. The daemon asks the \
+             responder again later. Set `global.acme.ocsp` to false to stop asking.",
         )
     }
 }

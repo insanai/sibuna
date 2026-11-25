@@ -24,17 +24,20 @@
 //! certificates ([`x509`]), the renewal time and the retry delay ([`schedule`]), and the
 //! files of the certificate store ([`store`]).
 
+mod call;
 mod der;
 mod error;
 mod key;
 mod order;
 mod time;
+mod verify;
 
 pub mod ari;
 pub mod csr;
 pub mod dns;
 pub mod jws;
 pub mod local;
+pub mod ocsp;
 pub mod pem;
 pub mod schedule;
 pub mod store;
@@ -46,6 +49,7 @@ pub mod x509;
 #[cfg(test)]
 pub(crate) static SPAWN: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
+pub use call::Call;
 pub use error::Error;
 pub use jws::Binding;
 pub use key::{KeyPair, random_serial};

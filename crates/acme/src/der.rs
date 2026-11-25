@@ -19,6 +19,10 @@ pub(crate) const UTF8_STRING: u8 = 0x0c;
 pub(crate) const UTC_TIME: u8 = 0x17;
 /// `GeneralizedTime`.
 pub(crate) const GENERALIZED_TIME: u8 = 0x18;
+/// `NULL`.
+pub(crate) const NULL: u8 = 0x05;
+/// `ENUMERATED`.
+pub(crate) const ENUMERATED: u8 = 0x0a;
 
 /// Writes one element: the tag, the length in its shortest form, and the content.
 pub(crate) fn element(tag: u8, content: &[u8]) -> Vec<u8> {
@@ -91,6 +95,15 @@ pub(crate) fn read(der: &[u8]) -> Option<(u8, &[u8], &[u8])> {
 pub(crate) fn read_raw(der: &[u8]) -> Option<(&[u8], &[u8])> {
     let (_, _, rest) = read(der)?;
     Some(der.split_at(der.len() - rest.len()))
+}
+
+/// Takes the first element off `rest`: its tag, its content and the whole element with
+/// its tag and length bytes.
+pub(crate) fn take<'a>(rest: &mut &'a [u8]) -> Option<(u8, &'a [u8], &'a [u8])> {
+    let all = *rest;
+    let (tag, content, after) = read(all)?;
+    *rest = after;
+    Some((tag, content, &all[..all.len() - after.len()]))
 }
 
 /// The elements inside the content of a constructed element. It ends at the first
