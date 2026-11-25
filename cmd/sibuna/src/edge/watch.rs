@@ -27,17 +27,29 @@ fn stamp(path: &str) -> Option<Stamp> {
 pub(super) struct Source {
     path: Option<String>,
     loaded: Mutex<Option<Stamp>>,
+    /// Where `reload cluster` sends the file. Empty without a mesh.
+    cluster: std::sync::OnceLock<Arc<super::cluster::Peers>>,
 }
 
 impl Source {
     /// The topology of the file at `path`.
     pub fn file(path: &str) -> Self {
-        Self { path: Some(path.to_owned()), loaded: Mutex::new(None) }
+        Self { path: Some(path.to_owned()), loaded: Mutex::new(None), cluster: Default::default() }
     }
 
     /// The topology of a quick start. It cannot be loaded again.
     pub fn quick_start() -> Self {
-        Self { path: None, loaded: Mutex::new(None) }
+        Self { path: None, loaded: Mutex::new(None), cluster: Default::default() }
+    }
+
+    /// Names the peers of the mesh. The first call stays.
+    pub fn set_cluster(&self, peers: Arc<super::cluster::Peers>) {
+        let _ = self.cluster.set(peers);
+    }
+
+    /// The peers of the mesh, when the edge has one.
+    pub fn cluster(&self) -> Option<&Arc<super::cluster::Peers>> {
+        self.cluster.get()
     }
 
     /// The path of the file, if there is one.

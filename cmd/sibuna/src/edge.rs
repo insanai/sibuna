@@ -4,6 +4,7 @@
 mod admin;
 #[cfg(feature = "https")]
 mod automatic;
+mod cluster;
 mod control;
 mod ctl;
 mod failure;
@@ -243,7 +244,7 @@ impl Serving {
             | Command::Add { .. }
             | Command::Del { .. }
             | Command::DelBan { .. } => self.change(&command, true),
-            Command::Reload => {
+            Command::Reload | Command::ReloadCluster => {
                 let revision = revision
                     .ok_or_else(|| reload_rejected(io::Error::other("the file was not loaded")))?;
                 let line = self.reload(revision).map_err(reload_rejected)?;
@@ -401,7 +402,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let observe_options = config.observe().clone();
     let mut adapters = Adapters::default();
     adapt(&mut adapters, &mut config)?;
-    let mesh = config.mesh().map(start_mesh).transpose()?;
+    let mesh = config.mesh().map(|spec| start_mesh(spec, &source, &pending)).transpose()?;
     let admin_socket = config.admin_socket().map(str::to_owned);
     let takeover = config.reuse_port();
     let watch = config.watch();
@@ -589,7 +590,13 @@ pub(crate) fn note(line: std::fmt::Arguments<'_>) {
     let _ = writeln!(io::stderr().lock(), "{line}");
 }
 
-fn start_mesh(spec: &sibuna_lb::MeshConfig) -> io::Result<sibuna_lb::Mesh> {
+/// Starts the mesh thread. The admin socket learns where `reload cluster` sends the
+/// file, and with `mesh.accept_config` this node takes the file of a peer (SID 0023).
+fn start_mesh(
+    spec: &sibuna_lb::MeshConfig,
+    source: &Arc<Source>,
+    pending: &Pending,
+) -> io::Result<sibuna_lb::Mesh> {
     let mut key = [0; 32];
     let mut file = File::open(&spec.key_file)?;
     file.read_exact(&mut key)?;
@@ -598,5 +605,10 @@ fn start_mesh(spec: &sibuna_lb::MeshConfig) -> io::Result<sibuna_lb::Mesh> {
     }
     let mut boot = [0; 16];
     crate::random::fill(&mut boot)?;
+    let peers = Arc::new(cluster::Peers::new(spec, &key));
+    source.set_cluster(Arc::clone(&peers));
+    if spec.accept_config {
+        peers.accept(Arc::clone(source), Arc::clone(pending))?;
+    }
     sibuna_lb::Mesh::start(spec, &key, boot)
 }

@@ -25,7 +25,7 @@ set server POOL/NAME weight N [local]
 add server POOL/NAME IP:PORT [weight N] [local]
 del server POOL/NAME [local]
 del ban ADDRESS [local]
-reload
+reload [cluster]
 help
 ";
 
@@ -41,6 +41,8 @@ pub(super) enum Command {
     ShowCa,
     Help,
     Reload,
+    /// Reloads this node and sends its file to the peers of the mesh (SID 0023).
+    ReloadCluster,
     State {
         pool: String,
         name: String,
@@ -170,6 +172,7 @@ pub(super) fn parse(line: &str) -> Result<Command, RuntimeError> {
         ["show", "ca"] => Ok(Command::ShowCa),
         ["help"] => Ok(Command::Help),
         ["reload"] => Ok(Command::Reload),
+        ["reload", "cluster"] => Ok(Command::ReloadCluster),
         ["set", "server", server, "state", word] => {
             let (pool, name) = target(server)?;
             Ok(Command::State { pool, name, state: state(word)? })
@@ -392,6 +395,7 @@ mod tests {
         assert_eq!(parse("show certs"), Ok(Command::ShowCerts));
         assert_eq!(parse("show ca"), Ok(Command::ShowCa));
         assert_eq!(parse("reload"), Ok(Command::Reload));
+        assert_eq!(parse("reload cluster"), Ok(Command::ReloadCluster));
         let (pool, name) = server("app", "10.0.0.1:80");
         let drain = Command::State { pool, name, state: ServerState::Drain };
         assert_eq!(parse("set server app/10.0.0.1:80 state drain"), Ok(drain.clone()));
