@@ -14,6 +14,8 @@ A model of the algorithms of SID 0021, checked with Lean 4.19.0.
 9. Authorities: one attempt asks the listed authorities in order, at most once each, stops at the first that issues, succeeds when one issues and fails when none does.
 10. Renewal information: the pick lies in the window of the authority, the renewal time is at most four fifths of the lifetime and before the expiry, a window in the past is due at once, and a time inside our bounds is taken as it is.
 
+11. Stapling: an OCSP response is stapled only inside its window and only when it says good, and the next question to the responder lies after now and inside the window.
+
 Times are natural numbers of seconds. The JSON documents, the signatures, the sockets and the files are outside the model. Tests cover them.
 -/
 
@@ -781,5 +783,79 @@ theorem ari_follows_the_authority (b e p f : Nat) (h1 : f ≤ p) (h2 : p ≤ lat
   unfold ariRenew
   rw [Nat.max_eq_left h1]
   exact Nat.min_eq_left h2
+
+/-! ## Part K: OCSP stapling -/
+
+/-- What a responder says about a certificate. -/
+inductive OcspStatus where
+  | good | revoked | unknown
+  deriving DecidableEq, Repr
+
+/-- Whether an answer with the status `st` and the window `[t, n)` is stapled at `now`. -/
+def staples (st : OcspStatus) (t n now : Nat) : Bool :=
+  if st = .good ∧ t ≤ now ∧ now < n then true else false
+
+/-- A response is stapled only inside its window. -/
+theorem stapled_inside_window (st : OcspStatus) (t n now : Nat)
+    (h : staples st t n now = true) : t ≤ now ∧ now < n := by
+  unfold staples at h
+  split at h
+  · rename_i hc
+    exact hc.2
+  · contradiction
+
+/-- Only a good answer is stapled. -/
+theorem stapled_is_good (st : OcspStatus) (t n now : Nat)
+    (h : staples st t n now = true) : st = .good := by
+  unfold staples at h
+  split at h
+  · rename_i hc
+    exact hc.1
+  · contradiction
+
+/-- A revoked answer never staples. -/
+theorem revoked_never_staples (t n now : Nat) : staples .revoked t n now = false := by
+  unfold staples
+  rw [if_neg]
+  intro hc
+  exact absurd hc.1 (by decide)
+
+/-- An answer that does not know the certificate never staples. -/
+theorem unknown_never_staples (t n now : Nat) : staples .unknown t n now = false := by
+  unfold staples
+  rw [if_neg]
+  intro hc
+  exact absurd hc.1 (by decide)
+
+/-- When the responder is asked again, for an answer with the window `[t, n)` taken at
+`now`: at the middle of the window, or, once that has passed, at half of the time that
+is left, and one second later at least. -/
+def refreshAt (t n now : Nat) : Nat :=
+  if now < t + (n - t) / 2 then t + (n - t) / 2
+  else if (n - now) / 2 = 0 then now + 1 else now + (n - now) / 2
+
+/-- The next question lies after now: the thread does not ask in a loop. -/
+theorem refresh_after_now (t n now : Nat) : now < refreshAt t n now := by
+  unfold refreshAt
+  split
+  · assumption
+  · split <;> omega
+
+/-- The next question lies inside the window of an answer that is stapled. -/
+theorem refresh_within_window (t n now : Nat) (h1 : t ≤ now) (h2 : now < n) :
+    refreshAt t n now ≤ n := by
+  unfold refreshAt
+  split
+  · omega
+  · split <;> omega
+
+/-- With two seconds left, the next question comes before the window ends: a new
+response can replace the stapled one in time. -/
+theorem refresh_before_the_end (t n now : Nat) (h1 : t ≤ now) (h2 : now + 2 ≤ n) :
+    refreshAt t n now < n := by
+  unfold refreshAt
+  split
+  · omega
+  · split <;> omega
 
 end SibunaAcme
