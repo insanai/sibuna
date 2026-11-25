@@ -62,6 +62,7 @@ Edge load balancer
    sibuna ctl /run/sibuna/edge.sock add server app/blue 10.0.0.3:80
    sibuna ctl /run/sibuna/edge.sock del server app/blue
    sibuna ctl /run/sibuna/edge.sock reload                            # as SIGHUP, with the result
+   sibuna ctl /run/sibuna/edge.sock show info | grep spill            # the hints of a "spill" section: file, cost, counters
    cat fullchain.pem privkey.pem > /etc/sibuna/certs/site.pem   # one HAProxy-style bundle
 
 .. code-block:: json
