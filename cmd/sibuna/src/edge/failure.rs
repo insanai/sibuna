@@ -19,6 +19,11 @@ pub(super) struct Failure {
 pub(super) fn classify(file: Option<&str>, error: &io::Error) -> Failure {
     let text = error.to_string();
     let lower = text.to_ascii_lowercase();
+    // A failure of the database authority has a title and a hint of its own (SID 0028).
+    if let Some((title, hint)) = super::authority::failure(error) {
+        let subject = file.map_or(String::new(), |path| format!("{path}: "));
+        return Failure { title, message: format!("{subject}{text}."), hint };
+    }
     if let Some(path) = file.filter(|path| !Path::new(path).exists()) {
         return Failure {
             title: "configuration file not found",

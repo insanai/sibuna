@@ -2,6 +2,7 @@
 //! the admin socket and the file watcher of SID 0018 live in the submodules.
 
 mod admin;
+mod authority;
 #[cfg(feature = "https")]
 mod automatic;
 mod cluster;
@@ -35,6 +36,7 @@ pub(crate) fn command(args: &[String], secret: Option<&str>) -> Option<ExitCode>
     let path = match args {
         [word, rest @ ..] if word == "lb" => return Some(quick::run(rest, secret)),
         [word, rest @ ..] if word == "ctl" => return Some(ctl::run(rest)),
+        [word, rest @ ..] if word == "authority" => return Some(authority::run(rest)),
         [option, path] if option == "--config-file" => path,
         [check, option, path] if check == "check" && option == "-f" => path,
         _ => return None,
@@ -59,28 +61,57 @@ pub(crate) fn command(args: &[String], secret: Option<&str>) -> Option<ExitCode>
 struct Revision {
     config: Config,
     http: Option<http::Prepared>,
+    /// The revision of the database that the topology came from (SID 0028). The worker
+    /// settles it. `None` for a topology that a file holds whole.
+    published: Option<authority::Stamp>,
 }
 
+/// Loads the file at `path` for a check: a whole topology, or the file of a node in
+/// persistent mode, which is composed with the head of its database.
 fn load(path: &str) -> io::Result<Revision> {
-    let config = topology(path)?;
-    let http = http::Prepared::load(&config)?;
-    Ok(Revision { config, http })
+    load_into(path, &authority::Slot::default())
 }
-fn topology(path: &str) -> io::Result<Config> {
+
+/// Loads the file at `path` for the source that owns `slot`. The first load fixes
+/// whether the daemon serves its file or follows a database.
+fn load_into(path: &str, slot: &authority::Slot) -> io::Result<Revision> {
+    let document = document(path)?;
+    if authority::is_node_file(&document) {
+        return authority::load(&document, slot, &revision);
+    }
+    slot.serve_file()?;
+    revision(&document)
+}
+
+/// Checks the JSON document of a whole topology and prepares its HTTP side.
+fn revision(document: &[u8]) -> io::Result<Revision> {
+    let config = Config::parse(document)?;
+    let http = http::Prepared::load(&config)?;
+    Ok(Revision { config, http, published: None })
+}
+
+/// Reads the file at `path` within the limit of an edge file and returns its JSON
+/// document. A `.jlv` file is evaluated.
+fn document(path: &str) -> io::Result<Vec<u8>> {
     let mut bytes = Vec::new();
     File::open(path)?
         .take(Config::DOCUMENT_LIMITS.max_input_bytes as u64 + 1)
         .read_to_end(&mut bytes)?;
+    evaluate(path, bytes)
+}
+
+/// The JSON document of the source `bytes` that was read from `path`.
+fn evaluate(path: &str, bytes: Vec<u8>) -> io::Result<Vec<u8>> {
     if std::path::Path::new(path).extension().is_some_and(|ext| ext == "jlv") {
         #[cfg(feature = "jlv")]
-        return sibuna_jlv::parse(path, &bytes);
+        return sibuna_jlv::evaluate(path, &bytes).map(String::into_bytes);
         #[cfg(not(feature = "jlv"))]
         return Err(io::Error::new(
             io::ErrorKind::Unsupported,
             "this build needs the jlv feature for .jlv files",
         ));
     }
-    Config::parse(&bytes)
+    Ok(bytes)
 }
 
 /// The slot where the signal thread and the watcher leave a checked revision.
@@ -152,7 +183,18 @@ const REMOTE_DRAINS_PER_STEP: usize = 64;
 impl Serving {
     /// Applies a checked revision and returns the log line. A drain stays while the
     /// file still describes its server. Every other run-time change gives way.
-    fn reload(&mut self, revision: Revision) -> io::Result<String> {
+    fn reload(&mut self, mut revision: Revision) -> io::Result<String> {
+        // The follower of a database learns whether its revision is served (SID 0028).
+        let published = revision.published.take();
+        let outcome = self.replace(revision);
+        if let Some(published) = published {
+            published.settle(outcome.as_ref().err());
+        }
+        outcome
+    }
+
+    /// Puts a checked revision in the place of the serving one.
+    fn replace(&mut self, revision: Revision) -> io::Result<String> {
         if revision.config.admin_socket() != self.admin_socket.as_deref() {
             return Err(io::Error::other("changing global.admin_socket requires a restart"));
         }
@@ -239,8 +281,10 @@ impl Serving {
             Command::ShowStats => Ok(self.stats()),
             Command::ShowCerts => Ok(self.certs()),
             Command::ShowCa => Ok(self.ca()),
-            // The admin thread answers these two. They never reach the worker.
-            Command::Help | Command::ShowCluster => Ok(control::USAGE.to_owned()),
+            // The admin thread answers these. They never reach the worker.
+            Command::Help | Command::ShowCluster | Command::ShowAuthority => {
+                Ok(control::USAGE.to_owned())
+            }
             Command::ReopenLog => {
                 self.observed.shared().reopen_log();
                 Ok(String::new())
@@ -405,7 +449,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let source = Arc::new(source);
     let pending = Pending::default();
     let rotate = prepare(&shutdown, &source, &pending, &revision.config)?;
-    let Revision { mut config, http } = revision;
+    let Revision { mut config, http, published } = revision;
     let observe_options = config.observe().clone();
     let mut adapters = Adapters::default();
     adapt(&mut adapters, &mut config)?;
@@ -440,7 +484,11 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         drains,
     };
     serving.watch(watch)?;
+    authority::follow(&serving.source, &serving.pending)?;
     serving.announce();
+    if let Some(published) = published {
+        published.settle(None);
+    }
     while !shutdown.is_requested() {
         serving.observed.reopen_log_when(&rotate);
         serving.take_pending();

@@ -407,6 +407,7 @@ Usage: sibuna [options]
        sibuna check -f <edge.json|edge.jlv>
        sibuna lb --bind <ip:port> --server <ip:port> [--help]
        sibuna ctl <admin-socket> <command>
+       sibuna authority <command> [--help]
 
 Network:
   --port, -p <port>            Listening port (default: 8080)

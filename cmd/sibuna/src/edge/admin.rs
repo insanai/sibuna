@@ -235,6 +235,10 @@ mod unix {
         if command == Command::ShowCluster {
             return show_cluster(source);
         }
+        // The database authority (SID 0028). The follower answers, not the worker.
+        if command == Command::ShowAuthority {
+            return super::super::authority::describe(source).ok_or_else(no_authority);
+        }
         // The file is compiled and checked here, off the worker, as for SIGHUP.
         let revision = match command {
             Command::Reload | Command::ReloadCluster if source.path().is_none() => {
@@ -273,6 +277,12 @@ mod unix {
     /// file, and whether the peer holds the file of this node.
     fn show_cluster(source: &Source) -> Result<String, RuntimeError> {
         use super::super::cluster;
+        // In persistent mode the nodes are compared by the revision that they serve
+        // (SID 0028). With a mesh the table of the files follows.
+        let revisions = super::super::authority::cluster(source);
+        if let (Some(table), None) = (&revisions, source.cluster()) {
+            return Ok(table.clone());
+        }
         let (Some(peers), Some(path)) = (source.cluster(), source.path()) else {
             return Err(control::failure(
                 "ADM011",
@@ -295,11 +305,24 @@ mod unix {
         }
         let width = |column: usize| rows.iter().map(|row| row[column].len()).max().unwrap_or(0);
         let (node, file) = (width(0), width(1));
-        let mut out = String::new();
+        let mut out = revisions.map_or(String::new(), |table| table + "\n");
         for row in &rows {
             out.push_str(&format!("{:<node$} {:<file$} {}\n", row[0], row[1], row[2]));
         }
         Ok(out)
+    }
+
+    /// The `DBA006` failure of a command that needs a database on an edge that serves
+    /// its file (SID 0028).
+    fn no_authority() -> RuntimeError {
+        control::failure(
+            "DBA006",
+            "NO AUTHORITY",
+            "This edge serves the topology of its file. No database owns it.",
+            "Add `authority: { sqlite: \"FILE\" }` or `authority: { postgres_url_file: \
+             \"FILE\", node: \"NAME\" }` to the file, move `frontends`, `backends` and `http` \
+             to a source, apply it with `sibuna authority apply`, and restart.",
+        )
     }
 
     /// Sends the file that this node just reloaded to every peer, and adds one line

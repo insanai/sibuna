@@ -1350,6 +1350,7 @@ dependencies = [
  "quinn",
  "rustls",
  "sibuna-acme",
+ "sibuna-authority",
  "sibuna-challenge",
  "sibuna-cidr",
  "sibuna-console",
