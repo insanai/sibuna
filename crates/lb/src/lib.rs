@@ -2,7 +2,12 @@
 //! Prepare a [`Config`] off the worker, bind all listeners, then call [`Edge::step`] in
 //! the worker loop. Replacing the routing configuration preserves established flows.
 
+mod affinity;
+pub use affinity::{Affinity, AffinityCounters, AffinityKey, AffinityStore, AffinityTable, Kept};
+mod cluster;
+pub use cluster::ClusterState;
 mod acme;
+mod quota;
 pub use acme::{
     AcmeChallenge, AcmeIssuer, AcmeOptions, Authority, AutoName, AutomaticHttps, CertificateKey,
     DnsConfig, DnsProvider, Eab, INTERNAL_LIFETIME, Internal, LETSENCRYPT, LETSENCRYPT_STAGING,
@@ -155,6 +160,8 @@ struct DatagramFlow {
 
 /// A single-owner packet worker with bounded flows and a separate TCP connector queue.
 pub struct Edge {
+    /// The sticky table and the shares of the capped servers (SID 0025).
+    cluster: ClusterState,
     http: HttpRoutes,
     stats: std::sync::Arc<Stats>,
     budget: FlowBudget,
@@ -225,6 +232,12 @@ impl Edge {
         self.budget.clone()
     }
 
+    /// Shares the sticky table and the shares of the capped servers (SID 0025). The
+    /// daemon gives them to [`Mesh::share_state`], which replicates them.
+    pub fn cluster_state(&self) -> ClusterState {
+        self.cluster.clone()
+    }
+
     /// Shares the HTTP request scheduler with the firewall.
     pub fn http_routes(&self) -> HttpRoutes {
         self.http.clone()
@@ -270,12 +283,24 @@ impl Edge {
 
     /// Binds every configured listener before starting the worker. A failure releases
     /// any listeners already bound.
-    pub fn bind(mut config: Config) -> io::Result<Self> {
+    pub fn bind(config: Config) -> io::Result<Self> {
+        let cluster = ClusterState::new(config.sticky_entries);
+        Self::bind_with(config, cluster)
+    }
+
+    /// As [`Edge::bind`], with the sticky table and the shares of `cluster`
+    /// (SID 0025). A caller that keeps the sticky table elsewhere than in memory
+    /// gives its store to `cluster` first, with [`ClusterState::use_store`].
+    pub fn bind_with(mut config: Config, cluster: ClusterState) -> io::Result<Self> {
         let mut checks = health::Checks::default();
         checks.configure(&mut config)?;
         let stats = std::sync::Arc::new(Stats::default());
         stats.adopt(&mut config);
+        if let Some(mesh) = &config.mesh {
+            cluster.set_roster(mesh.listen(), mesh.peers(), mesh.replicate_shares);
+        }
         let http = HttpRoutes::default();
+        http.share_cluster(cluster.clone());
         http.publish(&mut config);
         let budget = FlowBudget::new(&config);
         let mut binds = Vec::new();
@@ -293,7 +318,7 @@ impl Edge {
             binds.push(bind);
             listeners.push(Listener { socket, route, paused_until: None });
         }
-        let mut loads = Loads::default();
+        let mut loads = Loads::of(cluster.clone());
         let pools = config
             .pools
             .into_iter()
@@ -301,6 +326,7 @@ impl Edge {
             .collect();
         let (flow_log, flow_ends) = flowlog::FlowLog::new(stats.clone());
         Ok(Self {
+            cluster,
             http,
             stats,
             budget,
@@ -358,6 +384,7 @@ impl Edge {
         let drained = self.drained_servers();
         self.budget.configure(&config);
         self.udp_limit = config.udp_limit;
+        self.cluster.set_slots(config.sticky_entries);
         self.http.publish(&mut config);
         self.pools = config
             .pools

@@ -78,6 +78,7 @@ mod tests {
             addr: ([127, 0, 0, 1], 443).into(),
             weight,
             limit: 20,
+            fleet: false,
             backup,
             remote: false,
             via: None,
