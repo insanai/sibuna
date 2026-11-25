@@ -5,7 +5,7 @@
 :sid-type: Architectural Specification
 :sid-authors: ["Vikrant Rathore"]
 :sid-created: 2026-11-24
-:sid-updated: 2026-11-24
+:sid-updated: 2026-11-25
 :sid-discussion: No external discussion URL assigned
 :sid-summary: Obtains and renews the certificates of an edge frontend through ACME when the operator names the hosts, answers HTTP-01, TLS-ALPN-01 and DNS-01 challenges in the daemon, issues for internal names and IP addresses from a local authority, installs each certificate for new handshakes without a reload, and redirects HTTP to HTTPS for the managed names.
 :sid-labels: ["architecture","load-balancer","tls","operations"]
@@ -587,6 +587,137 @@ We add no name constraints to the root. A constraint to the configured names wou
 
 The quick start gains ``--acme-dns-hook PROGRAM``. ``sibuna lb --tls auto --domain localhost --server ADDR`` needs no flag: the name is internal. The RFC 2136 provider needs a file.
 
+On demand, more authorities, stapling and the closed gaps
+---------------------------------------------------------
+
+This part closes gaps of the first two parts. It adds issuance on demand, a list of authorities with external account binding and renewal information, OCSP stapling, a Cloudflare provider, and changes to the local authority, the hook, the update, the keys and the thread.
+
+.. list-table:: The new keys
+   :header-rows: 1
+   :widths: 30 16 54
+
+   * - Key
+     - Default
+     - Meaning
+   * - ``tls.on_demand``
+     - ``false``
+     - The frontend obtains a certificate at the first handshake for a name that it does not serve yet. It needs ``global.acme.on_demand`` with a guard.
+   * - ``global.acme.on_demand.ask``
+     - none
+     - An ``http`` or ``https`` URL. We send ``GET URL?domain=NAME``. A status from 200 to 299 allows the name.
+   * - ``global.acme.on_demand.allow``
+     - none
+     - One to 64 suffixes. ``example.org`` allows that name and every name below it.
+   * - ``global.acme.on_demand.rate``
+     - 10
+     - New certificates per hour, 1 to 1000.
+   * - ``global.acme.on_demand.names``
+     - 100
+     - The most names held at once, 1 to 10000.
+   * - ``global.acme.on_demand.wait``
+     - 20
+     - The longest wait of a handshake in seconds, 1 to 120.
+   * - ``global.acme.eab``
+     - none
+     - ``{ kid, key_file }``: the external account binding of the first authority. The file holds the base64url key.
+   * - ``global.acme.fallback``
+     - none
+     - One to three more authorities, each ``{ directory, email, ca_file, eab }``.
+   * - ``global.acme.ari``
+     - ``true``
+     - Ask the authority when to renew (RFC 9773).
+   * - ``global.acme.ocsp``
+     - ``true``
+     - Staple an OCSP response when the certificate names a responder.
+   * - ``global.acme.key``
+     - ``"p256"``
+     - The key of new certificates: ``"p256"`` or ``"p384"``.
+   * - ``global.acme.dns.cloudflare``
+     - none
+     - ``{ token_file, zone }``: the third provider. ``zone`` is optional.
+   * - ``global.acme.dns.follow_cname``
+     - ``true``
+     - Write the record at the target of a CNAME delegation.
+   * - ``global.acme.dns.rfc2136.unsigned``
+     - ``false``
+     - Allow an update without a TSIG key to a server that is not on a loopback address.
+   * - ``global.acme.internal.constraints``
+     - none
+     - Name suffixes and address ranges that the root of the local authority may issue for.
+
+Issuance on demand
+~~~~~~~~~~~~~~~~~~
+
+A frontend with ``on_demand: true`` may have an empty ``auto`` list. A handshake that names a host for which the frontend has no certificate, neither automatic nor from a file, asks for one and waits.
+
+::
+
+   handshake (edge-tls)                      thread edge-acme
+   --------------------                      ----------------
+   read ClientHello, name N
+   N served already?  -- yes --> continue
+   N admissible?      -- no  --> continue (default certificate or alert)
+   request(N), wait at most `wait`  ----->   stored certificate? load it
+                                             ask(N)?  no: deny N for 60 s
+                                             token?   no: deny N until one is back
+                                             order or issue, install
+   woken or timed out  <-----------------    wake the waiters
+   continue with the usual choice
+
+The daemon refuses a file that turns ``on_demand`` on without ``ask`` and without ``allow``. This is the refusal by default: without a guard, anybody who can reach the listener could make us order certificates for any name that points at us, and spend the limits of the authority.
+
+The handshake applies the cheap guards itself, and never talks to a network. The name is admissible when it is a host name of at most 253 bytes, not an address and not a wildcard, when a suffix of ``allow`` covers it if the list exists, when it is not denied at the moment, and when the table of held names and the queue have room. The queue holds at most 64 names. A name that is not admissible is not queued. The handshake continues at once with the choice of SID 0015: the default certificate, or the alert under ``strict_sni``.
+
+The thread applies the guards that cost time. It first looks into the storage: a certificate that an earlier run or another node obtained is loaded and costs nothing. Else it asks the ``ask`` URL, with a limit of 5 seconds and one try. A failure to ask denies the name. Then it takes a token. The bucket holds ``rate`` tokens and gains one every :math:`3600 / rate` seconds. An empty bucket denies the name until the next token. Only then it orders, with the issuer that the name and ``tls.issuer`` select, as for a listed name. A denied name is remembered for 60 seconds, in a table of at most 1024 names, so a flood of handshakes for one name asks once.
+
+A held name is a managed name: it has a line in ``show certs``, with ``on-demand`` in a new column ``origin``, and it is renewed in the background. When its renewal is due and no handshake named it since the certificate was obtained, it is released instead: the name leaves the table and the certificate stays in the storage until it expires. So the table holds names that clients use, and its bound ``names`` is a bound on the renewals too. A name that fails is released after its first failure and denied for the retry delay of that failure count.
+
+The wait is bounded by ``wait`` and by the handshake deadline of the listener. A handshake that times out continues with the usual choice. The order goes on, and a later handshake finds the certificate. One order runs at a time, as before, so a burst of new names is served in sequence and some handshakes time out. QUIC handshakes do not wait: the QUIC library asks the resolver without a place to wait. They use the certificate once a TCP handshake has obtained it.
+
+Authorities, the binding and renewal information
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The keys ``directory``, ``email``, ``ca_file`` and ``eab`` describe the first authority. ``fallback`` lists up to three more. One attempt for a name asks the authorities in order and stops at the first certificate. Each failure is logged with the authority. The attempt fails when all fail, and the retry delay then counts one failure. Each authority has its own account and its own directory in the storage. The lock, the retry state and the DNS record of a name live in the directory of the first authority, so two nodes never order one name at two authorities at once. A stored certificate of any listed authority is served; the one that expires last wins. A name is public for the choice of the issuer when any listed authority is one of the public directories.
+
+With ``eab`` the registration carries ``externalAccountBinding`` (RFC 8555, section 7.3.4): a JWS with ``alg`` HS256, the ``kid`` of the binding and the URL of ``newAccount`` in its header, the account key as its payload, and an HMAC-SHA256 with the decoded key. A directory whose ``meta`` says ``externalAccountRequired`` and that has no ``eab`` fails with a hint before any request is signed.
+
+With ``ari`` the thread asks the ``renewalInfo`` URL of the directory for each served certificate of that authority. The identifier is the base64url of the authority key identifier, a dot, and the base64url of the serial (RFC 9773, section 4.1). The answer has a window. We pick the time :math:`s + (h \bmod (e - s))` in the window :math:`[s, e)`, where :math:`h` is a hash of the serial. The pick is therefore the same after a restart and on every node. The renewal time is the pick, and never later than four fifths of the lifetime: an authority cannot park a certificate until it expires. A window in the past renews at once. We ask again after the ``Retry-After`` of the answer, clamped to between one hour and one day, six hours without it. A failure to ask keeps the last answer, or the rule of two thirds. An order that replaces a certificate names it in ``replaces``.
+
+OCSP stapling
+~~~~~~~~~~~~~
+
+When the leaf names an OCSP responder with an ``http`` URL in its authority information access, the thread asks it after the certificate is installed. The request is a POST of an OCSP request with one SHA-1 certificate identifier and no nonce. The response is accepted when it is at most 64 KiB, successful, names our certificate with the status ``good``, has :math:`thisUpdate \le now < nextUpdate`, and carries a signature that verifies with the key of the issuer, or with a certificate inside the response that the issuer signed and that has the OCSP signing purpose. An accepted response is stored beside the certificate and stapled to new handshakes. It is asked again at half of its validity, and after a failure with the retry delays. A response that expires is removed from the handshakes. The status ``revoked`` is logged, staples nothing and makes the renewal due at once. A certificate without a responder gets nothing. Let's Encrypt names none since 2025. A responder is contacted only when a certificate names it.
+
+Cloudflare and the delegation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``dns: { cloudflare: { token_file: "/etc/sibuna/cf.token" } }`` writes the record through the API of Cloudflare, version 4, with a scoped token. We find the zone by asking ``GET /zones?name=Z`` for the owner without its first label, then without two, and so on, or take ``zone``. We create the record with ``POST /zones/ID/dns_records`` (type TXT, a TTL of 120). The cleanup lists the TXT records of the owner with our value and deletes each. Every call sends ``Authorization: Bearer`` and has a limit of 30 seconds. The token is read from the file at each use and never logged. A key ``api`` replaces the base URL for tests. It accepts an ``http`` URL on a loopback address and nothing else, so a file cannot send the token to another host.
+
+With ``follow_cname`` every provider receives the final name of the record: we follow CNAME records from ``_acme-challenge.NAME`` with the resolver, at most 8 steps, before ``present``. The hook gets the target as ``RECORD`` and the first owner in ``SIBUNA_ACME_CHALLENGE``. The stored record names the target, so the cleanup removes what was written. A resolver that does not answer fails the attempt with ACME010.
+
+The local authority
+~~~~~~~~~~~~~~~~~~~
+
+**Name constraints.** ``internal.constraints`` lists DNS suffixes and address ranges. They are written into the root as a critical name constraints extension with permitted subtrees, when the root is created. We put them on the root and not on the intermediate: both keys lie in one directory, so a constraint on the intermediate stops nobody who holds that directory, while a constraint on the root protects every machine that trusts it. A stolen root key then cannot issue for a bank. The default is no constraint, because ``issuer: "internal"`` may name any host. A root that exists is not rewritten. When its constraints differ from the list, the local authority fails with ACME011 and a hint, and ``sibuna check`` refuses a local name outside the list.
+
+**Revocation.** We publish no revocation list. A leaf lives 12 hours and is renewed at 8. A list would have to be fetched by the clients, and the clients of a private authority (browsers, curl, language runtimes) do not fetch lists unless told to, each in its own way. Its ``nextUpdate`` would be as long as the life of a leaf. Removing the name from the file stops the daemon from serving and renewing it. A stolen leaf key is useful for at most the lifetime, which ``internal.lifetime`` shortens. A stolen intermediate key ends with the intermediate, after at most 7 days. A stolen root key needs a new root, with or without a list.
+
+**The root file.** ``root.crt`` has mode 0644 and the directory ``local`` has mode 0755. The keys keep 0600 and the directories ``certs`` and ``locks`` keep 0700. Whether another user reaches the file depends on the storage directory, which we create with 0700 and never change afterwards.
+
+**A lost root.** A stored leaf whose chain does not end at the present root is not served. It is replaced at the start.
+
+**No ACME server.** The local authority does not answer ACME requests of other machines. That needs a server for the directory, nonces, accounts, orders, authorizations with outbound validation, and certificates, with the verification of every JWS: a second product. Nodes that share the storage share the root already.
+
+Smaller changes
+~~~~~~~~~~~~~~~
+
+- The hook runs in a process group of its own. After the timeout the whole group is killed.
+- An RFC 2136 server that is not on a loopback address needs a TSIG key, or ``unsigned: true``.
+- The record of a name that left the file is cleaned in the same round, and at the start for every record that the storage remembers.
+- ``sibuna lb`` gains ``--acme-issuer acme|internal`` and ``--acme-on-demand-ask URL``.
+- ``key: "p384"`` makes certificate keys on P-384. The account key stays P-256. RSA keys are not offered: the cryptography of the tree (``ring``) signs with an RSA key and cannot make one.
+- The certificate thread is supervised. A panic is logged, the thread starts again after 5 seconds, then 10, up to 5 minutes, and reads its state from the storage as after a restart.
+
 Rationale and alternatives
 --------------------------
 
@@ -796,6 +927,8 @@ Review history
 - 2026-11-24. Author's review of the implementation of the second part, with the tests and the Pebble run as instruments. It found nine defects and fixed each. (1) A name that could not be written left its first labels in the message; ``write_name`` now removes them, and a test compares the buffer. (2) The end of the hook's output was cut where it mattered: both streams were joined and the end was dropped; each stream now keeps its own last 1024 bytes, standard output first. (3) The tests of the hook failed now and then with "Text file busy", because a program started by one test thread held the script of another for a moment; the tests that write a script or start a program take one lock. (4) The certificate of a leaf with a short lifetime was due before it was issued, because the validity started a minute early; a short leaf now starts half its lifetime early. (5) The daemon announced "from Let's Encrypt" for names that all go to the local authority; the line now names each source with its count, and a node with internal names only opens no ACME account. (6) A record whose cleanup had failed was forgotten by the next order, which stores its own record in the same file; the next attempt now cleans first. (7) The cleanup of a leftover record ran without the lock of the name, so on shared storage it could have removed the record of another node's running order; it now takes the lock and leaves the record when it cannot. (8) The check of the test that trusts "another root" used the intermediate, which a verifier accepts as an anchor; it now uses a root of another authority. (9) The hint of a failed validation named ports only; it now names the TXT record for DNS-01. The review also recorded the gaps 3 to 12 above.
 - 2026-11-24. Fourth merge with ``main``, after SID 0022 and the function ``note`` for the lines of the running edge. No file conflicted. The new diagnostic of a failed cleanup is written through ``note``, like the other lines of the certificate thread.
 - 2026-11-24. Fifth merge with ``main``, after the ``local`` word of ``set server``. One file conflicted, ``cmd/sibuna/src/edge/control.rs``, in the usage text: the line ``show ca`` and the new form of ``set server`` both stay.
+- 2026-11-25. Third part, first draft, after a fast-forward to ``main`` with SID 0019, 0020 and 0022: issuance on demand, a list of authorities, the binding, renewal information, stapling, Cloudflare, constraints, and the smaller changes.
+- 2026-11-25. Author's review of the third part before implementation. It found nine faults and changed the draft for each. The draft asked the ``ask`` URL from the handshake; a slow answer would have held a worker of the TLS runtime, so the handshake applies only guards that read memory and the thread asks. The draft counted handshakes against the rate; a client that repeats one name would have spent it, so a token is taken per order, after the storage and ``ask`` had their say. The draft asked ``ask`` again for every handshake of a denied name; a denial is now remembered for 60 seconds in a bounded table. The draft renewed every held name for ever, so the table would have filled with names that nobody uses; a name without a handshake since its certificate is released at its renewal. The draft picked a random time in the window of the authority; each restart would have picked again and moved the renewal, so the pick is a function of the serial. The draft took the window as it came; an authority could have moved a renewal past the expiry, so the pick is capped at four fifths of the lifetime. The draft gave every authority its own lock; two nodes could then have ordered one name at two authorities, so the lock is that of the first authority. The draft put the name constraints on the intermediate; the root key lies beside it, so they are on the root. The draft let the file set the base URL of the Cloudflare API; a wrong or hostile file would have sent the token anywhere, so only a loopback ``http`` URL is accepted.
 
 References
 ----------
