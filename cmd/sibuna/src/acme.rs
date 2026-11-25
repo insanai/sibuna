@@ -93,6 +93,12 @@ pub(crate) fn log(event: &Event) {
             let _ = diagnostic::render(&mut text, &title, &message, &error.hint);
             crate::edge::note(format_args!("{}", text.trim_end_matches('\n')));
         }
+        Event::Refused { name, reason, seconds } => {
+            crate::edge::note(format_args!(
+                "ACME000: no certificate on demand for {name}: {reason}; refused for \
+                 {seconds} second(s)"
+            ));
+        }
         Event::Obtained { name, not_after, renewed } => {
             let verb = if *renewed { "renewed" } else { "obtained" };
             crate::edge::note(format_args!(
@@ -151,7 +157,7 @@ pub(crate) fn render_ca(
 /// The answer to `show certs`: one line per managed name under a header.
 pub(crate) fn render_certs(certificates: &[CertificateStatus]) -> String {
     let time = |seconds: Option<u64>| seconds.map_or("-".to_owned(), sibuna_acme::format_rfc3339);
-    let header = ["name", "via", "issuer", "expires", "renews", "state", "error"];
+    let header = ["name", "via", "issuer", "expires", "renews", "state", "origin", "error"];
     let mut rows = vec![header.map(str::to_owned)];
     for certificate in certificates {
         rows.push([
@@ -165,10 +171,11 @@ pub(crate) fn render_certs(certificates: &[CertificateStatus]) -> String {
             time(certificate.not_after),
             time(certificate.next_attempt),
             certificate.state.word().to_owned(),
+            certificate.origin.to_owned(),
             certificate.error.clone().unwrap_or_else(|| "-".to_owned()),
         ]);
     }
-    let mut widths = [0; 7];
+    let mut widths = [0; 8];
     for row in &rows {
         for (width, cell) in widths.iter_mut().zip(row) {
             *width = (*width).max(cell.len());
@@ -225,6 +232,7 @@ mod tests {
     fn show_certs_is_a_table_with_one_word_per_column() {
         let ready = CertificateStatus {
             name: "example.org".to_owned(),
+            origin: "listed",
             via: "dns-01",
             issuer: Some("Test Authority".to_owned()),
             not_after: Some(1_800_000_000),
@@ -234,6 +242,7 @@ mod tests {
         };
         let failing = CertificateStatus {
             name: "b.example.org".to_owned(),
+            origin: "on-demand",
             via: "local",
             issuer: None,
             not_after: None,
@@ -255,9 +264,10 @@ mod tests {
                 "2027-01-15T08:00:00Z",
                 "2027-01-03T18:13:20Z",
                 "ready",
+                "listed",
                 "-"
             ]
         );
-        assert!(lines[2].ends_with("retry VALIDATION FAILED (ACME005)"));
+        assert!(lines[2].ends_with("retry on-demand VALIDATION FAILED (ACME005)"));
     }
 }

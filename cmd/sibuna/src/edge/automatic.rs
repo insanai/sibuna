@@ -28,6 +28,9 @@ pub(super) fn start(
     if local > 0 {
         sources.push(format!("{local} name(s) from the local authority"));
     }
+    if config.on_demand {
+        sources.push("names on demand".to_owned());
+    }
     super::note(format_args!(
         "Sibuna edge: automatic HTTPS for {}, storage {}",
         sources.join(" and "),
