@@ -372,14 +372,15 @@ impl Peering {
         });
     }
 
-    /// Publishes the gauges.
-    fn publish(&self) {
+    /// Publishes the gauges. `active` says whether the node forwards now.
+    fn publish(&self, active: bool) {
         let flows: usize = self
             .peers
             .iter()
             .map(|peer| peer.load.flows.load(Ordering::Relaxed) + peer.entries)
             .sum();
-        self.counters.set_gauges(u64::from(self.eligible.count_ones()), flows as u64);
+        let eligible = u64::from(self.eligible.count_ones());
+        self.counters.set_gauges(active, eligible, flows as u64);
     }
 }
 
@@ -485,11 +486,12 @@ impl Edge {
         }
         self.name_fronts();
         self.expire_streams(now);
+        let active = self.forwards();
         let Some(peering) = self.peering.as_mut() else { return };
         peering.ping(now);
         peering.refresh(now);
         peering.expire_entries(now);
-        peering.publish();
+        peering.publish(active);
     }
 
     /// Handles a readable socket of the forwarding port.

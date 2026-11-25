@@ -39,6 +39,7 @@ const REJECTED: [&str; 5] = ["stranger", "bad_tag", "stale", "malformed", "unkno
 #[derive(Debug, Default)]
 pub(crate) struct Counters {
     on: AtomicBool,
+    active: AtomicU64,
     eligible: AtomicU64,
     flows_out: AtomicU64,
     streams_out: AtomicU64,
@@ -61,7 +62,9 @@ impl Counters {
         self.on.store(true, Ordering::Relaxed);
     }
 
-    pub fn set_gauges(&self, eligible: u64, flows_out: u64) {
+    /// `active` says whether the node forwards now: the mesh is regional.
+    pub fn set_gauges(&self, active: bool, eligible: u64, flows_out: u64) {
+        self.active.store(u64::from(active), Ordering::Relaxed);
         self.eligible.store(eligible, Ordering::Relaxed);
         self.flows_out.store(flows_out, Ordering::Relaxed);
     }
@@ -109,6 +112,7 @@ impl Counters {
             return Ok(());
         }
         let series = [
+            ("sibuna_edge_forward_active", "gauge", &self.active),
             ("sibuna_edge_forward_peers_eligible", "gauge", &self.eligible),
             ("sibuna_edge_forward_flows_out", "gauge", &self.flows_out),
             ("sibuna_edge_forward_streams_out_total", "counter", &self.streams_out),
@@ -150,7 +154,7 @@ mod tests {
         counters.local(Local::PeerLimit);
         counters.rejected(Rejected::Stranger);
         counters.stream_out();
-        counters.set_gauges(2, 5);
+        counters.set_gauges(true, 2, 5);
         counters.write_prometheus(&mut text).expect("write");
         for line in [
             "sibuna_edge_forward_peers_eligible 2",
