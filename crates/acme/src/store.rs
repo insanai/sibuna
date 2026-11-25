@@ -97,6 +97,18 @@ pub(crate) fn create_private_dir(path: &Path) -> io::Result<()> {
     builder.create(path)
 }
 
+/// Sets the mode of a file or a directory. Does nothing where modes do not exist.
+pub(crate) fn set_mode(path: &Path, mode: u32) -> io::Result<()> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt as _;
+        fs::set_permissions(path, fs::Permissions::from_mode(mode))?;
+    }
+    #[cfg(not(unix))]
+    let _ = (path, mode);
+    Ok(())
+}
+
 /// Opens a new file that only the owner may read. Fails when the file exists.
 pub(crate) fn create_private_file(path: &Path) -> io::Result<File> {
     let mut options = OpenOptions::new();

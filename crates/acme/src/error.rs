@@ -139,6 +139,21 @@ impl Error {
 }
 
 impl Error {
+    /// `ACME011`: the root of the local authority has other name constraints than the
+    /// configuration lists.
+    pub fn constraints(message: impl Into<String>) -> Self {
+        Self::new(
+            "ACME011",
+            "LOCAL AUTHORITY FAILED",
+            message.into(),
+            "Write the list the root was made with into `global.acme.internal.constraints`. \
+             Or remove `root.pem`, `root.crt` and `intermediate.pem` in the directory \
+             `local`: the daemon then makes a new root, which every client must install.",
+        )
+    }
+}
+
+impl Error {
     /// `ACME012`: the authority wants an external account binding, or refused ours.
     pub fn binding(message: impl Into<String>) -> Self {
         Self::new(

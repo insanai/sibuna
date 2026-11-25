@@ -312,7 +312,7 @@ impl Driver {
 
     fn try_local(&self) -> Result<Local, Error> {
         let storage = Path::new(&self.shared.options.storage);
-        let authority = LocalAuthority::open(storage, now())?;
+        let authority = LocalAuthority::open(storage, now(), &[])?;
         let store = Store::open_local(storage)?;
         Ok(Local { authority, store })
     }

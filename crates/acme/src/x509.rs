@@ -315,6 +315,9 @@ pub struct Template<'a> {
     /// Mark the certificate as that of a delegated OCSP signer: the extended key usage
     /// OCSPSigning.
     pub ocsp_signing: bool,
+    /// The DER value of the name constraints extension, which is written critical. See
+    /// [`crate::constraints::value`].
+    pub name_constraints: Option<&'a [u8]>,
 }
 
 fn common_name(text: &str) -> Vec<u8> {
@@ -347,6 +350,9 @@ fn extensions(template: &Template<'_>, subject_key: &[u8]) -> Vec<u8> {
         let value = der::sequence(&[TRUE, length.as_deref().unwrap_or_default()]);
         list.extend(extension(BASIC_CONSTRAINTS, true, &value));
         list.extend(extension(KEY_USAGE, true, USAGE_AUTHORITY));
+    }
+    if let Some(value) = template.name_constraints {
+        list.extend(extension(crate::constraints::NAME_CONSTRAINTS, true, value));
     }
     if template.server {
         list.extend(extension(KEY_USAGE, true, USAGE_SERVER));
