@@ -460,9 +460,10 @@ fn a_wildcard_is_proved_with_dns_01_through_a_hook_and_serves_one_label() {
     );
     let hook = script(&home, "dns-hook", &body);
     let acme = format!(
-        r#","challenge":"dns-01","dns":{{"hook":"{}","servers":["{}"],"timeout":20}}"#,
+        r#","challenge":"dns-01","dns":{{"hook":"{}","resolver":"{address}",
+            "servers":["{address}"],"timeout":20}}"#,
         hook.display(),
-        dns.address
+        address = dns.address
     );
     // The name and its wildcard share the record `_acme-challenge.apex.example.test`.
     let (apex, wildcard) = ("apex.example.test", "*.apex.example.test");
@@ -519,7 +520,8 @@ fn a_dynamic_update_signed_with_tsig_proves_a_wildcard() {
     });
     let acme = format!(
         r#","dns":{{"rfc2136":{{"server":"{address}","key_name":"sibuna-key.",
-            "key_file":"{key}","zone":"example.test"}},"servers":["{address}"],"timeout":20}}"#,
+            "key_file":"{key}","zone":"example.test"}},"resolver":"{address}",
+            "servers":["{address}"],"timeout":20}}"#,
         address = dns.address,
         key = key_file.display()
     );
@@ -566,7 +568,12 @@ fn a_failing_provider_and_an_invisible_record_are_reported_with_hints() {
     // A hook that fails: its status and the end of its output are in the diagnostic.
     let home_one = home("dns-fail");
     let hook = script(&home_one, "dns-hook", "echo 'the token is wrong' >&2\nexit 7");
-    let acme = format!(r#","dns":{{"hook":"{}","servers":["{}"]}}"#, hook.display(), dns.address);
+    // The resolver is the DNS server of the test: no test asks that of the system.
+    let acme = format!(
+        r#","dns":{{"hook":"{}","resolver":"{address}","servers":["{address}"]}}"#,
+        hook.display(),
+        address = dns.address
+    );
     let setup = Setup {
         authority: &authority,
         origin: origin(),
@@ -596,9 +603,9 @@ fn a_failing_provider_and_an_invisible_record_are_reported_with_hints() {
     let log_file = home_two.join("hook.log");
     let hook = script(&home_two, "dns-hook", &format!("echo \"$1\" >> {}", log_file.display()));
     let acme = format!(
-        r#","dns":{{"hook":"{}","servers":["{}"],"timeout":3}}"#,
+        r#","dns":{{"hook":"{}","resolver":"{address}","servers":["{address}"],"timeout":3}}"#,
         hook.display(),
-        dns.address
+        address = dns.address
     );
     let setup = Setup { home: &home_two, acme: &acme, ..setup };
     let daemon = start(&setup);
