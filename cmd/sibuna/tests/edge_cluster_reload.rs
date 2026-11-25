@@ -97,9 +97,17 @@ impl Cluster {
             .stderr(Stdio::piped())
             .spawn()
             .unwrap();
+        // A node may say other things first, such as a mesh port that it shares.
+        let mut reader = BufReader::new(child.stderr.take().unwrap());
         let mut line = String::new();
-        BufReader::new(child.stderr.take().unwrap()).read_line(&mut line).unwrap();
-        if !line.contains("ready") {
+        while !line.contains("listeners ready") {
+            line.clear();
+            if reader.read_line(&mut line).unwrap() == 0 {
+                break;
+            }
+        }
+        drop(reader);
+        if !line.contains("listeners ready") {
             let _ = child.kill();
             let _ = child.wait();
             return Err(line);
