@@ -84,5 +84,8 @@ Discussion registry
    * - 0024
      - :doc:`records/0024-tls-on-the-workers`
      - discussion
+   * - 0028
+     - :doc:`records/0028-database-authority`
+     - discussion
 
 .. sid-generated-end
