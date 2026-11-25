@@ -10,6 +10,9 @@ A model of the algorithms of SID 0021, checked with Lean 4.19.0.
 5. Issuer: every name has one issuer, a public authority is never asked for an internal name or an address, and no name is refused when the frontend states no issuer.
 6. Wildcard: `*.parent` covers a host of exactly one more label, neither the parent nor a deeper host, and an exact certificate wins over a wildcard, which wins over a file.
 7. Propagation: the check of DNS-01 asks a bounded number of times, pauses no longer than the timeout in total, and succeeds when the record shows in time.
+8. On demand: the token bucket never exceeds its capacity, the orders it admits are bounded, a name is ordered only after every guard, and the table of held names keeps its bound.
+9. Authorities: one attempt asks the listed authorities in order, at most once each, stops at the first that issues, succeeds when one issues and fails when none does.
+10. Renewal information: the pick lies in the window of the authority, the renewal time is at most four fifths of the lifetime and before the expiry, a window in the past is due at once, and a time inside our bounds is taken as it is.
 
 Times are natural numbers of seconds. The JSON documents, the signatures, the sockets and the files are outside the model. Tests cover them.
 -/
@@ -641,5 +644,142 @@ theorem table_within (bound : Nat) (events : List TableEvent) (s : Nat × Nat)
   | cons e rest ih =>
     simp only [List.foldl]
     exact ih (tableStep bound s e) (table_step_within bound s e h)
+
+/-! ## Part I: The authorities of one attempt -/
+
+/-- One attempt asks `count` authorities in order, starting with the one at `first`.
+`issues i` says whether the authority `i` issues. The result is the authority that
+issued, if any, and the number of authorities that were asked. -/
+def attempt (issues : Nat → Bool) : (count first : Nat) → Option Nat × Nat
+  | 0, _ => (none, 0)
+  | n + 1, i =>
+    if issues i then (some i, 1)
+    else ((attempt issues n (i + 1)).1, (attempt issues n (i + 1)).2 + 1)
+
+/-- An attempt asks every authority at most once. -/
+theorem attempt_asks_at_most (issues : Nat → Bool) (n i : Nat) :
+    (attempt issues n i).2 ≤ n := by
+  induction n generalizing i with
+  | zero => exact Nat.le_refl 0
+  | succ n ih =>
+    simp only [attempt]
+    split
+    · show 1 ≤ n + 1
+      omega
+    · show (attempt issues n (i + 1)).2 + 1 ≤ n + 1
+      have := ih (i + 1)
+      omega
+
+/-- The authority that issued is a listed one that issues. Every authority before it
+failed, and the attempt stopped with it: nobody after it was asked. -/
+theorem attempt_stops_at_the_first (issues : Nat → Bool) (n i k : Nat)
+    (h : (attempt issues n i).1 = some k) :
+    issues k = true ∧ i ≤ k ∧ k < i + n ∧ (∀ j, i ≤ j → j < k → issues j = false) ∧
+      (attempt issues n i).2 = k - i + 1 := by
+  induction n generalizing i with
+  | zero => simp [attempt] at h
+  | succ n ih =>
+    simp only [attempt] at h ⊢
+    by_cases hi : issues i = true
+    · rw [if_pos hi] at h ⊢
+      have hk : i = k := by simpa using h
+      refine ⟨hk ▸ hi, by omega, by omega, ?_, ?_⟩
+      · intro j h1 h2
+        omega
+      · show 1 = k - i + 1
+        omega
+    · rw [if_neg hi] at h ⊢
+      have h' : (attempt issues n (i + 1)).1 = some k := h
+      obtain ⟨a, b, c, d, e⟩ := ih (i + 1) h'
+      refine ⟨a, by omega, by omega, ?_, ?_⟩
+      · intro j h1 h2
+        by_cases hj : j = i
+        · rw [hj]
+          simpa using hi
+        · exact d j (by omega) h2
+      · show (attempt issues n (i + 1)).2 + 1 = k - i + 1
+        omega
+
+/-- When no listed authority issues, the attempt fails after it asked all of them. -/
+theorem attempt_fails_when_all_fail (issues : Nat → Bool) (n i : Nat)
+    (h : ∀ j, i ≤ j → j < i + n → issues j = false) :
+    attempt issues n i = (none, n) := by
+  induction n generalizing i with
+  | zero => rfl
+  | succ n ih =>
+    have hi : issues i = false := h i (Nat.le_refl _) (by omega)
+    have rest := ih (i + 1) (fun j h1 h2 => h j (by omega) (by omega))
+    simp [attempt, hi, rest]
+
+/-- When a listed authority issues, the attempt succeeds. -/
+theorem attempt_succeeds_when_one_issues (issues : Nat → Bool) (n i k : Nat)
+    (h1 : i ≤ k) (h2 : k < i + n) (hk : issues k = true) :
+    (attempt issues n i).1 ≠ none := by
+  induction n generalizing i with
+  | zero => omega
+  | succ n ih =>
+    by_cases hi : issues i = true
+    · simp [attempt, hi]
+    · have hne : k ≠ i := fun e => hi (e ▸ hk)
+      simp only [attempt]
+      rw [if_neg hi]
+      exact ih (i + 1) (by omega) (by omega)
+
+/-! ## Part J: Renewal information -/
+
+/-- The time in the window `[s, e)` for a certificate whose serial hashes to `h`. -/
+def pick (s e h : Nat) : Nat := if e ≤ s then s else s + h % (e - s)
+
+/-- The pick lies in the window. -/
+theorem pick_in_window (s e h : Nat) (hw : s < e) : s ≤ pick s e h ∧ pick s e h < e := by
+  unfold pick
+  rw [if_neg (by omega)]
+  have := Nat.mod_lt h (show 0 < e - s by omega)
+  omega
+
+/-- The pick of an empty window is its start. -/
+theorem pick_of_empty_window (s h : Nat) : pick s s h = s := by
+  unfold pick
+  rw [if_pos (Nat.le_refl s)]
+
+/-- The latest renewal that an authority may ask for: four fifths of the lifetime. -/
+def latest (b e : Nat) : Nat := b + (e - b) / 5 * 4
+
+/-- The renewal time for a pick `p` and a floor `f`. -/
+def ariRenew (b e p f : Nat) : Nat := min (max p f) (latest b e)
+
+/-- The cap lies before the expiry. -/
+theorem latest_before_expiry (b e : Nat) (h : b < e) : latest b e < e := by
+  unfold latest
+  omega
+
+/-- No answer of the authority moves the renewal past the cap. -/
+theorem ari_at_most_cap (b e p f : Nat) : ariRenew b e p f ≤ latest b e :=
+  Nat.min_le_right _ _
+
+/-- So no answer of the authority parks a certificate until it expires. -/
+theorem ari_before_expiry (b e p f : Nat) (h : b < e) : ariRenew b e p f < e :=
+  Nat.lt_of_le_of_lt (ari_at_most_cap b e p f) (latest_before_expiry b e h)
+
+/-- A window in the past makes a loaded certificate, which has no floor, due at once. -/
+theorem past_window_is_due (b e p now : Nat) (h : p ≤ now) : ariRenew b e p 0 ≤ now := by
+  unfold ariRenew
+  have : max p 0 = p := Nat.max_eq_left (Nat.zero_le p)
+  rw [this]
+  exact Nat.le_trans (Nat.min_le_left _ _) h
+
+/-- A certificate that was just obtained is not renewed before its floor, unless the
+cap comes first. -/
+theorem ari_respects_the_floor (b e p f : Nat) (h : f ≤ latest b e) :
+    f ≤ ariRenew b e p f := by
+  unfold ariRenew
+  exact Nat.le_min.mpr ⟨Nat.le_max_right p f, h⟩
+
+/-- An authority that asks for a time inside our bounds gets it. -/
+theorem ari_follows_the_authority (b e p f : Nat) (h1 : f ≤ p) (h2 : p ≤ latest b e) :
+    ariRenew b e p f = p := by
+  unfold ariRenew
+  rw [Nat.max_eq_left h1]
+  exact Nat.min_eq_left h2
 
 end SibunaAcme
