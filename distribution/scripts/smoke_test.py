@@ -5,7 +5,7 @@ Checks `--version`, bootstraps a console administrator, then twice starts the da
 front of a stub origin with a seed file, SQLite storage and the console, and checks the
 health route, the challenge page, the embedded solver module and the console page. Each
 run ends with the platform's stop request (SIGTERM, or CTRL_BREAK_EVENT on Windows) and
-must exit 0. Only the standard library is used, so it runs on every release runner.
+must exit 0. We also compile a quick-start JLV file and forward an HTTP request through it. Only the standard library is used, so it runs on every release runner.
 """
 import argparse
 import http.server
@@ -33,7 +33,7 @@ class Origin(http.server.BaseHTTPRequestHandler):
     """A stub origin that answers every GET with a fixed page."""
 
     def do_GET(self):
-        body = b'origin ok\n'
+        body = self.request_version.encode('ascii') + b' origin ok\n'
         self.send_response(200)
         self.send_header('Content-Type', 'text/plain')
         self.send_header('Content-Length', str(len(body)))
@@ -119,6 +119,29 @@ def run_once(binary, work, origin_port, log):
     stop(daemon)
 
 
+def check_edge(binary, work, origin_port, log):
+    listener = f'127.0.0.1:{free_port()}'
+    config = work / 'edge.jlv'
+    with config.open('wb') as source:
+        subprocess.run([binary, 'lb', '--bind', listener, '--server', f'127.0.0.1:{origin_port}',
+                        '--print-config'], stdout=source, stderr=log, check=True, timeout=30)
+    subprocess.run([binary, 'check', '-f', config], stdout=log, stderr=log, check=True, timeout=30)
+    flags = subprocess.CREATE_NEW_PROCESS_GROUP if WINDOWS else 0
+    daemon = subprocess.Popen([binary, '--config-file', config], cwd=work, stdout=log, stderr=log,
+                              creationflags=flags)
+    try:
+        url = f'http://{listener}/'
+        wait_healthy(url, daemon)
+        status, _, body = fetch(url)
+        if (status, body) != (200, b'HTTP/1.1 origin ok\n'):
+            raise SystemExit(f'smoke: expected an HTTP/1.1 origin response, got {status}, {body!r}')
+        stop(daemon)
+    finally:
+        if daemon.poll() is None:
+            daemon.kill()
+            daemon.wait()
+
+
 def smoke(binary):
     expected = f'sibuna {version()}'
     reported = subprocess.run([str(binary), '--version'], capture_output=True, text=True,
@@ -137,6 +160,7 @@ def smoke(binary):
             subprocess.run([str(binary), 'init-admin', 'admin', '--data-dir', str(work / 'data')],
                            capture_output=True, check=True, timeout=60)
             with open(log_path, 'wb') as log:
+                check_edge(binary, work, origin.server_address[1], log)
                 for _ in range(2):
                     run_once(binary, work, origin.server_address[1], log)
         finally:
