@@ -52,7 +52,7 @@ Edge load balancer
    sibuna ctl /run/sibuna/edge.sock show servers                      # needs global.admin_socket
    sibuna lb --tls auto --domain localhost --server 10.0.0.1:80       # the same from the local authority
    sibuna lb --tls auto --domain example.org --acme-on-demand-ask http://127.0.0.1:9000/ok --server 10.0.0.1:80   # more names on demand
-   sibuna ctl /run/sibuna/edge.sock show certs                        # certificates of tls.auto and on demand
+   sibuna ctl /run/sibuna/edge.sock show certs                        # certificates of tls.auto and on demand, and their OCSP staples
    sibuna ctl /run/sibuna/edge.sock show ca > sibuna-root.crt         # the root to install in clients
    sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain   # or ready
    sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 weight 5
