@@ -413,3 +413,97 @@ fn a_telemetry_agent_receives_a_sample_of_every_answered_request() {
         assert!(text.contains("/status/404") && text.contains("web"), "{text}");
     });
 }
+
+// ---- the cost of a request, measured ----
+
+/// The requests of one round of the measurement.
+const REQUESTS: u32 = 5000;
+
+/// Microseconds per request on one kept connection: the best of `rounds` rounds.
+fn request_cost(edge: &Edge, fields: &str, rounds: u32) -> f64 {
+    let mut client = edge.connect();
+    client.get_ref().set_nodelay(true).unwrap();
+    let head = format!("GET /who HTTP/1.1\r\nHost: app.example\r\n{fields}\r\n");
+    let mut best = f64::MAX;
+    for _ in 0..rounds {
+        let started = Instant::now();
+        for _ in 0..REQUESTS {
+            request(&mut client, head.as_bytes());
+            // The edge closes a kept connection after its share of requests.
+            let Some(answer) = read_message(&mut client, false) else {
+                client = edge.connect();
+                client.get_ref().set_nodelay(true).unwrap();
+                continue;
+            };
+            assert_eq!(answer.status(), 200);
+        }
+        best = best.min(started.elapsed().as_secs_f64() * 1e6 / f64::from(REQUESTS));
+    }
+    best
+}
+
+/// An origin that answers every request head with one write of a fixed response. The
+/// origin of the other tests answers in two writes, which costs a delayed acknowledgement.
+fn fast_origin() -> std::net::SocketAddr {
+    use std::io::Read;
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    std::thread::spawn(move || {
+        for mut stream in listener.incoming().map_while(Result::ok) {
+            std::thread::spawn(move || {
+                let _ = stream.set_nodelay(true);
+                let (mut buffer, mut held) = ([0u8; 4096], Vec::new());
+                while let Ok(count @ 1..) = stream.read(&mut buffer) {
+                    held.extend_from_slice(&buffer[..count]);
+                    while let Some(end) = held.windows(4).position(|w| w == b"\r\n\r\n") {
+                        held.drain(..end + 4);
+                        let answer = b"HTTP/1.1 200 OK\r\nContent-Length: 1\r\n\r\na";
+                        if stream.write_all(answer).is_err() {
+                            return;
+                        }
+                    }
+                }
+            });
+        }
+    });
+    address
+}
+
+/// The method of SID 0030, "Measured cost". Run it optimized and alone:
+///
+/// ```text
+/// cargo test -p sibuna --release --test edge_hooks -- --ignored --nocapture cost
+/// ```
+#[test]
+#[ignore = "a measurement"]
+fn cost_of_a_request_with_each_tier_on_loopback() {
+    let origin = fast_origin();
+    let hooked = |plugin: &str| {
+        Topology::new(&[origin])
+            .root(&format!(r#""plugins":{{"p":{plugin}}},"#))
+            .frontend(&format!(r#""hooks":{REQUEST},"#))
+            .start(true)
+    };
+    let agent = Agent::start_at(temp_path("cost.sock"), ADMIT);
+    let native = r#"{"kind":"native","hook":"require_header","settings":{"name":"x-token"}}"#;
+    let socket = agent.path.display();
+    let agent_plugin = format!(r#"{{"kind":"agent","socket":"{socket}","deadline":"1s"}}"#);
+    let edges = [
+        ("no hook", Topology::new(&[origin]).start(true)),
+        ("native", hooked(native)),
+        ("wasm", hooked(&wasm(EXAMPLE, ""))),
+        ("agent", hooked(&agent_plugin)),
+    ];
+    let fields = "X-Token: 1\r\nUser-Agent: cost\r\nAccept: */*\r\n";
+    // The rounds of the four edges alternate, so that a busy moment of the machine
+    // falls on all of them.
+    let mut best = [f64::MAX; 4];
+    for _ in 0..6 {
+        for (cost, (_, edge)) in best.iter_mut().zip(&edges) {
+            *cost = cost.min(request_cost(edge, fields, 2));
+        }
+    }
+    for (cost, (name, _)) in best.iter().zip(&edges) {
+        println!("{name:>8}: {cost:>7.1} us per request, {:+.1} us", cost - best[0]);
+    }
+}
