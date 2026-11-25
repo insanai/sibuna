@@ -103,6 +103,28 @@ impl Cluster {
         row.split_whitespace().nth(3).unwrap_or_default().to_owned()
     }
 
+    /// The row of `show servers` for the server `name`, as words, on the node at `index`.
+    fn row(&self, index: usize, name: &str) -> Option<Vec<String>> {
+        let table = self.ctl(index, &["show", "servers"]);
+        let rows = table
+            .lines()
+            .skip(1)
+            .map(|line| line.split_whitespace().map(str::to_owned).collect::<Vec<String>>());
+        rows.into_iter().find(|row| row.get(1).is_some_and(|word| word == name))
+    }
+
+    /// Waits until `holds` is true of the row of `name` on every node.
+    fn all_show(&self, name: &str, holds: impl Fn(Option<&Vec<String>>) -> bool) -> bool {
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while Instant::now() < deadline {
+            if (0..self.mesh.len()).all(|index| holds(self.row(index, name).as_ref())) {
+                return true;
+            }
+            std::thread::sleep(Duration::from_millis(150));
+        }
+        false
+    }
+
     /// Waits until the node at `index` shows the server in `state`.
     fn shows(&self, index: usize, state: &str) -> bool {
         let deadline = Instant::now() + Duration::from_secs(5);
@@ -110,7 +132,7 @@ impl Cluster {
             if self.state(index) == state {
                 return true;
             }
-            std::thread::sleep(Duration::from_millis(30));
+            std::thread::sleep(Duration::from_millis(150));
         }
         false
     }
@@ -130,7 +152,8 @@ impl Cluster {
             "observability":{{"listen":"{}"}},
             "http":{{"surface":"shield","rate_limit":"off"}},
             "frontends":{{"web":{{"proto":"http","binds":["{}"],"default_backend":"app"}}}},
-            "backends":{{"app":{{"mode":"http","servers":[{{"name":"a","addr":"{}"}}]}}}}}}"#,
+            "backends":{{"app":{{"mode":"http","balance":{{"kind":"round_robin"}},
+              "servers":[{{"name":"a","addr":"{}"}}]}}}}}}"#,
             self.socket(index).display(),
             self.mesh[index],
             peers.join(","),
@@ -274,5 +297,37 @@ fn a_drain_commanded_on_one_node_holds_on_its_peers_unless_it_is_local() {
     for index in 0..3 {
         assert!(cluster.shows(index, "ready"), "node {index}");
     }
+    drop(third);
+}
+
+#[test]
+fn a_weight_and_an_added_or_removed_server_hold_on_every_node() {
+    let (cluster, mut nodes) = cluster(3);
+    let weight = |row: Option<&Vec<String>>, weight: &str| {
+        row.is_some_and(|row| row.get(4).is_some_and(|word| word == weight))
+    };
+    cluster.ctl(0, &["set", "server", "app/a", "weight", "5"]);
+    assert!(cluster.all_show("a", |row| weight(row, "5")));
+    // A server added on one node serves on all, with its weight.
+    cluster.ctl(1, &["add", "server", "app/b", "127.83.7.9:9", "weight", "3"]);
+    assert!(cluster.all_show("b", |row| weight(row, "3")));
+    cluster.ctl(2, &["set", "server", "app/b", "weight", "8"]);
+    assert!(cluster.all_show("b", |row| weight(row, "8")));
+    // A local change stays on its node.
+    cluster.ctl(0, &["set", "server", "app/b", "weight", "2", "local"]);
+    std::thread::sleep(Duration::from_millis(1500));
+    assert!(weight(cluster.row(0, "b").as_ref(), "2"));
+    assert!(weight(cluster.row(1, "b").as_ref(), "8"));
+    // A node that restarts has only its file. It learns the server and its weight.
+    drop(nodes.pop());
+    let third = cluster.start(2).unwrap();
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while !weight(cluster.row(2, "b").as_ref(), "8") {
+        assert!(Instant::now() < deadline, "{:?}", cluster.row(2, "b"));
+        std::thread::sleep(Duration::from_millis(150));
+    }
+    // A removal holds everywhere, also on the node with the local weight.
+    cluster.ctl(2, &["del", "server", "app/b"]);
+    assert!(cluster.all_show("b", |row| row.is_none()));
     drop(third);
 }

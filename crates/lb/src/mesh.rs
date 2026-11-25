@@ -15,6 +15,8 @@ use sibuna_json::ObjectReader;
 use crate::config::{address, field, invalid, required};
 
 mod bans;
+mod commands;
+pub use commands::{Change, Command};
 
 pub use bans::Counters as BanCounters;
 
@@ -51,8 +53,8 @@ pub struct MeshConfig {
     pub key_file: String,
     /// Bans travel to the peers (`mesh.replicate_bans`, SID 0022).
     pub replicate_bans: bool,
-    /// Drain commands travel to the peers (`mesh.replicate_drains`, SID 0022).
-    pub replicate_drains: bool,
+    /// Run-time commands travel to the peers (`mesh.replicate_commands`, SID 0022).
+    pub replicate_commands: bool,
 }
 
 impl MeshConfig {
@@ -77,9 +79,9 @@ impl MeshConfig {
         }
         peers.sort();
         let replicate_bans = field(r.take_bool("replicate_bans"))?.unwrap_or(true);
-        let replicate_drains = field(r.take_bool("replicate_drains"))?.unwrap_or(true);
+        let replicate_commands = field(r.take_bool("replicate_commands"))?.unwrap_or(true);
         field(r.finish())?;
-        Ok(Self { listen, peers, key_file, replicate_bans, replicate_drains })
+        Ok(Self { listen, peers, key_file, replicate_bans, replicate_commands })
     }
 }
 
@@ -194,9 +196,8 @@ struct Monitor {
 /// Applies a ban that a peer issued: the client key and the Unix second it ends.
 pub type BanSink = Box<dyn Fn(&[u8], u64) + Send + Sync>;
 
-/// Applies a drain command that a peer issued: the pool, the server and whether the
-/// server is drained.
-pub type DrainSink = Box<dyn Fn(&str, &str, bool) + Send + Sync>;
+/// Applies a run-time command that the operator of a peer gave.
+pub type CommandSink = Box<dyn Fn(Command) + Send + Sync>;
 
 /// What the mesh thread calls with a key and the number it now holds for it.
 type Sink = Box<dyn Fn(&[u8], u64) + Send + Sync>;
@@ -220,16 +221,16 @@ impl BanFeed {
     }
 }
 
-/// Hands the drain commands of this node's operator to the mesh thread.
+/// Hands the run-time commands of this node's operator to the mesh thread.
 #[derive(Clone)]
-pub struct DrainFeed(BanFeed);
+pub struct CommandFeed(BanFeed);
 
-impl DrainFeed {
-    /// Tells the peers that the operator drained `pool/name`, or returned it to
-    /// rotation, now. The later command wins on every node. Never blocks.
-    pub fn publish(&self, pool: &str, name: &str, drained: bool) {
-        let key = format!("{pool}/{name}");
-        self.0.publish(key.as_bytes(), bans::drain_value(unix_ms(), drained));
+impl CommandFeed {
+    /// Tells the peers what the operator changed, now. The later command for a server
+    /// wins on every node. Never blocks.
+    pub fn publish(&self, command: &Command) {
+        let (key, value) = commands::encode(command, unix_ms());
+        self.0.publish(&key, value);
     }
 }
 
@@ -238,17 +239,17 @@ impl DrainFeed {
 enum Holds {
     /// Clients and the Unix second their ban ends.
     Bans,
-    /// Servers and the number of the operator's last command.
-    Drains,
+    /// Servers and the number of the operator's last command of each kind.
+    Commands,
 }
 
 impl Holds {
-    const ALL: [Self; 2] = [Self::Bans, Self::Drains];
+    const ALL: [Self; 2] = [Self::Bans, Self::Commands];
 
     fn kind(self) -> u8 {
         match self {
             Self::Bans => bans::KIND,
-            Self::Drains => bans::KIND_DRAIN,
+            Self::Commands => bans::KIND_COMMAND,
         }
     }
 }
@@ -288,7 +289,7 @@ impl Replica {
     fn merge(&mut self, key: &[u8], value: u64) -> Result<Option<u64>, ()> {
         match self.holds {
             Holds::Bans => self.log.merge(key, value, unix_now()),
-            Holds::Drains => match bans::admit_drain(value, unix_ms()) {
+            Holds::Commands => match commands::admit(key, value, unix_ms()) {
                 Some(value) => self.log.keep_larger(key, value),
                 None => Err(()),
             },
@@ -299,7 +300,12 @@ impl Replica {
     fn everything(&self) -> Vec<bans::Ban> {
         match self.holds {
             Holds::Bans => self.log.walk(unix_now()),
-            Holds::Drains => self.log.all(),
+            Holds::Commands => {
+                // A datagram takes its entries from the end: the members go first.
+                let mut all = self.log.all();
+                all.sort_unstable_by(|a, b| b.0.cmp(&a.0));
+                all
+            }
         }
     }
 
@@ -309,7 +315,7 @@ impl Replica {
         if !self.caught_up
             && let Some(sink) = self.sink.get()
         {
-            for (key, value) in self.everything() {
+            for (key, value) in self.everything().into_iter().rev() {
                 sink(&key, value);
             }
             self.caught_up = true;
@@ -354,8 +360,8 @@ const INBOX: usize = 1024;
 const WALK_TURN: usize = 8;
 /// How often ended bans are forgotten.
 const SWEEP: Duration = Duration::from_secs(10);
-/// The drain commands a node remembers.
-const DRAINS: usize = 4096;
+/// The run-time commands a node remembers.
+const COMMANDS: usize = 8192;
 
 fn unix_now() -> u64 {
     unix_ms() / 1000
@@ -558,7 +564,7 @@ impl Mesh {
             })
         };
         let bans = share(spec.replicate_bans, Holds::Bans, bans::CAPACITY);
-        let drains = share(spec.replicate_drains, Holds::Drains, DRAINS);
+        let drains = share(spec.replicate_commands, Holds::Commands, COMMANDS);
         let mut monitor = Monitor {
             socket,
             key,
@@ -596,18 +602,17 @@ impl Mesh {
         Some(feed.clone())
     }
 
-    /// The hand-over of the operator's drain commands to the peers, and where the
-    /// commands of the peers are applied. `None` when `mesh.replicate_drains` is off.
+    /// The hand-over of the operator's run-time commands to the peers, and where the
+    /// commands of the peers are applied. `None` when `mesh.replicate_commands` is off.
     /// The first sink stays.
-    pub fn share_drains(&self, sink: DrainSink) -> Option<DrainFeed> {
+    pub fn share_commands(&self, sink: CommandSink) -> Option<CommandFeed> {
         let (feed, slot) = self.drains.as_ref()?;
         let _ = slot.set(Box::new(move |key, value| {
-            let Ok(key) = std::str::from_utf8(key) else { return };
-            if let Some((pool, name)) = key.split_once('/') {
-                sink(pool, name, value & 1 == 1);
+            if let Some(command) = commands::decode(key, value) {
+                sink(command);
             }
         }));
-        Some(DrainFeed(feed.clone()))
+        Some(CommandFeed(feed.clone()))
     }
 
     /// What the replication of bans did so far. `None` when `mesh.replicate_bans` is off.
@@ -678,7 +683,7 @@ mod tests {
             peers: vec![peer.local_addr().expect("peer")],
             key_file: String::new(),
             replicate_bans: true,
-            replicate_drains: true,
+            replicate_commands: true,
         };
         let secret = [7; 32];
         let mesh = Mesh::start(&spec, &secret, [9; 16]).expect("start");
@@ -722,7 +727,7 @@ mod tests {
             peers,
             key_file: String::new(),
             replicate_bans: true,
-            replicate_drains: true,
+            replicate_commands: true,
         };
         let mesh = Mesh::start(&spec, &[7; 32], [boot; 16]).expect("start");
         let heard = Heard::default();
@@ -789,20 +794,16 @@ mod tests {
         assert_eq!(wait_for(&heard, 1), [(b"203.0.113.7".to_vec(), until)]);
     }
 
-    type Drains = Arc<std::sync::Mutex<Vec<(String, bool)>>>;
+    type Given = Arc<std::sync::Mutex<Vec<Command>>>;
 
-    fn drains_of(mesh: &Mesh) -> (DrainFeed, Drains) {
-        let heard = Drains::default();
+    fn commands_of(mesh: &Mesh) -> (CommandFeed, Given) {
+        let heard = Given::default();
         let record = Arc::clone(&heard);
-        let feed = mesh
-            .share_drains(Box::new(move |pool, name, drained| {
-                record.lock().expect("lock").push((format!("{pool}/{name}"), drained));
-            }))
-            .expect("replication is on");
-        (feed, heard)
+        let sink = move |command| record.lock().expect("lock").push(command);
+        (mesh.share_commands(Box::new(sink)).expect("replication is on"), heard)
     }
 
-    fn wait_for_drains(heard: &Drains, count: usize) -> Vec<(String, bool)> {
+    fn wait_for_commands(heard: &Given, count: usize) -> Vec<Command> {
         let deadline = Instant::now() + Duration::from_secs(5);
         loop {
             let seen = heard.lock().expect("lock").clone();
@@ -813,30 +814,41 @@ mod tests {
         }
     }
 
+    fn change(name: &str, change: Change) -> Command {
+        Command { pool: "app".to_owned(), name: name.to_owned(), change }
+    }
+
     #[test]
-    fn a_drain_and_its_end_reach_the_peers_and_a_node_that_restarts_learns_the_last() {
+    fn commands_reach_the_peers_and_a_node_that_restarts_learns_the_last_of_each() {
         let roster = roster();
         let (first, _, _) = node(&roster, 0, 1);
         let (second, _, _) = node(&roster, 1, 2);
-        let (feed, own) = drains_of(&first);
-        let (_, heard) = drains_of(&second);
-        feed.publish("app", "a", true);
-        assert_eq!(wait_for_drains(&heard, 1), [("app/a".to_owned(), true)]);
+        let (feed, own) = commands_of(&first);
+        let (_, heard) = commands_of(&second);
+        let drain = change("a", Change::State { drained: true });
+        feed.publish(&drain);
+        assert_eq!(wait_for_commands(&heard, 1), [drain]);
         std::thread::sleep(Duration::from_millis(5));
-        feed.publish("app", "a", false);
-        feed.publish("app", "b", true);
-        let seen = wait_for_drains(&heard, 3);
-        assert_eq!(seen.len(), 3, "{seen:?}");
-        assert!(seen.contains(&("app/a".to_owned(), false)));
-        assert!(seen.contains(&("app/b".to_owned(), true)));
+        let addr = "10.0.0.9:80".parse().expect("address");
+        let ready = change("a", Change::State { drained: false });
+        let added = change("b", Change::Member { addr, weight: 3, present: true });
+        let weight = change("b", Change::Weight(9));
+        for command in [&ready, &weight, &added] {
+            feed.publish(command);
+        }
+        let seen = wait_for_commands(&heard, 4);
+        assert_eq!(seen.len(), 4, "{seen:?}");
+        assert!(seen.contains(&ready) && seen.contains(&added) && seen.contains(&weight));
         assert!(own.lock().expect("lock").is_empty());
-        // A node that restarts learns the last command for each server, not the history.
+        // A node that restarts learns the last command of each kind for each server,
+        // and a server is added before its weight is set.
         drop(second);
         let (again, _, _) = node(&roster, 1, 5);
-        let (_, late) = drains_of(&again);
-        let mut seen = wait_for_drains(&late, 2);
-        seen.sort();
-        assert_eq!(seen, [("app/a".to_owned(), false), ("app/b".to_owned(), true)]);
+        let (_, late) = commands_of(&again);
+        let seen = wait_for_commands(&late, 3);
+        assert_eq!(seen.len(), 3, "{seen:?}");
+        assert_eq!(seen[0], added);
+        assert!(seen.contains(&ready) && seen.contains(&weight));
     }
 
     #[test]

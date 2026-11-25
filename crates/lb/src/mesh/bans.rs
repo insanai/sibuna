@@ -2,9 +2,9 @@
 //!
 //! The state is a map from keys to numbers, and merging keeps the larger number, so a
 //! datagram may arrive twice, late or out of order. For a ban the key is a client and
-//! the number is the Unix second the ban ends. For a drain the key is a server and the
-//! number is the time of the operator's command with the state in its lowest bit, so the
-//! later command wins. Nothing here touches a socket: the mesh thread owns the map and
+//! the number is the Unix second the ban ends. For a run-time command the key is a
+//! server and the number starts with the time of the command, so the later command wins
+//! (see `commands`). Nothing here touches a socket: the mesh thread owns the map and
 //! sends what [`Log::due`] and a walk hand it.
 
 use std::collections::{HashMap, VecDeque};
@@ -13,8 +13,9 @@ use std::time::{Duration, Instant};
 
 use sibuna_crypto::{blake3, ct};
 
-/// The longest key a datagram carries: a pool name, a stroke and a server name.
-pub(super) const MAX_KEY: usize = 129;
+/// The longest key a datagram carries: a tag, an address, a pool name and a server
+/// name with their separators.
+pub(super) const MAX_KEY: usize = 192;
 /// The longest datagram. It fits one packet on every path.
 pub(super) const MAX_DATAGRAM: usize = 1200;
 /// The bans a node remembers.
@@ -26,21 +27,8 @@ pub(super) const HEADER: usize = 28;
 const TAG: usize = 16;
 /// The kind byte of a ban datagram.
 pub(super) const KIND: u8 = 3;
-/// The kind byte of a drain datagram.
-pub(super) const KIND_DRAIN: u8 = 4;
-/// A drain stamped further ahead of the receiver's clock than this is refused.
-pub(super) const AHEAD_MS: u64 = 60_000;
-
-/// The number of a drain command: its Unix millisecond, and the state in the lowest bit.
-pub(super) fn drain_value(stamp_ms: u64, drained: bool) -> u64 {
-    (stamp_ms << 1) | u64::from(drained)
-}
-
-/// A received drain as it may be merged: `None` when its stamp is too far ahead, which
-/// would let one node with a wrong clock overrule every later command.
-pub(super) fn admit_drain(value: u64, now_ms: u64) -> Option<u64> {
-    ((value >> 1) <= now_ms.saturating_add(AHEAD_MS)).then_some(value)
-}
+/// The kind byte of a datagram of run-time commands.
+pub(super) const KIND_COMMAND: u8 = 4;
 /// When a ban is sent again after its first send.
 const RESENDS: [Duration; 2] = [Duration::from_secs(1), Duration::from_secs(4)];
 
@@ -361,41 +349,5 @@ mod tests {
             assert!(decode(&KEY, &body, &mut read));
             assert!(read.len() <= 1, "{count} {length}");
         }
-    }
-}
-
-#[cfg(test)]
-mod drain_tests {
-    use super::*;
-
-    #[test]
-    fn the_later_command_wins_whatever_the_order_of_arrival() {
-        let drain = drain_value(1_000, true);
-        let ready = drain_value(2_000, false);
-        for order in [[drain, ready], [ready, drain]] {
-            let mut log = Log::new(4);
-            for value in order {
-                log.keep_larger(b"app/a", value).unwrap();
-            }
-            assert_eq!(log.all(), [(Box::from(&b"app/a"[..]), ready)]);
-        }
-        // Two commands in the same millisecond agree on every node: the drain wins.
-        assert!(drain_value(5, true) > drain_value(5, false));
-    }
-
-    #[test]
-    fn a_stamp_far_ahead_of_the_clock_is_refused() {
-        let now = 1_000_000;
-        assert_eq!(admit_drain(drain_value(now, true), now), Some(drain_value(now, true)));
-        assert!(admit_drain(drain_value(now + AHEAD_MS, false), now).is_some());
-        assert!(admit_drain(drain_value(now + AHEAD_MS + 1, false), now).is_none());
-    }
-
-    #[test]
-    fn a_full_map_refuses_a_new_key_and_still_updates_a_known_one() {
-        let mut log = Log::new(1);
-        log.keep_larger(b"app/a", 2).unwrap();
-        assert_eq!(log.keep_larger(b"app/b", 9), Err(()));
-        assert_eq!(log.keep_larger(b"app/a", 9), Ok(Some(9)));
     }
 }
