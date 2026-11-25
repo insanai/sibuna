@@ -176,7 +176,7 @@ impl Link {
         });
         for peer in waiting {
             note(format_args!(
-                "EDGE014: console peer {} is new or changed: it is used after a restart",
+                "EDGE013: console peer {} is new or changed: it is used after a restart",
                 peer.node
             ));
         }
@@ -213,6 +213,7 @@ fn start(options: &ConsoleOptions, parts: Parts, board: Arc<Board>) -> io::Resul
         node: options.node,
         started: Instant::now(),
         cached: Mutex::new(None),
+        bucket: Mutex::new(control::Bucket::new(Instant::now())),
     };
     let inputs = Inputs {
         telemetry: Arc::clone(&seams.telemetry),
@@ -301,8 +302,11 @@ struct Host {
     jobs: Mutex<Sender<admin::Job>>,
     node: u32,
     started: Instant,
-    /// The last view and when it was built. It serves every reader for [`VIEW_AGE`].
-    cached: Mutex<Option<(Instant, View)>>,
+    /// The last view, or the last failure to get one, and when. It serves every reader
+    /// for [`VIEW_AGE`], so readers do not queue behind a worker that does not answer.
+    cached: Mutex<Option<(Instant, Option<View>)>>,
+    /// The limit of the admin socket: a burst of 20 commands and 10 per second after.
+    bucket: Mutex<control::Bucket>,
 }
 
 impl fmt::Debug for Host {
@@ -317,16 +321,23 @@ impl EdgeHost for Host {
         if let Some((built, view)) = cached.as_ref()
             && built.elapsed() < VIEW_AGE
         {
-            return Some(view.clone());
+            return view.clone();
         }
-        let view = self.board.ask(|table| self.build(table))?;
+        let view = self.board.ask(|table| self.build(table));
         *cached = Some((Instant::now(), view.clone()));
-        Some(view)
+        view
     }
 
     fn run(&self, line: &str, who: &str) -> Answer {
         let jobs = self.jobs.lock().unwrap_or_else(PoisonError::into_inner).clone();
-        match admin::run_line(line, &self.source, &jobs) {
+        let allowed =
+            self.bucket.lock().unwrap_or_else(PoisonError::into_inner).take(Instant::now());
+        let ran = if allowed {
+            admin::run_line(line, &self.source, &jobs)
+        } else {
+            Err(control::too_many_commands())
+        };
+        match ran {
             Ok(text) => {
                 if !who.is_empty() {
                     note(format_args!("EDGE010: console: {who}: {line}"));

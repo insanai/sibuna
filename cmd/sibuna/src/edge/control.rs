@@ -95,6 +95,17 @@ impl Command {
     }
 }
 
+/// The `ADM009` failure of a caller over the limit of [`Bucket`]. The admin socket and
+/// the console of SID 0031 each keep a bucket, and answer with this.
+pub(super) fn too_many_commands() -> RuntimeError {
+    failure(
+        "ADM009",
+        "TOO MANY COMMANDS",
+        "The socket accepts a burst of 20 commands and 10 per second after it.",
+        "Wait a moment and send the command again.",
+    )
+}
+
 /// An admin failure with a code that the socket alone produces.
 pub(super) fn failure(
     code: &'static str,

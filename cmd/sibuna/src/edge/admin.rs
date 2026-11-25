@@ -183,12 +183,7 @@ mod unix {
                 if bucket.take(Instant::now()) {
                     return run(&line, source, jobs);
                 }
-                Err(control::failure(
-                    "ADM009",
-                    "TOO MANY COMMANDS",
-                    "The socket accepts a burst of 20 commands and 10 per second after it.",
-                    "Wait a moment and send the command again.",
-                ))
+                Err(control::too_many_commands())
             });
             let _ = stream.set_write_timeout(Some(CLIENT_TIMEOUT));
             let _ = stream.write_all(control::encode(&answer).as_bytes());
