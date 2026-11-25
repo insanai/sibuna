@@ -349,9 +349,15 @@ fn two_nodes_follow_a_revision_and_show_cluster_names_what_each_applied() {
     assert!(own.contains("head: 2\nstate: current\n"), "{own}");
     let status = site.done("status", &[]);
     assert_eq!(status.matches(" current").count(), 2, "{status}");
-    // A rollback is a revision like any other, and the nodes follow it.
+    // A rollback is a revision like any other, and the nodes follow it. The file of a
+    // node changes the node at a reload only: broken on the disk, it stops nothing.
+    let file = site.home(0).join("node.json");
+    let good = fs::read(&file).unwrap();
+    fs::write(&file, "{").unwrap();
     site.done("rollback", &["1"]);
     assert!(site.serve(&[0, 1], &["a"]));
+    assert!(!site.ctl(0, &["reload"]).contains("reloaded"));
+    fs::write(&file, good).unwrap();
     // The file of a node stays on its host: `reload` reads it, `reload cluster` is refused.
     assert!(site.ctl(0, &["reload"]).contains("reloaded"));
     assert!(site.ctl(0, &["reload", "cluster"]).contains("DBA009"));

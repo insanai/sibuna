@@ -484,11 +484,12 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         drains,
     };
     serving.watch(watch)?;
-    authority::follow(&serving.source, &serving.pending)?;
     serving.announce();
+    // The follower of a database starts with the revision that the worker serves.
     if let Some(published) = published {
         published.settle(None);
     }
+    authority::follow(&serving.source, &serving.pending)?;
     while !shutdown.is_requested() {
         serving.observed.reopen_log_when(&rotate);
         serving.take_pending();

@@ -127,21 +127,27 @@ pub(in super::super) struct Authority {
     waker: Waker,
     requests: Mutex<Option<mpsc::Sender<Request>>>,
     said: Mutex<Said>,
+    /// The file of the node as the worker last took it. A new revision is composed with
+    /// it and not with the file on the disk, which changes the daemon only at a reload.
+    node_file: Mutex<Option<Arc<[u8]>>>,
 }
 
 /// The revision that a checked topology came from. The worker settles it.
 pub(in super::super) struct Stamp {
     authority: Arc<Authority>,
     published: Arc<Published>,
+    /// The file of the node that the topology was composed with.
+    node_file: Arc<[u8]>,
 }
 
 impl Stamp {
     /// Tells the follower what the worker did with the revision: it serves it, or it
     /// refused it with `refusal` and serves what it served.
     pub fn settle(self, refusal: Option<&io::Error>) {
-        let Stamp { authority, published } = self;
+        let Stamp { authority, published, node_file } = self;
         match refusal {
             None => {
+                *locked(&authority.node_file) = Some(node_file);
                 if locked(&authority.state).applied(&published) {
                     let digest = short(&published.digest);
                     note(format_args!(
@@ -170,6 +176,7 @@ impl Authority {
             store: Mutex::new(None),
             requests: Mutex::new(None),
             said: Mutex::new(Said::default()),
+            node_file: Mutex::new(None),
         });
         let (candidate, failure) = authority.look(&mut store);
         *locked(&authority.store) = Some(store);
@@ -256,7 +263,7 @@ impl Authority {
     /// Composes the file with one revision and checks the result.
     fn try_choice(
         self: &Arc<Self>,
-        node_file: &[u8],
+        node_file: &Arc<[u8]>,
         choice: &Arc<Published>,
         check: &dyn Fn(&[u8]) -> io::Result<Revision>,
     ) -> io::Result<Revision> {
@@ -271,8 +278,11 @@ impl Authority {
                 choice.revision
             ));
         }
-        let stamp = Stamp { authority: Arc::clone(self), published: Arc::clone(choice) };
-        revision.published = Some(stamp);
+        revision.published = Some(Stamp {
+            authority: Arc::clone(self),
+            published: Arc::clone(choice),
+            node_file: Arc::clone(node_file),
+        });
         Ok(revision)
     }
 
@@ -280,7 +290,7 @@ impl Authority {
     /// revision that the node serves, so that a change to the file still applies.
     fn compose_checked(
         self: &Arc<Self>,
-        node_file: &[u8],
+        node_file: &Arc<[u8]>,
         check: &dyn Fn(&[u8]) -> io::Result<Revision>,
     ) -> io::Result<Revision> {
         let choices = locked(&self.state).choices();
@@ -332,7 +342,6 @@ impl Authority {
     fn run(
         self: Arc<Self>,
         mut store: SqlStore,
-        source: &Source,
         pending: &Pending,
         requests: &mpsc::Receiver<Request>,
     ) {
@@ -346,19 +355,19 @@ impl Authority {
                 let _ = reply.try_send(listing);
             }
             if let (Some(candidate), _) = self.look(&mut store) {
-                self.offer(source, pending, &candidate);
+                self.offer(pending, &candidate);
             }
             self.keep(&mut store);
         }
     }
 
-    /// Checks a new revision against the file and leaves it for the worker. A revision
-    /// that does not check is refused here, and the worker hears nothing.
-    fn offer(self: &Arc<Self>, source: &Source, pending: &Pending, candidate: &Arc<Published>) {
-        let Some(path) = source.path() else { return };
-        let checked = super::super::document(path)
-            .and_then(|file| self.try_choice(&file, candidate, &super::super::revision));
-        match checked {
+    /// Checks a new revision with the file that the worker serves and leaves it for the
+    /// worker. A revision that does not check is refused here, and the worker hears
+    /// nothing.
+    fn offer(self: &Arc<Self>, pending: &Pending, candidate: &Arc<Published>) {
+        // The worker settles its first revision before this thread starts.
+        let Some(node_file) = locked(&self.node_file).clone() else { return };
+        match self.try_choice(&node_file, candidate, &super::super::revision) {
             Ok(revision) => *locked(pending) = Some(revision),
             Err(error) => self.refuse(candidate.revision, &error.to_string()),
         }
@@ -467,7 +476,7 @@ pub(in super::super) fn load(
 ) -> io::Result<Revision> {
     let settings = Settings::parse(node_file).map_err(fault)?;
     let authority = slot.database(settings)?;
-    let revision = authority.compose_checked(node_file, check);
+    let revision = authority.compose_checked(&Arc::from(node_file), check);
     authority.look_again();
     revision
 }
@@ -479,10 +488,10 @@ pub(in super::super) fn follow(source: &Arc<Source>, pending: &Pending) -> io::R
     let Some(store) = locked(&authority.store).take() else { return Ok(()) };
     let (sender, requests) = mpsc::channel();
     *locked(&authority.requests) = Some(sender);
-    let (source, pending) = (Arc::clone(source), Arc::clone(pending));
+    let pending = Arc::clone(pending);
     std::thread::Builder::new()
         .name("edge-authority".into())
-        .spawn(move || authority.run(store, &source, &pending, &requests))
+        .spawn(move || authority.run(store, &pending, &requests))
         .map(drop)
 }
 
