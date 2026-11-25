@@ -1438,3 +1438,45 @@ After the cluster features, the hooks and the console view were merged, we ran t
      - 0.69
 
 The new features cost nothing that this measurement can see while they are not configured. HTTP/2 stays where it was.
+
+Sibuna, HAProxy and Envoy
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+On the same host and with the same build we then ran the three proxies one after another, three times each, with 256 connections for eight seconds in each case. HAProxy was 3.0.11 and Envoy 1.40.2 with BoringSSL. Each proxy had the same eight CPUs and eight threads. Sibuna and HAProxy balanced by least connections, Envoy by least requests. The origins, the load generator and the certificate were the same. The table gives the median of the three runs. The spread between the runs of one case was at most 4%. No request failed.
+
+.. list-table:: One host, 256 connections, three proxies: requests per second, the median of three runs, and the resident memory at the end of the run.
+   :header-rows: 1
+   :widths: 16 14 14 14 14 14 14
+
+   * - Workload
+     - Sibuna
+     - HAProxy
+     - Envoy
+     - Sibuna MiB
+     - HAProxy MiB
+     - Envoy MiB
+   * - http
+     - 220,040
+     - 220,323
+     - 70,909
+     - 14
+     - 48
+     - 58
+   * - https
+     - 174,611
+     - 165,199
+     - 63,399
+     - 21
+     - 61
+     - 61
+   * - h2
+     - 104,132
+     - 153,899
+     - 68,972
+     - 116
+     - 112
+     - 140
+
+We read the table modestly. Sibuna and HAProxy are level for plaintext HTTP, and Sibuna is about 6% ahead with TLS. HAProxy is about half again as fast for HTTP/2, for the reason that the earlier sections give: Sibuna's HTTP/2 runs in a protocol runtime beside the workers. HAProxy and Envoy used all eight CPUs in every case; Sibuna used six to eight. Envoy reached about a third of the plaintext rate of the other two. We are not experts in tuning Envoy. We used its documented static configuration with the router filter and request identifiers and dynamic statistics turned off, and a better configuration may well change its numbers. Envoy is built for other strengths, such as dynamic configuration over xDS and a large set of filters, which this measurement does not see. We configured no TCP listener on Envoy, so it has no TCP line.
+
+All three are measured on one machine over loopback, with a two-byte response and no network between client and proxy. A small response makes the cost of each request dominate; a larger response or a real network narrows the differences. We ran each case once for eight seconds in each of three rounds, which is enough to see large differences and not enough to rank proxies that are within a few percent of each other. The scripts and configurations are those of the earlier sections.
