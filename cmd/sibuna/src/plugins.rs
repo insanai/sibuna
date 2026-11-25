@@ -101,14 +101,16 @@ fn judge<W: Write>(ctx: &Ctx<'_, W>, slot: &Slot, added: &mut [u8; ADDED_CAPACIT
         *slot = Field { name: header.name, value: header.value };
         count += 1;
     }
+    // The address the firewall judges by. A proxy names no port for its client.
+    let client = match ctx.client_address {
+        Some(address) if address != ingress.peer.ip() => SocketAddr::new(address, 0),
+        _ => ingress.peer,
+    };
     let view = View {
         stage: Stage::Request,
         protocol: protocol_of(ctx.trace.protocol),
         secure: ingress.secure,
-        client: SocketAddr::new(
-            ctx.client_address.unwrap_or(ingress.peer.ip()),
-            ingress.peer.port(),
-        ),
+        client,
         local: ingress.vip,
         frontend: &front.name,
         ja4: ctx.ja4.map_or(b"", |ja4| ja4.as_bytes()),
