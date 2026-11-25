@@ -33,7 +33,7 @@ fn flood(store: &dyn AffinityStore, candidates: u64, hot: u64, period: Option<Du
     let mut batch = start;
     for n in 0..candidates {
         if n % 4093 == 0 {
-            let sample = std::time::Instant::now();
+            let sample = Instant::now();
             exercise(store, n, hot);
             samples.push(sample.elapsed().as_nanos());
         } else {
@@ -90,7 +90,7 @@ fn retention(name: &str, hot: u64, slots: usize, period: Option<Duration>) -> (u
     let status = spill.status().unwrap();
     assert!(status.persistent);
     eprintln!("{} table slots, {:?}", status.table_slots, status.budget);
-    let start = std::time::Instant::now();
+    let start = Instant::now();
     for id in 0..hot {
         flow(&*store, client(id), 1);
         if id % 1024 == 1023 {
@@ -128,7 +128,6 @@ fn retention(name: &str, hot: u64, slots: usize, period: Option<Duration>) -> (u
 #[ignore = "SID 0015 storage availability measurement, requires 512 MiB of disk"]
 fn measure_storage_unavailability() {
     use std::sync::mpsc::sync_channel;
-    use std::time::Duration;
 
     let options = on_disk("unavailable", 512 << 20);
     let disk = sibuna_spill::Options { size: options.size, max_ttl: LONGEST_TTL + CLOCK_SLACK };
