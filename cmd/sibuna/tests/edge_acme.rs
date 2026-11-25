@@ -682,7 +682,7 @@ fn internal_names_and_addresses_are_served_from_the_local_authority() {
     }
     // Another name is not in the certificate, and another root does not verify.
     assert!(get_trusting(daemon.tls, "other.internal", &root).is_err());
-    let foreign = sibuna_acme::local::LocalAuthority::open(&other_home.join("foreign"), 0);
+    let foreign = sibuna_acme::local::LocalAuthority::open(&other_home.join("foreign"), 0, &[]);
     let foreign = foreign.unwrap().root_pem().unwrap();
     assert!(get_trusting(daemon.tls, "localhost", &foreign).is_err());
     let line = "automatic HTTPS for 3 name(s) from the local authority, storage";
@@ -835,4 +835,115 @@ fn the_check_refuses_an_internal_name_for_acme_and_a_wildcard_without_dns() {
     assert!(text.contains("dns: { hook:"), "{text}");
     let (ok, text) = check(r#"{"auto":["localhost","10.1.2.3","*.corp.internal"]}"#);
     assert!(ok, "{text}");
+}
+
+/// Whether a rustls verifier that trusts `root` alone accepts `chain_pem` for `name`.
+fn rustls_accepts(chain_pem: &str, name: &str, root: &str) -> bool {
+    use rustls::client::danger::ServerCertVerifier as _;
+    use rustls::pki_types::{CertificateDer, ServerName, UnixTime};
+    let mut roots = rustls::RootCertStore::empty();
+    for root in sibuna_acme::pem::decode("CERTIFICATE", root).unwrap() {
+        roots.add(CertificateDer::from(root)).unwrap();
+    }
+    let provider = Arc::new(rustls::crypto::ring::default_provider());
+    let verifier =
+        rustls::client::WebPkiServerVerifier::builder_with_provider(Arc::new(roots), provider)
+            .build()
+            .unwrap();
+    let chain = sibuna_acme::pem::decode("CERTIFICATE", chain_pem).unwrap();
+    let chain: Vec<_> = chain.into_iter().map(CertificateDer::from).collect();
+    let name = ServerName::try_from(name.to_owned()).unwrap();
+    verifier.verify_server_cert(&chain[0], &chain[1..], &name, &[], UnixTime::now()).is_ok()
+}
+
+/// The keys of the storage in `home` sign leaves inside and outside the constraints
+/// of their root: whoever holds the storage can do that. A client that trusts the root
+/// refuses the leaves outside.
+fn a_client_refuses_a_leaf_outside_the_constraints(home: &Path, root: &str) {
+    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap();
+    let list = ["127.0.0.0/8".to_owned(), "localhost".to_owned()];
+    let keys = sibuna_acme::local::LocalAuthority::open(&home.join("acme"), now.as_secs(), &list);
+    let keys = keys.unwrap();
+    let issue = |name: &str| keys.issue(&[name], 600, now.as_secs()).unwrap().chain_pem;
+    assert!(rustls_accepts(&issue("a.localhost"), "a.localhost", root));
+    assert!(rustls_accepts(&issue("127.9.9.9"), "127.9.9.9", root));
+    assert!(!rustls_accepts(&issue("bank.example"), "bank.example", root));
+    assert!(!rustls_accepts(&issue("10.0.0.1"), "10.0.0.1", root));
+}
+
+#[test]
+fn the_root_keeps_its_constraints_and_a_lost_root_is_replaced_at_the_start() {
+    let authority = Authority::start();
+    let home = home("local-constraints");
+    let constraints = r#","internal":{"constraints":["localhost","127.0.0.0/8"]}"#;
+    let setup = Setup {
+        authority: &authority,
+        origin: origin(),
+        home: &home,
+        names: &["localhost", "127.0.0.1"],
+        plain: None,
+        acme: constraints,
+        tls: "",
+        directory: false,
+    };
+    let ready = |daemon: &Daemon| {
+        wait_for("the certificates", 30, || {
+            let ready = |name: &str| daemon.row(name)[5] == "ready";
+            (ready("localhost") && ready("127.0.0.1")).then_some(())
+        });
+    };
+    let daemon = start(&setup);
+    ready(&daemon);
+    let (root, path) = local_root(&daemon);
+    // Every user may read the root. The keys stay private.
+    assert_eq!((mode(&path), mode(&home.join("acme/local"))), (0o644, 0o755));
+    assert_eq!(mode(&home.join("acme/local/root.pem")), 0o600);
+    assert_eq!(mode(&home.join("acme/local/certs")), 0o700);
+    // A rustls client accepts a name and an address inside the constraints.
+    for name in ["localhost", "127.0.0.1"] {
+        let answer = get_trusting(daemon.tls, name, &root);
+        assert!(answer.as_ref().is_ok_and(|answer| answer.ends_with("ok")), "{name}: {answer:?}");
+    }
+    drop(daemon);
+
+    a_client_refuses_a_leaf_outside_the_constraints(&home, &root);
+
+    // The check refuses a local name outside the list, and a start with another list
+    // reports the root and serves nothing new.
+    let file = home.join("check.json");
+    let socket = home.join("check.sock");
+    let outside = Setup { names: &["db.internal"], ..setup };
+    let address: SocketAddr = "127.0.0.1:8443".parse().unwrap();
+    fs::write(&file, topology(&outside, address, address, &socket)).unwrap();
+    let output = Command::new(BIN).arg("check").arg("-f").arg(&file).output().unwrap();
+    let text = String::from_utf8_lossy(&output.stderr).into_owned();
+    assert!(!output.status.success() && text.contains("NAME OUTSIDE CONSTRAINTS"), "{text}");
+    assert!(text.contains("`db.internal`") && text.contains("Hint: "), "{text}");
+    let other = r#","internal":{"constraints":["localhost","127.0.0.0/8","10.0.0.0/8"]}"#;
+    let daemon = start(&Setup { acme: other, ..setup });
+    let log = wait_for("the refusal of the root", 20, || {
+        Some(daemon.log()).filter(|log| log.contains("other name constraints"))
+    });
+    assert!(log.contains("ACME011") && log.contains("internal.constraints"), "{log}");
+    assert_ne!(daemon.row("localhost")[5], "ready");
+    drop(daemon);
+
+    // The storage loses its root. The next start makes a new one, does not serve the
+    // stored leaves of the old one, and issues once for each name.
+    for lost in ["root.pem", "root.crt", "intermediate.pem"] {
+        fs::remove_file(home.join("acme/local").join(lost)).unwrap();
+    }
+    let daemon = start(&setup);
+    ready(&daemon);
+    let (new_root, _) = local_root(&daemon);
+    assert_ne!(new_root, root);
+    for name in ["localhost", "127.0.0.1"] {
+        assert!(get_trusting(daemon.tls, name, &new_root).is_ok(), "{name}");
+        assert!(get_trusting(daemon.tls, name, &root).is_err(), "{name}");
+    }
+    let log = daemon.log();
+    assert!(!log.contains("loaded from storage"), "{log}");
+    assert_eq!(log.matches("certificate for localhost obtained").count(), 1, "{log}");
+    assert_eq!(log.matches("certificate for 127.0.0.1 obtained").count(), 1, "{log}");
+    assert_eq!(authority.order_count.load(Ordering::Relaxed), 0);
 }

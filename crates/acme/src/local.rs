@@ -411,7 +411,8 @@ mod tests {
             let path = scratch.0.join("local").join(name);
             fs::set_permissions(path, fs::Permissions::from_mode(mode)).unwrap();
         };
-        (private("root.crt", 0o600), private("", 0o700));
+        private("root.crt", 0o600);
+        private("", 0o700);
         LocalAuthority::open(&scratch.0, NOW, &[]).unwrap();
         assert_eq!((mode("root.crt"), mode("")), (0o644, 0o755));
     }

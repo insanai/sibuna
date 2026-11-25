@@ -4,6 +4,7 @@
 mod authority;
 mod demand;
 mod dns;
+mod internal;
 
 use std::collections::BTreeMap;
 use std::io;
@@ -14,6 +15,7 @@ use sibuna_json::ObjectReader;
 pub use self::authority::{Authority, Eab};
 pub use self::demand::OnDemand;
 pub use self::dns::{DnsConfig, DnsProvider};
+pub use self::internal::{INTERNAL_LIFETIME, Internal};
 use crate::config::{Config, Protocol, field, invalid};
 
 /// The production directory of Let's Encrypt, the default authority.
@@ -47,9 +49,6 @@ pub enum AcmeIssuer {
     Internal,
 }
 
-/// The default lifetime of a certificate of the local authority, in seconds: 12 hours.
-pub const INTERNAL_LIFETIME: u64 = 43_200;
-
 /// The `global.acme` object. Every key has a default.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AcmeOptions {
@@ -67,8 +66,9 @@ pub struct AcmeOptions {
     pub redirect: bool,
     /// The provider of the DNS-01 challenge. A wildcard from an ACME authority needs it.
     pub dns: Option<DnsConfig>,
-    /// The lifetime of a certificate of the local authority, in seconds.
-    pub internal_lifetime: u64,
+    /// The local authority: the lifetime of its certificates and the name constraints
+    /// of its root.
+    pub internal: Internal,
     /// The guards of issuance on demand. A frontend with `tls.on_demand` needs them.
     pub on_demand: Option<OnDemand>,
     /// The external account binding of the first authority.
@@ -91,7 +91,7 @@ impl Default for AcmeOptions {
             ca_file: None,
             redirect: true,
             dns: None,
-            internal_lifetime: INTERNAL_LIFETIME,
+            internal: Internal::default(),
             on_demand: None,
             eab: None,
             fallback: Vec::new(),
@@ -124,11 +124,15 @@ impl AcmeOptions {
     /// `port` may ask for on demand. `None` when the guards that read no state refuse
     /// `name`, or when no authority of ours can issue for it: issuance on demand is
     /// off, the name is not a plain host name, no suffix of `allow` covers it, or the
-    /// frontend sends an internal name to a public authority.
+    /// frontend sends an internal name to a public authority, or the constraints of
+    /// the local root do not permit a name of the local authority.
     pub fn demanded(&self, name: &str, port: u16, issuer: Option<AcmeIssuer>) -> Option<AutoName> {
         let guards = self.on_demand.as_ref()?;
         let local = is_local(name, issuer, self);
-        let refused_by_authority = !local && self.is_public() && is_internal_name(name);
+        let refused_by_authority = match local {
+            true => !self.internal.permits(name),
+            false => self.is_public() && is_internal_name(name),
+        };
         (guards.admits(name) && !refused_by_authority).then(|| AutoName {
             name: name.to_owned(),
             port,
@@ -161,7 +165,7 @@ impl AcmeOptions {
         };
         let redirect = field(r.take_bool("redirect"))?.unwrap_or(defaults.redirect);
         let dns = field(r.take_object("dns"))?.map(DnsConfig::parse).transpose()?;
-        let internal_lifetime = internal_lifetime(&mut r)?;
+        let internal = Internal::take(&mut r)?;
         let on_demand = field(r.take_object("on_demand"))?.map(OnDemand::parse).transpose()?;
         field(r.finish())?;
         Ok(Self {
@@ -172,7 +176,7 @@ impl AcmeOptions {
             ca_file,
             redirect,
             dns,
-            internal_lifetime,
+            internal,
             on_demand,
             eab,
             fallback,
@@ -180,21 +184,6 @@ impl AcmeOptions {
             ocsp,
         })
     }
-}
-
-/// Reads `global.acme.internal: { lifetime: SECONDS }`.
-fn internal_lifetime(r: &mut ObjectReader<'_, '_>) -> io::Result<u64> {
-    let Some(mut internal) = field(r.take_object("internal"))? else {
-        return Ok(INTERNAL_LIFETIME);
-    };
-    let path = internal.field_path("lifetime");
-    let lifetime = match field(internal.take_u64("lifetime"))? {
-        None => INTERNAL_LIFETIME,
-        Some(seconds) if (10..=172_800).contains(&seconds) => seconds,
-        Some(_) => return Err(invalid(format!("{path}: expected 10 to 172800 seconds"))),
-    };
-    field(internal.finish())?;
-    Ok(lifetime)
 }
 
 /// Reads `tls.issuer`.
@@ -399,6 +388,12 @@ impl Config {
                      tls.issuer"
                 )));
             }
+            if entry.local && !options.internal.permits(name) {
+                return Err(invalid(format!(
+                    "tls.auto: `{name}` is outside global.acme.internal.constraints; the \
+                     root of the local authority may not sign for it"
+                )));
+            }
             if entry.local {
                 continue;
             }
@@ -553,6 +548,46 @@ mod tests {
     }
 
     #[test]
+    fn the_local_root_signs_inside_its_constraints_only() {
+        let global = r#""global":{"acme":{"internal":{"lifetime":600,
+            "constraints":[".Corp.Internal","10.9.8.7/8","localhost","corp.internal"]}}},"#;
+        let config = parse(r#"{"auto":["a.corp.internal","10.1.2.3","localhost"]}"#, global);
+        let options = config.ok().and_then(|c| c.automatic_https()).map(|a| a.options.internal);
+        let expected = Internal {
+            lifetime: 600,
+            constraints: vec!["10.0.0.0/8".into(), "corp.internal".into(), "localhost".into()],
+        };
+        assert_eq!(options, Some(expected));
+        for outside in ["db.internal", "192.168.1.1", "*.internal"] {
+            let text = reason(&format!(r#"{{"auto":["{outside}"]}}"#), global);
+            assert!(text.contains("is outside global.acme.internal.constraints"), "{text}");
+        }
+        // A public name of the ACME authority is none of the root's business. With the
+        // override it is.
+        assert_eq!(names(r#"{"auto":["example.org"]}"#, global).len(), 1);
+        let text = reason(r#"{"auto":["example.org"],"issuer":"internal"}"#, global);
+        assert!(text.contains("`example.org` is outside"), "{text}");
+        for (bad, wanted) in [
+            (r#"["a b"]"#, "expected DNS suffixes"),
+            (r#"["10.0.0.0/40"]"#, "expected DNS suffixes"),
+            (r#"[7]"#, "expected DNS suffixes"),
+            ("[]", "expected 1 to 32 entries"),
+        ] {
+            let global = format!(r#""global":{{"acme":{{"internal":{{"constraints":{bad}}}}}}},"#);
+            let text = reason(r#"{"auto":["localhost"]}"#, &global);
+            assert!(text.contains("global.acme.internal.constraints") && text.contains(wanted));
+        }
+        // On demand: a local name outside the list is not asked for.
+        let global = r#""global":{"acme":{"on_demand":{"allow":["internal"]},
+            "internal":{"constraints":["corp.internal"]}}},"#;
+        let config = parse(r#"{"on_demand":true}"#, global).ok();
+        let options = config.and_then(|c| c.automatic_https()).map(|a| a.options);
+        let demanded = |name: &str| options.as_ref().and_then(|o| o.demanded(name, 443, None));
+        assert!(demanded("a.corp.internal").is_some_and(|name| name.local));
+        assert_eq!(demanded("db.internal"), None);
+    }
+
+    #[test]
     fn a_wildcard_needs_a_dns_provider_unless_it_is_local() {
         let text = reason(r#"{"auto":["*.example.org"]}"#, "");
         assert!(text.contains("is a wildcard, which needs the DNS challenge"), "{text}");
@@ -594,7 +629,7 @@ mod tests {
         let dns = options.dns.unwrap_or_else(|| unreachable!());
         assert_eq!(dns.resolver.map(|r| r.port()), Some(53));
         assert_eq!(dns.servers.len(), 2);
-        assert_eq!((options.challenge, options.internal_lifetime), (AcmeChallenge::Dns01, 600));
+        assert_eq!((options.challenge, options.internal.lifetime), (AcmeChallenge::Dns01, 600));
         let wrong = |members: &str| {
             let global = format!(r#""global":{{"acme":{{{members}}}}},"#);
             reason(r#"{"auto":["example.org"]}"#, &global)

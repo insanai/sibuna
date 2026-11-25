@@ -5,8 +5,8 @@
 mod acme;
 pub use acme::{
     AcmeChallenge, AcmeIssuer, AcmeOptions, Authority, AutoName, AutomaticHttps, DnsConfig,
-    DnsProvider, Eab, INTERNAL_LIFETIME, LETSENCRYPT, LETSENCRYPT_STAGING, OnDemand, is_address,
-    is_internal_name,
+    DnsProvider, Eab, INTERNAL_LIFETIME, Internal, LETSENCRYPT, LETSENCRYPT_STAGING, OnDemand,
+    is_address, is_internal_name,
 };
 mod budget;
 pub use budget::{FlowBudget, FlowPermit};

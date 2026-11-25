@@ -42,28 +42,7 @@ pub(super) fn classify(file: Option<&str>, error: &io::Error) -> Failure {
             "A port below 1024 needs the capability CAP_NET_BIND_SERVICE or the root user. \
              The unit sibuna-edge.service grants the capability.",
         ),
-        _ if lower.contains("is an internal name") => (
-            "name not public",
-            "A public certificate authority validates a name over the Internet. Remove \
-             `issuer: \"acme\"` from the frontend, or set `issuer: \"internal\"`: the local \
-             authority of the daemon then issues for the name. Or set \
-             `global.acme.directory` to an authority of your own.",
-        ),
-        _ if lower.contains("is a wildcard, which needs the dns challenge") => (
-            "wildcard needs dns",
-            "An authority proves a wildcard through a TXT record. Name a provider: \
-             `global: { acme: { dns: { hook: \"/etc/sibuna/dns-hook\" } } }`, or \
-             `dns: { rfc2136: { server: \"IP:PORT\", key_name: \"NAME\", key_file: \"FILE\" } }`. \
-             For an internal wildcard set `issuer: \"internal\"` on the frontend.",
-        ),
-        _ if lower.contains("tls.on_demand needs a guard") => (
-            "on demand needs a guard",
-            "Without a guard anybody who reaches the listener could make the daemon order \
-             certificates. Name the hosts that may get one: \
-             `global: { acme: { on_demand: { allow: [\"apps.example.org\"] } } }`, or a URL \
-             that decides: `on_demand: { ask: \"http://127.0.0.1:9000/allowed\" }`. It is \
-             asked `GET URL?domain=NAME` and allows with a status from 200 to 299.",
-        ),
+        _ if let Some(found) = automatic_https(&lower) => found,
         _ if names_a_certificate(&lower) => (
             "certificate not loaded",
             "Each `crt` entry is one PEM file with the certificate chain, leaf first, then \
@@ -82,6 +61,50 @@ pub(super) fn classify(file: Option<&str>, error: &io::Error) -> Failure {
     };
     let subject = file.map_or(String::new(), |path| format!("{path}: "));
     Failure { title, message: format!("{subject}{text}."), hint }
+}
+
+/// The title and the hint of a failure of the automatic HTTPS configuration, when the
+/// lower-case text `lower` is one.
+fn automatic_https(lower: &str) -> Option<(&'static str, &'static str)> {
+    if lower.contains("is an internal name") {
+        return Some((
+            "name not public",
+            "A public certificate authority validates a name over the Internet. Remove \
+             `issuer: \"acme\"` from the frontend, or set `issuer: \"internal\"`: the local \
+             authority of the daemon then issues for the name. Or set \
+             `global.acme.directory` to an authority of your own.",
+        ));
+    }
+    if lower.contains("is outside global.acme.internal.constraints") {
+        return Some((
+            "name outside constraints",
+            "The root of the local authority was made for the names and addresses of \
+             `global.acme.internal.constraints`, and a client refuses any other name under \
+             it. Remove the name, or give its frontend `issuer: \"acme\"`. A longer list \
+             needs a new root: remove `root.pem`, `root.crt` and `intermediate.pem` in the \
+             directory `local` of the storage, and install the new root in the clients.",
+        ));
+    }
+    if lower.contains("is a wildcard, which needs the dns challenge") {
+        return Some((
+            "wildcard needs dns",
+            "An authority proves a wildcard through a TXT record. Name a provider: \
+             `global: { acme: { dns: { hook: \"/etc/sibuna/dns-hook\" } } }`, or \
+             `dns: { rfc2136: { server: \"IP:PORT\", key_name: \"NAME\", key_file: \"FILE\" } }`. \
+             For an internal wildcard set `issuer: \"internal\"` on the frontend.",
+        ));
+    }
+    if lower.contains("tls.on_demand needs a guard") {
+        return Some((
+            "on demand needs a guard",
+            "Without a guard anybody who reaches the listener could make the daemon order \
+             certificates. Name the hosts that may get one: \
+             `global: { acme: { on_demand: { allow: [\"apps.example.org\"] } } }`, or a URL \
+             that decides: `on_demand: { ask: \"http://127.0.0.1:9000/allowed\" }`. It is \
+             asked `GET URL?domain=NAME` and allows with a status from 200 to 299.",
+        ));
+    }
+    None
 }
 
 fn names_a_file(lower: &str) -> bool {
@@ -143,6 +166,10 @@ mod tests {
         let guard = "tls.on_demand needs a guard; set global.acme.on_demand.ask or \
                      global.acme.on_demand.allow";
         assert_eq!(title(None, InvalidData, guard), "on demand needs a guard");
+        let outside = "tls.auto: `bank.example` is outside \
+                       global.acme.internal.constraints; the root of the local authority \
+                       may not sign for it";
+        assert_eq!(title(None, InvalidData, outside), "name outside constraints");
         let failure = classify(None, &io::Error::new(InvalidData, internal));
         assert!(failure.hint.contains("issuer: \"internal\""));
         let missing = "/nonexistent/sibuna/edge.jlv";

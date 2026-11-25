@@ -204,6 +204,16 @@ impl Source<'_> {
             Self::Local(_) => 1,
         }
     }
+
+    /// Whether a stored chain is of use. A leaf of the local authority must end at the
+    /// present root: clients installed that root, and a storage that lost its root has
+    /// a new one.
+    fn is_ours(&self, chain_pem: &str) -> bool {
+        match self {
+            Self::Acme(_) => true,
+            Self::Local(local) => local.authority.issued_here(chain_pem),
+        }
+    }
 }
 
 /// The failures to open a source, and the time of the next try.
@@ -312,7 +322,8 @@ impl Driver {
 
     fn try_local(&self) -> Result<Local, Error> {
         let storage = Path::new(&self.shared.options.storage);
-        let authority = LocalAuthority::open(storage, now(), &[])?;
+        let authority =
+            LocalAuthority::open(storage, now(), &self.shared.options.internal.constraints)?;
         let store = Store::open_local(storage)?;
         Ok(Local { authority, store })
     }
@@ -419,6 +430,9 @@ impl Driver {
     fn look(&self, source: &Source<'_>, name: &str, entry: &mut Entry, now: u64) -> bool {
         let stored = (0..source.store_count()).filter_map(|index| {
             let stored = source.store_at(index).load_certificate(name).ok()??;
+            if !source.is_ours(&stored.chain_pem) {
+                return None;
+            }
             let found = sound(name, &stored.chain_pem, &stored.key, now).ok()?;
             Some((index, found))
         });
@@ -554,7 +568,7 @@ impl Driver {
             names
                 .extend(others.map(|other| other.name.as_str()).filter(|other| is_address(other)));
         }
-        local.authority.issue(&names, self.shared.options.internal_lifetime, now())
+        local.authority.issue(&names, self.shared.options.internal.lifetime, now())
     }
 
     fn succeeded(&self, store: &Store, name: &str, entry: &mut Entry) {
