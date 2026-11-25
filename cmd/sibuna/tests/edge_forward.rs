@@ -70,10 +70,10 @@ fn every_node_names_the_same_owner_for_a_client_and_the_clients_spread() {
         // whichever node it is asked.
         let socket = UdpSocket::bind(format!("127.0.0.{client}:0")).unwrap();
         let (first, _) = udp_answer(&socket, cluster.dns[0], b"asked").expect("an answer");
-        for entry in 1..3 {
+        for entry in &cluster.dns[1..] {
             let socket = UdpSocket::bind(format!("127.0.0.{client}:0")).unwrap();
-            let answer = udp_answer(&socket, cluster.dns[entry], b"asked");
-            assert_eq!(answer, Some((first, cluster.dns[entry])), "client {client}");
+            let answer = udp_answer(&socket, *entry, b"asked");
+            assert_eq!(answer, Some((first, *entry)), "client {client}");
         }
         owners.push(first);
     }
