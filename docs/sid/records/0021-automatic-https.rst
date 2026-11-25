@@ -744,6 +744,198 @@ Smaller changes
 - ``key: "p384"`` makes certificate keys on P-384, for both sources. The request is signed with ECDSA and SHA-384. The account key and the keys of the local authority stay on P-256. A stored key of either curve loads, so a change of ``key`` takes effect at each renewal. RSA keys are not offered: the cryptography of the tree (``ring`` 0.17.14) signs with an RSA key and has no function that makes one, and no authority we know requires RSA.
 - The certificate thread is supervised. A panic is caught, logged as ``ACME014`` with its message, and the work starts again after 5 seconds, then 10, up to 5 minutes, with a new state that it reads from the storage as after a restart. The challenge answers of the order that died are withdrawn. The served certificates stay. A state that ran an hour without a panic counts as healthy, and the next panic waits 5 seconds again.
 
+RSA keys, the revocation list and the ACME server
+-------------------------------------------------
+
+This part builds the three things that the third part left out: RSA keys for certificates, a revocation list of the local authority, and an ACME server in front of the local authority. Where this part and an earlier part disagree, this part holds.
+
+.. list-table:: The new keys and the new command
+   :header-rows: 1
+   :widths: 34 14 52
+
+   * - Key or command
+     - Default
+     - Meaning
+   * - ``global.acme.key``
+     - ``"p256"``
+     - Gains ``"rsa2048"``, ``"rsa3072"`` and ``"rsa4096"``.
+   * - ``global.acme.internal.server``
+     - none
+     - ``{ url, allow, http_port }``: the local authority answers ACME clients at ``url``.
+   * - ``global.acme.internal.server.url``
+     - required
+     - The base URL of the server, for example ``"https://ca.corp.internal/acme"``. The scheme ``http`` is accepted for a loopback address only.
+   * - ``global.acme.internal.server.allow``
+     - required
+     - One to 32 DNS suffixes and address ranges, at least one of each kind. A client may order a name that a suffix covers. The validation connects only to an address inside a range.
+   * - ``global.acme.internal.server.http_port``
+     - ``80``
+     - The port that the HTTP-01 validation connects to. Another port serves a test and a network that maps the port.
+   * - ``revoke cert NAME|SERIAL``
+     -
+     - The admin command that revokes a certificate of the local authority.
+
+RSA keys
+~~~~~~~~
+
+``key`` selects the key of a new leaf certificate, from an ACME authority and from the local authority. The values ``"rsa2048"``, ``"rsa3072"`` and ``"rsa4096"`` make an RSA key of that many bits. The certificate request is signed with that key, with PKCS#1 version 1.5 and SHA-256. The account key stays on P-256. The root and the intermediate of the local authority stay on P-256 too: only leaves change. A client that needs an RSA leaf still verifies an ECDSA signature on it, so the setting serves clients that need an RSA key exchange or an RSA server key, and not clients that know no ECDSA at all.
+
+``ring`` signs with an RSA key and cannot make one. We do not write RSA key generation ourselves, and we add no crate. The daemon runs the installed program ``openssl``:
+
+.. code-block:: text
+
+   openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:N -outform PEM
+
+We run the program directly, with no shell, with standard input closed, and we read the key from its standard output. We read at most 16 KiB, wait at most 120 seconds, and kill the program after that time. The key is never in a file before the store writes it with mode 0600. The program is found through the ``PATH`` of the daemon. The key that it wrote must load as an RSA key of the asked size, or the attempt fails.
+
+A file with an RSA ``key`` needs the program on the day it is checked, and not on the day a certificate is due. ``sibuna check`` and the start of the daemon run ``openssl version``. When that fails, both stop with the diagnostic KEY TOOL FAILED (ACME015) and a hint that names the two ways out: install OpenSSL, or choose an ECDSA key. A reload runs the same check. A key that cannot be made later, because the program vanished or ran too long, fails the attempt for the name with the same code and the usual retry delay. A stored key of any of the five kinds loads, so a change of ``key`` takes effect at each renewal.
+
+.. list-table:: New failures of this part
+   :header-rows: 1
+   :widths: 12 24 64
+
+   * - Code
+     - Title
+     - Cause and hint
+   * - ``ACME015``
+     - KEY TOOL FAILED
+     - The program ``openssl`` could not be started, ran too long, ended with a failure, or wrote something that is no RSA key of the asked size. The hint says to install OpenSSL into the ``PATH`` of the daemon, or to set ``key`` to ``"p256"`` or ``"p384"``.
+   * - ``ACME016``
+     - REVOCATION LIST FAILED
+     - The revoked entries or the revocation list could not be read or written, or the list of revoked entries is full. The hint names the directory ``local`` of the storage.
+   * - ``ADM013``
+     - NOT REVOKED
+     - ``revoke cert`` named nothing that the local authority can revoke: the daemon has no local authority, the name has no certificate of it, or the word is neither a managed name nor a serial number.
+
+The revocation list
+~~~~~~~~~~~~~~~~~~~
+
+The local authority publishes a certificate revocation list (RFC 5280, version 2) and the operator revokes a certificate with an admin command.
+
+.. code-block:: text
+
+   STORAGE/local/
+     revoked/SERIAL              one file per revoked certificate, mode 0600
+     intermediate.previous.pem   the intermediate before the present one, mode 0600
+     crl.der                     the list of the present intermediate, DER, mode 0644
+     crl.pem                     the lists of every living intermediate, PEM, mode 0644
+
+**The entries.** A revoked certificate is one file in ``revoked``. Its name is the serial number in 16 lower-case hexadecimal digits. Its one line holds the time of the revocation, the time after which the entry may be dropped, and the name. A file per entry needs no lock: creating one is one rename, removing one is one unlink, and two nodes that share the storage never rewrite a common file. The directory holds at most 1024 entries. A revocation that would exceed the bound fails with ACME016 after the entries that may be dropped were removed. An entry may be dropped when its certificate has expired. When the serial is not that of a stored certificate, the entry stays for the longest life of a leaf, two days and one minute.
+
+**The list.** A revocation list must be signed by the issuer of the certificates it lists. The intermediate is replaced every few days, and a leaf of the replaced intermediate may still be valid. So the authority keeps the intermediate that it replaces as ``intermediate.previous.pem`` until that one expires, and it signs one list with each living intermediate. An intermediate is replaced after two thirds of its seven days, and a leaf lives two days at most, so two intermediates are enough: when the second replacement comes, the leaves of the first are gone. Every list holds every entry. A serial is 64 random bits, so an entry that belongs to the other intermediate matches nothing there. The list carries the authority key identifier of its signer and a list number, which is the time of its writing and at least one more than the number of the list it replaces. ``thisUpdate`` is one minute before the writing. ``nextUpdate`` is 24 hours after it, and not after the end of the signing intermediate.
+
+``crl.der`` holds the list of the present intermediate. ``crl.pem`` holds that list and, while the previous intermediate lives, its list as a second block. A verifier that reads PEM takes both. Both files are written under a temporary name and renamed.
+
+**The schedule.** The list is written again when it is missing, when the present intermediate is not its signer, when the entries are not the ones it lists, and when half of its validity has passed. The certificate thread looks at every round, so at least once an hour, and the thread of the ACME server looks once a minute. A list is therefore replaced at least eleven hours before its ``nextUpdate``. The admin command writes the list at once. A node that shares the storage sees the entry of another node at its next look.
+
+**The command.** ``sibuna ctl SOCKET revoke cert NAME`` revokes the certificate that the local authority issued for the managed name and that the storage holds. ``revoke cert SERIAL`` takes 1 to 16 hexadecimal digits, the serial as ``show certs`` and ``openssl x509 -serial`` print it, and also revokes a certificate that the storage no longer holds, for example one that the ACME server issued to another machine. A word that is both a managed name and hexadecimal is taken as the name. The command writes the entry and the list, and wakes the certificate thread. The thread treats a served certificate whose serial is revoked as due, so the name gets a new certificate with a new key in the same round. A stored leaf whose serial is revoked is not loaded at a start. The command is logged. It answers with the serial and the name.
+
+**What the list is for.** The file on disk is the product. A verifier is given the file: ``openssl verify -crl_check``, ``ssl_crl`` of nginx, ``SSLCARevocationFile`` of Apache. We put no distribution point into a leaf: by RFC 5280 it would have to be an ``http`` URL that every client can reach, and the daemon has no such address of its own. When the ACME server is on, it also answers ``GET URL/crl`` with ``crl.der``, for a job that fetches the file.
+
+The ACME server
+~~~~~~~~~~~~~~~
+
+With ``internal.server`` the local authority answers ACME clients (RFC 8555), so that another machine of the internal network obtains a certificate with certbot, lego, acme.sh or a second Sibuna.
+
+.. code-block:: text
+
+   global: { acme: { internal: { server: {
+       url: "https://ca.corp.internal/acme",
+       allow: ["corp.internal", "10.0.0.0/8"],
+   } } } },
+
+**Where it listens.** The server has no listener of its own. It answers the requests whose ``Host`` is the host of ``url`` and whose path begins with the path of ``url``, on the HTTP frontends of the daemon, in the hook that already answers the HTTP-01 challenge. A URL with ``https`` is answered on TLS frontends only. A URL with ``http`` is accepted for a loopback address only and is answered on plain frontends. We chose this over a dedicated bind because it adds no socket, no second TLS stack and no second HTTP parser: the frontend terminates TLS, with a certificate that the local authority itself issues when the host is an ``auto`` name, and the access log and the counters see every request. The cost is that a request body must fit the read buffer of the connection. The server refuses a body over 32 KiB, and a request is at most a certificate request with its signature.
+
+.. list-table:: The resources, relative to ``url``
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Path
+     - Meaning
+   * - ``GET /directory``
+     - The directory: ``newNonce``, ``newAccount``, ``newOrder``.
+   * - ``HEAD`` or ``GET /new-nonce``
+     - A fresh nonce in ``Replay-Nonce``.
+   * - ``POST /new-account``
+     - Returns the account URL of the key of the request.
+   * - ``POST /account/KEY``
+     - The account object.
+   * - ``POST /new-order``
+     - A new order for 1 to 16 DNS names.
+   * - ``POST /order/ID``
+     - The order.
+   * - ``POST /authz/ID``
+     - One authorization of an order, with its HTTP-01 challenge.
+   * - ``POST /chall/ID``
+     - Asks the server to validate.
+   * - ``POST /finalize/ID``
+     - Takes the certificate request.
+   * - ``POST /cert/ID``
+     - The chain as PEM: the leaf and the intermediate.
+   * - ``GET /crl``
+     - The revocation list of the present intermediate, DER.
+
+**Requests.** Every POST is a flattened JWS. The protected header has ``alg``, ``nonce``, ``url`` and exactly one of ``jwk`` and ``kid``. ``alg`` is ES256 with a P-256 key, or RS256 with an RSA key of 2048 to 8192 bits, which is the default of certbot. ``url`` must be the URL of the resource. The signature is verified first, and then the nonce is taken out of the table, so a nonce is accepted once. A failure is a problem document (RFC 7807) with an ACME error type, and every answer to a POST carries a new nonce.
+
+**Accounts keep no state.** The account URL is ``URL/account/`` followed by the base64url of the canonical JWK of the account key. A request with ``kid`` is verified with the key inside its ``kid``. The server therefore has no table of accounts, an account survives a restart, and every node that serves the URL knows it. Anybody who reaches the server may register, so a table would have decided nothing. The owner of an order is the thumbprint of the account key. The server sends no terms of service, takes no external account binding and ignores contacts. An account cannot be deactivated and its key cannot be rolled over.
+
+**Orders.** An order has 1 to 16 DNS names in lower case. A wildcard and an IP address are refused, because HTTP-01 proves neither here. Every name must be covered by a suffix of ``allow`` and, when the root has name constraints, be permitted by them. Each name gets one authorization with one HTTP-01 challenge and a token of 128 random bits. Authorizations are not reused between orders.
+
+.. code-block:: text
+
+   pending --all authorizations valid--> ready --finalize--> processing --issued--> valid
+      |                                                           |
+      +--an authorization invalid--> invalid <--not issued--------+
+
+   Every order is removed one hour after it was created, whatever its state.
+
+**Validation.** When the client answers a challenge, the challenge becomes ``processing`` and a task enters a queue. One thread, ``edge-acme-server``, works the queue, so the request path never waits for a network. The thread resolves the name with the resolver of the system and takes the first address that lies inside a range of ``allow``. A name without such an address is not contacted. It connects to that address and ``http_port``, with 5 seconds to connect and 10 seconds in all, sends ``GET /.well-known/acme-challenge/TOKEN`` with the name as ``Host``, and reads at most 8 KiB of header and 1 KiB of body. The status must be 200. A redirect is a failure: we follow none, so the client of the server cannot send the daemon to another host. The body, without white space at its ends, must be the token, a dot and the thumbprint of the account key. One try is made. A failure makes the challenge, the authorization and the order ``invalid`` and is stored as the ``error`` of the challenge.
+
+The allow list is what keeps the server from being a tool for request forgery. The daemon connects only where the operator said that validation targets live, it connects to the address that it checked and not to the name again, it sends one fixed request, and it returns nothing of the response to the client but a short reason.
+
+**Finalize.** The order must be ``ready``. The certificate request is at most 8 KiB of DER. Its signature must verify with the key it carries: P-256, P-384, or RSA with SHA-256, SHA-384 or SHA-512. Its names must be exactly the names of the order, as dNSName entries. The order becomes ``processing`` and a task enters the same queue. The thread signs the leaf with the present intermediate, for the client's key, with the lifetime ``internal.lifetime`` and the extensions of every local leaf. The order becomes ``valid`` and names the certificate URL.
+
+**Bounds.** Everything that a client can make grow has a bound, and reaching a bound is an answer and never a panic.
+
+.. list-table:: Bounds of the server
+   :header-rows: 1
+   :widths: 40 20 40
+
+   * - Thing
+     - Bound
+     - At the bound
+   * - Body of a request
+     - 32 KiB
+     - ``malformed``, status 413
+   * - Path of a request
+     - 2048 bytes
+     - status 404
+   * - Nonces
+     - 4096, one hour each
+     - The oldest nonce is dropped. Its holder receives ``badNonce`` and a new one.
+   * - Orders
+     - 1024, one hour each
+     - ``rateLimited``, status 429, ``Retry-After: 60``
+   * - Orders of one account
+     - 16
+     - ``rateLimited``
+   * - Names of an order
+     - 16
+     - ``malformed``
+   * - Queued validations and signings
+     - 64
+     - ``rateLimited``; the challenge stays ``pending``
+   * - Certificate request
+     - 8 KiB, 16 names
+     - ``badCSR``
+   * - Validation response
+     - 8 KiB header, 1 KiB body, 10 seconds
+     - The challenge is ``invalid``.
+
+**State.** Nonces, orders, authorizations and issued chains live in memory. Accounts are in no table at all. The consequence: a restart forgets the orders that were on their way and the chains that were not downloaded yet. A client then receives ``malformed`` for the order URL it remembers, and its next run starts a new order, which takes a few seconds. Nothing that was issued is lost to the client that already holds it. Nodes that share the storage share the authority and not the orders, so a client must reach one node for the minutes of one order. We chose memory because an order lives minutes, and a table of orders in the storage would add writes to shared files for something that a retry replaces.
+
+**What it does not do.** No ``revokeCert`` and no ``keyChange``: the directory does not name them, and the operator revokes with the admin command. No DNS-01 and no TLS-ALPN-01, so no wildcards. No IP identifiers. No external account binding, no renewal information. The lifetime of a certificate is ``internal.lifetime``, 12 hours by default and two days at most, so a client must renew often. This is the choice of the local authority, and a client that cannot renew daily is better served by the leaf lifetime than by a longer one that no revocation would reach.
+
 Rationale and alternatives
 --------------------------
 
@@ -1069,6 +1261,8 @@ Review history
 - 2026-11-25. A test of ``main`` once failed with "address in use" in ``edge_acme.rs``. The line was the start of the DNS server of the tests, which bound a UDP port and then the same TCP port, 16 times at most. Tests that run beside it take and release TCP ports all the time, so the TCP port was the one that was taken. The server now binds TCP first and then UDP, and tries 64 ports. The start of the daemon in the five suites already chose new ports after a failed start, and already waited for the line "listeners ready" and not for the word "ready".
 - 2026-11-25. Author's review of the implementation of the last part: the local authority and the smaller changes. It found seven defects and changed the code or this record for each. (1) The draft closed nothing: a list of suffixes left every address open, because X.509 constrains each kind of name by itself. A kind without an entry is now closed, and OpenSSL and rustls both refuse the other kind. (2) The first test with OpenSSL refused a leaf for ``10.1.2.3`` under a list of ranges: the common name of the leaf was the address, and OpenSSL holds a common name that looks like a host name against the DNS subtrees. The common name of an address leaf is now ``address 10.1.2.3``. (3) The draft said "a stored leaf whose chain does not end at the present root is replaced" and the code would have kept the intermediate of the lost root, which has the right name and a valid life; a new leaf would then have been signed by it and refused by every client of the new root. An intermediate is now ours only when the present root signed it. (4) The gap list said that a panic of the thread leaves the daemon without renewals. That was right, and the same list did not say that the challenge answers of the dead order stayed in the tables; the supervisor withdraws them. (5) The cleanup of a name that left the file was first written to run once per change of the names. A provider that is down at that moment would have left the record for ever, so a failed cleanup is tried again after two minutes. (6) The draft offered ``unsigned: true`` beside a key without saying what it means. It is refused. (7) The kill of the process group takes the number of the hook as the group. The numbers 0 and 1 would name our own group and every process; the foreign call refuses them, with a test. The design text of the third part changed where the list above says so. Not built, with the reasons in the text: a revocation list, an ACME server, RSA keys, and flags of ``sibuna lb`` for RFC 2136. The new binary tests passed at their first run; the crate test with OpenSSL found defect 2.
 - 2026-11-25. Eighth merge with ``main``, after the last round of SID 0019. No file conflicted. The full test suite ran on the tree of this merge.
+- 2026-11-25. Fourth part, first draft, on the branch ``sid-0021-local-authority``: RSA keys through the ``openssl`` program, a revocation list of the local authority with an admin command, and an ACME server in front of the local authority.
+- 2026-11-25. Author's review of the fourth part before implementation. It found eight faults and changed the draft for each. (1) The draft made an RSA key when a certificate was due and found a missing ``openssl`` then, hours after the start; the check of the file and the start now run the program once. (2) The draft signed one list with the present intermediate. A leaf of the replaced intermediate would have had no list that its issuer signed, and a verifier that checks lists refuses such a leaf; the replaced intermediate is now kept until it expires and signs a list of its own. (3) The draft kept the revoked entries in one file. The admin thread, the certificate thread and a second node would have rewritten it, and one of two revocations at the same moment would have been lost; an entry is now a file of its own. (4) The draft revoked by serial only what the storage holds. A certificate that the ACME server issued is in no storage, so a serial that is unknown is now revoked too, for the longest life of a leaf. (5) The draft gave the ACME server a listener of its own, which needs a TLS stack and a certificate beside the frontends; the server now answers on the frontends. (6) The draft kept a table of accounts in memory. Every restart would have forgotten the accounts, and no common client registers again by itself; the account URL now carries the key, and no table exists. (7) The draft resolved the name and then connected by name. A name that resolves differently the second time would have led the daemon outside ``allow``; the validation connects to the address that it checked. (8) The draft gave the server a lifetime key of its own, up to the life of the intermediate. Leaves of more than two days would have outlived two replacements of the intermediate and so the lists; the server uses ``internal.lifetime``.
 
 References
 ----------
