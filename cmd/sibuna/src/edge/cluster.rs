@@ -32,6 +32,12 @@ use super::{Pending, note};
 
 /// The first bytes of a pushed file.
 const MAGIC: &[u8; 4] = b"SEC1";
+/// The first bytes of a question for the digest of the file of a node.
+const ASK: &[u8; 4] = b"SEQ1";
+/// The bytes of a question: the magic, the stamp and the tag.
+const QUESTION: usize = 12 + TAG;
+/// The hexadecimal digits of a digest as we show it.
+const DIGEST: usize = 16;
 /// The bytes before the file: the magic, the stamp and the length.
 const HEADER: usize = 16;
 /// The bytes of the tag after the file.
@@ -92,6 +98,31 @@ fn open(key: &[u8; 32], stream: &mut impl Read) -> Result<(u64, Vec<u8>), String
     Ok((stamp, wire.split_off(HEADER)))
 }
 
+/// The digest of a file as `show cluster` prints it: the first digits of its BLAKE3 hash.
+pub(super) fn digest(file: &[u8]) -> String {
+    let hash = blake3::hash(file);
+    hash.iter().take(DIGEST / 2).map(|byte| format!("{byte:02x}")).collect()
+}
+
+/// A question for the digest, stamped with the Unix millisecond `stamp`.
+fn question(key: &[u8; 32], stamp: u64) -> Vec<u8> {
+    let mut wire = Vec::with_capacity(QUESTION);
+    wire.extend_from_slice(ASK);
+    wire.extend_from_slice(&stamp.to_be_bytes());
+    let tag = blake3::keyed_hash(key, &wire);
+    wire.extend_from_slice(&tag);
+    wire
+}
+
+/// The tag of an answer to the question stamped `stamp`: it binds the digest to the
+/// question, so an old answer cannot stand for a new one.
+fn answer_tag(key: &[u8; 32], stamp: u64, digest: &str) -> String {
+    let mut signed = stamp.to_be_bytes().to_vec();
+    signed.extend_from_slice(digest.as_bytes());
+    let tag = blake3::keyed_hash(key, &signed);
+    tag.iter().take(16).map(|byte| format!("{byte:02x}")).collect()
+}
+
 /// Whether a file stamped `stamp` may replace one stamped `last` at the time `now`: it
 /// is newer, and its stamp lies within [`SKEW_MS`] of the clock. An old message sent
 /// again is therefore refused.
@@ -119,6 +150,11 @@ impl Peers {
         Self { listen: spec.listen(), peers: spec.peers().to_vec(), key }
     }
 
+    /// The mesh address of this node.
+    pub fn listen(&self) -> SocketAddr {
+        self.listen
+    }
+
     /// Sends `file` to every peer at once and returns what each answered: nothing for
     /// a peer that took the file, or why it did not.
     pub fn push(&self, file: &[u8]) -> Vec<(SocketAddr, Result<(), String>)> {
@@ -136,9 +172,64 @@ impl Peers {
         })
     }
 
-    /// Takes files from the peers on the TCP port of the mesh address, on a thread of
-    /// its own, until the process ends. Fails when the port cannot be bound.
-    pub fn accept(self: Arc<Self>, source: Arc<Source>, pending: Pending) -> io::Result<()> {
+    /// Asks every peer at once for the digest of its file. Returns the digest of each,
+    /// or why it gave none.
+    pub fn ask(&self) -> Vec<(SocketAddr, Result<String, String>)> {
+        let stamp = unix_ms();
+        let wire = question(&self.key, stamp);
+        std::thread::scope(|scope| {
+            let asks: Vec<_> = self
+                .peers
+                .iter()
+                .map(|peer| (*peer, scope.spawn(|| self.ask_one(*peer, &wire, stamp))))
+                .collect();
+            let joined = asks.into_iter().map(|(peer, ask)| {
+                (peer, ask.join().unwrap_or_else(|_| Err("the question failed".to_owned())))
+            });
+            joined.collect()
+        })
+    }
+
+    fn ask_one(&self, peer: SocketAddr, wire: &[u8], stamp: u64) -> Result<String, String> {
+        let answer = exchange(peer, wire)?;
+        let mut words = answer.split_ascii_whitespace();
+        match (words.next(), words.next(), words.next()) {
+            (Some("digest"), Some(digest), Some(tag))
+                if ct::eq(tag.as_bytes(), answer_tag(&self.key, stamp, digest).as_bytes()) =>
+            {
+                Ok(digest.to_owned())
+            }
+            (Some("digest"), ..) => Err("the answer is not signed with our mesh key".to_owned()),
+            _ => Err(answer.strip_prefix("refused ").unwrap_or(&answer).to_owned()),
+        }
+    }
+
+    /// Answers a question for the digest of this node's file.
+    fn tell(&self, stream: &mut TcpStream, source: &Source) -> Result<String, String> {
+        let mut wire = [0; QUESTION];
+        stream.read_exact(&mut wire).map_err(|_| "the message was cut".to_owned())?;
+        let (signed, tag) = wire.split_at(12);
+        if !ct::eq(tag, &blake3::keyed_hash(&self.key, signed)) {
+            return Err("the tag is wrong: the mesh keys differ".to_owned());
+        }
+        let stamp = u64::from_be_bytes(signed[4..12].try_into().unwrap_or_default());
+        if stamp.abs_diff(unix_ms()) > SKEW_MS {
+            return Err("the clocks differ by more than a minute".to_owned());
+        }
+        let path = source.path().ok_or("this node has no file")?;
+        let digest = digest(&fs::read(path).map_err(|error| error.to_string())?);
+        Ok(format!("digest {digest} {}\n", answer_tag(&self.key, stamp, &digest)))
+    }
+
+    /// Serves the peers on the TCP port of the mesh address, on a thread of its own,
+    /// until the process ends: it tells the digest of this node's file, and with
+    /// `take_files` it takes the file of a peer. Fails when the port cannot be bound.
+    pub fn accept(
+        self: Arc<Self>,
+        source: Arc<Source>,
+        pending: Pending,
+        take_files: bool,
+    ) -> io::Result<()> {
         let listener = TcpListener::bind(self.listen)?;
         let serve = move || {
             let mut last = 0;
@@ -149,10 +240,9 @@ impl Peers {
                     std::thread::sleep(Duration::from_millis(50));
                     continue;
                 };
-                let answer = match self.receive(&mut stream, &source, &pending, &mut last) {
-                    Ok(()) => "ok\n".to_owned(),
-                    Err(reason) => format!("refused {}\n", reason.replace('\n', " ")),
-                };
+                let answer = self.serve(&mut stream, &source, &pending, &mut last, take_files);
+                let answer = answer
+                    .unwrap_or_else(|reason| format!("refused {}\n", reason.replace('\n', " ")));
                 let _ = stream.write_all(answer.as_bytes());
             }
         };
@@ -160,15 +250,15 @@ impl Peers {
         Ok(())
     }
 
-    /// Takes one file from a peer: authenticates it, checks it as a reload would, puts
-    /// it in the place of this node's file and leaves the revision for the worker.
-    fn receive(
+    /// Serves one connection of a peer: a question for the digest, or a file.
+    fn serve(
         &self,
         stream: &mut TcpStream,
         source: &Source,
         pending: &Pending,
         last: &mut u64,
-    ) -> Result<(), String> {
+        take_files: bool,
+    ) -> Result<String, String> {
         let text = |error: io::Error| error.to_string();
         let peer = stream.peer_addr().map_err(text)?;
         if !self.peers.iter().any(|known| known.ip() == peer.ip()) {
@@ -176,6 +266,27 @@ impl Peers {
         }
         stream.set_read_timeout(Some(TIMEOUT)).map_err(text)?;
         stream.set_write_timeout(Some(TIMEOUT)).map_err(text)?;
+        let mut magic = [0; 4];
+        if stream.peek(&mut magic).map_err(text)? == 4 && &magic == ASK {
+            return self.tell(stream, source);
+        }
+        if !take_files {
+            return Err("this node does not state mesh.accept_config".to_owned());
+        }
+        self.receive(stream, peer, source, pending, last).map(|()| "ok\n".to_owned())
+    }
+
+    /// Takes one file from a peer: authenticates it, checks it as a reload would, puts
+    /// it in the place of this node's file and leaves the revision for the worker.
+    fn receive(
+        &self,
+        stream: &mut TcpStream,
+        peer: SocketAddr,
+        source: &Source,
+        pending: &Pending,
+        last: &mut u64,
+    ) -> Result<(), String> {
+        let text = |error: io::Error| error.to_string();
         let (stamp, file) = open(&self.key, stream)?;
         if !is_fresh(stamp, *last, unix_ms()) {
             return Err("the file is older than the one in use, or the clocks differ by \
@@ -222,6 +333,14 @@ impl Peers {
 
 /// Sends the sealed file to one peer and reads its answer.
 fn send(peer: SocketAddr, wire: &[u8]) -> Result<(), String> {
+    match exchange(peer, wire)?.as_str() {
+        "ok" => Ok(()),
+        other => Err(other.strip_prefix("refused ").unwrap_or(other).to_owned()),
+    }
+}
+
+/// Sends one message to a peer and returns the line it answers.
+fn exchange(peer: SocketAddr, wire: &[u8]) -> Result<String, String> {
     let text = |error: io::Error| error.to_string();
     let mut stream = TcpStream::connect_timeout(&peer, TIMEOUT).map_err(text)?;
     stream.set_read_timeout(Some(TIMEOUT)).map_err(text)?;
@@ -229,11 +348,10 @@ fn send(peer: SocketAddr, wire: &[u8]) -> Result<(), String> {
     stream.write_all(wire).map_err(text)?;
     let mut answer = String::new();
     stream.take(MAX_ANSWER).read_to_string(&mut answer).map_err(text)?;
-    match answer.trim_end() {
-        "ok" => Ok(()),
-        "" => Err("the peer closed without an answer. It may not state mesh.accept_config".into()),
-        other => Err(other.strip_prefix("refused ").unwrap_or(other).to_owned()),
+    if answer.trim_end().is_empty() {
+        return Err("the peer closed without an answer".to_owned());
     }
+    Ok(answer.trim_end().to_owned())
 }
 
 #[cfg(test)]
@@ -272,6 +390,17 @@ mod tests {
         assert!(!is_fresh(now - 1, now, now), "an older message");
         assert!(!is_fresh(now - SKEW_MS - 1, 0, now), "a stale message after a restart");
         assert!(!is_fresh(now + SKEW_MS + 1, 0, now));
+    }
+
+    #[test]
+    fn an_answer_belongs_to_its_question_and_its_digest() {
+        let tag = answer_tag(&KEY, 5, "00ff");
+        assert_ne!(tag, answer_tag(&KEY, 6, "00ff"), "another question");
+        assert_ne!(tag, answer_tag(&KEY, 5, "00fe"), "another digest");
+        assert_ne!(tag, answer_tag(&[8; 32], 5, "00ff"), "another key");
+        assert_eq!(digest(b"a").len(), DIGEST);
+        assert_ne!(digest(b"a"), digest(b"b"));
+        assert_eq!(question(&KEY, 5).len(), QUESTION);
     }
 
     #[test]

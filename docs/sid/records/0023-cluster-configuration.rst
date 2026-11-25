@@ -80,6 +80,20 @@ The receiver takes these steps and stops at the first that fails.
 
 The receiver answers ``ok`` or ``refused`` with the reason, in one line. The node logs ``EDGE011: configuration received from ADDRESS``.
 
+Comparing the nodes
+~~~~~~~~~~~~~~~~~~~
+
+``sibuna ctl SOCKET show cluster`` asks every peer for the digest of its file and prints one line for each node.
+
+.. code-block:: text
+
+   node             file             state
+   10.0.0.1:7946    3fa9c1d2e4b50c77 this node
+   10.0.0.2:7946    3fa9c1d2e4b50c77 same
+   10.0.0.3:7946    91ab07c3d2e4f601 differs
+
+The digest is the first 16 hexadecimal digits of the BLAKE3 hash of the file. The question is ``S E Q 1``, a stamp of 8 bytes and a tag of 32 bytes on the same TCP port. The answer is the digest with a tag over the stamp and the digest, so an old answer cannot stand for a new one. Every node of a mesh answers the question, with or without ``accept_config``. A node that cannot bind the TCP port and does not take files logs ``EDGE012`` and serves without the answer. The admin thread asks. The edge worker takes no part.
+
 Rationale and alternatives
 --------------------------
 
@@ -123,6 +137,9 @@ Acceptance criteria and implementation status
      - A peer that refuses is named, and the others reload.
      - Met. A second test gives the third node another key. The command fails with ``ADM012``, names the node that reloaded and the node that refused.
    * - 4
+     - ``show cluster`` tells which nodes hold the same file.
+     - Met. The tests of rows 1 to 3 read the table: all the same after the reload, one that differs after a broken file, and no answer from the node with another key.
+   * - 5
      - An altered, cut, oversized, old or repeated message is refused.
      - Met in unit tests of the seal, the limit and the stamp.
 
@@ -132,7 +149,7 @@ Known gaps
 #. Files that the topology names by path are not sent. A new certificate or key must reach every node by other means before the reload.
 #. A JLV file that imports other files is sent without them.
 #. There is no history and no rollback. The operator keeps the earlier file.
-#. A node that is down misses the file. It serves its old file when it returns, and nothing compares the files of the nodes. The operator runs the command again.
+#. A node that is down misses the file and serves its old file when it returns. ``show cluster`` shows the difference, and the operator runs the command again. Nothing does that by itself.
 #. The stamp of the last file is kept in memory. After a restart a node accepts a message of the last 60 seconds again.
 #. The receiver knows a node by the source address of the connection. A sender whose route leaves from another address than its mesh address is refused.
 #. The test of three processes runs on one host. The nodes there share one listener with ``reuse_port`` and find themselves through ``self_file``.
@@ -142,13 +159,13 @@ Known gaps
 Open questions
 --------------
 
-#. Should the mesh carry a digest of the file of each node, so that ``show info`` can say when the nodes differ?
 #. Should a returning node ask a peer for the file?
 
 Review history
 --------------
 
 - 2026-11-25. Initial draft, written with the implementation. The review of the draft made receiving an explicit choice, added the check that the file names the same mesh, and bound the stamp to the clock so that a restart does not open the node to old messages for longer than a minute.
+- 2026-11-25. ``show cluster`` added, which answers the first open question of the draft.
 
 References
 ----------

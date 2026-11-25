@@ -237,7 +237,8 @@ impl Serving {
             Command::ShowStats => Ok(self.stats()),
             Command::ShowCerts => Ok(self.certs()),
             Command::ShowCa => Ok(self.ca()),
-            Command::Help => Ok(control::USAGE.to_owned()),
+            // The admin thread answers these two. They never reach the worker.
+            Command::Help | Command::ShowCluster => Ok(control::USAGE.to_owned()),
             Command::Local(command) => self.change(&command, false),
             Command::State { .. }
             | Command::Weight { .. }
@@ -607,8 +608,14 @@ fn start_mesh(
     crate::random::fill(&mut boot)?;
     let peers = Arc::new(cluster::Peers::new(spec, &key));
     source.set_cluster(Arc::clone(&peers));
-    if spec.accept_config {
-        peers.accept(Arc::clone(source), Arc::clone(pending))?;
+    let serving = peers.accept(Arc::clone(source), Arc::clone(pending), spec.accept_config);
+    if let Err(error) = serving {
+        // A node that takes files must be reachable. One that only answers
+        // `show cluster` serves without that answer.
+        if spec.accept_config {
+            return Err(error);
+        }
+        note(format_args!("EDGE012: the mesh address cannot serve `show cluster`: {error}"));
     }
     sibuna_lb::Mesh::start(spec, &key, boot)
 }
