@@ -54,6 +54,11 @@ pub struct Certificate {
     /// The DNS names and the IP addresses of the subjectAltName extension. An address
     /// is in the text form of [`std::net::IpAddr`].
     pub names: Vec<String>,
+    /// The content of the serial number, as the certificate holds it: big endian, with
+    /// a leading zero where the first bit would be set.
+    pub serial: Vec<u8>,
+    /// The key identifier of the authority key identifier extension, or nothing.
+    pub authority_key_id: Vec<u8>,
 }
 
 impl Certificate {
@@ -77,7 +82,7 @@ pub fn read(certificate: &[u8]) -> Option<Certificate> {
     if fields.peek().is_some_and(|(tag, _)| *tag == 0xa0) {
         fields.next();
     }
-    let _serial = fields.next()?;
+    let (der::INTEGER, serial) = fields.next()? else { return None };
     let _algorithm = fields.next()?;
     let (der::SEQUENCE, issuer) = fields.next()? else { return None };
     let (der::SEQUENCE, validity) = fields.next()? else { return None };
@@ -88,12 +93,35 @@ pub fn read(certificate: &[u8]) -> Option<Certificate> {
     });
     let not_before = times.next()??;
     let not_after = times.next()??;
-    let names = fields
+    let extensions = fields
         .find(|(tag, _)| *tag == 0xa3)
         .and_then(|(_, extensions)| der::read(extensions))
-        .map(|(_, extensions, _)| alt_names(extensions))
+        .map(|(_, extensions, _)| extensions)
         .unwrap_or_default();
-    Some(Certificate { not_before, not_after, issuer: issuer_name(issuer), names })
+    Some(Certificate {
+        not_before,
+        not_after,
+        issuer: issuer_name(issuer),
+        names: alt_names(extensions),
+        serial: serial.to_vec(),
+        authority_key_id: authority_key_id(extensions),
+    })
+}
+
+/// The key identifier in the authority key identifier of a DER `Extensions` sequence.
+fn authority_key_id(extensions: &[u8]) -> Vec<u8> {
+    for (_, extension) in der::children(extensions) {
+        let mut fields = der::children(extension);
+        if fields.next() != Some((der::OID, AUTHORITY_KEY_ID)) {
+            continue;
+        }
+        let Some((der::OCTET_STRING, value)) = fields.last() else { continue };
+        let Some((der::SEQUENCE, members, _)) = der::read(value) else { continue };
+        // The key identifier is the implicit field [0].
+        let found = der::children(members).find(|(tag, _)| *tag == 0x80);
+        return found.map(|(_, id)| id.to_vec()).unwrap_or_default();
+    }
+    Vec::new()
 }
 
 /// The common name in a DER `Name`, or else the organization, or `-`.
@@ -319,11 +347,22 @@ mod tests {
             names: &["example.org", "*.example.net"],
             not_before: NOW,
             not_after: NOW + 90 * 86_400,
-            serial: 7,
+            serial: 0x8765_4321,
+            authority_key_id: Some([7; 20]),
             ..Template::default()
         };
         let der = write(&template, &leaf.subject_public_key_info(), &authority).unwrap();
         let certificate = read(&der).unwrap();
+        // The serial keeps the zero that makes it positive, as RFC 9773 wants it.
+        assert_eq!(certificate.serial, [0x00, 0x87, 0x65, 0x43, 0x21]);
+        assert_eq!(certificate.authority_key_id, [7; 20]);
+        let plain = Template { authority_key_id: None, serial: 7, ..template };
+        let der = write(&plain, &leaf.subject_public_key_info(), &authority).unwrap();
+        let certificate = read(&der).unwrap();
+        assert_eq!(
+            (certificate.serial.as_slice(), certificate.authority_key_id.len()),
+            (&[7][..], 0)
+        );
         assert_eq!(certificate.not_before, NOW);
         assert_eq!(certificate.not_after, NOW + 90 * 86_400);
         assert_eq!(certificate.issuer, "Test Authority");

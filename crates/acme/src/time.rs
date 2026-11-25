@@ -113,6 +113,55 @@ pub(crate) fn parse_der_time(text: &[u8], two_digit_year: bool) -> Option<u64> {
     .to_unix()
 }
 
+/// Reads a time of RFC 3339, such as `2027-02-22T10:00:00Z` or
+/// `2027-02-22T12:00:00.25+02:00`, as seconds since 1970. A fraction is dropped.
+pub(crate) fn parse_rfc3339(text: &str) -> Option<u64> {
+    let bytes = text.as_bytes();
+    let shape_ok = text.is_ascii()
+        && (20..=40).contains(&bytes.len())
+        && bytes.get(4) == Some(&b'-')
+        && bytes.get(7) == Some(&b'-')
+        && matches!(bytes.get(10), Some(b'T' | b't' | b' '))
+        && bytes.get(13) == Some(&b':')
+        && bytes.get(16) == Some(&b':');
+    if !shape_ok {
+        return None;
+    }
+    let number = |from: usize, len: usize| {
+        let digits = text.get(from..from + len)?;
+        digits.bytes().all(|byte| byte.is_ascii_digit()).then(|| digits.parse::<u32>().ok())?
+    };
+    let civil = Civil {
+        year: i64::from(number(0, 4)?),
+        month: number(5, 2)?,
+        day: number(8, 2)?,
+        hour: number(11, 2)?,
+        minute: number(14, 2)?,
+        second: number(17, 2)?,
+    };
+    let mut zone = text.get(19..)?;
+    if let Some(fraction) = zone.strip_prefix('.') {
+        let digits = fraction.bytes().take_while(u8::is_ascii_digit).count();
+        zone = fraction.get(digits..).filter(|_| digits > 0)?;
+    }
+    let local = civil.to_unix()?;
+    if zone.eq_ignore_ascii_case("z") {
+        return Some(local);
+    }
+    let offset_ok = zone.len() == 6 && zone.as_bytes().get(3) == Some(&b':');
+    let at = 19 + (text.len() - 19 - zone.len());
+    let (hours, minutes) = (number(at + 1, 2)?, number(at + 4, 2)?);
+    if !offset_ok || hours > 23 || minutes > 59 {
+        return None;
+    }
+    let offset = u64::from(hours * 3600 + minutes * 60);
+    match zone.as_bytes().first() {
+        Some(b'+') => local.checked_sub(offset),
+        Some(b'-') => local.checked_add(offset),
+        _ => None,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -126,6 +175,31 @@ mod tests {
         assert_eq!(format_rfc3339(NOVEMBER), "2026-11-24T10:34:56Z");
         for seconds in [0, 86_399, 951_782_400, NOVEMBER, 4_102_444_800, 32_503_679_999] {
             assert_eq!(Civil::from_unix(seconds).to_unix(), Some(seconds));
+        }
+    }
+
+    #[test]
+    fn rfc_3339_times_parse_with_fractions_and_zones() {
+        assert_eq!(parse_rfc3339("2026-11-24T10:34:56Z"), Some(NOVEMBER));
+        assert_eq!(parse_rfc3339("2026-11-24t10:34:56z"), Some(NOVEMBER));
+        assert_eq!(parse_rfc3339("2026-11-24T10:34:56.789Z"), Some(NOVEMBER));
+        assert_eq!(parse_rfc3339("2026-11-24T12:34:56+02:00"), Some(NOVEMBER));
+        assert_eq!(parse_rfc3339("2026-11-24T05:04:56.5-05:30"), Some(NOVEMBER));
+        assert_eq!(parse_rfc3339(&format_rfc3339(NOVEMBER)), Some(NOVEMBER));
+        let bad = [
+            "",
+            "2026-11-24",
+            "2026-11-24T10:34:56",
+            "2026-11-24T10:34:56.Z",
+            "2026-13-24T10:34:56Z",
+            "2026-11-24T10:34:56+0200",
+            "2026-11-24T10:34:56+24:00",
+            "2026-11-24T10:34:56Zjunk",
+            "1970-01-01T00:00:00+01:00",
+            "2026-11-24T1\u{e9}:34:56Z",
+        ];
+        for text in bad {
+            assert_eq!(parse_rfc3339(text), None, "{text}");
         }
     }
 

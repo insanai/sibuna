@@ -28,6 +28,12 @@ struct Script {
     not_ready_once: bool,
     /// Authorizations listed in the order.
     authorizations: usize,
+    /// The key identifier and the MAC key of the binding that a new account needs.
+    binding: Option<(&'static str, &'static [u8])>,
+    /// Offer renewal information in the directory.
+    renewal_info: bool,
+    /// Refuse an order that names a certificate to replace.
+    refuse_replaces: bool,
 }
 
 impl Default for Script {
@@ -41,6 +47,9 @@ impl Default for Script {
             retry_after: None,
             not_ready_once: false,
             authorizations: 1,
+            binding: None,
+            renewal_info: false,
+            refuse_replaces: false,
         }
     }
 }
@@ -58,6 +67,8 @@ struct Authority {
     issued: Option<String>,
     /// The path of every request, in order.
     log: Vec<String>,
+    /// The `replaces` member of every order placed, empty without one.
+    replaces: Vec<String>,
 }
 
 fn decode(text: &str) -> Vec<u8> {
@@ -81,6 +92,7 @@ impl Authority {
             polls: 0,
             issued: None,
             log: Vec::new(),
+            replaces: Vec::new(),
         }
     }
 
@@ -121,9 +133,15 @@ impl Authority {
         self.log.push(path.clone());
         match (request.method, path.as_str()) {
             (Method::Get, "/directory") => {
+                let required = self.script.binding.is_some();
+                let ari = match self.script.renewal_info {
+                    true => format!(r#""renewalInfo":"{BASE}/renewal-info","#),
+                    false => String::new(),
+                };
                 let body = format!(
-                    r#"{{"newNonce":"{BASE}/new-nonce","newAccount":"{BASE}/new-account",
-                        "newOrder":"{BASE}/new-order","meta":{{"website":"x"}}}}"#
+                    r#"{{"newNonce":"{BASE}/new-nonce","newAccount":"{BASE}/new-account",{ari}
+                        "newOrder":"{BASE}/new-order",
+                        "meta":{{"website":"x","externalAccountRequired":{required}}}}}"#
                 );
                 Response { status: 200, body: body.into_bytes(), ..Response::default() }
             }
@@ -143,6 +161,10 @@ impl Authority {
         match path {
             "/new-account" => {
                 assert!(payload.contains("\"termsOfServiceAgreed\":true"), "{payload}");
+                if !self.is_bound(&payload, &request.url) {
+                    let kind = "urn:ietf:params:acme:error:unauthorized";
+                    return self.json(401, format!(r#"{{"type":"{kind}","detail":"bad MAC"}}"#));
+                }
                 self.registered = true;
                 let mut response = self.json(201, r#"{"status":"valid"}"#.to_owned());
                 response.location = Some(format!("{BASE}/account/1"));
@@ -151,6 +173,14 @@ impl Authority {
             "/new-order" => {
                 assert!(self.registered);
                 assert!(payload.contains(r#"{"type":"dns","value":"example.org"}"#), "{payload}");
+                let order = sibuna_json::parse(payload.as_bytes()).unwrap();
+                let replaces = order.as_object().unwrap().get("replaces");
+                let replaces = replaces.and_then(|value| value.as_str()).unwrap_or_default();
+                self.replaces.push(replaces.to_owned());
+                if self.script.refuse_replaces && !replaces.is_empty() {
+                    let kind = "urn:ietf:params:acme:error:alreadyReplaced";
+                    return self.json(409, format!(r#"{{"type":"{kind}","detail":"done"}}"#));
+                }
                 let list: Vec<String> = (0..self.script.authorizations)
                     .map(|index| format!(r#""{BASE}/authz/{index}""#))
                     .collect();
@@ -179,6 +209,30 @@ impl Authority {
             }
             other => panic!("unexpected request for {other}"),
         }
+    }
+
+    /// Whether a registration carries the binding that the script wants: a JWS with
+    /// HS256 over the account key, for this URL. The MAC is computed with `ring`, not
+    /// with the code under test.
+    fn is_bound(&self, payload: &str, url: &str) -> bool {
+        let Some((kid, key)) = self.script.binding else { return true };
+        let registration = sibuna_json::parse(payload.as_bytes()).unwrap();
+        let Some(binding) = registration.as_object().unwrap().get("externalAccountBinding") else {
+            return false;
+        };
+        let part = |name: &str| binding.as_object().unwrap().get(name).unwrap().as_str().unwrap();
+        let (protected, bound) = (part("protected"), part("payload"));
+        let header = decode(protected);
+        assert_eq!(field(&header, "alg"), "HS256");
+        assert_eq!(field(&header, "kid"), kid);
+        assert_eq!(field(&header, "url"), url);
+        assert!(!String::from_utf8(header).unwrap().contains("nonce"));
+        let jwk = decode(bound);
+        let x = base64::encode(URL_SAFE_NO_PAD, &self.account_point[1..33]);
+        assert_eq!((field(&jwk, "kty").as_str(), field(&jwk, "x")), ("EC", x));
+        let key = ring::hmac::Key::new(ring::hmac::HMAC_SHA256, key);
+        let signed = format!("{protected}.{bound}");
+        ring::hmac::verify(&key, signed.as_bytes(), &decode(part("signature"))).is_ok()
     }
 
     fn authorization(&mut self) -> Response {
@@ -247,6 +301,7 @@ struct Run {
     log: Vec<String>,
     presented: Vec<Challenge>,
     waits: Vec<u64>,
+    replaces: Vec<String>,
 }
 
 fn run_with(account: &mut Account, options: OrderOptions, script: Script) -> Run {
@@ -263,7 +318,7 @@ fn run_with(account: &mut Account, options: OrderOptions, script: Script) -> Run
         },
         |seconds| waits.push(seconds),
     );
-    Run { result, log: authority.log, presented, waits }
+    Run { result, log: authority.log, presented, waits, replaces: authority.replaces }
 }
 
 fn run(script: Script) -> Run {
@@ -499,4 +554,74 @@ fn a_failing_transport_ends_the_one_call_path() {
         |_| {},
     );
     assert_eq!(result.unwrap_err().code, "ACME002");
+}
+
+const MAC_KEY: &[u8] = b"a key of the authority, 32 bytes";
+
+fn bound(kid: &str, key: &[u8]) -> OrderOptions {
+    let binding = jws::Binding { kid: kid.to_owned(), key: key.to_vec() };
+    OrderOptions { binding: Some(binding), ..options() }
+}
+
+#[test]
+fn a_registration_carries_the_binding_that_the_authority_wants() {
+    let script = || Script { binding: Some(("kid-1", MAC_KEY)), ..Script::default() };
+    let mut account = Account::new(KeyPair::generate().unwrap());
+    let run = run_with(&mut account, bound("kid-1", MAC_KEY), script());
+    assert!(run.result.is_ok());
+    assert!(run.log.contains(&"/new-account".to_owned()));
+
+    // Another key: the authority refuses, and the failure names the binding.
+    let mut account = Account::new(KeyPair::generate().unwrap());
+    let run = run_with(&mut account, bound("kid-1", b"another key"), script());
+    let error = run.result.unwrap_err();
+    assert_eq!((error.code, error.title), ("ACME012", "ACCOUNT BINDING REFUSED"));
+    assert!(error.message.contains("bad MAC"), "{}", error.message);
+    assert_eq!(run.log.last().map(String::as_str), Some("/new-account"));
+}
+
+#[test]
+fn a_required_binding_that_is_missing_fails_before_any_signed_request() {
+    let script = Script { binding: Some(("kid-1", MAC_KEY)), ..Script::default() };
+    let run = run(script);
+    let error = run.result.unwrap_err();
+    assert_eq!(error.code, "ACME012");
+    assert!(error.message.contains("https://ca.example/directory"), "{}", error.message);
+    assert!(error.hint.contains("eab"));
+    assert_eq!(run.log, ["/directory"]);
+}
+
+#[test]
+fn the_binding_reads_its_key_file_and_hides_the_key() {
+    let binding = jws::Binding::parse("kid-1", " YSBrZXk=\n").unwrap();
+    assert_eq!(binding.key, b"a key");
+    assert_eq!(jws::Binding::parse("kid-1", "YSBrZXk").unwrap().key, b"a key");
+    assert!(jws::Binding::parse("", "YSBrZXk").is_none());
+    assert!(jws::Binding::parse("kid-1", "").is_none());
+    assert!(jws::Binding::parse("kid-1", "not base64!").is_none());
+    let shown = format!("{binding:?}");
+    assert!(shown.contains("kid-1") && !shown.contains("97"), "{shown}");
+}
+
+#[test]
+fn a_renewal_names_the_certificate_it_replaces_when_the_directory_takes_it() {
+    let replacing = || OrderOptions { replaces: Some("aaa.bbb".to_owned()), ..options() };
+    let mut account = Account::new(KeyPair::generate().unwrap());
+    let script = Script { renewal_info: true, ..Script::default() };
+    let run = run_with(&mut account, replacing(), script);
+    assert!(run.result.is_ok());
+    assert_eq!(run.replaces, ["aaa.bbb"]);
+
+    // A directory without renewal information does not know the member.
+    let mut account = Account::new(KeyPair::generate().unwrap());
+    let run = run_with(&mut account, replacing(), Script::default());
+    assert!(run.result.is_ok());
+    assert_eq!(run.replaces, [""]);
+
+    // An authority that refuses the member gets the order again without it.
+    let mut account = Account::new(KeyPair::generate().unwrap());
+    let script = Script { renewal_info: true, refuse_replaces: true, ..Script::default() };
+    let run = run_with(&mut account, replacing(), script);
+    assert!(run.result.is_ok());
+    assert_eq!(run.replaces, ["aaa.bbb", ""]);
 }

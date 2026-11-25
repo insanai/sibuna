@@ -30,6 +30,7 @@ mod key;
 mod order;
 mod time;
 
+pub mod ari;
 pub mod csr;
 pub mod dns;
 pub mod jws;
@@ -46,6 +47,7 @@ pub mod x509;
 pub(crate) static SPAWN: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 pub use error::Error;
+pub use jws::Binding;
 pub use key::{KeyPair, random_serial};
 pub use order::{
     Account, Action, Challenge, ChallengeKind, Issued, Method, Order, OrderOptions, Request,

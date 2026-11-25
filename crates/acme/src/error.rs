@@ -138,6 +138,20 @@ impl Error {
     }
 }
 
+impl Error {
+    /// `ACME012`: the authority wants an external account binding, or refused ours.
+    pub fn binding(message: impl Into<String>) -> Self {
+        Self::new(
+            "ACME012",
+            "ACCOUNT BINDING REFUSED",
+            message.into(),
+            "Set `eab: { kid, key_file }` for this authority with the key identifier and \
+             the base64url key that the authority gave you. A binding is used once: ask \
+             for a new one when the account was created before.",
+        )
+    }
+}
+
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} ({}): {}", self.title, self.code, self.message)
