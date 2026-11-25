@@ -702,6 +702,31 @@ fn a_502_of_the_server_itself_is_a_response_and_not_a_failure() {
 }
 
 #[test]
+fn the_byte_counts_of_http11_are_the_bytes_of_the_message() {
+    // A chunked response: its framing is part of what the client receives.
+    let chunked = b"HTTP/1.1 200 OK\r\ntransfer-encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n";
+    both(|event_loop| {
+        let daemon = start(answering(chunked), event_loop, &Extra::default());
+        // A padded field counts as it was sent, and the body by its length.
+        let request = "POST /upload HTTP/1.1\r\nHost: www.example.com\r\nX-Pad:    wide   \r\n\
+                       Content-Length: 7\r\nConnection: close\r\n\r\npayload";
+        let answer = exchange(daemon.vip, request.as_bytes());
+        assert_eq!(status(&answer), 200, "{answer}");
+        assert!(answer.ends_with("5\r\nhello\r\n0\r\n\r\n"), "{answer}");
+        let line = &daemon.lines(1)[0];
+        assert_eq!(field(line, "bytes_in"), request.len().to_string(), "{line} ({event_loop})");
+        assert_eq!(field(line, "bytes_out"), answer.len().to_string(), "{line} ({event_loop})");
+        // A chunked request body counts its data bytes, without the chunk framing.
+        let head = "POST /chunked HTTP/1.1\r\nHost: www.example.com\r\n\
+                    Transfer-Encoding: chunked\r\nConnection: close\r\n\r\n";
+        let request = format!("{head}7\r\npayload\r\n0\r\n\r\n");
+        assert_eq!(status(&exchange(daemon.vip, request.as_bytes())), 200);
+        let line = &daemon.lines(2)[1];
+        assert_eq!(field(line, "bytes_in"), (head.len() + 7).to_string(), "{line}");
+    });
+}
+
+#[test]
 fn an_interim_head_cut_in_two_does_not_hide_the_final_status() {
     // The interim head ends in a second write, after a pause.
     fn origin() -> SocketAddr {

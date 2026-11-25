@@ -225,7 +225,8 @@ fn an_http2_request_to_an_http11_pool_is_logged_with_its_server_and_times() {
         ("method", "GET"),
         ("path", "/page"),
         ("status", "200"),
-        ("bytes_out", "5"),
+        // The head as HTTP/1.1 text, 38 bytes, and the five bytes of the body.
+        ("bytes_out", "43"),
         ("backend", "app"),
         ("server", "a"),
         ("verdict", "pass"),
@@ -238,6 +239,32 @@ fn an_http2_request_to_an_http11_pool_is_logged_with_its_server_and_times() {
     let total: f64 = field(line, "duration_ms").parse().unwrap();
     let first: f64 = field(line, "ttfb_ms").parse().unwrap();
     assert!(first > 0.0 && first <= total, "{line}");
+}
+
+#[test]
+fn the_byte_counts_of_http2_are_the_heads_as_text_and_the_body_data() {
+    let daemon = start(origin(), "");
+    let vip = daemon.vip;
+    runtime().block_on(async {
+        let exchange = async {
+            let mut client = connect(vip).await;
+            let url = format!("https://localhost:{}/upload", vip.port());
+            let body = http_body_util::Full::new(Bytes::from(vec![b'x'; 3000]));
+            let request = Request::post(url).body(body.boxed_unsync()).unwrap();
+            let response = client.send_request(request).await.unwrap();
+            assert_eq!(response.status(), 200);
+            assert_eq!(response.into_body().collect().await.unwrap().to_bytes(), "hello");
+        };
+        tokio::time::timeout(WAIT, exchange).await.unwrap();
+    });
+    let line = &daemon.lines(1)[0];
+    let head = format!(
+        "POST /upload HTTP/1.1\r\nhost: localhost:{}\r\ncontent-length: 3000\r\n\r\n",
+        vip.port()
+    );
+    assert_eq!(field(line, "bytes_in"), (head.len() + 3000).to_string(), "{line}");
+    let answer = "HTTP/1.1 200 OK\r\ncontent-length: 5\r\n\r\nhello";
+    assert_eq!(field(line, "bytes_out"), answer.len().to_string(), "{line}");
 }
 
 /// One HTTP/1.1 request over TLS 1.2, which is what a client without ALPN speaks.
@@ -307,9 +334,11 @@ fn grpc_calls_on_a_shared_http2_session_are_logged_one_line_each() {
         assert!(field(line, "path").starts_with("/echo.Echo/"), "{line}");
         assert_ne!(field(line, "ttfb_ms"), "null", "{line}");
     }
-    // The stream of forty messages of 100 bytes, each with a prefix of five.
+    // The stream of forty messages of 100 bytes, each with a prefix of five, after the
+    // head and before the trailers, which count as HTTP/1.1 text.
     let stream = lines.iter().find(|line| field(line, "path") == "/echo.Echo/Stream").unwrap();
-    assert_eq!(field(stream, "bytes_out"), "4200", "{stream}");
+    let sent: usize = field(stream, "bytes_out").parse().unwrap();
+    assert!((4200 + 40..4200 + 400).contains(&sent), "{stream}");
 }
 
 #[test]

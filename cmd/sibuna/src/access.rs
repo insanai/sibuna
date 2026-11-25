@@ -213,6 +213,10 @@ pub(crate) struct Entry {
     /// The status sent to the client, or zero.
     pub status: u16,
     pub bytes_in: u64,
+    /// The part of `bytes_in` that stands for the body: its declared length, or what
+    /// was buffered of a body without one. A path that counts the body replaces it.
+    #[cfg_attr(not(feature = "https"), allow(dead_code))]
+    pub body_in: u64,
     pub bytes_out: u64,
     /// The wait for the first response byte of the server.
     pub first_byte: Option<Duration>,
@@ -243,6 +247,7 @@ impl Entry {
             verdict: "-",
             status: 0,
             bytes_in: 0,
+            body_in: 0,
             bytes_out: 0,
             first_byte: None,
             elapsed: Duration::ZERO,
@@ -383,8 +388,8 @@ pub(crate) fn forwarded_client<'c>(
 pub(crate) fn capture<W>(ctx: &mut Ctx<'_, W>) {
     let Some(observe) = &ctx.server.observe else { return };
     let request = &ctx.request;
-    let head: usize = request.headers().iter().map(|h| h.name.len() + h.value.len() + 4).sum();
-    let line = request.method_text.len() + request.path.len() + request.query.len() + 14;
+    // The head as it was received. Its blank line is part of it.
+    let head = request.head_len;
     let body =
         if ctx.declared_body == UNKNOWN_LENGTH { request.body.len() } else { ctx.declared_body };
     let trace = &mut *ctx.trace;
@@ -404,7 +409,8 @@ pub(crate) fn capture<W>(ctx: &mut Ctx<'_, W>) {
         scan: crate::client_writer::StatusScan::default(),
         verdict,
         status: 0,
-        bytes_in: (line + head + body) as u64,
+        bytes_in: (head + body) as u64,
+        body_in: body as u64,
         bytes_out: 0,
         first_byte: None,
         elapsed: Duration::ZERO,
@@ -451,6 +457,8 @@ impl sibuna_ingress::Report for Pending {
         let Pending { observe, mut entry, sent } = *self;
         entry.status = completion.status;
         entry.bytes_out = completion.bytes_out;
+        // The runtime counted the body bytes that the client really sent.
+        entry.bytes_in = entry.bytes_in - entry.body_in + completion.body_in;
         let decided = sent.saturating_duration_since(entry.started);
         entry.first_byte = completion.first_byte.map(|wait| decided + wait);
         observe.settle(entry, Instant::now());
