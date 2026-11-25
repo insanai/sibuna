@@ -84,5 +84,8 @@ Discussion registry
    * - 0024
      - :doc:`records/0024-tls-on-the-workers`
      - discussion
+   * - 0027
+     - :doc:`records/0027-spill-cache`
+     - discussion
 
 .. sid-generated-end
