@@ -80,8 +80,9 @@ pub type Handler = Arc<dyn Fn(TcpStream, SocketAddr, SocketAddr, Secured) + Send
 pub type Admit =
     Arc<dyn Fn(SocketAddr, SocketAddr) -> Option<Box<dyn std::any::Any + Send>> + Send + Sync>;
 
-/// Judges a QUIC connection when its ClientHello is read, before the handshake ends
-/// (SID 0030). The arguments are the client, the listener, the server name that the
+/// Judges a QUIC connection when its ClientHello is read (SID 0030). The handshake
+/// goes on meanwhile, and no request of the connection is accepted before the ruling.
+/// The arguments are the client, the listener, the server name that the
 /// client sent, empty when it sent none, and the closure that receives the ruling. The
 /// call must return at once. It calls the closure at once or later, from any thread,
 /// with true to go on and false to close the connection.

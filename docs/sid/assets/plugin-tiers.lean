@@ -142,6 +142,37 @@ theorem cleared_challenge_skips_nothing (before after : List (Verdict × Bool))
   simp only [List.map_append, List.map_cons, List.mem_append, List.mem_cons, List.mem_map]
   exact Or.inr (Or.inr ⟨x, hx, rfl⟩)
 
+/-- Shedding. A caller that may not wait, and whose judges have no room, runs the
+    chain itself. Each entry is a hook: whether it is an agent, its choice, and the
+    result it would give. A shed agent is not called: its result is `failed`. -/
+def shedOne (s : Stage) : Bool × OnFailure × Result → Verdict
+  | (true, f, _) => outcome s f Result.failed
+  | (false, f, r) => outcome s f r
+
+/-- The chain of a shedding caller. -/
+def shed (s : Stage) (xs : List (Bool × OnFailure × Result)) : Verdict :=
+  chain (xs.map (shedOne s))
+
+/-- A full queue never admits what a guarding agent guards: when one agent of the
+    chain has `on_failure: deny`, the shed chain does not admit, whatever the agent
+    would have answered. -/
+theorem shed_never_passes_a_guarding_agent (s : Stage) (hs : s ≠ Stage.telemetry)
+    (xs : List (Bool × OnFailure × Result)) (r : Result)
+    (h : (true, OnFailure.deny, r) ∈ xs) : shed s xs ≠ Verdict.admit := by
+  intro hadmit
+  have hall := (chain_admits_iff _).mp hadmit
+  have hmem : shedOne s (true, OnFailure.deny, r) ∈ xs.map (shedOne s) :=
+    List.mem_map_of_mem h
+  have hone : outcome s OnFailure.deny Result.failed = Verdict.admit := hall _ hmem
+  cases s with
+  | connection => exact absurd hone (by decide)
+  | request => exact absurd hone (by decide)
+  | telemetry => exact hs rfl
+
+/-- Shedding changes nothing for a hook that is no agent. -/
+theorem shed_runs_every_other_hook (s : Stage) (f : OnFailure) (r : Result) :
+    shedOne s (false, f, r) = outcome s f r := rfl
+
 /-- Fuel. One step of the interpreter spends at least one unit, and an
     invocation stops when no unit is left. `run fuel costs` is the number of
     steps taken over a program whose steps cost `costs`. -/

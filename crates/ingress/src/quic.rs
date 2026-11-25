@@ -94,8 +94,10 @@ pub(super) async fn serve(
 }
 
 /// Asks the judge of the node about a connection whose handshake has begun. The
-/// handshake data is known when the ClientHello is read, so the judge sees the server
-/// name before any certificate is sent. Without a judge every connection goes on.
+/// handshake data is known when the ClientHello is read: this is the first moment at
+/// which the library tells the server name. The library goes on with the handshake
+/// meanwhile, so the ruling does not stop the handshake: it decides whether the
+/// connection may serve. Without a judge every connection goes on.
 async fn judged(connecting: &mut quinn::Connecting, vip: SocketAddr, shared: &Shared) -> bool {
     let Some(judge) = shared.judge.get() else { return true };
     let Ok(Ok(data)) = timeout(DEADLINE, connecting.handshake_data()).await else {
