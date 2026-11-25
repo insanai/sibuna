@@ -56,6 +56,8 @@ Edge load balancer
    sibuna ctl /run/sibuna/edge.sock show ca > sibuna-root.crt         # the root to install in clients
    sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain   # or ready
    sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 weight 5
+   sibuna ctl /run/sibuna/edge.sock del ban 203.0.113.9                       # on every node of a mesh
+   sibuna ctl /run/sibuna/edge.sock reload cluster                            # this node, then its peers
    sibuna ctl /run/sibuna/edge.sock add server app/blue 10.0.0.3:80
    sibuna ctl /run/sibuna/edge.sock del server app/blue
    sibuna ctl /run/sibuna/edge.sock reload                            # as SIGHUP, with the result

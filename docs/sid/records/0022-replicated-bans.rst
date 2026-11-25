@@ -25,7 +25,7 @@ Motivation and scope
 
 SID 0015 lists replicated state among its proposals and asks which mesh state needs anti-entropy and expiry. We answer for the one state whose absence an attacker can use today. A ban is issued by the honeypot, by a rule quota, or by an administrator. It lives in the ban table of one process. With three nodes an attacker has three times the attempts before every node has banned it by itself, and a ban by an administrator holds on one node only.
 
-We do not replicate the rate limiters. Their counters change with every request, and each node already bounds what it serves. We do not replicate the lifting of bans, sticky tables or run-time server changes. Sticky cookies need no replication: every node derives the cookie from ``http.secret_file``, which the nodes of a cluster share.
+We do not replicate the rate limiters. Their counters change with every request, and each node already bounds what it serves. We do not replicate sticky tables or the counters of rate limits. An earlier draft also left out the lifting of bans and run-time server changes. Sticky cookies need no replication: every node derives the cookie from ``http.secret_file``, which the nodes of a cluster share.
 
 Specification
 -------------
@@ -98,16 +98,46 @@ Replication needs no setting. It runs whenever the topology has a ``mesh`` and a
        }
    }
 
-Drain commands
-~~~~~~~~~~~~~~
+Run-time commands
+~~~~~~~~~~~~~~~~~
 
-An operator drains a server before maintenance with ``set server POOL/NAME state drain``. In a cluster the command would have to be given on every node, and a node that restarts would return the server to rotation by itself. The mesh therefore carries the command as it carries a ban.
+An operator changes servers at run time through the admin socket: ``set server POOL/NAME state drain``, ``set server POOL/NAME weight N``, ``add server`` and ``del server``. In a cluster each command would have to be given on every node, and a node that restarts would forget it. The mesh therefore carries the command as it carries a ban.
 
-The state is a second map, from ``POOL/NAME`` to a number. The number is the Unix millisecond of the command, shifted left by one bit, with the state in the lowest bit: 1 for drained and 0 for ready. The merge keeps the larger number. The later command therefore wins on every node, whatever the order of arrival, and of two commands in one millisecond the drain wins everywhere. The datagram has the form of a ban datagram with kind 4. A key holds at most 129 bytes: two names of 64 bytes and a stroke.
+The state is a second map, from a key to a number. The number starts with the Unix millisecond of the command, and the merge keeps the larger number. The later command for a key therefore wins on every node, whatever the order of arrival.
 
-A command is sent three times as a ban is, and a returning peer receives the last command for every server. A node refuses a number whose time lies more than 60 seconds ahead of its own clock. Without that bound one node with a wrong clock could overrule every later command. The map holds at most 4,096 servers and nothing in it ends. When it is full, the command for a new server stays local.
+.. list-table::
+   :header-rows: 1
+   :widths: 16 40 44
 
-A received command is applied by the edge worker as a local command is, at most 64 in a turn, and logged as ``EDGE010: mesh: set server ...``. A node that does not have the server ignores the command. ``set server POOL/NAME state drain local`` keeps a command on its node. ``mesh.replicate_drains: false`` turns the sharing off. Weights, added servers and removed servers are not shared.
+   * - Command
+     - Key
+     - Number
+   * - add, del
+     - ``a``, the address, a line feed, ``POOL/NAME``
+     - the stamp, 16 bits of weight, 1 bit: present
+   * - state
+     - ``s``, ``POOL/NAME``
+     - the stamp, 1 bit: drained
+   * - weight
+     - ``w``, ``POOL/NAME``
+     - the stamp, 16 bits of weight
+
+Of two commands for one key in one millisecond the larger content wins everywhere: the drain over the return, the addition over the removal. The datagram has the form of a ban datagram with kind 4. A key holds at most 192 bytes.
+
+A command is sent three times as a ban is. A returning peer receives the last command of each kind for every server, the additions first, so that a server exists before its state and its weight are set. A node refuses a number whose time lies more than 60 seconds ahead of its own clock. Without that bound one node with a wrong clock could overrule every later command. The map holds at most 8,192 entries and nothing in it ends. When it is full, a command for a new key stays local.
+
+A received command is applied by the edge worker as a local command is, at most 64 in a turn, and logged as ``EDGE010: mesh: set server ...``. A node that cannot apply a command ignores it: it does not have the server, or its pool does not allow the change. The last word ``local`` keeps a command on its node. ``mesh.replicate_commands: false`` turns the sharing off.
+
+One rule of the edge stays. A pool that places clients by a Maglev table refuses weights and membership at run time, with or without a mesh, because every node must build the same table at the same moment. That is the default pool of a mesh. Its servers change by ``reload cluster`` (SID 0023). Drains work on every pool.
+
+Lifting a ban
+~~~~~~~~~~~~~
+
+``del ban ADDRESS`` lifts the ban of one client. The merge of bans keeps the later end, so a lift cannot be a smaller end: the next datagram of a peer would bring the ban back. A lift is an entry of a third map, from the client key to the end up to which bans are lifted. That map also merges by the larger number, in a datagram of kind 5.
+
+A ban is in effect when it ends after the lift of its client. The node of the operator sets the lift to the end of the ban it knows, and to at least 60 seconds ahead, which covers a ban that it has not heard yet. Every node that hears the lift tells its firewall to admit the client and forgets the ban. A ban that arrives later with an end that the lift covers is ignored, so a peer that was cut off cannot bring the ban back. A ban that ends after the lift is a new ban and holds. A lift is forgotten when its end has passed, as a ban is.
+
+Lifts travel when bans do. ``del ban ADDRESS local`` lifts on one node only.
 
 Observation
 ~~~~~~~~~~~
@@ -169,7 +199,7 @@ Acceptance criteria and implementation status
      - The map, the queue and the sends stay within their bounds.
      - Met in unit tests for the map and the size of a datagram. The queue and the sends of a walk are bounded by construction and have no test under load.
 
-The drain commands have their own row.
+The commands and the lifts have their own rows.
 
 .. list-table::
    :header-rows: 1
@@ -180,7 +210,13 @@ The drain commands have their own row.
      - Status
    * - 6
      - A drain commanded on one node holds on its peers and on a node that restarts, the later command wins, and a local command stays local.
-     - Met. ``cmd/sibuna/tests/edge_mesh_bans.rs`` drains a server on one of three processes, returns it on another with ``local``, restarts the third, and ends the drain from the third. Unit tests cover the order of arrival, the bound on the clock and a full map.
+     - Met. ``cmd/sibuna/tests/edge_mesh_bans.rs`` drains a server on one of three processes, returns it on another with ``local``, restarts the third, and ends the drain from the third.
+   * - 7
+     - A weight, an added server and a removed server hold on every node and on a node that restarts.
+     - Met. The same file sets a weight, adds a server with a weight on another node, changes it from a third, restarts a node and removes the server. Unit tests cover the entry of each command, the order of arrival, the bound on the clock and a full map.
+   * - 8
+     - A lifted ban is lifted on every node, does not return, and a new ban holds again.
+     - Met. The same file lifts a ban on the second of three processes, restarts the third, bans again from another node and lifts locally. A unit test sends the lifted ban again and a later one.
 
 Formal model
 ------------
@@ -192,23 +228,28 @@ Formal model
 - ``replay_is_harmless``, ``order_is_irrelevant``: a datagram heard twice, and two datagrams in either order.
 - ``heard_keeps``, ``heard_contains``: after any list of datagrams a node holds every ban it had and every ban it heard.
 - ``admit_is_bounded``, ``admit_never_extends``: a received end lies within the horizon and never beyond the end that was sent.
+- ``effect_ignores_order``, ``lift_ends_ban``, ``lifted_ban_does_not_return``, ``newer_ban_holds``: the rule of lifts.
+- ``later_command_wins``: of two stamped commands the later is the larger number, whatever they say.
 
 The model does not cover the schedule of the three sends, the walk or the expiry. Unit tests cover those.
 
 Known gaps
 ----------
 
-#. Lifting a ban is local. An operator who clears the bans of one node clears that node only.
+#. A ban issued after a lift holds on every node only when it ends after the lifted ban would have ended. Two bans of the same length always do. A shorter ban issued soon after a lift holds on its own node only.
 #. Bans that an administrator configures are not sent. They belong in the policy file of every node.
 #. The nodes must agree on ``ipv6_prefix`` and keep their clocks close. Neither is checked.
 #. A ban issued while a peer is cut off for less than three probe periods, with all three sends lost, reaches that peer only with its next walk, which a restart or a longer silence starts.
 #. A walk copies the map once for the returning peer, up to 65,536 entries.
 #. The test of three processes runs on one host over loopback. It has not run on separate hosts.
 #. Replication runs in edge mode only. The daemon mode of the firewall has no mesh.
-#. The map of drain commands never forgets a server. A cluster that names more than 4,096 servers over its life, counting removed ones, keeps later commands local until its nodes restart.
-#. Drain commands have no metrics of their own. Their effect shows in ``show servers`` and in the log.
+#. The map of commands never forgets a key. A cluster that gives commands for more than 8,192 keys over its life, counting removed servers, keeps later commands local until its nodes restart.
+#. Two operators who add one server name with two addresses on two nodes at the same moment can leave the nodes with different addresses for it. The next command for that name settles it.
+#. A reload returns a node to its file, as it does without a mesh. Commands given before the reload stay in force on the peers until they reload too. ``reload cluster`` reloads all nodes.
+#. Pools that place clients by a Maglev table take no weights or members at run time.
+#. Commands and lifts have no metrics of their own. Their effect shows in ``show servers`` and in the log.
 #. A node whose clock is more than 60 seconds behind its peers has its commands overruled by their earlier ones. A node whose clock is more than 60 seconds ahead has its commands refused by its peers.
-#. The Lean model covers the merge, which drains share with bans. It does not model the stamp or the bound on the clock.
+#. The Lean model covers the merge, the rule of lifts and the order of stamped commands. It does not model the bound on the clock, the schedule of sends or the walk.
 
 Open questions
 --------------
@@ -222,6 +263,7 @@ Review history
 - 2026-11-24. Initial draft.
 - 2026-11-24. Drain commands added on the same datagram and merge, after the question of what else a cluster must share. Configuration is not shared: every node reads its own file.
 - 2026-11-24. Implementation and its review. The review found two faults. The mesh thread starts before the firewall, so a walk could arrive before the firewall could take bans: the bans were merged and never applied. The mesh now remembers them and applies them once the firewall has given its sink. The test of three processes then showed that a restarted node died: the daemon wrote the routing regime to a standard error that nobody read, and ``eprintln!`` ends a process there. The lines of the running edge are now written without that, and the test closes the pipe on purpose.
+- 2026-11-25. Weights, added and removed servers, and lifted bans added. The drain map became the map of commands with a tagged key, and its configuration key became ``mesh.replicate_commands``. The review found that the default pool of a mesh refuses weights and members by design. We kept that rule and say so.
 
 References
 ----------

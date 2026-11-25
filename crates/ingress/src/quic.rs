@@ -99,7 +99,9 @@ async fn connection(
         identity.downcast::<Vec<rustls::pki_types::CertificateDer<'static>>>().ok()
     });
     let cert = crate::fingerprint(chain.as_ref().map(|chain| chain.as_slice()));
-    let lane = Lane::new(shared.handoff, shared.inline, conn.remote_address(), vip, cert);
+    // QUIC is always TLS 1.3. The library does not tell which suite it negotiated.
+    let secured = crate::Secured { cert, version: "1.3", cipher: "" };
+    let lane = Lane::new(shared.handoff, shared.inline, conn.remote_address(), vip, secured);
     let mut check = tokio::time::interval(IDLE_CHECK);
     let mut draining = false;
     loop {

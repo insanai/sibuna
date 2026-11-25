@@ -358,8 +358,13 @@ fn a_multiplexed_request_is_decided_in_process_and_sent_on_a_pooled_connection()
     assert_reports(&gate);
 }
 
-/// Every forwarded exchange is reported once, with its status, body bytes and wait.
+/// Every forwarded exchange is reported once, with its status, bytes and wait. The
+/// bytes are the response as HTTP/1.1 would carry it: the head as text and the body.
 fn assert_reports(gate: &Gate) {
+    // The head of the origin's plain answer with a body of `length` bytes.
+    let head = |length: usize| {
+        format!("HTTP/1.1 200 OK\r\nserver: origin\r\ncontent-length: {length}\r\n\r\n").len()
+    };
     // A report follows the end of its body, which the runtime may see after the client.
     let deadline = std::time::Instant::now() + Duration::from_secs(5);
     while gate.reports.lock().unwrap().len() < 8 && std::time::Instant::now() < deadline {
@@ -372,14 +377,20 @@ fn assert_reports(gate: &Gate) {
     assert_eq!(routed.len(), 3);
     for (_, protocol, completion) in routed {
         assert_eq!(*protocol, "h2");
-        assert_eq!((completion.status, completion.bytes_out), (200, 42));
+        assert_eq!((completion.status, completion.bytes_out), (200, (head(42) + 42) as u64));
+        assert_eq!(completion.body_in, 0);
         assert!(completion.first_byte.is_some());
     }
     let (_, _, upload) = of("/upload")[0];
-    assert_eq!((upload.status, upload.bytes_out), (200, 45));
-    // Trailers end an exchange: it is reported with the body bytes before them.
+    assert_eq!((upload.status, upload.bytes_out), (200, (head(45) + 45) as u64));
+    assert!(upload.body_in > 0, "the request body is counted: {upload:?}");
+    // Trailers end an exchange: it is reported with the head, the body and the
+    // trailers as text.
     let (_, _, grpc) = of("/grpc")[0];
-    assert_eq!((grpc.status, grpc.bytes_out), (200, 5));
+    let text = "HTTP/1.1 200 OK\r\ncontent-type: application/grpc\r\n\
+                trailer: grpc-status\r\n\r\nhello\
+                grpc-status: 0\r\n\r\n";
+    assert_eq!((grpc.status, grpc.bytes_out), (200, text.len() as u64));
     // A silent server is our 504 and never sent a first byte.
     let (_, _, silent) = of("/silent")[0];
     assert_eq!((silent.status, silent.first_byte), (504, None));
@@ -387,7 +398,8 @@ fn assert_reports(gate: &Gate) {
     let (_, _, stall) = of("/stall")[0];
     assert_eq!(stall.status, 200);
     let (_, protocol, stream) = of("/stream")[0];
-    assert_eq!((*protocol, stream.status, stream.bytes_out), ("h3", 200, 45));
+    let sent = (head(45) + 45) as u64;
+    assert_eq!((*protocol, stream.status, stream.bytes_out), ("h3", 200, sent));
 }
 
 /// One POST over HTTP/2 with a body.

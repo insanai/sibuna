@@ -87,6 +87,8 @@ pub struct Server {
     pub(crate) automatic: Option<Arc<sibuna_ingress::Automatic>>,
     /// Hands each ban to the peers of the edge mesh (SID 0022), once the mesh shares.
     pub(crate) ban_feed: std::sync::OnceLock<sibuna_lb::BanFeed>,
+    /// Where a ban that the operator lifts goes, when the edge has a mesh (SID 0022).
+    pub(crate) lift_feed: std::sync::OnceLock<sibuna_lb::LiftFeed>,
     /// The default per-client request limiter is off (edge mode only).
     pub(crate) unlimited: bool,
     /// The firewall is off for the whole edge (`http.surface: "off"`).
@@ -148,6 +150,7 @@ impl Server {
             #[cfg(feature = "https")]
             automatic: None,
             ban_feed: std::sync::OnceLock::new(),
+            lift_feed: std::sync::OnceLock::new(),
             unlimited: false,
             balances_only: false,
             max_connections: AtomicU32::new(config.max_connections),
@@ -207,10 +210,12 @@ impl Server {
         self.peers.count(address)
     }
 
-    /// Counts a refused connection by its reason, on an edge (SID 0020).
-    pub(crate) fn count_refusal(&self, reason: sibuna_lb::Refusal) {
+    /// Counts a refused connection of `client` by its reason, on an edge, and logs it
+    /// at a bounded rate (SID 0020).
+    pub(crate) fn refuse_connection(&self, reason: sibuna_lb::Refusal, client: IpAddr) {
         if let Some(observe) = &self.observe {
             observe.stats.refuse(reason);
+            observe.log_refusal(reason, client);
         }
     }
 
@@ -417,7 +422,7 @@ pub(crate) fn admit_within(
     if server.connections.fetch_add(1, Ordering::Relaxed) >= limit {
         server.connections.fetch_sub(1, Ordering::Relaxed);
         server.metrics.overloaded.bump();
-        server.count_refusal(sibuna_lb::Refusal::ConnectionLimit);
+        server.refuse_connection(sibuna_lb::Refusal::ConnectionLimit, peer);
         reject(server, stream, "Service Unavailable: connection limit reached");
         return None;
     }
@@ -426,7 +431,7 @@ pub(crate) fn admit_within(
         Err(_) => {
             server.connections.fetch_sub(1, Ordering::Relaxed);
             server.metrics.overloaded.bump();
-            server.count_refusal(sibuna_lb::Refusal::ClientLimit);
+            server.refuse_connection(sibuna_lb::Refusal::ClientLimit, peer);
             reject(
                 server,
                 stream,
@@ -450,7 +455,7 @@ pub(crate) fn admit_secure(
     if server.connections.fetch_add(1, Ordering::Relaxed) >= limit {
         server.connections.fetch_sub(1, Ordering::Relaxed);
         server.metrics.overloaded.bump();
-        server.count_refusal(sibuna_lb::Refusal::ConnectionLimit);
+        server.refuse_connection(sibuna_lb::Refusal::ConnectionLimit, peer);
         return None;
     }
     match server.peers.admit(peer, per_client) {
@@ -458,7 +463,7 @@ pub(crate) fn admit_secure(
         Err(_) => {
             server.connections.fetch_sub(1, Ordering::Relaxed);
             server.metrics.overloaded.bump();
-            server.count_refusal(sibuna_lb::Refusal::ClientLimit);
+            server.refuse_connection(sibuna_lb::Refusal::ClientLimit, peer);
             None
         }
     }

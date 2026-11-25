@@ -183,60 +183,16 @@ fn ingress_of(server: &Server, peer: SocketAddr, vip: SocketAddr, secure: bool) 
         .as_ref()
         .and_then(|routes| routes.frontend(vip))
         .is_some_and(|front| front.trusts(peer.ip()));
-    Ingress { peer, vip, secure, cert: None, trusted }
+    Ingress { peer, vip, secure, cert: None, tls: ("", ""), trusted }
 }
 
 /// Starts the access log, when the topology has one, and the counters beside it.
-fn start_observe(options: &sibuna_lb::ObserveOptions, edge: &Edge) -> io::Result<Arc<Observe>> {
+pub(super) fn start_observe(
+    options: &sibuna_lb::ObserveOptions,
+    edge: &Edge,
+) -> io::Result<Arc<Observe>> {
     let log = options.access_log.as_ref().map(AccessLog::start).transpose()?;
     Ok(Arc::new(Observe::new(options.clone(), log, edge.stats())))
-}
-
-/// What the edge observes, with or without an HTTP frontend (SID 0020).
-pub(super) struct Observed {
-    observe: Arc<Observe>,
-    _probe: Option<super::probe::Probe>,
-}
-
-impl Observed {
-    /// Reopens the access log file, for log rotation, when `asked` is set, and clears it.
-    pub fn reopen_log_when(&self, asked: &std::sync::atomic::AtomicBool) {
-        if asked.swap(false, Ordering::AcqRel) {
-            self.observe.reopen_log();
-        }
-    }
-
-    /// The counters and the log, for the admin socket.
-    pub fn shared(&self) -> Arc<Observe> {
-        self.observe.clone()
-    }
-
-    /// Turns the readiness answer to 503.
-    pub fn drain(&self) {
-        self.observe.draining.store(true, Ordering::Release);
-    }
-}
-
-/// Starts the separate listener, when the topology has one, and returns the handle of
-/// everything observed. A topology without an HTTP frontend has counters and no log.
-pub(super) fn observe(
-    http: Option<&Http>,
-    options: sibuna_lb::ObserveOptions,
-    edge: &Edge,
-) -> io::Result<Observed> {
-    let listen = options.listen;
-    let observe = match http {
-        Some(http) => http.observe.clone(),
-        None => Arc::new(Observe::new(options, None, edge.stats())),
-    };
-    let probe = listen
-        .map(|address| {
-            let server = http.map(|http| http.server.clone());
-            let sources = super::probe::Sources { observe: observe.clone(), server };
-            super::probe::Probe::start(address, sources)
-        })
-        .transpose()?;
-    Ok(Observed { observe, _probe: probe })
 }
 
 impl Http {
@@ -273,26 +229,9 @@ impl Http {
         let ingress = if prepared.identities.is_empty() {
             None
         } else {
-            let web = server.clone();
-            let pool = workers.clone();
-            let handler = Arc::new(move |stream, peer, vip, cert| {
-                let ingress = Ingress { cert, ..ingress_of(&web, peer, vip, true) };
-                serve(&web, pool.as_deref(), stream, ingress, None);
-            });
             let limits = ingress_limits(&prepared.options, prepared.share_address);
-            // Without the workers every request path is the blocking one.
-            let decide = workers.is_some().then(|| {
-                Arc::new(super::inline::Decision { server: server.clone() })
-                    as Arc<dyn sibuna_ingress::Decide>
-            });
-            let ingress = sibuna_ingress::Ingress::start(
-                prepared.identities,
-                edge.flow_budget(),
-                handler,
-                decide,
-                limits,
-            )?;
-            ingress.guard(quic_admission(server.clone()));
+            let budget = edge.flow_budget();
+            let ingress = start_ingress(&server, &workers, prepared.identities, budget, limits)?;
             Some(ingress)
         };
         let reaper = start_reaper(&server)?;
@@ -340,6 +279,25 @@ impl Http {
         if let Some(counters) = mesh.ban_counters() {
             let _ = self.observe.mesh_bans.set(counters);
         }
+        let server = self.server.clone();
+        let lift = move |client: &[u8]| {
+            server.bans.lift_hashed(server.client_hasher.hash(client));
+        };
+        if let Some(feed) = mesh.share_lifts(Box::new(lift)) {
+            let _ = self.server.lift_feed.set(feed);
+        }
+    }
+
+    /// Lifts the ban of the client at `address`, and with `share` tells the peers of
+    /// the mesh to lift it too. A client without a ban is left as it is.
+    pub fn lift_ban(&self, address: std::net::IpAddr, share: bool) {
+        let prefix = self.server.config.ipv6_prefix;
+        let key = crate::context::ClientKey::new(&[], Some(address), prefix);
+        let hash = self.server.client_hasher.hash(key.as_bytes());
+        self.server.bans.lift_hashed(hash);
+        if let (true, Some(feed)) = (share, self.server.lift_feed.get()) {
+            feed.publish(key.as_bytes());
+        }
     }
 
     /// The certificate thread of automatic HTTPS, when the daemon started one.
@@ -373,24 +331,18 @@ impl Http {
             return false;
         }
         self.options == next.options
-            && self.observe.compatible(&next.observe)
             && same_listeners(&self.binds, &next.binds)
             && next.seed.as_ref().is_none_or(|seed| {
                 self.server.config.secret_seed.as_ref() == Some(seed.as_bytes())
             })
     }
 
-    /// Opens what the access log of `next` needs, before anything is reloaded.
-    ///
-    /// # Errors
-    ///
-    /// The error of opening the new log file or of starting the writer thread.
-    pub fn plan_log(&self, next: &Prepared) -> io::Result<crate::access::Change> {
-        self.observe.plan(&next.observe)
+    /// What the server shares for observation, and the server for its process counters.
+    pub fn observed(&self) -> (Arc<Observe>, Arc<Server>) {
+        (self.observe.clone(), self.server.clone())
     }
 
-    pub fn reload(&mut self, prepared: Prepared, log: crate::access::Change) {
-        self.observe.apply(prepared.observe, log);
+    pub fn reload(&mut self, prepared: Prepared) {
         #[cfg(feature = "https")]
         super::automatic::reload(self.automatic(), prepared.automatic, &prepared.identities);
         #[cfg(feature = "https")]
@@ -415,6 +367,36 @@ fn poisoned<T>(error: std::sync::PoisonError<T>) -> T {
 
 /// Starts the event-driven workers when the topology asks for them and the platform has
 /// them.
+/// Starts the protocol runtime of the TLS listeners. Its connections reach the server
+/// through the workers, or without them through a thread each.
+#[cfg(feature = "https")]
+fn start_ingress(
+    server: &Arc<Server>,
+    workers: &Option<Arc<Workers>>,
+    identities: BTreeMap<SocketAddr, sibuna_ingress::Identity>,
+    budget: sibuna_lb::FlowBudget,
+    limits: sibuna_ingress::Limits,
+) -> io::Result<sibuna_ingress::Ingress> {
+    let web = server.clone();
+    let pool = workers.clone();
+    let handler = Arc::new(move |stream, peer, vip, secured: sibuna_ingress::Secured| {
+        let tls = (secured.version, secured.cipher);
+        let ingress = Ingress { cert: secured.cert, tls, ..ingress_of(&web, peer, vip, true) };
+        serve(&web, pool.as_deref(), stream, ingress, None);
+    });
+    // Without the workers every request path is the blocking one.
+    let decide = workers.is_some().then(|| {
+        Arc::new(super::inline::Decision { server: server.clone() })
+            as Arc<dyn sibuna_ingress::Decide>
+    });
+    let ingress = sibuna_ingress::Ingress::start(identities, budget, handler, decide, limits)?;
+    ingress.guard(quic_admission(server.clone()));
+    // Without the workers no decision hears of the requests the runtime refuses.
+    let web = server.clone();
+    ingress.report_refusals(Arc::new(move |refused| crate::access::refused(&web, refused)));
+    Ok(ingress)
+}
+
 fn start_workers(server: &Arc<Server>, options: &HttpOptions) -> io::Result<Option<Arc<Workers>>> {
     if !options.event_loop || !Workers::SUPPORTED {
         return Ok(None);
@@ -473,6 +455,7 @@ fn launch(server: &Arc<Server>, stream: TcpStream, ingress: Ingress, permit: Opt
         return;
     }
     let server_ref = server.clone();
+    let client = ingress.peer.ip();
     let task = server.tasks.launch(move || {
         let _permit = permit;
         if server_ref.is_stopping() {
@@ -491,7 +474,7 @@ fn launch(server: &Arc<Server>, stream: TcpStream, ingress: Ingress, permit: Opt
     });
     if task.is_err() {
         server.metrics.overloaded.bump();
-        server.count_refusal(sibuna_lb::Refusal::TaskLimit);
+        server.refuse_connection(sibuna_lb::Refusal::TaskLimit, client);
     }
 }
 
@@ -509,7 +492,5 @@ impl Drop for Http {
             let _ = reaper.join();
         }
         self.server.pool.drain();
-        // Every request path has ended. Write the lines that are queued.
-        self.observe.close_log();
     }
 }

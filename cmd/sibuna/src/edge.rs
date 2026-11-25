@@ -4,6 +4,7 @@
 mod admin;
 #[cfg(feature = "https")]
 mod automatic;
+mod cluster;
 mod control;
 mod ctl;
 mod failure;
@@ -11,6 +12,7 @@ mod fdlimit;
 mod http;
 #[cfg(feature = "https")]
 mod inline;
+mod observed;
 mod probe;
 mod quick;
 mod watch;
@@ -23,7 +25,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, PoisonError, mpsc};
 use std::time::{Duration, Instant};
 
-use sibuna_lb::{Config, Edge, RuntimeError};
+use sibuna_lb::{Change, Config, Edge, MeshCommand, RuntimeError, ServerState};
 
 use crate::signals::{self, Shutdown};
 use control::Command;
@@ -129,19 +131,19 @@ struct Serving {
     drain_delay: Duration,
     started: Instant,
     reloads: u64,
-    /// The counters of SID 0020, for `show stats`.
-    observe: Arc<crate::access::Observe>,
+    /// The counters, the access log and the separate listener of SID 0020.
+    observed: observed::Observed,
     /// The drain commands shared with the peers of the mesh (SID 0022).
     drains: Drains,
 }
 
-/// The drain commands on their way to the peers and from them.
+/// The run-time commands on their way to the peers and from them.
 #[derive(Default)]
 struct Drains {
     /// Where a command of this node's operator goes. `None` without a mesh.
-    feed: Option<sibuna_lb::DrainFeed>,
+    feed: Option<sibuna_lb::CommandFeed>,
     /// The commands of the operators of other nodes, from the mesh thread.
-    remote: Option<mpsc::Receiver<(String, String, bool)>>,
+    remote: Option<mpsc::Receiver<MeshCommand>>,
 }
 
 /// The commands of peers applied in one turn of the edge worker.
@@ -158,7 +160,8 @@ impl Serving {
         let shutdown_timeout = revision.config.shutdown_timeout();
         let drain_delay = revision.config.drain_delay();
         let before = self.edge.change_count();
-        reload(&mut self.edge, self.http.as_mut(), &mut self.adapters, revision)?;
+        let observed = &mut self.observed;
+        reload(&mut self.edge, self.http.as_mut(), &mut self.adapters, observed, revision)?;
         self.reloads += 1;
         self.shutdown_timeout = shutdown_timeout;
         self.drain_delay = drain_delay;
@@ -186,16 +189,12 @@ impl Serving {
     /// Follows the mesh: applies the drain commands of the peers and the routing regime.
     fn follow(&mut self, mesh: Option<&sibuna_lb::Mesh>, current: &mut sibuna_lb::Regime) {
         let commands = self.drains.remote.iter().flat_map(mpsc::Receiver::try_iter);
-        for (pool, name, drained) in commands.take(REMOTE_DRAINS_PER_STEP) {
-            let state = if drained {
-                sibuna_lb::ServerState::Drain
-            } else {
-                sibuna_lb::ServerState::Ready
-            };
-            // A server that this node does not have is another node's concern.
-            if self.edge.set_server_state(&pool, &name, state).is_ok() {
-                let word = state.word();
-                note(format_args!("EDGE010: mesh: set server {pool}/{name} state {word}"));
+        let commands: Vec<MeshCommand> = commands.take(REMOTE_DRAINS_PER_STEP).collect();
+        for command in commands {
+            // A command that this node cannot apply is another node's concern: a
+            // server it does not have, or one that its file fixes.
+            if self.apply(&command).is_ok() {
+                note(format_args!("EDGE010: mesh: {}", control::render_command(&command)));
             }
         }
         let Some(regime) = mesh.map(sibuna_lb::Mesh::regime) else { return };
@@ -234,36 +233,73 @@ impl Serving {
         command: Command,
         revision: Option<Revision>,
     ) -> Result<String, RuntimeError> {
-        let edge = &mut self.edge;
-        let done = |()| String::new();
         match command {
-            Command::ShowServers => Ok(control::render_servers(&edge.servers())),
+            Command::ShowServers => Ok(control::render_servers(&self.edge.servers())),
             Command::ShowInfo => Ok(self.info()),
             Command::ShowStats => Ok(self.stats()),
             Command::ShowCerts => Ok(self.certs()),
             Command::ShowCa => Ok(self.ca()),
-            Command::Help => Ok(control::USAGE.to_owned()),
-            Command::State { pool, name, state, local } => {
-                edge.set_server_state(&pool, &name, state)?;
-                if let (false, Some(feed)) = (local, &self.drains.feed) {
-                    feed.publish(&pool, &name, state == sibuna_lb::ServerState::Drain);
-                }
+            // The admin thread answers these two. They never reach the worker.
+            Command::Help | Command::ShowCluster => Ok(control::USAGE.to_owned()),
+            Command::ReopenLog => {
+                self.observed.shared().reopen_log();
                 Ok(String::new())
             }
-            Command::Weight { pool, name, weight } => {
-                edge.set_server_weight(&pool, &name, weight).map(done)
-            }
-            Command::Add { pool, name, addr, weight } => {
-                edge.add_server(&pool, &name, addr, weight).map(done)
-            }
-            Command::Del { pool, name } => edge.remove_server(&pool, &name).map(done),
-            Command::Reload => {
+            Command::Local(command) => self.change(&command, false),
+            Command::State { .. }
+            | Command::Weight { .. }
+            | Command::Add { .. }
+            | Command::Del { .. }
+            | Command::DelBan { .. } => self.change(&command, true),
+            Command::Reload | Command::ReloadCluster => {
                 let revision = revision
                     .ok_or_else(|| reload_rejected(io::Error::other("the file was not loaded")))?;
                 let line = self.reload(revision).map_err(reload_rejected)?;
                 note(format_args!("{line}"));
                 Ok(format!("{line}\n"))
             }
+        }
+    }
+
+    /// Applies a change to a server and, when `share` is set and the edge has a mesh,
+    /// hands it to the peers.
+    fn change(&mut self, command: &Command, share: bool) -> Result<String, RuntimeError> {
+        if let Command::DelBan { client } = command {
+            let Some(http) = &self.http else {
+                return Err(RuntimeError::invalid(
+                    "This edge has no HTTP frontend, and so no bans.".to_owned(),
+                    "Bans belong to the firewall of an HTTP frontend.",
+                ));
+            };
+            http.lift_ban(*client, share);
+            return Ok(String::new());
+        }
+        let Some(change) = control::mesh_command(command, &self.edge.servers()) else {
+            // Only the removal of a server that is not there has no change to share.
+            // The edge names the fault.
+            let Command::Del { pool, name } = command else { return Ok(String::new()) };
+            return self.edge.remove_server(pool, name).map(|()| String::new());
+        };
+        self.apply(&change)?;
+        if let (true, Some(feed)) = (share, &self.drains.feed) {
+            feed.publish(&change);
+        }
+        Ok(String::new())
+    }
+
+    /// Applies one change to a server, from this node's operator or from a peer.
+    fn apply(&mut self, command: &MeshCommand) -> Result<(), RuntimeError> {
+        let (edge, pool, name) = (&mut self.edge, &command.pool, &command.name);
+        match command.change {
+            Change::State { drained } => {
+                let state = if drained { ServerState::Drain } else { ServerState::Ready };
+                edge.set_server_state(pool, name, state)
+            }
+            Change::Weight(weight) => edge.set_server_weight(pool, name, weight),
+            Change::Member { addr, weight, present: true } => {
+                edge.add_server(pool, name, addr, weight)
+            }
+            Change::Member { present: false, .. } => edge.remove_server(pool, name),
         }
     }
 
@@ -279,7 +315,7 @@ impl Serving {
     /// The answer to `show stats`: the counters of SID 0020 and of automatic HTTPS.
     fn stats(&self) -> String {
         #[cfg_attr(not(feature = "https"), allow(unused_mut))]
-        let mut text = crate::access::metrics_text(None, &self.observe);
+        let mut text = crate::access::metrics_text(None, self.observed.shared());
         #[cfg(feature = "https")]
         if let Some(automatic) = self.http.as_ref().and_then(http::Http::automatic) {
             crate::acme::write_metrics(automatic, crate::acme::unix_now(), &mut text);
@@ -314,8 +350,7 @@ impl Serving {
     /// The answer to `show info`: one `key: value` per line.
     fn info(&self) -> String {
         let servers = self.edge.servers();
-        let drained =
-            servers.iter().filter(|server| server.state == sibuna_lb::ServerState::Drain).count();
+        let drained = servers.iter().filter(|server| server.state == ServerState::Drain).count();
         let watch = match self.watcher.interval() {
             Some(interval) => format!("{}s", interval.as_secs()),
             None => "off".to_owned(),
@@ -374,7 +409,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let observe_options = config.observe().clone();
     let mut adapters = Adapters::default();
     adapt(&mut adapters, &mut config)?;
-    let mesh = config.mesh().map(start_mesh).transpose()?;
+    let mesh = config.mesh().map(|spec| start_mesh(spec, &source, &pending)).transpose()?;
     let admin_socket = config.admin_socket().map(str::to_owned);
     let takeover = config.reuse_port();
     let watch = config.watch();
@@ -383,7 +418,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let edge = Edge::bind(config)?;
     let http = http.map(|p| http::Http::start(p, &edge, secret)).transpose()?;
     let drains = join(http.as_ref(), &adapters, mesh.as_ref());
-    let observed = http::observe(http.as_ref(), observe_options, &edge)?;
+    let observed = observed::Observed::start(http.as_ref(), &observe_options, &edge)?;
     let (jobs, inbox) = mpsc::channel();
     let _admin = match &admin_socket {
         Some(path) => Some(admin::Admin::start(path, takeover, Arc::clone(&source), jobs)?),
@@ -401,21 +436,21 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         drain_delay,
         started: Instant::now(),
         reloads: 0,
-        observe: observed.shared(),
+        observed,
         drains,
     };
     serving.watch(watch)?;
     serving.announce();
     while !shutdown.is_requested() {
-        observed.reopen_log_when(&rotate);
+        serving.observed.reopen_log_when(&rotate);
         serving.take_pending();
         for job in inbox.try_iter().take(COMMANDS_PER_STEP) {
             serving.answer(job);
         }
         serving.follow(mesh.as_ref(), &mut current);
-        step(&mut serving.edge, serving.http.as_ref())?;
+        serving.step()?;
     }
-    observed.drain();
+    serving.observed.drain();
     serving.linger()?;
     drop(mesh);
     serving.stop()
@@ -432,15 +467,23 @@ impl Serving {
         note(format_args!("Sibuna edge draining: not ready, serving for {delay:?}"));
         let until = Instant::now() + self.drain_delay;
         while Instant::now() < until {
-            step(&mut self.edge, self.http.as_ref())?;
+            self.step()?;
         }
+        Ok(())
+    }
+
+    /// One turn of the edge worker: the load balancer, the accepted HTTP connections
+    /// and the log lines of the flows that ended.
+    fn step(&mut self) -> io::Result<()> {
+        step(&mut self.edge, self.http.as_ref())?;
+        self.observed.pass_flows(&mut self.edge);
         Ok(())
     }
 
     /// Stops the listeners and waits for the established flows, at most
     /// `global.shutdown_timeout`.
     fn stop(self) -> io::Result<()> {
-        let Serving { mut edge, http, shutdown_timeout, .. } = self;
+        let Serving { mut edge, http, shutdown_timeout, observed, .. } = self;
         edge.drain();
         if let Some(http) = &http {
             http.drain();
@@ -448,9 +491,16 @@ impl Serving {
         let deadline = Instant::now() + shutdown_timeout;
         while edge.active() > 0 && Instant::now() < deadline {
             step(&mut edge, http.as_ref())?;
+            observed.pass_flows(&mut edge);
         }
         let (forced, drops) = (edge.active(), edge.dropped());
         note(format_args!("Sibuna edge stopped: {forced} forced closes, {drops} drops"));
+        // The flows that are still open end here, and their lines say `shutdown`.
+        edge.close_flows();
+        observed.pass_flows(&mut edge);
+        // The HTTP server ends its request paths before the log writes its last lines.
+        drop(http);
+        observed.close_log();
         Ok(())
     }
 }
@@ -469,26 +519,35 @@ fn reload(
     edge: &mut Edge,
     http: Option<&mut http::Http>,
     adapters: &mut Adapters,
+    observed: &mut observed::Observed,
     mut revision: Revision,
 ) -> io::Result<()> {
+    let observe = revision.config.observe().clone();
     match (http, revision.http) {
-        (None, None) => edge.reload(revision.config),
+        (None, None) => {
+            let plan = observed.plan(&observe)?;
+            edge.reload(revision.config)?;
+            observed.apply(observe, plan, edge);
+            Ok(())
+        }
         (Some(http), Some(prepared)) if http.compatible(&prepared) => {
-            let log = http.plan_log(&prepared)?;
+            // The new log file and the new listener open first. A failure refuses the
+            // reload, and the old ones serve on (SID 0020).
+            let plan = observed.plan(&observe)?;
             adapt(adapters, &mut revision.config)?;
             edge.reload(revision.config)?;
             // The engine follows the routes at once. A request decided under the old
             // engine in between is routed by the old revision (SID 0018). The adapters
             // of that revision close last.
-            http.reload(prepared, log);
+            http.reload(prepared);
+            observed.apply(observe, plan, edge);
             commit(adapters);
             // A reload may have started the first adapters.
             attach(Some(http), adapters);
             Ok(())
         }
         _ => Err(io::Error::other(
-            "changing HTTP firewall settings, TLS listeners, observability.listen or the \
-             access log queue requires a restart",
+            "changing HTTP firewall settings or TLS listeners requires a restart",
         )),
     }
 }
@@ -548,10 +607,10 @@ fn join(http: Option<&http::Http>, adapters: &Adapters, mesh: Option<&sibuna_lb:
     }
     let (commands, remote) = mpsc::sync_channel(1024);
     // The mesh thread never waits for the edge worker. A full queue drops the command.
-    let sink = move |pool: &str, name: &str, drained: bool| {
-        let _ = commands.try_send((pool.to_owned(), name.to_owned(), drained));
+    let sink = move |command: MeshCommand| {
+        let _ = commands.try_send(command);
     };
-    Drains { feed: mesh.share_drains(Box::new(sink)), remote: Some(remote) }
+    Drains { feed: mesh.share_commands(Box::new(sink)), remote: Some(remote) }
 }
 
 /// Writes one line to standard error. A daemon whose standard error was closed, by a
@@ -562,7 +621,13 @@ pub(crate) fn note(line: std::fmt::Arguments<'_>) {
     let _ = writeln!(io::stderr().lock(), "{line}");
 }
 
-fn start_mesh(spec: &sibuna_lb::MeshConfig) -> io::Result<sibuna_lb::Mesh> {
+/// Starts the mesh thread. The admin socket learns where `reload cluster` sends the
+/// file, and with `mesh.accept_config` this node takes the file of a peer (SID 0023).
+fn start_mesh(
+    spec: &sibuna_lb::MeshConfig,
+    source: &Arc<Source>,
+    pending: &Pending,
+) -> io::Result<sibuna_lb::Mesh> {
     let mut key = [0; 32];
     let mut file = File::open(&spec.key_file)?;
     file.read_exact(&mut key)?;
@@ -571,5 +636,16 @@ fn start_mesh(spec: &sibuna_lb::MeshConfig) -> io::Result<sibuna_lb::Mesh> {
     }
     let mut boot = [0; 16];
     crate::random::fill(&mut boot)?;
+    let peers = Arc::new(cluster::Peers::new(spec, &key));
+    source.set_cluster(Arc::clone(&peers));
+    let serving = peers.accept(Arc::clone(source), Arc::clone(pending), spec.accept_config);
+    if let Err(error) = serving {
+        // A node that takes files must be reachable. One that only answers
+        // `show cluster` serves without that answer.
+        if spec.accept_config {
+            return Err(error);
+        }
+        note(format_args!("EDGE012: the mesh address cannot serve `show cluster`: {error}"));
+    }
     sibuna_lb::Mesh::start(spec, &key, boot)
 }

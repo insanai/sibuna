@@ -244,6 +244,8 @@ fn an_http3_request_is_logged_with_its_protocol_server_and_bytes() {
         ("client", "127.0.0.1"),
         ("frontend", "web"),
         ("protocol", "h3"),
+        ("tls_version", "1.3"),
+        ("tls_cipher", "-"),
         ("scheme", "https"),
         ("method", "GET"),
         ("path", "/page"),
@@ -254,7 +256,13 @@ fn an_http3_request_is_logged_with_its_protocol_server_and_bytes() {
     ] {
         assert_eq!(field(line, name), value, "{name} in {line}");
     }
-    assert_eq!(field(line, "bytes_out"), length.to_string(), "{line}");
+    // Both counts are the message as HTTP/1.1 would carry it: the head as text and the
+    // body. The server answered with a length and no other field.
+    let head_out = format!("HTTP/1.1 200 OK\r\ncontent-length: {length}\r\n\r\n").len();
+    assert_eq!(field(line, "bytes_out"), (head_out + length).to_string(), "{line}");
+    let head_in =
+        format!("GET /page?token=secret HTTP/1.1\r\nhost: localhost:{}\r\n\r\n", vip.port());
+    assert_eq!(field(line, "bytes_in"), head_in.len().to_string(), "{line}");
     assert!(!line.contains("secret"), "the query is not logged: {line}");
     let total: f64 = field(line, "duration_ms").parse().unwrap();
     let first: f64 = field(line, "ttfb_ms").parse().unwrap();
@@ -344,7 +352,7 @@ fn a_grpc_call_over_http3_reaches_an_http2_pool_and_is_logged() {
     let origin = support::server(&servers, Arc::new(AtomicUsize::new(0)));
     let daemon = start(origin, &Extra { pool: r#","http_version":"2""#, ..Extra::default() });
     let vip = daemon.vip;
-    within(&servers, async {
+    let sent = within(&servers, async {
         let (_endpoint, connection) = quic(vip, false).await.unwrap();
         let mut sender = http3(connection).await;
         let request = Request::post(format!("https://localhost:{}/echo.Echo/Unary", vip.port()))
@@ -365,11 +373,20 @@ fn a_grpc_call_over_http3_reaches_an_http2_pool_and_is_logged() {
         assert_eq!(body, message(b"hello"));
         let trailers = stream.recv_trailers().await.unwrap().expect("trailers");
         assert_eq!(trailers["grpc-status"], "0");
+        // The response as HTTP/1.1 text: the status line, the fields, the message and
+        // the trailers.
+        let text = |fields: &hyper::HeaderMap| -> usize {
+            fields.iter().map(|(name, value)| name.as_str().len() + value.len() + 4).sum()
+        };
+        let head = "HTTP/1.1 200 OK\r\n".len() + text(response.headers()) + 2;
+        head + body.len() + text(&trailers) + 2
     });
     let line = &daemon.lines(1)[0];
-    for (name, value) in
-        [("protocol", "h3"), ("status", "200"), ("server", "a"), ("bytes_out", "10")]
-    {
+    for (name, value) in [("protocol", "h3"), ("status", "200"), ("server", "a")] {
         assert_eq!(field(line, name), value, "{name} in {line}");
     }
+    assert_eq!(field(line, "bytes_out"), sent.to_string(), "{line}");
+    // The request: its head as text and the ten bytes of the message.
+    let bytes_in: usize = field(line, "bytes_in").parse().unwrap();
+    assert!(bytes_in > 10 + "POST /echo.Echo/Unary HTTP/1.1\r\n\r\n".len(), "{line}");
 }

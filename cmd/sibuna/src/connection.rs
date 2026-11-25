@@ -42,6 +42,9 @@ pub(crate) struct Ingress {
     /// The SHA-256 digest of the certificate the client proved to hold, on a frontend
     /// with `tls.client_ca`.
     pub cert: Option<[u8; 32]>,
+    /// The TLS version and the cipher suite of the client's handshake, for the access
+    /// log (SID 0020). Each is empty when unknown or without TLS.
+    pub tls: (&'static str, &'static str),
     /// The socket peer is a proxy the frontend trusts, so the per-client connection
     /// bound does not apply to it (SID 0020).
     pub trusted: bool,

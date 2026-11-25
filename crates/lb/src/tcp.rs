@@ -72,6 +72,8 @@ impl Connectors {
 
 #[derive(Default)]
 struct Direction {
+    /// Bytes read from the source.
+    moved: u64,
     eof: bool,
     pending: Vec<u8>,
     sent: usize,
@@ -110,6 +112,7 @@ impl Direction {
             Err(error) if transient(&error) => return Ok(false),
             Err(error) => return Err(error),
         };
+        self.moved += n as u64;
         let written = write(&mut dst, &buf[..n])?;
         if written < n {
             self.pending.extend_from_slice(&buf[written..n]);
@@ -140,6 +143,17 @@ pub(crate) struct Stream {
     down: Direction,
     timeout: Duration,
     last: Instant,
+    /// The log line of the flow, when flows are logged (SID 0020).
+    line: Option<crate::flowlog::FlowGuard>,
+}
+
+impl Drop for Stream {
+    fn drop(&mut self) {
+        if let Some(line) = &mut self.line {
+            line.bytes_in += self.up.moved;
+            line.bytes_out = self.down.moved;
+        }
+    }
 }
 
 impl Stream {
@@ -150,6 +164,7 @@ impl Stream {
         ticket: Ticket,
         timeout: Duration,
         pending: Vec<u8>,
+        line: Option<crate::flowlog::FlowGuard>,
     ) -> io::Result<Self> {
         client.set_nonblocking(true)?;
         origin.set_nonblocking(true)?;
@@ -163,6 +178,7 @@ impl Stream {
             up: Direction { pending, stalled, ..Default::default() },
             down: Direction::default(),
             last: Instant::now(),
+            line,
         })
     }
 
@@ -194,12 +210,23 @@ impl Stream {
     }
 
     pub fn relay(&mut self, scratch: &mut [u8]) -> io::Result<bool> {
+        let quiet = !self.up.eof && !self.down.eof;
         let up = self.up.pump(&self.client, &self.origin, scratch)?;
         let down = self.down.pump(&self.origin, &self.client, scratch)?;
         if up || down {
             self.last = Instant::now();
         }
+        if quiet && (self.up.eof || self.down.eof) {
+            // The side that ends its direction first is the one that closed.
+            let end = if self.up.eof { "client_closed" } else { "server_closed" };
+            crate::flowlog::mark(&mut self.line, end);
+        }
         Ok(!(self.up.eof && self.down.eof))
+    }
+
+    /// Notes why the stream ends, for its log line.
+    fn mark(&mut self, end: &'static str) {
+        crate::flowlog::mark(&mut self.line, end);
     }
 }
 
@@ -249,8 +276,9 @@ impl Relays {
     }
 }
 
-impl Drop for Relays {
-    fn drop(&mut self) {
+impl Relays {
+    /// Ends the relay threads and with them their streams. Later streams are dropped.
+    pub fn stop(&mut self) {
         for worker in &mut self.workers {
             worker.tx = None;
             worker.wake.wake();
@@ -260,6 +288,12 @@ impl Drop for Relays {
                 let _ = thread.join();
             }
         }
+    }
+}
+
+impl Drop for Relays {
+    fn drop(&mut self) {
+        self.stop();
     }
 }
 
@@ -308,6 +342,7 @@ fn relay_loop(
             streams.retain(|_, stream| {
                 let keep = !stream.expired(now);
                 if !keep {
+                    stream.mark("idle_timeout");
                     stream.forget(&mut poll);
                     load.fetch_sub(1, Ordering::Relaxed);
                 }
@@ -325,7 +360,11 @@ fn advance(
     load: &AtomicUsize,
 ) {
     let Some(stream) = streams.get_mut(&key) else { return };
-    let open = stream.relay(scratch).unwrap_or(false) && stream.sync(poll, key).is_ok();
+    let relayed = stream.relay(scratch);
+    if relayed.is_err() {
+        stream.mark("reset");
+    }
+    let open = relayed.unwrap_or(false) && stream.sync(poll, key).is_ok();
     if !open && let Some(stream) = streams.remove(&key) {
         stream.forget(poll);
         load.fetch_sub(1, Ordering::Relaxed);

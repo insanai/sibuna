@@ -65,6 +65,8 @@ def contents(extracted):
         {'src': str(LINUX / 'sibuna-edge.service'),
          'dst': '/usr/lib/systemd/system/sibuna-edge.service'},
         {'src': str(LINUX / 'sibuna.sysusers'), 'dst': '/usr/lib/sysusers.d/sibuna.conf'},
+        {'src': str(LINUX / 'sibuna-edge.logrotate'), 'dst': '/etc/logrotate.d/sibuna-edge',
+         'type': 'config|noreplace', 'file_info': {'mode': 0o644}},
         {'src': str(LINUX / 'seed.sh'), 'dst': '/usr/lib/sibuna/seed.sh',
          'file_info': {'mode': 0o755}},
         {'src': str(LINUX / 'service.env'), 'dst': '/etc/sibuna/service.env',

@@ -8,7 +8,7 @@ use std::fmt::Write as _;
 use std::net::SocketAddr;
 use std::time::{Duration, Instant};
 
-use sibuna_lb::{RuntimeError, ServerState, ServerStatus};
+use sibuna_lb::{Change, MeshCommand, RuntimeError, ServerState, ServerStatus};
 
 /// The longest command line, without its line feed.
 pub(super) const MAX_LINE: usize = 512;
@@ -20,11 +20,14 @@ show info
 show stats
 show certs
 show ca
+show cluster
 set server POOL/NAME state ready|drain [local]
-set server POOL/NAME weight N
-add server POOL/NAME IP:PORT [weight N]
-del server POOL/NAME
-reload
+set server POOL/NAME weight N [local]
+add server POOL/NAME IP:PORT [weight N] [local]
+del server POOL/NAME [local]
+del ban ADDRESS [local]
+reload [cluster]
+reopen log
 help
 ";
 
@@ -38,14 +41,18 @@ pub(super) enum Command {
     ShowCerts,
     /// The root certificate of the local authority (SID 0021).
     ShowCa,
+    /// The digest of the file of every node of the mesh (SID 0023).
+    ShowCluster,
     Help,
     Reload,
+    /// Reloads this node and sends its file to the peers of the mesh (SID 0023).
+    ReloadCluster,
+    /// Open the access log file again, after a rotation renamed it (SID 0020).
+    ReopenLog,
     State {
         pool: String,
         name: String,
         state: ServerState,
-        /// The command stays on this node. Without it a mesh carries it to the peers.
-        local: bool,
     },
     Weight {
         pool: String,
@@ -62,6 +69,13 @@ pub(super) enum Command {
         pool: String,
         name: String,
     },
+    /// Lifts the ban of the client at this address (SID 0022).
+    DelBan {
+        client: std::net::IpAddr,
+    },
+    /// A change to a server that stays on this node. Without the word `local` a mesh
+    /// carries the change to the peers (SID 0022).
+    Local(Box<Command>),
 }
 
 impl Command {
@@ -74,7 +88,9 @@ impl Command {
                 | Self::ShowStats
                 | Self::ShowCerts
                 | Self::ShowCa
+                | Self::ShowCluster
                 | Self::Help
+                | Self::ReopenLog
         )
     }
 }
@@ -152,21 +168,24 @@ pub(super) fn parse(line: &str) -> Result<Command, RuntimeError> {
         words[count] = word;
         count += 1;
     }
-    match &words[..count] {
+    // The last word `local` keeps a change to a server on this node.
+    let changes_server = matches!(words[0], "set" | "add" | "del");
+    let local = changes_server && count > 1 && words[count - 1] == "local";
+    count -= usize::from(local);
+    let command = match &words[..count] {
         ["show", "servers"] => Ok(Command::ShowServers),
         ["show", "info"] => Ok(Command::ShowInfo),
         ["show", "stats"] => Ok(Command::ShowStats),
         ["show", "certs"] => Ok(Command::ShowCerts),
         ["show", "ca"] => Ok(Command::ShowCa),
+        ["show", "cluster"] => Ok(Command::ShowCluster),
         ["help"] => Ok(Command::Help),
         ["reload"] => Ok(Command::Reload),
+        ["reload", "cluster"] => Ok(Command::ReloadCluster),
+        ["reopen", "log"] => Ok(Command::ReopenLog),
         ["set", "server", server, "state", word] => {
             let (pool, name) = target(server)?;
-            Ok(Command::State { pool, name, state: state(word)?, local: false })
-        }
-        ["set", "server", server, "state", word, "local"] => {
-            let (pool, name) = target(server)?;
-            Ok(Command::State { pool, name, state: state(word)?, local: true })
+            Ok(Command::State { pool, name, state: state(word)? })
         }
         ["set", "server", server, "weight", word] => {
             let (pool, name) = target(server)?;
@@ -180,12 +199,20 @@ pub(super) fn parse(line: &str) -> Result<Command, RuntimeError> {
             let (pool, name) = target(server)?;
             Ok(Command::Add { pool, name, addr: address(addr)?, weight: weight(word)? })
         }
+        ["del", "ban", client] => match client.parse() {
+            Ok(client) => Ok(Command::DelBan { client }),
+            Err(_) => Err(RuntimeError::invalid(
+                format!("`{client}` is not an address."),
+                "Name the client by its IPv4 or IPv6 address, as the access log shows it.",
+            )),
+        },
         ["del", "server", server] => {
             let (pool, name) = target(server)?;
             Ok(Command::Del { pool, name })
         }
         _ => Err(unknown(line)),
-    }
+    }?;
+    Ok(if local { Command::Local(Box::new(command)) } else { command })
 }
 
 /// Checks the bytes of a received line and removes a trailing carriage return. Fails
@@ -330,6 +357,41 @@ impl Bucket {
     }
 }
 
+/// The change to a server that `command` asks for, as the mesh carries it. `None` for
+/// a command that changes no server, and for the removal of a server that is not among
+/// `servers`: a removal names the address it removes.
+pub(super) fn mesh_command(command: &Command, servers: &[ServerStatus]) -> Option<MeshCommand> {
+    let (pool, name, change) = match command {
+        Command::State { pool, name, state } => {
+            (pool, name, Change::State { drained: *state == ServerState::Drain })
+        }
+        Command::Weight { pool, name, weight } => (pool, name, Change::Weight(*weight)),
+        Command::Add { pool, name, addr, weight } => {
+            (pool, name, Change::Member { addr: *addr, weight: *weight, present: true })
+        }
+        Command::Del { pool, name } => {
+            let server = servers.iter().find(|s| s.pool == *pool && s.name == *name)?;
+            (pool, name, Change::Member { addr: server.addr, weight: 0, present: false })
+        }
+        _ => return None,
+    };
+    Some(MeshCommand { pool: pool.clone(), name: name.clone(), change })
+}
+
+/// The admin line that states `command`, for the log.
+pub(super) fn render_command(command: &MeshCommand) -> String {
+    let server = format!("{}/{}", command.pool, command.name);
+    match command.change {
+        Change::State { drained: true } => format!("set server {server} state drain"),
+        Change::State { drained: false } => format!("set server {server} state ready"),
+        Change::Weight(weight) => format!("set server {server} weight {weight}"),
+        Change::Member { addr, weight, present: true } => {
+            format!("add server {server} {addr} weight {weight}")
+        }
+        Change::Member { present: false, .. } => format!("del server {server}"),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -343,8 +405,11 @@ mod tests {
         assert_eq!(parse("show certs"), Ok(Command::ShowCerts));
         assert_eq!(parse("show ca"), Ok(Command::ShowCa));
         assert_eq!(parse("reload"), Ok(Command::Reload));
+        assert_eq!(parse("reload cluster"), Ok(Command::ReloadCluster));
+        assert_eq!(parse("reopen log"), Ok(Command::ReopenLog));
+        assert!(!Command::ReopenLog.changes(), "it changes nothing that is served");
         let (pool, name) = server("app", "10.0.0.1:80");
-        let drain = Command::State { pool, name, state: ServerState::Drain, local: false };
+        let drain = Command::State { pool, name, state: ServerState::Drain };
         assert_eq!(parse("set server app/10.0.0.1:80 state drain"), Ok(drain.clone()));
         assert_eq!(parse("set server app/10.0.0.1:80 state maint"), Ok(drain));
         let (pool, name) = server("app", "a/b");
@@ -357,7 +422,15 @@ mod tests {
         let add = Command::Add { pool, name, addr, weight: 3 };
         assert_eq!(parse("add server app/blue [2001:db8::3]:80 weight 3"), Ok(add));
         let (pool, name) = server("app", "blue");
-        assert_eq!(parse("del server app/blue"), Ok(Command::Del { pool, name }));
+        let del = Command::Del { pool, name };
+        assert_eq!(parse("del server app/blue"), Ok(del.clone()));
+        assert_eq!(parse("del server app/blue local"), Ok(Command::Local(Box::new(del))));
+        let lift = Command::DelBan { client: "2001:db8::7".parse().unwrap() };
+        assert_eq!(parse("del ban 2001:db8::7"), Ok(lift.clone()));
+        assert_eq!(parse("del ban 2001:db8::7 local"), Ok(Command::Local(Box::new(lift))));
+        assert!(parse("del ban example.org").is_err());
+        assert!(parse("show servers local").is_err());
+        assert!(parse("reload local").is_err());
     }
 
     #[test]
