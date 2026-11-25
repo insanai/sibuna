@@ -243,13 +243,14 @@ impl StreamWriter<'_, '_> {
     fn run(&mut self) {
         let mut last_auth = self.shared.now();
         let mut last_ping = last_auth;
-        let mut epoch = self.shared.peers.epoch();
+        // A peer can be removed after admission but before the writer starts.
+        let mut epoch = None;
         while !self.link.is_stopped() && !self.shared.is_stopping() {
             // A peer that left the configuration loses its stream at this turn, not
             // at the next periodic check (SID 0031).
             let removals = self.shared.peers.epoch();
-            if removals != epoch {
-                epoch = removals;
+            if epoch != Some(removals) {
+                epoch = Some(removals);
                 if self.is_removed_peer() {
                     self.close(1008);
                     break;
