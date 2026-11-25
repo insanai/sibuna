@@ -1,6 +1,8 @@
 //! In-process exchanges: the runtime asks for a verdict and talks to the server itself.
 #![allow(clippy::unwrap_used)]
 
+#[path = "../../lb/tests/free/mod.rs"]
+mod free;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{SocketAddr, TcpListener};
 use std::path::Path;
@@ -215,7 +217,9 @@ fn setup_with(before: &str) -> Bench {
 /// As [`setup_with`], with the members `frontend` and `pool` in the frontend and in the
 /// pool, each with a trailing comma.
 fn setup_full(before: &str, frontend: &str, pool: &str) -> Bench {
-    let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    // An address of this test alone: a port released on 127.0.0.1 may be taken by a
+    // test beside this one before the edge binds it.
+    let vip = free::tcp();
     let origins = Arc::new(AtomicUsize::new(0));
     let server = origin(origins.clone());
     let topology = format!(
