@@ -528,7 +528,7 @@ Every option has a default. We change one in ``global.acme``.
      - The provider of the DNS-01 challenge, described under *Wildcards and DNS-01*.
    * - ``internal``
      - ``{ lifetime: 43200 }``
-     - ``lifetime`` is the lifetime of a certificate of the local authority in seconds, from 10 to 172800. ``constraints`` lists what its root may sign for, described under *Internal names and the local authority*.
+     - ``lifetime`` is the lifetime of a certificate of the local authority in seconds, from 10 to 172800. ``constraints`` lists what its root may sign for, described under *Internal names and the local authority*. ``server`` makes the authority an ACME server for other machines, described there too.
    * - ``key``
      - ``"p256"``
      - The key of each new certificate, from either source: ECDSA on P-256, ``"p384"`` for P-384, or ``"rsa2048"``, ``"rsa3072"`` and ``"rsa4096"`` for an RSA key. A stored certificate keeps its key until its renewal. An RSA key is made by the ``openssl`` program, which must be in the ``PATH`` of the daemon.
@@ -702,7 +702,58 @@ The local authority keeps a revocation list in the directory ``local`` of the st
    ssl_crl /etc/nginx/sibuna-crl.pem;              # nginx, for client certificates of this authority
    SSLCARevocationFile /etc/apache2/sibuna-crl.pem
 
-A verifier that is not given the list accepts a revoked certificate until it expires. ``crl.pem`` may hold two lists: the intermediate is replaced every few days, and the one before it signs a list of its own while its certificates live. When the list cannot be written, the log has ``ACME016`` with the path. When the storage loses its root, Sibuna makes a new root at the next start, does not serve the stored certificates of the old root, and issues new ones at once. The local authority issues for this daemon and for the nodes that share its storage. It is not an ACME server for other machines.
+A verifier that is not given the list accepts a revoked certificate until it expires. ``crl.pem`` may hold two lists: the intermediate is replaced every few days, and the one before it signs a list of its own while its certificates live. When the list cannot be written, the log has ``ACME016`` with the path. When the storage loses its root, Sibuna makes a new root at the next start, does not serve the stored certificates of the old root, and issues new ones at once. The local authority issues for this daemon and for the nodes that share its storage. For other machines it can be an ACME server, which is off unless we turn it on.
+
+**An ACME server for the internal network.** With ``internal.server`` another machine obtains a certificate of the local authority with an ACME client: certbot, lego, acme.sh, or a second Sibuna whose ``directory`` is our URL.
+
+.. code-block:: text
+
+   "global": { "acme": { "internal": {
+       "constraints": ["corp.internal", "10.0.0.0/8"],
+       "server": { "url": "https://ca.corp.internal/acme",
+                   "allow": ["corp.internal", "10.0.0.0/8"] } } } },
+   "frontends": { "ca": { "proto": "http", "binds": ["10.0.0.5:443"],
+       "tls": { "auto": ["ca.corp.internal"] }, "default_backend": "app" } }
+
+``url`` is what we give to the clients, and its directory is ``URL/directory``. The server has no port of its own. It answers on the TLS frontends, for requests whose host and path are those of ``url``, so one frontend must serve that host. In the example the local authority issues the certificate of ``ca.corp.internal`` itself. An ``http`` URL is accepted for ``localhost`` and loopback addresses only. ``allow`` lists the DNS suffixes that a client may order under and the address ranges that a validation may connect into. It needs one of each. ``http_port`` is the port of the validation, 80 unless we state it. A change of ``server`` needs a restart.
+
+A client must trust the root before it can speak to the server, because the server is behind a certificate of the same authority. We install the root on the client as shown below, or we name it to the client.
+
+.. code-block:: sh
+
+   sibuna ctl /run/sibuna/edge.sock show ca > sibuna-root.crt
+   certbot certonly --standalone -d db.corp.internal \
+       --server https://ca.corp.internal/acme/directory
+   REQUESTS_CA_BUNDLE=sibuna-root.crt certbot ...      # when the root is not installed
+
+The server proves a name with HTTP-01 and nothing else. It resolves the name, connects to the first address inside a range of ``allow`` on ``http_port``, and asks for ``/.well-known/acme-challenge/TOKEN``. It follows no redirect and contacts no address outside ``allow``. So it issues host names only: no wildcard and no IP address. A certificate lives for ``internal.lifetime``, 12 hours unless we change it and two days at most. A client that renews a month before the end, as certbot does, must be told to renew every few hours, for example with a timer that runs ``certbot renew --force-renewal``.
+
+.. list-table:: What the server does not have
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Missing
+     - What we do instead
+   * - A list of clients, external account binding.
+     - Everybody who reaches the URL and can answer on port 80 of an address in ``allow`` for a name under ``allow`` obtains a certificate. We keep the URL inside the network, we keep ``allow`` narrow, and we set ``internal.constraints``.
+   * - A limit per client address.
+     - The server holds 1,024 orders, 16 for one account key, and 4,096 nonces. A client that fills them makes others wait up to an hour. The answer is written before the firewall, so its limits do not apply.
+   * - Revocation by the client.
+     - ``revoke cert SERIAL`` on the admin socket. The serial is on the certificate of the client: the daemon logs the names of what it issues and keeps no list.
+   * - Orders that survive a restart, or that several nodes share.
+     - Orders live in memory for at most one hour. After a restart a client orders again. Behind several nodes, a client must reach one node for one order.
+   * - Wildcards, IP addresses, DNS-01, TLS-ALPN-01, key rollover, renewal information.
+     - Nothing. A wildcard for an internal name comes from ``tls.auto`` on this daemon.
+
+``URL/crl`` serves the revocation list of the present intermediate in DER, for a verifier that fetches lists over HTTPS. The log has one line for each validation and each certificate.
+
+.. code-block:: text
+
+   ACME000: ACME server: db.corp.internal validated for a client
+   ACME000: ACME server: certificate issued to a client for db.corp.internal
+   ACME000: ACME server: db.corp.internal not validated for a client: The answer has the status 404, not 200.
+
+This server was tested with the ACME client of Sibuna. Other clients were not run against it yet.
 
 A client that connects to an IP address sends no server name. Such a handshake receives the certificate of the first address under ``auto``, and that certificate lists every address under ``auto``.
 
@@ -936,7 +987,7 @@ A reload may add and remove ``auto`` names, and turn ``on_demand`` of a frontend
    * - The local root may sign for any name.
      - The same by default. ``internal.constraints`` limits the root to our suffixes and ranges.
    * - ``acme_server`` makes the local authority an ACME server for other machines.
-     - Not offered. Nodes that share the storage share the root.
+     - ``global.acme.internal.server``, off by default. HTTP-01 only, into the address ranges of ``allow``, on the TLS frontends and with no port of its own.
    * - ``key_type`` offers ECDSA and RSA keys.
      - ``key``: ``"p256"``, ``"p384"``, ``"rsa2048"``, ``"rsa3072"`` or ``"rsa4096"``. An RSA key needs the ``openssl`` program.
    * - ``on_demand`` in a site, ``on_demand_tls { ask URL }`` in the global options.
@@ -949,8 +1000,6 @@ A reload may add and remove ``auto`` names, and turn ``on_demand`` of a frontend
      - ``eab: { kid, key_file }``. The key lives in a file, not in the configuration.
    * - Renewal follows the renewal information of the authority.
      - The same, with ``ari: false`` to turn it off, and never later than four fifths of the lifetime.
-   * - ``acme_server``.
-     - Not available.
 
 HTTP routing by name and path
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
