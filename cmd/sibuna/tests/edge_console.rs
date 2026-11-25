@@ -541,3 +541,171 @@ fn a_reload_that_removes_a_peer_closes_its_stream_and_refuses_it_after() {
     assert!(answer.contains("ADM008") && answer.contains("requires a restart"), "{answer}");
     assert_eq!(node.servers()[0][1], "a");
 }
+
+/// An origin that keeps its connections and answers every request with `ok`.
+fn lasting_origin() -> SocketAddr {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    std::thread::spawn(move || {
+        for stream in listener.incoming().flatten() {
+            std::thread::spawn(move || serve_lasting(stream));
+        }
+    });
+    address
+}
+
+fn serve_lasting(mut stream: TcpStream) {
+    let mut seen = Vec::new();
+    let mut chunk = [0u8; 4096];
+    while let Ok(read @ 1..) = stream.read(&mut chunk) {
+        seen.extend_from_slice(&chunk[..read]);
+        while let Some(end) = seen.windows(4).position(|window| window == b"\r\n\r\n") {
+            seen.drain(..end + 4);
+            if stream.write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok").is_err() {
+                return;
+            }
+        }
+    }
+}
+
+/// Counts the requests that `clients` connections complete through `vip` in `window`.
+/// The edge closes a connection after a number of requests. The client then connects
+/// again, as a browser does.
+fn throughput(vip: SocketAddr, clients: usize, window: Duration) -> u64 {
+    let connect = move || {
+        let stream = TcpStream::connect(vip).unwrap();
+        stream.set_nodelay(true).unwrap();
+        stream.set_read_timeout(Some(Duration::from_secs(10))).unwrap();
+        stream
+    };
+    let client = move || {
+        let (mut stream, mut done, mut reply) = (connect(), 0u64, [0u8; 512]);
+        let until = Instant::now() + window;
+        while Instant::now() < until {
+            let sent = stream.write_all(b"GET / HTTP/1.1\r\nHost: edge.test\r\n\r\n");
+            let mut filled = 0;
+            while sent.is_ok() && !reply[..filled].ends_with(b"\r\n\r\nok") {
+                match stream.read(&mut reply[filled..]) {
+                    Ok(read @ 1..) => filled += read,
+                    _ => break,
+                }
+            }
+            if reply[..filled].ends_with(b"\r\n\r\nok") {
+                done += 1;
+            } else {
+                assert_eq!(filled, 0, "a reply ended early");
+                stream = connect();
+            }
+        }
+        done
+    };
+    let workers: Vec<_> = (0..clients).map(|_| std::thread::spawn(client)).collect();
+    workers.into_iter().map(|worker| worker.join().unwrap()).sum()
+}
+
+/// The load on the console: four clients that read the view and the fleet and run
+/// `show servers` as fast as the console answers, while `running` is set.
+struct ConsoleLoad {
+    running: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    finished: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    answered: std::sync::Arc<std::sync::atomic::AtomicU64>,
+}
+
+impl ConsoleLoad {
+    fn start(console: &Console, session: &Session) -> ConsoleLoad {
+        let load = ConsoleLoad {
+            running: Default::default(),
+            finished: Default::default(),
+            answered: Default::default(),
+        };
+        for _ in 0..4 {
+            let (console, session) = (console.clone(), session.clone());
+            let (running, finished) = (load.running.clone(), load.finished.clone());
+            let answered = load.answered.clone();
+            std::thread::spawn(move || {
+                while !finished.load(Ordering::Acquire) {
+                    if !running.load(Ordering::Acquire) {
+                        std::thread::sleep(Duration::from_millis(5));
+                        continue;
+                    }
+                    console.get(VIEW, Some(&session));
+                    console.get("/console/api/edge/fleet", Some(&session));
+                    console.post(COMMAND, r#"{"line":"show servers"}"#, &session);
+                    answered.fetch_add(3, Ordering::Relaxed);
+                }
+            });
+        }
+        load
+    }
+}
+
+// The measurement of SID 0031, criterion 8. Run it against the release binary:
+// `cargo test --release -p sibuna --test edge_console -- --ignored --nocapture`.
+#[test]
+#[ignore = "a measurement: it takes a minute and prints its numbers"]
+#[allow(clippy::print_stdout)]
+fn measure_the_data_plane_with_the_console_idle_and_under_load() {
+    let server = lasting_origin();
+    let source = |vip: SocketAddr, listen: SocketAddr| {
+        format!(
+            r#"{{"global":{{"admin_socket":"edge.sock"}},
+            "http":{{"surface":"off","event_loop":true,"max_connections_per_ip":1024}},
+            "console":{{"listen":"{listen}","data_dir":"data","node":7}},
+            "frontends":{{"web":{{"proto":"http","binds":["{vip}"],"default_backend":"app"}}}},
+            "backends":{{"app":{{"mode":"http",
+              "servers":[{{"name":"a","addr":"{server}"}}]}}}}}}"#
+        )
+    };
+    // The node under measurement, and a second daemon whose console takes the same load
+    // in the control runs. The control shows what the load costs the machine alone.
+    let (node, other) = (Node::start("measure", source), Node::start("control", source));
+    let (session, other_session) = (node.admin(), other.admin());
+    let (clients, window) = (8, Duration::from_secs(3));
+    throughput(node.vip, clients, Duration::from_secs(2));
+    // Sixty-four browser streams stay open on each console through every run.
+    let open = |node: &Node, session: &Session| -> Vec<TcpStream> {
+        (0..64).map(|_| upgrade(&node.console, session).0).collect()
+    };
+    let streams = (open(&node, &session), open(&other, &other_session));
+    let load = ConsoleLoad::start(&node.console, &session);
+    let control = ConsoleLoad::start(&other.console, &other_session);
+    let mut runs = [Vec::new(), Vec::new(), Vec::new()];
+    for _ in 0..8 {
+        for (kind, own, elsewhere) in [(0, false, false), (1, true, false), (2, false, true)] {
+            load.running.store(own, Ordering::Release);
+            control.running.store(elsewhere, Ordering::Release);
+            std::thread::sleep(Duration::from_millis(300));
+            runs[kind].push(throughput(node.vip, clients, window));
+        }
+    }
+    load.finished.store(true, Ordering::Release);
+    control.finished.store(true, Ordering::Release);
+    let seconds = window.as_secs();
+    let names = ["console idle", "its console under load", "another console under load"];
+    let mut medians = [0u64; 3];
+    for (kind, name) in names.iter().enumerate() {
+        println!("{name} (requests in {seconds} s): {:?}", runs[kind]);
+        runs[kind].sort_unstable();
+        medians[kind] = (runs[kind][3] + runs[kind][4]) / 2 / seconds;
+    }
+    let ratio = |kind: usize| medians[kind] as f64 / medians[0] as f64;
+    println!(
+        "median req/s: idle {}, its console under load {} ({:.4}), another console under \
+         load {} ({:.4})",
+        medians[0],
+        medians[1],
+        ratio(1),
+        medians[2],
+        ratio(2)
+    );
+    let answered = |load: &ConsoleLoad| load.answered.load(Ordering::Relaxed);
+    println!(
+        "console requests answered: {} by its console, {} by the other; streams open: {}",
+        answered(&load),
+        answered(&control),
+        streams.0.len() + streams.1.len()
+    );
+    // The runs of a busy machine differ by more than the console costs. Only a gross
+    // loss fails the measurement.
+    assert!(ratio(1) > 0.5, "the console took half of the data plane: {}", ratio(1));
+}
