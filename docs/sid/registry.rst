@@ -84,5 +84,8 @@ Discussion registry
    * - 0024
      - :doc:`records/0024-tls-on-the-workers`
      - discussion
+   * - 0026
+     - :doc:`records/0026-peer-forwarding`
+     - discussion
 
 .. sid-generated-end
