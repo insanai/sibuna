@@ -59,6 +59,8 @@ The listener gives every accepted TLS socket to a worker. The worker reads the f
      - the runtime, which negotiates as before
    * - ``acme-tls/1``
      - the runtime, which answers the validation of SID 0021
+   * - a server name whose certificate must first be obtained on demand
+     - the runtime, which waits for the certificate
    * - a message that is not a ClientHello, or more than 16 KiB without a whole one
      - nobody: the worker closes the connection
 
@@ -79,7 +81,7 @@ The TLS library is used without I/O of its own: the worker moves bytes between t
 
 Tunnels, lingering closes (SID 0019) and deadlines work on clear bytes and need no change beyond these two steps.
 
-A listener that obtains certificates on demand (SID 0021) is the exception to all of this. Its handshake may wait for a certificate, and a worker must not wait. Such a listener gives every connection to the runtime, as before.
+A listener that obtains certificates on demand (SID 0021) adds one case. Its handshake may wait for a certificate, and a worker must not wait. The worker asks the listener whether the server name of the ClientHello must first obtain a certificate. If so, the connection goes to the runtime, which waits as before. A name whose certificate is there stays on the worker.
 
 Counting
 ~~~~~~~~
@@ -134,8 +136,11 @@ Acceptance criteria and implementation status
      - Met, on both paths. A 700 kB body, a 1 MiB response, 600 pipelined requests in one write (more than one buffer of clear bytes) and 2 MiB through a tunnel arrive whole.
    * - 4
      - A client that does not finish its handshake loses the connection within the bound.
-     - Met. A silent client, a client with half a ClientHello and a client that sends plain HTTP are closed, and the node serves on. The test uses an idle timeout of one second. The bound of 15 seconds itself is not timed.
+     - Met. A silent client, a client with half a ClientHello and a client that sends plain HTTP are closed, and the node serves on. The test uses an idle timeout of one second. A second test sets the idle timeout to a minute: half a ClientHello loses its connection after 15 seconds, and a connection that finished its handshake stays.
    * - 5
+     - A listener with certificates on demand passes only the handshakes that wait.
+     - Met. ``cmd/sibuna/tests/edge_acme_demand.rs`` reads the counters: the first handshake for a name is passed to the runtime, and the second is kept by a worker.
+   * - 6
      - HTTPS carries more requests on the benchmark host than before.
      - Met. With 256 connections on one host: 149,168 requests per second before and 174,901 after, where HAProxy with the same headers carries 153,080. The book has the table.
 
@@ -145,11 +150,9 @@ Known gaps
 ----------
 
 #. HTTP/2 is unchanged. It carries 67 to 74 percent of what HAProxy carries on the benchmark host, and only a cheaper HTTP/2 path would change that.
-#. A listener with ``on_demand`` certificates gains nothing: all its connections go to the runtime.
 #. A client that offers ``h2`` and then speaks HTTP/1.1, because the listener chose it, is served by the runtime through the socket pair, as before. No listener is configured that way today.
-#. TLS session resumption is that of the TLS library with its defaults. We did not measure the cost of full handshakes under a flood of new connections.
+#. TLS session resumption is that of the TLS library with its defaults. With a new connection for every request the node carried 5,890 HTTPS requests per second at 64 connections and 4,566 at 512, where HAProxy carried 4,967 and 4,693. The load generator was the limit in both cases: Sibuna used 10 to 12 CPU seconds of 64 and HAProxy 32. We did not find the rate at which the handshakes themselves fill the workers.
 #. The node without workers, and Windows, keep the old path.
-#. The handshake bound of 15 seconds has no test of its own.
 #. The 99th percentile at 2,048 HTTPS connections was 54 ms in the final run and 38 ms in an earlier run. We did not look for the reason of the spread.
 
 Open questions
@@ -162,6 +165,7 @@ Review history
 
 - 2026-11-25. Initial draft, after the comparison with HAProxy.
 - 2026-11-25. Implemented. The review of the code found three faults before the tests ran: a lingering close would have asked for write events without end, because the session flag stayed set while the worker only discards bytes; the draft named 10 seconds where the runtime uses 15; and a TLS connection with HTTP/1.1 had always counted twice under the node bound, which the new path corrects. Listeners with certificates on demand were left to the runtime.
+- 2026-11-25. A listener with certificates on demand now keeps the connections whose certificate is there. The handshake bound got a test of its own, and the rate of new connections was measured.
 
 References
 ----------
