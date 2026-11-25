@@ -5,6 +5,8 @@
 
 mod traffic;
 
+use traffic::edge_ready;
+
 use std::fs;
 use std::io::{BufRead, BufReader};
 use std::net::{SocketAddr, TcpListener, TcpStream};
@@ -115,9 +117,7 @@ fn start(scratch: &Scratch, servers: &[(SocketAddr, u32)]) -> Edge {
             .spawn()
             .unwrap();
         let mut stderr = BufReader::new(child.stderr.take().unwrap());
-        let mut line = String::new();
-        stderr.read_line(&mut line).unwrap();
-        if !line.contains("listeners ready") {
+        if let Err(line) = edge_ready::wait(&mut stderr) {
             let _ = child.kill();
             let _ = child.wait();
             failure = line;

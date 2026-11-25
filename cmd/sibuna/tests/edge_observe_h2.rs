@@ -3,6 +3,9 @@
 #![cfg(all(unix, feature = "https"))]
 #![allow(clippy::unwrap_used)]
 
+#[path = "support/edge_ready.rs"]
+mod edge_ready;
+
 #[path = "../../../crates/ingress/tests/support/grpc.rs"]
 mod support;
 
@@ -115,9 +118,7 @@ fn try_start(origin: SocketAddr, extra: Extra<'_>) -> Result<Daemon, String> {
         .spawn()
         .unwrap();
     let mut stderr = BufReader::new(child.stderr.take().unwrap());
-    let mut line = String::new();
-    stderr.read_line(&mut line).unwrap();
-    if !line.contains("ready") {
+    if let Err(line) = edge_ready::wait(&mut stderr) {
         let _ = child.kill();
         let _ = child.wait();
         let _ = fs::remove_dir_all(&directory);

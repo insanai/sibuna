@@ -102,7 +102,12 @@ fn start(path: PathBuf) -> (Daemon, mpsc::Receiver<String>) {
             }
         }
     });
-    assert!(lines.recv_timeout(WAIT).unwrap().contains("ready"));
+    let deadline = std::time::Instant::now() + WAIT;
+    while lines
+        .recv_timeout(deadline.saturating_duration_since(std::time::Instant::now()))
+        .unwrap()
+        != "Sibuna edge listeners ready"
+    {}
     (daemon, lines)
 }
 

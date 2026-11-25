@@ -14,13 +14,14 @@
 
 mod support;
 
+use std::net::TcpListener;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use sibuna_console::config::Probe;
 use sibuna_core::Config;
 use support::console::{
-    Console, Node, PostgresDatabase, Session, console_config, field, free_port, init_admin,
-    length, number, postgres_base, until,
+    Console, Node, PostgresDatabase, Session, console_config, field, init_admin, length, number,
+    postgres_base, until,
 };
 use support::{BROWSER_UA, get};
 
@@ -36,8 +37,10 @@ struct Cluster {
 impl Cluster {
     fn start(base: &str, name: &str) -> Cluster {
         let database = PostgresDatabase::create(base, name);
-        let data = [free_port(), free_port()];
-        let consoles = [free_port(), free_port()];
+        // Keep all four ports reserved while the database and the administrator start.
+        let reserves = [0, 1].map(|_| [0, 1].map(|_| TcpListener::bind("127.0.0.1:0").unwrap()));
+        let data = reserves.each_ref().map(|pair| pair[0].local_addr().unwrap().port());
+        let consoles = reserves.each_ref().map(|pair| pair[1].local_addr().unwrap().port());
         let config = |index: usize| Config {
             database_url: Some(database.url.clone()),
             cluster_node: Some(index as u32 + 1),
@@ -57,8 +60,11 @@ impl Cluster {
             ..console_config()
         };
         let temporary = init_admin(&config(0));
-        let nodes =
-            [0, 1].map(|index| Node::start_on(config(index), console(index), None, data[index]));
+        let [first, second] = reserves;
+        let nodes = [(0, first), (1, second)].map(|(index, pair)| {
+            drop(pair);
+            Node::start_on(config(index), console(index), None, data[index])
+        });
         Cluster { nodes, data, consoles, temporary, _database: database }
     }
 

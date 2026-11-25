@@ -6,8 +6,11 @@
 #![cfg(all(unix, feature = "https"))]
 #![allow(clippy::unwrap_used)]
 
+#[path = "support/edge_ready.rs"]
+mod edge_ready;
+
 use std::fs;
-use std::io::{BufRead, BufReader};
+use std::io::BufReader;
 use std::net::{SocketAddr, UdpSocket};
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStderr, Command, Stdio};
@@ -119,15 +122,13 @@ fn edge(server: SocketAddr, options: &str) -> Daemon {
             .spawn()
             .unwrap();
         let mut stderr = BufReader::new(child.stderr.take().unwrap());
-        let mut line = String::new();
-        stderr.read_line(&mut line).unwrap();
-        if line.contains("listeners ready") {
-            return Daemon { child, _stderr: stderr, file, vip };
-        }
+        failure = match edge_ready::wait(&mut stderr) {
+            Ok(()) => return Daemon { child, _stderr: stderr, file, vip },
+            Err(reason) => reason,
+        };
         let _ = child.kill();
         let _ = child.wait();
         let _ = fs::remove_file(&file);
-        failure = line;
     }
     panic!("the edge did not start: {failure}");
 }

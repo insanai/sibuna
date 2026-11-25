@@ -129,6 +129,11 @@ fn udp_clients_keep_their_server_across_two_upgrades() {
 
 #[test]
 fn six_thousand_mappings_move_in_two_pieces() {
+    // The clients live in the test process. Raising the daemon's limit cannot help them.
+    let limit = sibuna_reactor::descriptor_limit().unwrap();
+    if limit.soft < 8192 {
+        sibuna_reactor::set_descriptor_limit(8192).expect("6000 clients need 8192 descriptors");
+    }
     let mut scene = Scene::start_with(Mode::Handoff, r#""max_flows":20000,"#, "");
     let clients: Vec<_> = (0..6000).map(|_| upgrade::udp_client()).collect();
     let before: Vec<String> = clients.iter().map(|c| ask(c, scene.udp_vip).unwrap()).collect();

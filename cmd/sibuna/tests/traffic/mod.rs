@@ -2,6 +2,9 @@
 //! one-request client.
 #![allow(dead_code)]
 
+#[path = "../support/edge_ready.rs"]
+pub(crate) mod edge_ready;
+
 use std::fs;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
@@ -124,9 +127,7 @@ impl Topology {
             .spawn()
             .unwrap();
         let mut stderr = BufReader::new(child.stderr.take().unwrap());
-        let mut line = String::new();
-        stderr.read_line(&mut line).unwrap();
-        if !line.contains("ready") {
+        if let Err(line) = edge_ready::wait(&mut stderr) {
             let _ = child.kill();
             let _ = child.wait();
             files.remove();

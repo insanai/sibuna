@@ -3,6 +3,9 @@
 #![allow(clippy::unwrap_used)]
 #![cfg(unix)]
 
+#[path = "support/edge_ready.rs"]
+mod edge_ready;
+
 use std::fs;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
@@ -163,9 +166,7 @@ fn try_start(origin: SocketAddr, event_loop: bool, extra: &Extra<'_>) -> Result<
         .spawn()
         .unwrap();
     let mut stderr = BufReader::new(child.stderr.take().unwrap());
-    let mut line = String::new();
-    stderr.read_line(&mut line).unwrap();
-    if !line.contains("ready") {
+    if let Err(line) = edge_ready::wait(&mut stderr) {
         let _ = child.kill();
         let _ = child.wait();
         let _ = fs::remove_dir_all(&directory);

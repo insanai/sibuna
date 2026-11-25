@@ -2,6 +2,9 @@
 #![cfg(target_os = "linux")]
 #![allow(clippy::unwrap_used)]
 
+#[path = "support/edge_ready.rs"]
+mod edge_ready;
+
 use std::fs;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
@@ -37,9 +40,7 @@ fn origin() -> SocketAddr {
 fn start(path: &PathBuf) -> Child {
     let mut child =
         Command::new(BIN).arg("--config-file").arg(path).stderr(Stdio::piped()).spawn().unwrap();
-    let mut line = String::new();
-    BufReader::new(child.stderr.take().unwrap()).read_line(&mut line).unwrap();
-    assert!(line.contains("ready"), "{line}");
+    edge_ready::wait(&mut BufReader::new(child.stderr.take().unwrap())).unwrap();
     child
 }
 
