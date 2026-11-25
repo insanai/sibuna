@@ -281,8 +281,7 @@ impl Driver {
             if entry.error.is_none() && self.is_stale(name, &entry) {
                 entry.next_attempt = entry.next_attempt.min(now());
             }
-            if demanded && self.is_idle(name, &entry) {
-                self.shared.release(name);
+            if demanded && self.leaves(name, &mut entry) {
                 continue;
             }
             let ordering = self.shared.ordering.load(Ordering::Acquire);

@@ -20,6 +20,18 @@ const ASK_LIMIT: Duration = Duration::from_secs(5);
 const NOT_READY: &str = "its certificate source is not open";
 const NOT_ALLOWED: &str = "the ask URL did not allow it";
 const NO_TOKEN: &str = "the rate of new certificates is spent";
+/// Why a held name was released, for the log.
+const UNUSED: &str = "no handshake named it since its certificate";
+const WITHDRAWN: &str = "the ask URL no longer allows it";
+
+/// What the `ask` URL said about a name.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Verdict {
+    Allowed,
+    Refused,
+    /// No answer within the limit, or no client.
+    Silent,
+}
 
 /// The client that asks the `ask` URL, with a runtime of its own: a node whose names
 /// all go to the local authority has no ACME client.
@@ -36,8 +48,8 @@ impl Asker {
     }
 
     /// Sends `GET URL?domain=NAME` once. A status from 200 to 299 within five seconds
-    /// allows the name. Everything else refuses it, also a failure to ask.
-    fn allows(&self, url: &str, name: &str) -> bool {
+    /// allows the name, and any other status refuses it.
+    fn ask(&self, url: &str, name: &str) -> Verdict {
         let request = Request {
             method: Method::Get,
             url: format!("{url}?domain={name}"),
@@ -45,8 +57,9 @@ impl Asker {
         };
         let exchange = async { tokio::time::timeout(ASK_LIMIT, self.client.send(&request)).await };
         match self.runtime.block_on(exchange) {
-            Ok(Ok(response)) => (200..300).contains(&response.status),
-            _ => false,
+            Ok(Ok(response)) if (200..300).contains(&response.status) => Verdict::Allowed,
+            Ok(Ok(_)) => Verdict::Refused,
+            _ => Verdict::Silent,
         }
     }
 }
@@ -100,34 +113,58 @@ impl Driver {
         if has_fresh(store, &wanted.name) {
             return Ok(());
         }
-        if let Some(url) = self.shared.demand.ask() {
-            if self.asker.is_none() {
-                self.asker = Asker::open(self.shared.options.ca_file.as_deref());
-            }
-            let allowed = self.asker.as_ref().is_some_and(|asker| asker.allows(url, &wanted.name));
-            if !allowed {
-                return Err((DENIAL_MS, NOT_ALLOWED));
-            }
+        // A new name needs a yes. Silence refuses it.
+        if self.ask(&wanted.name) != Verdict::Allowed {
+            return Err((DENIAL_MS, NOT_ALLOWED));
         }
         self.shared.demand.take_token(now_ms()).map_err(|wait_ms| (wait_ms, NO_TOKEN))
     }
 
-    /// Whether a name held on demand is due for renewal and no handshake named it
-    /// since its certificate was obtained. Such a name is released, not renewed.
-    pub(super) fn is_idle(&self, name: &str, entry: &Entry) -> bool {
-        entry.served.is_some() && entry.next_attempt <= now() && self.shared.demand.is_unused(name)
+    /// Asks the `ask` URL about `name`. Without a URL every name is allowed.
+    fn ask(&mut self, name: &str) -> Verdict {
+        let Some(url) = self.shared.demand.ask() else { return Verdict::Allowed };
+        if self.asker.is_none() {
+            self.asker = Asker::open(self.shared.options.ca_file.as_deref());
+        }
+        self.asker.as_ref().map_or(Verdict::Silent, |asker| asker.ask(url, name))
+    }
+
+    /// Looks at a name held on demand whose renewal is due. The name is released, and
+    /// not renewed, when no handshake named it since its certificate was obtained, or
+    /// when the `ask` URL no longer allows it. When the URL does not answer, the
+    /// certificate stays and the renewal waits for the first retry delay. Returns
+    /// whether the name was released.
+    pub(super) fn leaves(&mut self, name: &str, entry: &mut Entry) -> bool {
+        if entry.served.is_none() || entry.next_attempt > now() {
+            return false;
+        }
+        let reason = match self.shared.demand.is_unused(name) {
+            true => UNUSED,
+            false => match self.ask(name) {
+                Verdict::Allowed => return false,
+                Verdict::Refused => WITHDRAWN,
+                Verdict::Silent => {
+                    entry.next_attempt = now() + schedule::FIRST_DELAY;
+                    return false;
+                }
+            },
+        };
+        self.shared.release(name);
+        (self.report)(&Event::Released { name: name.to_owned(), reason });
+        true
     }
 
     /// Ends the look at a name held on demand. A new certificate is recorded. A name
-    /// without a certificate whose order failed is released and denied until its next
-    /// attempt would be due. The handshakes that wait are woken. Returns whether the
-    /// name is still held.
+    /// that has no certificate and whose next attempt lies ahead is released and denied
+    /// until then: its order failed, in this run or in an earlier one, or another node
+    /// holds its lock. The handshakes that wait are woken. Returns whether the name is
+    /// still held.
     pub(super) fn settle(&self, name: &str, entry: &Entry, before: Option<u64>) -> bool {
         let now = now_ms();
         if entry.served.as_ref().map(|served| served.not_after) != before {
             self.shared.demand.obtained(name, now);
         }
-        let failed = entry.served.is_none() && entry.error.is_some();
+        let failed = entry.served.is_none() && entry.next_attempt > super::now();
         if failed {
             self.shared.demand.deny(name, entry.next_attempt.saturating_mul(1000), now);
             self.shared.release(name);

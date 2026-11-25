@@ -48,11 +48,13 @@ fn origin() -> SocketAddr {
     address
 }
 
-/// The `ask` server of a test: it allows the names that start with `yes`, and records
-/// every name it was asked for.
+/// The `ask` server of a test: it allows the names that start with `yes` until the
+/// test closes it, and records every name it was asked for.
 struct Ask {
     url: String,
     asked: Arc<Mutex<Vec<String>>>,
+    /// Refuse every name from now on.
+    closed: Arc<std::sync::atomic::AtomicBool>,
 }
 
 impl Ask {
@@ -61,6 +63,8 @@ impl Ask {
         let url = format!("http://{}/allowed", listener.local_addr().unwrap());
         let asked = Arc::new(Mutex::new(Vec::new()));
         let record = Arc::clone(&asked);
+        let closed = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let refusing = Arc::clone(&closed);
         std::thread::spawn(move || {
             for mut socket in listener.incoming().flatten() {
                 let mut reader = BufReader::new(socket.try_clone().unwrap());
@@ -72,14 +76,15 @@ impl Ask {
                 }
                 let target = first.split(' ').nth(1).unwrap_or_default();
                 let name = target.strip_prefix("/allowed?domain=").unwrap_or_default().to_owned();
-                let status = if name.starts_with("yes") { "204 No Content" } else { "403 No" };
+                let allowed = name.starts_with("yes") && !refusing.load(Ordering::Relaxed);
+                let status = if allowed { "204 No Content" } else { "403 No" };
                 record.lock().unwrap().push(name);
                 let answer =
                     format!("HTTP/1.1 {status}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
                 let _ = socket.write_all(answer.as_bytes());
             }
         });
-        Self { url, asked }
+        Self { url, asked, closed }
     }
 
     /// How often the server was asked for `name`.
@@ -356,6 +361,7 @@ fn a_used_name_is_renewed_and_an_unused_one_is_released() {
     });
     assert_eq!(renewed[6], "on-demand", "{renewed:?}");
     wait_for("the release of the unused name", 10, || daemon.row(unused).is_none().then_some(()));
+    assert!(daemon.log().contains("no handshake named it since its certificate"));
     assert_eq!(authority.order_count.load(Ordering::Relaxed), 3);
     let leaf = handshake(&daemon, used).expect("the renewed certificate");
     assert_ne!(leaf, first);
@@ -364,6 +370,26 @@ fn a_used_name_is_renewed_and_an_unused_one_is_released() {
     std::thread::sleep(Duration::from_secs(1));
     assert!(handshake(&daemon, unused).is_some());
     assert_eq!(authority.order_count.load(Ordering::Relaxed), 4);
+}
+
+#[test]
+fn a_name_that_ask_no_longer_allows_is_released_at_its_renewal() {
+    let authority = Authority::start();
+    authority.lifetime.store(9, Ordering::Relaxed);
+    let ask = Ask::start();
+    let home = home("withdrawn");
+    let guards = format!(r#""ask":"{}","wait":4"#, ask.url);
+    let daemon = start(&authority, &home, &guarded(&authority, &guards), "");
+    let name = "yes.shop.example.test";
+    let first = handshake(&daemon, name).expect("the certificate");
+    assert_eq!(handshake(&daemon, name), Some(first));
+    ask.closed.store(true, Ordering::Relaxed);
+    wait_for("the release", 20, || daemon.row(name).is_none().then_some(()));
+    assert_eq!((authority.order_count.load(Ordering::Relaxed), ask.count(name)), (1, 2));
+    let log = daemon.log();
+    assert!(log.contains(&format!("certificate on demand for {name} released")), "{log}");
+    assert!(log.contains("the ask URL no longer allows it"), "{log}");
+    assert_eq!(peer_certificate(daemon.tls, name, None), None);
 }
 
 #[test]

@@ -79,6 +79,13 @@ pub enum Event {
         /// For how many seconds the refusal is remembered.
         seconds: u64,
     },
+    /// A name held on demand was released at its renewal. It is no longer served.
+    Released {
+        /// The name.
+        name: String,
+        /// Why it was released.
+        reason: &'static str,
+    },
     /// An attempt failed. The served certificate, if any, stays.
     Failed {
         /// The name, or `None` for a failure of the storage or the account.

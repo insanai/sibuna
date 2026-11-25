@@ -99,6 +99,11 @@ pub(crate) fn log(event: &Event) {
                  {seconds} second(s)"
             ));
         }
+        Event::Released { name, reason } => {
+            crate::edge::note(format_args!(
+                "ACME000: certificate on demand for {name} released: {reason}"
+            ));
+        }
         Event::Obtained { name, not_after, renewed } => {
             let verb = if *renewed { "renewed" } else { "obtained" };
             crate::edge::note(format_args!(
