@@ -177,6 +177,8 @@ pub(crate) struct Entry {
     pub secure: bool,
     /// Sibuna answered for a server that failed, so a 502 or 504 is its own.
     pub failed: bool,
+    /// How many servers the request left before the one that ended it (SID 0019).
+    pub retries: u8,
     /// Finds the status in the pieces of a relayed response.
     pub scan: crate::client_writer::StatusScan,
     pub verdict: &'static str,
@@ -208,6 +210,7 @@ impl Entry {
             protocol,
             secure: false,
             failed: false,
+            retries: 0,
             scan: crate::client_writer::StatusScan::default(),
             verdict: "-",
             status: 0,
@@ -278,6 +281,8 @@ pub(crate) struct Trace {
     active: Option<ActiveRequest>,
     /// The relay to the server failed and Sibuna answered itself.
     pub failed: bool,
+    /// How many servers the request left before the current one (SID 0019).
+    pub retries: u8,
     /// The entry of the request, from the end of its dispatch until it is settled.
     pub entry: Option<Entry>,
 }
@@ -293,6 +298,7 @@ impl Trace {
         self.server = None;
         self.active = None;
         self.failed = false;
+        self.retries = 0;
         self.entry = None;
         self.front = match (&server.edge_routes, ingress) {
             (Some(routes), Some(ingress)) => routes.frontend(ingress.vip),
@@ -369,6 +375,7 @@ pub(crate) fn capture<W>(ctx: &mut Ctx<'_, W>) {
         protocol: protocol_of(trace),
         secure: ctx.ingress.is_some_and(|ingress| ingress.secure),
         failed: std::mem::take(&mut trace.failed),
+        retries: std::mem::take(&mut trace.retries),
         scan: crate::client_writer::StatusScan::default(),
         verdict,
         status: 0,
@@ -384,10 +391,16 @@ pub(crate) fn capture<W>(ctx: &mut Ctx<'_, W>) {
     trace.entry = Some(entry);
 }
 
+/// How many servers the request of `target` left before this one.
+pub(crate) fn moves_of(target: &sibuna_lb::HttpTarget) -> u8 {
+    u8::try_from(target.move_count()).unwrap_or(u8::MAX)
+}
+
 /// Notes the server an admitted request goes to.
 pub(crate) fn selected<W>(ctx: &mut Ctx<'_, W>, target: Option<&sibuna_lb::HttpTarget>) {
     if ctx.server.observe.is_some() {
         ctx.trace.server = target.and_then(|target| target.server().cloned());
+        ctx.trace.retries = target.map_or(0, moves_of);
         ctx.trace.active = ctx.trace.server.as_ref().map(ServerInfo::begin_request);
     }
 }
@@ -426,6 +439,7 @@ impl sibuna_ingress::Report for Pending {
 
     fn moved(&mut self, target: &sibuna_lb::HttpTarget) {
         self.entry.server = target.server().cloned();
+        self.entry.retries = moves_of(target);
         self.entry.active = self.entry.server.as_ref().map(ServerInfo::begin_request);
     }
 }

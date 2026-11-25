@@ -576,6 +576,7 @@ fn a_moved_request_is_logged_and_counted_once_under_the_server_that_answered() {
         assert_eq!((answer.status(), answer.text()), (200, "12".into()));
         let line = &edge.log_lines(1)[0];
         assert_eq!((logged(line, "status"), logged(line, "server")), ("200", "s1"), "{line}");
+        assert_eq!(logged(line, "retries"), "1", "{line}");
         assert_ne!(logged(line, "ttfb_ms"), "null", "{line}");
         let metrics = get(&edge, "/__sibuna/metrics").text();
         for series in [
