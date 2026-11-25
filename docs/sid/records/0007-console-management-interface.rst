@@ -852,17 +852,17 @@ Verification
 - **Telemetry correctness.** Inject counter resets, issuer-order inversions, duplicate peer buckets, partial minutes, sample loss, and cross-window challenge solutions. Check sketch estimates against exact sample counts and merge error bounds; exercise the Unknown bucket.
 - **Globe and authentication.** Assert zero globe/GeoIP/telemetry loads before successful login, including failed login, TOTP and forced-change states. Test Traffic/Attacks switching, missing GeoIP, country coverage, back hemisphere clipping, poles, antimeridian crossings, keyboard centering, pause, stale/reconnect and sign-out stream teardown. Record geometry vertex, linear-memory and render-time budgets on desktop and a low-end device.
 - **Abuse and failure.** Test bounded distributed login load, revoked sessions on followers, fragmented/invalid WebSockets, unsolicited delivery while the reader blocks, 64 subscribers with HTTP slots remaining, SQL deadline/backpressure, GeoIP failed activation, trie-full country rejection, revision conflicts and unauthenticated probe/webhook destinations.
-- **Document.** Compile this source to PDF and to page PNGs with Typst; inspect every wireframe for clipping, overlap, navigation completeness and the separate authentication shell.
+- **Document.** We inspect each wireframe in HTML and PDF for clipped labels, overlapping panels, navigation completeness and the separate authentication shell.
 - **Browser.** A minimal Chromium script (the harness family of the benchmarks) loads the console, logs in, and checks that tiles update, kept outside ``zig build test`` because it needs a browser.
 
-Document review is reproducible without building the daemon:
+From the repository root, we build the records with Guidedog.
 
 .. code-block:: sh
 
-   mkdir -p docs/build/review-0007
-   typst compile --root docs docs/sid/records/0007-console-management-interface.typ docs/build/review-0007/console.pdf
-   typst compile --root docs docs/sid/records/0007-console-management-interface.typ 'docs/build/review-0007/page-{0p}.png' --ppi 120
-   typst compile --root docs docs/sid/figures/0007-console-landing-preview.typ docs/build/review-0007/landing.png --ppi 160
+   cd docs/sid
+   guidedog dsc build
+
+We open this record in ``_build/html/records/0007-console-management-interface.html`` or ``_build/pdf/sid-0007-console-management-interface-en.pdf``.
 
 Resolved Design Decisions
 -------------------------
