@@ -258,14 +258,29 @@ impl Server {
             ("POST", path) => self.post(path, exchange.body, now),
             _ => refuse(404, "malformed", "This server has no such resource."),
         };
-        if exchange.method != "GET" || exchange.path == "/new-nonce" {
+        let with_nonce = exchange.method != "GET" || exchange.path == "/new-nonce";
+        self.finish(&mut reply, with_nonce, now);
+        reply
+    }
+
+    /// The answer to a request whose body the frontend did not read to its end: too
+    /// long, or in a transfer coding that the frontend does not buffer. It carries a
+    /// fresh nonce, as every refusal of a POST does.
+    pub fn refuse_body(&self, now: u64) -> Reply {
+        let mut reply = refuse(413, "malformed", "The body is longer than 32 KiB, or chunked.");
+        self.finish(&mut reply, true, now);
+        reply
+    }
+
+    /// Adds the header fields that every reply carries, and a new nonce when asked.
+    fn finish(&self, reply: &mut Reply, with_nonce: bool, now: u64) {
+        if with_nonce {
             let nonce = self.random_word();
             self.state().nonces.add(nonce.clone(), now);
             reply.headers.push(("Replay-Nonce", nonce));
         }
         let index = format!("<{}/directory>;rel=\"index\"", self.options.url);
         reply.headers.push(("Link", index));
-        reply
     }
 
     fn directory(&self) -> Reply {
