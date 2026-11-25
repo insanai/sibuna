@@ -15,7 +15,7 @@ use sibuna_reactor::{
 use super::conn::{BUFFER, Buffer, Conn, HIGH_WATER, Linger, Origin, Reading};
 use super::request::{self, Scratch, Step};
 use super::{Incoming, Shared, Timeouts};
-use crate::connection::{MAX_REQUESTS_PER_CONNECTION, PeerText};
+use crate::connection::PeerText;
 use crate::server::{Server, admit_handoff, admit_within};
 
 const KIND_WAKE: u64 = 0;
@@ -339,11 +339,11 @@ impl Worker {
             buffer.consume(used);
         }
         conn.reading = Reading::default();
+        // The last request of a connection is answered with `Connection: close`, and
+        // the end of that answer closes the connection. Closing here would drop the
+        // answer that a server still owes.
         conn.served += 1;
         conn.activity = now;
-        if conn.served >= MAX_REQUESTS_PER_CONNECTION {
-            conn.closing = true;
-        }
     }
 
     /// Writes pending response bytes. Returns false when the connection was closed.
