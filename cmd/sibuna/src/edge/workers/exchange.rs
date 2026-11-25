@@ -37,6 +37,8 @@ impl Worker {
     pub fn begin(&mut self, index: u32, plan: Plan, wire: Vec<u8>) {
         let Plan { target, outbound, keep_alive, tunnel: permit, body_seen } = plan;
         let address = target.address();
+        // The body is in `wire`. The pool says how much of it to send twice.
+        let retryable = outbound.retryable && body_seen <= target.retry_body();
         let exchange = Exchange {
             origin: None,
             target,
@@ -47,7 +49,7 @@ impl Worker {
             upload: outbound.upload,
             relay: ResponseRelay::new(&outbound, keep_alive),
             inbound: Vec::new(),
-            retryable: outbound.retryable,
+            retryable,
             poolable: outbound.poolable,
             buffered: outbound.buffered,
             keep_alive,
@@ -371,10 +373,13 @@ impl Worker {
             return false;
         };
         let unanswered = matches!(exchange.relay.end_of_stream(), Err(ProxyError::UpstreamClosed));
+        // `retryable` says both: the method is idempotent and the request is kept.
         let lost = sibuna_net::Lost {
             unanswered,
             pooled: exchange.pooled,
-            retryable: exchange.retryable,
+            kept: exchange.retryable,
+            idempotent: exchange.retryable,
+            refused: false,
             retried: exchange.retried,
         };
         // The rule is shared with the thread path (SID 0019).

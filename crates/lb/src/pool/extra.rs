@@ -7,7 +7,7 @@ use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU32, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
-use super::{Load, Pool, Target, Ticket};
+use super::{Load, Pool, Target, Ticket, millis};
 use crate::sticky::{self, Key, Token};
 use crate::{Passive, Sticky};
 
@@ -64,10 +64,13 @@ pub(super) struct State {
     ejected_until: Mutex<Option<Instant>>,
     /// When the server last entered service, for slow start.
     service: Mutex<Service>,
+    /// A copy of `Service::seen`, read without the lock.
+    seen: AtomicBool,
+    /// Slow start last saw the server in service and past its ramp. While this holds
+    /// and the server is in service, slow start has nothing to note and takes no lock.
+    settled: AtomicBool,
     /// The weight of a server in its ramp, in units of 1/[`SCALE`]. Zero outside a ramp.
     ramped: AtomicU32,
-    /// The sticky token of the server, with a mark of the key and names it was made from.
-    token: Mutex<(u64, Token)>,
     /// The credit of the server in round robin.
     credit: AtomicI64,
 }
@@ -107,59 +110,109 @@ impl Pool {
 }
 
 impl Pool {
-    /// The server that source stickiness gives `client`: the nearest server of the pool
-    /// that is `eligible` and not a backup. `None` when the pool is not sticky by
-    /// source, and when only backups are eligible.
+    /// The server that source stickiness gives `client`: the nearest server of the
+    /// client's slot that is `eligible` and not a backup. `None` when the pool is not
+    /// sticky by source, and when only backups are eligible.
     ///
     /// The ranking is a rendezvous hash, so the clients of a server that is drained,
     /// down, ejected or full get one other server each and keep it until their own
     /// returns. The other clients stay where they are.
+    ///
+    /// The ranking of a slot was computed when the pool was built, for its nearest
+    /// [`KEPT`] servers. So the usual request costs one hash, whatever the size of the
+    /// pool. Only when none of those servers is eligible is the whole pool ranked.
     pub(super) fn home(
         &self,
         client: std::net::IpAddr,
         eligible: impl Fn(&Target) -> bool,
     ) -> Option<usize> {
-        if self.policy.sticky != Some(Sticky::Source) {
-            return None;
-        }
+        let ranks = self.ranks.as_ref()?;
         let client = sticky::client_bytes(client);
+        let slot = (sibuna_crypto::wyhash::hash(5, &client) % SLOTS as u64) as usize;
+        let stays = |target: &Target| !target.server.backup && eligible(target);
+        let kept = ranks.get(slot)?.iter().map(|&index| usize::from(index));
+        let near = kept.into_iter().find(|&index| self.targets.get(index).is_some_and(stays));
+        near.or_else(|| self.nearest(slot, |_, target| stays(target)))
+    }
+
+    /// The server nearest to `slot` among those that `stays` admits.
+    fn nearest(&self, slot: usize, stays: impl Fn(usize, &Target) -> bool) -> Option<usize> {
+        let client = slot_bytes(slot);
         let distance =
             |target: &Target| sticky::distance(&client, target.rank_seed, target.server.weight);
-        let stays = |target: &Target| !target.server.backup && eligible(target);
-        let servers = self.targets.iter().enumerate().filter(|(_, target)| stays(target));
+        let servers =
+            self.targets.iter().enumerate().filter(|(index, target)| stays(*index, target));
         servers
             .map(|(index, target)| (index, distance(target)))
             .reduce(|best, next| if next.1.nearer_than(&best.1) { next } else { best })
             .map(|(index, _)| index)
     }
 
-    /// The server whose sticky token under `key` is `presented`, for the pool `name`.
-    pub(crate) fn holder(&self, key: &Key, name: &str, presented: &[u8]) -> Option<usize> {
-        self.targets
-            .iter()
-            .position(|target| sibuna_crypto::ct::eq(&target.token(key, name), presented))
+    /// Builds the ranking table of a pool that is sticky by source. The table depends
+    /// on the names, the weights and the order of the servers, so every change of
+    /// those calls this again. A drain, an ejection and a health change do not.
+    pub(super) fn rank(&mut self) {
+        self.ranks = None;
+        if self.policy.sticky != Some(Sticky::Source) {
+            return;
+        }
+        let mut ranks = vec![[NO_SERVER; KEPT]; SLOTS];
+        for (slot, kept) in ranks.iter_mut().enumerate() {
+            for place in 0..KEPT {
+                let taken = *kept;
+                let free = |index: usize, target: &Target| {
+                    !target.server.backup
+                        && !taken[..place].iter().any(|&t| usize::from(t) == index)
+                };
+                let Some(next) = self.nearest(slot, free) else { break };
+                // A pool has far fewer than 65535 servers.
+                kept[place] = next as u16;
+            }
+        }
+        self.ranks = Some(ranks.into());
+    }
+
+    /// Computes the sticky tokens of the servers under `key`, for the pool `name`. The
+    /// routing table calls this when the key, the pool or its servers change, so that a
+    /// request reads a token and computes none.
+    pub(crate) fn seal(&mut self, key: &Key, name: &str) {
+        let cookie = matches!(self.policy.sticky, Some(Sticky::Cookie { .. }));
+        for target in &mut self.targets {
+            target.token = cookie.then(|| key.token(name, &target.server.name));
+        }
+    }
+
+    /// The server whose sticky token is `presented`.
+    pub(crate) fn holder(&self, presented: &[u8]) -> Option<usize> {
+        let holds = |target: &Target| {
+            target.token.is_some_and(|token| sibuna_crypto::ct::eq(&token, presented))
+        };
+        self.targets.iter().position(holds)
     }
 
     /// The sticky token of the server that `ticket` reserved.
-    pub(crate) fn token_of(&self, key: &Key, name: &str, ticket: &Ticket) -> Option<Token> {
+    pub(crate) fn token_of(&self, ticket: &Ticket) -> Option<Token> {
         let target = self.targets.iter().find(|target| Arc::ptr_eq(&target.load, &ticket.load))?;
-        Some(target.token(key, name))
+        target.token
     }
 }
 
-impl Target {
-    /// The sticky token of the server in the pool `pool`. It is computed once for each
-    /// key and pair of names.
-    fn token(&self, key: &Key, pool: &str) -> Token {
-        let names = sibuna_crypto::wyhash::hash(pool.len() as u64, pool.as_bytes());
-        let names = sibuna_crypto::wyhash::hash(names, self.server.name.as_bytes());
-        let mark = (key.tag ^ names) | 1;
-        let mut cached = self.load.extra.token.lock().unwrap_or_else(PoisonError::into_inner);
-        if cached.0 != mark {
-            *cached = (mark, key.token(pool, &self.server.name));
-        }
-        cached.1
-    }
+/// The slots of the ranking table of source stickiness. A prime, so that the slot of
+/// a client depends on every bit of its hash.
+const SLOTS: usize = 1021;
+/// The servers that the table keeps for each slot, nearest first.
+const KEPT: usize = 4;
+/// The mark of a place that has no server, in a pool of fewer than [`KEPT`] servers.
+const NO_SERVER: u16 = u16::MAX;
+
+/// The nearest servers of one slot, by their place in the pool.
+pub(super) type Slot = [u16; KEPT];
+
+/// The bytes that stand for `slot` where the ranking expects a client address.
+fn slot_bytes(slot: usize) -> [u8; 16] {
+    let mut bytes = [0; 16];
+    bytes[..8].copy_from_slice(&(slot as u64).to_le_bytes());
+    bytes
 }
 
 /// What slow start has seen of a server.
@@ -197,11 +250,17 @@ impl State {
     /// says whether the server is in service. `veteran` says whether the pool had a
     /// server before this one was first seen, which makes this one an addition.
     fn observe(&self, weight: u32, ramp: Duration, now: Instant, up: bool, veteran: bool) {
+        // The usual case: the server is in service and its ramp is over.
+        if up && self.settled.load(Ordering::Relaxed) {
+            return;
+        }
         let mut service = self.service.lock().unwrap_or_else(PoisonError::into_inner);
         let added = !service.seen && veteran;
         service.seen = true;
+        self.seen.store(true, Ordering::Relaxed);
         if !up {
             service.down = true;
+            self.settled.store(false, Ordering::Relaxed);
             return;
         }
         if service.down || added {
@@ -217,10 +276,11 @@ impl State {
             }
         };
         self.ramped.store(ramped, Ordering::Relaxed);
+        self.settled.store(service.since.is_none(), Ordering::Relaxed);
     }
 
     fn seen(&self) -> bool {
-        self.service.lock().unwrap_or_else(PoisonError::into_inner).seen
+        self.seen.load(Ordering::Relaxed)
     }
 }
 
@@ -247,9 +307,8 @@ impl Target {
     /// a failed connect and not ejected. A full server and a server the request already
     /// tried are in service.
     fn in_service(&self, now: Instant) -> bool {
-        let marked = self.load.retry_after.lock().unwrap_or_else(PoisonError::into_inner);
         self.server.healthy.as_ref().is_none_or(|healthy| healthy.load(Ordering::Relaxed))
-            && marked.is_none_or(|deadline| deadline <= now)
+            && !self.load.is_marked(millis(now))
             && !self.load.extra.is_ejected(now)
             && !self.drained
     }

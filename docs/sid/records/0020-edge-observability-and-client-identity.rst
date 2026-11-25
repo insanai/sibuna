@@ -181,6 +181,8 @@ The fields are fixed. Their order is the order below.
      - The server name, or ``-``.
    * - ``verdict``
      - What the firewall decided: ``pass``, ``deny``, ``challenge``, ``rate_limited``, ``banned``, ``internal`` for a reserved route, or ``-`` when the request was refused before the decision.
+   * - ``retries``
+     - How many servers the request left before the server that ended it (SID 0019). It is 0 for a request that did not move.
 
 ``bytes_in`` and ``bytes_out`` have one meaning on every path: the bytes of the HTTP message as HTTP/1.1 carries it, without TLS. For ``http/1.1`` that is the message itself. HTTP/2 and HTTP/3 compress heads and frame bodies inside the protocol libraries, which do not tell us the sizes. For them a head counts as its HTTP/1.1 text and a body as its data bytes. Each count has a test on its path.
 
@@ -451,7 +453,7 @@ A content network at 198.51.100.0/24 reaches the frontend ``web``. A client at 2
 
 .. code-block:: json
 
-   {"time":"2026-11-24T10:15:02.418Z","client":"203.0.113.7","frontend":"web","protocol":"http/1.1","scheme":"http","method":"GET","host":"www.example.com","path":"/index.html","status":200,"bytes_in":112,"bytes_out":5310,"duration_ms":3.184,"ttfb_ms":2.907,"backend":"app","server":"app-2","verdict":"pass"}
+   {"time":"2026-11-24T10:15:02.418Z","client":"203.0.113.7","frontend":"web","protocol":"http/1.1","scheme":"http","method":"GET","host":"www.example.com","path":"/index.html","status":200,"bytes_in":112,"bytes_out":5310,"duration_ms":3.184,"ttfb_ms":2.907,"backend":"app","server":"app-2","verdict":"pass","retries":0}
 
 Second round
 ~~~~~~~~~~~~

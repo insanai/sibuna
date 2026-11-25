@@ -232,8 +232,9 @@ pub(crate) fn relay_body<R: Read, W: Write + ?Sized>(
 /// Sends the rest of a chunked request body. Each read is decoded in place and forwarded as
 /// one canonical chunk, so chunk boundaries at the origin follow arrival, never the client's
 /// choice (SID 0009). The last chunk is written only when the body ends; a framing error
-/// leaves the origin with a truncated body. So does a body of more than `room` decoded
-/// bytes, which ends with [`ProxyError::BodyTooLarge`] (SID 0019).
+/// leaves the origin with a truncated body. So does a body of more than `room` bytes,
+/// counted as the client sent them, with their chunk framing, as the event-driven
+/// workers count. It ends with [`ProxyError::BodyTooLarge`] (SID 0019).
 pub(crate) fn relay_chunked_body<R: Read, W: Write + ?Sized>(
     client: &mut Reader<'_, R>,
     origin: &mut W,
@@ -247,7 +248,7 @@ pub(crate) fn relay_chunked_body<R: Read, W: Write + ?Sized>(
         let raw = client.buffered_mut();
         let decoded = decoder.decode(raw).map_err(|_| ProxyError::MalformedRequestBody)?;
         let data = raw.get(..decoded.output).unwrap_or_default();
-        carried += data.len() as u64;
+        carried += decoded.consumed as u64;
         if room.is_some_and(|room| carried > room) {
             return Err(ProxyError::BodyTooLarge);
         }

@@ -21,11 +21,18 @@ pub struct Bounds {
     pub response: Option<Duration>,
     /// The most body bytes a request without a declared length may carry.
     pub max_body: Option<u64>,
+    /// The largest body that is kept so that the request can be sent again.
+    pub retry_body: u64,
 }
 
 impl Default for Bounds {
     fn default() -> Self {
-        Self { connect: crate::CONNECT_TIMEOUT, response: None, max_body: None }
+        Self {
+            connect: crate::CONNECT_TIMEOUT,
+            response: None,
+            max_body: None,
+            retry_body: u64::MAX,
+        }
     }
 }
 
@@ -60,10 +67,26 @@ pub struct Lost {
     pub unanswered: bool,
     /// The connection came from the pool of idle connections.
     pub pooled: bool,
-    /// The request is safe (`GET`, `HEAD`, `OPTIONS`) and still held whole.
-    pub retryable: bool,
+    /// The request is still held whole: its body, if it has one, was buffered and is
+    /// within the `retry_body` of its pool.
+    pub kept: bool,
+    /// The method is idempotent: carrying the request out twice has the effect of
+    /// carrying it out once.
+    pub idempotent: bool,
+    /// The server said that it did not act on the request: the connection handed the
+    /// request back unsent, or an HTTP/2 server refused the stream or sent `GOAWAY`
+    /// below it. A lost HTTP/1.1 connection never proves this.
+    pub refused: bool,
     /// The request was already sent again on a fresh connection to this server.
     pub retried: bool,
+}
+
+/// True for the methods whose requests may be sent twice (RFC 9110, section 9.2.2).
+/// `TRACE` is idempotent too. It carries no body and is rare, and it is left out so
+/// that every path reads one list.
+pub fn is_idempotent(method: sibuna_http::Method) -> bool {
+    use sibuna_http::Method::{Delete, Get, Head, Options, Put};
+    matches!(method, Get | Head | Options | Put | Delete)
 }
 
 /// What follows the loss of a server.
@@ -80,12 +103,12 @@ pub enum Recovery {
 
 /// Decides what follows the loss of a server after the connection was made.
 ///
-/// A missing reply is no evidence that a server did not act on a request. So only a
-/// request that is safe and held whole is ever sent twice, and only while no response
-/// byte arrived. A failed connect is not decided here: nothing was sent, and any request
-/// may move.
+/// A missing reply is no evidence that a server did not act on a request. So a request
+/// is sent twice only while no response byte arrived, only when it is still held whole,
+/// and only when it is idempotent or the server refused it. A failed connect is not
+/// decided here: nothing was sent, and any request may move.
 pub fn recover(lost: Lost) -> Recovery {
-    if !(lost.unanswered && lost.retryable) {
+    if !(lost.unanswered && lost.kept && (lost.idempotent || lost.refused)) {
         Recovery::Fail
     } else if lost.pooled && !lost.retried {
         Recovery::Reconnect
@@ -99,12 +122,47 @@ mod tests {
     use super::*;
 
     #[test]
-    fn only_a_safe_unanswered_request_is_sent_again() {
-        let lost = Lost { unanswered: true, pooled: true, retryable: true, retried: false };
+    fn only_a_kept_unanswered_request_that_is_idempotent_or_refused_is_sent_again() {
+        let lost = Lost {
+            unanswered: true,
+            pooled: true,
+            kept: true,
+            idempotent: true,
+            refused: false,
+            retried: false,
+        };
         assert_eq!(recover(lost), Recovery::Reconnect);
         assert_eq!(recover(Lost { retried: true, ..lost }), Recovery::Move);
         assert_eq!(recover(Lost { pooled: false, ..lost }), Recovery::Move);
-        assert_eq!(recover(Lost { retryable: false, ..lost }), Recovery::Fail);
+        assert_eq!(recover(Lost { kept: false, ..lost }), Recovery::Fail);
         assert_eq!(recover(Lost { unanswered: false, ..lost }), Recovery::Fail);
+        // A request that is not idempotent needs the word of the server.
+        let post = Lost { idempotent: false, ..lost };
+        assert_eq!(recover(post), Recovery::Fail);
+        assert_eq!(recover(Lost { refused: true, ..post }), Recovery::Reconnect);
+        assert_eq!(recover(Lost { refused: true, kept: false, ..post }), Recovery::Fail);
+        // All the cases agree with the rule as the record states it.
+        for bits in 0..64u8 {
+            let bit = |at: u8| bits & (1 << at) != 0;
+            let lost = Lost {
+                unanswered: bit(0),
+                pooled: bit(1),
+                kept: bit(2),
+                idempotent: bit(3),
+                refused: bit(4),
+                retried: bit(5),
+            };
+            let again = lost.unanswered && lost.kept && (lost.idempotent || lost.refused);
+            assert_eq!(recover(lost) != Recovery::Fail, again, "{lost:?}");
+        }
+    }
+
+    #[test]
+    fn the_idempotent_methods_are_those_of_the_record() {
+        use sibuna_http::Method;
+        for method in [Method::Get, Method::Head, Method::Options, Method::Put, Method::Delete] {
+            assert!(is_idempotent(method));
+        }
+        assert!(!is_idempotent(Method::Post) && !is_idempotent(Method::Patch));
     }
 }

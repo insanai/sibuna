@@ -44,7 +44,7 @@ Invariants
 ~~~~~~~~~~
 
 #. A topology that sets no option of this record is valid and serves as before, except for the defaults named in "Backwards compatibility".
-#. A request is sent to another server only when the first server cannot have acted on it: no byte of it was sent, or it is safe (GET, HEAD, OPTIONS) and was buffered whole.
+#. A request is sent to another server only when sending it twice does no harm: no byte of it was sent, or we still hold all of it and either its method is idempotent (GET, HEAD, OPTIONS, PUT, DELETE) or the first server said that it did not act on it.
 #. One request never tries the same server twice, and tries at most ``retries + 1`` servers.
 #. A server is chosen by affinity only when it is eligible at that moment. Affinity never overrides health, a drain, a flow limit or an ejection.
 #. The weight of a server in slow start never exceeds its configured weight, never decreases while it stays in service, and is never zero.
@@ -74,6 +74,9 @@ A pool (an entry of ``backends``) takes these members. All are optional.
    * - ``retries``
      - ``2``
      - How many other servers one request may try. 0 to 8. Zero turns failover off.
+   * - ``retry_body``
+     - ``"64k"``
+     - The largest request body that is kept so that the request can be sent again. 0 to ``"64k"``, the size of the request buffer. Zero keeps no body.
    * - ``passive_health``
      - on
      - ``"off"``, or an object with ``failures`` (3), ``ejection`` (``"10s"``) and ``http_5xx`` (false).
@@ -203,15 +206,15 @@ Failover
      connect -> send [label="connected"];
      send -> done;
      connect -> select [label="failed, attempts left"];
-     send -> select [label="no response byte,\nsafe and buffered,\nattempts left"];
+     send -> select [label="no response byte,\nkept, idempotent or refused,\nattempts left"];
      select -> fail [label="none left"];
    }
 
 The reservation of a request remembers the servers it tried. ``HttpRoutes::retry`` takes a failed reservation and returns a reservation on another server of the same pool, or nothing. It refuses when the attempts are spent, when the revision that routed the request no longer serves (a reload retires a revision and SID 0018 keeps it for ten seconds), and when no untried server is eligible. The failed server is marked as before, so later requests avoid it for two seconds.
 
-A connect failure is a refused connection, an unreachable address or the connect timeout. For it the method of the request does not matter, because the server received nothing. After a byte was sent, only a request that SID 0016 calls retryable is sent again. A pooled socket that the server closed is first replaced by a fresh connection to the same server, as before. If that fails too, the request moves on.
+A connect failure is a refused connection, an unreachable address or the connect timeout. For it the method of the request does not matter, because the server received nothing. After a byte was sent, a request is sent again only under the rule of the section "Moving a request that has a body". A pooled socket that the server closed is first replaced by a fresh connection to the same server, as before. If that fails too, the request moves on.
 
-The decision is one function, ``sibuna_net::recover``. It takes what a path knows of a lost exchange: whether a response byte arrived, whether the connection was a pooled one, whether the request is safe and fully buffered, and whether it was already sent again on a fresh connection. It answers "reconnect to the same server", "move to another server" or "fail". The workers, the blocking relay of the thread path and the direct sends to HTTP/2 and HTTP/3 servers all ask it, so they cannot drift apart.
+The decision is one function, ``sibuna_net::recover``. It takes what a path knows of a lost exchange: whether a response byte arrived, whether the connection was a pooled one, whether the request is kept, whether its method is idempotent, whether the server refused it, and whether it was already sent again on a fresh connection. It answers "reconnect to the same server", "move to another server" or "fail". The workers, the blocking relay of the thread path, the pooled HTTP/1.1 connections of the in-process path and the direct sends to HTTP/2 and HTTP/3 servers all ask it, so they cannot drift apart.
 
 The three paths
 ~~~~~~~~~~~~~~~
@@ -231,7 +234,7 @@ The three paths
    * - ``response_timeout``
      - While the server owes bytes
      - No head and no moving upload for the bound, then silence between body pieces
-     - The read timeout of the server socket; the client idle deadline is lifted while the server owes bytes
+     - Read timeouts of 250 ms on the server socket, summed to the bound, with a look at the client between two of them; the client idle deadline is lifted while the server owes bytes
    * - Failover
      - ``recover``
      - ``recover``, also for a session that fails after the send
@@ -247,17 +250,17 @@ The three paths
    * - ``max_body``, unknown length
      - Counted with the chunk framing
      - Counted as data bytes
-     - Counted as decoded bytes
+     - Counted with the chunk framing
    * - Over the limit after the head
      - Connection closed
      - Stream reset
      - Connection closed
 
-The thread path gives a ``sibuna_net::Route`` to the blocking relay: the address of the current server, its bounds, the edit of the response, and the verbs ``unreachable``, ``advance`` and ``responded``. The relay asks ``recover`` and calls ``advance`` to move, which is ``HttpRoutes::retry``. Two differences from the workers remain, and both follow from blocking sockets. First, the relay learns of a silent server through a read timeout on the server socket, so it cannot watch the client and the server at once: while the server owes bytes a client that goes away is noticed at the next write. Second, a chunked request body is decoded as it is relayed, so the limit counts the decoded bytes, where a worker counts the bytes on the wire with their chunk framing. A body that passes on one path can therefore be refused on the other only within the size of the framing, a few bytes per chunk.
+The thread path gives a ``sibuna_net::Route`` to the blocking relay: the address of the current server, its bounds, the edit of the response, and the verbs ``unreachable``, ``advance`` and ``responded``. The relay asks ``recover`` and calls ``advance`` to move, which is ``HttpRoutes::retry``. A blocking read waits on one socket, so the relay cannot wait for the client and the server at once. It cuts the wait for the server into slices of 250 ms and asks the client socket for its pending error between two slices. A client that reset its connection is so noticed within a slice, the exchange ends, and the place on the server is free again. A client that closed in order is not treated as gone, on any path: it may have closed its sending side only and still read the answer. A chunked request body is counted in the bytes that the client sent, with the chunk framing, as a worker counts it.
 
 On the in-process path a body of unknown length is counted as it streams to the server. HTTP/2 and HTTP/3 allow a response before the request ended, so before a response head we answer 413 and stop reading the body. After a response head there is nothing left to answer: the stream is reset, which the client sees as an aborted response.
 
-A direct send to an HTTP/2 or HTTP/3 server that loses its session before a response head is first sent again on a fresh session to the same server, once, as a worker replaces a pooled socket. If that fails too, the server is marked and the request moves, when it is safe and has no body. A request with a body was handed to the session and cannot be sent again, so it answers 502.
+A direct send to an HTTP/2 or HTTP/3 server that loses its session before a response head is first sent again on a fresh session to the same server, once, as a worker replaces a pooled socket. If that fails too, the server is marked and the request moves, under the same rule. The in-process path keeps a body that ended inside the 64 KiB it showed to the firewall, and sends it again from there. A body that was still streaming was handed to the session and cannot be sent again, so its request answers 502.
 
 Passive health
 ~~~~~~~~~~~~~~
@@ -285,6 +288,103 @@ The ramp starts when a reservation first sees the server in service again, not w
 
 The default is off, as in HAProxy, nginx and Envoy. A ramp that is too short does nothing and one that is too long wastes a healthy server, and only the operator knows how long the application takes to warm up.
 
+Moving a request that has a body
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A request can be sent again only while we still hold all of it. Every path buffers the first 64 KiB of a request for the firewall decision. A body that ended inside that buffer is held whole, at no further cost. ``retry_body`` says how much of it we are willing to send twice: a body of at most ``retry_body`` bytes that is held whole is *kept*. A longer body, and a body that is still streaming, is not kept. ``retry_body`` cannot exceed the buffer, so no path makes a second copy of a body.
+
+Holding the request is necessary and not sufficient. Sending a request twice is safe in two cases only.
+
+#. The method is idempotent by RFC 9110, section 9.2.2: ``GET``, ``HEAD``, ``OPTIONS``, ``PUT`` and ``DELETE``. Carrying such a request out twice has the effect of carrying it out once. ``TRACE`` is idempotent too. It has no body and is rare, and we leave it out.
+#. The server provably did not act on the request. This is so when the connect failed, when a pooled HTTP/1.1 connection handed the request back without writing a byte of it, when an HTTP/2 server reset the stream with ``REFUSED_STREAM``, and when an HTTP/2 server sent a graceful ``GOAWAY`` with a last stream below the stream of the request (RFC 9113, sections 6.8 and 8.7). A ``GOAWAY`` with an error code ends the streams that the server worked on as well, so it proves nothing.
+
+A missing reply is not such a proof. A ``POST`` whose connection was lost after a byte was sent is never sent again, whatever its size.
+
+.. list-table:: What follows the loss of a server before a response byte
+   :header-rows: 1
+   :widths: 40 20 20 20
+
+   * - Loss
+     - Idempotent, kept
+     - Not idempotent, kept
+     - Not kept
+   * - The connect failed, or the session could not be opened
+     - Moves
+     - Moves
+     - Moves
+   * - The request was handed back unsent, ``REFUSED_STREAM``, or a graceful ``GOAWAY`` below the stream (in-process path)
+     - Same server once, then moves
+     - Same server once, then moves
+     - 502
+   * - A pooled connection or a shared session was lost after the send
+     - Same server once, then moves
+     - 502
+     - 502
+   * - A fresh connection was lost after the send
+     - Moves
+     - 502
+     - 502
+   * - Silence for ``response_timeout``
+     - 504
+     - 504
+     - 504
+   * - Any loss after a response byte
+     - Closed
+     - Closed
+     - Closed
+
+A failed connect moves a request that is not kept as well, because the body has not left the client connection yet: it streams to the server that accepts the connect. A request that is "not kept" in the second row has a body that was already taken from its stream, so there is nothing left to send. A timeout does not move a request: the server may be working on it, and sending it elsewhere would do the work twice and take twice the time the client was promised.
+
+``sibuna_net::recover`` reads four facts about the loss, ``unanswered``, ``kept``, ``idempotent`` and ``refused``, and two about the connection, ``pooled`` and ``retried``. It answers ``Fail`` unless ``unanswered`` and ``kept`` and (``idempotent`` or ``refused``). Otherwise it answers ``Reconnect`` for the first loss of a pooled connection and ``Move`` after that. The Lean model proves that a request that is not idempotent is sent again only with ``refused``.
+
+Only the in-process path can have such a proof. The workers and the thread path speak HTTP/1.1 through blocking or raw sockets, where a lost connection says nothing, so for them ``refused`` is always false. For an HTTP/3 server we have no proof of refusal yet: the client library reports ``H3_REQUEST_REJECTED`` like any other stream error. HTTP/3 servers therefore get the idempotent rule only.
+
+The choice of a server without a lock
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The routing table was one mutex, taken by every request for the choice of its server. Under contention the lock, not the choice, was the cost. Now a request reads an immutable snapshot.
+
+.. graphviz::
+   :caption: Writers build a snapshot under the mutex and raise the generation. A reader compares one number and uses the snapshot its thread already has.
+   :alt: A reload or a command changes the master table under a mutex, builds a snapshot from it, stores it and raises a generation counter. Each worker thread keeps its own reference to a snapshot together with the generation it was read at. A request compares that generation with the counter. When they are equal it uses the cached snapshot without any lock. When they differ the thread takes the mutex once and fetches the new snapshot.
+
+   digraph snapshot {
+     graph [rankdir=LR, bgcolor="transparent", fontname="Helvetica", fontsize=9, nodesep=0.3, ranksep=0.5];
+     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fillcolor="#eff6ff", color="#1e40af", penwidth=1.0, margin="0.1,0.05"];
+     edge [color="#64748b", fontname="Helvetica", fontsize=7.5, fontcolor="#475569", arrowsize=0.6];
+     writer [label="Reload or command"];
+     master [label="Master table\n(mutex)"];
+     snap [label="Snapshot\n(immutable)"];
+     gen [label="Generation\n(atomic)"];
+     cache [label="Thread cache\nsnapshot + generation"];
+     request [label="Request"];
+     writer -> master [label="change"];
+     master -> snap [label="build"];
+     master -> gen [label="raise"];
+     request -> gen [label="compare"];
+     request -> cache [label="equal: use"];
+     cache -> master [label="differs: fetch once", style=dashed];
+   }
+
+A snapshot holds the frontends, the pools of the current revision and of the revision a reload retired, and the regime. It never changes after it is built. Everything that a request changes lives outside it, in the per-server state that a reload keeps: the count of active requests, the count of admitted requests, the round robin credit, the latency sample, the mark of a failed connect, the ejection and the ramp. These are atomics. The mark of a failed connect and the latency sample were a mutex each and are now one atomic number each. The slow start state stays behind a small mutex per server, but a server that is in service and past its ramp is recognised by one atomic flag, so the mutex is taken only around a return to service. The sticky token of a server was computed under a mutex and cached; it is now computed when the table changes and stored in the pool.
+
+A writer (a reload, a run-time command, the change of the regime or of the sticky seed) changes the master table under the mutex, builds a new snapshot, and raises the generation. A run-time command copies the routes before it changes them, because the snapshot in use shares them. A reader that compares the generation just before the writer raises it uses the old snapshot, exactly as a request that arrived a moment earlier. The health flags are atomics that both snapshots share, so a probe needs no new snapshot.
+
+There is no new crate and no ``unsafe``: the thread cache is a ``thread_local`` list of at most eight entries, one for each routing table the thread has used.
+
+Two requests that choose at the same time may now both see the same least loaded server and both take it. With the mutex the second one saw the count of the first. The counts are exact again one request later, and limits are still enforced: a reservation counts itself first and then looks at the count. When it finds its server above ``max_flows`` it gives the place back and chooses again, at most eight times.
+
+The ranking table of source stickiness
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Ranking every server for every request costs one hash and one logarithm per server. The ranking of a client depends only on its address, the names and the weights, so we compute it in advance for a fixed number of classes of clients.
+
+A pool that is sticky by source has a table of 1021 slots. Slot :math:`i` holds the four nearest servers of the pool for the number :math:`i`, by the same weighted rendezvous ranking, nearest first, backups excluded. A client address is hashed to a slot. Its server is the first server of the slot that can serve now. When none of the four can, the pool falls back to ranking all servers for the slot number, so the answer is always the nearest eligible server of that slot.
+
+The properties of the ranking carry over, per slot instead of per address: a server takes slots in proportion to its weight; when a server leaves, only its slots move, each to the next server of its own order; when it returns the slots return; every node computes the same table. The table depends on names and weights only, so a drain, an ejection or a health change does not rebuild it. A change of a weight, ``add server`` and ``del server`` rebuild it, 1021 rankings of the pool, when the next snapshot is built.
+
+The price is granularity. Two addresses in one slot share their server and their second choice. With 1021 slots a server of weight 1 in a pool of total weight 1000 serves one slot, not a thousandth of the addresses exactly.
+
 Sticky sessions
 ~~~~~~~~~~~~~~~
 
@@ -309,7 +409,7 @@ A request that declares a body longer than ``max_body`` answers 413 before any b
 
 A 413 closes the connection, because the body was not read. A client that is still writing would then receive a reset and might never read the answer. So after a 413 we stop sending, keep reading and discarding for at most 2 seconds and 1 MiB, and close then. A 413 is an answer of our own: it does not count in ``sibuna_upstream_errors_total``.
 
-HSTS is one field line, written on every response on a TLS frontend: on the responses of a server, where it replaces a ``Strict-Transport-Security`` field of the server so that a client reads one policy, and on the answers of our own (a redirect, a challenge page, a refusal, 413, 502 and 504). A browser must learn the rule from whatever it is shown first. Our own answers carry neither the header edits nor the sticky cookie: the edits describe the application's responses, and a cookie would bind the client to a server that did not answer. The answer to an upgrade (101) belongs to the server and starts another protocol; no path edits it. A redirect keeps the connection open when the request has no body.
+HSTS is one field line, written on every response on a TLS frontend: on the responses of a server, where it replaces a ``Strict-Transport-Security`` field of the server so that a client reads one policy, and on the answers of our own (a redirect, a challenge page, a refusal, 413, 502 and 504). A browser must learn the rule from whatever it is shown first. Our own answers carry neither the header edits nor the sticky cookie: the edits describe the application's responses, and a cookie would bind the client to a server that did not answer. The answer to an upgrade (101) belongs to the server and starts another protocol; no path edits it. A redirect keeps the connection open when the request has no body. The route of an answer of our own is the route of the path in normal form, the same route that chooses the server. Only an answer that is given before the path has a normal form, such as the 400 for a malformed path, takes the route of the path as it was written.
 
 Header edits are prepared when the topology is parsed: a list of names to drop and one block of lines to append. ``set`` drops the name and appends the line. Names that carry framing or that Sibuna writes are refused at parse time: ``Host``, ``Content-Length``, ``Transfer-Encoding``, ``Connection``, ``Upgrade``, ``TE``, ``Trailer``, ``Keep-Alive``, the ``Proxy-`` fields, and on requests the ``X-Forwarded-``, ``X-Real-IP`` and ``X-Sibuna-`` fields.
 
@@ -375,7 +475,7 @@ What the operator sees
    app  b    10.0.0.12:8080 ready 1      3     up     -       40%  -
    app  c    10.0.0.13:8080 drain 1      0     up     -       -    state
 
-Two series per server count the events: ``sibuna_edge_server_ejections_total`` and ``sibuna_edge_server_failovers_total``, the requests that left the server for another one. ``sibuna_origin_retries_total`` counts the moves of the node. The access log has one line per request, under the server that ended it, and no field for a move: a request that moved is found by the failover count of the server it left.
+Two series per server count the events: ``sibuna_edge_server_ejections_total`` and ``sibuna_edge_server_failovers_total``, the requests that left the server for another one. ``sibuna_origin_retries_total`` counts the moves of the node. The access log has one line per request, under the server that ended it. Its last field, ``retries``, is the number of servers the request left before that one: 0 for nearly every request.
 
 Worked example
 ~~~~~~~~~~~~~~
@@ -435,7 +535,16 @@ Implemented on the branch ``sid-0019-traffic-policy``. Unit tests stand beside t
      - Binary: a server that answers after 2.5 s is served although the client idle timeout is 1 s; a short ``response_timeout`` answers 504; a slow upload keeps the client bound; a connect that hangs ends at ``connect_timeout``. In-process: a silent server answers 504 at the pool bound.
    * - Failover
      - Done
-     - Binary: a refused connect moves a POST to another server; at most ``retries`` other servers and none twice; after bytes were sent only a safe buffered request moves. In-process: two refused connects, then the body reaches the third server once.
+     - Binary: a refused connect moves a POST to another server; at most ``retries`` other servers and none twice; after bytes were sent a GET moves and a POST answers 502. In-process: two refused connects, then the body reaches the third server once.
+   * - Moving a request with a body
+     - Done
+     - Binary, workers and thread path (``edge_traffic.rs``) and HTTP/2 over TLS (``edge_traffic_tls.rs``): a PUT and a DELETE with a body reach the second server whole after the first read them and closed; a body above ``retry_body`` and any body with ``retry_body`` 0 answer 502; a POST answers 502 and no other server sees it. In-process (``grpc.rs``): a POST moves after ``REFUSED_STREAM``, once more to the same server and then to the next, and answers 502 after a lost session. ``crates/net`` tests ``recover`` over all 64 cases.
+   * - The choice without a lock
+     - Done
+     - Routing (``traffic.rs``): eight threads choose 160,000 times on servers of 3 and 2 places and no reservation passes a limit; a drain, a weight and a removal reach a thread that read the table before. The measurements are in "Measured".
+   * - The ranking table
+     - Done
+     - Routing: 4096 addresses keep their servers, in shares that follow weights 1, 2 and 4; when more servers leave than a slot keeps, every client has one that remains and returns home afterwards; a heavier weight gains clients and moves no other. The older tests of source stickiness pass unchanged, for HTTP, TCP and UDP.
    * - Passive health
      - Done
      - Binary, both paths: a silent server is ejected after its consecutive timeouts and the pool then answers at once; a pool of one server keeps serving; 503 responses count only with ``http_5xx``. Unit: forty thousand concurrent reports lose no count.
@@ -450,13 +559,13 @@ Implemented on the branch ``sid-0019-traffic-policy``. Unit tests stand beside t
      - Binary, both paths: redirect with 308 and 301, a route that opts out, a kept connection; header edits on both sides, with the client's ``_`` alias dropped; ``X-Forwarded-Host`` and ``X-Forwarded-Port``; 413 for a declared body and for a chunked body, buffered and streamed, with no upstream error counted; a client that still sends its refused body reads the 413. In-process: response fields set and removed; a body of unknown length is refused beyond the decision prefix. Unit: our own answers carry HSTS once, an interim head and a 101 are left alone.
    * - The three paths agree
      - Done
-     - ``cmd/sibuna/tests/edge_traffic.rs`` runs every test of timeouts, failover, passive health, slow start and the body limit on the workers and on the thread path. ``crates/net`` tests ``recover``. In-process: an upload of 1.2 s outlives a response bound of 400 ms; a safe request moves when the session of its HTTP/2 server fails after the send; a session opens within a ``connect_timeout`` above five seconds.
+     - ``cmd/sibuna/tests/edge_traffic.rs`` runs every test of timeouts, failover, passive health, slow start and the body limit on the workers and on the thread path. ``crates/net`` tests ``recover``. In-process: an upload of 1.2 s outlives a response bound of 400 ms; a safe request moves when the session of its HTTP/2 server fails after the send; a session opens within a ``connect_timeout`` above five seconds. Both paths: a client that resets while the server is silent frees its place on the server within 1.5 s, where the server would answer after 3 s.
    * - TLS and HTTP/2 through the binary
      - Done
-     - ``cmd/sibuna/tests/edge_traffic_tls.rs``, both paths: a request leaves a refused server; the sticky cookie is ``Secure`` and holds six requests on one server against round robin; the response edits and HSTS; the request edit reaches the server; a 413 of our own carries HSTS and no edit; the failover is counted.
+     - ``cmd/sibuna/tests/edge_traffic_tls.rs``, both paths: a request leaves a refused server; the sticky cookie is ``Secure`` and holds six requests on one server against round robin; the response edits and HSTS; the request edit reaches the server; a 413 of our own carries HSTS and no edit; the failover is counted. A 413 for ``/a/../open/length`` has the route of ``/open``, which turns HSTS off.
    * - Operator visibility
      - Done
-     - Binary, both paths: ``show servers`` shows the time left of an ejection and the percent of a ramp; the ejection and failover series count.
+     - Binary, both paths: ``show servers`` shows the time left of an ejection and the percent of a ramp; the ejection and failover series count; the log line of a moved request ends with ``"retries":1``.
    * - Integration with SID 0017, 0018 and 0020
      - Done
      - Binary, both paths: a drained server gives up its cookie and its source clients and gets them back; a redirect and a 413 are in the access log; behind a trusted proxy the forwarded client selects the server; a moved request passes over a drained server; a server added with ``add server`` takes at most 2 of 20 requests while it ramps; a moved request is one log line and one count under the server that answered, with one failure on the server it left. Routing: each client of an ejected server gets one other server and keeps it. Flows: source stickiness on a TCP pool and on a UDP pool.
@@ -498,8 +607,18 @@ Formal model
      - Only ``failures`` consecutive failures eject a server.
    * - ``ejection_never_empties_a_pool``, ``ejected_servers_wait``
      - Passive health never leaves available servers without a candidate, and an ejected server waits while another is available.
+   * - ``resend_needs_no_answer_and_a_kept_request``
+     - A request is sent again only before a response byte and only while it is kept.
+   * - ``a_request_that_is_not_idempotent_needs_a_refusal``
+     - A request whose method is not idempotent is sent again only when the server refused it.
+   * - ``a_server_is_tried_again_at_most_once``
+     - The same server is tried again only for a pooled connection, and only once.
+   * - ``first_eligible_is_eligible``, ``home_is_eligible``
+     - The server that the ranking table gives a client is eligible, also when the slot has none and the whole pool is ranked.
+   * - ``the_first_server_of_a_slot_serves_when_it_can``
+     - A client has the nearest server of its slot whenever that server is eligible.
 
-The model takes the scheduler as an arbitrary function. It does not model the round robin credits, the rendezvous ranking or concurrency: the routing table is one lock, so reservations are sequential.
+The model takes the scheduler as an arbitrary function. It does not model the round robin credits, the rendezvous ranking itself, or concurrency. Reservations are no longer sequential: the model states what one reservation does, and the test with eight threads shows that the limit of a server holds between them.
 
 Integration with SID 0017, SID 0018, SID 0020 and SID 0021
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -523,13 +642,15 @@ The branch was merged with the direct sends of SID 0017, the run-time changes of
 Known gaps
 ~~~~~~~~~~
 
-#. On the thread path a client that goes away while the server owes bytes is noticed at the next write, not at once, and a chunked body is counted without its framing. "The three paths" gives the reason.
-#. On a direct send a request with a body does not move after its session failed, although the server may have received nothing. The body was consumed by the session.
-#. Sibuna's own answer to a request whose path is not in normal form takes the HSTS field of the route that the path as written matches.
-#. The access log has no field for a move. The failover series of the server that was left shows it.
-#. The choice of a server takes the lock of the routing table, once per request and once per move. Under eight threads that do nothing else the choice costs 3.8 microseconds per call, against 0.1 microseconds on one thread. We did not change it: a request does far more work outside the lock, and a finer lock needs a design of its own.
-#. Source stickiness ranks every server of the pool for each request, under that lock: 27 ns per server, 0.2 microseconds for 4 servers and 3.5 microseconds for the largest pool of 128.
-#. The measurements above are micro-measurements on one development machine. The record was not benchmarked under load on a cluster.
+#. An HTTP/3 server cannot refuse a request in a way we read. The client library reports ``H3_REQUEST_REJECTED`` like any other stream error, so a request to an HTTP/3 server that is not idempotent never moves after the send.
+#. The move of a request that a pooled HTTP/1.1 connection handed back unsent has no test. The connection must close between our check and our write, which a test cannot place. The rule that it feeds is tested.
+#. A body moves only when it ended inside the request buffer of 64 KiB. A longer body is streamed and is gone when the server fails. Keeping it would mean a second buffer per request, up to the bound, and the record does not spend that memory.
+#. A client that closes its connection in order while the server is silent is not noticed until we write to it. On no path can we tell this from a client that closed its sending side and waits for the answer. A reset is noticed: at once by the workers, within 250 ms on the thread path.
+#. The choice of a server still writes to memory that the threads share: the reference counts of the pool policy, the route policy, the pool name and the server names, and the counters of the chosen server. Under eight threads that do nothing else it costs about a microsecond per call, against 4 microseconds with the lock. Removing these writes means a reservation that borrows from the snapshot, which changes the type that all three paths hold. We did not do it.
+#. Two requests that choose at the same moment may take the same least loaded server. "The choice of a server without a lock" gives the reason.
+#. A thread that serves no request keeps the snapshot it last read, and with it the pools of a topology that a reload replaced. This is memory only, one snapshot per idle thread, until the next request of that thread.
+#. The ranking table changed the server of most client addresses against the ranking before it. Nodes that run the two versions side by side disagree on the home of a client until all are upgraded.
+#. The measurements are micro-measurements on one development machine that ran other work. The record was not benchmarked under load on a cluster: this work was not allowed on the test hosts.
 
 Measured
 ~~~~~~~~
@@ -571,6 +692,47 @@ A release build of the lb crate was timed on one machine with two million calls 
 
 "Before" took the table lock for each of the three questions of a request. "After" answers the first two from two flags that a reload stores, and hashes the name of a server once, not per request. The difference in the plain ``choose`` is noise between two runs.
 
+The second table is the removal of the lock from the choice and the ranking table. It was measured in the same way, three runs each, on a machine that ran other work, so we give the range.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 46 18 18 18
+
+   * - Call
+     - Threads
+     - With the lock
+     - Without
+   * - ``choose``, 4 servers
+     - 1
+     - 110 to 120 ns
+     - 130 to 200 ns
+   * - ``choose``, 4 servers
+     - 8
+     - 4100 to 4600 ns
+     - 790 to 1600 ns
+   * - ``policy``, a topology with ``max_body``
+     - 8
+     - 480 ns
+     - 170 to 220 ns
+   * - ``firewall_applies``, a topology with ``max_body``
+     - 8
+     - 14 ns
+     - 1.4 ns
+   * - ``choose``, source sticky, 4 servers
+     - 1
+     - 234 ns
+     - 116 to 122 ns
+   * - ``choose``, source sticky, 32 servers
+     - 1
+     - 954 ns
+     - 122 to 129 ns
+   * - ``choose``, source sticky, 128 servers
+     - 1
+     - 3443 ns
+     - 148 to 188 ns
+
+On one thread the choice costs a little more than before: the lookup of the thread's snapshot replaces an uncontended lock. On eight threads it costs a quarter. What remains there is the shared reference counts that "Known gaps" names: ``policy`` alone, which clones one shared policy and takes no lock, costs 200 ns per call on eight threads. Source stickiness no longer depends on the size of the pool.
+
 Open questions
 --------------
 
@@ -585,6 +747,7 @@ Review history
 - 2026-11-24. Review of the implementation. Found and fixed: the in-process path bounded one attempt by the sum of both timeouts and so tried a refused server for too long; the fixed-point logarithm of the rendezvous ranking overflowed; a chunked body was counted from the admission only, so the buffered part escaped ``max_body``; our HSTS field stood beside that of the server; a client could keep a request field that an edit removes by spelling it with ``_``. The slow-start text claimed that least connections ignores the ramp for sequential traffic; the code divides by the weight in the tie-break too, and the text now says so. The gaps that remain are listed in "Known gaps".
 - 2026-11-24. Merge with ``main``, which had gained SID 0018, SID 0020 and the direct sends of SID 0017. The section on integration records the rules. Found and fixed in the merge: eligibility for slow start ignored a drain; source stickiness kept ranking a drained server and read the socket peer behind a trusted proxy; a moved request stayed in the log under the server it had left; the direct send had the fixed bounds of SID 0017 and no failover.
 - 2026-11-24. Review before production use, of the gaps that the last review listed. Design first: the three paths must share the rule for moving a request, so it became ``sibuna_net::recover`` and the thread path gained ``sibuna_net::Route``; the section "The three paths" records it. Closed: the thread path has the pool timeouts, failover, passive health and the chunked body limit; the in-process path bounds a body of unknown length and no longer counts a moving upload as silence; a direct send moves a safe request after a lost session and honours ``connect_timeout`` above five seconds; our own answers carry HSTS; a 413 lets the client finish and is not an upstream error; ``show servers`` and two series show ejections, ramps and failovers; the clients of a server that is out keep one other server; passive health loses no concurrent report; the policy and firewall questions take no lock. Found on the way: a test expected 502 from a silent server on the thread path, which now answers 504 like the workers; tests of the lb crate bound a released port and could collide, and now use a loopback address of their own. Decided and recorded as intended: no edits and no cookie on our own answers, no edit of a 101, one ejection for one address in two pools, no new ramp on a weight change. What remains is in "Known gaps".
+- 2026-11-25. The last gaps. Design first, in the three sections "Moving a request that has a body", "The choice of a server without a lock" and "The ranking table of source stickiness", with the two rules added to the Lean model. Implemented: ``retry_body`` and the rule of ``kept``, ``idempotent`` and ``refused`` on all three paths; the snapshot of the routing table; the ranking table; the watch on the client and the wire count of a chunked body on the thread path; the route of the normal path for HSTS on our own answers; the field ``retries`` of the access log. Review of the implementation found and fixed: a kept body that was sent again was counted twice against ``max_body`` on the in-process path, so a second attempt could answer 413; the design named ``TRACE`` among the methods and the code has no such method, so the text now leaves it out; the design let the snapshot hold the sticky key, which nothing reads once the tokens are stored in the pools. The crate ``h2`` is now named in the workspace. It was in the build through hyper, and we name it only to read the reason of a failed stream.
 
 References
 ----------

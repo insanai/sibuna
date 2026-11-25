@@ -1151,6 +1151,9 @@ Each HTTP pool bounds its own waits. The client has its bound, ``http.idle_timeo
    * - ``retries``
      - ``2``
      - How many other servers one request may try, from 0 to 8.
+   * - ``retry_body``
+     - ``"64k"``
+     - The largest request body that we keep, so that the request can be sent again. From 0 to ``"64k"``. 0 keeps no body.
 
 .. code-block:: text
 
@@ -1166,11 +1169,11 @@ Each HTTP pool bounds its own waits. The client has its bound, ``http.idle_timeo
 
 ``response_timeout`` bounds silence, not the whole exchange. A download of an hour passes as long as the server keeps sending. A slow upload is the client's affair and stays under ``http.idle_timeout``.
 
-When a server cannot be reached, the request moves to another server of the pool. The server received nothing, so this is safe for every method, also for ``POST``. After a byte of the request was sent, only a ``GET``, ``HEAD`` or ``OPTIONS`` request that fits the request buffer is sent again. A request never tries the same server twice, and never a drained one. ``retries: 0`` turns failover off, and the client then receives 502 at once.
+When a server cannot be reached, the request moves to another server of the pool. The server received nothing, so this is safe for every method, also for ``POST``. After a byte of the request was sent, we send a request again only when two things hold. We still have all of it: it has no body, or a body of at most ``retry_body`` that fits the request buffer. And sending it twice does no harm: its method is ``GET``, ``HEAD``, ``OPTIONS``, ``PUT`` or ``DELETE``. A ``POST`` or a ``PATCH`` whose connection was lost answers 502, because the server may have carried it out. A request never tries the same server twice, and never a drained one. ``retries: 0`` turns failover off, and the client then receives 502 at once.
 
-A request to an HTTP/2 or HTTP/3 server also moves when the shared session to the server fails before a response head, if the request is safe and has no body. The session is first opened again to the same server, once.
+A request to an HTTP/2 or HTTP/3 server also moves when the shared session to the server fails before a response head, under the same rule. The session is first opened again to the same server, once. An HTTP/2 server can also say that it did not act on a request, with ``REFUSED_STREAM`` or with a graceful ``GOAWAY``. Such a request is sent again whatever its method, when we still have all of it.
 
-A request that moved is one line of the access log and one request in the counters, under the server that answered it. Each server it left counts one in ``sibuna_edge_server_failures_total`` and one in ``sibuna_edge_server_failovers_total``. The log line has no field for the move: we find moved requests by the failover count of the server they left. A redirect and a 413 of our own are logged without a server.
+A request that moved is one line of the access log and one request in the counters, under the server that answered it. Each server it left counts one in ``sibuna_edge_server_failures_total`` and one in ``sibuna_edge_server_failovers_total``. The last field of the log line, ``retries``, is the number of servers the request left. A redirect and a 413 of our own are logged without a server.
 
 Sticky sessions
 ~~~~~~~~~~~~~~~
@@ -1398,10 +1401,12 @@ An edge writes an access log, counts each request per frontend and per server, a
      - The pool and the server the request was sent to, or ``-``.
    * - ``verdict``
      - ``pass``, ``deny``, ``challenge``, ``rate_limited``, ``banned``, ``internal`` or ``-``.
+   * - ``retries``
+     - The number of servers the request left before the one that ended it. 0 unless the request moved.
 
 .. code-block:: json
 
-   {"time":"2026-11-24T10:15:02.418Z","client":"203.0.113.7","frontend":"web","protocol":"http/1.1","scheme":"https","tls_version":"1.3","tls_cipher":"TLS13_AES_128_GCM_SHA256","method":"GET","host":"www.example.com","path":"/index.html","status":200,"bytes_in":112,"bytes_out":5310,"duration_ms":3.184,"ttfb_ms":2.907,"backend":"app","server":"app-2","verdict":"pass"}
+   {"time":"2026-11-24T10:15:02.418Z","client":"203.0.113.7","frontend":"web","protocol":"http/1.1","scheme":"https","tls_version":"1.3","tls_cipher":"TLS13_AES_128_GCM_SHA256","method":"GET","host":"www.example.com","path":"/index.html","status":200,"bytes_in":112,"bytes_out":5310,"duration_ms":3.184,"ttfb_ms":2.907,"backend":"app","server":"app-2","verdict":"pass","retries":0}
 
 A worker never waits for the log. It puts the entry in a bounded queue, and one thread formats and writes. When the queue is full the entry is dropped and ``sibuna_edge_access_log_dropped_total`` counts it.
 
