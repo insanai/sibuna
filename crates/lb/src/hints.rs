@@ -129,9 +129,11 @@ pub struct SpillStatus {
 /// `key` is the hash of the pool and the client, never zero when in use. `rest` holds
 /// the tag of the server and the expiry, masked with a mix of the key. Two workers may
 /// write one entry at once, and a reader may then see the key of one write and the rest
-/// of the other. Unmasked with the wrong key the rest is noise, and noise fails the
-/// check of the expiry in all but about `ttl / 2^32` of the cases. Then it still has to
-/// name a server of the pool. Every access is one atomic load or store.
+/// of the other. Unmasked with the wrong key the rest is noise. Noise seldom passes the
+/// check of the expiry: about `ttl / 2^32` of all pairs of keys do, but for two keys
+/// that agree in their low nine bits the chance is `ttl / 2^23`. Noise that passes
+/// still has to name a server of the pool with its 31 bits of tag, and that server has
+/// to be able to serve. Every access is one atomic load or store.
 #[derive(Default)]
 struct Entry {
     key: AtomicU64,
@@ -143,7 +145,7 @@ struct Entry {
 struct Found {
     /// The tag of the server, without the tentative bit.
     tag: u32,
-    /// The choice was made without a hint, and the disk has not answered yet.
+    /// The choice was made without a hint, and the disk has not said what it holds.
     tentative: bool,
     /// The Unix second at which the hint expires.
     expires: u32,
@@ -308,6 +310,18 @@ fn promote(table: &Table, counters: &Counters, key: &[u8], hint: &sibuna_spill::
     counters.promoted.fetch_add(1, Ordering::Relaxed);
 }
 
+/// The disk holds no hint for the key. So the choice that was made without a hint is
+/// all there is to know, and it becomes definite.
+fn confirm(table: &Table, key: &[u8]) {
+    let Some(key) = key.first_chunk::<8>() else { return };
+    let (key, now) = (u64::from_le_bytes(*key), now());
+    if let Some((entry, held)) = table.find(key, now)
+        && held.tentative
+    {
+        Table::write(entry, key, Found { tentative: false, ..held });
+    }
+}
+
 impl Hints {
     /// Opens the hints that `options` describe: the table in memory, and the file with
     /// its storage thread. `None` without options.
@@ -350,7 +364,10 @@ impl Hints {
                 let service = sibuna_spill::start_service(
                     cache,
                     ServiceOptions::default(),
-                    move |key, hint| promote(&sink, &counted, key, hint),
+                    move |key, hint| match hint {
+                        Some(hint) => promote(&sink, &counted, key, hint),
+                        None => confirm(&sink, key),
+                    },
                 )?;
                 status.outcome = Some(report.outcome);
                 status.persistent = report.persistent;
@@ -411,20 +428,27 @@ impl Hints {
     /// that the choice was made after a [`Recall::Miss`].
     ///
     /// A choice after a miss is tentative. The disk may hold the older hint, so the
-    /// choice is offered to the disk as a guess, which the disk keeps only when it has
-    /// no hint for the client, and in memory it never replaces what the disk answered
-    /// meanwhile. A choice after a hit is definite. A new or changed definite hint
-    /// replaces the hint on disk at once, and a hint in the second half of its life is
-    /// renewed.
+    /// choice is offered to the disk as a guess, which the disk keeps only in a free
+    /// slot and only when it has no hint for the client. A tentative hint stays
+    /// tentative until the disk has answered: the hint of the disk replaces it, and
+    /// the answer that the disk has none makes it definite. Each use of a tentative
+    /// hint asks the disk again, because a question may have been shed.
+    ///
+    /// A new or changed definite hint replaces the hint on disk at once, and a hint in
+    /// the second half of its life is renewed. Only these two offers compete for a
+    /// full bucket, so a client has to return over time, or move, to displace another.
+    ///
+    /// Without a disk every hint is definite.
     pub fn learn(&self, key: u64, tag: u32, missed: bool, now: u32) {
-        let fresh = Found { tag, tentative: missed, expires: now.saturating_add(self.ttl) };
+        let tentative = missed && self.service.is_some();
+        let fresh = Found { tag, tentative, expires: now.saturating_add(self.ttl) };
         let Some((entry, held)) = self.table.find(key, now) else {
-            // A definite hint that leaves memory goes to the disk once more: the disk
-            // may have rejected it before, and it has been used since.
+            // A definite hint that leaves memory is offered once more, as a guess: the
+            // disk has it already unless the offer was shed or found no room.
             if let Some((old_key, old)) = self.table.insert(key, fresh, now)
                 && !old.tentative
             {
-                self.offer(old_key, old);
+                self.offer(old_key, Found { tentative: true, ..old });
             }
             self.offer(key, fresh);
             return;
@@ -433,8 +457,17 @@ impl Hints {
         if missed {
             return;
         }
-        let renew = held.expires - now < self.ttl / 2;
-        if held.tag != tag || held.tentative || renew {
+        let changed = held.tag != tag || held.expires - now < self.ttl / 2;
+        if held.tentative {
+            if let Some(service) = &self.service {
+                service.ask(&key.to_le_bytes());
+            }
+            if changed {
+                let guess = Found { tentative: true, ..fresh };
+                Table::write(entry, key, guess);
+                self.offer(key, guess);
+            }
+        } else if changed {
             Table::write(entry, key, fresh);
             self.offer(key, fresh);
         }

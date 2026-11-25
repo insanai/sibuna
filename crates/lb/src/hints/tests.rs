@@ -70,17 +70,17 @@ fn the_spill_section_is_off_by_default_and_has_bounds() {
 }
 
 #[test]
-fn a_choice_after_a_miss_is_tentative_and_becomes_definite_when_it_is_used() {
+fn without_a_disk_every_choice_is_definite_and_follows_the_server() {
     let hints = Hints::without_disk(4 << 10);
     assert_eq!(hints.status().entries, 256);
     assert_eq!(hints.recall(7, NOW), Recall::Miss);
     hints.learn(7, 11, true, NOW);
     let (_, held) = hints.table.find(7, NOW).unwrap();
-    assert_eq!(held, Found { tag: 11, tentative: true, expires: NOW + TTL });
+    assert_eq!(held, Found { tag: 11, tentative: false, expires: NOW + TTL });
     assert_eq!(hints.recall(7, NOW), Recall::Hit(11));
     hints.learn(7, 11, false, NOW + 1);
     let (_, held) = hints.table.find(7, NOW + 1).unwrap();
-    assert_eq!(held, Found { tag: 11, tentative: false, expires: NOW + 1 + TTL });
+    assert_eq!(held, Found { tag: 11, tentative: false, expires: NOW + TTL });
     // A second miss of the same client leaves what is there.
     hints.learn(7, 12, true, NOW + 2);
     assert_eq!(hints.recall(7, NOW + 2), Recall::Hit(11));
@@ -297,7 +297,7 @@ fn measured_flow(hints: &Hints, client: u64) {
 #[ignore = "a measurement, not a check"]
 fn measure_two_tiers() {
     const CLIENTS: u64 = 2_000_000;
-    const BATCH: u64 = 2_000;
+    const BATCH: u64 = 1_000;
     let directory =
         std::env::var_os("SIBUNA_SPILL_DIR").map_or_else(std::env::temp_dir, PathBuf::from);
     let path = directory.join(format!("sibuna-lb-measure-{}.spill", std::process::id()));
@@ -358,4 +358,95 @@ fn measure_two_tiers() {
     }
     drop(disk);
     let _ = std::fs::remove_file(&path);
+}
+
+/// The options of hints on a file of their own in the temporary directory.
+fn on_disk(name: &str, size: u64) -> SpillOptions {
+    let file = format!("sibuna-hints-{}-{name}.spill", std::process::id());
+    let path = std::env::temp_dir().join(file);
+    let _ = std::fs::remove_file(&path);
+    SpillOptions { path, size, memory: 64 << 10, ttl: Duration::from_secs(u64::from(TTL)) }
+}
+
+fn open(options: &SpillOptions) -> (Arc<Hints>, Disk) {
+    let (hints, disk) = Hints::open(Some(options)).unwrap();
+    (hints.unwrap(), disk)
+}
+
+#[test]
+fn a_guess_never_becomes_definite_before_the_disk_has_answered() {
+    let options = on_disk("guess", 1 << 20);
+    let (hints, disk) = open(&options);
+    let at = now();
+    let ((known, _), (unknown, _)) = (measured_client(7), measured_client(8));
+    // The disk knows the server of one client and nothing of the other.
+    hints.learn(known, 21, false, at);
+    drained(&hints);
+    // Memory lost both, and each got a choice without a hint. Then a second flow of
+    // each uses the guess, before any answer of the disk.
+    let guess = Found { tag: 11, tentative: true, expires: at + TTL };
+    for key in [known, unknown] {
+        hints.table.insert(key, guess, at);
+        assert_eq!(hints.recall(key, at), Recall::Hit(11));
+        hints.learn(key, 11, false, at);
+        let (_, held) = hints.table.find(key, at).unwrap();
+        assert!(held.tentative || held != Found { tentative: false, ..guess } || key == unknown);
+    }
+    // The use asked the disk again. Its hint wins, and its silence confirms the guess.
+    drained(&hints);
+    let held = |key| hints.table.find(key, at).map(|(_, held)| (held.tag, held.tentative));
+    assert_eq!(held(known), Some((21, false)));
+    assert_eq!(held(unknown), Some((11, false)));
+    // The disk still holds what it knew.
+    drop(disk);
+    let (hints, disk) = open(&options);
+    assert_eq!(hints.recall(known, at), Recall::Miss);
+    drained(&hints);
+    assert_eq!(hints.table.find(known, at).map(|(_, held)| held.tag), Some(21));
+    drop(disk);
+    let _ = std::fs::remove_file(&options.path);
+}
+
+/// How many of the clients `0..count` have a hint on the disk of `options`.
+fn on_disk_count(options: &SpillOptions, count: u64) -> u64 {
+    let (hints, disk) = open(options);
+    for client in 0..count {
+        hints.recall(measured_client(client).0, now());
+        drained(&hints);
+    }
+    let hits = hints.status().disk.cache.hits;
+    drop(disk);
+    hits
+}
+
+#[test]
+fn a_flood_of_clients_seen_once_displaces_no_hint_on_disk() {
+    const RESIDENTS: u64 = 300;
+    // 768 slots on disk and 4,096 entries in memory.
+    let options = on_disk("flood", 64 << 10);
+    let (hints, disk) = open(&options);
+    for client in 0..RESIDENTS {
+        let (key, tag) = measured_client(client);
+        hints.learn(key, tag, false, now());
+        drained(&hints);
+    }
+    drop(disk);
+    let before = on_disk_count(&options, RESIDENTS);
+    assert!(before > RESIDENTS * 3 / 4, "{before}");
+
+    // Twenty-six clients for every slot come once each. Each asks the disk, guesses,
+    // is confirmed, and leaves memory when later ones need its entry.
+    let (hints, disk) = open(&options);
+    for client in 1_000..21_000 {
+        measured_flow(&hints, client);
+        if client % 500 == 0 {
+            drained(&hints);
+        }
+    }
+    drained(&hints);
+    let cache = hints.status().disk.cache;
+    assert_eq!(cache.replaced, 0, "{cache:?}");
+    drop(disk);
+    assert_eq!(on_disk_count(&options, RESIDENTS), before);
+    let _ = std::fs::remove_file(&options.path);
 }
