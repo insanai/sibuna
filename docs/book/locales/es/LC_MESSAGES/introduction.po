@@ -1,0 +1,77 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Vikrant Rathore and Sibuna contributors
+# This file is distributed under the same license as the The Sibuna Book package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"PO-Revision-Date: 2026-10-16 05:14+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: es\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ../../introduction.rst:1
+msgid "What is Sibuna?"
+msgstr "¿Qué es Sibuna?"
+
+#: ../../introduction.rst:4
+msgid "A passenger opens a railway timetable and asks for the next departure. We run two copies of the timetable application so that one can answer while the other restarts. We give passengers one public address. Sibuna listens at that address, receives the request and chooses where it goes. In this role it is a load balancer. It can also examine web requests and decide which ones may reach the application. In that role it is a web application firewall."
+msgstr "Una pasajera abre el horario de trenes para consultar la próxima salida. Mantenemos dos copias de la aplicación para que una pueda responder mientras la otra se reinicia. Damos a los pasajeros una sola dirección pública. Sibuna escucha en ella, recibe la solicitud y elige su destino. Así actúa como balanceador de carga. También puede examinar las solicitudes web y decidir cuáles llegan a la aplicación. En ese papel actúa como cortafuegos de aplicaciones web."
+
+#: ../../introduction.rst:6
+msgid "One request through the edge"
+msgstr "El recorrido de una solicitud"
+
+#: ../../introduction.rst:9
+msgid "The browser opens an encrypted connection to the timetable's public name. Sibuna presents a certificate for that name. If the browser trusts the certificate, the two establish a secure connection. Sibuna can obtain and renew public certificates through Let's Encrypt. For an internal service, it can issue a certificate from a local authority whose root we install on the clients."
+msgstr "El navegador abre una conexión cifrada al nombre público del horario. Sibuna presenta un certificado para ese nombre. Si el navegador confía en el certificado, ambos establecen una conexión segura. Sibuna puede obtener y renovar certificados públicos mediante Let's Encrypt. Para un servicio interno puede emitir un certificado de una autoridad local cuya raíz instalamos en los clientes."
+
+#: ../../introduction.rst:11
+msgid "The address where Sibuna accepts traffic is a frontend. Once Sibuna has received the HTTP request, it can read the host and path. A route sends timetable requests to a pool containing our two application servers. These servers are the origins. For an admitted request, Sibuna chooses a healthy origin from the pool, forwards the request and returns its answer to the passenger."
+msgstr "La dirección donde Sibuna acepta tráfico pertenece a un frontend. Al recibir la solicitud HTTP, Sibuna puede leer el host y la ruta. Una regla dirige las consultas del horario a un grupo que contiene nuestros dos servidores de aplicación. Estos son los servidores de origen. Para cada solicitud admitida, Sibuna elige un origen sano del grupo, le envía la solicitud y devuelve su respuesta a la pasajera."
+
+#: ../../introduction.rst:13
+msgid ""
+"Browser -- HTTPS --> Sibuna --+-- HTTP/1.1 --> A\n"
+"                              |\n"
+"                              +-- HTTP/1.1 --> B"
+msgstr "Navegador -- HTTPS --> Sibuna --+-- HTTP/1.1 --> A\n                                |\n                                +-- HTTP/1.1 --> B"
+
+#: ../../introduction.rst:19
+msgid "The two connections can use different protocols. A browser might speak HTTP/3 to Sibuna while the timetable application speaks HTTP/1.1. An internal gRPC client needs an HTTP/2 route to a compatible service. A plain TCP stream or UDP datagram can also go to a pool. In those cases Sibuna can forward traffic without reading a web page or applying rules to an HTTP path."
+msgstr "Las dos conexiones pueden usar protocolos distintos. El navegador puede hablar HTTP/3 con Sibuna mientras la aplicación habla HTTP/1.1. Un cliente gRPC interno necesita una ruta HTTP/2 hacia un servicio compatible. Un flujo TCP o un datagrama UDP también se puede enviar a un grupo. En esos casos Sibuna reenvía el tráfico sin leer una página web ni aplicar reglas sobre una ruta HTTP."
+
+#: ../../introduction.rst:21
+msgid "Who gets through?"
+msgstr "¿Quién puede pasar?"
+
+#: ../../introduction.rst:24
+msgid "Suppose a script asks for the timetable faster than the application can compute it. Adding a second origin spreads the work across two machines. A firewall rule can instead refuse a request or ask the browser to solve a puzzle before either origin does the work. After Sibuna verifies the answer, it issues a signed session that the browser can present on later visits."
+msgstr "Supongamos que un programa pide el horario más rápido de lo que la aplicación puede calcularlo. Añadir un segundo origen reparte el trabajo entre dos máquinas. Una regla del cortafuegos puede rechazar la solicitud o pedir al navegador que resuelva un reto antes de que trabaje un origen. Tras verificar la respuesta, Sibuna emite una sesión firmada que el navegador puede presentar en visitas posteriores."
+
+#: ../../introduction.rst:26
+msgid "Gate handles admission and local rate limits. Shield also inspects HTTP requests for patterns such as an attempted injection. We can apply the shield to the passenger website and give a machine client its own route. That client then uses the authentication required by its service."
+msgstr "Gate controla la admisión y los límites locales de solicitudes. Shield también examina las solicitudes HTTP en busca de patrones como un intento de inyección. Podemos aplicar Shield al sitio de pasajeros y dar una ruta propia a un cliente automatizado. Ese cliente usa la autenticación que exige su servicio."
+
+#: ../../introduction.rst:28
+msgid "From one node to a cluster"
+msgstr "De un nodo a un clúster"
+
+#: ../../introduction.rst:31
+msgid "If one timetable server goes down and its health check fails, the edge can send new requests to the other server. If the edge itself goes down, the surviving origin cannot answer through that edge. We can put a second Sibuna node behind the same public name and arrange for the network to direct clients to the available node."
+msgstr "Si un servidor del horario deja de funcionar y falla su comprobación de salud, el nodo de borde puede enviar nuevas solicitudes al otro servidor. Si falla el propio nodo de borde, el origen que sigue en pie no puede responder a través de él. Podemos poner un segundo nodo Sibuna bajo el mismo nombre público y configurar la red para que dirija los clientes al nodo disponible."
+
+#: ../../introduction.rst:33
+msgid "The nodes each forward their own traffic. Through a mesh they can exchange routing configurations, bans and information about which origin a client previously used. A passenger's next connection may reach a different edge. This is why the cluster chapters ask which decisions a node can make alone and which facts its peers need to know."
+msgstr "Cada nodo reenvía su propio tráfico. Mediante una malla pueden intercambiar configuraciones de rutas, bloqueos e información sobre el origen que atendió antes a un cliente. La siguiente conexión de la pasajera puede llegar a otro nodo. Por eso los capítulos sobre clústeres estudian qué decisiones puede tomar cada nodo y qué necesitan saber sus pares."
+
+#: ../../introduction.rst:35
+msgid "Before we turn the page, suppose both timetable servers are healthy and a passenger receives a browser challenge. Which component made that decision? Now suppose the passenger is admitted but one server has failed its health check. Which decision changes? These are the two questions we will follow through the book."
+msgstr "Supongamos que los dos servidores del horario están sanos y la pasajera recibe un reto en su navegador. ¿Qué componente tomó esa decisión? Ahora la pasajera obtiene acceso, pero un servidor falla su comprobación de salud. ¿Qué decisión cambia? Estas dos preguntas nos acompañarán a lo largo del libro."

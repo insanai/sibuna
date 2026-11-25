@@ -6,7 +6,7 @@ A Jlavi file describes the topology that Sibuna should serve. At startup or relo
 Build a web pool
 ----------------
 
-We save this module as ``edge.jlv``. A frontend listens on port 8080. Its ``default_backend`` names the site pool. The shield inspects HTTP requests, and the pool distributes admitted requests between two replicas.
+We can now describe the two timetable servers from :doc:`introduction` in a file. We save this module as ``edge.jlv``. A frontend listens on port 8080. Its ``default_backend`` names the timetable pool. The shield inspects HTTP requests, and the pool distributes admitted requests between two replicas.
 
 .. code-block:: text
 
@@ -14,8 +14,8 @@ We save this module as ``edge.jlv``. A frontend listens on port 8080. Its ``defa
        let hosts = ["127.0.0.1", "127.0.0.2"]
        return {
            http: { surface: "shield" },
-           frontends: { web: { binds: ["127.0.0.1:8080"], default_backend: "site" } },
-           backends: { site: { servers: [for host in hosts: "${host}:9000"] } },
+           frontends: { web: { binds: ["127.0.0.1:8080"], default_backend: "timetable" } },
+           backends: { timetable: { servers: [for host in hosts: "${host}:9000"] } },
        }
    }
 

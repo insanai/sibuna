@@ -22,18 +22,8 @@ msgid "How to Read This Book"
 msgstr "Wie wir dieses Buch lesen"
 
 #: ../../learning.rst:4
-msgid ""
-"We begin with a single question: what is the cheapest safe decision the "
-"server can make now? We keep that question beside us through the protocol "
-"and implementation chapters. A cheap operation that admits the wrong "
-"request is a defect; a correct operation with unbounded cost is another "
-"kind of defect."
-msgstr ""
-"Wir beginnen mit einer einzigen Frage: Was ist die billigste sichere "
-"Entscheidung, die der Server jetzt treffen kann? Diese Frage begleitet "
-"uns durch die Kapitel über Protokoll und Implementierung. Eine billige "
-"Operation, die die falsche Anfrage zulässt, ist ein Defekt; eine korrekte "
-"Operation mit unbeschränkten Kosten ist eine andere Art von Defekt."
+msgid "The timetable example gives us two questions to carry into the design chapters. Which requests does the edge admit, and which server handles an admitted request? The first chapters develop the cost and correctness of admission. Later chapters show how a single edge selects a server and how multiple edges cooperate."
+msgstr "Aus dem Fahrplanbeispiel nehmen wir zwei Fragen mit. Welche Anfragen lässt der Edge zu, und welcher Server bedient eine zugelassene Anfrage? Die ersten Kapitel untersuchen Kosten und Korrektheit der Zulassung. Später sehen wir, wie ein Edge einen Server auswählt und mehrere Knoten zusammenarbeiten."
 
 #: ../../learning.rst:10
 msgid "Question"
@@ -161,18 +151,8 @@ msgstr ""
 "oder einen geliehenen Slice erreicht."
 
 #: ../../learning.rst:37
-msgid ""
-"*Operating a deployment.* Part XI, then Part XIII, with Part XII open for "
-"lookups. Read Parts VIII and IX for the reasons behind the settings. Read "
-"the \"Feature Comparison\" in Part II before choosing a surface, and the "
-"\"Whole-Product Comparison\" in Part X before choosing worker and "
-"connection limits."
-msgstr ""
-"*Einen Einsatz betreiben.* Teil XI, dann Teil XIII, mit Teil XII zum "
-"Nachschlagen. Die Gründe hinter den Einstellungen stehen in den Teilen "
-"VIII und IX. Vor der Wahl einer Betriebsform lesen wir den "
-"„Funktionsvergleich“ in Teil II, und vor der Wahl der Worker- und "
-"Verbindungsgrenzen den „Vergleich der Gesamtprodukte“ in Teil X."
+msgid "For a first deployment, we work through :doc:`jlavi` after meeting frontends, routes and pools in :doc:`introduction`. Part XI then explains how to install, observe and reload the running system. Parts XII and XIII provide the reference and the command summary."
+msgstr "Für eine erste Bereitstellung arbeiten wir :doc:`jlavi` durch, nachdem wir in :doc:`introduction` Frontends, Routen und Pools kennengelernt haben. Teil XI erklärt Installation, Beobachtung und Neuladen im Betrieb. Die Teile XII und XIII enthalten die Referenz und die Befehlsübersicht."
 
 #: ../../learning.rst:38
 msgid ""

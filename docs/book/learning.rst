@@ -1,7 +1,7 @@
 How to Read This Book
 =====================
 
-We begin with a single question: what is the cheapest safe decision the server can make now? We keep that question beside us through the protocol and implementation chapters. A cheap operation that admits the wrong request is a defect; a correct operation with unbounded cost is another kind of defect.
+The timetable example gives us two questions to carry into the design chapters. Which requests does the edge admit, and which server handles an admitted request? The first chapters develop the cost and correctness of admission. Later chapters show how a single edge selects a server and how multiple edges cooperate.
 
 .. list-table::
    :header-rows: 1
@@ -34,7 +34,7 @@ Three Reading Paths
 -------------------
 
 - *Learning the design.* Parts I to IV in order, then the worked trace in Part VI, then Part VII. For the load balancer, Part VIII and then Part IX; they need only Part I and the ownership ideas of Part V. Do the exercises; compare with the solutions at the back only afterwards. Return to Part V when a trace reaches a shared table or a borrowed slice.
-- *Operating a deployment.* Part XI, then Part XIII, with Part XII open for lookups. Read Parts VIII and IX for the reasons behind the settings. Read the "Feature Comparison" in Part II before choosing a surface, and the "Whole-Product Comparison" in Part X before choosing worker and connection limits.
+- For a first deployment, we work through :doc:`jlavi` after meeting frontends, routes and pools in :doc:`introduction`. Part XI then explains how to install, observe and reload the running system. Parts XII and XIII provide the reference and the command summary.
 - *Changing the code.* Parts V and VI, the source anchors in every chapter, and the SID records they cite. Part X explains which harness will catch a regression in what we touched; Part II lists the constraints a change must keep.
 
 Conventions

@@ -1,13 +1,13 @@
 The Sibuna Book
 ===============
 
-Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes.
+This book follows a request from a browser to the application that answers it. We begin with a railway timetable served by two computers. From that example we develop the design of the load balancer, the firewall and the cluster.
 
 .. toctree::
    :maxdepth: 2
 
    preface
-   jlavi
+   introduction
    learning
    foundations
    prior-art
@@ -19,6 +19,7 @@ Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or conne
    edge
    cluster
    benchmarks
+   jlavi
    operations
    reference
    quick-reference

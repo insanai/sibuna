@@ -23,5 +23,5 @@ msgid "The Sibuna Book"
 msgstr "كتاب Sibuna"
 
 #: ../../index.rst:4
-msgid "Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes."
-msgstr "يوجّه Sibuna حركة TCP وUDP وHTTP إلى خوادم سليمة. يمكننا تشغيل عقدة طرفية واحدة أو ربط عدة عقد في شبكة مترابطة، وإنهاء TLS عند كل عقدة وتطبيق جدار الحماية على مسارات HTTP محددة."
+msgid "This book follows a request from a browser to the application that answers it. We begin with a railway timetable served by two computers. From that example we develop the design of the load balancer, the firewall and the cluster."
+msgstr "نتتبع في هذا الكتاب طلبا من المتصفح إلى التطبيق الذي يجيب عنه. نبدأ بجدول مواعيد قطارات يقدمه حاسوبان. ومن هذا المثال ندرس تصميم موازن الحمل وجدار الحماية والعنقود."

@@ -22,5 +22,5 @@ msgid "The Sibuna Book"
 msgstr "Sibuna 기술 안내서"
 
 #: ../../index.rst:4
-msgid "Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes."
-msgstr "Sibuna는 TCP, UDP, HTTP 트래픽을 정상 서버로 전달합니다. 에지 하나를 운영하거나 여러 에지를 메시로 연결하고, 각 에지에서 TLS를 종료하고 선택한 HTTP 경로에 방화벽을 적용할 수 있습니다."
+msgid "This book follows a request from a browser to the application that answers it. We begin with a railway timetable served by two computers. From that example we develop the design of the load balancer, the firewall and the cluster."
+msgstr "이 책은 브라우저가 보낸 요청이 응답을 만드는 애플리케이션에 닿기까지의 과정을 따라갑니다. 두 대의 컴퓨터가 제공하는 열차 시간표에서 출발해 로드 밸런서, 방화벽, 클러스터의 설계를 살펴봅니다."

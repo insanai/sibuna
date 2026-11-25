@@ -1,0 +1,77 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Vikrant Rathore and Sibuna contributors
+# This file is distributed under the same license as the The Sibuna Book package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"PO-Revision-Date: 2026-10-16 05:16+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: hi\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ../../introduction.rst:1
+msgid "What is Sibuna?"
+msgstr "Sibuna क्या है?"
+
+#: ../../introduction.rst:4
+msgid "A passenger opens a railway timetable and asks for the next departure. We run two copies of the timetable application so that one can answer while the other restarts. We give passengers one public address. Sibuna listens at that address, receives the request and chooses where it goes. In this role it is a load balancer. It can also examine web requests and decide which ones may reach the application. In that role it is a web application firewall."
+msgstr "एक यात्री रेल समय-सारणी खोलता है और अगली गाड़ी का समय पूछता है। हम समय-सारणी एप्लिकेशन की दो प्रतियाँ चलाते हैं ताकि एक के फिर से शुरू होने पर दूसरी जवाब दे सके। यात्रियों को एक ही सार्वजनिक पता मिलता है। Sibuna उस पते पर अनुरोध लेता है और तय करता है कि उसे कहाँ भेजें। इस भूमिका में वह लोड बैलेंसर है। वह वेब अनुरोधों को जाँचकर यह भी तय कर सकता है कि कौन से अनुरोध एप्लिकेशन तक पहुँचें। इस भूमिका में वह वेब एप्लिकेशन फ़ायरवॉल है।"
+
+#: ../../introduction.rst:6
+msgid "One request through the edge"
+msgstr "एज से गुज़रता एक अनुरोध"
+
+#: ../../introduction.rst:9
+msgid "The browser opens an encrypted connection to the timetable's public name. Sibuna presents a certificate for that name. If the browser trusts the certificate, the two establish a secure connection. Sibuna can obtain and renew public certificates through Let's Encrypt. For an internal service, it can issue a certificate from a local authority whose root we install on the clients."
+msgstr "ब्राउज़र समय-सारणी के सार्वजनिक होस्ट नाम से एन्क्रिप्टेड कनेक्शन शुरू करता है। Sibuna उस नाम का प्रमाणपत्र प्रस्तुत करता है। यदि ब्राउज़र प्रमाणपत्र पर भरोसा करता है तो सुरक्षित कनेक्शन बन जाता है। Sibuna सार्वजनिक प्रमाणपत्र Let's Encrypt से ले सकता है और उनका नवीनीकरण कर सकता है। आंतरिक सेवा के लिए वह स्थानीय प्रमाणन प्राधिकरण से प्रमाणपत्र जारी कर सकता है, जिसका मूल प्रमाणपत्र हम क्लाइंट पर स्थापित करते हैं।"
+
+#: ../../introduction.rst:11
+msgid "The address where Sibuna accepts traffic is a frontend. Once Sibuna has received the HTTP request, it can read the host and path. A route sends timetable requests to a pool containing our two application servers. These servers are the origins. For an admitted request, Sibuna chooses a healthy origin from the pool, forwards the request and returns its answer to the passenger."
+msgstr "जिस पते पर Sibuna ट्रैफ़िक स्वीकार करता है वह फ्रंटएंड का हिस्सा है। HTTP अनुरोध मिलने पर Sibuna उसका होस्ट और पथ पढ़ सकता है। एक रूट समय-सारणी के अनुरोध उस पूल को भेजता है जिसमें हमारे दोनों एप्लिकेशन सर्वर हैं। ये मूल सर्वर हैं। स्वीकृत अनुरोध के लिए Sibuna पूल से स्वस्थ मूल सर्वर चुनता है, उसे अनुरोध भेजता है और उसका जवाब यात्री को लौटाता है।"
+
+#: ../../introduction.rst:13
+msgid ""
+"Browser -- HTTPS --> Sibuna --+-- HTTP/1.1 --> A\n"
+"                              |\n"
+"                              +-- HTTP/1.1 --> B"
+msgstr "ब्राउज़र -- HTTPS --> Sibuna --+-- HTTP/1.1 --> A\n                               |\n                               +-- HTTP/1.1 --> B"
+
+#: ../../introduction.rst:19
+msgid "The two connections can use different protocols. A browser might speak HTTP/3 to Sibuna while the timetable application speaks HTTP/1.1. An internal gRPC client needs an HTTP/2 route to a compatible service. A plain TCP stream or UDP datagram can also go to a pool. In those cases Sibuna can forward traffic without reading a web page or applying rules to an HTTP path."
+msgstr "दोनों कनेक्शन अलग-अलग प्रोटोकॉल इस्तेमाल कर सकते हैं। ब्राउज़र Sibuna से HTTP/3 पर बात कर सकता है जबकि समय-सारणी एप्लिकेशन HTTP/1.1 पर चलती है। आंतरिक gRPC क्लाइंट को संगत सेवा तक HTTP/2 रूट चाहिए। साधारण TCP स्ट्रीम या UDP डेटाग्राम भी पूल को भेजे जा सकते हैं। ऐसे में वेब पेज पढ़े या HTTP पथ पर नियम लागू किए बिना ट्रैफ़िक आगे भेजा जा सकता है।"
+
+#: ../../introduction.rst:21
+msgid "Who gets through?"
+msgstr "किसे प्रवेश मिलता है?"
+
+#: ../../introduction.rst:24
+msgid "Suppose a script asks for the timetable faster than the application can compute it. Adding a second origin spreads the work across two machines. A firewall rule can instead refuse a request or ask the browser to solve a puzzle before either origin does the work. After Sibuna verifies the answer, it issues a signed session that the browser can present on later visits."
+msgstr "मान लें कि कोई स्क्रिप्ट समय-सारणी की गणना होने से भी तेज़ी से अनुरोध भेजती है। एक और मूल सर्वर जोड़ने पर काम दो मशीनों में बँटता है। इसके बजाय फ़ायरवॉल का नियम अनुरोध अस्वीकार कर सकता है या किसी मूल सर्वर पर काम शुरू होने से पहले ब्राउज़र से पहेली हल करने को कह सकता है। उत्तर जाँचने के बाद Sibuna हस्ताक्षरित सत्र जारी करता है जिसे ब्राउज़र अगली बार प्रस्तुत कर सकता है।"
+
+#: ../../introduction.rst:26
+msgid "Gate handles admission and local rate limits. Shield also inspects HTTP requests for patterns such as an attempted injection. We can apply the shield to the passenger website and give a machine client its own route. That client then uses the authentication required by its service."
+msgstr "Gate प्रवेश और स्थानीय दर सीमाएँ सँभालता है। Shield इसके अलावा HTTP अनुरोध में इंजेक्शन के प्रयास जैसे पैटर्न तलाशता है। हम यात्रियों की वेबसाइट पर Shield लगाकर मशीन क्लाइंट के लिए अलग रूट दे सकते हैं। वह क्लाइंट अपनी सेवा द्वारा अपेक्षित प्रमाणीकरण इस्तेमाल करता है।"
+
+#: ../../introduction.rst:28
+msgid "From one node to a cluster"
+msgstr "एक नोड से क्लस्टर तक"
+
+#: ../../introduction.rst:31
+msgid "If one timetable server goes down and its health check fails, the edge can send new requests to the other server. If the edge itself goes down, the surviving origin cannot answer through that edge. We can put a second Sibuna node behind the same public name and arrange for the network to direct clients to the available node."
+msgstr "यदि समय-सारणी का एक सर्वर बंद हो जाता है और उसकी स्वास्थ्य जाँच विफल होती है, तो एज नए अनुरोध दूसरे सर्वर को भेज सकता है। यदि एज ही बंद हो जाए तो बचा हुआ मूल सर्वर भी उसके ज़रिए जवाब नहीं दे सकता। हम उसी सार्वजनिक नाम के अंतर्गत दूसरा Sibuna नोड रख सकते हैं और नेटवर्क को क्लाइंट उपलब्ध नोड तक पहुँचाने के लिए कॉन्फ़िगर कर सकते हैं।"
+
+#: ../../introduction.rst:33
+msgid "The nodes each forward their own traffic. Through a mesh they can exchange routing configurations, bans and information about which origin a client previously used. A passenger's next connection may reach a different edge. This is why the cluster chapters ask which decisions a node can make alone and which facts its peers need to know."
+msgstr "हर नोड अपना ट्रैफ़िक आगे भेजता है। मेश के ज़रिए नोड रूटिंग कॉन्फ़िगरेशन, प्रतिबंध और क्लाइंट ने पहले कौन सा मूल सर्वर इस्तेमाल किया था, इसकी जानकारी साझा कर सकते हैं। यात्री का अगला कनेक्शन किसी दूसरे एज तक पहुँच सकता है। इसलिए क्लस्टर वाले अध्यायों में हम देखते हैं कि नोड कौन से निर्णय अकेले ले सकता है और उसके साथियों को किन तथ्यों की ज़रूरत होती है।"
+
+#: ../../introduction.rst:35
+msgid "Before we turn the page, suppose both timetable servers are healthy and a passenger receives a browser challenge. Which component made that decision? Now suppose the passenger is admitted but one server has failed its health check. Which decision changes? These are the two questions we will follow through the book."
+msgstr "आगे बढ़ने से पहले सोचें कि समय-सारणी के दोनों सर्वर स्वस्थ हैं और यात्री के ब्राउज़र को एक चुनौती मिलती है। यह निर्णय किस घटक ने लिया? अब यात्री को प्रवेश मिल गया है, लेकिन एक सर्वर स्वास्थ्य जाँच में विफल है। कौन सा निर्णय बदलेगा? इन दो प्रश्नों के साथ हम आगे पढ़ेंगे।"
