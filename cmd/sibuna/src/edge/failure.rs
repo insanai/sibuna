@@ -21,6 +21,8 @@ pub(super) struct Failure {
 /// file, or `None` for a quick start.
 pub(super) fn classify(file: Option<&str>, error: &io::Error) -> Failure {
     let text = error.to_string();
+    // Some messages end their hint with a period. We add ours below, so we drop theirs.
+    let text = text.trim_end_matches('.');
     let lower = text.to_ascii_lowercase();
     // A failure of the database authority has a title and a hint of its own (SID 0028).
     if let Some((title, hint)) = super::authority::failure(error) {
@@ -200,6 +202,8 @@ mod tests {
         assert!(failure.message.ends_with("(os error 2)."), "{}", failure.message);
         assert!(failure.hint.contains("p256") && failure.hint.contains("PATH"));
         let other = classify(None, &io::Error::other("http 0.0.0.0:80: no"));
+        let ended = classify(None, &io::Error::other("SPILL004: no room. Hint: free it."));
+        assert!(ended.message.ends_with("free it."), "{}", ended.message);
         assert_eq!(other.code, "EDGE001");
     }
 
