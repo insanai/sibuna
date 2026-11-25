@@ -206,6 +206,8 @@ We need no file to balance load. One command serves HTTP on port 8080 and spread
      - The directory of keys and certificates. The default is ``/var/lib/sibuna/acme``.
    * - ``--acme-dns-hook PROGRAM``
      - The program that answers the DNS-01 challenge, which a wildcard ``--domain`` needs (section *Automatic HTTPS*).
+   * - ``--acme-on-demand-ask URL``
+     - Also obtain a certificate at the first handshake for a name that ``GET URL?domain=NAME`` allows with a status from 200 to 299.
    * - ``--health PATH|tcp``
      - Probe each server with ``GET PATH``, or with a TCP connect.
    * - ``--firewall off|gate|shield``
@@ -525,6 +527,9 @@ Every option has a default. We change one in ``global.acme``.
    * - ``internal``
      - ``{ lifetime: 43200 }``
      - The lifetime of a certificate of the local authority in seconds, from 10 to 172800.
+   * - ``on_demand``
+     - none
+     - The guards of issuance at the first handshake, described under *On demand*.
 
 By using an authority we accept its terms of service, as with any ACME client.
 
@@ -654,6 +659,70 @@ A client trusts these certificates once it trusts the root. Sibuna never changes
 
 The lines of ``show ca`` that start with ``#`` name the file and its expiry. The rest is the PEM text, which every tool above reads. Firefox and Java keep trust stores of their own. Whoever can read ``local/root.pem`` in the storage can sign for any name towards the clients that trust this root, so we install the root only on machines we control, and we protect the storage like a private key.
 
+**On demand.** Sometimes we cannot list the names: customers point their own domains at us, or each tenant gets a subdomain. A frontend with ``on_demand: true`` obtains the certificate at the first handshake that names a host. We must say which hosts may get one, and the line ``global`` does that.
+
+.. code-block:: text
+
+   fn edge() -> Map<Value> {
+       return {
+           global: { acme: { on_demand: { allow: ["apps.example.org"] } } },
+           frontends: {
+               web: { binds: ["0.0.0.0:443"], tls: { on_demand: true } },
+               plain: { binds: ["0.0.0.0:80"] },
+           },
+           backends: { app: { servers: ["10.0.0.1:80"] } },
+       }
+   }
+
+The first client that connects to ``shop.apps.example.org`` waits a few seconds while Sibuna orders the certificate, and is then served with it. Every later client finds it. ``auto`` may list names on the same frontend, and it may be absent.
+
+.. code-block:: text
+
+   client                         Sibuna                               certificate authority
+     | -- ClientHello: shop.apps.example.org -->  no certificate yet
+     |                              guards pass: order ------------------>  |
+     |          (the handshake waits, at most `wait` seconds)  <-- validate  |
+     |                              certificate  <------------------------  |
+     | <----- handshake goes on with the new certificate
+
+A guard is required. Without one, anybody who can reach the listener could make us order certificates for any name that points at us, and spend the limits of the authority. ``sibuna check`` and the start refuse such a file with the title ``ON DEMAND NEEDS A GUARD``. There are two guards, and we may use both.
+
+- ``allow`` lists suffixes. ``apps.example.org`` allows that name and every name below it.
+- ``ask`` names a URL of ours. Sibuna sends ``GET URL?domain=NAME`` and allows the name on a status from 200 to 299. Any other status refuses it, and so does no answer within 5 seconds. We remember a refusal for 60 seconds, and we ask again at each renewal. The endpoint should answer from a table of known customers, on the loopback interface or a private network.
+
+.. code-block:: text
+
+   global: { acme: { on_demand: { ask: "http://127.0.0.1:9000/tls-allowed", rate: 30 } } },
+
+.. list-table:: Members of ``global.acme.on_demand``
+   :header-rows: 1
+   :widths: 14 12 74
+
+   * - Member
+     - Default
+     - Meaning
+   * - ``ask``
+     - none
+     - An ``http`` or ``https`` URL without a query. It decides each name.
+   * - ``allow``
+     - none
+     - One to 64 suffixes. A name outside them is never asked about and never ordered.
+   * - ``rate``
+     - 10
+     - New certificates per hour, from 1 to 1000. The first ``rate`` names are served at once, and then one more every :math:`3600 / rate` seconds. A certificate that the storage already has costs nothing.
+   * - ``names``
+     - 100
+     - The most names held on demand at once, from 1 to 10000.
+   * - ``wait``
+     - 20
+     - The longest time a handshake waits for its certificate, in seconds, from 1 to 120.
+
+A name on demand is a host name. A wildcard and an IP address are never obtained on demand. The issuer follows the name as for a listed name: a public name goes to the ACME authority, and an internal name such as ``app.localhost`` goes to the local authority, which answers at once.
+
+**What a client sees.** A handshake for a name that a guard refuses does not wait. It gets what any unknown name gets: the first certificate of ``crt`` when the frontend has one, and a TLS alert otherwise. A handshake whose order takes longer than ``wait`` gets the same, and the order goes on, so a later handshake finds the certificate. One order runs at a time, so many new names at once are served one after the other. HTTP/3 never waits: a QUIC handshake uses the certificate once a TCP handshake has obtained it.
+
+**Keeping and releasing.** A name on demand has a line in ``show certs`` with ``on-demand`` in the column ``origin``, and it is renewed in the background like a listed name. At its renewal Sibuna asks two questions. Did a handshake name it since the certificate was obtained? Does ``ask`` still allow it? If either answer is no, the name is released: it is no longer served or renewed, and its line leaves ``show certs``. The log says which. A name whose first order fails is released at once and refused until its retry delay has passed. The next handshake after that asks again. A restart forgets the names and keeps the certificates: the first handshake for each loads its certificate from the storage, with no order.
+
 **Looking at the state.** The admin socket lists the certificates.
 
 .. code-block:: sh
@@ -662,13 +731,14 @@ The lines of ``show ca`` that start with ``#`` name the file and its expiry. The
 
 .. code-block:: text
 
-   name            via     issuer                                expires              renews               state error
-   *.example.org   dns-01  R11                                   2027-02-22T10:00:00Z 2027-01-23T10:00:00Z ready -
-   example.org     http-01 R11                                   2027-02-22T10:00:00Z 2027-01-23T10:00:00Z ready -
-   localhost       local   Sibuna_Local_Authority_-_Intermediate 2026-11-24T22:00:00Z 2026-11-24T18:00:00Z ready -
-   www.example.org http-01 -                                     -                    2026-11-24T10:04:00Z retry VALIDATION FAILED (ACME005)
+   name                  via     issuer                                expires              renews               state origin    error
+   *.example.org         dns-01  R11                                   2027-02-22T10:00:00Z 2027-01-23T10:00:00Z ready listed    -
+   example.org           http-01 R11                                   2027-02-22T10:00:00Z 2027-01-23T10:00:00Z ready listed    -
+   localhost             local   Sibuna_Local_Authority_-_Intermediate 2026-11-24T22:00:00Z 2026-11-24T18:00:00Z ready listed    -
+   shop.apps.example.org http-01 R11                                   2027-02-22T10:00:00Z 2027-01-23T10:00:00Z ready on-demand -
+   www.example.org       http-01 -                                     -                    2026-11-24T10:04:00Z retry listed    VALIDATION FAILED (ACME005)
 
-``via`` says how the certificate is obtained: the challenge, or ``local`` for the local authority. ``state`` is ``pending`` before the first attempt, ``ordering`` during an order, ``waiting`` while another node holds the lock, ``retry`` after a failure, and ``ready`` otherwise. ``renews`` is the time of the next order. ``show stats`` and the metrics endpoint add four series: ``sibuna_edge_acme_certificates_managed``, ``sibuna_edge_acme_certificates_served``, ``sibuna_edge_acme_nearest_expiry_seconds`` and ``sibuna_edge_acme_failures_total``. An alert on the third one tells us when renewal has been failing for too long.
+``via`` says how the certificate is obtained: the challenge, or ``local`` for the local authority. ``origin`` is ``listed`` for a name under ``auto`` and ``on-demand`` for a name that a handshake asked for. ``state`` is ``pending`` before the first attempt, ``ordering`` during an order, ``waiting`` while another node holds the lock, ``retry`` after a failure, and ``ready`` otherwise. ``renews`` is the time of the next order. ``show stats`` and the metrics endpoint add four series: ``sibuna_edge_acme_certificates_managed``, ``sibuna_edge_acme_certificates_served``, ``sibuna_edge_acme_nearest_expiry_seconds`` and ``sibuna_edge_acme_failures_total``. An alert on the third one tells us when renewal has been failing for too long.
 
 **Troubleshooting.** Each failure is written to standard error with a code, the reason of the authority and a hint.
 
@@ -718,7 +788,7 @@ The lines of ``show ca`` that start with ``#`` name the file and its expiry. The
      - local authority failed
      - The directory ``local`` in the storage: its owner, its mode, and a damaged file.
 
-A reload may add and remove ``auto`` names. A new name is ordered at once, and a removed name is no longer renewed or served. Changing ``global.acme``, or adding the first ``auto`` name to a daemon that has none, needs a restart. A certificate from ``crt`` and ``auto`` names may share a listener. For a name that both cover, the automatic certificate serves once it exists.
+A reload may add and remove ``auto`` names, and turn ``on_demand`` of a frontend on and off. A new name is ordered at once, and a removed name is no longer renewed or served. Changing ``global.acme``, which includes the guards of ``on_demand``, or adding the first ``auto`` name to a daemon that has none, needs a restart. A certificate from ``crt`` and ``auto`` names may share a listener. For a name that both cover, the automatic certificate serves once it exists.
 
 **Coming from Caddy.** The behaviour follows Caddy's automatic HTTPS, with these differences.
 
@@ -736,10 +806,12 @@ A reload may add and remove ``auto`` names. A new name is ordered at once, and a
      - A hook program or an RFC 2136 update. No build step, and no vendor module.
    * - The root is installed into the trust store at the first start.
      - Never. ``show ca`` prints the root, and we install it.
-   * - On-demand TLS, a second issuer, ``acme_server``.
+   * - ``on_demand`` in a site, ``on_demand_tls { ask URL }`` in the global options.
+     - ``tls: { on_demand: true }`` and ``global.acme.on_demand``. The ``ask`` contract is the same: ``?domain=NAME``, and a 2xx status allows. A file without ``ask`` and without ``allow`` is refused, where Caddy warns.
+   * - An on-demand certificate is renewed during a handshake.
+     - It is renewed in the background while clients use the name, and released when they stop.
+   * - A second issuer, ``acme_server``.
      - Not available.
-
-Sibuna has no authority of its own for internal names, issues no certificate at the first handshake of an unknown name, and does not solve the DNS-01 challenge, so it obtains no wildcard certificates. For these cases we keep using ``crt``.
 
 HTTP routing by name and path
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
