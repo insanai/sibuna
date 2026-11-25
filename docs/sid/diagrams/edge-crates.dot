@@ -1,0 +1,40 @@
+digraph edge_crates {
+  graph [rankdir=BT, bgcolor="transparent", fontname="Helvetica", fontsize=10, nodesep=0.32, ranksep=0.55];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9, fillcolor="#eff6ff", color="#1e40af", penwidth=1.0];
+  edge [color="#64748b", arrowsize=0.65];
+
+  subgraph cluster_reusable {
+    label="Worker and schema crates";
+    style="dashed,rounded"; color="#94a3b8"; bgcolor="#f8fafc";
+    crypto [label="sibuna-crypto"];
+    cidr [label="sibuna-cidr"];
+    store [label="sibuna-store"];
+    http [label="sibuna-http"];
+    io [label="sibuna-io\n(epoll/io_uring/kqueue/IOCP)", fillcolor="#dcfce7", color="#15803d"];
+    kv [label="sibuna-kv\n(Worker RAM + off-path mmap)", fillcolor="#dcfce7", color="#15803d"];
+    lb [label="sibuna-lb\n(Maglev, P2C, PROXYv2, SNI/JA4)", fillcolor="#dcfce7", color="#15803d"];
+    conf [label="sibuna-conf\n(EdgeConfig Schema & JSON)", fillcolor="#dcfce7", color="#15803d"];
+    plugin [label="sibuna-plugin\n(Traits, Fuel WASM, SPOE)", fillcolor="#dcfce7", color="#15803d"];
+  }
+
+  core [label="sibuna-core"];
+  policy [label="sibuna-policy"];
+  jlv [label="sibuna-jlv\n(Off-Path JLV/2 Transform)", fillcolor="#fef3c7", color="#b45309"];
+  net [label="sibuna-net"];
+  cluster [label="sibuna-cluster\n(ATDP, SWIM, CRDT, CPF)", fillcolor="#fef3c7", color="#b45309"];
+  storage [label="sibuna-storage\n(SQLite / PostgreSQL)"];
+  console [label="sibuna-console"];
+  daemon [label="cmd/sibuna\n(Edge LB + WAF + Console)", fillcolor="#ede9fe", color="#6d28d9"];
+
+  kv -> crypto;
+  lb -> crypto; lb -> cidr;
+  conf -> cidr;
+  plugin -> http; plugin -> crypto;
+  policy -> core; policy -> cidr;
+  jlv -> conf;
+  net -> io; net -> lb; net -> http; net -> core;
+  cluster -> lb; cluster -> kv; cluster -> crypto; cluster -> core;
+  storage -> conf; storage -> policy; storage -> core;
+  console -> storage; console -> cluster; console -> jlv;
+  daemon -> net; daemon -> cluster; daemon -> kv; daemon -> conf; daemon -> jlv; daemon -> plugin; daemon -> policy; daemon -> storage; daemon -> console;
+}

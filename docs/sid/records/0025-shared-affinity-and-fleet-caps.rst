@@ -97,12 +97,9 @@ The pool and the mesh thread use the table through the trait ``AffinityStore``: 
 The datagram
 ^^^^^^^^^^^^
 
-.. code-block:: text
-
-   0        4               20        28   29                               n-16      n
-   +--------+---------------+---------+----+--------------------------------+---------+
-   | S E 1 6|  boot nonce   | sequence| k  | k x (key:16, server:8, end:8)  |   tag   |
-   +--------+---------------+---------+----+--------------------------------+---------+
+.. typst-diagram:: ../diagrams/affinity-datagram.typ
+   :caption: Affinity datagram fields in wire order.
+   :alt: A count at byte 28 precedes the 32-byte affinity entries. The last 16 bytes hold the tag.
 
 The datagram has kind 6 and otherwise the form and the tag of SID 0022. It holds at most 36 entries in 1,200 bytes.
 
@@ -204,13 +201,9 @@ A change of the limit, of the address of the server or of the roster makes a new
 The status datagram
 ^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: text
-
-   0        4          20        28       36      44   45                          n-16   n
-   +--------+----------+---------+--------+-------+----+---------------------------+------+
-   | S E 1 7|boot nonce| sequence| epoch  | echo  | k  | k x (key:8, gave:8,       | tag  |
-   |        |          |         |        |       |    |      got:8, want:4, f:1)  |      |
-   +--------+----------+---------+--------+-------+----+---------------------------+------+
+.. typst-diagram:: ../diagrams/status-datagram.typ
+   :caption: Fleet-cap status fields in wire order.
+   :alt: The epoch and echo follow the sequence. A count at byte 44 precedes the 29-byte ledger records and the trailing tag.
 
 The datagram has kind 7. It is addressed to one peer: ``gave`` and ``got`` are the numbers of the pair. ``got`` tells the giver what has arrived. A datagram holds 39 records. A node sends its status to each peer in each period of 500 ms. A status without a record still carries the two epochs. A node keeps at most 1,024 ledgers over its life and forgets none. A server beyond that has a share of zero.
 

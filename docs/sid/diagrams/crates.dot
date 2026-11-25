@@ -1,0 +1,15 @@
+digraph crates {
+  graph [rankdir=BT, bgcolor="transparent"];
+  node [shape=box, fontname="Helvetica"];
+  subgraph cluster_reusable {
+    label="reusable"; style=dashed;
+    crypto; encoding; json; pow; http; patterns; cidr; store; inflate; geoip; html;
+  }
+  pow -> crypto; http -> crypto; http -> encoding; geoip -> inflate; geoip -> crypto;
+  policy -> patterns; policy -> cidr; policy -> json; policy -> core;
+  challenge -> crypto; challenge -> pow; challenge -> store; challenge -> encoding;
+  net -> http; net -> core;
+  storage -> policy; storage -> core;
+  sibuna -> policy; sibuna -> challenge; sibuna -> net; sibuna -> storage;
+  "sibuna-pow-wasm" -> pow;
+}

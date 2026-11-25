@@ -113,23 +113,9 @@ The age of a slot comes from its stamp. Each shard counts its writes in 32 bits 
 The two tiers in the edge
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. graphviz::
+.. graphviz:: ../diagrams/tiers.dot
    :caption: A worker reads and writes the table in memory. Only the storage thread touches the file.
    :alt: Workers and the mesh thread use the store. The store holds the table in memory. A bounded queue carries offers and questions to the storage thread, which owns the mapped file and answers into the table.
-
-   digraph tiers {
-     node [shape=box];
-     worker [label="Worker, mesh thread:\nfind, keep"];
-     ram [label="SpillStore\n(the sticky table in memory)"];
-     queue [label="Bounded queue"];
-     disk [label="Storage thread\nmapped file"];
-     shed [label="Count shed work"];
-     worker -> ram;
-     ram -> queue [label="offer, ask"];
-     queue -> disk;
-     queue -> shed [label="full"];
-     disk -> ram [label="answer"];
-   }
 
 With the ``spill`` section the store of the edge is a ``SpillStore``. It implements ``AffinityStore`` with the table of SID 0025 in front, so the pool, the mesh thread and ``show affinity`` work as before. The edge makes it the store with ``ClusterState::use_store`` before it builds its first pool.
 

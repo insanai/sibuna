@@ -1,0 +1,10 @@
+digraph internal_order {
+  graph [rankdir=TB, bgcolor="white", pad=0.2, nodesep=0.28, ranksep=0.38];
+  node [shape=box, style="rounded,filled", fillcolor="#eff6ff", color="#1e40af", fontname="Helvetica", fontsize=11, margin="0.13,0.08"];
+  edge [color="#475569", fontname="Helvetica", fontsize=10, arrowsize=0.75];
+  pending -> ready [label=" all authorizations valid"];
+  ready -> processing [label=" finalize"];
+  processing -> valid [label=" issued"];
+  pending -> invalid [label=" failed authorization"]; processing -> invalid [label=" issuance failed"];
+  valid [fillcolor="#f0fdf4"]; invalid [fillcolor="#fff7ed"];
+}

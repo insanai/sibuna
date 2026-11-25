@@ -1,0 +1,17 @@
+digraph handoff_protocol {
+  graph [rankdir=TB, bgcolor="white", pad=0.2, nodesep=0.28, ranksep=0.38];
+  node [shape=box, style="rounded,filled", fillcolor="#eff6ff", color="#1e40af", fontname="Helvetica", fontsize=11, margin="0.13,0.08"];
+  edge [color="#475569", fontname="Helvetica", fontsize=10, arrowsize=0.75];
+  start [label="Replacement checks its file and connects\nBoth processes check peer credentials"];
+  hello [label="New to old: HELLO\nOffer version range; old chooses a version"];
+  listeners [label="Old to new: LISTENERS\nKind, address and descriptor of each listener"];
+  ready [label="New to old: READY\nOld pauses UDP; TCP remains open"];
+  flows [label="Old to new: FLOWS, then COMMIT\nMappings, server sockets and total count"];
+  done [label="New to old: DONE\nCounts adopted and dropped"];
+  new [label="New process reads UDP\nBinds upgrade and admin sockets, reports ready"];
+  old [label="Old process stops accepting\nForgets mappings, drains TCP, exits 0"];
+  start -> hello -> listeners;
+  listeners -> ready [label=" verify descriptors; start HTTP, logs and counters\nwithout reading"];
+  ready -> flows; flows -> done [label=" adopt mappings and begin accepting TCP"];
+  done -> new; done -> old;
+}

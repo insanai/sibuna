@@ -240,24 +240,9 @@ The reload rule has two parts because the changes are of two kinds. A weight, an
 
 The log line of a reload states both numbers: ``Sibuna edge routes reloaded: 1 drain kept, 2 run-time changes replaced by the file``.
 
-.. graphviz::
+.. graphviz:: ../diagrams/authority.dot
    :caption: Authority. The file decides the topology at every reload. Commands lay changes over it, and only drains pass a reload.
    :alt: The JLV or JSON file is compiled and checked into a revision. A reload makes the revision the serving topology. The admin socket applies commands to the serving topology as an overlay. At a reload the weights, additions and removals of the overlay are dropped and its drains are carried over.
-
-   digraph authority {
-     graph [rankdir=LR, bgcolor="transparent", fontname="Helvetica", fontsize=9, nodesep=0.3, ranksep=0.45];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fillcolor="#eff6ff", color="#1e40af", penwidth=1.0, margin="0.1,0.05"];
-     edge [color="#64748b", fontname="Helvetica", fontsize=7.5, fontcolor="#475569", arrowsize=0.6];
-     file [label="edge.jlv\nthe authority", fillcolor="#fffbeb", color="#b45309"];
-     revision [label="Checked revision"];
-     serving [label="Serving topology\nrevision + overlay", fillcolor="#f0fdf4", color="#15803d"];
-     socket [label="Admin socket\nsibuna ctl", fillcolor="#f5f3ff", color="#6d28d9"];
-     flows [label="New flows", fillcolor="#ffffff"];
-     file -> revision [label="SIGHUP, reload,\nwatch"];
-     revision -> serving [label="replaces topology,\nkeeps drains"];
-     socket -> serving [label="drain, weight,\nadd, del"];
-     serving -> flows;
-   }
 
 ``show servers`` has a column ``changed``. It holds ``-`` for a server that is served as the file describes it, ``added`` for a server that a command added, and the changed fields ``state`` and ``weight`` otherwise. ``show info`` counts the run-time changes and lists the servers of the file that a command removed.
 

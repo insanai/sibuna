@@ -43,26 +43,9 @@ Invariants
 #. A server connection carries one exchange at a time, and returns to the pool only after a complete response.
 #. Every wait has a bound.
 
-.. graphviz::
+.. graphviz:: ../diagrams/inline.dot
    :caption: One request. The decision is a function call, and the server connection belongs to the runtime.
    :alt: A stream is translated to an HTTP/1.1 head and the start of its body. The decision either answers or admits. An admitted request goes to a pooled server connection and the response returns to the stream.
-
-   digraph inline {
-     graph [rankdir=LR, bgcolor="transparent", fontname="Helvetica", fontsize=9, nodesep=0.3, ranksep=0.45];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fillcolor="#eff6ff", color="#1e40af", penwidth=1.0, margin="0.1,0.05"];
-     edge [color="#64748b", fontname="Helvetica", fontsize=7.5, fontcolor="#475569", arrowsize=0.6];
-     stream [label="HTTP/2 or HTTP/3\nstream"];
-     offer [label="Offer\nhead, start of body"];
-     decide [label="Decide\nfirewall, routes", fillcolor="#fef3c7", color="#92400e"];
-     answer [label="Answer\nSibuna's response"];
-     server [label="Server\npooled HTTP/1.1"];
-     stream -> offer [label="translate, render"];
-     offer -> decide [label="call"];
-     decide -> answer [label="refused, challenged"];
-     decide -> server [label="Forward: target, head"];
-     server -> stream [label="response"];
-     answer -> stream;
-   }
 
 The interface
 ~~~~~~~~~~~~~

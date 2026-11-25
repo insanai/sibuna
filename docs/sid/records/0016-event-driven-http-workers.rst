@@ -49,65 +49,16 @@ Workers and connection ownership
 
 The edge starts one HTTP worker for each processor the process may use, up to 64. The edge worker of SID 0015 accepts connections, applies the frontend's connection rate limit and the flow budget, and assigns each connection to the HTTP worker with the fewest connections. The protocol runtime assigns its handoffs the same way, and passes the client address and the listener with each one. The assignment crosses threads once, through a queue and a wake-up.
 
-.. graphviz::
+.. graphviz:: ../diagrams/workers.dot
    :caption: Ownership. One thread accepts, the HTTP workers own connections and server sockets, and nothing is shared on the request path except the admission tables.
    :alt: The edge worker accepts connections and assigns them to HTTP workers. The TLS runtime hands exchanges to the same workers. Each worker holds a connection table, a server pool, a buffer pool and a timer wheel, and reaches the servers.
-
-   digraph workers {
-     graph [rankdir=LR, bgcolor="transparent", fontname="Helvetica", fontsize=9, nodesep=0.25, ranksep=0.5];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fillcolor="#eff6ff", color="#1e40af", penwidth=1.0, margin="0.1,0.05"];
-     edge [color="#64748b", fontname="Helvetica", fontsize=7.5, fontcolor="#475569", arrowsize=0.6];
-     accept [label="Edge worker\naccept, rate, budget"];
-     tls [label="TLS, HTTP/2, HTTP/3\nruntime", fillcolor="#f5f3ff", color="#6d28d9"];
-     w1 [label="HTTP worker 1\nconnections, server pool,\nbuffers, timer wheel", fillcolor="#f0fdf4", color="#15803d"];
-     wn [label="HTTP worker n", fillcolor="#f0fdf4", color="#15803d"];
-     shared [label="Shared, lock-free or striped:\npolicy engine, limiter,\nbans, routes", fillcolor="#fffbeb", color="#b45309"];
-     servers [label="Servers", fillcolor="#ffffff"];
-     accept -> w1 [label="assign"];
-     accept -> wn;
-     tls -> w1 [label="socket pair"];
-     tls -> wn;
-     w1 -> shared [style=dashed, label="decide"];
-     wn -> shared [style=dashed];
-     w1 -> servers;
-     wn -> servers;
-   }
 
 The life of a connection
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. graphviz::
+.. graphviz:: ../diagrams/states.dot
    :caption: States of a connection. Each arrow is taken inside the worker without blocking.
    :alt: Idle leads to Head when bytes arrive. Head leads to Body or Decide. Decide leads to Respond for a local answer or to Connect and Exchange for an admitted request. Exchange leads to Idle on keep-alive, to Tunnel after a 101 response, or to Closed.
-
-   digraph states {
-     graph [rankdir=LR, bgcolor="transparent", fontname="Helvetica", fontsize=9, nodesep=0.3, ranksep=0.4];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fillcolor="#eff6ff", color="#1e40af", penwidth=1.0, margin="0.08,0.04"];
-     edge [color="#64748b", fontname="Helvetica", fontsize=7.5, fontcolor="#475569", arrowsize=0.6];
-     idle [label="Idle\nno buffer"];
-     head [label="Head"];
-     body [label="Body\nup to 64 KiB"];
-     decide [label="Decide\nsynchronous, no I/O", fillcolor="#fffbeb", color="#b45309"];
-     respond [label="Respond"];
-     connect [label="Connect"];
-     exchange [label="Exchange"];
-     tunnel [label="Tunnel", fillcolor="#f0fdf4", color="#15803d"];
-     closed [label="Closed", fillcolor="#ffffff"];
-     idle -> head [label="bytes"];
-     head -> body;
-     head -> decide;
-     body -> decide;
-     decide -> respond [label="deny, challenge,\ninternal route"];
-     decide -> connect [label="admit, no pooled socket"];
-     decide -> exchange [label="admit"];
-     connect -> exchange;
-     exchange -> idle [label="keep-alive"];
-     respond -> idle [label="keep-alive"];
-     exchange -> tunnel [label="101"];
-     exchange -> closed;
-     respond -> closed;
-     tunnel -> closed;
-   }
 
 *Idle.* The connection holds no buffer. When the socket becomes readable the worker borrows a 64 KiB buffer from its pool.
 

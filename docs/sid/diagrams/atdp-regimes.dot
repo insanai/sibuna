@@ -1,0 +1,16 @@
+digraph atdp_regimes {
+  graph [rankdir=LR, bgcolor="transparent", fontname="Helvetica", fontsize=10, nodesep=0.5, ranksep=0.8];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9, penwidth=1.2, margin="0.16,0.10"];
+  edge [fontname="Helvetica", fontsize=8.2, color="#475569", penwidth=1.0];
+
+  r1 [label="Regime 1: Standalone / VIP\n(peers = 0)\n- P2C Peak-EWMA Scheduler\n- Local sibuna-kv Mmap Store\n- Zero Network Gossip", color="#1e40af", fillcolor="#eff6ff"];
+  r2 [label="Regime 2: Regional PoP Mesh\n(regional peer forwarding)\n- Bounded-Load Maglev (M = 65537)\n- 1-Hop Consistent Peer Forwarding (CPF)\n- Batched UDP Delta-CRDT Stick-Tables", color="#15803d", fillcolor="#f0fdf4"];
+  r3 [label="Regime 3: Geo-Anycast WAN\n(locality-tiered routing)\n- Locality-Tiered Maglev (Local PoP First)\n- Stateless AEAD Flow Routing Tokens\n- Async PostgreSQL Ban/Policy Sync", color="#b45309", fillcolor="#fffbeb"];
+
+  r1 -> r2 [label="peer discovered\nRTT <= 3.0 ms"];
+  r1 -> r3 [label="peer discovered\nRTT > 3.0 ms"];
+  r2 -> r3 [label="p95 RTT > 3.0 ms"];
+  r3 -> r2 [label="p95 RTT < 1.5 ms"];
+  r2 -> r1 [label="peers == 0"];
+  r3 -> r1 [label="peers == 0"];
+}

@@ -166,11 +166,9 @@ The crate ``sibuna-acme`` (``crates/acme``) holds the protocol and no I/O. It de
 
 The state machine is the algorithm of this record. The caller gives it the response to the last request, and it returns the next action.
 
-.. code-block:: text
-
-   Directory -> Nonce -> Account -> NewOrder -> Authorization -> Present
-                                                                   |
-        Done <- Download <- PollOrder <- Finalize <- PollAuthorization <- Respond
+.. graphviz:: ../diagrams/acme-order.dot
+   :caption: States of an ACME client order.
+   :alt: Directory discovery, nonce and account setup precede the order. Sibuna presents the challenge, waits for authorization, finalizes the order and downloads the certificate.
 
 .. list-table:: Actions of the order
    :header-rows: 1
@@ -465,17 +463,9 @@ The DNS-01 challenge
 
 The authority looks up the TXT record ``_acme-challenge.NAME``, where NAME is the name without ``*.``. Its value is the base64url SHA-256 digest of the key authorization (RFC 8555, section 8.4). We write the record through a *provider*, wait until the authoritative servers show it, tell the authority, and remove the record when the order ends.
 
-.. code-block:: text
-
-   Present(dns-01)
-     |  write "presented" file  (owner, value)        so a crash can be cleaned up
-     |  provider present owner value
-     |  wait `wait` seconds
-     |  check: every authoritative server shows the value   (at most `timeout` seconds)
-     v
-   Respond ... order ends, with or without a certificate
-     |  provider cleanup owner value
-     |  remove "presented" file
+.. graphviz:: ../diagrams/dns-record-lifetime.dot
+   :caption: Lifetime of a DNS-01 TXT record.
+   :alt: Sibuna records the owner and value before publishing, waits for every authoritative server, and cleans up both the DNS record and its recovery file when the order ends.
 
 ``global.acme.challenge`` gains the value ``"dns-01"``. It then applies to every ACME name, also to names without a wildcard. This serves hosts with no open port 80 or 443. With ``"auto"``, a wildcard uses DNS-01 and every other name uses HTTP-01 or TLS-ALPN-01 as before. With ``"http-01"`` or ``"tls-alpn-01"`` a wildcard still uses DNS-01, because nothing else can prove it.
 
@@ -668,19 +658,9 @@ Issuance on demand
 
 A frontend with ``on_demand: true`` may have an empty ``auto`` list. A handshake that names a host for which the frontend has no certificate, neither automatic nor from a file, asks for one and waits.
 
-::
-
-   handshake (edge-tls)                      thread edge-acme
-   --------------------                      ----------------
-   read ClientHello, name N
-   N served already?  -- yes --> continue
-   N admissible?      -- no  --> continue (default certificate or alert)
-   request(N), wait at most `wait`  ----->   stored certificate? load it
-                                             ask(N)?  no: deny N for 60 s
-                                             token?   no: deny N until one is back
-                                             order or issue, install
-   woken or timed out  <-----------------    wake the waiters
-   continue with the usual choice
+.. graphviz:: ../diagrams/on-demand-issuance.dot
+   :caption: On-demand certificate selection during a TCP handshake.
+   :alt: The handshake queues an admissible name and waits up to its limit. The ACME thread checks storage, policy and the rate token before ordering. A timeout resumes the handshake while the order continues.
 
 The daemon refuses a file that turns ``on_demand`` on without ``ask`` and without ``allow``. This is the refusal by default: without a guard, anybody who can reach the listener could make us order certificates for any name that points at us, and spend the limits of the authority.
 
@@ -884,13 +864,11 @@ With ``internal.server`` the local authority answers ACME clients (RFC 8555), so
 
 **Orders.** An order has 1 to 16 DNS names in lower case. A wildcard and an IP address are refused, because HTTP-01 proves neither here. Every name must be covered by a suffix of ``allow`` and, when the root has name constraints, be permitted by them. Each name gets one authorization with one HTTP-01 challenge and a token of 128 random bits. Authorizations are not reused between orders.
 
-.. code-block:: text
+.. graphviz:: ../diagrams/internal-order.dot
+   :caption: States of an order at the internal ACME authority.
+   :alt: An order becomes ready when all names validate. Finalization begins processing. Issuance succeeds or the order becomes invalid. A failed authorization also invalidates the order.
 
-   pending --all authorizations valid--> ready --finalize--> processing --issued--> valid
-      |                                                           |
-      +--an authorization invalid--> invalid <--not issued--------+
-
-   Every order is removed one hour after it was created, whatever its state.
+The authority removes each order one hour after creation in every state.
 
 **Validation.** When the client answers a challenge, the challenge becomes ``processing`` and a task enters a queue. One thread, ``edge-acme-server``, works the queue, so the request path never waits for a network. The thread resolves the name with the resolver of the system and takes the first address that lies inside a range of ``allow``. A name without such an address is not contacted. It connects to that address and ``http_port``, with 5 seconds to connect and 10 seconds in all, sends ``GET /.well-known/acme-challenge/TOKEN`` with the name as ``Host``, and reads at most 8 KiB of header and 1 KiB of body. The status must be 200. A redirect is a failure: we follow none, so the client of the server cannot send the daemon to another host. The body, without white space at its ends, must be the token, a dot and the thumbprint of the account key. One try is made. A failure makes the challenge, the authorization and the order ``invalid`` and is stored as the ``error`` of the challenge.
 

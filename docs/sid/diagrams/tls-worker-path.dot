@@ -1,0 +1,11 @@
+digraph tls_worker_path {
+  graph [rankdir=TB, bgcolor="white", pad=0.2, nodesep=0.28, ranksep=0.38];
+  node [shape=box, style="rounded,filled", fillcolor="#eff6ff", color="#1e40af", fontname="Helvetica", fontsize=11, margin="0.13,0.08"];
+  edge [color="#475569", fontname="Helvetica", fontsize=10, arrowsize=0.75];
+  subgraph cluster_before { label="Original path"; color="#cbd5e1";
+    a [label="Client"]; b [label="Runtime thread"]; c [label="Worker"]; d [label="Server"];
+    a -> b [label=" TLS"]; b -> c [label=" socket pair"]; c -> d; }
+  subgraph cluster_after { label="TLS on the worker"; color="#93c5fd";
+    e [label="Client"]; f [label="Worker"]; g [label="Server"];
+    e -> f [label=" TLS"]; f -> g; }
+}

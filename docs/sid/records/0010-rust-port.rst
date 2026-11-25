@@ -111,25 +111,9 @@ Workspace
 
 Binaries live under ``cmd/``: the daemon ``sibuna`` and the browser solver ``sibuna-pow-wasm``. Repository tools are Rust programs under ``tools/``, run through ``cargo xtask``. Dependencies point one way: reusable crates, then ``sibuna-core``, then the application crates, then the binaries.
 
-.. graphviz::
+.. graphviz:: ../diagrams/crates.dot
    :caption: Crate dependencies. Reusable crates depend on no application crate.
    :alt: A layered graph from reusable crates through sibuna-core to the application crates and the daemon.
-
-   digraph crates {
-     graph [rankdir=BT, bgcolor="transparent"];
-     node [shape=box, fontname="Helvetica"];
-     subgraph cluster_reusable {
-       label="reusable"; style=dashed;
-       crypto; encoding; json; pow; http; patterns; cidr; store; inflate; geoip; html;
-     }
-     pow -> crypto; http -> crypto; http -> encoding; geoip -> inflate; geoip -> crypto;
-     policy -> patterns; policy -> cidr; policy -> json; policy -> core;
-     challenge -> crypto; challenge -> pow; challenge -> store; challenge -> encoding;
-     net -> http; net -> core;
-     storage -> policy; storage -> core;
-     sibuna -> policy; sibuna -> challenge; sibuna -> net; sibuna -> storage;
-     "sibuna-pow-wasm" -> pow;
-   }
 
 Mapping of mechanisms
 ~~~~~~~~~~~~~~~~~~~~~

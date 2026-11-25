@@ -64,30 +64,9 @@ Who speaks to whom
 
 The replacement connects to the old process. The old process gives; the replacement takes. One handoff runs at a time. The messages below are in the order they are sent.
 
-.. code-block:: text
-
-   replacement (new)                        old process
-   -----------------                        -----------
-   checks its file
-   connect  ------------------------------> accept, check peer credentials
-   check peer credentials
-   HELLO  min version, max version  ------> choose the version
-          <------  LISTENERS  kind, address and descriptor of each listener
-   check each descriptor
-   build the edge on the descriptors,
-   start HTTP, logs and counters.
-   Nothing reads a descriptor yet.          serves as before: accepts, reads UDP
-   READY  --------------------------------> stop reading UDP listeners and the
-                                            server sockets of UDP mappings
-          <------  FLOWS  the mappings, each with its server socket
-          <------  COMMIT  number of mappings
-   adopt the mappings
-   start accepting on the TCP listeners     still accepts on the TCP listeners
-   DONE  adopted, dropped  ---------------> stop accepting, forget the mappings,
-   start reading UDP                        drain TCP streams, exit with status 0
-   bind the upgrade socket and
-   the admin socket
-   "listeners ready"
+.. graphviz:: ../diagrams/handoff-protocol.dot
+   :caption: The handoff exchanges and the two local cutover points.
+   :alt: The replacement validates its file and the listener descriptors. READY pauses UDP. FLOWS and COMMIT carry mappings, sockets and count. The replacement accepts TCP before DONE, then reads UDP. The old process drains its established TCP streams.
 
 The replacement has "validated its configuration, acquired listeners and acknowledged readiness", in the words of SID 0015, when it sends READY. Until then the old process has changed nothing. Between READY and DONE the old process accepts TCP and does not read UDP. That interval is the only one in which UDP datagrams wait. The old process measures it and writes it in its log line.
 
@@ -271,17 +250,9 @@ Under systemd the two processes are two instances of one template unit, for exam
 Structure
 ~~~~~~~~~
 
-.. code-block:: text
-
-   crates/upgrade     the socket, the frames, the two ends of the protocol, the FFI
-        ^             (sendmsg, recvmsg, SO_PEERCRED, SO_TYPE, kill). No other crate.
-        |
-   crates/lb          Edge::bind_inherited, and in handoff.rs: lend_listeners,
-        ^             freeze_datagrams, lend_flows, resume_datagrams, adopt_flows,
-        |             arm_streams, arm_datagrams, release_listeners, waker
-        |
-   cmd/sibuna         edge/upgrade.rs: the gate thread of the old process and the
-                      start of the replacement
+.. graphviz:: ../diagrams/handoff-crates.dot
+   :caption: Dependencies of the listener handoff.
+   :alt: The daemon coordinates the old and new processes. The load balancer freezes, adopts and arms sockets. The upgrade crate implements frames, descriptor passing and peer credentials.
 
 The crate ``sibuna-upgrade`` knows sockets and addresses and nothing of the edge. Its FFI module is the only unsafe code of this record.
 

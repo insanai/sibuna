@@ -189,26 +189,9 @@ On a worker the server owes us bytes when the request body is complete and the c
 Failover
 ~~~~~~~~
 
-.. graphviz::
+.. graphviz:: ../diagrams/failover.dot
    :caption: One request and its attempts. A server is tried once, and the count of attempts is bounded.
    :alt: A request selects a server. A failed connect, or a failed safe buffered request, selects another server that was not tried while attempts remain. Otherwise the client receives 502.
-
-   digraph failover {
-     graph [rankdir=LR, bgcolor="transparent", fontname="Helvetica", fontsize=9, nodesep=0.3, ranksep=0.45];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fillcolor="#eff6ff", color="#1e40af", penwidth=1.0, margin="0.1,0.05"];
-     edge [color="#64748b", fontname="Helvetica", fontsize=7.5, fontcolor="#475569", arrowsize=0.6];
-     select [label="Select\nnot tried, eligible"];
-     connect [label="Connect"];
-     send [label="Send request"];
-     done [label="Response"];
-     fail [label="502", fillcolor="#fef3c7", color="#92400e"];
-     select -> connect;
-     connect -> send [label="connected"];
-     send -> done;
-     connect -> select [label="failed, attempts left"];
-     send -> select [label="no response byte,\nkept, idempotent or refused,\nattempts left"];
-     select -> fail [label="none left"];
-   }
 
 The reservation of a request remembers the servers it tried. ``HttpRoutes::retry`` takes a failed reservation and returns a reservation on another server of the same pool, or nothing. It refuses when the attempts are spent, when the revision that routed the request no longer serves (a reload retires a revision and SID 0018 keeps it for ten seconds), and when no untried server is eligible. The failed server is marked as before, so later requests avoid it for two seconds.
 
@@ -344,27 +327,9 @@ The choice of a server without a lock
 
 The routing table was one mutex, taken by every request for the choice of its server. Under contention the lock, not the choice, was the cost. Now a request reads an immutable snapshot.
 
-.. graphviz::
+.. graphviz:: ../diagrams/snapshot.dot
    :caption: Writers build a snapshot under the mutex and raise the generation. A reader compares one number and uses the snapshot its thread already has.
    :alt: A reload or a command changes the master table under a mutex, builds a snapshot from it, stores it and raises a generation counter. Each worker thread keeps its own reference to a snapshot together with the generation it was read at. A request compares that generation with the counter. When they are equal it uses the cached snapshot without any lock. When they differ the thread takes the mutex once and fetches the new snapshot.
-
-   digraph snapshot {
-     graph [rankdir=LR, bgcolor="transparent", fontname="Helvetica", fontsize=9, nodesep=0.3, ranksep=0.5];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fillcolor="#eff6ff", color="#1e40af", penwidth=1.0, margin="0.1,0.05"];
-     edge [color="#64748b", fontname="Helvetica", fontsize=7.5, fontcolor="#475569", arrowsize=0.6];
-     writer [label="Reload or command"];
-     master [label="Master table\n(mutex)"];
-     snap [label="Snapshot\n(immutable)"];
-     gen [label="Generation\n(atomic)"];
-     cache [label="Thread cache\nsnapshot + generation"];
-     request [label="Request"];
-     writer -> master [label="change"];
-     master -> snap [label="build"];
-     master -> gen [label="raise"];
-     request -> gen [label="compare"];
-     request -> cache [label="equal: use"];
-     cache -> master [label="differs: fetch once", style=dashed];
-   }
 
 A snapshot holds the frontends, the pools of the current revision and of the revision a reload retired, and the regime. It never changes after it is built. Everything that a request changes lives outside it, in the per-server state that a reload keeps: the count of active requests, the count of admitted requests, the round robin credit, the latency sample, the mark of a failed connect, the ejection and the ramp. These are atomics. The mark of a failed connect and the latency sample were a mutex each and are now one atomic number each. The slow start state stays behind a small mutex per server, but a server that is in service and past its ramp is recognised by one atomic flag, so the mutex is taken only around a return to service. The sticky token of a server was computed under a mutex and cached; it is now computed when the table changes and stored in the pool.
 

@@ -1,0 +1,11 @@
+digraph flow_log_queues {
+  graph [rankdir=TB, bgcolor="white", pad=0.2, nodesep=0.28, ranksep=0.38];
+  node [shape=box, style="rounded,filled", fillcolor="#eff6ff", color="#1e40af", fontname="Helvetica", fontsize=11, margin="0.13,0.08"];
+  edge [color="#475569", fontname="Helvetica", fontsize=10, arrowsize=0.75];
+  relay [label="Relay threads"]; worker [label="LB worker"]; {rank=same; relay; worker;}
+  ends [label="4,096 flow ends"]; log [label="Access log queue"]; writer [label="Log writer"];
+  loss [label="Drop and count line", fillcolor="#fffbeb", color="#92400e"];
+  relay -> ends [label=" try_send"]; worker -> ends [label=" try_send"];
+  ends -> log [label=" edge loop"]; log -> writer;
+  ends -> loss [label=" full", style=dashed]; log -> loss [label=" full", style=dashed];
+}

@@ -1,0 +1,19 @@
+digraph workers {
+  graph [rankdir=LR, bgcolor="transparent", fontname="Helvetica", fontsize=9, nodesep=0.25, ranksep=0.5];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fillcolor="#eff6ff", color="#1e40af", penwidth=1.0, margin="0.1,0.05"];
+  edge [color="#64748b", fontname="Helvetica", fontsize=7.5, fontcolor="#475569", arrowsize=0.6];
+  accept [label="Edge worker\naccept, rate, budget"];
+  tls [label="TLS, HTTP/2, HTTP/3\nruntime", fillcolor="#f5f3ff", color="#6d28d9"];
+  w1 [label="HTTP worker 1\nconnections, server pool,\nbuffers, timer wheel", fillcolor="#f0fdf4", color="#15803d"];
+  wn [label="HTTP worker n", fillcolor="#f0fdf4", color="#15803d"];
+  shared [label="Shared, lock-free or striped:\npolicy engine, limiter,\nbans, routes", fillcolor="#fffbeb", color="#b45309"];
+  servers [label="Servers", fillcolor="#ffffff"];
+  accept -> w1 [label="assign"];
+  accept -> wn;
+  tls -> w1 [label="socket pair"];
+  tls -> wn;
+  w1 -> shared [style=dashed, label="decide"];
+  wn -> shared [style=dashed];
+  w1 -> servers;
+  wn -> servers;
+}

@@ -49,29 +49,9 @@ Invariants
 #. A PROXY header is read with a bound on its size and on the wait, and only from a trusted proxy. A connection without a valid header is closed before any byte reaches TLS or HTTP.
 #. Counters survive a reload. A server keeps its counters while its backend and its name stay in the topology.
 
-.. graphviz::
+.. graphviz:: ../diagrams/observe.dot
    :caption: One request and the three places that observe it. The log queue is the only shared structure on the path.
    :alt: A connection passes the optional PROXY stage and reaches one of three request paths. Each path fills one entry. A finished entry updates the counters and is offered to the bounded queue. One writer thread takes entries from the queue and writes lines.
-
-   digraph observe {
-     graph [rankdir=LR, bgcolor="transparent", fontname="Helvetica", fontsize=9, nodesep=0.3, ranksep=0.45];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fillcolor="#eff6ff", color="#1e40af", penwidth=1.0, margin="0.1,0.05"];
-     edge [color="#64748b", fontname="Helvetica", fontsize=7.5, fontcolor="#475569", arrowsize=0.6];
-     accept [label="accept"];
-     stage [label="PROXY stage\nbounded, optional", fillcolor="#fef3c7", color="#92400e"];
-     paths [label="request path\nworker, in-process\nor thread"];
-     entry [label="entry\none per request"];
-     stats [label="counters\nper frontend, per server"];
-     queue [label="bounded queue\ndrop and count", fillcolor="#fef3c7", color="#92400e"];
-     writer [label="writer thread\nJSON lines"];
-     accept -> stage [label="proxy_protocol"];
-     accept -> paths;
-     stage -> paths [label="client address"];
-     paths -> entry [label="dispatch"];
-     entry -> stats [label="settle"];
-     entry -> queue [label="try_send"];
-     queue -> writer;
-   }
 
 Configuration
 ~~~~~~~~~~~~~
@@ -346,14 +326,9 @@ Readiness and access control
 
 A shutdown has three steps:
 
-.. code-block:: text
-
-   SIGTERM
-     |  readiness answers 503; listeners accept; requests are served
-     |<------------ global.drain_delay (default 0s) ------------>|
-     |  listeners stop; established flows and requests finish
-     |<------------ global.shutdown_timeout (default 5s) ------->|
-     v  what is still open is closed; the process ends
+.. graphviz:: ../diagrams/drain-timing.dot
+   :caption: Readiness changes before the listeners stop admitting flows.
+   :alt: SIGTERM makes readiness return 503. The drain delay lets new arrivals through. During the shutdown timeout established flows finish. Remaining flows close at exit.
 
 The delay exists for a balancer in front that learns of the drain from the readiness answer. It should be a little longer than the probe interval times the failure threshold of that balancer. The default is zero, because without such a balancer the delay only makes every stop slower. The longest time from the signal to the end of the process is the sum of the two settings.
 
@@ -466,12 +441,9 @@ The first implementation left gaps that this section closes. Each paragraph is t
 
 **Flow lines.** A TCP connection and a UDP mapping write one line when they end. The worker and the relay threads of the load balancer offer a ``FlowEnd`` to a bounded channel with ``try_send``. A full channel drops the line and counts it in ``sibuna_edge_flow_log_dropped_total``. The loop of the edge takes the lines after each step and offers them to the queue of the access log, which is bounded too. So no thread of the data path waits. Without a log the load balancer builds no line at all. A topology without an HTTP frontend has the log too, and ``sibuna lb --access-log`` works with ``--proto tcp`` and ``--proto udp``. At the end of a shutdown the flows that are still open are closed, and their lines say ``shutdown``.
 
-.. code-block:: text
-
-   relay threads --try_send--+
-                             v
-   lb worker ---try_send--> [ 4,096 flow ends ] --edge loop--> [ log queue ] --> writer
-                             | full: drop, count                | full: drop, count
+.. graphviz:: ../diagrams/flow-log-queues.dot
+   :caption: Two bounded queues carry completed flows to the access log.
+   :alt: Relay threads and the worker try to enqueue flow ends. The edge loop moves them to the log queue for the writer. Either queue can drop and count a line when full.
 
 .. list-table::
    :header-rows: 1

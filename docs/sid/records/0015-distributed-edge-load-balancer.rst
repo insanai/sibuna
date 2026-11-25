@@ -33,128 +33,9 @@ Specification
 Worker ownership and deployment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. typst-diagram::
+.. typst-diagram:: ../diagrams/edge-pop.typ
    :caption: Example edge deployment at a point of presence (PoP).
    :alt: ECMP directs traffic to hosts. Each host has packet workers, an optional spill service and a separate management plane.
-
-   #import "@preview/cetz:0.5.2"
-   #set text(font: "Libertinus Serif", size: 8.0pt, fill: rgb("#172033"))
-   #cetz.canvas(length: 1cm, {
-     import cetz.draw: *
-
-     let ink = rgb("#172033")
-     let muted = rgb("#64748b")
-     let blue = rgb("#1e40af")
-     let blue-bg = rgb("#eff6ff")
-     let green = rgb("#15803d")
-     let green-bg = rgb("#f0fdf4")
-     let amber = rgb("#b45309")
-     let amber-bg = rgb("#fffbeb")
-     let red = rgb("#b91c1c")
-     let red-bg = rgb("#fef2f2")
-     let violet = rgb("#6d28d9")
-     let violet-bg = rgb("#f5f3ff")
-     let slate-bg = rgb("#f8fafc")
-
-     let card(x1, y1, x2, y2, fill-c, stroke-c, title, body) = {
-       rect((x1, y1), (x2, y2), radius: 3pt, fill: fill-c, stroke: 0.75pt + stroke-c)
-       content(((x1 + x2) / 2, (y1 + y2) / 2), box(width: (x2 - x1 - 0.25) * 1cm, align(center, {
-         text(weight: "bold", size: 7.7pt, fill: stroke-c.darken(15%), title)
-         if body != "" {
-           linebreak()
-           text(size: 6.7pt, fill: ink, body)
-         }
-       })))
-     }
-
-     let arr(p1, p2, col, lbl: none) = {
-       line(p1, p2, stroke: 0.8pt + col, mark: (end: "stealth", fill: col, scale: 0.65))
-       if lbl != none {
-         content(((p1.at(0) + p2.at(0)) / 2, (p1.at(1) + p2.at(1)) / 2),
-           box(fill: white, inset: 1.3pt, text(size: 6.6pt, fill: col.darken(10%), lbl)))
-       }
-     }
-
-     // Tier 0: Clients & Attackers
-     card(0.0, 11.4, 6.8, 12.6, green-bg, green, "Legitimate Clients (TCP / UDP / HTTPS / QUIC)",
-       "Browsers, APIs, DNS, WireGuard, VoIP, Gaming")
-     card(7.6, 11.4, 14.4, 12.6, red-bg, red, "Volumetric & State-Exhaustion Adversaries",
-       "SYN/UDP Spoof Floods, Million-IP Botnets, TLS/HTTP Scrapers")
-
-     // Tier 1: Network Perimeter
-     card(1.6, 9.6, 12.8, 10.7, blue-bg, blue,
-       "Edge Transit / IXP - BGP Anycast VIPs + L3/L4 ECMP Hardware Hashing",
-       "Stateless 5-tuple ECMP spray across active Sibuna Edge hosts; BIRD/FRR announces /24 & /48 health")
-     arr((3.4, 11.4), (4.8, 10.7), green)
-     arr((11.0, 11.4), (9.6, 10.7), red)
-
-     // Tier 2: Sibuna Edge Host Box
-     rect((0.0, 2.7), (10.3, 8.85), radius: 4pt, fill: slate-bg, stroke: 1.0pt + blue)
-     content((0.25, 8.52), anchor: "west",
-       text(weight: "bold", size: 8.2pt, fill: blue, "Sibuna Edge Host i (Node 1..K in PoP - Zero NIC Takeover)"))
-
-     // Inside Host: NIC + Kernel Cooperative Layer
-     card(0.3, 6.85, 6.7, 8.15, blue-bg, blue,
-       "NIC RSS + Kernel SO_REUSEPORT + cBPF",
-       "SYN cookies, TCP_DEFER_ACCEPT, io_uring, recvmmsg, kqueue")
-     card(7.0, 6.85, 10.0, 8.15, white, muted,
-       "Co-Resident OS Stack",
-       "BIRD/FRR BGP, SSHd,\nICMP/ARP untouched")
-
-     // Pinned Workers
-     card(0.3, 4.75, 3.35, 6.35, green-bg, green,
-       "Core 0 Worker",
-       "64B FlowTable + Slab\nMaglev/P2C + Plugins\nStateless UDP Gate")
-     card(3.55, 4.75, 6.7, 6.35, green-bg, green,
-       "Core 1..N Workers",
-       "Shared-Nothing Loops\nTLS SNI + Native JA4\nGCRA + PoSW Gate")
-
-     // Mmap KV Spill Arena
-     card(0.3, 2.95, 6.7, 4.3, amber-bg, amber,
-       "sibuna-kv (RAM cache + optional mmap spill service)",
-       "Bounded spill queue for discardable cache entries")
-
-     // Local Control Plane inside Host
-     card(7.0, 2.95, 10.0, 6.35, violet-bg, violet,
-       "Local Control Plane",
-       "JLV/JSON Eval & RCU\nActive Health Prober\nSCM_RIGHTS Hot-FD\nSWIM + CRDT Gossip\nSPOE Offload Client")
-
-     arr((5.0, 9.6), (3.5, 8.15), blue, lbl: "VIP Flows")
-     arr((1.8, 6.85), (1.8, 6.35), green)
-     arr((5.1, 6.85), (5.1, 6.35), green)
-     arr((1.8, 4.75), (1.8, 4.3), amber)
-     arr((5.1, 4.75), (5.1, 4.3), amber)
-     line((7.0, 5.55), (6.7, 5.55), stroke: (paint: violet, thickness: 0.75pt, dash: "dashed"),
-       mark: (end: "stealth", fill: violet, scale: 0.6))
-
-     // Peer Cluster Mesh + Shared Control Plane (Right side)
-     card(10.75, 6.15, 14.4, 8.65, green-bg, green,
-       "Sibling Edge Nodes (2..K)",
-       "UDP SWIM Heartbeats\nDelta-CRDT Stick-Tables\n1-Hop CPF Tunnel\n(Auto-tuned by RTT)")
-     card(10.75, 2.95, 14.4, 5.75, violet-bg, violet,
-       "Cluster Control Plane",
-       "sibuna.jlv (GitOps) +\nPostgreSQL HA Store\nNOTIFY sibuna_policy\nWASM Operator Console")
-
-     line((10.0, 7.4), (10.75, 7.4), stroke: 0.8pt + green,
-       mark: (start: "stealth", end: "stealth", fill: green, scale: 0.6))
-     line((10.0, 4.35), (10.75, 4.35), stroke: 0.8pt + violet,
-       mark: (start: "stealth", end: "stealth", fill: violet, scale: 0.6))
-
-     // Tier 3: Origin Fleets
-     card(0.0, 0.3, 4.5, 1.75, blue-bg, blue,
-       "TCP / TLS Origin Pool",
-       "PROXYv2 + SNI + JA4 TLV\nDatabases, gRPC, TLS Ingress")
-     card(4.95, 0.3, 9.45, 1.75, green-bg, green,
-       "UDP / QUIC Origin Pool",
-       "4-Tuple NAT / CID Affinity\nHTTP/3, DNS, Media, WireGuard")
-     card(9.9, 0.3, 14.4, 1.75, amber-bg, amber,
-       "HTTP/1.1 Protected Origins",
-       "Sibuna Gate / Shield WAF\nStriped Keep-Alive Pools")
-
-     arr((2.2, 2.7), (2.2, 1.75), blue, lbl: "L4 TCP")
-     arr((5.1, 2.7), (7.1, 1.75), green, lbl: "L4 UDP")
-     arr((6.4, 2.7), (11.8, 1.75), amber, lbl: "L7 HTTP")
-   })
 
 Each worker owns a poller, a flow table and a pool of 16 KiB buffers. The control plane validates configuration, builds routing tables, probes backends and publishes revisions. Workers take a consistent view at a batch boundary. Database access, configuration evaluation and access to file-backed pages belong off the worker thread.
 
@@ -364,77 +245,9 @@ On Linux a simpler cutover is implemented. With ``global.reuse_port`` every list
 
 SID 0029 builds the two proposals above for Linux. With ``global.upgrade_socket`` the replacement connects to the old process, both check the credentials of the peer, and the listening sockets pass with SCM_RIGHTS. The old process serves until the replacement says that it is ready, then hands over its UDP mappings with their server sockets, with one reader at every instant, and takes the service back when the replacement fails before it acknowledges. SID 0029 departs from this section in two points: the replacement is started by the operator or the supervisor and not by the old process, and other Unix systems are not built. QUIC connections still do not survive.
 
-.. typst-diagram::
+.. typst-diagram:: ../diagrams/tcp-cutover.typ
    :caption: Proposed TCP listener cutover on Unix. The old workers drain accepted sockets.
    :alt: The supervisor waits for the replacement to acknowledge readiness before moving TCP admission.
-
-   #import "@preview/cetz:0.5.2"
-   #set text(font: "Libertinus Serif", size: 7.8pt, fill: rgb("#172033"))
-   #cetz.canvas(length: 1cm, {
-     import cetz.draw: *
-
-     let ink = rgb("#172033")
-     let muted = rgb("#64748b")
-     let blue = rgb("#1e40af")
-     let blue-bg = rgb("#eff6ff")
-     let green = rgb("#15803d")
-     let amber = rgb("#b45309")
-     let amber-bg = rgb("#fffbeb")
-     let violet = rgb("#6d28d9")
-
-     let xs = (0.9, 3.8, 7.0, 10.3, 13.4)
-     let names = (
-       "Operator /\nPostgres",
-       "Control Plane\n(Gen k)",
-       "Pinned Workers\n(Gen k)",
-       "New Process\n(Gen k+1)",
-       "Live TCP/UDP\nClients",
-     )
-     let cols = (violet, blue, green, amber, ink)
-
-     for i in range(5) {
-       let x = xs.at(i)
-       let c = cols.at(i)
-       rect((x - 1.15, 9.5), (x + 1.15, 10.35), radius: 2.5pt, fill: c.lighten(88%), stroke: 0.75pt + c)
-       content((x, 9.92), align(center, text(weight: "bold", size: 7.4pt, fill: c.darken(15%), names.at(i))))
-       line((x, 0.3), (x, 9.5), stroke: (paint: muted.lighten(30%), thickness: 0.65pt, dash: "dashed"))
-     }
-
-     let msg(from, to, y, col, label, dashed: false) = {
-       let x1 = xs.at(from)
-       let x2 = xs.at(to)
-       line((x1, y), (x2, y),
-         stroke: (paint: col, thickness: 0.8pt, dash: if dashed { "dashed" } else { none }),
-         mark: (end: "stealth", fill: col, scale: 0.6))
-       content(((x1 + x2) / 2, y + 0.22), align(center,
-         box(fill: white, inset: 1.2pt, text(size: 6.9pt, fill: col.darken(15%), label))))
-     }
-
-     // Band 1: Tier-1 RCU Reload
-     rect((0.0, 5.65), (14.4, 9.25), radius: 3pt, fill: blue-bg.lighten(45%), stroke: 0.5pt + blue.lighten(50%))
-     content((0.2, 9.02), anchor: "west",
-       text(weight: "bold", size: 7.6pt, fill: blue, "Tier 1: In-Process Snapshot Reload (SIGHUP / Admin IPC / PostgreSQL NOTIFY)"))
-
-     msg(0, 1, 8.5, violet, "1. SIGHUP / NOTIFY sibuna_policy")
-     rect((2.8, 7.62), (4.8, 8.22), fill: white, stroke: 0.6pt + blue, radius: 2pt)
-     content((3.8, 7.92), align(center, text(size: 6.5pt, "Eval JLV/JSON &\nBuild Maglev")))
-     msg(1, 2, 7.22, blue, "2. Publish owned snapshot (gen + 1)")
-     msg(4, 2, 6.62, green, "3. Existing flows keep backend; new flows use revision")
-     msg(1, 0, 5.98, violet, "4. OK (applied revision & SHA-256)", dashed: true)
-
-     // Band 2: Tier-2 Binary Upgrade
-     rect((0.0, 0.5), (14.4, 5.35), radius: 3pt, fill: amber-bg.lighten(45%), stroke: 0.5pt + amber.lighten(50%))
-     content((0.2, 5.12), anchor: "west",
-       text(weight: "bold", size: 7.6pt, fill: amber, "Tier 2: TCP Binary / Listener Upgrade (SIGUSR2 + Unix SCM_RIGHTS)"))
-
-     msg(0, 1, 4.6, violet, "1. SIGUSR2 (spawn upgraded binary)")
-     msg(1, 3, 4.0, amber, "2. Pass TCP listener FDs (SCM_RIGHTS)")
-     msg(3, 1, 3.35, green, "3. READY (new workers prepared)", dashed: true)
-     msg(1, 2, 2.75, blue, "4. Detach listeners & enter draining state")
-     msg(4, 3, 2.1, green, "5. New TCP connections to replacement")
-     msg(4, 2, 1.45, muted, "6. Old workers drain TCP to deadline", dashed: true)
-     msg(2, 1, 0.85, muted, "7. Drain complete or deadline reached", dashed: true)
-   })
 
 Bounded memory and disk state
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -447,22 +260,9 @@ Worker ownership permits ordinary reads and writes within a shard. If we introdu
 
 A storage worker owns the fixed-size file mapping. Packet workers may enqueue bounded lookup or demotion requests. They proceed on a cache miss and shed cache writes when the queue fills. The storage service validates the format version, length, key, expiry and checksum before reusing an entry. We discard incompatible or corrupt cache files and rebuild from authoritative state. Disk faults, slow writes and storage exhaustion must be tested independently of the slot bound.
 
-.. graphviz::
+.. graphviz:: ../diagrams/spill.dot
    :caption: A worker can finish a cache miss even when the disk service stalls.
    :alt: A worker uses its RAM shard directly. A bounded queue separates optional cache writes from the storage service.
-
-   digraph spill {
-     node [shape=box];
-     flow [label="Packet worker"];
-     ram [label="RAM shard"];
-     queue [label="Bounded spill queue"];
-     mmap [label="Storage worker and mapped arena"];
-     shed [label="Count discarded hint"];
-     flow -> ram [label="probe"];
-     ram -> queue [label="offer evicted hint"];
-     queue -> mmap [label="service available"];
-     queue -> shed [label="full"];
-   }
 
 Backend selection and cluster routing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -471,26 +271,9 @@ A new flow first filters out unhealthy, draining and administratively disabled s
 
 A hard node-local backend limit requires an atomic reservation or disjoint worker quotas whose sum fits the limit. We release a reservation on connect failure, timeout or close. Independent nodes can observe different health and load. A fleet-wide hard cap would require a quota allocation protocol.
 
-.. graphviz::
+.. graphviz:: ../diagrams/atdp-regimes.dot
    :caption: Routing regime as a function of active peers and sampled p95 RTT.
    :alt: With peers present, the regional and wide-area regimes retain their previous state between the thresholds.
-
-   digraph atdp_regimes {
-     graph [rankdir=LR, bgcolor="transparent", fontname="Helvetica", fontsize=10, nodesep=0.5, ranksep=0.8];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9, penwidth=1.2, margin="0.16,0.10"];
-     edge [fontname="Helvetica", fontsize=8.2, color="#475569", penwidth=1.0];
-
-     r1 [label="Regime 1: Standalone / VIP\n(peers = 0)\n- P2C Peak-EWMA Scheduler\n- Local sibuna-kv Mmap Store\n- Zero Network Gossip", color="#1e40af", fillcolor="#eff6ff"];
-     r2 [label="Regime 2: Regional PoP Mesh\n(regional peer forwarding)\n- Bounded-Load Maglev (M = 65537)\n- 1-Hop Consistent Peer Forwarding (CPF)\n- Batched UDP Delta-CRDT Stick-Tables", color="#15803d", fillcolor="#f0fdf4"];
-     r3 [label="Regime 3: Geo-Anycast WAN\n(locality-tiered routing)\n- Locality-Tiered Maglev (Local PoP First)\n- Stateless AEAD Flow Routing Tokens\n- Async PostgreSQL Ban/Policy Sync", color="#b45309", fillcolor="#fffbeb"];
-
-     r1 -> r2 [label="peer discovered\nRTT <= 3.0 ms"];
-     r1 -> r3 [label="peer discovered\nRTT > 3.0 ms"];
-     r2 -> r3 [label="p95 RTT > 3.0 ms"];
-     r3 -> r2 [label="p95 RTT < 1.5 ms"];
-     r2 -> r1 [label="peers == 0"];
-     r3 -> r1 [label="peers == 0"];
-   }
 
 With no reachable authenticated peers we select standalone. With peers present we enter the regional mesh below 1.5 ms and the wide-area regime above 3.0 ms. At either boundary and between them we retain the current mesh or wide-area regime. The first peer observed in this interval selects the regional mesh. Regime changes apply to new admissions.
 
@@ -516,50 +299,9 @@ Implementation boundaries
 
 We propose small crates with borrowed inputs and plain-data results. The worker depends on the poller, scheduler and bounded cache interface. The configuration compiler, health probes, storage client and console can allocate within their own budgets. Operating-system calls belong in the platform adapters. Resource owners release sockets, file mappings and buffer leases through Rust lifetimes and Drop.
 
-.. graphviz::
+.. graphviz:: ../diagrams/edge-crates.dot
    :caption: Proposed crate dependencies. Arrows point from each consumer to its dependency.
    :alt: The daemon composes the worker and management crates. JLV evaluation and SQL storage remain on the management path.
-
-   digraph edge_crates {
-     graph [rankdir=BT, bgcolor="transparent", fontname="Helvetica", fontsize=10, nodesep=0.32, ranksep=0.55];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9, fillcolor="#eff6ff", color="#1e40af", penwidth=1.0];
-     edge [color="#64748b", arrowsize=0.65];
-
-     subgraph cluster_reusable {
-       label="Worker and schema crates";
-       style="dashed,rounded"; color="#94a3b8"; bgcolor="#f8fafc";
-       crypto [label="sibuna-crypto"];
-       cidr [label="sibuna-cidr"];
-       store [label="sibuna-store"];
-       http [label="sibuna-http"];
-       io [label="sibuna-io\n(epoll/io_uring/kqueue/IOCP)", fillcolor="#dcfce7", color="#15803d"];
-       kv [label="sibuna-kv\n(Worker RAM + off-path mmap)", fillcolor="#dcfce7", color="#15803d"];
-       lb [label="sibuna-lb\n(Maglev, P2C, PROXYv2, SNI/JA4)", fillcolor="#dcfce7", color="#15803d"];
-       conf [label="sibuna-conf\n(EdgeConfig Schema & JSON)", fillcolor="#dcfce7", color="#15803d"];
-       plugin [label="sibuna-plugin\n(Traits, Fuel WASM, SPOE)", fillcolor="#dcfce7", color="#15803d"];
-     }
-
-     core [label="sibuna-core"];
-     policy [label="sibuna-policy"];
-     jlv [label="sibuna-jlv\n(Off-Path JLV/2 Transform)", fillcolor="#fef3c7", color="#b45309"];
-     net [label="sibuna-net"];
-     cluster [label="sibuna-cluster\n(ATDP, SWIM, CRDT, CPF)", fillcolor="#fef3c7", color="#b45309"];
-     storage [label="sibuna-storage\n(SQLite / PostgreSQL)"];
-     console [label="sibuna-console"];
-     daemon [label="cmd/sibuna\n(Edge LB + WAF + Console)", fillcolor="#ede9fe", color="#6d28d9"];
-
-     kv -> crypto;
-     lb -> crypto; lb -> cidr;
-     conf -> cidr;
-     plugin -> http; plugin -> crypto;
-     policy -> core; policy -> cidr;
-     jlv -> conf;
-     net -> io; net -> lb; net -> http; net -> core;
-     cluster -> lb; cluster -> kv; cluster -> crypto; cluster -> core;
-     storage -> conf; storage -> policy; storage -> core;
-     console -> storage; console -> cluster; console -> jlv;
-     daemon -> net; daemon -> cluster; daemon -> kv; daemon -> conf; daemon -> jlv; daemon -> plugin; daemon -> policy; daemon -> storage; daemon -> console;
-   }
 
 Operator console
 ~~~~~~~~~~~~~~~~
@@ -570,87 +312,9 @@ The proposed fleet view grows from nine to 64 members, including the local node.
 
 The current build ceiling for console.wasm is 768 KiB. The proposal requests a review at 1 MiB and a ceiling of 1.25 MiB for the expanded view. We measure the built asset and data-plane throughput with the management listener under load before adopting the increase. The figures in the mockup are illustrative.
 
-.. typst-diagram::
+.. typst-diagram:: ../diagrams/edge-operator-view.typ
    :caption: Proposed operator view of mesh links, node pressure and backend drain state.
    :alt: Three sample nodes and two backend pools show proposed metrics and operator controls.
-
-   #import "@preview/cetz:0.5.2"
-   #set text(font: "Libertinus Serif", size: 7.4pt, fill: rgb("#172033"))
-   #cetz.canvas(length: 1cm, {
-     import cetz.draw: *
-
-     let ink = rgb("#172033")
-     let muted = rgb("#64748b")
-     let blue = rgb("#1e40af")
-     let blue-bg = rgb("#eff6ff")
-     let green = rgb("#15803d")
-     let green-bg = rgb("#f0fdf4")
-     let amber = rgb("#b45309")
-     let amber-bg = rgb("#fffbeb")
-     let red = rgb("#b91c1c")
-     let red-bg = rgb("#fef2f2")
-     let violet = rgb("#6d28d9")
-     let violet-bg = rgb("#f5f3ff")
-     let border = rgb("#cbd5e1")
-
-     // Outer Browser/Console Frame
-     rect((0.0, 0.0), (14.4, 8.35), radius: 4pt, fill: rgb("#f8fafc"), stroke: 0.9pt + border)
-     rect((0.0, 7.45), (14.4, 8.35), radius: (top: 4pt), fill: white, stroke: 0.7pt + border)
-     content((0.3, 7.9), anchor: "west",
-       text(weight: "bold", size: 7.4pt, fill: ink, "CONSOLE  /  TOPOLOGY & CLUSTER MESH"))
-     rect((9.25, 7.62), (14.15, 8.18), radius: 9pt, fill: green-bg, stroke: 0.65pt + green)
-     content((11.7, 7.9), text(weight: "bold", size: 6.5pt, fill: green,
-       "ATDP: LAN PoP Mesh (3/3 Healthy / p95 0.42 ms)"))
-
-     // Edge Node Cards Row
-     let node-card(x, title, role-col, role-bg, flows, kv-txt) = {
-       rect((x, 4.75), (x + 4.2, 7.05), radius: 3pt, fill: white, stroke: 0.8pt + role-col)
-       rect((x, 6.45), (x + 4.2, 7.05), radius: (top: 3pt), fill: role-bg, stroke: 0.6pt + role-col)
-       content((x + 2.1, 6.75), text(weight: "bold", size: 7.0pt, fill: role-col.darken(15%), title))
-       content((x + 2.1, 5.6), box(width: 3.85cm, align(left, text(size: 6.4pt, [
-         - *Flows:* #flows\
-         - *KV RAM / Mmap:* #kv-txt\
-         - *Rev:* `42` (synced) / `[Drain]`
-       ]))))
-     }
-
-     node-card(0.3, "Node 1 (fra-edge-01 / LIVE)", green, green-bg, "142,810 TCP / 89,120 UDP", "68% / 4% NVMe")
-     node-card(5.1, "Node 2 (fra-edge-02 / LIVE)", green, green-bg, "139,405 TCP / 91,004 UDP", "65% / 3% NVMe")
-     node-card(9.9, "Node 3 (fra-edge-03 / DRAINING)", amber, amber-bg, "12,104 in-flight (CPF -> 1,2)", "21% / 0% NVMe")
-
-     // Mesh peer links between nodes
-     line((4.5, 5.9), (5.1, 5.9), stroke: 0.8pt + green, mark: (start: "stealth", end: "stealth", fill: green, scale: 0.5))
-     content((4.8, 6.2), text(size: 5.8pt, fill: green, "CRDT\n0.3ms"))
-     line((9.3, 5.9), (9.9, 5.9), stroke: (paint: amber, thickness: 0.8pt, dash: "dashed"),
-       mark: (end: "stealth", fill: amber, scale: 0.5))
-     content((9.6, 6.2), text(size: 5.8pt, fill: amber, "1-Hop\nCPF"))
-
-     // Backend Pool Matrix (Bottom half)
-     rect((0.3, 0.3), (7.05, 4.05), radius: 3pt, fill: white, stroke: 0.75pt + blue)
-     content((0.5, 3.72), anchor: "west",
-       text(weight: "bold", size: 6.7pt, fill: blue, "Backend: api_tcp_origin (TCP / Maglev / PROXYv2+JA4)"))
-     line((0.45, 3.45), (6.9, 3.45), stroke: 0.5pt + border)
-     content((3.68, 1.9), box(width: 6.35cm, align(left, text(size: 6.3pt, [
-       `[UP]`    *api-1* (`10.20.1.11:8443`) w=100 flows: `48,210/50k` (`1.1ms`)\
-       `[UP]`    *api-2* (`10.20.1.12:8443`) w=100 flows: `47,905/50k` (`1.2ms`)\
-       `[DRAIN]` *api-3* (`10.20.1.13:8443`) w=50  flows: `1,204/25k`  (`1.4ms`)
-     ]))))
-
-     rect((7.35, 0.3), (14.1, 4.05), radius: 3pt, fill: white, stroke: 0.75pt + violet)
-     content((7.55, 3.72), anchor: "west",
-       text(weight: "bold", size: 6.7pt, fill: violet, "Backend: quic_h3_fleet (UDP / Tuple Affinity / Rate Limit)"))
-     line((7.5, 3.45), (13.95, 3.45), stroke: 0.5pt + border)
-     content((10.72, 1.9), box(width: 6.35cm, align(left, text(size: 6.4pt, [
-       `[UP]`    *h3-1*  (`10.20.2.11:443`)   w=100  sessions: `90,112`   ewma: `0.6ms`\
-       `[UP]`    *h3-2*  (`10.20.2.12:443`)   w=100  sessions: `89,992`   ewma: `0.7ms`\
-       `[SHED]`  *UDP Rate Limit:* `412,900/s` datagrams shed (budget reached)
-     ]))))
-
-     line((2.4, 4.75), (3.4, 4.05), stroke: 0.75pt + blue, mark: (end: "stealth", fill: blue, scale: 0.55))
-     line((7.2, 4.75), (3.9, 4.05), stroke: 0.75pt + blue, mark: (end: "stealth", fill: blue, scale: 0.55))
-     line((2.6, 4.75), (10.3, 4.05), stroke: 0.75pt + violet, mark: (end: "stealth", fill: violet, scale: 0.55))
-     line((7.4, 4.75), (10.9, 4.05), stroke: 0.75pt + violet, mark: (end: "stealth", fill: violet, scale: 0.55))
-   })
 
 What the Lean model establishes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

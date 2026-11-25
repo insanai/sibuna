@@ -1,0 +1,10 @@
+digraph acme_order {
+  graph [rankdir=TB, bgcolor="white", pad=0.2, nodesep=0.28, ranksep=0.38];
+  node [shape=box, style="rounded,filled", fillcolor="#eff6ff", color="#1e40af", fontname="Helvetica", fontsize=11, margin="0.13,0.08"];
+  edge [color="#475569", fontname="Helvetica", fontsize=10, arrowsize=0.75];
+  {rank=same; Directory; Nonce; Account;}
+  {rank=same; Present; Authorization; NewOrder;}
+  {rank=same; Respond; PollAuthorization; Finalize;}
+  {rank=same; Done; Download; PollOrder;}
+  Directory -> Nonce -> Account -> NewOrder -> Authorization -> Present -> Respond -> PollAuthorization -> Finalize -> PollOrder -> Download -> Done;
+}

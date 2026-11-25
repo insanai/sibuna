@@ -95,44 +95,9 @@ Write :math:`c_{\mathrm{iss}}` for the server cost to issue a challenge, :math:`
 
 The figure below fixes the pipeline that the rest of the record analyses; each box names the part that proves its properties.
 
-.. graphviz::
+.. graphviz:: ../diagrams/pipeline.dot
    :caption: The request pipeline and the part of this record that proves each stage.
    :alt: A request is parsed without copying, then passes the ban table (Part E style, lock-free reads), the GCRA limiter (Part D), the keyed BLAKE3 token check (Part C) and the policy stage of automaton, tokenizer and rules (Part F). Policy allows (proxy), denies (403) or issues a challenge whose identifier is payload concatenated with a MAC (Part C). The solution is hashcash (Part A) or PoSW (Part B); verification inserts into the spent set (Part E) and mints a token (Part C). Engine slots are swapped by RCU (Part G), difficulty follows load (Part H), and incidents flow through a ring to storage and campaigns by embedding (Part I).
-
-   digraph pipeline {
-     rankdir=TB;
-     node [shape=box, fontname="Helvetica", fontsize=10];
-     edge [fontname="Helvetica", fontsize=9];
-     request [shape=oval];
-     parse [label="parse (zero copy)"];
-     ban [label="ban table\n(Part E style, lock-free reads)"];
-     gcra [label="GCRA limiter (Part D)"];
-     token_check [label="token check:\nkeyed BLAKE3 tag (Part C)"];
-     policy [label="policy: automaton + tokenizer + rules\n(Part F)"];
-     proxy [label="proxy", shape=oval];
-     deny [label="403", shape=oval];
-     challenge [label="challenge id = payload || MAC\n(Part C)"];
-     solution [label="solution: hashcash (A) or PoSW (B)"];
-     verify [label="verify"];
-     spent [label="spent set (Part E)"];
-     token [label="token (C)", shape=oval];
-     request -> parse -> ban -> gcra -> token_check -> policy;
-     policy -> proxy [label="allow"];
-     policy -> deny [label="deny"];
-     policy -> challenge [label="challenge"];
-     challenge -> solution -> verify -> spent -> token;
-     subgraph cluster_background {
-       label="background";
-       fontname="Helvetica"; fontsize=10;
-       rcu [label="engine slots swapped by RCU (Part G)"];
-       adaptive [label="difficulty from load (Part H)"];
-       incidents [label="incidents"];
-       ring [label="ring"];
-       storage [label="storage"];
-       campaigns [label="campaigns by embedding (Part I)"];
-       incidents -> ring -> storage -> campaigns;
-     }
-   }
 
 Part A: The Hashcash Tier
 -------------------------

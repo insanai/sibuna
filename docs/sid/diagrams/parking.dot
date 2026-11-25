@@ -1,0 +1,8 @@
+digraph parking {
+  rankdir=LR; node [shape=box, fontname="Helvetica", fontsize=10]; edge [fontname="Helvetica", fontsize=9];
+  worker [label="edge worker\nor HTTP/3 task"]; queue [label="bounded queue\n(hook_judges.queue)"];
+  judges [label="judges\n(hook_judges.threads)"]; agent [label="agent"];
+  worker -> queue [label="case: an owned copy\nof the view"]; queue -> judges; judges -> agent [label="blocking call,\ndeadline, breaker"];
+  judges -> worker [label="verdict, wake"];
+  worker -> worker [label="queue full:\nrun the chain here,\nevery agent fails\nwith overload"];
+}

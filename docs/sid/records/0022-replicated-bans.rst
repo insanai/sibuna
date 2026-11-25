@@ -51,12 +51,9 @@ The datagram
 
 The mesh already sends probes of 44 bytes: ``S``, ``E``, a version, a kind, the boot nonce of the sender, a sequence number and a tag. A ban datagram has kind 3 and the same first 28 bytes. One count byte follows, then that many entries, then the 16-byte tag over everything before it. An entry is the end as eight bytes, the length of the key as one byte, and the key. A datagram has at most 1,200 bytes, so it fits one packet on every path.
 
-.. code-block:: text
-
-   0        4               20        28   29                          n-16      n
-   +--------+---------------+---------+----+---------------------------+---------+
-   | S E 1 3|  boot nonce   | sequence| k  | k x (end:8, len:1, key)   |   tag   |
-   +--------+---------------+---------+----+---------------------------+---------+
+.. typst-diagram:: ../diagrams/ban-datagram.typ
+   :caption: Ban datagram fields in wire order.
+   :alt: A 28-byte header precedes the count and variable-length ban entries. The last 16 bytes authenticate everything before them.
 
 The tag is the keyed BLAKE3 hash of the bytes before it, cut to 16 bytes, under the key that the probes use. The kind byte is inside the hashed part, so a probe cannot be turned into a ban datagram.
 
