@@ -210,7 +210,7 @@ A fallback that forwards ``invalid`` bytes sends bytes of an unknown protocol to
 
 ``defer_accept`` moves waiting connections from the node into the kernel's queue of incomplete and deferred connections. That queue is bounded by the host. The option reduces the work of the node. It does not replace SYN cookies.
 
-A validated QUIC mapping has no reply bound. The client proved that it receives at its address, so the traffic is not a reflection. The origin's own congestion control governs the rate.
+A validated QUIC mapping has no reply bound. The client proved that it receives at its address, so the traffic is not a reflection. The origin's own congestion control governs the rate. A sender that spoofs the address and the port of a validated client can send a new Initial on its mapping. The edge forwards it, and the origin answers within its own limit of three times, as RFC 9000 obliges it to. For further connections on a validated mapping the edge therefore relies on the origin.
 
 With ``udp_inspect: "quic"`` a client whose mapping expired cannot resume with a short-header packet, because only an Initial opens a mapping. ``session_timeout`` of the frontend should exceed the idle timeout of the QUIC origin.
 
@@ -230,13 +230,48 @@ Acceptance criteria and implementation status
      - Criterion
      - Status
    * - 1
-     - Pending.
-     - Pending.
+     - Every class of TLS passthrough metadata has one outcome, and the file refuses a fallback that cannot be decided.
+     - Met. ``inspect::tests::every_class_has_exactly_one_outcome_under_every_fallback`` checks the five classes under all 18 accepted fallbacks. ``the_file_refuses_a_fallback_that_cannot_be_decided`` in ``crates/lb/tests/inspect.rs`` checks nine refused files. ``decision_total`` and ``no_hello_ignores_rules`` in the Lean model.
+   * - 2
+     - The inspected prefix is bounded in bytes and in time.
+     - Met. ``the_byte_bound_ends_a_hello_that_is_too_long`` and ``the_byte_bound_refuses_by_default`` send a ClientHello of about 3,100 bytes against ``inspect_bytes`` 1,024. ``a_silent_client_reaches_the_fallback_pool_and_the_server_may_speak_first`` ends an inspection at ``inspect_delay`` 200 ms. ``hello::tests::random_bytes_never_panic_and_never_exceed_the_bound`` checks the bound over 20,000 random streams. ``reads_bounded`` in the Lean model.
+   * - 3
+     - A forwarded connection gives its origin the buffered bytes exactly once, in order, before the rest.
+     - Met. ``each_class_takes_its_configured_fallback_and_the_bytes_arrive_once`` compares what each pool received with what the client sent, for a ClientHello, a plain request and a ClientHello sent in two parts around the deadline. ``a_failed_connect_receives_nothing_and_the_next_server_receives_the_prefix_once`` puts a refusing server first in the pool. ``forwarded_origin_sees_the_stream`` and ``replay_exactly_once`` in the Lean model.
+   * - 4
+     - The ClientHello parser survives truncated and hostile input.
+     - Met. Nine unit tests in ``crates/lb/src/hello.rs``: every truncation and every split of a valid hello, every single-byte change to three values, 20,000 random streams, 20,000 random bodies under a valid header, duplicate extensions, a false length, other protocols. No panic, and each input has the expected class.
+   * - 5
+     - Kernel admission is opt-in, needs no privilege, and a refusal does not stop the node.
+     - Met on Linux 7.0 x86-64. The tests ran as an ordinary user with an empty effective capability set (``CapEff`` 0). ``a_deferred_frontend_admits_a_client_with_its_first_byte`` in ``crates/lb/tests/listen.rs``: a silent client reaches no server and takes no flow slot for 300 ms, and its first byte admits it. ``a_reload_turns_deferral_on_and_off``. ``listen::tests::options_that_are_not_named_change_nothing_and_report_nothing``. ``listen::tests::a_refusal_of_the_kernel_is_a_fault_and_not_a_failure`` uses a socket on which the kernel refuses both options. The ``EDGE013`` line of the daemon is not tested through the binary (gap 3).
+   * - 6
+     - Before validation a QUIC mapping sends at most three times what it received, and only an Initial opens a mapping.
+     - Met. ``replies_are_bounded_to_three_times_until_the_client_repeats_the_connection_id`` in ``crates/lb/tests/quic_edge.rs``: of eight replies of 1,200 bytes to one Initial of 1,200 bytes, three arrive. A wrong guess of the connection ID lifts nothing. ``only_an_initial_opens_a_mapping_and_the_rest_allocates_nothing``: four other datagrams reach no server. ``unvalidated_replies_bounded`` in the Lean model.
+   * - 7
+     - Validation never uses a value that the client chose.
+     - Met. ``version_negotiation_and_an_echo_validate_nobody`` over sockets, and ``quic_edge::tests::nothing_a_client_chose_is_learned_from_a_reply`` for six kinds of reply.
+   * - 8
+     - A real QUIC library works through the edge, and validation removes the throttle.
+     - Met with quinn 0.11 on both sides through the binary, on loopback, debug build, three runs. ``cmd/sibuna/tests/edge_quic_passthrough.rs``: with ``udp_inspect`` an 8 MiB download took 83 ms to 86 ms. Without it 17,060 bytes arrived in 3 seconds, in each run. A server that answers with Retry serves 1 MiB through the edge.
+   * - 9
+     - Edge-generated Retry is enabled only under the stated contract.
+     - Not built, by the rule of SID 0015. The contract is specified above. quinn-proto 0.11.19 keeps the token format private and binds the token to the source address of the datagram, so the contract cannot hold and no interoperability test can pass.
 
 Known gaps
 ----------
 
-#. Pending.
+#. TCP and UDP frontends do not consult the ban table. Bans belong to the HTTP firewall, and an edge without an HTTP frontend has no ban table. The stage "local address and ban checks" of SID 0015 is therefore complete for HTTP only.
+#. Edge-generated Retry is specified and not built.
+#. The ``EDGE013`` note is produced by a few lines of the daemon that no test runs on Linux, where the kernel accepts both options. The fault itself is tested in the library.
+#. Kernel admission is built for Linux. On other Unix systems ``backlog`` is applied and ``defer_accept`` is reported as unavailable. FreeBSD accept filters are not used. Only Linux was run.
+#. The effect of ``backlog`` on a full queue is not measured. The test checks that the call succeeds and the listener serves.
+#. The edge cannot check the entropy of the connection IDs of an origin, only their length.
+#. With ``udp_inspect: "quic"`` a short-header packet of a client without a mapping is dropped. The origin cannot answer it with a stateless reset, and the client waits for its idle timeout.
+#. A QUIC client that migrates to a new address gets a new mapping only with an Initial. Connection migration through the edge does not work, as before this record.
+#. A greased and a real Encrypted ClientHello are one class. The edge cannot tell them apart.
+#. Per-prefix byte budgets for UDP, which SID 0015 names beside packet budgets, are not built. The packet rate is limited per prefix and the reply bytes per mapping.
+#. The download figures come from one machine, loopback and a debug build. They show the size of the effect and are no benchmark.
+#. Cooperative platform-specific batching is left out of this record by decision.
 
 Open questions
 --------------
@@ -247,6 +282,7 @@ Open questions
 Review history
 --------------
 
+- 2026-11-25. Review of the code as a hostile reader. A client that sent fewer than five bytes of another protocol waited for the deadline, since the record header was judged only when whole. The first two bytes now decide. A validated mapping has no reply bound at the edge, and a sender that spoofs the address and port of a validated client can start further connections on it. The origin's own limit bounds those, and the security section now says so. A test sent a burst of 200 datagrams, overran a socket buffer and lost 32 of them. It now sends 60. A constant for the bytes read of a QUIC header was unused outside the tests and moved there. No fault was found in the replay path: the prefix leaves the edge in one place, when a connect succeeds.
 - 2026-11-25. Initial draft, written before the code. The review of the draft found four faults. First, the edge would have learned the connection ID from a Version Negotiation packet, which repeats values that the client chose: a spoofing sender could then validate itself. The edge now learns only from a packet with a version other than zero, and never a value that the opening datagram carried. Second, ``rules`` was allowed for ``incomplete`` and ``invalid``, where there is no ClientHello to evaluate. It is now refused in the file. Third, a failed kernel option stopped the start. It is now a note. Fourth, the smallest ``inspect_bytes`` was 512, below a common ClientHello. It is now 1,024 with a warning in the text.
 
 References

@@ -53,7 +53,7 @@ def outcomeOf (f : Fallback) (rules : Outcome) (m : Metadata) : Outcome :=
   | .backend pool => .forward pool
 
 /-- Every class ends in a refusal or in exactly one pool. -/
-theorem decide_total (f : Fallback) (rules : Outcome) (m : Metadata) :
+theorem decision_total (f : Fallback) (rules : Outcome) (m : Metadata) :
     outcomeOf f rules m = .refuse ∨ ∃ pool, outcomeOf f rules m = .forward pool := by
   cases h : outcomeOf f rules m with
   | refuse => exact Or.inl rfl
