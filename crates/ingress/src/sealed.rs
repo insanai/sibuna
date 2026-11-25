@@ -4,7 +4,8 @@
 //! here it ends the TLS of such a connection itself: nothing is copied to the protocol
 //! runtime and back. The worker first reads the ClientHello through a [`Greeting`].
 //! That tells whether the connection stays ([`Sealed`]) or goes to the runtime, which
-//! serves HTTP/2 and the validations of automatic HTTPS.
+//! serves HTTP/2, the validations of automatic HTTPS and the handshakes that wait for
+//! a certificate on demand.
 //!
 //! ```text
 //!  socket --> Greeting --+--> Kept:   Sealed, read and written by the worker
@@ -19,6 +20,7 @@ use rustls::server::{Accepted, AcceptedAlert, Acceptor};
 use rustls::{ServerConfig, ServerConnection};
 use sibuna_reactor::Io;
 
+use crate::certs::Certificates;
 use crate::{Secured, auto};
 
 /// The most bytes a client may send before its ClientHello is whole.
@@ -32,10 +34,11 @@ const ROUNDS: usize = 32;
 pub enum Greeted {
     /// The ClientHello is not whole yet.
     More,
-    /// The client offers neither HTTP/2 nor a validation: the caller keeps the
-    /// connection and serves HTTP/1.1 through this session.
+    /// The client offers neither HTTP/2 nor a validation, and its certificate is
+    /// there: the caller keeps the connection and serves HTTP/1.1 through this session.
     Kept(Box<Sealed>),
-    /// The protocol runtime serves this client. These are all the bytes read so far,
+    /// The protocol runtime serves this client: it offers HTTP/2 or a validation, or
+    /// its certificate must first be obtained. These are all the bytes read so far,
     /// for [`crate::Ingress::accept_started`].
     Passed(Vec<u8>),
     /// The bytes are not a ClientHello that the listener can answer. The caller writes
@@ -47,12 +50,17 @@ pub enum Greeted {
 pub struct Greeting {
     acceptor: Acceptor,
     config: Arc<ServerConfig>,
+    /// The certificates and the port of a listener that obtains them on demand.
+    on_demand: Option<(Arc<Certificates>, u16)>,
     seen: Vec<u8>,
 }
 
 impl Greeting {
-    pub(crate) fn new(config: Arc<ServerConfig>) -> Self {
-        Self { acceptor: Acceptor::default(), config, seen: Vec::new() }
+    pub(crate) fn new(
+        config: Arc<ServerConfig>,
+        on_demand: Option<(Arc<Certificates>, u16)>,
+    ) -> Self {
+        Self { acceptor: Acceptor::default(), config, on_demand, seen: Vec::new() }
     }
 
     /// Takes the next bytes of the client, in the order they arrived. After any answer
@@ -82,7 +90,13 @@ impl Greeting {
         let for_runtime = accepted.client_hello().alpn().is_some_and(|mut offered| {
             offered.any(|protocol| protocol == b"h2" || protocol == auto::ACME_TLS)
         });
-        if for_runtime {
+        // A name whose certificate must first be obtained waits for it, and only the
+        // runtime can wait (SID 0021). A name that has its certificate stays.
+        let must_wait = self.on_demand.as_ref().is_some_and(|(certificates, port)| {
+            let name = accepted.client_hello().server_name().map(str::to_owned);
+            name.is_some_and(|name| certificates.demand(&name, *port).is_some())
+        });
+        if for_runtime || must_wait {
             return Greeted::Passed(std::mem::take(&mut self.seen));
         }
         let mut conn = match accepted.into_connection(Arc::clone(&self.config)) {
@@ -279,7 +293,7 @@ mod tests {
     /// Feeds `bytes` one at a time and returns the first answer that is not `More`,
     /// with the number of bytes it took.
     fn feed_slowly(bytes: &[u8]) -> (Greeted, usize) {
-        let mut greeting = Greeting::new(server_config());
+        let mut greeting = Greeting::new(server_config(), None);
         for (index, byte) in bytes.iter().enumerate() {
             match greeting.feed(std::slice::from_ref(byte)) {
                 Greeted::More => {}
@@ -314,7 +328,7 @@ mod tests {
         let (greeted, _) = feed_slowly(b"GET / HTTP/1.1\r\nHost: a\r\n\r\n");
         assert!(matches!(greeted, Greeted::Failed(_)));
         // A handshake record that announces more than a greeting may hold.
-        let mut greeting = Greeting::new(server_config());
+        let mut greeting = Greeting::new(server_config(), None);
         let piece = [22, 3, 1, 0x40, 0, 1, 0, 0xff, 0xff];
         assert!(matches!(greeting.feed(&piece), Greeted::More));
         let mut answer = Greeted::More;
@@ -329,7 +343,7 @@ mod tests {
 
     /// The server side of one connection: a session kept from the hello of `far`.
     fn keep(near: &TcpStream) -> Sealed {
-        let mut greeting = Greeting::new(server_config());
+        let mut greeting = Greeting::new(server_config(), None);
         let mut block = [0; 4096];
         loop {
             match sibuna_reactor::read_once(near, &mut block) {
