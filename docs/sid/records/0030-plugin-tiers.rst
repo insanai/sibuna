@@ -53,7 +53,7 @@ A hook attaches to a frontend at one or more of three stages.
      - When it runs
      - What it decides
    * - ``connection``
-     - Once for each TCP connection of a TCP or HTTP frontend, after the connection rate and the flow budget admitted it. On a TCP frontend with ``tcp_inspect`` it runs after the ClientHello is read. Once for each new UDP mapping. A frontend that serves HTTP/3 has no connection stage: its QUIC connections do not pass the edge worker, so a file that attaches a connection hook there is refused.
+     - Once for each TCP connection of a TCP or HTTP frontend, after the connection rate and the flow budget admitted it. On a TCP frontend with ``tcp_inspect`` it runs after the ClientHello is read. Once for each new UDP mapping. Once for each QUIC connection of a frontend that serves HTTP/3, when the ClientHello of the connection is read and before the handshake ends: the view has the protocol ``quic``, the client address and the server name, and no JA4. The TCP connections of the same frontend are judged at their accept, as on every HTTP frontend.
      - Admit or deny. A denied connection is closed. A denied datagram is dropped and opens no mapping.
    * - ``request``
      - Once for each HTTP request that the bans, the limiters and the firewall policy admitted, before a server is chosen.
@@ -358,7 +358,35 @@ The payload of ``decide`` and ``sample`` is the wire form of the view. The agent
 
 A call that the breaker refuses fails with ``unavailable`` and costs no system call. With :math:`w` threads, a dead agent costs each thread ``failures`` calls of one deadline each, and then one probe per thread for each ``open`` interval. A call that fails with ``overload`` is not a fault of the agent and does not count.
 
-An agent call occupies its thread for the round trip. On an event-driven worker the other connections of that worker wait for it. The deadline bounds the wait and the breaker bounds how often it is paid. The section on known gaps returns to this.
+An agent call occupies the thread that makes it for the round trip. At the request stage that thread is the one that serves the request, and on an event-driven worker the other connections of that worker wait for it. The deadline bounds the wait and the breaker bounds how often it is paid. The section on known gaps returns to this.
+
+Parking a connection
+~~~~~~~~~~~~~~~~~~~~
+
+At the connection stage the calling thread is the edge worker, which accepts for every frontend, or a thread of the HTTP/3 runtime. Neither may wait for an agent. So a connection whose chain names an agent is *parked*, and judges decide it.
+
+.. graphviz::
+
+   digraph parking {
+     rankdir=LR; node [shape=box, fontname="Helvetica", fontsize=10]; edge [fontname="Helvetica", fontsize=9];
+     worker [label="edge worker\nor HTTP/3 task"]; queue [label="bounded queue\n(hook_judges.queue)"];
+     judges [label="judges\n(hook_judges.threads)"]; agent [label="agent"];
+     worker -> queue [label="case: an owned copy\nof the view"]; queue -> judges; judges -> agent [label="blocking call,\ndeadline, breaker"];
+     judges -> worker [label="verdict, wake"];
+     worker -> worker [label="queue full:\nrun the chain here,\nevery agent fails\nwith overload"];
+   }
+
+The *judges* are a small set of threads, ``hook_judges.threads`` of them (4 unless the file says otherwise, 1 to 64), for each of the two callers. A judge owns its own instances of the hooks, as every thread does: its Wasm memories, its agent connections and its breakers. It takes a *case*, an owned copy of the view, runs the whole chain of the frontend on it with the blocking calls of this section, and gives the verdict back. The edge worker receives it through its wake socket. An HTTP/3 task receives it through a one-shot channel.
+
+A chain without an agent is never parked. It runs on the calling thread as before, and costs what it cost.
+
+While a connection is parked the worker holds its socket and its flow permit, and does not read it. A parked UDP client has its first datagram kept, and its further datagrams are dropped until the verdict: a mapping does not exist yet. When the verdict admits, the flow starts where it would have started. When it denies, the connection is closed and counted with the reason ``hook``. A client that closes while it is parked changes nothing: the verdict arrives, and the flow that starts sees the end of its client at once.
+
+The wait is bounded at every step. The queue holds ``hook_judges.queue`` cases (256 unless the file says otherwise, 1 to 4,096). When it is full, the chain runs on the calling thread *shedding*: native and Wasm hooks run, and every agent hook fails with ``overload`` without a call. The failure rule then decides as for every failure, so a full queue takes the ``on_failure`` outcome of each agent in the chain. A judge sheds in the same way a case that waited in the queue longer than the longest ``deadline`` of the agents of the plan. So a parked connection waits at most that deadline in the queue, and then at most the sum of the deadlines of its chain. The worker also drops a parked connection that has no verdict after five seconds, and counts it as refused by a hook. This happens only if a judge died.
+
+A dead agent therefore costs the judges, not the worker. Each judge pays ``failures`` deadlines, its breaker opens, and its calls fail at once until the probe. Meanwhile connections of frontends without that agent are not delayed at all, and connections of the same frontend wait for a judge or are shed.
+
+The Lean model has the shed case: a shed chain is the chain of the same hooks in which every agent has the result ``failed``, so a chain whose agents all fail closed never admits by shedding what a denying native hook would deny, and a full queue never admits a connection that an agent with ``on_failure: "deny"`` guards.
 
 Crates
 ~~~~~~
@@ -603,7 +631,7 @@ Known gaps
 Open questions
 --------------
 
-#. Should an agent call park the request instead of occupying the thread? What deadline do real agents need?
+#. Should an agent call at the request stage park the request, as the connection stage parks a connection? What deadline do real agents need?
 #. Should a hook be able to add fields to a response that Sibuna itself writes, such as a denial?
 
 Review history
