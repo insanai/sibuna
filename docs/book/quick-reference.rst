@@ -1,14 +1,14 @@
-Part XI: Quick Reference Card
-=============================
+Part XIII: Quick Reference Card
+===============================
 
-Keep beside a terminal: build, run, configure, route, observe, and diagnose. Part X holds the full tables; this card holds what an operator types.
+Keep beside a terminal: build, run, configure, route, observe, and diagnose. Part XII holds the full tables; this card holds what an operator types.
 
 Build
 -----
 
 .. code-block:: sh
 
-   cargo build --release -p sibuna                          # daemon + SQLite + console
+   cargo build --release -p sibuna                          # daemon + SQLite + console + JLV + ACME
    cargo build --release -p sibuna --no-default-features    # in-memory, no external crate
    cargo build --release -p sibuna --features postgres-tls  # shared PostgreSQL clusters
    rustup target add wasm32-unknown-unknown   # or set SIBUNA_POW_WASM / SIBUNA_CONSOLE_WASM
@@ -45,30 +45,39 @@ Edge load balancer
 
    sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80   # no file needed
    sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
+   sibuna lb --bind :8080 --server 10.0.0.1:80 --firewall shield --health /healthz --admin /run/sibuna/edge.sock --access-log stdout
+   sibuna lb --proto tcp --bind :2222 --server 10.0.0.8:22
+   sibuna lb --proto udp --bind 192.0.2.10:53 --server 10.0.0.53:53       # UDP binds a specific IP
    sibuna lb --tls auto --domain example.org --server 10.0.0.1:80     # automatic HTTPS (ACME)
    sibuna check -f edge.jlv           # or edge.json: validate topology, certificates, CA files
    sibuna --config-file edge.jlv      # serve TCP, UDP and HTTP frontends
    kill -HUP "$(pidof sibuna)"        # reload routes, policy and certificates in place
    sibuna ctl /run/sibuna/edge.sock show servers                      # needs global.admin_socket
+   sibuna ctl /run/sibuna/edge.sock show stats                        # the Prometheus text of the edge
+   sibuna ctl /run/sibuna/edge.sock help                              # every command
    /opt/sibuna/new/sibuna --config-file edge.jlv   # with global.upgrade_socket: replaces the running daemon, no connection lost (Linux)
    sibuna lb --tls auto --domain localhost --server 10.0.0.1:80       # the same from the local authority
    sibuna lb --tls auto --domain staging.example.org --acme-issuer internal --server 10.0.0.1:80   # a public name from the local authority
    sibuna lb --tls auto --domain example.org --acme-on-demand-ask http://127.0.0.1:9000/ok --server 10.0.0.1:80   # more names on demand
    sibuna ctl /run/sibuna/edge.sock show certs                        # certificates of tls.auto and on demand, and their OCSP staples
    sibuna ctl /run/sibuna/edge.sock show ca > sibuna-root.crt         # the root to install in clients
+   sibuna ctl /run/sibuna/edge.sock revoke cert db.corp.internal      # a certificate of the local authority, or its serial
    sibuna ctl /run/sibuna/edge.sock show hooks                        # plugins: calls, verdicts, failures, open breakers (SID 0030)
    sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain   # or ready
    sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 weight 5
+   sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain local   # this node only
    sibuna ctl /run/sibuna/edge.sock del ban 203.0.113.9                       # on every node of a mesh
    sibuna ctl /run/sibuna/edge.sock reload cluster                            # this node, then its peers
+   sibuna ctl /run/sibuna/edge.sock show cluster                              # the file digest or revision of every node
    sibuna ctl /run/sibuna/edge.sock show affinity                             # the sticky table and the shares of fleet-wide limits
    sibuna ctl /run/sibuna/edge.sock add server app/blue 10.0.0.3:80
    sibuna ctl /run/sibuna/edge.sock del server app/blue
    sibuna ctl /run/sibuna/edge.sock reload                            # as SIGHUP, with the result
+   sibuna ctl /run/sibuna/edge.sock reopen log                        # after logrotate renamed the access log
    sibuna ctl /run/sibuna/edge.sock show info | grep spill            # the disk tier of the sticky table: file, cost, counters
    sibuna authority diff -c /etc/sibuna/node.json -f edge.jlv         # what apply would change in the database
-   sibuna authority apply -c /etc/sibuna/node.json -f edge.jlv --expect 7   # publish revision 8, or a conflict
-   sibuna authority history -c /etc/sibuna/node.json                  # the revisions, newest first
+   sibuna authority apply -c /etc/sibuna/node.json -f edge.jlv --expect 7 --note "add web3"   # publish revision 8, or DBA002
+   sibuna authority history -c /etc/sibuna/node.json --limit 20       # the revisions, newest first
    sibuna authority rollback -c /etc/sibuna/node.json 6               # a new revision with the document of 6
    sibuna authority dump -c /etc/sibuna/node.json --revision 6        # evaluated data; --source for the source
    sibuna authority status -c /etc/sibuna/node.json                   # the head and what every node applied
@@ -126,7 +135,7 @@ Console (opt-in preview)
    sibuna init-admin admin --data-dir ./data
    sibuna --data-dir ./data --console 127.0.0.1:19446
 
-Open ``http://127.0.0.1:19446/console/`` and replace the temporary password. Add ``--console-location 1.3521,103.8198`` to place the node on the globe. Remote access requires an HTTPS proxy, an explicit origin and trusted-proxy CIDRs; follow Part IX. SID 0007 is Committed. The console passes its browser workflows in headless Chromium (SID 0010, criterion 5); its formal performance isolation gate remains open (Part VIII).
+Open ``http://127.0.0.1:19446/console/`` and replace the temporary password. Add ``--console-location 1.3521,103.8198`` to place the node on the globe. Remote access requires an HTTPS proxy, an explicit origin and trusted-proxy CIDRs; follow Part XI. SID 0007 is Committed. The console passes its browser workflows in headless Chromium (SID 0010, criterion 5); its formal performance isolation gate remains open (Part X).
 
 Flags That Matter First
 -----------------------
@@ -206,7 +215,7 @@ Endpoints Under ``/__sibuna/``
    * - ``verify`` (POST)
      - ``{challenge_id, nonce | proof}`` -> ``200`` + ``Set-Cookie``, else ``400``
    * - ``wasm/sibuna-pow.wasm``
-     - 15,181-byte solver
+     - 14,744-byte solver
    * - ``worker.js``
      - worker with WASM and JS provers
    * - ``honeypot``
@@ -330,9 +339,9 @@ Diagnostics
    * - ``INVALID COMMAND LINE``
      - unknown option, bad value, or a removed Zaxonlite option
 
-A plugin that does not load is refused with ``HOOK001`` to ``HOOK009``; the operations chapter lists them. To alert on hooks: ``sibuna_edge_hook_calls_total`` with ``result`` ``timeout``, ``trap`` or ``unavailable``, and ``sibuna_edge_hook_breakers_open``.
+The edge prints diagnostics with codes of the families ``EDGE`` (start and reload), ``ADM`` (admin socket), ``ACME`` (automatic HTTPS), ``DBA`` (database authority), ``UPG`` (binary handoff), ``SPILL`` (spill cache) and ``HOOK`` (plugins); Part XII lists every code. A plugin that does not load is refused with ``HOOK001`` to ``HOOK009``. To alert on hooks: ``sibuna_edge_hook_calls_total`` with ``result`` ``timeout``, ``trap`` or ``unavailable``, and ``sibuna_edge_hook_breakers_open``.
 
-Metrics to alert on: ``denied``, ``rate_limited``, ``overloaded``, ``upstream_errors``, ``incidents_dropped``, ``incident_write_failures``, ``bans_refused``, ``forwarded_invalid`` (all ``sibuna_*_total``).
+Metrics to alert on: ``denied``, ``rate_limited``, ``overloaded``, ``upstream_errors``, ``incidents_dropped``, ``incident_write_failures``, ``bans_refused``, ``forwarded_invalid`` (all ``sibuna_*_total``). On the edge also: ``sibuna_edge_server_up``, ``sibuna_edge_server_failures_total``, ``sibuna_edge_refused_total`` by ``reason``, ``sibuna_edge_access_log_dropped_total``, ``sibuna_edge_acme_nearest_expiry_seconds`` and ``sibuna_edge_forward_local_total``.
 
 Numbers to Remember
 -------------------
@@ -342,6 +351,6 @@ Challenge id 70 chars (36-byte payload + 16-byte tag); token 75 chars (40 + 16),
 Ingress Routing
 ---------------
 
-Use the Nginx or Caddy recipe in Part IX, Forward Auth Behind an Ingress. Route ``/__sibuna/*`` directly; authorize application requests with the original URI, method and trusted client address. Replace incoming Sibuna audit headers with the authorization result. Nginx needs explicit challenge, 429 and unavailable-auth handling.
+Use the Nginx or Caddy recipe in Part XI, Forward Auth Behind an Ingress. Route ``/__sibuna/*`` directly; authorize application requests with the original URI, method and trusted client address. Replace incoming Sibuna audit headers with the authorization result. Nginx needs explicit challenge, 429 and unavailable-auth handling.
 
-``reverse_proxy`` carries admitted HTTP/1.1 bodies and WebSockets; ``forward_auth`` grants admission and the ingress carries them. Omitted auth bodies and origin responses cannot be inspected or counted by Sibuna. TLS terminates at the ingress; native HTTP/2 is deferred. Uploads use Content-Length or chunked coding; inspection sees at most an 8 KiB prefix, with file bytes opaque.
+``reverse_proxy`` carries admitted HTTP/1.1 bodies and WebSockets; ``forward_auth`` grants admission and the ingress carries them. Omitted auth bodies and origin responses cannot be inspected or counted by Sibuna. In the daemon mode TLS terminates at the ingress and there is no native HTTP/2; the edge (``--config-file``) terminates TLS, HTTP/2 and HTTP/3 itself. Uploads use Content-Length or chunked coding; inspection sees at most an 8 KiB prefix, with file bytes opaque.
