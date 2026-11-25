@@ -34,7 +34,7 @@ A read-only audit of the edge mode found six gaps that block production use.
 
 This record covers edge mode only (``sibuna --config-file``). The daemon of SID 0002 keeps its behaviour: its health and metrics routes stay open, and its ``--trust-forwarded`` option is unchanged.
 
-Out of scope: a log for TCP and UDP flows, log shipping, tracing, and the PROXY protocol on TCP frontends. The section *Known gaps* lists them.
+Out of scope: log shipping and tracing. The section *Known gaps* lists what remains.
 
 Specification
 -------------
@@ -135,7 +135,7 @@ The queue holds entries, not text, so that formatting runs on the writer thread.
 
 A full queue drops the entry. The drop is counted in ``sibuna_edge_access_log_dropped_total``. A write error drops the line, counts it in ``sibuna_edge_access_log_errors_total``, and reports the first error of each minute on standard error.
 
-SIGHUP reopens a file destination, before the topology is read again and whether or not the new topology is accepted. A log rotation therefore renames the file and sends SIGHUP. The writer reopens the path between two lines, so no line is split.
+SIGHUP reopens a file destination, before the topology is read again and whether or not the new topology is accepted. The admin command ``reopen log`` reopens it without reading the topology. A log rotation therefore renames the file and sends the command, or SIGHUP when a reload of the file does no harm. The writer reopens the path between two lines, so no line is split.
 
 The fields are fixed. Their order is the order below.
 
@@ -155,6 +155,10 @@ The fields are fixed. Their order is the order below.
      - ``http/1.1``, ``h2`` or ``h3``.
    * - ``scheme``
      - ``https`` when the client reached a TLS frontend, else ``http``.
+   * - ``tls_version``
+     - ``1.2`` or ``1.3``, or ``-`` without TLS.
+   * - ``tls_cipher``
+     - The IANA name of the cipher suite, such as ``TLS13_AES_128_GCM_SHA256``. ``-`` without TLS, and ``-`` for ``h3``: the QUIC library does not tell which suite it negotiated.
    * - ``method``
      - The request method, or ``-`` for a request that did not parse.
    * - ``host``
@@ -162,7 +166,7 @@ The fields are fixed. Their order is the order below.
    * - ``path``
      - The path in normal form, without the query, at most 1,024 bytes.
    * - ``status``
-     - The status sent to the client. ``0`` when the exchange ended before a status.
+     - The status sent to the client. ``499`` when the client gave the request up before any response: it closed the connection or reset the stream. No client receives a 499.
    * - ``bytes_in``
      - See the table of byte counts below.
    * - ``bytes_out``
@@ -178,7 +182,7 @@ The fields are fixed. Their order is the order below.
    * - ``verdict``
      - What the firewall decided: ``pass``, ``deny``, ``challenge``, ``rate_limited``, ``banned``, ``internal`` for a reserved route, or ``-`` when the request was refused before the decision.
 
-The byte counts are exact where the path sees the bytes, and say so where it does not:
+``bytes_in`` and ``bytes_out`` have one meaning on every path: the bytes of the HTTP message as HTTP/1.1 carries it, without TLS. For ``http/1.1`` that is the message itself. HTTP/2 and HTTP/3 compress heads and frame bodies inside the protocol libraries, which do not tell us the sizes. For them a head counts as its HTTP/1.1 text and a body as its data bytes. Each count has a test on its path.
 
 .. list-table::
    :header-rows: 1
@@ -188,11 +192,14 @@ The byte counts are exact where the path sees the bytes, and say so where it doe
      - ``bytes_in``
      - ``bytes_out``
    * - ``http/1.1``
-     - The head as parsed: the request line, and each field with its separator and line end. A field that the client folded or padded counts in its parsed form. Plus the body length that the request declared. For a body without a length (chunked), only the part that was buffered for the decision.
+     - The head exactly as received, with its blank line, plus the body. A body with a length counts that length. A chunked body counts its data bytes: the chunk framing is removed before the request is judged, and its size is not kept. Of a chunked body that is larger than one connection buffer, only the buffered part is counted.
      - Exact: every byte written towards the client before TLS, with heads, interim heads and chunk framing. The body of a response to HEAD, which is dropped, is not counted.
    * - ``h2``, ``h3``
-     - The head as its HTTP/1.1 translation, plus the declared body length, or the buffered part without one. Not the compressed frames.
-     - Exact for the body: the response data bytes. The head and the frames are not counted.
+     - The head as HTTP/1.1 text, plus the body data bytes that the client sent and that went on towards the server. Of a request that Sibuna answers itself, the body bytes that were read for the decision.
+     - The head as HTTP/1.1 text, the body data bytes, and the trailers as text. The fields that the protocol library adds itself, such as ``date``, are not counted.
+   * - ``h2``, ``h3`` on the thread path
+     - As ``http/1.1``, of the HTTP/1.1 text that the runtime hands to the thread.
+     - As ``http/1.1``, of the HTTP/1.1 text that the thread writes.
    * - Refused before the decision
      - 0
      - 0 for ``h2`` and ``h3``. Exact for ``http/1.1``.
@@ -237,7 +244,7 @@ The ingress crate does not depend on the binary. Its interface of SID 0017 gains
 
 A request that does not parse has no context. The paths that own a response writer log it with the client, the status and ``-`` for the fields they do not know.
 
-The protocol runtime answers some requests before any decision: 503 when the node runs as many HTTP/2 and HTTP/3 requests as it may, 417 for an expectation it cannot meet, 400 or 501 for a request that does not translate to HTTP/1.1, and 400 for a body that does not arrive. The trait ``Decide`` gains ``refused(&Refused)``, with the client, the listener, the protocol, the status, the method, the authority and the path. The binary counts the refusal by its reason and writes a line with verdict ``-``. This hook exists on the in-process path. Without the event-driven workers a TLS request crosses a socket pair, and the runtime's own refusals there are neither logged nor counted.
+The protocol runtime answers some requests before any decision: 503 when the node runs as many HTTP/2 and HTTP/3 requests as it may, 417 for an expectation it cannot meet, 400 or 501 for a request that does not translate to HTTP/1.1, and 400 for a body that does not arrive. The trait ``Decide`` gains ``refused(&Refused)``, with the client, the listener, the protocol, the status, the method, the authority and the path. The binary counts the refusal by its reason and writes a line with verdict ``-``. Without the event-driven workers there is no decision in the runtime. The runtime then tells a hook of its own, ``Ingress::report_refusals``, so a refusal is logged and counted on every path. A request whose body the client cut off while it was read is reported with status 499 and counted as ``client_closed``.
 
 Counters
 ~~~~~~~~
@@ -265,7 +272,9 @@ The metrics route and the separate listener write the process counters of SID 00
    * - ``sibuna_edge_server_requests_total{backend,server,code}``
      - Requests a server was chosen for, by status class.
    * - ``sibuna_edge_server_failures_total{backend,server}``
-     - Requests a server was chosen for that ended without its response.
+     - Requests a server was chosen for that ended without its response, because the server failed. A request that its client gave up is not one of them.
+   * - ``sibuna_edge_server_client_closed_total{backend,server}``
+     - Requests a server was chosen for that their client gave up before the server answered.
    * - ``sibuna_edge_server_response_seconds{backend,server}``
      - A histogram of ``ttfb_ms``.
    * - ``sibuna_edge_server_up{backend,server}``
@@ -280,6 +289,10 @@ The metrics route and the separate listener write the process counters of SID 00
      - 1 until the node drains.
    * - ``sibuna_edge_access_log_written_total``, ``..._dropped_total``, ``..._errors_total``
      - The log.
+   * - ``sibuna_edge_access_log_queue_length``
+     - The length of the log queue in force, or 0 without a log.
+   * - ``sibuna_edge_flow_log_dropped_total``
+     - Flow lines dropped between the load balancer and the log queue.
    * - ``sibuna_edge_proxy_protocol_accepted_total``, ``..._rejected_total``
      - Connections of PROXY frontends.
 
@@ -307,8 +320,20 @@ The histograms have fixed bounds: 1, 2.5, 5, 10, 25, 50, 100, 250, 500 ms, 1, 2.
      - An HTTP/2 or HTTP/3 request above the request bound of the runtime (503).
    * - ``bad_request``
      - An HTTP/2 or HTTP/3 request that the runtime answered 400, 417 or 501.
+   * - ``client_closed``
+     - An HTTP/2 or HTTP/3 request whose client reset the stream while the request was read. Nothing was refused. The reason keeps it apart from ``bad_request``.
+   * - ``no_server``
+     - A TCP connection or a UDP datagram for which no server of the pool was eligible.
+   * - ``udp_rate_limit``
+     - A datagram of a client above ``udp_defense.threshold_pps``.
+   * - ``udp_flow_limit``
+     - A datagram of a new client when no UDP mapping was free.
+   * - ``udp_reply_limit``
+     - An answer of a UDP server larger than three times what its client sent.
 
-A refused connection has no request line, so it has a counter and no log line. A refused request has both. UDP datagrams that a limit drops are in ``sibuna_edge_drops_total`` without a reason.
+A refused request has a counter and a request line. A refused connection has a counter and a flow line, at most ten lines per second for the whole node.
+
+**A client that leaves is not a failed server.** Every answer has a status: the server's, or Sibuna's own 502 or 504 for a server that failed. So an exchange that ends without a status was given up by its client. We log it with status 499, count it in ``sibuna_edge_server_client_closed_total``, and count no failure. The frontend counts it in the class ``4xx``. Passive health (SID 0019) is told of a failure only where a server event is seen: a refused or timed out connect, a connection that the server closed without an answer, and a silence longer than the response bound. None of these sites runs when the client leaves. This holds for the workers, the in-process path and the thread path.
 
 A server that ``sibuna ctl`` adds at run time gets its series at once. A server that a command removes loses its series at once. A request that was decided before a reload and is routed by the retired revision (SID 0018) is counted under the server of that revision, by name: the retired revision keeps its own table of names.
 
@@ -382,24 +407,39 @@ The bound of 536 bytes is the 16 fixed bytes, the largest address block (216 byt
 The descriptor limit
 ~~~~~~~~~~~~~~~~~~~~
 
-A flow uses two descriptors: one to the client and one to the server. At startup we compute
+A flow uses two descriptors: one to the client and one to the server. A server connection that waits for reuse uses one. At startup we compute
 
 .. math::
 
-   need = 2 \cdot max\_flows + 2 \cdot http.max\_connections + 512
+   need = 2 \cdot max\_flows + 2 \cdot http.max\_connections + idle + 512
 
-where the HTTP term is zero without an HTTP frontend. The 512 hold what has a fixed bound: at most 128 listeners, at most 256 idle server connections of the thread path, the one socket of the mesh, and the files and pollers of the threads. A compile-time assertion keeps these inside the reserve. When the soft limit is below the need, we raise it to the smaller of the need and the hard limit. When it is still below, we print a warning and continue:
+where the HTTP terms are zero without an HTTP frontend. ``idle`` is the bound on the server connections kept for reuse:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Who keeps them
+     - Bound
+   * - The event-driven workers
+     - Each worker keeps at most its share of ``http.max_connections``: the quotient by the number of workers, at least 1 and at most 1,024. Together that is at most ``http.max_connections``, or the number of workers when that is larger.
+   * - The protocol runtime, with a TLS frontend and the workers
+     - 256 for each server of an HTTP pool.
+   * - The thread path
+     - 256 in all. They are inside the 512.
+
+The 512 hold what has a fixed bound: at most 128 listeners, the 256 idle server connections of the thread path, the one socket of the mesh, and the files and pollers of the threads. A compile-time assertion keeps these inside the reserve. When the soft limit is below the need, we raise it to the smaller of the need and the hard limit. When it is still below, we print a warning and continue:
 
 .. code-block:: text
 
    -- DESCRIPTOR LIMIT TOO LOW ------------------------------------ edge.jlv
 
-   This topology can use 18944 file descriptors, but the process may open 4096.
+   This topology can use 19968 file descriptors, but the process may open 4096.
 
-   global.max_flows = 8192, http.max_connections = 1024
-   need = 2 * 8192 + 2 * 1024 + 512 = 18944
+   global.max_flows = 8192, http.max_connections = 1024, idle server connections = 1024
+   need = 2 * 8192 + 2 * 1024 + 1024 + 512 = 19968
 
-   Hint: Raise the limit (`LimitNOFILE=18944` in the systemd unit, or `ulimit -n 18944`),
+   Hint: Raise the limit (`LimitNOFILE=19968` in the systemd unit, or `ulimit -n 19968`),
    or lower `global.max_flows` and `http.max_connections`.
 
 The two system calls live in a new FFI module of the reactor crate, beside the poller.
@@ -420,9 +460,9 @@ The first implementation left gaps that this section closes. Each paragraph is t
 
 **The TLS version and cipher suite.** The handler of the protocol runtime took the fingerprint of the client certificate as its fourth argument. It now takes a small value, ``Secured``, with the fingerprint, the version and the cipher suite of the handshake. ``Offer`` carries the same two names. The log gains ``tls_version`` (``1.2``, ``1.3``) and ``tls_cipher`` (the IANA name, such as ``TLS13_AES_128_GCM_SHA256``) after ``scheme``. Both are ``-`` on a plain frontend. A QUIC connection is always TLS 1.3. Its cipher suite is ``-``: the QUIC library does not tell us the suite it negotiated.
 
-**One meaning for the byte counts.** ``bytes_in`` and ``bytes_out`` are the bytes of the HTTP message as its sender framed it, without TLS. For ``http/1.1`` that is the wire: the head as received and the body with its chunk framing, in both directions. HTTP/2 and HTTP/3 compress heads and frame bodies in a way the libraries do not expose. For them the head counts as its HTTP/1.1 text and the body counts as its data bytes, in both directions, and trailers count as text. The table of byte counts says this in one row per protocol.
+**One meaning for the byte counts.** ``bytes_in`` and ``bytes_out`` are the bytes of the HTTP message as HTTP/1.1 carries it, without TLS. The parser keeps the length of the head as received. The runtime reports the response head and the trailers as text, and the request body bytes that it sent on. The table of byte counts has one row per protocol, and it names the one case that is not exact: the framing of a chunked HTTP/1.1 request body, which is removed in place before the request is judged.
 
-**Flow lines.** A TCP connection and a UDP mapping write one line when they end. The worker and the relay threads of the load balancer offer a ``FlowEnd`` to a bounded channel with ``try_send``. A full channel drops the line and counts it in ``sibuna_edge_flow_log_dropped_total``. The loop of the edge takes the lines after each step and offers them to the queue of the access log, which is bounded too. So no thread of the data path waits. Without a log the load balancer builds no line at all.
+**Flow lines.** A TCP connection and a UDP mapping write one line when they end. The worker and the relay threads of the load balancer offer a ``FlowEnd`` to a bounded channel with ``try_send``. A full channel drops the line and counts it in ``sibuna_edge_flow_log_dropped_total``. The loop of the edge takes the lines after each step and offers them to the queue of the access log, which is bounded too. So no thread of the data path waits. Without a log the load balancer builds no line at all. A topology without an HTTP frontend has the log too, and ``sibuna lb --access-log`` works with ``--proto tcp`` and ``--proto udp``. At the end of a shutdown the flows that are still open are closed, and their lines say ``shutdown``.
 
 .. code-block:: text
 
@@ -444,7 +484,7 @@ The first implementation left gaps that this section closes. Each paragraph is t
    * - ``frontend``
      - The name of the frontend.
    * - ``protocol``
-     - ``tcp`` or ``udp``. A refused connection of an HTTP frontend is ``tcp``.
+     - ``tcp`` or ``udp``. A refused connection of an HTTP frontend is ``tcp``. A connection that the HTTP server refused has ``-`` for the frontend and the backend.
    * - ``backend``, ``server``
      - The pool and the address of the server, or ``-`` when no server was reached.
    * - ``bytes_in``, ``bytes_out``
@@ -483,11 +523,15 @@ The first implementation left gaps that this section closes. Each paragraph is t
 
 **Reasons for UDP drops.** ``sibuna_edge_refused_total`` gains ``udp_rate_limit`` (a datagram above ``udp_defense.threshold_pps``), ``udp_flow_limit`` (no slot for a new mapping) and ``udp_reply_limit`` (an answer larger than three times what the client sent). ``no_server`` counts a connection or datagram for which no server was eligible.
 
-**Refusals of the runtime on every path.** The hook of the first round reached the decision, which exists only with the event-driven workers. The runtime now has a hook of its own, ``Ingress::report_refusals``, and uses it on every path.
+**Refusals of the runtime on every path.** The hook of the first round reached the decision, which exists only with the event-driven workers. The runtime now has a hook of its own, ``Ingress::report_refusals``, and uses it when there is no decision.
 
-**A reload of ``listen`` and of the queue.** A reload that changes ``observability.listen`` binds the new address first. When the bind fails, the reload is refused and the old listener keeps serving. Otherwise the old listener closes after the reload. A reload that changes ``queue`` creates a new channel and hands its receiving end to the writer through the old channel, so the writer empties the old queue first and no line changes its order.
+**A reload of ``listen`` and of the queue.** A reload that changes ``observability.listen`` binds the new address first. When the bind fails, the reload is refused and the old listener keeps serving. Otherwise the old listener closes after the reload. A reload that changes ``queue`` creates a new channel. Entries go to the new channel from then on. The writer empties the old channel, learns from its closing that no entry follows, and turns to the new one. So no line is lost or changes its order, and the reload does not wait for the disk. A topology without an HTTP frontend follows a reload of ``observability`` in the same way.
 
-**Descriptors of idle server connections.** Each event-driven worker keeps idle server connections for reuse. Their number has a fixed bound per worker, and the need counts the bound of every worker.
+**Descriptors of idle server connections.** Each event-driven worker keeps idle server connections for reuse. A worker now keeps at most its share of ``http.max_connections``, and the need counts the bound of every worker and that of the protocol runtime. The section *The descriptor limit* has the formula.
+
+**Rotation without a reload.** SIGHUP reopens the log and also reloads the topology file, which replaces the run-time changes of ``sibuna ctl``. A nightly rotation must not do that. The admin socket gains ``reopen log``, which only reopens the file. The packaged unit gets ``LogsDirectory=sibuna``, because the rest of the system is read-only for the daemon, and the packages install ``/etc/logrotate.d/sibuna-edge``, which calls the command.
+
+**A client abort.** A load run showed server failures and bad requests where nothing had failed: the load tool reset its streams at its end. The section *Counters* has the rule that replaced the miscount.
 
 Rationale and alternatives
 --------------------------
@@ -506,7 +550,7 @@ Rationale and alternatives
 
 **A stage thread for the PROXY header.** The first implementation read the header on a thread of the binary, for HTTP frontends only. The worker of the load balancer already owns a poller and already holds connections for the TLS hello of SID 0015, so the header moved there. TCP frontends gained the protocol, and the thread is gone.
 
-**The TLS version in the log.** We considered a ``tls`` field with the negotiated version. The handler interface of the protocol runtime does not carry it, and every caller would change. The ``scheme`` field says what every path knows. The version stays future work.
+**The TLS version in the log.** The first round left it out, because the handler interface of the protocol runtime did not carry it. The second round changed the interface: the handler takes one value with the certificate, the version and the suite, so the next addition does not change every caller again.
 
 **Reading a PROXY header across several reads.** It would need a buffer in front of TLS, which takes its bytes from the socket. Peeking keeps the socket the only buffer.
 
@@ -588,12 +632,28 @@ Implemented on the branch ``sid-0020-observability``. Every criterion has a test
      - ``edge_observe.rs``: ``a_request_in_flight_is_in_the_active_gauge_of_its_server``, and ``crates/lb/tests/observe.rs``
    * - With ``global.drain_delay`` a shutdown answers 503 on readiness and still serves new requests, then stops.
      - ``edge_observe.rs``: ``a_drain_delay_keeps_serving_while_readiness_says_no``
-   * - A reload moves the log to another file, turns it off and on, starts a log that did not exist, and replaces ``internal_allow``. A changed ``listen`` refuses the reload as a whole.
-     - ``edge_observe.rs``: ``a_reload_moves_the_log_and_changes_who_reads_the_internal_routes``, ``a_log_added_by_a_reload_starts_and_a_new_listener_needs_a_restart``
+   * - A reload moves the log to another file, turns it off and on, starts a log that did not exist, and replaces ``internal_allow``. It changes the queue length without losing or reordering a line. It opens a new ``listen`` address before it closes the old one, and an address that cannot be bound refuses the reload as a whole.
+     - ``edge_observe.rs``: ``a_reload_moves_the_log_and_changes_who_reads_the_internal_routes``, ``a_reload_starts_a_log_changes_its_queue_and_moves_the_listener``; ``access::sink::tests::a_new_queue_length_keeps_every_line_in_its_order``
    * - Silent clients of the separate listener do not delay the next probe.
      - ``edge::probe::tests::the_listener_refuses_what_it_does_not_serve``
-   * - ``sibuna lb --access-log`` sets the log, and refuses it for TCP and UDP.
-     - ``edge::quick::tests``, ``crates/lb/src/quick.rs``
+   * - ``sibuna lb --access-log`` sets the log, for HTTP, TCP and UDP.
+     - ``edge::quick::tests``, ``crates/lb/src/quick.rs``, ``edge_flow_log.rs``: ``the_quick_start_logs_udp_mappings``
+   * - The line has ``tls_version`` and ``tls_cipher`` on every path: HTTP/1.1 over TLS with and without the workers, HTTP/2, HTTP/3, and ``-`` without TLS.
+     - ``edge_observe_h2.rs``: ``an_http11_request_over_tls_is_logged_with_the_version_and_the_suite``, ``an_http2_request_to_an_http11_pool_is_logged_with_its_server_and_times``; ``edge_http3.rs``: ``an_http3_request_is_logged_with_its_protocol_server_and_bytes``; ``edge_observe.rs``: ``each_request_is_one_line_with_its_server_status_and_times``
+   * - The byte counts are those of the table, on each path.
+     - ``edge_observe.rs``: ``the_byte_counts_of_http11_are_the_bytes_of_the_message`` (workers and threads); ``edge_observe_h2.rs``: ``the_byte_counts_of_http2_are_the_heads_as_text_and_the_body_data``; ``edge_http3.rs``: both tests; ``crates/ingress/tests/inline.rs``
+   * - A TCP connection and a UDP mapping write one line at their end, with the client, the server, the bytes and the reason. A full channel drops the line and counts it. A topology without HTTP reloads its log.
+     - ``crates/lb/tests/flow_log.rs`` (four tests), ``crates/lb/src/flowlog.rs``, ``edge_flow_log.rs`` (two tests), ``access::sink::tests::a_flow_line_has_its_fields_in_order``
+   * - Refused connections are all counted and logged at most ten times per second.
+     - ``crates/lb/tests/flow_log.rs``: ``refused_connections_are_all_counted_and_logged_at_a_bounded_rate``
+   * - Without the workers, a request that the runtime refuses is logged and counted.
+     - ``edge_observe_h2.rs``: ``the_thread_path_logs_and_counts_what_the_runtime_refuses``
+   * - A client that resets its stream or closes while the server is silent is logged with 499 and counts neither as a server failure nor as a bad request.
+     - ``edge_observe_h2.rs``: ``a_client_that_resets_its_stream_is_no_failure_of_the_server_and_no_bad_request``; ``edge_observe.rs``: ``a_client_that_closes_while_the_server_is_silent_is_no_failure_of_the_server``
+   * - The descriptor need counts the bounded idle server connections.
+     - ``edge::fdlimit::tests``, ``edge_observe.rs``: ``a_descriptor_limit_below_the_need_is_reported_with_a_hint``
+   * - ``show stats`` prints every series, and ``reopen log`` reopens the file without a reload.
+     - ``edge_observe.rs``: ``the_admin_socket_prints_the_series_of_the_edge``
 
 ``cmd/sibuna/tests/edge_observe_h2.rs`` drives HTTP/2 over TLS through the binary and reads the log: one request to an HTTP/1.1 pool, and six gRPC calls on the shared session of an HTTP/2 pool. ``crates/ingress/tests/grpc.rs`` and ``tests/inline.rs`` check the report on both send paths, including an exchange that trailers end.
 
@@ -624,15 +684,18 @@ The parser of the PROXY header is a bounded scan without state. Its unit tests c
 Known gaps
 ~~~~~~~~~~
 
-#. ``bytes_in`` is not the wire size. It is the parsed head plus the declared body, and for a body without a length only the buffered part. ``bytes_out`` of ``h2`` and ``h3`` is the body alone. The table of byte counts states each case. Exact wire counts need counters in the TLS and framing layers of the protocol runtime.
-#. The log has no TLS version. See the rationale.
-#. Without the event-driven workers, a request of a TLS client that the protocol runtime refuses before the decision is neither logged nor counted. The workers are the default where the platform has them.
-#. A refused connection is counted by reason but has no log line, and UDP drops have no reason label.
-#. TCP and UDP flows have counters and no log line. A line per closed TCP flow needs the byte counts of the relay threads and a way from the worker of the load balancer to the log of the binary. It is future work.
+#. The chunk framing of an HTTP/1.1 request body is not counted in ``bytes_in``, and of a chunked body larger than one connection buffer only the buffered part is counted. The framing is removed in place before the request is judged, in code that the three request paths share. Counting it needs the raw size carried through the dispatch.
+#. A request that the runtime refuses before the decision has 0 for both byte counts on ``h2`` and ``h3``.
+#. ``tls_cipher`` is ``-`` for ``h3``. The QUIC library does not expose the negotiated suite.
+#. On the thread path an HTTP/2 or HTTP/3 request is logged with protocol ``http/1.1``, because the thread sees the translation. Only the requests that the runtime refuses carry ``h2`` or ``h3`` there.
+#. On the worker path and the thread path an orderly close of the client's sending side is not an abort: the answer is still written and logged with its status. Only a connection that breaks is logged with 499. No test breaks a connection with a reset there, because the standard library cannot send one.
+#. A flow line is written at the end of a flow only. A long-lived TCP connection has no line while it is open.
+#. The line of a connection that the HTTP server refused (``connection_limit``, ``client_limit``, ``task_limit``) has ``-`` for the frontend.
 #. A frontend behind a proxy that sends only ``X-Forwarded-For`` has no connection rate per client. This is a decision, explained under *Trusted proxies*.
-#. ``observability.listen`` and the ``queue`` of a running log need a restart. A topology without an HTTP frontend ignores a changed ``observability`` object on reload.
-#. The log is reopened within about one second of SIGHUP, not at once. Lines written in between go to the old file.
-#. The descriptor need does not count the idle server connections of the event-driven workers, which have no configured bound. They reuse the two descriptors per HTTP connection that the need counts, while those connections are open.
+#. A reload cannot move ``observability.listen`` to another address with the same port, because the new address is bound while the old one is open. Two reloads do it.
+#. The log is reopened within about one second of SIGHUP or of ``reopen log``, not at once. Lines written in between go to the old file.
+#. The descriptor need does not count the sockets of the protocol adapters towards TLS, HTTP/2 and HTTP/3 servers (SID 0017), which have no configured bound.
+#. The packaging scripts were changed to install the logrotate file. The packages were not built in this work.
 #. A request on an edge takes one more lock of the routing table, to find its frontend.
 #. A second SIGTERM does not cut ``global.drain_delay`` short.
 #. ``tests/e2e.rs`` has a test, ``proxied_responses_keep_the_client_connection_open_for_the_next_request``, that fails about once in eight runs. It fails as often on ``main`` before this branch. It is not fixed here.
@@ -651,6 +714,9 @@ Review history
 - 2026-11-24. Implementation review. The separate listener closed over unread request bytes, and the reset could destroy its response; it now reads what arrived before it closes. It answers 501 to other methods, because the response writer has no 405. The warning of the descriptor limit is printed before the ready line. The acceptance table and the known gaps were written from the code and the tests.
 
 - 2026-11-24. Production readiness. HTTP/3 is tested through the binary, with no defect found. The PROXY header moved from a stage thread of the binary into the worker of the load balancer, and TCP frontends read it. The connection rate stopped counting trusted proxies and counts the client of a PROXY header. Refusals before the decision are counted by reason, and refused requests are logged. The status scan passes over interim heads wherever the pieces are cut, on both HTTP/1.1 paths. A server's own 502 or 504 is told from ours by the result of the relay. The log gained ``scheme``, and ``https`` left ``protocol``. Servers gained an active gauge, a removed server loses its series at once, and a retired revision keeps its server names. ``global.drain_delay`` was added. A reload changes the log output and ``internal_allow``. The separate listener serves eight clients at once. The quick start gained ``--access-log``. The state moved to accepted: every acceptance criterion has a passing test, and the remaining gaps are listed with their reasons.
+
+- 2026-11-25. Second round. The log gained ``tls_version`` and ``tls_cipher``, flow lines for TCP and UDP, and one meaning for the byte counts. A reload follows ``listen`` and the queue length. The thread path logs the refusals of the runtime. Refused connections are logged at a bounded rate and UDP drops have reasons. The workers bound their idle server connections and the need counts them. The review of the design changed three things. The queue change no longer sends the new channel through the old one, which could have made a reload wait for a full queue. The listener is bound before the log file is opened, so a refused reload leaves no empty file. The idle bound became a share of ``http.max_connections``, because 1,024 per worker would have asked for descriptors that are never used.
+- 2026-11-25. A load run showed server failures and bad requests when clients reset their streams. A client abort is now 499 in the log, has its own counters, and is no failure of a server. ``reopen log`` and the logrotate file were added, because a rotation by SIGHUP also reloads the topology.
 
 References
 ----------
