@@ -51,7 +51,8 @@ pub(crate) struct Frontend {
     pub rate: Option<sibuna_store::limiter::Limits>,
     pub pool: std::sync::Arc<str>,
     pub timeout: Duration,
-    pub inspect: Option<(Duration, std::sync::Arc<[crate::rules::Rule]>)>,
+    /// How a TCP frontend inspects the ClientHello, when it does (SID 0032).
+    pub inspect: Option<std::sync::Arc<crate::inspect::Plan>>,
     /// The name, the counters and the trusted proxies of the frontend (SID 0020).
     pub info: std::sync::Arc<crate::FrontendInfo>,
 }
@@ -341,16 +342,7 @@ impl Config {
             None => Duration::from_secs(30),
             Some(s) => duration(s).ok_or_else(|| invalid(format!("{path}: invalid timeout")))?,
         };
-        let inspect = match field(r.take_str("tcp_inspect"))? {
-            Some("tls_client_hello") if proto == Protocol::Tcp => {
-                let delay = field(r.take_str("inspect_delay"))?.unwrap_or("2s");
-                let delay =
-                    duration(delay).ok_or_else(|| invalid(r.field_path("inspect_delay")))?;
-                Some((delay, std::sync::Arc::from(crate::rules::parse(&mut r, &self.pools)?)))
-            }
-            Some(_) => return Err(invalid(format!("{path}: invalid TCP inspection mode"))),
-            None => None,
-        };
+        let inspect = crate::inspect::Plan::parse(&mut r, proto, &self.pools, &pool)?;
         let (tls, firewall, websocket, http_rules, policy) =
             http_frontend(&mut r, proto, &self.pools)?;
         let http_rules: std::sync::Arc<[_]> = http_rules.into();

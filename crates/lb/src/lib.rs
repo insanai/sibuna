@@ -20,6 +20,7 @@ pub use http::{
 mod websocket;
 pub use websocket::{TunnelPermit, TunnelRefusal, WebSocketRule};
 mod hello;
+mod inspect;
 mod ja4;
 mod maglev;
 mod mesh;
@@ -129,7 +130,7 @@ struct Inspecting {
     opening: Opening,
     input: hello::Inspection,
     deadline: Instant,
-    rules: std::sync::Arc<[rules::Rule]>,
+    plan: std::sync::Arc<inspect::Plan>,
 }
 
 struct Pending {
@@ -441,14 +442,6 @@ impl Edge {
             }
             keep
         });
-        self.inspecting.retain(|_, flow| {
-            let keep = now < flow.deadline;
-            if !keep {
-                flowlog::mark(&mut flow.opening.line, "idle_timeout");
-                poll.remove(handle(&flow.opening.client));
-            }
-            keep
-        });
         let stats = &self.stats;
         self.awaiting.retain(|_, flow| {
             let keep = now < flow.deadline;
@@ -474,6 +467,7 @@ impl Edge {
                 }
             }
         }
+        self.expire_inspections(now);
     }
 
     fn pause(&mut self, id: usize) {
@@ -645,7 +639,8 @@ impl Edge {
             prefix: Vec::new(),
             line,
         };
-        if let Some((delay, rules)) = &route.inspect {
+        if let Some(plan) = &route.inspect {
+            let plan = plan.clone();
             if opening.client.set_nonblocking(true).is_err() {
                 return false;
             }
@@ -657,8 +652,8 @@ impl Edge {
                 Inspecting {
                     opening,
                     input: hello::Inspection::default(),
-                    deadline: Instant::now() + *delay,
-                    rules: rules.clone(),
+                    deadline: Instant::now() + plan.delay,
+                    plan,
                 },
             );
             return true;
@@ -669,52 +664,6 @@ impl Edge {
         };
         opening.prefix = prefix;
         self.connect(id, opening)
-    }
-
-    fn inspect(&mut self, id: u64) -> bool {
-        let Some(flow) = self.inspecting.get_mut(&id) else { return true };
-        match flow.input.read(&mut flow.opening.client, &mut self.buffer) {
-            Ok(false) => return true,
-            Err(error) if transient(&error) => return true,
-            Err(_) => {
-                if let Some(mut flow) = self.finish_inspection(id) {
-                    flowlog::mark(&mut flow.opening.line, "reset");
-                }
-                return false;
-            }
-            Ok(true) => {}
-        }
-        let Some(mut flow) = self.finish_inspection(id) else { return false };
-        let wire = std::mem::take(&mut flow.input.wire);
-        if let Some(line) = &mut flow.opening.line {
-            // The hello is replayed to the server from here, not relayed.
-            line.bytes_in = wire.len() as u64;
-        }
-        let Some(hello) = flow.input.hello() else { return false };
-        let Some(pool) = rules::select(&flow.rules, &hello, &flow.opening.pool) else {
-            return false;
-        };
-        let pool = pool.clone();
-        if let Some(line) = &mut flow.opening.line {
-            line.backend = pool.clone();
-        }
-        flow.opening.pool = pool;
-        let Some(pool) = self.pools.get(flow.opening.pool.as_ref()) else { return false };
-        let Some(prefix) =
-            proxy::prefix(pool.proxy_v2, flow.opening.peer, flow.opening.vip, Some(&hello), wire)
-        else {
-            return false;
-        };
-        flow.opening.prefix = prefix;
-        self.connect(id, flow.opening)
-    }
-
-    /// Takes an inspection out of the worker's poller. The relay thread registers the
-    /// client socket in its own poller once the origin is connected.
-    fn finish_inspection(&mut self, id: u64) -> Option<Inspecting> {
-        let flow = self.inspecting.remove(&id)?;
-        self.poll.remove(handle(&flow.opening.client));
-        Some(flow)
     }
 
     fn connect(&mut self, id: u64, mut opening: Opening) -> bool {
