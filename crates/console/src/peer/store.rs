@@ -99,6 +99,9 @@ struct Slot {
     queries: VecDeque<Queued>,
     /// Queries queued or on the wire.
     outstanding: usize,
+    /// The peer left the configuration while the console runs (SID 0031). It keeps its
+    /// index, and nothing is admitted, connected or asked for it again.
+    removed: bool,
 }
 
 /// The observations, admissions and query queues of the configured peers.
@@ -124,14 +127,35 @@ impl Store {
                 observation: Observation::unobserved(node),
                 queries: VecDeque::new(),
                 outstanding: 0,
+                removed: false,
             })
             .collect();
         Store { self_node, slots, replay: ReplayCache::default(), stopping: false }
     }
 
-    /// Returns the configuration index of `node`.
+    /// Returns the configuration index of `node`, unless the peer was removed.
     pub fn find(&self, node: u32) -> Option<usize> {
-        self.slots.iter().position(|slot| slot.observation.node == node)
+        self.slots.iter().position(|slot| !slot.removed && slot.observation.node == node)
+    }
+
+    /// Removes the peer `node` (SID 0031): its queued queries fail, its observation is
+    /// forgotten, and [`Store::find`] no longer knows it, so its next upgrade is refused
+    /// as that of an unknown sender. Returns false when `node` is no live peer.
+    pub fn remove(&mut self, node: u32) -> bool {
+        let Some(index) = self.find(node) else { return false };
+        let Some(slot) = self.slots.get_mut(index) else { return false };
+        slot.removed = true;
+        slot.observation = Observation::unobserved(node);
+        for queued in slot.queries.drain(..) {
+            queued.answer(Outcome::Failed(Status::Unavailable));
+            slot.outstanding = slot.outstanding.saturating_sub(1);
+        }
+        true
+    }
+
+    /// Returns true while the peer at `index` is configured and not removed.
+    pub fn is_live(&self, index: usize) -> bool {
+        self.slots.get(index).is_some_and(|slot| !slot.removed)
     }
 
     /// Refuses everything from now on and fails every queued query as cancelled.
@@ -197,6 +221,9 @@ impl Store {
             return Err(StoreError::InvalidObservation);
         }
         let slot = self.slots.get_mut(index).ok_or(StoreError::InvalidObservation)?;
+        if slot.removed {
+            return Err(StoreError::UnknownPeer);
+        }
         slot.generation = slot.generation.checked_add(1).ok_or(StoreError::GenerationExhausted)?;
         slot.boot = boot;
         let observation = &mut slot.observation;
@@ -214,6 +241,9 @@ impl Store {
     /// invalid location, or invalid or repeated countries.
     pub fn publish(&mut self, handle: &Handle, update: &Update<'_>) -> Result<bool, StoreError> {
         let Some(slot) = self.slots.get_mut(handle.index) else { return Ok(false) };
+        if slot.removed {
+            return Ok(false);
+        }
         if self.stopping || slot.generation != handle.generation {
             return Ok(false);
         }
@@ -262,6 +292,9 @@ impl Store {
     /// caller audits a refusal once, not on every retry.
     pub fn failed(&mut self, index: usize, rejected: bool) -> bool {
         let Some(slot) = self.slots.get_mut(index) else { return false };
+        if slot.removed {
+            return false;
+        }
         let before = slot.observation.status;
         slot.observation.status = if rejected { PeerStatus::Rejected } else { PeerStatus::Stale };
         rejected && before != PeerStatus::Rejected
@@ -277,7 +310,8 @@ impl Store {
     /// wall-clock skew is reported apart from the receipt age.
     pub fn reports(&self, now: u64, out: &mut Vec<Peer>) {
         out.clear();
-        out.extend(self.slots.iter().map(|slot| report(&slot.observation, now)));
+        let live = self.slots.iter().filter(|slot| !slot.removed);
+        out.extend(live.map(|slot| report(&slot.observation, now)));
     }
 
     /// Queues a query of `kind` with `cursor` to peer `node` as query `id`, at `now`.

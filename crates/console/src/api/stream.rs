@@ -243,7 +243,18 @@ impl StreamWriter<'_, '_> {
     fn run(&mut self) {
         let mut last_auth = self.shared.now();
         let mut last_ping = last_auth;
+        let mut epoch = self.shared.peers.epoch();
         while !self.link.is_stopped() && !self.shared.is_stopping() {
+            // A peer that left the configuration loses its stream at this turn, not
+            // at the next periodic check (SID 0031).
+            let removals = self.shared.peers.epoch();
+            if removals != epoch {
+                epoch = removals;
+                if self.is_removed_peer() {
+                    self.close(1008);
+                    break;
+                }
+            }
             if !self.flush_controls() {
                 break;
             }
@@ -318,6 +329,14 @@ impl StreamWriter<'_, '_> {
         true
     }
 
+    /// Returns true for the stream of a peer that is no longer configured.
+    fn is_removed_peer(&self) -> bool {
+        match &self.party {
+            Party::Peer { node, .. } => !self.shared.peers.contains(*node),
+            Party::Browser { .. } => false,
+        }
+    }
+
     /// Returns when the stream must end: the session's expiry, or the peer's hour.
     fn expires(&self) -> u64 {
         match &self.party {
@@ -338,7 +357,7 @@ impl StreamWriter<'_, '_> {
         let digest = match &self.party {
             Party::Browser { digest, .. } => *digest,
             Party::Peer { node, .. } => {
-                // The configured membership is fixed while the console runs.
+                // A peer can only leave the membership while the console runs.
                 if self.shared.peers.contains(*node) {
                     return true;
                 }

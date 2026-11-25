@@ -316,7 +316,11 @@ mod tests {
         ConsoleConfig {
             key_file: Some(key.into()),
             peers: Peers {
-                targets: vec![PeerTarget { node: 2, origin: "https://peer.test".into() }],
+                targets: vec![PeerTarget {
+                    node: 2,
+                    origin: "https://peer.test".into(),
+                    ..PeerTarget::default()
+                }],
                 key_file: Some(peer_key.into()),
                 ca_file: None,
             },

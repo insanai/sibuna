@@ -13,7 +13,8 @@ use super::serve::{INBOX_CAPACITY, Inbox, accept};
 use super::*;
 
 fn fixture() -> Peers {
-    let targets = [PeerTarget { node: 2, origin: "https://peer.test".into() }];
+    let targets =
+        [PeerTarget { node: 2, origin: "https://peer.test".into(), ..PeerTarget::default() }];
     Peers::with_key(1, &targets, Some(ConsoleKey::new(auth::derive(&[7; 32]))))
 }
 
