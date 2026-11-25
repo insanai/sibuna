@@ -11,7 +11,7 @@ use std::sync::{Arc, PoisonError, RwLock};
 #[cfg(unix)]
 use crate::agent::{AgentClient, AgentShared};
 use crate::native::{Constructor, Hook, Native};
-use crate::spec::{Error, Kind, MAX_PLUGINS, MAX_STAGE_HOOKS, Settings, Spec};
+use crate::spec::{Error, JudgeOptions, Kind, MAX_PLUGINS, MAX_STAGE_HOOKS, Settings, Spec};
 use crate::verdict::{Failure, OnFailure, Stage, Verdict, outcome};
 use crate::view::{Edits, View, encode};
 use crate::wasm::MAX_MODULE_BYTES;
@@ -81,6 +81,8 @@ struct Frontend {
     name: Box<str>,
     /// The plugins of each stage by index, in the order of [`Stage::ALL`].
     chains: [Box<[u16]>; 3],
+    /// The stages whose chain names an agent, as bits.
+    agents: u8,
 }
 
 /// A loaded set of hooks: immutable, and shared by every thread.
@@ -89,6 +91,9 @@ pub struct Plan {
     plugins: Vec<Plugin>,
     frontends: Vec<Frontend>,
     stages: u8,
+    judges: JudgeOptions,
+    /// The longest deadline of an agent of the plan.
+    patience: std::time::Duration,
 }
 
 impl std::fmt::Debug for Plan {
@@ -190,10 +195,19 @@ impl Plan {
         if settings.plugins.len() > MAX_PLUGINS {
             return Err(Error::invalid(format!("more than {MAX_PLUGINS} plugins")));
         }
+        let judges = settings.judges;
+        if !(1..=64).contains(&judges.threads) || !(1..=4096).contains(&judges.queue) {
+            let what = "hook_judges: threads must be 1 to 64 and queue 1 to 4096";
+            return Err(Error::invalid(what.to_owned()));
+        }
+        let agent = |index: usize| {
+            settings.plugins.get(index).is_some_and(|spec| matches!(spec.kind, Kind::Agent(_)))
+        };
         let mut frontends = Vec::new();
         let mut used = vec![0u8; settings.plugins.len()];
         for (frontend, attach) in &settings.frontends {
             let mut chains: [Box<[u16]>; 3] = Default::default();
+            let mut agents = 0;
             for stage in Stage::ALL {
                 let names = attach.of(stage);
                 if names.len() > MAX_STAGE_HOOKS {
@@ -208,11 +222,14 @@ impl Plan {
                     let index =
                         found.ok_or_else(|| Error::unknown_plugin(frontend, stage, name))?;
                     used[index] |= stage.bit();
+                    if agent(index) {
+                        agents |= stage.bit();
+                    }
                     chain.push(index as u16);
                 }
                 chains[stage_index(stage)] = chain.into();
             }
-            frontends.push(Frontend { name: frontend.as_str().into(), chains });
+            frontends.push(Frontend { name: frontend.as_str().into(), chains, agents });
         }
         let mut plugins = Vec::new();
         for (spec, stages) in settings.plugins.iter().zip(&used) {
@@ -228,7 +245,25 @@ impl Plan {
             });
         }
         let stages = used.iter().fold(0, |all, stages| all | stages);
-        Ok(Plan { plugins, frontends, stages })
+        let deadline = |spec: &Spec| match &spec.kind {
+            Kind::Agent(agent) => agent.deadline_ms,
+            _ => 0,
+        };
+        let patience = settings.plugins.iter().map(deadline).max().unwrap_or(0);
+        let patience = std::time::Duration::from_millis(patience);
+        Ok(Plan { plugins, frontends, stages, judges, patience })
+    }
+
+    /// The options of the judges of parked connections.
+    pub fn judges(&self) -> JudgeOptions {
+        self.judges
+    }
+
+    /// True when the chain of the frontend `name` at `stage` names an agent. A caller
+    /// that may not wait parks such a flow (see [`crate::Judges`]).
+    pub fn parks(&self, name: &str, stage: Stage) -> bool {
+        let frontend = self.frontends.iter().find(|known| *known.name == *name);
+        frontend.is_some_and(|frontend| frontend.agents & stage.bit() != 0)
     }
 
     /// The bit set of the stages at which some frontend attaches a hook.
@@ -423,6 +458,7 @@ fn invoke(
     instance: &mut Instance,
     view: &View<'_>,
     scratch: &mut Scratch<'_>,
+    shed: bool,
 ) -> Result<Verdict, Failure> {
     match (instance, &plugin.tier) {
         (Instance::Native(hook), _) => match view.stage {
@@ -433,6 +469,11 @@ fn invoke(
         (Instance::Wasm(hook), Tier::Wasm(compiled)) => {
             scratch.encoded(view)?;
             hook.invoke(compiled, view.stage, scratch.encoded, scratch.edits)
+        }
+        // A shedding caller may not wait: its agents fail without a call.
+        #[cfg(unix)]
+        (Instance::Agent(_), _) if shed && view.stage != Stage::Telemetry => {
+            Err(Failure::Overload)
         }
         #[cfg(unix)]
         (Instance::Agent(client), _) => {
@@ -509,6 +550,36 @@ impl Local {
         view: &View<'_>,
         clears: &mut dyn FnMut(&str) -> bool,
     ) -> Decision<'_> {
+        self.run_chain(slot, view, clears, false)
+    }
+
+    /// Like [`Local::run`], for a caller that may not wait and whose judges have no
+    /// room (see [`crate::Judges`]). Native and Wasm hooks run. Every agent hook fails
+    /// with [`Failure::Overload`] without a call, and the failure rule decides.
+    pub fn run_shedding(&mut self, slot: &Slot, view: &View<'_>) -> Decision<'_> {
+        self.run_chain(slot, view, &mut |_| false, true)
+    }
+
+    /// True when the chain of `frontend` at `stage` names an agent in the plan that
+    /// `slot` publishes now.
+    pub fn parks(&mut self, slot: &Slot, frontend: &str, stage: Stage) -> bool {
+        self.refresh(slot);
+        self.plan.as_deref().is_some_and(|plan| plan.parks(frontend, stage))
+    }
+
+    /// The longest deadline of an agent of the plan that `slot` publishes now.
+    pub fn patience(&mut self, slot: &Slot) -> std::time::Duration {
+        self.refresh(slot);
+        self.plan.as_deref().map_or(std::time::Duration::ZERO, |plan| plan.patience)
+    }
+
+    fn run_chain(
+        &mut self,
+        slot: &Slot,
+        view: &View<'_>,
+        clears: &mut dyn FnMut(&str) -> bool,
+        shed: bool,
+    ) -> Decision<'_> {
         self.refresh(slot);
         let Local { plan, instances, encoded, edits, .. } = self;
         edits.clear();
@@ -524,9 +595,9 @@ impl Local {
             let mark = scratch.edits.mark();
             let refused_before = scratch.edits.refused();
             let result = match place {
-                Some(instance) => invoke(plugin, instance, view, &mut scratch),
+                Some(instance) => invoke(plugin, instance, view, &mut scratch, shed),
                 None => instantiate(plugin).and_then(|instance| {
-                    invoke(plugin, place.insert(instance), view, &mut scratch)
+                    invoke(plugin, place.insert(instance), view, &mut scratch, shed)
                 }),
             };
             if result != Ok(Verdict::Admit) {

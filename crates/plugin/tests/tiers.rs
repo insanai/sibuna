@@ -70,7 +70,7 @@ fn wasm(name: &str, bytes: &[u8], on_failure: OnFailure) -> Spec {
 fn attach_all(plugins: Vec<Spec>) -> Settings {
     let names: Vec<String> = plugins.iter().map(|spec| spec.name.clone()).collect();
     let attach = Attach { connection: names.clone(), request: names.clone(), telemetry: names };
-    Settings { plugins, frontends: vec![("web".to_owned(), attach)] }
+    Settings { plugins, frontends: vec![("web".to_owned(), attach)], ..Settings::default() }
 }
 
 fn published(settings: &Settings) -> Slot {

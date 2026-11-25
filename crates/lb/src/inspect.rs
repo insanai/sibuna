@@ -258,19 +258,32 @@ impl Edge {
     /// its pool with the bytes read so far as the prefix. Returns false on a refusal.
     fn conclude(&mut self, id: u64, end: End) -> bool {
         let Some(mut flow) = self.finish_inspection(id) else { return false };
+        // The connection hooks judge every ended inspection (SID 0030). One that takes
+        // a fallback has no ClientHello: its view has no server name and no JA4.
+        let hello = if end == End::Whole { flow.input.hello() } else { None };
+        match self.rule_hello(&flow.opening, hello.as_ref()) {
+            crate::gate::Ruling::Admit => self.settle_inspection(id, flow, end),
+            crate::gate::Ruling::Deny => {
+                self.stats.refuse(Refusal::Hook);
+                flowlog::mark(&mut flow.opening.line, Refusal::Hook.end());
+                false
+            }
+            crate::gate::Ruling::Parked(ticket) => {
+                let parked = crate::gate::Parked::Hello { id, flow: Box::new(flow), end };
+                self.park(ticket, parked);
+                true
+            }
+        }
+    }
+
+    /// Decides an inspection that the connection hooks admitted.
+    pub(crate) fn settle_inspection(&mut self, id: u64, mut flow: Inspecting, end: End) -> bool {
         let wire = std::mem::take(&mut flow.input.wire);
         if let Some(line) = &mut flow.opening.line {
             // These bytes are replayed to the server from here, not relayed.
             line.bytes_in = wire.len() as u64;
         }
         let hello = if end == End::Whole { flow.input.hello() } else { None };
-        // The connection hooks judge every ended inspection (SID 0030). One that takes
-        // a fallback has no ClientHello: its view has no server name and no JA4.
-        if !self.hello_admitted(&flow.opening, hello.as_ref()) {
-            self.stats.refuse(Refusal::Hook);
-            flowlog::mark(&mut flow.opening.line, Refusal::Hook.end());
-            return false;
-        }
         let metadata = match (end, &hello) {
             (End::Whole, Some(hello)) => classify(hello),
             (End::Whole | End::Invalid, _) => Metadata::Invalid,

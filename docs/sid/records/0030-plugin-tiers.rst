@@ -53,7 +53,7 @@ A hook attaches to a frontend at one or more of three stages.
      - When it runs
      - What it decides
    * - ``connection``
-     - Once for each TCP connection of a TCP or HTTP frontend, after the connection rate and the flow budget admitted it. On a TCP frontend with ``tcp_inspect`` it runs after the ClientHello is read. Once for each new UDP mapping. A frontend that serves HTTP/3 has no connection stage: its QUIC connections do not pass the edge worker, so a file that attaches a connection hook there is refused.
+     - Once for each TCP connection of a TCP or HTTP frontend, after the connection rate and the flow budget admitted it. On a TCP frontend with ``tcp_inspect`` it runs after the ClientHello is read. Once for each new UDP mapping. Once for each QUIC connection of a frontend that serves HTTP/3, when the ClientHello of the connection is read: the view has the protocol ``quic``, the client address and the server name, and no JA4. This is the first moment at which the QUIC library (quinn 0.11) tells the server name. Before it, at ``Incoming``, only the address is known. The library goes on with the handshake while the hooks judge, and gives us no way to hold it. So the verdict does not stop the handshake. It decides whether the connection may serve: no request stream is accepted before the verdict, and a denied connection is closed. The TCP connections of the same frontend are judged at their accept, as on every HTTP frontend.
      - Admit or deny. A denied connection is closed. A denied datagram is dropped and opens no mapping.
    * - ``request``
      - Once for each HTTP request that the bans, the limiters and the firewall policy admitted, before a server is chosen.
@@ -78,7 +78,7 @@ Every tier reads the same plain record, the view. The native tier borrows it. Th
    * - Field
      - Meaning
    * - stage, protocol
-     - The stage, and ``tcp``, ``udp``, ``http/1.1``, ``http/2`` or ``http/3``. At the connection stage of an HTTP frontend the protocol is ``tcp``.
+     - The stage, and ``tcp``, ``udp``, ``http/1.1``, ``http/2``, ``http/3`` or ``quic``. At the connection stage of an HTTP frontend the protocol is ``tcp`` for a TCP connection and ``quic`` for a QUIC connection.
    * - secure
      - The client reached us over TLS or QUIC.
    * - client, local
@@ -299,7 +299,7 @@ The return codes are 0 for admit, 1 for deny and 2 for challenge. Any other valu
    offset  size  field
    0       1     wire version, 1
    1       1     stage: 1 connection, 2 request, 3 telemetry
-   2       1     protocol: 1 tcp, 2 udp, 3 http/1.1, 4 http/2, 5 http/3
+   2       1     protocol: 1 tcp, 2 udp, 3 http/1.1, 4 http/2, 5 http/3, 6 quic
    3       1     flags: bit 0 secure, bit 1 the client address is IPv6, bit 2 the local one is
    4       2     client port
    6       2     local port
@@ -358,7 +358,35 @@ The payload of ``decide`` and ``sample`` is the wire form of the view. The agent
 
 A call that the breaker refuses fails with ``unavailable`` and costs no system call. With :math:`w` threads, a dead agent costs each thread ``failures`` calls of one deadline each, and then one probe per thread for each ``open`` interval. A call that fails with ``overload`` is not a fault of the agent and does not count.
 
-An agent call occupies its thread for the round trip. On an event-driven worker the other connections of that worker wait for it. The deadline bounds the wait and the breaker bounds how often it is paid. The section on known gaps returns to this.
+An agent call occupies the thread that makes it for the round trip. At the request stage that thread is the one that serves the request, and on an event-driven worker the other connections of that worker wait for it. The deadline bounds the wait and the breaker bounds how often it is paid. The section on known gaps returns to this.
+
+Parking a connection
+~~~~~~~~~~~~~~~~~~~~
+
+At the connection stage the calling thread is the edge worker, which accepts for every frontend, or a thread of the HTTP/3 runtime. Neither may wait for an agent. So a connection whose chain names an agent is *parked*, and judges decide it.
+
+.. graphviz::
+
+   digraph parking {
+     rankdir=LR; node [shape=box, fontname="Helvetica", fontsize=10]; edge [fontname="Helvetica", fontsize=9];
+     worker [label="edge worker\nor HTTP/3 task"]; queue [label="bounded queue\n(hook_judges.queue)"];
+     judges [label="judges\n(hook_judges.threads)"]; agent [label="agent"];
+     worker -> queue [label="case: an owned copy\nof the view"]; queue -> judges; judges -> agent [label="blocking call,\ndeadline, breaker"];
+     judges -> worker [label="verdict, wake"];
+     worker -> worker [label="queue full:\nrun the chain here,\nevery agent fails\nwith overload"];
+   }
+
+The root object ``hook_judges`` has the two numbers of this section, ``threads`` and ``queue``. The *judges* are a small set of threads, ``hook_judges.threads`` of them (4 unless the file says otherwise, 1 to 64), for each of the two callers. A judge owns its own instances of the hooks, as every thread does: its Wasm memories, its agent connections and its breakers. It takes a *case*, an owned copy of the view, runs the whole chain of the frontend on it with the blocking calls of this section, and gives the verdict back. The edge worker receives it through its wake socket. An HTTP/3 task receives it through a one-shot channel.
+
+A chain without an agent is never parked. It runs on the calling thread as before, and costs what it cost.
+
+While a connection is parked the worker holds its socket and its flow permit, and does not read it. A parked UDP client has its first datagram kept, and its further datagrams are dropped until the verdict: a mapping does not exist yet. When the verdict admits, the flow starts where it would have started. When it denies, the connection is closed and counted with the reason ``hook``. A client that closes while it is parked changes nothing: the verdict arrives, and the flow that starts sees the end of its client at once.
+
+The wait is bounded at every step. The queue holds ``hook_judges.queue`` cases (256 unless the file says otherwise, 1 to 4,096). When it is full, the chain runs on the calling thread *shedding*: native and Wasm hooks run, and every agent hook fails with ``overload`` without a call. The failure rule then decides as for every failure, so a full queue takes the ``on_failure`` outcome of each agent in the chain. A judge sheds in the same way a case that waited in the queue longer than the longest ``deadline`` of the agents of the plan. So a parked connection waits at most that deadline in the queue, and then at most the sum of the deadlines of its chain. The worker also drops a parked connection that has no verdict after five seconds, and counts it as refused by a hook. This happens only if a judge died.
+
+A dead agent therefore costs the judges, not the worker. Each judge pays ``failures`` deadlines, its breaker opens, and its calls fail at once until the probe. Meanwhile connections of frontends without that agent are not delayed at all, and connections of the same frontend wait for a judge or are shed.
+
+The Lean model has the shed case: a shed chain is the chain of the same hooks in which every agent has the result ``failed``, so a chain whose agents all fail closed never admits by shedding what a denying native hook would deny, and a full queue never admits a connection that an agent with ``on_failure: "deny"`` guards.
 
 Crates
 ~~~~~~
@@ -506,7 +534,19 @@ The state of this record is ``discussion``. The code below is on the branch ``si
    * - 16
      - The failure rule and the breaker are modelled.
      - Met
-     - ``docs/sid/assets/plugin-tiers.lean``, checked with Lean 4, core only: 10 theorems on the outcome, the chain and fuel, 10 on the breaker.
+     - ``docs/sid/assets/plugin-tiers.lean``, checked with Lean 4, core only: 12 theorems on the outcome, the chain, shedding and fuel, 10 on the breaker.
+   * - 17
+     - A slow or dead agent at the connection stage stops no other flow.
+     - Met
+     - ``crates/lb/tests/parked.rs`` on real sockets: with an agent that never answers and a deadline of 400 ms, twenty connections of another frontend are each served in under 100 ms, and four connections of the guarded frontend start together after one deadline (``a_silent_agent_delays_no_other_flow_of_the_worker``). A full queue takes the outcome of the agent (``a_full_queue_of_judges_takes_the_outcome_of_the_agent``). A parked inspection is judged by its server name, and the first datagram of a parked UDP client is not lost. ``crates/plugin/tests/agent.rs`` (``judges_decide_parked_cases_and_a_silent_agent_never_holds_the_caller``).
+   * - 18
+     - A QUIC connection of an HTTP/3 frontend is judged once, with its client and its server name, and the TCP side is judged for itself.
+     - Met
+     - ``cmd/sibuna/tests/edge_hooks_secure.rs`` through the binary (``a_quic_connection_is_judged_once_by_its_client_and_server_name``, ``a_silent_agent_serves_no_quic_connection_and_holds_none_longer_than_its_deadline``).
+   * - 19
+     - The request stage admits with a field, denies and challenges over TLS, HTTP/2 and HTTP/3.
+     - Met
+     - ``edge_hooks_secure.rs`` (``the_request_stage_judges_tls_http2_and_http3_on_the_workers`` and ``..._on_the_thread_path``). The tests found no fault.
 
 Measured cost
 ~~~~~~~~~~~~~
@@ -532,8 +572,10 @@ All numbers are from one machine with 32 hardware threads that ran other builds 
      - 2.2 to 2.4 us
      - Encoding the view, copying it in and 635 operations.
    * - Agent
-     - 13 to 18 us
+     - 12 to 18 us
      - A round trip on a Unix socket to a thread of the same process.
+
+*A parked agent call.* The same command prints both lines. One thread gives a case to one judge and waits for the answer on a channel, 50,000 times. On a quiet machine (load average below 1) three runs gave 11.7, 12.1 and 12.3 us for the call on the calling thread and 22.8, 22.8 and 22.9 us for the parked call. Parking costs about 11 us: two handoffs between threads. The edge worker adds one wake of its poller, which this number does not include.
 
 *One request, end to end.* ``cargo test -p sibuna --release --test edge_hooks -- --ignored --nocapture cost``. One client sends 5,000 requests after one another on a kept connection to the edge binary, which relays to an origin that answers one byte. Four edges run side by side, one for each case, and their rounds alternate. Two runs gave these means per request.
 
@@ -583,9 +625,12 @@ The same trials take 1.0 ms in native code with the SHA extensions of the proces
 Known gaps
 ----------
 
-#. *HTTP/3 has no connection stage.* A QUIC connection is accepted by the HTTP/3 listener and does not pass the edge worker. We refuse a file that attaches a connection hook to a frontend with ``tls.http3``, so nothing goes unjudged in silence. The request stage covers HTTP/3.
-#. *An agent call holds its thread.* On an event-driven worker every connection of that worker waits for the round trip, at most ``deadline``. A connection hook that is an agent holds the single edge worker, which accepts for every frontend. The breaker bounds the repetition. Parking the request is the first open question.
-#. *The request stage is tested over cleartext HTTP/1.1 only.* The code path is the same function for TLS, HTTP/2 and HTTP/3, and no test of this record drives a hook over them.
+#. *An agent call at the request stage holds its thread.* The connection stage parks. The request stage does not: on an event-driven worker every connection of that worker waits for the round trip, at most ``deadline``, and over HTTP/2 and HTTP/3 the thread that decides the request waits. Each of several threads pays, not the one thread that accepts, and the breaker bounds the repetition. Parking a request needs a suspended state in the request path of the workers, which holds borrowed buffers today. It is the first open question.
+#. *The verdict on a QUIC connection does not stop its handshake.* The library completes the handshake while the hooks judge. A denied client therefore learns the certificate of the frontend and costs one handshake, and then its connection is closed without a request served. The connection rate and the client bound, which run before the handshake, are unchanged.
+#. *A parked flow costs two thread handoffs.* A healthy agent call takes about 23 us parked and about 12 us on the calling thread. Parked connections of one caller share ``hook_judges.threads`` judges, so a slow agent that answers within its deadline serves at most ``threads / latency`` connections in a second, and the rest are shed with the ``on_failure`` outcome. Calls are not multiplexed on one agent connection.
+#. *The judges are started with the first parked flow and keep their number.* A reload that changes ``hook_judges`` takes effect at a restart. The edge worker and the HTTP/3 runtime have a set each, so a node has up to twice ``threads`` judges, each with its own agent connection and breaker.
+#. *A parked UDP client keeps one datagram.* Its further datagrams are dropped until the verdict.
+#. *No metric counts the parked flows.* The calls, the overloads and the timeouts of the plugin are counted as before.
 #. *The telemetry stage covers HTTP requests.* The end of a TCP or UDP flow is not shown to a hook. A sample has no query, no fields and no client port.
 #. *Requests that Sibuna answers itself reach no request hook:* the reserved routes, a redirect or a fixed answer of the traffic policy, a ban, a limit. The hook judges what would reach a server.
 #. *A native hook is added by editing the table in ``cmd/sibuna/src/plugins.rs``.* There is no registration from another crate. One hook is shipped.
@@ -603,7 +648,7 @@ Known gaps
 Open questions
 --------------
 
-#. Should an agent call park the request instead of occupying the thread? What deadline do real agents need?
+#. Should an agent call at the request stage park the request, as the connection stage parks a connection? What deadline do real agents need?
 #. Should a hook be able to add fields to a response that Sibuna itself writes, such as a denial?
 
 Review history
@@ -613,6 +658,7 @@ Review history
 - 2026-11-25. Review of the draft. It found seven faults, and the text above has the corrections. (1) The draft ran request hooks before the policy, so a client that a rule would have denied could spend an agent call: hooks now run only for admitted requests. (2) The draft cut a head that did not fit the input buffer: a hook would then admit a request it had not seen, so the invocation now fails. (3) The draft let ``on_failure`` default to the choice of each tier: it now defaults to ``deny`` everywhere, and the telemetry stage ignores it. (4) The draft charged one unit of fuel for ``memory.fill`` of any length, which made fuel no bound on time. (5) The draft kept the memory of an instance after a trap. (6) The draft kept an agent connection after a timeout and matched answers by identifier alone: a late answer could then be read by the next call if identifiers were reused after a reconnect, so the connection now closes. (7) The draft counted an ``overload`` as a failure of the agent, so a burst of our own could open the breaker.
 - 2026-11-25. Review of the code against this record. It found six faults, all corrected. (1) A session that cleared the challenge of a hook ended the chain as an admission, so the hooks behind it did not run: the chain now goes on, the Lean model has the theorem, and a test pays a real challenge. (2) The HTTP server started before it was given the hooks, so a request in the first moments could pass unjudged: it now receives them before it starts. (3) A reload published the hooks after the routes, so a new frontend served a moment without its hooks: the order is reversed, and a refused reload restores the set. (4) A connection hook on an HTTP/3 frontend was accepted and never asked: the file is now refused. (5) The request view gave the port of the socket peer beside the address of a forwarded client. (6) The telemetry stage found no host and no path unless the access log was on. The review also measured the interpreter against wasmi and replaced a sentence of the draft that called the difference negligible: it is 1.4 microseconds for the example hook.
 - 2026-11-25. Merge with the admission stages (SID 0032), peer forwarding (SID 0026) and the handoff (SID 0029). Two faults of the merge were found and corrected. The variable that told the hooks of an HTTP/3 frontend shadowed the new ``udp_inspect`` setting of the listener. An inspection that ended by its fallback started a flow without asking the connection hooks: every ended inspection is now judged, with an empty server name when there is no ClientHello.
+- 2026-11-25. Three known gaps closed, after a review of the text and then of the code. *Parking.* The draft of this change let the worker register the agent socket with its poller. We rejected it: a chain may name several hooks around the agent, so the worker would need a resumable chain and a non-blocking agent client, and the breaker and the queue would move into the worker. Judges with their own instances run the unchanged blocking chain, and the worker only parks and resumes. The cost is two thread handoffs and no multiplexing. The review of the code found that a judge thread which could not start left a QUIC connection without an answer until its handshake bound: it is now shed. *QUIC.* The text first said that the verdict comes before the handshake ends. The test of a silent agent showed the handshake complete on the client within 100 ms: the library does not wait for us. The text now says what the verdict decides. *Request stage.* The tests over TLS, HTTP/2 and HTTP/3 passed as written, on the workers and on the thread path.
 
 References
 ----------

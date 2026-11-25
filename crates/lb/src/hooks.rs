@@ -6,8 +6,8 @@ use std::io::Result;
 
 use sibuna_json::{ObjectReader, Value};
 use sibuna_plugin::{
-    AgentSpec, Attach, BreakerLimits, Kind, MAX_PLUGINS, MAX_STAGE_HOOKS, OnFailure, Settings,
-    Spec, Stage, WasmSpec,
+    AgentSpec, Attach, BreakerLimits, JudgeOptions, Kind, MAX_PLUGINS, MAX_STAGE_HOOKS, OnFailure,
+    Settings, Spec, Stage, WasmSpec,
 };
 
 use crate::config::{Protocol, duration, field, invalid, required};
@@ -20,6 +20,21 @@ pub(crate) fn plugins(root: &mut ObjectReader<'_, '_>) -> Result<Vec<Spec>> {
         invalid(format!("plugins must be an object of at most {MAX_PLUGINS} named plugins"))
     })?;
     entries.iter().map(|(name, value)| plugin(name, value)).collect()
+}
+
+/// Reads the root object `hook_judges`: the threads that decide parked connections
+/// and their queue. The bounds are checked where the plugins are loaded.
+pub(crate) fn judges(root: &mut ObjectReader<'_, '_>) -> Result<JudgeOptions> {
+    let mut options = JudgeOptions::default();
+    let Some(mut r) = field(root.take_object("hook_judges"))? else { return Ok(options) };
+    if let Some(threads) = field(r.take_u64("threads"))? {
+        options.threads = small(&r, "threads", threads)?;
+    }
+    if let Some(queue) = field(r.take_u64("queue"))? {
+        options.queue = small(&r, "queue", queue)?;
+    }
+    field(r.finish())?;
+    Ok(options)
 }
 
 fn plugin(name: &str, value: &Value<'_>) -> Result<Spec> {
@@ -122,11 +137,11 @@ fn millis(r: &ObjectReader<'_, '_>, key: &str, text: &str) -> Result<u64> {
 
 /// Reads the `hooks` object of the frontend `name` into `settings`. Each stage lists
 /// plugins of the topology in the order they run. A TCP or UDP frontend has the
-/// connection stage only, and a frontend that serves HTTP/3 (`quic`) does not have it.
+/// connection stage only.
 pub(crate) fn attach(
     r: &mut ObjectReader<'_, '_>,
     name: &str,
-    (proto, quic): (Protocol, bool),
+    proto: Protocol,
     settings: &mut Settings,
 ) -> Result<()> {
     let Some(mut hooks) = field(r.take_object("hooks"))? else { return Ok(()) };
@@ -137,14 +152,6 @@ pub(crate) fn attach(
         let path = hooks.field_path(stage.name());
         if stage != Stage::Connection && proto != Protocol::Http {
             return Err(invalid(format!("{path}: only an HTTP frontend has this stage")));
-        }
-        // A QUIC connection does not pass the worker that asks the connection hooks.
-        // We refuse the combination, so that no connection goes unjudged in silence.
-        if stage == Stage::Connection && quic && !names.is_empty() {
-            return Err(invalid(format!(
-                "{path}: a frontend with tls.http3 has no connection stage yet; \
-                 attach the hooks at the request stage"
-            )));
         }
         if names.len() > MAX_STAGE_HOOKS {
             return Err(invalid(format!("{path}: at most {MAX_STAGE_HOOKS} hooks per stage")));
@@ -254,11 +261,17 @@ mod tests {
     }
 
     #[test]
-    fn a_frontend_with_http3_has_no_connection_stage() {
-        let hooks = r#"{"connection":["geo"]},"tls":{"crt":["site.pem"],"http3":true}"#;
-        assert!(error(THREE, hooks, "http").contains("tls.http3"));
-        let hooks = r#"{"request":["role"]},"tls":{"crt":["site.pem"],"http3":true}"#;
-        assert!(Config::parse(topology(THREE, hooks, "http").as_bytes()).is_ok());
+    fn a_frontend_with_http3_attaches_every_stage() {
+        let hooks = r#"{"connection":["geo"],"request":["role"]},
+            "tls":{"crt":["site.pem"],"http3":true}"#;
+        let config = Config::parse(topology(THREE, hooks, "http").as_bytes()).unwrap();
+        assert_eq!(config.plugins().frontends[0].1.connection, ["geo"]);
+    }
+
+    #[test]
+    fn hook_judges_are_read_and_default_to_four_threads() {
+        let config = Config::parse(topology(THREE, "{}", "http").as_bytes()).unwrap();
+        assert_eq!((config.plugins().judges.threads, config.plugins().judges.queue), (4, 256));
     }
 
     #[test]

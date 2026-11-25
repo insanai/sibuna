@@ -27,6 +27,8 @@ pub enum Protocol {
     Http2,
     /// A request over HTTP/3.
     Http3,
+    /// A QUIC connection of an HTTP/3 frontend, before its first request.
+    Quic,
 }
 
 impl Protocol {
@@ -38,6 +40,7 @@ impl Protocol {
             Protocol::Http1 => 3,
             Protocol::Http2 => 4,
             Protocol::Http3 => 5,
+            Protocol::Quic => 6,
         }
     }
 }

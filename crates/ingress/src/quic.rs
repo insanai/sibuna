@@ -25,6 +25,8 @@ pub(super) struct Shared {
     pub idle: Duration,
     /// The admission of a connection, once the firewall has set it.
     pub admit: Arc<std::sync::OnceLock<crate::Admit>>,
+    /// The judge of a connection, once the firewall has set it.
+    pub judge: Arc<std::sync::OnceLock<crate::Judge>>,
 }
 
 /// Opens the HTTP/3 endpoint of one listener. With `shared` the socket may share its
@@ -79,11 +81,36 @@ pub(super) async fn serve(
         let drain = drain.clone();
         tokio::spawn(async move {
             let _held = (slot, place);
-            if let Ok(Ok(conn)) = timeout(DEADLINE, incoming).await {
+            let Ok(mut connecting) = incoming.accept() else { return };
+            if !judged(&mut connecting, vip, &shared).await {
+                // Dropping the handshake closes the connection.
+                return;
+            }
+            if let Ok(Ok(conn)) = timeout(DEADLINE, connecting).await {
                 let _ = connection(conn, vip, shared, drain).await;
             }
         });
     }
+}
+
+/// Asks the judge of the node about a connection whose handshake has begun. The
+/// handshake data is known when the ClientHello is read: this is the first moment at
+/// which the library tells the server name. The library goes on with the handshake
+/// meanwhile, so the ruling does not stop the handshake: it decides whether the
+/// connection may serve. Without a judge every connection goes on.
+async fn judged(connecting: &mut quinn::Connecting, vip: SocketAddr, shared: &Shared) -> bool {
+    let Some(judge) = shared.judge.get() else { return true };
+    let Ok(Ok(data)) = timeout(DEADLINE, connecting.handshake_data()).await else {
+        return false;
+    };
+    let data = data.downcast::<quinn::crypto::rustls::HandshakeData>().ok();
+    let name = data.and_then(|data| data.server_name).unwrap_or_default();
+    let (ruling, ruled) = tokio::sync::oneshot::channel();
+    let answer = Box::new(move |admitted| {
+        let _ = ruling.send(admitted);
+    });
+    judge(connecting.remote_address(), vip, &name, answer);
+    matches!(timeout(DEADLINE, ruled).await, Ok(Ok(true)))
 }
 
 async fn connection(
