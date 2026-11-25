@@ -6505,17 +6505,9 @@ msgstr ""
 msgid "Writing the topology in JLV"
 msgstr "JLV में टोपोलॉजी लिखना"
 
-#: ../../operations.rst:1762
-msgid ""
-"JLV is the configuration language of jlavideploy and jlavici. A file that "
-"ends in ``.jlv`` is a JLV/2 module with a function ``edge`` that returns "
-"the same document as the JSON file. We write a pool once and generate its "
-"servers."
-msgstr ""
-"JLV jlavideploy और jlavici की कॉन्फ़िगरेशन भाषा है। ``.jlv`` पर समाप्त "
-"होने वाली फ़ाइल एक JLV/2 मॉड्यूल है जिसमें ``edge`` फ़ंक्शन होता है जो "
-"JSON फ़ाइल वाला ही दस्तावेज़ लौटाता है। हम एक पूल एक बार लिखते हैं और "
-"उसके सर्वर उत्पन्न करते हैं।"
+#: ../../operations.rst:1802
+msgid "Sibuna uses Jlavi (JLV/2) as its configuration language. A file that ends in ``.jlv`` is a JLV/2 module with a function ``edge`` that returns the same document as the JSON file. We write a pool once and generate its servers."
+msgstr "Sibuna की कॉन्फ़िगरेशन भाषा Jlavi (JLV/2) है। ``.jlv`` पर समाप्त होने वाली फ़ाइल एक JLV/2 मॉड्यूल है जिसमें ``edge`` फ़ंक्शन होता है जो JSON फ़ाइल वाला ही दस्तावेज़ लौटाता है। हम एक पूल एक बार लिखते हैं और उसके सर्वर उत्पन्न करते हैं।"
 
 #: ../../operations.rst:1764
 msgid ""

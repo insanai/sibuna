@@ -6057,15 +6057,9 @@ msgstr ""
 msgid "Writing the topology in JLV"
 msgstr "JLV로 토폴로지 작성하기"
 
-#: ../../operations.rst:1762
-msgid ""
-"JLV is the configuration language of jlavideploy and jlavici. A file that "
-"ends in ``.jlv`` is a JLV/2 module with a function ``edge`` that returns "
-"the same document as the JSON file. We write a pool once and generate its "
-"servers."
-msgstr ""
-"JLV는 jlavideploy와 jlavici의 설정 언어입니다. 이름이 ``.jlv``\\ 로 끝나는 파일은 JSON 파일과 같은 "
-"문서를 반환하는 함수 ``edge``\\ 를 가진 JLV/2 모듈입니다. 풀은 한 번만 쓰고 서버는 생성합니다."
+#: ../../operations.rst:1802
+msgid "Sibuna uses Jlavi (JLV/2) as its configuration language. A file that ends in ``.jlv`` is a JLV/2 module with a function ``edge`` that returns the same document as the JSON file. We write a pool once and generate its servers."
+msgstr "Sibuna는 Jlavi(JLV/2)를 설정 언어로 사용합니다. 이름이 ``.jlv``\\ 로 끝나는 파일은 JSON 파일과 같은 문서를 반환하는 함수 ``edge``\\ 를 가진 JLV/2 모듈입니다. 풀은 한 번만 쓰고 서버는 생성합니다."
 
 #: ../../operations.rst:1764
 msgid ""

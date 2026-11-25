@@ -22,74 +22,274 @@ msgid "Configuring Sibuna with Jlavi"
 msgstr "Configurar Sibuna con Jlavi"
 
 #: ../../jlavi.rst:4
-msgid "A Jlavi file describes the topology that Sibuna should serve. At startup or reload, Sibuna evaluates one JLV/2 module and validates its result with the same schema as a JSON configuration. Workers use the resulting routes for subsequent traffic."
-msgstr "Un archivo Jlavi describe la topología que debe servir Sibuna. Al arrancar o recargar, Sibuna evalúa un módulo JLV/2 y valida su resultado con el mismo esquema que una configuración JSON. Los workers usan las rutas resultantes para el tráfico posterior."
+msgid "Jlavi is Sibuna's configuration language. We use it to describe the topology that Sibuna should serve. At startup or reload, Sibuna evaluates one JLV/2 module and validates its result with the same schema as a JSON configuration. Workers use the resulting routes for subsequent traffic."
+msgstr "Jlavi es el lenguaje de configuración de Sibuna. Con él describimos la topología que Sibuna debe servir. Al arrancar o recargar, Sibuna evalúa un módulo JLV/2 y valida el resultado con el mismo esquema que una configuración JSON. Los trabajadores usan las rutas resultantes para el tráfico posterior."
 
 #: ../../jlavi.rst:6
-msgid "Build a web pool"
-msgstr "Crear un grupo de servidores web"
+msgid "We try each complete example in its own working directory. We stop the running example before starting another that uses the same port."
+msgstr "Probamos cada ejemplo completo en su propio directorio de trabajo. Detenemos el ejemplo en ejecución antes de iniciar otro que use el mismo puerto."
 
-#: ../../jlavi.rst:9
-msgid "We can now describe the two timetable servers from :doc:`introduction` in a file. We save this module as ``edge.jlv``. A frontend listens on port 8080. Its ``default_backend`` names the timetable pool. The shield inspects HTTP requests, and the pool distributes admitted requests between two replicas."
-msgstr "Ahora podemos describir en un archivo los dos servidores del horario de :doc:`introduction`. Guardamos el módulo como ``edge.jlv``. Un frontend escucha en el puerto 8080. Su ``default_backend`` identifica el grupo timetable. El escudo inspecciona las solicitudes HTTP y el grupo distribuye las admitidas entre dos réplicas."
-
-#: ../../jlavi.rst:11
-msgid ""
-"fn edge() -> Map<Value> {\n"
-"    let hosts = [\"127.0.0.1\", \"127.0.0.2\"]\n"
-"    return {\n"
-"        http: { surface: \"shield\" },\n"
-"        frontends: { web: { binds: [\"127.0.0.1:8080\"], default_backend: \"timetable\" } },\n"
-"        backends: { timetable: { servers: [for host in hosts: \"${host}:9000\"] } },\n"
-"    }\n"
-"}"
-msgstr ""
-"fn edge() -> Map<Value> {\n"
-"    let hosts = [\"127.0.0.1\", \"127.0.0.2\"]\n"
-"    return {\n"
-"        http: { surface: \"shield\" },\n"
-"        frontends: { web: { binds: [\"127.0.0.1:8080\"], default_backend: \"timetable\" } },\n"
-"        backends: { timetable: { servers: [for host in hosts: \"${host}:9000\"] } },\n"
-"    }\n"
-"}"
-
-#: ../../jlavi.rst:22
-msgid "Check the module before opening the listener. For a starting point based on an existing command line, ``sibuna lb --print-config`` writes a complete JLV module to standard output."
-msgstr "Validamos el módulo antes de abrir el puerto. Para partir de una línea de órdenes existente, ``sibuna lb --print-config`` escribe un módulo JLV completo en la salida estándar."
-
-#: ../../jlavi.rst:24
-msgid ""
-"sibuna check -f edge.jlv\n"
-"sibuna --config-file edge.jlv"
-msgstr ""
-"sibuna check -f edge.jlv\n"
-"sibuna --config-file edge.jlv"
-
-#: ../../jlavi.rst:29
+#: ../../jlavi.rst:8
 msgid "Read the language"
 msgstr "Leer el lenguaje"
 
-#: ../../jlavi.rst:32
+#: ../../jlavi.rst:11
 msgid "Source files use UTF-8. An identifier starts with an ASCII letter or underscore and can then contain digits. A newline ends a statement. Lists and records can span lines. Double quotes delimit text. A line comment starts with two slashes. A block comment runs from ``/*`` to ``*/`` and cannot nest."
 msgstr "Los archivos usan UTF-8. Un identificador empieza por una letra ASCII o un guion bajo y puede contener dígitos a continuación. El salto de línea termina una sentencia. Las listas y los registros pueden ocupar varias líneas. El texto va entre comillas dobles. Dos barras inician un comentario de línea. Los comentarios de bloque van de ``/*`` a ``*/`` y no se anidan."
 
-#: ../../jlavi.rst:34
-msgid "The entry point takes no arguments. ``Map<Value>`` lets one record hold text, booleans, integers, lists and nested records. In the first module, let binds the list once. The for expression visits each host in order and inserts its text into the address at ``${host}``."
-msgstr "El punto de entrada no recibe argumentos. ``Map<Value>`` permite combinar texto, booleanos, enteros, listas y registros anidados en un registro. En el primer módulo, let vincula la lista una sola vez. La expresión for recorre los hosts en orden e inserta su texto en la dirección donde aparece ``${host}``."
+#: ../../jlavi.rst:13
+msgid "We start with a function. Its parameters have types. The type after ``->`` describes its result. We can put this helper above the entry point in the same file."
+msgstr "Empezamos con una función. Sus parámetros tienen tipos. El tipo que sigue a ``->`` describe el resultado. Podemos colocar esta función auxiliar encima del punto de entrada en el mismo archivo."
 
-#: ../../jlavi.rst:36
+#: ../../jlavi.rst:15
+msgid ""
+"fn address(host: Text, port: Int) -> Text {\n"
+"    return \"${host}:${port}\"\n"
+"}"
+msgstr ""
+"fn address(host: Text, port: Int) -> Text {\n"
+"    return \"${host}:${port}\"\n"
+"}"
+
+#: ../../jlavi.rst:21
+msgid "The call ``address(\"127.0.0.1\", 9000)`` returns ``\"127.0.0.1:9000\"``. Inside a string, ``${...}`` inserts the value of the enclosed expression. A helper constructs data. Sibuna opens listeners only when it serves the resulting configuration."
+msgstr "La llamada ``address(\"127.0.0.1\", 9000)`` devuelve ``\"127.0.0.1:9000\"``. Dentro de una cadena, ``${...}`` inserta el valor de la expresión entre llaves. Una función auxiliar construye datos. Sibuna abre los puertos de escucha cuando empieza a servir la configuración resultante."
+
+#: ../../jlavi.rst:23
+msgid "Sibuna calls ``edge()`` with no arguments. Its result type is ``Map<Value>``. The keys are text. The values can have different types, so one map can hold a list of bind addresses beside a boolean switch. A list preserves order. For HTTP routes this matters because Sibuna uses the first matching route."
+msgstr "Sibuna llama a ``edge()`` sin argumentos. El tipo del resultado es ``Map<Value>``. Las claves son texto. Los valores pueden tener tipos distintos, de modo que un mapa puede contener una lista de direcciones de escucha junto a un valor booleano. Una lista conserva el orden. Esto importa para las rutas HTTP porque Sibuna usa la primera ruta que coincide."
+
+#: ../../jlavi.rst:25
 msgid "A colon separates a field name from its value. Commas separate fields and list elements. A trailing comma is allowed. Write a port as part of the quoted bind address, a connection limit as a decimal integer and a switch such as http3 as true or false."
 msgstr "Los dos puntos separan el nombre de un campo de su valor. Las comas separan los campos y los elementos de una lista. Se admite una coma final. Escribimos el puerto dentro de la dirección de escucha entre comillas, el límite de conexiones como entero decimal y un indicador como http3 con el valor true o false."
 
-#: ../../jlavi.rst:38
+#: ../../jlavi.rst:27
+msgid "Build a web pool"
+msgstr "Crear un grupo de servidores web"
+
+#: ../../jlavi.rst:30
+msgid "We can now describe the two timetable servers from :doc:`introduction` in a file. We save this module as ``edge.jlv``. A frontend listens on port 8080. Its ``default_backend`` names the timetable pool. The shield inspects HTTP requests, and the pool distributes admitted requests between two replicas."
+msgstr "Ahora podemos describir en un archivo los dos servidores del horario de :doc:`introduction`. Guardamos el módulo como ``edge.jlv``. Un frontend escucha en el puerto 8080. Su ``default_backend`` identifica el grupo timetable. El escudo inspecciona las solicitudes HTTP y el grupo distribuye las admitidas entre dos réplicas."
+
+#: ../../jlavi.rst:32
+msgid ""
+"fn edge() -> Map<Value> {\n"
+"    let hosts = [\"127.0.0.1\", \"127.0.0.2\"]\n"
+"    return {\n"
+"        http: { surface: \"shield\" },\n"
+"        frontends: { web: { binds: [\"127.0.0.1:8080\"], default_backend: \"timetable\" } },\n"
+"        backends: { timetable: { servers: [for host in hosts: \"${host}:9000\"] } },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn edge() -> Map<Value> {\n"
+"    let hosts = [\"127.0.0.1\", \"127.0.0.2\"]\n"
+"    return {\n"
+"        http: { surface: \"shield\" },\n"
+"        frontends: { web: { binds: [\"127.0.0.1:8080\"], default_backend: \"timetable\" } },\n"
+"        backends: { timetable: { servers: [for host in hosts: \"${host}:9000\"] } },\n"
+"    }\n"
+"}"
+
+#: ../../jlavi.rst:43
+msgid "The binding ``let hosts`` gives the list a name for the rest of the function. Its value stays fixed. The expression ``[for host in hosts: \"${host}:9000\"]`` makes one server address per host in list order. We could write ``address(host, 9000)`` there if we included the helper above."
+msgstr "Con ``let hosts`` damos un nombre a la lista para el resto de la función. Su valor permanece fijo. La expresión ``[for host in hosts: \"${host}:9000\"]`` produce una dirección de servidor por máquina, en el orden de la lista. Si incluimos la función auxiliar anterior, podemos escribir ahí ``address(host, 9000)``."
+
+#: ../../jlavi.rst:45
+msgid "We check the module before opening the listener. To generate a module from a working ``sibuna lb`` command we add ``--print-config`` to that command."
+msgstr "Comprobamos el módulo antes de abrir el puerto de escucha. Para generar un módulo a partir de una orden de ``sibuna lb`` que ya funciona, le añadimos ``--print-config``."
+
+#: ../../jlavi.rst:47
+msgid ""
+"sibuna check -f edge.jlv\n"
+"sibuna --config-file edge.jlv"
+msgstr ""
+"sibuna check -f edge.jlv\n"
+"sibuna --config-file edge.jlv"
+
+#: ../../jlavi.rst:52
+msgid "Name replicas with a helper"
+msgstr "Nombrar las réplicas con una función auxiliar"
+
+#: ../../jlavi.rst:55
+msgid "When replicas have names and weights, we can build each server record with the same function. We add the import at the top of the module and the helper before ``edge()``. The condition takes a boolean. The imported text library converts the name to lowercase."
+msgstr "Cuando las réplicas tienen nombres y pesos, podemos crear cada registro de servidor con la misma función. Añadimos la importación al inicio del módulo y la función auxiliar antes de ``edge()``. La condición recibe un booleano. La biblioteca de texto importada pasa el nombre a minúsculas."
+
+#: ../../jlavi.rst:57
+msgid ""
+"import { text } from jlv.std.foundation\n"
+"\n"
+"fn replica(label: Text, address: Text, primary: Bool) -> Map<Value> {\n"
+"    let name = text.lower(label)\n"
+"    if primary {\n"
+"        return { name: name, addr: address, weight: 2 }\n"
+"    }\n"
+"    return { name: name, addr: address, weight: 1 }\n"
+"}"
+msgstr ""
+"import { text } from jlv.std.foundation\n"
+"\n"
+"fn replica(label: Text, address: Text, primary: Bool) -> Map<Value> {\n"
+"    let name = text.lower(label)\n"
+"    if primary {\n"
+"        return { name: name, addr: address, weight: 2 }\n"
+"    }\n"
+"    return { name: name, addr: address, weight: 1 }\n"
+"}"
+
+#: ../../jlavi.rst:69
+msgid "In the first timetable pool we can replace the entire ``servers`` list with the expression below. Evaluating it produces two records that Sibuna can validate before it contacts either server."
+msgstr "En el primer grupo de horarios podemos sustituir toda la lista ``servers`` por la expresión siguiente. Su evaluación produce dos registros que Sibuna puede validar antes de contactar con los servidores."
+
+#: ../../jlavi.rst:71
+msgid "[replica(\"East\", \"127.0.0.1:9000\", true), replica(\"West\", \"127.0.0.2:9000\", false)]"
+msgstr "[replica(\"East\", \"127.0.0.1:9000\", true), replica(\"West\", \"127.0.0.2:9000\", false)]"
+
+#: ../../jlavi.rst:75
+msgid "Serve and observe a protected application"
+msgstr "Servir y observar una aplicación protegida"
+
+#: ../../jlavi.rst:78
+msgid "We save the following module as ``station.jlv``. We give the timetable a health check and twice as much weight on the first replica. A request must carry the station header to pass our request hook. The firewall checks it first. The separate connection hook asks a local agent about new connections on the staff frontend only."
+msgstr "Guardamos el siguiente módulo como ``station.jlv``. Configuramos una comprobación de salud para el servicio de horarios y damos a la primera réplica el doble de peso que a la segunda. Para pasar el control de peticiones, una petición debe llevar la cabecera de la estación. Antes la comprueba el cortafuegos. Solo en el frontend del personal, un control de conexión consulta a un agente local sobre las conexiones nuevas."
+
+#: ../../jlavi.rst:80
+msgid ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        global: {\n"
+"            max_flows: 4096, workers: 2, admin_socket: \"edge.sock\",\n"
+"            watch: \"5s\", shutdown_timeout: \"10s\",\n"
+"        },\n"
+"        http: {\n"
+"            surface: \"shield\", policy_file: \"policy.json\", secret_file: \"http.key\",\n"
+"            rate_limit: 120, rate_window: \"10s\",\n"
+"        },\n"
+"        plugins: {\n"
+"            station: { kind: \"native\", hook: \"require_header\", settings: { name: \"x-station\" } },\n"
+"            staff: { kind: \"agent\", socket: \"staff.sock\", deadline: \"5ms\", on_failure: \"deny\" },\n"
+"        },\n"
+"        hook_judges: { threads: 2, queue: 64 },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:8080\"], default_backend: \"timetable\",\n"
+"                max_body: \"64k\", hooks: { request: [\"station\"] },\n"
+"            },\n"
+"            staff: {\n"
+"                binds: [\"127.0.0.1:8081\"], default_backend: \"timetable\",\n"
+"                hooks: { connection: [\"staff\"], request: [\"station\"] },\n"
+"            },\n"
+"        },\n"
+"        backends: { timetable: {\n"
+"            balance: { kind: \"round_robin\" },\n"
+"            health_check: { kind: \"http\", path: \"/healthz\", expect_status: 200 },\n"
+"            connect_timeout: \"2s\", response_timeout: \"10s\", retries: 1,\n"
+"            servers: [\n"
+"                { name: \"east\", addr: \"127.0.0.1:9000\", weight: 2 },\n"
+"                { name: \"west\", addr: \"127.0.0.2:9000\", weight: 1 },\n"
+"            ],\n"
+"        } },\n"
+"        observability: { access_log: { output: \"stderr\" }, listen: \"127.0.0.1:9100\" },\n"
+"        console: { listen: \"127.0.0.1:9443\", data_dir: \"console-data\", node: 1 },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        global: {\n"
+"            max_flows: 4096, workers: 2, admin_socket: \"edge.sock\",\n"
+"            watch: \"5s\", shutdown_timeout: \"10s\",\n"
+"        },\n"
+"        http: {\n"
+"            surface: \"shield\", policy_file: \"policy.json\", secret_file: \"http.key\",\n"
+"            rate_limit: 120, rate_window: \"10s\",\n"
+"        },\n"
+"        plugins: {\n"
+"            station: { kind: \"native\", hook: \"require_header\", settings: { name: \"x-station\" } },\n"
+"            staff: { kind: \"agent\", socket: \"staff.sock\", deadline: \"5ms\", on_failure: \"deny\" },\n"
+"        },\n"
+"        hook_judges: { threads: 2, queue: 64 },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:8080\"], default_backend: \"timetable\",\n"
+"                max_body: \"64k\", hooks: { request: [\"station\"] },\n"
+"            },\n"
+"            staff: {\n"
+"                binds: [\"127.0.0.1:8081\"], default_backend: \"timetable\",\n"
+"                hooks: { connection: [\"staff\"], request: [\"station\"] },\n"
+"            },\n"
+"        },\n"
+"        backends: { timetable: {\n"
+"            balance: { kind: \"round_robin\" },\n"
+"            health_check: { kind: \"http\", path: \"/healthz\", expect_status: 200 },\n"
+"            connect_timeout: \"2s\", response_timeout: \"10s\", retries: 1,\n"
+"            servers: [\n"
+"                { name: \"east\", addr: \"127.0.0.1:9000\", weight: 2 },\n"
+"                { name: \"west\", addr: \"127.0.0.2:9000\", weight: 1 },\n"
+"            ],\n"
+"        } },\n"
+"        observability: { access_log: { output: \"stderr\" }, listen: \"127.0.0.1:9100\" },\n"
+"        console: { listen: \"127.0.0.1:9443\", data_dir: \"console-data\", node: 1 },\n"
+"    }\n"
+"}"
+
+#: ../../jlavi.rst:121
+msgid "We set the node's flow limit in ``global`` and the HTTP request allowance in ``http``. The ``plugins`` map names the checks. Each frontend chooses which checks run. The two threads in ``hook_judges`` handle connection-stage agent calls, with room for 64 waiting connections. The console keeps its accounts and audit records in its own SQLite directory."
+msgstr "En ``global`` fijamos el límite de flujos del nodo y en ``http`` la cuota de peticiones HTTP. El mapa ``plugins`` da nombre a los controles. Cada frontend selecciona cuáles se ejecutan. Los dos hilos de ``hook_judges`` consultan al agente en la fase de conexión y admiten hasta 64 conexiones en espera. La consola guarda las cuentas y los registros de auditoría en su propio directorio SQLite."
+
+#: ../../jlavi.rst:123
+msgid "The value of ``http.policy_file`` names a JSON file. We save this policy as ``policy.json`` beside the module. It challenges requests by default and denies requests for the retired timetable. We run the commands from that directory so the relative paths resolve."
+msgstr "El valor de ``http.policy_file`` nombra un archivo JSON. Guardamos esta política como ``policy.json`` junto al módulo. Por defecto presenta un desafío y deniega las peticiones del horario retirado. Ejecutamos las órdenes desde ese directorio para que se resuelvan las rutas relativas."
+
+#: ../../jlavi.rst:125
+msgid ""
+"{\n"
+"  \"default_action\": \"CHALLENGE\",\n"
+"  \"rules\": [{ \"name\": \"retired\", \"path\": \"/retired/*\", \"action\": \"DENY\" }]\n"
+"}"
+msgstr ""
+"{\n"
+"  \"default_action\": \"CHALLENGE\",\n"
+"  \"rules\": [{ \"name\": \"retired\", \"path\": \"/retired/*\", \"action\": \"DENY\" }]\n"
+"}"
+
+#: ../../jlavi.rst:132
+msgid ""
+"(umask 077 && openssl rand 32 > http.key)\n"
+"mkdir -p console-data\n"
+"sibuna init-admin admin --data-dir console-data\n"
+"sibuna check -f station.jlv\n"
+"sibuna --config-file station.jlv"
+msgstr ""
+"(umask 077 && openssl rand 32 > http.key)\n"
+"mkdir -p console-data\n"
+"sibuna init-admin admin --data-dir console-data\n"
+"sibuna check -f station.jlv\n"
+"sibuna --config-file station.jlv"
+
+#: ../../jlavi.rst:140
+msgid "We create the seed and administrator once. Each replica must answer ``GET /healthz`` and the staff agent must listen on ``staff.sock`` before it can admit staff connections. With Sibuna running, we can check readiness, inspect the pool and sign in at ``http://127.0.0.1:9443/console/``."
+msgstr "Creamos una sola vez la semilla y la cuenta de administración. Cada réplica debe responder a ``GET /healthz`` y el agente del personal debe escuchar en ``staff.sock`` para admitir conexiones. Con Sibuna en marcha, podemos comprobar si está listo, consultar el grupo e iniciar sesión en ``http://127.0.0.1:9443/console/``."
+
+#: ../../jlavi.rst:142
+msgid ""
+"curl http://127.0.0.1:9100/ready\n"
+"sibuna ctl edge.sock show servers\n"
+"sibuna ctl edge.sock show hooks"
+msgstr ""
+"curl http://127.0.0.1:9100/ready\n"
+"sibuna ctl edge.sock show servers\n"
+"sibuna ctl edge.sock show hooks"
+
+#: ../../jlavi.rst:148
 msgid "Route a browser and an RPC client"
 msgstr "Enrutar un navegador y un cliente RPC"
 
-#: ../../jlavi.rst:41
-msgid "This second module uses a typed helper to name an origin. The public portal uses the shield. Calls under ``/orders.Orders/`` use an HTTP/2 pool and skip the browser firewall. The RPC service must authenticate its callers."
-msgstr "El segundo módulo usa una función auxiliar tipada para nombrar un servidor de origen. El portal público usa el escudo. Las llamadas a ``/orders.Orders/`` usan un grupo HTTP/2 y omiten el cortafuegos del navegador. El servicio RPC debe autenticar a sus clientes."
+#: ../../jlavi.rst:151
+msgid "This module uses a typed helper to name an origin. The public portal uses the shield. Calls under ``/orders.Orders/`` use an HTTP/2 pool and skip the browser firewall. The RPC service must authenticate its callers."
+msgstr "Este módulo usa una función auxiliar tipada para nombrar un servidor de origen. El portal público usa el escudo. Las llamadas bajo ``/orders.Orders/`` usan un grupo HTTP/2 y omiten el cortafuegos del navegador. El servicio RPC debe autenticar a quienes lo llaman."
 
-#: ../../jlavi.rst:43
+#: ../../jlavi.rst:153
 msgid ""
 "fn service(name: Text, address: Text) -> Map<Value> {\n"
 "    return { name: name, addr: address }\n"
@@ -97,6 +297,7 @@ msgid ""
 "\n"
 "fn edge() -> Map<Value> {\n"
 "    return {\n"
+"        global: { acme: { storage: \"certificates\", directory: \"letsencrypt-staging\" } },\n"
 "        http: { surface: \"shield\" },\n"
 "        frontends: { https: {\n"
 "            binds: [\"0.0.0.0:443\"],\n"
@@ -120,6 +321,7 @@ msgstr ""
 "\n"
 "fn edge() -> Map<Value> {\n"
 "    return {\n"
+"        global: { acme: { storage: \"certificates\", directory: \"letsencrypt-staging\" } },\n"
 "        http: { surface: \"shield\" },\n"
 "        frontends: { https: {\n"
 "            binds: [\"0.0.0.0:443\"],\n"
@@ -137,57 +339,115 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../jlavi.rst:68
+#: ../../jlavi.rst:179
 msgid "We replace the example names and addresses before deployment. For a public name the ACME authority must be able to validate our domain. For ``orders.internal`` Sibuna issues and renews the certificate locally. We install the local root certificate in each client's trust store."
 msgstr "Sustituimos los nombres y las direcciones del ejemplo antes de desplegar. Para un nombre público, la autoridad ACME debe poder validar nuestro dominio. Para ``orders.internal``, Sibuna emite y renueva el certificado localmente. Instalamos el certificado raíz local en el almacén de confianza de cada cliente."
 
-#: ../../jlavi.rst:70
+#: ../../jlavi.rst:181
+msgid "Browsers can negotiate HTTP/2 over TCP or HTTP/3 over UDP on port 443. The portal pool uses the default HTTP/1.1 upstream. The orders pool selects HTTP/2 for gRPC trailers and streaming. For a public deployment we change the staging directory to ``\"letsencrypt\"`` after testing issuance. With an existing PEM bundle we replace ``auto`` with ``crt: \"portal.pem\"`` and supply the certificates and private keys for the names we serve."
+msgstr "Los navegadores pueden negociar HTTP/2 sobre TCP o HTTP/3 sobre UDP en el puerto 443. El grupo del portal usa HTTP/1.1 por defecto hacia el origen. El grupo de pedidos usa HTTP/2 para las cabeceras finales y los flujos de gRPC. Después de probar la emisión, cambiamos el directorio de pruebas por ``\"letsencrypt\"`` para el despliegue público. Con un paquete PEM existente, sustituimos ``auto`` por ``crt: \"portal.pem\"`` y proporcionamos los certificados y las claves privadas de los nombres que servimos."
+
+#: ../../jlavi.rst:183
+msgid "Relay a TCP service"
+msgstr "Retransmitir un servicio TCP"
+
+#: ../../jlavi.rst:186
+msgid "Some clients speak a protocol of their own. We give the frontend and its pool the same protocol. This complete module relays a connection to one of two timetable feeds. The frontend limits new connections per source and the pool checks whether each feed accepts TCP connections."
+msgstr "Algunos clientes hablan un protocolo propio. Damos al frontend y a su grupo el mismo protocolo. Este módulo completo retransmite cada conexión a una de dos fuentes de horarios. El frontend limita las conexiones nuevas por origen y el grupo comprueba si cada fuente acepta conexiones TCP."
+
+#: ../../jlavi.rst:188
+msgid ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        frontends: { feed: {\n"
+"            proto: \"tcp\", binds: [\"127.0.0.1:7000\"], default_backend: \"feeds\",\n"
+"            rate_limit: { conn_per_10s: 200 },\n"
+"        } },\n"
+"        backends: { feeds: {\n"
+"            mode: \"tcp\", health_check: { kind: \"tcp\" },\n"
+"            servers: [\"127.0.0.1:7001\", \"127.0.0.1:7002\"],\n"
+"        } },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        frontends: { feed: {\n"
+"            proto: \"tcp\", binds: [\"127.0.0.1:7000\"], default_backend: \"feeds\",\n"
+"            rate_limit: { conn_per_10s: 200 },\n"
+"        } },\n"
+"        backends: { feeds: {\n"
+"            mode: \"tcp\", health_check: { kind: \"tcp\" },\n"
+"            servers: [\"127.0.0.1:7001\", \"127.0.0.1:7002\"],\n"
+"        } },\n"
+"    }\n"
+"}"
+
+#: ../../jlavi.rst:203
 msgid "Share a UDP topology"
 msgstr "Compartir una topología UDP"
 
-#: ../../jlavi.rst:73
+#: ../../jlavi.rst:206
 msgid "Both nodes can use this module. In an empty directory we create mesh.key with 32 random bytes and copy it securely to the other node. Each node writes its own address and port from the nodes list into mesh.self. We run the check in that directory. The shared key authenticates peers, and accept_config lets them receive a cluster reload."
 msgstr "Ambos nodos pueden usar este módulo. En un directorio vacío creamos mesh.key con 32 bytes aleatorios y lo copiamos de forma segura al otro nodo. Cada nodo escribe en mesh.self su dirección y puerto de la lista nodes. Ejecutamos la validación en ese directorio. La clave compartida autentica a los pares y accept_config les permite recibir una recarga del clúster."
 
-#: ../../jlavi.rst:75
+#: ../../jlavi.rst:208
 msgid ""
 "fn edge() -> Map<Value> {\n"
 "    let peers = [\"10.20.0.11\", \"10.20.0.12\"]\n"
 "    return {\n"
+"        global: { admin_socket: \"edge.sock\", sticky_entries: 8192 },\n"
+"        spill: { path: \"dns.spill\", size: \"1m\" },\n"
 "        mesh: {\n"
 "            nodes: [for peer in peers: \"${peer}:7946\"],\n"
 "            self_file: \"mesh.self\",\n"
 "            key_file: \"mesh.key\",\n"
-"            accept_config: true,\n"
+"            accept_config: true, forward: {},\n"
 "        },\n"
 "        frontends: { dns: {\n"
-"            proto: \"udp\", binds: [\"127.0.0.1:5353\"], default_backend: \"resolvers\",\n"
+"            proto: \"udp\", binds: [\"127.0.0.1:15353\"], default_backend: \"resolvers\",\n"
+"            udp_defense: { mode: \"rate_limit\", threshold_pps: 200 },\n"
 "        } },\n"
-"        backends: { resolvers: { mode: \"udp\", servers: [\"10.20.0.53:53\"] } },\n"
+"        backends: { resolvers: {\n"
+"            mode: \"udp\", sticky: \"table\", max_flows_scope: \"fleet\",\n"
+"            servers: [\n"
+"                { name: \"east\", addr: \"10.20.0.53:53\", max_flows: 300 },\n"
+"                { name: \"west\", addr: \"10.20.0.54:53\", max_flows: 300 },\n"
+"            ],\n"
+"        } },\n"
 "    }\n"
 "}"
 msgstr ""
 "fn edge() -> Map<Value> {\n"
 "    let peers = [\"10.20.0.11\", \"10.20.0.12\"]\n"
 "    return {\n"
+"        global: { admin_socket: \"edge.sock\", sticky_entries: 8192 },\n"
+"        spill: { path: \"dns.spill\", size: \"1m\" },\n"
 "        mesh: {\n"
 "            nodes: [for peer in peers: \"${peer}:7946\"],\n"
 "            self_file: \"mesh.self\",\n"
 "            key_file: \"mesh.key\",\n"
-"            accept_config: true,\n"
+"            accept_config: true, forward: {},\n"
 "        },\n"
 "        frontends: { dns: {\n"
-"            proto: \"udp\", binds: [\"127.0.0.1:5353\"], default_backend: \"resolvers\",\n"
+"            proto: \"udp\", binds: [\"127.0.0.1:15353\"], default_backend: \"resolvers\",\n"
+"            udp_defense: { mode: \"rate_limit\", threshold_pps: 200 },\n"
 "        } },\n"
-"        backends: { resolvers: { mode: \"udp\", servers: [\"10.20.0.53:53\"] } },\n"
+"        backends: { resolvers: {\n"
+"            mode: \"udp\", sticky: \"table\", max_flows_scope: \"fleet\",\n"
+"            servers: [\n"
+"                { name: \"east\", addr: \"10.20.0.53:53\", max_flows: 300 },\n"
+"                { name: \"west\", addr: \"10.20.0.54:53\", max_flows: 300 },\n"
+"            ],\n"
+"        } },\n"
 "    }\n"
 "}"
 
-#: ../../jlavi.rst:93
+#: ../../jlavi.rst:235
 msgid "We run the first command on one node only. On the second node we use the same key and put 10.20.0.12:7946 in mesh.self. Each DNS listener serves clients on its own loopback interface."
 msgstr "Ejecutamos el primer comando en un solo nodo. En el segundo usamos la misma clave y escribimos 10.20.0.12:7946 en mesh.self. Cada nodo atiende a los clientes DNS en su interfaz de bucle local."
 
-#: ../../jlavi.rst:95
+#: ../../jlavi.rst:237
 msgid ""
 "(umask 077 && openssl rand 32 > mesh.key)\n"
 "printf '%s\\n' '10.20.0.11:7946' > mesh.self"
@@ -195,14 +455,170 @@ msgstr ""
 "(umask 077 && openssl rand 32 > mesh.key)\n"
 "printf '%s\\n' '10.20.0.11:7946' > mesh.self"
 
-#: ../../jlavi.rst:100
+#: ../../jlavi.rst:242
+msgid "The pool remembers a client's resolver. Each node keeps its own spill file for recovering choices after a restart. The mesh shares choices and the per-server flow allowance. We allow UDP port 7946 and the forwarding port 7947 (TCP and UDP) between peers. After starting both nodes we can compare their revisions with ``sibuna ctl edge.sock show cluster``."
+msgstr "El grupo recuerda el resolvedor de cada cliente. Cada nodo mantiene su propio archivo de respaldo para recuperar las asignaciones tras un reinicio. La malla comparte las asignaciones y el cupo de flujos por servidor. Entre pares abrimos el puerto UDP 7946 y el puerto de reenvío 7947 (TCP y UDP). Tras arrancar ambos nodos podemos comparar sus revisiones con ``sibuna ctl edge.sock show cluster``."
+
+#: ../../jlavi.rst:244
+msgid "Publish routes from a database"
+msgstr "Publicar rutas desde una base de datos"
+
+#: ../../jlavi.rst:247
+msgid "For a versioned topology we keep two modules. We use the first timetable example as ``edge.jlv``. Its ``frontends``, ``backends`` and ``http`` are the published revision. We save the following host settings as ``node.jlv``. The bind override lets this node serve the published web frontend on port 8180."
+msgstr "Para versionar la topología mantenemos dos módulos. Usamos el primer ejemplo de horarios como ``edge.jlv``. Sus secciones ``frontends``, ``backends`` y ``http`` forman la revisión publicada. Guardamos los ajustes de la máquina que siguen como ``node.jlv``. Al sustituir la dirección de escucha, este nodo sirve el frontend web publicado en el puerto 8180."
+
+#: ../../jlavi.rst:249
+msgid ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        global: { admin_socket: \"edge.sock\" },\n"
+"        authority: {\n"
+"            sqlite: \"authority.db\", node: \"station-1\", poll: \"5s\",\n"
+"            cache: \"authority.cache\", binds: { web: [\"127.0.0.1:8180\"] },\n"
+"        },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        global: { admin_socket: \"edge.sock\" },\n"
+"        authority: {\n"
+"            sqlite: \"authority.db\", node: \"station-1\", poll: \"5s\",\n"
+"            cache: \"authority.cache\", binds: { web: [\"127.0.0.1:8180\"] },\n"
+"        },\n"
+"    }\n"
+"}"
+
+#: ../../jlavi.rst:261
+msgid ""
+"sibuna authority apply -c node.jlv -f edge.jlv --expect 0 --note \"first timetable\"\n"
+"sibuna authority history -c node.jlv\n"
+"sibuna --config-file node.jlv"
+msgstr ""
+"sibuna authority apply -c node.jlv -f edge.jlv --expect 0 --note \"first timetable\"\n"
+"sibuna authority history -c node.jlv\n"
+"sibuna --config-file node.jlv"
+
+#: ../../jlavi.rst:267
+msgid "This example uses a build with SQLite support. We use revision zero only for a new database. Before the next change we run ``sibuna authority diff -c node.jlv -f edge.jlv`` and apply against the revision we reviewed. SQLite serves one host. With PostgreSQL support we can serve a fleet. We replace ``sqlite`` with ``postgres_url_file`` pointing to a protected file containing the PostgreSQL connection URL. Each host supplies its own node name and bind overrides."
+msgstr "Este ejemplo usa una compilación con SQLite. Usamos la revisión cero solo para una base de datos nueva. Antes del siguiente cambio ejecutamos ``sibuna authority diff -c node.jlv -f edge.jlv`` y aplicamos el cambio sobre la revisión examinada. SQLite sirve a una máquina. Con PostgreSQL podemos servir a un conjunto de máquinas. Sustituimos ``sqlite`` por ``postgres_url_file``, que apunta a un archivo protegido con la URL de conexión a PostgreSQL. Cada máquina aporta su nombre de nodo y sus direcciones de escucha locales."
+
+#: ../../jlavi.rst:269
 msgid "Evaluation and diagnostics"
 msgstr "Evaluación y diagnóstico"
 
-#: ../../jlavi.rst:103
+#: ../../jlavi.rst:272
 msgid "Sibuna exposes the pure ``jlv.std.foundation`` library. Helpers live in the same module. Deployment resources, filesystem operations and imports from neighbouring files are outside this interface. Source and resulting JSON each have a 256 KiB limit. Evaluation has a budget of one million steps."
 msgstr "Sibuna ofrece la biblioteca pura ``jlv.std.foundation``. Las funciones auxiliares viven en el mismo módulo. Los recursos de despliegue, el acceso al sistema de archivos y las importaciones de archivos vecinos quedan fuera de esta interfaz. El código y el JSON resultante tienen un límite de 256 KiB cada uno. La evaluación admite un millón de pasos."
 
-#: ../../jlavi.rst:105
+#: ../../jlavi.rst:274
 msgid "If the compiler reports an unknown name, we check its spelling and type at the reported line and column. If validation reports an unknown backend, we check that the route names a pool in the returned map. A rejected reload keeps the previous routing configuration."
 msgstr "Si el compilador indica un nombre desconocido, revisamos la grafía y el tipo en la línea y columna indicadas. Si la validación informa de un backend desconocido, comprobamos que la ruta nombre un grupo del mapa devuelto. Si se rechaza la recarga, sigue activa la configuración anterior."
+
+#: ../../jlavi.rst:276
+msgid "Where to configure each part"
+msgstr "Dónde configuramos cada componente"
+
+#: ../../jlavi.rst:279
+msgid "The following sections give the supported options, defaults and restart rules. A map in an operations example belongs at the same position in the value returned by ``edge()``. A quoted JSON field such as ``\"max_flows\": 4096`` can be written as ``max_flows: 4096`` in Jlavi."
+msgstr "Las siguientes secciones dan las opciones admitidas, los valores predeterminados y las reglas de reinicio. Un mapa de un ejemplo de operaciones ocupa el mismo lugar en el valor que devuelve ``edge()``. Un campo JSON como ``\"max_flows\": 4096`` se puede escribir en Jlavi como ``max_flows: 4096``."
+
+#: ../../jlavi.rst:285
+msgid "Jlavi field"
+msgstr "Campo de Jlavi"
+
+#: ../../jlavi.rst:286
+msgid "Operations reference"
+msgstr "Referencia de operaciones"
+
+#: ../../jlavi.rst:287
+msgid "``global``"
+msgstr "``global``"
+
+#: ../../jlavi.rst:288
+msgid ":ref:`edge-global-limits`, :ref:`edge-reload-drain-and-shutdown`, :ref:`edge-replacing-the-binary-without-losing-a-connection`"
+msgstr ":ref:`edge-global-limits`, :ref:`edge-reload-drain-and-shutdown`, :ref:`edge-replacing-the-binary-without-losing-a-connection`"
+
+#: ../../jlavi.rst:289
+msgid "``frontends``"
+msgstr "``frontends``"
+
+#: ../../jlavi.rst:290
+msgid ":ref:`edge-http-routing-by-name-and-path`, :ref:`edge-redirects-headers-and-body-limits`, :ref:`edge-websockets`, :ref:`edge-admission-at-the-socket-edge`, :ref:`edge-tcp-inspection-and-proxy-v2`"
+msgstr ":ref:`edge-http-routing-by-name-and-path`, :ref:`edge-redirects-headers-and-body-limits`, :ref:`edge-websockets`, :ref:`edge-admission-at-the-socket-edge`, :ref:`edge-tcp-inspection-and-proxy-v2`"
+
+#: ../../jlavi.rst:291
+msgid "``frontends.*.tls``"
+msgstr "``frontends.*.tls``"
+
+#: ../../jlavi.rst:292
+msgid ":ref:`edge-tls-certificates`, :ref:`edge-automatic-https`"
+msgstr ":ref:`edge-tls-certificates`, :ref:`edge-automatic-https`"
+
+#: ../../jlavi.rst:293
+msgid "``backends``"
+msgstr "``backends``"
+
+#: ../../jlavi.rst:294
+msgid ":ref:`edge-scheduling-and-health-checks`, :ref:`edge-timeouts-and-failover`, :ref:`edge-servers-that-speak-tls-http-2-or-http-3`, :ref:`edge-grpc`"
+msgstr ":ref:`edge-scheduling-and-health-checks`, :ref:`edge-timeouts-and-failover`, :ref:`edge-servers-that-speak-tls-http-2-or-http-3`, :ref:`edge-grpc`"
+
+#: ../../jlavi.rst:295
+msgid "``http``"
+msgstr "``http``"
+
+#: ../../jlavi.rst:296
+msgid ":ref:`edge-turning-the-firewall-on-and-off`, :ref:`edge-rate-limiting`, :ref:`edge-the-http-object`, :ref:`edge-declarative-policy`"
+msgstr ":ref:`edge-turning-the-firewall-on-and-off`, :ref:`edge-rate-limiting`, :ref:`edge-the-http-object`, :ref:`edge-declarative-policy`"
+
+#: ../../jlavi.rst:297
+msgid "``mesh``"
+msgstr "``mesh``"
+
+#: ../../jlavi.rst:298
+msgid ":ref:`edge-bans-across-a-cluster`, :ref:`edge-one-file-for-the-cluster`, :ref:`edge-one-node-for-each-client`"
+msgstr ":ref:`edge-bans-across-a-cluster`, :ref:`edge-one-file-for-the-cluster`, :ref:`edge-one-node-for-each-client`"
+
+#: ../../jlavi.rst:299
+msgid "``spill``"
+msgstr "``spill``"
+
+#: ../../jlavi.rst:300
+msgid ":ref:`edge-sticky-sessions`, :ref:`edge-keeping-the-sticky-table-over-a-restart`, :ref:`edge-a-sticky-table-and-a-limit-for-the-whole-cluster`"
+msgstr ":ref:`edge-sticky-sessions`, :ref:`edge-keeping-the-sticky-table-over-a-restart`, :ref:`edge-a-sticky-table-and-a-limit-for-the-whole-cluster`"
+
+#: ../../jlavi.rst:301
+msgid "``observability``"
+msgstr "``observability``"
+
+#: ../../jlavi.rst:302
+msgid ":ref:`edge-observing-the-edge`"
+msgstr ":ref:`edge-observing-the-edge`"
+
+#: ../../jlavi.rst:303
+msgid "``console``"
+msgstr "``console``"
+
+#: ../../jlavi.rst:304
+msgid ":ref:`edge-the-operator-console-of-the-edge`"
+msgstr ":ref:`edge-the-operator-console-of-the-edge`"
+
+#: ../../jlavi.rst:305
+msgid "``plugins``, ``hook_judges``"
+msgstr "``plugins``, ``hook_judges``"
+
+#: ../../jlavi.rst:306
+msgid ":ref:`edge-hooks-a-decision-of-our-own-on-the-path`"
+msgstr ":ref:`edge-hooks-a-decision-of-our-own-on-the-path`"
+
+#: ../../jlavi.rst:307
+msgid "``authority``"
+msgstr "``authority``"
+
+#: ../../jlavi.rst:308
+msgid ":ref:`edge-a-database-for-the-topology`"
+msgstr ":ref:`edge-a-database-for-the-topology`"
+
+#: ../../jlavi.rst:310
+msgid "Standalone firewall deployments select reverse proxy or forward authentication with ``--mode``. Their incident and reputation storage is configured on the daemon command line. We use :ref:`edge-daemon-options` for those flags and :ref:`edge-packaging` for service installation."
+msgstr "En un despliegue independiente del cortafuegos elegimos el proxy inverso o la autenticación delegada con ``--mode``. Configuramos el almacenamiento de incidentes y reputación desde la línea de órdenes del servicio. Consultamos :ref:`edge-daemon-options` para esas opciones y :ref:`edge-packaging` para instalar el servicio."

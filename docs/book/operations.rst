@@ -22,6 +22,8 @@ Edge mode
 
 With ``--config-file`` the daemon runs as an edge load balancer. It forwards TCP and UDP, terminates TLS, HTTP/2 and HTTP/3, and applies the gate or shield to the HTTP names that need it. ``sibuna lb`` starts the same load balancer from a few options, without a file, ``sibuna check -f`` checks a file offline, and ``sibuna ctl`` inspects the daemon and changes its servers while it runs. With an ``authority`` section the topology comes from a database that ``sibuna authority`` publishes to (SID 0028), and with a ``mesh`` section several nodes share their state. ``--config-file`` takes none of the options below. The chapter *Edge Load Balancing* below describes the commands and the file.
 
+.. _edge-daemon-options:
+
 Command-Line Reference
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -356,6 +358,8 @@ A failure to start is explained. The diagnostic has a title, the cause and a hin
 
 The checker rejects unknown keys, duplicate server identities, missing backends and invalid routes. It also loads every certificate and CA file. Startup binds every listener before it announces readiness. A UDP frontend binds a specific local IP, so replies leave from the address the client contacted. Durations are whole numbers with ``ms``, ``s``, ``m`` or ``h``, up to one day.
 
+.. _edge-global-limits:
+
 Global limits
 ~~~~~~~~~~~~~
 
@@ -394,6 +398,8 @@ Global limits
 One worker thread accepts connections, inspects handshakes and owns the UDP mappings. Established TCP streams move to the relay threads. On Linux every thread waits with epoll, so an idle flow costs no CPU time. We budget two file descriptors for each TCP stream and one for each UDP mapping. The operating system must allow the daemon that many descriptors (``LimitNOFILE`` under systemd).
 
 UDP sources are not validated, so a flood of spoofed addresses could fill the table. The separate UDP ceiling keeps TCP and HTTP clients admitted. When the UDP share is full, a new client replaces the oldest mapping that no server has answered.
+
+.. _edge-tls-certificates:
 
 TLS certificates
 ~~~~~~~~~~~~~~~~
@@ -453,6 +459,8 @@ To staple an OCSP response we put it as a DER file beside the certificate, with 
 The next section lets Sibuna obtain and renew certificates itself. An external ACME client such as certbot or acme.sh also fits. Its deploy hook writes the combined PEM file into the ``crt`` directory and sends SIGHUP. For the HTTP-01 challenge we route ``/.well-known/acme-challenge/`` to the client's own listener with ``"firewall": false``.
 
 To rotate a certificate we replace the file and send SIGHUP. A new handshake uses the new certificate. An established session keeps the one it started with. A reload with a bad file changes nothing.
+
+.. _edge-automatic-https:
 
 Automatic HTTPS
 ~~~~~~~~~~~~~~~
@@ -1004,6 +1012,8 @@ A reload may add and remove ``auto`` names, and turn ``on_demand`` of a frontend
    * - Renewal follows the renewal information of the authority.
      - The same, with ``ari: false`` to turn it off, and never later than four fifths of the lifetime.
 
+.. _edge-http-routing-by-name-and-path:
+
 HTTP routing by name and path
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1036,6 +1046,8 @@ An HTTP frontend selects a backend for each request, also for later requests on 
 
 Sibuna keeps the client's ``Host`` field and sets ``X-Forwarded-For``, ``X-Forwarded-Proto`` and ``X-Real-IP`` from the connection it terminated. It also sets ``X-Forwarded-Host`` to the ``Host`` of the request and ``X-Forwarded-Port`` to the port of the listener. A client cannot supply these fields. An application that reads ``X-Forwarded-For`` must list the Sibuna node as a trusted proxy.
 
+.. _edge-turning-the-firewall-on-and-off:
+
 Turning the firewall on and off
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1045,6 +1057,8 @@ A browser can solve a proof-of-work challenge. Git, curl, a CI runner and an API
 - ``"surface": "gate"`` or ``"shield"`` (the default) enables the firewall. A frontend then takes ``"firewall": false`` to exempt its requests, and each route takes ``"firewall": true`` or ``false`` to decide for its name or path. A route without the key follows its frontend.
 
 A request on a route without the firewall skips the policy, the challenge and the semantic inspection. Sibuna still parses and validates the request, enforces the connection limits and timeouts, honours existing bans, and applies ``http.rate_limit`` when we set a number. The audit fields report the rule ``load-balancer`` for it.
+
+.. _edge-rate-limiting:
 
 Rate limiting
 ~~~~~~~~~~~~~
@@ -1075,6 +1089,8 @@ Each protocol has its own limiter. All of them count per source IPv4 address or 
      - Further connections are refused. The default is 64.
 
 A UDP mapping may also send at most three times the bytes it received, with a bounded burst, so a spoofed source cannot use a server as an amplifier. A QUIC frontend ends the bound for a client that it validated (``udp_inspect``, below).
+
+.. _edge-the-http-object:
 
 The ``http`` object
 ~~~~~~~~~~~~~~~~~~~
@@ -1126,6 +1142,8 @@ With the workers on, a request of an HTTP/2 or HTTP/3 client is decided on the t
 
 An idle HTTP/2 or HTTP/3 connection gives up its flow slot after ``idle_timeout``, and after 60 s at the earliest. HTTP/2 connections are also probed with PING every 20 s. An HTTP/2 client may open a WebSocket with extended CONNECT (RFC 8441), which Sibuna carries as an HTTP/1.1 upgrade. Other CONNECT tunnels are refused.
 
+.. _edge-grpc:
+
 gRPC
 ~~~~
 
@@ -1157,6 +1175,8 @@ Three settings matter for a gRPC service.
 - A stream on which the server is silent for the ``response_timeout`` of its pool is closed. The default is 60 s. Long-lived streams need application messages more often than that, or a pool of their own with a longer bound, such as ``response_timeout: "1h"``. The same member bounds the wait for the response head of a call.
 
 The decision sees the request head and the message bytes that have arrived with it. It does not wait for more, because a call may wait for an answer before it sends its next message. gRPC over cleartext HTTP/2 from the client is not accepted: the frontend must terminate TLS. A server pool may speak cleartext HTTP/2 or HTTP/2 over TLS.
+
+.. _edge-servers-that-speak-tls-http-2-or-http-3:
 
 Servers that speak TLS, HTTP/2 or HTTP/3
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1206,6 +1226,8 @@ By default we verify the server certificate against the system roots, or against
 
 The firewall always relays HTTP/1.1. For the other cases an adapter inside the daemon listens on a loopback port for each server and translates. HTTP/2 and HTTP/3 servers cannot receive an HTTP/1.1 upgrade, so a WebSocket request to them answers 501. A local process that connects to an adapter port reaches the server it could already reach directly.
 
+.. _edge-scheduling-and-health-checks:
+
 Scheduling and health checks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1229,6 +1251,8 @@ An HTTP pool also learns from live requests. This is *passive health*, and it is
 ``failures`` is the number of consecutive failures, from 1 to 100. ``ejection`` is how long the server stays out. With ``http_5xx: true`` a response with status 500, 502, 503 or 504 counts as a failure too. Any other complete response sets the count back to zero. ``passive_health: "off"`` keeps every server in rotation.
 
 A server that returns after it was down or drained, or that a reload or ``add server`` adds to a pool, can start gently. With ``slow_start: "30s"`` its weight grows from almost nothing to its configured weight over thirty seconds. The default is off, as in HAProxy and nginx: only we know how long our application takes to warm up. Servers that start together with the edge do not ramp.
+
+.. _edge-timeouts-and-failover:
 
 Timeouts and failover
 ~~~~~~~~~~~~~~~~~~~~~
@@ -1275,6 +1299,8 @@ A request to an HTTP/2 or HTTP/3 server also moves when the shared session to th
 
 A request that moved is one line of the access log and one request in the counters, under the server that answered it. Each server it left counts one in ``sibuna_edge_server_failures_total`` and one in ``sibuna_edge_server_failovers_total``. The last field of the log line, ``retries``, is the number of servers the request left. A redirect and a 413 of our own are logged without a server.
 
+.. _edge-sticky-sessions:
+
 Sticky sessions
 ~~~~~~~~~~~~~~~
 
@@ -1293,6 +1319,8 @@ With ``"source"`` the client address selects the server, without its port. No co
 A cookie whose server is down, full, ejected or drained gives way: the request is balanced as usual, and the client receives the cookie of the server that answered. With ``"source"`` each client of a server that is down, full, ejected or drained has one other server, and returns when its own server does.
 
 Behind ``trusted_proxies`` the client address of ``"source"`` is the one the proxy recorded, as for the access log and the limits. Without that option it is the socket peer, so all requests of one proxy would share a server.
+
+.. _edge-keeping-the-sticky-table-over-a-restart:
 
 Keeping the sticky table over a restart
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1349,6 +1377,8 @@ Keep the file on a local disk, in a directory that only the daemon writes. A sec
 - *A volume that outlives the container.* The file also works in the writable layer of a container and in an ``emptyDir``, but there it is lost with the container or the Pod, and a new file is empty. We use a named volume or a PersistentVolumeClaim. We never put the file on a ``tmpfs`` or on an ``emptyDir`` with ``medium: Memory``: the whole file then counts as memory and no restart of the host keeps it. The size of the file counts against the size of the volume, and in an ``emptyDir`` against the limit of ephemeral storage.
 - *The memory limit.* This is ``--memory`` of Docker and ``resources.limits.memory`` of Kubernetes. We set it above the size of the file plus the memory of the daemon, as the paragraph on memory says. In Kubernetes we set the request to the same value, because the used pages count as working memory of the Pod.
 - *One file for each replica.* The file is locked. A second replica with the same volume and the same path runs with the table in memory alone. We give each replica a volume of its own, as the volume claim template of a StatefulSet does. A network file system such as NFS is not a local disk, and we have not tested one.
+
+.. _edge-redirects-headers-and-body-limits:
 
 Redirects, headers and body limits
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1429,6 +1459,8 @@ The edits apply to exchanges with a server. Sibuna's own pages, such as a challe
 
 In JSON the members have the same names: ``"redirect_https": true``, ``"max_body": "10m"``, ``"sticky": {"kind": "cookie", "cookie": "srv"}``.
 
+.. _edge-websockets:
+
 WebSockets
 ~~~~~~~~~~
 
@@ -1458,10 +1490,14 @@ Three timers matter. ``websocket_idle_timeout`` closes a tunnel on which neither
 
 A tunnel stays on the server that accepted it. An application that keeps its live state in one process, such as a hub of connected clients, therefore needs a pool with one server, or a broker behind its servers.
 
+.. _edge-tcp-inspection-and-proxy-v2:
+
 TCP inspection and PROXY v2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A frontend may set ``"tcp_inspect": "tls_client_hello"``, define ``acls`` with exact ``sni`` or ``alpn`` matches or a ``ja4_prefix`` pattern such as ``t13d*``, and list ordered ``deny`` or ``use_backend`` rules. By default the worker closes malformed or incomplete handshakes after a bounded inspection of up to 32 KiB and a default deadline of two seconds, and ``inspect_fallback`` can forward them instead (see the next section). A complete hello with no matching rule uses the default pool. Enable ``"proxy_v2": {"enabled": true}`` on a TCP pool only when its servers accept a PROXY v2 address header before the stream. We can add ``"tlv_sni": true`` or ``"tlv_ja4": true`` inside ``proxy_v2`` to forward inspected metadata. SNI uses the AUTHORITY type (0x02). Sibuna uses the custom type 0xe0 for the 36 ASCII bytes of JA4. The origin must agree on this type.
+
+.. _edge-admission-at-the-socket-edge:
 
 Admission at the socket edge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1554,6 +1590,8 @@ The servers of the pool must choose random connection IDs of at least 8 bytes, a
     "session_timeout": "60s",
     "udp_defense": {"mode": "rate_limit", "threshold_pps": 50000},
     "default_backend": "quic_fleet"}
+
+.. _edge-observing-the-edge:
 
 Observing the edge
 ~~~~~~~~~~~~~~~~~~
@@ -1761,7 +1799,7 @@ Writing the topology in JLV
 
 :doc:`jlavi`
 
-JLV is the configuration language of jlavideploy and jlavici. A file that ends in ``.jlv`` is a JLV/2 module with a function ``edge`` that returns the same document as the JSON file. We write a pool once and generate its servers.
+Sibuna uses Jlavi (JLV/2) as its configuration language. A file that ends in ``.jlv`` is a JLV/2 module with a function ``edge`` that returns the same document as the JSON file. We write a pool once and generate its servers.
 
 .. code-block:: text
 
@@ -1800,6 +1838,8 @@ JLV is the configuration language of jlavideploy and jlavici. A file that ends i
 
 We check the module with ``sibuna check -f edge.jlv`` and run it with ``sibuna --config-file edge.jlv``. Sibuna compiles and evaluates the module at startup and at each reload, off the packet path. An error names the line and column. The pure ``jlv.std.foundation`` functions are available. One module is evaluated. It cannot import other files, read the environment or perform I/O. The source and the expanded document each have a 256 KiB limit, and evaluation has one million steps. Both formats pass through the same topology checks. A build without the ``jlv`` feature accepts JSON only.
 
+.. _edge-reload-drain-and-shutdown:
+
 Reload, drain and shutdown
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1808,6 +1848,8 @@ On Unix we replace the file and send SIGHUP. Sibuna prepares the whole revision 
 A reload fails no request. The firewall decides a request under one policy and selects its server a moment later. When a reload falls between the two, the request is routed by the revision it was decided under. The daemon keeps the replaced revision for ten seconds for this purpose.
 
 With ``global.watch`` the daemon reloads the file by itself. It looks at the modification time and the length of the file at the given interval, and loads the file when both differ from the last load and have been the same for two looks. The second condition waits for a writer to finish. A rejected file is logged once and not tried again until it changes. The watcher is off by default. After a reviewed edit, ``sibuna check -f`` followed by SIGHUP or ``sibuna ctl SOCKET reload`` shows us the result. The watcher suits a file that a deployment tool replaces by rename.
+
+.. _edge-bans-across-a-cluster:
 
 Bans across a cluster
 ~~~~~~~~~~~~~~~~~~~~~
@@ -1833,6 +1875,8 @@ The commands of the admin socket travel the same way. ``sibuna ctl SOCKET set se
 One rule stays. The default pool of a mesh places clients by a table that every node builds from the file. Such a pool takes drains at run time, but no weights and no members. We change its servers in the file and run ``reload cluster``. A pool with ``balance: { kind: "round_robin" }``, ``"least_connections"`` or ``"p2c_pewma"`` takes every command.
 
 ``sibuna ctl SOCKET del ban 203.0.113.9`` lifts the ban of one client on every node. A node that was cut off cannot bring the ban back. A client that offends again is banned again. ``del ban ADDRESS local`` lifts the ban on one node.
+
+.. _edge-one-file-for-the-cluster:
 
 One file for the cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1871,6 +1915,8 @@ The initiating node checks and applies its file, then sends those same bytes to 
 A node takes a file only when it states ``accept_config: true``, and only from a holder of the mesh key. A holder of that key can therefore change the topology of every such node, so the key file must be readable by the daemon alone. The daemon must be able to write the directory of its file. The file travels signed but not encrypted. Certificates, keys and other files that the topology names by path are not sent: we place them on every node before the reload. A node that was down keeps its old file; we run the command again when it is back.
 
 The sticky cookie of a pool needs no sharing, but it needs the same ``http.secret_file`` on every node. Without that file each node draws its own secret and does not recognise the cookie of another.
+
+.. _edge-a-database-for-the-topology:
 
 A database for the topology
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1945,6 +1991,8 @@ The URL file holds ``postgres://ROLE:PASSWORD@HOST/DATABASE``. Only the user of 
 
 In this mode the file of a node stays on its host. ``reload`` reads it again, and ``reload cluster`` answers ``DBA009``. Adding or removing ``authority``, or changing anything in it but ``binds``, needs a restart. A change at run time, such as a weight, is not a revision: the next revision replaces it as a reload does. The history is not pruned.
 
+.. _edge-a-sticky-table-and-a-limit-for-the-whole-cluster:
+
 A sticky table and a limit for the whole cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1981,6 +2029,8 @@ Every node must name the server with the same address and the same ``max_flows``
    http 10.0.1.1:80    300    100    180    171  2/2
 
 ``share`` is what this node may hold now and ``used`` what it holds. ``synced`` counts the peers whose account of the server this node knows. While it is below the number of peers, the node serves only on what the other peers lend it. A value that stays low names a peer that is down or whose file differs. ``mesh.replicate_sticky: false`` keeps the table on its node. ``mesh.replicate_shares: false`` fixes every node at its equal share.
+
+.. _edge-one-node-for-each-client:
 
 One node for each client
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2067,6 +2117,8 @@ The new process binds the same addresses while the old one serves, and the kerne
 A takeover needs no ``global.drain_delay``: nothing in front has to notice, because the new process already accepts. With a delay the old process keeps accepting its share of new connections for that time, and only then stops. We set a delay for the other case, a node that leaves the pool of a balancer in front.
 
 A connection that reaches the old process in the instant it closes its listener is reset, and the client connects again. In our test with a client that opens a new connection for every request, no request failed in 15 takeovers. An HTTP/3 connection does not survive the takeover: the kernel may hand its packets to the other process, which does not know the connection, and the client then connects again. Connections over TCP are not affected. Without ``reuse_port`` a second process on the same address is refused with ADDRESS IN USE, which protects against starting the service twice by mistake.
+
+.. _edge-replacing-the-binary-without-losing-a-connection:
 
 Replacing the binary without losing a connection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2312,6 +2364,8 @@ We change a setting in a drop-in, not in the packaged file: ``systemctl edit sib
    sudo systemctl enable --now sibuna-edge
    sudo -u sibuna sibuna ctl /run/sibuna/edge.sock show servers
 
+.. _edge-hooks-a-decision-of-our-own-on-the-path:
+
 Hooks: a decision of our own on the path
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -2430,6 +2484,8 @@ A reload loads every module again and checks it before anything changes. A plugi
 *Writing a module.* A module exports its memory and six functions, and receives each request as one encoded record in a buffer of its own. The crate ``cmd/sibuna-hook-wasm`` is a complete example in Rust without ``std``, and SID 0030 specifies the record and the functions. We build it with ``cargo build -p sibuna-hook-wasm --target wasm32-unknown-unknown --profile wasm``.
 
 *Writing an agent.* An agent accepts connections on its socket and reads frames: a length of four bytes, a version, a kind, and an identifier of eight bytes. It answers a ``decide`` frame with a ``verdict`` frame of the same identifier, whose payload is one byte, 0 to admit, 1 to deny, 2 to challenge, and then the field lines to add. A ``sample`` frame has no answer. SID 0030 specifies the frame.
+
+.. _edge-the-operator-console-of-the-edge:
 
 The operator console of the edge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3034,6 +3090,8 @@ The first rule denies one fingerprint exactly; the value is an example, not a kn
 
 Incidents (WAF denials, honeypot hits and audit findings) record the fingerprint of their request when it carried one, in the column ``security_incidents.ja4``. The console shows it in the incident evidence as "JA4 fingerprint", with the value or "Not recorded". The Events filters accept a fingerprint or a prefix. The managed-rule editor has a JA4 field, stored in ``policies.ja4_pattern``, and the policy test form takes a fingerprint.
 
+.. _edge-declarative-policy:
+
 Declarative Policy
 ------------------
 
@@ -3203,6 +3261,8 @@ Cluster Challenge Routing
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Challenge keys are bound to ``--cluster-node``; keep challenge issuance and verification on the same member. Tokens use the shared seed and work on other members. Local rate quotas do not become global quotas, and process restarts clear spent sets. With three nodes on one local PostgreSQL, a policy row written directly reaches all three within one tick, a honeypot ban on one node reaches the others, and incident identifiers never collide (``crates/storage/tests/multi_node.rs``, SID 0011 criterion 2; it runs when ``SIBUNA_TEST_DATABASE_URL`` is set).
+
+.. _edge-packaging:
 
 Packaging
 ---------
