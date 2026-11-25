@@ -74,6 +74,9 @@ A pool (an entry of ``backends``) takes these members. All are optional.
    * - ``retries``
      - ``2``
      - How many other servers one request may try. 0 to 8. Zero turns failover off.
+   * - ``retry_body``
+     - ``"64k"``
+     - The largest request body that is kept so that the request can be sent again. 0 to ``"64k"``, the size of the request buffer. Zero keeps no body.
    * - ``passive_health``
      - on
      - ``"off"``, or an object with ``failures`` (3), ``ejection`` (``"10s"``) and ``http_5xx`` (false).
@@ -284,6 +287,103 @@ A server enters service when it is first seen in a pool that already had servers
 The ramp starts when a reservation first sees the server in service again, not when the health probe does. A pool without traffic therefore starts the ramp at its next request.
 
 The default is off, as in HAProxy, nginx and Envoy. A ramp that is too short does nothing and one that is too long wastes a healthy server, and only the operator knows how long the application takes to warm up.
+
+Moving a request that has a body
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A request can be sent again only while we still hold all of it. Every path buffers the first 64 KiB of a request for the firewall decision. A body that ended inside that buffer is held whole, at no further cost. ``retry_body`` says how much of it we are willing to send twice: a body of at most ``retry_body`` bytes that is held whole is *kept*. A longer body, and a body that is still streaming, is not kept. ``retry_body`` cannot exceed the buffer, so no path makes a second copy of a body.
+
+Holding the request is necessary and not sufficient. Sending a request twice is safe in two cases only.
+
+#. The method is idempotent by RFC 9110, section 9.2.2: ``GET``, ``HEAD``, ``OPTIONS``, ``PUT``, ``DELETE`` and ``TRACE``. Carrying such a request out twice has the effect of carrying it out once.
+#. The server provably did not act on the request. This is so when the connect failed, when the request was handed back unsent by the connection, when an HTTP/2 server reset the stream with ``REFUSED_STREAM``, and when an HTTP/2 server sent ``GOAWAY`` with a last stream below the stream of the request (RFC 9113, sections 6.8 and 8.7).
+
+A missing reply is not such a proof. A ``POST`` whose connection was lost after a byte was sent is never sent again, whatever its size.
+
+.. list-table:: What follows the loss of a server before a response byte
+   :header-rows: 1
+   :widths: 40 20 20 20
+
+   * - Loss
+     - Idempotent, kept
+     - Not idempotent, kept
+     - Not kept
+   * - The connect failed, or the session could not be opened
+     - Moves
+     - Moves
+     - Moves
+   * - The request was handed back unsent, ``REFUSED_STREAM``, or ``GOAWAY`` below the stream (HTTP/2 server)
+     - Same server once, then moves
+     - Same server once, then moves
+     - 502
+   * - A pooled connection or a shared session was lost after the send
+     - Same server once, then moves
+     - 502
+     - 502
+   * - A fresh connection was lost after the send
+     - Moves
+     - 502
+     - 502
+   * - Silence for ``response_timeout``
+     - 504
+     - 504
+     - 504
+   * - Any loss after a response byte
+     - Closed
+     - Closed
+     - Closed
+
+A failed connect moves a request that is not kept as well, because the body has not left the client connection yet: it streams to the server that accepts the connect. A request that is "not kept" in the second row has a body that was already taken from its stream, so there is nothing left to send. A timeout does not move a request: the server may be working on it, and sending it elsewhere would do the work twice and take twice the time the client was promised.
+
+``sibuna_net::recover`` reads four facts about the loss, ``unanswered``, ``kept``, ``idempotent`` and ``refused``, and two about the connection, ``pooled`` and ``retried``. It answers ``Fail`` unless ``unanswered`` and ``kept`` and (``idempotent`` or ``refused``). Otherwise it answers ``Reconnect`` for the first loss of a pooled connection and ``Move`` after that. The Lean model proves that a request that is not idempotent is sent again only with ``refused``.
+
+For an HTTP/3 server we have no proof of refusal yet: the client library reports ``H3_REQUEST_REJECTED`` like any other stream error. HTTP/3 servers therefore get the idempotent rule only.
+
+The choice of a server without a lock
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The routing table was one mutex, taken by every request for the choice of its server. Under contention the lock, not the choice, was the cost. Now a request reads an immutable snapshot.
+
+.. graphviz::
+   :caption: Writers build a snapshot under the mutex and raise the generation. A reader compares one number and uses the snapshot its thread already has.
+   :alt: A reload or a command changes the master table under a mutex, builds a snapshot from it, stores it and raises a generation counter. Each worker thread keeps its own reference to a snapshot together with the generation it was read at. A request compares that generation with the counter. When they are equal it uses the cached snapshot without any lock. When they differ the thread takes the mutex once and fetches the new snapshot.
+
+   digraph snapshot {
+     graph [rankdir=LR, bgcolor="transparent", fontname="Helvetica", fontsize=9, nodesep=0.3, ranksep=0.5];
+     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fillcolor="#eff6ff", color="#1e40af", penwidth=1.0, margin="0.1,0.05"];
+     edge [color="#64748b", fontname="Helvetica", fontsize=7.5, fontcolor="#475569", arrowsize=0.6];
+     writer [label="Reload or command"];
+     master [label="Master table\n(mutex)"];
+     snap [label="Snapshot\n(immutable)"];
+     gen [label="Generation\n(atomic)"];
+     cache [label="Thread cache\nsnapshot + generation"];
+     request [label="Request"];
+     writer -> master [label="change"];
+     master -> snap [label="build"];
+     master -> gen [label="raise"];
+     request -> gen [label="compare"];
+     request -> cache [label="equal: use"];
+     cache -> master [label="differs: fetch once", style=dashed];
+   }
+
+A snapshot holds the frontends, the pools of the current revision and of the revision a reload retired, the sticky key and the regime. It never changes after it is built. Everything that a request changes lives outside it, in the per-server state that a reload keeps: the count of active requests, the count of admitted requests, the round robin credit, the mark of a failed connect, the ejection and the ramp. These are atomics. The mark of a failed connect was a mutex per server and is now one atomic number of milliseconds. The slow start state stays behind a small mutex per server, but a server that is in service and past its ramp is recognised by one atomic flag, so the mutex is taken only around a return to service. The sticky token of a server was computed under a mutex and cached; it is now computed when the snapshot is built.
+
+A writer (a reload, a run-time command, the change of the regime or of the sticky seed) changes the master table under the mutex, builds a new snapshot, and raises the generation. A reader that compares the generation just before the writer raises it uses the old snapshot, exactly as a request that arrived a moment earlier. The health flags are atomics that both snapshots share, so a probe needs no new snapshot.
+
+There is no new crate and no ``unsafe``: the thread cache is a ``thread_local`` list of at most eight entries, one for each routing table the thread has used.
+
+Two requests that choose at the same time may now both see the same least loaded server and both take it. With the mutex the second one saw the count of the first. The counts are exact again one request later, and limits are still enforced: a reservation that finds its server above ``max_flows`` after counting itself gives the place back and the choice is repeated.
+
+The ranking table of source stickiness
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Ranking every server for every request costs one hash and one logarithm per server. The ranking of a client depends only on its address, the names and the weights, so we compute it in advance for a fixed number of classes of clients.
+
+A pool that is sticky by source has a table of 1021 slots. Slot :math:`i` holds the four nearest servers of the pool for the number :math:`i`, by the same weighted rendezvous ranking, nearest first, backups excluded. A client address is hashed to a slot. Its server is the first server of the slot that can serve now. When none of the four can, the pool falls back to ranking all servers for the slot number, so the answer is always the nearest eligible server of that slot.
+
+The properties of the ranking carry over, per slot instead of per address: a server takes slots in proportion to its weight; when a server leaves, only its slots move, each to the next server of its own order; when it returns the slots return; every node computes the same table. The table depends on names and weights only, so a drain, an ejection or a health change does not rebuild it. A change of a weight, ``add server`` and ``del server`` rebuild it, 1021 rankings of the pool, when the next snapshot is built.
+
+The price is granularity. Two addresses in one slot share their server and their second choice. With 1021 slots a server of weight 1 in a pool of total weight 1000 serves one slot, not a thousandth of the addresses exactly.
 
 Sticky sessions
 ~~~~~~~~~~~~~~~

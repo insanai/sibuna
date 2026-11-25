@@ -206,3 +206,86 @@ theorem ejected_servers_wait (available : List (Nat × Bool))
   simp only [candidates, spare, if_true] at h
   have := (List.mem_filter.mp h).2
   simpa using this
+
+/-! ## Sending a request again
+
+`recover` decides what follows the loss of a server after the connection was made.
+A request that is not idempotent is sent again only when the server refused it. -/
+
+inductive Recovery where
+  | reconnect
+  | move
+  | fail
+deriving DecidableEq
+
+structure Lost where
+  unanswered : Bool
+  kept : Bool
+  idempotent : Bool
+  refused : Bool
+  pooled : Bool
+  retried : Bool
+
+def recover (lost : Lost) : Recovery :=
+  if lost.unanswered && lost.kept && (lost.idempotent || lost.refused) then
+    if lost.pooled && !lost.retried then Recovery.reconnect else Recovery.move
+  else Recovery.fail
+
+theorem resend_needs_no_answer_and_a_kept_request (lost : Lost)
+    (h : recover lost ≠ Recovery.fail) : lost.unanswered = true ∧ lost.kept = true := by
+  cases lost with
+  | mk unanswered kept idempotent refused pooled retried =>
+    cases unanswered <;> cases kept <;> simp_all [recover]
+
+theorem a_request_that_is_not_idempotent_needs_a_refusal (lost : Lost)
+    (h : recover lost ≠ Recovery.fail) (unsafe' : lost.idempotent = false) :
+    lost.refused = true := by
+  cases lost with
+  | mk unanswered kept idempotent refused pooled retried =>
+    cases unanswered <;> cases kept <;> cases refused <;> simp_all [recover]
+
+theorem a_server_is_tried_again_at_most_once (lost : Lost)
+    (h : recover lost = Recovery.reconnect) : lost.pooled = true ∧ lost.retried = false := by
+  cases lost with
+  | mk unanswered kept idempotent refused pooled retried =>
+    cases unanswered <;> cases kept <;> cases idempotent <;> cases refused <;>
+      cases pooled <;> cases retried <;> simp_all [recover]
+
+/-! ## The ranking table of source stickiness
+
+A slot holds a short order of servers. The server of a client is the first eligible
+one of its slot, or the result of the full ranking when the slot has none. -/
+
+def firstEligible (eligible : Nat → Bool) : List Nat → Option Nat
+  | [] => none
+  | server :: rest => if eligible server then some server else firstEligible eligible rest
+
+def home (eligible : Nat → Bool) (slot : List Nat) (full : Option Nat) : Option Nat :=
+  match firstEligible eligible slot with
+  | some server => some server
+  | none => full
+
+theorem first_eligible_is_eligible (eligible : Nat → Bool) (slot : List Nat) (server : Nat)
+    (h : firstEligible eligible slot = some server) : eligible server = true := by
+  induction slot with
+  | nil => simp [firstEligible] at h
+  | cons head rest ih =>
+    simp only [firstEligible] at h
+    split at h
+    · cases h; assumption
+    · exact ih h
+
+theorem home_is_eligible (eligible : Nat → Bool) (slot : List Nat) (full : Option Nat)
+    (server : Nat) (fallback : ∀ s, full = some s → eligible s = true)
+    (h : home eligible slot full = some server) : eligible server = true := by
+  unfold home at h
+  split at h
+  · rename_i found
+    cases h
+    exact first_eligible_is_eligible eligible slot _ found
+  · exact fallback server h
+
+theorem the_first_server_of_a_slot_serves_when_it_can (eligible : Nat → Bool) (first : Nat)
+    (rest : List Nat) (full : Option Nat) (h : eligible first = true) :
+    home eligible (first :: rest) full = some first := by
+  simp [home, firstEligible, h]
