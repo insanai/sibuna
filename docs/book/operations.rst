@@ -1646,6 +1646,43 @@ A node takes a file only when it states ``accept_config: true``, and only from a
 
 The sticky cookie of a pool needs no sharing, but it needs the same ``http.secret_file`` on every node. Without that file each node draws its own secret and does not recognise the cookie of another.
 
+A sticky table and a limit for the whole cluster
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Two more things can hold on every node of a mesh (SID 0025). Both are off until a pool asks for them.
+
+.. code-block:: text
+
+   backends: {
+       app: {
+           sticky: { kind: "table", on: "cookie", cookie: "JSESSIONID", ttl: "30m" },
+           max_flows_scope: "fleet",
+           servers: [
+               { name: "a", addr: "10.0.1.1:80", max_flows: 300 },
+               { name: "b", addr: "10.0.1.2:80", max_flows: 300 },
+           ],
+       },
+   }
+
+With ``sticky: "table"`` the pool balances the first flow of a client and remembers the server. The client is its source address, or with ``on: "cookie"`` the value of a cookie that the application sets. The node tells its peers each choice, and a peer that restarts receives the whole table, so the client reaches the same server through every node. ``ttl`` is how long a choice is kept after its last use, 30 minutes by default. ``global.sticky_entries`` is the size of the table, 65,536 by default. We set it to twice the clients we expect, and restart to change it. A node that is cut off serves from its own table. When it returns, the choice that was made or used last wins for new flows. A flow under way never moves.
+
+With ``max_flows_scope: "fleet"`` the ``max_flows`` of a server bounds the flows of all nodes together. Each node starts with an equal share, and the shares move to the nodes that have the flows within about a second. The limit holds whatever the network does. The price is capacity that nobody can use for a while:
+
+- A node that stops keeps its share from the others until it starts again. To give the share up for good we remove the node from the mesh of every file and restart the nodes.
+- A node that is cut off keeps its last share, and so does the other side.
+- When all nodes start and one is missing, no node serves the capped server until the missing node answers.
+
+Every node must name the server with the same address and the same ``max_flows``, and all nodes must run a version with this feature. ``sibuna ctl SOCKET show affinity`` shows the table and the shares:
+
+.. code-block:: text
+
+   sticky table: 65536 slots, 412 learned, 96 refreshed, 12 evicted, 0 not written
+   sticky mesh: 1524 sent, 1012 received, 498 applied, 0 dropped
+   server            limit   base  share   used  synced
+   http 10.0.1.1:80    300    100    180    171  2/2
+
+``share`` is what this node may hold now and ``used`` what it holds. ``synced`` counts the peers whose account of the server this node knows. While it is below the number of peers, the node serves only on what the other peers lend it. A value that stays low names a peer that is down or whose file differs. ``mesh.replicate_sticky: false`` keeps the table on its node. ``mesh.replicate_shares: false`` fixes every node at its equal share.
+
 Replacing the binary without closing the port
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
