@@ -33,6 +33,7 @@ pub use mesh::{
 mod observe;
 mod pool;
 mod proxy;
+mod quic_edge;
 mod quick;
 pub use quick::{QuickAutomatic, QuickProtocol, QuickStart};
 mod route;
@@ -154,6 +155,8 @@ struct DatagramFlow {
     timeout: Duration,
     wire_credit: usize,
     payload_credit: usize,
+    /// Whether the client address is validated, on a QUIC frontend (SID 0032).
+    validation: quic_edge::Validation,
 }
 
 /// A single-owner packet worker with bounded flows and a separate TCP connector queue.
@@ -823,6 +826,7 @@ impl Edge {
                 timeout,
                 wire_credit: 0,
                 payload_credit: 0,
+                validation: quic_edge::Validation::new(self.listeners[key.0].route.quic),
             },
         );
         true
@@ -834,10 +838,13 @@ impl Edge {
             return false;
         }
         let now = Instant::now();
-        if !self.udp.contains_key(&key) && !self.open_mapping(key, now) {
+        if !self.udp.contains_key(&key)
+            && !(self.may_open(key, size) && self.open_mapping(key, now))
+        {
             return false;
         }
         let Some(flow) = self.udp.get_mut(&key) else { return false };
+        flow.validation.see_request(&self.buffer[..size]);
         match flow.origin.send(&self.buffer[..size]) {
             Ok(n) if n == size => {
                 flow.last = now;
@@ -883,13 +890,18 @@ impl Edge {
         let Socket::Udp(listener) = &self.listeners[key.0].socket else { return };
         let overhead = if key.1.is_ipv4() { 28 } else { 48 };
         match flow.origin.recv(&mut self.buffer) {
-            Ok(n) if flow.wire_credit >= n + overhead && flow.payload_credit >= n => {
+            Ok(n)
+                if flow.validation.is_done()
+                    || (flow.wire_credit >= n + overhead && flow.payload_credit >= n) =>
+            {
                 if let Some(sent) = flow.first_request.take() {
                     flow.ticket.observe(sent, Instant::now());
                 }
                 if listener.send_to(&self.buffer[..n], key.1).is_ok() {
-                    flow.wire_credit -= n + overhead;
-                    flow.payload_credit -= n;
+                    // A validated mapping may have spent its credit already.
+                    flow.wire_credit = flow.wire_credit.saturating_sub(n + overhead);
+                    flow.payload_credit = flow.payload_credit.saturating_sub(n);
+                    flow.validation.see_reply(&self.buffer[..n]);
                     flow.last = Instant::now();
                     if let Some(line) = &mut flow.line {
                         line.bytes_out += n as u64;

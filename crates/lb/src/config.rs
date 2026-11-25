@@ -55,6 +55,8 @@ pub(crate) struct Frontend {
     pub inspect: Option<std::sync::Arc<crate::inspect::Plan>>,
     /// The kernel admission of the listeners of the frontend (SID 0032).
     pub listen: crate::listen::ListenOptions,
+    /// A UDP frontend that carries QUIC: `udp_inspect: "quic"` (SID 0032).
+    pub quic: bool,
     /// The name, the counters and the trusted proxies of the frontend (SID 0020).
     pub info: std::sync::Arc<crate::FrontendInfo>,
 }
@@ -346,6 +348,11 @@ impl Config {
         };
         let inspect = crate::inspect::Plan::parse(&mut r, proto, &self.pools, &pool)?;
         let listen = crate::listen::ListenOptions::parse(&mut r, proto)?;
+        let quic = match field(r.take_str("udp_inspect"))? {
+            None => false,
+            Some("quic") if proto == Protocol::Udp => true,
+            Some(_) => return Err(invalid(format!("{path}: invalid UDP inspection mode"))),
+        };
         let (tls, firewall, websocket, http_rules, policy) =
             http_frontend(&mut r, proto, &self.pools)?;
         let http_rules: std::sync::Arc<[_]> = http_rules.into();
@@ -370,6 +377,7 @@ impl Config {
                 timeout,
                 inspect: inspect.clone(),
                 listen,
+                quic,
                 rate,
                 info: info.clone(),
             };
