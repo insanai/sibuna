@@ -637,32 +637,9 @@ Read-Copy-Update Engine Publication
 
 The policy engine is rebuilt off the hot path when policies change. Requests must never observe a half-built engine, and an engine must never be freed while a request is still reading it. Sibuna publishes each engine as an ``Arc<Engine>`` in an ``EngineSlot``, and each connection reads it through an ``EngineCache``:
 
-.. graphviz::
+.. graphviz:: diagrams/engine-publication.dot
    :caption: Engine publication. The storage thread publishes a complete engine and advances the generation; each connection checks the generation with one acquire load and clones the published Arc only after a publication. An old engine is freed when the last cache holding it lets go.
    :alt: The storage thread builds Engine v2 off the request path and publishes it into the EngineSlot, which holds an RwLock around the current Arc and an atomic generation. Connection thread A has refreshed: its cache holds generation 2 and an Arc of Engine v2, and its next refresh is one acquire load with no clone. Connection thread B still holds generation 1 and an Arc of Engine v1; on its next refresh it sees the generation moved, takes the read lock and clones the Arc of v2. Engine v1 is freed when B lets go of it.
-
-   digraph engine_publication {
-     graph [rankdir=TB, bgcolor="transparent", newrank=true, nodesep=0.45, ranksep=0.55, pad=0.1];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9.5, fontcolor="#172033", color="#1e40af", fillcolor="#eff6ff", penwidth=1.1, margin="0.12,0.06"];
-     edge [color="#64748b", fontname="Helvetica", fontsize=8, fontcolor="#475569", arrowsize=0.6, penwidth=1.1];
-
-     storage [label="Storage thread\nbuild Engine v2\noff the request path", color="#b45309", fillcolor="#fffbeb"];
-     slot [label="EngineSlot\nRwLock<Arc<Engine>>\ngeneration: AtomicU64", color="#172033", fillcolor="#ffffff", penwidth=1.6];
-     v2 [label="Engine v2\n(published)", color="#15803d", fillcolor="#f0fdf4"];
-     a [label="Connection thread A\nEngineCache\ngeneration 2"];
-     b [label="Connection thread B\nEngineCache\ngeneration 1"];
-     v1 [label="Engine v1\nfreed when the last\ncache lets go", color="#94a3b8", fillcolor="#f8fafc", fontcolor="#475569", style="rounded,filled,dashed"];
-
-     { rank=same; slot; v2; }
-     { rank=same; a; b; v1; }
-
-     storage -> slot [label=" publish: swap the Arc\n under the write lock,\n generation += 1 (Release)", color="#b45309", fontcolor="#92400e", penwidth=1.4];
-     slot -> v2 [label="holds", color="#15803d", fontcolor="#15803d", penwidth=1.4, minlen=3];
-     slot -> a [dir=back, label="refresh: load generation\n(Acquire); equal, no clone "];
-     v2 -> a [dir=back, label=" Arc", color="#15803d", fontcolor="#15803d"];
-     slot -> b [dir=back, label=" generation moved:\n read lock, clone Arc", style=dashed];
-     b -> v1 [label="Arc until\nnext refresh", color="#94a3b8", minlen=2];
-   }
 
 .. admonition:: Implementation: ``EngineSlot::publish`` and ``EngineCache::refresh``
 

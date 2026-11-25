@@ -1,0 +1,10 @@
+digraph mesh_pair {
+  graph [rankdir=LR, bgcolor="transparent", nodesep=0.4, ranksep=2.2, pad=0.12];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, fontcolor="#172033", color="#1e40af", fillcolor="#eff6ff", penwidth=1.1, height=0.5, margin="0.14,0.06"];
+  edge [fontname="Helvetica", fontsize=8.5, fontcolor="#475569", color="#64748b", arrowsize=0.65, penwidth=1.1, dir=both];
+  a [label="Node A"];
+  b [label="Node B"];
+  a -> b [color="#d97706", fontcolor="#b45309", label="UDP, mesh port 7946 (SID 0015, 0022, 0025)\nprobes; bans (3); commands (4); lifts (5);\nsticky entries (6); status of shares (7)"];
+  a -> b [label="TCP, mesh port 7946 (SID 0023)\nthe configuration file; the digest of the file"];
+  a -> b [color="#15803d", fontcolor="#166534", label="TCP and UDP, mesh port + 1 (SID 0026)\nforwarded connections and datagrams"];
+}

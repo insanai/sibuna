@@ -10,45 +10,9 @@ The Challenge Round Trip
 
    By the end of this chapter, we should be able to trace a browser from its first request to a minted session, name every endpoint and JSON field involved, and explain why the challenge carries the protected path's policy decision.
 
-.. graphviz::
+.. graphviz:: diagrams/round-trip.dot
    :caption: The challenge round trip. Steps on the left run in the browser, steps on the right in Sibuna.
    :alt: A loop of eight steps: browser navigation, interstitial (HTTP 200), GET /__sibuna/challenge.json?need=, stateless id (payload + tag), Web Worker solving with the WASM or JS prover, POST /__sibuna/verify with the nonce or proof, verify, spent set and mint MAC token, Set-Cookie then reload, and back to the navigation with a session.
-
-   digraph round_trip {
-     graph [rankdir=TB, bgcolor="transparent", newrank=true, nodesep=0.55, ranksep=0.26, pad=0.1, fontname="Helvetica", fontsize=10, fontcolor="#172033"];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9.5, fontcolor="#172033", color="#1e40af", fillcolor="#eff6ff", penwidth=1.1, width=1.7, height=0.44, group=b, margin="0.12,0.06"];
-     edge [color="#64748b", fontname="Helvetica", fontsize=8.5, fontcolor="#475569", arrowsize=0.65, penwidth=1.1];
-
-     subgraph cluster_browser {
-       label=<<b>Browser</b>>; labeljust=l; style="rounded,filled"; color="#bfdbfe"; fillcolor="#f8fbff"; margin=12;
-       nav [label="Browser\nnavigation"];
-       fetch [label="GET /__sibuna/\nchallenge.json?need="];
-       worker [label="Web Worker\nWASM / JS prover"];
-       verify [label="POST /__sibuna/verify"];
-       cookie [label="Set-Cookie\nthen reload"];
-     }
-     subgraph cluster_sibuna {
-       label=<<b>Sibuna</b>>; labeljust=r; style="rounded,filled"; color="#bbf7d0"; fillcolor="#f7fdf9"; margin=12;
-       node [color="#15803d", fillcolor="#f0fdf4", group=s];
-       page [label="Interstitial\n(HTTP 200)"];
-       record [label="Stateless id:\npayload + tag"];
-       mint [label="Verify, spent set,\nmint MAC token"];
-     }
-
-     { rank=same; nav; page; }
-     { rank=same; fetch; record; }
-     { rank=same; verify; mint; }
-
-     nav -> page;
-     page -> fetch;
-     fetch -> record;
-     page -> record -> mint [style=invis];
-     record -> worker [label=" solve"];
-     worker -> verify [label=" nonce or proof"];
-     verify -> mint;
-     mint -> cookie;
-     cookie -> nav [taillabel="session", labelangle=-35, labeldistance=3.2, constraint=false, tailport=w, headport=w, minlen=1, color="#15803d", fontcolor="#15803d", style=dashed];
-   }
 
 1. A navigation with no valid session reaches the policy engine and is classified ``CHALLENGE``. Because the request accepts ``text/html``, the daemon answers ``200`` with the interstitial page and the header ``X-Sibuna-Status: CHALLENGE``; an API client that does not accept HTML receives ``401`` with a JSON body whose ``challenge`` URL is ready to fetch. Either way the response carries a *requirement ticket*: the challenge this decision demands (algorithm, work bits, openings) and the rule's hash, sealed for this client with a keyed BLAKE3 tag under its own derived key and valid for one challenge lifetime.
 2. The interstitial fetches ``GET /__sibuna/challenge.json?path=<original URL>&need=<ticket>``. A valid ticket decides the challenge: the work is fixed by the decision that demanded it, not recomputed from a reported URL and the fetch's own headers, which differ from the navigation's (``Accept``, ``Sec-Fetch-*``). Without a valid ticket (an API client that ignores the URL, a page left open past the lifetime) the server evaluates the reported URL, split into path and query by the same function that reads the request line, with the path put in the normal form admission uses (SID 0009); a URL longer than 8 KiB is refused with ``414``, never truncated, and a path without a normal form with ``400``. The ticket is advisory: admission still checks the session's work level, so a replayed or forged ticket can only cost its holder work.

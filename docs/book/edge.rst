@@ -69,42 +69,9 @@ The firewall of the earlier Parts serves each connection on a thread. Beside HAP
 The Path of a Connection
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. graphviz::
+.. graphviz:: diagrams/edge-path.dot
    :caption: The path of a connection through a node. Each box is owned by one thread or one group of threads; the dashed edges are the shared, read-mostly state.
    :alt: A client reaches the kernel listener, then the edge worker, which applies the connection rate, the flow budget and the connection hooks. A TCP flow passes the ClientHello inspection, reserves a server and is relayed by a relay thread. A UDP flow passes the QUIC screen and becomes a mapping. An HTTP connection goes to an HTTP worker; a TLS client that offers h2 goes to the protocol runtime. Both run bans and limits, traffic policy, the gate or shield, request hooks, and the choice of a server from the routing snapshot, then exchange with the server.
-
-   digraph edge_path {
-     graph [rankdir=TB, bgcolor="transparent", fontname="Helvetica", fontsize=9, nodesep=0.3, ranksep=0.32];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fillcolor="#eff6ff", color="#1e40af", penwidth=1.0, margin="0.1,0.05"];
-     edge [color="#64748b", fontname="Helvetica", fontsize=7.5, fontcolor="#475569", arrowsize=0.6];
-     client [label="Client", fillcolor="#ffffff", color="#172033"];
-     kernel [label="Kernel listener\ndefer_accept, backlog"];
-     edgew [label="Edge worker\nconnection rate, flow budget,\nconnection hooks", fillcolor="#f0fdf4", color="#15803d"];
-     inspect [label="TCP: ClientHello inspection\nfive classes, fallback"];
-     udp [label="UDP: QUIC screen,\nmapping, reply bound"];
-     relay [label="Relay thread\nbyte pipe"];
-     worker [label="HTTP worker\nTLS for HTTP/1.1", fillcolor="#f0fdf4", color="#15803d"];
-     runtime [label="Protocol runtime\nHTTP/2, HTTP/3", fillcolor="#f5f3ff", color="#6d28d9"];
-     decide [label="Bans, limiter, traffic policy,\ngate or shield, request hooks", fillcolor="#fffbeb", color="#b45309"];
-     choose [label="Choose a server\nfrom the snapshot"];
-     shared [label="Shared: routing snapshot,\nserver loads, health flags", fillcolor="#f8fafc", color="#64748b"];
-     server [label="Server", fillcolor="#ffffff", color="#172033"];
-     client -> kernel;
-     kernel -> edgew;
-     edgew -> inspect [label="tcp"];
-     edgew -> udp [label="udp"];
-     edgew -> worker [label="http, fewest"];
-     worker -> runtime [label="offers h2"];
-     inspect -> relay [label="reserve, connect"];
-     udp -> server;
-     relay -> server;
-     worker -> decide;
-     runtime -> decide [label="Decide"];
-     decide -> choose;
-     choose -> server [label="exchange"];
-     choose -> shared [style=dashed];
-     inspect -> shared [style=dashed];
-   }
 
 A QUIC client of an HTTP/3 frontend does not pass the edge worker: the protocol runtime accepts it, applies the per-client bound through an admission function, and asks the connection hooks when the ClientHello is read (SID 0017, SID 0030).
 
@@ -271,30 +238,9 @@ Health, Slow Start, Draining and Failover
 
 A server can be out of rotation for five reasons, and each has its own way back. Active probes and passive health judge the server; a failed connect judges one attempt; a drain is the operator's word; slow start governs the return.
 
-.. graphviz::
+.. graphviz:: diagrams/server-states.dot
    :caption: The life of a server in a pool. Only "In service" and "Ramping" take new flows; slow start applies when it is configured.
    :alt: In service leads to Down after fall failed probes, to Ejected after consecutive request failures, to Marked after a failed connect, and to Drained by an operator. Down returns after rise passed probes, Ejected after the ejection time, Marked after two seconds, Drained when readmitted. Each return leads to Ramping, which leads to In service after the ramp.
-
-   digraph server_states {
-     graph [rankdir=LR, bgcolor="transparent", fontname="Helvetica", fontsize=9, nodesep=0.3, ranksep=0.55];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fillcolor="#eff6ff", color="#1e40af", penwidth=1.0, margin="0.1,0.05"];
-     edge [color="#64748b", fontname="Helvetica", fontsize=7.5, fontcolor="#475569", arrowsize=0.6];
-     service [label="In service", fillcolor="#f0fdf4", color="#15803d"];
-     down [label="Down\n(active probe)"];
-     ejected [label="Ejected\n(passive health)"];
-     marked [label="Marked\n(connect failed)"];
-     drained [label="Drained\n(operator)", fillcolor="#fffbeb", color="#b45309"];
-     ramp [label="Ramping\n(slow start)", fillcolor="#f0fdf4", color="#15803d"];
-     service -> down [label="fall failures"];
-     down -> ramp [label="rise passes"];
-     service -> ejected [label="failures in a row"];
-     ejected -> ramp [label="ejection ends"];
-     service -> marked [label="connect fails"];
-     marked -> ramp [label="2 s"];
-     service -> drained [label="set state drain"];
-     drained -> ramp [label="set state ready"];
-     ramp -> service [label="ramp ends"];
-   }
 
 *Active probes* connect, or send ``GET``, at an interval. A server starts in service, leaves after ``fall`` failures in a row and returns after ``rise`` passes. A probe thread continues from the published status after a reload, so one result cannot flip it. *Passive health* counts consecutive failures of live requests: a response timeout, and with ``http_5xx`` a status of 500, 502, 503 or 504. At the threshold the server is ejected for the ejection time. An ejected server is skipped only while another can serve; a pool of one slow server must not answer 503 because three requests were slow. This is the panic rule of Envoy with a threshold of one server. A *failed connect* keeps the server out for two seconds and is not subject to the panic rule. A *drain* takes the server out for new flows while its established flows finish. A drain survives a reload as long as the file still names the server at the same address (SID 0018).
 

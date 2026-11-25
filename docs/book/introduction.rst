@@ -10,11 +10,9 @@ The browser opens an encrypted connection to the timetable's public name. Sibuna
 
 The address where Sibuna accepts traffic is a frontend. Once Sibuna has received the HTTP request, it can read the host and path. A route sends timetable requests to a pool containing our two application servers. These servers are the origins. For an admitted request, Sibuna chooses a healthy origin from the pool, forwards the request and returns its answer to the passenger.
 
-.. code-block:: text
-
-   Browser -- HTTPS --> Sibuna --+-- HTTP/1.1 --> A
-                                 |
-                                 +-- HTTP/1.1 --> B
+.. typst-diagram:: diagrams/timetable.typ
+   :caption: One public address, two timetable servers.
+   :alt: Sibuna terminates HTTPS and forwards each admitted request to one healthy HTTP/1.1 origin.
 
 The two connections can use different protocols. A browser might speak HTTP/3 to Sibuna while the timetable application speaks HTTP/1.1. An internal gRPC client needs an HTTP/2 route to a compatible service. A plain TCP stream or UDP datagram can also go to a pool. In those cases Sibuna can forward traffic without reading a web page or applying rules to an HTTP path.
 

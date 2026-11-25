@@ -274,38 +274,9 @@ The vocabulary follows HAProxy. A *frontend* binds one or more numeric socket ad
 
 The semantic firewall inspects HTTP requests. It never runs on a TCP or UDP frontend, because those streams are opaque to Sibuna.
 
-.. graphviz::
+.. graphviz:: diagrams/edge-paths.dot
    :caption: The path of a flow through the edge. Only HTTP requests meet the firewall, and a route can skip it.
    :alt: TCP streams go from the worker to relay threads and TCP servers. UDP datagrams go from the worker to UDP servers. HTTP connections pass optional TLS termination, then the firewall or a bypass, then route selection, and reach HTTP/1.1 servers directly or HTTP/2, HTTP/3 and TLS servers through an adapter.
-
-   digraph edge_paths {
-     graph [rankdir=LR, bgcolor="transparent", fontname="Helvetica", fontsize=9, nodesep=0.25, ranksep=0.45];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fillcolor="#eff6ff", color="#1e40af", penwidth=1.0, margin="0.1,0.05"];
-     edge [color="#64748b", fontname="Helvetica", fontsize=7.5, fontcolor="#475569", arrowsize=0.6];
-
-     worker [label="Edge worker\naccept, admission,\nUDP mappings"];
-     relay [label="Relay threads\n(epoll)", fillcolor="#f0fdf4", color="#15803d"];
-     tls [label="TLS, HTTP/2, HTTP/3\ntermination", fillcolor="#f5f3ff", color="#6d28d9"];
-     fw [label="HTTP firewall\ngate or shield", fillcolor="#fffbeb", color="#b45309"];
-     route [label="Route by host\nand path"];
-     adapter [label="Origin adapter\nTLS, HTTP/2, HTTP/3", fillcolor="#f5f3ff", color="#6d28d9"];
-     tcp [label="TCP servers", fillcolor="#ffffff"];
-     udp [label="UDP servers", fillcolor="#ffffff"];
-     h1 [label="HTTP/1.1 servers", fillcolor="#ffffff"];
-     hx [label="TLS, HTTP/2 and\nHTTP/3 servers", fillcolor="#ffffff"];
-
-     worker -> relay [label="tcp"];
-     relay -> tcp;
-     worker -> udp [label="udp"];
-     worker -> tls [label="http + tls"];
-     worker -> fw [label="http"];
-     tls -> fw;
-     fw -> route [label="admitted"];
-     worker -> route [style=dashed, label="firewall: false"];
-     route -> h1;
-     route -> adapter;
-     adapter -> hx;
-   }
 
 A first topology
 ~~~~~~~~~~~~~~~~
@@ -487,13 +458,9 @@ One command does the same without a file. It listens on port 443 and on port 80.
 
 The certificate authority speaks the ACME protocol (RFC 8555). It checks that we control each name, and it does so by connecting to us.
 
-.. code-block:: text
-
-   certificate authority                         Sibuna
-        |  <----------- order for example.org ----  |   thread edge-acme
-        |  ---- GET http://example.org/.well-known/acme-challenge/TOKEN --->  port 80
-        |  <----------- TOKEN.THUMBPRINT ---------  |   answered before the firewall
-        |  ------------ certificate ------------->  |   stored, then served on port 443
+.. typst-diagram:: diagrams/http-01.typ
+   :caption: HTTP-01 validation on port 80.
+   :alt: The authority fetches the challenge before issuance. Sibuna answers before the firewall and serves the stored certificate on port 443.
 
 So three things must hold before the first start.
 
@@ -593,18 +560,9 @@ A restart loads the stored certificates and orders nothing while they are fresh.
        }
    }
 
-.. code-block:: text
-
-   Sibuna                         DNS provider              certificate authority
-     | -- order *.example.org ------------------------------------> |
-     | <------------------------------------------- token --------- |
-     | -- hook present _acme-challenge.example.org. VALUE --> |     |
-     | -- TXT? --> each authoritative server of the zone      |     |
-     | <-- VALUE, from all of them                            |     |
-     | -- ready ---------------------------------------------------> |
-     |                                    TXT? <---------------------|
-     | <------------------------------------------- certificate ---- |
-     | -- hook cleanup _acme-challenge.example.org. VALUE --> |
+.. typst-diagram:: diagrams/dns-01.typ
+   :caption: DNS-01 validation for a wildcard.
+   :alt: Sibuna publishes a TXT value for _acme-challenge.example.org, waits for all authoritative servers, signals readiness, and removes the value after issuance.
 
 There are three providers. We name exactly one.
 
@@ -675,15 +633,20 @@ Before Sibuna tells the authority to look, it asks every authoritative name serv
 
    frontends: { web: { binds: ["0.0.0.0:443"], tls: { auto: ["localhost", "intranet.corp.internal", "10.0.0.5"] } } },
 
-.. code-block:: text
+.. list-table::
+   :header-rows: 1
+   :widths: 33 67
 
-   name under auto          issuer
-   -----------------------  -------------------------------------------
-   example.org              the ACME authority (Let's Encrypt)
-   localhost, db.internal   the local authority
-   10.0.0.5, ::1            the local authority
-   any name, with           the local authority
-     issuer: "internal"
+   * - Name under ``auto``
+     - Certificate issuer
+   * - ``example.org``
+     - ACME authority (Let's Encrypt by default)
+   * - ``localhost``, ``db.internal``
+     - Local authority
+   * - ``10.0.0.5``, ``::1``
+     - Local authority
+   * - Any name with ``issuer: "internal"``
+     - Local authority
 
 At the first internal name Sibuna creates a root certificate, valid for ten years, and an intermediate that it replaces every few days. Both live in the directory ``local`` of the storage, with keys of mode 0600. Each name gets a certificate of 12 hours, renewed every 8 hours by the same thread, with no restart. Several nodes that share the storage use one root. One frontend may mix public and internal names. ``tls: { auto: ["www.example.org"], issuer: "internal" }`` sends a public name to the local authority, for a staging host or a private network. ``issuer: "acme"`` with an internal name is refused when the file is checked, with a hint. With a ``directory`` of our own, internal names go to that authority, and addresses still to the local one.
 
@@ -804,14 +767,9 @@ The lines of ``show ca`` that start with ``#`` name the file and its expiry. The
 
 The first client that connects to ``shop.apps.example.org`` waits a few seconds while Sibuna orders the certificate, and is then served with it. Every later client finds it. ``auto`` may list names on the same frontend, and it may be absent.
 
-.. code-block:: text
-
-   client                         Sibuna                               certificate authority
-     | -- ClientHello: shop.apps.example.org -->  no certificate yet
-     |                              guards pass: order ------------------>  |
-     |          (the handshake waits, at most `wait` seconds)  <-- validate  |
-     |                              certificate  <------------------------  |
-     | <----- handshake goes on with the new certificate
+.. typst-diagram:: diagrams/on-demand-tls.typ
+   :caption: The first handshake for an on-demand name.
+   :alt: The client waits up to the configured limit while Sibuna obtains a certificate for shop.apps.example.org. Later handshakes use the stored certificate.
 
 A guard is required. Without one, anybody who can reach the listener could make us order certificates for any name that points at us, and spend the limits of the authority. ``sibuna check`` and the start refuse such a file with the title ``ON DEMAND NEEDS A GUARD``. There are two guards, and we may use both.
 
@@ -885,11 +843,9 @@ All authorities share one account key, the one in the directory of the first aut
 
 **OCSP stapling.** Some authorities put the URL of an OCSP responder into their certificates. For such a certificate Sibuna asks the responder whether the certificate is still good, checks the signature of the answer against the issuer, and staples the answer to every handshake. A client then needs no connection to the responder. Sibuna asks again at the middle of the validity of each answer, keeps the answer beside the certificate, and staples it again after a restart. An answer whose validity ends is no longer stapled.
 
-.. code-block:: text
-
-   certificate installed --> ask the responder --> good     --> staple, ask again at half of the validity
-                                                --> revoked  --> staple nothing, renew the certificate
-                                                --> failure  --> serve without a staple, ask again later
+.. typst-diagram:: diagrams/ocsp.typ
+   :caption: Three outcomes of an OCSP query.
+   :alt: Sibuna staples a verified good response, renews a revoked certificate, and retries when the responder fails.
 
 When the responder says ``revoked``, Sibuna logs it and renews the certificate at once. A certificate that it obtained a moment ago waits a short time first, so a responder cannot cause a loop of orders. A responder that fails changes nothing for the clients: the certificate is served without a staple, the failure is logged with ``ACME013``, and the question is repeated with growing delays. A certificate that names no responder gets no staple, and nobody is asked. Let's Encrypt names none since 2025. ``ocsp: false`` turns stapling off. Only ``http`` responders are asked. A certificate from ``crt`` is stapled from a file, as the section on certificates says.
 
@@ -2140,17 +2096,9 @@ With ``global.upgrade_socket`` the old process gives its listening sockets to th
 
 The command of an upgrade is the command of a start. A process that starts with this key connects to the path. When a daemon answers there, the new process takes its place. When nobody answers, it starts as a first process does. We do not signal the old process. It exits by itself with status 0 when its established flows have ended, or after ``shutdown_timeout``.
 
-.. code-block:: text
-
-   new process                                old process
-   -----------                                -----------
-   reads and checks its file                  serves
-   connects, takes the listening sockets      serves
-   starts everything, reads nothing yet       serves
-   says that it is ready  ------------------> stops reading UDP, still accepts TCP
-                          <------------------ gives the UDP mappings
-   accepts TCP, acknowledges  --------------> stops accepting, drains, exits 0
-   reads UDP, "listeners ready"
+.. typst-diagram:: diagrams/listener-handoff.typ
+   :caption: Listener handoff on Linux.
+   :alt: The old process pauses UDP at READY and passes the mappings. The replacement adopts them and accepts TCP before DONE. It then reads UDP while the old process drains.
 
 A new process that fails leaves the old one serving. This holds for a file that does not check, for a certificate or a log file that cannot be opened, and for a process that dies or hangs before it acknowledges. The old process waits 10 s for the acknowledgement, then ends the new process with SIGKILL and reads UDP again. Datagrams that arrived meanwhile waited in the socket.
 
@@ -2912,36 +2860,9 @@ Deployment Topologies
 Reverse Proxy
 ~~~~~~~~~~~~~
 
-.. graphviz::
+.. graphviz:: diagrams/shield-routing.dot
    :caption: Request routing on the Shield surface
    :alt: A request passes local bans and the rate limit, then inspection and policy. A DENY goes to Deny. An ALLOW goes to the origin or an auth success. A CHALLENGE checks the session MAC: a valid session goes to the origin, a missing or invalid one leads to a new puzzle.
-
-   digraph shield_routing {
-     graph [rankdir=TB, bgcolor="transparent", newrank=true, nodesep=0.35, ranksep=0.38, pad=0.1];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9.5, fontcolor="#172033", color="#1e40af", fillcolor="#eff6ff", penwidth=1.1, width=1.4, height=0.42, margin="0.1,0.05"];
-     edge [color="#64748b", fontname="Helvetica", fontsize=8.5, fontcolor="#475569", arrowsize=0.6, penwidth=1.1];
-
-     request [label="Request", color="#172033", fillcolor="#ffffff"];
-     limits [label="Local bans\nand rate limit", shape=hexagon, style=filled, margin="0.02,0.04"];
-     policy [label="Inspection\nand policy", shape=hexagon, style=filled, margin="0.02,0.04"];
-     session [label="Session MAC\nif challenged", shape=hexagon, style=filled, color="#b45309", fillcolor="#fffbeb", margin="0.02,0.04"];
-     deny [label="Deny", color="#b91c1c", fillcolor="#fef2f2", penwidth=1.4];
-     origin [label="Origin / auth\nsuccess", color="#15803d", fillcolor="#f0fdf4", penwidth=1.4];
-     puzzle [label="Issue puzzle", color="#b45309", fillcolor="#fffbeb", penwidth=1.4];
-
-     { rank=same; deny; session; }
-     { rank=same; origin; puzzle; }
-     deny -> session [style=invis, minlen=2];
-     origin -> puzzle [style=invis];
-
-     request -> limits;
-     limits -> policy [label=" within limits"];
-     policy -> deny [label="DENY ", color="#b91c1c", fontcolor="#b91c1c", fontname="Helvetica-Bold"];
-     policy -> origin [label=" ALLOW", color="#15803d", fontcolor="#15803d", fontname="Helvetica-Bold"];
-     policy -> session [label=" CHALLENGE", color="#b45309", fontcolor="#b45309", fontname="Helvetica-Bold"];
-     session -> origin [label="valid ", color="#15803d", fontcolor="#15803d"];
-     session -> puzzle [label=" missing / invalid", color="#b45309", fontcolor="#b45309"];
-   }
 
 .. code-block:: sh
 
@@ -3051,15 +2972,19 @@ A JA4 fingerprint summarises how a client opens a TLS connection. It is computed
 .. code-block:: text
 
    t13d1516h2_8daaf6152771_02713d6af862
-   ^^^^^^^^^^ ^^^^^^^^^^^^ ^^^^^^^^^^^^
-   a          b            c
 
-   a  protocol (t TCP, q QUIC, d DTLS), TLS version (13 is TLS 1.3),
-      d with SNI or i without, cipher count (two digits),
-      extension count (two digits), ALPN code (h2 is HTTP/2)
-   b  a 12-digit lowercase hexadecimal hash of the sorted cipher suites
-   c  a 12-digit lowercase hexadecimal hash of the sorted extensions
-      and signature algorithms
+.. list-table::
+   :header-rows: 1
+   :widths: 33 67
+
+   * - JA4 part
+     - Fields encoded
+   * - a  ``t13d1516h2``
+     - protocol (t TCP, q QUIC, d DTLS), TLS version (13 is TLS 1.3), d with SNI or i without, cipher count (two digits), extension count (two digits), ALPN code (h2 is HTTP/2)
+   * - b  ``8daaf6152771``
+     - a 12-digit lowercase hexadecimal hash of the sorted cipher suites
+   * - c  ``02713d6af862``
+     - a 12-digit lowercase hexadecimal hash of the sorted extensions and signature algorithms
 
 A TCP edge frontend can compute JA4 from a visible ClientHello during passthrough. When we run the HTTP firewall behind a TLS ingress, the ingress sees that handshake and Sibuna receives HTTP/1.1. We can configure the trusted ingress to compute JA4 and send the fingerprint to the firewall in a request header.
 
@@ -3160,37 +3085,9 @@ Persistent Storage and Clustering
 
    Enable SQLite or PostgreSQL storage, add a dynamic policy and a ban with SQL, query incident forensics, understand campaign clustering, and run several nodes on one PostgreSQL database.
 
-.. graphviz::
+.. graphviz:: diagrams/storage-architecture.dot
    :caption: The storage architecture: workers never block on the database
    :alt: Request threads push incidents into an MPSC ring of 512 slots. The storage thread pops them, writes batches through sqlx to the SQLite file or the PostgreSQL database holding policies, ip_reputation, security_incidents and the full-text index. When the policy revision changes it rebuilds the engine and publishes it as an Arc, which the request threads read. Other cluster nodes share the PostgreSQL database and hear NOTIFY sibuna_policy.
-
-   digraph storage_architecture {
-     graph [rankdir=TB, bgcolor="transparent", newrank=true, nodesep=0.8, ranksep=0.42, pad=0.1];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9, fontcolor="#172033", color="#1e40af", fillcolor="#eff6ff", penwidth=1.1, width=1.7, height=0.45, margin="0.1,0.05"];
-     edge [color="#64748b", fontname="Helvetica", fontsize=8, fontcolor="#475569", arrowsize=0.6, penwidth=1.7];
-
-     workers [label="Request threads\n(hot path)", color="#172033", fillcolor="#ffffff", penwidth=1.6, width=3.0];
-     ring [label="MPSC ring\n512 incidents", color="#b45309", fillcolor="#fffbeb"];
-     publish [label="EngineSlot::publish\nArc swap", color="#b45309", fillcolor="#fffbeb"];
-     thread [label="Storage thread (tokio)\ndrain + poll"];
-     rebuild [label="Rebuild engine\noff the hot path"];
-     db [label="sqlx: SQLite file\nor PostgreSQL", shape=cylinder, style=filled, color="#15803d", fillcolor="#f0fdf4", height=0.62];
-     tables [label="policies, ip_reputation,\nsecurity_incidents,\nfull-text index", color="#15803d", fillcolor="#f0fdf4"];
-     others [label="Other cluster\nnodes", color="#64748b", fillcolor="#ffffff", style="rounded,filled,dashed", width=1.7];
-
-     { rank=same; ring; publish; }
-     { rank=same; thread; rebuild; }
-     { rank=same; db; tables; }
-
-     workers -> ring [label=" push"];
-     ring -> thread [label=" pop"];
-     thread -> db [label=" batched SQL"];
-     db -> tables;
-     rebuild -> tables [dir=back, label=" revision changed?"];
-     publish -> rebuild [dir=back];
-     workers -> publish [dir=back, label=" new rules"];
-     db -> others [dir=both, style=dashed, label=" shared PostgreSQL,\n NOTIFY sibuna_policy"];
-   }
 
 ``--data-dir /var/lib/sibuna`` opens the SQLite file ``/var/lib/sibuna/sibuna.db`` (WAL mode, ``synchronous=NORMAL``, a busy timeout) and starts the storage thread. ``--database-url`` (or ``--database-url-file``) connects to a PostgreSQL database instead. The storage thread owns a single-threaded tokio runtime and a small connection pool; it is the only place that runs SQL. On start, whenever the policy revision changes (a write to ``policies``, ``ip_reputation`` or ``policy_inspection``), and when a reputation entry expires, the thread rebuilds the engine from the policy file plus the database and publishes it; requests never wait on SQL. A rebuild reads the revision before and after loading, and discards its candidate if a writer committed in between. This storage belongs to the firewall daemon; an edge started with ``--config-file`` takes none of these options (the section *Clustering* says how the two relate).
 

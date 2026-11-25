@@ -63,53 +63,15 @@ A fixed roster and authenticated datagrams
 
 The nodes of a cluster form a mesh (SID 0015). The roster is fixed for the life of a process and holds at most 64 nodes. Every node knows every other by its address. The nodes speak by UDP datagrams on one port. A datagram begins with ``S``, ``E``, a version and a kind. It carries the boot nonce of the sender and a sequence number, and it ends with a 16-byte tag: the keyed BLAKE3 hash of every byte before it, under the group key of the key file. A node reads a datagram only from an address of the roster and only with a valid tag. The kind lies inside the hashed bytes, so a datagram of one kind cannot be turned into another. A datagram holds at most 1,200 bytes, so it fits one packet on every path.
 
-.. graphviz::
+.. graphviz:: diagrams/cluster-topology.dot
    :caption: A cluster of three nodes. The router spreads the clients; the dashed edges are the mesh; the dotted edges are the database of SID 0028, which a cluster may use instead of sending files.
    :alt: Clients reach a DNS or ECMP router, which sends flows to nodes A, B and C. The three nodes are joined pairwise by dashed mesh edges. All three send flows to the servers of the pools. A PostgreSQL database of revisions is joined to each node by a dotted edge.
 
-   digraph cluster_topology {
-     graph [rankdir=TB, bgcolor="transparent", nodesep=0.6, ranksep=0.45, pad=0.12];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, fontcolor="#172033", color="#1e40af", fillcolor="#eff6ff", penwidth=1.1, height=0.4, margin="0.12,0.05"];
-     edge [fontname="Helvetica", fontsize=8.5, fontcolor="#475569", color="#64748b", arrowsize=0.65, penwidth=1.1];
-     clients [label="Clients", fillcolor="#ffffff", color="#172033"];
-     router [label="DNS or ECMP router", fillcolor="#ffffff", color="#172033"];
-     a [label="Node A"];
-     b [label="Node B"];
-     c [label="Node C"];
-     servers [label="Servers of the pools", color="#15803d", fillcolor="#f0fdf4"];
-     db [label="PostgreSQL\nrevisions (SID 0028)", shape=cylinder, color="#7c3aed", fillcolor="#f5f3ff"];
-     { rank=same; a; b; c; }
-     clients -> router;
-     router -> a;
-     router -> b;
-     router -> c;
-     a -> b [dir=both, style=dashed, color="#d97706", fontcolor="#b45309", label="mesh"];
-     b -> c [dir=both, style=dashed, color="#d97706", fontcolor="#b45309", label="mesh"];
-     a -> c [dir=both, style=dashed, color="#d97706", fontcolor="#b45309", label="mesh"];
-     a -> servers;
-     b -> servers;
-     c -> servers;
-     a -> db [dir=back, style=dotted, color="#7c3aed"];
-     b -> db [dir=back, style=dotted, color="#7c3aed"];
-     c -> db [dir=back, style=dotted, color="#7c3aed"];
-   }
-
 Every pair of nodes exchanges the same things. The next figure shows one pair.
 
-.. graphviz::
+.. graphviz:: diagrams/mesh-pair.dot
    :caption: What flows between two nodes, by port. The kind of each datagram is in parentheses.
    :alt: Node A and node B joined by three edges. The first, UDP on the mesh port 7946, carries probes, bans (kind 3), commands (kind 4), lifts (kind 5), sticky entries (kind 6) and the status of shares (kind 7). The second, TCP on the mesh port, carries the configuration file and its digest. The third, TCP and UDP on the mesh port plus one, carries forwarded flows.
-
-   digraph mesh_pair {
-     graph [rankdir=LR, bgcolor="transparent", nodesep=0.4, ranksep=2.2, pad=0.12];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, fontcolor="#172033", color="#1e40af", fillcolor="#eff6ff", penwidth=1.1, height=0.5, margin="0.14,0.06"];
-     edge [fontname="Helvetica", fontsize=8.5, fontcolor="#475569", color="#64748b", arrowsize=0.65, penwidth=1.1, dir=both];
-     a [label="Node A"];
-     b [label="Node B"];
-     a -> b [color="#d97706", fontcolor="#b45309", label="UDP, mesh port 7946 (SID 0015, 0022, 0025)\nprobes; bans (3); commands (4); lifts (5);\nsticky entries (6); status of shares (7)"];
-     a -> b [label="TCP, mesh port 7946 (SID 0023)\nthe configuration file; the digest of the file"];
-     a -> b [color="#15803d", fontcolor="#166534", label="TCP and UDP, mesh port + 1 (SID 0026)\nforwarded connections and datagrams"];
-   }
 
 Every node sends to every other directly. A node never forwards a datagram it received. With a full roster every node hears every writer, and forwarding on receipt is what makes gossip loop. Epidemic forwarding earns its cost in large groups whose members change; a roster of at most 64 fixed nodes has no use for it.
 
@@ -557,18 +519,9 @@ With ``global.reuse_port`` each process has its own TCP accept queue. The old pr
 
 SID 0029 passes the sockets instead. The old process listens on a Unix socket, ``global.upgrade_socket``. The replacement checks its file, connects, and receives the listening sockets as descriptors in ``SCM_RIGHTS`` control messages of ``sendmsg``. Both ends check the credentials of the peer with ``SO_PEERCRED`` and refuse another user.
 
-.. code-block:: text
-
-   replacement                               old process
-   checks its file
-   connect, HELLO  ------------------------> checks the peer, chooses the version
-                   <------------------------ LISTENERS with descriptors
-   builds the edge on them, reads nothing    accepts TCP, reads UDP as before
-   READY  ---------------------------------> stops reading UDP
-                   <------------------------ FLOWS (mappings and server sockets), COMMIT
-   adopts the mappings, accepts TCP          still accepts TCP
-   DONE  ----------------------------------> stops accepting, drains, exits 0
-   reads UDP, binds its admin socket
+.. typst-diagram:: diagrams/listener-handoff.typ
+   :caption: Listener handoff on Linux.
+   :alt: The old process pauses UDP at READY and passes the mappings. The replacement adopts them and accepts TCP before DONE. It then reads UDP while the old process drains.
 
 Two invariants govern the cutover. At every instant some live process accepts on each TCP listener: two acceptors on one socket lose nothing, since each connection goes to one of them. And at most one process reads a UDP socket: two readers would give the datagrams of one client to two tables, so between READY and DONE nobody reads, and the kernel holds the datagrams in the socket. The old process measures that interval; with 6,000 mappings it was 59 to 87 ms on a quiet machine. A failure before DONE returns the service to the old process with every listener and mapping it had. The old process resumes reading only when the connection to the replacement is closed, because a deadline proves nothing: a stopped replacement could wake and read beside it. So after 10 s without DONE the old process ends the replacement and waits for the close.
 

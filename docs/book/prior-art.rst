@@ -17,64 +17,9 @@ Dwork and Naor's "Pricing via Processing" (CRYPTO 1992) proposed that a service 
 
 Hash search is embarrassingly parallel, so a requester with more cores finishes sooner. Mahmoody, Moran, and Vadhan (CRYPTO 2013) defined proofs of *sequential* work, in which the prover must perform a long chain of dependent steps whatever its core count, and Cohen and Pietrzak (EUROCRYPT 2018) gave the simple hash-graph construction whose verifier needs only :math:`O(t \log N)` work. Blocki, Lee, and Zhou (ITC 2021) proved the same construction sound against quantum provers in the quantum random-oracle model. Part III derives Sibuna's Tier Two from that line of work; SID 0006 records the assumptions.
 
-.. graphviz::
+.. graphviz:: diagrams/lineage.dot
    :caption: Lineage of the ideas Sibuna combines. The left column is the cryptography of client puzzles and sequential work, the right column the algorithms and systems Sibuna builds on, and the middle column the products in the same space; time runs downward. Thin arrows are direct descent, and the filled boxes are the ideas Sibuna takes directly. An earlier storage design drew on Multi-Paxos (Lamport 1998; SID 0005); Sibuna now stores its state in SQLite or PostgreSQL (SID 0011).
    :alt: A lineage graph. Dwork-Naor 1992 leads to Hashcash 1997, Juels-Brainard 1999, Mahmoody et al. 2013, Cohen-Pietrzak 2018 and Blocki-Lee-Zhou 2021. Aho-Corasick 1975 leads to Hyperscan 2019; ModSecurity and CRS 2002 lead to libinjection 2012. Hashcash leads to the Anubis interstitial and libinjection to the SafeLine semantic WAF; the Cloudflare hosted edge stands beside them. Sibuna (Gate, Shield, Edge) descends from Hashcash, Cohen-Pietrzak, Blocki-Lee-Zhou, Aho-Corasick, libinjection, GCRA (ATM Forum 1996), Anubis, SafeLine and Cloudflare.
-
-   digraph lineage {
-     graph [rankdir=TB, bgcolor="transparent", newrank=true, compound=true, nodesep=0.3, ranksep=0.2, pad=0.1, fontname="Helvetica", fontsize=9.5, fontcolor="#172033"];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9, fontcolor="#172033", fillcolor="#ffffff", penwidth=1.0, width=1.35, height=0.4, margin="0.08,0.04"];
-     edge [color="#94a3b8", arrowsize=0.55, penwidth=1.0];
-
-     subgraph cluster_puzzles {
-       label=<<b>Client puzzles and<br/>sequential work</b>>; style="rounded,filled"; color="#fde68a"; fillcolor="#fffdf5"; margin=10;
-       node [color="#d6a35c"];
-       dwork [label="Dwork-Naor\n1992"];
-       hashcash [label="Hashcash\n1997", color="#b45309", fillcolor="#fde68a", penwidth=1.3];
-       juels [label="Juels-Brainard\n1999"];
-       mahmoody [label="Mahmoody et al.\n2013"];
-       cohen [label="Cohen-Pietrzak\n2018", color="#b45309", fillcolor="#fde68a", penwidth=1.3];
-       blocki [label="Blocki-Lee-Zhou\n2021", color="#b45309", fillcolor="#fde68a", penwidth=1.3];
-     }
-     subgraph cluster_products {
-       label=<<b>Products in<br/>the same space</b>>; style="rounded,filled"; color="#ddd6fe"; fillcolor="#fbfaff"; margin=10;
-       node [color="#6d28d9", fillcolor="#ddd6fe", penwidth=1.3];
-       p0 [style=invis, label=""];
-       p1 [style=invis, label=""];
-       anubis [label="Anubis\ninterstitial"];
-       cloudflare [label="Cloudflare\nhosted edge"];
-       safeline [label="SafeLine\nsemantic WAF"];
-     }
-     subgraph cluster_systems {
-       label=<<b>Algorithms and<br/>systems</b>>; style="rounded,filled"; color="#bfdbfe"; fillcolor="#f8fbff"; margin=10;
-       node [color="#7c9cd6"];
-       aho [label="Aho-Corasick\n1975", color="#1e40af", fillcolor="#bfdbfe", penwidth=1.3];
-       gcra [label="GCRA\nATM Forum 1996", color="#1e40af", fillcolor="#bfdbfe", penwidth=1.3];
-       modsec [label="ModSecurity, CRS\n2002"];
-       libinj [label="libinjection\n2012", color="#1e40af", fillcolor="#bfdbfe", penwidth=1.3];
-       hyperscan [label="Hyperscan\n2019"];
-     }
-     sibuna [label=<<b>Sibuna</b><br/><font point-size="9">Gate, Shield, Edge</font>>, fontsize=11, color="#15803d", fillcolor="#bbf7d0", penwidth=1.8, width=2.2, height=0.5];
-
-     dwork -> hashcash -> juels -> mahmoody -> cohen -> blocki [color="#d6a35c"];
-     aho -> gcra [style=invis];
-     gcra -> modsec [style=invis];
-     modsec -> libinj [color="#7c9cd6"];
-     libinj -> hyperscan [style=invis];
-     aho -> hyperscan [color="#7c9cd6", constraint=false];
-     hashcash -> anubis [color="#d6a35c", constraint=false];
-     libinj -> safeline [color="#7c9cd6", constraint=false];
-     { rank=same; dwork; p0; aho; }
-     { rank=same; hashcash; p1; gcra; }
-     { rank=same; juels; anubis; modsec; }
-     { rank=same; mahmoody; cloudflare; libinj; }
-     { rank=same; cohen; safeline; hyperscan; }
-     p0 -> p1 -> anubis -> cloudflare -> safeline [style=invis];
-
-     blocki -> sibuna [ltail=cluster_puzzles, color="#b45309", penwidth=1.3, minlen=2];
-     safeline -> sibuna [ltail=cluster_products, color="#6d28d9", penwidth=1.3, minlen=2];
-     hyperscan -> sibuna [ltail=cluster_systems, color="#1e40af", penwidth=1.3, minlen=2];
-   }
 
 Application Firewalls
 ~~~~~~~~~~~~~~~~~~~~~
@@ -298,35 +243,9 @@ Four papers decide how the edge places a flow and what it remembers.
 - *Rendezvous hashing* (Thaler and Ravishankar, IEEE/ACM Transactions on Networking 1998) gives each server a score from a hash of its name and the key, and the largest score wins. Losing a server moves only its own keys and needs no table. Source stickiness ranks servers in this way (SID 0019), and peer forwarding chooses the owner of a client among the nodes in this way (SID 0026).
 - *TinyLFU* (Einziger, Friedman and Manes, ACM Transactions on Storage 2017) admits a new entry to a full cache only when a small frequency sketch says that it is used more often than the entry it would push out. The spill cache of SID 0027 admits hints to its file by this rule.
 
-.. graphviz::
+.. graphviz:: diagrams/lb-lineage.dot
    :caption: What the edge load balancer takes from earlier systems and papers. Solid arrows are ideas taken directly; dashed lines are ideas shared.
    :alt: HAProxy gives the vocabulary and the admin socket, nginx the event-driven workers, and Envoy shares the idea of hook stages. Maglev and bounded loads give the bounded Maglev pool, rendezvous hashing gives source stickiness and the owner of a client, and TinyLFU gives the admission of the spill cache. HAProxy's hash-balance-factor shares the idea of bounded loads.
-
-   digraph lb_lineage {
-     graph [rankdir=LR, bgcolor="transparent", nodesep=0.25, ranksep=0.5, fontname="Helvetica", fontsize=9];
-     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fillcolor="#ffffff", color="#7c9cd6", margin="0.08,0.04"];
-     edge [color="#94a3b8", arrowsize=0.55];
-
-     haproxy [label="HAProxy"];
-     nginx [label="nginx"];
-     envoy [label="Envoy"];
-     maglev [label="Maglev\nEisenbud et al. 2016"];
-     bounded [label="Bounded loads\nMirrokni et al. 2018"];
-     hrw [label="Rendezvous hashing\nThaler-Ravishankar 1998"];
-     tinylfu [label="TinyLFU\nEinziger et al. 2017"];
-
-     node [color="#15803d", fillcolor="#f0fdf4"];
-     vocab [label="frontends, backends,\nadmin socket (SID 0018)"];
-     workers [label="event-driven HTTP\nworkers (SID 0016)"];
-     hooks [label="hook stages and\ntiers (SID 0030)"];
-     bmaglev [label="bounded_maglev\n(SID 0015)"];
-     sticky [label="source stickiness (SID 0019),\nowner of a client (SID 0026)"];
-     spill [label="spill cache admission\n(SID 0027)"];
-
-     haproxy -> vocab; nginx -> workers; envoy -> hooks [style=dashed];
-     maglev -> bmaglev; bounded -> bmaglev; hrw -> sticky; tinylfu -> spill;
-     haproxy -> bounded [style=dashed, dir=none, label=" hash-balance-factor", fontsize=7.5, fontcolor="#475569"];
-   }
 
 Load Balancing Compared
 ~~~~~~~~~~~~~~~~~~~~~~~
