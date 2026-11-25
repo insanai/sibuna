@@ -84,5 +84,8 @@ Discussion registry
    * - 0024
      - :doc:`records/0024-tls-on-the-workers`
      - discussion
+   * - 0030
+     - :doc:`records/0030-plugin-tiers`
+     - discussion
 
 .. sid-generated-end
