@@ -127,3 +127,45 @@ impl Pool {
         Some(learner.key(value))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #![allow(clippy::unwrap_used)]
+    use std::net::Ipv4Addr;
+    use std::time::{Duration, Instant};
+
+    use super::*;
+    use crate::PoolPolicy;
+
+    #[test]
+    fn a_lookup_hashes_the_client_and_reads_one_bucket() {
+        let state = ClusterState::default();
+        let sticky = Some(Sticky::Table { cookie: None, ttl: Duration::from_secs(600) });
+        let policy = PoolPolicy { sticky, ..PoolPolicy::default() };
+        let learner = Learner::of("app", &policy, Some(&state)).unwrap();
+        // The table is filled to three quarters, so most buckets hold three entries.
+        const CLIENTS: u32 = 49_152;
+        let address = |client: u32| IpAddr::V4(Ipv4Addr::from(0x0a00_0000 + client));
+        let ends = unix_ms() + 600_000;
+        for client in 0..CLIENTS {
+            let key = learner.key(&sticky::client_bytes(address(client)));
+            learner.store.keep(&key, Affinity { server: u64::from(client), ends }, 0);
+        }
+        const ROUNDS: u32 = 400_000;
+        let started = Instant::now();
+        let mut found = 0u32;
+        for round in 0..ROUNDS {
+            let recalled = learner.recall(&[], None, address(round % CLIENTS)).unwrap();
+            found += u32::from(recalled.entry.is_some());
+        }
+        let each = started.elapsed() / ROUNDS;
+        println!("lookup: {each:?} for each of {ROUNDS}, {found} found");
+        // A bucket holds four entries. At this fill about one client in nine met a
+        // full bucket and was given up, which is why a table wants twice its clients.
+        assert!(found > ROUNDS / 10 * 8, "{found}");
+        // The bound of SID 0025 is for an optimised build.
+        if !cfg!(debug_assertions) {
+            assert!(each < Duration::from_micros(1), "{each:?}");
+        }
+    }
+}
