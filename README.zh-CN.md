@@ -1,8 +1,9 @@
-<!-- English source SHA-256: 331b33dcfa1187045c4d09efe004a4c272482ff10db48816f67090e01a0a80f8 -->
+<!-- English source SHA-256: 2213ca66b48390aac695b02731322e1fa885d704796a4fd3304bc5e157897a0c -->
 <h1 align="center">sibuna</h1>
-<p align="center">通过浏览器工作量证明保护网站，并提供可选的管理控制台。</p>
+<p align="center">一个可执行文件中的负载均衡器，以及基于浏览器工作量证明的网站防护。</p>
 <p align="center">
   <a href="#features">功能</a> ·
+  <a href="#load-balancing">负载均衡</a> ·
   <a href="#quickstart">快速入门</a> ·
   <a href="#console">控制台</a> ·
   <a href="#how-it-works">工作原理</a> ·
@@ -17,7 +18,7 @@
   <a href="README.hi.md">हिन्दी</a> · <a href="README.ar.md">العربية</a>
 </p>
 
-**Sibuna 帮助网站和 API 抵御不需要的机器人流量。** 它可以将请求转发给应用，也可以配合 Caddy 或 nginx 等现有代理使用。
+**Sibuna 帮助网站和 API 抵御不需要的机器人流量。** 它可以将请求转发给应用，也可以配合 Caddy 或 nginx 等现有代理使用。在边缘模式下，它本身就是负载均衡器：转发 TCP 和 UDP，终止 TLS，并把 HTTP 路由到多台服务器。
 
 发送请求通常很便宜。处理请求却可能让应用付出更多工作。Sibuna 要求客户端先解一道计算题，再获得访问权限。这道题的设计使生成证明比验证证明需要更多计算。自动化客户端因此要承担更多访问网站的成本。
 
@@ -31,11 +32,38 @@
 - **原生安装包：** 支持 Linux、macOS、Windows、FreeBSD 和 OpenBSD。浏览器求解器使用 WebAssembly。
 - **浏览器挑战：** 顺序工作量证明（默认）或 Hashcash，完成后获得签名会话。
 - **访问策略：** 根据地址、路径、请求头和 User-Agent 放行、挑战、加权评估或拒绝请求。
+- **负载均衡：** 在多台服务器前处理 TCP、UDP 和 HTTP，支持 TLS 终止、自动证书和集群模式。见[负载均衡](#load-balancing)。已发布的安装包尚不包含此功能。
 - **TLS 指纹：** 按受信任的入口代理转发的 JA4 指纹匹配请求，可精确匹配，也可按前缀匹配。
 - **应用层检查：** 内置 SQL 注入、XSS、路径遍历和命令注入检查。
 - **本地速率限制：** 控制突发和持续流量，也可为单条规则设置限额。
 - **管理控制台：** 流量、按国家采样的活动、已记录的事件和策略编辑。
 - **集群支持：** 单独的构建版本通过 PostgreSQL 共享策略和信誉数据。
+
+<a id="load-balancing"></a>
+
+## 负载均衡
+
+在边缘模式下，Sibuna 就是位于服务器前面的负载均衡器。边缘模式位于源码树中。它不包含在 v1.0.0-beta.3 安装包中，因此在下一个版本发布之前，我们[从源码构建它](#build-from-source)。
+
+```sh
+sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
+sibuna lb --tls auto --domain example.org --server 10.0.0.1:80
+sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
+sibuna --config-file edge.jlv
+```
+
+- **转发：** TCP 和 UDP、按服务器名称路由的 TLS 透传、QUIC 透传以及 PROXY 协议。
+- **HTTP：** 使用 HAProxy 风格的 PEM 证书包终止 TLS；支持 HTTP/1.1、HTTP/2、HTTP/3 和 WebSocket；按主机名和路径路由到 HTTP/1.1、HTTP/2 或 HTTP/3 服务器。在 Linux 上，由事件驱动的 worker 处理连接，每个处理器一个 worker。
+- **证书：** 通过 ACME 自动获取并续期，支持备用证书颁发机构和外部账户绑定；通过 DNS 获取通配符证书，可使用钩子程序、RFC 2136 更新或 Cloudflare API；OCSP 装订；在守卫之后按需获取证书；为 `localhost`、内部名称和 IP 地址提供本地证书颁发机构，它有自己的吊销列表和 ACME 服务器。
+- **服务器：** 健康检查、慢启动、排空、权重、会话保持，以及每台服务器的流数量限制。
+- **运行中变更：** 重新加载不会让任何请求失败。管理套接字可以排空、调整权重、添加和移除服务器（`sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain`）。在 Linux 上，新的可执行文件从旧的可执行文件接管监听套接字和 UDP 映射；QUIC 连接会终止。
+- **集群：** 网格中的节点共享会话保持表和服务器的流数量限制，并把客户端转发给拥有它的节点。PostgreSQL 数据库可以把同一份配置发布到每个节点，也可以回滚。一个映射文件在重启后保留会话保持的提示信息。
+- **钩子：** 在连接阶段和请求阶段运行：可以编译进程序，可以作为带预算的 WebAssembly，也可以作为 Unix 套接字上的代理程序。
+- **观测：** 指标、访问日志，以及展示服务器、流和拒绝情况的控制台视图。
+
+Gate 或 Shield 只应用于需要它的名称，也可以不应用于任何名称。配置文件始终是权威来源：运行时的变更只持续到下一次重新加载。
+
+负载均衡器未发布，也未在生产流量下运行过。它的集群功能在三台主机上测试过。每篇[设计讨论](https://insanai.github.io/sibuna/sid/)都列出已经实现的部分和已知的不足。
 
 <a id="quickstart"></a>
 
@@ -86,7 +114,7 @@ tar -xzf sibuna-linux-amd64.tar.gz
 
 ### 从源码构建
 
-我们使用 **Rust 1.100** 进行构建和测试。浏览器求解器和控制台界面由 Rust 编译为 WebAssembly；构建不需要 Node 或 npm。
+我们使用 **Rust 1.100** 进行构建和测试，默认的 JLV 编译器需要这个版本。仅支持 JSON 的守护进程可以用 Rust 1.94 配合 `--no-default-features` 构建，并按需选择 `sqlite,console`。浏览器求解器和控制台界面由 Rust 编译为 WebAssembly；构建不需要 Node 或 npm。
 
 ```sh
 git clone https://github.com/insanai/sibuna.git
@@ -174,9 +202,9 @@ Gate 检查访问规则、会话和本地速率限制。Shield 在此基础上�
 
 ### 部署限制
 
-Sibuna 的私有监听端口使用 HTTP/1.1。公网 TLS 和 HTTP/2 由入口代理处理。forward-auth 模式只检查入口代理提供的元数据。在反向代理模式下，内置检查器覆盖请求体的前 8 KiB。上传数据以流式方式传给应用。WebSocket 消息直接转发，不进行检查。该检查器是一种启发式方法，不是完整的语言解析器。
+私有监听端口在外部入口代理之后使用 HTTP/1.1。在边缘模式下，我们可以在 Sibuna 中终止 TLS、HTTP/2 和 HTTP/3，并转发到 HTTP/1.1、HTTP/2 或 HTTP/3 服务器池。forward-auth 模式只检查入口代理提供的元数据。在反向代理模式下，内置检查器覆盖请求体的前 8 KiB。上传数据以流式方式传给应用。WebSocket 消息直接转发，不进行检查。该检查器是一种启发式方法，不是完整的语言解析器。
 
-速率限制在每个节点本地计算。Sibuna 不提供针对大流量网络攻击的缓解。挑战与签发它的节点绑定；请将挑战及其解答路由到同一个节点。控制台的严格性能目标尚未正式通过。在生产应用旁启用控制台之前，请阅读[部署限制和测量结果](https://insanai.github.io/sibuna/book/operations.html)。
+速率限制在每个节点本地计算。Sibuna 不提供针对大流量网络攻击的缓解。不丢失连接的可执行文件替换和事件驱动的 worker 只在 Linux 上提供。挑战与签发它的节点绑定；请将挑战及其解答路由到同一个节点。控制台的严格性能目标尚未正式通过。在生产应用旁启用控制台之前，请阅读[部署限制和测量结果](https://insanai.github.io/sibuna/book/operations.html)。
 
 <a id="benchmarks"></a>
 
@@ -193,6 +221,21 @@ Sibuna 的私有监听端口使用 HTTP/1.1。公网 TLS 和 HTTP/2 由入口代
 - 在 forward-auth 模式下，各工作负载的速率为每秒 197,532 至 211,636 个请求，p99 为 305 至 327 微秒，每个请求耗费 11.7 至 13.8 微秒 CPU 时间。瓶颈在负载生成器。
 - 代理请求的速率为每秒 138,965 至 147,303 个。内存峰值约为 16 MiB。
 - 在每秒 100,000 个已准入请求的相同负载下，p99.9 延迟在 forward-auth 模式下为 62 微秒，在反向代理模式下为 150 微秒。
+
+<a id="beside-haproxy-and-envoy"></a>
+
+### 与 HAProxy 和 Envoy 对照
+
+我们在一台主机上通过回环接口依次运行这三个代理，每个运行三次：HAProxy 3.0.11、Envoy 1.40.2，以及 2026-11-25 源码树中的 Sibuna。每个代理都使用同样的八个 CPU 和八个线程、256 个连接，每个场景运行八秒。表中为三次运行每秒请求数的中位数。没有失败的请求。
+
+| 场景 | Sibuna | HAProxy | Envoy |
+| --- | ---: | ---: | ---: |
+| HTTP/1.1 | 220,040 | 220,323 | 70,909 |
+| 基于 TLS 的 HTTP/1.1 | 174,611 | 165,199 | 63,399 |
+| HTTP/2 | 104,132 | 153,899 | 68,972 |
+| 常驻内存，HTTP/1.1 | 14 MiB | 48 MiB | 58 MiB |
+
+请把这看作一次小规模的测量，而不是排名。Sibuna 和 HAProxy 在明文 HTTP 上持平，HAProxy 在 HTTP/2 上明显更快。我们不是 Envoy 专家：我们使用的是简单的静态配置，更好的配置很可能会改变它的数字。Envoy 的长处，例如动态配置和它的过滤器，不在本次测试的衡量范围内。响应只有两个字节，并且经过回环接口，这会夸大每个请求的成本；真实流量会缩小这些差距。[技术手册](https://insanai.github.io/sibuna/book/benchmarks.html)给出了方法、配置、更多连接数下的结果，以及一个由三台主机组成的集群。
 
 <a id="beside-anubis"></a>
 

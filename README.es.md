@@ -1,8 +1,9 @@
-<!-- English source SHA-256: 331b33dcfa1187045c4d09efe004a4c272482ff10db48816f67090e01a0a80f8 -->
+<!-- English source SHA-256: 2213ca66b48390aac695b02731322e1fa885d704796a4fd3304bc5e157897a0c -->
 <h1 align="center">sibuna</h1>
-<p align="center">Protección web con prueba de trabajo en el navegador y una consola opcional.</p>
+<p align="center">Un balanceador de carga y protección web con prueba de trabajo en el navegador, en un solo ejecutable.</p>
 <p align="center">
   <a href="#features">Características</a> ·
+  <a href="#load-balancing">Balanceo de carga</a> ·
   <a href="#quickstart">Inicio rápido</a> ·
   <a href="#console">Consola</a> ·
   <a href="#how-it-works">Cómo funciona</a> ·
@@ -19,6 +20,8 @@
 
 **Sibuna ayuda a proteger sitios web y API frente a tráfico de bots no deseado.** Puede
 reenviar peticiones a tu aplicación o trabajar junto a un proxy existente, como Caddy o nginx.
+En modo edge es el propio balanceador de carga: reenvía TCP y UDP, termina TLS y enruta HTTP
+hacia varios servidores.
 
 Enviar peticiones suele ser barato. Procesarlas puede exigir más trabajo a tu aplicación.
 Sibuna pide a los clientes que resuelvan un desafío antes de conceder acceso. El desafío está
@@ -39,11 +42,43 @@ controlar lo que esos clientes pueden pedir después.
 - **Paquetes nativos:** Linux, macOS, Windows, FreeBSD y OpenBSD. El solucionador de navegador usa WebAssembly.
 - **Desafíos de navegador:** prueba de trabajo secuencial (por defecto) o Hashcash, seguidos de una sesión firmada.
 - **Políticas de acceso:** permitir, desafiar, ponderar o denegar peticiones por dirección, ruta, cabeceras y User-Agent.
+- **Balanceo de carga:** TCP, UDP y HTTP delante de varios servidores, con terminación TLS, certificados automáticos y un modo de clúster. Consulta [Balanceo de carga](#load-balancing). Aún no está en los paquetes publicados.
 - **Huellas TLS:** comparar la huella JA4 que reenvía un proxy de entrada de confianza, de forma exacta o por prefijo.
 - **Inspección de aplicaciones:** comprobaciones integradas de inyección SQL, XSS, recorrido de rutas e inyección de comandos.
 - **Límites de tasa locales:** controlar ráfagas y tráfico sostenido, con límites opcionales por regla.
 - **Consola de operador:** tráfico, actividad de países muestreada, incidentes registrados y edición de políticas.
 - **Soporte de clúster:** una compilación separada comparte políticas y reputación mediante PostgreSQL.
+
+<a id="load-balancing"></a>
+
+## Balanceo de carga
+
+En modo edge, Sibuna es el balanceador de carga situado delante de los servidores. El modo edge
+está en el árbol de código fuente. No forma parte de los paquetes de v1.0.0-beta.3, así que lo
+[compilamos desde las fuentes](#build-from-source) hasta la próxima versión.
+
+```sh
+sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
+sibuna lb --tls auto --domain example.org --server 10.0.0.1:80
+sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
+sibuna --config-file edge.jlv
+```
+
+- **Reenvío:** TCP y UDP, paso de TLS sin descifrar (passthrough) enrutado por nombre de servidor, paso de QUIC sin descifrar y el protocolo PROXY.
+- **HTTP:** terminación TLS con paquetes PEM al estilo de HAProxy; HTTP/1.1, HTTP/2, HTTP/3 y WebSocket; enrutamiento por nombre de host y ruta hacia servidores HTTP/1.1, HTTP/2 o HTTP/3. En Linux, workers dirigidos por eventos atienden las conexiones, un worker por procesador.
+- **Certificados:** automáticos mediante ACME con renovación, autoridades de respaldo y vinculación de cuenta externa; comodines mediante DNS con un programa hook, una actualización RFC 2136 o la API de Cloudflare; grapado OCSP; certificados bajo demanda detrás de una guarda; una autoridad local para `localhost`, nombres internos y direcciones IP, con una lista de revocación y un servidor ACME propio.
+- **Servidores:** comprobaciones de estado, arranque lento, drenaje, pesos, sesiones persistentes y un límite de flujos por servidor.
+- **Cambios en funcionamiento:** una recarga no hace fallar ninguna petición. El socket de administración drena, pondera, añade y quita servidores (`sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain`). En Linux, un ejecutable nuevo recibe del anterior los sockets de escucha y las asignaciones UDP; las conexiones QUIC terminan.
+- **Clúster:** los nodos de una malla comparten la tabla de afinidad y los límites de flujos de un servidor, y reenvían un cliente al nodo al que pertenece. Una base de datos PostgreSQL puede publicar una misma configuración en todos los nodos y revertirla. Un archivo mapeado conserva pistas de afinidad tras un reinicio.
+- **Hooks:** en la conexión y en la petición, compilados en el ejecutable, como WebAssembly con un presupuesto o como un agente en un socket Unix.
+- **Observación:** métricas, registros de acceso y una vista de consola de servidores, flujos y rechazos.
+
+Gate o Shield se aplica a los nombres que lo necesitan, o a ninguno. El archivo sigue siendo la
+autoridad: un cambio en tiempo de ejecución dura hasta la siguiente recarga.
+
+El balanceador de carga no se ha publicado y no ha funcionado con tráfico de producción. Sus
+funciones de clúster se probaron en tres hosts. Cada [debate de diseño](https://insanai.github.io/sibuna/sid/)
+enumera lo que está construido y las carencias conocidas.
 
 <a id="quickstart"></a>
 
@@ -117,8 +152,9 @@ con ACL de Windows.
 
 ### Compilar desde las fuentes
 
-Compilamos y probamos con **Rust 1.100**. El solucionador de navegador y la interfaz de la
-consola son Rust compilado a WebAssembly; la compilación no necesita Node ni npm.
+Compilamos y probamos con **Rust 1.100**, la versión que requiere el compilador JLV predeterminado. Podemos compilar el daemon solo JSON con Rust 1.94 y `--no-default-features`, y seleccionar `sqlite,console` según haga falta.
+El solucionador de navegador y la interfaz de la consola son Rust compilado a WebAssembly; la
+compilación no necesita Node ni npm.
 
 ```sh
 git clone https://github.com/insanai/sibuna.git
@@ -223,13 +259,15 @@ El [libro](https://insanai.github.io/sibuna/book/) explica sus responsabilidades
 
 ### Límites de despliegue
 
-Sibuna usa HTTP/1.1 en su puerto de escucha privado. Tu proxy de entrada gestiona TLS público y HTTP/2.
+El puerto de escucha privado usa HTTP/1.1 detrás de un proxy de entrada externo. En modo edge podemos terminar TLS, HTTP/2 y HTTP/3 en Sibuna y reenviar a pools de servidores HTTP/1.1, HTTP/2 o HTTP/3.
 Forward-auth inspecciona los metadatos que aporta el proxy de entrada. En modo proxy inverso, el
 inspector integrado cubre los primeros 8 KiB de un cuerpo. Las subidas se reenvían a tu aplicación sobre la marcha.
 Los mensajes WebSocket se retransmiten sin inspección. El inspector es heurístico, no un
 analizador completo del lenguaje.
 
 Los límites de tasa son locales a cada nodo. Sibuna no ofrece mitigación volumétrica de red.
+La sustitución del ejecutable sin perder conexiones y los workers dirigidos por eventos solo
+existen en Linux.
 Los desafíos están ligados al nodo que los emitió; enruta un desafío y su solución al mismo
 nodo. El objetivo estricto de rendimiento de la consola aún no ha superado formalmente su prueba de aceptación. Revisa los
 [límites de despliegue y mediciones](https://insanai.github.io/sibuna/book/operations.html)
@@ -259,6 +297,31 @@ Las cifras son medianas de tres ejecuciones.
   máxima fue de unos 16 MiB.
 - Con una misma carga ofrecida de 100.000 peticiones admitidas por segundo, la latencia p99.9
   fue de 62 us en modo forward-auth y de 150 us en modo proxy inverso.
+
+<a id="beside-haproxy-and-envoy"></a>
+
+### Junto a HAProxy y Envoy
+
+Ejecutamos los tres proxies en un host por loopback, uno tras otro, tres veces cada uno:
+HAProxy 3.0.11, Envoy 1.40.2 y Sibuna desde el árbol de código fuente del 2026-11-25. Cada uno
+tuvo las mismas ocho CPU y ocho hilos, 256 conexiones y ocho segundos por caso. La tabla da la
+mediana de peticiones por segundo de las tres ejecuciones. Ninguna petición falló.
+
+| Caso | Sibuna | HAProxy | Envoy |
+| --- | ---: | ---: | ---: |
+| HTTP/1.1 | 220.040 | 220.323 | 70.909 |
+| HTTP/1.1 sobre TLS | 174.611 | 165.199 | 63.399 |
+| HTTP/2 | 104.132 | 153.899 | 68.972 |
+| Memoria residente, HTTP/1.1 | 14 MiB | 48 MiB | 58 MiB |
+
+Te pedimos que lo leas como una medición pequeña, no como una clasificación. Sibuna y HAProxy
+están a la par en HTTP sin cifrar, y HAProxy es claramente más rápido con HTTP/2. No somos
+expertos en Envoy: usamos una configuración estática sencilla, y una mejor bien podría cambiar
+sus cifras. Los puntos fuertes de Envoy, como la configuración dinámica y sus filtros, no son lo
+que mide esta prueba. La respuesta era de dos bytes por loopback, lo que exagera el coste de cada
+petición; el tráfico real reduce las diferencias. El
+[libro](https://insanai.github.io/sibuna/book/benchmarks.html) da el método, las
+configuraciones, más números de conexiones y un clúster de tres hosts.
 
 <a id="beside-anubis"></a>
 
