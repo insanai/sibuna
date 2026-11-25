@@ -50,6 +50,7 @@ Edge load balancer
    sibuna --config-file edge.jlv      # serve TCP, UDP and HTTP frontends
    kill -HUP "$(pidof sibuna)"        # reload routes, policy and certificates in place
    sibuna ctl /run/sibuna/edge.sock show servers                      # needs global.admin_socket
+   /opt/sibuna/new/sibuna --config-file edge.jlv   # with global.upgrade_socket: replaces the running daemon, no connection lost (Linux)
    sibuna lb --tls auto --domain localhost --server 10.0.0.1:80       # the same from the local authority
    sibuna lb --tls auto --domain staging.example.org --acme-issuer internal --server 10.0.0.1:80   # a public name from the local authority
    sibuna lb --tls auto --domain example.org --acme-on-demand-ask http://127.0.0.1:9000/ok --server 10.0.0.1:80   # more names on demand
@@ -59,10 +60,18 @@ Edge load balancer
    sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 weight 5
    sibuna ctl /run/sibuna/edge.sock del ban 203.0.113.9                       # on every node of a mesh
    sibuna ctl /run/sibuna/edge.sock reload cluster                            # this node, then its peers
+   sibuna ctl /run/sibuna/edge.sock show affinity                             # the sticky table and the shares of fleet-wide limits
    sibuna ctl /run/sibuna/edge.sock add server app/blue 10.0.0.3:80
    sibuna ctl /run/sibuna/edge.sock del server app/blue
    sibuna ctl /run/sibuna/edge.sock reload                            # as SIGHUP, with the result
-   sibuna ctl /run/sibuna/edge.sock show info | grep spill            # the hints of a "spill" section: file, cost, counters
+   sibuna ctl /run/sibuna/edge.sock show info | grep spill            # the disk tier of the sticky table: file, cost, counters
+   sibuna authority diff -c /etc/sibuna/node.json -f edge.jlv         # what apply would change in the database
+   sibuna authority apply -c /etc/sibuna/node.json -f edge.jlv --expect 7   # publish revision 8, or a conflict
+   sibuna authority history -c /etc/sibuna/node.json                  # the revisions, newest first
+   sibuna authority rollback -c /etc/sibuna/node.json 6               # a new revision with the document of 6
+   sibuna authority dump -c /etc/sibuna/node.json --revision 6        # evaluated data; --source for the source
+   sibuna authority status -c /etc/sibuna/node.json                   # the head and what every node applied
+   sibuna ctl /run/sibuna/edge.sock show authority                    # the revision that this node serves
    cat fullchain.pem privkey.pem > /etc/sibuna/certs/site.pem   # one HAProxy-style bundle
 
 .. code-block:: json
@@ -90,6 +99,8 @@ Edge load balancer
    }
 
 ``"http": {"surface": "off"}`` gives a load balancer with no firewall. TCP and UDP frontends never use the firewall.
+
+Admission options of a frontend (SID 0032): ``"defer_accept": "5s"`` and ``"backlog": 4096`` on ``tcp`` and ``http``; ``"inspect_bytes"`` and ``"inspect_fallback": {"absent": {"action": "deny"}}`` beside ``tcp_inspect``; ``"udp_inspect": "quic"`` on ``udp``. All are off by default.
 
 Console (opt-in preview)
 ------------------------

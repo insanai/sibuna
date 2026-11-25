@@ -5,6 +5,7 @@ mod authority;
 mod demand;
 mod dns;
 mod internal;
+mod server;
 
 use std::collections::BTreeMap;
 use std::io;
@@ -16,6 +17,7 @@ pub use self::authority::{Authority, Eab};
 pub use self::demand::OnDemand;
 pub use self::dns::{DnsConfig, DnsProvider};
 pub use self::internal::{INTERNAL_LIFETIME, Internal};
+pub use self::server::InternalServer;
 use crate::config::{Config, Protocol, field, invalid};
 
 /// The production directory of Let's Encrypt, the default authority.
@@ -40,7 +42,7 @@ pub enum AcmeChallenge {
     Dns01,
 }
 
-/// `global.acme.key`: the curve of the key of a new certificate.
+/// `global.acme.key`: the kind of the key of a new certificate.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum CertificateKey {
     /// ECDSA on P-256.
@@ -48,6 +50,19 @@ pub enum CertificateKey {
     P256,
     /// ECDSA on P-384.
     P384,
+    /// RSA with 2048 bits. The daemon makes it with the `openssl` program.
+    Rsa2048,
+    /// RSA with 3072 bits.
+    Rsa3072,
+    /// RSA with 4096 bits.
+    Rsa4096,
+}
+
+impl CertificateKey {
+    /// Whether the key is an RSA key, which the `openssl` program makes.
+    pub fn is_rsa(self) -> bool {
+        matches!(self, Self::Rsa2048 | Self::Rsa3072 | Self::Rsa4096)
+    }
 }
 
 /// Reads `global.acme.key`.
@@ -56,8 +71,11 @@ fn certificate_key(r: &mut ObjectReader<'_, '_>) -> io::Result<CertificateKey> {
     match field(r.take_str("key"))? {
         None | Some("p256") => Ok(CertificateKey::P256),
         Some("p384") => Ok(CertificateKey::P384),
+        Some("rsa2048") => Ok(CertificateKey::Rsa2048),
+        Some("rsa3072") => Ok(CertificateKey::Rsa3072),
+        Some("rsa4096") => Ok(CertificateKey::Rsa4096),
         Some(_) => Err(invalid(format!(
-            "{path}: expected \"p256\" or \"p384\"; RSA keys are not offered"
+            "{path}: expected \"p256\", \"p384\", \"rsa2048\", \"rsa3072\" or \"rsa4096\""
         ))),
     }
 }
@@ -101,7 +119,7 @@ pub struct AcmeOptions {
     pub ari: bool,
     /// Staple an OCSP response when a certificate names a responder.
     pub ocsp: bool,
-    /// The curve of the key of a new certificate, from either source.
+    /// The kind of the key of a new certificate, from either source.
     pub key: CertificateKey,
 }
 
@@ -584,7 +602,19 @@ mod tests {
         assert_eq!(key(r#""global":{"acme":{"key":"p256"}},"#), Some(CertificateKey::P256));
         assert_eq!(key(r#""global":{"acme":{"key":"p384"}},"#), Some(CertificateKey::P384));
         let text = reason(r#"{"auto":["example.org"]}"#, r#""global":{"acme":{"key":"rsa"}},"#);
-        assert!(text.contains("global.acme.key: expected \"p256\" or \"p384\""), "{text}");
+        assert!(
+            text.contains("global.acme.key: expected \"p256\", \"p384\", \"rsa2048\""),
+            "{text}"
+        );
+        for (word, kind) in [
+            ("rsa2048", CertificateKey::Rsa2048),
+            ("rsa3072", CertificateKey::Rsa3072),
+            ("rsa4096", CertificateKey::Rsa4096),
+        ] {
+            let global = format!(r#""global":{{"acme":{{"key":"{word}"}}}},"#);
+            assert_eq!(key(&global), Some(kind));
+            assert!(kind.is_rsa() && !CertificateKey::P384.is_rsa());
+        }
     }
 
     #[test]
@@ -596,6 +626,7 @@ mod tests {
         let expected = Internal {
             lifetime: 600,
             constraints: vec!["10.0.0.0/8".into(), "corp.internal".into(), "localhost".into()],
+            server: None,
         };
         assert_eq!(options, Some(expected));
         for outside in ["db.internal", "192.168.1.1", "*.internal"] {

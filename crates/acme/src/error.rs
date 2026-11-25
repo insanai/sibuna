@@ -8,7 +8,7 @@ use std::fmt;
 /// only: what the authority sent is filtered before it gets here.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Error {
-    /// `ACME001` to `ACME014`.
+    /// `ACME001` to `ACME016`.
     pub code: &'static str,
     /// The title in upper case, for example `VALIDATION FAILED`.
     pub title: &'static str,
@@ -180,6 +180,35 @@ impl Error {
     }
 }
 
+impl Error {
+    /// `ACME016`: the revoked certificates or the revocation list of the local
+    /// authority could not be read or written, or the list of them is full.
+    pub fn revocation(message: impl Into<String>) -> Self {
+        Self::new(
+            "ACME016",
+            "REVOCATION LIST FAILED",
+            message.into(),
+            "Check the directory `local` under `global.acme.storage`: the daemon's user \
+             must be able to write `revoked`, `crl.der` and `crl.pem` there. An entry in \
+             `revoked` leaves by itself when its certificate has expired.",
+        )
+    }
+}
+
+impl Error {
+    /// `ACME015`: the program that makes RSA keys could not be run, or wrote no key.
+    pub fn key_tool(message: impl Into<String>) -> Self {
+        Self::new(
+            "ACME015",
+            "KEY TOOL FAILED",
+            message.into(),
+            "RSA keys are made by the program `openssl`. Install OpenSSL so that `openssl` \
+             is in the PATH of the daemon. Or set `global.acme.key` to \"p256\" or \
+             \"p384\", which need no program.",
+        )
+    }
+}
+
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} ({}): {}", self.title, self.code, self.message)
@@ -218,6 +247,12 @@ mod tests {
         assert!(all.iter().all(|error| !error.hint.is_empty() && !error.title.is_empty()));
         assert_eq!(all[3].retry_after, Some(7));
         assert_eq!(all[0].to_string(), "STORAGE NOT WRITABLE (ACME001): a");
+        let list = Error::revocation("a");
+        assert_eq!((list.code, list.title), ("ACME016", "REVOCATION LIST FAILED"));
+        assert!(list.hint.contains("revoked"));
+        let tool = Error::key_tool("a");
+        assert_eq!((tool.code, tool.title), ("ACME015", "KEY TOOL FAILED"));
+        assert!(tool.hint.contains("openssl") && tool.hint.contains("p384"));
     }
 
     #[test]

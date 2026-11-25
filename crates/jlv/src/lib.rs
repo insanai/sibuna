@@ -18,6 +18,14 @@ const MODULE: &str = "//:edge.jlv";
 /// Compiles and evaluates `fn edge() -> Map<Value>` and validates its output as an edge topology.
 /// Compilation and evaluation share a dedicated stack. Only the pure foundation library is loaded.
 pub fn parse(path: &str, bytes: &[u8]) -> io::Result<Config> {
+    Config::parse(evaluate(path, bytes)?.as_bytes())
+}
+
+/// Compiles and evaluates `fn edge() -> Map<Value>` and returns its value as a JSON
+/// document, without checking it as a topology. `path` names the module in a diagnostic.
+/// It borrows `bytes` for the call. Fails with a diagnostic of the compiler or the
+/// evaluator, or when the source or the document exceeds the limits of an edge file.
+pub fn evaluate(path: &str, bytes: &[u8]) -> io::Result<String> {
     if bytes.len() > Config::DOCUMENT_LIMITS.max_input_bytes {
         return Err(invalid("JLV source exceeds the edge file size limit"));
     }
@@ -26,7 +34,7 @@ pub fn parse(path: &str, bytes: &[u8]) -> io::Result<Config> {
         std::thread::Builder::new()
             .name("sibuna-jlv".into())
             .stack_size(8 << 20)
-            .spawn_scoped(scope, || evaluate(path, source))?
+            .spawn_scoped(scope, || run(path, source))?
             .join()
             .map_err(|_| io::Error::other("JLV evaluator panicked"))?
     })
@@ -44,7 +52,7 @@ fn diagnostic(path: &str, source: &str, error: Diagnostic) -> io::Error {
     invalid(format!("{path}:{line}:{column}: {}: {}", problem.code, problem.message))
 }
 
-fn evaluate(path: &str, source: &str) -> io::Result<Config> {
+fn run(path: &str, source: &str) -> io::Result<String> {
     let mut closure = Closure::default();
     closure.add(MODULE, path, source);
     let mut natives = Natives::new();
@@ -81,5 +89,5 @@ fn evaluate(path: &str, source: &str) -> io::Result<Config> {
         &limits,
     )
     .map_err(|e| diagnostic(path, source, e))?;
-    Config::parse(document::encode(&outcome.value)?.as_bytes())
+    document::encode(&outcome.value)
 }

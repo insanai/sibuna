@@ -29,17 +29,29 @@ pub(super) struct Source {
     loaded: Mutex<Option<Stamp>>,
     /// Where `reload cluster` sends the file. Empty without a mesh.
     cluster: std::sync::OnceLock<Arc<super::cluster::Peers>>,
+    /// Whether the topology comes from the file or from a database (SID 0028).
+    authority: super::authority::Slot,
 }
 
 impl Source {
     /// The topology of the file at `path`.
     pub fn file(path: &str) -> Self {
-        Self { path: Some(path.to_owned()), loaded: Mutex::new(None), cluster: Default::default() }
+        Self {
+            path: Some(path.to_owned()),
+            loaded: Mutex::new(None),
+            cluster: Default::default(),
+            authority: Default::default(),
+        }
     }
 
     /// The topology of a quick start. It cannot be loaded again.
     pub fn quick_start() -> Self {
-        Self { path: None, loaded: Mutex::new(None), cluster: Default::default() }
+        Self {
+            path: None,
+            loaded: Mutex::new(None),
+            cluster: Default::default(),
+            authority: Default::default(),
+        }
     }
 
     /// Names the peers of the mesh. The first call stays.
@@ -50,6 +62,11 @@ impl Source {
     /// The peers of the mesh, when the edge has one.
     pub fn cluster(&self) -> Option<&Arc<super::cluster::Peers>> {
         self.cluster.get()
+    }
+
+    /// The mode of the source: a file, or a database with its follower (SID 0028).
+    pub fn authority(&self) -> &super::authority::Slot {
+        &self.authority
     }
 
     /// The path of the file, if there is one.
@@ -67,7 +84,7 @@ impl Source {
         };
         // The stamp is taken first. A write during the load then shows as a new stamp.
         *self.loaded.lock().unwrap_or_else(PoisonError::into_inner) = stamp(path);
-        super::load(path)
+        super::load_into(path, &self.authority)
     }
 
     fn loaded(&self) -> Option<Stamp> {

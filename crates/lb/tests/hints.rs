@@ -52,14 +52,14 @@ fn topology(vip: SocketAddr, weights: &[u32], spill: &str) -> Config {
     let source = format!(
         r#"{{{spill}"frontends":{{"web":{{"proto":"http","binds":["{vip}"],
         "default_backend":"app"}}}},
-        "backends":{{"app":{{"mode":"http","sticky":"source","servers":[{}]}}}}}}"#,
+        "backends":{{"app":{{"mode":"http","sticky":{{"kind":"table"}},"servers":[{}]}}}}}}"#,
         rows.join(",")
     );
     Config::parse(source.as_bytes()).unwrap()
 }
 
 fn spill(path: &Path) -> String {
-    format!(r#""spill":{{"path":"{}","size":"1m","memory":"64k"}},"#, path.display())
+    format!(r#""spill":{{"path":"{}","size":"1m"}},"#, path.display())
 }
 
 /// The port of the server that serves client number `client` now.
@@ -81,8 +81,7 @@ fn serve_at(routes: &HttpRoutes, vip: SocketAddr, client: u16, revision: u64) ->
     routes.choose(&query).unwrap().address().port()
 }
 
-/// Serves every client twice and returns the server of each. The second request makes
-/// the hint definite, which sends it to the disk.
+/// Serves every client twice and returns the server of each.
 fn settle(routes: &HttpRoutes, vip: SocketAddr) -> Vec<u16> {
     let homes: Vec<u16> = (0..CLIENTS).map(|client| serve(routes, vip, client)).collect();
     for client in 0..CLIENTS {
@@ -94,7 +93,7 @@ fn settle(routes: &HttpRoutes, vip: SocketAddr) -> Vec<u16> {
 /// Waits until the disk has answered `count` questions with a hint.
 fn promoted(edge: &Edge, count: u64) {
     let deadline = Instant::now() + Duration::from_secs(20);
-    while edge.spill_status().unwrap().promoted < count {
+    while edge.spill_status().unwrap().disk.cache.hits < count {
         assert!(Instant::now() < deadline, "{:?}", edge.spill_status());
         std::thread::sleep(Duration::from_millis(5));
     }
@@ -109,7 +108,7 @@ fn a_client_keeps_its_server_when_a_heavy_server_joins() {
     let routes = edge.http_routes();
     let status = edge.spill_status().unwrap();
     assert_eq!(status.outcome, Some(Outcome::Created));
-    assert!(status.slots > 15_000 && status.entries == 4096);
+    assert!(status.slots > 15_000 && status.table_slots == 65_536);
     let homes = settle(&routes, vip);
     assert!(homes.contains(&9500) && homes.contains(&9501));
     // A server with almost all the weight joins. The ranking would move nearly every
@@ -134,7 +133,7 @@ fn a_client_keeps_its_server_when_a_heavy_server_joins() {
         assert_eq!(serve_at(&routes, vip, client, 2), refuges[usize::from(client)], "{client}");
     }
     let status = edge.spill_status().unwrap();
-    assert!(status.hits >= 4 * u64::from(CLIENTS) && status.misses >= u64::from(CLIENTS));
+    assert!(status.asked >= u64::from(CLIENTS));
 }
 
 #[test]
@@ -254,42 +253,10 @@ fn the_spill_section_changes_only_with_a_restart_and_is_off_without_it() {
         let error = edge.reload(topology(vip, &[1, 1], changed)).err().unwrap().to_string();
         assert!(error.contains("spill section requires a restart"), "{error}");
     }
-    // An edge without the section keeps no table and follows the ranking.
+    // An edge without the section has the sticky table in memory and no disk tier.
     let vip = free::tcp();
-    let mut plain = Edge::bind(topology(vip, &[1, 1], "")).unwrap();
+    let plain = Edge::bind(topology(vip, &[1, 1], "")).unwrap();
     assert!(plain.spill_status().is_none());
-    let routes = plain.http_routes();
-    settle(&routes, vip);
-    plain.reload(topology(vip, &[1, 1, 200], "")).unwrap();
-    let moved = (0..CLIENTS).filter(|&client| serve_at(&routes, vip, client, 2) == 9502).count();
-    assert!(moved > 270, "{moved}");
-}
-
-#[test]
-fn a_retry_serves_one_request_elsewhere_and_does_not_move_the_client() {
-    let scratch = Scratch::new();
-    let vip = free::tcp();
-    let edge = Edge::bind(topology(vip, &[1, 1, 1], &spill(&scratch.file()))).unwrap();
-    let routes = edge.http_routes();
-    let homes = settle(&routes, vip);
-    for client in 0..CLIENTS {
-        let peer = SocketAddr::from(([198, 18, (client >> 8) as u8, client as u8], 40_000));
-        let query = Query {
-            vip,
-            peer,
-            host: b"app.example",
-            path: b"/",
-            policy_revision: 1,
-            ..Query::default()
-        };
-        // The request fails on its server and is sent again to another.
-        let first = routes.choose(&query).unwrap();
-        let home = homes[usize::from(client)];
-        assert_eq!(first.address().port(), home);
-        let second = routes.retry(&first).unwrap();
-        assert_ne!(second.address().port(), home);
-        drop((first, second));
-        // The next request of the client is with its own server again.
-        assert_eq!(serve(&routes, vip, client), home, "{client}");
-    }
+    let homes = settle(&plain.http_routes(), vip);
+    second_reload(plain, vip, "", &homes);
 }

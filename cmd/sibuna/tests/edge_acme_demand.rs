@@ -97,6 +97,7 @@ impl Ask {
 struct Daemon {
     child: Child,
     tls: SocketAddr,
+    plain: SocketAddr,
     socket: PathBuf,
     log: Arc<Mutex<String>>,
 }
@@ -125,6 +126,18 @@ impl Daemon {
             .unwrap();
         assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
         String::from_utf8_lossy(&output.stdout).into_owned()
+    }
+
+    /// The value of the counter `name` in the metrics of the edge.
+    fn counter(&self, name: &str) -> u64 {
+        let mut plain = std::net::TcpStream::connect(self.plain).unwrap();
+        let request = "GET /__sibuna/metrics HTTP/1.1\r\nHost: a\r\nConnection: close\r\n\r\n";
+        plain.write_all(request.as_bytes()).unwrap();
+        let mut text = String::new();
+        plain.read_to_string(&mut text).unwrap();
+        let line = text.lines().find(|line| !line.starts_with('#') && line.contains(name));
+        let value = line.and_then(|line| line.split_whitespace().last());
+        value.and_then(|value| value.parse().ok()).unwrap_or_else(|| panic!("{name} in\n{text}"))
     }
 
     /// The columns of the line of `show certs` for `name`, when it has one.
@@ -204,7 +217,7 @@ fn try_start(authority: &Authority, home: &Path, acme: &str, tls: &str) -> Resul
             line.clear();
         }
     });
-    Ok(Daemon { child, tls: bind, socket, log })
+    Ok(Daemon { child, tls: bind, plain, socket, log })
 }
 
 /// Waits until `check` returns a value, for at most `seconds`.
@@ -260,8 +273,11 @@ fn the_first_handshake_obtains_a_certificate_and_the_guards_refuse_other_names()
     let row = daemon.row(name).unwrap();
     assert_eq!(row[1..3], ["http-01", "Sibuna_Test_Authority"], "{row:?}");
     assert_eq!(row[5..], ["ready", "on-demand", "-", "-"], "{row:?}");
-    // The second handshake finds it. Nothing is asked again.
+    // That handshake waited, so a worker gave it to the protocol runtime (SID 0024).
+    assert_eq!((daemon.counter("tls_passed"), daemon.counter("tls_kept")), (1, 0));
+    // The second handshake finds it. Nothing is asked again, and a worker serves it.
     assert_eq!(handshake(&daemon, name), Some(first.clone()));
+    assert_eq!((daemon.counter("tls_passed"), daemon.counter("tls_kept")), (1, 1));
     assert_eq!((authority.order_count.load(Ordering::Relaxed), ask.count(name)), (1, 1));
 
     // A name that `ask` refuses gets no order. The handshake ends at once with an

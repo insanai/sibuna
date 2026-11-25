@@ -50,6 +50,7 @@ sibuna-lb = { path = "crates/lb", version = "1.0.0-beta.3" }
 sibuna-net = { path = "crates/net", version = "1.0.0-beta.3" }
 sibuna-reactor = { path = "crates/reactor", version = "1.0.0-beta.3" }
 sibuna-spill = { path = "crates/spill", version = "1.0.0-beta.3" }
+sibuna-upgrade = { path = "crates/upgrade", version = "1.0.0-beta.3" }
 sibuna-storage = { path = "crates/storage", version = "1.0.0-beta.3", default-features = false }
 sibuna-html = { path = "crates/html", version = "1.0.0-beta.3", default-features = false }
 sibuna-console-protocol = { path = "crates/console-protocol", version = "1.0.0-beta.3" }
@@ -57,6 +58,7 @@ sibuna-serve = { path = "crates/serve", version = "1.0.0-beta.3" }
 sibuna-tls = { path = "crates/tls", version = "1.0.0-beta.3" }
 sibuna-console-storage = { path = "crates/console-storage", version = "1.0.0-beta.3", default-features = false }
 sibuna-console = { path = "crates/console", version = "1.0.0-beta.3", default-features = false }
+sibuna-authority = { path = "crates/authority", version = "1.0.0-beta.3", default-features = false }
 
 # The LGPL JLV kernel runs only while loading an edge configuration (SID 0015).
 jlv-compiler = { path = "vendor/jlv/crates/jlv-compiler" }

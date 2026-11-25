@@ -17,6 +17,7 @@ sibuna-json = { workspace = true }
 sibuna-reactor = { workspace = true }
 sibuna-spill = { workspace = true }
 sibuna-cidr = { workspace = true }
+sibuna-upgrade = { workspace = true }
 
 [lints]
 workspace = true

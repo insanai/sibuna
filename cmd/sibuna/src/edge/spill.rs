@@ -1,5 +1,5 @@
-//! What the daemon says about learned source affinity and its disk tier (SID 0027): one
-//! line at start, and the lines of `show info`.
+//! What the daemon says about the disk tier of the sticky table (SID 0027): one line at
+//! start, and the lines of `show info`.
 
 use std::fmt::Write as _;
 
@@ -9,16 +9,17 @@ use sibuna_spill::Outcome;
 /// What opening the file found, in the words of an operator.
 fn found(status: &SpillStatus) -> String {
     match status.outcome {
-        None => "in use by another process, hints are kept in memory only".to_owned(),
+        None => "in use by another process, the sticky table is in memory only".to_owned(),
         Some(Outcome::Created) => "created".to_owned(),
         Some(Outcome::Reused) => "reused".to_owned(),
         Some(Outcome::Discarded(reason)) => format!("discarded because {reason}, created anew"),
     }
 }
 
-/// The memory of the process that the hints hold: the table, the sketches and the queue.
+/// The memory that the disk tier takes beside the sticky table: the sketches, the
+/// scratch space and the queue.
 fn memory_bytes(status: &SpillStatus) -> u64 {
-    status.table_bytes + status.budget.memory_bytes()
+    status.budget.memory_bytes()
 }
 
 /// The line that the daemon notes at start, with the code `EDGE013`. It says whether
@@ -28,7 +29,7 @@ pub(super) fn start_line(status: &SpillStatus) -> String {
     if status.outcome.is_some() {
         let _ = write!(
             line,
-            ", {} slots in {} bytes on disk, {} bytes of memory",
+            ", {} slots in {} bytes on disk, {} bytes of memory beside the table",
             status.slots,
             status.budget.file_bytes,
             memory_bytes(status)
@@ -47,8 +48,8 @@ pub(super) fn write_info(text: &mut String, status: &SpillStatus) {
     let _ = write!(
         text,
         "spill: {}\nspill_state: {}\nspill_slots: {}\nspill_file_bytes: {}\n\
-         spill_memory_bytes: {}\nspill_table_entries: {}\nspill_hits: {}\nspill_misses: {}\n\
-         spill_promoted: {}\nspill_disk_lookups: {}\nspill_disk_hits: {}\n\
+         spill_memory_bytes: {}\nspill_table_slots: {}\nspill_asked: {}\n\
+         spill_promoted: {}\nspill_preferred: {}\nspill_disk_lookups: {}\nspill_disk_hits: {}\n\
          spill_disk_written: {written}\nspill_disk_rejected: {}\nspill_disk_corrupt: {}\n\
          spill_disk_shed: {}\n",
         status.path.display(),
@@ -56,10 +57,10 @@ pub(super) fn write_info(text: &mut String, status: &SpillStatus) {
         status.slots,
         status.budget.file_bytes,
         memory_bytes(status),
-        status.entries,
-        status.hits,
-        status.misses,
+        status.table_slots,
+        status.asked,
         status.promoted,
+        status.preferred,
         disk.lookups,
         disk.hits,
         disk.rejected,
@@ -90,13 +91,12 @@ mod tests {
             outcome,
             persistent: true,
             slots: 16_128,
-            entries: 4_096,
+            table_slots: 65_536,
             budget,
-            table_bytes: 65_536,
             disk: ServiceCounters::default(),
-            hits: 7,
-            misses: 3,
+            asked: 7,
             promoted: 2,
+            preferred: 1,
         }
     }
 
@@ -106,13 +106,13 @@ mod tests {
         assert_eq!(
             reused,
             "EDGE013: spill cache /var/lib/sibuna/hints.spill: reused, 16128 slots in \
-             1040384 bytes on disk, 361448 bytes of memory"
+             1040384 bytes on disk, 295912 bytes of memory beside the table"
         );
         let discarded = Outcome::Discarded(Reason::Version(2));
         let line = start_line(&status(Some(discarded)));
         assert!(line.contains("discarded because it has format version 2, created anew"));
         let busy = start_line(&status(None));
-        assert!(busy.ends_with("in use by another process, hints are kept in memory only"));
+        assert!(busy.ends_with("in use by another process, the sticky table is in memory only"));
         let mut memory = status(Some(Outcome::Created));
         memory.persistent = false;
         assert!(start_line(&memory).ends_with("not kept over a restart on this platform"));
@@ -123,7 +123,7 @@ mod tests {
         let mut text = String::new();
         write_info(&mut text, &status(Some(Outcome::Created)));
         assert!(text.starts_with("spill: /var/lib/sibuna/hints.spill\nspill_state: created\n"));
-        for line in ["spill_slots: 16128\n", "spill_hits: 7\n", "spill_promoted: 2\n"] {
+        for line in ["spill_slots: 16128\n", "spill_asked: 7\n", "spill_promoted: 2\n"] {
             assert!(text.contains(line), "{text}");
         }
         assert!(text.ends_with("spill_disk_shed: 0\n"));

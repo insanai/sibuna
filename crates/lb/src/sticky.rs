@@ -78,6 +78,23 @@ pub(crate) fn presented<'a>(fields: &[&'a [u8]], name: &str) -> Option<&'a [u8]>
         .next()
 }
 
+/// The value of the cookie `name` in the `Cookie` fields `fields` of a request, when
+/// it is not empty and has at most [`MAX_VALUE`] bytes. The first such cookie counts.
+/// The learned table of SID 0025 keys a client by it.
+pub(crate) fn value<'a>(fields: &[&'a [u8]], name: &str) -> Option<&'a [u8]> {
+    let pairs = fields.iter().flat_map(|field| field.split(|&byte| byte == b';'));
+    pairs
+        .filter_map(|pair| {
+            let pair = pair.trim_ascii();
+            let value = pair.strip_prefix(name.as_bytes())?.strip_prefix(b"=")?;
+            (!value.is_empty() && value.len() <= MAX_VALUE).then_some(value)
+        })
+        .next()
+}
+
+/// The longest cookie value that names a client of a learned table.
+pub(crate) const MAX_VALUE: usize = 1024;
+
 /// Appends the `Set-Cookie` line that gives a client the token of its server.
 pub(crate) fn write_cookie(out: &mut Vec<u8>, name: &str, token: &Token, secure: bool) {
     out.extend_from_slice(b"Set-Cookie: ");
@@ -181,6 +198,13 @@ mod tests {
         assert_eq!(presented(&fields, "missing"), None);
         assert_eq!(presented(&[b"sibuna_srv=short"], "sibuna_srv"), None);
         assert_eq!(presented(&[], "sibuna_srv"), None);
+        // The value of any cookie, for the learned table.
+        assert_eq!(value(&fields, "theme"), Some(&b"dark"[..]));
+        assert_eq!(value(&fields, "a"), Some(&b"b"[..]));
+        assert_eq!(value(&fields, "them"), None);
+        assert_eq!(value(&[b"sid="], "sid"), None);
+        let long = [b"sid=".to_vec(), vec![b'x'; MAX_VALUE + 1]].concat();
+        assert_eq!(value(&[&long], "sid"), None);
         let mut line = Vec::new();
         write_cookie(&mut line, "sid", b"00112233aabbccdd", false);
         assert_eq!(line, b"Set-Cookie: sid=00112233aabbccdd; Path=/; HttpOnly; SameSite=Lax\r\n");

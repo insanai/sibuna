@@ -30,6 +30,11 @@ Discussion reading order
    records/0022-replicated-bans
    records/0023-cluster-configuration
    records/0024-tls-on-the-workers
+   records/0025-shared-affinity-and-fleet-caps
+   records/0026-peer-forwarding
    records/0027-spill-cache
+   records/0028-database-authority
+   records/0029-upgrade-handoff
+   records/0032-staged-admission
 
 .. sid-generated-end

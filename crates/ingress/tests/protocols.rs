@@ -1,8 +1,10 @@
 //! Negotiate both native protocols and inspect the exact HTTP/1.1 firewall exchange.
 #![allow(clippy::unwrap_used)]
 
+#[path = "../../lb/tests/free/mod.rs"]
+mod free;
 use std::io::{BufRead, BufReader, Write};
-use std::net::{SocketAddr, TcpListener};
+use std::net::SocketAddr;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -44,7 +46,7 @@ fn client(alpn: &[u8]) -> rustls::ClientConfig {
 fn firewall(vip: SocketAddr, connections: Arc<AtomicUsize>) -> Handler {
     Arc::new(move |mut stream, peer, dest, _| {
         assert_eq!(dest, vip);
-        assert_eq!(peer.ip(), vip.ip());
+        assert!(peer.ip().is_loopback(), "{peer}");
         connections.fetch_add(1, Ordering::SeqCst);
         std::thread::spawn(move || {
             let mut reader = BufReader::new(stream.try_clone().unwrap());
@@ -77,7 +79,9 @@ fn setup() -> (SocketAddr, Edge, Ingress, Arc<AtomicUsize>) {
 fn setup_with(
     firewall: fn(SocketAddr, Arc<AtomicUsize>) -> Handler,
 ) -> (SocketAddr, Edge, Ingress, Arc<AtomicUsize>) {
-    let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    // An address of this test alone: a port released on 127.0.0.1 may be taken by a
+    // test beside this one before the edge binds it.
+    let vip = free::tcp();
     let topology = format!(
         r#"{{"frontends":{{"web":{{"proto":"http","binds":["{vip}"],
         "default_backend":"pool"}}}},"backends":{{"pool":{{"mode":"http",

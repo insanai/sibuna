@@ -387,6 +387,9 @@ Global limits
    * - ``reuse_port``
      - ``false``
      - Listeners share their address with other Sibuna processes of the same user, so a new process can start before the old one stops. Linux only. Changing it takes a restart.
+   * - ``upgrade_socket``
+     - none
+     - The path of the socket over which a new process takes the listeners and the UDP mappings of this one. See "Replacing the binary without losing a connection". Linux only. Changing it takes a restart.
 
 One worker thread accepts connections, inspects handshakes and owns the UDP mappings. Established TCP streams move to the relay threads. On Linux every thread waits with epoll, so an idle flow costs no CPU time. We budget two file descriptors for each TCP stream and one for each UDP mapping. The operating system must allow the daemon that many descriptors (``LimitNOFILE`` under systemd).
 
@@ -528,10 +531,10 @@ Every option has a default. We change one in ``global.acme``.
      - The provider of the DNS-01 challenge, described under *Wildcards and DNS-01*.
    * - ``internal``
      - ``{ lifetime: 43200 }``
-     - ``lifetime`` is the lifetime of a certificate of the local authority in seconds, from 10 to 172800. ``constraints`` lists what its root may sign for, described under *Internal names and the local authority*.
+     - ``lifetime`` is the lifetime of a certificate of the local authority in seconds, from 10 to 172800. ``constraints`` lists what its root may sign for, described under *Internal names and the local authority*. ``server`` makes the authority an ACME server for other machines, described there too.
    * - ``key``
      - ``"p256"``
-     - The key of each new certificate, from either source: ECDSA on P-256, or ``"p384"`` for P-384. A stored certificate keeps its key until its renewal. RSA keys are not offered.
+     - The key of each new certificate, from either source: ECDSA on P-256, ``"p384"`` for P-384, or ``"rsa2048"``, ``"rsa3072"`` and ``"rsa4096"`` for an RSA key. A stored certificate keeps its key until its renewal. An RSA key is made by the ``openssl`` program, which must be in the ``PATH`` of the daemon.
    * - ``on_demand``
      - none
      - The guards of issuance at the first handshake, described under *On demand*.
@@ -684,7 +687,76 @@ We may limit what the root can sign for.
 
 ``constraints`` lists DNS suffixes and address ranges, at most 32. A suffix permits its own name and every name below it. Sibuna writes the list into the root as a critical name constraint when it creates the root. A client that trusts the root then refuses any certificate under it for another name, whoever signed it. So a stolen root key cannot be used against ``bank.example``. A list with suffixes only permits no address, and a list with ranges only permits no host name. Without the key the root may sign for every name, which ``issuer: "internal"`` on a public name needs. ``sibuna check`` refuses a local name outside the list with the diagnostic ``NAME OUTSIDE CONSTRAINTS``. The list belongs to the root: Sibuna never rewrites a root. When the file lists other constraints than the root has, the local authority fails with ``ACME011`` and a hint. A longer list needs a new root. We remove ``root.pem``, ``root.crt`` and ``intermediate.pem`` in the directory ``local``, and we install the new root in the clients.
 
-There is no revocation list. A certificate of the local authority lives 12 hours, and clients of a private authority do not fetch lists unless each is told to. To stop serving a name we remove it from the file. A stolen key of one certificate is useful until that certificate expires, and ``lifetime`` shortens this. When the storage loses its root, Sibuna makes a new root at the next start, does not serve the stored certificates of the old root, and issues new ones at once. The local authority issues for this daemon and for the nodes that share its storage. It is not an ACME server for other machines.
+A certificate of the local authority lives 12 hours, so a stolen key is useful until that certificate expires, and ``lifetime`` shortens this. To stop serving a name we remove it from the file. When a key is lost before its certificate expires, we revoke the certificate.
+
+.. code-block:: text
+
+   $ sibuna ctl /run/sibuna/edge.sock revoke cert db.internal
+   revoked serial 5f0c1a7be2d94410 name db.internal
+   # The revocation lists are written. A served certificate with this serial number is replaced now.
+
+``revoke cert`` takes a name that the local authority issues for on this node, or a serial number in hexadecimal digits, as ``openssl x509 -noout -serial`` prints it. The name gets a new certificate with a new key at once, with no restart. The serial form also revokes a certificate that this node no longer holds. A word that names nothing fails with ``ADM013``.
+
+The local authority keeps a revocation list in the directory ``local`` of the storage: ``crl.pem``, and ``crl.der`` for a tool that reads DER. Sibuna writes the list at the first internal name, also when nothing is revoked, and writes it again after every revocation and at least every 12 hours. A list is valid for 24 hours. A client does not find the list by itself. We give the file to each verifier that shall honour a revocation, and we give it again within a day, for example with a timer that copies it.
+
+.. code-block:: text
+
+   openssl verify -crl_check -CAfile root.crt -untrusted intermediate.pem -CRLfile crl.pem leaf.pem
+   ssl_crl /etc/nginx/sibuna-crl.pem;              # nginx, for client certificates of this authority
+   SSLCARevocationFile /etc/apache2/sibuna-crl.pem
+
+A verifier that is not given the list accepts a revoked certificate until it expires. ``crl.pem`` may hold two lists: the intermediate is replaced every few days, and the one before it signs a list of its own while its certificates live. When the list cannot be written, the log has ``ACME016`` with the path. When the storage loses its root, Sibuna makes a new root at the next start, does not serve the stored certificates of the old root, and issues new ones at once. The local authority issues for this daemon and for the nodes that share its storage. For other machines it can be an ACME server, which is off unless we turn it on.
+
+**An ACME server for the internal network.** With ``internal.server`` another machine obtains a certificate of the local authority with an ACME client: certbot, lego, acme.sh, or a second Sibuna whose ``directory`` is our URL.
+
+.. code-block:: text
+
+   "global": { "acme": { "internal": {
+       "constraints": ["corp.internal", "10.0.0.0/8"],
+       "server": { "url": "https://ca.corp.internal/acme",
+                   "allow": ["corp.internal", "10.0.0.0/8"] } } } },
+   "frontends": { "ca": { "proto": "http", "binds": ["10.0.0.5:443"],
+       "tls": { "auto": ["ca.corp.internal"] }, "default_backend": "app" } }
+
+``url`` is what we give to the clients, and its directory is ``URL/directory``. The server has no port of its own. It answers on the TLS frontends, for requests whose host and path are those of ``url``, so one frontend must serve that host. In the example the local authority issues the certificate of ``ca.corp.internal`` itself. An ``http`` URL is accepted for ``localhost`` and loopback addresses only. ``allow`` lists the DNS suffixes that a client may order under and the address ranges that a validation may connect into. It needs one of each. ``http_port`` is the port of the validation, 80 unless we state it. A change of ``server`` needs a restart.
+
+A client must trust the root before it can speak to the server, because the server is behind a certificate of the same authority. We install the root on the client as shown below, or we name it to the client.
+
+.. code-block:: sh
+
+   sibuna ctl /run/sibuna/edge.sock show ca > sibuna-root.crt
+   certbot certonly --standalone -d db.corp.internal \
+       --server https://ca.corp.internal/acme/directory
+   REQUESTS_CA_BUNDLE=sibuna-root.crt certbot ...      # when the root is not installed
+
+The server proves a name with HTTP-01 and nothing else. It resolves the name, connects to the first address inside a range of ``allow`` on ``http_port``, and asks for ``/.well-known/acme-challenge/TOKEN``. It follows no redirect and contacts no address outside ``allow``. So it issues host names only: no wildcard and no IP address. A certificate lives for ``internal.lifetime``, 12 hours unless we change it and two days at most. A client that renews a month before the end, as certbot does, must be told to renew every few hours, for example with a timer that runs ``certbot renew --force-renewal``.
+
+.. list-table:: What the server does not have
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Missing
+     - What we do instead
+   * - A list of clients, external account binding.
+     - Everybody who reaches the URL and can answer on port 80 of an address in ``allow`` for a name under ``allow`` obtains a certificate. We keep the URL inside the network, we keep ``allow`` narrow, and we set ``internal.constraints``.
+   * - A limit per client address.
+     - The server holds 1,024 orders, 16 for one account key, and 4,096 nonces. A client that fills them makes others wait up to an hour. The answer is written before the firewall, so its limits do not apply.
+   * - Revocation by the client.
+     - ``revoke cert SERIAL`` on the admin socket. The serial is on the certificate of the client: the daemon logs the names of what it issues and keeps no list.
+   * - Orders that survive a restart, or that several nodes share.
+     - Orders live in memory for at most one hour. After a restart a client orders again. Behind several nodes, a client must reach one node for one order.
+   * - Wildcards, IP addresses, DNS-01, TLS-ALPN-01, key rollover, renewal information.
+     - Nothing. A wildcard for an internal name comes from ``tls.auto`` on this daemon.
+
+``URL/crl`` serves the revocation list of the present intermediate in DER, for a verifier that fetches lists over HTTPS. The log has one line for each validation and each certificate.
+
+.. code-block:: text
+
+   ACME000: ACME server: db.corp.internal validated for a client
+   ACME000: ACME server: certificate issued to a client for db.corp.internal
+   ACME000: ACME server: db.corp.internal not validated for a client: The answer has the status 404, not 200.
+
+This server was tested with the ACME client of Sibuna. Other clients were not run against it yet.
 
 A client that connects to an IP address sends no server name. Such a handshake receives the certificate of the first address under ``auto``, and that certificate lists every address under ``auto``.
 
@@ -886,6 +958,12 @@ When the responder says ``revoked``, Sibuna logs it and renews the certificate a
    * - ``ACME014``
      - the certificate thread stopped on a defect
      - Nothing at once: the served certificates stay, and the thread starts again by itself after 5 seconds, then 10, up to 5 minutes. The line is a defect of Sibuna. We report it.
+   * - ``ACME016``
+     - the revocation list failed
+     - The directory ``local`` of the storage: the daemon's user must be able to write ``revoked``, ``crl.der`` and ``crl.pem``. The directory ``revoked`` takes 1,024 certificates that have not expired.
+   * - ``ACME015``
+     - the key tool failed
+     - The program ``openssl`` in the ``PATH`` of the daemon, which makes RSA keys. ``sibuna check`` and the start stop with this code when the program cannot be run. We install OpenSSL, or we set ``key`` to ``"p256"`` or ``"p384"``.
 
 A reload may add and remove ``auto`` names, and turn ``on_demand`` of a frontend on and off. A new name is ordered at once, and a removed name is no longer renewed or served. Changing ``global.acme``, which includes the guards of ``on_demand``, or adding the first ``auto`` name to a daemon that has none, needs a restart. A certificate from ``crt`` and ``auto`` names may share a listener. For a name that both cover, the automatic certificate serves once it exists.
 
@@ -912,9 +990,9 @@ A reload may add and remove ``auto`` names, and turn ``on_demand`` of a frontend
    * - The local root may sign for any name.
      - The same by default. ``internal.constraints`` limits the root to our suffixes and ranges.
    * - ``acme_server`` makes the local authority an ACME server for other machines.
-     - Not offered. Nodes that share the storage share the root.
+     - ``global.acme.internal.server``, off by default. HTTP-01 only, into the address ranges of ``allow``, on the TLS frontends and with no port of its own.
    * - ``key_type`` offers ECDSA and RSA keys.
-     - ``key: "p256"`` or ``"p384"``. No RSA keys.
+     - ``key``: ``"p256"``, ``"p384"``, ``"rsa2048"``, ``"rsa3072"`` or ``"rsa4096"``. An RSA key needs the ``openssl`` program.
    * - ``on_demand`` in a site, ``on_demand_tls { ask URL }`` in the global options.
      - ``tls: { on_demand: true }`` and ``global.acme.on_demand``. The ``ask`` contract is the same: ``?domain=NAME``, and a 2xx status allows. A file without ``ask`` and without ``allow`` is refused, where Caddy warns.
    * - An on-demand certificate is renewed during a handshake.
@@ -925,8 +1003,6 @@ A reload may add and remove ``auto`` names, and turn ``on_demand`` of a frontend
      - ``eab: { kid, key_file }``. The key lives in a file, not in the configuration.
    * - Renewal follows the renewal information of the authority.
      - The same, with ``ari: false`` to turn it off, and never later than four fifths of the lifetime.
-   * - ``acme_server``.
-     - Not available.
 
 HTTP routing by name and path
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -998,7 +1074,7 @@ Each protocol has its own limiter. All of them count per source IPv4 address or 
      - Concurrent connections of one client
      - Further connections are refused. The default is 64.
 
-A UDP mapping may also send at most three times the bytes it received, with a bounded burst, so a spoofed source cannot use a server as an amplifier.
+A UDP mapping may also send at most three times the bytes it received, with a bounded burst, so a spoofed source cannot use a server as an amplifier. A QUIC frontend ends the bound for a client that it validated (``udp_inspect``, below).
 
 The ``http`` object
 ~~~~~~~~~~~~~~~~~~~
@@ -1218,42 +1294,40 @@ A cookie whose server is down, full, ejected or drained gives way: the request i
 
 Behind ``trusted_proxies`` the client address of ``"source"`` is the one the proxy recorded, as for the access log and the limits. Without that option it is the socket peer, so all requests of one proxy would share a server.
 
-Remembering the server of a client
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Keeping the sticky table over a restart
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-With ``sticky: "source"`` the server of a client is computed, not remembered. So a share of the clients moves when a server joins the pool or changes its weight, and the clients of a server that was out return to it when it returns. The ``spill`` section makes the edge remember.
+A pool with ``sticky: "table"`` remembers the server of each client in a table in memory, as a later section describes. The table has ``global.sticky_entries`` slots, and a restart empties it. The ``spill`` section puts a file under the table.
 
 .. code-block:: text
 
    spill: {
        path: "/var/lib/sibuna/hints.spill",
        size: "64m",
-       memory: "1m",
-       ttl: "1h",
    },
 
-The section stands beside ``global`` and ``frontends``. With it, every pool that is sticky by source prefers the server that last served a client, while that server may serve. A client that was never seen follows the computed choice. A server that is down, full, ejected or drained gives up its clients as before, and they stay with their new server when the old one returns. A request that is sent again to another server does not move its client.
+The section stands beside ``global`` and ``frontends``, and both members are required. ``size`` is the size of the file, from ``64k`` to ``64g``. Each client takes 64 bytes, and ``64m`` holds a million slots. A file with room for four times the clients we expect keeps nearly all of them: at twice the clients, three in a hundred find their part of the file full. A change of the section needs a restart. Without the section nothing changes.
 
-``path`` and ``size`` are required. ``size`` is the size of the file, from ``64k`` to ``64g``. Each client takes 64 bytes, and a file should have room for twice the clients we expect within ``ttl``: ``64m`` holds a million slots. ``memory`` is the table in memory, from ``4k`` to ``1g`` and ``1m`` by default. Each client takes 16 bytes there. Clients that the table cannot hold are read back from the file. ``ttl`` is the life of a hint after its last use, from ``1m`` to ``720h`` and ``1h`` by default. A change of the section needs a restart.
+Every choice that the table learns is offered to the file. When the table has no entry for a client, the edge asks the file and serves the flow by the balanced choice meanwhile. The answer fills the table, and the next flow of the client goes to the remembered server. So clients that the table could not hold, and all clients after a restart or a crash of the daemon, find their server again one flow late.
 
-The file survives a restart and a crash of the daemon. After a restart the first request of a client is served by the computed choice while the file is read, and the next ones by the remembered server. What is in the file is a hint and nothing more. A file that is damaged costs the hints of the damaged part. A file from another version or of another size is replaced by an empty one. The daemon never overwrites a file that is not a spill cache: it refuses to start and names the file.
+What is in the file is a hint and nothing more. The pool uses it only when the server it names may serve. A file that is damaged costs the hints of the damaged part. A file from another version or of another size is replaced by an empty one. The daemon never overwrites a file that is not a spill cache: it refuses to start and names the file.
 
-The daemon says what it found when it starts, and ``show info`` has the counters.
+The daemon says what it found when it starts, and ``show info`` has the counters. ``show affinity`` shows the table in memory as before.
 
 .. code-block:: text
 
-   EDGE013: spill cache /var/lib/sibuna/hints.spill: reused, 1048064 slots in 67084288 bytes on disk, 3425712 bytes of memory
+   EDGE013: spill cache /var/lib/sibuna/hints.spill: reused, 1048064 slots in 67084288 bytes on disk, 4425712 bytes of memory beside the table
 
    $ sibuna ctl /run/sibuna/edge.sock show info
    spill: /var/lib/sibuna/hints.spill
    spill_state: reused
    spill_slots: 1048064
    spill_file_bytes: 67084288
-   spill_memory_bytes: 3425712
-   spill_table_entries: 65536
-   spill_hits: 81234
-   spill_misses: 1203
+   spill_memory_bytes: 4425712
+   spill_table_slots: 65536
+   spill_asked: 1203
    spill_promoted: 1100
+   spill_preferred: 40
    spill_disk_lookups: 1203
    spill_disk_hits: 1100
    spill_disk_written: 1350
@@ -1261,9 +1335,9 @@ The daemon says what it found when it starts, and ``show info`` has the counters
    spill_disk_corrupt: 0
    spill_disk_shed: 0
 
-``spill_hits`` and ``spill_misses`` count the choices that found a hint in memory and those that did not. ``spill_promoted`` counts the hints that the file gave back. ``spill_disk_rejected`` counts hints that a full part of the file did not admit: when it grows fast, the file is too small. ``spill_disk_corrupt`` counts slots that failed their check and were cleared. ``spill_disk_shed`` counts work that was dropped because the storage thread was behind: the edge never waits for the disk.
+``spill_asked`` counts the lookups that found nothing in memory and asked the file. ``spill_promoted`` counts the choices that the file gave back to memory, and ``spill_preferred`` those of them that replaced a choice made while the file was asked. ``spill_disk_rejected`` counts choices that a full part of the file did not admit: when it grows fast, the file is too small. ``spill_disk_corrupt`` counts slots that failed their check and were cleared. ``spill_disk_shed`` counts work that was dropped because the storage thread was behind: the edge never waits for the disk.
 
-Keep the file on a local disk, in a directory that only the daemon writes. The whole size is written at the first start, so a full disk is found then. The pages of the file that the daemon has used count as its resident memory, up to the whole file. The kernel can take them back, but a memory limit of systemd or of a container counts them: set such a limit above the size of the file plus the memory of the daemon. A second daemon that finds the file in use, as during the replacement of the binary, runs with the table in memory alone and says so. In a cluster each node has a file of its own, and the nodes do not share what they remember.
+Keep the file on a local disk, in a directory that only the daemon writes. The whole size is written at the first start, so a full disk is found then. The pages of the file that the daemon has used count as its resident memory, up to the whole file. The kernel can take them back, but a memory limit of systemd or of a container counts them: set such a limit above the size of the file plus the memory of the daemon. A second daemon that finds the file in use, as during the replacement of the binary, runs with the table in memory alone and says so. In a cluster each node has a file of its own. The nodes share the table in memory when ``mesh.replicate_sticky`` is set, and what a node hears from a peer is offered to its file too.
 
 Redirects, headers and body limits
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1376,7 +1450,99 @@ A tunnel stays on the server that accepted it. An application that keeps its liv
 TCP inspection and PROXY v2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A frontend may set ``"tcp_inspect": "tls_client_hello"``, define ``acls`` with exact ``sni`` or ``alpn`` matches or a ``ja4_prefix`` pattern such as ``t13d*``, and list ordered ``deny`` or ``use_backend`` rules. The worker closes malformed or incomplete handshakes after a bounded inspection of up to 32 KiB and a default deadline of two seconds. A complete hello with no matching rule uses the default pool. Enable ``"proxy_v2": {"enabled": true}`` on a TCP pool only when its servers accept a PROXY v2 address header before the stream. We can add ``"tlv_sni": true`` or ``"tlv_ja4": true`` inside ``proxy_v2`` to forward inspected metadata. SNI uses the AUTHORITY type (0x02). Sibuna uses the custom type 0xe0 for the 36 ASCII bytes of JA4. The origin must agree on this type.
+A frontend may set ``"tcp_inspect": "tls_client_hello"``, define ``acls`` with exact ``sni`` or ``alpn`` matches or a ``ja4_prefix`` pattern such as ``t13d*``, and list ordered ``deny`` or ``use_backend`` rules. By default the worker closes malformed or incomplete handshakes after a bounded inspection of up to 32 KiB and a default deadline of two seconds, and ``inspect_fallback`` can forward them instead (see the next section). A complete hello with no matching rule uses the default pool. Enable ``"proxy_v2": {"enabled": true}`` on a TCP pool only when its servers accept a PROXY v2 address header before the stream. We can add ``"tlv_sni": true`` or ``"tlv_ja4": true`` inside ``proxy_v2`` to forward inspected metadata. SNI uses the AUTHORITY type (0x02). Sibuna uses the custom type 0xe0 for the 36 ASCII bytes of JA4. The origin must agree on this type.
+
+Admission at the socket edge
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A connection or a datagram passes a sequence of checks before it costs a server anything. Each frontend applies the checks of its protocol. SID 0032 specifies the three that this section describes. All of them are off until the file names them.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 20 50
+
+   * - Option
+     - Frontend
+     - Effect
+   * - ``"defer_accept": "5s"``
+     - ``tcp``, ``http``
+     - The kernel gives the node a connection only when its first bytes arrive, or after about this time. From ``1s`` to ``60s``.
+   * - ``"backlog": 4096``
+     - ``tcp``, ``http``
+     - The length of the kernel's queue of connections that wait for the node. From 1 to 65,535. The kernel lowers it to ``net.core.somaxconn``.
+   * - ``"inspect_bytes": 8192``
+     - ``tcp`` with ``tcp_inspect``
+     - The most bytes held while we look for the ClientHello. From 1,024 to 32,768, which is the default.
+   * - ``"inspect_fallback": {...}``
+     - ``tcp`` with ``tcp_inspect``
+     - What happens to a connection whose TLS metadata we cannot use.
+   * - ``"udp_inspect": "quic"``
+     - ``udp``
+     - Only a QUIC Initial opens a mapping, and a validated client has no reply bound.
+
+**Kernel admission.** ``defer_accept`` and ``backlog`` need no privilege and work in an unprivileged container. We apply them at the start and at each reload. On a platform without ``TCP_DEFER_ACCEPT``, or under a sandbox that refuses the call, the node logs one line and serves without the option:
+
+.. code-block:: text
+
+   EDGE013: frontend web (0.0.0.0:443) serves without defer_accept: Operation not permitted
+
+``defer_accept`` suits protocols where the client speaks first, such as TLS and HTTP. Where the server speaks first it delays every connection by the configured time. SYN cookies stay a setting of the host.
+
+**The fallback of TLS passthrough.** A frontend with ``tcp_inspect`` reads the start of a connection within ``inspect_bytes`` and ``inspect_delay``. The rules decide a ClientHello that shows a server name. ``inspect_fallback`` decides the other four cases.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 16 54 30
+
+   * - Class
+     - When
+     - Default
+   * - ``absent``
+     - A ClientHello without a server name
+     - ``rules``
+   * - ``encrypted``
+     - A ClientHello with the Encrypted ClientHello extension
+     - ``rules``
+   * - ``incomplete``
+     - No whole ClientHello within the byte bound or the time bound
+     - ``deny``
+   * - ``invalid``
+     - Bytes that are not a TLS ClientHello
+     - ``deny``
+
+.. code-block:: json
+
+   {"proto": "tcp", "binds": ["0.0.0.0:443"], "tcp_inspect": "tls_client_hello",
+    "inspect_delay": "2s", "inspect_bytes": 8192, "defer_accept": "5s",
+    "inspect_fallback": {
+      "absent":     {"action": "use_backend", "backend": "default_tls"},
+      "encrypted":  {"action": "rules"},
+      "incomplete": {"action": "deny"},
+      "invalid":    {"action": "use_backend", "backend": "plain_tcp"}},
+    "acls": {"api": {"sni": "api.example.org"}},
+    "rules": [{"when": "api", "action": "use_backend", "backend": "api"}],
+    "default_backend": "default_tls"}
+
+An action is ``deny``, ``rules`` or ``use_backend``. ``use_backend`` without a ``backend`` uses ``default_backend`` and does not consult the rules. ``rules`` is accepted for ``absent`` and ``encrypted`` only. A forwarded connection sends the server every byte we read, once and in order, and then relays the rest. So a frontend can share a port between TLS and a plain protocol: ``invalid`` forwards the plain bytes at once, and ``incomplete`` forwards a client that waits for the server to speak, after ``inspect_delay``.
+
+Current browsers send the Encrypted ClientHello extension on every connection, as a real one or as a placeholder, and the two look the same. With a placeholder the visible name is the true name. With a real one it is the public name of the provider. ``"encrypted": {"action": "deny"}`` therefore refuses most browsers. Use it only for a service whose clients are known not to send the extension.
+
+A JA4 fingerprint describes how a client builds its handshake. Many clients share one fingerprint, and any client can imitate another. Use a ``ja4_prefix`` rule to route a population of clients or to refuse a tool that does not hide. Never use it as a credential: a matching fingerprint proves nothing about who connects.
+
+Refused connections are counted in ``sibuna_edge_refused_total{reason="inspect_denied"}``, and their flow log line ends with ``inspect_denied``.
+
+**QUIC passthrough.** A ``udp`` frontend bounds the replies of each mapping to three times what its client sent. A QUIC download breaks that bound by design: the client sends small acknowledgements. On loopback a quinn client received about 17,000 bytes of an 8 MiB download in three seconds through a plain ``udp`` frontend. With ``"udp_inspect": "quic"`` the same download took about 85 ms.
+
+The option does two things. A client without a mapping gets one only for a QUIC Initial: a long-header packet in a datagram of at least 1,200 bytes. Other datagrams are dropped and counted under ``udp_not_quic``. Then the node reads the connection ID that the server chose from the server's first reply. When the client repeats it, the client has shown that it receives at its address, and the reply bound ends for that mapping. Until then the bound of three times holds.
+
+The servers of the pool must choose random connection IDs of at least 8 bytes, as QUIC libraries do by default. Set ``session_timeout`` above the idle timeout of the QUIC servers: a client whose mapping expired cannot resume it with a short-header packet. A server may send Retry packets itself, and they pass. The node does not send Retry packets: SID 0032 records the contract that this would need and why the QUIC library of the servers cannot honour it today.
+
+.. code-block:: json
+
+   {"proto": "udp", "binds": ["192.0.2.10:443"], "udp_inspect": "quic",
+    "session_timeout": "60s",
+    "udp_defense": {"mode": "rate_limit", "threshold_pps": 50000},
+    "default_backend": "quic_fleet"}
 
 Observing the edge
 ~~~~~~~~~~~~~~~~~~
@@ -1539,7 +1705,7 @@ It expects the log under ``/var/log/sibuna`` and the admin socket at ``/run/sibu
 
 A request that Sibuna refuses before the firewall decides is logged too, with verdict ``-``: an HTTP/2 or HTTP/3 request above the request bound (503), or one that is malformed (400, 417, 501).
 
-**Metrics.** The metrics text has the process counters and then the series of the edge: requests by status class, bytes and a duration histogram per frontend; requests, failures, failovers, ejections, a response time histogram and ``sibuna_edge_server_up`` and the gauge ``sibuna_edge_server_active_requests`` per server; ``sibuna_edge_server_client_closed_total`` per server; ``sibuna_edge_refused_total`` by ``reason`` (``rate_limit``, ``flow_limit``, ``draining``, ``connection_limit``, ``client_limit``, ``task_limit``, ``exchange_limit``, ``bad_request``, ``client_closed``, ``no_server``, ``udp_rate_limit``, ``udp_flow_limit``, ``udp_reply_limit``); the flow table (``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``, ``sibuna_edge_drops_total``); and the counters of the log (with ``sibuna_edge_access_log_queue_length`` and ``sibuna_edge_flow_log_dropped_total``) and of the PROXY protocol.
+**Metrics.** The metrics text has the process counters and then the series of the edge: requests by status class, bytes and a duration histogram per frontend; requests, failures, failovers, ejections, a response time histogram and ``sibuna_edge_server_up`` and the gauge ``sibuna_edge_server_active_requests`` per server; ``sibuna_edge_server_client_closed_total`` per server; ``sibuna_edge_refused_total`` by ``reason`` (``rate_limit``, ``flow_limit``, ``draining``, ``connection_limit``, ``client_limit``, ``task_limit``, ``exchange_limit``, ``bad_request``, ``client_closed``, ``no_server``, ``udp_rate_limit``, ``udp_flow_limit``, ``udp_reply_limit``, ``inspect_denied``, ``udp_not_quic``); the flow table (``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``, ``sibuna_edge_drops_total``); and the counters of the log (with ``sibuna_edge_access_log_queue_length`` and ``sibuna_edge_flow_log_dropped_total``) and of the PROXY protocol.
 
 A client that closes its connection or resets its stream before the server answered is logged with status 499 and counted in ``sibuna_edge_server_client_closed_total``. It is not a failure of the server: ``sibuna_edge_server_failures_total`` and passive health count only what a server did. An alert on failures therefore does not fire when a load test ends or when users close their browsers.
 
@@ -1693,6 +1859,183 @@ A node takes a file only when it states ``accept_config: true``, and only from a
 
 The sticky cookie of a pool needs no sharing, but it needs the same ``http.secret_file`` on every node. Without that file each node draws its own secret and does not recognise the cookie of another.
 
+A database for the topology
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A cluster that wants a history, a rollback and one place to publish from keeps its topology in a database (SID 0028). The file of each node then holds only what belongs to its host, and the section ``authority`` names the database.
+
+.. code-block:: json
+
+   {
+     "global": {"workers": 4, "admin_socket": "/run/sibuna/edge.sock"},
+     "authority": {
+       "postgres_url_file": "/etc/sibuna/authority.url",
+       "node": "fra-edge-01",
+       "poll": "5s",
+       "cache": "/var/lib/sibuna/authority.cache",
+       "binds": {"web": ["10.0.0.1:443"]}
+     }
+   }
+
+The file owns ``global``, ``mesh``, ``observability`` and ``authority``. The database owns ``frontends``, ``backends`` and ``http``. ``binds`` replaces the addresses of a published frontend on this node. ``cache`` lets the node restart while the database is down. ``sqlite`` in the place of ``postgres_url_file`` names a database file. SQLite serves one host: a test, a laptop, or several daemons on one machine. It is not a store for a cluster, because the nodes of a cluster cannot share its file.
+
+We write the topology as before, in JSON or JLV, and publish it.
+
+.. code-block:: console
+
+   $ sibuna authority diff -c /etc/sibuna/node.json -f edge.jlv
+   ~ backends.app.servers[web2].weight: 1 -> 3
+   + backends.app.servers[web3]: {"addr":"10.0.0.3:80","name":"web3"}
+   revision 7 -> 8, not committed
+   $ sibuna authority apply -c /etc/sibuna/node.json -f edge.jlv --expect 7 --note "add web3"
+   ~ backends.app.servers[web2].weight: 1 -> 3
+   + backends.app.servers[web3]: {"addr":"10.0.0.3:80","name":"web3"}
+   revision 8 committed 3fa9c1d2e4b5
+
+``apply`` evaluates the source, checks the topology, prints the difference to the head and commits the next revision. When somebody else committed in between, the head is no longer the expected one and the command fails with ``DBA002 REVISION CONFLICT``. We then look at the difference again. Without ``--expect`` the command expects the head that it read for the difference. The source may also hold ``global`` and the other sections of the file. The command names them and leaves them out.
+
+Every node learns of the revision by a notification of PostgreSQL, and by its poll when the notification was lost. It composes the revision with its file, checks the result and serves it. ``show cluster`` on any node, or ``sibuna authority status``, shows what each node serves.
+
+.. code-block:: console
+
+   $ sibuna ctl /run/sibuna/edge.sock show cluster
+   revision 8 3fa9c1d2e4b5
+   node        applied state                                   seen
+   fra-edge-01 8       current, this node                      0s
+   fra-edge-02 8       current                                 2s
+   fra-edge-03 7       refused 8: certs/site.pem: No such file 1s
+
+A node that cannot serve a revision keeps the one it serves, logs ``DBA011`` and reports the reason. After we repair the host, ``reload`` on that node checks the head again. A node that cannot reach the database keeps what it serves, logs ``DBA012`` once and asks again every two seconds. ``show authority`` prints the view of one node.
+
+``history`` lists the revisions. ``rollback`` commits a new revision with the document of an earlier one, so the history keeps both and the numbers only grow.
+
+.. code-block:: console
+
+   $ sibuna authority history -c /etc/sibuna/node.json
+   revision committed            origin digest       author      source   note
+   8*       2026-11-25 10:02:11Z apply  3fa9c1d2e4b5 ann@admin01 edge.jlv add web3
+   7        2026-11-24 16:40:03Z apply  91ab07c3d2e4 ann@admin01 edge.jlv
+   $ sibuna authority rollback -c /etc/sibuna/node.json 7
+   - backends.app.servers[web3]
+   ~ backends.app.servers[web2].weight: 3 -> 1
+   revision 9 committed, it restores revision 7
+
+``dump`` prints the evaluated data of a revision, and ``dump --source`` the source as it was given. Applying a dump to the same database commits nothing.
+
+The URL file holds ``postgres://ROLE:PASSWORD@HOST/DATABASE``. Only the user of the daemon may read it: the daemon refuses a file with a mode wider than 0600. PostgreSQL checks the password with SCRAM-SHA-256. With the feature ``postgres-tls`` the URL can ask for ``sslmode=verify-full``. We give the nodes a role that cannot publish. The operator role owns the tables, and the first ``apply`` creates them.
+
+.. code-block:: sql
+
+   CREATE ROLE edge_node LOGIN PASSWORD '...';
+   GRANT SELECT ON edge_head, edge_revisions, edge_nodes, sibuna_schema TO edge_node;
+   GRANT INSERT, UPDATE ON edge_nodes TO edge_node;
+
+In this mode the file of a node stays on its host. ``reload`` reads it again, and ``reload cluster`` answers ``DBA009``. Adding or removing ``authority``, or changing anything in it but ``binds``, needs a restart. A change at run time, such as a weight, is not a revision: the next revision replaces it as a reload does. The history is not pruned.
+A sticky table and a limit for the whole cluster
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Two more things can hold on every node of a mesh (SID 0025). Both are off until a pool asks for them.
+
+.. code-block:: text
+
+   backends: {
+       app: {
+           sticky: { kind: "table", on: "cookie", cookie: "JSESSIONID", ttl: "30m" },
+           max_flows_scope: "fleet",
+           servers: [
+               { name: "a", addr: "10.0.1.1:80", max_flows: 300 },
+               { name: "b", addr: "10.0.1.2:80", max_flows: 300 },
+           ],
+       },
+   }
+
+With ``sticky: "table"`` the pool balances the first flow of a client and remembers the server. The client is its source address, or with ``on: "cookie"`` the value of a cookie that the application sets. The node tells its peers each choice, and a peer that restarts receives the whole table, so the client reaches the same server through every node. ``ttl`` is how long a choice is kept after its last use, 30 minutes by default. ``global.sticky_entries`` is the size of the table, 65,536 by default. We set it to twice the clients we expect, and restart to change it. A node that is cut off serves from its own table. When it returns, the choice that was made or used last wins for new flows. A flow under way never moves.
+
+With ``max_flows_scope: "fleet"`` the ``max_flows`` of a server bounds the flows of all nodes together. Each node starts with an equal share, and the shares move to the nodes that have the flows within about a second. The limit holds whatever the network does. The price is capacity that nobody can use for a while:
+
+- A node that stops keeps its share from the others until it starts again. To give the share up for good we remove the node from the mesh of every file and restart the nodes.
+- A node that is cut off keeps its last share, and so does the other side.
+- When all nodes start and one is missing, no node serves the capped server until the missing node answers.
+
+Every node must name the server with the same address and the same ``max_flows``, and all nodes must run a version with this feature. ``sibuna ctl SOCKET show affinity`` shows the table and the shares:
+
+.. code-block:: text
+
+   sticky table: 65536 slots, 412 learned, 96 refreshed, 12 evicted, 0 not written
+   sticky mesh: 1524 sent, 1012 received, 498 applied, 0 dropped
+   server            limit   base  share   used  synced
+   http 10.0.1.1:80    300    100    180    171  2/2
+
+``share`` is what this node may hold now and ``used`` what it holds. ``synced`` counts the peers whose account of the server this node knows. While it is below the number of peers, the node serves only on what the other peers lend it. A value that stays low names a peer that is down or whose file differs. ``mesh.replicate_sticky: false`` keeps the table on its node. ``mesh.replicate_shares: false`` fixes every node at its equal share.
+One node for each client
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The router in front of a cluster chooses a node for each client, and it chooses again when a node joins or leaves. A client then reaches a node that does not know it: its sticky server, its rate counters and its UDP session are on another node. With ``forward`` in the mesh section the nodes repair this themselves. Every client address has one owner among the live nodes. A node that receives a new connection or a UDP client of another owner hands it to that owner, and the owner serves it under the client's own address.
+
+.. code-block:: text
+
+   mesh: {
+       nodes: ["10.0.0.1:7946", "10.0.0.2:7946", "10.0.0.3:7946"],
+       key_file: "/etc/sibuna/mesh.key",
+       forward: {},
+   },
+
+The empty object turns forwarding on with the defaults. Each node then listens on its mesh address at the next port, here 7947, for TCP and UDP. We open that port between the nodes and to nobody else. ``forward`` is a change of the mesh, so it takes a restart of each node, one at a time. A node without it is never chosen as an owner, so a cluster can be changed node by node.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 20 50
+
+   * - Member
+     - Default
+     - Meaning
+   * - ``port_offset``
+     - 1
+     - The forwarding port is the mesh port plus this number (1 to 1024).
+   * - ``max_flows_per_peer``
+     - 4096
+     - The most flows that a node forwards to one peer at a time. A flow above it is served by the node that received it.
+   * - ``connect_timeout``
+     - ``"250ms"``
+     - The longest wait for an owner to take a TCP connection (10 ms to 5 s). After it the receiving node serves the connection.
+
+TCP frontends, HTTP frontends and UDP frontends are forwarded. The owner ends TLS, reads the request and chooses the server, and the receiving node only passes bytes. A server behind the owner sees the client address as always: in the PROXY header of a TCP pool, in ``X-Forwarded-For`` of an HTTP pool. A UDP reply returns through the node that the client reached, so the client sees it come from the address it sent to. A flow is forwarded once at most. The node that gets a forwarded flow serves it.
+
+Nothing is lost when an owner is away. A node that cannot reach the owner within ``connect_timeout`` serves the connection itself, and gives that owner no flow for a second. A node that stops answering loses its clients to the other nodes within 1.5 seconds. A draining node says so, and takes no new flow from then on.
+
+Forwarding has limits that we should know before we rely on it.
+
+- It keeps the node of a client, not a TCP connection. When the router moves the packets of an established TCP connection to another node, that connection is reset. The client's next connection reaches its owner again.
+- HTTP/3 and frontends with ``proxy_protocol`` are served by the node that receives them.
+- It works only while the nodes are close: the mesh must be in its regional regime, with a round trip between the nodes below about 3 ms.
+- The nodes authenticate each other with the mesh key, and encrypt nothing. The network between the nodes must be as trusted as the network to the servers. It should carry a client datagram plus 76 bytes without fragmentation.
+- A forwarded flow costs one more hop each way, and a new connection costs two more round trips between the nodes. On loopback we measured 20 microseconds more for each exchange and 80 to 120 microseconds more for a new connection.
+
+``sibuna ctl SOCKET show stats`` and the metrics listener show what forwarding does.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 45 55
+
+   * - Series
+     - Meaning
+   * - ``sibuna_edge_forward_active``
+     - 1 while this node forwards. 0 while its mesh is alone or wide apart.
+   * - ``sibuna_edge_forward_peers_eligible``
+     - The peers that can take a flow now. It should be the number of other nodes.
+   * - ``sibuna_edge_forward_flows_out``
+     - The flows that this node forwards now.
+   * - ``sibuna_edge_forward_streams_out_total``, ``_streams_in_total``
+     - Connections handed to a peer, and taken from peers.
+   * - ``sibuna_edge_forward_datagrams_out_total``, ``_datagrams_in_total``, ``_datagrams_returned_total``
+     - Datagrams sent to an owner, taken from peers, and replies passed back to a client.
+   * - ``sibuna_edge_forward_local_total{reason}``
+     - Flows of another owner that this node served: ``declined``, ``connect_failed``, ``timeout``, ``peer_limit``. A steady rise names a peer that is unreachable or full.
+   * - ``sibuna_edge_forward_denied_total``
+     - Connections closed because the owner's rate limit denied the client.
+   * - ``sibuna_edge_forward_rejected_total{reason}``
+     - What the forwarding port refused: ``stranger``, ``bad_tag``, ``stale``, ``malformed``, ``unknown``. ``bad_tag`` means a node with another key file. ``stranger`` means the port is reachable from outside the cluster.
+
 Replacing the binary without closing the port
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1709,6 +2052,97 @@ The new process binds the same addresses while the old one serves, and the kerne
 A takeover needs no ``global.drain_delay``: nothing in front has to notice, because the new process already accepts. With a delay the old process keeps accepting its share of new connections for that time, and only then stops. We set a delay for the other case, a node that leaves the pool of a balancer in front.
 
 A connection that reaches the old process in the instant it closes its listener is reset, and the client connects again. In our test with a client that opens a new connection for every request, no request failed in 15 takeovers. An HTTP/3 connection does not survive the takeover: the kernel may hand its packets to the other process, which does not know the connection, and the client then connects again. Connections over TCP are not affected. Without ``reuse_port`` a second process on the same address is refused with ADDRESS IN USE, which protects against starting the service twice by mistake.
+
+Replacing the binary without losing a connection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+With ``global.reuse_port`` the old process has listeners of its own until it exits. While it drains, the kernel still gives it a share of the new connections, and it refuses them. In our test, with one long stream that held the old process in its drain for 1.7 s, 10,000 to 22,000 connections failed in that time. UDP clients were given a server again.
+
+With ``global.upgrade_socket`` the old process gives its listening sockets to the new one. There is one accept queue, and it is never closed. The old process also gives its UDP mappings, so a UDP client keeps its server, and the server sees the same source address. The key needs Linux.
+
+.. code-block:: text
+
+   global: {
+       upgrade_socket: "/run/sibuna/edge.upgrade",
+   },
+
+.. code-block:: sh
+
+   /opt/sibuna/new/sibuna check -f /etc/sibuna/edge.jlv
+   /opt/sibuna/new/sibuna --config-file /etc/sibuna/edge.jlv    # replaces the running daemon
+
+The command of an upgrade is the command of a start. A process that starts with this key connects to the path. When a daemon answers there, the new process takes its place. When nobody answers, it starts as a first process does. We do not signal the old process. It exits by itself with status 0 when its established flows have ended, or after ``shutdown_timeout``.
+
+.. code-block:: text
+
+   new process                                old process
+   -----------                                -----------
+   reads and checks its file                  serves
+   connects, takes the listening sockets      serves
+   starts everything, reads nothing yet       serves
+   says that it is ready  ------------------> stops reading UDP, still accepts TCP
+                          <------------------ gives the UDP mappings
+   accepts TCP, acknowledges  --------------> stops accepting, drains, exits 0
+   reads UDP, "listeners ready"
+
+A new process that fails leaves the old one serving. This holds for a file that does not check, for a certificate or a log file that cannot be opened, and for a process that dies or hangs before it acknowledges. The old process waits 10 s for the acknowledgement, then ends the new process with SIGKILL and reads UDP again. Datagrams that arrived meanwhile waited in the socket.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 14 86
+
+   * - Line
+     - Meaning
+   * - ``UPG010``
+     - The old process handed over. The line gives the listeners, the UDP mappings, the mappings that the new process dropped, and for how long UDP was unread.
+   * - ``UPG011``
+     - A replacement failed before the cutover. The old process serves on.
+   * - ``UPG012``
+     - A peer was refused: another user, another version, or not a Sibuna edge.
+   * - ``UPG013``
+     - A replacement hangs and cannot be ended. UDP stays unread until we end it by hand.
+   * - ``UPG020``
+     - The new process took over. The line gives the listeners and mappings it took.
+
+The new process prints a diagnostic with a code from ``UPG001`` to ``UPG008`` when it is refused, and exits with status 1.
+
+What survives:
+
+- A connection that waits in a TCP listener, and every new connection. In our test, 17,000 to 33,000 connections during an upgrade, none failed.
+- An established TCP stream or HTTP connection stays with the old process until it ends, or until ``shutdown_timeout``.
+- A UDP mapping, when the new file has the same listener and the same server. In our test 6,000 mappings moved, and UDP was unread for 59 to 87 ms. With 41 mappings it was 1 ms.
+
+What does not survive:
+
+- An HTTP/3 connection. The client connects again.
+- Run-time commands such as a drained server, rate counters, health states and sticky tables. The new process starts from its file. We repeat the commands, or write them in the file first.
+- A UDP mapping whose listener or server the new file no longer has, or for which the new process has no room. Its client is given a server by its next datagram.
+
+Both processes must run as the same user. The socket file has mode 0600, and each end checks the user of the other. Each daemon needs a path of its own: a new process that finds a daemon with other addresses at the path gives up with ``UPG008``. A start with this key replaces a running daemon, so starting the service twice no longer fails with ADDRESS IN USE.
+
+The new process holds a descriptor for every mapping it takes, beside those of the old process, so ``LimitNOFILE`` must allow for both.
+
+A node with a mesh, with ``accept_config`` or with a separate ``observability.listen`` cannot be replaced this way yet: those sockets are not passed. We use ``reuse_port`` or a restart there.
+
+Under systemd the two processes are two instances of a template unit. The directory of the sockets must outlive an instance, so it is not a ``RuntimeDirectory`` of the unit.
+
+.. code-block:: ini
+
+   # /etc/systemd/system/sibuna-edge@.service
+   [Unit]
+   Description=Sibuna edge (%i)
+
+   [Service]
+   User=sibuna
+   ExecStart=/opt/sibuna/%i/sibuna --config-file /etc/sibuna/edge.jlv
+   Restart=on-failure
+   LimitNOFILE=1048576
+
+.. code-block:: sh
+
+   systemctl start sibuna-edge@b     # replaces sibuna-edge@a, which exits with status 0
+
+``Restart=always`` must not be used: the old instance would start again and take the listeners back. With ``Restart=on-failure`` a new instance that crashes after the cutover is started again, and binds as a first process does. We have not run this unit under systemd. The exit statuses it relies on are tested.
 
 Changing servers at run time
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1751,6 +2185,8 @@ A deployment takes one server out of rotation, replaces it, and returns it. For 
      - One line per name of automatic HTTPS: how it is obtained, the issuer, the expiry, the next renewal, the state and the last failure (section *Automatic HTTPS*).
    * - ``show ca``
      - The root certificate of the local authority as PEM, with its file and its expiry in comment lines. We install it in the clients of internal names.
+   * - ``revoke cert NAME|SERIAL``
+     - Revokes a certificate of the local authority, writes the revocation list and replaces the certificate (section *Automatic HTTPS*).
    * - ``show info``
      - The version, the process, the file, the number of reloads, the watcher, the flows, the drops, the number of run-time changes, and the servers of the file that a command removed.
    * - ``set server POOL/NAME state ready|drain``
@@ -1766,7 +2202,7 @@ A deployment takes one server out of rotation, replaces it, and returns it. For 
    * - ``help``
      - Lists the commands.
 
-A command applies to new flows only. An established TCP stream, a UDP mapping and a running HTTP exchange keep their server, as they do across a reload. ``sibuna ctl`` exits with status 0 on success. On failure it exits with status 1 and prints a diagnostic with a code from ``ADM001`` to ``ADM010`` and a hint, and nothing has changed.
+A command applies to new flows only. An established TCP stream, a UDP mapping and a running HTTP exchange keep their server, as they do across a reload. ``sibuna ctl`` exits with status 0 on success. On failure it exits with status 1 and prints a diagnostic with a code from ``ADM001`` to ``ADM013`` and a hint, and nothing has changed.
 
 The file stays the authority. Run-time changes live in memory, as an overlay on the last accepted revision, and the daemon never writes the file. The table says what happens to each change.
 
@@ -1989,7 +2425,7 @@ Coming from HAProxy
 Limits of this version
 ~~~~~~~~~~~~~~~~~~~~~~
 
-On Linux the HTTP firewall serves connections on event-driven workers, one per processor, up to ``http.max_connections``. A connection that waits holds a small record and no buffer. On other platforms, and with ``event_loop`` ``false``, each HTTP/1.1 connection and each HTTP/2 or HTTP/3 exchange has a thread of its own, up to 8192 at a time. A WebSocket to a pool with ``http_version`` 2 or 3 answers 501. HTTP/3 clients cannot open WebSockets, and browsers fall back to HTTP/1.1 or HTTP/2 for them. Server addresses are numeric. The admin socket changes servers only: frontends, routes, certificates and policy change by reload. Run-time changes do not survive a restart. Request headers are limited to 16 KiB on HTTP/2 and HTTP/3. Response compression and caching are not provided. Header edits set fixed values: there are no patterns or variables. With ``event_loop`` ``false`` a connection has the same traffic rules as on the workers: the timeouts of the pool, failover, passive health, sticky sessions, the redirect, the header edits and ``max_body``. Two details differ. A client that goes away while its server is silent is noticed when the server answers or its bound ends. A chunked body is counted by ``max_body`` without its chunk framing. Our own answers carry HSTS but neither the header edits nor the sticky cookie, and the answer to a WebSocket upgrade is not edited. SID 0019 lists the remaining gaps. The spill cache of SID 0027 keeps hints of source stickiness only, and its nodes do not share them. SID 0015 lists the parts of the design that remain proposals: database-backed topology, replicated bans, peer forwarding, binary handoff, plugins and the fleet console.
+On Linux the HTTP firewall serves connections on event-driven workers, one per processor, up to ``http.max_connections``. A connection that waits holds a small record and no buffer. On other platforms, and with ``event_loop`` ``false``, each HTTP/1.1 connection and each HTTP/2 or HTTP/3 exchange has a thread of its own, up to 8192 at a time. A WebSocket to a pool with ``http_version`` 2 or 3 answers 501. HTTP/3 clients cannot open WebSockets, and browsers fall back to HTTP/1.1 or HTTP/2 for them. Server addresses are numeric. The admin socket changes servers only: frontends, routes, certificates and policy change by reload. Run-time changes do not survive a restart. Request headers are limited to 16 KiB on HTTP/2 and HTTP/3. Response compression and caching are not provided. Header edits set fixed values: there are no patterns or variables. With ``event_loop`` ``false`` a connection has the same traffic rules as on the workers: the timeouts of the pool, failover, passive health, sticky sessions, the redirect, the header edits and ``max_body``. Two details differ. A client that goes away while its server is silent is noticed when the server answers or its bound ends. A chunked body is counted by ``max_body`` without its chunk framing. Our own answers carry HSTS but neither the header edits nor the sticky cookie, and the answer to a WebSocket upgrade is not edited. SID 0019 lists the remaining gaps. The spill cache of SID 0027 holds the learned sticky table only. SID 0015 lists the parts of the design that remain proposals: database-backed topology, replicated bans, peer forwarding, binary handoff, plugins and the fleet console.
 
 
 Console Preview

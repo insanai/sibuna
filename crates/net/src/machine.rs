@@ -155,7 +155,9 @@ impl UploadRelay {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Outcome {
     /// The client connection may serve another request, as far as the response decides.
-    /// The caller also requires [`Outbound::buffered`].
+    /// A caller that cannot tell where a streamed request body ends also requires
+    /// [`Outbound::buffered`]. A caller that relays the body through
+    /// [`UploadRelay`] requires that the relay is done.
     pub client_keep: bool,
     /// The origin socket is at a clean message boundary and may be pooled, when
     /// [`Outbound::poolable`] allows it too.

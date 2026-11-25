@@ -63,7 +63,7 @@ impl Drop for Edge {
 }
 
 /// The topology: one HTTP frontend that trusts the loopback as a proxy, and a pool that
-/// is sticky by source over `servers`, given as address and weight.
+/// is sticky by a table over `servers`, given as address and weight.
 fn topology(
     scratch: &Scratch,
     serial: usize,
@@ -80,11 +80,11 @@ fn topology(
         .collect();
     let source = format!(
         r#"{{"global":{{"admin_socket":"{}"}},
-        "spill":{{"path":"{}","size":"1m","memory":"64k"}},
+        "spill":{{"path":"{}","size":"1m"}},
         "http":{{"surface":"off"}},
         "frontends":{{"web":{{"proto":"http","binds":["{vip}"],
         "trusted_proxies":["127.0.0.0/8"],"default_backend":"app"}}}},
-        "backends":{{"app":{{"mode":"http","sticky":"source","servers":[{}]}}}}}}"#,
+        "backends":{{"app":{{"mode":"http","sticky":{{"kind":"table"}},"servers":[{}]}}}}}}"#,
         socket.display(),
         scratch.spill().display(),
         rows.join(",")
@@ -175,8 +175,8 @@ fn hints_survive_a_killed_daemon_and_keep_clients_on_their_servers() {
     let two = [(origins[0].address, 1), (origins[1].address, 1)];
     let three = [two[0], two[1], (origins[2].address, 200)];
 
-    // The first daemon learns where its clients are served. The second request of a
-    // client makes its hint definite, and a definite hint goes to the disk.
+    // The first daemon learns where its clients are served, and offers each choice to
+    // the disk.
     let edge = start(&scratch, &two);
     assert!(edge.spill_line.contains("EDGE013") && edge.spill_line.contains(": created,"));
     let homes: Vec<String> = (1..=CLIENTS).map(|client| who(&edge, client)).collect();
@@ -195,7 +195,7 @@ fn hints_survive_a_killed_daemon_and_keep_clients_on_their_servers() {
     // The first flow of a client goes on without its hint while the disk is asked.
     let first: Vec<String> = (1..=CLIENTS).map(|client| who(&edge, client)).collect();
     assert!(first.iter().filter(|name| *name == "c").count() > 30, "{first:?}");
-    reaches(&edge, "spill_promoted", u64::from(CLIENTS));
+    reaches(&edge, "spill_disk_hits", u64::from(CLIENTS));
     // From then on every client is with the server of the first daemon.
     for round in 0..2 {
         for client in 1..=CLIENTS {
