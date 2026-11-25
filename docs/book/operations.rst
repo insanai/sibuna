@@ -684,7 +684,25 @@ We may limit what the root can sign for.
 
 ``constraints`` lists DNS suffixes and address ranges, at most 32. A suffix permits its own name and every name below it. Sibuna writes the list into the root as a critical name constraint when it creates the root. A client that trusts the root then refuses any certificate under it for another name, whoever signed it. So a stolen root key cannot be used against ``bank.example``. A list with suffixes only permits no address, and a list with ranges only permits no host name. Without the key the root may sign for every name, which ``issuer: "internal"`` on a public name needs. ``sibuna check`` refuses a local name outside the list with the diagnostic ``NAME OUTSIDE CONSTRAINTS``. The list belongs to the root: Sibuna never rewrites a root. When the file lists other constraints than the root has, the local authority fails with ``ACME011`` and a hint. A longer list needs a new root. We remove ``root.pem``, ``root.crt`` and ``intermediate.pem`` in the directory ``local``, and we install the new root in the clients.
 
-There is no revocation list. A certificate of the local authority lives 12 hours, and clients of a private authority do not fetch lists unless each is told to. To stop serving a name we remove it from the file. A stolen key of one certificate is useful until that certificate expires, and ``lifetime`` shortens this. When the storage loses its root, Sibuna makes a new root at the next start, does not serve the stored certificates of the old root, and issues new ones at once. The local authority issues for this daemon and for the nodes that share its storage. It is not an ACME server for other machines.
+A certificate of the local authority lives 12 hours, so a stolen key is useful until that certificate expires, and ``lifetime`` shortens this. To stop serving a name we remove it from the file. When a key is lost before its certificate expires, we revoke the certificate.
+
+.. code-block:: text
+
+   $ sibuna ctl /run/sibuna/edge.sock revoke cert db.internal
+   revoked serial 5f0c1a7be2d94410 name db.internal
+   # The revocation lists are written. A served certificate with this serial number is replaced now.
+
+``revoke cert`` takes a name that the local authority issues for on this node, or a serial number in hexadecimal digits, as ``openssl x509 -noout -serial`` prints it. The name gets a new certificate with a new key at once, with no restart. The serial form also revokes a certificate that this node no longer holds. A word that names nothing fails with ``ADM013``.
+
+The local authority keeps a revocation list in the directory ``local`` of the storage: ``crl.pem``, and ``crl.der`` for a tool that reads DER. Sibuna writes the list at the first internal name, also when nothing is revoked, and writes it again after every revocation and at least every 12 hours. A list is valid for 24 hours. A client does not find the list by itself. We give the file to each verifier that shall honour a revocation, and we give it again within a day, for example with a timer that copies it.
+
+.. code-block:: text
+
+   openssl verify -crl_check -CAfile root.crt -untrusted intermediate.pem -CRLfile crl.pem leaf.pem
+   ssl_crl /etc/nginx/sibuna-crl.pem;              # nginx, for client certificates of this authority
+   SSLCARevocationFile /etc/apache2/sibuna-crl.pem
+
+A verifier that is not given the list accepts a revoked certificate until it expires. ``crl.pem`` may hold two lists: the intermediate is replaced every few days, and the one before it signs a list of its own while its certificates live. When the list cannot be written, the log has ``ACME016`` with the path. When the storage loses its root, Sibuna makes a new root at the next start, does not serve the stored certificates of the old root, and issues new ones at once. The local authority issues for this daemon and for the nodes that share its storage. It is not an ACME server for other machines.
 
 A client that connects to an IP address sends no server name. Such a handshake receives the certificate of the first address under ``auto``, and that certificate lists every address under ``auto``.
 
@@ -886,6 +904,9 @@ When the responder says ``revoked``, Sibuna logs it and renews the certificate a
    * - ``ACME014``
      - the certificate thread stopped on a defect
      - Nothing at once: the served certificates stay, and the thread starts again by itself after 5 seconds, then 10, up to 5 minutes. The line is a defect of Sibuna. We report it.
+   * - ``ACME016``
+     - the revocation list failed
+     - The directory ``local`` of the storage: the daemon's user must be able to write ``revoked``, ``crl.der`` and ``crl.pem``. The directory ``revoked`` takes 1,024 certificates that have not expired.
    * - ``ACME015``
      - the key tool failed
      - The program ``openssl`` in the ``PATH`` of the daemon, which makes RSA keys. ``sibuna check`` and the start stop with this code when the program cannot be run. We install OpenSSL, or we set ``key`` to ``"p256"`` or ``"p384"``.
@@ -1707,6 +1728,8 @@ A deployment takes one server out of rotation, replaces it, and returns it. For 
      - One line per name of automatic HTTPS: how it is obtained, the issuer, the expiry, the next renewal, the state and the last failure (section *Automatic HTTPS*).
    * - ``show ca``
      - The root certificate of the local authority as PEM, with its file and its expiry in comment lines. We install it in the clients of internal names.
+   * - ``revoke cert NAME|SERIAL``
+     - Revokes a certificate of the local authority, writes the revocation list and replaces the certificate (section *Automatic HTTPS*).
    * - ``show info``
      - The version, the process, the file, the number of reloads, the watcher, the flows, the drops, the number of run-time changes, and the servers of the file that a command removed.
    * - ``set server POOL/NAME state ready|drain``
@@ -1722,7 +1745,7 @@ A deployment takes one server out of rotation, replaces it, and returns it. For 
    * - ``help``
      - Lists the commands.
 
-A command applies to new flows only. An established TCP stream, a UDP mapping and a running HTTP exchange keep their server, as they do across a reload. ``sibuna ctl`` exits with status 0 on success. On failure it exits with status 1 and prints a diagnostic with a code from ``ADM001`` to ``ADM010`` and a hint, and nothing has changed.
+A command applies to new flows only. An established TCP stream, a UDP mapping and a running HTTP exchange keep their server, as they do across a reload. ``sibuna ctl`` exits with status 0 on success. On failure it exits with status 1 and prints a diagnostic with a code from ``ADM001`` to ``ADM013`` and a hint, and nothing has changed.
 
 The file stays the authority. Run-time changes live in memory, as an overlay on the last accepted revision, and the daemon never writes the file. The table says what happens to each change.
 
