@@ -50,6 +50,7 @@ mod stats;
 pub use stats::{
     ActiveRequest, FrontendStats, Histogram, Refusal, ServerInfo, ServerStats, Stats,
 };
+pub use stats::{FrontendView, Latency, ServerView, StatsView};
 
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::io;
@@ -57,6 +58,8 @@ use std::net::{SocketAddr, TcpListener, TcpStream, UdpSocket};
 use std::time::{Duration, Instant};
 
 pub use config::Config;
+mod console;
+pub use console::{ConsoleOptions, ConsolePeer, MAX_CONSOLE_NODES};
 use config::{Frontend, Protocol, invalid};
 use pool::{Loads, Pool, Ticket};
 use sibuna_reactor::{Poller, READ, Waker, handle};
