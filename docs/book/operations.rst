@@ -2428,10 +2428,11 @@ A reload loads every module again and checks it before anything changes. A plugi
 *Writing a module.* A module exports its memory and six functions, and receives each request as one encoded record in a buffer of its own. The crate ``cmd/sibuna-hook-wasm`` is a complete example in Rust without ``std``, and SID 0030 specifies the record and the functions. We build it with ``cargo build -p sibuna-hook-wasm --target wasm32-unknown-unknown --profile wasm``.
 
 *Writing an agent.* An agent accepts connections on its socket and reads frames: a length of four bytes, a version, a kind, and an identifier of eight bytes. It answers a ``decide`` frame with a ``verdict`` frame of the same identifier, whose payload is one byte, 0 to admit, 1 to deny, 2 to challenge, and then the field lines to add. A ``sample`` frame has no answer. SID 0030 specifies the frame.
+
 The operator console of the edge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The edge can run the console of Part XI beside the load balancer (SID 0031). We add a ``console`` section to the topology file. The console listens on an address of its own, on threads of its own, and it keeps its accounts and its audit log in a SQLite file.
+The edge can run the console of "Console Preview" below beside the load balancer (SID 0031). We add a ``console`` section to the topology file. The console listens on an address of its own, on threads of its own, and it keeps its accounts and its audit log in a SQLite file.
 
 .. code-block:: text
 
@@ -2489,7 +2490,7 @@ Every request passes the checks of the console: the session, the role, the ``Ori
        ],
    },
 
-A fleet has at most 64 members. The consoles talk to each other over HTTPS, so each one stands behind a TLS proxy, as Part XI describes for peers. The proxy must set ``X-Forwarded-For``. The two key files hold 64 hexadecimal digits each and are readable by their owner only.
+A fleet has at most 64 members. The consoles talk to each other over HTTPS, so each one stands behind a TLS proxy, as "A Tour of the Console" describes for remote operation. The proxy must set ``X-Forwarded-For``. The two key files hold 64 hexadecimal digits each and are readable by their owner only.
 
 The listener screens a connection by its source address when it accepts it. Behind a proxy it serves the trusted proxies only. Without a proxy, and with ``allow_operators``, it serves those networks only. A screened connection is closed before it takes a slot. A peer must connect from the ``allow_ips`` of its entry, must name itself and this node in a fresh transcript, and must prove the peer key. ``allow_operators`` holds for every other request.
 
