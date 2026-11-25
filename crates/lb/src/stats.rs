@@ -122,6 +122,8 @@ impl FrontendStats {
 pub struct ServerStats {
     requests: Classes,
     failures: AtomicU64,
+    /// Requests whose client left before this server answered. No failure of the server.
+    client_closed: AtomicU64,
     /// Requests that left this server for another one (SID 0019).
     failovers: AtomicU64,
     /// Times passive health ejected this server (SID 0019).
@@ -144,6 +146,18 @@ impl ServerStats {
                 self.failures.fetch_add(1, Ordering::Relaxed);
             }
         }
+    }
+
+    /// Counts a request that its client gave up before this server answered: the client
+    /// closed its connection or reset its stream. The server did not fail, so this is
+    /// neither a failure nor a request with a status.
+    pub fn record_client_closed(&self) {
+        self.client_closed.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// The number of requests whose client left before this server answered.
+    pub fn client_closed_count(&self) -> u64 {
+        self.client_closed.load(Ordering::Relaxed)
     }
 
     /// Counts a request that this server did not answer and that moved to another
@@ -271,11 +285,14 @@ pub enum Refusal {
     UdpFlowLimit,
     /// An answer of a UDP server larger than three times what its client sent.
     UdpReplyLimit,
+    /// The client gave its request up before the firewall could decide on it. Nothing
+    /// was refused: the reason keeps such a request apart from a malformed one.
+    ClientClosed,
 }
 
 impl Refusal {
     /// Every reason, in the order of the series.
-    pub const ALL: [Refusal; 12] = [
+    pub const ALL: [Refusal; 13] = [
         Refusal::RateLimit,
         Refusal::FlowLimit,
         Refusal::Draining,
@@ -288,6 +305,7 @@ impl Refusal {
         Refusal::UdpRateLimit,
         Refusal::UdpFlowLimit,
         Refusal::UdpReplyLimit,
+        Refusal::ClientClosed,
     ];
 
     /// The value of the `reason` label.
@@ -305,6 +323,7 @@ impl Refusal {
             Refusal::UdpRateLimit => "udp_rate_limit",
             Refusal::UdpFlowLimit => "udp_flow_limit",
             Refusal::UdpReplyLimit => "udp_reply_limit",
+            Refusal::ClientClosed => "client_closed",
         }
     }
 
@@ -323,6 +342,7 @@ impl Refusal {
             Refusal::UdpRateLimit => "refused_udp_rate_limit",
             Refusal::UdpFlowLimit => "refused_udp_flow_limit",
             Refusal::UdpReplyLimit => "refused_udp_reply_limit",
+            Refusal::ClientClosed => "refused_client_closed",
         }
     }
 }
@@ -493,6 +513,7 @@ fn write_fronts(out: &mut impl Write, fronts: &Fronts) -> fmt::Result {
 fn write_servers(out: &mut impl Write, servers: &Servers) -> fmt::Result {
     out.write_str("# TYPE sibuna_edge_server_requests_total counter\n")?;
     out.write_str("# TYPE sibuna_edge_server_failures_total counter\n")?;
+    out.write_str("# TYPE sibuna_edge_server_client_closed_total counter\n")?;
     out.write_str("# TYPE sibuna_edge_server_failovers_total counter\n")?;
     out.write_str("# TYPE sibuna_edge_server_ejections_total counter\n")?;
     out.write_str("# TYPE sibuna_edge_server_up gauge\n")?;
@@ -508,6 +529,8 @@ fn write_servers(out: &mut impl Write, servers: &Servers) -> fmt::Result {
         stats.requests.write(out, "sibuna_edge_server_requests_total", &labels)?;
         let failures = stats.failure_count();
         writeln!(out, "sibuna_edge_server_failures_total{{{labels}}} {failures}")?;
+        let left = stats.client_closed_count();
+        writeln!(out, "sibuna_edge_server_client_closed_total{{{labels}}} {left}")?;
         let (moved, ejected) = (stats.failover_count(), stats.ejection_count());
         writeln!(out, "sibuna_edge_server_failovers_total{{{labels}}} {moved}")?;
         writeln!(out, "sibuna_edge_server_ejections_total{{{labels}}} {ejected}")?;
