@@ -561,9 +561,9 @@ fn plan<W: Write>(
     match sibuna_net::machine::encode_request(&mut defer.wire, &ctx.request, ctx.upload, &audit) {
         Ok(outbound) => {
             let body_seen = ctx.request.body.len() as u64;
-            let keep_alive = ctx.keep_alive;
+            let keep_alive = ctx.keep_alive || ctx.keep_streamed;
             defer.plan = Some(Plan { target, outbound, keep_alive, tunnel, body_seen });
-            Ok(ctx.keep_alive)
+            Ok(keep_alive)
         }
         Err(error) => refuse_proxy_error(ctx, error),
     }

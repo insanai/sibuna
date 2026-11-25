@@ -51,7 +51,6 @@ impl Worker {
             inbound: Vec::new(),
             retryable,
             poolable: outbound.poolable,
-            buffered: outbound.buffered,
             keep_alive,
             head_request: outbound.head_request,
             pooled: false,
@@ -417,13 +416,15 @@ impl Worker {
         exchange.target.completed(exchange.started);
         exchange.target.answered(exchange.relay.status());
         let whole = exchange.upload.is_done() && exchange.inbound.is_empty();
-        let keep = outcome.client_keep
-            && exchange.keep_alive
-            && exchange.buffered
-            && whole
-            && !conn.read_closed
-            && !draining;
+        // `whole` says that the server took the whole body, so the next byte of the
+        // client begins a request.
+        let keep =
+            outcome.client_keep && exchange.keep_alive && whole && !conn.read_closed && !draining;
         conn.closing |= !keep;
+        if !keep {
+            // The client may reconnect as soon as it reads the end of this response.
+            conn.admission = None;
+        }
         let reuse = outcome.origin_reusable && exchange.poolable && whole && !draining;
         if let Some(at) = exchange.origin {
             self.release(at, reuse);
