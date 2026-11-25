@@ -22,7 +22,6 @@ msgid "The Sibuna Book"
 msgstr "El libro de Sibuna"
 
 #: ../../index.rst:4
-#, fuzzy
-#| msgid "The mathematics and engineering of web defense."
 msgid "The mathematics and engineering of load balancing and web defense."
-msgstr "Las matemáticas y la ingeniería de la defensa web."
+msgstr ""
+"Las matemáticas y la ingeniería del balanceo de carga y la defensa web."
