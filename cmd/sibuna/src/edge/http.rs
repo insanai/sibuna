@@ -279,6 +279,25 @@ impl Http {
         if let Some(counters) = mesh.ban_counters() {
             let _ = self.observe.mesh_bans.set(counters);
         }
+        let server = self.server.clone();
+        let lift = move |client: &[u8]| {
+            server.bans.lift_hashed(server.client_hasher.hash(client));
+        };
+        if let Some(feed) = mesh.share_lifts(Box::new(lift)) {
+            let _ = self.server.lift_feed.set(feed);
+        }
+    }
+
+    /// Lifts the ban of the client at `address`, and with `share` tells the peers of
+    /// the mesh to lift it too. A client without a ban is left as it is.
+    pub fn lift_ban(&self, address: std::net::IpAddr, share: bool) {
+        let prefix = self.server.config.ipv6_prefix;
+        let key = crate::context::ClientKey::new(&[], Some(address), prefix);
+        let hash = self.server.client_hasher.hash(key.as_bytes());
+        self.server.bans.lift_hashed(hash);
+        if let (true, Some(feed)) = (share, self.server.lift_feed.get()) {
+            feed.publish(key.as_bytes());
+        }
     }
 
     /// The certificate thread of automatic HTTPS, when the daemon started one.

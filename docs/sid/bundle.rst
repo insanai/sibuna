@@ -28,5 +28,6 @@ Discussion reading order
    records/0020-edge-observability-and-client-identity
    records/0021-automatic-https
    records/0022-replicated-bans
+   records/0023-cluster-configuration
 
 .. sid-generated-end
