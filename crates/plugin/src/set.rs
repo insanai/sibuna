@@ -485,6 +485,20 @@ impl Local {
     /// Call [`Slot::has`] first: it answers without touching the thread's instances
     /// when no hook is attached at the stage.
     pub fn run(&mut self, slot: &Slot, view: &View<'_>) -> Decision<'_> {
+        self.run_clearing(slot, view, &mut |_| false)
+    }
+
+    /// Like [`Local::run`], for a caller that can clear a challenge. When a hook answers
+    /// challenge, `clears` is asked with the name of its plugin. If it answers true, the
+    /// client has already paid for that challenge: the hook counts as one that admitted
+    /// without fields, and the chain goes on. So a cleared challenge never skips the
+    /// hooks behind it. A challenge that comes from a failure is cleared the same way.
+    pub fn run_clearing(
+        &mut self,
+        slot: &Slot,
+        view: &View<'_>,
+        clears: &mut dyn FnMut(&str) -> bool,
+    ) -> Decision<'_> {
         self.refresh(slot);
         let Local { plan, instances, encoded, edits, .. } = self;
         edits.clear();
@@ -512,6 +526,9 @@ impl Local {
             let refused = scratch.edits.refused() - refused_before;
             count(&plugin.stats, view.stage, result, refused);
             let verdict = outcome(view.stage, plugin.on_failure, result);
+            if verdict == Verdict::Challenge && clears(&plugin.name) {
+                continue;
+            }
             if verdict != Verdict::Admit {
                 return Decision { verdict, hook: &plugin.name, added: b"" };
             }

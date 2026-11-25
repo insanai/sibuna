@@ -175,6 +175,29 @@ fn the_connection_stage_and_the_telemetry_stage_reach_a_native_hook() {
     assert_eq!(local.run(&slot, &sample), Decision::ADMIT);
 }
 
+#[test]
+fn a_cleared_challenge_lets_the_chain_go_on_to_the_hooks_behind_it() {
+    let chain = vec![native("first", OnFailure::Deny), native("second", OnFailure::Deny)];
+    let slot = published(&attach_all(chain));
+    let mut local = Local::new();
+    let mut asked = Vec::new();
+    let mut clears = |name: &str| {
+        asked.push(name.to_owned());
+        name == "first"
+    };
+    // The first hook challenges and is cleared. The second still judges, and challenges.
+    let decision = local.run_clearing(&slot, &request(b"/challenge", &[]), &mut clears);
+    assert_eq!((decision.verdict, decision.hook), (Verdict::Challenge, "second"));
+    assert_eq!(asked, ["first", "second"]);
+    // With both cleared the request is admitted, and a challenging hook added no field.
+    let decision = local.run_clearing(&slot, &request(b"/challenge", &[]), &mut |_| true);
+    assert_eq!((decision.verdict, decision.added), (Verdict::Admit, &b""[..]));
+    // A denial is never offered for clearing.
+    let mut never = |_: &str| panic!("a denial must not be cleared");
+    let decision = local.run_clearing(&slot, &request(b"/deny", &[]), &mut never);
+    assert_eq!(decision.verdict, Verdict::Deny);
+}
+
 // ---- the Wasm tier: the example hook ----
 
 #[test]
