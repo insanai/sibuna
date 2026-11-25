@@ -693,3 +693,46 @@ fn a_client_that_resets_frees_its_server_while_the_server_is_silent() {
         assert!(flows_become(&edge, "0", Duration::from_millis(1500)), "{event_loop}");
     });
 }
+
+/// Sends `method path` with `body` on a new connection and returns the response.
+fn send(edge: &traffic::Edge, method: &str, path: &str, body: &[u8]) -> traffic::Message {
+    let mut client = edge.connect();
+    let length = body.len();
+    let head = format!(
+        "{method} {path} HTTP/1.1\r\nHost: app.example\r\nContent-Length: {length}\r\n\r\n"
+    );
+    request(&mut client, head.as_bytes());
+    request(&mut client, body);
+    traffic::read_message(&mut client, false).expect("a response")
+}
+
+#[test]
+fn a_kept_body_moves_with_an_idempotent_method_and_within_retry_body() {
+    both(|event_loop| {
+        // Each case has its own edge, so the server that closes is chosen first.
+        let case = |members: &str, method: &str, body: &[u8]| {
+            let closing = Origin::start("closing");
+            closing.closing.store(true, Ordering::SeqCst);
+            let good = Origin::start("good");
+            let servers = [closing.address, good.address];
+            let edge = Topology::new(&servers).backend(members).start(event_loop);
+            let answer = send(&edge, method, "/length", body);
+            assert_eq!(closing.requests.load(Ordering::SeqCst), 1, "{event_loop} {method}");
+            (answer.status(), answer.text(), good.requests.load(Ordering::SeqCst))
+        };
+        // The first server read the PUT and closed. The method is idempotent and the
+        // body is kept, so the second server gets all of it.
+        assert_eq!(case("", "PUT", b"abc"), (200, "3".into(), 1), "{event_loop}");
+        assert_eq!(case("", "DELETE", b"abcd"), (200, "4".into(), 1), "{event_loop}");
+        // A body above `retry_body` is not kept, and zero keeps none.
+        let small = r#""retry_body":2,"#;
+        assert_eq!(case(small, "PUT", b"abc").0, 502, "{event_loop}");
+        assert_eq!(case(small, "PUT", b"ab"), (200, "2".into(), 1), "{event_loop}");
+        let off = r#""retry_body":"0","#;
+        assert_eq!(case(off, "PUT", b"a").0, 502, "{event_loop}");
+        assert_eq!(case(off, "PUT", b""), (200, "0".into(), 1), "{event_loop}");
+        // A POST may have been carried out, whatever its size.
+        let post = case("", "POST", b"abc");
+        assert_eq!((post.0, post.2), (502, 0), "{event_loop}");
+    });
+}

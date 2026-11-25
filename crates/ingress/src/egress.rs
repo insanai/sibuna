@@ -474,6 +474,28 @@ impl rustls::client::danger::ServerCertVerifier for Unverified {
     }
 }
 
+/// Whether `error` proves that an HTTP/2 server did not act on the request of its
+/// stream (RFC 9113, sections 6.8 and 8.7): the server reset the stream with
+/// `REFUSED_STREAM`, or it sent a graceful `GOAWAY` whose last stream is below this one.
+///
+/// A `GOAWAY` with an error code ends every stream of the connection, also those that
+/// the server worked on, so it proves nothing. An HTTP/3 error is not read here.
+pub(crate) fn is_refused(error: &(dyn std::error::Error + 'static)) -> bool {
+    let mut cause = Some(error);
+    // The chain of causes of a hyper error is a few links long.
+    for _ in 0..8 {
+        let Some(link) = cause else { return false };
+        if let Some(stream) = link.downcast_ref::<h2::Error>() {
+            let reason = stream.reason();
+            let reset = stream.is_reset() && reason == Some(h2::Reason::REFUSED_STREAM);
+            let leaving = stream.is_go_away() && reason == Some(h2::Reason::NO_ERROR);
+            return stream.is_remote() && (reset || leaving);
+        }
+        cause = link.source();
+    }
+    false
+}
+
 #[cfg(test)]
 mod tests {
     use std::time::Instant;

@@ -288,16 +288,19 @@ pub(crate) async fn exchange(
     match inline.decide.decide(&offer) {
         Verdict::Answer(bytes) => answer(&bytes),
         Verdict::Forward(forward) => {
-            let safe = matches!(parts.method, Method::GET | Method::HEAD | Method::OPTIONS);
-            let retryable = safe && ended && prefix.is_empty();
-            let prefix = (!prefix.is_empty()).then(|| Bytes::from(prefix));
-            let body = if ended && prefix.is_none() {
-                empty()
-            } else {
-                Prefixed { first: prefix, rest: body }.boxed_unsync()
+            let idempotent = is_idempotent(&parts.method);
+            let prefix = Bytes::from(prefix);
+            // A body that ended inside the prefix is held whole and can be sent again.
+            let held = ended.then(|| prefix.clone());
+            let body = match &held {
+                Some(whole) => whole_body(whole),
+                None => {
+                    let first = (!prefix.is_empty()).then_some(prefix);
+                    Prefixed { first, rest: body }.boxed_unsync()
+                }
             };
             let flow = Arc::default();
-            send(inline, forward, body, Sending { retryable, trailers, flow }).await
+            send(inline, forward, body, Sending { held, idempotent, trailers, flow }).await
         }
     }
 }
@@ -343,10 +346,26 @@ fn arrived(body: &mut Body, budget: usize) -> Result<(Vec<u8>, bool), Error> {
     Ok((held, body.is_end_stream()))
 }
 
+/// The methods whose requests may be sent twice: the list of `sibuna_net::is_idempotent`.
+fn is_idempotent(method: &Method) -> bool {
+    [Method::GET, Method::HEAD, Method::OPTIONS, Method::PUT, Method::DELETE].contains(method)
+}
+
+/// A request body that is held whole.
+fn whole_body(bytes: &Bytes) -> Body {
+    if bytes.is_empty() {
+        return empty();
+    }
+    Full::new(bytes.clone()).map_err(|never| match never {}).boxed_unsync()
+}
+
 /// How an admitted request is sent.
 struct Sending {
-    /// The request may be sent again on a fresh connection.
-    retryable: bool,
+    /// The whole body, when it ended inside the bytes that the decision was shown. It
+    /// is empty for a request without a body. `None` while the body still streams.
+    held: Option<Bytes>,
+    /// The method is idempotent.
+    idempotent: bool,
     /// The client accepts trailers.
     trailers: bool,
     /// What the upload of the request has done so far.
@@ -476,6 +495,8 @@ enum Fault {
     Connect,
     /// The connection failed, or the server answered nothing usable.
     Exchange,
+    /// The connection handed the request back: not one byte of it was written.
+    Unsent,
     /// The server stayed silent for its response bound.
     Silent,
     /// The request body passed the `max_body` of its route.
@@ -490,9 +511,10 @@ async fn ask(
     limit: Duration,
     flow: &Flow,
 ) -> Result<Response<Incoming>, Fault> {
-    match flow.bounded(sender.send_request(request), limit).await {
+    match flow.bounded(sender.try_send_request(request), limit).await {
         Some(Ok(response)) => Ok(response),
         Some(Err(_)) if flow.is_over() => Err(Fault::TooLarge),
+        Some(Err(error)) if error.message().is_some() => Err(Fault::Unsent),
         Some(Err(_)) => Err(Fault::Exchange),
         None => Err(Fault::Silent),
     }
@@ -512,42 +534,83 @@ async fn fresh(inline: &Inline, target: &mut HttpTarget) -> Result<Sender, Fault
     }
 }
 
-/// One request and its response head over a pooled or a fresh connection.
+impl Sending {
+    /// The body of the request, when it is held whole and is within the `retry_body`
+    /// of the pool of `target`.
+    fn kept(&self, target: &HttpTarget) -> Option<&Bytes> {
+        self.held.as_ref().filter(|body| body.len() as u64 <= target.retry_body())
+    }
+
+    /// The kept body for one more attempt. It passed the body bound of its route the
+    /// first time, so it is not counted against the bound again, only as progress.
+    fn again(&self, target: &HttpTarget) -> Option<Body> {
+        let body = whole_body(self.kept(target)?);
+        let flow = Arc::clone(&self.flow);
+        Some(Watched { body, flow, room: None }.boxed_unsync())
+    }
+}
+
+/// An idle connection of `address` that is still open, if the pool has one.
+async fn idle(inline: &Inline, address: SocketAddr) -> Option<Sender> {
+    let mut sender = inline.take(address)?;
+    sender.ready().await.ok().map(|()| sender)
+}
+
+/// One request and its response head over a pooled or a fresh connection. A connection
+/// that is lost before the response head is replaced, and then the request moves to
+/// another server, under the rule of `sibuna_net::recover` (SID 0019).
 async fn attempt(
     inline: &Inline,
     target: &mut HttpTarget,
     request: Request<Body>,
     sending: &Sending,
 ) -> Result<(Sender, Response<Incoming>), Fault> {
-    let (retryable, flow) = (sending.retryable, &*sending.flow);
-    let mut pooled = inline.take(target.address());
-    if let Some(sender) = pooled.as_mut()
-        && sender.ready().await.is_err()
-    {
-        pooled = None;
-    }
-    let Some(mut sender) = pooled else {
-        let mut sender = fresh(inline, target).await?;
-        let response = ask(&mut sender, request, target.response_timeout(), flow).await?;
-        return Ok((sender, response));
-    };
-    let limit = target.response_timeout();
-    if !retryable {
-        let response = ask(&mut sender, request, limit, flow).await?;
-        return Ok((sender, response));
-    }
     let (parts, body) = request.into_parts();
-    let again = Request::from_parts(parts.clone(), empty());
-    match ask(&mut sender, Request::from_parts(parts, body), limit, flow).await {
-        Ok(response) => Ok((sender, response)),
-        Err(fault @ (Fault::Silent | Fault::TooLarge)) => Err(fault),
-        // The server closed the idle connection. It answered nothing, and the request
-        // is safe to send again.
-        Err(_) => {
-            let mut sender = fresh(inline, target).await?;
-            let response = ask(&mut sender, again, target.response_timeout(), flow).await?;
-            Ok((sender, response))
+    let (mut body, mut retried) = (Some(body), false);
+    loop {
+        let pooled = if retried { None } else { idle(inline, target.address()).await };
+        let was_pooled = pooled.is_some();
+        let mut sender = match pooled {
+            Some(sender) => sender,
+            None => fresh(inline, target).await?,
+        };
+        // The first attempt has the body as it arrived. A later one has the kept body.
+        let Some(body) = body.take().or_else(|| sending.again(target)) else {
+            return Err(Fault::Exchange);
+        };
+        let request = Request::from_parts(parts.clone(), body);
+        let refused =
+            match ask(&mut sender, request, target.response_timeout(), &sending.flow).await {
+                Ok(response) => return Ok((sender, response)),
+                Err(fault @ (Fault::Silent | Fault::TooLarge)) => return Err(fault),
+                // A lost HTTP/1.1 connection proves that the server did nothing only when
+                // the request was never written.
+                Err(fault) => matches!(fault, Fault::Unsent),
+            };
+        let lost = Lost {
+            unanswered: true,
+            pooled: was_pooled,
+            kept: sending.kept(target).is_some(),
+            idempotent: sending.idempotent,
+            refused,
+            retried,
+        };
+        let recovery = sibuna_net::recover(lost);
+        if recovery == Recovery::Reconnect {
+            retried = true;
+            continue;
         }
+        // An idle connection may close at any time. A fresh one that fails is a fault
+        // of the server.
+        if !was_pooled {
+            target.failed();
+        }
+        if recovery == Recovery::Fail {
+            return Err(Fault::Exchange);
+        }
+        // The old reservation is dropped here, which gives its place back.
+        *target = inline.decide.retry(target).ok_or(Fault::Exchange)?;
+        retried = false;
     }
 }
 
@@ -586,7 +649,7 @@ async fn send(
     let (sender, mut response) = match sent {
         Ok(exchange) => exchange,
         // Every server that was tried is marked already.
-        Err(Fault::Connect | Fault::Exchange) => {
+        Err(Fault::Connect | Fault::Exchange | Fault::Unsent) => {
             return refuse(&mut reporter, &target, StatusCode::BAD_GATEWAY);
         }
         Err(Fault::Silent) => {
@@ -652,8 +715,9 @@ fn advance(done: &mut Done) -> Option<Arc<Origin>> {
 /// The bounds are those of the server's pool (SID 0019). A server whose session cannot
 /// be opened received nothing, so the request moves to another server of the pool while
 /// the firewall offers one. A session that fails after the request was sent and before
-/// a response head arrived is tried once more, and then the request moves, when it is
-/// safe and has no body: the rule of `sibuna_net::recover`, as on the other paths.
+/// a response head arrived is tried once more, and then the request moves, when the
+/// request is kept and is idempotent or was refused by the server: the rule of
+/// `sibuna_net::recover`, as on the other paths.
 async fn direct(
     mut origin: Arc<Origin>,
     request: Request<Body>,
@@ -673,22 +737,32 @@ async fn direct(
             (origin, retried) = (next, false);
         }
         let limit = done.target.response_timeout();
-        // Only a request without a body is sent twice, so a second attempt has none.
-        let request = Request::from_parts(parts.clone(), body.take().unwrap_or_else(empty));
-        match flow.bounded(origin.exchange(request), limit).await {
+        // The first attempt has the body as it arrived. A later one has the kept body.
+        let Some(body) = body.take().or_else(|| sending.again(&done.target)) else {
+            return refuse(&mut done.reporter, &done.target, StatusCode::BAD_GATEWAY);
+        };
+        let request = Request::from_parts(parts.clone(), body);
+        let refused = match flow.bounded(origin.exchange(request), limit).await {
             Some(Ok(response)) => break response,
             Some(Err(_)) if flow.is_over() => {
                 return refuse(&mut done.reporter, &done.target, StatusCode::PAYLOAD_TOO_LARGE);
             }
-            Some(Err(_)) => {}
+            Some(Err(error)) => crate::egress::is_refused(&*error),
             None => {
                 done.target.timed_out();
                 return refuse(&mut done.reporter, &done.target, StatusCode::GATEWAY_TIMEOUT);
             }
-        }
+        };
         // The session was shared, like a connection from a pool: its loss alone says
         // nothing about the server, so the first loss opens a new session.
-        let lost = Lost { unanswered: true, pooled: true, retryable: sending.retryable, retried };
+        let lost = Lost {
+            unanswered: true,
+            pooled: true,
+            kept: sending.kept(&done.target).is_some(),
+            idempotent: sending.idempotent,
+            refused,
+            retried,
+        };
         let recovery = sibuna_net::recover(lost);
         if recovery == Recovery::Reconnect {
             retried = true;

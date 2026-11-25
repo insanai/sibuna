@@ -219,6 +219,7 @@ impl sibuna_net::Route for Moving<'_> {
             connect: self.target.connect_timeout(),
             response: Some(self.target.response_timeout()),
             max_body: self.target.route().max_body,
+            retry_body: self.target.retry_body(),
         }
     }
 

@@ -380,9 +380,8 @@ fn proxy<W: Write>(
 ) -> Result<bool, ProxyError> {
     let request = exchange.request;
     let handshake = upgrade::offered(request).map_err(|_| ProxyError::InvalidUpgrade)?;
-    let safe = matches!(request.method, Method::Get | Method::Head | Method::Options);
+    let idempotent = crate::route::is_idempotent(request.method);
     let buffered = exchange.upload.is_buffered(request.body.len());
-    let retryable = safe && buffered;
     let poolable = !exchange.upload.carries_body();
     let activity = exchange.client.activity;
     if pool.is_stopping() {
@@ -424,7 +423,10 @@ fn proxy<W: Write>(
         drop(origin);
         let unanswered =
             matches!(error, ProxyError::UpstreamClosed | ProxyError::UpstreamWriteFailed);
-        let lost = Lost { unanswered, pooled: was_pooled, retryable, retried };
+        // The body is in the request buffer. The pool says how much of it to send twice.
+        let kept = buffered && request.body.len() as u64 <= bounds.retry_body;
+        let lost =
+            Lost { unanswered, pooled: was_pooled, kept, idempotent, refused: false, retried };
         match recover(lost) {
             Recovery::Reconnect => retried = true,
             // A fresh connection that failed before an answer speaks against the server.

@@ -125,3 +125,36 @@ fn an_http2_client_on_a_tls_frontend_gets_the_whole_traffic_policy() {
         });
     });
 }
+
+#[test]
+fn an_http2_request_with_a_kept_body_moves_when_its_method_is_idempotent() {
+    both(|event_loop| {
+        let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+        // Each case has its own edge, so the server that closes is chosen first.
+        let case = |members: &'static str, method: &'static str, body: &'static [u8]| {
+            let closing = Origin::start("closing");
+            closing.closing.store(true, std::sync::atomic::Ordering::SeqCst);
+            let good = Origin::start("good");
+            let servers = [closing.address, good.address];
+            let topology = Topology::new(&servers).frontend(&frontend()).backend(members);
+            let edge = topology.start(event_loop);
+            let answer = runtime.block_on(async {
+                let sent = send(edge.vip, method, "/length", "", body);
+                tokio::time::timeout(Duration::from_secs(20), sent).await.unwrap()
+            });
+            assert_eq!(
+                closing.requests.load(std::sync::atomic::Ordering::SeqCst),
+                1,
+                "{event_loop} {method}"
+            );
+            (answer.status, answer.text, good.requests.load(std::sync::atomic::Ordering::SeqCst))
+        };
+        // The first server read the PUT and closed. The second gets the whole body.
+        assert_eq!(case("", "PUT", b"abc"), (200, "3".into(), 1), "{event_loop}");
+        // A body above `retry_body` is not kept.
+        assert_eq!(case(r#""retry_body":2,"#, "PUT", b"abc").0, 502, "{event_loop}");
+        // A POST may have been carried out, so no other server sees it.
+        let post = case("", "POST", b"abc");
+        assert_eq!((post.0, post.2), (502, 0), "{event_loop}");
+    });
+}

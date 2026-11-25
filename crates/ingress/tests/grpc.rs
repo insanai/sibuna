@@ -247,3 +247,64 @@ fn a_safe_request_moves_when_its_session_fails_after_the_send() {
     assert_eq!(bench.admit.moves.load(Ordering::SeqCst), 1);
     assert_eq!(good.load(Ordering::SeqCst), 1);
 }
+
+/// An HTTP/2 server that refuses every stream with `REFUSED_STREAM`. It counts the
+/// streams it refused.
+fn refuser(runtime: &tokio::runtime::Runtime, refusals: Arc<AtomicUsize>) -> SocketAddr {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    listener.set_nonblocking(true).unwrap();
+    runtime.spawn(async move {
+        let listener = tokio::net::TcpListener::from_std(listener).unwrap();
+        loop {
+            let (socket, _) = listener.accept().await.unwrap();
+            let refusals = refusals.clone();
+            tokio::spawn(async move {
+                let Ok(mut session) = h2::server::handshake(socket).await else { return };
+                while let Some(Ok((_request, mut respond))) = session.accept().await {
+                    refusals.fetch_add(1, Ordering::SeqCst);
+                    respond.send_reset(h2::Reason::REFUSED_STREAM);
+                }
+            });
+        }
+    });
+    address
+}
+
+/// Sends a `POST` with a small body through a bench whose first server is `first`, and
+/// returns the status and whether the answer is that of the good server.
+fn post_through(first: SocketAddr, second: SocketAddr) -> ((u16, bool), Bench) {
+    let mut bench = bench(&format!(
+        r#"{{"name":"first","addr":"{first}"}},{{"name":"origin","addr":"{second}"}}"#
+    ));
+    let vip = bench.vip;
+    let status = bench.run(async move {
+        let mut sender = support::connect(vip).await;
+        let url = format!("https://localhost:{}/echo.Echo/Missing", vip.port());
+        let whole = http_body_util::Full::new(bytes::Bytes::from_static(b"abc"));
+        let body = http_body_util::BodyExt::boxed_unsync(whole);
+        let request = hyper::Request::post(url).body(body).unwrap();
+        let response = sender.send_request(request).await.unwrap();
+        (response.status().as_u16(), response.headers().contains_key("x-version"))
+    });
+    (status, bench)
+}
+
+#[test]
+fn a_post_moves_only_when_its_server_refused_the_stream() {
+    let servers = servers_runtime();
+    let (refused, good) = (Arc::new(AtomicUsize::new(0)), Arc::new(AtomicUsize::new(0)));
+    let second = server(&servers, good.clone());
+    // The server said that it did not act on the request. So the POST is sent again:
+    // once more to the same server, and then to the next one.
+    let (status, bench) = post_through(refuser(&servers, refused.clone()), second);
+    assert_eq!(status, (200, true));
+    assert_eq!(refused.load(Ordering::SeqCst), 2);
+    assert_eq!(bench.admit.moves.load(Ordering::SeqCst), 1);
+    drop(bench);
+    // A session that is lost proves nothing: the server may have acted on the POST.
+    let broken = Arc::new(AtomicUsize::new(0));
+    let (status, bench) = post_through(breaker(&servers, broken.clone()), second);
+    assert_eq!(status.0, 502);
+    assert_eq!(bench.admit.moves.load(Ordering::SeqCst), 0);
+}
