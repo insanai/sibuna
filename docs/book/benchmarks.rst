@@ -1228,3 +1228,40 @@ We also timed what the cluster shares, on the same three hosts with ``surface: "
      - 30 ms
 
 The times include the request that observes the effect, sent every 5 ms. ``show cluster`` showed the same digest on all three nodes before and after the reload.
+
+**Like for like.** The HAProxy file of the tables above adds no header to a request. Sibuna always adds seven: ``X-Forwarded-For``, ``X-Forwarded-Proto``, ``X-Forwarded-Host``, ``X-Forwarded-Port``, ``X-Real-IP``, ``X-Sibuna-Status`` and ``X-Sibuna-Rule``. So HAProxy did less work for each request. We gave HAProxy ``option forwardfor`` and six ``http-request set-header`` lines that write the same seven headers, and measured both again on one host with 256 connections for six seconds. Both proxies negotiated TLS 1.3 with ``TLS_AES_256_GCM_SHA384`` and the same ECDSA P-256 certificate, and both ran on the same eight CPUs.
+
+.. list-table:: One host, 256 connections, both proxies writing the same seven headers. The CPU time is that of the proxy for one request.
+   :header-rows: 1
+   :widths: 18 16 16 16 17 17
+
+   * - Workload
+     - HAProxy
+     - Sibuna
+     - Sibuna / HAProxy
+     - HAProxy CPU per request
+     - Sibuna CPU per request
+   * - http
+     - 223,139
+     - 224,363
+     - 1.01
+     - 35.6 us
+     - 29.6 us
+   * - https
+     - 166,054
+     - 149,168
+     - 0.90
+     - 47.9 us
+     - 44.9 us
+   * - h2, 10 streams
+     - 152,781
+     - 104,384
+     - 0.68
+     - 51.8 us
+     - 74.2 us
+
+The CPU time of each thread group explains the two differences that remain. HAProxy runs eight threads, and one thread does everything for a connection: TLS, the HTTP framing, the choice of a server and the server side. Its threads were busy for 47.5 of the 48 CPU seconds in every line. Sibuna serves plain HTTP the same way, on its eight workers, and spends less CPU for a request than HAProxy does.
+
+For HTTPS, Sibuna ends TLS on the threads of the protocol runtime and serves the request on a worker. Every request and every response crosses from one thread to another. The two groups used 18.3 and 21.9 CPU seconds, 40 of the 48 available, so the node was not short of CPU. It waited for the other thread. Sixteen threads also shared eight CPUs, and the kernel took the CPU from a thread about once in eleven requests.
+
+For HTTP/2, the whole exchange runs in the protocol runtime, which is a general asynchronous runtime with a general HTTP/2 library. It used all its CPU and needed 74 us for a request, where HAProxy needs 52 us with a multiplexer written for this one purpose. This line is bound by CPU, and only a cheaper HTTP/2 path will raise it.
