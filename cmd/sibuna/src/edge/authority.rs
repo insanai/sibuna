@@ -24,11 +24,13 @@ mod follower;
 #[cfg(feature = "storage")]
 pub(super) use cli::run;
 #[cfg(feature = "storage")]
-pub(super) use follower::{Slot, Stamp, cluster, describe, failure, follow, is_node_file, load};
+pub(super) use follower::{
+    Slot, Stamp, cluster, describe, failure, follow, follows, is_node_file, load,
+};
 
 #[cfg(not(feature = "storage"))]
 pub(super) use absent::{
-    Slot, Stamp, cluster, describe, failure, follow, is_node_file, load, run,
+    Slot, Stamp, cluster, describe, failure, follow, follows, is_node_file, load, run,
 };
 
 /// A build without storage: no file is a node file, and the commands say why.
@@ -84,6 +86,11 @@ mod absent {
     /// No failure is one of the authority.
     pub(in super::super) fn failure(_error: &io::Error) -> Option<(&'static str, &'static str)> {
         None
+    }
+
+    /// No source follows a database in this build.
+    pub(in super::super) fn follows(_source: &Source) -> bool {
+        false
     }
 
     /// No revisions to show.

@@ -241,6 +241,10 @@ mod unix {
         }
         // The file is compiled and checked here, off the worker, as for SIGHUP.
         let revision = match command {
+            // In persistent mode the file belongs to this host (SID 0028).
+            Command::ReloadCluster if super::super::authority::follows(source) => {
+                return Err(file_is_local());
+            }
             Command::Reload | Command::ReloadCluster if source.path().is_none() => {
                 return Err(super::super::nothing_to_reload());
             }
@@ -278,10 +282,9 @@ mod unix {
     fn show_cluster(source: &Source) -> Result<String, RuntimeError> {
         use super::super::cluster;
         // In persistent mode the nodes are compared by the revision that they serve
-        // (SID 0028). With a mesh the table of the files follows.
-        let revisions = super::super::authority::cluster(source);
-        if let (Some(table), None) = (&revisions, source.cluster()) {
-            return Ok(table.clone());
+        // (SID 0028). Their files differ by design and are not compared.
+        if let Some(table) = super::super::authority::cluster(source) {
+            return Ok(table);
         }
         let (Some(peers), Some(path)) = (source.cluster(), source.path()) else {
             return Err(control::failure(
@@ -305,7 +308,7 @@ mod unix {
         }
         let width = |column: usize| rows.iter().map(|row| row[column].len()).max().unwrap_or(0);
         let (node, file) = (width(0), width(1));
-        let mut out = revisions.map_or(String::new(), |table| table + "\n");
+        let mut out = String::new();
         for row in &rows {
             out.push_str(&format!("{:<node$} {:<file$} {}\n", row[0], row[1], row[2]));
         }
@@ -322,6 +325,18 @@ mod unix {
             "Add `authority: { sqlite: \"FILE\" }` or `authority: { postgres_url_file: \
              \"FILE\", node: \"NAME\" }` to the file, move `frontends`, `backends` and `http` \
              to a source, apply it with `sibuna authority apply`, and restart.",
+        )
+    }
+
+    /// The `DBA009` failure of `reload cluster` on a node that follows a database: its
+    /// file holds what belongs to this host, and a peer must not take it (SID 0028).
+    fn file_is_local() -> RuntimeError {
+        control::failure(
+            "DBA009",
+            "FILE IS LOCAL",
+            "This node follows a database. Its file belongs to this host and is not sent.",
+            "Publish a change of the topology with `sibuna authority apply`. After a \
+             change to the file of a node run `reload` on that node.",
         )
     }
 

@@ -18,6 +18,9 @@ pub(in super::super) use sibuna_authority::is_node_file;
 /// How long the admin thread waits for the list of nodes.
 const ASK_TIMEOUT: Duration = Duration::from_secs(4);
 
+/// The longest wait before a database that did not answer is asked again.
+const RETRY: Duration = Duration::from_secs(2);
+
 /// A question of the admin thread for the thread that owns the store.
 enum Request {
     /// The head and the reports of all nodes.
@@ -334,7 +337,9 @@ impl Authority {
         requests: &mpsc::Receiver<Request>,
     ) {
         loop {
-            store.wait(self.settings.poll);
+            // A database that does not answer is asked again soon, whatever the poll is.
+            let down = locked(&self.state).is_down();
+            store.wait(if down { self.settings.poll.min(RETRY) } else { self.settings.poll });
             for Request::Nodes(reply) in requests.try_iter() {
                 let listing = store.head().and_then(|head| Ok((head, store.nodes()?)));
                 // The admin client may have given up.
@@ -396,6 +401,11 @@ impl Authority {
 
     /// Asks the thread that owns the store for the head and the reports of all nodes.
     fn ask_nodes(&self) -> Result<(Head, Vec<NodeReport>), String> {
+        // The thread asks a database that is down again by itself. We do not wait for it.
+        if let Some(reason) = locked(&self.state).down_reason() {
+            self.waker.wake();
+            return Err(reason.to_owned());
+        }
         let sender = locked(&self.requests).clone().ok_or("the follower does not run")?;
         let (reply, answer) = mpsc::sync_channel(1);
         sender.send(Request::Nodes(reply)).map_err(|_| "the follower stopped")?;
@@ -480,6 +490,11 @@ pub(in super::super) fn follow(source: &Arc<Source>, pending: &Pending) -> io::R
 /// file.
 pub(in super::super) fn cluster(source: &Source) -> Option<String> {
     source.authority().get().map(|authority| authority.cluster())
+}
+
+/// Whether `source` follows a database. Its file then belongs to this host.
+pub(in super::super) fn follows(source: &Source) -> bool {
+    source.authority().get().is_some()
 }
 
 /// The answer to `show authority`, or `None` on an edge that serves a file.

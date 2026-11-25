@@ -79,7 +79,12 @@ impl Following {
         self.reach = Reach::Up;
         self.head = head.revision;
         self.checked_at = now;
-        (head.revision != 0 && head.revision != self.handled).then_some(head.revision)
+        // A database that was restored may hold another document under a known number.
+        let replaced = self.candidate.as_ref().is_some_and(|candidate| {
+            candidate.revision == head.revision && candidate.digest != head.digest
+        });
+        let unhandled = head.revision != self.handled || replaced;
+        (head.revision != 0 && unhandled).then_some(head.revision)
     }
 
     /// Records that the store did not answer at the Unix second `now`. Returns true
@@ -98,6 +103,14 @@ impl Following {
     /// Whether the store did not answer the last look.
     pub fn is_down(&self) -> bool {
         matches!(self.reach, Reach::Down { .. })
+    }
+
+    /// Why the store did not answer the last look, or `None` when it answered.
+    pub fn down_reason(&self) -> Option<&str> {
+        match &self.reach {
+            Reach::Down { reason, .. } => Some(reason),
+            _ => None,
+        }
     }
 
     /// Takes a revision that was read from the store as the candidate and returns it.
@@ -226,6 +239,17 @@ mod tests {
 
     fn head(revision: u64) -> Head {
         Head { revision, digest: format!("{revision:064}") }
+    }
+
+    #[test]
+    fn a_replaced_document_under_a_known_number_is_read_again() {
+        let mut node = Following::new("n");
+        let head = |digest: &str| Head { revision: 2, digest: digest.to_owned() };
+        assert_eq!(node.saw_head(&head("aa"), 1), Some(2));
+        node.read(Published { revision: 2, digest: "aa".into(), document: "{}".into() });
+        assert_eq!(node.saw_head(&head("aa"), 2), None);
+        assert_eq!(node.saw_head(&head("bb"), 3), Some(2));
+        assert_eq!(node.down_reason(), None);
     }
 
     #[test]

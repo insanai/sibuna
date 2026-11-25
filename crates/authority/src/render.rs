@@ -22,6 +22,11 @@ fn table<const N: usize>(rows: &[[String; N]]) -> String {
                 writeln!(out, "{cell}")
             };
         }
+        // An empty last cell leaves the space of the column before it.
+        if out.ends_with(" \n") {
+            out.truncate(out.trim_end().len());
+            out.push('\n');
+        }
     }
     out
 }
