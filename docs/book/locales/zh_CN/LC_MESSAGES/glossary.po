@@ -23,7 +23,7 @@ msgstr "术语表"
 
 #: ../../glossary.rst:6
 msgid "Admin socket"
-msgstr ""
+msgstr "管理套接字（Admin socket）"
 
 #: ../../glossary.rst:7
 msgid ""
@@ -32,6 +32,9 @@ msgid ""
 "show the servers, drain, weigh, add or remove a server, lift a ban, "
 "reload. There is no TCP listener for administration (SID 0018)."
 msgstr ""
+"一个权限为 0600 的 Unix 套接字，由 ``global.admin_socket`` 或 ``sibuna lb --admin`` "
+"指定，每次从 ``sibuna ctl`` 接收一行命令：查看服务器、排空、设置权重、添加或删除服务器、解除封禁、重新加载。没有用于管理的 TCP "
+"监听器（SID 0018）。"
 
 #: ../../glossary.rst:9
 msgid "Admission"
@@ -48,7 +51,7 @@ msgstr ""
 
 #: ../../glossary.rst:12
 msgid "Affinity"
-msgstr ""
+msgstr "会话保持（Affinity）"
 
 #: ../../glossary.rst:13
 msgid ""
@@ -56,6 +59,8 @@ msgid ""
 "by the source address, or by a sticky table. It gives way when the server "
 "is down, full, ejected or drained (SID 0019, SID 0025)."
 msgstr ""
+"把同一个客户端的流发往同一台服务器的规则：按 Cookie、按源地址，或按粘性表。当服务器宕机、已满、被剔除或被排空时，它会让步（SID "
+"0019，SID 0025）。"
 
 #: ../../glossary.rst:15
 msgid "Aho-Corasick automaton"
@@ -71,7 +76,7 @@ msgstr ""
 
 #: ../../glossary.rst:18
 msgid "Authority"
-msgstr ""
+msgstr "权威（Authority）"
 
 #: ../../glossary.rst:19
 msgid ""
@@ -80,10 +85,13 @@ msgid ""
 "head and composes it with its own file, which keeps ``global``, ``mesh``, "
 "``observability`` and ``authority`` (SID 0028)."
 msgstr ""
+"在边缘中，持久模式下拥有已发布拓扑的数据库：``frontends``、``backends`` 和 "
+"``http``。每个节点跟随其头部修订版本，并把它与自己的文件组合，后者保留 "
+"``global``、``mesh``、``observability`` 和 ``authority``\\ （SID 0028）。"
 
 #: ../../glossary.rst:21
 msgid "Backend"
-msgstr ""
+msgstr "后端（Backend）"
 
 #: ../../glossary.rst:22
 msgid ""
@@ -91,27 +99,26 @@ msgid ""
 "timeouts and stickiness. The word follows HAProxy; *pool* names the same "
 "thing."
 msgstr ""
+"同一种协议的一个服务器池，带有调度器、健康检查、超时和粘性设置。这个词沿用 HAProxy 的用法；\\ *服务器池*\\ "
+"（pool）指的是同一个东西。"
 
 #: ../../glossary.rst:24
 msgid "Ban table"
 msgstr "封禁表"
 
 #: ../../glossary.rst:25
-#, fuzzy
-#| msgid ""
-#| "4,096 lock-free slots of banned client addresses with expiry, written "
-#| "by the honeypot and by reputation shared across a cluster, read on "
-#| "every request."
 msgid ""
 "Lock-free slots of banned client addresses with expiry, 65,536 by default "
 "(``--ban-table-slots``), written by the honeypot, by rule quotas, by "
 "reputation shared across a cluster and, in the edge, by the mesh; read on "
 "every request."
-msgstr "4,096 个无锁槽，保存被封禁的客户端地址及其过期时间；由蜜罐和集群共享的信誉写入，每个请求都会读取。"
+msgstr ""
+"无锁槽，保存被封禁的客户端地址及其过期时间，默认 65,536 "
+"个（``--ban-table-slots``）；由蜜罐、规则配额、集群共享的信誉写入，在边缘中还由网格写入；每个请求都会读取。"
 
 #: ../../glossary.rst:27
 msgid "Breaker"
-msgstr ""
+msgstr "熔断器（Breaker）"
 
 #: ../../glossary.rst:28
 msgid ""
@@ -119,6 +126,8 @@ msgid ""
 "failures in a row and stays open for ``open``; while it is open a call "
 "fails at once with the result ``unavailable`` (SID 0030)."
 msgstr ""
+"代理（agent）插件的熔断器。连续 ``failures`` 次失败后它断开，并保持断开 ``open`` 的时间；断开期间，调用立即以结果 "
+"``unavailable`` 失败（SID 0030）。"
 
 #: ../../glossary.rst:30
 msgid "Campaign"
@@ -147,7 +156,7 @@ msgstr ""
 
 #: ../../glossary.rst:36
 msgid "ClientHello inspection"
-msgstr ""
+msgstr "ClientHello 检查"
 
 #: ../../glossary.rst:37
 msgid ""
@@ -157,6 +166,9 @@ msgid ""
 "within ``inspect_bytes`` takes the configured fallback (SID 0015, SID "
 "0032)."
 msgstr ""
+"在带 ``tcp_inspect`` 的 ``tcp`` 前端上，在不终止 TLS 的情况下读取连接的第一个 TLS "
+"记录，以便按服务器名称、ALPN 或 JA4 路由或拒绝它。在 ``inspect_bytes`` 内没有发送完整 ClientHello "
+"的连接采用配置的后备动作（SID 0015，SID 0032）。"
 
 #: ../../glossary.rst:39
 msgid "Difficulty, work bits"
@@ -170,7 +182,7 @@ msgstr "同时缩放两层证明的那个整数：对 Hashcash 而言是前导�
 
 #: ../../glossary.rst:42
 msgid "Drain"
-msgstr ""
+msgstr "排空（Drain）"
 
 #: ../../glossary.rst:43
 msgid ""
@@ -179,6 +191,8 @@ msgid ""
 "and a restart ends it. A node drains as a whole at shutdown, while "
 "readiness answers 503."
 msgstr ""
+"服务器不接受新流、但保留已建立的流的状态。``set server POOL/NAME state drain`` "
+"设置这一状态，重新加载会保留它，重启会结束它。节点在关闭时整体排空，此时就绪检查回答 503。"
 
 #: ../../glossary.rst:45
 msgid "Edge"
@@ -196,10 +210,8 @@ msgstr ""
 "部署，为任一形态提供持久策略、共享信誉和事件取证。"
 
 #: ../../glossary.rst:48
-#, fuzzy
-#| msgid "Edge"
 msgid "Edge mode"
-msgstr "Edge"
+msgstr "边缘模式（Edge mode）"
 
 #: ../../glossary.rst:49
 msgid ""
@@ -208,6 +220,8 @@ msgid ""
 "pools, with the firewall on the routes that ask for it. It is unrelated "
 "to the storage sense of *Edge* above."
 msgstr ""
+"以 ``--config-file`` 启动的守护进程。它转发 TCP 和 UDP，终止 TLS、HTTP/2 和 HTTP/3，并把 HTTP "
+"请求路由到服务器池，在要求防火墙的路由上启用防火墙。它与上文存储意义上的 *Edge* 无关。"
 
 #: ../../glossary.rst:51
 msgid "Engine slot"
@@ -235,7 +249,7 @@ msgstr "客户端地址和 User-Agent 的带密钥哈希，绑定进挑战和令
 
 #: ../../glossary.rst:57
 msgid "Fleet cap"
-msgstr ""
+msgstr "集群上限（Fleet cap）"
 
 #: ../../glossary.rst:58
 msgid ""
@@ -244,16 +258,19 @@ msgid ""
 "the limit, and unused shares move to the nodes that have the flows (SID "
 "0025)."
 msgstr ""
+"在 ``max_flows_scope: \"fleet\"`` 下，服务器的 ``max_flows`` "
+"约束网格中所有节点的流之和。每个节点持有限制的一个份额，未使用的份额会转移到拥有流的节点（SID 0025）。"
 
 #: ../../glossary.rst:60
 msgid "Flow"
-msgstr ""
+msgstr "流（Flow）"
 
 #: ../../glossary.rst:61
 msgid ""
 "One unit of work of the edge that holds a slot of ``global.max_flows``: a "
 "TCP connection, a UDP mapping, or an HTTP connection."
 msgstr ""
+"边缘的一个工作单位，占用 ``global.max_flows`` 中的一个槽位：一个 TCP 连接、一个 UDP 映射或一个 HTTP 连接。"
 
 #: ../../glossary.rst:63
 msgid "Forward auth"
@@ -270,13 +287,13 @@ msgstr ""
 
 #: ../../glossary.rst:66
 msgid "Frontend"
-msgstr ""
+msgstr "前端（Frontend）"
 
 #: ../../glossary.rst:67
 msgid ""
 "A named set of listening addresses of one protocol, ``tcp``, ``udp`` or "
 "``http``, with its routes, its limits and its default backend."
-msgstr ""
+msgstr "同一种协议（``tcp``、``udp`` 或 ``http``）的一组具名监听地址，带有其路由、限制和默认后端。"
 
 #: ../../glossary.rst:69
 msgid "Gate"
@@ -303,7 +320,7 @@ msgstr ""
 
 #: ../../glossary.rst:75
 msgid "Handoff"
-msgstr ""
+msgstr "交接（Handoff）"
 
 #: ../../glossary.rst:76
 msgid ""
@@ -312,6 +329,8 @@ msgid ""
 "the new one over a Unix socket and then drains its TCP streams. Linux "
 "only (SID 0029)."
 msgstr ""
+"用 ``global.upgrade_socket`` 替换正在运行的边缘二进制程序：旧进程通过 Unix 套接字把监听套接字和活动的 UDP "
+"映射传递给新进程，然后排空它的 TCP 流。仅限 Linux（SID 0029）。"
 
 #: ../../glossary.rst:78
 msgid "Hashcash"
@@ -339,7 +358,7 @@ msgstr ""
 
 #: ../../glossary.rst:84
 msgid "Hook"
-msgstr ""
+msgstr "钩子（Hook）"
 
 #: ../../glossary.rst:85
 msgid ""
@@ -348,6 +367,8 @@ msgid ""
 "native Rust, a metered WebAssembly module, or an agent in another process "
 "(SID 0030)."
 msgstr ""
+"运维人员自己在边缘路径上加入的决策，由插件在 ``connection``、``request`` 或 ``telemetry`` "
+"阶段运行。插件可以是原生 Rust、计量的 WebAssembly 模块，或另一个进程中的代理（SID 0030）。"
 
 #: ../../glossary.rst:87
 msgid "Idle reaper"
@@ -389,16 +410,14 @@ msgstr ""
 "0014）。它与绑定进挑战和令牌中的客户端指纹无关。"
 
 #: ../../glossary.rst:96
-#, fuzzy
-#| msgid "Edge"
 msgid "Judge"
-msgstr "Edge"
+msgstr "评判线程（Judge）"
 
 #: ../../glossary.rst:97
 msgid ""
 "A thread that decides a parked connection whose chain of hooks names an "
 "agent, so that the edge worker never waits for the agent (SID 0030)."
-msgstr ""
+msgstr "一个线程，为调用链中包含代理的暂存连接作出决定，使边缘 worker 永远不必等待代理（SID 0030）。"
 
 #: ../../glossary.rst:99
 msgid "Keyed BLAKE3"
@@ -412,7 +431,7 @@ msgstr "Sibuna 的密钥派生、挑战标签、会话标签、指纹和挑战 n
 
 #: ../../glossary.rst:102
 msgid "Local authority"
-msgstr ""
+msgstr "本地证书颁发机构（Local authority）"
 
 #: ../../glossary.rst:103
 msgid ""
@@ -421,6 +440,8 @@ msgid ""
 "writes a revocation list, and can serve other machines as an ACME server "
 "(SID 0021)."
 msgstr ""
+"边缘为内部名称自己运行的证书颁发机构。它在自动 HTTPS 的存储中保存一个根证书和一个中间证书，写入吊销列表，并可以作为 ACME "
+"服务器为其他机器提供服务（SID 0021）。"
 
 #: ../../glossary.rst:105
 msgid "MAC token"
@@ -437,7 +458,7 @@ msgstr ""
 
 #: ../../glossary.rst:108
 msgid "Maglev"
-msgstr ""
+msgstr "Maglev"
 
 #: ../../glossary.rst:109
 msgid ""
@@ -447,10 +468,13 @@ msgid ""
 "table and bounds the load of the chosen server by a factor "
 "(``bounded_maglev``, SID 0015)."
 msgstr ""
+"一张槽数为素数（Sibuna 中为 65,537）的一致性哈希表，由服务器的排列填充，以常数时间把客户端放置到一台服务器上（Eisenbud "
+"等，NSDI 2016）。Sibuna 构建加权表，并把所选服务器的负载限制在某个倍数以内（``bounded_maglev``，SID "
+"0015）。"
 
 #: ../../glossary.rst:111
 msgid "Mesh"
-msgstr ""
+msgstr "网格（Mesh）"
 
 #: ../../glossary.rst:112
 msgid ""
@@ -460,16 +484,18 @@ msgid ""
 "``forward`` they also send flows to their owner. At most 64 nodes (SID "
 "0022 to SID 0026)."
 msgstr ""
+"边缘集群的节点，与一个共享密钥一起列在 ``mesh`` 部分中。它们每半秒通过 UDP 相互探测，共享封禁、命令、粘性表和集群上限的份额；使用 "
+"``forward`` 时，它们还把流发送给其所有者。至多 64 个节点（SID 0022 至 SID 0026）。"
 
 #: ../../glossary.rst:114
 msgid "Node"
-msgstr ""
+msgstr "节点（Node）"
 
 #: ../../glossary.rst:115
 msgid ""
 "One edge process in a mesh, known by its mesh address; in persistent mode "
 "also by the name ``authority.node``."
-msgstr ""
+msgstr "网格中的一个边缘进程，以其网格地址识别；在持久模式下还以名称 ``authority.node`` 识别。"
 
 #: ../../glossary.rst:117
 msgid "Work level"
@@ -495,28 +521,30 @@ msgstr "在顺序工作量证明中，一个叶子标签加上它通往根的路
 
 #: ../../glossary.rst:123
 msgid "Owner"
-msgstr ""
+msgstr "所有者（Owner）"
 
 #: ../../glossary.rst:124
 msgid ""
 "The node of a mesh that serves a client under peer forwarding: the live "
 "node with the largest rendezvous score for the client's address (SID "
 "0026)."
-msgstr ""
+msgstr "在对等转发下为客户端提供服务的网格节点：对该客户端地址具有最大 rendezvous 得分的存活节点（SID 0026）。"
 
 #: ../../glossary.rst:126
 msgid "Passive health"
-msgstr ""
+msgstr "被动健康检查（Passive health）"
 
 #: ../../glossary.rst:127
 msgid ""
 "Ejecting a server for ``ejection`` after ``failures`` consecutive "
 "failures of real requests, while another server can serve (SID 0019)."
 msgstr ""
+"在另一台服务器可以提供服务时，于真实请求连续失败 ``failures`` 次之后，把一台服务器剔除 ``ejection`` 的时间（SID "
+"0019）。"
 
 #: ../../glossary.rst:129
 msgid "Passthrough"
-msgstr ""
+msgstr "透传（Passthrough）"
 
 #: ../../glossary.rst:130
 msgid ""
@@ -524,10 +552,12 @@ msgid ""
 "terminating it. The edge may still read the ClientHello, or validate QUIC "
 "by connection ID (SID 0032)."
 msgstr ""
+"把 TLS 或 QUIC 连接的字节中继给服务器而不终止它。边缘仍然可以读取 ClientHello，或通过连接 ID 验证 QUIC（SID "
+"0032）。"
 
 #: ../../glossary.rst:132
 msgid "Peer forwarding"
-msgstr ""
+msgstr "对等转发（Peer forwarding）"
 
 #: ../../glossary.rst:133
 msgid ""
@@ -536,14 +566,16 @@ msgid ""
 "session stay on one node. An established TCP connection that the network "
 "moves is not repaired (SID 0026)."
 msgstr ""
+"网格的一项功能：把新的连接或 UDP 客户端交给拥有该客户端的节点，使它的粘性服务器、速率计数器和 UDP "
+"会话保持在一个节点上。被网络转移的已建立 TCP 连接不会被修复（SID 0026）。"
 
 #: ../../glossary.rst:135
 msgid "Pool"
-msgstr ""
+msgstr "服务器池（Pool）"
 
 #: ../../glossary.rst:136
 msgid "See *Backend*."
-msgstr ""
+msgstr "见\\ *后端*\\ 。"
 
 #: ../../glossary.rst:138
 msgid "Proof of Sequential Work (PoSW)"
@@ -560,7 +592,7 @@ msgstr ""
 
 #: ../../glossary.rst:141
 msgid "Regime"
-msgstr ""
+msgstr "模式（Regime）"
 
 #: ../../glossary.rst:142
 msgid ""
@@ -570,10 +602,13 @@ msgid ""
 "returns from wide-area to regional only below 1.5 ms (``Regime::step`` in "
 "``crates/lb/src/mesh.rs``)."
 msgstr ""
+"网格的路由模式，根据到对等节点往返时间的第 95 百分位选择：没有存活对等节点时为\\ *独立*\\ （standalone），往返时间保持在 3 "
+"ms 及以下时为\\ *区域*\\ （regional），高于 3 ms 时为\\ *广域*\\ （wide-area）。网格只有在低于 1.5 "
+"ms 时才从广域返回区域（``crates/lb/src/mesh.rs`` 中的 ``Regime::step``）。"
 
 #: ../../glossary.rst:144
 msgid "Rendezvous hashing"
-msgstr ""
+msgstr "rendezvous 哈希（Rendezvous hashing）"
 
 #: ../../glossary.rst:145
 msgid ""
@@ -583,6 +618,9 @@ msgid ""
 "it for source stickiness (SID 0019) and for the owner of a client (SID "
 "0026)."
 msgstr ""
+"最高随机权重哈希（Thaler 和 "
+"Ravishankar，1998）：每个候选者根据其名称和键的哈希得到一个得分，得分最高者胜出。失去一个候选者只会迁移它自己的键。Sibuna "
+"把它用于源地址粘性（SID 0019）和客户端的所有者（SID 0026）。"
 
 #: ../../glossary.rst:147
 msgid "Reputation trie"
@@ -598,7 +636,7 @@ msgstr ""
 
 #: ../../glossary.rst:150
 msgid "Revision"
-msgstr ""
+msgstr "修订版本（Revision）"
 
 #: ../../glossary.rst:151
 msgid ""
@@ -606,6 +644,7 @@ msgid ""
 "digest of the file; with a database it is a number that only grows, and a "
 "rollback is a new revision (SID 0028)."
 msgstr ""
+"在边缘中，拓扑的一个已发布状态。使用文件时，它是文件的摘要；使用数据库时，它是一个只增不减的数字，回滚也是一个新的修订版本（SID 0028）。"
 
 #: ../../glossary.rst:153
 msgid "Robin Hood spent set"
@@ -619,13 +658,13 @@ msgstr "固定容量的开放寻址表，保存已求解的挑战标签，防止
 
 #: ../../glossary.rst:156
 msgid "Route"
-msgstr ""
+msgstr "路由（Route）"
 
 #: ../../glossary.rst:157
 msgid ""
 "A rule of an HTTP frontend that selects a backend by host name and path "
 "prefix, and may switch the firewall off or on for its requests."
-msgstr ""
+msgstr "HTTP 前端的一条规则，按主机名和路径前缀选择后端，并可以为其请求关闭或开启防火墙。"
 
 #: ../../glossary.rst:159
 msgid "Rule hash"
@@ -639,21 +678,22 @@ msgstr "要求挑战的规则名称的 64 位哈希，携带在挑战、令牌�
 
 #: ../../glossary.rst:162
 msgid "Server"
-msgstr ""
+msgstr "服务器（Server）"
 
 #: ../../glossary.rst:163
 msgid ""
 "One address of a pool, with a name, a weight and an optional "
 "``max_flows``. ``sibuna ctl`` addresses it as ``POOL/NAME``."
 msgstr ""
+"服务器池中的一个地址，带有名称、权重和可选的 ``max_flows``。``sibuna ctl`` 以 ``POOL/NAME`` 指称它。"
 
 #: ../../glossary.rst:165
 msgid "Share"
-msgstr ""
+msgstr "份额（Share）"
 
 #: ../../glossary.rst:166
 msgid "The part of a fleet cap that one node may hold now (SID 0025)."
-msgstr ""
+msgstr "集群上限中一个节点此刻可以持有的部分（SID 0025）。"
 
 #: ../../glossary.rst:168
 msgid "Shield"
@@ -678,7 +718,7 @@ msgstr ""
 
 #: ../../glossary.rst:174
 msgid "Slow start"
-msgstr ""
+msgstr "慢启动（Slow start）"
 
 #: ../../glossary.rst:175
 msgid ""
@@ -686,10 +726,11 @@ msgid ""
 "takes a weight that grows in proportion to the time, so that a cold "
 "server is not flooded (SID 0019)."
 msgstr ""
+"``slow_start`` 的爬升期，在此期间刚进入服务的服务器所取的权重与时间成正比增长，使冷服务器不会被流量淹没（SID 0019）。"
 
 #: ../../glossary.rst:177
 msgid "Spill cache"
-msgstr ""
+msgstr "溢出缓存（Spill cache）"
 
 #: ../../glossary.rst:178
 msgid ""
@@ -697,10 +738,11 @@ msgid ""
 "clients that left memory, and keeps them over a restart. Admission to it "
 "follows TinyLFU (SID 0027)."
 msgstr ""
+"映射到内存中、位于粘性表之下的一个文件，保存已离开内存的客户端的提示，并在重启后保留它们。它的准入遵循 TinyLFU（SID 0027）。"
 
 #: ../../glossary.rst:180
 msgid "Sticky table"
-msgstr ""
+msgstr "粘性表（Sticky table）"
 
 #: ../../glossary.rst:181
 msgid ""
@@ -708,6 +750,8 @@ msgid ""
 "of each client, by source address or by cookie, for ``ttl`` after the "
 "last use. A mesh replicates it, and the later choice wins (SID 0025)."
 msgstr ""
+"带 ``sticky: \"table\"`` 的服务器池的表，按源地址或 Cookie 记住每个客户端的服务器，在最后一次使用后保留 "
+"``ttl`` 的时间。网格复制这张表，较晚的选择胜出（SID 0025）。"
 
 #: ../../glossary.rst:183
 msgid "Surface"
@@ -731,10 +775,8 @@ msgid ""
 msgstr "一种规则动作，它不直接作出决定，而是给请求的分数加上一个有符号的权重；总分达到或超过阈值时，以额外的工作比特发起挑战或拒绝请求。"
 
 #: ../../glossary.rst:189
-#, fuzzy
-#| msgid "Work level"
 msgid "Worker"
-msgstr "工作等级"
+msgstr "worker"
 
 #: ../../glossary.rst:190
 msgid ""
@@ -743,6 +785,8 @@ msgid ""
 "threads carry TCP streams; on Linux the event-driven HTTP workers, one "
 "per processor, serve HTTP connections (SID 0015, SID 0016)."
 msgstr ""
+"在边缘中，服务流量的线程。边缘 worker 为每个前端接受连接，并拥有流表和 UDP 映射；中继线程承载 TCP 流；在 Linux "
+"上，事件驱动的 HTTP worker（每个处理器一个）服务 HTTP 连接（SID 0015，SID 0016）。"
 
 #: ../../glossary.rst:192
 msgid "Zaxonlite"
@@ -929,15 +973,6 @@ msgstr ""
 "*NSDI*, 2019."
 
 #: ../../glossary.rst:219
-#, fuzzy
-#| msgid ""
-#| "Sibuna Discussions 0001 to 0014, ``docs/sid/records``, 2026: process, "
-#| "foundation architecture, declarative policy engine, semantic "
-#| "inspection, Zaxonlite storage architecture, mathematical foundations, "
-#| "console management interface, AI bot traffic monitoring, chunked "
-#| "request bodies, the Rust port, storage through sqlx, outbound TLS for "
-#| "the console through rustls, console storage, and trusted JA4 "
-#| "fingerprints from the ingress."
 msgid ""
 "Sibuna Discussions 0001 to 0032, ``docs/sid/records``, 2026: process, "
 "foundation architecture, declarative policy engine, semantic inspection, "
@@ -953,6 +988,8 @@ msgid ""
 "the operator console of the edge, and staged admission."
 msgstr ""
 "Sibuna 讨论 0001 至 "
-"0014，``docs/sid/records``，2026：流程、基础架构、声明式策略引擎、语义检查、Zaxonlite "
+"0032，``docs/sid/records``，2026：流程、基础架构、声明式策略引擎、语义检查、Zaxonlite "
 "存储架构、数学基础、控制台管理界面、AI 机器人流量监控、分块请求体、Rust 移植、通过 sqlx 实现的存储、通过 rustls "
-"为控制台提供的出站 TLS、控制台存储，以及来自入口代理的受信任 JA4 指纹。"
+"为控制台提供的出站 TLS、控制台存储、来自入口代理的受信任 JA4 指纹、分布式边缘负载均衡器、事件驱动的 HTTP "
+"worker、进程内交换、简单设置与运行时配置、流量策略、边缘可观测性、自动 HTTPS、复制的封禁、集群配置、worker 上的 "
+"TLS、共享的会话保持与集群上限、对等转发、溢出缓存、数据库权威、升级交接、插件层级、边缘的运维控制台，以及分阶段准入。"

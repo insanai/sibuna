@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../cluster.rst:1
 msgid "Part IX: A Cluster of Edges"
-msgstr ""
+msgstr "第 IX 部分：边缘集群"
 
 #: ../../cluster.rst:4
 msgid ""
@@ -33,10 +33,13 @@ msgid ""
 "compare-and-set. The configuration of each feature is in Part XI; here we "
 "study the reasons."
 msgstr ""
+"第 VIII 部分构建了单个节点。单个节点就是单点故障，其上限是一台机器。因此我们把多个节点放在同一个名称之后，通过 DNS 或 ECMP "
+"路由器，由路由器按照自己的规则为每个流选择一个节点。本章探讨这时节点之间必须共享什么、可以改为计算什么，以及什么必须留在单个节点上。每个答案都建立在一小块数学之上：最大值、全序、份额之和、按哈希排序、频率估计和比较并设置（compare-and-set）。每项功能的配置见第 "
+"XI 部分；这里我们研究其理由。"
 
 #: ../../cluster.rst:6
 msgid "Objectives"
-msgstr ""
+msgstr "学习目标"
 
 #: ../../cluster.rst:8
 msgid ""
@@ -49,10 +52,13 @@ msgid ""
 "it replaces; trace the handover of listening sockets to a new binary; and "
 "list what the cluster does not do."
 msgstr ""
+"学完本章，我们应当能够说出集群复制节点的哪些状态，以及为什么每种状态的合并都是取最大值；证明集群范围的上限在丢失、重复和重启下依然成立，并手工计算三个节点的份额；推导一个节点加入时 "
+"rendezvous 哈希迁移的客户端比例；给出 count-min sketch "
+"的误差上界；解释为什么向数据库的提交要指明它所替换的修订版本；追踪监听套接字向新二进制程序的交接；并列出集群不做的事情。"
 
 #: ../../cluster.rst:10
 msgid "What a Cluster Must Share"
-msgstr ""
+msgstr "集群必须共享什么"
 
 #: ../../cluster.rst:13
 msgid ""
@@ -64,22 +70,25 @@ msgid ""
 "mapping, and how many flows each server holds. We sort this state by how "
 "it changes."
 msgstr ""
+"客户端并不知道有多个节点。它的两个连接可能到达两个节点：路由器把它们哈希到了不同的地方，有节点加入或离开，或者 DNS "
+"给出了两个地址。每个节点都持有关于该客户端的状态。它知道客户端是否被封禁、在当前窗口内发送了多少个请求、被放置在哪台服务器上、它的 UDP "
+"映射，以及每台服务器持有多少个流。我们按照这些状态的变化方式对它们分类。"
 
 #: ../../cluster.rst:15
 msgid "The state of a node and what the cluster does with it."
-msgstr ""
+msgstr "节点的状态以及集群如何处理它。"
 
 #: ../../cluster.rst:19
 msgid "State"
-msgstr ""
+msgstr "状态"
 
 #: ../../cluster.rst:20
 msgid "How it changes"
-msgstr ""
+msgstr "变化方式"
 
 #: ../../cluster.rst:21
 msgid "What the cluster does"
-msgstr ""
+msgstr "集群的处理"
 
 #: ../../cluster.rst:22
 msgid "SID"
@@ -87,15 +96,15 @@ msgstr ""
 
 #: ../../cluster.rst:23
 msgid "A ban"
-msgstr ""
+msgstr "封禁"
 
 #: ../../cluster.rst:24
 msgid "Its end only moves later"
-msgstr ""
+msgstr "其结束时间只会推后"
 
 #: ../../cluster.rst:25
 msgid "Replicated; the merge keeps the later end"
-msgstr ""
+msgstr "复制；合并保留较晚的结束时间"
 
 #: ../../cluster.rst:26 ../../cluster.rst:30
 msgid "0022"
@@ -103,59 +112,59 @@ msgstr ""
 
 #: ../../cluster.rst:27
 msgid "A run-time command (drain, weight, add, remove)"
-msgstr ""
+msgstr "运行时命令（排空、权重、添加、删除）"
 
 #: ../../cluster.rst:28
 msgid "Each command replaces the last"
-msgstr ""
+msgstr "每条命令替换上一条"
 
 #: ../../cluster.rst:29
 msgid "Replicated; the merge keeps the later stamp"
-msgstr ""
+msgstr "复制；合并保留较晚的时间戳"
 
 #: ../../cluster.rst:31
 msgid "The topology"
-msgstr ""
+msgstr "拓扑"
 
 #: ../../cluster.rst:32
 msgid "Rarely, by an operator"
-msgstr ""
+msgstr "很少变化，由运维人员修改"
 
 #: ../../cluster.rst:33
 msgid "Sent whole and checked by every node, or read from a database"
-msgstr ""
+msgstr "整体发送并由每个节点检查，或从数据库读取"
 
 #: ../../cluster.rst:34
 msgid "0023, 0028"
-msgstr ""
+msgstr "0023、0028"
 
 #: ../../cluster.rst:35
 msgid "A sticky cookie, a rank by source address"
-msgstr ""
+msgstr "粘性 Cookie、按源地址的排序"
 
 #: ../../cluster.rst:36
 msgid "Computed from the shared secret and the file"
-msgstr ""
+msgstr "由共享密钥和文件计算得出"
 
 #: ../../cluster.rst:37
 msgid "Nothing to replicate"
-msgstr ""
+msgstr "无需复制"
 
 #: ../../cluster.rst:38
 msgid "0019, 0025"
-msgstr ""
+msgstr "0019、0025"
 
 #: ../../cluster.rst:39
 msgid "A learned sticky choice"
-msgstr ""
+msgstr "学习到的粘性选择"
 
 #: ../../cluster.rst:40
 msgid "At the first flow and at each refresh"
-msgstr ""
+msgstr "在第一个流时以及每次刷新时"
 
 #: ../../cluster.rst:41
 msgid "Replicated; the merge follows a total order"
-msgstr ""
+msgstr "复制；合并遵循一个全序"
 
 #: ../../cluster.rst:42 ../../cluster.rst:46
 msgid "0025"
@@ -163,39 +172,39 @@ msgstr ""
 
 #: ../../cluster.rst:43
 msgid "The flows on a capped server"
-msgstr ""
+msgstr "上限受限服务器上的流"
 
 #: ../../cluster.rst:44 ../../cluster.rst:52
 msgid "With every flow"
-msgstr ""
+msgstr "随每个流变化"
 
 #: ../../cluster.rst:45
 msgid "Divided into shares that sum to at most the limit"
-msgstr ""
+msgstr "划分为总和不超过限制的份额"
 
 #: ../../cluster.rst:47
 msgid "Rate counters"
-msgstr ""
+msgstr "速率计数器"
 
 #: ../../cluster.rst:48
 msgid "With every request"
-msgstr ""
+msgstr "随每个请求变化"
 
 #: ../../cluster.rst:49
 msgid "Stay on the node; forwarding makes one node count each client"
-msgstr ""
+msgstr "留在节点上；转发使每个客户端只由一个节点计数"
 
 #: ../../cluster.rst:50
 msgid "0022, 0026"
-msgstr ""
+msgstr "0022、0026"
 
 #: ../../cluster.rst:51
 msgid "A UDP mapping, a TCP socket"
-msgstr ""
+msgstr "UDP 映射、TCP 套接字"
 
 #: ../../cluster.rst:53
 msgid "Cannot be replicated; forwarding keeps the client on one node"
-msgstr ""
+msgstr "无法复制；转发使客户端保持在一个节点上"
 
 #: ../../cluster.rst:54
 msgid "0026"
@@ -210,14 +219,15 @@ msgid ""
 "node, and we move the client to the state instead of the state to the "
 "client."
 msgstr ""
+"从这张表中可以得出三条规则。能由共享输入计算得出的就计算，因为计算不会在网络中丢失。很少变化且只朝一个方向变化的，作为一种以取最大值为合并方式的状态进行复制。随每个请求变化的留在它的节点上，我们把客户端移到状态那里，而不是把状态移到客户端那里。"
 
 #: ../../cluster.rst:58
 msgid "The Mesh"
-msgstr ""
+msgstr "网格"
 
 #: ../../cluster.rst:61
 msgid "A fixed roster and authenticated datagrams"
-msgstr ""
+msgstr "固定的成员名单和经过认证的数据报"
 
 #: ../../cluster.rst:64
 msgid ""
@@ -232,6 +242,12 @@ msgid ""
 "bytes, so a datagram of one kind cannot be turned into another. A "
 "datagram holds at most 1,200 bytes, so it fits one packet on every path."
 msgstr ""
+"集群的节点组成一个网格（SID 0015）。成员名单在进程的生命周期内固定不变，至多包含 64 "
+"个节点。每个节点都通过地址知道其他每个节点。节点之间在一个端口上通过 UDP 数据报通信。数据报以 "
+"``S``、``E``、一个版本号和一个类型开头。它携带发送方的启动 nonce 和一个序列号，并以一个 16 "
+"字节的标签结尾：在密钥文件的组密钥下，对它之前每个字节计算的带密钥 BLAKE3 "
+"哈希。节点只读取来自成员名单中地址且标签有效的数据报。类型位于被哈希的字节之内，因此一种类型的数据报无法被篡改成另一种。一个数据报至多 1,200 "
+"字节，因此在每条路径上都能装进一个数据包。"
 
 #: ../../cluster.rst:67
 msgid ""
@@ -240,6 +256,8 @@ msgid ""
 "send flows to the servers of the pools. A PostgreSQL database of "
 "revisions is joined to each node by a dotted edge."
 msgstr ""
+"客户端到达 DNS 或 ECMP 路由器，由路由器把流发往节点 A、B 和 "
+"C。三个节点两两之间以虚线网格边相连。三个节点都把流发往服务器池中的服务器。一个保存修订版本的 PostgreSQL 数据库以点线边与每个节点相连。"
 
 #: ../../cluster.rst:67
 msgid ""
@@ -286,13 +304,13 @@ msgid ""
 "A cluster of three nodes. The router spreads the clients; the dashed "
 "edges are the mesh; the dotted edges are the database of SID 0028, which "
 "a cluster may use instead of sending files."
-msgstr ""
+msgstr "一个由三个节点组成的集群。路由器分散客户端；虚线边是网格；点线边是 SID 0028 的数据库，集群可以用它来代替发送文件。"
 
 #: ../../cluster.rst:97
 msgid ""
 "Every pair of nodes exchanges the same things. The next figure shows one "
 "pair."
-msgstr ""
+msgstr "每对节点交换的内容都相同。下图显示其中一对。"
 
 #: ../../cluster.rst:100
 msgid ""
@@ -302,6 +320,9 @@ msgid ""
 "TCP on the mesh port, carries the configuration file and its digest. The "
 "third, TCP and UDP on the mesh port plus one, carries forwarded flows."
 msgstr ""
+"节点 A 和节点 B 由三条边相连。第一条是网格端口 7946 上的 UDP，承载探测、封禁（类型 3）、命令（类型 4）、解除（类型 "
+"5）、粘性条目（类型 6）以及份额状态（类型 7）。第二条是网格端口上的 TCP，承载配置文件及其摘要。第三条是网格端口加一上的 TCP 和 "
+"UDP，承载转发的流。"
 
 #: ../../cluster.rst:100
 msgid ""
@@ -329,7 +350,7 @@ msgstr ""
 msgid ""
 "What flows between two nodes, by port. The kind of each datagram is in "
 "parentheses."
-msgstr ""
+msgstr "两个节点之间按端口传输的内容。每种数据报的类型写在括号中。"
 
 #: ../../cluster.rst:114
 msgid ""
@@ -339,10 +360,12 @@ msgid ""
 "earns its cost in large groups whose members change; a roster of at most "
 "64 fixed nodes has no use for it."
 msgstr ""
+"每个节点都直接向其他每个节点发送。节点从不转发它收到的数据报。成员名单完整时，每个节点都能听到每个写者，而收到即转发正是导致 gossip "
+"循环的原因。流行病式转发在成员不断变化的大型群组中才值得付出代价；至多 64 个固定节点的成员名单用不着它。"
 
 #: ../../cluster.rst:116
 msgid "Bans merged by a maximum"
-msgstr ""
+msgstr "以取最大值合并的封禁"
 
 #: ../../cluster.rst:119
 msgid ""
@@ -352,6 +375,8 @@ msgid ""
 "For each key it is the maximum of two numbers, so it has the three laws "
 "of the maximum."
 msgstr ""
+"封禁是一个二元组：客户端键和封禁结束时的 Unix 秒数。节点的状态是一个从键到结束时间的映射。两个状态合并时，对每个键取较晚的结束时间。令 "
+":math:`\\sqcup` 表示这一合并。对每个键，它是两个数的最大值，因此它具有最大值的三条定律。"
 
 #: ../../cluster.rst:121
 msgid ""
@@ -370,6 +395,8 @@ msgid ""
 "a join semilattice, the state-based replicated data type of Shapiro and "
 "his colleagues (2011)."
 msgstr ""
+"这三条定律就是收敛性的全部证明。第一条说明到达顺序无关紧要。第二条说明节点可以一次合并一个数据报。第三条说明重复的数据报不改变任何东西，因此网格不需要重放窗口，也不需要确认。两个听到了相同封禁的节点，无论顺序如何、重复多少次，持有的映射都相同。具有这种合并的状态是一个并半格（join "
+"semilattice），即 Shapiro 等人（2011）提出的基于状态的复制数据类型。"
 
 #: ../../cluster.rst:127
 msgid ""
@@ -381,6 +408,8 @@ msgid ""
 "receiver cuts an end to 30 days ahead of its own clock and ignores an end "
 "that has passed."
 msgstr ""
+"数据报携带的是结束时间，而不是剩余时间。剩余时间不依赖于节点的时钟，但重放的数据报会让封禁重新开始。使用结束时间时，重放所陈述的正是接收方已经持有的内容。代价是对时钟的依赖：在对等节点上，封禁持续的时间会因两个时钟之差而更长或更短。接收方把结束时间截断为不超过自身时钟之后 "
+"30 天，并忽略已经过去的结束时间。"
 
 #: ../../cluster.rst:129
 msgid ""
@@ -395,10 +424,14 @@ msgid ""
 "replication, counts it, and the ban still holds on the node that issued "
 "it."
 msgstr ""
+"节点对它签发的每个封禁发送三次：立即发送一次，一秒后一次，再过四秒一次。三次发送可以承受两个数据包的丢失。它们无法承受网络分区，因此节点还会把整个映射逐项发送给重新出现的对等节点：探测中携带新启动 "
+"nonce 的对等节点，或者在三个静默周期之后才应答的对等节点。逐项发送在每个 500 ms "
+"的周期内至多发送八个数据报。每个结构都是有界的：映射至多保存 65,536 个封禁，从防火墙到网格线程的队列至多保存 1,024 "
+"个。请求从不等待网格：队列已满时，该封禁不再被复制，会被计数，而封禁在签发它的节点上依然有效。"
 
 #: ../../cluster.rst:131
 msgid "Implementation: ``Log::merge``"
-msgstr ""
+msgstr "实现：``Log::merge``"
 
 #: ../../cluster.rst:133
 msgid ""
@@ -406,6 +439,8 @@ msgid ""
 "the merge added or extended it. In ``crates/lb/src/mesh/bans.rs`` (crate "
 "``sibuna-lb``). ``keep_larger`` holds the maximum."
 msgstr ""
+"把一个封禁合并到网格线程的映射中，当合并新增或延长了该封禁时返回其结束时间。位于 ``crates/lb/src/mesh/bans.rs``\\ "
+"（crate ``sibuna-lb``）。``keep_larger`` 保持最大值。"
 
 #: ../../cluster.rst:135
 msgid ""
@@ -432,6 +467,8 @@ msgid ""
 "not heard yet. A peer that was cut off cannot bring the ban back, because "
 "the lift covers its end."
 msgstr ""
+"解除不能是一个更早的结束时间：对等节点的下一个数据报会把封禁带回来。因此解除是第三个映射中的条目，从客户端键映射到其封禁被解除的截止时间，这个映射同样以取最大值合并。当封禁的结束时间晚于其客户端的解除时间时，封禁才生效。运维人员所在的节点把解除时间设为它所知道的封禁的结束时间，并且至少为当前时间之后 "
+"60 秒，以覆盖它尚未听到的封禁。被隔离的对等节点无法把封禁带回来，因为解除时间覆盖了它的结束时间。"
 
 #: ../../cluster.rst:149
 msgid ""
@@ -446,10 +483,14 @@ msgid ""
 "node must build the same table at the same moment. Its servers change "
 "through the file."
 msgstr ""
+"运行时命令以同样的方式传播。它们的映射从一个键（例如表示服务器状态的 ``s`` 和 ``POOL/NAME``）映射到一个以命令的 Unix "
+"毫秒数开头的数字。较大的数字胜出，因此无论到达顺序如何，较晚的命令在每个节点上都胜出。节点拒绝比自身时钟超前 60 "
+"秒以上的数字；没有这个上限，一个时钟错误的节点就可能推翻之后的所有命令。第 VIII 部分的一条规则依然有效：按 Maglev "
+"表放置客户端的服务器池在运行时不接受权重和成员的修改，因为每个节点都必须在同一时刻构建同一张表。它的服务器通过文件改变。"
 
 #: ../../cluster.rst:151
 msgid "Why a rate counter stays local"
-msgstr ""
+msgstr "为什么速率计数器留在本地"
 
 #: ../../cluster.rst:154
 msgid ""
@@ -465,6 +506,10 @@ msgid ""
 "maximum can only grow. SID 0022 therefore leaves the limiters on their "
 "nodes and says so: each node bounds what it serves."
 msgstr ""
+"速率限制器统计一个客户端在一个窗口内的请求数。设 :math:`n` 个节点中每个节点在一个窗口内准入某个客户端的 :math:`r` "
+"个请求。那么连接分散在所有节点上的客户端最多可以得到 "
+":math:`nr`。把计数器变成全局的看起来是显而易见的修复办法，但并非如此。为每个请求发送一条消息会把网格放到请求路径上：请求要么等待其对等节点，要么在其他节点的计数到达之前就被判定，而网格就要承载整个集群的请求速率。以取最大值合并也无济于事。窗口移动时，窗口的计数必须下降，而以取最大值合并的状态只能增长。因此 "
+"SID 0022 把限制器留在各自的节点上，并明确说明：每个节点约束它自己所服务的内容。"
 
 #: ../../cluster.rst:156
 msgid ""
@@ -475,10 +520,13 @@ msgid ""
 "holds only while forwarding runs, and for up to 1.5 s after a change of "
 "liveness two nodes may each count a part of one client."
 msgstr ""
+"集群的限制来自另一个方向。对等转发（SID "
+"0026，见下文）给每个客户端一个所有者，所有者的键就是速率限制器的键。于是所有者统计其客户端的每个流，一个节点所统计的限制就成了集群的限制。这只在转发运行时成立，并且在存活状态变化后的至多 "
+"1.5 s 内，两个节点可能各自统计一个客户端的一部分。"
 
 #: ../../cluster.rst:158
 msgid "One file for the cluster"
-msgstr ""
+msgstr "集群共用一个文件"
 
 #: ../../cluster.rst:161
 msgid ""
@@ -489,6 +537,8 @@ msgid ""
 "local, because the running daemon holds it. The other addresses are the "
 "peers."
 msgstr ""
+"SID 0023 使配置文件在每个节点上逐字节相同。它的 ``mesh`` 部分在 ``nodes`` "
+"下列出每个节点。节点把列表中第一个属于本主机的地址认作自己，判断标准是它能否绑定该地址；已被占用的地址也算作本地地址，因为正在运行的守护进程持有它。其他地址是对等节点。"
 
 #: ../../cluster.rst:163
 msgid ""
@@ -509,17 +559,26 @@ msgid ""
 "On three hosts the command returned, with all three holding the same "
 "file, in 30 ms (Part X)."
 msgstr ""
+"``reload cluster`` 检查它所在节点的文件，重新加载该节点，然后通过 TCP 在网格端口上同时把文件发送给每个对等节点。消息由 "
+"``SEC1``、一个时间戳、一个长度、文件以及一个 32 字节的标签组成。标签的密钥以上下文 "
+"``sibuna/edge-mesh/config/v1`` "
+"从网格密钥派生，因此网格数据报无法冒充文件，文件也无法冒充数据报。对等节点只有在声明了 ``accept_config`` "
+"时才接收文件，并在下列检查中第一个失败处停止：来源是成员名单中的节点；标签正确；时间戳晚于它上次接收的时间戳，并且与它的时钟相差不超过 60 "
+"秒；文件以 ``NAME.incoming.EXT`` 的名称、0600 "
+"权限写在它自己的文件旁边，并通过重新加载的检查；文件指定的是同一个网格且包含本节点。只有这时，文件才会被重命名以覆盖旧文件并加载。传输失败不会改变对等节点上的任何东西。``show "
+"cluster`` 向每个对等节点索取其文件的摘要，并显示哪些节点不同。在三台主机上，当三者持有相同文件时，该命令在 30 ms 内返回（第 X "
+"部分）。"
 
 #: ../../cluster.rst:165
 msgid ""
 "The file has no history and no rollback, a node that was down keeps its "
 "old file, and files that the topology names by path are not sent. SID "
 "0028, later in this chapter, answers the first two."
-msgstr ""
+msgstr "文件没有历史，也不能回滚；宕机的节点保留旧文件；拓扑按路径引用的文件不会被发送。本章后面的 SID 0028 解决了前两个问题。"
 
 #: ../../cluster.rst:167
 msgid "Exercise 9.1"
-msgstr ""
+msgstr "练习 9.1"
 
 #: ../../cluster.rst:169
 msgid ""
@@ -529,18 +588,21 @@ msgid ""
 "client again, until 1,250. What lift does C send, and which of the three "
 "bans holds on which node?"
 msgstr ""
+"节点 A 封禁一个客户端直到第 1,300 秒。第 900 秒时，运维人员在知道这个结束时间的节点 C 上解除封禁。节点 D "
+"曾被隔离，现在发送同一客户端直到 1,200 的封禁。第 1,000 秒时，节点 B 再次封禁该客户端，直到 1,250。C "
+"发送的解除时间是多少？三个封禁中哪一个在哪个节点上有效？"
 
 #: ../../cluster.rst:171
 msgid ""
 "Hint: Compute the lift as the operator's node does, then compare each end "
 "with it. Then read the first known gap of SID 0022."
-msgstr ""
+msgstr "提示：按运维人员所在节点的方式计算解除时间，然后把每个结束时间与它比较。再阅读 SID 0022 的第一条已知不足。"
 
 #: ../../cluster.rst:173 ../../cluster.rst:227 ../../cluster.rst:333
 #: ../../cluster.rst:442 ../../cluster.rst:519 ../../cluster.rst:549
 #: ../../cluster.rst:590
 msgid "Explain the invariant"
-msgstr ""
+msgstr "解释这个不变量"
 
 #: ../../cluster.rst:175
 msgid ""
@@ -549,14 +611,15 @@ msgid ""
 "would fail if a lift were sent as a smaller end, and what the map of "
 "lifts does instead."
 msgstr ""
+"解释为什么一个封禁数据报无论到达两次、迟到，还是先于一个更旧的数据报到达，都无法改变节点所封禁的内容。然后解释如果解除以一个更早的结束时间发送，同样的论证为什么会失败，以及解除映射是怎样做的。"
 
 #: ../../cluster.rst:177
 msgid "Shared Affinity"
-msgstr ""
+msgstr "共享的会话保持"
 
 #: ../../cluster.rst:180
 msgid "Three kinds of stickiness"
-msgstr ""
+msgstr "三种粘性"
 
 #: ../../cluster.rst:183
 msgid ""
@@ -572,10 +635,16 @@ msgid ""
 "that the application sets, such as a session identifier, from which the "
 "edge cannot compute a server. Only the third kind needs replication."
 msgstr ""
+"服务器池以三种方式之一把客户端保持在其服务器上（SID 0019，SID 0025）。使用 ``sticky: \"cookie\"`` "
+"时，客户端出示一个令牌，即对服务器池和服务器计算的带密钥哈希；每个节点都从 ``http.secret_file`` 派生密钥，因此不需要表。使用 "
+"``sticky: \"source\"`` "
+"时，每个节点按客户端地址的哈希对服务器排序；文件相同的节点排序结果相同。两者都是计算得出的，因此不会有数据报丢失。第三种 ``sticky: "
+"\"table\"`` 对客户端的第一个流进行均衡，并记住这一选择。它服务于计算无法处理的两种情况：第一次选择随负载而定，而且键可以是应用设置的 "
+"Cookie（例如会话标识符），边缘无法从中计算出服务器。只有第三种需要复制。"
 
 #: ../../cluster.rst:185
 msgid "The entry and its order"
-msgstr ""
+msgstr "条目及其顺序"
 
 #: ../../cluster.rst:188
 msgid ""
@@ -586,6 +655,9 @@ msgid ""
 "entry expires. Two entries of one key merge by keeping the larger pair of "
 "end and server, compared in that order:"
 msgstr ""
+"一个条目把 16 字节的键映射到一台服务器和一个结束时间。键是在从服务器池名称派生的密钥下，对客户端地址或 Cookie "
+"值计算的带密钥哈希。服务器是其名称的哈希，在每个节点上都相同。结束时间是条目过期时的 Unix "
+"毫秒数。同一个键的两个条目合并时，保留较大的（结束时间，服务器）对，按此顺序比较："
 
 #: ../../cluster.rst:190
 msgid ""
@@ -602,6 +674,8 @@ msgid ""
 "two servers for one client in the same millisecond, with the same "
 "``ttl``, would each keep their own entry forever."
 msgstr ""
+"数对上的字典序是全序：两个不同的数对中，总有一个更大。全序上的最大值满足交换律、结合律和幂等律，因此条目收敛的理由与封禁相同。服务器用于打破平局。没有它，两个节点如果在同一毫秒内、以相同的 "
+"``ttl`` 为同一个客户端学习到两台服务器，就会各自永远保留自己的条目。"
 
 #: ../../cluster.rst:196
 msgid ""
@@ -615,10 +689,15 @@ msgid ""
 "bounds the harm of a wrong clock: a received end more than 24 hours and "
 "60 seconds ahead is ignored."
 msgstr ""
+"结束时间同时也是条目的版本。当一个流被放置到表中未指定的服务器上时，节点进行\\ *学习*\\ ；新的结束时间取“当前时间加 "
+"``ttl``”与“旧结束时间之后一毫秒”中的较晚者。因此在每个节点上，新选择都大于它所替换的条目。当一个流使用该条目且剩余时间少于 "
+"``ttl`` 的四分之三时，节点进行\\ *刷新*\\ ；新的结束时间为当前时间加 "
+"``ttl``。一个数字同时充当版本和过期时间，而它与时钟之间距离的上限也限定了错误时钟的危害：超前 24 小时零 60 "
+"秒以上的收到的结束时间会被忽略。"
 
 #: ../../cluster.rst:198
 msgid "Implementation: ``Affinity::wins_over``"
-msgstr ""
+msgstr "实现：``Affinity::wins_over``"
 
 #: ../../cluster.rst:200
 msgid ""
@@ -627,6 +706,8 @@ msgid ""
 "``AffinityTable::keep`` in the same file stores an entry only when it "
 "wins over the one held."
 msgstr ""
+"决定同一个键的两个条目如何合并。位于 ``crates/lb/src/affinity.rs``\\ （crate "
+"``sibuna-lb``）。同一文件中的 ``AffinityTable::keep`` 只在新条目胜过已持有的条目时才存储它。"
 
 #: ../../cluster.rst:202
 msgid ""
@@ -652,6 +733,10 @@ msgid ""
 "clients. A lookup took 172 ns in an optimised build, on a table of 65,536 "
 "slots with 49,152 clients."
 msgstr ""
+"这张表是一个槽数组，每四个槽组成一个桶。一个槽是五个原子字：一个序列号、两个字的键、服务器和结束时间。写者用比较并交换使序列号变为奇数，存储条目，再使其变回偶数；读者只有在之前和之后读到相同的偶数序列号时才采用该条目。没有线程等待另一个线程。表有 "
+"``global.sticky_entries`` 个槽，默认 65,536 个，每个 40 "
+"字节，桶满时放弃最先结束的条目。四槽的桶在表满之前就会放弃条目：在四分之三满时，它已经放弃了九分之一的客户端，因此表的槽数应为客户端数的两倍。在优化构建中，在一张有 "
+"65,536 个槽、49,152 个客户端的表上，一次查找耗时 172 ns。"
 
 #: ../../cluster.rst:212
 msgid ""
@@ -662,10 +747,11 @@ msgid ""
 "serves only while it is eligible: in the pool, healthy, not drained, with "
 "room."
 msgstr ""
+"这张表只为新流的服务器选择提供建议。已建立的流在其服务器上持有预留，不会再读这张表。因此，条目丢失、被逐出或被修改，只会让客户端的下一个新流失去其服务器，别无其他影响；而被指定的服务器只有在合格时才提供服务：在服务器池中、健康、未被排空、仍有余量。"
 
 #: ../../cluster.rst:214
 msgid "Replication, partition and the window of a race"
-msgstr ""
+msgstr "复制、分区与竞争窗口"
 
 #: ../../cluster.rst:217
 msgid ""
@@ -681,6 +767,10 @@ msgid ""
 "One side's choice changes for the next new flow of that client. Flows "
 "under way stay."
 msgstr ""
+"worker 通过一个容量为 4,096 "
+"个键的有界队列，把它写入的每个条目的键交给网格线程，不等待。网格线程像发送封禁那样把条目发送三次，使用类型 6 的数据报，每个数据报装 36 "
+"个条目。对重新出现的对等节点，用游标把整张表发送给它，每个 500 ms 的周期至多 32 个数据报；一张 65,536 个条目的表大约需要 29 "
+"秒。被隔离的节点用自己的表提供服务：在分区期间，这张表放弃一致性而保持可用性。分区结束时，双方相互逐项发送各自的表，对每个键，每个节点都保留较大的条目，即最后作出或使用的选择。一方的选择会在该客户端的下一个新流时改变。进行中的流保持不变。"
 
 #: ../../cluster.rst:219
 msgid ""
@@ -698,10 +788,15 @@ msgid ""
 "without making the first flow wait for the peers, which the design "
 "refuses."
 msgstr ""
+"复制是异步的，因此存在一个窗口。一个选择到达对等节点，需要经过交给网格线程、一次发送和一次网络延迟。同一客户端的第二个流如果在窗口内到达对等节点，就找不到条目，会被均衡，对等节点于是学习到自己的选择。两个条目都会传播；较大的条目在所有地方胜出；客户端之后的新流会遇到同一台服务器。SID "
+"0025 在两台主机上用以 Cookie 为键的表测量了这个窗口。在一个节点上的第一个流与另一个节点上的下一个流之间没有停顿时，40 个客户端中有 "
+"25 个遇到了两台服务器；停顿 20 ms 时为 40 个中的 13 个；停顿 50 ms 时一个也没有。两秒后全部达成一致，300 个客户端中的 "
+"300 个无论经由哪个节点都到达同一台服务器。因此一个选择在 50 ms "
+"以内到达了对等节点。要关闭这个窗口，就必须让第一个流等待对等节点，而这是设计所拒绝的。"
 
 #: ../../cluster.rst:221
 msgid "Exercise 9.2"
-msgstr ""
+msgstr "练习 9.2"
 
 #: ../../cluster.rst:223
 msgid ""
@@ -711,12 +806,14 @@ msgid ""
 "flow. Which entry does every node hold after the datagrams cross? Which "
 "flows move?"
 msgstr ""
+"节点 A 和 B 在同一毫秒内、以相同的 ``ttl`` 为同一个新客户端学习到一台服务器。A 选择了哈希为 ``0x3a...`` 的服务器，B "
+"选择了哈希为 ``0x91...`` 的服务器。各自放置了一个流。数据报交叉之后，每个节点持有哪个条目？哪些流会迁移？"
 
 #: ../../cluster.rst:225
 msgid ""
 "Hint: Compare the pairs of end and server. Then recall what an "
 "established flow reads."
-msgstr ""
+msgstr "提示：比较（结束时间，服务器）对。然后回忆已建立的流会读取什么。"
 
 #: ../../cluster.rst:229
 msgid ""
@@ -724,14 +821,15 @@ msgid ""
 "the later end. Then explain why no loss of a datagram, and no eviction "
 "from a full bucket, can move a flow that is already established."
 msgstr ""
+"解释为什么粘性条目的合并需要一个全序，而不只是较晚的结束时间。然后解释为什么任何数据报的丢失，以及从满桶中的逐出，都无法让已经建立的流迁移。"
 
 #: ../../cluster.rst:231
 msgid "A Cap for the Whole Fleet"
-msgstr ""
+msgstr "整个集群的上限"
 
 #: ../../cluster.rst:234
 msgid "The invariant"
-msgstr ""
+msgstr "不变量"
 
 #: ../../cluster.rst:237
 msgid ""
@@ -742,6 +840,10 @@ msgid ""
 ":math:`i` and :math:`u_i` its flows on the server. The protocol keeps two "
 "inequalities:"
 msgstr ""
+"位于 :math:`n` 个节点之后、``max_flows: 100`` 的服务器，在每个节点单独执行该限制时，最多会接收 "
+":math:`100n` 个流。使用 ``max_flows_scope: \"fleet\"`` 时，限制 :math:`L` "
+"约束所有节点的流之和（SID 0025）。令 :math:`s_i` 为节点 :math:`i` 的份额，:math:`u_i` "
+"为它在该服务器上的流数。协议保持两个不等式："
 
 #: ../../cluster.rst:239
 msgid ""
@@ -756,10 +858,11 @@ msgid ""
 "and reordering of datagrams, for every partition, and for every set of "
 "nodes that stop or restart."
 msgstr ""
+"第一个是本地的：节点只有在其流数少于其份额时才准入一个流。第二个必须在数据报的任何丢失、重复、延迟和乱序下，在任何分区下，以及在任何节点集合停止或重启时都成立。"
 
 #: ../../cluster.rst:245
 msgid "Counters that only grow"
-msgstr ""
+msgstr "只增不减的计数器"
 
 #: ../../cluster.rst:248
 msgid ""
@@ -771,12 +874,15 @@ msgid ""
 "once. This is the escrow method of O'Neil (1986) and the bounded counter "
 "of Balegas and his colleagues (2015), built on the merge of SID 0022."
 msgstr ""
+"最初的设计用消息转移份额：“拿走 5 "
+"个”。这样的消息必须恰好到达一次。丢失时，它会永久丢失五个名额；重复时，它会使名额翻倍并突破限制。因此协议发送只增不减的数字，接收方像合并封禁一样以取最大值合并它们。一个数字无论听到多少次，效果都与听到一次相同。这就是 "
+"O'Neil（1986）的托管（escrow）方法和 Balegas 等人（2015）的有界计数器，建立在 SID 0022 的合并之上。"
 
 #: ../../cluster.rst:250
 msgid ""
 "The nodes of the roster are ordered by address, and node :math:`i` of "
 ":math:`n` has the base share"
-msgstr ""
+msgstr "成员名单中的节点按地址排序，:math:`n` 个节点中的节点 :math:`i` 的基础份额为"
 
 #: ../../cluster.rst:252
 msgid ""
@@ -791,6 +897,9 @@ msgid ""
 "ever gave to :math:`j`, and :math:`h_{ij}`, the largest :math:`g_{ji}` it "
 "heard from :math:`j`. Its share is"
 msgstr ""
+"每个节点都从文件计算基础份额。对每个对等节点 :math:`j`，节点 :math:`i` 保存两个只增不减的数：:math:`g_{ij}` "
+"是它曾经给予 :math:`j` 的全部份额，:math:`h_{ij}` 是它从 :math:`j` 听到的最大的 "
+":math:`g_{ji}`。它的份额为"
 
 #: ../../cluster.rst:258
 msgid "s_i = b_i - \\sum_j g_{ij} + \\sum_j h_{ij}."
@@ -802,6 +911,8 @@ msgid ""
 "its share before it sent them, so :math:`h_{ji} \\le g_{ij}` at every "
 "moment. Summing over the nodes and renaming the indices of the last sum,"
 msgstr ""
+"接收方只持有给予方发送的数字，而给予方在发送之前已经降低了自己的份额，因此在任何时刻都有 :math:`h_{ji} \\le "
+"g_{ij}`。对所有节点求和，并对最后一个和式的下标重新命名，得到"
 
 #: ../../cluster.rst:264
 msgid ""
@@ -815,10 +926,12 @@ msgid ""
 "difference is counted on neither node: it is stranded for one period of "
 "500 ms, never doubled."
 msgstr ""
+"数据报丢失会使 :math:`h_{ji} < g_{ij}` 维持一段时间。这个差额在两个节点上都不计入：它被搁置一个 500 ms "
+"的周期，但绝不会被重复计算。"
 
 #: ../../cluster.rst:270
 msgid "Moving shares to the demand"
-msgstr ""
+msgstr "把份额转移到需求所在之处"
 
 #: ../../cluster.rst:273
 msgid ""
@@ -834,6 +947,12 @@ msgid ""
 "a peer, it gives back the excess up to that gift, so the shares of an "
 "idle cluster return to the bases."
 msgstr ""
+"每个节点为每台受上限约束的服务器计算其空闲份额 :math:`f = s - u` 和余量 :math:`r = \\max(1, \\lceil "
+"u/4 \\rceil)`。当 :math:`r - f` 为正时，它\\ *需要*\\ :math:`r - "
+"f`；如果自上次状态以来它因份额不足而拒绝过流，它至少需要一个，并带上一个标志。它的\\ *盈余*\\ 为 :math:`f - "
+"r`。每个周期内，节点处理一次它听到的需求。它给对等节点需求与其盈余中的较小者；对正在拒绝流的对等节点，它给出需求与“盈余和 "
+":math:`\\lceil f/2 \\rceil` 中的较大者”之间的较小者。节点会主动归还借来的份额：当 :math:`f > "
+"2\\lceil u/4 \\rceil` 且它持有某个对等节点的净赠予时，它归还超出部分，至多为该赠予，因此空闲集群的份额会回到基础份额。"
 
 #: ../../cluster.rst:275
 msgid ""
@@ -847,10 +966,13 @@ msgid ""
 "peer, which then holds the whole limit. It limits the route, and the "
 "restart below needs it."
 msgstr ""
+"三条规则约束一次赠予。它来自空闲份额，因此给予方的流保持在其份额之内。节点只出借其基础份额：令 :math:`o_{ij} = g_{ij} - "
+"h_{ij}`，一个节点所有为正的 :math:`o_{ij}` 之和从不超过 "
+":math:`b_i`，赠予可以回到它所来自的对等节点，但不能继续转给第三方。并且节点只给予它在最近三个周期内听到过、且与之同步的对等节点。第二条规则并不限制份额可以去往何处：每个节点都可以把全部基础份额借给同一个对等节点，于是该节点持有整个限制。它限制的是路线，下面的重启需要这一点。"
 
 #: ../../cluster.rst:277
 msgid "Implementation: ``Cell::enter`` and ``Cell::lower``"
-msgstr ""
+msgstr "实现：``Cell::enter`` 和 ``Cell::lower``"
 
 #: ../../cluster.rst:279
 msgid ""
@@ -860,6 +982,9 @@ msgid ""
 "compute the want and the share; ``move_shares`` in "
 "``crates/lb/src/mesh/shares.rs`` serves the wants once in each period."
 msgstr ""
+"worker 上对一个流的准入，以及网格线程在赠予之前对份额的降低。位于 ``crates/lb/src/quota.rs``\\ （crate "
+"``sibuna-lb``）。同一文件中的 ``Demand::of`` 和 ``Ledger::share`` "
+"计算需求和份额；``crates/lb/src/mesh/shares.rs`` 中的 ``move_shares`` 每个周期处理一次需求。"
 
 #: ../../cluster.rst:281
 msgid ""
@@ -886,10 +1011,14 @@ msgid ""
 "reads the lowered share. No flow enters on a share that was given away, "
 "and no lock is taken."
 msgstr ""
+"worker 先把自己加入计数，再读取份额。``lower`` "
+"先存储降低后的份额，再读取计数；如果计数超过降低后的份额，说明在此期间有流进入，它就把份额提高这个差额，并少给出一些。这四个操作都是顺序一致的，因此它们处于同一个全序之中。要么 "
+"worker 的加法发生在网格线程的读取之前，于是网格线程能看到它；要么它发生在降低后份额的存储之后，于是 worker "
+"读到降低后的份额。没有流会在已经赠出的份额上进入，也不需要获取锁。"
 
 #: ../../cluster.rst:294
 msgid "Restarts and epochs"
-msgstr ""
+msgstr "重启与纪元"
 
 #: ../../cluster.rst:297
 msgid ""
@@ -901,6 +1030,9 @@ msgid ""
 "*echo*. A receiver ignores a datagram whose sender epoch is below the "
 "largest it knows for that peer."
 msgstr ""
+"重启的节点没有流，并且丢失了它的账本。它的对等节点仍然持有各自的账本，并可能在它赠予的份额上服务流。它不能从基础份额重新开始。因此每个节点都有一个\\ "
+"*纪元*\\ （epoch），即它启动时的 Unix 毫秒数。状态数据报携带发送方的纪元，以及发送方最近听到的接收方纪元，即它的\\ *回声*\\ "
+"（echo）。接收方忽略发送方纪元低于它所知道的该对等节点最大纪元的数据报。"
 
 #: ../../cluster.rst:299
 msgid ""
@@ -909,6 +1041,7 @@ msgid ""
 "it counts none of its base and only what synchronised peers gave it in "
 "net:"
 msgstr ""
+"刚启动的节点与每个对等节点都处于未同步状态。根据只出借基础份额的规则，它给予所有对等节点的总和至多是其基础份额，因此它不计入任何基础份额，只计入已同步的对等节点给予它的净额："
 
 #: ../../cluster.rst:301
 msgid ""
@@ -923,6 +1056,9 @@ msgid ""
 ":math:`h_{ij}` the :math:`g_{ji}`. The echo proves that :math:`j` had "
 "heard the new epoch before it sent, so the two ledgers agree from then on."
 msgstr ""
+"当对等节点 :math:`j` 的某个数据报回声了它的新纪元时，它就与 :math:`j` 同步。然后它接管 :math:`j` "
+"所保存的账本：它的 :math:`g_{ij}` 变为该数据报中的 :math:`h_{ji}`，它的 :math:`h_{ij}` 变为 "
+":math:`g_{ji}`。回声证明 :math:`j` 在发送之前已经听到了新纪元，因此从那时起两个账本一致。"
 
 #: ../../cluster.rst:307
 msgid ""
@@ -939,10 +1075,15 @@ msgid ""
 "peers lend it. A cluster that starts with one node missing serves no flow "
 "on a capped server until that node answers."
 msgstr ""
+"没有定时器会归还静默节点的份额。静默无法区分一个已停止的节点和一个被隔离但仍在服务其已准入流的节点。归还它的份额会超出限制，除非该节点关闭那些流，而 "
+"Sibuna "
+"不会为了配额关闭已建立的流。份额租约也因为同样的原因而行不通：流的寿命比租约长。代价是一段时间内无人能用的容量。丢失的赠予会被搁置一个周期。停止的节点会搁置其最后的份额，直到它重启并听到每个对等节点一次；如果它再也不回来，就要等到运维人员把它从 "
+"``mesh.nodes`` "
+"中删除并重启各节点。在某个对等节点静默时重启的节点，只能依靠其他对等节点借给它的份额提供服务。缺少一个节点就启动的集群，在该节点应答之前，不会在受上限约束的服务器上服务任何流。"
 
 #: ../../cluster.rst:309
 msgid "Worked example: three nodes and a limit of 30"
-msgstr ""
+msgstr "实例分析：三个节点和上限 30"
 
 #: ../../cluster.rst:311
 msgid ""
@@ -950,6 +1091,8 @@ msgid ""
 ":math:`\\lfloor 30/3 \\rfloor = 10` each. A holds 10 flows and refused "
 "one. B holds 2 and C holds none."
 msgstr ""
+"节点 A、B 和 C 共享一台 :math:`L = 30` 的服务器。基础份额各为 :math:`\\lfloor 30/3 \\rfloor "
+"= 10`。A 持有 10 个流并拒绝了一个。B 持有 2 个，C 没有。"
 
 #: ../../cluster.rst:313
 msgid ""
@@ -963,6 +1106,13 @@ msgid ""
 "are stranded and none is doubled. When A hears them, :math:`h_{AB} = "
 "h_{AC} = 3` and :math:`s_A = 10 + 3 + 3 = 16`. The sum is 30."
 msgstr ""
+"*第 1 个周期。*\\ A 有 :math:`f = 0` 和 :math:`r = \\lceil 10/4 \\rceil = "
+"3`，因此它需要 3，并带有标志。B 有 :math:`f = 8`、:math:`r = 1`，盈余为 7。A 处于压力之下，因此 B 可以给出 "
+":math:`\\min(3, \\max(7, \\lceil 8/2 \\rceil)) = "
+"3`；它的基础份额允许这样做，因为它还没有出借任何份额。B 把份额降到 7，并设置 :math:`g_{BA} = 3`。C 有 :math:`f "
+"= 10`，盈余为 9，同样给出 3：份额为 7，:math:`g_{CA} = 3`。在状态数据报到达之前，份额为 10、7 和 7，总和为 "
+"24：六个名额被搁置，没有任何名额被重复计算。当 A 听到它们后，:math:`h_{AB} = h_{AC} = 3`，:math:`s_A = "
+"10 + 3 + 3 = 16`。总和为 30。"
 
 #: ../../cluster.rst:315
 msgid ""
@@ -972,6 +1122,10 @@ msgid ""
 "and gives 4. Now :math:`g_{BA} = g_{CA} = 7`, and the shares are "
 ":math:`s_A = 10 + 7 + 7 = 24`, :math:`s_B = s_C = 3`. The sum is 30."
 msgstr ""
+"*第 2 个周期。*\\ A 填满了它的 16 个名额并再次拒绝：:math:`r = \\lceil 16/4 \\rceil = 4`，需要 "
+"4。B 的份额为 7，:math:`f = 5`，盈余为 4，给出 4；它可以出借 :math:`10 - 3 = 7`。C 有 :math:`f "
+"= 7`，盈余为 6，给出 4。现在 :math:`g_{BA} = g_{CA} = 7`，份额为 :math:`s_A = 10 + 7 + "
+"7 = 24`，:math:`s_B = s_C = 3`。总和为 30。"
 
 #: ../../cluster.rst:317
 msgid ""
@@ -979,6 +1133,8 @@ msgid ""
 "is stranded: the cluster can hold at most 27 flows on the server until C "
 "returns, and no timer changes that."
 msgstr ""
+"*C 停止。*\\ A 保留 :math:`h_{AC} = 7` 和它的 24 份额。C 的 3 份额被搁置：在 C "
+"回来之前，集群在该服务器上至多能持有 27 个流，没有任何定时器能改变这一点。"
 
 #: ../../cluster.rst:319
 msgid ""
@@ -989,6 +1145,10 @@ msgid ""
 "Synchronised with both, C counts :math:`s_C = 10 - 7 = 3`, and the sum is "
 "30 again."
 msgstr ""
+"*C 重启*\\ ，带着一个新纪元。它与两个对等节点都未同步，计为 :math:`s_C = 0`。A 的下一个状态回声了新纪元，并携带 "
+":math:`g_{AC} = 0` 和 :math:`h_{AC} = 7`。C 把它们接管为 :math:`h_{CA} = 0` 和 "
+":math:`g_{CA} = 7`。B 的状态给出的都是零。与两者都同步后，C 计为 :math:`s_C = 10 - 7 = "
+"3`，总和再次为 30。"
 
 #: ../../cluster.rst:321
 msgid ""
@@ -997,6 +1157,8 @@ msgid ""
 "in period 1. Had C restarted from its base, it would have counted 10 "
 "beside A's 24 and B's 3: 37 places for a limit of 30."
 msgstr ""
+"两个反事实说明了设计为什么是这样的。如果 B 发送的是消息“拿走 3 个”并且网络重复了它，A 在第 1 个周期就会计为 33。如果 C "
+"从基础份额重新开始，它会计为 10，加上 A 的 24 和 B 的 3：上限为 30 却有 37 个名额。"
 
 #: ../../cluster.rst:323
 msgid ""
@@ -1009,6 +1171,10 @@ msgid ""
 "refused. Each step took about three periods there, longer than one; the "
 "SID records the steps and not the cause."
 msgstr ""
+"同样的规则预测了实测的步进。在两台 :math:`L = 20` 的主机上，两者的基础份额都是 10。持有 10 个流并拒绝流的节点需要 "
+":math:`\\lceil 10/4 \\rceil = 3` 并收到 3，然后在有 13 个流时需要 :math:`\\lceil 13/4 "
+"\\rceil = 4` 并收到 4。SID 0025 测得 10，1.5 秒后为 13，3 秒后为 17，两个份额之和始终为 20；在 80 "
+"个保持的请求中，20 个得到服务，60 个被拒绝。在那里每一步大约耗时三个周期，比一个周期长；SID 记录了这些步进，但没有记录原因。"
 
 #: ../../cluster.rst:325
 msgid ""
@@ -1033,10 +1199,17 @@ msgid ""
 "``no_flow_enters_on_a_share_that_is_given_away_while_workers_race`` tests "
 "the second."
 msgstr ""
+"模型 ``docs/sid/assets/shared-affinity.lean`` 由不带库的 Lean 4 "
+"检查。对于上限，它证明了：当每个节点持有的至多是其对等节点所给予的时，份额之和至多为限制（``shares_within_limit``）；一次赠予和一次听到都保持这一条件（``give_keeps_sound``、``hear_keeps_sound``），因此在任意顺序、任意重复的赠予和听到序列之后，上限都成立（``cap_holds_on_every_trace``）；来自空闲份额的赠予使流保持在份额之内（``gift_from_free_share``）；并且在节点只出借基础份额的规则下，重启节点所计的份额至多为其真实份额（``restarted_share_is_safe``），忘记两个节点都已丢失的一对记录不会使任何份额为负（``forgotten_pair_is_safe``）。对于粘性表，它证明了合并的三条定律、``replay_is_harmless`` "
+"和 "
+"``learn_wins``。它没有对纪元、两个原子操作的顺序或时间建模。带丢失、重复、乱序和重启的二到五个节点的随机轨迹测试了第一项（``quota.rs`` "
+"中的 "
+"``the_cap_holds_under_loss_repetition_reordering_and_restarts``），``no_flow_enters_on_a_share_that_is_given_away_while_workers_race`` "
+"测试了第二项。"
 
 #: ../../cluster.rst:327
 msgid "Exercise 9.3"
-msgstr ""
+msgstr "练习 9.3"
 
 #: ../../cluster.rst:329
 msgid ""
@@ -1046,12 +1219,15 @@ msgid ""
 "which gave, stops for good. How many flows can the cluster hold on the "
 "server, and what must the operator do to recover the rest?"
 msgstr ""
+"四个节点共享一台 :math:`L = 10` 的服务器。计算基础份额。最后一个节点 D 持有 2 个流并拒绝了一个；其他节点没有流。D "
+"需要多少？在下一个周期每个对等节点给出多少？然后，曾给出份额的节点 A "
+"永久停止。集群在该服务器上能持有多少个流？运维人员必须做什么才能恢复其余容量？"
 
 #: ../../cluster.rst:331
 msgid ""
 "Hint: The remainder of :math:`10/4` goes to the first nodes. Every peer "
 "serves the want it heard, independently."
-msgstr ""
+msgstr "提示：:math:`10/4` 的余数分给最前面的节点。每个对等节点各自独立地处理它听到的需求。"
 
 #: ../../cluster.rst:335
 msgid ""
@@ -1059,10 +1235,12 @@ msgid ""
 "explain why a restarted node may not count its base, and why a timer that "
 "returned the share of a silent node would break the cap."
 msgstr ""
+"从 :math:`h_{ji} \\le g_{ij}` 证明 :math:`\\sum_i s_i \\le "
+"L`。然后解释为什么重启的节点不能计入其基础份额，以及为什么归还静默节点份额的定时器会破坏上限。"
 
 #: ../../cluster.rst:337
 msgid "One Owner for Each Client"
-msgstr ""
+msgstr "每个客户端一个所有者"
 
 #: ../../cluster.rst:340
 msgid ""
@@ -1074,10 +1252,13 @@ msgid ""
 "owner over the mesh network, and the owner serves it under the true "
 "client address."
 msgstr ""
+"当有节点加入或离开，或者路由器重新哈希时，客户端会落到另一个节点上。那个节点没有该客户端的任何状态：它的 UDP "
+"映射、连接数、速率预算、粘性选择。SID 0026 "
+"在存活节点中给每个客户端指定一个所有者。收到一个不属于自己的客户端的新流的节点，通过网格网络把这个流交给所有者，由所有者以真实的客户端地址为其服务。"
 
 #: ../../cluster.rst:342
 msgid "Rendezvous hashing"
-msgstr ""
+msgstr "rendezvous 哈希"
 
 #: ../../cluster.rst:345
 msgid ""
@@ -1093,6 +1274,12 @@ msgid ""
 "node, at most 64. The seeds depend on the mesh key, so a client cannot "
 "compute which addresses share an owner."
 msgstr ""
+"客户端的键是它的 IPv4 地址，或其 IPv6 地址的前 64 位；这些也是速率限制器的键。成员名单中的每个节点 :math:`n` "
+"都有一个种子 :math:`\\sigma_n`，即在从网格密钥派生的密钥下，对其网格地址计算的带密钥 BLAKE3 哈希的前八个字节。节点 "
+":math:`n` 对客户端 :math:`k` 的得分为 :math:`\\mathrm{wyhash}(\\sigma_n, "
+"k)`，所有者是得分最高的合格节点；得分相同时归成员名单中靠前的节点。这就是 rendezvous 哈希（Thaler 和 "
+"Ravishankar，1998）。它不需要表，也不需要发布；其工作量是对每个存活节点计算一次哈希，至多 64 "
+"次。种子依赖于网格密钥，因此客户端无法计算出哪些地址共用一个所有者。"
 
 #: ../../cluster.rst:347
 msgid ""
@@ -1103,6 +1290,9 @@ msgid ""
 "symmetry each of the :math:`n` nodes is the largest with the same "
 "probability, so"
 msgstr ""
+"为什么一次加入迁移的客户端如此之少？把一个客户端的各个得分建模为独立且均匀分布的；对 64 位得分，平局可以忽略。当一个节点加入、集群有 "
+":math:`n` 个节点时，客户端恰好在新节点拥有 :math:`n` 个得分中的最大者时更换所有者。由对称性，:math:`n` "
+"个节点中的每一个成为最大者的概率相同，因此"
 
 #: ../../cluster.rst:349
 msgid "P(\\text{the client moves}) = \\frac{1}{n}."
@@ -1120,20 +1310,24 @@ msgid ""
 "share of the clients of nodes that did not change, and it must be rebuilt "
 "and published at every change of liveness."
 msgstr ""
+"当新节点不是最大者时，旧得分中的最大者仍然是最大者，所有者不变。因此迁移的客户端全部迁移到新节点。没有任何方案能做得更好：要让新节点得到其公平份额，即 "
+":math:`1/n` 的客户端，至少要有 :math:`1/n` "
+"的客户端迁移。当一个节点离开时，只有它自己的客户端会迁移，各自去往得分第二高的节点，从而把它们均匀地分散到其他节点上。SID 0015 "
+"为源站勾画的 Maglev 表也会迁移未发生变化的节点的一小部分客户端，并且每次存活状态变化时都必须重建和发布。"
 
 #: ../../cluster.rst:355
 msgid "Worked example: a fourth node joins"
-msgstr ""
+msgstr "实例分析：第四个节点加入"
 
 #: ../../cluster.rst:357
 msgid ""
 "Four clients p, q, r and s, and three nodes A, B and C. We use made-up "
 "scores from 0 to 99 in place of wyhash outputs."
-msgstr ""
+msgstr "四个客户端 p、q、r 和 s，以及三个节点 A、B 和 C。我们用 0 到 99 之间虚构的得分代替 wyhash 的输出。"
 
 #: ../../cluster.rst:363
 msgid "Client"
-msgstr ""
+msgstr "客户端"
 
 #: ../../cluster.rst:364 ../../cluster.rst:374
 msgid "A"
@@ -1150,7 +1344,7 @@ msgstr ""
 
 #: ../../cluster.rst:367
 msgid "Owner of three"
-msgstr ""
+msgstr "三个节点时的所有者"
 
 #: ../../cluster.rst:368 ../../cluster.rst:376
 msgid "D"
@@ -1158,7 +1352,7 @@ msgstr ""
 
 #: ../../cluster.rst:369
 msgid "Owner of four"
-msgstr ""
+msgstr "四个节点时的所有者"
 
 #: ../../cluster.rst:370
 msgid "p"
@@ -1248,6 +1442,9 @@ msgid ""
 "expected :math:`1/4`. Had C left instead, only r would move, to A, its "
 "second largest score."
 msgstr ""
+"节点 D 加入。只有 p 迁移，因为它在 D 上的得分超过了它的三个旧得分，并且它迁移到 D。q、r 和 s "
+"保持原来的所有者，因为每个旧的最大值仍然是最大值。四个客户端中有一个迁移，正好是期望的 :math:`1/4`。如果改为 C 离开，只有 r "
+"会迁移，去往 A，即它得分第二高的节点。"
 
 #: ../../cluster.rst:401
 msgid ""
@@ -1258,10 +1455,14 @@ msgid ""
 "only: three residues of twelve. So three quarters of the clients move, "
 "most of them between old nodes."
 msgstr ""
+"与显而易见的规则比较：对哈希 :math:`h`，所有者为 :math:`h \\bmod n`。从三个节点变为四个节点时，只有当 "
+":math:`h \\bmod 3 = h \\bmod 4` 时客户端才会留下。两个余数都由 :math:`h \\bmod 12` "
+"决定，并且只在 :math:`h \\bmod 12 \\in \\{0, 1, 2\\}` "
+"时一致：十二个余数中只有三个。因此四分之三的客户端会迁移，其中大部分是在旧节点之间迁移。"
 
 #: ../../cluster.rst:403
 msgid "Implementation: ``Peering::owner_among``"
-msgstr ""
+msgstr "实现：``Peering::owner_among``"
 
 #: ../../cluster.rst:405
 msgid ""
@@ -1269,6 +1470,8 @@ msgid ""
 "eligible peers, given as a bit set. In ``crates/lb/src/forward.rs`` "
 "(crate ``sibuna-lb``). It returns ``None`` when this node owns the client."
 msgstr ""
+"在本节点和以位集给出的合格对等节点中，找出客户端所有者的扫描。位于 ``crates/lb/src/forward.rs``\\ （crate "
+"``sibuna-lb``）。当本节点拥有该客户端时，它返回 ``None``。"
 
 #: ../../cluster.rst:407
 msgid ""
@@ -1291,7 +1494,7 @@ msgstr ""
 
 #: ../../cluster.rst:425
 msgid "One hop, and what it does not repair"
-msgstr ""
+msgstr "一跳，以及它不能修复的问题"
 
 #: ../../cluster.rst:428
 msgid ""
@@ -1301,6 +1504,8 @@ msgid ""
 "alive when it answered within 1.5 s and does not drain. A peer that "
 "refused a flow or failed a connect is held back for one second."
 msgstr ""
+"当对等节点此刻能够接受一个流时，它是合格的。网格探测无法表明这一点，因为应答探测的是另一个端口上的另一个线程，所以边缘 worker 每 500 "
+"ms 亲自探测一次转发端口。对等节点在 1.5 s 内应答且未处于排空状态时视为存活。拒绝过流或连接失败的对等节点会被暂缓一秒。"
 
 #: ../../cluster.rst:430
 msgid ""
@@ -1321,6 +1526,13 @@ msgid ""
 "return through the node that the client reached, so the client sees the "
 "answer come from the address it sent to."
 msgstr ""
+"对于 TCP 或 HTTP "
+"连接，接收节点首先执行自己的检查：排空、自身的连接速率、空闲的流槽位。然后它计算所有者。如果所有者是另一个合格的对等节点，它就从自己的网格地址连接所有者的转发端口，并写入一个 "
+"76 字节的头部：所有者的纪元、前端、客户端和目的地址，以及一个覆盖此连接两个套接字地址和头部的标签。所有者以 17 "
+"字节应答：接受、谢绝或拒绝。接受时，接收节点双向中继字节，从不查看它们；TLS、解析、防火墙和服务器选择都在所有者上进行。谢绝、连接失败或 "
+"``connect_timeout``\\ （默认 250 "
+"ms）超时时，它自己服务这个连接。拒绝时，说明所有者的速率限制拒绝了该客户端，连接被关闭：否则其他每个节点都会为一个超出其限制的客户端提供服务。UDP "
+"数据报在同一个套接字上以头部和标签包裹传输，回复经由客户端到达的那个节点返回，因此客户端看到应答来自它所发往的地址。"
 
 #: ../../cluster.rst:432
 msgid ""
@@ -1336,6 +1548,12 @@ msgid ""
 "connection cost 79 to 91 us more to its first line, and an exchange on an "
 "established connection 19 to 21 us more."
 msgstr ""
+"两条规则保证了这样做是安全的。从对等节点到达的流在它落地的地方得到服务，永远不会再次转发，无论该节点对所有者有何判断，因此没有流会多走一跳以上，也没有流会形成循环。并且没有流会因转发而丢失：当所有者宕机、谢绝或达到 "
+"``max_flows_per_peer`` 时，由接收节点提供服务。模型 "
+"``docs/sid/assets/peer-forwarding.lean`` 对每个节点的每种判断证明了 ``one_hop`` 和 "
+"``forwarded_is_served``，对视图相同的两个节点证明了 ``owner_unique``，还证明了 "
+"``owner_after_join``：加入的节点要么成为所有者，要么不改变任何东西。在回环接口上，转发的连接到达其第一行要多花 79 到 91 "
+"us，已建立连接上的一次交换要多花 19 到 21 us。"
 
 #: ../../cluster.rst:434
 msgid ""
@@ -1350,10 +1568,15 @@ msgid ""
 "95th percentile of the measured round trip to its peers exceeds 3 ms and "
 "enters again from the wide-area regime only when it falls below 1.5 ms."
 msgstr ""
+"转发保持的是客户端的\\ *节点*\\ ，而不是一个 TCP 连接。当路由器把一个已建立 TCP "
+"连接的数据包转到另一个节点时，那个节点没有对应的套接字，会以复位应答；客户端的下一个连接会到达其所有者。修复这个连接需要在每个节点上保存其状态，或进行数据包级别的转发，两者都未实现。HTTP/3 "
+"由接收其数据包的节点提供服务，带 ``proxy_protocol`` "
+"的前端不会被转发，并且转发只在网格的区域模式下运行：当到对等节点的实测往返时间的第 95 百分位超过 3 ms 时，节点离开区域模式，只有当它降到 "
+"1.5 ms 以下时才从广域模式重新进入。"
 
 #: ../../cluster.rst:436
 msgid "Exercise 9.4"
-msgstr ""
+msgstr "练习 9.4"
 
 #: ../../cluster.rst:438
 msgid ""
@@ -1362,12 +1585,15 @@ msgid ""
 "node B leaves: which clients move, and where? (c) How many would move "
 "from four to five nodes under :math:`h \\bmod n`?"
 msgstr ""
+"一个由四个节点组成的集群均匀地拥有 1,000 个客户端。(a) 第五个节点加入：期望有多少客户端迁移，迁移到哪里？(b) 改为节点 B "
+"离开：哪些客户端迁移，迁移到哪里？(c) 在 :math:`h \\bmod n` 下，从四个节点变为五个节点时有多少客户端会迁移？"
 
 #: ../../cluster.rst:440
 msgid ""
 "Hint: For (c), count the residues of :math:`h \\bmod 20` at which "
 ":math:`h \\bmod 4 = h \\bmod 5`."
 msgstr ""
+"提示：对于 (c)，统计 :math:`h \\bmod 20` 的哪些余数满足 :math:`h \\bmod 4 = h \\bmod 5`。"
 
 #: ../../cluster.rst:444
 msgid ""
@@ -1376,10 +1602,13 @@ msgid ""
 "why neither rule can save an established TCP connection whose packets the "
 "router sends to another node."
 msgstr ""
+"解释为什么在 rendezvous "
+"哈希下，一次加入只迁移新节点现在拥有的客户端，为什么转发的流永远不会再次转发，以及为什么这两条规则都无法挽救一个数据包被路由器发往另一个节点的已建立 "
+"TCP 连接。"
 
 #: ../../cluster.rst:446
 msgid "A Disk Under the Sticky Table"
-msgstr ""
+msgstr "粘性表之下的磁盘"
 
 #: ../../cluster.rst:449
 msgid ""
@@ -1391,10 +1620,13 @@ msgid ""
 "wish: the pool uses it only for a new flow and only when the named server "
 "may serve now. No ban, no counter and no live flow depends on the file."
 msgstr ""
+"粘性表会在两种情况下遗忘：客户端多于它的槽数时，以及守护进程重启时。SID 0027 在它下面加了第二层，即一个固定大小的文件，由 crate "
+"``sibuna-spill`` "
+"映射到内存中。表存储的每个选择都会提供给文件，在内存中找不到的查找会询问文件。来自文件的提示只是一个愿望：服务器池只对新流使用它，并且只在所指定的服务器此刻可以服务时才使用。没有任何封禁、计数器或活动流依赖于这个文件。"
 
 #: ../../cluster.rst:451
 msgid "The file and its slots"
-msgstr ""
+msgstr "文件及其槽"
 
 #: ../../cluster.rst:454
 msgid ""
@@ -1413,10 +1645,15 @@ msgid ""
 "bounded queue: a worker never touches the file, never waits for it, and a "
 "full queue drops the work and counts it."
 msgstr ""
+"文件以两个 4,096 字节的页开始，即头部和 64 个分片各自的写计数器，接着是 :math:`64 \\times B \\times 4` "
+"个 64 字节的槽。一个槽包含 8 字节的校验和、8 字节的过期时间、4 字节的时间戳、两个长度、两个零字节、24 字节的键和 16 "
+"字节的值。校验和是对其余 56 字节计算的 "
+"wyhash，以文件的随机盐和槽号为种子，因此被复制到另一个位置或另一个文件中的槽无法通过检查。读者只从有效的槽中取条目：长度在范围内，填充为零，校验和匹配，过期时间在当前时间之后且不超过当前时间加最长有效期。检查失败的槽视为空闲空间，并被计数。一个存储线程拥有这个映射，每次访问复制进或复制出一个槽，并通过一个有界队列服务 "
+"worker：worker 从不接触文件，从不等待它，队列已满时丢弃工作并计数。"
 
 #: ../../cluster.rst:456
 msgid "Admission by frequency"
-msgstr ""
+msgstr "按频率准入"
 
 #: ../../cluster.rst:459
 msgid ""
@@ -1435,6 +1672,13 @@ msgid ""
 "for each slot of the shard, every counter is halved, so a key must keep "
 "returning to keep its estimate."
 msgstr ""
+"四个槽的桶经常是满的。这时新键要与一个牺牲者竞争，即其键被见到次数最少的有效槽，并且只有当新键的估计频率超过牺牲者时才能胜出。这就是 "
+"TinyLFU（Einziger、Friedman 和 "
+"Manes，2017）。只出现过一次的键无法取代被见到一次或多次的条目，因此大量新客户端涌入不会冲走正在使用的客户端。频率来自每个分片的 "
+"count-min sketch：一张有 :math:`m` 个四位计数器的表，每个分片槽对应八个计数器，向下取整为 2 "
+"的幂。一个键通过双重哈希选中其中四个计数器。它的估计值是这四个中的最小值。一次计数只增加等于该最小值的计数器；这种\\ *保守更新*\\ "
+"使每个计数器都不超过普通 sketch "
+"会持有的值，并且没有任何计数器低于真实计数。当计数次数达到分片槽数的四倍后，每个计数器减半，因此一个键必须不断出现才能保持其估计值。"
 
 #: ../../cluster.rst:461
 msgid ""
@@ -1445,6 +1689,9 @@ msgid ""
 ":math:`m`, so it raises this counter with probability at most "
 ":math:`4/m`. The expected excess of the counter is therefore"
 msgstr ""
+"Cormode 和 Muthukrishnan 的经典上界解释了为什么这个估计是好的。设对 :math:`N` 个键进行计数。固定一个键 "
+":math:`x` 及其一个计数器。其他键的每次计数至多增加四个计数器，每个计数器的位置在理想哈希下在 :math:`m` "
+"上均匀分布，因此它增加这个计数器的概率至多为 :math:`4/m`。于是该计数器的期望超额为"
 
 #: ../../cluster.rst:463
 msgid "\\lambda \\le \\frac{4N}{m}."
@@ -1460,10 +1707,15 @@ msgid ""
 "so it is close to a Poisson variable with mean :math:`\\lambda`, which "
 "gives a sharper estimate than Markov's bound."
 msgstr ""
+"由 Markov 不等式，超额达到 :math:`t` 的概率至多为 "
+":math:`\\lambda/t`。估计值是四个计数器中的最小值，因此只有当四个都偏高时它才会偏高 "
+":math:`t`；把这四个视为独立的（理想哈希使这几乎成立），这一概率至多为 "
+":math:`(\\lambda/t)^4`。超额是许多罕见命中之和，因此它接近一个均值为 :math:`\\lambda` 的 Poisson "
+"变量，由此得到比 Markov 上界更精确的估计。"
 
 #: ../../cluster.rst:469
 msgid "Worked example: the error of the sketch"
-msgstr ""
+msgstr "实例分析：sketch 的误差"
 
 #: ../../cluster.rst:471
 msgid ""
@@ -1473,6 +1725,10 @@ msgid ""
 "counters for each slot: 32 KiB for the shard and 2 MiB for the file, two "
 "bytes for each slot. The sketch halves after :math:`4S = 65{,}504` counts."
 msgstr ""
+"``64m`` 的文件有 1,048,064 个槽（第 XI 部分），因此一个分片有 :math:`S = 16{,}376` "
+"个槽。每个槽八个计数器就是 131,008 个。小于它的最大的 2 的幂是 :math:`m = 2^{16} = "
+"65{,}536`，即每个槽四个计数器：每个分片 32 KiB，整个文件 2 MiB，每个槽两字节。sketch 在 :math:`4S = "
+"65{,}504` 次计数后减半。"
 
 #: ../../cluster.rst:473
 msgid ""
@@ -1484,6 +1740,10 @@ msgid ""
 "bound gives at most :math:`(2/4)^4 = 1/16`. The Poisson estimate is "
 "sharper:"
 msgstr ""
+"我们取启动后的第一个窗口，此时 sketch 从零开始，并考察窗口中间，即 :math:`N = 2S = 32{,}752` 次计数。于是 "
+":math:`\\lambda \\le 4 \\times 32{,}752 / 65{,}536 \\approx "
+"2`。只见过一次的键要取代见过四次的牺牲者，其估计值必须至少为 5，即四个计数器上都有 :math:`t = 4` 的超额。Markov "
+"上界给出至多 :math:`(2/4)^4 = 1/16`。Poisson 估计更精确："
 
 #: ../../cluster.rst:475
 msgid ""
@@ -1503,10 +1763,14 @@ msgid ""
 "new keys, a file of 256 MiB kept all but 10 to 15 of the about 1,044,000 "
 "keys of a working set that it held before the flood."
 msgstr ""
+"因此，在第一个窗口的中间，大约万分之四只见过一次的键看起来像见过五次的键。之后的窗口从减半的计数器开始，因此它们的普通上界至多是这个值的两倍，而把 "
+":math:`m` 向下取整为 2 的幂可能使一个分片的计数器减半。保守更新只会降低这些数字。上界是一个模型，测量才是证据：在 "
+"16,776,192 个新键的洪泛下，一个 256 MiB 的文件保住了洪泛前它所持有的约 1,044,000 个工作集键中的绝大部分，只丢失了 "
+"10 到 15 个。"
 
 #: ../../cluster.rst:481
 msgid "Implementation: ``Sketch::touch``"
-msgstr ""
+msgstr "实现：``Sketch::touch``"
 
 #: ../../cluster.rst:483
 msgid ""
@@ -1515,6 +1779,8 @@ msgid ""
 "``sibuna-spill``). ``Sketch::estimate`` returns the smallest of the four "
 "counters."
 msgstr ""
+"以保守更新对一个键计数，并在样本满时让 sketch 老化。位于 ``crates/spill/src/sketch.rs``\\ （crate "
+"``sibuna-spill``）。``Sketch::estimate`` 返回四个计数器中的最小值。"
 
 #: ../../cluster.rst:485
 msgid ""
@@ -1551,10 +1817,16 @@ msgid ""
 "another server for 191 of them, and the second flow found the remembered "
 "server for all 300."
 msgstr ""
+"两层在 ``SpillStore``\\ （``crates/lb/src/hints.rs``）中汇合，它以表在前的方式实现 SID 0025 "
+"的 trait ``AffinityStore``。在内存中未命中的查找会询问磁盘而不等待：流继续使用均衡得出的选择，即一个\\ *猜测*\\ "
+"，磁盘的回答用一个晚一毫秒的结束时间取代这个猜测，因此它在本节点以及网格通知到的每个节点上胜出。猜测只占用磁盘上的空闲槽，不计入 "
+"sketch，因此无论多少猜测都不会取代一个提示。在 2,000,000 个客户端（是 65,536 个槽的表的三十倍）下，97.0% "
+"的客户端在第二次查找时就找到了自己的选择。在一个双主机网格的两个节点都重启之后，300 个客户端的第一个流中有 191 "
+"个找到了另一台服务器，而第二个流全部 300 个都找到了记住的服务器。"
 
 #: ../../cluster.rst:506
 msgid "Crash safety, memory and the file system"
-msgstr ""
+msgstr "崩溃安全、内存与文件系统"
 
 #: ../../cluster.rst:509
 msgid ""
@@ -1572,6 +1844,8 @@ msgid ""
 "costs its hint, and an old slot is a valid older hint, which the pool "
 "checks before use."
 msgstr ""
+"新文件从不就地创建。``crates/spill/src/open.rs`` 中的函数 ``create`` 删除路径后加 ``.tmp`` "
+"处的任何东西（不经由它写入），在那里构建一个完整的文件，写入每个块，最后写头部，然后把它重命名覆盖到该路径上。重命名一步就把一个名称替换为另一个，因此该路径要么不指向任何文件，要么指向一个外来文件或一个完整的文件，从不指向半成品。没有魔数的文件从不被覆盖：守护进程拒绝启动并指出该文件。写入经由映射进行，并在守护进程停止时刷写。进程崩溃不会丢失任何已写入的内容，因为这些页属于内核。断电可能使每个页处于旧、新或混合状态；混合的槽无法通过校验和，损失其提示；旧的槽是一个有效的较旧提示，服务器池在使用前会检查它。"
 
 #: ../../cluster.rst:511
 msgid ""
@@ -1588,10 +1862,16 @@ msgid ""
 "system fills later, a write through the mapping raises a signal that ends "
 "the daemon. Part XI gives the settings for systemd, Docker and Kubernetes."
 msgstr ""
+"主机的两个特性很重要。文件的页计为进程的内存。在低于文件大小的内存限制下，一个 256 MiB 的文件在 96 MiB "
+"的限制下，在一台主机上三次运行都被内核杀死，在另一台主机上达到限制 410,479 次，并且 17 分钟内都没有完成第一阶段。worker "
+"继续按均衡选择提供服务，但磁盘层变得无用或者守护进程终止，因此限制必须高于文件加上守护进程的大小。并且创建时会写入每个块，以便在启动时就发现磁盘已满，但压缩或写时复制的文件系统会打破这一保证：在启用压缩的 "
+"ZFS 上，一个 16,769,024 字节的新文件只占用 141 "
+"KiB。当这样的文件系统之后被写满时，经由映射的写入会引发一个信号，使守护进程终止。第 XI 部分给出了 systemd、Docker 和 "
+"Kubernetes 的设置。"
 
 #: ../../cluster.rst:513
 msgid "Exercise 9.5"
-msgstr ""
+msgstr "练习 9.5"
 
 #: ../../cluster.rst:515
 msgid ""
@@ -1600,12 +1880,16 @@ msgid ""
 "at the end of the first window, and the Poisson estimate that a key seen "
 "once reaches an estimate of 5 at each point."
 msgstr ""
+"槽数略低于 2 的幂的分片保留每个槽完整的八个计数器。计算第一个窗口中间和末尾的 "
+":math:`\\lambda`，以及在这两个时刻只见过一次的键的估计值达到 5 的 Poisson 估计。"
 
 #: ../../cluster.rst:517
 msgid ""
 "Hint: Only the ratio :math:`N/m` matters. At :math:`\\lambda = 1`, "
 ":math:`e^{-1} \\approx 0.3679`."
 msgstr ""
+"提示：只有比值 :math:`N/m` 起作用。当 :math:`\\lambda = 1` 时，:math:`e^{-1} \\approx "
+"0.3679`。"
 
 #: ../../cluster.rst:521
 msgid ""
@@ -1614,10 +1898,12 @@ msgid ""
 "file, and why the sketch may overestimate a frequency but never "
 "underestimate it."
 msgstr ""
+"解释为什么撕裂、复制或外来的槽可能损失一个提示，却永远不会选中一台不能服务的服务器；为什么该路径从不指向半成品文件；以及为什么 sketch "
+"可能高估频率，却从不低估。"
 
 #: ../../cluster.rst:523
 msgid "A Database as the Authority"
-msgstr ""
+msgstr "以数据库为权威"
 
 #: ../../cluster.rst:526
 msgid ""
@@ -1631,6 +1917,11 @@ msgid ""
 "SHA-256 digest, so a node reads a revision whole with one statement and "
 "refuses one whose digest does not match."
 msgstr ""
+"SID 0023 把一个文件发送给对等节点。两个运维人员同时发送两个文件时，各自会在一些节点上胜出；宕机的节点保留旧文件；也没有历史。SID "
+"0028 让数据库保存已发布的拓扑。每个节点的文件保留属于其主机的内容，即 ``global``、``mesh`` 和 "
+"``observability``，以及一个指定数据库的 ``authority`` 部分；数据库保存 "
+"``frontends``、``backends`` 和 ``http``。每个修订版本是一个带 SHA-256 摘要的规范 JSON "
+"文档，因此节点用一条语句就能完整地读取一个修订版本，并拒绝摘要不匹配的修订版本。"
 
 #: ../../cluster.rst:528
 msgid ""
@@ -1640,6 +1931,8 @@ msgid ""
 "condition: the head is still the revision it read. The commit is one "
 "transaction of two statements."
 msgstr ""
+"修订版本编号为 1、2、3，没有间隙，已提交的修订版本永不改变。``sibuna authority apply`` "
+"对源进行求值、检查，打印与头部修订版本的差异，并在一个条件下提交：头部仍然是它读到的那个修订版本。提交是一个包含两条语句的事务。"
 
 #: ../../cluster.rst:530
 msgid ""
@@ -1661,10 +1954,14 @@ msgid ""
 "document, because moving the head back would make \"applied 5\" ambiguous "
 "between before and after 7."
 msgstr ""
+"当第一条语句没有修改任何行时，说明头部已经移动，命令以 ``DBA002 REVISION CONFLICT`` "
+"失败，不提交任何内容。这是对一行的比较并设置。对于读到同一个头部的两个写者，PostgreSQL "
+"让第二个等待行锁，之后它发现新的头部，不修改任何东西。以“头部，无论它是什么”为条件将什么也保护不了：命令以它打印差异时所对照的头部为条件，因此运维人员看到的正是提交所替换的内容。回滚会以一个较早的文档提交一个新的修订版本，因为把头部移回去会使“已应用 "
+"5”在 7 之前和之后含义不明。"
 
 #: ../../cluster.rst:537
 msgid "Implementation: ``Store::commit``"
-msgstr ""
+msgstr "实现：``Store::commit``"
 
 #: ../../cluster.rst:539
 msgid ""
@@ -1678,6 +1975,13 @@ msgid ""
 "settles a commit whose connection failed by asking whether the head is "
 "the new revision with the new digest."
 msgstr ""
+"trait ``Store`` "
+"有七个操作：``head``、``revision``、``commit``、``history``、``report``、``nodes`` 和 "
+"``wait``。当头部为 ``expected`` 时，``commit`` 把草稿存储为修订版本 ``expected + "
+"1``，否则以冲突失败。位于 ``crates/authority/src/store.rs``\\ （crate "
+"``sibuna-authority``）。``crates/authority/src/sql.rs`` 中的 ``SqlStore`` 为 "
+"SQLite 和 PostgreSQL 实现它，``MemoryStore`` 用于测试。``store.rs`` 中的 "
+"``commit_settled`` 通过询问头部是否为带新摘要的新修订版本，来确定一次连接失败的提交的结果。"
 
 #: ../../cluster.rst:541
 msgid ""
@@ -1700,10 +2004,18 @@ msgid ""
 "costs one poll (``poll_converges``). On a debug build two nodes applied a "
 "revision 128 to 155 ms after ``apply`` began with PostgreSQL."
 msgstr ""
+"每个节点都在自己的线程 ``edge-authority`` 上跟随。它在 PostgreSQL 发送 ``NOTIFY`` "
+"时、轮询到期时、``reload`` 时，以及 worker 确定了一个修订版本时查看头部。新的头部被读取、与节点的文件组合、检查，然后留给 "
+"worker；只有在其 worker "
+"提供服务之后，节点才报告该修订版本已应用。无法读取数据库的节点保持它正在提供的内容，并在至多两秒后再次询问。拒绝某个修订版本的节点保持最后一个通过检查的修订版本，并报告原因。使用 "
+"``cache`` 时，节点可以在数据库宕机期间重启。节点以一个只能读取修订版本、只能写入自己报告的角色连接，因此被接管的节点无法修改拓扑。模型 "
+"``docs/sid/assets/database-authority.lean`` "
+"证明了：在过期头部上的提交不改变任何东西（``commit_conflict``）；同一头部上的两个写者中第二个会失败（``second_commit_conflicts``）；节点只会提供通过了检查的文档（``step_serves_valid``）；对一个有效头部看一次就能让节点到达它，因此丢失一次通知只需付出一次轮询的代价（``poll_converges``）。在调试构建中，使用 "
+"PostgreSQL 时，两个节点在 ``apply`` 开始后 128 到 155 ms 应用了一个修订版本。"
 
 #: ../../cluster.rst:543
 msgid "Exercise 9.6"
-msgstr ""
+msgstr "练习 9.6"
 
 #: ../../cluster.rst:545
 msgid ""
@@ -1713,10 +2025,13 @@ msgid ""
 "operator do? Why would an ``apply`` conditioned on the head at the time "
 "of the commit be wrong?"
 msgstr ""
+"两个运维人员针对头部 7 运行 ``diff``，然后同时运行 "
+"``apply``，一个添加一台服务器，一个删除一个前端。各自看到什么？之后数据库中保存的是什么？第二个运维人员应该怎么做？为什么以提交时刻的头部为条件的 "
+"``apply`` 是错误的？"
 
 #: ../../cluster.rst:547
 msgid "Hint: Follow the ``UPDATE`` of each transaction under the row lock."
-msgstr ""
+msgstr "提示：在行锁下跟踪每个事务的 ``UPDATE``。"
 
 #: ../../cluster.rst:551
 msgid ""
@@ -1724,10 +2039,11 @@ msgid ""
 "on whether a node serves a revision belongs to the node and not to the "
 "command, and why a rollback appends instead of moving the head."
 msgstr ""
+"解释为什么修订版本没有间隙且永不改变，为什么节点是否提供某个修订版本的最终决定权属于节点而不属于命令，以及为什么回滚是追加而不是移动头部。"
 
 #: ../../cluster.rst:553
 msgid "Replacing the Binary"
-msgstr ""
+msgstr "替换二进制程序"
 
 #: ../../cluster.rst:556
 msgid ""
@@ -1738,6 +2054,9 @@ msgid ""
 "process refuses what it accepts while it drains. Under one load SID 0029 "
 "counted 9,943 to 22,516 failed connections in a run with ``reuse_port``."
 msgstr ""
+"新的二进制程序必须在接管时既不丢失在监听器中等待的连接，也不把 UDP 客户端转移到另一台服务器。``global.reuse_port`` "
+"让新进程能够绑定相同的地址，但旧监听器在关闭之前保留自己的接受队列，而旧进程在排空期间会拒绝它接受的连接。在一种负载下，SID 0029 "
+"在一次使用 ``reuse_port`` 的运行中统计到 9,943 到 22,516 个失败的连接。"
 
 #: ../../cluster.rst:558
 msgid ""
@@ -1747,6 +2066,9 @@ msgid ""
 "``SCM_RIGHTS`` control messages of ``sendmsg``. Both ends check the "
 "credentials of the peer with ``SO_PEERCRED`` and refuse another user."
 msgstr ""
+"SID 0029 改为传递套接字。旧进程在一个 Unix 套接字 ``global.upgrade_socket`` "
+"上监听。替代进程检查自己的文件，建立连接，并以 ``sendmsg`` 的 ``SCM_RIGHTS`` "
+"控制消息中的描述符形式接收监听套接字。两端都用 ``SO_PEERCRED`` 检查对端的凭据，并拒绝其他用户。"
 
 #: ../../cluster.rst:560
 msgid ""
@@ -1781,10 +2103,16 @@ msgid ""
 "stopped replacement could wake and read beside it. So after 10 s without "
 "DONE the old process ends the replacement and waits for the close."
 msgstr ""
+"两个不变量支配着切换过程。在每一时刻，每个 TCP "
+"监听器上都有某个存活的进程在接受连接：一个套接字上有两个接受者不会丢失任何东西，因为每个连接都只会交给其中一个。并且至多一个进程读取 UDP "
+"套接字：两个读者会把同一个客户端的数据报交给两张表，因此在 READY 和 DONE "
+"之间没有人读取，内核把数据报保存在套接字中。旧进程测量这段间隔；在一台安静的机器上，6,000 个映射时为 59 到 87 ms。在 DONE "
+"之前发生的失败会把服务交还给旧进程，连同它原有的每个监听器和映射。旧进程只有在与替代进程的连接关闭后才恢复读取，因为期限证明不了任何东西：一个被暂停的替代进程可能醒来并与它同时读取。因此在 "
+"10 s 内没有收到 DONE 时，旧进程终止替代进程并等待连接关闭。"
 
 #: ../../cluster.rst:575
 msgid "Implementation: ``Giving::end_peer``"
-msgstr ""
+msgstr "实现：``Giving::end_peer``"
 
 #: ../../cluster.rst:577
 msgid ""
@@ -1796,6 +2124,12 @@ msgid ""
 "edge side, ``Edge::freeze_datagrams`` in ``crates/lb/src/handoff.rs`` "
 "stops the UDP reads."
 msgstr ""
+"终止一个静默的替代进程，并等待其连接关闭，这证明它不再读取任何套接字。位于 ``crates/upgrade/src/give.rs``\\ "
+"（crate ``sibuna-upgrade``）。同一文件中的 ``Giving::give_listeners`` 发送监听器，而带 "
+"``SCM_RIGHTS`` 的外部调用 ``sendmsg`` 位于 "
+"``crates/upgrade/src/sys.rs``，这是该记录中唯一的 unsafe "
+"代码。在边缘一侧，``crates/lb/src/handoff.rs`` 中的 ``Edge::freeze_datagrams`` 停止 "
+"UDP 读取。"
 
 #: ../../cluster.rst:579
 msgid ""
@@ -1829,6 +2163,17 @@ msgid ""
 "``always_an_acceptor`` and ``failure_returns_service`` for the state "
 "machine; it is not derived from the code."
 msgstr ""
+"交接的内容：TCP 和 UDP 监听器，以及 ``udp`` 前端的每个 UDP "
+"映射连同其已连接的服务器套接字，因此服务器看到的源端口相同。在测试中，27 次运行里每次 17,382 到 33,524 "
+"个连接都没有一个失败，一个 UDP 客户端经过两次升级仍保持其服务器。丢失的内容：HTTP/3 的 QUIC "
+"连接，其状态存在于旧进程的运行时中；已接受的 TCP 流留在旧进程中，直到它们结束或达到 "
+"``shutdown_timeout``。速率计数器、健康状态、延迟估计、粘性表和运行时命令从头开始。交接只在 Linux "
+"上实现和测试。有两个限制直接涉及集群。网格套接字和转发端口不会被传递，因此网格中的节点无法用这种方式替换；替代进程应当在 READY "
+"之前失败，让旧进程继续提供服务，而这条路径未经测试。此外，被接管的 UDP "
+"映射不计入集群范围的上限，因此在这些映射结束之前，一台服务器可能持有超出其限制这么多的流。模型 "
+"``docs/sid/assets/upgrade-handoff.lean`` 为该状态机证明了 "
+"``single_reader``、``always_an_acceptor`` 和 "
+"``failure_returns_service``；它并非从代码推导而来。"
 
 #: ../../cluster.rst:592
 msgid ""
@@ -1836,10 +2181,12 @@ msgid ""
 "the UDP sockets must have none, and why the old process trusts a closed "
 "connection and not a clock before it reads again."
 msgstr ""
+"解释为什么 TCP 监听器可以在一瞬间有两个接受者，而 UDP "
+"套接字必须一个读者都没有；以及为什么旧进程在再次读取之前信任的是关闭的连接，而不是时钟。"
 
 #: ../../cluster.rst:594
 msgid "The Fleet in the Console"
-msgstr ""
+msgstr "控制台中的集群"
 
 #: ../../cluster.rst:597
 msgid ""
@@ -1860,10 +2207,18 @@ msgid ""
 "the load fell on its own console or on that of another process, so the "
 "measurement saw the cost of shared processors and not of the coupling."
 msgstr ""
+"SID 0031 在边缘旁边启动 SID 0007 的控制台。它的 ``console`` 部分在 ``nodes`` 下列出每个成员，至多 64 "
+"个，因此这一部分在所有节点上都相同，并且可以由 ``reload cluster`` 携带。一个页面显示前端、后端和整个集群：``GET "
+"/console/api/edge/fleet`` 通过 SID 0007 "
+"的经过认证的流同时询问每个对等节点，至多等待五秒，并为每个成员返回一行，包含其链路状态和其节点的摘要。该页面通过同一个解析器和 worker "
+"运行管理套接字的命令，因此不增加任何权限；一条命令需要 ``control_node`` 动作，并通过会话、``Origin`` 和 CSRF "
+"检查，控制台保持管理套接字的限制：突发 20 条命令，每秒 10 "
+"条。从文件中删除的成员在两秒内失去其流。控制台对数据平面的开销低于百分之一这一标准尚未确立：在负载下，无论负载落在它自己的控制台上还是另一个进程的控制台上，数据平面都损失了 "
+"8% 到 11%，因此测量看到的是共享处理器的开销，而不是耦合的开销。"
 
 #: ../../cluster.rst:599
 msgid "What Three Hosts Measured"
-msgstr ""
+msgstr "三台主机的测量结果"
 
 #: ../../cluster.rst:602
 msgid ""
@@ -1881,16 +2236,24 @@ msgid ""
 "effect, sent every 5 ms. These are single runs on shared hosts; Part X "
 "gives the tables and the method."
 msgstr ""
+"第 X 部分记录了集群在三台主机上的表现，三台主机分别有 16、16 和 32 个 "
+"CPU，在同一网络中以容器运行，每台主机运行一个节点、一个源站和一个负载生成器，负载生成器向下一台主机的节点施加负载。在 SID 0024 "
+"之后，三个节点合计每秒承载 89,124 到 97,173 个 HTTP 请求和 90,399 到 92,652 个 HTTPS "
+"请求，是同一环境下 HAProxy 承载量的 0.87 到 1.15，使用 42 到 49 CPU 秒，而 HAProxy 为 66 到 "
+"102，两个代理都没有失败的请求。网络决定了上限，而且各次运行之间的差异大于两个代理之间的差异。在同样的主机上，一次封禁在 20 到 64 ms "
+"内到达另外两个节点，一次解除在 13 到 48 ms 内到达，``reload cluster`` 在 30 ms "
+"内返回且三个节点都持有相同文件，每次都包括观察到效果的那个请求，请求每 5 ms 发送一次。这些都是在共享主机上的单次运行；第 X "
+"部分给出了表格和方法。"
 
 #: ../../cluster.rst:604
 msgid "Limits"
-msgstr ""
+msgstr "局限"
 
 #: ../../cluster.rst:607
 msgid ""
 "We list the known gaps of each record. They are taken from the records "
 "and are not repaired at the time of writing."
-msgstr ""
+msgstr "我们列出每条记录的已知不足。它们取自这些记录，在撰写本书时尚未修复。"
 
 #: ../../cluster.rst:609
 msgid ""
@@ -1910,6 +2273,13 @@ msgid ""
 "of Part X is the only measurement across hosts. Replication runs in edge "
 "mode only."
 msgstr ""
+"**SID 0022，封禁与命令。** "
+"在解除之后签发的封禁，只有当它的结束时间晚于被解除的封禁本应结束的时间时，才在每个节点上有效；较短的封禁只在其自身节点上有效。策略文件配置的封禁不会被发送。各节点必须在 "
+"``ipv6_prefix`` 上保持一致并保持时钟接近，而这两点都不会被检查；落后 60 秒以上的节点的命令会被推翻，超前 60 "
+"秒以上的节点的命令会被拒绝。如果一个封禁的三次发送都因对等节点被隔离不到三个探测周期而丢失，它要等待下一次逐项发送。命令映射从不遗忘键，达到 "
+"8,192 个键之后，新命令在重启之前只在本地有效。两个运维人员同时以两个地址添加同一个服务器名称，可能使各节点在下一条命令之前不一致。按 "
+"Maglev 表放置客户端的服务器池在运行时不接受权重和成员的修改。命令和解除没有指标。进程测试在一台主机上运行；第 X "
+"部分的三主机计时是唯一的跨主机测量。复制只在边缘模式下运行。"
 
 #: ../../cluster.rst:611
 msgid ""
@@ -1920,6 +2290,9 @@ msgid ""
 "seconds again. A node is known by the source address of the connection. "
 "The transfer is authenticated and not encrypted."
 msgstr ""
+"**SID 0023，一个文件。** 拓扑按路径引用的文件，以及 JLV "
+"文件导入的文件，不会被发送。宕机的节点保留旧文件，直到该命令再次运行。上一个文件的时间戳保存在内存中，因此重启后节点会再次接受最近 60 "
+"秒内的消息。节点由连接的源地址识别。传输经过认证，但不加密。"
 
 #: ../../cluster.rst:613
 msgid ""
@@ -1935,6 +2308,11 @@ msgid ""
 "running processes. A client that uses two nodes within the replication "
 "window, under 50 ms on two hosts, can meet two servers."
 msgstr ""
+"**SID 0025，会话保持与上限。** "
+"已停止节点的份额在任何时限之后都不会归还；缺少一个节点就启动的集群不会在受上限约束的服务器上服务任何流；在某个对等节点静默时重启的节点只能依靠借来的份额提供服务。账本只保存在内存中。成员名单在进程的生命周期内固定。这张表没有指标序列；``show "
+"affinity`` 是唯一的查看方式。以 Cookie 为键的表只读取 ``Cookie`` "
+"字段，因此一个会话的第一个请求会被均衡而不会被记住。在一个纪元内，状态可以被重放。进程测试在没有丢失的回环接口上运行，没有任何测试在运行中的进程之间切断网络。在复制窗口内（两台主机上低于 "
+"50 ms）使用两个节点的客户端可能遇到两台服务器。"
 
 #: ../../cluster.rst:615
 msgid ""
@@ -1949,6 +2327,11 @@ msgid ""
 "draining owner and the ten-second end of silent relays have no process "
 "test. A forwarded datagram can be replayed within an epoch."
 msgstr ""
+"**SID 0026，转发。** 当路由器把已建立 TCP 连接的数据包转到另一个节点时，该连接会中断。HTTP/3 和带 "
+"``proxy_protocol`` 的前端不会被转发。在区域模式之外，转发停止。在 ``global.reuse_port`` "
+"下，新旧进程共享转发端口，可能有一段时间互相认为对方已失效。Linux "
+"以外的构建不把转发连接绑定到网格地址，也未经测试。所有测试和测量都在回环接口上运行；拒绝状态、``max_flows_per_peer`` "
+"上限、正在排空的所有者的拒绝，以及静默中继的十秒终止都没有进程测试。在一个纪元内，转发的数据报可以被重放。"
 
 #: ../../cluster.rst:617
 msgid ""
@@ -1965,6 +2348,11 @@ msgid ""
 "of SID 0015 is not run. A ``spill`` section without a pool that uses the "
 "table costs the file and does nothing, without a warning."
 msgstr ""
+"**SID 0027，溢出缓存。** "
+"低于文件大小的内存限制会杀死守护进程或使磁盘层停滞。文件被截断或磁盘读取错误会引发一个信号，使守护进程终止；压缩或写时复制文件系统被写满时也是如此，而我们检测不到这种情况。该缓存尚未在 "
+"Docker 或 Kubernetes 下运行过。连接两层的存储只经过其作者审查，其标记也未在多个 worker "
+"同时运行时测试。重启后客户端的第一个流没有提示可用。一个存储线程每秒处理一百万到三百万次操作，超出部分被丢弃。校验和不带密钥。没有断电测试，SID "
+"0015 的五千万键鉴定也尚未运行。没有任何服务器池使用该表的 ``spill`` 部分会占用文件而毫无作用，并且没有警告。"
 
 #: ../../cluster.rst:619
 msgid ""
@@ -1976,6 +2364,10 @@ msgid ""
 "A node with both a mesh and a database, and TLS to PostgreSQL, are not "
 "tested through the binary. Only Linux is tested."
 msgstr ""
+"**SID 0028，数据库。** 历史从不修剪。两个同名节点会相互覆盖对方的报告。``global``、``mesh`` 和 "
+"``observability`` 无法发布。没有分阶段发布，``apply`` "
+"也不等待各节点。运行时修改不是修订版本，下一个修订版本会替换它。SQLite 没有通知机制。同时带网格和数据库的节点，以及到 PostgreSQL "
+"的 TLS，未通过二进制程序测试。只在 Linux 上测试过。"
 
 #: ../../cluster.rst:621
 msgid ""
@@ -1991,6 +2383,11 @@ msgid ""
 "``reuse_port`` beside the new key, are untested. The signal to a silent "
 "replacement uses a process id, which the kernel can reuse."
 msgstr ""
+"**SID 0029，升级。** 被接管的 UDP "
+"映射不计入集群范围上限的计数。对等节点转发来的映射在交接后被直接应答。网格套接字、集群配置的监听器和转发端口不会被传递，因此网格中的节点无法用这种方式替换。QUIC "
+"连接随旧进程结束。在切换后超过 200 ms 才发送第一个请求的连接可能会被排空关闭。替代进程在 DONE "
+"之后崩溃会造成中断，直到监管程序重启它。没有 ``sd_notify``。多条路径、真实的第二个用户、超过 6,000 个映射，以及与新密钥并存的 "
+"``reuse_port`` 都未经测试。发给静默替代进程的信号使用进程 ID，而内核可能复用该 ID。"
 
 #: ../../cluster.rst:623
 msgid ""
@@ -2002,3 +2399,6 @@ msgid ""
 "member is silent, and shows at most 256 servers. The console threads are "
 "not pinned to processors of their own."
 msgstr ""
+"**SID 0031，控制台。** 开销标准尚未确立。新加入的成员只有在重启后才会被使用。控制台不终止 "
+"TLS，需要在前面放一个代理以供其对等节点使用。防火墙页面的节点命令在边缘上不起作用。没有测试运行过 64 "
+"个成员的集群。当某个成员静默时，集群视图会占住一个请求线程至多五秒，并且最多显示 256 台服务器。控制台线程没有绑定到专属的处理器上。"

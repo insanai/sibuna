@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../edge.rst:1
 msgid "Part VIII: The Edge Load Balancer"
-msgstr ""
+msgstr "第 VIII 部分：边缘负载均衡器"
 
 #: ../../edge.rst:4
 msgid ""
@@ -32,10 +32,13 @@ msgid ""
 "the parent record, and each section names the record that holds its "
 "design."
 msgstr ""
+"前面几个部分在单个源站前面构建了关卡（gate）和防护（shield）。本部分跟随一个连接穿过一个为多个源站服务的节点：它接受 TCP、UDP 和 "
+"HTTP，在套接字处准入或拒绝连接，选择一台服务器，并把流保持在这台服务器上直到流结束。我们研究这一设计及其理由。配置放在第 XI "
+"部分，我们引用它而不重复它。SID 0015 是父记录，每一节都注明保存其设计的记录。"
 
 #: ../../edge.rst:6
 msgid "Objectives"
-msgstr ""
+msgstr "学习目标"
 
 #: ../../edge.rst:8
 msgid ""
@@ -48,10 +51,13 @@ msgid ""
 "stages at the socket, state the outcome rule of a hook, and name the gaps "
 "that remain."
 msgstr ""
+"学完本章，我们应当能够解释为什么一个流属于一个线程、为什么重新加载不会让任何请求失败，描述一个等待中的连接为什么只占一条记录而不占缓冲区，手工演算加权轮询、最少连接、Maglev、有界负载和 "
+"rendezvous "
+"哈希，推导一台服务器离开时有多少客户端会迁移，把服务器的生命周期画成状态机，列出套接字处的准入阶段，说明钩子的结果规则，并指出仍然存在的不足。"
 
 #: ../../edge.rst:10
 msgid "The Model"
-msgstr ""
+msgstr "模型"
 
 #: ../../edge.rst:13
 msgid ""
@@ -66,6 +72,12 @@ msgid ""
 "in order; the first match selects a pool, and the default pool takes the "
 "rest."
 msgstr ""
+"一个节点由四类对象描述。\\ *前端*\\ （frontend）是一组绑定地址和一种协议：``tcp``、``udp`` 或 "
+"``http``。\\ *路由*\\ （route）属于某个 HTTP 前端，匹配主机、路径或两者。\\ *服务器池*\\ "
+"（pool，在文件中称为 ``backend``）是一组服务器，带有调度器、健康检查和流量策略。\\ *服务器*\\ "
+"（server）有名称、地址、权重、流上限 ``max_flows``，并且可以是备用服务器。TCP 或 UDP 前端指定一个默认服务器池，检查 "
+"ClientHello 的 TCP 前端还可以有选择其他服务器池的规则。HTTP "
+"前端按顺序评估它的路由；第一个匹配的路由选定服务器池，其余请求交给默认服务器池。"
 
 #: ../../edge.rst:15
 msgid ""
@@ -78,10 +90,14 @@ msgid ""
 "connection, or the streams of one HTTP/2 connection, may reach different "
 "servers."
 msgstr ""
+"工作的单位是\\ *流*\\ （flow）。一个 TCP 流从接受到关闭是一个流。一个 UDP "
+"映射，即一个客户端地址与一个服务器套接字之间的关联，从第一个数据报到空闲过期是一个流。一次 HTTP 交换，即一个请求及其响应，也是一个流。TCP "
+"或 UDP 流在整个生命周期内只选择一次服务器。HTTP 前端为每个请求选择服务器，因此同一个 keep-alive 连接上的多个请求，或同一个 "
+"HTTP/2 连接上的多个流，可能到达不同的服务器。"
 
 #: ../../edge.rst:17
 msgid "Flows Belong to One Thread"
-msgstr ""
+msgstr "流属于一个线程"
 
 #: ../../edge.rst:20
 msgid ""
@@ -94,6 +110,9 @@ msgid ""
 "owner holds nothing of the flow. So no lock protects the state of a flow, "
 "and a fault in one connection closes that connection only."
 msgstr ""
+"每个流在任一时刻都恰好归一个线程所有。边缘 worker 接受每个前端的连接，拥有 UDP 映射和 ClientHello 检查，并把已建立的 "
+"TCP 流交给一个中继线程。HTTP 连接被交给当前服务连接最少的 HTTP worker，并一直留在那里直到关闭（SID "
+"0016）。交接就是经过一个队列的移动，随后是一次唤醒。移动之后，原所有者不再持有这个流的任何东西。因此没有锁保护流的状态，一个连接中的故障只会关闭这个连接。"
 
 #: ../../edge.rst:22
 msgid ""
@@ -106,6 +125,9 @@ msgid ""
 "and is shared on purpose: the flow budget, the per-server counts of "
 "active flows, the health flags, and the published routing table."
 msgstr ""
+"另一种做法是让所有线程都读写同一张流表。这需要每次访问都加锁，或者使用一种无锁结构，其中每次读取载荷本身都没有数据竞争。SID 0015 "
+"指出了第二种选择的陷阱：能检测到撕裂读的序列计数器在 Rust "
+"中无法修复它，因为未同步的复制本身已经是数据竞争。所有权让这个问题不复存在。线程必须共享的东西很少，而且是有意共享的：流预算、每台服务器的活动流计数、健康标志和已发布的路由表。"
 
 #: ../../edge.rst:24
 msgid ""
@@ -115,10 +137,12 @@ msgid ""
 "model of SID 0016). It balances counts, not work: a busy connection and "
 "an idle one count the same."
 msgstr ""
+"所有权的代价是，流不能迁移到较空闲的线程。按最少连接分配使各 worker 的连接数彼此相差不超过一（SID 0016 的 Lean 模型中的 "
+"``assign_keeps_balance``）。它均衡的是连接数，而不是工作量：一个繁忙的连接和一个空闲的连接计数相同。"
 
 #: ../../edge.rst:26
 msgid "An Immutable Routing Snapshot"
-msgstr ""
+msgstr "不可变的路由快照"
 
 #: ../../edge.rst:29
 msgid ""
@@ -131,10 +155,13 @@ msgid ""
 "without a lock and without a write to shared memory. When they differ it "
 "takes the mutex once and fetches the new snapshot (SID 0019)."
 msgstr ""
+"路由表很少变化，却被每个请求读取。因此 Sibuna "
+"把两者分开。写者（即一次重新加载、一条管理命令或一次集群状态的变化）在互斥锁下修改主表，从中构建一个新的不可变快照，并递增一个代计数器。读者把一个数字与本线程上次看到的代比较。两者相等时，它使用本线程已持有的快照，不加锁，也不写共享内存。两者不同时，它获取一次互斥锁并取得新快照（SID "
+"0019）。"
 
 #: ../../edge.rst:31
 msgid "Implementation: ``Shared::read``"
-msgstr ""
+msgstr "实现：``Shared::read``"
 
 #: ../../edge.rst:33
 msgid ""
@@ -142,6 +169,8 @@ msgid ""
 "the generation with a ``thread_local`` cache of at most eight entries and "
 "takes no lock. In ``crates/lb/src/http.rs`` (crate ``sibuna-lb``)."
 msgstr ""
+"在当前路由快照上运行一个访问者。通常的调用把代与一个最多八项的 ``thread_local`` 缓存比较，不获取锁。位于 "
+"``crates/lb/src/http.rs``\\ （crate ``sibuna-lb``）。"
 
 #: ../../edge.rst:35
 msgid ""
@@ -174,6 +203,10 @@ msgid ""
 "requests in each of three runs. A request two revisions behind is still "
 "refused."
 msgstr ""
+"防火墙在策略代 :math:`n` 下判定一个请求，片刻之后路由表为它选择服务器。一次重新加载可能恰好落在两者之间。第一个版本对这样的请求回答 "
+"503，一项测试在 30 次重新加载期间的 49,522 个请求中统计到 32 "
+"个这样的回答。现在快照还把上一次重新加载所淘汰的修订版本保留十秒，在修订版本 :math:`n` 下判定的请求由修订版本 :math:`n` "
+"路由（SID 0018）。之后同一项测试在三次运行中每次约 50,000 个请求都通过了。落后两个修订版本的请求仍会被拒绝。"
 
 #: ../../edge.rst:54
 msgid ""
@@ -185,10 +218,13 @@ msgid ""
 "names keeps its counts. When the flow ends, the ticket's ``Drop`` returns "
 "its place to that record, whichever revision now serves."
 msgstr ""
+"流在重新加载时保持其服务器，原因更简单：它的预留不存放在快照中。预留是一个 "
+"``Ticket``，它持有服务器的地址和指向服务器负载记录的共享引用。负载记录保存在一个以协议和地址为键的映射中，重新加载会查阅这个映射，因此新文件仍然列出的服务器会保留其计数。流结束时，ticket "
+"的 ``Drop`` 把它的名额归还给那条记录，无论此时由哪个修订版本提供服务。"
 
 #: ../../edge.rst:56
 msgid "Implementation: ``Pool::reserve_with``"
-msgstr ""
+msgstr "实现：``Pool::reserve_with``"
 
 #: ../../edge.rst:58
 msgid ""
@@ -197,11 +233,13 @@ msgid ""
 "gives the place back and picks again, at most eight times. So a server "
 "never serves more than its ``max_flows``. In ``crates/lb/src/pool.rs``."
 msgstr ""
+"选出一台服务器，用一次原子加法把自己计入这台服务器，然后检查计数。如果在此期间另一个线程拿走了最后一个名额，它就归还名额并重新选择，最多八次。因此一台服务器服务的流从不超过它的 "
+"``max_flows``。位于 ``crates/lb/src/pool.rs``。"
 
 #: ../../edge.rst:60 ../../edge.rst:145 ../../edge.rst:265
 #: ../../edge.rst:332 ../../edge.rst:378 ../../edge.rst:453
 msgid "Explain the invariant"
-msgstr ""
+msgstr "解释这个不变量"
 
 #: ../../edge.rst:62
 msgid ""
@@ -211,10 +249,12 @@ msgid ""
 "this server from the file does not end its 9 flows, and when their places "
 "are returned."
 msgstr ""
+"两个线程在一台 ``max_flows`` 为 10、已持有 9 个流的服务器上预留。证明无论两次 ``fetch_add`` "
+"调用如何交错，至多只有其中一个保住名额。然后解释为什么一次从文件中删除这台服务器的重新加载不会结束它的 9 个流，以及它们的名额何时归还。"
 
 #: ../../edge.rst:64
 msgid "Workers That Wait Without Threads"
-msgstr ""
+msgstr "无需线程即可等待的 worker"
 
 #: ../../edge.rst:67
 msgid ""
@@ -224,10 +264,13 @@ msgid ""
 "and each connection held about 145 KiB of resident memory (SID 0015). SID "
 "0016 replaced the threads of the edge with event-driven workers."
 msgstr ""
+"前面几个部分的防火墙在一个线程上服务每个连接。与 HAProxy 3.0 并排比较时，在 256 个连接下，这一设计达到 HAProxy 明文 "
+"HTTP 吞吐量的 59%。它每个请求产生 2.9 次上下文切换，每个连接占用约 145 KiB 的常驻内存（SID 0015）。SID 0016 "
+"用事件驱动的 worker 取代了边缘的线程。"
 
 #: ../../edge.rst:69
 msgid "The Path of a Connection"
-msgstr ""
+msgstr "连接的路径"
 
 #: ../../edge.rst:73
 msgid ""
@@ -240,6 +283,10 @@ msgid ""
 "gate or shield, request hooks, and the choice of a server from the "
 "routing snapshot, then exchange with the server."
 msgstr ""
+"客户端先到达内核监听器，然后到达边缘 worker，后者应用连接速率、流预算和连接钩子。TCP 流通过 ClientHello "
+"检查，预留一台服务器，并由中继线程中继。UDP 流通过 QUIC 筛查，成为一个映射。HTTP 连接交给一个 HTTP worker；提供 h2 "
+"的 TLS 客户端交给协议运行时。两者都执行封禁和限制、流量策略、Gate 或 "
+"Shield、请求钩子，以及从路由快照中选择服务器，然后与服务器交换数据。"
 
 #: ../../edge.rst:73
 msgid ""
@@ -292,7 +339,7 @@ msgid ""
 "The path of a connection through a node. Each box is owned by one thread "
 "or one group of threads; the dashed edges are the shared, read-mostly "
 "state."
-msgstr ""
+msgstr "连接穿过一个节点的路径。每个方框归一个线程或一组线程所有；虚线边表示共享的、以读为主的状态。"
 
 #: ../../edge.rst:109
 msgid ""
@@ -301,10 +348,12 @@ msgid ""
 "admission function, and asks the connection hooks when the ClientHello is "
 "read (SID 0017, SID 0030)."
 msgstr ""
+"HTTP/3 前端的 QUIC 客户端不经过边缘 worker：协议运行时接受它，通过一个准入函数应用按客户端的上限，并在读到 "
+"ClientHello 时询问连接钩子（SID 0017，SID 0030）。"
 
 #: ../../edge.rst:111
 msgid "Readiness and the Cost of Waiting"
-msgstr ""
+msgstr "就绪与等待的成本"
 
 #: ../../edge.rst:114
 msgid ""
@@ -316,6 +365,9 @@ msgid ""
 "those bytes allow and returns to the loop. No thread ever waits for a "
 "slow client."
 msgstr ""
+"边缘为进程可使用的每个处理器启动一个 HTTP worker，最多 64 个。一个 worker 是一个带有一个轮询器（Linux 上为 "
+"``epoll``）的线程。它拥有的每个套接字都是非阻塞的，线程唯一的等待是其循环中对 ``epoll_wait`` 的那一次调用。worker "
+"会被告知哪些套接字\\ *就绪*\\ ：此刻可读或可写。然后它完成这些字节所允许的工作，再回到循环。没有任何线程会等待慢速客户端。"
 
 #: ../../edge.rst:116
 msgid ""
@@ -330,6 +382,11 @@ msgid ""
 "path. Kernel socket memory, about 3.4 KiB before any buffer, is then the "
 "larger cost."
 msgstr ""
+"一个连接就是 worker 中的一条记录和内核中的一个套接字。空闲时它不持有缓冲区。当它的套接字变为可读时，worker "
+"读入自己的一块内存，并且只在连接持有未处理的请求字节时，才从自己的池中借给连接一个 64 KiB 缓冲区。这就是等待成本低廉的原因。在 SID "
+"0016 的验收测试中，20,000 个空闲 keep-alive 连接增加了 8 MiB 常驻内存，10,000 个打开的 WebSocket "
+"占用 27 MiB。SID 0015 估计一个空闲 HTTP 连接在进程中约占 0.4 KiB，而线程路径上约为 145 "
+"KiB。此时，内核套接字内存（在分配任何缓冲区之前约 3.4 KiB）才是更大的成本。"
 
 #: ../../edge.rst:118
 msgid ""
@@ -344,16 +401,20 @@ msgid ""
 "mutated responses, fed whole, in random pieces and one byte at a time, "
 "the bytes and the results are equal."
 msgstr ""
+"防火墙决策并没有变成异步的。它不需要 I/O，因此仍然是前面几个部分中的同步函数。当完整的请求头部和请求体的开头都已在内存中时，worker "
+"调用它。准入时，决策返回一个\\ *计划*\\ ：服务器预留、编码后的请求头部，以及上传的分帧方式。随后由三个 sans-I/O "
+"状态机完成这次交换：一个请求编码器、一个上传中继和一个响应中继。每个状态机消费字节、产生字节，从不接触套接字。每个状态机都与它所取代的阻塞式中继进行了对照测试：对于 "
+"150,000 个变异响应，无论整块输入、按随机分片输入还是逐字节输入，产生的字节和结果都相同。"
 
 #: ../../edge.rst:120
 msgid "Every resource has a bound, and every state has a deadline:"
-msgstr ""
+msgstr "每种资源都有上限，每种状态都有期限："
 
 #: ../../edge.rst:122
 msgid ""
 "The worker reads from a socket only while the buffer toward the other "
 "side is below 64 KiB. A slow reader thereby stops the reads of its peer."
-msgstr ""
+msgstr "只有当发往另一侧的缓冲区低于 64 KiB 时，worker 才从套接字读取。因此，慢速读者会让它的对端停止被读取。"
 
 #: ../../edge.rst:123
 msgid ""
@@ -361,19 +422,20 @@ msgid ""
 "most 64 KiB, and causes at most eight rounds of work. A bulk transfer "
 "cannot starve the small requests of the same worker."
 msgstr ""
+"一次就绪事件对一个连接的每个套接字至多读取一次、至多 64 KiB，并至多引发八轮工作。批量传输无法饿死同一个 worker 上的小请求。"
 
 #: ../../edge.rst:124
 msgid ""
 "A timer wheel with one-second slots holds one deadline per connection: "
 "the idle timeout, a slow head, a slow body, a connect of five seconds, "
 "server silence, a write that makes no progress."
-msgstr ""
+msgstr "一个以一秒为槽的时间轮为每个连接保存一个期限：空闲超时、慢速请求头部、慢速请求体、五秒的连接建立、服务器静默、毫无进展的写入。"
 
 #: ../../edge.rst:125
 msgid ""
 "A connection serves at most 4,096 requests. A worker keeps at most 64 "
 "idle server sockets per address and 1,024 in all."
-msgstr ""
+msgstr "一个连接至多服务 4,096 个请求。一个 worker 对每个地址至多保留 64 个空闲服务器套接字，总共至多 1,024 个。"
 
 #: ../../edge.rst:127
 msgid ""
@@ -381,10 +443,12 @@ msgid ""
 "requests per second against HAProxy's 243,864, which is 94%, with a 99th "
 "percentile of 2.60 ms (SID 0016)."
 msgstr ""
+"使用这些 worker 后，256 个连接下的明文 HTTP 达到每秒 229,139 个请求，而 HAProxy 为 243,864，即 "
+"94%，第 99 百分位为 2.60 ms（SID 0016）。"
 
 #: ../../edge.rst:129
 msgid "Implementation: ``Workers::submit``"
-msgstr ""
+msgstr "实现：``Workers::submit``"
 
 #: ../../edge.rst:131
 msgid ""
@@ -393,10 +457,12 @@ msgid ""
 "connection then stays on that worker. In "
 "``cmd/sibuna/src/edge/workers.rs`` (crate ``sibuna``)."
 msgstr ""
+"把一个已接受的连接交给当前服务连接最少的 worker，增加该 worker 的计数并唤醒它的轮询器。此后这个连接一直留在该 worker "
+"上。位于 ``cmd/sibuna/src/edge/workers.rs``\\ （crate ``sibuna``）。"
 
 #: ../../edge.rst:133
 msgid "One Hop Fewer for HTTP/2 and HTTP/3"
-msgstr ""
+msgstr "HTTP/2 和 HTTP/3 少一跳"
 
 #: ../../edge.rst:136
 msgid ""
@@ -408,6 +474,10 @@ msgid ""
 "the request, and 30 us more in the worker to read the same request from a "
 "socket and decide it."
 msgstr ""
+"HTTP/2 和 HTTP/3 由一个协议运行时终止，它使用有人维护的库（rustls、hyper、带 h3 的 "
+"quinn）。起初，运行时把每个请求以 HTTP/1.1 形式写入一个套接字对，再由一个 worker 读取、重新解析、判定并转发。SID "
+"0017 测得一个 HTTP/2 请求耗费 76 us 的 CPU 时间：在 worker 看到请求之前，运行时中耗费 46 us，worker "
+"从套接字读取同一个请求并作出判定又耗费 30 us。"
 
 #: ../../edge.rst:138
 msgid ""
@@ -425,10 +495,17 @@ msgid ""
 "rapid resets, CONTINUATION floods and HPACK expansion would then become "
 "our own work."
 msgstr ""
+"修复的办法是在解码该流的线程上以函数调用的方式执行决策。ingress crate 定义了纯数据 ``Offer``\\ （以 HTTP/1.1 "
+"文本表示的请求头部和请求体的开头）和 ``Verdict``\\ （一个应答，或者一个带服务器预留和待发送请求头部的 "
+"``Forward``），以及一个 trait ``Decide``，二进制程序用 worker "
+"的分派逻辑实现它。获准的请求经由运行时自己管理的连接池中的连接发往其服务器。请求不再穿过套接字对和第二个线程。在相同的处理器上，HTTP/2 "
+"吞吐量提高了 20% 到 37%，2,048 个连接下的常驻内存从 771 MiB 降到 592 MiB。自己编写一个 HTTP/2 "
+"实现可以去掉更多开销；SID 0017 拒绝了这一做法，因为那样一来，防御快速重置、CONTINUATION 洪泛和 HPACK "
+"膨胀就都成了我们自己的工作。"
 
 #: ../../edge.rst:140
 msgid "TLS on the Workers"
-msgstr ""
+msgstr "worker 上的 TLS"
 
 #: ../../edge.rst:143
 msgid ""
@@ -446,6 +523,13 @@ msgid ""
 "rose from 149,168 to 174,901 requests per second, where HAProxy writing "
 "the same headers carries 153,080."
 msgstr ""
+"HTTPS 仍保留一次跨越：运行时终止 TLS，再通过套接字对把明文字节复制给一个 worker。SID 0024 让 worker 自己终止 "
+"HTTP/1.1 连接的 TLS。worker 读取 ClientHello 但不应答。如果客户端提供 ``h2`` 或 "
+"``acme-tls/1``，或者指定的主机的证书必须先按需获取，worker "
+"就把套接字和已读取的字节交给运行时。否则它保留这个连接，在不自行进行 I/O 的情况下驱动 TLS 库。worker "
+"根据提议而不是结果作出决定，因为已经应答过的会话无法迁移到另一个线程。对于尚未完成握手的客户端，工作量以 16 KiB 的首条消息和 15 "
+"秒为上限。在基准测试主机上，256 个连接下的 HTTPS 从每秒 149,168 个请求提高到 174,901 个，而写入相同响应头的 "
+"HAProxy 承载 153,080 个。"
 
 #: ../../edge.rst:147
 msgid ""
@@ -455,10 +539,12 @@ msgid ""
 "memory. Then name the one kind of call that still holds a worker for a "
 "round trip (see the section on hooks)."
 msgstr ""
+"“worker 从不等待对端。”解释这句话与 64 KiB 的高水位线一起，如何保证一个停止读取响应的客户端无法让 worker "
+"占用无界的内存。然后指出仍会让 worker 占用一个往返时间的那一种调用（见关于钩子的一节）。"
 
 #: ../../edge.rst:149
 msgid "Choosing a Server"
-msgstr ""
+msgstr "选择服务器"
 
 #: ../../edge.rst:152
 msgid ""
@@ -471,6 +557,8 @@ msgid ""
 "regime of a mesh, local servers are preferred when one is eligible. "
 "Backups are chosen only when no primary server is eligible."
 msgstr ""
+"一个新流首先过滤其服务器池中的服务器。一台服务器是\\ *合格的*\\ ，当且仅当：它不是前端自己的地址，未被排空，按最近一次探测是健康的，低于 "
+"``max_flows``，在集群范围限制中它的份额之内，过去两秒内没有因连接失败而被标记，并且未被这个请求尝试过。被被动健康检查剔除的服务器，只有在存在其他合格服务器时才被排除。在网格的广域模式下，只要有本地服务器合格，就优先选择本地服务器。只有在没有合格的主服务器时，才会选择备用服务器。"
 
 #: ../../edge.rst:154
 msgid ""
@@ -482,10 +570,14 @@ msgid ""
 "integer weights in units of 1/256, so that slow start can lower a weight "
 "in fine steps."
 msgstr ""
+"在合格的服务器中，选择按固定顺序进行：首先是粘性 Cookie "
+"或学习表所指定的服务器，然后是源地址粘性排在第一位的服务器，然后是处于负载上界之内的 Maglev "
+"首选服务器，否则使用服务器池的调度器：轮询、二选一（power of two choices）或加权最少连接。每个调度器都使用以 1/256 "
+"为单位的整数权重，以便慢启动可以细粒度地降低权重。"
 
 #: ../../edge.rst:156
 msgid "Weighted Round Robin"
-msgstr ""
+msgstr "加权轮询"
 
 #: ../../edge.rst:159
 msgid ""
@@ -496,10 +588,13 @@ msgid ""
 "return to where they started, and server :math:`i` was chosen exactly "
 ":math:`w_i` times."
 msgstr ""
+"轮询采用 nginx 的平滑加权轮询（SID "
+"0019）。每台合格服务器持有一个积分。每次选择时，每台服务器的积分增加其权重，积分最多的服务器被选中，并支付所有权重之和 "
+":math:`W`。经过 :math:`W` 次选择后，积分回到初始值，服务器 :math:`i` 恰好被选中 :math:`w_i` 次。"
 
 #: ../../edge.rst:161
 msgid "Worked example: three servers of weights 5, 1 and 1"
-msgstr ""
+msgstr "实例分析：权重为 5、1 和 1 的三台服务器"
 
 #: ../../edge.rst:163
 msgid ""
@@ -507,10 +602,11 @@ msgid ""
 "the gain, the choice, and the chosen server's credit after it pays 7. "
 "Ties go to the first server."
 msgstr ""
+":math:`W = 7`。所有积分从 0 开始。下表给出增加积分后的值、选择结果，以及被选中的服务器支付 7 之后的积分。平局时选择第一台服务器。"
 
 #: ../../edge.rst:166
 msgid "Step"
-msgstr ""
+msgstr "步骤"
 
 #: ../../edge.rst:166
 msgid "a, b, c"
@@ -518,7 +614,7 @@ msgstr ""
 
 #: ../../edge.rst:166
 msgid "Chosen"
-msgstr ""
+msgstr "选中"
 
 #: ../../edge.rst:168
 msgid "1"
@@ -624,10 +720,12 @@ msgid ""
 "server's turns instead of bunched at the end. The credits after step 7 "
 "are those of the start, so the pattern repeats."
 msgstr ""
+"选择序列是 ``a a b a c a a``：``a`` 轮到五次，``b`` 和 ``c`` "
+"各一次，轻量服务器分散在重量服务器的轮次之间，而不是挤在末尾。第 7 步之后的积分与开始时相同，因此这一模式会重复。"
 
 #: ../../edge.rst:179
 msgid "Least Connections and Two Choices"
-msgstr ""
+msgstr "最少连接与二选一"
 
 #: ../../edge.rst:182
 msgid ""
@@ -638,6 +736,9 @@ msgid ""
 "broken by the requests admitted since the pool was loaded, again per unit "
 "of weight, and a backup always ranks after a primary."
 msgstr ""
+"加权最少连接是独立服务器池的默认调度器，它选择每单位权重活动流最少的服务器。比较时避免除法：当 :math:`a_i w_j < a_j w_i` "
+"时，服务器 :math:`i` 优先于服务器 :math:`j`，其中 :math:`a` "
+"是活动流数。平局时按服务器池加载以来已准入的请求数（同样按每单位权重）决定，备用服务器总是排在主服务器之后。"
 
 #: ../../edge.rst:184
 msgid ""
@@ -650,10 +751,14 @@ msgid ""
 "estimate moves halfway back to its resting value of 1 ms for each second "
 "without a sample."
 msgstr ""
+"带峰值加权移动延迟的二选一（``p2c_pewma``）把流哈希到两台不同的合格服务器上，并选择成本较低的一台，其中服务器 :math:`i` "
+"的成本为 :math:`(a_i + 1)\\,\\ell_i / w_i`。延迟估计 :math:`\\ell_i` "
+"对慢样本立即作出反应，并缓慢地忘记它：新样本 :math:`s` 令 :math:`\\ell \\leftarrow \\max(s, "
+"(7\\ell + s)/8)`，而空闲服务器的估计值每过一秒没有样本，就向其静息值 1 ms 回退一半。"
 
 #: ../../edge.rst:186
 msgid "Consistent Hashing: the Problem"
-msgstr ""
+msgstr "一致性哈希：问题"
 
 #: ../../edge.rst:189
 msgid ""
@@ -662,10 +767,12 @@ msgid ""
 "as few flows as possible. The obvious method, server :math:`h \\bmod N` "
 "for a flow hash :math:`h`, fails the second requirement badly."
 msgstr ""
+"集群中的多个节点应当在互不通信的情况下把同一个流发往同一台服务器，并且服务器集合发生变化时，应当迁移尽可能少的流。显而易见的方法是对流哈希 "
+":math:`h` 选择服务器 :math:`h \\bmod N`，它严重违背了第二个要求。"
 
 #: ../../edge.rst:191
 msgid "Worked example: one of five servers leaves"
-msgstr ""
+msgstr "实例分析：五台服务器中的一台离开"
 
 #: ../../edge.rst:193
 msgid ""
@@ -681,6 +788,12 @@ msgid ""
 ":math:`N` to :math:`N - 1` servers keeps :math:`(N-1)/(N(N-1)) = 1/N` of "
 "the flows."
 msgstr ""
+"在取模哈希下，哈希为 :math:`h` 的流去往位置 :math:`h \\bmod 5`，离开之后去往四台幸存服务器列表中的位置 "
+":math:`h \\bmod 4`。由中国剩余定理，对于均匀哈希，数对 :math:`(h \\bmod 5, h \\bmod 4)` 以概率 "
+":math:`1/20` 取 :math:`5 \\times 4 = 20` "
+"个值中的每一个。只有当两个位置指向同一台幸存服务器时，流才留在原服务器上，而 4 台幸存服务器中的每一台恰好被一个这样的数对指向。因此 "
+":math:`4/20 = 20\\%` 的流留下，而 **80% 会迁移**，尽管只有离开的服务器所持有的 20% 才必须迁移。一般地，从 "
+":math:`N` 台服务器变为 :math:`N - 1` 台时，保留 :math:`(N-1)/(N(N-1)) = 1/N` 的流。"
 
 #: ../../edge.rst:195
 msgid ""
@@ -696,10 +809,17 @@ msgid ""
 "With ten servers the departed one held 9.999% to 10.000% of the slots, "
 "and 120 to 181 other slots, 0.18% to 0.28%, changed owner."
 msgstr ""
+"一致性的方法只迁移离开的服务器的流：:math:`1/5 = 20\\%`。下面介绍的 rendezvous 哈希恰好做到了这一点。Sibuna "
+"的 Maglev 表在一个很小的超额范围内做到了这一点。我们用 ``maglev.rs`` 构建循环的副本和相同的哈希，为名为 ``s1`` 到 "
+"``s5`` 的五台等权重服务器重建了这张表，并依次删除每台服务器（这是我们自己的运行，不是基准测试）。离开的服务器持有 65,537 个槽中的 "
+"19.999% 到 20.001%，另外还有 51 到 121 个槽（占表的 0.08% 到 "
+"0.19%）也更换了所有者。加入第六台服务器时，它得到 16.665% 的槽，并有 64 "
+"个槽（0.10%）在原有服务器之间迁移。有十台服务器时，离开的那台持有 9.999% 到 10.000% 的槽，另有 120 到 181 "
+"个槽（0.18% 到 0.28%）更换了所有者。"
 
 #: ../../edge.rst:197
 msgid "Maglev as Sibuna Builds It"
-msgstr ""
+msgstr "Sibuna 构建的 Maglev"
 
 #: ../../edge.rst:200
 msgid ""
@@ -715,10 +835,17 @@ msgid ""
 "hashing the frontend address and the client address with its port: one "
 "hash and one load."
 msgstr ""
+"Maglev（Eisenbud 等，2016）填充一张有 :math:`M` "
+"个槽的查找表。每台服务器从其名称导出两个数，即偏移量和步长，它们定义了该服务器的偏好顺序 :math:`p_k = "
+"(\\mathrm{offset} + k \\cdot \\mathrm{stride}) \\bmod "
+"M`。然后服务器轮流行动，每台服务器在自己的轮次中占据其顺序中第一个仍为空的槽。Sibuna 取 :math:`M = "
+"65537`，这是一个素数，因此从 1 到 :math:`M - 1` 的每个步长都会访问每个槽。它用上面同样的平滑轮询为轮次加权，因此权重为 "
+":math:`w_i` 的服务器占据 :math:`w_i/W` "
+"的槽，误差在一个槽以内。查找一个流时，对前端地址以及客户端地址和端口进行哈希：一次哈希和一次读取。"
 
 #: ../../edge.rst:202
 msgid "Implementation: ``Table::build`` and ``Table::primary``"
-msgstr ""
+msgstr "实现：``Table::build`` 和 ``Table::primary``"
 
 #: ../../edge.rst:204
 msgid ""
@@ -727,6 +854,8 @@ msgid ""
 "frontend and the client endpoint, IPv4 mapped into IPv6, to a slot. In "
 "``crates/lb/src/maglev.rs``."
 msgstr ""
+"``build`` 按稳定的名称顺序，跳过备用服务器，以平滑加权轮次从服务器填充 65,537 个槽。``primary`` "
+"把前端和客户端端点（IPv4 映射到 IPv6）哈希到一个槽。位于 ``crates/lb/src/maglev.rs``。"
 
 #: ../../edge.rst:206
 msgid ""
@@ -758,10 +887,13 @@ msgid ""
 "drain is allowed, because each node already excludes servers by its own "
 "health checks."
 msgstr ""
+"每个节点都从同一个文件构建同一张表，因此每个节点都把地址相同的流发往同一台服务器。这就是为什么 Maglev "
+"服务器池的成员和权重只能通过重新加载来改变。在一个节点上修改权重的管理命令会使该节点与其对等节点不一致，因此管理套接字拒绝这种命令（SID "
+"0018）。排空是允许的，因为每个节点本来就会根据自己的健康检查排除服务器。"
 
 #: ../../edge.rst:227
 msgid "Bounded Loads"
-msgstr ""
+msgstr "有界负载"
 
 #: ../../edge.rst:230
 msgid ""
@@ -773,6 +905,10 @@ msgid ""
 ":math:`a_p` those of the primary :math:`p`. The new flow goes to the "
 "primary when it is eligible and"
 msgstr ""
+"哈希只在平均意义上把流均匀分散。一个热门的客户端地址段仍可能挤满一台服务器。带有界负载的一致性哈希（Mirrokni、Thorup 和 "
+"Zadimoghaddam，2018）把每台服务器的负载限制在其公平份额的常数倍 :math:`c \\ge 1` 以内。Sibuna "
+"把这一上限应用于 Maglev 首选服务器。令 :math:`L` 为服务器池的活动流数，:math:`a_p` 为首选服务器 :math:`p` "
+"的活动流数。当首选服务器合格并且"
 
 #: ../../edge.rst:232
 msgid "a_p < \\left\\lceil \\frac{c\\,(L + 1)\\, w_p}{W} \\right\\rceil,"
@@ -785,10 +921,12 @@ msgid ""
 "least connections, or the power of two choices when ``fallback`` is "
 "``pewma``."
 msgstr ""
+"时，新流去往首选服务器，其中 :math:`c` 以百分比形式由 ``load_factor_pct`` 给出（默认 125，至少 "
+"100）。否则流去往服务器池的后备调度器：加权最少连接，或者当 ``fallback`` 为 ``pewma`` 时使用二选一。"
 
 #: ../../edge.rst:238
 msgid "Worked example: the bound with c = 1.25"
-msgstr ""
+msgstr "实例分析：c = 1.25 时的上界"
 
 #: ../../edge.rst:240
 msgid ""
@@ -802,6 +940,12 @@ msgid ""
 "\\rceil = 38` and :math:`\\lceil 1.25 \\times 40 / 4 \\rceil = \\lceil "
 "12.5 \\rceil = 13`."
 msgstr ""
+"四台等权重服务器持有 :math:`L = 99` 个流，第一百个流到达。上界为 :math:`\\lceil 1.25 \\times 100 "
+"/ 4 \\rceil = \\lceil 31.25 \\rceil = 32`。持有 31 个流的首选服务器接受新流，达到 32。持有 32 "
+"个流的首选服务器拒绝它，最少连接把它放到流最少的服务器上，该服务器至多有 :math:`\\lfloor 99/4 \\rfloor = 24` "
+"个流。权重为 3 和 1 且 :math:`L + 1 = 40` 时，上界分别为 :math:`\\lceil 1.25 \\times 40 "
+"\\times 3/4 \\rceil = \\lceil 37.5 \\rceil = 38` 和 :math:`\\lceil 1.25 "
+"\\times 40 / 4 \\rceil = \\lceil 12.5 \\rceil = 13`。"
 
 #: ../../edge.rst:242
 msgid ""
@@ -810,6 +954,9 @@ msgid ""
 "servers gives :math:`L \\ge c(L+1) > L`, a contradiction. With :math:`c = "
 "1.25` and four equal servers, at most three can sit at the bound at once."
 msgstr ""
+"溢出的流总能找到一台低于上界的服务器。假设每台服务器 :math:`i` 都至少持有 :math:`c(L+1)w_i/W` "
+"个流。对所有服务器求和得到 :math:`L \\ge c(L+1) > L`，矛盾。当 :math:`c = 1.25` "
+"且有四台等权重服务器时，至多三台可以同时处于上界。"
 
 #: ../../edge.rst:244
 msgid ""
@@ -826,10 +973,15 @@ msgid ""
 "respect: it does not walk to the next server of a consistent order, so "
 "two nodes may place an overflowing flow on different servers."
 msgstr ""
+"使用最少连接后备调度器且所有服务器都合格时，一次准入使每台服务器都保持在其上限之内：哈希路径只在低于上界时准入，而后备调度器选择每单位权重流数至多为平均值 "
+":math:`L/W` 的服务器，因此再多一个流仍然不超过 :math:`\\lceil c(L+1)w_i/W \\rceil`。这就是 SID "
+"0015 的 Lean 模型中针对一次顺序准入的 "
+"``admitBounded_respects_cap``。同时准入的两个线程可能都读到旧的计数。使用 ``pewma`` "
+"后备调度器时，哈希路径仍然遵守上界，但后备调度器按延迟选择，此时上限就不再是保证。溢出处理还在一个方面偏离了论文：它不会沿着一致的顺序走到下一台服务器，因此两个节点可能把一个溢出的流放到不同的服务器上。"
 
 #: ../../edge.rst:246
 msgid "Rendezvous Hashing for Source Stickiness"
-msgstr ""
+msgstr "用于源地址粘性的 rendezvous 哈希"
 
 #: ../../edge.rst:249
 msgid ""
@@ -838,6 +990,9 @@ msgid ""
 ":math:`x` and server :math:`i` the hash gives a number :math:`u_i \\in "
 "(0, 1]`, and the *distance* is"
 msgstr ""
+"带 ``sticky: \"source\"`` 的服务器池把每个客户端地址发往同一台服务器。它使用加权 rendezvous 哈希（SID "
+"0019）。对于客户端 :math:`x` 和服务器 :math:`i`，哈希给出一个数 :math:`u_i \\in (0, 1]`，而\\ "
+"*距离*\\ 为"
 
 #: ../../edge.rst:251
 msgid "d_i = \\frac{-\\log_2 u_i}{w_i}."
@@ -853,6 +1008,10 @@ msgid ""
 ":math:`w_i / \\sum_j w_j`. The base of the logarithm changes all "
 "distances by one factor and no ranking."
 msgstr ""
+"客户端去往最近的合格服务器。这一选择精确地遵循权重。由于对均匀的 :math:`u_i`，:math:`-\\ln u_i` 服从均值为 1 "
+"的指数分布，:math:`d_i` 服从速率与 :math:`w_i` 成正比的指数分布。速率为 :math:`w_i` "
+"的独立指数随机变量的最小值以概率 :math:`w_i / \\sum_j w_j` 在服务器 :math:`i` "
+"处取得。对数的底只会让所有距离乘上同一个因子，不改变排序。"
 
 #: ../../edge.rst:257
 msgid ""
@@ -864,6 +1023,10 @@ msgid ""
 "fractional bits and compares :math:`d_i < d_j` as :math:`c_i w_j < c_j "
 "w_i` without division."
 msgstr ""
+"扰动恰好是最小的。服务器 :math:`k` 离开时，最近服务器不是 :math:`k` "
+"的客户端保持原来的服务器，因为去掉一个候选者不会改变其余候选者的最小值。只有 :math:`k` 的客户端会迁移，各自去往自己的第二选择，并在 "
+":math:`k` 回来时返回。Sibuna 用带 16 位小数的定点数计算对数，并把 :math:`d_i < d_j` 作为 "
+":math:`c_i w_j < c_j w_i` 比较，不做除法。"
 
 #: ../../edge.rst:259
 msgid ""
@@ -878,10 +1041,15 @@ msgid ""
 "of weight 1 in a pool of weight 1,000 serves one slot, not a thousandth "
 "of the clients."
 msgstr ""
+"为每个请求对每台服务器排序，每台服务器要花费一次哈希和一次对数运算。因此服务器池预先计算一张 1,021 "
+"个槽的表。客户端地址被哈希到一个槽，槽中保存离它最近的四台服务器。第一台合格的服务器提供服务；四台都不合格时，为该槽对整个服务器池排序。测得的选择耗时不再随服务器池增长：128 "
+"台服务器时为 148 到 188 ns，而在引入这张表和无锁快照之前为 3,443 ns（SID "
+"0019）。代价是粒度：同一个槽中的两个地址共用一台服务器，在总权重为 1,000 的服务器池中，权重为 1 "
+"的服务器服务的是一个槽，而不是千分之一的客户端。"
 
 #: ../../edge.rst:261
 msgid "Implementation: ``Pool::home`` and ``sticky::distance``"
-msgstr ""
+msgstr "实现：``Pool::home`` 和 ``sticky::distance``"
 
 #: ../../edge.rst:263
 msgid ""
@@ -891,6 +1059,9 @@ msgid ""
 "its weight. In ``crates/lb/src/pool/extra.rs`` and "
 "``crates/lb/src/sticky.rs``."
 msgstr ""
+"``home`` 把客户端哈希到一个槽，返回该槽四台服务器中第一台合格的服务器，否则退回到对服务器池排序。``distance`` "
+"计算带权重的定点成本 :math:`64 - \\log_2(\\mathrm{draw})`。位于 "
+"``crates/lb/src/pool/extra.rs`` 和 ``crates/lb/src/sticky.rs``。"
 
 #: ../../edge.rst:267
 msgid ""
@@ -900,10 +1071,13 @@ msgid ""
 "hashed by address and port but uses rendezvous hashing for clients that "
 "must find the same server tomorrow."
 msgstr ""
+"rendezvous 哈希恰好只迁移离开的服务器的客户端；Maglev 表迁移这些客户端以及大约 0.1% "
+"的额外部分。解释上面的填充循环中这部分超额从何而来，以及为什么 Sibuna "
+"对按地址和端口哈希的流接受这一超额，却对明天还必须找到同一台服务器的客户端使用 rendezvous 哈希。"
 
 #: ../../edge.rst:269
 msgid "Health, Slow Start, Draining and Failover"
-msgstr ""
+msgstr "健康、慢启动、排空与故障转移"
 
 #: ../../edge.rst:272
 msgid ""
@@ -912,6 +1086,7 @@ msgid ""
 "connect judges one attempt; a drain is the operator's word; slow start "
 "governs the return."
 msgstr ""
+"一台服务器可能因五种原因退出轮换，每种原因都有自己的返回方式。主动探测和被动健康检查评判服务器；连接失败评判的是一次尝试；排空是运维人员的决定；慢启动管理返回过程。"
 
 #: ../../edge.rst:275
 msgid ""
@@ -922,6 +1097,9 @@ msgid ""
 "readmitted. Each return leads to Ramping, which leads to In service after "
 "the ramp."
 msgstr ""
+"“服务中”在 fall "
+"次探测失败后变为“宕机”，在连续请求失败后变为“已剔除”，在连接失败后变为“已标记”，由运维人员操作变为“已排空”。“宕机”在 rise "
+"次探测通过后返回，“已剔除”在剔除时间之后返回，“已标记”在两秒后返回，“已排空”在重新准入时返回。每次返回都进入“爬升中”，爬升结束后进入“服务中”。"
 
 #: ../../edge.rst:275
 msgid ""
@@ -958,7 +1136,7 @@ msgstr ""
 msgid ""
 "The life of a server in a pool. Only \"In service\" and \"Ramping\" take "
 "new flows; slow start applies when it is configured."
-msgstr ""
+msgstr "服务器池中一台服务器的生命周期。只有“服务中”和“爬升中”接受新流；慢启动在配置时才生效。"
 
 #: ../../edge.rst:299
 msgid ""
@@ -977,6 +1155,12 @@ msgid ""
 "survives a reload as long as the file still names the server at the same "
 "address (SID 0018)."
 msgstr ""
+"*主动探测*\\ 按一定间隔建立连接或发送 ``GET``。服务器开始时处于服务中，连续 ``fall`` 次失败后退出，``rise`` "
+"次通过后返回。重新加载后，探测线程从已发布的状态继续，因此单个结果无法使其翻转。\\ *被动健康检查*\\ "
+"统计实时请求的连续失败：响应超时，以及在设置 ``http_5xx`` 时状态码 500、502、503 或 "
+"504。达到阈值时，服务器被剔除一段剔除时间。被剔除的服务器只有在有其他服务器可以服务时才会被跳过；只有一台慢速服务器的服务器池不能因为三个请求慢就回答 "
+"503。这就是 Envoy 的 panic 规则，阈值为一台服务器。\\ *连接失败*\\ 使服务器退出两秒，且不受 panic 规则约束。\\ "
+"*排空*\\ 使服务器不再接受新流，同时让已建立的流结束。只要文件仍以相同地址列出这台服务器，排空在重新加载后依然有效（SID 0018）。"
 
 #: ../../edge.rst:301
 msgid ""
@@ -984,6 +1168,8 @@ msgid ""
 "configured weight :math:`W` that entered service :math:`t` ago has the "
 "effective weight, in units of 1/256,"
 msgstr ""
+"*慢启动*\\ 给返回的服务器一个爬升期 :math:`R`。配置权重为 :math:`W`、在 :math:`t` "
+"之前进入服务的服务器，其有效权重（以 1/256 为单位）为"
 
 #: ../../edge.rst:303
 msgid ""
@@ -1003,10 +1189,14 @@ msgid ""
 "units), round robin gives it :math:`256/1280 = 20\\%` of the turns "
 "instead of 50%."
 msgstr ""
+"权重从不为零，从不超过配置的权重，并且在服务器保持服务期间从不减少。一起首次出现的服务器（例如进程启动时）不会爬升。使用 "
+"``slow_start: \"30s\"`` 时，权重为 4、7.5 秒前返回的服务器有 :math:`w = \\lfloor 256 "
+"\\times 4 \\times 7.5/30 \\rfloor = 256`，即其权重的四分之一。与一个处于满权重（1,024 "
+"个单位）的权重为 4 的对等服务器并列时，轮询给它 :math:`256/1280 = 20\\%` 的轮次，而不是 50%。"
 
 #: ../../edge.rst:309
 msgid "Failover"
-msgstr ""
+msgstr "故障转移"
 
 #: ../../edge.rst:312
 msgid ""
@@ -1016,10 +1206,12 @@ msgid ""
 "the thread path, and the runtime's HTTP/1.1, HTTP/2 and HTTP/3 clients "
 "all ask it, so they cannot drift apart (SID 0019)."
 msgstr ""
+"只有当发送两次不会造成伤害时，请求才会转移到另一台服务器。连接失败时总可以转移：服务器什么也没有收到。发送了一个字节之后，由一个函数为每条路径作出决定：worker、线程路径以及运行时的 "
+"HTTP/1.1、HTTP/2 和 HTTP/3 客户端都询问它，因此它们不会彼此偏离（SID 0019）。"
 
 #: ../../edge.rst:314
 msgid "Implementation: ``recover``"
-msgstr ""
+msgstr "实现：``recover``"
 
 #: ../../edge.rst:316
 msgid ""
@@ -1027,6 +1219,8 @@ msgid ""
 "reconnect to the same server, move to another, or fail. In "
 "``crates/net/src/route.rs`` (crate ``sibuna-net``)."
 msgstr ""
+"决定连接建立之后失去服务器时的后续动作：重新连接同一台服务器、转移到另一台，或者失败。位于 "
+"``crates/net/src/route.rs``\\ （crate ``sibuna-net``）。"
 
 #: ../../edge.rst:318
 msgid ""
@@ -1055,6 +1249,12 @@ msgid ""
 "server the request tried. A request therefore tries no server twice and "
 "at most ``retries + 1`` servers."
 msgstr ""
+"只有在尚未收到任何响应字节、节点仍持有完整请求（请求体至多 64 KiB 且在请求缓冲区内结束），并且方法为 "
+"``GET``、``HEAD``、``OPTIONS``、``PUT`` 或 "
+"``DELETE``，或服务器表示它没有处理该请求时，请求才会被再次发送。服务器关闭的池化连接并不说明服务器的任何情况，因此首先用一个到同一台服务器的新连接替换它一次。然后 "
+"``HttpRoutes::retry`` "
+"在路由该请求的修订版本中，预留同一服务器池中的另一台服务器，排除该请求尝试过的每台服务器。因此一个请求不会两次尝试同一台服务器，至多尝试 "
+"``retries + 1`` 台服务器。"
 
 #: ../../edge.rst:334
 msgid ""
@@ -1064,10 +1264,13 @@ msgid ""
 "one fact, that the server answered HTTP/2 ``REFUSED_STREAM``, and trace "
 "it again."
 msgstr ""
+"一个带 2 KiB 请求体的 ``POST`` 在请求写出之后、收到任何响应字节之前失去了服务器。追踪 "
+"``recover``，解释为什么客户端收到 502，而不是一次悄无声息的第二次尝试。然后改变一个事实，即服务器以 HTTP/2 "
+"``REFUSED_STREAM`` 应答，再追踪一次。"
 
 #: ../../edge.rst:336
 msgid "Admission at the Socket"
-msgstr ""
+msgstr "套接字处的准入"
 
 #: ../../edge.rst:339
 msgid ""
@@ -1076,6 +1279,8 @@ msgid ""
 "orders the stages so that each costs less than the next. SID 0032 "
 "completed them for TCP and UDP frontends."
 msgstr ""
+"应用层过滤器只有在流量到达主机之后才能削减工作。因此最便宜的拒绝是最早的拒绝，SID 0015 "
+"对各阶段排序，使每个阶段的成本低于下一个阶段。SID 0032 为 TCP 和 UDP 前端补全了这些阶段。"
 
 #: ../../edge.rst:341
 msgid ""
@@ -1086,12 +1291,17 @@ msgid ""
 "privilege; when the platform refuses one, the node notes ``EDGE013`` and "
 "serves without it."
 msgstr ""
+"*内核监听器准入。*\\ ``defer_accept`` 在 Linux 上设置 "
+"``TCP_DEFER_ACCEPT``：只有当连接的第一批字节到达时，内核才把连接交给节点，因此静默的客户端不占用描述符、流槽位，也不引发唤醒。``backlog`` "
+"设置接受队列的长度。两者都不需要特权；平台拒绝其中一项时，节点记录 ``EDGE013`` 并在没有它的情况下提供服务。"
 
 #: ../../edge.rst:342
 msgid ""
 "*Connection rate.* ``rate_limit.conn_per_10s`` per source IPv4 address or "
 "IPv6 /64, and ``udp_defense.threshold_pps`` for datagrams."
 msgstr ""
+"*连接速率。*\\ 按每个源 IPv4 地址或 IPv6 /64 应用 ``rate_limit.conn_per_10s``，对数据报应用 "
+"``udp_defense.threshold_pps``。"
 
 #: ../../edge.rst:343
 msgid ""
@@ -1101,26 +1311,30 @@ msgid ""
 "because their sources are not validated. HTTP adds "
 "``http.max_connections`` and ``http.max_connections_per_ip``."
 msgstr ""
+"*流预算。*\\ 在整个节点范围内，每个客户端连接或 UDP 映射占用一个槽位，上限为 ``global.max_flows``\\ （默认 "
+"8,192，至多 1,000,000）。UDP 映射至多占用其中的 "
+"``global.max_udp_flows``，因为它们的源地址未经验证。HTTP 另外增加 ``http.max_connections`` "
+"和 ``http.max_connections_per_ip``。"
 
 #: ../../edge.rst:344
 msgid ""
 "*Bounded inspection*, of a TLS ClientHello on TCP, and of the QUIC header "
 "on UDP."
-msgstr ""
+msgstr "*有界检查*\\ ：TCP 上的 TLS ClientHello，以及 UDP 上的 QUIC 头部。"
 
 #: ../../edge.rst:345
 msgid ""
 "*The connection hooks*, then the pool: a server's ``max_flows`` and, in a "
 "cluster, its share of a fleet-wide limit (Part IX)."
-msgstr ""
+msgstr "*连接钩子*\\ ，然后是服务器池：服务器的 ``max_flows``，以及在集群中它在集群范围限制中的份额（第 IX 部分）。"
 
 #: ../../edge.rst:346
 msgid "*The HTTP firewall*, for HTTP frontends only."
-msgstr ""
+msgstr "*HTTP 防火墙*\\ ，仅用于 HTTP 前端。"
 
 #: ../../edge.rst:348
 msgid "Implementation: ``FlowBudget::reserve``"
-msgstr ""
+msgstr "实现：``FlowBudget::reserve``"
 
 #: ../../edge.rst:350
 msgid ""
@@ -1129,10 +1343,12 @@ msgid ""
 "slot on cancellation, close or expiry, so no path can leak one. A drain "
 "sets the limit to zero. In ``crates/lb/src/budget.rs``."
 msgstr ""
+"从节点范围的流预算中取出一个槽位并返回一个 ``FlowPermit``，预算已满时什么也不返回。permit 的 ``Drop`` "
+"在取消、关闭或过期时归还槽位，因此任何路径都不会泄漏槽位。排空会把上限设为零。位于 ``crates/lb/src/budget.rs``。"
 
 #: ../../edge.rst:352
 msgid "ClientHello Inspection and Fallback Classes"
-msgstr ""
+msgstr "ClientHello 检查与后备类别"
 
 #: ../../edge.rst:355
 msgid ""
@@ -1144,6 +1360,10 @@ msgid ""
 "TLS untouched, and replays the bytes it read exactly once, before any "
 "later byte of the client. A connect that fails receives none of them."
 msgstr ""
+"带 ``tcp_inspect: \"tls_client_hello\"`` 的 TCP 前端在选择服务器池之前，在 "
+"``inspect_bytes``\\ （1,024 到 32,768）和 ``inspect_delay``\\ （默认 2 "
+"秒）的范围内读取每个连接的开头。规则可以匹配服务器名称、提供的 ALPN 协议或 JA4 指纹。然后节点把连接透传给其服务器，不触动 "
+"TLS，并在客户端的任何后续字节之前，把已读取的字节恰好重放一次。连接失败的服务器不会收到这些字节。"
 
 #: ../../edge.rst:357
 msgid ""
@@ -1159,10 +1379,17 @@ msgid ""
 "classes existed: ``rules`` for absent and encrypted, ``deny`` for the "
 "other two."
 msgstr ""
+"检查以五个类别之一结束，每个类别恰好有一个结果：拒绝，或者一个指定的服务器池（SID 0032）。\\ *可见*\\ "
+"（visible）是一个带服务器名称、不带 Encrypted ClientHello 扩展的完整 "
+"ClientHello；它总是交给规则处理。\\ *缺失*\\ （absent）没有服务器名称，\\ *加密*\\ "
+"（encrypted）带有该扩展，\\ *不完整*\\ （incomplete）在消息完整之前就达到了某个上限，\\ *无效*\\ "
+"（invalid）根本不是 ClientHello。``inspect_fallback`` 为这四类各指定一个动作。文件中对 "
+"``incomplete`` 和 ``invalid`` 不允许使用 "
+"``rules``，因为没有可评估的内容。默认值重现了引入这些类别之前的行为：缺失和加密使用 ``rules``，另外两类使用 ``deny``。"
 
 #: ../../edge.rst:359
 msgid "Implementation: ``Plan::decide``"
-msgstr ""
+msgstr "实现：``Plan::decide``"
 
 #: ../../edge.rst:361
 msgid ""
@@ -1170,6 +1397,8 @@ msgid ""
 "refusal. The match is total, so no class is left without an outcome. In "
 "``crates/lb/src/inspect.rs``."
 msgstr ""
+"把一个类别和解析出的 ClientHello（如果有）映射到一个服务器池或一次拒绝。匹配是完全的，因此没有任何类别缺少结果。位于 "
+"``crates/lb/src/inspect.rs``。"
 
 #: ../../edge.rst:363
 msgid ""
@@ -1180,10 +1409,14 @@ msgid ""
 "in the outer field; the edge cannot tell greasing from a real ECH, so "
 "``encrypted: deny`` refuses most browsers."
 msgstr ""
+"这一功能旁边需要放两条提醒。JA4 "
+"指纹描述的是一次握手；任何客户端都可以发送另一个客户端的握手，因此它只能区分群体，而不是凭证。此外，当前的浏览器在每个连接上都对 "
+"Encrypted ClientHello 扩展做 GREASE 处理，真实名称放在外层字段中；边缘无法区分 GREASE 与真正的 ECH，因此 "
+"``encrypted: deny`` 会拒绝大多数浏览器。"
 
 #: ../../edge.rst:365
 msgid "QUIC Address Validation"
-msgstr ""
+msgstr "QUIC 地址验证"
 
 #: ../../edge.rst:368
 msgid ""
@@ -1200,6 +1433,11 @@ msgid ""
 "datagram of the client carries that ID as its destination, the address is "
 "validated, and the reply bound ends."
 msgstr ""
+"UDP 前端把每个映射的回复限制为客户端所发送字节数的三倍。没有这个上限，伪造的源地址就会把节点变成放大器。这个上限也会限制真实的 QUIC "
+"下载，因为小的确认包会换来大的数据包。使用 ``udp_inspect: \"quic\"`` 时，前端只为看起来像 QUIC Initial "
+"的数据报打开映射：长头部、长度合适的连接 ID，并且至少 1,200 字节，因为 RFC 9000 "
+"要求客户端填充到这一长度。然后它读取源站的回复。从第一个版本不为零、源连接 ID 至少 8 字节的长头部回复中，它记住这个 ID，除非该 ID "
+"等于客户端发送过的某个 ID。当客户端之后的某个数据报把这个 ID 作为目的连接 ID 携带时，地址即通过验证，回复上限随之解除。"
 
 #: ../../edge.rst:370
 msgid ""
@@ -1213,11 +1451,15 @@ msgid ""
 "86 ms with validation; without it, 17,060 bytes arrived in 3 seconds. "
 "These figures show the size of the effect and are no benchmark."
 msgstr ""
+"论证与 RFC 9000 第 8.1 节相同。这个 ID 由源站选择，并且只发送到所声称的地址。伪造地址的发送方永远收不到它，必须猜测至少 64 "
+"位，每次猜测一个数据报。两条排除规则堵住了明显的漏洞：版本协商包（版本为零）会重复客户端自己的 "
+"ID，而回显其输入的源站否则会让所有人都通过验证。在回环接口上，以调试构建，经边缘下载 8 MiB 在有验证时耗时 83 到 86 "
+"ms；没有验证时，3 秒内只到达了 17,060 字节。这些数字说明了效果的大小，并不是基准测试。"
 
 #: ../../edge.rst:372
 msgid ""
 "Implementation: ``Validation::see_reply`` and ``Validation::see_request``"
-msgstr ""
+msgstr "实现：``Validation::see_reply`` 和 ``Validation::see_request``"
 
 #: ../../edge.rst:374
 msgid ""
@@ -1226,6 +1468,8 @@ msgid ""
 "validated when the client repeats that ID in a long or a short header. In "
 "``crates/lb/src/quic_edge.rs``."
 msgstr ""
+"``see_reply`` 从回复中学习源站的连接 ID，拒绝版本为零、过短的 ID 和回显。当客户端在长头部或短头部中重复这个 ID "
+"时，``see_request`` 把映射标记为已验证。位于 ``crates/lb/src/quic_edge.rs``。"
 
 #: ../../edge.rst:376
 msgid ""
@@ -1236,6 +1480,8 @@ msgid ""
 "token format private and binds the token to the datagram's source, which "
 "behind the edge is the edge."
 msgstr ""
+"边缘自己不发送 QUIC Retry。SID 0032 规定了边缘与源站必须共享的约定：令牌格式和密钥、地址绑定，以及传输参数中的连接 "
+"ID；并记录了未实现它的原因：工作区所用的 QUIC 库不公开其令牌格式，并把令牌绑定到数据报的源地址，而在边缘之后，这个源地址就是边缘本身。"
 
 #: ../../edge.rst:380
 msgid ""
@@ -1244,10 +1490,12 @@ msgid ""
 "not zero, at least 8 bytes, not equal to an ID of the opening datagram) "
 "describe the attack it prevents."
 msgstr ""
+"“验证从不建立在路径外发送方可能知道的值上。”针对所学习连接 ID 的三个条件（版本不为零、至少 8 字节、不等于打开映射的数据报中的 "
+"ID），分别描述它所防止的攻击。"
 
 #: ../../edge.rst:382
 msgid "Traffic Policy, the Gate and the Shield"
-msgstr ""
+msgstr "流量策略、Gate 与 Shield"
 
 #: ../../edge.rst:385
 msgid ""
@@ -1267,10 +1515,17 @@ msgid ""
 "timeouts, retries, passive health, sticky sessions, header edits and "
 "HSTS. A TCP or UDP frontend never invokes the firewall."
 msgstr ""
+"HTTP 请求先通过廉价的检查，再通过昂贵的检查，钩子在两者之后才执行。封禁表和请求限制器排在最前。接着是 SID 0019 的流量策略：重定向到 "
+"HTTPS 和请求体限制（413）在防火墙策略之前判定，因此明文请求永远不会被挑战。然后按 ``http.surface`` "
+"的选择运行前面几个部分的防火墙：``off`` 使节点成为普通的负载均衡器，``gate`` 增加第 III 和 IV "
+"部分的策略和工作量证明挑战，``shield`` 增加第 VI 部分的语义检查。前端或路由可以为无法完成挑战的客户端（例如 Git 和 CI "
+"runner）设置 ``firewall: "
+"false``；这样的请求仍保留协议校验、连接限制、封禁和请求限制器。请求钩子评判防火墙准入的内容，之后才选择服务器。SID 0019 "
+"的其余部分塑造这次交换：连接和响应超时、重试、被动健康检查、粘性会话、请求头编辑和 HSTS。TCP 或 UDP 前端从不调用防火墙。"
 
 #: ../../edge.rst:387
 msgid "Hooks"
-msgstr ""
+msgstr "钩子"
 
 #: ../../edge.rst:390
 msgid ""
@@ -1286,6 +1541,12 @@ msgid ""
 "may not read a body, change the method, path or host, choose a server, or "
 "add a field of framing or one that Sibuna writes as its own statement."
 msgstr ""
+"运维人员有时需要在路径上加入自己的决策：租户检查、授权服务、评分。SID 0030 "
+"规定了这种钩子挂接在哪里、它能看到什么，以及它失败时会发生什么。钩子挂接在三个\\ *阶段*\\ 之一：``connection``\\ "
+"（在速率和预算之后，每个 TCP 连接或 UDP 映射一次；或在读到 QUIC 连接的 ClientHello 时每个 QUIC "
+"连接一次）、``request``\\ （每个被封禁、限制器和策略准入的请求一次，在选择服务器之前）和 ``telemetry``\\ "
+"（每个请求一次，在应答之后）。它可以准入、拒绝、要求挑战，并至多添加 8 "
+"个请求字段。它不能读取请求体，不能修改方法、路径或主机，不能选择服务器，也不能添加分帧字段或 Sibuna 作为自身声明而写入的字段。"
 
 #: ../../edge.rst:392
 msgid ""
@@ -1296,10 +1557,14 @@ msgid ""
 "``unsafe``. An *agent* is another process behind a Unix socket, a "
 "deadline and a circuit breaker."
 msgstr ""
+"钩子在三个\\ *层级*\\ 之一中运行。\\ *原生*\\ （native）钩子是编译进守护进程的 Rust "
+"代码：受信任、不受预算约束，连同调用链和计数器每次调用 42 ns。\\ *Wasm* 钩子运行在为此专门自行编写的解释器上（不是第 VII "
+"部分的浏览器引擎），没有 JIT，也没有 ``unsafe``。\\ *代理*\\ （agent）是位于 Unix "
+"套接字之后的另一个进程，带有期限和熔断器。"
 
 #: ../../edge.rst:394
 msgid "The Outcome Rule"
-msgstr ""
+msgstr "结果规则"
 
 #: ../../edge.rst:397
 msgid ""
@@ -1308,6 +1573,9 @@ msgid ""
 "``on_failure``, which is ``deny`` unless the operator writes ``admit``. "
 "For stage :math:`s`, written choice :math:`f` and result :math:`r`,"
 msgstr ""
+"一次调用以一个裁决或四种失败之一结束：``timeout``、``overload``、``trap`` 或 "
+"``unavailable``。每个插件都有 ``on_failure``，除非运维人员写成 ``admit``，否则它为 "
+"``deny``。对于阶段 :math:`s`、书面选择 :math:`f` 和结果 :math:`r`，"
 
 #: ../../edge.rst:399
 msgid ""
@@ -1324,10 +1592,11 @@ msgid ""
 "hook never admits, whatever the others answer, and no failure admits "
 "traffic except by a choice written in the file."
 msgstr ""
+"只有当调用链中的每个钩子的结果都是准入时，调用链才准入；第一个其他裁决会终止调用链。因此，带有一个失败的授权钩子的调用链永远不会准入，无论其他钩子如何回答；除了文件中写明的选择，任何失败都不会准入流量。"
 
 #: ../../edge.rst:405
 msgid "Implementation: ``outcome`` and ``chain``"
-msgstr ""
+msgstr "实现：``outcome`` 和 ``chain``"
 
 #: ../../edge.rst:407
 msgid ""
@@ -1335,6 +1604,8 @@ msgid ""
 "in ``docs/sid/assets/plugin-tiers.lean``. In "
 "``crates/plugin/src/verdict.rs`` (crate ``sibuna-plugin``)."
 msgstr ""
+"上述规则及其在调用链上的折叠，实现为两个小函数，并在 ``docs/sid/assets/plugin-tiers.lean`` 中建模。位于 "
+"``crates/plugin/src/verdict.rs``\\ （crate ``sibuna-plugin``）。"
 
 #: ../../edge.rst:409
 msgid ""
@@ -1351,7 +1622,7 @@ msgstr ""
 
 #: ../../edge.rst:420
 msgid "Fuel, Breakers and Parked Connections"
-msgstr ""
+msgstr "燃料、熔断器与暂存的连接"
 
 #: ../../edge.rst:423
 msgid ""
@@ -1371,6 +1642,16 @@ msgid ""
 "the difference of 1.4 us for an interpreter of 2,324 lines with no "
 "``unsafe`` and no new crate, against about 96,000 lines and eight crates."
 msgstr ""
+"Wasm 模块是不可信输入，因此每个上限都在它运行之前设定：模块至多 4 MiB，``memory_pages`` 个 64 KiB 的页，256 "
+"个调用帧，16,384 个栈值，对两个宿主函数的 ``host_calls`` 次调用，以及每次调用 ``fuel_limit`` "
+"个单位的燃料（默认 100,000）。每个操作花费一个单位，``memory.copy``、``memory.fill`` 和 "
+"``memory.grow`` 每处理 16 或 64 "
+"字节再多花费一个单位，因此没有任何操作做不计量的工作。解释器的循环在每个操作之前取走一个单位，即 "
+"``crates/plugin/src/wasm/exec.rs`` 中 ``Instance::run`` 里的 "
+"``budget.fuel.checked_sub(1).ok_or(Trap::Fuel)?``。燃料是计数，不是时钟：同一个模块在同一输入上，在每台机器上都会停在同一个操作。示例钩子花费 "
+"635 个操作，进程内每次调用 2.2 到 2.4 us。wasmi 1.1.0 运行同一调用需要 0.77 us；SID 0030 接受这 "
+"1.4 us 的差距，换来一个 2,324 行、没有 ``unsafe``、不引入新 crate 的解释器，而对方约有 96,000 行和八个 "
+"crate。"
 
 #: ../../edge.rst:425
 msgid ""
@@ -1380,10 +1661,13 @@ msgid ""
 "and after ``open`` one probe goes out, which closes or reopens it. An "
 "``overload`` is not the agent's fault and does not count."
 msgstr ""
+"一次代理调用至多等待 ``deadline``\\ （默认 5 ms）。每个线程为每个代理保留一个熔断器：连续 ``failures`` "
+"次失败使其断开，断开的熔断器立即以 ``unavailable`` 拒绝且不进行系统调用，经过 ``open`` "
+"之后发出一次探测，探测结果使其闭合或再次断开。``overload`` 不是代理的过错，不计入失败。"
 
 #: ../../edge.rst:427
 msgid "Worked example: what a dead agent costs"
-msgstr ""
+msgstr "实例分析：一个失效的代理有多大代价"
 
 #: ../../edge.rst:429
 msgid ""
@@ -1395,6 +1679,10 @@ msgid ""
 "most 0.5% of a worker. Meanwhile every request of the guarded frontend "
 "takes the agent's ``on_failure`` outcome: with the default, it is denied."
 msgstr ""
+"八个 worker 调用一个 ``deadline`` 为 5 ms、使用默认熔断器（五次失败、断开 ``1s``）的代理。最坏情况下，每个 "
+"worker 在其熔断器断开之前要付出五个完整的期限：总共 :math:`8 \\times 5 \\times 5 = 200` ms "
+"的线程时间，每个 worker 25 ms。此后每个 worker 每秒发送一次探测，每次至多 5 ms，至多占一个 worker 的 "
+"0.5%。在此期间，受保护前端的每个请求都采用代理的 ``on_failure`` 结果：在默认设置下，请求被拒绝。"
 
 #: ../../edge.rst:431
 msgid ""
@@ -1409,40 +1697,45 @@ msgid ""
 "the failure rule decides. Parking costs about 11 us, two thread handoffs: "
 "22.8 us against 12 us for the same call on the calling thread."
 msgstr ""
+"在请求阶段，代理调用会占住服务该请求的线程；在 worker 上，该 worker "
+"的其他连接都要等待它。在连接阶段，这会阻塞为所有前端接受连接的边缘 worker，因此调用链中包含代理的连接会被\\ *暂存*\\ 。worker "
+"保留其套接字和流许可，但不读取它；带有自己钩子实例的评判线程运行调用链，并用裁决唤醒 "
+"worker。当评判线程的队列已满时，调用链在调用者上运行，所有代理都以 ``overload`` 失败，由失败规则决定。暂存的代价约为 11 "
+"us，即两次线程交接：22.8 us，而在调用线程上进行同一调用为 12 us。"
 
 #: ../../edge.rst:433
 msgid ""
 "Measured cost of one hook (SID 0030, one busy machine, optimized builds, "
 "loopback)"
-msgstr ""
+msgstr "一个钩子的实测成本（SID 0030，一台繁忙的机器，优化构建，回环接口）"
 
 #: ../../edge.rst:437
 msgid "Case"
-msgstr ""
+msgstr "场景"
 
 #: ../../edge.rst:438
 msgid "In process"
-msgstr ""
+msgstr "进程内"
 
 #: ../../edge.rst:439
 msgid "End to end per request"
-msgstr ""
+msgstr "每个请求的端到端开销"
 
 #: ../../edge.rst:440
 msgid "No hook"
-msgstr ""
+msgstr "无钩子"
 
 #: ../../edge.rst:441
 msgid "1.1 ns (one load)"
-msgstr ""
+msgstr "1.1 ns（一次读取）"
 
 #: ../../edge.rst:442
 msgid "41.8 to 42.2 us"
-msgstr ""
+msgstr "41.8 到 42.2 us"
 
 #: ../../edge.rst:443
 msgid "Native ``require_header``"
-msgstr ""
+msgstr "原生 ``require_header``"
 
 #: ../../edge.rst:444
 msgid "42 ns"
@@ -1450,31 +1743,31 @@ msgstr ""
 
 #: ../../edge.rst:445
 msgid "within the noise of about 2 us"
-msgstr ""
+msgstr "在约 2 us 的噪声范围内"
 
 #: ../../edge.rst:446
 msgid "Wasm, the example module"
-msgstr ""
+msgstr "Wasm，示例模块"
 
 #: ../../edge.rst:447
 msgid "2.2 to 2.4 us"
-msgstr ""
+msgstr "2.2 到 2.4 us"
 
 #: ../../edge.rst:448
 msgid "+5.2 to +6.1 us"
-msgstr ""
+msgstr "+5.2 到 +6.1 us"
 
 #: ../../edge.rst:449
 msgid "Agent on a Unix socket"
-msgstr ""
+msgstr "Unix 套接字上的代理"
 
 #: ../../edge.rst:450
 msgid "12 to 18 us"
-msgstr ""
+msgstr "12 到 18 us"
 
 #: ../../edge.rst:451
 msgid "+18.4 to +21.5 us"
-msgstr ""
+msgstr "+18.4 到 +21.5 us"
 
 #: ../../edge.rst:455
 msgid ""
@@ -1484,10 +1777,13 @@ msgid ""
 "``on_failure`` left at its default, and what the operator gives up by "
 "writing ``on_failure: \"admit\"``."
 msgstr ""
+"“授权钩子失败即拒绝。”攻击者可以发送一个大于钩子输入缓冲区的请求头部，使 Wasm 钩子以 ``overload`` "
+"失败。解释为什么视图从不被截断以适应缓冲区，``on_failure`` 保持默认值时会发生什么，以及运维人员写成 ``on_failure: "
+"\"admit\"`` 会放弃什么。"
 
 #: ../../edge.rst:457
 msgid "Automatic HTTPS"
-msgstr ""
+msgstr "自动 HTTPS"
 
 #: ../../edge.rst:460
 msgid ""
@@ -1509,10 +1805,20 @@ msgid ""
 "read memory, and a thread asks the ``ask`` URL and takes a token from a "
 "bucket of ``rate`` orders per hour before it orders."
 msgstr ""
+"指定了主机的前端，例如 ``tls: { auto: [\"example.org\"] }``，会自行获取证书（SID 0021）。节点注册一个 "
+"ACME 账户，应答 HTTP-01、TLS-ALPN-01 或 "
+"DNS-01，存储证书，无需重新加载即可提供它，在其有效期的三分之二时续期，并把受管名称的明文 HTTP "
+"重定向。证书颁发机构的失败会连同提示一起记录并重试，监听器继续提供已有的证书。内部名称（例如 "
+"``localhost``、``.internal`` 或单标签名称）以及 IP "
+"地址从不发往公共证书颁发机构：要么文件被拒绝，要么该名称交给节点创建的\\ *本地证书颁发机构*\\ ，其根证书有效期 10 年，中间证书 7 "
+"天，叶证书 12 小时。节点从不把这个根证书安装到信任库中；``show ca`` 把它打印出来，由运维人员安装。\\ *按需*\\ "
+"签发（在首次握手时为未知名称签发）在没有防护的文件中会被拒绝：没有 ``ask`` 或 ``allow`` "
+"时，任何能把名称指向该节点的人都可能耗尽证书颁发机构的限额。有防护时，握手只执行读取内存的检查，由一个线程询问 ``ask`` "
+"URL，并在下单之前从每小时 ``rate`` 个订单的令牌桶中取出一个令牌。"
 
 #: ../../edge.rst:462
 msgid "Observation"
-msgstr ""
+msgstr "观测"
 
 #: ../../edge.rst:465
 msgid ""
@@ -1531,10 +1837,16 @@ msgid ""
 "for a look at the clients. A readiness route turns to 503 while the node "
 "drains."
 msgstr ""
+"节点对自己所做的事情计数，使运维人员能够区分因容量不足而拒绝和因策略而拒绝（SID 0020）。每个 HTTP "
+"请求通过一个线程上的有界队列写一行访问日志，每个 TCP 或 UDP "
+"流在结束时写一行。每个前端和每台服务器都有请求计数器、延迟直方图、健康状态和活动请求数。在防火墙之前被拒绝的每个连接或数据报都计入 "
+"``sibuna_edge_refused_total``，并带有原因：``rate_limit``、``flow_limit``、``draining``、``connection_limit``、``client_limit``、``exchange_limit``、``no_server``、``udp_rate_limit``、``udp_flow_limit``、``udp_reply_limit``、``udp_not_quic``、``inspect_denied`` "
+"等。原因正是计数有用的地方：``no_server`` 上升说明需要服务器，``rate_limit`` "
+"上升说明需要查看客户端。节点排空期间，就绪路由变为 503。"
 
 #: ../../edge.rst:467
 msgid "The Measured Result"
-msgstr ""
+msgstr "测量结果"
 
 #: ../../edge.rst:470
 msgid ""
@@ -1550,14 +1862,20 @@ msgid ""
 "multiplexer written for this one purpose. Only a cheaper HTTP/2 path "
 "would change it, and SID 0017 records why we have not written one."
 msgstr ""
+"第 X 部分在一台主机和三台主机上比较了边缘与 HAProxy 3.0.11。在 SID 0024 "
+"之后，当两个代理写入相同的响应头时，Sibuna 承载 TCP、明文 HTTP 和 HTTPS 的速率达到或超过 HAProxy，且使用更少的 "
+"CPU；在三台主机上，TCP 的比值为 1.04，HTTP 为 1.02，HTTPS 为 1.10。HAProxy 更快的是 "
+"HTTP/2：Sibuna 在一台主机上承载其速率的 0.67 到 0.74，在三台主机上为 0.69。基准测试一章解释了原因。整个 HTTP/2 "
+"交换都在协议运行时中进行，这是一个通用异步运行时加上一个通用 HTTP/2 库；这条路径受 CPU 限制，每个请求 74 us，而 HAProxy "
+"为这一目的专门编写的多路复用器为 52 us。只有更廉价的 HTTP/2 路径才能改变这一点，SID 0017 记录了我们为什么没有编写这样的路径。"
 
 #: ../../edge.rst:472
 msgid "Exercises"
-msgstr ""
+msgstr "练习"
 
 #: ../../edge.rst:475
 msgid "Exercise 8.1"
-msgstr ""
+msgstr "练习 8.1"
 
 #: ../../edge.rst:477
 msgid ""
@@ -1566,16 +1884,19 @@ msgid ""
 "run reported above for ten servers, about how many under Sibuna's Maglev "
 "table? Then answer the same for a server that joins a pool of four."
 msgstr ""
+"一个服务器池有十台等权重服务器，其中一台离开。在取模哈希下有多大比例的流迁移？在 rendezvous "
+"哈希下呢？根据上文报告的十台服务器的运行结果，在 Sibuna 的 Maglev "
+"表下大约有多少？然后对一台加入四台服务器的服务器池的服务器回答同样的问题。"
 
 #: ../../edge.rst:479
 msgid ""
 "Hint: Use the Chinese remainder theorem for modulo hashing, and the "
 "minimum of the other distances for rendezvous hashing."
-msgstr ""
+msgstr "提示：对取模哈希使用中国剩余定理，对 rendezvous 哈希使用其他距离的最小值。"
 
 #: ../../edge.rst:481
 msgid "Exercise 8.2"
-msgstr ""
+msgstr "练习 8.2"
 
 #: ../../edge.rst:483
 msgid ""
@@ -1586,16 +1907,20 @@ msgid ""
 "``a`` holds 9 and ``c`` holds 3? Show that some server is always below "
 "its bound."
 msgstr ""
+"一个有界 Maglev 服务器池有服务器 ``a``、``b`` 和 ``c``，权重分别为 2、1 和 "
+"1，``load_factor_pct`` 为 125，有 19 个活动流。计算第二十个流到来时每台服务器的上界。哈希指向持有 7 个流的 "
+"``b``。如果 ``a`` 持有 9 个流、``c`` 持有 3 个流，使用最少连接后备调度器时，这个流去往哪里？证明总有某台服务器低于其上界。"
 
 #: ../../edge.rst:485
 msgid ""
 "Hint: The bound is :math:`\\lceil c (L+1) w_p / W \\rceil`, and the "
 "contradiction argument of the worked example applies with weights."
 msgstr ""
+"提示：上界为 :math:`\\lceil c (L+1) w_p / W \\rceil`，实例分析中的反证法论证在带权重时同样适用。"
 
 #: ../../edge.rst:487
 msgid "Exercise 8.3"
-msgstr ""
+msgstr "练习 8.3"
 
 #: ../../edge.rst:489
 msgid ""
@@ -1607,16 +1932,20 @@ msgid ""
 "each request cost the worker for the agent? What changes if ``authz`` is "
 "written with ``on_failure: \"admit\"``?"
 msgstr ""
+"一个 HTTP 前端的请求调用链为 ``[tenant, score, authz]``：一个原生 ``require_header`` "
+"钩子、一个带 ``on_failure: \"admit\"`` 的 Wasm 钩子，以及一个使用默认 ``on_failure`` "
+"的代理。代理进程已经终止，所有熔断器都已断开。携带租户字段的请求的裁决是什么？缺少该字段的请求呢？每个请求为代理花费 worker 多少成本？如果 "
+"``authz`` 写成 ``on_failure: \"admit\"``，会有什么变化？"
 
 #: ../../edge.rst:491
 msgid ""
 "Hint: Apply the outcome rule to each hook, then the chain rule. An open "
 "breaker costs no system call."
-msgstr ""
+msgstr "提示：对每个钩子应用结果规则，再应用调用链规则。断开的熔断器不产生系统调用。"
 
 #: ../../edge.rst:493
 msgid "Exercise 8.4"
-msgstr ""
+msgstr "练习 8.4"
 
 #: ../../edge.rst:495
 msgid ""
@@ -1627,28 +1956,31 @@ msgid ""
 "client's address not produce it? Why would learning from a Version "
 "Negotiation packet break the argument?"
 msgstr ""
+"一个 QUIC 客户端经由带 ``udp_inspect: \"quic\"`` 的前端发送一个 1,200 字节的 Initial，源站以八个 "
+"1,200 "
+"字节的数据报应答。验证之前有多少个数据报到达客户端？客户端的哪个数据报使映射通过验证？为什么伪造客户端地址的发送方无法产生它？为什么从版本协商包中学习会破坏这一论证？"
 
 #: ../../edge.rst:497
 msgid ""
 "Hint: The bound is three times the bytes received. Compare what the "
 "origin chose with what the client chose."
-msgstr ""
+msgstr "提示：上限是所收到字节数的三倍。比较源站所选的内容与客户端所选的内容。"
 
 #: ../../edge.rst:499
 msgid "Limits"
-msgstr ""
+msgstr "局限"
 
 #: ../../edge.rst:502
 msgid ""
 "The known gaps of these records, and one consequence of the design, "
 "stated where an operator meets them:"
-msgstr ""
+msgstr "下面列出这些记录中已知的不足，以及设计带来的一个后果，写在运维人员会遇到它们的地方："
 
 #: ../../edge.rst:504
 msgid ""
 "*Ownership balances counts, not work.* A connection stays on the worker "
 "it was given; the assignment equalizes connection counts only."
-msgstr ""
+msgstr "*所有权均衡的是连接数，而不是工作量。*\\ 连接一直留在分配给它的 worker 上；这种分配只让连接数相等。"
 
 #: ../../edge.rst:505
 msgid ""
@@ -1659,6 +1991,9 @@ msgid ""
 "do not survive a restart, and a Maglev pool takes only ``drain`` at run "
 "time."
 msgstr ""
+"*改变绑定、网格成员名单或溢出（spill）部分的重新加载需要重启。*\\ "
+"在一个请求的决策时间内发生两次重新加载，仍会拒绝该请求；在重新加载后十秒内下达的排空命令不会作用于已淘汰的修订版本（SID "
+"0018）。运行时的修改在重启后不会保留，Maglev 服务器池在运行时只接受 ``drain``。"
 
 #: ../../edge.rst:506
 msgid ""
@@ -1670,6 +2005,10 @@ msgid ""
 "``http.workers`` says, and its idle pool is one lock. gRPC from a "
 "cleartext HTTP/2 client is not accepted."
 msgstr ""
+"*HTTP/2 运行在运行时上，而不是 worker 上。*\\ 它在一台主机上承载 HAProxy 速率的 0.67 到 0.74。来自提供过 "
+"``h2`` 的客户端的基于 TLS 的 HTTP/1.1，以及基于 HTTP/2 的 WebSocket，仍然要穿过套接字对（SID "
+"0017，SID 0024）。``http_version`` 为 2 或 3 的服务器池无法接收 WebSocket（SID 0016）。无论 "
+"``http.workers`` 如何设置，运行时至多使用八个线程，其空闲连接池是一把锁。不接受来自明文 HTTP/2 客户端的 gRPC。"
 
 #: ../../edge.rst:507
 msgid ""
@@ -1678,6 +2017,8 @@ msgid ""
 "threads. Two requests that choose at the same moment may take the same "
 "least loaded server; limits still hold (SID 0019)."
 msgstr ""
+"*选择服务器仍然会写共享内存：*\\ "
+"引用计数和所选服务器的计数器，在八个线程下每次调用约一微秒。同时进行选择的两个请求可能选中同一台负载最轻的服务器；限制仍然成立（SID 0019）。"
 
 #: ../../edge.rst:508
 msgid ""
@@ -1685,6 +2026,7 @@ msgid ""
 "overflow is not placed consistently across nodes. The slot table of "
 "source stickiness has a granularity of 1,021 slots."
 msgstr ""
+"*使用 pewma 后备调度器时，有界负载不是保证，*\\ 并且溢出的流在各节点之间的放置不一致。源地址粘性的槽表粒度为 1,021 个槽。"
 
 #: ../../edge.rst:509
 msgid ""
@@ -1693,6 +2035,8 @@ msgid ""
 "never moves after the send, because the client library does not report a "
 "refusal we can read (SID 0019)."
 msgstr ""
+"*故障转移无法转移一切。*\\ 超过 64 KiB 的请求体以流式发送，无法再次发送。发往 HTTP/3 "
+"服务器的非幂等请求在发送之后从不转移，因为客户端库不报告我们能够读取的拒绝（SID 0019）。"
 
 #: ../../edge.rst:510
 msgid ""
@@ -1705,6 +2049,10 @@ msgid ""
 "for Linux only, and the effect of ``backlog`` on a full queue is not "
 "measured (SID 0032)."
 msgstr ""
+"*套接字处的准入对 TCP 和 UDP 尚不完整。*\\ TCP 和 UDP 前端不查询封禁表。UDP 的按前缀字节预算尚未实现。由边缘生成的 "
+"QUIC Retry 已有规范，但尚未实现。边缘检查源站连接 ID 的长度，而不检查其熵。经过边缘的 QUIC 连接迁移无法工作，GREASE "
+"处理的 Encrypted ClientHello 与真正的 Encrypted ClientHello 属于同一类别。内核准入只为 Linux "
+"实现，``backlog`` 在队列已满时的效果尚未测量（SID 0032）。"
 
 #: ../../edge.rst:511
 msgid ""
@@ -1716,6 +2064,9 @@ msgid ""
 "had no external review. The hook measurements were taken on a busy "
 "machine (SID 0030)."
 msgstr ""
+"*请求阶段的代理调用会占住它的线程。*\\ QUIC 连接的裁决不会停止其握手。暂存的流要付出两次线程交接的代价，保留一个 UDP "
+"数据报，并且没有任何指标统计它们。每个线程持有自己的 Wasm 实例，重新加载会重建每个实例。该解释器比 wasmi "
+"慢两到三倍，也未经过外部审查。钩子测量是在一台繁忙的机器上进行的（SID 0030）。"
 
 #: ../../edge.rst:512
 msgid ""
@@ -1723,6 +2074,8 @@ msgid ""
 "``tls_cipher`` is ``-`` for HTTP/3; a long-lived TCP connection writes "
 "its line only at its end (SID 0020)."
 msgstr ""
+"*观测存在漏洞。*\\ 分块编码的分帧不计入 ``bytes_in``；HTTP/3 的 ``tls_cipher`` 为 ``-``；长连接的 "
+"TCP 连接只在结束时才写日志行（SID 0020）。"
 
 #: ../../edge.rst:513
 msgid ""
@@ -1731,6 +2084,9 @@ msgid ""
 "per address and keeps its orders in memory on one node; the Cloudflare "
 "DNS provider was never run against Cloudflare (SID 0021)."
 msgstr ""
+"*自动 HTTPS*\\ 对按需签发除了防护和令牌桶之外没有按客户端的上限；本地证书颁发机构的 ACME "
+"服务器没有按地址的限制，并且只在一个节点的内存中保存订单；Cloudflare DNS 提供程序从未在 Cloudflare 上实际运行过（SID "
+"0021）。"
 
 #: ../../edge.rst:514
 msgid ""
@@ -1739,3 +2095,4 @@ msgid ""
 "batching remain proposed, and the full qualification list of SID 0015 is "
 "open."
 msgstr ""
+"*规模尚未经过鉴定。*\\ 流表可配置到一百万个条目；一千万流的实验和协作式平台批处理仍处于提议阶段，SID 0015 的完整鉴定清单仍未完成。"
