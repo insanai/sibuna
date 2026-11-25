@@ -20,6 +20,7 @@ use sibuna_acme::{Account, Binding, ChallengeKind, Error, Issued, OrderOptions};
 
 use super::super::Event;
 use super::super::client::Client;
+use super::super::dns::Sender;
 use super::{Driver, Entry, ORDER_LIMIT, converse};
 
 /// The largest file of a binding key that we read.
@@ -83,6 +84,8 @@ pub(super) struct Ready {
     others: Vec<Authority>,
     pub runtime: tokio::runtime::Runtime,
     pub dns: Option<DnsOptions>,
+    /// The HTTP client of a DNS provider that needs one.
+    pub sender: Option<Sender>,
 }
 
 impl Ready {
@@ -97,11 +100,15 @@ impl Ready {
             .map(|config| Authority::open(storage, &config, Some(&first.store)))
             .collect::<Result<Vec<_>, _>>()?;
         let dns = options.dns.as_ref().map(super::super::dns::options).transpose()?;
+        let sender = match &options.dns {
+            Some(config) => super::super::dns::sender(config)?,
+            None => None,
+        };
         let runtime = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()
             .map_err(|error| Error::unreachable(format!("No runtime for the client: {error}.")))?;
-        Ok(Self { first, others, runtime, dns })
+        Ok(Self { first, others, runtime, dns, sender })
     }
 
     /// The thumbprint of the account key, which all authorities share.
@@ -193,14 +200,22 @@ impl Driver {
             binding: chosen.binding.clone(),
             replaces: self.replaced(entry, index),
         };
-        let Ready { first, others, runtime, dns } = ready;
+        let Ready { first, others, runtime, dns, sender } = ready;
         // The DNS record of a name is remembered with the first authority.
         let records = &first.store;
         let (account, client) = match index.checked_sub(1).and_then(|at| others.get_mut(at)) {
             Some(other) => (&mut other.account, &other.client),
             None => (&mut first.account, &first.client),
         };
-        self.conduct(Parts { account, client, records, runtime, dns: dns.as_ref() }, options)
+        let parts = Parts {
+            account,
+            client,
+            records,
+            runtime,
+            dns: dns.as_ref(),
+            sender: sender.as_ref(),
+        };
+        self.conduct(parts, options)
     }
 
     fn conduct(
@@ -208,12 +223,18 @@ impl Driver {
         parts: Parts<'_>,
         options: OrderOptions,
     ) -> Result<(Issued, &'static str), Error> {
-        let Parts { account, client, records, runtime, dns } = parts;
+        let Parts { account, client, records, runtime, dns, sender } = parts;
         let name = options.name.clone();
-        let solver = dns.map(|options| Solver { options, store: records });
+        let send = |call: &sibuna_acme::Call| match sender {
+            Some(sender) => sender.send(call),
+            None => Err(Error::provider("The DNS provider has no HTTP client.")),
+        };
+        let solver = dns.map(|options| Solver { options, store: records, http: Some(&send) });
         let mut limit = ORDER_LIMIT;
         if let (ChallengeKind::Dns01, Some(dns)) = (options.challenge, dns) {
             limit += dns.wait + dns.timeout + 2 * sibuna_acme::dns::HOOK_TIMEOUT;
+            // Following a delegation may take the timeout once more.
+            limit += if dns.follow_cname { dns.timeout } else { std::time::Duration::ZERO };
         }
         let conversation = converse(account, client, &self.shared, options, solver.as_ref());
         // The timer needs the runtime, so it is made inside it.
@@ -236,4 +257,5 @@ struct Parts<'a> {
     records: &'a Store,
     runtime: &'a tokio::runtime::Runtime,
     dns: Option<&'a DnsOptions>,
+    sender: Option<&'a Sender>,
 }

@@ -15,6 +15,7 @@
 //! The file `dns` is written before the provider runs and removed after the cleanup
 //! succeeded. A daemon that died in between finds the file and cleans up at its start.
 
+pub mod cloudflare;
 pub mod hook;
 pub mod lookup;
 #[cfg(any(test, feature = "test-server"))]
@@ -57,6 +58,15 @@ pub enum Provider {
         /// The path of the program.
         program: PathBuf,
     },
+    /// The API of Cloudflare. See [`cloudflare`].
+    Cloudflare {
+        /// The file that holds the API token. It is read at each use.
+        token_file: PathBuf,
+        /// The zone of the record. Without one it is searched from the owner upwards.
+        zone: Option<String>,
+        /// The base URL of the API: [`cloudflare::DEFAULT_API`] outside tests.
+        api: String,
+    },
     /// A dynamic update to the server of the zone. See [`update`].
     Rfc2136 {
         /// The server that takes the update.
@@ -81,6 +91,8 @@ pub struct DnsOptions {
     pub wait: Duration,
     /// Where the check asks.
     pub lookup: Lookup,
+    /// Write the record at the target of a CNAME delegation of `_acme-challenge.NAME`.
+    pub follow_cname: bool,
 }
 
 impl DnsOptions {
@@ -92,17 +104,68 @@ impl DnsOptions {
             timeout: Duration::from_secs(120),
             wait: Duration::ZERO,
             lookup: Lookup::default(),
+            follow_cname: true,
         }
     }
 }
 
 /// Presents and removes the record of one name.
-#[derive(Debug)]
 pub struct Solver<'a> {
     /// The settings.
     pub options: &'a DnsOptions,
     /// The store that remembers a presented record.
     pub store: &'a Store,
+    /// Sends the calls of a provider that speaks HTTP. The Cloudflare provider needs
+    /// it. The caller owns the sockets and the trust roots.
+    pub http: Option<cloudflare::Send<'a>>,
+}
+
+impl std::fmt::Debug for Solver<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Solver")
+            .field("options", self.options)
+            .field("store", self.store)
+            .field("http", &self.http.is_some())
+            .finish()
+    }
+}
+
+/// The largest token file that we read.
+const MAX_TOKEN_FILE: u64 = 4096;
+
+/// The owner that the authority asks for the `auto` name `name`: `_acme-challenge.` and
+/// the name without its `*.`.
+fn challenge_owner(name: &str) -> String {
+    format!("_acme-challenge.{}", name.strip_prefix("*.").unwrap_or(name))
+}
+
+/// Whether `owner` may be handed to a provider: labels of letters, digits, `-` and
+/// `_`, 253 bytes at most.
+fn is_record_name(owner: &str) -> bool {
+    let label = |label: &str| {
+        (1..=63).contains(&label.len())
+            && label
+                .bytes()
+                .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_')
+    };
+    owner.len() <= 253 && owner.split('.').all(label)
+}
+
+/// Reads the API token of a file. The token is in no message.
+fn read_token(file: &std::path::Path) -> Result<String, Error> {
+    use std::io::Read as _;
+    let shown = file.display();
+    let mut text = String::new();
+    let read = std::fs::File::open(file)
+        .and_then(|opened| opened.take(MAX_TOKEN_FILE).read_to_string(&mut text));
+    if let Err(error) = read {
+        return Err(Error::provider(format!("The token file `{shown}` cannot be read: {error}.")));
+    }
+    cloudflare::token(&text).map(str::to_owned).ok_or_else(|| {
+        Error::provider(format!(
+            "The token file `{shown}` holds no token: expected one word of printable text."
+        ))
+    })
 }
 
 impl Solver<'_> {
@@ -115,8 +178,20 @@ impl Solver<'_> {
                 owner,
                 value,
                 name,
+                challenge: &challenge_owner(name),
                 timeout: HOOK_TIMEOUT,
             }),
+            Provider::Cloudflare { token_file, zone, api } => {
+                let token = read_token(token_file)?;
+                let send = self.http.ok_or_else(|| {
+                    Error::provider("The Cloudflare provider has no HTTP client.")
+                })?;
+                let account = cloudflare::Cloudflare { api, token: &token, zone: zone.as_deref() };
+                match delete {
+                    true => account.cleanup(send, owner, value),
+                    false => account.present(send, owner, value),
+                }
+            }
             Provider::Rfc2136 { server, key, zone } => {
                 let found;
                 let zone = match zone {
@@ -149,7 +224,23 @@ impl Solver<'_> {
         challenge: &Challenge,
         pause: &mut dyn FnMut(Duration) -> bool,
     ) -> Result<(), Error> {
-        let (owner, value) = (challenge.dns_owner(), challenge.dns_value());
+        let value = challenge.dns_value();
+        // The record is written where a CNAME delegation of the challenge points. The
+        // stored record names that place, so the cleanup removes what was written.
+        let owner = match self.options.follow_cname {
+            true => {
+                let deadline = Instant::now() + self.options.timeout;
+                self.options.lookup.final_owner(&challenge.dns_owner(), deadline)?
+            }
+            false => challenge.dns_owner(),
+        };
+        // The target comes out of a DNS answer, and a hook may hand it to a shell.
+        if !is_record_name(&owner) {
+            return Err(Error::provider(format!(
+                "The CNAME records of `{}` lead to a name that is no host name.",
+                challenge.dns_owner()
+            )));
+        }
         self.store.save_presented(name, &owner, &value)?;
         self.provide(name, &owner, &value, false)?;
         let stopped = || Error::not_visible("The daemon stopped before the record was checked.");

@@ -568,6 +568,7 @@ mod tests {
             wait: 0,
             resolver: None,
             servers: Vec::new(),
+            follow_cname: true,
         };
         assert_eq!(dns, Some(expected));
         let text =
@@ -614,6 +615,66 @@ mod tests {
         assert!(wrong(r#""dns":{"hook":"/h","servers":[]}"#).contains("1 to 8 servers"));
         assert!(wrong(r#""dns":{"hook":"/h","token":"x"}"#).contains("token"));
         assert!(wrong(r#""internal":{"lifetime":5}"#).contains("10 to 172800"));
+    }
+
+    #[test]
+    fn the_cloudflare_provider_takes_a_token_file_and_a_loopback_api_only() {
+        let read = |members: &str| {
+            let global = format!(r#""global":{{"acme":{{"dns":{{{members}}}}}}},"#);
+            let options = parse(r#"{"auto":["*.example.org"]}"#, &global).ok()?.acme?;
+            options.dns
+        };
+        let wrong = |members: &str| {
+            let global = format!(r#""global":{{"acme":{{"dns":{{{members}}}}}}},"#);
+            reason(r#"{"auto":["*.example.org"]}"#, &global)
+        };
+        let dns = read(r#""cloudflare":{"token_file":"/etc/sibuna/cf-token"}"#);
+        let dns = dns.unwrap_or_else(|| unreachable!());
+        let plain = DnsProvider::Cloudflare {
+            token_file: "/etc/sibuna/cf-token".to_owned(),
+            zone: None,
+            api: None,
+        };
+        assert_eq!((dns.provider, dns.follow_cname), (plain, true));
+        let dns = read(
+            r#""cloudflare":{"token_file":"/t","zone":"Example.ORG.",
+               "api":"http://127.0.0.1:20443/client/v4"},"follow_cname":false"#,
+        );
+        let dns = dns.unwrap_or_else(|| unreachable!());
+        let full = DnsProvider::Cloudflare {
+            token_file: "/t".to_owned(),
+            zone: Some("example.org".to_owned()),
+            api: Some("http://127.0.0.1:20443/client/v4".to_owned()),
+        };
+        assert_eq!((dns.provider, dns.follow_cname), (full, false));
+        assert!(read(r#""cloudflare":{"token_file":"/t","api":"http://[::1]:1/v4"}"#).is_some());
+        // The token goes to the host of `api`: only a loopback address is taken.
+        for api in [
+            "https://api.cloudflare.com/client/v4",
+            "https://127.0.0.1:20443/",
+            "http://api.cloudflare.com/client/v4",
+            "http://localhost:20443/",
+            "http://192.0.2.1:80/",
+            "http://127.0.0.1@evil.example/",
+            "http://evil.example:80@127.0.0.1/",
+            "http://127.0.0.1.evil.example/",
+            "http://evil.example/127.0.0.1:1",
+            "http://",
+            "",
+        ] {
+            let text = wrong(&format!(r#""cloudflare":{{"token_file":"/t","api":"{api}"}}"#));
+            assert!(text.contains("global.acme.dns.cloudflare.api"), "{api}: {text}");
+            assert!(text.contains("an http URL on a loopback address"), "{api}: {text}");
+        }
+        assert!(wrong(r#""cloudflare":{}"#).contains("needs the file of an API token"));
+        assert!(wrong(r#""cloudflare":{"token_file":""}"#).contains("API token"));
+        assert!(wrong(r#""cloudflare":{"token_file":"/t","zone":"a b"}"#).contains("DNS name"));
+        assert!(wrong(r#""cloudflare":{"token_file":"/t","token":"x"}"#).contains("token"));
+        let two = r#""cloudflare":{"token_file":"/t"},"hook":"/h""#;
+        assert!(wrong(two).contains("expected one provider"));
+        let two = r#""cloudflare":{"token_file":"/t"},"rfc2136":{"server":"1.2.3.4:53"}"#;
+        assert!(wrong(two).contains("expected one provider"));
+        assert!(wrong(r#""hook":"/h","follow_cname":1"#).contains("follow_cname"));
     }
 
     #[test]

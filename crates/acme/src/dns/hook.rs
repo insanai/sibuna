@@ -37,6 +37,9 @@ pub struct Run<'a> {
     pub value: &'a str,
     /// The `auto` name of the certificate.
     pub name: &'a str,
+    /// The owner that the authority asks: `_acme-challenge.NAME`, without a final dot.
+    /// It differs from `owner` when a CNAME record delegates the challenge.
+    pub challenge: &'a str,
     /// How long the program may run before it is killed.
     pub timeout: Duration,
 }
@@ -83,6 +86,7 @@ pub fn run(run: Run<'_>) -> Result<(), Error> {
     command.env("SIBUNA_ACME_RECORD", &record);
     command.env("SIBUNA_ACME_VALUE", run.value);
     command.env("SIBUNA_ACME_NAME", run.name);
+    command.env("SIBUNA_ACME_CHALLENGE", format!("{}.", run.challenge.trim_end_matches('.')));
     command.stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
     let mut child = command
         .spawn()

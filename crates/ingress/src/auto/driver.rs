@@ -487,7 +487,12 @@ impl Driver {
     /// failure is reported. It does not fail the order, and the record stays remembered.
     fn clean(&self, ready: &Ready, name: &str) {
         let Some(options) = &ready.dns else { return };
-        if let Err(error) = (Solver { options, store: &ready.first.store }).cleanup(name) {
+        let send = |call: &sibuna_acme::Call| match &ready.sender {
+            Some(sender) => sender.send(call),
+            None => Err(Error::provider("The DNS provider has no HTTP client.")),
+        };
+        let solver = Solver { options, store: &ready.first.store, http: Some(&send) };
+        if let Err(error) = solver.cleanup(name) {
             (self.report)(&Event::CleanupFailed { name: name.to_owned(), error });
         }
     }

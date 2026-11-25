@@ -93,11 +93,22 @@ impl Lookup {
     }
 
     /// Follows the CNAME records from `owner`, [`MAX_ALIASES`] at most, and returns the
-    /// last name: where the TXT record must be. Without an alias this is `owner`.
-    pub fn final_owner(&self, owner: &str, deadline: Instant) -> String {
+    /// last name: where the TXT record must be. Without an alias this is `owner`. An
+    /// answer without a CNAME record, also a negative one, ends the walk. Without a
+    /// resolver and without servers nobody can be asked, and `owner` is returned.
+    /// Fails with `ACME010` when none of them answers.
+    pub fn final_owner(&self, owner: &str, deadline: Instant) -> Result<String, Error> {
         let mut current = owner.strip_suffix('.').unwrap_or(owner).to_ascii_lowercase();
+        if self.guides().is_empty() {
+            return Ok(current);
+        }
         for _ in 0..MAX_ALIASES {
-            let Some(answer) = self.resolve(&current, TYPE_CNAME, deadline) else { break };
+            let Some(answer) = self.resolve(&current, TYPE_CNAME, deadline) else {
+                return Err(not_visible(format!(
+                    "No resolver answered the question for a CNAME record of `{current}`. \
+                     Check `global.acme.dns.resolver`, or `servers` when no resolver is set."
+                )));
+            };
             let target = answer.answers().iter().find_map(|record| match &record.data {
                 Data::Name(target) if record.kind == TYPE_CNAME && record.name == current => {
                     Some(target.clone())
@@ -109,7 +120,7 @@ impl Lookup {
                 _ => break,
             }
         }
-        current
+        Ok(current)
     }
 
     /// The zone that holds `name`: the first of the name and its parents that has an
@@ -224,7 +235,10 @@ pub fn wait_visible(
     pause: &mut dyn FnMut(Duration) -> bool,
 ) -> Result<(), Error> {
     let deadline = Instant::now() + timeout;
-    let owner = lookup.final_owner(owner, deadline);
+    // The provider wrote at the end of the delegation already. Here a question that
+    // nobody answers is no failure yet: the servers below may still show the record.
+    let plain = owner.strip_suffix('.').unwrap_or(owner).to_ascii_lowercase();
+    let owner = lookup.final_owner(owner, deadline).unwrap_or(plain);
     let servers = if lookup.servers.is_empty() {
         let zone = lookup.zone_of(&owner, deadline)?;
         lookup.servers_of(&zone, deadline)?
