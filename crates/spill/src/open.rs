@@ -1,11 +1,10 @@
 //! Opening a cache file: reuse it when it is whole, discard it when it is not ours to
 //! trust, refuse it when it is not ours at all.
 
-use std::ffi::OsString;
 use std::fs::{File, OpenOptions};
 use std::hash::{BuildHasher, RandomState};
 use std::io::{self, Read, Seek, SeekFrom, Write};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use crate::cache::Cache;
 use crate::error::Error;
@@ -229,33 +228,22 @@ fn open_file(path: &Path, geometry: Geometry, now: u64) -> Result<(File, Header,
     Ok((created, header, outcome))
 }
 
-/// The path of the file under construction: the name of `path` with `.tmp` after it.
-fn beside(path: &Path) -> PathBuf {
-    let mut name = OsString::from(path.as_os_str());
-    name.push(".tmp");
-    PathBuf::from(name)
-}
-
 /// Makes a complete new cache file beside `path` and renames it over `path`. So `path`
 /// never names a half-made file. Returns the locked new file and its header.
 fn create(path: &Path, geometry: Geometry, now: u64) -> Result<(File, Header), Error> {
-    let building = beside(path);
-    let fail = |error| Error::io(path, "create", error);
-    // The caller holds the lock of `path`, so no other process builds here now. What
-    // lies at the name is left over from a start that failed. We remove the name and
-    // do not write through it: it may be a link.
-    match std::fs::remove_file(&building) {
-        Err(error) if error.kind() != io::ErrorKind::NotFound => return Err(fail(error)),
-        _ => {}
-    }
-    let file = lock(path, open_private(&building, true).map_err(fail)?)?;
     let salt = fresh_salt(now);
-    let made = fill(&file, geometry, salt, now).and_then(|()| std::fs::rename(&building, path));
-    if let Err(error) = made {
+    let building = path.with_file_name(format!(".sibuna-spill-{salt:016x}.tmp"));
+    let fail = |error| Error::io(path, "create", error);
+    let file = open_private(&building, true).map_err(fail)?;
+    let made = lock(path, file).and_then(|file| {
+        fill(&file, geometry, salt, now).map_err(fail)?;
+        std::fs::rename(&building, path).map_err(fail)?;
+        Ok(file)
+    });
+    let file = made.inspect_err(|_| {
         // A half-made file of up to the whole size must not stay on a full disk.
         let _ = std::fs::remove_file(&building);
-        return Err(fail(error));
-    }
+    })?;
     Ok((file, Header { geometry, file_len: geometry.file_len(), salt }))
 }
 

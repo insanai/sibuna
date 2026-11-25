@@ -2,6 +2,7 @@
 
 use std::fs;
 use std::io::{Read, Seek, SeekFrom, Write};
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicU32, Ordering};
 
 use super::*;
@@ -81,7 +82,7 @@ fn hints_survive_closing_and_opening_the_file() {
     // The file has exactly the length of its geometry and no neighbour is left behind.
     let len = fs::metadata(scratch.file()).unwrap().len();
     assert_eq!(len, Geometry::for_size(OPTIONS.size).unwrap().file_len());
-    assert!(!beside(&scratch.file()).exists());
+    assert_eq!(fs::read_dir(&scratch.0).unwrap().count(), 1);
     // After their time the hints are gone, whatever the file says.
     assert_eq!(cache.get(&key(7), LATER), None);
 }
@@ -259,16 +260,17 @@ fn a_cache_in_memory_works_and_says_that_it_does_not_persist() {
 
 #[cfg(unix)]
 #[test]
-fn what_lies_at_the_name_of_the_new_file_is_removed_and_not_written_through() {
+fn creating_the_cache_preserves_an_existing_sibling_and_its_target() {
     let scratch = Scratch::new();
     let precious = scratch.0.join("precious");
     fs::write(&precious, b"keep me").unwrap();
-    std::os::unix::fs::symlink(&precious, beside(&scratch.file())).unwrap();
+    let sibling = scratch.0.join("hints.spill.tmp");
+    std::os::unix::fs::symlink(&precious, &sibling).unwrap();
     let (_cache, report) = load_cache(&scratch.file(), &OPTIONS, NOW).unwrap();
     assert_eq!(report.outcome, Outcome::Created);
     assert_eq!(fs::read(&precious).unwrap(), b"keep me");
     assert!(fs::symlink_metadata(scratch.file()).unwrap().file_type().is_file());
-    assert!(!beside(&scratch.file()).exists());
+    assert_eq!(fs::read_link(&sibling).unwrap(), precious);
 }
 
 #[cfg(unix)]
