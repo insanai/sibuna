@@ -8,7 +8,7 @@ use std::fmt;
 /// only: what the authority sent is filtered before it gets here.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Error {
-    /// `ACME001` to `ACME011`.
+    /// `ACME001` to `ACME012`.
     pub code: &'static str,
     /// The title in upper case, for example `VALIDATION FAILED`.
     pub title: &'static str,
@@ -143,7 +143,7 @@ impl Error {
     pub fn binding(message: impl Into<String>) -> Self {
         Self::new(
             "ACME012",
-            "ACCOUNT BINDING REFUSED",
+            "ACCOUNT NOT BOUND",
             message.into(),
             "Set `eab: { kid, key_file }` for this authority with the key identifier and \
              the base64url key that the authority gave you. A binding is used once: ask \

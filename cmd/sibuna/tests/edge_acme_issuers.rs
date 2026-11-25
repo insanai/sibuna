@@ -217,6 +217,8 @@ fn the_next_authority_issues_when_the_first_fails_and_rests_when_it_works() {
     daemon.ready(NAME);
     assert_eq!((orders(&first), orders(&second)), (1, 0));
     assert_eq!(second.signed_count.load(Ordering::Relaxed), 0);
+    let line = format!("for 1 name(s) from {} (then 1 more)", first.directory);
+    assert!(daemon.log().contains(&line), "{}", daemon.log());
     assert!(stored(&working, &first.directory) && !stored(&working, &second.directory));
     assert!(!daemon.log().contains("No certificate for"), "{}", daemon.log());
     drop(daemon);
@@ -286,7 +288,7 @@ fn an_account_is_bound_with_the_key_of_the_authority() {
     let daemon = start(&[&authority], &missing, &unbound);
     let log =
         wait_for("the refusal", 20, || Some(daemon.log()).filter(|log| log.contains("ACME012")));
-    assert!(log.contains("ACCOUNT BINDING REFUSED (ACME012)"), "{log}");
+    assert!(log.contains("ACCOUNT NOT BOUND (ACME012)"), "{log}");
     assert!(log.contains("registers an account only with an external account binding"), "{log}");
     assert!(log.contains("Hint: Set `eab: { kid, key_file }`"), "{log}");
     assert_eq!(authority.signed_count.load(Ordering::Relaxed), 0);

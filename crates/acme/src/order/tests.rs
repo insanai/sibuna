@@ -575,7 +575,7 @@ fn a_registration_carries_the_binding_that_the_authority_wants() {
     let mut account = Account::new(KeyPair::generate().unwrap());
     let run = run_with(&mut account, bound("kid-1", b"another key"), script());
     let error = run.result.unwrap_err();
-    assert_eq!((error.code, error.title), ("ACME012", "ACCOUNT BINDING REFUSED"));
+    assert_eq!((error.code, error.title), ("ACME012", "ACCOUNT NOT BOUND"));
     assert!(error.message.contains("bad MAC"), "{}", error.message);
     assert_eq!(run.log.last().map(String::as_str), Some("/new-account"));
 }
