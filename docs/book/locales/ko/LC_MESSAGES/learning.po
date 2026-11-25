@@ -54,12 +54,10 @@ msgid "How does Sibuna compare?"
 msgstr "Sibuna는 다른 제품과 비교해 어떨까요?"
 
 #: ../../learning.rst:15
-#, fuzzy
-#| msgid "Part II: lineage and the feature table; Part VIII: measurements."
 msgid ""
 "Part II: lineage and the feature tables; Part X: measurements beside "
 "Anubis and HAProxy."
-msgstr "제II부: 계보와 기능 표. 제VIII부: 측정."
+msgstr "제II부: 계보와 기능 표. 제X부: Anubis, HAProxy와 나란히 놓은 측정."
 
 #: ../../learning.rst:16
 msgid "What does a session mean?"
@@ -87,66 +85,53 @@ msgstr "제VII부: 워커 메시지, 메모리, 보정."
 
 #: ../../learning.rst:22
 msgid "How does one node balance load?"
-msgstr ""
+msgstr "노드 하나는 부하를 어떻게 분산할까요?"
 
 #: ../../learning.rst:23
 msgid ""
 "Part VIII: flows, workers, choosing a server, admission at the socket, "
 "hooks."
-msgstr ""
+msgstr "제VIII부: 플로, 워커, 서버 선택, 소켓에서의 요청 허용, 훅."
 
 #: ../../learning.rst:24
 msgid "How do several nodes act as one?"
-msgstr ""
+msgstr "여러 노드는 어떻게 하나처럼 동작할까요?"
 
 #: ../../learning.rst:25
 msgid "Part IX: the mesh, shared affinity, fleet caps, forwarding, handoff."
-msgstr ""
+msgstr "제IX부: 메시, 공유 어피니티, 플릿 상한, 전달, 핸드오프."
 
 #: ../../learning.rst:26
 msgid "How do we know it works?"
 msgstr "제대로 동작하는지 어떻게 알까요?"
 
 #: ../../learning.rst:27
-#, fuzzy
-#| msgid "Part VIII: three harnesses and what each excludes."
 msgid "Part X: three harnesses and what each excludes."
-msgstr "제VIII부: 하니스 세 개와 각 하니스가 측정에서 빼는 것."
+msgstr "제X부: 하니스 세 개와 각 하니스가 측정에서 빼는 것."
 
 #: ../../learning.rst:28
 msgid "How do we run it?"
 msgstr "어떻게 실행할까요?"
 
 #: ../../learning.rst:29
-#, fuzzy
-#| msgid ""
-#| "Part IX: flags, topologies, policy, storage, clustering, packaging."
 msgid ""
 "Part XI: flags, the edge topology, certificates, policy, storage, "
 "clustering, packaging."
-msgstr "제IX부: 플래그, 토폴로지, 정책, 저장소, 클러스터 구성, 패키징."
+msgstr "제XI부: 플래그, 엣지 토폴로지, 인증서, 정책, 저장소, 클러스터 구성, 패키징."
 
 #: ../../learning.rst:30
 msgid "What was that error?"
 msgstr "방금 그 오류는 무엇이었을까요?"
 
 #: ../../learning.rst:31
-#, fuzzy
-#| msgid "Part X: endpoints, statuses, errors, schema; Part XI: the card."
 msgid "Part XII: endpoints, statuses, errors, schema; Part XIII: the card."
-msgstr "제X부: 엔드포인트, 상태, 오류, 스키마. 제XI부: 카드."
+msgstr "제XII부: 엔드포인트, 상태, 오류, 스키마. 제XIII부: 카드."
 
 #: ../../learning.rst:33
 msgid "Three Reading Paths"
 msgstr "세 가지 읽기 경로"
 
 #: ../../learning.rst:36
-#, fuzzy
-#| msgid ""
-#| "*Learning the design.* Parts I to IV in order, then the worked trace "
-#| "in Part VI, then Part VII. Do the exercises; compare with the "
-#| "solutions at the back only afterwards. Return to Part V when a trace "
-#| "reaches a shared table or a borrowed slice."
 msgid ""
 "*Learning the design.* Parts I to IV in order, then the worked trace in "
 "Part VI, then Part VII. For the load balancer, Part VIII and then Part "
@@ -154,16 +139,11 @@ msgid ""
 "exercises; compare with the solutions at the back only afterwards. Return "
 "to Part V when a trace reaches a shared table or a borrowed slice."
 msgstr ""
-"*설계를 배우려면.* 제I부부터 제IV부까지 순서대로 읽고, 제VI부의 풀이 추적을 본 뒤 제VII부를 읽습니다. 연습 문제를 먼저 "
-"풀고, 책 끝의 해답과는 그다음에만 비교합니다. 추적이 공유 테이블이나 빌린 슬라이스에 이르면 제V부로 돌아갑니다."
+"*설계를 배우려면.* 제I부부터 제IV부까지 순서대로 읽고, 제VI부의 풀이 추적을 본 뒤 제VII부를 읽습니다. 로드 밸런서는 "
+"제VIII부, 그다음 제IX부를 읽습니다. 이 두 부에는 제I부와 제V부의 소유권 개념만 있으면 됩니다. 연습 문제를 먼저 풀고, "
+"책 끝의 해답과는 그다음에만 비교합니다. 추적이 공유 테이블이나 빌린 슬라이스에 이르면 제V부로 돌아갑니다."
 
 #: ../../learning.rst:37
-#, fuzzy
-#| msgid ""
-#| "*Operating a deployment.* Part IX, then Part XI, with Part X open for "
-#| "lookups. Read the \"Feature Comparison\" in Part II before choosing a "
-#| "surface, and the \"Whole-Product Comparison\" in Part VIII before "
-#| "choosing worker and connection limits."
 msgid ""
 "*Operating a deployment.* Part XI, then Part XIII, with Part XII open for "
 "lookups. Read Parts VIII and IX for the reasons behind the settings. Read "
@@ -171,24 +151,19 @@ msgid ""
 "\"Whole-Product Comparison\" in Part X before choosing worker and "
 "connection limits."
 msgstr ""
-"*배포를 운영하려면.* 제IX부와 제XI부를 읽고, 제X부는 찾아볼 수 있게 펼쳐 둡니다. 운영 구성을 고르기 전에 제II부의 "
-"\"기능 비교\"를 읽고, 워커와 연결 한도를 정하기 전에 제VIII부의 \"전체 제품 비교\"를 읽습니다."
+"*배포를 운영하려면.* 제XI부와 제XIII부를 읽고, 제XII부는 찾아볼 수 있게 펼쳐 둡니다. 설정의 이유는 제VIII부와 "
+"제IX부에서 읽습니다. 운영 구성을 고르기 전에 제II부의 \"기능 비교\"를 읽고, 워커와 연결 한도를 정하기 전에 제X부의 "
+"\"전체 제품 비교\"를 읽습니다."
 
 #: ../../learning.rst:38
-#, fuzzy
-#| msgid ""
-#| "*Changing the code.* Parts V and VI, the source anchors in every "
-#| "chapter, and the SID records they cite. Part VIII explains which "
-#| "harness will catch a regression in what we touched; Part II lists the "
-#| "constraints a change must keep."
 msgid ""
 "*Changing the code.* Parts V and VI, the source anchors in every chapter, "
 "and the SID records they cite. Part X explains which harness will catch a "
 "regression in what we touched; Part II lists the constraints a change "
 "must keep."
 msgstr ""
-"*코드를 바꾸려면.* 제V부와 제VI부, 각 장의 소스 위치, 그리고 그 위치가 인용하는 SID 기록을 봅니다. 제VIII부는 "
-"우리가 건드린 부분의 회귀를 어느 하니스가 잡아내는지 설명합니다. 제II부는 변경이 지켜야 할 제약을 나열합니다."
+"*코드를 바꾸려면.* 제V부와 제VI부, 각 장의 소스 위치, 그리고 그 위치가 인용하는 SID 기록을 봅니다. 제X부는 우리가 "
+"건드린 부분의 회귀를 어느 하니스가 잡아내는지 설명합니다. 제II부는 변경이 지켜야 할 제약을 나열합니다."
 
 #: ../../learning.rst:40
 msgid "Conventions"
@@ -210,17 +185,6 @@ msgstr ""
 "설명하기\"인 상자는 그 개념을 우리가 다시 가르쳐 보게 합니다."
 
 #: ../../learning.rst:45
-#, fuzzy
-#| msgid ""
-#| "In equations, :math:`b` is Hashcash difficulty in bits, :math:`n` is "
-#| "sequential-work depth, :math:`t` is the number of openings, :math:`p` "
-#| "is success probability per trial, :math:`K` is the number of trials, "
-#| ":math:`T` is a rate limiter's emission interval, :math:`\\tau` its "
-#| "burst tolerance, and :math:`Q` is a queue capacity. A symbol is local "
-#| "to its section unless stated otherwise. Nanoseconds and requests per "
-#| "second in Part VIII are measurements from a named run. Numbers in "
-#| "worked examples are chosen inputs, not benchmark claims. Statistical "
-#| "models state their assumptions before drawing conclusions."
 msgid ""
 "In equations, :math:`b` is Hashcash difficulty in bits, :math:`n` is "
 "sequential-work depth, :math:`t` is the number of openings, :math:`p` is "
@@ -237,6 +201,7 @@ msgstr ""
 "수식에서 :math:`b`\\ 는 비트 단위의 Hashcash 난이도, :math:`n`\\ 은 순차 작업 깊이, "
 ":math:`t`\\ 는 개방 수, :math:`p`\\ 는 시행당 성공 확률, :math:`K`\\ 는 시행 횟수, "
 ":math:`T`\\ 는 속도 제한기의 방출 간격, :math:`\\tau`\\ 는 그 버스트 허용치, :math:`Q`\\ 는 큐 "
-"용량입니다. 따로 밝히지 않으면 기호는 그 절 안에서만 쓰입니다. 제VIII부의 나노초와 초당 요청 수는 이름이 밝혀진 실행에서 "
-"얻은 측정값입니다. 풀이 예제의 숫자는 골라 둔 입력이며, 벤치마크 결과로 내세우는 값이 아닙니다. 통계 모델은 결론을 내리기 전에 "
+"용량입니다. 제VIII부와 제IX부에서 :math:`n`\\ 은 서버나 노드의 수이고 :math:`c`\\ 는 부하 상한의 "
+"한계값입니다. 따로 밝히지 않으면 기호는 그 절 안에서만 쓰입니다. 제X부의 나노초와 초당 요청 수는 이름이 밝혀진 실행에서 얻은 "
+"측정값입니다. 풀이 예제의 숫자는 골라 둔 입력이며, 벤치마크 결과로 내세우는 값이 아닙니다. 통계 모델은 결론을 내리기 전에 "
 "가정을 밝힙니다."

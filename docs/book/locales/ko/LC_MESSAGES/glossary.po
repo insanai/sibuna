@@ -23,7 +23,7 @@ msgstr "용어집"
 
 #: ../../glossary.rst:6
 msgid "Admin socket"
-msgstr ""
+msgstr "관리 소켓"
 
 #: ../../glossary.rst:7
 msgid ""
@@ -32,6 +32,9 @@ msgid ""
 "show the servers, drain, weigh, add or remove a server, lift a ban, "
 "reload. There is no TCP listener for administration (SID 0018)."
 msgstr ""
+"``global.admin_socket`` 또는 ``sibuna lb --admin``\\ 으로 지정하는 모드 0600의 Unix "
+"소켓으로, ``sibuna ctl``\\ 에서 한 번에 명령 한 줄을 받습니다. 서버 조회, 드레인, 가중치 지정, 서버 추가와 "
+"제거, 차단 해제, 다시 불러오기입니다. 관리용 TCP 리스너는 없습니다(SID 0018)."
 
 #: ../../glossary.rst:9
 msgid "Admission"
@@ -48,7 +51,7 @@ msgstr ""
 
 #: ../../glossary.rst:12
 msgid "Affinity"
-msgstr ""
+msgstr "어피니티"
 
 #: ../../glossary.rst:13
 msgid ""
@@ -56,6 +59,8 @@ msgid ""
 "by the source address, or by a sticky table. It gives way when the server "
 "is down, full, ejected or drained (SID 0019, SID 0025)."
 msgstr ""
+"한 클라이언트의 플로를 한 서버로 보내는 규칙입니다. 쿠키, 출발지 주소, 스티키 테이블로 정합니다. 서버가 내려갔거나, 가득 "
+"찼거나, 배제되었거나, 드레인되면 양보합니다(SID 0019, SID 0025)."
 
 #: ../../glossary.rst:15
 msgid "Aho-Corasick automaton"
@@ -72,7 +77,7 @@ msgstr ""
 
 #: ../../glossary.rst:18
 msgid "Authority"
-msgstr ""
+msgstr "authority"
 
 #: ../../glossary.rst:19
 msgid ""
@@ -81,10 +86,13 @@ msgid ""
 "head and composes it with its own file, which keeps ``global``, ``mesh``, "
 "``observability`` and ``authority`` (SID 0028)."
 msgstr ""
+"엣지에서, 영속 모드일 때 게시된 토폴로지(``frontends``, ``backends``, ``http``)를 소유하는 "
+"데이터베이스입니다. 각 노드는 그 헤드를 따라가며 자기 파일과 합성하고, 자기 파일은 ``global``, ``mesh``, "
+"``observability``, ``authority``\\ 를 유지합니다(SID 0028)."
 
 #: ../../glossary.rst:21
 msgid "Backend"
-msgstr ""
+msgstr "백엔드"
 
 #: ../../glossary.rst:22
 msgid ""
@@ -92,29 +100,27 @@ msgid ""
 "timeouts and stickiness. The word follows HAProxy; *pool* names the same "
 "thing."
 msgstr ""
+"한 프로토콜의 서버 풀로, 스케줄러, 헬스 체크, 타임아웃, 고정 방식을 갖춥니다. 이 단어는 HAProxy를 따릅니다. *풀*\\ "
+"도 같은 것을 가리킵니다."
 
 #: ../../glossary.rst:24
 msgid "Ban table"
 msgstr "차단 테이블"
 
 #: ../../glossary.rst:25
-#, fuzzy
-#| msgid ""
-#| "4,096 lock-free slots of banned client addresses with expiry, written "
-#| "by the honeypot and by reputation shared across a cluster, read on "
-#| "every request."
 msgid ""
 "Lock-free slots of banned client addresses with expiry, 65,536 by default "
 "(``--ban-table-slots``), written by the honeypot, by rule quotas, by "
 "reputation shared across a cluster and, in the edge, by the mesh; read on "
 "every request."
 msgstr ""
-"차단된 클라이언트 주소와 만료 시각을 담는 락 프리 슬롯 4,096개입니다. 허니팟과 클러스터 전체가 공유하는 평판이 기록하고, "
-"모든 요청이 읽습니다."
+"차단된 클라이언트 주소와 만료 시각을 담는 락 프리 슬롯으로, 기본값은 "
+"65,536개입니다(``--ban-table-slots``). 허니팟, 규칙 할당량, 클러스터 전체가 공유하는 평판, 그리고 "
+"엣지에서는 메시가 기록하고, 모든 요청이 읽습니다."
 
 #: ../../glossary.rst:27
 msgid "Breaker"
-msgstr ""
+msgstr "차단기"
 
 #: ../../glossary.rst:28
 msgid ""
@@ -122,6 +128,8 @@ msgid ""
 "failures in a row and stays open for ``open``; while it is open a call "
 "fails at once with the result ``unavailable`` (SID 0030)."
 msgstr ""
+"agent 플러그인의 회로 차단기입니다. 연속 ``failures``\\ 번 실패하면 열리고 ``open`` 동안 열려 있습니다. "
+"열려 있는 동안 호출은 결과 ``unavailable``\\ 로 즉시 실패합니다(SID 0030)."
 
 #: ../../glossary.rst:30
 msgid "Campaign"
@@ -153,7 +161,7 @@ msgstr ""
 
 #: ../../glossary.rst:36
 msgid "ClientHello inspection"
-msgstr ""
+msgstr "ClientHello 검사"
 
 #: ../../glossary.rst:37
 msgid ""
@@ -163,6 +171,9 @@ msgid ""
 "within ``inspect_bytes`` takes the configured fallback (SID 0015, SID "
 "0032)."
 msgstr ""
+"``tcp_inspect``\\ 가 있는 ``tcp`` 프런트엔드에서, TLS를 종료하지 않고 연결의 첫 TLS 레코드를 읽어 서버 "
+"이름, ALPN, JA4로 라우팅하거나 거부하는 일입니다. ``inspect_bytes`` 안에 온전한 ClientHello를 "
+"보내지 않은 연결은 설정된 대체 동작을 따릅니다(SID 0015, SID 0032)."
 
 #: ../../glossary.rst:39
 msgid "Difficulty, work bits"
@@ -178,7 +189,7 @@ msgstr ""
 
 #: ../../glossary.rst:42
 msgid "Drain"
-msgstr ""
+msgstr "드레인"
 
 #: ../../glossary.rst:43
 msgid ""
@@ -187,6 +198,9 @@ msgid ""
 "and a restart ends it. A node drains as a whole at shutdown, while "
 "readiness answers 503."
 msgstr ""
+"새 플로는 받지 않고 이미 수립된 플로는 유지하는 서버의 상태입니다. ``set server POOL/NAME state "
+"drain``\\ 이 설정하고, 다시 불러오기가 유지하며, 재시작이 끝냅니다. 노드는 종료할 때 전체가 드레인하며, 그동안 준비 "
+"상태는 503으로 답합니다."
 
 #: ../../glossary.rst:45
 msgid "Edge"
@@ -204,10 +218,8 @@ msgstr ""
 "배포입니다. 어느 운영 구성에든 영속 정책, 공유 평판, 인시던트 포렌식을 제공합니다."
 
 #: ../../glossary.rst:48
-#, fuzzy
-#| msgid "Edge"
 msgid "Edge mode"
-msgstr "Edge"
+msgstr "엣지 모드"
 
 #: ../../glossary.rst:49
 msgid ""
@@ -216,6 +228,9 @@ msgid ""
 "pools, with the firewall on the routes that ask for it. It is unrelated "
 "to the storage sense of *Edge* above."
 msgstr ""
+"``--config-file``\\ 로 시작한 데몬입니다. TCP와 UDP를 전달하고, TLS, HTTP/2, HTTP/3를 "
+"종료하며, HTTP 요청을 서버 풀로 라우팅하고, 방화벽을 요구하는 경로에는 방화벽을 둡니다. 위의 저장소 의미의 *Edge*\\ "
+"와는 관계가 없습니다."
 
 #: ../../glossary.rst:51
 msgid "Engine slot"
@@ -245,7 +260,7 @@ msgstr ""
 
 #: ../../glossary.rst:57
 msgid "Fleet cap"
-msgstr ""
+msgstr "플릿 상한"
 
 #: ../../glossary.rst:58
 msgid ""
@@ -254,16 +269,21 @@ msgid ""
 "the limit, and unused shares move to the nodes that have the flows (SID "
 "0025)."
 msgstr ""
+"``max_flows_scope: \"fleet\"``\\ 일 때 메시의 모든 노드의 플로를 합쳐서 제한하는 서버의 "
+"``max_flows``\\ 입니다. 각 노드는 한도의 몫을 쥐며, 쓰지 않는 몫은 플로가 있는 노드로 옮겨 갑니다(SID "
+"0025)."
 
 #: ../../glossary.rst:60
 msgid "Flow"
-msgstr ""
+msgstr "플로"
 
 #: ../../glossary.rst:61
 msgid ""
 "One unit of work of the edge that holds a slot of ``global.max_flows``: a "
 "TCP connection, a UDP mapping, or an HTTP connection."
 msgstr ""
+"``global.max_flows``\\ 의 슬롯 하나를 차지하는 엣지의 작업 단위입니다. TCP 연결, UDP 매핑, HTTP "
+"연결입니다."
 
 #: ../../glossary.rst:63
 msgid "Forward auth"
@@ -280,13 +300,15 @@ msgstr ""
 
 #: ../../glossary.rst:66
 msgid "Frontend"
-msgstr ""
+msgstr "프런트엔드"
 
 #: ../../glossary.rst:67
 msgid ""
 "A named set of listening addresses of one protocol, ``tcp``, ``udp`` or "
 "``http``, with its routes, its limits and its default backend."
 msgstr ""
+"한 프로토콜(``tcp``, ``udp``, ``http``)의 리스닝 주소에 이름을 붙인 집합으로, 경로, 한도, 기본 백엔드를 "
+"갖춥니다."
 
 #: ../../glossary.rst:69
 msgid "Gate"
@@ -315,7 +337,7 @@ msgstr ""
 
 #: ../../glossary.rst:75
 msgid "Handoff"
-msgstr ""
+msgstr "핸드오프"
 
 #: ../../glossary.rst:76
 msgid ""
@@ -324,6 +346,9 @@ msgid ""
 "the new one over a Unix socket and then drains its TCP streams. Linux "
 "only (SID 0029)."
 msgstr ""
+"``global.upgrade_socket``\\ 으로 실행 중인 엣지 바이너리를 교체하는 일입니다. 이전 프로세스가 Unix "
+"소켓으로 리스닝 소켓과 살아 있는 UDP 매핑을 새 프로세스에 넘긴 뒤, 자기 TCP 스트림을 드레인합니다. Linux "
+"전용입니다(SID 0029)."
 
 #: ../../glossary.rst:78
 msgid "Hashcash"
@@ -352,7 +377,7 @@ msgstr ""
 
 #: ../../glossary.rst:84
 msgid "Hook"
-msgstr ""
+msgstr "훅"
 
 #: ../../glossary.rst:85
 msgid ""
@@ -361,6 +386,9 @@ msgid ""
 "native Rust, a metered WebAssembly module, or an agent in another process "
 "(SID 0030)."
 msgstr ""
+"엣지의 경로 위에서 운영자가 직접 내리는 결정으로, ``connection``, ``request``, ``telemetry`` "
+"단계에서 플러그인이 실행합니다. 플러그인은 네이티브 Rust, 계량되는 WebAssembly 모듈, 또는 다른 프로세스의 "
+"agent입니다(SID 0030)."
 
 #: ../../glossary.rst:87
 msgid "Idle reaper"
@@ -406,16 +434,16 @@ msgstr ""
 "필드로 이 값을 비교합니다(SID 0014). 챌린지와 토큰에 묶이는 클라이언트 지문과는 관계가 없습니다."
 
 #: ../../glossary.rst:96
-#, fuzzy
-#| msgid "Edge"
 msgid "Judge"
-msgstr "Edge"
+msgstr "판정 스레드"
 
 #: ../../glossary.rst:97
 msgid ""
 "A thread that decides a parked connection whose chain of hooks names an "
 "agent, so that the edge worker never waits for the agent (SID 0030)."
 msgstr ""
+"훅 체인에 agent가 있어 대기시킨 연결을 판정하는 스레드로, 엣지 워커가 결코 agent를 기다리지 않게 합니다(SID "
+"0030)."
 
 #: ../../glossary.rst:99
 msgid "Keyed BLAKE3"
@@ -429,7 +457,7 @@ msgstr "Sibuna의 키 스케줄, 챌린지 태그, 세션 태그, 지문, 챌린
 
 #: ../../glossary.rst:102
 msgid "Local authority"
-msgstr ""
+msgstr "로컬 인증 기관"
 
 #: ../../glossary.rst:103
 msgid ""
@@ -438,6 +466,8 @@ msgid ""
 "writes a revocation list, and can serve other machines as an ACME server "
 "(SID 0021)."
 msgstr ""
+"엣지가 내부 이름을 위해 직접 운영하는 인증 기관입니다. 루트와 중간 인증서를 자동 HTTPS 저장소에 두고, 폐지 목록을 쓰며, "
+"ACME 서버로서 다른 기계에 서비스할 수 있습니다(SID 0021)."
 
 #: ../../glossary.rst:105
 msgid "MAC token"
@@ -464,10 +494,13 @@ msgid ""
 "table and bounds the load of the chosen server by a factor "
 "(``bounded_maglev``, SID 0015)."
 msgstr ""
+"서버의 순열로 채운, 소수 개 슬롯(Sibuna에서는 65,537개)의 일관 해시 테이블로, 클라이언트를 상수 시간에 서버에 "
+"배치합니다(Eisenbud 외, NSDI 2016). Sibuna는 가중 테이블을 만들고, 선택된 서버의 부하를 일정 배로 "
+"제한합니다(``bounded_maglev``, SID 0015)."
 
 #: ../../glossary.rst:111
 msgid "Mesh"
-msgstr ""
+msgstr "메시"
 
 #: ../../glossary.rst:112
 msgid ""
@@ -477,16 +510,21 @@ msgid ""
 "``forward`` they also send flows to their owner. At most 64 nodes (SID "
 "0022 to SID 0026)."
 msgstr ""
+"``mesh`` 절에 공유 키와 함께 나열된 엣지 클러스터의 노드들입니다. 0.5초마다 UDP로 서로를 프로브하고, 차단, 명령, "
+"스티키 테이블, 플릿 상한의 몫을 공유합니다. ``forward``\\ 가 있으면 플로를 소유 노드로 보내기도 합니다. 노드는 최대 "
+"64개입니다(SID 0022부터 SID 0026까지)."
 
 #: ../../glossary.rst:114
 msgid "Node"
-msgstr ""
+msgstr "노드"
 
 #: ../../glossary.rst:115
 msgid ""
 "One edge process in a mesh, known by its mesh address; in persistent mode "
 "also by the name ``authority.node``."
 msgstr ""
+"메시 안의 엣지 프로세스 하나로, 메시 주소로 식별합니다. 영속 모드에서는 이름 ``authority.node``\\ 로도 "
+"식별합니다."
 
 #: ../../glossary.rst:117
 msgid "Work level"
@@ -516,7 +554,7 @@ msgstr ""
 
 #: ../../glossary.rst:123
 msgid "Owner"
-msgstr ""
+msgstr "소유 노드"
 
 #: ../../glossary.rst:124
 msgid ""
@@ -524,20 +562,24 @@ msgid ""
 "node with the largest rendezvous score for the client's address (SID "
 "0026)."
 msgstr ""
+"동료 전달에서 클라이언트를 서비스하는 메시의 노드입니다. 클라이언트 주소에 대한 랑데부 점수가 가장 큰 살아 있는 노드입니다(SID "
+"0026)."
 
 #: ../../glossary.rst:126
 msgid "Passive health"
-msgstr ""
+msgstr "수동 헬스 체크"
 
 #: ../../glossary.rst:127
 msgid ""
 "Ejecting a server for ``ejection`` after ``failures`` consecutive "
 "failures of real requests, while another server can serve (SID 0019)."
 msgstr ""
+"실제 요청이 연속 ``failures``\\ 번 실패하면, 다른 서버가 서비스할 수 있는 동안 서버를 ``ejection`` 동안 "
+"배제하는 일입니다(SID 0019)."
 
 #: ../../glossary.rst:129
 msgid "Passthrough"
-msgstr ""
+msgstr "패스스루"
 
 #: ../../glossary.rst:130
 msgid ""
@@ -545,10 +587,12 @@ msgid ""
 "terminating it. The edge may still read the ClientHello, or validate QUIC "
 "by connection ID (SID 0032)."
 msgstr ""
+"TLS나 QUIC 연결을 종료하지 않고 그 바이트를 서버로 중계하는 일입니다. 엣지는 그래도 ClientHello를 읽거나, 연결 "
+"ID로 QUIC을 검증할 수 있습니다(SID 0032)."
 
 #: ../../glossary.rst:132
 msgid "Peer forwarding"
-msgstr ""
+msgstr "동료 전달"
 
 #: ../../glossary.rst:133
 msgid ""
@@ -557,14 +601,16 @@ msgid ""
 "session stay on one node. An established TCP connection that the network "
 "moves is not repaired (SID 0026)."
 msgstr ""
+"새 연결이나 UDP 클라이언트를 그 클라이언트를 소유한 노드로 넘기는 메시 기능으로, 스티키 서버, 속도 카운터, UDP 세션이 한 "
+"노드에 머물게 합니다. 네트워크가 옮긴 수립된 TCP 연결은 고치지 않습니다(SID 0026)."
 
 #: ../../glossary.rst:135
 msgid "Pool"
-msgstr ""
+msgstr "풀"
 
 #: ../../glossary.rst:136
 msgid "See *Backend*."
-msgstr ""
+msgstr "*백엔드*\\ 를 보세요."
 
 #: ../../glossary.rst:138
 msgid "Proof of Sequential Work (PoSW)"
@@ -581,7 +627,7 @@ msgstr ""
 
 #: ../../glossary.rst:141
 msgid "Regime"
-msgstr ""
+msgstr "체제"
 
 #: ../../glossary.rst:142
 msgid ""
@@ -591,10 +637,14 @@ msgid ""
 "returns from wide-area to regional only below 1.5 ms (``Regime::step`` in "
 "``crates/lb/src/mesh.rs``)."
 msgstr ""
+"동료들과의 왕복 시간의 95번째 백분위수로 고르는 메시의 라우팅 모드입니다. 살아 있는 동료가 없으면 *standalone*, 왕복 "
+"시간이 3 ms 이하인 동안은 *regional*, 3 ms를 넘으면 *wide-area*\\ 입니다. 메시는 1.5 ms "
+"아래에서만 wide-area에서 regional로 돌아옵니다(``crates/lb/src/mesh.rs``\\ 의 "
+"``Regime::step``)."
 
 #: ../../glossary.rst:144
 msgid "Rendezvous hashing"
-msgstr ""
+msgstr "랑데부 해싱"
 
 #: ../../glossary.rst:145
 msgid ""
@@ -604,6 +654,9 @@ msgid ""
 "it for source stickiness (SID 0019) and for the owner of a client (SID "
 "0026)."
 msgstr ""
+"최고 무작위 가중치 해싱입니다(Thaler와 Ravishankar, 1998). 각 후보는 그 이름과 키의 해시로 점수를 얻고, "
+"가장 큰 점수가 이깁니다. 후보를 잃으면 그 후보의 키만 옮겨 갑니다. Sibuna는 이를 소스 고정(SID 0019)과 "
+"클라이언트의 소유 노드(SID 0026)에 씁니다."
 
 #: ../../glossary.rst:147
 msgid "Reputation trie"
@@ -619,7 +672,7 @@ msgstr ""
 
 #: ../../glossary.rst:150
 msgid "Revision"
-msgstr ""
+msgstr "리비전"
 
 #: ../../glossary.rst:151
 msgid ""
@@ -627,6 +680,8 @@ msgid ""
 "digest of the file; with a database it is a number that only grows, and a "
 "rollback is a new revision (SID 0028)."
 msgstr ""
+"엣지에서, 게시된 토폴로지의 상태 하나입니다. 파일이면 파일의 다이제스트이고, 데이터베이스이면 자라기만 하는 수이며, 되돌리기는 새 "
+"리비전입니다(SID 0028)."
 
 #: ../../glossary.rst:153
 msgid "Robin Hood spent set"
@@ -640,13 +695,14 @@ msgstr "해결된 챌린지 태그를 담는 고정 용량의 개방 주소법 �
 
 #: ../../glossary.rst:156
 msgid "Route"
-msgstr ""
+msgstr "경로"
 
 #: ../../glossary.rst:157
 msgid ""
 "A rule of an HTTP frontend that selects a backend by host name and path "
 "prefix, and may switch the firewall off or on for its requests."
 msgstr ""
+"호스트 이름과 경로 접두사로 백엔드를 고르는 HTTP 프런트엔드의 규칙으로, 그 요청들에 대해 방화벽을 끄거나 켤 수 있습니다."
 
 #: ../../glossary.rst:159
 msgid "Rule hash"
@@ -661,21 +717,23 @@ msgstr ""
 
 #: ../../glossary.rst:162
 msgid "Server"
-msgstr ""
+msgstr "서버"
 
 #: ../../glossary.rst:163
 msgid ""
 "One address of a pool, with a name, a weight and an optional "
 "``max_flows``. ``sibuna ctl`` addresses it as ``POOL/NAME``."
 msgstr ""
+"풀의 주소 하나로, 이름, 가중치, 선택적인 ``max_flows``\\ 를 가집니다. ``sibuna ctl``\\ 은 이를 "
+"``POOL/NAME``\\ 으로 가리킵니다."
 
 #: ../../glossary.rst:165
 msgid "Share"
-msgstr ""
+msgstr "몫"
 
 #: ../../glossary.rst:166
 msgid "The part of a fleet cap that one node may hold now (SID 0025)."
-msgstr ""
+msgstr "플릿 상한 중 한 노드가 지금 쥘 수 있는 부분입니다(SID 0025)."
 
 #: ../../glossary.rst:168
 msgid "Shield"
@@ -700,7 +758,7 @@ msgstr ""
 
 #: ../../glossary.rst:174
 msgid "Slow start"
-msgstr ""
+msgstr "슬로 스타트"
 
 #: ../../glossary.rst:175
 msgid ""
@@ -708,10 +766,12 @@ msgid ""
 "takes a weight that grows in proportion to the time, so that a cold "
 "server is not flooded (SID 0019)."
 msgstr ""
+"서비스에 들어간 서버가 시간에 비례해 커지는 가중치를 받는 ``slow_start``\\ 의 램프로, 차가운 서버에 요청이 쏟아지지 "
+"않게 합니다(SID 0019)."
 
 #: ../../glossary.rst:177
 msgid "Spill cache"
-msgstr ""
+msgstr "spill 캐시"
 
 #: ../../glossary.rst:178
 msgid ""
@@ -719,10 +779,12 @@ msgid ""
 "clients that left memory, and keeps them over a restart. Admission to it "
 "follows TinyLFU (SID 0027)."
 msgstr ""
+"스티키 테이블 아래에서 메모리에 매핑된 파일로, 메모리에서 밀려난 클라이언트의 힌트를 보관하고 재시작 뒤에도 유지합니다. 이 "
+"캐시로의 허용은 TinyLFU를 따릅니다(SID 0027)."
 
 #: ../../glossary.rst:180
 msgid "Sticky table"
-msgstr ""
+msgstr "스티키 테이블"
 
 #: ../../glossary.rst:181
 msgid ""
@@ -730,6 +792,8 @@ msgid ""
 "of each client, by source address or by cookie, for ``ttl`` after the "
 "last use. A mesh replicates it, and the later choice wins (SID 0025)."
 msgstr ""
+"``sticky: \"table\"``\\ 인 풀의 테이블로, 각 클라이언트의 서버를 출발지 주소나 쿠키로 마지막 사용 뒤 "
+"``ttl`` 동안 기억합니다. 메시가 이를 복제하며, 더 나중의 선택이 이깁니다(SID 0025)."
 
 #: ../../glossary.rst:183
 msgid "Surface"
@@ -755,10 +819,8 @@ msgstr ""
 "제시하거나 거부합니다."
 
 #: ../../glossary.rst:189
-#, fuzzy
-#| msgid "Work level"
 msgid "Worker"
-msgstr "작업 수준"
+msgstr "워커"
 
 #: ../../glossary.rst:190
 msgid ""
@@ -767,6 +829,9 @@ msgid ""
 "threads carry TCP streams; on Linux the event-driven HTTP workers, one "
 "per processor, serve HTTP connections (SID 0015, SID 0016)."
 msgstr ""
+"엣지에서 트래픽을 서비스하는 스레드입니다. 엣지 워커는 모든 프런트엔드에 대해 accept하고 플로 테이블과 UDP 매핑을 "
+"소유합니다. 중계 스레드는 TCP 스트림을 나릅니다. Linux에서는 프로세서마다 하나씩인 이벤트 기반 HTTP 워커가 HTTP "
+"연결을 서비스합니다(SID 0015, SID 0016)."
 
 #: ../../glossary.rst:192
 msgid "Zaxonlite"
@@ -869,6 +934,8 @@ msgid ""
 "Einziger, G., Friedman, R., and Manes, B. \"TinyLFU: a highly efficient "
 "cache admission policy.\" *ACM Transactions on Storage* 13(4), 2017."
 msgstr ""
+"Einziger, G., Friedman, R., and Manes, B. \"TinyLFU: a highly efficient "
+"cache admission policy.\" *ACM Transactions on Storage* 13(4), 2017."
 
 #: ../../glossary.rst:209
 msgid ""
@@ -877,6 +944,10 @@ msgid ""
 "J. D. \"Maglev: a fast and reliable software network load balancer.\" "
 "*NSDI*, 2016."
 msgstr ""
+"Eisenbud, D. E., Yi, C., Contavalli, C., Smith, C., Kononov, R., "
+"Mann-Hielscher, E., Cilingiroglu, A., Cheyney, B., Shang, W., and Hosein, "
+"J. D. \"Maglev: a fast and reliable software network load balancer.\" "
+"*NSDI*, 2016."
 
 #: ../../glossary.rst:210
 msgid ""
@@ -919,6 +990,8 @@ msgid ""
 "Mirrokni, V., Thorup, M., and Zadimoghaddam, M. \"Consistent hashing with "
 "bounded loads.\" *SODA*, 2018."
 msgstr ""
+"Mirrokni, V., Thorup, M., and Zadimoghaddam, M. \"Consistent hashing with "
+"bounded loads.\" *SODA*, 2018."
 
 #: ../../glossary.rst:215
 msgid ""
@@ -933,6 +1006,8 @@ msgid ""
 "Thaler, D. G., and Ravishankar, C. V. \"Using name-based mappings to "
 "increase hit rates.\" *IEEE/ACM Transactions on Networking* 6(1), 1998."
 msgstr ""
+"Thaler, D. G., and Ravishankar, C. V. \"Using name-based mappings to "
+"increase hit rates.\" *IEEE/ACM Transactions on Networking* 6(1), 1998."
 
 #: ../../glossary.rst:217
 msgid ""
@@ -953,15 +1028,6 @@ msgstr ""
 "*NSDI*, 2019."
 
 #: ../../glossary.rst:219
-#, fuzzy
-#| msgid ""
-#| "Sibuna Discussions 0001 to 0014, ``docs/sid/records``, 2026: process, "
-#| "foundation architecture, declarative policy engine, semantic "
-#| "inspection, Zaxonlite storage architecture, mathematical foundations, "
-#| "console management interface, AI bot traffic monitoring, chunked "
-#| "request bodies, the Rust port, storage through sqlx, outbound TLS for "
-#| "the console through rustls, console storage, and trusted JA4 "
-#| "fingerprints from the ingress."
 msgid ""
 "Sibuna Discussions 0001 to 0032, ``docs/sid/records``, 2026: process, "
 "foundation architecture, declarative policy engine, semantic inspection, "
@@ -976,7 +1042,10 @@ msgid ""
 "spill cache, the database authority, the upgrade handoff, plugin tiers, "
 "the operator console of the edge, and staged admission."
 msgstr ""
-"Sibuna Discussions 0001부터 0014까지, ``docs/sid/records``, 2026: 프로세스, 기반 "
+"Sibuna Discussions 0001부터 0032까지, ``docs/sid/records``, 2026: 프로세스, 기반 "
 "아키텍처, 선언형 정책 엔진, 의미 기반 검사, Zaxonlite 저장소 아키텍처, 수학적 기초, 콘솔 관리 인터페이스, AI 봇 "
 "트래픽 모니터링, 청크 요청 본문, Rust 포팅, sqlx를 통한 저장소, rustls를 통한 콘솔의 아웃바운드 TLS, 콘솔 "
-"저장소, 인그레스에서 받는 신뢰할 수 있는 JA4 지문."
+"저장소, 인그레스에서 받는 신뢰할 수 있는 JA4 지문, 분산 엣지 로드 밸런서, 이벤트 기반 HTTP 워커, 프로세스 내 교환, "
+"간단한 설정과 실행 중 설정, 트래픽 정책, 엣지 관측, 자동 HTTPS, 복제된 차단, 클러스터 설정, 워커 위의 TLS, 공유 "
+"어피니티와 플릿 상한, 동료 전달, spill 캐시, 데이터베이스 authority, 업그레이드 핸드오프, 플러그인 계층, 엣지의 "
+"운영자 콘솔, 단계적 허용."

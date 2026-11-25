@@ -570,14 +570,6 @@ msgstr ""
 "거부합니다. 그렇지 않으면 그런 레코드가 챌린지의 수명을 늘릴 수 있습니다."
 
 #: ../../protocol.rst:193
-#, fuzzy
-#| msgid ""
-#| "Errors surface to the client as ``400`` with an Elm-style diagnostic "
-#| "(Part X): each ``VerifyError`` converts into "
-#| "``sibuna_core::errors::ErrorKind``, whose explanation is the response "
-#| "body. The end-to-end tests assert on ``DOUBLE SPEND``, ``FINGERPRINT "
-#| "MISMATCH``, ``WRONG SOLUTION TYPE``, and ``MALFORMED CHALLENGE`` in "
-#| "the response body."
 msgid ""
 "Errors surface to the client as ``400`` with an Elm-style diagnostic "
 "(Part XII): each ``VerifyError`` converts into "
@@ -586,9 +578,9 @@ msgid ""
 "MISMATCH``, ``WRONG SOLUTION TYPE``, and ``MALFORMED CHALLENGE`` in the "
 "response body."
 msgstr ""
-"오류는 Elm 스타일 진단(제X부)과 함께 ``400``\\ 으로 클라이언트에 전달됩니다. 각 ``VerifyError``\\ 는 "
-"``sibuna_core::errors::ErrorKind``\\ 로 변환되며, 그 설명이 응답 본문이 됩니다. 종단 간 테스트는 "
-"응답 본문의 ``DOUBLE SPEND``, ``FINGERPRINT MISMATCH``, ``WRONG SOLUTION "
+"오류는 Elm 스타일 진단(제XII부)과 함께 ``400``\\ 으로 클라이언트에 전달됩니다. 각 ``VerifyError``\\ "
+"는 ``sibuna_core::errors::ErrorKind``\\ 로 변환되며, 그 설명이 응답 본문이 됩니다. 종단 간 "
+"테스트는 응답 본문의 ``DOUBLE SPEND``, ``FINGERPRINT MISMATCH``, ``WRONG SOLUTION "
 "TYPE``, ``MALFORMED CHALLENGE``\\ 를 확인합니다."
 
 #: ../../protocol.rst:195

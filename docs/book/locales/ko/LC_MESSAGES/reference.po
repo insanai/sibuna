@@ -18,10 +18,8 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: ../../reference.rst:1
-#, fuzzy
-#| msgid "Part X: Desk Reference and Diagnostics"
 msgid "Part XII: Desk Reference and Diagnostics"
-msgstr "제X부: 참고 자료와 진단"
+msgstr "제XII부: 참고 자료와 진단"
 
 #: ../../reference.rst:4
 msgid ""
@@ -30,6 +28,8 @@ msgid ""
 "VIII, Part IX). The tables of the edge were read from the code, not from "
 "the SID records."
 msgstr ""
+"방화벽 데몬과 엣지 로드 밸런서(제VIII부, 제IX부)를 위한 엔드포인트, 지표, 오류 목록, 정책 스키마, 저장소 테이블을 "
+"한곳에 모았습니다. 엣지의 표는 SID 기록이 아니라 코드에서 읽었습니다."
 
 #: ../../reference.rst:6
 msgid "Endpoints"
@@ -182,19 +182,6 @@ msgstr ""
 "와 함께 ``401``\\ 을 받습니다."
 
 #: ../../reference.rst:47
-#, fuzzy
-#| msgid ""
-#| "The separate opt-in management listener serves ``/console/``. "
-#| "Initialize its administrator locally with ``sibuna init-admin``, then "
-#| "replace the temporary password on first sign-in. "
-#| "``/console/api/stats`` and ``/console/ws`` require an authenticated "
-#| "session (a kiosk session included). The WebSocket multiplexes "
-#| "statistics, events, nodes, policy, challenges and audit with bounded "
-#| "snapshots, deltas and gap recovery. Management peers connect to "
-#| "``/console/peer``, and every API route lives under ``/console/api/``. "
-#| "Origin error counters are not observed in forward-auth mode. Part IX "
-#| "documents the console's workflows, HTTPS deployment and current SID "
-#| "0007 limits."
 msgid ""
 "The separate opt-in management listener serves ``/console/``. Initialize "
 "its administrator locally with ``sibuna init-admin``, then replace the "
@@ -213,11 +200,11 @@ msgstr ""
 "정책, 챌린지, 감사 기록을 크기가 제한된 스냅숏, 변경분, 누락 복구와 함께 다중화합니다. 관리 피어는 "
 "``/console/peer``\\ 에 연결하며, 모든 API 경로는 ``/console/api/`` 아래에 있습니다. "
 "forward-auth 모드에서는 원본 서버 오류 카운터를 관찰하지 않습니다. 콘솔의 워크플로, HTTPS 배포, 현재 SID "
-"0007의 한계는 제IX부에서 설명합니다."
+"0007의 한계는 제XI부에서 설명합니다."
 
 #: ../../reference.rst:49
 msgid "Routes of the edge"
-msgstr ""
+msgstr "엣지의 경로"
 
 #: ../../reference.rst:52
 msgid ""
@@ -227,33 +214,39 @@ msgid ""
 "``cmd/sibuna/src/edge/probe.rs``, ``cmd/sibuna/src/acme.rs`` and "
 "``crates/acme/src/server.rs`` hold them."
 msgstr ""
+"``--config-file`` 또는 ``sibuna lb``\\ 로 시작한 엣지는 운영 구성이 ``gate``\\ 나 "
+"``shield``\\ 인 HTTP 프런트엔드에서 방화벽의 경로를 제공합니다. 여기에 아래의 경로를 더합니다. "
+"``cmd/sibuna/src/routes.rs``, ``cmd/sibuna/src/edge/probe.rs``, "
+"``cmd/sibuna/src/acme.rs``, ``crates/acme/src/server.rs``\\ 에 있습니다."
 
 #: ../../reference.rst:54
 msgid "HTTP routes of the edge"
-msgstr ""
+msgstr "엣지의 HTTP 경로"
 
 #: ../../reference.rst:61
 msgid "``/__sibuna/ready`` on an HTTP frontend"
-msgstr ""
+msgstr "HTTP 프런트엔드의 ``/__sibuna/ready``"
 
 #: ../../reference.rst:63
 msgid ""
 "``200`` with ``{\"status\":\"ready\"}``; ``503`` with "
 "``{\"status\":\"draining\"}`` from the start of a shutdown (SID 0020)"
 msgstr ""
+"``{\"status\":\"ready\"}``\\ 와 함께 ``200``; 종료가 시작되면 "
+"``{\"status\":\"draining\"}``\\ 과 함께 ``503``\\ (SID 0020)"
 
 #: ../../reference.rst:64
 msgid "``/__sibuna/health``, ``/__sibuna/metrics`` on an HTTP frontend"
-msgstr ""
+msgstr "HTTP 프런트엔드의 ``/__sibuna/health``, ``/__sibuna/metrics``"
 
 #: ../../reference.rst:66
 msgid ""
 "As in the firewall. The metrics text adds the series of the edge (below)"
-msgstr ""
+msgstr "방화벽과 같음. 지표 텍스트에 엣지의 시계열(아래)이 더해짐"
 
 #: ../../reference.rst:67
 msgid "``/health``, ``/ready``, ``/metrics`` on ``observability.listen``"
-msgstr ""
+msgstr "``observability.listen``\\ 의 ``/health``, ``/ready``, ``/metrics``"
 
 #: ../../reference.rst:69
 msgid ""
@@ -261,6 +254,8 @@ msgid ""
 "``/__sibuna/`` spelling. It applies no address list: its address is its "
 "access control"
 msgstr ""
+"별도 리스너에서 같은 세 응답을 주며, ``/__sibuna/`` 표기도 받음. 주소 목록을 적용하지 않음. 그 주소 자체가 접근 "
+"제어임"
 
 #: ../../reference.rst:70
 msgid "``/.well-known/acme-challenge/TOKEN``"
@@ -270,7 +265,7 @@ msgstr ""
 msgid ""
 "The HTTP-01 answer of automatic HTTPS, before the firewall and before a "
 "redirect (SID 0021)"
-msgstr ""
+msgstr "자동 HTTPS의 HTTP-01 응답, 방화벽과 리디렉션보다 먼저 처리(SID 0021)"
 
 #: ../../reference.rst:73
 msgid "``URL/directory``, ``URL/new-nonce``"
@@ -278,13 +273,15 @@ msgstr ""
 
 #: ../../reference.rst:74
 msgid "GET (``HEAD`` for the nonce)"
-msgstr ""
+msgstr "GET(nonce에는 ``HEAD``)"
 
 #: ../../reference.rst:75
 msgid ""
 "The ACME server of the local authority, where ``URL`` is "
 "``global.acme.internal.server.url``; off by default"
 msgstr ""
+"로컬 인증 기관의 ACME 서버. ``URL``\\ 은 ``global.acme.internal.server.url``; 기본값은 "
+"꺼짐"
 
 #: ../../reference.rst:76
 msgid ""
@@ -295,7 +292,7 @@ msgstr ""
 #: ../../reference.rst:78
 msgid ""
 "Signed ACME requests of at most 32 KiB; HTTP-01 is the only challenge"
-msgstr ""
+msgstr "최대 32 KiB의 서명된 ACME 요청; 챌린지는 HTTP-01만"
 
 #: ../../reference.rst:79
 msgid "``URL/crl``"
@@ -303,7 +300,7 @@ msgstr ""
 
 #: ../../reference.rst:81
 msgid "The revocation list of the present intermediate, in DER"
-msgstr ""
+msgstr "현재 중간 인증서의 폐지 목록, DER 형식"
 
 #: ../../reference.rst:83
 msgid ""
@@ -313,10 +310,14 @@ msgid ""
 "field. Every other client receives the ``404`` of an unknown route. "
 "``/__sibuna/ready`` exists on the edge only."
 msgstr ""
+"``/__sibuna/``\\ 의 세 경로는 ``observability.internal_allow``\\ (기본값은 루프백 "
+"네트워크) 안에 있고 요청에 ``X-Forwarded-For``, ``X-Real-IP``, ``Forwarded`` 필드가 없는 "
+"클라이언트에게만 답합니다. 그 밖의 모든 클라이언트는 알 수 없는 경로의 ``404``\\ 를 받습니다. "
+"``/__sibuna/ready``\\ 는 엣지에만 있습니다."
 
 #: ../../reference.rst:85
 msgid "The admin socket"
-msgstr ""
+msgstr "관리 소켓"
 
 #: ../../reference.rst:88
 msgid ""
@@ -327,10 +328,14 @@ msgid ""
 "listed subset of the same lines through the same parser. "
 "``cmd/sibuna/src/edge/control.rs`` holds the grammar."
 msgstr ""
+"``global.admin_socket``\\ (또는 ``sibuna lb --admin``)은 모드 0600의 Unix 소켓을 "
+"엽니다. ``sibuna ctl SOCKET COMMAND``\\ 는 출력 가능한 ASCII 최대 512바이트의 한 줄을 보내고 "
+"응답을 출력합니다. 소켓은 버스트로 명령 20개, 그 뒤로 초당 10개를 받습니다. 엣지의 콘솔은 같은 줄 중 정해진 일부를 같은 "
+"파서로 실행합니다. 문법은 ``cmd/sibuna/src/edge/control.rs``\\ 에 있습니다."
 
 #: ../../reference.rst:90
 msgid "Commands of the admin socket"
-msgstr ""
+msgstr "관리 소켓의 명령"
 
 #: ../../reference.rst:94 ../../reference.rst:892 ../../reference.rst:916
 msgid "Command"
@@ -338,11 +343,11 @@ msgstr "명령"
 
 #: ../../reference.rst:95
 msgid "Answer or effect"
-msgstr ""
+msgstr "응답 또는 효과"
 
 #: ../../reference.rst:96
 msgid "Console"
-msgstr ""
+msgstr "콘솔"
 
 #: ../../reference.rst:97
 msgid "``show servers``"
@@ -352,13 +357,13 @@ msgstr ""
 msgid ""
 "One line per server: pool, name, address, state, weight, flows, health, "
 "ejection, ramp, change"
-msgstr ""
+msgstr "서버마다 한 줄: 풀, 이름, 주소, 상태, 가중치, 플로, 헬스, 배제, 램프, 변경"
 
 #: ../../reference.rst:99 ../../reference.rst:108 ../../reference.rst:117
 #: ../../reference.rst:126 ../../reference.rst:129 ../../reference.rst:132
 #: ../../reference.rst:135 ../../reference.rst:141
 msgid "yes"
-msgstr ""
+msgstr "예"
 
 #: ../../reference.rst:100
 msgid "``show info``"
@@ -369,12 +374,14 @@ msgid ""
 "``key: value`` lines: version, process, source, reloads, watcher, flows, "
 "drops, run-time changes, and the counters of the spill cache (SID 0027)"
 msgstr ""
+"``key: value`` 줄: 버전, 프로세스, 소스, 다시 불러오기, 감시자, 플로, 버림, 실행 중 변경, spill 캐시의 "
+"카운터(SID 0027)"
 
 #: ../../reference.rst:102 ../../reference.rst:105 ../../reference.rst:111
 #: ../../reference.rst:114 ../../reference.rst:120 ../../reference.rst:123
 #: ../../reference.rst:138 ../../reference.rst:144 ../../reference.rst:147
 msgid "no"
-msgstr ""
+msgstr "아니요"
 
 #: ../../reference.rst:103
 msgid "``show stats``"
@@ -384,7 +391,7 @@ msgstr ""
 msgid ""
 "The series of the edge in the Prometheus text format, as the metrics "
 "route prints them"
-msgstr ""
+msgstr "지표 경로가 출력하는 대로 Prometheus 텍스트 형식의 엣지 시계열"
 
 #: ../../reference.rst:106
 msgid "``show certs``, ``show ca``"
@@ -394,7 +401,7 @@ msgstr ""
 msgid ""
 "The names of automatic HTTPS with their state and staple; the root of the "
 "local authority as PEM (SID 0021)"
-msgstr ""
+msgstr "자동 HTTPS 이름과 그 상태와 스테이플; 로컬 인증 기관의 루트(PEM)(SID 0021)"
 
 #: ../../reference.rst:109
 msgid "``revoke cert NAME|SERIAL``"
@@ -404,7 +411,7 @@ msgstr ""
 msgid ""
 "Revokes a certificate of the local authority and writes the revocation "
 "list"
-msgstr ""
+msgstr "로컬 인증 기관의 인증서를 폐지하고 폐지 목록을 씀"
 
 #: ../../reference.rst:112
 msgid "``show hooks``"
@@ -414,7 +421,7 @@ msgstr ""
 msgid ""
 "The plugins with their calls, verdicts, failures and open breakers (SID "
 "0030)"
-msgstr ""
+msgstr "플러그인과 그 호출, 판정, 실패, 열린 차단기(SID 0030)"
 
 #: ../../reference.rst:115
 msgid "``show cluster``"
@@ -424,7 +431,7 @@ msgstr ""
 msgid ""
 "Each node of the mesh with the digest of its file, or with the revision "
 "it serves in persistent mode (SID 0023, SID 0028)"
-msgstr ""
+msgstr "메시의 각 노드와 그 파일의 다이제스트, 또는 영속 모드에서 서비스하는 리비전(SID 0023, SID 0028)"
 
 #: ../../reference.rst:118
 msgid "``show affinity``"
@@ -432,7 +439,7 @@ msgstr ""
 
 #: ../../reference.rst:119
 msgid "The sticky table and the shares of fleet-wide limits (SID 0025)"
-msgstr ""
+msgstr "스티키 테이블과 플릿 전체 한도의 몫(SID 0025)"
 
 #: ../../reference.rst:121
 msgid "``show authority``"
@@ -440,7 +447,7 @@ msgstr ""
 
 #: ../../reference.rst:122
 msgid "The revision of the database that this node serves (SID 0028)"
-msgstr ""
+msgstr "이 노드가 서비스하는 데이터베이스 리비전(SID 0028)"
 
 #: ../../reference.rst:124
 msgid "``set server POOL/NAME state ready|drain [local]``"
@@ -450,7 +457,7 @@ msgstr ""
 msgid ""
 "Admits a server, or stops new flows to it; ``maint`` is another word for "
 "``drain``"
-msgstr ""
+msgstr "서버를 허용하거나, 그 서버로 가는 새 플로를 멈춤; ``maint``\\ 는 ``drain``\\ 의 다른 이름"
 
 #: ../../reference.rst:127
 msgid "``set server POOL/NAME weight N [local]``"
@@ -458,7 +465,7 @@ msgstr ""
 
 #: ../../reference.rst:128
 msgid "Sets the weight, 1 to 65,535"
-msgstr ""
+msgstr "가중치를 1에서 65,535 사이로 설정"
 
 #: ../../reference.rst:130
 msgid ""
@@ -468,7 +475,7 @@ msgstr ""
 
 #: ../../reference.rst:131
 msgid "Adds or removes a server of a pool"
-msgstr ""
+msgstr "풀의 서버를 추가하거나 제거"
 
 #: ../../reference.rst:133
 msgid "``del ban ADDRESS [local]``"
@@ -476,27 +483,23 @@ msgstr ""
 
 #: ../../reference.rst:134
 msgid "Lifts the ban of one client (SID 0022)"
-msgstr ""
+msgstr "클라이언트 하나의 차단을 해제(SID 0022)"
 
 #: ../../reference.rst:136
-#, fuzzy
-#| msgid "``overloaded``"
 msgid "``reload``"
-msgstr "``overloaded``"
+msgstr ""
 
 #: ../../reference.rst:137
 msgid "Loads the file as SIGHUP does and prints the result"
-msgstr ""
+msgstr "SIGHUP처럼 파일을 불러오고 결과를 출력"
 
 #: ../../reference.rst:139
-#, fuzzy
-#| msgid "``overloaded``"
 msgid "``reload cluster``"
-msgstr "``overloaded``"
+msgstr ""
 
 #: ../../reference.rst:140
 msgid "Reloads this node, then sends the file to every peer (SID 0023)"
-msgstr ""
+msgstr "이 노드를 다시 불러온 뒤, 모든 동료에게 파일을 보냄(SID 0023)"
 
 #: ../../reference.rst:142
 msgid "``reopen log``"
@@ -504,7 +507,7 @@ msgstr ""
 
 #: ../../reference.rst:143
 msgid "Opens the access log file again"
-msgstr ""
+msgstr "액세스 로그 파일을 다시 엶"
 
 #: ../../reference.rst:145
 msgid "``help``"
@@ -512,7 +515,7 @@ msgstr ""
 
 #: ../../reference.rst:146
 msgid "Lists the commands"
-msgstr ""
+msgstr "명령을 나열"
 
 #: ../../reference.rst:149
 msgid ""
@@ -521,10 +524,12 @@ msgid ""
 "diagnostic with a code of the families ``ADM`` or ``DBA`` below, and "
 "nothing has changed."
 msgstr ""
+"메시가 있으면, 마지막 단어가 ``local``\\ 이 아닌 한 서버 변경과 차단 해제가 모든 노드에 닿습니다(SID 0022). "
+"실패하면 아래 ``ADM``\\ 이나 ``DBA`` 계열의 코드와 함께 진단을 출력하며, 아무것도 바뀌지 않습니다."
 
 #: ../../reference.rst:151
 msgid "The console of the edge"
-msgstr ""
+msgstr "엣지의 콘솔"
 
 #: ../../reference.rst:154
 msgid ""
@@ -533,10 +538,13 @@ msgid ""
 "routes concern the edge (``crates/console/src/routes.rs``, "
 "``crates/console/src/api/edge.rs``)."
 msgstr ""
+"``console`` 절이 있으면 엣지는 자기 리스너에서 SID 0031의 콘솔을 제공합니다. 방화벽 콘솔의 경로 말고도 세 경로가 "
+"엣지에 관계됩니다(``crates/console/src/routes.rs``, "
+"``crates/console/src/api/edge.rs``)."
 
 #: ../../reference.rst:156
 msgid "Console routes of the edge"
-msgstr ""
+msgstr "엣지의 콘솔 경로"
 
 #: ../../reference.rst:163
 msgid "``/console/api/edge``"
@@ -547,6 +555,7 @@ msgid ""
 "The node, its refusals by reason, its frontends and its pools, at most "
 "256 servers. Needs a session, or a token with the scope ``stats_read``"
 msgstr ""
+"노드, 이유별 거부, 프런트엔드와 풀, 최대 256개 서버. 세션 또는 범위가 ``stats_read``\\ 인 토큰이 필요"
 
 #: ../../reference.rst:166
 msgid "``/console/api/edge/fleet``"
@@ -556,7 +565,7 @@ msgstr ""
 msgid ""
 "One row for each member of the fleet, asked all at once, waiting at most "
 "five seconds"
-msgstr ""
+msgstr "플릿의 구성원마다 한 행, 한꺼번에 묻고 최대 5초 기다림"
 
 #: ../../reference.rst:169
 msgid "``/console/api/edge/command``"
@@ -568,6 +577,8 @@ msgid ""
 "role operator or administrator, the ``Origin`` field, the CSRF token and "
 "the mutation allowance; a change is audited before and after it runs"
 msgstr ""
+"``{\"line\": \"...\"}``: 관리 소켓의 정해진 줄 하나. operator 또는 administrator 역할, "
+"``Origin`` 필드, CSRF 토큰, 변경 허용이 필요하며, 변경은 실행 전후에 감사 기록됨"
 
 #: ../../reference.rst:172
 msgid "``/console/peer``"
@@ -577,13 +588,13 @@ msgstr ""
 msgid ""
 "The stream of a peer console, from the ``allow_ips`` of its entry, with "
 "the peer key"
-msgstr ""
+msgstr "동료 콘솔의 스트림. 그 항목의 ``allow_ips``\\ 에서, 동료 키와 함께"
 
 #: ../../reference.rst:176
 msgid ""
 "A console without an edge answers ``404`` with ``CONSOLE404`` on the "
 "three ``edge`` routes."
-msgstr ""
+msgstr "엣지가 없는 콘솔은 세 ``edge`` 경로에 ``CONSOLE404``\\ 와 함께 ``404``\\ 로 답합니다."
 
 #: ../../reference.rst:178
 msgid "Metrics"
@@ -786,19 +797,17 @@ msgstr ""
 msgid ""
 "An upgraded connection became a tunnel on an event-driven worker (SID "
 "0016)"
-msgstr ""
+msgstr "업그레이드된 연결이 이벤트 기반 워커에서 터널이 됨(SID 0016)"
 
 #: ../../reference.rst:227
-#, fuzzy
-#| msgid "``incidents_persisted``, ``incident_batches``"
 msgid "``origin_reused``, ``origin_connects``"
-msgstr "``incidents_persisted``, ``incident_batches``"
+msgstr ""
 
 #: ../../reference.rst:228
 msgid ""
 "An exchange of a worker reused an idle server socket, or opened a server "
 "connection"
-msgstr ""
+msgstr "워커의 교환이 유휴 서버 소켓을 재사용했거나, 서버 연결을 엶"
 
 #: ../../reference.rst:229
 msgid "``origin_retries``"
@@ -806,7 +815,7 @@ msgstr ""
 
 #: ../../reference.rst:230
 msgid "A request was sent again because an idle server socket had closed"
-msgstr ""
+msgstr "유휴 서버 소켓이 닫혀 요청을 다시 보냄"
 
 #: ../../reference.rst:231
 msgid "``deadline_closes``, ``worker_faults``"
@@ -816,7 +825,7 @@ msgstr ""
 msgid ""
 "A worker closed a connection because a deadline passed, or after a fault "
 "in its own code"
-msgstr ""
+msgstr "워커가 기한이 지나서, 또는 자기 코드의 결함 뒤에 연결을 닫음"
 
 #: ../../reference.rst:233
 msgid "``tls_kept``, ``tls_passed``"
@@ -826,17 +835,19 @@ msgstr ""
 msgid ""
 "A worker ended a TLS connection itself, or gave it to the protocol "
 "runtime after its ClientHello (SID 0024)"
-msgstr ""
+msgstr "워커가 TLS 연결을 직접 끝냈거나, ClientHello 뒤에 프로토콜 런타임에 넘김(SID 0024)"
 
 #: ../../reference.rst:236
 msgid ""
 "The last eight counters are written by the event-driven workers of the "
 "edge (SID 0016, SID 0024). ``crates/core/src/metrics.rs`` holds the list."
 msgstr ""
+"마지막 카운터 여덟 개는 엣지의 이벤트 기반 워커가 씁니다(SID 0016, SID 0024). 목록은 "
+"``crates/core/src/metrics.rs``\\ 에 있습니다."
 
 #: ../../reference.rst:238 ../../reference.rst:243
 msgid "Series of the edge"
-msgstr ""
+msgstr "엣지의 시계열"
 
 #: ../../reference.rst:241
 msgid ""
@@ -848,20 +859,23 @@ msgid ""
 "``crates/lb/src/forward/counters.rs``, ``cmd/sibuna/src/access.rs``, "
 "``cmd/sibuna/src/plugins.rs`` and ``cmd/sibuna/src/acme.rs``."
 msgstr ""
+"엣지의 지표 텍스트에는 위의 카운터와 그다음 이 시계열들이 있습니다. 관리 소켓의 ``show stats``\\ 도 같은 텍스트를 "
+"출력합니다. 설정하지 않은 계열의 시계열은 없습니다. 전달, 메시, 플러그인, 자동 HTTPS는 각각 켜져 있을 때에만 자기 "
+"시계열을 더합니다. 이를 쓰는 코드는 ``crates/lb/src/stats.rs``, "
+"``crates/lb/src/forward/counters.rs``, ``cmd/sibuna/src/access.rs``, "
+"``cmd/sibuna/src/plugins.rs``, ``cmd/sibuna/src/acme.rs``\\ 입니다."
 
 #: ../../reference.rst:247
-#, fuzzy
-#| msgid "Metrics"
 msgid "Series"
-msgstr "지표"
+msgstr "시계열"
 
 #: ../../reference.rst:248
 msgid "Type"
-msgstr ""
+msgstr "유형"
 
 #: ../../reference.rst:249
 msgid "Labels"
-msgstr ""
+msgstr "레이블"
 
 #: ../../reference.rst:250 ../../reference.rst:502 ../../reference.rst:550
 #: ../../reference.rst:584 ../../reference.rst:631 ../../reference.rst:689
@@ -870,22 +884,18 @@ msgid "Meaning"
 msgstr "의미"
 
 #: ../../reference.rst:251
-#, fuzzy
-#| msgid "``/__sibuna/verify``"
 msgid "``sibuna_edge_ready``"
-msgstr "``/__sibuna/verify``"
+msgstr ""
 
 #: ../../reference.rst:252 ../../reference.rst:256 ../../reference.rst:300
 #: ../../reference.rst:312 ../../reference.rst:316 ../../reference.rst:344
 #: ../../reference.rst:356 ../../reference.rst:360 ../../reference.rst:368
-#, fuzzy
-#| msgid "Cause"
 msgid "gauge"
-msgstr "원인"
+msgstr ""
 
 #: ../../reference.rst:254
 msgid "1 while readiness answers 200, 0 from the start of a shutdown"
-msgstr ""
+msgstr "준비 상태가 200으로 답하는 동안 1, 종료가 시작되면 0"
 
 #: ../../reference.rst:255
 msgid "``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``"
@@ -893,7 +903,7 @@ msgstr ""
 
 #: ../../reference.rst:258
 msgid "The flows in the flow table, and ``global.max_flows``"
-msgstr ""
+msgstr "플로 테이블의 플로, 그리고 ``global.max_flows``"
 
 #: ../../reference.rst:259
 msgid "``sibuna_edge_drops_total``"
@@ -906,14 +916,12 @@ msgstr ""
 #: ../../reference.rst:328 ../../reference.rst:332 ../../reference.rst:336
 #: ../../reference.rst:340 ../../reference.rst:348 ../../reference.rst:352
 #: ../../reference.rst:364
-#, fuzzy
-#| msgid "Counter"
 msgid "counter"
-msgstr "카운터"
+msgstr ""
 
 #: ../../reference.rst:262
 msgid "Datagrams that the edge worker discarded and admissions it refused"
-msgstr ""
+msgstr "엣지 워커가 버린 데이터그램과 거부한 허용"
 
 #: ../../reference.rst:263
 msgid "``sibuna_edge_proxy_protocol_accepted_total``, ``_rejected_total``"
@@ -921,7 +929,7 @@ msgstr ""
 
 #: ../../reference.rst:266
 msgid "Connections whose PROXY header was accepted or refused"
-msgstr ""
+msgstr "PROXY 헤더를 받아들였거나 거부한 연결"
 
 #: ../../reference.rst:267
 msgid "``sibuna_edge_flow_log_dropped_total``"
@@ -929,19 +937,15 @@ msgstr ""
 
 #: ../../reference.rst:270
 msgid "Lines of TCP and UDP flows that did not fit the queue of the log"
-msgstr ""
+msgstr "로그 큐에 들어가지 못한 TCP와 UDP 플로의 줄"
 
 #: ../../reference.rst:271
-#, fuzzy
-#| msgid "``bans_refused``"
 msgid "``sibuna_edge_refused_total``"
-msgstr "``bans_refused``"
+msgstr ""
 
 #: ../../reference.rst:273 ../../reference.rst:333 ../../reference.rst:337
-#, fuzzy
-#| msgid "``ja4_present``"
 msgid "``reason``"
-msgstr "``ja4_present``"
+msgstr ""
 
 #: ../../reference.rst:274
 msgid ""
@@ -952,6 +956,11 @@ msgid ""
 "``udp_reply_limit``, ``client_closed``, ``hook``, ``inspect_denied`` and "
 "``udp_not_quic``"
 msgstr ""
+"거부된 연결, 요청, 데이터그램. 이유는 ``rate_limit``, ``flow_limit``, ``draining``, "
+"``connection_limit``, ``client_limit``, ``task_limit``, "
+"``exchange_limit``, ``bad_request``, ``no_server``, ``udp_rate_limit``, "
+"``udp_flow_limit``, ``udp_reply_limit``, ``client_closed``, ``hook``, "
+"``inspect_denied``, ``udp_not_quic``"
 
 #: ../../reference.rst:275
 msgid "``sibuna_edge_frontend_requests_total``"
@@ -966,6 +975,7 @@ msgid ""
 "HTTP requests by status class: ``1xx`` to ``5xx``, or ``none`` for an "
 "exchange that ended without a status"
 msgstr ""
+"상태 클래스별 HTTP 요청: ``1xx``\\ 부터 ``5xx``\\ 까지, 또는 상태 없이 끝난 교환에는 ``none``"
 
 #: ../../reference.rst:279
 msgid ""
@@ -974,14 +984,12 @@ msgid ""
 msgstr ""
 
 #: ../../reference.rst:281 ../../reference.rst:285
-#, fuzzy
-#| msgid "``banned``"
 msgid "``frontend``"
-msgstr "``banned``"
+msgstr ""
 
 #: ../../reference.rst:282
 msgid "Bytes from and to the clients, and flows of a frontend"
-msgstr ""
+msgstr "클라이언트에게서 받고 클라이언트로 보낸 바이트, 그리고 프런트엔드의 플로"
 
 #: ../../reference.rst:283
 msgid "``sibuna_edge_frontend_request_seconds``"
@@ -994,21 +1002,19 @@ msgstr ""
 #: ../../reference.rst:286
 msgid ""
 "The duration of a request; buckets from 0.001 to 30 seconds (14 bounds)"
-msgstr ""
+msgstr "요청의 소요 시간; 0.001초에서 30초까지의 버킷(경계 14개)"
 
 #: ../../reference.rst:287
 msgid "``sibuna_edge_server_requests_total``"
 msgstr ""
 
 #: ../../reference.rst:289
-#, fuzzy
-#| msgid "``allowed``, ``denied``, ``challenged``"
 msgid "``backend``, ``server``, ``code``"
-msgstr "``allowed``, ``denied``, ``challenged``"
+msgstr ""
 
 #: ../../reference.rst:290
 msgid "Requests a server answered, by status class"
-msgstr ""
+msgstr "서버가 답한 요청, 상태 클래스별"
 
 #: ../../reference.rst:291
 msgid ""
@@ -1025,7 +1031,7 @@ msgstr ""
 msgid ""
 "What a server did wrong, requests that left it for another server, and "
 "ejections by passive health (SID 0019)"
-msgstr ""
+msgstr "서버의 잘못, 다른 서버로 넘어간 요청, 수동 헬스 체크에 의한 배제(SID 0019)"
 
 #: ../../reference.rst:295
 msgid "``sibuna_edge_server_client_closed_total``"
@@ -1035,7 +1041,7 @@ msgstr ""
 msgid ""
 "Clients that left before the server answered (logged as 499); not a "
 "failure of the server"
-msgstr ""
+msgstr "서버가 답하기 전에 떠난 클라이언트(499로 기록); 서버의 실패가 아님"
 
 #: ../../reference.rst:299
 msgid "``sibuna_edge_server_up``, ``sibuna_edge_server_active_requests``"
@@ -1043,7 +1049,7 @@ msgstr ""
 
 #: ../../reference.rst:302
 msgid "1 while the server is in service, and its requests in flight"
-msgstr ""
+msgstr "서버가 서비스 중인 동안 1, 그리고 처리 중인 요청 수"
 
 #: ../../reference.rst:303
 msgid "``sibuna_edge_server_response_seconds``"
@@ -1051,7 +1057,7 @@ msgstr ""
 
 #: ../../reference.rst:306
 msgid "The wait for the first byte of the server, with the buckets above"
-msgstr ""
+msgstr "서버의 첫 바이트를 기다린 시간, 위와 같은 버킷"
 
 #: ../../reference.rst:307
 msgid ""
@@ -1060,14 +1066,10 @@ msgid ""
 msgstr ""
 
 #: ../../reference.rst:310
-#, fuzzy
-#| msgid ""
-#| "Queue pushes rejected because the ring was full, and failed commit "
-#| "attempts"
 msgid ""
 "Lines of the access log written, dropped because the queue was full, and "
 "failed writes"
-msgstr "링이 가득 차서 거부된 큐 삽입, 그리고 실패한 커밋 시도"
+msgstr "기록된 액세스 로그 줄, 큐가 가득 차서 버린 줄, 실패한 쓰기"
 
 #: ../../reference.rst:311
 msgid "``sibuna_edge_access_log_queue_length``"
@@ -1075,7 +1077,7 @@ msgstr ""
 
 #: ../../reference.rst:314
 msgid "Entries waiting for the writer"
-msgstr ""
+msgstr "작성자를 기다리는 항목"
 
 #: ../../reference.rst:315
 msgid "``sibuna_edge_forward_active``, ``_peers_eligible``, ``_flows_out``"
@@ -1085,7 +1087,7 @@ msgstr ""
 msgid ""
 "Peer forwarding (SID 0026): 1 while this node forwards, the peers that "
 "can take a flow, and the flows forwarded now"
-msgstr ""
+msgstr "동료 전달(SID 0026): 이 노드가 전달하는 동안 1, 플로를 받을 수 있는 동료, 지금 전달 중인 플로"
 
 #: ../../reference.rst:319
 msgid "``sibuna_edge_forward_streams_out_total``, ``_streams_in_total``"
@@ -1093,7 +1095,7 @@ msgstr ""
 
 #: ../../reference.rst:322
 msgid "Connections handed to an owner, and taken from peers"
-msgstr ""
+msgstr "소유 노드에 넘긴 연결과 동료에게서 받은 연결"
 
 #: ../../reference.rst:323
 msgid ""
@@ -1105,7 +1107,7 @@ msgstr ""
 msgid ""
 "Datagrams sent to an owner, taken from peers, and replies passed back to "
 "a client"
-msgstr ""
+msgstr "소유 노드에 보낸 데이터그램, 동료에게서 받은 데이터그램, 클라이언트에게 되돌려 준 응답"
 
 #: ../../reference.rst:327
 msgid "``sibuna_edge_forward_denied_total``"
@@ -1113,7 +1115,7 @@ msgstr ""
 
 #: ../../reference.rst:330
 msgid "Connections closed because the owner's rate limit denied the client"
-msgstr ""
+msgstr "소유 노드의 속도 제한이 클라이언트를 거부해 닫은 연결"
 
 #: ../../reference.rst:331
 msgid "``sibuna_edge_forward_local_total``"
@@ -1124,6 +1126,8 @@ msgid ""
 "Flows of another owner served here: ``declined``, ``connect_failed``, "
 "``timeout``, ``peer_limit``"
 msgstr ""
+"여기서 서비스한 다른 소유 노드의 플로: ``declined``, ``connect_failed``, ``timeout``, "
+"``peer_limit``"
 
 #: ../../reference.rst:335
 msgid "``sibuna_edge_forward_rejected_total``"
@@ -1134,6 +1138,8 @@ msgid ""
 "What the forwarding port refused: ``stranger``, ``bad_tag``, ``stale``, "
 "``malformed``, ``unknown``"
 msgstr ""
+"전달 포트가 거부한 것: ``stranger``, ``bad_tag``, ``stale``, ``malformed``, "
+"``unknown``"
 
 #: ../../reference.rst:339
 msgid ""
@@ -1147,6 +1153,8 @@ msgid ""
 "send, read from authentic datagrams, that added or extended a ban, and "
 "lost to a bound"
 msgstr ""
+"복제된 차단(SID 0022): 동료마다 그리고 전송마다 데이터그램에 한 번씩 기록한 것, 인증된 데이터그램에서 읽어 차단을 "
+"추가하거나 늘린 것, 상한 때문에 잃은 것"
 
 #: ../../reference.rst:343
 msgid "``sibuna_edge_mesh_bans_known``"
@@ -1154,7 +1162,7 @@ msgstr ""
 
 #: ../../reference.rst:346
 msgid "The bans this node remembers now"
-msgstr ""
+msgstr "이 노드가 지금 기억하는 차단"
 
 #: ../../reference.rst:347
 msgid "``sibuna_edge_hook_calls_total``"
@@ -1170,6 +1178,9 @@ msgid ""
 "``agent``; ``result`` is ``admit``, ``deny``, ``challenge``, ``timeout``, "
 "``overload``, ``trap`` or ``unavailable``"
 msgstr ""
+"플러그인의 호출(SID 0030). ``tier``\\ 는 ``native``, ``wasm``, ``agent``\\ 이고, "
+"``result``\\ 는 ``admit``, ``deny``, ``challenge``, ``timeout``, "
+"``overload``, ``trap``, ``unavailable``"
 
 #: ../../reference.rst:351
 msgid ""
@@ -1185,7 +1196,7 @@ msgstr ""
 msgid ""
 "Telemetry samples dropped, and request fields that the plugin tried to "
 "add and that were refused"
-msgstr ""
+msgstr "버린 텔레메트리 표본, 그리고 플러그인이 더하려다 거부된 요청 필드"
 
 #: ../../reference.rst:355
 msgid "``sibuna_edge_hook_breakers_open``"
@@ -1193,7 +1204,7 @@ msgstr ""
 
 #: ../../reference.rst:358
 msgid "Open breakers of an agent plugin"
-msgstr ""
+msgstr "agent 플러그인의 열린 차단기"
 
 #: ../../reference.rst:359
 msgid "``sibuna_edge_acme_certificates_managed``, ``_served``"
@@ -1203,7 +1214,7 @@ msgstr ""
 msgid ""
 "Names of automatic HTTPS, and those with a certificate in service (SID "
 "0021)"
-msgstr ""
+msgstr "자동 HTTPS 이름, 그리고 그중 인증서가 서비스 중인 이름(SID 0021)"
 
 #: ../../reference.rst:363
 msgid "``sibuna_edge_acme_failures_total``"
@@ -1211,7 +1222,7 @@ msgstr ""
 
 #: ../../reference.rst:366
 msgid "Failed attempts to obtain or renew a certificate"
-msgstr ""
+msgstr "인증서를 받거나 갱신하려다 실패한 시도"
 
 #: ../../reference.rst:367
 msgid "``sibuna_edge_acme_nearest_expiry_seconds``"
@@ -1221,7 +1232,7 @@ msgstr ""
 msgid ""
 "Seconds until the first served certificate expires; absent while none is "
 "served"
-msgstr ""
+msgstr "서비스 중인 첫 인증서가 만료될 때까지 남은 초; 서비스 중인 인증서가 없으면 없음"
 
 #: ../../reference.rst:372
 msgid ""
@@ -1231,6 +1242,9 @@ msgid ""
 "by ``show authority`` (SID 0028). No series counts the commands, the "
 "lifted bans or the parked flows of the plugins."
 msgstr ""
+"엣지의 일부 상태에는 시계열이 없습니다. 스티키 테이블과 플릿 전체 한도의 몫은 ``show affinity``\\ 로만(SID "
+"0025), spill 캐시는 ``show info``\\ 로(SID 0027), 데이터베이스 리비전은 ``show "
+"authority``\\ 로(SID 0028) 보여 줍니다. 명령, 해제된 차단, 플러그인의 대기시킨 플로를 세는 시계열은 없습니다."
 
 #: ../../reference.rst:374
 msgid ""
@@ -1398,12 +1412,12 @@ msgid ""
 "firewall decides, and adds these of its own (SID 0019, SID 0020, SID "
 "0030)."
 msgstr ""
+"엣지의 HTTP 프런트엔드는 방화벽이 결정하는 곳에서는 위의 코드로 답하고, 자기만의 코드를 더합니다(SID 0019, SID "
+"0020, SID 0030)."
 
 #: ../../reference.rst:416
-#, fuzzy
-#| msgid "Status codes of the data plane"
 msgid "Status codes that the edge adds"
-msgstr "데이터 평면의 상태 코드"
+msgstr "엣지가 더하는 상태 코드"
 
 #: ../../reference.rst:422
 msgid "301, 308"
@@ -1413,61 +1427,59 @@ msgstr ""
 msgid ""
 "``redirect_https`` on a cleartext frontend or route, or the automatic "
 "redirect of a managed name (308)"
-msgstr ""
+msgstr "평문 프런트엔드나 경로의 ``redirect_https``, 또는 관리되는 이름의 자동 리디렉션(308)"
 
 #: ../../reference.rst:425
 msgid ""
 "A request hook denied the request, or a WebSocket upgrade carried an "
 "``Origin`` that the route does not list"
-msgstr ""
+msgstr "요청 훅이 요청을 거부했거나, WebSocket 업그레이드가 경로에 나열되지 않은 ``Origin``\\ 을 담음"
 
 #: ../../reference.rst:427
 msgid ""
 "``/__sibuna/ready``, ``health`` or ``metrics`` asked from outside "
 "``internal_allow`` or through a proxy"
 msgstr ""
+"``internal_allow`` 밖에서 또는 프록시를 거쳐 ``/__sibuna/ready``, ``health``, "
+"``metrics``\\ 를 요청함"
 
 #: ../../reference.rst:429
 msgid "A request body above ``max_body``"
-msgstr ""
+msgstr "``max_body``\\ 를 넘는 요청 본문"
 
 #: ../../reference.rst:430
-#, fuzzy
-#| msgid "429"
 msgid "499"
-msgstr "429"
+msgstr ""
 
 #: ../../reference.rst:431
 msgid ""
 "Written to the access log only: the client closed or reset before any "
 "response; no client receives it"
-msgstr ""
+msgstr "액세스 로그에만 기록: 응답 전에 클라이언트가 닫거나 리셋함; 어떤 클라이언트도 받지 않음"
 
 #: ../../reference.rst:433
 msgid "A WebSocket upgrade to a pool with ``http_version`` 2 or 3"
-msgstr ""
+msgstr "``http_version``\\ 이 2나 3인 풀로의 WebSocket 업그레이드"
 
 #: ../../reference.rst:435
 msgid ""
 "No server could be reached, or a request that is not safe to repeat lost "
 "its server connection after it was sent"
-msgstr ""
+msgstr "어떤 서버에도 닿을 수 없었거나, 반복하기에 안전하지 않은 요청이 보낸 뒤 서버 연결을 잃음"
 
 #: ../../reference.rst:437
 msgid ""
 "Readiness during a shutdown, an HTTP/2 or HTTP/3 request above the "
 "request bound, or a console stream over its quota"
-msgstr ""
+msgstr "종료 중의 준비 상태, 요청 상한을 넘는 HTTP/2나 HTTP/3 요청, 또는 할당량을 넘은 콘솔 스트림"
 
 #: ../../reference.rst:438
-#, fuzzy
-#| msgid "404"
 msgid "504"
-msgstr "404"
+msgstr ""
 
 #: ../../reference.rst:439
 msgid "A server stayed silent longer than ``response_timeout``"
-msgstr ""
+msgstr "서버가 ``response_timeout``\\ 보다 오래 침묵함"
 
 #: ../../reference.rst:441
 msgid "Error Catalog"
@@ -1768,16 +1780,12 @@ msgid "More than sixty management mutations in a minute from one session"
 msgstr "한 세션에서 1분에 관리 변경이 60건을 넘음"
 
 #: ../../reference.rst:521
-#, fuzzy
-#| msgid "``CONSOLENODE``"
 msgid "``CONSOLEEDGE``"
-msgstr "``CONSOLENODE``"
+msgstr ""
 
 #: ../../reference.rst:522
-#, fuzzy
-#| msgid "400 / 409 / 503"
 msgid "400 / 503"
-msgstr "400 / 409 / 503"
+msgstr ""
 
 #: ../../reference.rst:523
 msgid ""
@@ -1785,32 +1793,28 @@ msgid ""
 "(400), or the edge worker did not answer or the audit row could not be "
 "written (503)"
 msgstr ""
+"*Edge* 페이지의 줄이 형식이 잘못되었거나 콘솔의 목록에 없음(400), 또는 엣지 워커가 답하지 않았거나 감사 행을 쓸 수 "
+"없음(503)"
 
 #: ../../reference.rst:524
-#, fuzzy
-#| msgid "``CONSOLEQUORUM``"
 msgid "``CONSOLEQUERY``"
-msgstr "``CONSOLEQUORUM``"
+msgstr ""
 
 #: ../../reference.rst:526
 msgid "A read of the page *Edge* past the query allowance of the session"
-msgstr ""
+msgstr "세션의 조회 허용량을 넘은 *Edge* 페이지 읽기"
 
 #: ../../reference.rst:527
-#, fuzzy
-#| msgid "``CONSOLE004``"
 msgid "``CONSOLE404``"
-msgstr "``CONSOLE004``"
+msgstr ""
 
 #: ../../reference.rst:529
 msgid "An ``edge`` route on a console that runs without an edge"
-msgstr ""
+msgstr "엣지 없이 실행하는 콘솔의 ``edge`` 경로"
 
 #: ../../reference.rst:531
-#, fuzzy
-#| msgid "Status codes of the data plane"
 msgid "Operator codes of the edge"
-msgstr "데이터 평면의 상태 코드"
+msgstr "엣지의 운영자 코드"
 
 #: ../../reference.rst:534
 msgid ""
@@ -1820,6 +1824,9 @@ msgid ""
 "marked *log* is not a failure: it is the code of a line on standard error "
 "that reports an event."
 msgstr ""
+"엣지는 실패를 코드를 담은 제목 줄, 설명, ``Hint:``\\ 로 이루어진 진단으로 표시합니다. 표는 코드 표가 담은 모든 "
+"코드를 데몬이 출력하는 제목과 함께 나열합니다. *log*\\ 로 표시한 코드는 실패가 아닙니다. 사건을 보고하는 표준 오류 줄의 "
+"코드입니다."
 
 #: ../../reference.rst:536
 msgid ""
@@ -1838,12 +1845,14 @@ msgid ""
 "``EDGE``: start, reload and notes of the edge "
 "(``cmd/sibuna/src/edge/failure.rs``, ``cmd/sibuna/src/edge.rs``)"
 msgstr ""
+"``EDGE``: 엣지의 시작, 다시 불러오기, 알림(``cmd/sibuna/src/edge/failure.rs``, "
+"``cmd/sibuna/src/edge.rs``)"
 
 #: ../../reference.rst:549 ../../reference.rst:583 ../../reference.rst:630
 #: ../../reference.rst:688 ../../reference.rst:744 ../../reference.rst:791
 #: ../../reference.rst:813
 msgid "Title"
-msgstr ""
+msgstr "제목"
 
 #: ../../reference.rst:551
 msgid "``EDGE001``"
@@ -1865,12 +1874,14 @@ msgid ""
 "a failure of the database authority carries the title of its ``DBA`` code "
 "under ``EDGE001``"
 msgstr ""
+"엣지가 시작하지 않았거나, ``sibuna check``\\ 가 파일을 거부함. 자동 HTTPS는 ``NAME NOT "
+"PUBLIC``, ``NAME OUTSIDE CONSTRAINTS``, ``UPDATE NOT SIGNED``, ``WILDCARD "
+"NEEDS DNS``, ``ON DEMAND NEEDS A GUARD``\\ 를 더하며, 데이터베이스 authority의 실패는 "
+"``EDGE001`` 아래에 자기 ``DBA`` 코드의 제목을 담음"
 
 #: ../../reference.rst:554
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``EDGE002``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:555 ../../reference.rst:558 ../../reference.rst:561
 #: ../../reference.rst:564 ../../reference.rst:567 ../../reference.rst:570
@@ -1885,7 +1896,7 @@ msgstr ""
 #: ../../reference.rst:556
 msgid ""
 "A reload was rejected; the serving routes stay, and the line says why"
-msgstr ""
+msgstr "다시 불러오기가 거부됨; 서비스 중인 경로는 그대로이며, 그 줄이 이유를 말함"
 
 #: ../../reference.rst:557
 msgid "``EDGE010``"
@@ -1895,7 +1906,7 @@ msgstr ""
 msgid ""
 "A command changed state: from the admin socket, from the mesh, or from "
 "the console; also a failed write of the access log"
-msgstr ""
+msgstr "명령이 상태를 바꿈: 관리 소켓, 메시, 또는 콘솔에서; 액세스 로그 쓰기 실패도 포함"
 
 #: ../../reference.rst:560
 msgid "``EDGE011``"
@@ -1903,7 +1914,7 @@ msgstr ""
 
 #: ../../reference.rst:562
 msgid "A configuration file was received from a peer (SID 0023)"
-msgstr ""
+msgstr "동료에게서 설정 파일을 받음(SID 0023)"
 
 #: ../../reference.rst:563
 msgid "``EDGE012``"
@@ -1913,7 +1924,7 @@ msgstr ""
 msgid ""
 "The mesh address cannot serve ``show cluster``; the node serves without "
 "that answer"
-msgstr ""
+msgstr "메시 주소로 ``show cluster``\\ 를 서비스할 수 없음; 노드는 그 응답 없이 서비스함"
 
 #: ../../reference.rst:566
 msgid "``EDGE013``"
@@ -1923,7 +1934,7 @@ msgstr ""
 msgid ""
 "The kernel refused a listener option such as ``defer_accept``; the "
 "frontend serves without it (SID 0032)"
-msgstr ""
+msgstr "커널이 ``defer_accept`` 같은 리스너 옵션을 거부함; 프런트엔드는 그 옵션 없이 서비스함(SID 0032)"
 
 #: ../../reference.rst:569
 msgid "``EDGE014``"
@@ -1932,7 +1943,7 @@ msgstr ""
 #: ../../reference.rst:571
 msgid ""
 "A console peer is new or changed and is used after a restart (SID 0031)"
-msgstr ""
+msgstr "콘솔 동료가 새로 생겼거나 바뀌었으며, 재시작 뒤에 쓰임(SID 0031)"
 
 #: ../../reference.rst:572
 msgid "``EDGE015``"
@@ -1942,17 +1953,19 @@ msgstr ""
 msgid ""
 "The spill cache at start: created, reused, discarded, or in use by "
 "another process, with its size (SID 0027)"
-msgstr ""
+msgstr "시작 시의 spill 캐시: 생성, 재사용, 폐기, 또는 다른 프로세스가 사용 중, 그리고 그 크기(SID 0027)"
 
 #: ../../reference.rst:576
 msgid "The code holds no ``EDGE003`` to ``EDGE009``."
-msgstr ""
+msgstr "코드에는 ``EDGE003``\\ 부터 ``EDGE009``\\ 까지가 없습니다."
 
 #: ../../reference.rst:578
 msgid ""
 "``ADM``: the admin socket and the console commands "
 "(``cmd/sibuna/src/edge/control.rs``, ``crates/lb/src/runtime.rs``)"
 msgstr ""
+"``ADM``: 관리 소켓과 콘솔 명령(``cmd/sibuna/src/edge/control.rs``, "
+"``crates/lb/src/runtime.rs``)"
 
 #: ../../reference.rst:585
 msgid "``ADM001``"
@@ -1966,7 +1979,7 @@ msgstr ""
 msgid ""
 "The line holds a byte outside printable ASCII, is longer than 512 bytes, "
 "or did not arrive within two seconds"
-msgstr ""
+msgstr "줄에 출력 가능한 ASCII 밖의 바이트가 있거나, 512바이트보다 길거나, 2초 안에 도착하지 않음"
 
 #: ../../reference.rst:588
 msgid "``ADM002``"
@@ -1978,7 +1991,7 @@ msgstr ""
 
 #: ../../reference.rst:590
 msgid "The words are not a command"
-msgstr ""
+msgstr "단어들이 명령이 아님"
 
 #: ../../reference.rst:591
 msgid "``ADM003``"
@@ -1990,7 +2003,7 @@ msgstr ""
 
 #: ../../reference.rst:593
 msgid "No pool has this name"
-msgstr ""
+msgstr "이 이름의 풀이 없음"
 
 #: ../../reference.rst:594
 msgid "``ADM004``"
@@ -2002,7 +2015,7 @@ msgstr ""
 
 #: ../../reference.rst:596
 msgid "The pool has no server of this name; the hint names a near one"
-msgstr ""
+msgstr "풀에 이 이름의 서버가 없음; 힌트가 가까운 이름을 알려 줌"
 
 #: ../../reference.rst:597
 msgid "``ADM005``"
@@ -2016,7 +2029,7 @@ msgstr ""
 msgid ""
 "A weight, an address, a state, a server name or a client address is not "
 "valid"
-msgstr ""
+msgstr "가중치, 주소, 상태, 서버 이름, 또는 클라이언트 주소가 유효하지 않음"
 
 #: ../../reference.rst:600
 msgid "``ADM006``"
@@ -2028,7 +2041,7 @@ msgstr ""
 
 #: ../../reference.rst:602
 msgid "The pool already has a server with this name or this address"
-msgstr ""
+msgstr "풀에 이미 이 이름이나 이 주소의 서버가 있음"
 
 #: ../../reference.rst:603
 msgid "``ADM007``"
@@ -2042,7 +2055,7 @@ msgstr ""
 msgid ""
 "The pool changes only by reload (a Maglev table or protocol adapters), is "
 "full, or would lose its last server"
-msgstr ""
+msgstr "풀이 다시 불러오기로만 바뀌거나(Maglev 테이블 또는 프로토콜 어댑터), 가득 찼거나, 마지막 서버를 잃게 됨"
 
 #: ../../reference.rst:606
 msgid "``ADM008``"
@@ -2056,7 +2069,7 @@ msgstr ""
 msgid ""
 "The file does not check, or the daemon was started by ``sibuna lb`` and "
 "has no file"
-msgstr ""
+msgstr "파일이 확인을 통과하지 못하거나, 데몬이 ``sibuna lb``\\ 로 시작되어 파일이 없음"
 
 #: ../../reference.rst:609
 msgid "``ADM009``"
@@ -2069,21 +2082,19 @@ msgstr ""
 #: ../../reference.rst:611
 msgid ""
 "More than a burst of 20 commands, or more than 10 per second after it"
-msgstr ""
+msgstr "버스트 20개를 넘는 명령, 또는 그 뒤 초당 10개를 넘는 명령"
 
 #: ../../reference.rst:612
 msgid "``ADM010``"
 msgstr ""
 
 #: ../../reference.rst:613
-#, fuzzy
-#| msgid "``CONSOLEQUORUM``"
 msgid "``NO ANSWER``"
-msgstr "``CONSOLEQUORUM``"
+msgstr ""
 
 #: ../../reference.rst:614
 msgid "The edge worker did not answer within five seconds"
-msgstr ""
+msgstr "엣지 워커가 5초 안에 답하지 않음"
 
 #: ../../reference.rst:615
 msgid "``ADM011``"
@@ -2097,7 +2108,7 @@ msgstr ""
 msgid ""
 "``reload cluster`` or ``show cluster`` on an edge without a mesh or "
 "without a file"
-msgstr ""
+msgstr "메시나 파일이 없는 엣지에서 ``reload cluster`` 또는 ``show cluster``"
 
 #: ../../reference.rst:618
 msgid "``ADM012``"
@@ -2109,47 +2120,44 @@ msgstr ""
 
 #: ../../reference.rst:620
 msgid "This node reloaded, and some peers did not take the file"
-msgstr ""
+msgstr "이 노드는 다시 불러왔지만, 일부 동료가 파일을 받지 않음"
 
 #: ../../reference.rst:621
 msgid "``ADM013``"
 msgstr ""
 
 #: ../../reference.rst:622
-#, fuzzy
-#| msgid "``CONSOLENODE``"
 msgid "``NOT REVOKED``"
-msgstr "``CONSOLENODE``"
+msgstr ""
 
 #: ../../reference.rst:623
 msgid ""
 "``revoke cert`` named nothing that the local authority issued, or the "
 "build has no TLS"
-msgstr ""
+msgstr "``revoke cert``\\ 가 로컬 인증 기관이 발급한 것을 아무것도 지정하지 않았거나, 빌드에 TLS가 없음"
 
 #: ../../reference.rst:625
 msgid ""
 "``ACME``: automatic HTTPS (``crates/acme/src/error.rs``, "
 "``cmd/sibuna/src/acme.rs``)"
 msgstr ""
+"``ACME``: 자동 HTTPS(``crates/acme/src/error.rs``, "
+"``cmd/sibuna/src/acme.rs``)"
 
 #: ../../reference.rst:632
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``ACME000``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:634
 msgid ""
 "An event of a certificate: obtained, renewed, loaded, stapled, held or "
 "released on demand, or validated and issued by the ACME server"
 msgstr ""
+"인증서의 사건: 받음, 갱신함, 불러옴, 스테이플함, 요청 시점에 보류하거나 해제함, 또는 ACME 서버가 검증하고 발급함"
 
 #: ../../reference.rst:635
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``ACME001``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:636
 msgid "``STORAGE NOT WRITABLE``"
@@ -2157,13 +2165,11 @@ msgstr ""
 
 #: ../../reference.rst:637
 msgid "The directory of ``global.acme.storage`` cannot be read or written"
-msgstr ""
+msgstr "``global.acme.storage``\\ 의 디렉터리를 읽거나 쓸 수 없음"
 
 #: ../../reference.rst:638
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``ACME002``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:639
 msgid "``AUTHORITY UNREACHABLE``"
@@ -2172,13 +2178,11 @@ msgstr ""
 #: ../../reference.rst:640
 msgid ""
 "The ACME authority could not be reached, or no trust root could be loaded"
-msgstr ""
+msgstr "ACME 인증 기관에 닿을 수 없었거나, 신뢰 루트를 불러올 수 없음"
 
 #: ../../reference.rst:641
-#, fuzzy
-#| msgid "``CONSOLE003``"
 msgid "``ACME003``"
-msgstr "``CONSOLE003``"
+msgstr ""
 
 #: ../../reference.rst:642
 msgid "``AUTHORITY REFUSED``"
@@ -2186,13 +2190,11 @@ msgstr ""
 
 #: ../../reference.rst:643
 msgid "The authority answered with a problem; the daemon tries again later"
-msgstr ""
+msgstr "인증 기관이 문제를 답함; 데몬은 나중에 다시 시도함"
 
 #: ../../reference.rst:644
-#, fuzzy
-#| msgid "``CONSOLE004``"
 msgid "``ACME004``"
-msgstr "``CONSOLE004``"
+msgstr ""
 
 #: ../../reference.rst:645
 msgid "``RATE LIMITED``"
@@ -2200,13 +2202,11 @@ msgstr ""
 
 #: ../../reference.rst:646
 msgid "The authority limits our requests; the daemon waits as it was told"
-msgstr ""
+msgstr "인증 기관이 우리 요청을 제한함; 데몬은 지시받은 대로 기다림"
 
 #: ../../reference.rst:647
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``ACME005``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:648
 msgid "``VALIDATION FAILED``"
@@ -2216,13 +2216,11 @@ msgstr ""
 msgid ""
 "The authority could not validate the name over HTTP-01, TLS-ALPN-01 or "
 "DNS-01"
-msgstr ""
+msgstr "인증 기관이 HTTP-01, TLS-ALPN-01, DNS-01로 이름을 검증할 수 없음"
 
 #: ../../reference.rst:650
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``ACME006``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:651
 msgid "``UNEXPECTED ANSWER``"
@@ -2230,13 +2228,11 @@ msgstr ""
 
 #: ../../reference.rst:652
 msgid "An answer broke the protocol or a bound"
-msgstr ""
+msgstr "응답이 프로토콜이나 상한을 어김"
 
 #: ../../reference.rst:653
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``ACME008``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:654
 msgid "``CERTIFICATE REJECTED``"
@@ -2244,13 +2240,11 @@ msgstr ""
 
 #: ../../reference.rst:655
 msgid "The issued certificate cannot be served"
-msgstr ""
+msgstr "발급된 인증서를 제공할 수 없음"
 
 #: ../../reference.rst:656
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``ACME009``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:657
 msgid "``DNS PROVIDER FAILED``"
@@ -2261,12 +2255,11 @@ msgid ""
 "The DNS provider (hook, RFC 2136 or Cloudflare) could not write or remove "
 "the record, or its key or roots could not be read"
 msgstr ""
+"DNS 공급자(훅, RFC 2136, Cloudflare)가 레코드를 쓰거나 지울 수 없었거나, 그 키나 루트를 읽을 수 없음"
 
 #: ../../reference.rst:659
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``ACME010``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:660
 msgid "``RECORD NOT VISIBLE``"
@@ -2274,7 +2267,7 @@ msgstr ""
 
 #: ../../reference.rst:661
 msgid "The authoritative servers did not show the TXT record in time"
-msgstr ""
+msgstr "권한 있는 서버들이 제때 TXT 레코드를 보여 주지 않음"
 
 #: ../../reference.rst:662
 msgid "``ACME011``"
@@ -2288,13 +2281,11 @@ msgstr ""
 msgid ""
 "The local authority could not be created, read or used, or its root has "
 "other name constraints than the file lists"
-msgstr ""
+msgstr "로컬 인증 기관을 만들거나, 읽거나, 쓸 수 없었거나, 그 루트의 이름 제약이 파일이 나열한 것과 다름"
 
 #: ../../reference.rst:665
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``ACME012``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:666
 msgid "``ACCOUNT NOT BOUND``"
@@ -2302,13 +2293,11 @@ msgstr ""
 
 #: ../../reference.rst:667
 msgid "The authority wants an external account binding, or refused ours"
-msgstr ""
+msgstr "인증 기관이 외부 계정 바인딩을 요구하거나, 우리의 바인딩을 거부함"
 
 #: ../../reference.rst:668
-#, fuzzy
-#| msgid "``CONSOLE003``"
 msgid "``ACME013``"
-msgstr "``CONSOLE003``"
+msgstr ""
 
 #: ../../reference.rst:669
 msgid "``NO OCSP RESPONSE``"
@@ -2318,19 +2307,17 @@ msgstr ""
 msgid ""
 "The OCSP responder did not answer, or its answer cannot be stapled; the "
 "certificate is served without a staple"
-msgstr ""
+msgstr "OCSP 응답자가 답하지 않았거나, 그 응답을 스테이플할 수 없음; 인증서는 스테이플 없이 제공됨"
 
 #: ../../reference.rst:671
-#, fuzzy
-#| msgid "``CONSOLE004``"
 msgid "``ACME014``"
-msgstr "``CONSOLE004``"
+msgstr ""
 
 #: ../../reference.rst:673
 msgid ""
 "The certificate thread stopped on a defect and starts again; the served "
 "certificates stay"
-msgstr ""
+msgstr "인증서 스레드가 결함으로 멈췄다가 다시 시작함; 제공 중인 인증서는 그대로"
 
 #: ../../reference.rst:674
 msgid "``ACME015``"
@@ -2344,7 +2331,7 @@ msgstr ""
 msgid ""
 "The program ``openssl`` that makes RSA keys could not be run, or wrote no "
 "key"
-msgstr ""
+msgstr "RSA 키를 만드는 프로그램 ``openssl``\\ 을 실행할 수 없었거나, 키를 쓰지 않음"
 
 #: ../../reference.rst:677
 msgid "``ACME016``"
@@ -2358,17 +2345,19 @@ msgstr ""
 msgid ""
 "The revoked certificates or the revocation list of the local authority "
 "could not be read or written, or the list is full"
-msgstr ""
+msgstr "로컬 인증 기관의 폐지된 인증서나 폐지 목록을 읽거나 쓸 수 없었거나, 목록이 가득 참"
 
 #: ../../reference.rst:681
 msgid "The code holds no ``ACME007``."
-msgstr ""
+msgstr "코드에는 ``ACME007``\\ 이 없습니다."
 
 #: ../../reference.rst:683
 msgid ""
 "``DBA``: the database authority (``crates/authority/src/error.rs``, "
 "``cmd/sibuna/src/edge/authority/``)"
 msgstr ""
+"``DBA``: 데이터베이스 authority(``crates/authority/src/error.rs``, "
+"``cmd/sibuna/src/edge/authority/``)"
 
 #: ../../reference.rst:690
 msgid "``DBA001``"
@@ -2380,7 +2369,7 @@ msgstr ""
 
 #: ../../reference.rst:692
 msgid "A source or a stored document does not evaluate or does not check"
-msgstr ""
+msgstr "소스나 저장된 문서가 평가되지 않거나 확인을 통과하지 못함"
 
 #: ../../reference.rst:693
 msgid "``DBA002``"
@@ -2392,7 +2381,7 @@ msgstr ""
 
 #: ../../reference.rst:695
 msgid "The head is not the revision that the commit expected"
-msgstr ""
+msgstr "헤드가 커밋이 기대한 리비전이 아님"
 
 #: ../../reference.rst:696
 msgid "``DBA003``"
@@ -2406,7 +2395,7 @@ msgstr ""
 msgid ""
 "The database cannot be reached, or it refused the statement (also for a "
 "role that lacks a right)"
-msgstr ""
+msgstr "데이터베이스에 닿을 수 없거나, 데이터베이스가 문장을 거부함(권한이 없는 역할도 포함)"
 
 #: ../../reference.rst:699
 msgid "``DBA004``"
@@ -2418,7 +2407,7 @@ msgstr ""
 
 #: ../../reference.rst:701
 msgid "Nothing is published yet, or no revision has this number"
-msgstr ""
+msgstr "아직 게시된 것이 없거나, 이 번호의 리비전이 없음"
 
 #: ../../reference.rst:702
 msgid "``DBA005``"
@@ -2432,7 +2421,7 @@ msgstr ""
 msgid ""
 "The ``authority`` section or its file is wrong, or the build has no "
 "storage"
-msgstr ""
+msgstr "``authority`` 절이나 그 파일이 잘못되었거나, 빌드에 저장소가 없음"
 
 #: ../../reference.rst:705
 msgid "``DBA006``"
@@ -2444,7 +2433,7 @@ msgstr ""
 
 #: ../../reference.rst:707
 msgid "``show authority`` on an edge that serves its file"
-msgstr ""
+msgstr "자기 파일을 서비스하는 엣지에서 ``show authority``"
 
 #: ../../reference.rst:708
 msgid "``DBA007``"
@@ -2456,7 +2445,7 @@ msgstr ""
 
 #: ../../reference.rst:710
 msgid "``sibuna authority`` without a known command, or with a bad option"
-msgstr ""
+msgstr "알려진 명령이 없거나 잘못된 옵션이 있는 ``sibuna authority``"
 
 #: ../../reference.rst:711
 msgid "``DBA008``"
@@ -2468,7 +2457,7 @@ msgstr ""
 
 #: ../../reference.rst:713
 msgid "A stored revision is not what its row says"
-msgstr ""
+msgstr "저장된 리비전이 그 행이 말하는 것과 다름"
 
 #: ../../reference.rst:714
 msgid "``DBA009``"
@@ -2480,7 +2469,7 @@ msgstr ""
 
 #: ../../reference.rst:716
 msgid "``reload cluster`` on a node that follows a database"
-msgstr ""
+msgstr "데이터베이스를 따르는 노드에서 ``reload cluster``"
 
 #: ../../reference.rst:717
 msgid "``DBA010``"
@@ -2488,7 +2477,7 @@ msgstr ""
 
 #: ../../reference.rst:719
 msgid "A revision was applied"
-msgstr ""
+msgstr "리비전이 적용됨"
 
 #: ../../reference.rst:720
 msgid "``DBA011``"
@@ -2496,7 +2485,7 @@ msgstr ""
 
 #: ../../reference.rst:722
 msgid "A revision was refused; the node keeps the one it serves"
-msgstr ""
+msgstr "리비전이 거부됨; 노드는 서비스하던 리비전을 유지함"
 
 #: ../../reference.rst:723
 msgid "``DBA012``"
@@ -2506,7 +2495,7 @@ msgstr ""
 msgid ""
 "The database cannot be reached; the node keeps its revision and asks "
 "again every two seconds"
-msgstr ""
+msgstr "데이터베이스에 닿을 수 없음; 노드는 자기 리비전을 유지하고 2초마다 다시 물음"
 
 #: ../../reference.rst:726
 msgid "``DBA013``"
@@ -2514,7 +2503,7 @@ msgstr ""
 
 #: ../../reference.rst:728
 msgid "The database answers again"
-msgstr ""
+msgstr "데이터베이스가 다시 답함"
 
 #: ../../reference.rst:729
 msgid "``DBA014``"
@@ -2522,7 +2511,7 @@ msgstr ""
 
 #: ../../reference.rst:731
 msgid "The node started from its cache"
-msgstr ""
+msgstr "노드가 캐시에서 시작함"
 
 #: ../../reference.rst:732
 msgid "``DBA015``"
@@ -2531,7 +2520,7 @@ msgstr ""
 #: ../../reference.rst:734
 msgid ""
 "``authority.binds`` names a frontend that the revision does not publish"
-msgstr ""
+msgstr "``authority.binds``\\ 가 리비전이 게시하지 않는 프런트엔드를 지정함"
 
 #: ../../reference.rst:735
 msgid "``DBA016``"
@@ -2541,13 +2530,15 @@ msgstr ""
 msgid ""
 "The cache is ignored or cannot be written, or the report to the database "
 "failed"
-msgstr ""
+msgstr "캐시를 무시하거나 쓸 수 없음, 또는 데이터베이스로의 보고가 실패함"
 
 #: ../../reference.rst:739
 msgid ""
 "``UPG``: replacing the binary (``crates/upgrade/src/error.rs``, "
 "``cmd/sibuna/src/edge/upgrade.rs``)"
 msgstr ""
+"``UPG``: 바이너리 교체(``crates/upgrade/src/error.rs``, "
+"``cmd/sibuna/src/edge/upgrade.rs``)"
 
 #: ../../reference.rst:746
 msgid "``UPG001``"
@@ -2559,7 +2550,7 @@ msgstr ""
 
 #: ../../reference.rst:748
 msgid "The replacement runs as another user than the running daemon"
-msgstr ""
+msgstr "교체 프로세스가 실행 중인 데몬과 다른 사용자로 실행됨"
 
 #: ../../reference.rst:749
 msgid "``UPG002``"
@@ -2571,7 +2562,7 @@ msgstr ""
 
 #: ../../reference.rst:751
 msgid "The two binaries share no version of the handoff protocol"
-msgstr ""
+msgstr "두 바이너리가 공유하는 핸드오프 프로토콜 버전이 없음"
 
 #: ../../reference.rst:752
 msgid "``UPG003``"
@@ -2585,7 +2576,7 @@ msgstr ""
 msgid ""
 "A malformed, oversized or unexpected frame, or a descriptor that is not "
 "what the frame says"
-msgstr ""
+msgstr "형식이 잘못되었거나, 너무 크거나, 예상하지 못한 프레임, 또는 프레임이 말하는 것과 다른 디스크립터"
 
 #: ../../reference.rst:755
 msgid "``UPG004``"
@@ -2597,7 +2588,7 @@ msgstr ""
 
 #: ../../reference.rst:757
 msgid "The running daemon did not answer in time; it keeps serving"
-msgstr ""
+msgstr "실행 중인 데몬이 제때 답하지 않음; 데몬은 계속 서비스함"
 
 #: ../../reference.rst:758
 msgid "``UPG005``"
@@ -2609,7 +2600,7 @@ msgstr ""
 
 #: ../../reference.rst:760
 msgid "The running daemon ended the handoff; its log says why"
-msgstr ""
+msgstr "실행 중인 데몬이 핸드오프를 끝냄; 그 로그가 이유를 말함"
 
 #: ../../reference.rst:761
 msgid "``UPG006``"
@@ -2622,7 +2613,7 @@ msgstr ""
 #: ../../reference.rst:763
 msgid ""
 "Another replacement is in progress, or the running daemon is stopping"
-msgstr ""
+msgstr "다른 교체가 진행 중이거나, 실행 중인 데몬이 멈추는 중"
 
 #: ../../reference.rst:764
 msgid "``UPG007``"
@@ -2634,7 +2625,7 @@ msgstr ""
 
 #: ../../reference.rst:766
 msgid "The platform cannot pass descriptors (Linux only)"
-msgstr ""
+msgstr "플랫폼이 디스크립터를 넘길 수 없음(Linux 전용)"
 
 #: ../../reference.rst:767
 msgid "``UPG008``"
@@ -2648,7 +2639,7 @@ msgstr ""
 msgid ""
 "The daemon at ``global.upgrade_socket`` listens on none of the addresses "
 "of this file"
-msgstr ""
+msgstr "``global.upgrade_socket``\\ 의 데몬이 이 파일의 어떤 주소에서도 리슨하지 않음"
 
 #: ../../reference.rst:770
 msgid "``UPG010``"
@@ -2657,7 +2648,7 @@ msgstr ""
 #: ../../reference.rst:772
 msgid ""
 "The old process handed its listeners and UDP mappings to the replacement"
-msgstr ""
+msgstr "이전 프로세스가 리스너와 UDP 매핑을 교체 프로세스에 넘김"
 
 #: ../../reference.rst:773
 msgid "``UPG011``"
@@ -2665,7 +2656,7 @@ msgstr ""
 
 #: ../../reference.rst:775
 msgid "The replacement failed before the cutover; the old process serves on"
-msgstr ""
+msgstr "교체 프로세스가 전환 전에 실패함; 이전 프로세스가 계속 서비스함"
 
 #: ../../reference.rst:776
 msgid "``UPG012``"
@@ -2673,7 +2664,7 @@ msgstr ""
 
 #: ../../reference.rst:778
 msgid "The old process refused an upgrade peer"
-msgstr ""
+msgstr "이전 프로세스가 업그레이드 상대를 거부함"
 
 #: ../../reference.rst:779
 msgid "``UPG013``"
@@ -2681,7 +2672,7 @@ msgstr ""
 
 #: ../../reference.rst:781
 msgid "The replacement cannot be ended; UDP stays unread until it is gone"
-msgstr ""
+msgstr "교체 프로세스를 끝낼 수 없음; 그것이 사라질 때까지 UDP를 읽지 않음"
 
 #: ../../reference.rst:782
 msgid "``UPG020``"
@@ -2689,17 +2680,15 @@ msgstr ""
 
 #: ../../reference.rst:784
 msgid "The replacement took the listeners and UDP mappings"
-msgstr ""
+msgstr "교체 프로세스가 리스너와 UDP 매핑을 넘겨받음"
 
 #: ../../reference.rst:786
 msgid "``SPILL``: the spill cache (``crates/spill/src/error.rs``)"
-msgstr ""
+msgstr "``SPILL``: spill 캐시(``crates/spill/src/error.rs``)"
 
 #: ../../reference.rst:793
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``SPILL001``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:794
 msgid "``SPILL CACHE SIZE OUT OF RANGE``"
@@ -2707,13 +2696,11 @@ msgstr ""
 
 #: ../../reference.rst:795
 msgid "The size lies outside 64 KiB to 64 GiB"
-msgstr ""
+msgstr "크기가 64 KiB에서 64 GiB 범위를 벗어남"
 
 #: ../../reference.rst:796
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``SPILL002``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:797
 msgid "``NOT A SPILL CACHE``"
@@ -2721,13 +2708,11 @@ msgstr ""
 
 #: ../../reference.rst:798
 msgid "The file at the path exists and is not a cache; it is left alone"
-msgstr ""
+msgstr "경로에 파일이 있지만 캐시가 아님; 그대로 둠"
 
 #: ../../reference.rst:799
-#, fuzzy
-#| msgid "``CONSOLE003``"
 msgid "``SPILL003``"
-msgstr "``CONSOLE003``"
+msgstr ""
 
 #: ../../reference.rst:800
 msgid "``SPILL CACHE IN USE``"
@@ -2737,13 +2722,11 @@ msgstr ""
 msgid ""
 "Another process holds the lock of the file; the daemon then runs with the "
 "sticky table in memory only"
-msgstr ""
+msgstr "다른 프로세스가 파일의 락을 쥐고 있음; 그러면 데몬은 스티키 테이블을 메모리에만 두고 실행함"
 
 #: ../../reference.rst:802
-#, fuzzy
-#| msgid "``CONSOLE004``"
 msgid "``SPILL004``"
-msgstr "``CONSOLE004``"
+msgstr ""
 
 #: ../../reference.rst:803
 msgid "``SPILL CACHE UNAVAILABLE``"
@@ -2751,7 +2734,7 @@ msgstr ""
 
 #: ../../reference.rst:804
 msgid "The system refused an operation on the file"
-msgstr ""
+msgstr "시스템이 파일에 대한 연산을 거부함"
 
 #: ../../reference.rst:806
 msgid ""
@@ -2759,16 +2742,16 @@ msgid ""
 "``EDGE001`` with the title ``SPILL CACHE NOT USABLE``, and the message "
 "carries the ``SPILL`` code."
 msgstr ""
+"``SPILL003``\\ 이 아닌 ``SPILL`` 실패는 제목 ``SPILL CACHE NOT USABLE``\\ 과 함께 "
+"``EDGE001``\\ 로 시작을 멈추며, 메시지에 ``SPILL`` 코드가 담깁니다."
 
 #: ../../reference.rst:808
 msgid "``HOOK``: plugins (``crates/plugin/src/spec.rs``)"
-msgstr ""
+msgstr "``HOOK``: 플러그인(``crates/plugin/src/spec.rs``)"
 
 #: ../../reference.rst:815
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``HOOK001``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:816
 msgid "``UNKNOWN PLUGIN``"
@@ -2776,13 +2759,11 @@ msgstr ""
 
 #: ../../reference.rst:817
 msgid "A frontend lists a plugin that ``plugins`` does not define"
-msgstr ""
+msgstr "프런트엔드가 ``plugins``\\ 에 정의되지 않은 플러그인을 나열함"
 
 #: ../../reference.rst:818
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``HOOK002``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:819
 msgid "``INVALID PLUGIN SETTINGS``"
@@ -2790,13 +2771,11 @@ msgstr ""
 
 #: ../../reference.rst:820
 msgid "A key of a plugin is missing, unknown or out of range"
-msgstr ""
+msgstr "플러그인의 키가 없거나, 알 수 없거나, 범위를 벗어남"
 
 #: ../../reference.rst:821
-#, fuzzy
-#| msgid "``CONSOLE003``"
 msgid "``HOOK003``"
-msgstr "``CONSOLE003``"
+msgstr ""
 
 #: ../../reference.rst:822
 msgid "``MODULE NOT READABLE``"
@@ -2804,30 +2783,24 @@ msgstr ""
 
 #: ../../reference.rst:823
 msgid "The Wasm module cannot be read"
-msgstr ""
+msgstr "Wasm 모듈을 읽을 수 없음"
 
 #: ../../reference.rst:824
-#, fuzzy
-#| msgid "``CONSOLE004``"
 msgid "``HOOK004``"
-msgstr "``CONSOLE004``"
+msgstr ""
 
 #: ../../reference.rst:825
-#, fuzzy
-#| msgid "``CONSOLENODE``"
 msgid "``MODULE NOT LOADED``"
-msgstr "``CONSOLENODE``"
+msgstr ""
 
 #: ../../reference.rst:826
 msgid ""
 "The module does not validate, or its memory does not fit ``memory_pages``"
-msgstr ""
+msgstr "모듈이 검증을 통과하지 못하거나, 그 메모리가 ``memory_pages``\\ 에 들어가지 않음"
 
 #: ../../reference.rst:827
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``HOOK005``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:828
 msgid "``FORBIDDEN IMPORT``"
@@ -2837,13 +2810,11 @@ msgstr ""
 msgid ""
 "The module imports something other than ``sibuna.add_header`` and "
 "``sibuna.now_ms``"
-msgstr ""
+msgstr "모듈이 ``sibuna.add_header``\\ 와 ``sibuna.now_ms`` 말고 다른 것을 가져옴"
 
 #: ../../reference.rst:830
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``HOOK006``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:831
 msgid "``ABI MISMATCH``"
@@ -2853,13 +2824,11 @@ msgstr ""
 msgid ""
 "The module lacks an export of the interface, or ``sibuna_abi`` does not "
 "return 1"
-msgstr ""
+msgstr "모듈에 인터페이스의 내보내기가 없거나, ``sibuna_abi``\\ 가 1을 돌려주지 않음"
 
 #: ../../reference.rst:833
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``HOOK007``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:834
 msgid "``UNKNOWN NATIVE HOOK``"
@@ -2867,13 +2836,11 @@ msgstr ""
 
 #: ../../reference.rst:835
 msgid "The build has no native hook of this name"
-msgstr ""
+msgstr "빌드에 이 이름의 네이티브 훅이 없음"
 
 #: ../../reference.rst:836
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``HOOK008``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:837
 msgid "``NATIVE HOOK REFUSED ITS SETTINGS``"
@@ -2881,13 +2848,11 @@ msgstr ""
 
 #: ../../reference.rst:838
 msgid "A native hook refused the ``settings`` of the plugin"
-msgstr ""
+msgstr "네이티브 훅이 플러그인의 ``settings``\\ 를 거부함"
 
 #: ../../reference.rst:839
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``HOOK009``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:840
 msgid "``AGENTS NOT SUPPORTED``"
@@ -2895,7 +2860,7 @@ msgstr ""
 
 #: ../../reference.rst:841
 msgid "An agent needs a Unix socket, which this platform lacks"
-msgstr ""
+msgstr "agent에는 이 플랫폼에 없는 Unix 소켓이 필요함"
 
 #: ../../reference.rst:843
 msgid ""
@@ -2907,6 +2872,11 @@ msgid ""
 "their own (``TRAFFIC``, ``COMPARISON``, ``RANKHISTORY``, ``RULEHITS``, "
 "``TIMELINE``, ``MINUTES``), whose hints the interface shows."
 msgstr ""
+"다시 불러오기에서 불러오지 못한 플러그인 집합은 서비스 중인 집합을 그대로 둡니다. 두 계열이 더 있지만, 엣지 운영자보다는 빌드와 "
+"콘솔에 관계됩니다. ``HTML001``\\ 부터 ``HTML008``\\ 까지는 페이지 템플릿의 빌드를 멈추고, "
+"``GEOIP001``\\ 은 콘솔이 없는 빌드에서 GeoIP 스냅숏을 거부합니다. 콘솔의 조회 경로는 자기 "
+"계열(``TRAFFIC``, ``COMPARISON``, ``RANKHISTORY``, ``RULEHITS``, "
+"``TIMELINE``, ``MINUTES``)로 답하며, 그 힌트는 인터페이스가 보여 줍니다."
 
 #: ../../reference.rst:845
 msgid "Policy Schema"
@@ -2983,21 +2953,6 @@ msgstr ""
 "}"
 
 #: ../../reference.rst:872
-#, fuzzy
-#| msgid ""
-#| "``challenge_at`` and ``deny_at`` lie in -1000 to 1000 with ``deny_at`` "
-#| "at or above ``challenge_at``, and ``bits_step`` in 1 to 1000. A "
-#| "``challenge`` block belongs only to ``CHALLENGE`` rules, with 1 to 64 "
-#| "work bits. ``limits`` gives a rule its own quota: ``rate`` 1 to "
-#| "1,000,000 and ``window_seconds`` 1 to 86,400 are required, "
-#| "``ban_seconds`` (at most 86,400) is optional, and ``WEIGH`` rules "
-#| "cannot carry limits. ``ja4`` is a whole JA4 fingerprint, which must be "
-#| "equal, or a prefix followed by ``*``, which the fingerprint must start "
-#| "with; ``*`` alone matches any fingerprint, and a request without one "
-#| "matches no ``ja4`` rule. A pattern that no fingerprint could match is "
-#| "refused with ``InvalidJa4`` (Part IX, JA4 Fingerprints From the "
-#| "Ingress). The reputation trie of ``ip_rules`` holds at most 8,192 "
-#| "nodes. Each rule may use one spelling of each criterion."
 msgid ""
 "``challenge_at`` and ``deny_at`` lie in -1000 to 1000 with ``deny_at`` at "
 "or above ``challenge_at``, and ``bits_step`` in 1 to 1000. A "
@@ -3021,7 +2976,7 @@ msgstr ""
 "``WEIGH`` 규칙에는 한도를 둘 수 없습니다. ``ja4``\\ 는 정확히 같아야 하는 전체 JA4 지문이거나, 지문이 "
 "그것으로 시작해야 하는 접두사 뒤에 ``*``\\ 를 붙인 것입니다. ``*`` 하나만 쓰면 모든 지문과 일치하고, 지문이 없는 "
 "요청은 어떤 ``ja4`` 규칙과도 일치하지 않습니다. 어떤 지문과도 일치할 수 없는 패턴은 ``InvalidJa4``\\ 로 "
-"거부됩니다(제IX부, 인그레스에서 받는 JA4 지문). ``ip_rules``\\ 의 평판 트라이는 노드를 최대 8,192개 "
+"거부됩니다(제XI부, 인그레스에서 받는 JA4 지문). ``ip_rules``\\ 의 평판 트라이는 노드를 최대 8,192개 "
 "담습니다. 각 규칙은 조건마다 한 가지 표기만 쓸 수 있습니다."
 
 #: ../../reference.rst:874
@@ -3081,34 +3036,43 @@ msgid ""
 "channel ``sibuna_edge``. The history is never pruned. "
 "``crates/authority/src/sql.rs`` holds the schema."
 msgstr ""
+"엣지의 데이터베이스 authority(SID 0028)는 방화벽의 데이터베이스나 다른 데이터베이스에 "
+"``sibuna_schema``\\ 의 구성 요소 ``authority``\\ 로 테이블 세 개를 더합니다. "
+"``edge_head``\\ (헤드 번호를 담은 행 하나), ``edge_revisions``\\ (리비전마다 한 행: "
+"``origin``\\ (``apply`` 또는 ``rollback``), ``restored``, 64자리 ``digest``\\ "
+"와 함께 확인을 통과한 최대 256 KiB의 ``document``, 이름과 다이제스트를 가진 ``source``, "
+"``author``, ``note``, ``committed_at``), ``edge_nodes``\\ (노드마다 한 행: "
+"``applied``, ``digest``, ``refused``, ``detail``, ``seen_at``)입니다. "
+"PostgreSQL에서 ``edge_head``\\ 를 갱신하면 채널 ``sibuna_edge``\\ 에 알림이 갑니다. 이력은 "
+"결코 정리하지 않습니다. 스키마는 ``crates/authority/src/sql.rs``\\ 에 있습니다."
 
 #: ../../reference.rst:883
 msgid "Commands of the Binary"
-msgstr ""
+msgstr "바이너리의 명령"
 
 #: ../../reference.rst:886
 msgid ""
 "One binary holds the firewall daemon, the edge and their tools. Part XI "
 "describes each command; this table says where."
 msgstr ""
+"바이너리 하나에 방화벽 데몬, 엣지, 그리고 그 도구들이 들어 있습니다. 제XI부가 각 명령을 설명하며, 이 표는 그 위치를 알려 "
+"줍니다."
 
 #: ../../reference.rst:888
 msgid "Commands of ``sibuna``"
-msgstr ""
+msgstr "``sibuna``\\ 의 명령"
 
 #: ../../reference.rst:893
 msgid "Purpose, and where Part XI describes it"
-msgstr ""
+msgstr "용도, 그리고 제XI부에서 설명하는 곳"
 
 #: ../../reference.rst:894
-#, fuzzy
-#| msgid "``/__sibuna/metrics``"
 msgid "``sibuna [options]``"
-msgstr "``/__sibuna/metrics``"
+msgstr ""
 
 #: ../../reference.rst:895
 msgid "The firewall daemon (*Command-Line Reference*)"
-msgstr ""
+msgstr "방화벽 데몬(*명령줄 레퍼런스*)"
 
 #: ../../reference.rst:896
 msgid "``sibuna --config-file FILE``"
@@ -3118,7 +3082,7 @@ msgstr ""
 msgid ""
 "The edge from a JSON or JLV topology; it takes no other option (*Edge "
 "Load Balancing*)"
-msgstr ""
+msgstr "JSON 또는 JLV 토폴로지에서 시작하는 엣지; 다른 옵션은 받지 않음(*엣지 로드 밸런싱*)"
 
 #: ../../reference.rst:898
 msgid "``sibuna check -f FILE``"
@@ -3127,7 +3091,7 @@ msgstr ""
 #: ../../reference.rst:899
 msgid ""
 "Checks a topology offline, with its certificates and CA files, and exits"
-msgstr ""
+msgstr "토폴로지를 인증서, CA 파일과 함께 오프라인으로 확인하고 종료"
 
 #: ../../reference.rst:900
 msgid "``sibuna lb --bind IP:PORT --server IP:PORT ...``"
@@ -3137,7 +3101,7 @@ msgstr ""
 msgid ""
 "The edge from a few options, without a file; ``--print-config`` writes "
 "the file (*Starting with one command*)"
-msgstr ""
+msgstr "파일 없이 옵션 몇 개로 시작하는 엣지; ``--print-config``\\ 가 파일을 씀(*명령 하나로 시작하기*)"
 
 #: ../../reference.rst:902
 msgid "``sibuna ctl SOCKET COMMAND``"
@@ -3147,7 +3111,7 @@ msgstr ""
 msgid ""
 "One command of the admin socket (*Changing servers at run time*, and the "
 "table above)"
-msgstr ""
+msgstr "관리 소켓의 명령 하나(*실행 중에 서버 바꾸기*, 그리고 위의 표)"
 
 #: ../../reference.rst:904
 msgid ""
@@ -3158,7 +3122,7 @@ msgstr ""
 msgid ""
 "Publishes and inspects the topology in a database (*A database for the "
 "topology*)"
-msgstr ""
+msgstr "데이터베이스에 토폴로지를 게시하고 살펴봄(*토폴로지를 위한 데이터베이스*)"
 
 #: ../../reference.rst:906
 msgid "``sibuna init-admin``, ``sibuna console ...``"
@@ -3168,7 +3132,7 @@ msgstr ""
 msgid ""
 "The accounts, tokens, policies and GeoIP data of the console (*Console "
 "Preview*)"
-msgstr ""
+msgstr "콘솔의 계정, 토큰, 정책, GeoIP 데이터(*콘솔 미리보기*)"
 
 #: ../../reference.rst:909
 msgid "Build Targets"
@@ -3187,12 +3151,12 @@ msgid "``cargo build --release -p sibuna``"
 msgstr "``cargo build --release -p sibuna``"
 
 #: ../../reference.rst:919
-#, fuzzy
-#| msgid "Daemon with SQLite storage and the console (the default features)"
 msgid ""
 "Daemon with SQLite storage, the console, JLV and automatic HTTPS (the "
 "default features ``sqlite``, ``console``, ``jlv`` and ``https``)"
-msgstr "SQLite 저장소와 콘솔을 포함한 데몬(기본 기능)"
+msgstr ""
+"SQLite 저장소, 콘솔, JLV, 자동 HTTPS를 포함한 데몬(기본 기능 ``sqlite``, ``console``, "
+"``jlv``, ``https``)"
 
 #: ../../reference.rst:920
 msgid "``cargo build --release -p sibuna --no-default-features``"
@@ -3311,10 +3275,8 @@ msgstr ""
 "거부합니다(``GEOIP001``)."
 
 #: ../../reference.rst:943
-#, fuzzy
-#| msgid "Exercise 10.1"
 msgid "Exercise 12.1"
-msgstr "연습 문제 10.1"
+msgstr "연습 문제 12.1"
 
 #: ../../reference.rst:945
 msgid ""
