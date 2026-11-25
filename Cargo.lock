@@ -1370,6 +1370,7 @@ dependencies = [
  "sibuna-reactor",
  "sibuna-storage",
  "sibuna-store",
+ "sibuna-upgrade",
  "tokio",
  "tokio-rustls",
 ]

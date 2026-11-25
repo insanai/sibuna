@@ -126,10 +126,25 @@ fn names_a_certificate(lower: &str) -> bool {
 
 /// Prints the diagnostic of `error` to standard error.
 pub(super) fn report(file: Option<&str>, error: &io::Error) {
+    #[cfg(unix)]
+    if let Some(upgrade) = error.get_ref().and_then(|inner| inner.downcast_ref()) {
+        return report_upgrade(upgrade);
+    }
     let failure = classify(file, error);
     let mut text = String::new();
     let title = format!("{} (EDGE001)", failure.title);
     let _ = diagnostic::render(&mut text, &title, &failure.message, failure.hint);
+    eprint!("{text}");
+}
+
+/// Prints the diagnostic of a handoff that did not replace the running daemon
+/// (SID 0029). It carries its own code, from `UPG001`.
+#[cfg(unix)]
+fn report_upgrade(error: &sibuna_upgrade::UpgradeError) {
+    let mut text = String::new();
+    let title = format!("{} ({})", error.title(), error.code());
+    let message = format!("The running daemon was not replaced: {error}.");
+    let _ = diagnostic::render(&mut text, &title, &message, error.hint());
     eprint!("{text}");
 }
 
