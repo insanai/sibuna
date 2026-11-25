@@ -5,6 +5,7 @@
 //! ```text
 //!   request on any HTTP frontend
 //!     |
+//!     +-- for the ACME server of the local authority ----------> its reply (`serve`)
 //!     +-- GET /.well-known/acme-challenge/TOKEN, answer known --> 200, the answer
 //!     +-- plain HTTP, Host is a managed name ------------------> 308, https://HOST/...
 //!     |     (unless the route states `redirect_https` itself: SID 0019 then decides)
@@ -13,6 +14,8 @@
 //!
 //! Both answers are written before any firewall decision. A ban or a challenge page must
 //! not keep the certificate authority from validating a name.
+
+mod serve;
 
 use std::fmt::Write as _;
 use std::io::{self, Write};
@@ -42,6 +45,12 @@ pub(crate) fn intercept<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<Option<boo
     let (Some(automatic), Some(ingress)) = (&ctx.server.automatic, ctx.ingress) else {
         return Ok(None);
     };
+    if let Some((server, config)) = automatic.acme_server() {
+        let answered = serve::intercept(ctx, server, config, ingress.secure)?;
+        if answered.is_some() {
+            return Ok(answered);
+        }
+    }
     let host = ctx.request.header(b"host").unwrap_or_default();
     let token = ctx.request.path.strip_prefix(CHALLENGE_PREFIX);
     if let Some(answer) = token.and_then(|token| automatic.challenge_answer(token, host)) {
@@ -158,6 +167,20 @@ pub(crate) fn log(event: &Event) {
             crate::edge::note(format_args!(
                 "ACME000: the OCSP responder says the certificate for {name} is revoked; \
                  no response is stapled and the certificate is renewed now"
+            ));
+        }
+        Event::ServerValidated { name, failure: None } => {
+            crate::edge::note(format_args!("ACME000: ACME server: {name} validated for a client"));
+        }
+        Event::ServerValidated { name, failure: Some(reason) } => {
+            crate::edge::note(format_args!(
+                "ACME000: ACME server: {name} not validated for a client: {reason}"
+            ));
+        }
+        Event::ServerIssued { names } => {
+            crate::edge::note(format_args!(
+                "ACME000: ACME server: certificate issued to a client for {}",
+                names.join(", ")
             ));
         }
         Event::Obtained { name, not_after, renewed } => {
