@@ -10,7 +10,8 @@
 //! of the slots in use under a flood of new keys, then closes the file and reads the
 //! working set from a new mapping, then offers through the storage thread. A third
 //! argument N flushes the file after every N offers of the first phase, to see what
-//! a bound on the dirty pages costs.
+//! a bound on the dirty pages costs. A fourth argument sets the number of distinct
+//! flood keys (default: four per slot).
 #![allow(clippy::print_stdout, clippy::unwrap_used)]
 
 use std::path::{Path, PathBuf};
@@ -83,11 +84,10 @@ fn held(cache: &mut Cache, clock: Clock, working: u64) -> u64 {
 }
 
 /// Keeps a working set of a quarter of the slots in use, first alone and then under a
-/// flood of new keys: four for every slot, with three uses between two of them.
+/// flood of distinct keys, with three working-set accesses per candidate.
 /// Returns how many members the cache holds at the end.
-fn work(cache: &mut Cache, clock: Clock) -> u64 {
-    let slots = cache.slot_count();
-    let working = slots / 4;
+fn work(cache: &mut Cache, clock: Clock, flood_keys: u64) -> u64 {
+    let working = cache.slot_count() / 4;
     let started = Instant::now();
     for _ in 0..4 {
         for number in 0..working {
@@ -95,19 +95,32 @@ fn work(cache: &mut Cache, clock: Clock) -> u64 {
         }
     }
     report("working set: 4 x read or offer", 4 * working, started);
-    println!("  working set held: {} of {working}", held(cache, clock, working));
+    let seeded: Vec<bool> =
+        (0..working).map(|n| cache.get(&key(BASE + n), clock.now).is_some()).collect();
+    let initial = seeded.iter().filter(|&&present| present).count();
+    println!("  working set held: {initial} of {working}");
 
     let started = Instant::now();
     let mut next = 0;
-    for flood in 0..4 * slots {
+    for flood in 0..flood_keys {
         cache.put(&key((1 << 41) + flood), b"away", clock.later, clock.now);
         for _ in 0..3 {
             use_hint(cache, clock, next % working);
             next += 1;
         }
     }
-    report("flood 4 x slots, 3 uses each", 16 * slots, started);
-    let kept = held(cache, clock, working);
+    report("flood, 3 working-set uses per key", 4 * flood_keys, started);
+    let mut kept = 0;
+    let mut retained = 0;
+    for (n, seeded) in seeded.into_iter().enumerate() {
+        if cache.get(&key(BASE + n as u64), clock.now).is_some() {
+            kept += 1;
+            retained += u64::from(seeded);
+        }
+    }
+    println!(
+        "  seeded keys present after {flood_keys} distinct candidates: {retained} of {initial}"
+    );
     println!("  working set held after the flood: {kept} of {working}");
     println!("  {:?}", cache.counters());
     kept
@@ -145,13 +158,25 @@ fn offer_through_service(cache: Cache, clock: Clock) {
     println!("  queued {}, shed {}", counters.queued, counters.shed);
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut arguments = std::env::args().skip(1);
-    let mebibytes: u64 = arguments.next().and_then(|text| text.parse().ok()).unwrap_or(64);
+    let mebibytes: u64 = arguments.next().map(|n| n.parse()).transpose()?.unwrap_or(64);
     let directory = arguments.next().map_or_else(std::env::temp_dir, PathBuf::from);
-    let flush_every: u64 = arguments.next().and_then(|text| text.parse().ok()).unwrap_or(0);
-    let path = directory.join(format!("sibuna-spill-measure-{}.spill", std::process::id()));
-    let options = Options { size: mebibytes << 20, max_ttl: TTL };
+    let flush_every: u64 = arguments.next().map(|n| n.parse()).transpose()?.unwrap_or(0);
+    let flood_keys: Option<u64> = arguments.next().map(|n| n.parse()).transpose()?;
+    if arguments.next().is_some() || flood_keys.is_some_and(|n| n == 0 || n > BASE) {
+        return Err(
+            "expected MiB [directory [flush_every [distinct_flood_keys in 1..=2^40]]]".into()
+        );
+    }
+    let size = mebibytes.checked_mul(1 << 20).ok_or("file size overflow")?;
+    if !(sibuna_spill::MIN_SIZE..=sibuna_spill::MAX_SIZE).contains(&size) {
+        return Err("file size must be in 1..=65536 MiB".into());
+    }
+    let scratch = directory.join(format!("sibuna-spill-measure-{}", std::process::id()));
+    std::fs::create_dir(&scratch)?;
+    let path = scratch.join("hints.spill");
+    let options = Options { size, max_ttl: TTL };
     let now = unix_seconds();
     let clock = Clock { now, later: now + TTL / 2 };
 
@@ -163,12 +188,16 @@ fn main() {
     report("create and map", 1, started);
 
     fill(&mut cache, clock, flush_every);
-    let kept = work(&mut cache, clock);
+    let kept = work(&mut cache, clock, flood_keys.unwrap_or(4 * slots));
     let started = Instant::now();
     cache.flush().unwrap();
     drop(cache);
     report("flush and close", 1, started);
     let cache = reopen(&path, &options, clock, kept);
     offer_through_service(cache, clock);
-    let _ = std::fs::remove_file(&path);
+    if opened.persistent {
+        std::fs::remove_file(&path)?;
+    }
+    std::fs::remove_dir(scratch)?;
+    Ok(())
 }

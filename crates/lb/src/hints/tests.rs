@@ -1,5 +1,8 @@
 #![allow(clippy::unwrap_used)]
 
+#[cfg(all(unix, target_pointer_width = "64"))]
+mod scale;
+
 use super::*;
 use crate::Config;
 
@@ -41,7 +44,7 @@ fn on_disk(name: &str, size: u64) -> SpillOptions {
     let directory =
         std::env::var_os("SIBUNA_SPILL_DIR").map_or_else(std::env::temp_dir, PathBuf::from);
     let path = directory.join(format!("sibuna-hints-{}-{name}.spill", std::process::id()));
-    let _ = std::fs::remove_file(&path);
+    std::fs::File::create_new(&path).expect("the measurement needs a fresh path");
     SpillOptions { path, size }
 }
 
@@ -74,7 +77,7 @@ fn drained(spill: &Spill) {
 
 /// The key of client number `client`: bytes that look like a keyed hash.
 fn key(client: u64) -> AffinityKey {
-    let low = (client + 1).wrapping_mul(0x9e37_79b9_7f4a_7c15);
+    let low = client.wrapping_add(1).wrapping_mul(0x9e37_79b9_7f4a_7c15);
     let high = low.rotate_left(29).wrapping_mul(0xff51_afd7_ed55_8ccd);
     let mut bytes = [0; 16];
     bytes[..8].copy_from_slice(&low.to_le_bytes());
