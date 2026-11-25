@@ -234,3 +234,128 @@ fn keys_and_tags_are_stable_and_never_zero() {
     assert_eq!(tag(u64::MAX), 0x7fff_ffff);
     assert_eq!(tag(0x1_8000_0001), 1);
 }
+
+/// The resident memory of this process in KiB: all of it, the anonymous part and the
+/// part that maps files.
+fn resident() -> [u64; 3] {
+    let status = std::fs::read_to_string("/proc/self/status").unwrap_or_default();
+    ["VmRSS:", "RssAnon:", "RssFile:"].map(|name| {
+        let line = status.lines().find_map(|line| line.strip_prefix(name));
+        line.and_then(|rest| rest.split_whitespace().next()?.parse().ok()).unwrap_or(0)
+    })
+}
+
+/// Waits until the storage thread has served everything that was queued.
+fn drained(hints: &Hints) {
+    loop {
+        let disk = hints.status().disk;
+        let cache = disk.cache;
+        let served = cache.lookups
+            + cache.stored
+            + cache.updated
+            + cache.kept
+            + cache.replaced
+            + cache.rejected
+            + cache.refused;
+        if served >= disk.queued {
+            return;
+        }
+        std::thread::yield_now();
+    }
+}
+
+fn measured(phase: &str, operations: u64, started: std::time::Instant) {
+    let seconds = started.elapsed().as_secs_f64();
+    let [all, anonymous, file] = resident();
+    eprintln!(
+        "{phase:<40} {operations:>9} ops {seconds:>6.2} s {:>6.2} M ops/s  rss {all} KiB \
+         (anonymous {anonymous}, file {file})",
+        operations as f64 / seconds / 1e6
+    );
+}
+
+/// The key and the tag of client number `client` of the measurement.
+fn measured_client(client: u64) -> (u64, u32) {
+    let name = (u128::from(client) + 1).to_le_bytes();
+    (key(pool_seed("app"), &name), (client as u32).wrapping_mul(7).wrapping_add(1) & !TENTATIVE)
+}
+
+/// Serves client number `client` once, as a pool does: recall, then learn.
+fn measured_flow(hints: &Hints, client: u64) {
+    let (key, tag) = measured_client(client);
+    let missed = hints.recall(key, now()) == Recall::Miss;
+    hints.learn(key, tag, missed, now());
+}
+
+/// Measures both tiers with a working set of thirty times the table in memory.
+///
+/// ```sh
+/// SIBUNA_SPILL_DIR=/var/tmp cargo test --release -p sibuna-lb --lib measure_two_tiers \
+///     -- --ignored --nocapture
+/// ```
+#[test]
+#[ignore = "a measurement, not a check"]
+fn measure_two_tiers() {
+    const CLIENTS: u64 = 2_000_000;
+    const BATCH: u64 = 2_000;
+    let directory =
+        std::env::var_os("SIBUNA_SPILL_DIR").map_or_else(std::env::temp_dir, PathBuf::from);
+    let path = directory.join(format!("sibuna-lb-measure-{}.spill", std::process::id()));
+    let ttl = Duration::from_secs(3600);
+    let options = SpillOptions { path: path.clone(), size: 256 << 20, memory: 1 << 20, ttl };
+    let (hints, disk) = Hints::open(Some(&options)).unwrap();
+    let hints = hints.unwrap();
+    let status = hints.status();
+    eprintln!("table {} entries, disk {} slots", status.entries, status.slots);
+    eprintln!("{:?}", status.budget);
+
+    // Every client is served once: a miss, a choice, a guess for the disk.
+    let started = std::time::Instant::now();
+    for first in (0..CLIENTS).step_by(BATCH as usize) {
+        (first..first + BATCH).for_each(|client| measured_flow(&hints, client));
+        drained(&hints);
+    }
+    measured("first flow of 2,000,000 clients", CLIENTS, started);
+
+    // Every client returns. Its first flow finds memory empty, the second its hint.
+    let started = std::time::Instant::now();
+    let (mut in_memory, mut retained) = (0u64, 0u64);
+    for first in (0..CLIENTS).step_by(BATCH as usize) {
+        for client in first..first + BATCH {
+            let (key, _) = measured_client(client);
+            in_memory += u64::from(hints.recall(key, now()) != Recall::Miss);
+        }
+        drained(&hints);
+        for client in first..first + BATCH {
+            let (key, tag) = measured_client(client);
+            retained += u64::from(hints.recall(key, now()) == Recall::Hit(tag));
+        }
+    }
+    measured("return of 2,000,000 clients, 2 flows", 2 * CLIENTS, started);
+    eprintln!("  still in memory {in_memory}, hint on the second flow {retained} of {CLIENTS}");
+    let status = hints.status();
+    eprintln!("  promoted {}, {:?}", status.promoted, status.disk);
+
+    // What a worker pays: four threads on clients that fit in memory, then on all.
+    let spans =
+        [("4 threads, 16,000 clients (hits)", 16_000), ("4 threads, all (misses)", CLIENTS)];
+    for (name, span) in spans {
+        let started = std::time::Instant::now();
+        std::thread::scope(|scope| {
+            for worker in 0..4u64 {
+                let hints = &hints;
+                scope.spawn(move || {
+                    for round in 0..1_000_000u64 {
+                        let client = (round * 4 + worker).wrapping_mul(2_654_435_761) % span;
+                        measured_flow(hints, client);
+                    }
+                });
+            }
+        });
+        measured(name, 4_000_000, started);
+        let status = hints.status();
+        eprintln!("  hits {}, misses {}, shed {}", status.hits, status.misses, status.disk.shed);
+    }
+    drop(disk);
+    let _ = std::fs::remove_file(&path);
+}
