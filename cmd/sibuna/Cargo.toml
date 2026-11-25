@@ -63,6 +63,7 @@ sibuna-lb = { workspace = true }
 sibuna-jlv = { workspace = true, optional = true }
 sibuna-net = { workspace = true }
 sibuna-reactor = { workspace = true }
+sibuna-spill = { workspace = true }
 sibuna-upgrade = { workspace = true }
 sibuna-pow = { workspace = true }
 sibuna-storage = { workspace = true, optional = true }

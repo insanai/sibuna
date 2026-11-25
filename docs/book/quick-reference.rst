@@ -64,6 +64,7 @@ Edge load balancer
    sibuna ctl /run/sibuna/edge.sock add server app/blue 10.0.0.3:80
    sibuna ctl /run/sibuna/edge.sock del server app/blue
    sibuna ctl /run/sibuna/edge.sock reload                            # as SIGHUP, with the result
+   sibuna ctl /run/sibuna/edge.sock show info | grep spill            # the disk tier of the sticky table: file, cost, counters
    sibuna authority diff -c /etc/sibuna/node.json -f edge.jlv         # what apply would change in the database
    sibuna authority apply -c /etc/sibuna/node.json -f edge.jlv --expect 7   # publish revision 8, or a conflict
    sibuna authority history -c /etc/sibuna/node.json                  # the revisions, newest first

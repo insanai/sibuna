@@ -90,6 +90,9 @@ Discussion registry
    * - 0026
      - :doc:`records/0026-peer-forwarding`
      - discussion
+   * - 0027
+     - :doc:`records/0027-spill-cache`
+     - discussion
    * - 0028
      - :doc:`records/0028-database-authority`
      - discussion

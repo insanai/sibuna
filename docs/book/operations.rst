@@ -1294,6 +1294,51 @@ A cookie whose server is down, full, ejected or drained gives way: the request i
 
 Behind ``trusted_proxies`` the client address of ``"source"`` is the one the proxy recorded, as for the access log and the limits. Without that option it is the socket peer, so all requests of one proxy would share a server.
 
+Keeping the sticky table over a restart
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A pool with ``sticky: "table"`` remembers the server of each client in a table in memory, as a later section describes. The table has ``global.sticky_entries`` slots, and a restart empties it. The ``spill`` section puts a file under the table.
+
+.. code-block:: text
+
+   spill: {
+       path: "/var/lib/sibuna/hints.spill",
+       size: "64m",
+   },
+
+The section stands beside ``global`` and ``frontends``, and both members are required. ``size`` is the size of the file, from ``64k`` to ``64g``. Each client takes 64 bytes, and ``64m`` holds a million slots. A file with room for four times the clients we expect keeps nearly all of them: at twice the clients, three in a hundred find their part of the file full. A change of the section needs a restart. Without the section nothing changes.
+
+Every choice that the table learns is offered to the file. When the table has no entry for a client, the edge asks the file and serves the flow by the balanced choice meanwhile. The answer fills the table, and the next flow of the client goes to the remembered server. So clients that the table could not hold, and all clients after a restart or a crash of the daemon, find their server again one flow late.
+
+What is in the file is a hint and nothing more. The pool uses it only when the server it names may serve. A file that is damaged costs the hints of the damaged part. A file from another version or of another size is replaced by an empty one. The daemon never overwrites a file that is not a spill cache: it refuses to start and names the file.
+
+The daemon says what it found when it starts, and ``show info`` has the counters. ``show affinity`` shows the table in memory as before.
+
+.. code-block:: text
+
+   EDGE013: spill cache /var/lib/sibuna/hints.spill: reused, 1048064 slots in 67084288 bytes on disk, 4425712 bytes of memory beside the table
+
+   $ sibuna ctl /run/sibuna/edge.sock show info
+   spill: /var/lib/sibuna/hints.spill
+   spill_state: reused
+   spill_slots: 1048064
+   spill_file_bytes: 67084288
+   spill_memory_bytes: 4425712
+   spill_table_slots: 65536
+   spill_asked: 1203
+   spill_promoted: 1100
+   spill_preferred: 40
+   spill_disk_lookups: 1203
+   spill_disk_hits: 1100
+   spill_disk_written: 1350
+   spill_disk_rejected: 4
+   spill_disk_corrupt: 0
+   spill_disk_shed: 0
+
+``spill_asked`` counts the lookups that found nothing in memory and asked the file. ``spill_promoted`` counts the choices that the file gave back to memory, and ``spill_preferred`` those of them that replaced a choice made while the file was asked. ``spill_disk_rejected`` counts choices that a full part of the file did not admit: when it grows fast, the file is too small. ``spill_disk_corrupt`` counts slots that failed their check and were cleared. ``spill_disk_shed`` counts work that was dropped because the storage thread was behind: the edge never waits for the disk.
+
+Keep the file on a local disk, in a directory that only the daemon writes. The whole size is written at the first start, so a full disk is found then. The pages of the file that the daemon has used count as its resident memory, up to the whole file. The kernel can take them back, but a memory limit of systemd or of a container counts them: set such a limit above the size of the file plus the memory of the daemon. A second daemon that finds the file in use, as during the replacement of the binary, runs with the table in memory alone and says so. In a cluster each node has a file of its own. The nodes share the table in memory when ``mesh.replicate_sticky`` is set, and what a node hears from a peer is offered to its file too.
+
 Redirects, headers and body limits
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -2449,7 +2494,7 @@ Coming from HAProxy
 Limits of this version
 ~~~~~~~~~~~~~~~~~~~~~~
 
-On Linux the HTTP firewall serves connections on event-driven workers, one per processor, up to ``http.max_connections``. A connection that waits holds a small record and no buffer. On other platforms, and with ``event_loop`` ``false``, each HTTP/1.1 connection and each HTTP/2 or HTTP/3 exchange has a thread of its own, up to 8192 at a time. A WebSocket to a pool with ``http_version`` 2 or 3 answers 501. HTTP/3 clients cannot open WebSockets, and browsers fall back to HTTP/1.1 or HTTP/2 for them. Server addresses are numeric. The admin socket changes servers only: frontends, routes, certificates and policy change by reload. Run-time changes do not survive a restart. Request headers are limited to 16 KiB on HTTP/2 and HTTP/3. Response compression and caching are not provided. Header edits set fixed values: there are no patterns or variables. With ``event_loop`` ``false`` a connection has the same traffic rules as on the workers: the timeouts of the pool, failover, passive health, sticky sessions, the redirect, the header edits and ``max_body``. Two details differ. A client that goes away while its server is silent is noticed when the server answers or its bound ends. A chunked body is counted by ``max_body`` without its chunk framing. Our own answers carry HSTS but neither the header edits nor the sticky cookie, and the answer to a WebSocket upgrade is not edited. SID 0019 lists the remaining gaps. SID 0015 lists the parts of the design that remain proposals: the shared-memory spill cache, database-backed topology, replicated bans, peer forwarding, binary handoff, plugins and the fleet console.
+On Linux the HTTP firewall serves connections on event-driven workers, one per processor, up to ``http.max_connections``. A connection that waits holds a small record and no buffer. On other platforms, and with ``event_loop`` ``false``, each HTTP/1.1 connection and each HTTP/2 or HTTP/3 exchange has a thread of its own, up to 8192 at a time. A WebSocket to a pool with ``http_version`` 2 or 3 answers 501. HTTP/3 clients cannot open WebSockets, and browsers fall back to HTTP/1.1 or HTTP/2 for them. Server addresses are numeric. The admin socket changes servers only: frontends, routes, certificates and policy change by reload. Run-time changes do not survive a restart. Request headers are limited to 16 KiB on HTTP/2 and HTTP/3. Response compression and caching are not provided. Header edits set fixed values: there are no patterns or variables. With ``event_loop`` ``false`` a connection has the same traffic rules as on the workers: the timeouts of the pool, failover, passive health, sticky sessions, the redirect, the header edits and ``max_body``. Two details differ. A client that goes away while its server is silent is noticed when the server answers or its bound ends. A chunked body is counted by ``max_body`` without its chunk framing. Our own answers carry HSTS but neither the header edits nor the sticky cookie, and the answer to a WebSocket upgrade is not edited. SID 0019 lists the remaining gaps. The spill cache of SID 0027 holds the learned sticky table only. SID 0015 lists the parts of the design that remain proposals: database-backed topology, replicated bans, peer forwarding, binary handoff, plugins and the fleet console.
 
 
 Console Preview
