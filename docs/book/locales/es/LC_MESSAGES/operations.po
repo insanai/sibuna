@@ -12988,10 +12988,8 @@ msgid "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 msgstr "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 
 #: ../../operations.rst:3227
-msgid ""
-"``sibuna-<version>-freebsd-15.1-amd64.pkg`` and ``sibuna-<version>.tgz``."
-msgstr ""
-"``sibuna-<version>-freebsd-15.1-amd64.pkg`` y ``sibuna-<version>.tgz``."
+msgid "``sibuna-<version>-freebsd-15.1-amd64.pkg``. The optional OpenBSD job adds ``sibuna-<version>.tgz`` when its native qualification passes."
+msgstr "``sibuna-<version>-freebsd-15.1-amd64.pkg``. El trabajo opcional de OpenBSD añade el paquete si supera las comprobaciones nativas. (``sibuna-<version>.tgz``)."
 
 #: ../../operations.rst:3228
 msgid "Homebrew, Kubernetes, containers"
@@ -13285,17 +13283,8 @@ msgid "Building from source"
 msgstr "Compilar desde las fuentes"
 
 #: ../../operations.rst:3300
-msgid ""
-"We build and test with Rust 1.100. The default build includes the JLV "
-"compiler and requires Rust 1.100. We can build the JSON-only daemon with "
-"Rust 1.100 using ``cargo build -p sibuna --no-default-features``. We add "
-"``--features sqlite,console`` to include SQLite and the console."
-msgstr ""
-"Compilamos y probamos con Rust 1.100. La compilación por defecto incluye "
-"el compilador de JLV y requiere Rust 1.100. Podemos compilar el daemon "
-"solo con JSON con Rust 1.100 mediante ``cargo build -p sibuna "
-"--no-default-features``. Añadimos ``--features sqlite,console`` para "
-"incluir SQLite y la consola."
+msgid "All feature sets require Rust 1.100. The default build includes the JLV compiler. We build the JSON-only daemon using ``cargo build -p sibuna --no-default-features``. We add ``--features sqlite,console`` to include SQLite and the console."
+msgstr "Todas las combinaciones de características requieren Rust 1.100. La compilación predeterminada incluye el compilador JLV. Compilamos el daemon solo JSON con ``cargo build -p sibuna --no-default-features`` Añadimos ``--features sqlite,console`` para incluir SQLite y la consola."
 
 #: ../../operations.rst:3302
 msgid ""

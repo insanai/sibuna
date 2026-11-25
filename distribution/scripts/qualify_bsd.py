@@ -42,10 +42,13 @@ def as_user(*command):
 
 def install_rust(system):
     """Returns the cargo to build with."""
+    pin = os.environ['RUST_TOOLCHAIN']
     if system == 'openbsd':
         run('pkg_add', '-I', 'rust')
+        compiler = subprocess.check_output(['/usr/local/bin/rustc', '--version'], text=True)
+        if compiler.split()[1] != pin:
+            raise SystemExit(f'qualify-bsd: OpenBSD needs rustc {pin}; found {compiler.strip()}')
         return Path('/usr/local/bin/cargo')
-    toolchain = os.environ.get('RUST_TOOLCHAIN', 'stable')
     data = urllib.request.urlopen(RUSTUP, timeout=120).read()
     expected = urllib.request.urlopen(RUSTUP + '.sha256', timeout=120).read().split()[0]
     if hashlib.sha256(data).hexdigest().encode() != expected:
@@ -54,7 +57,7 @@ def install_rust(system):
     installer.write_bytes(data)
     installer.chmod(0o755)
     run(installer, '-y', '--no-modify-path', '--profile', 'minimal',
-        '--default-toolchain', toolchain)
+        '--default-toolchain', pin)
     return Path.home() / '.cargo/bin/cargo'
 
 

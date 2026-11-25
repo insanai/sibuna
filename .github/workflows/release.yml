@@ -39,7 +39,7 @@ jobs:
       - name: Tag, Cargo.toml and chart name one version
         run: python distribution/scripts/release_version.py --check
       - name: Package contact is configured for a tag
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         env:
           CONTACT: ${{ vars.SIBUNA_PACKAGE_CONTACT }}
         run: |
@@ -49,7 +49,7 @@ jobs:
           fi
       - id: plan
         env:
-          PLATFORM: ${{ startsWith(github.ref, 'refs/tags/v') && 'all' || inputs.platform || 'all' }}
+          PLATFORM: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && 'all' || inputs.platform || 'all' }}
         run: |
           python - <<'PYTHON' >> "$GITHUB_OUTPUT"
           import json, os, subprocess
@@ -293,7 +293,8 @@ jobs:
           path: dist/*.pkg
           if-no-files-found: error
   openbsd:
-    name: OpenBSD 7.9 package
+    name: OpenBSD 7.9 package (optional)
+    continue-on-error: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
     needs: prepare
     if: contains(fromJSON('["all","openbsd"]'), needs.prepare.outputs.platform)
     runs-on: ubuntu-24.04
@@ -315,7 +316,7 @@ jobs:
           arch: x86_64
           mem: 8192
           cpu: 4
-          envs: CONTACT SIBUNA_POW_WASM SIBUNA_CONSOLE_WASM
+          envs: CONTACT SIBUNA_POW_WASM SIBUNA_CONSOLE_WASM RUST_TOOLCHAIN
           sync: rsync
           prepare: |
             set -eu
@@ -368,7 +369,13 @@ jobs:
           if-no-files-found: error
   publish:
     name: Publish the release
-    if: startsWith(github.ref, 'refs/tags/v')
+    # Wait for the optional package so a successful build joins the release.
+    if: >-
+      !cancelled() && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') &&
+      needs.prepare.result == 'success' && needs.build.result == 'success' &&
+      needs.linux-packages.result == 'success' && needs.source-and-chart.result == 'success' &&
+      needs.homebrew.result == 'success' && needs.freebsd.result == 'success' &&
+      needs.container.result == 'success'
     needs: [prepare, build, linux-packages, source-and-chart, homebrew, freebsd, openbsd, container]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -423,17 +430,24 @@ jobs:
             exit 1
           fi
           cat dist/IMAGE-DIGEST.txt
-      - name: Publish the release after every platform passed
+      - name: Publish the release after all required jobs passed
         run: |
           cd dist
           python3 ../distribution/scripts/release_checksums.py .
           if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            notes=../.github/release-notes.txt
+            if [[ "$VERSION" == *-rc.* ]]; then
+              notes="../.github/release-notes-$VERSION.txt"
+            fi
             gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --draft \
-              --title "Sibuna $VERSION" --notes-file ../.github/release-notes.txt
+              --title "Sibuna $VERSION" --notes-file "$notes"
           fi
           gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber \
             ./*.tar.gz ./*.zip ./*.deb ./*.rpm ./*.pkg.tar.zst ./*.pkg ./*.tgz sibuna.rb \
             IMAGE-DIGEST.txt SHA256SUMS
-          # Betas are public releases too, so every published release becomes the latest.
+          visibility=(--prerelease=false --latest)
+          if [[ "$VERSION" == *-rc.* ]]; then
+            visibility=(--prerelease --latest=false)
+          fi
           gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false \
-            --prerelease=false --latest
+            "${visibility[@]}"

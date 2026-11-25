@@ -22,7 +22,9 @@ prepare: version check, WebAssembly modules (once)
    +--> freebsd, openbsd (native build and package in a VM) ----+
 ```
 
-Every platform job builds with the same WebAssembly modules (`SIBUNA_POW_WASM`, `SIBUNA_CONSOLE_WASM`), runs `--version` and `scripts/smoke_test.py` against the executable it built, and packages it with `scripts/package_release.py`. The publish job runs only after every job passed. It copies the verified image to GHCR, writes `SHA256SUMS`, and creates the GitHub release and marks it the latest one; a beta is a public release too.
+Every platform job builds with the same WebAssembly modules (`SIBUNA_POW_WASM`, `SIBUNA_CONSOLE_WASM`), runs `--version` and `scripts/smoke_test.py` against the executable it built, and packages it with `scripts/package_release.py`. The publish job runs after all required jobs pass and the OpenBSD attempt finishes. It copies the verified image to GHCR, writes `SHA256SUMS`, and creates the GitHub release. A release candidate is a prerelease. Stable releases and public betas receive the latest designation.
+
+We attempt the OpenBSD 7.9 amd64 package on every tag. A successful native build, smoke test and package lifecycle check add its archive to the release and its digest to `SHA256SUMS`. If the job fails, we publish the other assets. The manual OpenBSD workflow reports qualification failures directly. FreeBSD remains a required job.
 
 ## Maintainer setup
 

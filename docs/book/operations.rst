@@ -3224,7 +3224,7 @@ Every release on GitHub carries the same executable for each platform, built fro
    * - Windows x86-64
      - ``sibuna-windows-amd64.zip`` holds ``sibuna.exe``, for Windows 10 or Server 2016 or later.
    * - FreeBSD 15.1, OpenBSD 7.9 (amd64)
-     - ``sibuna-<version>-freebsd-15.1-amd64.pkg`` and ``sibuna-<version>.tgz``.
+     - ``sibuna-<version>-freebsd-15.1-amd64.pkg``. The optional OpenBSD job adds ``sibuna-<version>.tgz`` when its native qualification passes.
    * - Homebrew, Kubernetes, containers
      - ``sibuna.rb``, ``helm-sibuna-<version>.tgz``, and the image ``ghcr.io/insanai/sibuna:<version>`` for amd64 and arm64, whose digest is in ``IMAGE-DIGEST.txt``.
    * - Source
@@ -3297,7 +3297,7 @@ The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. It requ
 Building from source
 ~~~~~~~~~~~~~~~~~~~~
 
-We build and test with Rust 1.100. The default build includes the JLV compiler and requires Rust 1.100. We can build the JSON-only daemon with Rust 1.100 using ``cargo build -p sibuna --no-default-features``. We add ``--features sqlite,console`` to include SQLite and the console.
+All feature sets require Rust 1.100. The default build includes the JLV compiler. We build the JSON-only daemon using ``cargo build -p sibuna --no-default-features``. We add ``--features sqlite,console`` to include SQLite and the console.
 
 We install the release toolchain with ``rustup toolchain install 1.100.0 --profile minimal --target wasm32-unknown-unknown`` and select it with ``cargo +1.100.0`` in the commands below.
 
