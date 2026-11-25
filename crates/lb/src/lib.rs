@@ -56,6 +56,7 @@ pub use route::{FieldEdit, Redirect, RoutePolicy};
 pub use traffic::{Passive, PoolPolicy, Sticky};
 mod flowlog;
 mod gate;
+mod parked;
 pub use flowlog::FlowEnd;
 mod forward;
 pub use forward::ForwardConfig;
@@ -294,7 +295,7 @@ impl Edge {
     /// a TCP or HTTP connection or a UDP mapping (SID 0030). The worker owns its own
     /// instances of the hooks, and follows every plan that `slot` publishes later.
     pub fn set_hooks(&mut self, slot: std::sync::Arc<sibuna_plugin::Slot>) {
-        self.gate = Some(gate::Gate::new(slot));
+        self.gate = Some(gate::Gate::new(slot, self.handoff.wake.clone()));
     }
 
     /// Shares admission with QUIC listeners.
@@ -551,6 +552,7 @@ impl Edge {
     pub fn step(&mut self) -> io::Result<()> {
         let now = Instant::now();
         self.finish_connects(now);
+        self.finish_rulings(now);
         if now.saturating_duration_since(self.swept) >= SWEEP {
             self.swept = now;
             self.sweep(now);
@@ -578,6 +580,7 @@ impl Edge {
         }
         if self.events.iter().any(|event| matches!(event, Ready::Wake)) {
             self.finish_connects(Instant::now());
+            self.finish_rulings(Instant::now());
         }
         Ok(())
     }
@@ -801,10 +804,31 @@ impl Edge {
                 server_name: b"",
                 ja4: b"",
             };
-            if !gate::admits(&mut self.gate, &flow) {
-                return self.refuse(listener, peer, Refusal::Hook);
+            match gate::rule(&mut self.gate, &flow) {
+                gate::Ruling::Admit => {}
+                gate::Ruling::Deny => return self.refuse(listener, peer, Refusal::Hook),
+                gate::Ruling::Parked(ticket) => {
+                    let parked =
+                        gate::Parked::Stream { listener, client, peer, reached, permit, named };
+                    self.park(ticket, parked);
+                    return true;
+                }
             }
         }
+        self.start_flow(listener, client, peer, reached, permit, named)
+    }
+
+    /// Starts the flow of a connection that the connection hooks admitted, or the
+    /// inspection of one that they judge later.
+    fn start_flow(
+        &mut self,
+        listener: usize,
+        client: TcpStream,
+        peer: SocketAddr,
+        reached: Option<SocketAddr>,
+        permit: FlowPermit,
+        named: Option<SocketAddr>,
+    ) -> bool {
         self.listeners[listener].route.info.stats.flow();
         if self.binds[listener].0 == Protocol::Http {
             let bind = self.binds[listener].1;
@@ -857,13 +881,13 @@ impl Edge {
 
     /// Asks the connection hooks about an inspected connection, with the server name
     /// and the JA4 fingerprint of its ClientHello when it sent a whole one.
-    pub(crate) fn hello_admitted(
+    pub(crate) fn rule_hello(
         &mut self,
         opening: &Opening,
         hello: Option<&hello::Hello<'_>>,
-    ) -> bool {
+    ) -> gate::Ruling {
         if self.gate.is_none() {
-            return true;
+            return gate::Ruling::Admit;
         }
         // A reload may have removed the listener meanwhile: then nothing is attached.
         let Some(at) = self
@@ -871,7 +895,7 @@ impl Edge {
             .iter()
             .position(|bind| bind.0 == Protocol::Tcp && gate::covers(bind.1, opening.vip))
         else {
-            return true;
+            return gate::Ruling::Admit;
         };
         let ja4 = hello.and_then(|hello| {
             hello.ja4.get_or_init(|| ja4::fingerprint(hello)).as_ref().map(|text| &text[..])
@@ -885,7 +909,7 @@ impl Edge {
             server_name: hello.and_then(|hello| hello.sni).map_or(b"", str::as_bytes),
             ja4: ja4.unwrap_or(b""),
         };
-        gate::admits(&mut self.gate, &flow)
+        gate::rule(&mut self.gate, &flow)
     }
 
     fn connect(&mut self, id: u64, mut opening: Opening) -> bool {
@@ -980,7 +1004,7 @@ impl Edge {
 
     /// Opens the mapping of a new UDP client towards a server of the pool. A client
     /// that gets none is counted by the reason.
-    fn open_mapping(&mut self, key: Client, now: Instant) -> bool {
+    fn open_mapping(&mut self, key: Client, now: Instant, first: parked::First) -> bool {
         if self.draining {
             self.stats.refuse(Refusal::Draining);
             return false;
@@ -1010,10 +1034,23 @@ impl Edge {
             server_name: b"",
             ja4: b"",
         };
-        if !gate::admits(&mut self.gate, &flow) {
-            self.stats.refuse(Refusal::Hook);
-            return false;
+        match gate::rule(&mut self.gate, &flow) {
+            gate::Ruling::Admit => self.map(key, permit, now),
+            gate::Ruling::Deny => {
+                self.stats.refuse(Refusal::Hook);
+                false
+            }
+            // The datagram waits with its client. The caller finds no mapping yet.
+            gate::Ruling::Parked(ticket) => {
+                let bytes = self.buffer[..first.0].to_vec();
+                self.park(ticket, gate::Parked::Datagram { key, permit, bytes, via: first.1 });
+                false
+            }
         }
+    }
+
+    /// Opens the mapping of a UDP client that the connection hooks admitted.
+    fn map(&mut self, key: Client, permit: FlowPermit, now: Instant) -> bool {
         let Some(ticket) = self.reserve(key.0, key.1) else {
             self.stats.refuse(Refusal::NoServer);
             return false;
@@ -1058,6 +1095,10 @@ impl Edge {
         }
         let now = Instant::now();
         if !self.udp.contains_key(&key) {
+            // While the judges decide about a client, its mapping does not exist.
+            if self.gate.as_ref().is_some_and(|gate| gate.holds(key)) {
+                return false;
+            }
             // A datagram that may open no mapping here may open none on a peer either.
             if !self.may_open(key, size) {
                 return false;
@@ -1069,10 +1110,22 @@ impl Edge {
                     forward::Outcome::Local => {}
                 }
             }
-            if !self.open_mapping(key, now) {
-                return false;
+            if !self.open_mapping(key, now, (size, via)) {
+                // A parked client is no drop: its datagram goes out with the ruling.
+                return self.gate.as_ref().is_some_and(|gate| gate.holds(key));
             }
         }
+        self.relay(key, size, via, now)
+    }
+
+    /// Sends the datagram of `size` bytes in the buffer through the mapping of `key`.
+    fn relay(
+        &mut self,
+        key: Client,
+        size: usize,
+        via: Option<forward::Via>,
+        now: Instant,
+    ) -> bool {
         let Some(flow) = self.udp.get_mut(&key) else { return false };
         flow.via = via;
         flow.validation.see_request(&self.buffer[..size]);
