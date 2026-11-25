@@ -35,7 +35,7 @@ impl Tried {
 }
 
 /// What one reservation asks for beyond the scheduler's choice.
-#[derive(Default)]
+#[derive(Clone, Copy, Default)]
 pub(crate) struct Wish<'a> {
     /// Servers that must not be selected.
     pub tried: Option<&'a Tried>,
@@ -44,6 +44,8 @@ pub(crate) struct Wish<'a> {
     /// The client address behind trusted proxies, for source stickiness. Without it
     /// the address of the transport is the client.
     pub client: Option<std::net::IpAddr>,
+    /// The key of the client in the learned table, when a cookie gives it (SID 0025).
+    pub affinity: Option<crate::affinity::AffinityKey>,
 }
 
 impl Wish<'_> {

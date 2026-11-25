@@ -95,7 +95,18 @@ pub enum Sticky {
     },
     /// The client address, without its port, selects the server.
     Source,
+    /// The pool remembers the server it placed a client on, and a mesh shares the
+    /// choice between its nodes (SID 0025).
+    Table {
+        /// The cookie whose value names the client. `None` for the source address.
+        cookie: Option<Box<str>>,
+        /// How long a choice is kept after its last use.
+        ttl: Duration,
+    },
 }
+
+/// How long a learned choice is kept when the pool states no `ttl`.
+const TABLE_TTL: Duration = Duration::from_secs(30 * 60);
 
 /// The name of the sticky cookie when the pool gives none.
 const COOKIE: &str = "sibuna_srv";
@@ -106,8 +117,9 @@ impl Sticky {
     fn parse(r: &mut ObjectReader<'_, '_>, http: bool) -> io::Result<Option<Self>> {
         let Some(value) = r.take("sticky") else { return Ok(None) };
         let path = r.field_path("sticky");
-        let hint = "Hint: write \"cookie\", \"source\" or \"off\", or an object such as \
-                    {\"kind\": \"cookie\", \"cookie\": \"srv\"}.";
+        let hint = "Hint: write \"cookie\", \"source\", \"table\" or \"off\", or an object \
+                    such as {\"kind\": \"cookie\", \"cookie\": \"srv\"}.";
+        let (mut on, mut ttl) = (None, None);
         let (kind, name) = match value.as_str() {
             Some(kind) => (kind.to_owned(), None),
             None => {
@@ -117,10 +129,21 @@ impl Sticky {
                     })?;
                 let kind = crate::config::required(&mut rule, "kind")?;
                 let name = field(rule.take_str("cookie"))?.map(str::to_owned);
+                on = field(rule.take_str("on"))?.map(str::to_owned);
+                ttl = field(rule.take_str("ttl"))?.map(str::to_owned);
                 field(rule.finish())?;
                 (kind, name)
             }
         };
+        if kind == "table" {
+            return Self::table(&path, http, on.as_deref(), name, ttl.as_deref()).map(Some);
+        }
+        if on.is_some() || ttl.is_some() {
+            return Err(invalid(format!(
+                "{path}: only the kind \"table\" has the members `on` and `ttl`. Hint: \
+                 write \"kind\": \"table\", or leave the two members out."
+            )));
+        }
         if name.is_some() && kind != "cookie" {
             return Err(invalid(format!("{path}.cookie: only the kind \"cookie\" has a name")));
         }
@@ -130,8 +153,7 @@ impl Sticky {
             "cookie" if !http => Err(http_only(r, "sticky")),
             "cookie" => {
                 let name = name.unwrap_or_else(|| COOKIE.to_owned());
-                let token = |b: u8| b.is_ascii_alphanumeric() || b"-_.".contains(&b);
-                if name.is_empty() || name.len() > 64 || !name.bytes().all(token) {
+                if !is_cookie_name(&name) {
                     return Err(invalid(format!(
                         "{path}.cookie: expected 1 to 64 letters, digits, `-`, `_` or `.`, \
                          found {name:?}. Hint: leave the member out for {COOKIE:?}."
@@ -142,6 +164,62 @@ impl Sticky {
             other => Err(invalid(format!("{path}: unknown kind {other:?}. {hint}"))),
         }
     }
+
+    /// Reads the members of the kind `table` (SID 0025): `on` is `"source"` or
+    /// `"cookie"`, `cookie` names the cookie of the application, and `ttl` is how long
+    /// a choice is kept.
+    fn table(
+        path: &str,
+        http: bool,
+        on: Option<&str>,
+        cookie: Option<String>,
+        ttl: Option<&str>,
+    ) -> io::Result<Self> {
+        let ttl = match ttl {
+            None => TABLE_TTL,
+            Some(text) => duration(text).filter(|ttl| ttl.as_secs() >= 1).ok_or_else(|| {
+                invalid(format!(
+                    "{path}.ttl: expected a duration from \"1s\" to \"24h\", found {text:?}. \
+                     Hint: it is how long a client keeps its server after its last flow."
+                ))
+            })?,
+        };
+        let cookie = match (on.unwrap_or("source"), cookie) {
+            ("source", None) => None,
+            ("source", Some(_)) => {
+                return Err(invalid(format!(
+                    "{path}.cookie: a table on the source address reads no cookie. Hint: \
+                     write \"on\": \"cookie\" to key the table by the cookie."
+                )));
+            }
+            ("cookie", _) if !http => {
+                return Err(invalid(format!(
+                    "{path}.on: only an HTTP pool reads a cookie. Hint: a TCP or UDP pool \
+                     keys its table by \"source\"."
+                )));
+            }
+            ("cookie", Some(name)) if is_cookie_name(&name) => Some(name.into()),
+            ("cookie", _) => {
+                return Err(invalid(format!(
+                    "{path}.cookie: a table on a cookie needs its name, 1 to 64 letters, \
+                     digits, `-`, `_` or `.`. Hint: name the session cookie of the \
+                     application, such as \"JSESSIONID\"."
+                )));
+            }
+            (other, _) => {
+                return Err(invalid(format!(
+                    "{path}.on: unknown key {other:?}. Hint: write \"source\" or \"cookie\"."
+                )));
+            }
+        };
+        Ok(Self::Table { cookie, ttl })
+    }
+}
+
+/// Whether `name` can be the name of a cookie in the file.
+fn is_cookie_name(name: &str) -> bool {
+    let token = |b: u8| b.is_ascii_alphanumeric() || b"-_.".contains(&b);
+    !name.is_empty() && name.len() <= 64 && name.bytes().all(token)
 }
 
 /// The traffic options of one pool. Fill it with struct-update syntax:

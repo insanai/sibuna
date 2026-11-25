@@ -84,6 +84,9 @@ Discussion registry
    * - 0024
      - :doc:`records/0024-tls-on-the-workers`
      - discussion
+   * - 0025
+     - :doc:`records/0025-shared-affinity-and-fleet-caps`
+     - discussion
    * - 0028
      - :doc:`records/0028-database-authority`
      - discussion
