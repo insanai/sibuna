@@ -444,7 +444,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         reloads: 0,
         observed,
         drains,
-        upgrade: upgrade::Old::start(None)?,
+        upgrade: upgrade::Old::none(),
     };
     serving.watch(watch)?;
     // From here the old daemon reads no UDP, so nothing slow may come before the first
@@ -458,7 +458,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         }
         None => None,
     };
-    serving.upgrade = upgrade::Old::start(upgrade_socket.as_deref())?;
+    serving.upgrade = upgrade::Old::start(upgrade_socket.as_deref(), &serving.edge)?;
     serving.announce();
     while !shutdown.is_requested() {
         serving.observed.reopen_log_when(&rotate);
@@ -473,8 +473,12 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         serving.step()?;
     }
     serving.observed.drain();
-    // A replacement serves the same addresses already, so no balancer has to be told.
-    if !serving.upgrade.is_handed() {
+    if serving.upgrade.is_handed() {
+        // A replacement serves the same addresses already, so no balancer has to be
+        // told. The connections accepted in the last instant have sent nothing yet,
+        // and a drain closes a connection that has sent nothing: we serve on briefly.
+        serving.serve_for(upgrade::SETTLE)?;
+    } else {
         serving.linger()?;
     }
     drop(mesh);
@@ -490,8 +494,16 @@ impl Serving {
         }
         let delay = self.drain_delay;
         note(format_args!("Sibuna edge draining: not ready, serving for {delay:?}"));
-        let until = Instant::now() + self.drain_delay;
+        self.serve_for(delay)
+    }
+
+    /// Turns the worker for `time` more.
+    fn serve_for(&mut self, time: Duration) -> io::Result<()> {
+        let until = Instant::now() + time;
         while Instant::now() < until {
+            // A replacement that arrived before the stop is still answered. When it
+            // takes the listeners, this process must stop accepting on them.
+            self.upgrade.step(&mut self.edge);
             self.step()?;
         }
         Ok(())
@@ -508,13 +520,16 @@ impl Serving {
     /// Stops the listeners and waits for the established flows, at most
     /// `global.shutdown_timeout`.
     fn stop(self) -> io::Result<()> {
-        let Serving { mut edge, http, shutdown_timeout, observed, .. } = self;
+        let Serving { mut edge, http, shutdown_timeout, observed, mut upgrade, .. } = self;
         edge.drain();
         if let Some(http) = &http {
             http.drain();
         }
         let deadline = Instant::now() + shutdown_timeout;
         while edge.active() > 0 && Instant::now() < deadline {
+            // See `serve_for`: a draining process refuses what it accepts, and after
+            // a handoff the listeners are no longer its own.
+            upgrade.step(&mut edge);
             step(&mut edge, http.as_ref())?;
             observed.pass_flows(&mut edge);
         }

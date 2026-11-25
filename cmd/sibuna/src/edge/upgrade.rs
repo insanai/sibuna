@@ -26,6 +26,11 @@ use sibuna_lb::{Config, Edge, Inherited};
 
 pub(super) use imp::{Old, Replacement};
 
+/// How long a process that has handed its listeners over serves on before it drains.
+/// A drain closes a connection that has not sent a request yet, and the last
+/// connections that the process accepted are in that state.
+pub(super) const SETTLE: std::time::Duration = std::time::Duration::from_millis(200);
+
 #[cfg(unix)]
 mod imp {
     use std::os::fd::{AsFd, OwnedFd};
@@ -33,7 +38,7 @@ mod imp {
     use std::path::Path;
     use std::sync::Arc;
     use std::sync::mpsc::{self, Receiver, Sender, SyncSender};
-    use std::time::Duration;
+    use std::time::{Duration, Instant};
 
     use sibuna_upgrade::{
         Done, Failure, Flow, Gate, Giving, Listener, Taking, Timeouts, UpgradeError, begin_give,
@@ -57,7 +62,32 @@ mod imp {
         Freeze(SyncSender<usize>),
         Flows(usize, SyncSender<io::Result<Vec<(Flow, OwnedFd)>>>),
         Resume,
-        Release { pid: i32, listeners: usize, done: Done },
+        Release { pid: i32, listeners: usize, done: Done, unread: Duration },
+    }
+
+    /// The way to the edge worker: the queue of requests, and the call that ends the
+    /// wait of the worker so that it looks at the queue.
+    struct Worker {
+        requests: Sender<Request>,
+        wake: Box<dyn Fn() + Send>,
+    }
+
+    impl Worker {
+        /// Leaves a request. False when the worker is gone.
+        fn tell(&self, request: Request) -> bool {
+            let sent = self.requests.send(request).is_ok();
+            (self.wake)();
+            sent
+        }
+
+        /// Asks the worker and waits for its answer.
+        fn ask<T>(&self, request: impl FnOnce(SyncSender<T>) -> Request) -> Option<T> {
+            let (reply, answer) = mpsc::sync_channel(1);
+            if !self.tell(request(reply)) {
+                return None;
+            }
+            answer.recv_timeout(WORKER_TIMEOUT).ok()
+        }
     }
 
     /// The start of a process that may replace a running one.
@@ -89,6 +119,14 @@ mod imp {
             for (listener, socket) in taking.listeners() {
                 replacement.listeners.push(listener);
                 replacement.inherited.push(listener, socket)?;
+            }
+            // A daemon that listens on none of our addresses is another service. Going
+            // on would stop it and serve nothing of what it served.
+            let lent = replacement.listeners.len();
+            if lent > 0 && replacement.inherited.matching_count(config) == 0 {
+                let text =
+                    format!("the daemon at {path} lent {lent} listeners, none of this file");
+                return Err(other(UpgradeError::new(Failure::Unrelated, text)));
             }
             replacement.taking = Some(taking);
             Ok(replacement)
@@ -144,25 +182,29 @@ mod imp {
     }
 
     impl Old {
+        /// A daemon without an upgrade socket.
+        pub fn none() -> Self {
+            Self { gate: None, requests: None, handed: false }
+        }
+
         /// Binds the upgrade socket at `path` and starts the thread that serves it.
-        /// Without a path nothing is started.
+        /// Without a path nothing is started. `edge` is the edge that the thread asks.
         ///
         /// # Errors
         ///
         /// The error of binding the socket or of starting the thread.
-        pub fn start(path: Option<&str>) -> io::Result<Self> {
-            let Some(path) = path else {
-                return Ok(Self { gate: None, requests: None, handed: false });
-            };
+        pub fn start(path: Option<&str>, edge: &Edge) -> io::Result<Self> {
+            let Some(path) = path else { return Ok(Self::none()) };
             let gate = Gate::listen(Path::new(path)).map_err(|error| {
                 io::Error::new(error.kind(), format!("upgrade socket {path}: {error}"))
             })?;
             let gate = Arc::new(gate);
             let (sender, requests) = mpsc::channel();
             let served = Arc::clone(&gate);
+            let worker = Worker { requests: sender, wake: Box::new(edge.waker()) };
             std::thread::Builder::new()
                 .name("edge-upgrade".into())
-                .spawn(move || serve(&served, &sender))?;
+                .spawn(move || serve(&served, &worker))?;
             Ok(Self { gate: Some(gate), requests: Some(requests), handed: false })
         }
 
@@ -193,12 +235,14 @@ mod imp {
                         let _ = reply.send(edge.lend_flows(start, PIECE));
                     }
                     Request::Resume => edge.resume_datagrams(),
-                    Request::Release { pid, listeners, done } => {
+                    Request::Release { pid, listeners, done, unread } => {
                         edge.release_listeners();
                         note(format_args!(
                             "UPG010: handed {listeners} listeners and {} UDP mappings to pid \
-                             {pid}, {} mappings dropped",
-                            done.adopted, done.dropped
+                             {pid}, {} mappings dropped, UDP unread for {} ms",
+                            done.adopted,
+                            done.dropped,
+                            unread.as_millis()
                         ));
                         self.handed = true;
                         return true;
@@ -210,7 +254,7 @@ mod imp {
     }
 
     /// Serves the gate until a replacement has taken the service or the worker is gone.
-    fn serve(gate: &Gate, requests: &Sender<Request>) {
+    fn serve(gate: &Gate, requests: &Worker) {
         loop {
             let Ok(stream) = gate.accept() else {
                 // A failed accept belongs to one peer. A pause keeps a persistent
@@ -241,26 +285,12 @@ mod imp {
         WorkerGone,
     }
 
-    /// Asks the edge worker and waits for its answer.
-    fn ask<T>(
-        requests: &Sender<Request>,
-        request: impl FnOnce(SyncSender<T>) -> Request,
-    ) -> Option<T> {
-        let (reply, answer) = mpsc::sync_channel(1);
-        requests.send(request(reply)).ok()?;
-        answer.recv_timeout(WORKER_TIMEOUT).ok()
-    }
-
     /// One handoff, from the accepted connection to the release of the listeners.
-    fn hand_over(
-        stream: UnixStream,
-        gate: &Gate,
-        requests: &Sender<Request>,
-    ) -> Result<(), Ended> {
+    fn hand_over(stream: UnixStream, gate: &Gate, requests: &Worker) -> Result<(), Ended> {
         let mut giving = begin_give(stream, &Timeouts::default()).map_err(Ended::Refused)?;
         let pid = giving.peer().pid;
         let failed = |error| Ended::Failed { pid, error };
-        let listeners = match ask(requests, Request::Lend) {
+        let listeners = match requests.ask(Request::Lend) {
             Some(Ok(listeners)) => listeners,
             Some(Err(error)) => {
                 giving.refuse_busy("the daemon cannot copy its descriptors");
@@ -280,10 +310,12 @@ mod imp {
         drop(listeners);
         // Until READY nothing has changed here, so a failure needs no repair.
         giving.wait_ready().map_err(failed)?;
+        let frozen = Instant::now();
         match cut_over(&mut giving, requests) {
             Ok(done) => {
                 gate.keep_file();
-                let _ = requests.send(Request::Release { pid, listeners: count, done });
+                let unread = frozen.elapsed();
+                requests.tell(Request::Release { pid, listeners: count, done, unread });
                 Ok(())
             }
             Err(error) => {
@@ -295,13 +327,12 @@ mod imp {
 
     /// The cutover: the worker stops reading UDP, the mappings go to the replacement,
     /// and the replacement acknowledges.
-    fn cut_over(giving: &mut Giving, requests: &Sender<Request>) -> Result<Done, UpgradeError> {
+    fn cut_over(giving: &mut Giving, requests: &Worker) -> Result<Done, UpgradeError> {
         let stopping = || UpgradeError::new(Failure::Busy, "the edge worker did not answer");
-        let total = ask(requests, Request::Freeze).ok_or_else(stopping)?;
+        let total = requests.ask(Request::Freeze).ok_or_else(stopping)?;
         let mut start = 0;
         while start < total {
-            let piece =
-                ask(requests, |reply| Request::Flows(start, reply)).ok_or_else(stopping)?;
+            let piece = requests.ask(|reply| Request::Flows(start, reply)).ok_or_else(stopping)?;
             let piece = piece.map_err(|error| {
                 UpgradeError::new(Failure::Busy, format!("lending the UDP mappings: {error}"))
             })?;
@@ -316,7 +347,7 @@ mod imp {
     /// Takes the service back after a cutover that failed with `error`. The worker
     /// reads UDP again only when the connection of the replacement is closed. A
     /// replacement that is still there is ended first.
-    fn take_back(giving: &mut Giving, error: &UpgradeError, requests: &Sender<Request>) {
+    fn take_back(giving: &mut Giving, error: &UpgradeError, requests: &Worker) {
         if error.failure != Failure::Closed {
             let mut waited = 0u32;
             while !giving.end_peer(Duration::from_secs(1)) {
@@ -330,7 +361,7 @@ mod imp {
                 }
             }
         }
-        let _ = requests.send(Request::Resume);
+        requests.tell(Request::Resume);
     }
 }
 
@@ -362,8 +393,13 @@ mod imp {
     pub(in super::super) struct Old;
 
     impl Old {
+        /// A daemon without an upgrade socket.
+        pub fn none() -> Self {
+            Self
+        }
+
         /// Starts nothing.
-        pub fn start(_path: Option<&str>) -> io::Result<Self> {
+        pub fn start(_path: Option<&str>, _edge: &Edge) -> io::Result<Self> {
             Ok(Self)
         }
 
