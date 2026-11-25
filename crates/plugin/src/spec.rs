@@ -21,6 +21,24 @@ pub struct Settings {
     pub plugins: Vec<Spec>,
     /// The frontends that attach hooks: the name and the lists.
     pub frontends: Vec<(String, Attach)>,
+    /// The judges of parked connections.
+    pub judges: JudgeOptions,
+}
+
+/// The threads that decide parked connections, for each caller that parks (SID 0030,
+/// "Parking a connection").
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct JudgeOptions {
+    /// The threads, 1 to 64.
+    pub threads: u32,
+    /// The cases that may wait for a thread, 1 to 4,096.
+    pub queue: u32,
+}
+
+impl Default for JudgeOptions {
+    fn default() -> Self {
+        JudgeOptions { threads: 4, queue: 256 }
+    }
 }
 
 impl Settings {

@@ -15,8 +15,9 @@ use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
 use sibuna_plugin::{
-    AgentSpec, Attach, BreakerLimits, Frame, FrameKind, Kind, Local, OnFailure, Plan,
-    PluginStatus, Protocol, Settings, Slot, Spec, Stage, Verdict, View, read_frame, write_frame,
+    AgentSpec, Answer, Attach, BreakerLimits, Case, Field, Frame, FrameKind, JudgeOptions, Judges,
+    Kind, Local, OnFailure, Plan, PluginStatus, Protocol, Settings, Slot, Spec, Stage, Verdict,
+    View, encode, read_frame, write_frame,
 };
 use support::temp_path;
 
@@ -148,7 +149,8 @@ fn spec(path: &std::path::Path, on_failure: OnFailure) -> Spec {
 fn published(spec: Spec) -> Slot {
     let names = vec![spec.name.clone()];
     let attach = Attach { connection: names.clone(), request: names.clone(), telemetry: names };
-    let settings = Settings { plugins: vec![spec], frontends: vec![("web".to_owned(), attach)] };
+    let frontends = vec![("web".to_owned(), attach)];
+    let settings = Settings { plugins: vec![spec], frontends, ..Settings::default() };
     let slot = Slot::new();
     slot.publish(Plan::load(&settings, &[]).expect("the plan loads"));
     slot
@@ -398,4 +400,102 @@ fn an_agent_that_does_not_read_fills_a_bounded_backlog_and_never_holds_the_threa
     assert!(seen.dropped >= 2000, "{seen:?}");
     assert_eq!(seen.failures[1], seen.dropped - seen.failures[3], "{seen:?}");
     drop(held);
+}
+
+/// Gives `count` cases of `view` to `judges` and returns the receiver of their answers
+/// and how many the queue refused.
+fn submit(
+    judges: &Judges,
+    view: &View<'_>,
+    count: usize,
+) -> (std::sync::mpsc::Receiver<Answer>, usize) {
+    let (answers, received) = std::sync::mpsc::channel();
+    let mut refused = 0;
+    for _ in 0..count {
+        let answers = answers.clone();
+        let deliver = Box::new(move |answer| {
+            let _ = answers.send(answer);
+        });
+        refused += usize::from(!judges.submit(Case::of(view), deliver));
+    }
+    (received, refused)
+}
+
+#[test]
+fn a_case_is_a_faithful_copy_of_its_view() {
+    let fields = [Field { name: b"Cookie", value: b"a=1" }, Field { name: b"X", value: b"" }];
+    let original = View {
+        server_name: b"name.test",
+        ja4: b"t13d",
+        query: b"q=1",
+        fields: &fields,
+        status: 204,
+        duration_us: 77,
+        secure: true,
+        ..view(Stage::Request)
+    };
+    let (mut wanted, mut copied) = (Vec::new(), Vec::new());
+    encode(&original, &mut wanted, 65_536).unwrap();
+    Case::of(&original).with_view(|view| encode(view, &mut copied, 65_536).unwrap());
+    assert_eq!(wanted, copied);
+}
+
+#[test]
+fn judges_decide_parked_cases_and_a_silent_agent_never_holds_the_caller() {
+    let agent = Agent::start(Reply::Silent);
+    let slot = Arc::new(published(spec(&agent.path, OnFailure::Deny)));
+    let mut local = Local::new();
+    let connection = view(Stage::Connection);
+    assert!(local.parks(&slot, "web", Stage::Connection));
+    assert!(!local.parks(&slot, "other", Stage::Connection));
+    let judges = Judges::start(&slot, JudgeOptions { threads: 2, queue: 2 }).unwrap();
+    let began = Instant::now();
+    // Two cases occupy the judges for the deadline of 200 ms, two wait, the rest
+    // find no room. A judge may take a case at once, so the count has a range.
+    let (answers, refused) = submit(&judges, &connection, 8);
+    assert!((4..=6).contains(&refused), "{refused} refused");
+    // The caller sheds what found no room: the agent fails with overload, and denies.
+    for _ in 0..refused {
+        assert_eq!(local.run_shedding(&slot, &connection).verdict, Verdict::Deny);
+    }
+    assert!(began.elapsed() < Duration::from_millis(100), "the caller waited");
+    assert_eq!(status(&slot).failures[1], refused as u64, "overloads");
+    for _ in 0..8 - refused {
+        let answer = answers.recv_timeout(Duration::from_secs(5)).unwrap();
+        assert_eq!(answer, Answer { verdict: Verdict::Deny, hook: "authz".into() });
+    }
+    // Every case ended as a failure of the agent: a timeout, a shed case or, once the
+    // breakers of the judges opened, an agent that is not asked.
+    let seen = status(&slot);
+    assert_eq!((seen.calls, seen.denied, seen.admitted), (8, 0, 0), "{seen:?}");
+    assert!(seen.failures[0] >= 2, "the judges timed out: {seen:?}");
+}
+
+#[test]
+fn judges_admit_with_a_healthy_agent_and_an_advisory_agent_admits_when_shed() {
+    let agent = Agent::start(Reply::Verdict(0, b""));
+    let slot = Arc::new(published(spec(&agent.path, OnFailure::Admit)));
+    let judges = Judges::start(&slot, JudgeOptions::default()).unwrap();
+    let connection = view(Stage::Connection);
+    let (answers, refused) = submit(&judges, &connection, 20);
+    assert_eq!(refused, 0);
+    for _ in 0..20 {
+        let answer = answers.recv_timeout(Duration::from_secs(5)).unwrap();
+        assert_eq!(answer, Answer { verdict: Verdict::Admit, hook: "".into() });
+    }
+    assert_eq!(agent.decides(), 20);
+    let mut local = Local::new();
+    assert_eq!(local.run_shedding(&slot, &connection).verdict, Verdict::Admit);
+    assert_eq!(agent.decides(), 20, "a shed chain asks no agent");
+    // The judges end when their owner drops them.
+    drop(judges);
+}
+
+#[test]
+fn hook_judges_outside_their_range_refuse_the_plan() {
+    let spec = spec(&temp_path("none.sock"), OnFailure::Deny);
+    for judges in [JudgeOptions { threads: 0, queue: 1 }, JudgeOptions { threads: 65, queue: 1 }] {
+        let settings = Settings { plugins: vec![spec.clone()], judges, ..Settings::default() };
+        assert_eq!(Plan::load(&settings, &[]).unwrap_err().code, "HOOK002");
+    }
 }

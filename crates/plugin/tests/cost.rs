@@ -50,7 +50,8 @@ const NATIVES: [Native; 1] = [Native { name: "example", build }];
 fn slot_of(kind: Kind) -> Slot {
     let plugins = vec![Spec { name: "p".to_owned(), on_failure: OnFailure::Deny, kind }];
     let attach = Attach { request: vec!["p".to_owned()], ..Attach::default() };
-    let settings = Settings { plugins, frontends: vec![("web".to_owned(), attach)] };
+    let frontends = vec![("web".to_owned(), attach)];
+    let settings = Settings { plugins, frontends, ..Settings::default() };
     let slot = Slot::new();
     slot.publish(Plan::load(&settings, &NATIVES).unwrap());
     slot

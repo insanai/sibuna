@@ -27,6 +27,7 @@
 
 mod agent;
 mod breaker;
+mod judges;
 mod native;
 mod set;
 mod spec;
@@ -39,10 +40,12 @@ pub use agent::{
     FRAME_HEADER, Frame, FrameKind, MAX_FRAME, PROTOCOL_VERSION, read_frame, write_frame,
 };
 pub use breaker::{Breaker, BreakerLimits};
+pub use judges::{Answer, Case, Deliver, Judges};
 pub use native::{Constructor, Hook, Native};
 pub use set::{Decision, Local, Plan, PluginStatus, Slot};
 pub use spec::{
-    AgentSpec, Attach, Error, Kind, MAX_PLUGINS, MAX_STAGE_HOOKS, Settings, Spec, WasmSpec,
+    AgentSpec, Attach, Error, JudgeOptions, Kind, MAX_PLUGINS, MAX_STAGE_HOOKS, Settings, Spec,
+    WasmSpec,
 };
 pub use verdict::{Failure, OnFailure, Stage, Verdict, chain, outcome};
 pub use view::{
