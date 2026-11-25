@@ -1567,6 +1567,7 @@ dependencies = [
  "sibuna-crypto",
  "sibuna-encoding",
  "sibuna-json",
+ "sibuna-plugin",
  "sibuna-policy",
  "sibuna-reactor",
  "sibuna-store",

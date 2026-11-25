@@ -30,6 +30,8 @@ pub struct Config {
     pub(crate) mesh: Option<crate::MeshConfig>,
     pub(crate) listeners: BTreeMap<(Protocol, SocketAddr), Frontend>,
     pub(crate) pools: BTreeMap<String, Backend>,
+    /// The plugins and where each frontend attaches them (SID 0030).
+    pub(crate) plugins: sibuna_plugin::Settings,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialOrd, PartialEq)]
@@ -216,6 +218,11 @@ impl Config {
         self.drain_delay
     }
 
+    /// The plugins of the topology and the hooks of each frontend (SID 0030).
+    pub fn plugins(&self) -> &sibuna_plugin::Settings {
+        &self.plugins
+    }
+
     /// Static peer configuration, when the operator enabled RTT-based routing.
     pub fn mesh(&self) -> Option<&crate::MeshConfig> {
         self.mesh.as_ref()
@@ -261,7 +268,9 @@ impl Config {
             acme,
             pools: BTreeMap::new(),
             listeners: BTreeMap::new(),
+            plugins: sibuna_plugin::Settings::default(),
         };
+        config.plugins.plugins = crate::hooks::plugins(&mut root)?;
         for (name, value) in named(&mut root, "backends")? {
             config.pools.insert(name.into(), Backend::parse(name, value, adaptive)?);
         }
@@ -356,6 +365,7 @@ impl Config {
         let http_rules: std::sync::Arc<[_]> = http_rules.into();
         let info = crate::FrontendInfo::parse(&mut r, name, proto)?;
         let info = std::sync::Arc::new(info);
+        crate::hooks::attach(&mut r, name, proto, &mut self.plugins)?;
         let binds = field(r.take_array("binds"))?.ok_or_else(|| invalid(r.missing("binds")))?;
         if binds.is_empty() || self.listeners.len() + binds.len() > 128 {
             return Err(invalid(format!("{path}: expected 1 to 128 binds in total")));

@@ -288,11 +288,13 @@ pub enum Refusal {
     /// The client gave its request up before the firewall could decide on it. Nothing
     /// was refused: the reason keeps such a request apart from a malformed one.
     ClientClosed,
+    /// A connection hook denied the connection or the UDP mapping (SID 0030).
+    Hook,
 }
 
 impl Refusal {
     /// Every reason, in the order of the series.
-    pub const ALL: [Refusal; 13] = [
+    pub const ALL: [Refusal; 14] = [
         Refusal::RateLimit,
         Refusal::FlowLimit,
         Refusal::Draining,
@@ -306,6 +308,7 @@ impl Refusal {
         Refusal::UdpFlowLimit,
         Refusal::UdpReplyLimit,
         Refusal::ClientClosed,
+        Refusal::Hook,
     ];
 
     /// The value of the `reason` label.
@@ -324,6 +327,7 @@ impl Refusal {
             Refusal::UdpFlowLimit => "udp_flow_limit",
             Refusal::UdpReplyLimit => "udp_reply_limit",
             Refusal::ClientClosed => "client_closed",
+            Refusal::Hook => "hook",
         }
     }
 
@@ -343,6 +347,7 @@ impl Refusal {
             Refusal::UdpFlowLimit => "refused_udp_flow_limit",
             Refusal::UdpReplyLimit => "refused_udp_reply_limit",
             Refusal::ClientClosed => "refused_client_closed",
+            Refusal::Hook => "refused_hook",
         }
     }
 }
