@@ -245,6 +245,10 @@ pub(super) struct Driver {
     local_backoff: Backoff,
     /// The client of the `ask` URL of issuance on demand, once it was needed.
     asker: Option<admit::Asker>,
+    /// The managed names at the last look for DNS-01 records of names that left, and
+    /// the earliest time of the next look after one that left a record behind.
+    swept: Option<Vec<String>>,
+    sweep_at: u64,
 }
 
 impl Driver {
@@ -258,6 +262,8 @@ impl Driver {
             local: None,
             local_backoff: Backoff::default(),
             asker: None,
+            swept: None,
+            sweep_at: 0,
         }
     }
 
@@ -334,6 +340,9 @@ impl Driver {
         self.shared.forget_except(names);
         // The sources leave the driver for the round, so that the methods can borrow it.
         let (mut ready, local) = (self.ready.take(), self.local.take());
+        if let Some(ready) = &ready {
+            self.sweep(ready, names);
+        }
         for wanted in names {
             if self.stopping() {
                 break;
@@ -494,6 +503,26 @@ impl Driver {
         }
         if let Ok(Some(_lock)) = ready.first.store.lock(name) {
             self.clean(ready, name);
+        }
+    }
+
+    /// Removes the DNS-01 records of names that the daemon no longer manages: a name
+    /// that left the file while its record was not cleaned, in this run or before a
+    /// restart. The store is listed at the start and whenever the names changed. A
+    /// record that could not be removed is tried again after the first retry delay.
+    fn sweep(&mut self, ready: &Ready, names: &[AutoName]) {
+        let listed: Vec<String> = names.iter().map(|name| name.name.clone()).collect();
+        if self.swept.as_ref() == Some(&listed) || now() < self.sweep_at {
+            return;
+        }
+        let gone = |name: &String| !listed.contains(name);
+        for name in ready.first.store.presented_names().into_iter().filter(gone) {
+            self.clean_leftover(ready, &name);
+        }
+        if ready.first.store.presented_names().iter().any(gone) {
+            self.sweep_at = now() + schedule::FIRST_DELAY;
+        } else {
+            self.swept = Some(listed);
         }
     }
 

@@ -26,6 +26,8 @@ use crate::{Error, KeyPair, pem};
 pub const STALE_LOCK: Duration = Duration::from_secs(15 * 60);
 /// The largest file the store reads.
 const MAX_FILE: u64 = pem::MAX_PEM as u64;
+/// The most directories of names that one listing of the store looks at.
+pub const MAX_LISTED: usize = 4096;
 /// The PEM label of a stored OCSP response.
 const STAPLE_LABEL: &str = "OCSP RESPONSE";
 
@@ -265,6 +267,32 @@ impl Store {
         let text = read_bounded(&path).ok()??;
         let (owner, value) = text.trim().split_once(' ')?;
         Some((owner.to_owned(), value.to_owned()))
+    }
+
+    /// The names that have a presented DNS-01 record in the store, sorted. The daemon
+    /// cleans the records of names that it no longer manages. The call looks at no
+    /// more than [`MAX_LISTED`] directories and returns no more than 64 names; what it
+    /// leaves out is found by a later call, after the first records are gone.
+    pub fn presented_names(&self) -> Vec<String> {
+        let Ok(entries) = fs::read_dir(self.root.join("certs")) else { return Vec::new() };
+        let mut names = Vec::new();
+        for entry in entries.flatten().take(MAX_LISTED) {
+            let Some(stored) = entry.file_name().to_str().map(str::to_owned) else { continue };
+            // An IPv6 address is stored with underscores. No authority validates an
+            // address through the DNS, so such a directory has no record.
+            let name = match stored.strip_prefix("_.") {
+                Some(parent) => format!("*.{parent}"),
+                None => stored,
+            };
+            if !name.contains('_') && self.load_presented(&name).is_some() {
+                names.push(name);
+            }
+            if names.len() == 64 {
+                break;
+            }
+        }
+        names.sort();
+        names
     }
 
     /// Records that the DNS-01 record `owner` with `value` is about to be presented.
@@ -559,6 +587,21 @@ mod tests {
         store.clear_presented("*.example.org");
         assert_eq!(store.load_presented("*.example.org"), None);
         assert!(store.lock("*.example.org").unwrap().is_some());
+    }
+
+    #[test]
+    fn the_presented_records_of_the_store_are_listed() {
+        let scratch = Scratch::new("presented-list");
+        let store = scratch.store();
+        assert!(store.presented_names().is_empty());
+        let key = KeyPair::generate().unwrap();
+        store.save_certificate("served.example.org", &chain(&key), &key).unwrap();
+        store.save_presented("b.example.org", "_acme-challenge.b.example.org", "v1").unwrap();
+        store.save_presented("*.example.org", "_acme-challenge.example.org", "v2").unwrap();
+        store.save_certificate("::1", &chain(&key), &key).unwrap();
+        assert_eq!(store.presented_names(), ["*.example.org", "b.example.org"]);
+        store.clear_presented("*.example.org");
+        assert_eq!(store.presented_names(), ["b.example.org"]);
     }
 
     #[test]

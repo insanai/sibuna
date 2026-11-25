@@ -947,3 +947,70 @@ fn the_root_keeps_its_constraints_and_a_lost_root_is_replaced_at_the_start() {
     assert_eq!(log.matches("certificate for 127.0.0.1 obtained").count(), 1, "{log}");
     assert_eq!(authority.order_count.load(Ordering::Relaxed), 0);
 }
+
+/// The files `dns` under the storage of `home`: the DNS-01 records that the daemon
+/// remembers as presented.
+fn remembered_records(home: &Path) -> Vec<PathBuf> {
+    let mut found = Vec::new();
+    for authority in fs::read_dir(home.join("acme")).unwrap().flatten() {
+        let Ok(names) = fs::read_dir(authority.path().join("certs")) else { continue };
+        found.extend(names.flatten().map(|name| name.path().join("dns")).filter(|p| p.exists()));
+    }
+    found
+}
+
+#[test]
+fn the_record_of_a_name_that_left_the_file_is_cleaned_at_once_and_at_the_start() {
+    let authority = Authority::start();
+    let dns = Server::start_local().unwrap();
+    *authority.dns_server.lock().unwrap() = Some(dns.address);
+    let wildcard = "*.gone.example.test";
+    let record = "cleanup _acme-challenge.gone.example.test.";
+    for (tag, restart) in [("sweep-reload", false), ("sweep-start", true)] {
+        let home = home(tag);
+        // The hook fails, also at the cleanup: the record stays remembered.
+        let hook = script(&home, "dns-hook", "exit 7");
+        let acme = format!(
+            r#","dns":{{"hook":"{}","resolver":"{address}","servers":["{address}"]}}"#,
+            hook.display(),
+            address = dns.address
+        );
+        let setup = Setup {
+            authority: &authority,
+            origin: origin(),
+            home: &home,
+            names: &[wildcard],
+            plain: None,
+            acme: &acme,
+            tls: "",
+            directory: true,
+        };
+        let daemon = start(&setup);
+        wait_for("the failure", 60, || Some(daemon.row(wildcard)).filter(|row| row[5] == "retry"));
+        assert_eq!(remembered_records(&home).len(), 1);
+        // The hook works again, and the wildcard leaves the file for another name.
+        let log = home.join("hook.log");
+        script(&home, "dns-hook", &format!("echo \"$1 $2\" >> {}", log.display()));
+        let kept = Setup { names: &["kept.gone.example.test"], ..setup };
+        let daemon = match restart {
+            true => {
+                drop(daemon);
+                start(&kept)
+            }
+            false => {
+                let file = topology(&kept, daemon.tls, daemon.plain, &daemon.socket);
+                fs::write(&daemon.file, file).unwrap();
+                daemon.ctl("reload");
+                daemon
+            }
+        };
+        let hook_log = wait_for("the cleanup", 20, || {
+            fs::read_to_string(&log).ok().filter(|text| text.contains(record))
+        });
+        assert_eq!(hook_log.matches(record).count(), 1, "{tag}: {hook_log}");
+        wait_for("the forgotten record", 10, || {
+            remembered_records(&home).is_empty().then_some(())
+        });
+        assert!(!daemon.ctl("show certs").contains(wildcard), "{tag}");
+    }
+}
