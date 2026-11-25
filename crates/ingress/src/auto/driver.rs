@@ -274,6 +274,10 @@ impl Driver {
     /// Runs until the handle is dropped.
     pub fn run(mut self) {
         while !self.stopping() {
+            #[cfg(test)]
+            if self.shared.panic_once.swap(false, Ordering::AcqRel) {
+                panic!("the test of the supervisor asked for this panic");
+            }
             // The names that handshakes asked for are decided first. They stay queued
             // until then, so the handshakes know that they wait.
             let queued = self.shared.demand.queued();

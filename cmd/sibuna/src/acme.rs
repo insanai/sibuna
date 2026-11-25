@@ -130,6 +130,13 @@ pub(crate) fn log(event: &Event) {
         return;
     }
     match event {
+        Event::Panicked { message, restart_in } => {
+            crate::edge::note(format_args!(
+                "ACME014: the certificate thread stopped on a defect ({message}); the served \
+                 certificates stay, and the thread starts again in {restart_in} second(s). \
+                 Please report this line"
+            ));
+        }
         Event::Refused { name, reason, seconds } => {
             crate::edge::note(format_args!(
                 "ACME000: no certificate on demand for {name}: {reason}; refused for \

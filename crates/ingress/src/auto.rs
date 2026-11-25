@@ -18,6 +18,7 @@ mod client;
 pub(crate) mod demand;
 mod dns;
 mod driver;
+mod supervise;
 
 use std::collections::{BTreeMap, HashMap};
 use std::io;
@@ -128,6 +129,14 @@ pub enum Event {
         /// The time of the next attempt, in seconds since 1970.
         retry_at: u64,
     },
+    /// The thread panicked: a defect of ours. The served certificates stay. A new
+    /// thread state starts after the delay and reads the storage as after a restart.
+    Panicked {
+        /// What the panic said, in one printable line.
+        message: String,
+        /// The seconds until the thread works again.
+        restart_in: u64,
+    },
 }
 
 /// Receives the events of the thread. It is called on that thread and must not block.
@@ -230,6 +239,9 @@ pub(crate) struct Shared {
     ordering: AtomicBool,
     /// The names that handshakes asked for, on frontends with `on_demand`.
     pub demand: demand::Demand,
+    /// Makes the thread panic once, for the test of its supervisor.
+    #[cfg(test)]
+    panic_once: AtomicBool,
 }
 
 impl Shared {
@@ -248,6 +260,8 @@ impl Shared {
             wake: Condvar::new(),
             stopping: AtomicBool::new(false),
             ordering: AtomicBool::new(false),
+            #[cfg(test)]
+            panic_once: AtomicBool::new(false),
         }
     }
 
@@ -426,12 +440,16 @@ impl Automatic {
     /// Starts the thread `edge-acme`. It loads the stored certificates. After
     /// [`Automatic::allow_orders`] it orders and renews in the background. This call
     /// opens no socket and no file, and fails only when the thread cannot be spawned.
+    ///
+    /// The thread is supervised. When its work panics, `report` receives
+    /// [`Event::Panicked`], the served certificates stay, and the work starts again
+    /// after 5 seconds, then 10, up to 5 minutes, from what the storage holds.
     pub fn start(config: AutomaticHttps, report: Notify) -> io::Result<Self> {
         let shared = Arc::new(Shared::new(config));
         let thread = Arc::clone(&shared);
         std::thread::Builder::new()
             .name("edge-acme".into())
-            .spawn(move || driver::Driver::new(thread, report).run())?;
+            .spawn(move || supervise::run(&thread, &report))?;
         Ok(Self { shared })
     }
 
