@@ -81,5 +81,8 @@ Discussion registry
    * - 0023
      - :doc:`records/0023-cluster-configuration`
      - discussion
+   * - 0024
+     - :doc:`records/0024-tls-on-the-workers`
+     - discussion
 
 .. sid-generated-end
