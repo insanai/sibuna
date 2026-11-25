@@ -20,7 +20,13 @@ pub(super) struct Stamp {
 
 fn stamp(path: &str) -> Option<Stamp> {
     let metadata = std::fs::metadata(path).ok()?;
-    Some(Stamp { modified: metadata.modified().ok(), length: metadata.len() })
+    Some(Stamp::from_file(&metadata))
+}
+
+impl Stamp {
+    pub(super) fn from_file(metadata: &std::fs::Metadata) -> Self {
+        Self { modified: metadata.modified().ok(), length: metadata.len() }
+    }
 }
 
 /// The file of the topology, or none for a daemon started by `sibuna lb`.
@@ -83,8 +89,19 @@ impl Source {
             ));
         };
         // The stamp is taken first. A write during the load then shows as a new stamp.
-        *self.loaded.lock().unwrap_or_else(PoisonError::into_inner) = stamp(path);
+        self.mark_loaded(stamp(path));
         super::load_into(path, &self.authority)
+    }
+
+    /// Records the file that an explicit local or peer reload already checked.
+    pub(super) fn mark_loaded(&self, stamp: Option<Stamp>) {
+        *self.loaded.lock().unwrap_or_else(PoisonError::into_inner) = stamp;
+    }
+
+    #[cfg(unix)]
+    pub(super) fn cluster_file(&self, path: &str) -> io::Result<Vec<u8>> {
+        self.mark_loaded(stamp(path));
+        super::read_file(path)
     }
 
     fn loaded(&self) -> Option<Stamp> {

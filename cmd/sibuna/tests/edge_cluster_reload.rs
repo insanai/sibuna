@@ -165,14 +165,17 @@ fn cluster(nodes: usize) -> (Cluster, Vec<Node>) {
 fn reload_cluster_puts_one_file_on_every_node() {
     let (cluster, _nodes) = cluster(3);
     assert!(cluster.all_serve(&["a"]));
+    let sibling = cluster.home(1).join("edge.incoming.json");
+    fs::write(&sibling, "operator copy").unwrap();
     // The operator edits the file of one node and reloads the cluster from it.
     let next = cluster.source(&["a", "b"]);
     fs::write(cluster.file(0), &next).unwrap();
     let output = cluster.ctl(0, &["reload", "cluster"]);
     let answer = String::from_utf8_lossy(&output.stdout).into_owned();
     assert!(output.status.success(), "{answer}{}", String::from_utf8_lossy(&output.stderr));
-    assert_eq!(answer.matches(" reloaded").count(), 3, "{answer}");
+    assert_eq!(answer.matches(" queued").count(), 2, "{answer}");
     assert!(cluster.all_serve(&["a", "b"]));
+    assert_eq!(fs::read_to_string(sibling).unwrap(), "operator copy");
     // Every node now holds the same file, so a restart serves the same servers.
     for index in 1..3 {
         assert_eq!(fs::read_to_string(cluster.file(index)).unwrap(), next);
@@ -205,7 +208,7 @@ fn a_node_with_another_key_refuses_the_file_and_the_command_says_so() {
         + &String::from_utf8_lossy(&output.stdout);
     assert!(!output.status.success(), "{said}");
     assert!(said.contains("CLUSTER RELOAD INCOMPLETE"), "{said}");
-    assert!(said.contains(&format!("{} reloaded", cluster.mesh[1])), "{said}");
+    assert!(said.contains(&format!("{} queued", cluster.mesh[1])), "{said}");
     assert!(said.contains(&format!("{} refused", cluster.mesh[2])), "{said}");
     assert_eq!(cluster.servers(0), ["a", "b"]);
     assert_eq!(cluster.servers(1), ["a", "b"]);

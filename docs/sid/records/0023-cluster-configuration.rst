@@ -56,7 +56,7 @@ The rest of the file must suit every node too. The frontends bind the same addre
 The command
 ~~~~~~~~~~~
 
-``sibuna ctl SOCKET reload cluster`` does three things in order. It checks the file of this node. It reloads this node. It sends the file to every peer at once and waits at most five seconds for each. The answer has the line of the reload and one line for each peer: ``ADDRESS reloaded``. When a peer does not take the file the command fails with ``ADM012 CLUSTER RELOAD INCOMPLETE``, and its message names every peer with its answer. A file that does not check stops the command before any peer is asked. On an edge without a mesh the command fails with ``ADM011``.
+``sibuna ctl SOCKET reload cluster`` does three things in order. It checks the file of this node. It reloads this node. It sends the file to every peer at once and waits at most five seconds for each. The answer has the line of the reload and one line for each peer: ``ADDRESS queued``. When a peer does not take the file the command fails with ``ADM012 CLUSTER RELOAD INCOMPLETE``, and its message names every peer with its answer. A file that does not check stops the command before any peer is asked. On an edge without a mesh the command fails with ``ADM011``.
 
 The transfer
 ~~~~~~~~~~~~
@@ -67,16 +67,16 @@ The sender connects by TCP to the mesh address of the peer. The port number is t
 
    S E C 1 | stamp: 8 bytes | length: 4 bytes | file | tag: 32 bytes
 
-The stamp is the Unix millisecond of the send. The tag is a keyed BLAKE3 hash of everything before it. The key is derived from the mesh key with the context ``sibuna/edge-mesh/config/v1``, so a datagram of the mesh cannot stand for a file and the reverse. A file holds at most 1 MiB.
+The stamp is the Unix millisecond of the send. The tag is a keyed BLAKE3 hash of everything before it. The key is derived from the mesh key with the context ``sibuna/edge-mesh/config/v1``, so a datagram of the mesh cannot stand for a file and the reverse. A file holds at most 256 KiB, the same limit as a local edge source.
 
 The receiver takes these steps and stops at the first that fails.
 
 #. The source address is the address of a node of the mesh.
 #. The message is whole and its tag is right.
 #. The stamp is later than the stamp of the last file taken, and within 60 seconds of the clock. An old message sent again is refused.
-#. The file is written beside the file of the node, as ``NAME.incoming.EXT`` with mode 0600, and checked as a reload checks it.
+#. We check the received bytes in the language of the destination file. We use the same checked revision for the worker.
 #. The file names the same mesh: this node finds itself in it at its own address, with the same peers. A file in the old form names the sender as ``listen`` and is refused here, with a hint.
-#. The file is renamed over the file of the node. The node loads it and leaves the revision for the edge worker, as the signal for a reload does.
+#. We write the checked bytes to a new, private sibling file and rename it over the node file. We leave the prepared revision for the edge worker.
 
 The receiver answers ``ok`` or ``refused`` with the reason, in one line. The node logs ``EDGE011: configuration received from ADDRESS``.
 
@@ -110,7 +110,7 @@ A holder of the mesh key can ban any client and, on nodes that state ``accept_co
 
 The daemon must be able to write the directory of its file. A daemon that cannot refuses the transfer and keeps serving.
 
-The answer ``reloaded`` means that the peer checked the file and gave it to its worker. The worker can still refuse a change that needs a restart, such as another admin socket. It logs the refusal and keeps its routes, and the file on disk is then ahead of what the node serves.
+The answer ``queued`` means that the peer checked the file and gave it to its worker. The worker can still refuse a change that needs a restart, such as another admin socket. It logs the refusal and keeps its routes, and the file on disk is then ahead of what the node serves.
 
 Backwards compatibility
 -----------------------
@@ -135,7 +135,7 @@ Acceptance criteria and implementation status
      - Met. The same test writes a broken file. The command fails and the peers keep their file.
    * - 3
      - A peer that refuses is named, and the others reload.
-     - Met. A second test gives the third node another key. The command fails with ``ADM012``, names the node that reloaded and the node that refused.
+     - Met. A second test gives the third node another key. The command fails with ``ADM012``, names the node that queued the revision and the node that refused.
    * - 4
      - ``show cluster`` tells which nodes hold the same file.
      - Met. The tests of rows 1 to 3 read the table: all the same after the reload, one that differs after a broken file, and no answer from the node with another key.
@@ -163,6 +163,8 @@ Open questions
 
 Review history
 --------------
+
+- 2026-11-25. A cluster reload sends the exact bytes checked by its initiating node. Each receiver creates a private temporary file exclusively before replacing its source. A peer reports ``queued`` when its worker still has to apply the revision.
 
 - 2026-11-25. Initial draft, written with the implementation. The review of the draft made receiving an explicit choice, added the check that the file names the same mesh, and bound the stamp to the clock so that a restart does not open the node to old messages for longer than a minute.
 - 2026-11-25. ``show cluster`` added, which answers the first open question of the draft.

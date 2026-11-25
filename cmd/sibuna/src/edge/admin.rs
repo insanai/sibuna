@@ -250,6 +250,7 @@ mod unix {
             return super::super::authority::describe(source).ok_or_else(no_authority);
         }
         // The file is compiled and checked here, off the worker, as for SIGHUP.
+        let mut pushed = None;
         let revision = match command {
             // In persistent mode the file belongs to this host (SID 0028).
             Command::ReloadCluster if super::super::authority::follows(source) => {
@@ -266,12 +267,18 @@ mod unix {
                     "Run `reload`, or name the nodes under `mesh` in the file of every node.",
                 ));
             }
-            Command::Reload | Command::ReloadCluster => {
-                Some(source.load().map_err(super::super::reload_rejected)?)
+            Command::ReloadCluster => {
+                let path = source.path().ok_or_else(super::super::nothing_to_reload)?;
+                let file = source.cluster_file(path).map_err(super::super::reload_rejected)?;
+                let revision = super::super::evaluate(path, file.clone())
+                    .and_then(|doc| super::super::revision(&doc))
+                    .map_err(super::super::reload_rejected)?;
+                pushed = Some(file);
+                Some(revision)
             }
+            Command::Reload => Some(source.load().map_err(super::super::reload_rejected)?),
             _ => None,
         };
-        let cluster = command == Command::ReloadCluster;
         let (reply, answer) = mpsc::sync_channel(1);
         let job = Job { line: line.to_owned(), command, revision, reply };
         let no_answer = || {
@@ -284,7 +291,7 @@ mod unix {
         };
         jobs.send(job).map_err(|_| no_answer())?;
         let own = answer.recv_timeout(WORKER_TIMEOUT).map_err(|_| no_answer())??;
-        if cluster { push(source, own) } else { Ok(own) }
+        if let Some(file) = pushed { push(source, own, &file) } else { Ok(own) }
     }
 
     /// The answer to `show cluster`: this node and each peer with the digest of its
@@ -304,7 +311,7 @@ mod unix {
                 "Name the nodes under `mesh` in the file of every node.",
             ));
         };
-        let own = fs::read(path).map(|file| cluster::digest(&file));
+        let own = super::super::read_file(path).map(|file| cluster::digest(&file));
         let own = own.map_err(super::super::reload_rejected)?;
         let mut rows = vec![["node".to_owned(), "file".to_owned(), "state".to_owned()]];
         rows.push([peers.listen().to_string(), own.clone(), "this node".to_owned()]);
@@ -352,19 +359,14 @@ mod unix {
 
     /// Sends the file that this node just reloaded to every peer, and adds one line
     /// per peer to the answer. Fails with `ADM012` when a peer did not take the file.
-    fn push(source: &Source, mut answer: String) -> Result<String, RuntimeError> {
-        let (Some(peers), Some(path)) = (source.cluster(), source.path()) else {
-            return Ok(answer);
-        };
-        let results = match fs::read(path) {
-            Ok(file) => peers.push(&file),
-            Err(error) => return Err(super::super::reload_rejected(error)),
-        };
+    fn push(source: &Source, mut answer: String, file: &[u8]) -> Result<String, RuntimeError> {
+        let Some(peers) = source.cluster() else { return Ok(answer) };
+        let results = peers.push(file);
         let mut failed = 0;
         let mut lines = Vec::new();
         for (peer, result) in &results {
             match result {
-                Ok(()) => lines.push(format!("{peer} reloaded")),
+                Ok(()) => lines.push(format!("{peer} queued")),
                 Err(reason) => {
                     failed += 1;
                     lines.push(format!("{peer} refused: {reason}"));

@@ -1851,10 +1851,10 @@ With this section, and with frontends that bind the same addresses on every node
 
    $ sibuna ctl /run/sibuna/edge.sock reload cluster
    Sibuna edge routes reloaded
-   10.0.0.2:7946 reloaded
-   10.0.0.3:7946 reloaded
+   10.0.0.2:7946 queued
+   10.0.0.3:7946 queued
 
-The node checks its file and reloads. It then sends the file to its peers. Each peer checks the file itself, writes it in the place of its own and reloads. A file that does not check reaches no peer. When a peer does not take the file, the command fails and names each peer with its answer; we correct the peer and run the command again.
+The initiating node checks and applies its file, then sends those same bytes to its peers. Each peer checks the file, installs it, and queues the revision for its worker. A refusal names the peer and fails the command. We use ``show servers`` on each peer to verify the routes it serves.
 
 ``show cluster`` tells whether the nodes hold the same file.
 

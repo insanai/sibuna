@@ -10,8 +10,8 @@
 //!     check and reload own file
 //!     connect TCP B:mesh port  ------------> source address in the roster?
 //!     SEC1 | stamp | length | file | tag --> tag right? stamp fresh and newer?
-//!                                            write FILE.incoming, check it
-//!                                            same mesh nodes? rename over FILE
+//!                                            check the received bytes
+//!                                            same mesh nodes? install FILE
 //!     "ok" or "refused REASON" <------------ leave the revision for the worker
 //! ```
 //!
@@ -43,7 +43,7 @@ const HEADER: usize = 16;
 /// The bytes of the tag after the file.
 const TAG: usize = 32;
 /// The largest file a node takes from a peer.
-const MAX_FILE: usize = 1 << 20;
+const MAX_FILE: usize = sibuna_lb::Config::DOCUMENT_LIMITS.max_input_bytes;
 /// How long a node waits for a peer, to connect and for each read and write.
 const TIMEOUT: Duration = Duration::from_secs(5);
 /// How far the stamp of a file may lie from the clock of the receiver.
@@ -130,17 +130,27 @@ fn is_fresh(stamp: u64, last: u64, now: u64) -> bool {
     stamp > last && stamp.abs_diff(now) <= SKEW_MS
 }
 
-/// Where a received file waits for its check: beside `path`, with the same extension,
-/// so that it is read in the same language.
-fn incoming(path: &str) -> String {
-    let file = std::path::Path::new(path);
-    match file.extension().and_then(|extension| extension.to_str()) {
-        Some(extension) => {
-            let stem = &path[..path.len() - extension.len() - 1];
-            format!("{stem}.incoming.{extension}")
-        }
-        None => format!("{path}.incoming"),
+/// Replaces the destination only after the complete checked source is on disk.
+fn install(path: &str, bytes: &[u8]) -> io::Result<super::watch::Stamp> {
+    let mut nonce = [0; 12];
+    crate::random::fill(&mut nonce)?;
+    let temporary = std::path::Path::new(path)
+        .with_file_name(format!(".sibuna-{}.tmp", sibuna_encoding::hex::encode(&nonce)));
+    let mut options = fs::OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    std::os::unix::fs::OpenOptionsExt::mode(&mut options, 0o600);
+    let mut out = options.open(&temporary)?;
+    let result = out.write_all(bytes).and_then(|()| out.sync_all()).and_then(|()| out.metadata());
+    drop(out);
+    let result = result.and_then(|metadata| {
+        fs::rename(&temporary, path)?;
+        Ok(super::watch::Stamp::from_file(&metadata))
+    });
+    if result.is_err() {
+        let _ = fs::remove_file(temporary);
     }
+    result
 }
 
 impl Peers {
@@ -205,7 +215,7 @@ impl Peers {
     }
 
     /// Answers a question for the digest of this node's file.
-    fn tell(&self, stream: &mut TcpStream, source: &Source) -> Result<String, String> {
+    fn tell(&self, stream: &mut impl Read, source: &Source) -> Result<String, String> {
         let mut wire = [0; QUESTION];
         stream.read_exact(&mut wire).map_err(|_| "the message was cut".to_owned())?;
         let (signed, tag) = wire.split_at(12);
@@ -217,7 +227,7 @@ impl Peers {
             return Err("the clocks differ by more than a minute".to_owned());
         }
         let path = source.path().ok_or("this node has no file")?;
-        let digest = digest(&fs::read(path).map_err(|error| error.to_string())?);
+        let digest = digest(&super::read_file(path).map_err(|error| error.to_string())?);
         Ok(format!("digest {digest} {}\n", answer_tag(&self.key, stamp, &digest)))
     }
 
@@ -267,20 +277,22 @@ impl Peers {
         stream.set_read_timeout(Some(TIMEOUT)).map_err(text)?;
         stream.set_write_timeout(Some(TIMEOUT)).map_err(text)?;
         let mut magic = [0; 4];
-        if stream.peek(&mut magic).map_err(text)? == 4 && &magic == ASK {
-            return self.tell(stream, source);
+        stream.read_exact(&mut magic).map_err(text)?;
+        let mut message = magic.as_slice().chain(stream);
+        if &magic == ASK {
+            return self.tell(&mut message, source);
         }
         if !take_files {
             return Err("this node does not state mesh.accept_config".to_owned());
         }
-        self.receive(stream, peer, source, pending, last).map(|()| "ok\n".to_owned())
+        self.receive(&mut message, peer, source, pending, last).map(|()| "ok\n".to_owned())
     }
 
     /// Takes one file from a peer: authenticates it, checks it as a reload would, puts
     /// it in the place of this node's file and leaves the revision for the worker.
     fn receive(
         &self,
-        stream: &mut TcpStream,
+        stream: &mut impl Read,
         peer: SocketAddr,
         source: &Source,
         pending: &Pending,
@@ -300,29 +312,19 @@ impl Peers {
         let Some(path) = source.path() else {
             return Err("this node was started by `sibuna lb` and has no file".to_owned());
         };
-        let waiting = incoming(path);
-        let checked = self.check(&waiting, &file);
-        if let Err(reason) = checked.and_then(|()| fs::rename(&waiting, path).map_err(text)) {
-            let _ = fs::remove_file(&waiting);
-            return Err(reason);
-        }
+        let revision = self.check(path, &file)?;
+        let installed = install(path, &file).map_err(text)?;
+        source.mark_loaded(Some(installed));
         *last = stamp;
-        let revision = source.load().map_err(text)?;
         *pending.lock().unwrap_or_else(PoisonError::into_inner) = Some(revision);
         note(format_args!("EDGE011: configuration received from {}", peer.ip()));
         Ok(())
     }
 
-    /// Writes `file` at `waiting` and checks it: it must be a valid topology that names
-    /// the mesh as this node knows it.
-    fn check(&self, waiting: &str, file: &[u8]) -> Result<(), String> {
-        let text = |error: io::Error| error.to_string();
-        let mut options = fs::OpenOptions::new();
-        options.write(true).create(true).truncate(true);
-        #[cfg(unix)]
-        std::os::unix::fs::OpenOptionsExt::mode(&mut options, 0o600);
-        options.open(waiting).and_then(|mut out| out.write_all(file)).map_err(text)?;
-        let revision = super::load(waiting).map_err(text)?;
+    /// Prepares the exact source that will be installed, using the node's file language.
+    fn check(&self, path: &str, file: &[u8]) -> Result<super::Revision, String> {
+        let document = super::evaluate(path, file.to_vec()).map_err(|e| e.to_string())?;
+        let revision = super::revision(&document).map_err(|e| e.to_string())?;
         let same = revision.config.mesh().is_some_and(|mesh| {
             mesh.listen() == self.listen && mesh.peers() == self.peers.as_slice()
         });
@@ -331,7 +333,7 @@ impl Peers {
                         Hint: list every node under mesh.nodes, the same on all nodes"
                 .to_owned());
         }
-        Ok(())
+        Ok(revision)
     }
 }
 
@@ -405,12 +407,5 @@ mod tests {
         assert_eq!(digest(b"a").len(), DIGEST);
         assert_ne!(digest(b"a"), digest(b"b"));
         assert_eq!(question(&KEY, 5).len(), QUESTION);
-    }
-
-    #[test]
-    fn the_waiting_file_keeps_the_extension() {
-        assert_eq!(incoming("/etc/sibuna/edge.jlv"), "/etc/sibuna/edge.incoming.jlv");
-        assert_eq!(incoming("edge.json"), "edge.incoming.json");
-        assert_eq!(incoming("/etc/sibuna/edge"), "/etc/sibuna/edge.incoming");
     }
 }

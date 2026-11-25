@@ -106,11 +106,19 @@ fn revision(document: &[u8]) -> io::Result<Revision> {
 /// Reads the file at `path` within the limit of an edge file and returns its JSON
 /// document. A `.jlv` file is evaluated.
 fn document(path: &str) -> io::Result<Vec<u8>> {
+    evaluate(path, read_file(path)?)
+}
+
+/// Reads one complete edge source within the topology budget.
+fn read_file(path: &str) -> io::Result<Vec<u8>> {
     let mut bytes = Vec::new();
     File::open(path)?
         .take(Config::DOCUMENT_LIMITS.max_input_bytes as u64 + 1)
         .read_to_end(&mut bytes)?;
-    evaluate(path, bytes)
+    if bytes.len() > Config::DOCUMENT_LIMITS.max_input_bytes {
+        return Err(io::Error::new(io::ErrorKind::InvalidData, "edge source exceeds 256 KiB"));
+    }
+    Ok(bytes)
 }
 
 /// The JSON document of the source `bytes` that was read from `path`.
