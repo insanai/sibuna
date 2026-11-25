@@ -53,7 +53,7 @@ A hook attaches to a frontend at one or more of three stages.
      - When it runs
      - What it decides
    * - ``connection``
-     - Once for each TCP connection of a TCP or HTTP frontend, after the connection rate and the flow budget admitted it. On a TCP frontend with ``tcp_inspect`` it runs after the ClientHello is read. Once for each new UDP mapping.
+     - Once for each TCP connection of a TCP or HTTP frontend, after the connection rate and the flow budget admitted it. On a TCP frontend with ``tcp_inspect`` it runs after the ClientHello is read. Once for each new UDP mapping. A frontend that serves HTTP/3 has no connection stage: its QUIC connections do not pass the edge worker, so a file that attaches a connection hook there is refused.
      - Admit or deny. A denied connection is closed. A denied datagram is dropped and opens no mapping.
    * - ``request``
      - Once for each HTTP request that the bans, the limiters and the firewall policy admitted, before a server is chosen.
@@ -92,6 +92,8 @@ Every tier reads the same plain record, the view. The native tier borrows it. Th
    * - status, duration
      - Telemetry only: the status of the answer and the time from the request to its end in microseconds.
 
+The telemetry view is built from the entry that SID 0020 settles. It has the frontend, the protocol, the client address without a port, the listener, the method, the host, the path, the status and the duration. It has no query and no fields, and its host and path are cut at the bounds of the access log, 255 and 1,024 bytes. A telemetry hook observes, so a cut text cannot change a decision.
+
 A hook may do four things: admit, deny, ask for a challenge, and add request fields. A hook may not do the following, and no tier gives it the means.
 
 - Read or change a request body or a response body.
@@ -102,7 +104,7 @@ A hook may do four things: admit, deny, ask for a challenge, and add request fie
 
 One invocation may add at most 8 fields and 1,024 bytes. A field line holds a token name, a colon and a value without control characters.
 
-A denial is answered 403 with the reason ``hook:NAME``. A challenge is the proof-of-work challenge of the firewall under the rule name ``hook:NAME``. A client that holds a session with enough work passes it, as it passes a challenge of the policy. The connection stage has no challenge: a hook that asks for one there denies.
+A denial is answered 403 with the reason ``hook:NAME``. A challenge is the proof-of-work challenge of the firewall under the rule name ``hook:NAME``. A client that holds a session with enough work passes it, as it passes a challenge of the policy. The hook then counts as one that admitted without fields, and the chain goes on with the hooks behind it. A cleared challenge therefore never skips a hook. A denial is never cleared. The connection stage has no challenge: a hook that asks for one there denies.
 
 The failure rule
 ~~~~~~~~~~~~~~~~
@@ -196,7 +198,7 @@ Plugins are named at the root of the topology, in JSON and in JLV alike. A front
 
 A topology may name 16 plugins. A stage of a frontend may list 8.
 
-A reload reads the configuration, loads every module file, decodes and validates it, instantiates it once and checks its exports. Only then does it publish the set. A thread sees the new set at its next request: it compares one generation number, and when the number moved it drops its instances and builds new ones. A request that is inside a hook finishes with the instance it has. A plugin that fails to load refuses the reload with a ``HOOK`` diagnostic, and the old set serves. The file of a module is read at reload only, so replacing the file takes effect at the next reload. An agent need not run at reload: the breaker handles its absence.
+A reload reads the configuration, loads every module file, decodes and validates it, instantiates it once and checks its exports. Only then does it publish the set. The set is published before the new routes, so that no frontend of the new file serves a moment without its hooks, and when the routes are then refused the old set is published again. A thread sees the new set at its next request: it compares one generation number, and when the number moved it drops its instances and builds new ones. A request that is inside a hook finishes with the instance it has. A plugin that fails to load refuses the reload with a ``HOOK`` diagnostic, and the old set serves. The file of a module is read at reload only, so replacing the file takes effect at the next reload. An agent need not run at reload: the breaker handles its absence.
 
 The native tier
 ~~~~~~~~~~~~~~~
@@ -298,7 +300,7 @@ The return codes are 0 for admit, 1 for deny and 2 for challenge. Any other valu
    0       1     wire version, 1
    1       1     stage: 1 connection, 2 request, 3 telemetry
    2       1     protocol: 1 tcp, 2 udp, 3 http/1.1, 4 http/2, 5 http/3
-   3       1     flags: bit 0 secure, bit 1 the addresses are IPv6
+   3       1     flags: bit 0 secure, bit 1 the client address is IPv6, bit 2 the local one is
    4       2     client port
    6       2     local port
    8       16    client address (IPv4 in the first four bytes, the rest zero)
@@ -311,7 +313,7 @@ The return codes are 0 for admit, 1 for deny and 2 for challenge. Any other valu
 
 A head that does not fit is not cut: the invocation fails with ``overload``. A hook that judged half a head would judge a different request.
 
-The example hook ``cmd/sibuna-hook-wasm`` is 60 lines of Rust without ``std``. It denies a path under ``/admin`` unless the request carries ``x-role: admin``, and it marks admitted requests with a field. Its binary is committed as ``crates/plugin/tests/data/example_hook.wasm``, so no Wasm toolchain is needed to build or test the workspace.
+The example hook ``cmd/sibuna-hook-wasm`` is one file of 223 lines of Rust without ``std``, its tests included. Its module has 1,268 bytes. It denies a path under ``/admin`` unless the request carries ``x-role: admin``, and it marks admitted requests with a field. Its binary is committed as ``crates/plugin/tests/data/example_hook.wasm``, so no Wasm toolchain is needed to build or test the workspace.
 
 The agent tier
 ~~~~~~~~~~~~~~
@@ -361,7 +363,7 @@ An agent call occupies its thread for the round trip. On an event-driven worker 
 Crates
 ~~~~~~
 
-``sibuna-plugin`` is a library without dependencies. It holds the view, the trait, the failure rule, the breaker, the interpreter, the agent client and the published set. ``sibuna-lb`` reads the configuration into the plain specifications of that crate and calls a gate, a boxed closure, at the connection stage. The daemon builds the set, owns the table of native hooks and joins the stages to its request path.
+``sibuna-plugin`` is a library without dependencies. It holds the view, the trait, the failure rule, the breaker, the interpreter, the agent client and the published set. ``sibuna-lb`` reads the configuration into the plain specifications of that crate. Its edge worker owns its own instances and asks them at the connection stage. The daemon builds the set, owns the table of native hooks and joins the stages to its request path.
 
 Rationale and alternatives
 --------------------------
@@ -376,19 +378,19 @@ Rationale and alternatives
      - In-house
      - wasmi 1.1.0
    * - Lines of Rust to audit
-     - WASM_LINES
+     - 2,324 in the seven files of ``crates/plugin/src/wasm``, unit tests included
      - 96,233 with its four companion crates and ``wasmparser``
    * - Uses of ``unsafe``
      - 0
      - 143 occurrences of the word in those sources
    * - New crates in the build
      - 0
-     - 6 and their transitive dependencies
+     - 8: ``wasmi``, ``wasmi_core``, ``wasmi_ir``, ``wasmi_collections``, ``wasmparser``, ``spin``, ``libm``, ``bitflags``
    * - Speed
-     - WASM_SPEED
-     - WASM_SPEED_WASMI
+     - 20,000 SHA-256 hashcash trials in 413 ms. One call of the example hook in 2.2 microseconds.
+     - The same trials in 210 ms. The same call in 0.77 microseconds.
 
-The rule of this project is that the standard library comes first and that an external crate must solve a large problem. A complete WebAssembly engine is a large problem. A hook runtime is a small one: one memory, one table, no threads, no SIMD, a fixed ABI, and budgets that we want to define ourselves. The instruction set is specified exactly and the validator is the published algorithm. wasmi is faster on long computations, because it translates to a register machine. A hook spends a few hundred to a few thousand operations on a request, and at that size the difference is below the cost of encoding the view. We chose the in-house interpreter. We would choose wasmi if hooks became compute-heavy, and the trait boundary of the tier lets us do so without changing the ABI.
+The rule of this project is that the standard library comes first and that an external crate must solve a large problem. A complete WebAssembly engine is a large problem. A hook runtime is a small one: one memory, one table, no threads, no SIMD, a fixed ABI, and budgets that we want to define ourselves. The instruction set is specified exactly and the validator is the published algorithm. wasmi is two to three times faster, because it translates to a register machine. A hook spends a few hundred to a few thousand operations on a request. The example hook spends 635, and the difference between the two interpreters is then 1.4 microseconds for a request. We accept that cost for an interpreter of a fortieth of the size, without ``unsafe`` and without a new crate. We chose the in-house interpreter. We would choose wasmi if hooks became compute-heavy, and the trait boundary of the tier lets us do so without changing the ABI.
 
 *A JIT (Wasmtime, Wasmer).* Rejected. A JIT needs executable memory and ``unsafe`` code on a scale that we cannot audit, and its dependencies exceed the rest of the daemon.
 
@@ -431,12 +433,170 @@ A topology without ``plugins`` and without ``hooks`` behaves as before. The keys
 Acceptance criteria and implementation status
 ---------------------------------------------
 
-ACCEPTANCE_TABLE
+The state of this record is ``discussion``. The code below is on the branch ``sid-0030-plugins``. Every row names the test that is its evidence. All tests run on loopback.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 4 40 12 44
+
+   * - #
+     - Criterion
+     - Status
+     - Evidence
+   * - 1
+     - The native tier admits, denies, challenges and fails with its configured outcome.
+     - Met
+     - ``crates/plugin/tests/tiers.rs`` (``the_native_tier_admits_denies_challenges_and_fails_closed``, ``an_advisory_native_hook_admits_on_failure_and_adds_nothing``); ``cmd/sibuna/tests/edge_hooks.rs`` (``a_native_hook_admits_and_denies_requests``) through the binary, on the workers and on the thread path.
+   * - 2
+     - The Wasm tier admits, denies, challenges, times out, traps and overflows with its configured outcome.
+     - Met
+     - ``tiers.rs`` (``the_example_hook_admits_denies_and_challenges``, ``a_wasm_hook_that_spins_times_out_with_its_configured_outcome``, ``a_wasm_hook_that_traps_fails_with_its_configured_outcome``, ``a_view_larger_than_the_input_buffer_overflows_and_is_never_cut``, ``host_calls_beyond_the_bound_trap``); ``edge_hooks.rs`` (``the_example_wasm_hook_admits_with_a_field_denies_and_challenges``, ``a_wasm_hook_that_spins_or_traps_gets_the_configured_outcome``, ``a_request_too_large_for_the_input_buffer_overflows_and_is_not_cut``).
+   * - 3
+     - The agent tier admits, denies, challenges, times out, is unavailable and overflows with its configured outcome.
+     - Met
+     - ``crates/plugin/tests/agent.rs`` (11 tests against an agent in the test process); ``edge_hooks.rs`` (``an_agent_admits_with_a_field_denies_and_times_out``, ``an_advisory_agent_that_is_away_admits``).
+   * - 4
+     - Fuel holds against an infinite loop, and fuel is a count.
+     - Met
+     - ``crates/plugin/tests/wasm.rs`` (``an_infinite_loop_stops_when_its_fuel_is_spent``, ``growth_and_bulk_operations_cost_fuel_in_proportion``).
+   * - 5
+     - The page budget holds against memory growth, and the frame limit against deep recursion.
+     - Met
+     - ``wasm.rs`` (``memory_growth_stops_at_the_page_budget``, ``unbounded_recursion_stops_at_the_frame_limit``, ``a_module_that_starts_above_the_page_budget_does_not_instantiate``); ``tiers.rs`` (``a_hook_that_grows_its_memory_without_end_is_stopped_by_pages_and_fuel``).
+   * - 6
+     - A malformed binary is refused without a panic or a hang.
+     - Met
+     - ``wasm.rs``: every prefix of a real module, 20,000 mutated copies of it that load or fail and then run within their budget, counts of four billion refused before an allocation, and ten kinds of code that does not type-check.
+   * - 7
+     - The interpreter computes what the compiled code means.
+     - Met
+     - ``tiers.rs`` (``the_interpreter_runs_the_compiled_solver_to_the_native_result``): the proof-of-work solver of the project, built by rustc, finds the nonce that the native code finds, and its sequential-work proof passes the native verifier.
+   * - 8
+     - The breaker opens after failures in a row and closes after a good probe.
+     - Met
+     - ``agent.rs`` (``the_breaker_opens_after_failures_in_a_row_and_closes_after_a_good_probe``, ``a_probe_that_fails_keeps_the_breaker_open``, ``each_thread_has_a_breaker_of_its_own``, ``a_call_beyond_the_queue_is_an_overload_and_does_not_blame_the_agent``); ``edge_hooks.rs`` (``the_breaker_of_an_agent_opens_and_closes``); unit tests of ``breaker.rs``.
+   * - 9
+     - No WASI and no other import.
+     - Met
+     - ``tiers.rs`` (``a_module_that_imports_wasi_does_not_load``); ``edge_hooks.rs`` (``a_plugin_that_does_not_load_is_a_diagnostic_of_the_check``, ``HOOK005``).
+   * - 10
+     - A reload publishes only a set that loaded, and the counters go on.
+     - Met
+     - ``edge_hooks.rs`` (``a_reload_changes_the_hooks_and_a_bad_module_keeps_the_serving_ones``); ``tiers.rs`` (``a_thread_takes_a_new_plan_at_its_next_run_and_the_counters_go_on``).
+   * - 11
+     - The connection stage judges a TCP connection, an inspected connection by its server name, and a UDP mapping once.
+     - Met
+     - ``crates/lb/tests/hooks.rs`` (4 tests on real sockets); ``edge_hooks.rs`` (``a_connection_hook_closes_a_connection_before_any_request``).
+   * - 12
+     - A paid challenge of a hook is cleared, and the hooks behind it still judge.
+     - Met
+     - ``edge_hooks.rs`` (``a_paid_challenge_of_a_hook_is_cleared_and_the_hook_behind_it_still_judges``): the test solves the proof of work and presents the session. ``tiers.rs`` (``a_cleared_challenge_lets_the_chain_go_on_to_the_hooks_behind_it``).
+   * - 13
+     - A hook cannot add a field of framing or a statement of Sibuna.
+     - Met
+     - Unit tests of ``view.rs``; ``tiers.rs`` (``a_field_that_a_hook_may_not_add_is_refused_and_counted``); ``agent.rs`` (an agent that answers ``Host: evil``).
+   * - 14
+     - The telemetry stage delivers a sample and never holds a thread.
+     - Met
+     - ``edge_hooks.rs`` (``a_telemetry_agent_receives_a_sample_of_every_answered_request``); ``agent.rs`` (``an_agent_that_does_not_read_fills_a_bounded_backlog_and_never_holds_the_thread``).
+   * - 15
+     - Without hooks the request path costs one load, and with hooks it takes no lock.
+     - Met by construction, measured in part
+     - ``Slot::has`` is one relaxed load of a byte, 1.1 ns. The request path reads it through one ``OnceLock``, so the cost is two loads. With hooks a thread uses its own instances. The counters of a plugin are shared atomic words that every thread adds to. We did not measure their contention on many cores.
+   * - 16
+     - The failure rule and the breaker are modelled.
+     - Met
+     - ``docs/sid/assets/plugin-tiers.lean``, checked with Lean 4, core only: 10 theorems on the outcome, the chain and fuel, 10 on the breaker.
+
+Measured cost
+~~~~~~~~~~~~~
+
+All numbers are from one machine with 32 hardware threads that ran other builds at the time (load average about 20), in optimized builds, on loopback. We took the best of repeated rounds. They are an order of magnitude and a comparison, not a benchmark of the product.
+
+*One invocation, in process.* ``cargo test -p sibuna-plugin --release --test cost -- --ignored --nocapture --test-threads 1``. The view is a request of eight fields, 433 bytes encoded. The native hook does what the example module does.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 20 40
+
+   * - Case
+     - Time
+     - Note
+   * - No hook, ``Slot::has``
+     - 1.1 ns
+     - One load.
+   * - Native
+     - 42 ns
+     - The chain, the counters and the hook.
+   * - Wasm, the example module
+     - 2.2 to 2.4 us
+     - Encoding the view, copying it in and 635 operations.
+   * - Agent
+     - 13 to 18 us
+     - A round trip on a Unix socket to a thread of the same process.
+
+*One request, end to end.* ``cargo test -p sibuna --release --test edge_hooks -- --ignored --nocapture cost``. One client sends 5,000 requests after one another on a kept connection to the edge binary, which relays to an origin that answers one byte. Four edges run side by side, one for each case, and their rounds alternate. Two runs gave these means per request.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 35 35
+
+   * - Case
+     - Run 1
+     - Run 2
+   * - No hook
+     - 41.8 us
+     - 42.2 us
+   * - Native ``require_header``
+     - 40.0 us
+     - 41.2 us
+   * - Wasm, the example module
+     - 47.1 us, +5.2
+     - 48.4 us, +6.1
+   * - Agent in the test process
+     - 63.4 us, +21.5
+     - 60.6 us, +18.4
+
+The native hook is below the noise of the method, which is about 2 us. The Wasm hook costs about 3 us more end to end than in process. We did not find out why.
+
+*The interpreter against wasmi 1.1.0.* A scratch program outside the repository linked wasmi with fuel metering on, built without network from the local registry. Both ran the committed modules. The solver, ``pow_solver.wasm``, ran 20,000 SHA-256 trials, 110 million operations of our interpreter. The example module judged the same encoded view.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 30 30
+
+   * - Workload
+     - In-house
+     - wasmi 1.1.0
+   * - 20,000 SHA-256 trials
+     - 413 to 650 ms
+     - 210 to 264 ms
+   * - One call of the example module
+     - 2.2 to 3.9 us
+     - 0.77 to 1.1 us
+   * - Loading the solver, 15 KiB
+     - 0.2 ms
+     - 0.2 to 0.3 ms
+
+The same trials take 1.0 ms in native code with the SHA extensions of the processor. A hook is not the place for a hash loop.
 
 Known gaps
 ----------
 
-KNOWN_GAPS
+#. *HTTP/3 has no connection stage.* A QUIC connection is accepted by the HTTP/3 listener and does not pass the edge worker. We refuse a file that attaches a connection hook to a frontend with ``tls.http3``, so nothing goes unjudged in silence. The request stage covers HTTP/3.
+#. *An agent call holds its thread.* On an event-driven worker every connection of that worker waits for the round trip, at most ``deadline``. A connection hook that is an agent holds the single edge worker, which accepts for every frontend. The breaker bounds the repetition. Parking the request is the first open question.
+#. *The request stage is tested over cleartext HTTP/1.1 only.* The code path is the same function for TLS, HTTP/2 and HTTP/3, and no test of this record drives a hook over them.
+#. *The telemetry stage covers HTTP requests.* The end of a TCP or UDP flow is not shown to a hook. A sample has no query, no fields and no client port.
+#. *Requests that Sibuna answers itself reach no request hook:* the reserved routes, a redirect or a fixed answer of the traffic policy, a ban, a limit. The hook judges what would reach a server.
+#. *A native hook is added by editing the table in ``cmd/sibuna/src/plugins.rs``.* There is no registration from another crate. One hook is shipped.
+#. *The counters of a plugin are shared atomic words.* Every thread adds to them on each call. The path takes no lock, and we did not measure the cache traffic on many cores.
+#. *Each thread holds its own instance,* so a Wasm plugin costs ``memory_pages`` of memory for each thread that has served its frontend, and an agent one connection for each such thread. On the thread path that is one for each thread of the pool.
+#. *A reload rebuilds every instance,* whether or not the plugins changed, and an open breaker starts closed again.
+#. *The connector thread of an agent* ends with its set of hooks. A connect that blocks for ever on a socket whose backlog is full keeps that thread.
+#. *The interpreter is two to three times slower than wasmi,* and it is new code. Its evidence is the tests above. It has had no external review and no fuzzing beyond the 20,000 mutations of one module.
+#. *The measurements were taken on a busy machine* and not repeated on a quiet one.
+#. *Plugins exist in the edge only.* The firewall daemon that runs without an edge topology has none.
+#. *Not built:* a hook on a response, a hook that sees a body, a hook per datagram, a TCP transport for agents.
 
 Open questions
 --------------
@@ -449,6 +609,7 @@ Review history
 
 - 2026-11-25. Initial draft, written before the code.
 - 2026-11-25. Review of the draft. It found seven faults, and the text above has the corrections. (1) The draft ran request hooks before the policy, so a client that a rule would have denied could spend an agent call: hooks now run only for admitted requests. (2) The draft cut a head that did not fit the input buffer: a hook would then admit a request it had not seen, so the invocation now fails. (3) The draft let ``on_failure`` default to the choice of each tier: it now defaults to ``deny`` everywhere, and the telemetry stage ignores it. (4) The draft charged one unit of fuel for ``memory.fill`` of any length, which made fuel no bound on time. (5) The draft kept the memory of an instance after a trap. (6) The draft kept an agent connection after a timeout and matched answers by identifier alone: a late answer could then be read by the next call if identifiers were reused after a reconnect, so the connection now closes. (7) The draft counted an ``overload`` as a failure of the agent, so a burst of our own could open the breaker.
+- 2026-11-25. Review of the code against this record. It found six faults, all corrected. (1) A session that cleared the challenge of a hook ended the chain as an admission, so the hooks behind it did not run: the chain now goes on, the Lean model has the theorem, and a test pays a real challenge. (2) The HTTP server started before it was given the hooks, so a request in the first moments could pass unjudged: it now receives them before it starts. (3) A reload published the hooks after the routes, so a new frontend served a moment without its hooks: the order is reversed, and a refused reload restores the set. (4) A connection hook on an HTTP/3 frontend was accepted and never asked: the file is now refused. (5) The request view gave the port of the socket peer beside the address of a forwarded client. (6) The telemetry stage found no host and no path unless the access log was on. The review also measured the interpreter against wasmi and replaced a sentence of the draft that called the difference negligible: it is 1.4 microseconds for the example hook.
 
 References
 ----------

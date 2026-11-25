@@ -115,6 +115,33 @@ theorem telemetry_leaves_chain (vs : List Verdict) (f : OnFailure) (r : Result) 
   | nil => simp [chain]
   | cons v rest ih => cases v <;> simp [chain, ih]
 
+/-- A session that paid for the challenge of a hook clears that challenge.
+    Each entry is the outcome of one hook, and whether the client paid for a
+    challenge of that hook. A cleared challenge counts as an admission. -/
+def effective : Verdict × Bool → Verdict
+  | (Verdict.challenge, true) => Verdict.admit
+  | (v, _) => v
+
+/-- The chain of the request stage, where a session may clear challenges. -/
+def chainClearing (xs : List (Verdict × Bool)) : Verdict :=
+  chain (xs.map effective)
+
+/-- A session never clears a denial. -/
+theorem denial_is_never_cleared (paid : Bool) :
+    effective (Verdict.deny, paid) = Verdict.deny := by
+  cases paid <;> rfl
+
+/-- A cleared challenge skips nothing: when the chain admits, every hook
+    behind the cleared one admitted too, or had its own challenge paid. -/
+theorem cleared_challenge_skips_nothing (before after : List (Verdict × Bool))
+    (h : chainClearing (before ++ (Verdict.challenge, true) :: after) = Verdict.admit) :
+    ∀ x ∈ after, effective x = Verdict.admit := by
+  intro x hx
+  have hall := (chain_admits_iff _).mp h
+  apply hall
+  simp only [List.map_append, List.map_cons, List.mem_append, List.mem_cons, List.mem_map]
+  exact Or.inr (Or.inr ⟨x, hx, rfl⟩)
+
 /-- Fuel. One step of the interpreter spends at least one unit, and an
     invocation stops when no unit is left. `run fuel costs` is the number of
     steps taken over a program whose steps cost `costs`. -/
