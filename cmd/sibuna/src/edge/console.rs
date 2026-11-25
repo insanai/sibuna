@@ -31,7 +31,7 @@ use sibuna_lb::{ConsoleOptions, Edge, Regime, ServerState, ServerStatus, Stats, 
 use sibuna_storage::{Hooks, Storage};
 
 use super::watch::Source;
-use super::{admin, cluster, control, note};
+use super::{admin, authority, cluster, control, note};
 use crate::access::Observe;
 use crate::console::start::{ASSETS, Seams, banner, is_uninitialized};
 
@@ -176,7 +176,7 @@ impl Link {
         });
         for peer in waiting {
             note(format_args!(
-                "EDGE013: console peer {} is new or changed: it is used after a restart",
+                "EDGE014: console peer {} is new or changed: it is used after a restart",
                 peer.node
             ));
         }
@@ -408,8 +408,8 @@ impl Host {
             servers_down: count(|server| server.healthy == Some(false)),
             // The digest that `show cluster` compares: the revision of today.
             file_digest: file.map(|file| cluster::digest(&file)),
-            // SID 0028 puts the revision of the database authority here.
-            authority_revision: None,
+            // The revision of the database that this node serves (SID 0028).
+            authority_revision: authority::served(&self.source),
             regime: table.regime.to_owned(),
             refused: stats
                 .refused

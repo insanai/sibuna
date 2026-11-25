@@ -86,6 +86,12 @@ struct Member {
 }
 
 impl ConsoleOptions {
+    /// Takes the `console` section out of the topology `root`, or `None` without one.
+    /// Fails as [`Self::parse`] does, and when `console` is not an object.
+    pub(crate) fn section(root: &mut ObjectReader<'_, '_>) -> io::Result<Option<Self>> {
+        field(root.take_object("console"))?.map(Self::parse).transpose()
+    }
+
     /// Reads the section. With `nodes` it reads the number of this node from the file
     /// that `node_file` names.
     ///

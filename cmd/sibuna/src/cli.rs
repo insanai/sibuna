@@ -35,7 +35,7 @@ pub(crate) fn report(message: &str) {
 /// `SIBUNA_SECRET`, if set) until SIGINT or SIGTERM. Returns the process exit status.
 pub fn run(args: &[String], secret: Option<&str>) -> ExitCode {
     // `lb` and `ctl` have options and help of their own (SID 0018).
-    if args.first().is_some_and(|word| word == "lb" || word == "ctl")
+    if args.first().is_some_and(|word| word == "lb" || word == "ctl" || word == "authority")
         && let Some(code) = crate::edge::command(args, secret)
     {
         return code;

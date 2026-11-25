@@ -16,6 +16,9 @@ use crate::config::{address, field, invalid, required};
 
 mod bans;
 mod commands;
+mod hints;
+mod shared;
+mod shares;
 pub use commands::{Change, Command};
 
 pub use bans::Counters as BanCounters;
@@ -58,6 +61,15 @@ pub struct MeshConfig {
     /// This node takes the file that a peer sends with `reload cluster`
     /// (`mesh.accept_config`, SID 0023).
     pub accept_config: bool,
+    /// The learned sticky table travels to the peers (`mesh.replicate_sticky`,
+    /// SID 0025).
+    pub replicate_sticky: bool,
+    /// The nodes exchange their shares of the servers that are capped for the fleet
+    /// (`mesh.replicate_shares`, SID 0025). Without it every node keeps its base.
+    pub replicate_shares: bool,
+    /// A flow of a client that another node owns is handed to that node
+    /// (`mesh.forward`, SID 0026). `None` leaves forwarding off.
+    pub forward: Option<crate::ForwardConfig>,
 }
 
 impl MeshConfig {
@@ -100,8 +112,25 @@ impl MeshConfig {
         let replicate_bans = field(r.take_bool("replicate_bans"))?.unwrap_or(true);
         let replicate_commands = field(r.take_bool("replicate_commands"))?.unwrap_or(true);
         let accept_config = field(r.take_bool("accept_config"))?.unwrap_or(false);
+        let replicate_sticky = field(r.take_bool("replicate_sticky"))?.unwrap_or(true);
+        let replicate_shares = field(r.take_bool("replicate_shares"))?.unwrap_or(true);
+        let forward =
+            field(r.take_object("forward"))?.map(crate::ForwardConfig::parse).transpose()?;
+        if let Some(forward) = &forward {
+            forward.check(&[&peers[..], &[listen]].concat())?;
+        }
         field(r.finish())?;
-        Ok(Self { listen, peers, key_file, replicate_bans, replicate_commands, accept_config })
+        Ok(Self {
+            listen,
+            peers,
+            key_file,
+            replicate_bans,
+            replicate_commands,
+            accept_config,
+            replicate_sticky,
+            replicate_shares,
+            forward,
+        })
     }
 }
 
@@ -251,6 +280,8 @@ struct Monitor {
     samples: Vec<Duration>,
     /// The replicated maps that are on, indexed as the walks of a peer are.
     replicas: Vec<Replica>,
+    /// The sticky table and the shares of the capped servers (SID 0025).
+    shared: shared::Shared,
 }
 
 /// Applies a ban that a peer issued: the client key and the Unix second it ends.
@@ -533,6 +564,9 @@ impl Monitor {
         }
         for peer in 0..self.peers.len() {
             let returned = std::mem::take(&mut self.peers[peer].returned);
+            if returned {
+                self.shared.returned(peer);
+            }
             for index in 0..self.replicas.len() {
                 if returned {
                     self.peers[peer].walks[index] = self.replicas[index].everything();
@@ -640,6 +674,7 @@ impl Monitor {
         self.samples.sort_unstable();
         let rank = (self.samples.len() * 95).div_ceil(100);
         self.walk(now);
+        self.share_tick(now);
         current.step(rank.checked_sub(1).map(|i| self.samples[i]))
     }
 
@@ -652,6 +687,9 @@ impl Monitor {
         }
         if Holds::ALL.iter().any(|holds| holds.kind() == wire[3]) {
             self.learn(&wire[..length]);
+            return;
+        }
+        if self.share_learn(index, &wire[..length]) {
             return;
         }
         if length != 44 {
@@ -699,6 +737,10 @@ pub struct Mesh {
     bans: Option<(BanFeed, Arc<OnceLock<Sink>>)>,
     drains: Option<(BanFeed, Arc<OnceLock<Sink>>)>,
     lifts: Option<(BanFeed, Arc<OnceLock<Sink>>)>,
+    /// Where the edge puts its sticky table and its shares (SID 0025).
+    cluster: Arc<OnceLock<crate::ClusterState>>,
+    /// The queue of the keys that the workers wrote in the sticky table.
+    written: Option<SyncSender<crate::AffinityKey>>,
 }
 
 impl Mesh {
@@ -719,6 +761,20 @@ impl Mesh {
         let bans = share(spec.replicate_bans, Holds::Bans, bans::CAPACITY);
         let drains = share(spec.replicate_commands, Holds::Commands, COMMANDS);
         let lifts = share(spec.replicate_bans, Holds::Lifts, bans::CAPACITY);
+        let cluster = Arc::new(OnceLock::new());
+        let (written, inbox) = if spec.replicate_sticky {
+            let (written, inbox) = std::sync::mpsc::sync_channel(hints::INBOX);
+            (Some(written), Some(inbox))
+        } else {
+            (None, None)
+        };
+        let shared = shared::Shared::new(
+            Arc::clone(&cluster),
+            inbox,
+            spec.replicate_shares,
+            spec.peers.len(),
+            unix_ms(),
+        );
         let mut monitor = Monitor {
             socket,
             key,
@@ -727,6 +783,7 @@ impl Mesh {
             peers: spec.peers.iter().copied().map(Peer::new).collect(),
             samples: Vec::with_capacity(8 * spec.peers.len()),
             replicas,
+            shared,
         };
         let state = Arc::new(AtomicU8::new(0));
         let stop = Arc::new(AtomicBool::new(false));
@@ -742,10 +799,21 @@ impl Mesh {
                     next = now + PERIOD;
                 }
                 monitor.replicate(now);
+                monitor.share_turn(now);
                 monitor.receive();
             }
         })?;
-        Ok(Self { state, stop, thread: Some(thread), bans, drains, lifts })
+        Ok(Self { state, stop, thread: Some(thread), bans, drains, lifts, cluster, written })
+    }
+
+    /// Gives the mesh the sticky table and the shares of the edge (SID 0025). From
+    /// then on the mesh thread sends the entries that the pools write, merges those
+    /// of the peers, and moves the shares of the capped servers. The first call stays.
+    pub fn share_state(&self, state: crate::ClusterState) {
+        if let Some(written) = &self.written {
+            state.set_feed(written.clone());
+        }
+        let _ = self.cluster.set(state);
     }
 
     /// The hand-over of bans to the peers, and where bans from the peers are applied.
@@ -847,6 +915,9 @@ mod tests {
             replicate_bans: true,
             replicate_commands: true,
             accept_config: false,
+            replicate_sticky: true,
+            replicate_shares: true,
+            forward: None,
         };
         let secret = [7; 32];
         let mesh = Mesh::start(&spec, &secret, [9; 16]).expect("start");
@@ -892,6 +963,9 @@ mod tests {
             replicate_bans: true,
             replicate_commands: true,
             accept_config: false,
+            replicate_sticky: true,
+            replicate_shares: true,
+            forward: None,
         };
         let mesh = Mesh::start(&spec, &[7; 32], [boot; 16]).expect("start");
         let heard = Heard::default();

@@ -1,12 +1,13 @@
 //! The `global.acme.internal` object: the lifetime of a certificate of the local
-//! authority and the name constraints of its root (SID 0021). Nothing here opens a
-//! socket or a file.
+//! authority, the name constraints of its root and its ACME server (SID 0021). Nothing
+//! here opens a socket or a file.
 
 use std::io;
 use std::net::IpAddr;
 
 use sibuna_json::ObjectReader;
 
+use super::server::InternalServer;
 use crate::config::{field, invalid};
 
 /// The default lifetime of a certificate of the local authority, in seconds: 12 hours.
@@ -23,17 +24,19 @@ pub struct Internal {
     /// and address ranges as `ADDRESS/PREFIX` with the bits after the prefix cleared.
     /// Sorted, without repetitions. Empty: the root signs for every name.
     pub constraints: Vec<String>,
+    /// The ACME server in front of the authority. `None`: there is none.
+    pub server: Option<InternalServer>,
 }
 
 impl Default for Internal {
     fn default() -> Self {
-        Self { lifetime: INTERNAL_LIFETIME, constraints: Vec::new() }
+        Self { lifetime: INTERNAL_LIFETIME, constraints: Vec::new(), server: None }
     }
 }
 
 /// The address range that `text` spells: `ADDRESS/PREFIX`, or one address, which is the
 /// range of that address alone. The bits after the prefix are cleared.
-fn range(text: &str) -> Option<(IpAddr, u8)> {
+pub(super) fn range(text: &str) -> Option<(IpAddr, u8)> {
     let (address, prefix) = match text.split_once('/') {
         Some((address, prefix)) => (address, Some(prefix)),
         None => (text, None),
@@ -63,7 +66,7 @@ fn masked(address: IpAddr, prefix: u8) -> IpAddr {
 
 /// One entry of `constraints` in its stored form, or `None` when it is no DNS suffix
 /// and no address range.
-fn canonical(entry: &str) -> Option<String> {
+pub(super) fn canonical(entry: &str) -> Option<String> {
     if let Some((address, prefix)) = range(entry) {
         return Some(format!("{address}/{prefix}"));
     }
@@ -73,7 +76,7 @@ fn canonical(entry: &str) -> Option<String> {
 }
 
 impl Internal {
-    /// Reads `global.acme.internal: { lifetime: SECONDS, constraints: [...] }`.
+    /// Reads `global.acme.internal: { lifetime: SECONDS, constraints: [...], server: {...} }`.
     pub(crate) fn take(r: &mut ObjectReader<'_, '_>) -> io::Result<Self> {
         let Some(mut internal) = field(r.take_object("internal"))? else {
             return Ok(Self::default());
@@ -104,8 +107,11 @@ impl Internal {
         };
         constraints.sort();
         constraints.dedup();
+        let server = field(internal.take_object("server"))?
+            .map(|server| InternalServer::parse(server, &constraints))
+            .transpose()?;
         field(internal.finish())?;
-        Ok(Self { lifetime, constraints })
+        Ok(Self { lifetime, constraints, server })
     }
 
     /// Whether the root of the local authority may sign for `name`: a host name, a
@@ -137,7 +143,7 @@ mod tests {
 
     fn constrained(entries: &[&str]) -> Internal {
         let constraints = entries.iter().filter_map(|entry| canonical(entry)).collect();
-        Internal { lifetime: INTERNAL_LIFETIME, constraints }
+        Internal { constraints, ..Internal::default() }
     }
 
     #[test]

@@ -41,6 +41,8 @@
 //! # Ok::<(), std::io::Error>(())
 //! ```
 
+mod bound;
+mod listen;
 mod poll;
 mod rlimit;
 mod slab;
@@ -49,6 +51,8 @@ mod wheel;
 use std::io::{self, Read, Write};
 use std::net::TcpStream;
 
+pub use bound::{CAN_CONNECT_FROM, start_connect_from};
+pub use listen::{CAN_DEFER_ACCEPT, CAN_SET_BACKLOG, defer_accept, set_backlog, set_defer_accept};
 pub use poll::{
     CAN_SHARE_ADDRESS, CAN_START_CONNECT, Handle, Poller, READ, WRITE, Wake, Waker, bind_shared,
     handle, listen_shared, start_connect,

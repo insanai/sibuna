@@ -119,6 +119,8 @@ The life of a connection
 
 *Exchange.* The worker writes the request, relays the rest of an upload, and feeds the server's bytes to the response machine. The machine's output goes to the client. When the machine finishes, the worker records the outcome on the reservation, pools or closes the server socket, and returns the connection to Idle or closes it. The encoded request is kept until the first response byte, so that a retry can send it again.
 
+A request whose body was larger than the request buffer keeps its connection too. The upload framing tells the worker where the body ends, so the next byte of the client begins a request. The thread path cannot tell that and closes the connection after such a request.
+
 Three cases end an exchange early. If the response completes while upload bytes remain, the server did not read the body, and the worker closes both sockets after the response. If the client closes its sending side with a complete request, the exchange finishes and the connection closes after the response. If the client closes or fails before the response is complete, the worker closes the server socket.
 
 *Tunnel.* After a validated 101 the two sockets form a byte pipe with one bounded buffer per direction. End of stream on one side shuts down the sending side of the other. A failure closes both.
@@ -331,6 +333,7 @@ Review history
 - 2026-11-24. Initial draft: per-core loops, a synchronous decision, sans-I/O relays, per-worker pools.
 - 2026-11-24. Implementation and its review. Three-node tests and the load tests found two defects, both fixed: a tunnel kept an empty 64 KiB request buffer for its whole life, and vectors kept the capacity of their largest burst. With them 10,000 tunnels held 106 MiB; without them 27 MiB. The review also moved the protocol-free parts into ``sibuna-reactor``, added the counters, changed the per-turn byte budget into a bound on reads and rounds per event, and recorded the known gaps above. WebSocket toward HTTP/2 pools was specified and is not implemented; the specification now says so.
 - 2026-11-24. Second review, after comparing with HAProxy and Envoy. A silent server now answers 504 on the workers. ``http.workers`` sets the worker count. A test covers the slow-body and slow-reader deadlines and checks that other connections of the same worker are not delayed. Those three items left the known gaps.
+- 2026-11-25. A connection now stays open after a request body that the worker streamed. Until then both paths closed it, and only the thread path needs to. A test in ``cmd/sibuna/tests/edge_http.rs`` sends a body with a length and a chunked body of 700 kB, each with a request behind it on the same connection.
 - 2026-11-24. Author's review before promotion. It added the ordering invariant for pipelined requests, the three early endings of an exchange (a response before the end of an upload, a half-closed client, a failed client), the retention of the encoded request for a retry, fault isolation by connection, the per-turn byte budget, the counters, and the scope of the ``websocket`` route options. It replaced a claim that decisions are cheap with their bounds.
 
 References

@@ -123,6 +123,7 @@ mod tests {
             signatures: &signatures,
             extensions: &extensions,
             ja4: Default::default(),
+            ech: false,
         };
         assert_eq!(fingerprint(&hello), Some(*b"t13d1516h2_8daaf6152771_e5627efa2ab1"));
         assert_eq!(alpn_code(b"\x02\xab\xcd"), *b"ad");

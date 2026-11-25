@@ -355,6 +355,45 @@ fn uploads_larger_than_the_buffer_stream_to_the_origin() {
 }
 
 #[test]
+fn a_worker_keeps_the_connection_after_a_body_that_it_streamed() {
+    let daemon = start(origin(), true, "");
+    let body = pattern(700_000);
+    let expected = format!("{} {}", body.len(), sum(&body)).into_bytes();
+    let mut client = connect(&daemon);
+    // A body with a length, a chunked body and a request behind each, on one
+    // connection. The request behind the chunked body is sent with it.
+    let head = format!("POST /echo HTTP/1.1\r\nHost: a\r\nContent-Length: {}\r\n\r\n", body.len());
+    send(&mut client, head.as_bytes());
+    send(&mut client, &body);
+    let first = read_message(&mut client, false).unwrap();
+    assert_eq!(first.body, expected);
+    assert_ne!(first.field("connection"), Some("close"));
+    send(&mut client, b"GET /after/length HTTP/1.1\r\nHost: a\r\n\r\n");
+    assert_eq!(read_message(&mut client, false).unwrap().body, b"/after/length");
+    let mut wire =
+        b"POST /echo HTTP/1.1\r\nHost: a\r\nTransfer-Encoding: chunked\r\n\r\n".to_vec();
+    for piece in body.chunks(9_973) {
+        write!(wire, "{:x}\r\n", piece.len()).unwrap();
+        wire.extend_from_slice(piece);
+        wire.extend_from_slice(b"\r\n");
+    }
+    wire.extend_from_slice(b"0\r\n\r\nGET /after/chunks HTTP/1.1\r\nHost: a\r\n\r\n");
+    let mut writer = client.get_ref().try_clone().unwrap();
+    let sender = std::thread::spawn(move || writer.write_all(&wire).unwrap());
+    assert_eq!(read_message(&mut client, false).unwrap().body, expected);
+    assert_eq!(read_message(&mut client, false).unwrap().body, b"/after/chunks");
+    sender.join().unwrap();
+    // The thread path cannot tell where such a body ends, and closes after it.
+    let daemon = start(origin(), false, "");
+    let mut client = connect(&daemon);
+    send(&mut client, head.as_bytes());
+    send(&mut client, &body);
+    let answer = read_message(&mut client, false).unwrap();
+    assert_eq!(answer.field("connection"), Some("close"));
+    assert_eq!(answer.body, expected);
+}
+
+#[test]
 fn a_websocket_tunnel_carries_large_frames_both_ways() {
     both(|event_loop| {
         let daemon = start(origin(), event_loop, "");

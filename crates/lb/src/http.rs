@@ -745,6 +745,12 @@ impl HttpRoutes {
         visit(&table.routes.pools)
     }
 
+    /// Gives the pools of later publications the sticky table and the shares of the
+    /// edge (SID 0025).
+    pub(crate) fn share_cluster(&self, cluster: crate::ClusterState) {
+        self.0.write(|table| table.loads.cluster = Some(cluster));
+    }
+
     pub(crate) fn set_regime(&self, regime: Regime) {
         self.0.write(|table| table.regime = Some(regime));
     }

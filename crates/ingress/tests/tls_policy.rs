@@ -1,7 +1,9 @@
 //! The TLS policy of a listener: the version floor and client certificates.
 #![allow(clippy::unwrap_used)]
 
-use std::net::{SocketAddr, TcpListener};
+#[path = "../../lb/tests/free/mod.rs"]
+mod free;
+use std::net::SocketAddr;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -66,7 +68,9 @@ fn with_listener<F>(policy: TlsOptions, check: fn(SocketAddr, Arc<AtomicUsize>) 
 where
     F: Future<Output = ()> + Send + 'static,
 {
-    let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    // An address of this test alone: a port released on 127.0.0.1 may be taken by a
+    // test beside this one before the edge binds it.
+    let vip = free::tcp();
     let topology = format!(
         r#"{{"frontends":{{"web":{{"proto":"http","binds":["{vip}"],
         "default_backend":"pool"}}}},"backends":{{"pool":{{"mode":"http",

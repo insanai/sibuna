@@ -23,10 +23,14 @@ pub struct Config {
     pub(crate) drain_delay: Duration,
     /// Listeners share their address, so a new process can bind it (`global.reuse_port`).
     pub(crate) reuse_port: bool,
+    /// Where a replacing process is given the listeners (`global.upgrade_socket`).
+    pub(crate) upgrade_socket: Option<String>,
     pub(crate) http: crate::HttpOptions,
     pub(crate) observe: crate::ObserveOptions,
     /// The `global.acme` object of automatic HTTPS (SID 0021).
     pub(crate) acme: Option<crate::AcmeOptions>,
+    /// The entries of the learned sticky table (`global.sticky_entries`, SID 0025).
+    pub(crate) sticky_entries: usize,
     pub(crate) mesh: Option<crate::MeshConfig>,
     /// The `console` section of SID 0031.
     pub(crate) console: Option<crate::ConsoleOptions>,
@@ -53,12 +57,19 @@ pub(crate) struct Frontend {
     pub rate: Option<sibuna_store::limiter::Limits>,
     pub pool: std::sync::Arc<str>,
     pub timeout: Duration,
-    pub inspect: Option<(Duration, std::sync::Arc<[crate::rules::Rule]>)>,
+    /// How a TCP frontend inspects the ClientHello, when it does (SID 0032).
+    pub inspect: Option<std::sync::Arc<crate::inspect::Plan>>,
+    /// The kernel admission of the listeners of the frontend (SID 0032).
+    pub listen: crate::listen::ListenOptions,
+    /// A UDP frontend that carries QUIC: `udp_inspect: "quic"` (SID 0032).
+    pub quic: bool,
     /// The name, the counters and the trusted proxies of the frontend (SID 0020).
     pub info: std::sync::Arc<crate::FrontendInfo>,
 }
 
 pub(crate) struct Backend {
+    /// The name of the pool in the file.
+    pub name: std::sync::Arc<str>,
     pub protocol: Protocol,
     pub servers: Vec<Server>,
     pub scheduler: Scheduler,
@@ -75,6 +86,8 @@ pub(crate) struct Server {
     pub addr: SocketAddr,
     pub weight: u32,
     pub limit: usize,
+    /// `limit` bounds the flows of all nodes of the mesh together (SID 0025).
+    pub fleet: bool,
     pub backup: bool,
     pub remote: bool,
     /// The local protocol adapter that reaches this server, when its pool needs one.
@@ -207,6 +220,13 @@ impl Config {
         self.reuse_port
     }
 
+    /// The path of the socket on which this daemon gives its listeners to the process
+    /// that replaces it, and takes them from the one it replaces
+    /// (`global.upgrade_socket`, SID 0029).
+    pub fn upgrade_socket(&self) -> Option<&str> {
+        self.upgrade_socket.as_deref()
+    }
+
     /// How long a shutdown waits for established flows (`global.shutdown_timeout`).
     pub fn shutdown_timeout(&self) -> Duration {
         self.shutdown_timeout
@@ -242,7 +262,9 @@ impl Config {
             shutdown_timeout,
             drain_delay,
             reuse_port,
+            upgrade_socket,
             acme,
+            sticky_entries,
         } = global(&mut root)?;
         let mesh = field(root.take_object("mesh"))?.map(crate::MeshConfig::parse).transpose()?;
         let http = field(root.take_object("http"))?.map(crate::HttpOptions::parse).transpose()?;
@@ -253,8 +275,7 @@ impl Config {
             .transpose()?
             .unwrap_or_default();
         let adaptive = mesh.is_some();
-        let console =
-            field(root.take_object("console"))?.map(crate::ConsoleOptions::parse).transpose()?;
+        let console = crate::ConsoleOptions::section(&mut root)?;
         let mut config = Self {
             console,
             limit,
@@ -265,10 +286,12 @@ impl Config {
             shutdown_timeout,
             drain_delay,
             reuse_port,
+            upgrade_socket,
             mesh,
             http,
             observe,
             acme,
+            sticky_entries,
             pools: BTreeMap::new(),
             listeners: BTreeMap::new(),
         };
@@ -351,15 +374,12 @@ impl Config {
             None => Duration::from_secs(30),
             Some(s) => duration(s).ok_or_else(|| invalid(format!("{path}: invalid timeout")))?,
         };
-        let inspect = match field(r.take_str("tcp_inspect"))? {
-            Some("tls_client_hello") if proto == Protocol::Tcp => {
-                let delay = field(r.take_str("inspect_delay"))?.unwrap_or("2s");
-                let delay =
-                    duration(delay).ok_or_else(|| invalid(r.field_path("inspect_delay")))?;
-                Some((delay, std::sync::Arc::from(crate::rules::parse(&mut r, &self.pools)?)))
-            }
-            Some(_) => return Err(invalid(format!("{path}: invalid TCP inspection mode"))),
-            None => None,
+        let inspect = crate::inspect::Plan::parse(&mut r, proto, &self.pools, &pool)?;
+        let listen = crate::listen::ListenOptions::parse(&mut r, proto)?;
+        let quic = match field(r.take_str("udp_inspect"))? {
+            None => false,
+            Some("quic") if proto == Protocol::Udp => true,
+            Some(_) => return Err(invalid(format!("{path}: invalid UDP inspection mode"))),
         };
         let (tls, firewall, websocket, http_rules, policy) =
             http_frontend(&mut r, proto, &self.pools)?;
@@ -384,6 +404,8 @@ impl Config {
                 pool: pool.as_str().into(),
                 timeout,
                 inspect: inspect.clone(),
+                listen,
+                quic,
                 rate,
                 info: info.clone(),
             };
@@ -412,7 +434,9 @@ struct Global {
     shutdown_timeout: Duration,
     drain_delay: Duration,
     reuse_port: bool,
+    upgrade_socket: Option<String>,
     acme: Option<crate::AcmeOptions>,
+    sticky_entries: usize,
 }
 
 /// Reads `global`: the flow table size, the optional UDP share, the relay threads, the
@@ -426,8 +450,11 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
     let mut shutdown_timeout = Duration::from_secs(5);
     let mut drain_delay = Duration::ZERO;
     let mut reuse_port = false;
+    let mut upgrade_socket = None;
     let mut acme = None;
+    let mut sticky_entries = crate::AffinityTable::DEFAULT_SLOTS;
     if let Some(mut global) = field(root.take_object("global"))? {
+        sticky_entries = sticky_slots(&mut global)?;
         acme = field(global.take_object("acme"))?.map(crate::AcmeOptions::parse).transpose()?;
         if let Some(text) = field(global.take_str("shutdown_timeout"))? {
             shutdown_timeout = duration(text)
@@ -443,6 +470,7 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
         if reuse_port && !sibuna_reactor::CAN_SHARE_ADDRESS {
             return Err(invalid("global.reuse_port needs Linux"));
         }
+        upgrade_socket = upgrade_path(&mut global)?;
         limit = number(&mut global, "max_flows", limit, MAX_FLOWS)?;
         admin_socket = match field(global.take_str("admin_socket"))? {
             Some("") => return Err(invalid("global.admin_socket must be a path")),
@@ -480,8 +508,23 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
         shutdown_timeout,
         drain_delay,
         reuse_port,
+        upgrade_socket,
         acme,
+        sticky_entries,
     })
+}
+
+/// Reads `global.upgrade_socket` (SID 0029). The key needs a platform that passes
+/// descriptors.
+fn upgrade_path(global: &mut ObjectReader<'_, '_>) -> Result<Option<String>> {
+    match field(global.take_str("upgrade_socket"))? {
+        Some("") => Err(invalid("global.upgrade_socket must be a path")),
+        Some(_) if !sibuna_upgrade::SUPPORTED => Err(invalid(
+            "global.upgrade_socket needs Linux; elsewhere replace the binary with \
+             global.reuse_port or a restart",
+        )),
+        path => Ok(path.map(str::to_owned)),
+    }
 }
 
 /// One relay thread per available CPU, up to eight.
@@ -574,8 +617,9 @@ impl Backend {
         let mut servers = Vec::with_capacity(rows.len());
         let mut addresses = HashSet::new();
         let mut names = HashSet::new();
+        let fleet = flow_scope(&mut r)?.unwrap_or(false);
         for (index, row) in rows.iter().enumerate() {
-            let server = Server::parse(row, format!("{path}.servers[{index}]"))?;
+            let server = Server::parse(row, format!("{path}.servers[{index}]"), fleet)?;
             if !addresses.insert(server.addr) || !names.insert(server.name.clone()) {
                 return Err(invalid(format!("{path}: duplicate server name or address")));
             }
@@ -598,7 +642,37 @@ impl Backend {
         let policy = std::sync::Arc::new(crate::PoolPolicy::parse(&mut r, protocol)?);
         let scheduler = scheduler(&mut r, mesh, &mut servers)?;
         field(r.finish())?;
-        Ok(Self { protocol, servers, scheduler, proxy_v2, health, origin, policy })
+        let name = name.into();
+        Ok(Self { name, protocol, servers, scheduler, proxy_v2, health, origin, policy })
+    }
+}
+
+/// Reads `global.sticky_entries`, the size of the learned sticky table (SID 0025).
+fn sticky_slots(global: &mut ObjectReader<'_, '_>) -> Result<usize> {
+    match field(global.take_u64("sticky_entries"))? {
+        None => Ok(crate::AffinityTable::DEFAULT_SLOTS),
+        Some(n) if crate::AffinityTable::accepts(n) => Ok(n as usize),
+        Some(_) => Err(invalid(format!(
+            "global.sticky_entries must be in {}..={}. Hint: it is the number of clients \
+             that the pools with a sticky table remember; an entry takes 40 bytes.",
+            crate::AffinityTable::MIN_SLOTS,
+            crate::AffinityTable::MAX_SLOTS
+        ))),
+    }
+}
+
+/// Reads `max_flows_scope` of a pool or a server (SID 0025): `"fleet"` is true,
+/// `"node"` is false, and an absent member is `None`.
+fn flow_scope(r: &mut ObjectReader<'_, '_>) -> Result<Option<bool>> {
+    match field(r.take_str("max_flows_scope"))? {
+        None => Ok(None),
+        Some("node") => Ok(Some(false)),
+        Some("fleet") => Ok(Some(true)),
+        Some(other) => Err(invalid(format!(
+            "{}: unknown scope {other:?}. Hint: write \"node\" for a limit that holds on \
+             each node, or \"fleet\" for a limit that holds over all nodes of the mesh.",
+            r.field_path("max_flows_scope")
+        ))),
     }
 }
 
@@ -671,6 +745,7 @@ impl Server {
             addr,
             weight,
             limit: MAX_FLOWS,
+            fleet: false,
             backup: false,
             remote: false,
             via: None,
@@ -687,12 +762,15 @@ impl Server {
             && !addr.ip().is_multicast()
     }
 
-    fn parse(value: &Value<'_>, path: String) -> Result<Self> {
+    fn parse(value: &Value<'_>, path: String, fleet: bool) -> Result<Self> {
         // The short form (SID 0018): an address alone, which is also the name.
         if let Some(text) = value.as_str() {
             let addr = address(text, &path)?;
             if !Self::routable(addr) {
                 return Err(invalid(format!("{path}: expected unicast server")));
+            }
+            if fleet {
+                return Err(unbounded_fleet(&path));
             }
             return Ok(Self::new(addr.to_string(), addr, 1));
         }
@@ -704,6 +782,11 @@ impl Server {
         }
         let weight = number(&mut r, "weight", 1, Self::MAX_WEIGHT as usize)? as u32;
         let limit = number(&mut r, "max_flows", MAX_FLOWS, MAX_FLOWS)?;
+        let fleet = flow_scope(&mut r)?.unwrap_or(fleet);
+        // The largest limit is the limit of a server that states none.
+        if fleet && limit == MAX_FLOWS {
+            return Err(unbounded_fleet(r.path()));
+        }
         let remote = field(r.take_bool("remote"))?.unwrap_or(false);
         let backup = field(r.take_bool("backup"))?.unwrap_or(false);
         field(r.finish())?;
@@ -711,6 +794,7 @@ impl Server {
             name,
             addr,
             limit,
+            fleet,
             weight,
             backup,
             remote,
@@ -719,6 +803,15 @@ impl Server {
             info: None,
         })
     }
+}
+
+/// The diagnostic for a server whose scope is the fleet and that states no limit.
+fn unbounded_fleet(path: &str) -> Error {
+    invalid(format!(
+        "{path}: max_flows_scope \"fleet\" needs a limit to share. Hint: write the server \
+         as an object with max_flows, such as {{\"name\": \"a\", \"addr\": \"10.0.1.1:80\", \
+         \"max_flows\": 300}}, or set max_flows_scope to \"node\"."
+    ))
 }
 
 fn frontend_rate(

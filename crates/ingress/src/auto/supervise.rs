@@ -35,7 +35,7 @@ pub(crate) fn restart_delay(panics: u32) -> u64 {
 }
 
 /// What a panic said, when it said it in text.
-fn panic_text(payload: &(dyn std::any::Any + Send)) -> String {
+pub(super) fn panic_text(payload: &(dyn std::any::Any + Send)) -> String {
     let text = payload
         .downcast_ref::<&str>()
         .map(|text| (*text).to_owned())

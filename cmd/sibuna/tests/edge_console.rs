@@ -241,7 +241,7 @@ fn the_view_agrees_with_show_servers_and_the_metrics() {
         let name = format!("sibuna_edge_refused_total{{reason=\"{}\"}}", refused.reason);
         assert_eq!(refused.count, series(&metrics, &name), "{name}");
     }
-    assert_eq!(view.node.refused.len(), 13, "every cause is shown");
+    assert_eq!(view.node.refused.len(), 15, "every cause is shown");
 
     // The frontend and the servers: the counters of the metrics.
     let front = &view.frontends[0];

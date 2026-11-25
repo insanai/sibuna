@@ -14,6 +14,7 @@ use std::time::{Duration, Instant};
 use crate::config::{Backend, Protocol, Scheduler, Server};
 
 mod extra;
+mod learned;
 pub(crate) use extra::{Tried, Wish};
 
 /// The milliseconds from the first use of this clock to `at`. An atomic holds a moment
@@ -62,6 +63,8 @@ impl Load {
 pub(crate) struct Ticket {
     pub addr: SocketAddr,
     load: Arc<Load>,
+    /// The share that the flow holds a place of, on a server capped for the fleet.
+    quota: Option<Arc<crate::quota::Cell>>,
 }
 
 impl Ticket {
@@ -81,15 +84,29 @@ impl Ticket {
 impl Drop for Ticket {
     fn drop(&mut self) {
         self.load.active.fetch_sub(1, Ordering::Relaxed);
+        if let Some(cell) = &self.quota {
+            cell.leave();
+        }
     }
 }
 
 #[derive(Default)]
-pub(crate) struct Loads(HashMap<(Protocol, SocketAddr), Weak<Load>>);
+pub(crate) struct Loads {
+    loads: HashMap<(Protocol, SocketAddr), Weak<Load>>,
+    /// The sticky table and the shares of the edge (SID 0025). A pool that is built
+    /// without them has neither.
+    pub cluster: Option<crate::ClusterState>,
+}
 
 impl Loads {
+    /// The loads of an edge whose pools use the sticky table and the shares of
+    /// `cluster`.
+    pub fn of(cluster: crate::ClusterState) -> Self {
+        Self { loads: HashMap::new(), cluster: Some(cluster) }
+    }
+
     pub fn prune(&mut self) {
-        self.0.retain(|_, load| load.strong_count() != 0);
+        self.loads.retain(|_, load| load.strong_count() != 0);
     }
 }
 
@@ -110,15 +127,21 @@ struct Target {
     rank_seed: u64,
     /// The sticky token of the server, in a pool that is sticky by cookie.
     token: Option<crate::sticky::Token>,
+    /// The share of this node, when `max_flows` bounds the whole fleet (SID 0025).
+    quota: Option<Arc<crate::quota::Cell>>,
 }
 
 impl Target {
     fn new(server: Server, protocol: Protocol, loads: &mut Loads) -> Self {
-        let slot = loads.0.entry((protocol, server.addr)).or_default();
+        let slot = loads.loads.entry((protocol, server.addr)).or_default();
         let load = slot.upgrade().unwrap_or_default();
         *slot = Arc::downgrade(&load);
         let rank_seed = crate::sticky::rank_seed(&server.name);
+        // Without the state of an edge the limit holds on this node, as before.
+        let cluster = loads.cluster.as_ref().filter(|_| server.fleet);
+        let quota = cluster.map(|state| state.quotas().cell(protocol, server.addr, server.limit));
         Self {
+            quota,
             server,
             load,
             admitted: Arc::default(),
@@ -171,11 +194,14 @@ pub(crate) struct Pool {
     adapted: bool,
     /// Names of the file's servers that a command removed.
     pub removed: Vec<String>,
+    /// The learned sticky table, when the pool is sticky by one (SID 0025).
+    learner: Option<Arc<learned::Learner>>,
 }
 
 impl Pool {
     pub fn new(backend: Backend, loads: &mut Loads) -> Self {
         let protocol = backend.protocol;
+        let learner = learned::Learner::of(&backend.name, &backend.policy, loads.cluster.as_ref());
         let targets =
             backend.servers.into_iter().map(|s| Target::new(s, protocol, loads)).collect();
         let mut pool = Self {
@@ -189,6 +215,7 @@ impl Pool {
             health: backend.health,
             adapted: backend.origin.is_some(),
             removed: Vec::new(),
+            learner: learner.map(Arc::new),
         };
         pool.rank();
         pool
@@ -218,18 +245,51 @@ impl Pool {
         regime: crate::Regime,
         wish: &Wish<'_>,
     ) -> Option<Ticket> {
+        // The learned table names the server of the client, when it knows one. It is
+        // read once here and never by the flow that this reservation begins.
+        let recalled = self.learner.as_ref().and_then(|learner| {
+            learner.recall(&self.targets, wish.affinity, wish.client.unwrap_or(peer.ip()))
+        });
+        let learned = recalled.as_ref().and_then(|recalled| recalled.index);
+        let wish = &Wish { sticky: wish.sticky.or(learned), ..*wish };
         for _ in 0..CROWDED {
             let target = &self.targets[self.pick(now, peer, vip, regime, wish)?];
             if target.load.active.fetch_add(1, Ordering::Relaxed) >= target.server.limit {
                 target.load.active.fetch_sub(1, Ordering::Relaxed);
                 continue;
             }
+            // The share of this node in a limit of the fleet (SID 0025).
+            if target.quota.as_ref().is_some_and(|cell| !cell.enter()) {
+                target.load.active.fetch_sub(1, Ordering::Relaxed);
+                continue;
+            }
             target.admitted.fetch_add(1, Ordering::Relaxed);
+            if let (Some(learner), Some(recalled)) = (&self.learner, &recalled) {
+                learner.note(recalled, target.rank_seed);
+            }
             // An HTTP exchange enters the pool's protocol adapter when it has one.
             let addr = target.server.via.unwrap_or(target.server.addr);
-            return Some(Ticket { addr, load: Arc::clone(&target.load) });
+            let quota = target.quota.clone();
+            return Some(Ticket { addr, load: Arc::clone(&target.load), quota });
         }
         None
+    }
+
+    /// Reserves a place on the server at `addr` for a flow that is established there
+    /// already: a UDP mapping taken over from the process this one replaces (SID 0029).
+    /// The scheduler is not asked, and neither the server's limit nor a drain refuses
+    /// it, as neither ends an established flow. `None` when the pool has no server at
+    /// that address.
+    pub fn reserve_at(&self, addr: SocketAddr) -> Option<Ticket> {
+        let target = self
+            .targets
+            .iter()
+            .find(|target| target.server.via.is_none() && target.server.addr == addr)?;
+        target.load.active.fetch_add(1, Ordering::Relaxed);
+        target.admitted.fetch_add(1, Ordering::Relaxed);
+        // The flow is outside the count of a fleet-wide limit (SID 0025): the share of
+        // this process starts anew, and an established flow is never refused.
+        Some(Ticket { addr, load: Arc::clone(&target.load), quota: None })
     }
 
     /// The index of the server that the scheduler and `wish` choose now.
@@ -248,6 +308,7 @@ impl Pool {
                 && !target.drained
                 && target.server.healthy.as_ref().is_none_or(|h| h.load(Ordering::Relaxed))
                 && target.load.active.load(Ordering::Relaxed) < target.server.limit
+                && target.quota.as_ref().is_none_or(|cell| cell.has_room())
                 && !target.load.is_marked(clock)
                 && wish.allows(target)
         };

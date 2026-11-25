@@ -29,7 +29,7 @@ use tokio::sync::{Semaphore, watch};
 use tokio::time::timeout;
 use tokio_rustls::TlsAcceptor;
 
-pub use auto::{Automatic, CertificateState, CertificateStatus, Event, Notify};
+pub use auto::{Automatic, CertificateState, CertificateStatus, Event, Notify, RevokeError};
 use bridge::Lane;
 pub use egress::{Directory, Egress};
 use handoff::Handoff;
@@ -353,12 +353,11 @@ impl Ingress {
     }
 
     /// Starts the greeting of a connection for a caller that ends the TLS of HTTP/1.1
-    /// connections itself (SID 0024). `None` when `bind` is no TLS listener, or when it
-    /// obtains certificates on demand: such a handshake may wait for a certificate,
-    /// which only the runtime can do, so the caller uses [`Ingress::accept_from`].
+    /// connections itself (SID 0024). `None` when `bind` is no TLS listener.
     pub fn greeting(&self, bind: SocketAddr) -> Option<Greeting> {
-        let listener = self.listeners.get(&bind).filter(|l| l.on_demand.is_none())?;
-        Some(Greeting::new(Arc::clone(&listener.config)))
+        let listener = self.listeners.get(&bind)?;
+        let on_demand = listener.on_demand.as_ref().map(|held| (Arc::clone(held), bind.port()));
+        Some(Greeting::new(Arc::clone(&listener.config), on_demand))
     }
 
     /// As [`Ingress::accept_from`], for a connection of which the caller has read the
@@ -375,6 +374,8 @@ impl Ingress {
     ) {
         let Some(listener) = self.listeners.get(&bind).cloned() else { return };
         let (Ok(peer), Ok(vip)) = (stream.peer_addr(), stream.local_addr()) else { return };
+        // A connection that a peer forwarded arrived on another port (SID 0026).
+        let vip = sibuna_lb::listener_address(bind, vip);
         let peer = client.unwrap_or(peer);
         if stream.set_nonblocking(true).is_err() {
             return;

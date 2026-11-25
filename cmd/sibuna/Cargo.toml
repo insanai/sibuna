@@ -24,14 +24,19 @@ https = ["dep:sibuna-ingress", "dep:sibuna-acme"]
 jlv = ["dep:sibuna-jlv"]
 # Persistent storage (SID 0011). Without either backend the daemon is the in-memory
 # firewall and depends on no external crate.
-sqlite = ["storage", "sibuna-storage/sqlite", "sibuna-console?/sqlite"]
-postgres = ["storage", "sibuna-storage/postgres", "sibuna-console?/postgres"]
+sqlite = ["storage", "sibuna-storage/sqlite", "sibuna-console?/sqlite", "sibuna-authority?/sqlite"]
+postgres = [
+    "storage",
+    "sibuna-storage/postgres",
+    "sibuna-console?/postgres",
+    "sibuna-authority?/postgres",
+]
 # TLS for the PostgreSQL connections (`sslmode=verify-full&sslrootcert=...` in the URL).
 # Without it a URL whose `sslmode` needs TLS is refused at startup; production clusters
 # build with it.
 postgres-tls = ["postgres", "sibuna-storage/postgres-tls"]
 # Internal: set by `sqlite` and `postgres`; enables the storage wiring.
-storage = ["dep:sibuna-storage"]
+storage = ["dep:sibuna-storage", "dep:sibuna-authority"]
 # The console server (SID 0007): `--console*` options, `sibuna console ...` commands and
 # the request-path telemetry. It needs storage; build it with a backend.
 console = [
@@ -58,8 +63,11 @@ sibuna-lb = { workspace = true }
 sibuna-jlv = { workspace = true, optional = true }
 sibuna-net = { workspace = true }
 sibuna-reactor = { workspace = true }
+sibuna-upgrade = { workspace = true }
 sibuna-pow = { workspace = true }
 sibuna-storage = { workspace = true, optional = true }
+# The database authority of the edge topology (SID 0028).
+sibuna-authority = { workspace = true, optional = true }
 sibuna-console = { workspace = true, optional = true }
 sibuna-console-protocol = { workspace = true, optional = true }
 sibuna-console-storage = { workspace = true, optional = true }
@@ -77,6 +85,8 @@ workspace = true
 [dev-dependencies]
 # The tests of DNS-01 run the small authoritative DNS server of the crate.
 sibuna-acme = { workspace = true, features = ["test-server"] }
+# The tests of the database authority start a PostgreSQL server of their own (SID 0028).
+sibuna-authority = { workspace = true, features = ["testing", "sqlite"] }
 bytes.workspace = true
 futures-util.workspace = true
 http-body-util.workspace = true
