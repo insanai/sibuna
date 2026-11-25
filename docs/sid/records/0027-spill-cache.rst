@@ -7,7 +7,7 @@
 :sid-created: 2026-11-25
 :sid-updated: 2026-11-25
 :sid-discussion: No external discussion URL assigned
-:sid-summary: Adds an optional disk tier under a learned source-affinity table of the edge. The tier is a fixed-size mapped file of 64 shards and four-way buckets with a frequency sketch for admission. Every slot is validated before use, so a torn or foreign file costs hints and nothing else.
+:sid-summary: Adds an optional disk tier under the learned sticky table of the edge (SID 0025). The tier is a fixed-size mapped file of 64 shards and four-way buckets with a frequency sketch for admission. Every slot is validated before use, so a torn or foreign file costs hints and nothing else.
 :sid-labels: ["architecture","load-balancer","cache","storage"]
 
 A Mapped Spill Cache for Affinity Hints
@@ -16,18 +16,20 @@ A Mapped Spill Cache for Affinity Hints
 Abstract
 --------
 
-SID 0015 proposes an optional disk cache for the hints that do not fit in memory. We build it. A new crate, ``sibuna-spill``, keeps fixed-size records in a file that it maps into memory. The edge keeps a small table in memory that remembers which server last served a client. That table spills into the file and is refilled from it. The file survives a restart of the daemon, and the hints with it.
+SID 0015 proposes an optional disk cache for the hints that do not fit in memory. We build it. A new crate, ``sibuna-spill``, keeps fixed-size records in a file that it maps into memory. The learned sticky table of SID 0025 remembers in memory which server serves a client. With the cache under it, every choice of the table is offered to the file, and a lookup that finds nothing in memory asks the file. The file survives a restart of the daemon, and the hints with it.
 
 A hint may be lost, stale or wrong. The edge treats it as a wish: it uses the hint only for a new flow, only when the named server exists in the pool and may serve now. No ban, no counter and no live flow depends on the file.
 
 Motivation and scope
 --------------------
 
-A pool with ``sticky: "source"`` ranks its servers for each client by a rendezvous hash (SID 0019). The ranking needs no memory. It also has no memory: when a server joins the pool, a share of the clients moves to it, and when a server returns from an outage, its clients move back. An application that keeps a session on its server loses the session at each move.
+A pool with ``sticky: "table"`` balances the first flow of a client and remembers the server (SID 0025). The table is in memory and has a fixed number of slots. So it forgets twice: when more clients come than it has slots, and when the daemon restarts. An application that keeps a session on its server loses the session each time.
 
-A table that remembers the server of each client avoids those moves. The table must be bounded, and the clients of a busy edge do not fit a small table. SID 0015 answers with two tiers: a table in memory and a larger one on disk that holds what memory dropped.
+SID 0015 answers with two tiers: a table in memory and a larger one on disk. SID 0025 left the place for it: the pool and the mesh reach the table through the trait ``AffinityStore``, and a store on disk can stand behind it.
 
-We specify the file format, the admission rule, the validation of a slot, the behaviour after a crash, and the interface between the pool and the two tiers. We do not replicate hints between nodes: SID 0025 does that. We do not run the 50-million-key qualification of SID 0015.
+We specify the file format, the admission rule, the validation of a slot, the behaviour after a crash, and the store that joins the two tiers. We do not replicate entries between nodes: SID 0025 does that, on the table in memory. We do not run the 50-million-key qualification of SID 0015.
+
+An earlier state of this branch built a table of its own for ``sticky: "source"``, because the sticky table did not exist yet. It is removed. "Review history" keeps what its reviews found.
 
 Specification
 -------------
@@ -41,7 +43,7 @@ Invariants
 #. A bucket never holds more than four entries, and the file never grows.
 #. A packet worker never touches the file and never waits for it. It offers work to a bounded queue and goes on. A full queue drops the work and counts it.
 #. One thread owns the mapping. No reference into the mapping exists: every access copies one slot in or out.
-#. The edge uses a hint only for a new flow and only when the hinted server is in the pool, is not a backup and may serve now. An active flow never consults the cache. Bans are never stored in it.
+#. The edge uses a hint only as an entry of the sticky table, and the pool uses such an entry only for a new flow and only when the server it names is in the pool and may serve now (SID 0025). An active flow never consults the cache. Bans are never stored in it.
 #. With the ``spill`` section absent nothing changes: no table, no thread, no file.
 
 The file
@@ -113,40 +115,40 @@ The two tiers in the edge
 
 .. graphviz::
    :caption: A worker reads and writes the table in memory. Only the storage thread touches the file.
-   :alt: Workers use an atomic table in memory. A bounded queue carries offers and questions to the storage thread, which owns the mapped file and answers into the table.
+   :alt: Workers and the mesh thread use the store. The store holds the table in memory. A bounded queue carries offers and questions to the storage thread, which owns the mapped file and answers into the table.
 
    digraph tiers {
      node [shape=box];
-     worker [label="Worker: choose a server"];
-     ram [label="Table in memory\n(atomic entries, four-way sets)"];
+     worker [label="Worker, mesh thread:\nfind, keep"];
+     ram [label="SpillStore\n(the sticky table in memory)"];
      queue [label="Bounded queue"];
      disk [label="Storage thread\nmapped file"];
      shed [label="Count shed work"];
-     worker -> ram [label="recall, learn"];
+     worker -> ram;
      ram -> queue [label="offer, ask"];
      queue -> disk;
      queue -> shed [label="full"];
-     disk -> ram [label="promote"];
+     disk -> ram [label="answer"];
    }
 
-The key of a hint is a hash of 64 bits over the name of the pool and the address of the client. The value is a tag of 31 bits of the name of the server. A hint lives for ``ttl`` and is renewed when it is used in the second half of its life.
+With the ``spill`` section the store of the edge is a ``SpillStore``. It implements ``AffinityStore`` with the table of SID 0025 in front, so the pool, the mesh thread and ``show affinity`` work as before. The edge makes it the store with ``ClusterState::use_store`` before it builds its first pool.
 
-The table in memory has four-way sets of entries. An entry is two atomic words: the key, and the tag with the expiry. The second word is stored masked with a mix of the key, so a reader that catches two halves of different writes decodes noise, and noise fails the checks of expiry and tag. Every access is an atomic load or store. Workers share the table without a lock.
+The key of a hint is the key of the table: 16 bytes of a keyed hash over the pool and the client. The value is the entry of the table: the hash of the server's name and the Unix millisecond at which the choice ends. The hint expires on disk at that end, rounded up to a second. The disk refuses an expiry that lies more than a day and a minute ahead, because the ``ttl`` of a table is at most a day.
 
-When a worker chooses a server for a new flow of a pool that is sticky by source, it recalls the hint of the client.
+``find`` reads the table in memory. When it finds nothing, it asks the storage thread and returns nothing: the flow goes on with the balanced choice. The storage thread answers every question it serves. A hint fills the table.
 
-#. A hit names a server. The pool uses it when it may serve, before the rendezvous ranking.
-#. A miss asks the storage thread, and the flow goes on with the ranking. The storage thread answers every question it serves: with the hint of the disk, or with the fact that the disk has none.
+``keep`` merges an entry into the table as before, and offers what was stored to the disk.
 
-After the choice the worker learns it.
+#. An entry for a key that memory does not hold is a *guess*. The lookup found nothing, so the disk may hold the older choice. The disk takes a guess only into a free slot and only when it holds no hint for the key.
+#. An entry for a key that memory holds is a change of server or a renewal. It replaces the hint on disk and competes for a full bucket. The pool renews an entry when a quarter of its life has passed, so a client has to return over time, or move, to displace another. Clients that come once displace nothing.
 
-#. The choice after a miss is *tentative*, because the disk may hold the older and better hint. It enters the table, and it is offered to the disk as a guess.
-#. A tentative entry stays tentative until the disk has answered. The hint of the disk replaces it. The answer that the disk has none makes it *definite*. A flow that uses a tentative entry asks the disk again, because a question can be shed.
-#. A definite hint that changes its server, or that is used in the second half of its life, is offered to the disk at once and replaces what the disk holds. Only these two offers compete for a full bucket. So a client must return over time, or move, to displace another, and clients that come once displace nothing.
-#. A definite entry that leaves the table in memory is offered once more, as a guess: the disk has it already unless that offer was shed or found no room.
-#. A choice of a backup server is not learned. Neither is the server of a retry: one failed request must not move a client for good.
+The disk is asked only after memory held nothing. So when the answer finds another server in the table, that server is a guess, and the hint of the disk replaces it. The table merges by the later end, so the hint gets an end one millisecond past the guess. It then wins here, and on every node that the mesh tells.
+
+The answer can also come before the guess is stored, in the time one reservation takes. A small array of marks decides who stores first. A lookup that asks sets the mark of its key. The storage thread stores its hint under the mark and leaves word, and ``keep`` then drops a guess that names another server. When ``keep`` comes first, it holds the mark while it stores, and the storage thread waits those two steps. While the storage thread stores, ``keep`` stores nothing and reports ``Busy``, which the pool counts as not written. Two keys can share a mark. Then the later lookup has it, and the earlier guess may win over the hint of the disk. That costs one hint and nothing else.
 
 So after a restart a client goes without its hint only until the disk has answered. That is one flow, or more when they come at once.
+
+``scan``, ``slot_count`` and ``evicted_count`` are those of the table in memory. The mesh walks memory only. What a node hears from a peer goes through ``keep`` and is offered to the file like any other entry.
 
 Crash safety
 ~~~~~~~~~~~~
@@ -184,13 +186,13 @@ Configuration
    spill: {
        path: "/var/lib/sibuna/hints.spill",
        size: "64m",
-       memory: "1m",     // the table in memory; default 1m
-       ttl: "1h",        // the life of a hint; default 1h
    },
 
-The section stands at the top of the file, beside ``global``. ``path`` and ``size`` are required. ``size`` is from 64 KiB to 64 GiB. ``memory`` is from 4 KiB to 1 GiB and is rounded down to a power of two. ``ttl`` is from one minute to 30 days. A change of the section needs a restart.
+The section stands at the top of the file, beside ``global``. Both members are required. ``size`` is from 64 KiB to 64 GiB. A change of the section needs a restart. The table in memory keeps its own setting, ``global.sticky_entries``, and the life of a choice is the ``ttl`` of its pool (SID 0025).
 
-The cost in memory beside the table is the sketch, two to four bytes for each slot, which is 3% to 6% of the file, and the queue of 4,096 requests. The pages of the file are page cache. The kernel may drop them when memory is short, but they count as memory of the process, and "Known gaps" says what that means under a memory limit. The daemon reports the parts at start.
+The cost in memory beside the table is the sketch, two to four bytes for each slot, which is 3% to 6% of the file, the queue of 4,096 requests and 32 KiB of marks. The pages of the file are page cache. The kernel may drop them when memory is short, but they count as memory of the process, and "Known gaps" says what that means under a memory limit. The daemon reports the parts at start.
+
+The section has an effect only on pools with ``sticky: "table"``. With the section the table in memory is made at start, also when no pool uses it.
 
 The crate
 ~~~~~~~~~
@@ -212,7 +214,7 @@ We considered scanning the file at start to warm the table in memory. The scan w
 
 We considered keeping the sketch in the file. A sketch is rebuilt by traffic within minutes, and a sketch from before a restart describes old traffic.
 
-We considered spilling only on eviction from memory, as the figure of SID 0015 shows. A restart would then lose exactly the hints in use. We write a definite hint through when it is new or changes.
+We considered spilling only on eviction from memory, as the figure of SID 0015 shows. A restart would then lose exactly the hints in use. We offer every entry when it is stored.
 
 Security and operational considerations
 ---------------------------------------
@@ -230,7 +232,7 @@ A client address is stored only as a hash with a fixed seed. The file names no a
 Backwards compatibility
 -----------------------
 
-A configuration without the ``spill`` section behaves as before. With it, a pool that is sticky by source prefers the server that last served a client to the server the ranking names. Pools with other settings are untouched. The file format has a version, and a file of another version is discarded.
+A configuration without the ``spill`` section behaves as before. With it, the sticky table of SID 0025 has a file under it, and nothing else changes. An earlier state of this branch read ``memory`` and ``ttl`` in the section. They are gone and are refused as unknown members. No release had them. The file format has a version, and a file of another version is discarded.
 
 Measurement
 -----------
@@ -258,7 +260,7 @@ The first program is ``cargo run --release -p sibuna-spill --example spill_measu
    * - Resident memory
      - 8.6 MiB of our own, of which 8 MiB are the sketch. 257.5 MiB of mapped pages, which is the whole file. After the file is closed 1.8 MiB remain.
 
-The second program is the ignored test ``measure_two_tiers`` of ``sibuna-lb``. The table in memory has 1 MiB, which is 65,536 entries. There are 2,000,000 clients, thirty times the table. We ran it twice.
+The second program is the ignored test ``measure_two_tiers`` of ``sibuna-lb``, run with ``SIBUNA_SPILL_DIR=/var/tmp cargo test --release -p sibuna-lb --lib measure_two_tiers -- --ignored --nocapture``. It drives the store behind ``AffinityStore`` as a pool does: a lookup, and a choice when the lookup found nothing. The table in memory has 65,536 slots. There are 2,000,000 clients, thirty times the table. We ran it twice.
 
 .. list-table::
    :header-rows: 1
@@ -267,15 +269,15 @@ The second program is the ignored test ``measure_two_tiers`` of ``sibuna-lb``. T
    * - Phase
      - Result
    * - The first flow of every client: a miss, a choice, a guess for the disk
-     - 1.0 to 1.2 million flows in a second, with a wait for the storage thread after every 1,000. Nothing is shed.
-   * - Every client returns with two flows
-     - 1,908,157 of 2,000,000 clients, 95.4%, have their hint at the second flow. The disk answered 98.1% of the questions with a hint. 1,934,606 guesses were stored, so 3.3% found their bucket full: the file is half full, and a bucket of four overflows that often.
+     - 1.6 and 1.8 million flows in a second, with a wait for the storage thread after every 1,000. Nothing is shed.
+   * - Every client returns with two lookups
+     - 49,152 clients are still in memory at the first lookup. 1,939,963 and 1,940,215 of 2,000,000 clients, 97.0%, have their choice at the second lookup. 1,933,818 guesses were stored, so 3.3% found their bucket full: the file is half full, and a bucket of four overflows that often.
    * - Four threads, 16,000 clients that fit in memory
-     - 9.8 and 17.5 million recalls with their learns in a second, for all four threads together.
+     - 82 million flows in a second for all four threads together. This is the table of SID 0025 alone.
    * - Four threads, all clients, without a pause
-     - 10.9 and 11.3 million in a second. Nearly every one misses, and the queue sheds most of the questions.
+     - 4.5 and 6.4 million in a second. Nearly every one misses, and the queue sheds three quarters of the questions.
    * - Resident memory
-     - 10.1 MiB of our own. 258.7 MiB of mapped pages.
+     - 11.4 MiB of our own. 258.9 MiB of mapped pages.
 
 We also ran the first program in a control group with a memory limit of 96 MiB and no swap, ``systemd-run --user --scope -p MemoryMax=96M -p MemorySwapMax=0``. The kernel killed it for lack of memory in three runs. In two of them the creation of the file alone took 12 and 130 seconds. A fourth run did not finish creating the file in 110 seconds and we stopped it. So on this machine the kernel did not take the pages of the file back fast enough to keep the process inside a limit below the size of the file. The file system is ZFS, which has a cache of its own. We had no other file system to compare.
 
@@ -312,19 +314,19 @@ Acceptance criteria and implementation status
      - Met. ``a_file_that_is_not_a_cache_is_refused_and_left_alone``, ``a_second_opener_finds_the_cache_in_use``, ``what_lies_at_the_name_of_the_new_file_is_removed_and_not_written_through``, and through the binary ``a_file_that_is_not_a_cache_stops_the_daemon_with_a_diagnostic``. ``a_lock_on_a_file_that_lost_its_name_does_not_open_the_cache`` checks the comparison of names. No test runs two processes through the race itself.
    * - 8
      - A worker never waits for the disk.
-     - Met. ``a_full_queue_sheds_work_and_never_blocks``. The table in memory is atomic words: ``workers_that_learn_and_recall_at_once_read_only_hints_that_were_written``.
+     - Met. ``a_full_queue_sheds_work_and_never_blocks``. The table in memory is that of SID 0025, and the marks are single atomic words.
    * - 8a
      - A guess does not overwrite what the disk knows, and clients that come once displace no hint on disk.
-     - Met. ``a_guess_never_becomes_definite_before_the_disk_has_answered``, ``a_flood_of_clients_seen_once_displaces_no_hint_on_disk`` with 26 clients for every slot, and ``a_guess_takes_a_free_slot_only_however_often_it_was_seen``.
+     - Met for one worker. ``a_guess_made_while_the_disk_is_asked_gives_way_to_what_the_disk_knows`` lets the answer come before and after the guess. ``a_flood_of_clients_seen_once_displaces_no_hint_on_disk`` has 26 clients for every slot. ``a_guess_takes_a_free_slot_only_however_often_it_was_seen``. No test drives the marks from several workers at once.
    * - 9
      - The edge uses a hint only for a server that may serve, and a wrong hint changes only the choice for a new flow.
-     - Met. ``a_damaged_file_costs_the_hints_and_the_edge_serves_on``, ``a_retry_serves_one_request_elsewhere_and_does_not_move_the_client``. The eligibility check is the one the cookie of SID 0019 uses.
+     - Met. ``a_damaged_file_costs_the_hints_and_the_edge_serves_on``. The check that a server may serve is that of the pool of SID 0025, unchanged.
    * - 10
      - Hints survive a restart of the daemon.
      - Met. ``cmd/sibuna/tests/edge_spill.rs`` serves 40 clients, kills the daemon with SIGKILL and starts another on the same file with a third server of weight 200. After one request each, every client is with its old server. Without the file more than 30 of 40 go to the heavy server.
    * - 11
      - The tier is off by default and has no cost then.
-     - Met. ``the_spill_section_is_off_by_default_and_has_bounds``, ``the_spill_section_changes_only_with_a_restart_and_is_off_without_it``. Without the section a pool holds ``None`` and makes no call.
+     - Met. ``the_spill_section_is_off_by_default_and_has_bounds``, ``the_spill_section_changes_only_with_a_restart_and_is_off_without_it``. Without the section the store is the table of SID 0025 and no code of this SID runs.
    * - 12
      - The cost in memory is reported and bounded.
      - Met. The daemon notes ``EDGE013`` with slots, bytes on disk and bytes of memory, and ``show info`` repeats them. The measurement above confirms the numbers.
@@ -339,37 +341,36 @@ Deviations from SID 0015
 ------------------------
 
 #. SID 0015 lets each worker own some shards. Here one storage thread owns all 64, and the workers reach it through a queue. The section on alternatives says why.
-#. SID 0015 spills an entry when it leaves memory. Here a hint is also written when it is learned, so that a restart finds the hints in use.
-#. SID 0015 speaks of stick tables and affinity. This version has no stored stick table to put the cache under, so this SID adds a small one for source stickiness. Cookie stickiness stays stateless.
-#. ``size`` is the size of the file. The sketch, the table and the queue come on top and are reported. SID 0015 asks for a budget that counts them, and the report counts them, but one number does not bound them all.
+#. SID 0015 spills an entry when it leaves memory. Here every entry is offered when it is stored, so that a restart finds the entries in use. Nothing is offered at eviction: the table of SID 0025 does not say what it evicts.
+#. ``size`` is the size of the file. The sketch, the marks and the queue come on top and are reported, and the table in memory has its own setting. SID 0015 asks for a budget that counts them. The report counts them, but one number does not bound them all.
 #. The sketch takes 2 to 4 bytes for each slot, 3% to 6% of the file, not the smaller share a sketch of one counter for each slot would take. The smaller sketch kept only 77% of a working set under a flood.
+#. Only the sticky table spills. SID 0015 also names other stick tables, and this version has none.
 
 Known gaps
 ----------
 
 #. The pages of the file count as memory of the process. Under a memory limit below the size of the file, the measurement program was killed. We did not find out whether another file system behaves better. The operator has to set a limit above the file.
 #. A truncation of the file by another process, or a read error of the disk, raises a signal that ends the daemon. Reading and writing with system calls would turn both into errors.
-#. The first flow of a client after a restart, or after its hint left memory, goes without the hint. In the measurement 4.6% of the clients were also without it at the second flow: 3.3% never fitted their bucket, and the rest lost their entry in memory to a neighbour before they used it.
-#. The table in memory has no admission. Its sets are chosen with a hash that is not secret, so someone who knows the name of the pool and controls many addresses can push the hint of a client out of memory again and again. That client then meets one flow without its hint each time. The file is salted and is not exposed in this way.
-#. A flood of clients that come once empties the table in memory of the hints in use. They come back from the disk, one flow late. The disk keeps them: see the acceptance table.
-#. A hint enters a full bucket only by a renewal or a move. A new client whose bucket is full has no hint on disk until it is still in memory after half of ``ttl``.
-#. Each definite entry that leaves memory costs one request of the queue that the disk mostly answers with "kept". In the measurement that was 1.8 million of 8 million requests.
-#. A healthy slot whose expiry lies more than ``ttl`` plus a minute ahead is treated as corrupt, cleared and counted in ``spill_disk_corrupt``. This happens to older hints after ``ttl`` was lowered, and to recent ones after the clock stepped back by more than a minute.
+#. The store behind ``AffinityStore`` was written after the merge with SID 0025 and was reviewed by its author only. The second reader saw the earlier table and the crate, not this store.
+#. No test drives the marks from several workers and the storage thread at once. The argument for them is in the text above and is not modelled.
+#. Two keys that share a mark, or a lookup whose choice is never stored, leave a mark that is wrong for a later call. The cost is one guess that wins over the hint of the disk, or one change of server that is not stored and is stored at the next flow.
+#. An entry that a node hears from a peer is treated like a local one: as a guess when memory does not hold the key, and as a change when it does. So a peer can replace a hint on disk, as SID 0025 lets it replace the entry in memory.
+#. The first flow of a client after a restart, or after its entry left memory, goes without the hint. In the measurement 3.0% of the clients were also without it at the second lookup, because their bucket on disk was full when they came.
+#. A hint enters a full bucket only by a renewal or a move. A new client whose bucket is full has no hint on disk until it is still in memory after a quarter of its ``ttl``.
+#. One storage thread serves all workers. It handles about one to three million operations in a second. Beyond that the queue sheds, which costs hints and no latency.
+#. A healthy slot whose expiry lies more than a day and a minute ahead is treated as corrupt, cleared and counted in ``spill_disk_corrupt``. This happens to recent hints after the clock stepped back by more than a minute.
 #. A file that we reuse is trusted to have its blocks. A sparse file of the right length with a valid header, as a backup tool may restore it, raises a signal at the first write to a hole on a full disk.
 #. A reused file keeps its permission bits. Only a file we create gets mode 0600.
 #. The daemon opens the file, and replaces a damaged one, before it binds its listeners. A start that then fails has already replaced the file.
+#. A second process on the same file runs with the table in memory only until its next start. So during the replacement of the binary the new process writes nothing to the file.
 #. The send to the queue is ``try_send`` of the standard library. It never waits for the disk. We did not verify that it takes no lock inside when the storage thread sleeps, so "no lock on the request path" is not proven for this one call.
 #. The sketch of a file of 64 GiB takes 4 GiB of memory, and aging walks the 64 MiB of one shard on the storage thread. Stopping the daemon waits for the flush of the file.
-#. One storage thread serves all workers. It handles about two to three million operations in a second. Beyond that the queue sheds, which costs hints and no latency.
-#. Hints are local to a node. In a mesh, two nodes can choose different servers for one client until SID 0025 shares the entries. With the section absent the ranking agrees on all nodes.
-#. The tag of a server has 31 bits of its ranking seed. Two servers of a pool with the same tag would be confused for hinted clients. We do not detect that.
 #. The checksum is not keyed. A file written by someone who knows the format is trusted as hints.
-#. Creation overwrites ``path.tmp`` without asking.
-#. A second process on the same file runs with the table in memory only, so during the replacement of the binary the new process learns afresh and writes nothing.
-#. The model proves the admission rule for exact frequencies and one bucket. It does not model the sketch collisions, the two tiers, the guess that leaves a known hint alone, or concurrency.
+#. Creation removes what lies at ``path.tmp`` without asking.
+#. The model proves the admission rule for exact frequencies and one bucket, and the validation of a slot. It does not model the sketch collisions, the guess, the two tiers or concurrency.
 #. There is no test of a loss of power. The table of crash safety is an argument over the states a page can be left in, and the tests write those states by hand.
 #. The 50-million-key qualification of SID 0015 is not run. The largest file we measured has 4.2 million slots.
-#. The code ``EDGE013`` was the next free number on this branch. Another branch may have taken it.
+#. A ``spill`` section without a pool that is sticky by a table costs the file and the memory and does nothing. ``sibuna check`` does not warn.
 
 Open questions
 --------------
@@ -380,6 +381,7 @@ Open questions
 Review history
 --------------
 
+- 2026-11-25. Merge with SID 0025. The sticky table of SID 0025 arrived on ``main`` with the trait ``AffinityStore``. The table of hints that this branch had built for ``sticky: "source"`` was removed, with its hook in the pool, and the cache went under the sticky table as ``SpillStore``. The members ``memory`` and ``ttl`` of the section went with it. The tentative bit of the old table had no place in an entry of SID 0025, so the store tells a guess by whether memory holds the key, and the answer of the disk replaces a guess by an end one millisecond later. The first version of the store lost the hint of the disk for about one client in three hundred of the restart test: the answer and the guess were stored at the same moment and the guess had the later end. The marks close that window. The author reviewed this store. No second reader did.
 - 2026-11-25. Review of the implementation by a second reader who had not written it. It found no fault of memory safety and no way for a hint to choose a server that may not serve. It found ten points. Fixed: a second flow turned a guess into a definite hint before the disk had answered and overwrote the hint on disk, so the storage thread now answers every question and a guess stays tentative until then. Clients seen once were counted twice and displaced the hints in use, so a guess now takes a free slot only and does not count, and the offer at eviction is a guess. A lock could be taken on a file that had lost its name to a rename, so the name is compared after the lock. The file under construction was opened through a link and left behind on failure, so it is created anew and removed on failure. The wrong number in the comment on torn entries was corrected. Recorded under "Known gaps" and not fixed: the table in memory without admission and with a public hash, the sparse reused file, the healthy slots counted as corrupt after a lower ``ttl`` or a clock step, the busy file that disables the disk tier until the next start, the permission bits of a reused file, the cost of a large sketch, and the unverified inside of ``try_send``.
 - 2026-11-25. Review of the code by its author before that. A retry was learned as the new server of a client, so one failed request moved the client for good: a retry is no longer learned. A choice after a miss was never written to disk, so a client with flows far apart never got a hint saved: it is offered as a guess. The storage thread reads the clock once for a batch, so a hint stamped by a worker a second later was judged corrupt: the disk tier allows a minute of slack. The note ``EDGE013`` came before the line ``listeners ready`` and broke harnesses that read the first line: it follows now.
 - 2026-11-25. Initial draft. The review of the draft found six faults. A hint offered after a miss could overwrite the better hint on disk, so the choice after a miss became tentative. A file of zeros or of another program would have been overwritten, so a file without the magic is now refused. Creation in place could leave a half-made file under the final name, so a new file is built beside the path and renamed. A sparse file would fault on a full disk, so every block is written at creation. Two processes could map one file during a handoff, so the file is locked. A reference into the mapping would make a foreign write undefined behaviour, so every access copies a slot.
