@@ -36,7 +36,7 @@ use crate::recipe::Recipe;
 use crate::server::{Server, VERSION};
 
 /// The interface's files, embedded at build time (`build.rs` builds the module).
-const ASSETS: AssetBytes = AssetBytes {
+pub(crate) const ASSETS: AssetBytes = AssetBytes {
     wasm: include_bytes!(concat!(env!("OUT_DIR"), "/console.wasm")),
     glue: include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/../console-ui/web/glue.js")),
     css: include_bytes!(concat!(

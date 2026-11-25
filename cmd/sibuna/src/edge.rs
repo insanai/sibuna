@@ -5,6 +5,11 @@ mod admin;
 #[cfg(feature = "https")]
 mod automatic;
 mod cluster;
+#[cfg(all(feature = "console", unix))]
+mod console;
+#[cfg(not(all(feature = "console", unix)))]
+#[path = "edge/no_console.rs"]
+mod console;
 mod control;
 mod ctl;
 mod failure;
@@ -135,6 +140,8 @@ struct Serving {
     observed: observed::Observed,
     /// The drain commands shared with the peers of the mesh (SID 0022).
     drains: Drains,
+    /// The operator console of SID 0031, when the file has a `console` section.
+    console: console::Link,
 }
 
 /// The run-time commands on their way to the peers and from them.
@@ -156,6 +163,8 @@ impl Serving {
         if revision.config.admin_socket() != self.admin_socket.as_deref() {
             return Err(io::Error::other("changing global.admin_socket requires a restart"));
         }
+        let console = revision.config.console().cloned();
+        let removed_peers = self.console.plan(console.as_ref())?;
         let watch = revision.config.watch();
         let shutdown_timeout = revision.config.shutdown_timeout();
         let drain_delay = revision.config.drain_delay();
@@ -163,6 +172,7 @@ impl Serving {
         let observed = &mut self.observed;
         reload(&mut self.edge, self.http.as_mut(), &mut self.adapters, observed, revision)?;
         self.reloads += 1;
+        self.console.apply(&removed_peers, console.as_ref());
         self.shutdown_timeout = shutdown_timeout;
         self.drain_delay = drain_delay;
         self.watch(watch)?;
@@ -412,6 +422,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let mesh = config.mesh().map(|spec| start_mesh(spec, &source, &pending)).transpose()?;
     let admin_socket = config.admin_socket().map(str::to_owned);
     let takeover = config.reuse_port();
+    let console_options = config.console().cloned();
     let watch = config.watch();
     let (shutdown_timeout, drain_delay) = (config.shutdown_timeout(), config.drain_delay());
     let mut current = sibuna_lb::Regime::Standalone;
@@ -420,6 +431,13 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let drains = join(http.as_ref(), &adapters, mesh.as_ref());
     let observed = observed::Observed::start(http.as_ref(), &observe_options, &edge)?;
     let (jobs, inbox) = mpsc::channel();
+    let parts = console::Parts {
+        stats: edge.stats(),
+        observe: Arc::clone(observed.shared()),
+        source: Arc::clone(&source),
+        jobs: jobs.clone(),
+    };
+    let console = console::Link::start(console_options.as_ref(), parts)?;
     let _admin = match &admin_socket {
         Some(path) => Some(admin::Admin::start(path, takeover, Arc::clone(&source), jobs)?),
         None => None,
@@ -438,6 +456,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         reloads: 0,
         observed,
         drains,
+        console,
     };
     serving.watch(watch)?;
     serving.announce();
@@ -448,6 +467,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
             serving.answer(job);
         }
         serving.follow(mesh.as_ref(), &mut current);
+        serving.console.set_regime(current);
         serving.step()?;
     }
     serving.observed.drain();
@@ -477,6 +497,7 @@ impl Serving {
     fn step(&mut self) -> io::Result<()> {
         step(&mut self.edge, self.http.as_ref())?;
         self.observed.pass_flows(&mut self.edge);
+        self.console.turn(&self.edge, self.reloads);
         Ok(())
     }
 

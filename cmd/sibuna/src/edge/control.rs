@@ -271,7 +271,7 @@ pub(super) fn decode(text: &str) -> Option<Answer<'_>> {
 }
 
 /// What a command changed on a server, for the column `changed`.
-fn changed(server: &ServerStatus) -> String {
+pub(super) fn changed(server: &ServerStatus) -> String {
     let marks = [
         (server.added, "added"),
         (server.state == ServerState::Drain, "state"),
