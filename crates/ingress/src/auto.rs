@@ -8,12 +8,14 @@
 //!                        --write-->  TLS-ALPN-01 answers   <--  TLS handshake (acme-tls/1)
 //!                        --write-->  HTTP-01 answers       <--  request dispatch
 //!                        --write-->  status by name        <--  `show certs`
+//!   decide, hold, deny   <--read---  names on demand       <--  TLS handshake (queue)
 //! ```
 //!
 //! A reader takes a read lock on a small map and nothing else. Only the thread talks to
 //! the certificate authority.
 
 mod client;
+pub(crate) mod demand;
 mod dns;
 mod driver;
 
@@ -31,6 +33,16 @@ use sibuna_lb::{AcmeOptions, AutoName, AutomaticHttps};
 pub(crate) const ACME_TLS: &[u8] = b"acme-tls/1";
 /// The longest token we answer.
 const MAX_TOKEN: usize = 128;
+/// The origin of a name under `auto`.
+const LISTED: &str = "listed";
+/// The origin of a name that a handshake asked for.
+const ON_DEMAND: &str = "on-demand";
+
+/// Milliseconds since 1970.
+pub(crate) fn now_ms() -> u64 {
+    let since = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
+    since.map_or(0, |elapsed| u64::try_from(elapsed.as_millis()).unwrap_or(u64::MAX))
+}
 
 /// What the thread tells the daemon, for its log.
 #[derive(Clone, Debug)]
@@ -57,6 +69,15 @@ pub enum Event {
         name: String,
         /// What failed, with a hint.
         error: AcmeError,
+    },
+    /// A name that a handshake asked for on demand was refused by a guard.
+    Refused {
+        /// The name.
+        name: String,
+        /// Which guard refused it.
+        reason: &'static str,
+        /// For how many seconds the refusal is remembered.
+        seconds: u64,
     },
     /// An attempt failed. The served certificate, if any, stays.
     Failed {
@@ -105,6 +126,8 @@ impl CertificateState {
 pub struct CertificateStatus {
     /// The managed name.
     pub name: String,
+    /// Why the name is managed: `listed` under `auto`, or `on-demand`.
+    pub origin: &'static str,
     /// How the certificate is obtained: `http-01`, `tls-alpn-01`, `dns-01` or `local`.
     pub via: &'static str,
     /// The issuer of the served certificate.
@@ -123,6 +146,7 @@ impl CertificateStatus {
     fn pending(name: &str) -> Self {
         Self {
             name: name.to_owned(),
+            origin: LISTED,
             via: "-",
             issuer: None,
             not_after: None,
@@ -160,11 +184,14 @@ pub(crate) struct Shared {
     stopping: AtomicBool,
     /// Whether orders may start. Until then the thread only loads stored certificates.
     ordering: AtomicBool,
+    /// The names that handshakes asked for, on frontends with `on_demand`.
+    pub demand: demand::Demand,
 }
 
 impl Shared {
     fn new(config: AutomaticHttps) -> Self {
         Self {
+            demand: demand::Demand::new(config.options.on_demand.clone(), now_ms()),
             options: config.options,
             wanted: RwLock::new((by_name(config.names), config.plain_frontend)),
             certificates: RwLock::default(),
@@ -190,8 +217,53 @@ impl Shared {
         read(&self.alpn_answers).get(name).cloned()
     }
 
+    /// Every managed name: the listed ones, and the ones held on demand.
     fn names(&self) -> Vec<AutoName> {
-        read(&self.wanted).0.values().cloned().collect()
+        let wanted = read(&self.wanted);
+        let mut names: Vec<AutoName> = wanted.0.values().cloned().collect();
+        let held = self.demand.held_names();
+        names.extend(held.into_iter().filter(|held| !wanted.0.contains_key(&held.name)));
+        names
+    }
+
+    /// Whether `name` is managed only because a handshake asked for it.
+    fn is_demanded(&self, name: &str) -> bool {
+        self.demand.is_held(name) && !read(&self.wanted).0.contains_key(name)
+    }
+
+    /// The origin of a managed name, for `show certs`.
+    fn origin(&self, name: &str) -> &'static str {
+        if read(&self.wanted).0.contains_key(name) { LISTED } else { ON_DEMAND }
+    }
+
+    /// Whether a handshake that waits for `name` has its answer: the name is neither
+    /// queued nor held without a certificate.
+    fn is_settled(&self, name: &str) -> bool {
+        let pending = self.demand.is_held(name) && self.certificate(name).is_none();
+        !pending && !self.demand.is_queued(name)
+    }
+
+    /// A handshake asks for a certificate for `wanted`, which no listener serves and
+    /// which passed the guards that read no state. Waits until the thread decided and
+    /// served the name, at most `on_demand.wait` seconds. Returns at once when the name
+    /// is denied or a table is full.
+    pub async fn obtain(&self, wanted: AutoName) {
+        let name = wanted.name.clone();
+        if self.demand.request(wanted, now_ms()) == demand::Admission::Refused {
+            return;
+        }
+        self.notify();
+        self.demand.wait_until(|| self.is_settled(&name)).await;
+    }
+
+    /// Lets go of a name held on demand: it is no longer served or renewed. Its
+    /// certificate stays in the storage.
+    fn release(&self, name: &str) {
+        self.demand.release(name);
+        if !read(&self.wanted).0.contains_key(name) {
+            write(&self.certificates).remove(name);
+            self.status.lock().unwrap_or_else(PoisonError::into_inner).remove(name);
+        }
     }
 
     /// Sleeps for `time` in short steps. Returns false when the daemon stops meanwhile.
@@ -361,7 +433,8 @@ impl Automatic {
             let (_, parent) = name.split_once('.')?;
             wanted.0.get(&format!("*.{parent}"))
         };
-        exact.or_else(covering).map(|found| found.port)
+        let listed = exact.or_else(covering).map(|found| found.port);
+        listed.or_else(|| self.shared.demand.held(&name).map(|held| held.port))
     }
 
     /// The root of the local authority, when the daemon manages a name that it issues
@@ -388,7 +461,8 @@ impl Automatic {
             .iter()
             .map(|name| {
                 let pending = || CertificateStatus::pending(&name.name);
-                known.get(&name.name).cloned().unwrap_or_else(pending)
+                let status = known.get(&name.name).cloned().unwrap_or_else(pending);
+                CertificateStatus { origin: self.shared.origin(&name.name), ..status }
             })
             .collect()
     }
@@ -415,8 +489,13 @@ mod tests {
     }
 
     fn automatic(redirect: bool) -> Automatic {
+        let guards = sibuna_lb::OnDemand {
+            allow: vec!["apps.test".to_owned()],
+            wait: 1,
+            ..sibuna_lb::OnDemand::default()
+        };
         let config = AutomaticHttps {
-            options: AcmeOptions { redirect, ..AcmeOptions::default() },
+            options: AcmeOptions { redirect, on_demand: Some(guards), ..AcmeOptions::default() },
             names: vec![
                 name("example.org", 443),
                 name("alt.example.org", 8443),
@@ -424,6 +503,7 @@ mod tests {
                 name("::1", 7443),
             ],
             plain_frontend: true,
+            on_demand: false,
         };
         // No thread: these tests read the tables only.
         Automatic { shared: Arc::new(Shared::new(config)) }
@@ -474,5 +554,53 @@ mod tests {
         assert_eq!(on.redirect_port(b"example.org"), None);
         assert_eq!(on.status().len(), 1);
         assert_eq!(on.status()[0].state, CertificateState::Pending);
+    }
+
+    #[test]
+    fn a_name_on_demand_is_managed_while_it_is_held() {
+        let automatic = automatic(true);
+        let shared = &automatic.shared;
+        assert!(shared.options.demanded("a.other.test", 9443, None).is_none());
+        let Some(wanted) = shared.options.demanded("a.apps.test", 9443, None) else {
+            panic!("the suffix allows the name");
+        };
+        assert_eq!(shared.demand.request(wanted.clone(), 1), demand::Admission::Pending);
+        assert!(!shared.is_settled("a.apps.test") && !shared.is_demanded("a.apps.test"));
+        assert_eq!(automatic.status().len(), 4);
+        shared.demand.hold(wanted, 2);
+        assert!(shared.is_demanded("a.apps.test") && !shared.is_settled("a.apps.test"));
+        let origins: Vec<_> = automatic.status().iter().map(|line| line.origin).collect();
+        assert_eq!(origins.iter().filter(|origin| **origin == "on-demand").count(), 1);
+        assert_eq!(origins.len(), 5);
+        assert_eq!(automatic.redirect_port(b"a.apps.test:80"), Some(9443));
+        // With a certificate the waiting handshake has its answer.
+        let Ok(key) = KeyPair::generate() else { panic!("no key") };
+        let der = x509::challenge_certificate(&key, "a.apps.test", "a.b", 1_795_516_496);
+        let certified = der.and_then(|der| driver::certified(vec![der], &key, false));
+        let Ok(certified) = certified else { panic!("no certificate") };
+        shared.install("a.apps.test", certified);
+        assert!(shared.is_settled("a.apps.test"));
+        shared.release("a.apps.test");
+        assert!(shared.certificate("a.apps.test").is_none() && shared.is_settled("a.apps.test"));
+        assert_eq!(automatic.status().len(), 4);
+        assert_eq!(automatic.redirect_port(b"a.apps.test"), None);
+        // A listed name is never a name on demand, and a release leaves it alone.
+        assert!(!shared.is_demanded("example.org"));
+        assert_eq!(shared.origin("example.org"), "listed");
+    }
+
+    #[tokio::test]
+    async fn a_handshake_waits_for_a_pending_name_only() {
+        let automatic = automatic(true);
+        let shared = &automatic.shared;
+        let name = |name: &str| AutoName { name: name.to_owned(), port: 443, local: true };
+        shared.demand.deny("no.apps.test", u64::MAX, 0);
+        let start = std::time::Instant::now();
+        shared.obtain(name("no.apps.test")).await;
+        assert!(start.elapsed() < Duration::from_millis(500));
+        // Nobody decides the name: the wait ends after `wait`, one second here.
+        shared.obtain(name("a.apps.test")).await;
+        assert!(start.elapsed() >= Duration::from_secs(1));
+        assert!(shared.demand.is_queued("a.apps.test"));
     }
 }

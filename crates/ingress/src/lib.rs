@@ -84,6 +84,8 @@ pub struct Identity {
     quic: Option<quinn::ServerConfig>,
     /// Where the tables of automatic HTTPS go, for a listener with `auto` names.
     managed: Option<certs::Tables>,
+    /// The certificates, for a listener that obtains them on demand.
+    on_demand: Option<Arc<certs::Certificates>>,
 }
 
 impl Identity {
@@ -92,6 +94,7 @@ impl Identity {
     pub fn load(spec: &TlsOptions) -> Result<Self, Error> {
         let certificates = Arc::new(certs::Certificates::load(spec)?);
         let managed = certificates.tables();
+        let on_demand = certificates.is_on_demand().then(|| Arc::clone(&certificates));
         let provider = Arc::new(rustls::crypto::ring::default_provider());
         let versions: &[&rustls::SupportedProtocolVersion] = match spec.min_version {
             TlsVersion::V12 => rustls::DEFAULT_VERSIONS,
@@ -125,7 +128,7 @@ impl Identity {
             // Offered last: only a certificate authority asks for it (RFC 8737).
             config.alpn_protocols.push(auto::ACME_TLS.to_vec());
         }
-        Ok(Self { tcp: Arc::new(config), quic, managed })
+        Ok(Self { tcp: Arc::new(config), quic, managed, on_demand })
     }
 
     /// Lets the handshakes of this identity read the certificates of `automatic`
@@ -137,10 +140,55 @@ impl Identity {
     }
 }
 
+/// What a TLS handshake on one address needs.
+#[derive(Clone)]
+struct Listener {
+    acceptor: TlsAcceptor,
+    config: Arc<rustls::ServerConfig>,
+    /// The certificates of a listener that obtains them on demand (SID 0021).
+    on_demand: Option<Arc<certs::Certificates>>,
+}
+
+impl Listener {
+    fn new(
+        config: Arc<rustls::ServerConfig>,
+        on_demand: Option<Arc<certs::Certificates>>,
+    ) -> Self {
+        Self { acceptor: TlsAcceptor::from(Arc::clone(&config)), config, on_demand }
+    }
+
+    /// Runs the handshake, within the deadline. A listener that obtains certificates
+    /// on demand reads the ClientHello first. When it has no certificate for the server
+    /// name, it asks the certificate thread and waits, at most `on_demand.wait` seconds
+    /// beside the deadlines of reading the hello and of the handshake. Then the
+    /// handshake goes on as on any listener: the certificate is there, or the choice of
+    /// SID 0015 applies.
+    async fn accept(&self, stream: tokio::net::TcpStream, port: u16) -> io::Result<Tls> {
+        let late = |_| io::Error::from(io::ErrorKind::TimedOut);
+        let Some(certificates) = &self.on_demand else {
+            return timeout(DEADLINE, self.acceptor.accept(stream)).await.map_err(late)?;
+        };
+        let reading = tokio_rustls::LazyConfigAcceptor::new(Default::default(), stream);
+        let start = timeout(DEADLINE, reading).await.map_err(late)??;
+        let wanted = {
+            let hello = start.client_hello();
+            // A TLS-ALPN-01 validation gets its challenge certificate and never waits.
+            let validation =
+                hello.alpn().is_some_and(|mut offered| offered.any(|p| p == auto::ACME_TLS));
+            let name = hello.server_name().filter(|_| !validation);
+            name.and_then(|name| certificates.demand(name, port))
+        };
+        if let Some((tables, wanted)) = wanted {
+            tables.obtain(wanted).await;
+        }
+        timeout(DEADLINE, start.into_stream(Arc::clone(&self.config))).await.map_err(late)?
+    }
+}
+
 /// Owns the protocol runtime and the QUIC listeners. Dropping it cancels its tasks.
 pub struct Ingress {
     runtime: Runtime,
-    listeners: BTreeMap<SocketAddr, TlsAcceptor>,
+    listeners: BTreeMap<SocketAddr, Listener>,
     endpoints: BTreeMap<SocketAddr, quinn::Endpoint>,
     handoff: Arc<Handoff>,
     inline: Option<Arc<inline::Inline>>,
@@ -192,7 +240,7 @@ impl Ingress {
                         drain.subscribe(),
                     ));
                 }
-                listeners.insert(vip, TlsAcceptor::from(identity.tcp));
+                listeners.insert(vip, Listener::new(identity.tcp, identity.on_demand));
             }
             handoff
         };
@@ -226,7 +274,7 @@ impl Ingress {
             if let Some(ep) = self.endpoints.get(&vip) {
                 ep.set_server_config(identity.quic);
             }
-            self.listeners.insert(vip, TlsAcceptor::from(identity.tcp));
+            self.listeners.insert(vip, Listener::new(identity.tcp, identity.on_demand));
         }
     }
 
@@ -258,7 +306,7 @@ impl Ingress {
         held: Box<dyn std::any::Any + Send>,
         client: Option<SocketAddr>,
     ) {
-        let Some(acceptor) = self.listeners.get(&bind).cloned() else { return };
+        let Some(listener) = self.listeners.get(&bind).cloned() else { return };
         let (Ok(peer), Ok(vip)) = (stream.peer_addr(), stream.local_addr()) else { return };
         let peer = client.unwrap_or(peer);
         if stream.set_nonblocking(true).is_err() {
@@ -284,7 +332,7 @@ impl Ingress {
         self.runtime.spawn(async move {
             let _permit = (permit, held);
             let Ok(stream) = tokio::net::TcpStream::from_std(stream) else { return };
-            let Ok(Ok(tls)) = timeout(DEADLINE, acceptor.accept(stream)).await else { return };
+            let Ok(tls) = listener.accept(stream, vip.port()).await else { return };
             if tls.get_ref().1.alpn_protocol() == Some(auto::ACME_TLS) {
                 // A TLS-ALPN-01 validation ends with the handshake. It carries no request.
                 return;

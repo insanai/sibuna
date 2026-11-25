@@ -5,6 +5,8 @@
 //! challenge. The local authority issues at once, for internal names and addresses.
 //! Storage, lock, schedule and retry are the same for both.
 
+mod admit;
+
 use std::collections::BTreeMap;
 use std::path::Path;
 use std::sync::Arc;
@@ -158,6 +160,8 @@ pub(super) struct Driver {
     /// The local authority, once it could be opened, and the failures to open it.
     local: Option<Local>,
     local_backoff: Backoff,
+    /// The client of the `ask` URL of issuance on demand, once it was needed.
+    asker: Option<admit::Asker>,
 }
 
 impl Driver {
@@ -170,6 +174,7 @@ impl Driver {
             ready_backoff: Backoff::default(),
             local: None,
             local_backoff: Backoff::default(),
+            asker: None,
         }
     }
 
@@ -180,8 +185,14 @@ impl Driver {
     /// Runs until the handle is dropped.
     pub fn run(mut self) {
         while !self.stopping() {
-            let names = self.shared.names();
+            // The names that handshakes asked for are decided first. They stay queued
+            // until then, so the handshakes know that they wait.
+            let queued = self.shared.demand.queued();
+            let mut names = self.shared.names();
+            names.extend(queued.iter().cloned());
             self.prepare(&names);
+            self.admit(&queued);
+            let names = self.shared.names();
             let sleep = self.round(&names);
             self.shared.sleep(Duration::from_secs(sleep.clamp(1, LONGEST_SLEEP)));
         }
@@ -262,19 +273,31 @@ impl Driver {
                 _ => continue,
             };
             let name = &wanted.name;
-            let mut entry = match self.entries.remove(name) {
-                Some(entry) => entry,
-                None => self.adopt(&source, name),
-            };
+            let demanded = self.shared.is_demanded(name);
+            let known = self.entries.remove(name);
+            let before = known.as_ref().and_then(|entry| entry.served.as_ref());
+            let before = before.map(|served| served.not_after);
+            let mut entry = known.unwrap_or_else(|| self.adopt(&source, name));
             if entry.error.is_none() && self.is_stale(name, &entry) {
                 entry.next_attempt = entry.next_attempt.min(now());
             }
+            if demanded && self.is_idle(name, &entry) {
+                self.shared.release(name);
+                continue;
+            }
             let ordering = self.shared.ordering.load(Ordering::Acquire);
-            if ordering && entry.next_attempt <= now() {
+            let attempted = ordering && entry.next_attempt <= now();
+            if attempted {
                 self.attempt(&mut source, name, &mut entry);
+            }
+            // The handshakes that wait for a name on demand are woken before the pause.
+            let kept = !demanded || self.settle(name, &entry, before);
+            if attempted {
                 std::thread::sleep(PACE);
             }
-            self.entries.insert(name.clone(), entry);
+            if kept {
+                self.entries.insert(name.clone(), entry);
+            }
         }
         (self.ready, self.local) = (ready, local);
         let waiting = |open: bool, backoff: &Backoff, local: bool| {
@@ -347,6 +370,7 @@ impl Driver {
         let via = entry.via.unwrap_or_else(|| self.planned(name));
         self.shared.set_status(CertificateStatus {
             name: name.to_owned(),
+            origin: self.shared.origin(name),
             via,
             issuer: entry.served.as_ref().map(|served| served.issuer.clone()),
             not_after: entry.served.as_ref().map(|served| served.not_after),

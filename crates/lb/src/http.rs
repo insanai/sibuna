@@ -191,25 +191,26 @@ pub struct TlsOptions {
     pub on_demand: bool,
 }
 
+/// Reads `tls.crt`: one path or a list of 1 to 64 paths.
+fn crt_paths(r: &mut ObjectReader<'_, '_>) -> io::Result<Vec<String>> {
+    let path = r.field_path("crt");
+    match r.take("crt") {
+        None => Ok(Vec::new()),
+        Some(value) => match (value.as_str(), value.as_array()) {
+            (Some(path), _) => Ok(vec![path.to_owned()]),
+            (_, Some(paths)) if (1..=64).contains(&paths.len()) => paths
+                .iter()
+                .map(|path| path.as_str().map(str::to_owned))
+                .collect::<Option<Vec<_>>>()
+                .ok_or_else(|| invalid(format!("{path}: expected paths"))),
+            _ => Err(invalid(format!("{path}: expected a path or a list of 1 to 64 paths"))),
+        },
+    }
+}
+
 impl TlsOptions {
     pub(crate) fn parse(mut r: ObjectReader<'_, '_>) -> io::Result<Self> {
-        let crt = match r.take("crt") {
-            None => Vec::new(),
-            Some(value) => match (value.as_str(), value.as_array()) {
-                (Some(path), _) => vec![path.to_owned()],
-                (_, Some(paths)) if (1..=64).contains(&paths.len()) => paths
-                    .iter()
-                    .map(|path| path.as_str().map(str::to_owned))
-                    .collect::<Option<Vec<_>>>()
-                    .ok_or_else(|| invalid(format!("{}: expected paths", r.field_path("crt"))))?,
-                _ => {
-                    return Err(invalid(format!(
-                        "{}: expected a path or a list of 1 to 64 paths",
-                        r.field_path("crt")
-                    )));
-                }
-            },
-        };
+        let crt = crt_paths(&mut r)?;
         let cert_file = field(r.take_str("cert_file"))?.map(str::to_owned);
         let key_file = field(r.take_str("key_file"))?.map(str::to_owned);
         if cert_file.is_some() != key_file.is_some() {
