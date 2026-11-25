@@ -40,6 +40,21 @@ impl Daemon {
         daemon
     }
 
+    /// Accepts the connection that the daemon opens to `origin`. A daemon that opens
+    /// none fails the test with what it logged, instead of holding the test for ever.
+    fn accept_from(&self, origin: &TcpListener) -> TcpStream {
+        origin.set_nonblocking(true).unwrap();
+        let started = std::time::Instant::now();
+        while started.elapsed() < WAIT {
+            if let Ok((stream, _)) = origin.accept() {
+                return stream;
+            }
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        let logged: Vec<String> = self.lines.try_iter().collect();
+        panic!("the daemon opened no connection to the origin; it logged {logged:#?}");
+    }
+
     /// Waits for a log line that contains `text` and returns it.
     fn log(&self, text: &str) -> String {
         loop {
@@ -402,7 +417,7 @@ fn shutdown_waits_for_flows_as_long_as_the_file_says() {
     fs::write(&file, document).unwrap();
     let daemon = Daemon::start(&["--config-file", file.to_str().unwrap()], vec![file.clone()]);
     let _client = TcpStream::connect_timeout(&vip, WAIT).unwrap();
-    let _held = silent.accept().unwrap();
+    let _held = daemon.accept_from(&silent);
     let pid = daemon.child.id().to_string();
     let asked = std::time::Instant::now();
     assert!(Command::new("kill").args(["-TERM", &pid]).status().unwrap().success());
