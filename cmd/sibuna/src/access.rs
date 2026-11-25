@@ -203,6 +203,8 @@ pub(crate) struct Entry {
     pub protocol: &'static str,
     /// The client reached a TLS frontend.
     pub secure: bool,
+    /// The TLS version and the cipher suite of the client. Each is empty when unknown.
+    pub tls: (&'static str, &'static str),
     /// Sibuna answered for a server that failed, so a 502 or 504 is its own.
     pub failed: bool,
     /// Finds the status in the pieces of a relayed response.
@@ -235,6 +237,7 @@ impl Entry {
             active: None,
             protocol,
             secure: false,
+            tls: ("", ""),
             failed: false,
             scan: crate::client_writer::StatusScan::default(),
             verdict: "-",
@@ -396,6 +399,7 @@ pub(crate) fn capture<W>(ctx: &mut Ctx<'_, W>) {
         active: trace.active.take(),
         protocol: protocol_of(trace),
         secure: ctx.ingress.is_some_and(|ingress| ingress.secure),
+        tls: ctx.ingress.map_or(("", ""), |ingress| ingress.tls),
         failed: std::mem::take(&mut trace.failed),
         scan: crate::client_writer::StatusScan::default(),
         verdict,
@@ -473,6 +477,7 @@ pub(crate) fn refused(server: &Server, refused: &sibuna_ingress::Refused<'_>) {
     peer.format(Some(refused.peer));
     let mut entry = Entry::unparsed(peer.as_bytes(), front, refused.protocol);
     entry.secure = true;
+    entry.tls = (refused.secured.version, refused.secured.cipher);
     if observe.log().is_some() {
         let (host, method, path) = (refused.host, refused.method, refused.path);
         entry.set_text(peer.as_bytes(), host.as_bytes(), method.as_bytes(), path.as_bytes());
@@ -502,6 +507,7 @@ pub(crate) fn settle_written(
             };
             let mut entry = Entry::unparsed(peer, front, protocol_of(trace));
             entry.secure = ingress.is_some_and(|ingress| ingress.secure);
+            entry.tls = ingress.map_or(("", ""), |ingress| ingress.tls);
             Some(entry)
         }
         None => None,

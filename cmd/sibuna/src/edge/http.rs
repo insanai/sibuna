@@ -183,7 +183,7 @@ fn ingress_of(server: &Server, peer: SocketAddr, vip: SocketAddr, secure: bool) 
         .as_ref()
         .and_then(|routes| routes.frontend(vip))
         .is_some_and(|front| front.trusts(peer.ip()));
-    Ingress { peer, vip, secure, cert: None, trusted }
+    Ingress { peer, vip, secure, cert: None, tls: ("", ""), trusted }
 }
 
 /// Starts the access log, when the topology has one, and the counters beside it.
@@ -229,30 +229,9 @@ impl Http {
         let ingress = if prepared.identities.is_empty() {
             None
         } else {
-            let web = server.clone();
-            let pool = workers.clone();
-            let handler = Arc::new(move |stream, peer, vip, cert| {
-                let ingress = Ingress { cert, ..ingress_of(&web, peer, vip, true) };
-                serve(&web, pool.as_deref(), stream, ingress, None);
-            });
             let limits = ingress_limits(&prepared.options, prepared.share_address);
-            // Without the workers every request path is the blocking one.
-            let decide = workers.is_some().then(|| {
-                Arc::new(super::inline::Decision { server: server.clone() })
-                    as Arc<dyn sibuna_ingress::Decide>
-            });
-            let ingress = sibuna_ingress::Ingress::start(
-                prepared.identities,
-                edge.flow_budget(),
-                handler,
-                decide,
-                limits,
-            )?;
-            ingress.guard(quic_admission(server.clone()));
-            // Without the workers no decision hears of the requests the runtime refuses.
-            let web = server.clone();
-            ingress
-                .report_refusals(Arc::new(move |refused| crate::access::refused(&web, refused)));
+            let budget = edge.flow_budget();
+            let ingress = start_ingress(&server, &workers, prepared.identities, budget, limits)?;
             Some(ingress)
         };
         let reaper = start_reaper(&server)?;
@@ -369,6 +348,36 @@ fn poisoned<T>(error: std::sync::PoisonError<T>) -> T {
 
 /// Starts the event-driven workers when the topology asks for them and the platform has
 /// them.
+/// Starts the protocol runtime of the TLS listeners. Its connections reach the server
+/// through the workers, or without them through a thread each.
+#[cfg(feature = "https")]
+fn start_ingress(
+    server: &Arc<Server>,
+    workers: &Option<Arc<Workers>>,
+    identities: BTreeMap<SocketAddr, sibuna_ingress::Identity>,
+    budget: sibuna_lb::FlowBudget,
+    limits: sibuna_ingress::Limits,
+) -> io::Result<sibuna_ingress::Ingress> {
+    let web = server.clone();
+    let pool = workers.clone();
+    let handler = Arc::new(move |stream, peer, vip, secured: sibuna_ingress::Secured| {
+        let tls = (secured.version, secured.cipher);
+        let ingress = Ingress { cert: secured.cert, tls, ..ingress_of(&web, peer, vip, true) };
+        serve(&web, pool.as_deref(), stream, ingress, None);
+    });
+    // Without the workers every request path is the blocking one.
+    let decide = workers.is_some().then(|| {
+        Arc::new(super::inline::Decision { server: server.clone() })
+            as Arc<dyn sibuna_ingress::Decide>
+    });
+    let ingress = sibuna_ingress::Ingress::start(identities, budget, handler, decide, limits)?;
+    ingress.guard(quic_admission(server.clone()));
+    // Without the workers no decision hears of the requests the runtime refuses.
+    let web = server.clone();
+    ingress.report_refusals(Arc::new(move |refused| crate::access::refused(&web, refused)));
+    Ok(ingress)
+}
+
 fn start_workers(server: &Arc<Server>, options: &HttpOptions) -> io::Result<Option<Arc<Workers>>> {
     if !options.event_loop || !Workers::SUPPORTED {
         return Ok(None);

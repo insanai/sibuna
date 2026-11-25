@@ -244,6 +244,8 @@ fn an_http3_request_is_logged_with_its_protocol_server_and_bytes() {
         ("client", "127.0.0.1"),
         ("frontend", "web"),
         ("protocol", "h3"),
+        ("tls_version", "1.3"),
+        ("tls_cipher", "-"),
         ("scheme", "https"),
         ("method", "GET"),
         ("path", "/page"),

@@ -221,6 +221,7 @@ fn an_http2_request_to_an_http11_pool_is_logged_with_its_server_and_times() {
         ("frontend", "web"),
         ("protocol", "h2"),
         ("scheme", "https"),
+        ("tls_version", "1.3"),
         ("method", "GET"),
         ("path", "/page"),
         ("status", "200"),
@@ -232,10 +233,56 @@ fn an_http2_request_to_an_http11_pool_is_logged_with_its_server_and_times() {
         assert_eq!(field(line, name), value, "{name} in {line}");
     }
     assert!(field(line, "host").starts_with("localhost"), "{line}");
+    assert!(field(line, "tls_cipher").starts_with("TLS13_"), "{line}");
     assert!(!line.contains("secret"), "the query is not logged: {line}");
     let total: f64 = field(line, "duration_ms").parse().unwrap();
     let first: f64 = field(line, "ttfb_ms").parse().unwrap();
     assert!(first > 0.0 && first <= total, "{line}");
+}
+
+/// One HTTP/1.1 request over TLS 1.2, which is what a client without ALPN speaks.
+async fn get_over_tls12(vip: SocketAddr, path: &str) -> String {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    let mut trust = rustls::RootCertStore::empty();
+    let authority = rustls::pki_types::pem::PemObject::from_pem_file(fixture("ca.pem"));
+    trust.add(authority.unwrap()).unwrap();
+    let provider = Arc::new(rustls::crypto::ring::default_provider());
+    let config = rustls::ClientConfig::builder_with_provider(provider)
+        .with_protocol_versions(&[&rustls::version::TLS12])
+        .unwrap()
+        .with_root_certificates(trust)
+        .with_no_client_auth();
+    let tcp = tokio::net::TcpStream::connect(vip).await.unwrap();
+    let connector = tokio_rustls::TlsConnector::from(Arc::new(config));
+    let mut tls = connector.connect("localhost".try_into().unwrap(), tcp).await.unwrap();
+    let request = format!("GET {path} HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n");
+    tls.write_all(request.as_bytes()).await.unwrap();
+    let mut answer = Vec::new();
+    let _ = tls.read_to_end(&mut answer).await;
+    String::from_utf8_lossy(&answer).into_owned()
+}
+
+#[test]
+fn an_http11_request_over_tls_is_logged_with_the_version_and_the_suite() {
+    for http in ["", r#","event_loop":false"#] {
+        let daemon = start_with(origin(), Extra { http, ..Extra::default() });
+        let vip = daemon.vip;
+        let answer = runtime().block_on(async {
+            tokio::time::timeout(WAIT, get_over_tls12(vip, "/plain")).await.unwrap()
+        });
+        assert!(answer.starts_with("HTTP/1.1 200"), "{answer}");
+        let line = &daemon.lines(1)[0];
+        for (name, value) in [
+            ("protocol", "http/1.1"),
+            ("scheme", "https"),
+            ("tls_version", "1.2"),
+            ("path", "/plain"),
+            ("status", "200"),
+        ] {
+            assert_eq!(field(line, name), value, "{name} in {line}");
+        }
+        assert!(field(line, "tls_cipher").starts_with("TLS_ECDHE_"), "{line}");
+    }
 }
 
 #[test]
@@ -307,6 +354,7 @@ fn refused_requests(http: &str) {
             ("method", "GET"),
             ("client", "127.0.0.1"),
             ("frontend", "web"),
+            ("tls_version", "1.3"),
             ("server", "-"),
             ("verdict", "-"),
         ] {

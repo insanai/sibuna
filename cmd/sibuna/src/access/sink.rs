@@ -403,6 +403,11 @@ pub(crate) fn format_json(entry: &Entry, out: &mut Vec<u8>) {
     } else {
         b",\"scheme\":\"http\""
     });
+    let or_dash = |name: &'static str| if name.is_empty() { "-" } else { name };
+    out.extend_from_slice(b",\"tls_version\":");
+    write_string(or_dash(entry.tls.0).as_bytes(), out);
+    out.extend_from_slice(b",\"tls_cipher\":");
+    write_string(or_dash(entry.tls.1).as_bytes(), out);
     out.extend_from_slice(b",\"method\":");
     write_string(entry.method(), out);
     out.extend_from_slice(b",\"host\":");
@@ -616,14 +621,17 @@ mod tests {
             line(&entry),
             "{\"time\":\"2026-11-24T10:15:02.418Z\",\"client\":\"203.0.113.7\",\
              \"frontend\":\"-\",\"protocol\":\"http/1.1\",\"scheme\":\"http\",\
-             \"method\":\"GET\",\
+             \"tls_version\":\"-\",\"tls_cipher\":\"-\",\"method\":\"GET\",\
              \"host\":\"www.example.com\",\"path\":\"/index.html\",\"status\":200,\
              \"bytes_in\":112,\"bytes_out\":5310,\"duration_ms\":3.184,\"ttfb_ms\":null,\
              \"backend\":\"-\",\"server\":\"-\",\"verdict\":\"pass\"}\n"
         );
         entry.first_byte = Some(Duration::from_micros(2907));
         assert!(line(&entry).contains("\"ttfb_ms\":2.907,"));
-        assert_eq!(line(&entry).matches("\":").count(), 16, "sixteen fields");
+        assert_eq!(line(&entry).matches("\":").count(), 18, "eighteen fields");
+        entry.tls = ("1.3", "TLS13_AES_128_GCM_SHA256");
+        let secured = "\"tls_version\":\"1.3\",\"tls_cipher\":\"TLS13_AES_128_GCM_SHA256\",";
+        assert!(line(&entry).contains(secured), "{}", line(&entry));
         assert_parses(&line(&entry));
     }
 

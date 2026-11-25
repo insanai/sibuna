@@ -260,6 +260,8 @@ fn each_request_is_one_line_with_its_server_status_and_times() {
             ("frontend", "web"),
             ("protocol", "http/1.1"),
             ("scheme", "http"),
+            ("tls_version", "-"),
+            ("tls_cipher", "-"),
             ("method", "GET"),
             ("host", "www.example.com"),
             ("path", "/index.html"),
