@@ -267,7 +267,16 @@ fn grpc_calls_on_a_shared_http2_session_are_logged_one_line_each() {
 
 #[test]
 fn a_request_that_the_runtime_refuses_is_logged_and_counted_by_reason() {
-    let extra = Extra { http: r#","max_connections":1"#, ..Extra::default() };
+    refused_requests(r#","max_connections":1"#);
+}
+
+#[test]
+fn the_thread_path_logs_and_counts_what_the_runtime_refuses() {
+    refused_requests(r#","max_connections":1,"event_loop":false"#);
+}
+
+fn refused_requests(http: &str) {
+    let extra = Extra { http, ..Extra::default() };
     let daemon = start_with(slow_origin(Duration::from_millis(700)), extra);
     let vip = daemon.vip;
     runtime().block_on(async {

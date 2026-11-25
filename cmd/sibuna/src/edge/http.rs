@@ -249,6 +249,10 @@ impl Http {
                 limits,
             )?;
             ingress.guard(quic_admission(server.clone()));
+            // Without the workers no decision hears of the requests the runtime refuses.
+            let web = server.clone();
+            ingress
+                .report_refusals(Arc::new(move |refused| crate::access::refused(&web, refused)));
             Some(ingress)
         };
         let reaper = start_reaper(&server)?;
