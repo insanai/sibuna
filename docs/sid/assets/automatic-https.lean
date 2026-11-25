@@ -473,4 +473,173 @@ theorem check_fails_when_hidden (visible : Nat → Bool) (fuel asked : Nat)
     simp only [check, hidden asked]
     exact ih (asked + 1)
 
+/-! ## Part H: Issuance on demand -/
+
+/-- The bucket of tokens: one new certificate takes one token. -/
+structure Bucket where
+  capacity : Nat
+  tokens : Nat
+
+/-- The bucket gains tokens with time, to at most its capacity. -/
+def Bucket.refill (b : Bucket) (gained : Nat) : Bucket :=
+  { b with tokens := min b.capacity (b.tokens + gained) }
+
+/-- Takes one token. Returns whether there was one, and the bucket afterwards. -/
+def Bucket.take (b : Bucket) : Bool × Bucket :=
+  if b.tokens = 0 then (false, b) else (true, { b with tokens := b.tokens - 1 })
+
+/-- One name asks for a token after the bucket gained `gained` tokens. -/
+def Bucket.step (b : Bucket) (gained : Nat) : Bool × Bucket := (b.refill gained).take
+
+/-- The orders that a run admits. Each element is the gain before one name asks. -/
+def admitted : Bucket → List Nat → Nat
+  | _, [] => 0
+  | b, gained :: rest =>
+    (if (b.step gained).1 then 1 else 0) + admitted (b.step gained).2 rest
+
+/-- A refill never exceeds the capacity. -/
+theorem refill_within (b : Bucket) (gained : Nat) : (b.refill gained).tokens ≤ b.capacity := by
+  simp only [Bucket.refill]
+  exact Nat.min_le_left _ _
+
+/-- A take leaves the bucket within its capacity. -/
+theorem take_within (b : Bucket) (h : b.tokens ≤ b.capacity) :
+    b.take.2.tokens ≤ b.take.2.capacity := by
+  unfold Bucket.take
+  split
+  · exact h
+  · simp only
+    omega
+
+/-- An empty bucket admits nothing: the tokens never go below zero. -/
+theorem empty_bucket_refuses (b : Bucket) (h : b.tokens = 0) : b.take.1 = false := by
+  simp [Bucket.take, h]
+
+/-- A step conserves tokens: what it admits and what it leaves is at most what the bucket had and gained. -/
+theorem step_conserves (b : Bucket) (gained : Nat) :
+    (if (b.step gained).1 then 1 else 0) + (b.step gained).2.tokens ≤ b.tokens + gained := by
+  have within : (b.refill gained).tokens ≤ b.tokens + gained := by
+    simp only [Bucket.refill]
+    exact Nat.min_le_right _ _
+  unfold Bucket.step Bucket.take
+  split
+  · simp only [Bool.false_eq_true, if_false]
+    omega
+  · simp only [if_true]
+    omega
+
+/-- Over any run the admitted orders are at most the tokens at its start plus the tokens gained. -/
+theorem admitted_bounded (b : Bucket) (gains : List Nat) :
+    admitted b gains ≤ b.tokens + gains.sum := by
+  induction gains generalizing b with
+  | nil => simp [admitted]
+  | cons gained rest ih =>
+    simp only [admitted, List.sum_cons]
+    have step := step_conserves b gained
+    have tail := ih (b.step gained).2
+    omega
+
+/-- A bucket that starts full admits at most its capacity plus the refills. -/
+theorem full_bucket_admits_at_most (capacity : Nat) (gains : List Nat) :
+    admitted { capacity := capacity, tokens := capacity } gains ≤ capacity + gains.sum :=
+  admitted_bounded _ gains
+
+/-- What the guards say about one name. The first four read memory, in the handshake. The last three take time, in the thread. -/
+structure Guards where
+  /-- A plain host name: no address, no wildcard, at most 253 bytes. -/
+  hostName : Bool
+  /-- A suffix of `allow` covers the name, or the file has no list. -/
+  suffix : Bool
+  /-- The name is not denied at the moment. -/
+  notDenied : Bool
+  /-- The held names and the queue have room. -/
+  room : Bool
+  /-- The storage has a fresh certificate. -/
+  stored : Bool
+  /-- The `ask` URL allows the name, or the file has no URL. -/
+  asked : Bool
+  /-- The bucket has a token. -/
+  token : Bool
+
+/-- What becomes of a name that a handshake asks for. -/
+inductive Demand where
+  | notQueued
+  | denied
+  | loaded
+  | ordered
+  deriving DecidableEq
+
+/-- The decision. `guarded` says that the file has `ask` or `allow`. The daemon refuses a file without. -/
+def decide (guarded : Bool) (g : Guards) : Demand :=
+  if !(guarded && g.hostName && g.suffix && g.notDenied && g.room) then .notQueued
+  else if g.stored then .loaded
+  else if !(g.asked && g.token) then .denied
+  else .ordered
+
+/-- An order is placed only when the file has a guard and every guard passes. -/
+theorem ordered_passed_every_guard (guarded : Bool) (g : Guards)
+    (h : decide guarded g = .ordered) :
+    guarded = true ∧ g.hostName = true ∧ g.suffix = true ∧ g.notDenied = true ∧ g.room = true
+      ∧ g.asked = true ∧ g.token = true := by
+  unfold decide at h
+  cases guarded <;> cases hn : g.hostName <;> cases sf : g.suffix <;> cases nd : g.notDenied
+    <;> cases rm : g.room <;> cases st : g.stored <;> cases ak : g.asked <;> cases tk : g.token
+    <;> simp_all
+
+/-- Without a guard in the file nothing is ordered and nothing is loaded. -/
+theorem unguarded_orders_nothing (g : Guards) : decide false g = .notQueued := by
+  simp [decide]
+
+/-- A name that the `ask` URL refuses is never ordered. -/
+theorem refused_by_ask_is_not_ordered (guarded : Bool) (g : Guards) (h : g.asked = false) :
+    decide guarded g ≠ .ordered := by
+  intro ordered
+  have := ordered_passed_every_guard guarded g ordered
+  simp_all
+
+/-- A name without a token is never ordered. -/
+theorem without_token_is_not_ordered (guarded : Bool) (g : Guards) (h : g.token = false) :
+    decide guarded g ≠ .ordered := by
+  intro ordered
+  have := ordered_passed_every_guard guarded g ordered
+  simp_all
+
+/-- What happens to the tables of issuance on demand. -/
+inductive TableEvent where
+  /-- A handshake asks for a new name. -/
+  | request
+  /-- The thread holds a queued name. -/
+  | hold
+  /-- The thread denies a queued name. -/
+  | deny
+  /-- A held name is released. -/
+  | release
+
+/-- The tables as two counts: the held names and the queued names. -/
+def tableStep (bound : Nat) (s : Nat × Nat) : TableEvent → Nat × Nat
+  | .request => if s.1 + s.2 < bound then (s.1, s.2 + 1) else s
+  | .hold => if s.2 = 0 then s else (s.1 + 1, s.2 - 1)
+  | .deny => (s.1, s.2 - 1)
+  | .release => (s.1 - 1, s.2)
+
+/-- No event takes the held names and the queue together over the bound. -/
+theorem table_step_within (bound : Nat) (s : Nat × Nat) (e : TableEvent)
+    (h : s.1 + s.2 ≤ bound) : (tableStep bound s e).1 + (tableStep bound s e).2 ≤ bound := by
+  cases e <;> simp only [tableStep]
+  · split <;> first | omega | (simp at *; omega)
+  · split <;> first | omega | (simp at *; omega)
+  · omega
+  · omega
+
+/-- After any run of events the daemon holds at most `bound` names. -/
+theorem table_within (bound : Nat) (events : List TableEvent) (s : Nat × Nat)
+    (h : s.1 + s.2 ≤ bound) : (events.foldl (tableStep bound) s).1 ≤ bound := by
+  induction events generalizing s with
+  | nil =>
+    simp only [List.foldl]
+    omega
+  | cons e rest ih =>
+    simp only [List.foldl]
+    exact ih (tableStep bound s e) (table_step_within bound s e h)
+
 end SibunaAcme
