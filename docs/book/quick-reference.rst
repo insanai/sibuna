@@ -90,6 +90,8 @@ Edge load balancer
 
 ``"http": {"surface": "off"}`` gives a load balancer with no firewall. TCP and UDP frontends never use the firewall.
 
+Admission options of a frontend (SID 0032): ``"defer_accept": "5s"`` and ``"backlog": 4096`` on ``tcp`` and ``http``; ``"inspect_bytes"`` and ``"inspect_fallback": {"absent": {"action": "deny"}}`` beside ``tcp_inspect``; ``"udp_inspect": "quic"`` on ``udp``. All are off by default.
+
 Console (opt-in preview)
 ------------------------
 
