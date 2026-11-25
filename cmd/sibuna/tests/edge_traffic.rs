@@ -662,3 +662,34 @@ fn a_client_that_still_sends_a_refused_body_reads_the_413() {
         assert!(metrics.contains("sibuna_upstream_errors_total 0\n"), "({event_loop})\n{metrics}");
     });
 }
+
+/// Waits until `show servers` has `flows` in the column of that name for `s0`.
+fn flows_become(edge: &traffic::Edge, flows: &str, within: Duration) -> bool {
+    let started = Instant::now();
+    while started.elapsed() < within {
+        if shown(edge, "s0", "flows") == flows {
+            return true;
+        }
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    false
+}
+
+#[test]
+fn a_client_that_resets_frees_its_server_while_the_server_is_silent() {
+    both(|event_loop| {
+        let slow = Origin::start("slow");
+        slow.stalled.store(true, Ordering::SeqCst);
+        let members = r#""response_timeout":"10s","#;
+        let edge = Topology::new(&[slow.address]).backend(members).start(event_loop);
+        let mut client = edge.connect();
+        let head = "POST /length HTTP/1.1\r\nHost: app.example\r\nExpect: 100-continue\r\n";
+        request(&mut client, format!("{head}Content-Length: 2\r\n\r\nhi").as_bytes());
+        assert!(flows_become(&edge, "1", Duration::from_secs(2)), "{event_loop}");
+        // Our interim answer is still unread, so closing the socket resets the
+        // connection. The server answers only after three seconds.
+        std::thread::sleep(Duration::from_millis(200));
+        drop(client);
+        assert!(flows_become(&edge, "0", Duration::from_millis(1500)), "{event_loop}");
+    });
+}

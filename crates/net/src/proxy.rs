@@ -8,8 +8,9 @@
 //! detected before any byte reaches the client, and a safe, buffered request is retried once
 //! on a fresh connection.
 
+use std::cell::Cell;
 use std::fmt;
-use std::io::{Read, Write};
+use std::io::{self, Read, Write};
 use std::net::{IpAddr, SocketAddr, TcpStream};
 use std::sync::Arc;
 use std::time::Duration;
@@ -504,8 +505,8 @@ fn exchange_once<W: Write>(
     let _ = origin.set_read_timeout(bounds.response);
     send_request(origin, origin_write, upload, exchange, handshake.is_some(), progress, &bounds)?;
     let waiting = Waiting::begin(exchange.client.activity, &bounds);
-    let mut reader = Reader::new(origin, origin_read);
     if let Some(offered) = handshake {
+        let mut reader = Reader::new(origin, origin_read);
         let length = final_response_head(&mut reader, exchange.client.writer, progress)?;
         let head = reader.buffered().get(..length).unwrap_or_default();
         let parsed = parse_response_head(head, false).ok_or(ProxyError::UpstreamReadFailed)?;
@@ -518,14 +519,34 @@ fn exchange_once<W: Write>(
             }
             return relay_upgrade(exchange, origin, reader, length, offered, upload);
         }
+        // The server declined the upgrade. Its answer is relayed as it is.
+        let relayed = respond(&mut reader, exchange, via)?;
+        return Ok(relayed);
     }
+    let gone = Cell::new(false);
+    let watched = Watched::new(origin, exchange.client.stream, bounds.response, &gone);
+    let mut reader = Reader::new(watched, origin_read);
+    // A client that is gone is the reason of the failure, whatever the read reported.
+    respond(&mut reader, exchange, via).map_err(|error| match gone.get() {
+        true => ProxyError::ClientFailed,
+        false => error,
+    })
+}
+
+/// Relays the response of the server to the client and tells the route its status.
+fn respond<R: Read, W: Write>(
+    reader: &mut Reader<'_, R>,
+    exchange: &mut Exchange<'_, W>,
+    via: &mut Via<'_>,
+) -> Result<Relayed, ProxyError> {
+    let progress = Progress { activity: exchange.client.activity };
     let head_request = exchange.request.method == Method::Head;
     let edit = match &*via {
         Via::Fixed(_) => exchange.audit.response_edit,
         Via::Route(route) => route.response_edit(),
     };
     let relayed = relay_response_edited(
-        &mut reader,
+        reader,
         exchange.client.writer,
         head_request,
         exchange.keep_alive,
@@ -537,6 +558,67 @@ fn exchange_once<W: Write>(
         route.responded(relayed.status);
     }
     Ok(relayed)
+}
+
+/// How often a wait for the server looks at the client (SID 0019).
+const WATCH: Duration = Duration::from_millis(250);
+
+/// The server socket of an exchange, read with an eye on the client.
+///
+/// A blocking read waits on one socket. So the wait for the server is cut into slices
+/// of [`WATCH`], and between two slices we ask the client socket for its pending error.
+/// A client that reset its connection is then noticed within a slice, not when the
+/// server answers at last. A client that closed in order is not treated as gone: it
+/// may have closed its sending side only and still read the answer.
+struct Watched<'a> {
+    origin: &'a TcpStream,
+    client: &'a TcpStream,
+    /// The longest silence of the server, or `None` for an unwatched read.
+    bound: Option<Duration>,
+    slice: Duration,
+    gone: &'a Cell<bool>,
+}
+
+impl<'a> Watched<'a> {
+    fn new(
+        origin: &'a TcpStream,
+        client: &'a TcpStream,
+        bound: Option<Duration>,
+        gone: &'a Cell<bool>,
+    ) -> Self {
+        let slice = bound.map_or(WATCH, |bound| bound.clamp(Duration::from_millis(1), WATCH));
+        if bound.is_some() {
+            let _ = origin.set_read_timeout(Some(slice));
+        }
+        Self { origin, client, bound, slice, gone }
+    }
+}
+
+impl Read for Watched<'_> {
+    fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+        let mut origin = self.origin;
+        let Some(bound) = self.bound else { return origin.read(buffer) };
+        let mut waited = Duration::ZERO;
+        loop {
+            let error = match origin.read(buffer) {
+                Err(error) if is_wait(&error) => error,
+                other => return other,
+            };
+            waited += self.slice;
+            if !matches!(self.client.take_error(), Ok(None)) {
+                self.gone.set(true);
+                return Err(io::ErrorKind::ConnectionAborted.into());
+            }
+            if waited >= bound {
+                return Err(error);
+            }
+        }
+    }
+}
+
+/// True for the error of a read that reached its timeout.
+fn is_wait(error: &io::Error) -> bool {
+    matches!(error.kind(), io::ErrorKind::WouldBlock | io::ErrorKind::TimedOut)
 }
 
 /// Writes the request head and body to the origin and flushes it.
