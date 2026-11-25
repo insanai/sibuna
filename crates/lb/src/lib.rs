@@ -244,6 +244,15 @@ impl Edge {
         self.flow_ends.try_iter()
     }
 
+    /// Closes every TCP connection and UDP mapping, for the end of a shutdown. Their
+    /// log lines, with the end `shutdown`, wait for [`Edge::ended_flows`].
+    pub fn close_flows(&mut self) {
+        self.pending.clear();
+        self.inspecting.clear();
+        self.udp.clear();
+        self.relays.stop();
+    }
+
     /// Takes accepted HTTP sockets for plaintext dispatch or TLS negotiation.
     pub fn accepted(&mut self) -> impl Iterator<Item = Accepted> {
         self.http_pending.drain(..)
@@ -790,63 +799,69 @@ impl Edge {
         self.budget.allowed(listener, peer, rate)
     }
 
-    fn forward(&mut self, key: Client, size: usize) -> bool {
-        let refuse = |reason| {
-            self.stats.refuse(reason);
-            false
+    /// Opens the mapping of a new UDP client towards a server of the pool. A client
+    /// that gets none is counted by the reason.
+    fn open_mapping(&mut self, key: Client, now: Instant) -> bool {
+        if self.draining {
+            self.stats.refuse(Refusal::Draining);
+            return false;
+        }
+        // Datagram sources are not validated. A separate ceiling keeps spoofed
+        // sources from taking the slots of TCP and HTTP clients, and a full table
+        // gives up the oldest mapping that no origin has answered.
+        if self.udp.len() >= self.udp_limit && !self.evict_unanswered() {
+            self.stats.refuse(Refusal::UdpFlowLimit);
+            return false;
+        }
+        let permit = match self.budget.reserve() {
+            Some(permit) => Some(permit),
+            None if self.evict_unanswered() => self.budget.reserve(),
+            None => None,
         };
+        let Some(permit) = permit else {
+            self.stats.refuse(Refusal::UdpFlowLimit);
+            return false;
+        };
+        let Some(ticket) = self.reserve(key.0, key.1) else {
+            self.stats.refuse(Refusal::NoServer);
+            return false;
+        };
+        let Ok(origin) = connected_udp(ticket.addr) else { return false };
+        if self.poll.set(handle(&origin), READ, Ready::Udp(key)).is_err() {
+            return false;
+        }
+        self.unanswered.push_back(key);
+        self.listeners[key.0].route.info.stats.flow();
+        let mut line = self.begin_line(key.0, key.1);
+        if let Some(line) = &mut line {
+            line.server = Some(ticket.addr);
+        }
+        let timeout = self.listeners[key.0].route.timeout;
+        self.udp.insert(
+            key,
+            DatagramFlow {
+                line,
+                _permit: permit,
+                origin,
+                ticket,
+                first_request: Some(now),
+                last: now,
+                timeout,
+                wire_credit: 0,
+                payload_credit: 0,
+            },
+        );
+        true
+    }
+
+    fn forward(&mut self, key: Client, size: usize) -> bool {
         if !self.allowed(key.0, key.1) {
-            return refuse(Refusal::UdpRateLimit);
+            self.stats.refuse(Refusal::UdpRateLimit);
+            return false;
         }
         let now = Instant::now();
-        if !self.udp.contains_key(&key) {
-            if self.draining {
-                return refuse(Refusal::Draining);
-            }
-            // Datagram sources are not validated. A separate ceiling keeps spoofed
-            // sources from taking the slots of TCP and HTTP clients, and a full table
-            // gives up the oldest mapping that no origin has answered.
-            if self.udp.len() >= self.udp_limit && !self.evict_unanswered() {
-                self.stats.refuse(Refusal::UdpFlowLimit);
-                return false;
-            }
-            let permit = match self.budget.reserve() {
-                Some(permit) => Some(permit),
-                None if self.evict_unanswered() => self.budget.reserve(),
-                None => None,
-            };
-            let Some(permit) = permit else {
-                self.stats.refuse(Refusal::UdpFlowLimit);
-                return false;
-            };
-            let Some(ticket) = self.reserve(key.0, key.1) else {
-                self.stats.refuse(Refusal::NoServer);
-                return false;
-            };
-            let Ok(origin) = connected_udp(ticket.addr) else { return false };
-            if self.poll.set(handle(&origin), READ, Ready::Udp(key)).is_err() {
-                return false;
-            }
-            self.unanswered.push_back(key);
-            self.listeners[key.0].route.info.stats.flow();
-            let mut line = self.begin_line(key.0, key.1);
-            if let Some(line) = &mut line {
-                line.server = Some(ticket.addr);
-            }
-            self.udp.insert(
-                key,
-                DatagramFlow {
-                    line,
-                    _permit: permit,
-                    origin,
-                    ticket,
-                    first_request: Some(now),
-                    last: now,
-                    timeout: self.listeners[key.0].route.timeout,
-                    wire_credit: 0,
-                    payload_credit: 0,
-                },
-            );
+        if !self.udp.contains_key(&key) && !self.open_mapping(key, now) {
+            return false;
         }
         let Some(flow) = self.udp.get_mut(&key) else { return false };
         match flow.origin.send(&self.buffer[..size]) {

@@ -276,8 +276,9 @@ impl Relays {
     }
 }
 
-impl Drop for Relays {
-    fn drop(&mut self) {
+impl Relays {
+    /// Ends the relay threads and with them their streams. Later streams are dropped.
+    pub fn stop(&mut self) {
         for worker in &mut self.workers {
             worker.tx = None;
             worker.wake.wake();
@@ -287,6 +288,12 @@ impl Drop for Relays {
                 let _ = thread.join();
             }
         }
+    }
+}
+
+impl Drop for Relays {
+    fn drop(&mut self) {
+        self.stop();
     }
 }
 
