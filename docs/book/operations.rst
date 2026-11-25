@@ -1,7 +1,7 @@
-Part IX: Operations and Deployment
+Part XI: Operations and Deployment
 ==================================
 
-We cover the two surfaces, every command-line flag, forward-auth recipes, policy files, persistent storage in SQLite or PostgreSQL, clustering over one shared database, and packaging.
+We cover the two surfaces, every command-line flag, the edge load balancer and its clusters, forward-auth recipes, policy files, persistent storage in SQLite or PostgreSQL, clustering over one shared database, and packaging.
 
 Surfaces and Configuration
 --------------------------
@@ -20,7 +20,7 @@ Choosing a Surface
 Edge mode
 ~~~~~~~~~
 
-With ``--config-file`` the daemon runs as an edge load balancer. It forwards TCP and UDP, terminates TLS, HTTP/2 and HTTP/3, and applies the gate or shield to the HTTP names that need it. ``sibuna lb`` starts the same load balancer from a few options, without a file, and ``sibuna ctl`` changes its servers while it runs. The chapter *Edge Load Balancing* below describes the commands and the file.
+With ``--config-file`` the daemon runs as an edge load balancer. It forwards TCP and UDP, terminates TLS, HTTP/2 and HTTP/3, and applies the gate or shield to the HTTP names that need it. ``sibuna lb`` starts the same load balancer from a few options, without a file, ``sibuna check -f`` checks a file offline, and ``sibuna ctl`` inspects the daemon and changes its servers while it runs. With an ``authority`` section the topology comes from a database that ``sibuna authority`` publishes to (SID 0028), and with a ``mesh`` section several nodes share their state. ``--config-file`` takes none of the options below. The chapter *Edge Load Balancing* below describes the commands and the file.
 
 Command-Line Reference
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -1716,7 +1716,7 @@ It expects the log under ``/var/log/sibuna`` and the admin socket at ``/run/sibu
 
 A request that Sibuna refuses before the firewall decides is logged too, with verdict ``-``: an HTTP/2 or HTTP/3 request above the request bound (503), or one that is malformed (400, 417, 501).
 
-**Metrics.** The metrics text has the process counters and then the series of the edge: requests by status class, bytes and a duration histogram per frontend; requests, failures, failovers, ejections, a response time histogram and ``sibuna_edge_server_up`` and the gauge ``sibuna_edge_server_active_requests`` per server; ``sibuna_edge_server_client_closed_total`` per server; ``sibuna_edge_refused_total`` by ``reason`` (``rate_limit``, ``flow_limit``, ``draining``, ``connection_limit``, ``client_limit``, ``task_limit``, ``exchange_limit``, ``bad_request``, ``client_closed``, ``no_server``, ``udp_rate_limit``, ``udp_flow_limit``, ``udp_reply_limit``, ``inspect_denied``, ``udp_not_quic``); the flow table (``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``, ``sibuna_edge_drops_total``); and the counters of the log (with ``sibuna_edge_access_log_queue_length`` and ``sibuna_edge_flow_log_dropped_total``) and of the PROXY protocol.
+**Metrics.** The metrics text has the process counters and then the series of the edge: requests by status class, bytes and a duration histogram per frontend; requests, failures, failovers, ejections, a response time histogram and ``sibuna_edge_server_up`` and the gauge ``sibuna_edge_server_active_requests`` per server; ``sibuna_edge_server_client_closed_total`` per server; ``sibuna_edge_refused_total`` by ``reason`` (``rate_limit``, ``flow_limit``, ``draining``, ``connection_limit``, ``client_limit``, ``task_limit``, ``exchange_limit``, ``bad_request``, ``client_closed``, ``no_server``, ``udp_rate_limit``, ``udp_flow_limit``, ``udp_reply_limit``, ``hook``, ``inspect_denied``, ``udp_not_quic``); the flow table (``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``, ``sibuna_edge_drops_total``); and the counters of the log (with ``sibuna_edge_access_log_queue_length`` and ``sibuna_edge_flow_log_dropped_total``) and of the PROXY protocol.
 
 A client that closes its connection or resets its stream before the server answered is logged with status 499 and counted in ``sibuna_edge_server_client_closed_total``. It is not a failure of the server: ``sibuna_edge_server_failures_total`` and passive health count only what a server did. An alert on failures therefore does not fire when a load test ends or when users close their browsers.
 
@@ -1824,7 +1824,7 @@ Each node names its own address under ``listen`` and the other nodes under ``pee
 
 A node tells its peers the client and the time the ban ends, three times over five seconds, in a datagram signed with the key. A peer keeps the later end. A node that restarts, or that was cut off, receives all bans in effect from each peer when it returns. ``sibuna ctl SOCKET show stats`` shows the series ``sibuna_edge_mesh_bans_sent_total``, ``_received_total``, ``_applied_total``, ``_dropped_total`` and ``sibuna_edge_mesh_bans_known``.
 
-Three things stay local. Lifting a ban on one node lifts it there only. Bans that the policy file configures are not sent, so the file must be the same on every node. The request limiters count on each node by itself. The nodes must use the same ``ipv6_prefix`` and keep their clocks within a few seconds. ``mesh.replicate_bans: false`` turns the sharing off.
+Two things stay local. Bans that the policy file configures are not sent, so the file must be the same on every node. The request limiters count on each node by itself. The nodes must use the same ``ipv6_prefix`` and keep their clocks within a few seconds. ``mesh.replicate_bans: false`` turns the sharing off.
 
 The commands of the admin socket travel the same way. ``sibuna ctl SOCKET set server app/a state drain`` on any node takes the server out of rotation on every node, and ``state ready`` returns it everywhere. ``set server ... weight``, ``add server`` and ``del server`` hold on every node too. The later command wins. A node that restarts learns the commands in force from its peers, so it does not send clients to a server under maintenance. The last word ``local`` keeps a command on its node, and ``mesh.replicate_commands: false`` turns the sharing off.
 
@@ -2020,7 +2020,7 @@ Forwarding has limits that we should know before we rely on it.
 
 - It keeps the node of a client, not a TCP connection. When the router moves the packets of an established TCP connection to another node, that connection is reset. The client's next connection reaches its owner again.
 - HTTP/3 and frontends with ``proxy_protocol`` are served by the node that receives them.
-- It works only while the nodes are close: the mesh must be in its regional regime, with a round trip between the nodes below about 3 ms.
+- It works only while the nodes are close: the mesh must be in its regional regime. The mesh leaves that regime when the 95th percentile of the round trip between the nodes passes 3 ms, and returns to it from the wide-area regime only when it falls below 1.5 ms.
 - The nodes authenticate each other with the mesh key, and encrypt nothing. The network between the nodes must be as trusted as the network to the servers. It should carry a client datagram plus 76 bytes without fragmentation.
 - A forwarded flow costs one more hop each way, and a new connection costs two more round trips between the nodes. On loopback we measured 20 microseconds more for each exchange and 80 to 120 microseconds more for a new connection.
 
@@ -2212,10 +2212,20 @@ A deployment takes one server out of rotation, replaces it, and returns it. For 
      - Removes a server. The last server of a pool stays. We drain it instead.
    * - ``reload``
      - Loads the file and applies it, as SIGHUP does, and prints the result or the reason for which the file was rejected.
+   * - ``show hooks``
+     - The plugins with their calls, verdicts, failures and open breakers (section *Hooks*).
+   * - ``show affinity``
+     - The sticky table and the shares of fleet-wide limits (section *A sticky table and a limit for the whole cluster*).
+   * - ``show cluster``, ``reload cluster``
+     - Compares the nodes of a mesh, and reloads every node from the file of this one (section *One file for the cluster*).
+   * - ``show authority``
+     - The revision of the database that this node serves (section *A database for the topology*).
+   * - ``del ban ADDRESS``
+     - Lifts the ban of one client (section *Bans across a cluster*).
    * - ``help``
      - Lists the commands.
 
-A command applies to new flows only. An established TCP stream, a UDP mapping and a running HTTP exchange keep their server, as they do across a reload. ``sibuna ctl`` exits with status 0 on success. On failure it exits with status 1 and prints a diagnostic with a code from ``ADM001`` to ``ADM013`` and a hint, and nothing has changed.
+A command applies to new flows only. An established TCP stream, a UDP mapping and a running HTTP exchange keep their server, as they do across a reload. ``sibuna ctl`` exits with status 0 on success. On failure it exits with status 1 and prints a diagnostic with a code from ``ADM001`` to ``ADM013``, or ``DBA006`` and ``DBA009`` for the database authority, and a hint, and nothing has changed. Part XII lists the codes.
 
 The file stays the authority. Run-time changes live in memory, as an overlay on the last accepted revision, and the daemon never writes the file. The table says what happens to each change.
 
@@ -2238,7 +2248,7 @@ The file stays the authority. Run-time changes live in memory, as an overlay on 
 
 A weight, an addition and a removal are topology, and the file can express them. The run-time form is a rehearsal. To keep the change we edit the module: a server added with ``add server app/blue 10.0.0.3:80`` becomes a new element of ``servers``, or a new host of the list that a comprehension reads. A drain is different. It says that somebody is working on a machine, and the file has no key for it. A reload must not return that machine to rotation, so a drain passes the reload. It ends when we say ``ready``, when the file drops the server or gives its name another address, or when the daemon restarts. The log line of a reload states what it did: ``Sibuna edge routes reloaded: 1 drain kept, 2 run-time changes replaced by the file``.
 
-Two kinds of pool change their servers and weights only by reload. A pool with ``bounded_maglev``, and the default pool of a node with a ``mesh``, place clients by a table that every node builds from the file. A pool with ``http_version`` or ``tls`` reaches its servers through adapters that a reload prepares. ``drain`` works for every pool. A command acts on one node. On several nodes we send it to each.
+Two kinds of pool change their servers and weights only by reload. A pool with ``bounded_maglev``, and the default pool of a node with a ``mesh``, place clients by a table that every node builds from the file. A pool with ``http_version`` or ``tls`` reaches its servers through adapters that a reload prepares. ``drain`` works for every pool. Without a mesh a command acts on one node. With a mesh a change to a server reaches every node, unless its last word is ``local`` (section *Bans across a cluster*).
 
 The socket is a Unix socket with mode 0600, so only the user of the daemon can connect. Whoever can connect can direct traffic to an address of his choice. There is no TCP listener for administration. A connection carries one line of at most 512 bytes, and the daemon accepts a burst of 20 commands and 10 per second after it. Each command that changes state is logged with the code ``EDGE010``. A daemon that ``sibuna lb`` started has no file, so ``reload`` and SIGHUP are refused, and its run-time changes last until it stops.
 
@@ -2421,7 +2431,7 @@ A reload loads every module again and checks it before anything changes. A plugi
 The operator console of the edge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The edge can run the console of Part IX beside the load balancer (SID 0031). We add a ``console`` section to the topology file. The console listens on an address of its own, on threads of its own, and it keeps its accounts and its audit log in a SQLite file.
+The edge can run the console of Part XI beside the load balancer (SID 0031). We add a ``console`` section to the topology file. The console listens on an address of its own, on threads of its own, and it keeps its accounts and its audit log in a SQLite file.
 
 .. code-block:: text
 
@@ -2479,7 +2489,7 @@ Every request passes the checks of the console: the session, the role, the ``Ori
        ],
    },
 
-A fleet has at most 64 members. The consoles talk to each other over HTTPS, so each one stands behind a TLS proxy, as Part IX describes for peers. The proxy must set ``X-Forwarded-For``. The two key files hold 64 hexadecimal digits each and are readable by their owner only.
+A fleet has at most 64 members. The consoles talk to each other over HTTPS, so each one stands behind a TLS proxy, as Part XI describes for peers. The proxy must set ``X-Forwarded-For``. The two key files hold 64 hexadecimal digits each and are readable by their owner only.
 
 The listener screens a connection by its source address when it accepts it. Behind a proxy it serves the trusted proxies only. Without a proxy, and with ``allow_operators``, it serves those networks only. A screened connection is closed before it takes a slot. A peer must connect from the ``allow_ips`` of its entry, must name itself and this node in a fresh transcript, and must prove the peer key. ``allow_operators`` holds for every other request.
 
@@ -2490,7 +2500,7 @@ The listener has a fixed number of slots: 64 browser streams, one peer stream fo
 Several nodes
 ~~~~~~~~~~~~~
 
-For several nodes we can add a top-level ``mesh`` object with a unicast ``listen`` address, a list of ``peers`` as numeric UDP socket addresses, and a ``key_file`` containing the same 32 random binary bytes on each node. We provision this key on the management network and restart nodes when rotating it. Peers exchange authenticated challenges every half second. Pools with no explicit scheduler choose two candidates while standalone and use a deterministic weighted Maglev table once a peer responds. The wide-area regime prefers eligible local servers over servers marked ``"remote": true``. At least three missed probe periods expire a peer. Each node makes its own health and admission decisions. Keeping established flows on their owning node across a routing change requires upstream flow steering.
+For several nodes we can add a top-level ``mesh`` object with a unicast ``listen`` address, a list of ``peers`` as numeric UDP socket addresses, and a ``key_file`` containing the same 32 random binary bytes on each node. We provision this key on the management network and restart nodes when rotating it. Peers exchange authenticated challenges every half second. Pools with no explicit scheduler choose two candidates while standalone and use a deterministic weighted Maglev table once a peer responds. The wide-area regime prefers eligible local servers over servers marked ``"remote": true``. At least three missed probe periods expire a peer. The ``nodes`` form lists every node in one list instead, so that all nodes can hold one file (section *One file for the cluster*). Each node makes its own health decisions, and its own admission decisions except for fleet-wide limits (SID 0025). The mesh shares bans and commands, a sticky table and fleet-wide limits, and with ``forward`` it sends the new flows of a client to its owner node (sections above, SID 0022 to SID 0026). Keeping an established TCP connection on its node across a routing change still requires upstream flow steering.
 
 Hosting jlavi, jlavideploy and jlavici
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2621,11 +2631,33 @@ Coming from HAProxy
      - ``add server app/s3 10.0.0.3:80``, ``del server app/s3``
    * - ``server-state-file`` with ``load-server-state-from-file``
      - Not needed for drains, which pass a reload. Other run-time changes are made durable in the file.
+   * - ``show info``, ``show stat``
+     - ``show info``, ``show stats`` (the Prometheus text of the metrics route)
+   * - ``show ssl cert``, ``acme status``
+     - ``show certs``
+   * - ``acme`` section with ``challenge http-01`` (experimental in HAProxy 3.4)
+     - ``"tls": {"auto": ["example.org"]}`` on the frontend, ``global.acme`` for the account (section *Automatic HTTPS*)
+   * - ``balance source`` with ``hash-type consistent`` and ``hash-balance-factor 125``
+     - ``"balance": {"kind": "bounded_maglev", "load_factor_pct": 125}``
+   * - ``peers`` section, with ``peers`` on a ``stick-table``
+     - ``mesh`` with ``"sticky": {"kind": "table"}`` on the pool (section *A sticky table and a limit for the whole cluster*)
+   * - ``show peers``
+     - ``show cluster``
+   * - ``show table``
+     - ``show affinity``
+   * - ``clear table <table> key <address>`` on a table that holds bans
+     - ``del ban ADDRESS``, on every node of a mesh
+   * - ``-x`` or ``expose-fd listeners`` (seamless reload)
+     - SIGHUP for a new file; ``global.upgrade_socket`` (Linux) or ``global.reuse_port`` for a new binary
+   * - ``filter spoe``
+     - A plugin of the kind ``agent`` on a Unix socket (section *Hooks*)
+   * - ``lua-load``
+     - A plugin of the kind ``wasm``, or a native hook compiled into the binary
 
 Limits of this version
 ~~~~~~~~~~~~~~~~~~~~~~
 
-On Linux the HTTP firewall serves connections on event-driven workers, one per processor, up to ``http.max_connections``. A connection that waits holds a small record and no buffer. On other platforms, and with ``event_loop`` ``false``, each HTTP/1.1 connection and each HTTP/2 or HTTP/3 exchange has a thread of its own, up to 8192 at a time. A WebSocket to a pool with ``http_version`` 2 or 3 answers 501. HTTP/3 clients cannot open WebSockets, and browsers fall back to HTTP/1.1 or HTTP/2 for them. Server addresses are numeric. The admin socket changes servers only: frontends, routes, certificates and policy change by reload. Run-time changes do not survive a restart. Request headers are limited to 16 KiB on HTTP/2 and HTTP/3. Response compression and caching are not provided. Header edits set fixed values: there are no patterns or variables. With ``event_loop`` ``false`` a connection has the same traffic rules as on the workers: the timeouts of the pool, failover, passive health, sticky sessions, the redirect, the header edits and ``max_body``. Two details differ. A client that goes away while its server is silent is noticed when the server answers or its bound ends. A chunked body is counted by ``max_body`` without its chunk framing. Our own answers carry HSTS but neither the header edits nor the sticky cookie, and the answer to a WebSocket upgrade is not edited. SID 0019 lists the remaining gaps. The spill cache of SID 0027 holds the learned sticky table only. SID 0015 lists the parts of the design that remain proposals: database-backed topology, replicated bans, peer forwarding, binary handoff and the fleet console.
+On Linux the HTTP firewall serves connections on event-driven workers, one per processor, up to ``http.max_connections``. A connection that waits holds a small record and no buffer. On other platforms, and with ``event_loop`` ``false``, each HTTP/1.1 connection and each HTTP/2 or HTTP/3 exchange has a thread of its own, up to 8192 at a time. A WebSocket to a pool with ``http_version`` 2 or 3 answers 501. HTTP/3 clients cannot open WebSockets, and browsers fall back to HTTP/1.1 or HTTP/2 for them. Server addresses are numeric. The admin socket changes servers, lifts bans and revokes certificates of the local authority: frontends, routes, other certificates and policy change by reload. Run-time changes do not survive a restart, except that a node of a mesh learns the commands in force from its peers. Request headers are limited to 16 KiB on HTTP/2 and HTTP/3. Response compression and caching are not provided. Header edits set fixed values: there are no patterns or variables. With ``event_loop`` ``false`` a connection has the same traffic rules as on the workers: the timeouts of the pool, failover, passive health, sticky sessions, the redirect, the header edits and ``max_body``. Two details differ. A client that goes away while its server is silent is noticed when the server answers or its bound ends. A chunked body is counted by ``max_body`` without its chunk framing. Our own answers carry HSTS but neither the header edits nor the sticky cookie, and the answer to a WebSocket upgrade is not edited. SID 0019 lists the remaining gaps. The spill cache of SID 0027 holds the learned sticky table only. Replicated bans, one file for a cluster, a shared sticky table and fleet-wide limits, peer forwarding, the spill cache, the database authority, the binary handoff, plugins, the operator console and staged admission are built (SID 0022 to SID 0032), each with the known gaps that its record lists. SID 0015 lists what remains proposed: cooperative platform-specific batching, the ten-million-flow experiment and edge-generated QUIC Retry.
 
 
 Console Preview
@@ -2777,7 +2809,7 @@ Policy workflows on the Policies page: reorder managed rules, replay a draft aga
 
 Importing a later GeoIP generation does not automatically refresh existing country-derived reputation rows. Preview the country action to compare added, retained and removed prefixes; page through the reviewed diff before applying it. The replacement removes obsolete rows owned by that country and preserves independently managed prefixes. A changed generation or policy revision requires a fresh preview, and overlapping independent edits are refused. The Events page contains retained WAF findings and honeypot incidents; it is not a complete access log. With GeoIP loaded, the storage thread records each incident's country and generation in the incident batch's transaction. This is attribution at persistence, not a reconstructed request-time location. Later imports leave recorded mappings unchanged. The country filter accepts an uppercase two-letter code, ``unknown`` for an address absent from the loaded generation, or ``not_recorded`` for an incident without mapping data. Source groups report mixed countries or coverage explicitly. The globe's *View events* action keeps the selected node and opens the country's retained incidents for the last hour. The Statistics page's *Security* view combines live rate-limit, challenge and ban rates with retained inspection and honeypot findings over one hour, one day, seven days or thirty days. Category, source and path links open the normal incident workflow with the same node and a fixed time boundary. Applying incident filters starts a new period. Findings include audit records and are distinct from blocked-request totals; absent reputation and rule-hit attribution is shown as not recorded. Event and audit filters keep labels with their controls, align the Apply action separately and adapt their columns to the available content width. One authenticated WebSocket survives navigation and carries statistics, incident summaries, node status, policy revisions, challenges and audit summaries. New incident and audit records wait behind *Load latest records* so the table stays in place while it is read. Policy updates show current committed and applied revisions without replacing an open draft. Flow counters update live; refresh a selected non-default challenge timing partition explicitly. Historical queries, detail reads and mutations remain HTTP requests.
 
-Page fragments can be bookmarked; Back and Forward reopen authenticated pages. The sidebar also remembers theme and spacing choices in this browser, with System as the default theme. SID 0007 is Committed. The console passes its golden fixtures and its browser workflows in headless Chromium (``cargo xtask browser console``, SID 0010 criterion 5). Its end-to-end suite is ``cmd/sibuna/tests/console_*.rs``, whose PostgreSQL cluster scenarios run when ``SIBUNA_TEST_DATABASE_URL`` is set. SID 0010 records that with the console compiled in, disabled, storage only, or enabled and idle, the 16 product workloads stay within about 1% of the daemon built without it, which is within noise. The formal isolation gate of SID 0007, with eight active dashboards under load, has not been measured yet (Part VIII). The complete WebAssembly application has a 768 KiB uncompressed ceiling, which the daemon's build script enforces by failing the build, and a 640 KiB review threshold. In 1.0.0-beta.3 the module measures 724,330 bytes (272,568 gzipped), above the review threshold, which SID 0007 records for review. These project limits leave room for console workflows; they do not replace browser loading and responsiveness measurements. The module's linear memory grows on demand up to a declared maximum of 16 MiB.
+Page fragments can be bookmarked; Back and Forward reopen authenticated pages. The sidebar also remembers theme and spacing choices in this browser, with System as the default theme. SID 0007 is Committed. The console passes its golden fixtures and its browser workflows in headless Chromium (``cargo xtask browser console``, SID 0010 criterion 5). Its end-to-end suite is ``cmd/sibuna/tests/console_*.rs``, whose PostgreSQL cluster scenarios run when ``SIBUNA_TEST_DATABASE_URL`` is set. SID 0010 records that with the console compiled in, disabled, storage only, or enabled and idle, the 16 product workloads stay within about 1% of the daemon built without it, which is within noise. The formal isolation gate of SID 0007, with eight active dashboards under load, has not been measured yet (Part X). The complete WebAssembly application has a 768 KiB uncompressed ceiling, which the daemon's build script enforces by failing the build, and a 640 KiB review threshold. In 1.0.0-beta.3 the module measures 724,330 bytes (272,568 gzipped), above the review threshold, which SID 0007 records for review. These project limits leave room for console workflows; they do not replace browser loading and responsiveness measurements. The module's linear memory grows on demand up to a declared maximum of 16 MiB.
 
 Deployment Topologies
 ---------------------
@@ -2829,7 +2861,7 @@ Admitted requests reach the origin with ``X-Forwarded-For``, ``X-Forwarded-Proto
 
 HTTP/1.1 WebSocket upgrades pass through admission and policy checks before the origin's handshake is accepted. Subprotocol and extension negotiation remains end-to-end. Two threads relay bytes, one per direction, each with one fixed buffer, including prefetched bytes and half-closes; an upgraded connection therefore holds two threads, and the number of connection threads can reach twice ``--max-connections`` when every connection is upgraded. Upgraded sockets remain within the normal connection quota and shutdown registry, but use ``--websocket-idle-timeout`` (300 seconds by default) independently of the HTTP idle deadline. Traffic in either direction refreshes that bound, but a peer that accepts no byte for the whole period ends the relay, however busy the other direction is. Frames after the handshake are not WAF inspection inputs. For WSS we use an external TLS ingress that forwards the HTTP/1.1 upgrade to Sibuna. The native HTTP/2 and HTTP/3 listeners handle ordinary HTTP exchanges.
 
-The ingress can negotiate HTTP/2 with browsers and forward HTTP/1.1 to Sibuna. Native HTTP/2 support in Sibuna is deferred to a later update; this arrangement does not provide end-to-end HTTP/2 semantics for applications such as native gRPC.
+The ingress can negotiate HTTP/2 with browsers and forward HTTP/1.1 to Sibuna. The daemon mode has no native HTTP/2; this arrangement does not provide end-to-end HTTP/2 semantics for applications such as native gRPC. The edge (``--config-file``) terminates HTTP/2 and HTTP/3 itself and carries gRPC (section *gRPC*).
 
 Content-Length request bodies stream through fixed buffers, preserving bytes and MIME headers. Multipart uploads retain boundaries, repeated field names, filenames and part types. The WAF examines at most the first 8 KiB of the body: multipart metadata and non-file fields remain text inspection inputs, while file payloads are opaque. A part whose ``filename`` is empty is an ordinary field. A body of a recognized binary top-level MIME type (images except SVG, audio, video, PDF, ZIP, gzip, 7z, protobuf and octet-stream) is opaque only when its prefix also looks binary, that is, when at least one byte in sixteen is a control byte other than tab, line feed, vertical tab, form feed and carriage return; otherwise it is inspected as text (SID 0004). JSON, XML, SVG, URL-encoded forms and unknown types retain text inspection. Ambiguous or malformed MIME metadata falls back to text inspection. Multipart parsing is bounded to 32 parts and 2 KiB of headers per part within that same prefix, and accepts the transport padding of RFC 2046 after a delimiter.
 
@@ -2981,7 +3013,7 @@ In the forward-auth recipe, the same ``proxy_set_header X-JA4 $http_ssl_ja4;`` l
 
 **Apache Traffic Server.** The ``ja4_fingerprint`` plugin is enabled by the line ``ja4_fingerprint.so`` in ``plugin.config``. It has no options. It adds a ``ja4`` field with the fingerprint, and an ``x-ja4-via`` field with the proxy's name, to the requests of each TLS connection. We start Sibuna with ``--ja4-header ja4 --trust-forwarded``. The plugin's documentation does not say whether it replaces a ``ja4`` field that the client sent. We must establish this for our version, or remove the client's field before the plugin adds its own, before we trust the value.
 
-A rule matches a fingerprint with the ``ja4`` field (Part X, Policy Schema). The value is either a whole fingerprint, which must be equal, or a prefix followed by ``*``, which the fingerprint must start with. ``"*"`` alone matches any fingerprint. A request without a fingerprint never matches a ``ja4`` rule. The loader refuses a pattern that no fingerprint could match, such as ``T13D*`` in upper case, with ``INVALID POLICY JA4``. Matching compares bytes and allocates nothing.
+A rule matches a fingerprint with the ``ja4`` field (Part XII, Policy Schema). The value is either a whole fingerprint, which must be equal, or a prefix followed by ``*``, which the fingerprint must start with. ``"*"`` alone matches any fingerprint. A request without a fingerprint never matches a ``ja4`` rule. The loader refuses a pattern that no fingerprint could match, such as ``T13D*`` in upper case, with ``INVALID POLICY JA4``. Matching compares bytes and allocates nothing.
 
 .. code-block:: json
 
@@ -3026,7 +3058,7 @@ Declarative Policy
      ]
    }
 
-The loader fails closed: an unknown key, a misspelled action, a malformed address or an out-of-range number rejects the whole file, the diagnostic names the rule and field, and the daemon does not start. A command line with an unknown option or an out-of-range value is refused the same way. ``rules`` replaces the built-in table when present; ``ip_rules`` feeds the reputation trie, which scales to thousands of prefixes; ``waf: false`` selects the Gate surface from the file. Two further keys are part of the schema (Part X): ``inspection`` sets each WAF category to ``disabled``, ``audit`` or ``enforce``, and a rule's ``limits`` object gives it a quota of its own. A rule's ``ja4`` field matches the JA4 fingerprint that a trusted ingress forwarded, exactly or by a prefix followed by ``*``; it needs ``--ja4-header`` (see "JA4 Fingerprints From the Ingress"). Path patterns match the request path in normal form (SID 0003), so a pattern must be written in that form.
+The loader fails closed: an unknown key, a misspelled action, a malformed address or an out-of-range number rejects the whole file, the diagnostic names the rule and field, and the daemon does not start. A command line with an unknown option or an out-of-range value is refused the same way. ``rules`` replaces the built-in table when present; ``ip_rules`` feeds the reputation trie, which scales to thousands of prefixes; ``waf: false`` selects the Gate surface from the file. Two further keys are part of the schema (Part XII): ``inspection`` sets each WAF category to ``disabled``, ``audit`` or ``enforce``, and a rule's ``limits`` object gives it a quota of its own. A rule's ``ja4`` field matches the JA4 fingerprint that a trusted ingress forwarded, exactly or by a prefix followed by ``*``; it needs ``--ja4-header`` (see "JA4 Fingerprints From the Ingress"). Path patterns match the request path in normal form (SID 0003), so a pattern must be written in that form.
 
 Persistent Storage and Clustering
 ---------------------------------
@@ -3067,7 +3099,7 @@ Persistent Storage and Clustering
      db -> others [dir=both, style=dashed, label=" shared PostgreSQL,\n NOTIFY sibuna_policy"];
    }
 
-``--data-dir /var/lib/sibuna`` opens the SQLite file ``/var/lib/sibuna/sibuna.db`` (WAL mode, ``synchronous=NORMAL``, a busy timeout) and starts the storage thread. ``--database-url`` (or ``--database-url-file``) connects to a PostgreSQL database instead. The storage thread owns a single-threaded tokio runtime and a small connection pool; it is the only place that runs SQL. On start, whenever the policy revision changes (a write to ``policies``, ``ip_reputation`` or ``policy_inspection``), and when a reputation entry expires, the thread rebuilds the engine from the policy file plus the database and publishes it; requests never wait on SQL. A rebuild reads the revision before and after loading, and discards its candidate if a writer committed in between.
+``--data-dir /var/lib/sibuna`` opens the SQLite file ``/var/lib/sibuna/sibuna.db`` (WAL mode, ``synchronous=NORMAL``, a busy timeout) and starts the storage thread. ``--database-url`` (or ``--database-url-file``) connects to a PostgreSQL database instead. The storage thread owns a single-threaded tokio runtime and a small connection pool; it is the only place that runs SQL. On start, whenever the policy revision changes (a write to ``policies``, ``ip_reputation`` or ``policy_inspection``), and when a reputation entry expires, the thread rebuilds the engine from the policy file plus the database and publishes it; requests never wait on SQL. A rebuild reads the revision before and after loading, and discards its candidate if a writer committed in between. This storage belongs to the firewall daemon; an edge started with ``--config-file`` takes none of these options (the section *Clustering* says how the two relate).
 
 Schema
 ~~~~~~
@@ -3135,7 +3167,7 @@ The storage thread collects at most 32 pending records and builds one SQL transa
 
 A failed commit retains the pending batch in memory and increments ``incident_write_failures``. The tick still attempts policy polling. A full 512-record queue counts ``incidents_dropped``; it never blocks an HTTP response waiting for disk. The pending batch adds space for 32 records. Process death before commit can lose queued data: this is a bounded asynchronous forensic path, not a durable message queue at enqueue time.
 
-.. admonition:: Exercise 9.1
+.. admonition:: Exercise 11.1
 
    Move the receipt update outside the data transaction. Construct one crash schedule that duplicates a reputation effect and another that loses an incident.
 
@@ -3161,6 +3193,8 @@ Nodes reach the shared database across the network, so we encrypt and verify tha
 At startup the daemon prints one line about the database connection. With ``verify-full`` it says that the certificate and host name are verified. With any weaker mode it prints a warning and a hint. Without ``sslmode`` the mode is ``prefer``: the connection is encrypted only if the server offers TLS, and the server is not verified. A daemon built without ``postgres-tls`` refuses ``require``, ``verify-ca`` and ``verify-full`` and names the missing feature; it never falls back to plaintext. A refused certificate stops startup at once; the hint asks us to check ``sslrootcert`` and that the URL's host is a name in the server's certificate. ``sslrootcert`` adds our authority to the system trust store; it does not remove the system's authorities (SID 0011, SID 0012).
 
 Sibuna does not replicate a database of its own and elects no leader. Replication, failover and backups are PostgreSQL's (streaming replication, Patroni or a managed service). The console's node view has no leader: it shows the role ``single`` for a SQLite node and ``unknown`` for a PostgreSQL node, and ``quorum`` means only that the node's last database round trip succeeded. If the database is unreachable, the last published engine keeps serving, incidents queue in the bounded ring and are dropped with a counter once it is full, and the storage thread retries with backoff; a node keeps its last policy until it reconnects. A Zaxonlite data directory (SID 0005) is not read; policies move with ``sibuna console policies export`` and ``sibuna console policies import``, and forensic history is not migrated.
+
+**The cluster and the mesh.** This cluster is one of the firewall daemon. An edge does not join it: ``--config-file`` takes no storage option, the firewall of an edge reads its policy from ``http.policy_file``, and its bans live in memory. The nodes of an edge form a mesh instead (section *Bans across a cluster*). The mesh needs no database: its nodes share bans, server commands, a sticky table and fleet-wide limits over UDP under one key (SID 0022, SID 0025), and the daemon mode of the firewall has no mesh. An edge can keep its topology in a database as well, but that is the database authority of SID 0028, with tables of its own (``edge_head``, ``edge_revisions`` and ``edge_nodes``) that may live in the database of the firewall or in another (section *A database for the topology*). An edge records no incidents and no reputation in a database.
 
 Cluster Challenge Routing
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3275,7 +3309,7 @@ The release profile uses fat LTO and one codegen unit. The workflow builds the t
 
 On Windows the daemon stops on Ctrl+C, Ctrl+Break and console close events; it does not run as a Windows service. Windows files have no mode bits, so Sibuna cannot refuse a key, credential or database URL file that others may read: we restrict those files with ACLs. The console's memory and CPU gauges are read from ``/proc`` and are unavailable on other systems.
 
-.. admonition:: Exercise 9.2
+.. admonition:: Exercise 11.2
 
    Write the policy file and the ``ip_reputation`` rows needed so that a staging network (``10.20.0.0/16``) bypasses challenges, ``/admin/*`` demands 20 work bits of sequential work, and a partner scraper identified by ``X-Partner-Key`` is admitted at 30 requests per 10 seconds.
 
