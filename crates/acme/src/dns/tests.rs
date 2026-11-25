@@ -162,6 +162,33 @@ fn a_hook_that_runs_too_long_is_stopped() {
 
 #[cfg(unix)]
 #[test]
+fn what_a_stopped_hook_started_is_stopped_with_it() {
+    let _spawn = crate::SPAWN.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    let scratch = Scratch::new();
+    let (late, begun) = (scratch.0.join("late"), scratch.0.join("begun"));
+    // The hook starts a program in the background that would write a file one second
+    // after the hook was stopped, and waits itself.
+    let body = format!(
+        "(sleep 1.3; echo late > {}) &\necho begun > {}\nsleep 30",
+        late.display(),
+        begun.display()
+    );
+    let program = scratch.script("hook", &body);
+    let error = hook::run(hook_run(&program, "present", Duration::from_millis(300))).unwrap_err();
+    assert!(error.message.contains("was stopped"), "{}", error.message);
+    assert!(begun.exists());
+    std::thread::sleep(Duration::from_millis(1800));
+    assert!(!late.exists(), "the background program of the hook went on");
+    // A hook that ends in time leaves what it started alone.
+    let body = format!("(sleep 0.3; echo late > {}) &\nexit 0", late.display());
+    let program = scratch.script("kind", &body);
+    hook::run(hook_run(&program, "present", HOOK_TIMEOUT)).unwrap();
+    std::thread::sleep(Duration::from_millis(900));
+    assert!(late.exists());
+}
+
+#[cfg(unix)]
+#[test]
 fn the_solver_remembers_the_record_until_its_cleanup_succeeded() {
     let _spawn = crate::SPAWN.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
     let scratch = Scratch::new();

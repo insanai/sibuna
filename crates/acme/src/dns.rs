@@ -16,6 +16,7 @@
 //! succeeded. A daemon that died in between finds the file and cleans up at its start.
 
 pub mod cloudflare;
+mod group;
 pub mod hook;
 pub mod lookup;
 #[cfg(any(test, feature = "test-server"))]
