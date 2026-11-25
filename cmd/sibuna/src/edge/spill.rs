@@ -22,10 +22,10 @@ fn memory_bytes(status: &SpillStatus) -> u64 {
     status.budget.memory_bytes()
 }
 
-/// The line that the daemon notes at start, with the code `EDGE013`. It says whether
+/// The line that the daemon notes at start, with the code `EDGE015`. It says whether
 /// the hints of the last run are in use, and what the tiers cost.
 pub(super) fn start_line(status: &SpillStatus) -> String {
-    let mut line = format!("EDGE013: spill cache {}: {}", status.path.display(), found(status));
+    let mut line = format!("EDGE015: spill cache {}: {}", status.path.display(), found(status));
     if status.outcome.is_some() {
         let _ = write!(
             line,
@@ -105,7 +105,7 @@ mod tests {
         let reused = start_line(&status(Some(Outcome::Reused)));
         assert_eq!(
             reused,
-            "EDGE013: spill cache /var/lib/sibuna/hints.spill: reused, 16128 slots in \
+            "EDGE015: spill cache /var/lib/sibuna/hints.spill: reused, 16128 slots in \
              1040384 bytes on disk, 295912 bytes of memory beside the table"
         );
         let discarded = Outcome::Discarded(Reason::Version(2));

@@ -1316,7 +1316,7 @@ The daemon says what it found when it starts, and ``show info`` has the counters
 
 .. code-block:: text
 
-   EDGE013: spill cache /var/lib/sibuna/hints.spill: reused, 1048064 slots in 67084288 bytes on disk, 4425712 bytes of memory beside the table
+   EDGE015: spill cache /var/lib/sibuna/hints.spill: reused, 1048064 slots in 67084288 bytes on disk, 4425712 bytes of memory beside the table
 
    $ sibuna ctl /run/sibuna/edge.sock show info
    spill: /var/lib/sibuna/hints.spill

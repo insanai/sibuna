@@ -51,7 +51,7 @@ struct Edge {
     _stderr: BufReader<ChildStderr>,
     socket: PathBuf,
     vip: SocketAddr,
-    /// The line with `EDGE013` that the daemon wrote at start.
+    /// The line with `EDGE015` that the daemon wrote at start.
     spill_line: String,
 }
 
@@ -178,7 +178,7 @@ fn hints_survive_a_killed_daemon_and_keep_clients_on_their_servers() {
     // The first daemon learns where its clients are served, and offers each choice to
     // the disk.
     let edge = start(&scratch, &two);
-    assert!(edge.spill_line.contains("EDGE013") && edge.spill_line.contains(": created,"));
+    assert!(edge.spill_line.contains("EDGE015") && edge.spill_line.contains(": created,"));
     let homes: Vec<String> = (1..=CLIENTS).map(|client| who(&edge, client)).collect();
     for client in 1..=CLIENTS {
         assert_eq!(who(&edge, client), homes[usize::from(client - 1)]);
