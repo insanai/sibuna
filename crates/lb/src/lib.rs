@@ -38,6 +38,8 @@ mod traffic;
 pub use observe::{AccessLogOptions, Forwarded, FrontendInfo, LogOutput, ObserveOptions};
 pub use route::{FieldEdit, Redirect, RoutePolicy};
 pub use traffic::{Passive, PoolPolicy, Sticky};
+mod flowlog;
+pub use flowlog::FlowEnd;
 mod proxy_header;
 pub use proxy_header::{MAX_PROXY_HEADER, ProxyHeader, ProxyHeaderError, parse_proxy_header};
 mod stats;
@@ -115,6 +117,8 @@ struct Opening {
     timeout: Duration,
     pool: std::sync::Arc<str>,
     prefix: Vec<u8>,
+    /// The log line of the flow, when flows are logged (SID 0020).
+    line: Option<flowlog::FlowGuard>,
 }
 
 struct Inspecting {
@@ -134,6 +138,7 @@ struct Pending {
 }
 
 struct DatagramFlow {
+    line: Option<flowlog::FlowGuard>,
     _permit: FlowPermit,
     first_request: Option<Instant>,
     origin: UdpSocket,
@@ -151,6 +156,8 @@ pub struct Edge {
     budget: FlowBudget,
     http_pending: Vec<Accepted>,
     awaiting: HashMap<u64, Awaiting>,
+    flow_log: std::sync::Arc<flowlog::FlowLog>,
+    flow_ends: std::sync::mpsc::Receiver<FlowEnd>,
     mesh: Option<MeshConfig>,
     regime: Regime,
     binds: Vec<Bind>,
@@ -225,6 +232,18 @@ impl Edge {
         self.stats.clone()
     }
 
+    /// Turns the log lines of TCP connections and UDP mappings on or off (SID 0020).
+    /// While they are on, the caller takes them with [`Edge::ended_flows`].
+    pub fn log_flows(&self, on: bool) {
+        self.flow_log.set(on);
+    }
+
+    /// Takes the flows that ended since the last call, and the refused connections
+    /// that may be logged. At most 4,096 wait; more are dropped and counted.
+    pub fn ended_flows(&mut self) -> impl Iterator<Item = FlowEnd> + '_ {
+        self.flow_ends.try_iter()
+    }
+
     /// Takes accepted HTTP sockets for plaintext dispatch or TLS negotiation.
     pub fn accepted(&mut self) -> impl Iterator<Item = Accepted> {
         self.http_pending.drain(..)
@@ -267,12 +286,15 @@ impl Edge {
             .into_iter()
             .map(|(name, pool)| (name, Pool::new(pool, &mut loads)))
             .collect();
+        let (flow_log, flow_ends) = flowlog::FlowLog::new(stats.clone());
         Ok(Self {
             http,
             stats,
             budget,
             http_pending: Vec::new(),
             awaiting: HashMap::new(),
+            flow_log,
+            flow_ends,
             mesh: config.mesh,
             regime: Regime::Standalone,
             binds,
@@ -401,6 +423,7 @@ impl Edge {
         self.udp.retain(|_, flow| {
             let keep = now.saturating_duration_since(flow.last) < flow.timeout;
             if !keep {
+                flowlog::mark(&mut flow.line, "idle_timeout");
                 poll.remove(handle(&flow.origin));
             }
             keep
@@ -408,6 +431,7 @@ impl Edge {
         self.inspecting.retain(|_, flow| {
             let keep = now < flow.deadline;
             if !keep {
+                flowlog::mark(&mut flow.opening.line, "idle_timeout");
                 poll.remove(handle(&flow.opening.client));
             }
             keep
@@ -486,7 +510,7 @@ impl Edge {
 
     fn accept(&mut self, listener: usize, client: TcpStream, peer: SocketAddr) -> bool {
         if self.draining {
-            return self.refuse(Refusal::Draining);
+            return self.refuse(listener, peer, Refusal::Draining);
         }
         let info = &self.listeners[listener].route.info;
         let trusted = info.trusts(peer.ip());
@@ -496,15 +520,32 @@ impl Edge {
         // A trusted proxy carries the connections of many clients, so the connection
         // rate is not counted against it (SID 0020).
         if !trusted && !self.allowed(listener, peer) {
-            return self.refuse(Refusal::RateLimit);
+            return self.refuse(listener, peer, Refusal::RateLimit);
         }
-        let Some(permit) = self.budget.reserve() else { return self.refuse(Refusal::FlowLimit) };
+        let Some(permit) = self.budget.reserve() else {
+            return self.refuse(listener, peer, Refusal::FlowLimit);
+        };
         self.admit(listener, client, peer, permit, None)
     }
 
-    fn refuse(&self, reason: Refusal) -> bool {
+    /// Counts a refused connection of `peer`, and logs it when the rate of such lines
+    /// allows one more.
+    fn refuse(&self, listener: usize, peer: SocketAddr, reason: Refusal) -> bool {
         self.stats.refuse(reason);
+        let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
+        let now = now.map_or(0, |since| since.as_secs());
+        if self.flow_log.is_on() && self.stats.may_log_refusal(now) {
+            let mut line = self.begin_line(listener, peer);
+            flowlog::mark(&mut line, reason.end());
+        }
         false
+    }
+
+    /// Starts the log line of a flow of `peer` on a listener, when flows are logged.
+    fn begin_line(&self, listener: usize, peer: SocketAddr) -> Option<flowlog::FlowGuard> {
+        let route = &self.listeners[listener].route;
+        let protocol = if self.binds[listener].0 == Protocol::Udp { "udp" } else { "tcp" };
+        self.flow_log.begin(protocol, peer, &route.info.name, &route.pool)
     }
 
     /// Holds a connection of a PROXY frontend until its header arrives. A peer that the
@@ -553,7 +594,7 @@ impl Edge {
         let client = source.unwrap_or(flow.peer);
         let trusted = self.listeners[listener].route.info.trusts(client.ip());
         if !trusted && !self.allowed(listener, client) {
-            return self.refuse(Refusal::RateLimit);
+            return self.refuse(listener, client, Refusal::RateLimit);
         }
         self.admit(listener, flow.client, client, flow.permit, source)
     }
@@ -574,10 +615,13 @@ impl Edge {
             self.http_pending.push(Accepted { bind, stream: client, permit, client: named });
             return true;
         }
-        let route = &self.listeners[listener].route;
         self.next_id = self.next_id.wrapping_add(1);
         let id = self.next_id;
         let Ok(vip) = client.local_addr() else { return false };
+        let mut line = self.begin_line(listener, peer);
+        // Until a server is chosen, the flow can only end for want of one.
+        flowlog::mark(&mut line, "no_server");
+        let route = &self.listeners[listener].route;
         let mut opening = Opening {
             permit,
             vip,
@@ -586,6 +630,7 @@ impl Edge {
             pool: route.pool.clone(),
             timeout: route.timeout,
             prefix: Vec::new(),
+            line,
         };
         if let Some((delay, rules)) = &route.inspect {
             if opening.client.set_nonblocking(true).is_err() {
@@ -619,18 +664,28 @@ impl Edge {
             Ok(false) => return true,
             Err(error) if transient(&error) => return true,
             Err(_) => {
-                self.finish_inspection(id);
+                if let Some(mut flow) = self.finish_inspection(id) {
+                    flowlog::mark(&mut flow.opening.line, "reset");
+                }
                 return false;
             }
             Ok(true) => {}
         }
         let Some(mut flow) = self.finish_inspection(id) else { return false };
         let wire = std::mem::take(&mut flow.input.wire);
+        if let Some(line) = &mut flow.opening.line {
+            // The hello is replayed to the server from here, not relayed.
+            line.bytes_in = wire.len() as u64;
+        }
         let Some(hello) = flow.input.hello() else { return false };
         let Some(pool) = rules::select(&flow.rules, &hello, &flow.opening.pool) else {
             return false;
         };
-        flow.opening.pool = pool.clone();
+        let pool = pool.clone();
+        if let Some(line) = &mut flow.opening.line {
+            line.backend = pool.clone();
+        }
+        flow.opening.pool = pool;
         let Some(pool) = self.pools.get(flow.opening.pool.as_ref()) else { return false };
         let Some(prefix) =
             proxy::prefix(pool.proxy_v2, flow.opening.peer, flow.opening.vip, Some(&hello), wire)
@@ -649,12 +704,16 @@ impl Edge {
         Some(flow)
     }
 
-    fn connect(&mut self, id: u64, opening: Opening) -> bool {
+    fn connect(&mut self, id: u64, mut opening: Opening) -> bool {
         let Some(pool) = self.pools.get_mut(opening.pool.as_ref()) else { return false };
         let vip = opening.vip;
         let Some(ticket) = pool.reserve(Instant::now(), opening.peer, vip, self.regime) else {
+            self.stats.refuse(Refusal::NoServer);
             return false;
         };
+        if let Some(line) = &mut opening.line {
+            (line.server, line.end) = (Some(ticket.addr), "connect_failed");
+        }
         let deadline = Instant::now() + Duration::from_secs(2).min(opening.timeout);
         if !self.connectors.submit(id, ticket.addr, deadline) {
             return false;
@@ -686,6 +745,10 @@ impl Edge {
                         pending.ticket,
                         pending.opening.timeout,
                         pending.opening.prefix,
+                        pending.opening.line.take().map(|mut line| {
+                            line.end = "shutdown";
+                            line
+                        }),
                     ) {
                         self.relays.submit(stream);
                         continue;
@@ -709,6 +772,9 @@ impl Edge {
                     {
                         pending.started = now;
                         pending.attempts += 1;
+                        if let Some(line) = &mut pending.opening.line {
+                            line.server = Some(ticket.addr);
+                        }
                         pending.ticket = ticket;
                         self.pending.insert(id, pending);
                         continue;
@@ -725,38 +791,52 @@ impl Edge {
     }
 
     fn forward(&mut self, key: Client, size: usize) -> bool {
+        let refuse = |reason| {
+            self.stats.refuse(reason);
+            false
+        };
         if !self.allowed(key.0, key.1) {
-            return false;
+            return refuse(Refusal::UdpRateLimit);
         }
         let now = Instant::now();
         if !self.udp.contains_key(&key) {
             if self.draining {
-                return false;
+                return refuse(Refusal::Draining);
             }
             // Datagram sources are not validated. A separate ceiling keeps spoofed
             // sources from taking the slots of TCP and HTTP clients, and a full table
             // gives up the oldest mapping that no origin has answered.
             if self.udp.len() >= self.udp_limit && !self.evict_unanswered() {
+                self.stats.refuse(Refusal::UdpFlowLimit);
                 return false;
             }
             let permit = match self.budget.reserve() {
-                Some(permit) => permit,
-                None if self.evict_unanswered() => match self.budget.reserve() {
-                    Some(permit) => permit,
-                    None => return false,
-                },
-                None => return false,
+                Some(permit) => Some(permit),
+                None if self.evict_unanswered() => self.budget.reserve(),
+                None => None,
             };
-            let Some(ticket) = self.reserve(key.0, key.1) else { return false };
+            let Some(permit) = permit else {
+                self.stats.refuse(Refusal::UdpFlowLimit);
+                return false;
+            };
+            let Some(ticket) = self.reserve(key.0, key.1) else {
+                self.stats.refuse(Refusal::NoServer);
+                return false;
+            };
             let Ok(origin) = connected_udp(ticket.addr) else { return false };
             if self.poll.set(handle(&origin), READ, Ready::Udp(key)).is_err() {
                 return false;
             }
             self.unanswered.push_back(key);
             self.listeners[key.0].route.info.stats.flow();
+            let mut line = self.begin_line(key.0, key.1);
+            if let Some(line) = &mut line {
+                line.server = Some(ticket.addr);
+            }
             self.udp.insert(
                 key,
                 DatagramFlow {
+                    line,
                     _permit: permit,
                     origin,
                     ticket,
@@ -772,6 +852,9 @@ impl Edge {
         match flow.origin.send(&self.buffer[..size]) {
             Ok(n) if n == size => {
                 flow.last = now;
+                if let Some(line) = &mut flow.line {
+                    line.bytes_in += size as u64;
+                }
                 // Count headers too, so empty datagrams also consume a bounded budget.
                 let overhead = if key.1.is_ipv4() { 28 } else { 48 };
                 flow.wire_credit =
@@ -781,14 +864,16 @@ impl Edge {
             }
             Err(error) if transient(&error) => false,
             _ => {
-                self.close_mapping(key);
+                self.close_mapping(key, "send_failed");
                 false
             }
         }
     }
 
-    fn close_mapping(&mut self, key: Client) {
-        if let Some(flow) = self.udp.remove(&key) {
+    /// Ends a UDP mapping. `end` says why, for its log line.
+    fn close_mapping(&mut self, key: Client, end: &'static str) {
+        if let Some(mut flow) = self.udp.remove(&key) {
+            flowlog::mark(&mut flow.line, end);
             self.poll.remove(handle(&flow.origin));
         }
     }
@@ -796,7 +881,7 @@ impl Edge {
     fn evict_unanswered(&mut self) -> bool {
         while let Some(key) = self.unanswered.pop_front() {
             if self.udp.get(&key).is_some_and(|flow| flow.first_request.is_some()) {
-                self.close_mapping(key);
+                self.close_mapping(key, "evicted");
                 self.drops = self.drops.saturating_add(1);
                 return true;
             }
@@ -817,12 +902,15 @@ impl Edge {
                     flow.wire_credit -= n + overhead;
                     flow.payload_credit -= n;
                     flow.last = Instant::now();
+                    if let Some(line) = &mut flow.line {
+                        line.bytes_out += n as u64;
+                    }
                     return;
                 }
             }
-            Ok(_) => {}
+            Ok(_) => self.stats.refuse(Refusal::UdpReplyLimit),
             Err(error) if transient(&error) => return,
-            Err(_) => self.close_mapping(key),
+            Err(_) => self.close_mapping(key, "reset"),
         }
         self.drops = self.drops.saturating_add(1);
     }

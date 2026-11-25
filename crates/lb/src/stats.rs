@@ -235,7 +235,14 @@ pub struct Stats {
     proxy_accepted: AtomicU64,
     proxy_rejected: AtomicU64,
     refused: [AtomicU64; Refusal::ALL.len()],
+    flow_log_dropped: AtomicU64,
+    /// The wall-clock second of the last refusal line, and the lines of that second.
+    refusal_lines: AtomicU64,
 }
+
+/// The most log lines for refused connections in one second, for the whole node. A
+/// flood of refusals is counted in full and logged at this rate.
+pub const REFUSAL_LINES_PER_SECOND: u64 = 10;
 
 /// Why a connection or a request was refused before the firewall decided on it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -256,11 +263,19 @@ pub enum Refusal {
     ExchangeLimit,
     /// The protocol runtime found the request malformed or unsupported.
     BadRequest,
+    /// No server of the pool was eligible, or a rule denied the connection.
+    NoServer,
+    /// A datagram above `udp_defense.threshold_pps`.
+    UdpRateLimit,
+    /// No slot was free for a new UDP mapping.
+    UdpFlowLimit,
+    /// An answer of a UDP server larger than three times what its client sent.
+    UdpReplyLimit,
 }
 
 impl Refusal {
     /// Every reason, in the order of the series.
-    pub const ALL: [Refusal; 8] = [
+    pub const ALL: [Refusal; 12] = [
         Refusal::RateLimit,
         Refusal::FlowLimit,
         Refusal::Draining,
@@ -269,6 +284,10 @@ impl Refusal {
         Refusal::TaskLimit,
         Refusal::ExchangeLimit,
         Refusal::BadRequest,
+        Refusal::NoServer,
+        Refusal::UdpRateLimit,
+        Refusal::UdpFlowLimit,
+        Refusal::UdpReplyLimit,
     ];
 
     /// The value of the `reason` label.
@@ -282,6 +301,28 @@ impl Refusal {
             Refusal::TaskLimit => "task_limit",
             Refusal::ExchangeLimit => "exchange_limit",
             Refusal::BadRequest => "bad_request",
+            Refusal::NoServer => "no_server",
+            Refusal::UdpRateLimit => "udp_rate_limit",
+            Refusal::UdpFlowLimit => "udp_flow_limit",
+            Refusal::UdpReplyLimit => "udp_reply_limit",
+        }
+    }
+
+    /// The `end` field of the log line of a connection refused for this reason.
+    pub fn end(self) -> &'static str {
+        match self {
+            Refusal::RateLimit => "refused_rate_limit",
+            Refusal::FlowLimit => "refused_flow_limit",
+            Refusal::Draining => "refused_draining",
+            Refusal::ConnectionLimit => "refused_connection_limit",
+            Refusal::ClientLimit => "refused_client_limit",
+            Refusal::TaskLimit => "refused_task_limit",
+            Refusal::ExchangeLimit => "refused_exchange_limit",
+            Refusal::BadRequest => "refused_bad_request",
+            Refusal::NoServer => "refused_no_server",
+            Refusal::UdpRateLimit => "refused_udp_rate_limit",
+            Refusal::UdpFlowLimit => "refused_udp_flow_limit",
+            Refusal::UdpReplyLimit => "refused_udp_reply_limit",
         }
     }
 }
@@ -346,6 +387,42 @@ impl Stats {
         self.refused[reason as usize].load(Ordering::Relaxed)
     }
 
+    /// True when a refused connection may write a log line now: at most
+    /// [`REFUSAL_LINES_PER_SECOND`] per second. `now` is the Unix time in seconds.
+    pub fn may_log_refusal(&self, now: u64) -> bool {
+        let mut word = self.refusal_lines.load(Ordering::Acquire);
+        loop {
+            let (second, lines) = (word >> 8, word & 0xff);
+            let next = if second != now {
+                now << 8 | 1
+            } else if lines < REFUSAL_LINES_PER_SECOND {
+                word + 1
+            } else {
+                return false;
+            };
+            let swap = self.refusal_lines.compare_exchange_weak(
+                word,
+                next,
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            );
+            match swap {
+                Ok(_) => return true,
+                Err(current) => word = current,
+            }
+        }
+    }
+
+    /// Counts a flow line that found its queue full.
+    pub fn count_flow_log_drop(&self) {
+        self.flow_log_dropped.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// The number of flow lines dropped because a queue was full.
+    pub fn flow_log_drop_count(&self) -> u64 {
+        self.flow_log_dropped.load(Ordering::Relaxed)
+    }
+
     /// Counts a connection of a PROXY frontend: one that sent a valid header, or one
     /// that was closed.
     pub fn count_proxy(&self, accepted: bool) {
@@ -371,6 +448,7 @@ impl Stats {
             ("sibuna_edge_drops_total", "counter", &self.drops),
             ("sibuna_edge_proxy_protocol_accepted_total", "counter", &self.proxy_accepted),
             ("sibuna_edge_proxy_protocol_rejected_total", "counter", &self.proxy_rejected),
+            ("sibuna_edge_flow_log_dropped_total", "counter", &self.flow_log_dropped),
         ];
         for (name, kind, value) in gauges {
             writeln!(out, "# TYPE {name} {kind}\n{name} {}", value.load(Ordering::Relaxed))?;
