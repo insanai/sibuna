@@ -373,21 +373,18 @@ html:is(:lang(hi),:lang(ar)) .hero h1 em {
     flex-wrap:wrap;
     row-gap:6px}
 }
-/* The landing page of the load balancer: hero with a terminal, the release status, the
- * path figure, six capabilities, the measurements and two code panes. */
+/* The clustered edge and its release status. */
 .hero-edge {
   grid-template-columns:1.1fr 1fr;
   gap:6%;
-  padding:70px 0 50px
+  padding:36px 0 26px
+}
+.hero-edge h1 {
+  font-size:clamp(40px,4.25vw,58px);
+  overflow-wrap:anywhere
 }
 .hero-edge .lead {
   max-width:600px
-}
-.hero-code {
-  box-shadow:0 20px 55px #20352f1f
-}
-.hero-code pre {
-  font-size:13.5px
 }
 .status {
   display:flex;
@@ -413,16 +410,6 @@ html:is(:lang(hi),:lang(ar)) .hero h1 em {
 }
 .path {
   border-top:0
-}
-.path-figure {
-  margin:0 0 20px;
-  overflow-x:auto
-}
-.path-figure svg {
-  display:block;
-  width:100%;
-  min-width:680px;
-  height:auto
 }
 .path .features {
   grid-template-columns:repeat(3,1fr);
@@ -514,7 +501,7 @@ html:is(:lang(hi),:lang(ar)) .hero h1 em {
   gap:16px;
   min-width:0
 }
-.code,.path-figure,.table-wrap {
+.code,.table-wrap {
   direction:ltr
 }
 [dir="rtl"] .measure th,[dir="rtl"] .measure td,[dir="rtl"] .measure caption {
@@ -546,4 +533,40 @@ html:is(:lang(zh),:lang(ja),:lang(ko),:lang(hi),:lang(ar)) .measure thead th {
   .bar {
     width:40px;
     margin-inline-end:8px}
+}
+
+/* Both TLS paths remain visible when the reader pauses the packet traces. */
+.edge-map {
+  margin:0;
+  position:relative;
+  min-width:0;
+  background:radial-gradient(ellipse at 50% 35%,#234338,#132c25 75%);
+  color:#eff7ef;
+  border:1px solid #315544;
+  border-radius:14px;
+  padding:18px 14px 42px
+}
+.edge-map svg {display:block;width:100%;height:auto;direction:ltr}
+.map-labels {font:15px system-ui,sans-serif;fill:#e0eee1}
+.map-labels g {font:14px ui-monospace,monospace;fill:#ddc28c}
+.edge-map input {position:absolute;inset-inline-start:18px;bottom:16px;accent-color:#b5dbc4}
+.edge-map label {position:absolute;inset-inline-start:42px;bottom:12px;font-size:13px;cursor:pointer}
+.packet {stroke:#a9ebbf;stroke-dasharray:5 110;animation:edge-flow 3.8s linear infinite}
+.replica-packet {animation-delay:-1.9s}
+.rpc-packet {stroke:#eac17f;animation-duration:3s}
+.peer-packet {stroke:#c1d0c0;animation-duration:2.4s;animation-direction:alternate}
+@keyframes edge-flow {from {stroke-dashoffset:6} to {stroke-dashoffset:-100}}
+.edge-map input:checked ~ svg .packet {animation-play-state:paused}
+.deployments {padding:15px 0 34px}
+.deployments h2 {font-size:clamp(25px,3vw,38px);margin:0 0 22px}
+.deployment-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px}
+.deployment-grid article {border-top:2px solid var(--green);padding-block-start:14px}
+.deployment-grid h3 {margin:0;font-size:21px}
+.deployment-grid h3 a {color:var(--ink);text-decoration-thickness:1px}
+.deployment-grid p {margin:10px 0 0;color:#475a50}
+@media(max-width:680px){.deployment-grid{grid-template-columns:1fr;gap:17px}}
+@media(prefers-reduced-motion:reduce){
+  .edge-map .packet {animation:none;stroke-dashoffset:-44}
+  .edge-map input,.edge-map label {display:none}
+  .edge-map {padding-bottom:12px}
 }
