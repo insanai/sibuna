@@ -531,10 +531,29 @@ fn the_admin_socket_prints_the_series_of_the_edge() {
         "sibuna_edge_ready 1\n",
         "sibuna_edge_frontend_requests_total{frontend=\"web\",code=\"2xx\"} 1\n",
         "sibuna_edge_server_requests_total{backend=\"app\",server=\"a\",code=\"2xx\"} 1\n",
+        "sibuna_edge_server_client_closed_total{backend=\"app\",server=\"a\"} 0\n",
+        "sibuna_edge_server_active_requests{backend=\"app\",server=\"a\"} 0\n",
         "sibuna_edge_access_log_written_total 1\n",
+        "sibuna_edge_access_log_dropped_total 0\n",
+        "sibuna_edge_access_log_queue_length 8192\n",
+        "sibuna_edge_flow_log_dropped_total 0\n",
+        "sibuna_edge_refused_total{reason=\"client_closed\"} 0\n",
+        "sibuna_edge_refused_total{reason=\"udp_rate_limit\"} 0\n",
+        "sibuna_edge_refused_total{reason=\"no_server\"} 0\n",
+        "sibuna_edge_proxy_protocol_accepted_total 0\n",
+        "sibuna_edge_flows_active ",
     ] {
         assert!(text.contains(series), "{series} is missing:\n{text}");
     }
+    // A rotation by command: the file is renamed, and `reopen log` opens the path
+    // again without a reload of the topology.
+    fs::rename(daemon.log_path(), daemon.directory.join("access.log.1")).unwrap();
+    let reopened = Command::new(BIN).arg("ctl").arg(&socket).args(["reopen", "log"]).output();
+    assert!(reopened.unwrap().status.success());
+    std::thread::sleep(Duration::from_millis(500));
+    assert_eq!(status(&get(daemon.vip, "/rotated", "")), 200);
+    assert_eq!(field(&daemon.lines(1)[0], "path"), "/rotated");
+    assert_eq!(daemon.lines_of("access.log.1", 1).len(), 1);
 }
 
 /// Asks the separate listener until its readiness answer has `wanted`.

@@ -245,6 +245,10 @@ impl Serving {
             Command::ShowCerts => Ok(self.certs()),
             Command::ShowCa => Ok(self.ca()),
             Command::Help => Ok(control::USAGE.to_owned()),
+            Command::ReopenLog => {
+                self.observed.shared().reopen_log();
+                Ok(String::new())
+            }
             Command::State { pool, name, state, local } => {
                 edge.set_server_state(&pool, &name, state)?;
                 if let (false, Some(feed)) = (local, &self.drains.feed) {

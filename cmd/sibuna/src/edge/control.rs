@@ -25,6 +25,7 @@ set server POOL/NAME weight N
 add server POOL/NAME IP:PORT [weight N]
 del server POOL/NAME
 reload
+reopen log
 help
 ";
 
@@ -40,6 +41,8 @@ pub(super) enum Command {
     ShowCa,
     Help,
     Reload,
+    /// Open the access log file again, after a rotation renamed it (SID 0020).
+    ReopenLog,
     State {
         pool: String,
         name: String,
@@ -75,6 +78,7 @@ impl Command {
                 | Self::ShowCerts
                 | Self::ShowCa
                 | Self::Help
+                | Self::ReopenLog
         )
     }
 }
@@ -160,6 +164,7 @@ pub(super) fn parse(line: &str) -> Result<Command, RuntimeError> {
         ["show", "ca"] => Ok(Command::ShowCa),
         ["help"] => Ok(Command::Help),
         ["reload"] => Ok(Command::Reload),
+        ["reopen", "log"] => Ok(Command::ReopenLog),
         ["set", "server", server, "state", word] => {
             let (pool, name) = target(server)?;
             Ok(Command::State { pool, name, state: state(word)?, local: false })
@@ -343,6 +348,8 @@ mod tests {
         assert_eq!(parse("show certs"), Ok(Command::ShowCerts));
         assert_eq!(parse("show ca"), Ok(Command::ShowCa));
         assert_eq!(parse("reload"), Ok(Command::Reload));
+        assert_eq!(parse("reopen log"), Ok(Command::ReopenLog));
+        assert!(!Command::ReopenLog.changes(), "it changes nothing that is served");
         let (pool, name) = server("app", "10.0.0.1:80");
         let drain = Command::State { pool, name, state: ServerState::Drain, local: false };
         assert_eq!(parse("set server app/10.0.0.1:80 state drain"), Ok(drain.clone()));
