@@ -334,6 +334,8 @@ Acceptance criteria and implementation status
      - A forged, cut, altered or replayed datagram changes nothing.
      - Met in unit tests. ``mesh::hints::tests`` and ``mesh::shares::tests`` refuse a forged, a cut and an altered datagram of each kind, and a status that is old or of an old epoch changes nothing. Not shown with three processes.
 
+We also ran the final build on two hosts as a mesh of two nodes with eight workers each, three origins, and clients on a third host. With a table keyed by a cookie, 300 clients reached the same server through either node, 300 of 300. A choice made on one node was known to the other in less than 50 milliseconds: with no pause between the first flow on one node and the next on the other, 25 of 40 clients met two servers; with 20 milliseconds 13 of 40; with 50 milliseconds none. All agreed two seconds later. After a restart of one node the 300 clients found their servers through it, 300 of 300. A server with ``max_flows: 20`` in fleet scope, whose answers we held for four seconds, never held more than 20 flows over both nodes: of 80 requests 20 were served and 60 refused. With all the demand on one node its share went from 10 to 13 after 1.5 seconds and to 17 after 3 seconds, and the two shares always added up to 20.
+
 Formal model
 ------------
 
@@ -373,6 +375,7 @@ Review history
 - 2026-11-25. Initial draft.
 - 2026-11-25. Review of the design before the code, with the model and a random simulation. Messages that move a share ("take 5") break the cap when repeated: replaced by counters that only grow. A node that restarts from its base double counts what it gave: added epochs and synchronisation. A random boot nonce cannot order two lives of a node: the epoch is the time of the start. A node that raises its own epoch is unsound when datagrams cross: removed. A lease that returns a silent share needs closed flows: rejected, and stated as the price. A re-learned choice could tie with the old one: the new end is at least one millisecond later. A reserve for each peer, and passing a loan on, exceed the limit when two nodes restart together, which the simulation found with four nodes: a node lends only its base, and an unsynchronised node counts only its loans.
 - 2026-11-25. Review of the code. Serving a want when its datagram arrives lets a replay move shares many times in a period: wants are served once in a period. An idle node kept a quarter of what it borrowed: it returns all. The share is keyed by the address of the server, as its load is, so two pools of one server share it. A test of the seqlock asserted an order between readers that the table does not promise: the test now asserts whole entries only. The reader tries a held slot 32 times, not 4. A table filled to three quarters gives up one client in nine: stated with the size. Findings that stay are in the known gaps.
+- 2026-11-25. Test on two hosts after the merge of all branches. The table, the restart of a node and the cap behaved as specified. The movement of shares is slower than "about a second" for a whole share, and the book now gives the measured steps. A client that uses two nodes within 50 milliseconds of its first flow can meet two servers.
 
 References
 ----------
