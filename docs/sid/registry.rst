@@ -84,5 +84,8 @@ Discussion registry
    * - 0024
      - :doc:`records/0024-tls-on-the-workers`
      - discussion
+   * - 0029
+     - :doc:`records/0029-upgrade-handoff`
+     - discussion
 
 .. sid-generated-end
