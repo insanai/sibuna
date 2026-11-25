@@ -413,6 +413,82 @@ A content network at 198.51.100.0/24 reaches the frontend ``web``. A client at 2
 
    {"time":"2026-11-24T10:15:02.418Z","client":"203.0.113.7","frontend":"web","protocol":"http/1.1","scheme":"http","method":"GET","host":"www.example.com","path":"/index.html","status":200,"bytes_in":112,"bytes_out":5310,"duration_ms":3.184,"ttfb_ms":2.907,"backend":"app","server":"app-2","verdict":"pass"}
 
+Second round
+~~~~~~~~~~~~
+
+The first implementation left gaps that this section closes. Each paragraph is the design. The sections above describe the result.
+
+**The TLS version and cipher suite.** The handler of the protocol runtime took the fingerprint of the client certificate as its fourth argument. It now takes a small value, ``Secured``, with the fingerprint, the version and the cipher suite of the handshake. ``Offer`` carries the same two names. The log gains ``tls_version`` (``1.2``, ``1.3``) and ``tls_cipher`` (the IANA name, such as ``TLS13_AES_128_GCM_SHA256``) after ``scheme``. Both are ``-`` on a plain frontend. A QUIC connection is always TLS 1.3. Its cipher suite is ``-``: the QUIC library does not tell us the suite it negotiated.
+
+**One meaning for the byte counts.** ``bytes_in`` and ``bytes_out`` are the bytes of the HTTP message as its sender framed it, without TLS. For ``http/1.1`` that is the wire: the head as received and the body with its chunk framing, in both directions. HTTP/2 and HTTP/3 compress heads and frame bodies in a way the libraries do not expose. For them the head counts as its HTTP/1.1 text and the body counts as its data bytes, in both directions, and trailers count as text. The table of byte counts says this in one row per protocol.
+
+**Flow lines.** A TCP connection and a UDP mapping write one line when they end. The worker and the relay threads of the load balancer offer a ``FlowEnd`` to a bounded channel with ``try_send``. A full channel drops the line and counts it in ``sibuna_edge_flow_log_dropped_total``. The loop of the edge takes the lines after each step and offers them to the queue of the access log, which is bounded too. So no thread of the data path waits. Without a log the load balancer builds no line at all.
+
+.. code-block:: text
+
+   relay threads --try_send--+
+                             v
+   lb worker ---try_send--> [ 4,096 flow ends ] --edge loop--> [ log queue ] --> writer
+                             | full: drop, count                | full: drop, count
+
+.. list-table::
+   :header-rows: 1
+   :widths: 18 82
+
+   * - Field
+     - Meaning
+   * - ``time``
+     - When the flow ended, as UTC in RFC 3339 with milliseconds.
+   * - ``client``
+     - The client address: the source of a PROXY header, or the socket peer.
+   * - ``frontend``
+     - The name of the frontend.
+   * - ``protocol``
+     - ``tcp`` or ``udp``. A refused connection of an HTTP frontend is ``tcp``.
+   * - ``backend``, ``server``
+     - The pool and the address of the server, or ``-`` when no server was reached.
+   * - ``bytes_in``, ``bytes_out``
+     - Payload bytes from the client and to the client.
+   * - ``duration_ms``
+     - From the accepted connection, or the first datagram, to the end.
+   * - ``end``
+     - Why the flow ended. See below.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 26 74
+
+   * - ``end``
+     - Meaning
+   * - ``client_closed``, ``server_closed``
+     - Both directions ended in order. The name says which side closed first.
+   * - ``reset``
+     - A read or a write failed.
+   * - ``idle_timeout``
+     - Nothing moved for the session timeout of the frontend.
+   * - ``connect_failed``
+     - No server of the pool accepted the connection.
+   * - ``no_server``
+     - The pool had no eligible server, or a rule denied the connection.
+   * - ``evicted``
+     - A UDP mapping without an answer gave way to a new client.
+   * - ``send_failed``
+     - A datagram could not be sent to the server.
+   * - ``shutdown``
+     - The node stopped while the flow was open.
+   * - ``refused_<reason>``
+     - The connection was refused. The reason is a label of ``sibuna_edge_refused_total``.
+
+**Refused connections.** A refusal is counted always and logged at most ten times per second for the whole node. A flood of refused connections therefore writes at most ten lines per second, about 2 KiB, and the counter still has every one. The limit is a count per wall-clock second, kept in one atomic word.
+
+**Reasons for UDP drops.** ``sibuna_edge_refused_total`` gains ``udp_rate_limit`` (a datagram above ``udp_defense.threshold_pps``), ``udp_flow_limit`` (no slot for a new mapping) and ``udp_reply_limit`` (an answer larger than three times what the client sent). ``no_server`` counts a connection or datagram for which no server was eligible.
+
+**Refusals of the runtime on every path.** The hook of the first round reached the decision, which exists only with the event-driven workers. The runtime now has a hook of its own, ``Ingress::report_refusals``, and uses it on every path.
+
+**A reload of ``listen`` and of the queue.** A reload that changes ``observability.listen`` binds the new address first. When the bind fails, the reload is refused and the old listener keeps serving. Otherwise the old listener closes after the reload. A reload that changes ``queue`` creates a new channel and hands its receiving end to the writer through the old channel, so the writer empties the old queue first and no line changes its order.
+
+**Descriptors of idle server connections.** Each event-driven worker keeps idle server connections for reuse. Their number has a fixed bound per worker, and the need counts the bound of every worker.
+
 Rationale and alternatives
 --------------------------
 
