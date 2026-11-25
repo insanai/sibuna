@@ -288,11 +288,17 @@ pub enum Refusal {
     /// The client gave its request up before the firewall could decide on it. Nothing
     /// was refused: the reason keeps such a request apart from a malformed one.
     ClientClosed,
+    /// A rule or a fallback of a TLS passthrough inspection refused the connection
+    /// (SID 0032).
+    InspectDenied,
+    /// A datagram that may not open a QUIC mapping: no padded long-header packet
+    /// (SID 0032).
+    UdpNotQuic,
 }
 
 impl Refusal {
     /// Every reason, in the order of the series.
-    pub const ALL: [Refusal; 13] = [
+    pub const ALL: [Refusal; 15] = [
         Refusal::RateLimit,
         Refusal::FlowLimit,
         Refusal::Draining,
@@ -306,6 +312,8 @@ impl Refusal {
         Refusal::UdpFlowLimit,
         Refusal::UdpReplyLimit,
         Refusal::ClientClosed,
+        Refusal::InspectDenied,
+        Refusal::UdpNotQuic,
     ];
 
     /// The value of the `reason` label.
@@ -324,6 +332,8 @@ impl Refusal {
             Refusal::UdpFlowLimit => "udp_flow_limit",
             Refusal::UdpReplyLimit => "udp_reply_limit",
             Refusal::ClientClosed => "client_closed",
+            Refusal::InspectDenied => "inspect_denied",
+            Refusal::UdpNotQuic => "udp_not_quic",
         }
     }
 
@@ -343,6 +353,8 @@ impl Refusal {
             Refusal::UdpFlowLimit => "refused_udp_flow_limit",
             Refusal::UdpReplyLimit => "refused_udp_reply_limit",
             Refusal::ClientClosed => "refused_client_closed",
+            Refusal::InspectDenied => "inspect_denied",
+            Refusal::UdpNotQuic => "refused_udp_not_quic",
         }
     }
 }

@@ -51,7 +51,12 @@ pub(crate) struct Frontend {
     pub rate: Option<sibuna_store::limiter::Limits>,
     pub pool: std::sync::Arc<str>,
     pub timeout: Duration,
-    pub inspect: Option<(Duration, std::sync::Arc<[crate::rules::Rule]>)>,
+    /// How a TCP frontend inspects the ClientHello, when it does (SID 0032).
+    pub inspect: Option<std::sync::Arc<crate::inspect::Plan>>,
+    /// The kernel admission of the listeners of the frontend (SID 0032).
+    pub listen: crate::listen::ListenOptions,
+    /// A UDP frontend that carries QUIC: `udp_inspect: "quic"` (SID 0032).
+    pub quic: bool,
     /// The name, the counters and the trusted proxies of the frontend (SID 0020).
     pub info: std::sync::Arc<crate::FrontendInfo>,
 }
@@ -341,15 +346,12 @@ impl Config {
             None => Duration::from_secs(30),
             Some(s) => duration(s).ok_or_else(|| invalid(format!("{path}: invalid timeout")))?,
         };
-        let inspect = match field(r.take_str("tcp_inspect"))? {
-            Some("tls_client_hello") if proto == Protocol::Tcp => {
-                let delay = field(r.take_str("inspect_delay"))?.unwrap_or("2s");
-                let delay =
-                    duration(delay).ok_or_else(|| invalid(r.field_path("inspect_delay")))?;
-                Some((delay, std::sync::Arc::from(crate::rules::parse(&mut r, &self.pools)?)))
-            }
-            Some(_) => return Err(invalid(format!("{path}: invalid TCP inspection mode"))),
-            None => None,
+        let inspect = crate::inspect::Plan::parse(&mut r, proto, &self.pools, &pool)?;
+        let listen = crate::listen::ListenOptions::parse(&mut r, proto)?;
+        let quic = match field(r.take_str("udp_inspect"))? {
+            None => false,
+            Some("quic") if proto == Protocol::Udp => true,
+            Some(_) => return Err(invalid(format!("{path}: invalid UDP inspection mode"))),
         };
         let (tls, firewall, websocket, http_rules, policy) =
             http_frontend(&mut r, proto, &self.pools)?;
@@ -374,6 +376,8 @@ impl Config {
                 pool: pool.as_str().into(),
                 timeout,
                 inspect: inspect.clone(),
+                listen,
+                quic,
                 rate,
                 info: info.clone(),
             };

@@ -507,6 +507,10 @@ impl Serving {
 
 fn step(edge: &mut Edge, http: Option<&http::Http>) -> io::Result<()> {
     edge.step()?;
+    // A kernel option that the platform refused is a note, never a failure (SID 0032).
+    for fault in edge.listen_faults() {
+        note(format_args!("EDGE013: {fault}"));
+    }
     if let Some(http) = http {
         for accepted in edge.accepted() {
             http.accept(accepted);

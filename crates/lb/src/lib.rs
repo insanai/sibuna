@@ -20,7 +20,10 @@ pub use http::{
 mod websocket;
 pub use websocket::{TunnelPermit, TunnelRefusal, WebSocketRule};
 mod hello;
+mod inspect;
 mod ja4;
+mod listen;
+pub use listen::ListenFault;
 mod maglev;
 mod mesh;
 pub use mesh::{
@@ -30,6 +33,7 @@ pub use mesh::{
 mod observe;
 mod pool;
 mod proxy;
+mod quic_edge;
 mod quick;
 pub use quick::{QuickAutomatic, QuickProtocol, QuickStart};
 mod route;
@@ -129,7 +133,7 @@ struct Inspecting {
     opening: Opening,
     input: hello::Inspection,
     deadline: Instant,
-    rules: std::sync::Arc<[rules::Rule]>,
+    plan: std::sync::Arc<inspect::Plan>,
 }
 
 struct Pending {
@@ -151,6 +155,8 @@ struct DatagramFlow {
     timeout: Duration,
     wire_credit: usize,
     payload_credit: usize,
+    /// Whether the client address is validated, on a QUIC frontend (SID 0032).
+    validation: quic_edge::Validation,
 }
 
 /// A single-owner packet worker with bounded flows and a separate TCP connector queue.
@@ -186,6 +192,8 @@ pub struct Edge {
     buffer: Box<[u8]>,
     draining: bool,
     drops: u64,
+    /// Kernel options that a listener asked for and did not get (SID 0032).
+    listen_faults: Vec<ListenFault>,
 }
 
 /// Opens the socket of one listener. With `shared` it may share its address with
@@ -257,6 +265,13 @@ impl Edge {
         self.relays.stop();
     }
 
+    /// Takes the kernel options that listeners asked for and did not get, since the
+    /// last call (SID 0032). The listeners serve without them. A caller reports each
+    /// once: a start and a reload can add some.
+    pub fn listen_faults(&mut self) -> impl Iterator<Item = ListenFault> + '_ {
+        self.listen_faults.drain(..)
+    }
+
     /// Takes accepted HTTP sockets for plaintext dispatch or TLS negotiation.
     pub fn accepted(&mut self) -> impl Iterator<Item = Accepted> {
         self.http_pending.drain(..)
@@ -280,11 +295,16 @@ impl Edge {
         let budget = FlowBudget::new(&config);
         let mut binds = Vec::new();
         let mut listeners = Vec::new();
+        let mut listen_faults = Vec::new();
         let mut poll = Poller::new()?;
         let (waker, wake) = Waker::new()?;
         poll.set(handle(waker.socket()), READ, Ready::Wake)?;
         for (bind, route) in config.listeners {
             let socket = open_listener(bind.0, bind.1, config.reuse_port)?;
+            if let Socket::Tcp(listener) = &socket {
+                let none = listen::ListenOptions::default();
+                route.listen.apply(&none, listener, &route.info.name, &mut listen_faults);
+            }
             let fd = match &socket {
                 Socket::Tcp(socket) => handle(socket),
                 Socket::Udp(socket) => handle(socket),
@@ -331,6 +351,7 @@ impl Edge {
             buffer: vec![0; 65536].into_boxed_slice(),
             draining: false,
             drops: 0,
+            listen_faults,
         })
     }
 
@@ -367,6 +388,10 @@ impl Edge {
         self.loads.prune();
         self.keep_drained(drained);
         for (listener, route) in self.listeners.iter_mut().zip(config.listeners.into_values()) {
+            if let Socket::Tcp(socket) = &listener.socket {
+                let (old, name) = (&listener.route.listen, &route.info.name);
+                route.listen.apply(old, socket, name, &mut self.listen_faults);
+            }
             listener.route = route;
         }
         // A partially inspected handshake has no upstream yet. Drop it at a policy
@@ -441,14 +466,6 @@ impl Edge {
             }
             keep
         });
-        self.inspecting.retain(|_, flow| {
-            let keep = now < flow.deadline;
-            if !keep {
-                flowlog::mark(&mut flow.opening.line, "idle_timeout");
-                poll.remove(handle(&flow.opening.client));
-            }
-            keep
-        });
         let stats = &self.stats;
         self.awaiting.retain(|_, flow| {
             let keep = now < flow.deadline;
@@ -474,6 +491,7 @@ impl Edge {
                 }
             }
         }
+        self.expire_inspections(now);
     }
 
     fn pause(&mut self, id: usize) {
@@ -645,7 +663,8 @@ impl Edge {
             prefix: Vec::new(),
             line,
         };
-        if let Some((delay, rules)) = &route.inspect {
+        if let Some(plan) = &route.inspect {
+            let plan = plan.clone();
             if opening.client.set_nonblocking(true).is_err() {
                 return false;
             }
@@ -657,8 +676,8 @@ impl Edge {
                 Inspecting {
                     opening,
                     input: hello::Inspection::default(),
-                    deadline: Instant::now() + *delay,
-                    rules: rules.clone(),
+                    deadline: Instant::now() + plan.delay,
+                    plan,
                 },
             );
             return true;
@@ -669,52 +688,6 @@ impl Edge {
         };
         opening.prefix = prefix;
         self.connect(id, opening)
-    }
-
-    fn inspect(&mut self, id: u64) -> bool {
-        let Some(flow) = self.inspecting.get_mut(&id) else { return true };
-        match flow.input.read(&mut flow.opening.client, &mut self.buffer) {
-            Ok(false) => return true,
-            Err(error) if transient(&error) => return true,
-            Err(_) => {
-                if let Some(mut flow) = self.finish_inspection(id) {
-                    flowlog::mark(&mut flow.opening.line, "reset");
-                }
-                return false;
-            }
-            Ok(true) => {}
-        }
-        let Some(mut flow) = self.finish_inspection(id) else { return false };
-        let wire = std::mem::take(&mut flow.input.wire);
-        if let Some(line) = &mut flow.opening.line {
-            // The hello is replayed to the server from here, not relayed.
-            line.bytes_in = wire.len() as u64;
-        }
-        let Some(hello) = flow.input.hello() else { return false };
-        let Some(pool) = rules::select(&flow.rules, &hello, &flow.opening.pool) else {
-            return false;
-        };
-        let pool = pool.clone();
-        if let Some(line) = &mut flow.opening.line {
-            line.backend = pool.clone();
-        }
-        flow.opening.pool = pool;
-        let Some(pool) = self.pools.get(flow.opening.pool.as_ref()) else { return false };
-        let Some(prefix) =
-            proxy::prefix(pool.proxy_v2, flow.opening.peer, flow.opening.vip, Some(&hello), wire)
-        else {
-            return false;
-        };
-        flow.opening.prefix = prefix;
-        self.connect(id, flow.opening)
-    }
-
-    /// Takes an inspection out of the worker's poller. The relay thread registers the
-    /// client socket in its own poller once the origin is connected.
-    fn finish_inspection(&mut self, id: u64) -> Option<Inspecting> {
-        let flow = self.inspecting.remove(&id)?;
-        self.poll.remove(handle(&flow.opening.client));
-        Some(flow)
     }
 
     fn connect(&mut self, id: u64, mut opening: Opening) -> bool {
@@ -853,6 +826,7 @@ impl Edge {
                 timeout,
                 wire_credit: 0,
                 payload_credit: 0,
+                validation: quic_edge::Validation::new(self.listeners[key.0].route.quic),
             },
         );
         true
@@ -864,10 +838,13 @@ impl Edge {
             return false;
         }
         let now = Instant::now();
-        if !self.udp.contains_key(&key) && !self.open_mapping(key, now) {
+        if !self.udp.contains_key(&key)
+            && !(self.may_open(key, size) && self.open_mapping(key, now))
+        {
             return false;
         }
         let Some(flow) = self.udp.get_mut(&key) else { return false };
+        flow.validation.see_request(&self.buffer[..size]);
         match flow.origin.send(&self.buffer[..size]) {
             Ok(n) if n == size => {
                 flow.last = now;
@@ -913,13 +890,18 @@ impl Edge {
         let Socket::Udp(listener) = &self.listeners[key.0].socket else { return };
         let overhead = if key.1.is_ipv4() { 28 } else { 48 };
         match flow.origin.recv(&mut self.buffer) {
-            Ok(n) if flow.wire_credit >= n + overhead && flow.payload_credit >= n => {
+            Ok(n)
+                if flow.validation.is_done()
+                    || (flow.wire_credit >= n + overhead && flow.payload_credit >= n) =>
+            {
                 if let Some(sent) = flow.first_request.take() {
                     flow.ticket.observe(sent, Instant::now());
                 }
                 if listener.send_to(&self.buffer[..n], key.1).is_ok() {
-                    flow.wire_credit -= n + overhead;
-                    flow.payload_credit -= n;
+                    // A validated mapping may have spent its credit already.
+                    flow.wire_credit = flow.wire_credit.saturating_sub(n + overhead);
+                    flow.payload_credit = flow.payload_credit.saturating_sub(n);
+                    flow.validation.see_reply(&self.buffer[..n]);
                     flow.last = Instant::now();
                     if let Some(line) = &mut flow.line {
                         line.bytes_out += n as u64;

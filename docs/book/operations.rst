@@ -998,7 +998,7 @@ Each protocol has its own limiter. All of them count per source IPv4 address or 
      - Concurrent connections of one client
      - Further connections are refused. The default is 64.
 
-A UDP mapping may also send at most three times the bytes it received, with a bounded burst, so a spoofed source cannot use a server as an amplifier.
+A UDP mapping may also send at most three times the bytes it received, with a bounded burst, so a spoofed source cannot use a server as an amplifier. A QUIC frontend ends the bound for a client that it validated (``udp_inspect``, below).
 
 The ``http`` object
 ~~~~~~~~~~~~~~~~~~~
@@ -1329,7 +1329,99 @@ A tunnel stays on the server that accepted it. An application that keeps its liv
 TCP inspection and PROXY v2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A frontend may set ``"tcp_inspect": "tls_client_hello"``, define ``acls`` with exact ``sni`` or ``alpn`` matches or a ``ja4_prefix`` pattern such as ``t13d*``, and list ordered ``deny`` or ``use_backend`` rules. The worker closes malformed or incomplete handshakes after a bounded inspection of up to 32 KiB and a default deadline of two seconds. A complete hello with no matching rule uses the default pool. Enable ``"proxy_v2": {"enabled": true}`` on a TCP pool only when its servers accept a PROXY v2 address header before the stream. We can add ``"tlv_sni": true`` or ``"tlv_ja4": true`` inside ``proxy_v2`` to forward inspected metadata. SNI uses the AUTHORITY type (0x02). Sibuna uses the custom type 0xe0 for the 36 ASCII bytes of JA4. The origin must agree on this type.
+A frontend may set ``"tcp_inspect": "tls_client_hello"``, define ``acls`` with exact ``sni`` or ``alpn`` matches or a ``ja4_prefix`` pattern such as ``t13d*``, and list ordered ``deny`` or ``use_backend`` rules. By default the worker closes malformed or incomplete handshakes after a bounded inspection of up to 32 KiB and a default deadline of two seconds, and ``inspect_fallback`` can forward them instead (see the next section). A complete hello with no matching rule uses the default pool. Enable ``"proxy_v2": {"enabled": true}`` on a TCP pool only when its servers accept a PROXY v2 address header before the stream. We can add ``"tlv_sni": true`` or ``"tlv_ja4": true`` inside ``proxy_v2`` to forward inspected metadata. SNI uses the AUTHORITY type (0x02). Sibuna uses the custom type 0xe0 for the 36 ASCII bytes of JA4. The origin must agree on this type.
+
+Admission at the socket edge
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A connection or a datagram passes a sequence of checks before it costs a server anything. Each frontend applies the checks of its protocol. SID 0032 specifies the three that this section describes. All of them are off until the file names them.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 20 50
+
+   * - Option
+     - Frontend
+     - Effect
+   * - ``"defer_accept": "5s"``
+     - ``tcp``, ``http``
+     - The kernel gives the node a connection only when its first bytes arrive, or after about this time. From ``1s`` to ``60s``.
+   * - ``"backlog": 4096``
+     - ``tcp``, ``http``
+     - The length of the kernel's queue of connections that wait for the node. From 1 to 65,535. The kernel lowers it to ``net.core.somaxconn``.
+   * - ``"inspect_bytes": 8192``
+     - ``tcp`` with ``tcp_inspect``
+     - The most bytes held while we look for the ClientHello. From 1,024 to 32,768, which is the default.
+   * - ``"inspect_fallback": {...}``
+     - ``tcp`` with ``tcp_inspect``
+     - What happens to a connection whose TLS metadata we cannot use.
+   * - ``"udp_inspect": "quic"``
+     - ``udp``
+     - Only a QUIC Initial opens a mapping, and a validated client has no reply bound.
+
+**Kernel admission.** ``defer_accept`` and ``backlog`` need no privilege and work in an unprivileged container. We apply them at the start and at each reload. On a platform without ``TCP_DEFER_ACCEPT``, or under a sandbox that refuses the call, the node logs one line and serves without the option:
+
+.. code-block:: text
+
+   EDGE013: frontend web (0.0.0.0:443) serves without defer_accept: Operation not permitted
+
+``defer_accept`` suits protocols where the client speaks first, such as TLS and HTTP. Where the server speaks first it delays every connection by the configured time. SYN cookies stay a setting of the host.
+
+**The fallback of TLS passthrough.** A frontend with ``tcp_inspect`` reads the start of a connection within ``inspect_bytes`` and ``inspect_delay``. The rules decide a ClientHello that shows a server name. ``inspect_fallback`` decides the other four cases.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 16 54 30
+
+   * - Class
+     - When
+     - Default
+   * - ``absent``
+     - A ClientHello without a server name
+     - ``rules``
+   * - ``encrypted``
+     - A ClientHello with the Encrypted ClientHello extension
+     - ``rules``
+   * - ``incomplete``
+     - No whole ClientHello within the byte bound or the time bound
+     - ``deny``
+   * - ``invalid``
+     - Bytes that are not a TLS ClientHello
+     - ``deny``
+
+.. code-block:: json
+
+   {"proto": "tcp", "binds": ["0.0.0.0:443"], "tcp_inspect": "tls_client_hello",
+    "inspect_delay": "2s", "inspect_bytes": 8192, "defer_accept": "5s",
+    "inspect_fallback": {
+      "absent":     {"action": "use_backend", "backend": "default_tls"},
+      "encrypted":  {"action": "rules"},
+      "incomplete": {"action": "deny"},
+      "invalid":    {"action": "use_backend", "backend": "plain_tcp"}},
+    "acls": {"api": {"sni": "api.example.org"}},
+    "rules": [{"when": "api", "action": "use_backend", "backend": "api"}],
+    "default_backend": "default_tls"}
+
+An action is ``deny``, ``rules`` or ``use_backend``. ``use_backend`` without a ``backend`` uses ``default_backend`` and does not consult the rules. ``rules`` is accepted for ``absent`` and ``encrypted`` only. A forwarded connection sends the server every byte we read, once and in order, and then relays the rest. So a frontend can share a port between TLS and a plain protocol: ``invalid`` forwards the plain bytes at once, and ``incomplete`` forwards a client that waits for the server to speak, after ``inspect_delay``.
+
+Current browsers send the Encrypted ClientHello extension on every connection, as a real one or as a placeholder, and the two look the same. With a placeholder the visible name is the true name. With a real one it is the public name of the provider. ``"encrypted": {"action": "deny"}`` therefore refuses most browsers. Use it only for a service whose clients are known not to send the extension.
+
+A JA4 fingerprint describes how a client builds its handshake. Many clients share one fingerprint, and any client can imitate another. Use a ``ja4_prefix`` rule to route a population of clients or to refuse a tool that does not hide. Never use it as a credential: a matching fingerprint proves nothing about who connects.
+
+Refused connections are counted in ``sibuna_edge_refused_total{reason="inspect_denied"}``, and their flow log line ends with ``inspect_denied``.
+
+**QUIC passthrough.** A ``udp`` frontend bounds the replies of each mapping to three times what its client sent. A QUIC download breaks that bound by design: the client sends small acknowledgements. On loopback a quinn client received about 17,000 bytes of an 8 MiB download in three seconds through a plain ``udp`` frontend. With ``"udp_inspect": "quic"`` the same download took about 85 ms.
+
+The option does two things. A client without a mapping gets one only for a QUIC Initial: a long-header packet in a datagram of at least 1,200 bytes. Other datagrams are dropped and counted under ``udp_not_quic``. Then the node reads the connection ID that the server chose from the server's first reply. When the client repeats it, the client has shown that it receives at its address, and the reply bound ends for that mapping. Until then the bound of three times holds.
+
+The servers of the pool must choose random connection IDs of at least 8 bytes, as QUIC libraries do by default. Set ``session_timeout`` above the idle timeout of the QUIC servers: a client whose mapping expired cannot resume it with a short-header packet. A server may send Retry packets itself, and they pass. The node does not send Retry packets: SID 0032 records the contract that this would need and why the QUIC library of the servers cannot honour it today.
+
+.. code-block:: json
+
+   {"proto": "udp", "binds": ["192.0.2.10:443"], "udp_inspect": "quic",
+    "session_timeout": "60s",
+    "udp_defense": {"mode": "rate_limit", "threshold_pps": 50000},
+    "default_backend": "quic_fleet"}
 
 Observing the edge
 ~~~~~~~~~~~~~~~~~~
@@ -1492,7 +1584,7 @@ It expects the log under ``/var/log/sibuna`` and the admin socket at ``/run/sibu
 
 A request that Sibuna refuses before the firewall decides is logged too, with verdict ``-``: an HTTP/2 or HTTP/3 request above the request bound (503), or one that is malformed (400, 417, 501).
 
-**Metrics.** The metrics text has the process counters and then the series of the edge: requests by status class, bytes and a duration histogram per frontend; requests, failures, failovers, ejections, a response time histogram and ``sibuna_edge_server_up`` and the gauge ``sibuna_edge_server_active_requests`` per server; ``sibuna_edge_server_client_closed_total`` per server; ``sibuna_edge_refused_total`` by ``reason`` (``rate_limit``, ``flow_limit``, ``draining``, ``connection_limit``, ``client_limit``, ``task_limit``, ``exchange_limit``, ``bad_request``, ``client_closed``, ``no_server``, ``udp_rate_limit``, ``udp_flow_limit``, ``udp_reply_limit``); the flow table (``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``, ``sibuna_edge_drops_total``); and the counters of the log (with ``sibuna_edge_access_log_queue_length`` and ``sibuna_edge_flow_log_dropped_total``) and of the PROXY protocol.
+**Metrics.** The metrics text has the process counters and then the series of the edge: requests by status class, bytes and a duration histogram per frontend; requests, failures, failovers, ejections, a response time histogram and ``sibuna_edge_server_up`` and the gauge ``sibuna_edge_server_active_requests`` per server; ``sibuna_edge_server_client_closed_total`` per server; ``sibuna_edge_refused_total`` by ``reason`` (``rate_limit``, ``flow_limit``, ``draining``, ``connection_limit``, ``client_limit``, ``task_limit``, ``exchange_limit``, ``bad_request``, ``client_closed``, ``no_server``, ``udp_rate_limit``, ``udp_flow_limit``, ``udp_reply_limit``, ``inspect_denied``, ``udp_not_quic``); the flow table (``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``, ``sibuna_edge_drops_total``); and the counters of the log (with ``sibuna_edge_access_log_queue_length`` and ``sibuna_edge_flow_log_dropped_total``) and of the PROXY protocol.
 
 A client that closes its connection or resets its stream before the server answered is logged with status 499 and counted in ``sibuna_edge_server_client_closed_total``. It is not a failure of the server: ``sibuna_edge_server_failures_total`` and passive health count only what a server did. An alert on failures therefore does not fire when a load test ends or when users close their browsers.
 
