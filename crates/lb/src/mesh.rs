@@ -58,6 +58,9 @@ pub struct MeshConfig {
     /// This node takes the file that a peer sends with `reload cluster`
     /// (`mesh.accept_config`, SID 0023).
     pub accept_config: bool,
+    /// A flow of a client that another node owns is handed to that node
+    /// (`mesh.forward`, SID 0026). `None` leaves forwarding off.
+    pub forward: Option<crate::ForwardConfig>,
 }
 
 impl MeshConfig {
@@ -100,8 +103,21 @@ impl MeshConfig {
         let replicate_bans = field(r.take_bool("replicate_bans"))?.unwrap_or(true);
         let replicate_commands = field(r.take_bool("replicate_commands"))?.unwrap_or(true);
         let accept_config = field(r.take_bool("accept_config"))?.unwrap_or(false);
+        let forward =
+            field(r.take_object("forward"))?.map(crate::ForwardConfig::parse).transpose()?;
+        if let Some(forward) = &forward {
+            forward.check(&[&peers[..], &[listen]].concat())?;
+        }
         field(r.finish())?;
-        Ok(Self { listen, peers, key_file, replicate_bans, replicate_commands, accept_config })
+        Ok(Self {
+            listen,
+            peers,
+            key_file,
+            replicate_bans,
+            replicate_commands,
+            accept_config,
+            forward,
+        })
     }
 }
 
@@ -847,6 +863,7 @@ mod tests {
             replicate_bans: true,
             replicate_commands: true,
             accept_config: false,
+            forward: None,
         };
         let secret = [7; 32];
         let mesh = Mesh::start(&spec, &secret, [9; 16]).expect("start");
@@ -892,6 +909,7 @@ mod tests {
             replicate_bans: true,
             replicate_commands: true,
             accept_config: false,
+            forward: None,
         };
         let mesh = Mesh::start(&spec, &[7; 32], [boot; 16]).expect("start");
         let heard = Heard::default();
