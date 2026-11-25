@@ -445,9 +445,4 @@ jobs:
           gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber \
             ./*.tar.gz ./*.zip ./*.deb ./*.rpm ./*.pkg.tar.zst ./*.pkg ./*.tgz sibuna.rb \
             IMAGE-DIGEST.txt SHA256SUMS
-          visibility=(--prerelease=false --latest)
-          if [[ "$VERSION" == *-rc.* ]]; then
-            visibility=(--prerelease --latest=false)
-          fi
-          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false \
-            "${visibility[@]}"
+          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease=false --latest
