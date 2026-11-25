@@ -291,6 +291,12 @@ impl HttpTarget {
         self.policy.connect_timeout
     }
 
+    /// The largest request body that is kept to send the request again (`retry_body`
+    /// of its pool).
+    pub fn retry_body(&self) -> u64 {
+        self.policy.retry_body
+    }
+
     /// The longest silence of the server while it owes bytes (`response_timeout` of its
     /// pool).
     pub fn response_timeout(&self) -> Duration {

@@ -12,6 +12,9 @@ use crate::config::{Protocol, duration, field, invalid, number};
 /// The most other servers one request may try.
 const MAX_RETRIES: u64 = 8;
 
+/// The largest `retry_body`: the request buffer, which holds the body that is kept.
+pub const MAX_RETRY_BODY: u64 = 64 * 1024;
+
 /// Passive health: failures seen on live requests take a server out for a while.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Passive {
@@ -152,6 +155,9 @@ pub struct PoolPolicy {
     pub response_timeout: Duration,
     /// How many other servers one request may try after a failure. Zero turns failover off.
     pub retries: u8,
+    /// The largest request body that is kept so that the request can be sent again.
+    /// Zero keeps no body: only a request without one is sent twice.
+    pub retry_body: u64,
     /// Passive health, or `None` when it is off.
     pub passive: Option<Passive>,
     /// The ramp of a server that returns or is added, or `None` for full weight at once.
@@ -166,6 +172,7 @@ impl Default for PoolPolicy {
             connect_timeout: Duration::from_secs(5),
             response_timeout: Duration::from_secs(60),
             retries: 2,
+            retry_body: MAX_RETRY_BODY,
             passive: Some(Passive::default()),
             slow_start: None,
             sticky: None,
@@ -201,6 +208,9 @@ impl PoolPolicy {
                 )));
             }
         }
+        if let Some(bytes) = retry_body(r, http)? {
+            policy.retry_body = bytes;
+        }
         policy.slow_start = match field(r.take_str("slow_start"))? {
             None => None,
             Some(text) => Some(duration(text).ok_or_else(|| {
@@ -218,6 +228,28 @@ impl PoolPolicy {
             policy.passive = None;
         }
         Ok(policy)
+    }
+}
+
+/// Reads `retry_body`: a number of bytes or a text such as `"16k"`, at most 64 KiB.
+fn retry_body(r: &mut ObjectReader<'_, '_>, http: bool) -> io::Result<Option<u64>> {
+    let Some(value) = r.take("retry_body") else { return Ok(None) };
+    if !http {
+        return Err(http_only(r, "retry_body"));
+    }
+    let bytes = match (value.as_str(), value.as_number()) {
+        (Some(text), _) => crate::route::size(text),
+        (None, Some(number)) => number.as_u64().ok(),
+        (None, None) => None,
+    };
+    match bytes {
+        Some(bytes) if bytes <= MAX_RETRY_BODY => Ok(Some(bytes)),
+        _ => Err(invalid(format!(
+            "{}: expected a size from 0 to \"64k\", such as 0, 4096 or \"16k\". Hint: a \
+             body is kept in the request buffer of 64 KiB, so it cannot be larger; 0 keeps \
+             no body.",
+            r.field_path("retry_body")
+        ))),
     }
 }
 
@@ -365,5 +397,24 @@ mod tests {
         let error = parse(r#"{"retries":1}"#, Protocol::Tcp).unwrap_err().to_string();
         assert!(error.contains("backends.app.retries") && error.contains("Hint:"), "{error}");
         assert!(parse(r#"{"connect_timeout":"1s"}"#, Protocol::Udp).is_err());
+    }
+
+    #[test]
+    fn retry_body_is_the_request_buffer_by_default_and_reads_a_size() {
+        assert_eq!(parse("{}", Protocol::Http).unwrap().retry_body, MAX_RETRY_BODY);
+        for (source, bytes) in [
+            (r#"{"retry_body":0}"#, 0),
+            (r#"{"retry_body":"16k"}"#, 16 * 1024),
+            (r#"{"retry_body":4096}"#, 4096),
+            (r#"{"retry_body":"64k"}"#, MAX_RETRY_BODY),
+        ] {
+            assert_eq!(parse(source, Protocol::Http).unwrap().retry_body, bytes, "{source}");
+        }
+        for bad in [r#"{"retry_body":"65k"}"#, r#"{"retry_body":"some"}"#, r#"{"retry_body":-1}"#]
+        {
+            let error = parse(bad, Protocol::Http).unwrap_err().to_string();
+            assert!(error.contains("backends.app.retry_body") && error.contains("Hint:"), "{bad}");
+        }
+        assert!(parse(r#"{"retry_body":0}"#, Protocol::Tcp).is_err());
     }
 }

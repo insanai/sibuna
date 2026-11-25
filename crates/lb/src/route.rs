@@ -265,7 +265,7 @@ fn max_body(value: &Value<'_>, path: &str) -> io::Result<Option<u64>> {
 }
 
 /// The bytes of a size text: digits and an optional `k`, `m` or `g`.
-fn size(text: &str) -> Option<u64> {
+pub(crate) fn size(text: &str) -> Option<u64> {
     let (digits, shift) = match text.as_bytes().last()?.to_ascii_lowercase() {
         b'k' => (&text[..text.len() - 1], 10),
         b'm' => (&text[..text.len() - 1], 20),
