@@ -26,6 +26,8 @@ sibuna lb --tls auto --domain NAME [--domain NAME]... --server IP:PORT [options]
   --acme-email ADDRESS  The contact address of the ACME account
   --acme-storage DIR    Keys and certificates (default: /var/lib/sibuna/acme)
   --acme-dns-hook PROG  The program that answers DNS-01, for a wildcard --domain
+  --acme-issuer WHO     acme or internal: who issues for each --domain. Without it
+                        the name decides: the local authority for internal names
   --acme-on-demand-ask URL
                         Also obtain a certificate at the first handshake for a
                         name that GET URL?domain=NAME allows (status 2xx)
@@ -169,6 +171,7 @@ fn parse(args: &[String]) -> Result<Request, Mistake> {
             "--acme-storage" => start.automatic.storage = Some(value()?.to_owned()),
             "--acme-dns-hook" => start.automatic.dns_hook = Some(value()?.to_owned()),
             "--acme-on-demand-ask" => start.automatic.on_demand_ask = Some(value()?.to_owned()),
+            "--acme-issuer" => start.automatic.issuer = Some(value()?.to_owned()),
             "--health" => start.health = Some(value()?.to_owned()),
             "--firewall" => start.surface = value()?.to_owned(),
             "--admin" => start.admin_socket = Some(value()?.to_owned()),
@@ -332,13 +335,15 @@ mod tests {
         assert_eq!(start.automatic.http_binds, ["0.0.0.0:80".parse().unwrap()]);
         let line = "--tls auto --domain example.org --server 10.0.0.1:80 --bind [::1]:8443 \
                     --http :8080 --acme-directory letsencrypt-staging --acme-email a@example.org \
-                    --acme-storage /tmp/acme --acme-on-demand-ask http://127.0.0.1:9/ok";
+                    --acme-storage /tmp/acme --acme-on-demand-ask http://127.0.0.1:9/ok \
+                    --acme-issuer internal";
         let Ok(Request::Serve(start)) = request(line) else { panic!("expected a topology") };
         assert_eq!(start.automatic.http_binds, ["0.0.0.0:8080".parse().unwrap()]);
         assert_eq!(start.automatic.directory.as_deref(), Some("letsencrypt-staging"));
         assert_eq!(start.automatic.email.as_deref(), Some("a@example.org"));
         assert_eq!(start.automatic.storage.as_deref(), Some("/tmp/acme"));
         assert_eq!(start.automatic.on_demand_ask.as_deref(), Some("http://127.0.0.1:9/ok"));
+        assert_eq!(start.automatic.issuer.as_deref(), Some("internal"));
         let off = "--tls auto --domain example.org --server 10.0.0.1:80 --http off";
         let Ok(Request::Serve(start)) = request(off) else { panic!("expected a topology") };
         assert!(start.automatic.http_binds.is_empty());

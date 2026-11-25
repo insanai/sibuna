@@ -62,6 +62,8 @@ pub struct QuickAutomatic {
     /// `global.acme.on_demand.ask`. With it the frontend also obtains certificates on
     /// demand, for the names that the URL allows.
     pub on_demand_ask: Option<String>,
+    /// `tls.issuer` of the frontend: `acme` or `internal`. Without it the name decides.
+    pub issuer: Option<String>,
 }
 
 impl QuickAutomatic {
@@ -205,6 +207,9 @@ impl QuickStart {
         let mut tls = Vec::new();
         if !automatic.domains.is_empty() {
             tls.push(("auto", Node::List(automatic.domains.iter().map(text).collect())));
+            if let Some(issuer) = &automatic.issuer {
+                tls.push(("issuer", text(issuer)));
+            }
             if automatic.on_demand_ask.is_some() {
                 tls.push(("on_demand", Node::Code("true".to_owned())));
             }
@@ -411,6 +416,29 @@ mod tests {
             let guards = automatic.options.on_demand.unwrap();
             assert!(automatic.on_demand && guards.ask.is_some() && guards.allow.is_empty());
         }
+    }
+
+    #[test]
+    fn the_issuer_of_the_quick_start_is_that_of_the_frontend() {
+        let mut start = QuickStart {
+            binds: vec!["0.0.0.0:443".parse().unwrap()],
+            servers: vec!["10.0.0.1:80".parse().unwrap()],
+            ..QuickStart::default()
+        };
+        start.automatic.domains = vec!["www.example.org".to_owned()];
+        start.automatic.issuer = Some("internal".to_owned());
+        let module = start.jlv();
+        assert!(
+            module.contains("auto: [\"www.example.org\"], issuer: \"internal\" }"),
+            "{module}"
+        );
+        let automatic = start.config().unwrap().automatic_https().unwrap();
+        assert!(automatic.names[0].local);
+        start.automatic.issuer = Some("acme".to_owned());
+        assert!(!start.config().unwrap().automatic_https().unwrap().names[0].local);
+        start.automatic.issuer = Some("other".to_owned());
+        let error = start.config().err().map(|error| error.to_string()).unwrap_or_default();
+        assert!(error.contains("expected \"acme\" or \"internal\""), "{error}");
     }
 
     #[test]
