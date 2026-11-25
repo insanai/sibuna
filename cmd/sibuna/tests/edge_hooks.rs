@@ -162,7 +162,8 @@ fn a_paid_challenge_of_a_hook_is_cleared_and_the_hook_behind_it_still_judges() {
         let module = temp_file("hook.wasm", EXAMPLE);
         let plugins = format!(
             r#""plugins":{{"p":{{"kind":"wasm","module":"{module}"}},
-            "token":{{"kind":"native","hook":"require_header","settings":{{"name":"x-token"}}}}}},"#
+            "token":{{"kind":"native","hook":"require_header",
+              "settings":{{"name":"x-token"}}}}}},"#
         );
         let edge = Topology::new(&[origin.address])
             .root(&plugins)
