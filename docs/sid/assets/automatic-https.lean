@@ -17,6 +17,9 @@ A model of the algorithms of SID 0021, checked with Lean 4.19.0.
 12. Zone search: the search for the zone of a record at a DNS provider asks a bounded number of questions, fewer than the owner has labels, finds only a zone that the account has and that ends the owner, and finds the longest such zone.
 13. Constraints: the empty list of the local root permits every name, a list permits exactly the names that an entry covers, a suffix covers at whole labels and never a shorter name, and a list of one kind of entry permits no name of the other kind.
 14. Restart: the delay before the certificate thread starts again after a panic is at least five seconds, at most five minutes, and never shrinks.
+15. Revocation list: a list that is looked at every hour and written again at half of its validity is replaced before it ends, and its number grows with every list, also when the clock steps back.
+16. Nonces: the ACME server accepts a nonce once, never a nonce that it did not hand out, and its table of nonces keeps its bound.
+17. Server order: an order at the ACME server never moves back, becomes ready only when every name is proved, is signed only after it was ready and finalized, and stays valid or invalid once it is.
 
 Times are natural numbers of seconds. The JSON documents, the signatures, the sockets and the files are outside the model. Tests cover them.
 -/
@@ -1144,5 +1147,146 @@ theorem restart_monotone (n m : Nat) (h : n ≤ m) : restartDelay n ≤ restartD
 /-- The first delays: 5, 10, 20, 40, 80, 160, then 300. -/
 example : (List.range 9).map (fun n => restartDelay (n + 1)) =
     [5, 10, 20, 40, 80, 160, 300, 300, 300] := by decide
+
+/-! ## Part O: The revocation list -/
+
+/-- Whether the list written at `t` with the validity `l` is written again at `now`:
+half of its validity has passed. -/
+def listDue (t l now : Nat) : Bool :=
+  Decidable.decide (t + l / 2 ≤ now)
+
+/-- The thread looks at the list at least every `gap` seconds, and half of the
+validity is at least that long. A list that was not due at the look `p` is therefore
+still valid at every moment up to the next look: it is replaced before it ends. -/
+theorem list_replaced_before_its_end (t l gap p now : Nat)
+    (fresh : listDue t l p = false) (next : now ≤ p + gap) (room : gap ≤ l / 2) :
+    now < t + l := by
+  simp [listDue] at fresh
+  omega
+
+/-- With the validity of one day and a look at least every hour, the bound holds. -/
+example : (3600 : Nat) ≤ 86400 / 2 := by decide
+
+/-- The number of the list that replaces the list with the number `old` at `now`. -/
+def nextNumber (old now : Nat) : Nat :=
+  max now (old + 1)
+
+/-- The number grows with every list, also when the clock steps back. -/
+theorem list_number_grows (old now : Nat) : old < nextNumber old now := by
+  simp only [nextNumber]
+  omega
+
+/-- The number is never before the clock. -/
+theorem list_number_follows_the_clock (old now : Nat) : now ≤ nextNumber old now := by
+  simp only [nextNumber]
+  omega
+
+/-! ## Part P: The nonces of the ACME server -/
+
+/-- Takes the nonce `n` out of the known nonces: whether it was there, and what is
+left. The table holds a nonce at most once, so taking it removes every occurrence. -/
+def takeNonce (n : Nat) (known : List Nat) : Bool × List Nat :=
+  (known.contains n, known.filter (fun m => m != n))
+
+/-- A nonce is accepted once: after a request used it, a second request with the same
+nonce is refused, whatever happened to other nonces in between. -/
+theorem nonce_used_once (n : Nat) (known : List Nat) :
+    (takeNonce n (takeNonce n known).2).1 = false := by
+  simp [takeNonce]
+
+/-- Taking another nonce in between does not bring a used nonce back. -/
+theorem nonce_stays_used (n m : Nat) (known : List Nat) :
+    (takeNonce n (takeNonce m (takeNonce n known).2).2).1 = false := by
+  simp [takeNonce]
+
+/-- A nonce that the server never handed out is refused. -/
+theorem unknown_nonce_refused (n : Nat) (known : List Nat) (h : n ∉ known) :
+    (takeNonce n known).1 = false := by
+  simp [takeNonce, h]
+
+/-- Remembers a new nonce. At the bound `cap` the oldest nonces leave first. -/
+def addNonce (cap n : Nat) (known : List Nat) : List Nat :=
+  known.drop (known.length + 1 - cap) ++ [n]
+
+/-- The table of nonces keeps its bound. -/
+theorem nonces_bounded (cap n : Nat) (known : List Nat) (pos : 0 < cap) :
+    (addNonce cap n known).length ≤ cap := by
+  simp only [addNonce, List.length_append, List.length_drop, List.length_singleton]
+  omega
+
+/-! ## Part Q: The order at the ACME server -/
+
+/-- The states of an order at the server (RFC 8555, section 7.1.6). -/
+inductive OrderState where
+  | pending | ready | processing | valid | invalid
+  deriving DecidableEq, Repr
+
+/-- What happens to an order. A validation ends with every name proved (`allValid`),
+with one name failed (`anyInvalid`), or with names still open. -/
+inductive OrderEvent where
+  | validated (allValid anyInvalid : Bool)
+  | finalize
+  | issued
+  | notIssued
+
+/-- One step of an order. An event that does not fit the state changes nothing. -/
+def orderStep : OrderState → OrderEvent → OrderState
+  | .pending, .validated _ true => .invalid
+  | .pending, .validated true false => .ready
+  | .ready, .finalize => .processing
+  | .processing, .issued => .valid
+  | .processing, .notIssued => .invalid
+  | s, _ => s
+
+/-- How far an order has come. -/
+def orderRank : OrderState → Nat
+  | .pending => 0
+  | .ready => 1
+  | .processing => 2
+  | .valid => 3
+  | .invalid => 4
+
+/-- An order never moves back. -/
+theorem order_moves_forward (s : OrderState) (e : OrderEvent) :
+    orderRank s ≤ orderRank (orderStep s e) := by
+  cases s <;> cases e <;> simp [orderStep, orderRank] <;> (rename_i a b; cases a <;> cases b <;> simp [orderStep, orderRank])
+
+/-- An order becomes ready only from pending, and only when every name is proved and
+none has failed. -/
+theorem ready_needs_every_proof (s : OrderState) (e : OrderEvent)
+    (h : orderStep s e = .ready) (new : s ≠ .ready) :
+    s = .pending ∧ e = .validated true false := by
+  cases s <;> cases e <;> simp_all [orderStep] <;> (rename_i a b; cases a <;> cases b <;> simp_all [orderStep])
+
+/-- The signing starts only from a ready order, with the request of the client. -/
+theorem processing_needs_ready (s : OrderState) (e : OrderEvent)
+    (h : orderStep s e = .processing) (new : s ≠ .processing) :
+    s = .ready ∧ e = .finalize := by
+  cases s <;> cases e <;> simp_all [orderStep] <;> (rename_i a b; cases a <;> cases b <;> simp_all [orderStep])
+
+/-- A certificate exists only after the signing of a finalized order. -/
+theorem valid_needs_processing (s : OrderState) (e : OrderEvent)
+    (h : orderStep s e = .valid) (new : s ≠ .valid) :
+    s = .processing ∧ e = .issued := by
+  cases s <;> cases e <;> simp_all [orderStep] <;> (rename_i a b; cases a <;> cases b <;> simp_all [orderStep])
+
+/-- A valid order and an invalid order stay as they are: an order is finalized once,
+and a failed order issues nothing. -/
+theorem final_states_stay (e : OrderEvent) :
+    orderStep .valid e = .valid ∧ orderStep .invalid e = .invalid := by
+  cases e <;> simp [orderStep]
+
+/-- The run of an order over a list of events. -/
+def orderRun (s : OrderState) : List OrderEvent → OrderState
+  | [] => s
+  | e :: rest => orderRun (orderStep s e) rest
+
+/-- The usual order: the proof, the request, the signing. -/
+example : orderRun .pending [.validated true false, .finalize, .issued] = .valid := by decide
+
+/-- A request before the proof changes nothing, and a failed name ends the order. -/
+example : orderRun .pending [.finalize, .issued] = .pending := by decide
+example : orderRun .pending [.validated false true, .validated true false, .finalize, .issued]
+    = .invalid := by decide
 
 end SibunaAcme
