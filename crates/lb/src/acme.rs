@@ -40,6 +40,28 @@ pub enum AcmeChallenge {
     Dns01,
 }
 
+/// `global.acme.key`: the curve of the key of a new certificate.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum CertificateKey {
+    /// ECDSA on P-256.
+    #[default]
+    P256,
+    /// ECDSA on P-384.
+    P384,
+}
+
+/// Reads `global.acme.key`.
+fn certificate_key(r: &mut ObjectReader<'_, '_>) -> io::Result<CertificateKey> {
+    let path = r.field_path("key");
+    match field(r.take_str("key"))? {
+        None | Some("p256") => Ok(CertificateKey::P256),
+        Some("p384") => Ok(CertificateKey::P384),
+        Some(_) => Err(invalid(format!(
+            "{path}: expected \"p256\" or \"p384\"; RSA keys are not offered"
+        ))),
+    }
+}
+
 /// `tls.issuer`: who issues the certificates of the `auto` names of a frontend.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum AcmeIssuer {
@@ -79,6 +101,8 @@ pub struct AcmeOptions {
     pub ari: bool,
     /// Staple an OCSP response when a certificate names a responder.
     pub ocsp: bool,
+    /// The curve of the key of a new certificate, from either source.
+    pub key: CertificateKey,
 }
 
 impl Default for AcmeOptions {
@@ -97,6 +121,7 @@ impl Default for AcmeOptions {
             fallback: Vec::new(),
             ari: true,
             ocsp: true,
+            key: CertificateKey::P256,
         }
     }
 }
@@ -166,6 +191,7 @@ impl AcmeOptions {
         let redirect = field(r.take_bool("redirect"))?.unwrap_or(defaults.redirect);
         let dns = field(r.take_object("dns"))?.map(DnsConfig::parse).transpose()?;
         let internal = Internal::take(&mut r)?;
+        let key = certificate_key(&mut r)?;
         let on_demand = field(r.take_object("on_demand"))?.map(OnDemand::parse).transpose()?;
         field(r.finish())?;
         Ok(Self {
@@ -182,6 +208,7 @@ impl AcmeOptions {
             fallback,
             ari,
             ocsp,
+            key,
         })
     }
 }
@@ -545,6 +572,19 @@ mod tests {
             "backends":{"app":{"servers":["10.0.0.1:80"]}}}"#;
         let text = Config::parse(document.as_bytes()).err().map(|e| e.to_string());
         assert!(text.unwrap_or_default().contains("has two issuers"));
+    }
+
+    #[test]
+    fn the_key_of_a_certificate_is_on_one_of_two_curves() {
+        let key = |global: &str| {
+            let config = parse(r#"{"auto":["example.org"]}"#, global).ok();
+            config.and_then(|c| c.automatic_https()).map(|a| a.options.key)
+        };
+        assert_eq!(key(""), Some(CertificateKey::P256));
+        assert_eq!(key(r#""global":{"acme":{"key":"p256"}},"#), Some(CertificateKey::P256));
+        assert_eq!(key(r#""global":{"acme":{"key":"p384"}},"#), Some(CertificateKey::P384));
+        let text = reason(r#"{"auto":["example.org"]}"#, r#""global":{"acme":{"key":"rsa"}},"#);
+        assert!(text.contains("global.acme.key: expected \"p256\" or \"p384\""), "{text}");
     }
 
     #[test]

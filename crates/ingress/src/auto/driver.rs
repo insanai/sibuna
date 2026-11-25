@@ -506,6 +506,14 @@ impl Driver {
         }
     }
 
+    /// The curve of the key of a new certificate: `global.acme.key`.
+    fn curve(&self) -> sibuna_acme::Curve {
+        match self.shared.options.key {
+            sibuna_lb::CertificateKey::P256 => sibuna_acme::Curve::P256,
+            sibuna_lb::CertificateKey::P384 => sibuna_acme::Curve::P384,
+        }
+    }
+
     /// Removes the DNS-01 records of names that the daemon no longer manages: a name
     /// that left the file while its record was not cleaned, in this run or before a
     /// restart. The store is listed at the start and whenever the names changed. A
@@ -597,7 +605,8 @@ impl Driver {
             names
                 .extend(others.map(|other| other.name.as_str()).filter(|other| is_address(other)));
         }
-        local.authority.issue(&names, self.shared.options.internal.lifetime, now())
+        let lifetime = self.shared.options.internal.lifetime;
+        local.authority.issue_on(self.curve(), &names, lifetime, now())
     }
 
     fn succeeded(&self, store: &Store, name: &str, entry: &mut Entry) {

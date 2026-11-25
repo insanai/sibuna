@@ -6,7 +6,6 @@ use std::net::IpAddr;
 use sibuna_crypto::sha256::Sha256;
 
 use crate::error::printable;
-use crate::key::signature_algorithm;
 use crate::{Error, KeyPair, der, time};
 
 /// `subjectAltName`, 2.5.29.17.
@@ -403,7 +402,7 @@ pub fn write(
     let tbs = der::sequence(&[
         &der::element(0xa0, &der::integer(&[2])),
         &der::integer(&template.serial.max(1).to_be_bytes()),
-        &signature_algorithm(),
+        &signer.signature_algorithm(),
         &common_name(template.issuer),
         &validity,
         &common_name(template.subject),

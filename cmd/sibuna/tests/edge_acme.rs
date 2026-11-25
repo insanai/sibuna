@@ -1014,3 +1014,53 @@ fn the_record_of_a_name_that_left_the_file_is_cleaned_at_once_and_at_the_start()
         assert!(!daemon.ctl("show certs").contains(wildcard), "{tag}");
     }
 }
+
+#[test]
+fn a_certificate_key_on_p384_is_ordered_issued_stored_and_served() {
+    /// The object identifier of the curve P-384, as the key of a certificate names it.
+    const SECP384R1: [u8; 7] = [0x06, 0x05, 0x2b, 0x81, 0x04, 0x00, 0x22];
+    let authority = Authority::start();
+    let home = home("p384");
+    let name = "p384.example.test";
+    let setup = Setup {
+        authority: &authority,
+        origin: origin(),
+        home: &home,
+        names: &[name, "127.0.0.1"],
+        plain: Some(""),
+        acme: r#","key":"p384""#,
+        tls: "",
+        directory: true,
+    };
+    let on_p384 = |daemon: &Daemon, host: &str| {
+        // A rustls client completes the handshake, so the daemon signed with the key.
+        let leaf = peer_certificate(daemon.tls, host, None).unwrap();
+        leaf.windows(SECP384R1.len()).any(|window| window == SECP384R1)
+    };
+    let ready = |daemon: &Daemon| {
+        wait_for("the certificates", 30, || {
+            let ready = |name: &str| daemon.row(name)[5] == "ready";
+            (ready(name) && ready("127.0.0.1")).then_some(())
+        });
+    };
+    let daemon = start(&setup);
+    ready(&daemon);
+    // One certificate from the authority of the test, one from the local authority.
+    assert_eq!(daemon.row(name)[1], "http-01");
+    assert_eq!(daemon.row("127.0.0.1")[1], "local");
+    assert!(on_p384(&daemon, name) && on_p384(&daemon, "127.0.0.1"));
+    assert!(get(daemon.plain, name, "/").starts_with("HTTP/1.1 308 "));
+    let (root, _) = local_root(&daemon);
+    let answer = get_trusting(daemon.tls, "127.0.0.1", &root);
+    assert!(answer.is_ok_and(|answer| answer.ends_with("ok")));
+    assert_eq!(authority.order_count.load(Ordering::Relaxed), 1);
+    drop(daemon);
+
+    // The stored keys load after a restart, and nothing is ordered again.
+    let daemon = start(&setup);
+    ready(&daemon);
+    assert!(on_p384(&daemon, name) && on_p384(&daemon, "127.0.0.1"));
+    let log = daemon.log();
+    assert!(log.contains(&format!("certificate for {name} loaded from storage")), "{log}");
+    assert_eq!(authority.order_count.load(Ordering::Relaxed), 1);
+}

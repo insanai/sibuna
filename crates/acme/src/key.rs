@@ -1,11 +1,15 @@
-//! An ECDSA P-256 key pair: the account key that signs every request, and the key of
-//! each certificate. The arithmetic is `ring`'s.
+//! An ECDSA key pair: the account key that signs every request, and the key of each
+//! certificate. The account key and the keys of the local authority are on P-256. The
+//! key of a certificate is on P-256 or on P-384. The arithmetic is `ring`'s. `ring`
+//! signs with an RSA key and cannot make one, so there are no RSA keys here.
 
 use std::fmt;
 
 use ring::rand::SystemRandom;
 use ring::signature::{
-    ECDSA_P256_SHA256_ASN1_SIGNING, ECDSA_P256_SHA256_FIXED_SIGNING, EcdsaKeyPair, KeyPair as _,
+    ECDSA_P256_SHA256_ASN1_SIGNING, ECDSA_P256_SHA256_FIXED_SIGNING,
+    ECDSA_P384_SHA384_ASN1_SIGNING, ECDSA_P384_SHA384_FIXED_SIGNING, EcdsaKeyPair,
+    EcdsaSigningAlgorithm, KeyPair as _,
 };
 
 use crate::{Error, der, pem};
@@ -18,11 +22,44 @@ const EC_PUBLIC_KEY: &[u8] = &[0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01];
 const PRIME256V1: &[u8] = &[0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07];
 /// `ecdsa-with-SHA256`, 1.2.840.10045.4.3.2.
 const ECDSA_WITH_SHA256: &[u8] = &[0x2a, 0x86, 0x48, 0xce, 0x3d, 0x04, 0x03, 0x02];
+/// `secp384r1`, 1.3.132.0.34.
+pub(crate) const SECP384R1: &[u8] = &[0x2b, 0x81, 0x04, 0x00, 0x22];
+/// `ecdsa-with-SHA384`, 1.2.840.10045.4.3.3.
+const ECDSA_WITH_SHA384: &[u8] = &[0x2a, 0x86, 0x48, 0xce, 0x3d, 0x04, 0x03, 0x03];
 
-/// A P-256 private key with its public point. It owns the PKCS#8 encoding and never
-/// prints it: `Debug` shows the public point only.
+/// The curve of a key. A key on P-256 signs with SHA-256, one on P-384 with SHA-384.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Curve {
+    /// NIST P-256, the default.
+    #[default]
+    P256,
+    /// NIST P-384.
+    P384,
+}
+
+impl Curve {
+    /// The algorithms of `ring` for the fixed-width and for the DER signature.
+    fn algorithms(self) -> (&'static EcdsaSigningAlgorithm, &'static EcdsaSigningAlgorithm) {
+        match self {
+            Self::P256 => (&ECDSA_P256_SHA256_FIXED_SIGNING, &ECDSA_P256_SHA256_ASN1_SIGNING),
+            Self::P384 => (&ECDSA_P384_SHA384_FIXED_SIGNING, &ECDSA_P384_SHA384_ASN1_SIGNING),
+        }
+    }
+
+    /// The object identifiers of the curve and of its signature algorithm.
+    fn identifiers(self) -> (&'static [u8], &'static [u8]) {
+        match self {
+            Self::P256 => (PRIME256V1, ECDSA_WITH_SHA256),
+            Self::P384 => (SECP384R1, ECDSA_WITH_SHA384),
+        }
+    }
+}
+
+/// A private key with its public point. It owns the PKCS#8 encoding and never prints
+/// it: `Debug` shows the public point only.
 pub struct KeyPair {
     pkcs8: Vec<u8>,
+    curve: Curve,
     /// Signs with the fixed-width signature of JWS.
     fixed: EcdsaKeyPair,
     /// Signs with the DER signature of X.509.
@@ -37,7 +74,7 @@ impl fmt::Debug for KeyPair {
 }
 
 fn key_failure(what: &str) -> Error {
-    Error::unexpected(format!("The P-256 key could not be {what}."))
+    Error::unexpected(format!("The key could not be {what}."))
 }
 
 /// Eight bytes from the system's random source, for a serial number. Fails only when
@@ -50,24 +87,39 @@ pub fn random_serial() -> Result<u64, Error> {
 }
 
 impl KeyPair {
-    /// Draws a new key from the system's random source. Fails only when that source does.
+    /// Draws a new key on P-256 from the system's random source. Fails only when that
+    /// source does.
     pub fn generate() -> Result<Self, Error> {
+        Self::generate_on(Curve::P256)
+    }
+
+    /// Draws a new key on `curve` from the system's random source. Fails only when
+    /// that source does.
+    pub fn generate_on(curve: Curve) -> Result<Self, Error> {
         let random = SystemRandom::new();
-        let document = EcdsaKeyPair::generate_pkcs8(&ECDSA_P256_SHA256_FIXED_SIGNING, &random)
+        let document = EcdsaKeyPair::generate_pkcs8(curve.algorithms().0, &random)
             .map_err(|_| key_failure("generated"))?;
         Self::from_pkcs8(document.as_ref())
     }
 
-    /// Reads a key from its PKCS#8 DER encoding. Fails for any other key type and for an
-    /// encoding without the public point.
+    /// Reads a key on P-256 or P-384 from its PKCS#8 DER encoding. Fails for any other
+    /// key type and for an encoding without the public point.
     pub fn from_pkcs8(der: &[u8]) -> Result<Self, Error> {
         let random = SystemRandom::new();
-        let load = |algorithm| {
-            EcdsaKeyPair::from_pkcs8(algorithm, der, &random).map_err(|_| key_failure("read"))
+        let load = |curve: Curve| {
+            let (fixed, asn1) = curve.algorithms();
+            let fixed = EcdsaKeyPair::from_pkcs8(fixed, der, &random).ok()?;
+            let asn1 = EcdsaKeyPair::from_pkcs8(asn1, der, &random).ok()?;
+            Some((curve, fixed, asn1))
         };
-        let fixed = load(&ECDSA_P256_SHA256_FIXED_SIGNING)?;
-        let asn1 = load(&ECDSA_P256_SHA256_ASN1_SIGNING)?;
-        Ok(Self { pkcs8: der.to_vec(), fixed, asn1, random })
+        let (curve, fixed, asn1) =
+            load(Curve::P256).or_else(|| load(Curve::P384)).ok_or_else(|| key_failure("read"))?;
+        Ok(Self { pkcs8: der.to_vec(), curve, fixed, asn1, random })
+    }
+
+    /// The curve of the key.
+    pub fn curve(&self) -> Curve {
+        self.curve
     }
 
     /// Reads the first `PRIVATE KEY` block of a PEM text.
@@ -86,7 +138,8 @@ impl KeyPair {
         &self.pkcs8
     }
 
-    /// The public point in uncompressed form: `0x04`, then X and Y of 32 bytes each.
+    /// The public point in uncompressed form: `0x04`, then X and Y, of 32 bytes each
+    /// on P-256 and of 48 bytes each on P-384.
     pub fn public_point(&self) -> &[u8] {
         self.fixed.public_key().as_ref()
     }
@@ -95,13 +148,23 @@ impl KeyPair {
     pub fn subject_public_key_info(&self) -> Vec<u8> {
         let algorithm = der::sequence(&[
             &der::element(der::OID, EC_PUBLIC_KEY),
-            &der::element(der::OID, PRIME256V1),
+            &der::element(der::OID, self.curve.identifiers().0),
         ]);
         der::sequence(&[&algorithm, &der::bit_string(self.public_point())])
     }
 
-    /// Signs `message` for a JWS: R and S of 32 bytes each.
+    /// The DER `AlgorithmIdentifier` of the signatures of this key: ECDSA with SHA-256
+    /// or with SHA-384.
+    pub(crate) fn signature_algorithm(&self) -> Vec<u8> {
+        der::sequence(&[&der::element(der::OID, self.curve.identifiers().1)])
+    }
+
+    /// Signs `message` for a JWS with the algorithm ES256: R and S of 32 bytes each.
+    /// Fails for a key on another curve; the account key is always on P-256.
     pub(crate) fn sign_fixed(&self, message: &[u8]) -> Result<Vec<u8>, Error> {
+        if self.curve != Curve::P256 {
+            return Err(key_failure("used for a request: the account key is on P-256"));
+        }
         let signature =
             self.fixed.sign(&self.random, message).map_err(|_| key_failure("used to sign"))?;
         Ok(signature.as_ref().to_vec())
@@ -112,14 +175,9 @@ impl KeyPair {
     pub(crate) fn sign_der(&self, body: &[u8]) -> Result<Vec<u8>, Error> {
         let signature =
             self.asn1.sign(&self.random, body).map_err(|_| key_failure("used to sign"))?;
-        let algorithm = signature_algorithm();
+        let algorithm = self.signature_algorithm();
         Ok(der::sequence(&[body, &algorithm, &der::bit_string(signature.as_ref())]))
     }
-}
-
-/// The DER `AlgorithmIdentifier` of ECDSA with SHA-256.
-pub(crate) fn signature_algorithm() -> Vec<u8> {
-    der::sequence(&[&der::element(der::OID, ECDSA_WITH_SHA256)])
 }
 
 /// The PKCS#8 encoding of a P-256 key from its scalar and its public point, for tests
@@ -178,6 +236,27 @@ mod tests {
         UnparsedPublicKey::new(&ECDSA_P256_SHA256_ASN1, key.public_point())
             .verify(&body, signature)
             .unwrap();
+    }
+
+    #[test]
+    fn a_key_on_p384_signs_with_sha384_and_survives_its_pem_form() {
+        use ring::signature::ECDSA_P384_SHA384_ASN1;
+        let key = KeyPair::generate_on(Curve::P384).unwrap();
+        assert_eq!((key.curve(), key.public_point().len()), (Curve::P384, 97));
+        let again = KeyPair::from_pem(&key.to_pem()).unwrap();
+        assert_eq!((again.curve(), again.public_point()), (Curve::P384, key.public_point()));
+        assert_eq!(KeyPair::generate().unwrap().curve(), Curve::P256);
+        let body = der::sequence(&[&der::integer(&[7])]);
+        let signed = key.sign_der(&body).unwrap();
+        let (_, content, _) = der::read(&signed).unwrap();
+        let parts: Vec<_> = der::children(content).collect();
+        assert!(parts[1].1.ends_with(ECDSA_WITH_SHA384));
+        UnparsedPublicKey::new(&ECDSA_P384_SHA384_ASN1, key.public_point())
+            .verify(&body, &parts[2].1[1..])
+            .unwrap();
+        assert!(key.subject_public_key_info().windows(5).any(|window| window == SECP384R1));
+        // A request to the authority is signed with ES256, by a key on P-256 only.
+        assert!(key.sign_fixed(b"message").is_err());
     }
 
     #[test]

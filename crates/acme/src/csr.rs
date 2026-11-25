@@ -1,7 +1,7 @@
 //! The PKCS#10 certificate request (RFC 2986) that finalizes an order: the public key and
 //! the DNS names in a subjectAltName extension, signed with the private key.
 
-use ring::signature::{ECDSA_P256_SHA256_ASN1, UnparsedPublicKey};
+use ring::signature::{ECDSA_P256_SHA256_ASN1, ECDSA_P384_SHA384_ASN1, UnparsedPublicKey};
 
 use crate::{Error, KeyPair, der, x509};
 
@@ -40,9 +40,9 @@ pub struct Parsed {
     pub public_key: Vec<u8>,
 }
 
-/// Reads a request and checks its signature with the P-256 key it carries. Returns `None`
-/// for any other key type, a bad signature or a malformed request. A test authority uses
-/// this; the client itself only writes requests.
+/// Reads a request and checks its signature with the key it carries, on P-256 or on
+/// P-384. Returns `None` for any other key type, a bad signature or a malformed request.
+/// A test authority uses this; the client itself only writes requests.
 pub fn read(request: &[u8]) -> Option<Parsed> {
     let (der::SEQUENCE, outer, _) = der::read(request)? else { return None };
     let (info_raw, rest) = der::read_raw(outer)?;
@@ -54,11 +54,13 @@ pub fn read(request: &[u8]) -> Option<Parsed> {
     let _subject = fields.next()?;
     let (der::SEQUENCE, key_fields) = fields.next()? else { return None };
     let (0xa0, attributes) = fields.next()? else { return None };
-    let (_, point) = der::children(key_fields).nth(1)?;
+    let mut key_parts = der::children(key_fields);
+    let (der::SEQUENCE, key_type) = key_parts.next()? else { return None };
+    let (_, point) = key_parts.next()?;
     let point = point.get(1..)?;
-    UnparsedPublicKey::new(&ECDSA_P256_SHA256_ASN1, point)
-        .verify(info_raw, signature.get(1..)?)
-        .ok()?;
+    let on_p384 = key_type.ends_with(crate::key::SECP384R1);
+    let algorithm = if on_p384 { &ECDSA_P384_SHA384_ASN1 } else { &ECDSA_P256_SHA256_ASN1 };
+    UnparsedPublicKey::new(algorithm, point).verify(info_raw, signature.get(1..)?).ok()?;
     let mut names = Vec::new();
     for (_, attribute) in der::children(attributes) {
         let mut parts = der::children(attribute);
@@ -113,8 +115,15 @@ mod tests {
     /// `openssl req -verify` accepts the request, when OpenSSL is installed.
     #[test]
     fn openssl_verifies_the_request() {
-        let key = KeyPair::generate().unwrap();
+        openssl_verifies(crate::Curve::P256, "prime256v1", "ecdsa-with-SHA256");
+        openssl_verifies(crate::Curve::P384, "secp384r1", "ecdsa-with-SHA384");
+    }
+
+    fn openssl_verifies(curve: crate::Curve, curve_name: &str, signature: &str) {
+        let key = KeyPair::generate_on(curve).unwrap();
         let request = write(&key, &["example.org", "www.example.org"]).unwrap();
+        // Our own reader accepts the request of either curve too.
+        assert_eq!(read(&request).unwrap().public_key, key.subject_public_key_info());
         let text = pem::encode("CERTIFICATE REQUEST", &request);
         let spawned = Command::new("openssl")
             .args(["req", "-verify", "-noout", "-text"])
@@ -136,5 +145,6 @@ mod tests {
         assert!(output.status.success(), "{all}");
         assert!(all.contains("DNS:example.org") && all.contains("DNS:www.example.org"), "{all}");
         assert!(all.to_ascii_lowercase().contains("verify ok"), "{all}");
+        assert!(all.contains(curve_name) && all.contains(signature), "{all}");
     }
 }

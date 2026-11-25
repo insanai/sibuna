@@ -53,7 +53,7 @@ pub(crate) static SPAWN: std::sync::Mutex<()> = std::sync::Mutex::new(());
 pub use call::Call;
 pub use error::Error;
 pub use jws::Binding;
-pub use key::{KeyPair, random_serial};
+pub use key::{Curve, KeyPair, random_serial};
 pub use order::{
     Account, Action, Challenge, ChallengeKind, Issued, Method, Order, OrderOptions, Request,
     Response, obtain,
