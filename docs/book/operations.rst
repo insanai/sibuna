@@ -530,6 +530,15 @@ Every option has a default. We change one in ``global.acme``.
    * - ``on_demand``
      - none
      - The guards of issuance at the first handshake, described under *On demand*.
+   * - ``eab``
+     - none
+     - ``{ kid, key_file }``: the external account binding of the authority, described under *More than one authority*.
+   * - ``fallback``
+     - none
+     - One to three more authorities, asked in this order when the first one fails.
+   * - ``ari``
+     - ``true``
+     - Ask the authority when to renew each certificate, described under *When a certificate is renewed*.
 
 By using an authority we accept its terms of service, as with any ACME client.
 
@@ -723,6 +732,38 @@ A name on demand is a host name. A wildcard and an IP address are never obtained
 
 **Keeping and releasing.** A name on demand has a line in ``show certs`` with ``on-demand`` in the column ``origin``, and it is renewed in the background like a listed name. At its renewal Sibuna asks two questions. Did a handshake name it since the certificate was obtained? Does ``ask`` still allow it? If either answer is no, the name is released: it is no longer served or renewed, and its line leaves ``show certs``. The log says which. A name whose first order fails is released at once and refused until its retry delay has passed. The next handshake after that asks again. A restart forgets the names and keeps the certificates: the first handshake for each loads its certificate from the storage, with no order.
 
+**More than one authority.** An authority can be down, or can refuse us for a while. We name a second one, and Sibuna asks it in the same attempt.
+
+.. code-block:: text
+
+   fn edge() -> Map<Value> {
+       return {
+           global: { acme: {
+               email: "ops@example.org",
+               fallback: [
+                   {
+                       directory: "https://acme.zerossl.com/v2/DV90",
+                       email: "ops@example.org",
+                       eab: { kid: "kid-from-the-dashboard", key_file: "/etc/sibuna/zerossl.key" },
+                   },
+               ],
+           } },
+           frontends: {
+               web: { binds: ["0.0.0.0:443"], tls: { auto: ["example.org"] } },
+               plain: { binds: ["0.0.0.0:80"] },
+           },
+           backends: { app: { servers: ["10.0.0.1:80"] } },
+       }
+   }
+
+The keys ``directory``, ``email``, ``ca_file`` and ``eab`` of ``global.acme`` describe the first authority, here Let's Encrypt by default. Each member of ``fallback`` has the same four keys, and ``directory`` is required there. One attempt for a name asks the authorities in order and stops at the first certificate. The log names each authority that failed and the one that is asked next. When all fail, the attempt fails once and is tried again after the usual delay, with the first authority first. A certificate is stored under the authority that issued it, and at a start we serve the stored certificate that expires last. ``show certs`` names the issuer.
+
+Some authorities issue only to an account that they know already. They hand out a key identifier and a MAC key, the *external account binding*. We write the identifier into ``kid`` and the key, in base64url as the authority shows it, into a file that only the daemon's user can read. Sibuna signs the registration with it once. The key is never logged. An authority that wants a binding and gets none fails with ``ACME012`` before we send it anything signed.
+
+All authorities share one account key, the one in the directory of the first authority. So every node that shares the storage answers an HTTP-01 challenge of any of them.
+
+**When a certificate is renewed.** Without other knowledge we renew at two thirds of the lifetime. An authority that supports renewal information (RFC 9773) may know better: it spreads the load of its clients, and it asks for an early renewal before it revokes a certificate. Sibuna asks the authority for each certificate, every six hours or as often as the authority says, between one hour and one day. The answer is a window. We take one time in it, the same on every node and after every restart, and ``show certs`` shows it in the column ``renews``. Two bounds are ours. We never renew later than four fifths of the lifetime, whatever the authority says. And a certificate that we just obtained is not renewed in its first two minutes. The new order tells the authority which certificate it replaces. ``ari: false`` turns the questions off. An authority without renewal information is not asked.
+
 **Looking at the state.** The admin socket lists the certificates.
 
 .. code-block:: sh
@@ -787,6 +828,9 @@ A name on demand is a host name. A wildcard and an IP address are never obtained
    * - ``ACME011``
      - local authority failed
      - The directory ``local`` in the storage: its owner, its mode, and a damaged file.
+   * - ``ACME012``
+     - account not bound
+     - ``eab`` of the authority that the message names: the key identifier, and the key file, which holds the base64url key. An authority uses a binding once.
 
 A reload may add and remove ``auto`` names, and turn ``on_demand`` of a frontend on and off. A new name is ordered at once, and a removed name is no longer renewed or served. Changing ``global.acme``, which includes the guards of ``on_demand``, or adding the first ``auto`` name to a daemon that has none, needs a restart. A certificate from ``crt`` and ``auto`` names may share a listener. For a name that both cover, the automatic certificate serves once it exists.
 
@@ -810,7 +854,13 @@ A reload may add and remove ``auto`` names, and turn ``on_demand`` of a frontend
      - ``tls: { on_demand: true }`` and ``global.acme.on_demand``. The ``ask`` contract is the same: ``?domain=NAME``, and a 2xx status allows. A file without ``ask`` and without ``allow`` is refused, where Caddy warns.
    * - An on-demand certificate is renewed during a handshake.
      - It is renewed in the background while clients use the name, and released when they stop.
-   * - A second issuer, ``acme_server``.
+   * - Several issuers in ``tls { issuer ... }``, tried in order. ZeroSSL is the second by default.
+     - ``global.acme.fallback``, tried in order in one attempt. No second authority by default: we name it.
+   * - ``acme_eab { key_id, mac_key }`` in the Caddyfile.
+     - ``eab: { kid, key_file }``. The key lives in a file, not in the configuration.
+   * - Renewal follows the renewal information of the authority.
+     - The same, with ``ari: false`` to turn it off, and never later than four fifths of the lifetime.
+   * - ``acme_server``.
      - Not available.
 
 HTTP routing by name and path
