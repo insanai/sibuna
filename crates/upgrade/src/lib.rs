@@ -11,7 +11,7 @@
 //!                   <---- LISTENERS -------- Giving::give_listeners
 //!  ... prepares to serve, reads nothing ...
 //!  Taking::ready    ----- READY -----------> Giving::wait_ready
-//!                   <---- FLOWS, COMMIT ---- Giving::give_flows   (giver reads no UDP)
+//!                   <---- FLOWS, COMMIT ---- Giving::give_flows, commit  (giver reads no UDP)
 //!  Taking::done     ----- DONE ------------> Giving::wait_done    (giver stops)
 //! ```
 //!

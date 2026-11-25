@@ -68,7 +68,9 @@ fn a_whole_handoff_moves_the_listeners_and_the_mappings() {
         giving.give_listeners(&listeners).expect("listeners");
         giving.wait_ready().expect("ready");
         let lent: Vec<_> = flows.iter().map(|(flow, socket)| (*flow, socket.as_fd())).collect();
-        giving.give_flows(&lent).expect("flows");
+        giving.give_flows(&lent[..10]).expect("flows");
+        giving.give_flows(&lent[10..]).expect("flows");
+        giving.commit().expect("commit");
         giving.wait_done().expect("done")
     });
 
@@ -191,7 +193,7 @@ fn a_replacement_that_dies_in_the_cutover_is_seen_as_closed_and_a_silent_one_tim
             let mut giving = begin_give(old, &quick()).expect("begin");
             giving.give_listeners(&[]).expect("listeners");
             giving.wait_ready().expect("ready");
-            giving.give_flows(&[]).expect("flows");
+            giving.commit().expect("commit");
             giving.wait_done().expect_err("no done")
         });
         let mut taking = begin_take_as(new, &quick(), sys::effective_user()).expect("take");
@@ -260,6 +262,7 @@ fn a_mapping_with_a_wrong_listener_or_socket_is_dropped_and_counted() {
             (good.0, tcp.as_fd()),
         ];
         giving.give_flows(&lent).expect("flows");
+        giving.commit().expect("commit");
         giving.wait_done().expect("done")
     });
     let mut taking = begin_take_as(new, &quick(), sys::effective_user()).expect("take");
@@ -299,6 +302,7 @@ fn one_call_takes_everything() {
         giving.wait_ready().expect("ready");
         let flow = flow_to(&server, 0);
         giving.give_flows(&[(flow.0, flow.1.as_fd())]).expect("flows");
+        giving.commit().expect("commit");
         giving.wait_done().expect("done")
     });
     let taken = take_all(&path, &quick()).expect("take").expect("somebody answers");

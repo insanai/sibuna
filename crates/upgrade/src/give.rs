@@ -27,6 +27,8 @@ pub struct Giving {
     timeouts: Timeouts,
     /// When the cutover must be over. Set when `READY` arrives.
     cutover: Option<Instant>,
+    /// The mappings given so far.
+    given: usize,
 }
 
 /// Starts a handoff on a connection that the [`crate::Gate`] accepted: checks that the
@@ -73,7 +75,7 @@ pub(crate) fn begin_give_as(
         channel.refuse(wire::REFUSED_VERSION, &reason);
         return Err(UpgradeError::new(Failure::Version, reason));
     }
-    Ok(Giving { channel, peer, timeouts: *timeouts, cutover: None })
+    Ok(Giving { channel, peer, timeouts: *timeouts, cutover: None, given: 0 })
 }
 
 /// Reads the credentials of the peer of `channel`.
@@ -142,24 +144,35 @@ impl Giving {
         Ok(())
     }
 
-    /// Gives the UDP mappings with their server sockets, then `COMMIT`. The caller has
-    /// stopped reading those sockets. The descriptors stay open here.
+    /// Gives UDP mappings with their server sockets. The caller has stopped reading
+    /// those sockets. It may call this several times, with a piece of the mappings each
+    /// time, and then calls [`Giving::commit`]. The descriptors stay open here.
     ///
     /// # Errors
     ///
-    /// [`Failure::Protocol`] for more than [`MAX_FLOWS`], and the failure of sending.
-    /// After any error but [`Failure::Closed`] the caller must call
+    /// [`Failure::Protocol`] for more than [`MAX_FLOWS`] in all, and the failure of
+    /// sending. After any error but [`Failure::Closed`] the caller must call
     /// [`Giving::end_peer`] before it reads the sockets again.
     pub fn give_flows(&mut self, flows: &[(Flow, BorrowedFd<'_>)]) -> Result<(), UpgradeError> {
-        if flows.len() > MAX_FLOWS {
+        if self.given + flows.len() > MAX_FLOWS {
             return Err(protocol("more mappings than a handoff carries"));
         }
         for chunk in flows.chunks(wire::PER_FRAME) {
             let list: Vec<Flow> = chunk.iter().map(|(flow, _)| *flow).collect();
             let sockets: Vec<BorrowedFd<'_>> = chunk.iter().map(|(_, socket)| *socket).collect();
             self.channel.send(wire::FLOWS, &wire::flows(&list), &sockets)?;
+            self.given += chunk.len();
         }
-        self.channel.send(wire::COMMIT, &wire::numbers(&[flows.len() as u32]), &[])
+        Ok(())
+    }
+
+    /// Says that every mapping was given: sends `COMMIT` with their number.
+    ///
+    /// # Errors
+    ///
+    /// The failure of sending, with the same duty as for [`Giving::give_flows`].
+    pub fn commit(&mut self) -> Result<(), UpgradeError> {
+        self.channel.send(wire::COMMIT, &wire::numbers(&[self.given as u32]), &[])
     }
 
     /// Waits for `DONE` until the cutover deadline. When this returns `Ok` the

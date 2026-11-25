@@ -37,7 +37,14 @@ fn failed(error: &io::Error, doing: &str) -> UpgradeError {
         Unsupported => Failure::Unsupported,
         _ => Failure::Protocol,
     };
+    if failure == Failure::Timeout {
+        return timed_out(doing);
+    }
     UpgradeError::new(failure, format!("{doing}: {error}"))
+}
+
+fn timed_out(doing: &str) -> UpgradeError {
+    UpgradeError::new(Failure::Timeout, format!("{doing}: no answer in time"))
 }
 
 fn closed(doing: &str) -> UpgradeError {
@@ -99,7 +106,7 @@ impl Channel {
         while filled < buffer.len() {
             let left = deadline.saturating_duration_since(Instant::now());
             if left.is_zero() {
-                return Err(UpgradeError::new(Failure::Timeout, format!("{doing}: no answer")));
+                return Err(timed_out(doing));
             }
             self.stream
                 .set_read_timeout(Some(left.max(Duration::from_millis(1))))
