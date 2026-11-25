@@ -7,7 +7,9 @@ use std::time::Instant;
 use sibuna_http::chunked::Decoder;
 use sibuna_lb::{FlowPermit, HttpTarget};
 use sibuna_net::machine::{ResponseRelay, UploadRelay};
+use sibuna_reactor::Io;
 
+use super::secure::Secure;
 use crate::connection::{Ingress, MAX_REQUEST_BYTES, PeerText};
 use crate::server::Admitted;
 
@@ -81,10 +83,14 @@ pub(super) enum Linger {
 /// One client connection.
 pub(super) struct Conn {
     pub stream: TcpStream,
+    /// The TLS session of a connection whose TLS this worker ends (SID 0024).
+    pub secure: Option<Secure>,
     pub ingress: Ingress,
     pub peer: PeerText,
     /// The flow slot and the place under the connection limits, given back when dropped.
-    pub _permit: Option<FlowPermit>,
+    /// The flow slot. It goes with a connection that goes to the protocol runtime.
+    #[cfg_attr(not(feature = "https"), allow(dead_code))]
+    pub permit: Option<FlowPermit>,
     pub admission: Option<Admitted>,
     /// Request bytes. An idle connection holds no buffer.
     pub input: Option<Buffer>,
@@ -113,6 +119,24 @@ impl Conn {
     /// Response bytes the client has not taken yet.
     pub fn backlog(&self) -> usize {
         self.output.len() - self.sent
+    }
+
+    /// True when the TLS session may hold clear bytes that no socket event announces.
+    pub fn holds_clear(&self) -> bool {
+        self.secure.as_ref().is_some_and(Secure::holds_clear)
+    }
+
+    /// True while the TLS session holds encrypted bytes for the socket.
+    pub fn holds_sealed(&self) -> bool {
+        self.secure.as_ref().is_some_and(Secure::wants_write)
+    }
+
+    /// Reads the client once into `buffer`, through the TLS session when there is one.
+    pub fn read_into(stream: &TcpStream, secure: &mut Option<Secure>, buffer: &mut [u8]) -> Io {
+        match secure {
+            Some(secure) => secure.read(stream, buffer),
+            None => sibuna_reactor::read_once(stream, buffer),
+        }
     }
 
     /// True when request bytes are buffered.

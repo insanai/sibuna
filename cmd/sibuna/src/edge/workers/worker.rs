@@ -14,7 +14,8 @@ use sibuna_reactor::{
 
 use super::conn::{BUFFER, Buffer, Conn, HIGH_WATER, Linger, Origin, Reading};
 use super::request::{self, Scratch, Step};
-use super::{Incoming, Shared, Timeouts};
+use super::secure::{HANDSHAKE_TIME, Secure};
+use super::{Incoming, Shared, Started, Timeouts};
 use crate::connection::PeerText;
 use crate::server::{Server, admit_handoff, admit_within};
 
@@ -151,19 +152,22 @@ impl Worker {
 
     /// Takes a connection under the connection limits and registers it.
     fn adopt(&mut self, incoming: Incoming) -> bool {
-        let Incoming { stream, ingress, permit } = incoming;
+        let Incoming { stream, ingress, permit, tls } = incoming;
         if self.draining || stream.set_nonblocking(true).is_err() {
             return false;
         }
-        let admission = if ingress.secure {
-            admit_handoff(&self.server)
-        } else {
-            let bound = ingress.connection_bound(&self.server);
-            let peer = ingress.peer.ip();
-            let Some(admission) = admit_within(&self.server, &stream, peer, bound) else {
-                return false;
-            };
-            admission
+        let (secure, admission) = match Started::begin(tls) {
+            // The listener counted this connection when it accepted it.
+            Some((session, place)) => (Some(session), place),
+            None if ingress.secure => (None, admit_handoff(&self.server)),
+            None => {
+                let bound = ingress.connection_bound(&self.server);
+                let peer = ingress.peer.ip();
+                let Some(admission) = admit_within(&self.server, &stream, peer, bound) else {
+                    return false;
+                };
+                (None, admission)
+            }
         };
         // A socket pair from the TLS front refuses this option. It needs none.
         let _ = stream.set_nodelay(true);
@@ -171,9 +175,10 @@ impl Worker {
         peer.format(Some(ingress.peer));
         let conn = Conn {
             stream,
+            secure,
             ingress,
             peer,
-            _permit: permit,
+            permit,
             admission: Some(admission),
             input: None,
             output: Vec::new(),
@@ -205,7 +210,9 @@ impl Worker {
 
     /// Does everything a connection can do without waiting.
     fn drive(&mut self, index: u32, side: Side) {
-        if side == Side::Client && !self.read_client(index) {
+        // A TLS session may hold clear bytes that no socket event announces.
+        let held = self.conns.at(index).is_some_and(|conn| conn.holds_clear());
+        if (side == Side::Client || held) && !self.read_client(index) {
             return;
         }
         for round in 0..ROUNDS {
@@ -229,21 +236,24 @@ impl Worker {
         if let Linger::Draining(left) = conn.linger {
             return self.drain(index, left);
         }
+        if conn.secure.as_ref().is_some_and(Secure::is_greeting) {
+            return self.greet(index);
+        }
         if conn.read_closed || conn.closing {
             return true;
         }
         let was_empty = !conn.has_input();
         let result = match conn.input.as_mut() {
             Some(buffer) => {
-                let result =
-                    read(&conn.stream, buffer.data.get_mut(buffer.len..).unwrap_or_default());
+                let room = buffer.data.get_mut(buffer.len..).unwrap_or_default();
+                let result = Conn::read_into(&conn.stream, &mut conn.secure, room);
                 if let Io::Bytes(count) = result {
                     buffer.len += count;
                 }
                 result
             }
             None => {
-                let result = read(&conn.stream, &mut self.block);
+                let result = Conn::read_into(&conn.stream, &mut conn.secure, &mut self.block);
                 if let Io::Bytes(count) = result {
                     let mut buffer = self.buffers.pop().unwrap_or_else(Buffer::new);
                     buffer.data[..count].copy_from_slice(&self.block[..count]);
@@ -253,6 +263,11 @@ impl Worker {
                 result
             }
         };
+        if conn.ingress.tls.0.is_empty()
+            && let Some(secure) = &conn.secure
+        {
+            secure.settle(&mut conn.ingress);
+        }
         match result {
             Io::Bytes(count) => {
                 let tunnel = conn.exchange.as_ref().is_some_and(|exchange| exchange.tunnel);
@@ -350,7 +365,12 @@ impl Worker {
     pub fn flush_client(&mut self, index: u32) -> bool {
         let Some(conn) = self.conns.at(index) else { return false };
         if conn.backlog() > 0 {
-            match write(&conn.stream, conn.output.get(conn.sent..).unwrap_or_default()) {
+            let pending = conn.output.get(conn.sent..).unwrap_or_default();
+            let written = match conn.secure.as_mut() {
+                Some(secure) => secure.write(&conn.stream, pending),
+                None => write(&conn.stream, pending),
+            };
+            match written {
                 Io::Bytes(count) => {
                     conn.sent += count;
                     conn.activity = self.now;
@@ -369,7 +389,15 @@ impl Worker {
                 }
             }
         }
-        if conn.closing && conn.backlog() == 0 && !matches!(conn.linger, Linger::Draining(_)) {
+        // The handshake, and bytes that the socket did not take, wait in the session.
+        if let Some(secure) = conn.secure.as_mut()
+            && !secure.flush(&conn.stream)
+        {
+            self.close(index);
+            return false;
+        }
+        let written = conn.backlog() == 0 && !conn.holds_sealed();
+        if conn.closing && written && !matches!(conn.linger, Linger::Draining(_)) {
             // A refused body is drained before the close (SID 0019).
             if self.begin_linger(index) {
                 return true;
@@ -389,10 +417,17 @@ impl Worker {
         let room = exchange.map_or(conn.backlog(), |exchange| exchange.backlog()) < HIGH_WATER;
         let draining = matches!(conn.linger, Linger::Draining(_));
         let reads = draining || (!conn.read_closed && !conn.closing && !full && room);
-        let events = (i16::from(reads) * READ) | (i16::from(conn.backlog() > 0) * WRITE);
+        // Clear bytes that the session holds are announced by no read event. The socket
+        // is writable sooner, and the worker reads when it hears of that (SID 0024).
+        let rereads = reads && !draining && conn.holds_clear();
+        let writes = conn.backlog() > 0 || conn.holds_sealed() || rereads;
+        let events = (i16::from(reads) * READ) | (i16::from(writes) * WRITE);
         let registered =
             self.poll.set(handle(&conn.stream), events, key(KIND_CLIENT, index, generation));
         let mut timeout = if draining { crate::traffic::LINGER_TIME } else { self.timeouts.idle };
+        if conn.secure.as_ref().is_some_and(Secure::is_starting) {
+            timeout = timeout.min(HANDSHAKE_TIME);
+        }
         let mut since = conn.activity;
         let mut origin = None;
         if let Some(exchange) = exchange {
@@ -442,6 +477,9 @@ impl Worker {
         }
         // The place under the limits is free before the client can see the close.
         drop(conn.admission.take());
+        if let Some(secure) = conn.secure.as_mut() {
+            secure.end(&conn.stream);
+        }
         let _ = conn.stream.shutdown(Shutdown::Write);
         // Closing over unread bytes resets the connection, and the reset can destroy the
         // response on its way. Take what has arrived first.

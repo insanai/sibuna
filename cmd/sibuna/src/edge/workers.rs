@@ -8,6 +8,7 @@ mod conn;
 mod exchange;
 mod linger;
 mod request;
+mod secure;
 mod trace;
 mod worker;
 
@@ -24,12 +25,16 @@ use sibuna_reactor::{Wake, Waker};
 use crate::connection::Ingress;
 use crate::server::Server;
 
+pub(super) use secure::Started;
+
 /// A connection on its way to a worker.
 pub(super) struct Incoming {
     pub stream: TcpStream,
     pub ingress: Ingress,
     /// The flow slot of a connection the edge accepted itself.
     pub permit: Option<FlowPermit>,
+    /// A TLS connection whose handshake has not begun: the worker begins it (SID 0024).
+    pub tls: Option<Started>,
 }
 
 /// What the workers of one server share.
