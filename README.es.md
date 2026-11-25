@@ -1,6 +1,6 @@
-<!-- English source SHA-256: 2213ca66b48390aac695b02731322e1fa885d704796a4fd3304bc5e157897a0c -->
+<!-- English source SHA-256: 4f4a4074b23f24663e85b168db739f9d4ca9cf40431e796253bdc84612f5fcea -->
 <h1 align="center">sibuna</h1>
-<p align="center">Un balanceador de carga y protección web con prueba de trabajo en el navegador, en un solo ejecutable.</p>
+<p align="center">Balanceador de carga distribuido y cortafuegos de aplicaciones web</p>
 <p align="center">
   <a href="#features">Características</a> ·
   <a href="#load-balancing">Balanceo de carga</a> ·
@@ -18,21 +18,21 @@
   <a href="README.hi.md">हिन्दी</a> · <a href="README.ar.md">العربية</a>
 </p>
 
-**Sibuna ayuda a proteger sitios web y API frente a tráfico de bots no deseado.** Puede
-reenviar peticiones a tu aplicación o trabajar junto a un proxy existente, como Caddy o nginx.
-En modo edge es el propio balanceador de carga: reenvía TCP y UDP, termina TLS y enruta HTTP
-hacia varios servidores.
+Sibuna dirige TCP, UDP y HTTP a servidores en buen estado. Podemos ejecutar un nodo de borde o conectar varios en una malla, terminar TLS en cada nodo y aplicar el cortafuegos a rutas HTTP concretas.
 
-Enviar peticiones suele ser barato. Procesarlas puede exigir más trabajo a tu aplicación.
-Sibuna pide a los clientes que resuelvan un desafío antes de conceder acceso. El desafío está
-diseñado para que crear la prueba cueste más cálculo que verificarla. Los clientes
-automatizados asumen una parte mayor del coste de acceder a un sitio.
+## Dónde usamos Sibuna
 
-Calcular también consume energía, pero la cantidad depende del hardware y de los ajustes.
-La prueba de trabajo añade un coste de admisión. No demuestra que un visitante sea humano ni
-detiene todos los ataques. Una sesión firmada permite a los clientes admitidos volver sin
-resolver un desafío nuevo en cada petición. Usa reglas de acceso y límites de tasa locales para
-controlar lo que esos clientes pueden pedir después.
+- **Sitios web públicos**
+
+  Atendemos a los navegadores mediante HTTP/2 o HTTP/3, renovamos certificados públicos con Let's Encrypt e inspeccionamos las solicitudes antes de enviarlas a réplicas HTTP/1.1.
+- **Servicios gRPC internos**
+
+  Emitimos certificados para nombres internos con la CA local. Los clientes confían en su raíz y llaman al servicio por TLS. Un backend HTTP/2 transporta los mensajes y los tráileres de gRPC.
+- **Un clúster de nodos de borde**
+
+  Distribuimos una configuración de rutas validada por la malla. Los nodos pueden compartir bloqueos y afinidades aprendidas mientras cada uno reenvía tráfico a sus grupos de servidores.
+
+[Configurar Sibuna con Jlavi](https://insanai.github.io/sibuna/es/book/jlavi.html)
 
 <a id="features"></a>
 
@@ -59,6 +59,7 @@ Sibuna 1.0.0-rc.1 incluye el modo de borde. Las descargas de la guía rápida co
 sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
 sibuna lb --tls auto --domain example.org --server 10.0.0.1:80
 sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
+sibuna check -f edge.jlv
 sibuna --config-file edge.jlv
 ```
 
@@ -106,7 +107,7 @@ Los paquetes de Linux incluyen un servicio systemd opcional y desactivado. Los p
 crean servicio, cuenta ni estado. Son descargas oficiales del proyecto; su inclusión en los
 repositorios de la comunidad es un proceso aparte. La versión también incluye un chart de Helm y una imagen de
 contenedor, `ghcr.io/insanai/sibuna`.
-Consulta la [guía de operaciones de paquetes](https://insanai.github.io/sibuna/book/operations.html)
+Consulta la [guía de operaciones de paquetes](https://insanai.github.io/sibuna/es/book/operations.html)
 para instalación, verificación, estado privado, actualizaciones y configuración de Kubernetes.
 
 El [tap Homebrew de Sibuna](https://github.com/insanai/homebrew-sibuna) ofrece una fórmula CLI
@@ -133,7 +134,7 @@ tar -xzf sibuna-linux-amd64.tar.gz
 
 Abre `http://127.0.0.1:8080` para probarlo localmente. En un sitio público, termina HTTPS en un
 proxy de entrada de confianza y mantén privado el puerto de escucha de Sibuna. Sigue la
-[guía de despliegue](https://insanai.github.io/sibuna/book/operations.html) para Caddy o nginx.
+[guía de despliegue](https://insanai.github.io/sibuna/es/book/operations.html) para Caddy o nginx.
 
 El modo por defecto es `reverse_proxy`. Usa `--mode forward_auth` cuando tu proxy de entrada
 reenvíe las peticiones y pida a Sibuna una decisión de acceso. La guía incluye ambas
@@ -179,7 +180,7 @@ La consola forma parte del mismo ejecutable. Crea el primer administrador con el
 ```
 
 Abre `http://127.0.0.1:19446/console/` y cambia la contraseña temporal.
-La [guía de operaciones](https://insanai.github.io/sibuna/book/operations.html) explica el
+La [guía de operaciones](https://insanai.github.io/sibuna/es/book/operations.html) explica el
 acceso HTTPS, las importaciones GeoIP, los usuarios, los tokens de API y las pantallas murales.
 
 ![Consola Sibuna con navegación, globo de actividad por país, resultados de peticiones, cobertura y muestras por país](docs/readme/images/console-globe-93225dc9.png)
@@ -220,6 +221,8 @@ mostrados no son resultados de pruebas de rendimiento.
 
 ## Cómo funciona
 
+Un frontend recibe la conexión. Para TCP o UDP, Sibuna elige un servidor para el flujo. Para HTTP, compara el host y la ruta de cada solicitud, aplica la política de cortafuegos de esa ruta y reenvía las solicitudes admitidas a un servidor sano del grupo elegido. Cada nodo toma esa decisión mientras sus pares intercambian datos de afinidad y bloqueos.
+
 Una petición puede admitirse, desafiarse o denegarse. Un visitante que resuelve un desafío
 recibe una sesión firmada. Las peticiones posteriores siguen pasando las comprobaciones de
 políticas y de tasa aplicables.
@@ -249,7 +252,7 @@ Una sesión válida no evita las comprobaciones de ataques ni los límites de pe
 </picture>
 
 Los crates separan red, pruebas, políticas, estado local, almacenamiento y gestión.
-El [libro](https://insanai.github.io/sibuna/book/) explica sus responsabilidades.
+El [libro](https://insanai.github.io/sibuna/es/book/) explica sus responsabilidades.
 
 </details>
 
@@ -268,7 +271,7 @@ La sustitución del ejecutable sin perder conexiones y los workers dirigidos por
 existen en Linux.
 Los desafíos están ligados al nodo que los emitió; enruta un desafío y su solución al mismo
 nodo. El objetivo estricto de rendimiento de la consola aún no ha superado formalmente su prueba de aceptación. Revisa los
-[límites de despliegue y mediciones](https://insanai.github.io/sibuna/book/operations.html)
+[límites de despliegue y mediciones](https://insanai.github.io/sibuna/es/book/operations.html)
 antes de activar la consola junto a una aplicación de producción.
 
 <a id="benchmarks"></a>
@@ -318,7 +321,7 @@ expertos en Envoy: usamos una configuración estática sencilla, y una mejor bie
 sus cifras. Los puntos fuertes de Envoy, como la configuración dinámica y sus filtros, no son lo
 que mide esta prueba. La respuesta era de dos bytes por loopback, lo que exagera el coste de cada
 petición; el tráfico real reduce las diferencias. El
-[libro](https://insanai.github.io/sibuna/book/benchmarks.html) da el método, las
+[libro](https://insanai.github.io/sibuna/es/book/benchmarks.html) da el método, las
 configuraciones, más números de conexiones y un clúster de tres hosts.
 
 <a id="beside-anubis"></a>
@@ -360,16 +363,16 @@ rangos y los comandos de reproducción: [product-latest.md](benchmarks/results/p
 [latency-latest.md](benchmarks/results/latency-latest.md),
 [comparison-latest.md](benchmarks/results/comparison-latest.md) y
 [admission-latest.md](benchmarks/results/admission-latest.md).
-La parte VIII del libro analiza cada diferencia.
+La parte X del libro analiza cada diferencia.
 
 <a id="documentation"></a>
 
 ## Documentación
 
-- [Libro](https://insanai.github.io/sibuna/book/): conceptos, algoritmos, ejemplos y mediciones.
-- [Documento técnico](https://insanai.github.io/sibuna/whitepaper/): arquitectura, demostraciones y detalles de diseño.
-- [Guía de operaciones](https://insanai.github.io/sibuna/book/operations.html): instalación y despliegue.
-- [Referencia](https://insanai.github.io/sibuna/book/reference.html): detalles de la CLI y del protocolo.
+- [Libro](https://insanai.github.io/sibuna/es/book/): conceptos, algoritmos, ejemplos y mediciones.
+- [Documento técnico](https://insanai.github.io/sibuna/es/whitepaper/): arquitectura, demostraciones y detalles de diseño.
+- [Guía de operaciones](https://insanai.github.io/sibuna/es/book/operations.html): instalación y despliegue.
+- [Referencia](https://insanai.github.io/sibuna/es/book/reference.html): detalles de la CLI y del protocolo.
 - [Debates de diseño](https://insanai.github.io/sibuna/sid/) (en inglés): decisiones y contratos de ingeniería.
 - [Contribuir](CONTRIBUTING.md): compilación desde las fuentes y comprobaciones.
 

@@ -1,6 +1,6 @@
-<!-- English source SHA-256: 2213ca66b48390aac695b02731322e1fa885d704796a4fd3304bc5e157897a0c -->
+<!-- English source SHA-256: 4f4a4074b23f24663e85b168db739f9d4ca9cf40431e796253bdc84612f5fcea -->
 <h1 align="center">sibuna</h1>
-<p align="center">一个可执行文件中的负载均衡器，以及基于浏览器工作量证明的网站防护。</p>
+<p align="center">分布式负载均衡器和 Web 应用防火墙</p>
 <p align="center">
   <a href="#features">功能</a> ·
   <a href="#load-balancing">负载均衡</a> ·
@@ -18,11 +18,21 @@
   <a href="README.hi.md">हिन्दी</a> · <a href="README.ar.md">العربية</a>
 </p>
 
-**Sibuna 帮助网站和 API 抵御不需要的机器人流量。** 它可以将请求转发给应用，也可以配合 Caddy 或 nginx 等现有代理使用。在边缘模式下，它本身就是负载均衡器：转发 TCP 和 UDP，终止 TLS，并把 HTTP 路由到多台服务器。
+Sibuna 将 TCP、UDP 和 HTTP 流量转发到健康的服务器。我们可以运行单个边缘节点，也可以将多个节点组成网状集群，在各节点终止 TLS，并对指定的 HTTP 路由应用防火墙。
 
-发送请求通常很便宜。处理请求却可能让应用付出更多工作。Sibuna 要求客户端先解一道计算题，再获得访问权限。这道题的设计使生成证明比验证证明需要更多计算。自动化客户端因此要承担更多访问网站的成本。
+## Sibuna 的应用场景
 
-计算也消耗能源，但用量取决于硬件和配置。工作量证明增加的是准入成本。它不能证明访问者是人，也不能阻止所有攻击。签名会话让已准入的客户端再次访问时不必为每个请求重新解题。请使用访问规则和本地速率限制，控制这些客户端之后可以请求的内容。
+- **公共网站**
+
+  通过 HTTP/2 或 HTTP/3 接受浏览器连接，用 Let's Encrypt 续订公有证书，并在向 HTTP/1.1 副本转发前检查请求。
+- **内部 gRPC 服务**
+
+  使用本地 CA 为内部名称签发证书。客户端信任其根证书，通过 TLS 调用服务。HTTP/2 后端传输 gRPC 消息和尾部字段。
+- **边缘节点集群**
+
+  在网状集群中分发已验证的路由配置。各节点可以共享封禁和已学习的客户端亲和性，同时向各自的后端池转发流量。
+
+[使用 Jlavi 配置 Sibuna](https://insanai.github.io/sibuna/zh-hans/book/jlavi.html)
 
 <a id="features"></a>
 
@@ -49,6 +59,7 @@ Sibuna 1.0.0-rc.1 包含边缘模式。下方的快速入门下载链接指向 b
 sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
 sibuna lb --tls auto --domain example.org --server 10.0.0.1:80
 sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
+sibuna check -f edge.jlv
 sibuna --config-file edge.jlv
 ```
 
@@ -83,7 +94,7 @@ Gate 或 Shield 只应用于需要它的名称，也可以不应用于任何名�
 
 这是一个测试版（beta）发行版。macOS 构建未签名。每个安装包都包含许可证、源码链接和构建清单。使用前，请对照 `SHA256SUMS` 校验压缩包。
 
-Debian/RPM 软件包支持 Linux x86-64 和 ARM64；Arch `sibuna-bin` 支持 x86-64。FreeBSD 15.1 和 OpenBSD 7.9 软件包支持 x86-64，并安装 CLI。Linux 软件包包含一个可选的 systemd 服务，默认停用。BSD 软件包不创建服务、账户或状态。这些是上游提供的下载；社区仓库是否收录需另行审核。发行版还包含一个 Helm chart 和一个容器镜像 `ghcr.io/insanai/sibuna`。安装、验证、私密状态、升级及 Kubernetes 设置请参阅[软件包运维指南](https://insanai.github.io/sibuna/book/operations.html)。
+Debian/RPM 软件包支持 Linux x86-64 和 ARM64；Arch `sibuna-bin` 支持 x86-64。FreeBSD 15.1 和 OpenBSD 7.9 软件包支持 x86-64，并安装 CLI。Linux 软件包包含一个可选的 systemd 服务，默认停用。BSD 软件包不创建服务、账户或状态。这些是上游提供的下载；社区仓库是否收录需另行审核。发行版还包含一个 Helm chart 和一个容器镜像 `ghcr.io/insanai/sibuna`。安装、验证、私密状态、升级及 Kubernetes 设置请参阅[软件包运维指南](https://insanai.github.io/sibuna/zh-hans/book/operations.html)。
 
 [Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna) 提供一个 CLI formula，用于安装经过校验的发行版压缩包，支持 macOS 和 Linux（Apple Silicon、ARM64 和 x86-64）。该 tap 跟随最新发布的版本，因此已经提供本测试版。安装不会启动服务：
 
@@ -104,7 +115,7 @@ tar -xzf sibuna-linux-amd64.tar.gz
 ./sibuna --host 127.0.0.1 --port 8080 --upstream-port 3000 --secret-file ./sibuna.seed
 ```
 
-打开 `http://127.0.0.1:8080` 即可在本地试用。对于公开网站，请由受信任的入口代理终止 HTTPS，并保持 Sibuna 的监听端口不对外公开。Caddy 或 nginx 的配置请按照[部署指南](https://insanai.github.io/sibuna/book/operations.html)进行。
+打开 `http://127.0.0.1:8080` 即可在本地试用。对于公开网站，请由受信任的入口代理终止 HTTPS，并保持 Sibuna 的监听端口不对外公开。Caddy 或 nginx 的配置请按照[部署指南](https://insanai.github.io/sibuna/zh-hans/book/operations.html)进行。
 
 默认模式为 `reverse_proxy`。如果入口代理负责转发请求，并向 Sibuna 查询访问决策，请使用 `--mode forward_auth`。指南包含这两种配置。Shield 的内置检查默认启用。若只需要准入控制、不需要该检查器，请使用 `--gate`。通过 `--policy-file <file>` 选择访问规则，其中可以包括为无法运行浏览器挑战的 API 客户端和健康检查准备的规则。`./sibuna --help` 列出所有选项。
 
@@ -137,7 +148,7 @@ cargo +1.100.0 build --release -p sibuna
   --data-dir ./data --console 127.0.0.1:19446
 ```
 
-打开 `http://127.0.0.1:19446/console/` 并修改临时密码。[运维指南](https://insanai.github.io/sibuna/book/operations.html)介绍 HTTPS 访问、GeoIP 导入、用户、API 令牌和大屏显示。
+打开 `http://127.0.0.1:19446/console/` 并修改临时密码。[运维指南](https://insanai.github.io/sibuna/zh-hans/book/operations.html)介绍 HTTPS 访问、GeoIP 导入、用户、API 令牌和大屏显示。
 
 ![显示导航、国家活动地球、请求结果、覆盖情况和国家采样的 Sibuna 控制台](docs/readme/images/console-globe-93225dc9.png)
 
@@ -170,6 +181,8 @@ cargo +1.100.0 build --release -p sibuna
 
 ## 工作原理
 
+前端接收连接。对于 TCP 或 UDP，Sibuna 为每个流选择一个服务器。对于 HTTP，Sibuna 逐请求匹配主机名和路径，应用相应路由的防火墙策略，再把获准的请求转发给选定池中的健康服务器。各边缘节点独立做出决定，同时与对等节点交换亲和性和封禁信息。
+
 请求可能被放行、被要求完成挑战或被拒绝。完成挑战的访问者会获得签名会话。之后的请求仍需通过适用的策略检查和速率检查。
 
 <picture>
@@ -194,7 +207,7 @@ Gate 检查访问规则、会话和本地速率限制。Shield 在此基础上�
   <img src="docs/readme/images/subsystems.svg" alt="Sibuna 内部各 crate 的职责">
 </picture>
 
-这些 crate 分别负责网络、证明、策略、本地状态、存储和管理。[技术手册](https://insanai.github.io/sibuna/book/)介绍了它们的职责。
+这些 crate 分别负责网络、证明、策略、本地状态、存储和管理。[技术手册](https://insanai.github.io/sibuna/zh-hans/book/)介绍了它们的职责。
 
 </details>
 
@@ -204,7 +217,7 @@ Gate 检查访问规则、会话和本地速率限制。Shield 在此基础上�
 
 私有监听端口在外部入口代理之后使用 HTTP/1.1。在边缘模式下，我们可以在 Sibuna 中终止 TLS、HTTP/2 和 HTTP/3，并转发到 HTTP/1.1、HTTP/2 或 HTTP/3 服务器池。forward-auth 模式只检查入口代理提供的元数据。在反向代理模式下，内置检查器覆盖请求体的前 8 KiB。上传数据以流式方式传给应用。WebSocket 消息直接转发，不进行检查。该检查器是一种启发式方法，不是完整的语言解析器。
 
-速率限制在每个节点本地计算。Sibuna 不提供针对大流量网络攻击的缓解。不丢失连接的可执行文件替换和事件驱动的 worker 只在 Linux 上提供。挑战与签发它的节点绑定；请将挑战及其解答路由到同一个节点。控制台的严格性能目标尚未正式通过。在生产应用旁启用控制台之前，请阅读[部署限制和测量结果](https://insanai.github.io/sibuna/book/operations.html)。
+速率限制在每个节点本地计算。Sibuna 不提供针对大流量网络攻击的缓解。不丢失连接的可执行文件替换和事件驱动的 worker 只在 Linux 上提供。挑战与签发它的节点绑定；请将挑战及其解答路由到同一个节点。控制台的严格性能目标尚未正式通过。在生产应用旁启用控制台之前，请阅读[部署限制和测量结果](https://insanai.github.io/sibuna/zh-hans/book/operations.html)。
 
 <a id="benchmarks"></a>
 
@@ -235,7 +248,7 @@ Gate 检查访问规则、会话和本地速率限制。Shield 在此基础上�
 | HTTP/2 | 104,132 | 153,899 | 68,972 |
 | 常驻内存，HTTP/1.1 | 14 MiB | 48 MiB | 58 MiB |
 
-请把这看作一次小规模的测量，而不是排名。Sibuna 和 HAProxy 在明文 HTTP 上持平，HAProxy 在 HTTP/2 上明显更快。我们不是 Envoy 专家：我们使用的是简单的静态配置，更好的配置很可能会改变它的数字。Envoy 的长处，例如动态配置和它的过滤器，不在本次测试的衡量范围内。响应只有两个字节，并且经过回环接口，这会夸大每个请求的成本；真实流量会缩小这些差距。[技术手册](https://insanai.github.io/sibuna/book/benchmarks.html)给出了方法、配置、更多连接数下的结果，以及一个由三台主机组成的集群。
+请把这看作一次小规模的测量，而不是排名。Sibuna 和 HAProxy 在明文 HTTP 上持平，HAProxy 在 HTTP/2 上明显更快。我们不是 Envoy 专家：我们使用的是简单的静态配置，更好的配置很可能会改变它的数字。Envoy 的长处，例如动态配置和它的过滤器，不在本次测试的衡量范围内。响应只有两个字节，并且经过回环接口，这会夸大每个请求的成本；真实流量会缩小这些差距。[技术手册](https://insanai.github.io/sibuna/zh-hans/book/benchmarks.html)给出了方法、配置、更多连接数下的结果，以及一个由三台主机组成的集群。
 
 <a id="beside-anubis"></a>
 
@@ -262,16 +275,16 @@ Gate 检查访问规则、会话和本地速率限制。Shield 在此基础上�
 
 Sibuna 的内存峰值保持在 16 MiB 左右。Anubis 在 forward-auth 模式下约使用 33 MiB，在反向代理模式下最多约使用 600 MiB。Anubis 是一款广泛使用且能力出色的工具，这些数据并非排名。其中几项并非同等条件的对比：在 forward-auth 模式下，Anubis 会自行响应部分路径，它不做载荷检查，而且两者的挑战页面也不同。测试通过回环接口进行，未使用 TLS、真实浏览器或存储。
 
-方法、范围和复现命令见[基准测试记录](benchmarks/results/README.md)：[product-latest.md](benchmarks/results/product-latest.md)、[latency-latest.md](benchmarks/results/latency-latest.md)、[comparison-latest.md](benchmarks/results/comparison-latest.md) 和 [admission-latest.md](benchmarks/results/admission-latest.md)。技术手册第 VIII 部分讨论了每一项差异。
+方法、范围和复现命令见[基准测试记录](benchmarks/results/README.md)：[product-latest.md](benchmarks/results/product-latest.md)、[latency-latest.md](benchmarks/results/latency-latest.md)、[comparison-latest.md](benchmarks/results/comparison-latest.md) 和 [admission-latest.md](benchmarks/results/admission-latest.md)。技术手册第 X 部分讨论了每一项差异。
 
 <a id="documentation"></a>
 
 ## 文档
 
-- [技术手册](https://insanai.github.io/sibuna/book/)：概念、算法、示例和测量结果。
-- [白皮书](https://insanai.github.io/sibuna/whitepaper/)：架构、证明和设计细节。
-- [运维指南](https://insanai.github.io/sibuna/book/operations.html)：安装和部署。
-- [参考手册](https://insanai.github.io/sibuna/book/reference.html)：CLI 和协议细节。
+- [技术手册](https://insanai.github.io/sibuna/zh-hans/book/)：概念、算法、示例和测量结果。
+- [白皮书](https://insanai.github.io/sibuna/zh-hans/whitepaper/)：架构、证明和设计细节。
+- [运维指南](https://insanai.github.io/sibuna/zh-hans/book/operations.html)：安装和部署。
+- [参考手册](https://insanai.github.io/sibuna/zh-hans/book/reference.html)：CLI 和协议细节。
 - [设计讨论](https://insanai.github.io/sibuna/sid/)：决策和工程约定。
 - [贡献指南](CONTRIBUTING.md)：源码构建和检查。
 

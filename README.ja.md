@@ -1,6 +1,6 @@
-<!-- English source SHA-256: 2213ca66b48390aac695b02731322e1fa885d704796a4fd3304bc5e157897a0c -->
+<!-- English source SHA-256: 4f4a4074b23f24663e85b168db739f9d4ca9cf40431e796253bdc84612f5fcea -->
 <h1 align="center">sibuna</h1>
-<p align="center">ロードバランサーと、ブラウザーでの作業証明によるWeb保護を、1つの実行ファイルで。</p>
+<p align="center">分散ロードバランサーとWebアプリケーションファイアウォール</p>
 <p align="center">
   <a href="#features">機能</a> ·
   <a href="#load-balancing">負荷分散</a> ·
@@ -18,11 +18,21 @@
   <a href="README.hi.md">हिन्दी</a> · <a href="README.ar.md">العربية</a>
 </p>
 
-**Sibunaは、WebサイトやAPIを不要なボットトラフィックから守るためのソフトウェアです。** アプリにリクエストを転送するほか、Caddyやnginxなどの既存のプロキシと組み合わせて使えます。エッジモードでは、Sibuna自体がロードバランサーになります。TCPとUDPを転送し、TLSを終端し、HTTPを複数のサーバーへルーティングします。
+SibunaはTCP、UDP、HTTPの通信を正常なサーバーに振り分けます。エッジを単独で運用することも、複数のエッジをメッシュで結ぶこともできます。各エッジでTLSを終端し、選んだHTTPルートにファイアウォールを適用できます。
 
-リクエストの送信は多くの場合安価です。一方、その処理はアプリにとってより多くの作業になることがあります。Sibunaは、アクセスを許可する前にクライアントにパズルを解いてもらいます。このパズルは、証明の生成に検証より多くの計算が必要になるよう設計されています。これにより、自動化されたクライアントがサイトへのアクセスにかかるコストをより多く負担します。
+## Sibunaの利用例
 
-計算にはエネルギーも使いますが、その量はハードウェアや設定によって変わります。作業証明は、アクセスの許可にコストを加えるものです。訪問者が人間であることを証明するものではなく、すべての攻撃を防ぐものでもありません。署名付きセッションがあれば、許可されたクライアントはリクエストごとに新しいパズルを解かずに再訪できます。その後にこれらのクライアントが要求できる内容は、アクセスルールとローカルのレート制限で制御してください。
+- **公開ウェブサイト**
+
+  ブラウザーからの接続をHTTP/2またはHTTP/3で受け、Let's Encryptで公開証明書を更新します。リクエストを検査してからHTTP/1.1のレプリカに転送します。
+- **内部gRPCサービス**
+
+  ローカルCAで内部名の証明書を発行します。クライアントはそのルート証明書を信頼し、TLS経由でサービスを呼び出します。HTTP/2バックエンドがgRPCメッセージとトレーラーを運びます。
+- **エッジノードのクラスタ**
+
+  検証済みのルーティング設定をメッシュに配布します。各ノードは自身のバックエンドプールに通信を転送しながら、拒否情報や学習済みの振り分け先を共有できます。
+
+[JlaviでSibunaを設定する](https://insanai.github.io/sibuna/ja/book/jlavi.html)
 
 <a id="features"></a>
 
@@ -49,6 +59,7 @@ Sibuna 1.0.0-rc.1 にはエッジモードが含まれます。以下のクイ�
 sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
 sibuna lb --tls auto --domain example.org --server 10.0.0.1:80
 sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
+sibuna check -f edge.jlv
 sibuna --config-file edge.jlv
 ```
 
@@ -83,7 +94,7 @@ GateまたはShieldは、必要な名前だけに適用することも、どこ�
 
 これはベータ版のリリースです。macOS向けビルドは未署名です。各パッケージにはライセンス、ソースへのリンク、ビルドマニフェストが含まれます。使用する前に、`SHA256SUMS`と照合してアーカイブを検証してください。
 
-Debian/RPMパッケージはLinux x86-64とARM64に、Archの`sibuna-bin`はx86-64に対応します。FreeBSD 15.1とOpenBSD 7.9のパッケージはx86-64に対応し、CLIをインストールします。Linuxパッケージには、任意で使える無効状態のsystemdサービスが含まれます。BSDパッケージはサービス、アカウント、状態を作成しません。これらは上流の配布物で、コミュニティのアーカイブへの採用は別の手続きです。リリースにはHelm chartとコンテナーイメージ`ghcr.io/insanai/sibuna`も含まれます。インストール、検証、非公開の状態、アップグレード、Kubernetesの設定は[パッケージ運用ガイド](https://insanai.github.io/sibuna/book/operations.html)を参照してください。
+Debian/RPMパッケージはLinux x86-64とARM64に、Archの`sibuna-bin`はx86-64に対応します。FreeBSD 15.1とOpenBSD 7.9のパッケージはx86-64に対応し、CLIをインストールします。Linuxパッケージには、任意で使える無効状態のsystemdサービスが含まれます。BSDパッケージはサービス、アカウント、状態を作成しません。これらは上流の配布物で、コミュニティのアーカイブへの採用は別の手続きです。リリースにはHelm chartとコンテナーイメージ`ghcr.io/insanai/sibuna`も含まれます。インストール、検証、非公開の状態、アップグレード、Kubernetesの設定は[パッケージ運用ガイド](https://insanai.github.io/sibuna/ja/book/operations.html)を参照してください。
 
 [Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna)は、検証済みのリリースアーカイブをインストールするCLI formulaを提供します。対応するのはmacOSとLinux（Apple Silicon、ARM64、x86-64）です。tapは公開済みの最新リリースに追従するため、このベータ版もすでに提供されています。インストールしてもサービスは起動しません：
 
@@ -104,7 +115,7 @@ tar -xzf sibuna-linux-amd64.tar.gz
 ./sibuna --host 127.0.0.1 --port 8080 --upstream-port 3000 --secret-file ./sibuna.seed
 ```
 
-`http://127.0.0.1:8080`を開くとローカルで試せます。公開サイトでは、信頼できるイングレスでHTTPSを終端し、Sibunaのリスナーは非公開にしてください。Caddyまたはnginxでの構成は[デプロイガイド](https://insanai.github.io/sibuna/book/operations.html)に従ってください。
+`http://127.0.0.1:8080`を開くとローカルで試せます。公開サイトでは、信頼できるイングレスでHTTPSを終端し、Sibunaのリスナーは非公開にしてください。Caddyまたはnginxでの構成は[デプロイガイド](https://insanai.github.io/sibuna/ja/book/operations.html)に従ってください。
 
 標準モードは`reverse_proxy`です。イングレスがリクエストを転送し、Sibunaにアクセス判断を問い合わせる構成では`--mode forward_auth`を使います。ガイドには両方の設定が載っています。Shieldの内蔵検査は標準で有効です。この検査器を使わずにアクセスの許可だけを行う場合は`--gate`を使います。アクセスルールは`--policy-file <file>`で選びます。ブラウザーチャレンジを実行できないAPIクライアントやヘルスチェック向けのルールも含められます。`./sibuna --help`はすべてのオプションを一覧表示します。
 
@@ -137,7 +148,7 @@ cargo +1.100.0 build --release -p sibuna
   --data-dir ./data --console 127.0.0.1:19446
 ```
 
-`http://127.0.0.1:19446/console/`を開き、一時パスワードを変更してください。[運用ガイド](https://insanai.github.io/sibuna/book/operations.html)では、HTTPSでのアクセス、GeoIPのインポート、ユーザー、APIトークン、ウォールディスプレイについて説明しています。
+`http://127.0.0.1:19446/console/`を開き、一時パスワードを変更してください。[運用ガイド](https://insanai.github.io/sibuna/ja/book/operations.html)では、HTTPSでのアクセス、GeoIPのインポート、ユーザー、APIトークン、ウォールディスプレイについて説明しています。
 
 ![ナビゲーション、国別活動の地球儀、リクエストの結果、観測範囲、国別サンプルを表示したSibunaコンソール](docs/readme/images/console-globe-93225dc9.png)
 
@@ -170,6 +181,8 @@ cargo +1.100.0 build --release -p sibuna
 
 ## 仕組み
 
+フロントエンドが接続を受け付けます。TCP や UDP ではフローごとにサーバーを選びます。HTTP ではリクエストごとにホストとパスを照合し、ルートのファイアウォールポリシーを適用して、許可したリクエストを該当プールの正常なサーバーに転送します。各エッジがこの判断を行い、ノード間ではサーバーへの割り当てやブロック情報の更新を共有します。
+
 リクエストは許可される場合も、チャレンジを要求される場合も、拒否される場合もあります。チャレンジを解いた訪問者は署名付きセッションを受け取ります。その後のリクエストも、適用されるポリシーとレートの検査を通ります。
 
 <picture>
@@ -194,7 +207,7 @@ Gateはアクセスルール、セッション、ローカルのレート制限�
   <img src="docs/readme/images/subsystems.svg" alt="Sibuna内部のクレートの役割">
 </picture>
 
-クレートは、ネットワーク、証明、ポリシー、ローカル状態、ストレージ、管理の責務を分けています。[技術ガイド](https://insanai.github.io/sibuna/book/)でそれぞれの役割を説明しています。
+クレートは、ネットワーク、証明、ポリシー、ローカル状態、ストレージ、管理の責務を分けています。[技術ガイド](https://insanai.github.io/sibuna/ja/book/)でそれぞれの役割を説明しています。
 
 </details>
 
@@ -204,7 +217,7 @@ Gateはアクセスルール、セッション、ローカルのレート制限�
 
 非公開リスナーは、外部のイングレスの背後でHTTP/1.1を使います。エッジモードでは、TLS、HTTP/2、HTTP/3をSibunaで終端し、HTTP/1.1、HTTP/2、HTTP/3のサーバープールへ転送できます。Forward-authはイングレスから渡されたメタデータを検査します。リバースプロキシモードでは、内蔵検査器はボディーの先頭8 KiBを対象とします。アップロードはストリーミングでアプリへ転送します。WebSocketメッセージは検査せずに中継します。検査器はヒューリスティックであり、完全な言語パーサーではありません。
 
-レート制限はノードごとにローカルで適用されます。Sibunaは大規模なネットワークトラフィック攻撃の緩和機能を提供しません。接続を失わない実行ファイルの置き換えと、イベント駆動のワーカーは、Linuxにのみあります。チャレンジは、それを発行したノードに結び付けられます。チャレンジとその解答は同じノードへルーティングしてください。コンソールの厳格な性能目標は、まだ正式には通過していません。本番アプリと一緒にコンソールを有効にする前に、[デプロイ時の制約と測定結果](https://insanai.github.io/sibuna/book/operations.html)を確認してください。
+レート制限はノードごとにローカルで適用されます。Sibunaは大規模なネットワークトラフィック攻撃の緩和機能を提供しません。接続を失わない実行ファイルの置き換えと、イベント駆動のワーカーは、Linuxにのみあります。チャレンジは、それを発行したノードに結び付けられます。チャレンジとその解答は同じノードへルーティングしてください。コンソールの厳格な性能目標は、まだ正式には通過していません。本番アプリと一緒にコンソールを有効にする前に、[デプロイ時の制約と測定結果](https://insanai.github.io/sibuna/ja/book/operations.html)を確認してください。
 
 <a id="benchmarks"></a>
 
@@ -235,7 +248,7 @@ Gateはアクセスルール、セッション、ローカルのレート制限�
 | HTTP/2 | 104,132 | 153,899 | 68,972 |
 | 常駐メモリ、HTTP/1.1 | 14 MiB | 48 MiB | 58 MiB |
 
-これは順位付けではなく、1つの小さな測定として読んでください。平文のHTTPではSibunaとHAProxyは同等で、HTTP/2ではHAProxyのほうが明らかに速いです。私たちはEnvoyの専門家ではありません。単純な静的設定を使ったので、より良い設定にすれば数値が変わる可能性は十分にあります。動的な設定やフィルターといったEnvoyの強みは、このテストでは測っていません。応答はループバック上の2バイトだったため、リクエストごとのコストが誇張されています。実際のトラフィックでは差は縮まります。[技術ガイド](https://insanai.github.io/sibuna/book/benchmarks.html)に、方法、設定、さらに多くの接続数、3台のホストによるクラスターを載せています。
+これは順位付けではなく、1つの小さな測定として読んでください。平文のHTTPではSibunaとHAProxyは同等で、HTTP/2ではHAProxyのほうが明らかに速いです。私たちはEnvoyの専門家ではありません。単純な静的設定を使ったので、より良い設定にすれば数値が変わる可能性は十分にあります。動的な設定やフィルターといったEnvoyの強みは、このテストでは測っていません。応答はループバック上の2バイトだったため、リクエストごとのコストが誇張されています。実際のトラフィックでは差は縮まります。[技術ガイド](https://insanai.github.io/sibuna/ja/book/benchmarks.html)に、方法、設定、さらに多くの接続数、3台のホストによるクラスターを載せています。
 
 <a id="beside-anubis"></a>
 
@@ -262,16 +275,16 @@ Gateはアクセスルール、セッション、ローカルのレート制限�
 
 Sibunaの最大メモリは16 MiB前後にとどまりました。Anubisはforward-authモードで約33 MiB、リバースプロキシモードで最大約600 MiBを使いました。Anubisは広く使われている有能なツールであり、これらの行は順位付けではありません。いくつかの行は同じ条件での比較ではありません。forward-authモードのAnubisは一部のパスに自ら応答し、ペイロード検査を行わず、チャレンジページも異なります。実行はループバックで行い、TLS、実際のブラウザー、ストレージは使っていません。
 
-手法、範囲、再実行コマンドは[ベンチマーク記録](benchmarks/results/README.md)を参照してください：[product-latest.md](benchmarks/results/product-latest.md)、[latency-latest.md](benchmarks/results/latency-latest.md)、[comparison-latest.md](benchmarks/results/comparison-latest.md)、[admission-latest.md](benchmarks/results/admission-latest.md)。技術ガイドの第VIII部で、それぞれの違いを説明しています。
+手法、範囲、再実行コマンドは[ベンチマーク記録](benchmarks/results/README.md)を参照してください：[product-latest.md](benchmarks/results/product-latest.md)、[latency-latest.md](benchmarks/results/latency-latest.md)、[comparison-latest.md](benchmarks/results/comparison-latest.md)、[admission-latest.md](benchmarks/results/admission-latest.md)。技術ガイドの第X部で、それぞれの違いを説明しています。
 
 <a id="documentation"></a>
 
 ## ドキュメント
 
-- [技術ガイド](https://insanai.github.io/sibuna/book/)：概念、アルゴリズム、例、測定結果。
-- [ホワイトペーパー](https://insanai.github.io/sibuna/whitepaper/)：アーキテクチャ、証明、設計の詳細。
-- [運用ガイド](https://insanai.github.io/sibuna/book/operations.html)：インストールとデプロイ。
-- [リファレンス](https://insanai.github.io/sibuna/book/reference.html)：CLIとプロトコルの詳細。
+- [技術ガイド](https://insanai.github.io/sibuna/ja/book/)：概念、アルゴリズム、例、測定結果。
+- [ホワイトペーパー](https://insanai.github.io/sibuna/ja/whitepaper/)：アーキテクチャ、証明、設計の詳細。
+- [運用ガイド](https://insanai.github.io/sibuna/ja/book/operations.html)：インストールとデプロイ。
+- [リファレンス](https://insanai.github.io/sibuna/ja/book/reference.html)：CLIとプロトコルの詳細。
 - [設計議論](https://insanai.github.io/sibuna/sid/)：設計上の決定とエンジニアリング上の契約。
 - [貢献ガイド](CONTRIBUTING.md)：ソースからのビルドと検査。
 

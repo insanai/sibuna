@@ -1,5 +1,5 @@
 <h1 align="center">sibuna</h1>
-<p align="center">A load balancer and web protection with browser proof of work, in one executable.</p>
+<p align="center">Distributed load balancer and web application firewall</p>
 <p align="center">
   <a href="#features">Features</a> ·
   <a href="#load-balancing">Load balancing</a> ·
@@ -17,20 +17,21 @@
   <a href="README.hi.md">हिन्दी</a> · <a href="README.ar.md">العربية</a>
 </p>
 
-**Sibuna helps protect websites and APIs from unwanted bot traffic.** It can forward requests
-to your app or work alongside an existing proxy, such as Caddy or nginx.
-In edge mode it is the load balancer itself: it forwards TCP and UDP, terminates TLS and
-routes HTTP to several servers.
+Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes.
 
-Sending requests is often cheap. Processing them can cost your app more work. Sibuna asks
-clients to solve a puzzle before granting access. The puzzle is designed to make proof
-creation cost more computation than verification. Automated clients share more of the cost
-of accessing a site.
+## Where we use Sibuna
 
-Computing also uses energy, but the amount depends on hardware and settings. Proof of work
-adds an admission cost. It does not prove that a visitor is human or stop every attack.
-A signed session lets admitted clients return without solving a new puzzle on every request.
-Use access rules and local rate limits to control what those clients can request afterwards.
+- **Public websites**
+
+  Serve browsers over HTTP/2 or HTTP/3, renew public certificates with Let's Encrypt and inspect requests before forwarding them to HTTP/1.1 replicas.
+- **Internal gRPC services**
+
+  Issue certificates for internal names with the local CA. Clients trust its root and call the service over TLS. An HTTP/2 backend carries gRPC messages and trailers.
+- **A cluster of edge nodes**
+
+  Distribute a checked routing configuration across the mesh. Nodes can share bans and learned affinity while each node forwards traffic to its own backend pools.
+
+[Configuring Sibuna with Jlavi](https://insanai.github.io/sibuna/book/jlavi.html)
 
 ## Features
 
@@ -53,6 +54,7 @@ Sibuna 1.0.0-rc.1 includes edge mode. The quickstart downloads below are for bet
 sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
 sibuna lb --tls auto --domain example.org --server 10.0.0.1:80
 sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
+sibuna check -f edge.jlv
 sibuna --config-file edge.jlv
 ```
 
@@ -200,6 +202,8 @@ with generated traffic and test GeoIP mappings. The displayed counts are not ben
 
 ## How it works
 
+A frontend accepts the connection. For TCP or UDP, Sibuna chooses a server for the flow. For HTTP, it matches the host and path on each request, applies the route's firewall policy and sends admitted traffic to a healthy server in the selected pool. Each edge can make that decision while its peers exchange affinity and ban updates.
+
 A request can be admitted, challenged or denied. A visitor who solves a challenge receives
 a signed session. Later requests still pass the applicable policy and rate checks.
 
@@ -314,7 +318,7 @@ commands: [product-latest.md](benchmarks/results/product-latest.md),
 [latency-latest.md](benchmarks/results/latency-latest.md),
 [comparison-latest.md](benchmarks/results/comparison-latest.md) and
 [admission-latest.md](benchmarks/results/admission-latest.md).
-Part VIII of the book discusses each difference.
+Part X of the book discusses each difference.
 
 ## Documentation
 

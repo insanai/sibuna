@@ -1,6 +1,6 @@
-<!-- English source SHA-256: 2213ca66b48390aac695b02731322e1fa885d704796a4fd3304bc5e157897a0c -->
+<!-- English source SHA-256: 4f4a4074b23f24663e85b168db739f9d4ca9cf40431e796253bdc84612f5fcea -->
 <h1 align="center">sibuna</h1>
-<p align="center">로드 밸런서와 브라우저 작업 증명 기반 웹 보호를 실행 파일 하나에 담았습니다.</p>
+<p align="center">분산 로드 밸런서와 웹 애플리케이션 방화벽</p>
 <p align="center">
   <a href="#features">기능</a> ·
   <a href="#load-balancing">로드 밸런싱</a> ·
@@ -18,11 +18,21 @@
   <a href="README.hi.md">हिन्दी</a> · <a href="README.ar.md">العربية</a>
 </p>
 
-**Sibuna는 웹사이트와 API를 원치 않는 봇 트래픽으로부터 보호하도록 돕습니다.** 앱으로 요청을 전달하거나 Caddy, nginx 같은 기존 프록시와 함께 사용할 수 있습니다. 엣지 모드에서는 Sibuna 자체가 로드 밸런서입니다. TCP와 UDP를 전달하고, TLS를 종료하며, HTTP를 여러 서버로 라우팅합니다.
+Sibuna는 TCP, UDP, HTTP 트래픽을 정상 서버로 전달합니다. 에지 하나를 운영하거나 여러 에지를 메시로 연결하고, 각 에지에서 TLS를 종료하고 선택한 HTTP 경로에 방화벽을 적용할 수 있습니다.
 
-요청을 보내는 데는 대개 비용이 적게 듭니다. 그 요청을 처리하는 데는 앱이 더 많은 일을 해야 할 수 있습니다. Sibuna는 접근을 허용하기 전에 클라이언트에게 퍼즐을 풀도록 요청합니다. 이 퍼즐은 증명을 만드는 데 검증보다 많은 연산이 들도록 설계되었습니다. 이로써 자동화 클라이언트가 사이트 접근 비용을 더 많이 부담하게 됩니다.
+## Sibuna 활용 사례
 
-연산에는 에너지도 들지만, 그 양은 하드웨어와 설정에 따라 달라집니다. 작업 증명은 접근 비용을 더합니다. 작업 증명은 방문자가 사람임을 증명하지 않으며 모든 공격을 막지도 않습니다. 접근이 허용된 클라이언트는 서명된 세션으로 다시 방문할 수 있어 요청마다 새 퍼즐을 풀 필요가 없습니다. 이후 이 클라이언트가 무엇을 요청할 수 있는지는 접근 규칙과 로컬 속도 제한으로 제어하세요.
+- **공개 웹사이트**
+
+  HTTP/2 또는 HTTP/3로 브라우저 요청을 받고 Let's Encrypt로 공개 인증서를 갱신합니다. 요청을 검사한 뒤 HTTP/1.1 복제 서버로 전달합니다.
+- **내부 gRPC 서비스**
+
+  로컬 CA로 내부 이름의 인증서를 발급합니다. 클라이언트는 루트 인증서를 신뢰하고 TLS로 서비스를 호출합니다. HTTP/2 백엔드가 gRPC 메시지와 트레일러를 전달합니다.
+- **에지 노드 클러스터**
+
+  검증한 라우팅 설정을 메시에 배포합니다. 각 노드는 자체 백엔드 풀로 트래픽을 전달하면서 차단 정보와 학습한 서버 할당을 공유할 수 있습니다.
+
+[Jlavi로 Sibuna 구성하기](https://insanai.github.io/sibuna/ko/book/jlavi.html)
 
 <a id="features"></a>
 
@@ -49,6 +59,7 @@ Sibuna 1.0.0-rc.1에는 엣지 모드가 포함됩니다. 아래 빠른 시작�
 sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
 sibuna lb --tls auto --domain example.org --server 10.0.0.1:80
 sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
+sibuna check -f edge.jlv
 sibuna --config-file edge.jlv
 ```
 
@@ -83,7 +94,7 @@ Gate 또는 Shield는 필요한 이름에만 적용하거나, 어디에도 적�
 
 이번 릴리스는 베타 릴리스입니다. macOS 빌드에는 서명이 없습니다. 각 패키지에는 라이선스, 소스 링크와 빌드 명세가 포함됩니다. 사용하기 전에 `SHA256SUMS`로 압축 파일을 검증하세요.
 
-Debian/RPM 패키지는 Linux x86-64와 ARM64를 지원하고, Arch `sibuna-bin`은 x86-64를 지원합니다. FreeBSD 15.1과 OpenBSD 7.9 패키지는 x86-64를 지원하며 CLI를 설치합니다. Linux 패키지에는 선택적인 systemd 서비스가 비활성 상태로 포함됩니다. BSD 패키지는 서비스, 계정, 상태를 만들지 않습니다. 이는 업스트림 다운로드이며, 커뮤니티 저장소 채택은 별개입니다. 릴리스에는 Helm 차트와 컨테이너 이미지 `ghcr.io/insanai/sibuna`도 포함됩니다. 설치, 검증, 비공개 상태, 업그레이드, Kubernetes 설정은 [패키지 운영 가이드](https://insanai.github.io/sibuna/book/operations.html)를 참고하세요.
+Debian/RPM 패키지는 Linux x86-64와 ARM64를 지원하고, Arch `sibuna-bin`은 x86-64를 지원합니다. FreeBSD 15.1과 OpenBSD 7.9 패키지는 x86-64를 지원하며 CLI를 설치합니다. Linux 패키지에는 선택적인 systemd 서비스가 비활성 상태로 포함됩니다. BSD 패키지는 서비스, 계정, 상태를 만들지 않습니다. 이는 업스트림 다운로드이며, 커뮤니티 저장소 채택은 별개입니다. 릴리스에는 Helm 차트와 컨테이너 이미지 `ghcr.io/insanai/sibuna`도 포함됩니다. 설치, 검증, 비공개 상태, 업그레이드, Kubernetes 설정은 [패키지 운영 가이드](https://insanai.github.io/sibuna/ko/book/operations.html)를 참고하세요.
 
 [Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna)은 검증된 릴리스 압축 파일을 설치하는 CLI formula를 제공합니다. macOS와 Linux(Apple Silicon, ARM64, x86-64)를 지원합니다. tap은 게시된 최신 릴리스를 따르므로 이번 베타도 이미 제공합니다. 설치해도 서비스는 시작되지 않습니다:
 
@@ -104,7 +115,7 @@ tar -xzf sibuna-linux-amd64.tar.gz
 ./sibuna --host 127.0.0.1 --port 8080 --upstream-port 3000 --secret-file ./sibuna.seed
 ```
 
-`http://127.0.0.1:8080`을 열어 로컬에서 시험할 수 있습니다. 공개 사이트에서는 신뢰할 수 있는 인그레스에서 HTTPS를 종료하고, Sibuna의 리스너는 외부에 공개하지 마세요. Caddy나 nginx 설정은 [배포 가이드](https://insanai.github.io/sibuna/book/operations.html)를 따르세요.
+`http://127.0.0.1:8080`을 열어 로컬에서 시험할 수 있습니다. 공개 사이트에서는 신뢰할 수 있는 인그레스에서 HTTPS를 종료하고, Sibuna의 리스너는 외부에 공개하지 마세요. Caddy나 nginx 설정은 [배포 가이드](https://insanai.github.io/sibuna/ko/book/operations.html)를 따르세요.
 
 기본 모드는 `reverse_proxy`입니다. 인그레스가 요청을 전달하고 Sibuna에 접근 결정을 묻는 구성이라면 `--mode forward_auth`를 사용하세요. 가이드에는 두 가지 구성이 모두 나와 있습니다. Shield의 내장 검사는 기본적으로 켜져 있습니다. 이 검사기 없이 접근 제어만 사용하려면 `--gate`를 지정하세요. `--policy-file <file>`로 접근 규칙을 선택하세요. 여기에는 브라우저 챌린지를 실행할 수 없는 API 클라이언트와 상태 점검을 위한 규칙도 포함됩니다. `./sibuna --help`는 모든 옵션을 보여 줍니다.
 
@@ -137,7 +148,7 @@ cargo +1.100.0 build --release -p sibuna
   --data-dir ./data --console 127.0.0.1:19446
 ```
 
-`http://127.0.0.1:19446/console/`을 열고 임시 비밀번호를 바꾸세요. [운영 가이드](https://insanai.github.io/sibuna/book/operations.html)에는 HTTPS 접근, GeoIP 가져오기, 사용자, API 토큰과 벽면 디스플레이가 설명되어 있습니다.
+`http://127.0.0.1:19446/console/`을 열고 임시 비밀번호를 바꾸세요. [운영 가이드](https://insanai.github.io/sibuna/ko/book/operations.html)에는 HTTPS 접근, GeoIP 가져오기, 사용자, API 토큰과 벽면 디스플레이가 설명되어 있습니다.
 
 ![탐색 메뉴, 국가별 활동 지구본, 요청 결과, 관측 범위와 국가별 샘플을 보여 주는 Sibuna 콘솔](docs/readme/images/console-globe-93225dc9.png)
 
@@ -170,6 +181,8 @@ cargo +1.100.0 build --release -p sibuna
 
 ## 작동 방식
 
+프런트엔드가 연결을 받습니다. TCP와 UDP에서는 흐름마다 서버를 선택합니다. HTTP에서는 요청마다 호스트와 경로를 확인하고 해당 경로의 방화벽 정책을 적용한 뒤, 허용된 요청을 선택한 풀의 정상 서버로 보냅니다. 각 에지가 이 결정을 내리는 동안 피어들은 서버 할당 정보와 차단 목록의 변경 사항을 교환합니다.
+
 요청은 허용되거나, 챌린지를 받거나, 거부될 수 있습니다. 챌린지를 해결한 방문자는 서명된 세션을 받습니다. 이후 요청도 해당 정책과 속도 제한 검사를 통과해야 합니다.
 
 <picture>
@@ -194,7 +207,7 @@ Gate는 접근 규칙, 세션과 로컬 속도 제한을 검사합니다. Shield
   <img src="docs/readme/images/subsystems.svg" alt="Sibuna 내부 크레이트의 역할">
 </picture>
 
-각 크레이트는 네트워킹, 증명, 정책, 로컬 상태, 저장소와 관리를 나누어 담당합니다. [기술 안내서](https://insanai.github.io/sibuna/book/)에서 그 역할을 설명합니다.
+각 크레이트는 네트워킹, 증명, 정책, 로컬 상태, 저장소와 관리를 나누어 담당합니다. [기술 안내서](https://insanai.github.io/sibuna/ko/book/)에서 그 역할을 설명합니다.
 
 </details>
 
@@ -204,7 +217,7 @@ Gate는 접근 규칙, 세션과 로컬 속도 제한을 검사합니다. Shield
 
 비공개 리스너는 외부 인그레스 뒤에서 HTTP/1.1을 사용합니다. 엣지 모드에서는 Sibuna에서 TLS, HTTP/2, HTTP/3를 종료하고 HTTP/1.1, HTTP/2 또는 HTTP/3 서버 풀로 전달할 수 있습니다. Forward-auth는 인그레스가 제공한 메타데이터를 검사합니다. 리버스 프록시 모드에서 내장 검사기는 본문의 처음 8 KiB를 검사합니다. 업로드는 앱으로 스트리밍됩니다. WebSocket 메시지는 검사 없이 중계합니다. 검사기는 휴리스틱이며, 완전한 언어 파서가 아닙니다.
 
-속도 제한은 노드별로 적용됩니다. Sibuna는 대규모 네트워크 트래픽 공격을 완화하는 기능을 제공하지 않습니다. 연결을 잃지 않는 실행 파일 교체와 이벤트 기반 워커는 Linux에만 있습니다. 챌린지는 이를 발급한 노드에 묶여 있으므로, 챌린지와 그 해답은 같은 노드로 라우팅하세요. 콘솔의 엄격한 성능 목표는 아직 공식적으로 통과하지 못했습니다. 운영 앱과 함께 콘솔을 켜기 전에 [배포 제한과 측정 결과](https://insanai.github.io/sibuna/book/operations.html)를 검토하세요.
+속도 제한은 노드별로 적용됩니다. Sibuna는 대규모 네트워크 트래픽 공격을 완화하는 기능을 제공하지 않습니다. 연결을 잃지 않는 실행 파일 교체와 이벤트 기반 워커는 Linux에만 있습니다. 챌린지는 이를 발급한 노드에 묶여 있으므로, 챌린지와 그 해답은 같은 노드로 라우팅하세요. 콘솔의 엄격한 성능 목표는 아직 공식적으로 통과하지 못했습니다. 운영 앱과 함께 콘솔을 켜기 전에 [배포 제한과 측정 결과](https://insanai.github.io/sibuna/ko/book/operations.html)를 검토하세요.
 
 <a id="benchmarks"></a>
 
@@ -235,7 +248,7 @@ Gate는 접근 규칙, 세션과 로컬 속도 제한을 검사합니다. Shield
 | HTTP/2 | 104,132 | 153,899 | 68,972 |
 | 상주 메모리, HTTP/1.1 | 14 MiB | 48 MiB | 58 MiB |
 
-이 결과는 순위가 아니라 작은 측정 하나로 읽어 주세요. 평문 HTTP에서는 Sibuna와 HAProxy가 비슷하고, HTTP/2에서는 HAProxy가 분명히 더 빠릅니다. 저희는 Envoy 전문가가 아닙니다. 단순한 정적 설정을 사용했으며, 더 나은 설정이라면 수치가 충분히 달라질 수 있습니다. 동적 설정이나 필터 같은 Envoy의 강점은 이 테스트가 측정하는 대상이 아닙니다. 응답은 루프백에서 2바이트였기 때문에 요청당 비용이 과장됩니다. 실제 트래픽에서는 차이가 줄어듭니다. [기술 안내서](https://insanai.github.io/sibuna/book/benchmarks.html)에 방법, 설정, 더 많은 연결 수, 호스트 세 대로 이루어진 클러스터가 나와 있습니다.
+이 결과는 순위가 아니라 작은 측정 하나로 읽어 주세요. 평문 HTTP에서는 Sibuna와 HAProxy가 비슷하고, HTTP/2에서는 HAProxy가 분명히 더 빠릅니다. 저희는 Envoy 전문가가 아닙니다. 단순한 정적 설정을 사용했으며, 더 나은 설정이라면 수치가 충분히 달라질 수 있습니다. 동적 설정이나 필터 같은 Envoy의 강점은 이 테스트가 측정하는 대상이 아닙니다. 응답은 루프백에서 2바이트였기 때문에 요청당 비용이 과장됩니다. 실제 트래픽에서는 차이가 줄어듭니다. [기술 안내서](https://insanai.github.io/sibuna/ko/book/benchmarks.html)에 방법, 설정, 더 많은 연결 수, 호스트 세 대로 이루어진 클러스터가 나와 있습니다.
 
 <a id="beside-anubis"></a>
 
@@ -262,16 +275,16 @@ Gate는 접근 규칙, 세션과 로컬 속도 제한을 검사합니다. Shield
 
 Sibuna의 최대 메모리는 16 MiB 근처에 머물렀습니다. Anubis는 forward-auth 모드에서 약 33 MiB, 리버스 프록시 모드에서 최대 약 600 MiB를 사용했습니다. Anubis는 널리 쓰이는 유능한 도구이며, 이 표는 순위가 아닙니다. 몇몇 행은 같은 조건의 비교가 아닙니다. forward-auth 모드에서 Anubis는 일부 경로에 직접 응답하고, 페이로드를 검사하지 않으며, 챌린지 페이지도 다릅니다. 이 실행은 루프백을 사용했고 TLS, 실제 브라우저, 저장소는 사용하지 않았습니다.
 
-방법, 범위와 재실행 명령은 [벤치마크 기록](benchmarks/results/README.md)을 참고하세요: [product-latest.md](benchmarks/results/product-latest.md), [latency-latest.md](benchmarks/results/latency-latest.md), [comparison-latest.md](benchmarks/results/comparison-latest.md), [admission-latest.md](benchmarks/results/admission-latest.md). 기술 안내서의 제VIII부에서 각 차이를 설명합니다.
+방법, 범위와 재실행 명령은 [벤치마크 기록](benchmarks/results/README.md)을 참고하세요: [product-latest.md](benchmarks/results/product-latest.md), [latency-latest.md](benchmarks/results/latency-latest.md), [comparison-latest.md](benchmarks/results/comparison-latest.md), [admission-latest.md](benchmarks/results/admission-latest.md). 기술 안내서의 제X부에서 각 차이를 설명합니다.
 
 <a id="documentation"></a>
 
 ## 문서
 
-- [기술 안내서](https://insanai.github.io/sibuna/book/): 개념, 알고리즘, 예제와 측정 결과.
-- [백서](https://insanai.github.io/sibuna/whitepaper/): 아키텍처, 증명과 설계 세부 사항.
-- [운영 가이드](https://insanai.github.io/sibuna/book/operations.html): 설치와 배포.
-- [참조 문서](https://insanai.github.io/sibuna/book/reference.html): CLI와 프로토콜 세부 사항.
+- [기술 안내서](https://insanai.github.io/sibuna/ko/book/): 개념, 알고리즘, 예제와 측정 결과.
+- [백서](https://insanai.github.io/sibuna/ko/whitepaper/): 아키텍처, 증명과 설계 세부 사항.
+- [운영 가이드](https://insanai.github.io/sibuna/ko/book/operations.html): 설치와 배포.
+- [참조 문서](https://insanai.github.io/sibuna/ko/book/reference.html): CLI와 프로토콜 세부 사항.
 - [설계 논의](https://insanai.github.io/sibuna/sid/): 결정과 엔지니어링 계약.
 - [기여 안내](CONTRIBUTING.md): 소스 빌드와 검사.
 

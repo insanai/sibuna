@@ -1,6 +1,6 @@
-<!-- English source SHA-256: 2213ca66b48390aac695b02731322e1fa885d704796a4fd3304bc5e157897a0c -->
+<!-- English source SHA-256: 4f4a4074b23f24663e85b168db739f9d4ca9cf40431e796253bdc84612f5fcea -->
 <h1 align="center">sibuna</h1>
-<p align="center">Ein Load Balancer und Webschutz mit Proof of Work im Browser, in einer ausführbaren Datei.</p>
+<p align="center">Verteilter Lastverteiler und Web Application Firewall</p>
 <p align="center">
   <a href="#features">Funktionen</a> ·
   <a href="#load-balancing">Lastverteilung</a> ·
@@ -18,22 +18,21 @@
   <a href="README.hi.md">हिन्दी</a> · <a href="README.ar.md">العربية</a>
 </p>
 
-**Sibuna hilft, Websites und APIs vor unerwünschtem Datenverkehr von Bots zu schützen.** Es kann
-Anfragen an deine Anwendung weiterleiten oder neben einem vorhandenen Proxy wie Caddy oder
-nginx arbeiten.
-Im Edge-Modus ist es selbst der Load Balancer: Es leitet TCP und UDP weiter, terminiert TLS und
-routet HTTP zu mehreren Servern.
+Sibuna leitet TCP, UDP und HTTP an gesunde Server weiter. Wir können einen Edge betreiben oder mehrere zu einem Mesh verbinden, an jedem Edge TLS terminieren und die Firewall auf ausgewählte HTTP-Routen anwenden.
 
-Anfragen zu senden ist oft billig. Ihre Verarbeitung kann deine Anwendung mehr Arbeit kosten.
-Sibuna verlangt von Clients, vor dem Zugang ein Rätsel zu lösen. Das Rätsel ist so entworfen,
-dass das Erzeugen des Nachweises mehr Rechenarbeit kostet als seine Prüfung. Automatisierte
-Clients tragen so einen größeren Teil der Kosten für den Zugriff auf eine Website.
+## Einsatzgebiete von Sibuna
 
-Rechnen verbraucht auch Energie, aber die Menge hängt von Hardware und Einstellungen ab.
-Proof of Work fügt Zulassungskosten hinzu. Es beweist nicht, dass ein Besucher ein Mensch ist,
-und stoppt nicht jeden Angriff. Eine signierte Sitzung lässt zugelassene Clients zurückkehren,
-ohne bei jeder Anfrage ein neues Rätsel zu lösen. Nutze Zugangsregeln und lokale Ratenlimits,
-um zu steuern, was diese Clients danach anfordern dürfen.
+- **Öffentliche Websites**
+
+  Wir bedienen Browser über HTTP/2 oder HTTP/3, erneuern öffentliche Zertifikate mit Let's Encrypt und prüfen Anfragen vor der Weiterleitung an HTTP/1.1-Replikate.
+- **Interne gRPC-Dienste**
+
+  Wir stellen mit der lokalen CA Zertifikate für interne Namen aus. Clients vertrauen ihrem Stammzertifikat und rufen den Dienst über TLS auf. Ein HTTP/2-Backend überträgt gRPC-Nachrichten und Trailer.
+- **Ein Cluster aus Edge-Knoten**
+
+  Wir verteilen eine geprüfte Routingkonfiguration im Mesh. Die Knoten können Sperren und gelernte Serverzuordnungen austauschen, während jeder Knoten Verkehr an seine Backend-Pools weiterleitet.
+
+[Sibuna mit Jlavi konfigurieren](https://insanai.github.io/sibuna/de/book/jlavi.html)
 
 <a id="features"></a>
 
@@ -60,6 +59,7 @@ Sibuna 1.0.0-rc.1 enthält den Edge-Modus. Die Downloads weiter unten gehören z
 sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
 sibuna lb --tls auto --domain example.org --server 10.0.0.1:80
 sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
+sibuna check -f edge.jlv
 sibuna --config-file edge.jlv
 ```
 
@@ -107,7 +107,7 @@ Linux-Pakete enthalten einen optionalen, deaktivierten systemd-Dienst. BSD-Paket
 weder Dienst noch Konto oder Zustand. Dies sind Upstream-Downloads; die Aufnahme in
 Community-Archive ist ein separates Verfahren. Das Release enthält auch ein Helm-Chart und ein
 Container-Image, `ghcr.io/insanai/sibuna`.
-Die [Paket-Betriebsanleitung](https://insanai.github.io/sibuna/book/operations.html)
+Die [Paket-Betriebsanleitung](https://insanai.github.io/sibuna/de/book/operations.html)
 beschreibt Installation, Verifikation, privaten Zustand, Upgrades und die Einrichtung unter
 Kubernetes.
 
@@ -135,7 +135,7 @@ tar -xzf sibuna-linux-amd64.tar.gz
 
 Öffne `http://127.0.0.1:8080` für einen lokalen Versuch. Terminiere bei einer öffentlichen
 Website HTTPS an einem vertrauenswürdigen Eingangsproxy und halte Sibunas Listener privat.
-Folge der [Einsatzanleitung](https://insanai.github.io/sibuna/book/operations.html) für Caddy
+Folge der [Einsatzanleitung](https://insanai.github.io/sibuna/de/book/operations.html) für Caddy
 oder nginx.
 
 Der Standardmodus ist `reverse_proxy`. Nutze `--mode forward_auth`, wenn dein Eingangsproxy
@@ -182,7 +182,7 @@ Die Konsole läuft in derselben ausführbaren Datei. Initialisiere einen Adminis
 ```
 
 Öffne `http://127.0.0.1:19446/console/` und ändere das vorläufige Passwort.
-Die [Betriebsanleitung](https://insanai.github.io/sibuna/book/operations.html) erklärt
+Die [Betriebsanleitung](https://insanai.github.io/sibuna/de/book/operations.html) erklärt
 HTTPS-Zugriff, GeoIP-Importe, Benutzer, API-Tokens und Wandanzeigen.
 
 ![Sibuna-Konsole mit Navigation, Globus der Länderaktivität, Anfrageergebnissen, Abdeckung und Länderstichproben](docs/readme/images/console-globe-93225dc9.png)
@@ -222,6 +222,8 @@ Die angezeigten Zähler sind keine Benchmark-Ergebnisse.
 
 ## Funktionsweise
 
+Ein Frontend nimmt die Verbindung an. Bei TCP oder UDP wählt Sibuna einen Server für den Datenstrom. Bei HTTP prüft Sibuna Host und Pfad jeder Anfrage, wendet die Firewall-Regeln der Route an und leitet zugelassene Anfragen an einen gesunden Server im gewählten Pool weiter. Jeder Edge-Knoten trifft diese Entscheidung selbst, während die Peers Serverzuordnungen und Sperren austauschen.
+
 Eine Anfrage kann zugelassen, mit einer Challenge belegt oder abgelehnt werden. Ein Besucher, der eine
 Challenge löst, erhält eine signierte Sitzung. Spätere Anfragen durchlaufen weiterhin die
 anwendbaren Richtlinien- und Ratenprüfungen.
@@ -251,7 +253,7 @@ Eine gültige Sitzung umgeht weder anwendbare Angriffsprüfungen noch Anfragelim
 </picture>
 
 Die Crates trennen Netzwerk, Nachweise, Richtlinien, lokalen Zustand, Speicher und Verwaltung.
-Das [Buch](https://insanai.github.io/sibuna/book/) erklärt ihre Aufgaben.
+Das [Buch](https://insanai.github.io/sibuna/de/book/) erklärt ihre Aufgaben.
 
 </details>
 
@@ -272,7 +274,7 @@ Worker existieren nur unter Linux.
 Challenges sind an den Knoten gebunden, der sie ausgestellt hat; leite eine Challenge und ihre
 Lösung zum selben Knoten. Das strenge Leistungsziel der Konsole ist nicht
 formal bestanden. Prüfe die
-[Einsatzgrenzen und Messungen](https://insanai.github.io/sibuna/book/operations.html), bevor du
+[Einsatzgrenzen und Messungen](https://insanai.github.io/sibuna/de/book/operations.html), bevor du
 die Konsole neben einer produktiven Anwendung aktivierst.
 
 <a id="benchmarks"></a>
@@ -321,7 +323,7 @@ Envoy-Experten: Wir haben eine schlichte statische Konfiguration verwendet, und 
 seine Zahlen durchaus verändern. Envoys Stärken, etwa die dynamische Konfiguration und seine
 Filter, misst dieser Test nicht. Die Antwort war zwei Bytes groß und lief über Loopback, was die
 Kosten jeder Anfrage übertreibt; echter Datenverkehr verringert die Unterschiede. Das
-[Buch](https://insanai.github.io/sibuna/book/benchmarks.html) beschreibt die Methode, die
+[Buch](https://insanai.github.io/sibuna/de/book/benchmarks.html) beschreibt die Methode, die
 Konfigurationen, weitere Verbindungszahlen und einen Cluster aus drei Hosts.
 
 <a id="beside-anubis"></a>
@@ -363,16 +365,16 @@ Wiederholungsbefehle: [product-latest.md](benchmarks/results/product-latest.md),
 [latency-latest.md](benchmarks/results/latency-latest.md),
 [comparison-latest.md](benchmarks/results/comparison-latest.md) und
 [admission-latest.md](benchmarks/results/admission-latest.md).
-Teil VIII des Buchs bespricht jeden Unterschied.
+Teil X des Buchs bespricht jeden Unterschied.
 
 <a id="documentation"></a>
 
 ## Dokumentation
 
-- [Buch](https://insanai.github.io/sibuna/book/): Konzepte, Algorithmen, Beispiele und Messungen.
-- [Whitepaper](https://insanai.github.io/sibuna/whitepaper/): Architektur, Beweise und Entwurfsdetails.
-- [Betriebsanleitung](https://insanai.github.io/sibuna/book/operations.html): Installation und Einsatz.
-- [Referenz](https://insanai.github.io/sibuna/book/reference.html): Details zu CLI und Protokoll.
+- [Buch](https://insanai.github.io/sibuna/de/book/): Konzepte, Algorithmen, Beispiele und Messungen.
+- [Whitepaper](https://insanai.github.io/sibuna/de/whitepaper/): Architektur, Beweise und Entwurfsdetails.
+- [Betriebsanleitung](https://insanai.github.io/sibuna/de/book/operations.html): Installation und Einsatz.
+- [Referenz](https://insanai.github.io/sibuna/de/book/reference.html): Details zu CLI und Protokoll.
 - [Entwurfsdiskussionen](https://insanai.github.io/sibuna/sid/): Entscheidungen und technische Verträge.
 - [Mitwirken](CONTRIBUTING.md): Quellbuilds und Prüfungen.
 
