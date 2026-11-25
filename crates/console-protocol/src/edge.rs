@@ -440,7 +440,8 @@ impl Decode for View {
             node: fields.required("node")?,
             frontends: fields
                 .required_with("frontends", |value, path| decode_list(value, path, groups))?,
-            pools: fields.required_with("pools", |value, path| decode_list(value, path, groups))?,
+            pools: fields
+                .required_with("pools", |value, path| decode_list(value, path, groups))?,
             queues: fields.or_default("queues")?,
         };
         fields.finish()?;

@@ -116,6 +116,9 @@ fn dispatch(shared: &Shared, context: &mut Context<'_>) -> Result<(), RouteError
     if !shared.ingress.accepts(context.peer().ip(), forwarded) {
         return Err(RouteError::fail(403, "CONSOLE403"));
     }
+    if !operator_allowed(shared, context) {
+        return Err(RouteError::fail(403, "CONSOLE403"));
+    }
     context.extend(HTTP_WAIT.as_secs() + 2);
     if serve_files(shared, context)? {
         return Ok(());
@@ -125,6 +128,19 @@ fn dispatch(shared: &Shared, context: &mut Context<'_>) -> Result<(), RouteError
     };
     let call = authenticate(shared, context, route)?;
     execute(shared, context, &call)
+}
+
+/// Returns whether the request comes from a network of the operators (SID 0031): always
+/// when none is configured, and for the peer upgrade, whose sender has networks of its
+/// own. Behind a proxy the address is the forwarded one.
+fn operator_allowed(shared: &Shared, context: &Context<'_>) -> bool {
+    if shared.operators.is_empty() || context.target() == b"/console/peer" {
+        return true;
+    }
+    let client = crate::http::origin::client_address(context, shared.config.behind_proxy);
+    client
+        .parse::<std::net::IpAddr>()
+        .is_ok_and(|address| shared.operators.iter().any(|network| network.contains(address)))
 }
 
 /// Serves the world geometry, a digest-named asset or the shell, and returns true; returns
@@ -288,6 +304,7 @@ fn execute(shared: &Shared, context: &mut Context<'_>, call: &Call) -> Result<()
         H::NodeStatus | H::NodesMembers | H::NodeCommand | H::NodeCommandRead => {
             api::nodes::handle
         }
+        H::EdgeView | H::EdgeFleet | H::EdgeCommand => api::edge::handle,
         H::Events | H::EventsHeads | H::EventsSimilar => api::events::handle,
         H::EventsExport => api::export::handle,
         H::SecurityQuery | H::SecurityTrends => api::security::handle,

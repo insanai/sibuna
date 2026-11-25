@@ -162,7 +162,9 @@ fn own_number(r: &mut ObjectReader<'_, '_>) -> io::Result<Option<u32>> {
         None => None,
     };
     match (given, from_file) {
-        (Some(_), Some(_)) => Err(invalid("console.node and console.node_file exclude each other")),
+        (Some(_), Some(_)) => {
+            Err(invalid("console.node and console.node_file exclude each other"))
+        }
         (number, other) => number.or(other).map(|n| node_number(n, "console.node")).transpose(),
     }
 }

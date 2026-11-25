@@ -23,7 +23,7 @@ use sibuna_console_protocol::codec::{
     Decode, DecodeError, DecodeErrorKind, Encode, Fields, Path, WireEnum, decode_byte_array,
     field, to_json,
 };
-use sibuna_console_protocol::{rankings, timeline};
+use sibuna_console_protocol::{edge, rankings, timeline};
 use sibuna_json::{Value, Writer};
 
 use super::Peers;
@@ -47,15 +47,18 @@ pub enum Kind {
     Timeline,
     /// The current minute's rankings.
     Rankings,
+    /// The summary of the edge of the node (SID 0031).
+    Edge,
 }
 
 impl WireEnum for Kind {
-    const ALL: &'static [Kind] = &[Kind::Timeline, Kind::Rankings];
+    const ALL: &'static [Kind] = &[Kind::Timeline, Kind::Rankings, Kind::Edge];
 
     fn name(self) -> &'static str {
         match self {
             Kind::Timeline => "timeline",
             Kind::Rankings => "rankings",
+            Kind::Edge => "edge",
         }
     }
 }
@@ -509,6 +512,14 @@ fn validate(
                 return Err(invalid);
             }
             to_json(&page)
+        }
+        Kind::Edge => {
+            let summary = edge::Node::decode(data, Path::Root).map_err(|_| invalid)?;
+            // A peer speaks for itself only.
+            if summary.node != node {
+                return Err(invalid);
+            }
+            to_json(&summary)
         }
     };
     if text.len() > MAX_BODY {

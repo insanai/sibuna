@@ -59,8 +59,8 @@ use std::time::{Duration, Instant};
 
 pub use config::Config;
 mod console;
-pub use console::{ConsoleOptions, ConsolePeer, MAX_CONSOLE_NODES};
 use config::{Frontend, Protocol, invalid};
+pub use console::{ConsoleOptions, ConsolePeer, MAX_CONSOLE_NODES};
 use pool::{Loads, Pool, Ticket};
 use sibuna_reactor::{Poller, READ, Waker, handle};
 use tcp::{Connect, Connectors, Relays, Stream, transient};

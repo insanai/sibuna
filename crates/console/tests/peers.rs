@@ -19,6 +19,7 @@ use std::time::{Duration, Instant};
 use sibuna_console::config::{PeerTarget, Peers};
 use sibuna_console::{Config, ConsoleKey, Keys};
 use sibuna_console_protocol::Role;
+use sibuna_console_protocol::edge;
 use sibuna_console_protocol::subscription_client::{Client, Event};
 use sibuna_console_protocol::subscriptions::Topic;
 use sibuna_crypto::hmac::{HmacSha256, hmac_sha256};
@@ -48,7 +49,8 @@ fn config(targets: Vec<PeerTarget>, ca_file: Option<PathBuf>) -> Config {
 }
 
 fn target(node: u32, ingress: &Ingress) -> PeerTarget {
-    PeerTarget { node, origin: format!("https://localhost:{}", ingress.address().port()) }
+    let origin = format!("https://localhost:{}", ingress.address().port());
+    PeerTarget { node, origin, allow_ips: Vec::new() }
 }
 
 /// Starts console `node` with `targets`, trusting `ca` for its peers.
@@ -57,7 +59,40 @@ fn start(name: &str, node: u32, targets: Vec<PeerTarget>, ca: PathBuf) -> Harnes
         inputs.node_id = node;
         inputs.boot = [u8::try_from(node).unwrap(); 16];
         inputs.keys = Keys { totp: None, peer: Some(ConsoleKey::new(MASTER)) };
+        inputs.edge = Some(std::sync::Arc::new(FakeEdge { node }));
     })
+}
+
+/// An edge whose summary names its node and one active flow per node id.
+#[derive(Debug)]
+struct FakeEdge {
+    node: u32,
+}
+
+impl sibuna_console::EdgeHost for FakeEdge {
+    fn view(&self) -> Option<edge::View> {
+        let node =
+            edge::Node { node: self.node, flows: u64::from(self.node), ..edge::Node::default() };
+        Some(edge::View { node, ..edge::View::default() })
+    }
+
+    fn run(&self, _line: &str, _who: &str) -> edge::Answer {
+        edge::Answer::default()
+    }
+}
+
+/// SID 0031: the fleet of `a` holds itself and its peer, each with its own summary.
+fn fleet_view(a: &Harness, session: &Session) {
+    let reply = get(a, session, "/console/api/edge/fleet");
+    assert_eq!(reply.status, 200, "{}", reply.text());
+    let fleet: edge::Fleet = sibuna_console_protocol::codec::from_json(&reply.body).unwrap();
+    assert_eq!(fleet.self_node, 1);
+    let seen: Vec<(u32, &str, Option<u64>)> = fleet
+        .members
+        .iter()
+        .map(|m| (m.node, m.link.as_str(), m.summary.as_ref().map(|s| s.flows)))
+        .collect();
+    assert_eq!(seen, [(1, "self", Some(1)), (2, "current", Some(2))]);
 }
 
 /// Signs in a viewer (an administrator behind a proxy would first need a second factor).
@@ -288,6 +323,7 @@ fn two_consoles_peer_over_wss_through_the_ingress_with_a_private_ca() {
 
     dashboard_and_nodes_topic(&a, &session_a);
     peer_queries(&a, &session_a);
+    fleet_view(&a, &session_a);
     inbound_admission(&b);
     rejections_are_audited_once(&b);
 
@@ -463,4 +499,69 @@ fn the_peer_route_is_absent_without_a_proxy_or_peers() {
     let refused = inbound(&plain, &request, &proof(b"client", &[&request])).err().unwrap();
     assert_eq!((refused.status, refused.code().as_str()), (404, "CONSOLE404"));
     plain.stop();
+}
+
+/// Opens `/console/peer` on `harness` as its proxy would for a peer at `address`.
+fn inbound_from(
+    harness: &Harness,
+    from: u32,
+    nonce: u8,
+    address: &str,
+) -> Result<(Socket, Response), Response> {
+    let request = transcript(from, 2, nonce, [nonce; 16]);
+    let signature = proof(b"client", &[&request]);
+    let fields = [
+        PROXIED,
+        ("X-Forwarded-For", address),
+        ("X-Sibuna-Peer", &hex::encode(&request)),
+        ("X-Sibuna-Proof", &hex::encode(&signature)),
+    ];
+    upgrade(harness.address(), "/console/peer", &fields, &[nonce; 16])
+}
+
+// SID 0031, acceptance criterion 6: a peer is checked by its address before its proof,
+// and a removed peer loses its stream within two seconds and is not admitted again.
+#[test]
+fn a_peer_outside_its_networks_is_refused_and_a_removed_peer_loses_its_stream() {
+    // Nothing listens at the origins: only inbound links matter here.
+    let peer = |node: u32, allow_ips: &[&str]| PeerTarget {
+        node,
+        origin: format!("https://localhost:{node}"),
+        allow_ips: allow_ips.iter().map(|&text| text.to_owned()).collect(),
+    };
+    let targets = vec![peer(3, &["10.99.0.0/24", "2001:db8::/64"]), peer(4, &[]), peer(5, &[])];
+    let b = start("peers-removal", 2, targets, ca_file());
+    assert_eq!(b.console().peer_nodes(), [3, 4, 5]);
+
+    // Peer 3 has networks: a valid proof from another address is refused.
+    let refused = inbound_from(&b, 3, 0x51, "10.99.1.9").err().unwrap();
+    assert_eq!((refused.status, refused.code().as_str()), (403, "CONSOLEPEER"));
+    let (mut third, _) = inbound_from(&b, 3, 0x52, "10.99.0.9").unwrap();
+    // Peer 4 has none: its address is not checked.
+    let (mut fourth, _) = inbound_from(&b, 4, 0x53, "192.0.2.7").unwrap();
+
+    let removed_at = Instant::now();
+    assert!(b.console().remove_peer(4));
+    assert!(!b.console().remove_peer(4), "a peer is removed once");
+    assert!(!b.console().remove_peer(9), "an unknown node is no peer");
+    let code = loop {
+        match fourth.text() {
+            Ok(_) => {}
+            Err(code) => break code,
+        }
+    };
+    assert_eq!(code, Some(1008));
+    assert!(removed_at.elapsed() < Duration::from_secs(2), "{:?}", removed_at.elapsed());
+    assert_eq!(b.console().peer_nodes(), [3, 5]);
+
+    // The removed peer still holds the key. It is an unknown sender now.
+    let again = inbound_from(&b, 4, 0x54, "192.0.2.7").err().unwrap();
+    assert_eq!((again.status, again.code().as_str()), (403, "CONSOLEPEER"));
+    // The stream of the peer that stayed still serves.
+    third.send(Opcode::Text, b"{\"op\":\"sub\",\"topic\":\"stats\",\"args\":{}}");
+    assert!(third.text().is_ok());
+    let session = viewer(&b);
+    let nodes: Vec<u64> = reports(&b, &session).into_iter().map(|(node, _, _)| node).collect();
+    assert_eq!(nodes, [3, 5], "the removed peer is not reported");
+    b.stop();
 }

@@ -76,6 +76,10 @@ pub struct Shared {
     pub clock: Arc<dyn Clock>,
     /// The daemon's local effects and readings.
     pub node: Arc<dyn Node>,
+    /// The edge of the node (SID 0031); `None` for a daemon without one.
+    pub edge: Option<Arc<dyn crate::host::EdgeHost>>,
+    /// The networks operators come from, parsed once; empty admits every address.
+    pub operators: Vec<crate::http::ingress::Network>,
     /// The data plane's sampled requests, challenge events and outcome counters.
     pub telemetry: Arc<ConsoleTelemetry>,
     /// Committed incidents, published by the storage thread.
@@ -151,6 +155,12 @@ impl Shared {
             storage: ConsoleStorage::new(inputs.storage),
             clock: inputs.clock,
             node: inputs.node,
+            edge: inputs.edge,
+            operators: config
+                .allow_operators
+                .iter()
+                .filter_map(|text| crate::http::ingress::Network::parse(text))
+                .collect(),
             telemetry: inputs.telemetry,
             incidents: inputs.incidents,
             metrics: inputs.metrics,
