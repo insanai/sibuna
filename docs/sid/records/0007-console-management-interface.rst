@@ -269,27 +269,9 @@ Non-Goals
 Architecture Overview
 ---------------------
 
-.. graphviz::
+.. graphviz:: ../diagrams/modules.dot
    :caption: Proposed modules and runtime interfaces. The daemon owns database access; console work uses its bounded mailbox. Dashed telemetry reads do not take engine or request-state locks.
    :alt: The daemon apps/sibuna starts libs/console and passes counters to it, depends on libs/store, libs/policy, libs/crypto and libs/net, and issues SQL to Zaxonlite. libs/console uses the kernel libs/serve, embeds the wasm32 interface module apps/console-ui, sends storage and control requests to the daemon's mailbox, and reads the daemon's counters through atomic loads.
-
-   digraph modules {
-     rankdir=LR;
-     node [shape=box, style="rounded"];
-     sibuna [label="apps/sibuna\nCLI, daemon, storage thread"];
-     libs [label="libs/store, libs/policy\nlibs/crypto, libs/net"];
-     console [label="libs/console\napp: routes, auth, telemetry, hub, geoip, cluster"];
-     serve [label="libs/serve\nkernel: listener, slots, HTTP, WebSocket, assets"];
-     ui [label="apps/console-ui\nwasm32 interface module"];
-     zaxonlite [label="Zaxonlite\nreplicated SQLite"];
-     sibuna -> libs;
-     sibuna -> console [label="starts; counters"];
-     console -> serve;
-     console -> ui [label="embeds"];
-     console -> sibuna [label="storage/control mailbox"];
-     sibuna -> zaxonlite [label="SQL"];
-     console -> sibuna [label="atomic loads", style=dashed];
-   }
 
 Modules and directories
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -519,35 +501,9 @@ Example subscription and initial unavailable snapshot (separate JSON messages). 
 
 The hub keeps one bounded ring per topic (1,024 entries of at most 2 KB) and a cursor per subscriber. Publication uses preallocated storage and never waits on network writes; a slow consumer sees a ``dropped`` count rather than growing memory. The ring and subscriber outbox are separate bounded owners. Fan-out runs on the hub thread, which writes into each connection's bounded send queue; a full queue invalidates the affected topic, removes its queued frames and reserves a gap notice before surviving data. That topic resumes only with a new subscription epoch, so a stalled tab cannot complete a broken snapshot or grow an unbounded backlog. Subscribers are capped at 64 per console; the 65th receives a ``503`` at upgrade. Reserve separate HTTP/control capacity so 64 long-lived sockets cannot prevent login or API requests. Sequence numbers are per subscription with an epoch; filters start a new epoch/snapshot. A 2 KiB ring entry carries a bounded event summary, not a 64-record full-payload batch. Chunk snapshots with explicit begin/end watermarks; bound reassembly and resynchronize after a gap. Reconnect with jittered backoff, show stale age and keep the last good view.
 
-.. code-block:: text
+.. typst-diagram:: ../diagrams/console/session.typ
    :caption: One browser session: login, upgrade, subscribe, live deltas, a mutation, and the policy rebuild it causes on every node. Storage arrows represent mailbox requests; password verification runs between the user read and session write, outside a storage transaction. Solid arrows are requests; dashed arrows are responses and asynchronous effects.
-
-   Browser          Console                 Zaxonlite           Storage thread
-      |                |                        |               (every node)
-      | POST /console/api/login                 |                     |
-      |--------------->|                        |                     |
-      |                | read user; verify off-owner; store session   |
-      |                |----------------------->|                     |
-      | 200 + session cookie + CSRF token       |                     |
-      |<- - - - - - - -|                        |                     |
-      | GET /console/ws; then sub stats         |                     |
-      |--------------->|                        |                     |
-      | snapshot, then 1 Hz stats deltas        |                     |
-      |<- - - - - - - -|                        |                     |
-      | POST /console/api/policies/edit + CSRF  |                     |
-      |--------------->|                        |                     |
-      |                | expected revision;     |                     |
-      |                | policy + audit transaction                   |
-      |                |----------------------->|                     |
-      |                |                        | replicated commit;  |
-      |                |                        | revision changed    |
-      |                |                        |-------------------->|
-      |                |                        |                     | tick: rebuild spare
-      |                |                        |                     | engine; publish
-      |                |                        |                     |- - -.
-      |                |                        |                     |<- - '
-      |                | `policy` topic: rule p1 active on node n     |
-      |                |<- - - - - - - - - - - - - - - - - - - - - - -|
+   :alt: Login establishes a session. A WebSocket supplies live stats. A policy edit commits a revision that each node publishes.
 
 Data Model
 ----------
@@ -689,671 +645,79 @@ These drawings specify every route and key workflow; illustrative values are not
 
 The drawings fix layout and information density, not visual style; the visual system of the Elegance subsection supplies the style. Every panel named here maps to one ``sb-*`` component and one render function, and every page is laid out to pass the audit of the principle audit: tiles first, trends second, tables third, detail on the right or in a modal, and the way back in the same place on every page.
 
-The drawings below are ASCII redrawings of the original Typst wireframes. In them, ``>`` marks the active sidebar page, ``v`` a drop-down, ``(ext)`` a link that opens elsewhere, ``[...]`` a button or input, ``* Live`` the live indicator, and ``#`` a bar; ``o`` and ``x`` on a globe mark traffic (blue) and attack (red) countries.
+The figures reproduce the original console design. The operator book shows the implemented console.
 
-.. code-block:: text
+.. typst-diagram:: ../diagrams/console/shell.typ
    :caption: The shell: top bar with cluster status and the account menu, a fixed sidebar of the eight pages, and the page body. Below 1,024 px navigation becomes a labelled menu drawer.
+   :alt: The sidebar and account controls surround the active page.
 
-   +--------------------------------------------------------------------------------------+
-   | SIBUNA                            cluster: edge-eu - 3/3 healthy - admin v - (theme) |
-   +--------------+-----------------------------------------------------------------------+
-   |>Statistics   |                                                                       |
-   | Attack events| +--------------------------------------------------------------------+|
-   | Challenges   | | page body                                                          ||
-   | Policy       | |                                                                    ||
-   | Nodes        | |                                                                    ||
-   | GeoIP        | |                                                                    ||
-   | Settings     | |                                                                    ||
-   | Audit        | |                                                                    ||
-   |              | +--------------------------------------------------------------------+|
-   |              |                                                                       |
-   +--------------+-----------------------------------------------------------------------+
-
-.. code-block:: text
+.. typst-diagram:: ../diagrams/console/login.typ
    :caption: Login and first-run setup. The setup variant replaces the password field with the one-time password and a new-password pair, and forces a change.
+   :alt: A sign-in form precedes access to telemetry.
 
-                           +----------------------------------------+
-                           |             SIBUNA CONSOLE             |
-                           |                                        |
-                           | +----------------------------------+   |
-                           | | user name                        |   |
-                           | +----------------------------------+   |
-                           | +----------------------------------+   |
-                           | | password                         |   |
-                           | +----------------------------------+   |
-                           | [             Sign in              ]   |
-                           |                                        |
-                           +----------------------------------------+
-
-                     Authentication required - no telemetry before sign-in
-            Five attempts per minute per address - sessions expire after 30 idle minutes
-
-.. code-block:: text
+.. typst-diagram:: ../diagrams/console/traffic.typ
    :caption: The signed-in landing page: Traffic overview with a live country-level earth globe, ranked countries across both hemispheres, traffic totals and timeline. Values and geography are illustrative; sampling, Unknown coverage and freshness are explicit.
+   :alt: Traffic totals sit above a country globe, rankings and timeline.
 
-   +--------------+-----------------------------------------------------------------------+
-   | SIBUNA       | edge-eu / All nodes / Statistics / Traffic            [Light / Dark]  |
-   | CONSOLE      | 3 of 3 nodes reporting - last update 1 s ago    [admin v - Sign out]  |
-   |              |-----------------------------------------------------------------------|
-   |>Statistics   | TRAFFIC OVERVIEW                [All nodes v] [Last 24 h v] [* Live]  |
-   | Attack events| External requests - UTC - illustrative data after successful login    |
-   | Challenges   | [Traffic] [Security]                                    [Kiosk (ext)] |
-   | Policy       | +--------------------+ +--------------------+ +--------------------+  |
-   | Nodes        | | Requests - 24 h    | | Admitted           | | Challenged         |  |
-   | GeoIP        | | 1.28 M             | | 1.19 M             | | 64 k               |  |
-   | Settings     | | +8.2% vs prior day | | +7.1% vs prior day | | +3.4% vs prior day |  |
-   | Audit        | +--------------------+ +--------------------+ +--------------------+  |
-   |              | +--------------------+ +--------------------+ +--------------------+  |
-   |              | | Denied             | | Banned /           | | Reporting nodes    |  |
-   |              | | 21 k               | | rate-limited       | | 3 / 3              |  |
-   |              | | -2.1% vs prior day | | 5 k                | | Coverage complete  |  |
-   |              | +--------------------+ | Separate outcomes  | +--------------------+  |
-   |              |                        +--------------------+                         |
-   |              | +-------------------------------------------+ +----------------------+|
-   |              | | LIVE EARTH GLOBE     [Traffic] [Attacks]  | | TRAFFIC TIMELINE     ||
-   |              | | Last 60 s - GeoIP by DB-IP - countries,   | | 2,140 req/s now -    ||
-   |              | | not precise locations                     | | external outcomes    ||
-   |              | |                                           | |                      ||
-   |              | |                    Country     Est. req.  | | 2 k ................ ||
-   |              | |     .-~~~~~-.      United States  38.4 k  | |      a  aa    aa  a  ||
-   |              | |   .' o ox    '.    #############          | |     a aa  aaa  aa a  ||
-   |              | |  /    .      x \   Germany        25.6 k  | | 1 k ................ ||
-   |              | | |   .  o        |  #########              | |                      ||
-   |              | | | o      .      |  India          19.2 k  | |     cc ccc  ccc cc c ||
-   |              | |  \      o      /   ######                 | | 0   dddddddddddddddd ||
-   |              | |   '.         .'    Brazil         12.8 k  | |     00:00  24:00 UTC ||
-   |              | |     '-~~~~~-'      ####                   | |                      ||
-   |              | |                    Japan           6.4 k  | | a Admitted -         ||
-   |              | |                    ##                     | | c Challenged -       ||
-   |              | | o traffic (blue)  x attacks (red)         | | d Denied             ||
-   |              | |                                           | | Banned / rate-       ||
-   |              | | [<- Rotate] [Rotate ->] [Reset]           | | limited / other in   ||
-   |              | | [Flat map] [Pause]           Unknown 4%   | | detail (ext)         ||
-   |              | +-------------------------------------------+ +----------------------+|
-   |              | +--------------------+ +--------------------+ +--------------------+  |
-   |              | | Origin status      | | Popular paths      | | Client families    |  |
-   |              | | (sampled)          | | (sampled)          | | (sampled)          |  |
-   |              | | 2xx 92%  4xx 5%    | | / 42%  /api 31%    | | Chrome 58%         |  |
-   |              | | 5xx 3%             | | /login 12%         | | Safari 22%         |  |
-   | node 1 - Edge| +--------------------+ +--------------------+ +--------------------+  |
-   | v0.1.0 -     | Geo sample p = 1/64 - loss 0 - known country 96% - blue: traffic /    |
-   |  proposed UI | red: attacks - table includes hidden hemisphere                       |
-   | Operator     | Wireframe only - illustrative traffic and simplified geography -      |
-   |  guide (ext) | example data                                                          |
-   +--------------+-----------------------------------------------------------------------+
-
-.. code-block:: text
+.. typst-diagram:: ../diagrams/console/security.typ
    :caption: Statistics / Security: one tile and one trend per module, the live event feed, and the rankings that answer "what was attacked".
+   :alt: Security tiles lead to module trends and the event feed.
 
-   +--------------------------------------------------------------------------------------+
-   | SIBUNA                            cluster: edge-eu - 3/3 healthy - admin v - (theme) |
-   +--------------+-----------------------------------------------------------------------+
-   |>Statistics   | STATISTICS                   [TRAFFIC - SECURITY - KIOSK (ext)]       |
-   | Attack events|                                                                       |
-   | Challenges   | +------------+ +------------+ +------------+ +------------+           |
-   | Policy       | | 21 k       | | 1,204      | | 3,318      | | 64 k       |           |
-   | Nodes        | | inspection | | reputation | | rate       | | challenges |           |
-   | GeoIP        | | denials    | | hits       | | limited    | |            |           |
-   | Settings     | +------------+ +------------+ +------------+ +------------+           |
-   | Audit        | +------------+ +------------+                                         |
-   |              | | 312        | | 41         |                                         |
-   |              | | bans       | | honeypot   |                                         |
-   |              | |            | |            |                                         |
-   |              | +------------+ +------------+                                         |
-   |              | +--------------------------------+ +---------------------------------+|
-   |              | | inspection trend - top         | | REAL-TIME EVENTS                ||
-   |              | | addresses                      | |                                 ||
-   |              | |                                | | [inspection] sqli - node 2 -    ||
-   |              | |      _/\  /\_  address    n    | |   198.51.100.7         12:41:07 ||
-   |              | |  /\_/   \/   \ --------- --    | | [honeypot] ban - node 1 -       ||
-   |              | | /              --------- --    | |   203.0.113.9          12:41:02 ||
-   |              | |                --------- --    | | [rate limit] 429 - node 3 -     ||
-   |              | +--------------------------------+ |   192.0.2.44           12:40:58 ||
-   |              | +--------------------------------+ | [challenge] rejected - double   ||
-   |              | | rate limiting trend - top      | |   spend                12:40:51 ||
-   |              | | addresses                      | | [reputation] deny prefix        ||
-   |              | |                                | |   2001:db8::/32        12:40:40 ||
-   |              | |      _/\  /\_  address    n    | | [inspection] xss - node 1 -     ||
-   |              | |  /\_/   \/   \ --------- --    | |   198.51.100.7         12:40:33 ||
-   |              | | /              --------- --    | +---------------------------------+|
-   |              | |                --------- --    | +---------------------------------+|
-   |              | +--------------------------------+ | ATTACK CATEGORIES               ||
-   |              | +--------------------------------+ |                                 ||
-   |              | | challenges trend - failed      | |   .-=-.   sqli 48%              ||
-   |              | | solvers                        | |  /     \  xss 22%               ||
-   |              | |                                | |  \     /  traversal 17%         ||
-   |              | |      _/\  /\_  address    n    | |   '-=-'   rce 9%                ||
-   |              | |  /\_/   \/   \ --------- --    | |           honeypot 4%           ||
-   |              | | /              --------- --    | +---------------------------------+|
-   |              | |                --------- --    | +---------------------------------+|
-   |              | +--------------------------------+ | ATTACKED PATHS - RULE HITS      ||
-   |              |                                    |                                 ||
-   |              |                                    | /search      ###########        ||
-   |              |                                    | /login       ######             ||
-   |              |                                    | /.git/config #####              ||
-   |              |                                    | /wp-admin    ###                ||
-   |              |                                    | /api/v1      ##                 ||
-   |              |                                    +---------------------------------+|
-   +--------------+-----------------------------------------------------------------------+
-
-.. code-block:: text
+.. typst-diagram:: ../diagrams/console/event-detail.typ
    :caption: Attack events with the detail modal open over the raw view. New rows wait behind a "Show new events" control while the reader is interacting; the modal keeps the layout operators know and adds available rule evidence, the campaign, and the nearest incidents. Raw-head capture shown below is a proposed redacted extension, not current stored evidence.
+   :alt: An event detail panel overlays the raw request list.
 
-   +--------------------------------------------------------------------------------------+
-   | SIBUNA                            cluster: edge-eu - 3/3 healthy - admin v - (theme) |
-   +--------------+-----------------------------------------------------------------------+
-   | Statistics   | ATTACK EVENTS                [BY SOURCE - RAW]                        |
-   |>Attack events| [node v] [category v] [rule v] [address] [country v] [path]           |
-   | Challenges   | [period v] [* live] [export]                                          |
-   | Policy       | action | URL          | category | rule   | address - country | time >|
-   | Nodes        | ------ | ------------ | -------- | ------ | ----------------- | ---- >|
-   | GeoIP        | ------ | ------------ | -------- | ------ | ----------------- | ---- >|
-   | Settings     |  +------------------------------------------------------------------+ |
-   | Audit        |  | [waf:sqli] GET /search?q=%27%20OR%201%3D1-- - node 2 -           | |
-   |              |  |            2026-09-08 12:41:07                                   | |
-   |              |  |                                                                  | |
-   |              |  | address       198.51.100.7 - Unknown (documentation IP) -        | |
-   |              |  |               [Ban 24 h] [Allow]                                 | |
-   |              |  | JA4 (from     Not recorded - requires trusted-ingress            | |
-   |              |  |  ingress)     capture                                            | |
-   |              |  | payload       Query excerpt: ' OR 1=1-- - matched span not       | |
-   |              |  |               recorded                                           | |
-   |              |  | rule - score  waf:sqli (terminal) - numeric score not recorded   | |
-   |              |  | campaign      41 - 3 incidents - nearest: 12:38:51 node 1        | |
-   |              |  |               (0.12), 11:02:10 node 3 (0.21)                     | |
-   |              |  | id            node 2 - seq 88,412                                | |
-   |              |  |                                                                  | |
-   |              |  | REQUEST - RESPONSE                                      UTF-8 v  | |
-   |              |  | +--------------------------------------------------------------+ | |
-   |              |  | | GET /search?q=%27%20OR%201%3D1-- HTTP/1.1                    | | |
-   |              |  | | Host: shop.example                                           | | |
-   |              |  | | User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) ...    | | |
-   |              |  | | Accept: text/html,application/xhtml+xml,*/*;q=0.8            | | |
-   |              |  | | Cookie: [redacted]                                           | | |
-   |              |  | | Response: local denial - no origin response                  | | |
-   |              |  | +--------------------------------------------------------------+ | |
-   |              |  | [Copy as cURL]                                         [Close]   | |
-   |              |  +------------------------------------------------------------------+ |
-   |              | ------ | ------------ | -------- | ------ | ----------------- | ---- >|
-   |              | ------ | ------------ | -------- | ------ | ----------------- | ---- >|
-   +--------------+-----------------------------------------------------------------------+
-
-.. code-block:: text
+.. typst-diagram:: ../diagrams/console/policy.typ
    :caption: Policy: the ordered rules table and the editor. The tester on the right evaluates a synthetic request against the current policy through the same engine code and names the rule that decided.
+   :alt: The rule editor and tester appear beside the ordered policy.
 
-   +--------------------------------------------------------------------------------------+
-   | SIBUNA                            cluster: edge-eu - 3/3 healthy - admin v - (theme) |
-   +--------------+-----------------------------------------------------------------------+
-   | Statistics   | POLICY - surface: Shield v - thresholds: 10 / 40 / 5                  |
-   | Attack events|                                                                       |
-   | Challenges   | [+ New rule] [Import JSON] [Export]         +------------------------+|
-   |>Policy       | Rules 12 - file rules 4 (read-only)         | EDIT RULE -            ||
-   | Nodes        |                                             | protect-checkout       ||
-   | GeoIP        | = | name   | match     | action | diff | on |                        ||
-   | Settings     | --+--------+-----------+--------+------+--- | [name               ]  ||
-   | Audit        | = | ------ | --------- | ------ | ---- | -- | [path pattern       ]  ||
-   |              | = | ------ | --------- | ------ | ---- | -- | [user agent         ]  ||
-   |              | = | ------ | --------- | ------ | ---- | -- | [headers (4)        ]  ||
-   |              | = | ------ | --------- | ------ | ---- | -- | [CIDRs (8)          ]  ||
-   |              | = | ------ | --------- | ------ | ---- | -- | [action v - weight  ]  ||
-   |              | = | ------ | --------- | ------ | ---- | -- | [challenge: posw -  ]  ||
-   |              | = | ------ | --------- | ------ | ---- | -- | [  depth 20         ]  ||
-   |              | = | ------ | --------- | ------ | ---- | -- |                        ||
-   |              | = | ------ | --------- | ------ | ---- | -- | [Save] [JSON view]     ||
-   |              | = | ------ | --------- | ------ | ---- | -- +------------------------+|
-   |              | = | ------ | --------- | ------ | ---- | -- +------------------------+|
-   |              | = | ------ | --------- | ------ | ---- | -- | TEST A REQUEST         ||
-   |              |                                             |                        ||
-   |              |                                             | [GET /checkout/pay  ]  ||
-   |              |                                             | [UA: Mozilla/5.0 ...]  ||
-   |              |                                             | [X-Api-Key: ... -   ]  ||
-   |              |                                             | [  203.0.113.9      ]  ||
-   |              |                                             |                        ||
-   |              |                                             | CHALLENGE - rule       ||
-   |              |                                             | protect-checkout       ||
-   |              |                                             | posw depth 20 -        ||
-   |              |                                             | openings per config    ||
-   |              |                                             |                        ||
-   |              |                                             | [Evaluate]             ||
-   |              |                                             +------------------------+|
-   +--------------+-----------------------------------------------------------------------+
-
-.. code-block:: text
+.. typst-diagram:: ../diagrams/console/nodes.typ
    :caption: Nodes: one card per member with role, health, version, and sparklines, and the two facts an operator must know about cluster semantics.
+   :alt: Node cards show health and the detail view exposes drain controls.
 
-   +--------------------------------------------------------------------------------------+
-   | SIBUNA                            cluster: edge-eu - 3/3 healthy - admin v - (theme) |
-   +--------------+-----------------------------------------------------------------------+
-   | Statistics   | NODES - edge-eu - leader: node 2 - last commit 4,118 - lag 0          |
-   | Attack events|                                                                       |
-   | Challenges   | +--------------------+  +--------------------+  +--------------------+|
-   | Policy       | | node 1 - 10.0.0.1  |  | node 2 - 10.0.0.2  |  | node 3 - 10.0.0.3  ||
-   |>Nodes        | | follower           |  | leader             |  | follower           ||
-   | GeoIP        | |                    |  |                    |  |                    ||
-   | Settings     | | healthy - v0.1.0 - |  | healthy - v0.1.0 - |  | storage degraded - ||
-   | Audit        | | up 3d 4h           |  | up 3d 4h           |  | serving last       ||
-   |              | |                    |  |                    |  | snapshot           ||
-   |              | |  _/\_/\__/\_/\     |  |  _/\_/\__/\_/\     |  |                    ||
-   |              | |                    |  |                    |  |  _/\_/\__/\_/\     ||
-   |              | | 2,140 req/s -      |  | 2,140 req/s -      |  |                    ||
-   |              | | 21 MiB - 0.9 core  |  | 21 MiB - 0.9 core  |  | 2,140 req/s -      ||
-   |              | | bans 312 -         |  | bans 312 -         |  | 21 MiB - 0.9 core  ||
-   |              | | challenges 64 k -  |  | challenges 64 k -  |  | bans 312 -         ||
-   |              | | denied 21 k        |  | denied 21 k        |  | challenges 64 k -  ||
-   |              | |                    |  |                    |  | denied 21 k        ||
-   |              | | [Drain]            |  | [Drain]            |  |                    ||
-   |              | | [Clear bans]       |  | [Clear bans]       |  | [Drain]            ||
-   |              | | [Open console]     |  | [Open console]     |  | [Clear bans]       ||
-   |              | |   (ext)            |  |   (ext)            |  | [Open console]     ||
-   |              | +--------------------+  +--------------------+  |   (ext)            ||
-   |              |                                                 +--------------------+|
-   |              | +--------------------------------------------------------------------+|
-   |              | | Challenge verification is issuer-bound: route a solver's fetch and ||
-   |              | | verify to the same node. Rate limits and spent sets are per node.  ||
-   |              | +--------------------------------------------------------------------+|
-   +--------------+-----------------------------------------------------------------------+
-
-.. code-block:: text
+.. typst-diagram:: ../diagrams/console/settings.typ
    :caption: Settings: users with two-factor state, API tokens, page templates, retention, notifications, GeoIP, and about.
+   :alt: The settings page groups accounts, tokens, templates and retention.
 
-   +--------------------------------------------------------------------------------------+
-   | SIBUNA                            cluster: edge-eu - 3/3 healthy - admin v - (theme) |
-   +--------------+-----------------------------------------------------------------------+
-   | Statistics   | SETTINGS                                                              |
-   | Attack events| [USERS - API TOKENS - PAGES - RETENTION - NOTIFICATIONS - GEOIP -     |
-   | Challenges   |  ABOUT]                                                               |
-   | Policy       |                                                                       |
-   | Nodes        | user   | role   | 2FA | last login | state  +------------------------+|
-   | GeoIP        | -------+--------+-----+------------+------  | ADD USER               ||
-   |>Settings     | ------ | ------ | --- | ---------- | -----  |                        ||
-   | Audit        | ------ | ------ | --- | ---------- | -----  | [name              ]   ||
-   |              | ------ | ------ | --- | ---------- | -----  | [role: viewer v    ]   ||
-   |              | ------ | ------ | --- | ---------- | -----  | [temporary password]   ||
-   |              | ------ | ------ | --- | ---------- | -----  | [x] require two-factor ||
-   |              |                                             +------------------------+|
-   |              | +--------------------+ +---------------------+ +---------------------+|
-   |              | | PAGES              | | RETENTION           | | NOTIFICATIONS       ||
-   |              | | challenge - denied | | minutes 90 d -      | | webhook - syslog -  ||
-   |              | | - rate limited -   | | incidents 30 d -    | | events: denial      ||
-   |              | | banned -           | | audit 365 d -       | | spike, ban, node    ||
-   |              | | overloaded         | | rankings 7 d        | | unhealthy, leader   ||
-   |              | | edit template -    | +---------------------+ | change              ||
-   |              | | preview - reset    |                         +---------------------+|
-   |              | +--------------------+                                                |
-   |              | +---------------------------------+ +--------------------------------+|
-   |              | | GEOIP                           | | ABOUT                          ||
-   |              | | DB-IP Lite - 2026-09 - range    | | v0.1.0 - node 1 - cluster      ||
-   |              | | count from import - loaded      | | edge-eu - bound 127.0.0.1:9443 ||
-   |              | | 2026-09-08                      | | behind proxy                   ||
-   |              | | Update now - attribution shown  | | build (example) - storage      ||
-   |              | | in footer                       | | v0.6.1                         ||
-   |              | +---------------------------------+ +--------------------------------+|
-   +--------------+-----------------------------------------------------------------------+
-
-.. code-block:: text
+.. typst-diagram:: ../diagrams/console/challenge-dashboard.typ
    :caption: Challenge dashboard visual layout: independently counted flow stages, accepted solve-time buckets and explicit missing-data coverage. The detailed controls follow.
+   :alt: Window totals sit beside a histogram of accepted solve times.
 
-   +--------------------------------------------------------------------------------------+
-   | SIBUNA                            cluster: edge-eu - 3/3 healthy - admin v - (theme) |
-   +--------------+-----------------------------------------------------------------------+
-   | Statistics   | CHALLENGES - all nodes - last hour                                    |
-   | Attack events|                                                                       |
-   |>Challenges   | +--------------------------------+ +---------------------------------+|
-   | Policy       | | CHALLENGE FLOW - WINDOW TOTALS | | ACCEPTED SOLVE TIME - CLIENT    ||
-   | Nodes        | |                                | | REPORTED                        ||
-   | GeoIP        | | +----------------------------+ | | [Hashcash v] -                  ||
-   | Settings     | | |      Issued - 8,200        | | | [difficulty 16 v]               ||
-   | Audit        | | +----------------------------+ | |                                 ||
-   |              | |  +--------------------------+  | |                 #               ||
-   |              | |  |   Submitted - 7,900      |  | |               # #               ||
-   |              | |  +--------------------------+  | |             # # # #             ||
-   |              | |   +------------------------+   | |             # # # #             ||
-   |              | |   |   Accepted - 7,750     |   | |           # # # # # #           ||
-   |              | |   +------------------------+   | |           # # # # # # #         ||
-   |              | |    +----------------------+    | |       # # # # # # # # # #       ||
-   |              | |    | Rejected 120 -       |    | | # # # # # # # # # # # # # # # # ||
-   |              | |    | malformed 30         |    | | ------------------------------- ||
-   |              | |    +----------------------+    | | 0-1 ms - logarithmic powers of  ||
-   |              | +--------------------------------+ | two - >=16,384 ms               ||
-   |              |                                    +---------------------------------+|
-   |              | +--------------------------------------------------------------------+|
-   |              | | Timing missing 4% - invalid 0.1% - client-reported values are      ||
-   |              | | untrusted. Issued and submitted can refer to different time-window ||
-   |              | | cohorts.                                                           ||
-   |              | +--------------------------------------------------------------------+|
-   +--------------+-----------------------------------------------------------------------+
-
-.. code-block:: text
+.. typst-diagram:: ../diagrams/console/challenges.typ
    :caption: Challenges: flow totals, timing and rejection analysis, with algorithm-aware parameters. Counts are illustrative window totals, not a cohort conversion rate.
+   :alt: Challenge totals and rejection causes link to address records.
 
-   +--------------------------------------------------------------------------------------+
-   | SIBUNA                            cluster: edge-eu - 3/3 healthy - admin v - (theme) |
-   +--------------+-----------------------------------------------------------------------+
-   | Statistics   | CHALLENGES - all nodes - last hour - live                             |
-   | Attack events|                                                                       |
-   |>Challenges   | +---------------------------------+ +--------------------------------+|
-   | Policy       | | CHALLENGE FLOW                  | | INVESTIGATE AND TUNE           ||
-   | Nodes        | |                                 | |                                ||
-   | GeoIP        | | Issued: 8,200 -> Submitted:     | | REJECTIONS BY CAUSE            ||
-   | Settings     | | 7,900                           | | Double spend: 52 - Expired: 31 ||
-   | Audit        | | Accepted: 7,750 - Rejected: 120 | | Fingerprint mismatch: 12 -     ||
-   |              | | - Malformed: 30                 | | Other causes: 25               ||
-   |              | |                                 | | Select a cause -> per-address  ||
-   |              | | ACCEPTED SOLVE TIME (CLIENT     | | records                        ||
-   |              | | REPORTED)                       | |                                ||
-   |              | | Algorithm: Hashcash v -         | | Address / node / issued /      ||
-   |              | | difficulty: 16 v                | | accepted / cause               ||
-   |              | | Median: 280 ms - p95 bucket:    | | 192.0.2.44 / 2 / 10 / 8 /      ||
-   |              | | 1,024-2,048 ms                  | | expired                        ||
-   |              | | Timing missing: 4% - invalid:   | | Per-address capture missing?   ||
-   |              | | 0.1%                            | | "Not recorded"                 ||
-   |              | |                                 | |                                ||
-   |              | | Histogram: 16 logarithmic       | | Adaptive difficulty: Show      ||
-   |              | | buckets                         | | change timeline                ||
-   |              | | Show bucket counts / Open       | | Solver mode: Wasm / JS         ||
-   |              | | timing table                    | | fallback / unknown             ||
-   |              | |                                 | |                                ||
-   |              | | PoSW view uses depth and        | | Edit rule parameters ->        ||
-   |              | | opening count.                  | | preview -> save                ||
-   |              | | Untrusted device timing; no     | | Runtime limits remain          ||
-   |              | | security inference.             | | node-local.                    ||
-   |              | +---------------------------------+ +--------------------------------+|
-   |              | +--------------------------------------------------------------------+|
-   |              | | No data: "No challenges in this window". Missing instrumentation:  ||
-   |              | | "Not available". Late submissions may cross windows.               ||
-   |              | +--------------------------------------------------------------------+|
-   +--------------+-----------------------------------------------------------------------+
-
-.. code-block:: text
+.. typst-diagram:: ../diagrams/console/grouped-events.typ
    :caption: Attack events grouped by source, including filters, pagination, export and the transition to raw evidence. A paused reader controls when new rows appear.
+   :alt: Source groups lead to individual events and exports.
 
-   +--------------------------------------------------------------------------------------+
-   | SIBUNA                            cluster: edge-eu - 3/3 healthy - admin v - (theme) |
-   +--------------+-----------------------------------------------------------------------+
-   | Statistics   | ATTACK EVENTS - By source / Raw                                       |
-   |>Attack events|                                                                       |
-   | Challenges   | +---------------------------------+ +--------------------------------+|
-   | Policy       | | SOURCE GROUPS                   | | SOURCE DETAIL                  ||
-   | Nodes        | |                                 | |                                ||
-   | GeoIP        | | Node: all v - Category: all v   | | 198.51.100.7 - nodes 1, 2      ||
-   | Settings     | | Address: ________ - Country:    | | 18 recorded incidents - 2      ||
-   | Audit        | | all v                           | | categories                     ||
-   |              | | Path: ________ - Period: last   | |                                ||
-   |              | | 24 h v                          | | Timeline / categories /        ||
-   |              | |                                 | | campaign candidates            ||
-   |              | | [Show 12 new events] - Live     | | Open raw event -> retained     ||
-   |              | | paused                          | | evidence                       ||
-   |              | | Address / incidents / first /   | | Similarity is heuristic, not   ||
-   |              | | last                            | | attribution.                   ||
-   |              | | 198.51.100.7 / 18 / 12:00 /     | |                                ||
-   |              | | 12:41                           | | Ban 24 h / Allow 1 h / Add to  ||
-   |              | | 192.0.2.44 / 9 / 11:30 / 12:39  | | group                          ||
-   |              | |                                 | | Preview overlap and effective  ||
-   |              | | Select source -> filtered raw   | | precedence                     ||
-   |              | | events                          | | Confirm -> applied per-node    ||
-   |              | | Country: Unknown for these      | | revision                       ||
-   |              | | example IPs                     | |                                ||
-   |              | |                                 | | Undo 30 s -> new audited       ||
-   |              | | Previous / Page 1 / Next -      | | mutation                       ||
-   |              | | Export CSV                      | | Export omits credentials and   ||
-   |              | | Export respects filters and     | | redacted data.                 ||
-   |              | | size limits.                    | +--------------------------------+|
-   |              | +---------------------------------+                                   |
-   |              | +--------------------------------------------------------------------+|
-   |              | | Empty: adjust filters. Retention gap, dropped incidents and stale  ||
-   |              | | replica state are shown above the list.                            ||
-   |              | +--------------------------------------------------------------------+|
-   +--------------+-----------------------------------------------------------------------+
-
-.. code-block:: text
+.. typst-diagram:: ../diagrams/console/policy-modes.typ
    :caption: Policy modes, limits and IP groups complement the rule editor. Audit mode continues evaluation; country operations are capacity-checked before commit.
+   :alt: Rule modes, limits and IP groups share a policy view.
 
-   +--------------------------------------------------------------------------------------+
-   | SIBUNA                            cluster: edge-eu - 3/3 healthy - admin v - (theme) |
-   +--------------+-----------------------------------------------------------------------+
-   | Statistics   | POLICY - Rules / Inspection / Limits / IP groups                      |
-   | Attack events|                                                                       |
-   | Challenges   | +---------------------------------+ +--------------------------------+|
-   |>Policy       | | INSPECTION AND LIMITS           | | IP GROUPS AND COUNTRY ACTION   ||
-   | Nodes        | |                                 | |                                ||
-   | GeoIP        | | Category / mode                 | | Prefix / action / expiry /     ||
-   | Settings     | | SQL injection / Enforce v       | | provenance                     ||
-   | Audit        | | XSS / Audit v                   | | 192.0.2.0/24 / deny / 1 h /    ||
-   |              | | Path traversal / Enforce v      | | operator                       ||
-   |              | | RCE / Disabled v                | | Add prefix / edit / remove     ||
-   |              | |                                 | |                                ||
-   |              | | Audit logs a finding then       | | COUNTRY BUILDER                ||
-   |              | | continues evaluation.           | | Country: select v - GeoIP      ||
-   |              | | Another enforcing rule can      | | generation: current            ||
-   |              | | still deny.                     | | Action: Deny v - Duration: 24  ||
-   |              | |                                 | | h v                            ||
-   |              | | LIMITS - target node: node 2 v  | | Preview CIDRs / overlaps /     ||
-   |              | | Current GCRA: rate / window /   | | trie-node usage                ||
-   |              | | ban duration                    | |                                ||
-   |              | | Terminal rules own additional   | | Reject if full; never silently ||
-   |              | | node-local quotas.              | | truncate.                      ||
-   |              | |                                 | | Challenge needs explicit       ||
-   |              | | Review changes -> Save expected | | supported rules.               ||
-   |              | | revision 17                     | |                                ||
-   |              | +---------------------------------+ | Confirm / Cancel - Conflict?   ||
-   |              |                                     | reload and diff                ||
-   |              |                                     | Committed revision != applied  ||
-   |              |                                     | on every node.                 ||
-   |              |                                     +--------------------------------+|
-   |              | +--------------------------------------------------------------------+|
-   |              | | Viewer: edits disabled. Invalid input: inline error. Full engine:  ||
-   |              | | reject. Concurrent edit: show conflict before retry.               ||
-   |              | +--------------------------------------------------------------------+|
-   +--------------+-----------------------------------------------------------------------+
-
-.. code-block:: text
+.. typst-diagram:: ../diagrams/console/geoip.typ
    :caption: GeoIP is a complete source/import workflow, with validation, attribution, progress, failure recovery and policy-generation pinning.
+   :alt: The GeoIP import form shows the source, validation and active database.
 
-   +--------------------------------------------------------------------------------------+
-   | SIBUNA                            cluster: edge-eu - 3/3 healthy - admin v - (theme) |
-   +--------------+-----------------------------------------------------------------------+
-   | Statistics   | GEOIP - country enrichment                                            |
-   | Attack events|                                                                       |
-   | Challenges   | +---------------------------------+ +--------------------------------+|
-   | Policy       | | CURRENT DATABASE                | | UPDATE DATABASE                ||
-   | Nodes        | |                                 | |                                ||
-   |>GeoIP        | | Provider: ip-location-db        | | Download -> validate -> stage  ||
-   | Settings     | | user-country v                  | | -> activate                    ||
-   | Audit        | | Source version: 2026-09-09      | | Progress: 2 of 4 stages -      ||
-   |              | | (example, daily)                | | Cancel                         ||
-   |              | | Active generation: 7 - Loaded:  | | Bounded bytes and rows; one    ||
-   |              | | 12:00 UTC                       | | import at a time               ||
-   |              | | IPv4 / IPv6 ranges: counts from | |                                ||
-   |              | | loader                          | | Preview source, licence,       ||
-   |              | | SHA-256: copy digest            | | checksum, range count          ||
-   |              | | Licence: PDDL 1.0 -             | | Errors keep the prior          ||
-   |              | | Attribution: none (DB-IP: CC BY | | generation active.             ||
-   |              | | 4.0)                            | | Retry / View diagnostic        ||
-   |              | |                                 | |                                ||
-   |              | | Country only; no individual     | | Publisher SHA-256 files        ||
-   |              | | coordinates.                    | | verified per source file       ||
-   |              | | Private/reserved/unmapped       | | One HTTPS redirect hop to the  ||
-   |              | | addresses: Unknown              | | fixed asset host               ||
-   |              | |                                 | |                                ||
-   |              | | Lookup address: ________ [Look  | | Update data / Review affected  ||
-   |              | | up]                             | | country policies               ||
-   |              | | Result: country / unknown /     | | Policy prefixes stay pinned    ||
-   |              | | generation                      | | until approved.                ||
-   |              | +---------------------------------+ +--------------------------------+|
-   |              | +--------------------------------------------------------------------+|
-   |              | | No database: "GeoIP unavailable"; dashboard globe shows only       ||
-   |              | | outline and Unknown totals. No invented locations.                 ||
-   |              | +--------------------------------------------------------------------+|
-   +--------------+-----------------------------------------------------------------------+
-
-.. code-block:: text
+.. typst-diagram:: ../diagrams/console/audit.typ
    :caption: Audit with before/after evidence, safe exports and conflict-checked rule revert. Local commands show intent and completion separately.
+   :alt: Audit entries expose before and after values for a change.
 
-   +--------------------------------------------------------------------------------------+
-   | SIBUNA                            cluster: edge-eu - 3/3 healthy - admin v - (theme) |
-   +--------------+-----------------------------------------------------------------------+
-   | Statistics   | AUDIT - activity and policy history                                   |
-   | Attack events|                                                                       |
-   | Challenges   | +---------------------------------+ +--------------------------------+|
-   | Policy       | | ACTIVITY                        | | SELECTED CHANGE                ||
-   | Nodes        | |                                 | |                                ||
-   | GeoIP        | | Actor: all v - Action: all v -  | | Actor: alice - operator -      ||
-   | Settings     | | Period: 24 h v                  | | address recorded               ||
-   |>Audit        | | Subject: ________ - Node: all v | | Policy p1 - revision 17 -> 18  ||
-   |              | |                                 | |                                ||
-   |              | | Time / actor / action / subject | | Before: action challenge;      ||
-   |              | | / result                        | | difficulty 16                  ||
-   |              | | 12:41 / alice / policy edit /   | | After: action deny             ||
-   |              | | p1 / committed                  | | Reason: operator description   ||
-   |              | | 12:40 / admin / drain / node 2  | |                                ||
-   |              | | / completed                     | | Applied: node 1 ok - node 2 ok ||
-   |              | | 12:38 / ci / export / events /  | | - node 3 pending               ||
-   |              | | completed                       | | Review policy revision /       ||
-   |              | |                                 | | Revert this change             ||
-   |              | | Previous / Page 1 / Next -      | |                                ||
-   |              | | Export                          | | Revert restores the document   ||
-   |              | | Retention: 365 days - old       | | recorded before revision 18 as ||
-   |              | | records expire                  | | revision 19 with a fresh       ||
-   |              | | Append-only for users, not      | | audit.                         ||
-   |              | | tamper-proof.                   | | Rejected if revision 18 is no  ||
-   |              | +---------------------------------+ | longer current; Policy history ||
-   |              |                                     | offers compare and rebase.     ||
-   |              |                                     | Secrets and full token values  ||
-   |              |                                     | never displayed.               ||
-   |              |                                     +--------------------------------+|
-   |              | +--------------------------------------------------------------------+|
-   |              | | Local action detail: request id, intent, target acknowledgment and ||
-   |              | | failure reason; no false atomicity claim.                          ||
-   |              | +--------------------------------------------------------------------+|
-   +--------------+-----------------------------------------------------------------------+
-
-.. code-block:: text
+.. typst-diagram:: ../diagrams/console/settings-forms.typ
    :caption: Settings forms cover credentials, templates, retention and notifications, with separate read-only About information and safe previews.
+   :alt: Settings forms show validation and notification controls.
 
-   +--------------------------------------------------------------------------------------+
-   | SIBUNA                            cluster: edge-eu - 3/3 healthy - admin v - (theme) |
-   +--------------+-----------------------------------------------------------------------+
-   | Statistics   | SETTINGS - Users / Tokens / Pages / Retention / Notifications / About |
-   | Attack events|                                                                       |
-   | Challenges   | +---------------------------------+ +--------------------------------+|
-   | Policy       | | USERS AND API TOKENS            | | OPERATIONAL SETTINGS           ||
-   | Nodes        | |                                 | |                                ||
-   | GeoIP        | | User: alice - role: operator v  | | TEMPLATES - denied v - bounded ||
-   |>Settings     | | TOTP: enrolled - last login:    | | placeholders                   ||
-   | Audit        | | 12:00 UTC                       | | Edit / sandboxed preview /     ||
-   |              | | Disable user / reset password / | | reset / save                   ||
-   |              | | revoke sessions                 | | No executable scripts or       ||
-   |              | |                                 | | arbitrary imports              ||
-   |              | | Token label: deploy-ci - role:  | |                                ||
-   |              | | operator v                      | | RETENTION - traffic 90 d -     ||
-   |              | | Expiry: date/time - scope:      | | incidents 30 d                 ||
-   |              | | policy only                     | | Rankings 7 d / 512 MiB - audit ||
-   |              | | Create -> show secret once ->   | | 365 d                          ||
-   |              | | copy -> close                   | | Estimate footprint -> review   ||
-   |              | | Existing tokens: id / scope /   | | -> save                        ||
-   |              | | expiry / revoke                 | |                                ||
-   |              | |                                 | | NOTIFICATIONS - destination    ||
-   |              | | Viewer role: inspect, cannot    | | type: webhook v                ||
-   |              | | change settings.                | | URL / masked secret / events / ||
-   |              | | Administrator changes require   | | cooldown                       ||
-   |              | | recent auth.                    | | Test destination -> show       ||
-   |              | |                                 | | result -> save                 ||
-   |              | | About: node/version/build/liste | | Node unhealthy / leader change ||
-   |              | | ner/storage                     | | / denial spike                 ||
-   |              | | Never expose secrets or         | | Bounded retries; one cluster   ||
-   |              | | arbitrary environment.          | | notifier lease                 ||
-   |              | +---------------------------------+ +--------------------------------+|
-   |              | +--------------------------------------------------------------------+|
-   |              | | Validation is inline; save has pending/success/error states. Slow  ||
-   |              | | notifications never run in data-plane threads.                     ||
-   |              | +--------------------------------------------------------------------+|
-   +--------------+-----------------------------------------------------------------------+
-
-.. code-block:: text
+.. typst-diagram:: ../diagrams/console/authentication.typ
    :caption: Authentication states. The public sign-in surface loads no globe, GeoIP or telemetry; the dashboard starts only after all required authentication steps succeed.
+   :alt: Sign-in, setup, password change and recovery have separate states.
 
-                                     SIBUNA - Sign in
-
-   +--------------------------+ +--------------------------+ +--------------------------+
-   | 1 - CREDENTIALS          | | 2 - REQUIRED             | | 3 - SUCCESS / EXPIRY     |
-   |                          | | VERIFICATION             | |                          |
-   | Username                 | |                          | | Success -> Traffic       |
-   | [____________]           | | Authenticator code       | | overview                 |
-   | Password                 | | [____________]           | | Load globe + open        |
-   | [************]           | | [Verify]                 | | streams                  |
-   |                          | |                          | |                          |
-   | [Sign in]                | | Use recovery code        | | Expired -> Sign in again |
-   |                          | |                          | | Preserve safe return     |
-   | Invalid credentials:     | | First login: change      | | route                    |
-   | retry                    | | temporary password;      | |                          |
-   | Rate limited: retry      | | enroll TOTP when         | | No users? Run init-admin |
-   | after Ns                 | | required.                | | locally; no public       |
-   +--------------------------+ +--------------------------+ | account creation.        |
-                                                             +--------------------------+
-   +------------------------------------------------------------------------------------+
-   | Authentication only: no globe assets, telemetry connection, country data, cluster  |
-   | health or traffic on the sign-in page.                                             |
-   +------------------------------------------------------------------------------------+
-
-.. code-block:: text
+.. typst-diagram:: ../diagrams/console/kiosk.typ
    :caption: Kiosk after a one-time code is entered in the sign-in form: full-screen live globe, coverage and traffic/attack summaries. Expired access returns to sign-in; no mutation controls are present.
+   :alt: A read-only kiosk shows the globe and age of incoming data.
 
-   +------------------------------------------------------------------------------------+
-   | SIBUNA - edge-eu - Traffic / Attacks - 3/3 reporting - live - last update 1 s      |
-   +------------------------------------------------------------------------------------+
-   +------------------------------------------------+ +---------------------------------+
-   | LIVE EARTH GLOBE - TRAFFIC / ATTACKS           | | LAST 60 SECONDS                 |
-   |                                                | | Requests: 128 k (example)       |
-   |                     +----------------------+   | | Recorded incidents: 128         |
-   |     .-~~~~~-.       | COUNTRIES            |   | | Unknown country: 4%             |
-   |   .' o ox    '.     | Germany - 2,560      |   | +---------------------------------+
-   |  /    .      x \    | India - 1,920        |   | +---------------------------------+
-   | |   .  o        |   | Brazil - 1,280       |   | | MODULE TRENDS                   |
-   | | o      .      |   | Unknown - 4%         |   | | Inspection / reputation /       |
-   |  \      o      /    |                      |   | | limits                          |
-   |   '.         .'     | Samples - p=1/64     |   | | Challenges / bans / honeypot    |
-   |     '-~~~~~-'       | Loss: 0 (example)    |   | | Read-only - no payload detail   |
-   |                     +----------------------+   | +---------------------------------+
-   |                     +----------------------+   |
-   |                     | Rotate / Pause /     |   |
-   |                     | Reset                |   |
-   |                     +----------------------+   |
-   +------------------------------------------------+
-   +------------------------------------------------------------------------------------+
-   | Exit kiosk - session expiry visible - no URL bearer token - stale stream freezes   |
-   | with age; GeoIP unavailable shows outline only                                     |
-   +------------------------------------------------------------------------------------+
-
-.. code-block:: text
+.. typst-diagram:: ../diagrams/console/responsive.typ
    :caption: Responsive and data-state variants. Navigation remains labelled; the mobile landing page places the globe and country table in a vertical flow.
-
-   +--------------------------------+ +-------------------------------------------------+
-   | +----------------------------+ | | LOADING / EMPTY                                 |
-   | | Menu - SIBUNA - admin v    | | | Fixed-size skeleton; no fabricated zeros. Once  |
-   | +----------------------------+ | | loaded: "No traffic in this window". First use  |
-   | +----------------------------+ | | preserves navigation and setup links.           |
-   | | Traffic - all nodes        | | +-------------------------------------------------+
-   | | 24 h - Live / Pause        | | +-------------------------------------------------+
-   | +----------------------------+ | | GEOIP UNAVAILABLE                               |
-   | +-------------+ +------------+ | | Earth outline only; Unknown totals, provider    |
-   | | 128 k       | | 128        | | | state and admin setup link. Country controls    |
-   | | Requests    | | Incidents  | | | disabled with explanation.                      |
-   | +-------------+ +------------+ | +-------------------------------------------------+
-   | +----------------------------+ | +-------------------------------------------------+
-   | | Globe - Traffic / Attacks  | | | DISCONNECTED / PARTIAL CLUSTER                  |
-   | |                            | | | Freeze last values; display age and 2/3         |
-   | |   .-~~-.    Rotate         | | | reporting. Retry with backoff. Resnapshot       |
-   | |  / o x  \   Flat map       | | | before clearing stale state.                    |
-   | | |  o .   |                 | | +-------------------------------------------------+
-   | |  \  o   /                  | | +-------------------------------------------------+
-   | |   '-~~-'                   | | | ERROR / PERMISSION / OVERFLOW                   |
-   | +----------------------------+ | | Inline diagnosis and retry; viewer actions      |
-   | +----------------------------+ | | disabled; truncated history marked. Keyboard    |
-   | | Countries (down)           | | | focus persists across live patches.             |
-   | | Timeline (down)            | | +-------------------------------------------------+
-   | | Full labels in menu        | |
-   | +----------------------------+ |
-   +--------------------------------+
+   :alt: The mobile layout stacks the globe and countries. Adjacent panels show partial, empty and stale states.
 
 .. list-table::
    :header-rows: 1

@@ -16,7 +16,9 @@ AI Bot Traffic Identification, Multi-Tier Verification, and Operator Console Ana
 Revision note
 -------------
 
-2026-10-15: Ported from the Typst original in the Zig repository. The record describes the Zig implementation as it was decided; SID 0010 maps its packages to the Rust crates of the port. The record is still open for discussion. The pipeline figure is redrawn with Graphviz, and the four console wireframes, drawn with vector primitives in the original, are redrawn as ASCII: colours are lost, the sidebar of the console shell becomes a navigation row, long table rows take two lines, and the check mark, cross, warning and heuristic glyphs are written ``ok``, ``x``, ``!`` and ``~``.
+2026-10-15: Ported from the Typst original in the Zig repository. The record describes the Zig implementation as it was decided; SID 0010 maps its packages to the Rust crates of the port. The record is still open for discussion. The port drew the pipeline with Graphviz and used ASCII for the four console wireframes.
+
+The four console figures now reproduce the original proposed screens.
 
 Abstract
 --------
@@ -533,25 +535,9 @@ To track the most frequently targeted URI paths without unbounded memory allocat
 
 Sibuna couples the in-memory streaming sketches to persistent storage using an append-only **Micro-RRD (Round Robin Database)** rollup model:
 
-.. graphviz::
+.. graphviz:: ../diagrams/0008-pipeline.dot
    :caption: End-to-End High-Efficiency Streaming Analytics and Decoupled Rollup Pipeline
    :alt: HTTP ingress workers send 100 percent of requests to striped atomics and a 1/64 sample to an MPSC ring buffer; a 1 Hz collector thread folds both and writes once per minute to Zaxonlite storage.
-
-   digraph pipeline {
-       rankdir=LR;
-       node [shape=box, style="rounded", fontname="Helvetica", fontsize=10];
-       edge [fontname="Helvetica", fontsize=9];
-       ingress [label="HTTP Ingress Worker\nZero-alloc UA & CIDR trie\nsub-45ns latency overhead"];
-       atomics [label="Striped Atomics (S=16)\n64B-aligned L1/L2 cache\nZero bus lock, sub-5ns"];
-       ring [label="MPSC Ring Buffer\nQ = 4,096 slots (1 MiB)\nNon-blocking drop-and-count"];
-       collector [label="1 Hz Collector Thread\nSpace-Saving Sketch (m=256)\nCategorical [16]u64 vectors\nFixed RAM, Off request path"];
-       storage [label="Zaxonlite Storage\nSBR3 & SBM2 Blobs\n~4 KiB/min, Append-only\n1,440 rows for 24 hours"];
-       ingress -> atomics [label="100% requests"];
-       ingress -> ring [label="p = 1/64 sample"];
-       atomics -> collector;
-       ring -> collector;
-       collector -> storage [label="1 write / min"];
-   }
 
 .. admonition:: Definition 14 (Minute Archive Format ``SBR3``)
 
@@ -639,234 +625,23 @@ The Sibuna Console UI (``apps/console-ui``) provides website operators with an i
 3.1 Operator Screen Wireframes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The interface follows the visual architecture and information density established in SID 0007. Every panel maps to an ``sb-*`` component and native WebAssembly render function. Rather than static ASCII art, all screens are rendered via vector primitives maintaining exact spatial proportion:
+The interface follows the visual architecture and information density established in SID 0007. Every panel maps to an ``sb-*`` component and native WebAssembly render function. The following wireframes show the proposed layout and relative size of each panel.
 
-::
+.. typst-diagram:: ../diagrams/bot-traffic/traffic.typ
+   :caption: Statistics, AI & Bot Traffic Overview: Top-level proportional composition bar, metric tiles for human vs. automated traffic with inline sparklines and deviation pills, live request composition trend with axes and anomaly callout, AI provider market share segmented donut with top scraped paths, and real-time crawl event feed with verification badges.
+   :alt: Traffic shares, a trend, provider rankings and a sampled event feed.
 
-   +--------------------------------------------------------------------------------------+
-   | SIBUNA                            cluster: edge-eu . 3/3 healthy . admin v . [theme] |
-   +--------------------------------------------------------------------------------------+
-   | Nav: [Statistics]  Attack events  Challenges  Policy  Nodes  GeoIP  Settings  Audit  |
-   +--------------------------------------------------------------------------------------+
-   | Statistics . AI & Bot Traffic Overview                                               |
-   |                                     [*Overview*] AI Providers  Event Log  Policy  -> |
-   | Live ingress population telemetry & 24h comparative baseline                         |
-   |                                                                                      |
-   | +----------------------------------------------------------------------------------+ |
-   | | Ingress Population Ratio (100% Monotonic Striped Counters)                       | |
-   | |                                   2,441,000 total requests . Zero sampling error | |
-   | |                                                                                  | |
-   | | HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH|OOOOOOOOOOOO|CCCCCCC|GGGG|SSSSS|XXX | |
-   | | H Actual Human: 58.2%   O OpenAI 16%   C Claude 9%                               | |
-   | | G Google 6%   S Search 7%   X 3.7%                                               | |
-   | +----------------------------------------------------------------------------------+ |
-   |                                                                                      |
-   | +-------------------------+ +-------------------------+ +-------------------------+  |
-   | | 1.42 M         [+12.4%] | | 1.02 M         [+18.7%] | | 766 k          [+24.1%] |  |
-   | | Actual Human            | | Total Automated         | | AI LLM Crawlers         |  |
-   | | ___.._....-------~~~~^^ | | ____.......---~---~~~^^ | | ______....----~---~~^^^ |  |
-   | +-------------------------+ +-------------------------+ +-------------------------+  |
-   | +-------------------------+ +-------------------------+ +-------------------------+  |
-   | | 173 k           [-1.2%] | | 96.4%      [48 subnets] | | 142 k        [32% drop] |  |
-   | | Search Indexers         | | Verified CIDR           | | Challenged / Denied     |  |
-   | | ----~^~-_..----.__.---- | | __..----.--~~~~~^^~~~~~ | | ____...--~~^^~~-----~~~ |  |
-   | +-------------------------+ +-------------------------+ +-------------------------+  |
-   |                                                                                      |
-   | +--------------------------------------------++------------------------------------+ |
-   | | Traffic Composition Trend (Live & 24h)     || AI Provider Distribution &         | |
-   | |                      [*60s Live*]  24h  7d || Scraped Paths                      | |
-   | |                                            ||                                    | |
-   | |          [^ 03:15 AM ClaudeBot (+320 rps)] ||      OOOOO                         | |
-   | |                  |                         ||   OOOO   OOOO                      | |
-   | | 50k|.............|.......................  || OOO  766 k  OOO                    | |
-   | |    |             |                         || AA           OO                    | |
-   | |    |             |   hhhhhh                || AAA AI Reqs xxx                    | |
-   | |    |           hhhhhh      h               ||   AAAA   GGGG                      | |
-   | | 25k|.........hh.aa..........hhhh.........  ||      AAGGG                         | |
-   | |    |        h  a  a             hhh        || O OpenAI 48% (391k)                | |
-   | |    |aa######aaa    a  aaaaaaaaaa   hh   a  || A Anthropic 26% (220k)             | |
-   | |    |hh              aa          aaaaa###h  || G Google 15% (147k)                | |
-   | |   0|.....................................  || x Others 11% (89k)                 | |
-   | |   00:00 04:00 08:00 12:00 16:00 20:00  Now ||                                    | |
-   | |     h Human Traffic   a AI Crawl   # both  || Top Targeted URIs                  | |
-   | +--------------------------------------------+| /blog (62%)    #################   | |
-   |                                               | /docs (24%)    ##########          | |
-   |                                               | /api (9%)      ######              | |
-   |                                               | /pricing (5%)  ####                | |
-   |                                               +------------------------------------+ |
-   |                                                                                      |
-   | +----------------------------------------------------------------------------------+ |
-   | | Real-Time AI Ingress Feed (1/64 Bounded Sample Queue)                            | |
-   | |                                          * Ingestion: 64 samples/s . buffer: 14% | |
-   | +----------------------------------------------------------------------------------+ |
-   | | TIME      PROVIDER      USER-AGENT             STATUS     CIDR VERIFICATION      | |
-   | |                         TARGET URI                                               | |
-   | +----------------------------------------------------------------------------------+ |
-   | | 15:32:01  [OpenAI]      GPTBot/1.2             200 OK     [ok Azure CIDR]        | |
-   | |                         /blog/deep-learning-foundations                          | |
-   | |                                                                                  | |
-   | | 15:31:58  [Anthropic]   ClaudeBot/1.0          429 Chlg   [ok AWS CIDR]          | |
-   | |                         /docs/architecture/spec-v2                               | |
-   | |                                                                                  | |
-   | | 15:31:54  [ByteDance]   Bytespider             403 Deny   [x Spoofed IP]         | |
-   | |                         /internal/catalog-dump                                   | |
-   | |                                                                                  | |
-   | | 15:31:49  [Perplexity]  Perplexity-User        200 OK     [ok Azure CIDR]        | |
-   | |                         /news/product-announcement                               | |
-   | |                                                                                  | |
-   | | 15:31:42  [Google]      Google-Extended        200 OK     [ok GCP CIDR]          | |
-   | |                         /archive/quarterly-report                                | |
-   | |                                                                                  | |
-   | | 15:31:38  [Unknown]     python-requests/2.31   429 Limit  [~ Heuristic]          | |
-   | |                         /api/v1/pricing                                          | |
-   | +----------------------------------------------------------------------------------+ |
-   +--------------------------------------------------------------------------------------+
+.. typst-diagram:: ../diagrams/bot-traffic/providers.typ
+   :caption: Major AI Service Providers & Crawlers: Granular table inspection showing active agents, operational intent (training vs. live search RAG), sampled volumes with relative share bars, CIDR verification rate, active WAF policy actions, and configuration triggers.
+   :alt: Each provider row shows agents, intent, volume, verification and policy.
 
-*Statistics, AI & Bot Traffic Overview: Top-level proportional composition bar, metric tiles for human vs. automated traffic with inline sparklines and deviation pills, live request composition trend with axes and anomaly callout, AI provider market share segmented donut with top scraped paths, and real-time crawl event feed with verification badges.*
+.. typst-diagram:: ../diagrams/bot-traffic/provider-policy.typ
+   :caption: AI Provider Policy & CIDR Verification Modal: Granular policy configuration drawer for OpenAI, enabling operators to differentiate live search queries (ChatGPT-User) from training scrapers (GPTBot) with automated Radix CIDR enforcement.
+   :alt: The OpenAI detail drawer separates observed requests, verification and enforcement settings.
 
-::
-
-   +--------------------------------------------------------------------------------------+
-   | SIBUNA                            cluster: edge-eu . 3/3 healthy . admin v . [theme] |
-   +--------------------------------------------------------------------------------------+
-   | Nav: [Statistics]  Attack events  Challenges  Policy  Nodes  GeoIP  Settings  Audit  |
-   +--------------------------------------------------------------------------------------+
-   | Statistics . Major AI Service Providers & Crawlers                                   |
-   | 1/64 Space-Saving bounded sketch (k=256) .                                           |
-   | In-memory Radix CIDR verification (sub-50ns)                                         |
-   |                                                                                      |
-   | [Search provider, agent, or subnet...]                                               |
-   | [Intent: All v]  [CIDR: All v]  [Status: All v]  [CSV v]                             |
-   |                                                                                      |
-   | +----------------------------------------------------------------------------------+ |
-   | | PROVIDER    ACTIVE AGENTS           OPERATIONAL INTENT                    CONFIG | |
-   | |             VOLUME & SHARE                   CIDR VERIFIED  POLICY ACTION        | |
-   | +----------------------------------------------------------------------------------+ |
-   | | OpenAI      GPTBot, ChatGPT-User    [Training + Live RAG]                 [cfg]  | |
-   | |             391,200 (16.0%) ################ ok 98.2%       [Challenge Scraper]  | |
-   | |                                                                                  | |
-   | | Anthropic   ClaudeBot, Claude-Web   [Training + Live RAG]                 [cfg]  | |
-   | |             220,100 ( 9.0%) #########        ok 96.4%       [Challenge Scraper]  | |
-   | |                                                                                  | |
-   | | Google      Google-Extended, Other  [AI Training / R&D]                   [cfg]  | |
-   | |             146,800 ( 6.0%) ######           ok 99.5%       [Admitted (Allow)]   | |
-   | |                                                                                  | |
-   | | Perplexity  PerplexityBot, -User    [Live Search Fetch]                   [cfg]  | |
-   | |              51,300 ( 2.1%) ##               ok 94.0%       [Admitted (Allow)]   | |
-   | |                                                                                  | |
-   | | ByteDance   Bytespider              [High-Freq Scraper]                   [cfg]  | |
-   | |              48,200 ( 2.0%) ##               ! 81.2%        [Denied (Block 403)] | |
-   | |                                                                                  | |
-   | | Meta        Meta-ExternalAgent      [Model Training]                      [cfg]  | |
-   | |              22,400 ( 0.9%) #                ok 97.1%       [Challenge]          | |
-   | |                                                                                  | |
-   | | Apple       Applebot-Extended       [Foundation Models]                   [cfg]  | |
-   | |              14,800 ( 0.6%) #                ok 98.4%       [Admitted (Allow)]   | |
-   | |                                                                                  | |
-   | | Tools/Libs  curl, python-requests   [Developer Script]                    [cfg]  | |
-   | |              86,500 ( 3.5%) ####             - 0.0%         [Rate Limited]       | |
-   | +----------------------------------------------------------------------------------+ |
-   |                                                                                      |
-   | +----------------------------------------------------------------------------------+ |
-   | | Showing 1-8 of 14 detected AI crawler organizations                              | |
-   | | Bound error under 0.2% . Memory: 42 KB                    < Prev  [1]  2  Next > | |
-   | +----------------------------------------------------------------------------------+ |
-   +--------------------------------------------------------------------------------------+
-
-*Major AI Service Providers & Crawlers: Granular table inspection showing active agents, operational intent (training vs. live search RAG), sampled volumes with relative share bars, CIDR verification rate, active WAF policy actions, and configuration triggers.*
-
-::
-
-   +--------------------------------------------------------------------------------------+
-   | SIBUNA                            cluster: edge-eu . 3/3 healthy . admin v . [theme] |
-   +--------------------------------------------------------------------------------------+
-   | Nav: [Statistics]  Attack events  Challenges  Policy  Nodes  GeoIP  Settings  Audit  |
-   +--------------------------------------------------------------------------------------+
-   | :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
-   | +----------------------------------------------------------------------------------+ |
-   | | [OpenAI]  Provider Policy & Radix CIDR Enforcement                           [x] | |
-   | +----------------------------------------------------------------------------------+ |
-   | | [*Rules & CIDR Enforcement*]   Verified Subnets (48)   Sampled Ingress Audit     | |
-   | |                                                                                  | |
-   | | +---------------------------------+ +------------------------------------------+ | |
-   | | | Observed Ingress Telemetry      | | Policy Configuration & Enforcement       | | |
-   | | | * Total Volume: 391,200 reqs    | | [ok] Enforce Radix CIDR Match            | | |
-   | | |   (16.0% site ingress)          | |      (sub-50ns)                          | | |
-   | | | * Training (GPTBot): 342,100    | |                                          | | |
-   | | |   reqs (87.4%)                  | | Training Scraper (GPTBot):               | | |
-   | | | * Live Search (ChatGPT-User):   | | [~ Proof-of-Work Challenge (PoW)     v]  | | |
-   | | |   49,100 reqs (12.6%)           | | Live User Search (ChatGPT-User):         | | |
-   | | |                                 | | [ok Admitted (Bypass WAF)            v]  | | |
-   | | | Radix CIDR Verification Audit   | | Unverified / Spoofed Agents:             | | |
-   | | | [############################!] | | [x Deny Immediately (Block 403)      v]  | | |
-   | | | ok 98.2% (384,158 reqs)         | | GCRA Rate Limiter:                       | | |
-   | | |    verified in Azure ASN 8075   | | [25 req/s . Burst capacity: 100 reqs v]  | | |
-   | | | !  1.8% (7,042 reqs) from alien | |                                          | | |
-   | | |    residential IPs              | | Immutable trie updates execute via       | | |
-   | | |                                 | | zero-downtime RCU.                       | | |
-   | | | Top Target Endpoints            | +------------------------------------------+ | |
-   | | | /blog (62%) . /docs (28%) .     |                                              | |
-   | | | /api (10%)                      |                                              | |
-   | | | Verified subnets: 20.15.0.0/16, |                                              | |
-   | | | 20.28.0.0/16, ...               |                                              | |
-   | | +---------------------------------+                                              | |
-   | +----------------------------------------------------------------------------------+ |
-   | | [Dry Run Simulation]                           [Cancel]  [*Save & Apply Policy*] | |
-   | +----------------------------------------------------------------------------------+ |
-   | :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: |
-   +--------------------------------------------------------------------------------------+
-
-*AI Provider Policy & CIDR Verification Modal: Granular policy configuration drawer for OpenAI, enabling operators to differentiate live search queries (ChatGPT-User) from training scrapers (GPTBot) with automated Radix CIDR enforcement.*
-
-::
-
-   +--------------------------------------------------------------------------------------+
-   | SIBUNA                            cluster: edge-eu . 3/3 healthy . admin v . [theme] |
-   +--------------------------------------------------------------------------------------+
-   | Nav: [Statistics]  Attack events  Challenges  Policy  Nodes  GeoIP  Settings  Audit  |
-   +--------------------------------------------------------------------------------------+
-   | Statistics . Human vs. Bot Comparative Analysis                                      |
-   | Side-by-side behavioral, protocol, and network telemetry analysis                    |
-   | (100% Exact + 1/64 Samples)                                                          |
-   |                                                                                      |
-   | +----------------------------------------++----------------------------------------+ |
-   | | Legitimate Human Traffic Profile       || Automated Bot & Crawler Profile        | |
-   | | (58.2%)                                || (41.8%)                                | |
-   | | ====================================== || ====================================== | |
-   | | 420 rps      4.8 min      78.4%        || 310 rps      Stateless    11.8%        | |
-   | | peak rate    avg session  cache hit    || burst rate   leaf crawl   cache hit    | |
-   | |                                        ||                                        | |
-   | | HTTP Status Code Distribution          || HTTP Status Code Distribution          | |
-   | | 200 OK (89.2%)     ##################  || 200 OK (52.1%)     #############       | |
-   | | 304 Cache (8.0%)   #######             || 403 Denied (26.3%) ############        | |
-   | | 4xx Error (2.6%)   ###                 || 429 Chlg (17.8%)   #########           | |
-   | | 5xx Error (0.2%)   #                   || 404 Missing (3.8%) ####                | |
-   | |                                        ||                                        | |
-   | | Resource Cascade & Client Engine       || Resource Cascade & Client Engine       | |
-   | | ok 12% Document HTML / 88% Static      || x  96% Document HTML / 4% Static       | |
-   | |    Assets                              ||    Assets                              | |
-   | | ok Full V8/WebKit/Gecko asset          || x  Zero asset cascade (headless script | |
-   | |    rendering cascade                   ||    leaf scraper)                       | |
-   | | ok Median TTFB: 24 ms . Interactive    || x  Median TTFB: 18 ms . Rapid          | |
-   | |    clicks & scrolls                    ||    recursive crawling                  | |
-   | |                                        ||                                        | |
-   | | Network & Origin Fingerprint           || Network & Origin Fingerprint           | |
-   | | ok 84% Consumer Broadband (Comcast,    || x  98% Cloud Datacenter ASNs (Azure,   | |
-   | |    DT, Orange)                         ||    AWS, GCP)                           | |
-   | | ok Valid Session Cookies &             || x  Headless HTTP runtimes (Python, Go, | |
-   | |    Cryptographic PoW tokens            ||    cURL)                               | |
-   | | ok Standard Browser TLS JA4 & HTTP/2   || x  Missing Sec-Fetch headers &         | |
-   | |    headers                             ||    anomalous ciphers                   | |
-   | +----------------------------------------++----------------------------------------+ |
-   |                                                                                      |
-   | +----------------------------------------------------------------------------------+ |
-   | | Comparative telemetry derived from 100% exact atomic striped counters combined   | |
-   | | with 1/64 Space-Saving sample sketches. Zero-allocation hot path executes in     | |
-   | | sub-50 nanoseconds.                                                              | |
-   | +----------------------------------------------------------------------------------+ |
-   +--------------------------------------------------------------------------------------+
-
-*Comparative Posture Matrix: Side-by-side behavioral contrast between legitimate human visitors and automated bot traffic across response status distributions, resource cascades, latency, and origin ISP classification.*
+.. typst-diagram:: ../diagrams/bot-traffic/comparison.typ
+   :caption: Comparative Posture Matrix: Side-by-side behavioral contrast between legitimate human visitors and automated bot traffic across response status distributions, resource cascades, latency, and origin ISP classification.
+   :alt: Two columns compare request outcomes, rates, geography and bandwidth.
 
 3.2 Visual Components
 ^^^^^^^^^^^^^^^^^^^^^

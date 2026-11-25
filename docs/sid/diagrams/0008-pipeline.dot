@@ -1,0 +1,15 @@
+digraph pipeline {
+    rankdir=LR;
+    node [shape=box, style="rounded", fontname="Helvetica", fontsize=10];
+    edge [fontname="Helvetica", fontsize=9];
+    ingress [label="HTTP Ingress Worker\nZero-alloc UA & CIDR trie\nsub-45ns latency overhead"];
+    atomics [label="Striped Atomics (S=16)\n64B-aligned L1/L2 cache\nZero bus lock, sub-5ns"];
+    ring [label="MPSC Ring Buffer\nQ = 4,096 slots (1 MiB)\nNon-blocking drop-and-count"];
+    collector [label="1 Hz Collector Thread\nSpace-Saving Sketch (m=256)\nCategorical [16]u64 vectors\nFixed RAM, Off request path"];
+    storage [label="Zaxonlite Storage\nSBR3 & SBM2 Blobs\n~4 KiB/min, Append-only\n1,440 rows for 24 hours"];
+    ingress -> atomics [label="100% requests"];
+    ingress -> ring [label="p = 1/64 sample"];
+    atomics -> collector;
+    ring -> collector;
+    collector -> storage [label="1 write / min"];
+}

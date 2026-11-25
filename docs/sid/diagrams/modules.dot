@@ -1,0 +1,17 @@
+digraph modules {
+  rankdir=LR;
+  node [shape=box, style="rounded"];
+  sibuna [label="apps/sibuna\nCLI, daemon, storage thread"];
+  libs [label="libs/store, libs/policy\nlibs/crypto, libs/net"];
+  console [label="libs/console\napp: routes, auth, telemetry, hub, geoip, cluster"];
+  serve [label="libs/serve\nkernel: listener, slots, HTTP, WebSocket, assets"];
+  ui [label="apps/console-ui\nwasm32 interface module"];
+  zaxonlite [label="Zaxonlite\nreplicated SQLite"];
+  sibuna -> libs;
+  sibuna -> console [label="starts; counters"];
+  console -> serve;
+  console -> ui [label="embeds"];
+  console -> sibuna [label="storage/control mailbox"];
+  sibuna -> zaxonlite [label="SQL"];
+  console -> sibuna [label="atomic loads", style=dashed];
+}
