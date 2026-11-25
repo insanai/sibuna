@@ -1,7 +1,8 @@
 <h1 align="center">sibuna</h1>
-<p align="center">Web protection with browser proof of work and an optional console.</p>
+<p align="center">A load balancer and web protection with browser proof of work, in one executable.</p>
 <p align="center">
   <a href="#features">Features</a> ·
+  <a href="#load-balancing">Load balancing</a> ·
   <a href="#quickstart">Quickstart</a> ·
   <a href="#console">Console</a> ·
   <a href="#how-it-works">How it works</a> ·
@@ -18,6 +19,8 @@
 
 **Sibuna helps protect websites and APIs from unwanted bot traffic.** It can forward requests
 to your app or work alongside an existing proxy, such as Caddy or nginx.
+In edge mode it is the load balancer itself: it forwards TCP and UDP, terminates TLS and
+routes HTTP to several servers.
 
 Sending requests is often cheap. Processing them can cost your app more work. Sibuna asks
 clients to solve a puzzle before granting access. The puzzle is designed to make proof
@@ -35,12 +38,41 @@ Use access rules and local rate limits to control what those clients can request
 - **Native packages:** Linux, macOS, Windows, FreeBSD and OpenBSD. The browser solver uses WebAssembly.
 - **Browser challenges:** proof of sequential work (default) or Hashcash, followed by a signed session.
 - **Access policies:** allow, challenge, weigh or deny requests by address, path, headers and User-Agent.
-- **Edge load balancing.** We can forward TCP and UDP, terminate TLS with HAProxy-style PEM bundles, serve HTTP/1.1, HTTP/2 and HTTP/3, and route each request by host name and path to HTTP/1.1, HTTP/2 or HTTP/3 servers. The gate or shield applies to the names that need it, or to none. On Linux, HTTP connections and WebSocket tunnels are served by event-driven workers, one per processor, so a waiting connection costs a small record and not a thread. One command starts it without a file, `sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80`, and `--print-config` prints the equivalent JLV module. Certificates can be automatic: with `tls: { auto: ["example.org"] }` in the file, or `sibuna lb --tls auto --domain example.org --server 10.0.0.1:80`, Sibuna obtains the certificate from Let's Encrypt over ACME, renews it, and redirects HTTP to HTTPS, with no restart and no reload. More authorities can be listed under `fallback` and are asked when the first one fails, `eab` binds an account where an authority wants it, and the renewal time follows the renewal information of the authority (RFC 9773). A wildcard such as `*.example.org` is proved through DNS, with a hook program, an RFC 2136 update or the Cloudflare API, and the record is written at the target of a CNAME delegation of the challenge. A certificate that names an OCSP responder is served with a stapled response. With `tls: { on_demand: true }` and a guard, a certificate is obtained at the first handshake for a name we did not list. `localhost`, internal names and IP addresses under `auto` get certificates from a local authority that Sibuna keeps itself, and `sibuna ctl SOCKET show ca` prints its root. A local admin socket drains, weighs, adds and removes servers while the daemon runs (`sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain`). The file stays the authority, and a reload fails no request.
+- **Load balancing:** TCP, UDP and HTTP in front of several servers, with TLS termination, automatic certificates and a cluster mode. See [Load balancing](#load-balancing). It is not yet in the released packages.
 - **TLS fingerprints:** match the JA4 fingerprint that a trusted ingress forwards, exactly or by prefix.
 - **Application inspection:** built-in checks for SQL injection, XSS, path traversal and command injection.
 - **Local rate limits:** control bursts and sustained traffic, with optional limits per rule.
 - **Operator console:** traffic, sampled country activity, recorded incidents and policy editing.
 - **Cluster support:** a separate build shares policies and reputation through PostgreSQL.
+
+## Load balancing
+
+In edge mode Sibuna is the load balancer in front of the servers. The edge mode is in the
+source tree. It is not part of the v1.0.0-beta.3 packages, so we
+[build it from source](#build-from-source) until the next release.
+
+```sh
+sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
+sibuna lb --tls auto --domain example.org --server 10.0.0.1:80
+sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
+sibuna --config-file edge.jlv
+```
+
+- **Forwarding:** TCP and UDP, TLS passthrough routed by server name, QUIC passthrough and the PROXY protocol.
+- **HTTP:** TLS termination with HAProxy-style PEM bundles; HTTP/1.1, HTTP/2, HTTP/3 and WebSocket; routes by host name and path to HTTP/1.1, HTTP/2 or HTTP/3 servers. On Linux, event-driven workers serve the connections, one worker per processor.
+- **Certificates:** automatic over ACME with renewal, fallback authorities and external account binding; wildcards through DNS with a hook program, an RFC 2136 update or the Cloudflare API; OCSP stapling; certificates on demand behind a guard; a local authority for `localhost`, internal names and IP addresses, with a revocation list and an ACME server of its own.
+- **Servers:** health checks, slow start, draining, weights, sticky sessions and a limit of flows for each server.
+- **Changes while it runs:** a reload fails no request. The admin socket drains, weighs, adds and removes servers (`sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain`). On Linux a new executable takes the listening sockets and the UDP mappings from the old one; QUIC connections end.
+- **Cluster:** the nodes of a mesh share the sticky table and the flow limits of a server, and forward a client to the node that owns it. A PostgreSQL database can publish one configuration to every node and roll it back. A mapped file keeps affinity hints across a restart.
+- **Hooks:** at the connection and at the request, compiled in, as WebAssembly with a budget, or as an agent on a Unix socket.
+- **Observation:** metrics, access logs and a console view of servers, flows and refusals.
+
+The gate or the shield applies to the names that need it, or to none. The file stays the
+authority: a change at run time lasts until the next reload.
+
+The load balancer has not been released and has not run under production traffic. Its cluster
+features were tested on three hosts. Each [design discussion](https://insanai.github.io/sibuna/sid/)
+lists what is built and the known gaps.
 
 ## Quickstart
 
@@ -211,6 +243,8 @@ WebSocket messages are relayed without inspection. The inspector is a heuristic,
 language parser.
 
 Rate limits are local to each node. Sibuna does not provide volumetric network mitigation.
+The replacement of the executable without lost connections and the event-driven workers
+exist on Linux only.
 Challenges are bound to the node that issued them; route a challenge and its solution to the
 same node. The console's strict performance target has not formally passed. Review the
 [deployment limits and measurements](https://insanai.github.io/sibuna/book/operations.html)
@@ -233,6 +267,22 @@ Figures are medians of three runs.
 - Proxied requests ran at 138,965 to 147,303 per second. Peak memory was about 16 MiB.
 - At an equal offered load of 100,000 admitted requests per second, the p99.9 latency was
   62 us in forward-auth mode and 150 us in reverse-proxy mode.
+
+### Beside HAProxy
+
+One host, loopback, HAProxy 3.0.11. Each proxy had eight CPUs and 256 connections, and each
+case ran once for eight seconds on the build of 2026-11-25. No request failed.
+
+| Case | Sibuna req/s | HAProxy req/s | Sibuna / HAProxy |
+| --- | ---: | ---: | ---: |
+| TCP forwarding | 240,967 | 230,934 | 1.04 |
+| HTTP/1.1 | 224,375 | 219,798 | 1.02 |
+| HTTP/1.1 over TLS | 178,261 | 162,520 | 1.10 |
+| HTTP/2 | 103,789 | 150,384 | 0.69 |
+
+HAProxy is faster for HTTP/2. The
+[book](https://insanai.github.io/sibuna/book/benchmarks.html) gives the method, more
+connection counts and a cluster of three hosts.
 
 ### Beside Anubis
 
