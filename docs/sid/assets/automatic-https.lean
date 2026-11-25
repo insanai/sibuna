@@ -13,8 +13,8 @@ A model of the algorithms of SID 0021, checked with Lean 4.19.0.
 8. On demand: the token bucket never exceeds its capacity, the orders it admits are bounded, a name is ordered only after every guard, and the table of held names keeps its bound.
 9. Authorities: one attempt asks the listed authorities in order, at most once each, stops at the first that issues, succeeds when one issues and fails when none does.
 10. Renewal information: the pick lies in the window of the authority, the renewal time is at most four fifths of the lifetime and before the expiry, a window in the past is due at once, and a time inside our bounds is taken as it is.
-
 11. Stapling: an OCSP response is stapled only inside its window and only when it says good, and the next question to the responder lies after now and inside the window.
+12. Zone search: the search for the zone of a record at a DNS provider asks a bounded number of questions, fewer than the owner has labels, finds only a zone that the account has and that ends the owner, and finds the longest such zone.
 
 Times are natural numbers of seconds. The JSON documents, the signatures, the sockets and the files are outside the model. Tests cover them.
 -/
@@ -857,5 +857,147 @@ theorem refresh_before_the_end (t n now : Nat) (h1 : t ≤ now) (h2 : now + 2 �
   split
   · omega
   · split <;> omega
+
+/-! ## Part L: The zone of a record at a DNS provider -/
+
+/-- The names that may be the zone of a record, the longest first: the owner and its
+parents down to two labels, `limit` at most. A name is its labels, the leftmost first. -/
+def zoneCandidates : Nat → List Nat → List (List Nat)
+  | 0, _ => []
+  | _ + 1, [] => []
+  | _ + 1, [_] => []
+  | k + 1, a :: b :: rest => (a :: b :: rest) :: zoneCandidates k (b :: rest)
+
+/-- The first candidate that the account has. `has` is the answer of the provider. -/
+def firstKnown (has : List Nat → Bool) : List (List Nat) → Option (List Nat)
+  | [] => none
+  | z :: rest => if has z then some z else firstKnown has rest
+
+/-- The zone that the search finds for an owner. -/
+def findZone (has : List Nat → Bool) (limit : Nat) (owner : List Nat) : Option (List Nat) :=
+  firstKnown has (zoneCandidates limit owner)
+
+/-- The search asks at most `limit` questions. -/
+theorem zone_questions_bounded (k : Nat) (l : List Nat) : (zoneCandidates k l).length ≤ k := by
+  induction k generalizing l with
+  | zero => simp [zoneCandidates]
+  | succ k ih =>
+    match l with
+    | [] => simp [zoneCandidates]
+    | [_] => simp [zoneCandidates]
+    | a :: b :: rest =>
+      simp only [zoneCandidates, List.length_cons]
+      have := ih (b :: rest)
+      omega
+
+/-- The search asks fewer questions than the owner has labels. -/
+theorem zone_questions_below_labels (k : Nat) (l : List Nat) :
+    (zoneCandidates k l).length + 1 ≤ l.length ∨ zoneCandidates k l = [] := by
+  induction k generalizing l with
+  | zero => right; simp [zoneCandidates]
+  | succ k ih =>
+    match l with
+    | [] => right; simp [zoneCandidates]
+    | [_] => right; simp [zoneCandidates]
+    | a :: b :: rest =>
+      left
+      simp only [zoneCandidates, List.length_cons]
+      cases ih (b :: rest) with
+      | inl h => simp only [List.length_cons] at h; omega
+      | inr h => rw [h]; simp
+
+/-- Every candidate ends the owner, has two labels at least, and is no longer than it. -/
+theorem zone_candidate_is_parent (k : Nat) (l z : List Nat) (h : z ∈ zoneCandidates k l) :
+    z <:+ l ∧ 2 ≤ z.length ∧ z.length ≤ l.length := by
+  induction k generalizing l with
+  | zero => simp [zoneCandidates] at h
+  | succ k ih =>
+    match l with
+    | [] => simp [zoneCandidates] at h
+    | [_] => simp [zoneCandidates] at h
+    | a :: b :: rest =>
+      simp only [zoneCandidates, List.mem_cons] at h
+      cases h with
+      | inl h =>
+        subst h
+        exact ⟨List.suffix_refl _, by simp, Nat.le_refl _⟩
+      | inr h =>
+        have ⟨hs, h2, hl⟩ := ih (b :: rest) h
+        refine ⟨List.IsSuffix.trans hs (List.suffix_cons a (b :: rest)), h2, ?_⟩
+        simp only [List.length_cons] at hl ⊢
+        omega
+
+/-- A zone that the search finds is one that the provider has. -/
+theorem first_known_is_known (has : List Nat → Bool) (cs : List (List Nat)) (z : List Nat)
+    (h : firstKnown has cs = some z) : has z = true ∧ z ∈ cs := by
+  induction cs with
+  | nil => simp [firstKnown] at h
+  | cons c rest ih =>
+    simp only [firstKnown] at h
+    split at h
+    · rename_i hc
+      have hz : c = z := Option.some.inj h
+      subst hz
+      exact ⟨hc, List.mem_cons_self⟩
+    · have ⟨h1, h2⟩ := ih h
+      exact ⟨h1, List.mem_cons_of_mem c h2⟩
+
+/-- The zone that the search finds is in the account and ends the owner. -/
+theorem found_zone_is_known_parent (has : List Nat → Bool) (k : Nat) (l z : List Nat)
+    (h : findZone has k l = some z) : has z = true ∧ z <:+ l := by
+  have ⟨h1, h2⟩ := first_known_is_known has _ z h
+  exact ⟨h1, (zone_candidate_is_parent k l z h2).1⟩
+
+/-- The longest zone wins: no candidate that the provider has is longer than the zone
+that the search finds. A record of `a.b.example.org` goes into the zone `b.example.org`
+when the account has it, and not into `example.org`. -/
+theorem longest_zone_wins (has : List Nat → Bool) (k : Nat) (l z z' : List Nat)
+    (h : findZone has k l = some z) (hm : z' ∈ zoneCandidates k l) (hk : has z' = true) :
+    z'.length ≤ z.length := by
+  unfold findZone at h
+  induction k generalizing l with
+  | zero => simp [zoneCandidates] at hm
+  | succ k ih =>
+    match l with
+    | [] => simp [zoneCandidates] at hm
+    | [_] => simp [zoneCandidates] at hm
+    | a :: b :: rest =>
+      simp only [zoneCandidates, List.mem_cons] at hm
+      simp only [zoneCandidates, firstKnown] at h
+      split at h
+      · have hz : a :: b :: rest = z := Option.some.inj h
+        subst hz
+        cases hm with
+        | inl hm => subst hm; exact Nat.le_refl _
+        | inr hm =>
+          have := (zone_candidate_is_parent k (b :: rest) z' hm).2.2
+          simp only [List.length_cons] at this ⊢
+          omega
+      · rename_i hc
+        cases hm with
+        | inl hm => subst hm; exact absurd hk hc
+        | inr hm => exact ih (b :: rest) h hm
+
+/-- A search that finds nothing asked about zones that the account does not have. -/
+theorem no_zone_means_none_known (has : List Nat → Bool) (cs : List (List Nat))
+    (h : firstKnown has cs = none) : ∀ c ∈ cs, has c = false := by
+  induction cs with
+  | nil => intro c hc; simp at hc
+  | cons c rest ih =>
+    simp only [firstKnown] at h
+    split at h
+    · contradiction
+    · rename_i hc
+      intro c' hc'
+      cases List.mem_cons.mp hc' with
+      | inl e => subst e; simpa using hc
+      | inr e => exact ih h c' e
+
+/-- `_acme-challenge.a.example.org` in an account that has `example.org` (labels as
+numbers: 0 the challenge label, 1 `a`, 2 `example`, 3 `org`). -/
+example : findZone (fun z => z == [2, 3]) 8 [0, 1, 2, 3] = some [2, 3] := by decide
+
+/-- A name of one label is never asked about: a provider has no zone `org`. -/
+example : zoneCandidates 8 [3] = [] := by decide
 
 end SibunaAcme
