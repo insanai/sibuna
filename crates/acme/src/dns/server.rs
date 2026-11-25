@@ -260,14 +260,22 @@ pub struct Server {
 
 impl Server {
     /// Starts a server at `address` of the loopback interface. A port of 0 asks for a
-    /// free one, the same for UDP and TCP; the call tries a few when TCP has it taken.
+    /// free one, the same for UDP and TCP. TCP is bound first: tests that run beside
+    /// this one take and release TCP ports all the time, and UDP ports hardly ever. The
+    /// call tries other ports when the second socket finds its port taken.
     pub fn start(address: SocketAddr) -> io::Result<Self> {
         let mut last = io::Error::other("no port");
-        for _ in 0..16 {
-            let udp = UdpSocket::bind(address)?;
-            let bound = udp.local_addr()?;
-            match TcpListener::bind(bound) {
-                Ok(tcp) => return Self::serve(udp, tcp, bound),
+        for _ in 0..64 {
+            let tcp = match TcpListener::bind(address) {
+                Ok(tcp) => tcp,
+                Err(error) => {
+                    last = error;
+                    continue;
+                }
+            };
+            let bound = tcp.local_addr()?;
+            match UdpSocket::bind(bound) {
+                Ok(udp) => return Self::serve(udp, tcp, bound),
                 Err(error) => last = error,
             }
         }
