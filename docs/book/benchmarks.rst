@@ -1409,3 +1409,32 @@ On the three hosts the network still sets the ceiling, and the lines differ from
      - 49
 
 The CPU time of Sibuna for HTTPS on the three hosts fell from 69 to 71 seconds before the change to 48 to 49 seconds.
+
+After the cluster features, the hooks and the console view were merged, we ran the single host again with 256 connections, once for eight seconds in each case. No request failed.
+
+.. list-table:: One host after all merges of 2026-11-25, 256 connections: requests per second.
+   :header-rows: 1
+   :widths: 28 18 18 18
+
+   * - Workload
+     - HAProxy
+     - Sibuna
+     - Sibuna / HAProxy
+   * - tcp
+     - 230,934
+     - 240,967
+     - 1.04
+   * - http
+     - 219,798
+     - 224,375
+     - 1.02
+   * - https
+     - 162,520
+     - 178,261
+     - 1.10
+   * - h2
+     - 150,384
+     - 103,789
+     - 0.69
+
+The new features cost nothing that this measurement can see while they are not configured. HTTP/2 stays where it was.
