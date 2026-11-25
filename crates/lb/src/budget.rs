@@ -107,3 +107,6 @@ impl Drop for FlowPermit {
         self.budget.state().active -= 1;
     }
 }
+
+#[cfg(test)]
+mod tests;
