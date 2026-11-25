@@ -288,6 +288,10 @@ impl Peers {
     ) -> Result<(), String> {
         let text = |error: io::Error| error.to_string();
         let (stamp, file) = open(&self.key, stream)?;
+        // A node that follows a database keeps the file of its host (SID 0028).
+        if super::authority::follows(source) {
+            return Err("this node follows a database and keeps its own file".to_owned());
+        }
         if !is_fresh(stamp, *last, unix_ms()) {
             return Err("the file is older than the one in use, or the clocks differ by \
                         more than a minute"

@@ -29,6 +29,7 @@ del server POOL/NAME [local]
 del ban ADDRESS [local]
 reload [cluster]
 reopen log
+show authority
 help
 ";
 
@@ -82,6 +83,8 @@ pub(super) enum Command {
     /// A change to a server that stays on this node. Without the word `local` a mesh
     /// carries the change to the peers (SID 0022).
     Local(Box<Command>),
+    /// The revision of the database that this node serves (SID 0028).
+    ShowAuthority,
 }
 
 impl Command {
@@ -97,6 +100,7 @@ impl Command {
                 | Self::ShowCluster
                 | Self::Help
                 | Self::ReopenLog
+                | Self::ShowAuthority
         )
     }
 }
@@ -190,6 +194,8 @@ pub(super) fn parse(line: &str) -> Result<Command, RuntimeError> {
         ["reload"] => Ok(Command::Reload),
         ["reload", "cluster"] => Ok(Command::ReloadCluster),
         ["reopen", "log"] => Ok(Command::ReopenLog),
+        // The database authority (SID 0028).
+        ["show", "authority"] => Ok(Command::ShowAuthority),
         ["set", "server", server, "state", word] => {
             let (pool, name) = target(server)?;
             Ok(Command::State { pool, name, state: state(word)? })
@@ -418,6 +424,8 @@ mod tests {
         assert_eq!(parse("reload"), Ok(Command::Reload));
         assert_eq!(parse("reload cluster"), Ok(Command::ReloadCluster));
         assert_eq!(parse("reopen log"), Ok(Command::ReopenLog));
+        assert_eq!(parse("show authority"), Ok(Command::ShowAuthority));
+        assert!(!Command::ShowAuthority.changes());
         assert!(!Command::ReopenLog.changes(), "it changes nothing that is served");
         let (pool, name) = server("app", "10.0.0.1:80");
         let drain = Command::State { pool, name, state: ServerState::Drain };

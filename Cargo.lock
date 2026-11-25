@@ -1350,6 +1350,7 @@ dependencies = [
  "quinn",
  "rustls",
  "sibuna-acme",
+ "sibuna-authority",
  "sibuna-challenge",
  "sibuna-cidr",
  "sibuna-console",
@@ -1382,6 +1383,17 @@ dependencies = [
  "sibuna-crypto",
  "sibuna-encoding",
  "sibuna-json",
+]
+
+[[package]]
+name = "sibuna-authority"
+version = "1.0.0-beta.3"
+dependencies = [
+ "sibuna-authority",
+ "sibuna-crypto",
+ "sibuna-json",
+ "sibuna-storage",
+ "tokio",
 ]
 
 [[package]]

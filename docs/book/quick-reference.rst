@@ -62,6 +62,13 @@ Edge load balancer
    sibuna ctl /run/sibuna/edge.sock add server app/blue 10.0.0.3:80
    sibuna ctl /run/sibuna/edge.sock del server app/blue
    sibuna ctl /run/sibuna/edge.sock reload                            # as SIGHUP, with the result
+   sibuna authority diff -c /etc/sibuna/node.json -f edge.jlv         # what apply would change in the database
+   sibuna authority apply -c /etc/sibuna/node.json -f edge.jlv --expect 7   # publish revision 8, or a conflict
+   sibuna authority history -c /etc/sibuna/node.json                  # the revisions, newest first
+   sibuna authority rollback -c /etc/sibuna/node.json 6               # a new revision with the document of 6
+   sibuna authority dump -c /etc/sibuna/node.json --revision 6        # evaluated data; --source for the source
+   sibuna authority status -c /etc/sibuna/node.json                   # the head and what every node applied
+   sibuna ctl /run/sibuna/edge.sock show authority                    # the revision that this node serves
    cat fullchain.pem privkey.pem > /etc/sibuna/certs/site.pem   # one HAProxy-style bundle
 
 .. code-block:: json

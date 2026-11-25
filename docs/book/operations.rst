@@ -1811,6 +1811,79 @@ A node takes a file only when it states ``accept_config: true``, and only from a
 
 The sticky cookie of a pool needs no sharing, but it needs the same ``http.secret_file`` on every node. Without that file each node draws its own secret and does not recognise the cookie of another.
 
+A database for the topology
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A cluster that wants a history, a rollback and one place to publish from keeps its topology in a database (SID 0028). The file of each node then holds only what belongs to its host, and the section ``authority`` names the database.
+
+.. code-block:: json
+
+   {
+     "global": {"workers": 4, "admin_socket": "/run/sibuna/edge.sock"},
+     "authority": {
+       "postgres_url_file": "/etc/sibuna/authority.url",
+       "node": "fra-edge-01",
+       "poll": "5s",
+       "cache": "/var/lib/sibuna/authority.cache",
+       "binds": {"web": ["10.0.0.1:443"]}
+     }
+   }
+
+The file owns ``global``, ``mesh``, ``observability`` and ``authority``. The database owns ``frontends``, ``backends`` and ``http``. ``binds`` replaces the addresses of a published frontend on this node. ``cache`` lets the node restart while the database is down. ``sqlite`` in the place of ``postgres_url_file`` names a database file. SQLite serves one host: a test, a laptop, or several daemons on one machine. It is not a store for a cluster, because the nodes of a cluster cannot share its file.
+
+We write the topology as before, in JSON or JLV, and publish it.
+
+.. code-block:: console
+
+   $ sibuna authority diff -c /etc/sibuna/node.json -f edge.jlv
+   ~ backends.app.servers[web2].weight: 1 -> 3
+   + backends.app.servers[web3]: {"addr":"10.0.0.3:80","name":"web3"}
+   revision 7 -> 8, not committed
+   $ sibuna authority apply -c /etc/sibuna/node.json -f edge.jlv --expect 7 --note "add web3"
+   ~ backends.app.servers[web2].weight: 1 -> 3
+   + backends.app.servers[web3]: {"addr":"10.0.0.3:80","name":"web3"}
+   revision 8 committed 3fa9c1d2e4b5
+
+``apply`` evaluates the source, checks the topology, prints the difference to the head and commits the next revision. When somebody else committed in between, the head is no longer the expected one and the command fails with ``DBA002 REVISION CONFLICT``. We then look at the difference again. Without ``--expect`` the command expects the head that it read for the difference. The source may also hold ``global`` and the other sections of the file. The command names them and leaves them out.
+
+Every node learns of the revision by a notification of PostgreSQL, and by its poll when the notification was lost. It composes the revision with its file, checks the result and serves it. ``show cluster`` on any node, or ``sibuna authority status``, shows what each node serves.
+
+.. code-block:: console
+
+   $ sibuna ctl /run/sibuna/edge.sock show cluster
+   revision 8 3fa9c1d2e4b5
+   node        applied state                                   seen
+   fra-edge-01 8       current, this node                      0s
+   fra-edge-02 8       current                                 2s
+   fra-edge-03 7       refused 8: certs/site.pem: No such file 1s
+
+A node that cannot serve a revision keeps the one it serves, logs ``DBA011`` and reports the reason. After we repair the host, ``reload`` on that node checks the head again. A node that cannot reach the database keeps what it serves, logs ``DBA012`` once and asks again every two seconds. ``show authority`` prints the view of one node.
+
+``history`` lists the revisions. ``rollback`` commits a new revision with the document of an earlier one, so the history keeps both and the numbers only grow.
+
+.. code-block:: console
+
+   $ sibuna authority history -c /etc/sibuna/node.json
+   revision committed            origin digest       author      source   note
+   8*       2026-11-25 10:02:11Z apply  3fa9c1d2e4b5 ann@admin01 edge.jlv add web3
+   7        2026-11-24 16:40:03Z apply  91ab07c3d2e4 ann@admin01 edge.jlv
+   $ sibuna authority rollback -c /etc/sibuna/node.json 7
+   - backends.app.servers[web3]
+   ~ backends.app.servers[web2].weight: 3 -> 1
+   revision 9 committed, it restores revision 7
+
+``dump`` prints the evaluated data of a revision, and ``dump --source`` the source as it was given. Applying a dump to the same database commits nothing.
+
+The URL file holds ``postgres://ROLE:PASSWORD@HOST/DATABASE``. Only the user of the daemon may read it: the daemon refuses a file with a mode wider than 0600. PostgreSQL checks the password with SCRAM-SHA-256. With the feature ``postgres-tls`` the URL can ask for ``sslmode=verify-full``. We give the nodes a role that cannot publish. The operator role owns the tables, and the first ``apply`` creates them.
+
+.. code-block:: sql
+
+   CREATE ROLE edge_node LOGIN PASSWORD '...';
+   GRANT SELECT ON edge_head, edge_revisions, edge_nodes, sibuna_schema TO edge_node;
+   GRANT INSERT, UPDATE ON edge_nodes TO edge_node;
+
+In this mode the file of a node stays on its host. ``reload`` reads it again, and ``reload cluster`` answers ``DBA009``. Adding or removing ``authority``, or changing anything in it but ``binds``, needs a restart. A change at run time, such as a weight, is not a revision: the next revision replaces it as a reload does. The history is not pruned.
+
 Replacing the binary without closing the port
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
