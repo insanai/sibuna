@@ -229,7 +229,7 @@ fn serve_one<W: Write>(
 /// Buffers the body, then dispatches the request with it.
 fn serve_with_body<W: Write>(
     reader: &mut Reader<'_, &TcpStream>,
-    link: &mut Link<'_, W>,
+    link: &mut Link<'_, ClientWriter<W>>,
     peer: &[u8],
     paths: &mut [u8],
     head_len: usize,
@@ -263,7 +263,7 @@ fn serve_with_body<W: Write>(
 /// Puts the request path in normal form, then dispatches the request. A path without a
 /// normal form is answered 400 and the connection closed.
 pub(crate) fn dispatch<W: Write>(
-    link: &mut Link<'_, W>,
+    link: &mut Link<'_, ClientWriter<W>>,
     request: Request<'_>,
     pending: &[u8],
     upload: Upload,
@@ -276,6 +276,9 @@ pub(crate) fn dispatch<W: Write>(
         let _ = response::write_400(&mut link.writer, b"Malformed request target");
         return false;
     };
+    // The route is that of the path in normal form, as for the choice of the server.
+    // Until here an answer of our own had the route of the path as it was written.
+    link.writer.set_own(crate::traffic::own_policy(link.server, link.ingress, &request));
     let mut ctx = Ctx::new(link, request, peer, declared_body);
     ctx.pending = pending;
     ctx.upload = upload;
