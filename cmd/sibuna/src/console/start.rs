@@ -36,7 +36,7 @@ use crate::recipe::Recipe;
 use crate::server::{Server, VERSION};
 
 /// The interface's files, embedded at build time (`build.rs` builds the module).
-const ASSETS: AssetBytes = AssetBytes {
+pub(crate) const ASSETS: AssetBytes = AssetBytes {
     wasm: include_bytes!(concat!(env!("OUT_DIR"), "/console.wasm")),
     glue: include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/../console-ui/web/glue.js")),
     css: include_bytes!(concat!(
@@ -316,7 +316,11 @@ mod tests {
         ConsoleConfig {
             key_file: Some(key.into()),
             peers: Peers {
-                targets: vec![PeerTarget { node: 2, origin: "https://peer.test".into() }],
+                targets: vec![PeerTarget {
+                    node: 2,
+                    origin: "https://peer.test".into(),
+                    ..PeerTarget::default()
+                }],
                 key_file: Some(peer_key.into()),
                 ca_file: None,
             },

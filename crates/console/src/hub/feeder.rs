@@ -336,5 +336,7 @@ fn nodes_view(shared: &Shared, membership: Membership, single: bool) -> NodesVie
     shared.probes.snapshot(&mut probes);
     let mut peers = Vec::new();
     shared.peers.reports(now, &mut peers);
+    // The nodes topic carries nine members. The edge page shows a fleet of 64 (SID 0031).
+    peers.truncate(nodes::MAX_PROBES);
     NodesView { page, probes, peers, observed_at: now }
 }

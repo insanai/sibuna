@@ -9,6 +9,7 @@ mod account_security;
 mod audit;
 pub mod challenges;
 pub mod dashboard;
+mod edge;
 pub mod events;
 mod geoip;
 pub mod globe;
@@ -27,6 +28,7 @@ pub use account_security::AccountSecurity;
 pub use audit::Audit;
 pub use challenges::Challenges;
 pub use dashboard::Dashboard;
+pub use edge::Edge;
 pub use events::Events;
 pub use geoip::Geoip;
 pub use globe::Globe;
@@ -59,6 +61,8 @@ pub fn load_pages() -> Pages {
         Box::new(Audit::default()),
         Box::new(Settings::default()),
         Box::new(Nodes::default()),
+        // The load balancer of the node and the fleet (phase `edge`; SID 0031).
+        Box::new(Edge::default()),
         // Policies: applied and managed rules, IP groups and rule hit history (phase
         // `policies`); before the events page, which handles the other `events-` actions.
         Box::new(Policies::default()),

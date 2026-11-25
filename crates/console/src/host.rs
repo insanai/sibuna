@@ -28,6 +28,21 @@ pub struct RuleHitSample {
     pub retired: Option<Snapshot<MAX_RULES>>,
 }
 
+/// The edge of the node, for the routes of SID 0031. The daemon implements it over the
+/// edge worker and the function that its admin socket calls; tests implement it with a
+/// fake. A console of a node without an edge has none.
+pub trait EdgeHost: Send + Sync + fmt::Debug {
+    /// Returns the view of the load balancer: the node, its frontends and its pools.
+    /// `None` when the edge worker did not answer in time. May wait up to a second.
+    fn view(&self) -> Option<sibuna_console_protocol::edge::View>;
+
+    /// Runs `line`, one line of the admin socket, as that socket runs it, and returns
+    /// its answer. `who` names the caller for the log of the daemon, and is empty for a
+    /// line that only reads. The caller has checked that the console offers the line.
+    /// May wait for the edge worker as long as the socket does.
+    fn run(&self, line: &str, who: &str) -> sibuna_console_protocol::edge::Answer;
+}
+
 /// The daemon's side of the console: local effects and live readings.
 ///
 /// Every method may be called from any console thread and must not block for long: the

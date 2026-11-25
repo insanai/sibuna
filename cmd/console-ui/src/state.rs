@@ -54,11 +54,13 @@ pub enum Phase {
     Nodes,
     /// Console settings.
     Settings,
+    /// The load balancer of the node and the fleet (SID 0031).
+    Edge,
 }
 
 impl Phase {
     /// Every phase, in declaration order.
-    pub const ALL: [Phase; 17] = [
+    pub const ALL: [Phase; 18] = [
         Phase::Loading,
         Phase::Setup,
         Phase::Login,
@@ -76,6 +78,7 @@ impl Phase {
         Phase::Audit,
         Phase::Nodes,
         Phase::Settings,
+        Phase::Edge,
     ];
 
     /// Returns the phase's name, as the Zig enum spelled it (the golden fixture names).
@@ -98,6 +101,7 @@ impl Phase {
             Phase::Audit => "audit",
             Phase::Nodes => "nodes",
             Phase::Settings => "settings",
+            Phase::Edge => "edge",
         }
     }
 }
@@ -145,6 +149,8 @@ pub struct State {
     pub user_id: u64,
     /// The node serving this console, independent of the selected telemetry source.
     pub console_node: Option<u32>,
+    /// The node has a load balancer, and so the edge page (SID 0031).
+    pub edge: bool,
     /// An authentication form or account request is in flight.
     pub busy: bool,
     /// The password must be changed before anything else.
@@ -288,7 +294,7 @@ mod tests {
     #[test]
     fn phase_names_are_the_fixture_names() {
         let names: Vec<&str> = Phase::ALL.iter().map(|phase| phase.name()).collect();
-        assert_eq!(names.len(), 17);
+        assert_eq!(names.len(), 18);
         assert_eq!(names[5], "security_overview");
     }
 }

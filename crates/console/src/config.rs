@@ -72,6 +72,14 @@ pub struct Config {
     pub origin: String,
     /// The networks whose connections may carry forwarded fields, `<address>/<bits>`.
     pub trusted_proxies: Vec<String>,
+    /// The networks operators come from, `<address>/<bits>` (SID 0031). Empty admits every
+    /// address. Without a proxy the source of a connection is checked at accept; behind
+    /// one, the forwarded address of every request but the peer upgrade.
+    pub allow_operators: Vec<String>,
+    /// Close a connection at accept when its source is outside the networks that may
+    /// reach the console: the trusted proxies behind a proxy, else the operators'
+    /// (SID 0031). Without it such a request is answered 403.
+    pub screen_at_accept: bool,
     /// The origin peers show as this console's link; empty for none.
     pub advertise: String,
     /// This node's declared position, shown on the globe.
@@ -96,6 +104,8 @@ impl Default for Config {
             key_file: None,
             origin: String::new(),
             trusted_proxies: Vec::new(),
+            allow_operators: Vec::new(),
+            screen_at_accept: false,
             advertise: String::new(),
             server_location: None,
             probes: Vec::new(),
@@ -122,6 +132,9 @@ pub enum ConfigError {
     InvalidProxy,
     /// More than [`MAX_PROXIES`] trusted proxy networks.
     TooManyProxies,
+    /// An operator network is not `<address>/<bits>`, or there are more than
+    /// [`MAX_PROXIES`].
+    InvalidOperators,
     /// The advertised URL is not an origin, or HTTP to a host other than loopback.
     InvalidAdvertise,
     /// A probe is not `http://<ip>[:port]`, names node 0 or this node, or there are more
@@ -148,6 +161,9 @@ impl ConfigError {
             ConfigError::InvalidOrigin => "Write the origin as `https://host[:port]`.",
             ConfigError::InvalidProxy => "Write each trusted proxy as `<address>/<bits>`.",
             ConfigError::TooManyProxies => "Give at most 16 trusted proxy networks.",
+            ConfigError::InvalidOperators => {
+                "Write at most 16 operator networks, each as `<address>/<bits>`."
+            }
             ConfigError::InvalidAdvertise => {
                 "Advertise `https://host[:port]`, or `http://` only on a loopback address."
             }
@@ -172,6 +188,7 @@ impl fmt::Display for ConfigError {
             ConfigError::InvalidOrigin => f.write_str("invalid console origin"),
             ConfigError::InvalidProxy => f.write_str("invalid trusted proxy network"),
             ConfigError::TooManyProxies => f.write_str("too many trusted proxy networks"),
+            ConfigError::InvalidOperators => f.write_str("invalid operator networks"),
             ConfigError::InvalidAdvertise => f.write_str("invalid advertised console URL"),
             ConfigError::InvalidProbe => f.write_str("invalid console probe"),
             ConfigError::DuplicateProbe => f.write_str("duplicate console probe"),
@@ -214,6 +231,11 @@ impl Config {
         }
         if self.behind_proxy {
             self.validate_proxy()?;
+        }
+        let operators = &self.allow_operators;
+        let parse = |text: &String| Network::parse(text).is_some();
+        if operators.len() > MAX_PROXIES || !operators.iter().all(parse) {
+            return Err(ConfigError::InvalidOperators);
         }
         Ok(())
     }

@@ -36,6 +36,12 @@ pub fn handle(shared: &Shared, context: &mut Context<'_>, call: &Call) -> Result
     }
     let request = peer::read_request(context).map_err(|_| RouteError::BadRequest)?;
     let key = shared.peers.key().ok_or_else(|| RouteError::fail(403, "CONSOLEPEER"))?;
+    // The address is checked before the proof (SID 0031): a sender that is no member, or
+    // a member at another address, costs no hash.
+    let client = call.origin.client.parse::<std::net::IpAddr>().ok();
+    if !shared.peers.admits_address(request.transcript.from, client) {
+        return Err(RouteError::fail(403, "CONSOLEPEER"));
+    }
     let inbound = shared
         .peers
         .admit(&request.transcript, &request.proof, call.now)

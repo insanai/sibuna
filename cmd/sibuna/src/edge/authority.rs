@@ -23,6 +23,9 @@ mod follower;
 
 #[cfg(feature = "storage")]
 pub(super) use cli::run;
+/// The console of SID 0031 shows the revision that this node serves.
+#[cfg(all(unix, feature = "console"))]
+pub(super) use follower::served;
 #[cfg(feature = "storage")]
 pub(super) use follower::{
     Slot, Stamp, cluster, describe, failure, follow, follows, is_node_file, load,

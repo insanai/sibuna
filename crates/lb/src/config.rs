@@ -32,6 +32,8 @@ pub struct Config {
     /// The entries of the learned sticky table (`global.sticky_entries`, SID 0025).
     pub(crate) sticky_entries: usize,
     pub(crate) mesh: Option<crate::MeshConfig>,
+    /// The `console` section of SID 0031.
+    pub(crate) console: Option<crate::ConsoleOptions>,
     pub(crate) listeners: BTreeMap<(Protocol, SocketAddr), Frontend>,
     pub(crate) pools: BTreeMap<String, Backend>,
 }
@@ -241,6 +243,11 @@ impl Config {
         self.mesh.as_ref()
     }
 
+    /// The operator console of this node, when the topology has one (SID 0031).
+    pub fn console(&self) -> Option<&crate::ConsoleOptions> {
+        self.console.as_ref()
+    }
+
     /// Parses canonical JSON and resolves each frontend to a protocol-compatible backend.
     /// Returns a diagnostic for malformed JSON, unknown options or invalid resource bounds.
     pub fn parse(bytes: &[u8]) -> Result<Self> {
@@ -268,7 +275,9 @@ impl Config {
             .transpose()?
             .unwrap_or_default();
         let adaptive = mesh.is_some();
+        let console = crate::ConsoleOptions::section(&mut root)?;
         let mut config = Self {
+            console,
             limit,
             udp_limit: limit,
             workers,

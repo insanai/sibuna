@@ -60,6 +60,7 @@ use sibuna_console_protocol::nodes::{Peer, PeerStatus};
 use sibuna_serve::stack;
 
 use crate::config::PeerTarget;
+use crate::http::ingress::Network;
 use crate::keys::ConsoleKey;
 use crate::shared::{Setup, Shared};
 
@@ -113,6 +114,11 @@ pub struct Peers {
     store: Mutex<store::Store>,
     /// The next query id; Relaxed, ids only need to be distinct.
     next_id: AtomicU64,
+    /// The networks each target connects from, in the order of `targets` (SID 0031).
+    networks: Vec<Vec<Network>>,
+    /// Counts the removals. A stream compares it with the value it started under and
+    /// asks the store only after a change. Release on store, Acquire on load.
+    epoch: AtomicU64,
 }
 
 /// An admitted inbound stream; dropping it lets the peer connect in again.
@@ -148,6 +154,11 @@ impl Peers {
             key,
             store: Mutex::new(store::Store::new(self_node, &nodes)),
             next_id: AtomicU64::new(1),
+            networks: targets
+                .iter()
+                .map(|target| target.allow_ips.iter().filter_map(|t| Network::parse(t)).collect())
+                .collect(),
+            epoch: AtomicU64::new(0),
         }
     }
 
@@ -182,9 +193,44 @@ impl Peers {
         self.lock().snapshots(out);
     }
 
-    /// Returns true when `node` is a configured peer.
+    /// Returns true when `node` is a configured peer that was not removed.
     pub fn contains(&self, node: u32) -> bool {
-        self.targets.iter().any(|target| target.node == node)
+        self.lock().find(node).is_some()
+    }
+
+    /// Returns true while the peer at configuration index `index` was not removed.
+    pub fn is_live(&self, index: usize) -> bool {
+        self.lock().is_live(index)
+    }
+
+    /// Removes the peer `node` while the console runs (SID 0031): its inbound stream
+    /// closes at the next turn of its writer, its outbound worker ends, its queued
+    /// queries fail and its next upgrade is refused. Returns false when `node` is no
+    /// live peer.
+    pub fn remove(&self, node: u32) -> bool {
+        let removed = self.lock().remove(node);
+        if removed {
+            self.epoch.fetch_add(1, Ordering::Release);
+        }
+        removed
+    }
+
+    /// Returns the number of removals so far.
+    pub fn epoch(&self) -> u64 {
+        self.epoch.load(Ordering::Acquire)
+    }
+
+    /// Returns true when an upgrade that names `node` as its sender may come from
+    /// `address`: `node` is a live peer, and its networks are empty or hold the address.
+    /// An address that is not known is in no network.
+    pub fn admits_address(&self, node: u32, address: Option<std::net::IpAddr>) -> bool {
+        let Some(index) = self.lock().find(node) else { return false };
+        match self.networks.get(index) {
+            Some(networks) if !networks.is_empty() => {
+                address.is_some_and(|address| networks.iter().any(|n| n.contains(address)))
+            }
+            _ => true,
+        }
     }
 
     /// Admits an inbound stream with `transcript` and `proof` at `now`.
@@ -259,7 +305,8 @@ pub fn run(shared: &Shared) {
     }
     let usable = usize::try_from(shared.config.budget.stack_bytes).unwrap_or(stack::USABLE);
     std::thread::scope(|scope| {
-        for index in 0..count {
+        // More than this many peers is refused by the configuration.
+        for index in 0..count.min(crate::config::peers::MAX_PEERS) {
             let spawned = std::thread::Builder::new()
                 .name("sibuna-console-peer".into())
                 .stack_size(stack::bytes(usable))

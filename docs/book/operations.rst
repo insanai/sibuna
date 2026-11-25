@@ -2242,6 +2242,75 @@ We change a setting in a drop-in, not in the packaged file: ``systemctl edit sib
    sudo systemctl enable --now sibuna-edge
    sudo -u sibuna sibuna ctl /run/sibuna/edge.sock show servers
 
+The operator console of the edge
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The edge can run the console of Part IX beside the load balancer (SID 0031). We add a ``console`` section to the topology file. The console listens on an address of its own, on threads of its own, and it keeps its accounts and its audit log in a SQLite file.
+
+.. code-block:: text
+
+   console: {
+       listen: "127.0.0.1:9443",
+       data_dir: "/var/lib/sibuna",
+       node: 1,
+   },
+
+.. code-block:: sh
+
+   sibuna init-admin admin --data-dir /var/lib/sibuna    # once, while the daemon is stopped
+   sibuna --config-file /etc/sibuna/edge.jlv
+   # Console: http://127.0.0.1:9443/console/
+
+We sign in, replace the temporary password, and open the page *Edge*. The page shows four things.
+
+**The node.** Its state is one of three words. *Serving* means that the node admits new flows. *Draining* means that the node was told to stop: it refuses new flows and finishes the open ones. *Full* means that the flow table holds ``global.max_flows`` flows: the node refuses new flows for lack of capacity. The table below the state gives the active flows and the limit, the drops, the servers that are drained or down, the reloads, the routing regime of the mesh and two revisions. The first revision is the digest of the file, the one that ``show cluster`` prints. The second is the revision of the database that the node serves in persistent mode (SID 0028). A node that serves a file has none, and the page says "Not reported".
+
+**The refusals by cause.** One row for each reason of the metrics: ``flow_limit``, ``draining``, ``rate_limit``, ``connection_limit``, ``task_limit`` and the others. A node that refuses for lack of capacity counts under ``flow_limit``, and a node that drains counts under ``draining``.
+
+**The frontends and the pools.** A frontend shows its requests, flows, bytes and the latency of a request: the mean and the 95th percentile. A pool shows the columns of ``show servers`` for each server, then its requests, failures, requests in flight and the wait for the first byte. A view carries at most 256 servers, and the page says how many it left out.
+
+**The fleet.** One row for each member: the state of the link, the state of the node, its flows, its servers and its two revisions. A member whose file differs from the file of this node is marked ``differs``. A member that does not answer in five seconds has the row ``No answer``.
+
+An operator or an administrator also sees the commands. Each command is one line of the admin socket, and the function of the admin socket runs it. The same parser checks it, the same worker applies it, and the same limit of 20 commands in a burst and 10 per second holds. A change reaches the other nodes over the mesh, as it does from ``sibuna ctl``, unless we tick *This node only*.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - The console offers
+     - It does not offer
+   * - ``set server POOL/NAME state ready|drain [local]``, ``set server POOL/NAME weight N [local]``, ``add server``, ``del server``, ``del ban``, ``reload cluster``, ``show servers``, ``show cluster``, ``show certs``, ``show ca``
+     - ``reload``, ``reopen log``, ``show info``, ``show stats``, ``show authority``, ``show affinity``, ``revoke cert`` and every other command. They stay on the host, with ``sibuna ctl``.
+
+Every request passes the checks of the console: the session, the role, the ``Origin`` field, the CSRF token and the allowance of the session. A viewer reads the page and changes nothing. The audit log records each change twice: the line before it runs, and the result after. A line that the console does not offer is answered ``CONSOLEEDGE``, and the edge never sees it.
+
+**A fleet.** For more than one node we write the list of all members, the same on every node, so that ``reload cluster`` can carry the file. Each node finds itself by its number, which a small file on the node holds.
+
+.. code-block:: text
+
+   console: {
+       data_dir: "/var/lib/sibuna",
+       node_file: "/etc/sibuna/console.node",
+       behind_proxy: true,
+       trusted_proxies: ["10.99.0.2/32"],
+       allow_operators: ["10.99.10.0/24"],
+       key_file: "/etc/sibuna/console.key",
+       peer_key_file: "/etc/sibuna/console-peer.key",
+       peer_ca_file: "/etc/sibuna/management-ca.pem",
+       nodes: [
+           { node: 1, listen: "10.99.0.11:9443", origin: "https://fra-edge-01.internal", allow_ips: ["10.99.0.11/32"] },
+           { node: 2, listen: "10.99.0.12:9443", origin: "https://fra-edge-02.internal", allow_ips: ["10.99.0.12/32"] },
+       ],
+   },
+
+A fleet has at most 64 members. The consoles talk to each other over HTTPS, so each one stands behind a TLS proxy, as Part IX describes for peers. The proxy must set ``X-Forwarded-For``. The two key files hold 64 hexadecimal digits each and are readable by their owner only.
+
+The listener screens a connection by its source address when it accepts it. Behind a proxy it serves the trusted proxies only. Without a proxy, and with ``allow_operators``, it serves those networks only. A screened connection is closed before it takes a slot. A peer must connect from the ``allow_ips`` of its entry, must name itself and this node in a fresh transcript, and must prove the peer key. ``allow_operators`` holds for every other request.
+
+The listener has a fixed number of slots: 64 browser streams, one peer stream for each peer and at least 16, and 16 slots that only ordinary requests may take. A stream over its quota is answered 503, and the page and the commands still work. The console never takes a lock of a request path, and the edge worker looks at one flag for it in each turn.
+
+**Removing a member.** We delete its entry from the file and reload. The node closes the stream of that member within two seconds and refuses its next connection, although the member still holds the peer key. A new member, or a changed entry, is used after a restart: the daemon logs ``EDGE014``. A reload that changes the listener, the directory, the proxy settings or the keys of the console is refused, and the routes stay.
+
 Several nodes
 ~~~~~~~~~~~~~
 

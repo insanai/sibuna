@@ -96,6 +96,9 @@ Discussion registry
    * - 0029
      - :doc:`records/0029-upgrade-handoff`
      - discussion
+   * - 0031
+     - :doc:`records/0031-edge-operator-console`
+     - discussion
    * - 0032
      - :doc:`records/0032-staged-admission`
      - discussion

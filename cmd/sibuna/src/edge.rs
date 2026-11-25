@@ -6,6 +6,11 @@ mod authority;
 #[cfg(feature = "https")]
 mod automatic;
 mod cluster;
+#[cfg(all(feature = "console", unix))]
+mod console;
+#[cfg(not(all(feature = "console", unix)))]
+#[path = "edge/no_console.rs"]
+mod console;
 mod control;
 mod ctl;
 mod failure;
@@ -168,6 +173,8 @@ struct Serving {
     observed: observed::Observed,
     /// The drain commands shared with the peers of the mesh (SID 0022).
     drains: Drains,
+    /// The operator console of SID 0031, when the file has a `console` section.
+    console: console::Link,
     /// The upgrade socket, on which a replacing process takes the listeners (SID 0029).
     upgrade: upgrade::Old,
 }
@@ -202,6 +209,8 @@ impl Serving {
         if revision.config.admin_socket() != self.admin_socket.as_deref() {
             return Err(io::Error::other("changing global.admin_socket requires a restart"));
         }
+        let console = revision.config.console().cloned();
+        let removed_peers = self.console.plan(console.as_ref())?;
         let upgrade_socket = revision.config.upgrade_socket().map(std::path::Path::new);
         if upgrade_socket != self.upgrade.path() {
             return Err(io::Error::other("changing global.upgrade_socket requires a restart"));
@@ -213,6 +222,7 @@ impl Serving {
         let observed = &mut self.observed;
         reload(&mut self.edge, self.http.as_mut(), &mut self.adapters, observed, revision)?;
         self.reloads += 1;
+        self.console.apply(&removed_peers, console.as_ref());
         self.shutdown_timeout = shutdown_timeout;
         self.drain_delay = drain_delay;
         self.watch(watch)?;
@@ -473,6 +483,24 @@ fn prepare(
 /// The most admin commands applied between two readiness batches.
 const COMMANDS_PER_STEP: usize = 16;
 
+/// Starts the operator console of SID 0031 beside `edge`, or nothing when the file
+/// has no `console` section. Fails as [`console::Link::start`] does.
+fn start_console(
+    options: Option<&sibuna_lb::ConsoleOptions>,
+    edge: &Edge,
+    observed: &observed::Observed,
+    source: &Arc<Source>,
+    jobs: &mpsc::Sender<admin::Job>,
+) -> io::Result<console::Link> {
+    let parts = console::Parts {
+        stats: edge.stats(),
+        observe: Arc::clone(observed.shared()),
+        source: Arc::clone(source),
+        jobs: jobs.clone(),
+    };
+    console::Link::start(options, parts)
+}
+
 fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result<()> {
     let shutdown = Shutdown::new();
     let source = Arc::new(source);
@@ -485,6 +513,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let mesh = config.mesh().map(|spec| start_mesh(spec, &source, &pending)).transpose()?;
     let admin_socket = config.admin_socket().map(str::to_owned);
     let takeover = config.reuse_port();
+    let console_options = config.console().cloned();
     let watch = config.watch();
     let (shutdown_timeout, drain_delay) = (config.shutdown_timeout(), config.drain_delay());
     let upgrade_socket = config.upgrade_socket().map(str::to_owned);
@@ -499,6 +528,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let drains = join(http.as_ref(), &adapters, mesh.as_ref());
     let observed = observed::Observed::start(http.as_ref(), &observe_options, &edge)?;
     let (jobs, inbox) = mpsc::channel();
+    let console = start_console(console_options.as_ref(), &edge, &observed, &source, &jobs)?;
     let mut serving = Serving {
         edge,
         http,
@@ -513,6 +543,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         reloads: 0,
         observed,
         drains,
+        console,
         upgrade: upgrade::Old::none(),
     };
     serving.watch(watch)?;
@@ -520,13 +551,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     // turn of the worker. The sockets of this process take the paths of the old one
     // only now, when the old one has given the service up.
     let replaced = replacement.finish(&mut serving.edge)?;
-    let _admin = match &serving.admin_socket {
-        Some(path) => {
-            let source = Arc::clone(&serving.source);
-            Some(admin::Admin::start(path, takeover || replaced, source, jobs)?)
-        }
-        None => None,
-    };
+    let _admin = serving.start_admin(takeover || replaced, jobs)?;
     serving.upgrade = upgrade::Old::start(upgrade_socket.as_deref(), &serving.edge)?;
     serving.announce();
     // The follower of a database starts with the revision that the worker serves.
@@ -541,6 +566,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
             serving.answer(job);
         }
         serving.follow(mesh.as_ref(), &mut current);
+        serving.console.set_regime(current);
         if serving.upgrade.step(&mut serving.edge) {
             break;
         }
@@ -553,6 +579,18 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
 }
 
 impl Serving {
+    /// Opens the admin socket of `global.admin_socket`, or nothing without the key. With
+    /// `takeover` it replaces the socket file of another daemon. Fails when the socket
+    /// cannot be opened.
+    fn start_admin(
+        &self,
+        takeover: bool,
+        jobs: mpsc::Sender<admin::Job>,
+    ) -> io::Result<Option<admin::Admin>> {
+        let Some(path) = &self.admin_socket else { return Ok(None) };
+        admin::Admin::start(path, takeover, Arc::clone(&self.source), jobs).map(Some)
+    }
+
     /// Serves on for a while after the last turn of the worker and before the drain.
     fn settle(&mut self) -> io::Result<()> {
         if self.upgrade.is_handed() {
@@ -593,6 +631,7 @@ impl Serving {
     fn step(&mut self) -> io::Result<()> {
         step(&mut self.edge, self.http.as_ref())?;
         self.observed.pass_flows(&mut self.edge);
+        self.console.turn(&self.edge, self.reloads);
         Ok(())
     }
 

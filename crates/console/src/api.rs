@@ -15,6 +15,7 @@
 pub mod audit;
 pub mod challenges;
 pub mod country;
+pub mod edge;
 pub mod events;
 pub mod export;
 pub mod geoip;
