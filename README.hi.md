@@ -1,4 +1,4 @@
-<!-- English source SHA-256: f2e33ed0c74ec5728587671c3f77214143ec89eb95e3196cd0ca3fc207e2f189 -->
+<!-- English source SHA-256: cc1aaa74c7ebf304bf574d29f14c1d1eb9196b30744f92f833e9d2712778bbb8 -->
 <h1 align="center">sibuna</h1>
 <p align="center">वितरित लोड बैलेंसर और वेब एप्लिकेशन फ़ायरवॉल</p>
 <p align="center">
@@ -33,7 +33,7 @@ Sibuna TCP, UDP और HTTP ट्रैफ़िक को स्वस्थ �
 
   हम जाँचा हुआ रूटिंग कॉन्फ़िगरेशन पूरे मेश में वितरित करते हैं। हर नोड अपने बैकएंड पूल को ट्रैफ़िक भेजता है और प्रतिबंध व सीखे हुए सर्वर आवंटन साझा कर सकता है।
 
-[Jlavi से Sibuna का कॉन्फ़िगरेशन](https://insanai.github.io/sibuna/hi/book/jlavi.html)
+[Sibuna क्या है?](https://insanai.github.io/sibuna/hi/book/introduction.html)
 
 <a id="features"></a>
 
@@ -63,6 +63,8 @@ sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
 sibuna check -f edge.jlv
 sibuna --config-file edge.jlv
 ```
+
+[Jlavi से Sibuna का कॉन्फ़िगरेशन](https://insanai.github.io/sibuna/hi/book/jlavi.html)
 
 - **फ़ॉरवर्डिंग:** TCP और UDP, सर्वर नाम के आधार पर रूट होने वाला TLS पासथ्रू, QUIC पासथ्रू और PROXY प्रोटोकॉल।
 - **HTTP:** HAProxy-शैली के PEM बंडल के साथ TLS टर्मिनेशन; HTTP/1.1, HTTP/2, HTTP/3 और WebSocket; होस्ट नाम और पाथ के आधार पर HTTP/1.1, HTTP/2 या HTTP/3 सर्वर तक रूटिंग। Linux पर इवेंट-ड्रिवन वर्कर कनेक्शन संभालते हैं, हर प्रोसेसर पर एक वर्कर।

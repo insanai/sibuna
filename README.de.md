@@ -1,4 +1,4 @@
-<!-- English source SHA-256: f2e33ed0c74ec5728587671c3f77214143ec89eb95e3196cd0ca3fc207e2f189 -->
+<!-- English source SHA-256: cc1aaa74c7ebf304bf574d29f14c1d1eb9196b30744f92f833e9d2712778bbb8 -->
 <h1 align="center">sibuna</h1>
 <p align="center">Verteilter Lastverteiler und Web Application Firewall</p>
 <p align="center">
@@ -33,7 +33,7 @@ Sibuna leitet TCP, UDP und HTTP an gesunde Server weiter. Wir können einen Edge
 
   Wir verteilen eine geprüfte Routingkonfiguration im Mesh. Die Knoten können Sperren und gelernte Serverzuordnungen austauschen, während jeder Knoten Verkehr an seine Backend-Pools weiterleitet.
 
-[Sibuna mit Jlavi konfigurieren](https://insanai.github.io/sibuna/de/book/jlavi.html)
+[Was ist Sibuna?](https://insanai.github.io/sibuna/de/book/introduction.html)
 
 <a id="features"></a>
 
@@ -63,6 +63,8 @@ sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
 sibuna check -f edge.jlv
 sibuna --config-file edge.jlv
 ```
+
+[Sibuna mit Jlavi konfigurieren](https://insanai.github.io/sibuna/de/book/jlavi.html)
 
 - **Weiterleitung:** TCP und UDP, unentschlüsseltes Durchreichen von TLS, geroutet nach Servername, Durchreichen von QUIC und das PROXY-Protokoll.
 - **HTTP:** TLS-Terminierung mit PEM-Bündeln im Stil von HAProxy; HTTP/1.1, HTTP/2, HTTP/3 und WebSocket; Routing nach Hostname und Pfad zu HTTP/1.1-, HTTP/2- oder HTTP/3-Servern. Unter Linux bedienen ereignisgesteuerte Worker die Verbindungen, ein Worker pro Prozessor.

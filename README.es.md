@@ -1,4 +1,4 @@
-<!-- English source SHA-256: f2e33ed0c74ec5728587671c3f77214143ec89eb95e3196cd0ca3fc207e2f189 -->
+<!-- English source SHA-256: cc1aaa74c7ebf304bf574d29f14c1d1eb9196b30744f92f833e9d2712778bbb8 -->
 <h1 align="center">sibuna</h1>
 <p align="center">Balanceador de carga distribuido y cortafuegos de aplicaciones web</p>
 <p align="center">
@@ -33,7 +33,7 @@ Sibuna dirige TCP, UDP y HTTP a servidores en buen estado. Podemos ejecutar un n
 
   Distribuimos una configuración de rutas validada por la malla. Los nodos pueden compartir bloqueos y afinidades aprendidas mientras cada uno reenvía tráfico a sus grupos de servidores.
 
-[Configurar Sibuna con Jlavi](https://insanai.github.io/sibuna/es/book/jlavi.html)
+[¿Qué es Sibuna?](https://insanai.github.io/sibuna/es/book/introduction.html)
 
 <a id="features"></a>
 
@@ -63,6 +63,8 @@ sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
 sibuna check -f edge.jlv
 sibuna --config-file edge.jlv
 ```
+
+[Configurar Sibuna con Jlavi](https://insanai.github.io/sibuna/es/book/jlavi.html)
 
 - **Reenvío:** TCP y UDP, paso de TLS sin descifrar (passthrough) enrutado por nombre de servidor, paso de QUIC sin descifrar y el protocolo PROXY.
 - **HTTP:** terminación TLS con paquetes PEM al estilo de HAProxy; HTTP/1.1, HTTP/2, HTTP/3 y WebSocket; enrutamiento por nombre de host y ruta hacia servidores HTTP/1.1, HTTP/2 o HTTP/3. En Linux, workers dirigidos por eventos atienden las conexiones, un worker por procesador.

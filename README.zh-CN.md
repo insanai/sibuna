@@ -1,4 +1,4 @@
-<!-- English source SHA-256: f2e33ed0c74ec5728587671c3f77214143ec89eb95e3196cd0ca3fc207e2f189 -->
+<!-- English source SHA-256: cc1aaa74c7ebf304bf574d29f14c1d1eb9196b30744f92f833e9d2712778bbb8 -->
 <h1 align="center">sibuna</h1>
 <p align="center">分布式负载均衡器和 Web 应用防火墙</p>
 <p align="center">
@@ -33,7 +33,7 @@ Sibuna 将 TCP、UDP 和 HTTP 流量转发到健康的服务器。我们可以�
 
   在网状集群中分发已验证的路由配置。各节点可以共享封禁和已学习的客户端亲和性，同时向各自的后端池转发流量。
 
-[使用 Jlavi 配置 Sibuna](https://insanai.github.io/sibuna/zh-hans/book/jlavi.html)
+[Sibuna 是什么？](https://insanai.github.io/sibuna/zh-hans/book/introduction.html)
 
 <a id="features"></a>
 
@@ -63,6 +63,8 @@ sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
 sibuna check -f edge.jlv
 sibuna --config-file edge.jlv
 ```
+
+[使用 Jlavi 配置 Sibuna](https://insanai.github.io/sibuna/zh-hans/book/jlavi.html)
 
 - **转发：** TCP 和 UDP、按服务器名称路由的 TLS 透传、QUIC 透传以及 PROXY 协议。
 - **HTTP：** 使用 HAProxy 风格的 PEM 证书包终止 TLS；支持 HTTP/1.1、HTTP/2、HTTP/3 和 WebSocket；按主机名和路径路由到 HTTP/1.1、HTTP/2 或 HTTP/3 服务器。在 Linux 上，由事件驱动的 worker 处理连接，每个处理器一个 worker。

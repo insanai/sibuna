@@ -1,4 +1,4 @@
-<!-- English source SHA-256: f2e33ed0c74ec5728587671c3f77214143ec89eb95e3196cd0ca3fc207e2f189 -->
+<!-- English source SHA-256: cc1aaa74c7ebf304bf574d29f14c1d1eb9196b30744f92f833e9d2712778bbb8 -->
 <h1 align="center">sibuna</h1>
 <p align="center">분산 로드 밸런서와 웹 애플리케이션 방화벽</p>
 <p align="center">
@@ -33,7 +33,7 @@ Sibuna는 TCP, UDP, HTTP 트래픽을 정상 서버로 전달합니다. 에지 �
 
   검증한 라우팅 설정을 메시에 배포합니다. 각 노드는 자체 백엔드 풀로 트래픽을 전달하면서 차단 정보와 학습한 서버 할당을 공유할 수 있습니다.
 
-[Jlavi로 Sibuna 구성하기](https://insanai.github.io/sibuna/ko/book/jlavi.html)
+[Sibuna란 무엇인가](https://insanai.github.io/sibuna/ko/book/introduction.html)
 
 <a id="features"></a>
 
@@ -63,6 +63,8 @@ sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
 sibuna check -f edge.jlv
 sibuna --config-file edge.jlv
 ```
+
+[Jlavi로 Sibuna 구성하기](https://insanai.github.io/sibuna/ko/book/jlavi.html)
 
 - **전달:** TCP와 UDP, 서버 이름으로 라우팅하는 TLS 패스스루, QUIC 패스스루, PROXY 프로토콜.
 - **HTTP:** HAProxy 형식의 PEM 번들로 TLS를 종료합니다. HTTP/1.1, HTTP/2, HTTP/3, WebSocket을 지원하고, 호스트 이름과 경로에 따라 HTTP/1.1, HTTP/2, HTTP/3 서버로 라우팅합니다. Linux에서는 이벤트 기반 워커가 연결을 처리하며, 워커는 프로세서마다 하나입니다.

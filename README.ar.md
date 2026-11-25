@@ -1,4 +1,4 @@
-<!-- English source SHA-256: f2e33ed0c74ec5728587671c3f77214143ec89eb95e3196cd0ca3fc207e2f189 -->
+<!-- English source SHA-256: cc1aaa74c7ebf304bf574d29f14c1d1eb9196b30744f92f833e9d2712778bbb8 -->
 <div dir="rtl">
 
 <h1 align="center">sibuna</h1>
@@ -35,7 +35,7 @@
 
   نوزع إعدادات التوجيه بعد التحقق منها على الشبكة. يمكن للعقد تبادل قرارات الحظر وارتباطات العملاء بالخوادم، بينما تمرر كل عقدة الحركة إلى مجموعات خوادمها الخلفية.
 
-[إعداد Sibuna بلغة Jlavi](https://insanai.github.io/sibuna/ar/book/jlavi.html)
+[ما هو Sibuna؟](https://insanai.github.io/sibuna/ar/book/introduction.html)
 
 <a id="features"></a>
 
@@ -67,6 +67,8 @@ sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
 sibuna check -f edge.jlv
 sibuna --config-file edge.jlv
 ```
+
+[إعداد Sibuna بلغة Jlavi](https://insanai.github.io/sibuna/ar/book/jlavi.html)
 
 </div>
 

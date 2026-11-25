@@ -32,7 +32,7 @@ Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or conne
 
   Distribute a checked routing configuration across the mesh. Nodes can share bans and learned affinity while each node forwards traffic to its own backend pools.
 
-[Configuring Sibuna with Jlavi](https://insanai.github.io/sibuna/book/jlavi.html)
+[What is Sibuna?](https://insanai.github.io/sibuna/book/introduction.html)
 
 ## Features
 
@@ -58,6 +58,8 @@ sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
 sibuna check -f edge.jlv
 sibuna --config-file edge.jlv
 ```
+
+[Configuring Sibuna with Jlavi](https://insanai.github.io/sibuna/book/jlavi.html)
 
 - **Forwarding:** TCP and UDP, TLS passthrough routed by server name, QUIC passthrough and the PROXY protocol.
 - **HTTP:** TLS termination with HAProxy-style PEM bundles; HTTP/1.1, HTTP/2, HTTP/3 and WebSocket; routes by host name and path to HTTP/1.1, HTTP/2 or HTTP/3 servers. On Linux, event-driven workers serve the connections, one worker per processor.

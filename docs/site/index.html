@@ -1,7 +1,7 @@
 <section class="hero hero-edge">
   <div><h1>Distributed load balancer and web application firewall</h1>
     <p class="lead">Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes.</p>
-    <div class="actions"><a class="button" href="/sibuna/book/jlavi.html">Configuring Sibuna with Jlavi</a>
+    <div class="actions"><a class="button" href="/sibuna/book/introduction.html">What is Sibuna?</a>
       <a class="button secondary" href="#use-cases">Where we use Sibuna</a></div>
     <p class="meta">Open source · LGPL 3.0 · v1.0.0-rc.1</p></div>
   <figure class="edge-map">
@@ -50,7 +50,7 @@
   </div>
 </section>
 <section class="status" aria-label="Release status">
-  <p><strong>Where each part stands.</strong> The release candidate includes the clustered edge. The beta downloads below provide the firewall and console.</p>
+  <p><strong>Where each part stands.</strong> RC1 includes the load balancer, firewall and console in one executable.</p>
   <a href="#start">How to try it</a>
 </section>
 <section class="section path" aria-labelledby="path-title">
@@ -109,10 +109,10 @@
   <p>Releases hold binaries for Linux, macOS and Windows, Debian, RPM and Arch packages,
   CLI packages for FreeBSD 15.1 and OpenBSD 7.9 x86-64, a Helm chart and a container image.
   Verify the checksums before installation.</p>
-  <a href="https://github.com/insanai/sibuna/releases/tag/v1.0.0-beta.3">All downloads</a></div>
+  <a href="/sibuna/book/jlavi.html">Configuring Sibuna with Jlavi</a> · <a href="https://github.com/insanai/sibuna/releases">All downloads</a></div>
   <div class="panes">
-  <div class="code"><div class="code-label">Released · web protection · Linux x86-64</div><pre><code>curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.3/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.3/SHA256SUMS
+  <div class="code"><div class="code-label">RC1 on Linux x86-64</div><pre><code>curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.1/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.1/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 ./sibuna --help</code></pre></div>
@@ -142,10 +142,7 @@ cargo +1.100.0 build --release -p sibuna
   12 or later, and Windows 10 or Server 2016 or later. The event-driven workers and the
   replacement of the executable without lost connections exist on Linux only.</p>
   <a href="/sibuna/book/reference.html">CLI and protocol reference</a></div>
-  <div class="limits"><p>The load balancer has not been released and has not run under
-  production traffic. Its cluster features were tested on three hosts. A replacement of
-  the executable ends QUIC connections. HTTP/2 carries about two thirds of the requests
-  of HAProxy.</p>
+  <div class="limits"><p>We tested the cluster on three hosts. Qualification under production traffic remains open. Replacing the executable ends QUIC connections.</p>
   <p>The built-in inspector checks the first 8 KiB of supported bodies. WebSocket messages
   are relayed without inspection. Sibuna does not provide volumetric network mitigation.
   A challenge adds work. It does not establish that a visitor is human.</p>

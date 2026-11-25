@@ -1,4 +1,4 @@
-<!-- English source SHA-256: f2e33ed0c74ec5728587671c3f77214143ec89eb95e3196cd0ca3fc207e2f189 -->
+<!-- English source SHA-256: cc1aaa74c7ebf304bf574d29f14c1d1eb9196b30744f92f833e9d2712778bbb8 -->
 <h1 align="center">sibuna</h1>
 <p align="center">分散ロードバランサーとWebアプリケーションファイアウォール</p>
 <p align="center">
@@ -33,7 +33,7 @@ SibunaはTCP、UDP、HTTPの通信を正常なサーバーに振り分けます�
 
   検証済みのルーティング設定をメッシュに配布します。各ノードは自身のバックエンドプールに通信を転送しながら、拒否情報や学習済みの振り分け先を共有できます。
 
-[JlaviでSibunaを設定する](https://insanai.github.io/sibuna/ja/book/jlavi.html)
+[Sibuna とは何か](https://insanai.github.io/sibuna/ja/book/introduction.html)
 
 <a id="features"></a>
 
@@ -63,6 +63,8 @@ sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv
 sibuna check -f edge.jlv
 sibuna --config-file edge.jlv
 ```
+
+[JlaviでSibunaを設定する](https://insanai.github.io/sibuna/ja/book/jlavi.html)
 
 - **転送：** TCPとUDP、サーバー名でルーティングするTLSパススルー、QUICパススルー、PROXYプロトコル。
 - **HTTP：** HAProxy形式のPEMバンドルでTLSを終端します。HTTP/1.1、HTTP/2、HTTP/3、WebSocketに対応し、ホスト名とパスでHTTP/1.1、HTTP/2、HTTP/3のサーバーへルーティングします。Linuxでは、イベント駆動のワーカーが接続を処理します。ワーカーはプロセッサーごとに1つです。
