@@ -373,3 +373,177 @@ html:is(:lang(hi),:lang(ar)) .hero h1 em {
     flex-wrap:wrap;
     row-gap:6px}
 }
+/* The landing page of the load balancer: hero with a terminal, the release status, the
+ * path figure, six capabilities, the measurements and two code panes. */
+.hero-edge {
+  grid-template-columns:1.1fr 1fr;
+  gap:6%;
+  padding:70px 0 50px
+}
+.hero-edge .lead {
+  max-width:600px
+}
+.hero-code {
+  box-shadow:0 20px 55px #20352f1f
+}
+.hero-code pre {
+  font-size:13.5px
+}
+.status {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px;
+  margin-bottom:10px;
+  padding:16px 22px;
+  border:1px solid #e6d3ad;
+  border-left:3px solid var(--gold);
+  border-radius:8px;
+  background:#fbf4e4;
+  font-size:15px
+}
+.status p {
+  margin:0;
+  color:#4a4a3a
+}
+.status a {
+  white-space:nowrap;
+  font-weight:600;
+  font-size:14px
+}
+.path {
+  border-top:0
+}
+.path-figure {
+  margin:0 0 20px;
+  overflow-x:auto
+}
+.path-figure svg {
+  display:block;
+  width:100%;
+  min-width:680px;
+  height:auto
+}
+.path .features {
+  grid-template-columns:repeat(3,1fr);
+  gap:10px 4%;
+  padding:25px 0 0
+}
+.features h3 {
+  font-size:21px;
+  letter-spacing:-.02em;
+  margin:10px 0
+}
+.features article {
+  padding:14px 0
+}
+.measure {
+  display:grid;
+  grid-template-columns:1fr 1.3fr;
+  gap:7%;
+  align-items:center
+}
+.table-wrap {
+  overflow-x:auto;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#fcfcf8
+}
+.measure table {
+  width:100%;
+  border-collapse:collapse;
+  font-variant-numeric:tabular-nums;
+  font-size:15px
+}
+.measure caption {
+  caption-side:bottom;
+  padding:12px 20px;
+  text-align:start;
+  font-size:13px;
+  color:var(--muted);
+  border-top:1px solid var(--line)
+}
+.measure th,.measure td {
+  padding:14px 20px;
+  text-align:end;
+  white-space:nowrap
+}
+.measure th:first-child {
+  text-align:start
+}
+.measure thead th {
+  font:600 11px/1.5 ui-monospace,monospace;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  color:var(--muted);
+  border-bottom:1px solid var(--line)
+}
+.measure tbody th {
+  font-weight:600
+}
+.measure tbody tr+tr>* {
+  border-top:1px solid var(--line)
+}
+.measure td:last-child {
+  font-weight:650;
+  color:var(--green)
+}
+.measure .behind td:last-child {
+  color:#9a5a12
+}
+.bar {
+  display:inline-block;
+  vertical-align:middle;
+  width:70px;
+  height:8px;
+  margin-inline-end:12px;
+  border-radius:4px;
+  background:linear-gradient(to right,var(--green) var(--share),var(--pale) var(--share))
+}
+[dir="rtl"] .bar {
+  background:linear-gradient(to left,var(--green) var(--share),var(--pale) var(--share))
+}
+.behind .bar {
+  background:linear-gradient(to right,var(--gold) var(--share),var(--pale) var(--share))
+}
+[dir="rtl"] .behind .bar {
+  background:linear-gradient(to left,var(--gold) var(--share),var(--pale) var(--share))
+}
+.panes {
+  display:grid;
+  gap:16px;
+  min-width:0
+}
+.code,.path-figure,.table-wrap {
+  direction:ltr
+}
+[dir="rtl"] .measure th,[dir="rtl"] .measure td,[dir="rtl"] .measure caption {
+  direction:rtl
+}
+html:is(:lang(zh),:lang(ja),:lang(ko),:lang(hi),:lang(ar)) .measure thead th {
+  font-family:inherit;
+  letter-spacing:normal
+}
+@media(max-width:900px) {
+  .path .features {
+    grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:680px) {
+  .hero-edge,.measure {
+    grid-template-columns:1fr}
+  .hero-edge {
+    padding:40px 0 26px}
+  .status {
+    margin-top:4px}
+  .status {
+    flex-direction:column;
+    align-items:flex-start;
+    gap:10px}
+  .path .features {
+    grid-template-columns:1fr}
+  .measure th,.measure td {
+    padding:12px 12px}
+  .bar {
+    width:40px;
+    margin-inline-end:8px}
+}

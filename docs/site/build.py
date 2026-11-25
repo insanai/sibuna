@@ -49,8 +49,8 @@ SITE_URL = "https://insanai.github.io/sibuna/"
 REPO = "https://github.com/insanai/sibuna"
 # The workspace version; the landing page must name it (a release bump updates index.html).
 VERSION = re.search(r'^version = "([^"]+)"', (ROOT / "Cargo.toml").read_text(), re.M)[1]
-DESCRIPTION = ("Sibuna: self-hosted web protection with browser proof of work"
-               " and an optional console.")
+DESCRIPTION = ("Sibuna: a load balancer for TCP, UDP and HTTP with web protection by"
+               " browser proof of work, in one executable.")
 # Files the landing page loads, copied to /sibuna/assets/.
 ASSETS = ("site.css", "favicon.svg", "admission-demo.css", "admission-model.js",
           "admission-animation.js", "admission-scene.bundle.js", "three-LICENSE.txt",
@@ -84,7 +84,7 @@ NAVIGATION = (("Home", ""), ("Book", "book/"), ("Operations", "book/operations.h
 # The sections that exist in every language: the landing page and the bundles. The SIDs
 # exist only in English, and every edition links to them.
 TRANSLATED = ("",) + tuple(f"{bundle.folder}/" for bundle in BUNDLES)
-TITLE = "Web application protection"
+TITLE = "Load balancer and web protection"
 # The phrases the landing page's scripts and the documentation headers show.
 SCRIPT_PHRASES = languages.model_phrases() | set(languages.EXTRA_PHRASES)
 

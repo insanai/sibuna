@@ -1,67 +1,175 @@
-<section class="hero hero-demo">
-  <div><p class="eyebrow">Self-hosted web protection</p>
-    <h1>Protect your site.<br><em>Share the cost of access.</em></h1></div>
-  <div><p class="lead">Sibuna asks clients to solve a puzzle before granting access.
-    Creating the proof takes more computation than checking it. This helps preserve your
-    app's resources for admitted traffic.</p>
+<section class="hero hero-edge">
+  <div><p class="eyebrow">Load balancer and web protection in one executable</p>
+    <h1>Balance the load.<br><em>Guard the door.</em></h1>
+    <p class="lead">Sibuna forwards TCP and UDP, terminates TLS and routes HTTP/1.1, HTTP/2
+    and HTTP/3 to your servers. It can ask a client for proof of work before a request
+    reaches your application.</p>
     <div class="actions"><a class="button" href="/sibuna/book/operations.html">Get started</a>
-      <a class="button secondary" href="#how-sibuna-works">See how it works</a></div>
+      <a class="button secondary" href="#measurements">See the measurements</a></div>
     <p class="meta">Open source · LGPL 3.0 · v1.0.0-beta.3</p></div>
+  <div class="code hero-code"><div class="code-label">One command, no file</div><pre><code><span class="comment"># Two servers behind one port</span>
+sibuna lb --bind :8080 \
+  --server 10.0.0.1:80 --server 10.0.0.2:80
+
+<span class="comment"># HTTPS with an automatic certificate</span>
+sibuna lb --tls auto --domain example.org \
+  --server 10.0.0.1:80
+
+<span class="comment"># Drain a server while the daemon runs</span>
+sibuna ctl /run/sibuna/edge.sock \
+  set server app/10.0.0.1:80 state drain</code></pre></div>
+</section>
+<section class="status" aria-label="Release status">
+  <p><strong>Where each part stands.</strong> The packages of v1.0.0-beta.3 hold the web
+  protection and the console. The load balancer is in the source tree and comes with the next
+  release. Until then we build it from source.</p>
+  <a href="#start">How to try it</a>
+</section>
+<section class="section path" aria-labelledby="path-title">
+  <p class="eyebrow">One process on the path</p>
+  <h2 id="path-title">From the socket to the server.</h2>
+  <figure class="path-figure">
+    <svg viewBox="0 0 960 318" role="img" aria-labelledby="path-svg-title path-svg-desc">
+      <title id="path-svg-title">The path of a connection through Sibuna</title>
+      <desc id="path-svg-desc">Clients connect to the Sibuna edge. The edge admits the
+      connection, terminates TLS, applies the gate and the rules, selects a route and a
+      server, and forwards to a pool. Nodes of a mesh share state with each other.</desc>
+      <defs><marker id="path-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5"
+        orient="auto"><path d="M0 0L7 3.5L0 7" fill="none" stroke="#176a4b"/></marker></defs>
+      <g fill="none" stroke="#176a4b" stroke-width="2" marker-end="url(#path-arrow)">
+        <path d="M150 70H212"/><path d="M150 150H212"/><path d="M150 230H212"/>
+        <path d="M746 105H808"/><path d="M746 195H808"/></g>
+      <g fill="none" stroke="#b7c4b6" stroke-width="2" stroke-dasharray="5 6">
+        <path d="M480 264V290"/></g>
+      <g fill="#fcfcf8" stroke="#d9dfd5" stroke-width="1.5">
+        <rect x="20" y="44" width="130" height="52" rx="8"/>
+        <rect x="20" y="124" width="130" height="52" rx="8"/>
+        <rect x="20" y="204" width="130" height="52" rx="8"/>
+        <rect x="810" y="78" width="130" height="54" rx="8"/>
+        <rect x="810" y="168" width="130" height="54" rx="8"/></g>
+      <rect x="214" y="30" width="532" height="232" rx="14" fill="#152d28"/>
+      <g fill="#213c2c" stroke="#3d6a57">
+        <rect x="234" y="92" width="112" height="120" rx="8"/>
+        <rect x="362" y="92" width="112" height="120" rx="8"/>
+        <rect x="490" y="92" width="112" height="120" rx="8"/>
+        <rect x="618" y="92" width="108" height="120" rx="8"/></g>
+      <g font-family="system-ui,sans-serif" text-anchor="middle">
+        <g fill="#20352f" font-size="15">
+          <text x="85" y="75">TCP, UDP</text><text x="85" y="155">HTTPS</text>
+          <text x="85" y="235">HTTP/3</text>
+          <text x="875" y="110">Pool</text><text x="875" y="200">Pool</text></g>
+        <text x="480" y="66" fill="#f1ce8e" font-size="16">Sibuna, one worker for each processor</text>
+        <g fill="#e7f1e8" font-size="15">
+          <text x="290" y="140">Admit</text><text x="418" y="140">Decrypt</text>
+          <text x="546" y="140">Decide</text><text x="672" y="140">Balance</text></g>
+        <g fill="#9ab7aa" font-size="12">
+          <text x="290" y="166">Limits</text><text x="290" y="184">Inspection</text>
+          <text x="418" y="166">TLS</text><text x="418" y="184">Certificates</text>
+          <text x="546" y="166">Routes, rules</text><text x="546" y="184">Challenge, hooks</text>
+          <text x="672" y="166">Health</text><text x="672" y="184">Affinity</text></g>
+        <text x="480" y="310" fill="#64716b" font-size="13">Other nodes of the mesh</text></g>
+    </svg>
+  </figure>
+  <div class="features">
+    <article><span class="label">01 / Forward</span><h3>Connections and datagrams.</h3>
+    <p>TCP streams and UDP mappings go to a pool of servers. A TLS connection can pass
+    through undecrypted, routed by its server name. QUIC can pass through too. The PROXY
+    protocol carries the address of the client.</p></article>
+    <article><span class="label">02 / Terminate and route</span><h3>HTTPS without a second proxy.</h3>
+    <p>Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes
+    each request by host name and path. Certificates come from Let's Encrypt or another
+    ACME authority, and a local authority covers internal names.</p></article>
+    <article><span class="label">03 / Stay up</span><h3>Change it while it runs.</h3>
+    <p>Health checks, slow start and draining keep traffic on servers that can take it.
+    A reload of the configuration fails no request. On Linux a new executable takes the
+    listening sockets from the old one.</p></article>
+    <article><span class="label">04 / Scale out</span><h3>Several nodes, one behaviour.</h3>
+    <p>Nodes of a mesh share the sticky table and the limits of a server, and forward a
+    client to the node that owns it. A PostgreSQL database can publish one configuration
+    to every node and roll it back.</p></article>
+    <article><span class="label">05 / Protect</span><h3>Ask bots to do the work.</h3>
+    <p>A browser challenge adds a cost to automated access, and a signed session lets an
+    admitted visitor return. Rules allow, challenge or deny. The shield checks requests for
+    SQL injection, XSS, path traversal and command injection.</p></article>
+    <article><span class="label">06 / Extend and observe</span><h3>See and shape the decisions.</h3>
+    <p>Hooks run at the connection and at the request: compiled in, as WebAssembly with a
+    budget, or in a separate process. Metrics, access logs and a console show servers,
+    flows and the reason for each refusal.</p></article>
+  </div>
+</section>
+<section class="section measure" id="measurements" aria-labelledby="measure-title">
+  <div><p class="eyebrow">Measured, with the losses</p>
+    <h2 id="measure-title">Beside HAProxy<br>on one host.</h2>
+    <p>Both proxies ran on eight processors with 256 connections over loopback, each case
+    for eight seconds, with no failed request. Sibuna is level or ahead in three cases.
+    HAProxy is faster for HTTP/2, and we say why in the book.</p>
+    <a href="/sibuna/book/benchmarks.html">Method and all measurements</a></div>
+  <div class="table-wrap"><table>
+    <caption>Requests in a second. More is better.</caption>
+    <thead><tr><th scope="col">Case</th><th scope="col" translate="no">Sibuna</th>
+      <th scope="col" translate="no">HAProxy 3.0</th><th scope="col">Ratio</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">TCP forwarding</th><td>240,967</td><td>230,934</td>
+        <td><span class="bar" style="--share:100%"></span>1.04</td></tr>
+      <tr><th scope="row" translate="no">HTTP/1.1</th><td>224,375</td><td>219,798</td>
+        <td><span class="bar" style="--share:100%"></span>1.02</td></tr>
+      <tr><th scope="row">HTTP/1.1 over TLS</th><td>178,261</td><td>162,520</td>
+        <td><span class="bar" style="--share:100%"></span>1.10</td></tr>
+      <tr class="behind"><th scope="row" translate="no">HTTP/2</th><td>103,789</td><td>150,384</td>
+        <td><span class="bar" style="--share:66%"></span>0.69</td></tr>
+    </tbody></table></div>
 </section>
 <!-- admission-demo -->
-<section class="features" aria-label="Protection capabilities">
-  <article><span class="label">01 / Govern admission</span><h2>Ask bots to do the work.</h2>
-  <p>Browser challenges add a cost to automated access. Signed sessions let admitted visitors
-  return without a new puzzle on every request. Hardware and difficulty affect the cost.</p></article>
-  <article><span class="label">02 / Protect applications</span><h2>Keep requests flowing.</h2>
-  <p>Use Sibuna as a reverse proxy or an admission service for your existing ingress.
-  Rules can match the JA4 TLS fingerprint that a trusted ingress forwards.
-  Shield checks requests for SQL injection, XSS, path traversal and command injection.</p></article>
-  <article><span class="label">03 / Operate with evidence</span><h2>See the decisions.</h2>
-  <p>The optional console shows traffic, recorded incidents and policy changes.
-  Coverage and sampling labels help explain what each view can tell you.</p></article>
-</section>
-<section class="section start">
-  <div><p class="eyebrow">Try v1.0.0-beta.3</p><h2>Download.<br>Verify. Configure.</h2>
-  <p>Download binaries for Linux, macOS and Windows; Debian, RPM and Arch packages;
-  or CLI packages for FreeBSD 15.1 and OpenBSD 7.9 x86-64. Releases also include a Helm chart
-  and a container image. Verify checksums before installation.</p>
+<section class="section start" id="start">
+  <div><p class="eyebrow">Try it</p><h2>Download.<br>Or build.</h2>
+  <p>Releases hold binaries for Linux, macOS and Windows, Debian, RPM and Arch packages,
+  CLI packages for FreeBSD 15.1 and OpenBSD 7.9 x86-64, a Helm chart and a container image.
+  Verify the checksums before installation.</p>
+  <p>The load balancer needs a build from the source tree and a Rust toolchain.</p>
   <a href="https://github.com/insanai/sibuna/releases/tag/v1.0.0-beta.3">All downloads</a></div>
-  <div class="code"><div class="code-label">TERMINAL · LINUX x86-64</div><pre><code>curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.3/sibuna-linux-amd64.tar.gz
+  <div class="panes">
+  <div class="code"><div class="code-label">Released · web protection · Linux x86-64</div><pre><code>curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.3/sibuna-linux-amd64.tar.gz
 curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.3/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
-./sibuna --help
-
-<span class="comment"># Configure a trusted HTTPS ingress before deployment.</span></code></pre></div>
+./sibuna --help</code></pre></div>
+  <div class="code"><div class="code-label">From source · load balancer</div><pre><code>git clone https://github.com/insanai/sibuna
+cd sibuna &amp;&amp; cargo build --release -p sibuna
+./target/release/sibuna lb --bind :8080 --server 10.0.0.1:80 \
+  --server 10.0.0.2:80 --print-config &gt; edge.jlv
+./target/release/sibuna check -f edge.jlv
+./target/release/sibuna --config-file edge.jlv</code></pre></div>
+  </div>
 </section>
 <section class="section"><p class="eyebrow">Find your way through the system</p>
   <h2>Learn it. Use it. Question it.</h2><div class="cards">
-  <a class="card" href="/sibuna/book/"><span class="label">The book</span>
-  <h3>From proofs to protection</h3><p>The protocol, request pipeline, inspection bounds,
-  algorithms and measurements. Also available as a PDF.</p></a>
   <a class="card" href="/sibuna/book/operations.html"><span class="label">Operations</span>
-  <h3>Build and operate</h3><p>Installation, ingress recipes, policies, SQLite and
-  PostgreSQL storage, GeoIP, the console and clustering.</p></a>
+  <h3>Build and operate</h3><p>Installation, the edge configuration, certificates,
+  clustering, the admin socket, policies, storage and the console.</p></a>
+  <a class="card" href="/sibuna/book/"><span class="label">The book</span>
+  <h3>From proofs to protection</h3><p>The protocol, the request pipeline, the algorithms
+  and every measurement with its method. Also available as a PDF.</p></a>
   <a class="card" href="/sibuna/sid/"><span class="label">Design discussions</span>
-  <h3>Decisions with context</h3><p>Architecture, alternatives, implementation boundaries
-  and acceptance conditions in each Sibuna Discussion.</p></a></div>
+  <h3>Decisions with context</h3><p>Each Sibuna Discussion states a design, its
+  alternatives, what is built and what is not.</p></a></div>
 </section>
-<section class="section start"><div><p class="eyebrow">Know the deployment boundary</p>
-  <h2>Application protection.<br>Explicit limits.</h2>
-  <p>Terminate public HTTPS at a trusted ingress and keep Sibuna's listener private.
-  Linux requires kernel 5.10 or later; macOS requires 12 or later; Windows requires
-  Windows 10 or Server 2016 or later.</p>
+<section class="section start"><div><p class="eyebrow">Know the boundary</p>
+  <h2>What it does not do.<br>Yet, or at all.</h2>
+  <p>We state the limits beside the features. Linux requires kernel 5.10 or later, macOS
+  12 or later, and Windows 10 or Server 2016 or later. The event-driven workers and the
+  replacement of the executable without lost connections exist on Linux only.</p>
   <a href="/sibuna/book/reference.html">CLI and protocol reference</a></div>
-  <div class="limits"><p>The built-in inspector checks the first 8 KiB of supported bodies.
-  WebSocket messages are relayed without inspection. Forward-auth sees the metadata
-  supplied by the ingress.</p>
-  <p>Your ingress handles public TLS and HTTP/2. Rate limits are local to each node.
-  Sibuna does not provide volumetric network mitigation.
-  A challenge adds work; it does not establish that a visitor is human.</p>
+  <div class="limits"><p>The load balancer has not been released and has not run under
+  production traffic. Its cluster features were tested on three hosts. A replacement of
+  the executable ends QUIC connections. HTTP/2 carries about two thirds of the requests
+  of HAProxy.</p>
+  <p>The built-in inspector checks the first 8 KiB of supported bodies. WebSocket messages
+  are relayed without inspection. Sibuna does not provide volumetric network mitigation.
+  A challenge adds work. It does not establish that a visitor is human.</p>
   <p>The console is opt-in. Its strict performance isolation target has not formally passed.
   Published measurements identify the code revision and uncertainty.</p>
-  <p><a href="/sibuna/sid/records/0007-console-management-interface.html">Console contract</a>
+  <p><a href="/sibuna/sid/records/0015-distributed-edge-load-balancer.html">Load balancer design</a>
+  · <a href="/sibuna/sid/records/0007-console-management-interface.html">Console contract</a>
   · <a href="/sibuna/whitepaper/">Architecture whitepaper</a>
   · <a href="/sibuna/pdf/sibuna-book.pdf">Book PDF</a>
   · <a href="/sibuna/pdf/sibuna-whitepaper.pdf">Whitepaper PDF</a></p></div>
