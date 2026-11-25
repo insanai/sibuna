@@ -20,6 +20,7 @@ show info
 show stats
 show certs
 show ca
+revoke cert NAME|SERIAL
 show cluster
 set server POOL/NAME state ready|drain [local]
 set server POOL/NAME weight N [local]
@@ -41,6 +42,11 @@ pub(super) enum Command {
     ShowCerts,
     /// The root certificate of the local authority (SID 0021).
     ShowCa,
+    /// Revokes a certificate of the local authority, by its name or its serial number
+    /// (SID 0021).
+    RevokeCert {
+        target: String,
+    },
     /// The digest of the file of every node of the mesh (SID 0023).
     ShowCluster,
     Help,
@@ -178,6 +184,7 @@ pub(super) fn parse(line: &str) -> Result<Command, RuntimeError> {
         ["show", "stats"] => Ok(Command::ShowStats),
         ["show", "certs"] => Ok(Command::ShowCerts),
         ["show", "ca"] => Ok(Command::ShowCa),
+        ["revoke", "cert", target] => Ok(Command::RevokeCert { target: (*target).to_owned() }),
         ["show", "cluster"] => Ok(Command::ShowCluster),
         ["help"] => Ok(Command::Help),
         ["reload"] => Ok(Command::Reload),
@@ -404,6 +411,10 @@ mod tests {
         assert_eq!(parse("show stats"), Ok(Command::ShowStats));
         assert_eq!(parse("show certs"), Ok(Command::ShowCerts));
         assert_eq!(parse("show ca"), Ok(Command::ShowCa));
+        let revoke = Command::RevokeCert { target: "db.internal".to_owned() };
+        assert_eq!(parse("revoke cert db.internal"), Ok(revoke));
+        assert_eq!(parse("revoke cert").unwrap_err().code, "ADM002");
+        assert_eq!(parse("revoke cert a b").unwrap_err().code, "ADM002");
         assert_eq!(parse("reload"), Ok(Command::Reload));
         assert_eq!(parse("reload cluster"), Ok(Command::ReloadCluster));
         assert_eq!(parse("reopen log"), Ok(Command::ReopenLog));

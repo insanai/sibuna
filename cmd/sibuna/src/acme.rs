@@ -181,6 +181,43 @@ pub(crate) fn log(event: &Event) {
     }
 }
 
+/// Revokes a certificate of the local authority for the admin command `revoke cert`
+/// and returns the answer: the serial number, the name, and what happens next.
+pub(crate) fn revoke(
+    automatic: Option<&Automatic>,
+    target: &str,
+) -> Result<String, sibuna_lb::RuntimeError> {
+    use sibuna_ingress::RevokeError;
+    let nothing = |message: String| sibuna_lb::RuntimeError {
+        code: "ADM013",
+        title: "NOT REVOKED",
+        message,
+        hint: "Name a host or an address that the local authority issues for here, as \
+               `show certs` lists it with `local`, or the serial number of a certificate \
+               in 1 to 16 hexadecimal digits."
+            .to_owned(),
+    };
+    let Some(automatic) = automatic else {
+        return Err(nothing(
+            "This daemon has no automatic HTTPS, and so no local authority.".into(),
+        ));
+    };
+    match automatic.revoke(target, unix_now()) {
+        Ok(entry) => Ok(format!(
+            "revoked serial {:016x} name {}\n# The revocation lists are written. A served \
+             certificate with this serial number is replaced now.\n",
+            entry.serial, entry.name
+        )),
+        Err(RevokeError::Nothing(message)) => Err(nothing(message)),
+        Err(RevokeError::Failed(error)) => Err(sibuna_lb::RuntimeError {
+            code: error.code,
+            title: error.title,
+            message: error.message,
+            hint: error.hint,
+        }),
+    }
+}
+
 /// The answer to `show ca`. The lines that start with `#` say where the root is and
 /// how long it is valid. The rest is the PEM text, so that
 /// `sibuna ctl SOCKET show ca > root.crt` writes a file that every tool reads.
