@@ -1265,3 +1265,147 @@ The CPU time of each thread group explains the two differences that remain. HAPr
 For HTTPS, Sibuna ends TLS on the threads of the protocol runtime and serves the request on a worker. Every request and every response crosses from one thread to another. The two groups used 18.3 and 21.9 CPU seconds, 40 of the 48 available, so the node was not short of CPU. It waited for the other thread. Sixteen threads also shared eight CPUs, and the kernel took the CPU from a thread about once in eleven requests.
 
 For HTTP/2, the whole exchange runs in the protocol runtime, which is a general asynchronous runtime with a general HTTP/2 library. It used all its CPU and needed 74 us for a request, where HAProxy needs 52 us with a multiplexer written for this one purpose. This line is bound by CPU, and only a cheaper HTTP/2 path will raise it.
+
+**TLS on the workers.** SID 0024 removes the first of the two differences: a worker now ends the TLS of an HTTP/1.1 connection itself. We measured again on the same host, HAProxy with the same seven headers, eight seconds for each line, one run.
+
+.. list-table:: One host after SID 0024, both proxies writing the same headers: requests per second and the CPU seconds of the proxy during the eight seconds.
+   :header-rows: 1
+   :widths: 16 12 16 16 14 13 13
+
+   * - Workload
+     - Connections
+     - HAProxy
+     - Sibuna
+     - Sibuna / HAProxy
+     - HAProxy CPU s
+     - Sibuna CPU s
+   * - tcp
+     - 16
+     - 168,827
+     - 185,780
+     - 1.10
+     - 50
+     - 45
+   * - tcp
+     - 256
+     - 233,412
+     - 239,183
+     - 1.02
+     - 53
+     - 47
+   * - tcp
+     - 2,048
+     - 180,614
+     - 187,670
+     - 1.04
+     - 47
+     - 42
+   * - http
+     - 16
+     - 125,481
+     - 154,815
+     - 1.23
+     - 59
+     - 46
+   * - http
+     - 256
+     - 217,896
+     - 221,286
+     - 1.02
+     - 63
+     - 53
+   * - http
+     - 2,048
+     - 159,747
+     - 169,664
+     - 1.06
+     - 63
+     - 46
+   * - https
+     - 16
+     - 100,137
+     - 133,896
+     - 1.34
+     - 59
+     - 45
+   * - https
+     - 256
+     - 153,080
+     - 174,901
+     - 1.14
+     - 62
+     - 48
+   * - https
+     - 2,048
+     - 120,893
+     - 142,710
+     - 1.18
+     - 61
+     - 37
+   * - h2, 10 streams
+     - 16
+     - 180,326
+     - 120,663
+     - 0.67
+     - 62
+     - 61
+   * - h2, 10 streams
+     - 256
+     - 149,909
+     - 105,047
+     - 0.70
+     - 63
+     - 62
+   * - h2, 10 streams
+     - 2,048
+     - 116,731
+     - 86,234
+     - 0.74
+     - 62
+     - 60
+
+Before the change Sibuna carried 149,168 HTTPS requests per second with 256 connections. It now carries 174,901, and the whole of that work runs on the eight workers: in the measurement of thread groups they used 35.9 CPU seconds and the runtime threads none. Sibuna is ahead of HAProxy over TCP, HTTP and HTTPS, with less CPU, and behind over HTTP/2, which did not change. No request failed in any line.
+
+On the three hosts the network still sets the ceiling, and the lines differ from run to run by more than the two proxies differ from each other.
+
+.. list-table:: Three hosts after SID 0024, both proxies writing the same headers: requests per second of all nodes together and the CPU seconds of the three proxies during the ten seconds.
+   :header-rows: 1
+   :widths: 16 16 16 16 14 11 11
+
+   * - Workload
+     - Connections per node
+     - HAProxy
+     - Sibuna
+     - Sibuna / HAProxy
+     - HAProxy CPU s
+     - Sibuna CPU s
+   * - http
+     - 64
+     - 102,446
+     - 89,124
+     - 0.87
+     - 102
+     - 42
+   * - http
+     - 512
+     - 85,149
+     - 97,173
+     - 1.14
+     - 66
+     - 44
+   * - https
+     - 64
+     - 97,068
+     - 90,399
+     - 0.93
+     - 97
+     - 48
+   * - https
+     - 512
+     - 80,596
+     - 92,652
+     - 1.15
+     - 93
+     - 49
+
+The CPU time of Sibuna for HTTPS on the three hosts fell from 69 to 71 seconds before the change to 48 to 49 seconds.
