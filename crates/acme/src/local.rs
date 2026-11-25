@@ -259,14 +259,15 @@ impl LocalAuthority {
     /// early instead, so that two thirds of the validity lie ahead. Fails with
     /// `ACME011`, or for no name.
     pub fn issue(&self, names: &[&str], lifetime: u64, now: u64) -> Result<Issued, Error> {
-        self.issue_on(crate::Curve::P256, names, lifetime, now)
+        self.issue_as(crate::KeyType::P256, names, lifetime, now)
     }
 
-    /// As [`LocalAuthority::issue`], with the key of the certificate on `curve`. The
-    /// intermediate signs with its own key, which is on P-256.
-    pub fn issue_on(
+    /// As [`LocalAuthority::issue`], with a key of the kind `kind` for the certificate.
+    /// The intermediate signs with its own key, which is on P-256. An RSA key is made
+    /// by the `openssl` program; without it the call fails with `ACME015`.
+    pub fn issue_as(
         &self,
-        curve: crate::Curve,
+        kind: crate::KeyType,
         names: &[&str],
         lifetime: u64,
         now: u64,
@@ -281,7 +282,7 @@ impl LocalAuthority {
         let root = self.root(now)?;
         let wanted = now.saturating_add(lifetime);
         let intermediate = self.intermediate(&root, now, wanted.min(root.fields.not_after))?;
-        let key = KeyPair::generate_on(curve)?;
+        let key = KeyPair::generate_as(kind)?;
         let template = x509::Template {
             issuer: INTERMEDIATE_NAME,
             subject: &subject,
@@ -484,8 +485,8 @@ mod tests {
         let now =
             std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
         let authority = LocalAuthority::open(&scratch.0, now, &[]).unwrap();
-        let issued = authority.issue_on(crate::Curve::P384, &["localhost"], 3600, now).unwrap();
-        assert_eq!(issued.key.curve(), crate::Curve::P384);
+        let issued = authority.issue_as(crate::KeyType::P384, &["localhost"], 3600, now).unwrap();
+        assert_eq!(issued.key.key_type(), crate::KeyType::P384);
         let blocks = pem::decode("CERTIFICATE", &issued.chain_pem).unwrap();
         let public = issued.key.subject_public_key_info();
         assert!(blocks[0].windows(public.len()).any(|window| window == public));
@@ -506,6 +507,45 @@ mod tests {
         shown.args(["x509", "-noout", "-text", "-in"]).arg(&leaf);
         let text = String::from_utf8_lossy(&shown.output().unwrap().stdout).into_owned();
         assert!(text.contains("secp384r1") && text.contains("ecdsa-with-SHA256"), "{text}");
+    }
+
+    /// `openssl verify` accepts a chain whose leaf has an RSA key, signed by the P-256
+    /// intermediate. Skipped without `openssl`.
+    #[test]
+    fn openssl_verifies_a_leaf_with_an_rsa_key() {
+        if crate::keygen::probe().is_err() {
+            return;
+        }
+        let _spawn = crate::SPAWN.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        let scratch = Scratch::new();
+        let now =
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+        let authority = LocalAuthority::open(&scratch.0, now, &[]).unwrap();
+        let kind = crate::KeyType::Rsa2048;
+        let issued = authority.issue_as(kind, &["localhost"], 3600, now).unwrap();
+        assert_eq!(issued.key.key_type(), kind);
+        let blocks = pem::decode("CERTIFICATE", &issued.chain_pem).unwrap();
+        let public = issued.key.subject_public_key_info();
+        assert!(blocks[0].windows(public.len()).any(|window| window == public));
+        let file = |name: &str, der: &[u8]| {
+            let path = scratch.0.join(name);
+            fs::write(&path, pem::encode("CERTIFICATE", der)).unwrap();
+            path
+        };
+        let (leaf, intermediate) = (file("leaf.pem", &blocks[0]), file("int.pem", &blocks[1]));
+        let mut command = Command::new("openssl");
+        command.args(["verify", "-x509_strict", "-purpose", "sslserver"]);
+        command.arg("-CAfile").arg(authority.root_path());
+        command.arg("-untrusted").arg(&intermediate);
+        command.args(["-verify_hostname", "localhost"]).arg(&leaf);
+        let output = command.output().unwrap();
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        let mut shown = Command::new("openssl");
+        shown.args(["x509", "-noout", "-text", "-in"]).arg(&leaf);
+        let text = String::from_utf8_lossy(&shown.output().unwrap().stdout).into_owned();
+        // The leaf has the RSA key. The intermediate, on P-256, signed it.
+        assert!(text.contains("Public-Key: (2048 bit)"), "{text}");
+        assert!(text.contains("rsaEncryption") && text.contains("ecdsa-with-SHA256"), "{text}");
     }
 
     /// `openssl verify` accepts a leaf inside the constraints of the root and refuses a

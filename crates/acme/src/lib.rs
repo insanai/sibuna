@@ -19,7 +19,7 @@
 //!
 //! [`obtain`] runs this loop with three closures, for a caller that may block.
 //!
-//! The other modules are the pieces an order needs: a P-256 key pair ([`KeyPair`]), the
+//! The other modules are the pieces an order needs: a key pair ([`KeyPair`]), the
 //! JSON Web Signature ([`jws`]), the certificate request ([`csr`]), reading and writing
 //! certificates ([`x509`]), the renewal time and the retry delay ([`schedule`]), and the
 //! files of the certificate store ([`store`]).
@@ -37,6 +37,7 @@ pub mod constraints;
 pub mod csr;
 pub mod dns;
 pub mod jws;
+pub mod keygen;
 pub mod local;
 pub mod ocsp;
 pub mod pem;
@@ -53,7 +54,7 @@ pub(crate) static SPAWN: std::sync::Mutex<()> = std::sync::Mutex::new(());
 pub use call::Call;
 pub use error::Error;
 pub use jws::Binding;
-pub use key::{Curve, KeyPair, random_serial};
+pub use key::{Curve, KeyPair, KeyType, random_serial};
 pub use order::{
     Account, Action, Challenge, ChallengeKind, Issued, Method, Order, OrderOptions, Request,
     Response, obtain,
