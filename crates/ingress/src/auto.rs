@@ -86,6 +86,17 @@ pub enum Event {
         /// Why it was released.
         reason: &'static str,
     },
+    /// An authority failed to issue, and the attempt goes on with the next one.
+    Fallback {
+        /// The name of the certificate.
+        name: String,
+        /// The directory of the authority that failed.
+        authority: String,
+        /// The directory of the authority that is asked next.
+        next: String,
+        /// What failed, with a hint.
+        error: AcmeError,
+    },
     /// An attempt failed. The served certificate, if any, stays.
     Failed {
         /// The name, or `None` for a failure of the storage or the account.

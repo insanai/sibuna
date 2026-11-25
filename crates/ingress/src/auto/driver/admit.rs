@@ -105,12 +105,14 @@ impl Driver {
     /// The guards that take time, in the order of their cost: the storage, the `ask`
     /// URL, the token. A refusal names the milliseconds it lasts and its reason.
     fn guard(&mut self, wanted: &AutoName) -> Result<(), (u64, &'static str)> {
-        let store = match (wanted.local, &self.ready, &self.local) {
-            (true, _, Some(local)) => &local.store,
-            (false, Some(ready), _) => &ready.store,
+        let fresh = match (wanted.local, &self.ready, &self.local) {
+            (true, _, Some(local)) => has_fresh(&local.store, &wanted.name),
+            (false, Some(ready), _) => {
+                ready.all().any(|authority| has_fresh(&authority.store, &wanted.name))
+            }
             _ => return Err((DENIAL_MS, NOT_READY)),
         };
-        if has_fresh(store, &wanted.name) {
+        if fresh {
             return Ok(());
         }
         // A new name needs a yes. Silence refuses it.

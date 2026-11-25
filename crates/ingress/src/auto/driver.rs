@@ -6,6 +6,8 @@
 //! Storage, lock, schedule and retry are the same for both.
 
 mod admit;
+mod authority;
+mod renewal;
 
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -15,15 +17,16 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use rustls::pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
 use rustls::sign::CertifiedKey;
-use sibuna_acme::dns::{DnsOptions, Solver};
+use sibuna_acme::dns::Solver;
 use sibuna_acme::local::LocalAuthority;
 use sibuna_acme::store::{Retry, Store};
 use sibuna_acme::{
-    Account, Action, ChallengeKind, Error, Issued, KeyPair, Order, OrderOptions, pem, schedule,
-    x509,
+    Account, Action, ChallengeKind, Error, Issued, KeyPair, Order, OrderOptions, ari, pem,
+    schedule, x509,
 };
 use sibuna_lb::{AcmeChallenge, AutoName, is_address};
 
+use self::authority::Ready;
 use super::client::Client;
 use super::{CertificateState, CertificateStatus, Event, Notify, Shared};
 
@@ -84,7 +87,6 @@ fn sound(name: &str, chain_pem: &str, key: &KeyPair, now: u64) -> Result<Sound, 
 }
 
 /// What the thread remembers of one name.
-#[derive(Default)]
 struct Entry {
     /// The validity and issuer of the served certificate.
     served: Option<x509::Certificate>,
@@ -93,23 +95,62 @@ struct Entry {
     error: Option<String>,
     /// How the served certificate was obtained, once an attempt of ours succeeded.
     via: Option<&'static str>,
+    /// The index of the ACME authority whose store holds the served certificate.
+    issued_by: usize,
+    /// When an order of this process obtained the served certificate.
+    obtained: Option<u64>,
+    /// The renewal time that the authority suggests for the served certificate.
+    ari_pick: Option<u64>,
+    /// When the authority is asked next about the served certificate. `u64::MAX`:
+    /// never.
+    ari_next: u64,
 }
 
-impl Entry {
-    /// When the served certificate is due for renewal. Without one: at once.
-    fn renew_at(&self) -> u64 {
-        self.served.as_ref().map_or(0, |c| schedule::renew_at(c.not_before, c.not_after))
+impl Default for Entry {
+    fn default() -> Self {
+        Self {
+            served: None,
+            failures: 0,
+            next_attempt: 0,
+            error: None,
+            via: None,
+            issued_by: 0,
+            obtained: None,
+            ari_pick: None,
+            ari_next: u64::MAX,
+        }
     }
 }
 
-/// What an order needs: the files, the account, the client and its runtime, and the
-/// settings of DNS-01 when the topology has them.
-struct Ready {
-    store: Store,
-    account: Account,
-    client: Client,
-    runtime: tokio::runtime::Runtime,
-    dns: Option<DnsOptions>,
+impl Entry {
+    /// When the served certificate is due for renewal. Without one: at once. With an
+    /// answer of the authority: the time that it suggests, within our bounds. Else at
+    /// two thirds of the lifetime.
+    fn renew_at(&self) -> u64 {
+        let Some(served) = &self.served else { return 0 };
+        let (from, to) = (served.not_before, served.not_after);
+        match self.ari_pick {
+            Some(pick) => ari::renew_at(from, to, pick, ari::floor(self.obtained, from, to)),
+            None => schedule::renew_at(from, to),
+        }
+    }
+
+    /// Takes a certificate that was just installed: the one that the authority `index`
+    /// issued. What the authority said about the last one no longer holds, and it is
+    /// asked about this one at once.
+    fn serve(&mut self, fields: x509::Certificate, index: usize, obtained: Option<u64>) {
+        self.served = Some(fields);
+        self.issued_by = index;
+        self.obtained = obtained;
+        self.ari_pick = None;
+        self.ari_next = 0;
+    }
+
+    /// The time at which the thread looks at the name again: the next attempt, or the
+    /// next question to the authority when `asks`.
+    fn wake_at(&self, asks: bool) -> u64 {
+        if asks { self.next_attempt.min(self.ari_next) } else { self.next_attempt }
+    }
 }
 
 /// The local authority and the files of its certificates.
@@ -125,10 +166,28 @@ enum Source<'a> {
 }
 
 impl Source<'_> {
+    /// The store of the lock and the retry state of a name: that of the first
+    /// authority, or that of the local one.
     fn store(&self) -> &Store {
         match self {
-            Self::Acme(ready) => &ready.store,
+            Self::Acme(ready) => &ready.first.store,
             Self::Local(local) => &local.store,
+        }
+    }
+
+    /// The store of the certificates that the authority `index` issued.
+    fn store_at(&self, index: usize) -> &Store {
+        match self {
+            Self::Acme(ready) => &ready.at(index).store,
+            Self::Local(local) => &local.store,
+        }
+    }
+
+    /// How many stores may hold a certificate of a name.
+    fn store_count(&self) -> usize {
+        match self {
+            Self::Acme(ready) => ready.all().count(),
+            Self::Local(_) => 1,
         }
     }
 }
@@ -205,10 +264,10 @@ impl Driver {
     fn prepare(&mut self, names: &[AutoName]) {
         let wants_acme = names.iter().any(|name| !name.local);
         if wants_acme && self.ready.is_none() && now() >= self.ready_backoff.at {
-            match self.try_prepare() {
+            match Ready::open(&self.shared.options) {
                 Ok(ready) => {
                     self.ready_backoff = Backoff::default();
-                    *super::write(&self.shared.thumbprint) = Some(ready.account.thumbprint());
+                    *super::write(&self.shared.thumbprint) = Some(ready.thumbprint());
                     self.ready = Some(ready);
                 }
                 Err(error) => {
@@ -235,19 +294,6 @@ impl Driver {
     fn unprepared(&self, error: Error, retry_at: u64) {
         self.shared.failures.fetch_add(1, Ordering::Relaxed);
         (self.report)(&Event::Failed { name: None, error, retry_at });
-    }
-
-    fn try_prepare(&self) -> Result<Ready, Error> {
-        let options = &self.shared.options;
-        let store = Store::open(Path::new(&options.storage), &options.directory)?;
-        let account = Account::new(store.load_account()?);
-        let client = Client::load(options.ca_file.as_deref())?;
-        let dns = options.dns.as_ref().map(super::dns::options).transpose()?;
-        let runtime = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .map_err(|error| Error::unreachable(format!("No runtime for the client: {error}.")))?;
-        Ok(Ready { store, account, client, runtime, dns })
     }
 
     fn try_local(&self) -> Result<Local, Error> {
@@ -278,6 +324,9 @@ impl Driver {
             let before = known.as_ref().and_then(|entry| entry.served.as_ref());
             let before = before.map(|served| served.not_after);
             let mut entry = known.unwrap_or_else(|| self.adopt(&source, name));
+            if let Source::Acme(ready) = &mut source {
+                self.consult(ready, name, &mut entry);
+            }
             if entry.error.is_none() && self.is_stale(name, &entry) {
                 entry.next_attempt = entry.next_attempt.min(now());
             }
@@ -302,7 +351,8 @@ impl Driver {
         let waiting = |open: bool, backoff: &Backoff, local: bool| {
             (!open && names.iter().any(|name| name.local == local)).then_some(backoff.at)
         };
-        let attempts = self.entries.values().map(|entry| entry.next_attempt);
+        let asks = self.shared.options.ari && self.shared.ordering.load(Ordering::Acquire);
+        let attempts = self.entries.values().map(|entry| entry.wake_at(asks));
         let next = attempts
             .chain(waiting(self.ready.is_some(), &self.ready_backoff, false))
             .chain(waiting(self.local.is_some(), &self.local_backoff, true))
@@ -328,7 +378,7 @@ impl Driver {
         let mut entry = Entry::default();
         let now = now();
         let store = source.store();
-        self.look(store, name, &mut entry, now);
+        self.look(source, name, &mut entry, now);
         if let Source::Acme(ready) = source {
             self.clean_leftover(ready, name);
         }
@@ -343,18 +393,25 @@ impl Driver {
         entry
     }
 
-    /// Loads the stored certificate of a name and serves it when it is sound and does
-    /// not expire earlier than the served one. Returns whether it was installed.
-    fn look(&self, store: &Store, name: &str, entry: &mut Entry, now: u64) -> bool {
-        let Ok(Some(stored)) = store.load_certificate(name) else { return false };
-        let Ok(found) = sound(name, &stored.chain_pem, &stored.key, now) else { return false };
+    /// Loads the stored certificates of a name, one of each authority, and serves the
+    /// one that expires last when it is sound and expires later than the served one.
+    /// Returns whether it was installed.
+    fn look(&self, source: &Source<'_>, name: &str, entry: &mut Entry, now: u64) -> bool {
+        let stored = (0..source.store_count()).filter_map(|index| {
+            let stored = source.store_at(index).load_certificate(name).ok()??;
+            let found = sound(name, &stored.chain_pem, &stored.key, now).ok()?;
+            Some((index, found))
+        });
+        let Some((index, found)) = stored.max_by_key(|(_, found)| found.fields.not_after) else {
+            return false;
+        };
         let served = entry.served.as_ref();
         if served.is_some_and(|served| found.fields.not_after <= served.not_after) {
             return false;
         }
         let not_after = found.fields.not_after;
         self.shared.install(name, found.certified);
-        entry.served = Some(found.fields);
+        entry.serve(found.fields, index, None);
         (self.report)(&Event::Loaded { name: name.to_owned(), not_after });
         true
     }
@@ -389,10 +446,10 @@ impl Driver {
     /// died. We take the lock of the name first: while another node holds it, the record
     /// belongs to its running order.
     fn clean_leftover(&self, ready: &Ready, name: &str) {
-        if ready.store.load_presented(name).is_none() {
+        if ready.first.store.load_presented(name).is_none() {
             return;
         }
-        if let Ok(Some(_lock)) = ready.store.lock(name) {
+        if let Ok(Some(_lock)) = ready.first.store.lock(name) {
             self.clean(ready, name);
         }
     }
@@ -401,7 +458,7 @@ impl Driver {
     /// failure is reported. It does not fail the order, and the record stays remembered.
     fn clean(&self, ready: &Ready, name: &str) {
         let Some(options) = &ready.dns else { return };
-        if let Err(error) = (Solver { options, store: &ready.store }).cleanup(name) {
+        if let Err(error) = (Solver { options, store: &ready.first.store }).cleanup(name) {
             (self.report)(&Event::CleanupFailed { name: name.to_owned(), error });
         }
     }
@@ -411,7 +468,7 @@ impl Driver {
     fn attempt(&self, source: &mut Source<'_>, name: &str, entry: &mut Entry) {
         let now = now();
         // Another node that shares the storage may have renewed already.
-        let found = self.look(source.store(), name, entry, now);
+        let found = self.look(source, name, entry, now);
         if found && entry.renew_at() > now && !self.is_stale(name, entry) {
             self.succeeded(source.store(), name, entry);
             return;
@@ -427,29 +484,21 @@ impl Driver {
         };
         self.publish(name, entry, Some(CertificateState::Ordering));
         let issued = match source {
-            Source::Acme(ready) => {
-                // A record whose cleanup failed last time goes first: the order below
-                // remembers its own record in the same place.
-                self.clean(ready, name);
-                let issued = self.order(ready, name, entry.failures);
-                self.shared.withdraw();
-                self.clean(ready, name);
-                issued
-            }
-            Source::Local(local) => self.issue(local, name).map(|issued| (issued, "local")),
+            Source::Acme(ready) => self.order_any(ready, name, entry),
+            Source::Local(local) => self.issue(local, name).map(|issued| (issued, "local", 0)),
         };
         let store = source.store();
-        let installed = issued.and_then(|(issued, via)| {
+        let installed = issued.and_then(|(issued, via, index)| {
             let found = sound(name, &issued.chain_pem, &issued.key, now)?;
-            store.save_certificate(name, &issued.chain_pem, &issued.key)?;
-            Ok((found, via))
+            source.store_at(index).save_certificate(name, &issued.chain_pem, &issued.key)?;
+            Ok((found, via, index))
         });
         match installed {
-            Ok((found, via)) => {
+            Ok((found, via, index)) => {
                 let renewed = entry.served.is_some();
                 let not_after = found.fields.not_after;
                 self.shared.install(name, found.certified);
-                entry.served = Some(found.fields);
+                entry.serve(found.fields, index, Some(now));
                 entry.via = Some(via);
                 self.succeeded(store, name, entry);
                 (self.report)(&Event::Obtained { name: name.to_owned(), not_after, renewed });
@@ -515,40 +564,6 @@ impl Driver {
                 };
                 (if failures % 2 == 1 { first.other() } else { first }, true)
             }
-        }
-    }
-
-    /// Runs one order to its end, within five minutes and the waits of DNS-01. Returns
-    /// the certificate and the word of the challenge that was answered.
-    fn order(
-        &self,
-        ready: &mut Ready,
-        name: &str,
-        failures: u32,
-    ) -> Result<(Issued, &'static str), Error> {
-        let (challenge, any_challenge) = self.challenge(name, failures);
-        let options = OrderOptions {
-            directory: self.shared.options.directory.clone(),
-            name: name.to_owned(),
-            email: self.shared.options.email.clone(),
-            challenge,
-            any_challenge,
-        };
-        let Ready { account, client, runtime, store, dns } = ready;
-        let solver = dns.as_ref().map(|options| Solver { options, store });
-        let mut limit = ORDER_LIMIT;
-        if let (ChallengeKind::Dns01, Some(dns)) = (challenge, dns.as_ref()) {
-            limit += dns.wait + dns.timeout + 2 * sibuna_acme::dns::HOOK_TIMEOUT;
-        }
-        let conversation = converse(account, client, &self.shared, options, solver.as_ref());
-        // The timer needs the runtime, so it is made inside it.
-        let limited = async { tokio::time::timeout(limit, conversation).await };
-        match runtime.block_on(limited) {
-            Ok(result) => result,
-            Err(_) => Err(Error::unexpected(format!(
-                "The order for `{name}` took longer than {} seconds.",
-                limit.as_secs()
-            ))),
         }
     }
 }

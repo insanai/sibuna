@@ -117,6 +117,18 @@ pub(crate) fn log(event: &Event) {
                 time(*not_after)
             ));
         }
+        Event::Fallback { name, authority, next, error } => {
+            let title = format!("{} ({})", error.title, error.code);
+            let reason = error.message.trim_end();
+            let stop = if reason.ends_with('.') { "" } else { "." };
+            let message = format!(
+                "No certificate for `{name}` from {authority}. {reason}{stop} The daemon \
+                 asks {next} now."
+            );
+            let mut text = String::new();
+            let _ = diagnostic::render(&mut text, &title, &message, &error.hint);
+            crate::edge::note(format_args!("{}", text.trim_end_matches('\n')));
+        }
         Event::Failed { name, error, retry_at } => {
             let subject = match name {
                 Some(name) => format!("No new certificate for `{name}`. "),
