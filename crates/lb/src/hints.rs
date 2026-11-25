@@ -346,7 +346,7 @@ impl Spill {
             outcome: None,
             persistent: false,
             slots: 0,
-            table_slots: slots as u64,
+            table_slots: front.table.slot_count() as u64,
             budget: Budget::default(),
             disk: ServiceCounters::default(),
             asked: 0,
@@ -371,6 +371,7 @@ impl Spill {
                 return Err(invalid(text));
             }
         };
+        status.budget.scratch_bytes += size_of_val(&*front.pending) as u64;
         let store = Arc::new(SpillStore { front, service: service.as_ref().map(Service::handle) });
         if !cluster.use_store(Arc::clone(&store) as Arc<dyn AffinityStore>) {
             return Err(invalid("the spill section needs the sticky table, which has a store"));

@@ -244,8 +244,11 @@ fn a_flood_of_clients_seen_once_displaces_no_hint_on_disk() {
 #[test]
 fn a_file_in_use_leaves_the_table_in_memory_and_a_second_store_is_refused() {
     let options = on_disk("busy", 1 << 20);
-    let (first, _store) = open(&options, 1024);
-    let (second, store) = open(&options, 1024);
+    let (first, _store) = open(&options, 1025);
+    let (second, store) = open(&options, 1025);
+    assert_eq!(first.status().unwrap().table_slots, 2048);
+    assert_eq!(second.status().unwrap().table_slots, 2048);
+    assert_eq!(second.status().unwrap().budget.memory_bytes(), (PENDING * 8) as u64);
     let status = second.status().unwrap();
     assert_eq!((status.outcome, status.slots), (None, 0));
     assert_eq!(flow(&*store, 1, 21), None);
