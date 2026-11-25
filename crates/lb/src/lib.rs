@@ -17,7 +17,9 @@ mod budget;
 pub use budget::{FlowBudget, FlowPermit};
 mod config;
 mod health;
+mod hints;
 mod hooks;
+pub use hints::{SpillOptions, SpillStatus};
 mod http;
 pub use http::{
     HttpOptions, HttpRoutes, HttpTarget, OriginOptions, OriginTls, OriginVersion, Query,
@@ -65,6 +67,7 @@ mod stats;
 pub use stats::{
     ActiveRequest, FrontendStats, Histogram, Refusal, ServerInfo, ServerStats, Stats,
 };
+pub use stats::{FrontendView, Latency, ServerView, StatsView};
 
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::io;
@@ -72,7 +75,9 @@ use std::net::{SocketAddr, TcpListener, TcpStream, UdpSocket};
 use std::time::{Duration, Instant};
 
 pub use config::Config;
+mod console;
 use config::{Frontend, Protocol, invalid};
+pub use console::{ConsoleOptions, ConsolePeer, MAX_CONSOLE_NODES};
 use pool::{Loads, Pool, Ticket};
 use sibuna_reactor::{Poller, READ, Waker, handle};
 use tcp::{Connect, Connectors, Relays, Stream, transient};
@@ -192,6 +197,9 @@ pub struct Edge {
     listeners: Vec<Listener>,
     pools: BTreeMap<String, Pool>,
     loads: Loads,
+    /// The disk tier of the sticky table, when the `spill` section asks for one
+    /// (SID 0027). Its storage thread ends with the edge.
+    spill: hints::Spill,
     checks: health::Checks,
     poll: Poller<Ready>,
     waker: Waker,
@@ -230,6 +238,14 @@ fn publish_routes(config: &mut Config, cluster: &ClusterState) -> HttpRoutes {
     http.share_cluster(cluster.clone());
     http.publish(config);
     http
+}
+
+/// A poller that watches its own waker already. Returns both ends of the waker.
+fn watched_poller() -> io::Result<(Poller<Ready>, Waker, sibuna_reactor::Wake)> {
+    let mut poll = Poller::new()?;
+    let (waker, wake) = Waker::new()?;
+    poll.set(handle(waker.socket()), READ, Ready::Wake)?;
+    Ok((poll, waker, wake))
 }
 
 /// Builds the pools of a configuration, and the counts that their servers share.
@@ -284,6 +300,12 @@ impl Edge {
     /// Shares admission with QUIC listeners.
     pub fn flow_budget(&self) -> FlowBudget {
         self.budget.clone()
+    }
+
+    /// The state of the disk tier of the sticky table, when the `spill` section
+    /// asked for one (SID 0027).
+    pub fn spill_status(&self) -> Option<SpillStatus> {
+        self.spill.status()
     }
 
     /// Shares the sticky table and the shares of the capped servers (SID 0025). The
@@ -346,14 +368,27 @@ impl Edge {
     /// any listeners already bound.
     pub fn bind(config: Config) -> io::Result<Self> {
         let cluster = ClusterState::new(config.sticky_entries);
-        Self::bind_all(config, cluster, Inherited::default())
+        Self::bind_stored(config, cluster, Inherited::default())
+    }
+
+    /// Opens the disk tier of the sticky table when the `spill` section asks for one
+    /// (SID 0027), makes it the store of `cluster`, and binds. The tier must be the
+    /// store before the first pool is built, and it belongs to the edge after.
+    fn bind_stored(config: Config, cluster: ClusterState, lent: Inherited) -> io::Result<Self> {
+        let spill = hints::Spill::open(config.spill.as_ref(), config.sticky_entries, &cluster)?;
+        let mut edge = Self::bind_all(config, cluster, lent)?;
+        edge.spill = spill;
+        Ok(edge)
     }
 
     /// As [`Edge::bind`], with the sticky table and the shares of `cluster`
     /// (SID 0025). A caller that keeps the sticky table elsewhere than in memory
     /// gives its store to `cluster` first, with [`ClusterState::use_store`].
+    ///
+    /// A configuration with a `spill` section brings its own store, and fails here
+    /// when `cluster` has one already.
     pub fn bind_with(config: Config, cluster: ClusterState) -> io::Result<Self> {
-        Self::bind_all(config, cluster, Inherited::default())
+        Self::bind_stored(config, cluster, Inherited::default())
     }
 
     /// As [`Edge::bind`], on the listening sockets that the process this one replaces
@@ -362,7 +397,7 @@ impl Edge {
     /// listener is bound as usual. Lent sockets that no listener wants are closed.
     pub fn bind_inherited(config: Config, inherited: Inherited) -> io::Result<Self> {
         let cluster = ClusterState::new(config.sticky_entries);
-        Self::bind_all(config, cluster, inherited)
+        Self::bind_stored(config, cluster, inherited)
     }
 
     /// Binds with a given cluster state and given lent sockets.
@@ -380,10 +415,8 @@ impl Edge {
         let budget = FlowBudget::new(&config);
         let (mut binds, mut listeners) = (Vec::new(), Vec::new());
         let mut listen_faults = Vec::new();
-        let mut poll = Poller::new()?;
-        let (waker, wake) = Waker::new()?;
+        let (mut poll, waker, wake) = watched_poller()?;
         handoff.wake = Some(wake.clone());
-        poll.set(handle(waker.socket()), READ, Ready::Wake)?;
         for (bind, route) in config.listeners {
             let (socket, held) = inherited.take_or(bind, config.reuse_port)?;
             let fd = match &socket {
@@ -419,6 +452,7 @@ impl Edge {
             listeners,
             pools,
             loads,
+            spill: hints::Spill::default(),
             checks,
             poll,
             waker,
@@ -461,6 +495,9 @@ impl Edge {
         }
         if !self.binds.iter().eq(config.listeners.keys()) {
             return Err(invalid("changing frontend binds requires a drained restart"));
+        }
+        if self.spill.options != config.spill {
+            return Err(invalid("changing the spill section requires a restart"));
         }
         self.checks.configure(&mut config)?;
         self.stats.adopt(&mut config);

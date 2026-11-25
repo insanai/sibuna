@@ -1294,6 +1294,51 @@ A cookie whose server is down, full, ejected or drained gives way: the request i
 
 Behind ``trusted_proxies`` the client address of ``"source"`` is the one the proxy recorded, as for the access log and the limits. Without that option it is the socket peer, so all requests of one proxy would share a server.
 
+Keeping the sticky table over a restart
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A pool with ``sticky: "table"`` remembers the server of each client in a table in memory, as a later section describes. The table has ``global.sticky_entries`` slots, and a restart empties it. The ``spill`` section puts a file under the table.
+
+.. code-block:: text
+
+   spill: {
+       path: "/var/lib/sibuna/hints.spill",
+       size: "64m",
+   },
+
+The section stands beside ``global`` and ``frontends``, and both members are required. ``size`` is the size of the file, from ``64k`` to ``64g``. Each client takes 64 bytes, and ``64m`` holds a million slots. A file with room for four times the clients we expect keeps nearly all of them: at twice the clients, three in a hundred find their part of the file full. A change of the section needs a restart. Without the section nothing changes.
+
+Every choice that the table learns is offered to the file. When the table has no entry for a client, the edge asks the file and serves the flow by the balanced choice meanwhile. The answer fills the table, and the next flow of the client goes to the remembered server. So clients that the table could not hold, and all clients after a restart or a crash of the daemon, find their server again one flow late.
+
+What is in the file is a hint and nothing more. The pool uses it only when the server it names may serve. A file that is damaged costs the hints of the damaged part. A file from another version or of another size is replaced by an empty one. The daemon never overwrites a file that is not a spill cache: it refuses to start and names the file.
+
+The daemon says what it found when it starts, and ``show info`` has the counters. ``show affinity`` shows the table in memory as before.
+
+.. code-block:: text
+
+   EDGE015: spill cache /var/lib/sibuna/hints.spill: reused, 1048064 slots in 67084288 bytes on disk, 4425712 bytes of memory beside the table
+
+   $ sibuna ctl /run/sibuna/edge.sock show info
+   spill: /var/lib/sibuna/hints.spill
+   spill_state: reused
+   spill_slots: 1048064
+   spill_file_bytes: 67084288
+   spill_memory_bytes: 4425712
+   spill_table_slots: 65536
+   spill_asked: 1203
+   spill_promoted: 1100
+   spill_preferred: 40
+   spill_disk_lookups: 1203
+   spill_disk_hits: 1100
+   spill_disk_written: 1350
+   spill_disk_rejected: 4
+   spill_disk_corrupt: 0
+   spill_disk_shed: 0
+
+``spill_asked`` counts the lookups that found nothing in memory and asked the file. ``spill_promoted`` counts the choices that the file gave back to memory, and ``spill_preferred`` those of them that replaced a choice made while the file was asked. ``spill_disk_rejected`` counts choices that a full part of the file did not admit: when it grows fast, the file is too small. ``spill_disk_corrupt`` counts slots that failed their check and were cleared. ``spill_disk_shed`` counts work that was dropped because the storage thread was behind: the edge never waits for the disk.
+
+Keep the file on a local disk, in a directory that only the daemon writes. The whole size is written at the first start, so a full disk is found then. The pages of the file that the daemon has used count as its resident memory, up to the whole file. The kernel can take them back, but a memory limit of systemd or of a container counts them: set such a limit above the size of the file plus the memory of the daemon. A second daemon that finds the file in use, as during the replacement of the binary, runs with the table in memory alone and says so. In a cluster each node has a file of its own. The nodes share the table in memory when ``mesh.replicate_sticky`` is set, and what a node hears from a peer is offered to its file too.
+
 Redirects, headers and body limits
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -2358,6 +2403,74 @@ A reload loads every module again and checks it before anything changes. A plugi
 *Writing a module.* A module exports its memory and six functions, and receives each request as one encoded record in a buffer of its own. The crate ``cmd/sibuna-hook-wasm`` is a complete example in Rust without ``std``, and SID 0030 specifies the record and the functions. We build it with ``cargo build -p sibuna-hook-wasm --target wasm32-unknown-unknown --profile wasm``.
 
 *Writing an agent.* An agent accepts connections on its socket and reads frames: a length of four bytes, a version, a kind, and an identifier of eight bytes. It answers a ``decide`` frame with a ``verdict`` frame of the same identifier, whose payload is one byte, 0 to admit, 1 to deny, 2 to challenge, and then the field lines to add. A ``sample`` frame has no answer. SID 0030 specifies the frame.
+The operator console of the edge
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The edge can run the console of Part IX beside the load balancer (SID 0031). We add a ``console`` section to the topology file. The console listens on an address of its own, on threads of its own, and it keeps its accounts and its audit log in a SQLite file.
+
+.. code-block:: text
+
+   console: {
+       listen: "127.0.0.1:9443",
+       data_dir: "/var/lib/sibuna",
+       node: 1,
+   },
+
+.. code-block:: sh
+
+   sibuna init-admin admin --data-dir /var/lib/sibuna    # once, while the daemon is stopped
+   sibuna --config-file /etc/sibuna/edge.jlv
+   # Console: http://127.0.0.1:9443/console/
+
+We sign in, replace the temporary password, and open the page *Edge*. The page shows four things.
+
+**The node.** Its state is one of three words. *Serving* means that the node admits new flows. *Draining* means that the node was told to stop: it refuses new flows and finishes the open ones. *Full* means that the flow table holds ``global.max_flows`` flows: the node refuses new flows for lack of capacity. The table below the state gives the active flows and the limit, the drops, the servers that are drained or down, the reloads, the routing regime of the mesh and two revisions. The first revision is the digest of the file, the one that ``show cluster`` prints. The second is the revision of the database that the node serves in persistent mode (SID 0028). A node that serves a file has none, and the page says "Not reported".
+
+**The refusals by cause.** One row for each reason of the metrics: ``flow_limit``, ``draining``, ``rate_limit``, ``connection_limit``, ``task_limit`` and the others. A node that refuses for lack of capacity counts under ``flow_limit``, and a node that drains counts under ``draining``.
+
+**The frontends and the pools.** A frontend shows its requests, flows, bytes and the latency of a request: the mean and the 95th percentile. A pool shows the columns of ``show servers`` for each server, then its requests, failures, requests in flight and the wait for the first byte. A view carries at most 256 servers, and the page says how many it left out.
+
+**The fleet.** One row for each member: the state of the link, the state of the node, its flows, its servers and its two revisions. A member whose file differs from the file of this node is marked ``differs``. A member that does not answer in five seconds has the row ``No answer``.
+
+An operator or an administrator also sees the commands. Each command is one line of the admin socket, and the function of the admin socket runs it. The same parser checks it, the same worker applies it, and the same limit of 20 commands in a burst and 10 per second holds. A change reaches the other nodes over the mesh, as it does from ``sibuna ctl``, unless we tick *This node only*.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - The console offers
+     - It does not offer
+   * - ``set server POOL/NAME state ready|drain [local]``, ``set server POOL/NAME weight N [local]``, ``add server``, ``del server``, ``del ban``, ``reload cluster``, ``show servers``, ``show cluster``, ``show certs``, ``show ca``
+     - ``reload``, ``reopen log``, ``show info``, ``show stats``, ``show authority``, ``show affinity``, ``revoke cert`` and every other command. They stay on the host, with ``sibuna ctl``.
+
+Every request passes the checks of the console: the session, the role, the ``Origin`` field, the CSRF token and the allowance of the session. A viewer reads the page and changes nothing. The audit log records each change twice: the line before it runs, and the result after. A line that the console does not offer is answered ``CONSOLEEDGE``, and the edge never sees it.
+
+**A fleet.** For more than one node we write the list of all members, the same on every node, so that ``reload cluster`` can carry the file. Each node finds itself by its number, which a small file on the node holds.
+
+.. code-block:: text
+
+   console: {
+       data_dir: "/var/lib/sibuna",
+       node_file: "/etc/sibuna/console.node",
+       behind_proxy: true,
+       trusted_proxies: ["10.99.0.2/32"],
+       allow_operators: ["10.99.10.0/24"],
+       key_file: "/etc/sibuna/console.key",
+       peer_key_file: "/etc/sibuna/console-peer.key",
+       peer_ca_file: "/etc/sibuna/management-ca.pem",
+       nodes: [
+           { node: 1, listen: "10.99.0.11:9443", origin: "https://fra-edge-01.internal", allow_ips: ["10.99.0.11/32"] },
+           { node: 2, listen: "10.99.0.12:9443", origin: "https://fra-edge-02.internal", allow_ips: ["10.99.0.12/32"] },
+       ],
+   },
+
+A fleet has at most 64 members. The consoles talk to each other over HTTPS, so each one stands behind a TLS proxy, as Part IX describes for peers. The proxy must set ``X-Forwarded-For``. The two key files hold 64 hexadecimal digits each and are readable by their owner only.
+
+The listener screens a connection by its source address when it accepts it. Behind a proxy it serves the trusted proxies only. Without a proxy, and with ``allow_operators``, it serves those networks only. A screened connection is closed before it takes a slot. A peer must connect from the ``allow_ips`` of its entry, must name itself and this node in a fresh transcript, and must prove the peer key. ``allow_operators`` holds for every other request.
+
+The listener has a fixed number of slots: 64 browser streams, one peer stream for each peer and at least 16, and 16 slots that only ordinary requests may take. A stream over its quota is answered 503, and the page and the commands still work. The console never takes a lock of a request path, and the edge worker looks at one flag for it in each turn.
+
+**Removing a member.** We delete its entry from the file and reload. The node closes the stream of that member within two seconds and refuses its next connection, although the member still holds the peer key. A new member, or a changed entry, is used after a restart: the daemon logs ``EDGE014``. A reload that changes the listener, the directory, the proxy settings or the keys of the console is refused, and the routes stay.
 
 Several nodes
 ~~~~~~~~~~~~~
@@ -2497,7 +2610,7 @@ Coming from HAProxy
 Limits of this version
 ~~~~~~~~~~~~~~~~~~~~~~
 
-On Linux the HTTP firewall serves connections on event-driven workers, one per processor, up to ``http.max_connections``. A connection that waits holds a small record and no buffer. On other platforms, and with ``event_loop`` ``false``, each HTTP/1.1 connection and each HTTP/2 or HTTP/3 exchange has a thread of its own, up to 8192 at a time. A WebSocket to a pool with ``http_version`` 2 or 3 answers 501. HTTP/3 clients cannot open WebSockets, and browsers fall back to HTTP/1.1 or HTTP/2 for them. Server addresses are numeric. The admin socket changes servers only: frontends, routes, certificates and policy change by reload. Run-time changes do not survive a restart. Request headers are limited to 16 KiB on HTTP/2 and HTTP/3. Response compression and caching are not provided. Header edits set fixed values: there are no patterns or variables. With ``event_loop`` ``false`` a connection has the same traffic rules as on the workers: the timeouts of the pool, failover, passive health, sticky sessions, the redirect, the header edits and ``max_body``. Two details differ. A client that goes away while its server is silent is noticed when the server answers or its bound ends. A chunked body is counted by ``max_body`` without its chunk framing. Our own answers carry HSTS but neither the header edits nor the sticky cookie, and the answer to a WebSocket upgrade is not edited. SID 0019 lists the remaining gaps. SID 0015 lists the parts of the design that remain proposals: the shared-memory spill cache, database-backed topology, replicated bans, peer forwarding, binary handoff and the fleet console.
+On Linux the HTTP firewall serves connections on event-driven workers, one per processor, up to ``http.max_connections``. A connection that waits holds a small record and no buffer. On other platforms, and with ``event_loop`` ``false``, each HTTP/1.1 connection and each HTTP/2 or HTTP/3 exchange has a thread of its own, up to 8192 at a time. A WebSocket to a pool with ``http_version`` 2 or 3 answers 501. HTTP/3 clients cannot open WebSockets, and browsers fall back to HTTP/1.1 or HTTP/2 for them. Server addresses are numeric. The admin socket changes servers only: frontends, routes, certificates and policy change by reload. Run-time changes do not survive a restart. Request headers are limited to 16 KiB on HTTP/2 and HTTP/3. Response compression and caching are not provided. Header edits set fixed values: there are no patterns or variables. With ``event_loop`` ``false`` a connection has the same traffic rules as on the workers: the timeouts of the pool, failover, passive health, sticky sessions, the redirect, the header edits and ``max_body``. Two details differ. A client that goes away while its server is silent is noticed when the server answers or its bound ends. A chunked body is counted by ``max_body`` without its chunk framing. Our own answers carry HSTS but neither the header edits nor the sticky cookie, and the answer to a WebSocket upgrade is not edited. SID 0019 lists the remaining gaps. The spill cache of SID 0027 holds the learned sticky table only. SID 0015 lists the parts of the design that remain proposals: database-backed topology, replicated bans, peer forwarding, binary handoff and the fleet console.
 
 
 Console Preview

@@ -203,6 +203,7 @@ fn authenticated(cx: &mut Context<'_>, body: &Value<'_>) -> Result<(), UiError> 
     state.csrf = Secret::new(json::string(body, "csrf"))?;
     state.console_node =
         u32::try_from(json::unsigned_or_zero(body, "node")).ok().filter(|node| *node != 0);
+    state.edge = json::is_true(body, "edge");
     state.role = Text::new(json::string(body, "role"))?;
     state.must_change = json::is_true(body, "must_change");
     state.totp_required = json::is_true(body, "totp_required");

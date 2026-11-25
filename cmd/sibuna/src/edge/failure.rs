@@ -51,6 +51,11 @@ pub(super) fn classify(file: Option<&str>, error: &io::Error) -> Failure {
             "A port below 1024 needs the capability CAP_NET_BIND_SERVICE or the root user. \
              The unit sibuna-edge.service grants the capability.",
         ),
+        _ if lower.starts_with("spill0") => (
+            "spill cache not usable",
+            "The message says what to do. To start with the sticky table in memory \
+             alone, remove the `spill` section.",
+        ),
         _ if let Some(found) = automatic_https(&lower) => found,
         _ if names_a_certificate(&lower) => (
             "certificate not loaded",

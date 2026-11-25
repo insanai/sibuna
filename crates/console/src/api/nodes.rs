@@ -107,6 +107,8 @@ fn members(shared: &Shared, context: &mut Context<'_>, call: &Call) -> Result<()
     shared.probes.snapshot(&mut probes);
     let mut peers = Vec::new();
     shared.peers.reports(call.now, &mut peers);
+    // This page shows nine members. The edge page shows a fleet of 64 (SID 0031).
+    peers.truncate(nodes::MAX_PROBES);
     let reply = MembersReply { page: &page, probes: &probes, peers: &peers, now: call.now };
     Ok(reply::json(context, &reply)?)
 }

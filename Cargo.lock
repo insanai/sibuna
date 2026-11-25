@@ -1370,6 +1370,7 @@ dependencies = [
  "sibuna-policy",
  "sibuna-pow",
  "sibuna-reactor",
+ "sibuna-spill",
  "sibuna-storage",
  "sibuna-store",
  "sibuna-upgrade",
@@ -1584,6 +1585,7 @@ dependencies = [
  "sibuna-plugin",
  "sibuna-policy",
  "sibuna-reactor",
+ "sibuna-spill",
  "sibuna-store",
  "sibuna-upgrade",
 ]
@@ -1640,6 +1642,13 @@ name = "sibuna-serve"
 version = "1.0.0-beta.3"
 dependencies = [
  "sibuna-http",
+]
+
+[[package]]
+name = "sibuna-spill"
+version = "1.0.0-beta.3"
+dependencies = [
+ "sibuna-crypto",
 ]
 
 [[package]]

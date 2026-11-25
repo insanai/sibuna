@@ -90,6 +90,9 @@ Discussion registry
    * - 0026
      - :doc:`records/0026-peer-forwarding`
      - discussion
+   * - 0027
+     - :doc:`records/0027-spill-cache`
+     - discussion
    * - 0028
      - :doc:`records/0028-database-authority`
      - discussion
@@ -98,6 +101,9 @@ Discussion registry
      - discussion
    * - 0030
      - :doc:`records/0030-plugin-tiers`
+     - discussion
+   * - 0031
+     - :doc:`records/0031-edge-operator-console`
      - discussion
    * - 0032
      - :doc:`records/0032-staged-admission`

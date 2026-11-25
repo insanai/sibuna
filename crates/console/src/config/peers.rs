@@ -6,8 +6,10 @@ use std::path::PathBuf;
 
 use super::{is_origin_byte, split_authority};
 
-/// The most management peers one console connects to.
-pub const MAX_PEERS: usize = 8;
+/// The most management peers one console connects to: a fleet of 64 members (SID 0031).
+pub const MAX_PEERS: usize = 63;
+/// The most networks one peer connects from.
+pub const MAX_PEER_NETWORKS: usize = 16;
 /// The longest peer origin, in bytes.
 pub const MAX_ORIGIN: usize = 255;
 /// Node ids are below 2^23: incident identifiers keep the node in 23 bits.
@@ -20,6 +22,9 @@ pub struct PeerTarget {
     pub node: u32,
     /// The peer console's HTTPS origin.
     pub origin: String,
+    /// The networks the peer connects from, `<address>/<bits>` (SID 0031). The forwarded
+    /// address of its upgrade must lie in one. Empty: the address is not checked.
+    pub allow_ips: Vec<String>,
 }
 
 /// The management peer configuration.
@@ -57,6 +62,9 @@ pub enum PeerConfigError {
     PeerIngressRequired,
     /// A peer origin is not `https://host[:port]`.
     InvalidPeerOrigin,
+    /// A network of a peer is not `<address>/<bits>`, or a peer has more than
+    /// [`MAX_PEER_NETWORKS`].
+    InvalidPeerNetwork,
 }
 
 impl PeerConfigError {
@@ -64,7 +72,7 @@ impl PeerConfigError {
     pub fn hint(self) -> &'static str {
         match self {
             PeerConfigError::InvalidPeer => {
-                "Name at most eight peers by node ids other than this node's, below 8388608."
+                "Name at most 63 peers by node ids other than this node's, below 8388608."
             }
             PeerConfigError::DuplicatePeer => "Give each peer once, with its own origin.",
             PeerConfigError::PeerKeyRequired => "Give `--console-peer-key-file` with peers.",
@@ -73,6 +81,9 @@ impl PeerConfigError {
             }
             PeerConfigError::InvalidPeerOrigin => {
                 "Write the peer as `<node>=https://host[:port]`, with no path or user."
+            }
+            PeerConfigError::InvalidPeerNetwork => {
+                "Write at most 16 networks for a peer, each as `<address>/<bits>`."
             }
         }
     }
@@ -86,6 +97,7 @@ impl fmt::Display for PeerConfigError {
             PeerConfigError::PeerKeyRequired => "management peers need a peer key file",
             PeerConfigError::PeerIngressRequired => "management peers need a trusted ingress",
             PeerConfigError::InvalidPeerOrigin => "invalid management peer origin",
+            PeerConfigError::InvalidPeerNetwork => "invalid management peer network",
         })
     }
 }
@@ -118,6 +130,10 @@ impl Peers {
                 return Err(PeerConfigError::InvalidPeer);
             }
             parse_peer_origin(&target.origin)?;
+            let parse = |text: &String| crate::http::ingress::Network::parse(text).is_some();
+            if target.allow_ips.len() > MAX_PEER_NETWORKS || !target.allow_ips.iter().all(parse) {
+                return Err(PeerConfigError::InvalidPeerNetwork);
+            }
             let earlier = self.targets.iter().take(index);
             if earlier.into_iter().any(|e| e.node == target.node || e.origin == target.origin) {
                 return Err(PeerConfigError::DuplicatePeer);
@@ -163,7 +179,11 @@ mod tests {
     fn peers_require_https_membership_and_their_own_key() {
         let mut config = Peers::default();
         assert_eq!(config.validate(1, false), Ok(()));
-        config.targets.push(PeerTarget { node: 2, origin: "https://peer.test:9443".into() });
+        config.targets.push(PeerTarget {
+            node: 2,
+            origin: "https://peer.test:9443".into(),
+            allow_ips: Vec::new(),
+        });
         assert_eq!(config.validate(1, true), Err(PeerConfigError::PeerKeyRequired));
         config.key_file = Some("peer.key".into());
         assert_eq!(config.validate(1, false), Err(PeerConfigError::PeerIngressRequired));

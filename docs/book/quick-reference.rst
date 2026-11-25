@@ -65,6 +65,7 @@ Edge load balancer
    sibuna ctl /run/sibuna/edge.sock add server app/blue 10.0.0.3:80
    sibuna ctl /run/sibuna/edge.sock del server app/blue
    sibuna ctl /run/sibuna/edge.sock reload                            # as SIGHUP, with the result
+   sibuna ctl /run/sibuna/edge.sock show info | grep spill            # the disk tier of the sticky table: file, cost, counters
    sibuna authority diff -c /etc/sibuna/node.json -f edge.jlv         # what apply would change in the database
    sibuna authority apply -c /etc/sibuna/node.json -f edge.jlv --expect 7   # publish revision 8, or a conflict
    sibuna authority history -c /etc/sibuna/node.json                  # the revisions, newest first
@@ -99,6 +100,20 @@ Edge load balancer
    }
 
 ``"http": {"surface": "off"}`` gives a load balancer with no firewall. TCP and UDP frontends never use the firewall.
+
+The operator console of the edge (SID 0031) needs a ``console`` section in the file:
+
+.. code-block:: sh
+
+   # console: { listen: "127.0.0.1:9443", data_dir: "/var/lib/sibuna", node: 1 }
+   sibuna init-admin admin --data-dir /var/lib/sibuna    # once, while the daemon is stopped
+   sibuna --config-file edge.jlv                         # then open http://127.0.0.1:9443/console/ and the page Edge
+   curl -b "$COOKIE" http://127.0.0.1:9443/console/api/edge          # the node, its frontends and its pools
+   curl -b "$COOKIE" http://127.0.0.1:9443/console/api/edge/fleet    # one row for each member
+   curl -b "$COOKIE" -H "X-Console-CSRF: $CSRF" -H "Origin: http://127.0.0.1:9443" -H "Content-Type: application/json" \
+        -d '{"line":"set server app/a state drain"}' http://127.0.0.1:9443/console/api/edge/command
+
+The command route takes ``set server ... state|weight``, ``add server``, ``del server``, ``del ban``, ``reload cluster`` and ``show servers|cluster|certs|ca``, each with the checks of ``sibuna ctl``. It needs the role of an operator.
 
 Admission options of a frontend (SID 0032): ``"defer_accept": "5s"`` and ``"backlog": 4096`` on ``tcp`` and ``http``; ``"inspect_bytes"`` and ``"inspect_fallback": {"absent": {"action": "deny"}}`` beside ``tcp_inspect``; ``"udp_inspect": "quic"`` on ``udp``. All are off by default.
 

@@ -11,7 +11,7 @@ use crate::snippets;
 use crate::state::{Phase, State};
 
 /// The navigation actions, which are also the route names, in menu order.
-pub const ACTIONS: [&str; 12] = [
+pub const ACTIONS: [&str; 13] = [
     "dashboard",
     "events",
     "challenges",
@@ -21,13 +21,14 @@ pub const ACTIONS: [&str; 12] = [
     "tokens",
     "audit",
     "nodes",
+    "edge",
     "settings",
     "account",
     "security-overview",
 ];
 
 /// The menu label of each action in [`ACTIONS`].
-const LABELS: [&str; 12] = [
+const LABELS: [&str; 13] = [
     "Statistics",
     "Events",
     "Challenges",
@@ -37,6 +38,7 @@ const LABELS: [&str; 12] = [
     "Tokens",
     "Audit",
     "Nodes",
+    "Edge",
     "Settings",
     "Account",
     "Security",
@@ -64,6 +66,7 @@ pub fn section(phase: Phase) -> &'static str {
         Phase::Audit => "audit",
         Phase::Nodes => "nodes",
         Phase::Settings => "settings",
+        Phase::Edge => "edge",
         Phase::Password | Phase::Security => "account",
         Phase::Loading
         | Phase::Setup
@@ -100,6 +103,7 @@ pub fn begin(state: &State, out: &mut Html<'_>) -> fmt::Result {
     let active = section(state.phase);
     for (action, label) in ACTIONS.iter().zip(LABELS) {
         let hidden = *action == "security-overview"
+            || (*action == "edge" && !state.edge)
             || (*action == "tokens" && !state.allows(Action::ManageUsers))
             || (*action == "settings" && !state.allows(Action::ManageSettings));
         if hidden {

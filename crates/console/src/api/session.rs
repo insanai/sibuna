@@ -314,6 +314,7 @@ fn establish(
     let reply = SessionReply {
         user: user.id,
         node: shared.identity.node_id,
+        edge: shared.edge.is_some(),
         role: user.role,
         must_change: user.must_change,
         totp_required: shared.needs_totp(user.role, user.totp_enabled),
@@ -339,6 +340,8 @@ pub fn conflict_or(failure: StorageFailure, code: &'static str) -> RouteError {
 struct SessionReply<'a> {
     user: u64,
     node: u32,
+    /// The node has an edge (SID 0031). Written only when true.
+    edge: bool,
     role: Role,
     must_change: bool,
     totp_required: bool,
@@ -351,6 +354,9 @@ impl Encode for SessionReply<'_> {
         json.begin_object()?;
         counter_field(json, "user", self.user)?;
         field(json, "node", &self.node)?;
+        if self.edge {
+            field(json, "edge", &true)?;
+        }
         field(json, "role", &self.role)?;
         field(json, "must_change", &self.must_change)?;
         field(json, "totp_required", &self.totp_required)?;
@@ -451,6 +457,7 @@ fn password(shared: &Shared, context: &mut Context<'_>, call: &Call) -> Result<(
     let reply = SessionReply {
         user: user.id,
         node: shared.identity.node_id,
+        edge: shared.edge.is_some(),
         role: user.role,
         must_change: false,
         totp_required: shared.needs_totp(user.role, user.totp_enabled),
@@ -492,6 +499,7 @@ mod tests {
         let reply = SessionReply {
             user: 1 << 53,
             node: 3,
+            edge: false,
             role: Role::Operator,
             must_change: true,
             totp_required: false,
