@@ -1,9 +1,10 @@
-<!-- English source SHA-256: 4f4a4074b23f24663e85b168db739f9d4ca9cf40431e796253bdc84612f5fcea -->
+<!-- English source SHA-256: f2e33ed0c74ec5728587671c3f77214143ec89eb95e3196cd0ca3fc207e2f189 -->
 <h1 align="center">sibuna</h1>
 <p align="center">분산 로드 밸런서와 웹 애플리케이션 방화벽</p>
 <p align="center">
   <a href="#features">기능</a> ·
   <a href="#load-balancing">로드 밸런싱</a> ·
+  <a href="#beside-haproxy-and-envoy">벤치마크</a> ·
   <a href="#quickstart">빠른 시작</a> ·
   <a href="#console">콘솔</a> ·
   <a href="#how-it-works">작동 방식</a> ·
@@ -239,7 +240,7 @@ Gate는 접근 규칙, 세션과 로컬 속도 제한을 검사합니다. Shield
 
 ### HAProxy, Envoy와 함께 측정
 
-세 프록시를 호스트 한 대에서 루프백으로 차례로 하나씩, 각각 세 번 실행했습니다. 대상은 HAProxy 3.0.11, Envoy 1.40.2, 그리고 2026-11-25 소스 트리의 Sibuna입니다. 각 프록시는 같은 CPU 여덟 개와 스레드 여덟 개, 연결 256개를 사용했고, 사례마다 8초씩 실행했습니다. 표는 세 번 실행한 초당 요청 수의 중앙값입니다. 실패한 요청은 없었습니다.
+2026년 11월 25일 같은 호스트에서 Sibuna, HAProxy 3.0.11, BoringSSL을 쓰는 Envoy 1.40.2를 측정했습니다. 각 프록시에 CPU 8개와 작업 스레드 8개를 할당했습니다. 같은 원본 서버, 인증서, 부하 생성기를 사용했고 루프백 연결 256개에서 2바이트 응답을 받았습니다. 처음 세 행은 8초씩 세 번 측정한 초당 요청 수의 중앙값입니다. 마지막 세 행은 측정 종료 시점의 상주 메모리입니다. 처리량의 편차는 최대 4%였고 모든 요청이 완료됐습니다.
 
 | 사례 | Sibuna | HAProxy | Envoy |
 | --- | ---: | ---: | ---: |
@@ -247,8 +248,10 @@ Gate는 접근 규칙, 세션과 로컬 속도 제한을 검사합니다. Shield
 | TLS 위의 HTTP/1.1 | 174,611 | 165,199 | 63,399 |
 | HTTP/2 | 104,132 | 153,899 | 68,972 |
 | 상주 메모리, HTTP/1.1 | 14 MiB | 48 MiB | 58 MiB |
+| 상주 메모리, TLS 위의 HTTP/1.1 | 21 MiB | 61 MiB | 61 MiB |
+| 상주 메모리, HTTP/2 | 116 MiB | 112 MiB | 140 MiB |
 
-이 결과는 순위가 아니라 작은 측정 하나로 읽어 주세요. 평문 HTTP에서는 Sibuna와 HAProxy가 비슷하고, HTTP/2에서는 HAProxy가 분명히 더 빠릅니다. 저희는 Envoy 전문가가 아닙니다. 단순한 정적 설정을 사용했으며, 더 나은 설정이라면 수치가 충분히 달라질 수 있습니다. 동적 설정이나 필터 같은 Envoy의 강점은 이 테스트가 측정하는 대상이 아닙니다. 응답은 루프백에서 2바이트였기 때문에 요청당 비용이 과장됩니다. 실제 트래픽에서는 차이가 줄어듭니다. [기술 안내서](https://insanai.github.io/sibuna/ko/book/benchmarks.html)에 방법, 설정, 더 많은 연결 수, 호스트 세 대로 이루어진 클러스터가 나와 있습니다.
+평문 HTTP에서는 Sibuna와 HAProxy의 처리량이 거의 같았습니다. HTTP/2에서는 HAProxy가 Sibuna보다 약 48% 많은 요청을 처리했고 메모리도 조금 덜 사용했습니다. Envoy에는 정적 설정과 라우터 필터를 사용했습니다. 설정이나 부하를 바꾸면 결과도 달라질 수 있습니다. 이 짧은 측정으로는 동적 설정, 애플리케이션 지연 시간, 실제 네트워크 성능을 판단하기 어렵습니다. [벤치마크](https://insanai.github.io/sibuna/ko/book/benchmarks.html#sibuna-haproxy-and-envoy)
 
 <a id="beside-anubis"></a>
 

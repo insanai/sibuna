@@ -3,6 +3,7 @@
 <p align="center">
   <a href="#features">Features</a> ·
   <a href="#load-balancing">Load balancing</a> ·
+  <a href="#beside-haproxy-and-envoy">Benchmarks</a> ·
   <a href="#quickstart">Quickstart</a> ·
   <a href="#console">Console</a> ·
   <a href="#how-it-works">How it works</a> ·
@@ -272,7 +273,7 @@ Figures are medians of three runs.
 
 ### Beside HAProxy and Envoy
 
-We ran the three proxies on one host over loopback, one after another, three times each: HAProxy 3.0.11, Envoy 1.40.2 and Sibuna from the source tree of 2026-11-25. Each had the same eight CPUs and eight threads, 256 connections, and eight seconds per case. The table gives the median requests per second of the three runs. No request failed.
+On 25 November 2026 we ran Sibuna, HAProxy 3.0.11 and Envoy 1.40.2 with BoringSSL on the same host. Each proxy had eight CPUs and eight worker threads. We used the same origins, certificate and load generator, with 256 connections and a two-byte response over loopback. The first three rows give median requests per second across three eight-second runs. The last three give resident memory at the end of the run. The request rates in each case varied by at most 4%. Every request completed.
 
 | Case | Sibuna | HAProxy | Envoy |
 | --- | ---: | ---: | ---: |
@@ -280,8 +281,10 @@ We ran the three proxies on one host over loopback, one after another, three tim
 | HTTP/1.1 over TLS | 174,611 | 165,199 | 63,399 |
 | HTTP/2 | 104,132 | 153,899 | 68,972 |
 | Resident memory, HTTP/1.1 | 14 MiB | 48 MiB | 58 MiB |
+| Resident memory, HTTP/1.1 over TLS | 21 MiB | 61 MiB | 61 MiB |
+| Resident memory, HTTP/2 | 116 MiB | 112 MiB | 140 MiB |
 
-Please read this as one small measurement, not a ranking. Sibuna and HAProxy are level for plaintext HTTP, and HAProxy is clearly faster for HTTP/2. We are not Envoy experts: we used a plain static configuration, and a better one may well change its numbers. Envoy's strengths, such as dynamic configuration and its filters, are not what this test measures. The response was two bytes on loopback, which exaggerates the cost of each request; real traffic narrows the differences. The [book](https://insanai.github.io/sibuna/book/benchmarks.html) gives the method, the configurations, more connection counts and a cluster of three hosts.
+Plaintext HTTP was effectively tied between Sibuna and HAProxy. HAProxy served about 48% more HTTP/2 requests than Sibuna, and used slightly less memory in that case. We used a static Envoy configuration with its router filter. Other settings or workloads could change the result. These short runs tell us little about dynamic configuration, application latency or performance across a real network. [Method and measurements](docs/book/benchmarks.rst#sibuna-haproxy-and-envoy)
 
 ### Beside Anubis
 

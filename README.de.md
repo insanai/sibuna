@@ -1,9 +1,10 @@
-<!-- English source SHA-256: 4f4a4074b23f24663e85b168db739f9d4ca9cf40431e796253bdc84612f5fcea -->
+<!-- English source SHA-256: f2e33ed0c74ec5728587671c3f77214143ec89eb95e3196cd0ca3fc207e2f189 -->
 <h1 align="center">sibuna</h1>
 <p align="center">Verteilter Lastverteiler und Web Application Firewall</p>
 <p align="center">
   <a href="#features">Funktionen</a> ·
   <a href="#load-balancing">Lastverteilung</a> ·
+  <a href="#beside-haproxy-and-envoy">Benchmarks</a> ·
   <a href="#quickstart">Schnellstart</a> ·
   <a href="#console">Konsole</a> ·
   <a href="#how-it-works">Funktionsweise</a> ·
@@ -305,10 +306,7 @@ Die Werte sind Mediane aus drei Läufen.
 
 ### Neben HAProxy und Envoy
 
-Wir haben die drei Proxys auf einem Host über Loopback nacheinander laufen lassen, jeden dreimal:
-HAProxy 3.0.11, Envoy 1.40.2 und Sibuna aus dem Quellbaum vom 2026-11-25. Jeder hatte dieselben
-acht CPUs und acht Threads, 256 Verbindungen und acht Sekunden pro Fall. Die Tabelle zeigt den
-Median der Anfragen pro Sekunde aus den drei Läufen. Keine Anfrage schlug fehl.
+Am 25. November 2026 haben wir Sibuna, HAProxy 3.0.11 und Envoy 1.40.2 mit BoringSSL auf demselben Rechner gemessen. Jeder Proxy hatte acht CPUs und acht Worker-Threads. Wir verwendeten dieselben Ursprungsserver, dasselbe Zertifikat und denselben Lastgenerator mit 256 Verbindungen und einer Antwort von zwei Bytes über Loopback. Die ersten drei Zeilen zeigen den Median der Anfragen pro Sekunde aus drei Läufen zu je acht Sekunden. Die letzten drei zeigen den residenten Speicher am Ende des Laufs. Die Streuung der Anfragerate betrug höchstens 4 %. Alle Anfragen wurden abgeschlossen.
 
 | Fall | Sibuna | HAProxy | Envoy |
 | --- | ---: | ---: | ---: |
@@ -316,15 +314,10 @@ Median der Anfragen pro Sekunde aus den drei Läufen. Keine Anfrage schlug fehl.
 | HTTP/1.1 über TLS | 174.611 | 165.199 | 63.399 |
 | HTTP/2 | 104.132 | 153.899 | 68.972 |
 | Residenter Speicher, HTTP/1.1 | 14 MiB | 48 MiB | 58 MiB |
+| Residenter Speicher, HTTP/1.1 über TLS | 21 MiB | 61 MiB | 61 MiB |
+| Residenter Speicher, HTTP/2 | 116 MiB | 112 MiB | 140 MiB |
 
-Bitte lies dies als eine kleine Messung, nicht als Rangliste. Sibuna und HAProxy liegen bei
-unverschlüsseltem HTTP gleichauf, und bei HTTP/2 ist HAProxy deutlich schneller. Wir sind keine
-Envoy-Experten: Wir haben eine schlichte statische Konfiguration verwendet, und eine bessere kann
-seine Zahlen durchaus verändern. Envoys Stärken, etwa die dynamische Konfiguration und seine
-Filter, misst dieser Test nicht. Die Antwort war zwei Bytes groß und lief über Loopback, was die
-Kosten jeder Anfrage übertreibt; echter Datenverkehr verringert die Unterschiede. Das
-[Buch](https://insanai.github.io/sibuna/de/book/benchmarks.html) beschreibt die Methode, die
-Konfigurationen, weitere Verbindungszahlen und einen Cluster aus drei Hosts.
+Bei unverschlüsseltem HTTP lagen Sibuna und HAProxy praktisch gleichauf. Bei HTTP/2 bediente HAProxy rund 48 % mehr Anfragen als Sibuna und benötigte dabei etwas weniger Speicher. Wir nutzten Envoy mit einer statischen Konfiguration und seinem Router-Filter. Andere Einstellungen oder Lastprofile können das Ergebnis verändern. Die kurzen Läufe sagen wenig über dynamische Konfiguration, Anwendungslatenz oder die Leistung in einem echten Netz aus. [Benchmarks](https://insanai.github.io/sibuna/de/book/benchmarks.html#sibuna-haproxy-and-envoy)
 
 <a id="beside-anubis"></a>
 

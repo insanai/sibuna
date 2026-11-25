@@ -1,9 +1,10 @@
-<!-- English source SHA-256: 4f4a4074b23f24663e85b168db739f9d4ca9cf40431e796253bdc84612f5fcea -->
+<!-- English source SHA-256: f2e33ed0c74ec5728587671c3f77214143ec89eb95e3196cd0ca3fc207e2f189 -->
 <h1 align="center">sibuna</h1>
 <p align="center">Balanceador de carga distribuido y cortafuegos de aplicaciones web</p>
 <p align="center">
   <a href="#features">Características</a> ·
   <a href="#load-balancing">Balanceo de carga</a> ·
+  <a href="#beside-haproxy-and-envoy">Mediciones</a> ·
   <a href="#quickstart">Inicio rápido</a> ·
   <a href="#console">Consola</a> ·
   <a href="#how-it-works">Cómo funciona</a> ·
@@ -303,10 +304,7 @@ Las cifras son medianas de tres ejecuciones.
 
 ### Junto a HAProxy y Envoy
 
-Ejecutamos los tres proxies en un host por loopback, uno tras otro, tres veces cada uno:
-HAProxy 3.0.11, Envoy 1.40.2 y Sibuna desde el árbol de código fuente del 2026-11-25. Cada uno
-tuvo las mismas ocho CPU y ocho hilos, 256 conexiones y ocho segundos por caso. La tabla da la
-mediana de peticiones por segundo de las tres ejecuciones. Ninguna petición falló.
+El 25 de noviembre de 2026 medimos Sibuna, HAProxy 3.0.11 y Envoy 1.40.2 con BoringSSL en el mismo equipo. Cada proxy tuvo ocho CPU y ocho hilos de trabajo. Usamos los mismos servidores de origen, certificado y generador de carga, con 256 conexiones por la interfaz de bucle local y una respuesta de dos bytes. Las tres primeras filas dan la mediana de solicitudes por segundo en tres rondas de ocho segundos. Las tres últimas muestran la memoria residente al final de la ejecución. La variación de la tasa de solicitudes fue como máximo del 4 %. Todas las solicitudes se completaron.
 
 | Caso | Sibuna | HAProxy | Envoy |
 | --- | ---: | ---: | ---: |
@@ -314,15 +312,10 @@ mediana de peticiones por segundo de las tres ejecuciones. Ninguna petición fal
 | HTTP/1.1 sobre TLS | 174.611 | 165.199 | 63.399 |
 | HTTP/2 | 104.132 | 153.899 | 68.972 |
 | Memoria residente, HTTP/1.1 | 14 MiB | 48 MiB | 58 MiB |
+| Memoria residente, HTTP/1.1 sobre TLS | 21 MiB | 61 MiB | 61 MiB |
+| Memoria residente, HTTP/2 | 116 MiB | 112 MiB | 140 MiB |
 
-Te pedimos que lo leas como una medición pequeña, no como una clasificación. Sibuna y HAProxy
-están a la par en HTTP sin cifrar, y HAProxy es claramente más rápido con HTTP/2. No somos
-expertos en Envoy: usamos una configuración estática sencilla, y una mejor bien podría cambiar
-sus cifras. Los puntos fuertes de Envoy, como la configuración dinámica y sus filtros, no son lo
-que mide esta prueba. La respuesta era de dos bytes por loopback, lo que exagera el coste de cada
-petición; el tráfico real reduce las diferencias. El
-[libro](https://insanai.github.io/sibuna/es/book/benchmarks.html) da el método, las
-configuraciones, más números de conexiones y un clúster de tres hosts.
+En HTTP sin cifrar, Sibuna y HAProxy obtuvieron prácticamente el mismo resultado. Con HTTP/2, HAProxy atendió alrededor de un 48 % más de solicitudes que Sibuna y usó algo menos de memoria. Configuramos Envoy con rutas estáticas y su filtro de enrutamiento. Con otros ajustes o cargas los resultados podrían cambiar. Estas pruebas cortas dicen poco sobre la configuración dinámica, la latencia de la aplicación o el rendimiento en una red real. [Mediciones](https://insanai.github.io/sibuna/es/book/benchmarks.html#sibuna-haproxy-and-envoy)
 
 <a id="beside-anubis"></a>
 

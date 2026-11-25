@@ -1,9 +1,10 @@
-<!-- English source SHA-256: 4f4a4074b23f24663e85b168db739f9d4ca9cf40431e796253bdc84612f5fcea -->
+<!-- English source SHA-256: f2e33ed0c74ec5728587671c3f77214143ec89eb95e3196cd0ca3fc207e2f189 -->
 <h1 align="center">sibuna</h1>
 <p align="center">分布式负载均衡器和 Web 应用防火墙</p>
 <p align="center">
   <a href="#features">功能</a> ·
   <a href="#load-balancing">负载均衡</a> ·
+  <a href="#beside-haproxy-and-envoy">基准测试</a> ·
   <a href="#quickstart">快速入门</a> ·
   <a href="#console">控制台</a> ·
   <a href="#how-it-works">工作原理</a> ·
@@ -239,7 +240,7 @@ Gate 检查访问规则、会话和本地速率限制。Shield 在此基础上�
 
 ### 与 HAProxy 和 Envoy 对照
 
-我们在一台主机上通过回环接口依次运行这三个代理，每个运行三次：HAProxy 3.0.11、Envoy 1.40.2，以及 2026-11-25 源码树中的 Sibuna。每个代理都使用同样的八个 CPU 和八个线程、256 个连接，每个场景运行八秒。表中为三次运行每秒请求数的中位数。没有失败的请求。
+2026 年 11 月 25 日，我们在同一台主机上测量了 Sibuna、HAProxy 3.0.11 和使用 BoringSSL 的 Envoy 1.40.2。每个代理分配了 8 个 CPU 和 8 个工作线程。三者使用相同的源站、证书和负载生成器，通过回环接口建立 256 个连接，响应正文为两个字节。前三行是三轮测试的每秒请求数中位数，每轮 8 秒。后三行是测试结束时的常驻内存。各轮请求速率的差异最多为 4%，所有请求均已完成。
 
 | 场景 | Sibuna | HAProxy | Envoy |
 | --- | ---: | ---: | ---: |
@@ -247,8 +248,10 @@ Gate 检查访问规则、会话和本地速率限制。Shield 在此基础上�
 | 基于 TLS 的 HTTP/1.1 | 174,611 | 165,199 | 63,399 |
 | HTTP/2 | 104,132 | 153,899 | 68,972 |
 | 常驻内存，HTTP/1.1 | 14 MiB | 48 MiB | 58 MiB |
+| 常驻内存，基于 TLS 的 HTTP/1.1 | 21 MiB | 61 MiB | 61 MiB |
+| 常驻内存，HTTP/2 | 116 MiB | 112 MiB | 140 MiB |
 
-请把这看作一次小规模的测量，而不是排名。Sibuna 和 HAProxy 在明文 HTTP 上持平，HAProxy 在 HTTP/2 上明显更快。我们不是 Envoy 专家：我们使用的是简单的静态配置，更好的配置很可能会改变它的数字。Envoy 的长处，例如动态配置和它的过滤器，不在本次测试的衡量范围内。响应只有两个字节，并且经过回环接口，这会夸大每个请求的成本；真实流量会缩小这些差距。[技术手册](https://insanai.github.io/sibuna/zh-hans/book/benchmarks.html)给出了方法、配置、更多连接数下的结果，以及一个由三台主机组成的集群。
+在明文 HTTP 上，Sibuna 和 HAProxy 的吞吐量几乎相同。在 HTTP/2 上，HAProxy 比 Sibuna 多处理约 48% 的请求，用的内存也略少。我们为 Envoy 使用了静态配置和路由过滤器。其他配置或负载可能得到不同的结果。这些短时间测试很难说明动态配置、应用延迟或真实网络中的性能。 [基准测试](https://insanai.github.io/sibuna/zh-hans/book/benchmarks.html#sibuna-haproxy-and-envoy)
 
 <a id="beside-anubis"></a>
 
