@@ -1616,6 +1616,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "sibuna-spill"
+version = "1.0.0-beta.3"
+dependencies = [
+ "sibuna-crypto",
+]
+
+[[package]]
 name = "sibuna-storage"
 version = "1.0.0-beta.3"
 dependencies = [
