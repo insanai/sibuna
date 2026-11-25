@@ -17,6 +17,7 @@ mod inline;
 mod observed;
 mod probe;
 mod quick;
+mod upgrade;
 mod watch;
 mod workers;
 
@@ -167,6 +168,8 @@ struct Serving {
     observed: observed::Observed,
     /// The drain commands shared with the peers of the mesh (SID 0022).
     drains: Drains,
+    /// The upgrade socket, on which a replacing process takes the listeners (SID 0029).
+    upgrade: upgrade::Old,
 }
 
 /// The run-time commands on their way to the peers and from them.
@@ -198,6 +201,10 @@ impl Serving {
     fn replace(&mut self, revision: Revision) -> io::Result<String> {
         if revision.config.admin_socket() != self.admin_socket.as_deref() {
             return Err(io::Error::other("changing global.admin_socket requires a restart"));
+        }
+        let upgrade_socket = revision.config.upgrade_socket().map(std::path::Path::new);
+        if upgrade_socket != self.upgrade.path() {
+            return Err(io::Error::other("changing global.upgrade_socket requires a restart"));
         }
         let watch = revision.config.watch();
         let shutdown_timeout = revision.config.shutdown_timeout();
@@ -480,21 +487,18 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let takeover = config.reuse_port();
     let watch = config.watch();
     let (shutdown_timeout, drain_delay) = (config.shutdown_timeout(), config.drain_delay());
+    let upgrade_socket = config.upgrade_socket().map(str::to_owned);
     let mut current = sibuna_lb::Regime::Standalone;
-    let mut edge = Edge::bind(config)?;
-    if let Some(mesh) = &mesh {
-        // The mesh replicates the sticky table and moves the shares (SID 0025).
-        mesh.share_state(edge.cluster_state());
-    }
+    // With `global.upgrade_socket` a running daemon lends its listeners (SID 0029).
+    let mut replacement = upgrade::Replacement::begin(&config)?;
+    let mut edge = Edge::bind_inherited(config, replacement.inherited())?;
+    // The mesh replicates the sticky table and moves the shares (SID 0025).
+    mesh.iter().for_each(|mesh| mesh.share_state(edge.cluster_state()));
     forward::begin(&mut edge, takeover)?;
     let http = http.map(|p| http::Http::start(p, &edge, secret)).transpose()?;
     let drains = join(http.as_ref(), &adapters, mesh.as_ref());
     let observed = observed::Observed::start(http.as_ref(), &observe_options, &edge)?;
     let (jobs, inbox) = mpsc::channel();
-    let _admin = match &admin_socket {
-        Some(path) => Some(admin::Admin::start(path, takeover, Arc::clone(&source), jobs)?),
-        None => None,
-    };
     let mut serving = Serving {
         edge,
         http,
@@ -509,8 +513,21 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         reloads: 0,
         observed,
         drains,
+        upgrade: upgrade::Old::none(),
     };
     serving.watch(watch)?;
+    // From here the old daemon reads no UDP, so nothing slow may come before the first
+    // turn of the worker. The sockets of this process take the paths of the old one
+    // only now, when the old one has given the service up.
+    let replaced = replacement.finish(&mut serving.edge)?;
+    let _admin = match &serving.admin_socket {
+        Some(path) => {
+            let source = Arc::clone(&serving.source);
+            Some(admin::Admin::start(path, takeover || replaced, source, jobs)?)
+        }
+        None => None,
+    };
+    serving.upgrade = upgrade::Old::start(upgrade_socket.as_deref(), &serving.edge)?;
     serving.announce();
     // The follower of a database starts with the revision that the worker serves.
     if let Some(published) = published {
@@ -524,15 +541,30 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
             serving.answer(job);
         }
         serving.follow(mesh.as_ref(), &mut current);
+        if serving.upgrade.step(&mut serving.edge) {
+            break;
+        }
         serving.step()?;
     }
     serving.observed.drain();
-    serving.linger()?;
+    serving.settle()?;
     drop(mesh);
     serving.stop()
 }
 
 impl Serving {
+    /// Serves on for a while after the last turn of the worker and before the drain.
+    fn settle(&mut self) -> io::Result<()> {
+        if self.upgrade.is_handed() {
+            // A replacement serves the same addresses already, so no balancer has to be
+            // told. The connections accepted in the last instant have sent nothing yet,
+            // and a drain closes a connection that has sent nothing: we serve on briefly.
+            self.serve_for(upgrade::SETTLE)
+        } else {
+            self.linger()
+        }
+    }
+
     /// Serves on for `global.drain_delay` after readiness turned to 503, so that a
     /// balancer in front stops sending before the listeners close (SID 0020).
     fn linger(&mut self) -> io::Result<()> {
@@ -541,8 +573,16 @@ impl Serving {
         }
         let delay = self.drain_delay;
         note(format_args!("Sibuna edge draining: not ready, serving for {delay:?}"));
-        let until = Instant::now() + self.drain_delay;
+        self.serve_for(delay)
+    }
+
+    /// Turns the worker for `time` more.
+    fn serve_for(&mut self, time: Duration) -> io::Result<()> {
+        let until = Instant::now() + time;
         while Instant::now() < until {
+            // A replacement that arrived before the stop is still answered. When it
+            // takes the listeners, this process must stop accepting on them.
+            self.upgrade.step(&mut self.edge);
             self.step()?;
         }
         Ok(())
@@ -559,13 +599,16 @@ impl Serving {
     /// Stops the listeners and waits for the established flows, at most
     /// `global.shutdown_timeout`.
     fn stop(self) -> io::Result<()> {
-        let Serving { mut edge, http, shutdown_timeout, observed, .. } = self;
+        let Serving { mut edge, http, shutdown_timeout, observed, mut upgrade, .. } = self;
         edge.drain();
         if let Some(http) = &http {
             http.drain();
         }
         let deadline = Instant::now() + shutdown_timeout;
         while edge.active() > 0 && Instant::now() < deadline {
+            // See `serve_for`: a draining process refuses what it accepts, and after
+            // a handoff the listeners are no longer its own.
+            upgrade.step(&mut edge);
             step(&mut edge, http.as_ref())?;
             observed.pass_flows(&mut edge);
         }

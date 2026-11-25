@@ -128,6 +128,12 @@ impl Validation {
         if quic { Self::Fresh } else { Self::Off }
     }
 
+    /// The state of a mapping that the process before this one handed over (SID 0029).
+    /// `validated` is what that process had found.
+    pub fn adopted(quic: bool, validated: bool) -> Self {
+        if quic && validated { Self::Done } else { Self::new(quic) }
+    }
+
     /// True when the reply bound no longer applies.
     pub fn is_done(&self) -> bool {
         matches!(self, Self::Done)

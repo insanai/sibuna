@@ -275,6 +275,23 @@ impl Pool {
         None
     }
 
+    /// Reserves a place on the server at `addr` for a flow that is established there
+    /// already: a UDP mapping taken over from the process this one replaces (SID 0029).
+    /// The scheduler is not asked, and neither the server's limit nor a drain refuses
+    /// it, as neither ends an established flow. `None` when the pool has no server at
+    /// that address.
+    pub fn reserve_at(&self, addr: SocketAddr) -> Option<Ticket> {
+        let target = self
+            .targets
+            .iter()
+            .find(|target| target.server.via.is_none() && target.server.addr == addr)?;
+        target.load.active.fetch_add(1, Ordering::Relaxed);
+        target.admitted.fetch_add(1, Ordering::Relaxed);
+        // The flow is outside the count of a fleet-wide limit (SID 0025): the share of
+        // this process starts anew, and an established flow is never refused.
+        Some(Ticket { addr, load: Arc::clone(&target.load), quota: None })
+    }
+
     /// The index of the server that the scheduler and `wish` choose now.
     fn pick(
         &self,

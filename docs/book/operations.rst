@@ -387,6 +387,9 @@ Global limits
    * - ``reuse_port``
      - ``false``
      - Listeners share their address with other Sibuna processes of the same user, so a new process can start before the old one stops. Linux only. Changing it takes a restart.
+   * - ``upgrade_socket``
+     - none
+     - The path of the socket over which a new process takes the listeners and the UDP mappings of this one. See "Replacing the binary without losing a connection". Linux only. Changing it takes a restart.
 
 One worker thread accepts connections, inspects handshakes and owns the UDP mappings. Established TCP streams move to the relay threads. On Linux every thread waits with epoll, so an idle flow costs no CPU time. We budget two file descriptors for each TCP stream and one for each UDP mapping. The operating system must allow the daemon that many descriptors (``LimitNOFILE`` under systemd).
 
@@ -2004,6 +2007,97 @@ The new process binds the same addresses while the old one serves, and the kerne
 A takeover needs no ``global.drain_delay``: nothing in front has to notice, because the new process already accepts. With a delay the old process keeps accepting its share of new connections for that time, and only then stops. We set a delay for the other case, a node that leaves the pool of a balancer in front.
 
 A connection that reaches the old process in the instant it closes its listener is reset, and the client connects again. In our test with a client that opens a new connection for every request, no request failed in 15 takeovers. An HTTP/3 connection does not survive the takeover: the kernel may hand its packets to the other process, which does not know the connection, and the client then connects again. Connections over TCP are not affected. Without ``reuse_port`` a second process on the same address is refused with ADDRESS IN USE, which protects against starting the service twice by mistake.
+
+Replacing the binary without losing a connection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+With ``global.reuse_port`` the old process has listeners of its own until it exits. While it drains, the kernel still gives it a share of the new connections, and it refuses them. In our test, with one long stream that held the old process in its drain for 1.7 s, 10,000 to 22,000 connections failed in that time. UDP clients were given a server again.
+
+With ``global.upgrade_socket`` the old process gives its listening sockets to the new one. There is one accept queue, and it is never closed. The old process also gives its UDP mappings, so a UDP client keeps its server, and the server sees the same source address. The key needs Linux.
+
+.. code-block:: text
+
+   global: {
+       upgrade_socket: "/run/sibuna/edge.upgrade",
+   },
+
+.. code-block:: sh
+
+   /opt/sibuna/new/sibuna check -f /etc/sibuna/edge.jlv
+   /opt/sibuna/new/sibuna --config-file /etc/sibuna/edge.jlv    # replaces the running daemon
+
+The command of an upgrade is the command of a start. A process that starts with this key connects to the path. When a daemon answers there, the new process takes its place. When nobody answers, it starts as a first process does. We do not signal the old process. It exits by itself with status 0 when its established flows have ended, or after ``shutdown_timeout``.
+
+.. code-block:: text
+
+   new process                                old process
+   -----------                                -----------
+   reads and checks its file                  serves
+   connects, takes the listening sockets      serves
+   starts everything, reads nothing yet       serves
+   says that it is ready  ------------------> stops reading UDP, still accepts TCP
+                          <------------------ gives the UDP mappings
+   accepts TCP, acknowledges  --------------> stops accepting, drains, exits 0
+   reads UDP, "listeners ready"
+
+A new process that fails leaves the old one serving. This holds for a file that does not check, for a certificate or a log file that cannot be opened, and for a process that dies or hangs before it acknowledges. The old process waits 10 s for the acknowledgement, then ends the new process with SIGKILL and reads UDP again. Datagrams that arrived meanwhile waited in the socket.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 14 86
+
+   * - Line
+     - Meaning
+   * - ``UPG010``
+     - The old process handed over. The line gives the listeners, the UDP mappings, the mappings that the new process dropped, and for how long UDP was unread.
+   * - ``UPG011``
+     - A replacement failed before the cutover. The old process serves on.
+   * - ``UPG012``
+     - A peer was refused: another user, another version, or not a Sibuna edge.
+   * - ``UPG013``
+     - A replacement hangs and cannot be ended. UDP stays unread until we end it by hand.
+   * - ``UPG020``
+     - The new process took over. The line gives the listeners and mappings it took.
+
+The new process prints a diagnostic with a code from ``UPG001`` to ``UPG008`` when it is refused, and exits with status 1.
+
+What survives:
+
+- A connection that waits in a TCP listener, and every new connection. In our test, 17,000 to 33,000 connections during an upgrade, none failed.
+- An established TCP stream or HTTP connection stays with the old process until it ends, or until ``shutdown_timeout``.
+- A UDP mapping, when the new file has the same listener and the same server. In our test 6,000 mappings moved, and UDP was unread for 59 to 87 ms. With 41 mappings it was 1 ms.
+
+What does not survive:
+
+- An HTTP/3 connection. The client connects again.
+- Run-time commands such as a drained server, rate counters, health states and sticky tables. The new process starts from its file. We repeat the commands, or write them in the file first.
+- A UDP mapping whose listener or server the new file no longer has, or for which the new process has no room. Its client is given a server by its next datagram.
+
+Both processes must run as the same user. The socket file has mode 0600, and each end checks the user of the other. Each daemon needs a path of its own: a new process that finds a daemon with other addresses at the path gives up with ``UPG008``. A start with this key replaces a running daemon, so starting the service twice no longer fails with ADDRESS IN USE.
+
+The new process holds a descriptor for every mapping it takes, beside those of the old process, so ``LimitNOFILE`` must allow for both.
+
+A node with a mesh, with ``accept_config`` or with a separate ``observability.listen`` cannot be replaced this way yet: those sockets are not passed. We use ``reuse_port`` or a restart there.
+
+Under systemd the two processes are two instances of a template unit. The directory of the sockets must outlive an instance, so it is not a ``RuntimeDirectory`` of the unit.
+
+.. code-block:: ini
+
+   # /etc/systemd/system/sibuna-edge@.service
+   [Unit]
+   Description=Sibuna edge (%i)
+
+   [Service]
+   User=sibuna
+   ExecStart=/opt/sibuna/%i/sibuna --config-file /etc/sibuna/edge.jlv
+   Restart=on-failure
+   LimitNOFILE=1048576
+
+.. code-block:: sh
+
+   systemctl start sibuna-edge@b     # replaces sibuna-edge@a, which exits with status 0
+
+``Restart=always`` must not be used: the old instance would start again and take the listeners back. With ``Restart=on-failure`` a new instance that crashes after the cutover is started again, and binds as a first process does. We have not run this unit under systemd. The exit statuses it relies on are tested.
 
 Changing servers at run time
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

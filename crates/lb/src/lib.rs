@@ -55,6 +55,8 @@ mod flowlog;
 pub use flowlog::FlowEnd;
 mod forward;
 pub use forward::ForwardConfig;
+mod handoff;
+pub use handoff::Inherited;
 mod proxy_header;
 pub use proxy_header::{MAX_PROXY_HEADER, ProxyHeader, ProxyHeaderError, parse_proxy_header};
 mod stats;
@@ -210,6 +212,8 @@ pub struct Edge {
     listen_faults: Vec<ListenFault>,
     /// Peer forwarding, once [`Edge::begin_forwarding`] opened its port (SID 0026).
     peering: Option<Box<forward::Peering>>,
+    /// Where a handoff to or from another process stands (SID 0029).
+    handoff: handoff::State,
 }
 
 /// Gives `cluster` the roster of the mesh and publishes the HTTP routes of `config`
@@ -222,6 +226,16 @@ fn publish_routes(config: &mut Config, cluster: &ClusterState) -> HttpRoutes {
     http.share_cluster(cluster.clone());
     http.publish(config);
     http
+}
+
+/// Builds the pools of a configuration, and the counts that their servers share.
+fn build_pools(
+    pools: BTreeMap<String, config::Backend>,
+    cluster: &ClusterState,
+) -> (BTreeMap<String, Pool>, Loads) {
+    let mut loads = Loads::of(cluster.clone());
+    let pools = pools.into_iter().map(|(name, pool)| (name, Pool::new(pool, &mut loads)));
+    (pools.collect(), loads)
 }
 
 /// Opens the socket of one listener. With `shared` it may share its address with
@@ -321,13 +335,32 @@ impl Edge {
     /// any listeners already bound.
     pub fn bind(config: Config) -> io::Result<Self> {
         let cluster = ClusterState::new(config.sticky_entries);
-        Self::bind_with(config, cluster)
+        Self::bind_all(config, cluster, Inherited::default())
     }
 
     /// As [`Edge::bind`], with the sticky table and the shares of `cluster`
     /// (SID 0025). A caller that keeps the sticky table elsewhere than in memory
     /// gives its store to `cluster` first, with [`ClusterState::use_store`].
-    pub fn bind_with(mut config: Config, cluster: ClusterState) -> io::Result<Self> {
+    pub fn bind_with(config: Config, cluster: ClusterState) -> io::Result<Self> {
+        Self::bind_all(config, cluster, Inherited::default())
+    }
+
+    /// As [`Edge::bind`], on the listening sockets that the process this one replaces
+    /// has lent (SID 0029). A listener that has a lent socket uses it and is held: it
+    /// is not read until [`Edge::arm_streams`] or [`Edge::arm_datagrams`]. Every other
+    /// listener is bound as usual. Lent sockets that no listener wants are closed.
+    pub fn bind_inherited(config: Config, inherited: Inherited) -> io::Result<Self> {
+        let cluster = ClusterState::new(config.sticky_entries);
+        Self::bind_all(config, cluster, inherited)
+    }
+
+    /// Binds with a given cluster state and given lent sockets.
+    fn bind_all(
+        mut config: Config,
+        cluster: ClusterState,
+        mut inherited: Inherited,
+    ) -> io::Result<Self> {
+        let mut handoff = handoff::State::default();
         let mut checks = health::Checks::default();
         checks.configure(&mut config)?;
         let stats = std::sync::Arc::new(Stats::default());
@@ -339,27 +372,27 @@ impl Edge {
         let mut listen_faults = Vec::new();
         let mut poll = Poller::new()?;
         let (waker, wake) = Waker::new()?;
+        handoff.wake = Some(wake.clone());
         poll.set(handle(waker.socket()), READ, Ready::Wake)?;
         for (bind, route) in config.listeners {
-            let socket = open_listener(bind.0, bind.1, config.reuse_port)?;
-            if let Socket::Tcp(listener) = &socket {
-                let none = listen::ListenOptions::default();
-                route.listen.apply(&none, listener, &route.info.name, &mut listen_faults);
-            }
+            let (socket, held) = inherited.take_or(bind, config.reuse_port)?;
             let fd = match &socket {
-                Socket::Tcp(socket) => handle(socket),
+                Socket::Tcp(listener) => {
+                    let none = listen::ListenOptions::default();
+                    route.listen.apply(&none, listener, &route.info.name, &mut listen_faults);
+                    handle(listener)
+                }
                 Socket::Udp(socket) => handle(socket),
             };
-            poll.set(fd, READ, Ready::Listener(listeners.len()))?;
+            if held {
+                handoff.held.push(listeners.len());
+            } else {
+                poll.set(fd, READ, Ready::Listener(listeners.len()))?;
+            }
             binds.push(bind);
             listeners.push(Listener { socket, route, paused_until: None });
         }
-        let mut loads = Loads::of(cluster.clone());
-        let pools = config
-            .pools
-            .into_iter()
-            .map(|(name, pool)| (name, Pool::new(pool, &mut loads)))
-            .collect();
+        let (pools, loads) = build_pools(config.pools, &cluster);
         let (flow_log, flow_ends) = flowlog::FlowLog::new(stats.clone());
         Ok(Self {
             cluster,
@@ -395,6 +428,7 @@ impl Edge {
             drops: 0,
             listen_faults,
             peering: None,
+            handoff,
         })
     }
 

@@ -93,6 +93,9 @@ Discussion registry
    * - 0028
      - :doc:`records/0028-database-authority`
      - discussion
+   * - 0029
+     - :doc:`records/0029-upgrade-handoff`
+     - discussion
    * - 0032
      - :doc:`records/0032-staged-admission`
      - discussion

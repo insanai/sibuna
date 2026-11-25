@@ -33,6 +33,7 @@ Discussion reading order
    records/0025-shared-affinity-and-fleet-caps
    records/0026-peer-forwarding
    records/0028-database-authority
+   records/0029-upgrade-handoff
    records/0032-staged-admission
 
 .. sid-generated-end

@@ -82,7 +82,9 @@ impl Prepared {
             engine,
             binds,
             #[cfg(feature = "https")]
-            share_address: topology.reuse_port(),
+            // A replacement that takes the TCP listeners over the upgrade socket binds
+            // the UDP socket of HTTP/3 itself, beside the old one (SID 0029).
+            share_address: topology.reuse_port() || topology.upgrade_socket().is_some(),
             #[cfg(feature = "https")]
             identities,
             #[cfg(feature = "https")]

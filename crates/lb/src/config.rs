@@ -23,6 +23,8 @@ pub struct Config {
     pub(crate) drain_delay: Duration,
     /// Listeners share their address, so a new process can bind it (`global.reuse_port`).
     pub(crate) reuse_port: bool,
+    /// Where a replacing process is given the listeners (`global.upgrade_socket`).
+    pub(crate) upgrade_socket: Option<String>,
     pub(crate) http: crate::HttpOptions,
     pub(crate) observe: crate::ObserveOptions,
     /// The `global.acme` object of automatic HTTPS (SID 0021).
@@ -216,6 +218,13 @@ impl Config {
         self.reuse_port
     }
 
+    /// The path of the socket on which this daemon gives its listeners to the process
+    /// that replaces it, and takes them from the one it replaces
+    /// (`global.upgrade_socket`, SID 0029).
+    pub fn upgrade_socket(&self) -> Option<&str> {
+        self.upgrade_socket.as_deref()
+    }
+
     /// How long a shutdown waits for established flows (`global.shutdown_timeout`).
     pub fn shutdown_timeout(&self) -> Duration {
         self.shutdown_timeout
@@ -246,6 +255,7 @@ impl Config {
             shutdown_timeout,
             drain_delay,
             reuse_port,
+            upgrade_socket,
             acme,
             sticky_entries,
         } = global(&mut root)?;
@@ -267,6 +277,7 @@ impl Config {
             shutdown_timeout,
             drain_delay,
             reuse_port,
+            upgrade_socket,
             mesh,
             http,
             observe,
@@ -414,6 +425,7 @@ struct Global {
     shutdown_timeout: Duration,
     drain_delay: Duration,
     reuse_port: bool,
+    upgrade_socket: Option<String>,
     acme: Option<crate::AcmeOptions>,
     sticky_entries: usize,
 }
@@ -429,6 +441,7 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
     let mut shutdown_timeout = Duration::from_secs(5);
     let mut drain_delay = Duration::ZERO;
     let mut reuse_port = false;
+    let mut upgrade_socket = None;
     let mut acme = None;
     let mut sticky_entries = crate::AffinityTable::DEFAULT_SLOTS;
     if let Some(mut global) = field(root.take_object("global"))? {
@@ -448,6 +461,7 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
         if reuse_port && !sibuna_reactor::CAN_SHARE_ADDRESS {
             return Err(invalid("global.reuse_port needs Linux"));
         }
+        upgrade_socket = upgrade_path(&mut global)?;
         limit = number(&mut global, "max_flows", limit, MAX_FLOWS)?;
         admin_socket = match field(global.take_str("admin_socket"))? {
             Some("") => return Err(invalid("global.admin_socket must be a path")),
@@ -485,9 +499,23 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
         shutdown_timeout,
         drain_delay,
         reuse_port,
+        upgrade_socket,
         acme,
         sticky_entries,
     })
+}
+
+/// Reads `global.upgrade_socket` (SID 0029). The key needs a platform that passes
+/// descriptors.
+fn upgrade_path(global: &mut ObjectReader<'_, '_>) -> Result<Option<String>> {
+    match field(global.take_str("upgrade_socket"))? {
+        Some("") => Err(invalid("global.upgrade_socket must be a path")),
+        Some(_) if !sibuna_upgrade::SUPPORTED => Err(invalid(
+            "global.upgrade_socket needs Linux; elsewhere replace the binary with \
+             global.reuse_port or a restart",
+        )),
+        path => Ok(path.map(str::to_owned)),
+    }
 }
 
 /// One relay thread per available CPU, up to eight.
