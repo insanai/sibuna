@@ -273,6 +273,18 @@ pub(crate) fn write_prometheus(plugins: &[PluginStatus], out: &mut String) {
     }
 }
 
+/// Publishes the first plan of the daemon and gives it to the worker of `edge` for
+/// the connection stage. We call it before any thread serves.
+pub(crate) fn begin(
+    edge: &mut sibuna_lb::Edge,
+    plan: sibuna_plugin::Plan,
+) -> std::sync::Arc<Slot> {
+    let slot = std::sync::Arc::new(Slot::new());
+    slot.publish(plan);
+    edge.set_hooks(std::sync::Arc::clone(&slot));
+    slot
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

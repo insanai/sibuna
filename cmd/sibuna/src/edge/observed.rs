@@ -43,12 +43,17 @@ pub(super) struct Plan {
 impl Observed {
     /// Starts the access log of a topology without an HTTP frontend, and the separate
     /// listener when the topology has one. With an HTTP frontend the log is the one of
-    /// its server.
+    /// its server. The metrics report the hooks that `hooks` publishes (SID 0030).
     ///
     /// # Errors
     ///
     /// The error of opening the log file or of binding the listener.
-    pub fn start(http: Option<&Http>, options: &ObserveOptions, edge: &Edge) -> io::Result<Self> {
+    pub fn start(
+        http: Option<&Http>,
+        options: &ObserveOptions,
+        edge: &Edge,
+        hooks: &Arc<sibuna_plugin::Slot>,
+    ) -> io::Result<Self> {
         let (observe, server) = match http {
             Some(http) => {
                 let (observe, server) = http.observed();
@@ -56,6 +61,8 @@ impl Observed {
             }
             None => (super::http::start_observe(options, edge)?, None),
         };
+        // With an HTTP frontend its server has set them already.
+        let _ = observe.hooks.set(Arc::clone(hooks));
         let mut observed = Self { observe, server, probe: None };
         observed.probe = options.listen.map(|address| observed.listen(address)).transpose()?;
         edge.log_flows(observed.observe.log().is_some());
@@ -111,12 +118,6 @@ impl Observed {
     }
 
     /// The counters and the log, for the admin socket.
-    /// Gives the request path and the telemetry the hooks that the edge publishes
-    /// (SID 0030). Called once, before the listeners serve.
-    pub fn set_hooks(&self, slot: &Arc<sibuna_plugin::Slot>) {
-        let _ = self.observe.hooks.set(Arc::clone(slot));
-    }
-
     pub fn shared(&self) -> &Arc<Observe> {
         &self.observe
     }

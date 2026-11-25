@@ -87,7 +87,11 @@ fn choose_in(table: &Snapshot, query: &Query<'_>) -> Option<HttpTarget> {
     let policy = Arc::clone(&servers.policy);
     let presented = cookie_name(&policy).and_then(|name| sticky::presented(query.cookies, name));
     let holder = presented.and_then(|token| servers.holder(token));
-    let wish = Wish { sticky: holder, client: query.client, ..Wish::default() };
+    // The client of a learned table on a cookie is the value of that cookie (SID 0025).
+    let affinity = table_cookie(&policy)
+        .and_then(|name| sticky::value(query.cookies, name))
+        .and_then(|value| servers.affinity_key(value));
+    let wish = Wish { sticky: holder, client: query.client, affinity, ..Wish::default() };
     let ticket = servers.reserve_with(now, query.peer, query.vip, regime, &wish)?;
     let info = info_of(&routes.servers, &pool, &ticket);
     let again = Box::new(Again {
@@ -95,6 +99,7 @@ fn choose_in(table: &Snapshot, query: &Query<'_>) -> Option<HttpTarget> {
         vip: query.vip,
         peer: query.peer,
         client: query.client,
+        affinity,
         revision: query.policy_revision,
         secure: query.secure,
         tried: Tried::default(),
@@ -113,7 +118,12 @@ fn retry_in(table: &Snapshot, failed: &HttpTarget) -> Option<HttpTarget> {
     let routes = table.routes_of(again.revision, now)?;
     let servers = routes.pools.get(again.pool.as_ref())?;
     let tried = again.tried.with(&failed.ticket);
-    let wish = Wish { tried: Some(&tried), client: again.client, ..Wish::default() };
+    let wish = Wish {
+        tried: Some(&tried),
+        client: again.client,
+        affinity: again.affinity,
+        ..Wish::default()
+    };
     let ticket = servers.reserve_with(now, again.peer, again.vip, regime, &wish)?;
     let info = info_of(&routes.servers, &again.pool, &ticket);
     // The request is counted under the server that ends it. The one it leaves
@@ -139,7 +149,15 @@ fn info_of(infos: &Infos, pool: &str, ticket: &Ticket) -> Option<crate::ServerIn
 fn cookie_name(policy: &PoolPolicy) -> Option<&str> {
     match &policy.sticky {
         Some(Sticky::Cookie { name }) => Some(name),
-        Some(Sticky::Source) | None => None,
+        Some(Sticky::Source | Sticky::Table { .. }) | None => None,
+    }
+}
+
+/// The name of the cookie that keys the learned table of a pool, when it has one.
+fn table_cookie(policy: &PoolPolicy) -> Option<&str> {
+    match &policy.sticky {
+        Some(Sticky::Table { cookie, .. }) => cookie.as_deref(),
+        _ => None,
     }
 }
 
@@ -170,6 +188,8 @@ struct Again {
     vip: SocketAddr,
     peer: SocketAddr,
     client: Option<IpAddr>,
+    /// The key of the client in the learned table of the pool (SID 0025).
+    affinity: Option<crate::affinity::AffinityKey>,
     revision: u64,
     /// The client reached a TLS frontend.
     secure: bool,

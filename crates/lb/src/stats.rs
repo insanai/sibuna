@@ -250,6 +250,8 @@ pub struct Stats {
     proxy_rejected: AtomicU64,
     refused: [AtomicU64; Refusal::ALL.len()],
     flow_log_dropped: AtomicU64,
+    /// What peer forwarding did (SID 0026). The series appear once it is on.
+    pub(crate) forward: Arc<crate::forward::Counters>,
     /// The wall-clock second of the last refusal line, and the lines of that second.
     refusal_lines: AtomicU64,
 }
@@ -290,11 +292,17 @@ pub enum Refusal {
     ClientClosed,
     /// A connection hook denied the connection or the UDP mapping (SID 0030).
     Hook,
+    /// A rule or a fallback of a TLS passthrough inspection refused the connection
+    /// (SID 0032).
+    InspectDenied,
+    /// A datagram that may not open a QUIC mapping: no padded long-header packet
+    /// (SID 0032).
+    UdpNotQuic,
 }
 
 impl Refusal {
     /// Every reason, in the order of the series.
-    pub const ALL: [Refusal; 14] = [
+    pub const ALL: [Refusal; 16] = [
         Refusal::RateLimit,
         Refusal::FlowLimit,
         Refusal::Draining,
@@ -309,6 +317,8 @@ impl Refusal {
         Refusal::UdpReplyLimit,
         Refusal::ClientClosed,
         Refusal::Hook,
+        Refusal::InspectDenied,
+        Refusal::UdpNotQuic,
     ];
 
     /// The value of the `reason` label.
@@ -328,6 +338,8 @@ impl Refusal {
             Refusal::UdpReplyLimit => "udp_reply_limit",
             Refusal::ClientClosed => "client_closed",
             Refusal::Hook => "hook",
+            Refusal::InspectDenied => "inspect_denied",
+            Refusal::UdpNotQuic => "udp_not_quic",
         }
     }
 
@@ -348,6 +360,8 @@ impl Refusal {
             Refusal::UdpReplyLimit => "refused_udp_reply_limit",
             Refusal::ClientClosed => "refused_client_closed",
             Refusal::Hook => "refused_hook",
+            Refusal::InspectDenied => "inspect_denied",
+            Refusal::UdpNotQuic => "refused_udp_not_quic",
         }
     }
 }
@@ -483,6 +497,7 @@ impl Stats {
             let count = self.refusal_count(reason);
             writeln!(out, "sibuna_edge_refused_total{{reason=\"{}\"}} {count}", reason.name())?;
         }
+        self.forward.write_prometheus(out)?;
         let fronts = self.fronts.lock().unwrap_or_else(PoisonError::into_inner).clone();
         write_fronts(out, &fronts)?;
         let servers = self.servers.lock().unwrap_or_else(PoisonError::into_inner).clone();

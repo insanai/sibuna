@@ -1,0 +1,34 @@
+[package]
+name = "sibuna-authority"
+description = "Sibuna edge topology revisions in SQLite or PostgreSQL: commit, follow, history and rollback (SID 0028)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = ["sqlite"]
+sqlite = ["sibuna-storage/sqlite"]
+postgres = ["sibuna-storage/postgres"]
+# Exports `testing::Postgres`, a PostgreSQL server in a temporary directory for the tests
+# of this crate and of the daemon.
+testing = []
+
+[dependencies]
+# The dialect-neutral database, its migrations, the URL file and the notification channel.
+sibuna-storage = { workspace = true }
+# Documents are JSON: canonical text, composition and the difference of two revisions.
+sibuna-json = { workspace = true }
+# SHA-256 digests of documents and sources.
+sibuna-crypto = { workspace = true }
+# The runtime that sqlx requires, one current-thread runtime in each store (SID 0011).
+tokio = { workspace = true }
+
+[dev-dependencies]
+# The integration tests start the PostgreSQL server of `testing`.
+sibuna-authority = { workspace = true, features = ["testing"] }
+
+[lints]
+workspace = true

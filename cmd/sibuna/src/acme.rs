@@ -6,6 +6,7 @@
 //!   request on any HTTP frontend
 //!     |
 //!     +-- GET /.well-known/acme-challenge/TOKEN, answer known --> 200, the answer
+//!     +-- for the ACME server of the local authority ----------> its reply (`serve`)
 //!     +-- plain HTTP, Host is a managed name ------------------> 308, https://HOST/...
 //!     |     (unless the route states `redirect_https` itself: SID 0019 then decides)
 //!     +-- anything else ---------------------------------------> the firewall
@@ -13,6 +14,8 @@
 //!
 //! Both answers are written before any firewall decision. A ban or a challenge page must
 //! not keep the certificate authority from validating a name.
+
+mod serve;
 
 use std::fmt::Write as _;
 use std::io::{self, Write};
@@ -50,6 +53,14 @@ pub(crate) fn intercept<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<Option<boo
         let body = answer.as_bytes();
         response::write_response(ctx.writer, Status::Ok, b"text/plain", body, extra)?;
         return Ok(Some(ctx.keep_alive));
+    }
+    // The answer to a challenge of our own order came first: a server whose URL has
+    // no path must not hide it.
+    if let Some((server, config)) = automatic.acme_server() {
+        let answered = serve::intercept(ctx, server, config, ingress.secure)?;
+        if answered.is_some() {
+            return Ok(answered);
+        }
     }
     if ingress.secure {
         return Ok(None);
@@ -160,6 +171,20 @@ pub(crate) fn log(event: &Event) {
                  no response is stapled and the certificate is renewed now"
             ));
         }
+        Event::ServerValidated { name, failure: None } => {
+            crate::edge::note(format_args!("ACME000: ACME server: {name} validated for a client"));
+        }
+        Event::ServerValidated { name, failure: Some(reason) } => {
+            crate::edge::note(format_args!(
+                "ACME000: ACME server: {name} not validated for a client: {reason}"
+            ));
+        }
+        Event::ServerIssued { names } => {
+            crate::edge::note(format_args!(
+                "ACME000: ACME server: certificate issued to a client for {}",
+                names.join(", ")
+            ));
+        }
         Event::Obtained { name, not_after, renewed } => {
             let verb = if *renewed { "renewed" } else { "obtained" };
             crate::edge::note(format_args!(
@@ -178,6 +203,43 @@ pub(crate) fn log(event: &Event) {
         | Event::StapleFailed { .. }
         | Event::Fallback { .. }
         | Event::Failed { .. } => {}
+    }
+}
+
+/// Revokes a certificate of the local authority for the admin command `revoke cert`
+/// and returns the answer: the serial number, the name, and what happens next.
+pub(crate) fn revoke(
+    automatic: Option<&Automatic>,
+    target: &str,
+) -> Result<String, sibuna_lb::RuntimeError> {
+    use sibuna_ingress::RevokeError;
+    let nothing = |message: String| sibuna_lb::RuntimeError {
+        code: "ADM013",
+        title: "NOT REVOKED",
+        message,
+        hint: "Name a host or an address that the local authority issues for here, as \
+               `show certs` lists it with `local`, or the serial number of a certificate \
+               in 1 to 16 hexadecimal digits."
+            .to_owned(),
+    };
+    let Some(automatic) = automatic else {
+        return Err(nothing(
+            "This daemon has no automatic HTTPS, and so no local authority.".into(),
+        ));
+    };
+    match automatic.revoke(target, unix_now()) {
+        Ok(entry) => Ok(format!(
+            "revoked serial {:016x} name {}\n# The revocation lists are written. A served \
+             certificate with this serial number is replaced now.\n",
+            entry.serial, entry.name
+        )),
+        Err(RevokeError::Nothing(message)) => Err(nothing(message)),
+        Err(RevokeError::Failed(error)) => Err(sibuna_lb::RuntimeError {
+            code: error.code,
+            title: error.title,
+            message: error.message,
+            hint: error.hint,
+        }),
     }
 }
 

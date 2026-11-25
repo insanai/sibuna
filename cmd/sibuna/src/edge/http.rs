@@ -42,6 +42,10 @@ pub(super) struct Prepared {
 impl Prepared {
     pub fn load(topology: &sibuna_lb::Config) -> io::Result<Option<Self>> {
         let Some(options) = topology.http().cloned() else { return Ok(None) };
+        #[cfg(feature = "https")]
+        let automatic = topology.automatic_https();
+        #[cfg(feature = "https")]
+        super::automatic::check_tools(automatic.as_ref())?;
         let seed = options.secret_file.as_deref().map(crate::cli::read_seed).transpose()?;
         let config = firewall_config(&options);
         let bytes = match options.policy_file.as_deref() {
@@ -78,11 +82,13 @@ impl Prepared {
             engine,
             binds,
             #[cfg(feature = "https")]
-            share_address: topology.reuse_port(),
+            // A replacement that takes the TCP listeners over the upgrade socket binds
+            // the UDP socket of HTTP/3 itself, beside the old one (SID 0029).
+            share_address: topology.reuse_port() || topology.upgrade_socket().is_some(),
             #[cfg(feature = "https")]
             identities,
             #[cfg(feature = "https")]
-            automatic: topology.automatic_https(),
+            automatic,
         }))
     }
 }
@@ -160,6 +166,7 @@ impl Dispatcher {
                 let (Ok(peer), Ok(vip)) = (stream.peer_addr(), stream.local_addr()) else {
                     return;
                 };
+                let vip = sibuna_lb::listener_address(bind, vip);
                 let from = ingress_of(&self.server, client.unwrap_or(peer), vip, true);
                 let bound = from.connection_bound(&self.server);
                 let Some(place) = crate::server::admit_secure(&self.server, from.peer.ip(), bound)
@@ -183,8 +190,8 @@ impl Dispatcher {
                 return;
             }
         }
-        let _ = bind;
         let (Ok(peer), Ok(vip)) = (stream.peer_addr(), stream.local_addr()) else { return };
+        let vip = sibuna_lb::listener_address(bind, vip);
         let ingress = ingress_of(&self.server, client.unwrap_or(peer), vip, false);
         serve(&self.server, self.workers.as_deref(), stream, ingress, Some(permit));
     }

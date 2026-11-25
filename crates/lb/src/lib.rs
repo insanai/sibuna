@@ -2,11 +2,16 @@
 //! Prepare a [`Config`] off the worker, bind all listeners, then call [`Edge::step`] in
 //! the worker loop. Replacing the routing configuration preserves established flows.
 
+mod affinity;
+pub use affinity::{Affinity, AffinityCounters, AffinityKey, AffinityStore, AffinityTable, Kept};
+mod cluster;
+pub use cluster::ClusterState;
 mod acme;
+mod quota;
 pub use acme::{
     AcmeChallenge, AcmeIssuer, AcmeOptions, Authority, AutoName, AutomaticHttps, CertificateKey,
-    DnsConfig, DnsProvider, Eab, INTERNAL_LIFETIME, Internal, LETSENCRYPT, LETSENCRYPT_STAGING,
-    OnDemand, is_address, is_internal_name,
+    DnsConfig, DnsProvider, Eab, INTERNAL_LIFETIME, Internal, InternalServer, LETSENCRYPT,
+    LETSENCRYPT_STAGING, OnDemand, is_address, is_internal_name,
 };
 mod budget;
 pub use budget::{FlowBudget, FlowPermit};
@@ -21,7 +26,10 @@ pub use http::{
 mod websocket;
 pub use websocket::{TunnelPermit, TunnelRefusal, WebSocketRule};
 mod hello;
+mod inspect;
 mod ja4;
+mod listen;
+pub use listen::ListenFault;
 mod maglev;
 mod mesh;
 pub use mesh::{
@@ -31,6 +39,7 @@ pub use mesh::{
 mod observe;
 mod pool;
 mod proxy;
+mod quic_edge;
 mod quick;
 pub use quick::{QuickAutomatic, QuickProtocol, QuickStart};
 mod route;
@@ -46,6 +55,10 @@ pub use traffic::{Passive, PoolPolicy, Sticky};
 mod flowlog;
 mod gate;
 pub use flowlog::FlowEnd;
+mod forward;
+pub use forward::ForwardConfig;
+mod handoff;
+pub use handoff::Inherited;
 mod proxy_header;
 pub use proxy_header::{MAX_PROXY_HEADER, ProxyHeader, ProxyHeaderError, parse_proxy_header};
 mod stats;
@@ -92,6 +105,8 @@ enum Ready {
     Proxy(u64),
     Udp(Client),
     Wake,
+    /// A socket of the forwarding port (SID 0026).
+    Peer(forward::Event),
 }
 
 /// A connection of a PROXY frontend that has not sent its header yet (SID 0020).
@@ -131,7 +146,7 @@ struct Inspecting {
     opening: Opening,
     input: hello::Inspection,
     deadline: Instant,
-    rules: std::sync::Arc<[rules::Rule]>,
+    plan: std::sync::Arc<inspect::Plan>,
 }
 
 struct Pending {
@@ -153,10 +168,17 @@ struct DatagramFlow {
     timeout: Duration,
     wire_credit: usize,
     payload_credit: usize,
+    /// Whether the client address is validated, on a QUIC frontend (SID 0032).
+    validation: quic_edge::Validation,
+    /// The peer that forwarded the last datagram of the client (SID 0026). The replies
+    /// return through it.
+    via: Option<forward::Via>,
 }
 
 /// A single-owner packet worker with bounded flows and a separate TCP connector queue.
 pub struct Edge {
+    /// The sticky table and the shares of the capped servers (SID 0025).
+    cluster: ClusterState,
     http: HttpRoutes,
     stats: std::sync::Arc<Stats>,
     budget: FlowBudget,
@@ -190,6 +212,34 @@ pub struct Edge {
     drops: u64,
     /// The connection hooks of SID 0030, when the daemon publishes any.
     gate: Option<gate::Gate>,
+    /// Kernel options that a listener asked for and did not get (SID 0032).
+    listen_faults: Vec<ListenFault>,
+    /// Peer forwarding, once [`Edge::begin_forwarding`] opened its port (SID 0026).
+    peering: Option<Box<forward::Peering>>,
+    /// Where a handoff to or from another process stands (SID 0029).
+    handoff: handoff::State,
+}
+
+/// Gives `cluster` the roster of the mesh and publishes the HTTP routes of `config`
+/// with it (SID 0025).
+fn publish_routes(config: &mut Config, cluster: &ClusterState) -> HttpRoutes {
+    if let Some(mesh) = &config.mesh {
+        cluster.set_roster(mesh.listen(), mesh.peers(), mesh.replicate_shares);
+    }
+    let http = HttpRoutes::default();
+    http.share_cluster(cluster.clone());
+    http.publish(config);
+    http
+}
+
+/// Builds the pools of a configuration, and the counts that their servers share.
+fn build_pools(
+    pools: BTreeMap<String, config::Backend>,
+    cluster: &ClusterState,
+) -> (BTreeMap<String, Pool>, Loads) {
+    let mut loads = Loads::of(cluster.clone());
+    let pools = pools.into_iter().map(|(name, pool)| (name, Pool::new(pool, &mut loads)));
+    (pools.collect(), loads)
 }
 
 /// Opens the socket of one listener. With `shared` it may share its address with
@@ -236,6 +286,12 @@ impl Edge {
         self.budget.clone()
     }
 
+    /// Shares the sticky table and the shares of the capped servers (SID 0025). The
+    /// daemon gives them to [`Mesh::share_state`], which replicates them.
+    pub fn cluster_state(&self) -> ClusterState {
+        self.cluster.clone()
+    }
+
     /// Shares the HTTP request scheduler with the firewall.
     pub fn http_routes(&self) -> HttpRoutes {
         self.http.clone()
@@ -268,6 +324,13 @@ impl Edge {
         self.relays.stop();
     }
 
+    /// Takes the kernel options that listeners asked for and did not get, since the
+    /// last call (SID 0032). The listeners serve without them. A caller reports each
+    /// once: a start and a reload can add some.
+    pub fn listen_faults(&mut self) -> impl Iterator<Item = ListenFault> + '_ {
+        self.listen_faults.drain(..)
+    }
+
     /// Takes accepted HTTP sockets for plaintext dispatch or TLS negotiation.
     pub fn accepted(&mut self) -> impl Iterator<Item = Accepted> {
         self.http_pending.drain(..)
@@ -281,37 +344,68 @@ impl Edge {
 
     /// Binds every configured listener before starting the worker. A failure releases
     /// any listeners already bound.
-    pub fn bind(mut config: Config) -> io::Result<Self> {
+    pub fn bind(config: Config) -> io::Result<Self> {
+        let cluster = ClusterState::new(config.sticky_entries);
+        Self::bind_all(config, cluster, Inherited::default())
+    }
+
+    /// As [`Edge::bind`], with the sticky table and the shares of `cluster`
+    /// (SID 0025). A caller that keeps the sticky table elsewhere than in memory
+    /// gives its store to `cluster` first, with [`ClusterState::use_store`].
+    pub fn bind_with(config: Config, cluster: ClusterState) -> io::Result<Self> {
+        Self::bind_all(config, cluster, Inherited::default())
+    }
+
+    /// As [`Edge::bind`], on the listening sockets that the process this one replaces
+    /// has lent (SID 0029). A listener that has a lent socket uses it and is held: it
+    /// is not read until [`Edge::arm_streams`] or [`Edge::arm_datagrams`]. Every other
+    /// listener is bound as usual. Lent sockets that no listener wants are closed.
+    pub fn bind_inherited(config: Config, inherited: Inherited) -> io::Result<Self> {
+        let cluster = ClusterState::new(config.sticky_entries);
+        Self::bind_all(config, cluster, inherited)
+    }
+
+    /// Binds with a given cluster state and given lent sockets.
+    fn bind_all(
+        mut config: Config,
+        cluster: ClusterState,
+        mut inherited: Inherited,
+    ) -> io::Result<Self> {
+        let mut handoff = handoff::State::default();
         let mut checks = health::Checks::default();
         checks.configure(&mut config)?;
         let stats = std::sync::Arc::new(Stats::default());
         stats.adopt(&mut config);
-        let http = HttpRoutes::default();
-        http.publish(&mut config);
+        let http = publish_routes(&mut config, &cluster);
         let budget = FlowBudget::new(&config);
-        let mut binds = Vec::new();
-        let mut listeners = Vec::new();
+        let (mut binds, mut listeners) = (Vec::new(), Vec::new());
+        let mut listen_faults = Vec::new();
         let mut poll = Poller::new()?;
         let (waker, wake) = Waker::new()?;
+        handoff.wake = Some(wake.clone());
         poll.set(handle(waker.socket()), READ, Ready::Wake)?;
         for (bind, route) in config.listeners {
-            let socket = open_listener(bind.0, bind.1, config.reuse_port)?;
+            let (socket, held) = inherited.take_or(bind, config.reuse_port)?;
             let fd = match &socket {
-                Socket::Tcp(socket) => handle(socket),
+                Socket::Tcp(listener) => {
+                    let none = listen::ListenOptions::default();
+                    route.listen.apply(&none, listener, &route.info.name, &mut listen_faults);
+                    handle(listener)
+                }
                 Socket::Udp(socket) => handle(socket),
             };
-            poll.set(fd, READ, Ready::Listener(listeners.len()))?;
+            if held {
+                handoff.held.push(listeners.len());
+            } else {
+                poll.set(fd, READ, Ready::Listener(listeners.len()))?;
+            }
             binds.push(bind);
             listeners.push(Listener { socket, route, paused_until: None });
         }
-        let mut loads = Loads::default();
-        let pools = config
-            .pools
-            .into_iter()
-            .map(|(name, pool)| (name, Pool::new(pool, &mut loads)))
-            .collect();
+        let (pools, loads) = build_pools(config.pools, &cluster);
         let (flow_log, flow_ends) = flowlog::FlowLog::new(stats.clone());
         Ok(Self {
+            cluster,
             http,
             stats,
             budget,
@@ -343,6 +437,9 @@ impl Edge {
             draining: false,
             drops: 0,
             gate: None,
+            listen_faults,
+            peering: None,
+            handoff,
         })
     }
 
@@ -370,6 +467,7 @@ impl Edge {
         let drained = self.drained_servers();
         self.budget.configure(&config);
         self.udp_limit = config.udp_limit;
+        self.cluster.set_slots(config.sticky_entries);
         self.http.publish(&mut config);
         self.pools = config
             .pools
@@ -379,6 +477,10 @@ impl Edge {
         self.loads.prune();
         self.keep_drained(drained);
         for (listener, route) in self.listeners.iter_mut().zip(config.listeners.into_values()) {
+            if let Socket::Tcp(socket) = &listener.socket {
+                let (old, name) = (&listener.route.listen, &route.info.name);
+                route.listen.apply(old, socket, name, &mut self.listen_faults);
+            }
             listener.route = route;
         }
         // A partially inspected handshake has no upstream yet. Drop it at a policy
@@ -424,6 +526,7 @@ impl Edge {
                 Ready::Listener(id) => self.receive(id),
                 Ready::Udp(key) => self.reply(key),
                 Ready::Wake => self.waker.drain(),
+                Ready::Peer(event) => self.peer_event(event),
                 Ready::Hello(id) => {
                     if !self.inspect(id) {
                         self.drops = self.drops.saturating_add(1);
@@ -453,14 +556,6 @@ impl Edge {
             }
             keep
         });
-        self.inspecting.retain(|_, flow| {
-            let keep = now < flow.deadline;
-            if !keep {
-                flowlog::mark(&mut flow.opening.line, "idle_timeout");
-                poll.remove(handle(&flow.opening.client));
-            }
-            keep
-        });
         let stats = &self.stats;
         self.awaiting.retain(|_, flow| {
             let keep = now < flow.deadline;
@@ -486,6 +581,8 @@ impl Edge {
                 }
             }
         }
+        self.expire_inspections(now);
+        self.sweep_peering(now);
     }
 
     fn pause(&mut self, id: usize) {
@@ -506,7 +603,7 @@ impl Edge {
                 }
                 Socket::Udp(socket) => socket
                     .recv_from(&mut self.buffer)
-                    .map(|(size, peer)| self.forward((id, peer), size)),
+                    .map(|(size, peer)| self.forward((id, peer), size, None)),
             };
             match result {
                 Ok(false) => self.drops = self.drops.saturating_add(1),
@@ -550,6 +647,10 @@ impl Edge {
         let Some(permit) = self.budget.reserve() else {
             return self.refuse(listener, peer, Refusal::FlowLimit);
         };
+        // A client that another node owns goes to that node (SID 0026).
+        if let Some(owner) = self.owner_of_stream(peer) {
+            return self.begin_handoff(listener, client, peer, permit, owner);
+        }
         self.admit(listener, client, peer, permit, None)
     }
 
@@ -634,9 +735,25 @@ impl Edge {
         permit: FlowPermit,
         named: Option<SocketAddr>,
     ) -> bool {
+        self.admit_to(listener, client, peer, None, permit, named)
+    }
+
+    /// As [`Edge::admit`]. `reached` is the address that the client reached on the node
+    /// that forwarded the connection (SID 0026). It replaces the local address of the
+    /// socket, which is then the forwarding port.
+    fn admit_to(
+        &mut self,
+        listener: usize,
+        client: TcpStream,
+        peer: SocketAddr,
+        reached: Option<SocketAddr>,
+        permit: FlowPermit,
+        named: Option<SocketAddr>,
+    ) -> bool {
         // An inspected connection is judged once its ClientHello is known.
         let route = &self.listeners[listener].route;
         let (proto, bind) = self.binds[listener];
+        let bind = reached.unwrap_or(bind);
         if proto == Protocol::Http || route.inspect.is_none() {
             let flow = gate::Flow {
                 protocol: sibuna_plugin::Protocol::Tcp,
@@ -659,7 +776,7 @@ impl Edge {
         }
         self.next_id = self.next_id.wrapping_add(1);
         let id = self.next_id;
-        let Ok(vip) = client.local_addr() else { return false };
+        let Some(vip) = reached.or_else(|| client.local_addr().ok()) else { return false };
         let mut line = self.begin_line(listener, peer);
         // Until a server is chosen, the flow can only end for want of one.
         flowlog::mark(&mut line, "no_server");
@@ -674,7 +791,8 @@ impl Edge {
             prefix: Vec::new(),
             line,
         };
-        if let Some((delay, rules)) = &route.inspect {
+        if let Some(plan) = &route.inspect {
+            let plan = plan.clone();
             if opening.client.set_nonblocking(true).is_err() {
                 return false;
             }
@@ -686,8 +804,8 @@ impl Edge {
                 Inspecting {
                     opening,
                     input: hello::Inspection::default(),
-                    deadline: Instant::now() + *delay,
-                    rules: rules.clone(),
+                    deadline: Instant::now() + plan.delay,
+                    plan,
                 },
             );
             return true;
@@ -700,52 +818,13 @@ impl Edge {
         self.connect(id, opening)
     }
 
-    fn inspect(&mut self, id: u64) -> bool {
-        let Some(flow) = self.inspecting.get_mut(&id) else { return true };
-        match flow.input.read(&mut flow.opening.client, &mut self.buffer) {
-            Ok(false) => return true,
-            Err(error) if transient(&error) => return true,
-            Err(_) => {
-                if let Some(mut flow) = self.finish_inspection(id) {
-                    flowlog::mark(&mut flow.opening.line, "reset");
-                }
-                return false;
-            }
-            Ok(true) => {}
-        }
-        let Some(mut flow) = self.finish_inspection(id) else { return false };
-        let wire = std::mem::take(&mut flow.input.wire);
-        if let Some(line) = &mut flow.opening.line {
-            // The hello is replayed to the server from here, not relayed.
-            line.bytes_in = wire.len() as u64;
-        }
-        let Some(hello) = flow.input.hello() else { return false };
-        if !self.hello_admitted(&flow.opening, &hello) {
-            self.stats.refuse(Refusal::Hook);
-            flowlog::mark(&mut flow.opening.line, Refusal::Hook.end());
-            return false;
-        }
-        let Some(pool) = rules::select(&flow.rules, &hello, &flow.opening.pool) else {
-            return false;
-        };
-        let pool = pool.clone();
-        if let Some(line) = &mut flow.opening.line {
-            line.backend = pool.clone();
-        }
-        flow.opening.pool = pool;
-        let Some(pool) = self.pools.get(flow.opening.pool.as_ref()) else { return false };
-        let Some(prefix) =
-            proxy::prefix(pool.proxy_v2, flow.opening.peer, flow.opening.vip, Some(&hello), wire)
-        else {
-            return false;
-        };
-        flow.opening.prefix = prefix;
-        self.connect(id, flow.opening)
-    }
-
     /// Asks the connection hooks about an inspected connection, with the server name
-    /// and the JA4 fingerprint of its ClientHello.
-    fn hello_admitted(&mut self, opening: &Opening, hello: &hello::Hello<'_>) -> bool {
+    /// and the JA4 fingerprint of its ClientHello when it sent a whole one.
+    pub(crate) fn hello_admitted(
+        &mut self,
+        opening: &Opening,
+        hello: Option<&hello::Hello<'_>>,
+    ) -> bool {
         if self.gate.is_none() {
             return true;
         }
@@ -757,25 +836,19 @@ impl Edge {
         else {
             return true;
         };
-        let ja4 = hello.ja4.get_or_init(|| ja4::fingerprint(hello));
+        let ja4 = hello.and_then(|hello| {
+            hello.ja4.get_or_init(|| ja4::fingerprint(hello)).as_ref().map(|text| &text[..])
+        });
         let flow = gate::Flow {
             protocol: sibuna_plugin::Protocol::Tcp,
             secure: true,
             client: opening.peer,
             local: opening.vip,
             frontend: &self.listeners[at].route.info.name,
-            server_name: hello.sni.map_or(b"", str::as_bytes),
-            ja4: ja4.as_ref().map_or(b"", |text| &text[..]),
+            server_name: hello.and_then(|hello| hello.sni).map_or(b"", str::as_bytes),
+            ja4: ja4.unwrap_or(b""),
         };
         gate::admits(&mut self.gate, &flow)
-    }
-
-    /// Takes an inspection out of the worker's poller. The relay thread registers the
-    /// client socket in its own poller once the origin is connected.
-    fn finish_inspection(&mut self, id: u64) -> Option<Inspecting> {
-        let flow = self.inspecting.remove(&id)?;
-        self.poll.remove(handle(&flow.opening.client));
-        Some(flow)
     }
 
     fn connect(&mut self, id: u64, mut opening: Opening) -> bool {
@@ -808,7 +881,11 @@ impl Edge {
 
     fn finish_connects(&mut self, now: Instant) {
         while let Ok((id, result)) = self.connectors.done.try_recv() {
-            let Some(mut pending) = self.pending.remove(&id) else { continue };
+            let Some(mut pending) = self.pending.remove(&id) else {
+                // The connect to the owner of a client, not to a server (SID 0026).
+                self.handoff_connected(id, result);
+                continue;
+            };
             match result {
                 Connect::Ready(origin) => {
                     pending.ticket.observe(pending.started, now);
@@ -927,21 +1004,41 @@ impl Edge {
                 timeout,
                 wire_credit: 0,
                 payload_credit: 0,
+                validation: quic_edge::Validation::new(self.listeners[key.0].route.quic),
+                via: None,
             },
         );
         true
     }
 
-    fn forward(&mut self, key: Client, size: usize) -> bool {
+    /// Sends the datagram of `size` bytes in the buffer to the server of its client.
+    /// `via` is the peer that forwarded it (SID 0026), or `None` for a datagram that
+    /// the client sent to this node: only that one may be forwarded.
+    fn forward(&mut self, key: Client, size: usize, via: Option<forward::Via>) -> bool {
         if !self.allowed(key.0, key.1) {
             self.stats.refuse(Refusal::UdpRateLimit);
             return false;
         }
         let now = Instant::now();
-        if !self.udp.contains_key(&key) && !self.open_mapping(key, now) {
-            return false;
+        if !self.udp.contains_key(&key) {
+            // A datagram that may open no mapping here may open none on a peer either.
+            if !self.may_open(key, size) {
+                return false;
+            }
+            if via.is_none() && self.peering.is_some() {
+                match self.forward_datagram(key, size, now) {
+                    forward::Outcome::Sent => return true,
+                    forward::Outcome::Dropped => return false,
+                    forward::Outcome::Local => {}
+                }
+            }
+            if !self.open_mapping(key, now) {
+                return false;
+            }
         }
         let Some(flow) = self.udp.get_mut(&key) else { return false };
+        flow.via = via;
+        flow.validation.see_request(&self.buffer[..size]);
         match flow.origin.send(&self.buffer[..size]) {
             Ok(n) if n == size => {
                 flow.last = now;
@@ -987,13 +1084,25 @@ impl Edge {
         let Socket::Udp(listener) = &self.listeners[key.0].socket else { return };
         let overhead = if key.1.is_ipv4() { 28 } else { 48 };
         match flow.origin.recv(&mut self.buffer) {
-            Ok(n) if flow.wire_credit >= n + overhead && flow.payload_credit >= n => {
+            Ok(n)
+                if flow.validation.is_done()
+                    || (flow.wire_credit >= n + overhead && flow.payload_credit >= n) =>
+            {
                 if let Some(sent) = flow.first_request.take() {
                     flow.ticket.observe(sent, Instant::now());
                 }
-                if listener.send_to(&self.buffer[..n], key.1).is_ok() {
-                    flow.wire_credit -= n + overhead;
-                    flow.payload_credit -= n;
+                let reply = &self.buffer[..n];
+                let left = match flow.via {
+                    None => listener.send_to(reply, key.1).is_ok(),
+                    Some(via) => {
+                        forward::send_back(self.peering.as_deref_mut(), via, key.0, key.1, reply)
+                    }
+                };
+                if left {
+                    // A validated mapping may have spent its credit already.
+                    flow.wire_credit = flow.wire_credit.saturating_sub(n + overhead);
+                    flow.payload_credit = flow.payload_credit.saturating_sub(n);
+                    flow.validation.see_reply(&self.buffer[..n]);
                     flow.last = Instant::now();
                     if let Some(line) = &mut flow.line {
                         line.bytes_out += n as u64;
@@ -1015,6 +1124,13 @@ fn connected_udp(addr: SocketAddr) -> io::Result<UdpSocket> {
     socket.connect(addr)?;
     socket.set_nonblocking(true)?;
     Ok(socket)
+}
+
+/// The listener address of a connection that the listener `bind` accepted and whose
+/// socket has the local address `local`. A connection that a peer forwarded arrived on
+/// the forwarding port (SID 0026): `bind` then stands for the address.
+pub fn listener_address(bind: SocketAddr, local: SocketAddr) -> SocketAddr {
+    if local.port() == bind.port() { local } else { bind }
 }
 
 /// File table or socket buffer exhaustion is recoverable as existing flows finish.

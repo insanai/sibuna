@@ -207,12 +207,23 @@ impl Source<'_> {
 
     /// Whether a stored chain is of use. A leaf of the local authority must end at the
     /// present root: clients installed that root, and a storage that lost its root has
-    /// a new one.
+    /// a new one. A leaf that was revoked is of no use either.
     fn is_ours(&self, chain_pem: &str) -> bool {
         match self {
             Self::Acme(_) => true,
-            Self::Local(local) => local.authority.issued_here(chain_pem),
+            Self::Local(local) => {
+                let authority = &local.authority;
+                authority.issued_here(chain_pem) && !authority.chain_is_revoked(chain_pem)
+            }
         }
+    }
+
+    /// Whether the served certificate of `entry` is one that the local authority
+    /// revoked. The name then gets a new certificate at once.
+    fn has_revoked(&self, entry: &Entry) -> bool {
+        let Self::Local(local) = self else { return false };
+        let serial = entry.served.as_ref().and_then(sibuna_acme::local::serial_of);
+        serial.is_some_and(|serial| local.authority.is_revoked(serial))
     }
 }
 
@@ -249,6 +260,8 @@ pub(super) struct Driver {
     /// the earliest time of the next look after one that left a record behind.
     swept: Option<Vec<String>>,
     sweep_at: u64,
+    /// The earliest time of the next look at the revocation lists, after a failure.
+    crl_at: u64,
 }
 
 impl Driver {
@@ -264,6 +277,7 @@ impl Driver {
             asker: None,
             swept: None,
             sweep_at: 0,
+            crl_at: 0,
         }
     }
 
@@ -368,7 +382,8 @@ impl Driver {
                 Source::Local(_) => entry.ari_next = u64::MAX,
             }
             self.staple(&source, name, &mut entry);
-            if entry.error.is_none() && self.is_stale(name, &entry) {
+            let replace = self.is_stale(name, &entry) || source.has_revoked(&entry);
+            if entry.error.is_none() && replace {
                 entry.next_attempt = entry.next_attempt.min(now());
             }
             if demanded && self.leaves(name, &mut entry) {
@@ -390,6 +405,9 @@ impl Driver {
                 self.entries.insert(name.clone(), entry);
             }
         }
+        if let Some(local) = &local {
+            self.publish_crl(local);
+        }
         (self.ready, self.local) = (ready, local);
         let waiting = |open: bool, backoff: &Backoff, local: bool| {
             (!open && names.iter().any(|name| name.local == local)).then_some(backoff.at)
@@ -402,6 +420,20 @@ impl Driver {
             .chain(waiting(self.local.is_some(), &self.local_backoff, true))
             .min();
         next.unwrap_or(u64::MAX).saturating_sub(now())
+    }
+
+    /// Writes the revocation lists of the local authority when they are due: every
+    /// round looks, so a list is replaced long before its `nextUpdate`. A failure is
+    /// reported and tried again after the first retry delay.
+    fn publish_crl(&mut self, local: &Local) {
+        let now = now();
+        if now < self.crl_at {
+            return;
+        }
+        if let Err(error) = local.authority.refresh_crl(now, false) {
+            self.crl_at = now + schedule::FIRST_DELAY;
+            self.unprepared(error, self.crl_at);
+        }
     }
 
     /// Whether the served certificate of an address lacks an address that the daemon
@@ -510,11 +542,15 @@ impl Driver {
         }
     }
 
-    /// The curve of the key of a new certificate: `global.acme.key`.
-    fn curve(&self) -> sibuna_acme::Curve {
+    /// The kind of the key of a new certificate: `global.acme.key`.
+    fn key_type(&self) -> sibuna_acme::KeyType {
+        use sibuna_acme::KeyType;
         match self.shared.options.key {
-            sibuna_lb::CertificateKey::P256 => sibuna_acme::Curve::P256,
-            sibuna_lb::CertificateKey::P384 => sibuna_acme::Curve::P384,
+            sibuna_lb::CertificateKey::P256 => KeyType::P256,
+            sibuna_lb::CertificateKey::P384 => KeyType::P384,
+            sibuna_lb::CertificateKey::Rsa2048 => KeyType::Rsa2048,
+            sibuna_lb::CertificateKey::Rsa3072 => KeyType::Rsa3072,
+            sibuna_lb::CertificateKey::Rsa4096 => KeyType::Rsa4096,
         }
     }
 
@@ -610,7 +646,7 @@ impl Driver {
                 .extend(others.map(|other| other.name.as_str()).filter(|other| is_address(other)));
         }
         let lifetime = self.shared.options.internal.lifetime;
-        local.authority.issue_on(self.curve(), &names, lifetime, now())
+        local.authority.issue_as(self.key_type(), &names, lifetime, now())
     }
 
     fn succeeded(&self, store: &Store, name: &str, entry: &mut Entry) {

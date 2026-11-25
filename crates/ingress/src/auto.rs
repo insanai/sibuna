@@ -18,6 +18,8 @@ mod client;
 pub(crate) mod demand;
 mod dns;
 mod driver;
+mod revoke;
+mod server;
 mod supervise;
 
 use std::collections::{BTreeMap, HashMap};
@@ -29,6 +31,8 @@ use std::time::Duration;
 use rustls::sign::CertifiedKey;
 use sibuna_acme::{Challenge, ChallengeKind, Error as AcmeError, KeyPair, x509};
 use sibuna_lb::{AcmeOptions, AutoName, AutomaticHttps};
+
+pub use revoke::RevokeError;
 
 /// The ALPN protocol of the TLS-ALPN-01 challenge (RFC 8737).
 pub(crate) const ACME_TLS: &[u8] = b"acme-tls/1";
@@ -119,6 +123,19 @@ pub enum Event {
     Revoked {
         /// The name of the certificate.
         name: String,
+    },
+    /// The ACME server of the local authority validated a name for a client, or
+    /// failed to.
+    ServerValidated {
+        /// The name.
+        name: String,
+        /// Why the validation failed, in a sentence for the client.
+        failure: Option<String>,
+    },
+    /// The ACME server of the local authority issued a certificate to a client.
+    ServerIssued {
+        /// The names of the certificate.
+        names: Vec<String>,
     },
     /// An attempt failed. The served certificate, if any, stays.
     Failed {
@@ -434,6 +451,8 @@ fn host_name(host: &str) -> String {
 /// Automatic HTTPS of one daemon. Dropping it stops the thread after its current step.
 pub struct Automatic {
     shared: Arc<Shared>,
+    /// The ACME server of the local authority, when the configuration has one.
+    server: Option<Arc<sibuna_acme::server::Server>>,
 }
 
 impl Automatic {
@@ -447,10 +466,28 @@ impl Automatic {
     pub fn start(config: AutomaticHttps, report: Notify) -> io::Result<Self> {
         let shared = Arc::new(Shared::new(config));
         let thread = Arc::clone(&shared);
+        let server = server::build(&shared);
+        if let Some(server) = &server {
+            let (shared, server, report) =
+                (Arc::clone(&shared), Arc::clone(server), Arc::clone(&report));
+            std::thread::Builder::new()
+                .name("edge-acme-server".into())
+                .spawn(move || server::run(&shared, &server, &report))?;
+        }
         std::thread::Builder::new()
             .name("edge-acme".into())
             .spawn(move || supervise::run(&thread, &report))?;
-        Ok(Self { shared })
+        Ok(Self { shared, server })
+    }
+
+    /// The ACME server of the local authority and its configuration, when
+    /// `global.acme.internal.server` is set. The server answers a request from memory
+    /// and never blocks; its thread `edge-acme-server` validates and signs.
+    pub fn acme_server(
+        &self,
+    ) -> Option<(&sibuna_acme::server::Server, &sibuna_lb::InternalServer)> {
+        let config = self.shared.options.internal.server.as_ref()?;
+        Some((self.server.as_deref()?, config))
     }
 
     pub(crate) fn shared(&self) -> &Arc<Shared> {
@@ -579,7 +616,7 @@ mod tests {
             on_demand: false,
         };
         // No thread: these tests read the tables only.
-        Automatic { shared: Arc::new(Shared::new(config)) }
+        Automatic { shared: Arc::new(Shared::new(config)), server: None }
     }
 
     #[test]

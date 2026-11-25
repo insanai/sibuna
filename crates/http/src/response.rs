@@ -25,6 +25,8 @@ use std::io::{self, Write};
 pub enum Status {
     /// 200.
     Ok,
+    /// 201.
+    Created,
     /// 302.
     Found,
     /// 400.
@@ -62,6 +64,7 @@ impl Status {
     pub fn code(self) -> u16 {
         match self {
             Status::Ok => 200,
+            Status::Created => 201,
             Status::Found => 302,
             Status::BadRequest => 400,
             Status::Unauthorized => 401,
@@ -84,6 +87,7 @@ impl Status {
     pub fn reason(self) -> &'static str {
         match self {
             Status::Ok => "OK",
+            Status::Created => "Created",
             Status::Found => "Found",
             Status::BadRequest => "Bad Request",
             Status::Unauthorized => "Unauthorized",

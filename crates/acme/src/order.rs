@@ -199,8 +199,8 @@ pub struct OrderOptions {
     /// The identifier of the certificate that this order replaces (RFC 9773, section
     /// 5). It is sent when the directory offers renewal information.
     pub replaces: Option<String>,
-    /// The curve of the key of the certificate.
-    pub curve: crate::Curve,
+    /// The kind of the key of the certificate.
+    pub key: crate::KeyType,
 }
 
 impl Default for OrderOptions {
@@ -214,7 +214,7 @@ impl Default for OrderOptions {
             any_challenge: true,
             binding: None,
             replaces: None,
-            curve: crate::Curve::P256,
+            key: crate::KeyType::P256,
         }
     }
 }
@@ -412,7 +412,7 @@ impl<'a> Order<'a> {
 
     /// Draws the key of the certificate and writes the payload that finalizes the order.
     fn certificate_request(&mut self) -> Result<String, Error> {
-        let key = KeyPair::generate_on(self.options.curve)?;
+        let key = KeyPair::generate_as(self.options.key)?;
         let request = csr::write(&key, &[self.options.name.as_str()])?;
         self.key = Some(key);
         Ok(format!(r#"{{"csr":"{}"}}"#, jws::base64url(&request)))

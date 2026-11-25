@@ -320,3 +320,23 @@ fn a_client_that_does_not_finish_its_handshake_loses_the_connection() {
     assert_eq!(get(&mut client, "/after").body, b"/after");
     assert_eq!(counter(&edge, "tls_passed"), 0);
 }
+
+#[test]
+fn the_handshake_has_its_own_bound_below_a_longer_idle_timeout() {
+    let edge = start(origin(), true, r#","idle_timeout":"60s""#);
+    let mut half = socket(edge.vip);
+    half.set_read_timeout(Some(Duration::from_secs(30))).unwrap();
+    let mut hello = Vec::new();
+    session(config(&[], rustls::ALL_VERSIONS)).write_tls(&mut hello).unwrap();
+    half.write_all(&hello[..hello.len() / 2]).unwrap();
+    // A connection that has finished its handshake is idle, and stays for the minute.
+    let mut idle = open(edge.vip, &[]);
+    assert_eq!(get(&mut idle, "/before").body, b"/before");
+    let begun = Instant::now();
+    let mut rest = Vec::new();
+    let _ = half.read_to_end(&mut rest);
+    let taken = begun.elapsed();
+    // The bound is 15 seconds. The timer wheel of a worker may add a little.
+    assert!(taken >= Duration::from_secs(14) && taken < Duration::from_secs(22), "{taken:?}");
+    assert_eq!(get(&mut idle, "/after").body, b"/after");
+}

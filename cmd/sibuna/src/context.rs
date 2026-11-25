@@ -85,6 +85,9 @@ pub(crate) struct Ctx<'c, W> {
     pub now: u64,
     pub now_ms: u64,
     pub keep_alive: bool,
+    /// The connection may stay open when a worker sends this request to a server,
+    /// although a part of its body is still on its way.
+    pub keep_streamed: bool,
     /// The route identity, taken before any trusted authorization-target rewrite.
     pub internal: bool,
     /// What the access log and the counters learn of this request (SID 0020).
@@ -112,9 +115,12 @@ impl<'c, W: Write> Ctx<'c, W> {
         let client_hash = server.client_hasher.hash(client_key.as_bytes());
         let user_agent = request.header(b"user-agent").unwrap_or_default();
         let ja4 = resolve_ja4(server, &request);
-        let keep_alive =
-            request.wants_keep_alive() && declared_body <= request.body.len() && !link.last;
-        if !keep_alive {
+        let wants_keep = request.wants_keep_alive() && !link.last;
+        let keep_alive = wants_keep && declared_body <= request.body.len();
+        // A worker relays the rest of a body and knows where it ends. A request that it
+        // sends to a server may therefore keep its connection (SID 0016).
+        let keep_streamed = wants_keep && link.defer.is_some();
+        if !keep_alive && !keep_streamed {
             // The client may reconnect as soon as it reads this response.
             link.admission = None;
         }
@@ -141,6 +147,7 @@ impl<'c, W: Write> Ctx<'c, W> {
             now: now_ms / 1000,
             now_ms,
             keep_alive,
+            keep_streamed,
             internal,
             trace: &mut *link.trace,
             #[cfg(feature = "console")]

@@ -84,8 +84,23 @@ Discussion registry
    * - 0024
      - :doc:`records/0024-tls-on-the-workers`
      - discussion
+   * - 0025
+     - :doc:`records/0025-shared-affinity-and-fleet-caps`
+     - discussion
+   * - 0026
+     - :doc:`records/0026-peer-forwarding`
+     - discussion
+   * - 0028
+     - :doc:`records/0028-database-authority`
+     - discussion
+   * - 0029
+     - :doc:`records/0029-upgrade-handoff`
+     - discussion
    * - 0030
      - :doc:`records/0030-plugin-tiers`
+     - discussion
+   * - 0032
+     - :doc:`records/0032-staged-admission`
      - discussion
 
 .. sid-generated-end

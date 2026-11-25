@@ -163,7 +163,6 @@ pub(super) struct Exchange {
     pub inbound: Vec<u8>,
     pub retryable: bool,
     pub poolable: bool,
-    pub buffered: bool,
     pub keep_alive: bool,
     pub head_request: bool,
     /// The socket came from the idle pool, so it may have been closed by the server.

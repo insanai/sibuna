@@ -21,7 +21,9 @@ show stats
 show certs
 show ca
 show hooks
+revoke cert NAME|SERIAL
 show cluster
+show affinity
 set server POOL/NAME state ready|drain [local]
 set server POOL/NAME weight N [local]
 add server POOL/NAME IP:PORT [weight N] [local]
@@ -29,6 +31,7 @@ del server POOL/NAME [local]
 del ban ADDRESS [local]
 reload [cluster]
 reopen log
+show authority
 help
 ";
 
@@ -44,8 +47,15 @@ pub(super) enum Command {
     ShowCa,
     /// The plugins and their counters (SID 0030).
     ShowHooks,
+    /// Revokes a certificate of the local authority, by its name or its serial number
+    /// (SID 0021).
+    RevokeCert {
+        target: String,
+    },
     /// The digest of the file of every node of the mesh (SID 0023).
     ShowCluster,
+    /// The sticky table and the shares of the capped servers (SID 0025).
+    ShowAffinity,
     Help,
     Reload,
     /// Reloads this node and sends its file to the peers of the mesh (SID 0023).
@@ -79,6 +89,8 @@ pub(super) enum Command {
     /// A change to a server that stays on this node. Without the word `local` a mesh
     /// carries the change to the peers (SID 0022).
     Local(Box<Command>),
+    /// The revision of the database that this node serves (SID 0028).
+    ShowAuthority,
 }
 
 impl Command {
@@ -93,8 +105,10 @@ impl Command {
                 | Self::ShowCa
                 | Self::ShowHooks
                 | Self::ShowCluster
+                | Self::ShowAffinity
                 | Self::Help
                 | Self::ReopenLog
+                | Self::ShowAuthority
         )
     }
 }
@@ -183,11 +197,15 @@ pub(super) fn parse(line: &str) -> Result<Command, RuntimeError> {
         ["show", "certs"] => Ok(Command::ShowCerts),
         ["show", "ca"] => Ok(Command::ShowCa),
         ["show", "hooks"] => Ok(Command::ShowHooks),
+        ["revoke", "cert", target] => Ok(Command::RevokeCert { target: (*target).to_owned() }),
         ["show", "cluster"] => Ok(Command::ShowCluster),
+        ["show", "affinity"] => Ok(Command::ShowAffinity),
         ["help"] => Ok(Command::Help),
         ["reload"] => Ok(Command::Reload),
         ["reload", "cluster"] => Ok(Command::ReloadCluster),
         ["reopen", "log"] => Ok(Command::ReopenLog),
+        // The database authority (SID 0028).
+        ["show", "authority"] => Ok(Command::ShowAuthority),
         ["set", "server", server, "state", word] => {
             let (pool, name) = target(server)?;
             Ok(Command::State { pool, name, state: state(word)? })
@@ -410,9 +428,17 @@ mod tests {
         assert_eq!(parse("show certs"), Ok(Command::ShowCerts));
         assert_eq!(parse("show ca"), Ok(Command::ShowCa));
         assert_eq!(parse("show hooks"), Ok(Command::ShowHooks));
+        let revoke = Command::RevokeCert { target: "db.internal".to_owned() };
+        assert_eq!(parse("revoke cert db.internal"), Ok(revoke));
+        assert_eq!(parse("revoke cert").unwrap_err().code, "ADM002");
+        assert_eq!(parse("revoke cert a b").unwrap_err().code, "ADM002");
+        assert_eq!(parse("show affinity"), Ok(Command::ShowAffinity));
+        assert!(!Command::ShowAffinity.changes());
         assert_eq!(parse("reload"), Ok(Command::Reload));
         assert_eq!(parse("reload cluster"), Ok(Command::ReloadCluster));
         assert_eq!(parse("reopen log"), Ok(Command::ReopenLog));
+        assert_eq!(parse("show authority"), Ok(Command::ShowAuthority));
+        assert!(!Command::ShowAuthority.changes());
         assert!(!Command::ReopenLog.changes(), "it changes nothing that is served");
         let (pool, name) = server("app", "10.0.0.1:80");
         let drain = Command::State { pool, name, state: ServerState::Drain };

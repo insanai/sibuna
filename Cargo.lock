@@ -1350,6 +1350,7 @@ dependencies = [
  "quinn",
  "rustls",
  "sibuna-acme",
+ "sibuna-authority",
  "sibuna-challenge",
  "sibuna-cidr",
  "sibuna-console",
@@ -1371,6 +1372,7 @@ dependencies = [
  "sibuna-reactor",
  "sibuna-storage",
  "sibuna-store",
+ "sibuna-upgrade",
  "tokio",
  "tokio-rustls",
 ]
@@ -1383,6 +1385,17 @@ dependencies = [
  "sibuna-crypto",
  "sibuna-encoding",
  "sibuna-json",
+]
+
+[[package]]
+name = "sibuna-authority"
+version = "1.0.0-beta.3"
+dependencies = [
+ "sibuna-authority",
+ "sibuna-crypto",
+ "sibuna-json",
+ "sibuna-storage",
+ "tokio",
 ]
 
 [[package]]
@@ -1572,6 +1585,7 @@ dependencies = [
  "sibuna-policy",
  "sibuna-reactor",
  "sibuna-store",
+ "sibuna-upgrade",
 ]
 
 [[package]]
@@ -1654,6 +1668,10 @@ dependencies = [
  "rustls",
  "rustls-native-certs",
 ]
+
+[[package]]
+name = "sibuna-upgrade"
+version = "1.0.0-beta.3"
 
 [[package]]
 name = "slab"

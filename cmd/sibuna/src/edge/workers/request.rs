@@ -93,6 +93,10 @@ pub(super) fn advance(server: &Server, conn: &mut Conn, scratch: &mut Scratch) -
                 if crate::traffic::refused_body(tally.status) && !keep {
                     *linger = Linger::Wanted;
                 }
+                if !keep {
+                    // The client may reconnect as soon as it reads this answer.
+                    *admission = None;
+                }
                 Step::Answered { keep, used }
             }
         },

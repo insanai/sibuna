@@ -2,6 +2,7 @@
 //! the admin socket and the file watcher of SID 0018 live in the submodules.
 
 mod admin;
+mod authority;
 #[cfg(feature = "https")]
 mod automatic;
 mod cluster;
@@ -9,12 +10,14 @@ mod control;
 mod ctl;
 mod failure;
 mod fdlimit;
+mod forward;
 mod http;
 #[cfg(feature = "https")]
 mod inline;
 mod observed;
 mod probe;
 mod quick;
+mod upgrade;
 mod watch;
 mod workers;
 
@@ -35,6 +38,7 @@ pub(crate) fn command(args: &[String], secret: Option<&str>) -> Option<ExitCode>
     let path = match args {
         [word, rest @ ..] if word == "lb" => return Some(quick::run(rest, secret)),
         [word, rest @ ..] if word == "ctl" => return Some(ctl::run(rest)),
+        [word, rest @ ..] if word == "authority" => return Some(authority::run(rest)),
         [option, path] if option == "--config-file" => path,
         [check, option, path] if check == "check" && option == "-f" => path,
         _ => return None,
@@ -61,31 +65,60 @@ struct Revision {
     http: Option<http::Prepared>,
     /// The plugins of the topology, loaded and checked (SID 0030).
     plugins: sibuna_plugin::Plan,
+    /// The revision of the database that the topology came from (SID 0028). The worker
+    /// settles it. `None` for a topology that a file holds whole.
+    published: Option<authority::Stamp>,
 }
 
+/// Loads the file at `path` for a check: a whole topology, or the file of a node in
+/// persistent mode, which is composed with the head of its database.
 fn load(path: &str) -> io::Result<Revision> {
-    let config = topology(path)?;
+    load_into(path, &authority::Slot::default())
+}
+
+/// Loads the file at `path` for the source that owns `slot`. The first load fixes
+/// whether the daemon serves its file or follows a database.
+fn load_into(path: &str, slot: &authority::Slot) -> io::Result<Revision> {
+    let document = document(path)?;
+    if authority::is_node_file(&document) {
+        return authority::load(&document, slot, &revision);
+    }
+    slot.serve_file()?;
+    revision(&document)
+}
+
+/// Checks the JSON document of a whole topology and prepares its HTTP side.
+fn revision(document: &[u8]) -> io::Result<Revision> {
+    let config = Config::parse(document)?;
     let http = http::Prepared::load(&config)?;
     // A plugin that does not load refuses the revision, with its `HOOK` diagnostic.
     let plugins = sibuna_plugin::Plan::load(config.plugins(), &crate::plugins::NATIVES)
         .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
-    Ok(Revision { config, http, plugins })
+    Ok(Revision { config, http, plugins, published: None })
 }
-fn topology(path: &str) -> io::Result<Config> {
+
+/// Reads the file at `path` within the limit of an edge file and returns its JSON
+/// document. A `.jlv` file is evaluated.
+fn document(path: &str) -> io::Result<Vec<u8>> {
     let mut bytes = Vec::new();
     File::open(path)?
         .take(Config::DOCUMENT_LIMITS.max_input_bytes as u64 + 1)
         .read_to_end(&mut bytes)?;
+    evaluate(path, bytes)
+}
+
+/// The JSON document of the source `bytes` that was read from `path`.
+fn evaluate(path: &str, bytes: Vec<u8>) -> io::Result<Vec<u8>> {
     if std::path::Path::new(path).extension().is_some_and(|ext| ext == "jlv") {
         #[cfg(feature = "jlv")]
-        return sibuna_jlv::parse(path, &bytes);
+        return sibuna_jlv::evaluate(path, &bytes).map(String::into_bytes);
         #[cfg(not(feature = "jlv"))]
         return Err(io::Error::new(
             io::ErrorKind::Unsupported,
             "this build needs the jlv feature for .jlv files",
         ));
     }
-    Config::parse(&bytes)
+    Ok(bytes)
 }
 
 /// The slot where the signal thread and the watcher leave a checked revision.
@@ -142,6 +175,8 @@ struct Serving {
     drains: Drains,
     /// Where the hooks of the serving revision are published (SID 0030).
     plugins: Arc<sibuna_plugin::Slot>,
+    /// The upgrade socket, on which a replacing process takes the listeners (SID 0029).
+    upgrade: upgrade::Old,
 }
 
 /// The run-time commands on their way to the peers and from them.
@@ -160,8 +195,23 @@ impl Serving {
     /// Applies a checked revision and returns the log line. A drain stays while the
     /// file still describes its server. Every other run-time change gives way.
     fn reload(&mut self, mut revision: Revision) -> io::Result<String> {
+        // The follower of a database learns whether its revision is served (SID 0028).
+        let published = revision.published.take();
+        let outcome = self.replace(revision);
+        if let Some(published) = published {
+            published.settle(outcome.as_ref().err());
+        }
+        outcome
+    }
+
+    /// Puts a checked revision in the place of the serving one.
+    fn replace(&mut self, mut revision: Revision) -> io::Result<String> {
         if revision.config.admin_socket() != self.admin_socket.as_deref() {
             return Err(io::Error::other("changing global.admin_socket requires a restart"));
+        }
+        let upgrade_socket = revision.config.upgrade_socket().map(std::path::Path::new);
+        if upgrade_socket != self.upgrade.path() {
+            return Err(io::Error::other("changing global.upgrade_socket requires a restart"));
         }
         let watch = revision.config.watch();
         let shutdown_timeout = revision.config.shutdown_timeout();
@@ -194,6 +244,11 @@ impl Serving {
             ));
         }
         Ok(line)
+    }
+
+    /// The answer to `show hooks`: the plugins and their counters (SID 0030).
+    fn hooks(&self) -> String {
+        crate::plugins::render_status(&self.plugins.load().status())
     }
 
     /// Turns the file watcher on or off, or changes its interval.
@@ -255,9 +310,13 @@ impl Serving {
             Command::ShowStats => Ok(self.stats()),
             Command::ShowCerts => Ok(self.certs()),
             Command::ShowCa => Ok(self.ca()),
-            Command::ShowHooks => Ok(crate::plugins::render_status(&self.plugins.load().status())),
-            // The admin thread answers these two. They never reach the worker.
-            Command::Help | Command::ShowCluster => Ok(control::USAGE.to_owned()),
+            Command::ShowHooks => Ok(self.hooks()),
+            Command::RevokeCert { target } => self.revoke(&target),
+            // The admin thread answers these. They never reach the worker.
+            Command::Help | Command::ShowCluster | Command::ShowAuthority => {
+                Ok(control::USAGE.to_owned())
+            }
+            Command::ShowAffinity => Ok(self.edge.cluster_state().report()),
             Command::ReopenLog => {
                 self.observed.shared().reopen_log();
                 Ok(String::new())
@@ -364,6 +423,25 @@ impl Serving {
         "# no local authority: this build has no TLS\n".to_owned()
     }
 
+    /// The answer to `revoke cert`: the serial number and the name of the certificate
+    /// of the local authority that is now revoked (SID 0021). Fails with `ADM013` when
+    /// the word names nothing to revoke, and with the code of the failure when the
+    /// entry or the list could not be written.
+    fn revoke(&self, target: &str) -> Result<String, RuntimeError> {
+        #[cfg(feature = "https")]
+        {
+            let automatic = self.http.as_ref().and_then(http::Http::automatic);
+            crate::acme::revoke(automatic.map(Arc::as_ref), target)
+        }
+        #[cfg(not(feature = "https"))]
+        Err(control::failure(
+            "ADM013",
+            "NOT REVOKED",
+            format!("`{target}` was not revoked: this build has no TLS."),
+            "A build with the feature `https` has the local authority.",
+        ))
+    }
+
     /// The answer to `show info`: one `key: value` per line.
     fn info(&self) -> String {
         let servers = self.edge.servers();
@@ -419,32 +497,30 @@ const COMMANDS_PER_STEP: usize = 16;
 
 fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result<()> {
     let shutdown = Shutdown::new();
-    let source = Arc::new(source);
-    let pending = Pending::default();
+    let (source, pending) = (Arc::new(source), Pending::default());
     let rotate = prepare(&shutdown, &source, &pending, &revision.config)?;
-    let Revision { mut config, http, plugins: plan } = revision;
-    let plugins = Arc::new(sibuna_plugin::Slot::new());
-    plugins.publish(plan);
+    let Revision { mut config, http, plugins, published } = revision;
     let observe_options = config.observe().clone();
     let mut adapters = Adapters::default();
     adapt(&mut adapters, &mut config)?;
     let mesh = config.mesh().map(|spec| start_mesh(spec, &source, &pending)).transpose()?;
     let admin_socket = config.admin_socket().map(str::to_owned);
-    let takeover = config.reuse_port();
-    let watch = config.watch();
+    let (takeover, watch) = (config.reuse_port(), config.watch());
     let (shutdown_timeout, drain_delay) = (config.shutdown_timeout(), config.drain_delay());
+    let upgrade_socket = config.upgrade_socket().map(str::to_owned);
     let mut current = sibuna_lb::Regime::Standalone;
-    let mut edge = Edge::bind(config)?;
-    edge.set_hooks(Arc::clone(&plugins));
+    // With `global.upgrade_socket` a running daemon lends its listeners (SID 0029).
+    let mut replacement = upgrade::Replacement::begin(&config)?;
+    let mut edge = Edge::bind_inherited(config, replacement.inherited())?;
+    // The hooks are published before any thread serves (SID 0030).
+    let plugins = crate::plugins::begin(&mut edge, plugins);
+    // The mesh replicates the sticky table and moves the shares (SID 0025).
+    mesh.iter().for_each(|mesh| mesh.share_state(edge.cluster_state()));
+    forward::begin(&mut edge, takeover)?;
     let http = http.map(|p| http::Http::start(p, &edge, secret, &plugins)).transpose()?;
     let drains = join(http.as_ref(), &adapters, mesh.as_ref());
-    let observed = observed::Observed::start(http.as_ref(), &observe_options, &edge)?;
-    observed.set_hooks(&plugins);
+    let observed = observed::Observed::start(http.as_ref(), &observe_options, &edge, &plugins)?;
     let (jobs, inbox) = mpsc::channel();
-    let _admin = match &admin_socket {
-        Some(path) => Some(admin::Admin::start(path, takeover, Arc::clone(&source), jobs)?),
-        None => None,
-    };
     let mut serving = Serving {
         edge,
         http,
@@ -460,9 +536,27 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         observed,
         drains,
         plugins,
+        upgrade: upgrade::Old::none(),
     };
     serving.watch(watch)?;
+    // From here the old daemon reads no UDP, so nothing slow may come before the first
+    // turn of the worker. The sockets of this process take the paths of the old one
+    // only now, when the old one has given the service up.
+    let replaced = replacement.finish(&mut serving.edge)?;
+    let _admin = match &serving.admin_socket {
+        Some(path) => {
+            let source = Arc::clone(&serving.source);
+            Some(admin::Admin::start(path, takeover || replaced, source, jobs)?)
+        }
+        None => None,
+    };
+    serving.upgrade = upgrade::Old::start(upgrade_socket.as_deref(), &serving.edge)?;
     serving.announce();
+    // The follower of a database starts with the revision that the worker serves.
+    if let Some(published) = published {
+        published.settle(None);
+    }
+    authority::follow(&serving.source, &serving.pending)?;
     while !shutdown.is_requested() {
         serving.observed.reopen_log_when(&rotate);
         serving.take_pending();
@@ -470,15 +564,30 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
             serving.answer(job);
         }
         serving.follow(mesh.as_ref(), &mut current);
+        if serving.upgrade.step(&mut serving.edge) {
+            break;
+        }
         serving.step()?;
     }
     serving.observed.drain();
-    serving.linger()?;
+    serving.settle()?;
     drop(mesh);
     serving.stop()
 }
 
 impl Serving {
+    /// Serves on for a while after the last turn of the worker and before the drain.
+    fn settle(&mut self) -> io::Result<()> {
+        if self.upgrade.is_handed() {
+            // A replacement serves the same addresses already, so no balancer has to be
+            // told. The connections accepted in the last instant have sent nothing yet,
+            // and a drain closes a connection that has sent nothing: we serve on briefly.
+            self.serve_for(upgrade::SETTLE)
+        } else {
+            self.linger()
+        }
+    }
+
     /// Serves on for `global.drain_delay` after readiness turned to 503, so that a
     /// balancer in front stops sending before the listeners close (SID 0020).
     fn linger(&mut self) -> io::Result<()> {
@@ -487,8 +596,16 @@ impl Serving {
         }
         let delay = self.drain_delay;
         note(format_args!("Sibuna edge draining: not ready, serving for {delay:?}"));
-        let until = Instant::now() + self.drain_delay;
+        self.serve_for(delay)
+    }
+
+    /// Turns the worker for `time` more.
+    fn serve_for(&mut self, time: Duration) -> io::Result<()> {
+        let until = Instant::now() + time;
         while Instant::now() < until {
+            // A replacement that arrived before the stop is still answered. When it
+            // takes the listeners, this process must stop accepting on them.
+            self.upgrade.step(&mut self.edge);
             self.step()?;
         }
         Ok(())
@@ -505,13 +622,16 @@ impl Serving {
     /// Stops the listeners and waits for the established flows, at most
     /// `global.shutdown_timeout`.
     fn stop(self) -> io::Result<()> {
-        let Serving { mut edge, http, shutdown_timeout, observed, .. } = self;
+        let Serving { mut edge, http, shutdown_timeout, observed, mut upgrade, .. } = self;
         edge.drain();
         if let Some(http) = &http {
             http.drain();
         }
         let deadline = Instant::now() + shutdown_timeout;
         while edge.active() > 0 && Instant::now() < deadline {
+            // See `serve_for`: a draining process refuses what it accepts, and after
+            // a handoff the listeners are no longer its own.
+            upgrade.step(&mut edge);
             step(&mut edge, http.as_ref())?;
             observed.pass_flows(&mut edge);
         }
@@ -529,6 +649,10 @@ impl Serving {
 
 fn step(edge: &mut Edge, http: Option<&http::Http>) -> io::Result<()> {
     edge.step()?;
+    // A kernel option that the platform refused is a note, never a failure (SID 0032).
+    for fault in edge.listen_faults() {
+        note(format_args!("EDGE013: {fault}"));
+    }
     if let Some(http) = http {
         for accepted in edge.accepted() {
             http.accept(accepted);
