@@ -13574,3 +13574,7 @@ msgstr ""
 #~ "systemd-Unit und kein Betriebssystempaket; das Binary bindet die "
 #~ "C-Laufzeit des Systems dynamisch, daher braucht ein Container-Image "
 #~ "eine Basis, die sie bereitstellt. Die folgende Unit ist ein Beispiel:"
+
+#: ../../operations.rst:1762
+msgid ":doc:`jlavi`"
+msgstr ":doc:`Sibuna mit Jlavi konfigurieren <jlavi>`"

@@ -1,7 +1,7 @@
 Preface
 =======
 
-A request arrives with a method, a path, some headers, and a claim to the server's attention. None of those bytes establishes that serving it is worthwhile. Sibuna places a decision between the request and the origin: admit it, refuse it, or ask its sender to do verifiable work. When there is more than one origin, it also decides which one serves. This book follows both decisions from their mathematical models to the bytes in memory.
+Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes.
 
 The system has two surfaces. *Gate* provides proof-of-work admission and local flood controls. *Shield* adds application inspection and policy decisions. Either can use persistent storage for policy, reputation, and incident history, local to one node or shared by a cluster. The *edge* is the load balancer around them: it accepts TCP, UDP and HTTP, terminates TLS, chooses a server from a pool, and runs as one node or as a mesh of nodes that share their state. A valid session establishes admission; it does not exempt the request from inspection. Sharing durable state across a cluster distributes it; it does not turn a local rate counter into a global quota.
 
@@ -17,6 +17,6 @@ The reader should know basic programming, logarithms, and conditional probabilit
 
 This is an implementation book, not a claim that computational puzzles eliminate automated traffic, nor that a new load balancer has the record of an old one. Clients can buy compute, addresses can be shared, and application syntax is richer than a bounded detector. A load balancer earns trust through years of production traffic, and ours has not had them yet. The useful result is a system whose costs and limitations can be examined, tested, and changed without hiding them behind a slogan.
 
-.. rubric:: Edition for the Sibuna source tree after 1.0.0-beta.3, November 2026
+.. rubric:: Sibuna 1.0.0-rc.1, November 2026
 
 Sources, exercises, and reproducible measurements accompany the Sibuna repository.

@@ -1,0 +1,208 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Vikrant Rathore and Sibuna contributors
+# This file is distributed under the same license as the The Sibuna Book package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"PO-Revision-Date: 2026-10-16 05:33+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ja\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: ../../jlavi.rst:1
+msgid "Configuring Sibuna with Jlavi"
+msgstr "JlaviでSibunaを設定する"
+
+#: ../../jlavi.rst:4
+msgid "A Jlavi file describes the topology that Sibuna should serve. At startup or reload, Sibuna evaluates one JLV/2 module and validates its result with the same schema as a JSON configuration. Workers use the resulting routes for subsequent traffic."
+msgstr "JlaviファイルにはSibunaが提供するトポロジーを記述します。起動時または再読み込み時に、Sibunaは1つのJLV/2モジュールを評価し、結果をJSON設定と同じスキーマで検証します。その後の通信には評価済みのルートを使います。"
+
+#: ../../jlavi.rst:6
+msgid "Build a web pool"
+msgstr "ウェブ用のプールを作る"
+
+#: ../../jlavi.rst:9
+msgid "We save this module as ``edge.jlv``. A frontend listens on port 8080. Its ``default_backend`` names the site pool. The shield inspects HTTP requests, and the pool distributes admitted requests between two replicas."
+msgstr "このモジュールを ``edge.jlv`` として保存します。フロントエンドはポート8080で待ち受け、 ``default_backend`` でsiteプールを指定します。shieldがHTTPリクエストを検査し、通過したリクエストをプールが2台のレプリカに分配します。"
+
+#: ../../jlavi.rst:11
+msgid ""
+"fn edge() -> Map<Value> {\n"
+"    let hosts = [\"127.0.0.1\", \"127.0.0.2\"]\n"
+"    return {\n"
+"        http: { surface: \"shield\" },\n"
+"        frontends: { web: { binds: [\"127.0.0.1:8080\"], default_backend: \"site\" } },\n"
+"        backends: { site: { servers: [for host in hosts: \"${host}:9000\"] } },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn edge() -> Map<Value> {\n"
+"    let hosts = [\"127.0.0.1\", \"127.0.0.2\"]\n"
+"    return {\n"
+"        http: { surface: \"shield\" },\n"
+"        frontends: { web: { binds: [\"127.0.0.1:8080\"], default_backend: \"site\" } },\n"
+"        backends: { site: { servers: [for host in hosts: \"${host}:9000\"] } },\n"
+"    }\n"
+"}"
+
+#: ../../jlavi.rst:22
+msgid "Check the module before opening the listener. For a starting point based on an existing command line, ``sibuna lb --print-config`` writes a complete JLV module to standard output."
+msgstr "リスナーを開く前にモジュールを検証します。既存のコマンドから始める場合、 ``sibuna lb --print-config`` で完全なJLVモジュールを標準出力に書き出せます。"
+
+#: ../../jlavi.rst:24
+msgid ""
+"sibuna check -f edge.jlv\n"
+"sibuna --config-file edge.jlv"
+msgstr ""
+"sibuna check -f edge.jlv\n"
+"sibuna --config-file edge.jlv"
+
+#: ../../jlavi.rst:29
+msgid "Read the language"
+msgstr "言語の読み方"
+
+#: ../../jlavi.rst:32
+msgid "Source files use UTF-8. An identifier starts with an ASCII letter or underscore and can then contain digits. A newline ends a statement. Lists and records can span lines. Double quotes delimit text. A line comment starts with two slashes. A block comment runs from ``/*`` to ``*/`` and cannot nest."
+msgstr "ソースファイルはUTF-8です。識別子はASCIIの英字または下線で始まり、2文字目以降に数字も使えます。改行は文を区切ります。リストやレコードは複数行に分けられます。テキストは二重引用符で囲みます。スラッシュ2つで行コメントが始まります。ブロックコメントは ``/*`` から ``*/`` までで、入れ子にはできません。"
+
+#: ../../jlavi.rst:34
+msgid "The entry point takes no arguments. ``Map<Value>`` lets one record hold text, booleans, integers, lists and nested records. In the first module, let binds the list once. The for expression visits each host in order and inserts its text into the address at ``${host}``."
+msgstr "エントリー関数に引数はありません。 ``Map<Value>`` を使うと、テキスト、真偽値、整数、リスト、入れ子のレコードを1つのレコードに格納できます。最初のモジュールではletでリストを一度束縛します。for式はホストを順番にたどり、アドレスの ``${host}`` にその文字列を埋め込みます。"
+
+#: ../../jlavi.rst:36
+msgid "A colon separates a field name from its value. Commas separate fields and list elements. A trailing comma is allowed. Write a port as part of the quoted bind address, a connection limit as a decimal integer and a switch such as http3 as true or false."
+msgstr "フィールド名と値の間にコロンを置きます。フィールドやリストの要素はカンマで区切り、末尾にもカンマを置けます。ポートは引用符で囲んだ待ち受けアドレスの一部として書き、接続数の上限は十進整数で、http3 のような設定は true または false で指定します。"
+
+#: ../../jlavi.rst:38
+msgid "Route a browser and an RPC client"
+msgstr "ブラウザーとRPCクライアントの振り分け"
+
+#: ../../jlavi.rst:41
+msgid "This second module uses a typed helper to name an origin. The public portal uses the shield. Calls under ``/orders.Orders/`` use an HTTP/2 pool and skip the browser firewall. The RPC service must authenticate its callers."
+msgstr "2つ目のモジュールは型付きの補助関数でオリジンに名前を付けます。公開ポータルにはshieldを使います。 ``/orders.Orders/`` への呼び出しはHTTP/2プールに転送し、ブラウザー向けファイアウォールを通しません。呼び出し元の認証はRPCサービスが行います。"
+
+#: ../../jlavi.rst:43
+msgid ""
+"fn service(name: Text, address: Text) -> Map<Value> {\n"
+"    return { name: name, addr: address }\n"
+"}\n"
+"\n"
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { surface: \"shield\" },\n"
+"        frontends: { https: {\n"
+"            binds: [\"0.0.0.0:443\"],\n"
+"            tls: { auto: [\"portal.example.org\", \"orders.internal\"], http3: true },\n"
+"            default_backend: \"portal\",\n"
+"            routes: [{\n"
+"                host: \"orders.internal\", path_prefix: \"/orders.Orders/\",\n"
+"                backend: \"orders\", firewall: false,\n"
+"            }],\n"
+"        } },\n"
+"        backends: {\n"
+"            portal: { servers: [\"10.0.0.10:8080\"] },\n"
+"            orders: { http_version: \"2\", servers: [service(\"rpc1\", \"10.0.0.11:50051\")] },\n"
+"        },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn service(name: Text, address: Text) -> Map<Value> {\n"
+"    return { name: name, addr: address }\n"
+"}\n"
+"\n"
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { surface: \"shield\" },\n"
+"        frontends: { https: {\n"
+"            binds: [\"0.0.0.0:443\"],\n"
+"            tls: { auto: [\"portal.example.org\", \"orders.internal\"], http3: true },\n"
+"            default_backend: \"portal\",\n"
+"            routes: [{\n"
+"                host: \"orders.internal\", path_prefix: \"/orders.Orders/\",\n"
+"                backend: \"orders\", firewall: false,\n"
+"            }],\n"
+"        } },\n"
+"        backends: {\n"
+"            portal: { servers: [\"10.0.0.10:8080\"] },\n"
+"            orders: { http_version: \"2\", servers: [service(\"rpc1\", \"10.0.0.11:50051\")] },\n"
+"        },\n"
+"    }\n"
+"}"
+
+#: ../../jlavi.rst:68
+msgid "We replace the example names and addresses before deployment. For a public name the ACME authority must be able to validate our domain. For ``orders.internal`` Sibuna issues and renews the certificate locally. We install the local root certificate in each client's trust store."
+msgstr "配備前に例の名前とアドレスを置き換えます。公開名ではACME認証局がドメインを検証できる必要があります。 ``orders.internal`` の証明書はSibunaがローカルで発行・更新します。各クライアントのトラストストアにローカルのルート証明書を登録します。"
+
+#: ../../jlavi.rst:70
+msgid "Share a UDP topology"
+msgstr "UDPトポロジーの共有"
+
+#: ../../jlavi.rst:73
+msgid "Both nodes can use this module. In an empty directory we create mesh.key with 32 random bytes and copy it securely to the other node. Each node writes its own address and port from the nodes list into mesh.self. We run the check in that directory. The shared key authenticates peers, and accept_config lets them receive a cluster reload."
+msgstr "両ノードで同じモジュールを使えます。空のディレクトリに32バイトの乱数を格納したmesh.keyを作成し、もう一方のノードへ安全にコピーします。各ノードはnodesリストにある自身のアドレスとポートをmesh.selfに書き、このディレクトリで検証します。共有鍵でピアを認証し、accept_configでクラスタの設定の再読み込みを受け付けます。"
+
+#: ../../jlavi.rst:75
+msgid ""
+"fn edge() -> Map<Value> {\n"
+"    let peers = [\"10.20.0.11\", \"10.20.0.12\"]\n"
+"    return {\n"
+"        mesh: {\n"
+"            nodes: [for peer in peers: \"${peer}:7946\"],\n"
+"            self_file: \"mesh.self\",\n"
+"            key_file: \"mesh.key\",\n"
+"            accept_config: true,\n"
+"        },\n"
+"        frontends: { dns: {\n"
+"            proto: \"udp\", binds: [\"127.0.0.1:5353\"], default_backend: \"resolvers\",\n"
+"        } },\n"
+"        backends: { resolvers: { mode: \"udp\", servers: [\"10.20.0.53:53\"] } },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn edge() -> Map<Value> {\n"
+"    let peers = [\"10.20.0.11\", \"10.20.0.12\"]\n"
+"    return {\n"
+"        mesh: {\n"
+"            nodes: [for peer in peers: \"${peer}:7946\"],\n"
+"            self_file: \"mesh.self\",\n"
+"            key_file: \"mesh.key\",\n"
+"            accept_config: true,\n"
+"        },\n"
+"        frontends: { dns: {\n"
+"            proto: \"udp\", binds: [\"127.0.0.1:5353\"], default_backend: \"resolvers\",\n"
+"        } },\n"
+"        backends: { resolvers: { mode: \"udp\", servers: [\"10.20.0.53:53\"] } },\n"
+"    }\n"
+"}"
+
+#: ../../jlavi.rst:93
+msgid "We run the first command on one node only. On the second node we use the same key and put 10.20.0.12:7946 in mesh.self. Each DNS listener serves clients on its own loopback interface."
+msgstr "最初のコマンドは片方のノードだけで実行します。もう片方では同じ鍵を使い、mesh.self に 10.20.0.12:7946 を書きます。各ノードは自身のループバックインターフェースで DNS クライアントからの要求を受け付けます。"
+
+#: ../../jlavi.rst:95
+msgid ""
+"(umask 077 && openssl rand 32 > mesh.key)\n"
+"printf '%s\\n' '10.20.0.11:7946' > mesh.self"
+msgstr ""
+"(umask 077 && openssl rand 32 > mesh.key)\n"
+"printf '%s\\n' '10.20.0.11:7946' > mesh.self"
+
+#: ../../jlavi.rst:100
+msgid "Evaluation and diagnostics"
+msgstr "評価と診断"
+
+#: ../../jlavi.rst:103
+msgid "Sibuna exposes the pure ``jlv.std.foundation`` library. Helpers live in the same module. Deployment resources, filesystem operations and imports from neighbouring files are outside this interface. Source and resulting JSON each have a 256 KiB limit. Evaluation has a budget of one million steps."
+msgstr "Sibunaは純粋なライブラリ ``jlv.std.foundation`` を提供します。補助関数は同じモジュールに置きます。デプロイ用リソース、ファイル操作、隣接ファイルのインポートはこのインターフェースの対象外です。ソースと出力JSONの上限は各256 KiBで、評価の上限は100万ステップです。"
+
+#: ../../jlavi.rst:105
+msgid "If the compiler reports an unknown name, we check its spelling and type at the reported line and column. If validation reports an unknown backend, we check that the route names a pool in the returned map. A rejected reload keeps the previous routing configuration."
+msgstr "コンパイラーが未知の名前を報告したら、示された行と列でつづりと型を確認します。検証で未知のバックエンドが報告されたら、ルートに指定したプールが戻り値のマップにあるか確認します。再読み込みが拒否された場合は以前のルート設定が有効なままです。"

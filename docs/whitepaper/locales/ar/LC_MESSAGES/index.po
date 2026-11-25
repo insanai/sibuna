@@ -5201,3 +5201,7 @@ msgstr ""
 #~ msgstr ""
 #~ "*نطاق البروتوكول.* يتحدث Sibuna بروتوكولي HTTP/1.0 وHTTP/1.1؛ ولا يدعم "
 #~ "HTTP/2 ولا إنهاء TLS للاتصالات الواردة."
+
+#: ../../index.rst:8
+msgid "This paper measures the beta firewall. The release candidate also provides clustered load balancing, certificate management and gRPC routing. The Sibuna Book covers the configuration and measurements for the edge."
+msgstr "تقيس هذه الورقة أداء جدار الحماية في الإصدار التجريبي. يوفّر الإصدار المرشح أيضًا موازنة الحمل عبر عنقود وإدارة الشهادات وتوجيه gRPC. ويشرح كتاب Sibuna إعداد العقد الطرفية ونتائج قياسها."

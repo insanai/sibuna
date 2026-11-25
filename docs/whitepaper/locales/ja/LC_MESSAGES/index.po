@@ -4758,3 +4758,7 @@ msgstr ""
 #~ "HTTP/2 and no inbound TLS termination."
 #~ msgstr ""
 #~ "*プロトコルの範囲。*\\ SibunaはHTTP/1.0とHTTP/1.1を扱い、HTTP/2にも受信側のTLS終端にも対応していません。"
+
+#: ../../index.rst:8
+msgid "This paper measures the beta firewall. The release candidate also provides clustered load balancing, certificate management and gRPC routing. The Sibuna Book covers the configuration and measurements for the edge."
+msgstr "本稿はベータ版のファイアウォールを測定したものです。リリース候補ではクラスタでの負荷分散、証明書管理、gRPCルーティングも提供します。エッジの設定と測定結果はSibunaの書籍に掲載しています。"

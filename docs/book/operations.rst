@@ -1759,6 +1759,8 @@ A ``tcp`` frontend reads the PROXY header in the same way. The client it names t
 Writing the topology in JLV
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+:doc:`jlavi`
+
 JLV is the configuration language of jlavideploy and jlavici. A file that ends in ``.jlv`` is a JLV/2 module with a function ``edge`` that returns the same document as the JSON file. We write a pool once and generate its servers.
 
 .. code-block:: text

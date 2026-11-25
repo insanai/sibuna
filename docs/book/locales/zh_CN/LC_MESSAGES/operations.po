@@ -12205,3 +12205,7 @@ msgstr "用存储线程和引擎槽来向运维人员解释：为什么向 ``pol
 #~ msgstr ""
 #~ "release profile 使用 fat LTO 和单个代码生成单元。Sibuna 不提供容器镜像定义、systemd "
 #~ "单元或操作系统软件包；可执行文件动态链接系统 C 运行时，因此容器镜像需要一个提供它的基础镜像。下面的单元是一个示例："
+
+#: ../../operations.rst:1762
+msgid ":doc:`jlavi`"
+msgstr ":doc:`使用 Jlavi 配置 Sibuna <jlavi>`"

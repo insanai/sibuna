@@ -5467,3 +5467,7 @@ msgstr ""
 #~ msgstr ""
 #~ "*Alcance del protocolo.* Sibuna habla HTTP/1.0 y HTTP/1.1; no tiene "
 #~ "HTTP/2 ni terminación TLS de entrada."
+
+#: ../../index.rst:8
+msgid "This paper measures the beta firewall. The release candidate also provides clustered load balancing, certificate management and gRPC routing. The Sibuna Book covers the configuration and measurements for the edge."
+msgstr "Este estudio mide el cortafuegos de la versión beta. La versión candidata también ofrece balanceo de carga en clúster, gestión de certificados y enrutamiento gRPC. El libro de Sibuna recoge la configuración y las mediciones del borde."

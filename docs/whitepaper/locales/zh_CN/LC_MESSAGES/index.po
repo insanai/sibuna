@@ -4717,3 +4717,7 @@ msgstr ""
 #~ "*Protocol scope.* Sibuna speaks HTTP/1.0 and HTTP/1.1; it has no "
 #~ "HTTP/2 and no inbound TLS termination."
 #~ msgstr "*协议范围。* Sibuna 支持 HTTP/1.0 和 HTTP/1.1；它不支持 HTTP/2，也不终止入站 TLS。"
+
+#: ../../index.rst:8
+msgid "This paper measures the beta firewall. The release candidate also provides clustered load balancing, certificate management and gRPC routing. The Sibuna Book covers the configuration and measurements for the edge."
+msgstr "本文测量的是 Beta 版防火墙。候选版本还提供集群负载均衡、证书管理和 gRPC 路由。《Sibuna 手册》介绍边缘节点的配置和测量结果。"

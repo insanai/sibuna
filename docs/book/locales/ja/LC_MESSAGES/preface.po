@@ -21,18 +21,6 @@ msgstr ""
 msgid "Preface"
 msgstr "序文"
 
-#: ../../preface.rst:4
-msgid ""
-"A request arrives with a method, a path, some headers, and a claim to the "
-"server's attention. None of those bytes establishes that serving it is "
-"worthwhile. Sibuna places a decision between the request and the origin: "
-"admit it, refuse it, or ask its sender to do verifiable work. When there "
-"is more than one origin, it also decides which one serves. This book "
-"follows both decisions from their mathematical models to the bytes in "
-"memory."
-msgstr ""
-"リクエストは、メソッド、パス、いくつかのヘッダー、そしてサーバーの処理を求める要求を携えて届きます。これらのバイトのどれも、そのリクエストに応える価値があることを示しません。Sibunaはリクエストとオリジンの間に一つの判断を置きます。許可するか、拒否するか、送信者に検証可能な作業を求めるかです。オリジンが複数あるときは、どのオリジンが応えるかも決めます。本書はこの二つの判断を、数学的なモデルからメモリ上のバイトまで追います。"
-
 #: ../../preface.rst:6
 msgid ""
 "The system has two surfaces. *Gate* provides proof-of-work admission and "
@@ -127,12 +115,16 @@ msgid ""
 msgstr ""
 "本書は実装の本です。計算パズルが自動化されたトラフィックをなくすと主張するものでも、新しいロードバランサーに古いロードバランサーと同じ実績があると主張するものでもありません。クライアントは計算資源を買えますし、アドレスは共有され得ますし、アプリケーションの構文は上限のある検出器よりも豊かです。ロードバランサーは長年の本番トラフィックを通じて信頼を得るものですが、私たちのロードバランサーはまだその経験を積んでいません。本書が目指すのは、コストと限界をスローガンの陰に隠さず、調べ、テストし、変更できるシステムです。"
 
-#: ../../preface.rst:20
-msgid "Edition for the Sibuna source tree after 1.0.0-beta.3, November 2026"
-msgstr "1.0.0-beta.3以降のSibunaソースツリー対応版、2026年11月"
-
 #: ../../preface.rst:22
 msgid ""
 "Sources, exercises, and reproducible measurements accompany the Sibuna "
 "repository."
 msgstr "ソース、演習、再現可能な測定はSibunaリポジトリにあります。"
+
+#: ../../preface.rst:4
+msgid "Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes."
+msgstr "SibunaはTCP、UDP、HTTPの通信を正常なサーバーに振り分けます。エッジを単独で運用することも、複数のエッジをメッシュで結ぶこともできます。各エッジでTLSを終端し、選んだHTTPルートにファイアウォールを適用できます。"
+
+#: ../../preface.rst:20
+msgid "Sibuna 1.0.0-rc.1, November 2026"
+msgstr "Sibuna 1.0.0-rc.1、2026年11月"

@@ -22,5 +22,5 @@ msgid "The Sibuna Book"
 msgstr "Das Sibuna-Handbuch"
 
 #: ../../index.rst:4
-msgid "The mathematics and engineering of load balancing and web defense."
-msgstr "Mathematik und Technik von Lastverteilung und Webabwehr."
+msgid "Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes."
+msgstr "Sibuna leitet TCP, UDP und HTTP an gesunde Server weiter. Wir können einen Edge betreiben oder mehrere zu einem Mesh verbinden, an jedem Edge TLS terminieren und die Firewall auf ausgewählte HTTP-Routen anwenden."

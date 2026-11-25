@@ -22,5 +22,5 @@ msgid "The Sibuna Book"
 msgstr "Sibuna 之书"
 
 #: ../../index.rst:4
-msgid "The mathematics and engineering of load balancing and web defense."
-msgstr "负载均衡与 Web 防御的数学与工程。"
+msgid "Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes."
+msgstr "Sibuna 将 TCP、UDP 和 HTTP 流量转发到健康的服务器。我们可以运行单个边缘节点，也可以将多个节点组成网状集群，在各节点终止 TLS，并对指定的 HTTP 路由应用防火墙。"

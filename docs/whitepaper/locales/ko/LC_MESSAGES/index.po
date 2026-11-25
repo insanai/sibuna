@@ -4878,3 +4878,7 @@ msgstr ""
 #~ msgstr ""
 #~ "*프로토콜 범위.* Sibuna는 HTTP/1.0과 HTTP/1.1을 지원하며, HTTP/2와 인바운드 TLS 종료는 지원하지 "
 #~ "않습니다."
+
+#: ../../index.rst:8
+msgid "This paper measures the beta firewall. The release candidate also provides clustered load balancing, certificate management and gRPC routing. The Sibuna Book covers the configuration and measurements for the edge."
+msgstr "이 문서는 베타 버전 방화벽의 성능을 측정합니다. 릴리스 후보는 클러스터 부하 분산, 인증서 관리, gRPC 라우팅도 제공합니다. 에지의 설정과 측정 결과는 Sibuna 책에서 다룹니다."

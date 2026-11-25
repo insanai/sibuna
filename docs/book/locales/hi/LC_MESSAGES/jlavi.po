@@ -1,0 +1,208 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Vikrant Rathore and Sibuna contributors
+# This file is distributed under the same license as the The Sibuna Book package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"PO-Revision-Date: 2026-10-16 05:16+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: hi\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ../../jlavi.rst:1
+msgid "Configuring Sibuna with Jlavi"
+msgstr "Jlavi से Sibuna का कॉन्फ़िगरेशन"
+
+#: ../../jlavi.rst:4
+msgid "A Jlavi file describes the topology that Sibuna should serve. At startup or reload, Sibuna evaluates one JLV/2 module and validates its result with the same schema as a JSON configuration. Workers use the resulting routes for subsequent traffic."
+msgstr "Jlavi फ़ाइल उस टोपोलॉजी का वर्णन करती है जिसे Sibuna चलाएगा। शुरू या रीलोड करते समय Sibuna एक JLV/2 मॉड्यूल का मूल्यांकन करता है और परिणाम को JSON कॉन्फ़िगरेशन वाले स्कीमा से जाँचता है। वर्कर आगे आने वाले ट्रैफ़िक के लिए इन्हीं रूट का उपयोग करते हैं।"
+
+#: ../../jlavi.rst:6
+msgid "Build a web pool"
+msgstr "वेब पूल बनाएँ"
+
+#: ../../jlavi.rst:9
+msgid "We save this module as ``edge.jlv``. A frontend listens on port 8080. Its ``default_backend`` names the site pool. The shield inspects HTTP requests, and the pool distributes admitted requests between two replicas."
+msgstr "हम मॉड्यूल को ``edge.jlv`` के रूप में सहेजते हैं। फ़्रंटएंड पोर्ट 8080 पर सुनता है। उसका ``default_backend``, site पूल चुनता है। shield HTTP अनुरोधों को जाँचता है और पूल स्वीकृत अनुरोधों को दो प्रतिकृतियों में बाँटता है।"
+
+#: ../../jlavi.rst:11
+msgid ""
+"fn edge() -> Map<Value> {\n"
+"    let hosts = [\"127.0.0.1\", \"127.0.0.2\"]\n"
+"    return {\n"
+"        http: { surface: \"shield\" },\n"
+"        frontends: { web: { binds: [\"127.0.0.1:8080\"], default_backend: \"site\" } },\n"
+"        backends: { site: { servers: [for host in hosts: \"${host}:9000\"] } },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn edge() -> Map<Value> {\n"
+"    let hosts = [\"127.0.0.1\", \"127.0.0.2\"]\n"
+"    return {\n"
+"        http: { surface: \"shield\" },\n"
+"        frontends: { web: { binds: [\"127.0.0.1:8080\"], default_backend: \"site\" } },\n"
+"        backends: { site: { servers: [for host in hosts: \"${host}:9000\"] } },\n"
+"    }\n"
+"}"
+
+#: ../../jlavi.rst:22
+msgid "Check the module before opening the listener. For a starting point based on an existing command line, ``sibuna lb --print-config`` writes a complete JLV module to standard output."
+msgstr "लिसनर खोलने से पहले हम मॉड्यूल जाँचते हैं। मौजूदा कमांड को आधार बनाने के लिए ``sibuna lb --print-config`` पूरा JLV मॉड्यूल मानक आउटपुट पर लिखता है।"
+
+#: ../../jlavi.rst:24
+msgid ""
+"sibuna check -f edge.jlv\n"
+"sibuna --config-file edge.jlv"
+msgstr ""
+"sibuna check -f edge.jlv\n"
+"sibuna --config-file edge.jlv"
+
+#: ../../jlavi.rst:29
+msgid "Read the language"
+msgstr "भाषा की संरचना"
+
+#: ../../jlavi.rst:32
+msgid "Source files use UTF-8. An identifier starts with an ASCII letter or underscore and can then contain digits. A newline ends a statement. Lists and records can span lines. Double quotes delimit text. A line comment starts with two slashes. A block comment runs from ``/*`` to ``*/`` and cannot nest."
+msgstr "स्रोत फ़ाइलें UTF-8 में होती हैं। पहचानकर्ता ASCII अक्षर या अंडरस्कोर से शुरू होता है और उसके बाद अंक भी रख सकता है। नई पंक्ति कथन समाप्त करती है। सूची और रिकॉर्ड कई पंक्तियों में लिख सकते हैं। टेक्स्ट दोहरे उद्धरण चिह्नों में आता है। दो स्लैश से पंक्ति टिप्पणी शुरू होती है। ब्लॉक टिप्पणी ``/*`` से ``*/`` तक होती है और उसके भीतर दूसरी ब्लॉक टिप्पणी नहीं रख सकते।"
+
+#: ../../jlavi.rst:34
+msgid "The entry point takes no arguments. ``Map<Value>`` lets one record hold text, booleans, integers, lists and nested records. In the first module, let binds the list once. The for expression visits each host in order and inserts its text into the address at ``${host}``."
+msgstr "प्रवेश फ़ंक्शन कोई आर्ग्युमेंट नहीं लेता। ``Map<Value>`` से एक रिकॉर्ड में टेक्स्ट, बूलियन, पूर्णांक, सूचियाँ और नेस्टेड रिकॉर्ड रख सकते हैं। पहले मॉड्यूल में let सूची को एक बार बाँधता है। for व्यंजक हर होस्ट को क्रम से लेता है और पते में ``${host}`` की जगह उसका टेक्स्ट रखता है।"
+
+#: ../../jlavi.rst:36
+msgid "A colon separates a field name from its value. Commas separate fields and list elements. A trailing comma is allowed. Write a port as part of the quoted bind address, a connection limit as a decimal integer and a switch such as http3 as true or false."
+msgstr "कोलन फ़ील्ड के नाम को उसके मान से अलग करता है। फ़ील्ड और सूची के तत्वों को अल्पविराम से अलग करते हैं। अंत में भी अल्पविराम लगा सकते हैं। पोर्ट को उद्धरण चिह्नों वाले लिसन पते के भीतर लिखते हैं, कनेक्शन की सीमा को दशमलव पूर्णांक के रूप में और http3 जैसे विकल्प को true या false के रूप में।"
+
+#: ../../jlavi.rst:38
+msgid "Route a browser and an RPC client"
+msgstr "ब्राउज़र और RPC क्लाइंट के रूट"
+
+#: ../../jlavi.rst:41
+msgid "This second module uses a typed helper to name an origin. The public portal uses the shield. Calls under ``/orders.Orders/`` use an HTTP/2 pool and skip the browser firewall. The RPC service must authenticate its callers."
+msgstr "दूसरा मॉड्यूल टाइप वाले सहायक फ़ंक्शन से मूल सर्वर का नाम तय करता है। सार्वजनिक पोर्टल shield का उपयोग करता है। ``/orders.Orders/`` की कॉल HTTP/2 पूल में जाती हैं और ब्राउज़र फ़ायरवॉल से नहीं गुज़रतीं। RPC सेवा को कॉल करने वालों का प्रमाणीकरण करना होगा।"
+
+#: ../../jlavi.rst:43
+msgid ""
+"fn service(name: Text, address: Text) -> Map<Value> {\n"
+"    return { name: name, addr: address }\n"
+"}\n"
+"\n"
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { surface: \"shield\" },\n"
+"        frontends: { https: {\n"
+"            binds: [\"0.0.0.0:443\"],\n"
+"            tls: { auto: [\"portal.example.org\", \"orders.internal\"], http3: true },\n"
+"            default_backend: \"portal\",\n"
+"            routes: [{\n"
+"                host: \"orders.internal\", path_prefix: \"/orders.Orders/\",\n"
+"                backend: \"orders\", firewall: false,\n"
+"            }],\n"
+"        } },\n"
+"        backends: {\n"
+"            portal: { servers: [\"10.0.0.10:8080\"] },\n"
+"            orders: { http_version: \"2\", servers: [service(\"rpc1\", \"10.0.0.11:50051\")] },\n"
+"        },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn service(name: Text, address: Text) -> Map<Value> {\n"
+"    return { name: name, addr: address }\n"
+"}\n"
+"\n"
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { surface: \"shield\" },\n"
+"        frontends: { https: {\n"
+"            binds: [\"0.0.0.0:443\"],\n"
+"            tls: { auto: [\"portal.example.org\", \"orders.internal\"], http3: true },\n"
+"            default_backend: \"portal\",\n"
+"            routes: [{\n"
+"                host: \"orders.internal\", path_prefix: \"/orders.Orders/\",\n"
+"                backend: \"orders\", firewall: false,\n"
+"            }],\n"
+"        } },\n"
+"        backends: {\n"
+"            portal: { servers: [\"10.0.0.10:8080\"] },\n"
+"            orders: { http_version: \"2\", servers: [service(\"rpc1\", \"10.0.0.11:50051\")] },\n"
+"        },\n"
+"    }\n"
+"}"
+
+#: ../../jlavi.rst:68
+msgid "We replace the example names and addresses before deployment. For a public name the ACME authority must be able to validate our domain. For ``orders.internal`` Sibuna issues and renews the certificate locally. We install the local root certificate in each client's trust store."
+msgstr "तैनाती से पहले उदाहरण के नाम और पते बदलते हैं। सार्वजनिक नाम के लिए ACME प्राधिकरण हमारे डोमेन को सत्यापित कर सके। ``orders.internal`` का प्रमाणपत्र Sibuna स्थानीय रूप से जारी और नवीनीकृत करता है। हम हर क्लाइंट के ट्रस्ट स्टोर में स्थानीय रूट प्रमाणपत्र स्थापित करते हैं।"
+
+#: ../../jlavi.rst:70
+msgid "Share a UDP topology"
+msgstr "UDP टोपोलॉजी साझा करना"
+
+#: ../../jlavi.rst:73
+msgid "Both nodes can use this module. In an empty directory we create mesh.key with 32 random bytes and copy it securely to the other node. Each node writes its own address and port from the nodes list into mesh.self. We run the check in that directory. The shared key authenticates peers, and accept_config lets them receive a cluster reload."
+msgstr "दोनों नोड इस मॉड्यूल का उपयोग कर सकते हैं। खाली निर्देशिका में 32 यादृच्छिक बाइट की mesh.key बनाकर दूसरे नोड पर सुरक्षित रूप से कॉपी करते हैं। हर नोड nodes सूची वाला अपना पता और पोर्ट mesh.self में लिखता है। जाँच उसी निर्देशिका में चलाते हैं। साझा कुंजी पीयर का प्रमाणीकरण करती है और accept_config से नोड क्लस्टर रीलोड स्वीकार करते हैं।"
+
+#: ../../jlavi.rst:75
+msgid ""
+"fn edge() -> Map<Value> {\n"
+"    let peers = [\"10.20.0.11\", \"10.20.0.12\"]\n"
+"    return {\n"
+"        mesh: {\n"
+"            nodes: [for peer in peers: \"${peer}:7946\"],\n"
+"            self_file: \"mesh.self\",\n"
+"            key_file: \"mesh.key\",\n"
+"            accept_config: true,\n"
+"        },\n"
+"        frontends: { dns: {\n"
+"            proto: \"udp\", binds: [\"127.0.0.1:5353\"], default_backend: \"resolvers\",\n"
+"        } },\n"
+"        backends: { resolvers: { mode: \"udp\", servers: [\"10.20.0.53:53\"] } },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn edge() -> Map<Value> {\n"
+"    let peers = [\"10.20.0.11\", \"10.20.0.12\"]\n"
+"    return {\n"
+"        mesh: {\n"
+"            nodes: [for peer in peers: \"${peer}:7946\"],\n"
+"            self_file: \"mesh.self\",\n"
+"            key_file: \"mesh.key\",\n"
+"            accept_config: true,\n"
+"        },\n"
+"        frontends: { dns: {\n"
+"            proto: \"udp\", binds: [\"127.0.0.1:5353\"], default_backend: \"resolvers\",\n"
+"        } },\n"
+"        backends: { resolvers: { mode: \"udp\", servers: [\"10.20.0.53:53\"] } },\n"
+"    }\n"
+"}"
+
+#: ../../jlavi.rst:93
+msgid "We run the first command on one node only. On the second node we use the same key and put 10.20.0.12:7946 in mesh.self. Each DNS listener serves clients on its own loopback interface."
+msgstr "पहली कमांड केवल एक नोड पर चलाते हैं। दूसरे नोड पर उसी कुंजी का उपयोग करते हैं और mesh.self में 10.20.0.12:7946 लिखते हैं। हर DNS लिसनर अपने नोड के लूपबैक इंटरफ़ेस पर क्लाइंट के अनुरोध लेता है।"
+
+#: ../../jlavi.rst:95
+msgid ""
+"(umask 077 && openssl rand 32 > mesh.key)\n"
+"printf '%s\\n' '10.20.0.11:7946' > mesh.self"
+msgstr ""
+"(umask 077 && openssl rand 32 > mesh.key)\n"
+"printf '%s\\n' '10.20.0.11:7946' > mesh.self"
+
+#: ../../jlavi.rst:100
+msgid "Evaluation and diagnostics"
+msgstr "मूल्यांकन और निदान"
+
+#: ../../jlavi.rst:103
+msgid "Sibuna exposes the pure ``jlv.std.foundation`` library. Helpers live in the same module. Deployment resources, filesystem operations and imports from neighbouring files are outside this interface. Source and resulting JSON each have a 256 KiB limit. Evaluation has a budget of one million steps."
+msgstr "Sibuna शुद्ध ``jlv.std.foundation`` लाइब्रेरी देता है। सहायक फ़ंक्शन उसी मॉड्यूल में रहते हैं। तैनाती संसाधन, फ़ाइल सिस्टम क्रियाएँ और पड़ोसी फ़ाइलों से इम्पोर्ट इस इंटरफ़ेस के बाहर हैं। स्रोत और परिणामी JSON की अलग-अलग सीमा 256 KiB है। मूल्यांकन का बजट दस लाख चरण है।"
+
+#: ../../jlavi.rst:105
+msgid "If the compiler reports an unknown name, we check its spelling and type at the reported line and column. If validation reports an unknown backend, we check that the route names a pool in the returned map. A rejected reload keeps the previous routing configuration."
+msgstr "यदि कंपाइलर अज्ञात नाम बताए तो दी गई पंक्ति और कॉलम पर वर्तनी और टाइप जाँचते हैं। यदि सत्यापन में अज्ञात बैकएंड मिले तो देखते हैं कि रूट लौटाए गए मैप में मौजूद पूल का नाम ले रहा है। रीलोड अस्वीकार होने पर पहले का रूटिंग कॉन्फ़िगरेशन चलता रहता है।"

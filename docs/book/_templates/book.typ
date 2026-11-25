@@ -19,7 +19,6 @@
 //
 //   kicker    the small capitals above SIBUNA
 //   subtitle  the line under SIBUNA
-//   motto     the copper line under the cover art
 //   contents  the heading of the contents
 //   part      how the catalog translates a part's title, such as "Part VI: Automata":
 //             a regular expression whose first group is the label set above the title
@@ -29,29 +28,28 @@
 // joined letters apart; sibuna.typ does that for them (sibuna-joined-scripts).
 #let cover-dot = [#h(0.4em) \u{00B7} #h(0.4em)]
 #let covers = (
-  en: (kicker: [THE BOOK OF], subtitle: [The mathematics and engineering of web defense],
-    motto: [WORK #h(0.4em) \u{00B7} #h(0.4em) TRUST #h(0.4em) \u{00B7} #h(0.4em) BOUNDED STATE],
+  en: (kicker: [THE BOOK OF], subtitle: [Distributed load balancer and web application firewall],
     contents: [Contents], part: sibuna-part-pattern),
-  zh: (kicker: [技术手册], subtitle: [Web 防御的数学与工程],
-    motto: [工作量#cover-dot;信任#cover-dot;有界状态], contents: [目录],
+  zh: (kicker: [技术手册], subtitle: [分布式负载均衡器和 Web 应用防火墙],
+    contents: [目录],
     part: regex("^(第\s*[IVXLCDM0-9]+\s*部分)\s*[:：]?\s*(.*)$")),
-  ko: (kicker: [기술 안내서], subtitle: [웹 방어의 수학과 공학],
-    motto: [작업#cover-dot;신뢰#cover-dot;제한된 상태], contents: [목차],
+  ko: (kicker: [기술 안내서], subtitle: [분산 로드 밸런서와 웹 애플리케이션 방화벽],
+    contents: [목차],
     part: regex("^(제\s*[IVXLCDM0-9]+\s*부)\s*[:.]?\s*(.*)$")),
-  ja: (kicker: [技術ガイド], subtitle: [Web防御の数学とエンジニアリング],
-    motto: [作業#cover-dot;信頼#cover-dot;有界な状態], contents: [目次],
+  ja: (kicker: [技術ガイド], subtitle: [分散ロードバランサーとWebアプリケーションファイアウォール],
+    contents: [目次],
     part: regex("^(第\s*[IVXLCDM0-9]+\s*部)\s*[:：]?\s*(.*)$")),
-  es: (kicker: [EL LIBRO DE], subtitle: [Las matemáticas y la ingeniería de la defensa web],
-    motto: [TRABAJO#cover-dot;CONFIANZA#cover-dot;ESTADO ACOTADO], contents: [Índice],
+  es: (kicker: [EL LIBRO DE], subtitle: [Balanceador de carga distribuido y cortafuegos de aplicaciones web],
+    contents: [Índice],
     part: regex("^(Parte\s+[IVXLCDM0-9]+)\s*[:.]?\s*(.*)$")),
-  de: (kicker: [DAS HANDBUCH ZU], subtitle: [Mathematik und Technik der Webabwehr],
-    motto: [ARBEIT#cover-dot;VERTRAUEN#cover-dot;BEGRENZTER ZUSTAND], contents: [Inhalt],
+  de: (kicker: [DAS HANDBUCH ZU], subtitle: [Verteilter Lastverteiler und Web Application Firewall],
+    contents: [Inhalt],
     part: regex("^(Teil\s+[IVXLCDM0-9]+)\s*[:.]?\s*(.*)$")),
-  hi: (kicker: [तकनीकी मार्गदर्शिका], subtitle: [वेब सुरक्षा का गणित और इंजीनियरिंग],
-    motto: [कार्य#cover-dot;विश्वास#cover-dot;सीमित अवस्था], contents: [विषय-सूची],
+  hi: (kicker: [तकनीकी मार्गदर्शिका], subtitle: [वितरित लोड बैलेंसर और वेब एप्लिकेशन फ़ायरवॉल],
+    contents: [विषय-सूची],
     part: regex("^(भाग\s+[IVXLCDM0-9]+)\s*[:.]?\s*(.*)$")),
-  ar: (kicker: [كتاب], subtitle: [رياضيات حماية الويب وهندستها],
-    motto: [العمل#cover-dot;الثقة#cover-dot;الحالة المحدودة], contents: [المحتويات],
+  ar: (kicker: [كتاب], subtitle: [موازن حمل موزع وجدار حماية لتطبيقات الويب],
+    contents: [المحتويات],
     part: regex("^(الجزء\s+[^:]+?)\s*:\s*(.*)$")),
 )
 
@@ -86,7 +84,7 @@
     kicker: cover.kicker,
     headline: [SIBUNA],
     subtitle: cover.subtitle,
-    motto: cover.motto,
+    motto: [TCP#cover-dot;UDP#cover-dot;HTTP],
     contents-title: cover.contents,
     part-pattern: cover.part,
     body,

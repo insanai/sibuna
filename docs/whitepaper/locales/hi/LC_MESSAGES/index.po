@@ -5287,3 +5287,7 @@ msgstr ""
 #~ msgstr ""
 #~ "*प्रोटोकॉल का दायरा।* Sibuna HTTP/1.0 और HTTP/1.1 बोलता है; उसमें न "
 #~ "HTTP/2 है, न आने वाले TLS का टर्मिनेशन।"
+
+#: ../../index.rst:8
+msgid "This paper measures the beta firewall. The release candidate also provides clustered load balancing, certificate management and gRPC routing. The Sibuna Book covers the configuration and measurements for the edge."
+msgstr "यह शोधपत्र बीटा फ़ायरवॉल का प्रदर्शन मापता है। रिलीज़ कैंडिडेट में क्लस्टर लोड बैलेंसिंग, प्रमाणपत्र प्रबंधन और gRPC रूटिंग भी हैं। एज का कॉन्फ़िगरेशन और उसके मापन Sibuna पुस्तक में हैं।"

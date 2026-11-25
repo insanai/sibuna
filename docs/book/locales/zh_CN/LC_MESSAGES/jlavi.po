@@ -1,0 +1,208 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Vikrant Rathore and Sibuna contributors
+# This file is distributed under the same license as the The Sibuna Book package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"PO-Revision-Date: 2026-10-16 05:22+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: zh_CN\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: ../../jlavi.rst:1
+msgid "Configuring Sibuna with Jlavi"
+msgstr "使用 Jlavi 配置 Sibuna"
+
+#: ../../jlavi.rst:4
+msgid "A Jlavi file describes the topology that Sibuna should serve. At startup or reload, Sibuna evaluates one JLV/2 module and validates its result with the same schema as a JSON configuration. Workers use the resulting routes for subsequent traffic."
+msgstr "Jlavi 文件描述 Sibuna 要提供的拓扑。启动或重新加载时，Sibuna 求值一个 JLV/2 模块，并使用与 JSON 配置相同的模式验证结果。工作线程使用得到的路由处理后续流量。"
+
+#: ../../jlavi.rst:6
+msgid "Build a web pool"
+msgstr "建立网站后端池"
+
+#: ../../jlavi.rst:9
+msgid "We save this module as ``edge.jlv``. A frontend listens on port 8080. Its ``default_backend`` names the site pool. The shield inspects HTTP requests, and the pool distributes admitted requests between two replicas."
+msgstr "将此模块保存为 ``edge.jlv`` 。前端监听 8080 端口， ``default_backend`` 指向 site 池。shield 检查 HTTP 请求，后端池将获准的请求分发到两个副本。"
+
+#: ../../jlavi.rst:11
+msgid ""
+"fn edge() -> Map<Value> {\n"
+"    let hosts = [\"127.0.0.1\", \"127.0.0.2\"]\n"
+"    return {\n"
+"        http: { surface: \"shield\" },\n"
+"        frontends: { web: { binds: [\"127.0.0.1:8080\"], default_backend: \"site\" } },\n"
+"        backends: { site: { servers: [for host in hosts: \"${host}:9000\"] } },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn edge() -> Map<Value> {\n"
+"    let hosts = [\"127.0.0.1\", \"127.0.0.2\"]\n"
+"    return {\n"
+"        http: { surface: \"shield\" },\n"
+"        frontends: { web: { binds: [\"127.0.0.1:8080\"], default_backend: \"site\" } },\n"
+"        backends: { site: { servers: [for host in hosts: \"${host}:9000\"] } },\n"
+"    }\n"
+"}"
+
+#: ../../jlavi.rst:22
+msgid "Check the module before opening the listener. For a starting point based on an existing command line, ``sibuna lb --print-config`` writes a complete JLV module to standard output."
+msgstr "打开监听端口前先检查模块。要从现有命令行开始，可使用 ``sibuna lb --print-config`` 将完整的 JLV 模块写入标准输出。"
+
+#: ../../jlavi.rst:24
+msgid ""
+"sibuna check -f edge.jlv\n"
+"sibuna --config-file edge.jlv"
+msgstr ""
+"sibuna check -f edge.jlv\n"
+"sibuna --config-file edge.jlv"
+
+#: ../../jlavi.rst:29
+msgid "Read the language"
+msgstr "读懂语法"
+
+#: ../../jlavi.rst:32
+msgid "Source files use UTF-8. An identifier starts with an ASCII letter or underscore and can then contain digits. A newline ends a statement. Lists and records can span lines. Double quotes delimit text. A line comment starts with two slashes. A block comment runs from ``/*`` to ``*/`` and cannot nest."
+msgstr "源文件使用 UTF-8。标识符以 ASCII 字母或下划线开头，后续可包含数字。换行结束一条语句。列表和记录可以跨行。文本用双引号包围。两个斜杠开始行注释。块注释从 ``/*`` 到 ``*/`` ，不可嵌套。"
+
+#: ../../jlavi.rst:34
+msgid "The entry point takes no arguments. ``Map<Value>`` lets one record hold text, booleans, integers, lists and nested records. In the first module, let binds the list once. The for expression visits each host in order and inserts its text into the address at ``${host}``."
+msgstr "入口函数没有参数。 ``Map<Value>`` 允许一条记录同时包含文本、布尔值、整数、列表和嵌套记录。在第一个模块中，let 将列表绑定一次。for 表达式按顺序遍历主机，把主机文本插入地址的 ``${host}`` 处。"
+
+#: ../../jlavi.rst:36
+msgid "A colon separates a field name from its value. Commas separate fields and list elements. A trailing comma is allowed. Write a port as part of the quoted bind address, a connection limit as a decimal integer and a switch such as http3 as true or false."
+msgstr "冒号分隔字段名与值，逗号分隔字段或列表元素，末尾允许加逗号。端口写在带引号的监听地址中，连接数上限用十进制整数，http3 等开关用 true 或 false。"
+
+#: ../../jlavi.rst:38
+msgid "Route a browser and an RPC client"
+msgstr "为浏览器和 RPC 客户端分配路由"
+
+#: ../../jlavi.rst:41
+msgid "This second module uses a typed helper to name an origin. The public portal uses the shield. Calls under ``/orders.Orders/`` use an HTTP/2 pool and skip the browser firewall. The RPC service must authenticate its callers."
+msgstr "第二个模块用带类型的辅助函数为源站命名。公共门户使用 shield。 ``/orders.Orders/`` 下的调用绕过浏览器防火墙并使用 HTTP/2 后端池。RPC 服务必须自行认证调用方。"
+
+#: ../../jlavi.rst:43
+msgid ""
+"fn service(name: Text, address: Text) -> Map<Value> {\n"
+"    return { name: name, addr: address }\n"
+"}\n"
+"\n"
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { surface: \"shield\" },\n"
+"        frontends: { https: {\n"
+"            binds: [\"0.0.0.0:443\"],\n"
+"            tls: { auto: [\"portal.example.org\", \"orders.internal\"], http3: true },\n"
+"            default_backend: \"portal\",\n"
+"            routes: [{\n"
+"                host: \"orders.internal\", path_prefix: \"/orders.Orders/\",\n"
+"                backend: \"orders\", firewall: false,\n"
+"            }],\n"
+"        } },\n"
+"        backends: {\n"
+"            portal: { servers: [\"10.0.0.10:8080\"] },\n"
+"            orders: { http_version: \"2\", servers: [service(\"rpc1\", \"10.0.0.11:50051\")] },\n"
+"        },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn service(name: Text, address: Text) -> Map<Value> {\n"
+"    return { name: name, addr: address }\n"
+"}\n"
+"\n"
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { surface: \"shield\" },\n"
+"        frontends: { https: {\n"
+"            binds: [\"0.0.0.0:443\"],\n"
+"            tls: { auto: [\"portal.example.org\", \"orders.internal\"], http3: true },\n"
+"            default_backend: \"portal\",\n"
+"            routes: [{\n"
+"                host: \"orders.internal\", path_prefix: \"/orders.Orders/\",\n"
+"                backend: \"orders\", firewall: false,\n"
+"            }],\n"
+"        } },\n"
+"        backends: {\n"
+"            portal: { servers: [\"10.0.0.10:8080\"] },\n"
+"            orders: { http_version: \"2\", servers: [service(\"rpc1\", \"10.0.0.11:50051\")] },\n"
+"        },\n"
+"    }\n"
+"}"
+
+#: ../../jlavi.rst:68
+msgid "We replace the example names and addresses before deployment. For a public name the ACME authority must be able to validate our domain. For ``orders.internal`` Sibuna issues and renews the certificate locally. We install the local root certificate in each client's trust store."
+msgstr "部署前请替换示例中的名称和地址。对于公共名称，ACME 签发机构必须能够验证我们的域名。对于 ``orders.internal`` ，Sibuna 在本地签发和续订证书。我们将本地根证书装入每个客户端的信任库。"
+
+#: ../../jlavi.rst:70
+msgid "Share a UDP topology"
+msgstr "共享 UDP 拓扑"
+
+#: ../../jlavi.rst:73
+msgid "Both nodes can use this module. In an empty directory we create mesh.key with 32 random bytes and copy it securely to the other node. Each node writes its own address and port from the nodes list into mesh.self. We run the check in that directory. The shared key authenticates peers, and accept_config lets them receive a cluster reload."
+msgstr "两个节点可以使用同一模块。在空目录中创建包含 32 个随机字节的 mesh.key，并将其安全复制到另一节点。每个节点将 nodes 列表中自己的地址和端口写入 mesh.self。我们在该目录运行检查。共享密钥用于认证对端，accept_config 允许节点接收集群配置更新。"
+
+#: ../../jlavi.rst:75
+msgid ""
+"fn edge() -> Map<Value> {\n"
+"    let peers = [\"10.20.0.11\", \"10.20.0.12\"]\n"
+"    return {\n"
+"        mesh: {\n"
+"            nodes: [for peer in peers: \"${peer}:7946\"],\n"
+"            self_file: \"mesh.self\",\n"
+"            key_file: \"mesh.key\",\n"
+"            accept_config: true,\n"
+"        },\n"
+"        frontends: { dns: {\n"
+"            proto: \"udp\", binds: [\"127.0.0.1:5353\"], default_backend: \"resolvers\",\n"
+"        } },\n"
+"        backends: { resolvers: { mode: \"udp\", servers: [\"10.20.0.53:53\"] } },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn edge() -> Map<Value> {\n"
+"    let peers = [\"10.20.0.11\", \"10.20.0.12\"]\n"
+"    return {\n"
+"        mesh: {\n"
+"            nodes: [for peer in peers: \"${peer}:7946\"],\n"
+"            self_file: \"mesh.self\",\n"
+"            key_file: \"mesh.key\",\n"
+"            accept_config: true,\n"
+"        },\n"
+"        frontends: { dns: {\n"
+"            proto: \"udp\", binds: [\"127.0.0.1:5353\"], default_backend: \"resolvers\",\n"
+"        } },\n"
+"        backends: { resolvers: { mode: \"udp\", servers: [\"10.20.0.53:53\"] } },\n"
+"    }\n"
+"}"
+
+#: ../../jlavi.rst:93
+msgid "We run the first command on one node only. On the second node we use the same key and put 10.20.0.12:7946 in mesh.self. Each DNS listener serves clients on its own loopback interface."
+msgstr "第一条命令只在一个节点运行。第二个节点使用同一密钥，并在 mesh.self 中写入 10.20.0.12:7946。每个节点只在自己的回环接口上接收 DNS 请求。"
+
+#: ../../jlavi.rst:95
+msgid ""
+"(umask 077 && openssl rand 32 > mesh.key)\n"
+"printf '%s\\n' '10.20.0.11:7946' > mesh.self"
+msgstr ""
+"(umask 077 && openssl rand 32 > mesh.key)\n"
+"printf '%s\\n' '10.20.0.11:7946' > mesh.self"
+
+#: ../../jlavi.rst:100
+msgid "Evaluation and diagnostics"
+msgstr "求值与诊断"
+
+#: ../../jlavi.rst:103
+msgid "Sibuna exposes the pure ``jlv.std.foundation`` library. Helpers live in the same module. Deployment resources, filesystem operations and imports from neighbouring files are outside this interface. Source and resulting JSON each have a 256 KiB limit. Evaluation has a budget of one million steps."
+msgstr "Sibuna 提供纯函数库 ``jlv.std.foundation`` 。辅助函数放在同一模块内。此接口不提供部署资源、文件系统操作或从相邻文件导入模块的功能。源文件和生成的 JSON 各限 256 KiB，求值预算为一百万步。"
+
+#: ../../jlavi.rst:105
+msgid "If the compiler reports an unknown name, we check its spelling and type at the reported line and column. If validation reports an unknown backend, we check that the route names a pool in the returned map. A rejected reload keeps the previous routing configuration."
+msgstr "若编译器报告未知名称，就在给出的行和列检查拼写和类型。若验证阶段报告未知后端，应确认路由引用的池存在于返回的映射中。重新加载遭拒时，先前的路由配置继续生效。"

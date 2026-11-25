@@ -13462,3 +13462,7 @@ msgstr ""
 #~ "dinámicamente el runtime de C del sistema, así que una imagen de "
 #~ "contenedor necesita una base que lo proporcione. La unidad siguiente "
 #~ "es un ejemplo:"
+
+#: ../../operations.rst:1762
+msgid ":doc:`jlavi`"
+msgstr ":doc:`Configurar Sibuna con Jlavi <jlavi>`"
