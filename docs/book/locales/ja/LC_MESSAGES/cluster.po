@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../cluster.rst:1
 msgid "Part IX: A Cluster of Edges"
-msgstr ""
+msgstr "第IX部：エッジのクラスター"
 
 #: ../../cluster.rst:4
 msgid ""
@@ -33,10 +33,11 @@ msgid ""
 "compare-and-set. The configuration of each feature is in Part XI; here we "
 "study the reasons."
 msgstr ""
+"第VIII部では一つのノードを組み立てました。一つのノードは単一障害点であり、その上限は一台の機械です。そこで、DNSやECMPルーターによって、複数のノードを一つの名前の後ろに置きます。ルーターは自分の規則で、フローごとにノードを選びます。この章では、そのときノードが何を共有しなければならないか、代わりに何を計算できるか、何が一つのノードに留まらなければならないかを問います。どの答えも小さな数学に基づきます。最大値、全順序、割り当ての和、ハッシュによる順位付け、頻度の推定、compare-and-setです。各機能の設定は第XI部にあります。ここではその理由を学びます。"
 
 #: ../../cluster.rst:6
 msgid "Objectives"
-msgstr ""
+msgstr "この章の学習目標"
 
 #: ../../cluster.rst:8
 msgid ""
@@ -49,10 +50,12 @@ msgid ""
 "it replaces; trace the handover of listening sockets to a new binary; and "
 "list what the cluster does not do."
 msgstr ""
+"この章を終えると、次のことができるようになります。ノードのどの状態をクラスターが複製するか、そしてそれぞれの併合がなぜ最大値なのかを述べる。フリート全体のキャップが損失、重複、再起動の下でも守られることを証明し、三つのノードの割り当てを手で計算する。ノードが加わったときにランデブーハッシュが移すクライアントの割合を導く。count-min "
+"sketchの誤差の上限を求める。データベースへのコミットが、置き換えるリビジョンを指定する理由を説明する。リスニングソケットの新しいバイナリへの引き渡しをたどる。クラスターがしないことを列挙する。"
 
 #: ../../cluster.rst:10
 msgid "What a Cluster Must Share"
-msgstr ""
+msgstr "クラスターが共有しなければならないもの"
 
 #: ../../cluster.rst:13
 msgid ""
@@ -64,38 +67,39 @@ msgid ""
 "mapping, and how many flows each server holds. We sort this state by how "
 "it changes."
 msgstr ""
+"クライアントは、ノードが複数あることを知りません。その二つの接続が二つのノードに届くことがあります。ルーターがそれらを別々にハッシュした、ノードが加わったか離脱した、DNSが二つのアドレスを返した、といった場合です。各ノードはクライアントについての状態を持ちます。クライアントが禁止されているか、現在の窓で何件のリクエストを送ったか、どのサーバーに置かれたか、そのUDPマッピング、各サーバーが持つフローの数です。この状態を、変化の仕方で分類します。"
 
 #: ../../cluster.rst:15
 msgid "The state of a node and what the cluster does with it."
-msgstr ""
+msgstr "ノードの状態と、クラスターがそれをどう扱うか。"
 
 #: ../../cluster.rst:19
 msgid "State"
-msgstr ""
+msgstr "状態"
 
 #: ../../cluster.rst:20
 msgid "How it changes"
-msgstr ""
+msgstr "変化の仕方"
 
 #: ../../cluster.rst:21
 msgid "What the cluster does"
-msgstr ""
+msgstr "クラスターがすること"
 
 #: ../../cluster.rst:22
 msgid "SID"
-msgstr ""
+msgstr "SID"
 
 #: ../../cluster.rst:23
 msgid "A ban"
-msgstr ""
+msgstr "禁止"
 
 #: ../../cluster.rst:24
 msgid "Its end only moves later"
-msgstr ""
+msgstr "終了時刻は後ろにしか動かない"
 
 #: ../../cluster.rst:25
 msgid "Replicated; the merge keeps the later end"
-msgstr ""
+msgstr "複製する。併合は遅いほうの終了時刻を残す"
 
 #: ../../cluster.rst:26 ../../cluster.rst:30
 msgid "0022"
@@ -103,27 +107,27 @@ msgstr ""
 
 #: ../../cluster.rst:27
 msgid "A run-time command (drain, weight, add, remove)"
-msgstr ""
+msgstr "実行時のコマンド（drain、weight、add、remove）"
 
 #: ../../cluster.rst:28
 msgid "Each command replaces the last"
-msgstr ""
+msgstr "各コマンドが前のものを置き換える"
 
 #: ../../cluster.rst:29
 msgid "Replicated; the merge keeps the later stamp"
-msgstr ""
+msgstr "複製する。併合は遅いほうのスタンプを残す"
 
 #: ../../cluster.rst:31
 msgid "The topology"
-msgstr ""
+msgstr "トポロジー"
 
 #: ../../cluster.rst:32
 msgid "Rarely, by an operator"
-msgstr ""
+msgstr "まれに、運用者による"
 
 #: ../../cluster.rst:33
 msgid "Sent whole and checked by every node, or read from a database"
-msgstr ""
+msgstr "全体を送ってすべてのノードが確認する、またはデータベースから読む"
 
 #: ../../cluster.rst:34
 msgid "0023, 0028"
@@ -131,15 +135,15 @@ msgstr ""
 
 #: ../../cluster.rst:35
 msgid "A sticky cookie, a rank by source address"
-msgstr ""
+msgstr "スティッキーCookie、送信元アドレスによる順位"
 
 #: ../../cluster.rst:36
 msgid "Computed from the shared secret and the file"
-msgstr ""
+msgstr "共有の秘密とファイルから計算する"
 
 #: ../../cluster.rst:37
 msgid "Nothing to replicate"
-msgstr ""
+msgstr "複製するものはない"
 
 #: ../../cluster.rst:38
 msgid "0019, 0025"
@@ -147,15 +151,15 @@ msgstr ""
 
 #: ../../cluster.rst:39
 msgid "A learned sticky choice"
-msgstr ""
+msgstr "学習したスティッキーの選択"
 
 #: ../../cluster.rst:40
 msgid "At the first flow and at each refresh"
-msgstr ""
+msgstr "最初のフローと各更新時"
 
 #: ../../cluster.rst:41
 msgid "Replicated; the merge follows a total order"
-msgstr ""
+msgstr "複製する。併合は全順序に従う"
 
 #: ../../cluster.rst:42 ../../cluster.rst:46
 msgid "0025"
@@ -163,27 +167,27 @@ msgstr ""
 
 #: ../../cluster.rst:43
 msgid "The flows on a capped server"
-msgstr ""
+msgstr "キャップのあるサーバー上のフロー"
 
 #: ../../cluster.rst:44 ../../cluster.rst:52
 msgid "With every flow"
-msgstr ""
+msgstr "フローごと"
 
 #: ../../cluster.rst:45
 msgid "Divided into shares that sum to at most the limit"
-msgstr ""
+msgstr "合計が上限以下になる割り当てに分ける"
 
 #: ../../cluster.rst:47
 msgid "Rate counters"
-msgstr ""
+msgstr "レートカウンター"
 
 #: ../../cluster.rst:48
 msgid "With every request"
-msgstr ""
+msgstr "リクエストごと"
 
 #: ../../cluster.rst:49
 msgid "Stay on the node; forwarding makes one node count each client"
-msgstr ""
+msgstr "ノードに留まる。転送により、各クライアントを数えるのは一つのノードになる"
 
 #: ../../cluster.rst:50
 msgid "0022, 0026"
@@ -191,11 +195,11 @@ msgstr ""
 
 #: ../../cluster.rst:51
 msgid "A UDP mapping, a TCP socket"
-msgstr ""
+msgstr "UDPマッピング、TCPソケット"
 
 #: ../../cluster.rst:53
 msgid "Cannot be replicated; forwarding keeps the client on one node"
-msgstr ""
+msgstr "複製できない。転送によりクライアントを一つのノードに留める"
 
 #: ../../cluster.rst:54
 msgid "0026"
@@ -210,14 +214,15 @@ msgid ""
 "node, and we move the client to the state instead of the state to the "
 "client."
 msgstr ""
+"表から三つの規則が出てきます。共有の入力から計算できるものは計算します。計算はネットワークで失われることがないからです。まれに、しかも一方向にしか変わらないものは、併合が最大値である状態として複製します。リクエストごとに変わるものはそのノードに留め、状態をクライアントに移すのではなく、クライアントを状態に移します。"
 
 #: ../../cluster.rst:58
 msgid "The Mesh"
-msgstr ""
+msgstr "メッシュ"
 
 #: ../../cluster.rst:61
 msgid "A fixed roster and authenticated datagrams"
-msgstr ""
+msgstr "固定の名簿と認証付きのデータグラム"
 
 #: ../../cluster.rst:64
 msgid ""
@@ -232,6 +237,10 @@ msgid ""
 "bytes, so a datagram of one kind cannot be turned into another. A "
 "datagram holds at most 1,200 bytes, so it fits one packet on every path."
 msgstr ""
+"クラスターのノードはメッシュを作ります（SID "
+"0015）。名簿はプロセスの一生の間固定で、最大64ノードを持ちます。どのノードも他のすべてのノードをアドレスで知っています。ノードは一つのポートでUDPデータグラムによって通信します。データグラムは\\ "
+"``S``\\ 、\\ ``E``\\ "
+"、バージョン、種別で始まります。送信者のブートnonceとシーケンス番号を運び、16バイトのタグで終わります。タグは、鍵ファイルのグループ鍵の下での、それより前のすべてのバイトの鍵付きBLAKE3ハッシュです。ノードがデータグラムを読むのは、名簿のアドレスからのもので、タグが正しいときだけです。種別はハッシュされるバイトの中にあるので、ある種別のデータグラムを別の種別に変えることはできません。データグラムは最大1,200バイトなので、どの経路でも一つのパケットに収まります。"
 
 #: ../../cluster.rst:67
 msgid ""
@@ -240,6 +249,7 @@ msgid ""
 "send flows to the servers of the pools. A PostgreSQL database of "
 "revisions is joined to each node by a dotted edge."
 msgstr ""
+"クライアントはDNSまたはECMPのルーターに届き、ルーターはフローをノードA、B、Cへ送ります。三つのノードは、メッシュの破線の辺で互いに結ばれています。三つとも、フローをプールのサーバーへ送ります。リビジョンを保持するPostgreSQLデータベースが、点線の辺で各ノードに結ばれています。"
 
 #: ../../cluster.rst:67
 msgid ""
@@ -280,6 +290,42 @@ msgid ""
 "  c -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
 "}"
 msgstr ""
+"digraph cluster_topology {\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.6, ranksep=0.45, "
+"pad=0.12];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=10, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, height=0.4, margin=\"0.12,0.05\"];\n"
+"  edge [fontname=\"Helvetica\", fontsize=8.5, fontcolor=\"#475569\", "
+"color=\"#64748b\", arrowsize=0.65, penwidth=1.1];\n"
+"  clients [label=\"クライアント\", fillcolor=\"#ffffff\", color=\"#172033\"];\n"
+"  router [label=\"DNSまたはECMPルーター\", fillcolor=\"#ffffff\", "
+"color=\"#172033\"];\n"
+"  a [label=\"ノードA\"];\n"
+"  b [label=\"ノードB\"];\n"
+"  c [label=\"ノードC\"];\n"
+"  servers [label=\"プールのサーバー\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\"];\n"
+"  db [label=\"PostgreSQL\\nリビジョン（SID 0028）\", shape=cylinder, "
+"color=\"#7c3aed\", fillcolor=\"#f5f3ff\"];\n"
+"  { rank=same; a; b; c; }\n"
+"  clients -> router;\n"
+"  router -> a;\n"
+"  router -> b;\n"
+"  router -> c;\n"
+"  a -> b [dir=both, style=dashed, color=\"#d97706\", "
+"fontcolor=\"#b45309\", label=\"メッシュ\"];\n"
+"  b -> c [dir=both, style=dashed, color=\"#d97706\", "
+"fontcolor=\"#b45309\", label=\"メッシュ\"];\n"
+"  a -> c [dir=both, style=dashed, color=\"#d97706\", "
+"fontcolor=\"#b45309\", label=\"メッシュ\"];\n"
+"  a -> servers;\n"
+"  b -> servers;\n"
+"  c -> servers;\n"
+"  a -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
+"  b -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
+"  c -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
+"}"
 
 #: ../../cluster.rst:67
 msgid ""
@@ -287,12 +333,14 @@ msgid ""
 "edges are the mesh; the dotted edges are the database of SID 0028, which "
 "a cluster may use instead of sending files."
 msgstr ""
+"三つのノードのクラスター。ルーターがクライアントを分散します。破線の辺はメッシュです。点線の辺はSID "
+"0028のデータベースで、クラスターはファイルを送る代わりにこれを使えます。"
 
 #: ../../cluster.rst:97
 msgid ""
 "Every pair of nodes exchanges the same things. The next figure shows one "
 "pair."
-msgstr ""
+msgstr "ノードのどの組も同じものを交換します。次の図は一つの組を示します。"
 
 #: ../../cluster.rst:100
 msgid ""
@@ -302,6 +350,7 @@ msgid ""
 "TCP on the mesh port, carries the configuration file and its digest. The "
 "third, TCP and UDP on the mesh port plus one, carries forwarded flows."
 msgstr ""
+"三つの辺で結ばれたノードAとノードB。一つ目はメッシュのポート7946上のUDPで、プローブ、禁止（種別3）、コマンド（種別4）、解除（種別5）、スティッキーのエントリー（種別6）、割り当ての状態（種別7）を運びます。二つ目はメッシュのポート上のTCPで、設定ファイルとそのダイジェストを運びます。三つ目はメッシュのポートに1を足したポート上のTCPとUDPで、転送されたフローを運びます。"
 
 #: ../../cluster.rst:100
 msgid ""
@@ -324,12 +373,29 @@ msgid ""
 "mesh port + 1 (SID 0026)\\nforwarded connections and datagrams\"];\n"
 "}"
 msgstr ""
+"digraph mesh_pair {\n"
+"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.4, ranksep=2.2, "
+"pad=0.12];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=10, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, height=0.5, margin=\"0.14,0.06\"];\n"
+"  edge [fontname=\"Helvetica\", fontsize=8.5, fontcolor=\"#475569\", "
+"color=\"#64748b\", arrowsize=0.65, penwidth=1.1, dir=both];\n"
+"  a [label=\"ノードA\"];\n"
+"  b [label=\"ノードB\"];\n"
+"  a -> b [color=\"#d97706\", fontcolor=\"#b45309\", "
+"label=\"UDP、メッシュのポート7946（SID "
+"0015、0022、0025）\\nプローブ、禁止（3）、コマンド（4）、解除（5）、\\nスティッキーのエントリー（6）、割り当ての状態（7）\"];\n"
+"  a -> b [label=\"TCP、メッシュのポート7946（SID 0023）\\n設定ファイル、ファイルのダイジェスト\"];\n"
+"  a -> b [color=\"#15803d\", fontcolor=\"#166534\", "
+"label=\"TCPとUDP、メッシュのポート + 1（SID 0026）\\n転送された接続とデータグラム\"];\n"
+"}"
 
 #: ../../cluster.rst:100
 msgid ""
 "What flows between two nodes, by port. The kind of each datagram is in "
 "parentheses."
-msgstr ""
+msgstr "二つのノードの間をポートごとに流れるもの。各データグラムの種別を括弧内に示します。"
 
 #: ../../cluster.rst:114
 msgid ""
@@ -339,10 +405,11 @@ msgid ""
 "earns its cost in large groups whose members change; a roster of at most "
 "64 fixed nodes has no use for it."
 msgstr ""
+"どのノードも、他のすべてのノードへ直接送ります。ノードは受け取ったデータグラムを転送しません。名簿が完全なら、どのノードもすべての書き手から聞きますし、受け取ったものを転送することこそがゴシップをループさせる原因です。エピデミックな転送は、メンバーが変わる大きなグループでこそ割に合います。固定の最大64ノードの名簿には必要ありません。"
 
 #: ../../cluster.rst:116
 msgid "Bans merged by a maximum"
-msgstr ""
+msgstr "最大値で併合する禁止"
 
 #: ../../cluster.rst:119
 msgid ""
@@ -352,6 +419,8 @@ msgid ""
 "For each key it is the maximum of two numbers, so it has the three laws "
 "of the maximum."
 msgstr ""
+"禁止は組です。クライアントのキーと、禁止が終わるUnix秒です。ノードの状態は、キーから終了時刻へのマップです。二つの状態は、キーごとに遅いほうの終了時刻を取って併合します。この併合を\\ "
+":math:`\\sqcup`\\ とします。キーごとに二つの数の最大値なので、最大値の三つの法則を持ちます。"
 
 #: ../../cluster.rst:121
 msgid ""
@@ -370,6 +439,7 @@ msgid ""
 "a join semilattice, the state-based replicated data type of Shapiro and "
 "his colleagues (2011)."
 msgstr ""
+"この三つの法則が収束の証明のすべてです。一つ目は、到着の順序が問題にならないことを言います。二つ目は、ノードがデータグラムを一つずつ併合してよいことを言います。三つ目は、重複したデータグラムが何も変えないことを言うので、メッシュにはリプレイの窓も確認応答も要りません。同じ禁止を、どの順序で、どれだけ重複して聞いても、二つのノードは同じマップを持ちます。このような併合を持つ状態は結び半束であり、Shapiroらの状態ベースの複製データ型（2011）です。"
 
 #: ../../cluster.rst:127
 msgid ""
@@ -381,6 +451,7 @@ msgid ""
 "receiver cuts an end to 30 days ahead of its own clock and ignores an end "
 "that has passed."
 msgstr ""
+"データグラムは残り時間ではなく終了時刻を運びます。残り時間ならノードの時計に依存しませんが、リプレイされたデータグラムが禁止をもう一度始めてしまいます。終了時刻なら、リプレイは受信者がすでに持っているものを述べるだけです。代償は時計への依存です。ピアでの禁止は、二つの時計の差だけ長くまたは短く続きます。受信者は、終了時刻を自分の時計の30日先までに切り詰め、過ぎた終了時刻は無視します。"
 
 #: ../../cluster.rst:129
 msgid ""
@@ -395,10 +466,12 @@ msgid ""
 "replication, counts it, and the ban still holds on the node that issued "
 "it."
 msgstr ""
+"ノードは発行した禁止をそれぞれ三回送ります。すぐに、1秒後に、さらにその4秒後にです。三回送れば、二つのパケットの損失に耐えます。分断には耐えないので、ノードは戻ってきたピアにはマップ全体を順に送ります。戻ってきたピアとは、プローブが新しいブートnonceを運ぶピア、または三周期の無応答の後に応答したピアです。一回の送出は、500 "
+"msの周期に最大8個のデータグラムを送ります。どの構造にも上限があります。マップは65,536件の禁止を保持し、ファイアウォールからメッシュのスレッドへのキューは1,024件を保持します。リクエストがメッシュを待つことはありません。キューが満杯なら禁止を複製から落として数えますが、禁止は発行したノードでは引き続き有効です。"
 
 #: ../../cluster.rst:131
 msgid "Implementation: ``Log::merge``"
-msgstr ""
+msgstr "実装：\\ ``Log::merge``"
 
 #: ../../cluster.rst:133
 msgid ""
@@ -406,6 +479,9 @@ msgid ""
 "the merge added or extended it. In ``crates/lb/src/mesh/bans.rs`` (crate "
 "``sibuna-lb``). ``keep_larger`` holds the maximum."
 msgstr ""
+"一つの禁止をメッシュのスレッドのマップに併合し、併合で追加または延長されたときにその終了時刻を返します。\\ "
+"``crates/lb/src/mesh/bans.rs``\\ （クレート\\ ``sibuna-lb``\\ ）にあります。\\ "
+"``keep_larger``\\ が最大値を保ちます。"
 
 #: ../../cluster.rst:135
 msgid ""
@@ -432,6 +508,7 @@ msgid ""
 "not heard yet. A peer that was cut off cannot bring the ban back, because "
 "the lift covers its end."
 msgstr ""
+"解除を、より小さい終了時刻として表すことはできません。ピアの次のデータグラムが禁止を戻してしまうからです。そこで解除は三つ目のマップのエントリーとし、クライアントのキーから、禁止を解除する終了時刻の上限へ対応させます。このマップも最大値で併合します。禁止が有効なのは、その終了時刻がクライアントの解除より後のときです。運用者のノードは、解除を自分の知っている禁止の終了時刻に、かつ少なくとも60秒先に設定します。これにより、まだ聞いていない禁止もカバーされます。切り離されていたピアは禁止を戻せません。解除がその終了時刻をカバーするからです。"
 
 #: ../../cluster.rst:149
 msgid ""
@@ -446,10 +523,12 @@ msgid ""
 "node must build the same table at the same moment. Its servers change "
 "through the file."
 msgstr ""
+"実行時のコマンドも同じように伝わります。そのマップは、サーバーの状態についての\\ ``s``\\ と\\ ``POOL/NAME``\\ "
+"のようなキーから、コマンドのUnixミリ秒で始まる数へ対応します。大きい数が勝つので、到着の順序にかかわらず、どのノードでも後のコマンドが勝ちます。ノードは自分の時計より60秒以上先の数を拒否します。この上限がなければ、時計のずれた一つのノードが後のすべてのコマンドを覆せてしまいます。第VIII部の規則が一つ残ります。Maglevテーブルでクライアントを置くプールは、実行時に重みもメンバーも受け付けません。すべてのノードが同じ瞬間に同じテーブルを作らなければならないからです。そのサーバーはファイルを通して変わります。"
 
 #: ../../cluster.rst:151
 msgid "Why a rate counter stays local"
-msgstr ""
+msgstr "レートカウンターがローカルに留まる理由"
 
 #: ../../cluster.rst:154
 msgid ""
@@ -465,6 +544,11 @@ msgid ""
 "maximum can only grow. SID 0022 therefore leaves the limiters on their "
 "nodes and says so: each node bounds what it serves."
 msgstr ""
+"レートリミッターは、窓の中のクライアントのリクエストを数えます。\\ :math:`n`\\ "
+"個のノードのそれぞれが、窓の中でクライアントのリクエストを\\ :math:`r`\\ "
+"件許可するとします。接続がすべてのノードに分散したクライアントは、最大\\ :math:`nr`\\ "
+"件を得ます。カウンターをグローバルにするのは明らかな修正に見えますが、そうではありません。リクエストごとのメッセージはメッシュをリクエストの経路に置きます。リクエストはピアを待つか、他のノードのカウントが届く前に判断されるかのどちらかで、そのうえメッシュはクラスター全体のリクエストレートを運ぶことになります。最大値による併合も役に立ちません。窓のカウントは窓が進めば下がらなければなりませんが、併合が最大値である状態は増えることしかできません。そこでSID "
+"0022は、リミッターをそれぞれのノードに残し、そのことを明記しています。各ノードは自分が処理するものを制限します。"
 
 #: ../../cluster.rst:156
 msgid ""
@@ -475,10 +559,13 @@ msgid ""
 "holds only while forwarding runs, and for up to 1.5 s after a change of "
 "liveness two nodes may each count a part of one client."
 msgstr ""
+"クラスターの上限は反対の方向から得られます。ピア転送（SID "
+"0026、後述）は、すべてのクライアントに一つの所有者を与え、所有者のキーがレートリミッターのキーになります。すると所有者がそのクライアントのすべてのフローを数えるので、一つのノードが数える上限がクラスターの上限になります。これが成り立つのは転送が動いている間だけで、生存状態の変化から最大1.5 "
+"sの間は、二つのノードがそれぞれ一つのクライアントの一部を数えることがあります。"
 
 #: ../../cluster.rst:158
 msgid "One file for the cluster"
-msgstr ""
+msgstr "クラスターに一つのファイル"
 
 #: ../../cluster.rst:161
 msgid ""
@@ -489,6 +576,9 @@ msgid ""
 "local, because the running daemon holds it. The other addresses are the "
 "peers."
 msgstr ""
+"SID 0023は、設定ファイルをすべてのノードでバイト単位まで同じにします。その\\ ``mesh``\\ 節は、すべてのノードを\\ "
+"``nodes``\\ "
+"の下に列挙します。ノードは、リストのうち自分のホストに属する最初のアドレスを自分とみなします。判定は、そのアドレスをバインドできるかどうかです。使用中のアドレスはローカルとみなします。動いているデーモンがそれを保持しているからです。他のアドレスはピアです。"
 
 #: ../../cluster.rst:163
 msgid ""
@@ -509,6 +599,18 @@ msgid ""
 "On three hosts the command returned, with all three holding the same "
 "file, in 30 ms (Part X)."
 msgstr ""
+"``reload cluster``\\ "
+"は、実行したノードのファイルを確認し、そのノードを再読み込みし、それからメッシュのポート上のTCPで、すべてのピアへ同時にファイルを送ります。メッセージは\\ "
+"``SEC1``\\ 、スタンプ、長さ、ファイル、32バイトのタグです。タグの鍵はメッシュの鍵からコンテキスト\\ "
+"``sibuna/edge-mesh/config/v1``\\ "
+"で導くので、メッシュのデータグラムがファイルの代わりになることも、ファイルがデータグラムの代わりになることもありません。ピアがファイルを受け取るのは\\ "
+"``accept_config``\\ "
+"を宣言しているときだけで、次の確認のうち最初に失敗したところで止まります。送信元が名簿のノードであること。タグが正しいこと。スタンプが前回受け取ったものより後で、自分の時計の60秒以内であること。自分のファイルの隣にモード0600で\\ "
+"``NAME.incoming.EXT``\\ "
+"として書いたファイルが、再読み込みの確認に合格すること。そしてファイルが、このノードを含む同じメッシュを指定していること。そのときにだけ、ファイルは古いファイルの上に名前を変えて置かれ、読み込まれます。失敗した転送はピアで何も変えません。\\ "
+"``show cluster``\\ "
+"はすべてのピアにファイルのダイジェストを問い合わせ、どのノードが異なるかを示します。3台のホストで、三つすべてが同じファイルを持つとき、このコマンドは30 "
+"msで返りました（第X部）。"
 
 #: ../../cluster.rst:165
 msgid ""
@@ -516,10 +618,12 @@ msgid ""
 "old file, and files that the topology names by path are not sent. SID "
 "0028, later in this chapter, answers the first two."
 msgstr ""
+"ファイルには履歴もロールバックもなく、停止していたノードは古いファイルを保ち、トポロジーがパスで指定するファイルは送られません。この章の後半のSID "
+"0028が、最初の二つに答えます。"
 
 #: ../../cluster.rst:167
 msgid "Exercise 9.1"
-msgstr ""
+msgstr "演習9.1"
 
 #: ../../cluster.rst:169
 msgid ""
@@ -529,18 +633,20 @@ msgid ""
 "client again, until 1,250. What lift does C send, and which of the three "
 "bans holds on which node?"
 msgstr ""
+"ノードAがクライアントを1,300秒まで禁止します。900秒に、運用者がその終了時刻を知っているノードCで禁止を解除します。ノードDは切り離されていましたが、今、同じクライアントの1,200秒までの禁止を送ります。1,000秒に、ノードBがクライアントを再び1,250秒まで禁止します。Cはどんな解除を送るでしょうか。三つの禁止のうちどれが、どのノードで有効でしょうか。"
 
 #: ../../cluster.rst:171
 msgid ""
 "Hint: Compute the lift as the operator's node does, then compare each end "
 "with it. Then read the first known gap of SID 0022."
 msgstr ""
+"ヒント：運用者のノードと同じように解除を計算し、各終了時刻をそれと比べます。それからSID 0022の最初の既知の欠落を読んでください。"
 
 #: ../../cluster.rst:173 ../../cluster.rst:227 ../../cluster.rst:333
 #: ../../cluster.rst:442 ../../cluster.rst:519 ../../cluster.rst:549
 #: ../../cluster.rst:590
 msgid "Explain the invariant"
-msgstr ""
+msgstr "不変条件を説明してください"
 
 #: ../../cluster.rst:175
 msgid ""
@@ -549,14 +655,15 @@ msgid ""
 "would fail if a lift were sent as a smaller end, and what the map of "
 "lifts does instead."
 msgstr ""
+"二度届いた、遅れて届いた、あるいは古いものより先に届いた禁止のデータグラムが、ノードの禁止するものを変えられない理由を説明してください。次に、解除をより小さい終了時刻として送った場合に同じ論法が成り立たない理由と、解除のマップが代わりに何をするかを説明してください。"
 
 #: ../../cluster.rst:177
 msgid "Shared Affinity"
-msgstr ""
+msgstr "共有アフィニティ"
 
 #: ../../cluster.rst:180
 msgid "Three kinds of stickiness"
-msgstr ""
+msgstr "三種類のスティッキネス"
 
 #: ../../cluster.rst:183
 msgid ""
@@ -572,10 +679,16 @@ msgid ""
 "that the application sets, such as a session identifier, from which the "
 "edge cannot compute a server. Only the third kind needs replication."
 msgstr ""
+"プールは、三つの方法のどれかでクライアントをそのサーバーに留めます（SID 0019、SID 0025）。\\ ``sticky: "
+"\"cookie\"``\\ では、クライアントがトークン、つまりプールとサーバーの鍵付きハッシュを提示します。どのノードも鍵を\\ "
+"``http.secret_file``\\ から導くので、テーブルは要りません。\\ ``sticky: \"source\"``\\ "
+"では、どのノードもクライアントアドレスのハッシュでサーバーを順位付けます。同じファイルを持つノードは同じように順位付けます。どちらも計算なので、失われるデータグラムはありません。三つ目の\\ "
+"``sticky: \"table\"``\\ "
+"は、クライアントの最初のフローを負荷分散し、その選択を覚えます。これは計算では扱えない二つの場合に役立ちます。最初の選択が負荷に従うこと、そしてキーが、セッション識別子のようにアプリケーションが設定するCookieでもよく、エッジはそこからサーバーを計算できないことです。複製が必要なのは三つ目の種類だけです。"
 
 #: ../../cluster.rst:185
 msgid "The entry and its order"
-msgstr ""
+msgstr "エントリーとその順序"
 
 #: ../../cluster.rst:188
 msgid ""
@@ -586,6 +699,7 @@ msgid ""
 "entry expires. Two entries of one key merge by keeping the larger pair of "
 "end and server, compared in that order:"
 msgstr ""
+"エントリーは16バイトのキーを、サーバーと終了時刻に対応させます。キーは、プールの名前から導いた鍵の下での、クライアントアドレスまたはCookieの値の鍵付きハッシュです。サーバーはその名前のハッシュで、どのノードでも同じです。終了時刻は、エントリーが期限切れになるUnixミリ秒です。同じキーの二つのエントリーは、終了時刻とサーバーの組のうち大きいほうを残して併合します。比較はこの順で行います。"
 
 #: ../../cluster.rst:190
 msgid ""
@@ -602,6 +716,8 @@ msgid ""
 "two servers for one client in the same millisecond, with the same "
 "``ttl``, would each keep their own entry forever."
 msgstr ""
+"数の組に対する辞書式順序は全順序です。異なる二つの組では、一方が大きくなります。全順序上の最大値は可換、結合的、冪等なので、エントリーは禁止と同じ理由で収束します。サーバーは同点を決めます。それがなければ、同じミリ秒に、同じ\\ "
+"``ttl``\\ で、一つのクライアントについて二つのサーバーを学んだ二つのノードは、それぞれ自分のエントリーを永久に保つことになります。"
 
 #: ../../cluster.rst:196
 msgid ""
@@ -615,10 +731,15 @@ msgid ""
 "bounds the harm of a wrong clock: a received end more than 24 hours and "
 "60 seconds ahead is ignored."
 msgstr ""
+"終了時刻はエントリーのバージョンでもあります。ノードは、テーブルが指定していなかったサーバーにフローが置かれたときに\\ *学習*\\ "
+"します。新しい終了時刻は、現在時刻に\\ ``ttl``\\ "
+"を足したものと、古い終了時刻の1ミリ秒後のうち遅いほうです。したがって、新しい選択はどのノードでも、置き換えるエントリーより大きくなります。ノードは、フローがエントリーを使い、残りが\\ "
+"``ttl``\\ の4分の3未満のときに\\ *更新*\\ します。新しい終了時刻は現在時刻に\\ ``ttl``\\ "
+"を足したものです。一つの数がバージョンと期限を兼ね、時計からの距離の上限が、ずれた時計の害を制限します。受け取った終了時刻が24時間60秒より先なら無視します。"
 
 #: ../../cluster.rst:198
 msgid "Implementation: ``Affinity::wins_over``"
-msgstr ""
+msgstr "実装：\\ ``Affinity::wins_over``"
 
 #: ../../cluster.rst:200
 msgid ""
@@ -627,6 +748,9 @@ msgid ""
 "``AffinityTable::keep`` in the same file stores an entry only when it "
 "wins over the one held."
 msgstr ""
+"同じキーの二つのエントリーの併合を決めます。\\ ``crates/lb/src/affinity.rs``\\ （クレート\\ "
+"``sibuna-lb``\\ ）にあります。同じファイルの\\ ``AffinityTable::keep``\\ "
+"は、保持しているエントリーに勝つときだけエントリーを格納します。"
 
 #: ../../cluster.rst:202
 msgid ""
@@ -637,6 +761,11 @@ msgid ""
 "    (self.ends, self.server) > (other.ends, other.server)\n"
 "}"
 msgstr ""
+"/// 併合で `self` が `other` に勝つかどうか。遅い終了時刻、次に大きいサーバー。\n"
+"/// 順序は全順序なので、どのノードも同じエントリーを残す。\n"
+"pub fn wins_over(&self, other: &Self) -> bool {\n"
+"    (self.ends, self.server) > (other.ends, other.server)\n"
+"}"
 
 #: ../../cluster.rst:210
 msgid ""
@@ -652,6 +781,10 @@ msgid ""
 "clients. A lookup took 172 ns in an optimised build, on a table of 65,536 "
 "slots with 49,152 clients."
 msgstr ""
+"テーブルは、四つずつのバケットに分けたスロットの配列です。スロットは五つのアトミックなワードです。シーケンス番号、キーの二ワード、サーバー、終了時刻です。書き手はcompare-and-swapでシーケンスを奇数にし、エントリーを格納し、再び偶数にします。読み手がエントリーを取るのは、前後で同じ偶数のシーケンスを読んだときだけです。どのスレッドも他のスレッドを待ちません。テーブルは\\ "
+"``global.sticky_entries``\\ "
+"個（既定は65,536個）の、各40バイトのスロットを持ち、満杯のバケットは最初に終わるエントリーを手放します。四つのバケットは、テーブルが満杯になる前にエントリーを手放します。4分の3が埋まった時点で9クライアントに1つを手放していたので、テーブルにはクライアントの2倍のスロットが望ましいです。最適化ビルドで、49,152クライアントを持つ65,536スロットのテーブルでの参照は172 "
+"nsでした。"
 
 #: ../../cluster.rst:212
 msgid ""
@@ -662,10 +795,11 @@ msgid ""
 "serves only while it is eligible: in the pool, healthy, not drained, with "
 "room."
 msgstr ""
+"テーブルは、新しいフローのためのサーバーの選択に助言するだけです。確立したフローはサーバーの予約を持ち、テーブルを再び読むことはありません。したがって、失われた、追い出された、または変わったエントリーのコストは、クライアントが次の新しいフローでサーバーを失うことだけです。また、指定されたサーバーが受け持つのは、それが適格な間（プールにあり、正常で、ドレインされておらず、余地がある間）だけです。"
 
 #: ../../cluster.rst:214
 msgid "Replication, partition and the window of a race"
-msgstr ""
+msgstr "複製、分断、競合の窓"
 
 #: ../../cluster.rst:217
 msgid ""
@@ -681,6 +815,8 @@ msgid ""
 "One side's choice changes for the next new flow of that client. Flows "
 "under way stay."
 msgstr ""
+"ワーカーは、書いた各エントリーのキーを、4,096キーの上限付きキューを通して、待たずにメッシュのスレッドに渡します。メッシュのスレッドは、禁止を送るのと同じようにエントリーを三回、それぞれ36エントリーを持つ種別6のデータグラムで送ります。戻ってきたピアには、カーソルによってテーブル全体を、500 "
+"msの周期に最大32データグラムで送ります。65,536エントリーのテーブルには約29秒かかります。切り離されたノードは自分のテーブルで処理します。分断の間、テーブルは一致を諦めて可用性を保ちます。分断が終わると、両側が互いにテーブルを順に送り、キーごとにどのノードも大きいほうのエントリー、つまり最後に行われたか使われた選択を残します。一方の側の選択は、そのクライアントの次の新しいフローから変わります。進行中のフローは留まります。"
 
 #: ../../cluster.rst:219
 msgid ""
@@ -698,10 +834,15 @@ msgid ""
 "without making the first flow wait for the peers, which the design "
 "refuses."
 msgstr ""
+"複製は非同期なので、窓があります。選択がピアに届くのは、メッシュのスレッドへの引き渡し、一回の送信、一回のネットワーク遅延の後です。同じクライアントの二つ目のフローが窓の中でピアに届くと、エントリーは見つからず、負荷分散され、ピアは自分の選択を学びます。両方のエントリーが伝わり、大きいほうがどこでも勝ち、そのクライアントの以後の新しいフローは一つのサーバーに出会います。SID "
+"0025は、Cookieをキーとするテーブルで、2台のホスト上でこの窓を測定しました。一方のノードでの最初のフローと他方での次のフローの間に間隔がないとき、40クライアントのうち25が二つのサーバーに出会いました。20 "
+"msでは40のうち13、50 "
+"msでは0でした。2秒後にはすべてが一致し、300クライアントのうち300が、どちらのノードを通っても同じサーバーに届きました。したがって、選択は50 "
+"ms未満でピアに届きました。この窓は、最初のフローにピアを待たせなければ閉じられず、設計はそれを拒んでいます。"
 
 #: ../../cluster.rst:221
 msgid "Exercise 9.2"
-msgstr ""
+msgstr "演習9.2"
 
 #: ../../cluster.rst:223
 msgid ""
@@ -711,12 +852,15 @@ msgid ""
 "flow. Which entry does every node hold after the datagrams cross? Which "
 "flows move?"
 msgstr ""
+"ノードAとBが、同じミリ秒に、同じ\\ ``ttl``\\ で、同じ新しいクライアントについてサーバーを学びます。Aはハッシュが\\ "
+"``0x3a...``\\ のサーバーを、Bはハッシュが\\ ``0x91...``\\ "
+"のサーバーを選びました。それぞれ一つのフローを置きました。データグラムが行き交った後、どのノードもどのエントリーを持つでしょうか。どのフローが移るでしょうか。"
 
 #: ../../cluster.rst:225
 msgid ""
 "Hint: Compare the pairs of end and server. Then recall what an "
 "established flow reads."
-msgstr ""
+msgstr "ヒント：終了時刻とサーバーの組を比べます。それから、確立したフローが何を読むかを思い出してください。"
 
 #: ../../cluster.rst:229
 msgid ""
@@ -724,14 +868,15 @@ msgid ""
 "the later end. Then explain why no loss of a datagram, and no eviction "
 "from a full bucket, can move a flow that is already established."
 msgstr ""
+"スティッキーのエントリーの併合が、遅いほうの終了時刻だけでなく全順序を必要とする理由を説明してください。次に、データグラムの損失も、満杯のバケットからの追い出しも、すでに確立したフローを移せない理由を説明してください。"
 
 #: ../../cluster.rst:231
 msgid "A Cap for the Whole Fleet"
-msgstr ""
+msgstr "フリート全体のキャップ"
 
 #: ../../cluster.rst:234
 msgid "The invariant"
-msgstr ""
+msgstr "不変条件"
 
 #: ../../cluster.rst:237
 msgid ""
@@ -742,6 +887,11 @@ msgid ""
 ":math:`i` and :math:`u_i` its flows on the server. The protocol keeps two "
 "inequalities:"
 msgstr ""
+":math:`n`\\ 個のノードの背後にある\\ ``max_flows: 100``\\ "
+"のサーバーは、各ノードが単独で上限を強制すると、最大\\ :math:`100n`\\ 個のフローを受け取ります。\\ "
+"``max_flows_scope: \"fleet\"``\\ では、上限\\ :math:`L`\\ "
+"がすべてのノードのフローの合計を制限します（SID 0025）。\\ :math:`s_i`\\ をノード\\ :math:`i`\\ "
+"の割り当て、\\ :math:`u_i`\\ をそのサーバー上のフローの数とします。プロトコルは二つの不等式を保ちます。"
 
 #: ../../cluster.rst:239
 msgid ""
@@ -756,10 +906,11 @@ msgid ""
 "and reordering of datagrams, for every partition, and for every set of "
 "nodes that stop or restart."
 msgstr ""
+"一つ目はローカルです。ノードがフローを許可するのは、自分のフローが割り当てより少ない間だけです。二つ目は、データグラムのあらゆる損失、重複、遅延、順序の入れ替わり、あらゆる分断、そして停止または再起動するノードのあらゆる集合について成り立たなければなりません。"
 
 #: ../../cluster.rst:245
 msgid "Counters that only grow"
-msgstr ""
+msgstr "増えるだけのカウンター"
 
 #: ../../cluster.rst:248
 msgid ""
@@ -771,12 +922,15 @@ msgid ""
 "once. This is the escrow method of O'Neil (1986) and the bounded counter "
 "of Balegas and his colleagues (2015), built on the merge of SID 0022."
 msgstr ""
+"最初の設計は、メッセージで割り当てを移していました。「5を取れ」というメッセージです。このようなメッセージはちょうど一回届かなければなりません。失われれば五つの枠が永久に失われ、重複すれば倍になって上限を破ります。そこでプロトコルは増えるだけの数を送り、受信者はそれを禁止と同じように最大値で併合します。何回聞いても、一回聞いたのと同じ効果になります。これはO'Neil（1986）のエスクロー方式と、Balegasら（2015）の有界カウンターを、SID "
+"0022の併合の上に組み立てたものです。"
 
 #: ../../cluster.rst:250
 msgid ""
 "The nodes of the roster are ordered by address, and node :math:`i` of "
 ":math:`n` has the base share"
 msgstr ""
+"名簿のノードはアドレスで順序付けられ、\\ :math:`n`\\ 個のうちノード\\ :math:`i`\\ の基本割り当ては次のとおりです。"
 
 #: ../../cluster.rst:252
 msgid ""
@@ -791,6 +945,10 @@ msgid ""
 "ever gave to :math:`j`, and :math:`h_{ij}`, the largest :math:`g_{ji}` it "
 "heard from :math:`j`. Its share is"
 msgstr ""
+"どのノードもファイルから基本割り当てを計算します。各ピア\\ :math:`j`\\ について、ノード\\ :math:`i`\\ "
+"は増えるだけの数を二つ保持します。\\ :math:`j`\\ にこれまで与えたすべての量\\ :math:`g_{ij}`\\ と、\\ "
+":math:`j`\\ から聞いた\\ :math:`g_{ji}`\\ の最大値\\ :math:`h_{ij}`\\ "
+"です。その割り当ては次のとおりです。"
 
 #: ../../cluster.rst:258
 msgid "s_i = b_i - \\sum_j g_{ij} + \\sum_j h_{ij}."
@@ -802,6 +960,8 @@ msgid ""
 "its share before it sent them, so :math:`h_{ji} \\le g_{ij}` at every "
 "moment. Summing over the nodes and renaming the indices of the last sum,"
 msgstr ""
+"受信者が持つのは与え手が送った数だけで、与え手はそれを送る前に自分の割り当てを下げたので、どの時点でも\\ :math:`h_{ji} \\le "
+"g_{ij}`\\ です。ノードについて足し合わせ、最後の和の添え字を付け替えると、次のようになります。"
 
 #: ../../cluster.rst:264
 msgid ""
@@ -815,10 +975,12 @@ msgid ""
 "difference is counted on neither node: it is stranded for one period of "
 "500 ms, never doubled."
 msgstr ""
+"失われたデータグラムは、しばらくの間\\ :math:`h_{ji} < g_{ij}`\\ "
+"を残します。その差はどちらのノードでも数えられません。500 msの一周期の間取り残されますが、倍になることはありません。"
 
 #: ../../cluster.rst:270
 msgid "Moving shares to the demand"
-msgstr ""
+msgstr "割り当てを需要に移す"
 
 #: ../../cluster.rst:273
 msgid ""
@@ -834,6 +996,14 @@ msgid ""
 "a peer, it gives back the excess up to that gift, so the shares of an "
 "idle cluster return to the bases."
 msgstr ""
+"各ノードは、キャップのある各サーバーについて、空きの割り当て\\ :math:`f = s - u`\\ と余裕\\ :math:`r = "
+"\\max(1, \\lceil u/4 \\rceil)`\\ を計算します。\\ :math:`r - f`\\ が正ならそれを\\ "
+"*要求*\\ し、前回の状態の送信以降に割り当て不足でフローを拒否したときは、フラグ付きで少なくとも1を要求します。その\\ *余剰*\\ は\\ "
+":math:`f - r`\\ "
+"です。ノードは各周期に一度、聞いた要求に応えます。ピアには要求と余剰の小さいほうを与えます。フローを拒否しているピアには、要求と、余剰と\\ "
+":math:`\\lceil f/2 \\rceil`\\ の大きいほうとの小さいほうを与えます。ノードは借りた割り当てを自分から返します。\\ "
+":math:`f > 2\\lceil u/4 \\rceil`\\ "
+"で、ピアからの正味の贈与を持つとき、その贈与を上限として超過分を返すので、アイドルなクラスターの割り当ては基本割り当てに戻ります。"
 
 #: ../../cluster.rst:275
 msgid ""
@@ -847,10 +1017,14 @@ msgid ""
 "peer, which then holds the whole limit. It limits the route, and the "
 "restart below needs it."
 msgstr ""
+"三つの規則が贈与を制限します。贈与は空きの割り当てから出るので、与え手のフローはその割り当ての範囲に留まります。ノードが貸すのは基本割り当てだけです。\\ "
+":math:`o_{ij} = g_{ij} - h_{ij}`\\ として、一つのノードの正の\\ :math:`o_{ij}`\\ "
+"の合計が\\ :math:`b_i`\\ "
+"を超えることはありません。贈与は、元のピアに戻ることはあっても、第三のノードへ渡ることはありません。そして、ノードが与えるのは、直近の三周期に聞いていて、同期しているピアだけです。二つ目の規則は、割り当ての行き先を制限するものではありません。どのノードも基本割り当て全体を一つのピアに貸せるので、そのピアが上限全体を持つこともあります。制限するのは経路であり、後で述べる再起動にはこの規則が必要です。"
 
 #: ../../cluster.rst:277
 msgid "Implementation: ``Cell::enter`` and ``Cell::lower``"
-msgstr ""
+msgstr "実装：\\ ``Cell::enter``\\ と\\ ``Cell::lower``"
 
 #: ../../cluster.rst:279
 msgid ""
@@ -860,6 +1034,10 @@ msgid ""
 "compute the want and the share; ``move_shares`` in "
 "``crates/lb/src/mesh/shares.rs`` serves the wants once in each period."
 msgstr ""
+"ワーカー上でのフローの許可と、贈与の前にメッシュのスレッドが行う割り当ての引き下げです。\\ "
+"``crates/lb/src/quota.rs``\\ （クレート\\ ``sibuna-lb``\\ ）にあります。同じファイルの\\ "
+"``Demand::of``\\ と\\ ``Ledger::share``\\ が要求と割り当てを計算し、\\ "
+"``crates/lb/src/mesh/shares.rs``\\ の\\ ``move_shares``\\ が各周期に一度要求に応えます。"
 
 #: ../../cluster.rst:281
 msgid ""
@@ -886,10 +1064,12 @@ msgid ""
 "reads the lowered share. No flow enters on a share that was given away, "
 "and no lock is taken."
 msgstr ""
+"ワーカーは先にカウントに自分を加え、次に割り当てを読みます。\\ ``lower``\\ "
+"は先に下げた割り当てを格納し、次にカウントを読みます。カウントが下げた割り当てを超えていれば、その間にフローが入ったので、差だけ割り当てを上げ、与える量を減らします。四つの操作はすべて逐次一貫なので、一つの全順序に並びます。ワーカーの加算がメッシュのスレッドの読み出しより前なら、読み出しはそれを見ます。下げた割り当ての格納より後なら、ワーカーは下げた割り当てを読みます。与えてしまった割り当てでフローが入ることはなく、ロックも取りません。"
 
 #: ../../cluster.rst:294
 msgid "Restarts and epochs"
-msgstr ""
+msgstr "再起動とエポック"
 
 #: ../../cluster.rst:297
 msgid ""
@@ -901,6 +1081,10 @@ msgid ""
 "*echo*. A receiver ignores a datagram whose sender epoch is below the "
 "largest it knows for that peer."
 msgstr ""
+"再起動したノードはフローを持たず、台帳を失っています。ピアはまだ自分の台帳を持っており、そのノードが与えた割り当てでフローを処理しているかもしれません。そのノードは基本割り当てからやり直してはなりません。そこで各ノードは\\ "
+"*エポック*\\ "
+"、つまり起動したUnixミリ秒を持ちます。状態のデータグラムは、送信者のエポックと、送信者が最後に聞いた受信者のエポック、つまり\\ "
+"*エコー*\\ を運びます。受信者は、送信者のエポックがそのピアについて知っている最大のものより小さいデータグラムを無視します。"
 
 #: ../../cluster.rst:299
 msgid ""
@@ -909,6 +1093,7 @@ msgid ""
 "it counts none of its base and only what synchronised peers gave it in "
 "net:"
 msgstr ""
+"起動したノードは、どのピアとも同期していません。基本割り当てだけを貸すという規則により、すべてのピアに与えた合計は高々その基本割り当てなので、基本割り当ては何も数えず、同期したピアから正味で与えられた分だけを数えます。"
 
 #: ../../cluster.rst:301
 msgid ""
@@ -923,6 +1108,10 @@ msgid ""
 ":math:`h_{ij}` the :math:`g_{ji}`. The echo proves that :math:`j` had "
 "heard the new epoch before it sent, so the two ledgers agree from then on."
 msgstr ""
+"ピア\\ :math:`j`\\ のデータグラムが新しいエポックをエコーしたとき、ノードは\\ :math:`j`\\ "
+"と同期します。そのとき、\\ :math:`j`\\ が保持していた台帳を引き継ぎます。\\ :math:`g_{ij}`\\ "
+"はデータグラムの\\ :math:`h_{ji}`\\ に、\\ :math:`h_{ij}`\\ は\\ :math:`g_{ji}`\\ "
+"になります。エコーは、\\ :math:`j`\\ が送る前に新しいエポックを聞いていたことを証明するので、それ以降二つの台帳は一致します。"
 
 #: ../../cluster.rst:307
 msgid ""
@@ -939,10 +1128,13 @@ msgid ""
 "peers lend it. A cluster that starts with one node missing serves no flow "
 "on a capped server until that node answers."
 msgstr ""
+"沈黙したノードの割り当てを返すタイマーはありません。沈黙からは、停止したノードと、切り離されたまま許可したフローを処理し続けているノードを区別できません。その割り当てを返すと、そのノードがそれらのフローを閉じない限り上限を超えてしまいますが、Sibunaはクォータのために確立したフローを閉じません。割り当てのリースも同じ理由で失敗します。フローはリースより長生きするからです。代償は、しばらく誰も使えない容量です。失われた贈与は一周期の間取り残されます。停止したノードは、再起動して各ピアから一度聞くまで、あるいは戻らないなら運用者がそれを\\ "
+"``mesh.nodes``\\ "
+"から取り除いてノードを再起動するまで、最後の割り当てを取り残します。ピアが沈黙している間に再起動したノードは、他のピアが貸すものだけで処理します。一つのノードを欠いて起動したクラスターは、そのノードが応答するまで、キャップのあるサーバーでフローを処理しません。"
 
 #: ../../cluster.rst:309
 msgid "Worked example: three nodes and a limit of 30"
-msgstr ""
+msgstr "例題：三つのノードと上限30"
 
 #: ../../cluster.rst:311
 msgid ""
@@ -950,6 +1142,8 @@ msgid ""
 ":math:`\\lfloor 30/3 \\rfloor = 10` each. A holds 10 flows and refused "
 "one. B holds 2 and C holds none."
 msgstr ""
+"ノードA、B、Cが\\ :math:`L = 30`\\ のサーバーを共有します。基本割り当ては、それぞれ\\ :math:`\\lfloor "
+"30/3 \\rfloor = 10`\\ です。Aは10個のフローを持ち、一つを拒否しました。Bは2個を持ち、Cは何も持っていません。"
 
 #: ../../cluster.rst:313
 msgid ""
@@ -963,6 +1157,15 @@ msgid ""
 "are stranded and none is doubled. When A hears them, :math:`h_{AB} = "
 "h_{AC} = 3` and :math:`s_A = 10 + 3 + 3 = 16`. The sum is 30."
 msgstr ""
+"*周期1。*\\ Aは\\ :math:`f = 0`\\ 、\\ :math:`r = \\lceil 10/4 \\rceil = 3`\\ "
+"なので、フラグ付きで3を要求します。Bは\\ :math:`f = 8`\\ 、\\ :math:`r = 1`\\ "
+"、余剰7です。Aは逼迫しているので、Bは\\ :math:`\\min(3, \\max(7, \\lceil 8/2 \\rceil)) = "
+"3`\\ を与えられます。まだ何も貸していないので、基本割り当てがそれを許します。Bは割り当てを7に下げ、\\ :math:`g_{BA} = "
+"3`\\ とします。Cは\\ :math:`f = 10`\\ 、余剰9で、同じように3を与えます。割り当ては7、\\ :math:`g_{CA} "
+"= 3`\\ "
+"です。状態のデータグラムが届くまで、割り当ては10、7、7で、合計は24です。六つの枠が取り残されていますが、倍になったものはありません。Aがそれらを聞くと、\\ "
+":math:`h_{AB} = h_{AC} = 3`\\ で\\ :math:`s_A = 10 + 3 + 3 = 16`\\ "
+"になります。合計は30です。"
 
 #: ../../cluster.rst:315
 msgid ""
@@ -972,6 +1175,11 @@ msgid ""
 "and gives 4. Now :math:`g_{BA} = g_{CA} = 7`, and the shares are "
 ":math:`s_A = 10 + 7 + 7 = 24`, :math:`s_B = s_C = 3`. The sum is 30."
 msgstr ""
+"*周期2。*\\ Aは16の枠を埋めて再び拒否します。\\ :math:`r = \\lceil 16/4 \\rceil = 4`\\ "
+"で、4を要求します。Bは割り当て7、\\ :math:`f = 5`\\ 、余剰4で、4を与えます。Bは\\ :math:`10 - 3 = "
+"7`\\ まで貸せます。Cは\\ :math:`f = 7`\\ 、余剰6で、4を与えます。これで\\ :math:`g_{BA} = "
+"g_{CA} = 7`\\ となり、割り当ては\\ :math:`s_A = 10 + 7 + 7 = 24`\\ 、\\ :math:`s_B "
+"= s_C = 3`\\ です。合計は30です。"
 
 #: ../../cluster.rst:317
 msgid ""
@@ -979,6 +1187,8 @@ msgid ""
 "is stranded: the cluster can hold at most 27 flows on the server until C "
 "returns, and no timer changes that."
 msgstr ""
+"*Cが停止する。*\\ Aは\\ :math:`h_{AC} = 7`\\ "
+"と割り当て24を保ちます。Cの割り当て3は取り残されます。Cが戻るまで、クラスターがそのサーバーに持てるフローは最大27個で、タイマーがそれを変えることはありません。"
 
 #: ../../cluster.rst:319
 msgid ""
@@ -989,6 +1199,11 @@ msgid ""
 "Synchronised with both, C counts :math:`s_C = 10 - 7 = 3`, and the sum is "
 "30 again."
 msgstr ""
+"*Cが再起動する*\\ 。新しいエポックを持ちます。どちらのピアとも同期しておらず、\\ :math:`s_C = 0`\\ "
+"と数えます。Aの次の状態は新しいエポックをエコーし、\\ :math:`g_{AC} = 0`\\ と\\ :math:`h_{AC} = "
+"7`\\ を運びます。Cはそれを\\ :math:`h_{CA} = 0`\\ と\\ :math:`g_{CA} = 7`\\ "
+"として引き継ぎます。Bの状態はゼロを与えます。両方と同期すると、Cは\\ :math:`s_C = 10 - 7 = 3`\\ "
+"と数え、合計は再び30になります。"
 
 #: ../../cluster.rst:321
 msgid ""
@@ -997,6 +1212,7 @@ msgid ""
 "in period 1. Had C restarted from its base, it would have counted 10 "
 "beside A's 24 and B's 3: 37 places for a limit of 30."
 msgstr ""
+"二つの反実仮想が、設計がこうなっている理由を示します。Bが「3を取れ」というメッセージを送り、ネットワークがそれを重複させていたら、Aは周期1で33と数えていたでしょう。Cが基本割り当てから再起動していたら、Aの24とBの3に加えて10と数え、上限30に対して37の枠になっていたでしょう。"
 
 #: ../../cluster.rst:323
 msgid ""
@@ -1009,6 +1225,11 @@ msgid ""
 "refused. Each step took about three periods there, longer than one; the "
 "SID records the steps and not the cause."
 msgstr ""
+"同じ規則で、測定したステップを予測できます。\\ :math:`L = 20`\\ "
+"の2台のホストでは、どちらの基本割り当ても10です。10個のフローを持ち拒否したノードは\\ :math:`\\lceil 10/4 "
+"\\rceil = 3`\\ を要求して3を受け取り、次に13個のフローで\\ :math:`\\lceil 13/4 \\rceil = "
+"4`\\ を要求して4を受け取ります。SID "
+"0025の測定では、10、1.5秒後に13、3秒後に17となり、二つの割り当ての合計は常に20でした。保留した80件のリクエストのうち20件が処理され、60件が拒否されました。そこでは各ステップに一周期より長い約三周期かかりました。SIDはステップを記録していますが、その原因は記録していません。"
 
 #: ../../cluster.rst:325
 msgid ""
@@ -1033,10 +1254,25 @@ msgid ""
 "``no_flow_enters_on_a_share_that_is_given_away_while_workers_race`` tests "
 "the second."
 msgstr ""
+"モデル\\ ``docs/sid/assets/shared-affinity.lean``\\ は、ライブラリなしのLean "
+"4で検査されます。キャップについては、次のことを証明します。どのノードもピアが与えた量以下しか持たないとき、割り当ての合計は上限以下であること（\\ "
+"``shares_within_limit``\\ ）。贈与と聴取がその条件を保つこと（\\ ``give_keeps_sound``\\ 、\\ "
+"``hear_keeps_sound``\\ ）。したがって、任意の順序と任意の重複での贈与と聴取のあらゆる列の後にキャップが成り立つこと（\\ "
+"``cap_holds_on_every_trace``\\ ）。空きの割り当てからの贈与がフローを割り当ての範囲に保つこと（\\ "
+"``gift_from_free_share``\\ "
+"）。そして、ノードは基本割り当てだけを貸すという規則の下で、再起動したノードが数える割り当ては本当の割り当て以下であること（\\ "
+"``restarted_share_is_safe``\\ ）、両方のノードが失った組を忘れても負の割り当てが残らないこと（\\ "
+"``forgotten_pair_is_safe``\\ ）。スティッキーテーブルについては、併合の三つの法則、\\ "
+"``replay_is_harmless``\\ 、\\ ``learn_wins``\\ "
+"を証明します。エポック、二つのアトミック操作の順序、時間はモデル化していません。損失、重複、順序の入れ替わり、再起動を含む2から5ノードのランダムなトレースが一つ目を（\\ "
+"``quota.rs``\\ の\\ "
+"``the_cap_holds_under_loss_repetition_reordering_and_restarts``\\ ）、\\ "
+"``no_flow_enters_on_a_share_that_is_given_away_while_workers_race``\\ "
+"が二つ目をテストします。"
 
 #: ../../cluster.rst:327
 msgid "Exercise 9.3"
-msgstr ""
+msgstr "演習9.3"
 
 #: ../../cluster.rst:329
 msgid ""
@@ -1046,12 +1282,14 @@ msgid ""
 "which gave, stops for good. How many flows can the cluster hold on the "
 "server, and what must the operator do to recover the rest?"
 msgstr ""
+"四つのノードが\\ :math:`L = 10`\\ "
+"のサーバーを共有します。基本割り当てを計算してください。最後のノードDは2個のフローを持ち、一つを拒否します。他のノードは何も持っていません。Dは何を要求し、次の周期に各ピアは何を与えるでしょうか。次に、与えたノードAが永久に停止します。クラスターはそのサーバーにいくつのフローを持てるでしょうか。また、残りを回復するために運用者は何をしなければならないでしょうか。"
 
 #: ../../cluster.rst:331
 msgid ""
 "Hint: The remainder of :math:`10/4` goes to the first nodes. Every peer "
 "serves the want it heard, independently."
-msgstr ""
+msgstr "ヒント：\\ :math:`10/4`\\ の余りは先頭のノードに行きます。各ピアは、聞いた要求にそれぞれ独立に応えます。"
 
 #: ../../cluster.rst:335
 msgid ""
@@ -1059,10 +1297,12 @@ msgid ""
 "explain why a restarted node may not count its base, and why a timer that "
 "returned the share of a silent node would break the cap."
 msgstr ""
+":math:`h_{ji} \\le g_{ij}`\\ から\\ :math:`\\sum_i s_i \\le L`\\ "
+"を証明してください。次に、再起動したノードが基本割り当てを数えてはならない理由と、沈黙したノードの割り当てを返すタイマーがキャップを破る理由を説明してください。"
 
 #: ../../cluster.rst:337
 msgid "One Owner for Each Client"
-msgstr ""
+msgstr "クライアントごとに一つの所有者"
 
 #: ../../cluster.rst:340
 msgid ""
@@ -1074,10 +1314,12 @@ msgid ""
 "owner over the mesh network, and the owner serves it under the true "
 "client address."
 msgstr ""
+"ノードが加わったり離脱したりしたとき、あるいはルーターがハッシュし直したとき、クライアントは別のノードに着きます。そのノードはクライアントの状態を何も持っていません。UDPマッピング、接続数、レートの予算、スティッキーの選択です。SID "
+"0026は、すべてのクライアントに、生きているノードの中から一つの所有者を与えます。自分が所有していないクライアントの新しいフローを受け取ったノードは、メッシュのネットワークを通してそのフローを所有者に渡し、所有者は本当のクライアントアドレスでそれを処理します。"
 
 #: ../../cluster.rst:342
 msgid "Rendezvous hashing"
-msgstr ""
+msgstr "ランデブーハッシュ"
 
 #: ../../cluster.rst:345
 msgid ""
@@ -1093,6 +1335,12 @@ msgid ""
 "node, at most 64. The seeds depend on the mesh key, so a client cannot "
 "compute which addresses share an owner."
 msgstr ""
+"クライアントのキーは、そのIPv4アドレス、またはIPv6アドレスの先頭64ビットです。これはレートリミッターのキーでもあります。名簿の各ノード\\ "
+":math:`n`\\ はシード\\ :math:`\\sigma_n`\\ "
+"を持ちます。これは、メッシュの鍵から導いた鍵の下での、そのメッシュアドレスの鍵付きBLAKE3ハッシュの先頭8バイトです。クライアント\\ "
+":math:`k`\\ に対するノード\\ :math:`n`\\ のスコアは\\ "
+":math:`\\mathrm{wyhash}(\\sigma_n, k)`\\ "
+"で、所有者はスコアが最大の適格なノードです。スコアが等しければ、名簿で先にあるノードになります。これがランデブーハッシュです（ThalerとRavishankar、1998）。テーブルも公開も要らず、その仕事は生きているノードごとにハッシュ一回、最大64回です。シードはメッシュの鍵に依存するので、クライアントはどのアドレスが所有者を共有するかを計算できません。"
 
 #: ../../cluster.rst:347
 msgid ""
@@ -1103,6 +1351,9 @@ msgid ""
 "symmetry each of the :math:`n` nodes is the largest with the same "
 "probability, so"
 msgstr ""
+"加入で移るものがなぜこれほど少ないのでしょうか。一つのクライアントのスコアを独立で一様なものとしてモデル化します。64ビットのスコアなら、同点は無視できます。ノードが加わってクラスターが\\ "
+":math:`n`\\ 個のノードになったとき、クライアントの所有者が変わるのは、ちょうど新しいノードが\\ :math:`n`\\ "
+"個のスコアの最大を持つときです。対称性により、\\ :math:`n`\\ 個のノードはどれも同じ確率で最大になるので、次のようになります。"
 
 #: ../../cluster.rst:349
 msgid "P(\\text{the client moves}) = \\frac{1}{n}."
@@ -1120,20 +1371,25 @@ msgid ""
 "share of the clients of nodes that did not change, and it must be rebuilt "
 "and published at every change of liveness."
 msgstr ""
+"新しいノードが最大でないときは、古いスコアの最大が引き続き最大で、所有者は留まります。したがって、移るクライアントはすべて新しいノードへ移ります。これより良い方式はありません。新しいノードにクライアントの公平な取り分\\ "
+":math:`1/n`\\ を与えるには、少なくとも\\ :math:`1/n`\\ "
+"が移らなければならないからです。ノードが離脱したときは、そのノードのクライアントだけが、それぞれ二番目に大きいスコアのノードへ移るので、他のノードに均等に分散されます。SID "
+"0015がオリジンについて素描したMaglevテーブルでは、変化していないノードのクライアントもわずかに移りますし、生存状態が変わるたびにテーブルを作り直して公開しなければなりません。"
 
 #: ../../cluster.rst:355
 msgid "Worked example: a fourth node joins"
-msgstr ""
+msgstr "例題：四つ目のノードが加わる"
 
 #: ../../cluster.rst:357
 msgid ""
 "Four clients p, q, r and s, and three nodes A, B and C. We use made-up "
 "scores from 0 to 99 in place of wyhash outputs."
 msgstr ""
+"四つのクライアントp、q、r、sと、三つのノードA、B、Cがあります。wyhashの出力の代わりに、0から99までの架空のスコアを使います。"
 
 #: ../../cluster.rst:363
 msgid "Client"
-msgstr ""
+msgstr "クライアント"
 
 #: ../../cluster.rst:364 ../../cluster.rst:374
 msgid "A"
@@ -1150,7 +1406,7 @@ msgstr ""
 
 #: ../../cluster.rst:367
 msgid "Owner of three"
-msgstr ""
+msgstr "三ノードでの所有者"
 
 #: ../../cluster.rst:368 ../../cluster.rst:376
 msgid "D"
@@ -1158,7 +1414,7 @@ msgstr ""
 
 #: ../../cluster.rst:369
 msgid "Owner of four"
-msgstr ""
+msgstr "四ノードでの所有者"
 
 #: ../../cluster.rst:370
 msgid "p"
@@ -1248,6 +1504,8 @@ msgid ""
 "expected :math:`1/4`. Had C left instead, only r would move, to A, its "
 "second largest score."
 msgstr ""
+"ノードDが加わります。移るのは、Dでのスコアが古い三つのスコアを上回るpだけで、pはDへ移ります。q、r、sは所有者を保ちます。それぞれの古い最大値が引き続き最大だからです。四つのクライアントのうち一つが移り、これは期待どおりの\\ "
+":math:`1/4`\\ です。代わりにCが離脱していたら、rだけが、二番目に大きいスコアのAへ移ります。"
 
 #: ../../cluster.rst:401
 msgid ""
@@ -1258,10 +1516,15 @@ msgid ""
 "only: three residues of twelve. So three quarters of the clients move, "
 "most of them between old nodes."
 msgstr ""
+"素朴な規則、つまりハッシュ\\ :math:`h`\\ に対する所有者\\ :math:`h \\bmod n`\\ "
+"と比べてみます。三つのノードから四つになるとき、クライアントが留まるのは\\ :math:`h \\bmod 3 = h \\bmod 4`\\ "
+"のときだけです。二つの剰余はどちらも\\ :math:`h \\bmod 12`\\ で決まり、一致するのは\\ :math:`h \\bmod "
+"12 \\in \\{0, 1, 2\\}`\\ "
+"、つまり12のうち三つの剰余だけです。したがって、クライアントの4分の3が移り、その大部分は古いノードの間で移ります。"
 
 #: ../../cluster.rst:403
 msgid "Implementation: ``Peering::owner_among``"
-msgstr ""
+msgstr "実装：\\ ``Peering::owner_among``"
 
 #: ../../cluster.rst:405
 msgid ""
@@ -1269,6 +1532,9 @@ msgid ""
 "eligible peers, given as a bit set. In ``crates/lb/src/forward.rs`` "
 "(crate ``sibuna-lb``). It returns ``None`` when this node owns the client."
 msgstr ""
+"このノードと、ビット集合として与えた適格なピアの中から、クライアントの所有者を指定する走査です。\\ "
+"``crates/lb/src/forward.rs``\\ （クレート\\ ``sibuna-lb``\\ "
+"）にあります。このノードがクライアントを所有するときは\\ ``None``\\ を返します。"
 
 #: ../../cluster.rst:407
 msgid ""
@@ -1288,10 +1554,25 @@ msgid ""
 "    }\n"
 "}"
 msgstr ""
+"let key = client_key(client);\n"
+"let mut best = (wyhash::hash(self.seed, &key), self.rank);\n"
+"let mut owner = None;\n"
+"let mut left = eligible;\n"
+"while left != 0 {\n"
+"    let index = left.trailing_zeros() as usize;\n"
+"    left &= left - 1;\n"
+"    let Some(peer) = self.peers.get(index) else { break };\n"
+"    let score = wyhash::hash(peer.seed, &key);\n"
+"    // 等しいスコアは名簿で先にあるノードのものになる。\n"
+"    if score > best.0 || (score == best.0 && peer.rank < best.1) {\n"
+"        best = (score, peer.rank);\n"
+"        owner = Some(index);\n"
+"    }\n"
+"}"
 
 #: ../../cluster.rst:425
 msgid "One hop, and what it does not repair"
-msgstr ""
+msgstr "一ホップ、そしてそれが修復しないもの"
 
 #: ../../cluster.rst:428
 msgid ""
@@ -1301,6 +1582,9 @@ msgid ""
 "alive when it answered within 1.5 s and does not drain. A peer that "
 "refused a flow or failed a connect is held back for one second."
 msgstr ""
+"ピアが適格であるのは、今フローを受け取れるときです。メッシュのプローブはそれを示しません。別のスレッドが別のポートで応答するからです。そこでエッジワーカー自身が、500 "
+"msごとに転送用のポートをプローブします。ピアが生きているのは、1.5 "
+"s以内に応答し、ドレインしていないときです。フローを拒否したピアや接続確立に失敗したピアは、1秒間控えられます。"
 
 #: ../../cluster.rst:430
 msgid ""
@@ -1321,6 +1605,9 @@ msgid ""
 "return through the node that the client reached, so the client sees the "
 "answer come from the address it sent to."
 msgstr ""
+"TCPまたはHTTPの接続について、受け取ったノードはまず自分の検査を適用します。ドレイン、自分の接続レート、空いたフローの枠です。それから所有者を計算します。所有者が別の適格なピアなら、自分のメッシュアドレスから所有者の転送用のポートに接続し、76バイトのヘッダーを書きます。所有者のエポック、フロントエンド、クライアントと宛先、そしてこの接続の二つのソケットアドレスとヘッダーに対するタグです。所有者は17バイトで応答します。take、decline、denyのどれかです。takeなら、受け取ったノードは両方向にバイトを中継し、その中身を見ることはありません。TLS、パース、ファイアウォール、サーバーの選択は所有者で行われます。decline、接続確立の失敗、\\ "
+"``connect_timeout``\\ （既定は250 "
+"ms）のタイムアウトなら、自分で接続を処理します。denyなら、所有者のレート制限がクライアントを拒否したので、接続を閉じます。そうしなければ、他のすべてのノードが上限を超えたクライアントを処理してしまいます。UDPデータグラムは、一つのソケット上でヘッダーとタグに挟まれて伝わり、応答はクライアントが届いたノードを通って戻るので、クライアントには送った宛先のアドレスから応答が来たように見えます。"
 
 #: ../../cluster.rst:432
 msgid ""
@@ -1336,6 +1623,13 @@ msgid ""
 "connection cost 79 to 91 us more to its first line, and an exchange on an "
 "established connection 19 to 21 us more."
 msgstr ""
+"二つの規則がこれを安全にします。ピアから届いたフローは、そのノードが所有者について何を信じていても、着いた場所で処理され、二度と転送されません。そのため、どのフローも追加のホップは一回までで、ループすることはありません。そして、転送のせいで失われるフローはありません。所有者が停止している、declineする、あるいは\\ "
+"``max_flows_per_peer``\\ に達しているときは、受け取ったノードが処理します。モデル\\ "
+"``docs/sid/assets/peer-forwarding.lean``\\ は、すべてのノードのあらゆる信念について\\ "
+"``one_hop``\\ と\\ ``forwarded_is_served``\\ を、同じ見方を持つ二つのノードについて\\ "
+"``owner_unique``\\ を、そして\\ ``owner_after_join``\\ "
+"、つまり加わったノードは所有者になるか何も変えないかのどちらかであることを証明します。ループバックでは、転送した接続は最初の行までに79から91 "
+"us余分にかかり、確立した接続上の交換は19から21 us余分にかかりました。"
 
 #: ../../cluster.rst:434
 msgid ""
@@ -1350,10 +1644,15 @@ msgid ""
 "95th percentile of the measured round trip to its peers exceeds 3 ms and "
 "enters again from the wide-area regime only when it falls below 1.5 ms."
 msgstr ""
+"転送が保つのはクライアントの\\ *ノード*\\ "
+"であって、TCP接続ではありません。ルーターが確立したTCP接続のパケットを別のノードへ移すと、そのノードはそれに対するソケットを持たないのでリセットで応答します。クライアントの次の接続は所有者に届きます。接続を修復するには、その状態をすべてのノードに持つか、パケットレベルの転送が必要で、どちらも実装していません。HTTP/3はそのパケットを受け取ったノードが処理し、\\ "
+"``proxy_protocol``\\ "
+"を持つフロントエンドは転送されません。また、転送はメッシュの地域体制でのみ動きます。ノードは、ピアへの往復時間の測定値の95パーセンタイルが3 "
+"msを超えるとこの体制を離れ、広域体制から戻るのは、それが1.5 msを下回ったときだけです。"
 
 #: ../../cluster.rst:436
 msgid "Exercise 9.4"
-msgstr ""
+msgstr "演習9.4"
 
 #: ../../cluster.rst:438
 msgid ""
@@ -1362,12 +1661,18 @@ msgid ""
 "node B leaves: which clients move, and where? (c) How many would move "
 "from four to five nodes under :math:`h \\bmod n`?"
 msgstr ""
+"四つのノードのクラスターが1,000のクライアントを均等に所有しています。(a) "
+"五つ目のノードが加わります。期待値でいくつのクライアントが、どこへ移るでしょうか。(b) "
+"代わりにノードBが離脱します。どのクライアントが、どこへ移るでしょうか。(c) \\ :math:`h \\bmod n`\\ "
+"では、四つから五つのノードになるときにいくつ移るでしょうか。"
 
 #: ../../cluster.rst:440
 msgid ""
 "Hint: For (c), count the residues of :math:`h \\bmod 20` at which "
 ":math:`h \\bmod 4 = h \\bmod 5`."
 msgstr ""
+"ヒント：(c)では、\\ :math:`h \\bmod 4 = h \\bmod 5`\\ となる\\ :math:`h \\bmod "
+"20`\\ の剰余を数えます。"
 
 #: ../../cluster.rst:444
 msgid ""
@@ -1376,10 +1681,11 @@ msgid ""
 "why neither rule can save an established TCP connection whose packets the "
 "router sends to another node."
 msgstr ""
+"ランデブーハッシュでの加入が、新しいノードが今所有するクライアントだけを移す理由、転送されたフローが二度と転送されない理由、そして、ルーターがパケットを別のノードへ送る確立したTCP接続を、どちらの規則も救えない理由を説明してください。"
 
 #: ../../cluster.rst:446
 msgid "A Disk Under the Sticky Table"
-msgstr ""
+msgstr "スティッキーテーブルの下のディスク"
 
 #: ../../cluster.rst:449
 msgid ""
@@ -1391,10 +1697,13 @@ msgid ""
 "wish: the pool uses it only for a new flow and only when the named server "
 "may serve now. No ban, no counter and no live flow depends on the file."
 msgstr ""
+"スティッキーテーブルは二度忘れます。スロットより多くのクライアントが来たときと、デーモンが再起動したときです。SID "
+"0027は、その下に二つ目の層を置きます。クレート\\ ``sibuna-spill``\\ "
+"がメモリにマップする固定サイズのファイルです。テーブルが格納するすべての選択はファイルに提供され、メモリで何も見つからなかった参照はファイルに問い合わせます。ファイルからのヒントは希望にすぎません。プールがそれを使うのは新しいフローについてだけで、指定されたサーバーが今受け持てるときだけです。禁止も、カウンターも、生きているフローも、ファイルに依存しません。"
 
 #: ../../cluster.rst:451
 msgid "The file and its slots"
-msgstr ""
+msgstr "ファイルとそのスロット"
 
 #: ../../cluster.rst:454
 msgid ""
@@ -1413,10 +1722,13 @@ msgid ""
 "bounded queue: a worker never touches the file, never waits for it, and a "
 "full queue drops the work and counts it."
 msgstr ""
+"ファイルは4,096バイトのページ二つ、つまりヘッダーと64シャードのそれぞれに一つの書き込みカウンターで始まり、64バイトのスロット\\ "
+":math:`64 \\times B \\times 4`\\ "
+"個が続きます。スロットは、8バイトのチェックサム、8バイトの期限、4バイトのスタンプ、二つの長さ、ゼロの2バイト、24バイトのキー、16バイトの値を持ちます。チェックサムは、他の56バイトに対するwyhashで、ファイルのランダムなソルトとスロットの番号をシードにするので、別の場所や別のファイルにコピーされたスロットは検査に失敗します。読み手がエントリーを取るのは生きているスロットからだけです。長さが範囲内で、詰め物がゼロで、チェックサムが一致し、期限が現在より後で、かつ現在から最長の寿命以内にあるスロットです。失敗したスロットは空き領域とみなされ、数えられます。一つのストレージスレッドがマッピングを所有し、アクセスごとにスロットを一つ出し入れし、上限付きキューを通してワーカーに仕えます。ワーカーはファイルに触れず、ファイルを待たず、キューが満杯なら仕事を落として数えます。"
 
 #: ../../cluster.rst:456
 msgid "Admission by frequency"
-msgstr ""
+msgstr "頻度による受け入れ"
 
 #: ../../cluster.rst:459
 msgid ""
@@ -1435,6 +1747,11 @@ msgid ""
 "for each slot of the shard, every counter is halved, so a key must keep "
 "returning to keep its estimate."
 msgstr ""
+"四つのスロットのバケットはよく満杯になります。そのとき新しいキーは犠牲者、つまりキーが最も見られていない生きたスロットと競い、推定頻度が犠牲者のものを上回るときだけ勝ちます。これがTinyLFUです（Einziger、Friedman、Manes、2017）。一度だけ提供されたキーは、一度以上見られたエントリーを追い出せないので、新しいクライアントの殺到が使用中のクライアントを押し流すことはありません。頻度はシャードごとのcount-min "
+"sketchから得ます。\\ :math:`m`\\ "
+"個の4ビットカウンターの表で、シャードのスロットごとに八つを、2のべき乗に切り下げたものです。キーはそのうち四つに触れ、それはダブルハッシュで選ばれます。推定値は四つのうち最小のものです。カウントは、その最小値に等しいカウンターだけを上げます。この\\ "
+"*保守的な更新*\\ "
+"により、どのカウンターも普通のスケッチが持つ値以下に保たれ、本当のカウントを下回ることはありません。シャードのスロットごとに四回カウントした後、すべてのカウンターを半分にするので、キーは推定値を保つために戻り続けなければなりません。"
 
 #: ../../cluster.rst:461
 msgid ""
@@ -1445,6 +1762,11 @@ msgid ""
 ":math:`m`, so it raises this counter with probability at most "
 ":math:`4/m`. The expected excess of the counter is therefore"
 msgstr ""
+"CormodeとMuthukrishnanの古典的な上限が、推定値が良い理由を説明します。\\ :math:`N`\\ "
+"個のキーを数えるとします。キー\\ :math:`x`\\ "
+"とそのカウンターの一つを固定します。他のキーのカウントは、それぞれ最大四つのカウンターを上げ、その位置は理想的なハッシュのもとで\\ "
+":math:`m`\\ 上に一様なので、このカウンターを上げる確率は高々\\ :math:`4/m`\\ "
+"です。したがって、カウンターの超過の期待値は次のとおりです。"
 
 #: ../../cluster.rst:463
 msgid "\\lambda \\le \\frac{4N}{m}."
@@ -1460,10 +1782,15 @@ msgid ""
 "so it is close to a Poisson variable with mean :math:`\\lambda`, which "
 "gives a sharper estimate than Markov's bound."
 msgstr ""
+"マルコフの不等式により、超過が\\ :math:`t`\\ に達する確率は高々\\ :math:`\\lambda/t`\\ "
+"です。推定値は四つのカウンターの最小値なので、それが\\ :math:`t`\\ "
+"だけ高すぎるのは、四つすべてがそうであるときだけです。四つを独立とみなすと（理想的なハッシュならほぼそうなります）、その確率は高々\\ "
+":math:`(\\lambda/t)^4`\\ です。超過は多数のまれな当たりの和なので、平均\\ :math:`\\lambda`\\ "
+"のポアソン変数に近く、これによりマルコフの上限より鋭い推定が得られます。"
 
 #: ../../cluster.rst:469
 msgid "Worked example: the error of the sketch"
-msgstr ""
+msgstr "例題：スケッチの誤差"
 
 #: ../../cluster.rst:471
 msgid ""
@@ -1473,6 +1800,10 @@ msgid ""
 "counters for each slot: 32 KiB for the shard and 2 MiB for the file, two "
 "bytes for each slot. The sketch halves after :math:`4S = 65{,}504` counts."
 msgstr ""
+"``64m``\\ のファイルは1,048,064個のスロットを持つ（第XI部）ので、一つのシャードは\\ :math:`S = "
+"16{,}376`\\ 個を持ちます。スロットごとに八つのカウンターなら131,008個です。それより小さい最大の2のべき乗は\\ "
+":math:`m = 2^{16} = 65{,}536`\\ で、スロットごとに四つのカウンターです。シャードで32 KiB、ファイルで2 "
+"MiB、スロットごとに2バイトです。スケッチは\\ :math:`4S = 65{,}504`\\ 回のカウントの後に半分になります。"
 
 #: ../../cluster.rst:473
 msgid ""
@@ -1484,6 +1815,11 @@ msgid ""
 "bound gives at most :math:`(2/4)^4 = 1/16`. The Poisson estimate is "
 "sharper:"
 msgstr ""
+"起動後の最初の窓、つまりスケッチがゼロから始まるときを取り、その中間、\\ :math:`N = 2S = 32{,}752`\\ "
+"回のカウントの時点を見ます。すると\\ :math:`\\lambda \\le 4 \\times 32{,}752 / 65{,}536 "
+"\\approx 2`\\ です。一度見られたキーが四回見られた犠牲者を追い出せるのは、推定値が少なくとも5、つまり四つすべてのカウンターで\\ "
+":math:`t = 4`\\ の超過があるときだけです。マルコフの上限は高々\\ :math:`(2/4)^4 = 1/16`\\ "
+"を与えます。ポアソンによる推定はもっと鋭くなります。"
 
 #: ../../cluster.rst:475
 msgid ""
@@ -1503,10 +1839,14 @@ msgid ""
 "new keys, a file of 256 MiB kept all but 10 to 15 of the about 1,044,000 "
 "keys of a working set that it held before the flood."
 msgstr ""
+"したがって、最初の窓の中間では、一度見られたキーの1万に約4個が、五回見られたキーのように見えます。後の窓は半分にしたカウンターから始まるので、それらについての単純な上限は最大で2倍になり、\\ "
+":math:`m`\\ "
+"を2のべき乗に切り下げることで、シャードのカウンターが半分になることもあります。保守的な更新はこれらの数を下げるだけです。上限はモデルであり、証拠は測定です。16,776,192個の新しいキーの殺到の下で、256 "
+"MiBのファイルは、殺到の前に持っていた作業集合の約1,044,000キーのうち、10から15個を除くすべてを保ちました。"
 
 #: ../../cluster.rst:481
 msgid "Implementation: ``Sketch::touch``"
-msgstr ""
+msgstr "実装：\\ ``Sketch::touch``"
 
 #: ../../cluster.rst:483
 msgid ""
@@ -1515,6 +1855,9 @@ msgid ""
 "``sibuna-spill``). ``Sketch::estimate`` returns the smallest of the four "
 "counters."
 msgstr ""
+"保守的な更新で一つのキーを数え、サンプルが満杯になったらスケッチを古くします。\\ "
+"``crates/spill/src/sketch.rs``\\ （クレート\\ ``sibuna-spill``\\ ）にあります。\\ "
+"``Sketch::estimate``\\ は四つのカウンターの最小値を返します。"
 
 #: ../../cluster.rst:485
 msgid ""
@@ -1551,10 +1894,14 @@ msgid ""
 "another server for 191 of them, and the second flow found the remembered "
 "server for all 300."
 msgstr ""
+"二つの層は\\ ``SpillStore``\\ （\\ ``crates/lb/src/hints.rs``\\ "
+"）で出会います。これはテーブルを前に置いて、SID 0025のトレイト\\ ``AffinityStore``\\ "
+"を実装します。メモリで見つからない参照はディスクに問い合わせますが、待ちません。フローは負荷分散した選択、つまり\\ *推測*\\ "
+"で進み、ディスクの応答は1ミリ秒後の終了時刻で推測を置き換えるので、ここでも、メッシュが伝えるすべてのノードでも勝ちます。推測はディスク上の空いたスロットだけを取り、スケッチでは数えないので、推測がいくつあってもヒントを追い出すことはありません。65,536スロットのテーブルの30倍、2,000,000クライアントで、97.0パーセントが二回目の参照で自分の選択を得ました。2台のホストのメッシュで両方のノードを再起動した後、300クライアントの最初のフローは、そのうち191について別のサーバーを見つけ、二つ目のフローは300すべてについて覚えていたサーバーを見つけました。"
 
 #: ../../cluster.rst:506
 msgid "Crash safety, memory and the file system"
-msgstr ""
+msgstr "クラッシュ安全性、メモリ、ファイルシステム"
 
 #: ../../cluster.rst:509
 msgid ""
@@ -1572,6 +1919,9 @@ msgid ""
 "costs its hint, and an old slot is a valid older hint, which the pool "
 "checks before use."
 msgstr ""
+"新しいファイルをその場で作ることはありません。\\ ``crates/spill/src/open.rs``\\ の関数\\ "
+"``create``\\ は、パスの後ろに\\ ``.tmp``\\ "
+"を付けた場所にあるものを、それを通して書き込むことなく取り除き、そこにすべてのブロックを書き、ヘッダーを最後に書いた完全なファイルを作り、それをパスの上に名前を変えて置きます。名前の変更は一つの名前を一歩で別の名前に置き換えるので、パスが指すのは、ファイルなし、無関係なファイル、完全なファイルのどれかで、作りかけのファイルを指すことはありません。マジックのないファイルは決して上書きしません。デーモンは起動を拒否し、そのファイルを示します。書き込みはマッピングを通して行われ、デーモンが停止するときにフラッシュされます。プロセスがクラッシュしても、書いたものは何も失われません。ページはカーネルのものだからです。電源を失うと、各ページは古いか、新しいか、混ざった状態で残ることがあります。混ざったスロットはチェックサムに失敗し、そのヒントを失います。古いスロットは有効な古いヒントで、プールは使う前にそれを確認します。"
 
 #: ../../cluster.rst:511
 msgid ""
@@ -1588,10 +1938,14 @@ msgid ""
 "system fills later, a write through the mapping raises a signal that ends "
 "the daemon. Part XI gives the settings for systemd, Docker and Kubernetes."
 msgstr ""
+"ホストの二つの性質が重要です。ファイルのページはプロセスのメモリとして数えられます。ファイルのサイズより小さいメモリ上限の下で、つまり96 "
+"MiBの下で256 "
+"MiBのファイルを使うと、あるホストでは三回の実行でカーネルに強制終了され、別のホストでは上限に410,479回達し、最初の段階を17分で終えられませんでした。ワーカーは負荷分散した選択で処理を続けますが、ディスクの層は役に立たないか、デーモンが死ぬので、上限はファイルとデーモンの合計より上になければなりません。また、満杯のディスクを起動時に見つけるために作成時にすべてのブロックを書きますが、圧縮やコピーオンライトをするファイルシステムはこの約束を破ります。圧縮を有効にしたZFSでは、16,769,024バイトの新しいファイルが141 "
+"KiBしか占めませんでした。そのようなファイルシステムが後で満杯になると、マッピングを通した書き込みがシグナルを起こし、デーモンを終了させます。第XI部に、systemd、Docker、Kubernetesの設定があります。"
 
 #: ../../cluster.rst:513
 msgid "Exercise 9.5"
-msgstr ""
+msgstr "演習9.5"
 
 #: ../../cluster.rst:515
 msgid ""
@@ -1600,12 +1954,16 @@ msgid ""
 "at the end of the first window, and the Poisson estimate that a key seen "
 "once reaches an estimate of 5 at each point."
 msgstr ""
+"スロット数が2のべき乗のすぐ下にあるシャードは、スロットごとに八つのカウンターをすべて保ちます。最初の窓の中間と終わりでの\\ "
+":math:`\\lambda`\\ と、それぞれの時点で一度見られたキーの推定値が5に達するポアソンによる推定を計算してください。"
 
 #: ../../cluster.rst:517
 msgid ""
 "Hint: Only the ratio :math:`N/m` matters. At :math:`\\lambda = 1`, "
 ":math:`e^{-1} \\approx 0.3679`."
 msgstr ""
+"ヒント：重要なのは比\\ :math:`N/m`\\ だけです。\\ :math:`\\lambda = 1`\\ では\\ "
+":math:`e^{-1} \\approx 0.3679`\\ です。"
 
 #: ../../cluster.rst:521
 msgid ""
@@ -1614,10 +1972,11 @@ msgid ""
 "file, and why the sketch may overestimate a frequency but never "
 "underestimate it."
 msgstr ""
+"破れた、コピーされた、あるいは無関係なスロットが、ヒントを失わせることはあっても、受け持てないサーバーを選ぶことは決してない理由、パスが作りかけのファイルを指すことがない理由、そしてスケッチが頻度を過大評価することはあっても過小評価することはない理由を説明してください。"
 
 #: ../../cluster.rst:523
 msgid "A Database as the Authority"
-msgstr ""
+msgstr "オーソリティとしてのデータベース"
 
 #: ../../cluster.rst:526
 msgid ""
@@ -1631,6 +1990,12 @@ msgid ""
 "SHA-256 digest, so a node reads a revision whole with one statement and "
 "refuses one whose digest does not match."
 msgstr ""
+"SID "
+"0023は一つのファイルをピアに送ります。同時に二つのファイルを送った二人の運用者は、それぞれ一部のノードで勝ち、停止していたノードは古いファイルを保ち、履歴はありません。SID "
+"0028では、公開されたトポロジーをデータベースが保持できます。各ノードのファイルは、そのホストに属するもの（\\ ``global``\\ "
+"、\\ ``mesh``\\ 、\\ ``observability``\\ ）と、データベースを指定する\\ ``authority``\\ "
+"節を保ちます。データベースは\\ ``frontends``\\ 、\\ ``backends``\\ 、\\ ``http``\\ "
+"を保持します。各リビジョンは、SHA-256ダイジェストを持つ一つの正規形のJSON文書なので、ノードは一つの文でリビジョン全体を読み、ダイジェストが一致しないものは拒否します。"
 
 #: ../../cluster.rst:528
 msgid ""
@@ -1640,6 +2005,9 @@ msgid ""
 "condition: the head is still the revision it read. The commit is one "
 "transaction of two statements."
 msgstr ""
+"リビジョンには1、2、3と欠番なく番号が付き、コミットしたリビジョンは決して変わりません。\\ ``sibuna authority "
+"apply``\\ "
+"はソースを評価し、確認し、先頭との差分を表示し、一つの条件の下でコミットします。先頭がまだ読んだときのリビジョンであることです。コミットは二つの文からなる一つのトランザクションです。"
 
 #: ../../cluster.rst:530
 msgid ""
@@ -1661,10 +2029,12 @@ msgid ""
 "document, because moving the head back would make \"applied 5\" ambiguous "
 "between before and after 7."
 msgstr ""
+"最初の文がどの行も変えなければ、先頭が動いたということで、コマンドは\\ ``DBA002 REVISION CONFLICT``\\ "
+"で失敗し、何もコミットしません。これは一行に対するcompare-and-setです。同じ先頭を読んだ二人の書き手のうち、PostgreSQLは二人目に行ロックを待たせ、その後二人目は新しい先頭を見つけて何も変えません。「それが何であれ先頭」という条件では何も守れません。コマンドは差分を表示したときの先頭を条件にするので、運用者が見たものが、コミットで置き換えられるものです。ロールバックは以前の文書で新しいリビジョンをコミットします。先頭を戻すと、「5を適用した」が7の前なのか後なのか曖昧になるからです。"
 
 #: ../../cluster.rst:537
 msgid "Implementation: ``Store::commit``"
-msgstr ""
+msgstr "実装：\\ ``Store::commit``"
 
 #: ../../cluster.rst:539
 msgid ""
@@ -1678,6 +2048,15 @@ msgid ""
 "settles a commit whose connection failed by asking whether the head is "
 "the new revision with the new digest."
 msgstr ""
+"トレイト\\ ``Store``\\ は七つの操作を持ちます。\\ ``head``\\ 、\\ ``revision``\\ 、\\ "
+"``commit``\\ 、\\ ``history``\\ 、\\ ``report``\\ 、\\ ``nodes``\\ 、\\ "
+"``wait``\\ です。\\ ``commit``\\ は、先頭が\\ ``expected``\\ のとき下書きをリビジョン\\ "
+"``expected + 1``\\ として格納し、そうでなければ競合で失敗します。\\ "
+"``crates/authority/src/store.rs``\\ （クレート\\ ``sibuna-authority``\\ "
+"）にあります。\\ ``crates/authority/src/sql.rs``\\ の\\ ``SqlStore``\\ "
+"がSQLiteとPostgreSQLについてこれを実装し、\\ ``MemoryStore``\\ がテストのために実装します。\\ "
+"``store.rs``\\ の\\ ``commit_settled``\\ "
+"は、接続が失敗したコミットを、先頭が新しいダイジェストを持つ新しいリビジョンかどうかを問い合わせて決着させます。"
 
 #: ../../cluster.rst:541
 msgid ""
@@ -1700,10 +2079,22 @@ msgid ""
 "costs one poll (``poll_converges``). On a debug build two nodes applied a "
 "revision 128 to 155 ms after ``apply`` began with PostgreSQL."
 msgstr ""
+"どのノードも専用のスレッド\\ ``edge-authority``\\ で追従します。PostgreSQLが\\ ``NOTIFY``\\ "
+"を送ったとき、ポーリングの時刻が来たとき、\\ ``reload``\\ "
+"のとき、ワーカーがリビジョンを確定させたときに先頭を見ます。新しい先頭を読み、ノードのファイルと合成し、確認し、ワーカーに渡します。ノードがリビジョンを適用済みと報告するのは、ワーカーがそれを処理した後だけです。データベースを読めないノードは、処理しているものを保ち、最大2秒後にもう一度問い合わせます。リビジョンを拒否したノードは、確認に合格した最後のリビジョンを保ち、理由を報告します。\\ "
+"``cache``\\ "
+"があれば、ノードはデータベースが停止している間も再起動できます。ノードは、リビジョンを読めて自分の報告だけを書けるロールで接続するので、乗っ取られたノードがトポロジーを変えることはできません。モデル\\ "
+"``docs/sid/assets/database-authority.lean``\\ は、古い先頭へのコミットが何も変えないこと（\\ "
+"``commit_conflict``\\ ）、同じ先頭に対する二人の書き手のうち二人目が失敗すること（\\ "
+"``second_commit_conflicts``\\ ）、ノードが処理するのは確認に合格した文書だけであること（\\ "
+"``step_serves_valid``\\ "
+"）、有効な先頭を一度見ればノードがそこに至るので、失われた通知のコストはポーリング一回分であること（\\ ``poll_converges``\\ "
+"）を証明します。デバッグビルドでPostgreSQLを使ったとき、二つのノードは\\ ``apply``\\ の開始から128から155 "
+"ms後にリビジョンを適用しました。"
 
 #: ../../cluster.rst:543
 msgid "Exercise 9.6"
-msgstr ""
+msgstr "演習9.6"
 
 #: ../../cluster.rst:545
 msgid ""
@@ -1713,10 +2104,13 @@ msgid ""
 "operator do? Why would an ``apply`` conditioned on the head at the time "
 "of the commit be wrong?"
 msgstr ""
+"二人の運用者が先頭7に対して\\ ``diff``\\ を実行し、それから同時に\\ ``apply``\\ "
+"を実行します。一人はサーバーを加え、一人はフロントエンドを取り除きます。それぞれ何を見て、その後データベースは何を保持し、二人目の運用者は何をすべきでしょうか。コミットの時点での先頭を条件にした\\ "
+"``apply``\\ が誤りになるのはなぜでしょうか。"
 
 #: ../../cluster.rst:547
 msgid "Hint: Follow the ``UPDATE`` of each transaction under the row lock."
-msgstr ""
+msgstr "ヒント：行ロックの下で、各トランザクションの\\ ``UPDATE``\\ をたどってください。"
 
 #: ../../cluster.rst:551
 msgid ""
@@ -1724,10 +2118,11 @@ msgid ""
 "on whether a node serves a revision belongs to the node and not to the "
 "command, and why a rollback appends instead of moving the head."
 msgstr ""
+"リビジョンに欠番がなく決して変わらない理由、ノードがリビジョンを処理するかどうかの最終的な決定権がコマンドではなくノードにある理由、そしてロールバックが先頭を戻すのではなく追記する理由を説明してください。"
 
 #: ../../cluster.rst:553
 msgid "Replacing the Binary"
-msgstr ""
+msgstr "バイナリの置き換え"
 
 #: ../../cluster.rst:556
 msgid ""
@@ -1738,6 +2133,10 @@ msgid ""
 "process refuses what it accepts while it drains. Under one load SID 0029 "
 "counted 9,943 to 22,516 failed connections in a run with ``reuse_port``."
 msgstr ""
+"新しいバイナリは、リスナーで待っている接続を失わず、UDPクライアントを別のサーバーに移さずに引き継がなければなりません。\\ "
+"``global.reuse_port``\\ "
+"を使えば新しいプロセスが同じアドレスをバインドできますが、古いリスナーは閉じるまで自分のacceptキューを保ち、古いプロセスはドレインの間、受け付けたものを拒否します。ある負荷の下で、SID "
+"0029は\\ ``reuse_port``\\ を使った一回の実行で9,943から22,516件の失敗した接続を数えました。"
 
 #: ../../cluster.rst:558
 msgid ""
@@ -1747,6 +2146,10 @@ msgid ""
 "``SCM_RIGHTS`` control messages of ``sendmsg``. Both ends check the "
 "credentials of the peer with ``SO_PEERCRED`` and refuse another user."
 msgstr ""
+"SID 0029は代わりにソケットを渡します。古いプロセスはUnixソケット\\ ``global.upgrade_socket``\\ "
+"でリッスンします。置き換え側は自分のファイルを確認し、接続し、リスニングソケットを\\ ``sendmsg``\\ の\\ "
+"``SCM_RIGHTS``\\ 制御メッセージのディスクリプターとして受け取ります。両端は\\ ``SO_PEERCRED``\\ "
+"で相手の資格情報を確認し、別のユーザーを拒否します。"
 
 #: ../../cluster.rst:560
 msgid ""
@@ -1765,6 +2168,16 @@ msgid ""
 "0\n"
 "reads UDP, binds its admin socket"
 msgstr ""
+"置き換え側                                古いプロセス\n"
+"自分のファイルを確認\n"
+"接続、HELLO  ----------------------------> 相手を確認し、バージョンを選ぶ\n"
+"                <------------------------ ディスクリプター付きのLISTENERS\n"
+"それでエッジを構築、何も読まない          従来どおりTCPを受け付け、UDPを読む\n"
+"READY  ----------------------------------> UDPの読み込みを止める\n"
+"                <------------------------ FLOWS（マッピングとサーバーソケット）、COMMIT\n"
+"マッピングを引き継ぎ、TCPを受け付け       引き続きTCPを受け付ける\n"
+"DONE  -----------------------------------> 受け付けを止め、ドレインし、0で終了\n"
+"UDPを読み、管理ソケットをバインド"
 
 #: ../../cluster.rst:573
 msgid ""
@@ -1781,10 +2194,13 @@ msgid ""
 "stopped replacement could wake and read beside it. So after 10 s without "
 "DONE the old process ends the replacement and waits for the close."
 msgstr ""
+"二つの不変条件が切り替えを支配します。どの瞬間にも、各TCPリスナーで何らかの生きたプロセスが受け付けていること。一つのソケットに二つの受け付け手がいても何も失われません。各接続はどちらか一方へ行くからです。そして、UDPソケットを読むプロセスは高々一つであること。二つの読み手がいると、一つのクライアントのデータグラムが二つのテーブルに渡ってしまうので、READYからDONEまでの間は誰も読まず、カーネルがデータグラムをソケットに保持します。古いプロセスはこの間隔を測定します。6,000マッピングで、静かな機械では59から87 "
+"msでした。DONEの前の失敗は、サービスを、持っていたすべてのリスナーとマッピングとともに古いプロセスに戻します。古いプロセスが読み込みを再開するのは、置き換え側への接続が閉じたときだけです。期限は何も証明しないからです。停止していた置き換え側が目を覚まし、隣で読むかもしれません。そこで、DONEなしに10 "
+"sが過ぎると、古いプロセスは置き換え側を終了させ、接続が閉じるのを待ちます。"
 
 #: ../../cluster.rst:575
 msgid "Implementation: ``Giving::end_peer``"
-msgstr ""
+msgstr "実装：\\ ``Giving::end_peer``"
 
 #: ../../cluster.rst:577
 msgid ""
@@ -1796,6 +2212,13 @@ msgid ""
 "edge side, ``Edge::freeze_datagrams`` in ``crates/lb/src/handoff.rs`` "
 "stops the UDP reads."
 msgstr ""
+"沈黙した置き換え側を終了させ、その接続が閉じるのを待ちます。それが、どのソケットも読んでいないことの証明になります。\\ "
+"``crates/upgrade/src/give.rs``\\ （クレート\\ ``sibuna-upgrade``\\ "
+"）にあります。同じファイルの\\ ``Giving::give_listeners``\\ がリスナーを送り、\\ "
+"``SCM_RIGHTS``\\ 付きの外部呼び出し\\ ``sendmsg``\\ は、この記録で唯一のunsafeなコードである\\ "
+"``crates/upgrade/src/sys.rs``\\ にあります。エッジの側では、\\ "
+"``crates/lb/src/handoff.rs``\\ の\\ ``Edge::freeze_datagrams``\\ "
+"がUDPの読み込みを止めます。"
 
 #: ../../cluster.rst:579
 msgid ""
@@ -1807,6 +2230,12 @@ msgid ""
 "    self.channel.wait_closed(patience)\n"
 "}"
 msgstr ""
+"pub fn end_peer(&mut self, patience: Duration) -> bool {\n"
+"    // プロセスがすでにないとき、シグナルは失敗し得る。どちらにしても、\n"
+"    // 閉じた接続が証明になる。\n"
+"    let _ = sys::end_process(self.peer.pid);\n"
+"    self.channel.wait_closed(patience)\n"
+"}"
 
 #: ../../cluster.rst:588
 msgid ""
@@ -1829,6 +2258,13 @@ msgid ""
 "``always_an_acceptor`` and ``failure_returns_service`` for the state "
 "machine; it is not derived from the code."
 msgstr ""
+"引き渡されるもの：TCPとUDPのリスナー、そして\\ ``udp``\\ "
+"フロントエンドのすべてのUDPマッピングと、その接続済みのサーバーソケットです。そのため、サーバーには同じ送信元ポートが見えます。テストでは、27回の実行で、一回あたり17,382から33,524の接続のうち失敗したものはなく、UDPクライアントは二回のアップグレードを通じてサーバーを保ちました。失われるもの：HTTP/3のQUIC接続です。その状態は古いプロセスのランタイムにあります。受け付けたTCPストリームは、終わるまで、または\\ "
+"``shutdown_timeout``\\ "
+"まで古いプロセスに留まります。レートカウンター、ヘルスの状態、レイテンシーの推定値、スティッキーテーブル、実行時のコマンドは新しく始まります。ハンドオフはLinuxでのみ実装・テストされています。二つの制約がクラスターに直接関わります。メッシュのソケットと転送用のポートは渡されないので、メッシュのノードはこの方法では置き換えられません。置き換え側はREADYの前に失敗して古いプロセスに処理を続けさせるはずですが、その経路はテストしていません。また、引き継いだUDPマッピングはフリート全体のキャップに数えられないので、それらのマッピングが終わるまで、サーバーが上限をその分だけ超えるフローを持つことがあります。モデル\\ "
+"``docs/sid/assets/upgrade-handoff.lean``\\ は、状態機械について\\ "
+"``single_reader``\\ 、\\ ``always_an_acceptor``\\ 、\\ "
+"``failure_returns_service``\\ を証明します。モデルはコードから導いたものではありません。"
 
 #: ../../cluster.rst:592
 msgid ""
@@ -1836,10 +2272,11 @@ msgid ""
 "the UDP sockets must have none, and why the old process trusts a closed "
 "connection and not a clock before it reads again."
 msgstr ""
+"TCPリスナーは一瞬二つの受け付け手を持ってよいのに、UDPソケットは一つも持ってはならない理由と、古いプロセスが再び読む前に、時計ではなく閉じた接続を信頼する理由を説明してください。"
 
 #: ../../cluster.rst:594
 msgid "The Fleet in the Console"
-msgstr ""
+msgstr "コンソールの中のフリート"
 
 #: ../../cluster.rst:597
 msgid ""
@@ -1860,10 +2297,17 @@ msgid ""
 "the load fell on its own console or on that of another process, so the "
 "measurement saw the cost of shared processors and not of the coupling."
 msgstr ""
+"SID 0031は、SID 0007のコンソールをエッジの隣で起動します。その\\ ``console``\\ "
+"節はすべてのメンバー（最大64）を\\ ``nodes``\\ の下に列挙するので、この節はすべてのノードで同じになり、\\ ``reload "
+"cluster``\\ で運べます。一つのページがフロントエンド、バックエンド、フリートを示します。\\ ``GET "
+"/console/api/edge/fleet``\\ は、SID "
+"0007の認証付きストリームを通してすべてのピアに同時に問い合わせ、最大5秒待ち、メンバーごとに、リンクの状態とノードの概要を持つ一行を返します。ページは管理ソケットのコマンドを同じパーサーとワーカーを通して実行するので、新たな権限を加えません。コマンドには\\ "
+"``control_node``\\ の動作が必要で、セッション、\\ ``Origin``\\ "
+"、CSRFの確認を通ります。コンソールは管理ソケットの上限（バーストで20コマンド、毎秒10コマンド）を保ちます。ファイルから取り除かれたメンバーは、2秒以内にストリームを失います。コンソールがデータプレーンに与えるコストが1パーセント未満であるという基準は確立していません。負荷の下で、データプレーンは、負荷が自分のコンソールにかかっても別のプロセスのコンソールにかかっても8から11パーセントを失ったので、測定が見たのは結合のコストではなく、プロセッサーを共有するコストでした。"
 
 #: ../../cluster.rst:599
 msgid "What Three Hosts Measured"
-msgstr ""
+msgstr "3台のホストでの測定"
 
 #: ../../cluster.rst:602
 msgid ""
@@ -1881,16 +2325,22 @@ msgid ""
 "effect, sent every 5 ms. These are single runs on shared hosts; Part X "
 "gives the tables and the method."
 msgstr ""
+"第X部は、16、16、32 "
+"CPUの3台のホストでのクラスターを記録しています。一つのネットワーク上のコンテナーで、各ホストがノード、オリジン、そして次のホストのノードに負荷をかける負荷生成器を動かしました。SID "
+"0024の後、三つのノードは合わせて毎秒89,124から97,173のHTTPリクエストと、90,399から92,652のHTTPSリクエストを処理しました。これは同じ構成でHAProxyが処理した量の0.87から1.15で、CPU秒は42から49、HAProxyは66から102でした。どちらのプロキシでも失敗したリクエストはありません。上限を決めたのはネットワークで、結果は二つのプロキシの差より大きく実行ごとに異なります。同じホストで、禁止は20から64 "
+"msで他の二つのノードに届き、解除は13から48 msで、\\ ``reload cluster``\\ "
+"は三つのノードすべてが同じファイルを持った状態で30 msで返りました。いずれも、5 "
+"msごとに送った、効果を観測するリクエストを含めた時間です。これらは共有ホストでの単発の実行です。第X部に表と方法があります。"
 
 #: ../../cluster.rst:604
 msgid "Limits"
-msgstr ""
+msgstr "制約"
 
 #: ../../cluster.rst:607
 msgid ""
 "We list the known gaps of each record. They are taken from the records "
 "and are not repaired at the time of writing."
-msgstr ""
+msgstr "各記録の既知の欠落を列挙します。これらは記録から取ったもので、執筆時点では修復されていません。"
 
 #: ../../cluster.rst:609
 msgid ""
@@ -1910,6 +2360,10 @@ msgid ""
 "of Part X is the only measurement across hosts. Replication runs in edge "
 "mode only."
 msgstr ""
+"**SID 0022、禁止とコマンド。**\\ "
+"解除の後に発行された禁止がすべてのノードで有効になるのは、解除された禁止より後に終わるときだけです。それより短い禁止は自分のノードでしか有効になりません。ポリシーファイルで設定した禁止は送られません。ノードは\\ "
+"``ipv6_prefix``\\ "
+"について一致し、時計を近く保たなければなりませんが、どちらも確認されません。60秒より遅れたノードのコマンドは覆され、60秒より進んだノードのコマンドは拒否されます。三周期未満のプローブの間切り離されたピアに三回の送信がすべて失われた禁止は、次の順次送信を待ちます。コマンドのマップはキーを決して忘れず、8,192キーを超えると、新しいコマンドは再起動までローカルに留まります。二人の運用者が同時に一つのサーバー名を二つのアドレスで加えると、次のコマンドまでノードが食い違ったままになることがあります。Maglevテーブルでクライアントを置くプールは、実行時に重みもメンバーも受け付けません。コマンドと解除にはメトリクスがありません。プロセスのテストは1台のホストで動きます。第X部の3台のホストでの時間が、ホストをまたいだ唯一の測定です。複製はエッジモードでのみ動きます。"
 
 #: ../../cluster.rst:611
 msgid ""
@@ -1920,6 +2374,8 @@ msgid ""
 "seconds again. A node is known by the source address of the connection. "
 "The transfer is authenticated and not encrypted."
 msgstr ""
+"**SID 0023、一つのファイル。**\\ "
+"トポロジーがパスで指定するファイルと、JLVファイルがインポートするファイルは送られません。停止していたノードは、コマンドが再び実行されるまで古いファイルを保ちます。最後のファイルのスタンプはメモリにあるので、再起動の後、ノードは直近60秒のメッセージを再び受け入れます。ノードは接続の送信元アドレスで識別されます。転送は認証されますが、暗号化されません。"
 
 #: ../../cluster.rst:613
 msgid ""
@@ -1935,6 +2391,11 @@ msgid ""
 "running processes. A client that uses two nodes within the replication "
 "window, under 50 ms on two hosts, can meet two servers."
 msgstr ""
+"**SID 0025、アフィニティとキャップ。**\\ "
+"停止したノードの割り当ては、どれだけ待っても戻りません。一つのノードを欠いて起動したクラスターは、キャップのあるサーバーでフローを処理しません。ピアが沈黙している間に再起動したノードは、貸与分だけで処理します。台帳はメモリにしかありません。名簿はプロセスの一生の間固定です。テーブルにはメトリクスの系列がなく、\\ "
+"``show affinity``\\ が唯一の見方です。Cookieをキーとするテーブルは\\ ``Cookie``\\ "
+"フィールドしか読まないので、セッションの最初のリクエストは負荷分散され、覚えられません。状態は一つのエポックの中でリプレイできます。プロセスのテストは損失のないループバックで動き、動いているプロセスの間のネットワークを切るテストはありません。複製の窓（2台のホストで50 "
+"ms未満）の中で二つのノードを使うクライアントは、二つのサーバーに出会うことがあります。"
 
 #: ../../cluster.rst:615
 msgid ""
@@ -1949,6 +2410,12 @@ msgid ""
 "draining owner and the ten-second end of silent relays have no process "
 "test. A forwarded datagram can be replayed within an epoch."
 msgstr ""
+"**SID 0026、転送。**\\ ルーターがパケットを別のノードに移すと、確立したTCP接続は切れます。HTTP/3と\\ "
+"``proxy_protocol``\\ を持つフロントエンドは転送されません。地域体制の外では転送は止まります。\\ "
+"``global.reuse_port``\\ "
+"の下では、古いプロセスと新しいプロセスが転送用のポートを共有し、しばらくの間互いを停止しているとみなすことがあります。Linux以外のビルドは、転送の接続をメッシュアドレスにバインドせず、テストされていません。すべてのテストと測定はループバックで行い、denyのステータス、上限\\ "
+"``max_flows_per_peer``\\ "
+"、ドレイン中の所有者の拒否、沈黙した中継の10秒での終了にはプロセスのテストがありません。転送されたデータグラムは、エポックの中でリプレイできます。"
 
 #: ../../cluster.rst:617
 msgid ""
@@ -1965,6 +2432,10 @@ msgid ""
 "of SID 0015 is not run. A ``spill`` section without a pool that uses the "
 "table costs the file and does nothing, without a warning."
 msgstr ""
+"**SID 0027、spillキャッシュ。**\\ "
+"ファイルのサイズより小さいメモリ上限は、デーモンを強制終了させるか、ディスクの層を停滞させます。ファイルの切り詰めやディスクの読み込みエラーはシグナルを起こしてデーモンを終了させます。満杯になった圧縮またはコピーオンライトのファイルシステムも同じで、私たちはそれを検出しません。キャッシュはDockerやKubernetesの下で動かしたことがありません。層をつなぐストアは作者しかレビューしておらず、その印は複数のワーカーが同時に動く状態でテストしていません。再起動後のクライアントの最初のフローは、ヒントなしで進みます。一つのストレージスレッドは毎秒100万から300万の操作を処理し、それを超えると処理を捨てます。チェックサムは鍵付きではありません。電源喪失のテストはなく、SID "
+"0015の5,000万キーの検証は実行していません。テーブルを使うプールのない\\ ``spill``\\ "
+"節は、ファイルのコストがかかるだけで何もせず、警告もありません。"
 
 #: ../../cluster.rst:619
 msgid ""
@@ -1976,6 +2447,10 @@ msgid ""
 "A node with both a mesh and a database, and TLS to PostgreSQL, are not "
 "tested through the binary. Only Linux is tested."
 msgstr ""
+"**SID 0028、データベース。**\\ 履歴は決して刈り込まれません。同じ名前の二つのノードは、互いの報告を上書きします。\\ "
+"``global``\\ 、\\ ``mesh``\\ 、\\ ``observability``\\ "
+"は公開できません。段階的なロールアウトはなく、\\ ``apply``\\ "
+"はノードを待ちません。実行時の変更はリビジョンではなく、次のリビジョンがそれを置き換えます。SQLiteには通知がありません。メッシュとデータベースの両方を持つノードと、PostgreSQLへのTLSは、バイナリを通してテストしていません。テストしているのはLinuxだけです。"
 
 #: ../../cluster.rst:621
 msgid ""
@@ -1991,6 +2466,12 @@ msgid ""
 "``reuse_port`` beside the new key, are untested. The signal to a silent "
 "replacement uses a process id, which the kernel can reuse."
 msgstr ""
+"**SID 0029、アップグレード。**\\ "
+"引き継いだUDPマッピングは、フリート全体のキャップのカウントの外にあります。ピアが転送したマッピングには、ハンドオフの後に直接応答します。メッシュのソケット、クラスター設定のためのリスナー、転送用のポートは渡されないので、メッシュのノードはこの方法では置き換えられません。QUIC接続は古いプロセスとともに終わります。切り替えから200 "
+"msより後に最初のリクエストを送る接続は、ドレインによって閉じられることがあります。DONEの後の置き換え側のクラッシュは、スーパーバイザーが再起動するまで停止状態になります。\\ "
+"``sd_notify``\\ はありません。複数のパス、本当の別ユーザー、6,000を超えるマッピング、新しい鍵と並べた\\ "
+"``reuse_port``\\ "
+"はテストしていません。沈黙した置き換え側へのシグナルはプロセスIDを使いますが、カーネルはそれを再利用することがあります。"
 
 #: ../../cluster.rst:623
 msgid ""
@@ -2002,3 +2483,5 @@ msgid ""
 "member is silent, and shows at most 256 servers. The console threads are "
 "not pinned to processors of their own."
 msgstr ""
+"**SID 0031、コンソール。**\\ "
+"オーバーヘッドの基準は確立していません。加わったメンバーが使われるのは再起動の後だけです。コンソールはTLSを終端せず、ピアのために前段にプロキシが必要です。ファイアウォールのページのノードのコマンドは、エッジでは何もしません。64ノードのフリートを動かすテストはありません。フリートのビューは、メンバーが沈黙しているとリクエストのスレッドを最大5秒拘束し、最大256サーバーしか示しません。コンソールのスレッドは、専用のプロセッサーに固定されていません。"

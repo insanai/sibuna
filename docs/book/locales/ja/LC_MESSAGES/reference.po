@@ -18,10 +18,8 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: ../../reference.rst:1
-#, fuzzy
-#| msgid "Part X: Desk Reference and Diagnostics"
 msgid "Part XII: Desk Reference and Diagnostics"
-msgstr "第X部：手元リファレンスと診断"
+msgstr "第XII部：手元リファレンスと診断"
 
 #: ../../reference.rst:4
 msgid ""
@@ -30,6 +28,7 @@ msgid ""
 "VIII, Part IX). The tables of the edge were read from the code, not from "
 "the SID records."
 msgstr ""
+"エンドポイント、メトリクス、エラーカタログ、ポリシーのスキーマ、ストレージのテーブルを、ファイアウォールのデーモンとエッジのロードバランサー（第VIII部、第IX部）について一か所にまとめます。エッジの表は、SIDの記録からではなくコードから読み取りました。"
 
 #: ../../reference.rst:6
 msgid "Endpoints"
@@ -183,19 +182,6 @@ msgstr ""
 "付きの\\ ``401``\\ を受け取ります。"
 
 #: ../../reference.rst:47
-#, fuzzy
-#| msgid ""
-#| "The separate opt-in management listener serves ``/console/``. "
-#| "Initialize its administrator locally with ``sibuna init-admin``, then "
-#| "replace the temporary password on first sign-in. "
-#| "``/console/api/stats`` and ``/console/ws`` require an authenticated "
-#| "session (a kiosk session included). The WebSocket multiplexes "
-#| "statistics, events, nodes, policy, challenges and audit with bounded "
-#| "snapshots, deltas and gap recovery. Management peers connect to "
-#| "``/console/peer``, and every API route lives under ``/console/api/``. "
-#| "Origin error counters are not observed in forward-auth mode. Part IX "
-#| "documents the console's workflows, HTTPS deployment and current SID "
-#| "0007 limits."
 msgid ""
 "The separate opt-in management listener serves ``/console/``. Initialize "
 "its administrator locally with ``sibuna init-admin``, then replace the "
@@ -214,11 +200,11 @@ msgstr ""
 "には認証済みのセッション（キオスクのセッションを含む）が必要です。WebSocketは、統計、イベント、ノード、ポリシー、チャレンジ、監査を、上限のあるスナップショット、差分、欠落の回復とともに多重化します。管理用のピアは\\ "
 "``/console/peer``\\ に接続し、APIのルートはすべて\\ ``/console/api/``\\ "
 "配下にあります。forward-authモードでは、オリジンのエラーカウンターは観測されません。コンソールのワークフロー、HTTPSでのデプロイ、SID "
-"0007の現在の制限は第IX部に記載しています。"
+"0007の現在の制限は第XI部に記載しています。"
 
 #: ../../reference.rst:49
 msgid "Routes of the edge"
-msgstr ""
+msgstr "エッジのルート"
 
 #: ../../reference.rst:52
 msgid ""
@@ -228,33 +214,42 @@ msgid ""
 "``cmd/sibuna/src/edge/probe.rs``, ``cmd/sibuna/src/acme.rs`` and "
 "``crates/acme/src/server.rs`` hold them."
 msgstr ""
+"``--config-file``\\ または\\ ``sibuna lb``\\ で起動したエッジは、運用構成が\\ ``gate``\\ "
+"または\\ ``shield``\\ のHTTPフロントエンドで、ファイアウォールのルートを提供します。さらに以下のルートを加えます。\\ "
+"``cmd/sibuna/src/routes.rs``\\ 、\\ ``cmd/sibuna/src/edge/probe.rs``\\ 、\\ "
+"``cmd/sibuna/src/acme.rs``\\ 、\\ ``crates/acme/src/server.rs``\\ "
+"がそれらを持ちます。"
 
 #: ../../reference.rst:54
 msgid "HTTP routes of the edge"
-msgstr ""
+msgstr "エッジのHTTPルート"
 
 #: ../../reference.rst:61
 msgid "``/__sibuna/ready`` on an HTTP frontend"
-msgstr ""
+msgstr "HTTPフロントエンド上の\\ ``/__sibuna/ready``"
 
 #: ../../reference.rst:63
 msgid ""
 "``200`` with ``{\"status\":\"ready\"}``; ``503`` with "
 "``{\"status\":\"draining\"}`` from the start of a shutdown (SID 0020)"
 msgstr ""
+"``{\"status\":\"ready\"}``\\ 付きの\\ ``200``\\ 。停止の開始からは\\ "
+"``{\"status\":\"draining\"}``\\ 付きの\\ ``503``\\ （SID 0020）"
 
 #: ../../reference.rst:64
 msgid "``/__sibuna/health``, ``/__sibuna/metrics`` on an HTTP frontend"
-msgstr ""
+msgstr "HTTPフロントエンド上の\\ ``/__sibuna/health``\\ 、\\ ``/__sibuna/metrics``"
 
 #: ../../reference.rst:66
 msgid ""
 "As in the firewall. The metrics text adds the series of the edge (below)"
-msgstr ""
+msgstr "ファイアウォールと同じ。メトリクスのテキストにはエッジの系列（下記）が加わる"
 
 #: ../../reference.rst:67
 msgid "``/health``, ``/ready``, ``/metrics`` on ``observability.listen``"
 msgstr ""
+"``observability.listen``\\ 上の\\ ``/health``\\ 、\\ ``/ready``\\ 、\\ "
+"``/metrics``"
 
 #: ../../reference.rst:69
 msgid ""
@@ -262,6 +257,8 @@ msgid ""
 "``/__sibuna/`` spelling. It applies no address list: its address is its "
 "access control"
 msgstr ""
+"別のリスナー上の同じ三つの応答。\\ ``/__sibuna/``\\ "
+"の綴りも受け付ける。アドレスのリストは適用しない。そのアドレス自体がアクセス制御である"
 
 #: ../../reference.rst:70
 msgid "``/.well-known/acme-challenge/TOKEN``"
@@ -271,7 +268,7 @@ msgstr ""
 msgid ""
 "The HTTP-01 answer of automatic HTTPS, before the firewall and before a "
 "redirect (SID 0021)"
-msgstr ""
+msgstr "自動HTTPSのHTTP-01の応答。ファイアウォールとリダイレクトより前（SID 0021）"
 
 #: ../../reference.rst:73
 msgid "``URL/directory``, ``URL/new-nonce``"
@@ -279,13 +276,15 @@ msgstr ""
 
 #: ../../reference.rst:74
 msgid "GET (``HEAD`` for the nonce)"
-msgstr ""
+msgstr "GET（nonceには\\ ``HEAD``\\ ）"
 
 #: ../../reference.rst:75
 msgid ""
 "The ACME server of the local authority, where ``URL`` is "
 "``global.acme.internal.server.url``; off by default"
 msgstr ""
+"ローカルの認証局のACMEサーバー。\\ ``URL``\\ は\\ ``global.acme.internal.server.url``\\ "
+"。既定では無効"
 
 #: ../../reference.rst:76
 msgid ""
@@ -296,7 +295,7 @@ msgstr ""
 #: ../../reference.rst:78
 msgid ""
 "Signed ACME requests of at most 32 KiB; HTTP-01 is the only challenge"
-msgstr ""
+msgstr "最大32 KiBの署名付きACMEリクエスト。チャレンジはHTTP-01のみ"
 
 #: ../../reference.rst:79
 msgid "``URL/crl``"
@@ -304,7 +303,7 @@ msgstr ""
 
 #: ../../reference.rst:81
 msgid "The revocation list of the present intermediate, in DER"
-msgstr ""
+msgstr "現在の中間証明書の失効リスト（DER形式）"
 
 #: ../../reference.rst:83
 msgid ""
@@ -314,10 +313,15 @@ msgid ""
 "field. Every other client receives the ``404`` of an unknown route. "
 "``/__sibuna/ready`` exists on the edge only."
 msgstr ""
+"``/__sibuna/``\\ の三つのルートが応答するのは、\\ ``observability.internal_allow``\\ "
+"（既定ではループバックのネットワーク）の内側にいて、リクエストが\\ ``X-Forwarded-For``\\ 、\\ "
+"``X-Real-IP``\\ 、\\ ``Forwarded``\\ "
+"のフィールドを持たないクライアントだけです。それ以外のクライアントは、未知のルートに対する\\ ``404``\\ を受け取ります。\\ "
+"``/__sibuna/ready``\\ はエッジにだけあります。"
 
 #: ../../reference.rst:85
 msgid "The admin socket"
-msgstr ""
+msgstr "管理ソケット"
 
 #: ../../reference.rst:88
 msgid ""
@@ -328,10 +332,14 @@ msgid ""
 "listed subset of the same lines through the same parser. "
 "``cmd/sibuna/src/edge/control.rs`` holds the grammar."
 msgstr ""
+"``global.admin_socket``\\ （または\\ ``sibuna lb --admin``\\ "
+"）は、モード0600のUnixソケットを開きます。\\ ``sibuna ctl SOCKET COMMAND``\\ "
+"は、最大512バイトの印字可能なASCIIの一行を送り、応答を表示します。ソケットは20コマンドのバーストと、その後は毎秒10コマンドを受け付けます。エッジのコンソールは、同じ行のうち列挙した一部を同じパーサーで実行します。\\ "
+"``cmd/sibuna/src/edge/control.rs``\\ が文法を持ちます。"
 
 #: ../../reference.rst:90
 msgid "Commands of the admin socket"
-msgstr ""
+msgstr "管理ソケットのコマンド"
 
 #: ../../reference.rst:94 ../../reference.rst:892 ../../reference.rst:916
 msgid "Command"
@@ -339,11 +347,11 @@ msgstr "コマンド"
 
 #: ../../reference.rst:95
 msgid "Answer or effect"
-msgstr ""
+msgstr "応答または効果"
 
 #: ../../reference.rst:96
 msgid "Console"
-msgstr ""
+msgstr "コンソール"
 
 #: ../../reference.rst:97
 msgid "``show servers``"
@@ -353,13 +361,13 @@ msgstr ""
 msgid ""
 "One line per server: pool, name, address, state, weight, flows, health, "
 "ejection, ramp, change"
-msgstr ""
+msgstr "サーバーごとに一行：プール、名前、アドレス、状態、重み、フロー、ヘルス、除外、ランプ、変更"
 
 #: ../../reference.rst:99 ../../reference.rst:108 ../../reference.rst:117
 #: ../../reference.rst:126 ../../reference.rst:129 ../../reference.rst:132
 #: ../../reference.rst:135 ../../reference.rst:141
 msgid "yes"
-msgstr ""
+msgstr "可"
 
 #: ../../reference.rst:100
 msgid "``show info``"
@@ -370,12 +378,14 @@ msgid ""
 "``key: value`` lines: version, process, source, reloads, watcher, flows, "
 "drops, run-time changes, and the counters of the spill cache (SID 0027)"
 msgstr ""
+"``key: value``\\ "
+"の行：バージョン、プロセス、ソース、再読み込み、ウォッチャー、フロー、破棄、実行時の変更、spillキャッシュのカウンター（SID 0027）"
 
 #: ../../reference.rst:102 ../../reference.rst:105 ../../reference.rst:111
 #: ../../reference.rst:114 ../../reference.rst:120 ../../reference.rst:123
 #: ../../reference.rst:138 ../../reference.rst:144 ../../reference.rst:147
 msgid "no"
-msgstr ""
+msgstr "不可"
 
 #: ../../reference.rst:103
 msgid "``show stats``"
@@ -385,7 +395,7 @@ msgstr ""
 msgid ""
 "The series of the edge in the Prometheus text format, as the metrics "
 "route prints them"
-msgstr ""
+msgstr "メトリクスのルートが表示するのと同じ、Prometheusテキスト形式のエッジの系列"
 
 #: ../../reference.rst:106
 msgid "``show certs``, ``show ca``"
@@ -395,7 +405,7 @@ msgstr ""
 msgid ""
 "The names of automatic HTTPS with their state and staple; the root of the "
 "local authority as PEM (SID 0021)"
-msgstr ""
+msgstr "自動HTTPSの名前とその状態とステープル。ローカルの認証局のルート（PEM）（SID 0021）"
 
 #: ../../reference.rst:109
 msgid "``revoke cert NAME|SERIAL``"
@@ -405,7 +415,7 @@ msgstr ""
 msgid ""
 "Revokes a certificate of the local authority and writes the revocation "
 "list"
-msgstr ""
+msgstr "ローカルの認証局の証明書を失効させ、失効リストを書く"
 
 #: ../../reference.rst:112
 msgid "``show hooks``"
@@ -415,7 +425,7 @@ msgstr ""
 msgid ""
 "The plugins with their calls, verdicts, failures and open breakers (SID "
 "0030)"
-msgstr ""
+msgstr "プラグインとその呼び出し、判定、失敗、開いたブレーカー（SID 0030）"
 
 #: ../../reference.rst:115
 msgid "``show cluster``"
@@ -425,7 +435,7 @@ msgstr ""
 msgid ""
 "Each node of the mesh with the digest of its file, or with the revision "
 "it serves in persistent mode (SID 0023, SID 0028)"
-msgstr ""
+msgstr "メッシュの各ノードと、そのファイルのダイジェスト、または永続モードでは処理しているリビジョン（SID 0023、SID 0028）"
 
 #: ../../reference.rst:118
 msgid "``show affinity``"
@@ -433,7 +443,7 @@ msgstr ""
 
 #: ../../reference.rst:119
 msgid "The sticky table and the shares of fleet-wide limits (SID 0025)"
-msgstr ""
+msgstr "スティッキーテーブルと、フリート全体の上限の割り当て（SID 0025）"
 
 #: ../../reference.rst:121
 msgid "``show authority``"
@@ -441,7 +451,7 @@ msgstr ""
 
 #: ../../reference.rst:122
 msgid "The revision of the database that this node serves (SID 0028)"
-msgstr ""
+msgstr "このノードが処理しているデータベースのリビジョン（SID 0028）"
 
 #: ../../reference.rst:124
 msgid "``set server POOL/NAME state ready|drain [local]``"
@@ -451,7 +461,7 @@ msgstr ""
 msgid ""
 "Admits a server, or stops new flows to it; ``maint`` is another word for "
 "``drain``"
-msgstr ""
+msgstr "サーバーを受け入れる、またはそれへの新しいフローを止める。\\ ``maint``\\ は\\ ``drain``\\ の別名"
 
 #: ../../reference.rst:127
 msgid "``set server POOL/NAME weight N [local]``"
@@ -459,7 +469,7 @@ msgstr ""
 
 #: ../../reference.rst:128
 msgid "Sets the weight, 1 to 65,535"
-msgstr ""
+msgstr "重みを1から65,535の範囲で設定する"
 
 #: ../../reference.rst:130
 msgid ""
@@ -469,7 +479,7 @@ msgstr ""
 
 #: ../../reference.rst:131
 msgid "Adds or removes a server of a pool"
-msgstr ""
+msgstr "プールのサーバーを追加または削除する"
 
 #: ../../reference.rst:133
 msgid "``del ban ADDRESS [local]``"
@@ -477,27 +487,23 @@ msgstr ""
 
 #: ../../reference.rst:134
 msgid "Lifts the ban of one client (SID 0022)"
-msgstr ""
+msgstr "一つのクライアントの禁止を解除する（SID 0022）"
 
 #: ../../reference.rst:136
-#, fuzzy
-#| msgid "``overloaded``"
 msgid "``reload``"
-msgstr "``overloaded``"
+msgstr ""
 
 #: ../../reference.rst:137
 msgid "Loads the file as SIGHUP does and prints the result"
-msgstr ""
+msgstr "SIGHUPと同じようにファイルを読み込み、結果を表示する"
 
 #: ../../reference.rst:139
-#, fuzzy
-#| msgid "``overloaded``"
 msgid "``reload cluster``"
-msgstr "``overloaded``"
+msgstr ""
 
 #: ../../reference.rst:140
 msgid "Reloads this node, then sends the file to every peer (SID 0023)"
-msgstr ""
+msgstr "このノードを再読み込みし、それからファイルをすべてのピアに送る（SID 0023）"
 
 #: ../../reference.rst:142
 msgid "``reopen log``"
@@ -505,7 +511,7 @@ msgstr ""
 
 #: ../../reference.rst:143
 msgid "Opens the access log file again"
-msgstr ""
+msgstr "アクセスログのファイルを開き直す"
 
 #: ../../reference.rst:145
 msgid "``help``"
@@ -513,7 +519,7 @@ msgstr ""
 
 #: ../../reference.rst:146
 msgid "Lists the commands"
-msgstr ""
+msgstr "コマンドを列挙する"
 
 #: ../../reference.rst:149
 msgid ""
@@ -522,10 +528,12 @@ msgid ""
 "diagnostic with a code of the families ``ADM`` or ``DBA`` below, and "
 "nothing has changed."
 msgstr ""
+"メッシュがあるとき、サーバーへの変更と禁止の解除は、最後の語が\\ ``local``\\ でない限りすべてのノードに届きます（SID "
+"0022）。失敗すると、下記の\\ ``ADM``\\ または\\ ``DBA``\\ の系列のコードを持つ診断を表示し、何も変わっていません。"
 
 #: ../../reference.rst:151
 msgid "The console of the edge"
-msgstr ""
+msgstr "エッジのコンソール"
 
 #: ../../reference.rst:154
 msgid ""
@@ -534,10 +542,14 @@ msgid ""
 "routes concern the edge (``crates/console/src/routes.rs``, "
 "``crates/console/src/api/edge.rs``)."
 msgstr ""
+"``console``\\ 節があると、エッジはSID "
+"0031のコンソールを専用のリスナーで提供します。ファイアウォールのコンソールのルートに加えて、三つのルートがエッジに関わります（\\ "
+"``crates/console/src/routes.rs``\\ 、\\ "
+"``crates/console/src/api/edge.rs``\\ ）。"
 
 #: ../../reference.rst:156
 msgid "Console routes of the edge"
-msgstr ""
+msgstr "エッジのコンソールのルート"
 
 #: ../../reference.rst:163
 msgid "``/console/api/edge``"
@@ -548,6 +560,8 @@ msgid ""
 "The node, its refusals by reason, its frontends and its pools, at most "
 "256 servers. Needs a session, or a token with the scope ``stats_read``"
 msgstr ""
+"ノード、理由ごとのその拒否、フロントエンドとプール（最大256サーバー）。セッション、またはスコープ\\ ``stats_read``\\ "
+"のトークンが必要"
 
 #: ../../reference.rst:166
 msgid "``/console/api/edge/fleet``"
@@ -557,7 +571,7 @@ msgstr ""
 msgid ""
 "One row for each member of the fleet, asked all at once, waiting at most "
 "five seconds"
-msgstr ""
+msgstr "フリートのメンバーごとに一行。すべてに同時に問い合わせ、最大5秒待つ"
 
 #: ../../reference.rst:169
 msgid "``/console/api/edge/command``"
@@ -569,6 +583,8 @@ msgid ""
 "role operator or administrator, the ``Origin`` field, the CSRF token and "
 "the mutation allowance; a change is audited before and after it runs"
 msgstr ""
+"``{\"line\": \"...\"}``\\ ：管理ソケットの列挙された一行。operatorまたはadministratorのロール、\\ "
+"``Origin``\\ フィールド、CSRFトークン、変更の許可が必要。変更は実行の前後に監査される"
 
 #: ../../reference.rst:172
 msgid "``/console/peer``"
@@ -578,13 +594,15 @@ msgstr ""
 msgid ""
 "The stream of a peer console, from the ``allow_ips`` of its entry, with "
 "the peer key"
-msgstr ""
+msgstr "ピアのコンソールのストリーム。そのエントリーの\\ ``allow_ips``\\ から、ピアの鍵を使う"
 
 #: ../../reference.rst:176
 msgid ""
 "A console without an edge answers ``404`` with ``CONSOLE404`` on the "
 "three ``edge`` routes."
 msgstr ""
+"エッジのないコンソールは、三つの\\ ``edge``\\ ルートに\\ ``CONSOLE404``\\ 付きの\\ ``404``\\ "
+"で応答します。"
 
 #: ../../reference.rst:178
 msgid "Metrics"
@@ -787,19 +805,17 @@ msgstr ""
 msgid ""
 "An upgraded connection became a tunnel on an event-driven worker (SID "
 "0016)"
-msgstr ""
+msgstr "アップグレードされた接続が、イベント駆動のワーカー上でトンネルになった（SID 0016）"
 
 #: ../../reference.rst:227
-#, fuzzy
-#| msgid "``incidents_persisted``, ``incident_batches``"
 msgid "``origin_reused``, ``origin_connects``"
-msgstr "``incidents_persisted``, ``incident_batches``"
+msgstr ""
 
 #: ../../reference.rst:228
 msgid ""
 "An exchange of a worker reused an idle server socket, or opened a server "
 "connection"
-msgstr ""
+msgstr "ワーカーの交換がアイドルなサーバーソケットを再利用した、またはサーバーへの接続を開いた"
 
 #: ../../reference.rst:229
 msgid "``origin_retries``"
@@ -807,7 +823,7 @@ msgstr ""
 
 #: ../../reference.rst:230
 msgid "A request was sent again because an idle server socket had closed"
-msgstr ""
+msgstr "アイドルなサーバーソケットが閉じていたため、リクエストを再送した"
 
 #: ../../reference.rst:231
 msgid "``deadline_closes``, ``worker_faults``"
@@ -817,7 +833,7 @@ msgstr ""
 msgid ""
 "A worker closed a connection because a deadline passed, or after a fault "
 "in its own code"
-msgstr ""
+msgstr "期限が過ぎたため、または自分のコードの障害の後に、ワーカーが接続を閉じた"
 
 #: ../../reference.rst:233
 msgid "``tls_kept``, ``tls_passed``"
@@ -827,17 +843,19 @@ msgstr ""
 msgid ""
 "A worker ended a TLS connection itself, or gave it to the protocol "
 "runtime after its ClientHello (SID 0024)"
-msgstr ""
+msgstr "ワーカーがTLS接続を自分で終えた、またはClientHelloの後にプロトコルランタイムに渡した（SID 0024）"
 
 #: ../../reference.rst:236
 msgid ""
 "The last eight counters are written by the event-driven workers of the "
 "edge (SID 0016, SID 0024). ``crates/core/src/metrics.rs`` holds the list."
 msgstr ""
+"最後の八つのカウンターは、エッジのイベント駆動のワーカーが書き込みます（SID 0016、SID 0024）。\\ "
+"``crates/core/src/metrics.rs``\\ が一覧を持ちます。"
 
 #: ../../reference.rst:238 ../../reference.rst:243
 msgid "Series of the edge"
-msgstr ""
+msgstr "エッジの系列"
 
 #: ../../reference.rst:241
 msgid ""
@@ -849,20 +867,23 @@ msgid ""
 "``crates/lb/src/forward/counters.rs``, ``cmd/sibuna/src/access.rs``, "
 "``cmd/sibuna/src/plugins.rs`` and ``cmd/sibuna/src/acme.rs``."
 msgstr ""
+"エッジのメトリクスのテキストには、上のカウンターに続いてこれらの系列があります。管理ソケットの\\ ``show stats``\\ "
+"も同じテキストを表示します。設定されていない系統の系列はありません。転送、メッシュ、プラグイン、自動HTTPSは、それぞれ有効なときだけ自分の系列を加えます。それらを書くコードは\\ "
+"``crates/lb/src/stats.rs``\\ 、\\ ``crates/lb/src/forward/counters.rs``\\ "
+"、\\ ``cmd/sibuna/src/access.rs``\\ 、\\ ``cmd/sibuna/src/plugins.rs``\\ "
+"、\\ ``cmd/sibuna/src/acme.rs``\\ です。"
 
 #: ../../reference.rst:247
-#, fuzzy
-#| msgid "Metrics"
 msgid "Series"
-msgstr "メトリクス"
+msgstr "系列"
 
 #: ../../reference.rst:248
 msgid "Type"
-msgstr ""
+msgstr "型"
 
 #: ../../reference.rst:249
 msgid "Labels"
-msgstr ""
+msgstr "ラベル"
 
 #: ../../reference.rst:250 ../../reference.rst:502 ../../reference.rst:550
 #: ../../reference.rst:584 ../../reference.rst:631 ../../reference.rst:689
@@ -871,22 +892,18 @@ msgid "Meaning"
 msgstr "意味"
 
 #: ../../reference.rst:251
-#, fuzzy
-#| msgid "``/__sibuna/verify``"
 msgid "``sibuna_edge_ready``"
-msgstr "``/__sibuna/verify``"
+msgstr ""
 
 #: ../../reference.rst:252 ../../reference.rst:256 ../../reference.rst:300
 #: ../../reference.rst:312 ../../reference.rst:316 ../../reference.rst:344
 #: ../../reference.rst:356 ../../reference.rst:360 ../../reference.rst:368
-#, fuzzy
-#| msgid "Cause"
 msgid "gauge"
-msgstr "原因"
+msgstr "ゲージ"
 
 #: ../../reference.rst:254
 msgid "1 while readiness answers 200, 0 from the start of a shutdown"
-msgstr ""
+msgstr "レディネスが200で応答している間は1、停止の開始からは0"
 
 #: ../../reference.rst:255
 msgid "``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``"
@@ -894,7 +911,7 @@ msgstr ""
 
 #: ../../reference.rst:258
 msgid "The flows in the flow table, and ``global.max_flows``"
-msgstr ""
+msgstr "フローテーブルの中のフローと、\\ ``global.max_flows``"
 
 #: ../../reference.rst:259
 msgid "``sibuna_edge_drops_total``"
@@ -907,14 +924,12 @@ msgstr ""
 #: ../../reference.rst:328 ../../reference.rst:332 ../../reference.rst:336
 #: ../../reference.rst:340 ../../reference.rst:348 ../../reference.rst:352
 #: ../../reference.rst:364
-#, fuzzy
-#| msgid "Counter"
 msgid "counter"
 msgstr "カウンター"
 
 #: ../../reference.rst:262
 msgid "Datagrams that the edge worker discarded and admissions it refused"
-msgstr ""
+msgstr "エッジワーカーが破棄したデータグラムと、拒否した許可"
 
 #: ../../reference.rst:263
 msgid "``sibuna_edge_proxy_protocol_accepted_total``, ``_rejected_total``"
@@ -922,7 +937,7 @@ msgstr ""
 
 #: ../../reference.rst:266
 msgid "Connections whose PROXY header was accepted or refused"
-msgstr ""
+msgstr "PROXYヘッダーを受け入れた、または拒否した接続"
 
 #: ../../reference.rst:267
 msgid "``sibuna_edge_flow_log_dropped_total``"
@@ -930,19 +945,15 @@ msgstr ""
 
 #: ../../reference.rst:270
 msgid "Lines of TCP and UDP flows that did not fit the queue of the log"
-msgstr ""
+msgstr "ログのキューに収まらなかったTCPとUDPのフローの行"
 
 #: ../../reference.rst:271
-#, fuzzy
-#| msgid "``bans_refused``"
 msgid "``sibuna_edge_refused_total``"
-msgstr "``bans_refused``"
+msgstr ""
 
 #: ../../reference.rst:273 ../../reference.rst:333 ../../reference.rst:337
-#, fuzzy
-#| msgid "``ja4_present``"
 msgid "``reason``"
-msgstr "``ja4_present``"
+msgstr ""
 
 #: ../../reference.rst:274
 msgid ""
@@ -953,6 +964,12 @@ msgid ""
 "``udp_reply_limit``, ``client_closed``, ``hook``, ``inspect_denied`` and "
 "``udp_not_quic``"
 msgstr ""
+"拒否した接続、リクエスト、データグラム。理由は\\ ``rate_limit``\\ 、\\ ``flow_limit``\\ 、\\ "
+"``draining``\\ 、\\ ``connection_limit``\\ 、\\ ``client_limit``\\ 、\\ "
+"``task_limit``\\ 、\\ ``exchange_limit``\\ 、\\ ``bad_request``\\ 、\\ "
+"``no_server``\\ 、\\ ``udp_rate_limit``\\ 、\\ ``udp_flow_limit``\\ 、\\ "
+"``udp_reply_limit``\\ 、\\ ``client_closed``\\ 、\\ ``hook``\\ 、\\ "
+"``inspect_denied``\\ 、\\ ``udp_not_quic``"
 
 #: ../../reference.rst:275
 msgid "``sibuna_edge_frontend_requests_total``"
@@ -967,6 +984,8 @@ msgid ""
 "HTTP requests by status class: ``1xx`` to ``5xx``, or ``none`` for an "
 "exchange that ended without a status"
 msgstr ""
+"ステータスクラスごとのHTTPリクエスト：\\ ``1xx``\\ から\\ ``5xx``\\ 、またはステータスなしで終わった交換には\\ "
+"``none``"
 
 #: ../../reference.rst:279
 msgid ""
@@ -975,14 +994,12 @@ msgid ""
 msgstr ""
 
 #: ../../reference.rst:281 ../../reference.rst:285
-#, fuzzy
-#| msgid "``banned``"
 msgid "``frontend``"
-msgstr "``banned``"
+msgstr ""
 
 #: ../../reference.rst:282
 msgid "Bytes from and to the clients, and flows of a frontend"
-msgstr ""
+msgstr "フロントエンドのクライアントからのバイト、クライアントへのバイト、フロー"
 
 #: ../../reference.rst:283
 msgid "``sibuna_edge_frontend_request_seconds``"
@@ -990,26 +1007,24 @@ msgstr ""
 
 #: ../../reference.rst:284 ../../reference.rst:304
 msgid "histogram"
-msgstr ""
+msgstr "ヒストグラム"
 
 #: ../../reference.rst:286
 msgid ""
 "The duration of a request; buckets from 0.001 to 30 seconds (14 bounds)"
-msgstr ""
+msgstr "リクエストの所要時間。バケットは0.001から30秒（14個の境界）"
 
 #: ../../reference.rst:287
 msgid "``sibuna_edge_server_requests_total``"
 msgstr ""
 
 #: ../../reference.rst:289
-#, fuzzy
-#| msgid "``allowed``, ``denied``, ``challenged``"
 msgid "``backend``, ``server``, ``code``"
-msgstr "``allowed``, ``denied``, ``challenged``"
+msgstr ""
 
 #: ../../reference.rst:290
 msgid "Requests a server answered, by status class"
-msgstr ""
+msgstr "サーバーが応答したリクエスト（ステータスクラスごと）"
 
 #: ../../reference.rst:291
 msgid ""
@@ -1026,7 +1041,7 @@ msgstr ""
 msgid ""
 "What a server did wrong, requests that left it for another server, and "
 "ejections by passive health (SID 0019)"
-msgstr ""
+msgstr "サーバーの失敗、別のサーバーへ移ったリクエスト、パッシブヘルスによる除外（SID 0019）"
 
 #: ../../reference.rst:295
 msgid "``sibuna_edge_server_client_closed_total``"
@@ -1036,7 +1051,7 @@ msgstr ""
 msgid ""
 "Clients that left before the server answered (logged as 499); not a "
 "failure of the server"
-msgstr ""
+msgstr "サーバーが応答する前に去ったクライアント（499として記録）。サーバーの失敗ではない"
 
 #: ../../reference.rst:299
 msgid "``sibuna_edge_server_up``, ``sibuna_edge_server_active_requests``"
@@ -1044,7 +1059,7 @@ msgstr ""
 
 #: ../../reference.rst:302
 msgid "1 while the server is in service, and its requests in flight"
-msgstr ""
+msgstr "サーバーが稼働中の間は1、そして処理中のリクエスト"
 
 #: ../../reference.rst:303
 msgid "``sibuna_edge_server_response_seconds``"
@@ -1052,7 +1067,7 @@ msgstr ""
 
 #: ../../reference.rst:306
 msgid "The wait for the first byte of the server, with the buckets above"
-msgstr ""
+msgstr "サーバーの最初のバイトまでの待ち時間。バケットは上と同じ"
 
 #: ../../reference.rst:307
 msgid ""
@@ -1061,14 +1076,10 @@ msgid ""
 msgstr ""
 
 #: ../../reference.rst:310
-#, fuzzy
-#| msgid ""
-#| "Queue pushes rejected because the ring was full, and failed commit "
-#| "attempts"
 msgid ""
 "Lines of the access log written, dropped because the queue was full, and "
 "failed writes"
-msgstr "リングが満杯で拒否されたキューへの追加と、失敗したコミットの試行"
+msgstr "書き込んだアクセスログの行、キューが満杯で破棄した行、失敗した書き込み"
 
 #: ../../reference.rst:311
 msgid "``sibuna_edge_access_log_queue_length``"
@@ -1076,7 +1087,7 @@ msgstr ""
 
 #: ../../reference.rst:314
 msgid "Entries waiting for the writer"
-msgstr ""
+msgstr "ライターを待っているエントリー"
 
 #: ../../reference.rst:315
 msgid "``sibuna_edge_forward_active``, ``_peers_eligible``, ``_flows_out``"
@@ -1086,7 +1097,7 @@ msgstr ""
 msgid ""
 "Peer forwarding (SID 0026): 1 while this node forwards, the peers that "
 "can take a flow, and the flows forwarded now"
-msgstr ""
+msgstr "ピア転送（SID 0026）：このノードが転送している間は1、フローを受け取れるピア、現在転送しているフロー"
 
 #: ../../reference.rst:319
 msgid "``sibuna_edge_forward_streams_out_total``, ``_streams_in_total``"
@@ -1094,7 +1105,7 @@ msgstr ""
 
 #: ../../reference.rst:322
 msgid "Connections handed to an owner, and taken from peers"
-msgstr ""
+msgstr "所有者に渡した接続と、ピアから受け取った接続"
 
 #: ../../reference.rst:323
 msgid ""
@@ -1106,7 +1117,7 @@ msgstr ""
 msgid ""
 "Datagrams sent to an owner, taken from peers, and replies passed back to "
 "a client"
-msgstr ""
+msgstr "所有者に送ったデータグラム、ピアから受け取ったデータグラム、クライアントに戻した応答"
 
 #: ../../reference.rst:327
 msgid "``sibuna_edge_forward_denied_total``"
@@ -1114,7 +1125,7 @@ msgstr ""
 
 #: ../../reference.rst:330
 msgid "Connections closed because the owner's rate limit denied the client"
-msgstr ""
+msgstr "所有者のレート制限がクライアントを拒否したために閉じた接続"
 
 #: ../../reference.rst:331
 msgid "``sibuna_edge_forward_local_total``"
@@ -1125,6 +1136,8 @@ msgid ""
 "Flows of another owner served here: ``declined``, ``connect_failed``, "
 "``timeout``, ``peer_limit``"
 msgstr ""
+"ここで処理した別の所有者のフロー：\\ ``declined``\\ 、\\ ``connect_failed``\\ 、\\ "
+"``timeout``\\ 、\\ ``peer_limit``"
 
 #: ../../reference.rst:335
 msgid "``sibuna_edge_forward_rejected_total``"
@@ -1135,6 +1148,8 @@ msgid ""
 "What the forwarding port refused: ``stranger``, ``bad_tag``, ``stale``, "
 "``malformed``, ``unknown``"
 msgstr ""
+"転送用のポートが拒否したもの：\\ ``stranger``\\ 、\\ ``bad_tag``\\ 、\\ ``stale``\\ 、\\ "
+"``malformed``\\ 、\\ ``unknown``"
 
 #: ../../reference.rst:339
 msgid ""
@@ -1148,6 +1163,8 @@ msgid ""
 "send, read from authentic datagrams, that added or extended a ban, and "
 "lost to a bound"
 msgstr ""
+"複製した禁止（SID "
+"0022）：ピアと送信ごとに一回データグラムに書いたもの、正しいデータグラムから読んだもの、禁止を追加または延長したもの、上限のために失われたもの"
 
 #: ../../reference.rst:343
 msgid "``sibuna_edge_mesh_bans_known``"
@@ -1155,7 +1172,7 @@ msgstr ""
 
 #: ../../reference.rst:346
 msgid "The bans this node remembers now"
-msgstr ""
+msgstr "このノードが現在覚えている禁止"
 
 #: ../../reference.rst:347
 msgid "``sibuna_edge_hook_calls_total``"
@@ -1171,6 +1188,10 @@ msgid ""
 "``agent``; ``result`` is ``admit``, ``deny``, ``challenge``, ``timeout``, "
 "``overload``, ``trap`` or ``unavailable``"
 msgstr ""
+"プラグインの呼び出し（SID 0030）。\\ ``tier``\\ は\\ ``native``\\ 、\\ ``wasm``\\ 、\\ "
+"``agent``\\ のいずれか。\\ ``result``\\ は\\ ``admit``\\ 、\\ ``deny``\\ 、\\ "
+"``challenge``\\ 、\\ ``timeout``\\ 、\\ ``overload``\\ 、\\ ``trap``\\ 、\\ "
+"``unavailable``\\ のいずれか"
 
 #: ../../reference.rst:351
 msgid ""
@@ -1186,7 +1207,7 @@ msgstr ""
 msgid ""
 "Telemetry samples dropped, and request fields that the plugin tried to "
 "add and that were refused"
-msgstr ""
+msgstr "破棄したテレメトリーのサンプルと、プラグインが加えようとして拒否されたリクエストのフィールド"
 
 #: ../../reference.rst:355
 msgid "``sibuna_edge_hook_breakers_open``"
@@ -1194,7 +1215,7 @@ msgstr ""
 
 #: ../../reference.rst:358
 msgid "Open breakers of an agent plugin"
-msgstr ""
+msgstr "エージェントプラグインの開いたブレーカー"
 
 #: ../../reference.rst:359
 msgid "``sibuna_edge_acme_certificates_managed``, ``_served``"
@@ -1204,7 +1225,7 @@ msgstr ""
 msgid ""
 "Names of automatic HTTPS, and those with a certificate in service (SID "
 "0021)"
-msgstr ""
+msgstr "自動HTTPSの名前と、そのうち証明書が使用中のもの（SID 0021）"
 
 #: ../../reference.rst:363
 msgid "``sibuna_edge_acme_failures_total``"
@@ -1212,7 +1233,7 @@ msgstr ""
 
 #: ../../reference.rst:366
 msgid "Failed attempts to obtain or renew a certificate"
-msgstr ""
+msgstr "証明書の取得または更新の試行の失敗"
 
 #: ../../reference.rst:367
 msgid "``sibuna_edge_acme_nearest_expiry_seconds``"
@@ -1222,7 +1243,7 @@ msgstr ""
 msgid ""
 "Seconds until the first served certificate expires; absent while none is "
 "served"
-msgstr ""
+msgstr "使用中の証明書のうち最初のものが期限切れになるまでの秒数。使用中のものがない間はない"
 
 #: ../../reference.rst:372
 msgid ""
@@ -1232,6 +1253,10 @@ msgid ""
 "by ``show authority`` (SID 0028). No series counts the commands, the "
 "lifted bans or the parked flows of the plugins."
 msgstr ""
+"エッジの状態の中には系列を持たないものがあります。スティッキーテーブルとフリート全体の上限の割り当ては\\ ``show affinity``\\ "
+"だけが示し（SID 0025）、spillキャッシュは\\ ``show info``\\ （SID 0027）、データベースのリビジョンは\\ "
+"``show authority``\\ （SID "
+"0028）が示します。コマンド、解除した禁止、プラグインの保留したフローを数える系列はありません。"
 
 #: ../../reference.rst:374
 msgid ""
@@ -1399,12 +1424,12 @@ msgid ""
 "firewall decides, and adds these of its own (SID 0019, SID 0020, SID "
 "0030)."
 msgstr ""
+"エッジのHTTPフロントエンドは、ファイアウォールが判断する場面では上のコードで応答し、さらに次の独自のコードを加えます（SID 0019、SID "
+"0020、SID 0030）。"
 
 #: ../../reference.rst:416
-#, fuzzy
-#| msgid "Status codes of the data plane"
 msgid "Status codes that the edge adds"
-msgstr "データプレーンのステータスコード"
+msgstr "エッジが加えるステータスコード"
 
 #: ../../reference.rst:422
 msgid "301, 308"
@@ -1414,61 +1439,61 @@ msgstr ""
 msgid ""
 "``redirect_https`` on a cleartext frontend or route, or the automatic "
 "redirect of a managed name (308)"
-msgstr ""
+msgstr "平文のフロントエンドまたはルートでの\\ ``redirect_https``\\ 、または管理対象の名前の自動リダイレクト（308）"
 
 #: ../../reference.rst:425
 msgid ""
 "A request hook denied the request, or a WebSocket upgrade carried an "
 "``Origin`` that the route does not list"
 msgstr ""
+"リクエストフックがリクエストを拒否した、またはWebSocketのアップグレードが、ルートに列挙されていない\\ ``Origin``\\ "
+"を運んでいた"
 
 #: ../../reference.rst:427
 msgid ""
 "``/__sibuna/ready``, ``health`` or ``metrics`` asked from outside "
 "``internal_allow`` or through a proxy"
 msgstr ""
+"``internal_allow``\\ の外から、またはプロキシを通して\\ ``/__sibuna/ready``\\ 、\\ "
+"``health``\\ 、\\ ``metrics``\\ を要求した"
 
 #: ../../reference.rst:429
 msgid "A request body above ``max_body``"
-msgstr ""
+msgstr "``max_body``\\ を超えるリクエストボディー"
 
 #: ../../reference.rst:430
-#, fuzzy
-#| msgid "429"
 msgid "499"
-msgstr "429"
+msgstr ""
 
 #: ../../reference.rst:431
 msgid ""
 "Written to the access log only: the client closed or reset before any "
 "response; no client receives it"
-msgstr ""
+msgstr "アクセスログにだけ書かれる：クライアントが応答の前に閉じたかリセットした。どのクライアントもこれを受け取らない"
 
 #: ../../reference.rst:433
 msgid "A WebSocket upgrade to a pool with ``http_version`` 2 or 3"
-msgstr ""
+msgstr "``http_version``\\ が2または3のプールへのWebSocketのアップグレード"
 
 #: ../../reference.rst:435
 msgid ""
 "No server could be reached, or a request that is not safe to repeat lost "
 "its server connection after it was sent"
-msgstr ""
+msgstr "どのサーバーにも届かなかった、または繰り返すのが安全でないリクエストが、送信後にサーバーとの接続を失った"
 
 #: ../../reference.rst:437
 msgid ""
 "Readiness during a shutdown, an HTTP/2 or HTTP/3 request above the "
 "request bound, or a console stream over its quota"
-msgstr ""
+msgstr "停止中のレディネス、リクエストの上限を超えるHTTP/2またはHTTP/3のリクエスト、またはクォータを超えたコンソールのストリーム"
 
 #: ../../reference.rst:438
-#, fuzzy
-#| msgid "404"
 msgid "504"
-msgstr "404"
+msgstr ""
 
 #: ../../reference.rst:439
 msgid "A server stayed silent longer than ``response_timeout``"
-msgstr ""
+msgstr "サーバーが\\ ``response_timeout``\\ より長く無応答だった"
 
 #: ../../reference.rst:441
 msgid "Error Catalog"
@@ -1768,16 +1793,12 @@ msgid "More than sixty management mutations in a minute from one session"
 msgstr "一つのセッションから1分間に60件を超える管理上の変更"
 
 #: ../../reference.rst:521
-#, fuzzy
-#| msgid "``CONSOLENODE``"
 msgid "``CONSOLEEDGE``"
-msgstr "``CONSOLENODE``"
+msgstr ""
 
 #: ../../reference.rst:522
-#, fuzzy
-#| msgid "400 / 409 / 503"
 msgid "400 / 503"
-msgstr "400 / 409 / 503"
+msgstr ""
 
 #: ../../reference.rst:523
 msgid ""
@@ -1785,32 +1806,28 @@ msgid ""
 "(400), or the edge worker did not answer or the audit row could not be "
 "written (503)"
 msgstr ""
+"*Edge*\\ "
+"ページの行が不正な形式か、コンソールの一覧にない（400）、またはエッジワーカーが応答しなかったか、監査の行を書けなかった（503）"
 
 #: ../../reference.rst:524
-#, fuzzy
-#| msgid "``CONSOLEQUORUM``"
 msgid "``CONSOLEQUERY``"
-msgstr "``CONSOLEQUORUM``"
+msgstr ""
 
 #: ../../reference.rst:526
 msgid "A read of the page *Edge* past the query allowance of the session"
-msgstr ""
+msgstr "セッションの問い合わせの許容量を超えた\\ *Edge*\\ ページの読み込み"
 
 #: ../../reference.rst:527
-#, fuzzy
-#| msgid "``CONSOLE004``"
 msgid "``CONSOLE404``"
-msgstr "``CONSOLE004``"
+msgstr ""
 
 #: ../../reference.rst:529
 msgid "An ``edge`` route on a console that runs without an edge"
-msgstr ""
+msgstr "エッジなしで動くコンソールでの\\ ``edge``\\ ルート"
 
 #: ../../reference.rst:531
-#, fuzzy
-#| msgid "Status codes of the data plane"
 msgid "Operator codes of the edge"
-msgstr "データプレーンのステータスコード"
+msgstr "エッジの運用者向けコード"
 
 #: ../../reference.rst:534
 msgid ""
@@ -1820,6 +1837,9 @@ msgid ""
 "marked *log* is not a failure: it is the code of a line on standard error "
 "that reports an event."
 msgstr ""
+"エッジは失敗を、コードを含むタイトル行、説明、\\ ``Hint:``\\ "
+"を持つ診断として表示します。表には、コードの表にあるすべてのコードを、デーモンが表示するとおりのタイトルとともに挙げます。\\ *ログ*\\ "
+"と印の付いたコードは失敗ではありません。出来事を報告する標準エラーの行のコードです。"
 
 #: ../../reference.rst:536
 msgid ""
@@ -1838,12 +1858,14 @@ msgid ""
 "``EDGE``: start, reload and notes of the edge "
 "(``cmd/sibuna/src/edge/failure.rs``, ``cmd/sibuna/src/edge.rs``)"
 msgstr ""
+"``EDGE``\\ ：エッジの起動、再読み込み、通知（\\ ``cmd/sibuna/src/edge/failure.rs``\\ 、\\ "
+"``cmd/sibuna/src/edge.rs``\\ ）"
 
 #: ../../reference.rst:549 ../../reference.rst:583 ../../reference.rst:630
 #: ../../reference.rst:688 ../../reference.rst:744 ../../reference.rst:791
 #: ../../reference.rst:813
 msgid "Title"
-msgstr ""
+msgstr "タイトル"
 
 #: ../../reference.rst:551
 msgid "``EDGE001``"
@@ -1865,12 +1887,14 @@ msgid ""
 "a failure of the database authority carries the title of its ``DBA`` code "
 "under ``EDGE001``"
 msgstr ""
+"エッジが起動しなかった、または\\ ``sibuna check``\\ がファイルを拒否した。自動HTTPSは\\ ``NAME NOT "
+"PUBLIC``\\ 、\\ ``NAME OUTSIDE CONSTRAINTS``\\ 、\\ ``UPDATE NOT SIGNED``\\ "
+"、\\ ``WILDCARD NEEDS DNS``\\ 、\\ ``ON DEMAND NEEDS A GUARD``\\ "
+"を加え、データベースによるオーソリティの失敗は、その\\ ``DBA``\\ コードのタイトルを\\ ``EDGE001``\\ の下で運ぶ"
 
 #: ../../reference.rst:554
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``EDGE002``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:555 ../../reference.rst:558 ../../reference.rst:561
 #: ../../reference.rst:564 ../../reference.rst:567 ../../reference.rst:570
@@ -1880,12 +1904,12 @@ msgstr "``CONSOLE002``"
 #: ../../reference.rst:736 ../../reference.rst:771 ../../reference.rst:774
 #: ../../reference.rst:777 ../../reference.rst:780 ../../reference.rst:783
 msgid "*log*"
-msgstr ""
+msgstr "*ログ*"
 
 #: ../../reference.rst:556
 msgid ""
 "A reload was rejected; the serving routes stay, and the line says why"
-msgstr ""
+msgstr "再読み込みが拒否された。処理中のルートは残り、その行が理由を述べる"
 
 #: ../../reference.rst:557
 msgid "``EDGE010``"
@@ -1895,7 +1919,7 @@ msgstr ""
 msgid ""
 "A command changed state: from the admin socket, from the mesh, or from "
 "the console; also a failed write of the access log"
-msgstr ""
+msgstr "コマンドが状態を変えた。管理ソケット、メッシュ、コンソールのいずれかから。アクセスログの書き込みの失敗も含む"
 
 #: ../../reference.rst:560
 msgid "``EDGE011``"
@@ -1903,7 +1927,7 @@ msgstr ""
 
 #: ../../reference.rst:562
 msgid "A configuration file was received from a peer (SID 0023)"
-msgstr ""
+msgstr "ピアから設定ファイルを受け取った（SID 0023）"
 
 #: ../../reference.rst:563
 msgid "``EDGE012``"
@@ -1913,7 +1937,7 @@ msgstr ""
 msgid ""
 "The mesh address cannot serve ``show cluster``; the node serves without "
 "that answer"
-msgstr ""
+msgstr "メッシュアドレスが\\ ``show cluster``\\ に応えられない。ノードはその応答なしで動く"
 
 #: ../../reference.rst:566
 msgid "``EDGE013``"
@@ -1924,6 +1948,7 @@ msgid ""
 "The kernel refused a listener option such as ``defer_accept``; the "
 "frontend serves without it (SID 0032)"
 msgstr ""
+"カーネルが\\ ``defer_accept``\\ のようなリスナーのオプションを拒否した。フロントエンドはそれなしで動く（SID 0032）"
 
 #: ../../reference.rst:569
 msgid "``EDGE014``"
@@ -1932,7 +1957,7 @@ msgstr ""
 #: ../../reference.rst:571
 msgid ""
 "A console peer is new or changed and is used after a restart (SID 0031)"
-msgstr ""
+msgstr "コンソールのピアが新しいか変わっており、再起動の後に使われる（SID 0031）"
 
 #: ../../reference.rst:572
 msgid "``EDGE015``"
@@ -1942,17 +1967,19 @@ msgstr ""
 msgid ""
 "The spill cache at start: created, reused, discarded, or in use by "
 "another process, with its size (SID 0027)"
-msgstr ""
+msgstr "起動時のspillキャッシュ：作成、再利用、破棄、または別のプロセスが使用中。そのサイズとともに（SID 0027）"
 
 #: ../../reference.rst:576
 msgid "The code holds no ``EDGE003`` to ``EDGE009``."
-msgstr ""
+msgstr "コードには\\ ``EDGE003``\\ から\\ ``EDGE009``\\ はありません。"
 
 #: ../../reference.rst:578
 msgid ""
 "``ADM``: the admin socket and the console commands "
 "(``cmd/sibuna/src/edge/control.rs``, ``crates/lb/src/runtime.rs``)"
 msgstr ""
+"``ADM``\\ ：管理ソケットとコンソールのコマンド（\\ ``cmd/sibuna/src/edge/control.rs``\\ 、\\ "
+"``crates/lb/src/runtime.rs``\\ ）"
 
 #: ../../reference.rst:585
 msgid "``ADM001``"
@@ -1966,7 +1993,7 @@ msgstr ""
 msgid ""
 "The line holds a byte outside printable ASCII, is longer than 512 bytes, "
 "or did not arrive within two seconds"
-msgstr ""
+msgstr "行に印字可能なASCII以外のバイトがある、512バイトより長い、または2秒以内に届かなかった"
 
 #: ../../reference.rst:588
 msgid "``ADM002``"
@@ -1978,7 +2005,7 @@ msgstr ""
 
 #: ../../reference.rst:590
 msgid "The words are not a command"
-msgstr ""
+msgstr "語がコマンドではない"
 
 #: ../../reference.rst:591
 msgid "``ADM003``"
@@ -1990,7 +2017,7 @@ msgstr ""
 
 #: ../../reference.rst:593
 msgid "No pool has this name"
-msgstr ""
+msgstr "この名前のプールがない"
 
 #: ../../reference.rst:594
 msgid "``ADM004``"
@@ -2002,7 +2029,7 @@ msgstr ""
 
 #: ../../reference.rst:596
 msgid "The pool has no server of this name; the hint names a near one"
-msgstr ""
+msgstr "プールにこの名前のサーバーがない。ヒントが近い名前を示す"
 
 #: ../../reference.rst:597
 msgid "``ADM005``"
@@ -2016,7 +2043,7 @@ msgstr ""
 msgid ""
 "A weight, an address, a state, a server name or a client address is not "
 "valid"
-msgstr ""
+msgstr "重み、アドレス、状態、サーバー名、クライアントアドレスのいずれかが有効でない"
 
 #: ../../reference.rst:600
 msgid "``ADM006``"
@@ -2028,7 +2055,7 @@ msgstr ""
 
 #: ../../reference.rst:602
 msgid "The pool already has a server with this name or this address"
-msgstr ""
+msgstr "プールにはすでにこの名前またはこのアドレスのサーバーがある"
 
 #: ../../reference.rst:603
 msgid "``ADM007``"
@@ -2042,7 +2069,7 @@ msgstr ""
 msgid ""
 "The pool changes only by reload (a Maglev table or protocol adapters), is "
 "full, or would lose its last server"
-msgstr ""
+msgstr "プールが再読み込みでしか変わらない（Maglevテーブルまたはプロトコルアダプター）、満杯である、または最後のサーバーを失うことになる"
 
 #: ../../reference.rst:606
 msgid "``ADM008``"
@@ -2056,7 +2083,7 @@ msgstr ""
 msgid ""
 "The file does not check, or the daemon was started by ``sibuna lb`` and "
 "has no file"
-msgstr ""
+msgstr "ファイルが確認に合格しない、またはデーモンが\\ ``sibuna lb``\\ で起動されていてファイルがない"
 
 #: ../../reference.rst:609
 msgid "``ADM009``"
@@ -2069,21 +2096,19 @@ msgstr ""
 #: ../../reference.rst:611
 msgid ""
 "More than a burst of 20 commands, or more than 10 per second after it"
-msgstr ""
+msgstr "20コマンドのバーストを超えた、またはその後に毎秒10コマンドを超えた"
 
 #: ../../reference.rst:612
 msgid "``ADM010``"
 msgstr ""
 
 #: ../../reference.rst:613
-#, fuzzy
-#| msgid "``CONSOLEQUORUM``"
 msgid "``NO ANSWER``"
-msgstr "``CONSOLEQUORUM``"
+msgstr ""
 
 #: ../../reference.rst:614
 msgid "The edge worker did not answer within five seconds"
-msgstr ""
+msgstr "エッジワーカーが5秒以内に応答しなかった"
 
 #: ../../reference.rst:615
 msgid "``ADM011``"
@@ -2097,7 +2122,7 @@ msgstr ""
 msgid ""
 "``reload cluster`` or ``show cluster`` on an edge without a mesh or "
 "without a file"
-msgstr ""
+msgstr "メッシュまたはファイルのないエッジでの\\ ``reload cluster``\\ または\\ ``show cluster``"
 
 #: ../../reference.rst:618
 msgid "``ADM012``"
@@ -2109,47 +2134,43 @@ msgstr ""
 
 #: ../../reference.rst:620
 msgid "This node reloaded, and some peers did not take the file"
-msgstr ""
+msgstr "このノードは再読み込みしたが、一部のピアがファイルを受け取らなかった"
 
 #: ../../reference.rst:621
 msgid "``ADM013``"
 msgstr ""
 
 #: ../../reference.rst:622
-#, fuzzy
-#| msgid "``CONSOLENODE``"
 msgid "``NOT REVOKED``"
-msgstr "``CONSOLENODE``"
+msgstr ""
 
 #: ../../reference.rst:623
 msgid ""
 "``revoke cert`` named nothing that the local authority issued, or the "
 "build has no TLS"
-msgstr ""
+msgstr "``revoke cert``\\ が、ローカルの認証局が発行したものを何も指定していない、またはビルドにTLSがない"
 
 #: ../../reference.rst:625
 msgid ""
 "``ACME``: automatic HTTPS (``crates/acme/src/error.rs``, "
 "``cmd/sibuna/src/acme.rs``)"
 msgstr ""
+"``ACME``\\ ：自動HTTPS（\\ ``crates/acme/src/error.rs``\\ 、\\ "
+"``cmd/sibuna/src/acme.rs``\\ ）"
 
 #: ../../reference.rst:632
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``ACME000``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:634
 msgid ""
 "An event of a certificate: obtained, renewed, loaded, stapled, held or "
 "released on demand, or validated and issued by the ACME server"
-msgstr ""
+msgstr "証明書の出来事：取得、更新、読み込み、ステープル、オンデマンドでの保持または解放、あるいはACMEサーバーによる検証と発行"
 
 #: ../../reference.rst:635
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``ACME001``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:636
 msgid "``STORAGE NOT WRITABLE``"
@@ -2157,13 +2178,11 @@ msgstr ""
 
 #: ../../reference.rst:637
 msgid "The directory of ``global.acme.storage`` cannot be read or written"
-msgstr ""
+msgstr "``global.acme.storage``\\ のディレクトリーを読み書きできない"
 
 #: ../../reference.rst:638
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``ACME002``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:639
 msgid "``AUTHORITY UNREACHABLE``"
@@ -2172,13 +2191,11 @@ msgstr ""
 #: ../../reference.rst:640
 msgid ""
 "The ACME authority could not be reached, or no trust root could be loaded"
-msgstr ""
+msgstr "ACMEの認証局に届かなかった、または信頼のルートを読み込めなかった"
 
 #: ../../reference.rst:641
-#, fuzzy
-#| msgid "``CONSOLE003``"
 msgid "``ACME003``"
-msgstr "``CONSOLE003``"
+msgstr ""
 
 #: ../../reference.rst:642
 msgid "``AUTHORITY REFUSED``"
@@ -2186,13 +2203,11 @@ msgstr ""
 
 #: ../../reference.rst:643
 msgid "The authority answered with a problem; the daemon tries again later"
-msgstr ""
+msgstr "認証局が問題を返した。デーモンは後で再試行する"
 
 #: ../../reference.rst:644
-#, fuzzy
-#| msgid "``CONSOLE004``"
 msgid "``ACME004``"
-msgstr "``CONSOLE004``"
+msgstr ""
 
 #: ../../reference.rst:645
 msgid "``RATE LIMITED``"
@@ -2200,13 +2215,11 @@ msgstr ""
 
 #: ../../reference.rst:646
 msgid "The authority limits our requests; the daemon waits as it was told"
-msgstr ""
+msgstr "認証局がリクエストを制限している。デーモンは指示されたとおりに待つ"
 
 #: ../../reference.rst:647
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``ACME005``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:648
 msgid "``VALIDATION FAILED``"
@@ -2216,13 +2229,11 @@ msgstr ""
 msgid ""
 "The authority could not validate the name over HTTP-01, TLS-ALPN-01 or "
 "DNS-01"
-msgstr ""
+msgstr "認証局がHTTP-01、TLS-ALPN-01、DNS-01で名前を検証できなかった"
 
 #: ../../reference.rst:650
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``ACME006``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:651
 msgid "``UNEXPECTED ANSWER``"
@@ -2230,13 +2241,11 @@ msgstr ""
 
 #: ../../reference.rst:652
 msgid "An answer broke the protocol or a bound"
-msgstr ""
+msgstr "応答がプロトコルまたは上限に違反した"
 
 #: ../../reference.rst:653
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``ACME008``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:654
 msgid "``CERTIFICATE REJECTED``"
@@ -2244,13 +2253,11 @@ msgstr ""
 
 #: ../../reference.rst:655
 msgid "The issued certificate cannot be served"
-msgstr ""
+msgstr "発行された証明書を提供できない"
 
 #: ../../reference.rst:656
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``ACME009``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:657
 msgid "``DNS PROVIDER FAILED``"
@@ -2261,12 +2268,12 @@ msgid ""
 "The DNS provider (hook, RFC 2136 or Cloudflare) could not write or remove "
 "the record, or its key or roots could not be read"
 msgstr ""
+"DNSプロバイダー（フック、RFC "
+"2136、Cloudflare）がレコードを書けなかった、または削除できなかった。あるいはその鍵やルートを読めなかった"
 
 #: ../../reference.rst:659
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``ACME010``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:660
 msgid "``RECORD NOT VISIBLE``"
@@ -2274,7 +2281,7 @@ msgstr ""
 
 #: ../../reference.rst:661
 msgid "The authoritative servers did not show the TXT record in time"
-msgstr ""
+msgstr "権威サーバーが時間内にTXTレコードを示さなかった"
 
 #: ../../reference.rst:662
 msgid "``ACME011``"
@@ -2288,13 +2295,11 @@ msgstr ""
 msgid ""
 "The local authority could not be created, read or used, or its root has "
 "other name constraints than the file lists"
-msgstr ""
+msgstr "ローカルの認証局を作成、読み込み、使用できなかった。またはそのルートがファイルの列挙と異なる名前制約を持つ"
 
 #: ../../reference.rst:665
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``ACME012``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:666
 msgid "``ACCOUNT NOT BOUND``"
@@ -2302,13 +2307,11 @@ msgstr ""
 
 #: ../../reference.rst:667
 msgid "The authority wants an external account binding, or refused ours"
-msgstr ""
+msgstr "認証局が外部アカウントの結び付けを求めている、または私たちのものを拒否した"
 
 #: ../../reference.rst:668
-#, fuzzy
-#| msgid "``CONSOLE003``"
 msgid "``ACME013``"
-msgstr "``CONSOLE003``"
+msgstr ""
 
 #: ../../reference.rst:669
 msgid "``NO OCSP RESPONSE``"
@@ -2318,19 +2321,17 @@ msgstr ""
 msgid ""
 "The OCSP responder did not answer, or its answer cannot be stapled; the "
 "certificate is served without a staple"
-msgstr ""
+msgstr "OCSPレスポンダーが応答しなかった、またはその応答をステープルできない。証明書はステープルなしで提供される"
 
 #: ../../reference.rst:671
-#, fuzzy
-#| msgid "``CONSOLE004``"
 msgid "``ACME014``"
-msgstr "``CONSOLE004``"
+msgstr ""
 
 #: ../../reference.rst:673
 msgid ""
 "The certificate thread stopped on a defect and starts again; the served "
 "certificates stay"
-msgstr ""
+msgstr "証明書のスレッドが欠陥で停止し、再び起動する。提供中の証明書は残る"
 
 #: ../../reference.rst:674
 msgid "``ACME015``"
@@ -2344,7 +2345,7 @@ msgstr ""
 msgid ""
 "The program ``openssl`` that makes RSA keys could not be run, or wrote no "
 "key"
-msgstr ""
+msgstr "RSA鍵を作るプログラム\\ ``openssl``\\ を実行できなかった、または鍵を書かなかった"
 
 #: ../../reference.rst:677
 msgid "``ACME016``"
@@ -2358,17 +2359,19 @@ msgstr ""
 msgid ""
 "The revoked certificates or the revocation list of the local authority "
 "could not be read or written, or the list is full"
-msgstr ""
+msgstr "ローカルの認証局の失効した証明書または失効リストを読み書きできなかった、またはリストが満杯である"
 
 #: ../../reference.rst:681
 msgid "The code holds no ``ACME007``."
-msgstr ""
+msgstr "コードには\\ ``ACME007``\\ はありません。"
 
 #: ../../reference.rst:683
 msgid ""
 "``DBA``: the database authority (``crates/authority/src/error.rs``, "
 "``cmd/sibuna/src/edge/authority/``)"
 msgstr ""
+"``DBA``\\ ：データベースによるオーソリティ（\\ ``crates/authority/src/error.rs``\\ 、\\ "
+"``cmd/sibuna/src/edge/authority/``\\ ）"
 
 #: ../../reference.rst:690
 msgid "``DBA001``"
@@ -2380,7 +2383,7 @@ msgstr ""
 
 #: ../../reference.rst:692
 msgid "A source or a stored document does not evaluate or does not check"
-msgstr ""
+msgstr "ソースまたは格納された文書が評価できない、または確認に合格しない"
 
 #: ../../reference.rst:693
 msgid "``DBA002``"
@@ -2392,7 +2395,7 @@ msgstr ""
 
 #: ../../reference.rst:695
 msgid "The head is not the revision that the commit expected"
-msgstr ""
+msgstr "先頭が、コミットが期待したリビジョンではない"
 
 #: ../../reference.rst:696
 msgid "``DBA003``"
@@ -2406,7 +2409,7 @@ msgstr ""
 msgid ""
 "The database cannot be reached, or it refused the statement (also for a "
 "role that lacks a right)"
-msgstr ""
+msgstr "データベースに届かない、またはデータベースが文を拒否した（権限のないロールの場合も含む）"
 
 #: ../../reference.rst:699
 msgid "``DBA004``"
@@ -2418,7 +2421,7 @@ msgstr ""
 
 #: ../../reference.rst:701
 msgid "Nothing is published yet, or no revision has this number"
-msgstr ""
+msgstr "まだ何も公開されていない、またはこの番号のリビジョンがない"
 
 #: ../../reference.rst:702
 msgid "``DBA005``"
@@ -2432,7 +2435,7 @@ msgstr ""
 msgid ""
 "The ``authority`` section or its file is wrong, or the build has no "
 "storage"
-msgstr ""
+msgstr "``authority``\\ 節またはそのファイルが誤っている、またはビルドにストレージがない"
 
 #: ../../reference.rst:705
 msgid "``DBA006``"
@@ -2444,7 +2447,7 @@ msgstr ""
 
 #: ../../reference.rst:707
 msgid "``show authority`` on an edge that serves its file"
-msgstr ""
+msgstr "自分のファイルで動いているエッジでの\\ ``show authority``"
 
 #: ../../reference.rst:708
 msgid "``DBA007``"
@@ -2456,7 +2459,7 @@ msgstr ""
 
 #: ../../reference.rst:710
 msgid "``sibuna authority`` without a known command, or with a bad option"
-msgstr ""
+msgstr "既知のコマンドのない、または不正なオプションを持つ\\ ``sibuna authority``"
 
 #: ../../reference.rst:711
 msgid "``DBA008``"
@@ -2468,7 +2471,7 @@ msgstr ""
 
 #: ../../reference.rst:713
 msgid "A stored revision is not what its row says"
-msgstr ""
+msgstr "格納されたリビジョンが、その行の記述と一致しない"
 
 #: ../../reference.rst:714
 msgid "``DBA009``"
@@ -2480,7 +2483,7 @@ msgstr ""
 
 #: ../../reference.rst:716
 msgid "``reload cluster`` on a node that follows a database"
-msgstr ""
+msgstr "データベースに追従しているノードでの\\ ``reload cluster``"
 
 #: ../../reference.rst:717
 msgid "``DBA010``"
@@ -2488,7 +2491,7 @@ msgstr ""
 
 #: ../../reference.rst:719
 msgid "A revision was applied"
-msgstr ""
+msgstr "リビジョンを適用した"
 
 #: ../../reference.rst:720
 msgid "``DBA011``"
@@ -2496,7 +2499,7 @@ msgstr ""
 
 #: ../../reference.rst:722
 msgid "A revision was refused; the node keeps the one it serves"
-msgstr ""
+msgstr "リビジョンを拒否した。ノードは処理中のリビジョンを保つ"
 
 #: ../../reference.rst:723
 msgid "``DBA012``"
@@ -2506,7 +2509,7 @@ msgstr ""
 msgid ""
 "The database cannot be reached; the node keeps its revision and asks "
 "again every two seconds"
-msgstr ""
+msgstr "データベースに届かない。ノードはリビジョンを保ち、2秒ごとに再び問い合わせる"
 
 #: ../../reference.rst:726
 msgid "``DBA013``"
@@ -2514,7 +2517,7 @@ msgstr ""
 
 #: ../../reference.rst:728
 msgid "The database answers again"
-msgstr ""
+msgstr "データベースが再び応答する"
 
 #: ../../reference.rst:729
 msgid "``DBA014``"
@@ -2522,7 +2525,7 @@ msgstr ""
 
 #: ../../reference.rst:731
 msgid "The node started from its cache"
-msgstr ""
+msgstr "ノードがキャッシュから起動した"
 
 #: ../../reference.rst:732
 msgid "``DBA015``"
@@ -2531,7 +2534,7 @@ msgstr ""
 #: ../../reference.rst:734
 msgid ""
 "``authority.binds`` names a frontend that the revision does not publish"
-msgstr ""
+msgstr "``authority.binds``\\ が、リビジョンが公開していないフロントエンドを指定している"
 
 #: ../../reference.rst:735
 msgid "``DBA016``"
@@ -2541,13 +2544,15 @@ msgstr ""
 msgid ""
 "The cache is ignored or cannot be written, or the report to the database "
 "failed"
-msgstr ""
+msgstr "キャッシュが無視されたか書き込めない、またはデータベースへの報告が失敗した"
 
 #: ../../reference.rst:739
 msgid ""
 "``UPG``: replacing the binary (``crates/upgrade/src/error.rs``, "
 "``cmd/sibuna/src/edge/upgrade.rs``)"
 msgstr ""
+"``UPG``\\ ：バイナリの置き換え（\\ ``crates/upgrade/src/error.rs``\\ 、\\ "
+"``cmd/sibuna/src/edge/upgrade.rs``\\ ）"
 
 #: ../../reference.rst:746
 msgid "``UPG001``"
@@ -2559,7 +2564,7 @@ msgstr ""
 
 #: ../../reference.rst:748
 msgid "The replacement runs as another user than the running daemon"
-msgstr ""
+msgstr "置き換え側が、動いているデーモンと別のユーザーで動いている"
 
 #: ../../reference.rst:749
 msgid "``UPG002``"
@@ -2571,7 +2576,7 @@ msgstr ""
 
 #: ../../reference.rst:751
 msgid "The two binaries share no version of the handoff protocol"
-msgstr ""
+msgstr "二つのバイナリが、ハンドオフのプロトコルのバージョンを一つも共有していない"
 
 #: ../../reference.rst:752
 msgid "``UPG003``"
@@ -2585,7 +2590,7 @@ msgstr ""
 msgid ""
 "A malformed, oversized or unexpected frame, or a descriptor that is not "
 "what the frame says"
-msgstr ""
+msgstr "不正な形式、大きすぎる、または予期しないフレーム、あるいはフレームの記述と異なるディスクリプター"
 
 #: ../../reference.rst:755
 msgid "``UPG004``"
@@ -2597,7 +2602,7 @@ msgstr ""
 
 #: ../../reference.rst:757
 msgid "The running daemon did not answer in time; it keeps serving"
-msgstr ""
+msgstr "動いているデーモンが時間内に応答しなかった。デーモンは処理を続ける"
 
 #: ../../reference.rst:758
 msgid "``UPG005``"
@@ -2609,7 +2614,7 @@ msgstr ""
 
 #: ../../reference.rst:760
 msgid "The running daemon ended the handoff; its log says why"
-msgstr ""
+msgstr "動いているデーモンがハンドオフを終えた。その理由はログにある"
 
 #: ../../reference.rst:761
 msgid "``UPG006``"
@@ -2622,7 +2627,7 @@ msgstr ""
 #: ../../reference.rst:763
 msgid ""
 "Another replacement is in progress, or the running daemon is stopping"
-msgstr ""
+msgstr "別の置き換えが進行中である、または動いているデーモンが停止中である"
 
 #: ../../reference.rst:764
 msgid "``UPG007``"
@@ -2634,7 +2639,7 @@ msgstr ""
 
 #: ../../reference.rst:766
 msgid "The platform cannot pass descriptors (Linux only)"
-msgstr ""
+msgstr "プラットフォームがディスクリプターを渡せない（Linuxのみ）"
 
 #: ../../reference.rst:767
 msgid "``UPG008``"
@@ -2648,7 +2653,7 @@ msgstr ""
 msgid ""
 "The daemon at ``global.upgrade_socket`` listens on none of the addresses "
 "of this file"
-msgstr ""
+msgstr "``global.upgrade_socket``\\ のデーモンが、このファイルのどのアドレスでもリッスンしていない"
 
 #: ../../reference.rst:770
 msgid "``UPG010``"
@@ -2657,7 +2662,7 @@ msgstr ""
 #: ../../reference.rst:772
 msgid ""
 "The old process handed its listeners and UDP mappings to the replacement"
-msgstr ""
+msgstr "古いプロセスがリスナーとUDPマッピングを置き換え側に渡した"
 
 #: ../../reference.rst:773
 msgid "``UPG011``"
@@ -2665,7 +2670,7 @@ msgstr ""
 
 #: ../../reference.rst:775
 msgid "The replacement failed before the cutover; the old process serves on"
-msgstr ""
+msgstr "置き換え側が切り替えの前に失敗した。古いプロセスが処理を続ける"
 
 #: ../../reference.rst:776
 msgid "``UPG012``"
@@ -2673,7 +2678,7 @@ msgstr ""
 
 #: ../../reference.rst:778
 msgid "The old process refused an upgrade peer"
-msgstr ""
+msgstr "古いプロセスがアップグレードの相手を拒否した"
 
 #: ../../reference.rst:779
 msgid "``UPG013``"
@@ -2681,7 +2686,7 @@ msgstr ""
 
 #: ../../reference.rst:781
 msgid "The replacement cannot be ended; UDP stays unread until it is gone"
-msgstr ""
+msgstr "置き換え側を終了させられない。それがなくなるまでUDPは読まれない"
 
 #: ../../reference.rst:782
 msgid "``UPG020``"
@@ -2689,17 +2694,15 @@ msgstr ""
 
 #: ../../reference.rst:784
 msgid "The replacement took the listeners and UDP mappings"
-msgstr ""
+msgstr "置き換え側がリスナーとUDPマッピングを受け取った"
 
 #: ../../reference.rst:786
 msgid "``SPILL``: the spill cache (``crates/spill/src/error.rs``)"
-msgstr ""
+msgstr "``SPILL``\\ ：spillキャッシュ（\\ ``crates/spill/src/error.rs``\\ ）"
 
 #: ../../reference.rst:793
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``SPILL001``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:794
 msgid "``SPILL CACHE SIZE OUT OF RANGE``"
@@ -2707,13 +2710,11 @@ msgstr ""
 
 #: ../../reference.rst:795
 msgid "The size lies outside 64 KiB to 64 GiB"
-msgstr ""
+msgstr "サイズが64 KiBから64 GiBの範囲外にある"
 
 #: ../../reference.rst:796
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``SPILL002``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:797
 msgid "``NOT A SPILL CACHE``"
@@ -2721,13 +2722,11 @@ msgstr ""
 
 #: ../../reference.rst:798
 msgid "The file at the path exists and is not a cache; it is left alone"
-msgstr ""
+msgstr "パスにあるファイルが存在し、キャッシュではない。そのままにする"
 
 #: ../../reference.rst:799
-#, fuzzy
-#| msgid "``CONSOLE003``"
 msgid "``SPILL003``"
-msgstr "``CONSOLE003``"
+msgstr ""
 
 #: ../../reference.rst:800
 msgid "``SPILL CACHE IN USE``"
@@ -2737,13 +2736,11 @@ msgstr ""
 msgid ""
 "Another process holds the lock of the file; the daemon then runs with the "
 "sticky table in memory only"
-msgstr ""
+msgstr "別のプロセスがファイルのロックを持っている。そのときデーモンは、スティッキーテーブルをメモリだけに置いて動く"
 
 #: ../../reference.rst:802
-#, fuzzy
-#| msgid "``CONSOLE004``"
 msgid "``SPILL004``"
-msgstr "``CONSOLE004``"
+msgstr ""
 
 #: ../../reference.rst:803
 msgid "``SPILL CACHE UNAVAILABLE``"
@@ -2751,7 +2748,7 @@ msgstr ""
 
 #: ../../reference.rst:804
 msgid "The system refused an operation on the file"
-msgstr ""
+msgstr "システムがファイルに対する操作を拒否した"
 
 #: ../../reference.rst:806
 msgid ""
@@ -2759,16 +2756,16 @@ msgid ""
 "``EDGE001`` with the title ``SPILL CACHE NOT USABLE``, and the message "
 "carries the ``SPILL`` code."
 msgstr ""
+"``SPILL003``\\ 以外の\\ ``SPILL``\\ の失敗は、タイトル\\ ``SPILL CACHE NOT USABLE``\\ "
+"の\\ ``EDGE001``\\ で起動を止め、メッセージが\\ ``SPILL``\\ のコードを運びます。"
 
 #: ../../reference.rst:808
 msgid "``HOOK``: plugins (``crates/plugin/src/spec.rs``)"
-msgstr ""
+msgstr "``HOOK``\\ ：プラグイン（\\ ``crates/plugin/src/spec.rs``\\ ）"
 
 #: ../../reference.rst:815
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``HOOK001``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:816
 msgid "``UNKNOWN PLUGIN``"
@@ -2776,13 +2773,11 @@ msgstr ""
 
 #: ../../reference.rst:817
 msgid "A frontend lists a plugin that ``plugins`` does not define"
-msgstr ""
+msgstr "フロントエンドが、\\ ``plugins``\\ が定義していないプラグインを列挙している"
 
 #: ../../reference.rst:818
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``HOOK002``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:819
 msgid "``INVALID PLUGIN SETTINGS``"
@@ -2790,13 +2785,11 @@ msgstr ""
 
 #: ../../reference.rst:820
 msgid "A key of a plugin is missing, unknown or out of range"
-msgstr ""
+msgstr "プラグインのキーが欠けている、未知である、または範囲外である"
 
 #: ../../reference.rst:821
-#, fuzzy
-#| msgid "``CONSOLE003``"
 msgid "``HOOK003``"
-msgstr "``CONSOLE003``"
+msgstr ""
 
 #: ../../reference.rst:822
 msgid "``MODULE NOT READABLE``"
@@ -2804,30 +2797,24 @@ msgstr ""
 
 #: ../../reference.rst:823
 msgid "The Wasm module cannot be read"
-msgstr ""
+msgstr "Wasmモジュールを読めない"
 
 #: ../../reference.rst:824
-#, fuzzy
-#| msgid "``CONSOLE004``"
 msgid "``HOOK004``"
-msgstr "``CONSOLE004``"
+msgstr ""
 
 #: ../../reference.rst:825
-#, fuzzy
-#| msgid "``CONSOLENODE``"
 msgid "``MODULE NOT LOADED``"
-msgstr "``CONSOLENODE``"
+msgstr ""
 
 #: ../../reference.rst:826
 msgid ""
 "The module does not validate, or its memory does not fit ``memory_pages``"
-msgstr ""
+msgstr "モジュールが検証に合格しない、またはそのメモリが\\ ``memory_pages``\\ に収まらない"
 
 #: ../../reference.rst:827
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``HOOK005``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:828
 msgid "``FORBIDDEN IMPORT``"
@@ -2838,12 +2825,11 @@ msgid ""
 "The module imports something other than ``sibuna.add_header`` and "
 "``sibuna.now_ms``"
 msgstr ""
+"モジュールが\\ ``sibuna.add_header``\\ と\\ ``sibuna.now_ms``\\ 以外のものをインポートしている"
 
 #: ../../reference.rst:830
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``HOOK006``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:831
 msgid "``ABI MISMATCH``"
@@ -2853,13 +2839,11 @@ msgstr ""
 msgid ""
 "The module lacks an export of the interface, or ``sibuna_abi`` does not "
 "return 1"
-msgstr ""
+msgstr "モジュールにインターフェースのエクスポートが欠けている、または\\ ``sibuna_abi``\\ が1を返さない"
 
 #: ../../reference.rst:833
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``HOOK007``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:834
 msgid "``UNKNOWN NATIVE HOOK``"
@@ -2867,13 +2851,11 @@ msgstr ""
 
 #: ../../reference.rst:835
 msgid "The build has no native hook of this name"
-msgstr ""
+msgstr "ビルドにこの名前のネイティブフックがない"
 
 #: ../../reference.rst:836
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``HOOK008``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:837
 msgid "``NATIVE HOOK REFUSED ITS SETTINGS``"
@@ -2881,13 +2863,11 @@ msgstr ""
 
 #: ../../reference.rst:838
 msgid "A native hook refused the ``settings`` of the plugin"
-msgstr ""
+msgstr "ネイティブフックがプラグインの\\ ``settings``\\ を拒否した"
 
 #: ../../reference.rst:839
-#, fuzzy
-#| msgid "``CONSOLE002``"
 msgid "``HOOK009``"
-msgstr "``CONSOLE002``"
+msgstr ""
 
 #: ../../reference.rst:840
 msgid "``AGENTS NOT SUPPORTED``"
@@ -2895,7 +2875,7 @@ msgstr ""
 
 #: ../../reference.rst:841
 msgid "An agent needs a Unix socket, which this platform lacks"
-msgstr ""
+msgstr "エージェントにはUnixソケットが必要だが、このプラットフォームにはない"
 
 #: ../../reference.rst:843
 msgid ""
@@ -2907,6 +2887,11 @@ msgid ""
 "their own (``TRAFFIC``, ``COMPARISON``, ``RANKHISTORY``, ``RULEHITS``, "
 "``TIMELINE``, ``MINUTES``), whose hints the interface shows."
 msgstr ""
+"再読み込みで読み込めないプラグインの集合は、処理中の集合をそのまま残します。さらに二つの系列は、エッジの運用者よりもビルドとコンソールに関わります。\\ "
+"``HTML001``\\ から\\ ``HTML008``\\ はページテンプレートのビルドを止め、\\ ``GEOIP001``\\ "
+"はコンソールのないビルドでGeoIPのスナップショットを拒否します。コンソールの問い合わせのルートは独自の系列（\\ ``TRAFFIC``\\ "
+"、\\ ``COMPARISON``\\ 、\\ ``RANKHISTORY``\\ 、\\ ``RULEHITS``\\ 、\\ "
+"``TIMELINE``\\ 、\\ ``MINUTES``\\ ）で応答し、そのヒントをインターフェースが表示します。"
 
 #: ../../reference.rst:845
 msgid "Policy Schema"
@@ -2983,21 +2968,6 @@ msgstr ""
 "}"
 
 #: ../../reference.rst:872
-#, fuzzy
-#| msgid ""
-#| "``challenge_at`` and ``deny_at`` lie in -1000 to 1000 with ``deny_at`` "
-#| "at or above ``challenge_at``, and ``bits_step`` in 1 to 1000. A "
-#| "``challenge`` block belongs only to ``CHALLENGE`` rules, with 1 to 64 "
-#| "work bits. ``limits`` gives a rule its own quota: ``rate`` 1 to "
-#| "1,000,000 and ``window_seconds`` 1 to 86,400 are required, "
-#| "``ban_seconds`` (at most 86,400) is optional, and ``WEIGH`` rules "
-#| "cannot carry limits. ``ja4`` is a whole JA4 fingerprint, which must be "
-#| "equal, or a prefix followed by ``*``, which the fingerprint must start "
-#| "with; ``*`` alone matches any fingerprint, and a request without one "
-#| "matches no ``ja4`` rule. A pattern that no fingerprint could match is "
-#| "refused with ``InvalidJa4`` (Part IX, JA4 Fingerprints From the "
-#| "Ingress). The reputation trie of ``ip_rules`` holds at most 8,192 "
-#| "nodes. Each rule may use one spelling of each criterion."
 msgid ""
 "``challenge_at`` and ``deny_at`` lie in -1000 to 1000 with ``deny_at`` at "
 "or above ``challenge_at``, and ``bits_step`` in 1 to 1000. A "
@@ -3023,7 +2993,7 @@ msgstr ""
 "が続く接頭辞（フィンガープリントがそれで始まらなければならない）です。\\ ``*``\\ "
 "だけなら任意のフィンガープリントに一致し、フィンガープリントのないリクエストはどの\\ ``ja4``\\ "
 "ルールにも一致しません。どのフィンガープリントも一致し得ないパターンは\\ ``InvalidJa4``\\ "
-"で拒否されます（第IX部「イングレスから受け取るJA4フィンガープリント」）。\\ ``ip_rules``\\ "
+"で拒否されます（第XI部「イングレスから受け取るJA4フィンガープリント」）。\\ ``ip_rules``\\ "
 "のレピュテーショントライは最大8,192ノードを保持します。各ルールでは、各条件について一つの綴りだけを使えます。"
 
 #: ../../reference.rst:874
@@ -3084,34 +3054,43 @@ msgid ""
 "channel ``sibuna_edge``. The history is never pruned. "
 "``crates/authority/src/sql.rs`` holds the schema."
 msgstr ""
+"エッジのデータベースによるオーソリティ（SID 0028）は、\\ ``sibuna_schema``\\ のコンポーネント\\ "
+"``authority``\\ として、ファイアウォールのデータベースまたは別のデータベースに三つのテーブルを加えます。\\ "
+"``edge_head``\\ （先頭の番号を持つ一行）、\\ ``edge_revisions``\\ （リビジョンごとに一行：\\ "
+"``origin``\\ （\\ ``apply``\\ または\\ ``rollback``\\ ）、\\ ``restored``\\ "
+"、64桁の\\ ``digest``\\ を持つ最大256 KiBの確認済みの\\ ``document``\\ 、名前とダイジェストを持つ\\ "
+"``source``\\ 、\\ ``author``\\ 、\\ ``note``\\ 、\\ ``committed_at``\\ ）、\\ "
+"``edge_nodes``\\ （ノードごとに一行：\\ ``applied``\\ 、\\ ``digest``\\ 、\\ "
+"``refused``\\ 、\\ ``detail``\\ 、\\ ``seen_at``\\ ）です。PostgreSQLでは、\\ "
+"``edge_head``\\ の更新がチャネル\\ ``sibuna_edge``\\ に通知します。履歴は決して刈り込まれません。\\ "
+"``crates/authority/src/sql.rs``\\ がスキーマを持ちます。"
 
 #: ../../reference.rst:883
 msgid "Commands of the Binary"
-msgstr ""
+msgstr "バイナリのコマンド"
 
 #: ../../reference.rst:886
 msgid ""
 "One binary holds the firewall daemon, the edge and their tools. Part XI "
 "describes each command; this table says where."
 msgstr ""
+"一つのバイナリが、ファイアウォールのデーモン、エッジ、そのツールを持ちます。第XI部で各コマンドを説明しています。この表はその場所を示します。"
 
 #: ../../reference.rst:888
 msgid "Commands of ``sibuna``"
-msgstr ""
+msgstr "``sibuna``\\ のコマンド"
 
 #: ../../reference.rst:893
 msgid "Purpose, and where Part XI describes it"
-msgstr ""
+msgstr "目的と、第XI部で説明している箇所"
 
 #: ../../reference.rst:894
-#, fuzzy
-#| msgid "``/__sibuna/metrics``"
 msgid "``sibuna [options]``"
-msgstr "``/__sibuna/metrics``"
+msgstr ""
 
 #: ../../reference.rst:895
 msgid "The firewall daemon (*Command-Line Reference*)"
-msgstr ""
+msgstr "ファイアウォールのデーモン（\\ *コマンドラインのリファレンス*\\ ）"
 
 #: ../../reference.rst:896
 msgid "``sibuna --config-file FILE``"
@@ -3121,7 +3100,7 @@ msgstr ""
 msgid ""
 "The edge from a JSON or JLV topology; it takes no other option (*Edge "
 "Load Balancing*)"
-msgstr ""
+msgstr "JSONまたはJLVのトポロジーから起動するエッジ。他のオプションは取らない（\\ *エッジのロードバランシング*\\ ）"
 
 #: ../../reference.rst:898
 msgid "``sibuna check -f FILE``"
@@ -3130,7 +3109,7 @@ msgstr ""
 #: ../../reference.rst:899
 msgid ""
 "Checks a topology offline, with its certificates and CA files, and exits"
-msgstr ""
+msgstr "トポロジーを、その証明書とCAファイルとともにオフラインで確認し、終了する"
 
 #: ../../reference.rst:900
 msgid "``sibuna lb --bind IP:PORT --server IP:PORT ...``"
@@ -3141,6 +3120,8 @@ msgid ""
 "The edge from a few options, without a file; ``--print-config`` writes "
 "the file (*Starting with one command*)"
 msgstr ""
+"ファイルなしに、いくつかのオプションから起動するエッジ。\\ ``--print-config``\\ がファイルを書く（\\ "
+"*一つのコマンドで始める*\\ ）"
 
 #: ../../reference.rst:902
 msgid "``sibuna ctl SOCKET COMMAND``"
@@ -3150,7 +3131,7 @@ msgstr ""
 msgid ""
 "One command of the admin socket (*Changing servers at run time*, and the "
 "table above)"
-msgstr ""
+msgstr "管理ソケットの一つのコマンド（\\ *実行中にサーバーを変更する*\\ 、および上の表）"
 
 #: ../../reference.rst:904
 msgid ""
@@ -3161,7 +3142,7 @@ msgstr ""
 msgid ""
 "Publishes and inspects the topology in a database (*A database for the "
 "topology*)"
-msgstr ""
+msgstr "データベースでトポロジーを公開し、調べる（\\ *トポロジーのためのデータベース*\\ ）"
 
 #: ../../reference.rst:906
 msgid "``sibuna init-admin``, ``sibuna console ...``"
@@ -3171,7 +3152,7 @@ msgstr ""
 msgid ""
 "The accounts, tokens, policies and GeoIP data of the console (*Console "
 "Preview*)"
-msgstr ""
+msgstr "コンソールのアカウント、トークン、ポリシー、GeoIPデータ（\\ *コンソールのプレビュー*\\ ）"
 
 #: ../../reference.rst:909
 msgid "Build Targets"
@@ -3190,12 +3171,12 @@ msgid "``cargo build --release -p sibuna``"
 msgstr "``cargo build --release -p sibuna``"
 
 #: ../../reference.rst:919
-#, fuzzy
-#| msgid "Daemon with SQLite storage and the console (the default features)"
 msgid ""
 "Daemon with SQLite storage, the console, JLV and automatic HTTPS (the "
 "default features ``sqlite``, ``console``, ``jlv`` and ``https``)"
-msgstr "SQLiteストレージとコンソールを持つデーモン（既定のフィーチャー）"
+msgstr ""
+"SQLiteストレージ、コンソール、JLV、自動HTTPSを持つデーモン（既定のフィーチャー\\ ``sqlite``\\ 、\\ "
+"``console``\\ 、\\ ``jlv``\\ 、\\ ``https``\\ ）"
 
 #: ../../reference.rst:920
 msgid "``cargo build --release -p sibuna --no-default-features``"
@@ -3315,10 +3296,8 @@ msgstr ""
 "``GEOIP001``\\ ）。"
 
 #: ../../reference.rst:943
-#, fuzzy
-#| msgid "Exercise 10.1"
 msgid "Exercise 12.1"
-msgstr "演習10.1"
+msgstr "演習12.1"
 
 #: ../../reference.rst:945
 msgid ""

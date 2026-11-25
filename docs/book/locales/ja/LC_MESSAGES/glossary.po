@@ -23,7 +23,7 @@ msgstr "用語集"
 
 #: ../../glossary.rst:6
 msgid "Admin socket"
-msgstr ""
+msgstr "管理ソケット"
 
 #: ../../glossary.rst:7
 msgid ""
@@ -32,6 +32,10 @@ msgid ""
 "show the servers, drain, weigh, add or remove a server, lift a ban, "
 "reload. There is no TCP listener for administration (SID 0018)."
 msgstr ""
+"``global.admin_socket``\\ または\\ ``sibuna lb --admin``\\ "
+"で指定する、モード0600のUnixソケットです。\\ ``sibuna ctl``\\ "
+"からコマンドを一行ずつ受け取ります。サーバーの表示、ドレイン、重みの設定、サーバーの追加と削除、禁止の解除、再読み込みです。管理用のTCPリスナーはありません（SID "
+"0018）。"
 
 #: ../../glossary.rst:9
 msgid "Admission"
@@ -49,7 +53,7 @@ msgstr ""
 
 #: ../../glossary.rst:12
 msgid "Affinity"
-msgstr ""
+msgstr "アフィニティ"
 
 #: ../../glossary.rst:13
 msgid ""
@@ -57,6 +61,8 @@ msgid ""
 "by the source address, or by a sticky table. It gives way when the server "
 "is down, full, ejected or drained (SID 0019, SID 0025)."
 msgstr ""
+"一つのクライアントのフローを一つのサーバーへ送る規則です。Cookie、送信元アドレス、スティッキーテーブルのいずれかによります。サーバーが停止、満杯、除外、ドレインのときは譲ります（SID "
+"0019、SID 0025）。"
 
 #: ../../glossary.rst:15
 msgid "Aho-Corasick automaton"
@@ -72,7 +78,7 @@ msgstr ""
 
 #: ../../glossary.rst:18
 msgid "Authority"
-msgstr ""
+msgstr "オーソリティ"
 
 #: ../../glossary.rst:19
 msgid ""
@@ -81,10 +87,14 @@ msgid ""
 "head and composes it with its own file, which keeps ``global``, ``mesh``, "
 "``observability`` and ``authority`` (SID 0028)."
 msgstr ""
+"エッジにおいて、永続モードで公開されたトポロジー（\\ ``frontends``\\ 、\\ ``backends``\\ 、\\ "
+"``http``\\ ）を所有するデータベースです。各ノードはその先頭に追従し、それを自分のファイルと合成します。ファイルは\\ "
+"``global``\\ 、\\ ``mesh``\\ 、\\ ``observability``\\ 、\\ ``authority``\\ "
+"を保ちます（SID 0028）。"
 
 #: ../../glossary.rst:21
 msgid "Backend"
-msgstr ""
+msgstr "バックエンド"
 
 #: ../../glossary.rst:22
 msgid ""
@@ -92,28 +102,27 @@ msgid ""
 "timeouts and stickiness. The word follows HAProxy; *pool* names the same "
 "thing."
 msgstr ""
+"一つのプロトコルのサーバーのプールで、スケジューラー、ヘルスチェック、タイムアウト、スティッキネスを持ちます。この語はHAProxyに従ったもので、\\ "
+"*プール*\\ も同じものを指します。"
 
 #: ../../glossary.rst:24
 msgid "Ban table"
 msgstr "禁止テーブル"
 
 #: ../../glossary.rst:25
-#, fuzzy
-#| msgid ""
-#| "4,096 lock-free slots of banned client addresses with expiry, written "
-#| "by the honeypot and by reputation shared across a cluster, read on "
-#| "every request."
 msgid ""
 "Lock-free slots of banned client addresses with expiry, 65,536 by default "
 "(``--ban-table-slots``), written by the honeypot, by rule quotas, by "
 "reputation shared across a cluster and, in the edge, by the mesh; read on "
 "every request."
 msgstr ""
-"禁止したクライアントのアドレスを期限とともに持つ、4,096個のロックフリーなスロットです。ハニーポットと、クラスターで共有するレピュテーションが書き込み、すべてのリクエストで読みます。"
+"禁止したクライアントのアドレスを期限とともに持つロックフリーなスロットで、既定は65,536個です（\\ "
+"``--ban-table-slots``\\ "
+"）。ハニーポット、ルールのクォータ、クラスターで共有するレピュテーション、そしてエッジではメッシュが書き込み、すべてのリクエストで読みます。"
 
 #: ../../glossary.rst:27
 msgid "Breaker"
-msgstr ""
+msgstr "ブレーカー"
 
 #: ../../glossary.rst:28
 msgid ""
@@ -121,6 +130,8 @@ msgid ""
 "failures in a row and stays open for ``open``; while it is open a call "
 "fails at once with the result ``unavailable`` (SID 0030)."
 msgstr ""
+"エージェントプラグインのサーキットブレーカーです。\\ ``failures``\\ 回連続で失敗すると開き、\\ ``open``\\ "
+"の間開いたままです。開いている間、呼び出しは即座に結果\\ ``unavailable``\\ で失敗します（SID 0030）。"
 
 #: ../../glossary.rst:30
 msgid "Campaign"
@@ -150,7 +161,7 @@ msgstr ""
 
 #: ../../glossary.rst:36
 msgid "ClientHello inspection"
-msgstr ""
+msgstr "ClientHelloの検査"
 
 #: ../../glossary.rst:37
 msgid ""
@@ -160,6 +171,10 @@ msgid ""
 "within ``inspect_bytes`` takes the configured fallback (SID 0015, SID "
 "0032)."
 msgstr ""
+"``tcp_inspect``\\ を持つ\\ ``tcp``\\ "
+"フロントエンドで、TLSを終端せずに接続の最初のTLSレコードを読み、サーバー名、ALPN、JA4によってルーティングまたは拒否することです。\\ "
+"``inspect_bytes``\\ の範囲で完全なClientHelloを送らない接続は、設定されたフォールバックをとります（SID "
+"0015、SID 0032）。"
 
 #: ../../glossary.rst:39
 msgid "Difficulty, work bits"
@@ -173,7 +188,7 @@ msgstr "二つの層の規模を決める一つの整数です。Hashcashでは�
 
 #: ../../glossary.rst:42
 msgid "Drain"
-msgstr ""
+msgstr "ドレイン"
 
 #: ../../glossary.rst:43
 msgid ""
@@ -182,6 +197,8 @@ msgid ""
 "and a restart ends it. A node drains as a whole at shutdown, while "
 "readiness answers 503."
 msgstr ""
+"新しいフローを取らず、確立したフローを保つサーバーの状態です。\\ ``set server POOL/NAME state drain``\\ "
+"がこれを設定し、再読み込みはそれを保ち、再起動はそれを終わらせます。ノードは停止時に全体としてドレインし、その間レディネスは503で応答します。"
 
 #: ../../glossary.rst:45
 msgid "Edge"
@@ -199,10 +216,8 @@ msgstr ""
 "（クラスターで共有する一つのPostgreSQLデータベース）を使うSibunaのデプロイです。どちらの運用構成にも、永続的なポリシー、共有レピュテーション、インシデントのフォレンジックを提供します。"
 
 #: ../../glossary.rst:48
-#, fuzzy
-#| msgid "Edge"
 msgid "Edge mode"
-msgstr "Edge"
+msgstr "エッジモード"
 
 #: ../../glossary.rst:49
 msgid ""
@@ -211,6 +226,9 @@ msgid ""
 "pools, with the firewall on the routes that ask for it. It is unrelated "
 "to the storage sense of *Edge* above."
 msgstr ""
+"``--config-file``\\ "
+"で起動したデーモンです。TCPとUDPを転送し、TLS、HTTP/2、HTTP/3を終端し、HTTPリクエストをサーバーのプールへルーティングします。ファイアウォールはそれを求めるルートで動きます。上の、ストレージの意味での\\ "
+"*Edge*\\ とは無関係です。"
 
 #: ../../glossary.rst:51
 msgid "Engine slot"
@@ -238,7 +256,7 @@ msgstr ""
 
 #: ../../glossary.rst:57
 msgid "Fleet cap"
-msgstr ""
+msgstr "フリート全体のキャップ"
 
 #: ../../glossary.rst:58
 msgid ""
@@ -247,16 +265,20 @@ msgid ""
 "the limit, and unused shares move to the nodes that have the flows (SID "
 "0025)."
 msgstr ""
+"``max_flows_scope: \"fleet\"``\\ のとき、サーバーの\\ ``max_flows``\\ "
+"がメッシュのすべてのノードのフローの合計を制限することです。各ノードは上限の割り当てを持ち、使われていない割り当ては、フローを持つノードへ移ります（SID "
+"0025）。"
 
 #: ../../glossary.rst:60
 msgid "Flow"
-msgstr ""
+msgstr "フロー"
 
 #: ../../glossary.rst:61
 msgid ""
 "One unit of work of the edge that holds a slot of ``global.max_flows``: a "
 "TCP connection, a UDP mapping, or an HTTP connection."
 msgstr ""
+"``global.max_flows``\\ の枠を一つ占める、エッジの仕事の単位です。TCP接続、UDPマッピング、HTTP接続のいずれかです。"
 
 #: ../../glossary.rst:63
 msgid "Forward auth"
@@ -273,13 +295,15 @@ msgstr ""
 
 #: ../../glossary.rst:66
 msgid "Frontend"
-msgstr ""
+msgstr "フロントエンド"
 
 #: ../../glossary.rst:67
 msgid ""
 "A named set of listening addresses of one protocol, ``tcp``, ``udp`` or "
 "``http``, with its routes, its limits and its default backend."
 msgstr ""
+"一つのプロトコル（\\ ``tcp``\\ 、\\ ``udp``\\ 、\\ ``http``\\ "
+"）のリスニングアドレスの名前付きの集合で、ルート、上限、既定のバックエンドを持ちます。"
 
 #: ../../glossary.rst:69
 msgid "Gate"
@@ -308,7 +332,7 @@ msgstr ""
 
 #: ../../glossary.rst:75
 msgid "Handoff"
-msgstr ""
+msgstr "ハンドオフ"
 
 #: ../../glossary.rst:76
 msgid ""
@@ -317,6 +341,9 @@ msgid ""
 "the new one over a Unix socket and then drains its TCP streams. Linux "
 "only (SID 0029)."
 msgstr ""
+"``global.upgrade_socket``\\ "
+"による、動いているエッジのバイナリの置き換えです。古いプロセスは、リスニングソケットと生きているUDPマッピングをUnixソケットを通して新しいプロセスに渡し、それからTCPストリームをドレインします。Linuxのみです（SID "
+"0029）。"
 
 #: ../../glossary.rst:78
 msgid "Hashcash"
@@ -345,7 +372,7 @@ msgstr ""
 
 #: ../../glossary.rst:84
 msgid "Hook"
-msgstr ""
+msgstr "フック"
 
 #: ../../glossary.rst:85
 msgid ""
@@ -354,6 +381,10 @@ msgid ""
 "native Rust, a metered WebAssembly module, or an agent in another process "
 "(SID 0030)."
 msgstr ""
+"エッジの経路上で運用者自身が下す判断で、プラグインが\\ ``connection``\\ 、\\ ``request``\\ 、\\ "
+"``telemetry``\\ "
+"のいずれかの段階で実行します。プラグインは、ネイティブのRust、計量付きのWebAssemblyモジュール、別のプロセスのエージェントのいずれかです（SID "
+"0030）。"
 
 #: ../../glossary.rst:87
 msgid "Idle reaper"
@@ -397,16 +428,16 @@ msgstr ""
 "0014）。チャレンジとトークンに結び付けるクライアントのフィンガープリントとは無関係です。"
 
 #: ../../glossary.rst:96
-#, fuzzy
-#| msgid "Edge"
 msgid "Judge"
-msgstr "Edge"
+msgstr "判定スレッド"
 
 #: ../../glossary.rst:97
 msgid ""
 "A thread that decides a parked connection whose chain of hooks names an "
 "agent, so that the edge worker never waits for the agent (SID 0030)."
 msgstr ""
+"フックのチェーンがエージェントを指定する保留された接続を判定するスレッドです。これにより、エッジワーカーがエージェントを待つことはありません（SID "
+"0030）。"
 
 #: ../../glossary.rst:99
 msgid "Keyed BLAKE3"
@@ -420,7 +451,7 @@ msgstr "Sibunaの鍵スケジュール、チャレンジタグ、セッション
 
 #: ../../glossary.rst:102
 msgid "Local authority"
-msgstr ""
+msgstr "ローカルの認証局"
 
 #: ../../glossary.rst:103
 msgid ""
@@ -429,6 +460,8 @@ msgid ""
 "writes a revocation list, and can serve other machines as an ACME server "
 "(SID 0021)."
 msgstr ""
+"エッジが内部の名前のために自分で動かす認証局です。自動HTTPSのストレージにルートと中間を保持し、失効リストを書き、ACMEサーバーとして他の機械に証明書を提供できます（SID "
+"0021）。"
 
 #: ../../glossary.rst:105
 msgid "MAC token"
@@ -444,7 +477,7 @@ msgstr ""
 
 #: ../../glossary.rst:108
 msgid "Maglev"
-msgstr ""
+msgstr "Maglev"
 
 #: ../../glossary.rst:109
 msgid ""
@@ -454,10 +487,13 @@ msgid ""
 "table and bounds the load of the chosen server by a factor "
 "(``bounded_maglev``, SID 0015)."
 msgstr ""
+"素数個（Sibunaでは65,537個）のスロットを持つコンシステントハッシュの表で、サーバーの置換で埋められ、クライアントを定数時間でサーバーに置きます（Eisenbud "
+"et al., NSDI 2016）。Sibunaは重み付きの表を作り、選んだサーバーの負荷を定数倍で制限します（\\ "
+"``bounded_maglev``\\ 、SID 0015）。"
 
 #: ../../glossary.rst:111
 msgid "Mesh"
-msgstr ""
+msgstr "メッシュ"
 
 #: ../../glossary.rst:112
 msgid ""
@@ -467,16 +503,21 @@ msgid ""
 "``forward`` they also send flows to their owner. At most 64 nodes (SID "
 "0022 to SID 0026)."
 msgstr ""
+"エッジのクラスターのノードで、共有の鍵とともに\\ ``mesh``\\ "
+"節に列挙されます。0.5秒ごとにUDPで互いをプローブし、禁止、コマンド、スティッキーテーブル、フリート全体のキャップの割り当てを共有します。\\ "
+"``forward``\\ があれば、フローを所有者へ送ることもします。最大64ノードです（SID 0022からSID 0026）。"
 
 #: ../../glossary.rst:114
 msgid "Node"
-msgstr ""
+msgstr "ノード"
 
 #: ../../glossary.rst:115
 msgid ""
 "One edge process in a mesh, known by its mesh address; in persistent mode "
 "also by the name ``authority.node``."
 msgstr ""
+"メッシュの中の一つのエッジのプロセスで、メッシュアドレスで識別されます。永続モードでは名前\\ ``authority.node``\\ "
+"でも識別されます。"
 
 #: ../../glossary.rst:117
 msgid "Work level"
@@ -504,7 +545,7 @@ msgstr ""
 
 #: ../../glossary.rst:123
 msgid "Owner"
-msgstr ""
+msgstr "所有者"
 
 #: ../../glossary.rst:124
 msgid ""
@@ -512,20 +553,24 @@ msgid ""
 "node with the largest rendezvous score for the client's address (SID "
 "0026)."
 msgstr ""
+"ピア転送の下でクライアントを処理するメッシュのノードです。クライアントのアドレスに対するランデブーのスコアが最大の、生きているノードです（SID "
+"0026）。"
 
 #: ../../glossary.rst:126
 msgid "Passive health"
-msgstr ""
+msgstr "パッシブヘルス"
 
 #: ../../glossary.rst:127
 msgid ""
 "Ejecting a server for ``ejection`` after ``failures`` consecutive "
 "failures of real requests, while another server can serve (SID 0019)."
 msgstr ""
+"別のサーバーが受け持てる間、実際のリクエストが\\ ``failures``\\ 回連続で失敗したサーバーを\\ ``ejection``\\ "
+"の間除外することです（SID 0019）。"
 
 #: ../../glossary.rst:129
 msgid "Passthrough"
-msgstr ""
+msgstr "パススルー"
 
 #: ../../glossary.rst:130
 msgid ""
@@ -533,10 +578,12 @@ msgid ""
 "terminating it. The edge may still read the ClientHello, or validate QUIC "
 "by connection ID (SID 0032)."
 msgstr ""
+"TLSやQUICの接続を終端せずに、そのバイトをサーバーへ中継することです。それでもエッジはClientHelloを読んだり、QUICを接続IDで検証したりできます（SID "
+"0032）。"
 
 #: ../../glossary.rst:132
 msgid "Peer forwarding"
-msgstr ""
+msgstr "ピア転送"
 
 #: ../../glossary.rst:133
 msgid ""
@@ -545,14 +592,16 @@ msgid ""
 "session stay on one node. An established TCP connection that the network "
 "moves is not repaired (SID 0026)."
 msgstr ""
+"新しい接続やUDPクライアントを、そのクライアントを所有するノードに渡すメッシュの機能です。これにより、スティッキーなサーバー、レートカウンター、UDPセッションが一つのノードに留まります。ネットワークが移した確立済みのTCP接続は修復されません（SID "
+"0026）。"
 
 #: ../../glossary.rst:135
 msgid "Pool"
-msgstr ""
+msgstr "プール"
 
 #: ../../glossary.rst:136
 msgid "See *Backend*."
-msgstr ""
+msgstr "*バックエンド*\\ を参照。"
 
 #: ../../glossary.rst:138
 msgid "Proof of Sequential Work (PoSW)"
@@ -569,7 +618,7 @@ msgstr ""
 
 #: ../../glossary.rst:141
 msgid "Regime"
-msgstr ""
+msgstr "体制"
 
 #: ../../glossary.rst:142
 msgid ""
@@ -579,10 +628,14 @@ msgid ""
 "returns from wide-area to regional only below 1.5 ms (``Regime::step`` in "
 "``crates/lb/src/mesh.rs``)."
 msgstr ""
+"ピアへの往復時間の95パーセンタイルから選ぶ、メッシュのルーティングのモードです。生きているピアがなければ\\ *standalone*\\ "
+"、往復時間が3 ms以下の間は\\ *regional*\\ （地域）、3 msを超えると\\ *wide-area*\\ "
+"（広域）です。メッシュが広域から地域に戻るのは1.5 msを下回ったときだけです（\\ ``crates/lb/src/mesh.rs``\\ "
+"の\\ ``Regime::step``\\ ）。"
 
 #: ../../glossary.rst:144
 msgid "Rendezvous hashing"
-msgstr ""
+msgstr "ランデブーハッシュ"
 
 #: ../../glossary.rst:145
 msgid ""
@@ -592,6 +645,8 @@ msgid ""
 "it for source stickiness (SID 0019) and for the owner of a client (SID "
 "0026)."
 msgstr ""
+"最高ランダム重みハッシュ（ThalerとRavishankar、1998）です。各候補は名前とキーのハッシュからスコアを得て、最大のスコアが勝ちます。失われた候補は自分のキーだけを移します。Sibunaはこれをソースのスティッキネス（SID "
+"0019）とクライアントの所有者（SID 0026）に使います。"
 
 #: ../../glossary.rst:147
 msgid "Reputation trie"
@@ -607,7 +662,7 @@ msgstr ""
 
 #: ../../glossary.rst:150
 msgid "Revision"
-msgstr ""
+msgstr "リビジョン"
 
 #: ../../glossary.rst:151
 msgid ""
@@ -615,6 +670,8 @@ msgid ""
 "digest of the file; with a database it is a number that only grows, and a "
 "rollback is a new revision (SID 0028)."
 msgstr ""
+"エッジにおいて、公開されたトポロジーの一つの状態です。ファイルではファイルのダイジェスト、データベースでは増えるだけの数で、ロールバックは新しいリビジョンです（SID "
+"0028）。"
 
 #: ../../glossary.rst:153
 msgid "Robin Hood spent set"
@@ -628,13 +685,14 @@ msgstr "解かれたチャレンジのタグを持つ、容量固定のオープ
 
 #: ../../glossary.rst:156
 msgid "Route"
-msgstr ""
+msgstr "ルート"
 
 #: ../../glossary.rst:157
 msgid ""
 "A rule of an HTTP frontend that selects a backend by host name and path "
 "prefix, and may switch the firewall off or on for its requests."
 msgstr ""
+"ホスト名とパスの接頭辞でバックエンドを選ぶHTTPフロントエンドのルールで、そのリクエストについてファイアウォールを無効または有効にできます。"
 
 #: ../../glossary.rst:159
 msgid "Rule hash"
@@ -650,21 +708,23 @@ msgstr ""
 
 #: ../../glossary.rst:162
 msgid "Server"
-msgstr ""
+msgstr "サーバー"
 
 #: ../../glossary.rst:163
 msgid ""
 "One address of a pool, with a name, a weight and an optional "
 "``max_flows``. ``sibuna ctl`` addresses it as ``POOL/NAME``."
 msgstr ""
+"プールの一つのアドレスで、名前、重み、任意の\\ ``max_flows``\\ を持ちます。\\ ``sibuna ctl``\\ はそれを\\ "
+"``POOL/NAME``\\ と指定します。"
 
 #: ../../glossary.rst:165
 msgid "Share"
-msgstr ""
+msgstr "割り当て"
 
 #: ../../glossary.rst:166
 msgid "The part of a fleet cap that one node may hold now (SID 0025)."
-msgstr ""
+msgstr "フリート全体のキャップのうち、一つのノードが今持てる部分です（SID 0025）。"
 
 #: ../../glossary.rst:168
 msgid "Shield"
@@ -689,7 +749,7 @@ msgstr ""
 
 #: ../../glossary.rst:174
 msgid "Slow start"
-msgstr ""
+msgstr "スロースタート"
 
 #: ../../glossary.rst:175
 msgid ""
@@ -697,10 +757,12 @@ msgid ""
 "takes a weight that grows in proportion to the time, so that a cold "
 "server is not flooded (SID 0019)."
 msgstr ""
+"``slow_start``\\ "
+"のランプです。その間、稼働を始めたサーバーは時間に比例して増える重みをとるので、冷えたサーバーに負荷が殺到しません（SID 0019）。"
 
 #: ../../glossary.rst:177
 msgid "Spill cache"
-msgstr ""
+msgstr "spillキャッシュ"
 
 #: ../../glossary.rst:178
 msgid ""
@@ -708,10 +770,12 @@ msgid ""
 "clients that left memory, and keeps them over a restart. Admission to it "
 "follows TinyLFU (SID 0027)."
 msgstr ""
+"スティッキーテーブルの下でメモリにマップしたファイルで、メモリから出たクライアントのヒントを保持し、再起動をまたいで保ちます。その受け入れはTinyLFUに従います（SID "
+"0027）。"
 
 #: ../../glossary.rst:180
 msgid "Sticky table"
-msgstr ""
+msgstr "スティッキーテーブル"
 
 #: ../../glossary.rst:181
 msgid ""
@@ -719,6 +783,9 @@ msgid ""
 "of each client, by source address or by cookie, for ``ttl`` after the "
 "last use. A mesh replicates it, and the later choice wins (SID 0025)."
 msgstr ""
+"``sticky: \"table\"``\\ "
+"を持つプールの表で、各クライアントのサーバーを、送信元アドレスまたはCookieによって、最後に使ってから\\ ``ttl``\\ "
+"の間覚えます。メッシュがそれを複製し、後の選択が勝ちます（SID 0025）。"
 
 #: ../../glossary.rst:183
 msgid "Surface"
@@ -743,10 +810,8 @@ msgstr ""
 "判断を下す代わりに、リクエストのスコアに符号付きの重みを加えるルール動作です。合計がしきい値以上になると、追加の作業ビット付きでチャレンジするか、拒否します。"
 
 #: ../../glossary.rst:189
-#, fuzzy
-#| msgid "Work level"
 msgid "Worker"
-msgstr "作業レベル"
+msgstr "ワーカー"
 
 #: ../../glossary.rst:190
 msgid ""
@@ -755,6 +820,8 @@ msgid ""
 "threads carry TCP streams; on Linux the event-driven HTTP workers, one "
 "per processor, serve HTTP connections (SID 0015, SID 0016)."
 msgstr ""
+"エッジにおいて、トラフィックを処理するスレッドです。エッジワーカーはすべてのフロントエンドについて受け付け、フローテーブルとUDPマッピングを所有します。中継スレッドがTCPストリームを運びます。Linuxでは、プロセッサーごとに一つのイベント駆動のHTTPワーカーがHTTP接続を処理します（SID "
+"0015、SID 0016）。"
 
 #: ../../glossary.rst:192
 msgid "Zaxonlite"
@@ -857,6 +924,8 @@ msgid ""
 "Einziger, G., Friedman, R., and Manes, B. \"TinyLFU: a highly efficient "
 "cache admission policy.\" *ACM Transactions on Storage* 13(4), 2017."
 msgstr ""
+"Einziger, G., Friedman, R., and Manes, B. \"TinyLFU: a highly efficient "
+"cache admission policy.\" *ACM Transactions on Storage* 13(4), 2017."
 
 #: ../../glossary.rst:209
 msgid ""
@@ -865,6 +934,10 @@ msgid ""
 "J. D. \"Maglev: a fast and reliable software network load balancer.\" "
 "*NSDI*, 2016."
 msgstr ""
+"Eisenbud, D. E., Yi, C., Contavalli, C., Smith, C., Kononov, R., "
+"Mann-Hielscher, E., Cilingiroglu, A., Cheyney, B., Shang, W., and Hosein, "
+"J. D. \"Maglev: a fast and reliable software network load balancer.\" "
+"*NSDI*, 2016."
 
 #: ../../glossary.rst:210
 msgid ""
@@ -907,6 +980,8 @@ msgid ""
 "Mirrokni, V., Thorup, M., and Zadimoghaddam, M. \"Consistent hashing with "
 "bounded loads.\" *SODA*, 2018."
 msgstr ""
+"Mirrokni, V., Thorup, M., and Zadimoghaddam, M. \"Consistent hashing with "
+"bounded loads.\" *SODA*, 2018."
 
 #: ../../glossary.rst:215
 msgid ""
@@ -921,6 +996,8 @@ msgid ""
 "Thaler, D. G., and Ravishankar, C. V. \"Using name-based mappings to "
 "increase hit rates.\" *IEEE/ACM Transactions on Networking* 6(1), 1998."
 msgstr ""
+"Thaler, D. G., and Ravishankar, C. V. \"Using name-based mappings to "
+"increase hit rates.\" *IEEE/ACM Transactions on Networking* 6(1), 1998."
 
 #: ../../glossary.rst:217
 msgid ""
@@ -941,15 +1018,6 @@ msgstr ""
 "*NSDI*, 2019."
 
 #: ../../glossary.rst:219
-#, fuzzy
-#| msgid ""
-#| "Sibuna Discussions 0001 to 0014, ``docs/sid/records``, 2026: process, "
-#| "foundation architecture, declarative policy engine, semantic "
-#| "inspection, Zaxonlite storage architecture, mathematical foundations, "
-#| "console management interface, AI bot traffic monitoring, chunked "
-#| "request bodies, the Rust port, storage through sqlx, outbound TLS for "
-#| "the console through rustls, console storage, and trusted JA4 "
-#| "fingerprints from the ingress."
 msgid ""
 "Sibuna Discussions 0001 to 0032, ``docs/sid/records``, 2026: process, "
 "foundation architecture, declarative policy engine, semantic inspection, "
@@ -964,5 +1032,5 @@ msgid ""
 "spill cache, the database authority, the upgrade handoff, plugin tiers, "
 "the operator console of the edge, and staged admission."
 msgstr ""
-"Sibuna Discussions 0001から0014、\\ ``docs/sid/records``\\ "
-"、2026。プロセス、基礎アーキテクチャ、宣言的ポリシーエンジン、意味解析による検査、Zaxonliteストレージのアーキテクチャ、数学的基礎、コンソール管理インターフェース、AIボットのトラフィック監視、チャンク形式のリクエストボディー、Rustへの移植、sqlxによるストレージ、rustlsによるコンソールの外向きのTLS、コンソールのストレージ、イングレスから受け取る信頼できるJA4フィンガープリントを扱います。"
+"Sibuna Discussions 0001から0032、\\ ``docs/sid/records``\\ "
+"、2026。プロセス、基礎アーキテクチャ、宣言的ポリシーエンジン、意味解析による検査、Zaxonliteストレージのアーキテクチャ、数学的基礎、コンソール管理インターフェース、AIボットのトラフィック監視、チャンク形式のリクエストボディー、Rustへの移植、sqlxによるストレージ、rustlsによるコンソールの外向きのTLS、コンソールのストレージ、イングレスから受け取る信頼できるJA4フィンガープリント、分散エッジロードバランサー、イベント駆動のHTTPワーカー、プロセス内の交換、簡単なセットアップと実行時の設定、トラフィックポリシー、エッジの観測、自動HTTPS、禁止の複製、クラスターの設定、ワーカー上のTLS、共有アフィニティとフリート全体のキャップ、ピア転送、spillキャッシュ、データベースによるオーソリティ、アップグレードのハンドオフ、プラグインの層、エッジの運用者コンソール、段階的な許可を扱います。"

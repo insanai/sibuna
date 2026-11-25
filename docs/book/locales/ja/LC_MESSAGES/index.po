@@ -22,7 +22,5 @@ msgid "The Sibuna Book"
 msgstr "Sibuna技術ガイド"
 
 #: ../../index.rst:4
-#, fuzzy
-#| msgid "The mathematics and engineering of web defense."
 msgid "The mathematics and engineering of load balancing and web defense."
-msgstr "Web防御の数学とエンジニアリング。"
+msgstr "負荷分散とWeb防御の数学とエンジニアリング。"
