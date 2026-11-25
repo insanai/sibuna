@@ -49,6 +49,7 @@ sibuna-jlv = { path = "crates/jlv", version = "1.0.0-beta.3" }
 sibuna-lb = { path = "crates/lb", version = "1.0.0-beta.3" }
 sibuna-net = { path = "crates/net", version = "1.0.0-beta.3" }
 sibuna-reactor = { path = "crates/reactor", version = "1.0.0-beta.3" }
+sibuna-upgrade = { path = "crates/upgrade", version = "1.0.0-beta.3" }
 sibuna-storage = { path = "crates/storage", version = "1.0.0-beta.3", default-features = false }
 sibuna-html = { path = "crates/html", version = "1.0.0-beta.3", default-features = false }
 sibuna-console-protocol = { path = "crates/console-protocol", version = "1.0.0-beta.3" }

@@ -1566,6 +1566,7 @@ dependencies = [
  "sibuna-policy",
  "sibuna-reactor",
  "sibuna-store",
+ "sibuna-upgrade",
 ]
 
 [[package]]
@@ -1641,6 +1642,10 @@ dependencies = [
  "rustls",
  "rustls-native-certs",
 ]
+
+[[package]]
+name = "sibuna-upgrade"
+version = "1.0.0-beta.3"
 
 [[package]]
 name = "slab"
