@@ -510,11 +510,15 @@ impl Driver {
         }
     }
 
-    /// The curve of the key of a new certificate: `global.acme.key`.
-    fn curve(&self) -> sibuna_acme::Curve {
+    /// The kind of the key of a new certificate: `global.acme.key`.
+    fn key_type(&self) -> sibuna_acme::KeyType {
+        use sibuna_acme::KeyType;
         match self.shared.options.key {
-            sibuna_lb::CertificateKey::P256 => sibuna_acme::Curve::P256,
-            sibuna_lb::CertificateKey::P384 => sibuna_acme::Curve::P384,
+            sibuna_lb::CertificateKey::P256 => KeyType::P256,
+            sibuna_lb::CertificateKey::P384 => KeyType::P384,
+            sibuna_lb::CertificateKey::Rsa2048 => KeyType::Rsa2048,
+            sibuna_lb::CertificateKey::Rsa3072 => KeyType::Rsa3072,
+            sibuna_lb::CertificateKey::Rsa4096 => KeyType::Rsa4096,
         }
     }
 
@@ -610,7 +614,7 @@ impl Driver {
                 .extend(others.map(|other| other.name.as_str()).filter(|other| is_address(other)));
         }
         let lifetime = self.shared.options.internal.lifetime;
-        local.authority.issue_on(self.curve(), &names, lifetime, now())
+        local.authority.issue_as(self.key_type(), &names, lifetime, now())
     }
 
     fn succeeded(&self, store: &Store, name: &str, entry: &mut Entry) {
