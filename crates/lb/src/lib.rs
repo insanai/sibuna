@@ -295,6 +295,7 @@ impl Edge {
         let mut listeners = Vec::new();
         let mut poll = Poller::new()?;
         let (waker, wake) = Waker::new()?;
+        handoff.wake = Some(wake.clone());
         poll.set(handle(waker.socket()), READ, Ready::Wake)?;
         for (bind, route) in config.listeners {
             let (socket, held) = inherited.take_or(bind, config.reuse_port)?;

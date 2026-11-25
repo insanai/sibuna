@@ -29,9 +29,9 @@ use sibuna_reactor::{READ, handle};
 #[cfg(unix)]
 use sibuna_upgrade::{Flow, Kind, Listener, MAX_FLOWS};
 
-use super::{Bind, Client, Socket};
+use super::{Bind, Client, Edge, Socket};
 #[cfg(unix)]
-use super::{DatagramFlow, Edge, Ready, flowlog};
+use super::{DatagramFlow, Ready, flowlog};
 #[cfg(unix)]
 use crate::config::Protocol;
 
@@ -70,6 +70,12 @@ impl Inherited {
         Ok(())
     }
 
+    /// How many of the lent sockets are listeners of `config`, by kind and address. A
+    /// replacement that finds none has connected to the daemon of another service.
+    pub fn matching_count(&self, config: &crate::Config) -> usize {
+        self.sockets.iter().filter(|(bind, _)| config.listeners.contains_key(bind)).count()
+    }
+
     /// The sockets that no listener has taken. After [`Edge::bind_inherited`] these are
     /// the listeners that the new configuration no longer has.
     pub fn socket_count(&self) -> usize {
@@ -88,6 +94,7 @@ impl Inherited {
 
 /// Where a handoff stands for one [`Edge`], on either side.
 #[derive(Default)]
+#[cfg_attr(not(unix), allow(dead_code))]
 pub(crate) struct State {
     /// The listeners lent by an old process that the poller does not watch yet.
     pub(crate) held: Vec<usize>,
@@ -96,6 +103,22 @@ pub(crate) struct State {
     /// While this process reads no UDP for a replacement: the mappings in the order
     /// they are lent.
     frozen: Option<Vec<Client>>,
+    /// Interrupts the wait of the worker, for the thread that speaks to a replacement.
+    pub(crate) wake: Option<sibuna_reactor::Wake>,
+}
+
+impl Edge {
+    /// A function that ends the wait of [`Edge::step`] at once. The thread that
+    /// speaks to a replacement calls it after it has left a request for the worker,
+    /// so that the UDP sockets stay unread for as short a time as possible.
+    pub fn waker(&self) -> impl Fn() + Send + 'static {
+        let wake = self.handoff.wake.clone();
+        move || {
+            if let Some(wake) = &wake {
+                wake.wake();
+            }
+        }
+    }
 }
 
 #[cfg(unix)]

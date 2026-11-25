@@ -20,6 +20,8 @@ pub enum Failure {
     Busy,
     /// This platform cannot pass descriptors.
     Unsupported,
+    /// The process at the socket serves other addresses: it is another service.
+    Unrelated,
 }
 
 /// A handoff that ended without a cutover.
@@ -47,6 +49,7 @@ impl UpgradeError {
             Failure::Closed => "UPG005",
             Failure::Busy => "UPG006",
             Failure::Unsupported => "UPG007",
+            Failure::Unrelated => "UPG008",
         }
     }
 
@@ -60,6 +63,7 @@ impl UpgradeError {
             Failure::Closed => "upgrade connection closed",
             Failure::Busy => "upgrade not possible now",
             Failure::Unsupported => "upgrade socket not supported",
+            Failure::Unrelated => "upgrade socket of another daemon",
         }
     }
 
@@ -94,6 +98,10 @@ impl UpgradeError {
                 "Descriptor passing needs Linux. Remove `global.upgrade_socket`, and replace \
                  the binary with `global.reuse_port` or a restart."
             }
+            Failure::Unrelated => {
+                "The daemon that answers on `global.upgrade_socket` listens on none of the \
+                 addresses of this file. Give each daemon a socket of its own."
+            }
         }
     }
 }
@@ -125,6 +133,7 @@ mod tests {
             Failure::Closed,
             Failure::Busy,
             Failure::Unsupported,
+            Failure::Unrelated,
         ];
         let mut codes: Vec<&str> =
             all.iter().map(|failure| UpgradeError::new(*failure, "x").code()).collect();
