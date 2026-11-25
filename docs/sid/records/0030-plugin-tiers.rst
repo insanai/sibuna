@@ -486,7 +486,7 @@ The state of this record is ``discussion``. The code below is on the branch ``si
    * - 11
      - The connection stage judges a TCP connection, an inspected connection by its server name, and a UDP mapping once.
      - Met
-     - ``crates/lb/tests/hooks.rs`` (4 tests on real sockets); ``edge_hooks.rs`` (``a_connection_hook_closes_a_connection_before_any_request``).
+     - ``crates/lb/tests/hooks.rs`` (5 tests on real sockets, one of them an inspection that takes its fallback); ``edge_hooks.rs`` (``a_connection_hook_closes_a_connection_before_any_request``).
    * - 12
      - A paid challenge of a hook is cleared, and the hooks behind it still judge.
      - Met
