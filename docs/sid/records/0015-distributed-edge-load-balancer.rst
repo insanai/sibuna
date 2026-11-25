@@ -171,6 +171,23 @@ We can repeat the pilot from the repository root on Linux with Python 3.11 or la
    cargo build --release --locked -p sibuna
    python3 benchmarks/tcp_flow_pilot.py target/release/sibuna --flows 20000
 
+We also exercised the admission code at ten million simultaneous reservations. We instantiated ten independent node budgets and backend pools in one process. Each held one million pairs of node permits and backend tickets. Each refused an additional reservation at its limit. After dropping the tickets, all counts returned to zero and each pool admitted a new reservation. Two release runs took 0.95 and 1.05 seconds. The larger peak RSS was 551,424 KiB. This measures the cost of admission objects. Established network streams also need sockets, relay records and kernel memory.
+
+The larger TCP pilot uses 32 frontend and origin address pairs per host. Each connection must receive an origin greeting before it counts toward the simultaneous hold. After the hold, each client sends a distinct value and checks the echo. The client, edge worker and origin run in one test process, which needs four descriptors per proxied stream. On host 19 one edge instance held 250,000 streams and 1,000,063 process descriptors. The cgroup grew from 142,286,848 to 5,113,987,072 bytes. At this observed cost, ten million streams in the same four-socket topology would require about 185 GiB across the test fleet. The two 12 GiB hosts cannot support that projection.
+
+On host 20 the 250,000-stream attempt timed out while opening connections. New SSH connections also timed out temporarily. Its Linux connection-tracking limit was 262,144 entries. If both TCP legs are tracked, the attempted load needs about 500,000 entries. We did not capture the counter at failure. The harness now opens a loopback probe and checks the available connection-tracking entries before the ramp. The kernel documents the count and limit in its `connection tracking reference <https://docs.kernel.org/networking/nf_conntrack-sysctl.html>`_.
+
+We next held 300,000 real TCP streams simultaneously on two independent edge instances. Each instance forwarded on its own loopback network. Host 19 established 250,000 streams in 6.15 seconds and host 20 established 50,000 in 1.80 seconds. A coordinator waited for both active counts, held them for five more seconds and then released both verifiers. All 300,000 distinct echoes passed. Both instances reported zero drops and released every flow slot. At the plateau the connection tracker on host 20 held 100,016 entries, up from six. Host 19 reported zero at both readings. This qualifies the tested 300,000-stream topology. Ten million simultaneously established TCP streams remain unmeasured.
+
+We can repeat the two measurements with release builds. We set the TCP count to fit the host's memory, descriptor and connection-tracking limits.
+
+.. code-block:: sh
+
+   cargo test --release --locked -p sibuna-lb --lib ten_million_live_reservations -- --ignored --nocapture
+   SIBUNA_TCP_FLOWS=50000 cargo test --release --locked -p sibuna-lb --test flows simultaneous_tcp_flows -- --ignored --nocapture
+
+For a simultaneous hold on multiple hosts, each run can set ``SIBUNA_FLOW_RELEASE_FILE`` to an unused path in its own temporary directory. We wait for every run to print ``HELD`` before creating the files. Each worker checks its active count and drops again after the echoes, then checks that its flow count reaches zero on close.
+
 A worker retains an unwritten suffix after a short write and pauses reads until it can make progress. With completion-based I/O it retains each submitted buffer until the completion arrives. A half-close flushes pending bytes before closing the opposite write side. Buffer exhaustion applies backpressure to TCP and counts dropped UDP datagrams. Flow admission fails once the shard reaches its limit.
 
 Portable socket I/O
