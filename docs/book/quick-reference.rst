@@ -90,6 +90,20 @@ Edge load balancer
 
 ``"http": {"surface": "off"}`` gives a load balancer with no firewall. TCP and UDP frontends never use the firewall.
 
+The operator console of the edge (SID 0031) needs a ``console`` section in the file:
+
+.. code-block:: sh
+
+   # console: { listen: "127.0.0.1:9443", data_dir: "/var/lib/sibuna", node: 1 }
+   sibuna init-admin admin --data-dir /var/lib/sibuna    # once, while the daemon is stopped
+   sibuna --config-file edge.jlv                         # then open http://127.0.0.1:9443/console/ and the page Edge
+   curl -b "$COOKIE" http://127.0.0.1:9443/console/api/edge          # the node, its frontends and its pools
+   curl -b "$COOKIE" http://127.0.0.1:9443/console/api/edge/fleet    # one row for each member
+   curl -b "$COOKIE" -H "X-Console-CSRF: $CSRF" -H "Origin: http://127.0.0.1:9443" -H "Content-Type: application/json" \
+        -d '{"line":"set server app/a state drain"}' http://127.0.0.1:9443/console/api/edge/command
+
+The command route takes ``set server ... state|weight``, ``add server``, ``del server``, ``del ban``, ``reload cluster`` and ``show servers|cluster|certs|ca``, each with the checks of ``sibuna ctl``. It needs the role of an operator.
+
 Console (opt-in preview)
 ------------------------
 
