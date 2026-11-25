@@ -326,6 +326,92 @@ We can repeat these measurements on a local volume with at least 512 MiB of free
    SIBUNA_SPILL_DIR=/var/tmp cargo test --release --locked -p sibuna-lb --lib measure_fifty_million_candidates -- --ignored --nocapture
    SIBUNA_SPILL_DIR=/var/tmp cargo test --release --locked -p sibuna-lb --lib measure_storage_unavailability -- --ignored --nocapture
 
+Testing a 99% first-lookup threshold
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This check asks what fraction of clients whose original server we found at seeding still return that server on the first lookup after the flood. We divide the number retained by the number seeded and check the exact counts against 99%. We also report how many clients we offered at seeding. The loss of a disk hint, a lookup shed from a full queue and a disk answer that arrives after the first decision can all affect the result. The caller uses the same production affinity store and forced fallback as the preceding two-tier experiment. The check excludes network transfers and the pool's periodic renewals.
+
+Each run starts with a fresh mapped arena of 512 MiB and the same key permutation. An unpaced caller offers work as fast as it can. A paced caller offers up to 100,000 distinct cold candidates per second in batches of 128, with three hot accesses per candidate. Each run introduces 50 million distinct candidates. We reject a measurement if the original entries could have expired during the run.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Host
+     - Hot clients offered
+     - RAM table
+     - Cold rate cap
+     - Retained / seeded
+     - Queue operations shed
+     - Flood time
+   * - 19
+     - 16,384
+     - 40 MiB
+     - unpaced
+     - 5,694/16,384 (34.753%)
+     - 53,488,964
+     - 19.52 s
+   * - 19
+     - 16,384
+     - 40 MiB
+     - 100,000/s
+     - 16,335/16,384 (99.701%)
+     - 248,882
+     - 529.57 s
+   * - 19
+     - 16,384
+     - 40 MiB
+     - 100,000/s
+     - 16,335/16,384 (99.701%)
+     - 134,460
+     - 528.21 s
+   * - 20
+     - 262,144
+     - 40 MiB
+     - unpaced
+     - 244,166/260,178 (93.846%)
+     - 942,218
+     - 348.12 s
+   * - 20
+     - 262,144
+     - 40 MiB
+     - 100,000/s
+     - 244,178/260,178 (93.850%)
+     - 883,033
+     - 524.84 s
+   * - 20
+     - 262,144
+     - 160 MiB
+     - unpaced
+     - 259,199/262,136 (98.880%)
+     - 844,537
+     - 344.18 s
+   * - 21
+     - 262,144
+     - 40 MiB
+     - 100,000/s
+     - 244,163/260,178 (93.845%)
+     - 0
+     - 522.67 s
+   * - 21
+     - 262,144
+     - 160 MiB
+     - 100,000/s
+     - 259,200/262,136 (98.880%)
+     - 0
+     - 522.75 s
+
+Host 21 had 32 CPUs and about 121 GiB of RAM. On that host we changed only the configured table capacity between the two paced runs. The 40 MiB table and spill structures used about 56.3 MiB before mapped pages. With the maximum supported 4,194,304 slots they used about 176.3 MiB, above the original 64 MiB budget. Neither run shed storage work. The larger table preserved 259,200 first choices. Reaching 99% required 259,515. A RAM miss returns immediately, even when the storage thread can later recover the hint.
+
+With 16,384 hot clients and the rate cap, host 19 passed 99% twice. Both runs preserved 16,335 original choices from separate fresh files. At full producer speed the same host and working set retained 34.753% and shed more than 53 million storage operations. A retention claim must specify the working set, the configured table capacity and the offered rate.
+
+We can run the qualification with the original 262,144-client working set. A result below 99% makes the command exit unsuccessfully. Omitting the rate gives the unpaced run.
+
+.. code-block:: sh
+
+   SIBUNA_SPILL_DIR=/var/tmp SIBUNA_AFFINITY_HOT_KEYS=262144 \
+     SIBUNA_AFFINITY_TABLE_SLOTS=1048576 SIBUNA_AFFINITY_COLD_PER_SECOND=100000 \
+     cargo test --release --locked -p sibuna-lb --lib qualify_ninety_nine_percent_affinity -- --ignored --nocapture
+
 Acceptance criteria and implementation status
 ---------------------------------------------
 
