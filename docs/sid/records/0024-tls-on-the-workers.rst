@@ -39,7 +39,7 @@ Invariants
 #. A TLS connection is served by exactly one of the two: a worker or the runtime. No byte is read twice and none is lost when a connection goes to the runtime.
 #. The certificate, the protocol versions, the cipher suites and the client certificate check are those of the listener, whoever ends the TLS. Both use the same configuration object, and a reload reaches both.
 #. A connection counts once under the node bound and once under the bound of its client, from the accept to its end, as before.
-#. The worker does a bounded amount of work for a client that has not finished its handshake: at most 16 KiB of first message and at most 10 seconds.
+#. The worker does a bounded amount of work for a client that has not finished its handshake: at most 16 KiB of first message and at most 15 seconds.
 #. Clear bytes that the TLS session holds are never left waiting for a socket event that will not come.
 
 Which connections a worker keeps
@@ -75,9 +75,18 @@ The TLS library is used without I/O of its own: the worker moves bytes between t
 
 *Writing.* The worker gives output bytes to the session, which holds at most 64 KiB of encrypted bytes, and writes those to the socket. Output that the session did not take stays in the output of the connection, as bytes that a socket did not take do today. The worker asks for write events while the output or the session holds bytes. A connection closes only after the session has written everything, and the worker sends the TLS close message before it closes its side.
 
-*The handshake.* The messages of the handshake pass through the same two steps. The time from the accept to the end of the handshake is bounded by 10 seconds, the bound of the runtime. When the handshake ends, the worker records the TLS version, the cipher suite and the fingerprint of the client certificate for the access log and the rules, as the runtime does.
+*The handshake.* The messages of the handshake pass through the same two steps. The time from the accept to the end of the handshake is bounded by 15 seconds, the bound of the runtime, or by the idle timeout when that is shorter. When the handshake ends, the worker records the TLS version, the cipher suite and the fingerprint of the client certificate for the access log and the rules, as the runtime does.
 
 Tunnels, lingering closes (SID 0019) and deadlines work on clear bytes and need no change beyond these two steps.
+
+A listener that obtains certificates on demand (SID 0021) is the exception to all of this. Its handshake may wait for a certificate, and a worker must not wait. Such a listener gives every connection to the runtime, as before.
+
+Counting
+~~~~~~~~
+
+The listener counts a TLS connection once when it accepts it, and the worker holds that place until the connection ends or goes to the runtime, which then holds it. Before this record a TLS connection with HTTP/1.1 counted twice under the node bound, once for the client socket and once for the socket pair. It now counts once, as a plain connection does.
+
+``/__sibuna/metrics`` gains two counters: ``tls_kept`` for the connections a worker kept and ``tls_passed`` for those it gave to the runtime.
 
 Rationale and alternatives
 --------------------------
@@ -116,24 +125,32 @@ Acceptance criteria and implementation status
      - Status
    * - 1
      - An HTTP/1.1 connection over TLS is served by a worker alone.
-     - Pending.
+     - Met. ``cmd/sibuna/tests/edge_tls_workers.rs`` opens connections without a protocol list, with ``http/1.1`` and with TLS 1.2. ``tls_kept`` counts each, ``tls_passed`` stays 0, and the access log has the version and the suite of each request.
    * - 2
      - A client that offers ``h2`` is served over HTTP/2 as before, also when its first message arrives in pieces.
-     - Pending.
+     - Met. The same file writes a ClientHello in three pieces with pauses and gets ``h2``, runs an HTTP/2 exchange, and reads ``tls_passed``. The unit tests of ``crates/ingress/src/sealed.rs`` feed a ClientHello byte by byte: the answer comes with the last byte, and a passed connection carries every byte.
    * - 3
      - Large requests and responses, pipelined requests and a WebSocket tunnel pass through TLS on a worker whole.
-     - Pending.
+     - Met, on both paths. A 700 kB body, a 1 MiB response, 600 pipelined requests in one write (more than one buffer of clear bytes) and 2 MiB through a tunnel arrive whole.
    * - 4
      - A client that does not finish its handshake loses the connection within the bound.
-     - Pending.
+     - Met. A silent client, a client with half a ClientHello and a client that sends plain HTTP are closed, and the node serves on. The test uses an idle timeout of one second. The bound of 15 seconds itself is not timed.
    * - 5
      - HTTPS carries more requests on the benchmark host than before.
-     - Pending.
+     - Met. With 256 connections on one host: 149,168 requests per second before and 174,901 after, where HAProxy with the same headers carries 153,080. The book has the table.
+
+The model ``docs/sid/assets/tls-on-the-workers.lean`` proves the two facts the design rests on: a read leaves clear bytes behind only when it filled the buffer, and then says so (invariant 5), and the bytes that the runtime replays followed by the rest of the socket are the stream of the client (invariant 1).
 
 Known gaps
 ----------
 
-Pending.
+#. HTTP/2 is unchanged. It carries 67 to 74 percent of what HAProxy carries on the benchmark host, and only a cheaper HTTP/2 path would change that.
+#. A listener with ``on_demand`` certificates gains nothing: all its connections go to the runtime.
+#. A client that offers ``h2`` and then speaks HTTP/1.1, because the listener chose it, is served by the runtime through the socket pair, as before. No listener is configured that way today.
+#. TLS session resumption is that of the TLS library with its defaults. We did not measure the cost of full handshakes under a flood of new connections.
+#. The node without workers, and Windows, keep the old path.
+#. The handshake bound of 15 seconds has no test of its own.
+#. The 99th percentile at 2,048 HTTPS connections was 54 ms in the final run and 38 ms in an earlier run. We did not look for the reason of the spread.
 
 Open questions
 --------------
@@ -144,6 +161,7 @@ Review history
 --------------
 
 - 2026-11-25. Initial draft, after the comparison with HAProxy.
+- 2026-11-25. Implemented. The review of the code found three faults before the tests ran: a lingering close would have asked for write events without end, because the session flag stayed set while the worker only discards bytes; the draft named 10 seconds where the runtime uses 15; and a TLS connection with HTTP/1.1 had always counted twice under the node bound, which the new path corrects. Listeners with certificates on demand were left to the runtime.
 
 References
 ----------
