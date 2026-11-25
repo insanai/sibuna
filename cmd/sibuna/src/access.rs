@@ -65,15 +65,41 @@ impl Observe {
         self.options.read().unwrap_or_else(PoisonError::into_inner).allows(address)
     }
 
-    /// True when a reload can move to `next`. The separate listener and the length of
-    /// a running log queue are fixed when the process starts.
-    pub(crate) fn compatible(&self, next: &ObserveOptions) -> bool {
-        let options = self.options.read().unwrap_or_else(PoisonError::into_inner);
-        let queue = match (self.log.get(), &next.access_log) {
-            (Some(log), Some(asked)) => log.queue() == asked.queue,
-            _ => true,
-        };
-        options.listen == next.listen && queue
+    /// The address of the separate listener that the options in force ask for.
+    pub(crate) fn listen(&self) -> Option<std::net::SocketAddr> {
+        self.options.read().unwrap_or_else(PoisonError::into_inner).listen
+    }
+
+    /// Offers the line of an ended TCP connection or UDP mapping to the log. Never
+    /// waits.
+    pub(crate) fn offer_flow(&self, flow: sibuna_lb::FlowEnd) {
+        if let Some(log) = self.log() {
+            log.offer_flow(flow);
+        }
+    }
+
+    /// Logs a connection of `client` that the HTTP server refused, when the rate of
+    /// such lines allows one more. The caller has counted it.
+    pub(crate) fn log_refusal(&self, reason: sibuna_lb::Refusal, client: IpAddr) {
+        let Some(log) = self.log() else { return };
+        let ended = std::time::SystemTime::now();
+        let now = ended.duration_since(std::time::UNIX_EPOCH).map_or(0, |since| since.as_secs());
+        if !self.stats.may_log_refusal(now) {
+            return;
+        }
+        let unknown: Arc<str> = Arc::from("-");
+        log.offer_flow(sibuna_lb::FlowEnd {
+            ended,
+            duration: Duration::ZERO,
+            protocol: "tcp",
+            client: std::net::SocketAddr::new(client, 0),
+            frontend: unknown.clone(),
+            backend: unknown,
+            server: None,
+            bytes_in: 0,
+            bytes_out: 0,
+            end: reason.end(),
+        });
     }
 
     /// Prepares the access log of `next`. See [`AccessLog::plan`].
@@ -133,11 +159,13 @@ impl Observe {
         // Writing to a string cannot fail.
         let _ = self.stats.write_prometheus(out);
         let (written, dropped, errors) = self.log.get().map_or((0, 0, 0), AccessLog::counts);
+        let queue = self.log().map_or(0, |log| log.queue() as u64);
         let series = [
             ("sibuna_edge_ready", "gauge", u64::from(self.is_ready())),
             ("sibuna_edge_access_log_written_total", "counter", written),
             ("sibuna_edge_access_log_dropped_total", "counter", dropped),
             ("sibuna_edge_access_log_errors_total", "counter", errors),
+            ("sibuna_edge_access_log_queue_length", "gauge", queue),
         ];
         for (name, kind, value) in series {
             let _ = writeln!(out, "# TYPE {name} {kind}\n{name} {value}");

@@ -92,6 +92,8 @@ struct Extra<'a> {
     listen: bool,
     /// The file name of the log. Empty is `access.log`, and `-` is no log.
     log: &'a str,
+    /// Members of the `access_log` object, each with a leading comma.
+    log_members: &'a str,
 }
 
 /// The text of the topology file.
@@ -105,7 +107,9 @@ fn source(
 ) -> String {
     let (http, observe, front, root) = (extra.http, extra.observe, extra.front, extra.root);
     let name = if extra.log.is_empty() { "access.log" } else { extra.log };
-    let mut members = format!(r#""access_log":{{"output":"{}"}}"#, directory.join(name).display());
+    let output = directory.join(name);
+    let mut members =
+        format!(r#""access_log":{{"output":"{}"{}}}"#, output.display(), extra.log_members);
     if extra.log == "-" {
         // The members of a test begin with a comma, so one member stays in front.
         members = r#""internal_allow":["127.0.0.0/8","::1/128"]"#.to_owned();
@@ -593,7 +597,7 @@ fn a_reload_moves_the_log_and_changes_who_reads_the_internal_routes() {
 }
 
 #[test]
-fn a_log_added_by_a_reload_starts_and_a_new_listener_needs_a_restart() {
+fn a_reload_starts_a_log_changes_its_queue_and_moves_the_listener() {
     let server = origin(Duration::ZERO);
     let daemon = start(server, true, &Extra { log: "-", ..Extra::default() });
     assert_eq!(status(&get(daemon.vip, "/unlogged", "")), 200);
@@ -601,13 +605,34 @@ fn a_log_added_by_a_reload_starts_and_a_new_listener_needs_a_restart() {
     assert_eq!(status(&get(daemon.vip, "/logged", "")), 200);
     let line = &daemon.lines(1)[0];
     assert_eq!(field(line, "path"), "/logged", "{line}");
-    // The separate listener is bound when the process starts. The reload is refused
-    // as a whole, so the log stays where it is.
-    daemon.reload(server, &Extra { listen: true, log: "other.log", ..Extra::default() });
+    let metrics = get(daemon.vip, "/__sibuna/metrics", "");
+    assert!(metrics.contains("sibuna_edge_access_log_queue_length 8192\n"), "{metrics}");
+    // A listener and another queue length, without a restart.
+    let short = r#","queue":64"#;
+    daemon.reload(server, &Extra { listen: true, log_members: short, ..Extra::default() });
+    let metrics = get(daemon.admin, "/metrics", "");
+    assert!(metrics.contains("sibuna_edge_access_log_queue_length 64\n"), "{metrics}");
+    assert_eq!(status(&get(daemon.vip, "/resized", "")), 200);
+    assert_eq!(field(&daemon.lines(3)[2], "path"), "/resized");
+    // An address that is taken refuses the reload as a whole: the old listener
+    // serves on and the log stays where it is.
+    let holder = TcpListener::bind("127.0.0.1:0").unwrap();
+    let taken = format!(r#","listen":"{}""#, holder.local_addr().unwrap());
+    daemon.reload(server, &Extra { observe: &taken, log: "other.log", ..Extra::default() });
+    assert_eq!(status(&get(daemon.admin, "/ready", "")), 200);
     assert_eq!(status(&get(daemon.vip, "/kept", "")), 200);
-    assert_eq!(field(&daemon.lines(2)[1], "path"), "/kept");
-    assert!(TcpStream::connect(daemon.admin).is_err());
+    assert_eq!(field(&daemon.lines(4)[3], "path"), "/kept");
     assert!(!daemon.directory.join("other.log").exists());
+    // A free address: the new listener answers and the old one is closed.
+    let moved = free();
+    let listen = format!(r#","listen":"{moved}""#);
+    daemon.reload(server, &Extra { observe: &listen, ..Extra::default() });
+    assert_eq!(status(&get(moved, "/ready", "")), 200);
+    assert!(TcpStream::connect(daemon.admin).is_err());
+    // No listener at all.
+    daemon.reload(server, &Extra::default());
+    assert!(TcpStream::connect(moved).is_err());
+    assert_eq!(status(&get(daemon.vip, "/__sibuna/health", "")), 200);
 }
 
 #[test]

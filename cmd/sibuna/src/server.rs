@@ -207,10 +207,12 @@ impl Server {
         self.peers.count(address)
     }
 
-    /// Counts a refused connection by its reason, on an edge (SID 0020).
-    pub(crate) fn count_refusal(&self, reason: sibuna_lb::Refusal) {
+    /// Counts a refused connection of `client` by its reason, on an edge, and logs it
+    /// at a bounded rate (SID 0020).
+    pub(crate) fn refuse_connection(&self, reason: sibuna_lb::Refusal, client: IpAddr) {
         if let Some(observe) = &self.observe {
             observe.stats.refuse(reason);
+            observe.log_refusal(reason, client);
         }
     }
 
@@ -417,7 +419,7 @@ pub(crate) fn admit_within(
     if server.connections.fetch_add(1, Ordering::Relaxed) >= limit {
         server.connections.fetch_sub(1, Ordering::Relaxed);
         server.metrics.overloaded.bump();
-        server.count_refusal(sibuna_lb::Refusal::ConnectionLimit);
+        server.refuse_connection(sibuna_lb::Refusal::ConnectionLimit, peer);
         reject(server, stream, "Service Unavailable: connection limit reached");
         return None;
     }
@@ -426,7 +428,7 @@ pub(crate) fn admit_within(
         Err(_) => {
             server.connections.fetch_sub(1, Ordering::Relaxed);
             server.metrics.overloaded.bump();
-            server.count_refusal(sibuna_lb::Refusal::ClientLimit);
+            server.refuse_connection(sibuna_lb::Refusal::ClientLimit, peer);
             reject(
                 server,
                 stream,
@@ -450,7 +452,7 @@ pub(crate) fn admit_secure(
     if server.connections.fetch_add(1, Ordering::Relaxed) >= limit {
         server.connections.fetch_sub(1, Ordering::Relaxed);
         server.metrics.overloaded.bump();
-        server.count_refusal(sibuna_lb::Refusal::ConnectionLimit);
+        server.refuse_connection(sibuna_lb::Refusal::ConnectionLimit, peer);
         return None;
     }
     match server.peers.admit(peer, per_client) {
@@ -458,7 +460,7 @@ pub(crate) fn admit_secure(
         Err(_) => {
             server.connections.fetch_sub(1, Ordering::Relaxed);
             server.metrics.overloaded.bump();
-            server.count_refusal(sibuna_lb::Refusal::ClientLimit);
+            server.refuse_connection(sibuna_lb::Refusal::ClientLimit, peer);
             None
         }
     }
