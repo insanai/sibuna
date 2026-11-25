@@ -82,6 +82,7 @@ mod deadline;
 mod error;
 mod head;
 mod response;
+mod screen;
 mod server;
 pub mod stack;
 #[cfg(test)]
@@ -94,5 +95,6 @@ pub use deadline::Deadline;
 pub use error::{ServeError, StartError};
 pub use head::MAX_HEAD;
 pub use response::{CONSOLE_POLICY, ISOLATED_POLICY, phrase};
+pub use screen::{MAX_NETWORKS, Screen, ScreenError};
 pub use server::{Counters, Handler, Options, Server};
 pub use websocket::{Sender, WebSocket};
