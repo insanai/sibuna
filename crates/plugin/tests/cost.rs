@@ -127,15 +127,18 @@ fn cost_of_one_invocation_of_each_tier() {
     let path = temp_path("cost.sock");
     let listener = UnixListener::bind(&path).unwrap();
     std::thread::spawn(move || {
-        let (mut stream, _) = listener.accept().unwrap();
-        let mut out = Vec::new();
-        while let Ok(frame) = read_frame(&mut stream) {
-            out.clear();
-            write_frame(&mut out, FrameKind::Verdict, frame.id, b"\x00X-Hook: example\r\n")
-                .unwrap();
-            if stream.write_all(&out).is_err() {
-                return;
-            }
+        for mut stream in listener.incoming().map_while(Result::ok) {
+            std::thread::spawn(move || {
+                let mut out = Vec::new();
+                while let Ok(frame) = read_frame(&mut stream) {
+                    out.clear();
+                    let answer = b"\x00X-Hook: example\r\n";
+                    write_frame(&mut out, FrameKind::Verdict, frame.id, answer).unwrap();
+                    if stream.write_all(&out).is_err() {
+                        return;
+                    }
+                }
+            });
         }
     });
     let socket = path.to_string_lossy().into_owned();
@@ -147,6 +150,23 @@ fn cost_of_one_invocation_of_each_tier() {
         black_box(local.run(&slot, black_box(&view)).verdict);
     });
     println!("agent (thread, Unix socket): {agent:>7.1} ns");
+
+    // The same call parked: a case goes to one judge and the answer comes back.
+    let slot = Arc::new(slot);
+    let options = sibuna_plugin::JudgeOptions { threads: 1, queue: 8 };
+    let judges = sibuna_plugin::Judges::start(&slot, options).unwrap();
+    let (answers, received) = std::sync::mpsc::channel();
+    let round = || {
+        let answers = answers.clone();
+        let deliver = Box::new(move |answer| {
+            let _ = answers.send(answer);
+        });
+        assert!(judges.submit(sibuna_plugin::Case::of(black_box(&view)), deliver));
+        black_box(received.recv().unwrap().verdict);
+    };
+    round();
+    let parked = measure(50_000, round);
+    println!("agent, parked with a judge:  {parked:>7.1} ns");
     let _ = std::fs::remove_file(path);
 }
 
