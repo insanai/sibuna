@@ -49,11 +49,12 @@ def manifest(binary, package):
         if os.environ.get(variable):
             wasm[name] = sha256(os.environ[variable])
     release = version()
+    commit = git('rev-parse', 'HEAD')
     return {
         'name': 'sibuna',
         'version': release,
-        'commit': git('rev-parse', 'HEAD'),
-        'source': f'https://github.com/insanai/sibuna/tree/v{release}',
+        'commit': commit,
+        'source': f'https://github.com/insanai/sibuna/tree/{commit}',
         'package': package,
         'target': target,
         'rustc': subprocess.check_output(['rustc', '--version'], text=True).strip(),

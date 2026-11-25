@@ -414,7 +414,7 @@ pub(crate) fn dotted(label: &str) -> String {
         return alias.to_string();
     }
     let (dir, file) = rest.split_once(':').unwrap_or(("", rest));
-    let file = file.trim_suffix(".jlv");
+    let file = file.strip_suffix(".jlv").unwrap_or(file);
     let parts = alias.into_iter().chain(dir.split('/').filter(|d| !d.is_empty()));
     parts.chain([file]).collect::<Vec<_>>().join(".")
 }
@@ -427,7 +427,7 @@ fn unambiguous(request: Request<'_>) -> Result<(), Diagnostic> {
         let (dir, module) = body.split_once(':').unwrap_or(("", body));
         let name = match dir.split('/').next() {
             Some(first) if !first.is_empty() => first,
-            _ => module.trim_suffix(".jlv"),
+            _ => module.strip_suffix(".jlv").unwrap_or(module),
         };
         let package = match root_of(request, name) {
             Root::Own => continue,
