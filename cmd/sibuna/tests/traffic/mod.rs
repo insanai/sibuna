@@ -26,6 +26,7 @@ pub struct Topology {
     http: String,
     frontend: String,
     backend: String,
+    root: String,
 }
 
 impl Topology {
@@ -38,7 +39,14 @@ impl Topology {
             http: String::new(),
             frontend: String::new(),
             backend: String::new(),
+            root: String::new(),
         }
+    }
+
+    /// Extra members of the root object, each with a trailing comma.
+    pub fn root(mut self, members: &str) -> Self {
+        self.root = members.to_owned();
+        self
     }
 
     /// Replaces server `index` by the JSON object `row`.
@@ -67,12 +75,13 @@ impl Topology {
 
     fn source(&self, files: &Files, event_loop: bool) -> String {
         format!(
-            r#"{{"global":{{"admin_socket":"{}"}},
+            r#"{{{}"global":{{"admin_socket":"{}"}},
             "observability":{{"access_log":{{"output":"{}"}}}},
             "http":{{"surface":"off","event_loop":{event_loop}{}}},
             "frontends":{{"web":{{"proto":"http","binds":["{}"],{}
             "default_backend":"app"}}}},
             "backends":{{"app":{{"mode":"http",{}"servers":[{}]}}}}}}"#,
+            self.root,
             files.socket.display(),
             files.log.display(),
             self.http,
@@ -182,6 +191,20 @@ impl Edge {
         let diagnostics = String::from_utf8_lossy(&output.stderr);
         assert!(output.status.success(), "`{command}` failed: {diagnostics}");
         String::from_utf8_lossy(&output.stdout).into_owned()
+    }
+
+    /// Replaces the file of the edge by `topology`, for a `reload` that follows.
+    pub fn rewrite(&self, topology: &Topology, event_loop: bool) {
+        fs::write(&self.files.path, topology.source(&self.files, event_loop)).unwrap();
+    }
+
+    /// Runs `sibuna ctl` with `command` and returns its diagnostic, which must be one.
+    pub fn ctl_refused(&self, command: &str) -> String {
+        let mut ctl = Command::new(BIN);
+        ctl.arg("ctl").arg(&self.files.socket).args(command.split(' '));
+        let output = ctl.output().unwrap();
+        assert!(!output.status.success(), "`{command}` must be refused");
+        String::from_utf8_lossy(&output.stderr).into_owned()
     }
 
     /// Waits for `count` lines of the access log and returns them.
