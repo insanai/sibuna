@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"POT-Creation-Date: 2026-11-25 09:40+0000\n"
 "PO-Revision-Date: 2026-10-16 05:19+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -38,9 +38,9 @@ msgstr ""
 msgid "Surfaces and Configuration"
 msgstr "Modos de protección y configuración"
 
-#: ../../operations.rst:9 ../../operations.rst:170 ../../operations.rst:2817
-#: ../../operations.rst:3037 ../../operations.rst:3066
-#: ../../operations.rst:3207
+#: ../../operations.rst:9 ../../operations.rst:170 ../../operations.rst:2818
+#: ../../operations.rst:3038 ../../operations.rst:3067
+#: ../../operations.rst:3208
 msgid "Objectives"
 msgstr "Objetivos"
 
@@ -132,7 +132,7 @@ msgstr ""
 msgid "Daemon options"
 msgstr "Opciones del daemon"
 
-#: ../../operations.rst:34 ../../operations.rst:2679
+#: ../../operations.rst:34 ../../operations.rst:2680
 msgid "Flag"
 msgstr "Opción"
 
@@ -153,7 +153,7 @@ msgstr "Valor por defecto"
 #: ../../operations.rst:1592 ../../operations.rst:1674
 #: ../../operations.rst:2004 ../../operations.rst:2034
 #: ../../operations.rst:2108 ../../operations.rst:2379
-#: ../../operations.rst:2680
+#: ../../operations.rst:2681
 msgid "Meaning"
 msgstr "Significado"
 
@@ -8136,7 +8136,7 @@ msgstr ""
 "Vuelve a abrir el archivo del registro de acceso, después de que una "
 "rotación lo haya renombrado. No recarga nada."
 
-#: ../../operations.rst:2197 ../../operations.rst:2637
+#: ../../operations.rst:2197 ../../operations.rst:2638
 msgid "``show certs``"
 msgstr "``show certs``"
 
@@ -8258,7 +8258,7 @@ msgstr ""
 "Los plugins con sus llamadas, veredictos, fallos y cortacircuitos "
 "abiertos (sección *Hooks*)."
 
-#: ../../operations.rst:2217 ../../operations.rst:2647
+#: ../../operations.rst:2217 ../../operations.rst:2648
 msgid "``show affinity``"
 msgstr "``show affinity``"
 
@@ -9080,8 +9080,7 @@ msgid ""
 "eight bytes. It answers a ``decide`` frame with a ``verdict`` frame of "
 "the same identifier, whose payload is one byte, 0 to admit, 1 to deny, 2 "
 "to challenge, and then the field lines to add. A ``sample`` frame has no "
-"answer. SID 0030 specifies the frame. The operator console of the edge "
-"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+"answer. SID 0030 specifies the frame."
 msgstr ""
 "*Escribir un agente.* Un agente acepta conexiones en su socket y lee "
 "tramas: una longitud de cuatro bytes, una versión, un tipo y un "
@@ -9089,22 +9088,26 @@ msgstr ""
 "trama ``verdict`` del mismo identificador, cuya carga útil es un byte, 0 "
 "para admitir, 1 para denegar, 2 para pedir un desafío, seguido de las "
 "líneas de campos que hay que añadir. Una trama ``sample`` no tiene "
-"respuesta. El SID 0030 especifica la trama. La consola de operador del "
-"edge ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+"respuesta. El SID 0030 especifica la trama."
 
-#: ../../operations.rst:2434
+#: ../../operations.rst:2432
+msgid "The operator console of the edge"
+msgstr "La consola de operador del edge"
+
+#: ../../operations.rst:2435
 msgid ""
-"The edge can run the console of Part XI beside the load balancer (SID "
-"0031). We add a ``console`` section to the topology file. The console "
-"listens on an address of its own, on threads of its own, and it keeps its "
-"accounts and its audit log in a SQLite file."
+"The edge can run the console of \"Console Preview\" below beside the load "
+"balancer (SID 0031). We add a ``console`` section to the topology file. "
+"The console listens on an address of its own, on threads of its own, and "
+"it keeps its accounts and its audit log in a SQLite file."
 msgstr ""
-"El edge puede ejecutar la consola de la parte XI junto al balanceador de "
-"carga (SID 0031). Añadimos una sección ``console`` al archivo de "
-"topología. La consola escucha en una dirección propia, en hilos propios, "
-"y guarda sus cuentas y su registro de auditoría en un archivo SQLite."
+"El edge puede ejecutar la consola de *Vista previa de la consola*, más "
+"abajo, junto al balanceador de carga (SID 0031). Añadimos una sección "
+"``console`` al archivo de topología. La consola escucha en una dirección "
+"propia, en hilos propios, y guarda sus cuentas y su registro de auditoría "
+"en un archivo SQLite."
 
-#: ../../operations.rst:2436
+#: ../../operations.rst:2437
 msgid ""
 "console: {\n"
 "    listen: \"127.0.0.1:9443\",\n"
@@ -9113,7 +9116,7 @@ msgid ""
 "},"
 msgstr ""
 
-#: ../../operations.rst:2444
+#: ../../operations.rst:2445
 msgid ""
 "sibuna init-admin admin --data-dir /var/lib/sibuna    # once, while the "
 "daemon is stopped\n"
@@ -9121,7 +9124,7 @@ msgid ""
 "# Console: http://127.0.0.1:9443/console/"
 msgstr ""
 
-#: ../../operations.rst:2450
+#: ../../operations.rst:2451
 msgid ""
 "We sign in, replace the temporary password, and open the page *Edge*. The "
 "page shows four things."
@@ -9129,7 +9132,7 @@ msgstr ""
 "Iniciamos sesión, sustituimos la contraseña temporal y abrimos la página "
 "*Edge*. La página muestra cuatro cosas."
 
-#: ../../operations.rst:2452
+#: ../../operations.rst:2453
 msgid ""
 "**The node.** Its state is one of three words. *Serving* means that the "
 "node admits new flows. *Draining* means that the node was told to stop: "
@@ -9156,7 +9159,7 @@ msgstr ""
 "0028). Un nodo que sirve un archivo no tiene ninguna, y la página dice "
 "\"Not reported\"."
 
-#: ../../operations.rst:2454
+#: ../../operations.rst:2455
 msgid ""
 "**The refusals by cause.** One row for each reason of the metrics: "
 "``flow_limit``, ``draining``, ``rate_limit``, ``connection_limit``, "
@@ -9170,7 +9173,7 @@ msgstr ""
 "cuenta en ``flow_limit``, y un nodo que se está drenando cuenta en "
 "``draining``."
 
-#: ../../operations.rst:2456
+#: ../../operations.rst:2457
 msgid ""
 "**The frontends and the pools.** A frontend shows its requests, flows, "
 "bytes and the latency of a request: the mean and the 95th percentile. A "
@@ -9185,7 +9188,7 @@ msgstr ""
 "primer byte. Una vista contiene como máximo 256 servidores, y la página "
 "indica cuántos dejó fuera."
 
-#: ../../operations.rst:2458
+#: ../../operations.rst:2459
 msgid ""
 "**The fleet.** One row for each member: the state of the link, the state "
 "of the node, its flows, its servers and its two revisions. A member whose "
@@ -9197,7 +9200,7 @@ msgstr ""
 "cuyo archivo difiere del archivo de este nodo se marca con ``differs``. "
 "Un miembro que no responde en cinco segundos tiene la fila ``No answer``."
 
-#: ../../operations.rst:2460
+#: ../../operations.rst:2461
 msgid ""
 "An operator or an administrator also sees the commands. Each command is "
 "one line of the admin socket, and the function of the admin socket runs "
@@ -9213,15 +9216,15 @@ msgstr ""
 "por segundo. Un cambio llega a los demás nodos por la malla, como desde "
 "``sibuna ctl``, salvo que marquemos *This node only*."
 
-#: ../../operations.rst:2466
+#: ../../operations.rst:2467
 msgid "The console offers"
 msgstr "La consola ofrece"
 
-#: ../../operations.rst:2467
+#: ../../operations.rst:2468
 msgid "It does not offer"
 msgstr "No ofrece"
 
-#: ../../operations.rst:2468
+#: ../../operations.rst:2469
 msgid ""
 "``set server POOL/NAME state ready|drain [local]``, ``set server "
 "POOL/NAME weight N [local]``, ``add server``, ``del server``, ``del "
@@ -9233,7 +9236,7 @@ msgstr ""
 "ban``, ``reload cluster``, ``show servers``, ``show cluster``, ``show "
 "certs``, ``show ca``"
 
-#: ../../operations.rst:2469
+#: ../../operations.rst:2470
 msgid ""
 "``reload``, ``reopen log``, ``show info``, ``show stats``, ``show "
 "authority``, ``show affinity``, ``revoke cert`` and every other command. "
@@ -9243,7 +9246,7 @@ msgstr ""
 "authority``, ``show affinity``, ``revoke cert`` ni ningún otro comando. "
 "Se quedan en el host, con ``sibuna ctl``."
 
-#: ../../operations.rst:2471
+#: ../../operations.rst:2472
 msgid ""
 "Every request passes the checks of the console: the session, the role, "
 "the ``Origin`` field, the CSRF token and the allowance of the session. A "
@@ -9259,7 +9262,7 @@ msgstr ""
 "después. A una línea que la consola no ofrece se le responde "
 "``CONSOLEEDGE``, y el edge nunca la ve."
 
-#: ../../operations.rst:2473
+#: ../../operations.rst:2474
 msgid ""
 "**A fleet.** For more than one node we write the list of all members, the "
 "same on every node, so that ``reload cluster`` can carry the file. Each "
@@ -9270,7 +9273,7 @@ msgstr ""
 "transportar el archivo. Cada nodo se encuentra a sí mismo por su número, "
 "que contiene un pequeño archivo en el nodo."
 
-#: ../../operations.rst:2475
+#: ../../operations.rst:2476
 msgid ""
 "console: {\n"
 "    data_dir: \"/var/lib/sibuna\",\n"
@@ -9290,20 +9293,21 @@ msgid ""
 "},"
 msgstr ""
 
-#: ../../operations.rst:2492
+#: ../../operations.rst:2493
 msgid ""
 "A fleet has at most 64 members. The consoles talk to each other over "
-"HTTPS, so each one stands behind a TLS proxy, as Part XI describes for "
-"peers. The proxy must set ``X-Forwarded-For``. The two key files hold 64 "
-"hexadecimal digits each and are readable by their owner only."
+"HTTPS, so each one stands behind a TLS proxy, as \"A Tour of the "
+"Console\" describes for remote operation. The proxy must set "
+"``X-Forwarded-For``. The two key files hold 64 hexadecimal digits each "
+"and are readable by their owner only."
 msgstr ""
 "Una flota tiene como máximo 64 miembros. Las consolas hablan entre sí por "
-"HTTPS, así que cada una está detrás de un proxy TLS, como describe la "
-"parte XI para los pares. El proxy debe fijar ``X-Forwarded-For``. Los dos "
-"archivos de clave contienen 64 dígitos hexadecimales cada uno y solo "
-"puede leerlos su propietario."
+"HTTPS, así que cada una está detrás de un proxy TLS, como describe *Un "
+"recorrido por la consola* para el uso remoto. El proxy debe fijar "
+"``X-Forwarded-For``. Los dos archivos de clave contienen 64 dígitos "
+"hexadecimales cada uno y solo puede leerlos su propietario."
 
-#: ../../operations.rst:2494
+#: ../../operations.rst:2495
 msgid ""
 "The listener screens a connection by its source address when it accepts "
 "it. Behind a proxy it serves the trusted proxies only. Without a proxy, "
@@ -9321,7 +9325,7 @@ msgstr ""
 "una transcripción reciente, y debe demostrar la clave de los pares. "
 "``allow_operators`` rige para todas las demás peticiones."
 
-#: ../../operations.rst:2496
+#: ../../operations.rst:2497
 msgid ""
 "The listener has a fixed number of slots: 64 browser streams, one peer "
 "stream for each peer and at least 16, and 16 slots that only ordinary "
@@ -9336,7 +9340,7 @@ msgstr ""
 "nunca toma un bloqueo del camino de las peticiones, y el worker del edge "
 "consulta un único indicador para ella en cada vuelta."
 
-#: ../../operations.rst:2498
+#: ../../operations.rst:2499
 msgid ""
 "**Removing a member.** We delete its entry from the file and reload. The "
 "node closes the stream of that member within two seconds and refuses its "
@@ -9353,11 +9357,11 @@ msgstr ""
 "directorio, los ajustes del proxy o las claves de la consola se rechaza, "
 "y las rutas se mantienen."
 
-#: ../../operations.rst:2500
+#: ../../operations.rst:2501
 msgid "Several nodes"
 msgstr "Varios nodos"
 
-#: ../../operations.rst:2503
+#: ../../operations.rst:2504
 msgid ""
 "For several nodes we can add a top-level ``mesh`` object with a unicast "
 "``listen`` address, a list of ``peers`` as numeric UDP socket addresses, "
@@ -9398,11 +9402,11 @@ msgstr ""
 "TCP establecida en su nodo a través de un cambio de enrutamiento sigue "
 "requiriendo el direccionamiento de flujos aguas arriba."
 
-#: ../../operations.rst:2505
+#: ../../operations.rst:2506
 msgid "Hosting jlavi, jlavideploy and jlavici"
 msgstr "Alojar jlavi, jlavideploy y jlavici"
 
-#: ../../operations.rst:2508
+#: ../../operations.rst:2509
 msgid ""
 "The three sibling projects serve cleartext HTTP/1.1 and leave TLS to a "
 "proxy. One Sibuna node can serve all three names on port 443 and pass Git "
@@ -9412,31 +9416,31 @@ msgstr ""
 "proxy. Un solo nodo de Sibuna puede servir los tres nombres en el puerto "
 "443 y dejar pasar Git sobre SSH como TCP."
 
-#: ../../operations.rst:2510
+#: ../../operations.rst:2511
 msgid "What each project needs from the edge"
 msgstr "Lo que necesita cada proyecto del edge"
 
-#: ../../operations.rst:2514
+#: ../../operations.rst:2515
 msgid "Project"
 msgstr "Proyecto"
 
-#: ../../operations.rst:2515
+#: ../../operations.rst:2516
 msgid "Server"
 msgstr "Servidor"
 
-#: ../../operations.rst:2516
+#: ../../operations.rst:2517
 msgid "Needs"
 msgstr "Necesita"
 
-#: ../../operations.rst:2517
+#: ../../operations.rst:2518
 msgid "jlavi"
 msgstr "jlavi"
 
-#: ../../operations.rst:2518
+#: ../../operations.rst:2519
 msgid "``10.20.0.8:8040``"
 msgstr "``10.20.0.8:8040``"
 
-#: ../../operations.rst:2519
+#: ../../operations.rst:2520
 msgid ""
 "WebSocket on ``/live``, Git and large-file transfers of an hour, health "
 "at ``/api/v1/health``, ``trusted_proxies`` naming the Sibuna node, and "
@@ -9447,15 +9451,15 @@ msgstr ""
 "nodo de Sibuna, y paso TCP hacia ``sshd``. Varios procesos pueden "
 "compartir un pool."
 
-#: ../../operations.rst:2520
+#: ../../operations.rst:2521
 msgid "jlavideploy"
 msgstr "jlavideploy"
 
-#: ../../operations.rst:2521
+#: ../../operations.rst:2522
 msgid "``10.20.0.9:7420``"
 msgstr "``10.20.0.9:7420``"
 
-#: ../../operations.rst:2522
+#: ../../operations.rst:2523
 msgid ""
 "WebSocket on ``/live``, long polls of 30 s, bodies up to 64 MiB, health "
 "at ``/healthz``. It reads no forwarded field."
@@ -9463,15 +9467,15 @@ msgstr ""
 "WebSocket en ``/live``, sondeos largos de 30 s, cuerpos de hasta 64 MiB, "
 "estado en ``/healthz``. No lee ningún campo reenviado."
 
-#: ../../operations.rst:2523
+#: ../../operations.rst:2524
 msgid "jlavici"
 msgstr "jlavici"
 
-#: ../../operations.rst:2524
+#: ../../operations.rst:2525
 msgid "``10.20.0.10:8050``"
 msgstr "``10.20.0.10:8050``"
 
-#: ../../operations.rst:2525
+#: ../../operations.rst:2526
 msgid ""
 "Long polls of 25 s, chunk uploads of 16 MiB, large downloads, health at "
 "``/healthz``. One coordinator only, so one server. The public URL must be "
@@ -9481,7 +9485,7 @@ msgstr ""
 "grandes, estado en ``/healthz``. Un solo coordinador, así que un solo "
 "servidor. La URL pública debe ser el nombre que sirve el edge."
 
-#: ../../operations.rst:2527
+#: ../../operations.rst:2528
 msgid ""
 "{\n"
 "  \"global\": {\"max_flows\": 16384},\n"
@@ -9525,7 +9529,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../operations.rst:2559
+#: ../../operations.rst:2560
 msgid ""
 "The names carry no firewall here, because their clients are Git, curl and "
 "runners. To protect the browser pages of a project, we give its route "
@@ -9543,27 +9547,27 @@ msgstr ""
 "ejecutor que fija la clave pública del certificado sigue siendo válida "
 "mientras conservemos la misma clave privada al renovar."
 
-#: ../../operations.rst:2561
+#: ../../operations.rst:2562
 msgid "Coming from HAProxy"
 msgstr "Si venimos de HAProxy"
 
-#: ../../operations.rst:2564
+#: ../../operations.rst:2565
 msgid "HAProxy directives and their edge equivalents"
 msgstr "Directivas de HAProxy y sus equivalentes en el edge"
 
-#: ../../operations.rst:2568
+#: ../../operations.rst:2569
 msgid "HAProxy"
 msgstr "HAProxy"
 
-#: ../../operations.rst:2569
+#: ../../operations.rst:2570
 msgid "Sibuna edge"
 msgstr "Edge de Sibuna"
 
-#: ../../operations.rst:2570
+#: ../../operations.rst:2571
 msgid "``bind :443 ssl crt /etc/haproxy/certs/ alpn h2,http/1.1``"
 msgstr "``bind :443 ssl crt /etc/haproxy/certs/ alpn h2,http/1.1``"
 
-#: ../../operations.rst:2571
+#: ../../operations.rst:2572
 msgid ""
 "``\"binds\": [\"0.0.0.0:443\"], \"tls\": {\"crt\": "
 "\"/etc/sibuna/certs/\"}``"
@@ -9571,37 +9575,37 @@ msgstr ""
 "``\"binds\": [\"0.0.0.0:443\"], \"tls\": {\"crt\": "
 "\"/etc/sibuna/certs/\"}``"
 
-#: ../../operations.rst:2572
+#: ../../operations.rst:2573
 msgid "``bind quic4@:443 ssl crt ... alpn h3``"
 msgstr "``bind quic4@:443 ssl crt ... alpn h3``"
 
-#: ../../operations.rst:2573
+#: ../../operations.rst:2574
 msgid "``\"tls\": {\"crt\": ..., \"http3\": true}``"
 msgstr "``\"tls\": {\"crt\": ..., \"http3\": true}``"
 
-#: ../../operations.rst:2574
+#: ../../operations.rst:2575
 msgid "``use_backend api if { hdr(host) -i api.example.org }``"
 msgstr "``use_backend api if { hdr(host) -i api.example.org }``"
 
-#: ../../operations.rst:2575
+#: ../../operations.rst:2576
 msgid ""
 "``\"routes\": [{\"host\": \"api.example.org\", \"backend\": \"api\"}]``"
 msgstr ""
 "``\"routes\": [{\"host\": \"api.example.org\", \"backend\": \"api\"}]``"
 
-#: ../../operations.rst:2576
+#: ../../operations.rst:2577
 msgid "``use_backend api if { path_beg /v1/ }``"
 msgstr "``use_backend api if { path_beg /v1/ }``"
 
-#: ../../operations.rst:2577
+#: ../../operations.rst:2578
 msgid "``{\"path_prefix\": \"/v1/\", \"backend\": \"api\"}``"
 msgstr "``{\"path_prefix\": \"/v1/\", \"backend\": \"api\"}``"
 
-#: ../../operations.rst:2578
+#: ../../operations.rst:2579
 msgid "``mode tcp`` with ``req.ssl_sni``"
 msgstr "``mode tcp`` con ``req.ssl_sni``"
 
-#: ../../operations.rst:2579
+#: ../../operations.rst:2580
 msgid ""
 "``\"proto\": \"tcp\", \"tcp_inspect\": \"tls_client_hello\"`` with "
 "``acls`` and ``rules``"
@@ -9609,37 +9613,37 @@ msgstr ""
 "``\"proto\": \"tcp\", \"tcp_inspect\": \"tls_client_hello\"`` con "
 "``acls`` y ``rules``"
 
-#: ../../operations.rst:2580
+#: ../../operations.rst:2581
 msgid "``balance leastconn``, ``weight``, ``maxconn``, ``backup``"
 msgstr "``balance leastconn``, ``weight``, ``maxconn``, ``backup``"
 
-#: ../../operations.rst:2581
+#: ../../operations.rst:2582
 msgid ""
 "``least_connections`` (default), ``weight``, ``max_flows``, ``backup``"
 msgstr ""
 "``least_connections`` (por defecto), ``weight``, ``max_flows``, ``backup``"
 
-#: ../../operations.rst:2582
+#: ../../operations.rst:2583
 msgid "``balance roundrobin``"
 msgstr "``balance roundrobin``"
 
-#: ../../operations.rst:2583
+#: ../../operations.rst:2584
 msgid "``\"balance\": {\"kind\": \"round_robin\"}``"
 msgstr "``\"balance\": {\"kind\": \"round_robin\"}``"
 
-#: ../../operations.rst:2584
+#: ../../operations.rst:2585
 msgid "``balance source``"
 msgstr "``balance source``"
 
-#: ../../operations.rst:2585
+#: ../../operations.rst:2586
 msgid "``\"sticky\": \"source\"``"
 msgstr "``\"sticky\": \"source\"``"
 
-#: ../../operations.rst:2586
+#: ../../operations.rst:2587
 msgid "``cookie SRV insert indirect nocache httponly secure``"
 msgstr "``cookie SRV insert indirect nocache httponly secure``"
 
-#: ../../operations.rst:2587
+#: ../../operations.rst:2588
 msgid ""
 "``\"sticky\": {\"kind\": \"cookie\", \"cookie\": \"SRV\"}``. The value is "
 "a keyed hash, not the server name."
@@ -9647,11 +9651,11 @@ msgstr ""
 "``\"sticky\": {\"kind\": \"cookie\", \"cookie\": \"SRV\"}``. El valor es "
 "un hash con clave, no el nombre del servidor."
 
-#: ../../operations.rst:2588
+#: ../../operations.rst:2589
 msgid "``timeout connect 5s``, ``timeout server 60s``"
 msgstr "``timeout connect 5s``, ``timeout server 60s``"
 
-#: ../../operations.rst:2589
+#: ../../operations.rst:2590
 msgid ""
 "``\"connect_timeout\": \"5s\"``, ``\"response_timeout\": \"60s\"`` on the "
 "backend (these are the defaults)"
@@ -9659,20 +9663,20 @@ msgstr ""
 "``\"connect_timeout\": \"5s\"``, ``\"response_timeout\": \"60s\"`` en el "
 "backend (son los valores por defecto)"
 
-#: ../../operations.rst:2590
+#: ../../operations.rst:2591
 msgid "``retries 2`` with ``option redispatch``"
 msgstr "``retries 2`` con ``option redispatch``"
 
-#: ../../operations.rst:2591
+#: ../../operations.rst:2592
 msgid "``\"retries\": 2`` (default). Each retry goes to another server."
 msgstr ""
 "``\"retries\": 2`` (por defecto). Cada reintento va a otro servidor."
 
-#: ../../operations.rst:2592
+#: ../../operations.rst:2593
 msgid "``observe layer7``, ``error-limit 3``, ``on-error mark-down``"
 msgstr "``observe layer7``, ``error-limit 3``, ``on-error mark-down``"
 
-#: ../../operations.rst:2593
+#: ../../operations.rst:2594
 msgid ""
 "``\"passive_health\": {\"failures\": 3, \"ejection\": \"10s\", "
 "\"http_5xx\": true}``"
@@ -9680,66 +9684,66 @@ msgstr ""
 "``\"passive_health\": {\"failures\": 3, \"ejection\": \"10s\", "
 "\"http_5xx\": true}``"
 
-#: ../../operations.rst:2594
+#: ../../operations.rst:2595
 msgid "``server s1 ... slowstart 30s``"
 msgstr "``server s1 ... slowstart 30s``"
 
-#: ../../operations.rst:2595
+#: ../../operations.rst:2596
 msgid "``\"slow_start\": \"30s\"`` on the backend"
 msgstr "``\"slow_start\": \"30s\"`` en el backend"
 
-#: ../../operations.rst:2596
+#: ../../operations.rst:2597
 msgid "``http-request redirect scheme https code 308 unless { ssl_fc }``"
 msgstr "``http-request redirect scheme https code 308 unless { ssl_fc }``"
 
-#: ../../operations.rst:2597
+#: ../../operations.rst:2598
 msgid "``\"redirect_https\": true`` on the cleartext frontend"
 msgstr "``\"redirect_https\": true`` en el frontend en claro"
 
-#: ../../operations.rst:2598
+#: ../../operations.rst:2599
 msgid ""
 "``http-response set-header Strict-Transport-Security max-age=31536000``"
 msgstr ""
 "``http-response set-header Strict-Transport-Security max-age=31536000``"
 
-#: ../../operations.rst:2599
+#: ../../operations.rst:2600
 msgid "``\"hsts\": true`` on the TLS frontend"
 msgstr "``\"hsts\": true`` en el frontend TLS"
 
-#: ../../operations.rst:2600
-msgid ""
-"``http-request set-header X-Edge sibuna``, ``http-request del-header "
-"X-Debug``"
-msgstr ""
-"``http-request set-header X-Edge sibuna``, ``http-request del-header "
-"X-Debug``"
-
 #: ../../operations.rst:2601
 msgid ""
+"``http-request set-header X-Edge sibuna``, ``http-request del-header "
+"X-Debug``"
+msgstr ""
+"``http-request set-header X-Edge sibuna``, ``http-request del-header "
+"X-Debug``"
+
+#: ../../operations.rst:2602
+msgid ""
 "``\"request_headers\": {\"set\": {\"X-Edge\": \"sibuna\"}, \"remove\": "
 "[\"X-Debug\"]}``"
 msgstr ""
 "``\"request_headers\": {\"set\": {\"X-Edge\": \"sibuna\"}, \"remove\": "
 "[\"X-Debug\"]}``"
 
-#: ../../operations.rst:2602
+#: ../../operations.rst:2603
 msgid "``http-response set-header``, ``http-response del-header Server``"
 msgstr "``http-response set-header``, ``http-response del-header Server``"
 
-#: ../../operations.rst:2603
+#: ../../operations.rst:2604
 msgid "``\"response_headers\": {\"set\": {...}, \"remove\": [\"Server\"]}``"
 msgstr ""
 "``\"response_headers\": {\"set\": {...}, \"remove\": [\"Server\"]}``"
 
-#: ../../operations.rst:2604
+#: ../../operations.rst:2605
 msgid "``http-request deny deny_status 413 if { req.body_size gt 10m }``"
 msgstr "``http-request deny deny_status 413 if { req.body_size gt 10m }``"
 
-#: ../../operations.rst:2605
+#: ../../operations.rst:2606
 msgid "``\"max_body\": \"10m\"``"
 msgstr "``\"max_body\": \"10m\"``"
 
-#: ../../operations.rst:2606
+#: ../../operations.rst:2607
 msgid ""
 "``http-request set-header X-Forwarded-Host %[req.hdr(host)]``, "
 "``X-Forwarded-Port %[dst_port]``"
@@ -9747,55 +9751,55 @@ msgstr ""
 "``http-request set-header X-Forwarded-Host %[req.hdr(host)]``, "
 "``X-Forwarded-Port %[dst_port]``"
 
-#: ../../operations.rst:2607 ../../operations.rst:2615
+#: ../../operations.rst:2608 ../../operations.rst:2616
 msgid "Always on for HTTP frontends"
 msgstr "Siempre activado en los frontends HTTP"
 
-#: ../../operations.rst:2608
+#: ../../operations.rst:2609
 msgid "``option httpchk GET /health`` and ``check inter 2s rise 2 fall 3``"
 msgstr "``option httpchk GET /health`` y ``check inter 2s rise 2 fall 3``"
 
-#: ../../operations.rst:2609
-msgid ""
-"``\"health_check\": {\"kind\": \"http\", \"path\": \"/health\", "
-"\"interval\": \"2s\", \"rise\": 2, \"fall\": 3}``"
-msgstr ""
-"``\"health_check\": {\"kind\": \"http\", \"path\": \"/health\", "
-"\"interval\": \"2s\", \"rise\": 2, \"fall\": 3}``"
-
 #: ../../operations.rst:2610
 msgid ""
-"``server s1 10.0.0.1:8443 ssl verify required ca-file ca.pem sni "
-"str(api.internal) alpn h2``"
+"``\"health_check\": {\"kind\": \"http\", \"path\": \"/health\", "
+"\"interval\": \"2s\", \"rise\": 2, \"fall\": 3}``"
 msgstr ""
-"``server s1 10.0.0.1:8443 ssl verify required ca-file ca.pem sni "
-"str(api.internal) alpn h2``"
+"``\"health_check\": {\"kind\": \"http\", \"path\": \"/health\", "
+"\"interval\": \"2s\", \"rise\": 2, \"fall\": 3}``"
 
 #: ../../operations.rst:2611
 msgid ""
+"``server s1 10.0.0.1:8443 ssl verify required ca-file ca.pem sni "
+"str(api.internal) alpn h2``"
+msgstr ""
+"``server s1 10.0.0.1:8443 ssl verify required ca-file ca.pem sni "
+"str(api.internal) alpn h2``"
+
+#: ../../operations.rst:2612
+msgid ""
 "``\"http_version\": \"2\", \"tls\": {\"ca_file\": \"ca.pem\", \"sni\": "
 "\"api.internal\"}``"
 msgstr ""
 "``\"http_version\": \"2\", \"tls\": {\"ca_file\": \"ca.pem\", \"sni\": "
 "\"api.internal\"}``"
 
-#: ../../operations.rst:2612
+#: ../../operations.rst:2613
 msgid "``server s1 ... send-proxy-v2``"
 msgstr "``server s1 ... send-proxy-v2``"
 
-#: ../../operations.rst:2613
+#: ../../operations.rst:2614
 msgid "``\"proxy_v2\": {\"enabled\": true}`` on a TCP pool"
 msgstr "``\"proxy_v2\": {\"enabled\": true}`` en un pool TCP"
 
-#: ../../operations.rst:2614
+#: ../../operations.rst:2615
 msgid "``option forwardfor``"
 msgstr "``option forwardfor``"
 
-#: ../../operations.rst:2616
+#: ../../operations.rst:2617
 msgid "``timeout client``, ``timeout tunnel``"
 msgstr "``timeout client``, ``timeout tunnel``"
 
-#: ../../operations.rst:2617
+#: ../../operations.rst:2618
 msgid ""
 "``http.idle_timeout``, ``http.websocket_idle_timeout``, "
 "``session_timeout`` on TCP and UDP frontends"
@@ -9803,61 +9807,61 @@ msgstr ""
 "``http.idle_timeout``, ``http.websocket_idle_timeout``, "
 "``session_timeout`` en los frontends TCP y UDP"
 
-#: ../../operations.rst:2618
+#: ../../operations.rst:2619
 msgid "``stick-table ... conn_rate``, ``http_req_rate``"
 msgstr "``stick-table ... conn_rate``, ``http_req_rate``"
 
-#: ../../operations.rst:2619
+#: ../../operations.rst:2620
 msgid "``rate_limit`` on a frontend, ``http.rate_limit``"
 msgstr "``rate_limit`` en un frontend, ``http.rate_limit``"
 
-#: ../../operations.rst:2620
+#: ../../operations.rst:2621
 msgid "``reload`` (new process)"
 msgstr "``reload`` (proceso nuevo)"
 
-#: ../../operations.rst:2621
+#: ../../operations.rst:2622
 msgid "SIGHUP or ``sibuna ctl SOCKET reload`` (same process, flows kept)"
 msgstr ""
 "SIGHUP o ``sibuna ctl SOCKET reload`` (mismo proceso, se conservan los "
 "flujos)"
 
-#: ../../operations.rst:2622
+#: ../../operations.rst:2623
 msgid "``stats socket /run/haproxy.sock mode 600 level admin``"
 msgstr "``stats socket /run/haproxy.sock mode 600 level admin``"
 
-#: ../../operations.rst:2623
+#: ../../operations.rst:2624
 msgid "``\"global\": {\"admin_socket\": \"/run/sibuna/edge.sock\"}``"
 msgstr "``\"global\": {\"admin_socket\": \"/run/sibuna/edge.sock\"}``"
 
-#: ../../operations.rst:2624
+#: ../../operations.rst:2625
 msgid "``echo \"show servers state\" | socat stdio /run/haproxy.sock``"
 msgstr "``echo \"show servers state\" | socat stdio /run/haproxy.sock``"
 
-#: ../../operations.rst:2625
+#: ../../operations.rst:2626
 msgid "``sibuna ctl /run/sibuna/edge.sock show servers``"
 msgstr "``sibuna ctl /run/sibuna/edge.sock show servers``"
 
-#: ../../operations.rst:2626
+#: ../../operations.rst:2627
 msgid "``set server app/s1 state drain``, ``state maint``, ``state ready``"
 msgstr "``set server app/s1 state drain``, ``state maint``, ``state ready``"
 
-#: ../../operations.rst:2627
+#: ../../operations.rst:2628
 msgid "``set server app/s1 state drain``, ``state ready``"
 msgstr "``set server app/s1 state drain``, ``state ready``"
 
-#: ../../operations.rst:2628 ../../operations.rst:2629
+#: ../../operations.rst:2629 ../../operations.rst:2630
 msgid "``set server app/s1 weight 10``"
 msgstr "``set server app/s1 weight 10``"
 
-#: ../../operations.rst:2630 ../../operations.rst:2631
+#: ../../operations.rst:2631 ../../operations.rst:2632
 msgid "``add server app/s3 10.0.0.3:80``, ``del server app/s3``"
 msgstr "``add server app/s3 10.0.0.3:80``, ``del server app/s3``"
 
-#: ../../operations.rst:2632
+#: ../../operations.rst:2633
 msgid "``server-state-file`` with ``load-server-state-from-file``"
 msgstr "``server-state-file`` con ``load-server-state-from-file``"
 
-#: ../../operations.rst:2633
+#: ../../operations.rst:2634
 msgid ""
 "Not needed for drains, which pass a reload. Other run-time changes are "
 "made durable in the file."
@@ -9865,27 +9869,27 @@ msgstr ""
 "No hace falta para los drenajes, que sobreviven a una recarga. Los demás "
 "cambios en tiempo de ejecución se hacen duraderos en el archivo."
 
-#: ../../operations.rst:2634
+#: ../../operations.rst:2635
 msgid "``show info``, ``show stat``"
 msgstr "``show info``, ``show stat``"
 
-#: ../../operations.rst:2635
+#: ../../operations.rst:2636
 msgid ""
 "``show info``, ``show stats`` (the Prometheus text of the metrics route)"
 msgstr ""
 "``show info``, ``show stats`` (el texto Prometheus de la ruta de métricas)"
 
-#: ../../operations.rst:2636
+#: ../../operations.rst:2637
 msgid "``show ssl cert``, ``acme status``"
 msgstr "``show ssl cert``, ``acme status``"
 
-#: ../../operations.rst:2638
+#: ../../operations.rst:2639
 msgid ""
 "``acme`` section with ``challenge http-01`` (experimental in HAProxy 3.4)"
 msgstr ""
 "Sección ``acme`` con ``challenge http-01`` (experimental en HAProxy 3.4)"
 
-#: ../../operations.rst:2639
+#: ../../operations.rst:2640
 msgid ""
 "``\"tls\": {\"auto\": [\"example.org\"]}`` on the frontend, "
 "``global.acme`` for the account (section *Automatic HTTPS*)"
@@ -9893,7 +9897,7 @@ msgstr ""
 "``\"tls\": {\"auto\": [\"example.org\"]}`` en el frontend, "
 "``global.acme`` para la cuenta (sección *HTTPS automático*)"
 
-#: ../../operations.rst:2640
+#: ../../operations.rst:2641
 msgid ""
 "``balance source`` with ``hash-type consistent`` and "
 "``hash-balance-factor 125``"
@@ -9901,17 +9905,17 @@ msgstr ""
 "``balance source`` con ``hash-type consistent`` y ``hash-balance-factor "
 "125``"
 
-#: ../../operations.rst:2641
+#: ../../operations.rst:2642
 msgid ""
 "``\"balance\": {\"kind\": \"bounded_maglev\", \"load_factor_pct\": 125}``"
 msgstr ""
 "``\"balance\": {\"kind\": \"bounded_maglev\", \"load_factor_pct\": 125}``"
 
-#: ../../operations.rst:2642
+#: ../../operations.rst:2643
 msgid "``peers`` section, with ``peers`` on a ``stick-table``"
 msgstr "Sección ``peers``, con ``peers`` en una ``stick-table``"
 
-#: ../../operations.rst:2643
+#: ../../operations.rst:2644
 msgid ""
 "``mesh`` with ``\"sticky\": {\"kind\": \"table\"}`` on the pool (section "
 "*A sticky table and a limit for the whole cluster*)"
@@ -9919,32 +9923,32 @@ msgstr ""
 "``mesh`` con ``\"sticky\": {\"kind\": \"table\"}`` en el pool (sección "
 "*Una tabla de afinidad y un límite para todo el clúster*)"
 
-#: ../../operations.rst:2644
+#: ../../operations.rst:2645
 msgid "``show peers``"
 msgstr "``show peers``"
 
-#: ../../operations.rst:2645
+#: ../../operations.rst:2646
 msgid "``show cluster``"
 msgstr "``show cluster``"
 
-#: ../../operations.rst:2646
+#: ../../operations.rst:2647
 msgid "``show table``"
 msgstr "``show table``"
 
-#: ../../operations.rst:2648
+#: ../../operations.rst:2649
 msgid "``clear table <table> key <address>`` on a table that holds bans"
 msgstr ""
 "``clear table <table> key <address>`` en una tabla que contiene bloqueos"
 
-#: ../../operations.rst:2649
+#: ../../operations.rst:2650
 msgid "``del ban ADDRESS``, on every node of a mesh"
 msgstr "``del ban ADDRESS``, en todos los nodos de una malla"
 
-#: ../../operations.rst:2650
+#: ../../operations.rst:2651
 msgid "``-x`` or ``expose-fd listeners`` (seamless reload)"
 msgstr "``-x`` o ``expose-fd listeners`` (recarga sin cortes)"
 
-#: ../../operations.rst:2651
+#: ../../operations.rst:2652
 msgid ""
 "SIGHUP for a new file; ``global.upgrade_socket`` (Linux) or "
 "``global.reuse_port`` for a new binary"
@@ -9952,29 +9956,29 @@ msgstr ""
 "SIGHUP para un archivo nuevo; ``global.upgrade_socket`` (Linux) o "
 "``global.reuse_port`` para un binario nuevo"
 
-#: ../../operations.rst:2652
+#: ../../operations.rst:2653
 msgid "``filter spoe``"
 msgstr "``filter spoe``"
 
-#: ../../operations.rst:2653
+#: ../../operations.rst:2654
 msgid "A plugin of the kind ``agent`` on a Unix socket (section *Hooks*)"
 msgstr "Un plugin del tipo ``agent`` en un socket Unix (sección *Hooks*)"
 
-#: ../../operations.rst:2654
+#: ../../operations.rst:2655
 msgid "``lua-load``"
 msgstr "``lua-load``"
 
-#: ../../operations.rst:2655
+#: ../../operations.rst:2656
 msgid ""
 "A plugin of the kind ``wasm``, or a native hook compiled into the binary"
 msgstr ""
 "Un plugin del tipo ``wasm``, o un hook nativo compilado en el binario"
 
-#: ../../operations.rst:2657
+#: ../../operations.rst:2658
 msgid "Limits of this version"
 msgstr "Límites de esta versión"
 
-#: ../../operations.rst:2660
+#: ../../operations.rst:2661
 msgid ""
 "On Linux the HTTP firewall serves connections on event-driven workers, "
 "one per processor, up to ``http.max_connections``. A connection that "
@@ -10044,11 +10048,11 @@ msgstr ""
 "cada plataforma, el experimento de diez millones de flujos y los Retry de "
 "QUIC generados por el edge."
 
-#: ../../operations.rst:2663
+#: ../../operations.rst:2664
 msgid "Console Preview"
 msgstr "Vista previa de la consola"
 
-#: ../../operations.rst:2666
+#: ../../operations.rst:2667
 msgid ""
 "The console is compiled into the daemon by the default ``console`` "
 "feature, but starts only with ``--console``. It needs storage: "
@@ -10067,7 +10071,7 @@ msgstr ""
 "``--no-default-features`` no tiene ni almacenamiento ni consola. "
 "Inicializa localmente con el daemon detenido:"
 
-#: ../../operations.rst:2668
+#: ../../operations.rst:2669
 msgid ""
 "sibuna init-admin admin --data-dir ./data\n"
 "sibuna --data-dir ./data --console 127.0.0.1:19446"
@@ -10075,7 +10079,7 @@ msgstr ""
 "sibuna init-admin admin --data-dir ./data\n"
 "sibuna --data-dir ./data --console 127.0.0.1:19446"
 
-#: ../../operations.rst:2673
+#: ../../operations.rst:2674
 msgid ""
 "``sibuna console init-admin`` is the same command. Open "
 "``http://127.0.0.1:19446/console/`` and replace the generated temporary "
@@ -10101,15 +10105,15 @@ msgstr ""
 "y la hoja de estilos incluida en el repositorio se distribuyen con las "
 "compilaciones ordinarias."
 
-#: ../../operations.rst:2675
+#: ../../operations.rst:2676
 msgid "Console options"
 msgstr "Opciones de la consola"
 
-#: ../../operations.rst:2681
+#: ../../operations.rst:2682
 msgid "``--console <ip:port>``"
 msgstr "``--console <ip:port>``"
 
-#: ../../operations.rst:2682
+#: ../../operations.rst:2683
 msgid ""
 "Start the console on this listener (IPv6 in brackets, nonzero port); "
 "requires ``--data-dir`` or ``--database-url``"
@@ -10117,11 +10121,11 @@ msgstr ""
 "Inicia la consola en esta dirección de escucha (IPv6 entre corchetes, "
 "puerto distinto de cero); requiere ``--data-dir`` o ``--database-url``"
 
-#: ../../operations.rst:2683
+#: ../../operations.rst:2684
 msgid "``--console-key-file <path>``"
 msgstr "``--console-key-file <path>``"
 
-#: ../../operations.rst:2684
+#: ../../operations.rst:2685
 msgid ""
 "64 hex characters, owner-only permissions; protects stored second-factor "
 "and webhook secrets"
@@ -10129,27 +10133,27 @@ msgstr ""
 "64 caracteres hexadecimales, permisos solo para el propietario; protege "
 "los secretos guardados del segundo factor y de los webhooks"
 
-#: ../../operations.rst:2685
+#: ../../operations.rst:2686
 msgid "``--console-origin <https-origin>``"
 msgstr "``--console-origin <https-origin>``"
 
-#: ../../operations.rst:2686
+#: ../../operations.rst:2687
 msgid "The canonical HTTPS origin behind a proxy"
 msgstr "El origen HTTPS canónico detrás de un proxy"
 
-#: ../../operations.rst:2687
+#: ../../operations.rst:2688
 msgid "``--console-behind-proxy``"
 msgstr "``--console-behind-proxy``"
 
-#: ../../operations.rst:2688
+#: ../../operations.rst:2689
 msgid "A TLS-terminating proxy delivers every request"
 msgstr "Un proxy que termina TLS entrega todas las peticiones"
 
-#: ../../operations.rst:2689
+#: ../../operations.rst:2690
 msgid "``--console-trusted-proxy <cidr>``"
 msgstr "``--console-trusted-proxy <cidr>``"
 
-#: ../../operations.rst:2690
+#: ../../operations.rst:2691
 msgid ""
 "A network whose connections may carry forwarded fields; repeatable, at "
 "most 16"
@@ -10157,46 +10161,46 @@ msgstr ""
 "Una red cuyas conexiones pueden llevar campos reenviados; repetible, como "
 "máximo 16"
 
-#: ../../operations.rst:2691
+#: ../../operations.rst:2692
 msgid "``--console-advertise <origin>``"
 msgstr "``--console-advertise <origin>``"
 
-#: ../../operations.rst:2692
+#: ../../operations.rst:2693
 msgid "The link other consoles show for this one"
 msgstr "El enlace que otras consolas muestran para esta"
 
-#: ../../operations.rst:2693
+#: ../../operations.rst:2694
 msgid "``--console-location <latitude,longitude>``"
 msgstr "``--console-location <latitude,longitude>``"
 
-#: ../../operations.rst:2694
+#: ../../operations.rst:2695
 msgid "This node's declared position on the globe"
 msgstr "La posición declarada de este nodo en el globo"
 
-#: ../../operations.rst:2695
+#: ../../operations.rst:2696
 msgid "``--console-probe <node-id>=<http://ip:port>``"
 msgstr "``--console-probe <node-id>=<http://ip:port>``"
 
-#: ../../operations.rst:2696
+#: ../../operations.rst:2697
 msgid ""
 "A peer data-plane listener to health-check; repeatable, at most eight"
 msgstr ""
 "La dirección de escucha del plano de datos de un par, cuyo estado se "
 "comprueba; repetible, como máximo ocho"
 
-#: ../../operations.rst:2697
+#: ../../operations.rst:2698
 msgid "``--console-peer <node-id>=<https://origin>``"
 msgstr "``--console-peer <node-id>=<https://origin>``"
 
-#: ../../operations.rst:2698
+#: ../../operations.rst:2699
 msgid "A management peer; repeatable, at most eight"
 msgstr "Un par de gestión; repetible, como máximo ocho"
 
-#: ../../operations.rst:2699
+#: ../../operations.rst:2700
 msgid "``--console-peer-key-file <path>``"
 msgstr "``--console-peer-key-file <path>``"
 
-#: ../../operations.rst:2700
+#: ../../operations.rst:2701
 msgid ""
 "The peer key: owner-only, 64 hex characters, independent of the console "
 "key"
@@ -10204,32 +10208,32 @@ msgstr ""
 "La clave de los pares: solo para el propietario, 64 caracteres "
 "hexadecimales, independiente de la clave de la consola"
 
-#: ../../operations.rst:2701
+#: ../../operations.rst:2702
 msgid "``--console-peer-ca-file <path>``"
 msgstr "``--console-peer-ca-file <path>``"
 
-#: ../../operations.rst:2702
+#: ../../operations.rst:2703
 msgid "Optional PEM trust anchors for peers, replacing the system roots"
 msgstr ""
 "Anclas de confianza PEM opcionales para los pares, que sustituyen a las "
 "raíces del sistema"
 
-#: ../../operations.rst:2703
+#: ../../operations.rst:2704
 msgid "``--console-query-steps <n>``"
 msgstr "``--console-query-steps <n>``"
 
-#: ../../operations.rst:2704
+#: ../../operations.rst:2705
 msgid ""
 "SQLite steps per aggregate read, 100,000 to 50,000,000, default 4,000,000"
 msgstr ""
 "Pasos de SQLite por lectura agregada, de 100.000 a 50.000.000, por "
 "defecto 4.000.000"
 
-#: ../../operations.rst:2705
+#: ../../operations.rst:2706
 msgid "``--console-capture-heads``"
 msgstr "``--console-capture-heads``"
 
-#: ../../operations.rst:2706
+#: ../../operations.rst:2707
 msgid ""
 "Store redacted request and origin response heads per incident; off by "
 "default"
@@ -10237,11 +10241,11 @@ msgstr ""
 "Guarda por incidente los encabezados enmascarados de la petición y de la "
 "respuesta del origen; desactivada por defecto"
 
-#: ../../operations.rst:2707
+#: ../../operations.rst:2708
 msgid "``--console-capture-header <name>``"
 msgstr "``--console-capture-header <name>``"
 
-#: ../../operations.rst:2708
+#: ../../operations.rst:2709
 msgid ""
 "Keep this header's value in stored heads; repeatable, at most 16; "
 "requires ``--console-capture-heads``"
@@ -10249,11 +10253,11 @@ msgstr ""
 "Conserva el valor de esta cabecera en los encabezados guardados; "
 "repetible, como máximo 16; requiere ``--console-capture-heads``"
 
-#: ../../operations.rst:2709
+#: ../../operations.rst:2710
 msgid "``--console-cookie-secure``"
 msgstr "``--console-cookie-secure``"
 
-#: ../../operations.rst:2710
+#: ../../operations.rst:2711
 msgid ""
 "Give console cookies the ``Secure`` attribute without a proxy (accepted "
 "by the parser, not listed in ``--help``)"
@@ -10261,7 +10265,7 @@ msgstr ""
 "Da a las cookies de la consola el atributo ``Secure`` sin proxy (el "
 "analizador la acepta, pero no aparece en ``--help``)"
 
-#: ../../operations.rst:2712
+#: ../../operations.rst:2713
 msgid ""
 "A console option without ``--console``, a repeated option or a malformed "
 "value stops startup with ``CONSOLE002`` and the option's error name. A "
@@ -10275,11 +10279,11 @@ msgstr ""
 "ejemplo, una dirección de escucha fuera de loopback sin proxy de "
 "confianza) lo detiene con ``CONSOLE001``."
 
-#: ../../operations.rst:2714
+#: ../../operations.rst:2715
 msgid "A Tour of the Console"
 msgstr "Un recorrido por la consola"
 
-#: ../../operations.rst:2717
+#: ../../operations.rst:2718
 msgid ""
 "The screenshots below come from a release build on one loopback node with "
 "SQLite storage and a policy of four ``ALLOW`` rules over a default "
@@ -10304,7 +10308,7 @@ msgstr ""
 "enunciada en su título y muestra el producto, el nodo que sirve, la "
 "página y el camino de vuelta en el mismo lugar."
 
-#: ../../operations.rst:2719
+#: ../../operations.rst:2720
 msgid ""
 "The console sign-in page: user name, password and authenticator code "
 "fields with a Sign in button, and below them a Kiosk code field with an "
@@ -10314,7 +10318,7 @@ msgstr ""
 "contraseña y código del autenticador con un botón Sign in y, debajo, un "
 "campo Kiosk code con un botón Open wall display."
 
-#: ../../operations.rst:2722
+#: ../../operations.rst:2723
 msgid ""
 "Sign-in. The public shell loads no globe geometry, GeoIP data or "
 "telemetry; the second form exchanges a wall-display code for a read-only "
@@ -10324,7 +10328,7 @@ msgstr ""
 "GeoIP ni telemetría; el segundo formulario canjea un código de pantalla "
 "mural por una sesión de estadísticas de solo lectura."
 
-#: ../../operations.rst:2724
+#: ../../operations.rst:2725
 msgid ""
 "The Traffic overview page for the last 24 hours: tiles for requests, "
 "admitted, challenged, policy denied, banned, rate limited, other, and "
@@ -10336,7 +10340,7 @@ msgstr ""
 "limitadas por tasa, otras, y 4xx y 5xx del origen, cada uno con una "
 "comparación con el día anterior y una pequeña minigráfica."
 
-#: ../../operations.rst:2727
+#: ../../operations.rst:2728
 msgid ""
 "Statistics, Traffic, over the last 24 hours. The note under the period "
 "control states the coverage: only four of 1,440 expected minute records "
@@ -10366,7 +10370,7 @@ msgstr ""
 "sistemas operativos, los navegadores y los estados de respuesta de los "
 "clientes."
 
-#: ../../operations.rst:2729
+#: ../../operations.rst:2730
 msgid ""
 "The Security overview page: tiles for inspection, reputation, rate "
 "limiting, challenges, bans and honeypot, live trend panels, and a live "
@@ -10376,7 +10380,7 @@ msgstr ""
 "limitación de tasa, desafíos, bloqueos y honeypot, paneles de tendencias "
 "en vivo y un flujo de eventos en vivo con los hallazgos del WAF."
 
-#: ../../operations.rst:2732
+#: ../../operations.rst:2733
 msgid ""
 "Statistics, Security. One tile per module over the selected period, live "
 "outcome trends, and the live event feed with its newest findings (here "
@@ -10393,7 +10397,7 @@ msgstr ""
 "aparecen los hallazgos en sesenta intervalos iguales, las categorías de "
 "ataque y las rutas atacadas."
 
-#: ../../operations.rst:2734
+#: ../../operations.rst:2735
 msgid ""
 "The Events page with a filter form (module, category, country, client "
 "address, path, node, time range) above a list of recorded incidents "
@@ -10403,7 +10407,7 @@ msgstr ""
 "dirección del cliente, ruta, nodo, intervalo de tiempo) sobre una lista "
 "de incidentes registrados con las etiquetas waf:xss y waf:sqli."
 
-#: ../../operations.rst:2737
+#: ../../operations.rst:2738
 msgid ""
 "Events. The filter form above the recorded incidents, newest first. Each "
 "incident opens inline with its evidence: the selected local response, "
@@ -10434,7 +10438,7 @@ msgstr ""
 "denegar y permitir abren el formulario de grupos IP con la dirección ya "
 "rellenada."
 
-#: ../../operations.rst:2739
+#: ../../operations.rst:2740
 msgid ""
 "The Challenges page with a 24-hour retained window: seven challenges "
 "issued, submitted and accepted, none rejected, and a table of rejection "
@@ -10444,7 +10448,7 @@ msgstr ""
 "desafíos emitidos, enviados y aceptados, ninguno rechazado, y una tabla "
 "de causas de rechazo, todas a cero."
 
-#: ../../operations.rst:2742
+#: ../../operations.rst:2743
 msgid ""
 "Challenges. A retained window (one hour, one day or seven days) sums "
 "durable per-minute records and states how many minutes were recorded and "
@@ -10465,7 +10469,7 @@ msgstr ""
 "transiciones de dificultad adaptativa y los registros por dirección con "
 "atajos para denegar y permitir, conservados siete días."
 
-#: ../../operations.rst:2744
+#: ../../operations.rst:2745
 msgid ""
 "The Policies page: the applied configuration (Shield, revision 3, four "
 "rules, PoSW at difficulty 16, node-local limits) and the first rule, "
@@ -10475,7 +10479,7 @@ msgstr ""
 "reglas, PoSW con dificultad 16, límites locales del nodo) y la primera "
 "regla, public-static, con 339 coincidencias registradas hoy."
 
-#: ../../operations.rst:2747
+#: ../../operations.rst:2748
 msgid ""
 "Policies. The applied engine names its surface, revisions, default "
 "algorithm and difficulty and its node-local limits, then lists rules in "
@@ -10494,7 +10498,7 @@ msgstr ""
 "de los campos cambiados, y confirmarla valida el candidato completo y "
 "crea una nueva revisión."
 
-#: ../../operations.rst:2749
+#: ../../operations.rst:2750
 msgid ""
 "The Nodes page: node 1 accepting connections, with open connections, "
 "active local ban entries, policy revisions 3 of 3, uptime, resident "
@@ -10507,7 +10511,7 @@ msgstr ""
 "CPU y el identificador de arranque, minigráficas de memoria y CPU, y los "
 "botones Drain node, Resume admission y Clear local bans."
 
-#: ../../operations.rst:2752
+#: ../../operations.rst:2753
 msgid ""
 "Nodes. The serving node's status and commands, with resident memory and "
 "CPU of the last second and their sixty-second sparklines; below them "
@@ -10521,7 +10525,7 @@ msgstr ""
 "aplicada frente a la revisión confirmada, su dirección de gestión y el "
 "resultado de su sondeo (SID 0007, SID 0013)."
 
-#: ../../operations.rst:2754
+#: ../../operations.rst:2755
 msgid ""
 "The GeoIP page with the provider ip-location-db user-country, no "
 "generation loaded yet, and the import form."
@@ -10529,7 +10533,7 @@ msgstr ""
 "La página GeoIP con el proveedor ip-location-db user-country, todavía sin "
 "ninguna generación cargada, y el formulario de importación."
 
-#: ../../operations.rst:2757
+#: ../../operations.rst:2758
 msgid ""
 "GeoIP. Provider, licence, active generation digest, load time and the "
 "import form; here no generation has been loaded yet. A failed import "
@@ -10540,7 +10544,7 @@ msgstr ""
 "cargado ninguna generación. Una importación fallida nunca sustituye a la "
 "generación activa."
 
-#: ../../operations.rst:2759
+#: ../../operations.rst:2760
 msgid ""
 "The Settings page with an empty list of notification destinations and the "
 "form for a new webhook or syslog destination."
@@ -10548,7 +10552,7 @@ msgstr ""
 "La página Settings con una lista vacía de destinos de notificación y el "
 "formulario para un nuevo destino webhook o syslog."
 
-#: ../../operations.rst:2762
+#: ../../operations.rst:2763
 msgid ""
 "Settings, with no notification destination yet and the form for a new "
 "one. Further down the page are denial-spike thresholds, retention with an "
@@ -10559,7 +10563,7 @@ msgstr ""
 "denegaciones, la retención con una confirmación explícita por ventana, "
 "las plantillas de páginas de respuesta y About."
 
-#: ../../operations.rst:2764
+#: ../../operations.rst:2765
 msgid ""
 "The Audit history page with a filter form and recorded activity rows: "
 "session.create, session.logout, kiosk.exchange and kiosk.grant, each with "
@@ -10569,7 +10573,7 @@ msgstr ""
 "registrada: session.create, session.logout, kiosk.exchange y kiosk.grant, "
 "cada una con la hora, el actor y su rol, el sujeto y un botón Open."
 
-#: ../../operations.rst:2767
+#: ../../operations.rst:2768
 msgid ""
 "Audit. Append-only history with actor and role, action, subject and a "
 "detail view with redacted before and after summaries; refused sign-ins "
@@ -10590,7 +10594,7 @@ msgstr ""
 "revisión como una revisión nueva y auditada tras una confirmación, y se "
 "rechaza si el conjunto de reglas ha cambiado desde entonces."
 
-#: ../../operations.rst:2769
+#: ../../operations.rst:2770
 msgid ""
 "A wall display titled Node 1 Traffic, with Live, an expiry of 719 "
 "minutes, Pause, Theme and Exit kiosk controls, and the eleven traffic "
@@ -10600,7 +10604,7 @@ msgstr ""
 "caducidad de 719 minutos, Pause, Theme y Exit kiosk, y los once recuadros "
 "de tráfico sin navegación."
 
-#: ../../operations.rst:2772
+#: ../../operations.rst:2773
 msgid ""
 "A wall display. A kiosk session shows the Traffic and Security views "
 "only, without navigation, and states when it expires."
@@ -10608,7 +10612,7 @@ msgstr ""
 "Una pantalla mural. Una sesión de quiosco muestra solo las vistas Traffic "
 "y Security, sin navegación, e indica cuándo caduca."
 
-#: ../../operations.rst:2774
+#: ../../operations.rst:2775
 msgid ""
 "The optional ``--console-location <latitude,longitude>`` declares this "
 "node's position, for example ``1.3521,103.8198`` for a deployment in "
@@ -10633,7 +10637,7 @@ msgstr ""
 "explícitamente desconocida. El marcador configurado sigue visible durante "
 "las caídas de la telemetría; el tráfico obsoleto no se anima."
 
-#: ../../operations.rst:2776
+#: ../../operations.rst:2777
 msgid ""
 "Policy previews build a private candidate including configured file "
 "rules. Saves compare the expected revision and require confirmation of a "
@@ -10664,7 +10668,7 @@ msgstr ""
 "confirmada no demuestra por sí sola que el efecto en tiempo de ejecución "
 "haya terminado."
 
-#: ../../operations.rst:2778
+#: ../../operations.rst:2779
 msgid ""
 "For remote operation, use an HTTPS proxy and configure "
 "``--console-origin``, ``--console-behind-proxy``, explicit "
@@ -10687,7 +10691,7 @@ msgstr ""
 "HTTP en claro; la consola usa TLS solo para sus conexiones salientes, "
 "mediante rustls (SID 0012)."
 
-#: ../../operations.rst:2780
+#: ../../operations.rst:2781
 msgid ""
 "The native CLI accesses the running console through the same "
 "authorization and storage contracts. It reads credentials from private "
@@ -10697,7 +10701,7 @@ msgstr ""
 "contratos de autorización y almacenamiento. Lee las credenciales de "
 "archivos privados, no de valores en la línea de comandos:"
 
-#: ../../operations.rst:2782
+#: ../../operations.rst:2783
 msgid ""
 "sibuna console geoip update --version 2026-09-09 \\\n"
 "    --origin http://127.0.0.1:19446 --username admin \\\n"
@@ -10707,7 +10711,7 @@ msgstr ""
 "    --origin http://127.0.0.1:19446 --username admin \\\n"
 "    --password-file ./admin-password"
 
-#: ../../operations.rst:2788
+#: ../../operations.rst:2789
 msgid ""
 "Use an owner-only password file, complete password setup first, and add "
 "``--factor-file`` for an authenticator or recovery code when required; "
@@ -10755,7 +10759,7 @@ msgstr ""
 "muestras y los datos obsoletos siguen siendo visibles; importar datos de "
 "países no crea tráfico ni enriquece muestras ya caducadas."
 
-#: ../../operations.rst:2790
+#: ../../operations.rst:2791
 msgid ""
 "Cluster members announce themselves through the membership table of the "
 "shared database (``console_nodes``) at start, every minute, and within "
@@ -10854,7 +10858,7 @@ msgstr ""
 "independencia de la fuente de tráfico seleccionada. Los comandos locales "
 "siguen siendo por nodo."
 
-#: ../../operations.rst:2792
+#: ../../operations.rst:2793
 msgid ""
 "Traffic tiles open on the last 24 hours of retained closed-minute records "
 "for the selected nodes. The period control also offers an hour, seven or "
@@ -10876,7 +10880,7 @@ msgstr ""
 "hasta que se sustituyen; cambiar la fuente o el periodo descarta el "
 "ámbito anterior. El historial ausente nunca se convierte en cero."
 
-#: ../../operations.rst:2794
+#: ../../operations.rst:2795
 msgid ""
 "*Compare retained traffic* displays two closed minute windows beside each "
 "other: the same window yesterday, the preceding period, or a second node. "
@@ -10908,7 +10912,7 @@ msgstr ""
 "origen siguen sin estar disponibles en lugar de interpretar los ceros de "
 "forward-auth como respuestas observadas."
 
-#: ../../operations.rst:2796
+#: ../../operations.rst:2797
 msgid ""
 "*Compare retained path rankings* selects two closed windows or nodes. "
 "Node 0 includes all retained nodes, including retired members. An action "
@@ -10934,7 +10938,7 @@ msgstr ""
 "retención y la pérdida de cola notificada; los archivos ausentes no "
 "pueden demostrar tráfico cero ni una cobertura completa."
 
-#: ../../operations.rst:2798
+#: ../../operations.rst:2799
 msgid ""
 "Security opens on the last 24 hours and uses sixty equal time buckets "
 "over the selected period. Its aggregates run on the storage thread under "
@@ -10964,7 +10968,7 @@ msgstr ""
 "conservados, así que la falta de cobertura de incidentes no puede "
 "interpretarse como ausencia de ataques."
 
-#: ../../operations.rst:2800
+#: ../../operations.rst:2801
 msgid ""
 "Wall displays use kiosk sessions. Under Account, an operator names the "
 "display and selects Create display code. The display pastes the one-time "
@@ -10990,7 +10994,7 @@ msgstr ""
 "rotación automática es opcional, está desactivada al principio y se "
 "suspende con movimiento reducido, datos obsoletos o Pause."
 
-#: ../../operations.rst:2802
+#: ../../operations.rst:2803
 msgid ""
 "Notification destinations (signed webhooks and syslog for denial spikes, "
 "bans, unreachable members and leader changes) live under Settings; "
@@ -11027,7 +11031,7 @@ msgstr ""
 "destino; una finalización de auditoría no confirmada se muestra "
 "explícitamente antes de que un operador reintente."
 
-#: ../../operations.rst:2804
+#: ../../operations.rst:2805
 msgid ""
 "Settings also controls retention: one to 90 days for minute history, one "
 "to seven for rankings, one to 30 for incidents and one to 365 for audit. "
@@ -11047,7 +11051,7 @@ msgstr ""
 "borrado. Las ediciones obsoletas se rechazan y los cambios correctos "
 "aparecen en Audit."
 
-#: ../../operations.rst:2806
+#: ../../operations.rst:2807
 msgid ""
 "Response pages (challenge, denied, rate limited, banned, overloaded) are "
 "editable under Settings as bounded HTML with fixed placeholders; drafts "
@@ -11060,7 +11064,7 @@ msgstr ""
 "y las páginas guardadas se sirven a partir de la siguiente instantánea de "
 "políticas."
 
-#: ../../operations.rst:2808
+#: ../../operations.rst:2809
 msgid ""
 "Policy workflows on the Policies page: reorder managed rules, replay a "
 "draft against retained inspection findings, manage IP groups and country "
@@ -11111,7 +11115,7 @@ msgstr ""
 "una edición es una comparación, no una prueba de que la edición causara "
 "el cambio de tráfico."
 
-#: ../../operations.rst:2810
+#: ../../operations.rst:2811
 msgid ""
 "Importing a later GeoIP generation does not automatically refresh "
 "existing country-derived reputation rows. Preview the country action to "
@@ -11190,7 +11194,7 @@ msgstr ""
 "consultas históricas, las lecturas de detalle y las modificaciones siguen "
 "siendo peticiones HTTP."
 
-#: ../../operations.rst:2812
+#: ../../operations.rst:2813
 msgid ""
 "Page fragments can be bookmarked; Back and Forward reopen authenticated "
 "pages. The sidebar also remembers theme and spacing choices in this "
@@ -11236,11 +11240,11 @@ msgstr ""
 "navegador. La memoria lineal del módulo crece bajo demanda hasta un "
 "máximo declarado de 16 MiB."
 
-#: ../../operations.rst:2814
+#: ../../operations.rst:2815
 msgid "Deployment Topologies"
 msgstr "Topologías de despliegue"
 
-#: ../../operations.rst:2819
+#: ../../operations.rst:2820
 msgid ""
 "Deploy the autonomous reverse proxy and the forward-auth validator behind "
 "Nginx or Caddy."
@@ -11248,11 +11252,11 @@ msgstr ""
 "Desplegamos el proxy inverso autónomo y el validador forward-auth detrás "
 "de Nginx o Caddy."
 
-#: ../../operations.rst:2821
+#: ../../operations.rst:2822
 msgid "Reverse Proxy"
 msgstr "Proxy inverso"
 
-#: ../../operations.rst:2825
+#: ../../operations.rst:2826
 msgid ""
 "A request passes local bans and the rate limit, then inspection and "
 "policy. A DENY goes to Deny. An ALLOW goes to the origin or an auth "
@@ -11265,7 +11269,7 @@ msgstr ""
 "la sesión: una sesión válida lleva al origen, y una ausente o no válida "
 "lleva a un desafío nuevo."
 
-#: ../../operations.rst:2825
+#: ../../operations.rst:2826
 msgid ""
 "digraph shield_routing {\n"
 "  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.35, "
@@ -11356,11 +11360,11 @@ msgstr ""
 "fontcolor=\"#b45309\"];\n"
 "}"
 
-#: ../../operations.rst:2825
+#: ../../operations.rst:2826
 msgid "Request routing on the Shield surface"
 msgstr "Enrutamiento de peticiones en el modo de protección Shield"
 
-#: ../../operations.rst:2855
+#: ../../operations.rst:2856
 msgid ""
 "sibuna --port 80 --upstream-host 127.0.0.1 --upstream-port 3000 \\\n"
 "       --secret-file /etc/sibuna/secret --difficulty 16 --algorithm posw"
@@ -11368,7 +11372,7 @@ msgstr ""
 "sibuna --port 80 --upstream-host 127.0.0.1 --upstream-port 3000 \\\n"
 "       --secret-file /etc/sibuna/secret --difficulty 16 --algorithm posw"
 
-#: ../../operations.rst:2860
+#: ../../operations.rst:2861
 msgid ""
 "Admitted requests reach the origin with ``X-Forwarded-For``, "
 "``X-Forwarded-Proto``, ``X-Real-IP``, ``X-Sibuna-Status`` and "
@@ -11400,7 +11404,7 @@ msgstr ""
 "La ruta que recibe el origen es la forma normal que juzgó la política "
 "(SID 0009); una ruta sin forma normal recibe ``400``."
 
-#: ../../operations.rst:2862
+#: ../../operations.rst:2863
 msgid ""
 "HTTP/1.1 WebSocket upgrades pass through admission and policy checks "
 "before the origin's handshake is accepted. Subprotocol and extension "
@@ -11437,7 +11441,7 @@ msgstr ""
 "Los listeners nativos HTTP/2 y HTTP/3 atienden los intercambios HTTP "
 "ordinarios."
 
-#: ../../operations.rst:2864
+#: ../../operations.rst:2865
 msgid ""
 "The ingress can negotiate HTTP/2 with browsers and forward HTTP/1.1 to "
 "Sibuna. The daemon mode has no native HTTP/2; this arrangement does not "
@@ -11451,7 +11455,7 @@ msgstr ""
 "nativo. El edge (``--config-file``) termina HTTP/2 y HTTP/3 por sí mismo "
 "y transporta gRPC (sección *gRPC*)."
 
-#: ../../operations.rst:2866
+#: ../../operations.rst:2867
 msgid ""
 "Content-Length request bodies stream through fixed buffers, preserving "
 "bytes and MIME headers. Multipart uploads retain boundaries, repeated "
@@ -11489,7 +11493,7 @@ msgstr ""
 "por parte dentro de ese mismo prefijo, y acepta el relleno de transporte "
 "de RFC 2046 tras un delimitador."
 
-#: ../../operations.rst:2868
+#: ../../operations.rst:2869
 msgid ""
 "This is upload compatibility, not file validation or malware scanning. "
 "The backend must enforce accepted media types rather than trust a "
@@ -11536,11 +11540,11 @@ msgstr ""
 "expectativas no admitidas reciben 417. La cabecera Expect se consume "
 "antes de reenviar al backend."
 
-#: ../../operations.rst:2870
+#: ../../operations.rst:2871
 msgid "Forward Auth Behind an Ingress"
 msgstr "Forward-auth detrás de un proxy de entrada"
 
-#: ../../operations.rst:2873
+#: ../../operations.rst:2874
 msgid ""
 "In ``--mode forward_auth`` the daemon answers the ingress's subrequest "
 "with ``200`` (plus the audit headers ``X-Sibuna-Status``, "
@@ -11572,7 +11576,7 @@ msgstr ""
 "internas del daemon usan siempre la URI real de la petición. Forward-auth "
 "no inspecciona un cuerpo que el proxy de entrada omite."
 
-#: ../../operations.rst:2875
+#: ../../operations.rst:2876
 msgid ""
 "map $http_upgrade $sibuna_connection_upgrade {\n"
 "    default upgrade;\n"
@@ -11694,7 +11698,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../operations.rst:2936
+#: ../../operations.rst:2937
 msgid ""
 "example.com {\n"
 "    handle /__sibuna/* {\n"
@@ -11728,7 +11732,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../operations.rst:2953
+#: ../../operations.rst:2954
 msgid ""
 "The ``/__sibuna/*`` namespace (interstitial, challenge, verify, solver "
 "assets) must reach the daemon directly in both recipes. The nginx error "
@@ -11776,11 +11780,11 @@ msgstr ""
 "proxies de entrada reales; las reglas de metadatos reenviados de las que "
 "dependen están cubiertas por pruebas unitarias en ``sibuna-http``."
 
-#: ../../operations.rst:2955
+#: ../../operations.rst:2956
 msgid "JA4 Fingerprints From the Ingress"
 msgstr "Huellas JA4 desde el proxy de entrada"
 
-#: ../../operations.rst:2958
+#: ../../operations.rst:2959
 msgid ""
 "A JA4 fingerprint summarises how a client opens a TLS connection. It is "
 "computed from the client's first handshake message, the ClientHello. The "
@@ -11801,7 +11805,7 @@ msgstr ""
 "0014). JA4 lo definió FoxIO. Una huella tiene 36 caracteres en tres "
 "partes unidas por ``_``:"
 
-#: ../../operations.rst:2960
+#: ../../operations.rst:2961
 msgid ""
 "t13d1516h2_8daaf6152771_02713d6af862\n"
 "^^^^^^^^^^ ^^^^^^^^^^^^ ^^^^^^^^^^^^\n"
@@ -11826,7 +11830,7 @@ msgstr ""
 "c  hash hexadecimal en minúsculas, de 12 dígitos, de las extensiones\n"
 "   y los algoritmos de firma ordenados"
 
-#: ../../operations.rst:2973
+#: ../../operations.rst:2974
 msgid ""
 "A TCP edge frontend can compute JA4 from a visible ClientHello during "
 "passthrough. When we run the HTTP firewall behind a TLS ingress, the "
@@ -11841,7 +11845,7 @@ msgstr ""
 "entrada de confianza para que calcule JA4 y envíe la huella al "
 "cortafuegos en una cabecera de petición."
 
-#: ../../operations.rst:2975
+#: ../../operations.rst:2976
 msgid ""
 "``--ja4-header <name>`` names that header. It is off by default and has "
 "no default name; we always name the header the ingress uses. Sibuna "
@@ -11860,7 +11864,7 @@ msgstr ""
 "Cuando la opción está activa, el banner de arranque imprime una línea "
 "como ``JA4: from cf-ja4 (trusted)``."
 
-#: ../../operations.rst:2977
+#: ../../operations.rst:2978
 msgid ""
 "The header is read only when forwarded fields are trusted. This is the "
 "decision that governs ``X-Forwarded-For``: ``--trust-forwarded``, or "
@@ -11885,7 +11889,7 @@ msgstr ""
 "mal formada o repetida. Una petición de un par que no es de confianza no "
 "incrementa ninguno de los dos contadores."
 
-#: ../../operations.rst:2979
+#: ../../operations.rst:2980
 msgid ""
 "In reverse-proxy mode, the origin sees the header only when Sibuna trusts "
 "it. Without trust, Sibuna removes every field of that name from the "
@@ -11904,11 +11908,11 @@ msgstr ""
 "``_`` se sigue eliminando. Sin ``--ja4-header``, un campo con ese nombre "
 "es un campo corriente."
 
-#: ../../operations.rst:2981
+#: ../../operations.rst:2982
 msgid "The ingress must own the header"
 msgstr "El proxy de entrada debe controlar la cabecera"
 
-#: ../../operations.rst:2983
+#: ../../operations.rst:2984
 msgid ""
 "A fingerprint is only as trustworthy as the ingress that wrote it. Sibuna "
 "cannot tell a value the ingress computed from a value the client sent. "
@@ -11925,7 +11929,7 @@ msgstr ""
 "Sibuna debe aceptar conexiones solo del proxy de entrada, igual que para "
 "``X-Forwarded-For``."
 
-#: ../../operations.rst:2985
+#: ../../operations.rst:2986
 msgid ""
 "**Cloudflare.** The managed transform \"Add bot protection headers\" adds "
 "``cf-ja4`` to the request sent to the origin, beside ``cf-bot-score``, "
@@ -11940,11 +11944,11 @@ msgstr ""
 "Cloudflare y Sibuna debe pasar el campo sin cambios. Arrancamos Sibuna "
 "con:"
 
-#: ../../operations.rst:2987
+#: ../../operations.rst:2988
 msgid "sibuna --ja4-header cf-ja4 --trust-forwarded -s /etc/sibuna/secret"
 msgstr "sibuna --ja4-header cf-ja4 --trust-forwarded -s /etc/sibuna/secret"
 
-#: ../../operations.rst:2991
+#: ../../operations.rst:2992
 msgid ""
 "The ingress in front of Sibuna must accept connections from Cloudflare's "
 "addresses alone; otherwise a client can bypass Cloudflare and send its "
@@ -11954,7 +11958,7 @@ msgstr ""
 "solo de las direcciones de Cloudflare; de lo contrario, un cliente puede "
 "saltarse Cloudflare y enviar su propio ``cf-ja4``."
 
-#: ../../operations.rst:2993
+#: ../../operations.rst:2994
 msgid ""
 "**nginx.** FoxIO's ``ja4-nginx-module`` computes JA4 inside nginx and "
 "exposes it as ``$http_ssl_ja4``. It needs nginx 1.26 or later with the "
@@ -11970,7 +11974,7 @@ msgstr ""
 "cliente con el mismo nombre, así que cada location que llega a Sibuna "
 "fija la cabecera por sí misma:"
 
-#: ../../operations.rst:2995
+#: ../../operations.rst:2996
 msgid ""
 "# Reverse proxy: Sibuna runs with --ja4-header x-ja4 --trust-forwarded\n"
 "location / {\n"
@@ -12004,7 +12008,7 @@ msgstr ""
 "    # ... los demás campos de la receta de forward-auth anterior\n"
 "}"
 
-#: ../../operations.rst:3012
+#: ../../operations.rst:3013
 msgid ""
 "In the forward-auth recipe, the same ``proxy_set_header X-JA4 "
 "$http_ssl_ja4;`` line belongs in ``@sibuna_challenge`` and in ``location "
@@ -12016,7 +12020,7 @@ msgstr ""
 "/__sibuna/``. Una location que la omita pasa a Sibuna el propio ``X-JA4`` "
 "del cliente, y Sibuna confía en él."
 
-#: ../../operations.rst:3014
+#: ../../operations.rst:3015
 msgid ""
 "**Apache Traffic Server.** The ``ja4_fingerprint`` plugin is enabled by "
 "the line ``ja4_fingerprint.so`` in ``plugin.config``. It has no options. "
@@ -12036,7 +12040,7 @@ msgstr ""
 "Debemos comprobarlo para nuestra versión, o eliminar el campo del cliente "
 "antes de que el plugin añada el suyo, antes de confiar en el valor."
 
-#: ../../operations.rst:3016
+#: ../../operations.rst:3017
 msgid ""
 "A rule matches a fingerprint with the ``ja4`` field (Part XII, Policy "
 "Schema). The value is either a whole fingerprint, which must be equal, or "
@@ -12055,7 +12059,7 @@ msgstr ""
 "mayúsculas, con ``INVALID POLICY JA4``. La comparación opera sobre bytes "
 "y no asigna memoria."
 
-#: ../../operations.rst:3018
+#: ../../operations.rst:3019
 msgid ""
 "{ \"rules\": [\n"
 "    { \"name\": \"deny-known-scanner\", \"action\": \"DENY\",\n"
@@ -12083,7 +12087,7 @@ msgstr ""
 "      \"action\": \"CHALLENGE\" }\n"
 "] }"
 
-#: ../../operations.rst:3030
+#: ../../operations.rst:3031
 msgid ""
 "The first rule denies one fingerprint exactly; the value is an example, "
 "not a known scanner. The next two add weight to the request's score "
@@ -12119,7 +12123,7 @@ msgstr ""
 "motivo, Sibuna asocia los bloqueos y la reputación a la dirección y nunca "
 "a la huella."
 
-#: ../../operations.rst:3032
+#: ../../operations.rst:3033
 msgid ""
 "Incidents (WAF denials, honeypot hits and audit findings) record the "
 "fingerprint of their request when it carried one, in the column "
@@ -12138,11 +12142,11 @@ msgstr ""
 "``policies.ja4_pattern``, y el formulario de prueba de políticas acepta "
 "una huella."
 
-#: ../../operations.rst:3034
+#: ../../operations.rst:3035
 msgid "Declarative Policy"
 msgstr "Política declarativa"
 
-#: ../../operations.rst:3039
+#: ../../operations.rst:3040
 msgid ""
 "Write a policy file with rules, weights, thresholds, IP rules, and the "
 "WAF switch."
@@ -12150,7 +12154,7 @@ msgstr ""
 "Escribimos un archivo de políticas con reglas, pesos, umbrales, reglas IP "
 "y el interruptor del WAF."
 
-#: ../../operations.rst:3041
+#: ../../operations.rst:3042
 msgid ""
 "{\n"
 "  \"default_action\": \"CHALLENGE\",\n"
@@ -12204,7 +12208,7 @@ msgstr ""
 "  ]\n"
 "}"
 
-#: ../../operations.rst:3061
+#: ../../operations.rst:3062
 msgid ""
 "The loader fails closed: an unknown key, a misspelled action, a malformed "
 "address or an out-of-range number rejects the whole file, the diagnostic "
@@ -12238,11 +12242,11 @@ msgstr ""
 "entrada\"). Los patrones de ruta coinciden con la ruta de la petición en "
 "forma normal (SID 0003), así que un patrón debe escribirse en esa forma."
 
-#: ../../operations.rst:3063
+#: ../../operations.rst:3064
 msgid "Persistent Storage and Clustering"
 msgstr "Almacenamiento persistente y clúster"
 
-#: ../../operations.rst:3068
+#: ../../operations.rst:3069
 msgid ""
 "Enable SQLite or PostgreSQL storage, add a dynamic policy and a ban with "
 "SQL, query incident forensics, understand campaign clustering, and run "
@@ -12253,7 +12257,7 @@ msgstr ""
 "incidentes, entendemos la agrupación en campañas y ejecutamos varios "
 "nodos sobre una única base de datos PostgreSQL."
 
-#: ../../operations.rst:3071
+#: ../../operations.rst:3072
 msgid ""
 "Request threads push incidents into an MPSC ring of 512 slots. The "
 "storage thread pops them, writes batches through sqlx to the SQLite file "
@@ -12272,7 +12276,7 @@ msgstr ""
 "nodos del clúster comparten la base de datos PostgreSQL y reciben NOTIFY "
 "sibuna_policy."
 
-#: ../../operations.rst:3071
+#: ../../operations.rst:3072
 msgid ""
 "digraph storage_architecture {\n"
 "  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.8, "
@@ -12355,13 +12359,13 @@ msgstr ""
 "compartido,\\n NOTIFY sibuna_policy\"];\n"
 "}"
 
-#: ../../operations.rst:3071
+#: ../../operations.rst:3072
 msgid "The storage architecture: workers never block on the database"
 msgstr ""
 "La arquitectura de almacenamiento: los workers nunca se bloquean "
 "esperando a la base de datos"
 
-#: ../../operations.rst:3102
+#: ../../operations.rst:3103
 msgid ""
 "``--data-dir /var/lib/sibuna`` opens the SQLite file "
 "``/var/lib/sibuna/sibuna.db`` (WAL mode, ``synchronous=NORMAL``, a busy "
@@ -12395,27 +12399,27 @@ msgstr ""
 "edge arrancado con ``--config-file`` no admite ninguna de estas opciones "
 "(la sección *Funcionamiento en clúster* explica cómo se relacionan ambos)."
 
-#: ../../operations.rst:3104
+#: ../../operations.rst:3105
 msgid "Schema"
 msgstr "Esquema"
 
-#: ../../operations.rst:3107
+#: ../../operations.rst:3108
 msgid "Core tables"
 msgstr "Tablas principales"
 
-#: ../../operations.rst:3111
+#: ../../operations.rst:3112
 msgid "Table"
 msgstr "Tabla"
 
-#: ../../operations.rst:3112
+#: ../../operations.rst:3113
 msgid "Purpose and key"
 msgstr "Propósito y clave"
 
-#: ../../operations.rst:3113
+#: ../../operations.rst:3114
 msgid "``policy_revision``"
 msgstr "``policy_revision``"
 
-#: ../../operations.rst:3114
+#: ../../operations.rst:3115
 msgid ""
 "The policy revision, one row; triggers on the three policy tables advance "
 "it."
@@ -12423,11 +12427,11 @@ msgstr ""
 "La revisión de la política, una fila; la hacen avanzar disparadores en "
 "las tres tablas de políticas."
 
-#: ../../operations.rst:3115
+#: ../../operations.rst:3116
 msgid "``policies``"
 msgstr "``policies``"
 
-#: ../../operations.rst:3116
+#: ../../operations.rst:3117
 msgid ""
 "Ordered dynamic rules, keyed by ``id``. The nullable ``ja4_pattern`` "
 "holds a rule's JA4 criterion, at most 37 bytes."
@@ -12436,29 +12440,29 @@ msgstr ""
 "que admite nulos, guarda el criterio JA4 de una regla, de 37 bytes como "
 "máximo."
 
-#: ../../operations.rst:3117
+#: ../../operations.rst:3118
 msgid "``policy_inspection``"
 msgstr "``policy_inspection``"
 
-#: ../../operations.rst:3118
+#: ../../operations.rst:3119
 msgid "The stored WAF mode per category, one row."
 msgstr "El modo WAF guardado por categoría, una fila."
 
-#: ../../operations.rst:3119
+#: ../../operations.rst:3120
 msgid "``ip_reputation``"
 msgstr "``ip_reputation``"
 
-#: ../../operations.rst:3120
+#: ../../operations.rst:3121
 msgid "Scores, hit counts and expiry, keyed by address or prefix."
 msgstr ""
 "Puntuaciones, recuentos de coincidencias y caducidad, con clave por "
 "dirección o prefijo."
 
-#: ../../operations.rst:3121
+#: ../../operations.rst:3122
 msgid "``incident_receipts``"
 msgstr "``incident_receipts``"
 
-#: ../../operations.rst:3122
+#: ../../operations.rst:3123
 msgid ""
 "Each node's durable incident receipt (the next sequence after its last "
 "committed batch), keyed by node."
@@ -12466,11 +12470,11 @@ msgstr ""
 "El recibo duradero de incidentes de cada nodo (la secuencia siguiente a "
 "su último lote confirmado), con clave por nodo."
 
-#: ../../operations.rst:3123
+#: ../../operations.rst:3124
 msgid "``security_incidents``"
 msgstr "``security_incidents``"
 
-#: ../../operations.rst:3124
+#: ../../operations.rst:3125
 msgid ""
 "One bounded event record with its 64-component embedding (256 bytes), "
 "keyed by ``node_id << 40 | sequence``. The nullable ``ja4`` holds the "
@@ -12481,11 +12485,11 @@ msgstr ""
 "admite nulos, guarda la huella JA4 de la petición, de exactamente 36 "
 "bytes."
 
-#: ../../operations.rst:3125
+#: ../../operations.rst:3126
 msgid "``incidents_fts``"
 msgstr "``incidents_fts``"
 
-#: ../../operations.rst:3126
+#: ../../operations.rst:3127
 msgid ""
 "On SQLite: an FTS5 table over the canonical tokens of paths and payloads. "
 "On PostgreSQL the same tokens are the ``tsvector`` column ``search`` of "
@@ -12495,15 +12499,15 @@ msgstr ""
 "cargas útiles. En PostgreSQL los mismos tokens son la columna "
 "``tsvector`` ``search`` de ``security_incidents`` con un índice GIN."
 
-#: ../../operations.rst:3127
+#: ../../operations.rst:3128
 msgid "``sibuna_schema``"
 msgstr "``sibuna_schema``"
 
-#: ../../operations.rst:3128
+#: ../../operations.rst:3129
 msgid "Every applied migration, keyed by component and version."
 msgstr "Cada migración aplicada, con clave por componente y versión."
 
-#: ../../operations.rst:3130
+#: ../../operations.rst:3131
 msgid ""
 "The core schema is ``crates/storage/src/schema.rs``, written once per "
 "dialect. With the console the component ``console`` adds 33 tables whose "
@@ -12533,11 +12537,11 @@ msgstr ""
 "enumerados se guardan en minúsculas: una escritura directa de ``'DENY'`` "
 "se rechaza."
 
-#: ../../operations.rst:3132
+#: ../../operations.rst:3133
 msgid "Operating It"
 msgstr "Operación"
 
-#: ../../operations.rst:3135
+#: ../../operations.rst:3136
 msgid ""
 "Use the ``sqlite3`` shell on ``sibuna.db`` (WAL mode lets it read while "
 "the daemon runs), or ``psql`` on the cluster database:"
@@ -12546,7 +12550,7 @@ msgstr ""
 "mientras el daemon se ejecuta), o ``psql`` sobre la base de datos del "
 "clúster:"
 
-#: ../../operations.rst:3137
+#: ../../operations.rst:3138
 msgid ""
 "-- Add a dynamic rule; every node rebuilds on its next tick.\n"
 "INSERT INTO policies (id, name, priority, path_pattern, action, "
@@ -12592,7 +12596,7 @@ msgstr ""
 "FROM incidents_fts f JOIN security_incidents s ON s.id = f.rowid\n"
 "WHERE incidents_fts MATCH 'union' ORDER BY rank LIMIT 20;"
 
-#: ../../operations.rst:3155
+#: ../../operations.rst:3156
 msgid ""
 "The statements are written for SQLite. On PostgreSQL, ``enabled`` is "
 "``TRUE``, the time is ``CAST(extract(epoch FROM now()) AS BIGINT)`` "
@@ -12615,7 +12619,7 @@ msgstr ""
 "sibuna_policy``, así que los demás nodos ejecutan su ciclo de inmediato; "
 "el sondeo sigue siendo la garantía."
 
-#: ../../operations.rst:3157
+#: ../../operations.rst:3158
 msgid ""
 "Scores at or below :math:`-50` become ``deny`` prefixes in the trie, "
 "scores at or above :math:`50` become ``allow``, and ``banned_until`` "
@@ -12630,11 +12634,11 @@ msgstr ""
 "que, con una base de datos PostgreSQL compartida, una trampa activada en "
 "un nodo bloquea la dirección en todos ellos."
 
-#: ../../operations.rst:3159
+#: ../../operations.rst:3160
 msgid "A Transaction Receipt Makes Retry Safe"
 msgstr "Un recibo de transacción hace que reintentar sea seguro"
 
-#: ../../operations.rst:3162
+#: ../../operations.rst:3163
 msgid ""
 "The storage thread collects at most 32 pending records and builds one SQL "
 "transaction. The transaction inserts incidents, updates the full-text "
@@ -12651,11 +12655,11 @@ msgstr ""
 "protegida por ese recibo; la transacción lo hace avanzar en último lugar, "
 "y nunca hacia atrás."
 
-#: ../../operations.rst:3164
+#: ../../operations.rst:3165
 msgid "Worked example: the acknowledgement disappears"
 msgstr "Ejemplo resuelto: el acuse de recibo desaparece"
 
-#: ../../operations.rst:3166
+#: ../../operations.rst:3167
 msgid ""
 "Suppose issuer 2 prepares sequences 101 through 132, ending at receipt "
 "133. The database commits all records and receipt 133, then the "
@@ -12676,7 +12680,7 @@ msgstr ""
 "transacción original se deshizo, el recibo antiguo permanece y el "
 "reintento aplica todas las escrituras una vez."
 
-#: ../../operations.rst:3168
+#: ../../operations.rst:3169
 msgid ""
 "A failed commit retains the pending batch in memory and increments "
 "``incident_write_failures``. The tick still attempts policy polling. A "
@@ -12695,11 +12699,11 @@ msgstr ""
 "forense asíncrono y acotado, no una cola de mensajes duradera en el "
 "momento de encolar."
 
-#: ../../operations.rst:3170
+#: ../../operations.rst:3171
 msgid "Exercise 11.1"
 msgstr "Ejercicio 11.1"
 
-#: ../../operations.rst:3172
+#: ../../operations.rst:3173
 msgid ""
 "Move the receipt update outside the data transaction. Construct one crash "
 "schedule that duplicates a reputation effect and another that loses an "
@@ -12709,11 +12713,11 @@ msgstr ""
 "Construye una secuencia de caídas que duplique un efecto de reputación y "
 "otra que pierda un incidente."
 
-#: ../../operations.rst:3174
+#: ../../operations.rst:3175
 msgid "Campaign Clustering"
 msgstr "Agrupación en campañas"
 
-#: ../../operations.rst:3177
+#: ../../operations.rst:3178
 msgid ""
 "Each incident payload is embedded as a 64-dimensional unit vector by the "
 "hashing trick over byte trigrams (digits folded, case folded) and stored "
@@ -12743,11 +12747,11 @@ msgstr ""
 "útiles SQL relacionadas, pero eso no garantiza que cada par de ataques "
 "comparta campaña. No se ejecuta ningún modelo ni se entrena nada."
 
-#: ../../operations.rst:3179
+#: ../../operations.rst:3180
 msgid "Clustering"
 msgstr "Funcionamiento en clúster"
 
-#: ../../operations.rst:3182
+#: ../../operations.rst:3183
 msgid ""
 "A cluster is a set of nodes that share one PostgreSQL database. Build "
 "with the ``postgres-tls`` feature (``cargo build --release -p sibuna "
@@ -12759,7 +12763,7 @@ msgstr ""
 "--release -p sibuna --features postgres-tls``; implica ``postgres``) e "
 "inicia cada miembro con la base de datos y un id de nodo propio:"
 
-#: ../../operations.rst:3184
+#: ../../operations.rst:3185
 msgid ""
 "sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 \\\n"
 "       --secret-file /etc/sibuna/secret"
@@ -12767,7 +12771,7 @@ msgstr ""
 "sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 \\\n"
 "       --secret-file /etc/sibuna/secret"
 
-#: ../../operations.rst:3189
+#: ../../operations.rst:3190
 msgid ""
 "Every member must use the same master secret and a unique "
 "``--cluster-node`` from 1 to 8,388,607. The URL file holds one "
@@ -12784,7 +12788,7 @@ msgstr ""
 "revisión confirmada (mediante ``NOTIFY`` o por sondeo) y reconstruye su "
 "motor."
 
-#: ../../operations.rst:3191
+#: ../../operations.rst:3192
 msgid ""
 "Nodes reach the shared database across the network, so we encrypt and "
 "verify that connection. We give the server a certificate signed by our "
@@ -12801,7 +12805,7 @@ msgstr ""
 "En el servidor aceptamos TCP solo mediante líneas ``hostssl`` en "
 "``pg_hba.conf``."
 
-#: ../../operations.rst:3193
+#: ../../operations.rst:3194
 msgid ""
 "At startup the daemon prints one line about the database connection. With "
 "``verify-full`` it says that the certificate and host name are verified. "
@@ -12828,7 +12832,7 @@ msgstr ""
 "nuestra autoridad al almacén de confianza del sistema; no elimina las "
 "autoridades del sistema (SID 0011, SID 0012)."
 
-#: ../../operations.rst:3195
+#: ../../operations.rst:3196
 msgid ""
 "Sibuna does not replicate a database of its own and elects no leader. "
 "Replication, failover and backups are PostgreSQL's (streaming "
@@ -12858,7 +12862,7 @@ msgstr ""
 "políticas se trasladan con ``sibuna console policies export`` y ``sibuna "
 "console policies import``, y el historial forense no se migra."
 
-#: ../../operations.rst:3197
+#: ../../operations.rst:3198
 msgid ""
 "**The cluster and the mesh.** This cluster is one of the firewall daemon. "
 "An edge does not join it: ``--config-file`` takes no storage option, the "
@@ -12888,11 +12892,11 @@ msgstr ""
 "otra (sección *Una base de datos para la topología*). Un edge no registra "
 "incidentes ni reputación en una base de datos."
 
-#: ../../operations.rst:3199
+#: ../../operations.rst:3200
 msgid "Cluster Challenge Routing"
 msgstr "Enrutamiento de desafíos en el clúster"
 
-#: ../../operations.rst:3202
+#: ../../operations.rst:3203
 msgid ""
 "Challenge keys are bound to ``--cluster-node``; keep challenge issuance "
 "and verification on the same member. Tokens use the shared seed and work "
@@ -12914,11 +12918,11 @@ msgstr ""
 "(``crates/storage/tests/multi_node.rs``, criterio 2 de SID 0011; se "
 "ejecuta cuando se define ``SIBUNA_TEST_DATABASE_URL``)."
 
-#: ../../operations.rst:3204
+#: ../../operations.rst:3205
 msgid "Packaging"
 msgstr "Empaquetado"
 
-#: ../../operations.rst:3209
+#: ../../operations.rst:3210
 msgid ""
 "Install and verify a release package, run Sibuna as a service, in a "
 "container or under Kubernetes, and build the binary ourselves."
@@ -12927,7 +12931,7 @@ msgstr ""
 "Sibuna como servicio, en un contenedor o en Kubernetes, y compilamos el "
 "binario nosotros mismos."
 
-#: ../../operations.rst:3211
+#: ../../operations.rst:3212
 msgid ""
 "Every release on GitHub carries the same executable for each platform, "
 "built from the release tag with the default features: SQLite storage and "
@@ -12938,19 +12942,19 @@ msgstr ""
 "por defecto: almacenamiento SQLite y la consola. Los clústeres PostgreSQL "
 "necesitan una compilación propia (más abajo)."
 
-#: ../../operations.rst:3217
+#: ../../operations.rst:3218
 msgid "Platform"
 msgstr "Plataforma"
 
-#: ../../operations.rst:3218
+#: ../../operations.rst:3219
 msgid "Release assets"
 msgstr "Archivos de la versión"
 
-#: ../../operations.rst:3219
+#: ../../operations.rst:3220
 msgid "Linux x86-64, ARM64"
 msgstr "Linux x86-64, ARM64"
 
-#: ../../operations.rst:3220
+#: ../../operations.rst:3221
 msgid ""
 "``sibuna-linux-amd64.tar.gz`` and ``sibuna-linux-arm64.tar.gz`` hold a "
 "static musl executable that runs on any distribution. "
@@ -12966,11 +12970,11 @@ msgstr ""
 "instalan con un servicio systemd; "
 "``sibuna-bin-<version>-1-x86_64.pkg.tar.zst`` hace lo mismo en Arch Linux."
 
-#: ../../operations.rst:3221
+#: ../../operations.rst:3222
 msgid "macOS arm64, x86-64"
 msgstr "macOS arm64, x86-64"
 
-#: ../../operations.rst:3222
+#: ../../operations.rst:3223
 msgid ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, for macOS "
 "12 or later."
@@ -12978,11 +12982,11 @@ msgstr ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, para macOS "
 "12 o posterior."
 
-#: ../../operations.rst:3223
+#: ../../operations.rst:3224
 msgid "Windows x86-64"
 msgstr "Windows x86-64"
 
-#: ../../operations.rst:3224
+#: ../../operations.rst:3225
 msgid ""
 "``sibuna-windows-amd64.zip`` holds ``sibuna.exe``, for Windows 10 or "
 "Server 2016 or later."
@@ -12990,21 +12994,21 @@ msgstr ""
 "``sibuna-windows-amd64.zip`` contiene ``sibuna.exe``, para Windows 10 o "
 "Server 2016 o posterior."
 
-#: ../../operations.rst:3225
+#: ../../operations.rst:3226
 msgid "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 msgstr "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 
-#: ../../operations.rst:3226
+#: ../../operations.rst:3227
 msgid ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg`` and ``sibuna-<version>.tgz``."
 msgstr ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg`` y ``sibuna-<version>.tgz``."
 
-#: ../../operations.rst:3227
+#: ../../operations.rst:3228
 msgid "Homebrew, Kubernetes, containers"
 msgstr "Homebrew, Kubernetes, contenedores"
 
-#: ../../operations.rst:3228
+#: ../../operations.rst:3229
 msgid ""
 "``sibuna.rb``, ``helm-sibuna-<version>.tgz``, and the image "
 "``ghcr.io/insanai/sibuna:<version>`` for amd64 and arm64, whose digest is "
@@ -13014,15 +13018,15 @@ msgstr ""
 "``ghcr.io/insanai/sibuna:<version>`` para amd64 y arm64, cuyo digest está "
 "en ``IMAGE-DIGEST.txt``."
 
-#: ../../operations.rst:3229
+#: ../../operations.rst:3230
 msgid "Source"
 msgstr "Fuentes"
 
-#: ../../operations.rst:3230
+#: ../../operations.rst:3231
 msgid "``sibuna-<version>-source.tar.gz``."
 msgstr "``sibuna-<version>-source.tar.gz``."
 
-#: ../../operations.rst:3232
+#: ../../operations.rst:3233
 msgid ""
 "Each archive and package carries ``LICENSE``, ``NOTICE``, ``LICENSES/`` "
 "(with ``THIRD-PARTY-RUST.txt``, the crates in the executable), "
@@ -13042,7 +13046,7 @@ msgstr ""
 "en su propia plataforma antes de publicar nada, e instala, reinstala y "
 "elimina los paquetes en Debian, Fedora, Arch Linux, FreeBSD y OpenBSD."
 
-#: ../../operations.rst:3234
+#: ../../operations.rst:3235
 msgid ""
 "The assets are not signed. We check a download against ``SHA256SUMS`` "
 "from the same release before we install it:"
@@ -13050,7 +13054,7 @@ msgstr ""
 "Los archivos no están firmados. Comprobamos cada descarga contra "
 "``SHA256SUMS`` de la misma versión antes de instalarla:"
 
-#: ../../operations.rst:3236
+#: ../../operations.rst:3237
 msgid ""
 "sha256sum --ignore-missing -c SHA256SUMS          # Linux\n"
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
@@ -13060,7 +13064,7 @@ msgstr ""
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
 "sha256 -C SHA256SUMS sibuna-1.0.0-beta.3.tgz      # OpenBSD"
 
-#: ../../operations.rst:3242
+#: ../../operations.rst:3243
 msgid ""
 "On macOS a browser download carries a quarantine attribute that stops an "
 "unsigned executable; ``xattr -d com.apple.quarantine sibuna`` removes it "
@@ -13070,11 +13074,11 @@ msgstr ""
 "cuarentena que bloquea un ejecutable sin firmar; ``xattr -d "
 "com.apple.quarantine sibuna`` lo elimina después de la comprobación."
 
-#: ../../operations.rst:3244
+#: ../../operations.rst:3245
 msgid "The systemd service"
 msgstr "El servicio systemd"
 
-#: ../../operations.rst:3247
+#: ../../operations.rst:3248
 msgid ""
 "The Debian, RPM and Arch packages install ``/usr/bin/sibuna``, the unit "
 "``sibuna.service``, the account ``sibuna`` (through "
@@ -13089,7 +13093,7 @@ msgstr ""
 "``/etc/sibuna/service.env``. La instalación no arranca nada. Fijamos el "
 "origen, un literal IP, en el archivo de ajustes y arrancamos el servicio:"
 
-#: ../../operations.rst:3249
+#: ../../operations.rst:3250
 msgid ""
 "sudoedit /etc/sibuna/service.env      # SIBUNA_UPSTREAM_HOST, "
 "SIBUNA_UPSTREAM_PORT\n"
@@ -13101,7 +13105,7 @@ msgstr ""
 "sudo systemctl enable --now sibuna\n"
 "curl -s http://127.0.0.1:8080/__sibuna/health"
 
-#: ../../operations.rst:3255
+#: ../../operations.rst:3256
 msgid ""
 "The service listens on ``127.0.0.1:8080`` until ``SIBUNA_HOST`` and "
 "``SIBUNA_PORT`` say otherwise. ``SIBUNA_OPTIONS`` passes further options, "
@@ -13127,7 +13131,7 @@ msgstr ""
 "(``ProtectSystem=strict``), ``/tmp`` y dispositivos privados, y sin "
 "nuevos privilegios."
 
-#: ../../operations.rst:3257
+#: ../../operations.rst:3258
 msgid ""
 "An upgrade keeps the settings file, the seed and the state, and does not "
 "restart the service; we restart it after a backup. Removal stops and "
@@ -13140,7 +13144,7 @@ msgstr ""
 "conserva la cuenta, la semilla, los ajustes y el estado, que borramos "
 "nosotros mismos cuando retiramos el host."
 
-#: ../../operations.rst:3259
+#: ../../operations.rst:3260
 msgid ""
 "The FreeBSD and OpenBSD packages install only ``/usr/local/bin/sibuna`` "
 "and its documents (``pkg add``, or ``pkg_add -D unsigned`` for a package "
@@ -13154,11 +13158,11 @@ msgstr ""
 "cuenta ni estado: ejecutamos el daemon como un usuario sin privilegios, "
 "con una semilla y un directorio de datos privados."
 
-#: ../../operations.rst:3261
+#: ../../operations.rst:3262
 msgid "Homebrew"
 msgstr "Homebrew"
 
-#: ../../operations.rst:3264
+#: ../../operations.rst:3265
 msgid ""
 "``sibuna.rb`` installs the release archive for the machine: macOS or "
 "Linux, arm64 or x86-64. It does not build from source, because Homebrew's "
@@ -13175,7 +13179,7 @@ msgstr ""
 "que el flujo de trabajo de publicación ya comprobó. Homebrew solo instala "
 "fórmulas desde taps, así que ponemos la fórmula en un tap local:"
 
-#: ../../operations.rst:3266
+#: ../../operations.rst:3267
 msgid ""
 "brew tap-new \"$USER/local\"\n"
 "cp sibuna.rb \"$(brew "
@@ -13187,7 +13191,7 @@ msgstr ""
 "--repository)/Library/Taps/$USER/homebrew-local/Formula/\"\n"
 "brew install \"$USER/local/sibuna\""
 
-#: ../../operations.rst:3272
+#: ../../operations.rst:3273
 msgid ""
 "The formula starts no service. Its caveats show how to create a seed; its "
 "test starts the daemon twice on the same data directory."
@@ -13196,11 +13200,11 @@ msgstr ""
 "muestran cómo crear una semilla; su prueba arranca el daemon dos veces "
 "sobre el mismo directorio de datos."
 
-#: ../../operations.rst:3274
+#: ../../operations.rst:3275
 msgid "Containers and Kubernetes"
 msgstr "Contenedores y Kubernetes"
 
-#: ../../operations.rst:3277
+#: ../../operations.rst:3278
 msgid ""
 "The image ``ghcr.io/insanai/sibuna:<version>`` holds the static "
 "executable on a distroless base: CA certificates, user 65532, no shell "
@@ -13217,7 +13221,7 @@ msgstr ""
 "montada en solo lectura y un volumen para el estado, y la reinicia una "
 "vez:"
 
-#: ../../operations.rst:3279
+#: ../../operations.rst:3280
 msgid ""
 "docker run -d --read-only --cap-drop=ALL --security-opt=no-new-privileges "
 "\\\n"
@@ -13237,7 +13241,7 @@ msgstr ""
 "/var/lib/sibuna/data \\\n"
 "  --upstream-host 10.0.0.5 --upstream-port 3000"
 
-#: ../../operations.rst:3287
+#: ../../operations.rst:3288
 msgid ""
 "The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. "
 "It requires a Secret that we create (``secret.existingSecret``, key "
@@ -13271,7 +13275,7 @@ msgstr ""
 "actualiza y desinstala el chart en un clúster kind que aplica el estándar "
 "Restricted."
 
-#: ../../operations.rst:3289
+#: ../../operations.rst:3290
 msgid ""
 "kubectl -n sibuna create secret generic sibuna-admission "
 "--from-file=admission.seed\n"
@@ -13287,11 +13291,11 @@ msgstr ""
 "  --set secret.existingSecret=sibuna-admission \\\n"
 "  --set upstream.host=10.0.0.5 --set upstream.port=3000"
 
-#: ../../operations.rst:3296
+#: ../../operations.rst:3297
 msgid "Building from source"
 msgstr "Compilar desde las fuentes"
 
-#: ../../operations.rst:3299
+#: ../../operations.rst:3300
 msgid ""
 "We build and test with Rust 1.100. The default build includes the JLV "
 "compiler and requires Rust 1.100. We can build the JSON-only daemon with "
@@ -13304,7 +13308,7 @@ msgstr ""
 "--no-default-features``. Añadimos ``--features sqlite,console`` para "
 "incluir SQLite y la consola."
 
-#: ../../operations.rst:3301
+#: ../../operations.rst:3302
 msgid ""
 "We install the release toolchain with ``rustup toolchain install 1.100.0 "
 "--profile minimal --target wasm32-unknown-unknown`` and select it with "
@@ -13314,7 +13318,7 @@ msgstr ""
 "install 1.100.0 --profile minimal --target wasm32-unknown-unknown`` y la "
 "seleccionamos con ``cargo +1.100.0`` en los comandos siguientes."
 
-#: ../../operations.rst:3303
+#: ../../operations.rst:3304
 msgid ""
 "``cargo build --release -p sibuna`` produces ``target/release/sibuna`` "
 "with the default features: SQLite storage and the console. sqlx bundles "
@@ -13334,7 +13338,7 @@ msgstr ""
 "``SIBUNA_CONSOLE_WASM=<path>`` incorporan en su lugar módulos "
 "precompilados."
 
-#: ../../operations.rst:3304
+#: ../../operations.rst:3305
 msgid ""
 "``cargo build --release -p sibuna --no-default-features`` produces the "
 "in-memory firewall with no external crate at all; ``--data-dir`` and "
@@ -13346,7 +13350,7 @@ msgstr ""
 "``--database-url`` se rechazan entonces al arrancar con "
 "``StorageDisabled``, y ``sibuna console`` con ``CONSOLEBUILD``."
 
-#: ../../operations.rst:3305
+#: ../../operations.rst:3306
 msgid ""
 "``cargo build --release -p sibuna --features postgres-tls`` adds "
 "PostgreSQL clusters with verified TLS to the database. It needs no "
@@ -13356,7 +13360,7 @@ msgstr ""
 "clústeres PostgreSQL con TLS verificado hacia la base de datos. No "
 "necesita OpenSSL."
 
-#: ../../operations.rst:3306
+#: ../../operations.rst:3307
 msgid ""
 "The static Linux executables of the releases come from ``cargo build "
 "--release --locked -p sibuna --target x86_64-unknown-linux-musl`` (or "
@@ -13369,7 +13373,7 @@ msgstr ""
 "``musl-gcc`` como compilador de C "
 "(``CC_x86_64_unknown_linux_musl=musl-gcc``)."
 
-#: ../../operations.rst:3308
+#: ../../operations.rst:3309
 msgid ""
 "The release profile uses fat LTO and one codegen unit. The workflow "
 "builds the two WebAssembly modules once and passes them to every "
@@ -13384,7 +13388,7 @@ msgstr ""
 "licenses`` regenera ``LICENSES/THIRD-PARTY-RUST.txt`` cuando cambia una "
 "dependencia."
 
-#: ../../operations.rst:3310
+#: ../../operations.rst:3311
 msgid ""
 "On Windows the daemon stops on Ctrl+C, Ctrl+Break and console close "
 "events; it does not run as a Windows service. Windows files have no mode "
@@ -13401,11 +13405,11 @@ msgstr ""
 "indicadores de memoria y CPU de la consola se leen de ``/proc`` y no "
 "están disponibles en otros sistemas."
 
-#: ../../operations.rst:3312
+#: ../../operations.rst:3313
 msgid "Exercise 11.2"
 msgstr "Ejercicio 11.2"
 
-#: ../../operations.rst:3314
+#: ../../operations.rst:3315
 msgid ""
 "Write the policy file and the ``ip_reputation`` rows needed so that a "
 "staging network (``10.20.0.0/16``) bypasses challenges, ``/admin/*`` "
@@ -13418,7 +13422,7 @@ msgstr ""
 "de un socio identificado por ``X-Partner-Key`` se admita a 30 peticiones "
 "cada 10 segundos."
 
-#: ../../operations.rst:3316
+#: ../../operations.rst:3317
 msgid ""
 "Hint: The daemon flags set the per-client limit every request meets "
 "first; a rule can carry a quota of its own in ``limits``."
@@ -13427,11 +13431,11 @@ msgstr ""
 "petición encuentra primero; una regla puede llevar una cuota propia en "
 "``limits``."
 
-#: ../../operations.rst:3318
+#: ../../operations.rst:3319
 msgid "Explain the invariant"
 msgstr "Explica el invariante"
 
-#: ../../operations.rst:3320
+#: ../../operations.rst:3321
 msgid ""
 "Explain to an operator why adding a row to ``policies`` takes effect "
 "without a restart and without a request ever waiting, in terms of the "

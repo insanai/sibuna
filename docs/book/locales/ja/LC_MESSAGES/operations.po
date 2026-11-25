@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"POT-Creation-Date: 2026-11-25 09:40+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -34,9 +34,9 @@ msgstr ""
 msgid "Surfaces and Configuration"
 msgstr "運用構成と設定"
 
-#: ../../operations.rst:9 ../../operations.rst:170 ../../operations.rst:2817
-#: ../../operations.rst:3037 ../../operations.rst:3066
-#: ../../operations.rst:3207
+#: ../../operations.rst:9 ../../operations.rst:170 ../../operations.rst:2818
+#: ../../operations.rst:3038 ../../operations.rst:3067
+#: ../../operations.rst:3208
 msgid "Objectives"
 msgstr "この章の学習目標"
 
@@ -119,7 +119,7 @@ msgstr "この表は\\ ``sibuna --help``\\ のすべてのオプションを示�
 msgid "Daemon options"
 msgstr "デーモンのオプション"
 
-#: ../../operations.rst:34 ../../operations.rst:2679
+#: ../../operations.rst:34 ../../operations.rst:2680
 msgid "Flag"
 msgstr "フラグ"
 
@@ -140,7 +140,7 @@ msgstr "既定値"
 #: ../../operations.rst:1592 ../../operations.rst:1674
 #: ../../operations.rst:2004 ../../operations.rst:2034
 #: ../../operations.rst:2108 ../../operations.rst:2379
-#: ../../operations.rst:2680
+#: ../../operations.rst:2681
 msgid "Meaning"
 msgstr "意味"
 
@@ -7261,7 +7261,7 @@ msgid ""
 "nothing."
 msgstr "ローテーションで名前が変わった後に、アクセスログのファイルを開き直します。何も再読み込みしません。"
 
-#: ../../operations.rst:2197 ../../operations.rst:2637
+#: ../../operations.rst:2197 ../../operations.rst:2638
 msgid "``show certs``"
 msgstr "``show certs``"
 
@@ -7366,7 +7366,7 @@ msgid ""
 "(section *Hooks*)."
 msgstr "プラグインとその呼び出し、判定、失敗、開いているブレーカー（\\ *フック*\\ の節）。"
 
-#: ../../operations.rst:2217 ../../operations.rst:2647
+#: ../../operations.rst:2217 ../../operations.rst:2648
 msgid "``show affinity``"
 msgstr "``show affinity``"
 
@@ -8107,27 +8107,30 @@ msgid ""
 "eight bytes. It answers a ``decide`` frame with a ``verdict`` frame of "
 "the same identifier, whose payload is one byte, 0 to admit, 1 to deny, 2 "
 "to challenge, and then the field lines to add. A ``sample`` frame has no "
-"answer. SID 0030 specifies the frame. The operator console of the edge "
-"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+"answer. SID 0030 specifies the frame."
 msgstr ""
 "*エージェントを書く。*\\ "
 "エージェントはソケットで接続を受け付け、フレームを読みます。フレームは4バイトの長さ、バージョン、種類、8バイトの識別子からなります。\\ "
 "``decide``\\ フレームには同じ識別子の\\ ``verdict``\\ "
 "フレームで応答し、そのペイロードは1バイト（許可なら0、拒否なら1、チャレンジなら2）と、それに続く加えるフィールドの行です。\\ "
-"``sample``\\ フレームには応答しません。フレームはSID 0030が規定します。エッジの運用コンソール "
-"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+"``sample``\\ フレームには応答しません。フレームはSID 0030が規定します。"
 
-#: ../../operations.rst:2434
+#: ../../operations.rst:2432
+msgid "The operator console of the edge"
+msgstr "エッジの運用コンソール"
+
+#: ../../operations.rst:2435
 msgid ""
-"The edge can run the console of Part XI beside the load balancer (SID "
-"0031). We add a ``console`` section to the topology file. The console "
-"listens on an address of its own, on threads of its own, and it keeps its "
-"accounts and its audit log in a SQLite file."
+"The edge can run the console of \"Console Preview\" below beside the load "
+"balancer (SID 0031). We add a ``console`` section to the topology file. "
+"The console listens on an address of its own, on threads of its own, and "
+"it keeps its accounts and its audit log in a SQLite file."
 msgstr ""
-"エッジは、ロードバランサーの隣で第XI部のコンソールを動かせます（SID 0031）。トポロジーのファイルに\\ ``console``\\ "
+"エッジは、ロードバランサーの隣で後述の「コンソールのプレビュー」のコンソールを動かせます（SID 0031）。トポロジーのファイルに\\ "
+"``console``\\ "
 "セクションを加えます。コンソールは専用のアドレスで、専用のスレッドで待ち受け、アカウントと監査ログをSQLiteファイルに保持します。"
 
-#: ../../operations.rst:2436
+#: ../../operations.rst:2437
 msgid ""
 "console: {\n"
 "    listen: \"127.0.0.1:9443\",\n"
@@ -8136,7 +8139,7 @@ msgid ""
 "},"
 msgstr ""
 
-#: ../../operations.rst:2444
+#: ../../operations.rst:2445
 msgid ""
 "sibuna init-admin admin --data-dir /var/lib/sibuna    # once, while the "
 "daemon is stopped\n"
@@ -8147,13 +8150,13 @@ msgstr ""
 "sibuna --config-file /etc/sibuna/edge.jlv\n"
 "# Console: http://127.0.0.1:9443/console/"
 
-#: ../../operations.rst:2450
+#: ../../operations.rst:2451
 msgid ""
 "We sign in, replace the temporary password, and open the page *Edge*. The "
 "page shows four things."
 msgstr "サインインし、一時パスワードを置き換えて、\\ *Edge*\\ ページを開きます。このページは四つのものを示します。"
 
-#: ../../operations.rst:2452
+#: ../../operations.rst:2453
 msgid ""
 "**The node.** Its state is one of three words. *Serving* means that the "
 "node admits new flows. *Draining* means that the node was told to stop: "
@@ -8175,7 +8178,7 @@ msgstr ""
 "``show cluster``\\ が表示するものです。二つ目は、永続モードでノードが処理しているデータベースのリビジョンです（SID "
 "0028）。ファイルを処理しているノードにはこれがなく、ページは\"Not reported\"と表示します。"
 
-#: ../../operations.rst:2454
+#: ../../operations.rst:2455
 msgid ""
 "**The refusals by cause.** One row for each reason of the metrics: "
 "``flow_limit``, ``draining``, ``rate_limit``, ``connection_limit``, "
@@ -8187,7 +8190,7 @@ msgstr ""
 "``rate_limit``\\ 、\\ ``connection_limit``\\ 、\\ ``task_limit``\\ "
 "など。容量不足で拒否するノードは\\ ``flow_limit``\\ に、ドレイン中のノードは\\ ``draining``\\ に数えます。"
 
-#: ../../operations.rst:2456
+#: ../../operations.rst:2457
 msgid ""
 "**The frontends and the pools.** A frontend shows its requests, flows, "
 "bytes and the latency of a request: the mean and the 95th percentile. A "
@@ -8200,7 +8203,7 @@ msgstr ""
 "``show servers``\\ "
 "の列を、続いてそのリクエスト、失敗、処理中のリクエスト、最初のバイトまでの待ち時間を示します。一つの表示に載るのは最大256個のサーバーで、ページは省いた数を示します。"
 
-#: ../../operations.rst:2458
+#: ../../operations.rst:2459
 msgid ""
 "**The fleet.** One row for each member: the state of the link, the state "
 "of the node, its flows, its servers and its two revisions. A member whose "
@@ -8211,7 +8214,7 @@ msgstr ""
 "メンバーごとに1行で、リンクの状態、ノードの状態、フロー、サーバー、二つのリビジョンを示します。ファイルがこのノードのファイルと異なるメンバーには\\ "
 "``differs``\\ の印が付きます。5秒以内に応答しないメンバーの行は\\ ``No answer``\\ になります。"
 
-#: ../../operations.rst:2460
+#: ../../operations.rst:2461
 msgid ""
 "An operator or an administrator also sees the commands. Each command is "
 "one line of the admin socket, and the function of the admin socket runs "
@@ -8224,15 +8227,15 @@ msgstr ""
 "*This node only*\\ にチェックを入れない限り、\\ ``sibuna ctl``\\ "
 "からの場合と同じくメッシュを通して他のノードに届きます。"
 
-#: ../../operations.rst:2466
+#: ../../operations.rst:2467
 msgid "The console offers"
 msgstr "コンソールが提供するもの"
 
-#: ../../operations.rst:2467
+#: ../../operations.rst:2468
 msgid "It does not offer"
 msgstr "提供しないもの"
 
-#: ../../operations.rst:2468
+#: ../../operations.rst:2469
 msgid ""
 "``set server POOL/NAME state ready|drain [local]``, ``set server "
 "POOL/NAME weight N [local]``, ``add server``, ``del server``, ``del "
@@ -8244,7 +8247,7 @@ msgstr ""
 "ban``, ``reload cluster``, ``show servers``, ``show cluster``, ``show "
 "certs``, ``show ca``"
 
-#: ../../operations.rst:2469
+#: ../../operations.rst:2470
 msgid ""
 "``reload``, ``reopen log``, ``show info``, ``show stats``, ``show "
 "authority``, ``show affinity``, ``revoke cert`` and every other command. "
@@ -8254,7 +8257,7 @@ msgstr ""
 "stats``\\ 、\\ ``show authority``\\ 、\\ ``show affinity``\\ 、\\ ``revoke "
 "cert``\\ 、その他すべてのコマンド。これらはホスト上に留まり、\\ ``sibuna ctl``\\ で使います。"
 
-#: ../../operations.rst:2471
+#: ../../operations.rst:2472
 msgid ""
 "Every request passes the checks of the console: the session, the role, "
 "the ``Origin`` field, the CSRF token and the allowance of the session. A "
@@ -8267,7 +8270,7 @@ msgstr ""
 "フィールド、CSRFトークン、セッションの許容量の検査を通ります。閲覧者はページを読むだけで、何も変えません。監査ログは各変更を2回記録します。実行前の行と、実行後の結果です。コンソールが提供しない行には\\ "
 "``CONSOLEEDGE``\\ で応答し、エッジがそれを見ることはありません。"
 
-#: ../../operations.rst:2473
+#: ../../operations.rst:2474
 msgid ""
 "**A fleet.** For more than one node we write the list of all members, the "
 "same on every node, so that ``reload cluster`` can carry the file. Each "
@@ -8276,7 +8279,7 @@ msgstr ""
 "**フリート。**\\ 複数のノードでは、すべてのメンバーのリストをどのノードでも同じに書き、\\ ``reload cluster``\\ "
 "がファイルを運べるようにします。各ノードは、ノード上の小さなファイルに収めた番号で自分を見つけます。"
 
-#: ../../operations.rst:2475
+#: ../../operations.rst:2476
 msgid ""
 "console: {\n"
 "    data_dir: \"/var/lib/sibuna\",\n"
@@ -8296,18 +8299,19 @@ msgid ""
 "},"
 msgstr ""
 
-#: ../../operations.rst:2492
+#: ../../operations.rst:2493
 msgid ""
 "A fleet has at most 64 members. The consoles talk to each other over "
-"HTTPS, so each one stands behind a TLS proxy, as Part XI describes for "
-"peers. The proxy must set ``X-Forwarded-For``. The two key files hold 64 "
-"hexadecimal digits each and are readable by their owner only."
+"HTTPS, so each one stands behind a TLS proxy, as \"A Tour of the "
+"Console\" describes for remote operation. The proxy must set "
+"``X-Forwarded-For``. The two key files hold 64 hexadecimal digits each "
+"and are readable by their owner only."
 msgstr ""
-"フリートのメンバーは最大64です。コンソールどうしはHTTPSで通信するので、第XI部でピアについて説明しているように、それぞれTLSプロキシの背後に置きます。プロキシは\\ "
+"フリートのメンバーは最大64です。コンソールどうしはHTTPSで通信するので、「コンソールの各画面」でリモート運用について説明しているように、それぞれTLSプロキシの背後に置きます。プロキシは\\ "
 "``X-Forwarded-For``\\ "
 "を設定しなければなりません。二つの鍵ファイルはそれぞれ16進数64桁を収め、所有者だけが読めるようにします。"
 
-#: ../../operations.rst:2494
+#: ../../operations.rst:2495
 msgid ""
 "The listener screens a connection by its source address when it accepts "
 "it. Behind a proxy it serves the trusted proxies only. Without a proxy, "
@@ -8323,7 +8327,7 @@ msgstr ""
 "``allow_ips``\\ から接続し、新しいトランスクリプトの中で自分とこのノードを名乗り、ピア鍵を証明しなければなりません。\\ "
 "``allow_operators``\\ はそれ以外のすべてのリクエストに適用されます。"
 
-#: ../../operations.rst:2496
+#: ../../operations.rst:2497
 msgid ""
 "The listener has a fixed number of slots: 64 browser streams, one peer "
 "stream for each peer and at least 16, and 16 slots that only ordinary "
@@ -8333,7 +8337,7 @@ msgid ""
 msgstr ""
 "リスナーの枠の数は固定です。ブラウザーのストリームに64、ピアごとに一つで少なくとも16のピアのストリーム、通常のリクエストだけが使える16の枠です。割り当てを超えたストリームには503で応答し、ページとコマンドは引き続き動きます。コンソールはリクエストの経路のロックを決して取らず、エッジのワーカーはそのために各ターンで一つのフラグを見るだけです。"
 
-#: ../../operations.rst:2498
+#: ../../operations.rst:2499
 msgid ""
 "**Removing a member.** We delete its entry from the file and reload. The "
 "node closes the stream of that member within two seconds and refuses its "
@@ -8347,11 +8351,11 @@ msgstr ""
 "``EDGE014``\\ "
 "をログに出します。コンソールのリスナー、ディレクトリ、プロキシの設定、鍵を変更する再読み込みは拒否され、ルートは残ります。"
 
-#: ../../operations.rst:2500
+#: ../../operations.rst:2501
 msgid "Several nodes"
 msgstr "複数のノード"
 
-#: ../../operations.rst:2503
+#: ../../operations.rst:2504
 msgid ""
 "For several nodes we can add a top-level ``mesh`` object with a unicast "
 "``listen`` address, a list of ``peers`` as numeric UDP socket addresses, "
@@ -8383,11 +8387,11 @@ msgstr ""
 "があればクライアントの新しいフローをその所有者のノードへ送ります（前の各節、SID 0022からSID "
 "0026）。ルーティングが変わっても確立したTCP接続をそのノードに留めておくには、依然として上流でのフローの誘導が必要です。"
 
-#: ../../operations.rst:2505
+#: ../../operations.rst:2506
 msgid "Hosting jlavi, jlavideploy and jlavici"
 msgstr "jlavi、jlavideploy、jlaviciをホストする"
 
-#: ../../operations.rst:2508
+#: ../../operations.rst:2509
 msgid ""
 "The three sibling projects serve cleartext HTTP/1.1 and leave TLS to a "
 "proxy. One Sibuna node can serve all three names on port 443 and pass Git "
@@ -8395,31 +8399,31 @@ msgid ""
 msgstr ""
 "三つの兄弟プロジェクトは平文のHTTP/1.1を処理し、TLSはプロキシに任せます。一つのSibunaノードで、三つの名前をすべてポート443で処理し、SSH上のGitをTCPとして通せます。"
 
-#: ../../operations.rst:2510
+#: ../../operations.rst:2511
 msgid "What each project needs from the edge"
 msgstr "各プロジェクトがエッジに求めるもの"
 
-#: ../../operations.rst:2514
+#: ../../operations.rst:2515
 msgid "Project"
 msgstr "プロジェクト"
 
-#: ../../operations.rst:2515
+#: ../../operations.rst:2516
 msgid "Server"
 msgstr "サーバー"
 
-#: ../../operations.rst:2516
+#: ../../operations.rst:2517
 msgid "Needs"
 msgstr "必要なもの"
 
-#: ../../operations.rst:2517
+#: ../../operations.rst:2518
 msgid "jlavi"
 msgstr "jlavi"
 
-#: ../../operations.rst:2518
+#: ../../operations.rst:2519
 msgid "``10.20.0.8:8040``"
 msgstr "``10.20.0.8:8040``"
 
-#: ../../operations.rst:2519
+#: ../../operations.rst:2520
 msgid ""
 "WebSocket on ``/live``, Git and large-file transfers of an hour, health "
 "at ``/api/v1/health``, ``trusted_proxies`` naming the Sibuna node, and "
@@ -8429,15 +8433,15 @@ msgstr ""
 "でのヘルス、Sibunaのノードを指定した\\ ``trusted_proxies``\\ 、\\ ``sshd``\\ "
 "へのTCPパススルー。複数のプロセスが一つのプールを共有できます。"
 
-#: ../../operations.rst:2520
+#: ../../operations.rst:2521
 msgid "jlavideploy"
 msgstr "jlavideploy"
 
-#: ../../operations.rst:2521
+#: ../../operations.rst:2522
 msgid "``10.20.0.9:7420``"
 msgstr "``10.20.0.9:7420``"
 
-#: ../../operations.rst:2522
+#: ../../operations.rst:2523
 msgid ""
 "WebSocket on ``/live``, long polls of 30 s, bodies up to 64 MiB, health "
 "at ``/healthz``. It reads no forwarded field."
@@ -8445,15 +8449,15 @@ msgstr ""
 "``/live``\\ でのWebSocket、30秒のロングポーリング、最大64 MiBのボディー、\\ ``/healthz``\\ "
 "でのヘルス。転送のフィールドは読みません。"
 
-#: ../../operations.rst:2523
+#: ../../operations.rst:2524
 msgid "jlavici"
 msgstr "jlavici"
 
-#: ../../operations.rst:2524
+#: ../../operations.rst:2525
 msgid "``10.20.0.10:8050``"
 msgstr "``10.20.0.10:8050``"
 
-#: ../../operations.rst:2525
+#: ../../operations.rst:2526
 msgid ""
 "Long polls of 25 s, chunk uploads of 16 MiB, large downloads, health at "
 "``/healthz``. One coordinator only, so one server. The public URL must be "
@@ -8462,7 +8466,7 @@ msgstr ""
 "25秒のロングポーリング、16 MiBのチャンクのアップロード、大きなダウンロード、\\ ``/healthz``\\ "
 "でのヘルス。コーディネーターは一つだけなので、サーバーも一つです。公開のURLは、エッジが処理する名前でなければなりません。"
 
-#: ../../operations.rst:2527
+#: ../../operations.rst:2528
 msgid ""
 "{\n"
 "  \"global\": {\"max_flows\": 16384},\n"
@@ -8506,7 +8510,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../operations.rst:2559
+#: ../../operations.rst:2560
 msgid ""
 "The names carry no firewall here, because their clients are Git, curl and "
 "runners. To protect the browser pages of a project, we give its route "
@@ -8522,27 +8526,27 @@ msgstr ""
 "``trusted_proxies``\\ "
 "にSibunaのノードを登録します。証明書の公開鍵をピン留めするランナーの鍵は、更新時に同じ秘密鍵を使い続ける限り有効です。"
 
-#: ../../operations.rst:2561
+#: ../../operations.rst:2562
 msgid "Coming from HAProxy"
 msgstr "HAProxyからの移行"
 
-#: ../../operations.rst:2564
+#: ../../operations.rst:2565
 msgid "HAProxy directives and their edge equivalents"
 msgstr "HAProxyのディレクティブと、それに相当するエッジの設定"
 
-#: ../../operations.rst:2568
+#: ../../operations.rst:2569
 msgid "HAProxy"
 msgstr "HAProxy"
 
-#: ../../operations.rst:2569
+#: ../../operations.rst:2570
 msgid "Sibuna edge"
 msgstr "Sibunaのエッジ"
 
-#: ../../operations.rst:2570
+#: ../../operations.rst:2571
 msgid "``bind :443 ssl crt /etc/haproxy/certs/ alpn h2,http/1.1``"
 msgstr "``bind :443 ssl crt /etc/haproxy/certs/ alpn h2,http/1.1``"
 
-#: ../../operations.rst:2571
+#: ../../operations.rst:2572
 msgid ""
 "``\"binds\": [\"0.0.0.0:443\"], \"tls\": {\"crt\": "
 "\"/etc/sibuna/certs/\"}``"
@@ -8550,37 +8554,37 @@ msgstr ""
 "``\"binds\": [\"0.0.0.0:443\"], \"tls\": {\"crt\": "
 "\"/etc/sibuna/certs/\"}``"
 
-#: ../../operations.rst:2572
+#: ../../operations.rst:2573
 msgid "``bind quic4@:443 ssl crt ... alpn h3``"
 msgstr "``bind quic4@:443 ssl crt ... alpn h3``"
 
-#: ../../operations.rst:2573
+#: ../../operations.rst:2574
 msgid "``\"tls\": {\"crt\": ..., \"http3\": true}``"
 msgstr "``\"tls\": {\"crt\": ..., \"http3\": true}``"
 
-#: ../../operations.rst:2574
+#: ../../operations.rst:2575
 msgid "``use_backend api if { hdr(host) -i api.example.org }``"
 msgstr "``use_backend api if { hdr(host) -i api.example.org }``"
 
-#: ../../operations.rst:2575
+#: ../../operations.rst:2576
 msgid ""
 "``\"routes\": [{\"host\": \"api.example.org\", \"backend\": \"api\"}]``"
 msgstr ""
 "``\"routes\": [{\"host\": \"api.example.org\", \"backend\": \"api\"}]``"
 
-#: ../../operations.rst:2576
+#: ../../operations.rst:2577
 msgid "``use_backend api if { path_beg /v1/ }``"
 msgstr "``use_backend api if { path_beg /v1/ }``"
 
-#: ../../operations.rst:2577
+#: ../../operations.rst:2578
 msgid "``{\"path_prefix\": \"/v1/\", \"backend\": \"api\"}``"
 msgstr "``{\"path_prefix\": \"/v1/\", \"backend\": \"api\"}``"
 
-#: ../../operations.rst:2578
+#: ../../operations.rst:2579
 msgid "``mode tcp`` with ``req.ssl_sni``"
 msgstr "``req.ssl_sni``\\ を伴う\\ ``mode tcp``"
 
-#: ../../operations.rst:2579
+#: ../../operations.rst:2580
 msgid ""
 "``\"proto\": \"tcp\", \"tcp_inspect\": \"tls_client_hello\"`` with "
 "``acls`` and ``rules``"
@@ -8588,38 +8592,38 @@ msgstr ""
 "``acls``\\ と\\ ``rules``\\ を伴う\\ ``\"proto\": \"tcp\", \"tcp_inspect\": "
 "\"tls_client_hello\"``"
 
-#: ../../operations.rst:2580
+#: ../../operations.rst:2581
 msgid "``balance leastconn``, ``weight``, ``maxconn``, ``backup``"
 msgstr "``balance leastconn``, ``weight``, ``maxconn``, ``backup``"
 
-#: ../../operations.rst:2581
+#: ../../operations.rst:2582
 msgid ""
 "``least_connections`` (default), ``weight``, ``max_flows``, ``backup``"
 msgstr ""
 "``least_connections``\\ （既定）、\\ ``weight``\\ 、\\ ``max_flows``\\ 、\\ "
 "``backup``"
 
-#: ../../operations.rst:2582
+#: ../../operations.rst:2583
 msgid "``balance roundrobin``"
 msgstr "``balance roundrobin``"
 
-#: ../../operations.rst:2583
+#: ../../operations.rst:2584
 msgid "``\"balance\": {\"kind\": \"round_robin\"}``"
 msgstr "``\"balance\": {\"kind\": \"round_robin\"}``"
 
-#: ../../operations.rst:2584
+#: ../../operations.rst:2585
 msgid "``balance source``"
 msgstr "``balance source``"
 
-#: ../../operations.rst:2585
+#: ../../operations.rst:2586
 msgid "``\"sticky\": \"source\"``"
 msgstr "``\"sticky\": \"source\"``"
 
-#: ../../operations.rst:2586
+#: ../../operations.rst:2587
 msgid "``cookie SRV insert indirect nocache httponly secure``"
 msgstr "``cookie SRV insert indirect nocache httponly secure``"
 
-#: ../../operations.rst:2587
+#: ../../operations.rst:2588
 msgid ""
 "``\"sticky\": {\"kind\": \"cookie\", \"cookie\": \"SRV\"}``. The value is "
 "a keyed hash, not the server name."
@@ -8627,11 +8631,11 @@ msgstr ""
 "``\"sticky\": {\"kind\": \"cookie\", \"cookie\": \"SRV\"}``\\ "
 "。値はサーバー名ではなく鍵付きハッシュです。"
 
-#: ../../operations.rst:2588
+#: ../../operations.rst:2589
 msgid "``timeout connect 5s``, ``timeout server 60s``"
 msgstr "``timeout connect 5s``, ``timeout server 60s``"
 
-#: ../../operations.rst:2589
+#: ../../operations.rst:2590
 msgid ""
 "``\"connect_timeout\": \"5s\"``, ``\"response_timeout\": \"60s\"`` on the "
 "backend (these are the defaults)"
@@ -8639,19 +8643,19 @@ msgstr ""
 "バックエンドの\\ ``\"connect_timeout\": \"5s\"``\\ 、\\ ``\"response_timeout\": "
 "\"60s\"``\\ （これらが既定値）"
 
-#: ../../operations.rst:2590
+#: ../../operations.rst:2591
 msgid "``retries 2`` with ``option redispatch``"
 msgstr "``option redispatch``\\ を伴う\\ ``retries 2``"
 
-#: ../../operations.rst:2591
+#: ../../operations.rst:2592
 msgid "``\"retries\": 2`` (default). Each retry goes to another server."
 msgstr "``\"retries\": 2``\\ （既定）。再試行のたびに別のサーバーへ送ります。"
 
-#: ../../operations.rst:2592
+#: ../../operations.rst:2593
 msgid "``observe layer7``, ``error-limit 3``, ``on-error mark-down``"
 msgstr "``observe layer7``, ``error-limit 3``, ``on-error mark-down``"
 
-#: ../../operations.rst:2593
+#: ../../operations.rst:2594
 msgid ""
 "``\"passive_health\": {\"failures\": 3, \"ejection\": \"10s\", "
 "\"http_5xx\": true}``"
@@ -8659,66 +8663,66 @@ msgstr ""
 "``\"passive_health\": {\"failures\": 3, \"ejection\": \"10s\", "
 "\"http_5xx\": true}``"
 
-#: ../../operations.rst:2594
+#: ../../operations.rst:2595
 msgid "``server s1 ... slowstart 30s``"
 msgstr "``server s1 ... slowstart 30s``"
 
-#: ../../operations.rst:2595
+#: ../../operations.rst:2596
 msgid "``\"slow_start\": \"30s\"`` on the backend"
 msgstr "バックエンドの\\ ``\"slow_start\": \"30s\"``"
 
-#: ../../operations.rst:2596
+#: ../../operations.rst:2597
 msgid "``http-request redirect scheme https code 308 unless { ssl_fc }``"
 msgstr "``http-request redirect scheme https code 308 unless { ssl_fc }``"
 
-#: ../../operations.rst:2597
+#: ../../operations.rst:2598
 msgid "``\"redirect_https\": true`` on the cleartext frontend"
 msgstr "平文のフロントエンドの\\ ``\"redirect_https\": true``"
 
-#: ../../operations.rst:2598
+#: ../../operations.rst:2599
 msgid ""
 "``http-response set-header Strict-Transport-Security max-age=31536000``"
 msgstr ""
 "``http-response set-header Strict-Transport-Security max-age=31536000``"
 
-#: ../../operations.rst:2599
+#: ../../operations.rst:2600
 msgid "``\"hsts\": true`` on the TLS frontend"
 msgstr "TLSのフロントエンドの\\ ``\"hsts\": true``"
 
-#: ../../operations.rst:2600
-msgid ""
-"``http-request set-header X-Edge sibuna``, ``http-request del-header "
-"X-Debug``"
-msgstr ""
-"``http-request set-header X-Edge sibuna``, ``http-request del-header "
-"X-Debug``"
-
 #: ../../operations.rst:2601
 msgid ""
+"``http-request set-header X-Edge sibuna``, ``http-request del-header "
+"X-Debug``"
+msgstr ""
+"``http-request set-header X-Edge sibuna``, ``http-request del-header "
+"X-Debug``"
+
+#: ../../operations.rst:2602
+msgid ""
 "``\"request_headers\": {\"set\": {\"X-Edge\": \"sibuna\"}, \"remove\": "
 "[\"X-Debug\"]}``"
 msgstr ""
 "``\"request_headers\": {\"set\": {\"X-Edge\": \"sibuna\"}, \"remove\": "
 "[\"X-Debug\"]}``"
 
-#: ../../operations.rst:2602
+#: ../../operations.rst:2603
 msgid "``http-response set-header``, ``http-response del-header Server``"
 msgstr "``http-response set-header``, ``http-response del-header Server``"
 
-#: ../../operations.rst:2603
+#: ../../operations.rst:2604
 msgid "``\"response_headers\": {\"set\": {...}, \"remove\": [\"Server\"]}``"
 msgstr ""
 "``\"response_headers\": {\"set\": {...}, \"remove\": [\"Server\"]}``"
 
-#: ../../operations.rst:2604
+#: ../../operations.rst:2605
 msgid "``http-request deny deny_status 413 if { req.body_size gt 10m }``"
 msgstr "``http-request deny deny_status 413 if { req.body_size gt 10m }``"
 
-#: ../../operations.rst:2605
+#: ../../operations.rst:2606
 msgid "``\"max_body\": \"10m\"``"
 msgstr "``\"max_body\": \"10m\"``"
 
-#: ../../operations.rst:2606
+#: ../../operations.rst:2607
 msgid ""
 "``http-request set-header X-Forwarded-Host %[req.hdr(host)]``, "
 "``X-Forwarded-Port %[dst_port]``"
@@ -8726,56 +8730,56 @@ msgstr ""
 "``http-request set-header X-Forwarded-Host %[req.hdr(host)]``, "
 "``X-Forwarded-Port %[dst_port]``"
 
-#: ../../operations.rst:2607 ../../operations.rst:2615
+#: ../../operations.rst:2608 ../../operations.rst:2616
 msgid "Always on for HTTP frontends"
 msgstr "HTTPのフロントエンドでは常に有効"
 
-#: ../../operations.rst:2608
+#: ../../operations.rst:2609
 msgid "``option httpchk GET /health`` and ``check inter 2s rise 2 fall 3``"
 msgstr ""
 "``option httpchk GET /health``\\ と\\ ``check inter 2s rise 2 fall 3``"
 
-#: ../../operations.rst:2609
-msgid ""
-"``\"health_check\": {\"kind\": \"http\", \"path\": \"/health\", "
-"\"interval\": \"2s\", \"rise\": 2, \"fall\": 3}``"
-msgstr ""
-"``\"health_check\": {\"kind\": \"http\", \"path\": \"/health\", "
-"\"interval\": \"2s\", \"rise\": 2, \"fall\": 3}``"
-
 #: ../../operations.rst:2610
 msgid ""
-"``server s1 10.0.0.1:8443 ssl verify required ca-file ca.pem sni "
-"str(api.internal) alpn h2``"
+"``\"health_check\": {\"kind\": \"http\", \"path\": \"/health\", "
+"\"interval\": \"2s\", \"rise\": 2, \"fall\": 3}``"
 msgstr ""
-"``server s1 10.0.0.1:8443 ssl verify required ca-file ca.pem sni "
-"str(api.internal) alpn h2``"
+"``\"health_check\": {\"kind\": \"http\", \"path\": \"/health\", "
+"\"interval\": \"2s\", \"rise\": 2, \"fall\": 3}``"
 
 #: ../../operations.rst:2611
 msgid ""
+"``server s1 10.0.0.1:8443 ssl verify required ca-file ca.pem sni "
+"str(api.internal) alpn h2``"
+msgstr ""
+"``server s1 10.0.0.1:8443 ssl verify required ca-file ca.pem sni "
+"str(api.internal) alpn h2``"
+
+#: ../../operations.rst:2612
+msgid ""
 "``\"http_version\": \"2\", \"tls\": {\"ca_file\": \"ca.pem\", \"sni\": "
 "\"api.internal\"}``"
 msgstr ""
 "``\"http_version\": \"2\", \"tls\": {\"ca_file\": \"ca.pem\", \"sni\": "
 "\"api.internal\"}``"
 
-#: ../../operations.rst:2612
+#: ../../operations.rst:2613
 msgid "``server s1 ... send-proxy-v2``"
 msgstr "``server s1 ... send-proxy-v2``"
 
-#: ../../operations.rst:2613
+#: ../../operations.rst:2614
 msgid "``\"proxy_v2\": {\"enabled\": true}`` on a TCP pool"
 msgstr "TCPのプールの\\ ``\"proxy_v2\": {\"enabled\": true}``"
 
-#: ../../operations.rst:2614
+#: ../../operations.rst:2615
 msgid "``option forwardfor``"
 msgstr "``option forwardfor``"
 
-#: ../../operations.rst:2616
+#: ../../operations.rst:2617
 msgid "``timeout client``, ``timeout tunnel``"
 msgstr "``timeout client``, ``timeout tunnel``"
 
-#: ../../operations.rst:2617
+#: ../../operations.rst:2618
 msgid ""
 "``http.idle_timeout``, ``http.websocket_idle_timeout``, "
 "``session_timeout`` on TCP and UDP frontends"
@@ -8783,83 +8787,83 @@ msgstr ""
 "``http.idle_timeout``\\ 、\\ ``http.websocket_idle_timeout``\\ "
 "、TCPとUDPのフロントエンドの\\ ``session_timeout``"
 
-#: ../../operations.rst:2618
+#: ../../operations.rst:2619
 msgid "``stick-table ... conn_rate``, ``http_req_rate``"
 msgstr "``stick-table ... conn_rate``, ``http_req_rate``"
 
-#: ../../operations.rst:2619
+#: ../../operations.rst:2620
 msgid "``rate_limit`` on a frontend, ``http.rate_limit``"
 msgstr "フロントエンドの\\ ``rate_limit``\\ 、\\ ``http.rate_limit``"
 
-#: ../../operations.rst:2620
+#: ../../operations.rst:2621
 msgid "``reload`` (new process)"
 msgstr "``reload``\\ （新しいプロセス）"
 
-#: ../../operations.rst:2621
+#: ../../operations.rst:2622
 msgid "SIGHUP or ``sibuna ctl SOCKET reload`` (same process, flows kept)"
 msgstr "SIGHUPまたは\\ ``sibuna ctl SOCKET reload``\\ （同じプロセス、フローは保持）"
 
-#: ../../operations.rst:2622
+#: ../../operations.rst:2623
 msgid "``stats socket /run/haproxy.sock mode 600 level admin``"
 msgstr "``stats socket /run/haproxy.sock mode 600 level admin``"
 
-#: ../../operations.rst:2623
+#: ../../operations.rst:2624
 msgid "``\"global\": {\"admin_socket\": \"/run/sibuna/edge.sock\"}``"
 msgstr "``\"global\": {\"admin_socket\": \"/run/sibuna/edge.sock\"}``"
 
-#: ../../operations.rst:2624
+#: ../../operations.rst:2625
 msgid "``echo \"show servers state\" | socat stdio /run/haproxy.sock``"
 msgstr "``echo \"show servers state\" | socat stdio /run/haproxy.sock``"
 
-#: ../../operations.rst:2625
+#: ../../operations.rst:2626
 msgid "``sibuna ctl /run/sibuna/edge.sock show servers``"
 msgstr "``sibuna ctl /run/sibuna/edge.sock show servers``"
 
-#: ../../operations.rst:2626
+#: ../../operations.rst:2627
 msgid "``set server app/s1 state drain``, ``state maint``, ``state ready``"
 msgstr "``set server app/s1 state drain``, ``state maint``, ``state ready``"
 
-#: ../../operations.rst:2627
+#: ../../operations.rst:2628
 msgid "``set server app/s1 state drain``, ``state ready``"
 msgstr "``set server app/s1 state drain``, ``state ready``"
 
-#: ../../operations.rst:2628 ../../operations.rst:2629
+#: ../../operations.rst:2629 ../../operations.rst:2630
 msgid "``set server app/s1 weight 10``"
 msgstr "``set server app/s1 weight 10``"
 
-#: ../../operations.rst:2630 ../../operations.rst:2631
+#: ../../operations.rst:2631 ../../operations.rst:2632
 msgid "``add server app/s3 10.0.0.3:80``, ``del server app/s3``"
 msgstr "``add server app/s3 10.0.0.3:80``, ``del server app/s3``"
 
-#: ../../operations.rst:2632
+#: ../../operations.rst:2633
 msgid "``server-state-file`` with ``load-server-state-from-file``"
 msgstr "``load-server-state-from-file``\\ を伴う\\ ``server-state-file``"
 
-#: ../../operations.rst:2633
+#: ../../operations.rst:2634
 msgid ""
 "Not needed for drains, which pass a reload. Other run-time changes are "
 "made durable in the file."
 msgstr "ドレインには不要です。ドレインは再読み込みを越えて残ります。その他の実行時の変更は、ファイルに書いて永続化します。"
 
-#: ../../operations.rst:2634
+#: ../../operations.rst:2635
 msgid "``show info``, ``show stat``"
 msgstr "``show info``, ``show stat``"
 
-#: ../../operations.rst:2635
+#: ../../operations.rst:2636
 msgid ""
 "``show info``, ``show stats`` (the Prometheus text of the metrics route)"
 msgstr "``show info``\\ 、\\ ``show stats``\\ （メトリクスのルートのPrometheusテキスト）"
 
-#: ../../operations.rst:2636
+#: ../../operations.rst:2637
 msgid "``show ssl cert``, ``acme status``"
 msgstr "``show ssl cert``, ``acme status``"
 
-#: ../../operations.rst:2638
+#: ../../operations.rst:2639
 msgid ""
 "``acme`` section with ``challenge http-01`` (experimental in HAProxy 3.4)"
 msgstr "``challenge http-01``\\ を伴う\\ ``acme``\\ セクション（HAProxy 3.4では実験的）"
 
-#: ../../operations.rst:2639
+#: ../../operations.rst:2640
 msgid ""
 "``\"tls\": {\"auto\": [\"example.org\"]}`` on the frontend, "
 "``global.acme`` for the account (section *Automatic HTTPS*)"
@@ -8867,7 +8871,7 @@ msgstr ""
 "フロントエンドの\\ ``\"tls\": {\"auto\": [\"example.org\"]}``\\ 、アカウントには\\ "
 "``global.acme``\\ （\\ *自動HTTPS*\\ の節）"
 
-#: ../../operations.rst:2640
+#: ../../operations.rst:2641
 msgid ""
 "``balance source`` with ``hash-type consistent`` and "
 "``hash-balance-factor 125``"
@@ -8875,17 +8879,17 @@ msgstr ""
 "``hash-type consistent``\\ と\\ ``hash-balance-factor 125``\\ を伴う\\ "
 "``balance source``"
 
-#: ../../operations.rst:2641
+#: ../../operations.rst:2642
 msgid ""
 "``\"balance\": {\"kind\": \"bounded_maglev\", \"load_factor_pct\": 125}``"
 msgstr ""
 "``\"balance\": {\"kind\": \"bounded_maglev\", \"load_factor_pct\": 125}``"
 
-#: ../../operations.rst:2642
+#: ../../operations.rst:2643
 msgid "``peers`` section, with ``peers`` on a ``stick-table``"
 msgstr "``peers``\\ セクションと、\\ ``stick-table``\\ の\\ ``peers``"
 
-#: ../../operations.rst:2643
+#: ../../operations.rst:2644
 msgid ""
 "``mesh`` with ``\"sticky\": {\"kind\": \"table\"}`` on the pool (section "
 "*A sticky table and a limit for the whole cluster*)"
@@ -8893,31 +8897,31 @@ msgstr ""
 "``mesh``\\ と、プールの\\ ``\"sticky\": {\"kind\": \"table\"}``\\ （\\ "
 "*クラスター全体のスティッキーテーブルと制限*\\ の節）"
 
-#: ../../operations.rst:2644
+#: ../../operations.rst:2645
 msgid "``show peers``"
 msgstr "``show peers``"
 
-#: ../../operations.rst:2645
+#: ../../operations.rst:2646
 msgid "``show cluster``"
 msgstr "``show cluster``"
 
-#: ../../operations.rst:2646
+#: ../../operations.rst:2647
 msgid "``show table``"
 msgstr "``show table``"
 
-#: ../../operations.rst:2648
+#: ../../operations.rst:2649
 msgid "``clear table <table> key <address>`` on a table that holds bans"
 msgstr "禁止を保持する表に対する\\ ``clear table <table> key <address>``"
 
-#: ../../operations.rst:2649
+#: ../../operations.rst:2650
 msgid "``del ban ADDRESS``, on every node of a mesh"
 msgstr "メッシュのすべてのノードで\\ ``del ban ADDRESS``"
 
-#: ../../operations.rst:2650
+#: ../../operations.rst:2651
 msgid "``-x`` or ``expose-fd listeners`` (seamless reload)"
 msgstr "``-x``\\ または\\ ``expose-fd listeners``\\ （シームレスな再読み込み）"
 
-#: ../../operations.rst:2651
+#: ../../operations.rst:2652
 msgid ""
 "SIGHUP for a new file; ``global.upgrade_socket`` (Linux) or "
 "``global.reuse_port`` for a new binary"
@@ -8925,28 +8929,28 @@ msgstr ""
 "新しいファイルにはSIGHUP。新しいバイナリには\\ ``global.upgrade_socket``\\ （Linux）または\\ "
 "``global.reuse_port``"
 
-#: ../../operations.rst:2652
+#: ../../operations.rst:2653
 msgid "``filter spoe``"
 msgstr "``filter spoe``"
 
-#: ../../operations.rst:2653
+#: ../../operations.rst:2654
 msgid "A plugin of the kind ``agent`` on a Unix socket (section *Hooks*)"
 msgstr "Unixソケット上の種類\\ ``agent``\\ のプラグイン（\\ *フック*\\ の節）"
 
-#: ../../operations.rst:2654
+#: ../../operations.rst:2655
 msgid "``lua-load``"
 msgstr "``lua-load``"
 
-#: ../../operations.rst:2655
+#: ../../operations.rst:2656
 msgid ""
 "A plugin of the kind ``wasm``, or a native hook compiled into the binary"
 msgstr "種類\\ ``wasm``\\ のプラグイン、またはバイナリに組み込んでコンパイルしたネイティブフック"
 
-#: ../../operations.rst:2657
+#: ../../operations.rst:2658
 msgid "Limits of this version"
 msgstr "このバージョンの制限"
 
-#: ../../operations.rst:2660
+#: ../../operations.rst:2661
 msgid ""
 "On Linux the HTTP firewall serves connections on event-driven workers, "
 "one per processor, up to ``http.max_connections``. A connection that "
@@ -8999,11 +9003,11 @@ msgstr ""
 "0032）、それぞれの記録に既知の不足が列挙されています。提案のまま残っているもの、つまりプラットフォーム固有の協調的なバッチ処理、1,000万フローの実験、エッジが生成するQUIC "
 "Retryは、SID 0015が列挙します。"
 
-#: ../../operations.rst:2663
+#: ../../operations.rst:2664
 msgid "Console Preview"
 msgstr "コンソールのプレビュー"
 
-#: ../../operations.rst:2666
+#: ../../operations.rst:2667
 msgid ""
 "The console is compiled into the daemon by the default ``console`` "
 "feature, but starts only with ``--console``. It needs storage: "
@@ -9021,7 +9025,7 @@ msgstr ""
 "``--no-default-features``\\ "
 "だけのビルドには、ストレージもコンソールもありません。デーモンを停止した状態で、ローカルで初期設定します。"
 
-#: ../../operations.rst:2668
+#: ../../operations.rst:2669
 msgid ""
 "sibuna init-admin admin --data-dir ./data\n"
 "sibuna --data-dir ./data --console 127.0.0.1:19446"
@@ -9029,7 +9033,7 @@ msgstr ""
 "sibuna init-admin admin --data-dir ./data\n"
 "sibuna --data-dir ./data --console 127.0.0.1:19446"
 
-#: ../../operations.rst:2673
+#: ../../operations.rst:2674
 msgid ""
 "``sibuna console init-admin`` is the same command. Open "
 "``http://127.0.0.1:19446/console/`` and replace the generated temporary "
@@ -9048,15 +9052,15 @@ msgstr ""
 "``cmd/console-ui``\\ （クレート\\ ``sibuna-console-ui``\\ "
 "）からビルドするWebAssemblyモジュールです。これとコミット済みのスタイルシートは、通常のビルドに含まれます。"
 
-#: ../../operations.rst:2675
+#: ../../operations.rst:2676
 msgid "Console options"
 msgstr "コンソールのオプション"
 
-#: ../../operations.rst:2681
+#: ../../operations.rst:2682
 msgid "``--console <ip:port>``"
 msgstr "``--console <ip:port>``"
 
-#: ../../operations.rst:2682
+#: ../../operations.rst:2683
 msgid ""
 "Start the console on this listener (IPv6 in brackets, nonzero port); "
 "requires ``--data-dir`` or ``--database-url``"
@@ -9064,128 +9068,128 @@ msgstr ""
 "このリスナーでコンソールを起動（IPv6は角括弧で囲み、ポートは0以外）。\\ ``--data-dir``\\ または\\ "
 "``--database-url``\\ が必要"
 
-#: ../../operations.rst:2683
+#: ../../operations.rst:2684
 msgid "``--console-key-file <path>``"
 msgstr "``--console-key-file <path>``"
 
-#: ../../operations.rst:2684
+#: ../../operations.rst:2685
 msgid ""
 "64 hex characters, owner-only permissions; protects stored second-factor "
 "and webhook secrets"
 msgstr "16進数64文字、所有者のみの権限。保存した二要素認証とWebhookの秘密を保護"
 
-#: ../../operations.rst:2685
+#: ../../operations.rst:2686
 msgid "``--console-origin <https-origin>``"
 msgstr "``--console-origin <https-origin>``"
 
-#: ../../operations.rst:2686
+#: ../../operations.rst:2687
 msgid "The canonical HTTPS origin behind a proxy"
 msgstr "プロキシの背後での正規のHTTPSオリジン"
 
-#: ../../operations.rst:2687
+#: ../../operations.rst:2688
 msgid "``--console-behind-proxy``"
 msgstr "``--console-behind-proxy``"
 
-#: ../../operations.rst:2688
+#: ../../operations.rst:2689
 msgid "A TLS-terminating proxy delivers every request"
 msgstr "TLSを終端するプロキシがすべてのリクエストを届ける"
 
-#: ../../operations.rst:2689
+#: ../../operations.rst:2690
 msgid "``--console-trusted-proxy <cidr>``"
 msgstr "``--console-trusted-proxy <cidr>``"
 
-#: ../../operations.rst:2690
+#: ../../operations.rst:2691
 msgid ""
 "A network whose connections may carry forwarded fields; repeatable, at "
 "most 16"
 msgstr "接続が転送フィールドを運んでよいネットワーク。繰り返し指定可、最大16"
 
-#: ../../operations.rst:2691
+#: ../../operations.rst:2692
 msgid "``--console-advertise <origin>``"
 msgstr "``--console-advertise <origin>``"
 
-#: ../../operations.rst:2692
+#: ../../operations.rst:2693
 msgid "The link other consoles show for this one"
 msgstr "他のコンソールがこのコンソールのために表示するリンク"
 
-#: ../../operations.rst:2693
+#: ../../operations.rst:2694
 msgid "``--console-location <latitude,longitude>``"
 msgstr "``--console-location <latitude,longitude>``"
 
-#: ../../operations.rst:2694
+#: ../../operations.rst:2695
 msgid "This node's declared position on the globe"
 msgstr "このノードの地球儀上の宣言位置"
 
-#: ../../operations.rst:2695
+#: ../../operations.rst:2696
 msgid "``--console-probe <node-id>=<http://ip:port>``"
 msgstr "``--console-probe <node-id>=<http://ip:port>``"
 
-#: ../../operations.rst:2696
+#: ../../operations.rst:2697
 msgid ""
 "A peer data-plane listener to health-check; repeatable, at most eight"
 msgstr "ヘルスチェックするピアのデータプレーンのリスナー。繰り返し指定可、最大8"
 
-#: ../../operations.rst:2697
+#: ../../operations.rst:2698
 msgid "``--console-peer <node-id>=<https://origin>``"
 msgstr "``--console-peer <node-id>=<https://origin>``"
 
-#: ../../operations.rst:2698
+#: ../../operations.rst:2699
 msgid "A management peer; repeatable, at most eight"
 msgstr "管理用のピア。繰り返し指定可、最大8"
 
-#: ../../operations.rst:2699
+#: ../../operations.rst:2700
 msgid "``--console-peer-key-file <path>``"
 msgstr "``--console-peer-key-file <path>``"
 
-#: ../../operations.rst:2700
+#: ../../operations.rst:2701
 msgid ""
 "The peer key: owner-only, 64 hex characters, independent of the console "
 "key"
 msgstr "ピア鍵：所有者のみ、16進数64文字、コンソール鍵とは独立"
 
-#: ../../operations.rst:2701
+#: ../../operations.rst:2702
 msgid "``--console-peer-ca-file <path>``"
 msgstr "``--console-peer-ca-file <path>``"
 
-#: ../../operations.rst:2702
+#: ../../operations.rst:2703
 msgid "Optional PEM trust anchors for peers, replacing the system roots"
 msgstr "ピア用の任意のPEMのトラストアンカー。システムのルートを置き換える"
 
-#: ../../operations.rst:2703
+#: ../../operations.rst:2704
 msgid "``--console-query-steps <n>``"
 msgstr "``--console-query-steps <n>``"
 
-#: ../../operations.rst:2704
+#: ../../operations.rst:2705
 msgid ""
 "SQLite steps per aggregate read, 100,000 to 50,000,000, default 4,000,000"
 msgstr "集計の読み込みあたりのSQLiteのステップ数、100,000から50,000,000、既定4,000,000"
 
-#: ../../operations.rst:2705
+#: ../../operations.rst:2706
 msgid "``--console-capture-heads``"
 msgstr "``--console-capture-heads``"
 
-#: ../../operations.rst:2706
+#: ../../operations.rst:2707
 msgid ""
 "Store redacted request and origin response heads per incident; off by "
 "default"
 msgstr "インシデントごとに、伏せ字にしたリクエストとオリジンの応答のヘッダー部を保存。既定では無効"
 
-#: ../../operations.rst:2707
+#: ../../operations.rst:2708
 msgid "``--console-capture-header <name>``"
 msgstr "``--console-capture-header <name>``"
 
-#: ../../operations.rst:2708
+#: ../../operations.rst:2709
 msgid ""
 "Keep this header's value in stored heads; repeatable, at most 16; "
 "requires ``--console-capture-heads``"
 msgstr ""
 "保存するヘッダー部にこのヘッダーの値を残す。繰り返し指定可、最大16。\\ ``--console-capture-heads``\\ が必要"
 
-#: ../../operations.rst:2709
+#: ../../operations.rst:2710
 msgid "``--console-cookie-secure``"
 msgstr "``--console-cookie-secure``"
 
-#: ../../operations.rst:2710
+#: ../../operations.rst:2711
 msgid ""
 "Give console cookies the ``Secure`` attribute without a proxy (accepted "
 "by the parser, not listed in ``--help``)"
@@ -9193,7 +9197,7 @@ msgstr ""
 "プロキシなしでコンソールのCookieに\\ ``Secure``\\ 属性を付ける（パーサーは受け付けるが、\\ ``--help``\\ "
 "には載らない）"
 
-#: ../../operations.rst:2712
+#: ../../operations.rst:2713
 msgid ""
 "A console option without ``--console``, a repeated option or a malformed "
 "value stops startup with ``CONSOLE002`` and the option's error name. A "
@@ -9205,11 +9209,11 @@ msgstr ""
 "とオプションのエラー名で起動を停止します。コンソールの規則に反する設定（たとえば信頼するプロキシのない、ループバック以外のリスナー）は、\\ "
 "``CONSOLE001``\\ で起動を停止します。"
 
-#: ../../operations.rst:2714
+#: ../../operations.rst:2715
 msgid "A Tour of the Console"
 msgstr "コンソールの各画面"
 
-#: ../../operations.rst:2717
+#: ../../operations.rst:2718
 msgid ""
 "The screenshots below come from a release build on one loopback node with "
 "SQLite storage and a policy of four ``ALLOW`` rules over a default "
@@ -9228,7 +9232,7 @@ msgstr ""
 "``cargo xtask browser console --viewport-only``\\ "
 "を使いました。これはChromiumで1440×960ピクセルの画面でコンソールを巡回し、すべてのページを判定します。各ページはタイトルに書いた一つの問いに答え、製品、配信ノード、ページ、戻る手段を同じ場所に置いています。"
 
-#: ../../operations.rst:2719
+#: ../../operations.rst:2720
 msgid ""
 "The console sign-in page: user name, password and authenticator code "
 "fields with a Sign in button, and below them a Kiosk code field with an "
@@ -9237,7 +9241,7 @@ msgstr ""
 "コンソールのサインインページ。ユーザー名、パスワード、認証コードの入力欄とSign inボタンがあり、その下にKioskコードの入力欄とOpen "
 "wall displayボタンがあります。"
 
-#: ../../operations.rst:2722
+#: ../../operations.rst:2723
 msgid ""
 "Sign-in. The public shell loads no globe geometry, GeoIP data or "
 "telemetry; the second form exchanges a wall-display code for a read-only "
@@ -9245,7 +9249,7 @@ msgid ""
 msgstr ""
 "サインイン。公開された画面は、地球儀の形状、GeoIPのデータ、テレメトリーのいずれも読み込みません。二つ目のフォームは、ウォールディスプレイ用のコードを読み取り専用の統計セッションと交換します。"
 
-#: ../../operations.rst:2724
+#: ../../operations.rst:2725
 msgid ""
 "The Traffic overview page for the last 24 hours: tiles for requests, "
 "admitted, challenged, policy denied, banned, rate limited, other, and "
@@ -9254,7 +9258,7 @@ msgid ""
 msgstr ""
 "過去24時間のTraffic概要ページ。リクエスト、許可、チャレンジ、ポリシーによる拒否、禁止、レート制限、その他、オリジンの4xxと5xxのタイルがあり、それぞれに前日との比較と小さなスパークラインが付いています。"
 
-#: ../../operations.rst:2727
+#: ../../operations.rst:2728
 msgid ""
 "Statistics, Traffic, over the last 24 hours. The note under the period "
 "control states the coverage: only four of 1,440 expected minute records "
@@ -9272,7 +9276,7 @@ msgstr ""
 "available\"と表示されます。タイルは、保持している確定済みの分のカウントを、ライブの60秒のスパークラインとともに示します。判断の色（許可は緑、チャレンジは琥珀色、拒否は赤）はどのパネルでも同じです。保持している期間のオリジンの4xxと5xxは\"Not "
 "recorded\"と表示されます。分単位のレコードは、オリジンのカウントに意味を与えるプロキシのモードを保持していないからです。ライブの起動以降の合計にはそれらが表示されます。見えているタイルの下には、二つの水準のタイル（有効な禁止の項目と正常なノード）、タイムライン、そしてリクエストのパスと参照元のホストを順位付けし、クライアントのOS、ブラウザー、応答のステータスを数えるサンプリングしたパネルがあります。"
 
-#: ../../operations.rst:2729
+#: ../../operations.rst:2730
 msgid ""
 "The Security overview page: tiles for inspection, reputation, rate "
 "limiting, challenges, bans and honeypot, live trend panels, and a live "
@@ -9280,7 +9284,7 @@ msgid ""
 msgstr ""
 "Security概要ページ。検査、レピュテーション、レート制限、チャレンジ、禁止、ハニーポットのタイル、ライブの傾向パネル、WAFの検出結果を列挙するライブのイベントフィードがあります。"
 
-#: ../../operations.rst:2732
+#: ../../operations.rst:2733
 msgid ""
 "Statistics, Security. One tile per module over the selected period, live "
 "outcome trends, and the live event feed with its newest findings (here "
@@ -9294,7 +9298,7 @@ msgstr ""
 "）を示すライブのイベントフィードです。記録されていない値は、ゼロを表示する代わりにそのことを示します。Reputationのタイルは\"Not "
 "recorded\"と表示されています。ページのさらに下には、60個の等しい区間ごとの検出、攻撃のカテゴリー、攻撃されたパスがあります。"
 
-#: ../../operations.rst:2734
+#: ../../operations.rst:2735
 msgid ""
 "The Events page with a filter form (module, category, country, client "
 "address, path, node, time range) above a list of recorded incidents "
@@ -9302,7 +9306,7 @@ msgid ""
 msgstr ""
 "Eventsページ。フィルターのフォーム（モジュール、カテゴリー、国、クライアントのアドレス、パス、ノード、期間）の下に、waf:xssとwaf:sqliのタグが付いた記録済みインシデントの一覧があります。"
 
-#: ../../operations.rst:2737
+#: ../../operations.rst:2738
 msgid ""
 "Events. The filter form above the recorded incidents, newest first. Each "
 "incident opens inline with its evidence: the selected local response, "
@@ -9323,7 +9327,7 @@ msgstr ""
 "``--console-capture-header <name>``\\ "
 "でその一覧に加えます。それ以外の場合、ヘッダー部は記録なしと表示されます。拒否と許可の操作は、アドレスを入力済みにしたIPグループのフォームを開きます。"
 
-#: ../../operations.rst:2739
+#: ../../operations.rst:2740
 msgid ""
 "The Challenges page with a 24-hour retained window: seven challenges "
 "issued, submitted and accepted, none rejected, and a table of rejection "
@@ -9331,7 +9335,7 @@ msgid ""
 msgstr ""
 "Challengesページ。24時間の保持期間で、発行、提出、受理されたチャレンジがそれぞれ7件、拒否は0件で、拒否の原因の表はすべて0です。"
 
-#: ../../operations.rst:2742
+#: ../../operations.rst:2743
 msgid ""
 "Challenges. A retained window (one hour, one day or seven days) sums "
 "durable per-minute records and states how many minutes were recorded and "
@@ -9344,7 +9348,7 @@ msgid ""
 msgstr ""
 "チャレンジ（Challenges）。保持している窓（1時間、1日、7日）は永続的な分単位のレコードを合計し、何分が記録され完全かを示します。ここでは七つのチャレンジが発行、提出、受理され、拒否の原因はすべてゼロです。さらに下には、今回の起動以降のライブの合計、設定したパラメーターと最近発行したパラメーター、アルゴリズムとパラメーターの区分で分けた受理された解答時間のヒストグラム、適応的な難易度の遷移、拒否と許可のショートカット付きのアドレスごとのレコード（7日間保持）があります。"
 
-#: ../../operations.rst:2744
+#: ../../operations.rst:2745
 msgid ""
 "The Policies page: the applied configuration (Shield, revision 3, four "
 "rules, PoSW at difficulty 16, node-local limits) and the first rule, "
@@ -9352,7 +9356,7 @@ msgid ""
 msgstr ""
 "Policiesページ。適用中の設定（Shield、リビジョン3、ルール四つ、難易度16のPoSW、ノードローカルの制限）と、最初のルールpublic-staticが表示され、今日のヒット数は339件と記録されています。"
 
-#: ../../operations.rst:2747
+#: ../../operations.rst:2748
 msgid ""
 "Policies. The applied engine names its surface, revisions, default "
 "algorithm and difficulty and its node-local limits, then lists rules in "
@@ -9366,7 +9370,7 @@ msgstr ""
 "*Managed rules*\\ "
 "でエディターが開きます。編集を保存すると、まず変更したフィールドのレビューを示し、確定すると候補全体を検証して新しいリビジョンを作ります。"
 
-#: ../../operations.rst:2749
+#: ../../operations.rst:2750
 msgid ""
 "The Nodes page: node 1 accepting connections, with open connections, "
 "active local ban entries, policy revisions 3 of 3, uptime, resident "
@@ -9376,7 +9380,7 @@ msgstr ""
 "Nodesページ。接続を受け付けているノード1について、開いている接続、有効なローカルの禁止エントリー、ポリシーのリビジョン3/3、稼働時間、常駐メモリ、CPU、ブート識別子、メモリとCPUのスパークラインが表示され、Drain "
 "node、Resume admission、Clear local bansのボタンがあります。"
 
-#: ../../operations.rst:2752
+#: ../../operations.rst:2753
 msgid ""
 "Nodes. The serving node's status and commands, with resident memory and "
 "CPU of the last second and their sixty-second sparklines; below them "
@@ -9387,14 +9391,14 @@ msgstr ""
 "ノード（Nodes）。配信ノードの状態とコマンド、直前1秒間の常駐メモリとCPU、その60秒のスパークラインです。その下に、通知されたすべてのメンバーを、コミット済みのリビジョンに対する適用中のポリシーのリビジョン、管理用のアドレス、プローブの結果とともに示します（SID "
 "0007、SID 0013）。"
 
-#: ../../operations.rst:2754
+#: ../../operations.rst:2755
 msgid ""
 "The GeoIP page with the provider ip-location-db user-country, no "
 "generation loaded yet, and the import form."
 msgstr ""
 "GeoIPページ。プロバイダーはip-location-dbのuser-countryで、まだどの世代も読み込まれておらず、インポートのフォームがあります。"
 
-#: ../../operations.rst:2757
+#: ../../operations.rst:2758
 msgid ""
 "GeoIP. Provider, licence, active generation digest, load time and the "
 "import form; here no generation has been loaded yet. A failed import "
@@ -9402,13 +9406,13 @@ msgid ""
 msgstr ""
 "GeoIP。プロバイダー、ライセンス、有効な世代のダイジェスト、読み込み時刻、インポートのフォームです。ここではまだどの世代も読み込まれていません。失敗したインポートが有効な世代を置き換えることはありません。"
 
-#: ../../operations.rst:2759
+#: ../../operations.rst:2760
 msgid ""
 "The Settings page with an empty list of notification destinations and the "
 "form for a new webhook or syslog destination."
 msgstr "Settingsページ。通知先の一覧は空で、新しいWebhookまたはsyslogの通知先を追加するフォームがあります。"
 
-#: ../../operations.rst:2762
+#: ../../operations.rst:2763
 msgid ""
 "Settings, with no notification destination yet and the form for a new "
 "one. Further down the page are denial-spike thresholds, retention with an "
@@ -9416,7 +9420,7 @@ msgid ""
 msgstr ""
 "設定（Settings）。通知先はまだなく、新しい通知先のフォームがあります。ページのさらに下には、拒否の急増のしきい値、窓ごとに明示的な確認を伴う保持期間、応答ページのテンプレート、Aboutがあります。"
 
-#: ../../operations.rst:2764
+#: ../../operations.rst:2765
 msgid ""
 "The Audit history page with a filter form and recorded activity rows: "
 "session.create, session.logout, kiosk.exchange and kiosk.grant, each with "
@@ -9425,7 +9429,7 @@ msgstr ""
 "Audit "
 "historyページ。フィルターのフォームと、記録された操作の行（session.create、session.logout、kiosk.exchange、kiosk.grant）があり、各行に時刻、操作者とロール、対象、Openボタンがあります。"
 
-#: ../../operations.rst:2767
+#: ../../operations.rst:2768
 msgid ""
 "Audit. Append-only history with actor and role, action, subject and a "
 "detail view with redacted before and after summaries; refused sign-ins "
@@ -9440,7 +9444,7 @@ msgstr ""
 "*Revert this change*\\ "
 "があり、確認の後で、そのリビジョンの前に記録された文書を、監査付きの新しいリビジョンとして復元します。ルールセットがその後も変わっている場合は拒否されます。"
 
-#: ../../operations.rst:2769
+#: ../../operations.rst:2770
 msgid ""
 "A wall display titled Node 1 Traffic, with Live, an expiry of 719 "
 "minutes, Pause, Theme and Exit kiosk controls, and the eleven traffic "
@@ -9449,14 +9453,14 @@ msgstr ""
 "Node 1 Trafficという題のウォールディスプレイ。Live、残り719分の有効期限、Pause、Theme、Exit "
 "kioskの操作部と、ナビゲーションのない11個のトラフィックのタイルがあります。"
 
-#: ../../operations.rst:2772
+#: ../../operations.rst:2773
 msgid ""
 "A wall display. A kiosk session shows the Traffic and Security views "
 "only, without navigation, and states when it expires."
 msgstr ""
 "ウォールディスプレイ。キオスクのセッションは、ナビゲーションなしでTrafficとSecurityの表示だけを示し、いつ失効するかを示します。"
 
-#: ../../operations.rst:2774
+#: ../../operations.rst:2775
 msgid ""
 "The optional ``--console-location <latitude,longitude>`` declares this "
 "node's position, for example ``1.3521,103.8198`` for a deployment in "
@@ -9474,7 +9478,7 @@ msgstr ""
 "です。地球儀は最初にそこを中心に表示し、回転させた後はCenter "
 "Sibunaでその地点に戻ります。国ごとの活動は、ノードに向かってアニメーションする大円の弧で表され、裏側の半球や平面地図の日付変更線では切り取られます。国の位置は代表的な重心で、矢印は個々の接続ではなく、観測した60秒の窓を表します。サーバーの位置を設定しなければ、明示的に不明のままです。設定したマーカーはテレメトリーが途絶えても見えたままで、古いトラフィックはアニメーションしません。"
 
-#: ../../operations.rst:2776
+#: ../../operations.rst:2777
 msgid ""
 "Policy previews build a private candidate including configured file "
 "rules. Saves compare the expected revision and require confirmation of a "
@@ -9493,7 +9497,7 @@ msgstr ""
 "``503`` ``CONSOLENODE``\\ "
 "で拒否されます。応答が失われた後は、再試行する前に永続的な受領記録を確認してください。意図がコミットされただけでは、実行時の効果が完了したことにはなりません。"
 
-#: ../../operations.rst:2778
+#: ../../operations.rst:2779
 msgid ""
 "For remote operation, use an HTTPS proxy and configure "
 "``--console-origin``, ``--console-behind-proxy``, explicit "
@@ -9511,7 +9515,7 @@ msgstr ""
 "を設定します。鍵ファイルは16進数64文字を含み、所有者のみの権限を持ち、保存した二要素認証の秘密を保護します。チャレンジのシードとは別に、再起動をまたいで保持してください。ループバック以外からのアクセスには、設定したHTTPSオリジンとプロキシの許可リストが必須です。コンソールのリスナーは平文のHTTPを使います。コンソールがTLSを使うのは外向きの接続だけで、rustlsを使います（SID "
 "0012）。"
 
-#: ../../operations.rst:2780
+#: ../../operations.rst:2781
 msgid ""
 "The native CLI accesses the running console through the same "
 "authorization and storage contracts. It reads credentials from private "
@@ -9519,7 +9523,7 @@ msgid ""
 msgstr ""
 "ネイティブのCLIは、同じ認可とストレージの取り決めを通して稼働中のコンソールにアクセスします。資格情報はコマンドラインの値ではなく、非公開のファイルから読みます。"
 
-#: ../../operations.rst:2782
+#: ../../operations.rst:2783
 msgid ""
 "sibuna console geoip update --version 2026-09-09 \\\n"
 "    --origin http://127.0.0.1:19446 --username admin \\\n"
@@ -9529,7 +9533,7 @@ msgstr ""
 "    --origin http://127.0.0.1:19446 --username admin \\\n"
 "    --password-file ./admin-password"
 
-#: ../../operations.rst:2788
+#: ../../operations.rst:2789
 msgid ""
 "Use an owner-only password file, complete password setup first, and add "
 "``--factor-file`` for an authenticator or recovery code when required; "
@@ -9567,7 +9571,7 @@ msgstr ""
 "ツールで書き出したもの）を埋め込みます。コンソールなしのビルドはこれを\\ ``GEOIP001``\\ "
 "で拒否します。不明なアドレス、サンプルの損失、古いデータは見えたままです。国のデータをインポートしてもトラフィックは生まれず、すでに期限切れになったサンプルに情報が付加されることもありません。"
 
-#: ../../operations.rst:2790
+#: ../../operations.rst:2791
 msgid ""
 "Cluster members announce themselves through the membership table of the "
 "shared database (``console_nodes``) at start, every minute, and within "
@@ -9634,7 +9638,7 @@ msgstr ""
 "は、欠けている、古い、時計がずれているソース、観測時刻、設定した宛先を示します。国の順位は、省かれたソースの行による不確かさを示します。矢印は受信したノードを保持し、欠けたノードの位置をでっち上げることはありません。合算したレートは、寄与するソースのどれかに連続した区間が欠けていれば未観測のままです。一つのノードを選ぶと、保持している秒単位のデータと現在の分のパスの順位を調べられます。リモートのクエリは認証付きのピア接続を使います。クエリの応答は4 "
 "KiBのWebSocketメッセージ一つに収まらなければならないので、配信するコンソールは収まらないページの行を半分にします。欠けたピアは利用不可のままで、履歴のカーソルはノードの再起動をまたげません。分単位の履歴は、独自のノードの選択とノードごとの行を保持します。ナビゲーションとモバイルのヘッダーは、選んだトラフィックのソースとは独立に、配信しているコンソールのノードを示します。ローカルのコマンドはノードごとのままです。"
 
-#: ../../operations.rst:2792
+#: ../../operations.rst:2793
 msgid ""
 "Traffic tiles open on the last 24 hours of retained closed-minute records "
 "for the selected nodes. The period control also offers an hour, seven or "
@@ -9647,7 +9651,7 @@ msgid ""
 msgstr ""
 "Trafficのタイルは、選んだノードについて、保持している確定済みの分単位のレコードの直近24時間で開きます。期間の選択では、1時間、7日、90日、ライブの起動以降の合計も選べます。Yesterdayとの差分には、選んだすべてのノードから完全に一致する観測範囲が必要です。地球儀とスパークラインは、引き続き別のライブの60秒の窓を表します。保持データの走査は完了の1分後に更新され、置き換えられるまで以前の値とその経過時間を表示し続けます。ソースや期間を変えると古い範囲は破棄されます。欠けた履歴がゼロになることはありません。"
 
-#: ../../operations.rst:2794
+#: ../../operations.rst:2795
 msgid ""
 "*Compare retained traffic* displays two closed minute windows beside each "
 "other: the same window yesterday, the preceding period, or a second node. "
@@ -9666,7 +9670,7 @@ msgstr ""
 "*Compare retained traffic*\\ "
 "は、二つの確定済みの分の窓を並べて表示します。昨日の同じ窓、直前の期間、または二つ目のノードです。期間と終了オフセットの選択で、両方のUTCの範囲を固定します。各操作は片側につき最大16個のコンパクトなページを読み、1ページには96個の保存されたレコードがあります。これで、再起動が重ならない24時間の窓を1バッチで扱えます。Continueはより長い走査のために同じ境界を保ちます。完全な観測範囲、不完全な観測範囲、欠けた履歴は明示されたままです。レートの百分率には、等しいUTCの窓での重ならない完全な区間が必要で、観測したミリ秒で正規化します。参照がゼロで新しいトラフィックがあれば\"New\"と表示します。主のTrafficの期間は独立したままです。分単位の形式は過去のプロキシのモードを記録しないので、オリジンの応答の比較は、forward-authでのゼロを観測した応答と解釈するのではなく、利用不可のままにします。"
 
-#: ../../operations.rst:2796
+#: ../../operations.rst:2797
 msgid ""
 "*Compare retained path rankings* selects two closed windows or nodes. "
 "Node 0 includes all retained nodes, including retired members. An action "
@@ -9682,7 +9686,7 @@ msgstr ""
 "*Compare retained path rankings*\\ "
 "は、二つの確定済みの窓またはノードを選びます。ノード0は、退役したメンバーも含めて、保持しているすべてのノードを含みます。一つの操作は最大16個の不変のアーカイブを読み、その識別とチェックサムを確認し、表示する行を選ぶ前にすべてのカウンターを統合します。アーカイブは60秒の遅着サンプルの窓の後で封印されるので、最新の確定済みの分はまだ保留中のことがあります。Continueは元の窓とカーソルを保ちます。境界が表すのはサンプリングしたパスの接頭辞であり、正確なリクエストの合計ではありません。ページには、部分的な走査、切り詰め、保持期間の境界、報告されたキューの損失を示します。アーカイブが欠けていても、トラフィックがゼロであることや観測範囲が完全であることの根拠にはなりません。"
 
-#: ../../operations.rst:2798
+#: ../../operations.rst:2799
 msgid ""
 "Security opens on the last 24 hours and uses sixty equal time buckets "
 "over the selected period. Its aggregates run on the storage thread under "
@@ -9704,7 +9708,7 @@ msgstr ""
 "msのステートメントタイムアウトです（SID 0013）。\\ ``--console-query-steps``\\ "
 "を変えても変わりません。上限を使い果たしたクエリは、より狭い期間を求めます。ステップ数が抑えるのはクエリの作業量であり、経過時間ではありません。グラフは目盛りを共有します。Trendの値を展開すると、UTCでの区間の開始時刻と、グループ化した正確なカウントが表示されます。これらは保持している検出なので、インシデントの観測範囲が欠けていても、攻撃がなかったと解釈することはできません。"
 
-#: ../../operations.rst:2800
+#: ../../operations.rst:2801
 msgid ""
 "Wall displays use kiosk sessions. Under Account, an operator names the "
 "display and selects Create display code. The display pastes the one-time "
@@ -9720,7 +9724,7 @@ msgstr ""
 "ウォールディスプレイはキオスクのセッションを使います。Accountで、運用者がディスプレイに名前を付け、Create display "
 "codeを選びます。ディスプレイは10分以内に一回限りのコードをサインインのフォームに貼り付けます。そのセッションは読み取り専用で、統計に限られ、12時間以内に失効します。アカウントのページは、移動したときや非表示になったときに表示したコードを消去します。非表示にしても未使用の許可は取り消されず、交換の期限は引き続き適用されます。コードを決してURLに含めてはいけません。ディスプレイはTrafficとSecurityを共有します。Securityは、インシデントのアドレスやペイロードの証拠を含めずに、モジュールの集計の傾向とリクエストの結果を示します。自動の切り替えは任意で、最初は無効であり、動きを減らす設定、古いデータ、Pauseのいずれかで中断します。"
 
-#: ../../operations.rst:2802
+#: ../../operations.rst:2803
 msgid ""
 "Notification destinations (signed webhooks and syslog for denial spikes, "
 "bans, unreachable members and leader changes) live under Settings; "
@@ -9745,7 +9749,7 @@ msgstr ""
 "が含まれるので、受信側は、ネットワークでの完了が不確かな場合でも、繰り返しの効果を抑えられます。WebhookはHTTPSで送られ、平文のHTTPはリテラルのループバックアドレスに対してだけ使われます。応答のボディーは64 "
 "KiBまで読みます。syslogのUDP/TCPの選択は外向きの通知にだけ適用され、保護するWebトラフィックとは独立です。手動のテストは意図と完了をAuditに記録し、通知先の結果を更新します。監査上の完了が確認されていない場合は、運用者が再試行する前にそのことを明示します。"
 
-#: ../../operations.rst:2804
+#: ../../operations.rst:2805
 msgid ""
 "Settings also controls retention: one to 90 days for minute history, one "
 "to seven for rankings, one to 30 for incidents and one to 365 for audit. "
@@ -9758,7 +9762,7 @@ msgstr ""
 "Settingsでは保持期間も管理します。分単位の履歴は1から90日、順位は1から7日、インシデントは1から30日、監査は1から365日です。上限の値が既定値で、順位は512 "
 "MiBの上限を保ちます。保持期間の値を保存するには確認が必要です。後始末で、古いレコードを上限のあるバッチで永久に削除するからです。後で値を増やしても、削除した履歴は戻りません。古い編集は拒否され、成功した変更はAuditに現れます。"
 
-#: ../../operations.rst:2806
+#: ../../operations.rst:2807
 msgid ""
 "Response pages (challenge, denied, rate limited, banned, overloaded) are "
 "editable under Settings as bounded HTML with fixed placeholders; drafts "
@@ -9767,7 +9771,7 @@ msgid ""
 msgstr ""
 "応答ページ（チャレンジ、拒否、レート制限、禁止、過負荷）は、Settingsで、固定のプレースホルダーを持つ上限のあるHTMLとして編集できます。下書きはサンドボックス化したタブでプレビューでき、保存したページは次のポリシースナップショットから配信されます。"
 
-#: ../../operations.rst:2808
+#: ../../operations.rst:2809
 msgid ""
 "Policy workflows on the Policies page: reorder managed rules, replay a "
 "draft against retained inspection findings, manage IP groups and country "
@@ -9800,7 +9804,7 @@ msgstr ""
 "*Compare hits around this edit*\\ "
 "があり、編集した分を除き、選んだ長さまでの等しい利用可能な期間を使います。任意の適用リビジョンのフィルターで、関係のない世代を比較から除けます。起動、切り替え、欠けた書き込み、保持期間によって、観測範囲の欠落が目に見える形で残ります。百分率には両側で完全な観測範囲が必要です。ルールの観測と1時間ごと・1日ごとの要約は、分単位の保持期間の設定に従います。編集の前後で観測された変化は比較であり、編集がトラフィックの変化を引き起こした証拠ではありません。"
 
-#: ../../operations.rst:2810
+#: ../../operations.rst:2811
 msgid ""
 "Importing a later GeoIP generation does not automatically refresh "
 "existing country-derived reputation rows. Preview the country action to "
@@ -9845,7 +9849,7 @@ msgstr ""
 "*Load latest records*\\ "
 "の後ろで待つので、読んでいる間に表が動くことはありません。ポリシーの更新は、開いている下書きを置き換えずに、現在のコミット済みと適用中のリビジョンを示します。フローのカウンターはライブで更新されます。既定以外のチャレンジの計時区分を選んだ場合は、明示的に更新してください。過去のクエリ、詳細の読み込み、変更はHTTPリクエストのままです。"
 
-#: ../../operations.rst:2812
+#: ../../operations.rst:2813
 msgid ""
 "Page fragments can be bookmarked; Back and Forward reopen authenticated "
 "pages. The sidebar also remembers theme and spacing choices in this "
@@ -9879,21 +9883,21 @@ msgstr ""
 "0007はこれをレビュー対象として記録しています。これらはコンソールのワークフローに余地を残すためのプロジェクトの上限であり、ブラウザーでの読み込みと応答性の測定の代わりにはなりません。モジュールの線形メモリは、宣言した最大値の16 "
 "MiBまで必要に応じて伸びます。"
 
-#: ../../operations.rst:2814
+#: ../../operations.rst:2815
 msgid "Deployment Topologies"
 msgstr "デプロイの構成"
 
-#: ../../operations.rst:2819
+#: ../../operations.rst:2820
 msgid ""
 "Deploy the autonomous reverse proxy and the forward-auth validator behind "
 "Nginx or Caddy."
 msgstr "自律的なリバースプロキシと、forward-authの検証器を、NginxまたはCaddyの背後にデプロイします。"
 
-#: ../../operations.rst:2821
+#: ../../operations.rst:2822
 msgid "Reverse Proxy"
 msgstr "リバースプロキシ"
 
-#: ../../operations.rst:2825
+#: ../../operations.rst:2826
 msgid ""
 "A request passes local bans and the rate limit, then inspection and "
 "policy. A DENY goes to Deny. An ALLOW goes to the origin or an auth "
@@ -9902,7 +9906,7 @@ msgid ""
 msgstr ""
 "リクエストはローカルの禁止とレート制限を通過し、次に検査とポリシーに進みます。DENYは拒否に進みます。ALLOWはオリジン、または認証成功に進みます。CHALLENGEはセッションのMACを確認し、有効なセッションならオリジンへ、セッションがないか無効なら新しいパズルへ進みます。"
 
-#: ../../operations.rst:2825
+#: ../../operations.rst:2826
 msgid ""
 "digraph shield_routing {\n"
 "  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.35, "
@@ -9991,11 +9995,11 @@ msgstr ""
 "fontcolor=\"#b45309\"];\n"
 "}"
 
-#: ../../operations.rst:2825
+#: ../../operations.rst:2826
 msgid "Request routing on the Shield surface"
 msgstr "Shieldの運用構成でのリクエストのルーティング"
 
-#: ../../operations.rst:2855
+#: ../../operations.rst:2856
 msgid ""
 "sibuna --port 80 --upstream-host 127.0.0.1 --upstream-port 3000 \\\n"
 "       --secret-file /etc/sibuna/secret --difficulty 16 --algorithm posw"
@@ -10003,7 +10007,7 @@ msgstr ""
 "sibuna --port 80 --upstream-host 127.0.0.1 --upstream-port 3000 \\\n"
 "       --secret-file /etc/sibuna/secret --difficulty 16 --algorithm posw"
 
-#: ../../operations.rst:2860
+#: ../../operations.rst:2861
 msgid ""
 "Admitted requests reach the origin with ``X-Forwarded-For``, "
 "``X-Forwarded-Proto``, ``X-Real-IP``, ``X-Sibuna-Status`` and "
@@ -10031,7 +10035,7 @@ msgstr ""
 "の右側から読まなければならず、左端の項目から読んではなりません。オリジンが受け取るパスは、ポリシーが判定した正規形です（SID "
 "0009）。正規形を持たないパスには\\ ``400``\\ で応答します。"
 
-#: ../../operations.rst:2862
+#: ../../operations.rst:2863
 msgid ""
 "HTTP/1.1 WebSocket upgrades pass through admission and policy checks "
 "before the origin's handshake is accepted. Subprotocol and extension "
@@ -10055,7 +10059,7 @@ msgstr ""
 "``--websocket-idle-timeout``\\ "
 "（既定300秒）を使います。どちらの方向のトラフィックもこの上限を更新しますが、期間全体で1バイトも受け取らない相手がいれば、もう一方の方向がどれほど忙しくても中継は終わります。ハンドシェイク後のフレームはWAFの検査の入力になりません。WSSには、HTTP/1.1のアップグレードをSibunaへ転送する外部のTLSイングレスを使います。ネイティブのHTTP/2とHTTP/3のリスナーは、通常のHTTPのやり取りを処理します。"
 
-#: ../../operations.rst:2864
+#: ../../operations.rst:2865
 msgid ""
 "The ingress can negotiate HTTP/2 with browsers and forward HTTP/1.1 to "
 "Sibuna. The daemon mode has no native HTTP/2; this arrangement does not "
@@ -10066,7 +10070,7 @@ msgstr ""
 "イングレスはブラウザーとHTTP/2を交渉し、SibunaにはHTTP/1.1で転送できます。デーモンモードにはネイティブのHTTP/2がありません。この構成は、ネイティブのgRPCのようなアプリケーションに対して、エンドツーエンドのHTTP/2の意味論を提供しません。エッジ（\\ "
 "``--config-file``\\ ）は自らHTTP/2とHTTP/3を終端し、gRPCを運びます（\\ *gRPC*\\ の節）。"
 
-#: ../../operations.rst:2866
+#: ../../operations.rst:2867
 msgid ""
 "Content-Length request bodies stream through fixed buffers, preserving "
 "bytes and MIME headers. Multipart uploads retain boundaries, repeated "
@@ -10091,7 +10095,7 @@ msgstr ""
 "0004）。JSON、XML、SVG、URLエンコードのフォーム、不明な型はテキストの検査を保ちます。あいまいな、または不正な形式のMIMEのメタデータは、テキストの検査に戻ります。マルチパートのパースは、同じ先頭部分の中で32パート、パートあたり2 "
 "KiBのヘッダーに制限され、区切りの後のRFC 2046の転送用の詰め物を受け付けます。"
 
-#: ../../operations.rst:2868
+#: ../../operations.rst:2869
 msgid ""
 "This is upload compatibility, not file validation or malware scanning. "
 "The backend must enforce accepted media types rather than trust a "
@@ -10122,11 +10126,11 @@ msgstr ""
 "``100-continue``\\ "
 "を待つクライアントは、ボディーを送る前にローカルでそれを受け取ります。サポートしないexpectationには417を返します。Expectヘッダーはバックエンドに転送する前に消費されます。"
 
-#: ../../operations.rst:2870
+#: ../../operations.rst:2871
 msgid "Forward Auth Behind an Ingress"
 msgstr "イングレスの背後でのforward auth"
 
-#: ../../operations.rst:2873
+#: ../../operations.rst:2874
 msgid ""
 "In ``--mode forward_auth`` the daemon answers the ingress's subrequest "
 "with ``200`` (plus the audit headers ``X-Sibuna-Status``, "
@@ -10153,7 +10157,7 @@ msgstr ""
 "``400``\\ "
 "で拒否されます。デーモンの内部ルートは常に実際のリクエストのURIを使います。forward-authは、イングレスが省いたボディーを検査しません。"
 
-#: ../../operations.rst:2875
+#: ../../operations.rst:2876
 msgid ""
 "map $http_upgrade $sibuna_connection_upgrade {\n"
 "    default upgrade;\n"
@@ -10275,7 +10279,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../operations.rst:2936
+#: ../../operations.rst:2937
 msgid ""
 "example.com {\n"
 "    handle /__sibuna/* {\n"
@@ -10309,7 +10313,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../operations.rst:2953
+#: ../../operations.rst:2954
 msgid ""
 "The ``/__sibuna/*`` namespace (interstitial, challenge, verify, solver "
 "assets) must reach the daemon directly in both recipes. The nginx error "
@@ -10338,11 +10342,11 @@ msgstr ""
 "ブロックによって、チャレンジと検証のルートがforward-authの事前確認に入らないようにします。Nginxでは、アプリケーションのWebSocketのために、上に示した明示的なUpgrade/Connectionヘッダーが必要です。Nginxのエラーハンドラーは、二度目の認可判断をしたりアップロードのボディーを消費したりせずに、内部のチャレンジのルートを描画します。その認証モジュールが直接受け付けるのは2xx、401、403だけなので、例ではレート制限による認証エラーをRetry-After付きの429に戻します。それ以外の認可の失敗は503で閉じたままです。Nginxは独自の403のボディーを返しますが、CaddyはSibunaの拒否ページを転送します。どちらのレシピも、受信したSibunaの監査用ヘッダーを実際の認可の応答で置き換えます。通常のTLS証明書とアプリケーションのアップロードや期限の制限はイングレスで設定してください。例が示すのはルーティングの論理です。リポジトリでは、これらのレシピを実際のイングレスに対してまだテストしていません。レシピが依拠する転送メタデータの規則は、\\ "
 "``sibuna-http``\\ の単体テストで確かめています。"
 
-#: ../../operations.rst:2955
+#: ../../operations.rst:2956
 msgid "JA4 Fingerprints From the Ingress"
 msgstr "イングレスから受け取るJA4フィンガープリント"
 
-#: ../../operations.rst:2958
+#: ../../operations.rst:2959
 msgid ""
 "A JA4 fingerprint summarises how a client opens a TLS connection. It is "
 "computed from the client's first handshake message, the ClientHello. The "
@@ -10357,7 +10361,7 @@ msgstr ""
 "``User-Agent``\\ の値よりも強いシグナルになります（SID "
 "0014）。JA4はFoxIOが定義しました。フィンガープリントは36文字で、\\ ``_``\\ でつないだ三つの部分から成ります。"
 
-#: ../../operations.rst:2960
+#: ../../operations.rst:2961
 msgid ""
 "t13d1516h2_8daaf6152771_02713d6af862\n"
 "^^^^^^^^^^ ^^^^^^^^^^^^ ^^^^^^^^^^^^\n"
@@ -10381,7 +10385,7 @@ msgstr ""
 "c  ソートした拡張と署名アルゴリズムのハッシュ\n"
 "   （小文字の16進数12桁）"
 
-#: ../../operations.rst:2973
+#: ../../operations.rst:2974
 msgid ""
 "A TCP edge frontend can compute JA4 from a visible ClientHello during "
 "passthrough. When we run the HTTP firewall behind a TLS ingress, the "
@@ -10391,7 +10395,7 @@ msgid ""
 msgstr ""
 "TCPのエッジのフロントエンドは、パススルー中に見えているClientHelloからJA4を計算できます。HTTPファイアウォールをTLSイングレスの背後で動かす場合、そのハンドシェイクを見るのはイングレスで、SibunaはHTTP/1.1を受け取ります。信頼するイングレスがJA4を計算し、そのフィンガープリントをリクエストヘッダーでファイアウォールに送るように設定できます。"
 
-#: ../../operations.rst:2975
+#: ../../operations.rst:2976
 msgid ""
 "``--ja4-header <name>`` names that header. It is off by default and has "
 "no default name; we always name the header the ingress uses. Sibuna "
@@ -10408,7 +10412,7 @@ msgstr ""
 "を使ったものも含む）は拒否します。このオプションを指定すると、起動時のバナーに\\ ``JA4: from cf-ja4 "
 "(trusted)``\\ のような行を表示します。"
 
-#: ../../operations.rst:2977
+#: ../../operations.rst:2978
 msgid ""
 "The header is read only when forwarded fields are trusted. This is the "
 "decision that governs ``X-Forwarded-For``: ``--trust-forwarded``, or "
@@ -10429,7 +10433,7 @@ msgstr ""
 "``sibuna_ja4_invalid_total``\\ "
 "はヘッダーが不正な形式であるか繰り返されていたリクエストを数えます。信頼しない相手からのリクエストは、どちらのカウンターも増やしません。"
 
-#: ../../operations.rst:2979
+#: ../../operations.rst:2980
 msgid ""
 "In reverse-proxy mode, the origin sees the header only when Sibuna trusts "
 "it. Without trust, Sibuna removes every field of that name from the "
@@ -10445,11 +10449,11 @@ msgstr ""
 "``_``\\ を使った別名はやはり取り除かれます。\\ ``--ja4-header``\\ "
 "がなければ、その名前のフィールドは普通のフィールドです。"
 
-#: ../../operations.rst:2981
+#: ../../operations.rst:2982
 msgid "The ingress must own the header"
 msgstr "ヘッダーはイングレスが管理しなければならない"
 
-#: ../../operations.rst:2983
+#: ../../operations.rst:2984
 msgid ""
 "A fingerprint is only as trustworthy as the ingress that wrote it. Sibuna "
 "cannot tell a value the ingress computed from a value the client sent. "
@@ -10461,7 +10465,7 @@ msgstr ""
 "フィンガープリントは、それを書いたイングレスと同じ程度にしか信頼できません。Sibunaは、イングレスが計算した値とクライアントが送った値を区別できません。したがってイングレスは、Sibunaに届くすべてのルートで、クライアントが与えたヘッダーを上書きするか取り除かなければなりません。\\ "
 "``X-Forwarded-For``\\ の場合と同じく、Sibunaのリスナーはイングレスからの接続だけを受け付けなければなりません。"
 
-#: ../../operations.rst:2985
+#: ../../operations.rst:2986
 msgid ""
 "**Cloudflare.** The managed transform \"Add bot protection headers\" adds "
 "``cf-ja4`` to the request sent to the origin, beside ``cf-bot-score``, "
@@ -10474,11 +10478,11 @@ msgstr ""
 "``cf-ja4``\\ を加えます。これにはBot "
 "Management付きのEnterpriseプランが必要です。CloudflareとSibunaの間にあるイングレスは、このフィールドを変更せずに渡さなければなりません。Sibunaは次のように起動します。"
 
-#: ../../operations.rst:2987
+#: ../../operations.rst:2988
 msgid "sibuna --ja4-header cf-ja4 --trust-forwarded -s /etc/sibuna/secret"
 msgstr "sibuna --ja4-header cf-ja4 --trust-forwarded -s /etc/sibuna/secret"
 
-#: ../../operations.rst:2991
+#: ../../operations.rst:2992
 msgid ""
 "The ingress in front of Sibuna must accept connections from Cloudflare's "
 "addresses alone; otherwise a client can bypass Cloudflare and send its "
@@ -10487,7 +10491,7 @@ msgstr ""
 "Sibunaの前にあるイングレスは、Cloudflareのアドレスからの接続だけを受け付けなければなりません。そうしないと、クライアントはCloudflareを迂回して自分の\\ "
 "``cf-ja4``\\ を送れてしまいます。"
 
-#: ../../operations.rst:2993
+#: ../../operations.rst:2994
 msgid ""
 "**nginx.** FoxIO's ``ja4-nginx-module`` computes JA4 inside nginx and "
 "exposes it as ``$http_ssl_ja4``. It needs nginx 1.26 or later with the "
@@ -10502,7 +10506,7 @@ msgstr ""
 "``proxy_set_header``\\ "
 "はクライアントの同名のフィールドを置き換えるので、Sibunaに届くlocationごとに、自らヘッダーを設定します。"
 
-#: ../../operations.rst:2995
+#: ../../operations.rst:2996
 msgid ""
 "# Reverse proxy: Sibuna runs with --ja4-header x-ja4 --trust-forwarded\n"
 "location / {\n"
@@ -10534,7 +10538,7 @@ msgstr ""
 "    # ... 上記のforward-authの設定例にある残りのフィールド\n"
 "}"
 
-#: ../../operations.rst:3012
+#: ../../operations.rst:3013
 msgid ""
 "In the forward-auth recipe, the same ``proxy_set_header X-JA4 "
 "$http_ssl_ja4;`` line belongs in ``@sibuna_challenge`` and in ``location "
@@ -10546,7 +10550,7 @@ msgstr ""
 "にも置きます。この行を省いたlocationは、クライアント自身の\\ ``X-JA4``\\ "
 "をSibunaに渡し、Sibunaはそれを信頼してしまいます。"
 
-#: ../../operations.rst:3014
+#: ../../operations.rst:3015
 msgid ""
 "**Apache Traffic Server.** The ``ja4_fingerprint`` plugin is enabled by "
 "the line ``ja4_fingerprint.so`` in ``plugin.config``. It has no options. "
@@ -10564,7 +10568,7 @@ msgstr ""
 "ja4 --trust-forwarded``\\ で起動します。プラグインの文書は、クライアントが送った\\ ``ja4``\\ "
 "フィールドを置き換えるかどうかを述べていません。値を信頼する前に、使っているバージョンでこれを確かめるか、プラグインが自身のフィールドを加える前にクライアントのフィールドを取り除かなければなりません。"
 
-#: ../../operations.rst:3016
+#: ../../operations.rst:3017
 msgid ""
 "A rule matches a fingerprint with the ``ja4`` field (Part XII, Policy "
 "Schema). The value is either a whole fingerprint, which must be equal, or "
@@ -10581,7 +10585,7 @@ msgstr ""
 "ルールに一致することはありません。大文字の\\ ``T13D*``\\ のように、どのフィンガープリントも一致し得ないパターンを、ローダーは\\ "
 "``INVALID POLICY JA4``\\ で拒否します。照合はバイトを比較するだけで、メモリを割り当てません。"
 
-#: ../../operations.rst:3018
+#: ../../operations.rst:3019
 msgid ""
 "{ \"rules\": [\n"
 "    { \"name\": \"deny-known-scanner\", \"action\": \"DENY\",\n"
@@ -10609,7 +10613,7 @@ msgstr ""
 "      \"action\": \"CHALLENGE\" }\n"
 "] }"
 
-#: ../../operations.rst:3030
+#: ../../operations.rst:3031
 msgid ""
 "The first rule denies one fingerprint exactly; the value is an example, "
 "not a known scanner. The next two add weight to the request's score "
@@ -10633,7 +10637,7 @@ msgstr ""
 "1.2を交渉したすべてのクライアントに、接頭辞によってチャレンジします。拒否ではなくチャレンジにするのは、正当な古いクライアントの多くが今もTLS "
 "1.2を使うからです。ルールはこのようにJA4を他のシグナルと組み合わせるべきです。JA4の値が示すのはTLSライブラリとその設定であり、人や機器ではありません。多くのクライアントが一つのライブラリを共有し、特化したライブラリはブラウザーのClientHelloを模倣できます。JA4は自動化のコストを上げますが、身元を証明するものではありません。同じ理由から、Sibunaは禁止とレピュテーションをアドレスをキーとして保持し、フィンガープリントをキーにすることはありません。"
 
-#: ../../operations.rst:3032
+#: ../../operations.rst:3033
 msgid ""
 "Incidents (WAF denials, honeypot hits and audit findings) record the "
 "fingerprint of their request when it carried one, in the column "
@@ -10649,17 +10653,17 @@ msgstr ""
 "recorded\"とともに表示します。Eventsのフィルターはフィンガープリントまたは接頭辞を受け付けます。管理するルールのエディターにはJA4フィールドがあり、\\ "
 "``policies.ja4_pattern``\\ に保存されます。ポリシーのテストフォームはフィンガープリントを受け取ります。"
 
-#: ../../operations.rst:3034
+#: ../../operations.rst:3035
 msgid "Declarative Policy"
 msgstr "宣言的なポリシー"
 
-#: ../../operations.rst:3039
+#: ../../operations.rst:3040
 msgid ""
 "Write a policy file with rules, weights, thresholds, IP rules, and the "
 "WAF switch."
 msgstr "ルール、重み、しきい値、IPのルール、WAFの切り替えを含むポリシーファイルを書きます。"
 
-#: ../../operations.rst:3041
+#: ../../operations.rst:3042
 msgid ""
 "{\n"
 "  \"default_action\": \"CHALLENGE\",\n"
@@ -10713,7 +10717,7 @@ msgstr ""
 "  ]\n"
 "}"
 
-#: ../../operations.rst:3061
+#: ../../operations.rst:3062
 msgid ""
 "The loader fails closed: an unknown key, a misspelled action, a malformed "
 "address or an out-of-range number rejects the whole file, the diagnostic "
@@ -10741,11 +10745,11 @@ msgstr ""
 "が必要です（「イングレスから受け取るJA4フィンガープリント」を参照）。パスのパターンは正規形のリクエストのパスと照合するので（SID "
 "0003）、パターンはその形で書かなければなりません。"
 
-#: ../../operations.rst:3063
+#: ../../operations.rst:3064
 msgid "Persistent Storage and Clustering"
 msgstr "永続ストレージとクラスタリング"
 
-#: ../../operations.rst:3068
+#: ../../operations.rst:3069
 msgid ""
 "Enable SQLite or PostgreSQL storage, add a dynamic policy and a ban with "
 "SQL, query incident forensics, understand campaign clustering, and run "
@@ -10753,7 +10757,7 @@ msgid ""
 msgstr ""
 "SQLiteまたはPostgreSQLのストレージを有効にし、SQLで動的なポリシーと禁止を追加し、インシデントのフォレンジックを問い合わせ、キャンペーンのクラスタリングを理解し、一つのPostgreSQLデータベースで複数のノードを動かします。"
 
-#: ../../operations.rst:3071
+#: ../../operations.rst:3072
 msgid ""
 "Request threads push incidents into an MPSC ring of 512 slots. The "
 "storage thread pops them, writes batches through sqlx to the SQLite file "
@@ -10766,7 +10770,7 @@ msgstr ""
 "リクエストスレッドはインシデントを512スロットのMPSCリングに入れます。ストレージスレッドはそれを取り出し、sqlxを通じて、policies、ip_reputation、security_incidents、全文検索インデックスを保持するSQLiteファイルまたはPostgreSQLデータベースにまとめて書き込みます。ポリシーのリビジョンが変わると、エンジンを再構築してArcとして公開し、リクエストスレッドがそれを読みます。他のクラスターノードは同じPostgreSQLデータベースを共有し、NOTIFY "
 "sibuna_policyを受け取ります。"
 
-#: ../../operations.rst:3071
+#: ../../operations.rst:3072
 msgid ""
 "digraph storage_architecture {\n"
 "  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.8, "
@@ -10850,11 +10854,11 @@ msgstr ""
 "sibuna_policy\"];\n"
 "}"
 
-#: ../../operations.rst:3071
+#: ../../operations.rst:3072
 msgid "The storage architecture: workers never block on the database"
 msgstr "ストレージのアーキテクチャ：ワーカーがデータベースでブロックすることはない"
 
-#: ../../operations.rst:3102
+#: ../../operations.rst:3103
 msgid ""
 "``--data-dir /var/lib/sibuna`` opens the SQLite file "
 "``/var/lib/sibuna/sibuna.db`` (WAL mode, ``synchronous=NORMAL``, a busy "
@@ -10881,37 +10885,37 @@ msgstr ""
 "``--config-file``\\ で起動したエッジは、これらのオプションをどれも取りません（両者の関係は\\ *クラスタリング*\\ "
 "の節で説明します）。"
 
-#: ../../operations.rst:3104
+#: ../../operations.rst:3105
 msgid "Schema"
 msgstr "スキーマ"
 
-#: ../../operations.rst:3107
+#: ../../operations.rst:3108
 msgid "Core tables"
 msgstr "中核の表"
 
-#: ../../operations.rst:3111
+#: ../../operations.rst:3112
 msgid "Table"
 msgstr "表"
 
-#: ../../operations.rst:3112
+#: ../../operations.rst:3113
 msgid "Purpose and key"
 msgstr "目的とキー"
 
-#: ../../operations.rst:3113
+#: ../../operations.rst:3114
 msgid "``policy_revision``"
 msgstr "``policy_revision``"
 
-#: ../../operations.rst:3114
+#: ../../operations.rst:3115
 msgid ""
 "The policy revision, one row; triggers on the three policy tables advance "
 "it."
 msgstr "ポリシーのリビジョン、1行。三つのポリシーの表のトリガーがこれを進めます。"
 
-#: ../../operations.rst:3115
+#: ../../operations.rst:3116
 msgid "``policies``"
 msgstr "``policies``"
 
-#: ../../operations.rst:3116
+#: ../../operations.rst:3117
 msgid ""
 "Ordered dynamic rules, keyed by ``id``. The nullable ``ja4_pattern`` "
 "holds a rule's JA4 criterion, at most 37 bytes."
@@ -10919,37 +10923,37 @@ msgstr ""
 "順序付きの動的なルール、キーは\\ ``id``\\ 。NULLを許す\\ ``ja4_pattern``\\ "
 "はルールのJA4の条件で、最大37バイト。"
 
-#: ../../operations.rst:3117
+#: ../../operations.rst:3118
 msgid "``policy_inspection``"
 msgstr "``policy_inspection``"
 
-#: ../../operations.rst:3118
+#: ../../operations.rst:3119
 msgid "The stored WAF mode per category, one row."
 msgstr "カテゴリーごとに保存したWAFのモード、1行。"
 
-#: ../../operations.rst:3119
+#: ../../operations.rst:3120
 msgid "``ip_reputation``"
 msgstr "``ip_reputation``"
 
-#: ../../operations.rst:3120
+#: ../../operations.rst:3121
 msgid "Scores, hit counts and expiry, keyed by address or prefix."
 msgstr "スコア、ヒット数、期限。キーはアドレスまたは接頭辞。"
 
-#: ../../operations.rst:3121
+#: ../../operations.rst:3122
 msgid "``incident_receipts``"
 msgstr "``incident_receipts``"
 
-#: ../../operations.rst:3122
+#: ../../operations.rst:3123
 msgid ""
 "Each node's durable incident receipt (the next sequence after its last "
 "committed batch), keyed by node."
 msgstr "各ノードの永続的なインシデントの受領記録（最後にコミットしたバッチの次のシーケンス）。キーはノード。"
 
-#: ../../operations.rst:3123
+#: ../../operations.rst:3124
 msgid "``security_incidents``"
 msgstr "``security_incidents``"
 
-#: ../../operations.rst:3124
+#: ../../operations.rst:3125
 msgid ""
 "One bounded event record with its 64-component embedding (256 bytes), "
 "keyed by ``node_id << 40 | sequence``. The nullable ``ja4`` holds the "
@@ -10958,11 +10962,11 @@ msgstr ""
 "64成分の埋め込みベクトル（256バイト）を持つ、上限のある一つのイベントのレコード。キーは\\ ``node_id << 40 | "
 "sequence``\\ 。NULLを許す\\ ``ja4``\\ はリクエストのJA4フィンガープリントで、ちょうど36バイト。"
 
-#: ../../operations.rst:3125
+#: ../../operations.rst:3126
 msgid "``incidents_fts``"
 msgstr "``incidents_fts``"
 
-#: ../../operations.rst:3126
+#: ../../operations.rst:3127
 msgid ""
 "On SQLite: an FTS5 table over the canonical tokens of paths and payloads. "
 "On PostgreSQL the same tokens are the ``tsvector`` column ``search`` of "
@@ -10971,15 +10975,15 @@ msgstr ""
 "SQLiteでは、パスとペイロードの正規化したトークンに対するFTS5の表。PostgreSQLでは、同じトークンがGIN索引付きの\\ "
 "``security_incidents``\\ の\\ ``tsvector``\\ 列\\ ``search``\\ です。"
 
-#: ../../operations.rst:3127
+#: ../../operations.rst:3128
 msgid "``sibuna_schema``"
 msgstr "``sibuna_schema``"
 
-#: ../../operations.rst:3128
+#: ../../operations.rst:3129
 msgid "Every applied migration, keyed by component and version."
 msgstr "適用したすべてのマイグレーション。キーはコンポーネントとバージョン。"
 
-#: ../../operations.rst:3130
+#: ../../operations.rst:3131
 msgid ""
 "The core schema is ``crates/storage/src/schema.rs``, written once per "
 "dialect. With the console the component ``console`` adds 33 tables whose "
@@ -11003,11 +11007,11 @@ msgstr ""
 "制約がRustの型を写しているので、デーモンが表現できない行はデータベースが拒否します。列挙値は小文字で保存します。\\ ``'DENY'``\\ "
 "を直接書き込むと拒否されます。"
 
-#: ../../operations.rst:3132
+#: ../../operations.rst:3133
 msgid "Operating It"
 msgstr "運用"
 
-#: ../../operations.rst:3135
+#: ../../operations.rst:3136
 msgid ""
 "Use the ``sqlite3`` shell on ``sibuna.db`` (WAL mode lets it read while "
 "the daemon runs), or ``psql`` on the cluster database:"
@@ -11015,7 +11019,7 @@ msgstr ""
 "``sibuna.db``\\ には\\ ``sqlite3``\\ "
 "シェルを使い（WALモードなので、デーモンの実行中も読めます）、クラスターのデータベースには\\ ``psql``\\ を使います。"
 
-#: ../../operations.rst:3137
+#: ../../operations.rst:3138
 msgid ""
 "-- Add a dynamic rule; every node rebuilds on its next tick.\n"
 "INSERT INTO policies (id, name, priority, path_pattern, action, "
@@ -11059,7 +11063,7 @@ msgstr ""
 "FROM incidents_fts f JOIN security_incidents s ON s.id = f.rowid\n"
 "WHERE incidents_fts MATCH 'union' ORDER BY rank LIMIT 20;"
 
-#: ../../operations.rst:3155
+#: ../../operations.rst:3156
 msgid ""
 "The statements are written for SQLite. On PostgreSQL, ``enabled`` is "
 "``TRUE``, the time is ``CAST(extract(epoch FROM now()) AS BIGINT)`` "
@@ -11079,7 +11083,7 @@ msgstr ""
 "）を保持します。制約に反する直接の書き込みはデータベースが拒否し、ノードには届きません。PostgreSQLでは、リビジョンのトリガーが\\ "
 "``NOTIFY sibuna_policy``\\ も発行するので、他のノードはすぐにティックします。保証となるのは引き続きポーリングです。"
 
-#: ../../operations.rst:3157
+#: ../../operations.rst:3158
 msgid ""
 "Scores at or below :math:`-50` become ``deny`` prefixes in the trie, "
 "scores at or above :math:`50` become ``allow``, and ``banned_until`` "
@@ -11092,11 +11096,11 @@ msgstr ""
 ":math:`-100`\\ "
 "のレコードを挿入するので、共有PostgreSQLデータベースでは、一つのノードで作動した罠がすべてのノードでそのアドレスを禁止します。"
 
-#: ../../operations.rst:3159
+#: ../../operations.rst:3160
 msgid "A Transaction Receipt Makes Retry Safe"
 msgstr "トランザクションの受領記録が再試行を安全にする"
 
-#: ../../operations.rst:3162
+#: ../../operations.rst:3163
 msgid ""
 "The storage thread collects at most 32 pending records and builds one SQL "
 "transaction. The transaction inserts incidents, updates the full-text "
@@ -11109,11 +11113,11 @@ msgstr ""
 "``incident_receipts``\\ "
 "の自分の行を持ちます。データを変更する文はすべてその受領記録で守られ、トランザクションは最後にそれを進め、決して戻しません。"
 
-#: ../../operations.rst:3164
+#: ../../operations.rst:3165
 msgid "Worked example: the acknowledgement disappears"
 msgstr "例題：確認応答が消える"
 
-#: ../../operations.rst:3166
+#: ../../operations.rst:3167
 msgid ""
 "Suppose issuer 2 prepares sequences 101 through 132, ending at receipt "
 "133. The database commits all records and receipt 133, then the "
@@ -11126,7 +11130,7 @@ msgid ""
 msgstr ""
 "発行者2がシーケンス101から132を用意し、受領記録133で終えるとします。データベースはすべてのレコードと受領記録133をコミットし、その後、確認応答が届く前に接続が切れます。ストレージスレッドは用意したバッチ（識別子、埋め込みベクトル、キャンペーン）を保持して再試行します。受領記録はすでに133なので、守られた書き込みは何もしません。インシデントもハニーポットのヒット数も二重になりません。元のトランザクションがロールバックされていれば、古い受領記録が残り、再試行はすべての書き込みを一度だけ適用します。"
 
-#: ../../operations.rst:3168
+#: ../../operations.rst:3169
 msgid ""
 "A failed commit retains the pending batch in memory and increments "
 "``incident_write_failures``. The tick still attempts policy polling. A "
@@ -11141,11 +11145,11 @@ msgstr ""
 "``incidents_dropped``\\ "
 "を数えます。ディスクを待ってHTTPの応答をブロックすることはありません。保留中のバッチは32レコード分の空間を加えます。コミット前にプロセスが死ぬと、キューに入ったデータは失われ得ます。これは上限のある非同期のフォレンジックの経路であり、キューに入れた時点で永続化されるメッセージキューではありません。"
 
-#: ../../operations.rst:3170
+#: ../../operations.rst:3171
 msgid "Exercise 11.1"
 msgstr "演習11.1"
 
-#: ../../operations.rst:3172
+#: ../../operations.rst:3173
 msgid ""
 "Move the receipt update outside the data transaction. Construct one crash "
 "schedule that duplicates a reputation effect and another that loses an "
@@ -11153,11 +11157,11 @@ msgid ""
 msgstr ""
 "受領記録の更新をデータのトランザクションの外に移してください。レピュテーションへの効果を重複させるクラッシュの起き方と、インシデントを失わせる起き方を一つずつ構成してください。"
 
-#: ../../operations.rst:3174
+#: ../../operations.rst:3175
 msgid "Campaign Clustering"
 msgstr "キャンペーンのクラスタリング"
 
-#: ../../operations.rst:3177
+#: ../../operations.rst:3178
 msgid ""
 "Each incident payload is embedded as a 64-dimensional unit vector by the "
 "hashing trick over byte trigrams (digits folded, case folded) and stored "
@@ -11179,11 +11183,11 @@ msgstr ""
 ":math:`0.35`\\ 以下なら、新しいインシデントはそのインシデントの\\ ``campaign_id``\\ "
 "に加わり、そうでなければ自身の識別子を名前とするキャンペーンを始めます。窓より古いインシデントとは比較しません。類似度はヒューリスティックです。回帰テストの例では関連するSQLのペイロードがまとまりますが、攻撃のどの組も同じキャンペーンに属するという保証ではありません。モデルは実行せず、何も学習しません。"
 
-#: ../../operations.rst:3179
+#: ../../operations.rst:3180
 msgid "Clustering"
 msgstr "クラスタリング"
 
-#: ../../operations.rst:3182
+#: ../../operations.rst:3183
 msgid ""
 "A cluster is a set of nodes that share one PostgreSQL database. Build "
 "with the ``postgres-tls`` feature (``cargo build --release -p sibuna "
@@ -11194,7 +11198,7 @@ msgstr ""
 "フィーチャーでビルドし（\\ ``cargo build --release -p sibuna --features "
 "postgres-tls``\\ 。\\ ``postgres``\\ も含みます）、各メンバーをデータベースと固有のノードIDで起動します。"
 
-#: ../../operations.rst:3184
+#: ../../operations.rst:3185
 msgid ""
 "sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 \\\n"
 "       --secret-file /etc/sibuna/secret"
@@ -11202,7 +11206,7 @@ msgstr ""
 "sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 \\\n"
 "       --secret-file /etc/sibuna/secret"
 
-#: ../../operations.rst:3189
+#: ../../operations.rst:3190
 msgid ""
 "Every member must use the same master secret and a unique "
 "``--cluster-node`` from 1 to 8,388,607. The URL file holds one "
@@ -11216,7 +11220,7 @@ msgstr ""
 "のURLを一つ持ち、所有者だけが読めなければなりません。バナーがURLを表示することはありません。書き込みはPostgreSQLのプライマリーに送られます。各ノードのストレージスレッドは、コミットされたリビジョンの変化を（\\ "
 "``NOTIFY``\\ またはポーリングで）見て、エンジンを再構築します。"
 
-#: ../../operations.rst:3191
+#: ../../operations.rst:3192
 msgid ""
 "Nodes reach the shared database across the network, so we encrypt and "
 "verify that connection. We give the server a certificate signed by our "
@@ -11229,7 +11233,7 @@ msgstr ""
 "``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``\\ "
 "です。サーバーでは、\\ ``pg_hba.conf``\\ の\\ ``hostssl``\\ 行を通してだけTCPを受け付けます。"
 
-#: ../../operations.rst:3193
+#: ../../operations.rst:3194
 msgid ""
 "At startup the daemon prints one line about the database connection. With "
 "``verify-full`` it says that the certificate and host name are verified. "
@@ -11253,7 +11257,7 @@ msgstr ""
 "``sslrootcert``\\ はシステムのトラストストアに自分たちの認証局を加えますが、システムの認証局を取り除くことはしません（SID "
 "0011、SID 0012）。"
 
-#: ../../operations.rst:3195
+#: ../../operations.rst:3196
 msgid ""
 "Sibuna does not replicate a database of its own and elects no leader. "
 "Replication, failover and backups are PostgreSQL's (streaming "
@@ -11274,7 +11278,7 @@ msgstr ""
 "0005）は読みません。ポリシーは\\ ``sibuna console policies export``\\ と\\ ``sibuna "
 "console policies import``\\ で移し、フォレンジックの履歴は移行しません。"
 
-#: ../../operations.rst:3197
+#: ../../operations.rst:3198
 msgid ""
 "**The cluster and the mesh.** This cluster is one of the firewall daemon. "
 "An edge does not join it: ``--config-file`` takes no storage option, the "
@@ -11300,11 +11304,11 @@ msgstr ""
 "、\\ ``edge_nodes``\\ ）を持ち、それらはファイアウォールのデータベースにも別のデータベースにも置けます（\\ "
 "*トポロジーのためのデータベース*\\ の節）。エッジはインシデントもレピュテーションもデータベースに記録しません。"
 
-#: ../../operations.rst:3199
+#: ../../operations.rst:3200
 msgid "Cluster Challenge Routing"
 msgstr "クラスターでのチャレンジのルーティング"
 
-#: ../../operations.rst:3202
+#: ../../operations.rst:3203
 msgid ""
 "Challenge keys are bound to ``--cluster-node``; keep challenge issuance "
 "and verification on the same member. Tokens use the shared seed and work "
@@ -11320,18 +11324,18 @@ msgstr ""
 "``crates/storage/tests/multi_node.rs``\\ 、SID 0011の基準2。\\ "
 "``SIBUNA_TEST_DATABASE_URL``\\ を設定すると実行されます）。"
 
-#: ../../operations.rst:3204
+#: ../../operations.rst:3205
 msgid "Packaging"
 msgstr "パッケージング"
 
-#: ../../operations.rst:3209
+#: ../../operations.rst:3210
 msgid ""
 "Install and verify a release package, run Sibuna as a service, in a "
 "container or under Kubernetes, and build the binary ourselves."
 msgstr ""
 "リリースパッケージをインストールして検証し、Sibunaをサービスとして、コンテナーで、またはKubernetesの下で実行し、バイナリを自分たちでビルドします。"
 
-#: ../../operations.rst:3211
+#: ../../operations.rst:3212
 msgid ""
 "Every release on GitHub carries the same executable for each platform, "
 "built from the release tag with the default features: SQLite storage and "
@@ -11339,19 +11343,19 @@ msgid ""
 msgstr ""
 "GitHubのどのリリースにも、プラットフォームごとに同じ実行ファイルが含まれます。これはリリースタグから既定のフィーチャー（SQLiteストレージとコンソール）でビルドしたものです。PostgreSQLのクラスターには、自分たちでビルドしたものが必要です（後述）。"
 
-#: ../../operations.rst:3217
+#: ../../operations.rst:3218
 msgid "Platform"
 msgstr "プラットフォーム"
 
-#: ../../operations.rst:3218
+#: ../../operations.rst:3219
 msgid "Release assets"
 msgstr "リリースアセット"
 
-#: ../../operations.rst:3219
+#: ../../operations.rst:3220
 msgid "Linux x86-64, ARM64"
 msgstr "Linux x86-64、ARM64"
 
-#: ../../operations.rst:3220
+#: ../../operations.rst:3221
 msgid ""
 "``sibuna-linux-amd64.tar.gz`` and ``sibuna-linux-arm64.tar.gz`` hold a "
 "static musl executable that runs on any distribution. "
@@ -11367,11 +11371,11 @@ msgstr ""
 "``sibuna-<version>-1.aarch64.rpm``\\ は、それをsystemdサービスとともにインストールします。Arch "
 "Linuxでは\\ ``sibuna-bin-<version>-1-x86_64.pkg.tar.zst``\\ が同じことをします。"
 
-#: ../../operations.rst:3221
+#: ../../operations.rst:3222
 msgid "macOS arm64, x86-64"
 msgstr "macOS arm64、x86-64"
 
-#: ../../operations.rst:3222
+#: ../../operations.rst:3223
 msgid ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, for macOS "
 "12 or later."
@@ -11379,11 +11383,11 @@ msgstr ""
 "``sibuna-macos-arm64.tar.gz``\\ 、\\ ``sibuna-macos-amd64.tar.gz``\\ "
 "。macOS 12以降に対応します。"
 
-#: ../../operations.rst:3223
+#: ../../operations.rst:3224
 msgid "Windows x86-64"
 msgstr "Windows x86-64"
 
-#: ../../operations.rst:3224
+#: ../../operations.rst:3225
 msgid ""
 "``sibuna-windows-amd64.zip`` holds ``sibuna.exe``, for Windows 10 or "
 "Server 2016 or later."
@@ -11391,22 +11395,22 @@ msgstr ""
 "``sibuna-windows-amd64.zip``\\ には\\ ``sibuna.exe``\\ が入っています。Windows "
 "10またはServer 2016以降に対応します。"
 
-#: ../../operations.rst:3225
+#: ../../operations.rst:3226
 msgid "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 msgstr "FreeBSD 15.1、OpenBSD 7.9（amd64）"
 
-#: ../../operations.rst:3226
+#: ../../operations.rst:3227
 msgid ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg`` and ``sibuna-<version>.tgz``."
 msgstr ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg``\\ と\\ "
 "``sibuna-<version>.tgz``\\ 。"
 
-#: ../../operations.rst:3227
+#: ../../operations.rst:3228
 msgid "Homebrew, Kubernetes, containers"
 msgstr "Homebrew、Kubernetes、コンテナー"
 
-#: ../../operations.rst:3228
+#: ../../operations.rst:3229
 msgid ""
 "``sibuna.rb``, ``helm-sibuna-<version>.tgz``, and the image "
 "``ghcr.io/insanai/sibuna:<version>`` for amd64 and arm64, whose digest is "
@@ -11416,15 +11420,15 @@ msgstr ""
 "、そしてamd64とarm64向けのイメージ\\ ``ghcr.io/insanai/sibuna:<version>``\\ "
 "。イメージのダイジェストは\\ ``IMAGE-DIGEST.txt``\\ にあります。"
 
-#: ../../operations.rst:3229
+#: ../../operations.rst:3230
 msgid "Source"
 msgstr "ソース"
 
-#: ../../operations.rst:3230
+#: ../../operations.rst:3231
 msgid "``sibuna-<version>-source.tar.gz``."
 msgstr "``sibuna-<version>-source.tar.gz``\\ 。"
 
-#: ../../operations.rst:3232
+#: ../../operations.rst:3233
 msgid ""
 "Each archive and package carries ``LICENSE``, ``NOTICE``, ``LICENSES/`` "
 "(with ``THIRD-PARTY-RUST.txt``, the crates in the executable), "
@@ -11441,14 +11445,14 @@ msgstr ""
 "が入っています。このマニフェストは、バージョン、コミット、Rustのターゲット、コンパイラーのバージョン、フィーチャー、そして実行ファイルとその二つのWebAssemblyモジュールのSHA-256を記録します。リリースワークフローは、何かを公開する前にすべての実行ファイルをそれぞれのプラットフォームで起動し、Debian、Fedora、Arch "
 "Linux、FreeBSD、OpenBSDでパッケージのインストール、再インストール、削除を行います。"
 
-#: ../../operations.rst:3234
+#: ../../operations.rst:3235
 msgid ""
 "The assets are not signed. We check a download against ``SHA256SUMS`` "
 "from the same release before we install it:"
 msgstr ""
 "アセットには署名がありません。インストールする前に、ダウンロードしたものを同じリリースの\\ ``SHA256SUMS``\\ と照合します。"
 
-#: ../../operations.rst:3236
+#: ../../operations.rst:3237
 msgid ""
 "sha256sum --ignore-missing -c SHA256SUMS          # Linux\n"
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
@@ -11458,7 +11462,7 @@ msgstr ""
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
 "sha256 -C SHA256SUMS sibuna-1.0.0-beta.3.tgz      # OpenBSD"
 
-#: ../../operations.rst:3242
+#: ../../operations.rst:3243
 msgid ""
 "On macOS a browser download carries a quarantine attribute that stops an "
 "unsigned executable; ``xattr -d com.apple.quarantine sibuna`` removes it "
@@ -11467,11 +11471,11 @@ msgstr ""
 "macOSでは、ブラウザーでダウンロードしたファイルに隔離属性が付き、これが署名のない実行ファイルを止めます。照合の後、\\ ``xattr -d "
 "com.apple.quarantine sibuna``\\ でこの属性を取り除きます。"
 
-#: ../../operations.rst:3244
+#: ../../operations.rst:3245
 msgid "The systemd service"
 msgstr "systemdサービス"
 
-#: ../../operations.rst:3247
+#: ../../operations.rst:3248
 msgid ""
 "The Debian, RPM and Arch packages install ``/usr/bin/sibuna``, the unit "
 "``sibuna.service``, the account ``sibuna`` (through "
@@ -11486,7 +11490,7 @@ msgstr ""
 "``/etc/sibuna/service.env``\\ "
 "をインストールします。インストールしても何も起動しません。設定ファイルにオリジンをIPリテラルで設定し、サービスを起動します。"
 
-#: ../../operations.rst:3249
+#: ../../operations.rst:3250
 msgid ""
 "sudoedit /etc/sibuna/service.env      # SIBUNA_UPSTREAM_HOST, "
 "SIBUNA_UPSTREAM_PORT\n"
@@ -11498,7 +11502,7 @@ msgstr ""
 "sudo systemctl enable --now sibuna\n"
 "curl -s http://127.0.0.1:8080/__sibuna/health"
 
-#: ../../operations.rst:3255
+#: ../../operations.rst:3256
 msgid ""
 "The service listens on ``127.0.0.1:8080`` until ``SIBUNA_HOST`` and "
 "``SIBUNA_PORT`` say otherwise. ``SIBUNA_OPTIONS`` passes further options, "
@@ -11520,7 +11524,7 @@ msgstr ""
 "``/var/lib/sibuna``\\ に保存します。ユニットは、ケーパビリティなし、読み取り専用のシステム（\\ "
 "``ProtectSystem=strict``\\ ）、プライベートな\\ ``/tmp``\\ とデバイス、新しい特権なしで動きます。"
 
-#: ../../operations.rst:3257
+#: ../../operations.rst:3258
 msgid ""
 "An upgrade keeps the settings file, the seed and the state, and does not "
 "restart the service; we restart it after a backup. Removal stops and "
@@ -11529,7 +11533,7 @@ msgid ""
 msgstr ""
 "アップグレードは設定ファイル、シード、状態を保ち、サービスを再起動しません。バックアップの後で自分たちで再起動します。削除はサービスを停止して無効にしますが、アカウント、シード、設定、状態は残します。これらはホストを退役させるときに自分たちで削除します。"
 
-#: ../../operations.rst:3259
+#: ../../operations.rst:3260
 msgid ""
 "The FreeBSD and OpenBSD packages install only ``/usr/local/bin/sibuna`` "
 "and its documents (``pkg add``, or ``pkg_add -D unsigned`` for a package "
@@ -11542,11 +11546,11 @@ msgstr ""
 "unsigned``\\ "
 "）。サービス、アカウント、状態は作成しません。デーモンは、専用のシードとデータディレクトリを持つ特権のないユーザーで実行します。"
 
-#: ../../operations.rst:3261
+#: ../../operations.rst:3262
 msgid "Homebrew"
 msgstr "Homebrew"
 
-#: ../../operations.rst:3264
+#: ../../operations.rst:3265
 msgid ""
 "``sibuna.rb`` installs the release archive for the machine: macOS or "
 "Linux, arm64 or x86-64. It does not build from source, because Homebrew's "
@@ -11560,7 +11564,7 @@ msgstr ""
 "``wasm32-unknown-unknown``\\ "
 "向けの標準ライブラリがなく、埋め込む二つのWebAssemblyモジュールのビルドにはそれが必要だからです。アーカイブには、リリースワークフローが確認済みの実行ファイルが入っています。Homebrewはtapからしかformulaをインストールしないので、formulaをローカルのtapに置きます。"
 
-#: ../../operations.rst:3266
+#: ../../operations.rst:3267
 msgid ""
 "brew tap-new \"$USER/local\"\n"
 "cp sibuna.rb \"$(brew "
@@ -11572,18 +11576,18 @@ msgstr ""
 "--repository)/Library/Taps/$USER/homebrew-local/Formula/\"\n"
 "brew install \"$USER/local/sibuna\""
 
-#: ../../operations.rst:3272
+#: ../../operations.rst:3273
 msgid ""
 "The formula starts no service. Its caveats show how to create a seed; its "
 "test starts the daemon twice on the same data directory."
 msgstr ""
 "このformulaはサービスを起動しません。注意書き（caveats）はシードの作り方を示し、テストは同じデータディレクトリでデーモンを2回起動します。"
 
-#: ../../operations.rst:3274
+#: ../../operations.rst:3275
 msgid "Containers and Kubernetes"
 msgstr "コンテナーとKubernetes"
 
-#: ../../operations.rst:3277
+#: ../../operations.rst:3278
 msgid ""
 "The image ``ghcr.io/insanai/sibuna:<version>`` holds the static "
 "executable on a distroless base: CA certificates, user 65532, no shell "
@@ -11597,7 +11601,7 @@ msgstr ""
 "``sibuna``\\ "
 "なので、引数はデーモンのオプションです。リリースワークフローはこのイメージを、読み取り専用、ケーパビリティなしで、シードを読み取り専用でマウントし、状態用のボリュームを付けて実行し、1回再起動します。"
 
-#: ../../operations.rst:3279
+#: ../../operations.rst:3280
 msgid ""
 "docker run -d --read-only --cap-drop=ALL --security-opt=no-new-privileges "
 "\\\n"
@@ -11617,7 +11621,7 @@ msgstr ""
 "/var/lib/sibuna/data \\\n"
 "  --upstream-host 10.0.0.5 --upstream-port 3000"
 
-#: ../../operations.rst:3287
+#: ../../operations.rst:3288
 msgid ""
 "The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. "
 "It requires a Secret that we create (``secret.existingSecret``, key "
@@ -11648,7 +11652,7 @@ msgstr ""
 "はIPリテラルでなければならず、\\ ``extraArgs``\\ "
 "は追加のデーモンオプションを渡します。ワークフローは、Restricted標準を強制するkindクラスターで、チャートのインストール、アップグレード、アンインストールを行います。"
 
-#: ../../operations.rst:3289
+#: ../../operations.rst:3290
 msgid ""
 "kubectl -n sibuna create secret generic sibuna-admission "
 "--from-file=admission.seed\n"
@@ -11664,11 +11668,11 @@ msgstr ""
 "  --set secret.existingSecret=sibuna-admission \\\n"
 "  --set upstream.host=10.0.0.5 --set upstream.port=3000"
 
-#: ../../operations.rst:3296
+#: ../../operations.rst:3297
 msgid "Building from source"
 msgstr "ソースからビルドする"
 
-#: ../../operations.rst:3299
+#: ../../operations.rst:3300
 msgid ""
 "We build and test with Rust 1.100. The default build includes the JLV "
 "compiler and requires Rust 1.100. We can build the JSON-only daemon with "
@@ -11680,7 +11684,7 @@ msgstr ""
 "--no-default-features``\\ でRust 1.94でもビルドできます。SQLiteとコンソールを含めるには\\ "
 "``--features sqlite,console``\\ を加えます。"
 
-#: ../../operations.rst:3301
+#: ../../operations.rst:3302
 msgid ""
 "We install the release toolchain with ``rustup toolchain install 1.100.0 "
 "--profile minimal --target wasm32-unknown-unknown`` and select it with "
@@ -11690,7 +11694,7 @@ msgstr ""
 "--target wasm32-unknown-unknown`` でインストールし、以下のコマンドでは ``cargo +1.100.0`` "
 "で選択します。"
 
-#: ../../operations.rst:3303
+#: ../../operations.rst:3304
 msgid ""
 "``cargo build --release -p sibuna`` produces ``target/release/sibuna`` "
 "with the default features: SQLite storage and the console. sqlx bundles "
@@ -11707,7 +11711,7 @@ msgstr ""
 "``SIBUNA_POW_WASM=<path>``\\ と\\ ``SIBUNA_CONSOLE_WASM=<path>``\\ "
 "を指定すると、代わりにビルド済みのモジュールを埋め込みます。"
 
-#: ../../operations.rst:3304
+#: ../../operations.rst:3305
 msgid ""
 "``cargo build --release -p sibuna --no-default-features`` produces the "
 "in-memory firewall with no external crate at all; ``--data-dir`` and "
@@ -11719,7 +11723,7 @@ msgstr ""
 "``--database-url``\\ は起動時に\\ ``StorageDisabled``\\ で、\\ ``sibuna "
 "console``\\ は\\ ``CONSOLEBUILD``\\ で拒否されます。"
 
-#: ../../operations.rst:3305
+#: ../../operations.rst:3306
 msgid ""
 "``cargo build --release -p sibuna --features postgres-tls`` adds "
 "PostgreSQL clusters with verified TLS to the database. It needs no "
@@ -11728,7 +11732,7 @@ msgstr ""
 "``cargo build --release -p sibuna --features postgres-tls``\\ "
 "は、データベースへの検証付きTLSを備えたPostgreSQLのクラスターを加えます。OpenSSLは必要ありません。"
 
-#: ../../operations.rst:3306
+#: ../../operations.rst:3307
 msgid ""
 "The static Linux executables of the releases come from ``cargo build "
 "--release --locked -p sibuna --target x86_64-unknown-linux-musl`` (or "
@@ -11740,7 +11744,7 @@ msgstr ""
 "--locked -p sibuna --target x86_64-unknown-linux-musl``\\ （または\\ "
 "``aarch64-unknown-linux-musl``\\ ）でビルドしたものです。"
 
-#: ../../operations.rst:3308
+#: ../../operations.rst:3309
 msgid ""
 "The release profile uses fat LTO and one codegen unit. The workflow "
 "builds the two WebAssembly modules once and passes them to every "
@@ -11753,7 +11757,7 @@ msgstr ""
 "``cargo xtask licenses``\\ で\\ ``LICENSES/THIRD-PARTY-RUST.txt``\\ "
 "を再生成します。"
 
-#: ../../operations.rst:3310
+#: ../../operations.rst:3311
 msgid ""
 "On Windows the daemon stops on Ctrl+C, Ctrl+Break and console close "
 "events; it does not run as a Windows service. Windows files have no mode "
@@ -11765,11 +11769,11 @@ msgstr ""
 "Windowsでは、デーモンはCtrl+C、Ctrl+Break、コンソールを閉じるイベントで停止します。Windowsサービスとしては動きません。Windowsのファイルにはモードビットがないので、Sibunaは他者が読めるかもしれない鍵、認証情報、データベースURLのファイルを拒否できません。これらのファイルはACLで制限します。コンソールのメモリとCPUのゲージは\\ "
 "``/proc``\\ から読むので、他のシステムでは使えません。"
 
-#: ../../operations.rst:3312
+#: ../../operations.rst:3313
 msgid "Exercise 11.2"
 msgstr "演習11.2"
 
-#: ../../operations.rst:3314
+#: ../../operations.rst:3315
 msgid ""
 "Write the policy file and the ``ip_reputation`` rows needed so that a "
 "staging network (``10.20.0.0/16``) bypasses challenges, ``/admin/*`` "
@@ -11781,7 +11785,7 @@ msgstr ""
 "で識別するパートナーのスクレイパーを10秒あたり30リクエストで許可するために必要な、ポリシーファイルと\\ "
 "``ip_reputation``\\ の行を書いてください。"
 
-#: ../../operations.rst:3316
+#: ../../operations.rst:3317
 msgid ""
 "Hint: The daemon flags set the per-client limit every request meets "
 "first; a rule can carry a quota of its own in ``limits``."
@@ -11789,11 +11793,11 @@ msgstr ""
 "ヒント：デーモンのフラグは、すべてのリクエストが最初に通るクライアントごとの制限を設定します。ルールは\\ ``limits``\\ "
 "で専用のクォータを持てます。"
 
-#: ../../operations.rst:3318
+#: ../../operations.rst:3319
 msgid "Explain the invariant"
 msgstr "不変条件を説明してください"
 
-#: ../../operations.rst:3320
+#: ../../operations.rst:3321
 msgid ""
 "Explain to an operator why adding a row to ``policies`` takes effect "
 "without a restart and without a request ever waiting, in terms of the "

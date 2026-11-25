@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"POT-Creation-Date: 2026-11-25 09:40+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -35,9 +35,9 @@ msgstr ""
 msgid "Surfaces and Configuration"
 msgstr "운영 구성과 설정"
 
-#: ../../operations.rst:9 ../../operations.rst:170 ../../operations.rst:2817
-#: ../../operations.rst:3037 ../../operations.rst:3066
-#: ../../operations.rst:3207
+#: ../../operations.rst:9 ../../operations.rst:170 ../../operations.rst:2818
+#: ../../operations.rst:3038 ../../operations.rst:3067
+#: ../../operations.rst:3208
 msgid "Objectives"
 msgstr "학습 목표"
 
@@ -118,7 +118,7 @@ msgstr "이 표는 ``sibuna --help``\\ 의 모든 옵션을 나열합니다. 범
 msgid "Daemon options"
 msgstr "데몬 옵션"
 
-#: ../../operations.rst:34 ../../operations.rst:2679
+#: ../../operations.rst:34 ../../operations.rst:2680
 msgid "Flag"
 msgstr "플래그"
 
@@ -139,7 +139,7 @@ msgstr "기본값"
 #: ../../operations.rst:1592 ../../operations.rst:1674
 #: ../../operations.rst:2004 ../../operations.rst:2034
 #: ../../operations.rst:2108 ../../operations.rst:2379
-#: ../../operations.rst:2680
+#: ../../operations.rst:2681
 msgid "Meaning"
 msgstr "의미"
 
@@ -7406,7 +7406,7 @@ msgid ""
 "nothing."
 msgstr "로그 교체로 이름이 바뀐 뒤 액세스 로그 파일을 다시 엽니다. 아무것도 다시 불러오지 않습니다."
 
-#: ../../operations.rst:2197 ../../operations.rst:2637
+#: ../../operations.rst:2197 ../../operations.rst:2638
 msgid "``show certs``"
 msgstr "``show certs``"
 
@@ -7513,7 +7513,7 @@ msgid ""
 "(section *Hooks*)."
 msgstr "플러그인과 그 호출, 판정, 실패, 열린 차단기(*훅* 절)."
 
-#: ../../operations.rst:2217 ../../operations.rst:2647
+#: ../../operations.rst:2217 ../../operations.rst:2648
 msgid "``show affinity``"
 msgstr "``show affinity``"
 
@@ -8254,25 +8254,29 @@ msgid ""
 "eight bytes. It answers a ``decide`` frame with a ``verdict`` frame of "
 "the same identifier, whose payload is one byte, 0 to admit, 1 to deny, 2 "
 "to challenge, and then the field lines to add. A ``sample`` frame has no "
-"answer. SID 0030 specifies the frame. The operator console of the edge "
-"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+"answer. SID 0030 specifies the frame."
 msgstr ""
 "*에이전트 작성하기.* 에이전트는 소켓에서 연결을 받아 프레임을 읽습니다. 프레임은 4바이트 길이, 버전, 종류, 8바이트 식별자로 "
 "시작합니다. ``decide`` 프레임에는 같은 식별자의 ``verdict`` 프레임으로 응답하며, 그 페이로드는 한 바이트(허용 "
 "0, 거부 1, 챌린지 2)와 그 뒤에 추가할 필드 줄입니다. ``sample`` 프레임에는 응답하지 않습니다. SID 0030이 "
-"프레임을 명세합니다. 엣지의 운영자 콘솔 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+"프레임을 명세합니다."
 
-#: ../../operations.rst:2434
+#: ../../operations.rst:2432
+msgid "The operator console of the edge"
+msgstr "엣지의 운영자 콘솔"
+
+#: ../../operations.rst:2435
 msgid ""
-"The edge can run the console of Part XI beside the load balancer (SID "
-"0031). We add a ``console`` section to the topology file. The console "
-"listens on an address of its own, on threads of its own, and it keeps its "
-"accounts and its audit log in a SQLite file."
+"The edge can run the console of \"Console Preview\" below beside the load "
+"balancer (SID 0031). We add a ``console`` section to the topology file. "
+"The console listens on an address of its own, on threads of its own, and "
+"it keeps its accounts and its audit log in a SQLite file."
 msgstr ""
-"엣지는 로드 밸런서 옆에서 제XI부의 콘솔을 실행할 수 있습니다(SID 0031). 토폴로지 파일에 ``console`` 섹션을 "
-"추가합니다. 콘솔은 자신의 주소에서, 자신의 스레드로 수신하며, 계정과 감사 로그를 SQLite 파일에 보관합니다."
+"엣지는 로드 밸런서 옆에서 아래 *콘솔 미리보기*\\ 에서 설명하는 콘솔을 실행할 수 있습니다(SID 0031). 토폴로지 파일에 "
+"``console`` 섹션을 추가합니다. 콘솔은 자신의 주소에서, 자신의 스레드로 수신하며, 계정과 감사 로그를 SQLite 파일에 "
+"보관합니다."
 
-#: ../../operations.rst:2436
+#: ../../operations.rst:2437
 msgid ""
 "console: {\n"
 "    listen: \"127.0.0.1:9443\",\n"
@@ -8281,7 +8285,7 @@ msgid ""
 "},"
 msgstr ""
 
-#: ../../operations.rst:2444
+#: ../../operations.rst:2445
 msgid ""
 "sibuna init-admin admin --data-dir /var/lib/sibuna    # once, while the "
 "daemon is stopped\n"
@@ -8292,13 +8296,13 @@ msgstr ""
 "sibuna --config-file /etc/sibuna/edge.jlv\n"
 "# Console: http://127.0.0.1:9443/console/"
 
-#: ../../operations.rst:2450
+#: ../../operations.rst:2451
 msgid ""
 "We sign in, replace the temporary password, and open the page *Edge*. The "
 "page shows four things."
 msgstr "로그인하고, 임시 비밀번호를 바꾸고, *Edge* 페이지를 엽니다. 이 페이지는 네 가지를 보여 줍니다."
 
-#: ../../operations.rst:2452
+#: ../../operations.rst:2453
 msgid ""
 "**The node.** Its state is one of three words. *Serving* means that the "
 "node admits new flows. *Draining* means that the node was told to stop: "
@@ -8320,7 +8324,7 @@ msgstr ""
 "같습니다. 두 번째는 영속 모드에서 노드가 서비스하는 데이터베이스의 리비전입니다(SID 0028). 파일로 서비스하는 노드에는 이 "
 "값이 없으며, 페이지에 \"Not reported\"라고 표시됩니다."
 
-#: ../../operations.rst:2454
+#: ../../operations.rst:2455
 msgid ""
 "**The refusals by cause.** One row for each reason of the metrics: "
 "``flow_limit``, ``draining``, ``rate_limit``, ``connection_limit``, "
@@ -8332,7 +8336,7 @@ msgstr ""
 "``connection_limit``, ``task_limit`` 등. 용량이 부족해 거부하는 노드는 ``flow_limit``\\ "
 "에, 드레이닝 중인 노드는 ``draining``\\ 에 셉니다."
 
-#: ../../operations.rst:2456
+#: ../../operations.rst:2457
 msgid ""
 "**The frontends and the pools.** A frontend shows its requests, flows, "
 "bytes and the latency of a request: the mean and the 95th percentile. A "
@@ -8344,7 +8348,7 @@ msgstr ""
 "서버마다 ``show servers``\\ 의 열을 보여 주고, 이어서 요청 수, 실패, 처리 중인 요청, 첫 바이트까지의 대기 "
 "시간을 보여 줍니다. 한 화면에는 서버가 최대 256개까지 실리며, 페이지에 몇 개를 생략했는지 표시됩니다."
 
-#: ../../operations.rst:2458
+#: ../../operations.rst:2459
 msgid ""
 "**The fleet.** One row for each member: the state of the link, the state "
 "of the node, its flows, its servers and its two revisions. A member whose "
@@ -8354,7 +8358,7 @@ msgstr ""
 "**플릿.** 구성원마다 한 행: 링크 상태, 노드 상태, 플로, 서버, 리비전 두 개. 파일이 이 노드의 파일과 다른 구성원은 "
 "``differs``\\ 로 표시됩니다. 5초 안에 응답하지 않는 구성원의 행은 ``No answer``\\ 입니다."
 
-#: ../../operations.rst:2460
+#: ../../operations.rst:2461
 msgid ""
 "An operator or an administrator also sees the commands. Each command is "
 "one line of the admin socket, and the function of the admin socket runs "
@@ -8367,15 +8371,15 @@ msgstr ""
 "같은 워커가 적용하며, 한꺼번에 20개, 초당 10개라는 같은 제한이 유지됩니다. *This node only*\\ 를 선택하지 "
 "않으면, 변경은 ``sibuna ctl``\\ 에서와 마찬가지로 메시를 거쳐 다른 노드에 전달됩니다."
 
-#: ../../operations.rst:2466
+#: ../../operations.rst:2467
 msgid "The console offers"
 msgstr "콘솔이 제공하는 것"
 
-#: ../../operations.rst:2467
+#: ../../operations.rst:2468
 msgid "It does not offer"
 msgstr "제공하지 않는 것"
 
-#: ../../operations.rst:2468
+#: ../../operations.rst:2469
 msgid ""
 "``set server POOL/NAME state ready|drain [local]``, ``set server "
 "POOL/NAME weight N [local]``, ``add server``, ``del server``, ``del "
@@ -8387,7 +8391,7 @@ msgstr ""
 "ban``, ``reload cluster``, ``show servers``, ``show cluster``, ``show "
 "certs``, ``show ca``"
 
-#: ../../operations.rst:2469
+#: ../../operations.rst:2470
 msgid ""
 "``reload``, ``reopen log``, ``show info``, ``show stats``, ``show "
 "authority``, ``show affinity``, ``revoke cert`` and every other command. "
@@ -8397,7 +8401,7 @@ msgstr ""
 "authority``, ``show affinity``, ``revoke cert``, 그리고 다른 모든 명령. 이 명령들은 "
 "호스트에서 ``sibuna ctl``\\ 로 씁니다."
 
-#: ../../operations.rst:2471
+#: ../../operations.rst:2472
 msgid ""
 "Every request passes the checks of the console: the session, the role, "
 "the ``Origin`` field, the CSRF token and the allowance of the session. A "
@@ -8410,7 +8414,7 @@ msgstr ""
 "읽기만 하고 아무것도 바꾸지 않습니다. 감사 로그는 각 변경을 두 번 기록합니다. 실행 전의 줄과 실행 후의 결과입니다. 콘솔이 "
 "제공하지 않는 줄은 ``CONSOLEEDGE``\\ 로 응답되며, 엣지는 그 줄을 보지 않습니다."
 
-#: ../../operations.rst:2473
+#: ../../operations.rst:2474
 msgid ""
 "**A fleet.** For more than one node we write the list of all members, the "
 "same on every node, so that ``reload cluster`` can carry the file. Each "
@@ -8419,7 +8423,7 @@ msgstr ""
 "**플릿.** 노드가 둘 이상이면 모든 구성원의 목록을 모든 노드에서 똑같이 적어, ``reload cluster``\\ 가 파일을 "
 "전달할 수 있게 합니다. 각 노드는 노드의 작은 파일에 담긴 번호로 자신을 찾습니다."
 
-#: ../../operations.rst:2475
+#: ../../operations.rst:2476
 msgid ""
 "console: {\n"
 "    data_dir: \"/var/lib/sibuna\",\n"
@@ -8439,18 +8443,19 @@ msgid ""
 "},"
 msgstr ""
 
-#: ../../operations.rst:2492
+#: ../../operations.rst:2493
 msgid ""
 "A fleet has at most 64 members. The consoles talk to each other over "
-"HTTPS, so each one stands behind a TLS proxy, as Part XI describes for "
-"peers. The proxy must set ``X-Forwarded-For``. The two key files hold 64 "
-"hexadecimal digits each and are readable by their owner only."
+"HTTPS, so each one stands behind a TLS proxy, as \"A Tour of the "
+"Console\" describes for remote operation. The proxy must set "
+"``X-Forwarded-For``. The two key files hold 64 hexadecimal digits each "
+"and are readable by their owner only."
 msgstr ""
-"플릿의 구성원은 최대 64개입니다. 콘솔들은 HTTPS로 서로 통신하므로, 제XI부가 피어에 대해 설명하듯이 각 콘솔은 TLS "
-"프록시 뒤에 있습니다. 프록시는 ``X-Forwarded-For``\\ 를 설정해야 합니다. 두 키 파일은 각각 16진수 64자리를 "
-"담으며 소유자만 읽을 수 있습니다."
+"플릿의 구성원은 최대 64개입니다. 콘솔들은 HTTPS로 서로 통신하므로, *콘솔 둘러보기*\\ 가 원격 운영에 대해 설명하듯이 각 "
+"콘솔은 TLS 프록시 뒤에 있습니다. 프록시는 ``X-Forwarded-For``\\ 를 설정해야 합니다. 두 키 파일은 각각 "
+"16진수 64자리를 담으며 소유자만 읽을 수 있습니다."
 
-#: ../../operations.rst:2494
+#: ../../operations.rst:2495
 msgid ""
 "The listener screens a connection by its source address when it accepts "
 "it. Behind a proxy it serves the trusted proxies only. Without a proxy, "
@@ -8465,7 +8470,7 @@ msgstr ""
 "자신의 항목에 있는 ``allow_ips``\\ 에서 연결해야 하고, 새로운 트랜스크립트 안에서 자신과 이 노드의 이름을 밝혀야 "
 "하며, 피어 키를 증명해야 합니다. ``allow_operators``\\ 는 그 밖의 모든 요청에 적용됩니다."
 
-#: ../../operations.rst:2496
+#: ../../operations.rst:2497
 msgid ""
 "The listener has a fixed number of slots: 64 browser streams, one peer "
 "stream for each peer and at least 16, and 16 slots that only ordinary "
@@ -8477,7 +8482,7 @@ msgstr ""
 "있는 슬롯 16개입니다. 할당량을 넘는 스트림은 503으로 응답되며, 페이지와 명령은 계속 동작합니다. 콘솔은 요청 경로의 잠금을 "
 "절대 잡지 않으며, 엣지 워커는 매 회차마다 콘솔을 위한 플래그 하나만 봅니다."
 
-#: ../../operations.rst:2498
+#: ../../operations.rst:2499
 msgid ""
 "**Removing a member.** We delete its entry from the file and reload. The "
 "node closes the stream of that member within two seconds and refuses its "
@@ -8490,11 +8495,11 @@ msgstr ""
 "키를 가지고 있더라도 다음 연결을 거부합니다. 새 구성원이나 바뀐 항목은 재시작한 뒤에 쓰입니다. 데몬은 ``EDGE014``\\ "
 "를 기록합니다. 콘솔의 리스너, 디렉터리, 프록시 설정, 키를 바꾸는 다시 불러오기는 거부되며, 경로는 그대로 남습니다."
 
-#: ../../operations.rst:2500
+#: ../../operations.rst:2501
 msgid "Several nodes"
 msgstr "여러 노드"
 
-#: ../../operations.rst:2503
+#: ../../operations.rst:2504
 msgid ""
 "For several nodes we can add a top-level ``mesh`` object with a unicast "
 "``listen`` address, a list of ``peers`` as numeric UDP socket addresses, "
@@ -8525,11 +8530,11 @@ msgstr ""
 "``forward``\\ 가 있으면 클라이언트의 새 플로를 그 소유자 노드로 보냅니다(위의 절들, SID 0022에서 SID "
 "0026). 라우팅이 바뀌어도 수립된 TCP 연결을 그 노드에 유지하려면 여전히 상류의 플로 조향이 필요합니다."
 
-#: ../../operations.rst:2505
+#: ../../operations.rst:2506
 msgid "Hosting jlavi, jlavideploy and jlavici"
 msgstr "jlavi, jlavideploy, jlavici 호스팅"
 
-#: ../../operations.rst:2508
+#: ../../operations.rst:2509
 msgid ""
 "The three sibling projects serve cleartext HTTP/1.1 and leave TLS to a "
 "proxy. One Sibuna node can serve all three names on port 443 and pass Git "
@@ -8538,31 +8543,31 @@ msgstr ""
 "세 자매 프로젝트는 평문 HTTP/1.1을 제공하고 TLS는 프록시에 맡깁니다. Sibuna 노드 하나가 포트 443에서 세 이름을 "
 "모두 서비스하고, SSH 위의 Git을 TCP로 통과시킬 수 있습니다."
 
-#: ../../operations.rst:2510
+#: ../../operations.rst:2511
 msgid "What each project needs from the edge"
 msgstr "각 프로젝트가 엣지에 요구하는 것"
 
-#: ../../operations.rst:2514
+#: ../../operations.rst:2515
 msgid "Project"
 msgstr "프로젝트"
 
-#: ../../operations.rst:2515
+#: ../../operations.rst:2516
 msgid "Server"
 msgstr "서버"
 
-#: ../../operations.rst:2516
+#: ../../operations.rst:2517
 msgid "Needs"
 msgstr "요구 사항"
 
-#: ../../operations.rst:2517
+#: ../../operations.rst:2518
 msgid "jlavi"
 msgstr "jlavi"
 
-#: ../../operations.rst:2518
+#: ../../operations.rst:2519
 msgid "``10.20.0.8:8040``"
 msgstr "``10.20.0.8:8040``"
 
-#: ../../operations.rst:2519
+#: ../../operations.rst:2520
 msgid ""
 "WebSocket on ``/live``, Git and large-file transfers of an hour, health "
 "at ``/api/v1/health``, ``trusted_proxies`` naming the Sibuna node, and "
@@ -8572,15 +8577,15 @@ msgstr ""
 "검사, Sibuna 노드를 지정한 ``trusted_proxies``, ``sshd``\\ 로의 TCP 패스스루. 여러 프로세스가 "
 "풀 하나를 공유할 수 있습니다."
 
-#: ../../operations.rst:2520
+#: ../../operations.rst:2521
 msgid "jlavideploy"
 msgstr "jlavideploy"
 
-#: ../../operations.rst:2521
+#: ../../operations.rst:2522
 msgid "``10.20.0.9:7420``"
 msgstr "``10.20.0.9:7420``"
 
-#: ../../operations.rst:2522
+#: ../../operations.rst:2523
 msgid ""
 "WebSocket on ``/live``, long polls of 30 s, bodies up to 64 MiB, health "
 "at ``/healthz``. It reads no forwarded field."
@@ -8588,15 +8593,15 @@ msgstr ""
 "``/live``\\ 의 WebSocket, 30 s 롱 폴링, 최대 64 MiB 본문, ``/healthz``\\ 의 헬스 검사. "
 "전달 필드는 읽지 않습니다."
 
-#: ../../operations.rst:2523
+#: ../../operations.rst:2524
 msgid "jlavici"
 msgstr "jlavici"
 
-#: ../../operations.rst:2524
+#: ../../operations.rst:2525
 msgid "``10.20.0.10:8050``"
 msgstr "``10.20.0.10:8050``"
 
-#: ../../operations.rst:2525
+#: ../../operations.rst:2526
 msgid ""
 "Long polls of 25 s, chunk uploads of 16 MiB, large downloads, health at "
 "``/healthz``. One coordinator only, so one server. The public URL must be "
@@ -8605,7 +8610,7 @@ msgstr ""
 "25 s 롱 폴링, 16 MiB 청크 업로드, 대용량 다운로드, ``/healthz``\\ 의 헬스 검사. 코디네이터가 하나뿐이므로 "
 "서버도 하나입니다. 공개 URL은 엣지가 서비스하는 이름이어야 합니다."
 
-#: ../../operations.rst:2527
+#: ../../operations.rst:2528
 msgid ""
 "{\n"
 "  \"global\": {\"max_flows\": 16384},\n"
@@ -8649,7 +8654,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../operations.rst:2559
+#: ../../operations.rst:2560
 msgid ""
 "The names carry no firewall here, because their clients are Git, curl and "
 "runners. To protect the browser pages of a project, we give its route "
@@ -8664,27 +8669,27 @@ msgstr ""
 "애플리케이션은 공개 URL을 HTTPS 이름으로 설정합니다. jlavi는 Sibuna 노드를 ``trusted_proxies``\\ "
 "에 등록합니다. 인증서의 공개 키를 고정한 러너 키는 갱신할 때 같은 개인 키를 유지하는 한 계속 유효합니다."
 
-#: ../../operations.rst:2561
+#: ../../operations.rst:2562
 msgid "Coming from HAProxy"
 msgstr "HAProxy에서 옮겨 오기"
 
-#: ../../operations.rst:2564
+#: ../../operations.rst:2565
 msgid "HAProxy directives and their edge equivalents"
 msgstr "HAProxy 지시어와 그에 해당하는 엣지 설정"
 
-#: ../../operations.rst:2568
+#: ../../operations.rst:2569
 msgid "HAProxy"
 msgstr "HAProxy"
 
-#: ../../operations.rst:2569
+#: ../../operations.rst:2570
 msgid "Sibuna edge"
 msgstr "Sibuna 엣지"
 
-#: ../../operations.rst:2570
+#: ../../operations.rst:2571
 msgid "``bind :443 ssl crt /etc/haproxy/certs/ alpn h2,http/1.1``"
 msgstr "``bind :443 ssl crt /etc/haproxy/certs/ alpn h2,http/1.1``"
 
-#: ../../operations.rst:2571
+#: ../../operations.rst:2572
 msgid ""
 "``\"binds\": [\"0.0.0.0:443\"], \"tls\": {\"crt\": "
 "\"/etc/sibuna/certs/\"}``"
@@ -8692,37 +8697,37 @@ msgstr ""
 "``\"binds\": [\"0.0.0.0:443\"], \"tls\": {\"crt\": "
 "\"/etc/sibuna/certs/\"}``"
 
-#: ../../operations.rst:2572
+#: ../../operations.rst:2573
 msgid "``bind quic4@:443 ssl crt ... alpn h3``"
 msgstr "``bind quic4@:443 ssl crt ... alpn h3``"
 
-#: ../../operations.rst:2573
+#: ../../operations.rst:2574
 msgid "``\"tls\": {\"crt\": ..., \"http3\": true}``"
 msgstr "``\"tls\": {\"crt\": ..., \"http3\": true}``"
 
-#: ../../operations.rst:2574
+#: ../../operations.rst:2575
 msgid "``use_backend api if { hdr(host) -i api.example.org }``"
 msgstr "``use_backend api if { hdr(host) -i api.example.org }``"
 
-#: ../../operations.rst:2575
+#: ../../operations.rst:2576
 msgid ""
 "``\"routes\": [{\"host\": \"api.example.org\", \"backend\": \"api\"}]``"
 msgstr ""
 "``\"routes\": [{\"host\": \"api.example.org\", \"backend\": \"api\"}]``"
 
-#: ../../operations.rst:2576
+#: ../../operations.rst:2577
 msgid "``use_backend api if { path_beg /v1/ }``"
 msgstr "``use_backend api if { path_beg /v1/ }``"
 
-#: ../../operations.rst:2577
+#: ../../operations.rst:2578
 msgid "``{\"path_prefix\": \"/v1/\", \"backend\": \"api\"}``"
 msgstr "``{\"path_prefix\": \"/v1/\", \"backend\": \"api\"}``"
 
-#: ../../operations.rst:2578
+#: ../../operations.rst:2579
 msgid "``mode tcp`` with ``req.ssl_sni``"
 msgstr "``req.ssl_sni``\\ 와 함께 쓰는 ``mode tcp``"
 
-#: ../../operations.rst:2579
+#: ../../operations.rst:2580
 msgid ""
 "``\"proto\": \"tcp\", \"tcp_inspect\": \"tls_client_hello\"`` with "
 "``acls`` and ``rules``"
@@ -8730,36 +8735,36 @@ msgstr ""
 "``acls``\\ 및 ``rules``\\ 와 함께 쓰는 ``\"proto\": \"tcp\", \"tcp_inspect\": "
 "\"tls_client_hello\"``"
 
-#: ../../operations.rst:2580
+#: ../../operations.rst:2581
 msgid "``balance leastconn``, ``weight``, ``maxconn``, ``backup``"
 msgstr "``balance leastconn``, ``weight``, ``maxconn``, ``backup``"
 
-#: ../../operations.rst:2581
+#: ../../operations.rst:2582
 msgid ""
 "``least_connections`` (default), ``weight``, ``max_flows``, ``backup``"
 msgstr "``least_connections`` (기본값), ``weight``, ``max_flows``, ``backup``"
 
-#: ../../operations.rst:2582
+#: ../../operations.rst:2583
 msgid "``balance roundrobin``"
 msgstr "``balance roundrobin``"
 
-#: ../../operations.rst:2583
+#: ../../operations.rst:2584
 msgid "``\"balance\": {\"kind\": \"round_robin\"}``"
 msgstr "``\"balance\": {\"kind\": \"round_robin\"}``"
 
-#: ../../operations.rst:2584
+#: ../../operations.rst:2585
 msgid "``balance source``"
 msgstr "``balance source``"
 
-#: ../../operations.rst:2585
+#: ../../operations.rst:2586
 msgid "``\"sticky\": \"source\"``"
 msgstr "``\"sticky\": \"source\"``"
 
-#: ../../operations.rst:2586
+#: ../../operations.rst:2587
 msgid "``cookie SRV insert indirect nocache httponly secure``"
 msgstr "``cookie SRV insert indirect nocache httponly secure``"
 
-#: ../../operations.rst:2587
+#: ../../operations.rst:2588
 msgid ""
 "``\"sticky\": {\"kind\": \"cookie\", \"cookie\": \"SRV\"}``. The value is "
 "a keyed hash, not the server name."
@@ -8767,11 +8772,11 @@ msgstr ""
 "``\"sticky\": {\"kind\": \"cookie\", \"cookie\": \"SRV\"}``. 값은 서버 이름이 "
 "아니라 키 기반 해시입니다."
 
-#: ../../operations.rst:2588
+#: ../../operations.rst:2589
 msgid "``timeout connect 5s``, ``timeout server 60s``"
 msgstr "``timeout connect 5s``, ``timeout server 60s``"
 
-#: ../../operations.rst:2589
+#: ../../operations.rst:2590
 msgid ""
 "``\"connect_timeout\": \"5s\"``, ``\"response_timeout\": \"60s\"`` on the "
 "backend (these are the defaults)"
@@ -8779,19 +8784,19 @@ msgstr ""
 "백엔드의 ``\"connect_timeout\": \"5s\"``, ``\"response_timeout\": \"60s\"`` "
 "(이것이 기본값입니다)"
 
-#: ../../operations.rst:2590
+#: ../../operations.rst:2591
 msgid "``retries 2`` with ``option redispatch``"
 msgstr "``option redispatch``\\ 와 함께 쓰는 ``retries 2``"
 
-#: ../../operations.rst:2591
+#: ../../operations.rst:2592
 msgid "``\"retries\": 2`` (default). Each retry goes to another server."
 msgstr "``\"retries\": 2`` (기본값). 재시도는 매번 다른 서버로 갑니다."
 
-#: ../../operations.rst:2592
+#: ../../operations.rst:2593
 msgid "``observe layer7``, ``error-limit 3``, ``on-error mark-down``"
 msgstr "``observe layer7``, ``error-limit 3``, ``on-error mark-down``"
 
-#: ../../operations.rst:2593
+#: ../../operations.rst:2594
 msgid ""
 "``\"passive_health\": {\"failures\": 3, \"ejection\": \"10s\", "
 "\"http_5xx\": true}``"
@@ -8799,66 +8804,66 @@ msgstr ""
 "``\"passive_health\": {\"failures\": 3, \"ejection\": \"10s\", "
 "\"http_5xx\": true}``"
 
-#: ../../operations.rst:2594
+#: ../../operations.rst:2595
 msgid "``server s1 ... slowstart 30s``"
 msgstr "``server s1 ... slowstart 30s``"
 
-#: ../../operations.rst:2595
+#: ../../operations.rst:2596
 msgid "``\"slow_start\": \"30s\"`` on the backend"
 msgstr "백엔드의 ``\"slow_start\": \"30s\"``"
 
-#: ../../operations.rst:2596
+#: ../../operations.rst:2597
 msgid "``http-request redirect scheme https code 308 unless { ssl_fc }``"
 msgstr "``http-request redirect scheme https code 308 unless { ssl_fc }``"
 
-#: ../../operations.rst:2597
+#: ../../operations.rst:2598
 msgid "``\"redirect_https\": true`` on the cleartext frontend"
 msgstr "평문 프런트엔드의 ``\"redirect_https\": true``"
 
-#: ../../operations.rst:2598
+#: ../../operations.rst:2599
 msgid ""
 "``http-response set-header Strict-Transport-Security max-age=31536000``"
 msgstr ""
 "``http-response set-header Strict-Transport-Security max-age=31536000``"
 
-#: ../../operations.rst:2599
+#: ../../operations.rst:2600
 msgid "``\"hsts\": true`` on the TLS frontend"
 msgstr "TLS 프런트엔드의 ``\"hsts\": true``"
 
-#: ../../operations.rst:2600
-msgid ""
-"``http-request set-header X-Edge sibuna``, ``http-request del-header "
-"X-Debug``"
-msgstr ""
-"``http-request set-header X-Edge sibuna``, ``http-request del-header "
-"X-Debug``"
-
 #: ../../operations.rst:2601
 msgid ""
+"``http-request set-header X-Edge sibuna``, ``http-request del-header "
+"X-Debug``"
+msgstr ""
+"``http-request set-header X-Edge sibuna``, ``http-request del-header "
+"X-Debug``"
+
+#: ../../operations.rst:2602
+msgid ""
 "``\"request_headers\": {\"set\": {\"X-Edge\": \"sibuna\"}, \"remove\": "
 "[\"X-Debug\"]}``"
 msgstr ""
 "``\"request_headers\": {\"set\": {\"X-Edge\": \"sibuna\"}, \"remove\": "
 "[\"X-Debug\"]}``"
 
-#: ../../operations.rst:2602
+#: ../../operations.rst:2603
 msgid "``http-response set-header``, ``http-response del-header Server``"
 msgstr "``http-response set-header``, ``http-response del-header Server``"
 
-#: ../../operations.rst:2603
+#: ../../operations.rst:2604
 msgid "``\"response_headers\": {\"set\": {...}, \"remove\": [\"Server\"]}``"
 msgstr ""
 "``\"response_headers\": {\"set\": {...}, \"remove\": [\"Server\"]}``"
 
-#: ../../operations.rst:2604
+#: ../../operations.rst:2605
 msgid "``http-request deny deny_status 413 if { req.body_size gt 10m }``"
 msgstr "``http-request deny deny_status 413 if { req.body_size gt 10m }``"
 
-#: ../../operations.rst:2605
+#: ../../operations.rst:2606
 msgid "``\"max_body\": \"10m\"``"
 msgstr "``\"max_body\": \"10m\"``"
 
-#: ../../operations.rst:2606
+#: ../../operations.rst:2607
 msgid ""
 "``http-request set-header X-Forwarded-Host %[req.hdr(host)]``, "
 "``X-Forwarded-Port %[dst_port]``"
@@ -8866,55 +8871,55 @@ msgstr ""
 "``http-request set-header X-Forwarded-Host %[req.hdr(host)]``, "
 "``X-Forwarded-Port %[dst_port]``"
 
-#: ../../operations.rst:2607 ../../operations.rst:2615
+#: ../../operations.rst:2608 ../../operations.rst:2616
 msgid "Always on for HTTP frontends"
 msgstr "HTTP 프런트엔드에서는 항상 켜져 있음"
 
-#: ../../operations.rst:2608
+#: ../../operations.rst:2609
 msgid "``option httpchk GET /health`` and ``check inter 2s rise 2 fall 3``"
 msgstr "``option httpchk GET /health``\\ 와 ``check inter 2s rise 2 fall 3``"
 
-#: ../../operations.rst:2609
-msgid ""
-"``\"health_check\": {\"kind\": \"http\", \"path\": \"/health\", "
-"\"interval\": \"2s\", \"rise\": 2, \"fall\": 3}``"
-msgstr ""
-"``\"health_check\": {\"kind\": \"http\", \"path\": \"/health\", "
-"\"interval\": \"2s\", \"rise\": 2, \"fall\": 3}``"
-
 #: ../../operations.rst:2610
 msgid ""
-"``server s1 10.0.0.1:8443 ssl verify required ca-file ca.pem sni "
-"str(api.internal) alpn h2``"
+"``\"health_check\": {\"kind\": \"http\", \"path\": \"/health\", "
+"\"interval\": \"2s\", \"rise\": 2, \"fall\": 3}``"
 msgstr ""
-"``server s1 10.0.0.1:8443 ssl verify required ca-file ca.pem sni "
-"str(api.internal) alpn h2``"
+"``\"health_check\": {\"kind\": \"http\", \"path\": \"/health\", "
+"\"interval\": \"2s\", \"rise\": 2, \"fall\": 3}``"
 
 #: ../../operations.rst:2611
 msgid ""
+"``server s1 10.0.0.1:8443 ssl verify required ca-file ca.pem sni "
+"str(api.internal) alpn h2``"
+msgstr ""
+"``server s1 10.0.0.1:8443 ssl verify required ca-file ca.pem sni "
+"str(api.internal) alpn h2``"
+
+#: ../../operations.rst:2612
+msgid ""
 "``\"http_version\": \"2\", \"tls\": {\"ca_file\": \"ca.pem\", \"sni\": "
 "\"api.internal\"}``"
 msgstr ""
 "``\"http_version\": \"2\", \"tls\": {\"ca_file\": \"ca.pem\", \"sni\": "
 "\"api.internal\"}``"
 
-#: ../../operations.rst:2612
+#: ../../operations.rst:2613
 msgid "``server s1 ... send-proxy-v2``"
 msgstr "``server s1 ... send-proxy-v2``"
 
-#: ../../operations.rst:2613
+#: ../../operations.rst:2614
 msgid "``\"proxy_v2\": {\"enabled\": true}`` on a TCP pool"
 msgstr "TCP 풀의 ``\"proxy_v2\": {\"enabled\": true}``"
 
-#: ../../operations.rst:2614
+#: ../../operations.rst:2615
 msgid "``option forwardfor``"
 msgstr "``option forwardfor``"
 
-#: ../../operations.rst:2616
+#: ../../operations.rst:2617
 msgid "``timeout client``, ``timeout tunnel``"
 msgstr "``timeout client``, ``timeout tunnel``"
 
-#: ../../operations.rst:2617
+#: ../../operations.rst:2618
 msgid ""
 "``http.idle_timeout``, ``http.websocket_idle_timeout``, "
 "``session_timeout`` on TCP and UDP frontends"
@@ -8922,84 +8927,84 @@ msgstr ""
 "``http.idle_timeout``, ``http.websocket_idle_timeout``, TCP와 UDP 프런트엔드의 "
 "``session_timeout``"
 
-#: ../../operations.rst:2618
+#: ../../operations.rst:2619
 msgid "``stick-table ... conn_rate``, ``http_req_rate``"
 msgstr "``stick-table ... conn_rate``, ``http_req_rate``"
 
-#: ../../operations.rst:2619
+#: ../../operations.rst:2620
 msgid "``rate_limit`` on a frontend, ``http.rate_limit``"
 msgstr "프런트엔드의 ``rate_limit``, ``http.rate_limit``"
 
-#: ../../operations.rst:2620
+#: ../../operations.rst:2621
 msgid "``reload`` (new process)"
 msgstr "``reload`` (새 프로세스)"
 
-#: ../../operations.rst:2621
+#: ../../operations.rst:2622
 msgid "SIGHUP or ``sibuna ctl SOCKET reload`` (same process, flows kept)"
 msgstr "SIGHUP 또는 ``sibuna ctl SOCKET reload`` (같은 프로세스, 플로 유지)"
 
-#: ../../operations.rst:2622
+#: ../../operations.rst:2623
 msgid "``stats socket /run/haproxy.sock mode 600 level admin``"
 msgstr "``stats socket /run/haproxy.sock mode 600 level admin``"
 
-#: ../../operations.rst:2623
+#: ../../operations.rst:2624
 msgid "``\"global\": {\"admin_socket\": \"/run/sibuna/edge.sock\"}``"
 msgstr "``\"global\": {\"admin_socket\": \"/run/sibuna/edge.sock\"}``"
 
-#: ../../operations.rst:2624
+#: ../../operations.rst:2625
 msgid "``echo \"show servers state\" | socat stdio /run/haproxy.sock``"
 msgstr "``echo \"show servers state\" | socat stdio /run/haproxy.sock``"
 
-#: ../../operations.rst:2625
+#: ../../operations.rst:2626
 msgid "``sibuna ctl /run/sibuna/edge.sock show servers``"
 msgstr "``sibuna ctl /run/sibuna/edge.sock show servers``"
 
-#: ../../operations.rst:2626
+#: ../../operations.rst:2627
 msgid "``set server app/s1 state drain``, ``state maint``, ``state ready``"
 msgstr "``set server app/s1 state drain``, ``state maint``, ``state ready``"
 
-#: ../../operations.rst:2627
+#: ../../operations.rst:2628
 msgid "``set server app/s1 state drain``, ``state ready``"
 msgstr "``set server app/s1 state drain``, ``state ready``"
 
-#: ../../operations.rst:2628 ../../operations.rst:2629
+#: ../../operations.rst:2629 ../../operations.rst:2630
 msgid "``set server app/s1 weight 10``"
 msgstr "``set server app/s1 weight 10``"
 
-#: ../../operations.rst:2630 ../../operations.rst:2631
+#: ../../operations.rst:2631 ../../operations.rst:2632
 msgid "``add server app/s3 10.0.0.3:80``, ``del server app/s3``"
 msgstr "``add server app/s3 10.0.0.3:80``, ``del server app/s3``"
 
-#: ../../operations.rst:2632
+#: ../../operations.rst:2633
 msgid "``server-state-file`` with ``load-server-state-from-file``"
 msgstr "``load-server-state-from-file``\\ 과 함께 쓰는 ``server-state-file``"
 
-#: ../../operations.rst:2633
+#: ../../operations.rst:2634
 msgid ""
 "Not needed for drains, which pass a reload. Other run-time changes are "
 "made durable in the file."
 msgstr ""
 "드레이닝에는 필요 없습니다. 드레이닝은 다시 불러오기를 거쳐도 유지됩니다. 다른 실행 중 변경은 파일에 적어 영구히 남깁니다."
 
-#: ../../operations.rst:2634
+#: ../../operations.rst:2635
 msgid "``show info``, ``show stat``"
 msgstr "``show info``, ``show stat``"
 
-#: ../../operations.rst:2635
+#: ../../operations.rst:2636
 msgid ""
 "``show info``, ``show stats`` (the Prometheus text of the metrics route)"
 msgstr "``show info``, ``show stats`` (메트릭 경로의 Prometheus 텍스트)"
 
-#: ../../operations.rst:2636
+#: ../../operations.rst:2637
 msgid "``show ssl cert``, ``acme status``"
 msgstr "``show ssl cert``, ``acme status``"
 
-#: ../../operations.rst:2638
+#: ../../operations.rst:2639
 msgid ""
 "``acme`` section with ``challenge http-01`` (experimental in HAProxy 3.4)"
 msgstr "``challenge http-01``\\ 이 있는 ``acme`` 섹션(HAProxy 3.4에서 실험 기능)"
 
-#: ../../operations.rst:2639
+#: ../../operations.rst:2640
 msgid ""
 "``\"tls\": {\"auto\": [\"example.org\"]}`` on the frontend, "
 "``global.acme`` for the account (section *Automatic HTTPS*)"
@@ -9007,7 +9012,7 @@ msgstr ""
 "프런트엔드의 ``\"tls\": {\"auto\": [\"example.org\"]}``, 계정을 위한 ``global.acme`` "
 "(*자동 HTTPS* 절)"
 
-#: ../../operations.rst:2640
+#: ../../operations.rst:2641
 msgid ""
 "``balance source`` with ``hash-type consistent`` and "
 "``hash-balance-factor 125``"
@@ -9015,17 +9020,17 @@ msgstr ""
 "``hash-type consistent``\\ 와 ``hash-balance-factor 125``\\ 와 함께 쓰는 "
 "``balance source``"
 
-#: ../../operations.rst:2641
+#: ../../operations.rst:2642
 msgid ""
 "``\"balance\": {\"kind\": \"bounded_maglev\", \"load_factor_pct\": 125}``"
 msgstr ""
 "``\"balance\": {\"kind\": \"bounded_maglev\", \"load_factor_pct\": 125}``"
 
-#: ../../operations.rst:2642
+#: ../../operations.rst:2643
 msgid "``peers`` section, with ``peers`` on a ``stick-table``"
 msgstr "``stick-table``\\ 에 ``peers``\\ 를 지정한 ``peers`` 섹션"
 
-#: ../../operations.rst:2643
+#: ../../operations.rst:2644
 msgid ""
 "``mesh`` with ``\"sticky\": {\"kind\": \"table\"}`` on the pool (section "
 "*A sticky table and a limit for the whole cluster*)"
@@ -9033,31 +9038,31 @@ msgstr ""
 "``mesh``\\ 와 풀의 ``\"sticky\": {\"kind\": \"table\"}`` (*클러스터 전체를 위한 스티키 "
 "테이블과 제한* 절)"
 
-#: ../../operations.rst:2644
+#: ../../operations.rst:2645
 msgid "``show peers``"
 msgstr "``show peers``"
 
-#: ../../operations.rst:2645
+#: ../../operations.rst:2646
 msgid "``show cluster``"
 msgstr "``show cluster``"
 
-#: ../../operations.rst:2646
+#: ../../operations.rst:2647
 msgid "``show table``"
 msgstr "``show table``"
 
-#: ../../operations.rst:2648
+#: ../../operations.rst:2649
 msgid "``clear table <table> key <address>`` on a table that holds bans"
 msgstr "차단을 담은 테이블에 쓰는 ``clear table <table> key <address>``"
 
-#: ../../operations.rst:2649
+#: ../../operations.rst:2650
 msgid "``del ban ADDRESS``, on every node of a mesh"
 msgstr "메시의 모든 노드에서 ``del ban ADDRESS``"
 
-#: ../../operations.rst:2650
+#: ../../operations.rst:2651
 msgid "``-x`` or ``expose-fd listeners`` (seamless reload)"
 msgstr "``-x`` 또는 ``expose-fd listeners`` (끊김 없는 다시 불러오기)"
 
-#: ../../operations.rst:2651
+#: ../../operations.rst:2652
 msgid ""
 "SIGHUP for a new file; ``global.upgrade_socket`` (Linux) or "
 "``global.reuse_port`` for a new binary"
@@ -9065,28 +9070,28 @@ msgstr ""
 "새 파일에는 SIGHUP, 새 바이너리에는 ``global.upgrade_socket`` (Linux) 또는 "
 "``global.reuse_port``"
 
-#: ../../operations.rst:2652
+#: ../../operations.rst:2653
 msgid "``filter spoe``"
 msgstr "``filter spoe``"
 
-#: ../../operations.rst:2653
+#: ../../operations.rst:2654
 msgid "A plugin of the kind ``agent`` on a Unix socket (section *Hooks*)"
 msgstr "Unix 소켓 위의 ``agent`` 종류 플러그인(*훅* 절)"
 
-#: ../../operations.rst:2654
+#: ../../operations.rst:2655
 msgid "``lua-load``"
 msgstr "``lua-load``"
 
-#: ../../operations.rst:2655
+#: ../../operations.rst:2656
 msgid ""
 "A plugin of the kind ``wasm``, or a native hook compiled into the binary"
 msgstr "``wasm`` 종류 플러그인, 또는 바이너리에 함께 컴파일된 네이티브 훅"
 
-#: ../../operations.rst:2657
+#: ../../operations.rst:2658
 msgid "Limits of this version"
 msgstr "이 버전의 한계"
 
-#: ../../operations.rst:2660
+#: ../../operations.rst:2661
 msgid ""
 "On Linux the HTTP firewall serves connections on event-driven workers, "
 "one per processor, up to ``http.max_connections``. A connection that "
@@ -9138,11 +9143,11 @@ msgstr ""
 "0032), 각각 그 기록에 나열된 알려진 공백이 있습니다. SID 0015는 아직 제안 단계인 것을 나열합니다. 플랫폼별 협력 "
 "배칭, 1,000만 플로 실험, 엣지가 생성하는 QUIC Retry입니다."
 
-#: ../../operations.rst:2663
+#: ../../operations.rst:2664
 msgid "Console Preview"
 msgstr "콘솔 미리보기"
 
-#: ../../operations.rst:2666
+#: ../../operations.rst:2667
 msgid ""
 "The console is compiled into the daemon by the default ``console`` "
 "feature, but starts only with ``--console``. It needs storage: "
@@ -9159,7 +9164,7 @@ msgstr ""
 "사용하세요. ``--no-default-features``\\ 만 지정한 빌드에는 저장소도 콘솔도 없습니다. 데몬을 중지한 상태에서 "
 "로컬로 초기 설정을 합니다:"
 
-#: ../../operations.rst:2668
+#: ../../operations.rst:2669
 msgid ""
 "sibuna init-admin admin --data-dir ./data\n"
 "sibuna --data-dir ./data --console 127.0.0.1:19446"
@@ -9167,7 +9172,7 @@ msgstr ""
 "sibuna init-admin admin --data-dir ./data\n"
 "sibuna --data-dir ./data --console 127.0.0.1:19446"
 
-#: ../../operations.rst:2673
+#: ../../operations.rst:2674
 msgid ""
 "``sibuna console init-admin`` is the same command. Open "
 "``http://127.0.0.1:19446/console/`` and replace the generated temporary "
@@ -9188,15 +9193,15 @@ msgstr ""
 "``sibuna-console-ui``)에서 빌드한 WebAssembly 모듈입니다. 이 모듈과 커밋된 스타일시트는 일반 빌드에 "
 "포함됩니다."
 
-#: ../../operations.rst:2675
+#: ../../operations.rst:2676
 msgid "Console options"
 msgstr "콘솔 옵션"
 
-#: ../../operations.rst:2681
+#: ../../operations.rst:2682
 msgid "``--console <ip:port>``"
 msgstr "``--console <ip:port>``"
 
-#: ../../operations.rst:2682
+#: ../../operations.rst:2683
 msgid ""
 "Start the console on this listener (IPv6 in brackets, nonzero port); "
 "requires ``--data-dir`` or ``--database-url``"
@@ -9204,117 +9209,117 @@ msgstr ""
 "이 리스너에서 콘솔을 시작합니다(IPv6는 대괄호 안에, 포트는 0이 아님). ``--data-dir`` 또는 "
 "``--database-url``\\ 이 필요합니다"
 
-#: ../../operations.rst:2683
+#: ../../operations.rst:2684
 msgid "``--console-key-file <path>``"
 msgstr "``--console-key-file <path>``"
 
-#: ../../operations.rst:2684
+#: ../../operations.rst:2685
 msgid ""
 "64 hex characters, owner-only permissions; protects stored second-factor "
 "and webhook secrets"
 msgstr "16진수 문자 64개, 소유자 전용 권한. 저장된 2단계 인증 비밀 값과 웹훅 비밀 값을 보호합니다"
 
-#: ../../operations.rst:2685
+#: ../../operations.rst:2686
 msgid "``--console-origin <https-origin>``"
 msgstr "``--console-origin <https-origin>``"
 
-#: ../../operations.rst:2686
+#: ../../operations.rst:2687
 msgid "The canonical HTTPS origin behind a proxy"
 msgstr "프록시 뒤에서 사용하는 정식 HTTPS 출처"
 
-#: ../../operations.rst:2687
+#: ../../operations.rst:2688
 msgid "``--console-behind-proxy``"
 msgstr "``--console-behind-proxy``"
 
-#: ../../operations.rst:2688
+#: ../../operations.rst:2689
 msgid "A TLS-terminating proxy delivers every request"
 msgstr "TLS를 종료하는 프록시가 모든 요청을 전달합니다"
 
-#: ../../operations.rst:2689
+#: ../../operations.rst:2690
 msgid "``--console-trusted-proxy <cidr>``"
 msgstr "``--console-trusted-proxy <cidr>``"
 
-#: ../../operations.rst:2690
+#: ../../operations.rst:2691
 msgid ""
 "A network whose connections may carry forwarded fields; repeatable, at "
 "most 16"
 msgstr "전달 필드를 실어 보내도 되는 연결이 오는 네트워크. 반복 지정 가능, 최대 16개"
 
-#: ../../operations.rst:2691
+#: ../../operations.rst:2692
 msgid "``--console-advertise <origin>``"
 msgstr "``--console-advertise <origin>``"
 
-#: ../../operations.rst:2692
+#: ../../operations.rst:2693
 msgid "The link other consoles show for this one"
 msgstr "다른 콘솔이 이 콘솔을 가리킬 때 보여 주는 링크"
 
-#: ../../operations.rst:2693
+#: ../../operations.rst:2694
 msgid "``--console-location <latitude,longitude>``"
 msgstr "``--console-location <latitude,longitude>``"
 
-#: ../../operations.rst:2694
+#: ../../operations.rst:2695
 msgid "This node's declared position on the globe"
 msgstr "지구본 위에 선언하는 이 노드의 위치"
 
-#: ../../operations.rst:2695
+#: ../../operations.rst:2696
 msgid "``--console-probe <node-id>=<http://ip:port>``"
 msgstr "``--console-probe <node-id>=<http://ip:port>``"
 
-#: ../../operations.rst:2696
+#: ../../operations.rst:2697
 msgid ""
 "A peer data-plane listener to health-check; repeatable, at most eight"
 msgstr "상태를 점검할 피어 데이터 평면 리스너. 반복 지정 가능, 최대 8개"
 
-#: ../../operations.rst:2697
+#: ../../operations.rst:2698
 msgid "``--console-peer <node-id>=<https://origin>``"
 msgstr "``--console-peer <node-id>=<https://origin>``"
 
-#: ../../operations.rst:2698
+#: ../../operations.rst:2699
 msgid "A management peer; repeatable, at most eight"
 msgstr "관리 피어. 반복 지정 가능, 최대 8개"
 
-#: ../../operations.rst:2699
+#: ../../operations.rst:2700
 msgid "``--console-peer-key-file <path>``"
 msgstr "``--console-peer-key-file <path>``"
 
-#: ../../operations.rst:2700
+#: ../../operations.rst:2701
 msgid ""
 "The peer key: owner-only, 64 hex characters, independent of the console "
 "key"
 msgstr "피어 키: 소유자 전용, 16진수 문자 64개, 콘솔 키와 독립적"
 
-#: ../../operations.rst:2701
+#: ../../operations.rst:2702
 msgid "``--console-peer-ca-file <path>``"
 msgstr "``--console-peer-ca-file <path>``"
 
-#: ../../operations.rst:2702
+#: ../../operations.rst:2703
 msgid "Optional PEM trust anchors for peers, replacing the system roots"
 msgstr "피어용 선택적 PEM 신뢰 앵커. 시스템 루트 인증서를 대체합니다"
 
-#: ../../operations.rst:2703
+#: ../../operations.rst:2704
 msgid "``--console-query-steps <n>``"
 msgstr "``--console-query-steps <n>``"
 
-#: ../../operations.rst:2704
+#: ../../operations.rst:2705
 msgid ""
 "SQLite steps per aggregate read, 100,000 to 50,000,000, default 4,000,000"
 msgstr "집계 읽기 한 번당 SQLite 단계 수, 100,000에서 50,000,000까지, 기본값 4,000,000"
 
-#: ../../operations.rst:2705
+#: ../../operations.rst:2706
 msgid "``--console-capture-heads``"
 msgstr "``--console-capture-heads``"
 
-#: ../../operations.rst:2706
+#: ../../operations.rst:2707
 msgid ""
 "Store redacted request and origin response heads per incident; off by "
 "default"
 msgstr "인시던트마다 마스킹한 요청 헤드와 원본 서버 응답 헤드를 저장합니다. 기본값은 꺼짐"
 
-#: ../../operations.rst:2707
+#: ../../operations.rst:2708
 msgid "``--console-capture-header <name>``"
 msgstr "``--console-capture-header <name>``"
 
-#: ../../operations.rst:2708
+#: ../../operations.rst:2709
 msgid ""
 "Keep this header's value in stored heads; repeatable, at most 16; "
 "requires ``--console-capture-heads``"
@@ -9322,17 +9327,17 @@ msgstr ""
 "저장된 헤드에 이 헤더의 값을 남깁니다. 반복 지정 가능, 최대 16개. ``--console-capture-heads``\\ 가 "
 "필요합니다"
 
-#: ../../operations.rst:2709
+#: ../../operations.rst:2710
 msgid "``--console-cookie-secure``"
 msgstr "``--console-cookie-secure``"
 
-#: ../../operations.rst:2710
+#: ../../operations.rst:2711
 msgid ""
 "Give console cookies the ``Secure`` attribute without a proxy (accepted "
 "by the parser, not listed in ``--help``)"
 msgstr "프록시 없이도 콘솔 쿠키에 ``Secure`` 속성을 붙입니다(파서는 받지만 ``--help``\\ 에는 나오지 않음)"
 
-#: ../../operations.rst:2712
+#: ../../operations.rst:2713
 msgid ""
 "A console option without ``--console``, a repeated option or a malformed "
 "value stops startup with ``CONSOLE002`` and the option's error name. A "
@@ -9344,11 +9349,11 @@ msgstr ""
 "오류 이름을 내고 시작을 멈춥니다. 콘솔 규칙을 어기는 설정(예: 신뢰할 수 있는 프록시 없이 루프백이 아닌 주소에서 수신)은 "
 "``CONSOLE001``\\ 로 시작을 멈춥니다."
 
-#: ../../operations.rst:2714
+#: ../../operations.rst:2715
 msgid "A Tour of the Console"
 msgstr "콘솔 둘러보기"
 
-#: ../../operations.rst:2717
+#: ../../operations.rst:2718
 msgid ""
 "The screenshots below come from a release build on one loopback node with "
 "SQLite storage and a policy of four ``ALLOW`` rules over a default "
@@ -9368,7 +9373,7 @@ msgstr ""
 "이 명령은 Chromium에서 1440 x 960 픽셀로 콘솔을 순회하며 모든 페이지를 검사합니다. 각 페이지는 제목에 적힌 질문 "
 "하나에 답하며, 제품, 서비스 노드, 페이지, 돌아가기 링크를 같은 자리에 표시합니다."
 
-#: ../../operations.rst:2719
+#: ../../operations.rst:2720
 msgid ""
 "The console sign-in page: user name, password and authenticator code "
 "fields with a Sign in button, and below them a Kiosk code field with an "
@@ -9377,7 +9382,7 @@ msgstr ""
 "콘솔 로그인 페이지: 사용자 이름, 비밀번호, 인증 앱 코드 입력란과 로그인 버튼이 있고, 그 아래에 키오스크 코드 입력란과 벽면 "
 "디스플레이 열기 버튼이 있습니다."
 
-#: ../../operations.rst:2722
+#: ../../operations.rst:2723
 msgid ""
 "Sign-in. The public shell loads no globe geometry, GeoIP data or "
 "telemetry; the second form exchanges a wall-display code for a read-only "
@@ -9386,7 +9391,7 @@ msgstr ""
 "로그인. 공개 화면은 지구본 형상, GeoIP 데이터, 텔레메트리를 불러오지 않습니다. 두 번째 양식은 벽면 디스플레이 코드를 읽기 "
 "전용 통계 세션으로 교환합니다."
 
-#: ../../operations.rst:2724
+#: ../../operations.rst:2725
 msgid ""
 "The Traffic overview page for the last 24 hours: tiles for requests, "
 "admitted, challenged, policy denied, banned, rate limited, other, and "
@@ -9396,7 +9401,7 @@ msgstr ""
 "최근 24시간의 트래픽 개요 페이지: 요청, 허용, 챌린지, 정책 거부, 차단, 속도 제한, 기타, 원본 서버 4xx와 5xx "
 "타일이 있으며, 타일마다 어제와의 비교와 작은 스파크라인이 붙어 있습니다."
 
-#: ../../operations.rst:2727
+#: ../../operations.rst:2728
 msgid ""
 "Statistics, Traffic, over the last 24 hours. The note under the period "
 "control states the coverage: only four of 1,440 expected minute records "
@@ -9418,7 +9423,7 @@ msgstr ""
 "노드를 보여 주는 수준 타일 두 개, 타임라인, 그리고 요청 경로와 참조 호스트의 순위를 매기고 클라이언트 운영 체제, 브라우저, "
 "응답 상태를 세는 표본 패널이 있습니다."
 
-#: ../../operations.rst:2729
+#: ../../operations.rst:2730
 msgid ""
 "The Security overview page: tiles for inspection, reputation, rate "
 "limiting, challenges, bans and honeypot, live trend panels, and a live "
@@ -9427,7 +9432,7 @@ msgstr ""
 "보안 개요 페이지: 검사, 평판, 속도 제한, 챌린지, 차단, 허니팟 타일, 실시간 추세 패널, WAF 탐지 결과를 나열하는 실시간 "
 "이벤트 피드가 있습니다."
 
-#: ../../operations.rst:2732
+#: ../../operations.rst:2733
 msgid ""
 "Statistics, Security. One tile per module over the selected period, live "
 "outcome trends, and the live event feed with its newest findings (here "
@@ -9441,7 +9446,7 @@ msgstr ""
 "평판 타일은 \"기록되지 않음\"으로 표시됩니다. 페이지 아래쪽에는 같은 크기의 구간 60개에 걸친 탐지 결과, 공격 범주, "
 "공격받은 경로가 있습니다."
 
-#: ../../operations.rst:2734
+#: ../../operations.rst:2735
 msgid ""
 "The Events page with a filter form (module, category, country, client "
 "address, path, node, time range) above a list of recorded incidents "
@@ -9450,7 +9455,7 @@ msgstr ""
 "이벤트 페이지: 필터 양식(모듈, 범주, 국가, 클라이언트 주소, 경로, 노드, 시간 범위) 아래에 waf:xss와 waf:sqli "
 "태그가 붙은 기록된 인시던트 목록이 있습니다."
 
-#: ../../operations.rst:2737
+#: ../../operations.rst:2738
 msgid ""
 "Events. The filter form above the recorded incidents, newest first. Each "
 "incident opens inline with its evidence: the selected local response, "
@@ -9474,7 +9479,7 @@ msgstr ""
 "<name>``\\ 으로 그 목록에 추가합니다. 그렇지 않으면 헤드는 기록되지 않음으로 표시됩니다. 거부와 허용 동작은 해당 주소가 "
 "미리 채워진 IP 그룹 양식을 엽니다."
 
-#: ../../operations.rst:2739
+#: ../../operations.rst:2740
 msgid ""
 "The Challenges page with a 24-hour retained window: seven challenges "
 "issued, submitted and accepted, none rejected, and a table of rejection "
@@ -9482,7 +9487,7 @@ msgid ""
 msgstr ""
 "24시간 보존 구간의 챌린지 페이지: 챌린지 일곱 개가 발급, 제출, 수락되었고 거부는 없으며, 거부 원인 표의 값은 모두 0입니다."
 
-#: ../../operations.rst:2742
+#: ../../operations.rst:2743
 msgid ""
 "Challenges. A retained window (one hour, one day or seven days) sums "
 "durable per-minute records and states how many minutes were recorded and "
@@ -9498,7 +9503,7 @@ msgstr ""
 "매개변수와 가장 최근에 발급된 매개변수, 알고리즘과 매개변수 구간별로 나눈 수락된 풀이 시간 히스토그램, 적응형 난이도 전환, "
 "거부와 허용 바로 가기가 있는 주소별 기록이 있으며, 7일 동안 보존됩니다."
 
-#: ../../operations.rst:2744
+#: ../../operations.rst:2745
 msgid ""
 "The Policies page: the applied configuration (Shield, revision 3, four "
 "rules, PoSW at difficulty 16, node-local limits) and the first rule, "
@@ -9507,7 +9512,7 @@ msgstr ""
 "정책 페이지: 적용된 설정(Shield, 리비전 3, 규칙 네 개, 난이도 16의 PoSW, 노드 로컬 제한)과 오늘 적중 "
 "339회가 기록된 첫 번째 규칙 public-static이 보입니다."
 
-#: ../../operations.rst:2747
+#: ../../operations.rst:2748
 msgid ""
 "Policies. The applied engine names its surface, revisions, default "
 "algorithm and difficulty and its node-local limits, then lists rules in "
@@ -9522,7 +9527,7 @@ msgstr ""
 "누르면 편집기가 열립니다. 수정 내용을 저장하면 먼저 바뀐 필드의 검토 화면이 나오고, 확인하면 후보 전체를 검증한 뒤 새 리비전을 "
 "만듭니다."
 
-#: ../../operations.rst:2749
+#: ../../operations.rst:2750
 msgid ""
 "The Nodes page: node 1 accepting connections, with open connections, "
 "active local ban entries, policy revisions 3 of 3, uptime, resident "
@@ -9532,7 +9537,7 @@ msgstr ""
 "노드 페이지: 연결을 받고 있는 노드 1의 열린 연결 수, 활성 로컬 차단 항목, 정책 리비전 3/3, 가동 시간, 상주 메모리, "
 "CPU, 부팅 식별자, 메모리와 CPU 스파크라인, 그리고 노드 드레인, 요청 허용 재개, 로컬 차단 해제 버튼이 있습니다."
 
-#: ../../operations.rst:2752
+#: ../../operations.rst:2753
 msgid ""
 "Nodes. The serving node's status and commands, with resident memory and "
 "CPU of the last second and their sixty-second sparklines; below them "
@@ -9544,7 +9549,7 @@ msgstr ""
 "자신을 알린 모든 구성원이 적용한 정책 리비전(커밋된 리비전과 비교), 관리 주소, 점검 결과와 함께 나열됩니다(SID 0007, "
 "SID 0013)."
 
-#: ../../operations.rst:2754
+#: ../../operations.rst:2755
 msgid ""
 "The GeoIP page with the provider ip-location-db user-country, no "
 "generation loaded yet, and the import form."
@@ -9552,7 +9557,7 @@ msgstr ""
 "GeoIP 페이지: 제공자는 ip-location-db user-country이고, 아직 불러온 세대가 없으며, 가져오기 양식이 "
 "있습니다."
 
-#: ../../operations.rst:2757
+#: ../../operations.rst:2758
 msgid ""
 "GeoIP. Provider, licence, active generation digest, load time and the "
 "import form; here no generation has been loaded yet. A failed import "
@@ -9561,13 +9566,13 @@ msgstr ""
 "GeoIP. 제공자, 라이선스, 활성 세대 다이제스트, 로드 시간, 가져오기 양식을 보여 줍니다. 여기서는 아직 세대를 불러오지 "
 "않았습니다. 가져오기에 실패해도 활성 세대는 바뀌지 않습니다."
 
-#: ../../operations.rst:2759
+#: ../../operations.rst:2760
 msgid ""
 "The Settings page with an empty list of notification destinations and the "
 "form for a new webhook or syslog destination."
 msgstr "설정 페이지: 알림 대상 목록이 비어 있고, 새 웹훅 또는 syslog 대상을 추가하는 양식이 있습니다."
 
-#: ../../operations.rst:2762
+#: ../../operations.rst:2763
 msgid ""
 "Settings, with no notification destination yet and the form for a new "
 "one. Further down the page are denial-spike thresholds, retention with an "
@@ -9576,7 +9581,7 @@ msgstr ""
 "설정. 아직 알림 대상이 없고 새 대상을 추가하는 양식이 보입니다. 페이지 아래쪽에는 거부 급증 임계값, 기간별로 명시적 확인을 "
 "받는 보존 설정, 응답 페이지 템플릿, 정보 항목이 있습니다."
 
-#: ../../operations.rst:2764
+#: ../../operations.rst:2765
 msgid ""
 "The Audit history page with a filter form and recorded activity rows: "
 "session.create, session.logout, kiosk.exchange and kiosk.grant, each with "
@@ -9585,7 +9590,7 @@ msgstr ""
 "감사 기록 페이지: 필터 양식과 기록된 활동 행(session.create, session.logout, "
 "kiosk.exchange, kiosk.grant)이 있으며, 행마다 시각, 수행자와 역할, 대상, 열기 버튼이 있습니다."
 
-#: ../../operations.rst:2767
+#: ../../operations.rst:2768
 msgid ""
 "Audit. Append-only history with actor and role, action, subject and a "
 "detail view with redacted before and after summaries; refused sign-ins "
@@ -9601,7 +9606,7 @@ msgstr ""
 "행에는 주소가 기록되지 않음으로 표시됩니다. 정책 기록에는 *이 변경 되돌리기*\\ 가 있습니다. 확인을 거쳐 해당 리비전 이전에 "
 "기록된 문서를 감사되는 새 리비전으로 복원하며, 그 사이 규칙 집합이 바뀌었으면 거부됩니다."
 
-#: ../../operations.rst:2769
+#: ../../operations.rst:2770
 msgid ""
 "A wall display titled Node 1 Traffic, with Live, an expiry of 719 "
 "minutes, Pause, Theme and Exit kiosk controls, and the eleven traffic "
@@ -9610,13 +9615,13 @@ msgstr ""
 "Node 1 Traffic이라는 제목의 벽면 디스플레이: 실시간 표시, 남은 유효 시간 719분, 일시 정지, 테마, 키오스크 종료 "
 "컨트롤과 탐색 메뉴 없는 트래픽 타일 열한 개가 있습니다."
 
-#: ../../operations.rst:2772
+#: ../../operations.rst:2773
 msgid ""
 "A wall display. A kiosk session shows the Traffic and Security views "
 "only, without navigation, and states when it expires."
 msgstr "벽면 디스플레이. 키오스크 세션은 탐색 메뉴 없이 트래픽과 보안 화면만 보여 주며, 언제 만료되는지 표시합니다."
 
-#: ../../operations.rst:2774
+#: ../../operations.rst:2775
 msgid ""
 "The optional ``--console-location <latitude,longitude>`` declares this "
 "node's position, for example ``1.3521,103.8198`` for a deployment in "
@@ -9636,7 +9641,7 @@ msgstr ""
 "위치를 설정하지 않으면 명시적으로 \"알 수 없음\"으로 남습니다. 설정된 표식은 텔레메트리가 끊긴 동안에도 계속 보이며, 오래된 "
 "트래픽은 움직이지 않습니다."
 
-#: ../../operations.rst:2776
+#: ../../operations.rst:2777
 msgid ""
 "Policy previews build a private candidate including configured file "
 "rules. Saves compare the expected revision and require confirmation of a "
@@ -9658,7 +9663,7 @@ msgstr ""
 "중일 때 도착한 명령은 큐에 쌓이지 않고 ``503`` ``CONSOLENODE``\\ 로 거부됩니다. 응답을 잃었다면 다시 "
 "시도하기 전에 영속 영수증을 확인하세요. 커밋된 의도만으로는 실행 시점의 효과가 끝났다고 할 수 없습니다."
 
-#: ../../operations.rst:2778
+#: ../../operations.rst:2779
 msgid ""
 "For remote operation, use an HTTPS proxy and configure "
 "``--console-origin``, ``--console-behind-proxy``, explicit "
@@ -9677,7 +9682,7 @@ msgstr ""
 "출처와 프록시 허용 목록을 반드시 설정해야 합니다. 콘솔 리스너는 평문 HTTP를 사용합니다. 콘솔은 나가는 연결에만 rustls를 "
 "통해 TLS를 사용합니다(SID 0012)."
 
-#: ../../operations.rst:2780
+#: ../../operations.rst:2781
 msgid ""
 "The native CLI accesses the running console through the same "
 "authorization and storage contracts. It reads credentials from private "
@@ -9686,7 +9691,7 @@ msgstr ""
 "네이티브 CLI는 같은 권한 부여 및 저장소 규약을 거쳐 실행 중인 콘솔에 접근합니다. 자격 증명은 명령줄 값이 아니라 비공개 "
 "파일에서 읽습니다:"
 
-#: ../../operations.rst:2782
+#: ../../operations.rst:2783
 msgid ""
 "sibuna console geoip update --version 2026-09-09 \\\n"
 "    --origin http://127.0.0.1:19446 --username admin \\\n"
@@ -9696,7 +9701,7 @@ msgstr ""
 "    --origin http://127.0.0.1:19446 --username admin \\\n"
 "    --password-file ./admin-password"
 
-#: ../../operations.rst:2788
+#: ../../operations.rst:2789
 msgid ""
 "Use an owner-only password file, complete password setup first, and add "
 "``--factor-file`` for an authenticator or recovery code when required; "
@@ -9734,7 +9739,7 @@ msgstr ""
 "주소, 표본 손실, 오래된 데이터는 그대로 표시됩니다. 국가 데이터를 가져와도 트래픽이 생기거나 이미 만료된 표본이 보강되지는 "
 "않습니다."
 
-#: ../../operations.rst:2790
+#: ../../operations.rst:2791
 msgid ""
 "Cluster members announce themselves through the membership table of the "
 "shared database (``console_nodes``) at start, every minute, and within "
@@ -9808,7 +9813,7 @@ msgstr ""
 "행을 유지합니다. 탐색 메뉴와 모바일 헤더는 선택한 트래픽 소스와 관계없이 서비스하는 콘솔 노드를 표시합니다. 로컬 명령은 계속 "
 "노드별로 동작합니다."
 
-#: ../../operations.rst:2792
+#: ../../operations.rst:2793
 msgid ""
 "Traffic tiles open on the last 24 hours of retained closed-minute records "
 "for the selected nodes. The period control also offers an hour, seven or "
@@ -9825,7 +9830,7 @@ msgstr ""
 "때까지 이전 값과 경과 시간을 계속 보여 줍니다. 소스나 기간을 바꾸면 이전 범위는 버립니다. 누락된 기록이 0이 되는 일은 "
 "없습니다."
 
-#: ../../operations.rst:2794
+#: ../../operations.rst:2795
 msgid ""
 "*Compare retained traffic* displays two closed minute windows beside each "
 "other: the same window yesterday, the preceding period, or a second node. "
@@ -9849,7 +9854,7 @@ msgstr ""
 "있으면 \"새로 생김\"으로 표시합니다. 기본 트래픽 기간은 독립적으로 유지됩니다. 분 단위 형식은 과거의 프록시 모드를 기록하지 "
 "않으므로, 원본 서버 응답 비교는 forward-auth의 0을 관측된 응답으로 해석하지 않고 사용할 수 없음으로 남습니다."
 
-#: ../../operations.rst:2796
+#: ../../operations.rst:2797
 msgid ""
 "*Compare retained path rankings* selects two closed windows or nodes. "
 "Node 0 includes all retained nodes, including retired members. An action "
@@ -9869,7 +9874,7 @@ msgstr ""
 "표본으로 수집한 경로 접두사를 나타냅니다. 페이지는 부분 스캔, 잘림, 보존 경계, 보고된 큐 손실을 보여 줍니다. 누락된 "
 "아카이브로 트래픽이 0이었다거나 범위가 완전하다고 결론 낼 수는 없습니다."
 
-#: ../../operations.rst:2798
+#: ../../operations.rst:2799
 msgid ""
 "Security opens on the last 24 hours and uses sixty equal time buckets "
 "over the selected period. Its aggregates run on the storage thread under "
@@ -9893,7 +9898,7 @@ msgstr ""
 "눈금을 공유합니다. 추세 값을 펼치면 UTC 구간 시작 시각과 정확한 그룹별 수를 볼 수 있습니다. 이 값은 보존된 탐지 "
 "결과이므로, 인시던트 범위가 빠져 있다고 해서 공격이 없었다고 해석할 수는 없습니다."
 
-#: ../../operations.rst:2800
+#: ../../operations.rst:2801
 msgid ""
 "Wall displays use kiosk sessions. Under Account, an operator names the "
 "display and selects Create display code. The display pastes the one-time "
@@ -9913,7 +9918,7 @@ msgstr ""
 "줍니다. 보안 화면은 인시던트 주소나 페이로드 증거 없이 모듈별 집계 추세와 요청 결과만 보여 줍니다. 자동 순환은 선택 사항이며, "
 "처음에는 꺼져 있고, 동작 줄이기 설정, 오래된 데이터, 일시 정지 중에는 멈춥니다."
 
-#: ../../operations.rst:2802
+#: ../../operations.rst:2803
 msgid ""
 "Notification destinations (signed webhooks and syslog for denial spikes, "
 "bans, unreachable members and leader changes) live under Settings; "
@@ -9940,7 +9945,7 @@ msgstr ""
 "syslog의 UDP/TCP 선택은 나가는 알림에만 적용되며, 보호되는 웹 트래픽과는 관계없습니다. 수동 테스트는 의도와 완료를 "
 "감사 기록에 남기고 대상 결과를 갱신합니다. 감사 완료가 확인되지 않으면 운영자가 재시도하기 전에 그 사실을 명시적으로 보여 줍니다."
 
-#: ../../operations.rst:2804
+#: ../../operations.rst:2805
 msgid ""
 "Settings also controls retention: one to 90 days for minute history, one "
 "to seven for rankings, one to 30 for incidents and one to 365 for audit. "
@@ -9955,7 +9960,7 @@ msgstr ""
 "제한된 묶음 단위로 영구 삭제하므로, 보존 값을 저장하려면 확인이 필요합니다. 나중에 값을 늘려도 삭제된 기록은 복원되지 않습니다. "
 "오래된 편집은 거부되며, 성공한 변경은 감사 기록에 나타납니다."
 
-#: ../../operations.rst:2806
+#: ../../operations.rst:2807
 msgid ""
 "Response pages (challenge, denied, rate limited, banned, overloaded) are "
 "editable under Settings as bounded HTML with fixed placeholders; drafts "
@@ -9965,7 +9970,7 @@ msgstr ""
 "응답 페이지(챌린지, 거부, 속도 제한, 차단, 과부하)는 설정에서 고정된 자리 표시자를 쓰는 크기 제한 HTML로 편집할 수 "
 "있습니다. 초안은 샌드박스 탭에서 미리 보며, 저장된 페이지는 다음 정책 스냅숏부터 제공됩니다."
 
-#: ../../operations.rst:2808
+#: ../../operations.rst:2809
 msgid ""
 "Policy workflows on the Policies page: reorder managed rules, replay a "
 "draft against retained inspection findings, manage IP groups and country "
@@ -10002,7 +10007,7 @@ msgstr ""
 "백분율은 양쪽 모두 범위가 완전해야 합니다. 규칙 관측과 시간별/일별 요약은 분 단위 보존 설정을 따릅니다. 편집 전후에 관측된 "
 "변화는 비교일 뿐, 그 편집이 트래픽 변화를 일으켰다는 증거가 아닙니다."
 
-#: ../../operations.rst:2810
+#: ../../operations.rst:2811
 msgid ""
 "Importing a later GeoIP generation does not automatically refresh "
 "existing country-derived reputation rows. Preview the country action to "
@@ -10057,7 +10062,7 @@ msgstr ""
 "카운터는 실시간으로 갱신됩니다. 기본값이 아닌 챌린지 시간 구분을 선택했다면 명시적으로 새로 고치세요. 과거 기록 질의, 상세 "
 "읽기, 변경 작업은 계속 HTTP 요청으로 처리합니다."
 
-#: ../../operations.rst:2812
+#: ../../operations.rst:2813
 msgid ""
 "Page fragments can be bookmarked; Back and Forward reopen authenticated "
 "pages. The sidebar also remembers theme and spacing choices in this "
@@ -10092,21 +10097,21 @@ msgstr ""
 "0007은 이를 검토 대상으로 기록합니다. 이 프로젝트 제한은 콘솔 작업 흐름을 위한 여유를 남겨 둘 뿐, 브라우저 로딩과 응답성 "
 "측정을 대신하지는 않습니다. 모듈의 선형 메모리는 필요할 때 선언된 최대 16 MiB까지 늘어납니다."
 
-#: ../../operations.rst:2814
+#: ../../operations.rst:2815
 msgid "Deployment Topologies"
 msgstr "배포 토폴로지"
 
-#: ../../operations.rst:2819
+#: ../../operations.rst:2820
 msgid ""
 "Deploy the autonomous reverse proxy and the forward-auth validator behind "
 "Nginx or Caddy."
 msgstr "독립형 리버스 프록시와 forward-auth 검증기를 Nginx 또는 Caddy 뒤에 배포합니다."
 
-#: ../../operations.rst:2821
+#: ../../operations.rst:2822
 msgid "Reverse Proxy"
 msgstr "리버스 프록시"
 
-#: ../../operations.rst:2825
+#: ../../operations.rst:2826
 msgid ""
 "A request passes local bans and the rate limit, then inspection and "
 "policy. A DENY goes to Deny. An ALLOW goes to the origin or an auth "
@@ -10117,7 +10122,7 @@ msgstr ""
 "성공으로 갑니다. CHALLENGE는 세션 MAC을 확인합니다. 유효한 세션은 원본 서버로 가고, 세션이 없거나 유효하지 않으면 새 "
 "퍼즐을 받습니다."
 
-#: ../../operations.rst:2825
+#: ../../operations.rst:2826
 msgid ""
 "digraph shield_routing {\n"
 "  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.35, "
@@ -10206,11 +10211,11 @@ msgstr ""
 "fontcolor=\"#b45309\"];\n"
 "}"
 
-#: ../../operations.rst:2825
+#: ../../operations.rst:2826
 msgid "Request routing on the Shield surface"
 msgstr "Shield 운영 구성의 요청 라우팅"
 
-#: ../../operations.rst:2855
+#: ../../operations.rst:2856
 msgid ""
 "sibuna --port 80 --upstream-host 127.0.0.1 --upstream-port 3000 \\\n"
 "       --secret-file /etc/sibuna/secret --difficulty 16 --algorithm posw"
@@ -10218,7 +10223,7 @@ msgstr ""
 "sibuna --port 80 --upstream-host 127.0.0.1 --upstream-port 3000 \\\n"
 "       --secret-file /etc/sibuna/secret --difficulty 16 --algorithm posw"
 
-#: ../../operations.rst:2860
+#: ../../operations.rst:2861
 msgid ""
 "Admitted requests reach the origin with ``X-Forwarded-For``, "
 "``X-Forwarded-Proto``, ``X-Real-IP``, ``X-Sibuna-Status`` and "
@@ -10245,7 +10250,7 @@ msgstr ""
 "읽어야 하며, 가장 왼쪽 항목에서 읽으면 안 됩니다. 원본 서버가 받는 경로는 정책이 판정한 정규형입니다(SID 0009). "
 "정규형이 없는 경로에는 ``400``\\ 으로 응답합니다."
 
-#: ../../operations.rst:2862
+#: ../../operations.rst:2863
 msgid ""
 "HTTP/1.1 WebSocket upgrades pass through admission and policy checks "
 "before the origin's handshake is accepted. Subprotocol and extension "
@@ -10272,7 +10277,7 @@ msgstr ""
 "중계를 끝냅니다. 핸드셰이크 이후의 프레임은 WAF 검사 입력이 아닙니다. WSS에는 HTTP/1.1 업그레이드를 Sibuna로 "
 "전달하는 외부 TLS 인그레스를 씁니다. 네이티브 HTTP/2와 HTTP/3 리스너는 일반 HTTP 교환을 처리합니다."
 
-#: ../../operations.rst:2864
+#: ../../operations.rst:2865
 msgid ""
 "The ingress can negotiate HTTP/2 with browsers and forward HTTP/1.1 to "
 "Sibuna. The daemon mode has no native HTTP/2; this arrangement does not "
@@ -10284,7 +10289,7 @@ msgstr ""
 "HTTP/2가 없습니다. 이 구성은 네이티브 gRPC 같은 애플리케이션에 종단 간 HTTP/2 의미론을 제공하지 않습니다. "
 "엣지(``--config-file``)는 HTTP/2와 HTTP/3를 직접 종료하며 gRPC를 전달합니다(*gRPC* 절)."
 
-#: ../../operations.rst:2866
+#: ../../operations.rst:2867
 msgid ""
 "Content-Length request bodies stream through fixed buffers, preserving "
 "bytes and MIME headers. Multipart uploads retain boundaries, repeated "
@@ -10312,7 +10317,7 @@ msgstr ""
 "유지합니다. 모호하거나 형식이 잘못된 MIME 메타데이터는 텍스트 검사로 돌아갑니다. 멀티파트 파싱은 같은 접두사 안에서 파트 "
 "32개와 파트당 헤더 2 KiB로 제한되며, 구분자 뒤의 RFC 2046 전송 패딩을 허용합니다."
 
-#: ../../operations.rst:2868
+#: ../../operations.rst:2869
 msgid ""
 "This is upload compatibility, not file validation or malware scanning. "
 "The backend must enforce accepted media types rather than trust a "
@@ -10347,11 +10352,11 @@ msgstr ""
 "끝나면 닫히며 풀로 돌아가지 않습니다. ``100-continue``\\ 를 기다리는 클라이언트는 본문을 보내기 전에 로컬에서 이를 "
 "받습니다. 지원하지 않는 Expect 값은 417을 받습니다. Expect 헤더는 백엔드로 전달하기 전에 소비됩니다."
 
-#: ../../operations.rst:2870
+#: ../../operations.rst:2871
 msgid "Forward Auth Behind an Ingress"
 msgstr "인그레스 뒤의 forward-auth"
 
-#: ../../operations.rst:2873
+#: ../../operations.rst:2874
 msgid ""
 "In ``--mode forward_auth`` the daemon answers the ingress's subrequest "
 "with ``200`` (plus the audit headers ``X-Sibuna-Status``, "
@@ -10377,7 +10382,7 @@ msgstr ""
 "경우에는 ``400``\\ 으로 거부합니다. 데몬 내부 경로는 항상 실제 요청 URI를 사용합니다. forward-auth는 "
 "인그레스가 생략한 본문을 검사하지 않습니다."
 
-#: ../../operations.rst:2875
+#: ../../operations.rst:2876
 msgid ""
 "map $http_upgrade $sibuna_connection_upgrade {\n"
 "    default upgrade;\n"
@@ -10499,7 +10504,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../operations.rst:2936
+#: ../../operations.rst:2937
 msgid ""
 "example.com {\n"
 "    handle /__sibuna/* {\n"
@@ -10533,7 +10538,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../operations.rst:2953
+#: ../../operations.rst:2954
 msgid ""
 "The ``/__sibuna/*`` namespace (interstitial, challenge, verify, solver "
 "assets) must reach the daemon directly in both recipes. The nginx error "
@@ -10569,11 +10574,11 @@ msgstr ""
 "설정하세요. 예제는 라우팅 논리를 보여 줍니다. 저장소는 아직 이 구성 예를 실제 인그레스에서 테스트하지 않습니다. 구성 예가 "
 "의존하는 전달 메타데이터 규칙은 ``sibuna-http``\\ 의 단위 테스트가 다룹니다."
 
-#: ../../operations.rst:2955
+#: ../../operations.rst:2956
 msgid "JA4 Fingerprints From the Ingress"
 msgstr "인그레스에서 받는 JA4 지문"
 
-#: ../../operations.rst:2958
+#: ../../operations.rst:2959
 msgid ""
 "A JA4 fingerprint summarises how a client opens a TLS connection. It is "
 "computed from the client's first handshake message, the ClientHello. The "
@@ -10590,7 +10595,7 @@ msgstr ""
 "다릅니다. 그래서 JA4는 어떤 클라이언트든 마음대로 쓸 수 있는 ``User-Agent`` 값보다 강한 신호입니다(SID "
 "0014). JA4는 FoxIO가 정의했습니다. 지문은 36문자이며, ``_``\\ 로 이어진 세 부분으로 이루어집니다."
 
-#: ../../operations.rst:2960
+#: ../../operations.rst:2961
 msgid ""
 "t13d1516h2_8daaf6152771_02713d6af862\n"
 "^^^^^^^^^^ ^^^^^^^^^^^^ ^^^^^^^^^^^^\n"
@@ -10614,7 +10619,7 @@ msgstr ""
 "c  정렬한 확장과 서명 알고리즘의\n"
 "   12자리 소문자 16진수 해시"
 
-#: ../../operations.rst:2973
+#: ../../operations.rst:2974
 msgid ""
 "A TCP edge frontend can compute JA4 from a visible ClientHello during "
 "passthrough. When we run the HTTP firewall behind a TLS ingress, the "
@@ -10626,7 +10631,7 @@ msgstr ""
 "인그레스 뒤에서 실행하면 그 핸드셰이크는 인그레스가 보고, Sibuna는 HTTP/1.1을 받습니다. 신뢰하는 인그레스가 JA4를 "
 "계산해 요청 헤더로 방화벽에 지문을 보내도록 설정할 수 있습니다."
 
-#: ../../operations.rst:2975
+#: ../../operations.rst:2976
 msgid ""
 "``--ja4-header <name>`` names that header. It is off by default and has "
 "no default name; we always name the header the ingress uses. Sibuna "
@@ -10642,7 +10647,7 @@ msgstr ""
 "``X-Sibuna-*``, ``Forwarded``, 그리고 ``-`` 대신 ``_``\\ 를 쓴 형태)은 거부합니다. 옵션을 "
 "지정하면 시작 배너에 ``JA4: from cf-ja4 (trusted)`` 같은 줄이 출력됩니다."
 
-#: ../../operations.rst:2977
+#: ../../operations.rst:2978
 msgid ""
 "The header is read only when forwarded fields are trusted. This is the "
 "decision that governs ``X-Forwarded-For``: ``--trust-forwarded``, or "
@@ -10663,7 +10668,7 @@ msgstr ""
 "``sibuna_ja4_invalid_total``\\ 은 헤더 형식이 잘못되었거나 반복된 요청을 셉니다. 신뢰하지 않는 피어의 "
 "요청은 어느 카운터도 올리지 않습니다."
 
-#: ../../operations.rst:2979
+#: ../../operations.rst:2980
 msgid ""
 "In reverse-proxy mode, the origin sees the header only when Sibuna trusts "
 "it. Without trust, Sibuna removes every field of that name from the "
@@ -10679,11 +10684,11 @@ msgstr ""
 "바뀌지 않고 전달되며, ``_``\\ 를 쓴 별칭은 여전히 제거됩니다. ``--ja4-header``\\ 가 없으면 그 이름의 "
 "필드는 평범한 필드입니다."
 
-#: ../../operations.rst:2981
+#: ../../operations.rst:2982
 msgid "The ingress must own the header"
 msgstr "헤더는 인그레스가 직접 써야 합니다"
 
-#: ../../operations.rst:2983
+#: ../../operations.rst:2984
 msgid ""
 "A fingerprint is only as trustworthy as the ingress that wrote it. Sibuna "
 "cannot tell a value the ingress computed from a value the client sent. "
@@ -10696,7 +10701,7 @@ msgstr ""
 "없습니다. 따라서 인그레스는 Sibuna에 도달하는 모든 경로에서 클라이언트가 보낸 헤더 사본을 덮어쓰거나 제거해야 합니다. "
 "``X-Forwarded-For``\\ 와 마찬가지로, Sibuna의 리스너는 인그레스의 연결만 받아들여야 합니다."
 
-#: ../../operations.rst:2985
+#: ../../operations.rst:2986
 msgid ""
 "**Cloudflare.** The managed transform \"Add bot protection headers\" adds "
 "``cf-ja4`` to the request sent to the origin, beside ``cf-bot-score``, "
@@ -10710,11 +10715,11 @@ msgstr ""
 "Cloudflare와 Sibuna 사이의 인그레스는 이 필드를 바꾸지 않고 그대로 전달해야 합니다. 다음 명령으로 Sibuna를 "
 "시작합니다."
 
-#: ../../operations.rst:2987
+#: ../../operations.rst:2988
 msgid "sibuna --ja4-header cf-ja4 --trust-forwarded -s /etc/sibuna/secret"
 msgstr "sibuna --ja4-header cf-ja4 --trust-forwarded -s /etc/sibuna/secret"
 
-#: ../../operations.rst:2991
+#: ../../operations.rst:2992
 msgid ""
 "The ingress in front of Sibuna must accept connections from Cloudflare's "
 "addresses alone; otherwise a client can bypass Cloudflare and send its "
@@ -10723,7 +10728,7 @@ msgstr ""
 "Sibuna 앞의 인그레스는 Cloudflare의 주소에서 오는 연결만 받아들여야 합니다. 그렇지 않으면 클라이언트가 "
 "Cloudflare를 우회해 자신의 ``cf-ja4``\\ 를 보낼 수 있습니다."
 
-#: ../../operations.rst:2993
+#: ../../operations.rst:2994
 msgid ""
 "**nginx.** FoxIO's ``ja4-nginx-module`` computes JA4 inside nginx and "
 "exposes it as ``$http_ssl_ja4``. It needs nginx 1.26 or later with the "
@@ -10738,7 +10743,7 @@ msgstr ""
 "``proxy_set_header``\\ 는 클라이언트가 보낸 같은 이름의 필드를 대체하므로, Sibuna에 도달하는 각 "
 "location이 헤더를 직접 설정합니다."
 
-#: ../../operations.rst:2995
+#: ../../operations.rst:2996
 msgid ""
 "# Reverse proxy: Sibuna runs with --ja4-header x-ja4 --trust-forwarded\n"
 "location / {\n"
@@ -10770,7 +10775,7 @@ msgstr ""
 "    # ... 위 forward-auth 구성 예의 나머지 필드\n"
 "}"
 
-#: ../../operations.rst:3012
+#: ../../operations.rst:3013
 msgid ""
 "In the forward-auth recipe, the same ``proxy_set_header X-JA4 "
 "$http_ssl_ja4;`` line belongs in ``@sibuna_challenge`` and in ``location "
@@ -10781,7 +10786,7 @@ msgstr ""
 "``@sibuna_challenge``\\ 와 ``location /__sibuna/``\\ 에도 들어가야 합니다. 이 줄을 빠뜨린 "
 "location은 클라이언트가 보낸 ``X-JA4``\\ 를 그대로 Sibuna에 넘기고, Sibuna는 그 값을 신뢰합니다."
 
-#: ../../operations.rst:3014
+#: ../../operations.rst:3015
 msgid ""
 "**Apache Traffic Server.** The ``ja4_fingerprint`` plugin is enabled by "
 "the line ``ja4_fingerprint.so`` in ``plugin.config``. It has no options. "
@@ -10799,7 +10804,7 @@ msgstr ""
 "``ja4`` 필드를 플러그인이 대체하는지 밝히지 않습니다. 값을 신뢰하기 전에, 우리가 쓰는 버전에서 이를 확인하거나 플러그인이 "
 "자기 필드를 추가하기 전에 클라이언트의 필드를 제거해야 합니다."
 
-#: ../../operations.rst:3016
+#: ../../operations.rst:3017
 msgid ""
 "A rule matches a fingerprint with the ``ja4`` field (Part XII, Policy "
 "Schema). The value is either a whole fingerprint, which must be equal, or "
@@ -10814,7 +10819,7 @@ msgstr ""
 "없는 요청은 ``ja4`` 규칙과 절대 일치하지 않습니다. 로더는 대문자로 쓴 ``T13D*``\\ 처럼 어떤 지문과도 일치할 수 "
 "없는 패턴을 ``INVALID POLICY JA4``\\ 로 거부합니다. 비교는 바이트 단위로 이루어지며 메모리를 할당하지 않습니다."
 
-#: ../../operations.rst:3018
+#: ../../operations.rst:3019
 msgid ""
 "{ \"rules\": [\n"
 "    { \"name\": \"deny-known-scanner\", \"action\": \"DENY\",\n"
@@ -10842,7 +10847,7 @@ msgstr ""
 "      \"action\": \"CHALLENGE\" }\n"
 "] }"
 
-#: ../../operations.rst:3030
+#: ../../operations.rst:3031
 msgid ""
 "The first rule denies one fingerprint exactly; the value is an example, "
 "not a known scanner. The next two add weight to the request's score "
@@ -10870,7 +10875,7 @@ msgstr ""
 "브라우저의 ClientHello를 흉내 낼 수 있습니다. JA4는 자동화의 비용을 높일 뿐 신원을 증명하지 않습니다. 같은 이유로 "
 "Sibuna는 차단과 평판을 지문이 아니라 항상 주소를 키로 관리합니다."
 
-#: ../../operations.rst:3032
+#: ../../operations.rst:3033
 msgid ""
 "Incidents (WAF denials, honeypot hits and audit findings) record the "
 "fingerprint of their request when it carried one, in the column "
@@ -10886,17 +10891,17 @@ msgstr ""
 "받습니다. 관리 규칙 편집기에는 ``policies.ja4_pattern``\\ 에 저장되는 JA4 필드가 있고, 정책 테스트 "
 "양식은 지문을 입력받습니다."
 
-#: ../../operations.rst:3034
+#: ../../operations.rst:3035
 msgid "Declarative Policy"
 msgstr "선언형 정책"
 
-#: ../../operations.rst:3039
+#: ../../operations.rst:3040
 msgid ""
 "Write a policy file with rules, weights, thresholds, IP rules, and the "
 "WAF switch."
 msgstr "규칙, 가중치, 임계값, IP 규칙, WAF 스위치를 담은 정책 파일을 작성합니다."
 
-#: ../../operations.rst:3041
+#: ../../operations.rst:3042
 msgid ""
 "{\n"
 "  \"default_action\": \"CHALLENGE\",\n"
@@ -10950,7 +10955,7 @@ msgstr ""
 "  ]\n"
 "}"
 
-#: ../../operations.rst:3061
+#: ../../operations.rst:3062
 msgid ""
 "The loader fails closed: an unknown key, a misspelled action, a malformed "
 "address or an out-of-range number rejects the whole file, the diagnostic "
@@ -10978,11 +10983,11 @@ msgstr ""
 "``--ja4-header``\\ 가 필요합니다(\"인그레스에서 받는 JA4 지문\" 참조). 경로 패턴은 정규형의 요청 경로와 "
 "일치시키므로(SID 0003), 패턴도 그 형식으로 써야 합니다."
 
-#: ../../operations.rst:3063
+#: ../../operations.rst:3064
 msgid "Persistent Storage and Clustering"
 msgstr "영속 저장소와 클러스터"
 
-#: ../../operations.rst:3068
+#: ../../operations.rst:3069
 msgid ""
 "Enable SQLite or PostgreSQL storage, add a dynamic policy and a ban with "
 "SQL, query incident forensics, understand campaign clustering, and run "
@@ -10991,7 +10996,7 @@ msgstr ""
 "SQLite 또는 PostgreSQL 저장소를 켜고, SQL로 동적 정책과 차단을 추가하고, 인시던트 포렌식을 질의하고, 캠페인 "
 "군집화를 이해하고, PostgreSQL 데이터베이스 하나로 여러 노드를 실행합니다."
 
-#: ../../operations.rst:3071
+#: ../../operations.rst:3072
 msgid ""
 "Request threads push incidents into an MPSC ring of 512 slots. The "
 "storage thread pops them, writes batches through sqlx to the SQLite file "
@@ -11007,7 +11012,7 @@ msgstr ""
 "게시하고, 요청 스레드가 이를 읽습니다. 다른 클러스터 노드는 PostgreSQL 데이터베이스를 공유하며 NOTIFY "
 "sibuna_policy를 받습니다."
 
-#: ../../operations.rst:3071
+#: ../../operations.rst:3072
 msgid ""
 "digraph storage_architecture {\n"
 "  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.8, "
@@ -11090,11 +11095,11 @@ msgstr ""
 "sibuna_policy\"];\n"
 "}"
 
-#: ../../operations.rst:3071
+#: ../../operations.rst:3072
 msgid "The storage architecture: workers never block on the database"
 msgstr "저장소 아키텍처: 워커는 데이터베이스를 기다리며 멈추지 않습니다"
 
-#: ../../operations.rst:3102
+#: ../../operations.rst:3103
 msgid ""
 "``--data-dir /var/lib/sibuna`` opens the SQLite file "
 "``/var/lib/sibuna/sibuna.db`` (WAL mode, ``synchronous=NORMAL``, a busy "
@@ -11122,37 +11127,37 @@ msgstr ""
 "데몬에 속합니다. ``--config-file``\\ 로 시작한 엣지는 이 옵션을 하나도 받지 않습니다(둘의 관계는 *클러스터* "
 "절에서 설명합니다)."
 
-#: ../../operations.rst:3104
+#: ../../operations.rst:3105
 msgid "Schema"
 msgstr "스키마"
 
-#: ../../operations.rst:3107
+#: ../../operations.rst:3108
 msgid "Core tables"
 msgstr "핵심 테이블"
 
-#: ../../operations.rst:3111
+#: ../../operations.rst:3112
 msgid "Table"
 msgstr "테이블"
 
-#: ../../operations.rst:3112
+#: ../../operations.rst:3113
 msgid "Purpose and key"
 msgstr "용도와 키"
 
-#: ../../operations.rst:3113
+#: ../../operations.rst:3114
 msgid "``policy_revision``"
 msgstr "``policy_revision``"
 
-#: ../../operations.rst:3114
+#: ../../operations.rst:3115
 msgid ""
 "The policy revision, one row; triggers on the three policy tables advance "
 "it."
 msgstr "정책 리비전, 한 행. 세 정책 테이블의 트리거가 이 값을 올립니다."
 
-#: ../../operations.rst:3115
+#: ../../operations.rst:3116
 msgid "``policies``"
 msgstr "``policies``"
 
-#: ../../operations.rst:3116
+#: ../../operations.rst:3117
 msgid ""
 "Ordered dynamic rules, keyed by ``id``. The nullable ``ja4_pattern`` "
 "holds a rule's JA4 criterion, at most 37 bytes."
@@ -11160,37 +11165,37 @@ msgstr ""
 "순서가 있는 동적 규칙, 키는 ``id``. null 허용 ``ja4_pattern``\\ 은 규칙의 JA4 조건을 최대 "
 "37바이트로 담습니다."
 
-#: ../../operations.rst:3117
+#: ../../operations.rst:3118
 msgid "``policy_inspection``"
 msgstr "``policy_inspection``"
 
-#: ../../operations.rst:3118
+#: ../../operations.rst:3119
 msgid "The stored WAF mode per category, one row."
 msgstr "범주별로 저장된 WAF 모드, 한 행."
 
-#: ../../operations.rst:3119
+#: ../../operations.rst:3120
 msgid "``ip_reputation``"
 msgstr "``ip_reputation``"
 
-#: ../../operations.rst:3120
+#: ../../operations.rst:3121
 msgid "Scores, hit counts and expiry, keyed by address or prefix."
 msgstr "점수, 적중 수, 만료, 키는 주소 또는 접두사."
 
-#: ../../operations.rst:3121
+#: ../../operations.rst:3122
 msgid "``incident_receipts``"
 msgstr "``incident_receipts``"
 
-#: ../../operations.rst:3122
+#: ../../operations.rst:3123
 msgid ""
 "Each node's durable incident receipt (the next sequence after its last "
 "committed batch), keyed by node."
 msgstr "각 노드의 영속 인시던트 영수증(마지막으로 커밋된 묶음 다음의 시퀀스), 키는 노드."
 
-#: ../../operations.rst:3123
+#: ../../operations.rst:3124
 msgid "``security_incidents``"
 msgstr "``security_incidents``"
 
-#: ../../operations.rst:3124
+#: ../../operations.rst:3125
 msgid ""
 "One bounded event record with its 64-component embedding (256 bytes), "
 "keyed by ``node_id << 40 | sequence``. The nullable ``ja4`` holds the "
@@ -11199,11 +11204,11 @@ msgstr ""
 "64개 성분 임베딩(256바이트)을 포함한 제한된 크기의 이벤트 기록 하나, 키는 ``node_id << 40 | "
 "sequence``. null 허용 ``ja4``\\ 는 요청의 JA4 지문을 정확히 36바이트로 담습니다."
 
-#: ../../operations.rst:3125
+#: ../../operations.rst:3126
 msgid "``incidents_fts``"
 msgstr "``incidents_fts``"
 
-#: ../../operations.rst:3126
+#: ../../operations.rst:3127
 msgid ""
 "On SQLite: an FTS5 table over the canonical tokens of paths and payloads. "
 "On PostgreSQL the same tokens are the ``tsvector`` column ``search`` of "
@@ -11212,15 +11217,15 @@ msgstr ""
 "SQLite에서는 경로와 페이로드의 정규 토큰에 대한 FTS5 테이블입니다. PostgreSQL에서는 같은 토큰을 "
 "``security_incidents``\\ 의 ``tsvector`` 열 ``search``\\ 에 담고 GIN 인덱스를 둡니다."
 
-#: ../../operations.rst:3127
+#: ../../operations.rst:3128
 msgid "``sibuna_schema``"
 msgstr "``sibuna_schema``"
 
-#: ../../operations.rst:3128
+#: ../../operations.rst:3129
 msgid "Every applied migration, keyed by component and version."
 msgstr "적용된 모든 마이그레이션, 키는 구성 요소와 버전."
 
-#: ../../operations.rst:3130
+#: ../../operations.rst:3131
 msgid ""
 "The core schema is ``crates/storage/src/schema.rs``, written once per "
 "dialect. With the console the component ``console`` adds 33 tables whose "
@@ -11244,11 +11249,11 @@ msgstr ""
 "이고 ``CHECK`` 제약 조건이 Rust 타입을 그대로 반영하므로, 데몬이 표현할 수 없는 행은 데이터베이스가 거부합니다. "
 "열거형 값은 소문자로 저장됩니다. ``'DENY'``\\ 를 직접 쓰면 거부됩니다."
 
-#: ../../operations.rst:3132
+#: ../../operations.rst:3133
 msgid "Operating It"
 msgstr "운영 방법"
 
-#: ../../operations.rst:3135
+#: ../../operations.rst:3136
 msgid ""
 "Use the ``sqlite3`` shell on ``sibuna.db`` (WAL mode lets it read while "
 "the daemon runs), or ``psql`` on the cluster database:"
@@ -11256,7 +11261,7 @@ msgstr ""
 "``sibuna.db``\\ 에는 ``sqlite3`` 셸을 사용하고(WAL 모드 덕분에 데몬이 실행 중일 때도 읽을 수 "
 "있습니다), 클러스터 데이터베이스에는 ``psql``\\ 을 사용하세요:"
 
-#: ../../operations.rst:3137
+#: ../../operations.rst:3138
 msgid ""
 "-- Add a dynamic rule; every node rebuilds on its next tick.\n"
 "INSERT INTO policies (id, name, priority, path_pattern, action, "
@@ -11300,7 +11305,7 @@ msgstr ""
 "FROM incidents_fts f JOIN security_incidents s ON s.id = f.rowid\n"
 "WHERE incidents_fts MATCH 'union' ORDER BY rank LIMIT 20;"
 
-#: ../../operations.rst:3155
+#: ../../operations.rst:3156
 msgid ""
 "The statements are written for SQLite. On PostgreSQL, ``enabled`` is "
 "``TRUE``, the time is ``CAST(extract(epoch FROM now()) AS BIGINT)`` "
@@ -11320,7 +11325,7 @@ msgstr ""
 "않습니다. PostgreSQL에서는 리비전 트리거가 ``NOTIFY sibuna_policy``\\ 도 발행하므로 다른 노드가 즉시 "
 "틱을 실행합니다. 보장은 여전히 폴링이 제공합니다."
 
-#: ../../operations.rst:3157
+#: ../../operations.rst:3158
 msgid ""
 "Scores at or below :math:`-50` become ``deny`` prefixes in the trie, "
 "scores at or above :math:`50` become ``allow``, and ``banned_until`` "
@@ -11332,11 +11337,11 @@ msgstr ""
 "되며, ``banned_until``\\ 은 차단 기간의 끝을 정합니다. 허니팟 적중은 :math:`-100` 기록을 자동으로 "
 "삽입하므로, 공유 PostgreSQL 데이터베이스를 쓰면 한 노드에서 걸린 함정이 모든 노드에서 그 주소를 차단합니다."
 
-#: ../../operations.rst:3159
+#: ../../operations.rst:3160
 msgid "A Transaction Receipt Makes Retry Safe"
 msgstr "트랜잭션 영수증으로 안전하게 재시도하기"
 
-#: ../../operations.rst:3162
+#: ../../operations.rst:3163
 msgid ""
 "The storage thread collects at most 32 pending records and builds one SQL "
 "transaction. The transaction inserts incidents, updates the full-text "
@@ -11350,11 +11355,11 @@ msgstr ""
 "``incident_receipts``\\ 의 한 행이 있습니다. 데이터를 바꾸는 모든 문장은 이 영수증으로 보호됩니다. 트랜잭션은 "
 "영수증을 마지막에 올리며, 절대 되돌리지 않습니다."
 
-#: ../../operations.rst:3164
+#: ../../operations.rst:3165
 msgid "Worked example: the acknowledgement disappears"
 msgstr "풀이 예제: 확인 응답이 사라지는 경우"
 
-#: ../../operations.rst:3166
+#: ../../operations.rst:3167
 msgid ""
 "Suppose issuer 2 prepares sequences 101 through 132, ending at receipt "
 "133. The database commits all records and receipt 133, then the "
@@ -11370,7 +11375,7 @@ msgstr ""
 "시도합니다. 영수증이 이미 133이므로 보호된 쓰기는 아무것도 하지 않습니다. 인시던트도, 허니팟 적중 수도 두 번 늘지 않습니다. "
 "원래 트랜잭션이 롤백되었다면 이전 영수증이 남아 있으므로 재시도가 모든 쓰기를 한 번 적용합니다."
 
-#: ../../operations.rst:3168
+#: ../../operations.rst:3169
 msgid ""
 "A failed commit retains the pending batch in memory and increments "
 "``incident_write_failures``. The tick still attempts policy polling. A "
@@ -11386,11 +11391,11 @@ msgstr ""
 "큐에 있던 데이터를 잃을 수 있습니다. 이는 크기가 제한된 비동기 포렌식 경로이지, 큐에 넣는 순간 영속성이 보장되는 메시지 큐가 "
 "아닙니다."
 
-#: ../../operations.rst:3170
+#: ../../operations.rst:3171
 msgid "Exercise 11.1"
 msgstr "연습 문제 11.1"
 
-#: ../../operations.rst:3172
+#: ../../operations.rst:3173
 msgid ""
 "Move the receipt update outside the data transaction. Construct one crash "
 "schedule that duplicates a reputation effect and another that loses an "
@@ -11399,11 +11404,11 @@ msgstr ""
 "영수증 갱신을 데이터 트랜잭션 밖으로 옮겨 보세요. 평판 효과가 중복되는 크래시 시나리오 하나와 인시던트가 사라지는 크래시 시나리오 "
 "하나를 구성해 보세요."
 
-#: ../../operations.rst:3174
+#: ../../operations.rst:3175
 msgid "Campaign Clustering"
 msgstr "캠페인 군집화"
 
-#: ../../operations.rst:3177
+#: ../../operations.rst:3178
 msgid ""
 "Each incident payload is embedded as a 64-dimensional unit vector by the "
 "hashing trick over byte trigrams (digits folded, case folded) and stored "
@@ -11426,11 +11431,11 @@ msgstr ""
 "인시던트는 비교하지 않습니다. 유사도는 휴리스틱입니다. 회귀 테스트 예제는 관련된 SQL 페이로드를 한 그룹으로 묶지만, 모든 공격 "
 "쌍이 같은 캠페인에 속한다고 보장하지는 않습니다. 실행되는 모델도 없고 학습하는 것도 없습니다."
 
-#: ../../operations.rst:3179
+#: ../../operations.rst:3180
 msgid "Clustering"
 msgstr "클러스터"
 
-#: ../../operations.rst:3182
+#: ../../operations.rst:3183
 msgid ""
 "A cluster is a set of nodes that share one PostgreSQL database. Build "
 "with the ``postgres-tls`` feature (``cargo build --release -p sibuna "
@@ -11441,7 +11446,7 @@ msgstr ""
 "빌드하고(``cargo build --release -p sibuna --features postgres-tls``, "
 "``postgres``\\ 를 포함합니다), 각 구성원을 데이터베이스와 고유한 노드 id로 시작합니다:"
 
-#: ../../operations.rst:3184
+#: ../../operations.rst:3185
 msgid ""
 "sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 \\\n"
 "       --secret-file /etc/sibuna/secret"
@@ -11449,7 +11454,7 @@ msgstr ""
 "sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 \\\n"
 "       --secret-file /etc/sibuna/secret"
 
-#: ../../operations.rst:3189
+#: ../../operations.rst:3190
 msgid ""
 "Every member must use the same master secret and a unique "
 "``--cluster-node`` from 1 to 8,388,607. The URL file holds one "
@@ -11463,7 +11468,7 @@ msgstr ""
 "출력하지 않습니다. 쓰기는 PostgreSQL 주 서버로 갑니다. 각 노드의 저장소 스레드는 커밋된 리비전 변경을 "
 "(``NOTIFY`` 또는 폴링으로) 감지하고 엔진을 다시 만듭니다."
 
-#: ../../operations.rst:3191
+#: ../../operations.rst:3192
 msgid ""
 "Nodes reach the shared database across the network, so we encrypt and "
 "verify that connection. We give the server a certificate signed by our "
@@ -11477,7 +11482,7 @@ msgstr ""
 "``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``. "
 "서버에서는 ``pg_hba.conf``\\ 의 ``hostssl`` 줄로만 TCP를 받습니다."
 
-#: ../../operations.rst:3193
+#: ../../operations.rst:3194
 msgid ""
 "At startup the daemon prints one line about the database connection. With "
 "``verify-full`` it says that the certificate and host name are verified. "
@@ -11500,7 +11505,7 @@ msgstr ""
 "``sslrootcert``\\ 는 우리 인증 기관을 시스템 신뢰 저장소에 추가할 뿐, 시스템의 인증 기관을 제거하지는 "
 "않습니다(SID 0011, SID 0012)."
 
-#: ../../operations.rst:3195
+#: ../../operations.rst:3196
 msgid ""
 "Sibuna does not replicate a database of its own and elects no leader. "
 "Replication, failover and backups are PostgreSQL's (streaming "
@@ -11524,7 +11529,7 @@ msgstr ""
 "console policies export``\\ 와 ``sibuna console policies import``\\ 로 옮기며, "
 "포렌식 기록은 이전되지 않습니다."
 
-#: ../../operations.rst:3197
+#: ../../operations.rst:3198
 msgid ""
 "**The cluster and the mesh.** This cluster is one of the firewall daemon. "
 "An edge does not join it: ``--config-file`` takes no storage option, the "
@@ -11548,11 +11553,11 @@ msgstr ""
 "테이블(``edge_head``, ``edge_revisions``, ``edge_nodes``)을 가집니다(*토폴로지를 위한 "
 "데이터베이스* 절). 엣지는 인시던트나 평판을 데이터베이스에 기록하지 않습니다."
 
-#: ../../operations.rst:3199
+#: ../../operations.rst:3200
 msgid "Cluster Challenge Routing"
 msgstr "클러스터 챌린지 라우팅"
 
-#: ../../operations.rst:3202
+#: ../../operations.rst:3203
 msgid ""
 "Challenge keys are bound to ``--cluster-node``; keep challenge issuance "
 "and verification on the same member. Tokens use the shared seed and work "
@@ -11570,11 +11575,11 @@ msgstr ""
 "않습니다(``crates/storage/tests/multi_node.rs``, SID 0011 기준 2. "
 "``SIBUNA_TEST_DATABASE_URL``\\ 을 설정하면 실행됩니다)."
 
-#: ../../operations.rst:3204
+#: ../../operations.rst:3205
 msgid "Packaging"
 msgstr "패키징"
 
-#: ../../operations.rst:3209
+#: ../../operations.rst:3210
 msgid ""
 "Install and verify a release package, run Sibuna as a service, in a "
 "container or under Kubernetes, and build the binary ourselves."
@@ -11582,7 +11587,7 @@ msgstr ""
 "릴리스 패키지를 설치하고 검증하며, Sibuna를 서비스로, 컨테이너에서, 또는 Kubernetes에서 실행하고, 바이너리를 직접 "
 "빌드합니다."
 
-#: ../../operations.rst:3211
+#: ../../operations.rst:3212
 msgid ""
 "Every release on GitHub carries the same executable for each platform, "
 "built from the release tag with the default features: SQLite storage and "
@@ -11591,19 +11596,19 @@ msgstr ""
 "GitHub의 모든 릴리스에는 플랫폼마다 같은 실행 파일이 들어 있습니다. 이 실행 파일은 릴리스 태그에서 기본 기능(SQLite "
 "저장소와 콘솔)으로 빌드됩니다. PostgreSQL 클러스터에는 직접 빌드한 바이너리가 필요합니다(아래 참조)."
 
-#: ../../operations.rst:3217
+#: ../../operations.rst:3218
 msgid "Platform"
 msgstr "플랫폼"
 
-#: ../../operations.rst:3218
+#: ../../operations.rst:3219
 msgid "Release assets"
 msgstr "릴리스 파일"
 
-#: ../../operations.rst:3219
+#: ../../operations.rst:3220
 msgid "Linux x86-64, ARM64"
 msgstr "Linux x86-64, ARM64"
 
-#: ../../operations.rst:3220
+#: ../../operations.rst:3221
 msgid ""
 "``sibuna-linux-amd64.tar.gz`` and ``sibuna-linux-arm64.tar.gz`` hold a "
 "static musl executable that runs on any distribution. "
@@ -11618,11 +11623,11 @@ msgstr ""
 "``sibuna-<version>-1.aarch64.rpm``\\ 은 이 실행 파일을 systemd 서비스와 함께 설치하고, "
 "Arch Linux에서는 ``sibuna-bin-<version>-1-x86_64.pkg.tar.zst``\\ 가 같은 일을 합니다."
 
-#: ../../operations.rst:3221
+#: ../../operations.rst:3222
 msgid "macOS arm64, x86-64"
 msgstr "macOS arm64, x86-64"
 
-#: ../../operations.rst:3222
+#: ../../operations.rst:3223
 msgid ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, for macOS "
 "12 or later."
@@ -11630,11 +11635,11 @@ msgstr ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``. macOS 12 "
 "이상용입니다."
 
-#: ../../operations.rst:3223
+#: ../../operations.rst:3224
 msgid "Windows x86-64"
 msgstr "Windows x86-64"
 
-#: ../../operations.rst:3224
+#: ../../operations.rst:3225
 msgid ""
 "``sibuna-windows-amd64.zip`` holds ``sibuna.exe``, for Windows 10 or "
 "Server 2016 or later."
@@ -11642,21 +11647,21 @@ msgstr ""
 "``sibuna-windows-amd64.zip``\\ 에는 ``sibuna.exe``\\ 가 들어 있습니다. Windows 10 "
 "또는 Server 2016 이상용입니다."
 
-#: ../../operations.rst:3225
+#: ../../operations.rst:3226
 msgid "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 msgstr "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 
-#: ../../operations.rst:3226
+#: ../../operations.rst:3227
 msgid ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg`` and ``sibuna-<version>.tgz``."
 msgstr ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg``\\ 와 ``sibuna-<version>.tgz``."
 
-#: ../../operations.rst:3227
+#: ../../operations.rst:3228
 msgid "Homebrew, Kubernetes, containers"
 msgstr "Homebrew, Kubernetes, 컨테이너"
 
-#: ../../operations.rst:3228
+#: ../../operations.rst:3229
 msgid ""
 "``sibuna.rb``, ``helm-sibuna-<version>.tgz``, and the image "
 "``ghcr.io/insanai/sibuna:<version>`` for amd64 and arm64, whose digest is "
@@ -11666,15 +11671,15 @@ msgstr ""
 "``ghcr.io/insanai/sibuna:<version>``. 이미지의 다이제스트는 ``IMAGE-DIGEST.txt``\\ "
 "에 있습니다."
 
-#: ../../operations.rst:3229
+#: ../../operations.rst:3230
 msgid "Source"
 msgstr "소스"
 
-#: ../../operations.rst:3230
+#: ../../operations.rst:3231
 msgid "``sibuna-<version>-source.tar.gz``."
 msgstr "``sibuna-<version>-source.tar.gz``."
 
-#: ../../operations.rst:3232
+#: ../../operations.rst:3233
 msgid ""
 "Each archive and package carries ``LICENSE``, ``NOTICE``, ``LICENSES/`` "
 "(with ``THIRD-PARTY-RUST.txt``, the crates in the executable), "
@@ -11692,14 +11697,14 @@ msgstr ""
 "파일을 각자의 플랫폼에서 시작해 보고, Debian, Fedora, Arch Linux, FreeBSD, OpenBSD에서 패키지를 "
 "설치, 재설치, 제거해 봅니다."
 
-#: ../../operations.rst:3234
+#: ../../operations.rst:3235
 msgid ""
 "The assets are not signed. We check a download against ``SHA256SUMS`` "
 "from the same release before we install it:"
 msgstr ""
 "릴리스 파일에는 서명이 없습니다. 설치하기 전에 내려받은 파일을 같은 릴리스의 ``SHA256SUMS``\\ 와 대조해 확인합니다:"
 
-#: ../../operations.rst:3236
+#: ../../operations.rst:3237
 msgid ""
 "sha256sum --ignore-missing -c SHA256SUMS          # Linux\n"
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
@@ -11709,7 +11714,7 @@ msgstr ""
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
 "sha256 -C SHA256SUMS sibuna-1.0.0-beta.3.tgz      # OpenBSD"
 
-#: ../../operations.rst:3242
+#: ../../operations.rst:3243
 msgid ""
 "On macOS a browser download carries a quarantine attribute that stops an "
 "unsigned executable; ``xattr -d com.apple.quarantine sibuna`` removes it "
@@ -11718,11 +11723,11 @@ msgstr ""
 "macOS에서 브라우저로 내려받은 파일에는 서명되지 않은 실행 파일을 막는 격리 속성이 붙습니다. 확인을 마친 뒤 ``xattr "
 "-d com.apple.quarantine sibuna``\\ 로 이 속성을 제거합니다."
 
-#: ../../operations.rst:3244
+#: ../../operations.rst:3245
 msgid "The systemd service"
 msgstr "systemd 서비스"
 
-#: ../../operations.rst:3247
+#: ../../operations.rst:3248
 msgid ""
 "The Debian, RPM and Arch packages install ``/usr/bin/sibuna``, the unit "
 "``sibuna.service``, the account ``sibuna`` (through "
@@ -11736,7 +11741,7 @@ msgstr ""
 "``/usr/lib/sibuna/seed.sh``, 설정 파일 ``/etc/sibuna/service.env``\\ 를 설치합니다. "
 "설치만으로는 아무것도 시작되지 않습니다. 설정 파일에 원본 서버를 IP 리터럴로 지정하고 서비스를 시작합니다:"
 
-#: ../../operations.rst:3249
+#: ../../operations.rst:3250
 msgid ""
 "sudoedit /etc/sibuna/service.env      # SIBUNA_UPSTREAM_HOST, "
 "SIBUNA_UPSTREAM_PORT\n"
@@ -11748,7 +11753,7 @@ msgstr ""
 "sudo systemctl enable --now sibuna\n"
 "curl -s http://127.0.0.1:8080/__sibuna/health"
 
-#: ../../operations.rst:3255
+#: ../../operations.rst:3256
 msgid ""
 "The service listens on ``127.0.0.1:8080`` until ``SIBUNA_HOST`` and "
 "``SIBUNA_PORT`` say otherwise. ``SIBUNA_OPTIONS`` passes further options, "
@@ -11771,7 +11776,7 @@ msgstr ""
 "읽기 전용으로 두고(``ProtectSystem=strict``), 비공개 ``/tmp``\\ 와 장치를 쓰며, 새 권한 획득을 "
 "막습니다(no new privileges)."
 
-#: ../../operations.rst:3257
+#: ../../operations.rst:3258
 msgid ""
 "An upgrade keeps the settings file, the seed and the state, and does not "
 "restart the service; we restart it after a backup. Removal stops and "
@@ -11781,7 +11786,7 @@ msgstr ""
 "업그레이드는 설정 파일, 시드, 상태를 유지하며 서비스를 재시작하지 않습니다. 서비스는 백업한 뒤 직접 재시작합니다. 제거는 "
 "서비스를 중지하고 비활성화하지만 계정, 시드, 설정, 상태는 남겨 둡니다. 이것들은 호스트를 폐기할 때 직접 삭제합니다."
 
-#: ../../operations.rst:3259
+#: ../../operations.rst:3260
 msgid ""
 "The FreeBSD and OpenBSD packages install only ``/usr/local/bin/sibuna`` "
 "and its documents (``pkg add``, or ``pkg_add -D unsigned`` for a package "
@@ -11793,11 +11798,11 @@ msgstr ""
 "add``, 또는 OpenBSD 미러 밖에서 받은 패키지라면 ``pkg_add -D unsigned``). 서비스, 계정, 상태는 "
 "만들지 않습니다. 데몬은 비특권 사용자로, 전용 시드와 데이터 디렉터리를 두고 실행합니다."
 
-#: ../../operations.rst:3261
+#: ../../operations.rst:3262
 msgid "Homebrew"
 msgstr "Homebrew"
 
-#: ../../operations.rst:3264
+#: ../../operations.rst:3265
 msgid ""
 "``sibuna.rb`` installs the release archive for the machine: macOS or "
 "Linux, arm64 or x86-64. It does not build from source, because Homebrew's "
@@ -11812,7 +11817,7 @@ msgstr ""
 "때문입니다. 아카이브에는 릴리스 워크플로가 이미 확인한 실행 파일이 들어 있습니다. Homebrew는 탭에서만 포뮬러를 설치하므로, "
 "포뮬러를 로컬 탭에 넣습니다:"
 
-#: ../../operations.rst:3266
+#: ../../operations.rst:3267
 msgid ""
 "brew tap-new \"$USER/local\"\n"
 "cp sibuna.rb \"$(brew "
@@ -11824,7 +11829,7 @@ msgstr ""
 "--repository)/Library/Taps/$USER/homebrew-local/Formula/\"\n"
 "brew install \"$USER/local/sibuna\""
 
-#: ../../operations.rst:3272
+#: ../../operations.rst:3273
 msgid ""
 "The formula starts no service. Its caveats show how to create a seed; its "
 "test starts the daemon twice on the same data directory."
@@ -11832,11 +11837,11 @@ msgstr ""
 "포뮬러는 서비스를 시작하지 않습니다. 포뮬러의 주의 사항(caveats)은 시드를 만드는 방법을 보여 주고, 테스트는 같은 데이터 "
 "디렉터리에서 데몬을 두 번 시작합니다."
 
-#: ../../operations.rst:3274
+#: ../../operations.rst:3275
 msgid "Containers and Kubernetes"
 msgstr "컨테이너와 Kubernetes"
 
-#: ../../operations.rst:3277
+#: ../../operations.rst:3278
 msgid ""
 "The image ``ghcr.io/insanai/sibuna:<version>`` holds the static "
 "executable on a distroless base: CA certificates, user 65532, no shell "
@@ -11850,7 +11855,7 @@ msgstr ""
 "데몬 옵션입니다. 릴리스 워크플로는 이 이미지를 capability 없이 읽기 전용으로 실행하되, 시드는 읽기 전용으로 마운트하고 "
 "상태용 볼륨을 붙이며, 한 번 재시작해 봅니다:"
 
-#: ../../operations.rst:3279
+#: ../../operations.rst:3280
 msgid ""
 "docker run -d --read-only --cap-drop=ALL --security-opt=no-new-privileges "
 "\\\n"
@@ -11870,7 +11875,7 @@ msgstr ""
 "/var/lib/sibuna/data \\\n"
 "  --upstream-host 10.0.0.5 --upstream-port 3000"
 
-#: ../../operations.rst:3287
+#: ../../operations.rst:3288
 msgid ""
 "The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. "
 "It requires a Secret that we create (``secret.existingSecret``, key "
@@ -11898,7 +11903,7 @@ msgstr ""
 "``upstream.host``\\ 는 IP 리터럴이어야 하며, ``extraArgs``\\ 는 추가 데몬 옵션을 전달합니다. "
 "워크플로는 Restricted 표준을 강제하는 kind 클러스터에서 차트를 설치, 업그레이드, 제거해 봅니다."
 
-#: ../../operations.rst:3289
+#: ../../operations.rst:3290
 msgid ""
 "kubectl -n sibuna create secret generic sibuna-admission "
 "--from-file=admission.seed\n"
@@ -11914,11 +11919,11 @@ msgstr ""
 "  --set secret.existingSecret=sibuna-admission \\\n"
 "  --set upstream.host=10.0.0.5 --set upstream.port=3000"
 
-#: ../../operations.rst:3296
+#: ../../operations.rst:3297
 msgid "Building from source"
 msgstr "소스에서 빌드하기"
 
-#: ../../operations.rst:3299
+#: ../../operations.rst:3300
 msgid ""
 "We build and test with Rust 1.100. The default build includes the JLV "
 "compiler and requires Rust 1.100. We can build the JSON-only daemon with "
@@ -11929,7 +11934,7 @@ msgstr ""
 "받는 데몬은 ``cargo build -p sibuna --no-default-features``\\ 로 Rust 1.94에서 "
 "빌드할 수 있습니다. SQLite와 콘솔을 포함하려면 ``--features sqlite,console``\\ 을 더합니다."
 
-#: ../../operations.rst:3301
+#: ../../operations.rst:3302
 msgid ""
 "We install the release toolchain with ``rustup toolchain install 1.100.0 "
 "--profile minimal --target wasm32-unknown-unknown`` and select it with "
@@ -11938,7 +11943,7 @@ msgstr ""
 "릴리스 툴체인은 ``rustup toolchain install 1.100.0 --profile minimal --target "
 "wasm32-unknown-unknown``\\ 으로 설치하고, 아래 명령에서 ``cargo +1.100.0``\\ 으로 선택합니다."
 
-#: ../../operations.rst:3303
+#: ../../operations.rst:3304
 msgid ""
 "``cargo build --release -p sibuna`` produces ``target/release/sibuna`` "
 "with the default features: SQLite storage and the console. sqlx bundles "
@@ -11955,7 +11960,7 @@ msgstr ""
 "wasm32-unknown-unknown``\\ 이 필요합니다. ``SIBUNA_POW_WASM=<path>``\\ 와 "
 "``SIBUNA_CONSOLE_WASM=<path>``\\ 를 지정하면 대신 미리 빌드한 모듈을 내장합니다."
 
-#: ../../operations.rst:3304
+#: ../../operations.rst:3305
 msgid ""
 "``cargo build --release -p sibuna --no-default-features`` produces the "
 "in-memory firewall with no external crate at all; ``--data-dir`` and "
@@ -11967,7 +11972,7 @@ msgstr ""
 "``StorageDisabled``\\ 로, ``sibuna console``\\ 은 ``CONSOLEBUILD``\\ 로 "
 "거부됩니다."
 
-#: ../../operations.rst:3305
+#: ../../operations.rst:3306
 msgid ""
 "``cargo build --release -p sibuna --features postgres-tls`` adds "
 "PostgreSQL clusters with verified TLS to the database. It needs no "
@@ -11976,7 +11981,7 @@ msgstr ""
 "``cargo build --release -p sibuna --features postgres-tls``\\ 는 데이터베이스와의 "
 "연결에 검증된 TLS를 쓰는 PostgreSQL 클러스터 지원을 추가합니다. OpenSSL은 필요하지 않습니다."
 
-#: ../../operations.rst:3306
+#: ../../operations.rst:3307
 msgid ""
 "The static Linux executables of the releases come from ``cargo build "
 "--release --locked -p sibuna --target x86_64-unknown-linux-musl`` (or "
@@ -11988,7 +11993,7 @@ msgstr ""
 "--locked -p sibuna --target x86_64-unknown-linux-musl`` (또는 "
 "``aarch64-unknown-linux-musl``)로 빌드한 것입니다."
 
-#: ../../operations.rst:3308
+#: ../../operations.rst:3309
 msgid ""
 "The release profile uses fat LTO and one codegen unit. The workflow "
 "builds the two WebAssembly modules once and passes them to every "
@@ -12000,7 +12005,7 @@ msgstr ""
 "플랫폼에 전달하므로, 한 릴리스의 모든 실행 파일은 바이트 단위로 동일한 모듈을 내장합니다. 의존성이 바뀌면 ``cargo "
 "xtask licenses``\\ 로 ``LICENSES/THIRD-PARTY-RUST.txt``\\ 를 다시 생성합니다."
 
-#: ../../operations.rst:3310
+#: ../../operations.rst:3311
 msgid ""
 "On Windows the daemon stops on Ctrl+C, Ctrl+Break and console close "
 "events; it does not run as a Windows service. Windows files have no mode "
@@ -12014,11 +12019,11 @@ msgstr ""
 "URL 파일을 거부할 수 없습니다. 이런 파일은 ACL로 접근을 제한합니다. 콘솔의 메모리와 CPU 게이지는 ``/proc``\\ "
 "에서 읽으므로 다른 시스템에서는 사용할 수 없습니다."
 
-#: ../../operations.rst:3312
+#: ../../operations.rst:3313
 msgid "Exercise 11.2"
 msgstr "연습 문제 11.2"
 
-#: ../../operations.rst:3314
+#: ../../operations.rst:3315
 msgid ""
 "Write the policy file and the ``ip_reputation`` rows needed so that a "
 "staging network (``10.20.0.0/16``) bypasses challenges, ``/admin/*`` "
@@ -12029,7 +12034,7 @@ msgstr ""
 "20을 요구하며, ``X-Partner-Key``\\ 로 식별되는 파트너 스크레이퍼는 10초당 요청 30개로 허용되도록 정책 파일과 "
 "``ip_reputation`` 행을 작성하세요."
 
-#: ../../operations.rst:3316
+#: ../../operations.rst:3317
 msgid ""
 "Hint: The daemon flags set the per-client limit every request meets "
 "first; a rule can carry a quota of its own in ``limits``."
@@ -12037,11 +12042,11 @@ msgstr ""
 "힌트: 데몬 플래그는 모든 요청이 가장 먼저 만나는 클라이언트별 제한을 설정합니다. 규칙은 ``limits``\\ 에 자체 할당량을 "
 "둘 수 있습니다."
 
-#: ../../operations.rst:3318
+#: ../../operations.rst:3319
 msgid "Explain the invariant"
 msgstr "불변식 설명하기"
 
-#: ../../operations.rst:3320
+#: ../../operations.rst:3321
 msgid ""
 "Explain to an operator why adding a row to ``policies`` takes effect "
 "without a restart and without a request ever waiting, in terms of the "
