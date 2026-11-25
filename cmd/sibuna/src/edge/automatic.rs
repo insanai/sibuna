@@ -23,10 +23,17 @@ pub(super) fn start(
     let ordered = config.names.len() - local;
     let mut sources = Vec::new();
     if ordered > 0 {
-        sources.push(format!("{ordered} name(s) from {}", config.options.directory));
+        let fallback = match config.options.fallback.len() {
+            0 => String::new(),
+            count => format!(" (then {count} more)"),
+        };
+        sources.push(format!("{ordered} name(s) from {}{fallback}", config.options.directory));
     }
     if local > 0 {
         sources.push(format!("{local} name(s) from the local authority"));
+    }
+    if config.on_demand {
+        sources.push("names on demand".to_owned());
     }
     super::note(format_args!(
         "Sibuna edge: automatic HTTPS for {}, storage {}",

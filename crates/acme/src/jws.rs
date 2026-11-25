@@ -3,6 +3,7 @@
 
 use std::fmt::Write as _;
 
+use sibuna_crypto::hmac::hmac_sha256;
 use sibuna_crypto::sha256::Sha256;
 use sibuna_encoding::base64::{self, URL_SAFE_NO_PAD};
 
@@ -66,6 +67,50 @@ pub fn sign(
         r#"{{"protected":"{protected}","payload":"{payload}","signature":"{}"}}"#,
         base64url(&signature)
     ))
+}
+
+/// An external account binding (RFC 8555, section 7.3.4): the key identifier and the
+/// MAC key that an authority hands out for an account it knows already.
+#[derive(Clone, PartialEq, Eq)]
+pub struct Binding {
+    /// The key identifier.
+    pub kid: String,
+    /// The MAC key, decoded.
+    pub key: Vec<u8>,
+}
+
+impl std::fmt::Debug for Binding {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Binding").field("kid", &self.kid).finish_non_exhaustive()
+    }
+}
+
+impl Binding {
+    /// Reads a binding from its identifier and the text of its key file: base64url,
+    /// with or without padding, and white space around it. Returns `None` for an empty
+    /// identifier or key and for a key that is not base64url.
+    pub fn parse(kid: &str, key_text: &str) -> Option<Self> {
+        let text = key_text.trim().trim_end_matches('=');
+        let key = base64::decode(URL_SAFE_NO_PAD, text.as_bytes()).ok()?;
+        (!kid.is_empty() && !key.is_empty()).then(|| Self { kid: kid.to_owned(), key })
+    }
+
+    /// The member `externalAccountBinding` of a registration at `url`: a flattened JWS
+    /// with HS256 whose payload is the account key.
+    pub fn bind(&self, account: &KeyPair, url: &str) -> String {
+        let mut header = String::from(r#"{"alg":"HS256","kid":"#);
+        let _ = sibuna_json::write_string(&mut header, &self.kid);
+        header.push_str(r#","url":"#);
+        let _ = sibuna_json::write_string(&mut header, url);
+        header.push('}');
+        let protected = base64url(header.as_bytes());
+        let payload = base64url(jwk(account).as_bytes());
+        let mac = hmac_sha256(&self.key, format!("{protected}.{payload}").as_bytes());
+        format!(
+            r#"{{"protected":"{protected}","payload":"{payload}","signature":"{}"}}"#,
+            base64url(&mac)
+        )
+    }
 }
 
 #[cfg(test)]

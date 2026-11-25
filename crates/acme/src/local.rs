@@ -4,7 +4,8 @@
 //! ```text
 //! STORAGE/local/
 //!   root.pem            the root certificate and its key, mode 0600, 10 years
-//!   root.crt            the root certificate alone, the file to install in clients
+//!   root.crt            the root certificate alone, the file to install in clients,
+//!                       mode 0644; the directory itself has mode 0755
 //!   intermediate.pem    the intermediate and its key, mode 0600, 7 days
 //!
 //!   root --signs--> intermediate --signs--> leaf (12 hours by default)
@@ -18,9 +19,9 @@ use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
-use crate::store::write_private;
 use crate::store::{create_private_dir, create_private_file, read_bounded, temporary};
-use crate::{Error, Issued, KeyPair, pem, random_serial, schedule, x509};
+use crate::store::{set_mode, write_private};
+use crate::{Error, Issued, KeyPair, constraints, pem, random_serial, schedule, x509};
 
 /// The common name of the root.
 pub const ROOT_NAME: &str = "Sibuna Local Authority - Root";
@@ -99,17 +100,35 @@ pub fn read_root(storage: &Path) -> Result<Option<Root>, Error> {
 #[derive(Debug)]
 pub struct LocalAuthority {
     directory: PathBuf,
+    /// The DER value of the name constraints that a new root gets and that the root on
+    /// disk must have.
+    constraints: Option<Vec<u8>>,
 }
 
 impl LocalAuthority {
     /// Opens the local authority under `storage`, and creates its directory and its
-    /// root when they are missing. `now` is in seconds since 1970. Fails with `ACME011`
-    /// when the directory cannot be written or the root on disk cannot be read.
-    pub fn open(storage: &Path, now: u64) -> Result<Self, Error> {
+    /// root when they are missing. `now` is in seconds since 1970.
+    ///
+    /// `permitted` lists the DNS suffixes and the address ranges `ADDRESS/PREFIX` that
+    /// a new root may sign for; see [`constraints::value`]. The empty list constrains
+    /// nothing. A root that exists is never rewritten.
+    ///
+    /// The directory gets mode 0755 and `root.crt` mode 0644, so that a user who can
+    /// reach the storage directory can read the root. The keys stay private.
+    ///
+    /// Fails with `ACME011` when the directory cannot be written, when the root on disk
+    /// cannot be read, when an entry of `permitted` is malformed, or when the root on
+    /// disk has other constraints than `permitted`.
+    pub fn open(storage: &Path, now: u64, permitted: &[String]) -> Result<Self, Error> {
         let directory = storage.join(DIRECTORY);
         create_private_dir(&directory).map_err(|error| failure(&directory, error))?;
-        let authority = Self { directory };
+        set_mode(&directory, 0o755).map_err(|error| failure(&directory, error))?;
+        let constraints = constraints::value(permitted).map_err(|entry| {
+            Error::local(format!("`{entry}` is no DNS suffix and no address range."))
+        })?;
+        let authority = Self { directory, constraints };
         let root = authority.root(now)?;
+        authority.check_constraints(&root)?;
         // The file for clients follows the root, also when another node made the root.
         let path = authority.root_path();
         let text = pem::encode("CERTIFICATE", &root.certificate);
@@ -117,7 +136,41 @@ impl LocalAuthority {
         if current.as_deref() != Some(text.as_str()) {
             write_private(&path, &text).map_err(|error| failure(&path, error.message))?;
         }
+        set_mode(&path, 0o644).map_err(|error| failure(&path, error))?;
         Ok(authority)
+    }
+
+    /// Fails when the root on disk does not carry exactly the constraints of the
+    /// configuration. A client that installed the root trusts what the root says, so a
+    /// changed list would promise what the installed root does not keep.
+    fn check_constraints(&self, root: &Signer) -> Result<(), Error> {
+        let found = x509::parts(&root.certificate).and_then(|parts| {
+            x509::extension_value(parts.extensions, constraints::NAME_CONSTRAINTS)
+        });
+        if found == self.constraints.as_deref() {
+            return Ok(());
+        }
+        let path = self.directory.join("root.pem");
+        let what = match (found, &self.constraints) {
+            (Some(_), None) => "The root has name constraints and the configuration lists none",
+            (None, _) => "The root has no name constraints and the configuration lists some",
+            (Some(_), Some(_)) => "The root has other name constraints than the configuration",
+        };
+        Err(Error::constraints(format!("{}: {what}.", path.display())))
+    }
+
+    /// Whether the chain `chain_pem` of a stored leaf ends at the present root: its last
+    /// certificate is an intermediate that this root signed. A leaf of a root that the
+    /// storage lost is of no use to a client that installed the present root.
+    pub fn issued_here(&self, chain_pem: &str) -> bool {
+        let root = self.directory.join("root.pem");
+        let Some(root) = read_bounded(&root).ok().flatten().as_deref().and_then(Signer::parse)
+        else {
+            return false;
+        };
+        let last = pem::decode("CERTIFICATE", chain_pem)
+            .and_then(|chain| chain.last().and_then(|der| x509::read(der)));
+        last.is_some_and(|last| last.authority_key_id == root.key_id())
     }
 
     /// The path of the root certificate, the file that clients install.
@@ -148,6 +201,7 @@ impl LocalAuthority {
                 authority: true,
                 path_len: Some(1),
                 subject_key_id: true,
+                name_constraints: self.constraints.as_deref(),
                 ..x509::Template::default()
             };
             let certificate = x509::write(&template, &key.subject_public_key_info(), &key)?;
@@ -167,7 +221,8 @@ impl LocalAuthority {
         let usable = text.as_deref().and_then(Signer::parse).filter(|found| {
             let fields = &found.fields;
             let due = schedule::renew_at(fields.not_before, fields.not_after);
-            fields.issuer == ROOT_NAME && now < due && fields.not_after >= needed_until
+            let ours = fields.authority_key_id == root.key_id();
+            ours && fields.issuer == ROOT_NAME && now < due && fields.not_after >= needed_until
         });
         if let Some(found) = usable {
             return Ok(found);
@@ -194,22 +249,42 @@ impl LocalAuthority {
     }
 
     /// Issues a certificate for a TLS server. `names` are its DNS names and IP
-    /// addresses, the first of which is also its common name. It is valid for
+    /// addresses. The first is also its common name; an address is written there as
+    /// `address 10.0.0.1`, because a verifier takes a common name that looks like a
+    /// host name for one and holds it against the DNS constraints of the root. The
+    /// names are not compared with the constraints: the caller's configuration check
+    /// does that, and a client refuses a leaf outside them. It is valid for
     /// `lifetime` seconds from one minute before `now`, and never longer than the
     /// intermediate that signs it. A lifetime under two minutes starts half of itself
     /// early instead, so that two thirds of the validity lie ahead. Fails with
     /// `ACME011`, or for no name.
     pub fn issue(&self, names: &[&str], lifetime: u64, now: u64) -> Result<Issued, Error> {
-        let Some(subject) = names.first() else {
+        self.issue_on(crate::Curve::P256, names, lifetime, now)
+    }
+
+    /// As [`LocalAuthority::issue`], with the key of the certificate on `curve`. The
+    /// intermediate signs with its own key, which is on P-256.
+    pub fn issue_on(
+        &self,
+        curve: crate::Curve,
+        names: &[&str],
+        lifetime: u64,
+        now: u64,
+    ) -> Result<Issued, Error> {
+        let Some(first) = names.first() else {
             return Err(Error::local("A certificate needs a name."));
+        };
+        let subject = match first.parse::<std::net::IpAddr>() {
+            Ok(_) => format!("address {first}"),
+            Err(_) => (*first).to_owned(),
         };
         let root = self.root(now)?;
         let wanted = now.saturating_add(lifetime);
         let intermediate = self.intermediate(&root, now, wanted.min(root.fields.not_after))?;
-        let key = KeyPair::generate()?;
+        let key = KeyPair::generate_on(curve)?;
         let template = x509::Template {
             issuer: INTERMEDIATE_NAME,
-            subject,
+            subject: &subject,
             names,
             not_before: now.saturating_sub(BACKDATE.min(lifetime / 2)),
             not_after: wanted.min(intermediate.fields.not_after),
@@ -278,7 +353,7 @@ mod tests {
     #[test]
     fn a_leaf_names_hosts_and_addresses_and_chains_to_the_intermediate() {
         let scratch = Scratch::new();
-        let authority = LocalAuthority::open(&scratch.0, NOW).unwrap();
+        let authority = LocalAuthority::open(&scratch.0, NOW, &[]).unwrap();
         let issued = authority.issue(&["localhost", "127.0.0.1", "::1"], 43_200, NOW).unwrap();
         let chain = chain(&issued);
         assert_eq!(chain.len(), 2);
@@ -305,14 +380,14 @@ mod tests {
     #[test]
     fn the_root_is_kept_and_the_intermediate_is_replaced_in_time() {
         let scratch = Scratch::new();
-        let first = LocalAuthority::open(&scratch.0, NOW).unwrap();
+        let first = LocalAuthority::open(&scratch.0, NOW, &[]).unwrap();
         let root = first.root_pem().unwrap();
         let before = fs::read_to_string(scratch.0.join("local/intermediate.pem")).ok();
         assert_eq!(before, None);
         first.issue(&["a.internal"], 60, NOW).unwrap();
         let intermediate = fs::read_to_string(scratch.0.join("local/intermediate.pem")).unwrap();
         // A second node, and a later start, find the same root and intermediate.
-        let second = LocalAuthority::open(&scratch.0, NOW + 3600).unwrap();
+        let second = LocalAuthority::open(&scratch.0, NOW + 3600, &[]).unwrap();
         second.issue(&["b.internal"], 60, NOW + 3600).unwrap();
         assert_eq!(second.root_pem().unwrap(), root);
         let same = fs::read_to_string(scratch.0.join("local/intermediate.pem")).unwrap();
@@ -334,22 +409,161 @@ mod tests {
     fn the_keys_of_the_authority_are_private() {
         use std::os::unix::fs::PermissionsExt as _;
         let scratch = Scratch::new();
-        let authority = LocalAuthority::open(&scratch.0, NOW).unwrap();
+        let authority = LocalAuthority::open(&scratch.0, NOW, &[]).unwrap();
         authority.issue(&["a.internal"], 60, NOW).unwrap();
         let mode = |name: &str| {
             fs::metadata(scratch.0.join("local").join(name)).unwrap().permissions().mode() & 0o777
         };
-        assert_eq!((mode("root.pem"), mode("intermediate.pem"), mode("")), (0o600, 0o600, 0o700));
+        assert_eq!((mode("root.pem"), mode("intermediate.pem")), (0o600, 0o600));
+        // The root certificate is for every user. The directory lets them reach it.
+        assert_eq!((mode("root.crt"), mode("")), (0o644, 0o755));
         assert!(!authority.root_pem().unwrap().contains("PRIVATE KEY"));
+        // A storage that an earlier version made private is opened up at the next open.
+        let private = |name: &str, mode: u32| {
+            let path = scratch.0.join("local").join(name);
+            fs::set_permissions(path, fs::Permissions::from_mode(mode)).unwrap();
+        };
+        private("root.crt", 0o600);
+        private("", 0o700);
+        LocalAuthority::open(&scratch.0, NOW, &[]).unwrap();
+        assert_eq!((mode("root.crt"), mode("")), (0o644, 0o755));
+    }
+
+    fn list(entries: &[&str]) -> Vec<String> {
+        entries.iter().map(|entry| (*entry).to_owned()).collect()
+    }
+
+    #[test]
+    fn the_constraints_are_those_of_the_root_on_disk() {
+        let scratch = Scratch::new();
+        let permitted = list(&["corp.internal", "10.0.0.0/8"]);
+        LocalAuthority::open(&scratch.0, NOW, &permitted).unwrap();
+        let root = fs::read(scratch.0.join("local/root.pem")).unwrap();
+        // The same list opens the same root. Another list, or none, is refused, and the
+        // root stays as it is.
+        LocalAuthority::open(&scratch.0, NOW, &permitted).unwrap();
+        for other in [list(&[]), list(&["corp.internal"]), list(&["other.internal"])] {
+            let error = LocalAuthority::open(&scratch.0, NOW, &other).unwrap_err();
+            assert_eq!(error.code, "ACME011");
+            assert!(error.message.contains("name constraints"), "{}", error.message);
+            assert!(error.hint.contains("internal.constraints"), "{}", error.hint);
+        }
+        assert_eq!(fs::read(scratch.0.join("local/root.pem")).unwrap(), root);
+        // A root without constraints refuses a list in the same way.
+        let plain = Scratch::new();
+        LocalAuthority::open(&plain.0, NOW, &[]).unwrap();
+        let error = LocalAuthority::open(&plain.0, NOW, &permitted).unwrap_err();
+        assert!(error.message.contains("no name constraints"), "{}", error.message);
+        let error = LocalAuthority::open(&Scratch::new().0, NOW, &list(&["a b"])).unwrap_err();
+        assert!(error.message.contains("`a b`"), "{}", error.message);
+    }
+
+    #[test]
+    fn a_leaf_of_a_lost_root_is_not_ours() {
+        let scratch = Scratch::new();
+        let authority = LocalAuthority::open(&scratch.0, NOW, &[]).unwrap();
+        let old = authority.issue(&["a.internal"], 600, NOW).unwrap();
+        assert!(authority.issued_here(&old.chain_pem));
+        assert!(!authority.issued_here("no chain"));
+        // The storage loses the root. The intermediate of the old root stays behind.
+        fs::remove_file(scratch.0.join("local/root.pem")).unwrap();
+        let authority = LocalAuthority::open(&scratch.0, NOW, &[]).unwrap();
+        assert!(!authority.issued_here(&old.chain_pem));
+        // The next leaf is signed by a new intermediate, of the new root.
+        let new = authority.issue(&["a.internal"], 600, NOW).unwrap();
+        assert!(authority.issued_here(&new.chain_pem));
+        assert_ne!(chain(&new)[1].authority_key_id, chain(&old)[1].authority_key_id);
+    }
+
+    /// `openssl verify` accepts a chain whose leaf has a key on P-384, signed by the
+    /// P-256 intermediate. Skipped without `openssl`.
+    #[test]
+    fn openssl_verifies_a_leaf_with_a_key_on_p384() {
+        let _spawn = crate::SPAWN.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        let scratch = Scratch::new();
+        let now =
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+        let authority = LocalAuthority::open(&scratch.0, now, &[]).unwrap();
+        let issued = authority.issue_on(crate::Curve::P384, &["localhost"], 3600, now).unwrap();
+        assert_eq!(issued.key.curve(), crate::Curve::P384);
+        let blocks = pem::decode("CERTIFICATE", &issued.chain_pem).unwrap();
+        let public = issued.key.subject_public_key_info();
+        assert!(blocks[0].windows(public.len()).any(|window| window == public));
+        let file = |name: &str, der: &[u8]| {
+            let path = scratch.0.join(name);
+            fs::write(&path, pem::encode("CERTIFICATE", der)).unwrap();
+            path
+        };
+        let (leaf, intermediate) = (file("leaf.pem", &blocks[0]), file("int.pem", &blocks[1]));
+        let mut command = Command::new("openssl");
+        command.args(["verify", "-x509_strict", "-purpose", "sslserver"]);
+        command.arg("-CAfile").arg(authority.root_path());
+        command.arg("-untrusted").arg(&intermediate);
+        command.args(["-verify_hostname", "localhost"]).arg(&leaf);
+        let Ok(output) = command.output() else { return };
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        let mut shown = Command::new("openssl");
+        shown.args(["x509", "-noout", "-text", "-in"]).arg(&leaf);
+        let text = String::from_utf8_lossy(&shown.output().unwrap().stdout).into_owned();
+        assert!(text.contains("secp384r1") && text.contains("ecdsa-with-SHA256"), "{text}");
+    }
+
+    /// `openssl verify` accepts a leaf inside the constraints of the root and refuses a
+    /// leaf outside them that the same keys signed. Skipped without `openssl`.
+    #[test]
+    fn openssl_enforces_the_constraints_of_the_root() {
+        let _spawn = crate::SPAWN.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        let now =
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+        let verify = |permitted: &[&str], names: &[&str]| {
+            let scratch = Scratch::new();
+            let authority = LocalAuthority::open(&scratch.0, now, &list(permitted)).unwrap();
+            let issued = authority.issue(names, 3600, now).unwrap();
+            let blocks = pem::decode("CERTIFICATE", &issued.chain_pem).unwrap();
+            let file = |name: &str, der: &[u8]| {
+                let path = scratch.0.join(name);
+                fs::write(&path, pem::encode("CERTIFICATE", der)).unwrap();
+                path
+            };
+            let (leaf, intermediate) = (file("leaf.pem", &blocks[0]), file("int.pem", &blocks[1]));
+            let mut command = Command::new("openssl");
+            command.args(["verify", "-x509_strict", "-purpose", "sslserver"]);
+            command.arg("-CAfile").arg(authority.root_path());
+            command.arg("-untrusted").arg(&intermediate).arg(&leaf);
+            command.output().ok().map(|output| {
+                let text = String::from_utf8_lossy(&output.stdout).into_owned()
+                    + &String::from_utf8_lossy(&output.stderr);
+                (output.status.success(), text)
+            })
+        };
+        let Some(inside) = verify(&["corp.internal", "10.0.0.0/8"], &["a.corp.internal"]) else {
+            return;
+        };
+        assert!(inside.0, "{}", inside.1);
+        let accepted = |permitted: &[&str], names: &[&str]| verify(permitted, names).unwrap().0;
+        let both = ["corp.internal", "10.0.0.0/8"];
+        assert!(accepted(&both, &["corp.internal", "10.1.2.3"]));
+        assert!(!accepted(&both, &["bank.example"]));
+        assert!(!accepted(&both, &["a.corp.internal", "bank.example"]));
+        assert!(!accepted(&both, &["evilcorp.internal"]));
+        assert!(!accepted(&both, &["192.168.1.1"]));
+        // A list of one kind closes the other kind.
+        assert!(accepted(&["corp.internal"], &["a.corp.internal"]));
+        assert!(!accepted(&["corp.internal"], &["10.1.2.3"]));
+        assert!(!accepted(&["corp.internal"], &["::1"]));
+        assert!(accepted(&["10.0.0.0/8"], &["10.1.2.3"]));
+        assert!(!accepted(&["10.0.0.0/8"], &["a.corp.internal"]));
+        assert!(accepted(&["fd00::/8"], &["fd00::1"]));
+        assert!(!accepted(&["fd00::/8"], &["10.1.2.3"]));
     }
 
     #[test]
     fn a_damaged_root_is_reported_and_not_replaced() {
         let scratch = Scratch::new();
-        LocalAuthority::open(&scratch.0, NOW).unwrap();
+        LocalAuthority::open(&scratch.0, NOW, &[]).unwrap();
         let path = scratch.0.join("local/root.pem");
         fs::write(&path, "no pem").unwrap();
-        let error = LocalAuthority::open(&scratch.0, NOW).unwrap_err();
+        let error = LocalAuthority::open(&scratch.0, NOW, &[]).unwrap_err();
         assert_eq!(error.code, "ACME011");
         assert_eq!(fs::read_to_string(&path).unwrap(), "no pem");
     }
@@ -362,7 +576,7 @@ mod tests {
         let scratch = Scratch::new();
         let now =
             std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
-        let authority = LocalAuthority::open(&scratch.0, now).unwrap();
+        let authority = LocalAuthority::open(&scratch.0, now, &[]).unwrap();
         let issued = authority.issue(&["localhost", "127.0.0.1"], 3600, now).unwrap();
         let blocks = pem::decode("CERTIFICATE", &issued.chain_pem).unwrap();
         let file = |name: &str, der: &[u8]| {

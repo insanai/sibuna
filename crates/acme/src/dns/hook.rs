@@ -5,7 +5,9 @@
 //! HOOK cleanup RECORD VALUE        VALUE is the text of the TXT record
 //! ```
 //!
-//! We run the program directly, with no shell. Exit status 0 means done.
+//! We run the program directly, with no shell. Exit status 0 means done. The program
+//! is the first process of a new process group. When it runs too long, the whole group
+//! is killed: the program and what it started, unless that left the group.
 
 use std::io::Read;
 use std::path::Path;
@@ -37,6 +39,9 @@ pub struct Run<'a> {
     pub value: &'a str,
     /// The `auto` name of the certificate.
     pub name: &'a str,
+    /// The owner that the authority asks: `_acme-challenge.NAME`, without a final dot.
+    /// It differs from `owner` when a CNAME record delegates the challenge.
+    pub challenge: &'a str,
     /// How long the program may run before it is killed.
     pub timeout: Duration,
 }
@@ -56,13 +61,17 @@ fn collect(mut pipe: impl Read + Send + 'static, sender: mpsc::Sender<(u8, Vec<u
     });
 }
 
-/// Waits for the program to end. Kills it at `deadline` and returns `None`.
+/// Waits for the program to end. At `deadline` it kills the process group of the
+/// program, then the program itself, and returns `None`.
 fn wait(child: &mut Child, deadline: Instant) -> Option<std::process::ExitStatus> {
     loop {
         match child.try_wait() {
             Ok(Some(status)) => return Some(status),
             Ok(None) if Instant::now() < deadline => std::thread::sleep(POLL),
             _ => {
+                // The program has not been waited for, so its number still names it
+                // and its group. Where groups do not exist, the program alone ends.
+                let _ = super::group::kill_group(child.id());
                 let _ = child.kill();
                 let _ = child.wait();
                 return None;
@@ -83,7 +92,13 @@ pub fn run(run: Run<'_>) -> Result<(), Error> {
     command.env("SIBUNA_ACME_RECORD", &record);
     command.env("SIBUNA_ACME_VALUE", run.value);
     command.env("SIBUNA_ACME_NAME", run.name);
+    command.env("SIBUNA_ACME_CHALLENGE", format!("{}.", run.challenge.trim_end_matches('.')));
     command.stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt as _;
+        command.process_group(0);
+    }
     let mut child = command
         .spawn()
         .map_err(|error| Error::provider(format!("{shown} could not be started: {error}.")))?;

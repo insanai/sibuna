@@ -10,6 +10,13 @@ A model of the algorithms of SID 0021, checked with Lean 4.19.0.
 5. Issuer: every name has one issuer, a public authority is never asked for an internal name or an address, and no name is refused when the frontend states no issuer.
 6. Wildcard: `*.parent` covers a host of exactly one more label, neither the parent nor a deeper host, and an exact certificate wins over a wildcard, which wins over a file.
 7. Propagation: the check of DNS-01 asks a bounded number of times, pauses no longer than the timeout in total, and succeeds when the record shows in time.
+8. On demand: the token bucket never exceeds its capacity, the orders it admits are bounded, a name is ordered only after every guard, and the table of held names keeps its bound.
+9. Authorities: one attempt asks the listed authorities in order, at most once each, stops at the first that issues, succeeds when one issues and fails when none does.
+10. Renewal information: the pick lies in the window of the authority, the renewal time is at most four fifths of the lifetime and before the expiry, a window in the past is due at once, and a time inside our bounds is taken as it is.
+11. Stapling: an OCSP response is stapled only inside its window and only when it says good, and the next question to the responder lies after now and inside the window.
+12. Zone search: the search for the zone of a record at a DNS provider asks a bounded number of questions, fewer than the owner has labels, finds only a zone that the account has and that ends the owner, and finds the longest such zone.
+13. Constraints: the empty list of the local root permits every name, a list permits exactly the names that an entry covers, a suffix covers at whole labels and never a shorter name, and a list of one kind of entry permits no name of the other kind.
+14. Restart: the delay before the certificate thread starts again after a panic is at least five seconds, at most five minutes, and never shrinks.
 
 Times are natural numbers of seconds. The JSON documents, the signatures, the sockets and the files are outside the model. Tests cover them.
 -/
@@ -472,5 +479,670 @@ theorem check_fails_when_hidden (visible : Nat → Bool) (fuel asked : Nat)
   | succ k ih =>
     simp only [check, hidden asked]
     exact ih (asked + 1)
+
+/-! ## Part H: Issuance on demand -/
+
+/-- The bucket of tokens: one new certificate takes one token. -/
+structure Bucket where
+  capacity : Nat
+  tokens : Nat
+
+/-- The bucket gains tokens with time, to at most its capacity. -/
+def Bucket.refill (b : Bucket) (gained : Nat) : Bucket :=
+  { b with tokens := min b.capacity (b.tokens + gained) }
+
+/-- Takes one token. Returns whether there was one, and the bucket afterwards. -/
+def Bucket.take (b : Bucket) : Bool × Bucket :=
+  if b.tokens = 0 then (false, b) else (true, { b with tokens := b.tokens - 1 })
+
+/-- One name asks for a token after the bucket gained `gained` tokens. -/
+def Bucket.step (b : Bucket) (gained : Nat) : Bool × Bucket := (b.refill gained).take
+
+/-- The orders that a run admits. Each element is the gain before one name asks. -/
+def admitted : Bucket → List Nat → Nat
+  | _, [] => 0
+  | b, gained :: rest =>
+    (if (b.step gained).1 then 1 else 0) + admitted (b.step gained).2 rest
+
+/-- A refill never exceeds the capacity. -/
+theorem refill_within (b : Bucket) (gained : Nat) : (b.refill gained).tokens ≤ b.capacity := by
+  simp only [Bucket.refill]
+  exact Nat.min_le_left _ _
+
+/-- A take leaves the bucket within its capacity. -/
+theorem take_within (b : Bucket) (h : b.tokens ≤ b.capacity) :
+    b.take.2.tokens ≤ b.take.2.capacity := by
+  unfold Bucket.take
+  split
+  · exact h
+  · simp only
+    omega
+
+/-- An empty bucket admits nothing: the tokens never go below zero. -/
+theorem empty_bucket_refuses (b : Bucket) (h : b.tokens = 0) : b.take.1 = false := by
+  simp [Bucket.take, h]
+
+/-- A step conserves tokens: what it admits and what it leaves is at most what the bucket had and gained. -/
+theorem step_conserves (b : Bucket) (gained : Nat) :
+    (if (b.step gained).1 then 1 else 0) + (b.step gained).2.tokens ≤ b.tokens + gained := by
+  have within : (b.refill gained).tokens ≤ b.tokens + gained := by
+    simp only [Bucket.refill]
+    exact Nat.min_le_right _ _
+  unfold Bucket.step Bucket.take
+  split
+  · simp only [Bool.false_eq_true, if_false]
+    omega
+  · simp only [if_true]
+    omega
+
+/-- Over any run the admitted orders are at most the tokens at its start plus the tokens gained. -/
+theorem admitted_bounded (b : Bucket) (gains : List Nat) :
+    admitted b gains ≤ b.tokens + gains.sum := by
+  induction gains generalizing b with
+  | nil => simp [admitted]
+  | cons gained rest ih =>
+    simp only [admitted, List.sum_cons]
+    have step := step_conserves b gained
+    have tail := ih (b.step gained).2
+    omega
+
+/-- A bucket that starts full admits at most its capacity plus the refills. -/
+theorem full_bucket_admits_at_most (capacity : Nat) (gains : List Nat) :
+    admitted { capacity := capacity, tokens := capacity } gains ≤ capacity + gains.sum :=
+  admitted_bounded _ gains
+
+/-- What the guards say about one name. The first four read memory, in the handshake. The last three take time, in the thread. -/
+structure Guards where
+  /-- A plain host name: no address, no wildcard, at most 253 bytes. -/
+  hostName : Bool
+  /-- A suffix of `allow` covers the name, or the file has no list. -/
+  suffix : Bool
+  /-- The name is not denied at the moment. -/
+  notDenied : Bool
+  /-- The held names and the queue have room. -/
+  room : Bool
+  /-- The storage has a fresh certificate. -/
+  stored : Bool
+  /-- The `ask` URL allows the name, or the file has no URL. -/
+  asked : Bool
+  /-- The bucket has a token. -/
+  token : Bool
+
+/-- What becomes of a name that a handshake asks for. -/
+inductive Demand where
+  | notQueued
+  | denied
+  | loaded
+  | ordered
+  deriving DecidableEq
+
+/-- The decision. `guarded` says that the file has `ask` or `allow`. The daemon refuses a file without. -/
+def decide (guarded : Bool) (g : Guards) : Demand :=
+  if !(guarded && g.hostName && g.suffix && g.notDenied && g.room) then .notQueued
+  else if g.stored then .loaded
+  else if !(g.asked && g.token) then .denied
+  else .ordered
+
+/-- An order is placed only when the file has a guard and every guard passes. -/
+theorem ordered_passed_every_guard (guarded : Bool) (g : Guards)
+    (h : decide guarded g = .ordered) :
+    guarded = true ∧ g.hostName = true ∧ g.suffix = true ∧ g.notDenied = true ∧ g.room = true
+      ∧ g.asked = true ∧ g.token = true := by
+  unfold decide at h
+  cases guarded <;> cases hn : g.hostName <;> cases sf : g.suffix <;> cases nd : g.notDenied
+    <;> cases rm : g.room <;> cases st : g.stored <;> cases ak : g.asked <;> cases tk : g.token
+    <;> simp_all
+
+/-- Without a guard in the file nothing is ordered and nothing is loaded. -/
+theorem unguarded_orders_nothing (g : Guards) : decide false g = .notQueued := by
+  simp [decide]
+
+/-- A name that the `ask` URL refuses is never ordered. -/
+theorem refused_by_ask_is_not_ordered (guarded : Bool) (g : Guards) (h : g.asked = false) :
+    decide guarded g ≠ .ordered := by
+  intro ordered
+  have := ordered_passed_every_guard guarded g ordered
+  simp_all
+
+/-- A name without a token is never ordered. -/
+theorem without_token_is_not_ordered (guarded : Bool) (g : Guards) (h : g.token = false) :
+    decide guarded g ≠ .ordered := by
+  intro ordered
+  have := ordered_passed_every_guard guarded g ordered
+  simp_all
+
+/-- What happens to the tables of issuance on demand. -/
+inductive TableEvent where
+  /-- A handshake asks for a new name. -/
+  | request
+  /-- The thread holds a queued name. -/
+  | hold
+  /-- The thread denies a queued name. -/
+  | deny
+  /-- A held name is released. -/
+  | release
+
+/-- The tables as two counts: the held names and the queued names. -/
+def tableStep (bound : Nat) (s : Nat × Nat) : TableEvent → Nat × Nat
+  | .request => if s.1 + s.2 < bound then (s.1, s.2 + 1) else s
+  | .hold => if s.2 = 0 then s else (s.1 + 1, s.2 - 1)
+  | .deny => (s.1, s.2 - 1)
+  | .release => (s.1 - 1, s.2)
+
+/-- No event takes the held names and the queue together over the bound. -/
+theorem table_step_within (bound : Nat) (s : Nat × Nat) (e : TableEvent)
+    (h : s.1 + s.2 ≤ bound) : (tableStep bound s e).1 + (tableStep bound s e).2 ≤ bound := by
+  cases e <;> simp only [tableStep]
+  · split <;> first | omega | (simp at *; omega)
+  · split <;> first | omega | (simp at *; omega)
+  · omega
+  · omega
+
+/-- After any run of events the daemon holds at most `bound` names. -/
+theorem table_within (bound : Nat) (events : List TableEvent) (s : Nat × Nat)
+    (h : s.1 + s.2 ≤ bound) : (events.foldl (tableStep bound) s).1 ≤ bound := by
+  induction events generalizing s with
+  | nil =>
+    simp only [List.foldl]
+    omega
+  | cons e rest ih =>
+    simp only [List.foldl]
+    exact ih (tableStep bound s e) (table_step_within bound s e h)
+
+/-! ## Part I: The authorities of one attempt -/
+
+/-- One attempt asks `count` authorities in order, starting with the one at `first`.
+`issues i` says whether the authority `i` issues. The result is the authority that
+issued, if any, and the number of authorities that were asked. -/
+def attempt (issues : Nat → Bool) : (count first : Nat) → Option Nat × Nat
+  | 0, _ => (none, 0)
+  | n + 1, i =>
+    if issues i then (some i, 1)
+    else ((attempt issues n (i + 1)).1, (attempt issues n (i + 1)).2 + 1)
+
+/-- An attempt asks every authority at most once. -/
+theorem attempt_asks_at_most (issues : Nat → Bool) (n i : Nat) :
+    (attempt issues n i).2 ≤ n := by
+  induction n generalizing i with
+  | zero => exact Nat.le_refl 0
+  | succ n ih =>
+    simp only [attempt]
+    split
+    · show 1 ≤ n + 1
+      omega
+    · show (attempt issues n (i + 1)).2 + 1 ≤ n + 1
+      have := ih (i + 1)
+      omega
+
+/-- The authority that issued is a listed one that issues. Every authority before it
+failed, and the attempt stopped with it: nobody after it was asked. -/
+theorem attempt_stops_at_the_first (issues : Nat → Bool) (n i k : Nat)
+    (h : (attempt issues n i).1 = some k) :
+    issues k = true ∧ i ≤ k ∧ k < i + n ∧ (∀ j, i ≤ j → j < k → issues j = false) ∧
+      (attempt issues n i).2 = k - i + 1 := by
+  induction n generalizing i with
+  | zero => simp [attempt] at h
+  | succ n ih =>
+    simp only [attempt] at h ⊢
+    by_cases hi : issues i = true
+    · rw [if_pos hi] at h ⊢
+      have hk : i = k := by simpa using h
+      refine ⟨hk ▸ hi, by omega, by omega, ?_, ?_⟩
+      · intro j h1 h2
+        omega
+      · show 1 = k - i + 1
+        omega
+    · rw [if_neg hi] at h ⊢
+      have h' : (attempt issues n (i + 1)).1 = some k := h
+      obtain ⟨a, b, c, d, e⟩ := ih (i + 1) h'
+      refine ⟨a, by omega, by omega, ?_, ?_⟩
+      · intro j h1 h2
+        by_cases hj : j = i
+        · rw [hj]
+          simpa using hi
+        · exact d j (by omega) h2
+      · show (attempt issues n (i + 1)).2 + 1 = k - i + 1
+        omega
+
+/-- When no listed authority issues, the attempt fails after it asked all of them. -/
+theorem attempt_fails_when_all_fail (issues : Nat → Bool) (n i : Nat)
+    (h : ∀ j, i ≤ j → j < i + n → issues j = false) :
+    attempt issues n i = (none, n) := by
+  induction n generalizing i with
+  | zero => rfl
+  | succ n ih =>
+    have hi : issues i = false := h i (Nat.le_refl _) (by omega)
+    have rest := ih (i + 1) (fun j h1 h2 => h j (by omega) (by omega))
+    simp [attempt, hi, rest]
+
+/-- When a listed authority issues, the attempt succeeds. -/
+theorem attempt_succeeds_when_one_issues (issues : Nat → Bool) (n i k : Nat)
+    (h1 : i ≤ k) (h2 : k < i + n) (hk : issues k = true) :
+    (attempt issues n i).1 ≠ none := by
+  induction n generalizing i with
+  | zero => omega
+  | succ n ih =>
+    by_cases hi : issues i = true
+    · simp [attempt, hi]
+    · have hne : k ≠ i := fun e => hi (e ▸ hk)
+      simp only [attempt]
+      rw [if_neg hi]
+      exact ih (i + 1) (by omega) (by omega)
+
+/-! ## Part J: Renewal information -/
+
+/-- The time in the window `[s, e)` for a certificate whose serial hashes to `h`. -/
+def pick (s e h : Nat) : Nat := if e ≤ s then s else s + h % (e - s)
+
+/-- The pick lies in the window. -/
+theorem pick_in_window (s e h : Nat) (hw : s < e) : s ≤ pick s e h ∧ pick s e h < e := by
+  unfold pick
+  rw [if_neg (by omega)]
+  have := Nat.mod_lt h (show 0 < e - s by omega)
+  omega
+
+/-- The pick of an empty window is its start. -/
+theorem pick_of_empty_window (s h : Nat) : pick s s h = s := by
+  unfold pick
+  rw [if_pos (Nat.le_refl s)]
+
+/-- The latest renewal that an authority may ask for: four fifths of the lifetime. -/
+def latest (b e : Nat) : Nat := b + (e - b) / 5 * 4
+
+/-- The renewal time for a pick `p` and a floor `f`. -/
+def ariRenew (b e p f : Nat) : Nat := min (max p f) (latest b e)
+
+/-- The cap lies before the expiry. -/
+theorem latest_before_expiry (b e : Nat) (h : b < e) : latest b e < e := by
+  unfold latest
+  omega
+
+/-- No answer of the authority moves the renewal past the cap. -/
+theorem ari_at_most_cap (b e p f : Nat) : ariRenew b e p f ≤ latest b e :=
+  Nat.min_le_right _ _
+
+/-- So no answer of the authority parks a certificate until it expires. -/
+theorem ari_before_expiry (b e p f : Nat) (h : b < e) : ariRenew b e p f < e :=
+  Nat.lt_of_le_of_lt (ari_at_most_cap b e p f) (latest_before_expiry b e h)
+
+/-- A window in the past makes a loaded certificate, which has no floor, due at once. -/
+theorem past_window_is_due (b e p now : Nat) (h : p ≤ now) : ariRenew b e p 0 ≤ now := by
+  unfold ariRenew
+  have : max p 0 = p := Nat.max_eq_left (Nat.zero_le p)
+  rw [this]
+  exact Nat.le_trans (Nat.min_le_left _ _) h
+
+/-- A certificate that was just obtained is not renewed before its floor, unless the
+cap comes first. -/
+theorem ari_respects_the_floor (b e p f : Nat) (h : f ≤ latest b e) :
+    f ≤ ariRenew b e p f := by
+  unfold ariRenew
+  exact Nat.le_min.mpr ⟨Nat.le_max_right p f, h⟩
+
+/-- An authority that asks for a time inside our bounds gets it. -/
+theorem ari_follows_the_authority (b e p f : Nat) (h1 : f ≤ p) (h2 : p ≤ latest b e) :
+    ariRenew b e p f = p := by
+  unfold ariRenew
+  rw [Nat.max_eq_left h1]
+  exact Nat.min_eq_left h2
+
+/-! ## Part K: OCSP stapling -/
+
+/-- What a responder says about a certificate. -/
+inductive OcspStatus where
+  | good | revoked | unknown
+  deriving DecidableEq, Repr
+
+/-- Whether an answer with the status `st` and the window `[t, n)` is stapled at `now`. -/
+def staples (st : OcspStatus) (t n now : Nat) : Bool :=
+  if st = .good ∧ t ≤ now ∧ now < n then true else false
+
+/-- A response is stapled only inside its window. -/
+theorem stapled_inside_window (st : OcspStatus) (t n now : Nat)
+    (h : staples st t n now = true) : t ≤ now ∧ now < n := by
+  unfold staples at h
+  split at h
+  · rename_i hc
+    exact hc.2
+  · contradiction
+
+/-- Only a good answer is stapled. -/
+theorem stapled_is_good (st : OcspStatus) (t n now : Nat)
+    (h : staples st t n now = true) : st = .good := by
+  unfold staples at h
+  split at h
+  · rename_i hc
+    exact hc.1
+  · contradiction
+
+/-- A revoked answer never staples. -/
+theorem revoked_never_staples (t n now : Nat) : staples .revoked t n now = false := by
+  unfold staples
+  rw [if_neg]
+  intro hc
+  exact absurd hc.1 (by decide)
+
+/-- An answer that does not know the certificate never staples. -/
+theorem unknown_never_staples (t n now : Nat) : staples .unknown t n now = false := by
+  unfold staples
+  rw [if_neg]
+  intro hc
+  exact absurd hc.1 (by decide)
+
+/-- When the responder is asked again, for an answer with the window `[t, n)` taken at
+`now`: at the middle of the window, or, once that has passed, at half of the time that
+is left, and one second later at least. -/
+def refreshAt (t n now : Nat) : Nat :=
+  if now < t + (n - t) / 2 then t + (n - t) / 2
+  else if (n - now) / 2 = 0 then now + 1 else now + (n - now) / 2
+
+/-- The next question lies after now: the thread does not ask in a loop. -/
+theorem refresh_after_now (t n now : Nat) : now < refreshAt t n now := by
+  unfold refreshAt
+  split
+  · assumption
+  · split <;> omega
+
+/-- The next question lies inside the window of an answer that is stapled. -/
+theorem refresh_within_window (t n now : Nat) (h1 : t ≤ now) (h2 : now < n) :
+    refreshAt t n now ≤ n := by
+  unfold refreshAt
+  split
+  · omega
+  · split <;> omega
+
+/-- With two seconds left, the next question comes before the window ends: a new
+response can replace the stapled one in time. -/
+theorem refresh_before_the_end (t n now : Nat) (h1 : t ≤ now) (h2 : now + 2 ≤ n) :
+    refreshAt t n now < n := by
+  unfold refreshAt
+  split
+  · omega
+  · split <;> omega
+
+/-! ## Part L: The zone of a record at a DNS provider -/
+
+/-- The names that may be the zone of a record, the longest first: the owner and its
+parents down to two labels, `limit` at most. A name is its labels, the leftmost first. -/
+def zoneCandidates : Nat → List Nat → List (List Nat)
+  | 0, _ => []
+  | _ + 1, [] => []
+  | _ + 1, [_] => []
+  | k + 1, a :: b :: rest => (a :: b :: rest) :: zoneCandidates k (b :: rest)
+
+/-- The first candidate that the account has. `has` is the answer of the provider. -/
+def firstKnown (has : List Nat → Bool) : List (List Nat) → Option (List Nat)
+  | [] => none
+  | z :: rest => if has z then some z else firstKnown has rest
+
+/-- The zone that the search finds for an owner. -/
+def findZone (has : List Nat → Bool) (limit : Nat) (owner : List Nat) : Option (List Nat) :=
+  firstKnown has (zoneCandidates limit owner)
+
+/-- The search asks at most `limit` questions. -/
+theorem zone_questions_bounded (k : Nat) (l : List Nat) : (zoneCandidates k l).length ≤ k := by
+  induction k generalizing l with
+  | zero => simp [zoneCandidates]
+  | succ k ih =>
+    match l with
+    | [] => simp [zoneCandidates]
+    | [_] => simp [zoneCandidates]
+    | a :: b :: rest =>
+      simp only [zoneCandidates, List.length_cons]
+      have := ih (b :: rest)
+      omega
+
+/-- The search asks fewer questions than the owner has labels. -/
+theorem zone_questions_below_labels (k : Nat) (l : List Nat) :
+    (zoneCandidates k l).length + 1 ≤ l.length ∨ zoneCandidates k l = [] := by
+  induction k generalizing l with
+  | zero => right; simp [zoneCandidates]
+  | succ k ih =>
+    match l with
+    | [] => right; simp [zoneCandidates]
+    | [_] => right; simp [zoneCandidates]
+    | a :: b :: rest =>
+      left
+      simp only [zoneCandidates, List.length_cons]
+      cases ih (b :: rest) with
+      | inl h => simp only [List.length_cons] at h; omega
+      | inr h => rw [h]; simp
+
+/-- Every candidate ends the owner, has two labels at least, and is no longer than it. -/
+theorem zone_candidate_is_parent (k : Nat) (l z : List Nat) (h : z ∈ zoneCandidates k l) :
+    z <:+ l ∧ 2 ≤ z.length ∧ z.length ≤ l.length := by
+  induction k generalizing l with
+  | zero => simp [zoneCandidates] at h
+  | succ k ih =>
+    match l with
+    | [] => simp [zoneCandidates] at h
+    | [_] => simp [zoneCandidates] at h
+    | a :: b :: rest =>
+      simp only [zoneCandidates, List.mem_cons] at h
+      cases h with
+      | inl h =>
+        subst h
+        exact ⟨List.suffix_refl _, by simp, Nat.le_refl _⟩
+      | inr h =>
+        have ⟨hs, h2, hl⟩ := ih (b :: rest) h
+        refine ⟨List.IsSuffix.trans hs (List.suffix_cons a (b :: rest)), h2, ?_⟩
+        simp only [List.length_cons] at hl ⊢
+        omega
+
+/-- A zone that the search finds is one that the provider has. -/
+theorem first_known_is_known (has : List Nat → Bool) (cs : List (List Nat)) (z : List Nat)
+    (h : firstKnown has cs = some z) : has z = true ∧ z ∈ cs := by
+  induction cs with
+  | nil => simp [firstKnown] at h
+  | cons c rest ih =>
+    simp only [firstKnown] at h
+    split at h
+    · rename_i hc
+      have hz : c = z := Option.some.inj h
+      subst hz
+      exact ⟨hc, List.mem_cons_self⟩
+    · have ⟨h1, h2⟩ := ih h
+      exact ⟨h1, List.mem_cons_of_mem c h2⟩
+
+/-- The zone that the search finds is in the account and ends the owner. -/
+theorem found_zone_is_known_parent (has : List Nat → Bool) (k : Nat) (l z : List Nat)
+    (h : findZone has k l = some z) : has z = true ∧ z <:+ l := by
+  have ⟨h1, h2⟩ := first_known_is_known has _ z h
+  exact ⟨h1, (zone_candidate_is_parent k l z h2).1⟩
+
+/-- The longest zone wins: no candidate that the provider has is longer than the zone
+that the search finds. A record of `a.b.example.org` goes into the zone `b.example.org`
+when the account has it, and not into `example.org`. -/
+theorem longest_zone_wins (has : List Nat → Bool) (k : Nat) (l z z' : List Nat)
+    (h : findZone has k l = some z) (hm : z' ∈ zoneCandidates k l) (hk : has z' = true) :
+    z'.length ≤ z.length := by
+  unfold findZone at h
+  induction k generalizing l with
+  | zero => simp [zoneCandidates] at hm
+  | succ k ih =>
+    match l with
+    | [] => simp [zoneCandidates] at hm
+    | [_] => simp [zoneCandidates] at hm
+    | a :: b :: rest =>
+      simp only [zoneCandidates, List.mem_cons] at hm
+      simp only [zoneCandidates, firstKnown] at h
+      split at h
+      · have hz : a :: b :: rest = z := Option.some.inj h
+        subst hz
+        cases hm with
+        | inl hm => subst hm; exact Nat.le_refl _
+        | inr hm =>
+          have := (zone_candidate_is_parent k (b :: rest) z' hm).2.2
+          simp only [List.length_cons] at this ⊢
+          omega
+      · rename_i hc
+        cases hm with
+        | inl hm => subst hm; exact absurd hk hc
+        | inr hm => exact ih (b :: rest) h hm
+
+/-- A search that finds nothing asked about zones that the account does not have. -/
+theorem no_zone_means_none_known (has : List Nat → Bool) (cs : List (List Nat))
+    (h : firstKnown has cs = none) : ∀ c ∈ cs, has c = false := by
+  induction cs with
+  | nil => intro c hc; simp at hc
+  | cons c rest ih =>
+    simp only [firstKnown] at h
+    split at h
+    · contradiction
+    · rename_i hc
+      intro c' hc'
+      cases List.mem_cons.mp hc' with
+      | inl e => subst e; simpa using hc
+      | inr e => exact ih h c' e
+
+/-- `_acme-challenge.a.example.org` in an account that has `example.org` (labels as
+numbers: 0 the challenge label, 1 `a`, 2 `example`, 3 `org`). -/
+example : findZone (fun z => z == [2, 3]) 8 [0, 1, 2, 3] = some [2, 3] := by decide
+
+/-- A name of one label is never asked about: a provider has no zone `org`. -/
+example : zoneCandidates 8 [3] = [] := by decide
+
+/-! ## Part M: The name constraints of the local root -/
+
+/-- Whether the suffix `s` covers the host `h`. Both are lists of labels from the
+top-level label down: `a.corp.internal` is `[internal, corp, a]`, so a suffix of the
+name is a prefix of the list, and it ends at a label by construction. -/
+def under : List Nat → List Nat → Bool
+  | [], _ => true
+  | _ :: _, [] => false
+  | s :: ss, h :: hs => s == h && under ss hs
+
+/-- An entry of `internal.constraints`: a DNS suffix, or a range of addresses with its
+first address and its size. An address is a number. A range of size `k` starts at a
+multiple of `k`. -/
+inductive Entry where
+  | suffix (labels : List Nat)
+  | range (base size : Nat)
+
+/-- What a certificate names: a host, or an address. -/
+inductive Named where
+  | host (labels : List Nat)
+  | address (a : Nat)
+
+/-- Whether one entry covers a name. A suffix covers hosts only, a range addresses only. -/
+def covered : Entry → Named → Bool
+  | .suffix s, .host h => under s h
+  | .range b k, .address a => a / k == b / k
+  | _, _ => false
+
+/-- Whether the root may sign for a name: the empty list permits all, else an entry
+must cover the name. -/
+def permits (list : List Entry) (n : Named) : Bool :=
+  list.isEmpty || list.any (fun e => covered e n)
+
+/-- The empty list permits every name. -/
+theorem empty_list_permits_all (n : Named) : permits [] n = true := by
+  simp [permits]
+
+/-- With a list, a name is permitted exactly when an entry covers it. -/
+theorem permitted_iff_covered (e : Entry) (list : List Entry) (n : Named) :
+    permits (e :: list) n = true ↔ ∃ x, x ∈ e :: list ∧ covered x n = true := by
+  simp [permits, List.any_eq_true]
+
+/-- A suffix covers itself. -/
+theorem under_self (s : List Nat) : under s s = true := by
+  induction s with
+  | nil => simp [under]
+  | cons a t ih => simp [under, ih]
+
+/-- A suffix covers every name below a name that it covers. -/
+theorem under_below (s h t : List Nat) (c : under s h = true) : under s (h ++ t) = true := by
+  induction s generalizing h with
+  | nil => simp [under]
+  | cons a ss ih =>
+    cases h with
+    | nil => simp [under] at c
+    | cons b hs =>
+      simp [under] at c
+      simp [under, c.1, ih hs c.2]
+
+/-- A covered host has at least the labels of the suffix: `internal` is not covered by
+`corp.internal`. -/
+theorem under_is_no_shorter (s h : List Nat) (c : under s h = true) : s.length ≤ h.length := by
+  induction s generalizing h with
+  | nil => simp
+  | cons a ss ih =>
+    cases h with
+    | nil => simp [under] at c
+    | cons b hs =>
+      simp [under] at c
+      have := ih hs c.2
+      simp
+      omega
+
+/-- The cover compares whole labels: `evilcorp.internal` is not under `corp.internal`. -/
+theorem under_compares_labels (a b : Nat) (ss hs : List Nat)
+    (c : under (a :: ss) (b :: hs) = true) : a = b := by
+  simp [under] at c
+  exact c.1
+
+/-- A list of suffixes only permits no address. -/
+theorem suffixes_close_addresses (list : List Entry) (a : Nat) (e : Entry)
+    (h : ∀ x, x ∈ e :: list → ∃ s, x = .suffix s) :
+    permits (e :: list) (.address a) = false := by
+  simp only [permits, List.isEmpty_cons, Bool.false_or]
+  apply Bool.eq_false_iff.mpr
+  intro c
+  rw [List.any_eq_true] at c
+  obtain ⟨x, hx, hc⟩ := c
+  obtain ⟨s, rfl⟩ := h x hx
+  simp [covered] at hc
+
+/-- A list of ranges only permits no host. -/
+theorem ranges_close_hosts (list : List Entry) (l : List Nat) (e : Entry)
+    (h : ∀ x, x ∈ e :: list → ∃ b k, x = .range b k) :
+    permits (e :: list) (.host l) = false := by
+  simp only [permits, List.isEmpty_cons, Bool.false_or]
+  apply Bool.eq_false_iff.mpr
+  intro c
+  rw [List.any_eq_true] at c
+  obtain ⟨x, hx, hc⟩ := c
+  obtain ⟨b, k, rfl⟩ := h x hx
+  simp [covered] at hc
+
+/-- A range covers its own first address. -/
+theorem range_covers_its_base (b k : Nat) : covered (.range b k) (.address b) = true := by
+  simp [covered]
+
+/-- `a.corp.internal` (labels 1, 2, 3 from the top) under `corp.internal`: permitted.
+`evilcorp.internal` (labels 1, 4) is not, and an address in 10/8 of a toy space is. -/
+example : permits [.suffix [1, 2], .range 160 16] (.host [1, 2, 3]) = true := by decide
+example : permits [.suffix [1, 2], .range 160 16] (.host [1, 4]) = false := by decide
+example : permits [.suffix [1, 2], .range 160 16] (.address 171) = true := by decide
+example : permits [.suffix [1, 2], .range 160 16] (.address 176) = false := by decide
+
+/-! ## Part N: The restart of the certificate thread -/
+
+/-- The seconds before the restart after the `n`-th panic in a row, from 1. -/
+def restartDelay (n : Nat) : Nat :=
+  min (5 * 2 ^ (min (n - 1) 16)) 300
+
+/-- The delay is at least five seconds. -/
+theorem restart_at_least_five (n : Nat) : 5 ≤ restartDelay n := by
+  have h : 1 ≤ 2 ^ (min (n - 1) 16) := Nat.one_le_two_pow
+  simp only [restartDelay]
+  omega
+
+/-- The delay is at most five minutes. -/
+theorem restart_at_most_five_minutes (n : Nat) : restartDelay n ≤ 300 := by
+  simp only [restartDelay]
+  omega
+
+/-- The delay never shrinks as the panics go on. -/
+theorem restart_monotone (n m : Nat) (h : n ≤ m) : restartDelay n ≤ restartDelay m := by
+  have e : min (n - 1) 16 ≤ min (m - 1) 16 := by omega
+  have p : 2 ^ (min (n - 1) 16) ≤ 2 ^ (min (m - 1) 16) :=
+    Nat.pow_le_pow_right (by decide) e
+  simp only [restartDelay]
+  omega
+
+/-- The first delays: 5, 10, 20, 40, 80, 160, then 300. -/
+example : (List.range 9).map (fun n => restartDelay (n + 1)) =
+    [5, 10, 20, 40, 80, 160, 300, 300, 300] := by decide
 
 end SibunaAcme

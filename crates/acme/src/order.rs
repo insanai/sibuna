@@ -29,7 +29,7 @@ const MAX_CHALLENGES: usize = 16;
 const MAX_WAIT: u64 = 30;
 
 /// Bounds of the JSON documents of the authority.
-const LIMITS: sibuna_json::Limits = sibuna_json::Limits {
+pub(crate) const LIMITS: sibuna_json::Limits = sibuna_json::Limits {
     max_input_bytes: MAX_BODY,
     max_values: 4096,
     max_string_bytes: 8192,
@@ -194,6 +194,13 @@ pub struct OrderOptions {
     pub challenge: ChallengeKind,
     /// Answer the other type when the authority does not offer `challenge`.
     pub any_challenge: bool,
+    /// The external account binding of a new account, for an authority that wants one.
+    pub binding: Option<jws::Binding>,
+    /// The identifier of the certificate that this order replaces (RFC 9773, section
+    /// 5). It is sent when the directory offers renewal information.
+    pub replaces: Option<String>,
+    /// The curve of the key of the certificate.
+    pub curve: crate::Curve,
 }
 
 impl Default for OrderOptions {
@@ -205,6 +212,9 @@ impl Default for OrderOptions {
             email: None,
             challenge: ChallengeKind::Http01,
             any_challenge: true,
+            binding: None,
+            replaces: None,
+            curve: crate::Curve::P256,
         }
     }
 }
@@ -232,6 +242,8 @@ struct Endpoints {
     new_nonce: String,
     new_account: String,
     new_order: String,
+    /// Whether the directory offers renewal information.
+    renewal_info: bool,
 }
 
 /// One order in progress. It borrows the account for its whole life.
@@ -380,12 +392,7 @@ impl<'a> Order<'a> {
             Phase::Directory => return Ok(plain(Method::Get, &self.options.directory)),
             Phase::Nonce => return Ok(plain(Method::Head, &self.endpoints.new_nonce)),
             Phase::Account => (self.endpoints.new_account.clone(), self.registration()),
-            Phase::NewOrder => {
-                let mut payload = String::from(r#"{"identifiers":[{"type":"dns","value":"#);
-                let _ = sibuna_json::write_string(&mut payload, &self.options.name);
-                payload.push_str("}]}");
-                (self.endpoints.new_order.clone(), payload)
-            }
+            Phase::NewOrder => (self.endpoints.new_order.clone(), self.new_order()),
             Phase::Authorization | Phase::PollAuthorization => {
                 (self.authorization_url.clone(), String::new())
             }
@@ -405,15 +412,38 @@ impl<'a> Order<'a> {
 
     /// Draws the key of the certificate and writes the payload that finalizes the order.
     fn certificate_request(&mut self) -> Result<String, Error> {
-        let key = KeyPair::generate()?;
+        let key = KeyPair::generate_on(self.options.curve)?;
         let request = csr::write(&key, &[self.options.name.as_str()])?;
         self.key = Some(key);
         Ok(format!(r#"{{"csr":"{}"}}"#, jws::base64url(&request)))
     }
 
+    /// The certificate that the order replaces, when the directory takes the member.
+    fn replaced(&self) -> Option<&str> {
+        self.options.replaces.as_deref().filter(|_| self.endpoints.renewal_info)
+    }
+
+    /// The payload that places the order.
+    fn new_order(&self) -> String {
+        let mut payload = String::from(r#"{"identifiers":[{"type":"dns","value":"#);
+        let _ = sibuna_json::write_string(&mut payload, &self.options.name);
+        payload.push_str("}]");
+        if let Some(replaced) = self.replaced() {
+            payload.push_str(r#","replaces":"#);
+            let _ = sibuna_json::write_string(&mut payload, replaced);
+        }
+        payload.push('}');
+        payload
+    }
+
     /// The payload that registers the account, or finds it when the key is known.
     fn registration(&self) -> String {
         let mut payload = String::from(r#"{"termsOfServiceAgreed":true"#);
+        if let Some(binding) = &self.options.binding {
+            let url = &self.endpoints.new_account;
+            payload.push_str(r#","externalAccountBinding":"#);
+            payload.push_str(&binding.bind(&self.account.key, url));
+        }
         if let Some(email) = &self.options.email {
             payload.push_str(r#","contact":["#);
             let _ = sibuna_json::write_string(&mut payload, &format!("mailto:{email}"));
@@ -445,6 +475,19 @@ impl<'a> Order<'a> {
                 // The authority has not yet seen that the authorization is valid.
                 "orderNotReady" if self.phase == Phase::Finalize => {
                     self.wait(response.retry_after)
+                }
+                // The authority does not take the certificate as one to replace: it
+                // was replaced before, or it belongs to another account. The order is
+                // placed again without the member.
+                _ if self.phase == Phase::NewOrder
+                    && self.replaced().is_some()
+                    && self.nonce.is_some() =>
+                {
+                    self.options.replaces = None;
+                    self.send()
+                }
+                _ if self.phase == Phase::Account && self.options.binding.is_some() => {
+                    self.fail(Error::binding(error.message))
                 }
                 _ => self.fail(error),
             };
@@ -507,7 +550,18 @@ impl<'a> Order<'a> {
             new_nonce: self.checked_url(member(members, "newNonce")?)?,
             new_account: self.checked_url(member(members, "newAccount")?)?,
             new_order: self.checked_url(member(members, "newOrder")?)?,
+            renewal_info: members.get("renewalInfo").and_then(Value::as_str).is_some(),
         };
+        let meta = members.get("meta").and_then(Value::as_object);
+        let required = meta.and_then(|meta| meta.get("externalAccountRequired"));
+        let unbound = self.account.url.is_none() && self.options.binding.is_none();
+        if unbound && required.and_then(Value::as_bool) == Some(true) {
+            return Err(Error::binding(format!(
+                "The authority {} registers an account only with an external account \
+                 binding, and the file has none for it.",
+                self.options.directory
+            )));
+        }
         Ok(self.enter(Phase::Nonce))
     }
 

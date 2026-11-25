@@ -9,7 +9,7 @@ use hyper::header::{self, HeaderMap};
 use hyper::{Method as HttpMethod, Uri};
 use hyper_util::rt::TokioIo;
 use rustls::pki_types::ServerName;
-use sibuna_acme::{Error, Method, Request, Response};
+use sibuna_acme::{Call, Error, Method, Request, Response};
 use tokio::net::TcpStream;
 use tokio::time::timeout;
 use tokio_rustls::TlsConnector;
@@ -55,16 +55,37 @@ impl Client {
         Ok(Self { tls: TlsConnector::from(connector.client_config()) })
     }
 
-    /// Sends one request and reads the response, within 30 seconds.
+    /// Sends one request of an order and reads the response, within 30 seconds.
     pub async fn send(&self, request: &Request) -> Result<Response, Error> {
-        let url = request.url.as_str();
-        match timeout(EXCHANGE, self.exchange(request)).await {
+        let (method, kind) = match request.method {
+            Method::Get => ("GET", None),
+            Method::Head => ("HEAD", None),
+            Method::Post => ("POST", Some(("content-type", "application/jose+json".to_owned()))),
+        };
+        let call = Call {
+            method,
+            url: request.url.clone(),
+            headers: kind.into_iter().collect(),
+            body: request.body.clone().into_bytes(),
+        };
+        match timeout(EXCHANGE, self.exchange(&call, MAX_BODY)).await {
             Ok(result) => result,
-            Err(_) => Err(unreachable(url, "the authority did not answer within 30 seconds")),
+            Err(_) => {
+                Err(unreachable(&call.url, "the authority did not answer within 30 seconds"))
+            }
         }
     }
 
-    async fn exchange(&self, request: &Request) -> Result<Response, Error> {
+    /// Sends a plain request and reads a response body of at most `limit` bytes,
+    /// within 30 seconds: the question to an OCSP responder, a call of a DNS provider.
+    pub async fn call(&self, call: &Call, limit: usize) -> Result<Response, Error> {
+        match timeout(EXCHANGE, self.exchange(call, limit)).await {
+            Ok(result) => result,
+            Err(_) => Err(unreachable(&call.url, "no answer within 30 seconds")),
+        }
+    }
+
+    async fn exchange(&self, request: &Call, limit: usize) -> Result<Response, Error> {
         let url = request.url.as_str();
         let uri: Uri = url.parse().map_err(|_| unreachable(url, "the URL is malformed"))?;
         let host = uri.host().ok_or_else(|| unreachable(url, "the URL has no host"))?;
@@ -78,19 +99,25 @@ impl Client {
         };
         let _ = tcp.set_nodelay(true);
         if !secure {
-            return self.converse(TokioIo::new(tcp), request, &uri).await;
+            return self.converse(TokioIo::new(tcp), request, &uri, limit).await;
         }
         let name = ServerName::try_from(host.trim_matches(['[', ']']).to_owned())
             .map_err(|_| unreachable(url, "the host is no server name"))?;
         match timeout(CONNECT, self.tls.connect(name, tcp)).await {
-            Ok(Ok(tls)) => self.converse(TokioIo::new(tls), request, &uri).await,
+            Ok(Ok(tls)) => self.converse(TokioIo::new(tls), request, &uri, limit).await,
             Ok(Err(error)) => Err(unreachable(url, format!("the TLS handshake failed: {error}"))),
             Err(_) => Err(unreachable(url, "no TLS handshake within 10 seconds")),
         }
     }
 
     /// Speaks HTTP/1.1 on an open connection.
-    async fn converse<I>(&self, io: I, request: &Request, uri: &Uri) -> Result<Response, Error>
+    async fn converse<I>(
+        &self,
+        io: I,
+        request: &Call,
+        uri: &Uri,
+        limit: usize,
+    ) -> Result<Response, Error>
     where
         I: hyper::rt::Read + hyper::rt::Write + Unpin + Send + 'static,
     {
@@ -99,11 +126,8 @@ impl Client {
             .await
             .map_err(|error| unreachable(url, error))?;
         let connection = tokio::spawn(connection);
-        let method = match request.method {
-            Method::Get => HttpMethod::GET,
-            Method::Head => HttpMethod::HEAD,
-            Method::Post => HttpMethod::POST,
-        };
+        let method = HttpMethod::from_bytes(request.method.as_bytes())
+            .map_err(|error| unreachable(url, error))?;
         let target = uri.path_and_query().map_or("/", |target| target.as_str());
         let authority = uri.authority().map_or("", |authority| authority.as_str());
         let mut builder = hyper::Request::builder()
@@ -112,15 +136,15 @@ impl Client {
             .header(header::HOST, authority)
             .header(header::USER_AGENT, concat!("sibuna/", env!("CARGO_PKG_VERSION")))
             .header(header::CONNECTION, "close");
-        if request.method == Method::Post {
-            builder = builder.header(header::CONTENT_TYPE, "application/jose+json");
+        for (name, value) in &request.headers {
+            builder = builder.header(*name, value.as_str());
         }
         let outgoing = builder
             .body(Full::new(Bytes::from(request.body.clone())))
             .map_err(|error| unreachable(url, error))?;
         let answer = sender.send_request(outgoing).await.map_err(|e| unreachable(url, e))?;
         let (head, body) = answer.into_parts();
-        let body = Limited::new(body, MAX_BODY)
+        let body = Limited::new(body, limit)
             .collect()
             .await
             .map_err(|error| {

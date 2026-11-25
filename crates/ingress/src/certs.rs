@@ -142,7 +142,12 @@ struct Managed {
     names: HashSet<String>,
     /// The first `auto` name: its certificate is the default of a listener without a
     /// certificate from a file.
-    first: String,
+    first: Option<String>,
+    /// Whether the listener obtains certificates on demand. It then also serves the
+    /// names that the tables hold on demand.
+    on_demand: bool,
+    /// `tls.issuer`, for the names on demand.
+    issuer: Option<sibuna_lb::AcmeIssuer>,
     /// The first IP address under `auto`. A client that connects to an address sends no
     /// server name, so this certificate answers a handshake without one.
     address: Option<String>,
@@ -156,17 +161,29 @@ impl std::fmt::Debug for Managed {
 }
 
 impl Managed {
-    fn new(names: &[String]) -> Option<Self> {
-        let first = names.first()?.clone();
+    fn new(spec: &TlsOptions) -> Option<Self> {
+        let names = &spec.auto;
+        if names.is_empty() && !spec.on_demand {
+            return None;
+        }
+        let first = names.first().cloned();
         let address = names.iter().find(|name| sibuna_lb::is_address(name)).cloned();
         let names = names.iter().cloned().collect();
-        Some(Self { names, first, address, tables: Tables::default() })
+        let (on_demand, issuer) = (spec.on_demand, spec.issuer);
+        Some(Self { names, first, on_demand, issuer, address, tables: Tables::default() })
+    }
+
+    /// Whether the listener manages `name`: it lists the name, or it obtains
+    /// certificates on demand and the tables hold the name.
+    fn manages(&self, name: &str) -> bool {
+        let held = || self.tables.get().is_some_and(|tables| tables.demand.is_held(name));
+        self.names.contains(name) || (self.on_demand && held())
     }
 
     /// The automatic certificate with exactly the name `name`, when the listener
     /// manages the name and a certificate exists.
     fn exact(&self, name: &str) -> Option<Arc<CertifiedKey>> {
-        self.names.contains(name).then(|| self.tables.get()?.certificate(name)).flatten()
+        self.manages(name).then(|| self.tables.get()?.certificate(name)).flatten()
     }
 
     /// The automatic certificate for the host `name`: that of the name itself, or else
@@ -188,7 +205,7 @@ impl Managed {
     /// The TLS-ALPN-01 answer for `name`, while an order validates it.
     fn answer(&self, name: &str) -> Option<Arc<CertifiedKey>> {
         let name = name.trim_end_matches('.').to_ascii_lowercase();
-        self.names.contains(&name).then(|| self.tables.get()?.alpn_answer(&name)).flatten()
+        self.manages(&name).then(|| self.tables.get()?.alpn_answer(&name)).flatten()
     }
 }
 
@@ -204,7 +221,7 @@ impl Certificates {
             let bytes = pem(&path)?;
             bundles.push(bundle(&path, &bytes, &bytes)?);
         }
-        let managed = Managed::new(&spec.auto);
+        let managed = Managed::new(spec);
         let default = bundles.first().cloned();
         if default.is_none() && managed.is_none() {
             return Err("a TLS listener needs a certificate".into());
@@ -235,7 +252,7 @@ impl Certificates {
     /// a file, or else the certificate of the first `auto` name.
     fn fallback(&self) -> Option<Arc<CertifiedKey>> {
         let managed = self.managed.as_ref();
-        self.default.clone().or_else(|| managed.and_then(|m| m.exact(&m.first)))
+        self.default.clone().or_else(|| managed.and_then(|m| m.exact(m.first.as_deref()?)))
     }
 
     /// The certificate for a handshake without a server name: that of the first IP
@@ -245,22 +262,50 @@ impl Certificates {
         managed.and_then(Managed::for_address).or_else(|| self.fallback())
     }
 
+    /// The certificate that names the host `name`, in lower case: an automatic one, or
+    /// else one from a file, exact names before wildcards.
+    fn matching(&self, name: &str) -> Option<Arc<CertifiedKey>> {
+        // An automatic certificate wins over a file once it exists (SID 0021).
+        if let Some(found) = self.managed.as_ref().and_then(|m| m.certificate(name)) {
+            return Some(found);
+        }
+        if let Some(found) = self.exact.get(name) {
+            return Some(found.clone());
+        }
+        let (_, parent) = name.split_once('.')?;
+        self.wildcard.get(parent).cloned()
+    }
+
     fn select(&self, name: Option<&str>) -> Option<Arc<CertifiedKey>> {
         let Some(name) = name else { return self.unnamed() };
         let name = name.trim_end_matches('.').to_ascii_lowercase();
-        // An automatic certificate wins over a file once it exists (SID 0021).
-        if let Some(found) = self.managed.as_ref().and_then(|m| m.certificate(&name)) {
-            return Some(found);
+        match self.matching(&name) {
+            Some(found) => Some(found),
+            None if self.strict => None,
+            None => self.fallback(),
         }
-        if let Some(found) = self.exact.get(&name) {
-            return Some(found.clone());
+    }
+
+    /// What a handshake for the server name `name` on the port `port` asks the
+    /// certificate thread for, on a listener with `on_demand`: the tables and the name
+    /// with its issuer. `None` when the listener has a certificate for the name, when
+    /// it does not obtain on demand, or when the guards that read no state refuse the
+    /// name. A name that the tables hold is marked as used.
+    pub fn demand(&self, name: &str, port: u16) -> Option<(Arc<Shared>, sibuna_lb::AutoName)> {
+        let managed = self.managed.as_ref().filter(|managed| managed.on_demand)?;
+        let tables = managed.tables.get()?;
+        let name = name.trim_end_matches('.').to_ascii_lowercase();
+        tables.demand.touch(&name, crate::auto::now_ms());
+        if self.matching(&name).is_some() {
+            return None;
         }
-        if let Some((_, parent)) = name.split_once('.')
-            && let Some(found) = self.wildcard.get(parent)
-        {
-            return Some(found.clone());
-        }
-        if self.strict { None } else { self.fallback() }
+        let wanted = tables.options.demanded(&name, port, managed.issuer)?;
+        Some((Arc::clone(tables), wanted))
+    }
+
+    /// Whether the listener obtains certificates on demand.
+    pub fn is_on_demand(&self) -> bool {
+        self.managed.as_ref().is_some_and(|managed| managed.on_demand)
     }
 }
 

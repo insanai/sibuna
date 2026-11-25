@@ -18,7 +18,17 @@ const MAX_SERVERS: usize = 8;
 pub enum DnsProvider {
     /// A program of the operator, run as `PROGRAM present|cleanup RECORD VALUE`.
     Hook(String),
-    /// A dynamic update (RFC 2136) to the server of the zone.
+    /// The API of Cloudflare, with a token from a file.
+    Cloudflare {
+        /// The file that holds the API token.
+        token_file: String,
+        /// The zone of the record. Without one the daemon searches it at the API.
+        zone: Option<String>,
+        /// Another base URL of the API, for tests: `http` on a loopback address.
+        api: Option<String>,
+    },
+    /// A dynamic update (RFC 2136) to the server of the zone. A server that is not on
+    /// a loopback address needs a key, or `unsigned: true` in the file.
     Rfc2136 {
         /// The server that takes the update.
         server: SocketAddr,
@@ -44,6 +54,8 @@ pub struct DnsConfig {
     pub resolver: Option<SocketAddr>,
     /// The authoritative servers to ask. Empty: the servers of the NS records.
     pub servers: Vec<SocketAddr>,
+    /// Write the record at the target of a CNAME delegation of the challenge.
+    pub follow_cname: bool,
 }
 
 fn address(path: &str, text: &str) -> io::Result<SocketAddr> {
@@ -79,31 +91,92 @@ fn rfc2136(mut r: ObjectReader<'_, '_>) -> io::Result<DnsProvider> {
         }
         _ => return Err(invalid(format!("{}: key_name and key_file go together", r.path()))),
     };
-    let zone = match field(r.take_str("zone"))? {
-        None => None,
-        Some(zone) if crate::hello::valid_host(zone.trim_end_matches('.')) => {
-            Some(zone.trim_end_matches('.').to_ascii_lowercase())
-        }
-        Some(_) => return Err(invalid(format!("{}: expected a DNS name", r.field_path("zone")))),
-    };
+    // Without a key the answer is trusted by its address and its identifier alone, and
+    // anybody on the path may write the zone. That is fine on this host and a decision
+    // elsewhere.
+    let unsigned = field(r.take_bool("unsigned"))?.unwrap_or(false);
+    if key.is_some() && unsigned {
+        return Err(invalid(format!("{}: unsigned contradicts key_name and key_file", r.path())));
+    }
+    if key.is_none() && !unsigned && !server.ip().is_loopback() {
+        return Err(invalid(format!(
+            "{}: an update to {server} without a TSIG key is not signed; set key_name and \
+             key_file, or unsigned: true",
+            r.path()
+        )));
+    }
+    let zone = zone(&mut r)?;
     field(r.finish())?;
     Ok(DnsProvider::Rfc2136 { server, key, zone })
+}
+
+/// Reads a zone name: a DNS name, stored in lower case without a final dot.
+fn zone(r: &mut ObjectReader<'_, '_>) -> io::Result<Option<String>> {
+    match field(r.take_str("zone"))? {
+        None => Ok(None),
+        Some(zone) if crate::hello::valid_host(zone.trim_end_matches('.')) => {
+            Ok(Some(zone.trim_end_matches('.').to_ascii_lowercase()))
+        }
+        Some(_) => Err(invalid(format!("{}: expected a DNS name", r.field_path("zone")))),
+    }
+}
+
+/// Whether `url` is an `http` URL on a loopback address. The API token goes to the
+/// host of the URL, so no other host is accepted.
+fn is_loopback_http(url: &str) -> bool {
+    let printable = url.len() <= 512 && url.bytes().all(|byte| byte.is_ascii_graphic());
+    let Some(rest) = url.strip_prefix("http://").filter(|_| printable) else { return false };
+    let authority = rest.split(['/', '?', '#']).next().unwrap_or_default();
+    let host = match authority.strip_prefix('[') {
+        Some(bracketed) => bracketed.split(']').next().unwrap_or_default(),
+        None => authority.rsplit_once(':').map_or(authority, |(host, _)| host),
+    };
+    !authority.contains('@')
+        && host.parse::<std::net::IpAddr>().is_ok_and(|address| address.is_loopback())
+}
+
+fn cloudflare(mut r: ObjectReader<'_, '_>) -> io::Result<DnsProvider> {
+    let path = r.field_path("token_file");
+    let token_file = match field(r.take_str("token_file"))? {
+        Some(file) if !file.is_empty() => file.to_owned(),
+        _ => return Err(invalid(format!("{path}: the provider needs the file of an API token"))),
+    };
+    let zone = zone(&mut r)?;
+    let path = r.field_path("api");
+    let api = match field(r.take_str("api"))? {
+        None => None,
+        Some(url) if is_loopback_http(url) => Some(url.to_owned()),
+        Some(_) => {
+            return Err(invalid(format!(
+                "{path}: expected an http URL on a loopback address; this key is for tests, \
+                 and the token is sent to the host that it names"
+            )));
+        }
+    };
+    field(r.finish())?;
+    Ok(DnsProvider::Cloudflare { token_file, zone, api })
 }
 
 impl DnsConfig {
     pub(crate) fn parse(mut r: ObjectReader<'_, '_>) -> io::Result<Self> {
         let hook = field(r.take_str("hook"))?;
         let update = field(r.take_object("rfc2136"))?;
-        let provider = match (hook, update) {
-            (Some(program), None) if !program.is_empty() => DnsProvider::Hook(program.to_owned()),
-            (None, Some(update)) => rfc2136(update)?,
+        let vendor = field(r.take_object("cloudflare"))?;
+        let provider = match (hook, update, vendor) {
+            (Some(program), None, None) if !program.is_empty() => {
+                DnsProvider::Hook(program.to_owned())
+            }
+            (None, Some(update), None) => rfc2136(update)?,
+            (None, None, Some(vendor)) => cloudflare(vendor)?,
             _ => {
                 return Err(invalid(format!(
-                    "{}: expected one provider, hook (a program) or rfc2136 (an object)",
+                    "{}: expected one provider: hook (a program), rfc2136 (an object) or \
+                     cloudflare (an object)",
                     r.path()
                 )));
             }
         };
+        let follow_cname = field(r.take_bool("follow_cname"))?.unwrap_or(true);
         let check = field(r.take_bool("check"))?.unwrap_or(true);
         let timeout = seconds(&mut r, "timeout", 1, 120)?;
         let wait = seconds(&mut r, "wait", 0, 0)?;
@@ -124,6 +197,6 @@ impl DnsConfig {
             }
         };
         field(r.finish())?;
-        Ok(Self { provider, check, timeout, wait, resolver, servers })
+        Ok(Self { provider, check, timeout, wait, resolver, servers, follow_cname })
     }
 }

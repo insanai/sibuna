@@ -6,7 +6,6 @@ use std::net::IpAddr;
 use sibuna_crypto::sha256::Sha256;
 
 use crate::error::printable;
-use crate::key::signature_algorithm;
 use crate::{Error, KeyPair, der, time};
 
 /// `subjectAltName`, 2.5.29.17.
@@ -33,6 +32,14 @@ const SERVER_AUTH: &[u8] = &[0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x03, 0x01];
 const USAGE_AUTHORITY: &[u8] = &[0x03, 0x02, 0x01, 0x06];
 /// The key usage of a server with an ECDSA key: digitalSignature.
 const USAGE_SERVER: &[u8] = &[0x03, 0x02, 0x07, 0x80];
+/// `id-kp-OCSPSigning`, 1.3.6.1.5.5.7.3.9.
+pub(crate) const OCSP_SIGNING: &[u8] = &[0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x03, 0x09];
+/// `authorityInfoAccess`, 1.3.6.1.5.5.7.1.1.
+pub(crate) const AUTHORITY_INFO_ACCESS: &[u8] = &[0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x01, 0x01];
+/// `id-ad-ocsp`, 1.3.6.1.5.5.7.48.1.
+pub(crate) const AD_OCSP: &[u8] = &[0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01];
+/// The `uniformResourceIdentifier` choice of a general name.
+pub(crate) const URI: u8 = 0x86;
 /// The `iPAddress` choice of a general name.
 const IP_ADDRESS: u8 = 0x87;
 /// DER `BOOLEAN TRUE`.
@@ -54,6 +61,11 @@ pub struct Certificate {
     /// The DNS names and the IP addresses of the subjectAltName extension. An address
     /// is in the text form of [`std::net::IpAddr`].
     pub names: Vec<String>,
+    /// The content of the serial number, as the certificate holds it: big endian, with
+    /// a leading zero where the first bit would be set.
+    pub serial: Vec<u8>,
+    /// The key identifier of the authority key identifier extension, or nothing.
+    pub authority_key_id: Vec<u8>,
 }
 
 impl Certificate {
@@ -77,7 +89,7 @@ pub fn read(certificate: &[u8]) -> Option<Certificate> {
     if fields.peek().is_some_and(|(tag, _)| *tag == 0xa0) {
         fields.next();
     }
-    let _serial = fields.next()?;
+    let (der::INTEGER, serial) = fields.next()? else { return None };
     let _algorithm = fields.next()?;
     let (der::SEQUENCE, issuer) = fields.next()? else { return None };
     let (der::SEQUENCE, validity) = fields.next()? else { return None };
@@ -88,12 +100,114 @@ pub fn read(certificate: &[u8]) -> Option<Certificate> {
     });
     let not_before = times.next()??;
     let not_after = times.next()??;
-    let names = fields
+    let extensions = fields
         .find(|(tag, _)| *tag == 0xa3)
         .and_then(|(_, extensions)| der::read(extensions))
-        .map(|(_, extensions, _)| alt_names(extensions))
+        .map(|(_, extensions, _)| extensions)
         .unwrap_or_default();
-    Some(Certificate { not_before, not_after, issuer: issuer_name(issuer), names })
+    Some(Certificate {
+        not_before,
+        not_after,
+        issuer: issuer_name(issuer),
+        names: alt_names(extensions),
+        serial: serial.to_vec(),
+        authority_key_id: authority_key_id(extensions),
+    })
+}
+
+/// The parts of a certificate that a check of its signature and of what it signs needs.
+/// Each borrows from the certificate.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct Parts<'a> {
+    /// The signed part, with its tag and length.
+    pub tbs: &'a [u8],
+    /// The content of the serial number.
+    pub serial: &'a [u8],
+    /// The DER `Name` of the issuer, with its tag and length.
+    pub issuer: &'a [u8],
+    /// The start of the validity, in seconds since 1970.
+    pub not_before: u64,
+    /// The end of the validity, in seconds since 1970.
+    pub not_after: u64,
+    /// The DER `SubjectPublicKeyInfo`, with its tag and length.
+    pub spki: &'a [u8],
+    /// The content of the `Extensions` sequence, or nothing.
+    pub extensions: &'a [u8],
+    /// The object identifier of the signature algorithm.
+    pub algorithm: &'a [u8],
+    /// The signature.
+    pub signature: &'a [u8],
+}
+
+/// Walks a DER certificate. Returns `None` when it cannot be walked.
+pub(crate) fn parts(certificate: &[u8]) -> Option<Parts<'_>> {
+    let (der::SEQUENCE, mut outer, _) = der::read(certificate)? else { return None };
+    let (der::SEQUENCE, mut fields, tbs) = der::take(&mut outer)? else { return None };
+    let (der::SEQUENCE, algorithm, _) = der::take(&mut outer)? else { return None };
+    let (der::OID, algorithm, _) = der::read(algorithm)? else { return None };
+    let (der::BIT_STRING, bits, _) = der::take(&mut outer)? else { return None };
+    let (&0, signature) = bits.split_first()? else { return None };
+    let mut first = der::take(&mut fields)?;
+    // The version is the optional explicit field [0].
+    if first.0 == 0xa0 {
+        first = der::take(&mut fields)?;
+    }
+    let (der::INTEGER, serial, _) = first else { return None };
+    let _algorithm = der::take(&mut fields)?;
+    let (der::SEQUENCE, _, issuer) = der::take(&mut fields)? else { return None };
+    let (der::SEQUENCE, validity, _) = der::take(&mut fields)? else { return None };
+    let mut times = der::children(validity).map(|(tag, text)| match tag {
+        der::UTC_TIME => time::parse_der_time(text, true),
+        der::GENERALIZED_TIME => time::parse_der_time(text, false),
+        _ => None,
+    });
+    let (not_before, not_after) = (times.next()??, times.next()??);
+    let _subject = der::take(&mut fields)?;
+    let (der::SEQUENCE, _, spki) = der::take(&mut fields)? else { return None };
+    let extensions = der::children(fields)
+        .find(|(tag, _)| *tag == 0xa3)
+        .and_then(|(_, extensions)| der::read(extensions))
+        .map(|(_, extensions, _)| extensions)
+        .unwrap_or_default();
+    Some(Parts {
+        tbs,
+        serial,
+        issuer,
+        not_before,
+        not_after,
+        spki,
+        extensions,
+        algorithm,
+        signature,
+    })
+}
+
+/// The value of the extension `oid` in the content of a DER `Extensions` sequence.
+pub(crate) fn extension_value<'a>(extensions: &'a [u8], oid: &[u8]) -> Option<&'a [u8]> {
+    der::children(extensions).find_map(|(_, extension)| {
+        let mut fields = der::children(extension);
+        if fields.next() != Some((der::OID, oid)) {
+            return None;
+        }
+        // The value is the last field. An optional critical flag may precede it.
+        fields.last().filter(|(tag, _)| *tag == der::OCTET_STRING).map(|(_, value)| value)
+    })
+}
+
+/// The key identifier in the authority key identifier of a DER `Extensions` sequence.
+fn authority_key_id(extensions: &[u8]) -> Vec<u8> {
+    for (_, extension) in der::children(extensions) {
+        let mut fields = der::children(extension);
+        if fields.next() != Some((der::OID, AUTHORITY_KEY_ID)) {
+            continue;
+        }
+        let Some((der::OCTET_STRING, value)) = fields.last() else { continue };
+        let Some((der::SEQUENCE, members, _)) = der::read(value) else { continue };
+        // The key identifier is the implicit field [0].
+        let found = der::children(members).find(|(tag, _)| *tag == 0x80);
+        return found.map(|(_, id)| id.to_vec()).unwrap_or_default();
+    }
+    Vec::new()
 }
 
 /// The common name in a DER `Name`, or else the organization, or `-`.
@@ -195,6 +309,14 @@ pub struct Template<'a> {
     pub authority_key_id: Option<[u8; 20]>,
     /// The digest of the critical acmeIdentifier extension of TLS-ALPN-01.
     pub acme_identifier: Option<[u8; 32]>,
+    /// The URL of the OCSP responder, for the authority information access extension.
+    pub ocsp_url: Option<&'a str>,
+    /// Mark the certificate as that of a delegated OCSP signer: the extended key usage
+    /// OCSPSigning.
+    pub ocsp_signing: bool,
+    /// The DER value of the name constraints extension, which is written critical. See
+    /// [`crate::constraints::value`].
+    pub name_constraints: Option<&'a [u8]>,
 }
 
 fn common_name(text: &str) -> Vec<u8> {
@@ -228,10 +350,22 @@ fn extensions(template: &Template<'_>, subject_key: &[u8]) -> Vec<u8> {
         list.extend(extension(BASIC_CONSTRAINTS, true, &value));
         list.extend(extension(KEY_USAGE, true, USAGE_AUTHORITY));
     }
+    if let Some(value) = template.name_constraints {
+        list.extend(extension(crate::constraints::NAME_CONSTRAINTS, true, value));
+    }
     if template.server {
         list.extend(extension(KEY_USAGE, true, USAGE_SERVER));
         let purposes = der::sequence(&[&der::element(der::OID, SERVER_AUTH)]);
         list.extend(extension(EXT_KEY_USAGE, false, &purposes));
+    }
+    if template.ocsp_signing {
+        let purposes = der::sequence(&[&der::element(der::OID, OCSP_SIGNING)]);
+        list.extend(extension(EXT_KEY_USAGE, false, &purposes));
+    }
+    if let Some(url) = template.ocsp_url {
+        let access =
+            der::sequence(&[&der::element(der::OID, AD_OCSP), &der::element(URI, url.as_bytes())]);
+        list.extend(extension(AUTHORITY_INFO_ACCESS, false, &der::sequence(&[&access])));
     }
     if template.subject_key_id {
         let value = der::element(der::OCTET_STRING, &key_id(subject_key));
@@ -268,7 +402,7 @@ pub fn write(
     let tbs = der::sequence(&[
         &der::element(0xa0, &der::integer(&[2])),
         &der::integer(&template.serial.max(1).to_be_bytes()),
-        &signature_algorithm(),
+        &signer.signature_algorithm(),
         &common_name(template.issuer),
         &validity,
         &common_name(template.subject),
@@ -319,11 +453,22 @@ mod tests {
             names: &["example.org", "*.example.net"],
             not_before: NOW,
             not_after: NOW + 90 * 86_400,
-            serial: 7,
+            serial: 0x8765_4321,
+            authority_key_id: Some([7; 20]),
             ..Template::default()
         };
         let der = write(&template, &leaf.subject_public_key_info(), &authority).unwrap();
         let certificate = read(&der).unwrap();
+        // The serial keeps the zero that makes it positive, as RFC 9773 wants it.
+        assert_eq!(certificate.serial, [0x00, 0x87, 0x65, 0x43, 0x21]);
+        assert_eq!(certificate.authority_key_id, [7; 20]);
+        let plain = Template { authority_key_id: None, serial: 7, ..template };
+        let der = write(&plain, &leaf.subject_public_key_info(), &authority).unwrap();
+        let certificate = read(&der).unwrap();
+        assert_eq!(
+            (certificate.serial.as_slice(), certificate.authority_key_id.len()),
+            (&[7][..], 0)
+        );
         assert_eq!(certificate.not_before, NOW);
         assert_eq!(certificate.not_after, NOW + 90 * 86_400);
         assert_eq!(certificate.issuer, "Test Authority");

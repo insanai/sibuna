@@ -187,27 +187,31 @@ pub struct TlsOptions {
     /// Who issues for the `auto` names. `None` chooses by name: a public name goes to
     /// the ACME authority, an internal name and an IP address to the local authority.
     pub issuer: Option<crate::AcmeIssuer>,
+    /// Obtain a certificate at the first handshake for a name that the frontend does
+    /// not serve yet (SID 0021). It needs the guards of `global.acme.on_demand`.
+    pub on_demand: bool,
+}
+
+/// Reads `tls.crt`: one path or a list of 1 to 64 paths.
+fn crt_paths(r: &mut ObjectReader<'_, '_>) -> io::Result<Vec<String>> {
+    let path = r.field_path("crt");
+    match r.take("crt") {
+        None => Ok(Vec::new()),
+        Some(value) => match (value.as_str(), value.as_array()) {
+            (Some(path), _) => Ok(vec![path.to_owned()]),
+            (_, Some(paths)) if (1..=64).contains(&paths.len()) => paths
+                .iter()
+                .map(|path| path.as_str().map(str::to_owned))
+                .collect::<Option<Vec<_>>>()
+                .ok_or_else(|| invalid(format!("{path}: expected paths"))),
+            _ => Err(invalid(format!("{path}: expected a path or a list of 1 to 64 paths"))),
+        },
+    }
 }
 
 impl TlsOptions {
     pub(crate) fn parse(mut r: ObjectReader<'_, '_>) -> io::Result<Self> {
-        let crt = match r.take("crt") {
-            None => Vec::new(),
-            Some(value) => match (value.as_str(), value.as_array()) {
-                (Some(path), _) => vec![path.to_owned()],
-                (_, Some(paths)) if (1..=64).contains(&paths.len()) => paths
-                    .iter()
-                    .map(|path| path.as_str().map(str::to_owned))
-                    .collect::<Option<Vec<_>>>()
-                    .ok_or_else(|| invalid(format!("{}: expected paths", r.field_path("crt"))))?,
-                _ => {
-                    return Err(invalid(format!(
-                        "{}: expected a path or a list of 1 to 64 paths",
-                        r.field_path("crt")
-                    )));
-                }
-            },
-        };
+        let crt = crt_paths(&mut r)?;
         let cert_file = field(r.take_str("cert_file"))?.map(str::to_owned);
         let key_file = field(r.take_str("key_file"))?.map(str::to_owned);
         if cert_file.is_some() != key_file.is_some() {
@@ -215,12 +219,14 @@ impl TlsOptions {
         }
         let auto = crate::acme::names(&mut r)?;
         let issuer = crate::acme::issuer(&mut r)?;
-        if issuer.is_some() && auto.is_empty() {
-            return Err(invalid(format!("{}: issuer needs auto names", r.path())));
+        let on_demand = field(r.take_bool("on_demand"))?.unwrap_or(false);
+        if issuer.is_some() && auto.is_empty() && !on_demand {
+            return Err(invalid(format!("{}: issuer needs auto names or on_demand", r.path())));
         }
-        if crt.is_empty() && cert_file.is_none() && auto.is_empty() {
+        if crt.is_empty() && cert_file.is_none() && auto.is_empty() && !on_demand {
             return Err(invalid(format!(
-                "{}: expected crt (combined PEM), cert_file with key_file, or auto (host names)",
+                "{}: expected crt (combined PEM), cert_file with key_file, auto (host names) \
+                 or on_demand",
                 r.path()
             )));
         }
@@ -259,6 +265,7 @@ impl TlsOptions {
             client_optional,
             auto,
             issuer,
+            on_demand,
         })
     }
 }

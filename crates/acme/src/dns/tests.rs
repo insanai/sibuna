@@ -65,7 +65,8 @@ fn value() -> String {
 
 fn hook_run<'a>(program: &'a Path, action: &'a str, timeout: Duration) -> hook::Run<'a> {
     let owner = "_acme-challenge.example.org";
-    hook::Run { program, action, owner, value: "abc", name: "*.example.org", timeout }
+    let challenge = "_acme-challenge.example.org";
+    hook::Run { program, action, owner, challenge, value: "abc", name: "*.example.org", timeout }
 }
 
 fn far() -> Instant {
@@ -109,7 +110,8 @@ fn the_hook_receives_the_action_the_record_and_the_value() {
     let log = scratch.0.join("log");
     let body = format!(
         "echo \"$# $1 $2 $3 | $SIBUNA_ACME_ACTION $SIBUNA_ACME_RECORD $SIBUNA_ACME_VALUE \
-         $SIBUNA_ACME_NAME\" >> {}\nread line && echo \"stdin open\" >> {}\nexit 0",
+         $SIBUNA_ACME_NAME $SIBUNA_ACME_CHALLENGE\" >> {}\n\
+         read line && echo \"stdin open\" >> {}\nexit 0",
         log.display(),
         log.display()
     );
@@ -118,8 +120,8 @@ fn the_hook_receives_the_action_the_record_and_the_value() {
     hook::run(hook_run(&program, "cleanup", HOOK_TIMEOUT)).unwrap();
     let record = "_acme-challenge.example.org.";
     let expected = format!(
-        "3 present {record} abc | present {record} abc *.example.org\n\
-         3 cleanup {record} abc | cleanup {record} abc *.example.org\n"
+        "3 present {record} abc | present {record} abc *.example.org {record}\n\
+         3 cleanup {record} abc | cleanup {record} abc *.example.org {record}\n"
     );
     assert_eq!(scratch.log(), expected);
 }
@@ -160,6 +162,33 @@ fn a_hook_that_runs_too_long_is_stopped() {
 
 #[cfg(unix)]
 #[test]
+fn what_a_stopped_hook_started_is_stopped_with_it() {
+    let _spawn = crate::SPAWN.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    let scratch = Scratch::new();
+    let (late, begun) = (scratch.0.join("late"), scratch.0.join("begun"));
+    // The hook starts a program in the background that would write a file one second
+    // after the hook was stopped, and waits itself.
+    let body = format!(
+        "(sleep 1.3; echo late > {}) &\necho begun > {}\nsleep 30",
+        late.display(),
+        begun.display()
+    );
+    let program = scratch.script("hook", &body);
+    let error = hook::run(hook_run(&program, "present", Duration::from_millis(300))).unwrap_err();
+    assert!(error.message.contains("was stopped"), "{}", error.message);
+    assert!(begun.exists());
+    std::thread::sleep(Duration::from_millis(1800));
+    assert!(!late.exists(), "the background program of the hook went on");
+    // A hook that ends in time leaves what it started alone.
+    let body = format!("(sleep 0.3; echo late > {}) &\nexit 0", late.display());
+    let program = scratch.script("kind", &body);
+    hook::run(hook_run(&program, "present", HOOK_TIMEOUT)).unwrap();
+    std::thread::sleep(Duration::from_millis(900));
+    assert!(late.exists());
+}
+
+#[cfg(unix)]
+#[test]
 fn the_solver_remembers_the_record_until_its_cleanup_succeeded() {
     let _spawn = crate::SPAWN.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
     let scratch = Scratch::new();
@@ -172,7 +201,7 @@ fn the_solver_remembers_the_record_until_its_cleanup_succeeded() {
     );
     let options = DnsOptions { check: false, ..DnsOptions::hook(scratch.script("hook", &body)) };
     let store = Store::open(&scratch.0, "https://ca.test/dir").unwrap();
-    let solver = Solver { options: &options, store: &store };
+    let solver = Solver { options: &options, store: &store, http: None };
     let pauses = std::cell::RefCell::new(Vec::new());
     let mut pause = |time: Duration| {
         pauses.borrow_mut().push(time);
@@ -198,7 +227,7 @@ fn the_solver_remembers_the_record_until_its_cleanup_succeeded() {
     fs::remove_file(&fail).unwrap();
     // A new process finds the record of the dead one and removes it.
     let again = Store::open(&scratch.0, "https://ca.test/dir").unwrap();
-    assert!(Solver { options: &options, store: &again }.cleanup(name).unwrap());
+    assert!(Solver { options: &options, store: &again, http: None }.cleanup(name).unwrap());
     let line = |action: &str| format!("{action} {record}. {}\n", value());
     let expected =
         [line("present"), line("cleanup"), line("cleanup"), line("present"), line("cleanup")];
@@ -206,7 +235,7 @@ fn the_solver_remembers_the_record_until_its_cleanup_succeeded() {
     assert!(pauses.borrow().is_empty());
     // With `wait`, the solver pauses once; a stop during the pause fails the attempt.
     let waiting = DnsOptions { wait: Duration::from_secs(7), ..options.clone() };
-    let solver = Solver { options: &waiting, store: &store };
+    let solver = Solver { options: &waiting, store: &store, http: None };
     solver.present(name, &challenge(name), &mut pause).unwrap();
     assert_eq!(*pauses.borrow(), [Duration::from_secs(7)]);
     let error = solver.present(name, &challenge(name), &mut |_| false).unwrap_err();
@@ -270,9 +299,9 @@ fn a_delegated_challenge_is_checked_at_its_target() {
         table.add(owner, Entry::Cname("www.validation.example.net".to_owned()));
         table.add("www.validation.example.net", Entry::Txt("delegated".to_owned()));
     });
-    assert_eq!(lookup.final_owner(owner, far()), "www.validation.example.net");
+    assert_eq!(lookup.final_owner(owner, far()).unwrap(), "www.validation.example.net");
     assert_eq!(
-        lookup.final_owner("_acme-challenge.example.org.", far()),
+        lookup.final_owner("_acme-challenge.example.org.", far()).unwrap(),
         "_acme-challenge.example.org"
     );
     lookup::wait_visible(&lookup, owner, "delegated", Duration::from_secs(20), &mut |_| true)
@@ -282,8 +311,16 @@ fn a_delegated_challenge_is_checked_at_its_target() {
         table.add("a.example.org", Entry::Cname("b.example.org".to_owned()));
         table.add("b.example.org", Entry::Cname("a.example.org".to_owned()));
     });
-    let last = lookup.final_owner("a.example.org", far());
+    let last = lookup.final_owner("a.example.org", far()).unwrap();
     assert!(last == "a.example.org" || last == "b.example.org");
+    // Nobody to ask: the name stays. A resolver that is silent: a failure.
+    let nobody = Lookup::default();
+    assert_eq!(nobody.final_owner("A.example.org.", far()).unwrap(), "a.example.org");
+    let dead = Lookup { resolver: Some("127.0.0.9:9".parse().unwrap()), ..lookup };
+    let soon = Instant::now() + Duration::from_millis(300);
+    let error = dead.final_owner(owner, soon).unwrap_err();
+    assert_eq!(error.code, "ACME010");
+    assert!(error.message.contains("No resolver answered"), "{}", error.message);
 }
 
 #[test]
@@ -416,7 +453,7 @@ fn the_solver_updates_the_zone_it_finds_and_checks_the_record() {
     let store = Store::open(&scratch.0, "https://ca.test/dir").unwrap();
     let provider = Provider::Rfc2136 { server: server.address, key: Some(key()), zone: None };
     let options = DnsOptions { provider, lookup, ..DnsOptions::hook("") };
-    let solver = Solver { options: &options, store: &store };
+    let solver = Solver { options: &options, store: &store, http: None };
     let name = "*.www.example.org";
     solver.present(name, &challenge(name), &mut |_| true).unwrap();
     let owner = "_acme-challenge.www.example.org";
@@ -430,4 +467,113 @@ fn the_solver_updates_the_zone_it_finds_and_checks_the_record() {
     let dead: SocketAddr = "127.0.0.9:9".parse().unwrap();
     let error = update::send(dead, None, change(owner, "v", false)).unwrap_err();
     assert!(error.message.contains("did not answer"), "{}", error.message);
+}
+
+/// The challenge of `www.example.org` is delegated into `example.net`: every provider
+/// writes at the target, the store remembers the target, and the cleanup removes it.
+#[cfg(unix)]
+#[test]
+fn a_delegated_challenge_is_written_at_its_target() {
+    let _spawn = crate::SPAWN.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    let (server, lookup) = world();
+    let (first, target) = ("_acme-challenge.www.example.org", "www.validation.example.net");
+    server.with(|table| table.add(first, Entry::Cname(target.to_owned())));
+    let scratch = Scratch::new();
+    let store = Store::open(&scratch.0, "https://ca.test/dir").unwrap();
+    let name = "www.example.org";
+
+    // The dynamic update goes to the zone of the target, which the solver finds.
+    let provider = Provider::Rfc2136 { server: server.address, key: None, zone: None };
+    let options = DnsOptions { provider, lookup: lookup.clone(), ..DnsOptions::hook("") };
+    let solver = Solver { options: &options, store: &store, http: None };
+    solver.present(name, &challenge(name), &mut |_| true).unwrap();
+    assert_eq!(server.with(|table| table.texts(target)), [value()]);
+    assert!(server.with(|table| table.texts(first)).is_empty());
+    assert_eq!(store.load_presented(name), Some((target.to_owned(), value())));
+    assert!(solver.cleanup(name).unwrap());
+    assert!(server.with(|table| table.texts(target)).is_empty());
+
+    // The hook gets the target as its record and the first owner in the environment.
+    let log = scratch.0.join("log");
+    let body = format!("echo \"$1 $2 $SIBUNA_ACME_CHALLENGE\" >> {}", log.display());
+    let script = scratch.script("h", &body);
+    let hooked = DnsOptions { check: false, lookup: lookup.clone(), ..DnsOptions::hook(script) };
+    let solver = Solver { options: &hooked, store: &store, http: None };
+    solver.present(name, &challenge(name), &mut |_| true).unwrap();
+    assert!(solver.cleanup(name).unwrap());
+    assert_eq!(scratch.log(), format!("present {target}. {first}.\ncleanup {target}. {first}.\n"));
+
+    // A target that is no host name is given to no provider.
+    server.with(|table| {
+        table.add("_acme-challenge.odd.example.org", Entry::Cname("a$(id).example.net".into()));
+    });
+    let odd = "odd.example.org";
+    let error = solver.present(odd, &challenge(odd), &mut |_| true).unwrap_err();
+    assert_eq!(error.code, "ACME009");
+    assert!(error.message.contains("no host name"), "{}", error.message);
+    assert_eq!(store.load_presented(odd), None);
+
+    // Without `follow_cname` the record goes to the first owner.
+    let plain = DnsOptions { follow_cname: false, ..hooked.clone() };
+    let solver = Solver { options: &plain, store: &store, http: None };
+    solver.present(name, &challenge(name), &mut |_| true).unwrap();
+    assert_eq!(store.load_presented(name), Some((first.to_owned(), value())));
+    assert!(solver.cleanup(name).unwrap());
+
+    // A resolver that does not answer fails the attempt before anything is written.
+    let dead = Lookup { resolver: Some("127.0.0.9:9".parse().unwrap()), ..lookup };
+    let hurried = DnsOptions { timeout: Duration::from_millis(300), lookup: dead, ..hooked };
+    let solver = Solver { options: &hurried, store: &store, http: None };
+    let error = solver.present(name, &challenge(name), &mut |_| true).unwrap_err();
+    assert_eq!(error.code, "ACME010");
+    assert_eq!(store.load_presented(name), None);
+    assert_eq!(scratch.log().lines().count(), 4);
+}
+
+#[test]
+fn the_solver_reads_the_token_at_each_use_and_calls_the_api() {
+    let scratch = Scratch::new();
+    let store = Store::open(&scratch.0, "https://ca.test/dir").unwrap();
+    let token_file = scratch.0.join("token");
+    let provider = Provider::Cloudflare {
+        token_file: token_file.clone(),
+        zone: Some("example.org".to_owned()),
+        api: "http://127.0.0.1:9".to_owned(),
+    };
+    let options = DnsOptions { provider, check: false, ..DnsOptions::hook("") };
+    let seen = std::cell::RefCell::new(Vec::new());
+    let send = |call: &crate::Call| {
+        seen.borrow_mut().push((call.method, call.url.clone(), call.headers[0].1.clone()));
+        let result = match call.method {
+            "GET" if call.url.contains("/zones?") => r#"[{"id":"z1","name":"example.org"}]"#,
+            "GET" => r#"[{"id":"r1","name":"_acme-challenge.example.org","content":"VALUE"}]"#,
+            _ => r#"{"id":"r1"}"#,
+        };
+        let body = format!(r#"{{"success":true,"result":{result}}}"#).replace("VALUE", &value());
+        Ok(crate::Response { status: 200, body: body.into_bytes(), ..Default::default() })
+    };
+    let name = "*.example.org";
+    // No token file, and no client: both are failures of the provider.
+    let solver = Solver { options: &options, store: &store, http: Some(&send) };
+    let error = solver.present(name, &challenge(name), &mut |_| true).unwrap_err();
+    assert_eq!(error.code, "ACME009");
+    assert!(error.message.contains("cannot be read"), "{}", error.message);
+    fs::write(&token_file, "first-token\n").unwrap();
+    let blind = Solver { options: &options, store: &store, http: None };
+    let error = blind.present(name, &challenge(name), &mut |_| true).unwrap_err();
+    assert!(error.message.contains("no HTTP client"), "{}", error.message);
+    assert!(seen.borrow().is_empty());
+    // The token of the moment signs the calls: a rotated token needs no restart.
+    solver.present(name, &challenge(name), &mut |_| true).unwrap();
+    fs::write(&token_file, "second-token\n").unwrap();
+    assert!(solver.cleanup(name).unwrap());
+    let seen = seen.borrow();
+    let methods: Vec<_> = seen.iter().map(|(method, _, _)| *method).collect();
+    assert_eq!(methods, ["GET", "POST", "GET", "GET", "DELETE"]);
+    assert!(seen[..2].iter().all(|(_, _, bearer)| bearer == "Bearer first-token"));
+    assert!(seen[2..].iter().all(|(_, _, bearer)| bearer == "Bearer second-token"));
+    assert!(seen[4].1.ends_with("/zones/z1/dns_records/r1"), "{}", seen[4].1);
+    fs::write(&token_file, "two words").unwrap();
+    let error = solver.present(name, &challenge(name), &mut |_| true).unwrap_err();
+    assert!(error.message.contains("holds no token"), "{}", error.message);
 }

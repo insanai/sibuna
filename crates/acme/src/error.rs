@@ -8,7 +8,7 @@ use std::fmt;
 /// only: what the authority sent is filtered before it gets here.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Error {
-    /// `ACME001` to `ACME011`.
+    /// `ACME001` to `ACME014`.
     pub code: &'static str,
     /// The title in upper case, for example `VALIDATION FAILED`.
     pub title: &'static str,
@@ -134,6 +134,48 @@ impl Error {
             message.into(),
             "Check the directory `local` under `global.acme.storage`. Remove a damaged \
              `intermediate.pem`; the daemon writes a new one.",
+        )
+    }
+}
+
+impl Error {
+    /// `ACME011`: the root of the local authority has other name constraints than the
+    /// configuration lists.
+    pub fn constraints(message: impl Into<String>) -> Self {
+        Self::new(
+            "ACME011",
+            "LOCAL AUTHORITY FAILED",
+            message.into(),
+            "Write the list the root was made with into `global.acme.internal.constraints`. \
+             Or remove `root.pem`, `root.crt` and `intermediate.pem` in the directory \
+             `local`: the daemon then makes a new root, which every client must install.",
+        )
+    }
+}
+
+impl Error {
+    /// `ACME012`: the authority wants an external account binding, or refused ours.
+    pub fn binding(message: impl Into<String>) -> Self {
+        Self::new(
+            "ACME012",
+            "ACCOUNT NOT BOUND",
+            message.into(),
+            "Set `eab: { kid, key_file }` for this authority with the key identifier and \
+             the base64url key that the authority gave you. A binding is used once: ask \
+             for a new one when the account was created before.",
+        )
+    }
+}
+
+impl Error {
+    /// `ACME013`: the OCSP responder did not answer, or its answer cannot be stapled.
+    pub fn stapling(message: impl Into<String>) -> Self {
+        Self::new(
+            "ACME013",
+            "NO OCSP RESPONSE",
+            message.into(),
+            "The certificate is served without a stapled response. The daemon asks the \
+             responder again later. Set `global.acme.ocsp` to false to stop asking.",
         )
     }
 }

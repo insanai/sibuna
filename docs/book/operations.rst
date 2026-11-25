@@ -206,6 +206,10 @@ We need no file to balance load. One command serves HTTP on port 8080 and spread
      - The directory of keys and certificates. The default is ``/var/lib/sibuna/acme``.
    * - ``--acme-dns-hook PROGRAM``
      - The program that answers the DNS-01 challenge, which a wildcard ``--domain`` needs (section *Automatic HTTPS*).
+   * - ``--acme-issuer acme|internal``
+     - Who issues for each ``--domain``. Without it the name decides: the local authority for an internal name, the ACME authority for a public one.
+   * - ``--acme-on-demand-ask URL``
+     - Also obtain a certificate at the first handshake for a name that ``GET URL?domain=NAME`` allows with a status from 200 to 299.
    * - ``--health PATH|tcp``
      - Probe each server with ``GET PATH``, or with a TCP connect.
    * - ``--firewall off|gate|shield``
@@ -524,7 +528,25 @@ Every option has a default. We change one in ``global.acme``.
      - The provider of the DNS-01 challenge, described under *Wildcards and DNS-01*.
    * - ``internal``
      - ``{ lifetime: 43200 }``
-     - The lifetime of a certificate of the local authority in seconds, from 10 to 172800.
+     - ``lifetime`` is the lifetime of a certificate of the local authority in seconds, from 10 to 172800. ``constraints`` lists what its root may sign for, described under *Internal names and the local authority*.
+   * - ``key``
+     - ``"p256"``
+     - The key of each new certificate, from either source: ECDSA on P-256, or ``"p384"`` for P-384. A stored certificate keeps its key until its renewal. RSA keys are not offered.
+   * - ``on_demand``
+     - none
+     - The guards of issuance at the first handshake, described under *On demand*.
+   * - ``eab``
+     - none
+     - ``{ kid, key_file }``: the external account binding of the authority, described under *More than one authority*.
+   * - ``fallback``
+     - none
+     - One to three more authorities, asked in this order when the first one fails.
+   * - ``ari``
+     - ``true``
+     - Ask the authority when to renew each certificate, described under *When a certificate is renewed*.
+   * - ``ocsp``
+     - ``true``
+     - Staple an OCSP response to a certificate that names a responder, described under *OCSP stapling*.
 
 By using an authority we accept its terms of service, as with any ACME client.
 
@@ -573,16 +595,31 @@ A restart loads the stored certificates and orders nothing while they are fresh.
      | <------------------------------------------- certificate ---- |
      | -- hook cleanup _acme-challenge.example.org. VALUE --> |
 
-There are two providers. We name exactly one.
+There are three providers. We name exactly one.
 
-- ``hook`` is the path of a program of ours. Sibuna runs it without a shell as ``PROGRAM present RECORD VALUE`` and later as ``PROGRAM cleanup RECORD VALUE``. RECORD is the name of the TXT record with a final dot, and VALUE is its text. The same values are in the variables ``SIBUNA_ACME_ACTION``, ``SIBUNA_ACME_RECORD``, ``SIBUNA_ACME_VALUE`` and ``SIBUNA_ACME_NAME``. The program has the environment of the daemon, where we put its credentials. Exit status 0 means done. The program has 60 seconds. On a failure the diagnostic shows the end of what it wrote. A script written for the ``exec`` provider of lego works unchanged, and any DNS service with a command line tool or an HTTP interface is three lines of script away.
-- ``rfc2136`` sends a dynamic update to the server of the zone, which BIND, Knot, PowerDNS and many hosted services accept. The update is signed with a TSIG key (HMAC-SHA256) when we name one. The secret is in a file, in base64 on one line, never in the topology.
+- ``hook`` is the path of a program of ours. Sibuna runs it without a shell as ``PROGRAM present RECORD VALUE`` and later as ``PROGRAM cleanup RECORD VALUE``. RECORD is the name of the TXT record with a final dot, and VALUE is its text. The same values are in the variables ``SIBUNA_ACME_ACTION``, ``SIBUNA_ACME_RECORD``, ``SIBUNA_ACME_VALUE`` and ``SIBUNA_ACME_NAME``. ``SIBUNA_ACME_CHALLENGE`` holds the name that the authority asks, which differs from RECORD when the challenge is delegated. The program has the environment of the daemon, where we put its credentials. Exit status 0 means done. The program has 60 seconds. It runs in a process group of its own, and after the 60 seconds Sibuna kills the whole group: the program and what it started. On a failure the diagnostic shows the end of what it wrote. A script written for the ``exec`` provider of lego works unchanged, and any DNS service with a command line tool or an HTTP interface is three lines of script away.
+- ``rfc2136`` sends a dynamic update to the server of the zone, which BIND, Knot, PowerDNS and many hosted services accept. The update is signed with a TSIG key (HMAC-SHA256) when we name one. The secret is in a file, in base64 on one line, never in the topology. Without a key the update is not signed: anybody on the way to the server can then imitate it, and the zone trusts every host that it does not refuse by address. Sibuna therefore accepts an update without a key for a server on a loopback address only. For another server it refuses the file with the diagnostic ``UPDATE NOT SIGNED``, until we name a key or write ``unsigned: true`` beside ``server`` because we trust the link.
 
 .. code-block:: text
 
    global: { acme: { dns: { rfc2136: { server: "192.0.2.53:53", key_name: "sibuna.", key_file: "/etc/sibuna/tsig.key" } } } },
 
-Before Sibuna tells the authority to look, it asks every authoritative name server of the zone for the record itself, and waits until all that answer show it. It follows a CNAME at ``_acme-challenge`` to the zone where the record really lives. The record is removed when the order ends, also after a failure, and at the next start when the daemon died in between.
+- ``cloudflare`` writes the record through the API of Cloudflare. We create an API token with the rights *Zone / Zone / Read* and *Zone / DNS / Edit* for the zone, and put it alone into a file that only the daemon's user can read. Sibuna reads the file at each use, so a new token needs no restart. The token is never written to a log. Sibuna finds the zone by asking the API for the name of the record and then for each of its parents. ``zone`` names it directly, which a name of more than eight labels needs.
+
+.. code-block:: text
+
+   global: { acme: { dns: { cloudflare: { token_file: "/etc/sibuna/cf.token" } } } },
+
+**Delegating the challenge.** We may keep the credentials of the main zone away from the proxy. We create one CNAME record, ``_acme-challenge.example.org CNAME example-org.validation.example.net``, and give Sibuna a provider that can write the zone ``validation.example.net`` only. Sibuna follows the CNAME records from ``_acme-challenge.NAME``, eight at most, and writes the TXT record at the last name. The authority follows the same records and finds it.
+
+.. code-block:: text
+
+   _acme-challenge.example.org   CNAME   example-org.validation.example.net     (main zone, written once by us)
+   example-org.validation.example.net   TXT   VALUE                             (written by the provider at each order)
+
+Every provider receives the last name. The hook gets it as RECORD. ``follow_cname: false`` turns this off, and the provider then writes ``_acme-challenge.NAME``. When the resolver does not answer the question for the CNAME record, the attempt fails with ``ACME010`` and nothing is written.
+
+Before Sibuna tells the authority to look, it asks every authoritative name server of the zone for the record itself, and waits until all that answer show it. It looks where the record was written. The record is removed when the order ends, also after a failure, and at the next start when the daemon died in between.
 
 .. list-table:: Members of ``global.acme.dns``
    :header-rows: 1
@@ -597,6 +634,12 @@ Before Sibuna tells the authority to look, it asks every authoritative name serv
    * - ``rfc2136``
      - none
      - ``server`` (``"IP:PORT"``), ``key_name`` with ``key_file``, and ``zone``. Without ``zone`` Sibuna finds the zone from its SOA record.
+   * - ``cloudflare``
+     - none
+     - ``token_file``, and ``zone``. Without ``zone`` Sibuna finds the zone at the API. A third member ``api`` exists for tests. It takes an ``http`` URL on a loopback address and nothing else.
+   * - ``follow_cname``
+     - ``true``
+     - Write the record at the target of a CNAME record of ``_acme-challenge.NAME``.
    * - ``check``
      - ``true``
      - Wait until the authoritative servers show the record. ``false`` skips this, for a zone whose public servers this host cannot reach.
@@ -608,7 +651,7 @@ Before Sibuna tells the authority to look, it asks every authoritative name serv
      - Seconds to wait after the provider returned. With ``check: false`` this is the whole wait.
    * - ``resolver``
      - the first ``nameserver`` of ``/etc/resolv.conf``
-     - The resolver that finds the zone and its name servers, as ``"IP:PORT"``.
+     - The resolver that follows a delegation and finds the zone and its name servers, as ``"IP:PORT"``.
    * - ``servers``
      - the name servers of the zone
      - The servers to ask, as a list of ``"IP:PORT"``, in place of the search.
@@ -633,6 +676,16 @@ Before Sibuna tells the authority to look, it asks every authoritative name serv
 
 At the first internal name Sibuna creates a root certificate, valid for ten years, and an intermediate that it replaces every few days. Both live in the directory ``local`` of the storage, with keys of mode 0600. Each name gets a certificate of 12 hours, renewed every 8 hours by the same thread, with no restart. Several nodes that share the storage use one root. One frontend may mix public and internal names. ``tls: { auto: ["www.example.org"], issuer: "internal" }`` sends a public name to the local authority, for a staging host or a private network. ``issuer: "acme"`` with an internal name is refused when the file is checked, with a hint. With a ``directory`` of our own, internal names go to that authority, and addresses still to the local one.
 
+We may limit what the root can sign for.
+
+.. code-block:: text
+
+   global: { acme: { internal: { constraints: ["corp.internal", "localhost", "10.0.0.0/8"] } } },
+
+``constraints`` lists DNS suffixes and address ranges, at most 32. A suffix permits its own name and every name below it. Sibuna writes the list into the root as a critical name constraint when it creates the root. A client that trusts the root then refuses any certificate under it for another name, whoever signed it. So a stolen root key cannot be used against ``bank.example``. A list with suffixes only permits no address, and a list with ranges only permits no host name. Without the key the root may sign for every name, which ``issuer: "internal"`` on a public name needs. ``sibuna check`` refuses a local name outside the list with the diagnostic ``NAME OUTSIDE CONSTRAINTS``. The list belongs to the root: Sibuna never rewrites a root. When the file lists other constraints than the root has, the local authority fails with ``ACME011`` and a hint. A longer list needs a new root. We remove ``root.pem``, ``root.crt`` and ``intermediate.pem`` in the directory ``local``, and we install the new root in the clients.
+
+There is no revocation list. A certificate of the local authority lives 12 hours, and clients of a private authority do not fetch lists unless each is told to. To stop serving a name we remove it from the file. A stolen key of one certificate is useful until that certificate expires, and ``lifetime`` shortens this. When the storage loses its root, Sibuna makes a new root at the next start, does not serve the stored certificates of the old root, and issues new ones at once. The local authority issues for this daemon and for the nodes that share its storage. It is not an ACME server for other machines.
+
 A client that connects to an IP address sends no server name. Such a handshake receives the certificate of the first address under ``auto``, and that certificate lists every address under ``auto``.
 
 A client trusts these certificates once it trusts the root. Sibuna never changes a trust store. It shows us the root, and we install it where we want it.
@@ -652,7 +705,113 @@ A client trusts these certificates once it trusts the root. Sibuna never changes
    # Windows, in an administrator shell
    certutil -addstore -f Root sibuna-root.crt
 
-The lines of ``show ca`` that start with ``#`` name the file and its expiry. The rest is the PEM text, which every tool above reads. Firefox and Java keep trust stores of their own. Whoever can read ``local/root.pem`` in the storage can sign for any name towards the clients that trust this root, so we install the root only on machines we control, and we protect the storage like a private key.
+The lines of ``show ca`` that start with ``#`` name the file and its expiry. The rest is the PEM text, which every tool above reads. Firefox and Java keep trust stores of their own. The file ``local/root.crt`` in the storage holds the same certificate. It has mode 0644 and its directory mode 0755, so another user can read it when the storage directory lets them pass. Sibuna creates the storage directory with mode 0700 and never changes it afterwards, so by default only ``show ca`` reaches the root. Whoever can read ``local/root.pem`` in the storage can sign towards the clients that trust this root, for any name that ``constraints`` permits, so we install the root only on machines we control, and we protect the storage like a private key.
+
+**On demand.** Sometimes we cannot list the names: customers point their own domains at us, or each tenant gets a subdomain. A frontend with ``on_demand: true`` obtains the certificate at the first handshake that names a host. We must say which hosts may get one, and the line ``global`` does that.
+
+.. code-block:: text
+
+   fn edge() -> Map<Value> {
+       return {
+           global: { acme: { on_demand: { allow: ["apps.example.org"] } } },
+           frontends: {
+               web: { binds: ["0.0.0.0:443"], tls: { on_demand: true } },
+               plain: { binds: ["0.0.0.0:80"] },
+           },
+           backends: { app: { servers: ["10.0.0.1:80"] } },
+       }
+   }
+
+The first client that connects to ``shop.apps.example.org`` waits a few seconds while Sibuna orders the certificate, and is then served with it. Every later client finds it. ``auto`` may list names on the same frontend, and it may be absent.
+
+.. code-block:: text
+
+   client                         Sibuna                               certificate authority
+     | -- ClientHello: shop.apps.example.org -->  no certificate yet
+     |                              guards pass: order ------------------>  |
+     |          (the handshake waits, at most `wait` seconds)  <-- validate  |
+     |                              certificate  <------------------------  |
+     | <----- handshake goes on with the new certificate
+
+A guard is required. Without one, anybody who can reach the listener could make us order certificates for any name that points at us, and spend the limits of the authority. ``sibuna check`` and the start refuse such a file with the title ``ON DEMAND NEEDS A GUARD``. There are two guards, and we may use both.
+
+- ``allow`` lists suffixes. ``apps.example.org`` allows that name and every name below it.
+- ``ask`` names a URL of ours. Sibuna sends ``GET URL?domain=NAME`` and allows the name on a status from 200 to 299. Any other status refuses it, and so does no answer within 5 seconds. We remember a refusal for 60 seconds, and we ask again at each renewal. The endpoint should answer from a table of known customers, on the loopback interface or a private network.
+
+.. code-block:: text
+
+   global: { acme: { on_demand: { ask: "http://127.0.0.1:9000/tls-allowed", rate: 30 } } },
+
+.. list-table:: Members of ``global.acme.on_demand``
+   :header-rows: 1
+   :widths: 14 12 74
+
+   * - Member
+     - Default
+     - Meaning
+   * - ``ask``
+     - none
+     - An ``http`` or ``https`` URL without a query. It decides each name.
+   * - ``allow``
+     - none
+     - One to 64 suffixes. A name outside them is never asked about and never ordered.
+   * - ``rate``
+     - 10
+     - New certificates per hour, from 1 to 1000. The first ``rate`` names are served at once, and then one more every :math:`3600 / rate` seconds. A certificate that the storage already has costs nothing.
+   * - ``names``
+     - 100
+     - The most names held on demand at once, from 1 to 10000.
+   * - ``wait``
+     - 20
+     - The longest time a handshake waits for its certificate, in seconds, from 1 to 120.
+
+A name on demand is a host name. A wildcard and an IP address are never obtained on demand. The issuer follows the name as for a listed name: a public name goes to the ACME authority, and an internal name such as ``app.localhost`` goes to the local authority, which answers at once.
+
+**What a client sees.** A handshake for a name that a guard refuses does not wait. It gets what any unknown name gets: the first certificate of ``crt`` when the frontend has one, and a TLS alert otherwise. A handshake whose order takes longer than ``wait`` gets the same, and the order goes on, so a later handshake finds the certificate. One order runs at a time, so many new names at once are served one after the other. HTTP/3 never waits: a QUIC handshake uses the certificate once a TCP handshake has obtained it.
+
+**Keeping and releasing.** A name on demand has a line in ``show certs`` with ``on-demand`` in the column ``origin``, and it is renewed in the background like a listed name. At its renewal Sibuna asks two questions. Did a handshake name it since the certificate was obtained? Does ``ask`` still allow it? If either answer is no, the name is released: it is no longer served or renewed, and its line leaves ``show certs``. The log says which. A name whose first order fails is released at once and refused until its retry delay has passed. The next handshake after that asks again. A restart forgets the names and keeps the certificates: the first handshake for each loads its certificate from the storage, with no order.
+
+**More than one authority.** An authority can be down, or can refuse us for a while. We name a second one, and Sibuna asks it in the same attempt.
+
+.. code-block:: text
+
+   fn edge() -> Map<Value> {
+       return {
+           global: { acme: {
+               email: "ops@example.org",
+               fallback: [
+                   {
+                       directory: "https://acme.zerossl.com/v2/DV90",
+                       email: "ops@example.org",
+                       eab: { kid: "kid-from-the-dashboard", key_file: "/etc/sibuna/zerossl.key" },
+                   },
+               ],
+           } },
+           frontends: {
+               web: { binds: ["0.0.0.0:443"], tls: { auto: ["example.org"] } },
+               plain: { binds: ["0.0.0.0:80"] },
+           },
+           backends: { app: { servers: ["10.0.0.1:80"] } },
+       }
+   }
+
+The keys ``directory``, ``email``, ``ca_file`` and ``eab`` of ``global.acme`` describe the first authority, here Let's Encrypt by default. Each member of ``fallback`` has the same four keys, and ``directory`` is required there. One attempt for a name asks the authorities in order and stops at the first certificate. The log names each authority that failed and the one that is asked next. When all fail, the attempt fails once and is tried again after the usual delay, with the first authority first. A certificate is stored under the authority that issued it, and at a start we serve the stored certificate that expires last. ``show certs`` names the issuer.
+
+Some authorities issue only to an account that they know already. They hand out a key identifier and a MAC key, the *external account binding*. We write the identifier into ``kid`` and the key, in base64url as the authority shows it, into a file that only the daemon's user can read. Sibuna signs the registration with it once. The key is never logged. An authority that wants a binding and gets none fails with ``ACME012`` before we send it anything signed.
+
+All authorities share one account key, the one in the directory of the first authority. So every node that shares the storage answers an HTTP-01 challenge of any of them.
+
+**When a certificate is renewed.** Without other knowledge we renew at two thirds of the lifetime. An authority that supports renewal information (RFC 9773) may know better: it spreads the load of its clients, and it asks for an early renewal before it revokes a certificate. Sibuna asks the authority for each certificate, every six hours or as often as the authority says, between one hour and one day. The answer is a window. We take one time in it, the same on every node and after every restart, and ``show certs`` shows it in the column ``renews``. Two bounds are ours. We never renew later than four fifths of the lifetime, whatever the authority says. And a certificate that we just obtained is not renewed in its first two minutes. The new order tells the authority which certificate it replaces. ``ari: false`` turns the questions off. An authority without renewal information is not asked.
+
+**OCSP stapling.** Some authorities put the URL of an OCSP responder into their certificates. For such a certificate Sibuna asks the responder whether the certificate is still good, checks the signature of the answer against the issuer, and staples the answer to every handshake. A client then needs no connection to the responder. Sibuna asks again at the middle of the validity of each answer, keeps the answer beside the certificate, and staples it again after a restart. An answer whose validity ends is no longer stapled.
+
+.. code-block:: text
+
+   certificate installed --> ask the responder --> good     --> staple, ask again at half of the validity
+                                                --> revoked  --> staple nothing, renew the certificate
+                                                --> failure  --> serve without a staple, ask again later
+
+When the responder says ``revoked``, Sibuna logs it and renews the certificate at once. A certificate that it obtained a moment ago waits a short time first, so a responder cannot cause a loop of orders. A responder that fails changes nothing for the clients: the certificate is served without a staple, the failure is logged with ``ACME013``, and the question is repeated with growing delays. A certificate that names no responder gets no staple, and nobody is asked. Let's Encrypt names none since 2025. ``ocsp: false`` turns stapling off. Only ``http`` responders are asked. A certificate from ``crt`` is stapled from a file, as the section on certificates says.
 
 **Looking at the state.** The admin socket lists the certificates.
 
@@ -662,13 +821,14 @@ The lines of ``show ca`` that start with ``#`` name the file and its expiry. The
 
 .. code-block:: text
 
-   name            via     issuer                                expires              renews               state error
-   *.example.org   dns-01  R11                                   2027-02-22T10:00:00Z 2027-01-23T10:00:00Z ready -
-   example.org     http-01 R11                                   2027-02-22T10:00:00Z 2027-01-23T10:00:00Z ready -
-   localhost       local   Sibuna_Local_Authority_-_Intermediate 2026-11-24T22:00:00Z 2026-11-24T18:00:00Z ready -
-   www.example.org http-01 -                                     -                    2026-11-24T10:04:00Z retry VALIDATION FAILED (ACME005)
+   name                  via     issuer                                expires              renews               state origin    ocsp error
+   *.example.org         dns-01  R11                                   2027-02-22T10:00:00Z 2027-01-23T10:00:00Z ready listed    good -
+   example.org           http-01 R11                                   2027-02-22T10:00:00Z 2027-01-23T10:00:00Z ready listed    good -
+   localhost             local   Sibuna_Local_Authority_-_Intermediate 2026-11-24T22:00:00Z 2026-11-24T18:00:00Z ready listed    -    -
+   shop.apps.example.org http-01 R11                                   2027-02-22T10:00:00Z 2027-01-23T10:00:00Z ready on-demand good -
+   www.example.org       http-01 -                                     -                    2026-11-24T10:04:00Z retry listed    -    VALIDATION FAILED (ACME005)
 
-``via`` says how the certificate is obtained: the challenge, or ``local`` for the local authority. ``state`` is ``pending`` before the first attempt, ``ordering`` during an order, ``waiting`` while another node holds the lock, ``retry`` after a failure, and ``ready`` otherwise. ``renews`` is the time of the next order. ``show stats`` and the metrics endpoint add four series: ``sibuna_edge_acme_certificates_managed``, ``sibuna_edge_acme_certificates_served``, ``sibuna_edge_acme_nearest_expiry_seconds`` and ``sibuna_edge_acme_failures_total``. An alert on the third one tells us when renewal has been failing for too long.
+``via`` says how the certificate is obtained: the challenge, or ``local`` for the local authority. ``origin`` is ``listed`` for a name under ``auto`` and ``on-demand`` for a name that a handshake asked for. ``ocsp`` is ``good`` while a response is stapled, ``revoked`` when the responder said so, and ``-`` otherwise. ``state`` is ``pending`` before the first attempt, ``ordering`` during an order, ``waiting`` while another node holds the lock, ``retry`` after a failure, and ``ready`` otherwise. ``renews`` is the time of the next order. ``show stats`` and the metrics endpoint add four series: ``sibuna_edge_acme_certificates_managed``, ``sibuna_edge_acme_certificates_served``, ``sibuna_edge_acme_nearest_expiry_seconds`` and ``sibuna_edge_acme_failures_total``. An alert on the third one tells us when renewal has been failing for too long.
 
 **Troubleshooting.** Each failure is written to standard error with a code, the reason of the authority and a hint.
 
@@ -710,15 +870,24 @@ The lines of ``show ca`` that start with ``#`` name the file and its expiry. The
      - The clock of this node. The certificate does not name the host, has expired, or does not fit the key.
    * - ``ACME009``
      - DNS provider failed
-     - The hook, run by hand with the arguments that the message shows. With ``rfc2136``: the TSIG key and the update policy of the zone.
+     - The hook, run by hand with the arguments that the message shows. With ``rfc2136``: the TSIG key and the update policy of the zone. With ``cloudflare``: the token file and the rights of the token, and the message and code of the API in the diagnostic.
    * - ``ACME010``
      - record not visible
-     - The name servers that the message lists. Raise ``dns.timeout``, or set ``dns.check`` to ``false`` when this host cannot reach them.
+     - The name servers that the message lists. Raise ``dns.timeout``, or set ``dns.check`` to ``false`` when this host cannot reach them. When the message says that no resolver answered: ``dns.resolver``.
    * - ``ACME011``
      - local authority failed
      - The directory ``local`` in the storage: its owner, its mode, and a damaged file.
+   * - ``ACME012``
+     - account not bound
+     - ``eab`` of the authority that the message names: the key identifier, and the key file, which holds the base64url key. An authority uses a binding once.
+   * - ``ACME013``
+     - no OCSP response
+     - Outbound HTTP to the responder that the message names. The certificate is served without a staple meanwhile.
+   * - ``ACME014``
+     - the certificate thread stopped on a defect
+     - Nothing at once: the served certificates stay, and the thread starts again by itself after 5 seconds, then 10, up to 5 minutes. The line is a defect of Sibuna. We report it.
 
-A reload may add and remove ``auto`` names. A new name is ordered at once, and a removed name is no longer renewed or served. Changing ``global.acme``, or adding the first ``auto`` name to a daemon that has none, needs a restart. A certificate from ``crt`` and ``auto`` names may share a listener. For a name that both cover, the automatic certificate serves once it exists.
+A reload may add and remove ``auto`` names, and turn ``on_demand`` of a frontend on and off. A new name is ordered at once, and a removed name is no longer renewed or served. Changing ``global.acme``, which includes the guards of ``on_demand``, or adding the first ``auto`` name to a daemon that has none, needs a restart. A certificate from ``crt`` and ``auto`` names may share a listener. For a name that both cover, the automatic certificate serves once it exists.
 
 **Coming from Caddy.** The behaviour follows Caddy's automatic HTTPS, with these differences.
 
@@ -733,13 +902,31 @@ A reload may add and remove ``auto`` names. A new name is ordered at once, and a
    * - ``tls internal``
      - ``issuer: "internal"``. Internal names and addresses need neither.
    * - A DNS provider is a module compiled into the server.
-     - A hook program or an RFC 2136 update. No build step, and no vendor module.
+     - A hook program, an RFC 2136 update, or the built-in Cloudflare provider. No build step. Other vendors go through the hook.
+   * - ``dns_challenge_override_domain`` names the zone that receives the record.
+     - A CNAME record at ``_acme-challenge.NAME`` names it, and ``follow_cname`` is on by default.
+   * - OCSP responses are stapled automatically.
+     - The same for ``auto`` names, with ``ocsp: false`` to turn it off. A revoked certificate is renewed.
    * - The root is installed into the trust store at the first start.
      - Never. ``show ca`` prints the root, and we install it.
-   * - On-demand TLS, a second issuer, ``acme_server``.
+   * - The local root may sign for any name.
+     - The same by default. ``internal.constraints`` limits the root to our suffixes and ranges.
+   * - ``acme_server`` makes the local authority an ACME server for other machines.
+     - Not offered. Nodes that share the storage share the root.
+   * - ``key_type`` offers ECDSA and RSA keys.
+     - ``key: "p256"`` or ``"p384"``. No RSA keys.
+   * - ``on_demand`` in a site, ``on_demand_tls { ask URL }`` in the global options.
+     - ``tls: { on_demand: true }`` and ``global.acme.on_demand``. The ``ask`` contract is the same: ``?domain=NAME``, and a 2xx status allows. A file without ``ask`` and without ``allow`` is refused, where Caddy warns.
+   * - An on-demand certificate is renewed during a handshake.
+     - It is renewed in the background while clients use the name, and released when they stop.
+   * - Several issuers in ``tls { issuer ... }``, tried in order. ZeroSSL is the second by default.
+     - ``global.acme.fallback``, tried in order in one attempt. No second authority by default: we name it.
+   * - ``acme_eab { key_id, mac_key }`` in the Caddyfile.
+     - ``eab: { kid, key_file }``. The key lives in a file, not in the configuration.
+   * - Renewal follows the renewal information of the authority.
+     - The same, with ``ari: false`` to turn it off, and never later than four fifths of the lifetime.
+   * - ``acme_server``.
      - Not available.
-
-Sibuna has no authority of its own for internal names, issues no certificate at the first handshake of an unknown name, and does not solve the DNS-01 challenge, so it obtains no wildcard certificates. For these cases we keep using ``crt``.
 
 HTTP routing by name and path
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

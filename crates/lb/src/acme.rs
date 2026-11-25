@@ -1,7 +1,10 @@
 //! The configuration of automatic HTTPS (SID 0021): the `auto` names of a TLS frontend
 //! and the `global.acme` object. Nothing here opens a socket or a file.
 
+mod authority;
+mod demand;
 mod dns;
+mod internal;
 
 use std::collections::BTreeMap;
 use std::io;
@@ -9,7 +12,10 @@ use std::net::IpAddr;
 
 use sibuna_json::ObjectReader;
 
+pub use self::authority::{Authority, Eab};
+pub use self::demand::OnDemand;
 pub use self::dns::{DnsConfig, DnsProvider};
+pub use self::internal::{INTERNAL_LIFETIME, Internal};
 use crate::config::{Config, Protocol, field, invalid};
 
 /// The production directory of Let's Encrypt, the default authority.
@@ -34,6 +40,28 @@ pub enum AcmeChallenge {
     Dns01,
 }
 
+/// `global.acme.key`: the curve of the key of a new certificate.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum CertificateKey {
+    /// ECDSA on P-256.
+    #[default]
+    P256,
+    /// ECDSA on P-384.
+    P384,
+}
+
+/// Reads `global.acme.key`.
+fn certificate_key(r: &mut ObjectReader<'_, '_>) -> io::Result<CertificateKey> {
+    let path = r.field_path("key");
+    match field(r.take_str("key"))? {
+        None | Some("p256") => Ok(CertificateKey::P256),
+        Some("p384") => Ok(CertificateKey::P384),
+        Some(_) => Err(invalid(format!(
+            "{path}: expected \"p256\" or \"p384\"; RSA keys are not offered"
+        ))),
+    }
+}
+
 /// `tls.issuer`: who issues the certificates of the `auto` names of a frontend.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum AcmeIssuer {
@@ -42,9 +70,6 @@ pub enum AcmeIssuer {
     /// The local authority that the daemon keeps in its storage directory.
     Internal,
 }
-
-/// The default lifetime of a certificate of the local authority, in seconds: 12 hours.
-pub const INTERNAL_LIFETIME: u64 = 43_200;
 
 /// The `global.acme` object. Every key has a default.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -63,8 +88,21 @@ pub struct AcmeOptions {
     pub redirect: bool,
     /// The provider of the DNS-01 challenge. A wildcard from an ACME authority needs it.
     pub dns: Option<DnsConfig>,
-    /// The lifetime of a certificate of the local authority, in seconds.
-    pub internal_lifetime: u64,
+    /// The local authority: the lifetime of its certificates and the name constraints
+    /// of its root.
+    pub internal: Internal,
+    /// The guards of issuance on demand. A frontend with `tls.on_demand` needs them.
+    pub on_demand: Option<OnDemand>,
+    /// The external account binding of the first authority.
+    pub eab: Option<Eab>,
+    /// The authorities that are asked when the first one fails, in this order.
+    pub fallback: Vec<Authority>,
+    /// Ask the authority when to renew a certificate (RFC 9773).
+    pub ari: bool,
+    /// Staple an OCSP response when a certificate names a responder.
+    pub ocsp: bool,
+    /// The curve of the key of a new certificate, from either source.
+    pub key: CertificateKey,
 }
 
 impl Default for AcmeOptions {
@@ -77,36 +115,62 @@ impl Default for AcmeOptions {
             ca_file: None,
             redirect: true,
             dns: None,
-            internal_lifetime: INTERNAL_LIFETIME,
+            internal: Internal::default(),
+            on_demand: None,
+            eab: None,
+            fallback: Vec::new(),
+            ari: true,
+            ocsp: true,
+            key: CertificateKey::P256,
         }
     }
 }
 
 impl AcmeOptions {
-    /// Whether the authority is one of the public directories that we know by name. A
-    /// public authority is never asked for an internal name.
+    /// Every authority in the order in which an attempt asks them: the first one, then
+    /// those of `fallback`.
+    pub fn authorities(&self) -> Vec<Authority> {
+        let first = Authority {
+            directory: self.directory.clone(),
+            email: self.email.clone(),
+            ca_file: self.ca_file.clone(),
+            eab: self.eab.clone(),
+        };
+        std::iter::once(first).chain(self.fallback.iter().cloned()).collect()
+    }
+
+    /// Whether a listed authority is one of the public directories that we know by
+    /// name. A public authority is never asked for an internal name.
     pub fn is_public(&self) -> bool {
-        self.directory == LETSENCRYPT || self.directory == LETSENCRYPT_STAGING
+        self.authorities().iter().any(Authority::is_public)
+    }
+
+    /// The managed name that a handshake on a frontend with `issuer` and the TLS port
+    /// `port` may ask for on demand. `None` when the guards that read no state refuse
+    /// `name`, or when no authority of ours can issue for it: issuance on demand is
+    /// off, the name is not a plain host name, no suffix of `allow` covers it, or the
+    /// frontend sends an internal name to a public authority, or the constraints of
+    /// the local root do not permit a name of the local authority.
+    pub fn demanded(&self, name: &str, port: u16, issuer: Option<AcmeIssuer>) -> Option<AutoName> {
+        let guards = self.on_demand.as_ref()?;
+        let local = is_local(name, issuer, self);
+        let refused_by_authority = match local {
+            true => !self.internal.permits(name),
+            false => self.is_public() && is_internal_name(name),
+        };
+        (guards.admits(name) && !refused_by_authority).then(|| AutoName {
+            name: name.to_owned(),
+            port,
+            local,
+        })
     }
 
     pub(crate) fn parse(mut r: ObjectReader<'_, '_>) -> io::Result<Self> {
         let defaults = Self::default();
-        let directory = match field(r.take_str("directory"))? {
-            None | Some("letsencrypt") => defaults.directory,
-            Some("letsencrypt-staging") => LETSENCRYPT_STAGING.to_owned(),
-            Some(url) if is_directory_url(url) => url.to_owned(),
-            Some(_) => {
-                return Err(invalid(
-                    "global.acme.directory: expected \"letsencrypt\", \"letsencrypt-staging\" \
-                     or an https URL (http is accepted for a loopback address only)",
-                ));
-            }
-        };
-        let email = match field(r.take_str("email"))? {
-            None => None,
-            Some(email) if is_email(email) => Some(email.to_owned()),
-            Some(_) => return Err(invalid("global.acme.email: expected an e-mail address")),
-        };
+        let Authority { directory, email, ca_file, eab } = Authority::take(&mut r)?;
+        let fallback = authority::fallback(&mut r, &directory)?;
+        let ari = field(r.take_bool("ari"))?.unwrap_or(defaults.ari);
+        let ocsp = field(r.take_bool("ocsp"))?.unwrap_or(defaults.ocsp);
         let storage = match field(r.take_str("storage"))? {
             None => defaults.storage,
             Some("") => return Err(invalid("global.acme.storage must be a directory")),
@@ -124,10 +188,11 @@ impl AcmeOptions {
                 ));
             }
         };
-        let ca_file = field(r.take_str("ca_file"))?.map(str::to_owned);
         let redirect = field(r.take_bool("redirect"))?.unwrap_or(defaults.redirect);
         let dns = field(r.take_object("dns"))?.map(DnsConfig::parse).transpose()?;
-        let internal_lifetime = internal_lifetime(&mut r)?;
+        let internal = Internal::take(&mut r)?;
+        let key = certificate_key(&mut r)?;
+        let on_demand = field(r.take_object("on_demand"))?.map(OnDemand::parse).transpose()?;
         field(r.finish())?;
         Ok(Self {
             directory,
@@ -137,24 +202,15 @@ impl AcmeOptions {
             ca_file,
             redirect,
             dns,
-            internal_lifetime,
+            internal,
+            on_demand,
+            eab,
+            fallback,
+            ari,
+            ocsp,
+            key,
         })
     }
-}
-
-/// Reads `global.acme.internal: { lifetime: SECONDS }`.
-fn internal_lifetime(r: &mut ObjectReader<'_, '_>) -> io::Result<u64> {
-    let Some(mut internal) = field(r.take_object("internal"))? else {
-        return Ok(INTERNAL_LIFETIME);
-    };
-    let path = internal.field_path("lifetime");
-    let lifetime = match field(internal.take_u64("lifetime"))? {
-        None => INTERNAL_LIFETIME,
-        Some(seconds) if (10..=172_800).contains(&seconds) => seconds,
-        Some(_) => return Err(invalid(format!("{path}: expected 10 to 172800 seconds"))),
-    };
-    field(internal.finish())?;
-    Ok(lifetime)
 }
 
 /// Reads `tls.issuer`.
@@ -276,6 +332,8 @@ pub struct AutomaticHttps {
     /// Whether the topology has an HTTP frontend without TLS, for HTTP-01 and the
     /// redirect.
     pub plain_frontend: bool,
+    /// Whether a TLS frontend obtains certificates on demand.
+    pub on_demand: bool,
 }
 
 /// Whether the local authority issues for `name` on a frontend with `issuer`: when the
@@ -290,6 +348,11 @@ fn is_local(name: &str, issuer: Option<AcmeIssuer>, options: &AcmeOptions) -> bo
 }
 
 impl Config {
+    /// Whether a TLS frontend has `on_demand`.
+    fn has_on_demand(&self) -> bool {
+        self.listeners.values().any(|frontend| frontend.tls.as_ref().is_some_and(|t| t.on_demand))
+    }
+
     /// Every `auto` name of every TLS frontend with its port and its issuer, and
     /// whether the topology has a plain HTTP frontend.
     fn auto_names(&self) -> (Vec<AutoName>, bool) {
@@ -316,10 +379,12 @@ impl Config {
         for entry in listed {
             names.entry(entry.name.clone()).or_insert(entry);
         }
-        (!names.is_empty()).then(|| AutomaticHttps {
+        let on_demand = self.has_on_demand();
+        (!names.is_empty() || on_demand).then(|| AutomaticHttps {
             options: self.acme.clone().unwrap_or_default(),
             names: names.into_values().collect(),
             plain_frontend,
+            on_demand,
         })
     }
 
@@ -328,19 +393,32 @@ impl Config {
     /// from an ACME authority needs a DNS provider.
     pub(crate) fn check_automatic_https(&self) -> io::Result<()> {
         let (names, _) = self.auto_names();
-        if names.is_empty() {
+        let options = self.acme.clone().unwrap_or_default();
+        if self.has_on_demand() {
+            if !options.on_demand.as_ref().is_some_and(OnDemand::is_guarded) {
+                return Err(invalid(
+                    "tls.on_demand needs a guard; set global.acme.on_demand.ask or \
+                     global.acme.on_demand.allow",
+                ));
+            }
+        } else if names.is_empty() {
             return match self.acme {
                 Some(_) => Err(invalid("global.acme requires a frontend with tls.auto names")),
                 None => Ok(()),
             };
         }
-        let options = self.acme.clone().unwrap_or_default();
         for entry in &names {
             let name = &entry.name;
             if names.iter().any(|other| other.name == *name && other.local != entry.local) {
                 return Err(invalid(format!(
                     "tls.auto: `{name}` has two issuers; give its frontends the same \
                      tls.issuer"
+                )));
+            }
+            if entry.local && !options.internal.permits(name) {
+                return Err(invalid(format!(
+                    "tls.auto: `{name}` is outside global.acme.internal.constraints; the \
+                     root of the local authority may not sign for it"
                 )));
             }
             if entry.local {
@@ -409,6 +487,7 @@ mod tests {
             options: AcmeOptions::default(),
             names: vec![public("example.org", 443), public("www.example.org", 443)],
             plain_frontend: true,
+            on_demand: false,
         };
         assert_eq!(automatic, Some(expected));
         let defaults = AcmeOptions::default();
@@ -496,6 +575,59 @@ mod tests {
     }
 
     #[test]
+    fn the_key_of_a_certificate_is_on_one_of_two_curves() {
+        let key = |global: &str| {
+            let config = parse(r#"{"auto":["example.org"]}"#, global).ok();
+            config.and_then(|c| c.automatic_https()).map(|a| a.options.key)
+        };
+        assert_eq!(key(""), Some(CertificateKey::P256));
+        assert_eq!(key(r#""global":{"acme":{"key":"p256"}},"#), Some(CertificateKey::P256));
+        assert_eq!(key(r#""global":{"acme":{"key":"p384"}},"#), Some(CertificateKey::P384));
+        let text = reason(r#"{"auto":["example.org"]}"#, r#""global":{"acme":{"key":"rsa"}},"#);
+        assert!(text.contains("global.acme.key: expected \"p256\" or \"p384\""), "{text}");
+    }
+
+    #[test]
+    fn the_local_root_signs_inside_its_constraints_only() {
+        let global = r#""global":{"acme":{"internal":{"lifetime":600,
+            "constraints":[".Corp.Internal","10.9.8.7/8","localhost","corp.internal"]}}},"#;
+        let config = parse(r#"{"auto":["a.corp.internal","10.1.2.3","localhost"]}"#, global);
+        let options = config.ok().and_then(|c| c.automatic_https()).map(|a| a.options.internal);
+        let expected = Internal {
+            lifetime: 600,
+            constraints: vec!["10.0.0.0/8".into(), "corp.internal".into(), "localhost".into()],
+        };
+        assert_eq!(options, Some(expected));
+        for outside in ["db.internal", "192.168.1.1", "*.internal"] {
+            let text = reason(&format!(r#"{{"auto":["{outside}"]}}"#), global);
+            assert!(text.contains("is outside global.acme.internal.constraints"), "{text}");
+        }
+        // A public name of the ACME authority is none of the root's business. With the
+        // override it is.
+        assert_eq!(names(r#"{"auto":["example.org"]}"#, global).len(), 1);
+        let text = reason(r#"{"auto":["example.org"],"issuer":"internal"}"#, global);
+        assert!(text.contains("`example.org` is outside"), "{text}");
+        for (bad, wanted) in [
+            (r#"["a b"]"#, "expected DNS suffixes"),
+            (r#"["10.0.0.0/40"]"#, "expected DNS suffixes"),
+            (r#"[7]"#, "expected DNS suffixes"),
+            ("[]", "expected 1 to 32 entries"),
+        ] {
+            let global = format!(r#""global":{{"acme":{{"internal":{{"constraints":{bad}}}}}}},"#);
+            let text = reason(r#"{"auto":["localhost"]}"#, &global);
+            assert!(text.contains("global.acme.internal.constraints") && text.contains(wanted));
+        }
+        // On demand: a local name outside the list is not asked for.
+        let global = r#""global":{"acme":{"on_demand":{"allow":["internal"]},
+            "internal":{"constraints":["corp.internal"]}}},"#;
+        let config = parse(r#"{"on_demand":true}"#, global).ok();
+        let options = config.and_then(|c| c.automatic_https()).map(|a| a.options);
+        let demanded = |name: &str| options.as_ref().and_then(|o| o.demanded(name, 443, None));
+        assert!(demanded("a.corp.internal").is_some_and(|name| name.local));
+        assert_eq!(demanded("db.internal"), None);
+    }
+
+    #[test]
     fn a_wildcard_needs_a_dns_provider_unless_it_is_local() {
         let text = reason(r#"{"auto":["*.example.org"]}"#, "");
         assert!(text.contains("is a wildcard, which needs the DNS challenge"), "{text}");
@@ -511,6 +643,7 @@ mod tests {
             wait: 0,
             resolver: None,
             servers: Vec::new(),
+            follow_cname: true,
         };
         assert_eq!(dns, Some(expected));
         let text =
@@ -536,7 +669,7 @@ mod tests {
         let dns = options.dns.unwrap_or_else(|| unreachable!());
         assert_eq!(dns.resolver.map(|r| r.port()), Some(53));
         assert_eq!(dns.servers.len(), 2);
-        assert_eq!((options.challenge, options.internal_lifetime), (AcmeChallenge::Dns01, 600));
+        assert_eq!((options.challenge, options.internal.lifetime), (AcmeChallenge::Dns01, 600));
         let wrong = |members: &str| {
             let global = format!(r#""global":{{"acme":{{{members}}}}},"#);
             reason(r#"{"auto":["example.org"]}"#, &global)
@@ -547,6 +680,21 @@ mod tests {
                 .contains("one provider")
         );
         assert!(wrong(r#""dns":{"rfc2136":{}}"#).contains("needs the \"IP:PORT\""));
+        // An update without a key is accepted for this host, and elsewhere when the
+        // file says so.
+        let unsigned = wrong(r#""dns":{"rfc2136":{"server":"192.0.2.53:53"}}"#);
+        assert!(unsigned.contains("without a TSIG key is not signed"), "{unsigned}");
+        assert!(unsigned.contains("global.acme.dns.rfc2136"), "{unsigned}");
+        for accepted in [
+            r#""dns":{"rfc2136":{"server":"127.0.0.1:53"}}"#,
+            r#""dns":{"rfc2136":{"server":"[::1]:53"}}"#,
+            r#""dns":{"rfc2136":{"server":"192.0.2.53:53","unsigned":true}}"#,
+        ] {
+            assert_eq!(wrong(accepted), "", "{accepted}");
+        }
+        let both = r#""dns":{"rfc2136":{"server":"192.0.2.53:53","key_name":"k.",
+            "key_file":"/k","unsigned":true}}"#;
+        assert!(wrong(both).contains("unsigned contradicts"));
         assert!(wrong(r#""dns":{"rfc2136":{"server":"ns.example.org"}}"#).contains("IP:PORT"));
         assert!(
             wrong(r#""dns":{"rfc2136":{"server":"1.2.3.4:53","key_name":"k"}}"#)
@@ -560,6 +708,66 @@ mod tests {
     }
 
     #[test]
+    fn the_cloudflare_provider_takes_a_token_file_and_a_loopback_api_only() {
+        let read = |members: &str| {
+            let global = format!(r#""global":{{"acme":{{"dns":{{{members}}}}}}},"#);
+            let options = parse(r#"{"auto":["*.example.org"]}"#, &global).ok()?.acme?;
+            options.dns
+        };
+        let wrong = |members: &str| {
+            let global = format!(r#""global":{{"acme":{{"dns":{{{members}}}}}}},"#);
+            reason(r#"{"auto":["*.example.org"]}"#, &global)
+        };
+        let dns = read(r#""cloudflare":{"token_file":"/etc/sibuna/cf-token"}"#);
+        let dns = dns.unwrap_or_else(|| unreachable!());
+        let plain = DnsProvider::Cloudflare {
+            token_file: "/etc/sibuna/cf-token".to_owned(),
+            zone: None,
+            api: None,
+        };
+        assert_eq!((dns.provider, dns.follow_cname), (plain, true));
+        let dns = read(
+            r#""cloudflare":{"token_file":"/t","zone":"Example.ORG.",
+               "api":"http://127.0.0.1:20443/client/v4"},"follow_cname":false"#,
+        );
+        let dns = dns.unwrap_or_else(|| unreachable!());
+        let full = DnsProvider::Cloudflare {
+            token_file: "/t".to_owned(),
+            zone: Some("example.org".to_owned()),
+            api: Some("http://127.0.0.1:20443/client/v4".to_owned()),
+        };
+        assert_eq!((dns.provider, dns.follow_cname), (full, false));
+        assert!(read(r#""cloudflare":{"token_file":"/t","api":"http://[::1]:1/v4"}"#).is_some());
+        // The token goes to the host of `api`: only a loopback address is taken.
+        for api in [
+            "https://api.cloudflare.com/client/v4",
+            "https://127.0.0.1:20443/",
+            "http://api.cloudflare.com/client/v4",
+            "http://localhost:20443/",
+            "http://192.0.2.1:80/",
+            "http://127.0.0.1@evil.example/",
+            "http://evil.example:80@127.0.0.1/",
+            "http://127.0.0.1.evil.example/",
+            "http://evil.example/127.0.0.1:1",
+            "http://",
+            "",
+        ] {
+            let text = wrong(&format!(r#""cloudflare":{{"token_file":"/t","api":"{api}"}}"#));
+            assert!(text.contains("global.acme.dns.cloudflare.api"), "{api}: {text}");
+            assert!(text.contains("an http URL on a loopback address"), "{api}: {text}");
+        }
+        assert!(wrong(r#""cloudflare":{}"#).contains("needs the file of an API token"));
+        assert!(wrong(r#""cloudflare":{"token_file":""}"#).contains("API token"));
+        assert!(wrong(r#""cloudflare":{"token_file":"/t","zone":"a b"}"#).contains("DNS name"));
+        assert!(wrong(r#""cloudflare":{"token_file":"/t","token":"x"}"#).contains("token"));
+        let two = r#""cloudflare":{"token_file":"/t"},"hook":"/h""#;
+        assert!(wrong(two).contains("expected one provider"));
+        let two = r#""cloudflare":{"token_file":"/t"},"rfc2136":{"server":"1.2.3.4:53"}"#;
+        assert!(wrong(two).contains("expected one provider"));
+        assert!(wrong(r#""hook":"/h","follow_cname":1"#).contains("follow_cname"));
+    }
+
+    #[test]
     fn mistakes_are_named() {
         let auto = |value: &str| reason(&format!(r#"{{"auto":{value}}}"#), "");
         assert!(auto(r#"["*.example.org"]"#).contains("wildcard"));
@@ -568,7 +776,7 @@ mod tests {
         assert!(auto(r#"["bad_name.example.org"]"#).contains("is not a host name"));
         assert!(auto("[]").contains("1 to 64 host names"));
         assert!(auto("[7]").contains("expected host names"));
-        assert!(reason("{}", "").contains("or auto (host names)"));
+        assert!(reason("{}", "").contains("auto (host names) or on_demand"));
         let acme = |members: &str| {
             reason(
                 r#"{"auto":["example.org"]}"#,
@@ -594,5 +802,59 @@ mod tests {
         let automatic = Config::parse(document.as_bytes()).ok().and_then(|c| c.automatic_https());
         assert_eq!(automatic.as_ref().map(|a| a.plain_frontend), Some(false));
         assert_eq!(automatic.map(|a| a.names), Some(vec![public("example.org", 8443)]));
+    }
+
+    #[test]
+    fn on_demand_needs_a_guard_and_reads_its_keys() {
+        let demand = r#"{"on_demand":true}"#;
+        let unguarded = [
+            String::new(),
+            r#""global":{"acme":{}},"#.to_owned(),
+            r#""global":{"acme":{"on_demand":{"rate":5}}},"#.to_owned(),
+        ];
+        for global in &unguarded {
+            assert!(reason(demand, global).contains("tls.on_demand needs a guard"), "{global}");
+        }
+        let global = r#""global":{"acme":{"on_demand":{"ask":"http://127.0.0.1:9000/ok",
+            "allow":[".Example.org","apps.test"],"rate":5,"names":7,"wait":3}}},"#;
+        let automatic = parse(demand, global).ok().and_then(|config| config.automatic_https());
+        let automatic = automatic.unwrap_or_else(|| panic!("{}", reason(demand, global)));
+        assert!(automatic.on_demand && automatic.names.is_empty());
+        let expected = OnDemand {
+            ask: Some("http://127.0.0.1:9000/ok".to_owned()),
+            allow: vec!["example.org".to_owned(), "apps.test".to_owned()],
+            rate: 5,
+            names: 7,
+            wait: 3,
+        };
+        assert_eq!(automatic.options.on_demand, Some(expected));
+        let defaults = OnDemand::default();
+        assert_eq!((defaults.rate, defaults.names, defaults.wait), (10, 100, 20));
+        let bad = |members: &str| {
+            reason(demand, &format!(r#""global":{{"acme":{{"on_demand":{{{members}}}}}}},"#))
+        };
+        assert!(bad(r#""ask":"ftp://x""#).contains("http or https URL"));
+        assert!(bad(r#""allow":[]"#).contains("1 to 64 suffixes"));
+        assert!(bad(r#""allow":["a b"]"#).contains("DNS suffixes"));
+        assert!(bad(r#""allow":["a.test"],"rate":0"#).contains("1 to 1000"));
+        assert!(bad(r#""allow":["a.test"],"names":10001"#).contains("1 to 10000"));
+        assert!(bad(r#""allow":["a.test"],"wait":121"#).contains("1 to 120"));
+    }
+
+    #[test]
+    fn a_demanded_name_gets_the_issuer_of_a_listed_one() {
+        let guards =
+            OnDemand { allow: vec!["example.org".into(), "test".into()], ..OnDemand::default() };
+        let options = AcmeOptions { on_demand: Some(guards), ..AcmeOptions::default() };
+        let demanded = |name: &str, issuer| options.demanded(name, 443, issuer).map(|n| n.local);
+        assert_eq!(demanded("a.example.org", None), Some(false));
+        assert_eq!(demanded("a.example.org", Some(AcmeIssuer::Internal)), Some(true));
+        assert_eq!(demanded("app.test", None), Some(true));
+        // A public authority is not asked for an internal name, and nothing outside the
+        // suffixes is admitted.
+        assert_eq!(demanded("app.test", Some(AcmeIssuer::Acme)), None);
+        assert_eq!(demanded("a.example.com", None), None);
+        assert_eq!(demanded("*.example.org", None), None);
+        assert_eq!(AcmeOptions::default().demanded("a.example.org", 443, None), None);
     }
 }
