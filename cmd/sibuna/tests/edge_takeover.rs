@@ -7,7 +7,7 @@ mod edge_ready;
 
 use std::fs;
 use std::io::{BufRead, BufReader, Read, Write};
-use std::net::{SocketAddr, TcpListener, TcpStream};
+use std::net::{Ipv4Addr, SocketAddr, TcpListener, TcpStream, UdpSocket};
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
@@ -15,6 +15,21 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
 const BIN: &str = env!("CARGO_BIN_EXE_sibuna");
+
+/// A separate loopback address for each takeover. HTTP/3 binds TCP and UDP on the
+/// same port, so exclude ports already taken by a wildcard socket on either transport.
+fn vip() -> SocketAddr {
+    let [_, _, high, low] = std::process::id().to_be_bytes();
+    let ip = Ipv4Addr::new(127, 128 | (high & 63), low, serial() as u8);
+    for _ in 0..16 {
+        let tcp = TcpListener::bind((ip, 0)).unwrap();
+        let addr = tcp.local_addr().unwrap();
+        if UdpSocket::bind(addr).is_ok() {
+            return addr;
+        }
+    }
+    panic!("could not find a free TCP and UDP port on {ip}");
+}
 
 /// A server that answers every request with a short body and closes.
 fn origin() -> SocketAddr {
@@ -58,7 +73,7 @@ fn request(vip: SocketAddr) -> bool {
 
 #[test]
 fn a_new_process_takes_over_the_address_while_requests_keep_arriving() {
-    let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    let vip = vip();
     let origin = origin();
     let stem = format!("sibuna-takeover-{}-{}-{}", std::process::id(), serial(), vip.port());
     let path = std::env::temp_dir().join(format!("{stem}.json"));
@@ -124,7 +139,7 @@ fn a_new_process_takes_over_the_address_while_requests_keep_arriving() {
 #[cfg(feature = "https")]
 #[test]
 fn a_frontend_with_http3_is_taken_over_too() {
-    let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    let vip = vip();
     let origin = origin();
     let name =
         format!("sibuna-takeover-h3-{}-{}-{}.json", std::process::id(), serial(), vip.port());
@@ -159,7 +174,7 @@ fn a_frontend_with_http3_is_taken_over_too() {
 
 #[test]
 fn without_reuse_port_a_second_process_is_refused() {
-    let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    let vip = vip();
     let origin = origin();
     let name = format!("sibuna-single-{}-{}-{}.json", std::process::id(), serial(), vip.port());
     let path = std::env::temp_dir().join(name);
