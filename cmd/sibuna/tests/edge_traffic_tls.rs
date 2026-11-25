@@ -62,7 +62,8 @@ fn frontend() -> String {
     format!(
         r#""tls":{{"cert_file":"{}","key_file":"{}"}},"hsts":{{"max_age":600}},"max_body":"1k",
         "request_headers":{{"set":{{"X-Tenant":"blue"}}}},
-        "response_headers":{{"set":{{"X-Frame-Options":"DENY"}},"remove":["Server"]}},"#,
+        "response_headers":{{"set":{{"X-Frame-Options":"DENY"}},"remove":["Server"]}},
+        "routes":[{{"path_prefix":"/open","backend":"app","hsts":false}}],"#,
         fixture("localhost.pem"),
         fixture("localhost.key")
     )
@@ -108,6 +109,11 @@ fn an_http2_client_on_a_tls_frontend_gets_the_whole_traffic_policy() {
             assert_eq!(refused.status, 413, "{event_loop}");
             assert_eq!(refused.all("strict-transport-security"), [HSTS], "{event_loop}");
             assert!(refused.all("x-frame-options").is_empty());
+            // An answer of our own has the route of the path in normal form. This path
+            // is under `/open`, which has no HSTS, although it does not begin with it.
+            let open = send(vip, "POST", "/a/../open/length", pair, &[b'x'; 2000]).await;
+            assert_eq!(open.status, 413, "{event_loop}");
+            assert!(open.all("strict-transport-security").is_empty(), "{event_loop}");
             // The server that was left counts the request that moved.
             let metrics = send(vip, "GET", "/__sibuna/metrics", "", b"").await.text;
             let moved = "sibuna_edge_server_failovers_total{backend=\"app\",server=\"s0\"} ";
@@ -117,5 +123,38 @@ fn an_http2_client_on_a_tls_frontend_gets_the_whole_traffic_policy() {
         runtime.block_on(async {
             tokio::time::timeout(Duration::from_secs(30), case).await.unwrap();
         });
+    });
+}
+
+#[test]
+fn an_http2_request_with_a_kept_body_moves_when_its_method_is_idempotent() {
+    both(|event_loop| {
+        let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+        // Each case has its own edge, so the server that closes is chosen first.
+        let case = |members: &'static str, method: &'static str, body: &'static [u8]| {
+            let closing = Origin::start("closing");
+            closing.closing.store(true, std::sync::atomic::Ordering::SeqCst);
+            let good = Origin::start("good");
+            let servers = [closing.address, good.address];
+            let topology = Topology::new(&servers).frontend(&frontend()).backend(members);
+            let edge = topology.start(event_loop);
+            let answer = runtime.block_on(async {
+                let sent = send(edge.vip, method, "/length", "", body);
+                tokio::time::timeout(Duration::from_secs(20), sent).await.unwrap()
+            });
+            assert_eq!(
+                closing.requests.load(std::sync::atomic::Ordering::SeqCst),
+                1,
+                "{event_loop} {method}"
+            );
+            (answer.status, answer.text, good.requests.load(std::sync::atomic::Ordering::SeqCst))
+        };
+        // The first server read the PUT and closed. The second gets the whole body.
+        assert_eq!(case("", "PUT", b"abc"), (200, "3".into(), 1), "{event_loop}");
+        // A body above `retry_body` is not kept.
+        assert_eq!(case(r#""retry_body":2,"#, "PUT", b"abc").0, 502, "{event_loop}");
+        // A POST may have been carried out, so no other server sees it.
+        let post = case("", "POST", b"abc");
+        assert_eq!((post.0, post.2), (502, 0), "{event_loop}");
     });
 }

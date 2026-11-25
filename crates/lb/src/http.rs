@@ -1,10 +1,11 @@
 //! Request-level routing for the daemon's HTTP firewall. A reservation lasts through the
 //! response body, including an upgraded connection.
 
+use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::io;
 use std::net::SocketAddr;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
@@ -429,6 +430,7 @@ pub(crate) fn rules(
     Ok(rules)
 }
 
+#[derive(Clone)]
 struct Frontend {
     pool: Arc<str>,
     rules: Arc<[Rule]>,
@@ -456,39 +458,88 @@ impl Frontend {
     }
 }
 
-#[derive(Default)]
-struct Table {
+/// The names and counters of the servers of each pool, by address (SID 0020).
+type Infos = BTreeMap<String, Vec<(SocketAddr, crate::ServerInfo)>>;
+
+/// The frontends and pools of one revision of the topology.
+#[derive(Clone, Default)]
+struct Routes {
     revision: u64,
     fronts: BTreeMap<SocketAddr, Frontend>,
     pools: BTreeMap<String, Pool>,
-    /// The names and counters of each pool's servers, by address (SID 0020).
-    servers: BTreeMap<String, Vec<(SocketAddr, crate::ServerInfo)>>,
-    loads: Loads,
-    regime: Option<Regime>,
-    /// Some frontend or route turns the firewall off, so requests need the lookup.
-    bypasses: bool,
-    /// The key of the sticky cookies (SID 0019).
-    sticky: crate::sticky::Key,
-    /// Some frontend or route has a policy of SID 0019, so requests need the lookup.
-    policied: bool,
-    /// The routes of the revision before this one, for requests decided under it.
-    previous: Option<Retired>,
+    servers: Infos,
 }
 
 /// How long the routes of a replaced revision still serve the requests that the policy
 /// of that revision admitted. A decision takes far less.
 const RETIRE_AFTER: Duration = Duration::from_secs(10);
 
-/// The routes and pools of the revision that a reload replaced. A request is decided
-/// under one policy generation and routed a moment later. When a reload falls between
-/// the two, the request is routed by the revision it was decided under, not refused.
-struct Retired {
-    revision: u64,
-    fronts: BTreeMap<SocketAddr, Frontend>,
-    pools: BTreeMap<String, Pool>,
-    /// The names and counters of the servers of `pools` (SID 0020).
-    servers: BTreeMap<String, Vec<(SocketAddr, crate::ServerInfo)>>,
-    until: Instant,
+/// What a request reads of the routing table. It never changes after it is built, so
+/// any number of threads read it at once without a lock (SID 0019).
+///
+/// A request is decided under one policy generation and routed a moment later. When a
+/// reload falls between the two, the request is routed by the revision it was decided
+/// under, not refused. So the snapshot holds the revision before the current one too,
+/// for a while.
+#[derive(Default)]
+struct Snapshot {
+    routes: Arc<Routes>,
+    /// The routes of the revision before, and until when they serve.
+    previous: Option<(Arc<Routes>, Instant)>,
+    regime: Option<Regime>,
+}
+
+impl Snapshot {
+    /// The routes and pools of `revision`: the current ones, or those that a reload
+    /// retired a moment ago (SID 0018). `None` for an older revision.
+    fn routes_of(&self, revision: u64, now: Instant) -> Option<&Routes> {
+        if revision == self.routes.revision {
+            return Some(&self.routes);
+        }
+        let (retired, until) = self.previous.as_ref()?;
+        (retired.revision == revision && now < *until).then_some(&**retired)
+    }
+
+    fn front(&self, vip: SocketAddr) -> Option<&Frontend> {
+        front_of(&self.routes.fronts, vip)
+    }
+}
+
+/// The routing table as its writers see it: a reload, a run-time command, the cluster.
+struct Table {
+    routes: Arc<Routes>,
+    previous: Option<(Arc<Routes>, Instant)>,
+    loads: Loads,
+    regime: Option<Regime>,
+    /// The key of the sticky cookies (SID 0019). The pools hold the tokens made with it.
+    sticky: crate::sticky::Key,
+    /// What the requests read: a copy of the fields above, replaced after each change.
+    snapshot: Arc<Snapshot>,
+}
+
+impl Default for Table {
+    fn default() -> Self {
+        let mut table = Self {
+            routes: Arc::default(),
+            previous: None,
+            loads: Loads::default(),
+            regime: None,
+            sticky: crate::sticky::Key::default(),
+            snapshot: Arc::default(),
+        };
+        table.snapshot = Arc::new(table.snap());
+        table
+    }
+}
+
+impl Table {
+    fn snap(&self) -> Snapshot {
+        Snapshot {
+            routes: Arc::clone(&self.routes),
+            previous: self.previous.clone(),
+            regime: self.regime,
+        }
+    }
 }
 
 /// The frontend that serves `vip`: its own listener, or the wildcard one of its port.
@@ -504,104 +555,191 @@ fn front_of(fronts: &BTreeMap<SocketAddr, Frontend>, vip: SocketAddr) -> Option<
     fronts.get(&vip).or_else(|| fronts.get(&wildcard))
 }
 
-impl Table {
-    fn front(&self, vip: SocketAddr) -> Option<&Frontend> {
-        front_of(&self.fronts, vip)
-    }
-}
-
 /// A shared view of the current HTTP routing table. Each exchange chooses its origin afresh.
 #[derive(Clone, Default)]
 pub struct HttpRoutes(Arc<Shared>);
 
-/// The routing table and what a request may read of it without the lock.
+/// The routing table, and how a request reads it without a lock (SID 0019).
 ///
-/// Most topologies have no policy of SID 0019 and no route that turns the firewall
-/// off. Their requests ask both questions, and the two flags answer them without the
-/// lock of the table, which the choice of a server then takes once.
-#[derive(Default)]
+/// A writer changes the table under the mutex, builds a new [`Snapshot`] and raises
+/// `generation`. Each thread keeps the snapshot it last used, with the generation it
+/// was read at. A request compares that generation with the counter. When they are
+/// equal, which is nearly always, it reads the snapshot of its thread and touches
+/// nothing that another thread writes. When they differ, it takes the mutex once to
+/// fetch the new snapshot.
+///
+/// A request that reads the counter just before a writer raises it is served by the
+/// old snapshot, as if it had arrived a moment earlier.
 struct Shared {
     table: Mutex<Table>,
-    /// A copy of `Table::bypasses`, stored while the lock is held.
+    /// Counts the changes of the table.
+    generation: AtomicU64,
+    /// Tells this table from the others in the cache of a thread.
+    id: u64,
+    /// Some frontend or route turns the firewall off, so requests need the lookup.
     bypasses: AtomicBool,
-    /// A copy of `Table::policied`, stored while the lock is held.
+    /// Some frontend or route has a policy of SID 0019, so requests need the lookup.
     policied: AtomicBool,
 }
 
+impl Default for Shared {
+    fn default() -> Self {
+        static NEXT: AtomicU64 = AtomicU64::new(1);
+        Self {
+            table: Mutex::default(),
+            generation: AtomicU64::new(0),
+            id: NEXT.fetch_add(1, Ordering::Relaxed),
+            bypasses: AtomicBool::new(false),
+            policied: AtomicBool::new(false),
+        }
+    }
+}
+
+/// The snapshot of one routing table, as a thread last read it.
+struct Cached {
+    id: u64,
+    generation: u64,
+    snapshot: Arc<Snapshot>,
+}
+
+/// The routing tables a thread remembers. A process has one or two. A test has more,
+/// and the oldest entry then makes room.
+const CACHED: usize = 8;
+
+thread_local! {
+    static CACHE: RefCell<Vec<Cached>> = const { RefCell::new(Vec::new()) };
+}
+
 impl Shared {
-    fn lock(&self) -> std::sync::LockResult<std::sync::MutexGuard<'_, Table>> {
-        self.table.lock()
+    /// Runs `visit` on the current snapshot. The usual call takes no lock and writes
+    /// to no memory that another thread reads.
+    fn read<R>(&self, visit: impl Fn(&Snapshot) -> R) -> R {
+        let generation = self.generation.load(Ordering::Acquire);
+        let cached = CACHE.try_with(|cache| {
+            let cache = cache.try_borrow().ok()?;
+            let fresh = |entry: &&Cached| entry.id == self.id && entry.generation == generation;
+            cache.iter().find(fresh).map(|entry| visit(&entry.snapshot))
+        });
+        if let Ok(Some(result)) = cached {
+            return result;
+        }
+        let (snapshot, generation) = self.fetch();
+        // The cache is out of reach while its thread ends, and while an outer call on
+        // this thread reads it. The snapshot serves this call all the same.
+        let _ = CACHE.try_with(|cache| {
+            let Ok(mut cache) = cache.try_borrow_mut() else { return };
+            cache.retain(|entry| entry.id != self.id);
+            if cache.len() >= CACHED {
+                cache.remove(0);
+            }
+            cache.push(Cached { id: self.id, generation, snapshot: Arc::clone(&snapshot) });
+        });
+        visit(&snapshot)
+    }
+
+    /// The current snapshot and its generation, read under the mutex.
+    fn fetch(&self) -> (Arc<Snapshot>, u64) {
+        let table = self.table.lock().unwrap_or_else(PoisonError::into_inner);
+        (Arc::clone(&table.snapshot), self.generation.load(Ordering::Acquire))
+    }
+
+    /// Runs `change` on the table under the mutex, then publishes the new snapshot.
+    fn write<R>(&self, change: impl FnOnce(&mut Table) -> R) -> R {
+        let mut table = self.table.lock().unwrap_or_else(PoisonError::into_inner);
+        let result = change(&mut table);
+        table.snapshot = Arc::new(table.snap());
+        self.generation.fetch_add(1, Ordering::Release);
+        result
+    }
+}
+
+/// Computes the sticky tokens of every pool of `routes` under `key`.
+fn seal(routes: &mut Routes, key: &crate::sticky::Key) {
+    for (name, pool) in &mut routes.pools {
+        pool.seal(key, name);
     }
 }
 
 impl HttpRoutes {
     pub(crate) fn publish(&self, config: &mut Config) {
-        let mut state = self.0.lock().unwrap_or_else(PoisonError::into_inner);
-        let retired = Retired {
-            revision: state.revision,
-            fronts: std::mem::take(&mut state.fronts),
-            pools: std::mem::take(&mut state.pools),
-            servers: std::mem::take(&mut state.servers),
-            until: Instant::now() + RETIRE_AFTER,
-        };
-        state.previous = Some(retired);
-        state.revision = state.revision.wrapping_add(1);
-        state.fronts = config
-            .listeners
-            .iter()
-            .filter(|((p, _), _)| *p == Protocol::Http)
-            .map(|((_, addr), f)| {
-                let front = Frontend {
-                    pool: f.pool.clone(),
-                    rules: f.http_rules.clone(),
-                    firewall: f.firewall,
-                    websocket: f.websocket.clone(),
-                    policy: f.policy.clone(),
-                    info: f.info.clone(),
-                };
-                (*addr, front)
-            })
-            .collect();
-        state.bypasses = state.fronts.values().any(Frontend::bypasses);
-        state.policied = state.fronts.values().any(Frontend::has_policy);
-        // A request that reads a flag just before this point is answered by the old
-        // table, as if it had arrived a moment earlier.
-        self.0.bypasses.store(state.bypasses, Ordering::Release);
-        self.0.policied.store(state.policied, Ordering::Release);
-        state.servers = config
-            .pools
-            .iter()
-            .filter(|(_, pool)| pool.protocol == Protocol::Http)
-            .map(|(name, pool)| (name.clone(), crate::observe::server_infos(&pool.servers)))
-            .collect();
-        state.pools = config
-            .pools
-            .extract_if(.., |_, p| p.protocol == Protocol::Http)
-            .map(|(name, p)| (name, Pool::new(p, &mut state.loads)))
-            .collect();
-        state.loads.prune();
+        self.0.write(|state| {
+            let retired = Arc::clone(&state.routes);
+            let revision = retired.revision.wrapping_add(1);
+            state.previous = Some((retired, Instant::now() + RETIRE_AFTER));
+            let http =
+                |((protocol, _), _): &(&(Protocol, SocketAddr), _)| *protocol == Protocol::Http;
+            let fronts: BTreeMap<SocketAddr, Frontend> = config
+                .listeners
+                .iter()
+                .filter(http)
+                .map(|((_, addr), f)| {
+                    let front = Frontend {
+                        pool: f.pool.clone(),
+                        rules: f.http_rules.clone(),
+                        firewall: f.firewall,
+                        websocket: f.websocket.clone(),
+                        policy: f.policy.clone(),
+                        info: f.info.clone(),
+                    };
+                    (*addr, front)
+                })
+                .collect();
+            self.0.bypasses.store(fronts.values().any(Frontend::bypasses), Ordering::Release);
+            self.0.policied.store(fronts.values().any(Frontend::has_policy), Ordering::Release);
+            let servers = config
+                .pools
+                .iter()
+                .filter(|(_, pool)| pool.protocol == Protocol::Http)
+                .map(|(name, pool)| (name.clone(), crate::observe::server_infos(&pool.servers)))
+                .collect();
+            let pools = config
+                .pools
+                .extract_if(.., |_, p| p.protocol == Protocol::Http)
+                .map(|(name, p)| (name, Pool::new(p, &mut state.loads)))
+                .collect();
+            let mut routes = Routes { revision, fronts, pools, servers };
+            seal(&mut routes, &state.sticky);
+            state.routes = Arc::new(routes);
+            state.loads.prune();
+        });
     }
 
     /// Derives the key of the sticky cookies from `seed`, the challenge seed of the
     /// node (SID 0019). Nodes that share the seed accept each other's cookies. Without
     /// this call the key is random and lasts as long as the process.
     pub fn set_sticky_seed(&self, seed: &[u8]) {
-        let mut table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
-        table.sticky = crate::sticky::Key::derive(seed);
+        self.0.write(|table| {
+            table.sticky = crate::sticky::Key::derive(seed);
+            seal(Arc::make_mut(&mut table.routes), &table.sticky);
+            if let Some((retired, _)) = &mut table.previous {
+                seal(Arc::make_mut(retired), &table.sticky);
+            }
+        });
     }
 
-    /// Runs `visit` on the HTTP pools and their loads, under the lock of the table.
+    /// Runs `visit` on the HTTP pools and their loads, to change them. The requests
+    /// see the change in the snapshot that follows.
     pub(crate) fn with_pools<R>(
         &self,
         visit: impl FnOnce(&mut BTreeMap<String, Pool>, &mut Loads) -> R,
     ) -> R {
-        let mut table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
-        let table = &mut *table;
-        visit(&mut table.pools, &mut table.loads)
+        self.0.write(|table| {
+            // The snapshot shares the routes, so this copies them before the change.
+            let routes = Arc::make_mut(&mut table.routes);
+            let result = visit(&mut routes.pools, &mut table.loads);
+            seal(routes, &table.sticky);
+            result
+        })
+    }
+
+    /// Runs `visit` on the HTTP pools, to read them.
+    pub(crate) fn view_pools<R>(&self, visit: impl FnOnce(&BTreeMap<String, Pool>) -> R) -> R {
+        let table = self.0.table.lock().unwrap_or_else(PoisonError::into_inner);
+        visit(&table.routes.pools)
     }
 
     pub(crate) fn set_regime(&self, regime: Regime) {
-        self.0.lock().unwrap_or_else(PoisonError::into_inner).regime = Some(regime);
+        self.0.write(|table| table.regime = Some(regime));
     }
 
     /// Whether the firewall applies to this request. A frontend or a matching route may
@@ -611,15 +749,17 @@ impl HttpRoutes {
         if !self.0.bypasses.load(Ordering::Acquire) {
             return true;
         }
-        let table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
-        let Some(front) = table.front(vip) else { return true };
-        let host = bare_host(host);
-        front.rules.iter().find(|r| r.matches(host, path)).map_or(front.firewall, |r| r.firewall)
+        self.0.read(|table| {
+            let Some(front) = table.front(vip) else { return true };
+            let host = bare_host(host);
+            let rule = front.rules.iter().find(|r| r.matches(host, path));
+            rule.map_or(front.firewall, |r| r.firewall)
+        })
     }
 
     /// The policy of this request (SID 0019): that of the first matching route, or that
     /// of the frontend. `None` when no frontend of the table has a policy, which is the
-    /// usual case and takes no lock.
+    /// usual case.
     pub fn policy(
         &self,
         vip: SocketAddr,
@@ -629,8 +769,7 @@ impl HttpRoutes {
         if !self.0.policied.load(Ordering::Acquire) {
             return None;
         }
-        let table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
-        Some(Arc::clone(table.front(vip)?.policy(host, path)))
+        self.0.read(|table| Some(Arc::clone(table.front(vip)?.policy(host, path))))
     }
 
     /// The WebSocket rule of this request: that of the first matching route, or that of
@@ -641,13 +780,14 @@ impl HttpRoutes {
         host: &[u8],
         path: &[u8],
     ) -> Option<Arc<crate::WebSocketRule>> {
-        let table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
-        let front = table.front(vip)?;
-        let host = bare_host(host);
-        match front.rules.iter().find(|r| r.matches(host, path)) {
-            Some(rule) => rule.websocket.clone(),
-            None => front.websocket.clone(),
-        }
+        self.0.read(|table| {
+            let front = table.front(vip)?;
+            let host = bare_host(host);
+            match front.rules.iter().find(|r| r.matches(host, path)) {
+                Some(rule) => rule.websocket.clone(),
+                None => front.websocket.clone(),
+            }
+        })
     }
 
     /// Selects an eligible HTTP origin for the validated authority and normalized path.
@@ -666,17 +806,18 @@ impl HttpRoutes {
 
     /// Notes the counters of a server that joined `pool` at run time (SID 0020).
     pub(crate) fn enlist(&self, pool: &str, addr: SocketAddr, info: crate::ServerInfo) {
-        let mut table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
-        let servers = table.servers.entry(pool.to_owned()).or_default();
-        servers.retain(|(known, _)| *known != addr);
-        servers.push((addr, info));
+        self.0.write(|table| {
+            let routes = Arc::make_mut(&mut table.routes);
+            let servers = routes.servers.entry(pool.to_owned()).or_default();
+            servers.retain(|(known, _)| *known != addr);
+            servers.push((addr, info));
+        });
     }
 
     /// The name, the counters and the trusted proxies of the frontend behind `vip`
     /// (SID 0020), or `None` for an unknown listener.
     pub fn frontend(&self, vip: SocketAddr) -> Option<Arc<crate::FrontendInfo>> {
-        let table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
-        table.front(vip).map(|front| front.info.clone())
+        self.0.read(|table| table.front(vip).map(|front| front.info.clone()))
     }
 }
 

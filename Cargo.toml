@@ -18,6 +18,10 @@ authors = ["Vikrant Rathore"]
 sibuna-ingress = { path = "crates/ingress", version = "1.0.0-beta.3" }
 # SID 0015. Hyper handles HTTP framing and flow control, Quinn and h3 terminate QUIC.
 hyper = { version = "1", default-features = false, features = ["http1", "http2", "client", "server"] }
+# Hyper's HTTP/2 implementation, already in the build through hyper. It is named so
+# that the egress can read why a stream to an HTTP/2 server failed: only a refused
+# stream may be sent again when the request is not idempotent (SID 0019).
+h2 = { version = "0.4", default-features = false }
 hyper-util = { version = "0.1", default-features = false, features = ["tokio"] }
 http-body-util = "0.1"
 futures-util = { version = "0.3", default-features = false, features = ["std"] }

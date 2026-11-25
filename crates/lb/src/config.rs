@@ -67,6 +67,7 @@ pub(crate) struct Backend {
     pub policy: std::sync::Arc<crate::PoolPolicy>,
 }
 
+#[derive(Clone)]
 pub(crate) struct Server {
     pub name: String,
     pub addr: SocketAddr,

@@ -20,8 +20,6 @@ pub(crate) type Token = [u8; TOKEN_LEN];
 #[derive(Clone)]
 pub(crate) struct Key {
     bytes: [u8; blake3::KEY_LEN],
-    /// A short name of the key, so that a cached token knows the key it was made with.
-    pub tag: u64,
 }
 
 impl Key {
@@ -32,7 +30,7 @@ impl Key {
     }
 
     fn new(bytes: [u8; blake3::KEY_LEN]) -> Self {
-        Self { bytes, tag: wyhash::hash(5, &bytes) }
+        Self { bytes }
     }
 
     /// The token of the server `server` of the pool `pool`.
@@ -172,7 +170,6 @@ mod tests {
         assert_ne!(key.token("ab", "c"), key.token("a", "bc"));
         // Without a seed each process has a key of its own.
         assert_ne!(Key::default().token("app", "a"), Key::default().token("app", "a"));
-        assert_ne!(Key::default().tag, Key::default().tag);
     }
 
     #[test]

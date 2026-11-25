@@ -433,7 +433,8 @@ pub(crate) fn format_json(entry: &Entry, out: &mut Vec<u8>) {
     write_string(server.as_bytes(), out);
     out.extend_from_slice(b",\"verdict\":");
     write_string(entry.verdict.as_bytes(), out);
-    out.extend_from_slice(b"}\n");
+    // The last field: how many servers the request left before this one (SID 0019).
+    let _ = writeln!(out, ",\"retries\":{}}}", entry.retries);
 }
 
 /// Writes the end of a TCP connection or UDP mapping as one JSON object and a line
@@ -624,14 +625,16 @@ mod tests {
              \"tls_version\":\"-\",\"tls_cipher\":\"-\",\"method\":\"GET\",\
              \"host\":\"www.example.com\",\"path\":\"/index.html\",\"status\":200,\
              \"bytes_in\":112,\"bytes_out\":5310,\"duration_ms\":3.184,\"ttfb_ms\":null,\
-             \"backend\":\"-\",\"server\":\"-\",\"verdict\":\"pass\"}\n"
+             \"backend\":\"-\",\"server\":\"-\",\"verdict\":\"pass\",\"retries\":0}\n"
         );
         entry.first_byte = Some(Duration::from_micros(2907));
         assert!(line(&entry).contains("\"ttfb_ms\":2.907,"));
-        assert_eq!(line(&entry).matches("\":").count(), 18, "eighteen fields");
+        assert_eq!(line(&entry).matches("\":").count(), 19, "nineteen fields");
         entry.tls = ("1.3", "TLS13_AES_128_GCM_SHA256");
         let secured = "\"tls_version\":\"1.3\",\"tls_cipher\":\"TLS13_AES_128_GCM_SHA256\",";
         assert!(line(&entry).contains(secured), "{}", line(&entry));
+        entry.retries = 2;
+        assert!(line(&entry).ends_with(",\"retries\":2}\n"), "a moved request says so");
         assert_parses(&line(&entry));
     }
 

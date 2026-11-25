@@ -33,8 +33,9 @@ const MAX_INFORMATIONAL: u8 = 8;
 pub struct Outbound {
     /// The WebSocket handshake the request offers, to be passed to [`ResponseRelay::new`].
     pub handshake: Option<Offer>,
-    /// The request is safe and fully buffered, so it may be sent again on a fresh socket
-    /// when a pooled one turns out to be closed.
+    /// The request is idempotent and fully buffered, so it may be sent again on a fresh
+    /// socket when a pooled one turns out to be closed. The caller may narrow this by
+    /// the size of the body (SID 0019).
     pub retryable: bool,
     /// The origin socket may be pooled after a clean response: the request sent no body.
     pub poolable: bool,
@@ -65,7 +66,7 @@ pub fn encode_request(
     audit: &Audit<'_>,
 ) -> Result<Outbound, ProxyError> {
     let handshake = upgrade::offered(request).map_err(|_| ProxyError::InvalidUpgrade)?;
-    let safe = matches!(request.method, Method::Get | Method::Head | Method::Options);
+    let safe = crate::route::is_idempotent(request.method);
     let buffered = upload.is_buffered(request.body.len());
     let failed = |_| ProxyError::UpstreamWriteFailed;
     write_request_head(out, request, &upload, audit, handshake.is_some()).map_err(failed)?;

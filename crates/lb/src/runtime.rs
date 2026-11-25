@@ -152,8 +152,8 @@ impl Edge {
         for (name, pool) in &self.pools {
             visit(name, pool);
         }
-        self.http.with_pools(|pools, _| {
-            for (name, pool) in pools.iter() {
+        self.http.view_pools(|pools| {
+            for (name, pool) in pools {
                 visit(name, pool);
             }
         });

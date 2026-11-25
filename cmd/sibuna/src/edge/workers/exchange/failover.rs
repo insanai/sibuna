@@ -38,6 +38,7 @@ impl Worker {
         // The access log names the server that ends the request (SID 0020).
         if let Some(entry) = conn.trace.as_mut() {
             entry.server = next.server().cloned();
+            entry.retries = crate::access::moves_of(&next);
         }
         // Dropping the old reservation gives its place on the failed server back.
         exchange.target = next;
