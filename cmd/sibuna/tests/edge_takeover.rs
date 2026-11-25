@@ -8,7 +8,7 @@ use upgrade::{Daemon, try_request};
 
 use std::fs;
 use std::io::{BufRead, BufReader, Write};
-use std::net::{Ipv4Addr, SocketAddr, TcpListener, TcpStream, UdpSocket};
+use std::net::{Ipv4Addr, SocketAddr, TcpListener, UdpSocket};
 use std::process::Command;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
@@ -145,7 +145,7 @@ fn a_frontend_with_http3_is_taken_over_too() {
     let new = Daemon::start(&path).unwrap();
     old.signal("-TERM");
     assert!(old.wait(Duration::from_secs(8)).success());
-    assert!(TcpStream::connect(vip).is_ok());
+    assert!(std::net::TcpStream::connect(vip).is_ok());
     drop(new);
     let _ = fs::remove_file(&path);
 }
