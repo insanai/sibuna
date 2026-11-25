@@ -44,6 +44,8 @@ pub use route::{FieldEdit, Redirect, RoutePolicy};
 pub use traffic::{Passive, PoolPolicy, Sticky};
 mod flowlog;
 pub use flowlog::FlowEnd;
+mod handoff;
+pub use handoff::Inherited;
 mod proxy_header;
 pub use proxy_header::{MAX_PROXY_HEADER, ProxyHeader, ProxyHeaderError, parse_proxy_header};
 mod stats;
@@ -186,6 +188,8 @@ pub struct Edge {
     buffer: Box<[u8]>,
     draining: bool,
     drops: u64,
+    /// Where a handoff to or from another process stands (SID 0029).
+    handoff: handoff::State,
 }
 
 /// Opens the socket of one listener. With `shared` it may share its address with
@@ -270,7 +274,16 @@ impl Edge {
 
     /// Binds every configured listener before starting the worker. A failure releases
     /// any listeners already bound.
-    pub fn bind(mut config: Config) -> io::Result<Self> {
+    pub fn bind(config: Config) -> io::Result<Self> {
+        Self::bind_inherited(config, Inherited::default())
+    }
+
+    /// As [`Edge::bind`], on the listening sockets that the process this one replaces
+    /// has lent (SID 0029). A listener that has a lent socket uses it and is held: it
+    /// is not read until [`Edge::arm_streams`] or [`Edge::arm_datagrams`]. Every other
+    /// listener is bound as usual. Lent sockets that no listener wants are closed.
+    pub fn bind_inherited(mut config: Config, mut inherited: Inherited) -> io::Result<Self> {
+        let mut handoff = handoff::State::default();
         let mut checks = health::Checks::default();
         checks.configure(&mut config)?;
         let stats = std::sync::Arc::new(Stats::default());
@@ -284,12 +297,16 @@ impl Edge {
         let (waker, wake) = Waker::new()?;
         poll.set(handle(waker.socket()), READ, Ready::Wake)?;
         for (bind, route) in config.listeners {
-            let socket = open_listener(bind.0, bind.1, config.reuse_port)?;
+            let (socket, held) = inherited.take_or(bind, config.reuse_port)?;
             let fd = match &socket {
                 Socket::Tcp(socket) => handle(socket),
                 Socket::Udp(socket) => handle(socket),
             };
-            poll.set(fd, READ, Ready::Listener(listeners.len()))?;
+            if held {
+                handoff.held.push(listeners.len());
+            } else {
+                poll.set(fd, READ, Ready::Listener(listeners.len()))?;
+            }
             binds.push(bind);
             listeners.push(Listener { socket, route, paused_until: None });
         }
@@ -331,6 +348,7 @@ impl Edge {
             buffer: vec![0; 65536].into_boxed_slice(),
             draining: false,
             drops: 0,
+            handoff,
         })
     }
 
