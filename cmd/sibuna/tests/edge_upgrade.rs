@@ -109,7 +109,8 @@ fn udp_clients_keep_their_server_across_two_upgrades() {
         let old = std::mem::replace(&mut scene.daemon, new);
         let status = old.wait(Duration::from_secs(8));
         assert!(status.success(), "round {round}: the old process ended with {status}");
-        old.expect_line("UPG010: handed 3 listeners and 41 UDP mappings");
+        let line = old.line("UPG010: handed 3 listeners and 41 UDP mappings");
+        eprintln!("udp round {round}: {line}");
         scene.daemon.expect_line("and 41 UDP mappings from pid");
         // The same server answers, and it sees the same source address: the socket
         // towards the server is the one the old process opened.
@@ -124,6 +125,53 @@ fn udp_clients_keep_their_server_across_two_upgrades() {
     // A new client is served by the replacement.
     assert!(ask(&upgrade::udp_client(), scene.udp_vip).is_some());
     assert!(scene.ctl("show info").contains("flows: 42"));
+}
+
+#[test]
+fn six_thousand_mappings_move_in_two_pieces() {
+    let mut scene = Scene::start_with(Mode::Handoff, r#""max_flows":20000,"#, "");
+    let clients: Vec<_> = (0..6000).map(|_| upgrade::udp_client()).collect();
+    let before: Vec<String> = clients.iter().map(|c| ask(c, scene.udp_vip).unwrap()).collect();
+    let started = Instant::now();
+    let new = scene.daemon();
+    let replaced = started.elapsed();
+    let old = std::mem::replace(&mut scene.daemon, new);
+    assert!(old.wait(Duration::from_secs(8)).success());
+    let line = old.line("UPG010: handed 3 listeners and 6000 UDP mappings");
+    eprintln!("6000 mappings: replacement up in {replaced:?}; {line}");
+    assert!(line.contains(" 0 mappings dropped"), "{line}");
+    let after: Vec<String> = clients.iter().map(|c| ask(c, scene.udp_vip).unwrap()).collect();
+    let moved: Vec<_> = before.iter().zip(&after).filter(|(old, new)| old != new).collect();
+    assert!(moved.is_empty(), "{} of 6000 clients moved, the first {:?}", moved.len(), moved[0]);
+    assert!(scene.ctl("show info").contains("flows: 6000"));
+}
+
+/// A frontend with HTTP/3 is replaced too. Its UDP socket is not passed: the
+/// replacement binds its own beside the old one.
+#[cfg(feature = "https")]
+#[test]
+fn a_frontend_with_http3_is_replaced_and_its_tcp_listener_is_passed() {
+    let data = concat!(env!("CARGO_MANIFEST_DIR"), "/../../crates/tls/tests/data");
+    let tls: &'static str = Box::leak(
+        format!(
+            r#""tls":{{"cert_file":"{data}/localhost.pem","key_file":"{data}/localhost.key",
+                     "http3":true}},"#
+        )
+        .into_boxed_str(),
+    );
+    let mut scene = Scene::start_with(Mode::Handoff, "", tls);
+    let load = Load::start_tcp(scene.tcp_vip, 2);
+    let new = scene.daemon();
+    let old = std::mem::replace(&mut scene.daemon, new);
+    assert!(old.wait(Duration::from_secs(8)).success());
+    old.expect_line("UPG010: handed 3 listeners");
+    // The TLS listener answers a connection, and the TCP frontend lost nothing.
+    assert!(std::net::TcpStream::connect(scene.http_vip).is_ok());
+    std::thread::sleep(Duration::from_millis(200));
+    let (served, failed) = load.stop();
+    assert!(served > 20, "served {served}");
+    assert_eq!(failed, 0);
+    assert!(scene.daemon.is_running());
 }
 
 #[test]
@@ -174,7 +222,8 @@ fn a_replacement_that_fails_leaves_the_old_process_serving() {
     // The datagram that waited in the socket is answered by the old process.
     let mut answer = [0u8; 128];
     client.set_read_timeout(Some(Duration::from_secs(10))).unwrap();
-    let (size, _) = client.recv_from(&mut answer).unwrap();
+    let (size, from) = client.recv_from(&mut answer).unwrap();
+    assert_eq!(from, scene.udp_vip);
     assert_eq!(String::from_utf8_lossy(&answer[..size]), before);
     serves("a stalled cutover");
 
@@ -251,6 +300,23 @@ fn a_wrong_peer_is_refused_by_both_ends() {
     assert!(text.contains("-- UPGRADE PEER REFUSED (UPG001) "), "{text}");
     assert!(text.contains("user 1 is not user 2"), "{text}");
     assert!(request(scene.http_vip));
+}
+
+#[test]
+fn the_daemon_of_another_service_is_not_replaced() {
+    let (one, other) = (Scene::start(Mode::Handoff), Scene::start(Mode::Handoff));
+    // The file of the second service names the socket of the first by mistake.
+    let mistaken = other.write_config_at("mistaken", &one.upgrade_socket);
+    let output = other.run(&mistaken);
+    assert!(!output.status.success());
+    let text = String::from_utf8_lossy(&output.stderr);
+    assert!(text.contains("-- UPGRADE SOCKET OF ANOTHER DAEMON (UPG008) "), "{text}");
+    one.daemon.expect_line("UPG011: the replacement pid");
+    for scene in [&one, &other] {
+        assert!(scene.daemon.is_running());
+        assert!(request(scene.http_vip) && echo(scene.tcp_vip));
+        assert!(ask(&upgrade::udp_client(), scene.udp_vip).is_some());
+    }
 }
 
 #[test]

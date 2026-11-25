@@ -100,6 +100,13 @@ impl Daemon {
         self.expect_line_within(part, Duration::from_secs(8));
     }
 
+    /// Waits for a line that contains `part` and returns it.
+    pub fn line(&self, part: &str) -> String {
+        self.expect_line(part);
+        let lines = self.lines.lock().unwrap();
+        lines.iter().rev().find(|line| line.contains(part)).unwrap().clone()
+    }
+
     pub fn expect_line_within(&self, part: &str, patience: Duration) {
         let deadline = Instant::now() + patience;
         while !self.has_line(part) {
@@ -129,6 +136,8 @@ pub struct Scene {
     pub daemon: Daemon,
     mode: Mode,
     servers: Servers,
+    /// Members of `global` and of the frontend `web` that every file of the scene has.
+    always: (&'static str, &'static str),
 }
 
 #[derive(Clone, Copy)]
@@ -147,6 +156,12 @@ impl Scene {
     /// Starts the servers and the first daemon. A port that another test took between
     /// its choice and the bind of the daemon is answered by a new choice.
     pub fn start(mode: Mode) -> Self {
+        Self::start_with(mode, "", "")
+    }
+
+    /// As [`Scene::start`], with more members of `global` and of the frontend `web`,
+    /// each ending in a comma.
+    pub fn start_with(mode: Mode, global: &'static str, web: &'static str) -> Self {
         let directory =
             std::env::temp_dir().join(format!("sbu-{}-{}", std::process::id(), serial()));
         let _ = fs::remove_dir_all(&directory);
@@ -154,6 +169,8 @@ impl Scene {
         let servers = Servers { http: http_origin(), echo: echo_origin(), udp: udp_servers() };
         let mut last = String::new();
         for _ in 0..8 {
+            // A scene that did not start removed the directory when it was dropped.
+            fs::create_dir_all(&directory).unwrap();
             let http_vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
             let tcp_vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
             let udp_vip = UdpSocket::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
@@ -176,6 +193,7 @@ impl Scene {
                 },
                 mode,
                 servers,
+                always: (global, web),
             };
             let upgrade = scene.upgrade_socket.clone();
             fs::write(&config, scene.source(Some(&upgrade), "", "")).unwrap();
@@ -198,11 +216,13 @@ impl Scene {
             _ => r#""reuse_port":true,"#.to_owned(),
         };
         let Servers { http, echo, udp } = self.servers;
+        let (always, tls) = self.always;
         format!(
-            r#"{{"global":{{{replace}{global}"shutdown_timeout":"6s","admin_socket":"{admin}"}},
+            r#"{{"global":{{{replace}{global}{always}"shutdown_timeout":"6s",
+                         "admin_socket":"{admin}"}},
             {root}"http":{{"surface":"off"}},
             "frontends":{{
-              "web":{{"proto":"http","binds":["{web}"],"default_backend":"app"}},
+              "web":{{"proto":"http","binds":["{web}"],{tls}"default_backend":"app"}},
               "db":{{"proto":"tcp","binds":["{db}"],"default_backend":"data"}},
               "dns":{{"proto":"udp","binds":["{dns}"],"default_backend":"names"}}}},
             "backends":{{
@@ -339,14 +359,22 @@ fn udp_servers() -> [SocketAddr; 2] {
 
 /// One HTTP request on a connection of its own. True when the answer is complete.
 pub fn request(vip: SocketAddr) -> bool {
-    let Ok(mut socket) = TcpStream::connect(vip) else { return false };
+    try_request(vip).is_ok()
+}
+
+/// As [`request`], and says how the request failed.
+pub fn try_request(vip: SocketAddr) -> Result<(), String> {
+    let mut socket = TcpStream::connect(vip).map_err(|error| format!("http connect: {error}"))?;
     let _ = socket.set_read_timeout(Some(Duration::from_secs(5)));
-    if socket.write_all(b"GET / HTTP/1.1\r\nHost: a\r\nConnection: close\r\n\r\n").is_err() {
-        return false;
-    }
+    socket
+        .write_all(b"GET / HTTP/1.1\r\nHost: a\r\nConnection: close\r\n\r\n")
+        .map_err(|error| format!("http write: {error}"))?;
     let mut answer = Vec::new();
-    let _ = socket.read_to_end(&mut answer);
-    answer.starts_with(b"HTTP/1.1 200") && answer.ends_with(b"ok")
+    let read = socket.read_to_end(&mut answer);
+    if answer.starts_with(b"HTTP/1.1 200") && answer.ends_with(b"ok") {
+        return Ok(());
+    }
+    Err(format!("http answer {:?} after {read:?}", String::from_utf8_lossy(&answer)))
 }
 
 /// Sends `bytes` on `stream` and reads them back.
@@ -357,9 +385,17 @@ pub fn exchange(stream: &mut TcpStream, bytes: &[u8]) -> bool {
 
 /// One TCP connection through the TCP frontend that sends bytes and reads them back.
 pub fn echo(vip: SocketAddr) -> bool {
-    let Ok(mut socket) = TcpStream::connect(vip) else { return false };
+    try_echo(vip).is_ok()
+}
+
+/// As [`echo`], and says how the stream failed.
+pub fn try_echo(vip: SocketAddr) -> Result<(), String> {
+    let mut socket = TcpStream::connect(vip).map_err(|error| format!("tcp connect: {error}"))?;
     let _ = socket.set_read_timeout(Some(Duration::from_secs(5)));
-    exchange(&mut socket, b"ping")
+    socket.write_all(b"ping").map_err(|error| format!("tcp write: {error}"))?;
+    let mut back = [0u8; 4];
+    socket.read_exact(&mut back).map_err(|error| format!("tcp read: {error}"))?;
+    if &back == b"ping" { Ok(()) } else { Err(format!("tcp answer {back:?}")) }
 }
 
 /// A UDP client that waits a few seconds for an answer.
@@ -375,8 +411,15 @@ pub fn ask(client: &UdpSocket, vip: SocketAddr) -> Option<String> {
     // The edge lets a server answer with at most three times what its client sent.
     client.send_to(&[b'?'; 48], vip).ok()?;
     let mut bytes = [0u8; 128];
-    let (size, _) = client.recv_from(&mut bytes).ok()?;
-    Some(String::from_utf8_lossy(&bytes[..size]).into_owned())
+    loop {
+        let (size, from) = client.recv_from(&mut bytes).ok()?;
+        // Only the listener answers a client. A datagram from elsewhere is a stray: a
+        // process that ends beside this test can send a wake-up byte to a loopback
+        // port that it has just closed and that this client was then given.
+        if from == vip {
+            return Some(String::from_utf8_lossy(&bytes[..size]).into_owned());
+        }
+    }
 }
 
 /// Clients that open one connection after another and count the failures.
@@ -384,7 +427,28 @@ pub struct Load {
     stop: Arc<AtomicBool>,
     served: Arc<AtomicUsize>,
     failed: Arc<AtomicUsize>,
+    /// How the first few failures looked.
+    reasons: Arc<Mutex<Vec<String>>>,
     threads: Vec<std::thread::JoinHandle<()>>,
+}
+
+/// Counts one result of a client, and keeps the first few reasons of a failure.
+fn count(
+    result: Result<(), String>,
+    served: &AtomicUsize,
+    failed: &AtomicUsize,
+    reasons: &Mutex<Vec<String>>,
+) {
+    match result {
+        Ok(()) => {
+            served.fetch_add(1, Ordering::Relaxed);
+        }
+        Err(reason) => {
+            if failed.fetch_add(1, Ordering::Relaxed) < 5 {
+                reasons.lock().unwrap().push(reason);
+            }
+        }
+    }
 }
 
 impl Load {
@@ -393,20 +457,39 @@ impl Load {
     pub fn start(http: SocketAddr, tcp: SocketAddr, threads: usize) -> Self {
         let stop = Arc::new(AtomicBool::new(false));
         let (served, failed) = (Arc::new(AtomicUsize::new(0)), Arc::new(AtomicUsize::new(0)));
+        let reasons = Arc::new(Mutex::new(Vec::new()));
         let threads = (0..threads)
             .map(|_| {
                 let (stop, served, failed) = (stop.clone(), served.clone(), failed.clone());
+                let reasons = reasons.clone();
                 std::thread::spawn(move || {
                     while !stop.load(Ordering::Relaxed) {
-                        for ok in [request(http), echo(tcp)] {
-                            let counter = if ok { &served } else { &failed };
-                            counter.fetch_add(1, Ordering::Relaxed);
-                        }
+                        count(try_request(http), &served, &failed, &reasons);
+                        count(try_echo(tcp), &served, &failed, &reasons);
                     }
                 })
             })
             .collect();
-        Self { stop, served, failed, threads }
+        Self { stop, served, failed, reasons, threads }
+    }
+
+    /// Starts `threads` clients that open TCP streams only.
+    pub fn start_tcp(tcp: SocketAddr, threads: usize) -> Self {
+        let stop = Arc::new(AtomicBool::new(false));
+        let (served, failed) = (Arc::new(AtomicUsize::new(0)), Arc::new(AtomicUsize::new(0)));
+        let reasons = Arc::new(Mutex::new(Vec::new()));
+        let threads = (0..threads)
+            .map(|_| {
+                let (stop, served, failed) = (stop.clone(), served.clone(), failed.clone());
+                let reasons = reasons.clone();
+                std::thread::spawn(move || {
+                    while !stop.load(Ordering::Relaxed) {
+                        count(try_echo(tcp), &served, &failed, &reasons);
+                    }
+                })
+            })
+            .collect();
+        Self { stop, served, failed, reasons, threads }
     }
 
     pub fn served(&self) -> usize {
@@ -418,6 +501,10 @@ impl Load {
         self.stop.store(true, Ordering::Relaxed);
         for thread in self.threads {
             thread.join().unwrap();
+        }
+        let reasons = self.reasons.lock().unwrap();
+        if !reasons.is_empty() {
+            eprintln!("load: the first failures: {reasons:?}");
         }
         (self.served.load(Ordering::Relaxed), self.failed.load(Ordering::Relaxed))
     }
