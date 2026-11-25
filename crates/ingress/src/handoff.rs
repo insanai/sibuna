@@ -24,6 +24,9 @@ pub(crate) type Pipe = tokio::net::TcpStream;
 /// The firewall entry point and the way to reach it.
 pub(crate) struct Handoff {
     handler: Handler,
+    /// Who hears of a request that the runtime answered itself, when no in-process
+    /// decision does (SID 0020).
+    refusals: std::sync::OnceLock<crate::Refusals>,
     #[cfg(not(unix))]
     loopback: loopback::Listener,
 }
@@ -33,9 +36,22 @@ impl Handoff {
     pub fn start(handler: Handler) -> io::Result<Arc<Self>> {
         Ok(Arc::new(Self {
             handler,
+            refusals: std::sync::OnceLock::new(),
             #[cfg(not(unix))]
             loopback: loopback::Listener::start()?,
         }))
+    }
+
+    /// Sets who hears of refused requests. The first one stays.
+    pub fn report_refusals(&self, report: crate::Refusals) {
+        let _ = self.refusals.set(report);
+    }
+
+    /// Reports a request that the runtime answered itself.
+    pub fn refused(&self, refused: &crate::Refused<'_>) {
+        if let Some(report) = self.refusals.get() {
+            report(refused);
+        }
     }
 
     /// Opens a connection whose far end the firewall serves for `peer` on `vip`.
@@ -45,7 +61,7 @@ impl Handoff {
         &self,
         peer: SocketAddr,
         vip: SocketAddr,
-        cert: Option<crate::Fingerprint>,
+        secured: crate::Secured,
     ) -> io::Result<Pipe> {
         use std::os::fd::OwnedFd;
         use std::os::unix::net::UnixStream;
@@ -56,7 +72,7 @@ impl Handoff {
         // The firewall reads, writes, shuts down and sets timeouts, which every stream
         // socket supports. It takes the client address from `peer`, never from the socket.
         let far = std::net::TcpStream::from(OwnedFd::from(far));
-        (self.handler)(far, peer, vip, cert);
+        (self.handler)(far, peer, vip, secured);
         Ok(near)
     }
 
@@ -66,10 +82,10 @@ impl Handoff {
         &self,
         peer: SocketAddr,
         vip: SocketAddr,
-        cert: Option<crate::Fingerprint>,
+        secured: crate::Secured,
     ) -> io::Result<Pipe> {
         let (near, far) = self.loopback.pair().await?;
-        (self.handler)(far, peer, vip, cert);
+        (self.handler)(far, peer, vip, secured);
         Ok(near)
     }
 }

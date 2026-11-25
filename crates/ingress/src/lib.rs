@@ -37,11 +37,39 @@ type Error = Box<dyn std::error::Error + Send + Sync>;
 /// The SHA-256 digest of the certificate a client proved to hold in the TLS handshake.
 pub type Fingerprint = [u8; 32];
 
+/// What the terminated transport knows of its client beyond the address.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Secured {
+    /// The fingerprint of the client's verified certificate, when it presented one.
+    pub cert: Option<Fingerprint>,
+    /// The TLS version of the handshake, `1.2` or `1.3`. Empty when unknown.
+    pub version: &'static str,
+    /// The IANA name of the cipher suite, such as `TLS13_AES_128_GCM_SHA256`. Empty
+    /// when unknown: the QUIC library does not tell the suite of an HTTP/3 connection.
+    pub cipher: &'static str,
+}
+
+impl Secured {
+    /// Reads the outcome of a finished TLS handshake.
+    fn of(tls: &rustls::ServerConnection) -> Self {
+        let version = match tls.protocol_version() {
+            Some(rustls::ProtocolVersion::TLSv1_2) => "1.2",
+            Some(rustls::ProtocolVersion::TLSv1_3) => "1.3",
+            _ => "",
+        };
+        let cipher = tls.negotiated_cipher_suite().and_then(|suite| suite.suite().as_str());
+        Self {
+            cert: fingerprint(tls.peer_certificates()),
+            version,
+            cipher: cipher.unwrap_or_default(),
+        }
+    }
+}
+
 /// Hands one connection to the firewall with its client peer, its public destination
-/// and the fingerprint of the client's verified certificate, when it presented one.
-/// The call must return at once. The firewall serves the socket on its own thread.
-pub type Handler =
-    Arc<dyn Fn(TcpStream, SocketAddr, SocketAddr, Option<Fingerprint>) + Send + Sync>;
+/// and what the TLS handshake of the client settled. The call must return at once. The
+/// firewall serves the socket on its own thread.
+pub type Handler = Arc<dyn Fn(TcpStream, SocketAddr, SocketAddr, Secured) + Send + Sync>;
 
 /// Decides whether a QUIC connection from a client address to a listener may open.
 /// The value it returns is held, and dropped when the connection ends. `None` refuses
@@ -137,6 +165,10 @@ impl Identity {
     }
 }
 
+/// Hears of a request that the protocol runtime answered itself. It must not wait: it
+/// runs on a thread of the runtime.
+pub type Refusals = Arc<dyn Fn(&Refused<'_>) + Send + Sync>;
+
 /// Owns the protocol runtime and the QUIC listeners. Dropping it cancels its tasks.
 pub struct Ingress {
     runtime: Runtime,
@@ -215,6 +247,14 @@ impl Ingress {
         let _ = self.admit.set(admit);
     }
 
+    /// Sets who hears of a request that the runtime answers itself when no in-process
+    /// decision was given: the node runs as many requests as it may, or the request
+    /// cannot be translated. With a decision, [`Decide::refused`] hears of it. The
+    /// first hook stays.
+    pub fn report_refusals(&self, report: Refusals) {
+        self.handoff.report_refusals(report);
+    }
+
     /// Sends GOAWAY on live sessions so clients can direct new requests to another node.
     pub fn drain(&self) {
         self.drain.send_replace(());
@@ -279,7 +319,7 @@ impl Ingress {
                 .flatten(),
             peer,
             vip,
-            cert: None,
+            secured: Secured::default(),
         };
         self.runtime.spawn(async move {
             let _permit = (permit, held);
@@ -290,7 +330,7 @@ impl Ingress {
                 return;
             }
             let mut session = session;
-            session.cert = fingerprint(tls.get_ref().1.peer_certificates());
+            session.secured = Secured::of(tls.get_ref().1);
             if tls.get_ref().1.alpn_protocol() == Some(b"h2") {
                 session.http2(tls).await;
             } else {
@@ -313,14 +353,14 @@ struct Session {
     peer: SocketAddr,
     vip: SocketAddr,
     /// The client's verified certificate, known after the handshake.
-    cert: Option<Fingerprint>,
+    secured: Secured,
 }
 
 impl Session {
     /// Relays the decrypted bytes to the firewall, which speaks HTTP/1.1 itself:
     /// keep-alive, pipelined requests and WebSocket upgrades behave as on a plain listener.
     async fn http1(self, tls: Tls) {
-        let Ok(mut firewall) = self.handoff.open(self.peer, self.vip, self.cert).await else {
+        let Ok(mut firewall) = self.handoff.open(self.peer, self.vip, self.secured).await else {
             return;
         };
         let (mut client_read, mut client_write) = tokio::io::split(tls);
@@ -343,7 +383,7 @@ impl Session {
     }
 
     async fn http2(mut self, tls: Tls) {
-        let lane = Lane::new(self.handoff, self.inline, self.peer, self.vip, self.cert);
+        let lane = Lane::new(self.handoff, self.inline, self.peer, self.vip, self.secured);
         let (capacity, alt_svc) = (self.capacity, self.alt_svc);
         let exchanges = lane.clone();
         let service = service_fn(move |request| {

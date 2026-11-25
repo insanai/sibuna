@@ -7,17 +7,19 @@
 //! ```
 //!
 //! A request path never waits here. The queue holds entries, so that formatting runs on
-//! the writer thread.
+//! the writer thread. A reload that changes the length of the queue starts a new queue:
+//! the writer empties the old one first, so no line changes its place.
 
+use std::collections::VecDeque;
 use std::fs::{File, OpenOptions};
 use std::io::{self, BufWriter, Write};
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::mpsc::{self, Receiver, RecvTimeoutError, SyncSender, TrySendError};
-use std::sync::{Arc, Mutex, OnceLock, PoisonError};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
+use std::sync::mpsc::{self, Receiver, RecvTimeoutError, SyncSender};
+use std::sync::{Arc, Mutex, OnceLock, PoisonError, RwLock};
 use std::thread::JoinHandle;
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, UNIX_EPOCH};
 
-use sibuna_lb::{AccessLogOptions, LogOutput};
+use sibuna_lb::{AccessLogOptions, FlowEnd, LogOutput};
 
 use super::Entry;
 
@@ -30,6 +32,8 @@ const FLUSH_EVERY: Duration = Duration::from_secs(1);
 #[allow(clippy::large_enum_variant)]
 enum Message {
     Entry(Entry),
+    /// The end of a TCP connection or UDP mapping, or a refused connection.
+    Flow(FlowEnd),
     /// Write what is queued and end.
     Close,
 }
@@ -45,6 +49,9 @@ struct Counters {
     on: AtomicBool,
     /// The destination a reload opened, until the writer takes it.
     swap: Mutex<Option<(LogOutput, Target)>>,
+    /// The queues that reloads started, oldest first, until the writer has emptied the
+    /// queue before each.
+    queues: Mutex<VecDeque<Receiver<Message>>>,
 }
 
 enum Step {
@@ -56,12 +63,19 @@ enum Step {
 
 /// A change of the access log that a reload prepared. Whatever can fail has happened,
 /// so applying it cannot fail.
-pub(crate) struct Change(Step);
+pub(crate) struct Change {
+    step: Step,
+    /// The new length of the queue of a running log.
+    queue: Option<usize>,
+}
 
 impl Change {
     /// Applies the change to the log in `slot`, starting the log when it is the first.
     pub(crate) fn apply(self, slot: &OnceLock<AccessLog>) {
-        match (self.0, slot.get()) {
+        if let (Some(queue), Some(log)) = (self.queue, slot.get()) {
+            log.resize(queue);
+        }
+        match (self.step, slot.get()) {
             (Step::Off, Some(log)) => log.counters.on.store(false, Ordering::Release),
             (Step::To(output, target), Some(log)) => log.retarget(output, target),
             (Step::Start(log), None) => {
@@ -75,11 +89,12 @@ impl Change {
 
 /// The sending side of the access log. Dropping it writes what is queued.
 pub(crate) struct AccessLog {
-    sender: SyncSender<Message>,
+    /// The queue in use. A reload that changes its length replaces it.
+    sender: RwLock<SyncSender<Message>>,
     counters: Arc<Counters>,
     thread: Mutex<Option<JoinHandle<()>>>,
-    /// The length of the queue. It is fixed when the log starts.
-    queue: usize,
+    /// The length of the queue in use.
+    queue: AtomicUsize,
     /// Where the lines go now.
     output: Mutex<LogOutput>,
 }
@@ -104,13 +119,13 @@ impl AccessLog {
         };
         let thread = std::thread::Builder::new()
             .name("edge-access-log".into())
-            .spawn(move || writer.run(&receiver))?;
+            .spawn(move || writer.run(receiver))?;
         let output = Mutex::new(options.output.clone());
         Ok(Self {
-            sender,
+            sender: RwLock::new(sender),
             counters,
             thread: Mutex::new(Some(thread)),
-            queue: options.queue,
+            queue: AtomicUsize::new(options.queue),
             output,
         })
     }
@@ -136,7 +151,22 @@ impl AccessLog {
             }
             (None, Some(options)) => Step::Start(Box::new(AccessLog::start(options)?)),
         };
-        Ok(Change(step))
+        let queue = match (running, next) {
+            (Some(log), Some(options)) if log.queue() != options.queue => Some(options.queue),
+            _ => None,
+        };
+        Ok(Change { step, queue })
+    }
+
+    /// Starts a queue of `length` entries. Entries offered from now on wait in it, and
+    /// the writer turns to it when the old queue is empty.
+    fn resize(&self, length: usize) {
+        let (sender, receiver) = mpsc::sync_channel(length);
+        let mut queues = self.counters.queues.lock().unwrap_or_else(PoisonError::into_inner);
+        queues.push_back(receiver);
+        // Dropping the old sender tells the writer that the old queue has its last entry.
+        *self.sender.write().unwrap_or_else(PoisonError::into_inner) = sender;
+        self.queue.store(length, Ordering::Release);
     }
 
     /// True while entries are offered.
@@ -146,7 +176,7 @@ impl AccessLog {
 
     /// The length of the queue.
     pub(crate) fn queue(&self) -> usize {
-        self.queue
+        self.queue.load(Ordering::Acquire)
     }
 
     fn writes_to(&self, output: &LogOutput) -> bool {
@@ -164,11 +194,18 @@ impl AccessLog {
 
     /// Offers one entry. A full queue drops it and counts the drop. Never waits.
     pub(crate) fn offer(&self, entry: Entry) {
-        match self.sender.try_send(Message::Entry(entry)) {
-            Ok(()) => {}
-            Err(TrySendError::Full(_) | TrySendError::Disconnected(_)) => {
-                self.counters.dropped.fetch_add(1, Ordering::Relaxed);
-            }
+        self.send(Message::Entry(entry));
+    }
+
+    /// Offers the line of an ended flow, as [`AccessLog::offer`] does an entry.
+    pub(crate) fn offer_flow(&self, flow: FlowEnd) {
+        self.send(Message::Flow(flow));
+    }
+
+    fn send(&self, message: Message) {
+        let sender = self.sender.read().unwrap_or_else(PoisonError::into_inner);
+        if sender.try_send(message).is_err() {
+            self.counters.dropped.fetch_add(1, Ordering::Relaxed);
         }
     }
 
@@ -192,7 +229,8 @@ impl AccessLog {
         let thread = self.thread.lock().unwrap_or_else(PoisonError::into_inner).take();
         if let Some(thread) = thread {
             // This waits for room in the queue. Only a shutdown calls it.
-            let _ = self.sender.send(Message::Close);
+            let sender = self.sender.read().unwrap_or_else(PoisonError::into_inner);
+            let _ = sender.send(Message::Close);
             let _ = thread.join();
         }
     }
@@ -259,29 +297,45 @@ struct Writer {
 }
 
 impl Writer {
-    fn run(mut self, receiver: &Receiver<Message>) {
+    fn run(mut self, mut receiver: Receiver<Message>) {
         loop {
             match receiver.recv_timeout(IDLE) {
                 Ok(Message::Entry(entry)) => {
-                    self.reopen_if_asked();
-                    self.write(&entry);
-                    if self.flushed.elapsed() >= FLUSH_EVERY {
-                        self.flush();
-                    }
+                    self.line.clear();
+                    format_json(&entry, &mut self.line);
+                    self.write();
+                }
+                Ok(Message::Flow(flow)) => {
+                    self.line.clear();
+                    format_flow(&flow, &mut self.line);
+                    self.write();
                 }
                 Err(RecvTimeoutError::Timeout) => {
                     self.flush();
                     self.reopen_if_asked();
                 }
-                Ok(Message::Close) | Err(RecvTimeoutError::Disconnected) => break,
+                Ok(Message::Close) => break,
+                // The queue is empty and nothing more enters it. A reload started the
+                // next one, or the log was dropped.
+                Err(RecvTimeoutError::Disconnected) => match self.next_queue() {
+                    Some(next) => receiver = next,
+                    None => break,
+                },
             }
         }
         self.flush();
     }
 
-    fn write(&mut self, entry: &Entry) {
-        self.line.clear();
-        format_json(entry, &mut self.line);
+    fn next_queue(&self) -> Option<Receiver<Message>> {
+        self.counters.queues.lock().unwrap_or_else(PoisonError::into_inner).pop_front()
+    }
+
+    /// Writes the formatted line, after a reopen that was asked for.
+    fn write(&mut self) {
+        self.reopen_if_asked();
+        if self.flushed.elapsed() >= FLUSH_EVERY {
+            self.flush();
+        }
         match self.out.write_all(&self.line) {
             Ok(()) => {
                 self.counters.written.fetch_add(1, Ordering::Relaxed);
@@ -349,6 +403,11 @@ pub(crate) fn format_json(entry: &Entry, out: &mut Vec<u8>) {
     } else {
         b",\"scheme\":\"http\""
     });
+    let or_dash = |name: &'static str| if name.is_empty() { "-" } else { name };
+    out.extend_from_slice(b",\"tls_version\":");
+    write_string(or_dash(entry.tls.0).as_bytes(), out);
+    out.extend_from_slice(b",\"tls_cipher\":");
+    write_string(or_dash(entry.tls.1).as_bytes(), out);
     out.extend_from_slice(b",\"method\":");
     write_string(entry.method(), out);
     out.extend_from_slice(b",\"host\":");
@@ -376,6 +435,39 @@ pub(crate) fn format_json(entry: &Entry, out: &mut Vec<u8>) {
     write_string(entry.verdict.as_bytes(), out);
     // The last field: how many servers the request left before this one (SID 0019).
     let _ = writeln!(out, ",\"retries\":{}}}", entry.retries);
+}
+
+/// Writes the end of a TCP connection or UDP mapping as one JSON object and a line
+/// feed. The field set and its order are fixed (SID 0020).
+pub(crate) fn format_flow(flow: &FlowEnd, out: &mut Vec<u8>) {
+    let unix_ms = flow.ended.duration_since(UNIX_EPOCH).map_or(0, |since| since.as_millis());
+    out.extend_from_slice(b"{\"time\":\"");
+    write_time(u64::try_from(unix_ms).unwrap_or(u64::MAX), out);
+    let mut client = crate::connection::PeerText::default();
+    client.format(Some(flow.client));
+    out.extend_from_slice(b"\",\"client\":");
+    write_string(client.as_bytes(), out);
+    out.extend_from_slice(b",\"frontend\":");
+    write_string(flow.frontend.as_bytes(), out);
+    out.extend_from_slice(b",\"protocol\":");
+    write_string(flow.protocol.as_bytes(), out);
+    out.extend_from_slice(b",\"backend\":");
+    write_string(flow.backend.as_bytes(), out);
+    match flow.server {
+        Some(server) => {
+            let _ = write!(out, ",\"server\":\"{server}\"");
+        }
+        None => out.extend_from_slice(b",\"server\":\"-\""),
+    }
+    let _ = write!(
+        out,
+        ",\"bytes_in\":{},\"bytes_out\":{},\"duration_ms\":",
+        flow.bytes_in, flow.bytes_out
+    );
+    write_millis(flow.duration, out);
+    out.extend_from_slice(b",\"end\":");
+    write_string(flow.end.as_bytes(), out);
+    out.extend_from_slice(b"}\n");
 }
 
 /// Writes a duration as milliseconds with three decimals.
@@ -460,20 +552,87 @@ mod tests {
     }
 
     #[test]
+    fn a_flow_line_has_its_fields_in_order() {
+        let name: Arc<str> = Arc::from("db");
+        let flow = FlowEnd {
+            ended: UNIX_EPOCH + Duration::from_millis(1_795_515_302_418),
+            duration: Duration::from_micros(1500),
+            protocol: "tcp",
+            client: "203.0.113.7:4000".parse().unwrap(),
+            frontend: name.clone(),
+            backend: Arc::from("pool"),
+            server: Some("10.0.0.1:5432".parse().unwrap()),
+            bytes_in: 4,
+            bytes_out: 5,
+            end: "client_closed",
+        };
+        let mut out = Vec::new();
+        format_flow(&flow, &mut out);
+        let text = String::from_utf8(out).unwrap();
+        assert_eq!(
+            text,
+            "{\"time\":\"2026-11-24T10:15:02.418Z\",\"client\":\"203.0.113.7\",\
+             \"frontend\":\"db\",\"protocol\":\"tcp\",\"backend\":\"pool\",\
+             \"server\":\"10.0.0.1:5432\",\"bytes_in\":4,\"bytes_out\":5,\
+             \"duration_ms\":1.500,\"end\":\"client_closed\"}\n"
+        );
+        assert_parses(&text);
+    }
+
+    #[test]
+    fn a_new_queue_length_keeps_every_line_in_its_order() {
+        let name = format!("sibuna-sink-resize-{}.log", std::process::id());
+        let path = std::env::temp_dir().join(name);
+        let _ = std::fs::remove_file(&path);
+        let output = LogOutput::File(path.display().to_string());
+        let options = AccessLogOptions { output, queue: 64 };
+        let log = AccessLog::start(&options).unwrap();
+        for round in 0..3 {
+            for index in 0..20 {
+                log.offer(entry(format!("/{round}/{index}").as_bytes()));
+            }
+            // Two changes in a row: the writer has not turned to the first new queue.
+            log.resize(128 + round);
+            log.resize(256 + round);
+        }
+        assert_eq!(log.queue(), 258);
+        log.offer(entry(b"/last"));
+        log.close();
+        let text = std::fs::read_to_string(&path).unwrap();
+        let _ = std::fs::remove_file(&path);
+        let paths: Vec<&str> = text.lines().map(|line| field(line, "path")).collect();
+        let mut wanted: Vec<String> = Vec::new();
+        for round in 0..3 {
+            wanted.extend((0..20).map(|index| format!("/{round}/{index}")));
+        }
+        wanted.push("/last".to_owned());
+        assert_eq!(paths, wanted);
+    }
+
+    fn field<'a>(line: &'a str, name: &str) -> &'a str {
+        let key = format!("\"{name}\":\"");
+        let rest = &line[line.find(&key).unwrap() + key.len()..];
+        &rest[..rest.find('"').unwrap()]
+    }
+
+    #[test]
     fn a_line_has_the_fixed_fields_in_order() {
         let mut entry = entry(b"/index.html");
         assert_eq!(
             line(&entry),
             "{\"time\":\"2026-11-24T10:15:02.418Z\",\"client\":\"203.0.113.7\",\
              \"frontend\":\"-\",\"protocol\":\"http/1.1\",\"scheme\":\"http\",\
-             \"method\":\"GET\",\
+             \"tls_version\":\"-\",\"tls_cipher\":\"-\",\"method\":\"GET\",\
              \"host\":\"www.example.com\",\"path\":\"/index.html\",\"status\":200,\
              \"bytes_in\":112,\"bytes_out\":5310,\"duration_ms\":3.184,\"ttfb_ms\":null,\
              \"backend\":\"-\",\"server\":\"-\",\"verdict\":\"pass\",\"retries\":0}\n"
         );
         entry.first_byte = Some(Duration::from_micros(2907));
         assert!(line(&entry).contains("\"ttfb_ms\":2.907,"));
-        assert_eq!(line(&entry).matches("\":").count(), 17, "seventeen fields");
+        assert_eq!(line(&entry).matches("\":").count(), 19, "nineteen fields");
+        entry.tls = ("1.3", "TLS13_AES_128_GCM_SHA256");
+        let secured = "\"tls_version\":\"1.3\",\"tls_cipher\":\"TLS13_AES_128_GCM_SHA256\",";
+        assert!(line(&entry).contains(secured), "{}", line(&entry));
         entry.retries = 2;
         assert!(line(&entry).ends_with(",\"retries\":2}\n"), "a moved request says so");
         assert_parses(&line(&entry));

@@ -86,6 +86,7 @@ fn judge(server: &Server, offer: &Offer<'_>, scratch: &mut Scratch) -> Verdict {
         vip: offer.vip,
         secure: true,
         cert: offer.client_cert,
+        tls: (offer.tls_version, offer.tls_cipher),
         trusted: false,
     };
     let mut link = Link {

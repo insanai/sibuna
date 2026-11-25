@@ -38,6 +38,20 @@ pub(super) struct Shared {
     pub draining: AtomicBool,
     /// Close everything and end.
     pub stopping: AtomicBool,
+    /// The most idle server connections one worker keeps. See [`idle_per_worker`].
+    pub idle_limit: usize,
+}
+
+/// The most idle server connections one of `workers` workers keeps for reuse: its share
+/// of `max_connections`, at least one and at most 1,024. All workers together then
+/// keep at most [`idle_total`], which the descriptor check counts (SID 0020).
+pub fn idle_per_worker(max_connections: u32, workers: usize) -> usize {
+    (max_connections as usize / workers.max(1)).clamp(1, 1024)
+}
+
+/// The most idle server connections that `workers` workers keep together.
+pub fn idle_total(max_connections: u32, workers: usize) -> usize {
+    workers.max(1) * idle_per_worker(max_connections, workers)
 }
 
 /// The time limits of a worker.
@@ -69,6 +83,7 @@ impl Workers {
         let shared = Arc::new(Shared {
             draining: AtomicBool::new(false),
             stopping: AtomicBool::new(false),
+            idle_limit: idle_per_worker(server.config.max_connections, count),
         });
         let mut handles = Vec::with_capacity(count);
         for index in 0..count.max(1) {

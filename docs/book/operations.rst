@@ -213,7 +213,7 @@ We need no file to balance load. One command serves HTTP on port 8080 and spread
    * - ``--admin SOCKET``
      - Open the admin socket at this path for ``sibuna ctl``.
    * - ``--access-log PATH|stdout``
-     - Write one JSON line per HTTP request to this file or to standard output (section *Observing the edge*). Without the option nothing is logged.
+     - Write one JSON line per HTTP request, or per TCP connection and UDP mapping with ``--proto tcp`` and ``--proto udp``, to this file or to standard output (section *Observing the edge*). Without the option nothing is logged.
    * - ``--print-config``
      - Print the equivalent configuration and exit.
    * - ``--format jlv|json``
@@ -1222,12 +1222,14 @@ An edge writes an access log, counts each request per frontend and per server, a
      - ``http/1.1``, ``h2`` or ``h3``.
    * - ``scheme``
      - ``https`` when the client reached a TLS frontend, else ``http``.
+   * - ``tls_version``, ``tls_cipher``
+     - The TLS version (``1.2``, ``1.3``) and the IANA name of the cipher suite, or ``-`` without TLS. The suite of an ``h3`` connection is ``-``.
    * - ``method``, ``host``, ``path``
      - As sent. The path is in normal form and has no query. A request that did not parse has ``-``.
    * - ``status``
-     - The status sent to the client. 0 when the client left before a response.
+     - The status sent to the client. 499 when the client closed the connection or reset the stream before any response. No client receives a 499.
    * - ``bytes_in``, ``bytes_out``
-     - Request and response bytes. For ``http/1.1``, ``bytes_out`` is every byte written towards the client before TLS. For ``h2`` and ``h3`` it is the response body alone. ``bytes_in`` is the parsed head plus the declared body length, and for a body without a length only the part buffered for the decision.
+     - The bytes of the request and of the response as HTTP/1.1 carries them, without TLS. For ``http/1.1`` these are the bytes of the message. For ``h2`` and ``h3`` a head counts as its HTTP/1.1 text and a body as its data bytes. One case is not exact: a chunked ``http/1.1`` request body counts its data bytes without the chunk framing.
    * - ``duration_ms``
      - From the dispatch to the end of the response.
    * - ``ttfb_ms``
@@ -1241,15 +1243,73 @@ An edge writes an access log, counts each request per frontend and per server, a
 
 .. code-block:: json
 
-   {"time":"2026-11-24T10:15:02.418Z","client":"203.0.113.7","frontend":"web","protocol":"http/1.1","scheme":"http","method":"GET","host":"www.example.com","path":"/index.html","status":200,"bytes_in":112,"bytes_out":5310,"duration_ms":3.184,"ttfb_ms":2.907,"backend":"app","server":"app-2","verdict":"pass","retries":0}
+   {"time":"2026-11-24T10:15:02.418Z","client":"203.0.113.7","frontend":"web","protocol":"http/1.1","scheme":"https","tls_version":"1.3","tls_cipher":"TLS13_AES_128_GCM_SHA256","method":"GET","host":"www.example.com","path":"/index.html","status":200,"bytes_in":112,"bytes_out":5310,"duration_ms":3.184,"ttfb_ms":2.907,"backend":"app","server":"app-2","verdict":"pass","retries":0}
 
-A worker never waits for the log. It puts the entry in a bounded queue, and one thread formats and writes. When the queue is full the entry is dropped and ``sibuna_edge_access_log_dropped_total`` counts it. To rotate the file we rename it and send SIGHUP. Sibuna opens the path again within about a second. TCP and UDP flows are counted and not logged.
+A worker never waits for the log. It puts the entry in a bounded queue, and one thread formats and writes. When the queue is full the entry is dropped and ``sibuna_edge_access_log_dropped_total`` counts it.
 
-There is no log unless we configure one. A reload may change ``output``, remove the ``access_log`` object or add it, and may change ``internal_allow``. The new file is opened first, and a path that cannot be opened refuses the reload. ``listen`` and the ``queue`` of a running log need a restart.
+There is no log unless we configure one. A reload may change everything in ``observability``: the ``output``, the ``queue``, ``internal_allow`` and ``listen``, and it may remove the ``access_log`` object or add it. The new file and the new listener are opened first. When one of them cannot be opened, the reload is refused and the old ones serve on. A new ``listen`` address must differ from the old one in its port, or be reached in two reloads.
+
+**TCP and UDP flows.** A ``tcp`` connection and a ``udp`` mapping write one line when they end. So does a refused connection, at most ten times per second for the whole node. The counter ``sibuna_edge_refused_total`` has every one.
+
+.. code-block:: json
+
+   {"time":"2026-11-24T10:15:09.102Z","client":"203.0.113.7","frontend":"db","protocol":"tcp","backend":"db","server":"10.0.0.11:5432","bytes_in":412,"bytes_out":9120,"duration_ms":6841.337,"end":"client_closed"}
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - ``end``
+     - Meaning
+   * - ``client_closed``, ``server_closed``
+     - The flow ended in order. The name says which side closed first.
+   * - ``reset``
+     - A read or a write failed.
+   * - ``idle_timeout``
+     - Nothing moved for the ``session_timeout`` of the frontend.
+   * - ``connect_failed``, ``no_server``
+     - No server accepted the connection, or none was eligible.
+   * - ``evicted``, ``send_failed``
+     - A UDP mapping gave way to a new client, or its datagram could not be sent.
+   * - ``shutdown``
+     - The node stopped while the flow was open.
+   * - ``refused_<reason>``
+     - The connection was refused. The reason is a label of ``sibuna_edge_refused_total``.
+
+**Rotating the log.** We rename the file and tell Sibuna to open the path again. It does so within about a second. ``sibuna ctl SOCKET reopen log`` does only that. SIGHUP does it too, but it also reloads the topology file, and a reload replaces the run-time changes of ``sibuna ctl``. So a scheduled rotation uses the command. The Linux packages install this file as ``/etc/logrotate.d/sibuna-edge``:
+
+.. code-block:: text
+
+   /var/log/sibuna/*.log {
+       daily
+       rotate 14
+       missingok
+       notifempty
+       compress
+       delaycompress
+       create 0640 sibuna sibuna
+       sharedscripts
+       postrotate
+           if [ -S /run/sibuna/edge.sock ]; then
+               runuser -u sibuna -- /usr/bin/sibuna ctl /run/sibuna/edge.sock reopen log || true
+           fi
+       endscript
+   }
+
+It expects the log under ``/var/log/sibuna`` and the admin socket at ``/run/sibuna/edge.sock``:
+
+.. code-block:: text
+
+   global { admin_socket: "/run/sibuna/edge.sock" }
+   observability { access_log: { output: "/var/log/sibuna/access.log" } }
 
 A request that Sibuna refuses before the firewall decides is logged too, with verdict ``-``: an HTTP/2 or HTTP/3 request above the request bound (503), or one that is malformed (400, 417, 501).
 
-**Metrics.** The metrics text has the process counters and then the series of the edge: requests by status class, bytes and a duration histogram per frontend; requests, failures, failovers, ejections, a response time histogram and ``sibuna_edge_server_up`` and the gauge ``sibuna_edge_server_active_requests`` per server; ``sibuna_edge_refused_total`` by ``reason`` (``rate_limit``, ``flow_limit``, ``draining``, ``connection_limit``, ``client_limit``, ``task_limit``, ``exchange_limit``, ``bad_request``); the flow table (``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``, ``sibuna_edge_drops_total``); and the counters of the log and of the PROXY protocol. Counters follow a name across a reload. A server that ``sibuna ctl`` adds is counted at once, and one that it removes loses its series at once.
+**Metrics.** The metrics text has the process counters and then the series of the edge: requests by status class, bytes and a duration histogram per frontend; requests, failures, failovers, ejections, a response time histogram and ``sibuna_edge_server_up`` and the gauge ``sibuna_edge_server_active_requests`` per server; ``sibuna_edge_server_client_closed_total`` per server; ``sibuna_edge_refused_total`` by ``reason`` (``rate_limit``, ``flow_limit``, ``draining``, ``connection_limit``, ``client_limit``, ``task_limit``, ``exchange_limit``, ``bad_request``, ``client_closed``, ``no_server``, ``udp_rate_limit``, ``udp_flow_limit``, ``udp_reply_limit``); the flow table (``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``, ``sibuna_edge_drops_total``); and the counters of the log (with ``sibuna_edge_access_log_queue_length`` and ``sibuna_edge_flow_log_dropped_total``) and of the PROXY protocol.
+
+A client that closes its connection or resets its stream before the server answered is logged with status 499 and counted in ``sibuna_edge_server_client_closed_total``. It is not a failure of the server: ``sibuna_edge_server_failures_total`` and passive health count only what a server did. An alert on failures therefore does not fire when a load test ends or when users close their browsers.
+
+Counters follow a name across a reload. A server that ``sibuna ctl`` adds is counted at once, and one that it removes loses its series at once.
 
 **Readiness.** ``/__sibuna/ready`` answers 200 with ``{"status":"ready"}``. From the start of a shutdown it answers 503 with ``{"status":"draining"}``. ``/__sibuna/health`` only says that the process runs. We point a load balancer in front of Sibuna at the readiness answer.
 
@@ -1271,18 +1331,18 @@ A ``tcp`` frontend reads the PROXY header in the same way. The client it names t
                     trusted_proxies: ["10.0.0.0/24"], proxy_protocol: true,
                     default_backend: "db" } }
 
-**The descriptor limit.** At startup Sibuna compares the limit on open files with what the topology can use: two per flow, two per HTTP connection, and 512. It raises the soft limit as far as the hard limit allows. When that is not enough it prints a warning with the numbers and a hint, and starts anyway:
+**The descriptor limit.** At startup Sibuna compares the limit on open files with what the topology can use: two per flow, two per HTTP connection, the server connections kept for reuse, and 512. The event-driven workers together keep at most ``http.max_connections`` connections for reuse, and with a TLS frontend the protocol runtime keeps at most 256 for each HTTP server. It raises the soft limit as far as the hard limit allows. When that is not enough it prints a warning with the numbers and a hint, and starts anyway:
 
 .. code-block:: text
 
    -- DESCRIPTOR LIMIT TOO LOW ------------------------------------ edge.jlv
 
-   This topology can use 18944 file descriptors, but the process may open 4096.
+   This topology can use 19968 file descriptors, but the process may open 4096.
 
-   global.max_flows = 8192, http.max_connections = 1024
-   need = 2 * 8192 + 2 * 1024 + 512 = 18944
+   global.max_flows = 8192, http.max_connections = 1024, idle server connections = 1024
+   need = 2 * 8192 + 2 * 1024 + 1024 + 512 = 19968
 
-   Hint: Raise the limit (`LimitNOFILE=18944` in the systemd unit, or `ulimit -n 18944`),
+   Hint: Raise the limit (`LimitNOFILE=19968` in the systemd unit, or `ulimit -n 19968`),
    or lower `global.max_flows` and `http.max_connections`.
 
 Writing the topology in JLV
@@ -1450,7 +1510,9 @@ A deployment takes one server out of rotation, replaces it, and returns it. For 
    * - ``show servers``
      - One line per server. ``ejected`` is the time passive health still keeps the server out, and ``ramp`` is the share of its weight that a server in slow start has now. The column ``changed`` holds ``-`` for a server that is served as the file describes it, ``added`` for one that a command added, and ``state`` or ``weight`` for a changed field.
    * - ``show stats``
-     - The series of the edge in the Prometheus text format: requests, bytes and times per frontend and per server, the flow table, the access log and the PROXY protocol.
+     - The series of the edge in the Prometheus text format: requests, bytes and times per frontend and per server, client aborts per server, refusals by reason, the flow table, the access log and its queue, the flow lines that were dropped, and the PROXY protocol. It prints the same series as the metrics route.
+   * - ``reopen log``
+     - Opens the access log file again, after a rotation renamed it. It reloads nothing.
    * - ``show certs``
      - One line per name of automatic HTTPS: how it is obtained, the issuer, the expiry, the next renewal, the state and the last failure (section *Automatic HTTPS*).
    * - ``show ca``
@@ -1497,7 +1559,56 @@ Two kinds of pool change their servers and weights only by reload. A pool with `
 
 The socket is a Unix socket with mode 0600, so only the user of the daemon can connect. Whoever can connect can direct traffic to an address of his choice. There is no TCP listener for administration. A connection carries one line of at most 512 bytes, and the daemon accepts a burst of 20 commands and 10 per second after it. Each command that changes state is logged with the code ``EDGE010``. A daemon that ``sibuna lb`` started has no file, so ``reload`` and SIGHUP are refused, and its run-time changes last until it stops.
 
-Under systemd the Linux packages install the unit ``sibuna-edge.service`` beside ``sibuna.service`` and start neither. It runs ``sibuna --config-file /etc/sibuna/edge.jlv`` as the account ``sibuna`` with the one capability ``CAP_NET_BIND_SERVICE``, so it can bind ports 80 and 443. It raises the descriptor limit to 65,536, gives the daemon ``/run/sibuna`` for the admin socket, restarts it after a failure, and keeps the hardening of ``sibuna.service``. ``systemctl reload sibuna-edge`` checks the file and sends SIGHUP.
+Under systemd the Linux packages install the unit ``sibuna-edge.service`` beside ``sibuna.service`` and start neither. It runs ``sibuna --config-file /etc/sibuna/edge.jlv`` as the account ``sibuna`` with the one capability ``CAP_NET_BIND_SERVICE``, so it can bind ports 80 and 443. It raises the descriptor limit to 65,536, gives the daemon ``/run/sibuna`` for the admin socket, ``/var/lib/sibuna`` for certificates and ``/var/log/sibuna`` for the access log, restarts it after a failure, and keeps the hardening of ``sibuna.service``. ``systemctl reload sibuna-edge`` checks the file and sends SIGHUP.
+
+These are the lines of the unit that matter in production:
+
+.. code-block:: ini
+
+   [Service]
+   User=sibuna
+   Group=sibuna
+   RuntimeDirectory=sibuna
+   StateDirectory=sibuna
+   LogsDirectory=sibuna
+   ExecStartPre=/usr/bin/sibuna check -f /etc/sibuna/edge.jlv
+   ExecStart=/usr/bin/sibuna --config-file /etc/sibuna/edge.jlv
+   ExecReload=/usr/bin/sibuna check -f /etc/sibuna/edge.jlv
+   ExecReload=/bin/kill -HUP $MAINPID
+   Restart=on-failure
+   TimeoutStopSec=30
+   LimitNOFILE=65536
+   AmbientCapabilities=CAP_NET_BIND_SERVICE
+   CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+   NoNewPrivileges=true
+   ProtectSystem=strict
+   ProtectHome=true
+   PrivateTmp=true
+   PrivateDevices=true
+   RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+   MemoryDenyWriteExecute=true
+   SystemCallArchitectures=native
+
+.. list-table::
+   :header-rows: 1
+   :widths: 34 66
+
+   * - Setting
+     - Why
+   * - ``ProtectSystem=strict`` with the three directories
+     - The daemon can write to ``/run/sibuna``, ``/var/lib/sibuna`` and ``/var/log/sibuna`` and nowhere else. An access log outside ``/var/log/sibuna`` fails to open, and the unit then does not start.
+   * - ``CAP_NET_BIND_SERVICE`` alone
+     - Ports 80 and 443 without root. The bounding set removes every other capability, and ``NoNewPrivileges`` keeps it so.
+   * - ``RestrictAddressFamilies``
+     - Only IP and Unix sockets. The daemon needs no other family.
+   * - ``LimitNOFILE``
+     - The descriptors of the topology. When it is too low the daemon prints the number to set, as shown under *Observing the edge*.
+   * - ``TimeoutStopSec``
+     - Must exceed ``global.drain_delay`` plus ``global.shutdown_timeout``, or systemd kills the daemon in the middle of its drain. We raise it in a drop-in when we raise either.
+   * - ``ExecStartPre`` and ``ExecReload``
+     - A file with a mistake neither starts nor reloads. The serving routes stay.
+
+We change a setting in a drop-in, not in the packaged file: ``systemctl edit sibuna-edge``.
 
 .. code-block:: sh
 

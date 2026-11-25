@@ -1,0 +1,20 @@
+# Rotates the access log of the edge load balancer (SID 0020). The unit
+# sibuna-edge.service gives the daemon /var/log/sibuna. Write the log there:
+#   observability: { access_log: { output: "/var/log/sibuna/access.log" } }
+# After the rename the daemon is told to open the path again. `reopen log` does only
+# that. A SIGHUP would also reload the topology file and discard run-time changes.
+/var/log/sibuna/*.log {
+    daily
+    rotate 14
+    missingok
+    notifempty
+    compress
+    delaycompress
+    create 0640 sibuna sibuna
+    sharedscripts
+    postrotate
+        if [ -S /run/sibuna/edge.sock ]; then
+            runuser -u sibuna -- /usr/bin/sibuna ctl /run/sibuna/edge.sock reopen log || true
+        fi
+    endscript
+}

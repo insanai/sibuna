@@ -12,6 +12,7 @@ mod fdlimit;
 mod http;
 #[cfg(feature = "https")]
 mod inline;
+mod observed;
 mod probe;
 mod quick;
 mod watch;
@@ -130,8 +131,8 @@ struct Serving {
     drain_delay: Duration,
     started: Instant,
     reloads: u64,
-    /// The counters of SID 0020, for `show stats`.
-    observe: Arc<crate::access::Observe>,
+    /// The counters, the access log and the separate listener of SID 0020.
+    observed: observed::Observed,
     /// The drain commands shared with the peers of the mesh (SID 0022).
     drains: Drains,
 }
@@ -159,7 +160,8 @@ impl Serving {
         let shutdown_timeout = revision.config.shutdown_timeout();
         let drain_delay = revision.config.drain_delay();
         let before = self.edge.change_count();
-        reload(&mut self.edge, self.http.as_mut(), &mut self.adapters, revision)?;
+        let observed = &mut self.observed;
+        reload(&mut self.edge, self.http.as_mut(), &mut self.adapters, observed, revision)?;
         self.reloads += 1;
         self.shutdown_timeout = shutdown_timeout;
         self.drain_delay = drain_delay;
@@ -239,6 +241,10 @@ impl Serving {
             Command::ShowCa => Ok(self.ca()),
             // The admin thread answers these two. They never reach the worker.
             Command::Help | Command::ShowCluster => Ok(control::USAGE.to_owned()),
+            Command::ReopenLog => {
+                self.observed.shared().reopen_log();
+                Ok(String::new())
+            }
             Command::Local(command) => self.change(&command, false),
             Command::State { .. }
             | Command::Weight { .. }
@@ -309,7 +315,7 @@ impl Serving {
     /// The answer to `show stats`: the counters of SID 0020 and of automatic HTTPS.
     fn stats(&self) -> String {
         #[cfg_attr(not(feature = "https"), allow(unused_mut))]
-        let mut text = crate::access::metrics_text(None, &self.observe);
+        let mut text = crate::access::metrics_text(None, self.observed.shared());
         #[cfg(feature = "https")]
         if let Some(automatic) = self.http.as_ref().and_then(http::Http::automatic) {
             crate::acme::write_metrics(automatic, crate::acme::unix_now(), &mut text);
@@ -412,7 +418,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let edge = Edge::bind(config)?;
     let http = http.map(|p| http::Http::start(p, &edge, secret)).transpose()?;
     let drains = join(http.as_ref(), &adapters, mesh.as_ref());
-    let observed = http::observe(http.as_ref(), observe_options, &edge)?;
+    let observed = observed::Observed::start(http.as_ref(), &observe_options, &edge)?;
     let (jobs, inbox) = mpsc::channel();
     let _admin = match &admin_socket {
         Some(path) => Some(admin::Admin::start(path, takeover, Arc::clone(&source), jobs)?),
@@ -430,21 +436,21 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         drain_delay,
         started: Instant::now(),
         reloads: 0,
-        observe: observed.shared(),
+        observed,
         drains,
     };
     serving.watch(watch)?;
     serving.announce();
     while !shutdown.is_requested() {
-        observed.reopen_log_when(&rotate);
+        serving.observed.reopen_log_when(&rotate);
         serving.take_pending();
         for job in inbox.try_iter().take(COMMANDS_PER_STEP) {
             serving.answer(job);
         }
         serving.follow(mesh.as_ref(), &mut current);
-        step(&mut serving.edge, serving.http.as_ref())?;
+        serving.step()?;
     }
-    observed.drain();
+    serving.observed.drain();
     serving.linger()?;
     drop(mesh);
     serving.stop()
@@ -461,15 +467,23 @@ impl Serving {
         note(format_args!("Sibuna edge draining: not ready, serving for {delay:?}"));
         let until = Instant::now() + self.drain_delay;
         while Instant::now() < until {
-            step(&mut self.edge, self.http.as_ref())?;
+            self.step()?;
         }
+        Ok(())
+    }
+
+    /// One turn of the edge worker: the load balancer, the accepted HTTP connections
+    /// and the log lines of the flows that ended.
+    fn step(&mut self) -> io::Result<()> {
+        step(&mut self.edge, self.http.as_ref())?;
+        self.observed.pass_flows(&mut self.edge);
         Ok(())
     }
 
     /// Stops the listeners and waits for the established flows, at most
     /// `global.shutdown_timeout`.
     fn stop(self) -> io::Result<()> {
-        let Serving { mut edge, http, shutdown_timeout, .. } = self;
+        let Serving { mut edge, http, shutdown_timeout, observed, .. } = self;
         edge.drain();
         if let Some(http) = &http {
             http.drain();
@@ -477,9 +491,16 @@ impl Serving {
         let deadline = Instant::now() + shutdown_timeout;
         while edge.active() > 0 && Instant::now() < deadline {
             step(&mut edge, http.as_ref())?;
+            observed.pass_flows(&mut edge);
         }
         let (forced, drops) = (edge.active(), edge.dropped());
         note(format_args!("Sibuna edge stopped: {forced} forced closes, {drops} drops"));
+        // The flows that are still open end here, and their lines say `shutdown`.
+        edge.close_flows();
+        observed.pass_flows(&mut edge);
+        // The HTTP server ends its request paths before the log writes its last lines.
+        drop(http);
+        observed.close_log();
         Ok(())
     }
 }
@@ -498,26 +519,35 @@ fn reload(
     edge: &mut Edge,
     http: Option<&mut http::Http>,
     adapters: &mut Adapters,
+    observed: &mut observed::Observed,
     mut revision: Revision,
 ) -> io::Result<()> {
+    let observe = revision.config.observe().clone();
     match (http, revision.http) {
-        (None, None) => edge.reload(revision.config),
+        (None, None) => {
+            let plan = observed.plan(&observe)?;
+            edge.reload(revision.config)?;
+            observed.apply(observe, plan, edge);
+            Ok(())
+        }
         (Some(http), Some(prepared)) if http.compatible(&prepared) => {
-            let log = http.plan_log(&prepared)?;
+            // The new log file and the new listener open first. A failure refuses the
+            // reload, and the old ones serve on (SID 0020).
+            let plan = observed.plan(&observe)?;
             adapt(adapters, &mut revision.config)?;
             edge.reload(revision.config)?;
             // The engine follows the routes at once. A request decided under the old
             // engine in between is routed by the old revision (SID 0018). The adapters
             // of that revision close last.
-            http.reload(prepared, log);
+            http.reload(prepared);
+            observed.apply(observe, plan, edge);
             commit(adapters);
             // A reload may have started the first adapters.
             attach(Some(http), adapters);
             Ok(())
         }
         _ => Err(io::Error::other(
-            "changing HTTP firewall settings, TLS listeners, observability.listen or the \
-             access log queue requires a restart",
+            "changing HTTP firewall settings or TLS listeners requires a restart",
         )),
     }
 }

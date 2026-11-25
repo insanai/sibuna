@@ -138,6 +138,13 @@ impl Config {
         self.listeners.keys().any(|(proto, _)| *proto == Protocol::Http).then_some(&self.http)
     }
 
+    /// The number of servers in the HTTP pools. Each can hold idle connections of the
+    /// protocol runtime, which the descriptor check counts (SID 0020).
+    pub fn http_server_count(&self) -> usize {
+        let http = self.pools.values().filter(|pool| pool.protocol == Protocol::Http);
+        http.map(|pool| pool.servers.len()).sum()
+    }
+
     /// TLS frontends and their listener addresses, for the protocol adapter.
     pub fn tls(&self) -> BTreeMap<SocketAddr, std::sync::Arc<crate::TlsOptions>> {
         self.listeners.iter().filter_map(|((_, addr), f)| Some((*addr, f.tls.clone()?))).collect()

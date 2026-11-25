@@ -177,5 +177,7 @@ pub(crate) fn parse(data: &[u8]) -> Result<Request<'_>, ParseError> {
     if let Some(end) = index_of(data, b"\r\n\r\n") {
         req.body = &data[end + 4..];
     }
+    // The Zig parser has no such field. It is the input without the body.
+    req.head_len = data.len() - req.body.len();
     Ok(req)
 }

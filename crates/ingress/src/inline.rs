@@ -64,6 +64,10 @@ pub struct Offer<'a> {
     pub peer: SocketAddr,
     /// The fingerprint of the certificate the client proved to hold, if any.
     pub client_cert: Option<crate::Fingerprint>,
+    /// The TLS version of the client's handshake, `1.2` or `1.3`. Empty when unknown.
+    pub tls_version: &'static str,
+    /// The IANA name of the cipher suite. Empty when unknown, as on HTTP/3.
+    pub tls_cipher: &'static str,
     /// The listener the client reached.
     pub vip: SocketAddr,
     /// The protocol the client speaks: `h2` or `h3`.
@@ -96,8 +100,11 @@ pub struct Completion {
     /// The status sent to the client: the server's, or 502 or 504 of our own. Zero when
     /// the exchange ended before a response head.
     pub status: u16,
-    /// The response body bytes handed to the client's stream.
+    /// The response as HTTP/1.1 would carry it: the length of the head as text, the
+    /// body data bytes handed to the client's stream, and the trailers as text.
     pub bytes_out: u64,
+    /// The request body data bytes that were sent on towards the server.
+    pub body_in: u64,
     /// The wait for the server's response head, or `None` when it sent none.
     pub first_byte: Option<Duration>,
 }
@@ -120,6 +127,20 @@ pub trait Report: Send + 'static {
 struct Reporter {
     report: Option<Box<dyn Report>>,
     completion: Completion,
+    /// The upload of the request, for the count of its body bytes.
+    flow: Arc<Flow>,
+}
+
+/// The length of a response head, or of trailers, as HTTP/1.1 text: a status line when
+/// `status` is given, each field with its separator and line end, and the blank line.
+fn text_len(status: Option<StatusCode>, fields: &header::HeaderMap) -> u64 {
+    let line = status.map_or(0, |status| {
+        // `HTTP/1.1 200 OK` and a line end.
+        9 + 3 + 1 + status.canonical_reason().map_or(0, str::len) + 2
+    });
+    let fields: usize =
+        fields.iter().map(|(name, value)| name.as_str().len() + 2 + value.len() + 2).sum();
+    (line + fields + 2) as u64
 }
 
 impl Reporter {
@@ -134,6 +155,7 @@ impl Reporter {
 impl Drop for Reporter {
     fn drop(&mut self) {
         if let Some(report) = self.report.take() {
+            self.completion.body_in = self.flow.moved.load(Ordering::Relaxed);
             report.done(&self.completion);
         }
     }
@@ -148,7 +170,10 @@ pub struct Refused<'a> {
     pub vip: SocketAddr,
     /// The protocol the client speaks: `h2` or `h3`.
     pub protocol: &'static str,
-    /// The status of the answer.
+    /// The client's certificate and the outcome of its TLS handshake.
+    pub secured: crate::Secured,
+    /// The status of the answer. 499 stands for a request that its client gave up
+    /// while it was read. Such a client receives nothing.
     pub status: u16,
     /// The request method.
     pub method: &'a str,
@@ -248,7 +273,7 @@ pub(crate) async fn exchange(
     inline: &Arc<Inline>,
     req: Request<Body>,
     trailers: bool,
-    (peer, client_cert): (SocketAddr, Option<crate::Fingerprint>),
+    (peer, secured): (SocketAddr, crate::Secured),
     vip: SocketAddr,
     protocol: &'static str,
 ) -> Response<Body> {
@@ -263,11 +288,15 @@ pub(crate) async fn exchange(
     } else {
         timeout(DEADLINE, buffer(&mut body, budget)).await
     };
+    // A body that does not arrive in time is a bad request. A body that fails was cut
+    // off by its client, who reset the stream or closed the connection: that is
+    // reported as 499, which no client receives.
+    let status = if buffered.is_err() { 400 } else { 499 };
     let Ok(Ok((prefix, ended))) = buffered else {
         let host = parts.headers.get(header::HOST).and_then(|host| host.to_str().ok());
         let (method, path) = (parts.method.as_str(), parts.uri.path());
         let host = host.unwrap_or_default();
-        inline.refused(&Refused { peer, vip, protocol, status: 400, method, host, path });
+        inline.refused(&Refused { peer, vip, protocol, secured, status, method, host, path });
         return error(StatusCode::BAD_REQUEST);
     };
     let seen = prefix.len().min(budget);
@@ -281,7 +310,9 @@ pub(crate) async fn exchange(
         body_complete: ended && seen == prefix.len(),
         declared,
         peer,
-        client_cert,
+        client_cert: secured.cert,
+        tls_version: secured.version,
+        tls_cipher: secured.cipher,
         vip,
         protocol,
     };
@@ -624,8 +655,9 @@ async fn send(
     sending: Sending,
 ) -> Response<Body> {
     let Forward { mut target, head, guard, report } = forward;
-    let mut reporter = Reporter { report, completion: Completion::default() };
     let flow = Arc::clone(&sending.flow);
+    let mut reporter =
+        Reporter { report, completion: Completion::default(), flow: Arc::clone(&flow) };
     let body = Watched { body, flow, room: target.route().max_body }.boxed_unsync();
     let Some(mut request) = parse_request(&head, body) else {
         return refuse(&mut reporter, &target, StatusCode::BAD_GATEWAY);
@@ -667,6 +699,7 @@ async fn send(
     edit_response(response.headers_mut(), &target);
     let (parts, body) = response.into_parts();
     reporter.completion.status = parts.status.as_u16();
+    reporter.completion.bytes_out = text_len(Some(parts.status), &parts.headers);
     reporter.completion.first_byte = Some(started.elapsed());
     let sender = Some(sender);
     let done = Done { inline: Arc::clone(inline), address, sender, target, started, reporter };
@@ -684,6 +717,7 @@ fn refuse(reporter: &mut Reporter, target: &HttpTarget, status: StatusCode) -> R
     let mut response = error(status);
     let [_, hsts, _] = target.response_lines();
     append_lines(response.headers_mut(), hsts);
+    reporter.completion.bytes_out = text_len(Some(status), response.headers());
     response
 }
 
@@ -779,6 +813,7 @@ async fn direct(
     edit_response(response.headers_mut(), &done.target);
     let (parts, body) = response.into_parts();
     done.reporter.completion.status = parts.status.as_u16();
+    done.reporter.completion.bytes_out = text_len(Some(parts.status), &parts.headers);
     done.reporter.completion.first_byte = Some(done.started.elapsed());
     Response::from_parts(parts, track(body, done, guard))
 }
@@ -883,10 +918,10 @@ where
             return Poll::Pending;
         }
         self.waiting = false;
-        if let (Poll::Ready(Some(Ok(frame))), Some(done)) = (&frame, self.done.as_mut())
-            && let Some(data) = frame.data_ref()
-        {
-            done.reporter.completion.bytes_out += data.len() as u64;
+        if let (Poll::Ready(Some(Ok(frame))), Some(done)) = (&frame, self.done.as_mut()) {
+            let data = frame.data_ref().map_or(0, |data| data.len() as u64);
+            let trailers = frame.trailers_ref().map_or(0, |fields| text_len(None, fields));
+            done.reporter.completion.bytes_out += data + trailers;
         }
         // A length-framed body is complete before its consumer polls for the end, and
         // trailers are the last frame: the consumer does not poll again after them.

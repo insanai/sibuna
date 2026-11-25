@@ -25,6 +25,10 @@ use crate::context::Ctx;
 use crate::server::Server;
 use crate::telemetry::Outcome;
 
+/// The status in the log of a request that its client gave up before any response. No
+/// client receives it.
+pub(crate) const CLIENT_CLOSED: u16 = 499;
+
 /// The longest host and path an entry keeps.
 const MAX_HOST: usize = 255;
 const MAX_PATH: usize = 1024;
@@ -65,15 +69,41 @@ impl Observe {
         self.options.read().unwrap_or_else(PoisonError::into_inner).allows(address)
     }
 
-    /// True when a reload can move to `next`. The separate listener and the length of
-    /// a running log queue are fixed when the process starts.
-    pub(crate) fn compatible(&self, next: &ObserveOptions) -> bool {
-        let options = self.options.read().unwrap_or_else(PoisonError::into_inner);
-        let queue = match (self.log.get(), &next.access_log) {
-            (Some(log), Some(asked)) => log.queue() == asked.queue,
-            _ => true,
-        };
-        options.listen == next.listen && queue
+    /// The address of the separate listener that the options in force ask for.
+    pub(crate) fn listen(&self) -> Option<std::net::SocketAddr> {
+        self.options.read().unwrap_or_else(PoisonError::into_inner).listen
+    }
+
+    /// Offers the line of an ended TCP connection or UDP mapping to the log. Never
+    /// waits.
+    pub(crate) fn offer_flow(&self, flow: sibuna_lb::FlowEnd) {
+        if let Some(log) = self.log() {
+            log.offer_flow(flow);
+        }
+    }
+
+    /// Logs a connection of `client` that the HTTP server refused, when the rate of
+    /// such lines allows one more. The caller has counted it.
+    pub(crate) fn log_refusal(&self, reason: sibuna_lb::Refusal, client: IpAddr) {
+        let Some(log) = self.log() else { return };
+        let ended = std::time::SystemTime::now();
+        let now = ended.duration_since(std::time::UNIX_EPOCH).map_or(0, |since| since.as_secs());
+        if !self.stats.may_log_refusal(now) {
+            return;
+        }
+        let unknown: Arc<str> = Arc::from("-");
+        log.offer_flow(sibuna_lb::FlowEnd {
+            ended,
+            duration: Duration::ZERO,
+            protocol: "tcp",
+            client: std::net::SocketAddr::new(client, 0),
+            frontend: unknown.clone(),
+            backend: unknown,
+            server: None,
+            bytes_in: 0,
+            bytes_out: 0,
+            end: reason.end(),
+        });
     }
 
     /// Prepares the access log of `next`. See [`AccessLog::plan`].
@@ -116,11 +146,21 @@ impl Observe {
         entry.elapsed = now.saturating_duration_since(entry.started);
         // The request has ended. Its line may wait in the queue.
         entry.active = None;
+        // Every answer has a status: the server's, or Sibuna's own 502 or 504 for a
+        // server that failed. An exchange that ends without one was given up by its
+        // client, who closed the connection or reset the stream. That is 499 in the
+        // log and no failure of the server.
+        let client_closed = entry.status == 0;
+        if client_closed {
+            entry.status = CLIENT_CLOSED;
+        }
         if let Some(front) = &entry.frontend {
             front.stats.record(entry.status, entry.bytes_in, entry.bytes_out, entry.elapsed);
         }
-        if let Some(server) = &entry.server {
-            server.stats.record(entry.status, entry.first_byte);
+        match &entry.server {
+            Some(server) if client_closed => server.stats.record_client_closed(),
+            Some(server) => server.stats.record(entry.status, entry.first_byte),
+            None => {}
         }
         if let Some(log) = self.log() {
             log.offer(entry);
@@ -133,11 +173,13 @@ impl Observe {
         // Writing to a string cannot fail.
         let _ = self.stats.write_prometheus(out);
         let (written, dropped, errors) = self.log.get().map_or((0, 0, 0), AccessLog::counts);
+        let queue = self.log().map_or(0, |log| log.queue() as u64);
         let series = [
             ("sibuna_edge_ready", "gauge", u64::from(self.is_ready())),
             ("sibuna_edge_access_log_written_total", "counter", written),
             ("sibuna_edge_access_log_dropped_total", "counter", dropped),
             ("sibuna_edge_access_log_errors_total", "counter", errors),
+            ("sibuna_edge_access_log_queue_length", "gauge", queue),
         ];
         for (name, kind, value) in series {
             let _ = writeln!(out, "# TYPE {name} {kind}\n{name} {value}");
@@ -175,6 +217,8 @@ pub(crate) struct Entry {
     pub protocol: &'static str,
     /// The client reached a TLS frontend.
     pub secure: bool,
+    /// The TLS version and the cipher suite of the client. Each is empty when unknown.
+    pub tls: (&'static str, &'static str),
     /// Sibuna answered for a server that failed, so a 502 or 504 is its own.
     pub failed: bool,
     /// How many servers the request left before the one that ended it (SID 0019).
@@ -185,6 +229,10 @@ pub(crate) struct Entry {
     /// The status sent to the client, or zero.
     pub status: u16,
     pub bytes_in: u64,
+    /// The part of `bytes_in` that stands for the body: its declared length, or what
+    /// was buffered of a body without one. A path that counts the body replaces it.
+    #[cfg_attr(not(feature = "https"), allow(dead_code))]
+    pub body_in: u64,
     pub bytes_out: u64,
     /// The wait for the first response byte of the server.
     pub first_byte: Option<Duration>,
@@ -209,12 +257,14 @@ impl Entry {
             active: None,
             protocol,
             secure: false,
+            tls: ("", ""),
             failed: false,
             retries: 0,
             scan: crate::client_writer::StatusScan::default(),
             verdict: "-",
             status: 0,
             bytes_in: 0,
+            body_in: 0,
             bytes_out: 0,
             first_byte: None,
             elapsed: Duration::ZERO,
@@ -358,8 +408,8 @@ pub(crate) fn forwarded_client<'c>(
 pub(crate) fn capture<W>(ctx: &mut Ctx<'_, W>) {
     let Some(observe) = &ctx.server.observe else { return };
     let request = &ctx.request;
-    let head: usize = request.headers().iter().map(|h| h.name.len() + h.value.len() + 4).sum();
-    let line = request.method_text.len() + request.path.len() + request.query.len() + 14;
+    // The head as it was received. Its blank line is part of it.
+    let head = request.head_len;
     let body =
         if ctx.declared_body == UNKNOWN_LENGTH { request.body.len() } else { ctx.declared_body };
     let trace = &mut *ctx.trace;
@@ -374,12 +424,14 @@ pub(crate) fn capture<W>(ctx: &mut Ctx<'_, W>) {
         active: trace.active.take(),
         protocol: protocol_of(trace),
         secure: ctx.ingress.is_some_and(|ingress| ingress.secure),
+        tls: ctx.ingress.map_or(("", ""), |ingress| ingress.tls),
         failed: std::mem::take(&mut trace.failed),
         retries: std::mem::take(&mut trace.retries),
         scan: crate::client_writer::StatusScan::default(),
         verdict,
         status: 0,
-        bytes_in: (line + head + body) as u64,
+        bytes_in: (head + body) as u64,
+        body_in: body as u64,
         bytes_out: 0,
         first_byte: None,
         elapsed: Duration::ZERO,
@@ -432,6 +484,8 @@ impl sibuna_ingress::Report for Pending {
         let Pending { observe, mut entry, sent } = *self;
         entry.status = completion.status;
         entry.bytes_out = completion.bytes_out;
+        // The runtime counted the body bytes that the client really sent.
+        entry.bytes_in = entry.bytes_in - entry.body_in + completion.body_in;
         let decided = sent.saturating_duration_since(entry.started);
         entry.first_byte = completion.first_byte.map(|wait| decided + wait);
         observe.settle(entry, Instant::now());
@@ -451,6 +505,8 @@ pub(crate) fn refused(server: &Server, refused: &sibuna_ingress::Refused<'_>) {
     let Some(observe) = &server.observe else { return };
     let reason = match refused.status {
         503 => sibuna_lb::Refusal::ExchangeLimit,
+        // The client reset its stream while its request was read.
+        CLIENT_CLOSED => sibuna_lb::Refusal::ClientClosed,
         _ => sibuna_lb::Refusal::BadRequest,
     };
     observe.stats.refuse(reason);
@@ -459,6 +515,7 @@ pub(crate) fn refused(server: &Server, refused: &sibuna_ingress::Refused<'_>) {
     peer.format(Some(refused.peer));
     let mut entry = Entry::unparsed(peer.as_bytes(), front, refused.protocol);
     entry.secure = true;
+    entry.tls = (refused.secured.version, refused.secured.cipher);
     if observe.log().is_some() {
         let (host, method, path) = (refused.host, refused.method, refused.path);
         entry.set_text(peer.as_bytes(), host.as_bytes(), method.as_bytes(), path.as_bytes());
@@ -488,6 +545,7 @@ pub(crate) fn settle_written(
             };
             let mut entry = Entry::unparsed(peer, front, protocol_of(trace));
             entry.secure = ingress.is_some_and(|ingress| ingress.secure);
+            entry.tls = ingress.map_or(("", ""), |ingress| ingress.tls);
             Some(entry)
         }
         None => None,

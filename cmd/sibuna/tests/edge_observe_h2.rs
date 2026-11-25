@@ -221,10 +221,12 @@ fn an_http2_request_to_an_http11_pool_is_logged_with_its_server_and_times() {
         ("frontend", "web"),
         ("protocol", "h2"),
         ("scheme", "https"),
+        ("tls_version", "1.3"),
         ("method", "GET"),
         ("path", "/page"),
         ("status", "200"),
-        ("bytes_out", "5"),
+        // The head as HTTP/1.1 text, 38 bytes, and the five bytes of the body.
+        ("bytes_out", "43"),
         ("backend", "app"),
         ("server", "a"),
         ("verdict", "pass"),
@@ -232,10 +234,139 @@ fn an_http2_request_to_an_http11_pool_is_logged_with_its_server_and_times() {
         assert_eq!(field(line, name), value, "{name} in {line}");
     }
     assert!(field(line, "host").starts_with("localhost"), "{line}");
+    assert!(field(line, "tls_cipher").starts_with("TLS13_"), "{line}");
     assert!(!line.contains("secret"), "the query is not logged: {line}");
     let total: f64 = field(line, "duration_ms").parse().unwrap();
     let first: f64 = field(line, "ttfb_ms").parse().unwrap();
     assert!(first > 0.0 && first <= total, "{line}");
+}
+
+#[test]
+fn the_byte_counts_of_http2_are_the_heads_as_text_and_the_body_data() {
+    let daemon = start(origin(), "");
+    let vip = daemon.vip;
+    runtime().block_on(async {
+        let exchange = async {
+            let mut client = connect(vip).await;
+            let url = format!("https://localhost:{}/upload", vip.port());
+            let body = http_body_util::Full::new(Bytes::from(vec![b'x'; 3000]));
+            let request = Request::post(url).body(body.boxed_unsync()).unwrap();
+            let response = client.send_request(request).await.unwrap();
+            assert_eq!(response.status(), 200);
+            assert_eq!(response.into_body().collect().await.unwrap().to_bytes(), "hello");
+        };
+        tokio::time::timeout(WAIT, exchange).await.unwrap();
+    });
+    let line = &daemon.lines(1)[0];
+    let head = format!(
+        "POST /upload HTTP/1.1\r\nhost: localhost:{}\r\ncontent-length: 3000\r\n\r\n",
+        vip.port()
+    );
+    assert_eq!(field(line, "bytes_in"), (head.len() + 3000).to_string(), "{line}");
+    let answer = "HTTP/1.1 200 OK\r\ncontent-length: 5\r\n\r\nhello";
+    assert_eq!(field(line, "bytes_out"), answer.len().to_string(), "{line}");
+}
+
+/// A request body that never sends a byte and never ends.
+struct Silent;
+
+impl hyper::body::Body for Silent {
+    type Data = Bytes;
+    type Error = std::convert::Infallible;
+
+    fn poll_frame(
+        self: std::pin::Pin<&mut Self>,
+        _: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Option<Result<hyper::body::Frame<Bytes>, Self::Error>>> {
+        std::task::Poll::Pending
+    }
+}
+
+#[test]
+fn a_client_that_resets_its_stream_is_no_failure_of_the_server_and_no_bad_request() {
+    let daemon = start(slow_origin(Duration::from_millis(900)), "");
+    let vip = daemon.vip;
+    runtime().block_on(async {
+        let exchange = async {
+            let mut client = connect(vip).await;
+            let url = |path: &str| format!("https://localhost:{}{path}", vip.port());
+            // The server is still silent when the client gives the request up. Dropping
+            // the exchange resets its stream.
+            let waiting = Request::get(url("/waiting")).body(Empty::new().boxed_unsync());
+            let answer = client.send_request(waiting.unwrap());
+            assert!(tokio::time::timeout(Duration::from_millis(200), answer).await.is_err());
+            // The body of this one never arrives, so it is given up before the decision.
+            let unsent = Request::post(url("/unsent")).body(Silent.boxed_unsync()).unwrap();
+            let answer = client.send_request(unsent);
+            assert!(tokio::time::timeout(Duration::from_millis(200), answer).await.is_err());
+            // The connection lives on and the server is as healthy as before.
+            assert_eq!(fetch(&mut client, Request::get(url("/after"))).await, 200);
+        };
+        tokio::time::timeout(WAIT, exchange).await.unwrap();
+    });
+    let lines = daemon.lines(3);
+    let line = |path: &str| lines.iter().find(|line| field(line, "path") == path).unwrap();
+    let waiting = line("/waiting");
+    assert_eq!((field(waiting, "status"), field(waiting, "server")), ("499", "a"), "{waiting}");
+    assert_eq!(field(waiting, "ttfb_ms"), "null", "{waiting}");
+    let unsent = line("/unsent");
+    assert_eq!((field(unsent, "status"), field(unsent, "verdict")), ("499", "-"), "{unsent}");
+    assert_eq!(field(line("/after"), "status"), "200");
+    let text = metrics(&daemon);
+    for series in [
+        "sibuna_edge_server_failures_total{backend=\"app\",server=\"a\"} 0\n",
+        "sibuna_edge_server_client_closed_total{backend=\"app\",server=\"a\"} 1\n",
+        "sibuna_edge_refused_total{reason=\"bad_request\"} 0\n",
+        "sibuna_edge_refused_total{reason=\"client_closed\"} 1\n",
+        "sibuna_edge_server_up{backend=\"app\",server=\"a\"} 1\n",
+    ] {
+        assert!(text.contains(series), "{series} is missing:\n{text}");
+    }
+}
+
+/// One HTTP/1.1 request over TLS 1.2, which is what a client without ALPN speaks.
+async fn get_over_tls12(vip: SocketAddr, path: &str) -> String {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    let mut trust = rustls::RootCertStore::empty();
+    let authority = rustls::pki_types::pem::PemObject::from_pem_file(fixture("ca.pem"));
+    trust.add(authority.unwrap()).unwrap();
+    let provider = Arc::new(rustls::crypto::ring::default_provider());
+    let config = rustls::ClientConfig::builder_with_provider(provider)
+        .with_protocol_versions(&[&rustls::version::TLS12])
+        .unwrap()
+        .with_root_certificates(trust)
+        .with_no_client_auth();
+    let tcp = tokio::net::TcpStream::connect(vip).await.unwrap();
+    let connector = tokio_rustls::TlsConnector::from(Arc::new(config));
+    let mut tls = connector.connect("localhost".try_into().unwrap(), tcp).await.unwrap();
+    let request = format!("GET {path} HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n");
+    tls.write_all(request.as_bytes()).await.unwrap();
+    let mut answer = Vec::new();
+    let _ = tls.read_to_end(&mut answer).await;
+    String::from_utf8_lossy(&answer).into_owned()
+}
+
+#[test]
+fn an_http11_request_over_tls_is_logged_with_the_version_and_the_suite() {
+    for http in ["", r#","event_loop":false"#] {
+        let daemon = start_with(origin(), Extra { http, ..Extra::default() });
+        let vip = daemon.vip;
+        let answer = runtime().block_on(async {
+            tokio::time::timeout(WAIT, get_over_tls12(vip, "/plain")).await.unwrap()
+        });
+        assert!(answer.starts_with("HTTP/1.1 200"), "{answer}");
+        let line = &daemon.lines(1)[0];
+        for (name, value) in [
+            ("protocol", "http/1.1"),
+            ("scheme", "https"),
+            ("tls_version", "1.2"),
+            ("path", "/plain"),
+            ("status", "200"),
+        ] {
+            assert_eq!(field(line, name), value, "{name} in {line}");
+        }
+        assert!(field(line, "tls_cipher").starts_with("TLS_ECDHE_"), "{line}");
+    }
 }
 
 #[test]
@@ -260,14 +391,25 @@ fn grpc_calls_on_a_shared_http2_session_are_logged_one_line_each() {
         assert!(field(line, "path").starts_with("/echo.Echo/"), "{line}");
         assert_ne!(field(line, "ttfb_ms"), "null", "{line}");
     }
-    // The stream of forty messages of 100 bytes, each with a prefix of five.
+    // The stream of forty messages of 100 bytes, each with a prefix of five, after the
+    // head and before the trailers, which count as HTTP/1.1 text.
     let stream = lines.iter().find(|line| field(line, "path") == "/echo.Echo/Stream").unwrap();
-    assert_eq!(field(stream, "bytes_out"), "4200", "{stream}");
+    let sent: usize = field(stream, "bytes_out").parse().unwrap();
+    assert!((4200 + 40..4200 + 400).contains(&sent), "{stream}");
 }
 
 #[test]
 fn a_request_that_the_runtime_refuses_is_logged_and_counted_by_reason() {
-    let extra = Extra { http: r#","max_connections":1"#, ..Extra::default() };
+    refused_requests(r#","max_connections":1"#);
+}
+
+#[test]
+fn the_thread_path_logs_and_counts_what_the_runtime_refuses() {
+    refused_requests(r#","max_connections":1,"event_loop":false"#);
+}
+
+fn refused_requests(http: &str) {
+    let extra = Extra { http, ..Extra::default() };
     let daemon = start_with(slow_origin(Duration::from_millis(700)), extra);
     let vip = daemon.vip;
     runtime().block_on(async {
@@ -298,6 +440,7 @@ fn a_request_that_the_runtime_refuses_is_logged_and_counted_by_reason() {
             ("method", "GET"),
             ("client", "127.0.0.1"),
             ("frontend", "web"),
+            ("tls_version", "1.3"),
             ("server", "-"),
             ("verdict", "-"),
         ] {

@@ -29,7 +29,7 @@ sibuna lb --tls auto --domain NAME [--domain NAME]... --server IP:PORT [options]
   --health PATH|tcp     Probe each server: GET PATH, or a TCP connect
   --firewall MODE       off | gate | shield (default: off, a plain load balancer)
   --admin SOCKET        Open the admin socket for `sibuna ctl SOCKET ...`
-  --access-log PATH|stdout  Write one JSON line per HTTP request (default: no log)
+  --access-log PATH|stdout  Write one JSON line per request or flow (default: no log)
   --print-config        Print the equivalent configuration and exit
   --format jlv|json     The printed format";
 
@@ -178,15 +178,6 @@ fn parse(args: &[String]) -> Result<Request, Mistake> {
         }
     }
     complete(&mut start, plain)?;
-    if start.access_log.is_some() && start.protocol != QuickProtocol::Http {
-        return Err(mistake(
-            "invalid option",
-            "`--access-log` logs HTTP requests, and this quick start balances TCP or UDP."
-                .to_owned(),
-            "Leave `--access-log` out, or use `--proto http`. The counters of TCP and UDP \
-             frontends are in `sibuna ctl SOCKET show stats`.",
-        ));
-    }
     if start.binds.is_empty() || start.servers.is_empty() {
         return Err(mistake(
             "missing address",
@@ -376,7 +367,10 @@ mod tests {
         let logged = "--bind :80 --server 10.0.0.1:80 --access-log stdout";
         let Ok(Request::Serve(start)) = request(logged) else { panic!("{logged} was refused") };
         assert_eq!(start.access_log.as_deref(), Some("stdout"));
-        assert_eq!(title(&format!("{logged} --proto tcp")), "invalid option");
+        // A TCP or UDP quick start logs its flows.
+        let flows = format!("{logged} --proto tcp");
+        let Ok(Request::Serve(start)) = request(&flows) else { panic!("{flows} was refused") };
+        assert_eq!(start.access_log.as_deref(), Some("stdout"));
         assert_eq!(title("--bind :80 --server 10.0.0.1:80 --format yaml"), "invalid format");
     }
 }
