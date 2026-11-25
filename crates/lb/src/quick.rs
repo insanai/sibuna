@@ -59,6 +59,9 @@ pub struct QuickAutomatic {
     pub storage: Option<String>,
     /// `global.acme.dns.hook`: the program that answers the DNS-01 challenge.
     pub dns_hook: Option<String>,
+    /// `global.acme.on_demand.ask`. With it the frontend also obtains certificates on
+    /// demand, for the names that the URL allows.
+    pub on_demand_ask: Option<String>,
 }
 
 impl QuickAutomatic {
@@ -72,6 +75,9 @@ impl QuickAutomatic {
             .collect();
         if let Some(hook) = &self.dns_hook {
             members.push(("dns", Node::Map(vec![("hook", text(hook))])));
+        }
+        if let Some(url) = &self.on_demand_ask {
+            members.push(("on_demand", Node::Map(vec![("ask", text(url))])));
         }
         members
     }
@@ -199,6 +205,9 @@ impl QuickStart {
         let mut tls = Vec::new();
         if !automatic.domains.is_empty() {
             tls.push(("auto", Node::List(automatic.domains.iter().map(text).collect())));
+            if automatic.on_demand_ask.is_some() {
+                tls.push(("on_demand", Node::Code("true".to_owned())));
+            }
         }
         if let Some(path) = &self.tls {
             tls.push(("crt", text(path)));
@@ -392,6 +401,16 @@ mod tests {
         let automatic = start.config().unwrap().automatic_https().unwrap();
         assert_eq!(automatic.options.directory, crate::LETSENCRYPT_STAGING);
         assert!(!automatic.plain_frontend);
+        assert!(!automatic.on_demand && !json.contains("on_demand"), "{json}");
+        start.automatic.on_demand_ask = Some("http://127.0.0.1:9000/allowed".to_owned());
+        let module = start.jlv();
+        assert!(module.contains("www.example.org\"], on_demand: true }"), "{module}");
+        assert!(module.contains("on_demand: { ask: \"http://127.0.0.1:9000/allowed\" }"));
+        for config in [start.config().unwrap(), Config::parse(start.json().as_bytes()).unwrap()] {
+            let automatic = config.automatic_https().unwrap();
+            let guards = automatic.options.on_demand.unwrap();
+            assert!(automatic.on_demand && guards.ask.is_some() && guards.allow.is_empty());
+        }
     }
 
     #[test]
