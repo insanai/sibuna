@@ -72,8 +72,8 @@ impl Lane {
         (self.peer, self.cert)
     }
 
-    /// Reports a request that is answered with `status` before any decision (SID 0020).
-    /// Only the in-process path has someone to tell.
+    /// Reports a request that is answered with `status` before any decision (SID 0020):
+    /// to the in-process decision, or without one to the hook of the ingress.
     pub(crate) fn note_refusal(
         &self,
         version: Version,
@@ -81,8 +81,7 @@ impl Lane {
         uri: &hyper::Uri,
         status: StatusCode,
     ) {
-        let Some(inline) = &self.inline else { return };
-        inline.refused(&crate::Refused {
+        let refused = crate::Refused {
             peer: self.peer,
             vip: self.vip,
             protocol: protocol_name(version),
@@ -90,7 +89,11 @@ impl Lane {
             method: method.as_str(),
             host: uri.host().unwrap_or_default(),
             path: uri.path(),
-        });
+        };
+        match &self.inline {
+            Some(inline) => inline.refused(&refused),
+            None => self.handoff.refused(&refused),
+        }
     }
 
     pub fn quiet_for(&self) -> Duration {

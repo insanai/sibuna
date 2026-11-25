@@ -137,6 +137,10 @@ impl Identity {
     }
 }
 
+/// Hears of a request that the protocol runtime answered itself. It must not wait: it
+/// runs on a thread of the runtime.
+pub type Refusals = Arc<dyn Fn(&Refused<'_>) + Send + Sync>;
+
 /// Owns the protocol runtime and the QUIC listeners. Dropping it cancels its tasks.
 pub struct Ingress {
     runtime: Runtime,
@@ -213,6 +217,14 @@ impl Ingress {
     /// admitted by the caller of [`Ingress::accept`]. The first admission stays.
     pub fn guard(&self, admit: Admit) {
         let _ = self.admit.set(admit);
+    }
+
+    /// Sets who hears of a request that the runtime answers itself when no in-process
+    /// decision was given: the node runs as many requests as it may, or the request
+    /// cannot be translated. With a decision, [`Decide::refused`] hears of it. The
+    /// first hook stays.
+    pub fn report_refusals(&self, report: Refusals) {
+        self.handoff.report_refusals(report);
     }
 
     /// Sends GOAWAY on live sessions so clients can direct new requests to another node.

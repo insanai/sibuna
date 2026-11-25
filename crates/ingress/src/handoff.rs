@@ -24,6 +24,9 @@ pub(crate) type Pipe = tokio::net::TcpStream;
 /// The firewall entry point and the way to reach it.
 pub(crate) struct Handoff {
     handler: Handler,
+    /// Who hears of a request that the runtime answered itself, when no in-process
+    /// decision does (SID 0020).
+    refusals: std::sync::OnceLock<crate::Refusals>,
     #[cfg(not(unix))]
     loopback: loopback::Listener,
 }
@@ -33,9 +36,22 @@ impl Handoff {
     pub fn start(handler: Handler) -> io::Result<Arc<Self>> {
         Ok(Arc::new(Self {
             handler,
+            refusals: std::sync::OnceLock::new(),
             #[cfg(not(unix))]
             loopback: loopback::Listener::start()?,
         }))
+    }
+
+    /// Sets who hears of refused requests. The first one stays.
+    pub fn report_refusals(&self, report: crate::Refusals) {
+        let _ = self.refusals.set(report);
+    }
+
+    /// Reports a request that the runtime answered itself.
+    pub fn refused(&self, refused: &crate::Refused<'_>) {
+        if let Some(report) = self.refusals.get() {
+            report(refused);
+        }
     }
 
     /// Opens a connection whose far end the firewall serves for `peer` on `vip`.
