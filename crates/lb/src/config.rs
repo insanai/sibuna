@@ -340,6 +340,7 @@ impl Config {
     /// Reads the `backends` and then the `frontends`, which name them.
     fn add_topology(&mut self, root: &mut ObjectReader<'_, '_>, adaptive: bool) -> Result<()> {
         self.plugins.plugins = crate::hooks::plugins(root)?;
+        self.plugins.judges = crate::hooks::judges(root)?;
         for (name, value) in named(root, "backends")? {
             self.pools.insert(name.into(), Backend::parse(name, value, adaptive)?);
         }

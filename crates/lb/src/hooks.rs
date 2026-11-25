@@ -6,8 +6,8 @@ use std::io::Result;
 
 use sibuna_json::{ObjectReader, Value};
 use sibuna_plugin::{
-    AgentSpec, Attach, BreakerLimits, Kind, MAX_PLUGINS, MAX_STAGE_HOOKS, OnFailure, Settings,
-    Spec, Stage, WasmSpec,
+    AgentSpec, Attach, BreakerLimits, JudgeOptions, Kind, MAX_PLUGINS, MAX_STAGE_HOOKS, OnFailure,
+    Settings, Spec, Stage, WasmSpec,
 };
 
 use crate::config::{Protocol, duration, field, invalid, required};
@@ -20,6 +20,21 @@ pub(crate) fn plugins(root: &mut ObjectReader<'_, '_>) -> Result<Vec<Spec>> {
         invalid(format!("plugins must be an object of at most {MAX_PLUGINS} named plugins"))
     })?;
     entries.iter().map(|(name, value)| plugin(name, value)).collect()
+}
+
+/// Reads the root object `hook_judges`: the threads that decide parked connections
+/// and their queue. The bounds are checked where the plugins are loaded.
+pub(crate) fn judges(root: &mut ObjectReader<'_, '_>) -> Result<JudgeOptions> {
+    let mut options = JudgeOptions::default();
+    let Some(mut r) = field(root.take_object("hook_judges"))? else { return Ok(options) };
+    if let Some(threads) = field(r.take_u64("threads"))? {
+        options.threads = small(&r, "threads", threads)?;
+    }
+    if let Some(queue) = field(r.take_u64("queue"))? {
+        options.queue = small(&r, "queue", queue)?;
+    }
+    field(r.finish())?;
+    Ok(options)
 }
 
 fn plugin(name: &str, value: &Value<'_>) -> Result<Spec> {
