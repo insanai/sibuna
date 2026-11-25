@@ -79,13 +79,13 @@ Invariants of the table:
 #. A received entry is ignored when its end has passed, or lies more than 24 hours and 60 seconds ahead of the receiver's clock.
 #. The table only advises the choice of a server for a new flow. A flow that is established holds a reservation on its server and never reads the table again. No entry, lost entry, or changed entry ends or moves an established flow.
 #. A named server serves the client only while it is eligible: in the pool, healthy, not drained, with room. Otherwise the balancer chooses, and the node learns the new choice.
-#. The table has a fixed number of slots, ``global.sticky_entries``, by default 65,536. A full bucket gives up its entry with the earliest end. A lost entry costs a client its server for new flows and nothing else.
+#. The table has a fixed number of slots, ``global.sticky_entries``, from 1,024 to 4,194,304 and by default 65,536. An entry takes 40 bytes. A full bucket gives up its entry with the earliest end. A lost entry costs a client its server for new flows and nothing else. A bucket has four slots, so a table gives up entries before it is full: filled to three quarters it had given up one client in nine. A table wants twice as many slots as clients. The size is read when the node starts.
 #. The request path takes no lock. A lookup hashes once and reads at most four slots. A write claims one slot with one compare-and-swap and gives up when another thread holds it.
 
 The table in memory
 ^^^^^^^^^^^^^^^^^^^
 
-The table is an array of slots in buckets of four. A slot is five words: a sequence number, two words of key, the server and the end. All are atomic. A writer makes the sequence odd with a compare-and-swap, stores the entry and makes the sequence even again. A reader reads the sequence, the entry and the sequence again, and takes the entry when both readings are the same even number. It tries a slot at most four times and then treats it as empty. No thread waits for another, and no read sees half of an entry.
+The table is an array of slots in buckets of four. A slot is five words: a sequence number, two words of key, the server and the end. All are atomic. A writer makes the sequence odd with a compare-and-swap, stores the entry and makes the sequence even again. A reader reads the sequence, the entry and the sequence again, and takes the entry when both readings are the same even number. It tries a slot at most 32 times and then treats it as empty. No thread waits for another, and no read sees half of an entry.
 
 The workers and the mesh thread share one table. A worker reads it for each new flow of a pool with ``sticky: table`` and writes it when it learns or refreshes. The mesh thread writes what the peers send.
 
@@ -163,9 +163,17 @@ Moving shares
 
 Each node computes for each server its free share :math:`f = s - u` and a headroom :math:`r = \max(1, \lceil u/4 \rceil)`. It *wants* :math:`r - f` when that is positive. It reports a want of at least one, with a flag, when it refused a flow for lack of share since its last status. It has a *surplus* of :math:`f - r` when that is positive.
 
-A node that hears a want from a peer gives the smaller of the want and its surplus. To a peer that refuses flows it gives the smaller of the want and the larger of its surplus and half of its free share, rounded up. So a share that nobody uses moves to the node that refuses flows within one period, and nodes that all use their shares give nothing.
+A node serves the wants that it heard once in each period, not when a datagram arrives. It gives a peer the smaller of the want and its surplus. To a peer that refuses flows it gives the smaller of the want and the larger of its surplus and half of its free share, rounded up. So a share that nobody uses moves to the node that refuses flows within two periods, and nodes that all use their shares give nothing. A want is served once: the next status of the peer states what it still wants.
 
-Three rules bound a gift. It comes from the free share, so the giver's flows stay within its share. The net amount that a node has given to one peer, :math:`g_{ij} - h_{ij}`, never exceeds its base :math:`b_i`. A node gives only to a peer that it heard in the last three periods and that it is synchronised with, as defined below.
+A node also returns what it borrowed. When its free share exceeds twice the quarter of its flows, rounded up, and it holds a net gift of a peer, it gives the excess back to that peer, up to the net gift. An idle node therefore returns to its base, and the shares of an idle cluster return to the bases.
+
+Three rules bound a gift.
+
+#. It comes from the free share, so the giver's flows stay within its share.
+#. A node lends only its base. Let :math:`o_{ij} = g_{ij} - h_{ij}` be the net amount that :math:`i` gave to :math:`j`. The positive :math:`o_{ij}` of one node never sum to more than :math:`b_i`. A node may pass a gift back to the peer it came from, and may not pass it on to a third. The restart below needs this rule.
+#. A node gives only to a peer that it heard in the last three periods and that it is synchronised with, as defined below.
+
+The second rule does not limit where the shares can go. Every node can lend its whole base to one peer, which then holds the whole limit. It limits the route: a share returns to its node before it goes to another.
 
 Admission and the gift race
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -181,13 +189,15 @@ Each node has an *epoch*: the Unix millisecond of its start. A status datagram c
 
 A node that starts is *unsynchronised* with every peer, for every server. It becomes synchronised with peer :math:`j` when a datagram of :math:`j` echoes its own new epoch. It then takes over the ledger that :math:`j` kept: its :math:`g_{ij}` becomes the :math:`h_{ji}` of the datagram, and its :math:`h_{ij}` becomes the :math:`g_{ji}`. The echo proves that :math:`j` had heard the new epoch before it sent, so :math:`j` will raise its :math:`h_{ji}` no further on behalf of the old epoch, and the two ledgers agree.
 
-While node :math:`i` is unsynchronised with :math:`j` it does not know what it gave to :math:`j`. It knows that the net amount was at most :math:`b_i`. So it counts :math:`-b_i` for that peer:
+A node that is unsynchronised with some peer does not know what it gave to that peer. By the second rule of gifts it gave at most its base to all peers together. So it counts nothing of its base, and only what the peers it is synchronised with have given to it in net:
 
 .. math::
 
-   s_i = b_i - \sum_{j\ \text{synced}} (g_{ij} - h_{ij}) - \sum_{j\ \text{unsynced}} b_i .
+   s_i = \sum_{j\ \text{synced}} \max(0,\ h_{ij} - g_{ij}) .
 
-A negative result is a share of zero. Two nodes that both restarted find each other unsynchronised with empty ledgers and both begin at zero for the pair, which is sound because neither has a flow that depends on the other.
+This is never more than its true share. Such a node gives only what it borrowed, back to its lender. When it is synchronised with every peer it counts its full share again.
+
+Two nodes that both restarted hold no ledger of their pair. Each finds the other unsynchronised and empty, and both begin the pair at zero. A gift between them from their earlier lives is forgotten. This is sound because of the second rule: a node never passed such a gift on to a third node, so forgetting it leaves the true share of each at zero or above. Without the rule it is unsound, and the model has the example: of four nodes with base 100, one borrows 100, lends 200 and restarts together with its lender. The lender gets its 100 back while the other two hold 200 each.
 
 A change of the limit, of the address of the server or of the roster makes a new ledger, under a new key. The key is a hash of the protocol, the address, the limit and the roster.
 
@@ -202,7 +212,9 @@ The status datagram
    |        |          |         |        |       |    |      got:8, want:4, f:1)  |      |
    +--------+----------+---------+--------+-------+----+---------------------------+------+
 
-The datagram has kind 7. It is addressed to one peer: ``gave`` and ``got`` are the numbers of the pair. ``got`` tells the giver what has arrived. A datagram holds 39 records. A node sends one status to each peer in each period of 500 ms, and one at once to a peer that it just gave to. A node keeps at most 1,024 ledgers over its life. A server beyond that has a share of zero.
+The datagram has kind 7. It is addressed to one peer: ``gave`` and ``got`` are the numbers of the pair. ``got`` tells the giver what has arrived. A datagram holds 39 records. A node sends its status to each peer in each period of 500 ms. A status without a record still carries the two epochs. A node keeps at most 1,024 ledgers over its life and forgets none. A server beyond that has a share of zero.
+
+Two nodes share a ledger only when they agree on its key. So every node must name the server with the same protocol, address and limit, and the same nodes of the mesh. A node whose peer does not hold the ledger never synchronises with that peer for that server, and its share stays at what the other peers lend it. ``show affinity`` shows this in the column ``synced``.
 
 The price
 ^^^^^^^^^
@@ -229,7 +241,7 @@ A cap that must hold under every partition cannot also be fully used under every
      - Its last share.
      - Until the operator removes it from ``mesh.nodes`` and restarts the nodes.
    * - A node restarts while a peer is silent.
-     - Its base, once for each silent peer. It serves on what the peers that answer give it.
+     - Its base. It serves on what the peers that answer lend it.
      - Until the silent peer answers.
    * - All nodes start and one is missing.
      - Every share. No node knows what the missing node holds.
@@ -248,9 +260,9 @@ Both run whenever the topology has a ``mesh`` and a pool that asks for them. ``m
 
    sticky table: 65536 slots, 412 learned, 96 refreshed, 12 evicted, 0 not written
    sticky mesh: 1524 sent, 1012 received, 498 applied, 0 dropped
-   share            limit  base  share  used  synced
-   http 10.0.1.1:80   300   100    180   171  2/2
-   http 10.0.1.2:80   300   100     40    12  2/2
+   server            limit   base  share   used  synced
+   http 10.0.1.1:80    300    100    180    171  2/2
+   http 10.0.1.2:80    300    100     40     12  2/2
 
 Rationale and alternatives
 --------------------------
@@ -274,13 +286,13 @@ Rationale and alternatives
 Security and operational considerations
 ---------------------------------------
 
-Both datagrams carry the tag of SID 0022 and are read only from an address of the roster. A holder of the mesh key can already ban every client. With this record it can also name a server for a client of a pool with ``sticky: table``, and it can claim to have given shares or withhold its own. It cannot raise the sum of the shares of the honest nodes above the limit by replaying their datagrams: a replay carries numbers that the receiver holds, or an epoch that it has left behind.
+Both datagrams carry the tag of SID 0022 and are read only from an address of the roster. A holder of the mesh key can already ban every client. With this record it can also name a server for a client of a pool with ``sticky: table``, and it can claim to have given shares or withhold its own. It cannot raise the sum of the shares of the honest nodes above the limit by replaying their datagrams: a replay carries numbers that the receiver holds, or an epoch that it has left behind. A replayed status of the present epoch can repeat an old want. The receiver then gives free share that the sender no longer needs, at most once in a period and never above the rules of a gift, and the sender gives it back when it is idle. A replay also makes a stopped node look present, so a gift to it is stranded until it returns.
 
 A client chooses its address and its cookie. It can fill the table with entries of its own, which evict others. An evicted client is balanced again. The keyed hash of the key keeps a client from choosing the bucket of another client, as long as the name of the pool is not its only secret: an attacker who knows the pool name can compute buckets. The damage is bounded to lost stickiness.
 
 A node with a clock ahead writes entries that win over those of its peers for the same client until the clocks agree. Entries more than 24 hours and 60 seconds ahead are ignored. A node whose clock steps back across a restart has an epoch below its old one. Its peers ignore it, it stays unsynchronised, and ``show affinity`` shows ``0/2`` in the column ``synced``. Starting it again after the clock passed the old start repairs it.
 
-The nodes must hold the same limit for a server. While a ``reload cluster`` travels, nodes with the old limit and nodes with the new one keep separate ledgers. For that time the flows are bounded by the sum of the two limits.
+The nodes must hold the same limit for a server. While a ``reload cluster`` travels, nodes with the old limit and nodes with the new one keep separate ledgers. For that time the flows are bounded by the sum of the two limits. A new ledger starts unsynchronised, so a change of the limit refuses new flows on that server until the nodes have exchanged one status, about a second. Flows under way stay. Two pools that name one server with two limits keep two ledgers, and each bounds its own flows.
 
 Backwards compatibility
 -----------------------
@@ -299,38 +311,55 @@ Acceptance criteria and implementation status
      - Status
    * - 1
      - A client that a node placed is placed on the same server by the other nodes within one second.
-     - Open.
+     - Met. ``cmd/sibuna/tests/edge_shared_affinity.rs`` starts three processes on loopback with a table on a cookie and a round-robin pool of three servers. Thirty users arrive, ten on each node. Every node held the choices of the other two 261 ms after the first request, and every user then reached the same server through every node.
    * - 2
      - A node that restarts learns the table from its peers.
-     - Open.
+     - Met. The same test kills the third node, places ten more users, waits past every send and starts the node again. It held all forty choices 258 ms after its start, from the walks of its peers, and chose for no user by itself.
    * - 3
      - A lost or evicted entry changes the choice of a new flow only. An established flow keeps its server.
-     - Open.
+     - Met at the routing interface. ``crates/lb/tests/affinity.rs`` puts a store behind the interface that forgets everything: the flow under way keeps its server and its place, and the next request is balanced. A full bucket and an ended entry are tested in ``crates/lb/src/affinity.rs``. Not shown with three processes.
    * - 4
      - The request path takes no lock, and a lookup costs less than a microsecond.
-     - Open.
+     - Met. A lookup and an admission use atomic operations only. A lookup, with the keyed hash of the client and the read of a bucket, took 172 ns in an optimised build on a table of 65,536 slots with 49,152 clients, as the mean of 400,000 lookups on one thread (``pool::learned::tests``). An unoptimised build took 3.1 microseconds. A worker hands a written key to the mesh thread with ``try_send`` on a bounded channel of the standard library, which does not wait.
    * - 5
      - The flows of all nodes on a capped server never exceed its limit.
-     - Open.
+     - Met. The process test caps one server at three flows over three nodes. The origin counts its requests under way: never more than three, while requests are held on one node and tried on all. ``quota::tests::the_cap_holds_under_loss_repetition_reordering_and_restarts`` runs random traces of two to five nodes and checks the sum after every step. The model proves the inequality.
    * - 6
      - Shares move to the node that has the demand.
-     - Open.
+     - Met. In the process test the node that receives three requests with a share of one held all three 450 ms after the first. When the flows ended, a node that had lent its share served again after 301 ms.
    * - 7
      - A node that is killed keeps its share from the others. A node that returns gets its ledger back.
-     - Open.
+     - Met. The process test kills a node whose share another node uses, and starts it again: it refuses every request for four seconds and shows a share of zero, until the borrower is idle. It then kills a node that holds its own share: the two that remain serve two flows of three for five seconds, and the third flow is served 1.25 s after the node starts again.
    * - 8
      - A forged, cut, altered or replayed datagram changes nothing.
-     - Open.
+     - Met in unit tests. ``mesh::hints::tests`` and ``mesh::shares::tests`` refuse a forged, a cut and an altered datagram of each kind, and a status that is old or of an old epoch changes nothing. Not shown with three processes.
 
 Formal model
 ------------
 
-``assets/shared-affinity.lean`` holds the model. Lean 4.19.0 checks it without libraries.
+``assets/shared-affinity.lean`` holds the model. Lean 4 checks it without libraries, with ``lean docs/sid/assets/shared-affinity.lean``. It proves:
+
+- The merge of two entries is commutative, associative and idempotent, and a repeated datagram changes nothing (``merge_comm``, ``merge_assoc``, ``merge_idem``, ``replay_is_harmless``).
+- A learned choice is larger than the entry it replaces, and a refresh keeps the server (``learn_wins``, ``refresh_keeps``). An admitted end lies within the horizon (``admitted_is_bounded``).
+- When every node holds at most what its peer gave, the shares sum to at most the limit (``shares_within_limit``). A gift and a hearing keep that condition (``give_keeps_sound``, ``hear_keeps_sound``), so it holds after every sequence of gifts and hearings, in any order and with any repetition (``cap_holds_on_every_trace``).
+- A gift from the free share leaves the flows within the share (``gift_from_free_share``).
+- Under the rule that a node lends only its base, the share that an unsynchronised node counts is at most its true share, and the full share is at least what it counted (``restarted_share_is_safe``, ``full_share_covers_counted``). Forgetting a pair that both nodes lost leaves a share of zero or more (``forgotten_pair_is_safe``). Without the rule the example of four nodes exceeds the limit.
+
+The model does not cover the epochs, the order of the two atomic operations of an admission, or time. The first is tested by the random traces of ``quota::tests``, which restart nodes and deliver old datagrams. The second is tested by ``no_flow_enters_on_a_share_that_is_given_away_while_workers_race``.
 
 Known gaps
 ----------
 
-Open.
+#. The share of a node that stops does not return after a bound. SID 0015 asked for that. It returns when the node starts again, or when the operator removes the node from the roster and restarts the others. The section on the price says why a timer cannot be sound without closing flows.
+#. A cluster that starts with one node missing serves no flow on a capped server until that node answers. A node that restarts while a peer is silent serves only on what the other peers lend it.
+#. The ledger is in memory only. A ledger on disk would remove the gap above and is not built.
+#. The roster is fixed for the life of a process. A change of ``mesh`` needs a restart of every node, and for that time nodes with two rosters keep separate ledgers.
+#. The table has no series in the metrics of SID 0020. ``show affinity`` is the only view.
+#. The table is not written to disk and no spill cache sits under it. The interface for one exists, ``AffinityStore`` with ``ClusterState::use_store`` and ``Edge::bind_with``, and one test uses it. The daemon has no option that selects another store.
+#. ``sticky: table`` on a cookie reads the ``Cookie`` field of the request only. It does not learn from the ``Set-Cookie`` of a response, so the first request of a session, which has no cookie yet, is balanced and not remembered.
+#. A status datagram has no guard against a replay within one epoch. The section on security states what such a replay can do.
+#. The process test runs on loopback without loss. Loss, repetition and reordering are tested in memory, not between processes. No test cuts the network between running processes: a killed node stands in for a partition.
+#. Stickiness by a table was measured for a lookup, not as requests per second of a loaded node.
 
 Open questions
 --------------
@@ -342,6 +371,8 @@ Review history
 --------------
 
 - 2026-11-25. Initial draft.
+- 2026-11-25. Review of the design before the code, with the model and a random simulation. Messages that move a share ("take 5") break the cap when repeated: replaced by counters that only grow. A node that restarts from its base double counts what it gave: added epochs and synchronisation. A random boot nonce cannot order two lives of a node: the epoch is the time of the start. A node that raises its own epoch is unsound when datagrams cross: removed. A lease that returns a silent share needs closed flows: rejected, and stated as the price. A re-learned choice could tie with the old one: the new end is at least one millisecond later. A reserve for each peer, and passing a loan on, exceed the limit when two nodes restart together, which the simulation found with four nodes: a node lends only its base, and an unsynchronised node counts only its loans.
+- 2026-11-25. Review of the code. Serving a want when its datagram arrives lets a replay move shares many times in a period: wants are served once in a period. An idle node kept a quarter of what it borrowed: it returns all. The share is keyed by the address of the server, as its load is, so two pools of one server share it. A test of the seqlock asserted an order between readers that the table does not promise: the test now asserts whole entries only. The reader tries a held slot 32 times, not 4. A table filled to three quarters gives up one client in nine: stated with the size. Findings that stay are in the known gaps.
 
 References
 ----------
