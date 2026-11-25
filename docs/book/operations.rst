@@ -1919,6 +1919,74 @@ Every node must name the server with the same address and the same ``max_flows``
    http 10.0.1.1:80    300    100    180    171  2/2
 
 ``share`` is what this node may hold now and ``used`` what it holds. ``synced`` counts the peers whose account of the server this node knows. While it is below the number of peers, the node serves only on what the other peers lend it. A value that stays low names a peer that is down or whose file differs. ``mesh.replicate_sticky: false`` keeps the table on its node. ``mesh.replicate_shares: false`` fixes every node at its equal share.
+One node for each client
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The router in front of a cluster chooses a node for each client, and it chooses again when a node joins or leaves. A client then reaches a node that does not know it: its sticky server, its rate counters and its UDP session are on another node. With ``forward`` in the mesh section the nodes repair this themselves. Every client address has one owner among the live nodes. A node that receives a new connection or a UDP client of another owner hands it to that owner, and the owner serves it under the client's own address.
+
+.. code-block:: text
+
+   mesh: {
+       nodes: ["10.0.0.1:7946", "10.0.0.2:7946", "10.0.0.3:7946"],
+       key_file: "/etc/sibuna/mesh.key",
+       forward: {},
+   },
+
+The empty object turns forwarding on with the defaults. Each node then listens on its mesh address at the next port, here 7947, for TCP and UDP. We open that port between the nodes and to nobody else. ``forward`` is a change of the mesh, so it takes a restart of each node, one at a time. A node without it is never chosen as an owner, so a cluster can be changed node by node.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 20 50
+
+   * - Member
+     - Default
+     - Meaning
+   * - ``port_offset``
+     - 1
+     - The forwarding port is the mesh port plus this number (1 to 1024).
+   * - ``max_flows_per_peer``
+     - 4096
+     - The most flows that a node forwards to one peer at a time. A flow above it is served by the node that received it.
+   * - ``connect_timeout``
+     - ``"250ms"``
+     - The longest wait for an owner to take a TCP connection (10 ms to 5 s). After it the receiving node serves the connection.
+
+TCP frontends, HTTP frontends and UDP frontends are forwarded. The owner ends TLS, reads the request and chooses the server, and the receiving node only passes bytes. A server behind the owner sees the client address as always: in the PROXY header of a TCP pool, in ``X-Forwarded-For`` of an HTTP pool. A UDP reply returns through the node that the client reached, so the client sees it come from the address it sent to. A flow is forwarded once at most. The node that gets a forwarded flow serves it.
+
+Nothing is lost when an owner is away. A node that cannot reach the owner within ``connect_timeout`` serves the connection itself, and gives that owner no flow for a second. A node that stops answering loses its clients to the other nodes within 1.5 seconds. A draining node says so, and takes no new flow from then on.
+
+Forwarding has limits that we should know before we rely on it.
+
+- It keeps the node of a client, not a TCP connection. When the router moves the packets of an established TCP connection to another node, that connection is reset. The client's next connection reaches its owner again.
+- HTTP/3 and frontends with ``proxy_protocol`` are served by the node that receives them.
+- It works only while the nodes are close: the mesh must be in its regional regime, with a round trip between the nodes below about 3 ms.
+- The nodes authenticate each other with the mesh key, and encrypt nothing. The network between the nodes must be as trusted as the network to the servers. It should carry a client datagram plus 76 bytes without fragmentation.
+- A forwarded flow costs one more hop each way, and a new connection costs two more round trips between the nodes. On loopback we measured 20 microseconds more for each exchange and 80 to 120 microseconds more for a new connection.
+
+``sibuna ctl SOCKET show stats`` and the metrics listener show what forwarding does.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 45 55
+
+   * - Series
+     - Meaning
+   * - ``sibuna_edge_forward_active``
+     - 1 while this node forwards. 0 while its mesh is alone or wide apart.
+   * - ``sibuna_edge_forward_peers_eligible``
+     - The peers that can take a flow now. It should be the number of other nodes.
+   * - ``sibuna_edge_forward_flows_out``
+     - The flows that this node forwards now.
+   * - ``sibuna_edge_forward_streams_out_total``, ``_streams_in_total``
+     - Connections handed to a peer, and taken from peers.
+   * - ``sibuna_edge_forward_datagrams_out_total``, ``_datagrams_in_total``, ``_datagrams_returned_total``
+     - Datagrams sent to an owner, taken from peers, and replies passed back to a client.
+   * - ``sibuna_edge_forward_local_total{reason}``
+     - Flows of another owner that this node served: ``declined``, ``connect_failed``, ``timeout``, ``peer_limit``. A steady rise names a peer that is unreachable or full.
+   * - ``sibuna_edge_forward_denied_total``
+     - Connections closed because the owner's rate limit denied the client.
+   * - ``sibuna_edge_forward_rejected_total{reason}``
+     - What the forwarding port refused: ``stranger``, ``bad_tag``, ``stale``, ``malformed``, ``unknown``. ``bad_tag`` means a node with another key file. ``stranger`` means the port is reachable from outside the cluster.
 
 Replacing the binary without closing the port
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

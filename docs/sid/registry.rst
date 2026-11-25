@@ -87,6 +87,9 @@ Discussion registry
    * - 0025
      - :doc:`records/0025-shared-affinity-and-fleet-caps`
      - discussion
+   * - 0026
+     - :doc:`records/0026-peer-forwarding`
+     - discussion
    * - 0028
      - :doc:`records/0028-database-authority`
      - discussion

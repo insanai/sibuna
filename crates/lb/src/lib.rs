@@ -53,6 +53,8 @@ pub use route::{FieldEdit, Redirect, RoutePolicy};
 pub use traffic::{Passive, PoolPolicy, Sticky};
 mod flowlog;
 pub use flowlog::FlowEnd;
+mod forward;
+pub use forward::ForwardConfig;
 mod proxy_header;
 pub use proxy_header::{MAX_PROXY_HEADER, ProxyHeader, ProxyHeaderError, parse_proxy_header};
 mod stats;
@@ -99,6 +101,8 @@ enum Ready {
     Proxy(u64),
     Udp(Client),
     Wake,
+    /// A socket of the forwarding port (SID 0026).
+    Peer(forward::Event),
 }
 
 /// A connection of a PROXY frontend that has not sent its header yet (SID 0020).
@@ -162,6 +166,9 @@ struct DatagramFlow {
     payload_credit: usize,
     /// Whether the client address is validated, on a QUIC frontend (SID 0032).
     validation: quic_edge::Validation,
+    /// The peer that forwarded the last datagram of the client (SID 0026). The replies
+    /// return through it.
+    via: Option<forward::Via>,
 }
 
 /// A single-owner packet worker with bounded flows and a separate TCP connector queue.
@@ -201,6 +208,8 @@ pub struct Edge {
     drops: u64,
     /// Kernel options that a listener asked for and did not get (SID 0032).
     listen_faults: Vec<ListenFault>,
+    /// Peer forwarding, once [`Edge::begin_forwarding`] opened its port (SID 0026).
+    peering: Option<Box<forward::Peering>>,
 }
 
 /// Opens the socket of one listener. With `shared` it may share its address with
@@ -378,6 +387,7 @@ impl Edge {
             draining: false,
             drops: 0,
             listen_faults,
+            peering: None,
         })
     }
 
@@ -464,6 +474,7 @@ impl Edge {
                 Ready::Listener(id) => self.receive(id),
                 Ready::Udp(key) => self.reply(key),
                 Ready::Wake => self.waker.drain(),
+                Ready::Peer(event) => self.peer_event(event),
                 Ready::Hello(id) => {
                     if !self.inspect(id) {
                         self.drops = self.drops.saturating_add(1);
@@ -519,6 +530,7 @@ impl Edge {
             }
         }
         self.expire_inspections(now);
+        self.sweep_peering(now);
     }
 
     fn pause(&mut self, id: usize) {
@@ -539,7 +551,7 @@ impl Edge {
                 }
                 Socket::Udp(socket) => socket
                     .recv_from(&mut self.buffer)
-                    .map(|(size, peer)| self.forward((id, peer), size)),
+                    .map(|(size, peer)| self.forward((id, peer), size, None)),
             };
             match result {
                 Ok(false) => self.drops = self.drops.saturating_add(1),
@@ -583,6 +595,10 @@ impl Edge {
         let Some(permit) = self.budget.reserve() else {
             return self.refuse(listener, peer, Refusal::FlowLimit);
         };
+        // A client that another node owns goes to that node (SID 0026).
+        if let Some(owner) = self.owner_of_stream(peer) {
+            return self.begin_handoff(listener, client, peer, permit, owner);
+        }
         self.admit(listener, client, peer, permit, None)
     }
 
@@ -667,6 +683,21 @@ impl Edge {
         permit: FlowPermit,
         named: Option<SocketAddr>,
     ) -> bool {
+        self.admit_to(listener, client, peer, None, permit, named)
+    }
+
+    /// As [`Edge::admit`]. `reached` is the address that the client reached on the node
+    /// that forwarded the connection (SID 0026). It replaces the local address of the
+    /// socket, which is then the forwarding port.
+    fn admit_to(
+        &mut self,
+        listener: usize,
+        client: TcpStream,
+        peer: SocketAddr,
+        reached: Option<SocketAddr>,
+        permit: FlowPermit,
+        named: Option<SocketAddr>,
+    ) -> bool {
         self.listeners[listener].route.info.stats.flow();
         if self.binds[listener].0 == Protocol::Http {
             let bind = self.binds[listener].1;
@@ -675,7 +706,7 @@ impl Edge {
         }
         self.next_id = self.next_id.wrapping_add(1);
         let id = self.next_id;
-        let Ok(vip) = client.local_addr() else { return false };
+        let Some(vip) = reached.or_else(|| client.local_addr().ok()) else { return false };
         let mut line = self.begin_line(listener, peer);
         // Until a server is chosen, the flow can only end for want of one.
         flowlog::mark(&mut line, "no_server");
@@ -747,7 +778,11 @@ impl Edge {
 
     fn finish_connects(&mut self, now: Instant) {
         while let Ok((id, result)) = self.connectors.done.try_recv() {
-            let Some(mut pending) = self.pending.remove(&id) else { continue };
+            let Some(mut pending) = self.pending.remove(&id) else {
+                // The connect to the owner of a client, not to a server (SID 0026).
+                self.handoff_connected(id, result);
+                continue;
+            };
             match result {
                 Connect::Ready(origin) => {
                     pending.ticket.observe(pending.started, now);
@@ -854,23 +889,39 @@ impl Edge {
                 wire_credit: 0,
                 payload_credit: 0,
                 validation: quic_edge::Validation::new(self.listeners[key.0].route.quic),
+                via: None,
             },
         );
         true
     }
 
-    fn forward(&mut self, key: Client, size: usize) -> bool {
+    /// Sends the datagram of `size` bytes in the buffer to the server of its client.
+    /// `via` is the peer that forwarded it (SID 0026), or `None` for a datagram that
+    /// the client sent to this node: only that one may be forwarded.
+    fn forward(&mut self, key: Client, size: usize, via: Option<forward::Via>) -> bool {
         if !self.allowed(key.0, key.1) {
             self.stats.refuse(Refusal::UdpRateLimit);
             return false;
         }
         let now = Instant::now();
-        if !self.udp.contains_key(&key)
-            && !(self.may_open(key, size) && self.open_mapping(key, now))
-        {
-            return false;
+        if !self.udp.contains_key(&key) {
+            // A datagram that may open no mapping here may open none on a peer either.
+            if !self.may_open(key, size) {
+                return false;
+            }
+            if via.is_none() && self.peering.is_some() {
+                match self.forward_datagram(key, size, now) {
+                    forward::Outcome::Sent => return true,
+                    forward::Outcome::Dropped => return false,
+                    forward::Outcome::Local => {}
+                }
+            }
+            if !self.open_mapping(key, now) {
+                return false;
+            }
         }
         let Some(flow) = self.udp.get_mut(&key) else { return false };
+        flow.via = via;
         flow.validation.see_request(&self.buffer[..size]);
         match flow.origin.send(&self.buffer[..size]) {
             Ok(n) if n == size => {
@@ -924,7 +975,14 @@ impl Edge {
                 if let Some(sent) = flow.first_request.take() {
                     flow.ticket.observe(sent, Instant::now());
                 }
-                if listener.send_to(&self.buffer[..n], key.1).is_ok() {
+                let reply = &self.buffer[..n];
+                let left = match flow.via {
+                    None => listener.send_to(reply, key.1).is_ok(),
+                    Some(via) => {
+                        forward::send_back(self.peering.as_deref_mut(), via, key.0, key.1, reply)
+                    }
+                };
+                if left {
                     // A validated mapping may have spent its credit already.
                     flow.wire_credit = flow.wire_credit.saturating_sub(n + overhead);
                     flow.payload_credit = flow.payload_credit.saturating_sub(n);
@@ -950,6 +1008,13 @@ fn connected_udp(addr: SocketAddr) -> io::Result<UdpSocket> {
     socket.connect(addr)?;
     socket.set_nonblocking(true)?;
     Ok(socket)
+}
+
+/// The listener address of a connection that the listener `bind` accepted and whose
+/// socket has the local address `local`. A connection that a peer forwarded arrived on
+/// the forwarding port (SID 0026): `bind` then stands for the address.
+pub fn listener_address(bind: SocketAddr, local: SocketAddr) -> SocketAddr {
+    if local.port() == bind.port() { local } else { bind }
 }
 
 /// File table or socket buffer exhaustion is recoverable as existing flows finish.

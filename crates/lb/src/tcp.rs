@@ -134,11 +134,25 @@ pub(crate) fn transient(error: &io::Error) -> bool {
     matches!(error.kind(), io::ErrorKind::WouldBlock | io::ErrorKind::Interrupted)
 }
 
+/// What a relayed stream holds of its far side until it ends.
+pub(crate) enum Hold {
+    /// The reservation of a server of a pool.
+    Server { _ticket: Ticket },
+    /// A place under the bound of the peer that owns the client (SID 0026).
+    Peer(crate::forward::Slot),
+}
+
+impl From<Ticket> for Hold {
+    fn from(ticket: Ticket) -> Self {
+        Self::Server { _ticket: ticket }
+    }
+}
+
 pub(crate) struct Stream {
     _permit: crate::FlowPermit,
     pub client: TcpStream,
     pub origin: TcpStream,
-    _ticket: Ticket,
+    hold: Hold,
     up: Direction,
     down: Direction,
     timeout: Duration,
@@ -161,7 +175,7 @@ impl Stream {
         permit: crate::FlowPermit,
         client: TcpStream,
         origin: TcpStream,
-        ticket: Ticket,
+        hold: impl Into<Hold>,
         timeout: Duration,
         pending: Vec<u8>,
         line: Option<crate::flowlog::FlowGuard>,
@@ -173,7 +187,7 @@ impl Stream {
             _permit: permit,
             client,
             origin,
-            _ticket: ticket,
+            hold: hold.into(),
             timeout,
             up: Direction { pending, stalled, ..Default::default() },
             down: Direction::default(),
@@ -203,6 +217,10 @@ impl Stream {
     }
 
     pub fn expired(&self, now: Instant) -> bool {
+        // A peer that fell silent took the far side of its streams with it.
+        if matches!(&self.hold, Hold::Peer(slot) if slot.is_lost()) {
+            return true;
+        }
         [Some(self.last), self.up.stalled, self.down.stalled]
             .into_iter()
             .flatten()

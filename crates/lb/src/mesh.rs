@@ -67,6 +67,9 @@ pub struct MeshConfig {
     /// The nodes exchange their shares of the servers that are capped for the fleet
     /// (`mesh.replicate_shares`, SID 0025). Without it every node keeps its base.
     pub replicate_shares: bool,
+    /// A flow of a client that another node owns is handed to that node
+    /// (`mesh.forward`, SID 0026). `None` leaves forwarding off.
+    pub forward: Option<crate::ForwardConfig>,
 }
 
 impl MeshConfig {
@@ -111,6 +114,11 @@ impl MeshConfig {
         let accept_config = field(r.take_bool("accept_config"))?.unwrap_or(false);
         let replicate_sticky = field(r.take_bool("replicate_sticky"))?.unwrap_or(true);
         let replicate_shares = field(r.take_bool("replicate_shares"))?.unwrap_or(true);
+        let forward =
+            field(r.take_object("forward"))?.map(crate::ForwardConfig::parse).transpose()?;
+        if let Some(forward) = &forward {
+            forward.check(&[&peers[..], &[listen]].concat())?;
+        }
         field(r.finish())?;
         Ok(Self {
             listen,
@@ -121,6 +129,7 @@ impl MeshConfig {
             accept_config,
             replicate_sticky,
             replicate_shares,
+            forward,
         })
     }
 }
@@ -908,6 +917,7 @@ mod tests {
             accept_config: false,
             replicate_sticky: true,
             replicate_shares: true,
+            forward: None,
         };
         let secret = [7; 32];
         let mesh = Mesh::start(&spec, &secret, [9; 16]).expect("start");
@@ -955,6 +965,7 @@ mod tests {
             accept_config: false,
             replicate_sticky: true,
             replicate_shares: true,
+            forward: None,
         };
         let mesh = Mesh::start(&spec, &[7; 32], [boot; 16]).expect("start");
         let heard = Heard::default();

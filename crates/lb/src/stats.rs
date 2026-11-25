@@ -250,6 +250,8 @@ pub struct Stats {
     proxy_rejected: AtomicU64,
     refused: [AtomicU64; Refusal::ALL.len()],
     flow_log_dropped: AtomicU64,
+    /// What peer forwarding did (SID 0026). The series appear once it is on.
+    pub(crate) forward: Arc<crate::forward::Counters>,
     /// The wall-clock second of the last refusal line, and the lines of that second.
     refusal_lines: AtomicU64,
 }
@@ -490,6 +492,7 @@ impl Stats {
             let count = self.refusal_count(reason);
             writeln!(out, "sibuna_edge_refused_total{{reason=\"{}\"}} {count}", reason.name())?;
         }
+        self.forward.write_prometheus(out)?;
         let fronts = self.fronts.lock().unwrap_or_else(PoisonError::into_inner).clone();
         write_fronts(out, &fronts)?;
         let servers = self.servers.lock().unwrap_or_else(PoisonError::into_inner).clone();
