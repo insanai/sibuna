@@ -56,12 +56,12 @@ msgid "How does Sibuna compare?"
 msgstr "كيف يقارَن Sibuna بغيره؟"
 
 #: ../../learning.rst:15
-#, fuzzy
-#| msgid "Part II: lineage and the feature table; Part VIII: measurements."
 msgid ""
 "Part II: lineage and the feature tables; Part X: measurements beside "
 "Anubis and HAProxy."
-msgstr "الجزء الثاني: نسب الأفكار وجدول الميزات؛ الجزء الثامن: القياسات."
+msgstr ""
+"الجزء الثاني: نسب الأفكار وجداول الميزات؛ الجزء العاشر: القياسات إلى جانب "
+"Anubis وHAProxy."
 
 #: ../../learning.rst:16
 msgid "What does a session mean?"
@@ -91,57 +91,54 @@ msgstr "الجزء السابع: رسائل العامل، والذاكرة، و
 
 #: ../../learning.rst:22
 msgid "How does one node balance load?"
-msgstr ""
+msgstr "كيف توازن عقدة واحدة الحمل؟"
 
 #: ../../learning.rst:23
 msgid ""
 "Part VIII: flows, workers, choosing a server, admission at the socket, "
 "hooks."
 msgstr ""
+"الجزء الثامن: التدفقات، والعمال، واختيار الخادم، والقبول عند المقبس، "
+"والخطافات."
 
 #: ../../learning.rst:24
 msgid "How do several nodes act as one?"
-msgstr ""
+msgstr "كيف تعمل عقد عدة كأنها واحدة؟"
 
 #: ../../learning.rst:25
 msgid "Part IX: the mesh, shared affinity, fleet caps, forwarding, handoff."
 msgstr ""
+"الجزء التاسع: الشبكة المتداخلة، وتثبيت الجلسات المشترك، وحدود الأسطول، "
+"والتمرير، والتسليم."
 
 #: ../../learning.rst:26
 msgid "How do we know it works?"
 msgstr "كيف نعرف أنه يعمل؟"
 
 #: ../../learning.rst:27
-#, fuzzy
-#| msgid "Part VIII: three harnesses and what each excludes."
 msgid "Part X: three harnesses and what each excludes."
-msgstr "الجزء الثامن: ثلاث منظومات قياس وما تستبعده كل منها."
+msgstr "الجزء العاشر: ثلاث منظومات قياس وما تستبعده كل منها."
 
 #: ../../learning.rst:28
 msgid "How do we run it?"
 msgstr "كيف نشغله؟"
 
 #: ../../learning.rst:29
-#, fuzzy
-#| msgid ""
-#| "Part IX: flags, topologies, policy, storage, clustering, packaging."
 msgid ""
 "Part XI: flags, the edge topology, certificates, policy, storage, "
 "clustering, packaging."
 msgstr ""
-"الجزء التاسع: الخيارات، وبنى النشر، والسياسة، والتخزين، والعنقدة، "
-"والتحزيم."
+"الجزء الحادي عشر: الخيارات، وبنية نشر الحافة، والشهادات، والسياسة، "
+"والتخزين، والعنقدة، والتحزيم."
 
 #: ../../learning.rst:30
 msgid "What was that error?"
 msgstr "ما معنى ذلك الخطأ؟"
 
 #: ../../learning.rst:31
-#, fuzzy
-#| msgid "Part X: endpoints, statuses, errors, schema; Part XI: the card."
 msgid "Part XII: endpoints, statuses, errors, schema; Part XIII: the card."
 msgstr ""
-"الجزء العاشر: نقاط النهاية، والحالات، والأخطاء، والمخطط؛ الجزء الحادي "
+"الجزء الثاني عشر: نقاط النهاية، والحالات، والأخطاء، والمخطط؛ الجزء الثالث "
 "عشر: البطاقة."
 
 #: ../../learning.rst:33
@@ -149,12 +146,6 @@ msgid "Three Reading Paths"
 msgstr "ثلاثة مسارات للقراءة"
 
 #: ../../learning.rst:36
-#, fuzzy
-#| msgid ""
-#| "*Learning the design.* Parts I to IV in order, then the worked trace "
-#| "in Part VI, then Part VII. Do the exercises; compare with the "
-#| "solutions at the back only afterwards. Return to Part V when a trace "
-#| "reaches a shared table or a borrowed slice."
 msgid ""
 "*Learning the design.* Parts I to IV in order, then the worked trace in "
 "Part VI, then Part VII. For the load balancer, Part VIII and then Part "
@@ -163,17 +154,12 @@ msgid ""
 "to Part V when a trace reaches a shared table or a borrowed slice."
 msgstr ""
 "*تعلم التصميم.* الأجزاء من الأول إلى الرابع بالترتيب، ثم التتبع المحلول "
-"في الجزء السادس، ثم الجزء السابع. حلّ التمارين، ولا تقارن بالحلول في آخر "
-"الكتاب إلا بعد ذلك. وعُد إلى الجزء الخامس عندما يصل التتبع إلى جدول مشترك "
-"أو مقطع مستعار."
+"في الجزء السادس، ثم الجزء السابع. ولموازن الحمل، الجزء الثامن ثم الجزء "
+"التاسع؛ ولا يحتاجان إلا إلى الجزء الأول وأفكار الملكية في الجزء الخامس. "
+"حلّ التمارين، ولا تقارن بالحلول في آخر الكتاب إلا بعد ذلك. وعُد إلى الجزء "
+"الخامس عندما يصل التتبع إلى جدول مشترك أو مقطع مستعار."
 
 #: ../../learning.rst:37
-#, fuzzy
-#| msgid ""
-#| "*Operating a deployment.* Part IX, then Part XI, with Part X open for "
-#| "lookups. Read the \"Feature Comparison\" in Part II before choosing a "
-#| "surface, and the \"Whole-Product Comparison\" in Part VIII before "
-#| "choosing worker and connection limits."
 msgid ""
 "*Operating a deployment.* Part XI, then Part XIII, with Part XII open for "
 "lookups. Read Parts VIII and IX for the reasons behind the settings. Read "
@@ -181,18 +167,13 @@ msgid ""
 "\"Whole-Product Comparison\" in Part X before choosing worker and "
 "connection limits."
 msgstr ""
-"*تشغيل نشر.* الجزء التاسع، ثم الجزء الحادي عشر، مع إبقاء الجزء العاشر "
-"مفتوحًا للبحث. اقرأ \"مقارنة الميزات\" في الجزء الثاني قبل اختيار الوضع، "
-"و\"مقارنة المنتجات الكاملة\" في الجزء الثامن قبل اختيار حدود العمال "
+"*تشغيل نشر.* الجزء الحادي عشر، ثم الجزء الثالث عشر، مع إبقاء الجزء الثاني "
+"عشر مفتوحًا للبحث. اقرأ الجزأين الثامن والتاسع لمعرفة الأسباب وراء "
+"الإعدادات. واقرأ \"مقارنة الميزات\" في الجزء الثاني قبل اختيار الوضع، "
+"و\"مقارنة المنتجات الكاملة\" في الجزء العاشر قبل اختيار حدود العمال "
 "والاتصالات."
 
 #: ../../learning.rst:38
-#, fuzzy
-#| msgid ""
-#| "*Changing the code.* Parts V and VI, the source anchors in every "
-#| "chapter, and the SID records they cite. Part VIII explains which "
-#| "harness will catch a regression in what we touched; Part II lists the "
-#| "constraints a change must keep."
 msgid ""
 "*Changing the code.* Parts V and VI, the source anchors in every chapter, "
 "and the SID records they cite. Part X explains which harness will catch a "
@@ -200,7 +181,7 @@ msgid ""
 "must keep."
 msgstr ""
 "*تغيير الشيفرة.* الجزءان الخامس والسادس، ومراسي المصدر في كل فصل، وسجلات "
-"SID التي تستشهد بها. يشرح الجزء الثامن أي منظومة قياس ستكشف تراجعًا فيما "
+"SID التي تستشهد بها. يشرح الجزء العاشر أي منظومة قياس ستكشف تراجعًا فيما "
 "غيّرناه؛ ويسرد الجزء الثاني القيود التي يجب أن يحافظ عليها أي تغيير."
 
 #: ../../learning.rst:40
@@ -225,17 +206,6 @@ msgstr ""
 "وملفها؛ والإطارات المعنونة \"اشرح اللامتغير\" تطلب منا أن نعيد شرح الفكرة."
 
 #: ../../learning.rst:45
-#, fuzzy
-#| msgid ""
-#| "In equations, :math:`b` is Hashcash difficulty in bits, :math:`n` is "
-#| "sequential-work depth, :math:`t` is the number of openings, :math:`p` "
-#| "is success probability per trial, :math:`K` is the number of trials, "
-#| ":math:`T` is a rate limiter's emission interval, :math:`\\tau` its "
-#| "burst tolerance, and :math:`Q` is a queue capacity. A symbol is local "
-#| "to its section unless stated otherwise. Nanoseconds and requests per "
-#| "second in Part VIII are measurements from a named run. Numbers in "
-#| "worked examples are chosen inputs, not benchmark claims. Statistical "
-#| "models state their assumptions before drawing conclusions."
 msgid ""
 "In equations, :math:`b` is Hashcash difficulty in bits, :math:`n` is "
 "sequential-work depth, :math:`t` is the number of openings, :math:`p` is "
@@ -253,7 +223,8 @@ msgstr ""
 "العمل المتسلسل، و\\ :math:`t` عدد عمليات الفتح، و\\ :math:`p` احتمال "
 "النجاح في كل محاولة، و\\ :math:`K` عدد المحاولات، و\\ :math:`T` فاصل "
 "الإصدار لمحدد المعدل، و\\ :math:`\\tau` تسامحه مع الدفعات، و\\ :math:`Q` "
-"سعة الطابور. الرمز محلي في قسمه ما لم يُذكر غير ذلك. والنانوثواني "
-"والطلبات في الثانية في الجزء الثامن قياسات من تشغيل مسمى. والأرقام في "
-"الأمثلة المحلولة مدخلات مختارة، لا ادعاءات قياس أداء. وتذكر النماذج "
-"الإحصائية افتراضاتها قبل استخلاص النتائج."
+"سعة الطابور. وفي الجزأين الثامن والتاسع، :math:`n` عدد الخوادم أو العقد، "
+"و\\ :math:`c` حد الحمل المحدود. الرمز محلي في قسمه ما لم يُذكر غير ذلك. "
+"والنانوثواني والطلبات في الثانية في الجزء العاشر قياسات من تشغيل مسمى. "
+"والأرقام في الأمثلة المحلولة مدخلات مختارة، لا ادعاءات قياس أداء. وتذكر "
+"النماذج الإحصائية افتراضاتها قبل استخلاص النتائج."

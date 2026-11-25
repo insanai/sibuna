@@ -23,14 +23,6 @@ msgid "Part II: Prior Art and the Design Space"
 msgstr "الجزء الثاني: الأعمال السابقة وفضاء التصميم"
 
 #: ../../prior-art.rst:4
-#, fuzzy
-#| msgid ""
-#| "We place Sibuna among the systems it learned from: client puzzles and "
-#| "sequential work from the cryptography literature, signature and "
-#| "semantic application firewalls, proof-of-work interstitials, and "
-#| "hosted edge networks. We then compare the four tools an operator is "
-#| "most likely to weigh against each other, feature by feature, and "
-#| "record which facts were checked."
 msgid ""
 "We place Sibuna among the systems it learned from: client puzzles and "
 "sequential work from the cryptography literature, signature and semantic "
@@ -44,7 +36,8 @@ msgstr ""
 "أدبيات التشفير، وجدران حماية التطبيقات القائمة على التوقيعات والدلالة، "
 "والصفحات الوسيطة لإثبات العمل، وشبكات الحافة المستضافة. ثم نقارن، ميزةً "
 "ميزة، الأدوات الأربع التي يرجح أن يوازن المشغل بينها، ونسجل الحقائق التي "
-"تحققنا منها."
+"تحققنا منها. وأخيرًا نضع موازن الحمل على الحافة من الجزء الثامن إلى جانب "
+"HAProxy وEnvoy."
 
 #: ../../prior-art.rst:6
 msgid "Where Sibuna Comes From"
@@ -55,14 +48,6 @@ msgid "Objectives"
 msgstr "الأهداف"
 
 #: ../../prior-art.rst:11
-#, fuzzy
-#| msgid ""
-#| "By the end of this chapter, we should be able to trace the lineage of "
-#| "client puzzles from 1992 to the sequential-work constructions of 2018, "
-#| "name the three architectural ideas Sibuna combines, place Sibuna, "
-#| "Anubis, SafeLine, and the Cloudflare WAF in one design space, and say "
-#| "which comparison claims were verified and which were only read from "
-#| "documentation."
 msgid ""
 "By the end of this chapter, we should be able to trace the lineage of "
 "client puzzles from 1992 to the sequential-work constructions of 2018, "
@@ -75,8 +60,9 @@ msgstr ""
 "بنهاية هذا الفصل، ينبغي أن نتمكن من تتبع نسب ألغاز العملاء من عام 1992 "
 "إلى بناءات العمل المتسلسل عام 2018، وتسمية الأفكار المعمارية الثلاث التي "
 "يجمعها Sibuna، ووضع Sibuna وAnubis وSafeLine وCloudflare WAF في فضاء "
-"تصميم واحد، وبيان ادعاءات المقارنة التي تحققنا منها وتلك التي قرأناها من "
-"الوثائق فقط."
+"تصميم واحد، وتسمية الأوراق البحثية التي تقوم عليها الجدولة والتخزين "
+"المؤقت في موازن الحمل على الحافة، ومقارنته بـ HAProxy وEnvoy، وبيان "
+"ادعاءات المقارنة التي تحققنا منها وتلك التي قرأناها من الوثائق فقط."
 
 #: ../../prior-art.rst:13
 msgid "Client Puzzles and Sequential Work"
@@ -529,21 +515,6 @@ msgid "Feature Comparison"
 msgstr "مقارنة الميزات"
 
 #: ../../prior-art.rst:132
-#, fuzzy
-#| msgid ""
-#| "The four tables below compare Sibuna with the three tools most often "
-#| "mentioned alongside it. Facts about the other products were read from "
-#| "their public documentation and release artefacts in September 2026: "
-#| "Anubis 1.27.0 (MIT licence, Go), SafeLine community edition 9.x "
-#| "(GPL-3.0 management code around closed detector images, Docker "
-#| "Compose), and the Cloudflare WAF developer documentation. Anubis was "
-#| "also run on the benchmark host; SafeLine and Cloudflare were not (Part "
-#| "VIII explains why). A dash means the product does not offer the "
-#| "feature; a plan name means the feature exists but only on that plan. "
-#| "Each Sibuna measurement names the committed result file it comes from. "
-#| "The TLS fingerprint row was checked in October 2026, against the "
-#| "Anubis changelog (1.21.0 and 1.26.0), the SafeLine release notes "
-#| "(8.10.0 and 9.2.0), and Cloudflare's page \"JA3/JA4 fingerprint\"."
 msgid ""
 "The four tables below compare Sibuna with the three tools most often "
 "mentioned alongside it. Facts about the other products were read from "
@@ -565,7 +536,7 @@ msgstr ""
 "edition 9.x (شفرة إدارة بترخيص GPL-3.0 حول صور كاشف مغلقة، مع Docker "
 "Compose)، ووثائق المطورين الخاصة بـ Cloudflare WAF. وشُغِّل Anubis أيضًا "
 "على مضيف قياس الأداء؛ ولم يُشغَّل SafeLine ولا Cloudflare (يشرح الجزء "
-"الثامن السبب). وتعني الشرطة أن المنتج لا يقدم الميزة؛ ويعني اسم الخطة أن "
+"العاشر السبب). وتعني الشرطة أن المنتج لا يقدم الميزة؛ ويعني اسم الخطة أن "
 "الميزة موجودة لكن في تلك الخطة فقط. ويذكر كل قياس لـ Sibuna ملف النتائج "
 "المودَع في المستودع الذي أُخذ منه. وقد روجع صف بصمة TLS في أكتوبر 2026 "
 "مقابل سجل تغييرات Anubis (1.21.0 و1.26.0)، وملاحظات إصدار SafeLine "
@@ -605,17 +576,14 @@ msgid "Runs as"
 msgstr "طريقة التشغيل"
 
 #: ../../prior-art.rst:145
-#, fuzzy
-#| msgid ""
-#| "One binary; reverse proxy or forward auth; optional SQLite file or "
-#| "shared PostgreSQL database"
 msgid ""
 "One binary; reverse proxy or forward auth; optional SQLite file or shared "
 "PostgreSQL database; or an edge load balancer with the firewall per route "
 "(Part VIII)"
 msgstr ""
 "ملف تنفيذي واحد؛ وكيل عكسي أو forward auth؛ ملف SQLite اختياري أو قاعدة "
-"بيانات PostgreSQL مشتركة"
+"بيانات PostgreSQL مشتركة؛ أو موازن حمل على الحافة مع الجدار الناري لكل "
+"مسار (الجزء الثامن)"
 
 #: ../../prior-art.rst:146
 msgid "One Go binary; reverse proxy or forward auth"
@@ -966,17 +934,14 @@ msgid "Multi-node"
 msgstr "العقد المتعددة"
 
 #: ../../prior-art.rst:237
-#, fuzzy
-#| msgid ""
-#| "One PostgreSQL database shared by every node for policy and "
-#| "reputation; shared seed; sticky challenge verification"
 msgid ""
 "Daemon: one PostgreSQL database shared by every node for policy and "
 "reputation; shared seed; sticky challenge verification. Edge: a mesh "
 "shares bans (SID 0022)"
 msgstr ""
-"قاعدة بيانات PostgreSQL واحدة تتشاركها كل العقد للسياسة والسمعة؛ بذرة "
-"مشتركة؛ تحقق من التحدي مثبت على العقدة المُصدرة"
+"البرنامج الخدمي: قاعدة بيانات PostgreSQL واحدة تتشاركها كل العقد للسياسة "
+"والسمعة؛ بذرة مشتركة؛ تحقق من التحدي مثبت على العقدة المُصدرة. الحافة: "
+"شبكة متداخلة تتشارك الحظر (SID 0022)"
 
 #: ../../prior-art.rst:238
 msgid "Shared signing key; shared Valkey store"
@@ -1022,6 +987,8 @@ msgstr "إنهاء TLS"
 msgid ""
 "Daemon: \\- (ingress). Edge: **Yes**, with automatic HTTPS (SID 0021)"
 msgstr ""
+"البرنامج الخدمي: \\- (وكيل الدخول). الحافة: **نعم**، مع HTTPS التلقائي "
+"(SID 0021)"
 
 #: ../../prior-art.rst:259
 msgid "\\- (ingress)"
@@ -1045,10 +1012,8 @@ msgid "Measured on the benchmark host"
 msgstr "مقيس على مضيف قياس الأداء"
 
 #: ../../prior-art.rst:268
-#, fuzzy
-#| msgid "**Yes** (Part VIII)"
 msgid "**Yes** (Part X)"
-msgstr "**نعم** (الجزء الثامن)"
+msgstr "**نعم** (الجزء العاشر)"
 
 #: ../../prior-art.rst:270
 msgid "\\- (Docker only)"
@@ -1108,18 +1073,6 @@ msgid "Current product boundary"
 msgstr "حدود المنتج الحالية"
 
 #: ../../prior-art.rst:282
-#, fuzzy
-#| msgid ""
-#| "Sibuna leaves ingress TLS termination to the deployment proxy and does "
-#| "not score bots with a trained model or publish paid signatures. It "
-#| "matches the JA4 fingerprint that a trusted ingress computes; it cannot "
-#| "compute one itself (SID 0014, Part IX). Its opt-in console provides "
-#| "authenticated dashboards, country enrichment, policy editing, "
-#| "investigation and cluster management. Country lookup and storage work "
-#| "run outside request classification. SID 0007 is Committed, and the "
-#| "console passes its browser workflows (SID 0010). Its formal "
-#| "performance isolation gate, with eight active dashboards under load, "
-#| "is not yet measured; Part VIII records what is."
 msgid ""
 "The firewall daemon leaves TLS termination to the deployment proxy; the "
 "edge terminates TLS itself (Part VIII). Sibuna does not score bots with a "
@@ -1135,9 +1088,12 @@ msgid ""
 "gate, with eight active dashboards under load, is not yet measured; Part "
 "VIII records what is."
 msgstr ""
-"يترك Sibuna إنهاء TLS الوارد لوكيل النشر، ولا يقيّم الروبوتات بنموذج "
-"مدرَّب ولا ينشر توقيعات مدفوعة. وهو يطابق بصمة JA4 التي يحسبها وكيل دخول "
-"موثوق؛ ولا يستطيع حسابها بنفسه (SID 0014، الجزء التاسع). وتوفر وحدة "
+"يترك البرنامج الخدمي للجدار الناري إنهاء TLS لوكيل النشر؛ أما الحافة "
+"فتنهي TLS بنفسها (الجزء الثامن). ولا يقيّم Sibuna الروبوتات بنموذج مدرَّب "
+"ولا ينشر توقيعات مدفوعة. ويطابق الجدار الناري لـ HTTP بصمة JA4 التي "
+"يحسبها وكيل دخول موثوق ولا يستطيع حسابها بنفسه (SID 0014، الجزء الحادي "
+"عشر)؛ ولا تحسب الحافة JA4 إلا من ClientHello لواجهة أمامية TCP تفحصه، "
+"لقواعد توجيهها وخطافاتها وترويسة PROXY الخاصة بها (SID 0015). وتوفر وحدة "
 "التحكم الاختيارية لوحات معلومات تتطلب المصادقة، وإثراءً ببيانات البلدان، "
 "وتحرير السياسات، والتحقيق، وإدارة العنقود. ويجري البحث عن البلد وعمل "
 "التخزين خارج تصنيف الطلبات. حالة SID 0007 هي Committed، وتجتاز وحدة "
@@ -1147,7 +1103,7 @@ msgstr ""
 
 #: ../../prior-art.rst:284
 msgid "Load Balancers"
-msgstr ""
+msgstr "موازنات الحمل"
 
 #: ../../prior-art.rst:287
 msgid ""
@@ -1157,12 +1113,14 @@ msgid ""
 "names what the load balancer draws on and compares it with two open load "
 "balancers."
 msgstr ""
+"منذ SID 0015 صار Sibuna أيضًا موازن حمل على الحافة: يمرر TCP وUDP، وينهي "
+"TLS وHTTP/2 وHTTP/3، ويوجّه طلبات HTTP إلى مجمّعات من الخوادم، مع الجدار "
+"الناري على المسارات التي تطلبه. ويسمي هذا القسم ما يستند إليه موازن الحمل "
+"ويقارنه بموازنَي حمل مفتوحين."
 
 #: ../../prior-art.rst:289
-#, fuzzy
-#| msgid "Where Sibuna Comes From"
 msgid "Where the Load Balancer Comes From"
-msgstr "من أين جاء Sibuna"
+msgstr "من أين جاء موازن الحمل"
 
 #: ../../prior-art.rst:292
 msgid ""
@@ -1178,10 +1136,19 @@ msgid ""
 "of SID 0030 also attach at fixed stages, in three tiers, and each "
 "decision is one call with a deadline."
 msgstr ""
+"المفردات مفردات HAProxy. *الواجهة الأمامية* (frontend) تربط عناوين، و\\ "
+"*الواجهة الخلفية* (backend) مجمّع من *الخوادم*، ويصرّف المشغّل خادمًا عبر "
+"مقبس محلي بـ ``set server app/s1 state drain``. ويحتفظ الجزء الحادي عشر "
+"بجدول يترجم توجيهات HAProxy إلى مفاتيح الحافة. وجعل nginx العامل المدفوع "
+"بالأحداث التصميم المعتاد للوكيل: عمليات قليلة، لكل منها حلقة أحداث خاصة "
+"بها، ولا خيط لكل اتصال. ويبني SID 0016 عمال HTTP في الحافة بهذه الطريقة. "
+"وجعل Envoy الوكيل منصة قابلة للبرمجة: مرشِّحات عند نقاط ثابتة من المسار، "
+"وامتدادات بـ WebAssembly، وإعدادات تدفعها مستوى تحكم. وترتبط خطافات SID "
+"0030 أيضًا بمراحل ثابتة، في ثلاث طبقات، وكل قرار استدعاء واحد بموعد نهائي."
 
 #: ../../prior-art.rst:294
 msgid "Four papers decide how the edge places a flow and what it remembers."
-msgstr ""
+msgstr "أربع أوراق بحثية تقرر كيف تضع الحافة التدفق وما تتذكره."
 
 #: ../../prior-art.rst:296
 msgid ""
@@ -1192,6 +1159,11 @@ msgid ""
 "(``crates/lb/src/maglev.rs``), and a mesh in its regional regime places "
 "clients with it (SID 0015)."
 msgstr ""
+"*Maglev* (Eisenbud وآخرون، NSDI 2016) يملأ جدولًا عدد خاناته عدد أولي من "
+"تبديل واحد لكل خادم، فيكون البحث تجزئة واحدة وتحميلًا واحدًا، وتغيير "
+"الخوادم ينقل عملاء قليلين. ونوع المجمّع ``bounded_maglev`` يبني جدولًا "
+"موزونًا من 65,537 خانة (``crates/lb/src/maglev.rs``)، والشبكة المتداخلة "
+"في نظامها الإقليمي تضع العملاء به (SID 0015)."
 
 #: ../../prior-art.rst:297
 msgid ""
@@ -1202,6 +1174,11 @@ msgid ""
 "default. HAProxy applies the same idea to its consistent hashing with "
 "``hash-balance-factor``."
 msgstr ""
+"*التجزئة المتسقة ذات الأحمال المحدودة* (Mirrokni وThorup وZadimoghaddam، "
+"SODA 2018) تحد حمل الخادم المختار بمعامل من المتوسط وتمرر الفائض. ويطبّق "
+"``bounded_maglev`` مثل هذا الحد على الخادم الذي يسميه الجدول، مع "
+"``load_factor_pct``، وقيمته 125 افتراضيًا. ويطبّق HAProxy الفكرة نفسها "
+"على تجزئته المتسقة مع ``hash-balance-factor``."
 
 #: ../../prior-art.rst:298
 msgid ""
@@ -1212,6 +1189,11 @@ msgid ""
 "0019), and peer forwarding chooses the owner of a client among the nodes "
 "in this way (SID 0026)."
 msgstr ""
+"*تجزئة rendezvous* (Thaler وRavishankar، IEEE/ACM Transactions on "
+"Networking 1998) تعطي كل خادم درجة من تجزئة لاسمه وللمفتاح، والدرجة "
+"الأكبر تفوز. وفقد خادم لا ينقل إلا مفاتيحه ولا يحتاج إلى جدول. ويرتب "
+"تثبيت المصدر الخوادم بهذه الطريقة (SID 0019)، ويختار التمرير بين النظراء "
+"مالك العميل بين العقد بهذه الطريقة (SID 0026)."
 
 #: ../../prior-art.rst:299
 msgid ""
@@ -1220,6 +1202,10 @@ msgid ""
 "sketch says that it is used more often than the entry it would push out. "
 "The spill cache of SID 0027 admits hints to its file by this rule."
 msgstr ""
+"*TinyLFU* (Einziger وFriedman وManes، ACM Transactions on Storage 2017) "
+"لا يقبل مدخلًا جديدًا في ذاكرة مؤقتة ممتلئة إلا حين يقول مخطط تكرار صغير "
+"إنه يُستخدم أكثر من المدخل الذي سيزيحه. وتقبل ذاكرة الإفاضة المؤقتة في "
+"SID 0027 التلميحات في ملفها بهذه القاعدة."
 
 #: ../../prior-art.rst:302
 msgid ""
@@ -1230,6 +1216,11 @@ msgid ""
 "the spill cache. HAProxy's hash-balance-factor shares the idea of bounded "
 "loads."
 msgstr ""
+"يعطي HAProxy المفردات ومقبس الإدارة، ويعطي nginx العمال المدفوعين "
+"بالأحداث، ويتشارك Envoy فكرة مراحل الخطافات. ويعطي Maglev والأحمال "
+"المحدودة مجمّع Maglev المحدود، وتعطي تجزئة rendezvous تثبيت المصدر ومالك "
+"العميل، ويعطي TinyLFU قبول ذاكرة الإفاضة المؤقتة. ويتشارك "
+"hash-balance-factor في HAProxy فكرة الأحمال المحدودة."
 
 #: ../../prior-art.rst:302
 msgid ""
@@ -1265,16 +1256,49 @@ msgid ""
 "hash-balance-factor\", fontsize=7.5, fontcolor=\"#475569\"];\n"
 "}"
 msgstr ""
+"digraph lb_lineage {\n"
+"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.25, ranksep=0.5, "
+"fontname=\"Helvetica\", fontsize=9];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=8.5, fillcolor=\"#ffffff\", color=\"#7c9cd6\", "
+"margin=\"0.08,0.04\"];\n"
+"  edge [color=\"#94a3b8\", arrowsize=0.55];\n"
+"\n"
+"  haproxy [label=\"HAProxy\"];\n"
+"  nginx [label=\"nginx\"];\n"
+"  envoy [label=\"Envoy\"];\n"
+"  maglev [label=\"Maglev\\nEisenbud وآخرون 2016\"];\n"
+"  bounded [label=\"الأحمال المحدودة\\nMirrokni وآخرون 2018\"];\n"
+"  hrw [label=\"تجزئة rendezvous\\nThaler-Ravishankar 1998\"];\n"
+"  tinylfu [label=\"TinyLFU\\nEinziger وآخرون 2017\"];\n"
+"\n"
+"  node [color=\"#15803d\", fillcolor=\"#f0fdf4\"];\n"
+"  vocab [label=\"الواجهات الأمامية والخلفية،\\nمقبس الإدارة (SID "
+"0018)\"];\n"
+"  workers [label=\"عمال HTTP المدفوعون\\nبالأحداث (SID 0016)\"];\n"
+"  hooks [label=\"مراحل الخطافات\\nوطبقاتها (SID 0030)\"];\n"
+"  bmaglev [label=\"bounded_maglev\\n(SID 0015)\"];\n"
+"  sticky [label=\"تثبيت المصدر (SID 0019)،\\nمالك العميل (SID 0026)\"];\n"
+"  spill [label=\"القبول في ذاكرة الإفاضة\\n(SID 0027)\"];\n"
+"\n"
+"  haproxy -> vocab; nginx -> workers; envoy -> hooks [style=dashed];\n"
+"  maglev -> bmaglev; bounded -> bmaglev; hrw -> sticky; tinylfu -> "
+"spill;\n"
+"  haproxy -> bounded [style=dashed, dir=none, label=\" "
+"hash-balance-factor\", fontsize=7.5, fontcolor=\"#475569\"];\n"
+"}"
 
 #: ../../prior-art.rst:302
 msgid ""
 "What the edge load balancer takes from earlier systems and papers. Solid "
 "arrows are ideas taken directly; dashed lines are ideas shared."
 msgstr ""
+"ما يأخذه موازن الحمل على الحافة من الأنظمة والأوراق البحثية السابقة. "
+"الأسهم المتصلة أفكار مأخوذة مباشرة؛ والخطوط المتقطعة أفكار مشتركة."
 
 #: ../../prior-art.rst:331
 msgid "Load Balancing Compared"
-msgstr ""
+msgstr "مقارنة موازنة الحمل"
 
 #: ../../prior-art.rst:334
 msgid ""
@@ -1288,16 +1312,22 @@ msgid ""
 "settle. For Sibuna the code and the SID records decide, and a feature "
 "that is not built says so."
 msgstr ""
+"يقارن الجدول موازنة الحمل في Sibuna بـ HAProxy وEnvoy. قرأنا وثائقهما "
+"العامة في 25 نوفمبر 2026: HAProxy 3.4.8 Configuration Manual وManagement "
+"Guide (docs.haproxy.org؛ و3.4 هو أحدث فرع ذي دعم طويل الأمد)، ووثائق "
+"Envoy 1.40.2 (envoyproxy.io). ولم نشغّل أيًّا منهما لهذا الجدول؛ ويقارن "
+"الجزء العاشر Sibuna بـ HAProxy 3.0.11 على مضيف واحد ويشغّل عنقودًا من "
+"ثلاثة مضيفين. والخلية التي تقول *لم يُفحص* تسمي حقيقة لم تحسمها الصفحات "
+"التي قرأناها. وفي Sibuna تحسم الشيفرة وسجلات SID، والميزة التي لم تُبنَ "
+"يُصرَّح بذلك عنها."
 
 #: ../../prior-art.rst:336
 msgid "Load balancing: Sibuna, HAProxy and Envoy"
-msgstr ""
+msgstr "موازنة الحمل: Sibuna وHAProxy وEnvoy"
 
 #: ../../prior-art.rst:342
-#, fuzzy
-#| msgid "Sibuna"
 msgid "Sibuna edge"
-msgstr "Sibuna"
+msgstr "حافة Sibuna"
 
 #: ../../prior-art.rst:343
 msgid "HAProxy 3.4"
@@ -1309,35 +1339,43 @@ msgstr ""
 
 #: ../../prior-art.rst:345
 msgid "Protocols"
-msgstr ""
+msgstr "البروتوكولات"
 
 #: ../../prior-art.rst:346
 msgid ""
 "TCP, UDP, HTTP/1.1, HTTP/2, HTTP/3 and gRPC, toward clients and toward "
 "servers; WebSocket, but not toward an HTTP/2 or HTTP/3 pool"
 msgstr ""
+"TCP وUDP وHTTP/1.1 وHTTP/2 وHTTP/3 وgRPC، نحو العملاء ونحو الخوادم؛ "
+"وWebSocket، لكن ليس نحو مجمّع HTTP/2 أو HTTP/3"
 
 #: ../../prior-art.rst:347
 msgid ""
 "TCP, HTTP/1.1, HTTP/2 and HTTP/3; QUIC toward servers is experimental; "
 "UDP listeners only in ``log-forward`` sections"
 msgstr ""
+"TCP وHTTP/1.1 وHTTP/2 وHTTP/3؛ وQUIC نحو الخوادم تجريبي؛ ومستمعو UDP في "
+"أقسام ``log-forward`` فقط"
 
 #: ../../prior-art.rst:348
 msgid ""
 "TCP, UDP (UDP proxy filter), HTTP/1.1, HTTP/2, and HTTP/3 toward clients "
 "and toward servers"
 msgstr ""
+"TCP، وUDP (مرشِّح وكيل UDP)، وHTTP/1.1، وHTTP/2، وHTTP/3 نحو العملاء ونحو "
+"الخوادم"
 
 #: ../../prior-art.rst:349
 msgid "Scheduling"
-msgstr ""
+msgstr "الجدولة"
 
 #: ../../prior-art.rst:350
 msgid ""
 "Least connections (default), round robin, power of two choices with peak "
 "EWMA, bounded Maglev; slow start"
 msgstr ""
+"أقل الاتصالات (افتراضي)، والدوران الدائري، وقوة الخيارين مع peak EWMA، "
+"وMaglev المحدود؛ والبدء التدريجي"
 
 #: ../../prior-art.rst:351
 msgid ""
@@ -1345,30 +1383,37 @@ msgid ""
 "``source``, ``uri``, ``url_param``, ``hdr``, ``random``, ``rdp-cookie``, "
 "``sticky``; bounded loads with ``hash-balance-factor``; ``slowstart``"
 msgstr ""
+"``roundrobin``، و\\ ``static-rr``، و\\ ``leastconn``، و\\ ``first``، و\\ "
+"``hash``، و\\ ``source``، و\\ ``uri``، و\\ ``url_param``، و\\ ``hdr``، "
+"و\\ ``random``، و\\ ``rdp-cookie``، و\\ ``sticky``؛ والأحمال المحدودة مع "
+"``hash-balance-factor``؛ و\\ ``slowstart``"
 
 #: ../../prior-art.rst:352
 msgid ""
 "Weighted round robin, least request (power of two choices), ring hash, "
 "Maglev with 65,537 slots, random, client-side weighted round robin"
 msgstr ""
+"الدوران الدائري الموزون، وأقل الطلبات (قوة الخيارين)، وring hash، وMaglev "
+"بـ 65,537 خانة، والعشوائي، والدوران الدائري الموزون من جهة العميل"
 
 #: ../../prior-art.rst:354
 msgid ""
 "**Yes**: PEM bundles chosen by server name; HTTP/2 over TLS and HTTP/3 "
 "over QUIC"
 msgstr ""
+"**نعم**: حزم PEM تُختار بحسب اسم الخادم؛ وHTTP/2 عبر TLS وHTTP/3 عبر QUIC"
 
 #: ../../prior-art.rst:355
 msgid "**Yes**: ``bind ... ssl crt``"
-msgstr ""
+msgstr "**نعم**: ``bind ... ssl crt``"
 
 #: ../../prior-art.rst:356
 msgid "**Yes**: certificates from files or the secret discovery service"
-msgstr ""
+msgstr "**نعم**: شهادات من ملفات أو من خدمة اكتشاف الأسرار"
 
 #: ../../prior-art.rst:357
 msgid "TLS passthrough"
-msgstr ""
+msgstr "تمرير TLS دون فك تشفير"
 
 #: ../../prior-art.rst:358
 msgid ""
@@ -1376,20 +1421,23 @@ msgid ""
 "read from the ClientHello; QUIC is validated by connection ID (SID 0032); "
 "edge-generated Retry is not built"
 msgstr ""
+"**نعم**: الواجهات الأمامية ``tcp`` توجّه أو ترفض بحسب اسم الخادم أو ALPN "
+"أو JA4 المقروءة من ClientHello؛ ويُتحقق من QUIC بمعرف الاتصال (SID 0032)؛ "
+"وRetry الذي تولّده الحافة لم يُبنَ"
 
 #: ../../prior-art.rst:359
 msgid "**Yes**: ``mode tcp`` with content inspection of ``req.ssl_sni``"
-msgstr ""
+msgstr "**نعم**: ``mode tcp`` مع فحص محتوى ``req.ssl_sni``"
 
 #: ../../prior-art.rst:360
 msgid ""
 "**Yes**: the TLS Inspector reads server name and ALPN to choose a filter "
 "chain"
-msgstr ""
+msgstr "**نعم**: يقرأ TLS Inspector اسم الخادم وALPN لاختيار سلسلة مرشِّحات"
 
 #: ../../prior-art.rst:361
 msgid "ACME"
-msgstr ""
+msgstr "ACME"
 
 #: ../../prior-art.rst:362
 msgid ""
@@ -1397,67 +1445,80 @@ msgid ""
 "Cloudflare), wildcards, issuance on demand, OCSP stapling, and a local "
 "authority that can serve other machines over ACME (SID 0021)"
 msgstr ""
+"**مدمج**: HTTP-01 وTLS-ALPN-01 وDNS-01 (خطاف، RFC 2136، Cloudflare)، "
+"والشهادات الشاملة (wildcard)، والإصدار عند الطلب، وOCSP stapling، وسلطة "
+"محلية تستطيع خدمة أجهزة أخرى عبر ACME (SID 0021)"
 
 #: ../../prior-art.rst:363
 msgid ""
 "**Experimental** ``acme`` section: HAProxy answers HTTP-01 itself; DNS-01 "
 "and dns-persist-01 need the Data Plane API or another tool"
 msgstr ""
+"قسم ``acme`` **تجريبي**: يجيب HAProxy عن HTTP-01 بنفسه؛ وDNS-01 "
+"وdns-persist-01 يحتاجان إلى Data Plane API أو أداة أخرى"
 
 #: ../../prior-art.rst:364 ../../prior-art.rst:396
-#, fuzzy
-#| msgid "Not documented"
 msgid "Not checked"
-msgstr "غير موثق"
+msgstr "لم يُفحص"
 
 #: ../../prior-art.rst:365
 msgid "Health checks"
-msgstr ""
+msgstr "فحوص السلامة"
 
 #: ../../prior-art.rst:366
 msgid ""
 "Active TCP connect or HTTP ``GET`` with ``rise`` and ``fall``; passive "
 "ejection by real failures (SID 0019)"
 msgstr ""
+"اتصال TCP نشط أو ``GET`` عبر HTTP مع ``rise`` و\\ ``fall``؛ وإخراج سلبي "
+"بالإخفاقات الحقيقية (SID 0019)"
 
 #: ../../prior-art.rst:367
 msgid ""
 "Active checks (``check``, ``option httpchk``); passive observation with "
 "``observe`` and ``error-limit``"
 msgstr ""
+"فحوص نشطة (``check``، ``option httpchk``)؛ ومراقبة سلبية مع ``observe`` "
+"و\\ ``error-limit``"
 
 #: ../../prior-art.rst:368
 msgid ""
 "Active HTTP, gRPC, L3/L4, Redis and Thrift checks; passive outlier "
 "detection"
 msgstr ""
+"فحوص نشطة لـ HTTP وgRPC وL3/L4 وRedis وThrift؛ وكشف سلبي للخوادم الشاذة "
+"(outlier detection)"
 
 #: ../../prior-art.rst:369
-#, fuzzy
-#| msgid "Session"
 msgid "Sticky sessions"
-msgstr "الجلسة"
+msgstr "الجلسات المثبتة"
 
 #: ../../prior-art.rst:370
 msgid ""
 "Keyed cookie, source address, or a learned table by source or cookie that "
 "a mesh replicates and a file can keep over a restart (SID 0025, SID 0027)"
 msgstr ""
+"ملف تعريف ارتباط ذو مفتاح، أو عنوان المصدر، أو جدول متعلَّم بحسب المصدر "
+"أو ملف تعريف الارتباط تنسخه الشبكة المتداخلة ويستطيع ملف الاحتفاظ به عبر "
+"إعادة التشغيل (SID 0025، SID 0027)"
 
 #: ../../prior-art.rst:371
 msgid ""
 "``cookie`` (insert, rewrite, prefix); stick tables (``stick on src``)"
 msgstr ""
+"``cookie`` (insert، rewrite، prefix)؛ وجداول stick (``stick on src``)"
 
 #: ../../prior-art.rst:372
 msgid ""
 "A hash policy on the route with ring hash or Maglev; the stateful session "
 "filter with a cookie or a header"
 msgstr ""
+"سياسة تجزئة على المسار مع ring hash أو Maglev؛ ومرشِّح الجلسة ذي الحالة "
+"مع ملف تعريف ارتباط أو ترويسة"
 
 #: ../../prior-art.rst:373
 msgid "Runtime API"
-msgstr ""
+msgstr "واجهة وقت التشغيل البرمجية"
 
 #: ../../prior-art.rst:374
 msgid ""
@@ -1465,6 +1526,9 @@ msgid ""
 "servers, lift bans, reload, show; a subset in the operator console (SID "
 "0018, SID 0031)"
 msgstr ""
+"مقبس إدارة Unix و\\ ``sibuna ctl``: تصريف الخوادم، وتغيير أوزانها، "
+"وإضافتها وإزالتها، ورفع الحظر، وإعادة التحميل، والعرض؛ وجزء من ذلك في "
+"وحدة تحكم المشغّل (SID 0018، SID 0031)"
 
 #: ../../prior-art.rst:375
 msgid ""
@@ -1472,6 +1536,9 @@ msgid ""
 "server``, ``del server``, ``show stat``, ``show table``, ``clear table``, "
 "``acme renew``"
 msgstr ""
+"Runtime API على مقبس الإحصاءات: ``set server ... state|weight``، و\\ "
+"``add server``، و\\ ``del server``، و\\ ``show stat``، و\\ ``show "
+"table``، و\\ ``clear table``، و\\ ``acme renew``"
 
 #: ../../prior-art.rst:376
 msgid ""
@@ -1479,10 +1546,13 @@ msgid ""
 "``healthcheck/fail``, ``runtime_modify``; endpoints and listeners change "
 "through xDS from a control plane"
 msgstr ""
+"واجهة الإدارة: الإحصاءات، و\\ ``config_dump``، و\\ ``drain_listeners``، "
+"و\\ ``healthcheck/fail``، و\\ ``runtime_modify``؛ وتتغير نقاط النهاية "
+"والمستمعون عبر xDS من مستوى تحكم"
 
 #: ../../prior-art.rst:377
 msgid "Hot reload"
-msgstr ""
+msgstr "إعادة التحميل الساخنة"
 
 #: ../../prior-art.rst:378
 msgid ""
@@ -1490,20 +1560,25 @@ msgid ""
 "flows keep their server; ``reload cluster`` for a mesh; a database "
 "revision in persistent mode (SID 0023, SID 0028)"
 msgstr ""
+"في العملية نفسها عبر SIGHUP أو ``reload`` أو مراقب للملف؛ وتحتفظ التدفقات "
+"المؤسَّسة بخادمها؛ و\\ ``reload cluster`` للشبكة المتداخلة؛ ومراجعة قاعدة "
+"بيانات في الوضع الدائم (SID 0023، SID 0028)"
 
 #: ../../prior-art.rst:379
 msgid ""
 "A reload starts a new worker that takes the listening sockets of the old "
 "one (``-x``; automatic in master-worker mode)"
 msgstr ""
+"تبدأ إعادة التحميل عاملًا جديدًا يأخذ مقابس الاستماع من القديم (``-x``؛ "
+"تلقائي في وضع master-worker)"
 
 #: ../../prior-art.rst:380
 msgid "Dynamic configuration through xDS without a restart"
-msgstr ""
+msgstr "إعدادات ديناميكية عبر xDS دون إعادة تشغيل"
 
 #: ../../prior-art.rst:381
 msgid "Binary replacement"
-msgstr ""
+msgstr "استبدال الملف التنفيذي"
 
 #: ../../prior-art.rst:382
 msgid ""
@@ -1511,20 +1586,25 @@ msgid ""
 "mappings pass to the new process, and TCP streams drain in the old one; "
 "Linux only (SID 0029). Or ``global.reuse_port``"
 msgstr ""
+"``global.upgrade_socket``: تنتقل مقابس الاستماع وتعيينات UDP الحية إلى "
+"العملية الجديدة، وتُصرَّف تدفقات TCP في القديمة؛ Linux فقط (SID 0029). أو "
+"``global.reuse_port``"
 
 #: ../../prior-art.rst:383
 msgid "The same reload passes the listening sockets to the new process"
-msgstr ""
+msgstr "إعادة التحميل نفسها تمرر مقابس الاستماع إلى العملية الجديدة"
 
 #: ../../prior-art.rst:384
 msgid ""
 "Hot restart passes the listening sockets over a Unix socket; existing "
 "connections are not transferred; HTTP/3 is not handled gracefully yet"
 msgstr ""
+"إعادة التشغيل الساخنة تمرر مقابس الاستماع عبر مقبس Unix؛ ولا تُنقل "
+"الاتصالات القائمة؛ ولا يُعالج HTTP/3 بسلاسة بعد"
 
 #: ../../prior-art.rst:385
 msgid "Clustering of state"
-msgstr ""
+msgstr "عنقدة الحالة"
 
 #: ../../prior-art.rst:386
 msgid ""
@@ -1532,22 +1612,30 @@ msgid ""
 "and fleet-wide ``max_flows``, and forwards each client to its owner node "
 "(SID 0022, SID 0025, SID 0026); request limiters count on each node"
 msgstr ""
+"شبكة متداخلة من 64 عقدة على الأكثر تتشارك الحظر، وأوامر الخوادم، وجدول "
+"التثبيت، و\\ ``max_flows`` على مستوى الأسطول، وتمرر كل عميل إلى العقدة "
+"المالكة له (SID 0022، SID 0025، SID 0026)؛ وتعدّ محددات معدل الطلبات على "
+"كل عقدة"
 
 #: ../../prior-art.rst:387
 msgid ""
 "``peers`` sections push stick-table entries between instances over TCP, "
 "multi-master; values overwrite without aggregation"
 msgstr ""
+"أقسام ``peers`` تدفع مدخلات stick-table بين النسخ عبر TCP، بعدة رؤساء "
+"(multi-master)؛ والقيم تُكتب فوق بعضها دون تجميع"
 
 #: ../../prior-art.rst:388
 msgid ""
 "Global rate limits through an external gRPC rate limit service; other "
 "shared state not checked"
 msgstr ""
+"حدود معدل شاملة عبر خدمة خارجية لحد المعدل بـ gRPC؛ وحالة مشتركة أخرى لم "
+"تُفحص"
 
 #: ../../prior-art.rst:389
 msgid "Extension mechanism"
-msgstr ""
+msgstr "آلية التوسعة"
 
 #: ../../prior-art.rst:390
 msgid ""
@@ -1555,39 +1643,45 @@ msgid ""
 "agents on a Unix socket, at the connection, request and telemetry stages; "
 "no hook on a response or a body (SID 0030)"
 msgstr ""
+"خطافات Rust أصلية، وWebAssembly على مفسّر داخلي محسوب الاستهلاك، ووكلاء "
+"على مقبس Unix، في مراحل الاتصال والطلب والقياس عن بعد؛ ولا خطاف على "
+"استجابة أو جسم (SID 0030)"
 
 #: ../../prior-art.rst:391
 msgid ""
 "Lua (``lua-load``); filters, among them the Stream Processing Offload "
 "Engine (SPOE)"
 msgstr ""
+"Lua (``lua-load``)؛ ومرشِّحات، منها Stream Processing Offload Engine "
+"(SPOE)"
 
 #: ../../prior-art.rst:392
 msgid ""
 "Filters, among them Lua, external authorization and external processing; "
 "WebAssembly through the Proxy-Wasm ABI"
 msgstr ""
+"مرشِّحات، منها Lua، والتفويض الخارجي، والمعالجة الخارجية؛ وWebAssembly "
+"عبر Proxy-Wasm ABI"
 
 #: ../../prior-art.rst:393
 msgid "Built-in bot protection"
-msgstr ""
+msgstr "حماية مدمجة من الروبوتات"
 
 #: ../../prior-art.rst:394
 msgid ""
 "Proof-of-work admission (Gate) and the semantic firewall (Shield), chosen "
 "per frontend and per route; off in ``sibuna lb`` unless asked"
 msgstr ""
+"القبول بإثبات العمل (Gate) والجدار الناري الدلالي (Shield)، يُختاران لكل "
+"واجهة أمامية ولكل مسار؛ ومعطّلان في ``sibuna lb`` ما لم يُطلبا"
 
 #: ../../prior-art.rst:395
 msgid "None in the Configuration Manual; stick-table rates and deny rules"
-msgstr ""
+msgstr "لا شيء في Configuration Manual؛ معدلات stick-table وقواعد الرفض"
 
 #: ../../prior-art.rst:398
-#, fuzzy
-#| msgid ""
-#| "Three differences carry most of the weight in a selection decision."
 msgid "Three differences matter most when we choose."
-msgstr "تحمل ثلاثة فروق معظم الوزن في قرار الاختيار."
+msgstr "ثلاثة فروق هي الأهم حين نختار."
 
 #: ../../prior-art.rst:400
 msgid ""
@@ -1597,6 +1691,10 @@ msgid ""
 "Sibuna's socket changes servers, bans and certificates of its local "
 "authority; frontends, routes and policy change by reload (SID 0018)."
 msgstr ""
+"*ما يتغير في وقت التشغيل.* يغيّر HAProxy وSibuna كلاهما الخوادم عبر مقبس "
+"محلي. ويتوقع Envoy مستوى تحكم: فواجهة إدارته تفحص وتصرّف، وxDS يغيّر "
+"الإعدادات. ومقبس Sibuna يغيّر الخوادم والحظر وشهادات سلطته المحلية؛ أما "
+"الواجهات الأمامية والمسارات والسياسة فتتغير بإعادة التحميل (SID 0018)."
 
 #: ../../prior-art.rst:401
 msgid ""
@@ -1606,6 +1704,11 @@ msgid ""
 "fixed roster of at most 64 nodes and only on a network that is trusted, "
 "because the mesh authenticates and does not encrypt (SID 0026)."
 msgstr ""
+"*ما يتشاركه العنقود.* ينسخ HAProxy جداول stick بين النظراء. وتنسخ الشبكة "
+"المتداخلة في Sibuna أنواعًا أكثر من الحالة، لكل منها قاعدة دمجها، وتضيف "
+"حدودًا على مستوى الأسطول وتمريرًا بين النظراء، لكن ضمن قائمة أعضاء ثابتة "
+"واحدة من 64 عقدة على الأكثر فقط، وعلى شبكة موثوقة فقط، لأن الشبكة "
+"المتداخلة توثّق ولا تشفّر (SID 0026)."
 
 #: ../../prior-art.rst:402
 msgid ""
@@ -1613,10 +1716,13 @@ msgid ""
 "also passes live UDP mappings, so a UDP client keeps its server; none of "
 "the three moves an established TCP connection to the new process."
 msgstr ""
+"*ما يحتفظ به الاستبدال.* تحتفظ الثلاثة كلها بمقابس الاستماع. ويمرر Sibuna "
+"أيضًا تعيينات UDP الحية، فيحتفظ عميل UDP بخادمه؛ ولا ينقل أي من الثلاثة "
+"اتصال TCP مؤسَّسًا إلى العملية الجديدة."
 
 #: ../../prior-art.rst:404
 msgid "Current boundary of the load balancer"
-msgstr ""
+msgstr "الحدود الحالية لموازن الحمل"
 
 #: ../../prior-art.rst:407
 msgid ""
@@ -1627,6 +1733,12 @@ msgid ""
 "change frontends or routes, the spill cache was not qualified at 50 "
 "million keys, and an agent call at the request stage holds its thread."
 msgstr ""
+"الحافة جديدة. خدم HAProxy وEnvoy حركة مرور إنتاجية لسنوات؛ أما حافة "
+"Sibuna فعملت في الاختبارات وفي قياسات الأداء على ما يصل إلى ثلاثة مضيفين "
+"(الجزء العاشر). وفجواتها المعروفة مسرودة في كل SID: منها أن الواجهات "
+"الأمامية TCP وUDP لا ترجع إلى جدول الحظر، وأن مقبس الإدارة لا يستطيع "
+"تغيير الواجهات الأمامية أو المسارات، وأن ذاكرة الإفاضة المؤقتة لم تُؤهَّل "
+"عند 50 مليون مفتاح، وأن استدعاء الوكيل في مرحلة الطلب يحتجز خيطه."
 
 #: ../../prior-art.rst:409
 msgid "Exercise 2.1"
@@ -1661,10 +1773,8 @@ msgid "Hint: Start from the \"runs as\" and \"multi-node\" rows."
 msgstr "تلميح: ابدأ بصفّي \"طريقة التشغيل\" و\"العقد المتعددة\"."
 
 #: ../../prior-art.rst:419
-#, fuzzy
-#| msgid "Exercise 2.1"
 msgid "Exercise 2.3"
-msgstr "تمرين 2.1"
+msgstr "تمرين 2.3"
 
 #: ../../prior-art.rst:421
 msgid ""
@@ -1673,12 +1783,18 @@ msgid ""
 "move when one server is removed under each scheme, and why peer "
 "forwarding (SID 0026) chose rendezvous hashing for the owner of a client."
 msgstr ""
+"مجمّع فيه أربعة خوادم متساوية الوزن و1,000 عميل. مستخدمًا وصفي Maglev "
+"وتجزئة rendezvous أعلاه فقط، قل كم عميلًا ينتقل حين يُزال خادم واحد في كل "
+"مخطط، ولماذا اختار التمرير بين النظراء (SID 0026) تجزئة rendezvous لمالك "
+"العميل."
 
 #: ../../prior-art.rst:423
 msgid ""
 "Hint: Ask which clients a removal must move, and which ones a rebuilt "
 "table may move as well."
 msgstr ""
+"تلميح: اسأل أي العملاء يجب أن تنقلهم الإزالة، وأيهم قد ينقله الجدول "
+"المعاد بناؤه أيضًا."
 
 #: ../../prior-art.rst:425
 msgid "Explain the invariant"

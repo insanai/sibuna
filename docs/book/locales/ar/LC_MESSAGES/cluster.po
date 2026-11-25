@@ -20,7 +20,7 @@ msgstr ""
 
 #: ../../cluster.rst:1
 msgid "Part IX: A Cluster of Edges"
-msgstr ""
+msgstr "الجزء التاسع: عنقود من الحواف"
 
 #: ../../cluster.rst:4
 msgid ""
@@ -34,10 +34,18 @@ msgid ""
 "compare-and-set. The configuration of each feature is in Part XI; here we "
 "study the reasons."
 msgstr ""
+"بنى الجزء الثامن عقدة واحدة. والعقدة الواحدة نقطة فشل واحدة، وسقفها جهاز "
+"واحد. لذلك نضع عدة عقد خلف اسم واحد، عبر DNS أو عبر موجّه ECMP، ويختار "
+"الموجّه عقدة لكل تدفق بقاعدة خاصة به. ويسأل هذا الفصل ما الذي يجب على "
+"العقد أن تتشاركه حينئذ، وما الذي تستطيع حسابه بدلًا من ذلك، وما الذي يجب "
+"أن يبقى على عقدة واحدة. وكل إجابة تقوم على قطعة صغيرة من الرياضيات: قيمة "
+"عظمى، وترتيب كلي، ومجموع حصص، وترتيب بالتجزئة، وتقدير تكرار، ومقارنة مع "
+"تعيين (compare-and-set). وإعدادات كل ميزة في الجزء الحادي عشر؛ وهنا ندرس "
+"الأسباب."
 
 #: ../../cluster.rst:6
 msgid "Objectives"
-msgstr ""
+msgstr "الأهداف"
 
 #: ../../cluster.rst:8
 msgid ""
@@ -50,10 +58,17 @@ msgid ""
 "it replaces; trace the handover of listening sockets to a new binary; and "
 "list what the cluster does not do."
 msgstr ""
+"بنهاية هذا الفصل، ينبغي أن نستطيع أن نقول أي حالة من حالات العقدة ينسخها "
+"العنقود ولماذا يكون دمج كل منها قيمة عظمى؛ وأن نبرهن أن حدًا على مستوى "
+"الأسطول يصمد أمام الفقد والتكرار وإعادة التشغيل، وأن نحسب حصص ثلاث عقد "
+"يدويًا؛ وأن نشتق نسبة العملاء الذين تنقلهم تجزئة rendezvous حين تنضم "
+"عقدة؛ وأن نحد خطأ مخطط count-min؛ وأن نشرح لماذا يسمي التثبيت في قاعدة "
+"البيانات المراجعة التي يستبدلها؛ وأن نتتبع تسليم مقابس الاستماع إلى ملف "
+"تنفيذي جديد؛ وأن نسرد ما لا يفعله العنقود."
 
 #: ../../cluster.rst:10
 msgid "What a Cluster Must Share"
-msgstr ""
+msgstr "ما يجب أن يتشاركه العنقود"
 
 #: ../../cluster.rst:13
 msgid ""
@@ -65,22 +80,27 @@ msgid ""
 "mapping, and how many flows each server holds. We sort this state by how "
 "it changes."
 msgstr ""
+"لا يعرف العميل أن هناك عدة عقد. فقد يصل اتصالان له إلى عقدتين: فرّقتهما "
+"تجزئة الموجّه، أو انضمت عقدة أو غادرت، أو أعطى DNS عنوانين. وكل عقدة تحمل "
+"حالة عن العميل. فهي تعرف هل العميل محظور، وكم طلبًا أرسل في النافذة "
+"الحالية، وعلى أي خادم وُضع، وتعيين UDP الخاص به، وكم تدفقًا يحمل كل خادم. "
+"ونصنف هذه الحالة بحسب طريقة تغيرها."
 
 #: ../../cluster.rst:15
 msgid "The state of a node and what the cluster does with it."
-msgstr ""
+msgstr "حالة العقدة وما يفعله العنقود بها."
 
 #: ../../cluster.rst:19
 msgid "State"
-msgstr ""
+msgstr "الحالة"
 
 #: ../../cluster.rst:20
 msgid "How it changes"
-msgstr ""
+msgstr "كيف تتغير"
 
 #: ../../cluster.rst:21
 msgid "What the cluster does"
-msgstr ""
+msgstr "ما يفعله العنقود"
 
 #: ../../cluster.rst:22
 msgid "SID"
@@ -88,15 +108,15 @@ msgstr ""
 
 #: ../../cluster.rst:23
 msgid "A ban"
-msgstr ""
+msgstr "الحظر"
 
 #: ../../cluster.rst:24
 msgid "Its end only moves later"
-msgstr ""
+msgstr "نهايته لا تتحرك إلا إلى وقت لاحق"
 
 #: ../../cluster.rst:25
 msgid "Replicated; the merge keeps the later end"
-msgstr ""
+msgstr "تُنسخ؛ ويحتفظ الدمج بالنهاية الأبعد"
 
 #: ../../cluster.rst:26 ../../cluster.rst:30
 msgid "0022"
@@ -104,27 +124,27 @@ msgstr ""
 
 #: ../../cluster.rst:27
 msgid "A run-time command (drain, weight, add, remove)"
-msgstr ""
+msgstr "أمر وقت التشغيل (تصريف، وزن، إضافة، إزالة)"
 
 #: ../../cluster.rst:28
 msgid "Each command replaces the last"
-msgstr ""
+msgstr "كل أمر يستبدل سابقه"
 
 #: ../../cluster.rst:29
 msgid "Replicated; the merge keeps the later stamp"
-msgstr ""
+msgstr "تُنسخ؛ ويحتفظ الدمج بالختم الأحدث"
 
 #: ../../cluster.rst:31
 msgid "The topology"
-msgstr ""
+msgstr "بنية النشر"
 
 #: ../../cluster.rst:32
 msgid "Rarely, by an operator"
-msgstr ""
+msgstr "نادرًا، بفعل المشغّل"
 
 #: ../../cluster.rst:33
 msgid "Sent whole and checked by every node, or read from a database"
-msgstr ""
+msgstr "تُرسل كاملة وتفحصها كل عقدة، أو تُقرأ من قاعدة بيانات"
 
 #: ../../cluster.rst:34
 msgid "0023, 0028"
@@ -132,15 +152,15 @@ msgstr ""
 
 #: ../../cluster.rst:35
 msgid "A sticky cookie, a rank by source address"
-msgstr ""
+msgstr "ملف تعريف ارتباط للتثبيت، ترتيب بحسب عنوان المصدر"
 
 #: ../../cluster.rst:36
 msgid "Computed from the shared secret and the file"
-msgstr ""
+msgstr "يُحسب من السر المشترك والملف"
 
 #: ../../cluster.rst:37
 msgid "Nothing to replicate"
-msgstr ""
+msgstr "لا شيء يُنسخ"
 
 #: ../../cluster.rst:38
 msgid "0019, 0025"
@@ -148,15 +168,15 @@ msgstr ""
 
 #: ../../cluster.rst:39
 msgid "A learned sticky choice"
-msgstr ""
+msgstr "خيار تثبيت متعلَّم"
 
 #: ../../cluster.rst:40
 msgid "At the first flow and at each refresh"
-msgstr ""
+msgstr "عند أول تدفق وعند كل تحديث"
 
 #: ../../cluster.rst:41
 msgid "Replicated; the merge follows a total order"
-msgstr ""
+msgstr "يُنسخ؛ ويتبع الدمج ترتيبًا كليًا"
 
 #: ../../cluster.rst:42 ../../cluster.rst:46
 msgid "0025"
@@ -164,27 +184,27 @@ msgstr ""
 
 #: ../../cluster.rst:43
 msgid "The flows on a capped server"
-msgstr ""
+msgstr "التدفقات على خادم محدود"
 
 #: ../../cluster.rst:44 ../../cluster.rst:52
 msgid "With every flow"
-msgstr ""
+msgstr "مع كل تدفق"
 
 #: ../../cluster.rst:45
 msgid "Divided into shares that sum to at most the limit"
-msgstr ""
+msgstr "تُقسم إلى حصص لا يتجاوز مجموعها الحد"
 
 #: ../../cluster.rst:47
 msgid "Rate counters"
-msgstr ""
+msgstr "عدادات المعدل"
 
 #: ../../cluster.rst:48
 msgid "With every request"
-msgstr ""
+msgstr "مع كل طلب"
 
 #: ../../cluster.rst:49
 msgid "Stay on the node; forwarding makes one node count each client"
-msgstr ""
+msgstr "تبقى على العقدة؛ ويجعل التمرير عقدة واحدة تعدّ كل عميل"
 
 #: ../../cluster.rst:50
 msgid "0022, 0026"
@@ -192,11 +212,11 @@ msgstr ""
 
 #: ../../cluster.rst:51
 msgid "A UDP mapping, a TCP socket"
-msgstr ""
+msgstr "تعيين UDP، مقبس TCP"
 
 #: ../../cluster.rst:53
 msgid "Cannot be replicated; forwarding keeps the client on one node"
-msgstr ""
+msgstr "لا يمكن نسخه؛ ويُبقي التمرير العميل على عقدة واحدة"
 
 #: ../../cluster.rst:54
 msgid "0026"
@@ -211,14 +231,18 @@ msgid ""
 "node, and we move the client to the state instead of the state to the "
 "client."
 msgstr ""
+"تخرج من الجدول ثلاث قواعد. ما يمكن حسابه من مدخلات مشتركة يُحسب، لأن "
+"الحساب لا يمكن أن يضيع في الشبكة. وما يتغير نادرًا، وفي اتجاه واحد فقط، "
+"يُنسخ حالةً دمجها قيمة عظمى. وما يتغير مع كل طلب يبقى على عقدته، فننقل "
+"العميل إلى الحالة بدل أن ننقل الحالة إلى العميل."
 
 #: ../../cluster.rst:58
 msgid "The Mesh"
-msgstr ""
+msgstr "الشبكة المتداخلة"
 
 #: ../../cluster.rst:61
 msgid "A fixed roster and authenticated datagrams"
-msgstr ""
+msgstr "قائمة أعضاء ثابتة ورزم بيانات موثَّقة"
 
 #: ../../cluster.rst:64
 msgid ""
@@ -233,6 +257,15 @@ msgid ""
 "bytes, so a datagram of one kind cannot be turned into another. A "
 "datagram holds at most 1,200 bytes, so it fits one packet on every path."
 msgstr ""
+"تشكّل عقد العنقود شبكة متداخلة (SID 0015). قائمة الأعضاء ثابتة طوال حياة "
+"العملية وتضم 64 عقدة على الأكثر. وكل عقدة تعرف كل عقدة أخرى بعنوانها. "
+"وتتخاطب العقد برزم بيانات UDP على منفذ واحد. تبدأ رزمة البيانات بـ ``S`` "
+"و\\ ``E`` وإصدار ونوع. وتحمل القيمة المؤقتة لإقلاع المرسل ورقم تسلسل، "
+"وتنتهي بوسم من 16 بايتًا: تجزئة BLAKE3 ذات المفتاح لكل بايت قبله، تحت "
+"مفتاح المجموعة من ملف المفاتيح. ولا تقرأ العقدة رزمة بيانات إلا من عنوان "
+"في قائمة الأعضاء وإلا بوسم صالح. والنوع يقع داخل البايتات المجزأة، فلا "
+"يمكن تحويل رزمة من نوع إلى نوع آخر. وتحمل رزمة البيانات 1,200 بايت على "
+"الأكثر، فتتسع في رزمة واحدة على كل مسار."
 
 #: ../../cluster.rst:67
 msgid ""
@@ -241,6 +274,10 @@ msgid ""
 "send flows to the servers of the pools. A PostgreSQL database of "
 "revisions is joined to each node by a dotted edge."
 msgstr ""
+"يصل العملاء إلى موجّه DNS أو ECMP، فيرسل التدفقات إلى العقد A وB وC. "
+"وتتصل العقد الثلاث مثنى مثنى بحواف متقطعة للشبكة المتداخلة. وترسل الثلاث "
+"كلها تدفقات إلى خوادم المجمّعات. وتتصل قاعدة بيانات PostgreSQL للمراجعات "
+"بكل عقدة بحافة منقطة."
 
 #: ../../cluster.rst:67
 msgid ""
@@ -281,6 +318,42 @@ msgid ""
 "  c -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
 "}"
 msgstr ""
+"digraph cluster_topology {\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.6, ranksep=0.45, "
+"pad=0.12];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=10, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, height=0.4, margin=\"0.12,0.05\"];\n"
+"  edge [fontname=\"Helvetica\", fontsize=8.5, fontcolor=\"#475569\", "
+"color=\"#64748b\", arrowsize=0.65, penwidth=1.1];\n"
+"  clients [label=\"العملاء\", fillcolor=\"#ffffff\", color=\"#172033\"];\n"
+"  router [label=\"موجّه DNS أو ECMP\", fillcolor=\"#ffffff\", "
+"color=\"#172033\"];\n"
+"  a [label=\"العقدة A\"];\n"
+"  b [label=\"العقدة B\"];\n"
+"  c [label=\"العقدة C\"];\n"
+"  servers [label=\"خوادم المجمّعات\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\"];\n"
+"  db [label=\"PostgreSQL\\nالمراجعات (SID 0028)\", shape=cylinder, "
+"color=\"#7c3aed\", fillcolor=\"#f5f3ff\"];\n"
+"  { rank=same; a; b; c; }\n"
+"  clients -> router;\n"
+"  router -> a;\n"
+"  router -> b;\n"
+"  router -> c;\n"
+"  a -> b [dir=both, style=dashed, color=\"#d97706\", "
+"fontcolor=\"#b45309\", label=\"الشبكة المتداخلة\"];\n"
+"  b -> c [dir=both, style=dashed, color=\"#d97706\", "
+"fontcolor=\"#b45309\", label=\"الشبكة المتداخلة\"];\n"
+"  a -> c [dir=both, style=dashed, color=\"#d97706\", "
+"fontcolor=\"#b45309\", label=\"الشبكة المتداخلة\"];\n"
+"  a -> servers;\n"
+"  b -> servers;\n"
+"  c -> servers;\n"
+"  a -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
+"  b -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
+"  c -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
+"}"
 
 #: ../../cluster.rst:67
 msgid ""
@@ -288,12 +361,16 @@ msgid ""
 "edges are the mesh; the dotted edges are the database of SID 0028, which "
 "a cluster may use instead of sending files."
 msgstr ""
+"عنقود من ثلاث عقد. يوزع الموجّه العملاء؛ والحواف المتقطعة هي الشبكة "
+"المتداخلة؛ والحواف المنقطة هي قاعدة البيانات في SID 0028، التي يجوز "
+"للعنقود استخدامها بدل إرسال الملفات."
 
 #: ../../cluster.rst:97
 msgid ""
 "Every pair of nodes exchanges the same things. The next figure shows one "
 "pair."
 msgstr ""
+"كل زوج من العقد يتبادل الأشياء نفسها. ويعرض الشكل التالي زوجًا واحدًا."
 
 #: ../../cluster.rst:100
 msgid ""
@@ -303,6 +380,12 @@ msgid ""
 "TCP on the mesh port, carries the configuration file and its digest. The "
 "third, TCP and UDP on the mesh port plus one, carries forwarded flows."
 msgstr ""
+"العقدة A والعقدة B تصل بينهما ثلاث حواف. الأولى، UDP على منفذ الشبكة "
+"المتداخلة 7946، تحمل الفحوص، والحظر (النوع 3)، والأوامر (النوع 4)، ورفع "
+"الحظر (النوع 5)، ومدخلات التثبيت (النوع 6)، وحالة الحصص (النوع 7). "
+"والثانية، TCP على منفذ الشبكة المتداخلة، تحمل ملف الإعدادات وخلاصته. "
+"والثالثة، TCP وUDP على منفذ الشبكة المتداخلة زائدًا واحدًا، تحمل التدفقات "
+"الممررة."
 
 #: ../../cluster.rst:100
 msgid ""
@@ -325,12 +408,31 @@ msgid ""
 "mesh port + 1 (SID 0026)\\nforwarded connections and datagrams\"];\n"
 "}"
 msgstr ""
+"digraph mesh_pair {\n"
+"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.4, ranksep=2.2, "
+"pad=0.12];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=10, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, height=0.5, margin=\"0.14,0.06\"];\n"
+"  edge [fontname=\"Helvetica\", fontsize=8.5, fontcolor=\"#475569\", "
+"color=\"#64748b\", arrowsize=0.65, penwidth=1.1, dir=both];\n"
+"  a [label=\"العقدة A\"];\n"
+"  b [label=\"العقدة B\"];\n"
+"  a -> b [color=\"#d97706\", fontcolor=\"#b45309\", label=\"UDP، منفذ "
+"الشبكة المتداخلة 7946 (SID 0015، 0022، 0025)\\nالفحوص؛ الحظر (3)؛ الأوامر "
+"(4)؛ رفع الحظر (5)؛\\nمدخلات التثبيت (6)؛ حالة الحصص (7)\"];\n"
+"  a -> b [label=\"TCP، منفذ الشبكة المتداخلة 7946 (SID 0023)\\nملف "
+"الإعدادات؛ خلاصة الملف\"];\n"
+"  a -> b [color=\"#15803d\", fontcolor=\"#166534\", label=\"TCP وUDP، "
+"منفذ الشبكة المتداخلة + 1 (SID 0026)\\nالاتصالات ورزم البيانات "
+"الممررة\"];\n"
+"}"
 
 #: ../../cluster.rst:100
 msgid ""
 "What flows between two nodes, by port. The kind of each datagram is in "
 "parentheses."
-msgstr ""
+msgstr "ما يجري بين عقدتين، بحسب المنفذ. ونوع كل رزمة بيانات بين قوسين."
 
 #: ../../cluster.rst:114
 msgid ""
@@ -340,10 +442,15 @@ msgid ""
 "earns its cost in large groups whose members change; a roster of at most "
 "64 fixed nodes has no use for it."
 msgstr ""
+"ترسل كل عقدة إلى كل عقدة أخرى مباشرة. ولا تمرر العقدة أبدًا رزمة بيانات "
+"تلقتها. فمع قائمة أعضاء كاملة تسمع كل عقدة كل كاتب، والتمرير عند الاستلام "
+"هو ما يجعل التناقل (gossip) يدور في حلقة. والتمرير الوبائي يستحق كلفته في "
+"المجموعات الكبيرة التي يتغير أعضاؤها؛ أما قائمة من 64 عقدة ثابتة على "
+"الأكثر فلا حاجة لها به."
 
 #: ../../cluster.rst:116
 msgid "Bans merged by a maximum"
-msgstr ""
+msgstr "الحظر يُدمج بقيمة عظمى"
 
 #: ../../cluster.rst:119
 msgid ""
@@ -353,6 +460,10 @@ msgid ""
 "For each key it is the maximum of two numbers, so it has the three laws "
 "of the maximum."
 msgstr ""
+"الحظر زوج: مفتاح عميل، والثانية في توقيت Unix التي ينتهي عندها الحظر. "
+"وحالة العقدة خريطة من المفاتيح إلى النهايات. وتندمج حالتان بأخذ النهاية "
+"الأبعد لكل مفتاح. ليكن :math:`\\sqcup` هذا الدمج. وهو لكل مفتاح القيمة "
+"العظمى لعددين، فله قوانين القيمة العظمى الثلاثة."
 
 #: ../../cluster.rst:121
 msgid ""
@@ -371,6 +482,13 @@ msgid ""
 "a join semilattice, the state-based replicated data type of Shapiro and "
 "his colleagues (2011)."
 msgstr ""
+"هذه القوانين الثلاثة هي برهان التقارب كله. يقول الأول إن ترتيب الوصول لا "
+"يهم. ويقول الثاني إن العقدة يجوز لها أن تدمج رزم البيانات واحدة واحدة. "
+"ويقول الثالث إن رزمة البيانات المكررة لا تغيّر شيئًا، فلا تحتاج الشبكة "
+"المتداخلة إلى نافذة لإعادة الإرسال ولا إلى إشعار استلام. والعقدتان اللتان "
+"سمعتا الحظر نفسه، بأي ترتيب ومع أي تكرار، تحملان الخريطة نفسها. والحالة "
+"ذات هذا الدمج شبه شبكية للربط (join semilattice)، وهي نوع البيانات "
+"المنسوخ القائم على الحالة لدى Shapiro وزملائه (2011)."
 
 #: ../../cluster.rst:127
 msgid ""
@@ -382,6 +500,12 @@ msgid ""
 "receiver cuts an end to 30 days ahead of its own clock and ignores an end "
 "that has passed."
 msgstr ""
+"تحمل رزمة البيانات النهاية، لا الزمن المتبقي. فالزمن المتبقي لا يعتمد على "
+"ساعات العقد، لكن رزمة البيانات المعاد إرسالها كانت ستبدأ الحظر من جديد. "
+"ومع النهاية، تقرر إعادة الإرسال ما يحمله المستقبِل أصلًا. والثمن هو "
+"الاعتماد على الساعات: يدوم الحظر على النظير أطول أو أقصر بمقدار الفرق بين "
+"الساعتين. ويقتطع المستقبِل النهاية إلى 30 يومًا بعد ساعته هو، ويتجاهل "
+"النهاية التي مضت."
 
 #: ../../cluster.rst:129
 msgid ""
@@ -396,10 +520,19 @@ msgid ""
 "replication, counts it, and the ban still holds on the node that issued "
 "it."
 msgstr ""
+"ترسل العقدة كل حظر تصدره ثلاث مرات: فورًا، وبعد ثانية واحدة، وبعد ذلك "
+"بأربع ثوانٍ. وثلاث إرسالات تصمد أمام فقد رزمتين. لكنها لا تصمد أمام "
+"التقسيم (partition)، لذلك تمر العقدة أيضًا على خريطتها كلها لنظير يعود: "
+"نظير تحمل فحوصه قيمة إقلاع مؤقتة جديدة، أو يجيب بعد ثلاث فترات صامتة. "
+"ويرسل المرور ثماني رزم بيانات على الأكثر في فترة مدتها 500 ms. وكل بنية "
+"محدودة: تضم الخريطة 65,536 حظرًا، ويضم الطابور من الجدار الناري إلى خيط "
+"الشبكة المتداخلة 1,024. ولا ينتظر الطلب الشبكة المتداخلة أبدًا: فالطابور "
+"الممتلئ يُسقط الحظر من النسخ، ويعدّه، ويبقى الحظر ساريًا على العقدة التي "
+"أصدرته."
 
 #: ../../cluster.rst:131
 msgid "Implementation: ``Log::merge``"
-msgstr ""
+msgstr "التنفيذ: ``Log::merge``"
 
 #: ../../cluster.rst:133
 msgid ""
@@ -407,6 +540,9 @@ msgid ""
 "the merge added or extended it. In ``crates/lb/src/mesh/bans.rs`` (crate "
 "``sibuna-lb``). ``keep_larger`` holds the maximum."
 msgstr ""
+"يدمج حظرًا واحدًا في خريطة خيط الشبكة المتداخلة ويعيد نهايته حين يضيفه "
+"الدمج أو يمدده. في ``crates/lb/src/mesh/bans.rs`` (الحزمة ``sibuna-lb``). "
+"و\\ ``keep_larger`` يحمل القيمة العظمى."
 
 #: ../../cluster.rst:135
 msgid ""
@@ -433,6 +569,13 @@ msgid ""
 "not heard yet. A peer that was cut off cannot bring the ban back, because "
 "the lift covers its end."
 msgstr ""
+"لا يمكن أن يكون رفع الحظر نهاية أصغر: فرزمة البيانات التالية من نظير كانت "
+"ستعيد الحظر. لذلك فرفع الحظر مدخل في خريطة ثالثة، من مفتاح العميل إلى "
+"النهاية التي يُرفع حظره حتى بلوغها، وتندمج هذه الخريطة أيضًا بالقيمة "
+"العظمى. ويكون الحظر ساريًا حين ينتهي بعد رفع الحظر عن عميله. وتضبط عقدة "
+"المشغّل رفع الحظر على نهاية الحظر الذي تعرفه، وعلى 60 ثانية بعد الآن على "
+"الأقل، وهذا يغطي حظرًا لم تسمع به بعد. والنظير الذي كان معزولًا لا يستطيع "
+"إعادة الحظر، لأن رفع الحظر يغطي نهايته."
 
 #: ../../cluster.rst:149
 msgid ""
@@ -447,10 +590,18 @@ msgid ""
 "node must build the same table at the same moment. Its servers change "
 "through the file."
 msgstr ""
+"تنتقل أوامر وقت التشغيل بالطريقة نفسها. خريطتها من مفتاح، مثل ``s`` و\\ "
+"``POOL/NAME`` لحالة خادم، إلى رقم يبدأ بالمللي ثانية في توقيت Unix للأمر. "
+"والرقم الأكبر يفوز، فيفوز الأمر الأحدث على كل عقدة أيًّا كان ترتيب "
+"الوصول. وترفض العقدة رقمًا يزيد على ساعتها بأكثر من 60 ثانية؛ فبدون هذا "
+"الحد تستطيع عقدة واحدة بساعة خاطئة أن تنقض كل أمر لاحق. وتبقى قاعدة واحدة "
+"من الجزء الثامن: المجمّع الذي يضع العملاء بجدول Maglev لا يقبل أوزانًا "
+"ولا أعضاء في وقت التشغيل، لأن كل عقدة يجب أن تبني الجدول نفسه في اللحظة "
+"نفسها. وتتغير خوادمه عبر الملف."
 
 #: ../../cluster.rst:151
 msgid "Why a rate counter stays local"
-msgstr ""
+msgstr "لماذا يبقى عداد المعدل محليًا"
 
 #: ../../cluster.rst:154
 msgid ""
@@ -466,6 +617,15 @@ msgid ""
 "maximum can only grow. SID 0022 therefore leaves the limiters on their "
 "nodes and says so: each node bounds what it serves."
 msgstr ""
+"يعدّ محدد المعدل طلبات العميل في نافذة. لتقبل كل عقدة من :math:`n` عقدة "
+":math:`r` طلبًا من عميل في نافذة. فالعميل الذي تتوزع اتصالاته على كل "
+"العقد يحصل حينئذ على ما يصل إلى :math:`nr`. ويبدو جعل العداد شاملًا "
+"الإصلاح البديهي، وهو ليس كذلك. فرسالة لكل طلب تضع الشبكة المتداخلة على "
+"مسار الطلب: إما أن ينتظر الطلب نظراءه، وإما أن يُقرَّر قبل وصول عدّ "
+"الآخرين، وحينئذ تحمل الشبكة المتداخلة معدل طلبات العنقود كله. ولا يفيد "
+"الدمج بالقيمة العظمى أيضًا. فعدّ النافذة يجب أن ينخفض حين تتحرك النافذة، "
+"والحالة التي دمجها قيمة عظمى لا تستطيع إلا أن تكبر. لذلك يترك SID 0022 "
+"محددات المعدل على عقدها ويصرّح بذلك: كل عقدة تحد ما تخدمه."
 
 #: ../../cluster.rst:156
 msgid ""
@@ -476,10 +636,15 @@ msgid ""
 "holds only while forwarding runs, and for up to 1.5 s after a change of "
 "liveness two nodes may each count a part of one client."
 msgstr ""
+"يأتي الحد على مستوى العنقود من الاتجاه الآخر. فالتمرير بين النظراء (SID "
+"0026، أدناه) يعطي كل عميل مالكًا واحدًا، ومفتاح المالك هو مفتاح محدد "
+"المعدل. فيعدّ المالك حينئذ كل تدفق لعملائه، فيصير الحد الذي تعدّه عقدة "
+"واحدة حدًا على مستوى العنقود. ولا يصمد ذلك إلا ما دام التمرير يعمل، ولمدة "
+"تصل إلى 1.5 s بعد تغير الحيوية قد تعدّ عقدتان كل منهما جزءًا من عميل واحد."
 
 #: ../../cluster.rst:158
 msgid "One file for the cluster"
-msgstr ""
+msgstr "ملف واحد للعنقود"
 
 #: ../../cluster.rst:161
 msgid ""
@@ -490,6 +655,11 @@ msgid ""
 "local, because the running daemon holds it. The other addresses are the "
 "peers."
 msgstr ""
+"يجعل SID 0023 ملف الإعدادات واحدًا على كل عقدة، بايتًا ببايت. يسرد قسم "
+"``mesh`` فيه كل عقدة تحت ``nodes``. وتجد العقدة نفسها في أول عنوان من "
+"القائمة ينتمي إلى مضيفها، والاختبار هو هل تستطيع ربط العنوان؛ والعنوان "
+"المستخدم يُعدّ محليًا، لأن البرنامج الخدمي العامل يمسكه. والعناوين الأخرى "
+"هي النظراء."
 
 #: ../../cluster.rst:163
 msgid ""
@@ -510,6 +680,20 @@ msgid ""
 "On three hosts the command returned, with all three holding the same "
 "file, in 30 ms (Part X)."
 msgstr ""
+"يفحص ``reload cluster`` ملف العقدة التي يُعطى عليها، ويعيد تحميل تلك "
+"العقدة، ثم يرسل الملف إلى كل نظير دفعة واحدة عبر TCP، على منفذ الشبكة "
+"المتداخلة. والرسالة هي ``SEC1``، وختم، وطول، والملف، ووسم من 32 بايتًا. "
+"ومفتاح الوسم مشتق من مفتاح الشبكة المتداخلة بالسياق "
+"``sibuna/edge-mesh/config/v1``، فلا يمكن لرزمة بيانات الشبكة المتداخلة أن "
+"تقوم مقام ملف، ولا لملف أن يقوم مقام رزمة بيانات. ولا يأخذ النظير الملف "
+"إلا حين يصرّح بـ ``accept_config``، ويتوقف عند أول فحص يفشل من هذه "
+"الفحوص: المصدر عقدة في قائمة الأعضاء؛ والوسم صحيح؛ والختم أحدث من آخر ختم "
+"أخذه وضمن 60 ثانية من ساعته؛ والملف، المكتوب بجانب ملفه باسم "
+"``NAME.incoming.EXT`` بالأذونات 0600، يجتاز فحص إعادة التحميل؛ والملف "
+"يسمي الشبكة المتداخلة نفسها وهذه العقدة فيها. وعندئذ فقط يُعاد تسمية "
+"الملف فوق القديم ويُحمَّل. والنقل الفاشل لا يغيّر شيئًا على النظير. ويسأل "
+"``show cluster`` كل نظير عن خلاصة ملفه ويبين أي العقد تختلف. وعلى ثلاثة "
+"مضيفين عاد الأمر، والثلاثة تحمل الملف نفسه، في 30 ms (الجزء العاشر)."
 
 #: ../../cluster.rst:165
 msgid ""
@@ -517,10 +701,13 @@ msgid ""
 "old file, and files that the topology names by path are not sent. SID "
 "0028, later in this chapter, answers the first two."
 msgstr ""
+"ليس للملف سجل تاريخي ولا تراجع، والعقدة التي كانت معطلة تحتفظ بملفها "
+"القديم، والملفات التي تسميها بنية النشر بمسارها لا تُرسل. ويجيب SID 0028، "
+"لاحقًا في هذا الفصل، عن الأوليين."
 
 #: ../../cluster.rst:167
 msgid "Exercise 9.1"
-msgstr ""
+msgstr "تمرين 9.1"
 
 #: ../../cluster.rst:169
 msgid ""
@@ -530,18 +717,25 @@ msgid ""
 "client again, until 1,250. What lift does C send, and which of the three "
 "bans holds on which node?"
 msgstr ""
+"تحظر العقدة A عميلًا حتى الثانية 1,300. وعند الثانية 900 يرفع مشغّل الحظر "
+"على العقدة C، التي تعرف تلك النهاية. وكانت العقدة D معزولة وترسل الآن "
+"حظرًا للعميل نفسه حتى 1,200. وعند الثانية 1,000 تحظر العقدة B العميل من "
+"جديد، حتى 1,250. ما رفع الحظر الذي ترسله C، وأي الحظر الثلاثة يسري على أي "
+"عقدة؟"
 
 #: ../../cluster.rst:171
 msgid ""
 "Hint: Compute the lift as the operator's node does, then compare each end "
 "with it. Then read the first known gap of SID 0022."
 msgstr ""
+"تلميح: احسب رفع الحظر كما تحسبه عقدة المشغّل، ثم قارن كل نهاية به. ثم "
+"اقرأ أول فجوة معروفة في SID 0022."
 
 #: ../../cluster.rst:173 ../../cluster.rst:227 ../../cluster.rst:333
 #: ../../cluster.rst:442 ../../cluster.rst:519 ../../cluster.rst:549
 #: ../../cluster.rst:590
 msgid "Explain the invariant"
-msgstr ""
+msgstr "اشرح اللامتغير"
 
 #: ../../cluster.rst:175
 msgid ""
@@ -550,14 +744,17 @@ msgid ""
 "would fail if a lift were sent as a smaller end, and what the map of "
 "lifts does instead."
 msgstr ""
+"اشرح لماذا لا تستطيع رزمة بيانات حظر تصل مرتين، أو متأخرة، أو قبل رزمة "
+"أقدم، أن تغيّر ما تحظره العقدة. ثم اشرح لماذا كانت الحجة نفسها ستفشل لو "
+"أُرسل رفع الحظر نهايةً أصغر، وما الذي تفعله خريطة رفع الحظر بدلًا من ذلك."
 
 #: ../../cluster.rst:177
 msgid "Shared Affinity"
-msgstr ""
+msgstr "تثبيت الجلسات المشترك"
 
 #: ../../cluster.rst:180
 msgid "Three kinds of stickiness"
-msgstr ""
+msgstr "ثلاثة أنواع من التثبيت"
 
 #: ../../cluster.rst:183
 msgid ""
@@ -573,10 +770,20 @@ msgid ""
 "that the application sets, such as a session identifier, from which the "
 "edge cannot compute a server. Only the third kind needs replication."
 msgstr ""
+"يُبقي المجمّع العميل على خادمه بإحدى ثلاث طرق (SID 0019، SID 0025). مع "
+"``sticky: \"cookie\"`` يقدم العميل رمزًا، تجزئة ذات مفتاح للمجمّع "
+"والخادم؛ وتشتق كل عقدة المفتاح من ``http.secret_file``، فلا حاجة إلى "
+"جدول. ومع ``sticky: \"source\"`` ترتب كل عقدة الخوادم بتجزئة لعنوان "
+"العميل؛ والعقد ذات الملف نفسه ترتب ترتيبًا واحدًا. وكلاهما محسوب، فلا "
+"يمكن أن تضيع رزمة بيانات. أما النوع الثالث، ``sticky: \"table\"``، فيوازن "
+"أول تدفق للعميل ويتذكر الاختيار. ويخدم حالتين لا يستطيعهما الحساب: "
+"الاختيار الأول يتبع الحمل، والمفتاح قد يكون ملف تعريف ارتباط يضبطه "
+"التطبيق، مثل معرف جلسة، لا تستطيع الحافة أن تحسب منه خادمًا. والنوع "
+"الثالث وحده يحتاج إلى النسخ."
 
 #: ../../cluster.rst:185
 msgid "The entry and its order"
-msgstr ""
+msgstr "المدخل وترتيبه"
 
 #: ../../cluster.rst:188
 msgid ""
@@ -587,6 +794,11 @@ msgid ""
 "entry expires. Two entries of one key merge by keeping the larger pair of "
 "end and server, compared in that order:"
 msgstr ""
+"يربط المدخل مفتاحًا من 16 بايتًا بخادم ونهاية. والمفتاح تجزئة ذات مفتاح "
+"لعنوان العميل، أو لقيمة ملف تعريف الارتباط، تحت مفتاح مشتق من اسم "
+"المجمّع. والخادم تجزئة لاسمه، واحدة على كل عقدة. والنهاية هي المللي ثانية "
+"في توقيت Unix التي ينتهي عندها المدخل. ويندمج مدخلان لمفتاح واحد "
+"بالاحتفاظ بالزوج الأكبر من النهاية والخادم، مقارنَين بهذا الترتيب:"
 
 #: ../../cluster.rst:190
 msgid ""
@@ -603,6 +815,11 @@ msgid ""
 "two servers for one client in the same millisecond, with the same "
 "``ttl``, would each keep their own entry forever."
 msgstr ""
+"الترتيب المعجمي على أزواج الأعداد كلي: من زوجين مختلفين، أحدهما أكبر. "
+"والقيمة العظمى على ترتيب كلي تبديلية وتجميعية ومتساوية القوى، فتتقارب "
+"المدخلات للسبب الذي يتقارب به الحظر. والخادم يفصل في التعادل. فبدونه كانت "
+"عقدتان تعلمتا خادمين لعميل واحد في المللي ثانية نفسها، مع ``ttl`` نفسه، "
+"ستحتفظ كل منهما بمدخلها إلى الأبد."
 
 #: ../../cluster.rst:196
 msgid ""
@@ -616,10 +833,18 @@ msgid ""
 "bounds the harm of a wrong clock: a received end more than 24 hours and "
 "60 seconds ahead is ignored."
 msgstr ""
+"النهاية هي أيضًا إصدار المدخل. تتعلم العقدة حين يوضع تدفق على خادم لم "
+"يسمه الجدول؛ والنهاية الجديدة هي الأبعد من الآن زائدًا ``ttl`` ومن مللي "
+"ثانية واحدة بعد النهاية القديمة. فيكون الاختيار الجديد أكبر من المدخل "
+"الذي يستبدله، على كل عقدة. وتُحدِّث العقدة حين يستخدم تدفق المدخل ويبقى "
+"أقل من ثلاثة أرباع ``ttl``؛ والنهاية الجديدة هي الآن زائدًا ``ttl``. "
+"فيخدم رقم واحد إصدارًا وانتهاءً، والحد على بعده عن الساعة يحد ضرر الساعة "
+"الخاطئة: فالنهاية المستلمة التي تزيد على الساعة بأكثر من 24 ساعة و60 "
+"ثانية تُتجاهل."
 
 #: ../../cluster.rst:198
 msgid "Implementation: ``Affinity::wins_over``"
-msgstr ""
+msgstr "التنفيذ: ``Affinity::wins_over``"
 
 #: ../../cluster.rst:200
 msgid ""
@@ -628,6 +853,9 @@ msgid ""
 "``AffinityTable::keep`` in the same file stores an entry only when it "
 "wins over the one held."
 msgstr ""
+"يقرر دمج مدخلين لمفتاح واحد. في ``crates/lb/src/affinity.rs`` (الحزمة "
+"``sibuna-lb``). و\\ ``AffinityTable::keep`` في الملف نفسه لا يخزن مدخلًا "
+"إلا حين يفوز على المدخل المحفوظ."
 
 #: ../../cluster.rst:202
 msgid ""
@@ -653,6 +881,16 @@ msgid ""
 "clients. A lookup took 172 ns in an optimised build, on a table of 65,536 "
 "slots with 49,152 clients."
 msgstr ""
+"الجدول مصفوفة من الخانات في دلاء من أربع. والخانة خمس كلمات ذرية: رقم "
+"تسلسل، وكلمتان للمفتاح، والخادم، والنهاية. يجعل الكاتب التسلسل فرديًا "
+"بعملية مقارنة وتبديل، ويخزن المدخل، ثم يجعله زوجيًا من جديد؛ ولا يأخذ "
+"القارئ مدخلًا إلا حين يقرأ التسلسل الزوجي نفسه قبله وبعده. ولا ينتظر أي "
+"خيط غيره. وللجدول ``global.sticky_entries`` خانة، 65,536 افتراضيًا، كل "
+"منها 40 بايتًا، والدلو الممتلئ يتخلى عن المدخل الذي ينتهي أولًا. والدلو "
+"ذو الخانات الأربع يتخلى عن مدخلات قبل امتلاء الجدول: فعند امتلاء ثلاثة "
+"أرباعه كان قد تخلى عن عميل من كل تسعة، فيحتاج الجدول إلى ضعف عدد العملاء "
+"من الخانات. واستغرق البحث 172 ns في بناء محسّن، على جدول من 65,536 خانة "
+"مع 49,152 عميلًا."
 
 #: ../../cluster.rst:212
 msgid ""
@@ -663,10 +901,15 @@ msgid ""
 "serves only while it is eligible: in the pool, healthy, not drained, with "
 "room."
 msgstr ""
+"الجدول لا يقدم إلا نصيحة في اختيار خادم لتدفق جديد. والتدفق المؤسَّس يحمل "
+"حجزًا على خادمه ولا يقرأ الجدول مرة أخرى أبدًا. لذلك فالمدخل الضائع أو "
+"المُزاح أو المتغير لا يكلف العميل إلا خادمه في التدفق الجديد التالي، "
+"والخادم المسمى لا يخدم إلا ما دام مؤهلًا: في المجمّع، وسليمًا، وغير "
+"مُصرَّف، وفيه متسع."
 
 #: ../../cluster.rst:214
 msgid "Replication, partition and the window of a race"
-msgstr ""
+msgstr "النسخ، والتقسيم، ونافذة السباق"
 
 #: ../../cluster.rst:217
 msgid ""
@@ -682,6 +925,16 @@ msgid ""
 "One side's choice changes for the next new flow of that client. Flows "
 "under way stay."
 msgstr ""
+"يسلّم العامل مفتاح كل مدخل كتبه إلى خيط الشبكة المتداخلة عبر طابور محدود "
+"من 4,096 مفتاحًا، دون انتظار. ويرسل خيط الشبكة المتداخلة المدخل ثلاث "
+"مرات، كما يرسل الحظر، في رزم بيانات من النوع 6 تحمل كل منها 36 مدخلًا. "
+"والنظير العائد يُرسل إليه الجدول كله بمؤشر، 32 رزمة بيانات على الأكثر في "
+"فترة مدتها 500 ms؛ ويستغرق جدول من 65,536 مدخلًا نحو 29 ثانية. والعقدة "
+"المعزولة تخدم من جدولها الخاص: يتخلى الجدول عن الاتفاق أثناء التقسيم "
+"ويحتفظ بالإتاحة. وحين ينتهي التقسيم، يمر كل جانب على جدوله للآخر، ولكل "
+"مفتاح تحتفظ كل عقدة بالمدخل الأكبر، أي الاختيار الذي اتُّخذ أو استُخدم "
+"أخيرًا. ويتغير اختيار أحد الجانبين في التدفق الجديد التالي لذلك العميل. "
+"وتبقى التدفقات الجارية."
 
 #: ../../cluster.rst:219
 msgid ""
@@ -699,10 +952,21 @@ msgid ""
 "without making the first flow wait for the peers, which the design "
 "refuses."
 msgstr ""
+"النسخ غير متزامن، فهناك نافذة. يصل الاختيار إلى النظير بعد التسليم إلى "
+"خيط الشبكة المتداخلة، وإرسال واحد، وتأخير شبكة واحد. والتدفق الثاني "
+"للعميل نفسه الذي يصل إلى النظير داخل النافذة لا يجد مدخلًا، فيُوازن، "
+"ويتعلم النظير اختيارًا خاصًا به. وينتقل المدخلان كلاهما؛ ويفوز الأكبر في "
+"كل مكان؛ وتلقى التدفقات الجديدة اللاحقة للعميل خادمًا واحدًا. وقاس SID "
+"0025 النافذة على مضيفين، بجدول مفتاحه ملف تعريف ارتباط. بلا توقف بين "
+"التدفق الأول على عقدة والتالي على الأخرى، لقي 25 عميلًا من 40 خادمين؛ ومع "
+"20 ms، لقيهما 13 من 40؛ ومع 50 ms، لم يلقهما أحد. واتفق الجميع بعد "
+"ثانيتين، ووصل 300 عميل من 300 إلى الخادم نفسه عبر أي من العقدتين. "
+"فالاختيار وصل إلى النظير في أقل من 50 ms. ولا يمكن إغلاق النافذة دون جعل "
+"التدفق الأول ينتظر النظراء، وهذا ما يرفضه التصميم."
 
 #: ../../cluster.rst:221
 msgid "Exercise 9.2"
-msgstr ""
+msgstr "تمرين 9.2"
 
 #: ../../cluster.rst:223
 msgid ""
@@ -712,12 +976,17 @@ msgid ""
 "flow. Which entry does every node hold after the datagrams cross? Which "
 "flows move?"
 msgstr ""
+"تتعلم العقدتان A وB خادمًا للعميل الجديد نفسه في المللي ثانية نفسها، مع "
+"``ttl`` نفسه. اختارت A الخادم الذي تجزئته ``0x3a...`` واختارت B الخادم "
+"الذي تجزئته ``0x91...``. ووضعت كل منهما تدفقًا واحدًا. أي مدخل تحمله كل "
+"عقدة بعد أن تتقاطع رزم البيانات؟ وأي التدفقات تنتقل؟"
 
 #: ../../cluster.rst:225
 msgid ""
 "Hint: Compare the pairs of end and server. Then recall what an "
 "established flow reads."
 msgstr ""
+"تلميح: قارن أزواج النهاية والخادم. ثم تذكّر ما يقرؤه التدفق المؤسَّس."
 
 #: ../../cluster.rst:229
 msgid ""
@@ -725,14 +994,17 @@ msgid ""
 "the later end. Then explain why no loss of a datagram, and no eviction "
 "from a full bucket, can move a flow that is already established."
 msgstr ""
+"اشرح لماذا يحتاج دمج مدخلات التثبيت إلى ترتيب كلي لا إلى النهاية الأبعد "
+"وحدها. ثم اشرح لماذا لا يستطيع أي فقد لرزمة بيانات، ولا أي إزاحة من دلو "
+"ممتلئ، أن ينقل تدفقًا مؤسَّسًا من قبل."
 
 #: ../../cluster.rst:231
 msgid "A Cap for the Whole Fleet"
-msgstr ""
+msgstr "حد للأسطول كله"
 
 #: ../../cluster.rst:234
 msgid "The invariant"
-msgstr ""
+msgstr "اللامتغير"
 
 #: ../../cluster.rst:237
 msgid ""
@@ -743,6 +1015,11 @@ msgid ""
 ":math:`i` and :math:`u_i` its flows on the server. The protocol keeps two "
 "inequalities:"
 msgstr ""
+"الخادم ذو ``max_flows: 100`` خلف :math:`n` عقدة يتلقى ما يصل إلى "
+":math:`100n` تدفقًا حين تفرض كل عقدة الحد وحدها. ومع ``max_flows_scope: "
+"\"fleet\"`` يحد الحد :math:`L` تدفقات كل العقد مجتمعة (SID 0025). ليكن "
+":math:`s_i` حصة العقدة :math:`i` و\\ :math:`u_i` تدفقاتها على الخادم. "
+"يحافظ البروتوكول على متباينتين:"
 
 #: ../../cluster.rst:239
 msgid ""
@@ -757,10 +1034,13 @@ msgid ""
 "and reordering of datagrams, for every partition, and for every set of "
 "nodes that stop or restart."
 msgstr ""
+"الأولى محلية: لا تقبل العقدة تدفقًا إلا ما دامت تدفقاتها أقل من حصتها. "
+"والثانية يجب أن تصمد أمام كل فقد لرزم البيانات وتكرار وتأخير وإعادة "
+"ترتيب، وأمام كل تقسيم، وأمام كل مجموعة من العقد تتوقف أو تعيد التشغيل."
 
 #: ../../cluster.rst:245
 msgid "Counters that only grow"
-msgstr ""
+msgstr "عدادات لا تزداد إلا نموًا"
 
 #: ../../cluster.rst:248
 msgid ""
@@ -772,12 +1052,20 @@ msgid ""
 "once. This is the escrow method of O'Neil (1986) and the bounded counter "
 "of Balegas and his colleagues (2015), built on the merge of SID 0022."
 msgstr ""
+"كان التصميم الأول ينقل الحصص برسائل: \"خذ 5\". ومثل هذه الرسالة يجب أن "
+"تصل مرة واحدة بالضبط. فإن ضاعت أضاعت خمسة أماكن إلى الأبد؛ وإن تكررت "
+"ضاعفتها وكسرت الحد. لذلك يرسل البروتوكول أرقامًا لا تزداد إلا نموًا، "
+"ويدمجها المستقبِل بالقيمة العظمى، كما يدمج الحظر. والرقم المسموع أي عدد "
+"من المرات أثره أثر سماعه مرة واحدة. وهذه طريقة الضمان (escrow) لدى O'Neil "
+"(1986) والعداد المحدود لدى Balegas وزملائه (2015)، مبنية على دمج SID 0022."
 
 #: ../../cluster.rst:250
 msgid ""
 "The nodes of the roster are ordered by address, and node :math:`i` of "
 ":math:`n` has the base share"
 msgstr ""
+"عقد قائمة الأعضاء مرتبة بالعنوان، وللعقدة :math:`i` من :math:`n` الحصة "
+"الأساسية"
 
 #: ../../cluster.rst:252
 msgid ""
@@ -792,6 +1080,10 @@ msgid ""
 "ever gave to :math:`j`, and :math:`h_{ij}`, the largest :math:`g_{ji}` it "
 "heard from :math:`j`. Its share is"
 msgstr ""
+"تحسب كل عقدة الحصص الأساسية من الملف. ولكل نظير :math:`j`، تحتفظ العقدة "
+":math:`i` برقمين لا يزدادان إلا نموًا: :math:`g_{ij}`، كل ما أعطته لـ "
+":math:`j` على الإطلاق، و\\ :math:`h_{ij}`، أكبر :math:`g_{ji}` سمعته من "
+":math:`j`. وحصتها"
 
 #: ../../cluster.rst:258
 msgid "s_i = b_i - \\sum_j g_{ij} + \\sum_j h_{ij}."
@@ -803,6 +1095,9 @@ msgid ""
 "its share before it sent them, so :math:`h_{ji} \\le g_{ij}` at every "
 "moment. Summing over the nodes and renaming the indices of the last sum,"
 msgstr ""
+"لا يحمل المستقبِل إلا أرقامًا أرسلها المعطي، وقد خفّض المعطي حصته قبل أن "
+"يرسلها، فيكون :math:`h_{ji} \\le g_{ij}` في كل لحظة. وبالجمع على العقد "
+"وإعادة تسمية مؤشرات المجموع الأخير،"
 
 #: ../../cluster.rst:264
 msgid ""
@@ -816,10 +1111,13 @@ msgid ""
 "difference is counted on neither node: it is stranded for one period of "
 "500 ms, never doubled."
 msgstr ""
+"رزمة البيانات الضائعة تترك :math:`h_{ji} < g_{ij}` لبعض الوقت. والفرق لا "
+"يُحسب على أي من العقدتين: يبقى عالقًا فترة واحدة مدتها 500 ms، ولا يتضاعف "
+"أبدًا."
 
 #: ../../cluster.rst:270
 msgid "Moving shares to the demand"
-msgstr ""
+msgstr "نقل الحصص إلى حيث الطلب"
 
 #: ../../cluster.rst:273
 msgid ""
@@ -835,6 +1133,15 @@ msgid ""
 "a peer, it gives back the excess up to that gift, so the shares of an "
 "idle cluster return to the bases."
 msgstr ""
+"تحسب كل عقدة، لكل خادم محدود، حصتها الحرة :math:`f = s - u` وهامشًا "
+":math:`r = \\max(1, \\lceil u/4 \\rceil)`. وهي *تريد* :math:`r - f` حين "
+"يكون موجبًا، وواحدًا على الأقل، مع علم، حين رفضت تدفقًا لنقص الحصة منذ "
+"آخر حالة أرسلتها. و\\ *فائضها* هو :math:`f - r`. ومرة في كل فترة تلبي "
+"العقدة الرغبات التي سمعتها. فتعطي النظير الأصغر من الرغبة ومن فائضها؛ "
+"وتعطي النظير الذي يرفض تدفقات الأصغر من الرغبة ومن الأكبر بين فائضها و\\ "
+":math:`\\lceil f/2 \\rceil`. وتعيد العقدة الحصة المستعارة من تلقاء نفسها: "
+"حين :math:`f > 2\\lceil u/4 \\rceil` وهي تحمل هبة صافية من نظير، تعيد "
+"الزيادة حتى مقدار تلك الهبة، فتعود حصص العنقود الخامل إلى الحصص الأساسية."
 
 #: ../../cluster.rst:275
 msgid ""
@@ -848,10 +1155,18 @@ msgid ""
 "peer, which then holds the whole limit. It limits the route, and the "
 "restart below needs it."
 msgstr ""
+"ثلاث قواعد تحد الهبة. فهي تأتي من الحصة الحرة، فتبقى تدفقات المعطي ضمن "
+"حصته. ولا تُقرض العقدة إلا حصتها الأساسية: مع :math:`o_{ij} = g_{ij} - "
+"h_{ij}`، لا يزيد مجموع قيم :math:`o_{ij}` الموجبة لعقدة واحدة أبدًا على "
+":math:`b_i`، ويجوز للهبة أن تعود إلى النظير الذي جاءت منه لكن لا أن تمضي "
+"إلى ثالث. ولا تعطي العقدة إلا نظيرًا سمعته في الفترات الثلاث الأخيرة وهي "
+"متزامنة معه. والقاعدة الثانية لا تحد أين يمكن أن تذهب الحصص: فكل عقدة "
+"يجوز لها أن تُقرض حصتها الأساسية كلها لنظير واحد، فيحمل حينئذ الحد كله. "
+"إنها تحد الطريق، وإعادة التشغيل أدناه تحتاج إليها."
 
 #: ../../cluster.rst:277
 msgid "Implementation: ``Cell::enter`` and ``Cell::lower``"
-msgstr ""
+msgstr "التنفيذ: ``Cell::enter`` و\\ ``Cell::lower``"
 
 #: ../../cluster.rst:279
 msgid ""
@@ -861,6 +1176,10 @@ msgid ""
 "compute the want and the share; ``move_shares`` in "
 "``crates/lb/src/mesh/shares.rs`` serves the wants once in each period."
 msgstr ""
+"قبول تدفق على عامل، وخفض الحصة بيد خيط الشبكة المتداخلة قبل الهبة. في "
+"``crates/lb/src/quota.rs`` (الحزمة ``sibuna-lb``). و\\ ``Demand::of`` و\\ "
+"``Ledger::share`` في الملف نفسه يحسبان الرغبة والحصة؛ و\\ ``move_shares`` "
+"في ``crates/lb/src/mesh/shares.rs`` يلبي الرغبات مرة في كل فترة."
 
 #: ../../cluster.rst:281
 msgid ""
@@ -887,10 +1206,17 @@ msgid ""
 "reads the lowered share. No flow enters on a share that was given away, "
 "and no lock is taken."
 msgstr ""
+"يضيف العامل نفسه إلى العدد أولًا ويقرأ الحصة ثانيًا. ويخزن ``lower`` "
+"الحصة المخفّضة أولًا ويقرأ العدد ثانيًا؛ وحين يتجاوز العدد الحصة "
+"المخفّضة، تكون تدفقات قد دخلت في الأثناء، فيرفع الحصة بمقدار الفرق ويعطي "
+"أقل. والعمليات الأربع كلها متسقة تسلسليًا، فتقع في ترتيب كلي واحد. فإما "
+"أن تأتي إضافة العامل قبل قراءة خيط الشبكة المتداخلة، فيراها، وإما أن تأتي "
+"بعد تخزين الحصة المخفّضة، فيقرأ العامل الحصة المخفّضة. لا يدخل أي تدفق "
+"على حصة أُعطيت لغيرها، ولا يؤخذ أي قفل."
 
 #: ../../cluster.rst:294
 msgid "Restarts and epochs"
-msgstr ""
+msgstr "إعادة التشغيل والحقب"
 
 #: ../../cluster.rst:297
 msgid ""
@@ -902,6 +1228,12 @@ msgid ""
 "*echo*. A receiver ignores a datagram whose sender epoch is below the "
 "largest it knows for that peer."
 msgstr ""
+"العقدة التي تعيد التشغيل ليس لها تدفقات وقد فقدت دفترها. وما زال نظراؤها "
+"يحملون دفاترهم، وقد يخدمون تدفقات على حصص أعطتها لهم. فيجب ألا تبدأ من "
+"جديد من حصتها الأساسية. لذلك لكل عقدة *حقبة*، هي المللي ثانية في توقيت "
+"Unix لبدئها. وتحمل رزمة بيانات الحالة حقبة مرسلها وحقبة المستقبِل التي "
+"سمعها المرسل آخر مرة، أي *صداها*. ويتجاهل المستقبِل رزمة بيانات حقبة "
+"مرسلها أقل من أكبر حقبة يعرفها لذلك النظير."
 
 #: ../../cluster.rst:299
 msgid ""
@@ -910,6 +1242,10 @@ msgid ""
 "it counts none of its base and only what synchronised peers gave it in "
 "net:"
 msgstr ""
+"العقدة التي تبدأ غير متزامنة مع كل نظير. وبحسب قاعدة أنها لا تُقرض إلا "
+"حصتها الأساسية، فقد أعطت كل النظراء مجتمعين حصتها الأساسية على الأكثر، "
+"فلا تحسب شيئًا من حصتها الأساسية، ولا تحسب إلا ما أعطاها النظراء "
+"المتزامنون صافيًا:"
 
 #: ../../cluster.rst:301
 msgid ""
@@ -924,6 +1260,11 @@ msgid ""
 ":math:`h_{ij}` the :math:`g_{ji}`. The echo proves that :math:`j` had "
 "heard the new epoch before it sent, so the two ledgers agree from then on."
 msgstr ""
+"تصير متزامنة مع النظير :math:`j` حين تردد رزمة بيانات من :math:`j` حقبتها "
+"الجديدة. ثم تتسلم الدفتر الذي احتفظ به :math:`j`: يصير :math:`g_{ij}` "
+"الخاص بها هو :math:`h_{ji}` في رزمة البيانات، و\\ :math:`h_{ij}` هو "
+":math:`g_{ji}`. والصدى يثبت أن :math:`j` كان قد سمع الحقبة الجديدة قبل أن "
+"يرسل، فيتفق الدفتران منذ ذلك الحين."
 
 #: ../../cluster.rst:307
 msgid ""
@@ -940,10 +1281,20 @@ msgid ""
 "peers lend it. A cluster that starts with one node missing serves no flow "
 "on a capped server until that node answers."
 msgstr ""
+"لا يعيد أي مؤقت حصة عقدة صامتة. فالصمت لا يميز العقدة المتوقفة من العقدة "
+"المعزولة التي ما زالت تخدم التدفقات التي قبلتها. وإعادة حصتها تتجاوز الحد "
+"ما لم تغلق تلك العقدة تلك التدفقات، وSibuna لا يغلق التدفقات المؤسَّسة من "
+"أجل حصة. وتأجير الحصص يفشل للسبب نفسه: فالتدفق يعيش أطول من الإيجار. "
+"والثمن سعة لا يستطيع أحد استخدامها لبعض الوقت. فالهبة الضائعة تبقى عالقة "
+"فترة واحدة. والعقدة التي تتوقف تُبقي آخر حصة لها عالقة حتى تعيد التشغيل "
+"وتسمع كل نظير مرة واحدة، أو، إن لم تعد أبدًا، حتى يزيلها المشغّل من "
+"``mesh.nodes`` ويعيد تشغيل العقد. والعقدة التي تعيد التشغيل بينما نظير "
+"صامت لا تخدم إلا على ما يقرضها النظراء الآخرون. والعنقود الذي يبدأ وعقدة "
+"واحدة غائبة لا يخدم أي تدفق على خادم محدود حتى تجيب تلك العقدة."
 
 #: ../../cluster.rst:309
 msgid "Worked example: three nodes and a limit of 30"
-msgstr ""
+msgstr "مثال محلول: ثلاث عقد وحد قدره 30"
 
 #: ../../cluster.rst:311
 msgid ""
@@ -951,6 +1302,9 @@ msgid ""
 ":math:`\\lfloor 30/3 \\rfloor = 10` each. A holds 10 flows and refused "
 "one. B holds 2 and C holds none."
 msgstr ""
+"تتشارك العقد A وB وC خادمًا مع :math:`L = 30`. الحصص الأساسية "
+":math:`\\lfloor 30/3 \\rfloor = 10` لكل منها. تحمل A عشرة تدفقات ورفضت "
+"واحدًا. وتحمل B تدفقين ولا تحمل C شيئًا."
 
 #: ../../cluster.rst:313
 msgid ""
@@ -964,6 +1318,15 @@ msgid ""
 "are stranded and none is doubled. When A hears them, :math:`h_{AB} = "
 "h_{AC} = 3` and :math:`s_A = 10 + 3 + 3 = 16`. The sum is 30."
 msgstr ""
+"*الفترة 1.* لدى A :math:`f = 0` و\\ :math:`r = \\lceil 10/4 \\rceil = 3`، "
+"فتريد 3، مع العلم. ولدى B :math:`f = 8`، و\\ :math:`r = 1`، وفائض 7. وA "
+"مضغوطة، فيجوز لـ B أن تعطي :math:`\\min(3, \\max(7, \\lceil 8/2 \\rceil)) "
+"= 3`؛ وحصتها الأساسية تسمح بذلك، إذ لم تُقرض شيئًا. تخفّض B حصتها إلى 7 "
+"وتضبط :math:`g_{BA} = 3`. ولدى C :math:`f = 10`، وفائض 9، فتعطي 3 كذلك: "
+"الحصة 7، و\\ :math:`g_{CA} = 3`. وحتى تصل رزم بيانات الحالة تكون الحصص 10 "
+"و7 و7، ومجموعها 24: ستة أماكن عالقة ولا شيء متضاعف. وحين تسمعها A، يصير "
+":math:`h_{AB} = h_{AC} = 3` و\\ :math:`s_A = 10 + 3 + 3 = 16`. والمجموع "
+"30."
 
 #: ../../cluster.rst:315
 msgid ""
@@ -973,6 +1336,11 @@ msgid ""
 "and gives 4. Now :math:`g_{BA} = g_{CA} = 7`, and the shares are "
 ":math:`s_A = 10 + 7 + 7 = 24`, :math:`s_B = s_C = 3`. The sum is 30."
 msgstr ""
+"*الفترة 2.* تملأ A أماكنها الستة عشر وترفض من جديد: :math:`r = \\lceil "
+"16/4 \\rceil = 4`، والرغبة 4. ولدى B الحصة 7، و\\ :math:`f = 5`، وفائض 4، "
+"فتعطي 4؛ ويجوز لها أن تُقرض :math:`10 - 3 = 7`. ولدى C :math:`f = 7`، "
+"وفائض 6، فتعطي 4. الآن :math:`g_{BA} = g_{CA} = 7`، والحصص :math:`s_A = "
+"10 + 7 + 7 = 24`، و\\ :math:`s_B = s_C = 3`. والمجموع 30."
 
 #: ../../cluster.rst:317
 msgid ""
@@ -980,6 +1348,9 @@ msgid ""
 "is stranded: the cluster can hold at most 27 flows on the server until C "
 "returns, and no timer changes that."
 msgstr ""
+"*تتوقف C.* تحتفظ A بـ :math:`h_{AC} = 7` وبحصتها البالغة 24. وتبقى حصة C "
+"البالغة 3 عالقة: لا يستطيع العنقود أن يحمل أكثر من 27 تدفقًا على الخادم "
+"حتى تعود C، ولا يغيّر ذلك أي مؤقت."
 
 #: ../../cluster.rst:319
 msgid ""
@@ -990,6 +1361,11 @@ msgid ""
 "Synchronised with both, C counts :math:`s_C = 10 - 7 = 3`, and the sum is "
 "30 again."
 msgstr ""
+"*تعيد C التشغيل* بحقبة جديدة. وهي غير متزامنة مع النظيرين وتحسب "
+":math:`s_C = 0`. وتردد الحالة التالية من A الحقبة الجديدة وتحمل "
+":math:`g_{AC} = 0` و\\ :math:`h_{AC} = 7`. فتتسلمهما C على أنهما "
+":math:`h_{CA} = 0` و\\ :math:`g_{CA} = 7`. وتعطي حالة B أصفارًا. ومتزامنة "
+"مع النظيرين، تحسب C :math:`s_C = 10 - 7 = 3`، ويعود المجموع 30."
 
 #: ../../cluster.rst:321
 msgid ""
@@ -998,6 +1374,10 @@ msgid ""
 "in period 1. Had C restarted from its base, it would have counted 10 "
 "beside A's 24 and B's 3: 37 places for a limit of 30."
 msgstr ""
+"افتراضان مخالفان للواقع يبينان لماذا جاء التصميم على ما هو عليه. لو أرسلت "
+"B الرسالة \"خذ 3\" وكررتها الشبكة، لحسبت A ‏33 في الفترة 1. ولو أعادت C "
+"التشغيل من حصتها الأساسية، لحسبت 10 إلى جانب 24 لدى A و3 لدى B: أي 37 "
+"مكانًا لحد قدره 30."
 
 #: ../../cluster.rst:323
 msgid ""
@@ -1010,6 +1390,13 @@ msgid ""
 "refused. Each step took about three periods there, longer than one; the "
 "SID records the steps and not the cause."
 msgstr ""
+"تتنبأ القواعد نفسها بالخطوات المقيسة. على مضيفين مع :math:`L = 20`، "
+"الحصتان الأساسيتان 10 لكل منهما. والعقدة ذات التدفقات العشرة التي ترفض "
+"تريد :math:`\\lceil 10/4 \\rceil = 3` وتتلقى 3، ثم مع 13 تدفقًا تريد "
+":math:`\\lceil 13/4 \\rceil = 4` وتتلقى 4. وقاس SID 0025 القيمة 10، ثم 13 "
+"بعد 1.5 ثانية، ثم 17 بعد 3 ثوانٍ، مع بقاء مجموع الحصتين 20 دائمًا، ومن 80 "
+"طلبًا محتجزًا خُدم 20 ورُفض 60. واستغرقت كل خطوة هناك نحو ثلاث فترات، "
+"أطول من فترة واحدة؛ ويسجل SID الخطوات لا السبب."
 
 #: ../../cluster.rst:325
 msgid ""
@@ -1034,10 +1421,28 @@ msgid ""
 "``no_flow_enters_on_a_share_that_is_given_away_while_workers_race`` tests "
 "the second."
 msgstr ""
+"يتحقق Lean 4 من النموذج ``docs/sid/assets/shared-affinity.lean`` دون "
+"مكتبات. وللحد يبرهن أنه حين تحمل كل عقدة ما أعطاها نظيرها على الأكثر، لا "
+"يتجاوز مجموع الحصص الحد (``shares_within_limit``)؛ وأن الهبة والسماع "
+"يحافظان على هذا الشرط (``give_keeps_sound``، ``hear_keeps_sound``)، فيصمد "
+"الحد بعد كل تسلسل من الهبات والسماع بأي ترتيب ومع أي تكرار "
+"(``cap_holds_on_every_trace``)؛ وأن الهبة من الحصة الحرة تُبقي التدفقات "
+"ضمن الحصة (``gift_from_free_share``)؛ وأنه، تحت قاعدة أن العقدة لا تُقرض "
+"إلا حصتها الأساسية، لا تتجاوز الحصة التي تحسبها العقدة المعاد تشغيلها "
+"حصتها الحقيقية (``restarted_share_is_safe``)، وأن نسيان زوج فقدته "
+"العقدتان كلتاهما لا يترك أي حصة سالبة (``forgotten_pair_is_safe``). "
+"ولجدول التثبيت يبرهن قوانين الدمج الثلاثة، و\\ ``replay_is_harmless`` و\\ "
+"``learn_wins``. ولا ينمذج الحقب، ولا ترتيب العمليتين الذريتين، ولا الزمن. "
+"وتختبر تتبعات عشوائية لعقدتين إلى خمس عقد مع الفقد والتكرار وإعادة "
+"الترتيب وإعادة التشغيل الأولى "
+"(``the_cap_holds_under_loss_repetition_reordering_and_restarts`` في "
+"``quota.rs``)، ويختبر "
+"``no_flow_enters_on_a_share_that_is_given_away_while_workers_race`` "
+"الثاني."
 
 #: ../../cluster.rst:327
 msgid "Exercise 9.3"
-msgstr ""
+msgstr "تمرين 9.3"
 
 #: ../../cluster.rst:329
 msgid ""
@@ -1047,12 +1452,19 @@ msgid ""
 "which gave, stops for good. How many flows can the cluster hold on the "
 "server, and what must the operator do to recover the rest?"
 msgstr ""
+"أربع عقد تتشارك خادمًا مع :math:`L = 10`. احسب الحصص الأساسية. العقدة D، "
+"الأخيرة، تحمل تدفقين وترفض واحدًا؛ والأخرى لا تحمل شيئًا. ماذا تريد D، "
+"وماذا يعطي كل نظير في الفترة التالية؟ ثم تتوقف العقدة A، التي أعطت، "
+"نهائيًا. كم تدفقًا يستطيع العنقود أن يحمل على الخادم، وماذا يجب على "
+"المشغّل أن يفعل لاستعادة الباقي؟"
 
 #: ../../cluster.rst:331
 msgid ""
 "Hint: The remainder of :math:`10/4` goes to the first nodes. Every peer "
 "serves the want it heard, independently."
 msgstr ""
+"تلميح: باقي :math:`10/4` يذهب إلى العقد الأولى. وكل نظير يلبي الرغبة التي "
+"سمعها، مستقلًا عن غيره."
 
 #: ../../cluster.rst:335
 msgid ""
@@ -1060,10 +1472,13 @@ msgid ""
 "explain why a restarted node may not count its base, and why a timer that "
 "returned the share of a silent node would break the cap."
 msgstr ""
+"برهن :math:`\\sum_i s_i \\le L` انطلاقًا من :math:`h_{ji} \\le g_{ij}`. "
+"ثم اشرح لماذا لا يجوز للعقدة المعاد تشغيلها أن تحسب حصتها الأساسية، "
+"ولماذا كان مؤقت يعيد حصة العقدة الصامتة سيكسر الحد."
 
 #: ../../cluster.rst:337
 msgid "One Owner for Each Client"
-msgstr ""
+msgstr "مالك واحد لكل عميل"
 
 #: ../../cluster.rst:340
 msgid ""
@@ -1075,10 +1490,16 @@ msgid ""
 "owner over the mesh network, and the owner serves it under the true "
 "client address."
 msgstr ""
+"حين تنضم عقدة أو تغادر، أو حين يعيد الموجّه التجزئة، يحط العميل على عقدة "
+"أخرى. وتلك العقدة ليس لديها شيء من حالة العميل: تعيين UDP الخاص به، وعدد "
+"اتصالاته، وميزانية معدله، واختيار تثبيته. ويعطي SID 0026 كل عميل مالكًا "
+"واحدًا بين العقد الحية. والعقدة التي تتلقى تدفقًا جديدًا لعميل لا تملكه "
+"تسلّم التدفق إلى المالك عبر شبكة الشبكة المتداخلة، ويخدمه المالك تحت "
+"عنوان العميل الحقيقي."
 
 #: ../../cluster.rst:342
 msgid "Rendezvous hashing"
-msgstr ""
+msgstr "تجزئة rendezvous"
 
 #: ../../cluster.rst:345
 msgid ""
@@ -1094,6 +1515,17 @@ msgid ""
 "node, at most 64. The seeds depend on the mesh key, so a client cannot "
 "compute which addresses share an owner."
 msgstr ""
+"مفتاح العميل عنوان IPv4 الخاص به، أو أول 64 بتًا من عنوان IPv6 الخاص به؛ "
+"وهذه هي مفاتيح محددات المعدل. ولكل عقدة :math:`n` في قائمة الأعضاء بذرة "
+":math:`\\sigma_n`، هي أول ثمانية بايتات من تجزئة BLAKE3 ذات المفتاح "
+"لعنوانها في الشبكة المتداخلة تحت مفتاح مشتق من مفتاح الشبكة المتداخلة. "
+"ودرجة العقدة :math:`n` للعميل :math:`k` هي "
+":math:`\\mathrm{wyhash}(\\sigma_n, k)`، والمالك هو العقدة المؤهلة صاحبة "
+"أكبر درجة؛ والدرجات المتساوية تذهب إلى العقدة الأسبق في قائمة الأعضاء. "
+"وهذه تجزئة rendezvous (Thaler وRavishankar، 1998). لا تحتاج إلى جدول ولا "
+"إلى نشر؛ وعملها تجزئة واحدة لكل عقدة حية، 64 على الأكثر. والبذور تعتمد "
+"على مفتاح الشبكة المتداخلة، فلا يستطيع العميل أن يحسب أي العناوين تتشارك "
+"مالكًا."
 
 #: ../../cluster.rst:347
 msgid ""
@@ -1104,6 +1536,11 @@ msgid ""
 "symmetry each of the :math:`n` nodes is the largest with the same "
 "probability, so"
 msgstr ""
+"لماذا ينقل الانضمام هذا القدر القليل؟ لننمذج درجات عميل واحد على أنها "
+"مستقلة ومنتظمة؛ ومع درجات من 64 بتًا يكون التعادل مهملًا. حين تنضم عقدة "
+"ويصير في العنقود :math:`n` عقدة، يغيّر العميل مالكه بالضبط حين تكون "
+"للعقدة الجديدة أكبر الدرجات الـ :math:`n`. وبالتناظر تكون كل عقدة من "
+"العقد الـ :math:`n` الأكبر بالاحتمال نفسه، فيكون"
 
 #: ../../cluster.rst:349
 msgid "P(\\text{the client moves}) = \\frac{1}{n}."
@@ -1121,20 +1558,30 @@ msgid ""
 "share of the clients of nodes that did not change, and it must be rebuilt "
 "and published at every change of liveness."
 msgstr ""
+"حين لا تكون العقدة الجديدة الأكبر، تبقى أكبر الدرجات القديمة هي الأكبر، "
+"ويبقى المالك. فالعملاء الذين ينتقلون كلهم ينتقلون إلى العقدة الجديدة. ولا "
+"يستطيع أي مخطط أن يفعل أفضل من ذلك: فلإعطاء العقدة الجديدة حصتها العادلة "
+"البالغة :math:`1/n` من العملاء، يجب أن ينتقل :math:`1/n` على الأقل. وحين "
+"تغادر عقدة، لا ينتقل إلا عملاؤها، كل منهم إلى العقدة صاحبة ثاني أكبر درجة "
+"له، فيتوزعون بالتساوي على العقد الأخرى. وجدول Maglev الذي رسم SID 0015 "
+"خطوطه للخوادم الأصلية كان سينقل أيضًا حصة صغيرة من عملاء العقد التي لم "
+"تتغير، ويجب أن يُعاد بناؤه ونشره عند كل تغير في الحيوية."
 
 #: ../../cluster.rst:355
 msgid "Worked example: a fourth node joins"
-msgstr ""
+msgstr "مثال محلول: تنضم عقدة رابعة"
 
 #: ../../cluster.rst:357
 msgid ""
 "Four clients p, q, r and s, and three nodes A, B and C. We use made-up "
 "scores from 0 to 99 in place of wyhash outputs."
 msgstr ""
+"أربعة عملاء p وq وr وs، وثلاث عقد A وB وC. نستخدم درجات مختلقة من 0 إلى "
+"99 بدل مخرجات wyhash."
 
 #: ../../cluster.rst:363
 msgid "Client"
-msgstr ""
+msgstr "العميل"
 
 #: ../../cluster.rst:364 ../../cluster.rst:374
 msgid "A"
@@ -1151,7 +1598,7 @@ msgstr ""
 
 #: ../../cluster.rst:367
 msgid "Owner of three"
-msgstr ""
+msgstr "المالك بين ثلاث"
 
 #: ../../cluster.rst:368 ../../cluster.rst:376
 msgid "D"
@@ -1159,7 +1606,7 @@ msgstr ""
 
 #: ../../cluster.rst:369
 msgid "Owner of four"
-msgstr ""
+msgstr "المالك بين أربع"
 
 #: ../../cluster.rst:370
 msgid "p"
@@ -1249,6 +1696,10 @@ msgid ""
 "expected :math:`1/4`. Had C left instead, only r would move, to A, its "
 "second largest score."
 msgstr ""
+"تنضم العقدة D. لا ينتقل إلا p، الذي تتجاوز درجته عند D درجاته القديمة "
+"الثلاث، وينتقل إلى D. ويحتفظ q وr وs بمالكيهم، لأن كل قيمة عظمى قديمة ما "
+"زالت القيمة العظمى. انتقل عميل واحد من أربعة، وهو :math:`1/4` المتوقع. "
+"ولو غادرت C بدلًا من ذلك، لما انتقل إلا r، إلى A، صاحبة ثاني أكبر درجة له."
 
 #: ../../cluster.rst:401
 msgid ""
@@ -1259,10 +1710,15 @@ msgid ""
 "only: three residues of twelve. So three quarters of the clients move, "
 "most of them between old nodes."
 msgstr ""
+"قارن بالقاعدة البديهية، المالك :math:`h \\bmod n` لتجزئة :math:`h`. عند "
+"الانتقال من ثلاث عقد إلى أربع، لا يبقى العميل إلا حين :math:`h \\bmod 3 = "
+"h \\bmod 4`. والباقيان كلاهما يحددهما :math:`h \\bmod 12`، ولا يتفقان إلا "
+"عند :math:`h \\bmod 12 \\in \\{0, 1, 2\\}`: ثلاثة بواقٍ من اثني عشر. "
+"فينتقل ثلاثة أرباع العملاء، ومعظمهم بين عقد قديمة."
 
 #: ../../cluster.rst:403
 msgid "Implementation: ``Peering::owner_among``"
-msgstr ""
+msgstr "التنفيذ: ``Peering::owner_among``"
 
 #: ../../cluster.rst:405
 msgid ""
@@ -1270,6 +1726,9 @@ msgid ""
 "eligible peers, given as a bit set. In ``crates/lb/src/forward.rs`` "
 "(crate ``sibuna-lb``). It returns ``None`` when this node owns the client."
 msgstr ""
+"المسح الذي يسمي مالك العميل بين هذه العقدة والنظراء المؤهلين، المعطَين "
+"مجموعةَ بتات. في ``crates/lb/src/forward.rs`` (الحزمة ``sibuna-lb``). "
+"ويعيد ``None`` حين تملك هذه العقدة العميل."
 
 #: ../../cluster.rst:407
 msgid ""
@@ -1292,7 +1751,7 @@ msgstr ""
 
 #: ../../cluster.rst:425
 msgid "One hop, and what it does not repair"
-msgstr ""
+msgstr "قفزة واحدة، وما لا تصلحه"
 
 #: ../../cluster.rst:428
 msgid ""
@@ -1302,6 +1761,10 @@ msgid ""
 "alive when it answered within 1.5 s and does not drain. A peer that "
 "refused a flow or failed a connect is held back for one second."
 msgstr ""
+"يكون النظير مؤهلًا حين يستطيع أخذ تدفق الآن. وفحوص الشبكة المتداخلة لا "
+"تبين ذلك، لأن خيطًا آخر يجيب عنها على منفذ آخر، فيفحص عامل الحافة منفذ "
+"التمرير نفسه كل 500 ms. ويكون النظير حيًا حين يجيب خلال 1.5 s ولا "
+"يُصرَّف. والنظير الذي رفض تدفقًا أو فشل الاتصال به يُعلَّق ثانية واحدة."
 
 #: ../../cluster.rst:430
 msgid ""
@@ -1322,6 +1785,19 @@ msgid ""
 "return through the node that the client reached, so the client sees the "
 "answer come from the address it sent to."
 msgstr ""
+"لاتصال TCP أو HTTP تطبّق العقدة المستقبِلة فحوصها أولًا: التصريف، ومعدل "
+"اتصالاتها، وخانة تدفق حرة. ثم تحسب المالك. فإذا كان المالك نظيرًا آخر "
+"مؤهلًا، اتصلت بمنفذ التمرير لدى المالك، من عنوانها في الشبكة المتداخلة، "
+"وكتبت ترويسة من 76 بايتًا: حقبة المالك، والواجهة الأمامية، والعميل، "
+"والوجهة، ووسمًا على عنواني المقبسين لهذا الاتصال وعلى الترويسة. ويجيب "
+"المالك بـ 17 بايتًا: أخذ، أو اعتذار، أو رفض. وعند الأخذ، ترحّل العقدة "
+"المستقبِلة البايتات في الاتجاهين ولا تنظر فيها أبدًا؛ فـ TLS والتحليل "
+"والجدار الناري واختيار الخادم كلها تحدث على المالك. وعند الاعتذار، أو فشل "
+"الاتصال، أو انتهاء مهلة ``connect_timeout`` (250 ms افتراضيًا)، تخدم "
+"الاتصال بنفسها. وعند الرفض، يكون حد المعدل لدى المالك قد رفض العميل، "
+"فيُغلق الاتصال: وإلا لخدمت كل عقدة أخرى عميلًا تجاوز حده. وتنتقل رزم "
+"بيانات UDP بين ترويسة ووسم على مقبس واحد، وتعود الردود عبر العقدة التي "
+"وصل إليها العميل، فيرى العميل الإجابة آتية من العنوان الذي أرسل إليه."
 
 #: ../../cluster.rst:432
 msgid ""
@@ -1337,6 +1813,17 @@ msgid ""
 "connection cost 79 to 91 us more to its first line, and an exchange on an "
 "established connection 19 to 21 us more."
 msgstr ""
+"قاعدتان تجعلان هذا آمنًا. التدفق الذي وصل من نظير يُخدم حيث يحط ولا "
+"يُمرَّر مرة أخرى أبدًا، أيًّا كان اعتقاد تلك العقدة بشأن المالك، فلا يأخذ "
+"أي تدفق أكثر من قفزة إضافية واحدة ولا يمكن لأي تدفق أن يدور في حلقة. ولا "
+"يضيع أي تدفق بسبب التمرير: حين يكون المالك معطلًا، أو يعتذر، أو يبلغ "
+"``max_flows_per_peer``، تخدم العقدة المستقبِلة. ويبرهن النموذج "
+"``docs/sid/assets/peer-forwarding.lean`` القضيتين ``one_hop`` و\\ "
+"``forwarded_is_served`` لكل اعتقاد لدى كل عقدة، و\\ ``owner_unique`` "
+"لعقدتين لهما الرؤية نفسها، و\\ ``owner_after_join``: العقدة التي تنضم "
+"تصير المالك أو لا تغيّر شيئًا. وعلى واجهة الاسترجاع المحلية كلف الاتصال "
+"الممرر من 79 إلى 91 us زيادة حتى سطره الأول، والتبادل على اتصال مؤسَّس من "
+"19 إلى 21 us زيادة."
 
 #: ../../cluster.rst:434
 msgid ""
@@ -1351,10 +1838,19 @@ msgid ""
 "95th percentile of the measured round trip to its peers exceeds 3 ms and "
 "enters again from the wide-area regime only when it falls below 1.5 ms."
 msgstr ""
+"يحفظ التمرير *عقدة* العميل، لا اتصال TCP. فحين ينقل الموجّه رزم اتصال TCP "
+"مؤسَّس إلى عقدة أخرى، لا تحمل تلك العقدة مقبسًا له فتجيب بإعادة ضبط؛ ويصل "
+"اتصال العميل التالي إلى مالكه. وإصلاح الاتصال يحتاج إلى حالته على كل عقدة "
+"أو إلى تمرير على مستوى الرزم، ولم يُبنَ أي منهما. ويُخدم HTTP/3 على "
+"العقدة التي تتلقى رزمه، والواجهة الأمامية ذات ``proxy_protocol`` لا "
+"تُمرَّر، ولا يعمل التمرير إلا في النظام الإقليمي للشبكة المتداخلة، الذي "
+"تغادره العقدة حين يتجاوز المئين 95 لزمن الرحلة ذهابًا وإيابًا المقيس إلى "
+"نظرائها 3 ms، ولا تعود إليه من نظام المسافات الواسعة إلا حين ينخفض دون "
+"1.5 ms."
 
 #: ../../cluster.rst:436
 msgid "Exercise 9.4"
-msgstr ""
+msgstr "تمرين 9.4"
 
 #: ../../cluster.rst:438
 msgid ""
@@ -1363,12 +1859,18 @@ msgid ""
 "node B leaves: which clients move, and where? (c) How many would move "
 "from four to five nodes under :math:`h \\bmod n`?"
 msgstr ""
+"عنقود من أربع عقد يملك 1,000 عميل بالتساوي. (a) تنضم عقدة خامسة: كم "
+"عميلًا ينتقل في المتوسط المتوقع، وإلى أين؟ (b) بدلًا من ذلك تغادر العقدة "
+"B: أي العملاء ينتقلون، وإلى أين؟ (c) كم عميلًا كان سينتقل من أربع عقد إلى "
+"خمس تحت :math:`h \\bmod n`؟"
 
 #: ../../cluster.rst:440
 msgid ""
 "Hint: For (c), count the residues of :math:`h \\bmod 20` at which "
 ":math:`h \\bmod 4 = h \\bmod 5`."
 msgstr ""
+"تلميح: في (c)، عُدّ بواقي :math:`h \\bmod 20` التي يكون عندها :math:`h "
+"\\bmod 4 = h \\bmod 5`."
 
 #: ../../cluster.rst:444
 msgid ""
@@ -1377,10 +1879,14 @@ msgid ""
 "why neither rule can save an established TCP connection whose packets the "
 "router sends to another node."
 msgstr ""
+"اشرح لماذا لا ينقل الانضمام في تجزئة rendezvous إلا العملاء الذين تملكهم "
+"العقدة الجديدة الآن، ولماذا لا يُمرَّر التدفق الممرر مرة أخرى أبدًا، "
+"ولماذا لا تستطيع أي من القاعدتين إنقاذ اتصال TCP مؤسَّس يرسل الموجّه رزمه "
+"إلى عقدة أخرى."
 
 #: ../../cluster.rst:446
 msgid "A Disk Under the Sticky Table"
-msgstr ""
+msgstr "قرص تحت جدول التثبيت"
 
 #: ../../cluster.rst:449
 msgid ""
@@ -1392,10 +1898,16 @@ msgid ""
 "wish: the pool uses it only for a new flow and only when the named server "
 "may serve now. No ban, no counter and no live flow depends on the file."
 msgstr ""
+"ينسى جدول التثبيت مرتين: حين يأتي عملاء أكثر من خاناته، وحين يعيد "
+"البرنامج الخدمي التشغيل. ويضع SID 0027 تحته طبقة ثانية، ملفًا ثابت الحجم "
+"تعيّنه الحزمة ``sibuna-spill`` في الذاكرة. كل اختيار يخزنه الجدول يُعرض "
+"على الملف، والبحث الذي لا يجد شيئًا في الذاكرة يسأل الملف. والتلميح "
+"القادم من الملف رغبة: لا يستخدمه المجمّع إلا لتدفق جديد وإلا حين يجوز "
+"للخادم المسمى أن يخدم الآن. ولا يعتمد أي حظر أو عداد أو تدفق حي على الملف."
 
 #: ../../cluster.rst:451
 msgid "The file and its slots"
-msgstr ""
+msgstr "الملف وخاناته"
 
 #: ../../cluster.rst:454
 msgid ""
@@ -1414,10 +1926,22 @@ msgid ""
 "bounded queue: a worker never touches the file, never waits for it, and a "
 "full queue drops the work and counts it."
 msgstr ""
+"يبدأ الملف بصفحتين من 4,096 بايتًا، الترويسة وعداد كتابة واحد لكل من 64 "
+"شظية، ويستمر بـ :math:`64 \\times B \\times 4` خانة من 64 بايتًا. تحمل "
+"الخانة مجموعًا اختباريًا من 8 بايتات، وانتهاءً من 8، وختمًا من 4، "
+"والطولين، وبايتين من الأصفار، ومفتاحًا من 24 بايتًا، وقيمة من 16. "
+"والمجموع الاختباري wyhash على البايتات الستة والخمسين الأخرى، ببذرة هي "
+"الملح العشوائي للملف ورقم الخانة، فالخانة المنسوخة إلى مكان آخر أو إلى "
+"ملف آخر تفشل في فحصها. ولا يأخذ القارئ مدخلًا إلا من خانة حية: طولاها ضمن "
+"النطاق، وحشوها صفر، ومجموعها الاختباري مطابق، وانتهاؤها بعد الآن وفي حدود "
+"أطول عمر بعد الآن. والخانة التي تفشل مساحة حرة وتُعدّ. ويملك خيط تخزين "
+"واحد التعيين، وينسخ خانة واحدة إلى الداخل أو الخارج لكل وصول، ويخدم "
+"العمال عبر طابور محدود: لا يلمس العامل الملف أبدًا، ولا ينتظره أبدًا، "
+"والطابور الممتلئ يُسقط العمل ويعدّه."
 
 #: ../../cluster.rst:456
 msgid "Admission by frequency"
-msgstr ""
+msgstr "القبول بحسب التكرار"
 
 #: ../../cluster.rst:459
 msgid ""
@@ -1436,6 +1960,18 @@ msgid ""
 "for each slot of the shard, every counter is halved, so a key must keep "
 "returning to keep its estimate."
 msgstr ""
+"كثيرًا ما يكون دلو الخانات الأربع ممتلئًا. فيتنافس المفتاح الجديد حينئذ "
+"مع ضحية، هي الخانة الحية التي رُئي مفتاحها أقل مرات، ولا يفوز إلا حين "
+"يتجاوز تكراره المقدَّر تكرار الضحية. وهذا هو TinyLFU (Einziger وFriedman "
+"وManes، 2017). فالمفتاح المعروض مرة واحدة لا يستطيع إزاحة مدخل رُئي مرة "
+"أو أكثر، فلا يجرف سيل من العملاء الجدد العملاء المستخدمين. ويأتي التكرار "
+"من مخطط count-min لكل شظية: جدول من :math:`m` عدادًا رباعي البتات، ثمانية "
+"لكل خانة من الشظية مقرَّبة إلى الأسفل إلى قوة للعدد 2. ويلمس المفتاح "
+"أربعة منها، مختارة بالتجزئة المزدوجة. وتقديره أصغر الأربعة. والعدّ لا "
+"يرفع إلا العدادات التي تساوي تلك القيمة الصغرى؛ وهذا *التحديث المحافظ* "
+"يُبقي كل عداد عند ما كان سيحمله مخطط عادي أو دونه، ولا يُبقي أي عداد دون "
+"العدّ الحقيقي أبدًا. وبعد أربع عدّات لكل خانة من الشظية، يُنصَّف كل عداد، "
+"فيجب على المفتاح أن يواصل العودة ليحتفظ بتقديره."
 
 #: ../../cluster.rst:461
 msgid ""
@@ -1446,6 +1982,11 @@ msgid ""
 ":math:`m`, so it raises this counter with probability at most "
 ":math:`4/m`. The expected excess of the counter is therefore"
 msgstr ""
+"يشرح الحد الكلاسيكي لدى Cormode وMuthukrishnan لماذا يكون التقدير جيدًا. "
+"لنفترض أن :math:`N` مفتاحًا عُدّت. لنثبّت مفتاحًا :math:`x` وأحد عداداته. "
+"كل عدّ لمفتاح آخر يرفع أربعة عدادات على الأكثر، كل منها في موضع تجعله "
+"التجزئة المثالية منتظمًا على :math:`m`، فيرفع هذا العداد باحتمال "
+":math:`4/m` على الأكثر. لذلك تكون الزيادة المتوقعة للعداد"
 
 #: ../../cluster.rst:463
 msgid "\\lambda \\le \\frac{4N}{m}."
@@ -1461,10 +2002,17 @@ msgid ""
 "so it is close to a Poisson variable with mean :math:`\\lambda`, which "
 "gives a sharper estimate than Markov's bound."
 msgstr ""
+"بحسب متباينة Markov تبلغ الزيادة :math:`t` باحتمال :math:`\\lambda/t` على "
+"الأكثر. والتقدير أصغر أربعة عدادات، فلا يكون أعلى بمقدار :math:`t` إلا "
+"حين تكون الأربعة كلها كذلك؛ وبمعاملة الأربعة على أنها مستقلة، وهو ما "
+"تجعله التجزئة المثالية صحيحًا تقريبًا، يكون ذلك الاحتمال "
+":math:`(\\lambda/t)^4` على الأكثر. والزيادة مجموع إصابات نادرة كثيرة، فهي "
+"قريبة من متغير Poisson بمتوسط :math:`\\lambda`، وهذا يعطي تقديرًا أدق من "
+"حد Markov."
 
 #: ../../cluster.rst:469
 msgid "Worked example: the error of the sketch"
-msgstr ""
+msgstr "مثال محلول: خطأ المخطط"
 
 #: ../../cluster.rst:471
 msgid ""
@@ -1474,6 +2022,11 @@ msgid ""
 "counters for each slot: 32 KiB for the shard and 2 MiB for the file, two "
 "bytes for each slot. The sketch halves after :math:`4S = 65{,}504` counts."
 msgstr ""
+"ملف بحجم ``64m`` يضم 1,048,064 خانة (الجزء الحادي عشر)، فتضم الشظية "
+":math:`S = 16{,}376`. وثمانية عدادات لكل خانة تعني 131,008. وأكبر قوة "
+"للعدد 2 دون ذلك هي :math:`m = 2^{16} = 65{,}536`، أي أربعة عدادات لكل "
+"خانة: 32 KiB للشظية و2 MiB للملف، أي بايتان لكل خانة. وينصّف المخطط بعد "
+":math:`4S = 65{,}504` عدّة."
 
 #: ../../cluster.rst:473
 msgid ""
@@ -1485,6 +2038,12 @@ msgid ""
 "bound gives at most :math:`(2/4)^4 = 1/16`. The Poisson estimate is "
 "sharper:"
 msgstr ""
+"نأخذ النافذة الأولى بعد البدء، حين يبدأ المخطط من الصفر، وننظر إلى "
+"منتصفها، :math:`N = 2S = 32{,}752` عدّة. حينئذ :math:`\\lambda \\le 4 "
+"\\times 32{,}752 / 65{,}536 \\approx 2`. والمفتاح المرئي مرة واحدة لا "
+"يستطيع إزاحة ضحية رُئيت أربع مرات إلا إذا بلغ تقديره 5 على الأقل، أي "
+"زيادة :math:`t = 4` على العدادات الأربعة كلها. ويعطي حد Markov "
+":math:`(2/4)^4 = 1/16` على الأكثر. وتقدير Poisson أدق:"
 
 #: ../../cluster.rst:475
 msgid ""
@@ -1504,10 +2063,17 @@ msgid ""
 "new keys, a file of 256 MiB kept all but 10 to 15 of the about 1,044,000 "
 "keys of a working set that it held before the flood."
 msgstr ""
+"فنحو أربعة مفاتيح مرئية مرة واحدة من كل عشرة آلاف تبدو كمفاتيح رُئيت خمس "
+"مرات، في منتصف النافذة الأولى. والنوافذ اللاحقة تبدأ من عدادات منصَّفة، "
+"فيكون الحد العادي لها حتى ضعف ذلك، وتقريب :math:`m` إلى الأسفل إلى قوة "
+"للعدد 2 قد ينصّف عدادات شظية. والتحديث المحافظ لا يفعل إلا أن يخفض هذه "
+"الأرقام. والحد نموذج، والقياس هو الدليل: تحت سيل من 16,776,192 مفتاحًا "
+"جديدًا، احتفظ ملف بحجم 256 MiB بكل مفاتيح مجموعة عمل نحو 1,044,000 مفتاح "
+"كان يحملها قبل السيل، إلا ما بين 10 و15 منها."
 
 #: ../../cluster.rst:481
 msgid "Implementation: ``Sketch::touch``"
-msgstr ""
+msgstr "التنفيذ: ``Sketch::touch``"
 
 #: ../../cluster.rst:483
 msgid ""
@@ -1516,6 +2082,9 @@ msgid ""
 "``sibuna-spill``). ``Sketch::estimate`` returns the smallest of the four "
 "counters."
 msgstr ""
+"يعدّ مفتاحًا واحدًا بالتحديث المحافظ ويُعمِّر المخطط حين تمتلئ عينته. في "
+"``crates/spill/src/sketch.rs`` (الحزمة ``sibuna-spill``). ويعيد "
+"``Sketch::estimate`` أصغر العدادات الأربعة."
 
 #: ../../cluster.rst:485
 msgid ""
@@ -1552,10 +2121,20 @@ msgid ""
 "another server for 191 of them, and the second flow found the remembered "
 "server for all 300."
 msgstr ""
+"تلتقي الطبقتان في ``SpillStore`` (``crates/lb/src/hints.rs``)، الذي ينفذ "
+"السمة ``AffinityStore`` في SID 0025 مع الجدول في المقدمة. والبحث الذي "
+"يخطئ الذاكرة يسأل القرص ولا ينتظر: يمضي التدفق بالاختيار الموازَن، أي "
+"*تخمين*، وتستبدل إجابة القرص التخمين بنهاية بعده بمللي ثانية واحدة، فتفوز "
+"هنا وعلى كل عقدة تخبرها الشبكة المتداخلة. ولا يأخذ التخمين إلا خانة حرة "
+"على القرص ولا يُحسب في المخطط، فلا يزيح أي عدد من التخمينات تلميحًا. ومع "
+"2,000,000 عميل، أي ثلاثين ضعف جدول من 65,536 خانة، وجد 97.0 بالمئة "
+"اختيارهم عند بحثهم الثاني. وبعد إعادة تشغيل عقدتي شبكة متداخلة من مضيفين، "
+"وجد التدفق الأول لـ 300 عميل خادمًا آخر لـ 191 منهم، ووجد التدفق الثاني "
+"الخادم المتذكَّر للـ 300 كلهم."
 
 #: ../../cluster.rst:506
 msgid "Crash safety, memory and the file system"
-msgstr ""
+msgstr "الأمان عند الانهيار، والذاكرة، ونظام الملفات"
 
 #: ../../cluster.rst:509
 msgid ""
@@ -1573,6 +2152,17 @@ msgid ""
 "costs its hint, and an old slot is a valid older hint, which the pool "
 "checks before use."
 msgstr ""
+"لا يُنشأ ملف جديد في مكانه أبدًا. تزيل الدالة ``create`` في "
+"``crates/spill/src/open.rs`` كل ما يقع عند المسار متبوعًا بـ ``.tmp``، "
+"دون أن تكتب عبره، وتبني هناك ملفًا كاملًا كُتبت كل كتله والترويسة أخيرًا، "
+"وتعيد تسميته فوق المسار. وإعادة التسمية تستبدل اسمًا باسم في خطوة واحدة، "
+"فلا يسمي المسار إلا لا ملف، أو ملفًا أجنبيًا، أو ملفًا كاملًا، ولا يسمي "
+"أبدًا ملفًا نصف مصنوع. والملف الذي ليس فيه الرقم السحري لا يُكتب فوقه "
+"أبدًا: يرفض البرنامج الخدمي البدء ويسميه. وتمر الكتابات عبر التعيين "
+"وتُفرَّغ حين يتوقف البرنامج الخدمي. وانهيار العملية لا يُضيع شيئًا "
+"مكتوبًا، لأن الصفحات ملك للنواة. وانقطاع الكهرباء قد يترك كل صفحة قديمة "
+"أو جديدة أو مختلطة؛ والخانة المختلطة تفشل في مجموعها الاختباري وتكلف "
+"تلميحها، والخانة القديمة تلميح أقدم صالح، يفحصه المجمّع قبل الاستخدام."
 
 #: ../../cluster.rst:511
 msgid ""
@@ -1589,10 +2179,21 @@ msgid ""
 "system fills later, a write through the mapping raises a signal that ends "
 "the daemon. Part XI gives the settings for systemd, Docker and Kubernetes."
 msgstr ""
+"خاصيتان من خصائص المضيف مهمتان. صفحات الملف تُحسب ذاكرةً للعملية. فتحت حد "
+"للذاكرة دون حجم الملف، قتلت النواة ملفًا بحجم 256 MiB تحت 96 MiB في ثلاثة "
+"تشغيلات على مضيف واحد، وعلى مضيف آخر بلغ الحد 410,479 مرة ولم ينهِ مرحلته "
+"الأولى في 17 دقيقة. ويظل العمال يخدمون بالاختيار الموازَن، لكن طبقة القرص "
+"تصير عديمة الفائدة أو يموت البرنامج الخدمي، فيجب أن يكون الحد فوق الملف "
+"زائدًا البرنامج الخدمي. وكل كتلة تُكتب عند الإنشاء كي يُكتشف القرص "
+"الممتلئ عند البدء، لكن نظام الملفات الذي يضغط أو ينسخ عند الكتابة يكسر "
+"هذا الوعد: على ZFS مع الضغط أخذ ملف جديد من 16,769,024 بايتًا 141 KiB. "
+"وحين يمتلئ مثل هذا النظام لاحقًا، ترفع الكتابة عبر التعيين إشارة تنهي "
+"البرنامج الخدمي. ويعطي الجزء الحادي عشر الإعدادات لـ systemd وDocker "
+"وKubernetes."
 
 #: ../../cluster.rst:513
 msgid "Exercise 9.5"
-msgstr ""
+msgstr "تمرين 9.5"
 
 #: ../../cluster.rst:515
 msgid ""
@@ -1601,12 +2202,18 @@ msgid ""
 "at the end of the first window, and the Poisson estimate that a key seen "
 "once reaches an estimate of 5 at each point."
 msgstr ""
+"الشظية التي يقع عدد خاناتها تحت قوة للعدد 2 مباشرة تحتفظ بالعدادات "
+"الثمانية كاملة لكل خانة. احسب :math:`\\lambda` في منتصف النافذة الأولى "
+"وفي نهايتها، وتقدير Poisson لأن يبلغ مفتاح مرئي مرة واحدة تقديرًا قدره 5 "
+"عند كل نقطة."
 
 #: ../../cluster.rst:517
 msgid ""
 "Hint: Only the ratio :math:`N/m` matters. At :math:`\\lambda = 1`, "
 ":math:`e^{-1} \\approx 0.3679`."
 msgstr ""
+"تلميح: النسبة :math:`N/m` وحدها هي المهمة. عند :math:`\\lambda = 1`، "
+":math:`e^{-1} \\approx 0.3679`."
 
 #: ../../cluster.rst:521
 msgid ""
@@ -1615,10 +2222,14 @@ msgid ""
 "file, and why the sketch may overestimate a frequency but never "
 "underestimate it."
 msgstr ""
+"اشرح لماذا تستطيع الخانة الممزقة أو المنسوخة أو الأجنبية أن تكلف تلميحًا "
+"ولا تستطيع أبدًا أن تختار خادمًا لا يجوز له أن يخدم، ولماذا لا يسمي "
+"المسار أبدًا ملفًا نصف مصنوع، ولماذا قد يبالغ المخطط في تقدير التكرار "
+"لكنه لا يبخسه أبدًا."
 
 #: ../../cluster.rst:523
 msgid "A Database as the Authority"
-msgstr ""
+msgstr "قاعدة بيانات بوصفها المرجعية"
 
 #: ../../cluster.rst:526
 msgid ""
@@ -1632,6 +2243,14 @@ msgid ""
 "SHA-256 digest, so a node reads a revision whole with one statement and "
 "refuses one whose digest does not match."
 msgstr ""
+"يرسل SID 0023 ملفًا واحدًا إلى النظراء. والمشغّلان اللذان يرسلان ملفين في "
+"الوقت نفسه يفوز كل منهما على بعض العقد، والعقدة التي كانت معطلة تحتفظ "
+"بملفها القديم، ولا سجل تاريخي. ويتيح SID 0028 لقاعدة بيانات أن تحمل بنية "
+"النشر المنشورة. يحتفظ ملف كل عقدة بما ينتمي إلى مضيفها، ``global`` و\\ "
+"``mesh`` و\\ ``observability``، وبقسم ``authority`` يسمي قاعدة البيانات؛ "
+"وتحمل قاعدة البيانات ``frontends`` و\\ ``backends`` و\\ ``http``. وكل "
+"مراجعة وثيقة JSON قانونية واحدة مع خلاصة SHA-256 الخاصة بها، فتقرأ العقدة "
+"المراجعة كاملة بعبارة واحدة وترفض المراجعة التي لا تطابق خلاصتها."
 
 #: ../../cluster.rst:528
 msgid ""
@@ -1641,6 +2260,10 @@ msgid ""
 "condition: the head is still the revision it read. The commit is one "
 "transaction of two statements."
 msgstr ""
+"المراجعات مرقمة 1، 2، 3 بلا فجوة، والمراجعة المثبتة لا تتغير أبدًا. يقيّم "
+"``sibuna authority apply`` مصدرًا، ويفحصه، ويطبع الفرق عن الرأس، ويثبّت "
+"بشرط واحد: أن يظل الرأس هو المراجعة التي قرأها. والتثبيت معاملة واحدة من "
+"عبارتين."
 
 #: ../../cluster.rst:530
 msgid ""
@@ -1662,10 +2285,17 @@ msgid ""
 "document, because moving the head back would make \"applied 5\" ambiguous "
 "between before and after 7."
 msgstr ""
+"حين لا تغيّر العبارة الأولى أي صف، يكون الرأس قد تحرك، فيفشل الأمر بـ "
+"``DBA002 REVISION CONFLICT`` ولا يثبّت شيئًا. وهذه مقارنة مع تعيين على صف "
+"واحد. ومن كاتبين قرآ الرأس نفسه، يجعل PostgreSQL الثاني ينتظر قفل الصف، "
+"ثم يجد الرأس الجديد فلا يغيّر شيئًا. والشرط على \"الرأس، أيًّا كان\" لا "
+"يحمي شيئًا: فالأمر يشترط الرأس الذي طبع الفرق مقابله، فما رآه المشغّل هو "
+"ما يستبدله التثبيت. والتراجع يثبّت مراجعة جديدة بوثيقة أقدم، لأن إرجاع "
+"الرأس إلى الوراء يجعل \"طُبّقت 5\" ملتبسة بين ما قبل 7 وما بعدها."
 
 #: ../../cluster.rst:537
 msgid "Implementation: ``Store::commit``"
-msgstr ""
+msgstr "التنفيذ: ``Store::commit``"
 
 #: ../../cluster.rst:539
 msgid ""
@@ -1679,6 +2309,14 @@ msgid ""
 "settles a commit whose connection failed by asking whether the head is "
 "the new revision with the new digest."
 msgstr ""
+"للسمة ``Store`` سبع عمليات: ``head``، و\\ ``revision``، و\\ ``commit``، "
+"و\\ ``history``، و\\ ``report``، و\\ ``nodes``، و\\ ``wait``. يخزن "
+"``commit`` مسودة بوصفها المراجعة ``expected + 1`` حين يكون الرأس "
+"``expected`` ويفشل بتعارض في غير ذلك. في "
+"``crates/authority/src/store.rs`` (الحزمة ``sibuna-authority``). وينفذها "
+"``SqlStore`` في ``crates/authority/src/sql.rs`` لـ SQLite وPostgreSQL، "
+"و\\ ``MemoryStore`` للاختبارات. ويحسم ``commit_settled`` في ``store.rs`` "
+"تثبيتًا فشل اتصاله بالسؤال هل الرأس هو المراجعة الجديدة بالخلاصة الجديدة."
 
 #: ../../cluster.rst:541
 msgid ""
@@ -1701,10 +2339,26 @@ msgid ""
 "costs one poll (``poll_converges``). On a debug build two nodes applied a "
 "revision 128 to 155 ms after ``apply`` began with PostgreSQL."
 msgstr ""
+"كل عقدة تتابع على خيط خاص بها، ``edge-authority``. تنظر إلى الرأس حين "
+"يرسل PostgreSQL ``NOTIFY``، وحين يمر استطلاعها، وعند ``reload``، وحين "
+"يحسم العامل مراجعة. ويُقرأ الرأس الجديد، ويُركَّب مع ملف العقدة، ويُفحص، "
+"ويُترك للعامل؛ ولا تبلّغ العقدة عن مراجعة أنها طُبّقت إلا بعد أن يخدمها "
+"عاملها. والعقدة التي لا تستطيع قراءة قاعدة البيانات تحتفظ بما تخدمه وتسأل "
+"من جديد بعد ثانيتين على الأكثر. والعقدة التي ترفض مراجعة تحتفظ بآخر "
+"مراجعة اجتازت الفحص وتبلّغ عن السبب. ومع ``cache`` تستطيع العقدة إعادة "
+"التشغيل وقاعدة البيانات معطلة. وتتصل العقد بدور يستطيع قراءة المراجعات "
+"ولا يكتب إلا تقريرها الخاص، فالعقدة التي يُستولى عليها لا تستطيع تغيير "
+"بنية النشر. ويبرهن النموذج ``docs/sid/assets/database-authority.lean`` أن "
+"التثبيت على رأس قديم لا يغيّر شيئًا (``commit_conflict``)، وأنه من كاتبين "
+"على رأس واحد يفشل الثاني (``second_commit_conflicts``)، وأن العقدة لا "
+"تخدم أبدًا إلا وثيقة اجتازت فحصها (``step_serves_valid``)، وأن نظرة واحدة "
+"إلى رأس صالح تُوصل العقدة إليه، فلا يكلف الإشعار الضائع إلا استطلاعًا "
+"واحدًا (``poll_converges``). وعلى بناء تصحيح طبّقت عقدتان مراجعة بعد 128 "
+"إلى 155 ms من بدء ``apply`` مع PostgreSQL."
 
 #: ../../cluster.rst:543
 msgid "Exercise 9.6"
-msgstr ""
+msgstr "تمرين 9.6"
 
 #: ../../cluster.rst:545
 msgid ""
@@ -1714,10 +2368,14 @@ msgid ""
 "operator do? Why would an ``apply`` conditioned on the head at the time "
 "of the commit be wrong?"
 msgstr ""
+"مشغّلان يشغّلان ``diff`` مقابل الرأس 7 ثم ``apply`` في اللحظة نفسها، "
+"أحدهما يضيف خادمًا والآخر يزيل واجهة أمامية. ماذا يرى كل منهما، وماذا "
+"تحمل قاعدة البيانات بعد ذلك، وماذا ينبغي للمشغّل الثاني أن يفعل؟ ولماذا "
+"يكون ``apply`` المشروط بالرأس وقت التثبيت خطأً؟"
 
 #: ../../cluster.rst:547
 msgid "Hint: Follow the ``UPDATE`` of each transaction under the row lock."
-msgstr ""
+msgstr "تلميح: تتبّع ``UPDATE`` في كل معاملة تحت قفل الصف."
 
 #: ../../cluster.rst:551
 msgid ""
@@ -1725,10 +2383,13 @@ msgid ""
 "on whether a node serves a revision belongs to the node and not to the "
 "command, and why a rollback appends instead of moving the head."
 msgstr ""
+"اشرح لماذا لا فجوة في المراجعات ولا تتغير أبدًا، ولماذا تعود الكلمة "
+"الأخيرة في هل تخدم العقدة مراجعةً إلى العقدة لا إلى الأمر، ولماذا يُلحق "
+"التراجع مراجعة بدل أن يحرك الرأس."
 
 #: ../../cluster.rst:553
 msgid "Replacing the Binary"
-msgstr ""
+msgstr "استبدال الملف التنفيذي"
 
 #: ../../cluster.rst:556
 msgid ""
@@ -1739,6 +2400,12 @@ msgid ""
 "process refuses what it accepts while it drains. Under one load SID 0029 "
 "counted 9,943 to 22,516 failed connections in a run with ``reuse_port``."
 msgstr ""
+"يجب على الملف التنفيذي الجديد أن يتسلم دون أن يُضيع اتصالًا ينتظر في "
+"مستمع ودون أن ينقل عميل UDP إلى خادم آخر. يتيح ``global.reuse_port`` "
+"لعملية جديدة ربط العناوين نفسها، لكن المستمع القديم يحتفظ بطابور القبول "
+"الخاص به حتى يُغلق، والعملية القديمة ترفض ما تقبله ما دامت تُصرَّف. وتحت "
+"حمل واحد أحصى SID 0029 من 9,943 إلى 22,516 اتصالًا فاشلًا في تشغيل مع "
+"``reuse_port``."
 
 #: ../../cluster.rst:558
 msgid ""
@@ -1748,6 +2415,10 @@ msgid ""
 "``SCM_RIGHTS`` control messages of ``sendmsg``. Both ends check the "
 "credentials of the peer with ``SO_PEERCRED`` and refuse another user."
 msgstr ""
+"يمرر SID 0029 المقابس بدلًا من ذلك. تستمع العملية القديمة على مقبس Unix، "
+"``global.upgrade_socket``. ويفحص البديل ملفه، ويتصل، ويتلقى مقابس "
+"الاستماع واصفاتٍ في رسائل تحكم ``SCM_RIGHTS`` من ``sendmsg``. ويفحص "
+"الطرفان كلاهما اعتمادات النظير بـ ``SO_PEERCRED`` ويرفضان أي مستخدم آخر."
 
 #: ../../cluster.rst:560
 msgid ""
@@ -1782,10 +2453,20 @@ msgid ""
 "stopped replacement could wake and read beside it. So after 10 s without "
 "DONE the old process ends the replacement and waits for the close."
 msgstr ""
+"لامتغيران يحكمان التحول. في كل لحظة تقبل عملية حية ما على كل مستمع TCP: "
+"والقابلان على مقبس واحد لا يُضيعان شيئًا، لأن كل اتصال يذهب إلى أحدهما. "
+"وعملية واحدة على الأكثر تقرأ مقبس UDP: فقارئان كانا سيعطيان رزم بيانات "
+"عميل واحد لجدولين، لذلك لا يقرأ أحد بين READY وDONE، وتحتفظ النواة برزم "
+"البيانات في المقبس. وتقيس العملية القديمة تلك الفترة؛ ومع 6,000 تعيين "
+"كانت من 59 إلى 87 ms على جهاز هادئ. والفشل قبل DONE يعيد الخدمة إلى "
+"العملية القديمة مع كل مستمع وتعيين كان لديها. ولا تستأنف العملية القديمة "
+"القراءة إلا حين يُغلق الاتصال بالبديل، لأن الموعد النهائي لا يثبت شيئًا: "
+"فالبديل المتوقف قد يستيقظ ويقرأ إلى جانبها. لذلك بعد 10 s بلا DONE تنهي "
+"العملية القديمة البديل وتنتظر الإغلاق."
 
 #: ../../cluster.rst:575
 msgid "Implementation: ``Giving::end_peer``"
-msgstr ""
+msgstr "التنفيذ: ``Giving::end_peer``"
 
 #: ../../cluster.rst:577
 msgid ""
@@ -1797,6 +2478,12 @@ msgid ""
 "edge side, ``Edge::freeze_datagrams`` in ``crates/lb/src/handoff.rs`` "
 "stops the UDP reads."
 msgstr ""
+"ينهي بديلًا صامتًا وينتظر إغلاق اتصاله، وهذا يثبت أنه لا يقرأ أي مقبس. في "
+"``crates/upgrade/src/give.rs`` (الحزمة ``sibuna-upgrade``). ويرسل "
+"``Giving::give_listeners`` في الملف نفسه المستمعين، والاستدعاء الأجنبي "
+"``sendmsg`` مع ``SCM_RIGHTS`` موجود في ``crates/upgrade/src/sys.rs``، وهو "
+"الشيفرة غير الآمنة الوحيدة في السجل. وعلى جانب الحافة، يوقف "
+"``Edge::freeze_datagrams`` في ``crates/lb/src/handoff.rs`` قراءات UDP."
 
 #: ../../cluster.rst:579
 msgid ""
@@ -1830,6 +2517,22 @@ msgid ""
 "``always_an_acceptor`` and ``failure_returns_service`` for the state "
 "machine; it is not derived from the code."
 msgstr ""
+"ما يُسلَّم: مستمعو TCP وUDP، وكل تعيين UDP لواجهة أمامية ``udp`` مع مقبس "
+"خادمه المتصل، فيرى الخادم منفذ المصدر نفسه. وفي الاختبارات لم يفشل أي "
+"اتصال من 17,382 إلى 33,524 في التشغيل، في 27 تشغيلًا، واحتفظ عميل UDP "
+"بخادمه عبر ترقيتين. وما يضيع: اتصال QUIC الخاص بـ HTTP/3، الذي تعيش حالته "
+"في بيئة تشغيل العملية القديمة؛ وتدفقات TCP المقبولة تبقى مع العملية "
+"القديمة حتى تنتهي أو حتى ``shutdown_timeout``. وعدادات المعدل، وحالات "
+"السلامة، وتقديرات زمن الاستجابة، وجداول التثبيت، وأوامر وقت التشغيل تبدأ "
+"من جديد. والتسليم مبني ومختبر على Linux فقط. وحدّان يخصان العنقود مباشرة. "
+"مقبس الشبكة المتداخلة ومنفذ التمرير لا يُمرَّران، فلا يمكن استبدال عقدة "
+"في شبكة متداخلة بهذه الطريقة؛ وينبغي للبديل أن يفشل قبل READY ويترك "
+"العملية القديمة تخدم، وهذا المسار غير مختبر. وتعيين UDP المتبنّى لا يُحسب "
+"على حد على مستوى الأسطول، فقد يحمل الخادم ذلك العدد من التدفقات فوق حده "
+"حتى تنتهي تلك التعيينات. ويبرهن النموذج "
+"``docs/sid/assets/upgrade-handoff.lean`` ``single_reader`` و\\ "
+"``always_an_acceptor`` و\\ ``failure_returns_service`` لآلة الحالات؛ وهو "
+"غير مشتق من الشيفرة."
 
 #: ../../cluster.rst:592
 msgid ""
@@ -1837,10 +2540,13 @@ msgid ""
 "the UDP sockets must have none, and why the old process trusts a closed "
 "connection and not a clock before it reads again."
 msgstr ""
+"اشرح لماذا يجوز أن يكون لمستمعي TCP قابلان للحظة بينما يجب ألا يكون "
+"لمقابس UDP أي قارئ، ولماذا تثق العملية القديمة باتصال مغلق لا بساعة قبل "
+"أن تقرأ من جديد."
 
 #: ../../cluster.rst:594
 msgid "The Fleet in the Console"
-msgstr ""
+msgstr "الأسطول في وحدة التحكم"
 
 #: ../../cluster.rst:597
 msgid ""
@@ -1861,10 +2567,24 @@ msgid ""
 "the load fell on its own console or on that of another process, so the "
 "measurement saw the cost of shared processors and not of the coupling."
 msgstr ""
+"يبدأ SID 0031 وحدة التحكم في SID 0007 إلى جانب الحافة. يسرد قسم "
+"``console`` فيها كل عضو تحت ``nodes``، 64 على الأكثر، فيكون القسم واحدًا "
+"على كل العقد ويستطيع ``reload cluster`` حمله. وتعرض صفحة واحدة الواجهات "
+"الأمامية والخلفيات والأسطول: يسأل ``GET /console/api/edge/fleet`` كل نظير "
+"دفعة واحدة عبر التدفق الموثَّق في SID 0007، وينتظر خمس ثوانٍ على الأكثر، "
+"ويعيد صفًا واحدًا لكل عضو مع حالة رابطه وملخص عقدته. وتشغّل الصفحة أوامر "
+"مقبس الإدارة عبر المحلل والعامل نفسيهما، فلا تضيف أي صلاحية؛ ويحتاج الأمر "
+"إلى الإجراء ``control_node`` ويجتاز فحوص الجلسة و\\ ``Origin`` وCSRF، "
+"وتحتفظ وحدة التحكم بحد مقبس الإدارة البالغ 20 أمرًا في الدفعة و10 في "
+"الثانية. والعضو المُزال من الملف يفقد تدفقه خلال ثانيتين. ومعيار أن وحدة "
+"التحكم تكلف مستوى البيانات أقل من واحد بالمئة غير مثبت: فتحت الحمل فقد "
+"مستوى البيانات من 8 إلى 11 بالمئة سواء وقع الحمل على وحدة تحكمه أو على "
+"وحدة تحكم عملية أخرى، فرأى القياس كلفة المعالجات المشتركة لا كلفة "
+"الاقتران."
 
 #: ../../cluster.rst:599
 msgid "What Three Hosts Measured"
-msgstr ""
+msgstr "ما قاسه ثلاثة مضيفين"
 
 #: ../../cluster.rst:602
 msgid ""
@@ -1882,16 +2602,30 @@ msgid ""
 "effect, sent every 5 ms. These are single runs on shared hosts; Part X "
 "gives the tables and the method."
 msgstr ""
+"يسجل الجزء العاشر العنقود على ثلاثة مضيفين بـ 16 و16 و32 معالجًا، في "
+"حاويات على شبكة واحدة، ويشغّل كل مضيف عقدة وخادمًا أصليًا ومولد حمل حمّل "
+"عقدة المضيف التالي. بعد SID 0024، حملت العقد الثلاث معًا من 89,124 إلى "
+"97,173 طلب HTTP ومن 90,399 إلى 92,652 طلب HTTPS في الثانية، أي من 0.87 "
+"إلى 1.15 مما حمله HAProxy في الإعداد نفسه، بـ 42 إلى 49 ثانية معالج مقابل "
+"66 إلى 102 لـ HAProxy، ولم يفشل أي طلب مع أي من الوكيلين. وحددت الشبكة "
+"السقف، وتختلف الأسطر من تشغيل إلى آخر بأكثر مما يختلف الوكيلان. وعلى "
+"المضيفين أنفسهم وصل الحظر إلى العقدتين الأخريين في 20 إلى 64 ms، ورفع "
+"الحظر في 13 إلى 48 ms، وعاد ``reload cluster`` والعقد الثلاث كلها تحمل "
+"الملف نفسه في 30 ms، وفي كل مرة يشمل ذلك الطلب الذي لاحظ الأثر، المرسل كل "
+"5 ms. وهذه تشغيلات مفردة على مضيفين مشتركين؛ ويعطي الجزء العاشر الجداول "
+"والمنهج."
 
 #: ../../cluster.rst:604
 msgid "Limits"
-msgstr ""
+msgstr "الحدود"
 
 #: ../../cluster.rst:607
 msgid ""
 "We list the known gaps of each record. They are taken from the records "
 "and are not repaired at the time of writing."
 msgstr ""
+"نسرد الفجوات المعروفة في كل سجل. وهي مأخوذة من السجلات ولم تُصلح وقت "
+"الكتابة."
 
 #: ../../cluster.rst:609
 msgid ""
@@ -1911,6 +2645,20 @@ msgid ""
 "of Part X is the only measurement across hosts. Replication runs in edge "
 "mode only."
 msgstr ""
+"**SID 0022، الحظر والأوامر.** الحظر الصادر بعد رفع حظر لا يسري على كل "
+"عقدة إلا حين ينتهي بعد الموعد الذي كان سينتهي فيه الحظر المرفوع؛ والحظر "
+"الأقصر لا يسري إلا على عقدته. والحظر الذي يضبطه ملف السياسة لا يُرسل. "
+"ويجب أن تتفق العقد على ``ipv6_prefix`` وأن تُبقي ساعاتها متقاربة، ولا "
+"يُفحص أي منهما؛ والعقدة المتأخرة بأكثر من 60 ثانية تُنقض أوامرها، "
+"والمتقدمة بأكثر من 60 ثانية تُرفض أوامرها. والحظر الذي تضيع إرسالاته "
+"الثلاث إلى نظير معزول أقل من ثلاث فترات فحص ينتظر المرور التالي. وخريطة "
+"الأوامر لا تنسى مفتاحًا أبدًا، وبعد 8,192 مفتاحًا تبقى الأوامر الجديدة "
+"محلية حتى إعادة التشغيل. والمشغّلان اللذان يضيفان اسم خادم واحدًا "
+"بعنوانين في وقت واحد قد يتركان العقد مختلفة حتى الأمر التالي. والمجمّعات "
+"التي تضع العملاء بجدول Maglev لا تقبل أوزانًا ولا أعضاء في وقت التشغيل. "
+"وليس للأوامر ورفع الحظر مقاييس. وتعمل اختبارات العمليات على مضيف واحد؛ "
+"وتوقيت المضيفين الثلاثة في الجزء العاشر هو القياس الوحيد عبر المضيفين. "
+"ولا يعمل النسخ إلا في وضع الحافة."
 
 #: ../../cluster.rst:611
 msgid ""
@@ -1921,6 +2669,11 @@ msgid ""
 "seconds again. A node is known by the source address of the connection. "
 "The transfer is authenticated and not encrypted."
 msgstr ""
+"**SID 0023، ملف واحد.** الملفات التي تسميها بنية النشر بمسارها، والملفات "
+"التي يستوردها ملف JLV، لا تُرسل. والعقدة التي كانت معطلة تحتفظ بملفها "
+"القديم حتى يُشغَّل الأمر من جديد. وختم آخر ملف يعيش في الذاكرة، فبعد "
+"إعادة التشغيل تقبل العقدة من جديد رسالة من الثواني الستين الأخيرة. وتُعرف "
+"العقدة بعنوان مصدر الاتصال. والنقل موثَّق وغير مشفر."
 
 #: ../../cluster.rst:613
 msgid ""
@@ -1936,6 +2689,16 @@ msgid ""
 "running processes. A client that uses two nodes within the replication "
 "window, under 50 ms on two hosts, can meet two servers."
 msgstr ""
+"**SID 0025، تثبيت الجلسات والحدود.** حصة العقدة المتوقفة لا تعود بعد أي "
+"مدة محددة؛ والعنقود الذي يبدأ وعقدة واحدة غائبة لا يخدم أي تدفق على خادم "
+"محدود؛ والعقدة التي تعيد التشغيل بينما نظير صامت لا تخدم إلا على القروض. "
+"والدفتر في الذاكرة فقط. وقائمة الأعضاء ثابتة طوال حياة العملية. وليس "
+"للجدول سلاسل مقاييس؛ و\\ ``show affinity`` هو العرض الوحيد. والجدول الذي "
+"مفتاحه ملف تعريف ارتباط لا يقرأ إلا الحقل ``Cookie``، فيُوازن الطلب الأول "
+"للجلسة ولا يُتذكَّر. ويمكن إعادة إرسال الحالة ضمن حقبة واحدة. وتعمل "
+"اختبارات العمليات على واجهة الاسترجاع المحلية بلا فقد، ولا يقطع أي اختبار "
+"الشبكة بين عمليات عاملة. والعميل الذي يستخدم عقدتين ضمن نافذة النسخ، أقل "
+"من 50 ms على مضيفين، قد يلقى خادمين."
 
 #: ../../cluster.rst:615
 msgid ""
@@ -1950,6 +2713,16 @@ msgid ""
 "draining owner and the ten-second end of silent relays have no process "
 "test. A forwarded datagram can be replayed within an epoch."
 msgstr ""
+"**SID 0026، التمرير.** ينقطع اتصال TCP المؤسَّس حين ينقل الموجّه رزمه إلى "
+"عقدة أخرى. ولا يُمرَّر HTTP/3 ولا الواجهات الأمامية ذات "
+"``proxy_protocol``. ويتوقف التمرير خارج النظام الإقليمي. وتحت "
+"``global.reuse_port`` تتشارك عملية قديمة وجديدة منفذ التمرير وقد تجد كل "
+"منهما الأخرى ميتة لبعض الوقت. والأبنية لغير Linux لا تربط اتصال التمرير "
+"بعنوان الشبكة المتداخلة ولم تُختبر. وأُجريت كل الاختبارات والقياسات على "
+"واجهة الاسترجاع المحلية، وليس لحالة الرفض، ولا للحد "
+"``max_flows_per_peer``، ولا لرفض المالك الذي يُصرَّف، ولا لإنهاء "
+"المرحِّلات الصامتة بعد عشر ثوانٍ، اختبار عمليات. ويمكن إعادة إرسال رزمة "
+"بيانات ممررة ضمن حقبة."
 
 #: ../../cluster.rst:617
 msgid ""
@@ -1966,6 +2739,17 @@ msgid ""
 "of SID 0015 is not run. A ``spill`` section without a pool that uses the "
 "table costs the file and does nothing, without a warning."
 msgstr ""
+"**SID 0027، ذاكرة الإفاضة المؤقتة.** حد الذاكرة دون حجم الملف يقتل "
+"البرنامج الخدمي أو يعطل طبقة القرص. واقتطاع الملف أو خطأ القراءة من القرص "
+"يرفع إشارة تنهي البرنامج الخدمي، وكذلك نظام الملفات الممتلئ الذي يضغط أو "
+"ينسخ عند الكتابة، ونحن لا نكتشفه. ولم تعمل الذاكرة المؤقتة تحت Docker أو "
+"Kubernetes. والمخزن الذي يصل الطبقتين لم يراجعه إلا كاتبه، وعلاماته غير "
+"مختبرة مع عدة عمال في وقت واحد. والتدفق الأول للعميل بعد إعادة التشغيل "
+"يمضي بلا تلميحه. ويخدم خيط تخزين واحد من مليون إلى ثلاثة ملايين عملية في "
+"الثانية ويتخلص مما زاد على ذلك. والمجموع الاختباري غير ذي مفتاح. ولا يوجد "
+"اختبار لانقطاع الكهرباء، ولم يُشغَّل تأهيل الخمسين مليون مفتاح في SID "
+"0015. وقسم ``spill`` بلا مجمّع يستخدم الجدول يكلف الملف ولا يفعل شيئًا، "
+"دون تحذير."
 
 #: ../../cluster.rst:619
 msgid ""
@@ -1977,6 +2761,13 @@ msgid ""
 "A node with both a mesh and a database, and TLS to PostgreSQL, are not "
 "tested through the binary. Only Linux is tested."
 msgstr ""
+"**SID 0028، قاعدة البيانات.** لا يُقلَّم السجل التاريخي أبدًا. والعقدتان "
+"ذواتا الاسم نفسه تكتب كل منهما فوق تقرير الأخرى. ولا يمكن نشر ``global`` "
+"و\\ ``mesh`` و\\ ``observability``. ولا يوجد طرح مرحلي، و\\ ``apply`` لا "
+"ينتظر العقد. وتغيير وقت التشغيل ليس مراجعة، والمراجعة التالية تستبدله. "
+"وليس لـ SQLite إشعارات. والعقدة ذات الشبكة المتداخلة وقاعدة البيانات "
+"معًا، وTLS إلى PostgreSQL، لم يُختبرا عبر الملف التنفيذي. ولم يُختبر إلا "
+"Linux."
 
 #: ../../cluster.rst:621
 msgid ""
@@ -1992,6 +2783,15 @@ msgid ""
 "``reuse_port`` beside the new key, are untested. The signal to a silent "
 "replacement uses a process id, which the kernel can reuse."
 msgstr ""
+"**SID 0029، الترقية.** تعيينات UDP المتبنّاة خارج عدّ الحد على مستوى "
+"الأسطول. والتعيين الذي مرره نظير يُجاب مباشرة بعد التسليم. ومقبس الشبكة "
+"المتداخلة، ومستمع إعدادات العنقود، ومنفذ التمرير لا تُمرَّر، فلا يمكن "
+"استبدال عقدة في شبكة متداخلة بهذه الطريقة. وتنتهي اتصالات QUIC مع العملية "
+"القديمة. والاتصال الذي يرسل طلبه الأول بعد أكثر من 200 ms من التحول قد "
+"يغلقه التصريف. وانهيار البديل بعد DONE انقطاع للخدمة حتى يعيد المشرف "
+"تشغيله. ولا يوجد ``sd_notify``. ومسارات عدة، ومستخدم ثانٍ حقيقي، وأكثر من "
+"6,000 تعيين، و\\ ``reuse_port`` إلى جانب المفتاح الجديد، لم تُختبر. "
+"والإشارة إلى بديل صامت تستخدم معرف عملية، قد تعيد النواة استخدامه."
 
 #: ../../cluster.rst:623
 msgid ""
@@ -2003,3 +2803,9 @@ msgid ""
 "member is silent, and shows at most 256 servers. The console threads are "
 "not pinned to processors of their own."
 msgstr ""
+"**SID 0031، وحدة التحكم.** معيار العبء غير مثبت. والعضو الذي ينضم لا "
+"يُستخدم إلا بعد إعادة التشغيل. ولا تنهي وحدة التحكم TLS وتحتاج إلى وكيل "
+"أمامها لنظرائها. وأوامر العقدة في صفحة الجدار الناري لا تفعل شيئًا على "
+"الحافة. ولا يشغّل أي اختبار أسطولًا من 64. ويحتجز عرض الأسطول خيط طلب مدة "
+"تصل إلى خمس ثوانٍ حين يكون عضو صامتًا، ولا يعرض أكثر من 256 خادمًا. وخيوط "
+"وحدة التحكم غير مثبتة على معالجات خاصة بها."

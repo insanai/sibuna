@@ -24,7 +24,7 @@ msgstr "مسرد المصطلحات"
 
 #: ../../glossary.rst:6
 msgid "Admin socket"
-msgstr ""
+msgstr "مقبس الإدارة (Admin socket)"
 
 #: ../../glossary.rst:7
 msgid ""
@@ -33,6 +33,10 @@ msgid ""
 "show the servers, drain, weigh, add or remove a server, lift a ban, "
 "reload. There is no TCP listener for administration (SID 0018)."
 msgstr ""
+"مقبس Unix بالأذونات 0600، يسميه ``global.admin_socket`` أو ``sibuna lb "
+"--admin``، يأخذ سطر أمر واحدًا في كل مرة من ``sibuna ctl``: عرض الخوادم، "
+"والتصريف، وتغيير الوزن، وإضافة خادم أو إزالته، ورفع الحظر، وإعادة "
+"التحميل. ولا يوجد مستمع TCP للإدارة (SID 0018)."
 
 #: ../../glossary.rst:9
 msgid "Admission"
@@ -50,7 +54,7 @@ msgstr ""
 
 #: ../../glossary.rst:12
 msgid "Affinity"
-msgstr ""
+msgstr "تثبيت الجلسات (Affinity)"
 
 #: ../../glossary.rst:13
 msgid ""
@@ -58,6 +62,9 @@ msgid ""
 "by the source address, or by a sticky table. It gives way when the server "
 "is down, full, ejected or drained (SID 0019, SID 0025)."
 msgstr ""
+"القاعدة التي ترسل تدفقات عميل واحد إلى خادم واحد: بملف تعريف ارتباط، أو "
+"بعنوان المصدر، أو بجدول تثبيت. وتتنحى حين يكون الخادم معطلًا، أو ممتلئًا، "
+"أو مُخرَجًا، أو مُصرَّفًا (SID 0019، SID 0025)."
 
 #: ../../glossary.rst:15
 msgid "Aho-Corasick automaton"
@@ -75,7 +82,7 @@ msgstr ""
 
 #: ../../glossary.rst:18
 msgid "Authority"
-msgstr ""
+msgstr "المرجعية (Authority)"
 
 #: ../../glossary.rst:19
 msgid ""
@@ -84,10 +91,14 @@ msgid ""
 "head and composes it with its own file, which keeps ``global``, ``mesh``, "
 "``observability`` and ``authority`` (SID 0028)."
 msgstr ""
+"في الحافة، قاعدة البيانات التي تملك بنية النشر المنشورة في الوضع الدائم: "
+"``frontends`` و\\ ``backends`` و\\ ``http``. وتتابع كل عقدة رأسها وتركّبه "
+"مع ملفها الخاص، الذي يحتفظ بـ ``global`` و\\ ``mesh`` و\\ "
+"``observability`` و\\ ``authority`` (SID 0028)."
 
 #: ../../glossary.rst:21
 msgid "Backend"
-msgstr ""
+msgstr "الواجهة الخلفية (Backend)"
 
 #: ../../glossary.rst:22
 msgid ""
@@ -95,29 +106,28 @@ msgid ""
 "timeouts and stickiness. The word follows HAProxy; *pool* names the same "
 "thing."
 msgstr ""
+"مجمّع من خوادم بروتوكول واحد، مع مجدوله، وفحص سلامته، ومهله، وتثبيته. "
+"والكلمة تتبع HAProxy؛ و\\ *المجمّع* (pool) يسمي الشيء نفسه."
 
 #: ../../glossary.rst:24
 msgid "Ban table"
 msgstr "جدول الحظر"
 
 #: ../../glossary.rst:25
-#, fuzzy
-#| msgid ""
-#| "4,096 lock-free slots of banned client addresses with expiry, written "
-#| "by the honeypot and by reputation shared across a cluster, read on "
-#| "every request."
 msgid ""
 "Lock-free slots of banned client addresses with expiry, 65,536 by default "
 "(``--ban-table-slots``), written by the honeypot, by rule quotas, by "
 "reputation shared across a cluster and, in the edge, by the mesh; read on "
 "every request."
 msgstr ""
-"4,096 موضعًا بلا أقفال لعناوين العملاء المحظورين مع وقت انتهاء الحظر. "
-"تكتب فيه المصيدةُ والسمعةُ المشتركة عبر العنقود، ويُقرأ في كل طلب."
+"مواضع بلا أقفال لعناوين العملاء المحظورين مع وقت انتهاء الحظر، 65,536 "
+"افتراضيًا (``--ban-table-slots``)، تكتب فيها المصيدةُ، وحصصُ القواعد، "
+"والسمعةُ المشتركة عبر العنقود، وفي الحافة الشبكةُ المتداخلة؛ وتُقرأ في كل "
+"طلب."
 
 #: ../../glossary.rst:27
 msgid "Breaker"
-msgstr ""
+msgstr "قاطع الدارة (Breaker)"
 
 #: ../../glossary.rst:28
 msgid ""
@@ -125,6 +135,9 @@ msgid ""
 "failures in a row and stays open for ``open``; while it is open a call "
 "fails at once with the result ``unavailable`` (SID 0030)."
 msgstr ""
+"قاطع الدارة لإضافة الوكيل. ينفتح بعد ``failures`` إخفاقًا متتاليًا ويبقى "
+"مفتوحًا مدة ``open``؛ وما دام مفتوحًا يفشل الاستدعاء فورًا بالنتيجة "
+"``unavailable`` (SID 0030)."
 
 #: ../../glossary.rst:30
 msgid "Campaign"
@@ -157,7 +170,7 @@ msgstr ""
 
 #: ../../glossary.rst:36
 msgid "ClientHello inspection"
-msgstr ""
+msgstr "فحص ClientHello"
 
 #: ../../glossary.rst:37
 msgid ""
@@ -167,6 +180,10 @@ msgid ""
 "within ``inspect_bytes`` takes the configured fallback (SID 0015, SID "
 "0032)."
 msgstr ""
+"في واجهة أمامية ``tcp`` مع ``tcp_inspect``، قراءة أول سجل TLS في الاتصال "
+"دون إنهاء TLS، لتوجيهه أو رفضه بحسب اسم الخادم أو ALPN أو JA4. والاتصال "
+"الذي لا يرسل ClientHello كاملة ضمن ``inspect_bytes`` يأخذ البديل "
+"الاحتياطي المضبوط (SID 0015، SID 0032)."
 
 #: ../../glossary.rst:39
 msgid "Difficulty, work bits"
@@ -182,7 +199,7 @@ msgstr ""
 
 #: ../../glossary.rst:42
 msgid "Drain"
-msgstr ""
+msgstr "التصريف (Drain)"
 
 #: ../../glossary.rst:43
 msgid ""
@@ -191,6 +208,10 @@ msgid ""
 "and a restart ends it. A node drains as a whole at shutdown, while "
 "readiness answers 503."
 msgstr ""
+"حالة الخادم الذي لا يأخذ تدفقًا جديدًا ويحتفظ بتدفقاته المؤسَّسة. يضبطها "
+"``set server POOL/NAME state drain``، وتحتفظ بها إعادة التحميل، وتنهيها "
+"إعادة التشغيل. وتُصرَّف العقدة كلها عند الإيقاف، بينما تجيب الجاهزية بـ "
+"503."
 
 #: ../../glossary.rst:45
 msgid "Edge"
@@ -209,10 +230,8 @@ msgstr ""
 "وأدلة جنائية عن الحوادث."
 
 #: ../../glossary.rst:48
-#, fuzzy
-#| msgid "Edge"
 msgid "Edge mode"
-msgstr "Edge"
+msgstr "وضع الحافة (Edge mode)"
 
 #: ../../glossary.rst:49
 msgid ""
@@ -221,6 +240,9 @@ msgid ""
 "pools, with the firewall on the routes that ask for it. It is unrelated "
 "to the storage sense of *Edge* above."
 msgstr ""
+"البرنامج الخدمي المشغَّل مع ``--config-file``. يمرر TCP وUDP، وينهي TLS "
+"وHTTP/2 وHTTP/3، ويوجّه طلبات HTTP إلى مجمّعات الخوادم، مع الجدار الناري "
+"على المسارات التي تطلبه. ولا علاقة له بمعنى *Edge* الخاص بالتخزين أعلاه."
 
 #: ../../glossary.rst:51
 msgid "Engine slot"
@@ -252,7 +274,7 @@ msgstr ""
 
 #: ../../glossary.rst:57
 msgid "Fleet cap"
-msgstr ""
+msgstr "حد الأسطول (Fleet cap)"
 
 #: ../../glossary.rst:58
 msgid ""
@@ -261,16 +283,21 @@ msgid ""
 "the limit, and unused shares move to the nodes that have the flows (SID "
 "0025)."
 msgstr ""
+"قيمة ``max_flows`` للخادم حين تحد تدفقات كل عقد الشبكة المتداخلة مجتمعة، "
+"مع ``max_flows_scope: \"fleet\"``. تحمل كل عقدة حصة من الحد، وتنتقل الحصص "
+"غير المستخدمة إلى العقد التي لديها التدفقات (SID 0025)."
 
 #: ../../glossary.rst:60
 msgid "Flow"
-msgstr ""
+msgstr "التدفق (Flow)"
 
 #: ../../glossary.rst:61
 msgid ""
 "One unit of work of the edge that holds a slot of ``global.max_flows``: a "
 "TCP connection, a UDP mapping, or an HTTP connection."
 msgstr ""
+"وحدة عمل واحدة في الحافة تحمل خانة من ``global.max_flows``: اتصال TCP، أو "
+"تعيين UDP، أو اتصال HTTP."
 
 #: ../../glossary.rst:63
 msgid "Forward auth"
@@ -288,13 +315,15 @@ msgstr ""
 
 #: ../../glossary.rst:66
 msgid "Frontend"
-msgstr ""
+msgstr "الواجهة الأمامية (Frontend)"
 
 #: ../../glossary.rst:67
 msgid ""
 "A named set of listening addresses of one protocol, ``tcp``, ``udp`` or "
 "``http``, with its routes, its limits and its default backend."
 msgstr ""
+"مجموعة مسماة من عناوين الاستماع لبروتوكول واحد، ``tcp`` أو ``udp`` أو "
+"``http``، مع مساراتها وحدودها وواجهتها الخلفية الافتراضية."
 
 #: ../../glossary.rst:69
 msgid "Gate"
@@ -323,7 +352,7 @@ msgstr ""
 
 #: ../../glossary.rst:75
 msgid "Handoff"
-msgstr ""
+msgstr "التسليم (Handoff)"
 
 #: ../../glossary.rst:76
 msgid ""
@@ -332,6 +361,9 @@ msgid ""
 "the new one over a Unix socket and then drains its TCP streams. Linux "
 "only (SID 0029)."
 msgstr ""
+"استبدال ملف الحافة التنفيذي العامل مع ``global.upgrade_socket``: تمرر "
+"العملية القديمة مقابس استماعها وتعيينات UDP الحية إلى الجديدة عبر مقبس "
+"Unix ثم تصرّف تدفقات TCP الخاصة بها. Linux فقط (SID 0029)."
 
 #: ../../glossary.rst:78
 msgid "Hashcash"
@@ -361,7 +393,7 @@ msgstr ""
 
 #: ../../glossary.rst:84
 msgid "Hook"
-msgstr ""
+msgstr "الخطاف (Hook)"
 
 #: ../../glossary.rst:85
 msgid ""
@@ -370,6 +402,9 @@ msgid ""
 "native Rust, a metered WebAssembly module, or an agent in another process "
 "(SID 0030)."
 msgstr ""
+"قرار خاص بالمشغّل على مسار الحافة، تشغّله إضافة في المرحلة ``connection`` "
+"أو ``request`` أو ``telemetry``. والإضافة إما شيفرة Rust أصلية، أو وحدة "
+"WebAssembly محسوبة الاستهلاك، أو وكيل في عملية أخرى (SID 0030)."
 
 #: ../../glossary.rst:87
 msgid "Idle reaper"
@@ -417,16 +452,16 @@ msgstr ""
 "ولا صلة لها ببصمة العميل المربوطة في التحديات والرموز."
 
 #: ../../glossary.rst:96
-#, fuzzy
-#| msgid "Edge"
 msgid "Judge"
-msgstr "Edge"
+msgstr "الحكم (Judge)"
 
 #: ../../glossary.rst:97
 msgid ""
 "A thread that decides a parked connection whose chain of hooks names an "
 "agent, so that the edge worker never waits for the agent (SID 0030)."
 msgstr ""
+"خيط يقرر في اتصال مركون تسمي سلسلة خطافاته وكيلًا، كي لا ينتظر عامل "
+"الحافة الوكيل أبدًا (SID 0030)."
 
 #: ../../glossary.rst:99
 msgid "Keyed BLAKE3"
@@ -442,7 +477,7 @@ msgstr ""
 
 #: ../../glossary.rst:102
 msgid "Local authority"
-msgstr ""
+msgstr "السلطة المحلية (Local authority)"
 
 #: ../../glossary.rst:103
 msgid ""
@@ -451,6 +486,9 @@ msgid ""
 "writes a revocation list, and can serve other machines as an ACME server "
 "(SID 0021)."
 msgstr ""
+"سلطة الشهادات التي تشغّلها الحافة بنفسها للأسماء الداخلية. تحتفظ بجذر "
+"وشهادة وسيطة في تخزين HTTPS التلقائي، وتكتب قائمة إبطال، وتستطيع خدمة "
+"أجهزة أخرى بوصفها خادم ACME (SID 0021)."
 
 #: ../../glossary.rst:105
 msgid "MAC token"
@@ -468,7 +506,7 @@ msgstr ""
 
 #: ../../glossary.rst:108
 msgid "Maglev"
-msgstr ""
+msgstr "Maglev"
 
 #: ../../glossary.rst:109
 msgid ""
@@ -478,10 +516,14 @@ msgid ""
 "table and bounds the load of the chosen server by a factor "
 "(``bounded_maglev``, SID 0015)."
 msgstr ""
+"جدول تجزئة متسقة عدد خاناته عدد أولي (65,537 في Sibuna)، تملؤه تبديلات "
+"الخوادم، يضع العميل على خادم في زمن ثابت (Eisenbud وآخرون، NSDI 2016). "
+"ويبني Sibuna جدولًا موزونًا ويحد حمل الخادم المختار بمعامل "
+"(``bounded_maglev``، SID 0015)."
 
 #: ../../glossary.rst:111
 msgid "Mesh"
-msgstr ""
+msgstr "الشبكة المتداخلة (Mesh)"
 
 #: ../../glossary.rst:112
 msgid ""
@@ -491,16 +533,22 @@ msgid ""
 "``forward`` they also send flows to their owner. At most 64 nodes (SID "
 "0022 to SID 0026)."
 msgstr ""
+"عقد عنقود الحافة، المسرودة في القسم ``mesh`` مع مفتاح مشترك. تفحص بعضها "
+"بعضًا عبر UDP كل نصف ثانية وتتشارك الحظر، والأوامر، وجدول التثبيت، وحصص "
+"حدود الأسطول؛ ومع ``forward`` ترسل أيضًا التدفقات إلى مالكها. 64 عقدة على "
+"الأكثر (من SID 0022 إلى SID 0026)."
 
 #: ../../glossary.rst:114
 msgid "Node"
-msgstr ""
+msgstr "العقدة (Node)"
 
 #: ../../glossary.rst:115
 msgid ""
 "One edge process in a mesh, known by its mesh address; in persistent mode "
 "also by the name ``authority.node``."
 msgstr ""
+"عملية حافة واحدة في شبكة متداخلة، تُعرف بعنوانها في الشبكة المتداخلة؛ وفي "
+"الوضع الدائم أيضًا بالاسم ``authority.node``."
 
 #: ../../glossary.rst:117
 msgid "Work level"
@@ -530,7 +578,7 @@ msgstr ""
 
 #: ../../glossary.rst:123
 msgid "Owner"
-msgstr ""
+msgstr "المالك (Owner)"
 
 #: ../../glossary.rst:124
 msgid ""
@@ -538,20 +586,24 @@ msgid ""
 "node with the largest rendezvous score for the client's address (SID "
 "0026)."
 msgstr ""
+"عقدة الشبكة المتداخلة التي تخدم عميلًا في التمرير بين النظراء: العقدة "
+"الحية صاحبة أكبر درجة rendezvous لعنوان العميل (SID 0026)."
 
 #: ../../glossary.rst:126
 msgid "Passive health"
-msgstr ""
+msgstr "السلامة السلبية (Passive health)"
 
 #: ../../glossary.rst:127
 msgid ""
 "Ejecting a server for ``ejection`` after ``failures`` consecutive "
 "failures of real requests, while another server can serve (SID 0019)."
 msgstr ""
+"إخراج خادم مدة ``ejection`` بعد ``failures`` إخفاقًا متتاليًا لطلبات "
+"حقيقية، ما دام خادم آخر قادرًا على الخدمة (SID 0019)."
 
 #: ../../glossary.rst:129
 msgid "Passthrough"
-msgstr ""
+msgstr "التمرير دون فك التشفير (Passthrough)"
 
 #: ../../glossary.rst:130
 msgid ""
@@ -559,10 +611,12 @@ msgid ""
 "terminating it. The edge may still read the ClientHello, or validate QUIC "
 "by connection ID (SID 0032)."
 msgstr ""
+"ترحيل بايتات اتصال TLS أو QUIC إلى خادم دون إنهائه. ويجوز للحافة مع ذلك "
+"أن تقرأ ClientHello، أو أن تتحقق من QUIC بمعرف الاتصال (SID 0032)."
 
 #: ../../glossary.rst:132
 msgid "Peer forwarding"
-msgstr ""
+msgstr "التمرير بين النظراء (Peer forwarding)"
 
 #: ../../glossary.rst:133
 msgid ""
@@ -571,14 +625,17 @@ msgid ""
 "session stay on one node. An established TCP connection that the network "
 "moves is not repaired (SID 0026)."
 msgstr ""
+"ميزة الشبكة المتداخلة التي تسلّم الاتصال الجديد أو عميل UDP إلى العقدة "
+"التي تملك العميل، كي يبقى خادمه المثبت وعدادات معدله وجلسة UDP الخاصة به "
+"على عقدة واحدة. واتصال TCP المؤسَّس الذي تنقله الشبكة لا يُصلح (SID 0026)."
 
 #: ../../glossary.rst:135
 msgid "Pool"
-msgstr ""
+msgstr "المجمّع (Pool)"
 
 #: ../../glossary.rst:136
 msgid "See *Backend*."
-msgstr ""
+msgstr "انظر *الواجهة الخلفية*."
 
 #: ../../glossary.rst:138
 msgid "Proof of Sequential Work (PoSW)"
@@ -596,7 +653,7 @@ msgstr ""
 
 #: ../../glossary.rst:141
 msgid "Regime"
-msgstr ""
+msgstr "النظام (Regime)"
 
 #: ../../glossary.rst:142
 msgid ""
@@ -606,10 +663,15 @@ msgid ""
 "returns from wide-area to regional only below 1.5 ms (``Regime::step`` in "
 "``crates/lb/src/mesh.rs``)."
 msgstr ""
+"وضع التوجيه في الشبكة المتداخلة، يُختار من المئين 95 لزمن الرحلة ذهابًا "
+"وإيابًا إلى النظراء: *المستقل* بلا نظير حي، و\\ *الإقليمي* ما دام زمن "
+"الرحلة 3 ms أو أقل، و\\ *المسافات الواسعة* فوق 3 ms. ولا تعود الشبكة "
+"المتداخلة من المسافات الواسعة إلى الإقليمي إلا دون 1.5 ms "
+"(``Regime::step`` في ``crates/lb/src/mesh.rs``)."
 
 #: ../../glossary.rst:144
 msgid "Rendezvous hashing"
-msgstr ""
+msgstr "تجزئة rendezvous (Rendezvous hashing)"
 
 #: ../../glossary.rst:145
 msgid ""
@@ -619,6 +681,10 @@ msgid ""
 "it for source stickiness (SID 0019) and for the owner of a client (SID "
 "0026)."
 msgstr ""
+"تجزئة الوزن العشوائي الأعلى (Thaler وRavishankar، 1998): يأخذ كل مرشح "
+"درجة من تجزئة لاسمه وللمفتاح، والدرجة الأكبر تفوز. والمرشح المفقود لا "
+"ينقل إلا مفاتيحه. ويستخدمها Sibuna لتثبيت المصدر (SID 0019) ولمالك العميل "
+"(SID 0026)."
 
 #: ../../glossary.rst:147
 msgid "Reputation trie"
@@ -634,7 +700,7 @@ msgstr ""
 
 #: ../../glossary.rst:150
 msgid "Revision"
-msgstr ""
+msgstr "المراجعة (Revision)"
 
 #: ../../glossary.rst:151
 msgid ""
@@ -642,6 +708,9 @@ msgid ""
 "digest of the file; with a database it is a number that only grows, and a "
 "rollback is a new revision (SID 0028)."
 msgstr ""
+"في الحافة، حالة منشورة واحدة لبنية النشر. مع الملف هي خلاصة الملف؛ ومع "
+"قاعدة البيانات هي رقم لا يزداد إلا نموًا، والتراجع مراجعة جديدة (SID "
+"0028)."
 
 #: ../../glossary.rst:153
 msgid "Robin Hood spent set"
@@ -657,13 +726,15 @@ msgstr ""
 
 #: ../../glossary.rst:156
 msgid "Route"
-msgstr ""
+msgstr "المسار (Route)"
 
 #: ../../glossary.rst:157
 msgid ""
 "A rule of an HTTP frontend that selects a backend by host name and path "
 "prefix, and may switch the firewall off or on for its requests."
 msgstr ""
+"قاعدة في واجهة أمامية HTTP تختار واجهة خلفية بحسب اسم المضيف وبادئة "
+"المسار، ويجوز لها أن تعطّل الجدار الناري أو تفعّله لطلباتها."
 
 #: ../../glossary.rst:159
 msgid "Rule hash"
@@ -679,21 +750,23 @@ msgstr ""
 
 #: ../../glossary.rst:162
 msgid "Server"
-msgstr ""
+msgstr "الخادم (Server)"
 
 #: ../../glossary.rst:163
 msgid ""
 "One address of a pool, with a name, a weight and an optional "
 "``max_flows``. ``sibuna ctl`` addresses it as ``POOL/NAME``."
 msgstr ""
+"عنوان واحد في مجمّع، مع اسم ووزن و\\ ``max_flows`` اختياري. ويخاطبه "
+"``sibuna ctl`` بالصيغة ``POOL/NAME``."
 
 #: ../../glossary.rst:165
 msgid "Share"
-msgstr ""
+msgstr "الحصة (Share)"
 
 #: ../../glossary.rst:166
 msgid "The part of a fleet cap that one node may hold now (SID 0025)."
-msgstr ""
+msgstr "جزء حد الأسطول الذي يجوز لعقدة واحدة أن تحمله الآن (SID 0025)."
 
 #: ../../glossary.rst:168
 msgid "Shield"
@@ -720,7 +793,7 @@ msgstr ""
 
 #: ../../glossary.rst:174
 msgid "Slow start"
-msgstr ""
+msgstr "البدء التدريجي (Slow start)"
 
 #: ../../glossary.rst:175
 msgid ""
@@ -728,10 +801,12 @@ msgid ""
 "takes a weight that grows in proportion to the time, so that a cold "
 "server is not flooded (SID 0019)."
 msgstr ""
+"مدة التصاعد في ``slow_start`` التي يأخذ فيها الخادم الذي دخل الخدمة وزنًا "
+"ينمو بتناسب مع الزمن، كي لا يُغرق الخادم البارد (SID 0019)."
 
 #: ../../glossary.rst:177
 msgid "Spill cache"
-msgstr ""
+msgstr "ذاكرة الإفاضة المؤقتة (Spill cache)"
 
 #: ../../glossary.rst:178
 msgid ""
@@ -739,10 +814,13 @@ msgid ""
 "clients that left memory, and keeps them over a restart. Admission to it "
 "follows TinyLFU (SID 0027)."
 msgstr ""
+"ملف معيَّن في الذاكرة تحت جدول التثبيت يحتفظ بتلميحات العملاء الذين خرجوا "
+"من الذاكرة، ويحتفظ بها عبر إعادة التشغيل. ويتبع القبول فيه TinyLFU (SID "
+"0027)."
 
 #: ../../glossary.rst:180
 msgid "Sticky table"
-msgstr ""
+msgstr "جدول التثبيت (Sticky table)"
 
 #: ../../glossary.rst:181
 msgid ""
@@ -750,6 +828,9 @@ msgid ""
 "of each client, by source address or by cookie, for ``ttl`` after the "
 "last use. A mesh replicates it, and the later choice wins (SID 0025)."
 msgstr ""
+"جدول المجمّع ذي ``sticky: \"table\"`` الذي يتذكر خادم كل عميل، بحسب عنوان "
+"المصدر أو ملف تعريف الارتباط، مدة ``ttl`` بعد آخر استخدام. وتنسخه الشبكة "
+"المتداخلة، والاختيار الأحدث يفوز (SID 0025)."
 
 #: ../../glossary.rst:183
 msgid "Surface"
@@ -777,10 +858,8 @@ msgstr ""
 "أو إلى الرفض."
 
 #: ../../glossary.rst:189
-#, fuzzy
-#| msgid "Work level"
 msgid "Worker"
-msgstr "مستوى العمل"
+msgstr "العامل (Worker)"
 
 #: ../../glossary.rst:190
 msgid ""
@@ -789,6 +868,10 @@ msgid ""
 "threads carry TCP streams; on Linux the event-driven HTTP workers, one "
 "per processor, serve HTTP connections (SID 0015, SID 0016)."
 msgstr ""
+"في الحافة، خيط يخدم حركة المرور. يقبل عامل الحافة لكل واجهة أمامية ويملك "
+"جدول التدفقات وتعيينات UDP؛ وتحمل خيوط الترحيل تدفقات TCP؛ وفي Linux تخدم "
+"عمال HTTP المدفوعون بالأحداث، واحد لكل معالج، اتصالات HTTP (SID 0015، SID "
+"0016)."
 
 #: ../../glossary.rst:192
 msgid "Zaxonlite"
@@ -894,6 +977,8 @@ msgid ""
 "Einziger, G., Friedman, R., and Manes, B. \"TinyLFU: a highly efficient "
 "cache admission policy.\" *ACM Transactions on Storage* 13(4), 2017."
 msgstr ""
+"Einziger, G., Friedman, R., and Manes, B. \"TinyLFU: a highly efficient "
+"cache admission policy.\" *ACM Transactions on Storage* 13(4), 2017."
 
 #: ../../glossary.rst:209
 msgid ""
@@ -902,6 +987,10 @@ msgid ""
 "J. D. \"Maglev: a fast and reliable software network load balancer.\" "
 "*NSDI*, 2016."
 msgstr ""
+"Eisenbud, D. E., Yi, C., Contavalli, C., Smith, C., Kononov, R., "
+"Mann-Hielscher, E., Cilingiroglu, A., Cheyney, B., Shang, W., and Hosein, "
+"J. D. \"Maglev: a fast and reliable software network load balancer.\" "
+"*NSDI*, 2016."
 
 #: ../../glossary.rst:210
 msgid ""
@@ -944,6 +1033,8 @@ msgid ""
 "Mirrokni, V., Thorup, M., and Zadimoghaddam, M. \"Consistent hashing with "
 "bounded loads.\" *SODA*, 2018."
 msgstr ""
+"Mirrokni, V., Thorup, M., and Zadimoghaddam, M. \"Consistent hashing with "
+"bounded loads.\" *SODA*, 2018."
 
 #: ../../glossary.rst:215
 msgid ""
@@ -958,6 +1049,8 @@ msgid ""
 "Thaler, D. G., and Ravishankar, C. V. \"Using name-based mappings to "
 "increase hit rates.\" *IEEE/ACM Transactions on Networking* 6(1), 1998."
 msgstr ""
+"Thaler, D. G., and Ravishankar, C. V. \"Using name-based mappings to "
+"increase hit rates.\" *IEEE/ACM Transactions on Networking* 6(1), 1998."
 
 #: ../../glossary.rst:217
 msgid ""
@@ -978,15 +1071,6 @@ msgstr ""
 "*NSDI*, 2019."
 
 #: ../../glossary.rst:219
-#, fuzzy
-#| msgid ""
-#| "Sibuna Discussions 0001 to 0014, ``docs/sid/records``, 2026: process, "
-#| "foundation architecture, declarative policy engine, semantic "
-#| "inspection, Zaxonlite storage architecture, mathematical foundations, "
-#| "console management interface, AI bot traffic monitoring, chunked "
-#| "request bodies, the Rust port, storage through sqlx, outbound TLS for "
-#| "the console through rustls, console storage, and trusted JA4 "
-#| "fingerprints from the ingress."
 msgid ""
 "Sibuna Discussions 0001 to 0032, ``docs/sid/records``, 2026: process, "
 "foundation architecture, declarative policy engine, semantic inspection, "
@@ -1001,9 +1085,15 @@ msgid ""
 "spill cache, the database authority, the upgrade handoff, plugin tiers, "
 "the operator console of the edge, and staged admission."
 msgstr ""
-"Sibuna Discussions من 0001 إلى 0014، ``docs/sid/records``، 2026: العملية، "
+"Sibuna Discussions من 0001 إلى 0032، ``docs/sid/records``، 2026: العملية، "
 "والمعمارية الأساسية، ومحرك السياسات التصريحي، والفحص الدلالي، ومعمارية "
 "تخزين Zaxonlite، والأسس الرياضية، وواجهة إدارة وحدة التحكم، ومراقبة حركة "
 "روبوتات الذكاء الاصطناعي، وأجسام الطلبات المجزأة، والنقل إلى Rust، "
 "والتخزين عبر sqlx، وTLS الصادر لوحدة التحكم عبر rustls، وتخزين وحدة "
-"التحكم، وبصمات JA4 الموثوقة من وكيل الدخول."
+"التحكم، وبصمات JA4 الموثوقة من وكيل الدخول، وموازن الحمل الموزع على "
+"الحافة، وعمال HTTP المدفوعون بالأحداث، والتبادلات داخل العملية، والإعداد "
+"البسيط وضبط وقت التشغيل، وسياسة حركة المرور، ورصد الحافة، وHTTPS "
+"التلقائي، والحظر المنسوخ، وإعدادات العنقود، وTLS على العمال، وتثبيت "
+"الجلسات المشترك وحدود الأسطول، والتمرير بين النظراء، وذاكرة الإفاضة "
+"المؤقتة، والمرجعية في قاعدة البيانات، وتسليم الترقية، وطبقات الإضافات، "
+"ووحدة تحكم المشغّل للحافة، والقبول المرحلي."
