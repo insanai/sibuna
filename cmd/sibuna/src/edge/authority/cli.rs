@@ -177,7 +177,11 @@ fn open(options: &Options) -> Result<Session, Failure> {
     let node_file = super::super::document(path)
         .map_err(|error| Error::Settings(format!("the file `{path}` cannot be read: {error}")))?;
     let settings = Settings::parse(&node_file)?;
-    let store = SqlStore::new(&settings, Access::Operator)?;
+    // Only a command that commits may create the tables. The others read, so the role
+    // of a node is enough for them.
+    let commits = matches!(options.command.as_str(), "apply" | "rollback");
+    let access = if commits { Access::Operator } else { Access::Node };
+    let store = SqlStore::new(&settings, access)?;
     Ok(Session { node_file, store })
 }
 
@@ -242,12 +246,23 @@ fn expect(options: &Options, head: &Head) -> Result<u64, Error> {
     }
 }
 
-/// The document of the head, or `None` when nothing is published.
-fn head_document(store: &mut SqlStore, head: &Head) -> Result<Option<String>, Error> {
-    match head.revision {
-        0 => Ok(None),
-        number => store.revision(number).map(|revision| Some(revision.document)),
-    }
+/// The difference between the head and `after`, as lines. A head that is damaged
+/// cannot be compared. We say so and go on, so that a commit can replace it.
+fn difference(store: &mut SqlStore, head: &Head, after: &str) -> Result<String, Error> {
+    let before = match head.revision {
+        0 => None,
+        number => match store.revision(number) {
+            Ok(revision) => Some(revision.document),
+            Err(Error::Damaged(why)) => {
+                let all = render_diff(&diff(None, after)?);
+                return Ok(format!(
+                    "revision {number} is damaged and is not compared: {why}\n{all}"
+                ));
+            }
+            Err(error) => return Err(error),
+        },
+    };
+    Ok(render_diff(&diff(before.as_deref(), after)?))
 }
 
 /// `apply` and, without `commit`, `diff`.
@@ -255,7 +270,7 @@ fn apply(session: &mut Session, options: &Options, commit: bool) -> Result<Strin
     let path = options.source.as_deref().unwrap_or_default();
     let (raw, publication) = read_source(path)?;
     check(&session.node_file, &publication.document)?;
-    let head = session.store.head()?;
+    let head = read_head(&mut session.store)?;
     let expected = expect(options, &head)?;
     let mut out = String::new();
     if !publication.left_out.is_empty() {
@@ -266,8 +281,7 @@ fn apply(session: &mut Session, options: &Options, commit: bool) -> Result<Strin
         out.push_str(&format!("revision {} unchanged {}\n", head.revision, short(&head.digest)));
         return Ok(out);
     }
-    let before = head_document(&mut session.store, &head)?;
-    out.push_str(&render_diff(&diff(before.as_deref(), &publication.document)?));
+    out.push_str(&difference(&mut session.store, &head, &publication.document)?);
     let next = head.revision + 1;
     if !commit {
         out.push_str(&format!("revision {} -> {next}, not committed\n", head.revision));
@@ -306,8 +320,7 @@ fn rollback(session: &mut Session, options: &Options) -> Result<String, Failure>
     }
     // A newer binary may refuse a document that an older one accepted.
     check(&session.node_file, &restored.document)?;
-    let before = head_document(&mut session.store, &head)?;
-    let mut out = render_diff(&diff(before.as_deref(), &restored.document)?);
+    let mut out = difference(&mut session.store, &head, &restored.document)?;
     let author = author(options);
     let draft = Draft {
         document: &restored.document,
@@ -327,7 +340,7 @@ fn rollback(session: &mut Session, options: &Options) -> Result<String, Failure>
 fn dump(session: &mut Session, options: &Options) -> Result<Vec<u8>, Failure> {
     let number = match options.revision {
         Some(number) => number,
-        None => session.store.head()?.revision,
+        None => read_head(&mut session.store)?.revision,
     };
     if number == 0 {
         return Err(Error::Empty.into());
@@ -339,18 +352,33 @@ fn dump(session: &mut Session, options: &Options) -> Result<Vec<u8>, Failure> {
     Ok(pretty(&revision.document)?.into_bytes())
 }
 
+/// The head as a reading command sees it. A database without the tables holds no
+/// revision, as one with empty tables does.
+fn read_head(store: &mut SqlStore) -> Result<Head, Error> {
+    match store.head() {
+        Err(Error::Empty) => Ok(Head { revision: 0, digest: String::new() }),
+        head => head,
+    }
+}
+
 /// `history`: the newest revisions, 20 unless `--limit` says otherwise.
 fn history(session: &mut Session, options: &Options) -> Result<String, Failure> {
     let limit = options.limit.unwrap_or(20).min(usize::MAX as u64) as usize;
-    let head = session.store.head()?;
-    let entries = session.store.history(limit)?;
+    let head = read_head(&mut session.store)?;
+    let entries = match head.revision {
+        0 => Vec::new(),
+        _ => session.store.history(limit)?,
+    };
     Ok(render_history(&entries, head.revision))
 }
 
 /// `status`: the head and what every node reports.
 fn status(session: &mut Session) -> Result<String, Failure> {
-    let head = session.store.head()?;
-    let nodes = session.store.nodes()?;
+    let head = read_head(&mut session.store)?;
+    let nodes = match head.revision {
+        0 => Vec::new(),
+        _ => session.store.nodes()?,
+    };
     Ok(render_nodes(&head, &nodes, None, unix_now()))
 }
 
