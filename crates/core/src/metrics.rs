@@ -117,10 +117,14 @@ pub struct Metrics {
     pub deadline_closes: Counter,
     /// Connections a worker closed after a fault in its own code.
     pub worker_faults: Counter,
+    /// TLS connections whose TLS a worker ended itself (SID 0024).
+    pub tls_kept: Counter,
+    /// TLS connections a worker gave to the protocol runtime after their ClientHello.
+    pub tls_passed: Counter,
 }
 
 /// The number of counters in [`Metrics`].
-pub const COUNTER_COUNT: usize = 30;
+pub const COUNTER_COUNT: usize = 32;
 
 /// The number of counters the Zig daemon exposed; the ones after them are new in the port.
 pub const ZIG_COUNTER_COUNT: usize = 18;
@@ -160,6 +164,8 @@ impl Metrics {
             ("origin_retries", &self.origin_retries),
             ("deadline_closes", &self.deadline_closes),
             ("worker_faults", &self.worker_faults),
+            ("tls_kept", &self.tls_kept),
+            ("tls_passed", &self.tls_passed),
         ]
     }
 

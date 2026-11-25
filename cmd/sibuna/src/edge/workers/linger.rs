@@ -22,6 +22,9 @@ impl Worker {
         if conn.linger != Linger::Wanted || conn.read_closed {
             return false;
         }
+        if let Some(secure) = conn.secure.as_mut() {
+            secure.end(&conn.stream);
+        }
         let _ = conn.stream.shutdown(Shutdown::Write);
         conn.linger = Linger::Draining(LINGER_BYTES);
         // The time of the drain runs from here and is not extended by what arrives.

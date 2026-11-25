@@ -8,6 +8,8 @@ mod egress;
 mod handoff;
 mod inline;
 mod quic;
+mod replay;
+mod sealed;
 mod tunnel;
 
 use std::collections::BTreeMap;
@@ -32,6 +34,7 @@ use bridge::Lane;
 pub use egress::{Directory, Egress};
 use handoff::Handoff;
 pub use inline::{Completion, Decide, Forward, Offer, Refused, Report, Verdict};
+pub use sealed::{Greeted, Greeting, MAX_HELLO, Sealed};
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
 /// The SHA-256 digest of the certificate a client proved to hold in the TLS handshake.
@@ -191,7 +194,7 @@ impl Listener {
     /// beside the deadlines of reading the hello and of the handshake. Then the
     /// handshake goes on as on any listener: the certificate is there, or the choice of
     /// SID 0015 applies.
-    async fn accept(&self, stream: tokio::net::TcpStream, port: u16) -> io::Result<Tls> {
+    async fn accept(&self, stream: replay::Replay, port: u16) -> io::Result<Tls> {
         let late = |_| io::Error::from(io::ErrorKind::TimedOut);
         let Some(certificates) = &self.on_demand else {
             return timeout(DEADLINE, self.acceptor.accept(stream)).await.map_err(late)?;
@@ -346,6 +349,30 @@ impl Ingress {
         held: Box<dyn std::any::Any + Send>,
         client: Option<SocketAddr>,
     ) {
+        self.accept_started(bind, stream, permit, held, client, Vec::new());
+    }
+
+    /// Starts the greeting of a connection for a caller that ends the TLS of HTTP/1.1
+    /// connections itself (SID 0024). `None` when `bind` is no TLS listener, or when it
+    /// obtains certificates on demand: such a handshake may wait for a certificate,
+    /// which only the runtime can do, so the caller uses [`Ingress::accept_from`].
+    pub fn greeting(&self, bind: SocketAddr) -> Option<Greeting> {
+        let listener = self.listeners.get(&bind).filter(|l| l.on_demand.is_none())?;
+        Some(Greeting::new(Arc::clone(&listener.config)))
+    }
+
+    /// As [`Ingress::accept_from`], for a connection of which the caller has read the
+    /// bytes `seen` and written nothing: a [`Greeting`] answered [`Greeted::Passed`].
+    /// The handshake reads those bytes first.
+    pub fn accept_started(
+        &self,
+        bind: SocketAddr,
+        stream: TcpStream,
+        permit: FlowPermit,
+        held: Box<dyn std::any::Any + Send>,
+        client: Option<SocketAddr>,
+        seen: Vec<u8>,
+    ) {
         let Some(listener) = self.listeners.get(&bind).cloned() else { return };
         let (Ok(peer), Ok(vip)) = (stream.peer_addr(), stream.local_addr()) else { return };
         let peer = client.unwrap_or(peer);
@@ -372,6 +399,7 @@ impl Ingress {
         self.runtime.spawn(async move {
             let _permit = (permit, held);
             let Ok(stream) = tokio::net::TcpStream::from_std(stream) else { return };
+            let stream = replay::Replay::new(seen, stream);
             let Ok(tls) = listener.accept(stream, vip.port()).await else { return };
             if tls.get_ref().1.alpn_protocol() == Some(auto::ACME_TLS) {
                 // A TLS-ALPN-01 validation ends with the handshake. It carries no request.
@@ -388,7 +416,7 @@ impl Ingress {
     }
 }
 
-type Tls = tokio_rustls::server::TlsStream<tokio::net::TcpStream>;
+type Tls = tokio_rustls::server::TlsStream<replay::Replay>;
 
 /// What one accepted TLS connection needs to reach the firewall.
 struct Session {

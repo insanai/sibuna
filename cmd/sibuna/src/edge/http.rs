@@ -16,6 +16,8 @@ use crate::recipe::Recipe;
 use crate::server::{Hooks, Options, Server, admit_handoff, admit_within, start_reaper};
 use crate::slot::EngineSlot;
 
+#[cfg(feature = "https")]
+use super::workers::Started;
 use super::workers::{Incoming, Timeouts, Workers};
 
 /// The policy of `http.surface: "off"`.
@@ -134,9 +136,9 @@ pub(super) struct Dispatcher {
     binds: BTreeMap<SocketAddr, Arc<TlsOptions>>,
     /// The TLS front. Emptied when the server stops.
     #[cfg(feature = "https")]
-    ingress: RwLock<Option<sibuna_ingress::Ingress>>,
+    ingress: Arc<RwLock<Option<sibuna_ingress::Ingress>>>,
     #[cfg(not(feature = "https"))]
-    ingress: RwLock<Option<std::convert::Infallible>>,
+    ingress: Arc<RwLock<Option<std::convert::Infallible>>>,
 }
 
 impl Dispatcher {
@@ -164,7 +166,20 @@ impl Dispatcher {
                 else {
                     return;
                 };
-                ingress.accept_from(bind, stream, permit, Box::new(place), client);
+                // A worker ends the TLS of an HTTP/1.1 connection itself (SID 0024).
+                match (self.workers.as_deref(), ingress.greeting(bind)) {
+                    (Some(workers), Some(greeting)) => {
+                        let front = Arc::clone(&self.ingress);
+                        let tls = Some(Started { bind, client, place, greeting, front });
+                        workers.submit(Incoming {
+                            stream,
+                            ingress: from,
+                            permit: Some(permit),
+                            tls,
+                        });
+                    }
+                    _ => ingress.accept_from(bind, stream, permit, Box::new(place), client),
+                }
                 return;
             }
         }
@@ -238,7 +253,7 @@ impl Http {
         #[cfg(not(feature = "https"))]
         let ingress = None;
         let binds = prepared.binds.clone();
-        let ingress = RwLock::new(ingress);
+        let ingress = Arc::new(RwLock::new(ingress));
         let (web, pool) = (server.clone(), workers.clone());
         let dispatcher = Arc::new(Dispatcher { server: web, workers: pool, binds, ingress });
         Ok(Self {
@@ -422,7 +437,7 @@ fn serve(
     permit: Option<FlowPermit>,
 ) {
     match workers {
-        Some(workers) => workers.submit(Incoming { stream, ingress, permit }),
+        Some(workers) => workers.submit(Incoming { stream, ingress, permit, tls: None }),
         None => launch(server, stream, ingress, permit),
     }
 }
