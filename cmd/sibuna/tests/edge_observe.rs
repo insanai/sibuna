@@ -730,6 +730,29 @@ fn the_byte_counts_of_http11_are_the_bytes_of_the_message() {
 }
 
 #[test]
+fn a_client_that_closes_while_the_server_is_silent_is_no_failure_of_the_server() {
+    both(|event_loop| {
+        let daemon = start(origin(Duration::from_millis(900)), event_loop, &Extra::default());
+        let mut client = TcpStream::connect(daemon.vip).unwrap();
+        client.write_all(b"GET /left HTTP/1.1\r\nHost: www.example.com\r\n\r\n").unwrap();
+        std::thread::sleep(Duration::from_millis(200));
+        drop(client);
+        let line = &daemon.lines(1)[0];
+        // An orderly close of the sending side is no abort: the answer is still written,
+        // and the line says 200. A connection that breaks is logged with 499.
+        let status = field(line, "status");
+        assert!(["499", "200"].contains(&status), "{line} ({event_loop})");
+        let metrics = get(daemon.vip, "/__sibuna/metrics", "");
+        let failures = "sibuna_edge_server_failures_total{backend=\"app\",server=\"a\"} 0\n";
+        assert!(metrics.contains(failures), "({event_loop})\n{metrics}");
+        if status == "499" {
+            let left = "sibuna_edge_server_client_closed_total{backend=\"app\",server=\"a\"} 1\n";
+            assert!(metrics.contains(left), "({event_loop})\n{metrics}");
+        }
+    });
+}
+
+#[test]
 fn an_interim_head_cut_in_two_does_not_hide_the_final_status() {
     // The interim head ends in a second write, after a pause.
     fn origin() -> SocketAddr {

@@ -267,6 +267,63 @@ fn the_byte_counts_of_http2_are_the_heads_as_text_and_the_body_data() {
     assert_eq!(field(line, "bytes_out"), answer.len().to_string(), "{line}");
 }
 
+/// A request body that never sends a byte and never ends.
+struct Silent;
+
+impl hyper::body::Body for Silent {
+    type Data = Bytes;
+    type Error = std::convert::Infallible;
+
+    fn poll_frame(
+        self: std::pin::Pin<&mut Self>,
+        _: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Option<Result<hyper::body::Frame<Bytes>, Self::Error>>> {
+        std::task::Poll::Pending
+    }
+}
+
+#[test]
+fn a_client_that_resets_its_stream_is_no_failure_of_the_server_and_no_bad_request() {
+    let daemon = start(slow_origin(Duration::from_millis(900)), "");
+    let vip = daemon.vip;
+    runtime().block_on(async {
+        let exchange = async {
+            let mut client = connect(vip).await;
+            let url = |path: &str| format!("https://localhost:{}{path}", vip.port());
+            // The server is still silent when the client gives the request up. Dropping
+            // the exchange resets its stream.
+            let waiting = Request::get(url("/waiting")).body(Empty::new().boxed_unsync());
+            let answer = client.send_request(waiting.unwrap());
+            assert!(tokio::time::timeout(Duration::from_millis(200), answer).await.is_err());
+            // The body of this one never arrives, so it is given up before the decision.
+            let unsent = Request::post(url("/unsent")).body(Silent.boxed_unsync()).unwrap();
+            let answer = client.send_request(unsent);
+            assert!(tokio::time::timeout(Duration::from_millis(200), answer).await.is_err());
+            // The connection lives on and the server is as healthy as before.
+            assert_eq!(fetch(&mut client, Request::get(url("/after"))).await, 200);
+        };
+        tokio::time::timeout(WAIT, exchange).await.unwrap();
+    });
+    let lines = daemon.lines(3);
+    let line = |path: &str| lines.iter().find(|line| field(line, "path") == path).unwrap();
+    let waiting = line("/waiting");
+    assert_eq!((field(waiting, "status"), field(waiting, "server")), ("499", "a"), "{waiting}");
+    assert_eq!(field(waiting, "ttfb_ms"), "null", "{waiting}");
+    let unsent = line("/unsent");
+    assert_eq!((field(unsent, "status"), field(unsent, "verdict")), ("499", "-"), "{unsent}");
+    assert_eq!(field(line("/after"), "status"), "200");
+    let text = metrics(&daemon);
+    for series in [
+        "sibuna_edge_server_failures_total{backend=\"app\",server=\"a\"} 0\n",
+        "sibuna_edge_server_client_closed_total{backend=\"app\",server=\"a\"} 1\n",
+        "sibuna_edge_refused_total{reason=\"bad_request\"} 0\n",
+        "sibuna_edge_refused_total{reason=\"client_closed\"} 1\n",
+        "sibuna_edge_server_up{backend=\"app\",server=\"a\"} 1\n",
+    ] {
+        assert!(text.contains(series), "{series} is missing:\n{text}");
+    }
+}
+
 /// One HTTP/1.1 request over TLS 1.2, which is what a client without ALPN speaks.
 async fn get_over_tls12(vip: SocketAddr, path: &str) -> String {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};

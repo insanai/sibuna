@@ -25,6 +25,10 @@ use crate::context::Ctx;
 use crate::server::Server;
 use crate::telemetry::Outcome;
 
+/// The status in the log of a request that its client gave up before any response. No
+/// client receives it.
+pub(crate) const CLIENT_CLOSED: u16 = 499;
+
 /// The longest host and path an entry keeps.
 const MAX_HOST: usize = 255;
 const MAX_PATH: usize = 1024;
@@ -142,11 +146,21 @@ impl Observe {
         entry.elapsed = now.saturating_duration_since(entry.started);
         // The request has ended. Its line may wait in the queue.
         entry.active = None;
+        // Every answer has a status: the server's, or Sibuna's own 502 or 504 for a
+        // server that failed. An exchange that ends without one was given up by its
+        // client, who closed the connection or reset the stream. That is 499 in the
+        // log and no failure of the server.
+        let client_closed = entry.status == 0;
+        if client_closed {
+            entry.status = CLIENT_CLOSED;
+        }
         if let Some(front) = &entry.frontend {
             front.stats.record(entry.status, entry.bytes_in, entry.bytes_out, entry.elapsed);
         }
-        if let Some(server) = &entry.server {
-            server.stats.record(entry.status, entry.first_byte);
+        match &entry.server {
+            Some(server) if client_closed => server.stats.record_client_closed(),
+            Some(server) => server.stats.record(entry.status, entry.first_byte),
+            None => {}
         }
         if let Some(log) = self.log() {
             log.offer(entry);
@@ -477,6 +491,8 @@ pub(crate) fn refused(server: &Server, refused: &sibuna_ingress::Refused<'_>) {
     let Some(observe) = &server.observe else { return };
     let reason = match refused.status {
         503 => sibuna_lb::Refusal::ExchangeLimit,
+        // The client reset its stream while its request was read.
+        CLIENT_CLOSED => sibuna_lb::Refusal::ClientClosed,
         _ => sibuna_lb::Refusal::BadRequest,
     };
     observe.stats.refuse(reason);
