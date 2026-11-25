@@ -155,7 +155,10 @@ fn race(location: &Location, expected: u64, writers: usize) -> (usize, usize) {
         handles.into_iter().map(|handle| handle.join().unwrap()).collect()
     });
     let won = outcomes.iter().filter(|outcome| outcome.is_ok()).count();
-    let is_conflict = |outcome: &&Result<u64, Error>| matches!(outcome, Err(Error::Conflict { expected: named, .. }) if *named == expected);
+    let is_conflict = |outcome: &&Result<u64, Error>| match outcome {
+        Err(Error::Conflict { expected: named, .. }) => *named == expected,
+        _ => false,
+    };
     let conflicts = outcomes.iter().filter(is_conflict).count();
     assert_eq!(won + conflicts, writers, "{outcomes:?}");
     (won, conflicts)
