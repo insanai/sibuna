@@ -161,6 +161,9 @@ fn origin() -> SocketAddr {
 }
 
 fn serve_origin(socket: TcpStream) {
+    // `write!` sends an answer in pieces. Without this the second piece would wait
+    // for the delayed acknowledgement of the first, about 40 ms for every answer.
+    socket.set_nodelay(true).unwrap();
     let mut writer = socket.try_clone().unwrap();
     let mut reader = BufReader::new(socket);
     while let Some(request) = read_message(&mut reader, false) {
@@ -259,6 +262,34 @@ fn pipelined_requests_are_answered_in_order_on_one_connection() {
             assert_eq!(response.status(), 200);
             assert_eq!(response.body, format!("/item/{index}").into_bytes(), "{event_loop}");
         }
+    });
+}
+
+#[test]
+fn the_last_request_of_a_connection_is_answered_and_announces_the_close() {
+    both(|event_loop| {
+        let daemon = start(origin(), event_loop, "");
+        let mut client = connect(&daemon);
+        // A connection serves 4,096 requests. Every one is answered, the last one
+        // says that the connection closes, and then it closes. The requests go in
+        // batches, so that the test does not wait for each answer of its slow origin.
+        for batch in 0..32 {
+            let numbers = batch * 128 + 1..=batch * 128 + 128;
+            let mut wire = Vec::new();
+            for index in numbers.clone() {
+                write!(wire, "GET /item/{index} HTTP/1.1\r\nHost: a\r\n\r\n").unwrap();
+            }
+            send(&mut client, &wire);
+            for index in numbers {
+                let response = read_message(&mut client, false);
+                let response =
+                    response.unwrap_or_else(|| panic!("{event_loop}: no answer {index}"));
+                assert_eq!(response.body, format!("/item/{index}").into_bytes(), "{event_loop}");
+                let closes = response.field("connection").is_some_and(|value| value == "close");
+                assert_eq!(closes, index == 4096, "{event_loop}: request {index}");
+            }
+        }
+        assert!(read_message(&mut client, false).is_none(), "{event_loop}");
     });
 }
 
