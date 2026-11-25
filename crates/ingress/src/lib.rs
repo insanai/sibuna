@@ -29,7 +29,7 @@ use tokio::sync::{Semaphore, watch};
 use tokio::time::timeout;
 use tokio_rustls::TlsAcceptor;
 
-pub use auto::{Automatic, CertificateState, CertificateStatus, Event, Notify};
+pub use auto::{Automatic, CertificateState, CertificateStatus, Event, Notify, RevokeError};
 use bridge::Lane;
 pub use egress::{Directory, Egress};
 use handoff::Handoff;

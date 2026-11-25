@@ -18,6 +18,7 @@ mod client;
 pub(crate) mod demand;
 mod dns;
 mod driver;
+mod revoke;
 mod supervise;
 
 use std::collections::{BTreeMap, HashMap};
@@ -29,6 +30,8 @@ use std::time::Duration;
 use rustls::sign::CertifiedKey;
 use sibuna_acme::{Challenge, ChallengeKind, Error as AcmeError, KeyPair, x509};
 use sibuna_lb::{AcmeOptions, AutoName, AutomaticHttps};
+
+pub use revoke::RevokeError;
 
 /// The ALPN protocol of the TLS-ALPN-01 challenge (RFC 8737).
 pub(crate) const ACME_TLS: &[u8] = b"acme-tls/1";
