@@ -239,6 +239,7 @@ impl Serving {
             Command::ShowStats => Ok(self.stats()),
             Command::ShowCerts => Ok(self.certs()),
             Command::ShowCa => Ok(self.ca()),
+            Command::ShowAffinity => Ok(self.edge.cluster_state().report()),
             // The admin thread answers these two. They never reach the worker.
             Command::Help | Command::ShowCluster => Ok(control::USAGE.to_owned()),
             Command::ReopenLog => {
@@ -416,6 +417,10 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let (shutdown_timeout, drain_delay) = (config.shutdown_timeout(), config.drain_delay());
     let mut current = sibuna_lb::Regime::Standalone;
     let edge = Edge::bind(config)?;
+    if let Some(mesh) = &mesh {
+        // The mesh replicates the sticky table and moves the shares (SID 0025).
+        mesh.share_state(edge.cluster_state());
+    }
     let http = http.map(|p| http::Http::start(p, &edge, secret)).transpose()?;
     let drains = join(http.as_ref(), &adapters, mesh.as_ref());
     let observed = observed::Observed::start(http.as_ref(), &observe_options, &edge)?;

@@ -21,6 +21,7 @@ show stats
 show certs
 show ca
 show cluster
+show affinity
 set server POOL/NAME state ready|drain [local]
 set server POOL/NAME weight N [local]
 add server POOL/NAME IP:PORT [weight N] [local]
@@ -43,6 +44,8 @@ pub(super) enum Command {
     ShowCa,
     /// The digest of the file of every node of the mesh (SID 0023).
     ShowCluster,
+    /// The sticky table and the shares of the capped servers (SID 0025).
+    ShowAffinity,
     Help,
     Reload,
     /// Reloads this node and sends its file to the peers of the mesh (SID 0023).
@@ -89,6 +92,7 @@ impl Command {
                 | Self::ShowCerts
                 | Self::ShowCa
                 | Self::ShowCluster
+                | Self::ShowAffinity
                 | Self::Help
                 | Self::ReopenLog
         )
@@ -179,6 +183,7 @@ pub(super) fn parse(line: &str) -> Result<Command, RuntimeError> {
         ["show", "certs"] => Ok(Command::ShowCerts),
         ["show", "ca"] => Ok(Command::ShowCa),
         ["show", "cluster"] => Ok(Command::ShowCluster),
+        ["show", "affinity"] => Ok(Command::ShowAffinity),
         ["help"] => Ok(Command::Help),
         ["reload"] => Ok(Command::Reload),
         ["reload", "cluster"] => Ok(Command::ReloadCluster),
@@ -404,6 +409,8 @@ mod tests {
         assert_eq!(parse("show stats"), Ok(Command::ShowStats));
         assert_eq!(parse("show certs"), Ok(Command::ShowCerts));
         assert_eq!(parse("show ca"), Ok(Command::ShowCa));
+        assert_eq!(parse("show affinity"), Ok(Command::ShowAffinity));
+        assert!(!Command::ShowAffinity.changes());
         assert_eq!(parse("reload"), Ok(Command::Reload));
         assert_eq!(parse("reload cluster"), Ok(Command::ReloadCluster));
         assert_eq!(parse("reopen log"), Ok(Command::ReopenLog));
