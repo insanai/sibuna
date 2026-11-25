@@ -268,21 +268,18 @@ Figures are medians of three runs.
 - At an equal offered load of 100,000 admitted requests per second, the p99.9 latency was
   62 us in forward-auth mode and 150 us in reverse-proxy mode.
 
-### Beside HAProxy
+### Beside HAProxy and Envoy
 
-One host, loopback, HAProxy 3.0.11. Each proxy had eight CPUs and 256 connections, and each
-case ran once for eight seconds on the build of 2026-11-25. No request failed.
+We ran the three proxies on one host over loopback, one after another, three times each: HAProxy 3.0.11, Envoy 1.40.2 and Sibuna from the source tree of 2026-11-25. Each had the same eight CPUs and eight threads, 256 connections, and eight seconds per case. The table gives the median requests per second of the three runs. No request failed.
 
-| Case | Sibuna req/s | HAProxy req/s | Sibuna / HAProxy |
+| Case | Sibuna | HAProxy | Envoy |
 | --- | ---: | ---: | ---: |
-| TCP forwarding | 240,967 | 230,934 | 1.04 |
-| HTTP/1.1 | 224,375 | 219,798 | 1.02 |
-| HTTP/1.1 over TLS | 178,261 | 162,520 | 1.10 |
-| HTTP/2 | 103,789 | 150,384 | 0.69 |
+| HTTP/1.1 | 220,040 | 220,323 | 70,909 |
+| HTTP/1.1 over TLS | 174,611 | 165,199 | 63,399 |
+| HTTP/2 | 104,132 | 153,899 | 68,972 |
+| Resident memory, HTTP/1.1 | 14 MiB | 48 MiB | 58 MiB |
 
-HAProxy is faster for HTTP/2. The
-[book](https://insanai.github.io/sibuna/book/benchmarks.html) gives the method, more
-connection counts and a cluster of three hosts.
+Please read this as one small measurement, not a ranking. Sibuna and HAProxy are level for plaintext HTTP, and HAProxy is clearly faster for HTTP/2. We are not Envoy experts: we used a plain static configuration, and a better one may well change its numbers. Envoy's strengths, such as dynamic configuration and its filters, are not what this test measures. The response was two bytes on loopback, which exaggerates the cost of each request; real traffic narrows the differences. The [book](https://insanai.github.io/sibuna/book/benchmarks.html) gives the method, the configurations, more connection counts and a cluster of three hosts.
 
 ### Beside Anubis
 
