@@ -489,11 +489,14 @@ fn a_descriptor_limit_below_the_need_is_reported_with_a_hint() {
     }
     let daemon = Daemon { child, _stderr: stderr, directory, vip: free(), admin: free() };
     assert!(text.contains("-- DESCRIPTOR LIMIT TOO LOW -"), "{text}");
-    assert!(
-        text.contains("can use 18944 file descriptors, but the process may open 300."),
-        "{text}"
-    );
-    assert!(text.contains("Hint: Raise the limit (`LimitNOFILE=18944`"), "{text}");
+    assert!(text.contains(" file descriptors, but the process may open 300."), "{text}");
+    // The need counts the idle server connections of the workers: at most 1,024 for
+    // the 1,024 connections of the default, a little less when the worker count does
+    // not divide them.
+    let need: u64 =
+        text.split("can use ").nth(1).unwrap().split(' ').next().unwrap().parse().unwrap();
+    assert!((18_944 + 960..=18_944 + 1024).contains(&need), "{text}");
+    assert!(text.contains(&format!("Hint: Raise the limit (`LimitNOFILE={need}`")), "{text}");
     drop(daemon);
 }
 

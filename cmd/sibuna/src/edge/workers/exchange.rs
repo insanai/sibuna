@@ -15,9 +15,9 @@ use crate::dispatch::{Plan, answer_proxy_error};
 
 mod failover;
 
-/// Idle server sockets kept for one address, and by one worker.
+/// Idle server sockets kept for one address. The bound for one worker is its share of
+/// `http.max_connections` (`Shared::idle_limit`).
 const IDLE_PER_ADDRESS: usize = 64;
-const IDLE_PER_WORKER: usize = 1024;
 /// How long a server socket may stay idle.
 const IDLE_ORIGIN: Duration = Duration::from_secs(30);
 
@@ -432,7 +432,7 @@ impl Worker {
     fn release(&mut self, at: u32, reuse: bool) {
         let now = self.now;
         let generation = self.origins.generation(at);
-        let room = self.idle_count < IDLE_PER_WORKER;
+        let room = self.idle_count < self.shared.idle_limit;
         let Some(origin) = self.origins.at(at) else { return };
         let list = self.idle.entry(origin.address).or_default();
         let key = key(KIND_ORIGIN, at, generation);
