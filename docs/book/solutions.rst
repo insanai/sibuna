@@ -17,6 +17,8 @@ Part II: Prior Art
 
 **2.2.** (a) Sibuna Gate or Anubis, one binary; (b) Sibuna Shield, SafeLine, or Cloudflare (Pro plan or above); (c) Sibuna Edge with a shared PostgreSQL database (``--database-url``), Anubis with a shared Valkey store (for state, not for bans), or Cloudflare. The only single product meeting all three without a Docker host or a subscription is Sibuna Shield with its nodes sharing one PostgreSQL database (``--database-url`` and ``--cluster-node``); the "runs as", "inspection", and "multi-node" rows decide it.
 
+**2.3.** A removal must move the clients of the removed server, about 250 of the 1,000. Under rendezvous hashing exactly those move, each to the remaining server with the highest score for it, and no other client moves. A rebuilt Maglev table moves those 250 and a small share of the others, because the order in which servers claim slots changes; Part VIII measured 0.08% to 0.28% extra slots. Peer forwarding chose rendezvous hashing because it moves no client of a node that did not change, and because each node computes the owner from the list of nodes alone, with no table to rebuild and publish.
+
 Part III: Cryptography
 ----------------------
 

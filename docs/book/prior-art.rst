@@ -1,14 +1,14 @@
 Part II: Prior Art and the Design Space
 =======================================
 
-We place Sibuna among the systems it learned from: client puzzles and sequential work from the cryptography literature, signature and semantic application firewalls, proof-of-work interstitials, and hosted edge networks. We then compare the four tools an operator is most likely to weigh against each other, feature by feature, and record which facts were checked.
+We place Sibuna among the systems it learned from: client puzzles and sequential work from the cryptography literature, signature and semantic application firewalls, proof-of-work interstitials, and hosted edge networks. We then compare the four tools an operator is most likely to weigh against each other, feature by feature, and record which facts were checked. Last we place the edge load balancer of Part VIII beside HAProxy and Envoy.
 
 Where Sibuna Comes From
 -----------------------
 
 .. admonition:: Objectives
 
-   By the end of this chapter, we should be able to trace the lineage of client puzzles from 1992 to the sequential-work constructions of 2018, name the three architectural ideas Sibuna combines, place Sibuna, Anubis, SafeLine, and the Cloudflare WAF in one design space, and say which comparison claims were verified and which were only read from documentation.
+   By the end of this chapter, we should be able to trace the lineage of client puzzles from 1992 to the sequential-work constructions of 2018, name the three architectural ideas Sibuna combines, place Sibuna, Anubis, SafeLine, and the Cloudflare WAF in one design space, name the papers behind the scheduling and caching of the edge load balancer, compare it with HAProxy and Envoy, and say which comparison claims were verified and which were only read from documentation.
 
 Client Puzzles and Sequential Work
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -129,7 +129,7 @@ The browser solver compiles from the same proof sources as the native verifier. 
 Feature Comparison
 ------------------
 
-The four tables below compare Sibuna with the three tools most often mentioned alongside it. Facts about the other products were read from their public documentation and release artefacts in September 2026: Anubis 1.27.0 (MIT licence, Go), SafeLine community edition 9.x (GPL-3.0 management code around closed detector images, Docker Compose), and the Cloudflare WAF developer documentation. Anubis was also run on the benchmark host; SafeLine and Cloudflare were not (Part VIII explains why). A dash means the product does not offer the feature; a plan name means the feature exists but only on that plan. Each Sibuna measurement names the committed result file it comes from. The TLS fingerprint row was checked in October 2026, against the Anubis changelog (1.21.0 and 1.26.0), the SafeLine release notes (8.10.0 and 9.2.0), and Cloudflare's page "JA3/JA4 fingerprint".
+The four tables below compare Sibuna with the three tools most often mentioned alongside it. Facts about the other products were read from their public documentation and release artefacts in September 2026: Anubis 1.27.0 (MIT licence, Go), SafeLine community edition 9.x (GPL-3.0 management code around closed detector images, Docker Compose), and the Cloudflare WAF developer documentation. Anubis was also run on the benchmark host; SafeLine and Cloudflare were not (Part X explains why). A dash means the product does not offer the feature; a plan name means the feature exists but only on that plan. Each Sibuna measurement names the committed result file it comes from. The TLS fingerprint row was checked in October 2026, against the Anubis changelog (1.21.0 and 1.26.0), the SafeLine release notes (8.10.0 and 9.2.0), and Cloudflare's page "JA3/JA4 fingerprint".
 
 .. list-table:: Feature comparison, part 1: deployment
    :header-rows: 1
@@ -142,7 +142,7 @@ The four tables below compare Sibuna with the three tools most often mentioned a
      - SafeLine CE 9
      - Cloudflare WAF
    * - Runs as
-     - One binary; reverse proxy or forward auth; optional SQLite file or shared PostgreSQL database
+     - One binary; reverse proxy or forward auth; optional SQLite file or shared PostgreSQL database; or an edge load balancer with the firewall per route (Part VIII)
      - One Go binary; reverse proxy or forward auth
      - Seven Docker containers (tengine, detector, mgt, luigi, fvm, chaos, PostgreSQL)
      - Hosted network; DNS points at Cloudflare
@@ -234,7 +234,7 @@ The four tables below compare Sibuna with the three tools most often mentioned a
      - PostgreSQL attack log with console
      - Security Events; sampled on Free
    * - Multi-node
-     - One PostgreSQL database shared by every node for policy and reputation; shared seed; sticky challenge verification
+     - Daemon: one PostgreSQL database shared by every node for policy and reputation; shared seed; sticky challenge verification. Edge: a mesh shares bans (SID 0022)
      - Shared signing key; shared Valkey store
      - One stack per host
      - Global anycast
@@ -255,7 +255,7 @@ The four tables below compare Sibuna with the three tools most often mentioned a
      - Console dashboards
      - Dashboard and analytics
    * - TLS termination
-     - \- (ingress)
+     - Daemon: \- (ingress). Edge: **Yes**, with automatic HTTPS (SID 0021)
      - \- (ingress)
      - **Yes**
      - **Yes**
@@ -265,7 +265,7 @@ The four tables below compare Sibuna with the three tools most often mentioned a
      - **Yes**
      - **Yes**
    * - Measured on the benchmark host
-     - **Yes** (Part VIII)
+     - **Yes** (Part X)
      - **Yes**
      - \- (Docker only)
      - \- (hosted)
@@ -279,7 +279,132 @@ Three differences carry most of the weight in a selection decision.
 .. admonition:: Current product boundary
    :class: warning
 
-   Sibuna leaves ingress TLS termination to the deployment proxy and does not score bots with a trained model or publish paid signatures. It matches the JA4 fingerprint that a trusted ingress computes; it cannot compute one itself (SID 0014, Part IX). Its opt-in console provides authenticated dashboards, country enrichment, policy editing, investigation and cluster management. Country lookup and storage work run outside request classification. SID 0007 is Committed, and the console passes its browser workflows (SID 0010). Its formal performance isolation gate, with eight active dashboards under load, is not yet measured; Part VIII records what is.
+   The firewall daemon leaves TLS termination to the deployment proxy; the edge terminates TLS itself (Part VIII). Sibuna does not score bots with a trained model or publish paid signatures. The HTTP firewall matches the JA4 fingerprint that a trusted ingress computes and cannot compute one itself (SID 0014, Part XI); the edge computes JA4 only from the ClientHello of a TCP frontend that inspects it, for its routing rules, its hooks and its PROXY header (SID 0015). Its opt-in console provides authenticated dashboards, country enrichment, policy editing, investigation and cluster management. Country lookup and storage work run outside request classification. SID 0007 is Committed, and the console passes its browser workflows (SID 0010). Its formal performance isolation gate, with eight active dashboards under load, is not yet measured; Part VIII records what is.
+
+Load Balancers
+--------------
+
+Since SID 0015 Sibuna is also an edge load balancer: it forwards TCP and UDP, terminates TLS, HTTP/2 and HTTP/3, and routes HTTP requests to pools of servers, with the firewall on the routes that ask for it. This section names what the load balancer draws on and compares it with two open load balancers.
+
+Where the Load Balancer Comes From
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The vocabulary is HAProxy's. A *frontend* binds addresses, a *backend* is a pool of *servers*, and an operator drains a server through a local socket with ``set server app/s1 state drain``. Part XI keeps a table that translates HAProxy directives into the keys of the edge. nginx made the event-driven worker the ordinary design of a proxy: a few processes, each with its own event loop, and no thread per connection. SID 0016 builds the HTTP workers of the edge in that way. Envoy made a proxy a programmable platform: filters at fixed points of the path, extensions in WebAssembly, and a configuration that a control plane pushes. The hooks of SID 0030 also attach at fixed stages, in three tiers, and each decision is one call with a deadline.
+
+Four papers decide how the edge places a flow and what it remembers.
+
+- *Maglev* (Eisenbud et al., NSDI 2016) fills a table of a prime number of slots from one permutation per server, so a lookup is one hash and one load, and a change of servers moves few clients. The pool kind ``bounded_maglev`` builds a weighted table of 65,537 slots (``crates/lb/src/maglev.rs``), and a mesh in its regional regime places clients with it (SID 0015).
+- *Consistent hashing with bounded loads* (Mirrokni, Thorup and Zadimoghaddam, SODA 2018) caps the load of the chosen server at a factor of the mean and passes the excess on. ``bounded_maglev`` applies such a cap to the server that the table names, with ``load_factor_pct``, 125 by default. HAProxy applies the same idea to its consistent hashing with ``hash-balance-factor``.
+- *Rendezvous hashing* (Thaler and Ravishankar, IEEE/ACM Transactions on Networking 1998) gives each server a score from a hash of its name and the key, and the largest score wins. Losing a server moves only its own keys and needs no table. Source stickiness ranks servers in this way (SID 0019), and peer forwarding chooses the owner of a client among the nodes in this way (SID 0026).
+- *TinyLFU* (Einziger, Friedman and Manes, ACM Transactions on Storage 2017) admits a new entry to a full cache only when a small frequency sketch says that it is used more often than the entry it would push out. The spill cache of SID 0027 admits hints to its file by this rule.
+
+.. graphviz::
+   :caption: What the edge load balancer takes from earlier systems and papers. Solid arrows are ideas taken directly; dashed lines are ideas shared.
+   :alt: HAProxy gives the vocabulary and the admin socket, nginx the event-driven workers, and Envoy shares the idea of hook stages. Maglev and bounded loads give the bounded Maglev pool, rendezvous hashing gives source stickiness and the owner of a client, and TinyLFU gives the admission of the spill cache. HAProxy's hash-balance-factor shares the idea of bounded loads.
+
+   digraph lb_lineage {
+     graph [rankdir=LR, bgcolor="transparent", nodesep=0.25, ranksep=0.5, fontname="Helvetica", fontsize=9];
+     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fillcolor="#ffffff", color="#7c9cd6", margin="0.08,0.04"];
+     edge [color="#94a3b8", arrowsize=0.55];
+
+     haproxy [label="HAProxy"];
+     nginx [label="nginx"];
+     envoy [label="Envoy"];
+     maglev [label="Maglev\nEisenbud et al. 2016"];
+     bounded [label="Bounded loads\nMirrokni et al. 2018"];
+     hrw [label="Rendezvous hashing\nThaler-Ravishankar 1998"];
+     tinylfu [label="TinyLFU\nEinziger et al. 2017"];
+
+     node [color="#15803d", fillcolor="#f0fdf4"];
+     vocab [label="frontends, backends,\nadmin socket (SID 0018)"];
+     workers [label="event-driven HTTP\nworkers (SID 0016)"];
+     hooks [label="hook stages and\ntiers (SID 0030)"];
+     bmaglev [label="bounded_maglev\n(SID 0015)"];
+     sticky [label="source stickiness (SID 0019),\nowner of a client (SID 0026)"];
+     spill [label="spill cache admission\n(SID 0027)"];
+
+     haproxy -> vocab; nginx -> workers; envoy -> hooks [style=dashed];
+     maglev -> bmaglev; bounded -> bmaglev; hrw -> sticky; tinylfu -> spill;
+     haproxy -> bounded [style=dashed, dir=none, label=" hash-balance-factor", fontsize=7.5, fontcolor="#475569"];
+   }
+
+Load Balancing Compared
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The table compares the load balancing of Sibuna with HAProxy and Envoy. We read their public documentation on 25 November 2026: the HAProxy 3.4.8 Configuration Manual and Management Guide (docs.haproxy.org; 3.4 is the newest long-term-support branch), and the Envoy 1.40.2 documentation (envoyproxy.io). We ran neither for this table; Part X compares Sibuna with HAProxy 3.0.11 on one host and runs a cluster of three hosts. A cell that says *not checked* names a fact that the pages we read did not settle. For Sibuna the code and the SID records decide, and a feature that is not built says so.
+
+.. list-table:: Load balancing: Sibuna, HAProxy and Envoy
+   :header-rows: 1
+   :stub-columns: 1
+   :widths: 16 28 28 28
+
+   * - Feature
+     - Sibuna edge
+     - HAProxy 3.4
+     - Envoy 1.40
+   * - Protocols
+     - TCP, UDP, HTTP/1.1, HTTP/2, HTTP/3 and gRPC, toward clients and toward servers; WebSocket, but not toward an HTTP/2 or HTTP/3 pool
+     - TCP, HTTP/1.1, HTTP/2 and HTTP/3; QUIC toward servers is experimental; UDP listeners only in ``log-forward`` sections
+     - TCP, UDP (UDP proxy filter), HTTP/1.1, HTTP/2, and HTTP/3 toward clients and toward servers
+   * - Scheduling
+     - Least connections (default), round robin, power of two choices with peak EWMA, bounded Maglev; slow start
+     - ``roundrobin``, ``static-rr``, ``leastconn``, ``first``, ``hash``, ``source``, ``uri``, ``url_param``, ``hdr``, ``random``, ``rdp-cookie``, ``sticky``; bounded loads with ``hash-balance-factor``; ``slowstart``
+     - Weighted round robin, least request (power of two choices), ring hash, Maglev with 65,537 slots, random, client-side weighted round robin
+   * - TLS termination
+     - **Yes**: PEM bundles chosen by server name; HTTP/2 over TLS and HTTP/3 over QUIC
+     - **Yes**: ``bind ... ssl crt``
+     - **Yes**: certificates from files or the secret discovery service
+   * - TLS passthrough
+     - **Yes**: ``tcp`` frontends route or refuse by server name, ALPN or JA4 read from the ClientHello; QUIC is validated by connection ID (SID 0032); edge-generated Retry is not built
+     - **Yes**: ``mode tcp`` with content inspection of ``req.ssl_sni``
+     - **Yes**: the TLS Inspector reads server name and ALPN to choose a filter chain
+   * - ACME
+     - **Built in**: HTTP-01, TLS-ALPN-01 and DNS-01 (hook, RFC 2136, Cloudflare), wildcards, issuance on demand, OCSP stapling, and a local authority that can serve other machines over ACME (SID 0021)
+     - **Experimental** ``acme`` section: HAProxy answers HTTP-01 itself; DNS-01 and dns-persist-01 need the Data Plane API or another tool
+     - Not checked
+   * - Health checks
+     - Active TCP connect or HTTP ``GET`` with ``rise`` and ``fall``; passive ejection by real failures (SID 0019)
+     - Active checks (``check``, ``option httpchk``); passive observation with ``observe`` and ``error-limit``
+     - Active HTTP, gRPC, L3/L4, Redis and Thrift checks; passive outlier detection
+   * - Sticky sessions
+     - Keyed cookie, source address, or a learned table by source or cookie that a mesh replicates and a file can keep over a restart (SID 0025, SID 0027)
+     - ``cookie`` (insert, rewrite, prefix); stick tables (``stick on src``)
+     - A hash policy on the route with ring hash or Maglev; the stateful session filter with a cookie or a header
+   * - Runtime API
+     - Unix admin socket and ``sibuna ctl``: drain, weight, add and remove servers, lift bans, reload, show; a subset in the operator console (SID 0018, SID 0031)
+     - Runtime API on the stats socket: ``set server ... state|weight``, ``add server``, ``del server``, ``show stat``, ``show table``, ``clear table``, ``acme renew``
+     - Admin interface: stats, ``config_dump``, ``drain_listeners``, ``healthcheck/fail``, ``runtime_modify``; endpoints and listeners change through xDS from a control plane
+   * - Hot reload
+     - In the same process by SIGHUP, ``reload`` or a file watcher; established flows keep their server; ``reload cluster`` for a mesh; a database revision in persistent mode (SID 0023, SID 0028)
+     - A reload starts a new worker that takes the listening sockets of the old one (``-x``; automatic in master-worker mode)
+     - Dynamic configuration through xDS without a restart
+   * - Binary replacement
+     - ``global.upgrade_socket``: the listening sockets and the live UDP mappings pass to the new process, and TCP streams drain in the old one; Linux only (SID 0029). Or ``global.reuse_port``
+     - The same reload passes the listening sockets to the new process
+     - Hot restart passes the listening sockets over a Unix socket; existing connections are not transferred; HTTP/3 is not handled gracefully yet
+   * - Clustering of state
+     - A mesh of at most 64 nodes shares bans, server commands, the sticky table and fleet-wide ``max_flows``, and forwards each client to its owner node (SID 0022, SID 0025, SID 0026); request limiters count on each node
+     - ``peers`` sections push stick-table entries between instances over TCP, multi-master; values overwrite without aggregation
+     - Global rate limits through an external gRPC rate limit service; other shared state not checked
+   * - Extension mechanism
+     - Native Rust hooks, WebAssembly on an in-house metered interpreter, and agents on a Unix socket, at the connection, request and telemetry stages; no hook on a response or a body (SID 0030)
+     - Lua (``lua-load``); filters, among them the Stream Processing Offload Engine (SPOE)
+     - Filters, among them Lua, external authorization and external processing; WebAssembly through the Proxy-Wasm ABI
+   * - Built-in bot protection
+     - Proof-of-work admission (Gate) and the semantic firewall (Shield), chosen per frontend and per route; off in ``sibuna lb`` unless asked
+     - None in the Configuration Manual; stick-table rates and deny rules
+     - Not checked
+
+Three differences matter most when we choose.
+
+- *What changes at run time.* HAProxy and Sibuna both change servers through a local socket. Envoy expects a control plane: its admin interface inspects and drains, and xDS changes the configuration. Sibuna's socket changes servers, bans and certificates of its local authority; frontends, routes and policy change by reload (SID 0018).
+- *What a cluster shares.* HAProxy replicates stick tables between peers. Sibuna's mesh replicates more kinds of state, each with its own merge rule, and adds fleet-wide caps and peer forwarding, but only within one fixed roster of at most 64 nodes and only on a network that is trusted, because the mesh authenticates and does not encrypt (SID 0026).
+- *What a replacement keeps.* All three keep the listening sockets. Sibuna also passes live UDP mappings, so a UDP client keeps its server; none of the three moves an established TCP connection to the new process.
+
+.. admonition:: Current boundary of the load balancer
+   :class: warning
+
+   The edge is new. HAProxy and Envoy have served production traffic for years; Sibuna's edge has run in tests and in benchmarks on up to three hosts (Part X). Its known gaps are listed in each SID: among them, TCP and UDP frontends do not consult the ban table, the admin socket cannot change frontends or routes, the spill cache was not qualified at 50 million keys, and an agent call at the request stage holds its thread.
 
 .. admonition:: Exercise 2.1
 
@@ -290,6 +415,12 @@ Three differences carry most of the weight in a selection decision.
    Using only the comparison tables, write down the smallest deployment that gives a static site (a) a proof-of-work gate, (b) SQL-injection inspection, and (c) a cluster-wide ban. Which rows forced each choice?
 
    Hint: Start from the "runs as" and "multi-node" rows.
+
+.. admonition:: Exercise 2.3
+
+   A pool has four servers of equal weight and 1,000 clients. Using only the descriptions of Maglev and rendezvous hashing above, say how many clients move when one server is removed under each scheme, and why peer forwarding (SID 0026) chose rendezvous hashing for the owner of a client.
+
+   Hint: Ask which clients a removal must move, and which ones a rebuilt table may move as well.
 
 .. admonition:: Explain the invariant
 
