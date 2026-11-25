@@ -10,6 +10,6 @@ The edge routes TCP streams, UDP datagrams and individual HTTP requests. It can 
 
 A mesh can distribute a checked configuration from one node. A peer reports "queued" once its file is installed and its revision is waiting for the worker. Use "show servers" to verify the active routes. SQLite is included in the release binary. PostgreSQL support requires a source build with the postgres-tls feature.
 
-Live listener and UDP mapping handoff is available on Linux. The TCP pilot held 10,000 verified streams. Ten million simultaneous flows remain unqualified. Under a flood of 50 million distinct keys, the first lookup through the edge affinity store retained 93.84% of seeded server choices, below the proposed 99.9% target. SIDs 0015 and 0027 record the workloads and their limits.
+Live listener and UDP mapping handoff is available on Linux. The largest TCP loopback pilot held 20,000 verified streams. Ten million simultaneous flows remain unqualified. Under a flood of 50 million distinct keys, the first lookup through the edge affinity store retained 93.84% of seeded server choices, below the proposed 99.9% target. SIDs 0015 and 0027 record the workloads and their limits.
 
 The assets attached to this release are listed in SHA256SUMS. The OpenBSD 7.9 amd64 package is optional and appears only when its native build and package checks pass. The release candidate can be evaluated alongside the current public beta.

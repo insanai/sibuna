@@ -160,7 +160,16 @@ Each worker owns a poller, a flow table and a pool of 16 KiB buffers. The contro
 
 We target 64 bytes for the primary flow slot. At ten million slots the array alone takes 640,000,000 bytes, about 610 MiB. The process also needs flow indexes, timers, buffers, routing snapshots and descriptors. Kernel socket memory and the two sockets per proxied TCP connection enter the host budget separately. We must check the layout on each target and measure the complete deployment under idle and active traffic.
 
-For established proxied TCP streams the current ``global.max_flows`` ceiling is 1,000,000 per edge process. Ten million simultaneous TCP flows require at least ten such processes and 20 million edge socket descriptors in aggregate, plus listener and control descriptors. The generators and origins each need another ten million sockets and enough distinct address and port combinations. On the two test hosts the inherited hard descriptor limit was 1,048,576 per process. After the 512-descriptor reserve this allows at most 524,032 TCP flows per process even before other resource limits. In a loopback pilot on one host we established 10,000 proxied TCP streams in 1.64 seconds. The edge reported 10,000 flows and zero drops, and held 20,032 descriptors. All streams passed a one-byte echo after a five-second hold. Capacity at ten million is unmeasured.
+For established proxied TCP streams the current ``global.max_flows`` ceiling is 1,000,000 per edge process. Ten million simultaneous TCP flows require at least ten such processes and 20 million edge socket descriptors in aggregate, plus listener and control descriptors. The generators and origins each need another ten million sockets and enough distinct address and port combinations. On the two test hosts the inherited hard descriptor limit was 1,048,576 per process. After the 512-descriptor reserve this allows at most 524,032 TCP flows per process even before other resource limits. The default ephemeral port range on these hosts offered 28,232 ports per address pair.
+
+We measured two loopback TCP pilots on host 19 with 20 concurrent opens at a time. We established 10,000 streams in 1.64 seconds with 20,032 edge descriptors and 20,000 in 7.04 seconds with 40,032. The origin greeted every stream before we counted it. All streams passed an echo after a five-second hold, with zero admission drops in both runs. The two rates correspond to 27 and 59 minutes to open ten million streams if sustained. Capacity at ten million remains unmeasured. A full run also requires provisioning, a hold and a drain.
+
+We can repeat the pilot from the repository root on Linux with Python 3.11 or later.
+
+.. code-block:: sh
+
+   cargo build --release --locked -p sibuna
+   python3 benchmarks/tcp_flow_pilot.py target/release/sibuna --flows 20000
 
 A worker retains an unwritten suffix after a short write and pauses reads until it can make progress. With completion-based I/O it retains each submitted buffer until the completion arrives. A half-close flushes pending bytes before closing the opposite write side. Buffer exhaustion applies backpressure to TCP and counts dropped UDP datagrams. Flow admission fails once the shard reaches its limit.
 
