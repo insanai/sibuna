@@ -38,7 +38,7 @@ Use access rules and local rate limits to control what those clients can request
 - **Native packages:** Linux, macOS, Windows, FreeBSD and OpenBSD. The browser solver uses WebAssembly.
 - **Browser challenges:** proof of sequential work (default) or Hashcash, followed by a signed session.
 - **Access policies:** allow, challenge, weigh or deny requests by address, path, headers and User-Agent.
-- **Load balancing:** TCP, UDP and HTTP in front of several servers, with TLS termination, automatic certificates and a cluster mode. See [Load balancing](#load-balancing). It is not yet in the released packages.
+- **Load balancing:** TCP, UDP and HTTP in front of several servers, with TLS termination, automatic certificates and a cluster mode. See [Load balancing](#load-balancing).
 - **TLS fingerprints:** match the JA4 fingerprint that a trusted ingress forwards, exactly or by prefix.
 - **Application inspection:** built-in checks for SQL injection, XSS, path traversal and command injection.
 - **Local rate limits:** control bursts and sustained traffic, with optional limits per rule.
@@ -47,9 +47,7 @@ Use access rules and local rate limits to control what those clients can request
 
 ## Load balancing
 
-In edge mode Sibuna is the load balancer in front of the servers. The edge mode is in the
-source tree. It is not part of the v1.0.0-beta.3 packages, so we
-[build it from source](#build-from-source) until the next release.
+Sibuna 1.0.0-rc.1 includes edge mode. The quickstart downloads below are for beta.3. We can also [build the candidate from source](#build-from-source).
 
 ```sh
 sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
@@ -70,7 +68,7 @@ sibuna --config-file edge.jlv
 The gate or the shield applies to the names that need it, or to none. The file stays the
 authority: a change at run time lasts until the next reload.
 
-The load balancer has not been released and has not run under production traffic. Its cluster
+Production traffic qualification remains open. Its cluster
 features were tested on three hosts. Each [design discussion](https://insanai.github.io/sibuna/sid/)
 lists what is built and the known gaps.
 

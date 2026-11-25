@@ -42,7 +42,7 @@ controlar lo que esos clientes pueden pedir después.
 - **Paquetes nativos:** Linux, macOS, Windows, FreeBSD y OpenBSD. El solucionador de navegador usa WebAssembly.
 - **Desafíos de navegador:** prueba de trabajo secuencial (por defecto) o Hashcash, seguidos de una sesión firmada.
 - **Políticas de acceso:** permitir, desafiar, ponderar o denegar peticiones por dirección, ruta, cabeceras y User-Agent.
-- **Balanceo de carga:** TCP, UDP y HTTP delante de varios servidores, con terminación TLS, certificados automáticos y un modo de clúster. Consulta [Balanceo de carga](#load-balancing). Aún no está en los paquetes publicados.
+- **Balanceo de carga:** TCP, UDP y HTTP delante de varios servidores, con terminación TLS, certificados automáticos y un modo de clúster. Consulta [Balanceo de carga](#load-balancing).
 - **Huellas TLS:** comparar la huella JA4 que reenvía un proxy de entrada de confianza, de forma exacta o por prefijo.
 - **Inspección de aplicaciones:** comprobaciones integradas de inyección SQL, XSS, recorrido de rutas e inyección de comandos.
 - **Límites de tasa locales:** controlar ráfagas y tráfico sostenido, con límites opcionales por regla.
@@ -53,9 +53,7 @@ controlar lo que esos clientes pueden pedir después.
 
 ## Balanceo de carga
 
-En modo edge, Sibuna es el balanceador de carga situado delante de los servidores. El modo edge
-está en el árbol de código fuente. No forma parte de los paquetes de v1.0.0-beta.3, así que lo
-[compilamos desde las fuentes](#build-from-source) hasta la próxima versión.
+Sibuna 1.0.0-rc.1 incluye el modo de borde. Las descargas de la guía rápida corresponden a beta.3. También podemos [compilar el candidato desde el código fuente](#build-from-source).
 
 ```sh
 sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
@@ -76,7 +74,7 @@ sibuna --config-file edge.jlv
 Gate o Shield se aplica a los nombres que lo necesitan, o a ninguno. El archivo sigue siendo la
 autoridad: un cambio en tiempo de ejecución dura hasta la siguiente recarga.
 
-El balanceador de carga no se ha publicado y no ha funcionado con tráfico de producción. Sus
+Queda pendiente la validación con tráfico de producción. Sus
 funciones de clúster se probaron en tres hosts. Cada [debate de diseño](https://insanai.github.io/sibuna/sid/)
 enumera lo que está construido y las carencias conocidas.
 

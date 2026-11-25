@@ -43,7 +43,7 @@ um zu steuern, was diese Clients danach anfordern dürfen.
 - **Native Pakete:** Linux, macOS, Windows, FreeBSD und OpenBSD. Der Browser-Löser nutzt WebAssembly.
 - **Browser-Challenges:** Nachweis sequenzieller Arbeit (Standard) oder Hashcash, danach eine signierte Sitzung.
 - **Zugangsrichtlinien:** Anfragen nach Adresse, Pfad, Headern und User-Agent zulassen, mit einer Challenge belegen, gewichten oder ablehnen.
-- **Lastverteilung:** TCP, UDP und HTTP vor mehreren Servern, mit TLS-Terminierung, automatischen Zertifikaten und einem Cluster-Modus. Siehe [Lastverteilung](#load-balancing). Noch nicht in den veröffentlichten Paketen enthalten.
+- **Lastverteilung:** TCP, UDP und HTTP vor mehreren Servern, mit TLS-Terminierung, automatischen Zertifikaten und einem Cluster-Modus. Siehe [Lastverteilung](#load-balancing).
 - **TLS-Fingerabdrücke:** den JA4-Fingerabdruck, den ein vertrauenswürdiger Eingangsproxy weiterleitet, exakt oder per Präfix abgleichen.
 - **Anwendungsprüfung:** eingebaute Prüfungen für SQL-Injection, XSS, Path Traversal und Command Injection.
 - **Lokale Ratenlimits:** Bursts und Dauerlast steuern, optional mit Limits je Regel.
@@ -54,9 +54,7 @@ um zu steuern, was diese Clients danach anfordern dürfen.
 
 ## Lastverteilung
 
-Im Edge-Modus ist Sibuna der Load Balancer vor den Servern. Der Edge-Modus liegt im Quellbaum.
-Er ist nicht Teil der Pakete von v1.0.0-beta.3, daher
-[bauen wir ihn aus dem Quellcode](#build-from-source), bis das nächste Release erscheint.
+Sibuna 1.0.0-rc.1 enthält den Edge-Modus. Die Downloads weiter unten gehören zu beta.3. Den Release Candidate können wir auch [aus dem Quellcode bauen](#build-from-source).
 
 ```sh
 sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
@@ -77,7 +75,7 @@ sibuna --config-file edge.jlv
 Gate oder Shield gilt für die Namen, die es brauchen, oder für keinen. Die Datei bleibt
 maßgeblich: Eine Änderung zur Laufzeit gilt bis zum nächsten Neuladen.
 
-Der Load Balancer ist nicht veröffentlicht und lief nicht unter Produktionsverkehr. Seine
+Die Prüfung unter Produktionsverkehr steht noch aus. Seine
 Cluster-Funktionen wurden auf drei Hosts getestet. Jede
 [Entwurfsdiskussion](https://insanai.github.io/sibuna/sid/) nennt, was gebaut ist und
 welche Lücken bekannt sind.
