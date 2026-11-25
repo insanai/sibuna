@@ -3,6 +3,10 @@
 
 mod free;
 
+#[cfg(all(target_os = "linux", target_pointer_width = "64"))]
+#[path = "flows/scale.rs"]
+mod scale;
+
 use std::io::{Read, Write};
 use std::net::{Shutdown, SocketAddr, TcpListener, TcpStream, UdpSocket};
 use std::sync::mpsc::{self, Sender};
@@ -15,6 +19,8 @@ const WAIT: Duration = Duration::from_secs(3);
 
 enum Command {
     Reload(Box<Config>, Sender<bool>),
+    #[cfg(all(target_os = "linux", target_pointer_width = "64"))]
+    Counts(Sender<(usize, u64)>),
     Stop,
 }
 
@@ -33,6 +39,10 @@ impl Worker {
             loop {
                 match input.try_recv() {
                     Ok(Command::Stop) | Err(mpsc::TryRecvError::Disconnected) => break,
+                    #[cfg(all(target_os = "linux", target_pointer_width = "64"))]
+                    Ok(Command::Counts(reply)) => {
+                        reply.send((edge.active(), edge.dropped())).unwrap();
+                    }
                     Ok(Command::Reload(config, reply)) => {
                         reply.send(edge.reload(*config).is_ok()).unwrap();
                     }
