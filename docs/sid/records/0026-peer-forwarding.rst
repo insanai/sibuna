@@ -77,7 +77,7 @@ We chose this function over the Maglev table that SID 0015 sketches for origins.
 Liveness of the forwarding path
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A peer is eligible when it can take a flow now. The mesh probes of SID 0015 do not show that: they are answered by another thread on another port. The edge worker therefore probes the forwarding port itself. Every 500 ms it sends each peer a ``PING`` with a fresh number. The peer answers ``PONG`` with that number, its own start number (its epoch) and a flag that says whether it drains. A peer is eligible when it answered the outstanding number within the last 1.5 s, does not drain, and is not held back. A peer is held back for one second after it refused a flow or failed a connect. A node that restarts draws a new epoch.
+A peer is eligible when it can take a flow now. The mesh probes of SID 0015 do not show that: they are answered by another thread on another port. The edge worker therefore probes the forwarding port itself. Every 500 ms it sends each peer a ``PING`` with a fresh number. The peer answers ``PONG`` with that number, its own start number (its epoch) and a flag that says whether it drains. A peer is alive when it answered the outstanding number within the last 1.5 s and does not drain. A peer is eligible when it is alive and not held back. A peer is held back for one second after it refused a flow or failed a connect. A new flow goes only to an eligible peer. A UDP client that a peer already serves stays with it while the peer is alive, so one refused connection does not move the clients of that peer. A node that restarts draws a new epoch.
 
 Forwarding runs only in the regional regime of SID 0015, where the measured round trip between the nodes is below the threshold. In the standalone and wide-area regimes every node serves what it receives.
 
@@ -97,7 +97,7 @@ TCP and HTTP connections
      | bytes         | relay both ways                  | serve as if accepted here,
      |<=============>|<================================>| client = address in the header
 
-The receiving node applies its own checks first: it refuses when it drains, when the client exceeds the connection rate here, or when it has no flow slot. It then computes the owner. When the owner is itself, or no peer is eligible, the connection goes on as before. Otherwise the node connects to the forwarding port of the owner and writes one header. It reads nothing from the client yet, so the connection can still be served here.
+The receiving node applies its own checks first: it refuses when it drains, when the client exceeds the connection rate here, or when it has no flow slot. It then computes the owner. When the owner is itself, or no peer is eligible, the connection goes on as before. Otherwise the node connects to the forwarding port of the owner and writes one header. The connection leaves from the IP address of the node's mesh address, whatever the routing table would select, so the owner finds the source in its roster. On Linux the node binds the socket to that address before it connects. On other platforms the source is the address that the routing table selects, and forwarding works where that is the mesh address. The node reads nothing from the client yet, so the connection can still be served here.
 
 .. code-block:: text
 
@@ -147,13 +147,13 @@ Each node has one UDP socket on its forwarding port. A forwarded datagram is the
        60      n  the datagram of the client (kinds 2 and 3)
      60+n     16  tag
 
-The tag covers the mesh address of the sender, the mesh address of the receiver and every byte before the tag. A datagram for one node is therefore not valid for another, and not valid in the other direction.
+The tag covers the forwarding address of the sender, the forwarding address of the receiver and every byte before the tag. A datagram for one node is therefore not valid for another, and not valid in the other direction.
 
 A UDP worker handles a datagram from a client in this order.
 
 #. The rate limit of the frontend, as before.
 #. A local mapping for the client exists: the datagram goes to its server, as before. Nothing else is looked at.
-#. A forwarding entry for the client exists and its peer is still eligible: the datagram is sent to that peer as kind 2. An entry whose peer is no longer eligible is removed.
+#. A forwarding entry for the client exists and its peer is still alive: the datagram is sent to that peer as kind 2. An entry whose peer is no longer alive is removed.
 #. Otherwise the owner is computed. The owner is this node, no peer is eligible, or the bound of the peer is reached: a local mapping is opened, as before. Otherwise a forwarding entry is made and the datagram is sent to the owner.
 
 A forwarding entry holds the peer and the time of the last datagram. It ends after the session timeout of the frontend without traffic. It fixes the peer of an established client, so a node that joins does not take the client away while it talks.
@@ -162,7 +162,7 @@ The owner checks the source address against the forwarding addresses of the rost
 
 A node that receives kind 3 delivers it only when it holds a forwarding entry for that client towards that peer. A draining owner without a mapping for the client answers kind 4. The receiving node then removes the entry and holds the peer back, and the next datagram of the client is served here.
 
-A client datagram longer than 65,431 bytes does not fit and is dropped and counted.
+A client datagram longer than 65,431 bytes does not fit. It is dropped and counted in ``sibuna_edge_drops_total``.
 
 Bounds
 ~~~~~~
@@ -205,6 +205,7 @@ Counters
 
 With forwarding on, ``show stats`` and the metrics listener add these series.
 
+- ``sibuna_edge_forward_active``: 1 while this node forwards, which is while its mesh is in the regional regime.
 - ``sibuna_edge_forward_peers_eligible``: peers that can take a flow now.
 - ``sibuna_edge_forward_flows_out``: flows that this node forwards now.
 - ``sibuna_edge_forward_streams_out_total``, ``sibuna_edge_forward_streams_in_total``: connections handed to a peer, and taken from peers.
@@ -249,7 +250,9 @@ The forwarding network should carry the largest client datagram plus 76 bytes wi
 
 The status ``denied`` is the one case where the receiving node does not serve the client. Without it a client above its limit on the owner would be served by every other node.
 
-During a disagreement about liveness, which lasts at most the 1.5 s of the detection, one client can be served by two nodes. Each serves correctly. Limits that count on one node are then split for that time.
+During a disagreement about liveness, which lasts at most the 1.5 s of the detection, one client can be served by two nodes. Each serves correctly. Limits that count on one node are then split for that time. The same holds while the nodes disagree about the regime: a node whose mesh left the regional regime serves what it receives, and its peers still forward.
+
+A forwarded datagram carries no number of its own. Someone who can copy packets between the nodes can send a forwarded datagram again while the owner keeps its epoch. The owner then sees the client's datagram twice, as it can on any network that duplicates datagrams.
 
 When an owner stops without notice, its relayed TCP connections break, as the connections of any node that stops do. New connections are served by the node that receives them from the first failed connect on. UDP datagrams sent to it are lost until the peer is found silent, at most 1.5 s.
 
@@ -270,36 +273,81 @@ Acceptance criteria and implementation status
      - Status
    * - 1
      - A TCP connection that arrives at a node that does not own its client is served by the owner, and the server sees the address of the client.
-     - Pending.
+     - Done. ``edge_forward::a_flow_at_the_wrong_node_reaches_the_owner_and_the_server_sees_the_client``: three processes, a connection to each; the server of the owner reads the client's address and port in its PROXY v2 header and echoes 100,000 bytes.
    * - 2
      - The same for a connection of an HTTP frontend.
-     - Pending.
+     - Done. The same test: the server of the owner reads the client in ``X-Forwarded-For``. In one process, ``forward::tests::a_connection_reaches_the_owner_of_its_client_under_the_address_of_the_client``. HTTP over TLS and HTTP/2 through a forward are not tested.
    * - 3
      - The same for UDP, and the reply reaches the client from the address it sent to.
-     - Pending.
+     - Done. The same test, and ``edge_forward::every_node_names_the_same_owner_for_a_client_and_the_clients_spread`` for twelve client addresses.
    * - 4
      - A change of membership during a flow does not break it.
-     - Pending.
+     - Done for the flows that the design covers. ``edge_forward::established_flows_stay_when_the_owner_stops_returns_and_stops_again``: a relayed TCP connection and a forwarded UDP client keep their node while another node joins, takes the ownership of the client, and leaves again. A TCP connection whose packets the network moves to another node is not covered: see the known gaps.
    * - 5
      - With the owner down, the receiving node serves the flow.
-     - Pending.
+     - Done. The same test kills the owner and connects at once: the connect fails and the receiving node serves. ``edge_forward::a_node_alone_serves_every_flow_itself`` for TCP, HTTP and UDP.
    * - 6
      - A forward from outside the roster, or under a wrong key, is refused.
-     - Pending.
+     - Done. ``edge_forward::a_forward_from_outside_the_roster_or_under_another_key_is_refused`` with processes. ``forward::tests::a_forged_handover_is_refused_whatever_is_wrong_with_it`` covers a stranger with the right key, a wrong key, a replayed header, another epoch and a cut header. ``forward::tests::a_forged_datagram_is_refused_and_a_stranger_cannot_keep_a_peer_alive`` covers the datagrams.
    * - 7
      - A forwarded flow is never forwarded again.
-     - Pending.
+     - Done. ``forward::tests::a_forwarded_connection_is_served_where_it_lands_and_never_forwarded_again``, and the theorems ``forwarded_is_served`` and ``one_hop`` of the model. The same property of a datagram rests on the code path and the model. No test sends a datagram to a node that does not own its client through a peer.
    * - 8
      - A cluster without ``forward`` behaves as before.
-     - Pending.
+     - Done. ``edge_forward::a_cluster_without_the_forward_object_behaves_as_before``: no port is open and no series exists.
    * - 9
      - The added latency and the cost in throughput are measured.
-     - Pending.
+     - Done, on loopback only. See the measurement below.
+
+Measurement
+~~~~~~~~~~~
+
+``edge_forward::measure_the_cost_of_the_forwarding_hop`` starts two release processes on loopback, with one server behind each. One client thread talks to the owner of its address, first through the owner and then through the other node, one exchange at a time. The run is ``cargo test --release -p sibuna --test edge_forward -- --ignored --nocapture``. The machine has 32 hardware threads and ran other work at the time. The table gives the median of two runs each, and the 99th percentile in parentheses.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 20 20 20
+
+   * - Exchange
+     - Direct
+     - Forwarded
+     - Added (median)
+   * - New TCP connection up to the first line of the server, 2,000 times
+     - 171 and 162 us (227, 212)
+     - 250 and 253 us (303, 317)
+     - 79 and 91 us
+   * - Echo of 64 bytes on an established TCP connection, 20,000 times
+     - 33 and 38 us (41, 46)
+     - 52 and 59 us (63, 75)
+     - 19 and 21 us
+   * - UDP question and answer of 64 bytes, 20,000 times
+     - 31 and 34 us (41, 41)
+     - 51 and 56 us (63, 83)
+     - 20 and 22 us
+   * - HTTP request on a new connection, 2,000 times
+     - 204 and 185 us (264, 258)
+     - 287 and 306 us (378, 392)
+     - 83 and 121 us
+   * - Echo of 1 GiB on one TCP connection
+     - 1,661 and 1,737 MiB/s
+     - 1,649 and 1,452 MiB/s
+     - 1 and 16 percent less
+
+These numbers bound the cost of the code, not of a network. On loopback a round trip between the nodes costs a few microseconds. On a real mesh a new connection adds two round trips between the nodes, and every later exchange adds one. The throughput of one connection is limited by the single test client and its echo server as much as by the relays, so the loss under many connections is not measured. Nothing was measured with many clients at once.
 
 Known gaps
 ----------
 
-To be written with the implementation.
+#. An established TCP connection breaks when the network moves its packets to another node. That node holds no socket for the connection and answers with a reset. Forwarding keeps the owner of the client, so the next connection reaches the node with the client's state. It does not keep the connection. Repairing it needs the connection state on every node or a packet-level forward, and neither is built.
+#. HTTP/3 is not forwarded. A QUIC connection is served by the node that receives its packets.
+#. A frontend with ``proxy_protocol`` is not forwarded.
+#. Forwarding stops while a node's mesh is outside the regional regime. On a busy machine the measured round trip can pass the threshold for a while, and the node then serves what it receives. ``sibuna_edge_forward_active`` shows it.
+#. Under ``global.reuse_port`` the old and the new process share the forwarding port during a replacement. A probe answer can reach the process that did not ask. The peers and the node itself can then find each other not alive for up to the shutdown timeout, and serve locally for that time.
+#. A relayed connection of an HTTP frontend has an idle limit of one hour on the receiving node. The owner applies the HTTP deadlines and closes first.
+#. On platforms other than Linux the forwarding connection is not bound to the mesh address. Those builds compile and are not tested.
+#. All tests and measurements ran on loopback. No test ran over a network with loss, delay or an ECMP router, and none with IPv6 nodes.
+#. The tests do not cover the status 3 (denied) path, the bound ``max_flows_per_peer``, the refusal of a draining owner (kind 4), or the end of relayed connections after ten seconds of silence, with processes. The code paths exist and compile, and the status codes have unit tests of their encoding only.
+#. The model covers the routing rule and the binding of a header. It does not model time, the hold-back or the UDP entries.
 
 Open questions
 --------------
@@ -310,6 +358,7 @@ Open questions
 Review history
 --------------
 
+- 2026-11-25. Review of the code after the tests passed. It found these faults, and each is fixed. A hand-over connection left from the address that the routing table selects, which on a host with several addresses is not the address that the owner knows; the node binds the mesh address first. One refused TCP connection held a peer back and so removed the UDP entries of every client of that peer; an established client now stays while its peer is alive. A node whose mesh had not reached the regional regime showed the same gauges as one that forwards; the gauge ``sibuna_edge_forward_active`` separates them, and the tests wait for it. The tests bound listeners at 127.0.0.1, where connections of other tests hold ports; the nodes have loopback addresses of their own. The review also recorded what it did not fix: a forwarded datagram can be replayed within an epoch, the regime can split the nodes for a while, and a replacement process shares the forwarding port. These stand under the security considerations and the known gaps.
 - 2026-11-25. Initial draft. The review of the draft before any code found seven faults and changed the design. The liveness of a peer came from the mesh thread, which does not show that the forwarding port works; the worker now probes the port itself. The client bytes travelled with the header, so an owner that drains could only reset the client; the node now waits for a status and can serve the connection itself. A time stamp bound the header, which needs agreeing clocks; the epoch of the receiver and the addresses of the connection replace it. The status was one bare byte, which a process that takes the port of a stopped daemon could send; it carries a tag now. Each forwarded UDP client had a socket of its own; one socket serves all. The owner replied to a UDP client directly, from an address the client did not send to; replies return through the receiving node. A client denied by the owner's rate limit was served by the receiving node; it is refused now.
 
 References
