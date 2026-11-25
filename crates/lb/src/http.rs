@@ -186,6 +186,9 @@ pub struct TlsOptions {
     /// Who issues for the `auto` names. `None` chooses by name: a public name goes to
     /// the ACME authority, an internal name and an IP address to the local authority.
     pub issuer: Option<crate::AcmeIssuer>,
+    /// Obtain a certificate at the first handshake for a name that the frontend does
+    /// not serve yet (SID 0021). It needs the guards of `global.acme.on_demand`.
+    pub on_demand: bool,
 }
 
 impl TlsOptions {
@@ -214,12 +217,14 @@ impl TlsOptions {
         }
         let auto = crate::acme::names(&mut r)?;
         let issuer = crate::acme::issuer(&mut r)?;
-        if issuer.is_some() && auto.is_empty() {
-            return Err(invalid(format!("{}: issuer needs auto names", r.path())));
+        let on_demand = field(r.take_bool("on_demand"))?.unwrap_or(false);
+        if issuer.is_some() && auto.is_empty() && !on_demand {
+            return Err(invalid(format!("{}: issuer needs auto names or on_demand", r.path())));
         }
-        if crt.is_empty() && cert_file.is_none() && auto.is_empty() {
+        if crt.is_empty() && cert_file.is_none() && auto.is_empty() && !on_demand {
             return Err(invalid(format!(
-                "{}: expected crt (combined PEM), cert_file with key_file, or auto (host names)",
+                "{}: expected crt (combined PEM), cert_file with key_file, auto (host names) \
+                 or on_demand",
                 r.path()
             )));
         }
@@ -258,6 +263,7 @@ impl TlsOptions {
             client_optional,
             auto,
             issuer,
+            on_demand,
         })
     }
 }

@@ -56,6 +56,14 @@ pub(super) fn classify(file: Option<&str>, error: &io::Error) -> Failure {
              `dns: { rfc2136: { server: \"IP:PORT\", key_name: \"NAME\", key_file: \"FILE\" } }`. \
              For an internal wildcard set `issuer: \"internal\"` on the frontend.",
         ),
+        _ if lower.contains("tls.on_demand needs a guard") => (
+            "on demand needs a guard",
+            "Without a guard anybody who reaches the listener could make the daemon order \
+             certificates. Name the hosts that may get one: \
+             `global: { acme: { on_demand: { allow: [\"apps.example.org\"] } } }`, or a URL \
+             that decides: `on_demand: { ask: \"http://127.0.0.1:9000/allowed\" }`. It is \
+             asked `GET URL?domain=NAME` and allows with a status from 200 to 299.",
+        ),
         _ if names_a_certificate(&lower) => (
             "certificate not loaded",
             "Each `crt` entry is one PEM file with the certificate chain, leaf first, then \
@@ -132,6 +140,9 @@ mod tests {
         let wildcard = "tls.auto: `*.example.org` is a wildcard, which needs the DNS \
                         challenge; set global.acme.dns";
         assert_eq!(title(None, InvalidData, wildcard), "wildcard needs dns");
+        let guard = "tls.on_demand needs a guard; set global.acme.on_demand.ask or \
+                     global.acme.on_demand.allow";
+        assert_eq!(title(None, InvalidData, guard), "on demand needs a guard");
         let failure = classify(None, &io::Error::new(InvalidData, internal));
         assert!(failure.hint.contains("issuer: \"internal\""));
         let missing = "/nonexistent/sibuna/edge.jlv";

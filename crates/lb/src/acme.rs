@@ -1,6 +1,7 @@
 //! The configuration of automatic HTTPS (SID 0021): the `auto` names of a TLS frontend
 //! and the `global.acme` object. Nothing here opens a socket or a file.
 
+mod demand;
 mod dns;
 
 use std::collections::BTreeMap;
@@ -9,6 +10,7 @@ use std::net::IpAddr;
 
 use sibuna_json::ObjectReader;
 
+pub use self::demand::OnDemand;
 pub use self::dns::{DnsConfig, DnsProvider};
 use crate::config::{Config, Protocol, field, invalid};
 
@@ -65,6 +67,8 @@ pub struct AcmeOptions {
     pub dns: Option<DnsConfig>,
     /// The lifetime of a certificate of the local authority, in seconds.
     pub internal_lifetime: u64,
+    /// The guards of issuance on demand. A frontend with `tls.on_demand` needs them.
+    pub on_demand: Option<OnDemand>,
 }
 
 impl Default for AcmeOptions {
@@ -78,6 +82,7 @@ impl Default for AcmeOptions {
             redirect: true,
             dns: None,
             internal_lifetime: INTERNAL_LIFETIME,
+            on_demand: None,
         }
     }
 }
@@ -87,6 +92,22 @@ impl AcmeOptions {
     /// public authority is never asked for an internal name.
     pub fn is_public(&self) -> bool {
         self.directory == LETSENCRYPT || self.directory == LETSENCRYPT_STAGING
+    }
+
+    /// The managed name that a handshake on a frontend with `issuer` and the TLS port
+    /// `port` may ask for on demand. `None` when the guards that read no state refuse
+    /// `name`, or when no authority of ours can issue for it: issuance on demand is
+    /// off, the name is not a plain host name, no suffix of `allow` covers it, or the
+    /// frontend sends an internal name to a public authority.
+    pub fn demanded(&self, name: &str, port: u16, issuer: Option<AcmeIssuer>) -> Option<AutoName> {
+        let guards = self.on_demand.as_ref()?;
+        let local = is_local(name, issuer, self);
+        let refused_by_authority = !local && self.is_public() && is_internal_name(name);
+        (guards.admits(name) && !refused_by_authority).then(|| AutoName {
+            name: name.to_owned(),
+            port,
+            local,
+        })
     }
 
     pub(crate) fn parse(mut r: ObjectReader<'_, '_>) -> io::Result<Self> {
@@ -128,6 +149,7 @@ impl AcmeOptions {
         let redirect = field(r.take_bool("redirect"))?.unwrap_or(defaults.redirect);
         let dns = field(r.take_object("dns"))?.map(DnsConfig::parse).transpose()?;
         let internal_lifetime = internal_lifetime(&mut r)?;
+        let on_demand = field(r.take_object("on_demand"))?.map(OnDemand::parse).transpose()?;
         field(r.finish())?;
         Ok(Self {
             directory,
@@ -138,6 +160,7 @@ impl AcmeOptions {
             redirect,
             dns,
             internal_lifetime,
+            on_demand,
         })
     }
 }
@@ -276,6 +299,8 @@ pub struct AutomaticHttps {
     /// Whether the topology has an HTTP frontend without TLS, for HTTP-01 and the
     /// redirect.
     pub plain_frontend: bool,
+    /// Whether a TLS frontend obtains certificates on demand.
+    pub on_demand: bool,
 }
 
 /// Whether the local authority issues for `name` on a frontend with `issuer`: when the
@@ -290,6 +315,11 @@ fn is_local(name: &str, issuer: Option<AcmeIssuer>, options: &AcmeOptions) -> bo
 }
 
 impl Config {
+    /// Whether a TLS frontend has `on_demand`.
+    fn has_on_demand(&self) -> bool {
+        self.listeners.values().any(|frontend| frontend.tls.as_ref().is_some_and(|t| t.on_demand))
+    }
+
     /// Every `auto` name of every TLS frontend with its port and its issuer, and
     /// whether the topology has a plain HTTP frontend.
     fn auto_names(&self) -> (Vec<AutoName>, bool) {
@@ -316,10 +346,12 @@ impl Config {
         for entry in listed {
             names.entry(entry.name.clone()).or_insert(entry);
         }
-        (!names.is_empty()).then(|| AutomaticHttps {
+        let on_demand = self.has_on_demand();
+        (!names.is_empty() || on_demand).then(|| AutomaticHttps {
             options: self.acme.clone().unwrap_or_default(),
             names: names.into_values().collect(),
             plain_frontend,
+            on_demand,
         })
     }
 
@@ -328,13 +360,20 @@ impl Config {
     /// from an ACME authority needs a DNS provider.
     pub(crate) fn check_automatic_https(&self) -> io::Result<()> {
         let (names, _) = self.auto_names();
-        if names.is_empty() {
+        let options = self.acme.clone().unwrap_or_default();
+        if self.has_on_demand() {
+            if !options.on_demand.as_ref().is_some_and(OnDemand::is_guarded) {
+                return Err(invalid(
+                    "tls.on_demand needs a guard; set global.acme.on_demand.ask or \
+                     global.acme.on_demand.allow",
+                ));
+            }
+        } else if names.is_empty() {
             return match self.acme {
                 Some(_) => Err(invalid("global.acme requires a frontend with tls.auto names")),
                 None => Ok(()),
             };
         }
-        let options = self.acme.clone().unwrap_or_default();
         for entry in &names {
             let name = &entry.name;
             if names.iter().any(|other| other.name == *name && other.local != entry.local) {
@@ -409,6 +448,7 @@ mod tests {
             options: AcmeOptions::default(),
             names: vec![public("example.org", 443), public("www.example.org", 443)],
             plain_frontend: true,
+            on_demand: false,
         };
         assert_eq!(automatic, Some(expected));
         let defaults = AcmeOptions::default();
@@ -568,7 +608,7 @@ mod tests {
         assert!(auto(r#"["bad_name.example.org"]"#).contains("is not a host name"));
         assert!(auto("[]").contains("1 to 64 host names"));
         assert!(auto("[7]").contains("expected host names"));
-        assert!(reason("{}", "").contains("or auto (host names)"));
+        assert!(reason("{}", "").contains("auto (host names) or on_demand"));
         let acme = |members: &str| {
             reason(
                 r#"{"auto":["example.org"]}"#,
@@ -594,5 +634,59 @@ mod tests {
         let automatic = Config::parse(document.as_bytes()).ok().and_then(|c| c.automatic_https());
         assert_eq!(automatic.as_ref().map(|a| a.plain_frontend), Some(false));
         assert_eq!(automatic.map(|a| a.names), Some(vec![public("example.org", 8443)]));
+    }
+
+    #[test]
+    fn on_demand_needs_a_guard_and_reads_its_keys() {
+        let demand = r#"{"on_demand":true}"#;
+        let unguarded = [
+            String::new(),
+            r#""global":{"acme":{}},"#.to_owned(),
+            r#""global":{"acme":{"on_demand":{"rate":5}}},"#.to_owned(),
+        ];
+        for global in &unguarded {
+            assert!(reason(demand, global).contains("tls.on_demand needs a guard"), "{global}");
+        }
+        let global = r#""global":{"acme":{"on_demand":{"ask":"http://127.0.0.1:9000/ok",
+            "allow":[".Example.org","apps.test"],"rate":5,"names":7,"wait":3}}},"#;
+        let automatic = parse(demand, global).ok().and_then(|config| config.automatic_https());
+        let automatic = automatic.unwrap_or_else(|| panic!("{}", reason(demand, global)));
+        assert!(automatic.on_demand && automatic.names.is_empty());
+        let expected = OnDemand {
+            ask: Some("http://127.0.0.1:9000/ok".to_owned()),
+            allow: vec!["example.org".to_owned(), "apps.test".to_owned()],
+            rate: 5,
+            names: 7,
+            wait: 3,
+        };
+        assert_eq!(automatic.options.on_demand, Some(expected));
+        let defaults = OnDemand::default();
+        assert_eq!((defaults.rate, defaults.names, defaults.wait), (10, 100, 20));
+        let bad = |members: &str| {
+            reason(demand, &format!(r#""global":{{"acme":{{"on_demand":{{{members}}}}}}},"#))
+        };
+        assert!(bad(r#""ask":"ftp://x""#).contains("http or https URL"));
+        assert!(bad(r#""allow":[]"#).contains("1 to 64 suffixes"));
+        assert!(bad(r#""allow":["a b"]"#).contains("DNS suffixes"));
+        assert!(bad(r#""allow":["a.test"],"rate":0"#).contains("1 to 1000"));
+        assert!(bad(r#""allow":["a.test"],"names":10001"#).contains("1 to 10000"));
+        assert!(bad(r#""allow":["a.test"],"wait":121"#).contains("1 to 120"));
+    }
+
+    #[test]
+    fn a_demanded_name_gets_the_issuer_of_a_listed_one() {
+        let guards =
+            OnDemand { allow: vec!["example.org".into(), "test".into()], ..OnDemand::default() };
+        let options = AcmeOptions { on_demand: Some(guards), ..AcmeOptions::default() };
+        let demanded = |name: &str, issuer| options.demanded(name, 443, issuer).map(|n| n.local);
+        assert_eq!(demanded("a.example.org", None), Some(false));
+        assert_eq!(demanded("a.example.org", Some(AcmeIssuer::Internal)), Some(true));
+        assert_eq!(demanded("app.test", None), Some(true));
+        // A public authority is not asked for an internal name, and nothing outside the
+        // suffixes is admitted.
+        assert_eq!(demanded("app.test", Some(AcmeIssuer::Acme)), None);
+        assert_eq!(demanded("a.example.com", None), None);
+        assert_eq!(demanded("*.example.org", None), None);
+        assert_eq!(AcmeOptions::default().demanded("a.example.org", 443, None), None);
     }
 }
