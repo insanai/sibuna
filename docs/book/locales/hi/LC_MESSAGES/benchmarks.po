@@ -18,10 +18,8 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: ../../benchmarks.rst:1
-#, fuzzy
-#| msgid "Part VIII: Empirical Evaluation"
 msgid "Part X: Empirical Evaluation"
-msgstr "भाग VIII: प्रायोगिक मूल्यांकन"
+msgstr "भाग X: प्रायोगिक मूल्यांकन"
 
 #: ../../benchmarks.rst:4
 msgid ""
@@ -3134,7 +3132,7 @@ msgstr ""
 
 #: ../../benchmarks.rst:876
 msgid "Edge Load Balancing and HAProxy"
-msgstr ""
+msgstr "एज लोड बैलेंसिंग और HAProxy"
 
 #: ../../benchmarks.rst:881
 msgid ""
@@ -3142,6 +3140,8 @@ msgid ""
 "balancer matches HAProxy, where it does not, and which part of the design "
 "explains each difference."
 msgstr ""
+"इस अध्याय के अंत तक हमें यह बता पाना चाहिए कि एज लोड बैलेंसर कहाँ HAProxy "
+"के बराबर है, कहाँ नहीं, और डिज़ाइन का कौन-सा भाग हर अंतर को समझाता है।"
 
 #: ../../benchmarks.rst:883
 msgid ""
@@ -3153,17 +3153,26 @@ msgid ""
 "of eight seconds per cell, not a repeated measurement, so we read "
 "differences of a few percent as noise."
 msgstr ""
+"हमने एक होस्ट पर loopback पर Sibuna के एज मोड को HAProxy 3.0.11 के साथ "
+"चलाया। दो ऑरिजिन के पास चार CPU थे, प्रॉक्सी के पास आठ और लोड जनरेटर के "
+"पास चार। दोनों प्रॉक्सी ने आठ थ्रेड और least connections का उपयोग किया, "
+"और दोनों ने एक ही ECDSA सर्टिफ़िकेट के साथ TLS टर्मिनेट किया। रिकॉर्ड "
+"``benchmarks/results/edge-haproxy-2026-11-24.md`` है। यह प्रति सेल आठ "
+"सेकंड का एक मैनुअल रन है, दोहराया गया मापन नहीं, इसलिए हम कुछ प्रतिशत के "
+"अंतर को शोर मानते हैं।"
 
 #: ../../benchmarks.rst:885
 msgid ""
 "Requests per second through each proxy. ``tcp`` forwards the HTTP byte "
 "stream through a TCP frontend. ``off`` is ``http.surface``."
 msgstr ""
+"हर प्रॉक्सी से होकर प्रति सेकंड अनुरोध। ``tcp`` HTTP बाइट स्ट्रीम को एक "
+"TCP फ़्रंटएंड से होकर फ़ॉरवर्ड करता है। ``off`` ``http.surface`` है।"
 
 #: ../../benchmarks.rst:890 ../../benchmarks.rst:957
 #: ../../benchmarks.rst:1076 ../../benchmarks.rst:1276
 msgid "Connections"
-msgstr ""
+msgstr "कनेक्शन"
 
 #: ../../benchmarks.rst:891 ../../benchmarks.rst:958
 #: ../../benchmarks.rst:1077 ../../benchmarks.rst:1179
@@ -3171,24 +3180,22 @@ msgstr ""
 #: ../../benchmarks.rst:1377 ../../benchmarks.rst:1420
 #: ../../benchmarks.rst:1453
 msgid "HAProxy"
-msgstr ""
+msgstr "HAProxy"
 
 #: ../../benchmarks.rst:892
 msgid "Sibuna ``off``"
-msgstr ""
+msgstr "Sibuna ``off``"
 
 #: ../../benchmarks.rst:893
-#, fuzzy
-#| msgid "Sibuna Shield"
 msgid "Sibuna ``shield``"
-msgstr "Sibuna Shield"
+msgstr "Sibuna ``shield``"
 
 #: ../../benchmarks.rst:894 ../../benchmarks.rst:1079
 #: ../../benchmarks.rst:1181 ../../benchmarks.rst:1241
 #: ../../benchmarks.rst:1279 ../../benchmarks.rst:1379
 #: ../../benchmarks.rst:1422
 msgid "Sibuna / HAProxy"
-msgstr ""
+msgstr "Sibuna / HAProxy"
 
 #: ../../benchmarks.rst:895 ../../benchmarks.rst:901
 #: ../../benchmarks.rst:1082 ../../benchmarks.rst:1089
@@ -3196,7 +3203,7 @@ msgstr ""
 #: ../../benchmarks.rst:1289 ../../benchmarks.rst:1296
 #: ../../benchmarks.rst:1423
 msgid "tcp"
-msgstr ""
+msgstr "tcp"
 
 #: ../../benchmarks.rst:896 ../../benchmarks.rst:914
 #: ../../benchmarks.rst:926 ../../benchmarks.rst:938
@@ -3206,26 +3213,20 @@ msgstr ""
 #: ../../benchmarks.rst:1153 ../../benchmarks.rst:1290
 #: ../../benchmarks.rst:1311 ../../benchmarks.rst:1332
 #: ../../benchmarks.rst:1353
-#, fuzzy
-#| msgid "25"
 msgid "256"
-msgstr "25"
+msgstr "256"
 
 #: ../../benchmarks.rst:897
-#, fuzzy
-#| msgid "27.45"
 msgid "237,451"
-msgstr "27.45"
+msgstr "237,451"
 
 #: ../../benchmarks.rst:898
-#, fuzzy
-#| msgid "208,101"
 msgid "230,181"
-msgstr "208,101"
+msgstr "230,181"
 
 #: ../../benchmarks.rst:900 ../../benchmarks.rst:912
 msgid "0.97"
-msgstr ""
+msgstr "0.97"
 
 #: ../../benchmarks.rst:902 ../../benchmarks.rst:920
 #: ../../benchmarks.rst:975 ../../benchmarks.rst:1097
@@ -3233,28 +3234,20 @@ msgstr ""
 #: ../../benchmarks.rst:1160 ../../benchmarks.rst:1297
 #: ../../benchmarks.rst:1318 ../../benchmarks.rst:1339
 #: ../../benchmarks.rst:1360
-#, fuzzy
-#| msgid "142,498"
 msgid "2,048"
-msgstr "142,498"
+msgstr "2,048"
 
 #: ../../benchmarks.rst:903
-#, fuzzy
-#| msgid "183"
 msgid "183,887"
-msgstr "183"
+msgstr "183,887"
 
 #: ../../benchmarks.rst:904
-#, fuzzy
-#| msgid "143,900"
 msgid "184,890"
-msgstr "143,900"
+msgstr "184,890"
 
 #: ../../benchmarks.rst:906 ../../benchmarks.rst:1247
-#, fuzzy
-#| msgid "21.0"
 msgid "1.01"
-msgstr "21.0"
+msgstr "1.01"
 
 #: ../../benchmarks.rst:907 ../../benchmarks.rst:913
 #: ../../benchmarks.rst:919 ../../benchmarks.rst:962
@@ -3267,7 +3260,7 @@ msgstr "21.0"
 #: ../../benchmarks.rst:1389 ../../benchmarks.rst:1427
 #: ../../benchmarks.rst:1458
 msgid "http"
-msgstr ""
+msgstr "http"
 
 #: ../../benchmarks.rst:908 ../../benchmarks.rst:932
 #: ../../benchmarks.rst:963 ../../benchmarks.rst:987
@@ -3275,74 +3268,52 @@ msgstr ""
 #: ../../benchmarks.rst:1125 ../../benchmarks.rst:1146
 #: ../../benchmarks.rst:1283 ../../benchmarks.rst:1304
 #: ../../benchmarks.rst:1325 ../../benchmarks.rst:1346
-#, fuzzy
-#| msgid "160"
 msgid "16"
-msgstr "160"
+msgstr "16"
 
 #: ../../benchmarks.rst:909
-#, fuzzy
-#| msgid "10,000"
 msgid "140,003"
-msgstr "10,000"
+msgstr "140,003"
 
 #: ../../benchmarks.rst:910
-#, fuzzy
-#| msgid "195,188"
 msgid "135,488"
-msgstr "195,188"
+msgstr "135,488"
 
 #: ../../benchmarks.rst:911
-#, fuzzy
-#| msgid "16064"
 msgid "140,064"
-msgstr "16064"
+msgstr "140,064"
 
 #: ../../benchmarks.rst:915
-#, fuzzy
-#| msgid "32,696"
 msgid "242,695"
-msgstr "32,696"
+msgstr "242,695"
 
 #: ../../benchmarks.rst:916
-#, fuzzy
-#| msgid "143,900"
 msgid "143,405"
-msgstr "143,900"
+msgstr "143,405"
 
 #: ../../benchmarks.rst:917
-#, fuzzy
-#| msgid "145,673"
 msgid "145,434"
-msgstr "145,673"
+msgstr "145,434"
 
 #: ../../benchmarks.rst:918 ../../benchmarks.rst:1149
 msgid "0.59"
-msgstr ""
+msgstr "0.59"
 
 #: ../../benchmarks.rst:921
-#, fuzzy
-#| msgid "7,952"
 msgid "172,950"
-msgstr "7,952"
+msgstr "172,950"
 
 #: ../../benchmarks.rst:922
-#, fuzzy
-#| msgid "132.5"
 msgid "132,752"
-msgstr "132.5"
+msgstr "132,752"
 
 #: ../../benchmarks.rst:923
-#, fuzzy
-#| msgid "147,303"
 msgid "137,037"
-msgstr "147,303"
+msgstr "137,037"
 
 #: ../../benchmarks.rst:924 ../../benchmarks.rst:1209
-#, fuzzy
-#| msgid "13.77"
 msgid "0.77"
-msgstr "13.77"
+msgstr "0.77"
 
 #: ../../benchmarks.rst:925 ../../benchmarks.rst:980
 #: ../../benchmarks.rst:1124 ../../benchmarks.rst:1131
@@ -3353,31 +3324,23 @@ msgstr "13.77"
 #: ../../benchmarks.rst:1403 ../../benchmarks.rst:1431
 #: ../../benchmarks.rst:1465
 msgid "https"
-msgstr ""
+msgstr "https"
 
 #: ../../benchmarks.rst:927 ../../benchmarks.rst:982
-#, fuzzy
-#| msgid "16,240"
 msgid "166,407"
-msgstr "16,240"
+msgstr "166,407"
 
 #: ../../benchmarks.rst:928 ../../benchmarks.rst:983
-#, fuzzy
-#| msgid "27,785"
 msgid "88,785"
-msgstr "27,785"
+msgstr "88,785"
 
 #: ../../benchmarks.rst:929
-#, fuzzy
-#| msgid "32,624"
 msgid "83,962"
-msgstr "32,624"
+msgstr "83,962"
 
 #: ../../benchmarks.rst:930 ../../benchmarks.rst:991
-#, fuzzy
-#| msgid "106.30"
 msgid "0.53"
-msgstr "106.30"
+msgstr "0.53"
 
 #: ../../benchmarks.rst:931 ../../benchmarks.rst:937
 #: ../../benchmarks.rst:986 ../../benchmarks.rst:992
@@ -3386,55 +3349,39 @@ msgstr "106.30"
 #: ../../benchmarks.rst:1345 ../../benchmarks.rst:1352
 #: ../../benchmarks.rst:1359
 msgid "h2, 10 streams"
-msgstr ""
+msgstr "h2, 10 स्ट्रीम"
 
 #: ../../benchmarks.rst:933 ../../benchmarks.rst:988
-#, fuzzy
-#| msgid "195,188"
 msgid "195,808"
-msgstr "195,188"
+msgstr "195,808"
 
 #: ../../benchmarks.rst:934 ../../benchmarks.rst:989
-#, fuzzy
-#| msgid "32,624"
 msgid "72,602"
-msgstr "32,624"
+msgstr "72,602"
 
 #: ../../benchmarks.rst:935
-#, fuzzy
-#| msgid "16,316"
 msgid "69,169"
-msgstr "16,316"
+msgstr "69,169"
 
 #: ../../benchmarks.rst:936
-#, fuzzy
-#| msgid "106.30"
 msgid "0.37"
-msgstr "106.30"
+msgstr "0.37"
 
 #: ../../benchmarks.rst:939 ../../benchmarks.rst:994
-#, fuzzy
-#| msgid "16,240"
 msgid "167,124"
-msgstr "16,240"
+msgstr "167,124"
 
 #: ../../benchmarks.rst:940 ../../benchmarks.rst:995
-#, fuzzy
-#| msgid "555"
 msgid "64,555"
-msgstr "555"
+msgstr "64,555"
 
 #: ../../benchmarks.rst:941
-#, fuzzy
-#| msgid "210,549"
 msgid "61,849"
-msgstr "210,549"
+msgstr "61,849"
 
 #: ../../benchmarks.rst:942
-#, fuzzy
-#| msgid "106.30"
 msgid "0.39"
-msgstr "106.30"
+msgstr "0.39"
 
 #: ../../benchmarks.rst:944
 msgid ""
@@ -3442,6 +3389,10 @@ msgid ""
 "bytes between two sockets, which is what HAProxy does. Sibuna held 2,048 "
 "streams in 9 MiB of resident memory, against 51 MiB."
 msgstr ""
+"TCP फ़ॉरवर्डिंग HAProxy के बराबर है। रिले थ्रेड epoll के साथ प्रतीक्षा "
+"करते हैं और दो सॉकेट के बीच बाइट ले जाते हैं, जो HAProxy भी करता है। "
+"Sibuna ने 2,048 स्ट्रीम 9 MiB resident मेमोरी में रखीं, जबकि HAProxy ने "
+"51 MiB में।"
 
 #: ../../benchmarks.rst:946
 msgid ""
@@ -3452,6 +3403,12 @@ msgid ""
 "16 ms, against 2.3 ms. An event loop pays one wake-up for many ready "
 "sockets. A thread per connection pays one for each."
 msgstr ""
+"HTTP 16 कनेक्शन पर HAProxy के बराबर है और 256 से पीछे रह जाता है। HTTP "
+"फ़ायरवॉल हर कनेक्शन को blocking रीड के साथ उसके अपने थ्रेड पर सर्व करता "
+"है। 256 कनेक्शन पर उसने प्रति अनुरोध 2.9 context switch किए और अपने CPU "
+"समय का चार-पाँचवाँ हिस्सा कर्नेल में बिताया। 99वाँ पर्सेंटाइल 16 ms था, "
+"जबकि HAProxy का 2.3 ms। इवेंट लूप कई तैयार सॉकेट के लिए एक wake-up चुकाता "
+"है। प्रति कनेक्शन थ्रेड हर एक के लिए एक चुकाता है।"
 
 #: ../../benchmarks.rst:948
 msgid ""
@@ -3461,6 +3418,11 @@ msgid ""
 "firewall itself is not the cost: gate and shield with an allow-all policy "
 "ran as fast as ``off``."
 msgstr ""
+"TLS और HTTP/2 और पीछे रह जाते हैं। एक अलग रनटाइम उन्हें टर्मिनेट करता है "
+"और हर कनेक्शन या आदान-प्रदान को एक सॉकेट जोड़ी पर फ़ायरवॉल थ्रेड को "
+"सौंपता है, इसलिए हर अनुरोध एक और सॉकेट और एक और थ्रेड पार करता है। लागत "
+"फ़ायरवॉल की नहीं है: allow-all नीति के साथ gate और shield ``off`` जितनी "
+"तेज़ी से चले।"
 
 #: ../../benchmarks.rst:950
 msgid ""
@@ -3472,129 +3434,97 @@ msgid ""
 "HTTP cells on the same host. Its record is "
 "``benchmarks/results/edge-workers-2026-11-24.md``."
 msgstr ""
+"मापन ने बताया कि अगला कार्य कहाँ है, और SID 0016 ने वह कार्य किया। एज मोड "
+"अब HTTP को इवेंट-ड्रिवन वर्करों पर सर्व करता है: प्रति प्रोसेसर एक थ्रेड, "
+"हर एक अपने poller, कनेक्शन और सर्वर सॉकेट के साथ। ऊपर की तालिका थ्रेड पाथ "
+"का रिकॉर्ड है, जो ``\"http\": {\"event_loop\": false}`` के साथ उपलब्ध "
+"रहता है। अगली तालिका उसी होस्ट पर HTTP सेल दोहराती है। उसका रिकॉर्ड "
+"``benchmarks/results/edge-workers-2026-11-24.md`` है।"
 
 #: ../../benchmarks.rst:952
 msgid ""
 "Requests per second on the thread path and on the event-driven workers."
-msgstr ""
+msgstr "थ्रेड पाथ पर और इवेंट-ड्रिवन वर्करों पर प्रति सेकंड अनुरोध।"
 
 #: ../../benchmarks.rst:959
-#, fuzzy
-#| msgid "Sibuna Shield"
 msgid "Sibuna threads"
-msgstr "Sibuna Shield"
+msgstr "Sibuna थ्रेड"
 
 #: ../../benchmarks.rst:960
-#, fuzzy
-#| msgid "Sibuna Gate"
 msgid "Sibuna workers"
-msgstr "Sibuna Gate"
+msgstr "Sibuna वर्कर"
 
 #: ../../benchmarks.rst:961
 msgid "Workers / HAProxy"
-msgstr ""
+msgstr "वर्कर / HAProxy"
 
 #: ../../benchmarks.rst:964
-#, fuzzy
-#| msgid "19,261"
 msgid "139,618"
-msgstr "19,261"
+msgstr "139,618"
 
 #: ../../benchmarks.rst:965
-#, fuzzy
-#| msgid "135.41"
 msgid "135,435"
-msgstr "135.41"
+msgstr "135,435"
 
 #: ../../benchmarks.rst:966
-#, fuzzy
-#| msgid "16160"
 msgid "162,810"
-msgstr "16160"
+msgstr "162,810"
 
 #: ../../benchmarks.rst:967
-#, fuzzy
-#| msgid "12.17"
 msgid "1.17"
-msgstr "12.17"
+msgstr "1.17"
 
 #: ../../benchmarks.rst:970
-#, fuzzy
-#| msgid "32,624"
 msgid "243,864"
-msgstr "32,624"
+msgstr "243,864"
 
 #: ../../benchmarks.rst:971
-#, fuzzy
-#| msgid "3,331"
 msgid "143,311"
-msgstr "3,331"
+msgstr "143,311"
 
 #: ../../benchmarks.rst:972
-#, fuzzy
-#| msgid "2239"
 msgid "229,139"
-msgstr "2239"
+msgstr "229,139"
 
 #: ../../benchmarks.rst:973
-#, fuzzy
-#| msgid "190.40"
 msgid "0.94"
-msgstr "190.40"
+msgstr "0.94"
 
 #: ../../benchmarks.rst:976
-#, fuzzy
-#| msgid "16324"
 msgid "163,491"
-msgstr "16324"
+msgstr "163,491"
 
 #: ../../benchmarks.rst:977
-#, fuzzy
-#| msgid "3,331"
 msgid "133,301"
-msgstr "3,331"
+msgstr "133,301"
 
 #: ../../benchmarks.rst:978
-#, fuzzy
-#| msgid "16,444"
 msgid "176,448"
-msgstr "16,444"
+msgstr "176,448"
 
 #: ../../benchmarks.rst:979 ../../benchmarks.rst:1086
-#, fuzzy
-#| msgid "21.0"
 msgid "1.08"
-msgstr "21.0"
+msgstr "1.08"
 
 #: ../../benchmarks.rst:984
-#, fuzzy
-#| msgid "516,872"
 msgid "146,874"
-msgstr "516,872"
+msgstr "146,874"
 
 #: ../../benchmarks.rst:985
-#, fuzzy
-#| msgid "104.88"
 msgid "0.88"
-msgstr "104.88"
+msgstr "0.88"
 
 #: ../../benchmarks.rst:990
-#, fuzzy
-#| msgid "143,900"
 msgid "103,903"
-msgstr "143,900"
+msgstr "103,903"
 
 #: ../../benchmarks.rst:996
-#, fuzzy
-#| msgid "16,976"
 msgid "96,977"
-msgstr "16,976"
+msgstr "96,977"
 
 #: ../../benchmarks.rst:997
-#, fuzzy
-#| msgid "790.8"
 msgid "0.58"
-msgstr "790.8"
+msgstr "0.58"
 
 #: ../../benchmarks.rst:999
 msgid ""
@@ -3604,6 +3534,11 @@ msgid ""
 "furthest behind, because each stream crosses a socket pair between the "
 "protocol runtime and a worker."
 msgstr ""
+"Plaintext HTTP अब HAProxy के 94% से 117% के बीच चलता है। 256 कनेक्शन पर "
+"99वाँ पर्सेंटाइल 16.15 ms से घटकर 2.60 ms हो गया, जबकि HAProxy का 1.47 ms "
+"है। TLS 88% तक पहुँचता है। HTTP/2 में आधा सुधार हुआ और वह अब भी सबसे पीछे "
+"है, क्योंकि हर स्ट्रीम प्रोटोकॉल रनटाइम और वर्कर के बीच एक सॉकेट जोड़ी "
+"पार करती है।"
 
 #: ../../benchmarks.rst:1001
 msgid ""
@@ -3613,6 +3548,11 @@ msgid ""
 "WebSocket tunnels held 27 MiB. The thread count stayed at 35 throughout. "
 "These figures exclude the kernel's socket memory."
 msgstr ""
+"मेमोरी थ्रूपुट से अधिक बदली। कनेक्शन के पास अब कोई थ्रेड नहीं है। बिना "
+"लोड के एक रन में 20,000 निष्क्रिय keep-alive कनेक्शनों ने प्रोसेस की "
+"resident मेमोरी 7 MiB से 15 MiB कर दी, और 10,000 खुली WebSocket tunnel ने "
+"27 MiB रखी। थ्रेड गिनती पूरे समय 35 रही। इन आँकड़ों में कर्नेल की सॉकेट "
+"मेमोरी शामिल नहीं है।"
 
 #: ../../benchmarks.rst:1003
 msgid ""
@@ -3625,6 +3565,14 @@ msgid ""
 "us for HAProxy, but on HTTP/2 it spends 76 us, of which the TLS and "
 "HTTP/2 runtime takes 46 us before a worker sees the request."
 msgstr ""
+"उसी होस्ट पर बाद के एक रन में हमने आठ वर्कर थ्रेड के साथ Envoy 1.40.2 "
+"जोड़ा। Sibuna ने Envoy के plaintext अनुरोधों के 2.9 से 3.2 गुना, उसके TLS "
+"अनुरोधों के 1.7 से 2.4 गुना और उसके HTTP/2 अनुरोधों के 1.3 से 1.4 गुना "
+"सर्व किए। रिकॉर्ड में तालिका, Envoy की सेटिंग्स और हर थ्रेड समूह का प्रति "
+"अनुरोध CPU समय है। वह अंतिम तालिका HAProxy से HTTP/2 के अंतर को समझाती "
+"है: plaintext पर Sibuna प्रति अनुरोध 28 us CPU खर्च करता है, जबकि HAProxy "
+"32 us, लेकिन HTTP/2 पर वह 76 us खर्च करता है, जिसमें से TLS और HTTP/2 "
+"रनटाइम वर्कर के अनुरोध देखने से पहले 46 us लेता है।"
 
 #: ../../benchmarks.rst:1005
 msgid ""
@@ -3634,6 +3582,11 @@ msgid ""
 "connections, which is 20% to 37% more, 1.6 to 1.7 times Envoy and 70% to "
 "83% of HAProxy. No request failed."
 msgstr ""
+"फिर हमने वह हॉप हटाया जो अंतिम तालिका दिखाती है (SID 0017): HTTP/2 या "
+"HTTP/3 अनुरोध पर उसी थ्रेड पर निर्णय होता है जिसने उसे डिकोड किया। HTTP/2 "
+"16, 256 और 2,048 कनेक्शन पर प्रति सेकंड 140,728, 119,084 और 96,136 अनुरोध "
+"तक बढ़ा, जो 20% से 37% अधिक है, Envoy का 1.6 से 1.7 गुना और HAProxy का "
+"70% से 83%। कोई अनुरोध विफल नहीं हुआ।"
 
 #: ../../benchmarks.rst:1007
 msgid ""
@@ -3641,6 +3594,9 @@ msgid ""
 "and eight processors, the daemon served 68,000, 92,000, 176,000 and "
 "227,000 plaintext requests per second at 256 connections."
 msgstr ""
+"वर्कर उन्हें दिए गए प्रोसेसरों का उपयोग करते हैं। एक, दो, चार और आठ "
+"प्रोसेसरों तक सीमित रहने पर डेमन ने 256 कनेक्शन पर प्रति सेकंड 68,000, "
+"92,000, 176,000 और 227,000 plaintext अनुरोध सर्व किए।"
 
 #: ../../benchmarks.rst:1009
 msgid ""
@@ -3650,6 +3606,11 @@ msgid ""
 "node and stopping a node failed no request through the other nodes, and "
 "every tunnel through a surviving node stayed open."
 msgstr ""
+"तीन होस्ट पर हमने मेश के साथ तीन नोड चलाए और हर एक से होकर 300 WebSocket "
+"tunnel रखीं। एक ऑरिजिन को रोकने पर, उसके हेल्थ चेक द्वारा उसे हटाए जाने "
+"से पहले, लगभग 114,000 में से 10 अनुरोध विफल हुए। किसी नोड को मारने, रीलोड "
+"करने और रोकने पर दूसरे नोडों से होकर कोई अनुरोध विफल नहीं हुआ, और बचे हुए "
+"नोड से होकर हर tunnel खुली रही।"
 
 #: ../../benchmarks.rst:1011
 msgid "Not Measured"
@@ -3825,10 +3786,8 @@ msgstr ""
 "के पीछे चला सकता है।"
 
 #: ../../benchmarks.rst:1048
-#, fuzzy
-#| msgid "Exercise 8.1"
 msgid "Exercise 10.1"
-msgstr "अभ्यास 8.1"
+msgstr "अभ्यास 10.1"
 
 #: ../../benchmarks.rst:1050
 msgid ""
@@ -3842,10 +3801,8 @@ msgstr ""
 "दोनों में से कौन हार्डवेयर हैश निर्देशों पर अधिक निर्भर है, और क्यों?"
 
 #: ../../benchmarks.rst:1052
-#, fuzzy
-#| msgid "Exercise 8.2"
 msgid "Exercise 10.2"
-msgstr "अभ्यास 8.2"
+msgstr "अभ्यास 10.2"
 
 #: ../../benchmarks.rst:1054
 msgid ""
@@ -3889,7 +3846,7 @@ msgstr ""
 
 #: ../../benchmarks.rst:1062
 msgid "The Build of 2026-11-25 and a Cluster of Three Hosts"
-msgstr ""
+msgstr "2026-11-25 का बिल्ड और तीन होस्ट का एक क्लस्टर"
 
 #: ../../benchmarks.rst:1067
 msgid ""
@@ -3898,6 +3855,10 @@ msgid ""
 "HAProxy on one host, what three nodes carry together, and how fast a ban "
 "and a file cross the cluster."
 msgstr ""
+"इस अध्याय के अंत तक हमें यह बता पाना चाहिए कि ट्रैफ़िक नीति, अवलोकन और "
+"क्लस्टर कमांड वाले बिल्ड की एक होस्ट पर HAProxy के मुक़ाबले क्या लागत है, "
+"तीन नोड मिलकर कितना संभालते हैं, और एक प्रतिबंध और एक फ़ाइल कितनी तेज़ी "
+"से क्लस्टर पार करते हैं।"
 
 #: ../../benchmarks.rst:1069
 msgid ""
@@ -3909,300 +3870,221 @@ msgid ""
 "it runs at once by that number and 2,048 HTTP/2 connections with ten "
 "streams each exceed the smaller bound of the earlier run."
 msgstr ""
+"हमने उसी होस्ट पर कमिट ``2efd741`` के बिल्ड के साथ HAProxy 3.0.11 से "
+"तुलना दोहराई। विधि पिछले अध्याय वाली है: loopback, चार CPU पर दो ऑरिजिन, "
+"आठ पर प्रॉक्सी, चार पर लोड, ``http.surface: \"off\"``, हर पंक्ति के लिए "
+"आठ सेकंड, एक रन। ``http.max_connections`` 65,536 था, क्योंकि नोड एक साथ "
+"चलने वाले अनुरोधों को इसी संख्या से सीमित करता है, और दस-दस स्ट्रीम वाले "
+"2,048 HTTP/2 कनेक्शन पिछले रन की छोटी सीमा से अधिक हैं।"
 
 #: ../../benchmarks.rst:1071
 msgid ""
 "One host, requests per second and the CPU seconds of the proxy during the "
 "eight seconds."
 msgstr ""
+"एक होस्ट, प्रति सेकंड अनुरोध और आठ सेकंड के दौरान प्रॉक्सी के CPU सेकंड।"
 
 #: ../../benchmarks.rst:1078 ../../benchmarks.rst:1180
 #: ../../benchmarks.rst:1240 ../../benchmarks.rst:1278
 #: ../../benchmarks.rst:1378 ../../benchmarks.rst:1421
 #: ../../benchmarks.rst:1452
-#, fuzzy
-#| msgid "Sibuna Gate"
 msgid "Sibuna"
-msgstr "Sibuna Gate"
+msgstr "Sibuna"
 
 #: ../../benchmarks.rst:1080 ../../benchmarks.rst:1182
 #: ../../benchmarks.rst:1280 ../../benchmarks.rst:1380
 msgid "HAProxy CPU s"
-msgstr ""
+msgstr "HAProxy CPU सेकंड"
 
 #: ../../benchmarks.rst:1081 ../../benchmarks.rst:1183
 #: ../../benchmarks.rst:1281 ../../benchmarks.rst:1381
-#, fuzzy
-#| msgid "Sibuna and Anubis"
 msgid "Sibuna CPU s"
-msgstr "Sibuna और Anubis"
+msgstr "Sibuna CPU सेकंड"
 
 #: ../../benchmarks.rst:1084
-#, fuzzy
-#| msgid "10,951"
 msgid "170,191"
-msgstr "10,951"
+msgstr "170,191"
 
 #: ../../benchmarks.rst:1085
-#, fuzzy
-#| msgid "11,062"
 msgid "183,082"
-msgstr "11,062"
+msgstr "183,082"
 
 #: ../../benchmarks.rst:1087
-#, fuzzy
-#| msgid "152"
 msgid "52"
-msgstr "152"
+msgstr "52"
 
 #: ../../benchmarks.rst:1088 ../../benchmarks.rst:1123
 #: ../../benchmarks.rst:1395
-#, fuzzy
-#| msgid "4"
 msgid "44"
-msgstr "4"
+msgstr "44"
 
 #: ../../benchmarks.rst:1091
-#, fuzzy
-#| msgid "2239"
 msgid "232,439"
-msgstr "2239"
+msgstr "232,439"
 
 #: ../../benchmarks.rst:1092
-#, fuzzy
-#| msgid "2358"
 msgid "238,578"
-msgstr "2358"
+msgstr "238,578"
 
 #: ../../benchmarks.rst:1093
-#, fuzzy
-#| msgid "21.0"
 msgid "1.03"
-msgstr "21.0"
+msgstr "1.03"
 
 #: ../../benchmarks.rst:1094 ../../benchmarks.rst:1116
 #: ../../benchmarks.rst:1137 ../../benchmarks.rst:1294
 #: ../../benchmarks.rst:1316
-#, fuzzy
-#| msgid "1753"
 msgid "53"
-msgstr "1753"
+msgstr "53"
 
 #: ../../benchmarks.rst:1095 ../../benchmarks.rst:1109
 #: ../../benchmarks.rst:1197 ../../benchmarks.rst:1309
 #: ../../benchmarks.rst:1323
-#, fuzzy
-#| msgid "746"
 msgid "46"
-msgstr "746"
+msgstr "46"
 
 #: ../../benchmarks.rst:1098
-#, fuzzy
-#| msgid "16,240"
 msgid "178,740"
-msgstr "16,240"
+msgstr "178,740"
 
 #: ../../benchmarks.rst:1099
-#, fuzzy
-#| msgid "138,965"
 msgid "187,957"
-msgstr "138,965"
+msgstr "187,957"
 
 #: ../../benchmarks.rst:1100
-#, fuzzy
-#| msgid "13.05"
 msgid "1.05"
-msgstr "13.05"
+msgstr "1.05"
 
 #: ../../benchmarks.rst:1102 ../../benchmarks.rst:1302
 #: ../../benchmarks.rst:1388
-#, fuzzy
-#| msgid "427"
 msgid "42"
-msgstr "427"
+msgstr "42"
 
 #: ../../benchmarks.rst:1105
-#, fuzzy
-#| msgid "88,104"
 msgid "138,108"
-msgstr "88,104"
+msgstr "138,108"
 
 #: ../../benchmarks.rst:1106
-#, fuzzy
-#| msgid "155.8"
 msgid "158,058"
-msgstr "155.8"
+msgstr "158,058"
 
 #: ../../benchmarks.rst:1107 ../../benchmarks.rst:1335
 #: ../../benchmarks.rst:1393
-#, fuzzy
-#| msgid "13.1"
 msgid "1.14"
-msgstr "13.1"
+msgstr "1.14"
 
 #: ../../benchmarks.rst:1108 ../../benchmarks.rst:1308
 #: ../../benchmarks.rst:1329
-#, fuzzy
-#| msgid "759"
 msgid "59"
-msgstr "759"
+msgstr "59"
 
 #: ../../benchmarks.rst:1112
-#, fuzzy
-#| msgid "422"
 msgid "242,281"
-msgstr "422"
+msgstr "242,281"
 
 #: ../../benchmarks.rst:1113
 msgid "223,457"
-msgstr ""
+msgstr "223,457"
 
 #: ../../benchmarks.rst:1114
-#, fuzzy
-#| msgid "70.2"
 msgid "0.92"
-msgstr "70.2"
+msgstr "0.92"
 
 #: ../../benchmarks.rst:1115 ../../benchmarks.rst:1136
 #: ../../benchmarks.rst:1150 ../../benchmarks.rst:1157
 #: ../../benchmarks.rst:1315 ../../benchmarks.rst:1322
 #: ../../benchmarks.rst:1357
-#, fuzzy
-#| msgid "6.3"
 msgid "63"
-msgstr "6.3"
+msgstr "63"
 
 #: ../../benchmarks.rst:1119
-#, fuzzy
-#| msgid "134,344"
 msgid "174,374"
-msgstr "134,344"
+msgstr "174,374"
 
 #: ../../benchmarks.rst:1120
-#, fuzzy
-#| msgid "16192"
 msgid "168,190"
-msgstr "16192"
+msgstr "168,190"
 
 #: ../../benchmarks.rst:1121
-#, fuzzy
-#| msgid "32.96"
 msgid "0.96"
-msgstr "32.96"
+msgstr "0.96"
 
 #: ../../benchmarks.rst:1126
-#, fuzzy
-#| msgid "1753"
 msgid "107,538"
-msgstr "1753"
+msgstr "107,538"
 
 #: ../../benchmarks.rst:1127
-#, fuzzy
-#| msgid "857"
 msgid "85,703"
-msgstr "857"
+msgstr "85,703"
 
 #: ../../benchmarks.rst:1128
-#, fuzzy
-#| msgid "790.8"
 msgid "0.80"
-msgstr "790.8"
+msgstr "0.80"
 
 #: ../../benchmarks.rst:1130 ../../benchmarks.rst:1337
 #: ../../benchmarks.rst:1402 ../../benchmarks.rst:1463
-#, fuzzy
-#| msgid "548"
 msgid "48"
-msgstr "548"
+msgstr "48"
 
 #: ../../benchmarks.rst:1133
-#, fuzzy
-#| msgid "16,316"
 msgid "168,360"
-msgstr "16,316"
+msgstr "168,360"
 
 #: ../../benchmarks.rst:1134
-#, fuzzy
-#| msgid "16,328"
 msgid "146,329"
-msgstr "16,328"
+msgstr "146,329"
 
 #: ../../benchmarks.rst:1135 ../../benchmarks.rst:1188
 #: ../../benchmarks.rst:1386
-#, fuzzy
-#| msgid "790.8"
 msgid "0.87"
-msgstr "790.8"
+msgstr "0.87"
 
 #: ../../benchmarks.rst:1140
-#, fuzzy
-#| msgid "210,549"
 msgid "130,548"
-msgstr "210,549"
+msgstr "130,548"
 
 #: ../../benchmarks.rst:1141
-#, fuzzy
-#| msgid "211,345"
 msgid "121,450"
-msgstr "211,345"
+msgstr "121,450"
 
 #: ../../benchmarks.rst:1142 ../../benchmarks.rst:1400
-#, fuzzy
-#| msgid "106.30"
 msgid "0.93"
-msgstr "106.30"
+msgstr "0.93"
 
 #: ../../benchmarks.rst:1147
-#, fuzzy
-#| msgid "208,101"
 msgid "204,190"
-msgstr "208,101"
+msgstr "204,190"
 
 #: ../../benchmarks.rst:1148
-#, fuzzy
-#| msgid "10,000"
 msgid "120,026"
-msgstr "10,000"
+msgstr "120,026"
 
 #: ../../benchmarks.rst:1154
-#, fuzzy
-#| msgid "16,316"
 msgid "165,114"
-msgstr "16,316"
+msgstr "165,114"
 
 #: ../../benchmarks.rst:1155
-#, fuzzy
-#| msgid "1035"
 msgid "103,592"
-msgstr "1035"
+msgstr "103,592"
 
 #: ../../benchmarks.rst:1156
-#, fuzzy
-#| msgid "28.63"
 msgid "0.63"
-msgstr "28.63"
+msgstr "0.63"
 
 #: ../../benchmarks.rst:1161
-#, fuzzy
-#| msgid "132.5"
 msgid "123,725"
-msgstr "132.5"
+msgstr "123,725"
 
 #: ../../benchmarks.rst:1162
-#, fuzzy
-#| msgid "857"
 msgid "85,587"
-msgstr "857"
+msgstr "85,587"
 
 #: ../../benchmarks.rst:1163 ../../benchmarks.rst:1438
 msgid "0.69"
-msgstr ""
+msgstr "0.69"
 
 #: ../../benchmarks.rst:1165 ../../benchmarks.rst:1365
-#, fuzzy
-#| msgid "160"
 msgid "60"
-msgstr "160"
+msgstr "60"
 
 #: ../../benchmarks.rst:1167
 msgid ""
@@ -4214,6 +4096,12 @@ msgid ""
 "connections (68 ms against 95 ms) and higher at 2,048 HTTP/2 connections "
 "(1.02 s against 0.53 s)."
 msgstr ""
+"Sibuna TCP और सादा HTTP HAProxy की दर से, कम CPU के साथ संभालता है। वह "
+"HTTPS को 80 से 93 प्रतिशत और HTTP/2 को 59 से 69 प्रतिशत पर संभालता है। "
+"HTTP/2 पाथ वर्करों के साथ एक प्रोटोकॉल रनटाइम में चलता है, और अंतर वहीं "
+"है। किसी भी पंक्ति में कोई अनुरोध विफल नहीं हुआ। Sibuna का 99वाँ "
+"पर्सेंटाइल 2,048 HTTPS कनेक्शन पर HAProxy से कम था (95 ms के मुक़ाबले 68 "
+"ms) और 2,048 HTTP/2 कनेक्शन पर अधिक (0.53 s के मुक़ाबले 1.02 s)।"
 
 #: ../../benchmarks.rst:1169
 msgid ""
@@ -4227,6 +4115,14 @@ msgid ""
 "the table were measured on the commit before it, which differs in nothing "
 "else."
 msgstr ""
+"लोड रन ने एक ऐसी ख़राबी पाई जो किसी परीक्षण ने नहीं पाई थी। वर्कर पाथ पर "
+"एक कनेक्शन 4,096 अनुरोध सर्व करता है, और नोड उसे तब बंद कर देता था जब "
+"सर्वर पर अंतिम अनुरोध का उत्तर अभी बाक़ी था, इसलिए लंबे keep-alive "
+"कनेक्शन पर 4,096 में से एक अनुरोध को कोई उत्तर नहीं मिलता था। लोड उपकरण "
+"ने इसे read errors के रूप में दिखाया। ऊपर के बिल्ड में सुधार है, और एक "
+"परीक्षण अब दोनों पाथ पर एक कनेक्शन पर 4,096 अनुरोध भेजता है। 16 और 256 "
+"कनेक्शन पर http और https पंक्तियाँ सुधार के साथ मापी गईं। तालिका की बाक़ी "
+"पंक्तियाँ उससे पहले के कमिट पर मापी गईं, जो और किसी बात में अलग नहीं है।"
 
 #: ../../benchmarks.rst:1171
 msgid ""
@@ -4240,6 +4136,14 @@ msgid ""
 "requests per second with 64 connections, and a round trip between two of "
 "the hosts takes about a millisecond."
 msgstr ""
+"क्लस्टर के लिए हमने तीन होस्ट में से हर एक पर एक नोड चलाया, 16, 16 और 32 "
+"CPU, एक नेटवर्क पर कंटेनरों में। हर होस्ट ने एक ऑरिजिन और एक लोड जनरेटर "
+"भी चलाया, और हर जनरेटर ने अगले होस्ट के नोड पर लोड डाला, तीनों एक साथ दस "
+"सेकंड तक। हर नोड ने तीनों होस्ट के ऑरिजिन को भेजा। HAProxy उसी तरह चला, "
+"least connections के साथ। Sibuna ने मेश का डिफ़ॉल्ट पूल उपयोग किया। यहाँ "
+"सीमा नेटवर्क तय करता है: अकेला जनरेटर 64 कनेक्शन के साथ दूसरे होस्ट के "
+"ऑरिजिन तक प्रति सेकंड 58,000 से 105,000 अनुरोध पहुँचाता है, और दो होस्ट "
+"के बीच एक round trip में लगभग एक मिलीसेकंड लगता है।"
 
 #: ../../benchmarks.rst:1173
 msgid ""
@@ -4247,120 +4151,90 @@ msgid ""
 "together, and the CPU seconds of the three proxies together during the "
 "ten seconds."
 msgstr ""
+"तीन होस्ट, एक साथ लोड डाले गए तीन नोड: सभी नोडों के मिलाकर प्रति सेकंड "
+"अनुरोध, और दस सेकंड के दौरान तीनों प्रॉक्सी के मिलाकर CPU सेकंड।"
 
 #: ../../benchmarks.rst:1178 ../../benchmarks.rst:1376
 msgid "Connections per node"
-msgstr ""
+msgstr "प्रति नोड कनेक्शन"
 
 #: ../../benchmarks.rst:1185 ../../benchmarks.rst:1199
 #: ../../benchmarks.rst:1383 ../../benchmarks.rst:1397
-#, fuzzy
-#| msgid "4"
 msgid "64"
-msgstr "4"
+msgstr "64"
 
 #: ../../benchmarks.rst:1186
-#, fuzzy
-#| msgid "10,951"
 msgid "104,391"
-msgstr "10,951"
+msgstr "104,391"
 
 #: ../../benchmarks.rst:1187
-#, fuzzy
-#| msgid "33,764"
 msgid "90,764"
-msgstr "33,764"
+msgstr "90,764"
 
 #: ../../benchmarks.rst:1189 ../../benchmarks.rst:1401
 msgid "97"
-msgstr ""
+msgstr "97"
 
 #: ../../benchmarks.rst:1190
-#, fuzzy
-#| msgid "438"
 msgid "43"
-msgstr "438"
+msgstr "43"
 
 #: ../../benchmarks.rst:1192 ../../benchmarks.rst:1206
 #: ../../benchmarks.rst:1390 ../../benchmarks.rst:1404
-#, fuzzy
-#| msgid "51"
 msgid "512"
-msgstr "51"
+msgstr "512"
 
 #: ../../benchmarks.rst:1193
-#, fuzzy
-#| msgid "1035"
 msgid "110,354"
-msgstr "1035"
+msgstr "110,354"
 
 #: ../../benchmarks.rst:1194
-#, fuzzy
-#| msgid "9,546"
 msgid "98,462"
-msgstr "9,546"
+msgstr "98,462"
 
 #: ../../benchmarks.rst:1195
-#, fuzzy
-#| msgid "790.8"
 msgid "0.89"
-msgstr "790.8"
+msgstr "0.89"
 
 #: ../../benchmarks.rst:1196
-#, fuzzy
-#| msgid "177"
 msgid "77"
-msgstr "177"
+msgstr "77"
 
 #: ../../benchmarks.rst:1200
-#, fuzzy
-#| msgid "199,465"
 msgid "96,657"
-msgstr "199,465"
+msgstr "96,657"
 
 #: ../../benchmarks.rst:1201
-#, fuzzy
-#| msgid "7,952"
 msgid "87,985"
-msgstr "7,952"
+msgstr "87,985"
 
 #: ../../benchmarks.rst:1202
-#, fuzzy
-#| msgid "10,951"
 msgid "0.91"
-msgstr "10,951"
+msgstr "0.91"
 
 #: ../../benchmarks.rst:1203
 msgid "88"
-msgstr ""
+msgstr "88"
 
 #: ../../benchmarks.rst:1204
-#, fuzzy
-#| msgid "571"
 msgid "71"
-msgstr "571"
+msgstr "71"
 
 #: ../../benchmarks.rst:1207
-#, fuzzy
-#| msgid "10,000"
 msgid "106,803"
-msgstr "10,000"
+msgstr "106,803"
 
 #: ../../benchmarks.rst:1208
-#, fuzzy
-#| msgid "16,228"
 msgid "81,722"
-msgstr "16,228"
+msgstr "81,722"
 
 #: ../../benchmarks.rst:1210
-#, fuzzy
-#| msgid "1035"
 msgid "103"
-msgstr "1035"
+msgstr "103"
 
 #: ../../benchmarks.rst:1211
 msgid "69"
-msgstr ""
+msgstr "69"
 
 #: ../../benchmarks.rst:1213
 msgid ""
@@ -4369,51 +4243,58 @@ msgid ""
 "proxy. These are single runs on shared hosts, and the lines differ by "
 "several percent from run to run."
 msgstr ""
+"होस्टों के पार Sibuna HAProxy जितना संभालता है उसका 77 से 91 प्रतिशत "
+"संभालता है, उसके CPU समय के 44 से 81 प्रतिशत के साथ। किसी भी प्रॉक्सी के "
+"साथ कोई अनुरोध विफल नहीं हुआ। ये साझा होस्ट पर एकल रन हैं, और पंक्तियाँ "
+"रन-दर-रन कई प्रतिशत बदलती हैं।"
 
 #: ../../benchmarks.rst:1215
 msgid ""
 "We also timed what the cluster shares, on the same three hosts with "
 "``surface: \"shield\"``."
 msgstr ""
+"हमने उन्हीं तीन होस्ट पर ``surface: \"shield\"`` के साथ यह भी मापा कि "
+"क्लस्टर क्या साझा करता है।"
 
 #: ../../benchmarks.rst:1217
 msgid ""
 "Three hosts: the time from a command on one node to its effect on the "
 "others, three rounds."
 msgstr ""
+"तीन होस्ट: एक नोड पर कमांड से दूसरों पर उसके प्रभाव तक का समय, तीन दौर।"
 
 #: ../../benchmarks.rst:1221
 msgid "Event"
-msgstr ""
+msgstr "घटना"
 
 #: ../../benchmarks.rst:1222
 msgid "Time"
-msgstr ""
+msgstr "समय"
 
 #: ../../benchmarks.rst:1223
 msgid "A client banned on one node is refused by the two others"
-msgstr ""
+msgstr "एक नोड पर प्रतिबंधित क्लाइंट को दो अन्य नोड अस्वीकार करते हैं"
 
 #: ../../benchmarks.rst:1224
 msgid "20 to 64 ms"
-msgstr ""
+msgstr "20 से 64 ms"
 
 #: ../../benchmarks.rst:1225
 msgid "``del ban`` on one node: all three admit the client again"
-msgstr ""
+msgstr "एक नोड पर ``del ban``: तीनों क्लाइंट को फिर से प्रवेश देते हैं"
 
 #: ../../benchmarks.rst:1226
 msgid "13 to 48 ms"
-msgstr ""
+msgstr "13 से 48 ms"
 
 #: ../../benchmarks.rst:1227
 msgid ""
 "``reload cluster``: the command returns and all three hold the same file"
-msgstr ""
+msgstr "``reload cluster``: कमांड लौटती है और तीनों के पास एक ही फ़ाइल है"
 
 #: ../../benchmarks.rst:1228
 msgid "30 ms"
-msgstr ""
+msgstr "30 ms"
 
 #: ../../benchmarks.rst:1230
 msgid ""
@@ -4421,6 +4302,9 @@ msgid ""
 "``show cluster`` showed the same digest on all three nodes before and "
 "after the reload."
 msgstr ""
+"समय में वह अनुरोध शामिल है जो प्रभाव देखता है, और जो हर 5 ms पर भेजा जाता "
+"है। रीलोड से पहले और बाद में ``show cluster`` ने तीनों नोडों पर एक ही "
+"digest दिखाया।"
 
 #: ../../benchmarks.rst:1232
 msgid ""
@@ -4434,96 +4318,87 @@ msgid ""
 "Both proxies negotiated TLS 1.3 with ``TLS_AES_256_GCM_SHA384`` and the "
 "same ECDSA P-256 certificate, and both ran on the same eight CPUs."
 msgstr ""
+"**बराबरी की तुलना।** ऊपर की तालिकाओं की HAProxy फ़ाइल अनुरोध में कोई हेडर "
+"नहीं जोड़ती। Sibuna हमेशा सात जोड़ता है: ``X-Forwarded-For``, "
+"``X-Forwarded-Proto``, ``X-Forwarded-Host``, ``X-Forwarded-Port``, "
+"``X-Real-IP``, ``X-Sibuna-Status`` और ``X-Sibuna-Rule``। इसलिए HAProxy ने "
+"हर अनुरोध के लिए कम कार्य किया। हमने HAProxy को ``option forwardfor`` और "
+"छह ``http-request set-header`` पंक्तियाँ दीं जो वही सात हेडर लिखती हैं, "
+"और एक होस्ट पर 256 कनेक्शन के साथ छह सेकंड तक दोनों को फिर से मापा। दोनों "
+"प्रॉक्सी ने ``TLS_AES_256_GCM_SHA384`` और एक ही ECDSA P-256 सर्टिफ़िकेट "
+"के साथ TLS 1.3 negotiate किया, और दोनों एक ही आठ CPU पर चले।"
 
 #: ../../benchmarks.rst:1234
 msgid ""
 "One host, 256 connections, both proxies writing the same seven headers. "
 "The CPU time is that of the proxy for one request."
 msgstr ""
+"एक होस्ट, 256 कनेक्शन, दोनों प्रॉक्सी एक ही सात हेडर लिखते हुए। CPU समय "
+"एक अनुरोध के लिए प्रॉक्सी का है।"
 
 #: ../../benchmarks.rst:1242
 msgid "HAProxy CPU per request"
-msgstr ""
+msgstr "प्रति अनुरोध HAProxy CPU"
 
 #: ../../benchmarks.rst:1243
 msgid "Sibuna CPU per request"
-msgstr ""
+msgstr "प्रति अनुरोध Sibuna CPU"
 
 #: ../../benchmarks.rst:1245
-#, fuzzy
-#| msgid "2239"
 msgid "223,139"
-msgstr "2239"
+msgstr "223,139"
 
 #: ../../benchmarks.rst:1246
 msgid "224,363"
-msgstr ""
+msgstr "224,363"
 
 #: ../../benchmarks.rst:1248
 msgid "35.6 us"
-msgstr ""
+msgstr "35.6 us"
 
 #: ../../benchmarks.rst:1249
-#, fuzzy
-#| msgid "p99 us"
 msgid "29.6 us"
-msgstr "p99 us"
+msgstr "29.6 us"
 
 #: ../../benchmarks.rst:1251
-#, fuzzy
-#| msgid "16,544"
 msgid "166,054"
-msgstr "16,544"
+msgstr "166,054"
 
 #: ../../benchmarks.rst:1252
-#, fuzzy
-#| msgid "195,188"
 msgid "149,168"
-msgstr "195,188"
+msgstr "149,168"
 
 #: ../../benchmarks.rst:1253
-#, fuzzy
-#| msgid "106.30"
 msgid "0.90"
-msgstr "106.30"
+msgstr "0.90"
 
 #: ../../benchmarks.rst:1254
-#, fuzzy
-#| msgid "p99 us"
 msgid "47.9 us"
-msgstr "p99 us"
+msgstr "47.9 us"
 
 #: ../../benchmarks.rst:1255
-#, fuzzy
-#| msgid "p99 us"
 msgid "44.9 us"
-msgstr "p99 us"
+msgstr "44.9 us"
 
 #: ../../benchmarks.rst:1257
-#, fuzzy
-#| msgid "15928"
 msgid "152,781"
-msgstr "15928"
+msgstr "152,781"
 
 #: ../../benchmarks.rst:1258
-#, fuzzy
-#| msgid "134,344"
 msgid "104,384"
-msgstr "134,344"
+msgstr "104,384"
 
 #: ../../benchmarks.rst:1259
-#, fuzzy
-#| msgid "790.8"
 msgid "0.68"
-msgstr "790.8"
+msgstr "0.68"
 
 #: ../../benchmarks.rst:1260
 msgid "51.8 us"
-msgstr ""
+msgstr "51.8 us"
 
 #: ../../benchmarks.rst:1261
 msgid "74.2 us"
-msgstr ""
+msgstr "74.2 us"
 
 #: ../../benchmarks.rst:1263
 msgid ""
@@ -4534,6 +4409,12 @@ msgid ""
 "Sibuna serves plain HTTP the same way, on its eight workers, and spends "
 "less CPU for a request than HAProxy does."
 msgstr ""
+"हर थ्रेड समूह का CPU समय बचे हुए दो अंतरों को समझाता है। HAProxy आठ थ्रेड "
+"चलाता है, और एक थ्रेड किसी कनेक्शन के लिए सब कुछ करता है: TLS, HTTP "
+"framing, सर्वर का चुनाव और सर्वर की ओर का कार्य। हर पंक्ति में उसके थ्रेड "
+"48 CPU सेकंड में से 47.5 व्यस्त रहे। Sibuna सादा HTTP उसी तरह, अपने आठ "
+"वर्करों पर, सर्व करता है, और एक अनुरोध के लिए HAProxy से कम CPU खर्च करता "
+"है।"
 
 #: ../../benchmarks.rst:1265
 msgid ""
@@ -4544,6 +4425,12 @@ msgid ""
 "waited for the other thread. Sixteen threads also shared eight CPUs, and "
 "the kernel took the CPU from a thread about once in eleven requests."
 msgstr ""
+"HTTPS के लिए Sibuna प्रोटोकॉल रनटाइम के थ्रेड पर TLS समाप्त करता है और "
+"अनुरोध को एक वर्कर पर सर्व करता है। हर अनुरोध और हर रिस्पॉन्स एक थ्रेड से "
+"दूसरे पर जाता है। दोनों समूहों ने 18.3 और 21.9 CPU सेकंड उपयोग किए, "
+"उपलब्ध 48 में से 40, इसलिए नोड के पास CPU की कमी नहीं थी। वह दूसरे थ्रेड "
+"की प्रतीक्षा करता रहा। सोलह थ्रेड ने आठ CPU भी साझा किए, और कर्नेल ने "
+"लगभग हर ग्यारह अनुरोधों में एक बार किसी थ्रेड से CPU ले लिया।"
 
 #: ../../benchmarks.rst:1267
 msgid ""
@@ -4553,6 +4440,11 @@ msgid ""
 "multiplexer written for this one purpose. This line is bound by CPU, and "
 "only a cheaper HTTP/2 path will raise it."
 msgstr ""
+"HTTP/2 के लिए पूरा आदान-प्रदान प्रोटोकॉल रनटाइम में चलता है, जो एक "
+"सामान्य HTTP/2 लाइब्रेरी वाला सामान्य एसिंक्रोनस रनटाइम है। उसने अपना "
+"पूरा CPU उपयोग किया और एक अनुरोध के लिए 74 us लिए, जहाँ HAProxy को केवल "
+"इसी उद्देश्य के लिए लिखे गए multiplexer के साथ 52 us चाहिए। यह पंक्ति CPU "
+"से बँधी है, और केवल एक सस्ता HTTP/2 पाथ इसे बढ़ाएगा।"
 
 #: ../../benchmarks.rst:1269
 msgid ""
@@ -4561,223 +4453,158 @@ msgid ""
 "We measured again on the same host, HAProxy with the same seven headers, "
 "eight seconds for each line, one run."
 msgstr ""
+"**वर्करों पर TLS।** SID 0024 दोनों अंतरों में से पहला हटाता है: वर्कर अब "
+"HTTP/1.1 कनेक्शन का TLS स्वयं समाप्त करता है। हमने उसी होस्ट पर फिर से "
+"मापा, HAProxy उन्हीं सात हेडर के साथ, हर पंक्ति के लिए आठ सेकंड, एक रन।"
 
 #: ../../benchmarks.rst:1271
 msgid ""
 "One host after SID 0024, both proxies writing the same headers: requests "
 "per second and the CPU seconds of the proxy during the eight seconds."
 msgstr ""
+"SID 0024 के बाद एक होस्ट, दोनों प्रॉक्सी एक ही हेडर लिखते हुए: प्रति "
+"सेकंड अनुरोध और आठ सेकंड के दौरान प्रॉक्सी के CPU सेकंड।"
 
 #: ../../benchmarks.rst:1284
-#, fuzzy
-#| msgid "516,872"
 msgid "168,827"
-msgstr "516,872"
+msgstr "168,827"
 
 #: ../../benchmarks.rst:1285
-#, fuzzy
-#| msgid "180"
 msgid "185,780"
-msgstr "180"
+msgstr "185,780"
 
 #: ../../benchmarks.rst:1286 ../../benchmarks.rst:1434
-#, fuzzy
-#| msgid "21.0"
 msgid "1.10"
-msgstr "21.0"
+msgstr "1.10"
 
 #: ../../benchmarks.rst:1291
-#, fuzzy
-#| msgid "33,764"
 msgid "233,412"
-msgstr "33,764"
+msgstr "233,412"
 
 #: ../../benchmarks.rst:1292
-#, fuzzy
-#| msgid "39,980"
 msgid "239,183"
-msgstr "39,980"
+msgstr "239,183"
 
 #: ../../benchmarks.rst:1293 ../../benchmarks.rst:1314
 #: ../../benchmarks.rst:1430
-#, fuzzy
-#| msgid "15.02"
 msgid "1.02"
-msgstr "15.02"
+msgstr "1.02"
 
 #: ../../benchmarks.rst:1298
-#, fuzzy
-#| msgid "16064"
 msgid "180,614"
-msgstr "16064"
+msgstr "180,614"
 
 #: ../../benchmarks.rst:1299
-#, fuzzy
-#| msgid "160"
 msgid "187,670"
-msgstr "160"
+msgstr "187,670"
 
 #: ../../benchmarks.rst:1300 ../../benchmarks.rst:1426
-#, fuzzy
-#| msgid "169.04"
 msgid "1.04"
-msgstr "169.04"
+msgstr "1.04"
 
 #: ../../benchmarks.rst:1305
-#, fuzzy
-#| msgid "142,498"
 msgid "125,481"
-msgstr "142,498"
+msgstr "125,481"
 
 #: ../../benchmarks.rst:1306
-#, fuzzy
-#| msgid "15485.4"
 msgid "154,815"
-msgstr "15485.4"
+msgstr "154,815"
 
 #: ../../benchmarks.rst:1307
-#, fuzzy
-#| msgid "11.73"
 msgid "1.23"
-msgstr "11.73"
+msgstr "1.23"
 
 #: ../../benchmarks.rst:1312
-#, fuzzy
-#| msgid "15896"
 msgid "217,896"
-msgstr "15896"
+msgstr "217,896"
 
 #: ../../benchmarks.rst:1313
-#, fuzzy
-#| msgid "16,228"
 msgid "221,286"
-msgstr "16,228"
+msgstr "221,286"
 
 #: ../../benchmarks.rst:1319
-#, fuzzy
-#| msgid "177"
 msgid "159,747"
-msgstr "177"
+msgstr "159,747"
 
 #: ../../benchmarks.rst:1320
-#, fuzzy
-#| msgid "16,464"
 msgid "169,664"
-msgstr "16,464"
+msgstr "169,664"
 
 #: ../../benchmarks.rst:1321
-#, fuzzy
-#| msgid "21.0"
 msgid "1.06"
-msgstr "21.0"
+msgstr "1.06"
 
 #: ../../benchmarks.rst:1326
-#, fuzzy
-#| msgid "10,951"
 msgid "100,137"
-msgstr "10,951"
+msgstr "100,137"
 
 #: ../../benchmarks.rst:1327
-#, fuzzy
-#| msgid "33,396"
 msgid "133,896"
-msgstr "33,396"
+msgstr "133,896"
 
 #: ../../benchmarks.rst:1328
-#, fuzzy
-#| msgid "11.84"
 msgid "1.34"
-msgstr "11.84"
+msgstr "1.34"
 
 #: ../../benchmarks.rst:1333
-#, fuzzy
-#| msgid "143,900"
 msgid "153,080"
-msgstr "143,900"
+msgstr "153,080"
 
 #: ../../benchmarks.rst:1334
-#, fuzzy
-#| msgid "143,900"
 msgid "174,901"
-msgstr "143,900"
+msgstr "174,901"
 
 #: ../../benchmarks.rst:1340
-#, fuzzy
-#| msgid "12.09"
 msgid "120,893"
-msgstr "12.09"
+msgstr "120,893"
 
 #: ../../benchmarks.rst:1341
-#, fuzzy
-#| msgid "14,124"
 msgid "142,710"
-msgstr "14,124"
+msgstr "142,710"
 
 #: ../../benchmarks.rst:1342
-#, fuzzy
-#| msgid "12.8"
 msgid "1.18"
-msgstr "12.8"
+msgstr "1.18"
 
 #: ../../benchmarks.rst:1344
-#, fuzzy
-#| msgid "327"
 msgid "37"
-msgstr "327"
+msgstr "37"
 
 #: ../../benchmarks.rst:1347
-#, fuzzy
-#| msgid "16,316"
 msgid "180,326"
-msgstr "16,316"
+msgstr "180,326"
 
 #: ../../benchmarks.rst:1348
-#, fuzzy
-#| msgid "12,668"
 msgid "120,663"
-msgstr "12,668"
+msgstr "120,663"
 
 #: ../../benchmarks.rst:1349
-#, fuzzy
-#| msgid "27.67"
 msgid "0.67"
-msgstr "27.67"
+msgstr "0.67"
 
 #: ../../benchmarks.rst:1354
-#, fuzzy
-#| msgid "149,996"
 msgid "149,909"
-msgstr "149,996"
+msgstr "149,909"
 
 #: ../../benchmarks.rst:1355
-#, fuzzy
-#| msgid "10,000"
 msgid "105,047"
-msgstr "10,000"
+msgstr "105,047"
 
 #: ../../benchmarks.rst:1356
-#, fuzzy
-#| msgid "106.30"
 msgid "0.70"
-msgstr "106.30"
+msgstr "0.70"
 
 #: ../../benchmarks.rst:1361
-#, fuzzy
-#| msgid "16,316"
 msgid "116,731"
-msgstr "16,316"
+msgstr "116,731"
 
 #: ../../benchmarks.rst:1362
-#, fuzzy
-#| msgid "16,240"
 msgid "86,234"
-msgstr "16,240"
+msgstr "86,234"
 
 #: ../../benchmarks.rst:1363
-#, fuzzy
-#| msgid "74"
 msgid "0.74"
-msgstr "74"
+msgstr "0.74"
 
 #: ../../benchmarks.rst:1367
 msgid ""
@@ -4788,6 +4615,12 @@ msgid ""
 "TCP, HTTP and HTTPS, with less CPU, and behind over HTTP/2, which did not "
 "change. No request failed in any line."
 msgstr ""
+"बदलाव से पहले Sibuna 256 कनेक्शन के साथ प्रति सेकंड 149,168 HTTPS अनुरोध "
+"संभालता था। अब वह 174,901 संभालता है, और वह पूरा कार्य आठ वर्करों पर चलता "
+"है: थ्रेड समूहों के मापन में उन्होंने 35.9 CPU सेकंड उपयोग किए और रनटाइम "
+"थ्रेड ने कुछ नहीं। Sibuna TCP, HTTP और HTTPS पर HAProxy से आगे है, कम CPU "
+"के साथ, और HTTP/2 पर पीछे, जो नहीं बदला। किसी भी पंक्ति में कोई अनुरोध "
+"विफल नहीं हुआ।"
 
 #: ../../benchmarks.rst:1369
 msgid ""
@@ -4795,6 +4628,8 @@ msgid ""
 "differ from run to run by more than the two proxies differ from each "
 "other."
 msgstr ""
+"तीन होस्ट पर सीमा अब भी नेटवर्क तय करता है, और पंक्तियाँ रन-दर-रन दोनों "
+"प्रॉक्सी के आपसी अंतर से अधिक बदलती हैं।"
 
 #: ../../benchmarks.rst:1371
 msgid ""
@@ -4802,90 +4637,69 @@ msgid ""
 "requests per second of all nodes together and the CPU seconds of the "
 "three proxies during the ten seconds."
 msgstr ""
+"SID 0024 के बाद तीन होस्ट, दोनों प्रॉक्सी एक ही हेडर लिखते हुए: सभी नोडों "
+"के मिलाकर प्रति सेकंड अनुरोध और दस सेकंड के दौरान तीनों प्रॉक्सी के CPU "
+"सेकंड।"
 
 #: ../../benchmarks.rst:1384
-#, fuzzy
-#| msgid "16,444"
 msgid "102,446"
-msgstr "16,444"
+msgstr "102,446"
 
 #: ../../benchmarks.rst:1385
-#, fuzzy
-#| msgid "30,124"
 msgid "89,124"
-msgstr "30,124"
+msgstr "89,124"
 
 #: ../../benchmarks.rst:1387
-#, fuzzy
-#| msgid "15.02"
 msgid "102"
-msgstr "15.02"
+msgstr "102"
 
 #: ../../benchmarks.rst:1391
-#, fuzzy
-#| msgid "88,104"
 msgid "85,149"
-msgstr "88,104"
+msgstr "85,149"
 
 #: ../../benchmarks.rst:1392
-#, fuzzy
-#| msgid "197,532"
 msgid "97,173"
-msgstr "197,532"
+msgstr "97,173"
 
 #: ../../benchmarks.rst:1394
-#, fuzzy
-#| msgid "3066"
 msgid "66"
-msgstr "3066"
+msgstr "66"
 
 #: ../../benchmarks.rst:1398
-#, fuzzy
-#| msgid "768"
 msgid "97,068"
-msgstr "768"
+msgstr "97,068"
 
 #: ../../benchmarks.rst:1399
-#, fuzzy
-#| msgid "99,998"
 msgid "90,399"
-msgstr "99,998"
+msgstr "90,399"
 
 #: ../../benchmarks.rst:1405
-#, fuzzy
-#| msgid "210,549"
 msgid "80,596"
-msgstr "210,549"
+msgstr "80,596"
 
 #: ../../benchmarks.rst:1406
-#, fuzzy
-#| msgid "26.52"
 msgid "92,652"
-msgstr "26.52"
+msgstr "92,652"
 
 #: ../../benchmarks.rst:1407
-#, fuzzy
-#| msgid "13.15"
 msgid "1.15"
-msgstr "13.15"
+msgstr "1.15"
 
 #: ../../benchmarks.rst:1408
-#, fuzzy
-#| msgid "79.3"
 msgid "93"
-msgstr "79.3"
+msgstr "93"
 
 #: ../../benchmarks.rst:1409
-#, fuzzy
-#| msgid "4"
 msgid "49"
-msgstr "4"
+msgstr "49"
 
 #: ../../benchmarks.rst:1411
 msgid ""
 "The CPU time of Sibuna for HTTPS on the three hosts fell from 69 to 71 "
 "seconds before the change to 48 to 49 seconds."
 msgstr ""
+"तीन होस्ट पर HTTPS के लिए Sibuna का CPU समय बदलाव से पहले के 69 से 71 "
+"सेकंड से घटकर 48 से 49 सेकंड हो गया।"
 
 #: ../../benchmarks.rst:1413
 msgid ""
@@ -4893,74 +4707,64 @@ msgid ""
 "we ran the single host again with 256 connections, once for eight seconds "
 "in each case. No request failed."
 msgstr ""
+"क्लस्टर सुविधाओं, हुक और कंसोल दृश्य के merge होने के बाद, हमने एक होस्ट "
+"पर 256 कनेक्शन के साथ फिर से चलाया, हर मामले में एक बार आठ सेकंड के लिए। "
+"कोई अनुरोध विफल नहीं हुआ।"
 
 #: ../../benchmarks.rst:1415
 msgid ""
 "One host after all merges of 2026-11-25, 256 connections: requests per "
 "second."
 msgstr ""
+"2026-11-25 के सभी merge के बाद एक होस्ट, 256 कनेक्शन: प्रति सेकंड अनुरोध।"
 
 #: ../../benchmarks.rst:1424
-#, fuzzy
-#| msgid "583934"
 msgid "230,934"
-msgstr "583934"
+msgstr "230,934"
 
 #: ../../benchmarks.rst:1425
-#, fuzzy
-#| msgid "32,696"
 msgid "240,967"
-msgstr "32,696"
+msgstr "240,967"
 
 #: ../../benchmarks.rst:1428
-#, fuzzy
-#| msgid "99,998"
 msgid "219,798"
-msgstr "99,998"
+msgstr "219,798"
 
 #: ../../benchmarks.rst:1429
-#, fuzzy
-#| msgid "27,785"
 msgid "224,375"
-msgstr "27,785"
+msgstr "224,375"
 
 #: ../../benchmarks.rst:1432
-#, fuzzy
-#| msgid "16,240"
 msgid "162,520"
-msgstr "16,240"
+msgstr "162,520"
 
 #: ../../benchmarks.rst:1433
-#, fuzzy
-#| msgid "19,261"
 msgid "178,261"
-msgstr "19,261"
+msgstr "178,261"
 
 #: ../../benchmarks.rst:1435 ../../benchmarks.rst:1472
 msgid "h2"
-msgstr ""
+msgstr "h2"
 
 #: ../../benchmarks.rst:1436
-#, fuzzy
-#| msgid "16,328"
 msgid "150,384"
-msgstr "16,328"
+msgstr "150,384"
 
 #: ../../benchmarks.rst:1437
-#, fuzzy
-#| msgid "3,781"
 msgid "103,789"
-msgstr "3,781"
+msgstr "103,789"
 
 #: ../../benchmarks.rst:1440
 msgid ""
 "The new features cost nothing that this measurement can see while they "
 "are not configured. HTTP/2 stays where it was."
 msgstr ""
+"जब तक नई सुविधाएँ कॉन्फ़िगर नहीं की गई हैं, तब तक उनकी कोई ऐसी लागत नहीं "
+"है जिसे यह मापन देख सके। HTTP/2 वहीं रहता है जहाँ था।"
 
 #: ../../benchmarks.rst:1442
 msgid "Sibuna, HAProxy and Envoy"
-msgstr ""
+msgstr "Sibuna, HAProxy और Envoy"
 
 #: ../../benchmarks.rst:1445
 msgid ""
@@ -4973,112 +4777,93 @@ msgid ""
 "median of the three runs. The spread between the runs of one case was at "
 "most 4%. No request failed."
 msgstr ""
+"उसी होस्ट पर और उसी बिल्ड के साथ हमने फिर तीनों प्रॉक्सी एक के बाद एक "
+"चलाए, हर एक तीन बार, हर मामले में 256 कनेक्शन के साथ आठ सेकंड के लिए। "
+"HAProxy 3.0.11 था और Envoy BoringSSL के साथ 1.40.2। हर प्रॉक्सी के पास "
+"वही आठ CPU और आठ थ्रेड थे। Sibuna और HAProxy ने least connections से "
+"संतुलन किया, Envoy ने least requests से। ऑरिजिन, लोड जनरेटर और "
+"सर्टिफ़िकेट एक ही थे। तालिका तीन रन की माध्यिका (median) देती है। एक "
+"मामले के रनों के बीच फैलाव अधिकतम 4% था। कोई अनुरोध विफल नहीं हुआ।"
 
 #: ../../benchmarks.rst:1447
 msgid ""
 "One host, 256 connections, three proxies: requests per second, the median "
 "of three runs, and the resident memory at the end of the run."
 msgstr ""
+"एक होस्ट, 256 कनेक्शन, तीन प्रॉक्सी: प्रति सेकंड अनुरोध, तीन रन की "
+"माध्यिका, और रन के अंत में resident मेमोरी।"
 
 #: ../../benchmarks.rst:1454
 msgid "Envoy"
-msgstr ""
+msgstr "Envoy"
 
 #: ../../benchmarks.rst:1455
-#, fuzzy
-#| msgid "Sibuna Shield"
 msgid "Sibuna MiB"
-msgstr "Sibuna Shield"
+msgstr "Sibuna MiB"
 
 #: ../../benchmarks.rst:1456
 msgid "HAProxy MiB"
-msgstr ""
+msgstr "HAProxy MiB"
 
 #: ../../benchmarks.rst:1457
 msgid "Envoy MiB"
-msgstr ""
+msgstr "Envoy MiB"
 
 #: ../../benchmarks.rst:1459
-#, fuzzy
-#| msgid "10,000"
 msgid "220,040"
-msgstr "10,000"
+msgstr "220,040"
 
 #: ../../benchmarks.rst:1460
 msgid "220,323"
-msgstr ""
+msgstr "220,323"
 
 #: ../../benchmarks.rst:1461
-#, fuzzy
-#| msgid "78,997"
 msgid "70,909"
-msgstr "78,997"
+msgstr "70,909"
 
 #: ../../benchmarks.rst:1462
-#, fuzzy
-#| msgid "4"
 msgid "14"
-msgstr "4"
+msgstr "14"
 
 #: ../../benchmarks.rst:1466
-#, fuzzy
-#| msgid "14,124"
 msgid "174,611"
-msgstr "14,124"
+msgstr "174,611"
 
 #: ../../benchmarks.rst:1467
-#, fuzzy
-#| msgid "16192"
 msgid "165,199"
-msgstr "16192"
+msgstr "165,199"
 
 #: ../../benchmarks.rst:1468
-#, fuzzy
-#| msgid "33,396"
 msgid "63,399"
-msgstr "33,396"
+msgstr "63,399"
 
 #: ../../benchmarks.rst:1469
-#, fuzzy
-#| msgid "21.0"
 msgid "21"
-msgstr "21.0"
+msgstr "21"
 
 #: ../../benchmarks.rst:1473
-#, fuzzy
-#| msgid "14,124"
 msgid "104,132"
-msgstr "14,124"
+msgstr "104,132"
 
 #: ../../benchmarks.rst:1474
-#, fuzzy
-#| msgid "15896"
 msgid "153,899"
-msgstr "15896"
+msgstr "153,899"
 
 #: ../../benchmarks.rst:1475
-#, fuzzy
-#| msgid "78,997"
 msgid "68,972"
-msgstr "78,997"
+msgstr "68,972"
 
 #: ../../benchmarks.rst:1476
-#, fuzzy
-#| msgid "16176"
 msgid "116"
-msgstr "16176"
+msgstr "116"
 
 #: ../../benchmarks.rst:1477
-#, fuzzy
-#| msgid "15912"
 msgid "112"
-msgstr "15912"
+msgstr "112"
 
 #: ../../benchmarks.rst:1478
-#, fuzzy
-#| msgid "40"
 msgid "140"
-msgstr "40"
+msgstr "140"
 
 #: ../../benchmarks.rst:1480
 msgid ""
@@ -5096,6 +4881,18 @@ msgid ""
 "does not see. We configured no TCP listener on Envoy, so it has no TCP "
 "line."
 msgstr ""
+"हम तालिका को विनम्रता से पढ़ते हैं। plaintext HTTP में Sibuna और HAProxy "
+"बराबर हैं, और TLS में Sibuna लगभग 6% आगे है। HTTP/2 में HAProxy लगभग डेढ़ "
+"गुना तेज़ है, उस कारण से जो पिछले अनुभाग बताते हैं: Sibuna का HTTP/2 "
+"वर्करों के साथ एक प्रोटोकॉल रनटाइम में चलता है। HAProxy और Envoy ने हर "
+"मामले में सभी आठ CPU उपयोग किए; Sibuna ने छह से आठ। Envoy बाक़ी दोनों की "
+"plaintext दर के लगभग एक-तिहाई तक पहुँचा। हम Envoy को tune करने के "
+"विशेषज्ञ नहीं हैं। हमने router filter के साथ उसका दस्तावेज़ित static "
+"कॉन्फ़िगरेशन उपयोग किया, request identifiers और dynamic statistics बंद "
+"करके, और एक बेहतर कॉन्फ़िगरेशन उसकी संख्याएँ बदल भी सकता है। Envoy दूसरी "
+"ख़ूबियों के लिए बना है, जैसे xDS पर गतिशील कॉन्फ़िगरेशन और फ़िल्टरों का "
+"बड़ा समूह, जिन्हें यह मापन नहीं देखता। हमने Envoy पर कोई TCP लिसनर "
+"कॉन्फ़िगर नहीं किया, इसलिए उसकी कोई TCP पंक्ति नहीं है।"
 
 #: ../../benchmarks.rst:1482
 msgid ""
@@ -5107,3 +4904,10 @@ msgid ""
 "to rank proxies that are within a few percent of each other. The scripts "
 "and configurations are those of the earlier sections."
 msgstr ""
+"तीनों एक ही मशीन पर loopback पर मापे गए, दो बाइट के रिस्पॉन्स के साथ और "
+"क्लाइंट तथा प्रॉक्सी के बीच बिना किसी नेटवर्क के। छोटा रिस्पॉन्स हर "
+"अनुरोध की लागत को प्रमुख बना देता है; बड़ा रिस्पॉन्स या असली नेटवर्क "
+"अंतरों को कम कर देता है। हमने हर मामला तीन दौरों में से हर एक में एक बार "
+"आठ सेकंड के लिए चलाया, जो बड़े अंतर देखने के लिए पर्याप्त है, लेकिन कुछ "
+"प्रतिशत के भीतर वाले प्रॉक्सी को क्रम देने के लिए पर्याप्त नहीं। "
+"स्क्रिप्ट और कॉन्फ़िगरेशन पिछले अनुभागों वाले हैं।"

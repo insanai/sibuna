@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../edge.rst:1
 msgid "Part VIII: The Edge Load Balancer"
-msgstr ""
+msgstr "भाग VIII: एज लोड बैलेंसर"
 
 #: ../../edge.rst:4
 msgid ""
@@ -32,10 +32,18 @@ msgid ""
 "the parent record, and each section names the record that holds its "
 "design."
 msgstr ""
+"पिछले भागों ने एक ऑरिजिन के सामने एक गेट और एक शील्ड बनाई। यह भाग एक "
+"कनेक्शन के साथ ऐसे नोड से होकर चलता है जो कई ऑरिजिन को सर्व करता है: वह "
+"TCP, UDP और HTTP स्वीकार करता है, सॉकेट पर ही कनेक्शन को प्रवेश देता है "
+"या अस्वीकार करता है, एक सर्वर चुनता है, और फ़्लो के समाप्त होने तक उसे "
+"उसी सर्वर पर रखता है। हम डिज़ाइन और उसके कारणों का अध्ययन करते हैं। "
+"कॉन्फ़िगरेशन भाग XI में है, और उसे दोहराने के बजाय हम उसका संदर्भ देते "
+"हैं। SID 0015 मूल रिकॉर्ड है, और हर अनुभाग उस रिकॉर्ड का नाम देता है "
+"जिसमें उसका डिज़ाइन है।"
 
 #: ../../edge.rst:6
 msgid "Objectives"
-msgstr ""
+msgstr "उद्देश्य"
 
 #: ../../edge.rst:8
 msgid ""
@@ -48,10 +56,18 @@ msgid ""
 "stages at the socket, state the outcome rule of a hook, and name the gaps "
 "that remain."
 msgstr ""
+"इस अध्याय के अंत तक हमें यह कर पाना चाहिए: समझाना कि एक फ़्लो एक ही थ्रेड "
+"का क्यों होता है और रीलोड से कोई अनुरोध विफल क्यों नहीं होता; बताना कि "
+"प्रतीक्षा करता कनेक्शन केवल एक रिकॉर्ड की लागत रखता है, किसी बफ़र की "
+"नहीं; weighted round robin, least connections, Maglev, bounded loads और "
+"rendezvous hashing का अंकगणित हाथ से करना; निकालना कि किसी सर्वर के हटने "
+"पर कितने क्लाइंट दूसरी जगह जाते हैं; सर्वर के जीवन को एक स्टेट मशीन के "
+"रूप में बनाना; सॉकेट पर प्रवेश के चरणों की सूची देना; हुक के परिणाम का "
+"नियम बताना; और बची हुई कमियों के नाम देना।"
 
 #: ../../edge.rst:10
 msgid "The Model"
-msgstr ""
+msgstr "मॉडल"
 
 #: ../../edge.rst:13
 msgid ""
@@ -66,6 +82,16 @@ msgid ""
 "in order; the first match selects a pool, and the default pool takes the "
 "rest."
 msgstr ""
+"एक नोड का वर्णन चार प्रकार की वस्तुओं से होता है। *फ़्रंटएंड* बाउंड पतों "
+"का एक समूह और एक प्रोटोकॉल है: ``tcp``, ``udp`` या ``http``। *रूट* किसी "
+"HTTP फ़्रंटएंड का होता है और किसी होस्ट, किसी पाथ, या दोनों से मेल खाता "
+"है। *पूल* (फ़ाइल में ``backend``) सर्वरों का एक समूह है जिसके साथ एक "
+"शेड्यूलर, हेल्थ चेक और एक ट्रैफ़िक नीति होती है। *सर्वर* का एक नाम, एक "
+"पता, एक वेट और एक फ़्लो सीमा ``max_flows`` होती है, और वह बैकअप भी हो "
+"सकता है। TCP या UDP फ़्रंटएंड एक डिफ़ॉल्ट पूल का नाम देता है, और "
+"ClientHello का निरीक्षण करने वाले TCP फ़्रंटएंड में ऐसे नियम हो सकते हैं "
+"जो दूसरे पूल चुनें। HTTP फ़्रंटएंड अपने रूट क्रम से जाँचता है; पहला मेल "
+"एक पूल चुनता है, और बाक़ी डिफ़ॉल्ट पूल लेता है।"
 
 #: ../../edge.rst:15
 msgid ""
@@ -78,10 +104,17 @@ msgid ""
 "connection, or the streams of one HTTP/2 connection, may reach different "
 "servers."
 msgstr ""
+"कार्य की इकाई *फ़्लो* है। TCP स्ट्रीम accept से close तक एक फ़्लो है। UDP "
+"मैपिंग, यानी एक क्लाइंट पते और एक सर्वर सॉकेट का संबंध, अपने पहले "
+"डेटाग्राम से अपनी निष्क्रियता-समाप्ति तक एक फ़्लो है। HTTP एक्सचेंज, यानी "
+"एक अनुरोध और उसका रिस्पॉन्स, भी एक फ़्लो है। TCP या UDP फ़्लो अपना सर्वर "
+"एक बार, अपने पूरे जीवन के लिए चुनता है। HTTP फ़्रंटएंड हर अनुरोध के लिए "
+"सर्वर चुनता है, इसलिए एक keep-alive कनेक्शन के अनुरोध, या एक HTTP/2 "
+"कनेक्शन की स्ट्रीम, अलग-अलग सर्वरों तक पहुँच सकती हैं।"
 
 #: ../../edge.rst:17
 msgid "Flows Belong to One Thread"
-msgstr ""
+msgstr "फ़्लो एक ही थ्रेड के होते हैं"
 
 #: ../../edge.rst:20
 msgid ""
@@ -94,6 +127,14 @@ msgid ""
 "owner holds nothing of the flow. So no lock protects the state of a flow, "
 "and a fault in one connection closes that connection only."
 msgstr ""
+"हर फ़्लो का किसी भी समय ठीक एक थ्रेड मालिक होता है। एज वर्कर हर फ़्रंटएंड "
+"के कनेक्शन स्वीकार करता है, UDP मैपिंग और ClientHello निरीक्षणों का मालिक "
+"होता है, और स्थापित TCP स्ट्रीम को एक रिले थ्रेड को सौंप देता है। HTTP "
+"कनेक्शन उस HTTP वर्कर को सौंपा जाता है जो सबसे कम कनेक्शन सर्व कर रहा है, "
+"और बंद होने तक वहीं रहता है (SID 0016)। हैंडऑफ़ एक कतार से होकर "
+"स्थानांतरण है, जिसके बाद जगाया जाता है। स्थानांतरण के बाद पुराने मालिक के "
+"पास फ़्लो का कुछ भी नहीं रहता। इसलिए किसी फ़्लो की अवस्था को किसी लॉक की "
+"ज़रूरत नहीं है, और एक कनेक्शन की ख़राबी केवल उसी कनेक्शन को बंद करती है।"
 
 #: ../../edge.rst:22
 msgid ""
@@ -106,6 +147,14 @@ msgid ""
 "and is shared on purpose: the flow budget, the per-server counts of "
 "active flows, the health flags, and the published routing table."
 msgstr ""
+"विकल्प फ़्लो की एक ऐसी तालिका है जिसे हर थ्रेड पढ़ता और लिखता है। इसके "
+"लिए हर पहुँच पर एक लॉक चाहिए, या एक lock-free संरचना जिसमें पेलोड का हर "
+"रीड अपने आप में race से मुक्त हो। SID 0015 दूसरे विकल्प का जाल बताता है: "
+"टूटे हुए रीड (torn read) का पता लगाने वाला sequence counter Rust में उसकी "
+"मरम्मत नहीं कर सकता, क्योंकि असमकालिक प्रतिलिपि अपने आप में पहले ही data "
+"race है। ओनरशिप यह प्रश्न ही हटा देती है। थ्रेड को जो साझा करना पड़ता है "
+"वह छोटा है और जानबूझकर साझा किया जाता है: फ़्लो बजट, हर सर्वर पर सक्रिय "
+"फ़्लो की गिनती, हेल्थ फ़्लैग, और प्रकाशित रूटिंग टेबल।"
 
 #: ../../edge.rst:24
 msgid ""
@@ -115,10 +164,15 @@ msgid ""
 "model of SID 0016). It balances counts, not work: a busy connection and "
 "an idle one count the same."
 msgstr ""
+"ओनरशिप की कीमत यह है कि कोई फ़्लो कम व्यस्त थ्रेड पर नहीं जा सकता। सबसे "
+"कम कनेक्शन के आधार पर आवंटन वर्करों की कनेक्शन गिनती को एक-दूसरे से एक के "
+"अंतर के भीतर रखता है (SID 0016 के Lean मॉडल में "
+"``assign_keeps_balance``)। यह गिनतियों को संतुलित करता है, कार्य को नहीं: "
+"एक व्यस्त कनेक्शन और एक निष्क्रिय कनेक्शन बराबर गिने जाते हैं।"
 
 #: ../../edge.rst:26
 msgid "An Immutable Routing Snapshot"
-msgstr ""
+msgstr "एक अपरिवर्तनीय रूटिंग स्नैपशॉट"
 
 #: ../../edge.rst:29
 msgid ""
@@ -131,10 +185,18 @@ msgid ""
 "without a lock and without a write to shared memory. When they differ it "
 "takes the mutex once and fetches the new snapshot (SID 0019)."
 msgstr ""
+"रूटिंग टेबल कभी-कभार बदलती है और हर अनुरोध उसे पढ़ता है। इसलिए Sibuna इन "
+"दोनों को अलग करता है। एक लेखक, यानी रीलोड, एडमिन कमांड या क्लस्टर "
+"व्यवस्था (regime) का बदलाव, एक म्यूटेक्स के तहत मास्टर टेबल बदलता है, "
+"उससे एक नया अपरिवर्तनीय स्नैपशॉट बनाता है, और एक जनरेशन काउंटर बढ़ाता है। "
+"पाठक एक संख्या की तुलना उस जनरेशन से करता है जो उसके थ्रेड ने पिछली बार "
+"देखी थी। दोनों बराबर हों तो वह वही स्नैपशॉट उपयोग करता है जो उसके थ्रेड "
+"के पास पहले से है, बिना लॉक के और साझा मेमोरी में बिना लिखे। अलग हों तो "
+"वह एक बार म्यूटेक्स लेता है और नया स्नैपशॉट ले आता है (SID 0019)।"
 
 #: ../../edge.rst:31
 msgid "Implementation: ``Shared::read``"
-msgstr ""
+msgstr "इम्प्लीमेंटेशन: ``Shared::read``"
 
 #: ../../edge.rst:33
 msgid ""
@@ -142,6 +204,9 @@ msgid ""
 "the generation with a ``thread_local`` cache of at most eight entries and "
 "takes no lock. In ``crates/lb/src/http.rs`` (crate ``sibuna-lb``)."
 msgstr ""
+"वर्तमान रूटिंग स्नैपशॉट पर एक विज़िटर चलाता है। सामान्य कॉल जनरेशन की "
+"तुलना अधिकतम आठ प्रविष्टियों वाले ``thread_local`` कैश से करती है और कोई "
+"लॉक नहीं लेती। ``crates/lb/src/http.rs`` में (क्रेट ``sibuna-lb``)।"
 
 #: ../../edge.rst:35
 msgid ""
@@ -161,6 +226,21 @@ msgid ""
 "    visit(&snapshot)\n"
 "}"
 msgstr ""
+"fn read<R>(&self, visit: impl Fn(&Snapshot) -> R) -> R {\n"
+"    let generation = self.generation.load(Ordering::Acquire);\n"
+"    let cached = CACHE.try_with(|cache| {\n"
+"        let cache = cache.try_borrow().ok()?;\n"
+"        let fresh = |entry: &&Cached| entry.id == self.id && "
+"entry.generation == generation;\n"
+"        cache.iter().find(fresh).map(|entry| visit(&entry.snapshot))\n"
+"    });\n"
+"    if let Ok(Some(result)) = cached {\n"
+"        return result;\n"
+"    }\n"
+"    let (snapshot, generation) = self.fetch();\n"
+"    // ... इस थ्रेड के लिए स्नैपशॉट याद रखें, फिर:\n"
+"    visit(&snapshot)\n"
+"}"
 
 #: ../../edge.rst:52
 msgid ""
@@ -174,6 +254,14 @@ msgid ""
 "requests in each of three runs. A request two revisions behind is still "
 "refused."
 msgstr ""
+"फ़ायरवॉल नीति जनरेशन :math:`n` के तहत अनुरोध पर निर्णय लेता है, और रूट "
+"टेबल एक क्षण बाद उसका सर्वर चुनती है। दोनों के बीच रीलोड हो सकता है। पहले "
+"संस्करण ने ऐसे अनुरोध का उत्तर 503 दिया, और एक परीक्षण ने 30 रीलोड के "
+"दौरान 49,522 अनुरोधों में ऐसे 32 उत्तर गिने। अब स्नैपशॉट उस revision को "
+"भी दस सेकंड तक रखता है जिसे पिछले रीलोड ने हटाया था, और revision "
+":math:`n` के तहत तय हुआ अनुरोध revision :math:`n` से ही रूट होता है (SID "
+"0018)। तब वही परीक्षण तीन रन में से हर एक में लगभग 50,000 अनुरोधों के साथ "
+"पास हुआ। दो revision पीछे का अनुरोध अब भी अस्वीकार होता है।"
 
 #: ../../edge.rst:54
 msgid ""
@@ -185,10 +273,17 @@ msgid ""
 "names keeps its counts. When the flow ends, the ticket's ``Drop`` returns "
 "its place to that record, whichever revision now serves."
 msgstr ""
+"एक फ़्लो रीलोड के पार अपना सर्वर एक सरल कारण से बनाए रखता है: उसका आरक्षण "
+"स्नैपशॉट में नहीं रहता। आरक्षण एक ``Ticket`` है जो सर्वर का पता और सर्वर "
+"के लोड रिकॉर्ड का साझा संदर्भ रखता है। लोड रिकॉर्ड प्रोटोकॉल और पते की "
+"कुंजी वाले एक मैप में रखे जाते हैं, जिसे रीलोड देखता है, इसलिए जिस सर्वर "
+"का नाम नई फ़ाइल में भी है उसकी गिनतियाँ बनी रहती हैं। जब फ़्लो समाप्त "
+"होता है, तो टिकट का ``Drop`` अपनी जगह उसी रिकॉर्ड को लौटा देता है, चाहे "
+"अब कोई भी revision सर्व कर रहा हो।"
 
 #: ../../edge.rst:56
 msgid "Implementation: ``Pool::reserve_with``"
-msgstr ""
+msgstr "इम्प्लीमेंटेशन: ``Pool::reserve_with``"
 
 #: ../../edge.rst:58
 msgid ""
@@ -197,11 +292,15 @@ msgid ""
 "gives the place back and picks again, at most eight times. So a server "
 "never serves more than its ``max_flows``. In ``crates/lb/src/pool.rs``."
 msgstr ""
+"एक सर्वर चुनता है, एक atomic जोड़ से उस पर स्वयं को गिनता है, और फिर "
+"गिनती जाँचता है। यदि इस बीच किसी दूसरे थ्रेड ने अंतिम जगह ले ली हो, तो वह "
+"जगह लौटा देता है और फिर से चुनता है, अधिकतम आठ बार। इसलिए कोई सर्वर कभी "
+"अपने ``max_flows`` से अधिक सर्व नहीं करता। ``crates/lb/src/pool.rs`` में।"
 
 #: ../../edge.rst:60 ../../edge.rst:145 ../../edge.rst:265
 #: ../../edge.rst:332 ../../edge.rst:378 ../../edge.rst:453
 msgid "Explain the invariant"
-msgstr ""
+msgstr "अपरिवर्तनीय नियम समझाइए"
 
 #: ../../edge.rst:62
 msgid ""
@@ -211,10 +310,15 @@ msgid ""
 "this server from the file does not end its 9 flows, and when their places "
 "are returned."
 msgstr ""
+"दो थ्रेड ``max_flows`` 10 वाले ऐसे सर्वर पर आरक्षण करते हैं जिस पर 9 "
+"फ़्लो हैं। दिखाइए कि दोनों ``fetch_add`` कॉल का क्रम कुछ भी हो, उनमें से "
+"अधिकतम एक ही जगह रख पाता है। फिर समझाइए कि जो रीलोड इस सर्वर को फ़ाइल से "
+"हटाता है वह इसके 9 फ़्लो क्यों समाप्त नहीं करता, और उनकी जगहें कब लौटाई "
+"जाती हैं।"
 
 #: ../../edge.rst:64
 msgid "Workers That Wait Without Threads"
-msgstr ""
+msgstr "थ्रेड के बिना प्रतीक्षा करने वाले वर्कर"
 
 #: ../../edge.rst:67
 msgid ""
@@ -224,10 +328,15 @@ msgid ""
 "and each connection held about 145 KiB of resident memory (SID 0015). SID "
 "0016 replaced the threads of the edge with event-driven workers."
 msgstr ""
+"पिछले भागों का फ़ायरवॉल हर कनेक्शन को एक थ्रेड पर सर्व करता है। HAProxy "
+"3.0 के साथ तुलना में, उस डिज़ाइन ने 256 कनेक्शन पर plaintext HTTP में "
+"HAProxy के थ्रूपुट का 59% हासिल किया। उसने प्रति अनुरोध 2.9 context "
+"switch किए, और हर कनेक्शन ने लगभग 145 KiB resident मेमोरी रखी (SID 0015)। "
+"SID 0016 ने एज के थ्रेड को इवेंट-ड्रिवन वर्करों से बदल दिया।"
 
 #: ../../edge.rst:69
 msgid "The Path of a Connection"
-msgstr ""
+msgstr "एक कनेक्शन का पाथ"
 
 #: ../../edge.rst:73
 msgid ""
@@ -240,6 +349,14 @@ msgid ""
 "gate or shield, request hooks, and the choice of a server from the "
 "routing snapshot, then exchange with the server."
 msgstr ""
+"क्लाइंट कर्नेल लिसनर तक पहुँचता है, फिर एज वर्कर तक, जो कनेक्शन दर, फ़्लो "
+"बजट और कनेक्शन हुक लागू करता है। TCP फ़्लो ClientHello निरीक्षण से "
+"गुज़रता है, एक सर्वर आरक्षित करता है और एक रिले थ्रेड उसे रिले करता है। "
+"UDP फ़्लो QUIC जाँच से गुज़रता है और एक मैपिंग बन जाता है। HTTP कनेक्शन "
+"एक HTTP वर्कर के पास जाता है; h2 प्रस्तावित करने वाला TLS क्लाइंट "
+"प्रोटोकॉल रनटाइम के पास जाता है। दोनों प्रतिबंध और सीमाएँ, ट्रैफ़िक नीति, "
+"गेट या शील्ड, अनुरोध हुक, और रूटिंग स्नैपशॉट से सर्वर का चुनाव चलाते हैं, "
+"फिर सर्वर के साथ आदान-प्रदान करते हैं।"
 
 #: ../../edge.rst:73
 msgid ""
@@ -286,6 +403,47 @@ msgid ""
 "  inspect -> shared [style=dashed];\n"
 "}"
 msgstr ""
+"digraph edge_path {\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", fontname=\"Helvetica\", "
+"fontsize=9, nodesep=0.3, ranksep=0.32];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=8.5, fillcolor=\"#eff6ff\", color=\"#1e40af\", penwidth=1.0, "
+"margin=\"0.1,0.05\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
+"fontcolor=\"#475569\", arrowsize=0.6];\n"
+"  client [label=\"क्लाइंट\", fillcolor=\"#ffffff\", color=\"#172033\"];\n"
+"  kernel [label=\"कर्नेल लिसनर\\ndefer_accept, backlog\"];\n"
+"  edgew [label=\"एज वर्कर\\nकनेक्शन दर, फ़्लो बजट,\\nकनेक्शन हुक\", "
+"fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
+"  inspect [label=\"TCP: ClientHello निरीक्षण\\nपाँच वर्ग, fallback\"];\n"
+"  udp [label=\"UDP: QUIC जाँच,\\nमैपिंग, उत्तर सीमा\"];\n"
+"  relay [label=\"रिले थ्रेड\\nबाइट पाइप\"];\n"
+"  worker [label=\"HTTP वर्कर\\nHTTP/1.1 के लिए TLS\", "
+"fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
+"  runtime [label=\"प्रोटोकॉल रनटाइम\\nHTTP/2, HTTP/3\", "
+"fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
+"  decide [label=\"प्रतिबंध, लिमिटर, ट्रैफ़िक नीति,\\nगेट या शील्ड, अनुरोध "
+"हुक\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
+"  choose [label=\"स्नैपशॉट से\\nसर्वर चुनें\"];\n"
+"  shared [label=\"साझा: रूटिंग स्नैपशॉट,\\nसर्वर लोड, हेल्थ फ़्लैग\", "
+"fillcolor=\"#f8fafc\", color=\"#64748b\"];\n"
+"  server [label=\"सर्वर\", fillcolor=\"#ffffff\", color=\"#172033\"];\n"
+"  client -> kernel;\n"
+"  kernel -> edgew;\n"
+"  edgew -> inspect [label=\"tcp\"];\n"
+"  edgew -> udp [label=\"udp\"];\n"
+"  edgew -> worker [label=\"http, सबसे कम\"];\n"
+"  worker -> runtime [label=\"h2 प्रस्तावित\"];\n"
+"  inspect -> relay [label=\"आरक्षण, connect\"];\n"
+"  udp -> server;\n"
+"  relay -> server;\n"
+"  worker -> decide;\n"
+"  runtime -> decide [label=\"Decide\"];\n"
+"  decide -> choose;\n"
+"  choose -> server [label=\"आदान-प्रदान\"];\n"
+"  choose -> shared [style=dashed];\n"
+"  inspect -> shared [style=dashed];\n"
+"}"
 
 #: ../../edge.rst:73
 msgid ""
@@ -293,6 +451,8 @@ msgid ""
 "or one group of threads; the dashed edges are the shared, read-mostly "
 "state."
 msgstr ""
+"एक नोड से होकर कनेक्शन का पाथ। हर बॉक्स का मालिक एक थ्रेड या थ्रेड का एक "
+"समूह है; डैश वाली रेखाएँ साझा, अधिकतर पढ़ी जाने वाली अवस्था हैं।"
 
 #: ../../edge.rst:109
 msgid ""
@@ -301,10 +461,14 @@ msgid ""
 "admission function, and asks the connection hooks when the ClientHello is "
 "read (SID 0017, SID 0030)."
 msgstr ""
+"HTTP/3 फ़्रंटएंड का QUIC क्लाइंट एज वर्कर से नहीं गुज़रता: प्रोटोकॉल "
+"रनटाइम उसे स्वीकार करता है, एक प्रवेश फ़ंक्शन के ज़रिए प्रति-क्लाइंट सीमा "
+"लागू करता है, और ClientHello पढ़े जाने पर कनेक्शन हुक से पूछता है (SID "
+"0017, SID 0030)।"
 
 #: ../../edge.rst:111
 msgid "Readiness and the Cost of Waiting"
-msgstr ""
+msgstr "तत्परता (readiness) और प्रतीक्षा की लागत"
 
 #: ../../edge.rst:114
 msgid ""
@@ -316,6 +480,13 @@ msgid ""
 "those bytes allow and returns to the loop. No thread ever waits for a "
 "slow client."
 msgstr ""
+"एज हर उस प्रोसेसर के लिए, जिसे प्रोसेस उपयोग कर सकती है, एक HTTP वर्कर "
+"शुरू करता है, अधिकतम 64 तक। वर्कर एक poller (Linux पर ``epoll``) वाला एक "
+"थ्रेड है। जिस भी सॉकेट का वह मालिक है वह non-blocking है, और थ्रेड की "
+"एकमात्र प्रतीक्षा उसके लूप में ``epoll_wait`` की एक कॉल है। वर्कर को "
+"बताया जाता है कि कौन-से सॉकेट *तैयार* (ready) हैं: अभी पढ़े या लिखे जा "
+"सकते हैं। फिर वह उतना कार्य करता है जितना वे बाइट अनुमति देते हैं और लूप "
+"पर लौट आता है। कोई थ्रेड कभी किसी धीमे क्लाइंट की प्रतीक्षा नहीं करता।"
 
 #: ../../edge.rst:116
 msgid ""
@@ -330,6 +501,16 @@ msgid ""
 "path. Kernel socket memory, about 3.4 KiB before any buffer, is then the "
 "larger cost."
 msgstr ""
+"कनेक्शन वर्कर में एक रिकॉर्ड और कर्नेल में एक सॉकेट है। निष्क्रिय रहते "
+"हुए वह कोई बफ़र नहीं रखता। जब उसका सॉकेट पढ़ने योग्य होता है तो वर्कर "
+"अपने एक ब्लॉक में पढ़ता है, और कनेक्शन को अपने पूल से 64 KiB का बफ़र केवल "
+"तब तक उधार देता है जब तक कनेक्शन के पास अप्रसंस्कृत अनुरोध बाइट हों। "
+"इसीलिए प्रतीक्षा सस्ती है। SID 0016 के स्वीकृति परीक्षणों में 20,000 "
+"निष्क्रिय keep-alive कनेक्शनों ने 8 MiB resident मेमोरी जोड़ी, और 10,000 "
+"खुले WebSocket ने 27 MiB रखी। SID 0015 के अनुसार प्रोसेस में एक निष्क्रिय "
+"HTTP कनेक्शन लगभग 0.4 KiB का है, जबकि थ्रेड पाथ पर लगभग 145 KiB का। तब "
+"किसी भी बफ़र से पहले लगभग 3.4 KiB की कर्नेल सॉकेट मेमोरी बड़ी लागत होती "
+"है।"
 
 #: ../../edge.rst:118
 msgid ""
@@ -344,16 +525,28 @@ msgid ""
 "mutated responses, fed whole, in random pieces and one byte at a time, "
 "the bytes and the results are equal."
 msgstr ""
+"फ़ायरवॉल का निर्णय एसिंक्रोनस नहीं बना। उसे किसी I/O की ज़रूरत नहीं है, "
+"इसलिए वह पिछले भागों का सिंक्रोनस फ़ंक्शन ही रहता है। वर्कर उसे तब कॉल "
+"करता है जब पूरा हेड और बॉडी की शुरुआत मेमोरी में हों। प्रवेश मिलने पर "
+"निर्णय एक *योजना* (plan) लौटाता है: सर्वर का आरक्षण, एन्कोड किया गया हेड, "
+"और अपलोड की फ़्रेमिंग। फिर तीन sans-I/O मशीनें आदान-प्रदान को आगे ले जाती "
+"हैं: एक अनुरोध एन्कोडर, एक अपलोड रिले और एक रिस्पॉन्स रिले। हर एक बाइट "
+"लेती है और बाइट बनाती है, और कभी किसी सॉकेट को नहीं छूती। हर एक की तुलना "
+"उस ब्लॉकिंग रिले से की गई है जिसकी जगह उसने ली: 150,000 बदले हुए "
+"(mutated) रिस्पॉन्स के लिए, जो पूरे, यादृच्छिक टुकड़ों में और एक-एक बाइट "
+"करके दिए गए, बाइट और परिणाम बराबर रहे।"
 
 #: ../../edge.rst:120
 msgid "Every resource has a bound, and every state has a deadline:"
-msgstr ""
+msgstr "हर संसाधन की एक सीमा है, और हर अवस्था की एक समय-सीमा:"
 
 #: ../../edge.rst:122
 msgid ""
 "The worker reads from a socket only while the buffer toward the other "
 "side is below 64 KiB. A slow reader thereby stops the reads of its peer."
 msgstr ""
+"वर्कर किसी सॉकेट से केवल तब तक पढ़ता है जब तक दूसरी ओर जाने वाला बफ़र 64 "
+"KiB से कम हो। इस तरह एक धीमा पाठक अपने पीयर के रीड रोक देता है।"
 
 #: ../../edge.rst:123
 msgid ""
@@ -361,6 +554,9 @@ msgid ""
 "most 64 KiB, and causes at most eight rounds of work. A bulk transfer "
 "cannot starve the small requests of the same worker."
 msgstr ""
+"तत्परता की एक घटना किसी कनेक्शन के हर सॉकेट को अधिकतम एक बार, अधिकतम 64 "
+"KiB पढ़ती है, और अधिकतम आठ दौर का कार्य कराती है। कोई बड़ा ट्रांसफ़र उसी "
+"वर्कर के छोटे अनुरोधों को भूखा नहीं रख सकता।"
 
 #: ../../edge.rst:124
 msgid ""
@@ -368,12 +564,17 @@ msgid ""
 "the idle timeout, a slow head, a slow body, a connect of five seconds, "
 "server silence, a write that makes no progress."
 msgstr ""
+"एक-एक सेकंड के स्लॉट वाला टाइमर व्हील हर कनेक्शन के लिए एक समय-सीमा रखता "
+"है: निष्क्रियता टाइमआउट, धीमा हेड, धीमी बॉडी, पाँच सेकंड का connect, "
+"सर्वर की चुप्पी, ऐसा write जो आगे नहीं बढ़ता।"
 
 #: ../../edge.rst:125
 msgid ""
 "A connection serves at most 4,096 requests. A worker keeps at most 64 "
 "idle server sockets per address and 1,024 in all."
 msgstr ""
+"एक कनेक्शन अधिकतम 4,096 अनुरोध सर्व करता है। एक वर्कर प्रति पता अधिकतम 64 "
+"और कुल मिलाकर 1,024 निष्क्रिय सर्वर सॉकेट रखता है।"
 
 #: ../../edge.rst:127
 msgid ""
@@ -381,10 +582,13 @@ msgid ""
 "requests per second against HAProxy's 243,864, which is 94%, with a 99th "
 "percentile of 2.60 ms (SID 0016)."
 msgstr ""
+"इन वर्करों के साथ 256 कनेक्शन पर plaintext HTTP प्रति सेकंड 229,139 "
+"अनुरोध तक पहुँचा, जबकि HAProxy 243,864 तक, यानी 94%, और 99वाँ पर्सेंटाइल "
+"2.60 ms रहा (SID 0016)।"
 
 #: ../../edge.rst:129
 msgid "Implementation: ``Workers::submit``"
-msgstr ""
+msgstr "इम्प्लीमेंटेशन: ``Workers::submit``"
 
 #: ../../edge.rst:131
 msgid ""
@@ -393,10 +597,14 @@ msgid ""
 "connection then stays on that worker. In "
 "``cmd/sibuna/src/edge/workers.rs`` (crate ``sibuna``)."
 msgstr ""
+"स्वीकार किए गए कनेक्शन को उस वर्कर को देता है जो सबसे कम कनेक्शन सर्व कर "
+"रहा है, उस वर्कर की गिनती बढ़ाता है और उसके poller को जगाता है। फिर "
+"कनेक्शन उसी वर्कर पर रहता है। ``cmd/sibuna/src/edge/workers.rs`` में "
+"(क्रेट ``sibuna``)।"
 
 #: ../../edge.rst:133
 msgid "One Hop Fewer for HTTP/2 and HTTP/3"
-msgstr ""
+msgstr "HTTP/2 और HTTP/3 के लिए एक हॉप कम"
 
 #: ../../edge.rst:136
 msgid ""
@@ -408,6 +616,13 @@ msgid ""
 "the request, and 30 us more in the worker to read the same request from a "
 "socket and decide it."
 msgstr ""
+"HTTP/2 और HTTP/3 को एक प्रोटोकॉल रनटाइम टर्मिनेट करता है जो सुव्यवस्थित "
+"रूप से अनुरक्षित लाइब्रेरी (rustls, hyper, h3 के साथ quinn) का उपयोग करता "
+"है। शुरू में रनटाइम हर अनुरोध को HTTP/1.1 के रूप में एक सॉकेट जोड़ी "
+"(socket pair) में लिखता था, और एक वर्कर उसे पढ़ता, फिर से पार्स करता, उस "
+"पर निर्णय लेता और उसे फ़ॉरवर्ड करता था। SID 0017 ने एक HTTP/2 अनुरोध का "
+"CPU समय 76 us मापा: वर्कर के अनुरोध देखने से पहले रनटाइम में 46 us, और "
+"उसी अनुरोध को सॉकेट से पढ़ने और उस पर निर्णय लेने में वर्कर में 30 us और।"
 
 #: ../../edge.rst:138
 msgid ""
@@ -425,10 +640,22 @@ msgid ""
 "rapid resets, CONTINUATION floods and HPACK expansion would then become "
 "our own work."
 msgstr ""
+"सुधार यह है कि निर्णय को उसी थ्रेड पर एक फ़ंक्शन के रूप में कॉल किया जाए "
+"जिसने स्ट्रीम को डिकोड किया। ingress क्रेट सादा डेटा परिभाषित करता है, "
+"``Offer`` (HTTP/1.1 टेक्स्ट के रूप में हेड और बॉडी की शुरुआत) और "
+"``Verdict`` (एक उत्तर, या सर्वर आरक्षण और भेजे जाने वाले हेड के साथ एक "
+"``Forward``), और एक trait, ``Decide``, जिसे बाइनरी वर्करों के डिस्पैच से "
+"इम्प्लीमेंट करती है। स्वीकृत अनुरोध अपने सर्वर तक ऐसे कनेक्शन पर जाता है "
+"जिसे रनटाइम स्वयं पूल में रखता है। अनुरोध अब किसी सॉकेट जोड़ी और दूसरे "
+"थ्रेड को पार नहीं करता। उन्हीं प्रोसेसरों पर HTTP/2 थ्रूपुट 20% से 37% तक "
+"बढ़ा, और 2,048 कनेक्शन पर resident मेमोरी 771 MiB से घटकर 592 MiB हो गई। "
+"अपना HTTP/2 इम्प्लीमेंटेशन लिखने से और ओवरहेड हटता; SID 0017 इसे अस्वीकार "
+"करता है, क्योंकि तब rapid reset, CONTINUATION flood और HPACK expansion के "
+"विरुद्ध बचाव हमारा अपना कार्य बन जाता।"
 
 #: ../../edge.rst:140
 msgid "TLS on the Workers"
-msgstr ""
+msgstr "वर्करों पर TLS"
 
 #: ../../edge.rst:143
 msgid ""
@@ -446,6 +673,19 @@ msgid ""
 "rose from 149,168 to 174,901 requests per second, where HAProxy writing "
 "the same headers carries 153,080."
 msgstr ""
+"HTTPS में एक पारगमन बचा रहा: रनटाइम TLS समाप्त करता था और खुले (clear) "
+"बाइट एक सॉकेट जोड़ी के ज़रिए वर्कर को कॉपी करता था। SID 0024 वर्कर को "
+"HTTP/1.1 कनेक्शन का TLS स्वयं समाप्त करने देता है। वर्कर बिना उत्तर दिए "
+"ClientHello पढ़ता है। यदि क्लाइंट ``h2`` या ``acme-tls/1`` प्रस्तावित "
+"करता है, या ऐसे होस्ट का नाम देता है जिसका सर्टिफ़िकेट पहले मांग पर (on "
+"demand) प्राप्त करना होगा, तो वर्कर सॉकेट और पढ़े गए बाइट रनटाइम को दे "
+"देता है। अन्यथा वह कनेक्शन रखता है और अपने किसी I/O के बिना TLS लाइब्रेरी "
+"को चलाता है। वर्कर निर्णय प्रस्ताव से लेता है, परिणाम से नहीं, क्योंकि "
+"जिस सत्र ने उत्तर दे दिया है वह दूसरे थ्रेड पर नहीं जा सकता। जिस क्लाइंट "
+"ने अपना handshake पूरा नहीं किया है उसके लिए कार्य पहले संदेश के 16 KiB "
+"और 15 सेकंड से सीमित है। बेंचमार्क होस्ट पर 256 कनेक्शन पर HTTPS प्रति "
+"सेकंड 149,168 से बढ़कर 174,901 अनुरोध हो गया, जहाँ वही हेडर लिखते हुए "
+"HAProxy 153,080 संभालता है।"
 
 #: ../../edge.rst:147
 msgid ""
@@ -455,10 +695,15 @@ msgid ""
 "memory. Then name the one kind of call that still holds a worker for a "
 "round trip (see the section on hooks)."
 msgstr ""
+"\"वर्कर कभी किसी पीयर की प्रतीक्षा नहीं करता।\" समझाइए कि यह वाक्य, 64 "
+"KiB के high-water mark के साथ, कैसे गारंटी देता है कि अपने रिस्पॉन्स "
+"पढ़ना बंद करने वाला क्लाइंट किसी वर्कर से असीमित मेमोरी नहीं रखवा सकता। "
+"फिर उस एक प्रकार की कॉल का नाम दीजिए जो अब भी एक round trip के लिए वर्कर "
+"को रोके रखती है (हुक वाला अनुभाग देखें)।"
 
 #: ../../edge.rst:149
 msgid "Choosing a Server"
-msgstr ""
+msgstr "सर्वर चुनना"
 
 #: ../../edge.rst:152
 msgid ""
@@ -471,6 +716,15 @@ msgid ""
 "regime of a mesh, local servers are preferred when one is eligible. "
 "Backups are chosen only when no primary server is eligible."
 msgstr ""
+"एक नया फ़्लो पहले अपने पूल के सर्वरों को छाँटता है। कोई सर्वर *योग्य* "
+"(eligible) तब है जब वह फ़्रंटएंड का अपना पता न हो, ड्रेन न किया गया हो, "
+"अपने पिछले प्रोब के अनुसार स्वस्थ हो, ``max_flows`` से नीचे हो, "
+"फ़्लीट-व्यापी सीमा में अपने हिस्से के भीतर हो, पिछले दो सेकंड में विफल "
+"connect से चिह्नित न हो, और इस अनुरोध ने उसे पहले न आज़माया हो। निष्क्रिय "
+"(passive) हेल्थ द्वारा बाहर किया गया सर्वर केवल तब तक बाहर रहता है जब तक "
+"कोई दूसरा सर्वर योग्य हो। मेश की wide-area व्यवस्था में, कोई स्थानीय "
+"सर्वर योग्य हो तो स्थानीय सर्वरों को प्राथमिकता मिलती है। बैकअप केवल तब "
+"चुने जाते हैं जब कोई प्राथमिक सर्वर योग्य न हो।"
 
 #: ../../edge.rst:154
 msgid ""
@@ -482,10 +736,16 @@ msgid ""
 "integer weights in units of 1/256, so that slow start can lower a weight "
 "in fine steps."
 msgstr ""
+"योग्य सर्वरों में चुनाव एक तय क्रम में होता है: स्टिकी कुकी या सीखी गई "
+"टेबल द्वारा नामित सर्वर, फिर वह सर्वर जिसे source stickiness पहले स्थान "
+"पर रखती है, फिर Maglev का प्राथमिक सर्वर यदि वह अपनी लोड सीमा के भीतर हो, "
+"और अन्यथा पूल का शेड्यूलर: round robin, power of two choices, या weighted "
+"least connections। हर शेड्यूलर 1/256 की इकाइयों में पूर्णांक वेट के साथ "
+"काम करता है, ताकि स्लो स्टार्ट किसी वेट को बारीक चरणों में घटा सके।"
 
 #: ../../edge.rst:156
 msgid "Weighted Round Robin"
-msgstr ""
+msgstr "Weighted Round Robin"
 
 #: ../../edge.rst:159
 msgid ""
@@ -496,10 +756,16 @@ msgid ""
 "return to where they started, and server :math:`i` was chosen exactly "
 ":math:`w_i` times."
 msgstr ""
+"Round robin nginx का smooth weighted round robin है (SID 0019)। हर योग्य "
+"सर्वर एक क्रेडिट रखता है। हर चुनाव पर हर सर्वर अपने वेट जितना क्रेडिट "
+"पाता है, सबसे अधिक क्रेडिट वाला सर्वर चुना जाता है, और वह वेट के योग "
+":math:`W` का भुगतान करता है। :math:`W` चुनावों में क्रेडिट वहीं लौट आते "
+"हैं जहाँ से शुरू हुए थे, और सर्वर :math:`i` ठीक :math:`w_i` बार चुना गया "
+"होता है।"
 
 #: ../../edge.rst:161
 msgid "Worked example: three servers of weights 5, 1 and 1"
-msgstr ""
+msgstr "हल किया गया उदाहरण: 5, 1 और 1 वेट वाले तीन सर्वर"
 
 #: ../../edge.rst:163
 msgid ""
@@ -507,115 +773,118 @@ msgid ""
 "the gain, the choice, and the chosen server's credit after it pays 7. "
 "Ties go to the first server."
 msgstr ""
+":math:`W = 7`। सभी क्रेडिट 0 से शुरू होते हैं। तालिका बढ़त के बाद के "
+"क्रेडिट, चुनाव, और 7 चुकाने के बाद चुने गए सर्वर का क्रेडिट दिखाती है। "
+"बराबरी होने पर पहला सर्वर चुना जाता है।"
 
 #: ../../edge.rst:166
 msgid "Step"
-msgstr ""
+msgstr "चरण"
 
 #: ../../edge.rst:166
 msgid "a, b, c"
-msgstr ""
+msgstr "a, b, c"
 
 #: ../../edge.rst:166
 msgid "Chosen"
-msgstr ""
+msgstr "चुना गया"
 
 #: ../../edge.rst:168
 msgid "1"
-msgstr ""
+msgstr "1"
 
 #: ../../edge.rst:168
 msgid "5, 1, 1"
-msgstr ""
+msgstr "5, 1, 1"
 
 #: ../../edge.rst:168 ../../edge.rst:169 ../../edge.rst:171
 #: ../../edge.rst:173 ../../edge.rst:174
 msgid "a"
-msgstr ""
+msgstr "a"
 
 #: ../../edge.rst:168
 msgid "-2, 1, 1"
-msgstr ""
+msgstr "-2, 1, 1"
 
 #: ../../edge.rst:169
 msgid "2"
-msgstr ""
+msgstr "2"
 
 #: ../../edge.rst:169
 msgid "3, 2, 2"
-msgstr ""
+msgstr "3, 2, 2"
 
 #: ../../edge.rst:169
 msgid "-4, 2, 2"
-msgstr ""
+msgstr "-4, 2, 2"
 
 #: ../../edge.rst:170
 msgid "3"
-msgstr ""
+msgstr "3"
 
 #: ../../edge.rst:170
 msgid "1, 3, 3"
-msgstr ""
+msgstr "1, 3, 3"
 
 #: ../../edge.rst:170
 msgid "b"
-msgstr ""
+msgstr "b"
 
 #: ../../edge.rst:170
 msgid "1, -4, 3"
-msgstr ""
+msgstr "1, -4, 3"
 
 #: ../../edge.rst:171
 msgid "4"
-msgstr ""
+msgstr "4"
 
 #: ../../edge.rst:171
 msgid "6, -3, 4"
-msgstr ""
+msgstr "6, -3, 4"
 
 #: ../../edge.rst:171
 msgid "-1, -3, 4"
-msgstr ""
+msgstr "-1, -3, 4"
 
 #: ../../edge.rst:172
 msgid "5"
-msgstr ""
+msgstr "5"
 
 #: ../../edge.rst:172
 msgid "4, -2, 5"
-msgstr ""
+msgstr "4, -2, 5"
 
 #: ../../edge.rst:172
 msgid "c"
-msgstr ""
+msgstr "c"
 
 #: ../../edge.rst:172
 msgid "4, -2, -2"
-msgstr ""
+msgstr "4, -2, -2"
 
 #: ../../edge.rst:173
 msgid "6"
-msgstr ""
+msgstr "6"
 
 #: ../../edge.rst:173
 msgid "9, -1, -1"
-msgstr ""
+msgstr "9, -1, -1"
 
 #: ../../edge.rst:173
 msgid "2, -1, -1"
-msgstr ""
+msgstr "2, -1, -1"
 
 #: ../../edge.rst:174
 msgid "7"
-msgstr ""
+msgstr "7"
 
 #: ../../edge.rst:174
 msgid "7, 0, 0"
-msgstr ""
+msgstr "7, 0, 0"
 
 #: ../../edge.rst:174
 msgid "0, 0, 0"
-msgstr ""
+msgstr "0, 0, 0"
 
 #: ../../edge.rst:177
 msgid ""
@@ -624,10 +893,14 @@ msgid ""
 "server's turns instead of bunched at the end. The credits after step 7 "
 "are those of the start, so the pattern repeats."
 msgstr ""
+"क्रम ``a a b a c a a`` है: ``a`` की पाँच बारी, ``b`` और ``c`` की एक-एक, "
+"और हल्के सर्वर भारी सर्वर की बारियों के बीच फैले हैं, अंत में इकट्ठे "
+"नहीं। चरण 7 के बाद के क्रेडिट शुरुआत वाले ही हैं, इसलिए यह पैटर्न दोहराता "
+"है।"
 
 #: ../../edge.rst:179
 msgid "Least Connections and Two Choices"
-msgstr ""
+msgstr "Least Connections और दो विकल्प"
 
 #: ../../edge.rst:182
 msgid ""
@@ -638,6 +911,12 @@ msgid ""
 "broken by the requests admitted since the pool was loaded, again per unit "
 "of weight, and a backup always ranks after a primary."
 msgstr ""
+"Weighted least connections, जो स्वतंत्र पूल का डिफ़ॉल्ट है, वेट की प्रति "
+"इकाई सबसे कम सक्रिय फ़्लो वाला सर्वर चुनता है। तुलना में भाग नहीं किया "
+"जाता: सर्वर :math:`i` को सर्वर :math:`j` पर तब प्राथमिकता मिलती है जब "
+":math:`a_i w_j < a_j w_i` हो, जहाँ :math:`a` सक्रिय फ़्लो गिनता है। "
+"बराबरी पूल के लोड होने के बाद से स्वीकृत अनुरोधों से तोड़ी जाती है, फिर "
+"से वेट की प्रति इकाई, और बैकअप हमेशा किसी प्राथमिक सर्वर के बाद आता है।"
 
 #: ../../edge.rst:184
 msgid ""
@@ -650,10 +929,17 @@ msgid ""
 "estimate moves halfway back to its resting value of 1 ms for each second "
 "without a sample."
 msgstr ""
+"Peak-weighted moving latency वाला power of two choices (``p2c_pewma``) "
+"फ़्लो को दो अलग-अलग योग्य सर्वरों पर हैश करता है और सस्ता वाला लेता है, "
+"जहाँ सर्वर :math:`i` की लागत :math:`(a_i + 1)\\,\\ell_i / w_i` है। "
+"लेटेंसी का अनुमान :math:`\\ell_i` धीमे नमूने पर तुरंत प्रतिक्रिया करता है "
+"और उसे धीरे-धीरे भूलता है: नया नमूना :math:`s` सेट करता है :math:`\\ell "
+"\\leftarrow \\max(s, (7\\ell + s)/8)`, और किसी निष्क्रिय सर्वर का अनुमान "
+"बिना नमूने के हर सेकंड में अपने विश्राम मान 1 ms की ओर आधा लौट आता है।"
 
 #: ../../edge.rst:186
 msgid "Consistent Hashing: the Problem"
-msgstr ""
+msgstr "Consistent Hashing: समस्या"
 
 #: ../../edge.rst:189
 msgid ""
@@ -662,10 +948,14 @@ msgid ""
 "as few flows as possible. The obvious method, server :math:`h \\bmod N` "
 "for a flow hash :math:`h`, fails the second requirement badly."
 msgstr ""
+"क्लस्टर के कई नोड को एक ही फ़्लो एक ही सर्वर पर भेजना चाहिए, आपस में बात "
+"किए बिना, और सर्वर समूह के बदलने पर जितने कम हो सकें उतने फ़्लो हिलने "
+"चाहिए। स्पष्ट तरीक़ा, फ़्लो हैश :math:`h` के लिए सर्वर :math:`h \\bmod "
+"N`, दूसरी शर्त में बुरी तरह विफल होता है।"
 
 #: ../../edge.rst:191
 msgid "Worked example: one of five servers leaves"
-msgstr ""
+msgstr "हल किया गया उदाहरण: पाँच में से एक सर्वर हटता है"
 
 #: ../../edge.rst:193
 msgid ""
@@ -681,6 +971,16 @@ msgid ""
 ":math:`N` to :math:`N - 1` servers keeps :math:`(N-1)/(N(N-1)) = 1/N` of "
 "the flows."
 msgstr ""
+"Modulo hashing में हैश :math:`h` वाला फ़्लो स्थान :math:`h \\bmod 5` पर "
+"जाता है, और हटने के बाद चार बचे सर्वरों की सूची के स्थान :math:`h \\bmod "
+"4` पर। चीनी शेषफल प्रमेय के अनुसार, एकसमान हैश के लिए जोड़ी :math:`(h "
+"\\bmod 5, h \\bmod 4)` :math:`5 \\times 4 = 20` मानों में से हर एक को "
+":math:`1/20` प्रायिकता से लेती है। फ़्लो अपने सर्वर पर केवल तब रहता है जब "
+"दोनों स्थान एक ही बचे सर्वर का नाम दें, और 4 बचे सर्वरों में से हर एक का "
+"नाम ठीक एक ऐसी जोड़ी देती है। इसलिए :math:`4/20 = 20\\%` फ़्लो रहते हैं "
+"और **80% हिल जाते हैं**, जबकि केवल उन 20% को हिलना था जो हटे सर्वर के पास "
+"थे। सामान्य रूप से :math:`N` से :math:`N - 1` सर्वर का चरण "
+":math:`(N-1)/(N(N-1)) = 1/N` फ़्लो बनाए रखता है।"
 
 #: ../../edge.rst:195
 msgid ""
@@ -696,10 +996,21 @@ msgid ""
 "With ten servers the departed one held 9.999% to 10.000% of the slots, "
 "and 120 to 181 other slots, 0.18% to 0.28%, changed owner."
 msgstr ""
+"एक consistent तरीक़ा केवल हटे सर्वर के फ़्लो हिलाता है: :math:`1/5 = "
+"20\\%`। नीचे दिया rendezvous hashing ठीक यही हासिल करता है। Sibuna की "
+"Maglev टेबल इसे थोड़े अतिरेक के साथ हासिल करती है। हमने ``s1`` से ``s5`` "
+"नाम वाले बराबर वेट के पाँच सर्वरों के लिए टेबल फिर से बनाई, ``maglev.rs`` "
+"के build लूप की प्रतिलिपि और उसी हैश के साथ, और बारी-बारी से हर सर्वर "
+"हटाया (यह हमारा अपना रन है, बेंचमार्क नहीं)। हटा सर्वर 65,537 स्लॉट में "
+"से 19.999% से 20.001% रखता था, और 51 से 121 अन्य स्लॉट, यानी टेबल के "
+"0.08% से 0.19%, का मालिक भी बदला। छठा सर्वर जोड़ने पर उसे 16.665% स्लॉट "
+"मिले और पुराने सर्वरों के बीच 64 स्लॉट, यानी 0.10%, हिले। दस सर्वरों के "
+"साथ हटा सर्वर 9.999% से 10.000% स्लॉट रखता था, और 120 से 181 अन्य स्लॉट, "
+"यानी 0.18% से 0.28%, का मालिक बदला।"
 
 #: ../../edge.rst:197
 msgid "Maglev as Sibuna Builds It"
-msgstr ""
+msgstr "Sibuna जैसे Maglev बनाता है"
 
 #: ../../edge.rst:200
 msgid ""
@@ -715,10 +1026,21 @@ msgid ""
 "hashing the frontend address and the client address with its port: one "
 "hash and one load."
 msgstr ""
+"Maglev (Eisenbud et al., 2016) :math:`M` स्लॉट की एक lookup टेबल भरता है। "
+"हर सर्वर अपने नाम से दो संख्याएँ निकालता है, एक offset और एक stride, जो "
+"उसका वरीयता क्रम :math:`p_k = (\\mathrm{offset} + k \\cdot "
+"\\mathrm{stride}) \\bmod M` तय करती हैं। फिर सर्वर बारी-बारी से चलते हैं, "
+"और अपनी बारी में सर्वर अपने क्रम का वह पहला स्लॉट लेता है जो अब भी खाली "
+"है। Sibuna :math:`M = 65537` लेता है, जो एक अभाज्य संख्या है, इसलिए 1 से "
+":math:`M - 1` तक हर stride हर स्लॉट पर जाता है। वह बारियों को ऊपर वाले "
+"उसी smooth round robin से वेट देता है, इसलिए :math:`w_i` वेट वाला सर्वर "
+"एक स्लॉट के अंतर के भीतर :math:`w_i/W` स्लॉट लेता है। किसी फ़्लो को "
+"फ़्रंटएंड पते और पोर्ट सहित क्लाइंट पते को हैश करके खोजा जाता है: एक हैश "
+"और एक load।"
 
 #: ../../edge.rst:202
 msgid "Implementation: ``Table::build`` and ``Table::primary``"
-msgstr ""
+msgstr "इम्प्लीमेंटेशन: ``Table::build`` और ``Table::primary``"
 
 #: ../../edge.rst:204
 msgid ""
@@ -727,6 +1049,10 @@ msgid ""
 "frontend and the client endpoint, IPv4 mapped into IPv6, to a slot. In "
 "``crates/lb/src/maglev.rs``."
 msgstr ""
+"``build`` 65,537 स्लॉट को स्थिर नाम-क्रम में सर्वरों से, बैकअप छोड़कर, "
+"smooth weighted बारियों के साथ भरता है। ``primary`` फ़्रंटएंड और क्लाइंट "
+"endpoint को, IPv4 को IPv6 में मैप करके, एक स्लॉट पर हैश करता है। "
+"``crates/lb/src/maglev.rs`` में।"
 
 #: ../../edge.rst:206
 msgid ""
@@ -747,6 +1073,22 @@ msgid ""
 "    *next = (*next + *stride) % SIZE;\n"
 "}"
 msgstr ""
+"for _ in 0..SIZE {\n"
+"    let mut best = 0;\n"
+"    for i in 0..permutations.len() {\n"
+"        permutations[i].4 += i64::from(permutations[i].3);\n"
+"        if permutations[i].4 > permutations[best].4 {\n"
+"            best = i;\n"
+"        }\n"
+"    }\n"
+"    let (index, next, stride, _, credit) = &mut permutations[best];\n"
+"    *credit -= i64::from(weight);\n"
+"    while slots[*next] != EMPTY {\n"
+"        *next = (*next + *stride) % SIZE;\n"
+"    }\n"
+"    slots[*next] = *index;\n"
+"    *next = (*next + *stride) % SIZE;\n"
+"}"
 
 #: ../../edge.rst:225
 msgid ""
@@ -758,10 +1100,16 @@ msgid ""
 "drain is allowed, because each node already excludes servers by its own "
 "health checks."
 msgstr ""
+"हर नोड एक ही फ़ाइल से एक ही टेबल बनाता है, इसलिए हर नोड एक ही पतों वाले "
+"फ़्लो को एक ही सर्वर पर भेजता है। इसीलिए Maglev पूल की सदस्यता और वेट "
+"केवल रीलोड से बदलते हैं। जो एडमिन कमांड एक नोड पर वेट बदलती, वह उस नोड को "
+"उसके पीयर से असहमत कर देती, और एडमिन सॉकेट उसे अस्वीकार करता है (SID "
+"0018)। ड्रेन की अनुमति है, क्योंकि हर नोड पहले ही अपने हेल्थ चेक से "
+"सर्वरों को बाहर रखता है।"
 
 #: ../../edge.rst:227
 msgid "Bounded Loads"
-msgstr ""
+msgstr "सीमित लोड (Bounded Loads)"
 
 #: ../../edge.rst:230
 msgid ""
@@ -773,10 +1121,17 @@ msgid ""
 ":math:`a_p` those of the primary :math:`p`. The new flow goes to the "
 "primary when it is eligible and"
 msgstr ""
+"हैश फ़्लो को केवल औसत में समान रूप से फैलाता है। कोई लोकप्रिय क्लाइंट "
+"रेंज फिर भी एक सर्वर पर भीड़ कर सकती है। Consistent hashing with bounded "
+"loads (Mirrokni, Thorup और Zadimoghaddam, 2018) हर सर्वर को उसके उचित "
+"हिस्से के एक स्थिर गुणक :math:`c \\ge 1` गुना पर सीमित करता है। Sibuna यह "
+"सीमा Maglev के प्राथमिक सर्वर पर लागू करता है। मान लें :math:`L` पूल के "
+"सक्रिय फ़्लो हैं और :math:`a_p` प्राथमिक सर्वर :math:`p` के। नया फ़्लो "
+"प्राथमिक सर्वर पर तब जाता है जब वह योग्य हो और"
 
 #: ../../edge.rst:232
 msgid "a_p < \\left\\lceil \\frac{c\\,(L + 1)\\, w_p}{W} \\right\\rceil,"
-msgstr ""
+msgstr "a_p < \\left\\lceil \\frac{c\\,(L + 1)\\, w_p}{W} \\right\\rceil,"
 
 #: ../../edge.rst:236
 msgid ""
@@ -785,10 +1140,14 @@ msgid ""
 "least connections, or the power of two choices when ``fallback`` is "
 "``pewma``."
 msgstr ""
+"जहाँ :math:`c` प्रतिशत में ``load_factor_pct`` के रूप में दिया जाता है "
+"(डिफ़ॉल्ट 125, कम से कम 100)। अन्यथा फ़्लो पूल के fallback पर जाता है: "
+"weighted least connections, या ``fallback`` के ``pewma`` होने पर power of "
+"two choices।"
 
 #: ../../edge.rst:238
 msgid "Worked example: the bound with c = 1.25"
-msgstr ""
+msgstr "हल किया गया उदाहरण: c = 1.25 के साथ सीमा"
 
 #: ../../edge.rst:240
 msgid ""
@@ -802,6 +1161,15 @@ msgid ""
 "\\rceil = 38` and :math:`\\lceil 1.25 \\times 40 / 4 \\rceil = \\lceil "
 "12.5 \\rceil = 13`."
 msgstr ""
+"बराबर वेट वाले चार सर्वर :math:`L = 99` फ़्लो रखते हैं, और सौवाँ आता है। "
+"सीमा :math:`\\lceil 1.25 \\times 100 / 4 \\rceil = \\lceil 31.25 \\rceil "
+"= 32` है। 31 फ़्लो वाला प्राथमिक सर्वर नया फ़्लो लेता है और 32 पर पहुँचता "
+"है। 32 फ़्लो वाला प्राथमिक सर्वर उसे अस्वीकार करता है, और least "
+"connections उसे सबसे कम फ़्लो वाले सर्वर पर रखता है, जिसके पास अधिकतम "
+":math:`\\lfloor 99/4 \\rfloor = 24` हैं। वेट 3 और 1 और :math:`L + 1 = 40` "
+"के साथ सीमाएँ :math:`\\lceil 1.25 \\times 40 \\times 3/4 \\rceil = "
+"\\lceil 37.5 \\rceil = 38` और :math:`\\lceil 1.25 \\times 40 / 4 \\rceil "
+"= \\lceil 12.5 \\rceil = 13` हैं।"
 
 #: ../../edge.rst:242
 msgid ""
@@ -810,6 +1178,11 @@ msgid ""
 "servers gives :math:`L \\ge c(L+1) > L`, a contradiction. With :math:`c = "
 "1.25` and four equal servers, at most three can sit at the bound at once."
 msgstr ""
+"अतिप्रवाह (overflow) को हमेशा अपनी सीमा से नीचे का सर्वर मिलता है। मान "
+"लें हर सर्वर :math:`i` कम से कम :math:`c(L+1)w_i/W` फ़्लो रखता। सर्वरों "
+"पर योग करने से :math:`L \\ge c(L+1) > L` मिलता है, जो विरोधाभास है। "
+":math:`c = 1.25` और चार बराबर सर्वरों के साथ, एक समय में अधिकतम तीन सीमा "
+"पर हो सकते हैं।"
 
 #: ../../edge.rst:244
 msgid ""
@@ -826,10 +1199,22 @@ msgid ""
 "respect: it does not walk to the next server of a consistent order, so "
 "two nodes may place an overflowing flow on different servers."
 msgstr ""
+"Least-connections fallback के साथ, और सभी सर्वर योग्य होने पर, एक प्रवेश "
+"हर सर्वर को उसकी सीमा के भीतर रखता है: हैश पाथ केवल सीमा से नीचे प्रवेश "
+"देता है, और fallback ऐसा सर्वर चुनता है जिसके वेट की प्रति इकाई फ़्लो "
+"अधिकतम औसत :math:`L/W` हैं, ताकि एक और फ़्लो फिर भी :math:`\\lceil "
+"c(L+1)w_i/W \\rceil` के नीचे समा जाए। यह SID 0015 के Lean मॉडल का "
+"``admitBounded_respects_cap`` है, एक अनुक्रमिक प्रवेश के लिए। एक ही क्षण "
+"में प्रवेश देने वाले दो थ्रेड दोनों पुरानी गिनतियाँ पढ़ सकते हैं। "
+"``pewma`` fallback के साथ हैश पाथ फिर भी सीमा का पालन करता है, लेकिन "
+"fallback लेटेंसी के आधार पर चुनता है, और तब सीमा की गारंटी नहीं है। "
+"अतिप्रवाह एक बात में पेपर से अलग भी है: वह किसी consistent क्रम के अगले "
+"सर्वर तक नहीं जाता, इसलिए दो नोड अतिप्रवाहित फ़्लो को अलग-अलग सर्वरों पर "
+"रख सकते हैं।"
 
 #: ../../edge.rst:246
 msgid "Rendezvous Hashing for Source Stickiness"
-msgstr ""
+msgstr "Source Stickiness के लिए Rendezvous Hashing"
 
 #: ../../edge.rst:249
 msgid ""
@@ -838,10 +1223,14 @@ msgid ""
 ":math:`x` and server :math:`i` the hash gives a number :math:`u_i \\in "
 "(0, 1]`, and the *distance* is"
 msgstr ""
+"``sticky: \"source\"`` वाला पूल हर क्लाइंट पते को एक ही सर्वर पर भेजता "
+"है। यह weighted rendezvous hashing का उपयोग करता है (SID 0019)। क्लाइंट "
+":math:`x` और सर्वर :math:`i` के लिए हैश एक संख्या :math:`u_i \\in (0, 1]` "
+"देता है, और *दूरी* है"
 
 #: ../../edge.rst:251
 msgid "d_i = \\frac{-\\log_2 u_i}{w_i}."
-msgstr ""
+msgstr "d_i = \\frac{-\\log_2 u_i}{w_i}."
 
 #: ../../edge.rst:255
 msgid ""
@@ -853,6 +1242,12 @@ msgid ""
 ":math:`w_i / \\sum_j w_j`. The base of the logarithm changes all "
 "distances by one factor and no ranking."
 msgstr ""
+"क्लाइंट निकटतम योग्य सर्वर पर जाता है। चुनाव ठीक-ठीक वेट का पालन करता है। "
+"चूँकि एकसमान :math:`u_i` के लिए :math:`-\\ln u_i` माध्य 1 के साथ घातीय "
+"रूप से वितरित है, इसलिए :math:`d_i` :math:`w_i` के समानुपाती दर के साथ "
+"घातीय है। :math:`w_i` दरों वाले स्वतंत्र घातीय चरों का न्यूनतम सर्वर "
+":math:`i` पर :math:`w_i / \\sum_j w_j` प्रायिकता से प्राप्त होता है। "
+"लघुगणक का आधार सभी दूरियों को एक ही गुणक से बदलता है और किसी क्रम को नहीं।"
 
 #: ../../edge.rst:257
 msgid ""
@@ -864,6 +1259,13 @@ msgid ""
 "fractional bits and compares :math:`d_i < d_j` as :math:`c_i w_j < c_j "
 "w_i` without division."
 msgstr ""
+"व्यवधान ठीक न्यूनतम है। जब सर्वर :math:`k` हटता है, तो जिस क्लाइंट का "
+"निकटतम सर्वर :math:`k` नहीं था वह उसे बनाए रखता है, क्योंकि एक उम्मीदवार "
+"हटाने से बाक़ियों का न्यूनतम नहीं बदल सकता। केवल :math:`k` के क्लाइंट "
+"हिलते हैं, हर एक अपने दूसरे विकल्प पर, और :math:`k` के लौटने पर वे लौट "
+"आते हैं। Sibuna लघुगणक को 16 भिन्नात्मक बिट वाले fixed point में निकालता "
+"है और :math:`d_i < d_j` की तुलना बिना भाग के :math:`c_i w_j < c_j w_i` के "
+"रूप में करता है।"
 
 #: ../../edge.rst:259
 msgid ""
@@ -878,10 +1280,19 @@ msgid ""
 "of weight 1 in a pool of weight 1,000 serves one slot, not a thousandth "
 "of the clients."
 msgstr ""
+"हर अनुरोध के लिए हर सर्वर को क्रम देने की लागत प्रति सर्वर एक हैश और एक "
+"लघुगणक है। इसलिए पूल 1,021 स्लॉट की एक टेबल पहले से बना लेता है। क्लाइंट "
+"पता एक स्लॉट पर हैश होता है, और स्लॉट अपने चार निकटतम सर्वर रखता है। पहला "
+"योग्य सर्वर सर्व करता है; जब चारों में से कोई योग्य न हो, तो उस स्लॉट के "
+"लिए पूरे पूल को क्रम दिया जाता है। मापा गया चुनाव अब पूल के साथ नहीं "
+"बढ़ता: 128 सर्वरों पर 148 से 188 ns, जबकि टेबल और lock-free स्नैपशॉट से "
+"पहले 3,443 ns (SID 0019)। इसकी कीमत बारीकी (granularity) है: एक स्लॉट में "
+"दो पते अपना सर्वर साझा करते हैं, और 1,000 वेट वाले पूल में वेट 1 का सर्वर "
+"एक स्लॉट सर्व करता है, क्लाइंटों का हज़ारवाँ हिस्सा नहीं।"
 
 #: ../../edge.rst:261
 msgid "Implementation: ``Pool::home`` and ``sticky::distance``"
-msgstr ""
+msgstr "इम्प्लीमेंटेशन: ``Pool::home`` और ``sticky::distance``"
 
 #: ../../edge.rst:263
 msgid ""
@@ -891,6 +1302,11 @@ msgid ""
 "its weight. In ``crates/lb/src/pool/extra.rs`` and "
 "``crates/lb/src/sticky.rs``."
 msgstr ""
+"``home`` क्लाइंट को एक स्लॉट पर हैश करता है और स्लॉट के चार सर्वरों में "
+"से पहला योग्य सर्वर लौटाता है, और न मिले तो पूल को क्रम देता है। "
+"``distance`` अपने वेट के साथ fixed-point लागत :math:`64 - "
+"\\log_2(\\mathrm{draw})` निकालता है। ``crates/lb/src/pool/extra.rs`` और "
+"``crates/lb/src/sticky.rs`` में।"
 
 #: ../../edge.rst:267
 msgid ""
@@ -900,10 +1316,15 @@ msgid ""
 "hashed by address and port but uses rendezvous hashing for clients that "
 "must find the same server tomorrow."
 msgstr ""
+"Rendezvous hashing ठीक हटे सर्वर के क्लाइंट हिलाता है; Maglev टेबल उन्हें "
+"और लगभग 0.1% और हिलाती है। समझाइए कि ऊपर के fill लूप में यह अतिरेक कहाँ "
+"से आता है, और Sibuna पते और पोर्ट से हैश किए गए फ़्लो के लिए इसे क्यों "
+"स्वीकार करता है, लेकिन जिन क्लाइंटों को कल भी वही सर्वर मिलना चाहिए उनके "
+"लिए rendezvous hashing का उपयोग क्यों करता है।"
 
 #: ../../edge.rst:269
 msgid "Health, Slow Start, Draining and Failover"
-msgstr ""
+msgstr "हेल्थ, स्लो स्टार्ट, ड्रेनिंग और फ़ेलओवर"
 
 #: ../../edge.rst:272
 msgid ""
@@ -912,6 +1333,10 @@ msgid ""
 "connect judges one attempt; a drain is the operator's word; slow start "
 "governs the return."
 msgstr ""
+"कोई सर्वर पाँच कारणों से रोटेशन से बाहर हो सकता है, और हर एक का लौटने का "
+"अपना तरीक़ा है। सक्रिय प्रोब और निष्क्रिय हेल्थ सर्वर को परखते हैं; विफल "
+"connect एक प्रयास को परखता है; ड्रेन ऑपरेटर का निर्णय है; स्लो स्टार्ट "
+"वापसी को नियंत्रित करता है।"
 
 #: ../../edge.rst:275
 msgid ""
@@ -922,6 +1347,11 @@ msgid ""
 "readmitted. Each return leads to Ramping, which leads to In service after "
 "the ramp."
 msgstr ""
+"In service से fall विफल प्रोब के बाद Down, लगातार अनुरोध विफलताओं के बाद "
+"Ejected, विफल connect के बाद Marked, और ऑपरेटर द्वारा Drained अवस्था आती "
+"है। Down rise सफल प्रोब के बाद लौटता है, Ejected ejection समय के बाद, "
+"Marked दो सेकंड के बाद, Drained फिर से प्रवेश दिए जाने पर। हर वापसी "
+"Ramping तक ले जाती है, जो ramp के बाद In service तक ले जाती है।"
 
 #: ../../edge.rst:275
 msgid ""
@@ -953,12 +1383,41 @@ msgid ""
 "  ramp -> service [label=\"ramp ends\"];\n"
 "}"
 msgstr ""
+"digraph server_states {\n"
+"  graph [rankdir=LR, bgcolor=\"transparent\", fontname=\"Helvetica\", "
+"fontsize=9, nodesep=0.3, ranksep=0.55];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=8.5, fillcolor=\"#eff6ff\", color=\"#1e40af\", penwidth=1.0, "
+"margin=\"0.1,0.05\"];\n"
+"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
+"fontcolor=\"#475569\", arrowsize=0.6];\n"
+"  service [label=\"In service\", fillcolor=\"#f0fdf4\", "
+"color=\"#15803d\"];\n"
+"  down [label=\"Down\\n(सक्रिय प्रोब)\"];\n"
+"  ejected [label=\"Ejected\\n(निष्क्रिय हेल्थ)\"];\n"
+"  marked [label=\"Marked\\n(connect विफल)\"];\n"
+"  drained [label=\"Drained\\n(ऑपरेटर)\", fillcolor=\"#fffbeb\", "
+"color=\"#b45309\"];\n"
+"  ramp [label=\"Ramping\\n(स्लो स्टार्ट)\", fillcolor=\"#f0fdf4\", "
+"color=\"#15803d\"];\n"
+"  service -> down [label=\"fall विफलताएँ\"];\n"
+"  down -> ramp [label=\"rise सफलताएँ\"];\n"
+"  service -> ejected [label=\"लगातार विफलताएँ\"];\n"
+"  ejected -> ramp [label=\"ejection समाप्त\"];\n"
+"  service -> marked [label=\"connect विफल\"];\n"
+"  marked -> ramp [label=\"2 s\"];\n"
+"  service -> drained [label=\"set state drain\"];\n"
+"  drained -> ramp [label=\"set state ready\"];\n"
+"  ramp -> service [label=\"ramp समाप्त\"];\n"
+"}"
 
 #: ../../edge.rst:275
 msgid ""
 "The life of a server in a pool. Only \"In service\" and \"Ramping\" take "
 "new flows; slow start applies when it is configured."
 msgstr ""
+"पूल में एक सर्वर का जीवन। केवल \"In service\" और \"Ramping\" नए फ़्लो "
+"लेते हैं; स्लो स्टार्ट तब लागू होता है जब वह कॉन्फ़िगर किया गया हो।"
 
 #: ../../edge.rst:299
 msgid ""
@@ -977,6 +1436,20 @@ msgid ""
 "survives a reload as long as the file still names the server at the same "
 "address (SID 0018)."
 msgstr ""
+"*सक्रिय प्रोब* एक अंतराल पर connect करते हैं, या ``GET`` भेजते हैं। सर्वर "
+"सेवा में शुरू होता है, लगातार ``fall`` विफलताओं के बाद बाहर जाता है और "
+"``rise`` सफलताओं के बाद लौटता है। रीलोड के बाद प्रोब थ्रेड प्रकाशित "
+"स्टेटस से आगे चलता है, इसलिए एक परिणाम उसे पलट नहीं सकता। *निष्क्रिय "
+"हेल्थ* जीवित अनुरोधों की लगातार विफलताएँ गिनती है: रिस्पॉन्स टाइमआउट, और "
+"``http_5xx`` के साथ 500, 502, 503 या 504 स्टेटस। सीमा पर पहुँचने पर सर्वर "
+"ejection समय के लिए बाहर किया जाता है। बाहर किया गया सर्वर केवल तब तक "
+"छोड़ा जाता है जब तक कोई दूसरा सर्व कर सके; एक धीमे सर्वर वाले पूल को "
+"सिर्फ़ इसलिए 503 उत्तर नहीं देना चाहिए कि तीन अनुरोध धीमे थे। यह एक सर्वर "
+"की सीमा के साथ Envoy का panic नियम है। *विफल connect* सर्वर को दो सेकंड "
+"के लिए बाहर रखता है और panic नियम के अधीन नहीं है। *ड्रेन* सर्वर को नए "
+"फ़्लो के लिए बाहर कर देता है जबकि उसके स्थापित फ़्लो पूरे होते हैं। ड्रेन "
+"रीलोड के बाद भी बना रहता है, जब तक फ़ाइल उसी पते पर उस सर्वर का नाम देती "
+"है (SID 0018)।"
 
 #: ../../edge.rst:301
 msgid ""
@@ -984,6 +1457,9 @@ msgid ""
 "configured weight :math:`W` that entered service :math:`t` ago has the "
 "effective weight, in units of 1/256,"
 msgstr ""
+"*स्लो स्टार्ट* लौटने वाले सर्वर को एक ramp :math:`R` देता है। कॉन्फ़िगर "
+"किए गए वेट :math:`W` वाला सर्वर, जो :math:`t` समय पहले सेवा में आया, "
+"1/256 की इकाइयों में यह प्रभावी वेट रखता है:"
 
 #: ../../edge.rst:303
 msgid ""
@@ -991,6 +1467,9 @@ msgid ""
 "\\right\\rfloor\\right) \\text{ for } t < R, \\qquad w(t) = 256\\, W "
 "\\text{ otherwise.}"
 msgstr ""
+"w(t) = \\max\\left(1, \\left\\lfloor \\frac{256\\, W\\, t}{R} "
+"\\right\\rfloor\\right) \\text{ for } t < R, \\qquad w(t) = 256\\, W "
+"\\text{ otherwise.}"
 
 #: ../../edge.rst:307
 msgid ""
@@ -1003,10 +1482,17 @@ msgid ""
 "units), round robin gives it :math:`256/1280 = 20\\%` of the turns "
 "instead of 50%."
 msgstr ""
+"वेट कभी शून्य नहीं होता, कभी कॉन्फ़िगर किए गए वेट से ऊपर नहीं होता, और "
+"सर्वर के सेवा में रहते कभी घटता नहीं। जो सर्वर पहली बार एक साथ देखे गए, "
+"जैसे प्रोसेस की शुरुआत में, वे ramp नहीं करते। ``slow_start: \"30s\"`` के "
+"साथ, 7.5 सेकंड पहले लौटे वेट 4 के सर्वर का :math:`w = \\lfloor 256 "
+"\\times 4 \\times 7.5/30 \\rfloor = 256` है, यानी उसके वेट का एक चौथाई। "
+"पूरे वेट (1,024 इकाइयाँ) पर वेट 4 के पीयर के साथ, round robin उसे 50% के "
+"बजाय :math:`256/1280 = 20\\%` बारियाँ देता है।"
 
 #: ../../edge.rst:309
 msgid "Failover"
-msgstr ""
+msgstr "फ़ेलओवर"
 
 #: ../../edge.rst:312
 msgid ""
@@ -1016,10 +1502,15 @@ msgid ""
 "the thread path, and the runtime's HTTP/1.1, HTTP/2 and HTTP/3 clients "
 "all ask it, so they cannot drift apart (SID 0019)."
 msgstr ""
+"कोई अनुरोध दूसरे सर्वर पर केवल तब जाता है जब उसे दो बार भेजने से कोई हानि "
+"न हो। विफल connect हमेशा आगे जा सकता है: सर्वर को कुछ नहीं मिला। एक बाइट "
+"भेजे जाने के बाद, एक ही फ़ंक्शन हर पाथ के लिए निर्णय लेता है: वर्कर, "
+"थ्रेड पाथ, और रनटाइम के HTTP/1.1, HTTP/2 और HTTP/3 क्लाइंट सभी उसी से "
+"पूछते हैं, इसलिए वे आपस में भटक नहीं सकते (SID 0019)।"
 
 #: ../../edge.rst:314
 msgid "Implementation: ``recover``"
-msgstr ""
+msgstr "इम्प्लीमेंटेशन: ``recover``"
 
 #: ../../edge.rst:316
 msgid ""
@@ -1027,6 +1518,9 @@ msgid ""
 "reconnect to the same server, move to another, or fail. In "
 "``crates/net/src/route.rs`` (crate ``sibuna-net``)."
 msgstr ""
+"कनेक्शन बनने के बाद सर्वर खो जाने पर आगे क्या हो, यह तय करता है: उसी "
+"सर्वर से फिर से कनेक्ट करना, दूसरे पर जाना, या विफल होना। "
+"``crates/net/src/route.rs`` में (क्रेट ``sibuna-net``)।"
 
 #: ../../edge.rst:318
 msgid ""
@@ -1041,6 +1535,16 @@ msgid ""
 "    }\n"
 "}"
 msgstr ""
+"pub fn recover(lost: Lost) -> Recovery {\n"
+"    if !(lost.unanswered && lost.kept && (lost.idempotent || "
+"lost.refused)) {\n"
+"        Recovery::Fail\n"
+"    } else if lost.pooled && !lost.retried {\n"
+"        Recovery::Reconnect\n"
+"    } else {\n"
+"        Recovery::Move\n"
+"    }\n"
+"}"
 
 #: ../../edge.rst:330
 msgid ""
@@ -1055,6 +1559,16 @@ msgid ""
 "server the request tried. A request therefore tries no server twice and "
 "at most ``retries + 1`` servers."
 msgstr ""
+"कोई अनुरोध फिर से केवल तब भेजा जाता है जब रिस्पॉन्स का कोई बाइट न आया हो, "
+"जब नोड के पास अब भी वह पूरा हो (अधिकतम 64 KiB की बॉडी जो अनुरोध बफ़र के "
+"भीतर समाप्त हुई), और जब उसका मेथड ``GET``, ``HEAD``, ``OPTIONS``, ``PUT`` "
+"या ``DELETE`` हो या सर्वर ने कहा हो कि उसने उस पर कार्रवाई नहीं की। पूल "
+"का कोई कनेक्शन जिसे सर्वर ने बंद किया, सर्वर के बारे में कुछ नहीं बताता, "
+"इसलिए उसे पहले एक बार उसी सर्वर के नए कनेक्शन से बदला जाता है। फिर "
+"``HttpRoutes::retry`` उसी पूल का दूसरा सर्वर आरक्षित करता है, उसी "
+"revision में जिसने अनुरोध को रूट किया था, और उन सभी सर्वरों को छोड़कर "
+"जिन्हें अनुरोध आज़मा चुका है। इसलिए कोई अनुरोध किसी सर्वर को दो बार नहीं "
+"आज़माता और अधिकतम ``retries + 1`` सर्वर आज़माता है।"
 
 #: ../../edge.rst:334
 msgid ""
@@ -1064,10 +1578,15 @@ msgid ""
 "one fact, that the server answered HTTP/2 ``REFUSED_STREAM``, and trace "
 "it again."
 msgstr ""
+"2 KiB बॉडी वाला एक ``POST`` अनुरोध लिखे जाने के बाद और रिस्पॉन्स के किसी "
+"बाइट से पहले अपना सर्वर खो देता है। ``recover`` को ट्रेस कीजिए और समझाइए "
+"कि क्लाइंट को चुपचाप दूसरे प्रयास के बजाय 502 क्यों मिलता है। फिर एक तथ्य "
+"बदलिए, कि सर्वर ने HTTP/2 ``REFUSED_STREAM`` उत्तर दिया, और फिर से ट्रेस "
+"कीजिए।"
 
 #: ../../edge.rst:336
 msgid "Admission at the Socket"
-msgstr ""
+msgstr "सॉकेट पर प्रवेश"
 
 #: ../../edge.rst:339
 msgid ""
@@ -1076,6 +1595,10 @@ msgid ""
 "orders the stages so that each costs less than the next. SID 0032 "
 "completed them for TCP and UDP frontends."
 msgstr ""
+"एप्लिकेशन फ़िल्टर कार्य तभी घटा सकता है जब ट्रैफ़िक होस्ट तक पहुँच जाए। "
+"इसलिए सबसे सस्ती अस्वीकृति सबसे पहली होती है, और SID 0015 चरणों को इस "
+"क्रम में रखता है कि हर एक अगले से कम लागत का हो। SID 0032 ने इन्हें TCP "
+"और UDP फ़्रंटएंड के लिए पूरा किया।"
 
 #: ../../edge.rst:341
 msgid ""
@@ -1086,12 +1609,21 @@ msgid ""
 "privilege; when the platform refuses one, the node notes ``EDGE013`` and "
 "serves without it."
 msgstr ""
+"*कर्नेल लिसनर पर प्रवेश।* ``defer_accept`` Linux पर ``TCP_DEFER_ACCEPT`` "
+"सेट करता है: कर्नेल नोड को कनेक्शन केवल तब देता है जब उसके पहले बाइट आ "
+"जाएँ, इसलिए चुप क्लाइंट की कोई descriptor, कोई फ़्लो स्लॉट और कोई wake-up "
+"लागत नहीं होती। ``backlog`` accept कतार की लंबाई सेट करता है। दोनों के "
+"लिए किसी विशेषाधिकार की ज़रूरत नहीं है; जब प्लेटफ़ॉर्म किसी को अस्वीकार "
+"करता है, तो नोड ``EDGE013`` दर्ज करता है और उसके बिना सर्व करता है।"
 
 #: ../../edge.rst:342
 msgid ""
 "*Connection rate.* ``rate_limit.conn_per_10s`` per source IPv4 address or "
 "IPv6 /64, and ``udp_defense.threshold_pps`` for datagrams."
 msgstr ""
+"*कनेक्शन दर।* हर स्रोत IPv4 पते या IPv6 /64 के लिए "
+"``rate_limit.conn_per_10s``, और डेटाग्राम के लिए "
+"``udp_defense.threshold_pps``।"
 
 #: ../../edge.rst:343
 msgid ""
@@ -1101,26 +1633,34 @@ msgid ""
 "because their sources are not validated. HTTP adds "
 "``http.max_connections`` and ``http.max_connections_per_ip``."
 msgstr ""
+"*फ़्लो बजट।* पूरे नोड में हर क्लाइंट कनेक्शन या UDP मैपिंग के लिए एक "
+"स्लॉट, ``global.max_flows`` तक (डिफ़ॉल्ट 8,192, अधिकतम 1,000,000)। UDP "
+"मैपिंग इसमें से अधिकतम ``global.max_udp_flows`` लेती हैं, क्योंकि उनके "
+"स्रोत सत्यापित नहीं होते। HTTP ``http.max_connections`` और "
+"``http.max_connections_per_ip`` जोड़ता है।"
 
 #: ../../edge.rst:344
 msgid ""
 "*Bounded inspection*, of a TLS ClientHello on TCP, and of the QUIC header "
 "on UDP."
 msgstr ""
+"*सीमित निरीक्षण*, TCP पर TLS ClientHello का, और UDP पर QUIC हेडर का।"
 
 #: ../../edge.rst:345
 msgid ""
 "*The connection hooks*, then the pool: a server's ``max_flows`` and, in a "
 "cluster, its share of a fleet-wide limit (Part IX)."
 msgstr ""
+"*कनेक्शन हुक*, फिर पूल: सर्वर का ``max_flows`` और, क्लस्टर में, "
+"फ़्लीट-व्यापी सीमा में उसका हिस्सा (भाग IX)।"
 
 #: ../../edge.rst:346
 msgid "*The HTTP firewall*, for HTTP frontends only."
-msgstr ""
+msgstr "*HTTP फ़ायरवॉल*, केवल HTTP फ़्रंटएंड के लिए।"
 
 #: ../../edge.rst:348
 msgid "Implementation: ``FlowBudget::reserve``"
-msgstr ""
+msgstr "इम्प्लीमेंटेशन: ``FlowBudget::reserve``"
 
 #: ../../edge.rst:350
 msgid ""
@@ -1129,10 +1669,14 @@ msgid ""
 "slot on cancellation, close or expiry, so no path can leak one. A drain "
 "sets the limit to zero. In ``crates/lb/src/budget.rs``."
 msgstr ""
+"नोड-व्यापी फ़्लो बजट का एक स्लॉट लेता है और एक ``FlowPermit`` लौटाता है, "
+"या बजट भरा होने पर कुछ नहीं। permit का ``Drop`` रद्द होने, बंद होने या "
+"समाप्त होने पर स्लॉट लौटा देता है, इसलिए कोई पाथ उसे लीक नहीं कर सकता। "
+"ड्रेन सीमा को शून्य कर देता है। ``crates/lb/src/budget.rs`` में।"
 
 #: ../../edge.rst:352
 msgid "ClientHello Inspection and Fallback Classes"
-msgstr ""
+msgstr "ClientHello निरीक्षण और fallback वर्ग"
 
 #: ../../edge.rst:355
 msgid ""
@@ -1144,6 +1688,13 @@ msgid ""
 "TLS untouched, and replays the bytes it read exactly once, before any "
 "later byte of the client. A connect that fails receives none of them."
 msgstr ""
+"``tcp_inspect: \"tls_client_hello\"`` वाला TCP फ़्रंटएंड पूल चुनने से "
+"पहले हर कनेक्शन की शुरुआत पढ़ता है, ``inspect_bytes`` (1,024 से 32,768) "
+"और ``inspect_delay`` (डिफ़ॉल्ट 2 सेकंड) के भीतर। नियम सर्वर नाम, "
+"प्रस्तावित ALPN प्रोटोकॉल, या JA4 फ़िंगरप्रिंट से मेल खा सकते हैं। फिर "
+"नोड कनेक्शन को TLS को छुए बिना उसके सर्वर तक पास करता है, और पढ़े गए बाइट "
+"ठीक एक बार, क्लाइंट के किसी बाद वाले बाइट से पहले, दोबारा भेजता है। विफल "
+"connect को इनमें से कोई बाइट नहीं मिलता।"
 
 #: ../../edge.rst:357
 msgid ""
@@ -1159,10 +1710,20 @@ msgid ""
 "classes existed: ``rules`` for absent and encrypted, ``deny`` for the "
 "other two."
 msgstr ""
+"निरीक्षण पाँच वर्गों में से एक में समाप्त होता है, और हर वर्ग का ठीक एक "
+"परिणाम होता है, deny या एक नामित पूल (SID 0032)। *Visible* सर्वर नाम वाला "
+"और Encrypted ClientHello एक्सटेंशन के बिना पूरा ClientHello है; यह हमेशा "
+"नियमों के पास जाता है। *Absent* में कोई सर्वर नाम नहीं होता, *encrypted* "
+"में एक्सटेंशन होता है, *incomplete* संदेश पूरा होने से पहले किसी सीमा पर "
+"पहुँच गया, और *invalid* ClientHello है ही नहीं। ``inspect_fallback`` इन "
+"चारों में से हर एक की कार्रवाई का नाम देता है। फ़ाइल में ``incomplete`` "
+"और ``invalid`` के लिए ``rules`` अस्वीकार किया जाता है, क्योंकि जाँचने को "
+"कुछ है ही नहीं। डिफ़ॉल्ट वही व्यवहार दोहराते हैं जो वर्गों के होने से "
+"पहले था: absent और encrypted के लिए ``rules``, बाक़ी दो के लिए ``deny``।"
 
 #: ../../edge.rst:359
 msgid "Implementation: ``Plan::decide``"
-msgstr ""
+msgstr "इम्प्लीमेंटेशन: ``Plan::decide``"
 
 #: ../../edge.rst:361
 msgid ""
@@ -1170,6 +1731,9 @@ msgid ""
 "refusal. The match is total, so no class is left without an outcome. In "
 "``crates/lb/src/inspect.rs``."
 msgstr ""
+"एक वर्ग और पार्स किए गए ClientHello को, यदि हो, किसी पूल या अस्वीकृति से "
+"जोड़ता है। मिलान संपूर्ण (total) है, इसलिए कोई वर्ग बिना परिणाम के नहीं "
+"छूटता। ``crates/lb/src/inspect.rs`` में।"
 
 #: ../../edge.rst:363
 msgid ""
@@ -1180,10 +1744,17 @@ msgid ""
 "in the outer field; the edge cannot tell greasing from a real ECH, so "
 "``encrypted: deny`` refuses most browsers."
 msgstr ""
+"इस सुविधा के साथ दो सावधानियाँ ज़रूरी हैं। JA4 फ़िंगरप्रिंट एक handshake "
+"का वर्णन करता है; कोई भी क्लाइंट किसी दूसरे का handshake भेज सकता है, "
+"इसलिए यह आबादियों को अलग करता है और कोई पहचान-पत्र (credential) नहीं है। "
+"और वर्तमान ब्राउज़र हर कनेक्शन पर Encrypted ClientHello एक्सटेंशन को "
+"grease करते हैं, सच्चा नाम बाहरी फ़ील्ड में रखते हुए; एज greasing और असली "
+"ECH में अंतर नहीं कर सकता, इसलिए ``encrypted: deny`` अधिकांश ब्राउज़रों "
+"को अस्वीकार कर देता है।"
 
 #: ../../edge.rst:365
 msgid "QUIC Address Validation"
-msgstr ""
+msgstr "QUIC पते का सत्यापन"
 
 #: ../../edge.rst:368
 msgid ""
@@ -1200,6 +1771,18 @@ msgid ""
 "datagram of the client carries that ID as its destination, the address is "
 "validated, and the reply bound ends."
 msgstr ""
+"UDP फ़्रंटएंड हर मैपिंग के उत्तरों को क्लाइंट द्वारा भेजे गए बाइट के तीन "
+"गुना तक सीमित करता है। इस सीमा के बिना, नकली (spoofed) स्रोत नोड को एक "
+"amplifier बना देता। यह सीमा असली QUIC डाउनलोड को भी धीमा करती है, जहाँ "
+"छोटे acknowledgement बड़े पैकेट लाते हैं। ``udp_inspect: \"quic\"`` के "
+"साथ फ़्रंटएंड केवल ऐसे डेटाग्राम के लिए मैपिंग खोलता है जो QUIC Initial "
+"जैसा दिखे: एक long header, फ़िट होने वाले connection ID, और कम से कम "
+"1,200 बाइट, जैसे RFC 9000 क्लाइंट को pad करने के लिए बाध्य करता है। फिर "
+"वह ऑरिजिन के उत्तर पढ़ता है। शून्य से भिन्न संस्करण और कम से कम 8 बाइट के "
+"source connection ID वाले पहले long-header उत्तर से वह उस ID को याद रखता "
+"है, जब तक वह ID क्लाइंट द्वारा भेजे गए किसी ID के बराबर न हो। जब क्लाइंट "
+"का कोई बाद का डेटाग्राम उस ID को अपने destination के रूप में ले जाता है, "
+"तो पता सत्यापित हो जाता है, और उत्तर की सीमा समाप्त हो जाती है।"
 
 #: ../../edge.rst:370
 msgid ""
@@ -1213,11 +1796,20 @@ msgid ""
 "86 ms with validation; without it, 17,060 bytes arrived in 3 seconds. "
 "These figures show the size of the effect and are no benchmark."
 msgstr ""
+"तर्क RFC 9000, खंड 8.1 का है। ID ऑरिजिन ने चुना था और केवल दावा किए गए "
+"पते पर भेजा था। पते को spoof करने वाले प्रेषक को वह कभी नहीं मिलता और उसे "
+"कम से कम 64 बिट का अनुमान लगाना होगा, प्रति अनुमान एक डेटाग्राम। दोनों "
+"अपवाद स्पष्ट छेद बंद करते हैं: Version Negotiation पैकेट (संस्करण शून्य) "
+"क्लाइंट के अपने ID दोहराता है, और अपना इनपुट लौटाने वाला ऑरिजिन अन्यथा "
+"सबको सत्यापित कर देता। loopback पर, debug बिल्ड में, एज से होकर 8 MiB "
+"डाउनलोड में सत्यापन के साथ 83 से 86 ms लगे; इसके बिना 3 सेकंड में 17,060 "
+"बाइट पहुँचे। ये आँकड़े प्रभाव का आकार दिखाते हैं और बेंचमार्क नहीं हैं।"
 
 #: ../../edge.rst:372
 msgid ""
 "Implementation: ``Validation::see_reply`` and ``Validation::see_request``"
 msgstr ""
+"इम्प्लीमेंटेशन: ``Validation::see_reply`` और ``Validation::see_request``"
 
 #: ../../edge.rst:374
 msgid ""
@@ -1226,6 +1818,10 @@ msgid ""
 "validated when the client repeats that ID in a long or a short header. In "
 "``crates/lb/src/quic_edge.rs``."
 msgstr ""
+"``see_reply`` एक उत्तर से ऑरिजिन का connection ID सीखता है, संस्करण "
+"शून्य, छोटे ID और लौटाए गए (echo) ID को अस्वीकार करते हुए। "
+"``see_request`` मैपिंग को सत्यापित चिह्नित करता है जब क्लाइंट उस ID को "
+"long या short header में दोहराता है। ``crates/lb/src/quic_edge.rs`` में।"
 
 #: ../../edge.rst:376
 msgid ""
@@ -1236,6 +1832,12 @@ msgid ""
 "token format private and binds the token to the datagram's source, which "
 "behind the edge is the edge."
 msgstr ""
+"एज स्वयं QUIC Retry नहीं भेजता। SID 0032 वह अनुबंध निर्दिष्ट करता है जो "
+"एज और ऑरिजिन को साझा करना पड़ता, यानी एक token प्रारूप और कुंजी, एक पता "
+"बंधन, और transport parameters में connection ID, और दर्ज करता है कि यह "
+"क्यों नहीं बनाया गया: workspace की QUIC लाइब्रेरी अपना token प्रारूप निजी "
+"रखती है और token को डेटाग्राम के स्रोत से बाँधती है, जो एज के पीछे स्वयं "
+"एज है।"
 
 #: ../../edge.rst:380
 msgid ""
@@ -1244,10 +1846,14 @@ msgid ""
 "not zero, at least 8 bytes, not equal to an ID of the opening datagram) "
 "describe the attack it prevents."
 msgstr ""
+"\"सत्यापन कभी ऐसे मान पर नहीं होता जिसे off-path प्रेषक जान सके।\" सीखे "
+"गए connection ID की तीन शर्तों (संस्करण शून्य नहीं, कम से कम 8 बाइट, "
+"प्रारंभिक डेटाग्राम के किसी ID के बराबर नहीं) में से हर एक के लिए उस हमले "
+"का वर्णन कीजिए जिसे वह रोकती है।"
 
 #: ../../edge.rst:382
 msgid "Traffic Policy, the Gate and the Shield"
-msgstr ""
+msgstr "ट्रैफ़िक नीति, गेट और शील्ड"
 
 #: ../../edge.rst:385
 msgid ""
@@ -1267,10 +1873,25 @@ msgid ""
 "timeouts, retries, passive health, sticky sessions, header edits and "
 "HSTS. A TCP or UDP frontend never invokes the firewall."
 msgstr ""
+"HTTP अनुरोध महँगी जाँचों से पहले सस्ती जाँचों से गुज़रता है, और हुक केवल "
+"दोनों के बाद। प्रतिबंध टेबल और अनुरोध लिमिटर पहले आते हैं। फिर SID 0019 "
+"की ट्रैफ़िक नीति आती है: HTTPS पर redirect और बॉडी सीमा (413) फ़ायरवॉल "
+"नीति से पहले तय होते हैं, इसलिए cleartext अनुरोध को कभी चैलेंज नहीं किया "
+"जाता। फिर पिछले भागों का फ़ायरवॉल चलता है, जैसा ``http.surface`` चुनता "
+"है: ``off`` नोड को एक सादा लोड बैलेंसर बनाता है, ``gate`` भाग III और IV "
+"की नीति और proof-of-work चैलेंज जोड़ता है, और ``shield`` भाग VI का "
+"सिमैंटिक निरीक्षण जोड़ता है। कोई फ़्रंटएंड या रूट उन क्लाइंटों के लिए "
+"``firewall: false`` सेट कर सकता है जो चैलेंज हल नहीं कर सकते, जैसे Git और "
+"CI runner; ऐसा अनुरोध प्रोटोकॉल सत्यापन, कनेक्शन सीमाएँ, प्रतिबंध और "
+"अनुरोध लिमिटर बनाए रखता है। अनुरोध हुक उसे परखते हैं जिसे फ़ायरवॉल ने "
+"प्रवेश दिया, और केवल तब सर्वर चुना जाता है। SID 0019 का बाक़ी भाग "
+"आदान-प्रदान को आकार देता है: connect और रिस्पॉन्स टाइमआउट, रीट्राई, "
+"निष्क्रिय हेल्थ, स्टिकी सत्र, हेडर संपादन और HSTS। TCP या UDP फ़्रंटएंड "
+"कभी फ़ायरवॉल को नहीं बुलाता।"
 
 #: ../../edge.rst:387
 msgid "Hooks"
-msgstr ""
+msgstr "हुक"
 
 #: ../../edge.rst:390
 msgid ""
@@ -1286,6 +1907,18 @@ msgid ""
 "may not read a body, change the method, path or host, choose a server, or "
 "add a field of framing or one that Sibuna writes as its own statement."
 msgstr ""
+"ऑपरेटर को कभी-कभी पाथ पर अपना निर्णय चाहिए: टेनेंट जाँच, कोई "
+"authorization सेवा, कोई स्कोर। SID 0030 तय करता है कि ऐसा हुक कहाँ जुड़ता "
+"है, क्या देखता है, और विफल होने पर क्या होता है। हुक तीन *चरणों* (stages) "
+"में से एक पर जुड़ता है: ``connection`` (हर TCP कनेक्शन या UDP मैपिंग पर "
+"एक बार, दर और बजट के बाद, या हर QUIC कनेक्शन पर एक बार जब उसका "
+"ClientHello पढ़ा जाए), ``request`` (हर उस अनुरोध पर एक बार जिसे "
+"प्रतिबंधों, लिमिटरों और नीति ने प्रवेश दिया, सर्वर चुने जाने से पहले), और "
+"``telemetry`` (हर अनुरोध पर एक बार, उसके उत्तर के बाद)। वह प्रवेश दे सकता "
+"है, अस्वीकार कर सकता है, चैलेंज माँग सकता है, और अधिकतम 8 अनुरोध फ़ील्ड "
+"जोड़ सकता है। वह बॉडी नहीं पढ़ सकता, मेथड, पाथ या होस्ट नहीं बदल सकता, "
+"सर्वर नहीं चुन सकता, और न फ़्रेमिंग का कोई फ़ील्ड या ऐसा फ़ील्ड जोड़ सकता "
+"है जिसे Sibuna अपने कथन के रूप में लिखता है।"
 
 #: ../../edge.rst:392
 msgid ""
@@ -1296,10 +1929,16 @@ msgid ""
 "``unsafe``. An *agent* is another process behind a Unix socket, a "
 "deadline and a circuit breaker."
 msgstr ""
+"हुक तीन *स्तरों* (tiers) में से एक में चलता है। *native* हुक डेमन में "
+"कंपाइल किया गया Rust है: विश्वसनीय, बिना बजट का, chain और काउंटर सहित "
+"प्रति कॉल 42 ns। *Wasm* हुक इसी उद्देश्य के लिए स्वयं लिखे गए interpreter "
+"पर चलता है (भाग VII का ब्राउज़र इंजन नहीं), बिना JIT और बिना ``unsafe`` "
+"के। *agent* Unix सॉकेट, एक समय-सीमा और एक circuit breaker के पीछे कोई "
+"दूसरी प्रोसेस है।"
 
 #: ../../edge.rst:394
 msgid "The Outcome Rule"
-msgstr ""
+msgstr "परिणाम का नियम"
 
 #: ../../edge.rst:397
 msgid ""
@@ -1308,6 +1947,11 @@ msgid ""
 "``on_failure``, which is ``deny`` unless the operator writes ``admit``. "
 "For stage :math:`s`, written choice :math:`f` and result :math:`r`,"
 msgstr ""
+"एक invocation एक निर्णय (verdict) के साथ, या चार विफलताओं में से एक के "
+"साथ समाप्त होता है: ``timeout``, ``overload``, ``trap`` या "
+"``unavailable``। हर प्लगइन में ``on_failure`` है, जो ``deny`` है जब तक "
+"ऑपरेटर ``admit`` न लिखे। चरण :math:`s`, लिखे गए विकल्प :math:`f` और "
+"परिणाम :math:`r` के लिए,"
 
 #: ../../edge.rst:399
 msgid ""
@@ -1316,6 +1960,10 @@ msgid ""
 "& r = \\mathrm{failed},\\ f = \\mathrm{deny} \\\\ \\mathrm{admit} & r = "
 "\\mathrm{failed},\\ f = \\mathrm{admit}. \\end{cases}"
 msgstr ""
+"\\mathit{outcome}(s, f, r) = \\begin{cases} \\mathrm{admit} & s = "
+"\\mathrm{telemetry} \\\\ v & r = \\mathrm{verdict}(v) \\\\ \\mathrm{deny} "
+"& r = \\mathrm{failed},\\ f = \\mathrm{deny} \\\\ \\mathrm{admit} & r = "
+"\\mathrm{failed},\\ f = \\mathrm{admit}. \\end{cases}"
 
 #: ../../edge.rst:403
 msgid ""
@@ -1324,10 +1972,14 @@ msgid ""
 "hook never admits, whatever the others answer, and no failure admits "
 "traffic except by a choice written in the file."
 msgstr ""
+"एक chain केवल तब प्रवेश देती है जब उसके हर हुक का परिणाम admit हो; कोई भी "
+"दूसरा निर्णय उसे समाप्त कर देता है। इसलिए विफल होते authorization हुक "
+"वाली chain कभी प्रवेश नहीं देती, चाहे बाक़ी कुछ भी उत्तर दें, और फ़ाइल "
+"में लिखे विकल्प के सिवा कोई विफलता ट्रैफ़िक को प्रवेश नहीं देती।"
 
 #: ../../edge.rst:405
 msgid "Implementation: ``outcome`` and ``chain``"
-msgstr ""
+msgstr "इम्प्लीमेंटेशन: ``outcome`` और ``chain``"
 
 #: ../../edge.rst:407
 msgid ""
@@ -1335,6 +1987,9 @@ msgid ""
 "in ``docs/sid/assets/plugin-tiers.lean``. In "
 "``crates/plugin/src/verdict.rs`` (crate ``sibuna-plugin``)."
 msgstr ""
+"ऊपर का नियम और chain पर उसका fold, दो छोटे फ़ंक्शन के रूप में, जिनका मॉडल "
+"``docs/sid/assets/plugin-tiers.lean`` में है। "
+"``crates/plugin/src/verdict.rs`` में (क्रेट ``sibuna-plugin``)।"
 
 #: ../../edge.rst:409
 msgid ""
@@ -1348,10 +2003,19 @@ msgid ""
 "    }\n"
 "}"
 msgstr ""
+"pub fn outcome(stage: Stage, on_failure: OnFailure, result: "
+"Result<Verdict, Failure>) -> Verdict {\n"
+"    match (stage, result, on_failure) {\n"
+"        (Stage::Telemetry, _, _) => Verdict::Admit,\n"
+"        (_, Ok(verdict), _) => verdict,\n"
+"        (_, Err(_), OnFailure::Deny) => Verdict::Deny,\n"
+"        (_, Err(_), OnFailure::Admit) => Verdict::Admit,\n"
+"    }\n"
+"}"
 
 #: ../../edge.rst:420
 msgid "Fuel, Breakers and Parked Connections"
-msgstr ""
+msgstr "Fuel, Breaker और रुके हुए (parked) कनेक्शन"
 
 #: ../../edge.rst:423
 msgid ""
@@ -1371,6 +2035,21 @@ msgid ""
 "the difference of 1.4 us for an interpreter of 2,324 lines with no "
 "``unsafe`` and no new crate, against about 96,000 lines and eight crates."
 msgstr ""
+"Wasm मॉड्यूल अविश्वसनीय इनपुट है, इसलिए उसके चलने से पहले हर सीमा तय होती "
+"है: मॉड्यूल अधिकतम 4 MiB, 64 KiB के ``memory_pages`` पेज, 256 call frame, "
+"16,384 stack मान, दो होस्ट फ़ंक्शन की ``host_calls`` कॉल, और प्रति "
+"invocation ``fuel_limit`` इकाई fuel (डिफ़ॉल्ट 100,000)। हर ऑपरेशन की लागत "
+"एक इकाई है, और ``memory.copy``, ``memory.fill`` तथा ``memory.grow`` हर 16 "
+"या 64 बाइट के लिए एक और इकाई लेते हैं, इसलिए कोई ऑपरेशन बिना मापे कार्य "
+"नहीं करता। interpreter का लूप हर ऑपरेशन से पहले एक इकाई लेता है, "
+"``crates/plugin/src/wasm/exec.rs`` के ``Instance::run`` में "
+"``budget.fuel.checked_sub(1).ok_or(Trap::Fuel)?``। Fuel एक गिनती है, घड़ी "
+"नहीं: एक ही इनपुट पर एक ही मॉड्यूल हर मशीन पर एक ही ऑपरेशन पर रुकता है। "
+"उदाहरण हुक 635 ऑपरेशन खर्च करता है, प्रोसेस में प्रति कॉल 2.2 से 2.4 us। "
+"wasmi 1.1.0 वही कॉल 0.77 us में चलाता है; SID 0030 1.4 us के इस अंतर को "
+"स्वीकार करता है, क्योंकि बदले में 2,324 पंक्तियों का interpreter मिलता है "
+"जिसमें कोई ``unsafe`` और कोई नया क्रेट नहीं, जबकि दूसरी ओर लगभग 96,000 "
+"पंक्तियाँ और आठ क्रेट हैं।"
 
 #: ../../edge.rst:425
 msgid ""
@@ -1380,10 +2059,16 @@ msgid ""
 "and after ``open`` one probe goes out, which closes or reopens it. An "
 "``overload`` is not the agent's fault and does not count."
 msgstr ""
+"एक agent कॉल अधिकतम ``deadline`` (डिफ़ॉल्ट 5 ms) प्रतीक्षा करती है। हर "
+"थ्रेड हर agent के लिए एक breaker रखता है: लगातार ``failures`` विफलताएँ "
+"उसे खोल देती हैं, खुला breaker तुरंत ``unavailable`` के साथ और बिना "
+"system call के अस्वीकार करता है, और ``open`` के बाद एक प्रोब भेजा जाता "
+"है, जो उसे बंद करता है या फिर से खोलता है। ``overload`` agent की ग़लती "
+"नहीं है और गिना नहीं जाता।"
 
 #: ../../edge.rst:427
 msgid "Worked example: what a dead agent costs"
-msgstr ""
+msgstr "हल किया गया उदाहरण: एक मृत agent की लागत"
 
 #: ../../edge.rst:429
 msgid ""
@@ -1395,6 +2080,13 @@ msgid ""
 "most 0.5% of a worker. Meanwhile every request of the guarded frontend "
 "takes the agent's ``on_failure`` outcome: with the default, it is denied."
 msgstr ""
+"आठ वर्कर ``deadline`` 5 ms और डिफ़ॉल्ट breaker, यानी पाँच विफलताएँ और "
+"``1s`` open, के साथ एक agent को कॉल करते हैं। सबसे बुरी स्थिति में हर "
+"वर्कर अपने breaker के खुलने से पहले पाँच पूरी समय-सीमाएँ चुकाता है: कुल "
+":math:`8 \\times 5 \\times 5 = 200` ms थ्रेड समय, प्रति वर्कर 25 ms। उसके "
+"बाद हर वर्कर प्रति सेकंड एक प्रोब भेजता है, हर एक अधिकतम 5 ms, जो एक "
+"वर्कर का अधिकतम 0.5% है। इस बीच संरक्षित फ़्रंटएंड का हर अनुरोध agent का "
+"``on_failure`` परिणाम पाता है: डिफ़ॉल्ट के साथ वह अस्वीकार होता है।"
 
 #: ../../edge.rst:431
 msgid ""
@@ -1409,72 +2101,84 @@ msgid ""
 "the failure rule decides. Parking costs about 11 us, two thread handoffs: "
 "22.8 us against 12 us for the same call on the calling thread."
 msgstr ""
+"अनुरोध चरण पर agent कॉल उस थ्रेड को रोके रखती है जो अनुरोध सर्व करता है, "
+"और किसी वर्कर पर उस वर्कर के बाक़ी कनेक्शन उसकी प्रतीक्षा करते हैं। "
+"कनेक्शन चरण पर यह एज वर्कर को अटका देता, जो हर फ़्रंटएंड के लिए accept "
+"करता है, इसलिए जिस कनेक्शन की chain किसी agent का नाम देती है उसे *park* "
+"किया जाता है। वर्कर उसका सॉकेट और फ़्लो permit रखता है और उसे पढ़ता नहीं; "
+"अपने हुक instance वाले judge थ्रेड chain चलाते हैं और निर्णय के साथ वर्कर "
+"को जगाते हैं। जब judge की कतार भरी हो, तो chain कॉल करने वाले पर ही चलती "
+"है और हर agent ``overload`` के रूप में विफल होता है, और विफलता का नियम "
+"निर्णय लेता है। park करने की लागत लगभग 11 us है, दो थ्रेड हैंडऑफ़: कॉल "
+"करने वाले थ्रेड पर उसी कॉल के 12 us के मुक़ाबले 22.8 us।"
 
 #: ../../edge.rst:433
 msgid ""
 "Measured cost of one hook (SID 0030, one busy machine, optimized builds, "
 "loopback)"
 msgstr ""
+"एक हुक की मापी गई लागत (SID 0030, एक व्यस्त मशीन, optimized बिल्ड, "
+"loopback)"
 
 #: ../../edge.rst:437
 msgid "Case"
-msgstr ""
+msgstr "मामला"
 
 #: ../../edge.rst:438
 msgid "In process"
-msgstr ""
+msgstr "प्रोसेस में"
 
 #: ../../edge.rst:439
 msgid "End to end per request"
-msgstr ""
+msgstr "प्रति अनुरोध end to end"
 
 #: ../../edge.rst:440
 msgid "No hook"
-msgstr ""
+msgstr "कोई हुक नहीं"
 
 #: ../../edge.rst:441
 msgid "1.1 ns (one load)"
-msgstr ""
+msgstr "1.1 ns (एक load)"
 
 #: ../../edge.rst:442
 msgid "41.8 to 42.2 us"
-msgstr ""
+msgstr "41.8 से 42.2 us"
 
 #: ../../edge.rst:443
 msgid "Native ``require_header``"
-msgstr ""
+msgstr "Native ``require_header``"
 
 #: ../../edge.rst:444
 msgid "42 ns"
-msgstr ""
+msgstr "42 ns"
 
 #: ../../edge.rst:445
 msgid "within the noise of about 2 us"
-msgstr ""
+msgstr "लगभग 2 us के शोर के भीतर"
 
 #: ../../edge.rst:446
 msgid "Wasm, the example module"
-msgstr ""
+msgstr "Wasm, उदाहरण मॉड्यूल"
 
 #: ../../edge.rst:447
 msgid "2.2 to 2.4 us"
-msgstr ""
+msgstr "2.2 से 2.4 us"
 
 #: ../../edge.rst:448
 msgid "+5.2 to +6.1 us"
-msgstr ""
+msgstr "+5.2 से +6.1 us"
 
 #: ../../edge.rst:449
 msgid "Agent on a Unix socket"
-msgstr ""
+msgstr "Unix सॉकेट पर agent"
 
 #: ../../edge.rst:450
 msgid "12 to 18 us"
-msgstr ""
+msgstr "12 से 18 us"
 
 #: ../../edge.rst:451
 msgid "+18.4 to +21.5 us"
-msgstr ""
+msgstr "+18.4 से +21.5 us"
 
 #: ../../edge.rst:455
 msgid ""
@@ -1484,10 +2188,15 @@ msgid ""
 "``on_failure`` left at its default, and what the operator gives up by "
 "writing ``on_failure: \"admit\"``."
 msgstr ""
+"\"authorization हुक की विफलता अस्वीकार करती है।\" कोई हमलावर Wasm हुक के "
+"इनपुट बफ़र से बड़ा हेड भेजकर उसे ``overload`` के साथ विफल करा सकता है। "
+"समझाइए कि दृश्य (view) को फ़िट करने के लिए कभी काटा क्यों नहीं जाता, "
+"``on_failure`` को डिफ़ॉल्ट पर छोड़ने पर क्या होता है, और ``on_failure: "
+"\"admit\"`` लिखकर ऑपरेटर क्या खोता है।"
 
 #: ../../edge.rst:457
 msgid "Automatic HTTPS"
-msgstr ""
+msgstr "स्वचालित HTTPS"
 
 #: ../../edge.rst:460
 msgid ""
@@ -1509,10 +2218,29 @@ msgid ""
 "read memory, and a thread asks the ``ask`` URL and takes a token from a "
 "bucket of ``rate`` orders per hour before it orders."
 msgstr ""
+"जो फ़्रंटएंड अपने होस्ट के नाम देता है, ``tls: { auto: [\"example.org\"] "
+"}``, वह अपने सर्टिफ़िकेट स्वयं प्राप्त करता है (SID 0021)। नोड एक ACME "
+"खाता पंजीकृत करता है, HTTP-01, TLS-ALPN-01 या DNS-01 का उत्तर देता है, "
+"सर्टिफ़िकेट संग्रहीत करता है, उसे बिना रीलोड के सर्व करता है, उसकी अवधि "
+"के दो-तिहाई पर उसे नवीनीकृत करता है, और प्रबंधित नामों के लिए सादे HTTP "
+"को redirect करता है। अथॉरिटी की विफलता एक संकेत के साथ लॉग की जाती है और "
+"फिर से आज़माई जाती है, और लिसनर जो उसके पास है वह सर्व करता रहता है। "
+"आंतरिक नाम, जैसे ``localhost``, ``.internal`` या एक ही label, और IP पते "
+"कभी सार्वजनिक अथॉरिटी के पास नहीं जाते: फ़ाइल अस्वीकार की जाती है, या नाम "
+"एक *स्थानीय अथॉरिटी* के पास जाता है जिसे नोड बनाता है, 10 वर्ष का root, 7 "
+"दिन का intermediate, और 12 घंटे के leaf। नोड कभी उस root को किसी trust "
+"store में इंस्टॉल नहीं करता; ``show ca`` उसे ऑपरेटर के इंस्टॉल करने के "
+"लिए प्रिंट करता है। *मांग पर* जारी करना, यानी किसी अज्ञात नाम के पहले "
+"handshake पर, उस फ़ाइल में अस्वीकार किया जाता है जिसमें कोई सुरक्षा "
+"(guard) नहीं है: ``ask`` या ``allow`` के बिना, जो कोई भी किसी नाम को नोड "
+"की ओर इंगित कर सके, वह अथॉरिटी की सीमाएँ खर्च करा सकता है। guard के साथ, "
+"handshake केवल मेमोरी पढ़ने वाली जाँचें लागू करता है, और ऑर्डर करने से "
+"पहले एक थ्रेड ``ask`` URL से पूछता है और प्रति घंटे ``rate`` ऑर्डर वाली "
+"bucket से एक token लेता है।"
 
 #: ../../edge.rst:462
 msgid "Observation"
-msgstr ""
+msgstr "अवलोकन"
 
 #: ../../edge.rst:465
 msgid ""
@@ -1531,10 +2259,23 @@ msgid ""
 "for a look at the clients. A readiness route turns to 503 while the node "
 "drains."
 msgstr ""
+"नोड जो कुछ करता है उसे गिनता है, ताकि ऑपरेटर क्षमता की कमी से हुई "
+"अस्वीकृति को नीति से हुई अस्वीकृति से अलग पहचान सके (SID 0020)। हर HTTP "
+"अनुरोध एक थ्रेड पर एक सीमित कतार से एक्सेस लॉग की एक पंक्ति लिखता है, और "
+"हर TCP या UDP फ़्लो अपने अंत में एक पंक्ति लिखता है। हर फ़्रंटएंड और हर "
+"सर्वर के लिए अनुरोध काउंटर, लेटेंसी हिस्टोग्राम, हेल्थ अवस्था और सक्रिय "
+"अनुरोध हैं। फ़ायरवॉल से पहले अस्वीकार किया गया हर कनेक्शन या डेटाग्राम "
+"``sibuna_edge_refused_total`` में एक कारण के साथ गिना जाता है: "
+"``rate_limit``, ``flow_limit``, ``draining``, ``connection_limit``, "
+"``client_limit``, ``exchange_limit``, ``no_server``, ``udp_rate_limit``, "
+"``udp_flow_limit``, ``udp_reply_limit``, ``udp_not_quic``, "
+"``inspect_denied`` और अन्य। कारण ही गिनती को उपयोगी बनाता है: बढ़ता "
+"``no_server`` सर्वर माँगता है, बढ़ता ``rate_limit`` क्लाइंटों पर एक नज़र। "
+"नोड के ड्रेन होते समय एक readiness रूट 503 पर चला जाता है।"
 
 #: ../../edge.rst:467
 msgid "The Measured Result"
-msgstr ""
+msgstr "मापा गया परिणाम"
 
 #: ../../edge.rst:470
 msgid ""
@@ -1550,14 +2291,25 @@ msgid ""
 "multiplexer written for this one purpose. Only a cheaper HTTP/2 path "
 "would change it, and SID 0017 records why we have not written one."
 msgstr ""
+"भाग X एज की तुलना एक होस्ट पर और तीन होस्ट पर HAProxy 3.0.11 से करता है। "
+"SID 0024 के बाद, जब दोनों प्रॉक्सी एक ही हेडर लिखते हैं, Sibuna TCP, सादा "
+"HTTP और HTTPS को HAProxy की दर के बराबर या उससे ऊपर, कम CPU के साथ "
+"संभालता है; तीन होस्ट पर अनुपात TCP के लिए 1.04, HTTP के लिए 1.02 और "
+"HTTPS के लिए 1.10 थे। HTTP/2 में HAProxy तेज़ है: Sibuna एक होस्ट पर उसकी "
+"दर का 0.67 से 0.74 और तीन होस्ट पर 0.69 संभालता है। बेंचमार्क अध्याय इसका "
+"कारण बताता है। पूरा HTTP/2 आदान-प्रदान प्रोटोकॉल रनटाइम में चलता है, जो "
+"एक सामान्य HTTP/2 लाइब्रेरी वाला सामान्य एसिंक्रोनस रनटाइम है; वह पंक्ति "
+"CPU से बँधी है, प्रति अनुरोध 74 us, जबकि केवल इसी उद्देश्य के लिए लिखे गए "
+"HAProxy के multiplexer के लिए 52 us। केवल एक सस्ता HTTP/2 पाथ इसे बदलेगा, "
+"और SID 0017 दर्ज करता है कि हमने उसे क्यों नहीं लिखा।"
 
 #: ../../edge.rst:472
 msgid "Exercises"
-msgstr ""
+msgstr "अभ्यास"
 
 #: ../../edge.rst:475
 msgid "Exercise 8.1"
-msgstr ""
+msgstr "अभ्यास 8.1"
 
 #: ../../edge.rst:477
 msgid ""
@@ -1566,16 +2318,22 @@ msgid ""
 "run reported above for ten servers, about how many under Sibuna's Maglev "
 "table? Then answer the same for a server that joins a pool of four."
 msgstr ""
+"एक पूल में बराबर वेट के दस सर्वर हैं, और एक हटता है। modulo hashing में, "
+"rendezvous hashing में फ़्लो का कितना अंश हिलता है, और ऊपर दस सर्वरों के "
+"लिए बताए गए रन के आधार पर Sibuna की Maglev टेबल में लगभग कितना? फिर चार "
+"सर्वरों के पूल में जुड़ने वाले सर्वर के लिए यही उत्तर दीजिए।"
 
 #: ../../edge.rst:479
 msgid ""
 "Hint: Use the Chinese remainder theorem for modulo hashing, and the "
 "minimum of the other distances for rendezvous hashing."
 msgstr ""
+"संकेत: modulo hashing के लिए चीनी शेषफल प्रमेय का, और rendezvous hashing "
+"के लिए बाक़ी दूरियों के न्यूनतम का उपयोग करें।"
 
 #: ../../edge.rst:481
 msgid "Exercise 8.2"
-msgstr ""
+msgstr "अभ्यास 8.2"
 
 #: ../../edge.rst:483
 msgid ""
@@ -1586,16 +2344,24 @@ msgid ""
 "``a`` holds 9 and ``c`` holds 3? Show that some server is always below "
 "its bound."
 msgstr ""
+"एक bounded-Maglev पूल में ``a``, ``b`` और ``c`` सर्वर हैं, जिनके वेट 2, 1 "
+"और 1 हैं, ``load_factor_pct`` 125, और 19 सक्रिय फ़्लो। बीसवें फ़्लो के "
+"लिए हर सर्वर की सीमा निकालिए। हैश ``b`` का नाम देता है, जिसके पास 7 फ़्लो "
+"हैं। least-connections fallback के साथ फ़्लो कहाँ जाता है यदि ``a`` के "
+"पास 9 और ``c`` के पास 3 हों? दिखाइए कि कोई न कोई सर्वर हमेशा अपनी सीमा से "
+"नीचे होता है।"
 
 #: ../../edge.rst:485
 msgid ""
 "Hint: The bound is :math:`\\lceil c (L+1) w_p / W \\rceil`, and the "
 "contradiction argument of the worked example applies with weights."
 msgstr ""
+"संकेत: सीमा :math:`\\lceil c (L+1) w_p / W \\rceil` है, और हल किए गए "
+"उदाहरण का विरोधाभास वाला तर्क वेट के साथ लागू होता है।"
 
 #: ../../edge.rst:487
 msgid "Exercise 8.3"
-msgstr ""
+msgstr "अभ्यास 8.3"
 
 #: ../../edge.rst:489
 msgid ""
@@ -1607,16 +2373,25 @@ msgid ""
 "each request cost the worker for the agent? What changes if ``authz`` is "
 "written with ``on_failure: \"admit\"``?"
 msgstr ""
+"एक HTTP फ़्रंटएंड की अनुरोध chain ``[tenant, score, authz]`` है: एक "
+"native ``require_header`` हुक, ``on_failure: \"admit\"`` वाला एक Wasm "
+"हुक, और डिफ़ॉल्ट ``on_failure`` वाला एक agent। agent प्रोसेस मर चुकी है "
+"और हर breaker खुला है। tenant फ़ील्ड वाले अनुरोध के लिए निर्णय क्या है? "
+"जिसमें वह नहीं है उसके लिए? agent के कारण हर अनुरोध की वर्कर पर क्या लागत "
+"है? यदि ``authz`` ``on_failure: \"admit\"`` के साथ लिखा जाए तो क्या बदलता "
+"है?"
 
 #: ../../edge.rst:491
 msgid ""
 "Hint: Apply the outcome rule to each hook, then the chain rule. An open "
 "breaker costs no system call."
 msgstr ""
+"संकेत: हर हुक पर परिणाम का नियम लागू करें, फिर chain का नियम। खुले "
+"breaker की कोई system call लागत नहीं होती।"
 
 #: ../../edge.rst:493
 msgid "Exercise 8.4"
-msgstr ""
+msgstr "अभ्यास 8.4"
 
 #: ../../edge.rst:495
 msgid ""
@@ -1627,28 +2402,40 @@ msgid ""
 "client's address not produce it? Why would learning from a Version "
 "Negotiation packet break the argument?"
 msgstr ""
+"एक QUIC क्लाइंट ``udp_inspect: \"quic\"`` वाले फ़्रंटएंड से होकर 1,200 "
+"बाइट का एक Initial भेजता है, और ऑरिजिन 1,200 बाइट के आठ डेटाग्राम से "
+"उत्तर देता है। सत्यापन से पहले कितने क्लाइंट तक पहुँचते हैं? क्लाइंट का "
+"कौन-सा डेटाग्राम मैपिंग को सत्यापित करता है, और क्लाइंट के पते को spoof "
+"करने वाला प्रेषक उसे क्यों नहीं बना सकता? Version Negotiation पैकेट से "
+"सीखना तर्क को क्यों तोड़ देगा?"
 
 #: ../../edge.rst:497
 msgid ""
 "Hint: The bound is three times the bytes received. Compare what the "
 "origin chose with what the client chose."
 msgstr ""
+"संकेत: सीमा प्राप्त बाइट की तीन गुनी है। ऑरिजिन ने जो चुना उसकी तुलना "
+"क्लाइंट ने जो चुना उससे करें।"
 
 #: ../../edge.rst:499
 msgid "Limits"
-msgstr ""
+msgstr "सीमाएँ"
 
 #: ../../edge.rst:502
 msgid ""
 "The known gaps of these records, and one consequence of the design, "
 "stated where an operator meets them:"
 msgstr ""
+"इन रिकॉर्ड की ज्ञात कमियाँ, और डिज़ाइन का एक परिणाम, वहाँ बताए गए हैं "
+"जहाँ ऑपरेटर का उनसे सामना होता है:"
 
 #: ../../edge.rst:504
 msgid ""
 "*Ownership balances counts, not work.* A connection stays on the worker "
 "it was given; the assignment equalizes connection counts only."
 msgstr ""
+"*ओनरशिप गिनतियों को संतुलित करती है, कार्य को नहीं।* कनेक्शन उसी वर्कर पर "
+"रहता है जिसे वह दिया गया था; आवंटन केवल कनेक्शन गिनतियों को बराबर करता है।"
 
 #: ../../edge.rst:505
 msgid ""
@@ -1659,6 +2446,11 @@ msgid ""
 "do not survive a restart, and a Maglev pool takes only ``drain`` at run "
 "time."
 msgstr ""
+"*जो रीलोड bind, मेश की सदस्य-सूची (roster) या spill अनुभाग बदलता है, उसके "
+"लिए restart चाहिए।* एक अनुरोध के निर्णय-समय के भीतर दो रीलोड फिर भी उस "
+"अनुरोध को अस्वीकार करते हैं, और रीलोड के बाद के दस सेकंड में दिया गया "
+"ड्रेन आदेश हटाए गए revision तक नहीं पहुँचता (SID 0018)। रन-टाइम बदलाव "
+"restart के बाद नहीं बचते, और Maglev पूल रन-टाइम पर केवल ``drain`` लेता है।"
 
 #: ../../edge.rst:506
 msgid ""
@@ -1670,6 +2462,13 @@ msgid ""
 "``http.workers`` says, and its idle pool is one lock. gRPC from a "
 "cleartext HTTP/2 client is not accepted."
 msgstr ""
+"*HTTP/2 रनटाइम पर चलता है, वर्करों पर नहीं।* यह एक होस्ट पर HAProxy की दर "
+"का 0.67 से 0.74 संभालता है। ``h2`` प्रस्तावित करने वाले क्लाइंट से TLS पर "
+"HTTP/1.1, और HTTP/2 पर WebSocket, अब भी एक सॉकेट जोड़ी पार करते हैं (SID "
+"0017, SID 0024)। ``http_version`` 2 या 3 वाला पूल WebSocket नहीं ले सकता "
+"(SID 0016)। रनटाइम अधिकतम आठ थ्रेड का उपयोग करता है, ``http.workers`` कुछ "
+"भी कहे, और उसका निष्क्रिय पूल एक ही लॉक है। cleartext HTTP/2 क्लाइंट से "
+"gRPC स्वीकार नहीं किया जाता।"
 
 #: ../../edge.rst:507
 msgid ""
@@ -1678,6 +2477,10 @@ msgid ""
 "threads. Two requests that choose at the same moment may take the same "
 "least loaded server; limits still hold (SID 0019)."
 msgstr ""
+"*सर्वर का चुनाव अब भी साझा मेमोरी में लिखता है:* reference count और चुने "
+"गए सर्वर के काउंटर, आठ थ्रेड के तहत प्रति कॉल लगभग एक माइक्रोसेकंड। एक ही "
+"क्षण में चुनाव करने वाले दो अनुरोध एक ही सबसे कम लोड वाला सर्वर ले सकते "
+"हैं; सीमाएँ फिर भी बनी रहती हैं (SID 0019)।"
 
 #: ../../edge.rst:508
 msgid ""
@@ -1685,6 +2488,9 @@ msgid ""
 "overflow is not placed consistently across nodes. The slot table of "
 "source stickiness has a granularity of 1,021 slots."
 msgstr ""
+"*pewma fallback के साथ bounded loads गारंटी नहीं हैं,* और अतिप्रवाह को "
+"नोडों में एकरूपता से नहीं रखा जाता। source stickiness की स्लॉट टेबल की "
+"बारीकी 1,021 स्लॉट है।"
 
 #: ../../edge.rst:509
 msgid ""
@@ -1693,6 +2499,10 @@ msgid ""
 "never moves after the send, because the client library does not report a "
 "refusal we can read (SID 0019)."
 msgstr ""
+"*फ़ेलओवर सब कुछ नहीं हिला सकता।* 64 KiB से लंबी बॉडी stream की जाती है और "
+"फिर से नहीं भेजी जा सकती। HTTP/3 सर्वर को भेजा गया non-idempotent अनुरोध "
+"भेजने के बाद कभी नहीं हिलता, क्योंकि क्लाइंट लाइब्रेरी ऐसी अस्वीकृति की "
+"सूचना नहीं देती जिसे हम पढ़ सकें (SID 0019)।"
 
 #: ../../edge.rst:510
 msgid ""
@@ -1705,6 +2515,13 @@ msgid ""
 "for Linux only, and the effect of ``backlog`` on a full queue is not "
 "measured (SID 0032)."
 msgstr ""
+"*TCP और UDP के लिए सॉकेट पर प्रवेश अधूरा है।* TCP और UDP फ़्रंटएंड "
+"प्रतिबंध टेबल नहीं देखते। UDP के लिए प्रति-प्रीफ़िक्स बाइट बजट नहीं बने "
+"हैं। एज द्वारा बनाया गया QUIC Retry निर्दिष्ट है, बना नहीं है। एज ऑरिजिन "
+"के connection ID की लंबाई जाँचता है, उनकी entropy नहीं। एज से होकर QUIC "
+"connection migration काम नहीं करता, और greased तथा असली Encrypted "
+"ClientHello एक ही वर्ग हैं। कर्नेल प्रवेश केवल Linux के लिए बना है, और "
+"भरी कतार पर ``backlog`` का प्रभाव मापा नहीं गया है (SID 0032)।"
 
 #: ../../edge.rst:511
 msgid ""
@@ -1716,6 +2533,13 @@ msgid ""
 "had no external review. The hook measurements were taken on a busy "
 "machine (SID 0030)."
 msgstr ""
+"*अनुरोध चरण पर agent कॉल अपने थ्रेड को रोके रखती है।* QUIC कनेक्शन का "
+"निर्णय उसके handshake को नहीं रोकता। park किए गए फ़्लो की लागत दो थ्रेड "
+"हैंडऑफ़ है, वे एक UDP डेटाग्राम रखते हैं, और कोई मेट्रिक उन्हें नहीं "
+"गिनता। हर थ्रेड अपना Wasm instance रखता है, और रीलोड हर instance को फिर "
+"से बनाता है। interpreter wasmi से दो से तीन गुना धीमा है और उसकी कोई "
+"बाहरी समीक्षा नहीं हुई है। हुक के मापन एक व्यस्त मशीन पर लिए गए थे (SID "
+"0030)।"
 
 #: ../../edge.rst:512
 msgid ""
@@ -1723,6 +2547,9 @@ msgid ""
 "``tls_cipher`` is ``-`` for HTTP/3; a long-lived TCP connection writes "
 "its line only at its end (SID 0020)."
 msgstr ""
+"*अवलोकन में छेद हैं।* chunk framing ``bytes_in`` में नहीं गिनी जाती; "
+"HTTP/3 के लिए ``tls_cipher`` ``-`` है; लंबे समय तक चलने वाला TCP कनेक्शन "
+"अपनी पंक्ति केवल अंत में लिखता है (SID 0020)।"
 
 #: ../../edge.rst:513
 msgid ""
@@ -1731,6 +2558,11 @@ msgid ""
 "per address and keeps its orders in memory on one node; the Cloudflare "
 "DNS provider was never run against Cloudflare (SID 0021)."
 msgstr ""
+"*स्वचालित HTTPS* में मांग पर जारी करने के लिए अपने guard और bucket के "
+"अलावा प्रति क्लाइंट कोई सीमा नहीं है; स्थानीय अथॉरिटी के ACME सर्वर की "
+"प्रति पता कोई सीमा नहीं है और वह अपने ऑर्डर एक नोड पर मेमोरी में रखता है; "
+"Cloudflare DNS provider कभी Cloudflare के विरुद्ध नहीं चलाया गया (SID "
+"0021)।"
 
 #: ../../edge.rst:514
 msgid ""
@@ -1739,3 +2571,7 @@ msgid ""
 "batching remain proposed, and the full qualification list of SID 0015 is "
 "open."
 msgstr ""
+"*स्केल अभी प्रमाणित नहीं है।* फ़्लो टेबल को दस लाख प्रविष्टियों तक "
+"कॉन्फ़िगर किया जा सकता है; एक करोड़ फ़्लो वाला प्रयोग और cooperative "
+"platform batching अभी प्रस्तावित हैं, और SID 0015 की पूरी प्रमाणन सूची "
+"खुली है।"

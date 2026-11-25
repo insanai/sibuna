@@ -23,7 +23,7 @@ msgstr "शब्दावली"
 
 #: ../../glossary.rst:6
 msgid "Admin socket"
-msgstr ""
+msgstr "एडमिन सॉकेट (Admin socket)"
 
 #: ../../glossary.rst:7
 msgid ""
@@ -32,6 +32,11 @@ msgid ""
 "show the servers, drain, weigh, add or remove a server, lift a ban, "
 "reload. There is no TCP listener for administration (SID 0018)."
 msgstr ""
+"mode 0600 वाला एक Unix सॉकेट, जिसका नाम ``global.admin_socket`` या "
+"``sibuna lb --admin`` देता है, और जो ``sibuna ctl`` से एक बार में एक "
+"कमांड पंक्ति लेता है: सर्वर दिखाना, ड्रेन करना, वेट देना, सर्वर जोड़ना या "
+"हटाना, प्रतिबंध हटाना, रीलोड। प्रशासन के लिए कोई TCP लिसनर नहीं है (SID "
+"0018)।"
 
 #: ../../glossary.rst:9
 msgid "Admission"
@@ -49,7 +54,7 @@ msgstr ""
 
 #: ../../glossary.rst:12
 msgid "Affinity"
-msgstr ""
+msgstr "एफ़िनिटी (Affinity)"
 
 #: ../../glossary.rst:13
 msgid ""
@@ -57,6 +62,9 @@ msgid ""
 "by the source address, or by a sticky table. It gives way when the server "
 "is down, full, ejected or drained (SID 0019, SID 0025)."
 msgstr ""
+"वह नियम जो एक क्लाइंट के फ़्लो को एक सर्वर पर भेजता है: कुकी से, स्रोत "
+"पते से, या स्टिकी टेबल से। जब सर्वर बंद, भरा, बाहर किया गया (ejected) या "
+"ड्रेन किया गया हो, तो यह हट जाता है (SID 0019, SID 0025)।"
 
 #: ../../glossary.rst:15
 msgid "Aho-Corasick automaton"
@@ -75,7 +83,7 @@ msgstr ""
 
 #: ../../glossary.rst:18
 msgid "Authority"
-msgstr ""
+msgstr "अथॉरिटी (Authority)"
 
 #: ../../glossary.rst:19
 msgid ""
@@ -84,10 +92,14 @@ msgid ""
 "head and composes it with its own file, which keeps ``global``, ``mesh``, "
 "``observability`` and ``authority`` (SID 0028)."
 msgstr ""
+"एज में, वह डेटाबेस जो persistent मोड में प्रकाशित टोपोलॉजी का मालिक है: "
+"``frontends``, ``backends`` और ``http``। हर नोड उसके head का अनुसरण करता "
+"है और उसे अपनी फ़ाइल के साथ जोड़ता है, जो ``global``, ``mesh``, "
+"``observability`` और ``authority`` रखती है (SID 0028)।"
 
 #: ../../glossary.rst:21
 msgid "Backend"
-msgstr ""
+msgstr "बैकएंड (Backend)"
 
 #: ../../glossary.rst:22
 msgid ""
@@ -95,30 +107,29 @@ msgid ""
 "timeouts and stickiness. The word follows HAProxy; *pool* names the same "
 "thing."
 msgstr ""
+"एक प्रोटोकॉल के सर्वरों का पूल, अपने शेड्यूलर, हेल्थ चेक, टाइमआउट और "
+"stickiness के साथ। यह शब्द HAProxy से लिया गया है; *पूल* उसी चीज़ का नाम "
+"है।"
 
 #: ../../glossary.rst:24
 msgid "Ban table"
 msgstr "बैन टेबल (Ban table)"
 
 #: ../../glossary.rst:25
-#, fuzzy
-#| msgid ""
-#| "4,096 lock-free slots of banned client addresses with expiry, written "
-#| "by the honeypot and by reputation shared across a cluster, read on "
-#| "every request."
 msgid ""
 "Lock-free slots of banned client addresses with expiry, 65,536 by default "
 "(``--ban-table-slots``), written by the honeypot, by rule quotas, by "
 "reputation shared across a cluster and, in the edge, by the mesh; read on "
 "every request."
 msgstr ""
-"प्रतिबंधित क्लाइंट पतों के समाप्ति-समय सहित 4,096 lock-free स्लॉट, "
-"जिन्हें हनीपॉट और क्लस्टर में साझा प्रतिष्ठा लिखते हैं, और जिन्हें हर "
-"अनुरोध पर पढ़ा जाता है।"
+"प्रतिबंधित क्लाइंट पतों के समाप्ति-समय सहित lock-free स्लॉट, डिफ़ॉल्ट "
+"65,536 (``--ban-table-slots``), जिन्हें हनीपॉट, नियम कोटा, क्लस्टर में "
+"साझा प्रतिष्ठा और, एज में, मेश लिखते हैं; और जिन्हें हर अनुरोध पर पढ़ा "
+"जाता है।"
 
 #: ../../glossary.rst:27
 msgid "Breaker"
-msgstr ""
+msgstr "ब्रेकर (Breaker)"
 
 #: ../../glossary.rst:28
 msgid ""
@@ -126,6 +137,9 @@ msgid ""
 "failures in a row and stays open for ``open``; while it is open a call "
 "fails at once with the result ``unavailable`` (SID 0030)."
 msgstr ""
+"agent प्लगइन का circuit breaker। यह लगातार ``failures`` विफलताओं के बाद "
+"खुलता है और ``open`` तक खुला रहता है; खुले रहने पर कॉल तुरंत "
+"``unavailable`` परिणाम के साथ विफल होती है (SID 0030)।"
 
 #: ../../glossary.rst:30
 msgid "Campaign"
@@ -159,7 +173,7 @@ msgstr ""
 
 #: ../../glossary.rst:36
 msgid "ClientHello inspection"
-msgstr ""
+msgstr "ClientHello निरीक्षण (ClientHello inspection)"
 
 #: ../../glossary.rst:37
 msgid ""
@@ -169,6 +183,11 @@ msgid ""
 "within ``inspect_bytes`` takes the configured fallback (SID 0015, SID "
 "0032)."
 msgstr ""
+"``tcp_inspect`` वाले ``tcp`` फ़्रंटएंड पर, TLS टर्मिनेट किए बिना कनेक्शन "
+"का पहला TLS रिकॉर्ड पढ़ना, ताकि सर्वर नाम, ALPN या JA4 के आधार पर उसे रूट "
+"या अस्वीकार किया जा सके। जो कनेक्शन ``inspect_bytes`` के भीतर पूरा "
+"ClientHello नहीं भेजता, वह कॉन्फ़िगर किया गया fallback लेता है (SID 0015, "
+"SID 0032)।"
 
 #: ../../glossary.rst:39
 msgid "Difficulty, work bits"
@@ -185,7 +204,7 @@ msgstr ""
 
 #: ../../glossary.rst:42
 msgid "Drain"
-msgstr ""
+msgstr "ड्रेन (Drain)"
 
 #: ../../glossary.rst:43
 msgid ""
@@ -194,6 +213,10 @@ msgid ""
 "and a restart ends it. A node drains as a whole at shutdown, while "
 "readiness answers 503."
 msgstr ""
+"सर्वर की वह अवस्था जिसमें वह कोई नया फ़्लो नहीं लेता और अपने स्थापित "
+"फ़्लो रखता है। ``set server POOL/NAME state drain`` इसे सेट करता है, "
+"रीलोड इसे बनाए रखता है, और restart इसे समाप्त करता है। shutdown पर पूरा "
+"नोड ड्रेन होता है, जबकि readiness 503 उत्तर देता है।"
 
 #: ../../glossary.rst:45
 msgid "Edge"
@@ -212,10 +235,8 @@ msgstr ""
 "प्रतिष्ठा और घटनाओं की फ़ॉरेंसिक जाँच देता है।"
 
 #: ../../glossary.rst:48
-#, fuzzy
-#| msgid "Edge"
 msgid "Edge mode"
-msgstr "Edge"
+msgstr "एज मोड (Edge mode)"
 
 #: ../../glossary.rst:49
 msgid ""
@@ -224,6 +245,10 @@ msgid ""
 "pools, with the firewall on the routes that ask for it. It is unrelated "
 "to the storage sense of *Edge* above."
 msgstr ""
+"``--config-file`` के साथ शुरू किया गया डेमन। यह TCP और UDP फ़ॉरवर्ड करता "
+"है, TLS, HTTP/2 और HTTP/3 टर्मिनेट करता है, और HTTP अनुरोधों को सर्वर "
+"पूलों तक रूट करता है, उन रूटों पर फ़ायरवॉल के साथ जो उसे माँगते हैं। इसका "
+"ऊपर दिए स्टोरेज वाले अर्थ में *Edge* से कोई संबंध नहीं है।"
 
 #: ../../glossary.rst:51
 msgid "Engine slot"
@@ -256,7 +281,7 @@ msgstr ""
 
 #: ../../glossary.rst:57
 msgid "Fleet cap"
-msgstr ""
+msgstr "फ़्लीट सीमा (Fleet cap)"
 
 #: ../../glossary.rst:58
 msgid ""
@@ -265,16 +290,22 @@ msgid ""
 "the limit, and unused shares move to the nodes that have the flows (SID "
 "0025)."
 msgstr ""
+"``max_flows_scope: \"fleet\"`` के साथ सर्वर का ``max_flows``, जो मेश के "
+"सभी नोडों के फ़्लो को मिलाकर सीमित करता है। हर नोड सीमा का एक हिस्सा रखता "
+"है, और अप्रयुक्त हिस्से उन नोडों के पास जाते हैं जिनके पास फ़्लो हैं (SID "
+"0025)।"
 
 #: ../../glossary.rst:60
 msgid "Flow"
-msgstr ""
+msgstr "फ़्लो (Flow)"
 
 #: ../../glossary.rst:61
 msgid ""
 "One unit of work of the edge that holds a slot of ``global.max_flows``: a "
 "TCP connection, a UDP mapping, or an HTTP connection."
 msgstr ""
+"एज के कार्य की एक इकाई जो ``global.max_flows`` का एक स्लॉट रखती है: एक "
+"TCP कनेक्शन, एक UDP मैपिंग, या एक HTTP कनेक्शन।"
 
 #: ../../glossary.rst:63
 msgid "Forward auth"
@@ -292,13 +323,15 @@ msgstr ""
 
 #: ../../glossary.rst:66
 msgid "Frontend"
-msgstr ""
+msgstr "फ़्रंटएंड (Frontend)"
 
 #: ../../glossary.rst:67
 msgid ""
 "A named set of listening addresses of one protocol, ``tcp``, ``udp`` or "
 "``http``, with its routes, its limits and its default backend."
 msgstr ""
+"एक प्रोटोकॉल, ``tcp``, ``udp`` या ``http``, के लिसनिंग पतों का नामित "
+"समूह, अपने रूट, अपनी सीमाओं और अपने डिफ़ॉल्ट बैकएंड के साथ।"
 
 #: ../../glossary.rst:69
 msgid "Gate"
@@ -328,7 +361,7 @@ msgstr ""
 
 #: ../../glossary.rst:75
 msgid "Handoff"
-msgstr ""
+msgstr "हैंडऑफ़ (Handoff)"
 
 #: ../../glossary.rst:76
 msgid ""
@@ -337,6 +370,10 @@ msgid ""
 "the new one over a Unix socket and then drains its TCP streams. Linux "
 "only (SID 0029)."
 msgstr ""
+"``global.upgrade_socket`` के साथ चल रही एज बाइनरी का प्रतिस्थापन: पुरानी "
+"प्रोसेस अपने लिसनिंग सॉकेट और जीवित UDP मैपिंग एक Unix सॉकेट पर नई "
+"प्रोसेस को सौंपती है और फिर अपनी TCP स्ट्रीम ड्रेन करती है। केवल Linux "
+"(SID 0029)।"
 
 #: ../../glossary.rst:78
 msgid "Hashcash"
@@ -367,7 +404,7 @@ msgstr ""
 
 #: ../../glossary.rst:84
 msgid "Hook"
-msgstr ""
+msgstr "हुक (Hook)"
 
 #: ../../glossary.rst:85
 msgid ""
@@ -376,6 +413,10 @@ msgid ""
 "native Rust, a metered WebAssembly module, or an agent in another process "
 "(SID 0030)."
 msgstr ""
+"एज के पाथ पर ऑपरेटर का अपना निर्णय, जिसे कोई प्लगइन ``connection``, "
+"``request`` या ``telemetry`` चरण पर चलाता है। प्लगइन native Rust, मीटर "
+"वाला WebAssembly मॉड्यूल, या किसी दूसरी प्रोसेस में agent होता है (SID "
+"0030)।"
 
 #: ../../glossary.rst:87
 msgid "Idle reaper"
@@ -425,16 +466,17 @@ msgstr ""
 "चैलेंज और टोकन में बँधे क्लाइंट फ़िंगरप्रिंट से कोई संबंध नहीं है।"
 
 #: ../../glossary.rst:96
-#, fuzzy
-#| msgid "Edge"
 msgid "Judge"
-msgstr "Edge"
+msgstr "जज (Judge)"
 
 #: ../../glossary.rst:97
 msgid ""
 "A thread that decides a parked connection whose chain of hooks names an "
 "agent, so that the edge worker never waits for the agent (SID 0030)."
 msgstr ""
+"वह थ्रेड जो ऐसे park किए गए कनेक्शन पर निर्णय लेता है जिसकी हुक chain "
+"किसी agent का नाम देती है, ताकि एज वर्कर कभी agent की प्रतीक्षा न करे "
+"(SID 0030)।"
 
 #: ../../glossary.rst:99
 msgid "Keyed BLAKE3"
@@ -450,7 +492,7 @@ msgstr ""
 
 #: ../../glossary.rst:102
 msgid "Local authority"
-msgstr ""
+msgstr "स्थानीय अथॉरिटी (Local authority)"
 
 #: ../../glossary.rst:103
 msgid ""
@@ -459,6 +501,10 @@ msgid ""
 "writes a revocation list, and can serve other machines as an ACME server "
 "(SID 0021)."
 msgstr ""
+"वह सर्टिफ़िकेट अथॉरिटी जिसे एज आंतरिक नामों के लिए स्वयं चलाता है। यह "
+"स्वचालित HTTPS के स्टोरेज में एक root और एक intermediate रखती है, "
+"revocation list लिखती है, और ACME सर्वर के रूप में दूसरी मशीनों को सर्व "
+"कर सकती है (SID 0021)।"
 
 #: ../../glossary.rst:105
 msgid "MAC token"
@@ -476,7 +522,7 @@ msgstr ""
 
 #: ../../glossary.rst:108
 msgid "Maglev"
-msgstr ""
+msgstr "Maglev"
 
 #: ../../glossary.rst:109
 msgid ""
@@ -486,10 +532,15 @@ msgid ""
 "table and bounds the load of the chosen server by a factor "
 "(``bounded_maglev``, SID 0015)."
 msgstr ""
+"अभाज्य संख्या जितने स्लॉट (Sibuna में 65,537) की consistent-hash टेबल, "
+"सर्वरों के permutation से भरी हुई, जो क्लाइंट को स्थिर समय में सर्वर पर "
+"रखती है (Eisenbud et al., NSDI 2016)। Sibuna एक weighted टेबल बनाता है और "
+"चुने गए सर्वर के लोड को एक गुणक से सीमित करता है (``bounded_maglev``, SID "
+"0015)।"
 
 #: ../../glossary.rst:111
 msgid "Mesh"
-msgstr ""
+msgstr "मेश (Mesh)"
 
 #: ../../glossary.rst:112
 msgid ""
@@ -499,16 +550,23 @@ msgid ""
 "``forward`` they also send flows to their owner. At most 64 nodes (SID "
 "0022 to SID 0026)."
 msgstr ""
+"एज क्लस्टर के नोड, जो ``mesh`` अनुभाग में एक साझा कुंजी के साथ सूचीबद्ध "
+"हैं। वे हर आधे सेकंड UDP पर एक-दूसरे को प्रोब करते हैं और प्रतिबंध, "
+"कमांड, स्टिकी टेबल और फ़्लीट सीमाओं के हिस्से साझा करते हैं; ``forward`` "
+"के साथ वे फ़्लो को उनके मालिक तक भी भेजते हैं। अधिकतम 64 नोड (SID 0022 से "
+"SID 0026)।"
 
 #: ../../glossary.rst:114
 msgid "Node"
-msgstr ""
+msgstr "नोड (Node)"
 
 #: ../../glossary.rst:115
 msgid ""
 "One edge process in a mesh, known by its mesh address; in persistent mode "
 "also by the name ``authority.node``."
 msgstr ""
+"मेश में एक एज प्रोसेस, जो अपने मेश पते से पहचानी जाती है; persistent मोड "
+"में ``authority.node`` नाम से भी।"
 
 #: ../../glossary.rst:117
 msgid "Work level"
@@ -540,7 +598,7 @@ msgstr ""
 
 #: ../../glossary.rst:123
 msgid "Owner"
-msgstr ""
+msgstr "मालिक (Owner)"
 
 #: ../../glossary.rst:124
 msgid ""
@@ -548,20 +606,26 @@ msgid ""
 "node with the largest rendezvous score for the client's address (SID "
 "0026)."
 msgstr ""
+"मेश का वह नोड जो पीयर फ़ॉरवर्डिंग में किसी क्लाइंट को सर्व करता है: "
+"क्लाइंट के पते के लिए सबसे बड़े rendezvous स्कोर वाला जीवित नोड (SID "
+"0026)।"
 
 #: ../../glossary.rst:126
 msgid "Passive health"
-msgstr ""
+msgstr "निष्क्रिय हेल्थ (Passive health)"
 
 #: ../../glossary.rst:127
 msgid ""
 "Ejecting a server for ``ejection`` after ``failures`` consecutive "
 "failures of real requests, while another server can serve (SID 0019)."
 msgstr ""
+"जब कोई दूसरा सर्वर सर्व कर सके, तब वास्तविक अनुरोधों की लगातार "
+"``failures`` विफलताओं के बाद किसी सर्वर को ``ejection`` के लिए बाहर करना "
+"(SID 0019)।"
 
 #: ../../glossary.rst:129
 msgid "Passthrough"
-msgstr ""
+msgstr "पासथ्रू (Passthrough)"
 
 #: ../../glossary.rst:130
 msgid ""
@@ -569,10 +633,13 @@ msgid ""
 "terminating it. The edge may still read the ClientHello, or validate QUIC "
 "by connection ID (SID 0032)."
 msgstr ""
+"TLS या QUIC कनेक्शन के बाइट को टर्मिनेट किए बिना सर्वर तक रिले करना। एज "
+"फिर भी ClientHello पढ़ सकता है, या connection ID से QUIC को सत्यापित कर "
+"सकता है (SID 0032)।"
 
 #: ../../glossary.rst:132
 msgid "Peer forwarding"
-msgstr ""
+msgstr "पीयर फ़ॉरवर्डिंग (Peer forwarding)"
 
 #: ../../glossary.rst:133
 msgid ""
@@ -581,14 +648,18 @@ msgid ""
 "session stay on one node. An established TCP connection that the network "
 "moves is not repaired (SID 0026)."
 msgstr ""
+"मेश की वह सुविधा जो नए कनेक्शन या UDP क्लाइंट को उस नोड को सौंपती है जो "
+"क्लाइंट का मालिक है, ताकि उसका स्टिकी सर्वर, रेट काउंटर और UDP सत्र एक "
+"नोड पर रहें। नेटवर्क द्वारा हिलाया गया स्थापित TCP कनेक्शन ठीक नहीं किया "
+"जाता (SID 0026)।"
 
 #: ../../glossary.rst:135
 msgid "Pool"
-msgstr ""
+msgstr "पूल (Pool)"
 
 #: ../../glossary.rst:136
 msgid "See *Backend*."
-msgstr ""
+msgstr "*बैकएंड* देखें।"
 
 #: ../../glossary.rst:138
 msgid "Proof of Sequential Work (PoSW)"
@@ -606,7 +677,7 @@ msgstr ""
 
 #: ../../glossary.rst:141
 msgid "Regime"
-msgstr ""
+msgstr "व्यवस्था (Regime)"
 
 #: ../../glossary.rst:142
 msgid ""
@@ -616,10 +687,15 @@ msgid ""
 "returns from wide-area to regional only below 1.5 ms (``Regime::step`` in "
 "``crates/lb/src/mesh.rs``)."
 msgstr ""
+"मेश का रूटिंग मोड, जो पीयर तक round trip के 95वें पर्सेंटाइल से चुना जाता "
+"है: बिना जीवित पीयर के *standalone*, जब तक round trip 3 ms या उससे कम रहे "
+"तब *regional*, और 3 ms से ऊपर *wide-area*। मेश wide-area से regional में "
+"केवल 1.5 ms से नीचे लौटता है (``crates/lb/src/mesh.rs`` में "
+"``Regime::step``)।"
 
 #: ../../glossary.rst:144
 msgid "Rendezvous hashing"
-msgstr ""
+msgstr "Rendezvous hashing"
 
 #: ../../glossary.rst:145
 msgid ""
@@ -629,6 +705,11 @@ msgid ""
 "it for source stickiness (SID 0019) and for the owner of a client (SID "
 "0026)."
 msgstr ""
+"Highest-random-weight hashing (Thaler और Ravishankar, 1998): हर उम्मीदवार "
+"को उसके नाम और कुंजी के हैश से एक स्कोर मिलता है, और सबसे बड़ा स्कोर "
+"जीतता है। खोया उम्मीदवार केवल अपनी कुंजियाँ हिलाता है। Sibuna इसका उपयोग "
+"source stickiness (SID 0019) और क्लाइंट के मालिक (SID 0026) के लिए करता "
+"है।"
 
 #: ../../glossary.rst:147
 msgid "Reputation trie"
@@ -644,7 +725,7 @@ msgstr ""
 
 #: ../../glossary.rst:150
 msgid "Revision"
-msgstr ""
+msgstr "रिविज़न (Revision)"
 
 #: ../../glossary.rst:151
 msgid ""
@@ -652,6 +733,9 @@ msgid ""
 "digest of the file; with a database it is a number that only grows, and a "
 "rollback is a new revision (SID 0028)."
 msgstr ""
+"एज में, टोपोलॉजी की एक प्रकाशित अवस्था। फ़ाइल के साथ यह फ़ाइल का digest "
+"है; डेटाबेस के साथ यह एक केवल बढ़ने वाली संख्या है, और rollback एक नया "
+"revision है (SID 0028)।"
 
 #: ../../glossary.rst:153
 msgid "Robin Hood spent set"
@@ -667,13 +751,15 @@ msgstr ""
 
 #: ../../glossary.rst:156
 msgid "Route"
-msgstr ""
+msgstr "रूट (Route)"
 
 #: ../../glossary.rst:157
 msgid ""
 "A rule of an HTTP frontend that selects a backend by host name and path "
 "prefix, and may switch the firewall off or on for its requests."
 msgstr ""
+"HTTP फ़्रंटएंड का एक नियम जो होस्ट नाम और पाथ प्रीफ़िक्स से बैकएंड चुनता "
+"है, और अपने अनुरोधों के लिए फ़ायरवॉल को बंद या चालू कर सकता है।"
 
 #: ../../glossary.rst:159
 msgid "Rule hash"
@@ -689,21 +775,23 @@ msgstr ""
 
 #: ../../glossary.rst:162
 msgid "Server"
-msgstr ""
+msgstr "सर्वर (Server)"
 
 #: ../../glossary.rst:163
 msgid ""
 "One address of a pool, with a name, a weight and an optional "
 "``max_flows``. ``sibuna ctl`` addresses it as ``POOL/NAME``."
 msgstr ""
+"पूल का एक पता, एक नाम, एक वेट और वैकल्पिक ``max_flows`` के साथ। ``sibuna "
+"ctl`` उसे ``POOL/NAME`` के रूप में संबोधित करता है।"
 
 #: ../../glossary.rst:165
 msgid "Share"
-msgstr ""
+msgstr "हिस्सा (Share)"
 
 #: ../../glossary.rst:166
 msgid "The part of a fleet cap that one node may hold now (SID 0025)."
-msgstr ""
+msgstr "फ़्लीट सीमा का वह भाग जिसे एक नोड अभी रख सकता है (SID 0025)।"
 
 #: ../../glossary.rst:168
 msgid "Shield"
@@ -729,7 +817,7 @@ msgstr ""
 
 #: ../../glossary.rst:174
 msgid "Slow start"
-msgstr ""
+msgstr "स्लो स्टार्ट (Slow start)"
 
 #: ../../glossary.rst:175
 msgid ""
@@ -737,10 +825,12 @@ msgid ""
 "takes a weight that grows in proportion to the time, so that a cold "
 "server is not flooded (SID 0019)."
 msgstr ""
+"``slow_start`` का ramp, जिसके दौरान सेवा में आया सर्वर ऐसा वेट लेता है जो "
+"समय के अनुपात में बढ़ता है, ताकि ठंडे सर्वर पर बाढ़ न आए (SID 0019)।"
 
 #: ../../glossary.rst:177
 msgid "Spill cache"
-msgstr ""
+msgstr "स्पिल कैश (Spill cache)"
 
 #: ../../glossary.rst:178
 msgid ""
@@ -748,10 +838,13 @@ msgid ""
 "clients that left memory, and keeps them over a restart. Admission to it "
 "follows TinyLFU (SID 0027)."
 msgstr ""
+"स्टिकी टेबल के नीचे मेमोरी में मैप की गई एक फ़ाइल, जो मेमोरी से निकल चुके "
+"क्लाइंटों के संकेत रखती है, और उन्हें restart के पार भी रखती है। इसमें "
+"प्रवेश TinyLFU का पालन करता है (SID 0027)।"
 
 #: ../../glossary.rst:180
 msgid "Sticky table"
-msgstr ""
+msgstr "स्टिकी टेबल (Sticky table)"
 
 #: ../../glossary.rst:181
 msgid ""
@@ -759,6 +852,9 @@ msgid ""
 "of each client, by source address or by cookie, for ``ttl`` after the "
 "last use. A mesh replicates it, and the later choice wins (SID 0025)."
 msgstr ""
+"``sticky: \"table\"`` वाले पूल की वह टेबल जो हर क्लाइंट का सर्वर, स्रोत "
+"पते या कुकी के आधार पर, अंतिम उपयोग के बाद ``ttl`` तक याद रखती है। मेश "
+"उसकी प्रतिकृति बनाता है, और बाद वाला चुनाव जीतता है (SID 0025)।"
 
 #: ../../glossary.rst:183
 msgid "Surface"
@@ -787,10 +883,8 @@ msgstr ""
 "वर्क बिट्स के साथ चैलेंज करते हैं या अस्वीकार करते हैं।"
 
 #: ../../glossary.rst:189
-#, fuzzy
-#| msgid "Work level"
 msgid "Worker"
-msgstr "वर्क लेवल (Work level)"
+msgstr "वर्कर (Worker)"
 
 #: ../../glossary.rst:190
 msgid ""
@@ -799,6 +893,10 @@ msgid ""
 "threads carry TCP streams; on Linux the event-driven HTTP workers, one "
 "per processor, serve HTTP connections (SID 0015, SID 0016)."
 msgstr ""
+"एज में, ट्रैफ़िक सर्व करने वाला थ्रेड। एज वर्कर हर फ़्रंटएंड के लिए "
+"accept करता है और फ़्लो टेबल तथा UDP मैपिंग का मालिक है; रिले थ्रेड TCP "
+"स्ट्रीम ढोते हैं; Linux पर इवेंट-ड्रिवन HTTP वर्कर, प्रति प्रोसेसर एक, "
+"HTTP कनेक्शन सर्व करते हैं (SID 0015, SID 0016)।"
 
 #: ../../glossary.rst:192
 msgid "Zaxonlite"
@@ -904,6 +1002,8 @@ msgid ""
 "Einziger, G., Friedman, R., and Manes, B. \"TinyLFU: a highly efficient "
 "cache admission policy.\" *ACM Transactions on Storage* 13(4), 2017."
 msgstr ""
+"Einziger, G., Friedman, R., and Manes, B. \"TinyLFU: a highly efficient "
+"cache admission policy.\" *ACM Transactions on Storage* 13(4), 2017."
 
 #: ../../glossary.rst:209
 msgid ""
@@ -912,6 +1012,10 @@ msgid ""
 "J. D. \"Maglev: a fast and reliable software network load balancer.\" "
 "*NSDI*, 2016."
 msgstr ""
+"Eisenbud, D. E., Yi, C., Contavalli, C., Smith, C., Kononov, R., "
+"Mann-Hielscher, E., Cilingiroglu, A., Cheyney, B., Shang, W., and Hosein, "
+"J. D. \"Maglev: a fast and reliable software network load balancer.\" "
+"*NSDI*, 2016."
 
 #: ../../glossary.rst:210
 msgid ""
@@ -954,6 +1058,8 @@ msgid ""
 "Mirrokni, V., Thorup, M., and Zadimoghaddam, M. \"Consistent hashing with "
 "bounded loads.\" *SODA*, 2018."
 msgstr ""
+"Mirrokni, V., Thorup, M., and Zadimoghaddam, M. \"Consistent hashing with "
+"bounded loads.\" *SODA*, 2018."
 
 #: ../../glossary.rst:215
 msgid ""
@@ -968,6 +1074,8 @@ msgid ""
 "Thaler, D. G., and Ravishankar, C. V. \"Using name-based mappings to "
 "increase hit rates.\" *IEEE/ACM Transactions on Networking* 6(1), 1998."
 msgstr ""
+"Thaler, D. G., and Ravishankar, C. V. \"Using name-based mappings to "
+"increase hit rates.\" *IEEE/ACM Transactions on Networking* 6(1), 1998."
 
 #: ../../glossary.rst:217
 msgid ""
@@ -988,15 +1096,6 @@ msgstr ""
 "*NSDI*, 2019."
 
 #: ../../glossary.rst:219
-#, fuzzy
-#| msgid ""
-#| "Sibuna Discussions 0001 to 0014, ``docs/sid/records``, 2026: process, "
-#| "foundation architecture, declarative policy engine, semantic "
-#| "inspection, Zaxonlite storage architecture, mathematical foundations, "
-#| "console management interface, AI bot traffic monitoring, chunked "
-#| "request bodies, the Rust port, storage through sqlx, outbound TLS for "
-#| "the console through rustls, console storage, and trusted JA4 "
-#| "fingerprints from the ingress."
 msgid ""
 "Sibuna Discussions 0001 to 0032, ``docs/sid/records``, 2026: process, "
 "foundation architecture, declarative policy engine, semantic inspection, "
@@ -1011,9 +1110,14 @@ msgid ""
 "spill cache, the database authority, the upgrade handoff, plugin tiers, "
 "the operator console of the edge, and staged admission."
 msgstr ""
-"Sibuna Discussions 0001 से 0014, ``docs/sid/records``, 2026: प्रक्रिया, "
+"Sibuna Discussions 0001 से 0032, ``docs/sid/records``, 2026: प्रक्रिया, "
 "आधारभूत आर्किटेक्चर, घोषणात्मक (declarative) नीति इंजन, सिमैंटिक "
 "निरीक्षण, Zaxonlite स्टोरेज आर्किटेक्चर, गणितीय आधार, कंसोल प्रबंधन "
 "इंटरफ़ेस, AI बॉट ट्रैफ़िक निगरानी, chunked अनुरोध बॉडी, Rust पोर्ट, sqlx "
 "के माध्यम से स्टोरेज, rustls के माध्यम से कंसोल के लिए आउटबाउंड TLS, "
-"कंसोल स्टोरेज, और इनग्रेस से विश्वसनीय JA4 फ़िंगरप्रिंट।"
+"कंसोल स्टोरेज, इनग्रेस से विश्वसनीय JA4 फ़िंगरप्रिंट, वितरित एज लोड "
+"बैलेंसर, इवेंट-ड्रिवन HTTP वर्कर, इन-प्रोसेस आदान-प्रदान, सरल सेटअप और "
+"रन-टाइम कॉन्फ़िगरेशन, ट्रैफ़िक नीति, एज का अवलोकन, स्वचालित HTTPS, "
+"प्रतिकृत प्रतिबंध, क्लस्टर कॉन्फ़िगरेशन, वर्करों पर TLS, साझा एफ़िनिटी और "
+"फ़्लीट सीमाएँ, पीयर फ़ॉरवर्डिंग, spill cache, डेटाबेस अथॉरिटी, upgrade "
+"हैंडऑफ़, प्लगइन स्तर, एज का ऑपरेटर कंसोल, और चरणबद्ध प्रवेश।"

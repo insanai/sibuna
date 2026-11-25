@@ -22,14 +22,6 @@ msgid "Part II: Prior Art and the Design Space"
 msgstr "भाग II: पूर्व कार्य और डिज़ाइन का क्षेत्र"
 
 #: ../../prior-art.rst:4
-#, fuzzy
-#| msgid ""
-#| "We place Sibuna among the systems it learned from: client puzzles and "
-#| "sequential work from the cryptography literature, signature and "
-#| "semantic application firewalls, proof-of-work interstitials, and "
-#| "hosted edge networks. We then compare the four tools an operator is "
-#| "most likely to weigh against each other, feature by feature, and "
-#| "record which facts were checked."
 msgid ""
 "We place Sibuna among the systems it learned from: client puzzles and "
 "sequential work from the cryptography literature, signature and semantic "
@@ -44,7 +36,8 @@ msgstr ""
 "और सिमैंटिक एप्लिकेशन फ़ायरवॉल, proof-of-work इंटरस्टिशियल, और होस्टेड "
 "edge नेटवर्क। फिर हम उन चार उपकरणों की, जिन्हें कोई ऑपरेटर सबसे अधिक "
 "एक-दूसरे के विरुद्ध तौलेगा, सुविधा-दर-सुविधा तुलना करते हैं, और दर्ज करते "
-"हैं कि कौन-से तथ्य जाँचे गए।"
+"हैं कि कौन-से तथ्य जाँचे गए। अंत में हम भाग VIII के एज लोड बैलेंसर को "
+"HAProxy और Envoy के साथ रखते हैं।"
 
 #: ../../prior-art.rst:6
 msgid "Where Sibuna Comes From"
@@ -55,14 +48,6 @@ msgid "Objectives"
 msgstr "उद्देश्य"
 
 #: ../../prior-art.rst:11
-#, fuzzy
-#| msgid ""
-#| "By the end of this chapter, we should be able to trace the lineage of "
-#| "client puzzles from 1992 to the sequential-work constructions of 2018, "
-#| "name the three architectural ideas Sibuna combines, place Sibuna, "
-#| "Anubis, SafeLine, and the Cloudflare WAF in one design space, and say "
-#| "which comparison claims were verified and which were only read from "
-#| "documentation."
 msgid ""
 "By the end of this chapter, we should be able to trace the lineage of "
 "client puzzles from 1992 to the sequential-work constructions of 2018, "
@@ -75,9 +60,10 @@ msgstr ""
 "इस अध्याय के अंत तक हमें यह कर पाना चाहिए: 1992 से 2018 की अनुक्रमिक "
 "कार्य वाले निर्माणों तक क्लाइंट पहेलियों की वंश-परंपरा ट्रेस करना, Sibuna "
 "द्वारा जोड़े गए तीन आर्किटेक्चरल विचारों के नाम बताना, Sibuna, Anubis, "
-"SafeLine और Cloudflare WAF को एक डिज़ाइन क्षेत्र में रखना, और बताना कि "
-"तुलना के कौन-से दावे सत्यापित किए गए और कौन-से केवल दस्तावेज़ों से पढ़े "
-"गए।"
+"SafeLine और Cloudflare WAF को एक डिज़ाइन क्षेत्र में रखना, एज लोड बैलेंसर "
+"की शेड्यूलिंग और कैशिंग के पीछे के शोध-पत्रों के नाम बताना, उसकी तुलना "
+"HAProxy और Envoy से करना, और बताना कि तुलना के कौन-से दावे सत्यापित किए "
+"गए और कौन-से केवल दस्तावेज़ों से पढ़े गए।"
 
 #: ../../prior-art.rst:13
 msgid "Client Puzzles and Sequential Work"
@@ -545,21 +531,6 @@ msgid "Feature Comparison"
 msgstr "सुविधाओं की तुलना"
 
 #: ../../prior-art.rst:132
-#, fuzzy
-#| msgid ""
-#| "The four tables below compare Sibuna with the three tools most often "
-#| "mentioned alongside it. Facts about the other products were read from "
-#| "their public documentation and release artefacts in September 2026: "
-#| "Anubis 1.27.0 (MIT licence, Go), SafeLine community edition 9.x "
-#| "(GPL-3.0 management code around closed detector images, Docker "
-#| "Compose), and the Cloudflare WAF developer documentation. Anubis was "
-#| "also run on the benchmark host; SafeLine and Cloudflare were not (Part "
-#| "VIII explains why). A dash means the product does not offer the "
-#| "feature; a plan name means the feature exists but only on that plan. "
-#| "Each Sibuna measurement names the committed result file it comes from. "
-#| "The TLS fingerprint row was checked in October 2026, against the "
-#| "Anubis changelog (1.21.0 and 1.26.0), the SafeLine release notes "
-#| "(8.10.0 and 9.2.0), and Cloudflare's page \"JA3/JA4 fingerprint\"."
 msgid ""
 "The four tables below compare Sibuna with the three tools most often "
 "mentioned alongside it. Facts about the other products were read from "
@@ -581,8 +552,8 @@ msgstr ""
 "1.27.0 (MIT लाइसेंस, Go), SafeLine community edition 9.x (बंद डिटेक्टर "
 "इमेज के चारों ओर GPL-3.0 प्रबंधन कोड, Docker Compose), और Cloudflare WAF "
 "का डेवलपर दस्तावेज़ीकरण। Anubis को बेंचमार्क होस्ट पर चलाया भी गया; "
-"SafeLine और Cloudflare को नहीं (भाग VIII कारण बताता है)। डैश का अर्थ है "
-"कि उत्पाद यह सुविधा नहीं देता; प्लान के नाम का अर्थ है कि सुविधा मौजूद है "
+"SafeLine और Cloudflare को नहीं (भाग X कारण बताता है)। डैश का अर्थ है कि "
+"उत्पाद यह सुविधा नहीं देता; प्लान के नाम का अर्थ है कि सुविधा मौजूद है "
 "लेकिन केवल उस प्लान पर। Sibuna का हर मापन उस कमिट की गई परिणाम फ़ाइल का "
 "नाम देता है जिससे वह आया है। TLS फ़िंगरप्रिंट वाली पंक्ति अक्टूबर 2026 "
 "में Anubis के changelog (1.21.0 और 1.26.0), SafeLine के release notes "
@@ -623,17 +594,13 @@ msgid "Runs as"
 msgstr "किस रूप में चलता है"
 
 #: ../../prior-art.rst:145
-#, fuzzy
-#| msgid ""
-#| "One binary; reverse proxy or forward auth; optional SQLite file or "
-#| "shared PostgreSQL database"
 msgid ""
 "One binary; reverse proxy or forward auth; optional SQLite file or shared "
 "PostgreSQL database; or an edge load balancer with the firewall per route "
 "(Part VIII)"
 msgstr ""
 "एक बाइनरी; रिवर्स प्रॉक्सी या forward auth; वैकल्पिक SQLite फ़ाइल या साझा "
-"PostgreSQL डेटाबेस"
+"PostgreSQL डेटाबेस; या हर रूट पर फ़ायरवॉल वाला एज लोड बैलेंसर (भाग VIII)"
 
 #: ../../prior-art.rst:146
 msgid "One Go binary; reverse proxy or forward auth"
@@ -990,17 +957,13 @@ msgid "Multi-node"
 msgstr "मल्टी-नोड"
 
 #: ../../prior-art.rst:237
-#, fuzzy
-#| msgid ""
-#| "One PostgreSQL database shared by every node for policy and "
-#| "reputation; shared seed; sticky challenge verification"
 msgid ""
 "Daemon: one PostgreSQL database shared by every node for policy and "
 "reputation; shared seed; sticky challenge verification. Edge: a mesh "
 "shares bans (SID 0022)"
 msgstr ""
-"नीति और प्रतिष्ठा के लिए हर नोड द्वारा साझा एक PostgreSQL डेटाबेस; साझा "
-"सीड; sticky चैलेंज सत्यापन"
+"डेमन: नीति और प्रतिष्ठा के लिए हर नोड द्वारा साझा एक PostgreSQL डेटाबेस; "
+"साझा सीड; sticky चैलेंज सत्यापन। एज: मेश प्रतिबंध साझा करता है (SID 0022)"
 
 #: ../../prior-art.rst:238
 msgid "Shared signing key; shared Valkey store"
@@ -1045,7 +1008,7 @@ msgstr "TLS टर्मिनेशन"
 #: ../../prior-art.rst:258
 msgid ""
 "Daemon: \\- (ingress). Edge: **Yes**, with automatic HTTPS (SID 0021)"
-msgstr ""
+msgstr "डेमन: \\- (इनग्रेस)। एज: **हाँ**, स्वचालित HTTPS के साथ (SID 0021)"
 
 #: ../../prior-art.rst:259
 msgid "\\- (ingress)"
@@ -1069,10 +1032,8 @@ msgid "Measured on the benchmark host"
 msgstr "बेंचमार्क होस्ट पर मापा गया"
 
 #: ../../prior-art.rst:268
-#, fuzzy
-#| msgid "**Yes** (Part VIII)"
 msgid "**Yes** (Part X)"
-msgstr "**हाँ** (भाग VIII)"
+msgstr "**हाँ** (भाग X)"
 
 #: ../../prior-art.rst:270
 msgid "\\- (Docker only)"
@@ -1134,18 +1095,6 @@ msgid "Current product boundary"
 msgstr "उत्पाद की वर्तमान सीमा"
 
 #: ../../prior-art.rst:282
-#, fuzzy
-#| msgid ""
-#| "Sibuna leaves ingress TLS termination to the deployment proxy and does "
-#| "not score bots with a trained model or publish paid signatures. It "
-#| "matches the JA4 fingerprint that a trusted ingress computes; it cannot "
-#| "compute one itself (SID 0014, Part IX). Its opt-in console provides "
-#| "authenticated dashboards, country enrichment, policy editing, "
-#| "investigation and cluster management. Country lookup and storage work "
-#| "run outside request classification. SID 0007 is Committed, and the "
-#| "console passes its browser workflows (SID 0010). Its formal "
-#| "performance isolation gate, with eight active dashboards under load, "
-#| "is not yet measured; Part VIII records what is."
 msgid ""
 "The firewall daemon leaves TLS termination to the deployment proxy; the "
 "edge terminates TLS itself (Part VIII). Sibuna does not score bots with a "
@@ -1161,20 +1110,23 @@ msgid ""
 "gate, with eight active dashboards under load, is not yet measured; Part "
 "VIII records what is."
 msgstr ""
-"Sibuna इनग्रेस पर TLS टर्मिनेशन डिप्लॉयमेंट प्रॉक्सी पर छोड़ता है, और न "
-"तो प्रशिक्षित मॉडल से बॉट का स्कोर निकालता है और न ही सशुल्क सिग्नेचर "
-"प्रकाशित करता है। वह उस JA4 फ़िंगरप्रिंट का मिलान करता है जिसकी गणना कोई "
-"विश्वसनीय इनग्रेस करता है; वह स्वयं उसकी गणना नहीं कर सकता (SID 0014, भाग "
-"IX)। उसका वैकल्पिक कंसोल प्रमाणित डैशबोर्ड, देश की जानकारी, नीति संपादन, "
-"जाँच और क्लस्टर प्रबंधन देता है। देश का लुकअप और स्टोरेज का कार्य अनुरोध "
-"वर्गीकरण से बाहर चलते हैं। SID 0007 Committed है, और कंसोल अपने ब्राउज़र "
-"वर्कफ़्लो पास करता है (SID 0010)। लोड में आठ सक्रिय डैशबोर्ड के साथ उसका "
-"औपचारिक प्रदर्शन-पृथक्करण गेट अभी मापा नहीं गया है; भाग VIII दर्ज करता है "
-"कि क्या मापा गया है।"
+"फ़ायरवॉल डेमन TLS टर्मिनेशन डिप्लॉयमेंट प्रॉक्सी पर छोड़ता है; एज स्वयं "
+"TLS टर्मिनेट करता है (भाग VIII)। Sibuna न तो प्रशिक्षित मॉडल से बॉट का "
+"स्कोर निकालता है और न ही सशुल्क सिग्नेचर प्रकाशित करता है। HTTP फ़ायरवॉल "
+"उस JA4 फ़िंगरप्रिंट का मिलान करता है जिसकी गणना कोई विश्वसनीय इनग्रेस "
+"करता है, और स्वयं उसकी गणना नहीं कर सकता (SID 0014, भाग XI); एज JA4 की "
+"गणना केवल उस TCP फ़्रंटएंड के ClientHello से करता है जो उसका निरीक्षण "
+"करता है, अपने रूटिंग नियमों, अपने हुक और अपने PROXY हेडर के लिए (SID "
+"0015)। उसका वैकल्पिक कंसोल प्रमाणित डैशबोर्ड, देश की जानकारी, नीति "
+"संपादन, जाँच और क्लस्टर प्रबंधन देता है। देश का लुकअप और स्टोरेज का कार्य "
+"अनुरोध वर्गीकरण से बाहर चलते हैं। SID 0007 Committed है, और कंसोल अपने "
+"ब्राउज़र वर्कफ़्लो पास करता है (SID 0010)। लोड में आठ सक्रिय डैशबोर्ड के "
+"साथ उसका औपचारिक प्रदर्शन-पृथक्करण गेट अभी मापा नहीं गया है; भाग VIII "
+"दर्ज करता है कि क्या मापा गया है।"
 
 #: ../../prior-art.rst:284
 msgid "Load Balancers"
-msgstr ""
+msgstr "लोड बैलेंसर"
 
 #: ../../prior-art.rst:287
 msgid ""
@@ -1184,12 +1136,15 @@ msgid ""
 "names what the load balancer draws on and compares it with two open load "
 "balancers."
 msgstr ""
+"SID 0015 से Sibuna एक एज लोड बैलेंसर भी है: यह TCP और UDP फ़ॉरवर्ड करता "
+"है, TLS, HTTP/2 और HTTP/3 टर्मिनेट करता है, और HTTP अनुरोधों को सर्वरों "
+"के पूलों तक रूट करता है, उन रूटों पर फ़ायरवॉल के साथ जो उसे माँगते हैं। "
+"यह अनुभाग बताता है कि लोड बैलेंसर किन स्रोतों पर आधारित है, और उसकी तुलना "
+"दो खुले लोड बैलेंसरों से करता है।"
 
 #: ../../prior-art.rst:289
-#, fuzzy
-#| msgid "Where Sibuna Comes From"
 msgid "Where the Load Balancer Comes From"
-msgstr "Sibuna कहाँ से आता है"
+msgstr "लोड बैलेंसर कहाँ से आता है"
 
 #: ../../prior-art.rst:292
 msgid ""
@@ -1205,10 +1160,23 @@ msgid ""
 "of SID 0030 also attach at fixed stages, in three tiers, and each "
 "decision is one call with a deadline."
 msgstr ""
+"शब्दावली HAProxy की है। *frontend* पते bind करता है, *backend* *servers* "
+"का एक पूल है, और ऑपरेटर एक स्थानीय सॉकेट के ज़रिए ``set server app/s1 "
+"state drain`` से सर्वर को ड्रेन करता है। भाग XI एक तालिका रखता है जो "
+"HAProxy directives को एज की कुंजियों में बदलती है। nginx ने इवेंट-ड्रिवन "
+"वर्कर को प्रॉक्सी का सामान्य डिज़ाइन बनाया: कुछ प्रोसेस, हर एक अपने इवेंट "
+"लूप के साथ, और प्रति कनेक्शन कोई थ्रेड नहीं। SID 0016 एज के HTTP वर्कर "
+"इसी तरह बनाता है। Envoy ने प्रॉक्सी को एक प्रोग्राम करने योग्य "
+"प्लेटफ़ॉर्म बनाया: पाथ के तय बिंदुओं पर फ़िल्टर, WebAssembly में "
+"एक्सटेंशन, और एक कॉन्फ़िगरेशन जिसे control plane भेजता है। SID 0030 के "
+"हुक भी तय चरणों पर, तीन स्तरों में, जुड़ते हैं, और हर निर्णय एक समय-सीमा "
+"वाली एक कॉल है।"
 
 #: ../../prior-art.rst:294
 msgid "Four papers decide how the edge places a flow and what it remembers."
 msgstr ""
+"चार शोध-पत्र तय करते हैं कि एज किसी फ़्लो को कैसे रखता है और क्या याद "
+"रखता है।"
 
 #: ../../prior-art.rst:296
 msgid ""
@@ -1219,6 +1187,12 @@ msgid ""
 "(``crates/lb/src/maglev.rs``), and a mesh in its regional regime places "
 "clients with it (SID 0015)."
 msgstr ""
+"*Maglev* (Eisenbud et al., NSDI 2016) हर सर्वर के एक permutation से "
+"अभाज्य संख्या जितने स्लॉट की टेबल भरता है, इसलिए lookup एक हैश और एक load "
+"है, और सर्वरों का बदलाव कम क्लाइंटों को हिलाता है। पूल प्रकार "
+"``bounded_maglev`` 65,537 स्लॉट की weighted टेबल बनाता है "
+"(``crates/lb/src/maglev.rs``), और अपनी regional व्यवस्था में मेश इससे "
+"क्लाइंटों को रखता है (SID 0015)।"
 
 #: ../../prior-art.rst:297
 msgid ""
@@ -1229,6 +1203,12 @@ msgid ""
 "default. HAProxy applies the same idea to its consistent hashing with "
 "``hash-balance-factor``."
 msgstr ""
+"*Consistent hashing with bounded loads* (Mirrokni, Thorup और "
+"Zadimoghaddam, SODA 2018) चुने गए सर्वर के लोड को माध्य के एक गुणक पर "
+"सीमित करता है और अतिरेक को आगे भेज देता है। ``bounded_maglev`` ऐसी सीमा "
+"उस सर्वर पर लागू करता है जिसका नाम टेबल देती है, ``load_factor_pct`` के "
+"साथ, डिफ़ॉल्ट 125। HAProxy यही विचार अपने consistent hashing पर "
+"``hash-balance-factor`` के साथ लागू करता है।"
 
 #: ../../prior-art.rst:298
 msgid ""
@@ -1239,6 +1219,12 @@ msgid ""
 "0019), and peer forwarding chooses the owner of a client among the nodes "
 "in this way (SID 0026)."
 msgstr ""
+"*Rendezvous hashing* (Thaler और Ravishankar, IEEE/ACM Transactions on "
+"Networking 1998) हर सर्वर को उसके नाम और कुंजी के हैश से एक स्कोर देता "
+"है, और सबसे बड़ा स्कोर जीतता है। किसी सर्वर के खोने पर केवल उसकी अपनी "
+"कुंजियाँ हिलती हैं और किसी टेबल की ज़रूरत नहीं होती। source stickiness "
+"सर्वरों को इसी तरह क्रम देती है (SID 0019), और पीयर फ़ॉरवर्डिंग नोडों में "
+"से किसी क्लाइंट का मालिक इसी तरह चुनती है (SID 0026)।"
 
 #: ../../prior-art.rst:299
 msgid ""
@@ -1247,6 +1233,11 @@ msgid ""
 "sketch says that it is used more often than the entry it would push out. "
 "The spill cache of SID 0027 admits hints to its file by this rule."
 msgstr ""
+"*TinyLFU* (Einziger, Friedman और Manes, ACM Transactions on Storage 2017) "
+"भरे कैश में नई प्रविष्टि को केवल तब प्रवेश देता है जब एक छोटा आवृत्ति "
+"sketch कहे कि उसका उपयोग उस प्रविष्टि से अधिक बार होता है जिसे वह बाहर "
+"धकेलेगी। SID 0027 का spill cache अपनी फ़ाइल में संकेतों को इसी नियम से "
+"प्रवेश देता है।"
 
 #: ../../prior-art.rst:302
 msgid ""
@@ -1257,6 +1248,11 @@ msgid ""
 "the spill cache. HAProxy's hash-balance-factor shares the idea of bounded "
 "loads."
 msgstr ""
+"HAProxy शब्दावली और एडमिन सॉकेट देता है, nginx इवेंट-ड्रिवन वर्कर, और "
+"Envoy हुक चरणों का विचार साझा करता है। Maglev और bounded loads सीमित "
+"Maglev पूल देते हैं, rendezvous hashing source stickiness और क्लाइंट का "
+"मालिक देता है, और TinyLFU spill cache का प्रवेश देता है। HAProxy का "
+"hash-balance-factor bounded loads का विचार साझा करता है।"
 
 #: ../../prior-art.rst:302
 msgid ""
@@ -1292,16 +1288,49 @@ msgid ""
 "hash-balance-factor\", fontsize=7.5, fontcolor=\"#475569\"];\n"
 "}"
 msgstr ""
+"digraph lb_lineage {\n"
+"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.25, ranksep=0.5, "
+"fontname=\"Helvetica\", fontsize=9];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=8.5, fillcolor=\"#ffffff\", color=\"#7c9cd6\", "
+"margin=\"0.08,0.04\"];\n"
+"  edge [color=\"#94a3b8\", arrowsize=0.55];\n"
+"\n"
+"  haproxy [label=\"HAProxy\"];\n"
+"  nginx [label=\"nginx\"];\n"
+"  envoy [label=\"Envoy\"];\n"
+"  maglev [label=\"Maglev\\nEisenbud et al. 2016\"];\n"
+"  bounded [label=\"Bounded loads\\nMirrokni et al. 2018\"];\n"
+"  hrw [label=\"Rendezvous hashing\\nThaler-Ravishankar 1998\"];\n"
+"  tinylfu [label=\"TinyLFU\\nEinziger et al. 2017\"];\n"
+"\n"
+"  node [color=\"#15803d\", fillcolor=\"#f0fdf4\"];\n"
+"  vocab [label=\"फ़्रंटएंड, बैकएंड,\\nएडमिन सॉकेट (SID 0018)\"];\n"
+"  workers [label=\"इवेंट-ड्रिवन HTTP\\nवर्कर (SID 0016)\"];\n"
+"  hooks [label=\"हुक के चरण और\\nस्तर (SID 0030)\"];\n"
+"  bmaglev [label=\"bounded_maglev\\n(SID 0015)\"];\n"
+"  sticky [label=\"source stickiness (SID 0019),\\nक्लाइंट का मालिक (SID "
+"0026)\"];\n"
+"  spill [label=\"spill cache में प्रवेश\\n(SID 0027)\"];\n"
+"\n"
+"  haproxy -> vocab; nginx -> workers; envoy -> hooks [style=dashed];\n"
+"  maglev -> bmaglev; bounded -> bmaglev; hrw -> sticky; tinylfu -> "
+"spill;\n"
+"  haproxy -> bounded [style=dashed, dir=none, label=\" "
+"hash-balance-factor\", fontsize=7.5, fontcolor=\"#475569\"];\n"
+"}"
 
 #: ../../prior-art.rst:302
 msgid ""
 "What the edge load balancer takes from earlier systems and papers. Solid "
 "arrows are ideas taken directly; dashed lines are ideas shared."
 msgstr ""
+"एज लोड बैलेंसर पहले की प्रणालियों और शोध-पत्रों से क्या लेता है। ठोस तीर "
+"सीधे लिए गए विचार हैं; डैश वाली रेखाएँ साझा विचार हैं।"
 
 #: ../../prior-art.rst:331
 msgid "Load Balancing Compared"
-msgstr ""
+msgstr "लोड बैलेंसिंग की तुलना"
 
 #: ../../prior-art.rst:334
 msgid ""
@@ -1315,56 +1344,71 @@ msgid ""
 "settle. For Sibuna the code and the SID records decide, and a feature "
 "that is not built says so."
 msgstr ""
+"तालिका Sibuna की लोड बैलेंसिंग की तुलना HAProxy और Envoy से करती है। हमने "
+"उनका सार्वजनिक दस्तावेज़ीकरण 25 नवंबर 2026 को पढ़ा: HAProxy 3.4.8 "
+"Configuration Manual और Management Guide (docs.haproxy.org; 3.4 सबसे नई "
+"long-term-support शाखा है), और Envoy 1.40.2 दस्तावेज़ीकरण "
+"(envoyproxy.io)। इस तालिका के लिए हमने दोनों में से किसी को नहीं चलाया; "
+"भाग X एक होस्ट पर Sibuna की तुलना HAProxy 3.0.11 से करता है और तीन होस्ट "
+"का एक क्लस्टर चलाता है। *जाँचा नहीं गया* कहने वाला सेल ऐसे तथ्य का नाम "
+"देता है जिसे हमारे पढ़े पेजों ने तय नहीं किया। Sibuna के लिए कोड और SID "
+"रिकॉर्ड निर्णय करते हैं, और जो सुविधा नहीं बनी है उसके लिए यही कहा गया है।"
 
 #: ../../prior-art.rst:336
 msgid "Load balancing: Sibuna, HAProxy and Envoy"
-msgstr ""
+msgstr "लोड बैलेंसिंग: Sibuna, HAProxy और Envoy"
 
 #: ../../prior-art.rst:342
-#, fuzzy
-#| msgid "Sibuna"
 msgid "Sibuna edge"
-msgstr "Sibuna"
+msgstr "Sibuna एज"
 
 #: ../../prior-art.rst:343
 msgid "HAProxy 3.4"
-msgstr ""
+msgstr "HAProxy 3.4"
 
 #: ../../prior-art.rst:344
 msgid "Envoy 1.40"
-msgstr ""
+msgstr "Envoy 1.40"
 
 #: ../../prior-art.rst:345
 msgid "Protocols"
-msgstr ""
+msgstr "प्रोटोकॉल"
 
 #: ../../prior-art.rst:346
 msgid ""
 "TCP, UDP, HTTP/1.1, HTTP/2, HTTP/3 and gRPC, toward clients and toward "
 "servers; WebSocket, but not toward an HTTP/2 or HTTP/3 pool"
 msgstr ""
+"TCP, UDP, HTTP/1.1, HTTP/2, HTTP/3 और gRPC, क्लाइंटों की ओर और सर्वरों की "
+"ओर; WebSocket, लेकिन HTTP/2 या HTTP/3 पूल की ओर नहीं"
 
 #: ../../prior-art.rst:347
 msgid ""
 "TCP, HTTP/1.1, HTTP/2 and HTTP/3; QUIC toward servers is experimental; "
 "UDP listeners only in ``log-forward`` sections"
 msgstr ""
+"TCP, HTTP/1.1, HTTP/2 और HTTP/3; सर्वरों की ओर QUIC प्रायोगिक है; UDP "
+"लिसनर केवल ``log-forward`` अनुभागों में"
 
 #: ../../prior-art.rst:348
 msgid ""
 "TCP, UDP (UDP proxy filter), HTTP/1.1, HTTP/2, and HTTP/3 toward clients "
 "and toward servers"
 msgstr ""
+"TCP, UDP (UDP proxy filter), HTTP/1.1, HTTP/2, और HTTP/3, क्लाइंटों की ओर "
+"और सर्वरों की ओर"
 
 #: ../../prior-art.rst:349
 msgid "Scheduling"
-msgstr ""
+msgstr "शेड्यूलिंग"
 
 #: ../../prior-art.rst:350
 msgid ""
 "Least connections (default), round robin, power of two choices with peak "
 "EWMA, bounded Maglev; slow start"
 msgstr ""
+"Least connections (डिफ़ॉल्ट), round robin, peak EWMA के साथ power of two "
+"choices, bounded Maglev; स्लो स्टार्ट"
 
 #: ../../prior-art.rst:351
 msgid ""
@@ -1372,30 +1416,36 @@ msgid ""
 "``source``, ``uri``, ``url_param``, ``hdr``, ``random``, ``rdp-cookie``, "
 "``sticky``; bounded loads with ``hash-balance-factor``; ``slowstart``"
 msgstr ""
+"``roundrobin``, ``static-rr``, ``leastconn``, ``first``, ``hash``, "
+"``source``, ``uri``, ``url_param``, ``hdr``, ``random``, ``rdp-cookie``, "
+"``sticky``; ``hash-balance-factor`` के साथ bounded loads; ``slowstart``"
 
 #: ../../prior-art.rst:352
 msgid ""
 "Weighted round robin, least request (power of two choices), ring hash, "
 "Maglev with 65,537 slots, random, client-side weighted round robin"
 msgstr ""
+"Weighted round robin, least request (power of two choices), ring hash, "
+"65,537 स्लॉट वाला Maglev, random, client-side weighted round robin"
 
 #: ../../prior-art.rst:354
 msgid ""
 "**Yes**: PEM bundles chosen by server name; HTTP/2 over TLS and HTTP/3 "
 "over QUIC"
 msgstr ""
+"**हाँ**: सर्वर नाम से चुने गए PEM bundle; TLS पर HTTP/2 और QUIC पर HTTP/3"
 
 #: ../../prior-art.rst:355
 msgid "**Yes**: ``bind ... ssl crt``"
-msgstr ""
+msgstr "**हाँ**: ``bind ... ssl crt``"
 
 #: ../../prior-art.rst:356
 msgid "**Yes**: certificates from files or the secret discovery service"
-msgstr ""
+msgstr "**हाँ**: फ़ाइलों से या secret discovery service से सर्टिफ़िकेट"
 
 #: ../../prior-art.rst:357
 msgid "TLS passthrough"
-msgstr ""
+msgstr "TLS passthrough"
 
 #: ../../prior-art.rst:358
 msgid ""
@@ -1403,20 +1453,25 @@ msgid ""
 "read from the ClientHello; QUIC is validated by connection ID (SID 0032); "
 "edge-generated Retry is not built"
 msgstr ""
+"**हाँ**: ``tcp`` फ़्रंटएंड ClientHello से पढ़े गए सर्वर नाम, ALPN या JA4 "
+"के आधार पर रूट या अस्वीकार करते हैं; QUIC connection ID से सत्यापित होता "
+"है (SID 0032); एज द्वारा बनाया गया Retry नहीं बना है"
 
 #: ../../prior-art.rst:359
 msgid "**Yes**: ``mode tcp`` with content inspection of ``req.ssl_sni``"
-msgstr ""
+msgstr "**हाँ**: ``req.ssl_sni`` के content inspection के साथ ``mode tcp``"
 
 #: ../../prior-art.rst:360
 msgid ""
 "**Yes**: the TLS Inspector reads server name and ALPN to choose a filter "
 "chain"
 msgstr ""
+"**हाँ**: TLS Inspector filter chain चुनने के लिए सर्वर नाम और ALPN पढ़ता "
+"है"
 
 #: ../../prior-art.rst:361
 msgid "ACME"
-msgstr ""
+msgstr "ACME"
 
 #: ../../prior-art.rst:362
 msgid ""
@@ -1424,67 +1479,80 @@ msgid ""
 "Cloudflare), wildcards, issuance on demand, OCSP stapling, and a local "
 "authority that can serve other machines over ACME (SID 0021)"
 msgstr ""
+"**बिल्ट-इन**: HTTP-01, TLS-ALPN-01 और DNS-01 (हुक, RFC 2136, Cloudflare), "
+"wildcard, मांग पर जारी करना, OCSP stapling, और एक स्थानीय अथॉरिटी जो ACME "
+"पर दूसरी मशीनों को सर्व कर सकती है (SID 0021)"
 
 #: ../../prior-art.rst:363
 msgid ""
 "**Experimental** ``acme`` section: HAProxy answers HTTP-01 itself; DNS-01 "
 "and dns-persist-01 need the Data Plane API or another tool"
 msgstr ""
+"**प्रायोगिक** ``acme`` अनुभाग: HAProxy HTTP-01 का उत्तर स्वयं देता है; "
+"DNS-01 और dns-persist-01 के लिए Data Plane API या कोई दूसरा उपकरण चाहिए"
 
 #: ../../prior-art.rst:364 ../../prior-art.rst:396
-#, fuzzy
-#| msgid "Not documented"
 msgid "Not checked"
-msgstr "दस्तावेज़ों में नहीं"
+msgstr "जाँचा नहीं गया"
 
 #: ../../prior-art.rst:365
 msgid "Health checks"
-msgstr ""
+msgstr "हेल्थ चेक"
 
 #: ../../prior-art.rst:366
 msgid ""
 "Active TCP connect or HTTP ``GET`` with ``rise`` and ``fall``; passive "
 "ejection by real failures (SID 0019)"
 msgstr ""
+"``rise`` और ``fall`` के साथ सक्रिय TCP connect या HTTP ``GET``; वास्तविक "
+"विफलताओं से निष्क्रिय ejection (SID 0019)"
 
 #: ../../prior-art.rst:367
 msgid ""
 "Active checks (``check``, ``option httpchk``); passive observation with "
 "``observe`` and ``error-limit``"
 msgstr ""
+"सक्रिय जाँचें (``check``, ``option httpchk``); ``observe`` और "
+"``error-limit`` के साथ निष्क्रिय अवलोकन"
 
 #: ../../prior-art.rst:368
 msgid ""
 "Active HTTP, gRPC, L3/L4, Redis and Thrift checks; passive outlier "
 "detection"
 msgstr ""
+"सक्रिय HTTP, gRPC, L3/L4, Redis और Thrift जाँचें; निष्क्रिय outlier "
+"detection"
 
 #: ../../prior-art.rst:369
-#, fuzzy
-#| msgid "Session"
 msgid "Sticky sessions"
-msgstr "सत्र"
+msgstr "स्टिकी सत्र"
 
 #: ../../prior-art.rst:370
 msgid ""
 "Keyed cookie, source address, or a learned table by source or cookie that "
 "a mesh replicates and a file can keep over a restart (SID 0025, SID 0027)"
 msgstr ""
+"keyed कुकी, स्रोत पता, या स्रोत या कुकी के आधार पर सीखी गई टेबल जिसकी "
+"प्रतिकृति मेश बनाता है और जिसे एक फ़ाइल restart के पार रख सकती है (SID "
+"0025, SID 0027)"
 
 #: ../../prior-art.rst:371
 msgid ""
 "``cookie`` (insert, rewrite, prefix); stick tables (``stick on src``)"
 msgstr ""
+"``cookie`` (insert, rewrite, prefix); stick tables (``stick on src``)"
 
 #: ../../prior-art.rst:372
 msgid ""
 "A hash policy on the route with ring hash or Maglev; the stateful session "
 "filter with a cookie or a header"
 msgstr ""
+"ring hash या Maglev के साथ रूट पर hash policy; कुकी या हेडर के साथ "
+"stateful session filter"
 
 #: ../../prior-art.rst:373
 msgid "Runtime API"
-msgstr ""
+msgstr "रनटाइम API"
 
 #: ../../prior-art.rst:374
 msgid ""
@@ -1492,6 +1560,9 @@ msgid ""
 "servers, lift bans, reload, show; a subset in the operator console (SID "
 "0018, SID 0031)"
 msgstr ""
+"Unix एडमिन सॉकेट और ``sibuna ctl``: ड्रेन, वेट, सर्वर जोड़ना और हटाना, "
+"प्रतिबंध हटाना, रीलोड, show; इसका एक उपसमूह ऑपरेटर कंसोल में (SID 0018, "
+"SID 0031)"
 
 #: ../../prior-art.rst:375
 msgid ""
@@ -1499,6 +1570,9 @@ msgid ""
 "server``, ``del server``, ``show stat``, ``show table``, ``clear table``, "
 "``acme renew``"
 msgstr ""
+"stats सॉकेट पर Runtime API: ``set server ... state|weight``, ``add "
+"server``, ``del server``, ``show stat``, ``show table``, ``clear table``, "
+"``acme renew``"
 
 #: ../../prior-art.rst:376
 msgid ""
@@ -1506,10 +1580,13 @@ msgid ""
 "``healthcheck/fail``, ``runtime_modify``; endpoints and listeners change "
 "through xDS from a control plane"
 msgstr ""
+"एडमिन इंटरफ़ेस: stats, ``config_dump``, ``drain_listeners``, "
+"``healthcheck/fail``, ``runtime_modify``; endpoint और लिसनर control plane "
+"से xDS के ज़रिए बदलते हैं"
 
 #: ../../prior-art.rst:377
 msgid "Hot reload"
-msgstr ""
+msgstr "हॉट रीलोड"
 
 #: ../../prior-art.rst:378
 msgid ""
@@ -1517,20 +1594,25 @@ msgid ""
 "flows keep their server; ``reload cluster`` for a mesh; a database "
 "revision in persistent mode (SID 0023, SID 0028)"
 msgstr ""
+"उसी प्रोसेस में SIGHUP, ``reload`` या file watcher से; स्थापित फ़्लो अपना "
+"सर्वर बनाए रखते हैं; मेश के लिए ``reload cluster``; persistent मोड में "
+"डेटाबेस revision (SID 0023, SID 0028)"
 
 #: ../../prior-art.rst:379
 msgid ""
 "A reload starts a new worker that takes the listening sockets of the old "
 "one (``-x``; automatic in master-worker mode)"
 msgstr ""
+"रीलोड एक नया वर्कर शुरू करता है जो पुराने के लिसनिंग सॉकेट ले लेता है "
+"(``-x``; master-worker मोड में स्वचालित)"
 
 #: ../../prior-art.rst:380
 msgid "Dynamic configuration through xDS without a restart"
-msgstr ""
+msgstr "बिना restart के xDS के ज़रिए गतिशील कॉन्फ़िगरेशन"
 
 #: ../../prior-art.rst:381
 msgid "Binary replacement"
-msgstr ""
+msgstr "बाइनरी बदलना"
 
 #: ../../prior-art.rst:382
 msgid ""
@@ -1538,20 +1620,25 @@ msgid ""
 "mappings pass to the new process, and TCP streams drain in the old one; "
 "Linux only (SID 0029). Or ``global.reuse_port``"
 msgstr ""
+"``global.upgrade_socket``: लिसनिंग सॉकेट और जीवित UDP मैपिंग नई प्रोसेस "
+"को जाती हैं, और TCP स्ट्रीम पुरानी प्रोसेस में ड्रेन होती हैं; केवल Linux "
+"(SID 0029)। या ``global.reuse_port``"
 
 #: ../../prior-art.rst:383
 msgid "The same reload passes the listening sockets to the new process"
-msgstr ""
+msgstr "वही रीलोड लिसनिंग सॉकेट नई प्रोसेस को सौंपता है"
 
 #: ../../prior-art.rst:384
 msgid ""
 "Hot restart passes the listening sockets over a Unix socket; existing "
 "connections are not transferred; HTTP/3 is not handled gracefully yet"
 msgstr ""
+"Hot restart लिसनिंग सॉकेट को Unix सॉकेट पर सौंपता है; मौजूदा कनेक्शन "
+"स्थानांतरित नहीं होते; HTTP/3 अभी सुचारु रूप से नहीं सँभाला जाता"
 
 #: ../../prior-art.rst:385
 msgid "Clustering of state"
-msgstr ""
+msgstr "अवस्था की क्लस्टरिंग"
 
 #: ../../prior-art.rst:386
 msgid ""
@@ -1559,22 +1646,29 @@ msgid ""
 "and fleet-wide ``max_flows``, and forwards each client to its owner node "
 "(SID 0022, SID 0025, SID 0026); request limiters count on each node"
 msgstr ""
+"अधिकतम 64 नोड का मेश प्रतिबंध, सर्वर कमांड, स्टिकी टेबल और फ़्लीट-व्यापी "
+"``max_flows`` साझा करता है, और हर क्लाइंट को उसके मालिक नोड पर फ़ॉरवर्ड "
+"करता है (SID 0022, SID 0025, SID 0026); अनुरोध लिमिटर हर नोड पर गिनते हैं"
 
 #: ../../prior-art.rst:387
 msgid ""
 "``peers`` sections push stick-table entries between instances over TCP, "
 "multi-master; values overwrite without aggregation"
 msgstr ""
+"``peers`` अनुभाग TCP पर instances के बीच stick-table प्रविष्टियाँ भेजते "
+"हैं, multi-master; मान बिना एकत्रीकरण के overwrite होते हैं"
 
 #: ../../prior-art.rst:388
 msgid ""
 "Global rate limits through an external gRPC rate limit service; other "
 "shared state not checked"
 msgstr ""
+"बाहरी gRPC rate limit service के ज़रिए वैश्विक रेट लिमिट; अन्य साझा "
+"अवस्था जाँची नहीं गई"
 
 #: ../../prior-art.rst:389
 msgid "Extension mechanism"
-msgstr ""
+msgstr "एक्सटेंशन तंत्र"
 
 #: ../../prior-art.rst:390
 msgid ""
@@ -1582,39 +1676,45 @@ msgid ""
 "agents on a Unix socket, at the connection, request and telemetry stages; "
 "no hook on a response or a body (SID 0030)"
 msgstr ""
+"native Rust हुक, स्वयं लिखे गए मीटर वाले interpreter पर WebAssembly, और "
+"Unix सॉकेट पर agent, कनेक्शन, अनुरोध और telemetry चरणों पर; रिस्पॉन्स या "
+"बॉडी पर कोई हुक नहीं (SID 0030)"
 
 #: ../../prior-art.rst:391
 msgid ""
 "Lua (``lua-load``); filters, among them the Stream Processing Offload "
 "Engine (SPOE)"
 msgstr ""
+"Lua (``lua-load``); फ़िल्टर, जिनमें Stream Processing Offload Engine "
+"(SPOE) भी है"
 
 #: ../../prior-art.rst:392
 msgid ""
 "Filters, among them Lua, external authorization and external processing; "
 "WebAssembly through the Proxy-Wasm ABI"
 msgstr ""
+"फ़िल्टर, जिनमें Lua, external authorization और external processing हैं; "
+"Proxy-Wasm ABI के ज़रिए WebAssembly"
 
 #: ../../prior-art.rst:393
 msgid "Built-in bot protection"
-msgstr ""
+msgstr "बिल्ट-इन बॉट सुरक्षा"
 
 #: ../../prior-art.rst:394
 msgid ""
 "Proof-of-work admission (Gate) and the semantic firewall (Shield), chosen "
 "per frontend and per route; off in ``sibuna lb`` unless asked"
 msgstr ""
+"proof-of-work प्रवेश (Gate) और सिमैंटिक फ़ायरवॉल (Shield), हर फ़्रंटएंड "
+"और हर रूट के लिए चुने जाते हैं; ``sibuna lb`` में बंद, जब तक माँगा न जाए"
 
 #: ../../prior-art.rst:395
 msgid "None in the Configuration Manual; stick-table rates and deny rules"
-msgstr ""
+msgstr "Configuration Manual में कुछ नहीं; stick-table दरें और deny नियम"
 
 #: ../../prior-art.rst:398
-#, fuzzy
-#| msgid ""
-#| "Three differences carry most of the weight in a selection decision."
 msgid "Three differences matter most when we choose."
-msgstr "चयन के निर्णय में सबसे अधिक भार तीन अंतरों का है।"
+msgstr "चुनते समय तीन अंतर सबसे अधिक मायने रखते हैं।"
 
 #: ../../prior-art.rst:400
 msgid ""
@@ -1624,6 +1724,11 @@ msgid ""
 "Sibuna's socket changes servers, bans and certificates of its local "
 "authority; frontends, routes and policy change by reload (SID 0018)."
 msgstr ""
+"*रन-टाइम पर क्या बदलता है।* HAProxy और Sibuna दोनों एक स्थानीय सॉकेट से "
+"सर्वर बदलते हैं। Envoy एक control plane की अपेक्षा करता है: उसका एडमिन "
+"इंटरफ़ेस निरीक्षण और ड्रेन करता है, और xDS कॉन्फ़िगरेशन बदलता है। Sibuna "
+"का सॉकेट सर्वर, प्रतिबंध और अपनी स्थानीय अथॉरिटी के सर्टिफ़िकेट बदलता है; "
+"फ़्रंटएंड, रूट और नीति रीलोड से बदलते हैं (SID 0018)।"
 
 #: ../../prior-art.rst:401
 msgid ""
@@ -1633,6 +1738,12 @@ msgid ""
 "fixed roster of at most 64 nodes and only on a network that is trusted, "
 "because the mesh authenticates and does not encrypt (SID 0026)."
 msgstr ""
+"*क्लस्टर क्या साझा करता है।* HAProxy पीयर के बीच stick tables की "
+"प्रतिकृति बनाता है। Sibuna का मेश अवस्था के अधिक प्रकारों की प्रतिकृति "
+"बनाता है, हर एक अपने merge नियम के साथ, और फ़्लीट-व्यापी सीमाएँ और पीयर "
+"फ़ॉरवर्डिंग जोड़ता है, लेकिन केवल अधिकतम 64 नोड की एक तय सदस्य-सूची के "
+"भीतर और केवल विश्वसनीय नेटवर्क पर, क्योंकि मेश प्रमाणित करता है, "
+"एन्क्रिप्ट नहीं करता (SID 0026)।"
 
 #: ../../prior-art.rst:402
 msgid ""
@@ -1640,10 +1751,14 @@ msgid ""
 "also passes live UDP mappings, so a UDP client keeps its server; none of "
 "the three moves an established TCP connection to the new process."
 msgstr ""
+"*प्रतिस्थापन क्या बनाए रखता है।* तीनों लिसनिंग सॉकेट बनाए रखते हैं। "
+"Sibuna जीवित UDP मैपिंग भी सौंपता है, इसलिए UDP क्लाइंट अपना सर्वर बनाए "
+"रखता है; तीनों में से कोई भी स्थापित TCP कनेक्शन को नई प्रोसेस में नहीं "
+"ले जाता।"
 
 #: ../../prior-art.rst:404
 msgid "Current boundary of the load balancer"
-msgstr ""
+msgstr "लोड बैलेंसर की वर्तमान सीमा"
 
 #: ../../prior-art.rst:407
 msgid ""
@@ -1654,6 +1769,12 @@ msgid ""
 "change frontends or routes, the spill cache was not qualified at 50 "
 "million keys, and an agent call at the request stage holds its thread."
 msgstr ""
+"एज नया है। HAProxy और Envoy वर्षों से प्रोडक्शन ट्रैफ़िक सर्व कर रहे हैं; "
+"Sibuna का एज परीक्षणों में और अधिकतम तीन होस्ट पर बेंचमार्क में चला है "
+"(भाग X)। इसकी ज्ञात कमियाँ हर SID में सूचीबद्ध हैं: इनमें, TCP और UDP "
+"फ़्रंटएंड प्रतिबंध टेबल नहीं देखते, एडमिन सॉकेट फ़्रंटएंड या रूट नहीं बदल "
+"सकता, spill cache को 5 करोड़ कुंजियों पर प्रमाणित नहीं किया गया, और "
+"अनुरोध चरण पर agent कॉल अपने थ्रेड को रोके रखती है।"
 
 #: ../../prior-art.rst:409
 msgid "Exercise 2.1"
@@ -1689,10 +1810,8 @@ msgstr ""
 "संकेत: \"किस रूप में चलता है\" और \"मल्टी-नोड\" पंक्तियों से शुरू करें।"
 
 #: ../../prior-art.rst:419
-#, fuzzy
-#| msgid "Exercise 2.1"
 msgid "Exercise 2.3"
-msgstr "अभ्यास 2.1"
+msgstr "अभ्यास 2.3"
 
 #: ../../prior-art.rst:421
 msgid ""
@@ -1701,12 +1820,18 @@ msgid ""
 "move when one server is removed under each scheme, and why peer "
 "forwarding (SID 0026) chose rendezvous hashing for the owner of a client."
 msgstr ""
+"एक पूल में बराबर वेट के चार सर्वर और 1,000 क्लाइंट हैं। ऊपर दिए Maglev और "
+"rendezvous hashing के विवरणों का ही उपयोग करते हुए बताइए कि हर योजना में "
+"एक सर्वर हटाने पर कितने क्लाइंट हिलते हैं, और पीयर फ़ॉरवर्डिंग (SID 0026) "
+"ने क्लाइंट के मालिक के लिए rendezvous hashing क्यों चुना।"
 
 #: ../../prior-art.rst:423
 msgid ""
 "Hint: Ask which clients a removal must move, and which ones a rebuilt "
 "table may move as well."
 msgstr ""
+"संकेत: पूछिए कि हटाने पर किन क्लाइंटों को हिलना ही होगा, और फिर से बनी "
+"टेबल किन्हें और भी हिला सकती है।"
 
 #: ../../prior-art.rst:425
 msgid "Explain the invariant"
