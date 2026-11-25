@@ -80,6 +80,14 @@ pub type Handler = Arc<dyn Fn(TcpStream, SocketAddr, SocketAddr, Secured) + Send
 pub type Admit =
     Arc<dyn Fn(SocketAddr, SocketAddr) -> Option<Box<dyn std::any::Any + Send>> + Send + Sync>;
 
+/// Judges a QUIC connection when its ClientHello is read, before the handshake ends
+/// (SID 0030). The arguments are the client, the listener, the server name that the
+/// client sent, empty when it sent none, and the closure that receives the ruling. The
+/// call must return at once. It calls the closure at once or later, from any thread,
+/// with true to go on and false to close the connection.
+pub type Judge =
+    Arc<dyn Fn(SocketAddr, SocketAddr, &str, Box<dyn FnOnce(bool) + Send>) + Send + Sync>;
+
 /// The fingerprint of the first certificate of a chain the handshake verified.
 fn fingerprint(chain: Option<&[rustls::pki_types::CertificateDer<'_>]>) -> Option<Fingerprint> {
     chain?.first().map(|leaf| sibuna_crypto::sha256::Sha256::digest(leaf))
@@ -231,6 +239,7 @@ pub struct Ingress {
     idle: Duration,
     drain: watch::Sender<()>,
     admit: Arc<std::sync::OnceLock<Admit>>,
+    judge: Arc<std::sync::OnceLock<Judge>>,
 }
 
 impl Ingress {
@@ -254,6 +263,7 @@ impl Ingress {
         let capacity = Arc::new(Semaphore::new(limits.exchanges));
         let (drain, _) = watch::channel(());
         let admit = Arc::new(std::sync::OnceLock::new());
+        let judge = Arc::new(std::sync::OnceLock::new());
         let handoff = {
             let _enter = runtime.enter();
             let handoff = Handoff::start(handler)?;
@@ -271,6 +281,7 @@ impl Ingress {
                             capacity: capacity.clone(),
                             idle: limits.idle,
                             admit: admit.clone(),
+                            judge: judge.clone(),
                         },
                         drain.subscribe(),
                     ));
@@ -280,7 +291,18 @@ impl Ingress {
             handoff
         };
         let idle = limits.idle;
-        Ok(Self { runtime, listeners, endpoints, handoff, inline, capacity, idle, drain, admit })
+        Ok(Self {
+            runtime,
+            listeners,
+            endpoints,
+            handoff,
+            inline,
+            capacity,
+            idle,
+            drain,
+            admit,
+            judge,
+        })
     }
 
     /// Names the HTTP/2 and HTTP/3 servers of the egress. In-process exchanges then
@@ -296,6 +318,12 @@ impl Ingress {
     /// admitted by the caller of [`Ingress::accept`]. The first admission stays.
     pub fn guard(&self, admit: Admit) {
         let _ = self.admit.set(admit);
+    }
+
+    /// Sets the judge of QUIC connections: the connection stage of the hooks for an
+    /// HTTP/3 frontend (SID 0030). The first judge stays.
+    pub fn judge_connections(&self, judge: Judge) {
+        let _ = self.judge.set(judge);
     }
 
     /// Sets who hears of a request that the runtime answers itself when no in-process

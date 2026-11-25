@@ -115,7 +115,7 @@ impl Gate {
             let _ = rulings.send((ticket, answer.verdict == Verdict::Admit));
             wake.wake();
         });
-        judges.submit(Case::of(view), deliver).then_some(ticket)
+        judges.submit(Case::of(view), deliver).is_ok().then_some(ticket)
     }
 
     /// Keeps `flow` until the ruling of `ticket` arrives.

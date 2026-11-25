@@ -416,7 +416,7 @@ fn submit(
         let deliver = Box::new(move |answer| {
             let _ = answers.send(answer);
         });
-        refused += usize::from(!judges.submit(Case::of(view), deliver));
+        refused += usize::from(judges.submit(Case::of(view), deliver).is_err());
     }
     (received, refused)
 }

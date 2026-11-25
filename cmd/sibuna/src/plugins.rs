@@ -273,6 +273,56 @@ pub(crate) fn write_prometheus(plugins: &[PluginStatus], out: &mut String) {
     }
 }
 
+/// The connection stage of an HTTP/3 frontend (SID 0030): judges a QUIC connection by
+/// its client and its server name when the ClientHello is read. The threads of the
+/// HTTP/3 runtime never wait for an agent: a chain that names one goes to judges, and
+/// when they have no room the chain runs here with its agents failing as overloaded.
+#[cfg(feature = "https")]
+pub(crate) fn quic_judge(server: std::sync::Arc<crate::server::Server>) -> sibuna_ingress::Judge {
+    let judges = std::sync::OnceLock::new();
+    std::sync::Arc::new(move |peer, vip, name: &str, answer: Box<dyn FnOnce(bool) + Send>| {
+        let slot = server.plugins.get().filter(|slot| slot.has(Stage::Connection));
+        let front = server.edge_routes.as_ref().and_then(|routes| routes.frontend(vip));
+        let (Some(slot), Some(front)) = (slot, front) else { return answer(true) };
+        let view = View {
+            stage: Stage::Connection,
+            protocol: Protocol::Quic,
+            secure: true,
+            client: peer,
+            local: vip,
+            frontend: &front.name,
+            server_name: name.as_bytes(),
+            ..View::default()
+        };
+        let counted = std::sync::Arc::clone(&server);
+        let rule = move |admitted: bool| {
+            if !admitted {
+                counted.refuse_connection(sibuna_lb::Refusal::Hook, peer.ip());
+            }
+            answer(admitted);
+        };
+        let judges =
+            judges.get_or_init(|| sibuna_plugin::Judges::start(slot, slot.load().judges()).ok());
+        LOCAL.with_borrow_mut(|local| {
+            if !local.parks(slot, &front.name, Stage::Connection) {
+                return rule(local.run(slot, &view).verdict == Verdict::Admit);
+            }
+            let deliver: sibuna_plugin::Deliver =
+                Box::new(move |ruled| rule(ruled.verdict == Verdict::Admit));
+            let case = sibuna_plugin::Case::of(&view);
+            let deliver = match judges {
+                Some(judges) => match judges.submit(case, deliver) {
+                    Ok(()) => return,
+                    Err(deliver) => deliver,
+                },
+                None => deliver,
+            };
+            let verdict = local.run_shedding(slot, &view).verdict;
+            deliver(sibuna_plugin::Answer { verdict, hook: "".into() });
+        });
+    })
+}
+
 /// Publishes the first plan of the daemon and gives it to the worker of `edge` for
 /// the connection stage. We call it before any thread serves.
 pub(crate) fn begin(

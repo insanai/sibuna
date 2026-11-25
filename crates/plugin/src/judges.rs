@@ -15,7 +15,7 @@
 
 use std::io;
 use std::ops::Range;
-use std::sync::mpsc::{self, Receiver, SyncSender};
+use std::sync::mpsc::{self, Receiver, SyncSender, TrySendError};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::Instant;
 
@@ -159,10 +159,17 @@ impl Judges {
     }
 
     /// Gives `case` to the judges. `deliver` receives the answer on a judge's thread.
-    /// Returns false when the queue is full or no judge lives: nothing is delivered
-    /// then, and the caller decides the case itself with [`Local::run_shedding`].
-    pub fn submit(&self, case: Case, deliver: Deliver) -> bool {
-        self.queue.try_send(Job { case, deliver, queued: Instant::now() }).is_ok()
+    ///
+    /// # Errors
+    ///
+    /// The closure comes back when the queue is full or no judge lives. The caller
+    /// then decides the case itself with [`Local::run_shedding`].
+    pub fn submit(&self, case: Case, deliver: Deliver) -> Result<(), Deliver> {
+        let job = Job { case, deliver, queued: Instant::now() };
+        match self.queue.try_send(job) {
+            Ok(()) => Ok(()),
+            Err(TrySendError::Full(job) | TrySendError::Disconnected(job)) => Err(job.deliver),
+        }
     }
 }
 

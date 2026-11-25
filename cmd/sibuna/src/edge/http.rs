@@ -422,6 +422,7 @@ fn start_ingress(
     });
     let ingress = sibuna_ingress::Ingress::start(identities, budget, handler, decide, limits)?;
     ingress.guard(quic_admission(server.clone()));
+    ingress.judge_connections(crate::plugins::quic_judge(server.clone()));
     // Without the workers no decision hears of the requests the runtime refuses.
     let web = server.clone();
     ingress.report_refusals(Arc::new(move |refused| crate::access::refused(&web, refused)));

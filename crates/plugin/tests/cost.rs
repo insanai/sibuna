@@ -161,7 +161,7 @@ fn cost_of_one_invocation_of_each_tier() {
         let deliver = Box::new(move |answer| {
             let _ = answers.send(answer);
         });
-        assert!(judges.submit(sibuna_plugin::Case::of(black_box(&view)), deliver));
+        assert!(judges.submit(sibuna_plugin::Case::of(black_box(&view)), deliver).is_ok());
         black_box(received.recv().unwrap().verdict);
     };
     round();
