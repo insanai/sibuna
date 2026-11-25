@@ -15,6 +15,8 @@ A model of the algorithms of SID 0021, checked with Lean 4.19.0.
 10. Renewal information: the pick lies in the window of the authority, the renewal time is at most four fifths of the lifetime and before the expiry, a window in the past is due at once, and a time inside our bounds is taken as it is.
 11. Stapling: an OCSP response is stapled only inside its window and only when it says good, and the next question to the responder lies after now and inside the window.
 12. Zone search: the search for the zone of a record at a DNS provider asks a bounded number of questions, fewer than the owner has labels, finds only a zone that the account has and that ends the owner, and finds the longest such zone.
+13. Constraints: the empty list of the local root permits every name, a list permits exactly the names that an entry covers, a suffix covers at whole labels and never a shorter name, and a list of one kind of entry permits no name of the other kind.
+14. Restart: the delay before the certificate thread starts again after a panic is at least five seconds, at most five minutes, and never shrinks.
 
 Times are natural numbers of seconds. The JSON documents, the signatures, the sockets and the files are outside the model. Tests cover them.
 -/
@@ -999,5 +1001,148 @@ example : findZone (fun z => z == [2, 3]) 8 [0, 1, 2, 3] = some [2, 3] := by dec
 
 /-- A name of one label is never asked about: a provider has no zone `org`. -/
 example : zoneCandidates 8 [3] = [] := by decide
+
+/-! ## Part M: The name constraints of the local root -/
+
+/-- Whether the suffix `s` covers the host `h`. Both are lists of labels from the
+top-level label down: `a.corp.internal` is `[internal, corp, a]`, so a suffix of the
+name is a prefix of the list, and it ends at a label by construction. -/
+def under : List Nat → List Nat → Bool
+  | [], _ => true
+  | _ :: _, [] => false
+  | s :: ss, h :: hs => s == h && under ss hs
+
+/-- An entry of `internal.constraints`: a DNS suffix, or a range of addresses with its
+first address and its size. An address is a number. A range of size `k` starts at a
+multiple of `k`. -/
+inductive Entry where
+  | suffix (labels : List Nat)
+  | range (base size : Nat)
+
+/-- What a certificate names: a host, or an address. -/
+inductive Named where
+  | host (labels : List Nat)
+  | address (a : Nat)
+
+/-- Whether one entry covers a name. A suffix covers hosts only, a range addresses only. -/
+def covered : Entry → Named → Bool
+  | .suffix s, .host h => under s h
+  | .range b k, .address a => a / k == b / k
+  | _, _ => false
+
+/-- Whether the root may sign for a name: the empty list permits all, else an entry
+must cover the name. -/
+def permits (list : List Entry) (n : Named) : Bool :=
+  list.isEmpty || list.any (fun e => covered e n)
+
+/-- The empty list permits every name. -/
+theorem empty_list_permits_all (n : Named) : permits [] n = true := by
+  simp [permits]
+
+/-- With a list, a name is permitted exactly when an entry covers it. -/
+theorem permitted_iff_covered (e : Entry) (list : List Entry) (n : Named) :
+    permits (e :: list) n = true ↔ ∃ x, x ∈ e :: list ∧ covered x n = true := by
+  simp [permits, List.any_eq_true]
+
+/-- A suffix covers itself. -/
+theorem under_self (s : List Nat) : under s s = true := by
+  induction s with
+  | nil => simp [under]
+  | cons a t ih => simp [under, ih]
+
+/-- A suffix covers every name below a name that it covers. -/
+theorem under_below (s h t : List Nat) (c : under s h = true) : under s (h ++ t) = true := by
+  induction s generalizing h with
+  | nil => simp [under]
+  | cons a ss ih =>
+    cases h with
+    | nil => simp [under] at c
+    | cons b hs =>
+      simp [under] at c
+      simp [under, c.1, ih hs c.2]
+
+/-- A covered host has at least the labels of the suffix: `internal` is not covered by
+`corp.internal`. -/
+theorem under_is_no_shorter (s h : List Nat) (c : under s h = true) : s.length ≤ h.length := by
+  induction s generalizing h with
+  | nil => simp
+  | cons a ss ih =>
+    cases h with
+    | nil => simp [under] at c
+    | cons b hs =>
+      simp [under] at c
+      have := ih hs c.2
+      simp
+      omega
+
+/-- The cover compares whole labels: `evilcorp.internal` is not under `corp.internal`. -/
+theorem under_compares_labels (a b : Nat) (ss hs : List Nat)
+    (c : under (a :: ss) (b :: hs) = true) : a = b := by
+  simp [under] at c
+  exact c.1
+
+/-- A list of suffixes only permits no address. -/
+theorem suffixes_close_addresses (list : List Entry) (a : Nat) (e : Entry)
+    (h : ∀ x, x ∈ e :: list → ∃ s, x = .suffix s) :
+    permits (e :: list) (.address a) = false := by
+  simp only [permits, List.isEmpty_cons, Bool.false_or]
+  apply Bool.eq_false_iff.mpr
+  intro c
+  rw [List.any_eq_true] at c
+  obtain ⟨x, hx, hc⟩ := c
+  obtain ⟨s, rfl⟩ := h x hx
+  simp [covered] at hc
+
+/-- A list of ranges only permits no host. -/
+theorem ranges_close_hosts (list : List Entry) (l : List Nat) (e : Entry)
+    (h : ∀ x, x ∈ e :: list → ∃ b k, x = .range b k) :
+    permits (e :: list) (.host l) = false := by
+  simp only [permits, List.isEmpty_cons, Bool.false_or]
+  apply Bool.eq_false_iff.mpr
+  intro c
+  rw [List.any_eq_true] at c
+  obtain ⟨x, hx, hc⟩ := c
+  obtain ⟨b, k, rfl⟩ := h x hx
+  simp [covered] at hc
+
+/-- A range covers its own first address. -/
+theorem range_covers_its_base (b k : Nat) : covered (.range b k) (.address b) = true := by
+  simp [covered]
+
+/-- `a.corp.internal` (labels 1, 2, 3 from the top) under `corp.internal`: permitted.
+`evilcorp.internal` (labels 1, 4) is not, and an address in 10/8 of a toy space is. -/
+example : permits [.suffix [1, 2], .range 160 16] (.host [1, 2, 3]) = true := by decide
+example : permits [.suffix [1, 2], .range 160 16] (.host [1, 4]) = false := by decide
+example : permits [.suffix [1, 2], .range 160 16] (.address 171) = true := by decide
+example : permits [.suffix [1, 2], .range 160 16] (.address 176) = false := by decide
+
+/-! ## Part N: The restart of the certificate thread -/
+
+/-- The seconds before the restart after the `n`-th panic in a row, from 1. -/
+def restartDelay (n : Nat) : Nat :=
+  min (5 * 2 ^ (min (n - 1) 16)) 300
+
+/-- The delay is at least five seconds. -/
+theorem restart_at_least_five (n : Nat) : 5 ≤ restartDelay n := by
+  have h : 1 ≤ 2 ^ (min (n - 1) 16) := Nat.one_le_two_pow
+  simp only [restartDelay]
+  omega
+
+/-- The delay is at most five minutes. -/
+theorem restart_at_most_five_minutes (n : Nat) : restartDelay n ≤ 300 := by
+  simp only [restartDelay]
+  omega
+
+/-- The delay never shrinks as the panics go on. -/
+theorem restart_monotone (n m : Nat) (h : n ≤ m) : restartDelay n ≤ restartDelay m := by
+  have e : min (n - 1) 16 ≤ min (m - 1) 16 := by omega
+  have p : 2 ^ (min (n - 1) 16) ≤ 2 ^ (min (m - 1) 16) :=
+    Nat.pow_le_pow_right (by decide) e
+  simp only [restartDelay]
+  omega
+
+/-- The first delays: 5, 10, 20, 40, 80, 160, then 300. -/
+example : (List.range 9).map (fun n => restartDelay (n + 1)) =
+    [5, 10, 20, 40, 80, 160, 300, 300, 300] := by decide
 
 end SibunaAcme
