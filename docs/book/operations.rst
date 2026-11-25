@@ -531,7 +531,7 @@ Every option has a default. We change one in ``global.acme``.
      - ``lifetime`` is the lifetime of a certificate of the local authority in seconds, from 10 to 172800. ``constraints`` lists what its root may sign for, described under *Internal names and the local authority*.
    * - ``key``
      - ``"p256"``
-     - The key of each new certificate, from either source: ECDSA on P-256, or ``"p384"`` for P-384. A stored certificate keeps its key until its renewal. RSA keys are not offered.
+     - The key of each new certificate, from either source: ECDSA on P-256, ``"p384"`` for P-384, or ``"rsa2048"``, ``"rsa3072"`` and ``"rsa4096"`` for an RSA key. A stored certificate keeps its key until its renewal. An RSA key is made by the ``openssl`` program, which must be in the ``PATH`` of the daemon.
    * - ``on_demand``
      - none
      - The guards of issuance at the first handshake, described under *On demand*.
@@ -886,6 +886,9 @@ When the responder says ``revoked``, Sibuna logs it and renews the certificate a
    * - ``ACME014``
      - the certificate thread stopped on a defect
      - Nothing at once: the served certificates stay, and the thread starts again by itself after 5 seconds, then 10, up to 5 minutes. The line is a defect of Sibuna. We report it.
+   * - ``ACME015``
+     - the key tool failed
+     - The program ``openssl`` in the ``PATH`` of the daemon, which makes RSA keys. ``sibuna check`` and the start stop with this code when the program cannot be run. We install OpenSSL, or we set ``key`` to ``"p256"`` or ``"p384"``.
 
 A reload may add and remove ``auto`` names, and turn ``on_demand`` of a frontend on and off. A new name is ordered at once, and a removed name is no longer renewed or served. Changing ``global.acme``, which includes the guards of ``on_demand``, or adding the first ``auto`` name to a daemon that has none, needs a restart. A certificate from ``crt`` and ``auto`` names may share a listener. For a name that both cover, the automatic certificate serves once it exists.
 
@@ -914,7 +917,7 @@ A reload may add and remove ``auto`` names, and turn ``on_demand`` of a frontend
    * - ``acme_server`` makes the local authority an ACME server for other machines.
      - Not offered. Nodes that share the storage share the root.
    * - ``key_type`` offers ECDSA and RSA keys.
-     - ``key: "p256"`` or ``"p384"``. No RSA keys.
+     - ``key``: ``"p256"``, ``"p384"``, ``"rsa2048"``, ``"rsa3072"`` or ``"rsa4096"``. An RSA key needs the ``openssl`` program.
    * - ``on_demand`` in a site, ``on_demand_tls { ask URL }`` in the global options.
      - ``tls: { on_demand: true }`` and ``global.acme.on_demand``. The ``ask`` contract is the same: ``?domain=NAME``, and a 2xx status allows. A file without ``ask`` and without ``allow`` is refused, where Caddy warns.
    * - An on-demand certificate is renewed during a handshake.

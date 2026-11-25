@@ -363,8 +363,8 @@ Comparison with Caddy
      - differs
      - The same by default. ``internal.constraints`` limits the root.
    * - ``key_type`` offers ECDSA and RSA keys.
-     - differs
-     - ``key``: P-256 or P-384. No RSA.
+     - same
+     - ``key``: P-256, P-384, or RSA of 2048, 3072 or 4096 bits. An RSA key is made by the ``openssl`` program. See the fourth part.
    * - On-demand TLS with an ``ask`` endpoint.
      - same
      - ``tls: { on_demand: true }`` and ``global.acme.on_demand``, with the same ``ask`` contract. We refuse a file without a guard, where Caddy warns. A suffix list, a rate, a bound on the names and a bound on the wait are added.
@@ -1090,6 +1090,10 @@ The record is implemented on the branch ``sid-0021-automatic-https``. The table 
      - ``the_record_of_a_name_that_left_the_file_is_cleaned_at_once_and_at_the_start``: a hook that fails leaves the record remembered; after the hook works, a reload that drops the name and, in a second storage, a restart without the name each run ``cleanup`` once for the record and forget it. ``the_presented_records_of_the_store_are_listed`` covers the listing.
    * - A key on P-384 is requested, issued, stored and served.
      - ``crates/acme``: the signature of a P-384 key verifies with SHA-384, the key survives its PEM form, ``openssl req -verify`` accepts the request of either curve and names the curve and the signature, ``openssl verify -x509_strict`` accepts a local chain with a P-384 leaf. ``a_certificate_key_on_p384_is_ordered_issued_stored_and_served``: with ``key: "p384"`` a rustls client completes the handshake with a P-384 leaf of the test authority and of the local authority, and after a restart with the stored keys, with one order in all.
+   * - An RSA key is made, requested, issued, stored and served.
+     - ``crates/acme/src/keygen.rs``: a program that is missing, one that fails with its status and its words, one that is killed after its time, and output over the bound. ``key.rs``: a key of ``openssl`` signs with PKCS#1 and SHA-256 and survives its PEM form. ``csr.rs``: ``openssl req -verify`` accepts the request and names ``sha256WithRSAEncryption``. ``local.rs``: ``openssl verify -x509_strict`` accepts a chain with an RSA leaf of 2048 bits. ``a_certificate_key_of_rsa_is_ordered_issued_stored_and_served`` in ``edge_acme.rs``: with ``key: "rsa2048"`` a rustls client completes the handshake with an RSA leaf of the test authority and of the local authority, the stored key loads as RSA, and a restart orders nothing.
+   * - A missing ``openssl`` fails the check and the start.
+     - ``an_rsa_key_without_openssl_fails_the_check_and_the_start``: with an empty ``PATH``, ``sibuna check`` and the start both exit with KEY TOOL FAILED (ACME015) and the hint, and the storage directory was not created. The same file with ``"p384"`` checks.
    * - The thread starts again after a panic.
      - ``crates/ingress/src/auto/supervise.rs``: a thread that panics once reports the panic with a restart in 5 seconds, waits them, and then issues the certificate of the name; the delays are 5, 10, 20, 40, 80, 160 and 300 seconds. The panic is made by a flag that exists in the test build of the crate only. The line ``ACME014`` of the daemon was not seen through the binary, which has no way to make the thread panic.
    * - The quick start names the issuer.
@@ -1134,7 +1138,8 @@ Known gaps
 #. A failure to ask about a renewal is silent. ``show certs`` then shows the time of the last answer, or of the rule of two thirds.
 #. The certificate identifier needs the authority key identifier in the leaf. A certificate without that extension is not asked about.
 #. ``sibuna lb`` has no flag for ``fallback``, ``eab`` and ``ari``.
-#. Certificate keys are ECDSA on P-256 or P-384. No RSA keys: ``ring`` cannot make one. The account key and the keys of the local authority are on P-256 with no setting.
+#. An RSA key needs the ``openssl`` program. It is found through the ``PATH`` of the daemon, and no key of the file names another path. Whoever can put a program of that name earlier into that ``PATH`` makes the keys. The account key and the keys of the local authority are on P-256 with no setting, so a leaf with an RSA key still carries an ECDSA signature of its issuer.
+#. Making an RSA key blocks the certificate thread, for a part of a second with 2048 bits and for seconds with 4096. A handshake on demand waits for it. The time limit is 120 seconds, and it was not reached in a test. The keys of 3072 and 4096 bits were made and loaded by hand, and the tests make keys of 2048 bits only, to stay fast.
 #. A changed ``email`` does not update an existing account.
 #. The lock compares the modification time of a file with the clock of the node. Nodes whose clocks differ by more than ten minutes may order twice. Two containers with one host name and separate process tables may also order twice, because each takes the other's process for gone. A double order costs one certificate and corrupts nothing.
 #. One certificate per name. A frontend with many names of one registered domain spends the weekly limit of Let's Encrypt for that domain faster than one certificate with many names would.
