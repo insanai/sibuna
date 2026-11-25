@@ -292,6 +292,25 @@ impl LocalAuthority {
         lifetime: u64,
         now: u64,
     ) -> Result<Issued, Error> {
+        if names.is_empty() {
+            return Err(Error::local("A certificate needs a name."));
+        }
+        let key = KeyPair::generate_as(kind)?;
+        let chain_pem = self.issue_for(&key.subject_public_key_info(), names, lifetime, now)?;
+        Ok(Issued { chain_pem, key })
+    }
+
+    /// Signs a certificate for a public key that the caller holds no private key of:
+    /// the key of a certificate request. `public_key` is a DER `SubjectPublicKeyInfo`
+    /// that the caller has checked, for example with [`crate::csr::read`]. Returns the
+    /// chain as PEM, the leaf first. Fails as [`LocalAuthority::issue`] does.
+    pub fn issue_for(
+        &self,
+        public_key: &[u8],
+        names: &[&str],
+        lifetime: u64,
+        now: u64,
+    ) -> Result<String, Error> {
         let Some(first) = names.first() else {
             return Err(Error::local("A certificate needs a name."));
         };
@@ -302,7 +321,6 @@ impl LocalAuthority {
         let root = self.root(now)?;
         let wanted = now.saturating_add(lifetime);
         let intermediate = self.intermediate(&root, now, wanted.min(root.fields.not_after))?;
-        let key = KeyPair::generate_as(kind)?;
         let template = x509::Template {
             issuer: INTERMEDIATE_NAME,
             subject: &subject,
@@ -314,10 +332,9 @@ impl LocalAuthority {
             authority_key_id: Some(intermediate.key_id()),
             ..x509::Template::default()
         };
-        let leaf = x509::write(&template, &key.subject_public_key_info(), &intermediate.key)?;
-        let chain_pem = pem::encode("CERTIFICATE", &leaf)
-            + &pem::encode("CERTIFICATE", &intermediate.certificate);
-        Ok(Issued { chain_pem, key })
+        let leaf = x509::write(&template, public_key, &intermediate.key)?;
+        Ok(pem::encode("CERTIFICATE", &leaf)
+            + &pem::encode("CERTIFICATE", &intermediate.certificate))
     }
 }
 

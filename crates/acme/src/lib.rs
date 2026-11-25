@@ -43,6 +43,7 @@ pub mod local;
 pub mod ocsp;
 pub mod pem;
 pub mod schedule;
+pub mod server;
 pub mod store;
 pub mod x509;
 
