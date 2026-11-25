@@ -375,7 +375,7 @@ pub(crate) fn format_json(entry: &Entry, out: &mut Vec<u8>) {
     out.extend_from_slice(b",\"verdict\":");
     write_string(entry.verdict.as_bytes(), out);
     // The last field: how many servers the request left before this one (SID 0019).
-    let _ = write!(out, ",\"retries\":{}}}\n", entry.retries);
+    let _ = writeln!(out, ",\"retries\":{}}}", entry.retries);
 }
 
 /// Writes a duration as milliseconds with three decimals.
