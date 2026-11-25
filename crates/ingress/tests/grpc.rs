@@ -4,6 +4,8 @@
 //! The edge never looks inside a message.
 #![allow(clippy::unwrap_used)]
 
+#[path = "../../lb/tests/free/mod.rs"]
+mod free;
 #[path = "support/grpc.rs"]
 mod support;
 
@@ -93,7 +95,8 @@ struct Bench {
 
 /// Starts an edge whose pool has the servers `servers`, a list of JSON objects.
 fn bench(servers: &str) -> Bench {
-    let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+    // An address of its own: a port that was bound and released may be taken meanwhile.
+    let vip = free::tcp();
     let topology = format!(
         r#"{{"frontends":{{"web":{{"proto":"http","binds":["{vip}"],
         "default_backend":"grpc"}}}},"backends":{{"grpc":{{"mode":"http","http_version":"2",
