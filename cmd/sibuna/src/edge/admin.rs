@@ -234,12 +234,23 @@ mod unix {
         }
         // The file is compiled and checked here, off the worker, as for SIGHUP.
         let revision = match command {
-            Command::Reload if source.path().is_none() => {
+            Command::Reload | Command::ReloadCluster if source.path().is_none() => {
                 return Err(super::super::nothing_to_reload());
             }
-            Command::Reload => Some(source.load().map_err(super::super::reload_rejected)?),
+            Command::ReloadCluster if source.cluster().is_none() => {
+                return Err(control::failure(
+                    "ADM011",
+                    "NO CLUSTER",
+                    "This edge has no mesh, and so no peers to send the file to.",
+                    "Run `reload`, or name the nodes under `mesh` in the file of every node.",
+                ));
+            }
+            Command::Reload | Command::ReloadCluster => {
+                Some(source.load().map_err(super::super::reload_rejected)?)
+            }
             _ => None,
         };
+        let cluster = command == Command::ReloadCluster;
         let (reply, answer) = mpsc::sync_channel(1);
         let job = Job { line: line.to_owned(), command, revision, reply };
         let no_answer = || {
@@ -251,6 +262,50 @@ mod unix {
             )
         };
         jobs.send(job).map_err(|_| no_answer())?;
-        answer.recv_timeout(WORKER_TIMEOUT).map_err(|_| no_answer())?
+        let own = answer.recv_timeout(WORKER_TIMEOUT).map_err(|_| no_answer())??;
+        if cluster { push(source, own) } else { Ok(own) }
+    }
+
+    /// Sends the file that this node just reloaded to every peer, and adds one line
+    /// per peer to the answer. Fails with `ADM012` when a peer did not take the file.
+    fn push(source: &Source, mut answer: String) -> Result<String, RuntimeError> {
+        let (Some(peers), Some(path)) = (source.cluster(), source.path()) else {
+            return Ok(answer);
+        };
+        let results = match fs::read(path) {
+            Ok(file) => peers.push(&file),
+            Err(error) => return Err(super::super::reload_rejected(error)),
+        };
+        let mut failed = 0;
+        let mut lines = Vec::new();
+        for (peer, result) in &results {
+            match result {
+                Ok(()) => lines.push(format!("{peer} reloaded")),
+                Err(reason) => {
+                    failed += 1;
+                    lines.push(format!("{peer} refused: {reason}"));
+                }
+            }
+        }
+        if failed == 0 {
+            for line in lines {
+                answer.push_str(&line);
+                answer.push('\n');
+            }
+            return Ok(answer);
+        }
+        // The message of a failure is one line.
+        Err(control::failure(
+            "ADM012",
+            "CLUSTER RELOAD INCOMPLETE",
+            format!(
+                "This node reloaded. {failed} of {} peers did not take the file: {}.",
+                results.len(),
+                lines.join("; ")
+            ),
+            "A peer takes a file only when it states `mesh.accept_config: true`, shares the \
+             mesh key and lists the same `mesh.nodes`. Correct the peer and run the command \
+             again.",
+        ))
     }
 }

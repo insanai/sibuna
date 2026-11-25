@@ -1355,7 +1355,37 @@ A node tells its peers the client and the time the ban ends, three times over fi
 
 Three things stay local. Lifting a ban on one node lifts it there only. Bans that the policy file configures are not sent, so the file must be the same on every node. The request limiters count on each node by itself. The nodes must use the same ``ipv6_prefix`` and keep their clocks within a few seconds. ``mesh.replicate_bans: false`` turns the sharing off.
 
-A drain travels the same way. ``sibuna ctl SOCKET set server app/a state drain`` on any node takes the server out of rotation on every node, and ``state ready`` returns it everywhere. The later command wins. A node that restarts learns the drains in effect from its peers, so it does not send clients to a server under maintenance. Adding the word ``local`` keeps a command on its node, and ``mesh.replicate_drains: false`` turns the sharing off. Weights and added or removed servers are not shared: we give those commands on each node, or change the file of each node.
+The commands of the admin socket travel the same way. ``sibuna ctl SOCKET set server app/a state drain`` on any node takes the server out of rotation on every node, and ``state ready`` returns it everywhere. ``set server ... weight``, ``add server`` and ``del server`` hold on every node too. The later command wins. A node that restarts learns the commands in force from its peers, so it does not send clients to a server under maintenance. The last word ``local`` keeps a command on its node, and ``mesh.replicate_commands: false`` turns the sharing off.
+
+One rule stays. The default pool of a mesh places clients by a table that every node builds from the file. Such a pool takes drains at run time, but no weights and no members. We change its servers in the file and run ``reload cluster``. A pool with ``balance: { kind: "round_robin" }``, ``"least_connections"`` or ``"p2c_pewma"`` takes every command.
+
+``sibuna ctl SOCKET del ban 203.0.113.9`` lifts the ban of one client on every node. A node that was cut off cannot bring the ban back. A client that offends again is banned again. ``del ban ADDRESS local`` lifts the ban on one node.
+
+One file for the cluster
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+A cluster is easiest to run when every node holds the same file. The ``nodes`` form of the mesh section makes that possible: it lists every node, and each node finds itself in the list by its own address.
+
+.. code-block:: text
+
+   mesh: {
+       nodes: ["10.0.0.1:7946", "10.0.0.2:7946", "10.0.0.3:7946"],
+       key_file: "/etc/sibuna/mesh.key",
+       accept_config: true,
+   },
+
+With this section, and with frontends that bind the same addresses on every node, we edit the file on one node and run one command.
+
+.. code-block:: console
+
+   $ sibuna ctl /run/sibuna/edge.sock reload cluster
+   Sibuna edge routes reloaded
+   10.0.0.2:7946 reloaded
+   10.0.0.3:7946 reloaded
+
+The node checks its file and reloads. It then sends the file to its peers. Each peer checks the file itself, writes it in the place of its own and reloads. A file that does not check reaches no peer. When a peer does not take the file, the command fails and names each peer with its answer; we correct the peer and run the command again.
+
+A node takes a file only when it states ``accept_config: true``, and only from a holder of the mesh key. A holder of that key can therefore change the topology of every such node, so the key file must be readable by the daemon alone. The daemon must be able to write the directory of its file. The file travels signed but not encrypted. Certificates, keys and other files that the topology names by path are not sent: we place them on every node before the reload. A node that was down keeps its old file; we run the command again when it is back.
 
 The sticky cookie of a pool needs no sharing, but it needs the same ``http.secret_file`` on every node. Without that file each node draws its own secret and does not recognise the cookie of another.
 
