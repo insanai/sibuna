@@ -520,6 +520,8 @@ struct Table {
     regime: Option<Regime>,
     /// The key of the sticky cookies (SID 0019). The pools hold the tokens made with it.
     sticky: crate::sticky::Key,
+    /// The learned source affinity of the edge, when it keeps one (SID 0027).
+    hints: Option<Arc<crate::hints::Hints>>,
     /// What the requests read: a copy of the fields above, replaced after each change.
     snapshot: Arc<Snapshot>,
 }
@@ -532,6 +534,7 @@ impl Default for Table {
             loads: Loads::default(),
             regime: None,
             sticky: crate::sticky::Key::default(),
+            hints: None,
             snapshot: Arc::default(),
         };
         table.snapshot = Arc::new(table.snap());
@@ -706,6 +709,7 @@ impl HttpRoutes {
                 .collect();
             let mut routes = Routes { revision, fronts, pools, servers };
             seal(&mut routes, &state.sticky);
+            crate::hints::attach(&mut routes.pools, state.hints.as_ref());
             state.routes = Arc::new(routes);
             state.loads.prune();
         });
@@ -721,6 +725,15 @@ impl HttpRoutes {
             if let Some((retired, _)) = &mut table.previous {
                 seal(Arc::make_mut(retired), &table.sticky);
             }
+        });
+    }
+
+    /// Gives the HTTP pools that are sticky by source the hints of the edge (SID 0027).
+    /// The pools of every later revision get them too.
+    pub(crate) fn set_hints(&self, hints: Option<Arc<crate::hints::Hints>>) {
+        self.0.write(|table| {
+            crate::hints::attach(&mut Arc::make_mut(&mut table.routes).pools, hints.as_ref());
+            table.hints = hints;
         });
     }
 

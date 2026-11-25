@@ -12,6 +12,8 @@ mod budget;
 pub use budget::{FlowBudget, FlowPermit};
 mod config;
 mod health;
+mod hints;
+pub use hints::{SpillOptions, SpillStatus};
 mod http;
 pub use http::{
     HttpOptions, HttpRoutes, HttpTarget, OriginOptions, OriginTls, OriginVersion, Query,
@@ -168,6 +170,11 @@ pub struct Edge {
     listeners: Vec<Listener>,
     pools: BTreeMap<String, Pool>,
     loads: Loads,
+    /// Learned source affinity and the section that asked for it (SID 0027).
+    hints: Option<std::sync::Arc<hints::Hints>>,
+    spill: Option<SpillOptions>,
+    /// The storage thread of the hints. It ends with the edge.
+    _disk: hints::Disk,
     checks: health::Checks,
     poll: Poller<Ready>,
     waker: Waker,
@@ -225,6 +232,12 @@ impl Edge {
         self.budget.clone()
     }
 
+    /// The state of learned source affinity and its disk tier, when the `spill`
+    /// section asked for them (SID 0027).
+    pub fn spill_status(&self) -> Option<SpillStatus> {
+        self.hints.as_ref().map(|hints| hints.status())
+    }
+
     /// Shares the HTTP request scheduler with the firewall.
     pub fn http_routes(&self) -> HttpRoutes {
         self.http.clone()
@@ -276,6 +289,8 @@ impl Edge {
         let stats = std::sync::Arc::new(Stats::default());
         stats.adopt(&mut config);
         let http = HttpRoutes::default();
+        let (hints, disk) = hints::Hints::open(config.spill.as_ref())?;
+        http.set_hints(hints.clone());
         http.publish(&mut config);
         let budget = FlowBudget::new(&config);
         let mut binds = Vec::new();
@@ -294,11 +309,12 @@ impl Edge {
             listeners.push(Listener { socket, route, paused_until: None });
         }
         let mut loads = Loads::default();
-        let pools = config
+        let mut pools = config
             .pools
             .into_iter()
             .map(|(name, pool)| (name, Pool::new(pool, &mut loads)))
             .collect();
+        hints::attach(&mut pools, hints.as_ref());
         let (flow_log, flow_ends) = flowlog::FlowLog::new(stats.clone());
         Ok(Self {
             http,
@@ -314,6 +330,9 @@ impl Edge {
             listeners,
             pools,
             loads,
+            hints,
+            spill: config.spill,
+            _disk: disk,
             checks,
             poll,
             waker,
@@ -353,6 +372,9 @@ impl Edge {
         if !self.binds.iter().eq(config.listeners.keys()) {
             return Err(invalid("changing frontend binds requires a drained restart"));
         }
+        if self.spill != config.spill {
+            return Err(invalid("changing the spill section requires a restart"));
+        }
         self.checks.configure(&mut config)?;
         self.stats.adopt(&mut config);
         let drained = self.drained_servers();
@@ -364,6 +386,7 @@ impl Edge {
             .into_iter()
             .map(|(name, pool)| (name, Pool::new(pool, &mut self.loads)))
             .collect();
+        hints::attach(&mut self.pools, self.hints.as_ref());
         self.loads.prune();
         self.keep_drained(drained);
         for (listener, route) in self.listeners.iter_mut().zip(config.listeners.into_values()) {

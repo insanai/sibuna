@@ -21,7 +21,7 @@
 //!
 //! [`load_cache`] does the same with a file. The staged path moves the cache to a
 //! storage thread with [`start_service`], so that threads that serve traffic never wait
-//! for the disk: they call [`Service::offer`] and [`Service::ask`], which return at once
+//! for the disk: they call [`Handle::offer`] and [`Handle::ask`], which return at once
 //! and drop the work when the queue is full.
 //!
 //! # The shape
@@ -59,4 +59,4 @@ pub use format::{
     Geometry, MAX_KEY, MAX_SIZE, MAX_VALUE, MIN_SIZE, SHARDS, SLOT_LEN, VERSION, WAYS,
 };
 pub use open::{Options, Outcome, Reason, Report, load_cache, load_memory_cache};
-pub use service::{Service, ServiceCounters, ServiceOptions, start_service, unix_seconds};
+pub use service::{Handle, Service, ServiceCounters, ServiceOptions, start_service, unix_seconds};

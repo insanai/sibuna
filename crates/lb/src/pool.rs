@@ -15,6 +15,7 @@ use crate::config::{Backend, Protocol, Scheduler, Server};
 
 mod extra;
 pub(crate) use extra::{Tried, Wish};
+mod hinted;
 
 /// The milliseconds from the first use of this clock to `at`. An atomic holds a moment
 /// in this form, where it cannot hold an `Instant`.
@@ -171,6 +172,8 @@ pub(crate) struct Pool {
     adapted: bool,
     /// Names of the file's servers that a command removed.
     pub removed: Vec<String>,
+    /// The learned affinity of the edge, in a pool that is sticky by source (SID 0027).
+    hints: Option<hinted::Link>,
 }
 
 impl Pool {
@@ -189,6 +192,7 @@ impl Pool {
             health: backend.health,
             adapted: backend.origin.is_some(),
             removed: Vec::new(),
+            hints: None,
         };
         pool.rank();
         pool
@@ -218,13 +222,17 @@ impl Pool {
         regime: crate::Regime,
         wish: &Wish<'_>,
     ) -> Option<Ticket> {
+        // The server that last served this client, when the edge keeps hints (SID 0027).
+        let recalled = self.recall(wish, peer);
+        let hinted = recalled.as_ref().and_then(|recalled| recalled.server);
         for _ in 0..CROWDED {
-            let target = &self.targets[self.pick(now, peer, vip, regime, wish)?];
+            let target = &self.targets[self.pick(now, peer, vip, regime, wish, hinted)?];
             if target.load.active.fetch_add(1, Ordering::Relaxed) >= target.server.limit {
                 target.load.active.fetch_sub(1, Ordering::Relaxed);
                 continue;
             }
             target.admitted.fetch_add(1, Ordering::Relaxed);
+            self.learn(recalled.as_ref(), target);
             // An HTTP exchange enters the pool's protocol adapter when it has one.
             let addr = target.server.via.unwrap_or(target.server.addr);
             return Some(Ticket { addr, load: Arc::clone(&target.load) });
@@ -240,6 +248,7 @@ impl Pool {
         vip: SocketAddr,
         regime: crate::Regime,
         wish: &Wish<'_>,
+        hinted: Option<usize>,
     ) -> Option<usize> {
         let ramping = self.ramp(now);
         let clock = millis(now);
@@ -278,6 +287,11 @@ impl Pool {
         });
         // A sticky server serves its client whenever it is eligible (SID 0019).
         let sticky = wish.sticky.filter(|&index| self.targets.get(index).is_some_and(eligible));
+        // A hint names a server that served this client before. It counts like the
+        // server of the ranking, and before it: only when the server may serve now.
+        let stays = |target: &Target| !target.server.backup && eligible(target);
+        let sticky =
+            sticky.or_else(|| hinted.filter(|&index| self.targets.get(index).is_some_and(stays)));
         let sticky = sticky.or_else(|| self.home(wish.client.unwrap_or(peer.ip()), eligible));
         sticky.or(primary).or_else(|| {
             if matches!(*self.scheduler, Scheduler::RoundRobin) {

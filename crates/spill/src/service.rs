@@ -1,8 +1,11 @@
 //! The storage thread: the one owner of a cache, behind a bounded queue.
 //!
 //! Threads that serve traffic must not wait for a disk. They offer hints and ask for
-//! hints through a [`Service`]. Both calls return at once. When the queue is full the
+//! hints through a [`Handle`]. Both calls return at once. When the queue is full the
 //! work is dropped and counted: a hint is never worth a stall.
+//!
+//! The [`Service`] owns the thread. Handles are copies of the way in. When the service
+//! is dropped the thread ends and the file is closed, whoever still holds a handle.
 
 use std::io;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -41,9 +44,19 @@ pub fn unix_seconds() -> u64 {
 /// One piece of work for the storage thread, of a fixed size.
 #[derive(Clone, Copy)]
 enum Request {
-    Offer { key: Bytes<MAX_KEY>, value: Bytes<MAX_VALUE>, expires: u64 },
-    Ask { key: Bytes<MAX_KEY> },
-    Remove { key: Bytes<MAX_KEY> },
+    Offer {
+        key: Bytes<MAX_KEY>,
+        value: Bytes<MAX_VALUE>,
+        expires: u64,
+    },
+    Ask {
+        key: Bytes<MAX_KEY>,
+    },
+    Remove {
+        key: Bytes<MAX_KEY>,
+    },
+    /// The service was dropped: end the thread.
+    Stop,
 }
 
 /// A short byte string of at most `N` bytes, held in place.
@@ -84,13 +97,22 @@ struct Shared {
     cache: Mutex<Counters>,
 }
 
-/// A cache on a thread of its own. Share it by reference: every method takes `&self`.
+/// The way into a [`Service`] for the threads that serve traffic. Cheap to clone, and
+/// every method takes `&self`.
 ///
-/// Dropping the service ends the thread after the queued work, flushes the file and
-/// waits for both.
-pub struct Service {
-    sender: Option<SyncSender<Request>>,
+/// A handle that outlives its service drops all work and counts it as shed.
+#[derive(Clone)]
+pub struct Handle {
+    sender: SyncSender<Request>,
     shared: Arc<Shared>,
+}
+
+/// A cache on a thread of its own.
+///
+/// Dropping the service ends the thread after the work queued before, flushes the file,
+/// closes it and waits for all three.
+pub struct Service {
+    handle: Handle,
     thread: Option<JoinHandle<()>>,
     budget: Budget,
 }
@@ -121,17 +143,19 @@ pub fn start_service(
     let thread = std::thread::Builder::new()
         .name("sibuna-spill".to_owned())
         .spawn(move || serve(cache, &receiver, &published, found))?;
-    Ok(Service { sender: Some(sender), shared, thread: Some(thread), budget })
+    Ok(Service { handle: Handle { sender, shared }, thread: Some(thread), budget })
 }
 
-/// The loop of the storage thread. It ends when the service is dropped.
+/// The loop of the storage thread. It ends when the service is dropped. The cache is
+/// dropped with it, which closes the file and gives up its lock.
 fn serve(
     mut cache: Cache,
     receiver: &Receiver<Request>,
     shared: &Shared,
     mut found: impl FnMut(&[u8], &Hint),
 ) {
-    while let Ok(first) = receiver.recv() {
+    let mut stopped = false;
+    while !stopped && let Ok(first) = receiver.recv() {
         let now = unix_seconds();
         let more = std::iter::from_fn(|| receiver.try_recv().ok()).take(BATCH - 1);
         for request in std::iter::once(first).chain(more) {
@@ -147,6 +171,10 @@ fn serve(
                 Request::Remove { key } => {
                     cache.remove(key.get(), now);
                 }
+                Request::Stop => {
+                    stopped = true;
+                    break;
+                }
             }
         }
         *shared.cache.lock().unwrap_or_else(PoisonError::into_inner) = cache.counters();
@@ -155,10 +183,10 @@ fn serve(
     let _ = cache.flush();
 }
 
-impl Service {
+impl Handle {
     fn send(&self, request: Option<Request>) -> bool {
-        let (Some(sender), Some(request)) = (&self.sender, request) else { return false };
-        match sender.try_send(request) {
+        let Some(request) = request else { return false };
+        match self.sender.try_send(request) {
             Ok(()) => {
                 self.shared.queued.fetch_add(1, Ordering::Relaxed);
                 true
@@ -203,6 +231,33 @@ impl Service {
             queued: self.shared.queued.load(Ordering::Relaxed),
         }
     }
+}
+
+impl Service {
+    /// A way into the service for another owner. See [`Handle`].
+    pub fn handle(&self) -> Handle {
+        self.handle.clone()
+    }
+
+    /// [`Handle::offer`] through the service's own handle.
+    pub fn offer(&self, key: &[u8], value: &[u8], expires: u64) -> bool {
+        self.handle.offer(key, value, expires)
+    }
+
+    /// [`Handle::ask`] through the service's own handle.
+    pub fn ask(&self, key: &[u8]) -> bool {
+        self.handle.ask(key)
+    }
+
+    /// [`Handle::remove`] through the service's own handle.
+    pub fn remove(&self, key: &[u8]) -> bool {
+        self.handle.remove(key)
+    }
+
+    /// [`Handle::counters`] through the service's own handle.
+    pub fn counters(&self) -> ServiceCounters {
+        self.handle.counters()
+    }
 
     /// Where the bytes of the cache and the queue go.
     pub fn budget(&self) -> Budget {
@@ -212,8 +267,9 @@ impl Service {
 
 impl Drop for Service {
     fn drop(&mut self) {
-        // Closing the queue ends the loop of the thread after the work already queued.
-        self.sender = None;
+        // The request to stop waits for room in the queue, behind the work queued
+        // before. A thread that is gone already makes the send fail, which is as well.
+        let _ = self.handle.sender.send(Request::Stop);
         if let Some(thread) = self.thread.take() {
             let _ = thread.join();
         }
@@ -254,9 +310,14 @@ mod tests {
         let budget = service.budget();
         assert_eq!(budget.queue_bytes, 4096 * size_of::<Request>() as u64);
         assert!(budget.memory_bytes() > budget.queue_bytes);
+        let handle = service.handle();
         drop(service);
         // The thread has ended: no second answer came for the removed or the unknown key.
         assert!(heard.try_recv().is_err());
+        // A handle that outlives the service drops its work and counts it.
+        assert!(!handle.offer(b"client-3", b"srv-a", later));
+        assert!(!handle.ask(b"client-1"));
+        assert_eq!(handle.counters().shed, 2);
     }
 
     #[test]

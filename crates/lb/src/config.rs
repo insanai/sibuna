@@ -28,6 +28,8 @@ pub struct Config {
     /// The `global.acme` object of automatic HTTPS (SID 0021).
     pub(crate) acme: Option<crate::AcmeOptions>,
     pub(crate) mesh: Option<crate::MeshConfig>,
+    /// The `spill` section of learned source affinity (SID 0027).
+    pub(crate) spill: Option<crate::SpillOptions>,
     pub(crate) listeners: BTreeMap<(Protocol, SocketAddr), Frontend>,
     pub(crate) pools: BTreeMap<String, Backend>,
 }
@@ -216,6 +218,12 @@ impl Config {
         self.drain_delay
     }
 
+    /// Where learned source affinity is kept (`spill`), when the operator enabled it
+    /// (SID 0027).
+    pub fn spill(&self) -> Option<&crate::SpillOptions> {
+        self.spill.as_ref()
+    }
+
     /// Static peer configuration, when the operator enabled RTT-based routing.
     pub fn mesh(&self) -> Option<&crate::MeshConfig> {
         self.mesh.as_ref()
@@ -245,6 +253,8 @@ impl Config {
             .map(crate::ObserveOptions::parse)
             .transpose()?
             .unwrap_or_default();
+        let spill =
+            field(root.take_object("spill"))?.map(crate::SpillOptions::parse).transpose()?;
         let adaptive = mesh.is_some();
         let mut config = Self {
             limit,
@@ -259,6 +269,7 @@ impl Config {
             http,
             observe,
             acme,
+            spill,
             pools: BTreeMap::new(),
             listeners: BTreeMap::new(),
         };
