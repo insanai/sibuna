@@ -15,6 +15,7 @@ mod inline;
 mod observed;
 mod probe;
 mod quick;
+mod spill;
 mod watch;
 mod workers;
 
@@ -306,6 +307,9 @@ impl Serving {
     /// Says that the listeners serve. Automatic HTTPS places its orders from now on.
     fn announce(&self) {
         note(format_args!("Sibuna edge listeners ready"));
+        if let Some(status) = self.edge.spill_status() {
+            note(format_args!("{}", spill::start_line(&status)));
+        }
         #[cfg(feature = "https")]
         if let Some(http) = &self.http {
             http.listening();
@@ -370,6 +374,9 @@ impl Serving {
         );
         for removed in self.edge.removed_servers() {
             text.push_str(&format!("removed: {removed}\n"));
+        }
+        if let Some(status) = self.edge.spill_status() {
+            spill::write_info(&mut text, &status);
         }
         text
     }
