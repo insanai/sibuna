@@ -20,6 +20,7 @@ show info
 show stats
 show certs
 show ca
+show hooks
 show cluster
 set server POOL/NAME state ready|drain [local]
 set server POOL/NAME weight N [local]
@@ -41,6 +42,8 @@ pub(super) enum Command {
     ShowCerts,
     /// The root certificate of the local authority (SID 0021).
     ShowCa,
+    /// The plugins and their counters (SID 0030).
+    ShowHooks,
     /// The digest of the file of every node of the mesh (SID 0023).
     ShowCluster,
     Help,
@@ -88,6 +91,7 @@ impl Command {
                 | Self::ShowStats
                 | Self::ShowCerts
                 | Self::ShowCa
+                | Self::ShowHooks
                 | Self::ShowCluster
                 | Self::Help
                 | Self::ReopenLog
@@ -178,6 +182,7 @@ pub(super) fn parse(line: &str) -> Result<Command, RuntimeError> {
         ["show", "stats"] => Ok(Command::ShowStats),
         ["show", "certs"] => Ok(Command::ShowCerts),
         ["show", "ca"] => Ok(Command::ShowCa),
+        ["show", "hooks"] => Ok(Command::ShowHooks),
         ["show", "cluster"] => Ok(Command::ShowCluster),
         ["help"] => Ok(Command::Help),
         ["reload"] => Ok(Command::Reload),
@@ -404,6 +409,7 @@ mod tests {
         assert_eq!(parse("show stats"), Ok(Command::ShowStats));
         assert_eq!(parse("show certs"), Ok(Command::ShowCerts));
         assert_eq!(parse("show ca"), Ok(Command::ShowCa));
+        assert_eq!(parse("show hooks"), Ok(Command::ShowHooks));
         assert_eq!(parse("reload"), Ok(Command::Reload));
         assert_eq!(parse("reload cluster"), Ok(Command::ReloadCluster));
         assert_eq!(parse("reopen log"), Ok(Command::ReopenLog));

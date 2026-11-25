@@ -8,7 +8,8 @@
 //! 5. a rule's own quota;
 //! 6. a valid session clears an admission challenge whose work it already paid, never a
 //!    denial;
-//! 7. an admitted request streams to the origin, or forward authorization answers.
+//! 7. the request hooks of the frontend judge an admitted request (SID 0030);
+//! 8. an admitted request streams to the origin, or forward authorization answers.
 //!
 //! Before any step the request path is put in normal form ([`normalize_target`]): every
 //! decision above, the reserved-route match and the path the origin receives read that one
@@ -255,6 +256,29 @@ impl Verdict {
         }
     }
 
+    /// The verdict of the request hook of the plugin `name` (SID 0030): `action` under
+    /// the rule `hook:NAME`, with the challenge that the configuration sets by default.
+    pub(crate) fn hook(name: &str, action: Action) -> Verdict {
+        let mut rule = [0u8; MAX_RULE_NAME];
+        let mut rule_len = 0;
+        // A plugin name has at most 64 ASCII bytes, so the rule name is never cut.
+        for part in [&b"hook:"[..], name.as_bytes()] {
+            let part = part.get(..MAX_RULE_NAME - rule_len).unwrap_or(part);
+            rule[rule_len..rule_len + part.len()].copy_from_slice(part);
+            rule_len += part.len();
+        }
+        Verdict {
+            action,
+            difficulty: 0,
+            algorithm: None,
+            audited: 0,
+            limits: None,
+            limit_scope: 0,
+            rule,
+            rule_len,
+        }
+    }
+
     /// The deciding rule's name.
     pub fn rule_name(&self) -> &str {
         std::str::from_utf8(&self.rule[..self.rule_len]).unwrap_or_default()
@@ -347,11 +371,18 @@ fn answer_verdict<W: Write>(ctx: &mut Ctx<'_, W>, verdict: &Verdict) -> io::Resu
     {
         return forward(ctx, "PASS", "session", rule_hash);
     }
+    if verdict.action == Action::Allow {
+        let rule_hash = sibuna_challenge::rule_hash(verdict.rule_name());
+        return forward(ctx, "PASS", verdict.rule_name(), rule_hash);
+    }
+    refuse(ctx, verdict)
+}
+
+/// Answers a request that a rule or a request hook denies or challenges.
+pub(crate) fn refuse<W: Write>(ctx: &mut Ctx<'_, W>, verdict: &Verdict) -> io::Result<bool> {
+    let server = ctx.server;
     match verdict.action {
-        Action::Allow => {
-            let rule_hash = sibuna_challenge::rule_hash(verdict.rule_name());
-            forward(ctx, "PASS", verdict.rule_name(), rule_hash)
-        }
+        Action::Allow => Ok(ctx.keep_alive),
         Action::Deny => {
             server.metrics.denied.bump();
             telemetry::record_outcome(ctx, Outcome::Denied, 403);
@@ -396,13 +427,32 @@ fn restore_authorization_target<'c, W: Write>(
     }
 }
 
-/// Hands an admitted request to the origin (reverse proxy) or answers the ingress (forward
-/// authorization).
+/// Hands a request that the firewall admitted to the request hooks of its frontend
+/// (SID 0030), and then to the origin. Without a request hook in the node this costs
+/// two atomic loads.
 pub(crate) fn forward<W: Write>(
     ctx: &mut Ctx<'_, W>,
     status: &str,
     rule_name: &str,
     rule_hash: u64,
+) -> io::Result<bool> {
+    let server = ctx.server;
+    match server.plugins.get() {
+        Some(slot) if slot.has(sibuna_plugin::Stage::Request) => {
+            crate::plugins::forward(ctx, slot, status, rule_name, rule_hash)
+        }
+        _ => forward_admitted(ctx, status, rule_name, rule_hash, b""),
+    }
+}
+
+/// Hands an admitted request to the origin (reverse proxy) or answers the ingress (forward
+/// authorization). `added` holds the field lines that the request hooks add.
+pub(crate) fn forward_admitted<W: Write>(
+    ctx: &mut Ctx<'_, W>,
+    status: &str,
+    rule_name: &str,
+    rule_hash: u64,
+    added: &[u8],
 ) -> io::Result<bool> {
     let server = ctx.server;
     server.metrics.allowed.bump();
@@ -420,7 +470,7 @@ pub(crate) fn forward<W: Write>(
     server.metrics.proxied.bump();
     crate::access::selected(ctx, selected.as_ref());
     if ctx.defer.is_some() {
-        return plan(ctx, status, rule_name, selected, tunnel);
+        return plan(ctx, status, rule_name, (selected, tunnel), added);
     }
     release_for_upgrade(ctx);
     // Only a planned request has no client socket, and it returned above.
@@ -468,7 +518,7 @@ pub(crate) fn forward<W: Write>(
             },
             response_status: status_sink,
             response_head: head_sink,
-            ..crate::traffic::audit(&ctx.request, ctx.ingress, policy.as_deref())
+            ..edited_audit(&ctx.request, ctx.ingress, policy.as_deref(), added)
         },
         keep_alive: ctx.keep_alive,
     };
@@ -479,6 +529,19 @@ pub(crate) fn forward<W: Write>(
     // The tunnel has ended by now, so its place under the rule is free.
     drop(tunnel);
     relayed.or_else(|error| refuse_proxy_error(ctx, error))
+}
+
+/// The audit of [`crate::traffic::audit`] with the field lines `added` by the request
+/// hooks (SID 0030), written after the fields of the route.
+fn edited_audit<'a>(
+    request: &Request<'a>,
+    ingress: Option<crate::connection::Ingress>,
+    route: Option<&'a sibuna_lb::RoutePolicy>,
+    added: &'a [u8],
+) -> Audit<'a> {
+    let mut audit = crate::traffic::audit(request, ingress, route);
+    audit.request_edit.append[1] = added;
+    audit
 }
 
 /// Lets go of the policy snapshot before an upgrade. An upgraded connection may live for
@@ -529,8 +592,8 @@ fn plan<W: Write>(
     ctx: &mut Ctx<'_, W>,
     status: &str,
     rule_name: &str,
-    selected: Option<sibuna_lb::HttpTarget>,
-    tunnel: Option<sibuna_lb::TunnelPermit>,
+    (selected, tunnel): Selected,
+    added: &[u8],
 ) -> io::Result<bool> {
     let Some(target) = selected else {
         let status = Status::ServiceUnavailable;
@@ -554,7 +617,7 @@ fn plan<W: Write>(
         response_status: None,
         response_head: None,
         // The response edit is unused here: a worker edits the head when it relays it.
-        ..crate::traffic::audit(&ctx.request, ctx.ingress, Some(target.route()))
+        ..edited_audit(&ctx.request, ctx.ingress, Some(target.route()), added)
     };
     let Some(defer) = ctx.defer.as_deref_mut() else { return Ok(false) };
     defer.wire.clear();

@@ -59,12 +59,17 @@ pub(crate) fn command(args: &[String], secret: Option<&str>) -> Option<ExitCode>
 struct Revision {
     config: Config,
     http: Option<http::Prepared>,
+    /// The plugins of the topology, loaded and checked (SID 0030).
+    plugins: sibuna_plugin::Plan,
 }
 
 fn load(path: &str) -> io::Result<Revision> {
     let config = topology(path)?;
     let http = http::Prepared::load(&config)?;
-    Ok(Revision { config, http })
+    // A plugin that does not load refuses the revision, with its `HOOK` diagnostic.
+    let plugins = sibuna_plugin::Plan::load(config.plugins(), &crate::plugins::NATIVES)
+        .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+    Ok(Revision { config, http, plugins })
 }
 fn topology(path: &str) -> io::Result<Config> {
     let mut bytes = Vec::new();
@@ -135,6 +140,8 @@ struct Serving {
     observed: observed::Observed,
     /// The drain commands shared with the peers of the mesh (SID 0022).
     drains: Drains,
+    /// Where the hooks of the serving revision are published (SID 0030).
+    plugins: Arc<sibuna_plugin::Slot>,
 }
 
 /// The run-time commands on their way to the peers and from them.
@@ -152,7 +159,7 @@ const REMOTE_DRAINS_PER_STEP: usize = 64;
 impl Serving {
     /// Applies a checked revision and returns the log line. A drain stays while the
     /// file still describes its server. Every other run-time change gives way.
-    fn reload(&mut self, revision: Revision) -> io::Result<String> {
+    fn reload(&mut self, mut revision: Revision) -> io::Result<String> {
         if revision.config.admin_socket() != self.admin_socket.as_deref() {
             return Err(io::Error::other("changing global.admin_socket requires a restart"));
         }
@@ -161,7 +168,16 @@ impl Serving {
         let drain_delay = revision.config.drain_delay();
         let before = self.edge.change_count();
         let observed = &mut self.observed;
-        reload(&mut self.edge, self.http.as_mut(), &mut self.adapters, observed, revision)?;
+        // The hooks change first, so that no frontend of the new routes serves a
+        // moment without its hooks. A refused reload puts the old hooks back.
+        let serving = self.plugins.load();
+        self.plugins.publish(std::mem::take(&mut revision.plugins));
+        let reloaded =
+            reload(&mut self.edge, self.http.as_mut(), &mut self.adapters, observed, revision);
+        if let Err(error) = reloaded {
+            self.plugins.publish_shared(serving);
+            return Err(error);
+        }
         self.reloads += 1;
         self.shutdown_timeout = shutdown_timeout;
         self.drain_delay = drain_delay;
@@ -239,6 +255,7 @@ impl Serving {
             Command::ShowStats => Ok(self.stats()),
             Command::ShowCerts => Ok(self.certs()),
             Command::ShowCa => Ok(self.ca()),
+            Command::ShowHooks => Ok(crate::plugins::render_status(&self.plugins.load().status())),
             // The admin thread answers these two. They never reach the worker.
             Command::Help | Command::ShowCluster => Ok(control::USAGE.to_owned()),
             Command::ReopenLog => {
@@ -405,7 +422,9 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let source = Arc::new(source);
     let pending = Pending::default();
     let rotate = prepare(&shutdown, &source, &pending, &revision.config)?;
-    let Revision { mut config, http } = revision;
+    let Revision { mut config, http, plugins: plan } = revision;
+    let plugins = Arc::new(sibuna_plugin::Slot::new());
+    plugins.publish(plan);
     let observe_options = config.observe().clone();
     let mut adapters = Adapters::default();
     adapt(&mut adapters, &mut config)?;
@@ -415,10 +434,12 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     let watch = config.watch();
     let (shutdown_timeout, drain_delay) = (config.shutdown_timeout(), config.drain_delay());
     let mut current = sibuna_lb::Regime::Standalone;
-    let edge = Edge::bind(config)?;
-    let http = http.map(|p| http::Http::start(p, &edge, secret)).transpose()?;
+    let mut edge = Edge::bind(config)?;
+    edge.set_hooks(Arc::clone(&plugins));
+    let http = http.map(|p| http::Http::start(p, &edge, secret, &plugins)).transpose()?;
     let drains = join(http.as_ref(), &adapters, mesh.as_ref());
     let observed = observed::Observed::start(http.as_ref(), &observe_options, &edge)?;
+    observed.set_hooks(&plugins);
     let (jobs, inbox) = mpsc::channel();
     let _admin = match &admin_socket {
         Some(path) => Some(admin::Admin::start(path, takeover, Arc::clone(&source), jobs)?),
@@ -438,6 +459,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         reloads: 0,
         observed,
         drains,
+        plugins,
     };
     serving.watch(watch)?;
     serving.announce();

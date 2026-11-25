@@ -1,5 +1,6 @@
 //! Startup failures of the edge as diagnostics: a title, what happened, and a hint that
-//! says how to repair the common causes. Every one carries the code `EDGE001`.
+//! says how to repair the common causes. Every one carries the code `EDGE001`, except a
+//! plugin that does not load: it carries its own `HOOK` code (SID 0030).
 
 use std::io;
 use std::path::Path;
@@ -116,6 +117,11 @@ fn automatic_https(lower: &str) -> Option<(&'static str, &'static str)> {
     None
 }
 
+/// The diagnostic of a plugin that did not load, when `error` carries one.
+pub(super) fn hook_error(error: &io::Error) -> Option<&sibuna_plugin::Error> {
+    error.get_ref()?.downcast_ref()
+}
+
 fn names_a_file(lower: &str) -> bool {
     lower.contains('/') || names_a_certificate(lower)
 }
@@ -126,8 +132,14 @@ fn names_a_certificate(lower: &str) -> bool {
 
 /// Prints the diagnostic of `error` to standard error.
 pub(super) fn report(file: Option<&str>, error: &io::Error) {
-    let failure = classify(file, error);
     let mut text = String::new();
+    if let Some(hook) = hook_error(error) {
+        let title = format!("{} ({})", hook.title.to_ascii_lowercase(), hook.code);
+        let _ = diagnostic::render(&mut text, &title, &format!("{}.", hook.message), hook.hint);
+        eprint!("{text}");
+        return;
+    }
+    let failure = classify(file, error);
     let title = format!("{} (EDGE001)", failure.title);
     let _ = diagnostic::render(&mut text, &title, &failure.message, failure.hint);
     eprint!("{text}");

@@ -245,7 +245,11 @@ pub(super) fn run(args: &[String], secret: Option<&str>) -> ExitCode {
     let served = start.config().and_then(|config| {
         let http = super::http::Prepared::load(&config)?;
         eprintln!("{}", summary(&start));
-        super::serve(Source::quick_start(), super::Revision { config, http }, secret)
+        super::serve(
+            Source::quick_start(),
+            super::Revision { config, http, plugins: sibuna_plugin::Plan::default() },
+            secret,
+        )
     });
     match served {
         Ok(()) => ExitCode::SUCCESS,

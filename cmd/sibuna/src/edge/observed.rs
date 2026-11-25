@@ -111,6 +111,12 @@ impl Observed {
     }
 
     /// The counters and the log, for the admin socket.
+    /// Gives the request path and the telemetry the hooks that the edge publishes
+    /// (SID 0030). Called once, before the listeners serve.
+    pub fn set_hooks(&self, slot: &Arc<sibuna_plugin::Slot>) {
+        let _ = self.observe.hooks.set(Arc::clone(slot));
+    }
+
     pub fn shared(&self) -> &Arc<Observe> {
         &self.observe
     }
