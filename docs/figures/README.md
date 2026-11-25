@@ -1,6 +1,14 @@
 # Figures
 
-The diagrams and charts of the book and the whitepaper are drawn in Typst, with the CeTZ package. This directory holds their sources; the documents show SVG files rendered from them.
+## Diagrams in the published documents
+
+We keep each drawing beside its publication in `docs/book/diagrams`, `docs/whitepaper/diagrams`, or `docs/sid/diagrams`. We include its source in the RST with a Guidedog directive. For example, the operations chapter uses `.. typst-diagram:: diagrams/dns-01.typ` for the DNS exchange and `.. graphviz:: diagrams/edge-paths.dot` for the routing graph. A caption names the figure. Its alt text explains the result for readers who cannot see it.
+
+Guidedog renders both formats during its HTML and PDF builds. The sequence diagrams use CeTZ, and the timetable and OCSP diagrams use Fletcher. A shared style file controls type size and spacing. The book's gettext catalogs translate the captions, alt text and labels in the figure source. When we change that source, we update its message in each catalog.
+
+## Pre-rendered charts and figures
+
+This directory holds the sources, translations and input digests of the book and whitepaper figures rendered by `cargo xtask figures`. They include charts drawn from recorded benchmark data.
 
 ```
 docs/figures/

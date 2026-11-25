@@ -1,0 +1,45 @@
+digraph pipeline {
+  graph [rankdir=TB, bgcolor="transparent", newrank=true, nodesep=0.18, ranksep=0.34, pad=0.1, fontname="Helvetica", fontsize=9, fontcolor="#475569"];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fontcolor="#172033", color="#0369a1", fillcolor="#f0f9ff", penwidth=1.1, width=1.32, height=0.44, margin="0.08,0.04"];
+  edge [color="#64748b", fontname="Helvetica", fontsize=7.5, fontcolor="#475569", arrowsize=0.55, penwidth=1.0];
+
+  accept [label="Accept, read head\ninto 64 KiB buffer", color="#172033", fillcolor="#ffffff"];
+  {
+    parse [group=left, label="1. Zero-copy parse\n132.5 ns"];
+    ban [label="2. Ban table\nlock-free readers"];
+    routes [label="3. Internal routes\nchallenge, verify"];
+    gcra [label="4. GCRA limiter\n6.2 ns"];
+  }
+  {
+    node [color="#6d28d9", fillcolor="#f5f3ff"];
+    bots [group=left, label="8. Bot automaton\n55.7 ns"];
+    rules [label="7. Ordered rules\nWEIGH scores"];
+    trie [label="6. Reputation trie\nIPv4: 32.0 ns"];
+    waf [label="5. Shield inspection\n8 KiB body: 12.8 us"];
+  }
+  session [group=left, label="9. Session token\nkeyed BLAKE3: 155.8 ns", color="#b45309", fillcolor="#fffbeb"];
+  challenge [group=left, label="Challenge\ninterstitial (200)\nor JSON (401)", color="#b45309", fillcolor="#fffbeb"];
+  admit [label="Admit\nproxy via the origin pool,\nor a forward-auth verdict", color="#15803d", fillcolor="#f0fdf4", penwidth=1.4];
+  refuse [label="Refuse\n403, 429 or a ban", color="#b91c1c", fillcolor="#fef2f2", penwidth=1.4];
+
+  { rank=same; parse; ban; routes; gcra; }
+  { rank=same; bots; rules; trie; waf; }
+  { rank=same; session; admit; refuse; }
+
+  accept -> parse;
+  parse -> ban -> routes -> gcra;
+  gcra -> waf [label=" pass"];
+  bots -> rules -> trie -> waf [dir=back];
+  parse -> bots [style=invis];
+  ban -> rules [style=invis];
+  routes -> trie [style=invis];
+  rules -> session [style=invis];
+  bots -> session [label=" challenge"];
+  bots -> admit [label=" allow"];
+  session -> challenge [label=" none or too little"];
+  session -> admit [label="enough\nwork"];
+  admit -> refuse [style=invis];
+  ban -> refuse [style=dashed, color="#dc2626"];
+  waf -> refuse [style=dashed, color="#dc2626", label=" waf:*", fontcolor="#b91c1c"];
+  rules -> refuse [style=dashed, color="#dc2626"];
+}

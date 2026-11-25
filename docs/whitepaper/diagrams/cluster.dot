@@ -1,0 +1,32 @@
+digraph cluster {
+  graph [rankdir=TB, bgcolor="transparent", newrank=true, nodesep=0.25, ranksep=0.4, pad=0.1, fontname="Helvetica", fontsize=9, fontcolor="#334155"];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9, fontcolor="#172033", color="#1e40af", fillcolor="#eff6ff", penwidth=1.1, width=1.5, height=0.42, margin="0.1,0.05"];
+  edge [color="#64748b", fontname="Helvetica", fontsize=8, fontcolor="#475569", arrowsize=0.6, penwidth=1.1];
+
+  ingress [label="Ingress (TLS termination)\nCaddy or Nginx", color="#172033", fillcolor="#ffffff", width=2.4];
+  subgraph cluster_n1 {
+    label=<<b>Node 1</b>>; labeljust=l; style="rounded,filled"; color="#cbd5e1"; fillcolor="#f8fafc"; margin=10;
+    r1 [label="connection threads\nread the engine, push incidents"];
+    s1 [label="storage thread\nbatches, rebuilds", color="#b45309", fillcolor="#fffbeb"];
+    r1 -> s1 [label=" ring of 512", style=dashed];
+  }
+  subgraph cluster_n2 {
+    label=<<b>Node 2</b>>; labeljust=l; style="rounded,filled"; color="#cbd5e1"; fillcolor="#f8fafc"; margin=10;
+    r2 [label="connection threads"];
+    s2 [label="storage thread", color="#b45309", fillcolor="#fffbeb"];
+    r2 -> s2 [style=dashed];
+  }
+  subgraph cluster_n3 {
+    label=<<b>Node 3</b>>; labeljust=r; style="rounded,filled"; color="#cbd5e1"; fillcolor="#f8fafc"; margin=10;
+    r3 [label="connection threads"];
+    s3 [label="storage thread", color="#b45309", fillcolor="#fffbeb"];
+    r3 -> s3 [style=dashed];
+  }
+  pg [label="PostgreSQL primary\npolicies, reputation, incidents,\nconsole tables", shape=cylinder, style=filled, color="#15803d", fillcolor="#f0fdf4", penwidth=1.4, width=2.4, height=0.75];
+  standby [label="Standby\n(operator's replication)", shape=cylinder, style="filled,dashed", color="#94a3b8", fillcolor="#ffffff", fontcolor="#475569", width=1.8, height=0.6];
+
+
+  ingress -> r1; ingress -> r2; ingress -> r3;
+  s1 -> pg [label=" SQL, TLS verify-full"]; s2 -> pg; s3 -> pg;
+  pg -> standby [label=" streaming replication", style=dashed, color="#94a3b8"];
+}
