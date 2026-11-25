@@ -54,7 +54,7 @@ SibunaはTCP、UDP、HTTPの通信を正常なサーバーに振り分けます�
 
 ## 負荷分散
 
-Sibuna 1.0.0-rc.1 にはエッジモードが含まれます。以下のクイックスタートのダウンロードは beta.3 用です。リリース候補を[ソースからビルド](#build-from-source)することもできます。
+Sibuna 1.0.0-rc.2 にはエッジモードが含まれます。リリース候補を[ソースからビルド](#build-from-source)することもできます。
 
 ```sh
 sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
@@ -83,7 +83,7 @@ GateまたはShieldは、必要な名前だけに適用することも、どこ�
 
 ## クイックスタート
 
-プラットフォームに合った[リリースをダウンロード](https://github.com/insanai/sibuna/releases/tag/v1.0.0-beta.3)してください。標準パッケージにはストレージとコンソールのサポートが含まれます。コンソールは`--console`で起動します。
+プラットフォームに合った[リリースをダウンロード](https://github.com/insanai/sibuna/releases/tag/v1.0.0-rc.2)してください。標準パッケージにはストレージとコンソールのサポートが含まれます。コンソールは`--console`で起動します。
 
 | プラットフォーム | パッケージ | 動作要件 |
 | --- | --- | --- |
@@ -92,14 +92,14 @@ GateまたはShieldは、必要な名前だけに適用することも、どこ�
 | macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 12以降 |
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 12以降 |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2016以降、ネイティブの`sibuna.exe` |
-| FreeBSD x86-64 | `sibuna-1.0.0-beta.3-freebsd-15.1-amd64.pkg` | FreeBSD 15.1、CLIパッケージ |
-| OpenBSD x86-64 | `sibuna-1.0.0-beta.3.tgz` | OpenBSD 7.9、CLIパッケージ |
+| FreeBSD x86-64 | `sibuna-1.0.0-rc.2-freebsd-15.1-amd64.pkg` | FreeBSD 15.1、CLIパッケージ |
+| OpenBSD x86-64 | `sibuna-1.0.0-rc.2.tgz` | OpenBSD 7.9、CLIパッケージ |
 
-これはベータ版のリリースです。macOS向けビルドは未署名です。各パッケージにはライセンス、ソースへのリンク、ビルドマニフェストが含まれます。使用する前に、`SHA256SUMS`と照合してアーカイブを検証してください。
+macOS向けビルドは未署名です。各パッケージにはライセンス、ソースへのリンク、ビルドマニフェストが含まれます。使用する前に、`SHA256SUMS`と照合してアーカイブを検証してください。
 
 Debian/RPMパッケージはLinux x86-64とARM64に、Archの`sibuna-bin`はx86-64に対応します。FreeBSD 15.1とOpenBSD 7.9のパッケージはx86-64に対応し、CLIをインストールします。Linuxパッケージには、任意で使える無効状態のsystemdサービスが含まれます。BSDパッケージはサービス、アカウント、状態を作成しません。これらは上流の配布物で、コミュニティのアーカイブへの採用は別の手続きです。リリースにはHelm chartとコンテナーイメージ`ghcr.io/insanai/sibuna`も含まれます。インストール、検証、非公開の状態、アップグレード、Kubernetesの設定は[パッケージ運用ガイド](https://insanai.github.io/sibuna/ja/book/operations.html)を参照してください。
 
-[Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna)は、検証済みのリリースアーカイブをインストールするCLI formulaを提供します。対応するのはmacOSとLinux（Apple Silicon、ARM64、x86-64）です。tapは公開済みの最新リリースに追従するため、このベータ版もすでに提供されています。インストールしてもサービスは起動しません：
+[Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna)は、検証済みのリリースアーカイブをインストールするCLI formulaを提供します。対応するのはmacOSとLinux（Apple Silicon、ARM64、x86-64）です。tapは公開済みの最新リリースに追従します。インストールしてもサービスは起動しません：
 
 ```sh
 brew tap insanai/sibuna
@@ -110,8 +110,8 @@ sibuna --version
 Linux x86-64で、アプリがポート3000で待ち受けている場合：
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.3/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.3/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.2/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.2/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)

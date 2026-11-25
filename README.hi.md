@@ -54,7 +54,7 @@ Sibuna TCP, UDP और HTTP ट्रैफ़िक को स्वस्थ �
 
 ## लोड बैलेंसिंग
 
-Sibuna 1.0.0-rc.1 में एज मोड शामिल है। नीचे दिए गए डाउनलोड beta.3 के लिए हैं। हम [रिलीज़ कैंडिडेट को स्रोत से भी बिल्ड कर सकते हैं](#build-from-source)।
+Sibuna 1.0.0-rc.2 में एज मोड शामिल है। हम [रिलीज़ कैंडिडेट को स्रोत से भी बिल्ड कर सकते हैं](#build-from-source)।
 
 ```sh
 sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
@@ -83,7 +83,7 @@ Gate या Shield उन्हीं नामों पर लागू हो
 
 ## त्वरित शुरुआत
 
-अपने प्लेटफ़ॉर्म के लिए [रिलीज़ डाउनलोड करें](https://github.com/insanai/sibuna/releases/tag/v1.0.0-beta.3)। डिफ़ॉल्ट पैकेज में स्टोरेज और कंसोल का समर्थन शामिल है। कंसोल `--console` के साथ शुरू होता है।
+अपने प्लेटफ़ॉर्म के लिए [रिलीज़ डाउनलोड करें](https://github.com/insanai/sibuna/releases/tag/v1.0.0-rc.2)। डिफ़ॉल्ट पैकेज में स्टोरेज और कंसोल का समर्थन शामिल है। कंसोल `--console` के साथ शुरू होता है।
 
 | प्लेटफ़ॉर्म | पैकेज | आवश्यकताएँ |
 | --- | --- | --- |
@@ -92,14 +92,14 @@ Gate या Shield उन्हीं नामों पर लागू हो
 | macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 12 या बाद का |
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 12 या बाद का |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2016 या बाद का; नेटिव `sibuna.exe` |
-| FreeBSD x86-64 | `sibuna-1.0.0-beta.3-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI पैकेज |
-| OpenBSD x86-64 | `sibuna-1.0.0-beta.3.tgz` | OpenBSD 7.9; CLI पैकेज |
+| FreeBSD x86-64 | `sibuna-1.0.0-rc.2-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI पैकेज |
+| OpenBSD x86-64 | `sibuna-1.0.0-rc.2.tgz` | OpenBSD 7.9; CLI पैकेज |
 
-यह एक बीटा रिलीज़ है। macOS बिल्ड अहस्ताक्षरित हैं। हर पैकेज में लाइसेंस, स्रोत के लिंक और एक बिल्ड manifest है। उपयोग से पहले आर्काइव को `SHA256SUMS` से सत्यापित करें।
+macOS बिल्ड अहस्ताक्षरित हैं। हर पैकेज में लाइसेंस, स्रोत के लिंक और एक बिल्ड manifest है। उपयोग से पहले आर्काइव को `SHA256SUMS` से सत्यापित करें।
 
 Debian/RPM पैकेज Linux x86-64 और ARM64 के लिए हैं; Arch का `sibuna-bin` x86-64 के लिए है। FreeBSD 15.1 और OpenBSD 7.9 पैकेज x86-64 के लिए हैं और CLI इंस्टॉल करते हैं। Linux पैकेज में एक वैकल्पिक, अक्षम systemd सेवा शामिल है। BSD पैकेज कोई सेवा, खाता या संग्रहीत अवस्था नहीं बनाते। ये upstream डाउनलोड हैं; सामुदायिक रिपॉज़िटरी में स्वीकृति एक अलग विषय है। रिलीज़ में एक Helm chart और एक कंटेनर इमेज, `ghcr.io/insanai/sibuna`, भी है। इंस्टॉलेशन, सत्यापन, निजी अवस्था, अपग्रेड और Kubernetes सेटअप के लिए [पैकेज संचालन गाइड](https://insanai.github.io/sibuna/hi/book/operations.html) देखें।
 
-[Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna) एक CLI फ़ॉर्मूला देता है, जो macOS और Linux (Apple Silicon, ARM64 और x86-64) के लिए सत्यापित रिलीज़ आर्काइव इंस्टॉल करता है। tap नवीनतम प्रकाशित रिलीज़ का अनुसरण करता है, इसलिए यह बीटा उसमें पहले से उपलब्ध है। इंस्टॉलेशन कोई सेवा शुरू नहीं करता:
+[Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna) एक CLI फ़ॉर्मूला देता है, जो macOS और Linux (Apple Silicon, ARM64 और x86-64) के लिए सत्यापित रिलीज़ आर्काइव इंस्टॉल करता है। tap नवीनतम प्रकाशित रिलीज़ का अनुसरण करता है। इंस्टॉलेशन कोई सेवा शुरू नहीं करता:
 
 ```sh
 brew tap insanai/sibuna
@@ -110,8 +110,8 @@ sibuna --version
 Linux x86-64 पर, जब आपका ऐप पोर्ट 3000 पर सुन रहा हो:
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.3/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.3/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.2/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.2/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)

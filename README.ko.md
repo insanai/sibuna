@@ -54,7 +54,7 @@ Sibuna는 TCP, UDP, HTTP 트래픽을 정상 서버로 전달합니다. 에지 �
 
 ## 로드 밸런싱
 
-Sibuna 1.0.0-rc.1에는 엣지 모드가 포함됩니다. 아래 빠른 시작의 다운로드는 beta.3용입니다. [소스에서 릴리스 후보를 빌드](#build-from-source)할 수도 있습니다.
+Sibuna 1.0.0-rc.2에는 엣지 모드가 포함됩니다. [소스에서 릴리스 후보를 빌드](#build-from-source)할 수도 있습니다.
 
 ```sh
 sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
@@ -83,7 +83,7 @@ Gate 또는 Shield는 필요한 이름에만 적용하거나, 어디에도 적�
 
 ## 빠른 시작
 
-플랫폼에 맞는 [릴리스를 다운로드하세요](https://github.com/insanai/sibuna/releases/tag/v1.0.0-beta.3). 기본 패키지에는 저장소와 콘솔 지원이 포함됩니다. 콘솔은 `--console` 옵션으로 시작합니다.
+플랫폼에 맞는 [릴리스를 다운로드하세요](https://github.com/insanai/sibuna/releases/tag/v1.0.0-rc.2). 기본 패키지에는 저장소와 콘솔 지원이 포함됩니다. 콘솔은 `--console` 옵션으로 시작합니다.
 
 | 플랫폼 | 패키지 | 요구 사항 |
 | --- | --- | --- |
@@ -92,14 +92,14 @@ Gate 또는 Shield는 필요한 이름에만 적용하거나, 어디에도 적�
 | macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 12 이상 |
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 12 이상 |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2016 이상; 네이티브 `sibuna.exe` |
-| FreeBSD x86-64 | `sibuna-1.0.0-beta.3-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI 패키지 |
-| OpenBSD x86-64 | `sibuna-1.0.0-beta.3.tgz` | OpenBSD 7.9; CLI 패키지 |
+| FreeBSD x86-64 | `sibuna-1.0.0-rc.2-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI 패키지 |
+| OpenBSD x86-64 | `sibuna-1.0.0-rc.2.tgz` | OpenBSD 7.9; CLI 패키지 |
 
-이번 릴리스는 베타 릴리스입니다. macOS 빌드에는 서명이 없습니다. 각 패키지에는 라이선스, 소스 링크와 빌드 명세가 포함됩니다. 사용하기 전에 `SHA256SUMS`로 압축 파일을 검증하세요.
+macOS 빌드에는 서명이 없습니다. 각 패키지에는 라이선스, 소스 링크와 빌드 명세가 포함됩니다. 사용하기 전에 `SHA256SUMS`로 압축 파일을 검증하세요.
 
 Debian/RPM 패키지는 Linux x86-64와 ARM64를 지원하고, Arch `sibuna-bin`은 x86-64를 지원합니다. FreeBSD 15.1과 OpenBSD 7.9 패키지는 x86-64를 지원하며 CLI를 설치합니다. Linux 패키지에는 선택적인 systemd 서비스가 비활성 상태로 포함됩니다. BSD 패키지는 서비스, 계정, 상태를 만들지 않습니다. 이는 업스트림 다운로드이며, 커뮤니티 저장소 채택은 별개입니다. 릴리스에는 Helm 차트와 컨테이너 이미지 `ghcr.io/insanai/sibuna`도 포함됩니다. 설치, 검증, 비공개 상태, 업그레이드, Kubernetes 설정은 [패키지 운영 가이드](https://insanai.github.io/sibuna/ko/book/operations.html)를 참고하세요.
 
-[Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna)은 검증된 릴리스 압축 파일을 설치하는 CLI formula를 제공합니다. macOS와 Linux(Apple Silicon, ARM64, x86-64)를 지원합니다. tap은 게시된 최신 릴리스를 따르므로 이번 베타도 이미 제공합니다. 설치해도 서비스는 시작되지 않습니다:
+[Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna)은 검증된 릴리스 압축 파일을 설치하는 CLI formula를 제공합니다. macOS와 Linux(Apple Silicon, ARM64, x86-64)를 지원합니다. tap은 게시된 최신 릴리스를 따릅니다. 설치해도 서비스는 시작되지 않습니다:
 
 ```sh
 brew tap insanai/sibuna
@@ -110,8 +110,8 @@ sibuna --version
 Linux x86-64에서 앱이 3000번 포트로 요청을 받는 경우:
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.3/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-beta.3/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.2/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.2/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)

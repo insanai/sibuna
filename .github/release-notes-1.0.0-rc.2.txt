@@ -1,0 +1,7 @@
+Sibuna 1.0.0-rc.2 fixes HTTP request loss during Linux rolling restarts with independent reuse-port listeners (issue #1).
+
+When the old process starts draining, it closes its TCP listeners. Established streams can finish while the replacement accepts new connections. In one loopback test, four clients completed 28,338 HTTP and TCP exchanges with no failures while an established stream held the old process open. A connection queued on the old listener can still reset at cutover. In a separate single-client test, each of 30 takeovers lost one request. On Linux, global.upgrade_socket transfers the accept queue and live UDP mappings to the replacement.
+
+The operator book now introduces Sibuna through a request, explains how to configure each edge subsystem in Jlavi, and includes annotated firewall and load-balancer console screenshots. The upgrade chapters and their seven translations describe the corrected drain behavior.
+
+The release uses Rust 1.100.0. The optional OpenBSD 7.9 amd64 package uses the system Rust 1.94.1 and is attached after native package checks pass. SHA256SUMS lists the published assets.
