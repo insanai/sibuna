@@ -1064,3 +1064,92 @@ fn a_certificate_key_on_p384_is_ordered_issued_stored_and_served() {
     assert!(log.contains(&format!("certificate for {name} loaded from storage")), "{log}");
     assert_eq!(authority.order_count.load(Ordering::Relaxed), 1);
 }
+
+#[test]
+fn a_certificate_key_of_rsa_is_ordered_issued_stored_and_served() {
+    /// The object identifier `rsaEncryption`, as the key of a certificate names it.
+    const RSA: [u8; 11] = [0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01];
+    if sibuna_acme::keygen::probe().is_err() {
+        eprintln!("openssl is not installed; no RSA key is made");
+        return;
+    }
+    let authority = Authority::start();
+    let home = home("rsa");
+    let name = "rsa.example.test";
+    let setup = Setup {
+        authority: &authority,
+        origin: origin(),
+        home: &home,
+        names: &[name, "127.0.0.1"],
+        plain: Some(""),
+        acme: r#","key":"rsa2048""#,
+        tls: "",
+        directory: true,
+    };
+    let with_rsa = |daemon: &Daemon, host: &str| {
+        // A rustls client completes the handshake, so the daemon signed with the key.
+        let leaf = peer_certificate(daemon.tls, host, None).unwrap();
+        leaf.windows(RSA.len()).any(|window| window == RSA)
+    };
+    let ready = |daemon: &Daemon| {
+        wait_for("the certificates", 60, || {
+            let ready = |name: &str| daemon.row(name)[5] == "ready";
+            (ready(name) && ready("127.0.0.1")).then_some(())
+        });
+    };
+    let daemon = start(&setup);
+    ready(&daemon);
+    // One certificate from the authority of the test, one from the local authority.
+    assert_eq!(daemon.row(name)[1], "http-01");
+    assert_eq!(daemon.row("127.0.0.1")[1], "local");
+    assert!(with_rsa(&daemon, name) && with_rsa(&daemon, "127.0.0.1"));
+    let (root, _) = local_root(&daemon);
+    let answer = get_trusting(daemon.tls, "127.0.0.1", &root);
+    assert!(answer.is_ok_and(|answer| answer.ends_with("ok")));
+    assert_eq!(authority.order_count.load(Ordering::Relaxed), 1);
+    let key = home.join("acme/local/certs/127.0.0.1/key.pem");
+    let key = sibuna_acme::KeyPair::from_pem(&fs::read_to_string(key).unwrap()).unwrap();
+    assert_eq!(key.key_type(), sibuna_acme::KeyType::Rsa2048);
+    drop(daemon);
+
+    // The stored keys load after a restart, and nothing is ordered again.
+    let daemon = start(&setup);
+    ready(&daemon);
+    assert!(with_rsa(&daemon, name) && with_rsa(&daemon, "127.0.0.1"));
+    assert_eq!(authority.order_count.load(Ordering::Relaxed), 1);
+}
+
+/// With an RSA key and no `openssl` in the `PATH`, the check and the start both fail
+/// at once, with the code and the hint of the key tool.
+#[test]
+fn an_rsa_key_without_openssl_fails_the_check_and_the_start() {
+    let home = home("no-openssl");
+    let file = home.join("edge.json");
+    let storage = home.join("acme");
+    let text = format!(
+        r#"{{"global":{{"acme":{{"key":"rsa2048","storage":"{}"}}}},
+           "frontends":{{"web":{{"binds":["127.0.0.1:8443"],"tls":{{"auto":["localhost"]}}}}}},
+           "backends":{{"app":{{"servers":["127.0.0.1:8080"]}}}}}}"#,
+        storage.display()
+    );
+    fs::write(&file, text).unwrap();
+    let empty = home.join("empty-path");
+    fs::create_dir_all(&empty).unwrap();
+    for arguments in [vec!["check", "-f"], vec!["--config-file"]] {
+        let output =
+            Command::new(BIN).args(&arguments).arg(&file).env("PATH", &empty).output().unwrap();
+        let text = String::from_utf8_lossy(&output.stderr).into_owned();
+        assert!(!output.status.success(), "{arguments:?}: {text}");
+        assert!(text.contains("KEY TOOL FAILED (ACME015)"), "{arguments:?}: {text}");
+        assert!(text.contains("could not be started"), "{arguments:?}: {text}");
+        assert!(text.contains("Hint: ") && text.contains("\"p256\""), "{arguments:?}: {text}");
+    }
+    // Nothing was created: the failure came before the storage was touched.
+    assert!(!storage.exists());
+    // With an ECDSA key the same file needs no program.
+    let text = fs::read_to_string(&file).unwrap().replace("rsa2048", "p384");
+    fs::write(&file, text).unwrap();
+    let output =
+        Command::new(BIN).arg("check").arg("-f").arg(&file).env("PATH", &empty).output().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+}

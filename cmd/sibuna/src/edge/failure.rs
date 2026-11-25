@@ -9,6 +9,8 @@ use sibuna_core::diagnostic;
 /// A startup failure, classified for the operator.
 #[derive(Debug, PartialEq, Eq)]
 pub(super) struct Failure {
+    /// `EDGE001`, or the code of a failure that has one of its own.
+    pub code: &'static str,
     pub title: &'static str,
     pub message: String,
     pub hint: &'static str,
@@ -21,6 +23,7 @@ pub(super) fn classify(file: Option<&str>, error: &io::Error) -> Failure {
     let lower = text.to_ascii_lowercase();
     if let Some(path) = file.filter(|path| !Path::new(path).exists()) {
         return Failure {
+            code: "EDGE001",
             title: "configuration file not found",
             message: format!("There is no file at `{path}`."),
             hint: "Check the path after `--config-file`. `sibuna lb ... --print-config` \
@@ -60,7 +63,17 @@ pub(super) fn classify(file: Option<&str>, error: &io::Error) -> Failure {
         _ => ("edge not started", "Check the edge configuration and the listener addresses."),
     };
     let subject = file.map_or(String::new(), |path| format!("{path}: "));
-    Failure { title, message: format!("{subject}{text}."), hint }
+    if let Some(reason) = text.strip_suffix(" (ACME015)") {
+        return Failure {
+            code: "ACME015",
+            title: "KEY TOOL FAILED",
+            message: format!("{subject}{reason}."),
+            hint: "RSA keys are made by the program `openssl`. Install OpenSSL so that \
+                   `openssl` is in the PATH of the daemon. Or set `global.acme.key` to \
+                   \"p256\" or \"p384\", which need no program.",
+        };
+    }
+    Failure { code: "EDGE001", title, message: format!("{subject}{text}."), hint }
 }
 
 /// The title and the hint of a failure of the automatic HTTPS configuration, when the
@@ -128,7 +141,7 @@ fn names_a_certificate(lower: &str) -> bool {
 pub(super) fn report(file: Option<&str>, error: &io::Error) {
     let failure = classify(file, error);
     let mut text = String::new();
-    let title = format!("{} (EDGE001)", failure.title);
+    let title = format!("{} ({})", failure.title, failure.code);
     let _ = diagnostic::render(&mut text, &title, &failure.message, failure.hint);
     eprint!("{text}");
 }
@@ -139,6 +152,18 @@ mod tests {
 
     fn title(file: Option<&str>, kind: io::ErrorKind, text: &str) -> &'static str {
         classify(file, &io::Error::new(kind, text)).title
+    }
+
+    #[test]
+    fn a_missing_key_tool_keeps_its_own_code() {
+        let text = "global.acme.key: `openssl version` could not be started: No such file \
+                    or directory (os error 2) (ACME015)";
+        let failure = classify(None, &io::Error::other(text));
+        assert_eq!((failure.code, failure.title), ("ACME015", "KEY TOOL FAILED"));
+        assert!(failure.message.ends_with("(os error 2)."), "{}", failure.message);
+        assert!(failure.hint.contains("p256") && failure.hint.contains("PATH"));
+        let other = classify(None, &io::Error::other("http 0.0.0.0:80: no"));
+        assert_eq!(other.code, "EDGE001");
     }
 
     #[test]
