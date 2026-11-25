@@ -37,7 +37,7 @@ fn a_flow_at_the_wrong_node_reaches_the_owner_and_the_server_sees_the_client() {
         assert_eq!(greeting.client, greeting.stream.local_addr().unwrap());
         assert!(greeting.echoes(&[7u8; 100_000]));
         // HTTP: the server of the owner is told the client, not the node in between,
-        // whose address is 127.0.0.2 or above.
+        // whose address is 127.0.26.2 or above.
         assert_eq!(http_body(cluster.web[entry]), format!("n{owner} 127.0.0.1"));
         // UDP: the server of the owner answers, and the answer comes from the address
         // that the client sent to.

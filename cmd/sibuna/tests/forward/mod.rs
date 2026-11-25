@@ -2,9 +2,14 @@
 //! loopback, servers that say which node reached them and under which client address,
 //! and small clients.
 //!
-//! The nodes have mesh addresses of their own, 127.0.0.2 and up, and the test is a
+//! The nodes have mesh addresses of their own, 127.0.26.2 and up, and the test is a
 //! client at 127.0.0.1. So the test is a stranger to the forwarding port, and a server
 //! can tell the client from the node that forwarded it.
+//!
+//! No listener of a node is at 127.0.0.1. Other tests of this machine connect from
+//! that address all the time, and each connection holds a port there that a listener
+//! chosen a moment ago can then not bind. Each kind of listener has addresses of its
+//! own, so two listeners of one node never draw the same port.
 #![allow(dead_code)]
 
 use std::fs;
@@ -128,8 +133,17 @@ fn mesh_port(ip: Ipv4Addr) -> u16 {
     }
 }
 
-fn free_tcp() -> SocketAddr {
-    TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap()
+/// The address of the node `node` for the listeners of kind `role`.
+fn ip(role: u8, node: usize) -> Ipv4Addr {
+    Ipv4Addr::new(127, 0, role, 2 + node as u8)
+}
+
+fn free_tcp(role: u8, node: usize) -> SocketAddr {
+    TcpListener::bind((ip(role, node), 0)).unwrap().local_addr().unwrap()
+}
+
+fn free_udp(role: u8, node: usize) -> SocketAddr {
+    UdpSocket::bind((ip(role, node), 0)).unwrap().local_addr().unwrap()
 }
 
 /// The addresses of a cluster. Each node has its own listeners and its own servers, so
@@ -160,15 +174,14 @@ impl Cluster {
         fs::create_dir_all(&directory).unwrap();
         fs::write(directory.join("mesh.key"), [42u8; 32]).unwrap();
         fs::write(directory.join("other.key"), [43u8; 32]).unwrap();
-        let ip = |node: usize| Ipv4Addr::new(127, 0, 0, 2 + node as u8);
         let each = |make: &dyn Fn(usize) -> SocketAddr| (0..nodes).map(make).collect::<Vec<_>>();
         Self {
             directory,
-            mesh: each(&|node| (ip(node), mesh_port(ip(node))).into()),
-            db: each(&|_| free_tcp()),
-            web: each(&|_| free_tcp()),
-            dns: each(&|_| UdpSocket::bind("127.0.0.1:0").unwrap().local_addr().unwrap()),
-            probes: each(&|_| free_tcp()),
+            mesh: each(&|node| (ip(26, node), mesh_port(ip(26, node))).into()),
+            db: each(&|node| free_tcp(27, node)),
+            web: each(&|node| free_tcp(28, node)),
+            dns: each(&|node| free_udp(29, node)),
+            probes: each(&|node| free_tcp(30, node)),
             origins: (0..nodes)
                 .map(|node| [tcp_origin(node), http_origin(node), udp_origin(node)])
                 .collect(),

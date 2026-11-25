@@ -1,6 +1,9 @@
 //! Edges in one process that forward to each other over loopback. The nodes have mesh
-//! addresses of their own (127.0.0.2, 127.0.0.3, ...), so a test client at 127.0.0.1
+//! addresses of their own (127.0.26.2, 127.0.26.3, ...), so a test client at 127.0.0.1
 //! is a stranger to the forwarding port, as a client is in production.
+//!
+//! No listener is at 127.0.0.1. Other tests of this machine connect from that address
+//! all the time, and each connection holds a port there that a listener cannot bind.
 
 use std::io::{Read, Write};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener, TcpStream, UdpSocket};
@@ -29,7 +32,12 @@ fn free_port(ip: Ipv4Addr) -> u16 {
 }
 
 fn mesh_ip(node: usize) -> Ipv4Addr {
-    Ipv4Addr::new(127, 0, 0, 2 + node as u8)
+    Ipv4Addr::new(127, 0, 26, 2 + node as u8)
+}
+
+/// The address of the HTTP listener of a node.
+fn web_ip(node: usize) -> Ipv4Addr {
+    Ipv4Addr::new(127, 0, 27, 2 + node as u8)
 }
 
 /// The edges of a mesh with an HTTP frontend `web`, started with forwarding on and in
@@ -46,9 +54,8 @@ impl Mesh {
     fn try_start(nodes: usize, members: &str) -> std::io::Result<Self> {
         let mesh: Vec<SocketAddr> =
             (0..nodes).map(|n| (mesh_ip(n), free_port(mesh_ip(n))).into()).collect();
-        let web: Vec<SocketAddr> = (0..nodes)
-            .map(|_| (Ipv4Addr::LOCALHOST, free_port(Ipv4Addr::LOCALHOST)).into())
-            .collect();
+        let web: Vec<SocketAddr> =
+            (0..nodes).map(|node| (web_ip(node), free_port(web_ip(node))).into()).collect();
         let mut edges = Vec::new();
         for node in 0..nodes {
             let peers: Vec<String> = (0..nodes)
@@ -76,14 +83,14 @@ impl Mesh {
     }
 
     fn start(nodes: usize, members: &str) -> Self {
-        let mut failure = None;
+        let mut failures = Vec::new();
         for _ in 0..8 {
             match Self::try_start(nodes, members) {
                 Ok(mesh) => return mesh,
-                Err(error) => failure = Some(error),
+                Err(error) => failures.push(error.to_string()),
             }
         }
-        panic!("the mesh did not start: {failure:?}");
+        panic!("the mesh did not start: {failures:?}");
     }
 
     /// Steps every edge until `done` holds, for at most thirty seconds: the machine may
