@@ -138,10 +138,14 @@ pub(crate) fn read_bounded(path: &Path) -> Result<Option<String>, Error> {
     Ok(Some(text))
 }
 
-/// The temporary name beside `path`, unique to this process.
+/// A temporary name beside `path`, unique to this call: the process and a counter.
+/// Two threads of one process that write the same file, as the certificate thread and
+/// the thread of the ACME server may, therefore never share a temporary file.
 pub(crate) fn temporary(path: &Path) -> PathBuf {
+    static CALLS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let call = CALLS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     let mut name = path.as_os_str().to_owned();
-    name.push(format!(".tmp-{}", std::process::id()));
+    name.push(format!(".tmp-{}-{call}", std::process::id()));
     PathBuf::from(name)
 }
 
