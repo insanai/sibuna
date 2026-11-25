@@ -97,6 +97,28 @@ pub enum Event {
         /// What failed, with a hint.
         error: AcmeError,
     },
+    /// An OCSP response is stapled to the certificate of a name for the first time.
+    Stapled {
+        /// The name of the certificate.
+        name: String,
+        /// The end of the window of the response, in seconds since 1970.
+        until: u64,
+    },
+    /// The OCSP responder of a certificate did not give a response that can be stapled.
+    /// The certificate is served without one.
+    StapleFailed {
+        /// The name of the certificate.
+        name: String,
+        /// What failed, with a hint.
+        error: AcmeError,
+        /// The time of the next question, in seconds since 1970.
+        retry_at: u64,
+    },
+    /// The OCSP responder says that the served certificate is revoked. It is renewed.
+    Revoked {
+        /// The name of the certificate.
+        name: String,
+    },
     /// An attempt failed. The served certificate, if any, stays.
     Failed {
         /// The name, or `None` for a failure of the storage or the account.
@@ -146,6 +168,9 @@ pub struct CertificateStatus {
     pub name: String,
     /// Why the name is managed: `listed` under `auto`, or `on-demand`.
     pub origin: &'static str,
+    /// The OCSP status of the certificate: `good` while handshakes staple a response,
+    /// `revoked` when the responder said so, else `-`.
+    pub staple: &'static str,
     /// How the certificate is obtained: `http-01`, `tls-alpn-01`, `dns-01` or `local`.
     pub via: &'static str,
     /// The issuer of the served certificate.
@@ -165,6 +190,7 @@ impl CertificateStatus {
         Self {
             name: name.to_owned(),
             origin: LISTED,
+            staple: "-",
             via: "-",
             issuer: None,
             not_after: None,
@@ -301,6 +327,17 @@ impl Shared {
 
     fn has_plain_frontend(&self) -> bool {
         read(&self.wanted).1
+    }
+
+    /// Sets or removes the OCSP response that handshakes staple to the certificate of
+    /// `name`. Handshakes that run keep the certificate they took.
+    fn staple(&self, name: &str, response: Option<Vec<u8>>) {
+        let mut all = write(&self.certificates);
+        if let Some(served) = all.get_mut(name) {
+            let mut next = CertifiedKey::clone(served);
+            next.ocsp = response;
+            *served = Arc::new(next);
+        }
     }
 
     fn install(&self, name: &str, certificate: Arc<CertifiedKey>) {

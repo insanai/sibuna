@@ -76,23 +76,60 @@ fn is_header_safe(bytes: &[u8]) -> bool {
     bytes.len() <= MAX_LOCATION && bytes.iter().all(|byte| (0x21..0x7f).contains(byte))
 }
 
+/// Writes a diagnostic with the title and the hint of `error`. The message is
+/// `before`, the reason of the error as a sentence, and `after`.
+fn diagnose(error: &sibuna_acme::Error, before: &str, after: &str) {
+    let title = format!("{} ({})", error.title, error.code);
+    let reason = error.message.trim_end();
+    let stop = if reason.ends_with('.') { "" } else { "." };
+    let message = format!("{before}{reason}{stop}{after}");
+    let mut text = String::new();
+    let _ = diagnostic::render(&mut text, &title, &message, &error.hint);
+    crate::edge::note(format_args!("{}", text.trim_end_matches('\n')));
+}
+
+/// Writes the events that are failures: a diagnostic with a hint each. Returns whether
+/// `event` was one.
+fn log_failure(event: &Event) -> bool {
+    let time = sibuna_acme::format_rfc3339;
+    match event {
+        Event::CleanupFailed { name, error } => {
+            let before =
+                format!("The TXT record of the DNS-01 challenge for `{name}` was not removed. ");
+            let after = " The certificate is not affected. The daemon removes the record at \
+                         the next attempt for the name.";
+            diagnose(error, &before, after);
+        }
+        Event::StapleFailed { name, error, retry_at } => {
+            let before = format!("No OCSP response for the certificate of `{name}`. ");
+            diagnose(error, &before, &format!(" The daemon asks again at {}.", time(*retry_at)));
+        }
+        Event::Fallback { name, authority, next, error } => {
+            let before = format!("No certificate for `{name}` from {authority}. ");
+            diagnose(error, &before, &format!(" The daemon asks {next} now."));
+        }
+        Event::Failed { name, error, retry_at } => {
+            let before = match name {
+                Some(name) => format!("No new certificate for `{name}`. "),
+                None => String::new(),
+            };
+            let after =
+                format!(" The listeners keep serving. Next attempt at {}.", time(*retry_at));
+            diagnose(error, &before, &after);
+        }
+        _ => return false,
+    }
+    true
+}
+
 /// Writes an event of the certificate thread to standard error: one line for a
 /// certificate, a diagnostic with a hint for a failure.
 pub(crate) fn log(event: &Event) {
     let time = sibuna_acme::format_rfc3339;
+    if log_failure(event) {
+        return;
+    }
     match event {
-        Event::CleanupFailed { name, error } => {
-            let title = format!("{} ({})", error.title, error.code);
-            let reason = error.message.trim_end();
-            let message = format!(
-                "The TXT record of the DNS-01 challenge for `{name}` was not removed. \
-                 {reason} The certificate is not affected. The daemon removes the record \
-                 at the next attempt for the name."
-            );
-            let mut text = String::new();
-            let _ = diagnostic::render(&mut text, &title, &message, &error.hint);
-            crate::edge::note(format_args!("{}", text.trim_end_matches('\n')));
-        }
         Event::Refused { name, reason, seconds } => {
             crate::edge::note(format_args!(
                 "ACME000: no certificate on demand for {name}: {reason}; refused for \
@@ -102,6 +139,18 @@ pub(crate) fn log(event: &Event) {
         Event::Released { name, reason } => {
             crate::edge::note(format_args!(
                 "ACME000: certificate on demand for {name} released: {reason}"
+            ));
+        }
+        Event::Stapled { name, until } => {
+            crate::edge::note(format_args!(
+                "ACME000: OCSP response stapled to the certificate for {name}, valid until {}",
+                time(*until)
+            ));
+        }
+        Event::Revoked { name } => {
+            crate::edge::note(format_args!(
+                "ACME000: the OCSP responder says the certificate for {name} is revoked; \
+                 no response is stapled and the certificate is renewed now"
             ));
         }
         Event::Obtained { name, not_after, renewed } => {
@@ -117,34 +166,11 @@ pub(crate) fn log(event: &Event) {
                 time(*not_after)
             ));
         }
-        Event::Fallback { name, authority, next, error } => {
-            let title = format!("{} ({})", error.title, error.code);
-            let reason = error.message.trim_end();
-            let stop = if reason.ends_with('.') { "" } else { "." };
-            let message = format!(
-                "No certificate for `{name}` from {authority}. {reason}{stop} The daemon \
-                 asks {next} now."
-            );
-            let mut text = String::new();
-            let _ = diagnostic::render(&mut text, &title, &message, &error.hint);
-            crate::edge::note(format_args!("{}", text.trim_end_matches('\n')));
-        }
-        Event::Failed { name, error, retry_at } => {
-            let subject = match name {
-                Some(name) => format!("No new certificate for `{name}`. "),
-                None => String::new(),
-            };
-            let title = format!("{} ({})", error.title, error.code);
-            let reason = error.message.trim_end();
-            let stop = if reason.ends_with('.') { "" } else { "." };
-            let message = format!(
-                "{subject}{reason}{stop} The listeners keep serving. Next attempt at {}.",
-                time(*retry_at)
-            );
-            let mut text = String::new();
-            let _ = diagnostic::render(&mut text, &title, &message, &error.hint);
-            crate::edge::note(format_args!("{}", text.trim_end_matches('\n')));
-        }
+        // The failures were written above.
+        Event::CleanupFailed { .. }
+        | Event::StapleFailed { .. }
+        | Event::Fallback { .. }
+        | Event::Failed { .. } => {}
     }
 }
 
@@ -174,7 +200,8 @@ pub(crate) fn render_ca(
 /// The answer to `show certs`: one line per managed name under a header.
 pub(crate) fn render_certs(certificates: &[CertificateStatus]) -> String {
     let time = |seconds: Option<u64>| seconds.map_or("-".to_owned(), sibuna_acme::format_rfc3339);
-    let header = ["name", "via", "issuer", "expires", "renews", "state", "origin", "error"];
+    let header =
+        ["name", "via", "issuer", "expires", "renews", "state", "origin", "ocsp", "error"];
     let mut rows = vec![header.map(str::to_owned)];
     for certificate in certificates {
         rows.push([
@@ -189,10 +216,11 @@ pub(crate) fn render_certs(certificates: &[CertificateStatus]) -> String {
             time(certificate.next_attempt),
             certificate.state.word().to_owned(),
             certificate.origin.to_owned(),
+            certificate.staple.to_owned(),
             certificate.error.clone().unwrap_or_else(|| "-".to_owned()),
         ]);
     }
-    let mut widths = [0; 8];
+    let mut widths = [0; 9];
     for row in &rows {
         for (width, cell) in widths.iter_mut().zip(row) {
             *width = (*width).max(cell.len());
@@ -250,6 +278,7 @@ mod tests {
         let ready = CertificateStatus {
             name: "example.org".to_owned(),
             origin: "listed",
+            staple: "good",
             via: "dns-01",
             issuer: Some("Test Authority".to_owned()),
             not_after: Some(1_800_000_000),
@@ -260,6 +289,7 @@ mod tests {
         let failing = CertificateStatus {
             name: "b.example.org".to_owned(),
             origin: "on-demand",
+            staple: "-",
             via: "local",
             issuer: None,
             not_after: None,
@@ -282,9 +312,11 @@ mod tests {
                 "2027-01-03T18:13:20Z",
                 "ready",
                 "listed",
+                "good",
                 "-"
             ]
         );
-        assert!(lines[2].ends_with("retry on-demand VALIDATION FAILED (ACME005)"));
+        let words: Vec<&str> = lines[2].split_ascii_whitespace().collect();
+        assert_eq!(words[5..], ["retry", "on-demand", "-", "VALIDATION", "FAILED", "(ACME005)"]);
     }
 }

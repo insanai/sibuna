@@ -228,7 +228,7 @@ fn the_next_authority_issues_when_the_first_fails_and_rests_when_it_works() {
     let refused = home("refused");
     let daemon = start(&[&first, &second], &refused, &acme);
     let row = daemon.ready(NAME);
-    assert_eq!(row[7], "-", "{row:?}");
+    assert_eq!(row[8], "-", "{row:?}");
     assert_eq!((orders(&first), orders(&second)), (1, 1));
     assert!(!stored(&refused, &first.directory) && stored(&refused, &second.directory));
     let log = daemon.log();

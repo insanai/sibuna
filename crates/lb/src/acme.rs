@@ -77,6 +77,8 @@ pub struct AcmeOptions {
     pub fallback: Vec<Authority>,
     /// Ask the authority when to renew a certificate (RFC 9773).
     pub ari: bool,
+    /// Staple an OCSP response when a certificate names a responder.
+    pub ocsp: bool,
 }
 
 impl Default for AcmeOptions {
@@ -94,6 +96,7 @@ impl Default for AcmeOptions {
             eab: None,
             fallback: Vec::new(),
             ari: true,
+            ocsp: true,
         }
     }
 }
@@ -138,6 +141,7 @@ impl AcmeOptions {
         let Authority { directory, email, ca_file, eab } = Authority::take(&mut r)?;
         let fallback = authority::fallback(&mut r, &directory)?;
         let ari = field(r.take_bool("ari"))?.unwrap_or(defaults.ari);
+        let ocsp = field(r.take_bool("ocsp"))?.unwrap_or(defaults.ocsp);
         let storage = match field(r.take_str("storage"))? {
             None => defaults.storage,
             Some("") => return Err(invalid("global.acme.storage must be a directory")),
@@ -173,6 +177,7 @@ impl AcmeOptions {
             eab,
             fallback,
             ari,
+            ocsp,
         })
     }
 }

@@ -8,6 +8,7 @@
 mod admit;
 mod authority;
 mod renewal;
+mod staple;
 
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -27,6 +28,7 @@ use sibuna_acme::{
 use sibuna_lb::{AcmeChallenge, AutoName, is_address};
 
 use self::authority::Ready;
+use self::staple::Stapling;
 use super::client::Client;
 use super::{CertificateState, CertificateStatus, Event, Notify, Shared};
 
@@ -68,6 +70,8 @@ pub(super) fn certified(
 struct Sound {
     certified: Arc<CertifiedKey>,
     fields: x509::Certificate,
+    /// The OCSP responder that the leaf names, when the chain has its issuer.
+    responder: Option<sibuna_acme::ocsp::Responder>,
 }
 
 fn sound(name: &str, chain_pem: &str, key: &KeyPair, now: u64) -> Result<Sound, Error> {
@@ -83,7 +87,8 @@ fn sound(name: &str, chain_pem: &str, key: &KeyPair, now: u64) -> Result<Sound, 
     if fields.not_after <= now {
         return Err(reject("has expired"));
     }
-    Ok(Sound { certified: certified(chain, key, true)?, fields })
+    let responder = staple::responder(&chain);
+    Ok(Sound { certified: certified(chain, key, true)?, fields, responder })
 }
 
 /// What the thread remembers of one name.
@@ -104,6 +109,9 @@ struct Entry {
     /// When the authority is asked next about the served certificate. `u64::MAX`:
     /// never.
     ari_next: u64,
+    /// The OCSP responder of the served certificate and its staple, when the
+    /// certificate names one and `global.acme.ocsp` is on.
+    stapling: Option<Stapling>,
 }
 
 impl Default for Entry {
@@ -118,6 +126,7 @@ impl Default for Entry {
             obtained: None,
             ari_pick: None,
             ari_next: u64::MAX,
+            stapling: None,
         }
     }
 }
@@ -137,19 +146,24 @@ impl Entry {
 
     /// Takes a certificate that was just installed: the one that the authority `index`
     /// issued. What the authority said about the last one no longer holds, and it is
-    /// asked about this one at once.
+    /// asked about this one at once. The staple of the last one is gone with it.
     fn serve(&mut self, fields: x509::Certificate, index: usize, obtained: Option<u64>) {
         self.served = Some(fields);
         self.issued_by = index;
         self.obtained = obtained;
         self.ari_pick = None;
         self.ari_next = 0;
+        self.stapling = None;
     }
 
     /// The time at which the thread looks at the name again: the next attempt, or the
-    /// next question to the authority when `asks`.
-    fn wake_at(&self, asks: bool) -> u64 {
-        if asks { self.next_attempt.min(self.ari_next) } else { self.next_attempt }
+    /// next question to the authority when `asks`, or the next look at the staple when
+    /// `staples`.
+    fn wake_at(&self, asks: bool, staples: bool) -> u64 {
+        let staple =
+            self.stapling.as_ref().filter(|_| staples).map_or(u64::MAX, Stapling::wake_at);
+        let attempt = if asks { self.next_attempt.min(self.ari_next) } else { self.next_attempt };
+        attempt.min(staple)
     }
 }
 
@@ -329,6 +343,7 @@ impl Driver {
                 // Nobody is asked about a certificate of the local authority.
                 Source::Local(_) => entry.ari_next = u64::MAX,
             }
+            self.staple(&source, name, &mut entry);
             if entry.error.is_none() && self.is_stale(name, &entry) {
                 entry.next_attempt = entry.next_attempt.min(now());
             }
@@ -339,6 +354,8 @@ impl Driver {
             let attempted = ordering && entry.next_attempt <= now();
             if attempted {
                 self.attempt(&mut source, name, &mut entry);
+                // A certificate that was just installed gets its staple at once.
+                self.staple(&source, name, &mut entry);
             }
             // The handshakes that wait for a name on demand are woken before the pause.
             let kept = !demanded || self.settle(name, &entry, before);
@@ -353,8 +370,9 @@ impl Driver {
         let waiting = |open: bool, backoff: &Backoff, local: bool| {
             (!open && names.iter().any(|name| name.local == local)).then_some(backoff.at)
         };
-        let asks = self.shared.options.ari && self.shared.ordering.load(Ordering::Acquire);
-        let attempts = self.entries.values().map(|entry| entry.wake_at(asks));
+        let ordering = self.shared.ordering.load(Ordering::Acquire);
+        let asks = self.shared.options.ari && ordering;
+        let attempts = self.entries.values().map(|entry| entry.wake_at(asks, ordering));
         let next = attempts
             .chain(waiting(self.ready.is_some(), &self.ready_backoff, false))
             .chain(waiting(self.local.is_some(), &self.local_backoff, true))
@@ -414,8 +432,16 @@ impl Driver {
         let not_after = found.fields.not_after;
         self.shared.install(name, found.certified);
         entry.serve(found.fields, index, None);
+        entry.stapling = self.stapling(found.responder);
+        self.restore_staple(source.store_at(index), name, entry);
         (self.report)(&Event::Loaded { name: name.to_owned(), not_after });
         true
+    }
+
+    /// The state of the staple of a certificate that was just installed: none when the
+    /// certificate names no responder or `global.acme.ocsp` is off.
+    fn stapling(&self, responder: Option<sibuna_acme::ocsp::Responder>) -> Option<Stapling> {
+        responder.filter(|_| self.shared.options.ocsp).map(Stapling::new)
     }
 
     /// Writes the line of `show certs` for a name.
@@ -429,6 +455,7 @@ impl Driver {
         self.shared.set_status(CertificateStatus {
             name: name.to_owned(),
             origin: self.shared.origin(name),
+            staple: entry.stapling.as_ref().map_or("-", Stapling::word),
             via,
             issuer: entry.served.as_ref().map(|served| served.issuer.clone()),
             not_after: entry.served.as_ref().map(|served| served.not_after),
@@ -501,6 +528,9 @@ impl Driver {
                 let not_after = found.fields.not_after;
                 self.shared.install(name, found.certified);
                 entry.serve(found.fields, index, Some(now));
+                entry.stapling = self.stapling(found.responder);
+                // A stored response is about the certificate that was replaced.
+                source.store_at(index).clear_staple(name);
                 entry.via = Some(via);
                 self.succeeded(store, name, entry);
                 (self.report)(&Event::Obtained { name: name.to_owned(), not_after, renewed });
@@ -664,7 +694,7 @@ mod tests {
         assert_eq!(entry.renew_at(), schedule::renew_at(NOW, NOW + 1000));
         assert_eq!((entry.issued_by, entry.ari_next), (2, 0));
         entry.next_attempt = NOW + 600;
-        assert_eq!((entry.wake_at(true), entry.wake_at(false)), (0, NOW + 600));
+        assert_eq!((entry.wake_at(true, true), entry.wake_at(false, true)), (0, NOW + 600));
         // An answer in the past waits for the floor of a certificate we obtained, and
         // an answer after the expiry is capped at four fifths.
         entry.ari_pick = Some(NOW - 50);

@@ -259,7 +259,7 @@ fn the_first_handshake_obtains_a_certificate_and_the_guards_refuse_other_names()
     assert_eq!(ask.count(name), 1);
     let row = daemon.row(name).unwrap();
     assert_eq!(row[1..3], ["http-01", "Sibuna_Test_Authority"], "{row:?}");
-    assert_eq!(row[5..], ["ready", "on-demand", "-"], "{row:?}");
+    assert_eq!(row[5..], ["ready", "on-demand", "-", "-"], "{row:?}");
     // The second handshake finds it. Nothing is asked again.
     assert_eq!(handshake(&daemon, name), Some(first.clone()));
     assert_eq!((authority.order_count.load(Ordering::Relaxed), ask.count(name)), (1, 1));

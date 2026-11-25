@@ -9,6 +9,7 @@
 #![allow(clippy::unwrap_used)]
 
 #[path = "support/acme_authority.rs"]
+#[allow(dead_code)]
 mod authority;
 
 use std::fs;
@@ -317,7 +318,7 @@ fn a_certificate_is_obtained_served_renewed_and_kept_through_a_failure() {
     let row =
         wait_for("the ready state", 10, || Some(daemon.row(SITE)).filter(|row| row[5] == "ready"));
     assert_eq!(row[1..3], ["http-01", "Sibuna_Test_Authority"], "{row:?}");
-    assert_eq!(row[7], "-", "{row:?}");
+    assert_eq!(row[8], "-", "{row:?}");
     let stats = daemon.ctl("show stats");
     assert!(stats.contains("sibuna_edge_acme_certificates_managed 1\n"), "{stats}");
     assert!(stats.contains("sibuna_edge_acme_certificates_served 1\n"), "{stats}");
@@ -347,7 +348,7 @@ fn a_certificate_is_obtained_served_renewed_and_kept_through_a_failure() {
     let row = wait_for("the failure", 30, || {
         Some(daemon.row("refused.example.test")).filter(|row| row[5] == "retry")
     });
-    assert!(row[7..].join(" ").contains("ACME"), "{row:?}");
+    assert!(row[8..].join(" ").contains("ACME"), "{row:?}");
     let log = daemon.log();
     assert!(log.contains("Hint: ") && log.contains("refused.example.test"), "{log}");
     assert_eq!(issued(&daemon, SITE), Some(second));
@@ -578,7 +579,7 @@ fn a_failing_provider_and_an_invisible_record_are_reported_with_hints() {
     };
     let daemon = start(&setup);
     let row = row_of(&daemon);
-    assert_eq!(row[7..].join(" "), "DNS PROVIDER FAILED (ACME009)", "{row:?}");
+    assert_eq!(row[8..].join(" "), "DNS PROVIDER FAILED (ACME009)", "{row:?}");
     let log = wait_for("the diagnostic", 10, || {
         Some(daemon.log()).filter(|log| log.contains("ended with the status 7"))
     });
@@ -602,7 +603,7 @@ fn a_failing_provider_and_an_invisible_record_are_reported_with_hints() {
     let setup = Setup { home: &home_two, acme: &acme, ..setup };
     let daemon = start(&setup);
     let row = row_of(&daemon);
-    assert_eq!(row[7..].join(" "), "RECORD NOT VISIBLE (ACME010)", "{row:?}");
+    assert_eq!(row[8..].join(" "), "RECORD NOT VISIBLE (ACME010)", "{row:?}");
     let log = wait_for("the diagnostic", 10, || {
         Some(daemon.log()).filter(|log| log.contains("RECORD NOT VISIBLE"))
     });

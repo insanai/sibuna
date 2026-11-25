@@ -67,6 +67,9 @@ pub struct Authority {
     pub asked_renewal: Mutex<Vec<String>>,
     /// The `replaces` member of every order placed, empty without one.
     pub replaces: Mutex<Vec<String>>,
+    /// The URL of the OCSP responder that the next certificates name. Without one they
+    /// name none.
+    pub ocsp_url: Mutex<Option<String>>,
     /// The first signed request is answered with `badNonce`, once.
     bad_nonce_pending: AtomicBool,
     nonce: AtomicU64,
@@ -145,6 +148,7 @@ impl Authority {
             windows: Mutex::default(),
             asked_renewal: Mutex::default(),
             replaces: Mutex::default(),
+            ocsp_url: Mutex::default(),
             bad_nonce_pending: AtomicBool::new(true),
             nonce: AtomicU64::new(1),
             thumbprint: Mutex::default(),
@@ -158,6 +162,26 @@ impl Authority {
             }
         });
         authority
+    }
+
+    /// The root certificate, which signs every leaf, in DER.
+    pub fn root_der(&self) -> Vec<u8> {
+        pem::decode("CERTIFICATE", &self.root_pem).unwrap().remove(0)
+    }
+
+    /// The key of the root, for a responder that speaks for this authority.
+    pub fn signer(&self) -> &KeyPair {
+        &self.key
+    }
+
+    /// The leaf with the serial number `serial` that this authority issued, in DER.
+    pub fn issued(&self, serial: &[u8]) -> Option<Vec<u8>> {
+        let orders = self.orders.lock().unwrap();
+        let mut leaves = orders.iter().filter_map(|order| {
+            let chain = pem::decode("CERTIFICATE", order.certificate.as_deref()?)?;
+            chain.into_iter().next()
+        });
+        leaves.find(|leaf| x509::read(leaf).is_some_and(|fields| fields.serial == serial))
     }
 
     /// Reads one request and answers it. Every answer carries a fresh nonce.
@@ -453,10 +477,12 @@ impl Authority {
         if order.valid != Some(true) {
             return Answer::problem(403, "orderNotReady", "the name is not validated");
         }
+        let responder = self.ocsp_url.lock().unwrap().clone();
         let template = x509::Template {
             issuer: ISSUER,
             subject: &order.name,
             names: &[&order.name],
+            ocsp_url: responder.as_deref(),
             not_before: now(),
             not_after: now() + self.lifetime.load(Ordering::Relaxed),
             serial: 100 + id as u64,
@@ -520,6 +546,69 @@ impl ServerCertVerifier for AcceptAny {
     fn supported_verify_schemes(&self) -> Vec<rustls::SignatureScheme> {
         self.0.signature_verification_algorithms.supported_schemes()
     }
+}
+
+/// Accepts every certificate and keeps the OCSP response that came with it.
+#[derive(Debug)]
+struct KeepStaple(AcceptAny, Mutex<Vec<u8>>);
+
+impl ServerCertVerifier for KeepStaple {
+    fn verify_server_cert(
+        &self,
+        _end_entity: &CertificateDer<'_>,
+        _intermediates: &[CertificateDer<'_>],
+        _server_name: &ServerName<'_>,
+        ocsp: &[u8],
+        _now: UnixTime,
+    ) -> Result<ServerCertVerified, rustls::Error> {
+        *self.1.lock().unwrap() = ocsp.to_vec();
+        Ok(ServerCertVerified::assertion())
+    }
+
+    fn verify_tls12_signature(
+        &self,
+        message: &[u8],
+        certificate: &CertificateDer<'_>,
+        signature: &rustls::DigitallySignedStruct,
+    ) -> Result<HandshakeSignatureValid, rustls::Error> {
+        self.0.verify_tls12_signature(message, certificate, signature)
+    }
+
+    fn verify_tls13_signature(
+        &self,
+        message: &[u8],
+        certificate: &CertificateDer<'_>,
+        signature: &rustls::DigitallySignedStruct,
+    ) -> Result<HandshakeSignatureValid, rustls::Error> {
+        self.0.verify_tls13_signature(message, certificate, signature)
+    }
+
+    fn supported_verify_schemes(&self) -> Vec<rustls::SignatureScheme> {
+        self.0.supported_verify_schemes()
+    }
+}
+
+/// The leaf that `address` serves for the host `name` and the OCSP response that it
+/// staples to it, both in DER. The response is empty when the server staples none.
+pub fn stapled(address: SocketAddr, name: &str) -> Option<(Vec<u8>, Vec<u8>)> {
+    let provider = Arc::new(rustls::crypto::ring::default_provider());
+    let keep = Arc::new(KeepStaple(AcceptAny(Arc::clone(&provider)), Mutex::default()));
+    let config = rustls::ClientConfig::builder_with_provider(provider)
+        .with_safe_default_protocol_versions()
+        .ok()?
+        .dangerous()
+        .with_custom_certificate_verifier(Arc::clone(&keep) as Arc<dyn ServerCertVerifier>)
+        .with_no_client_auth();
+    let server = ServerName::try_from(name.to_owned()).ok()?;
+    let mut session = rustls::ClientConnection::new(Arc::new(config), server).ok()?;
+    let mut socket = TcpStream::connect(address).ok()?;
+    socket.set_read_timeout(Some(Duration::from_secs(5))).ok()?;
+    while session.is_handshaking() {
+        session.complete_io(&mut socket).ok()?;
+    }
+    let leaf = session.peer_certificates()?.first()?.to_vec();
+    let response = keep.1.lock().unwrap().clone();
+    Some((leaf, response))
 }
 
 /// A TLS session with `address` for the host `name`, offering `protocol` when given.

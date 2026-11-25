@@ -69,7 +69,9 @@ impl Driver {
             Ok(None) => entry.ari_next = u64::MAX,
             Err(_) => entry.ari_next = now + ari::poll_after(None, life.0, life.1),
         }
-        if entry.error.is_none() && entry.ari_pick.is_some() {
+        // A certificate that its responder calls revoked is renewed at once all the same.
+        let revoked = entry.stapling.as_ref().is_some_and(|stapling| stapling.is_revoked());
+        if entry.error.is_none() && entry.ari_pick.is_some() && !revoked {
             // A certificate that this process obtained is not renewed before its floor,
             // whatever its dates say: an authority cannot make us order in a loop.
             let floor = ari::floor(entry.obtained, life.0, life.1);

@@ -26,6 +26,8 @@ use crate::{Error, KeyPair, pem};
 pub const STALE_LOCK: Duration = Duration::from_secs(15 * 60);
 /// The largest file the store reads.
 const MAX_FILE: u64 = pem::MAX_PEM as u64;
+/// The PEM label of a stored OCSP response.
+const STAPLE_LABEL: &str = "OCSP RESPONSE";
 
 /// The directory of one authority inside the storage directory.
 #[derive(Clone, Debug)]
@@ -267,6 +269,28 @@ impl Store {
         }
     }
 
+    /// The OCSP response that was stored for the certificate of `name`, as DER. The
+    /// caller checks it against the certificate before it staples it.
+    pub fn load_staple(&self, name: &str) -> Option<Vec<u8>> {
+        let path = self.name_dir(name).ok()?.join("ocsp.pem");
+        let text = read_bounded(&path).ok()??;
+        pem::decode(STAPLE_LABEL, &text)?.into_iter().next()
+    }
+
+    /// Stores the OCSP response for the certificate of `name`.
+    pub fn save_staple(&self, name: &str, response: &[u8]) -> Result<(), Error> {
+        let dir = self.name_dir(name)?;
+        create_private_dir(&dir).map_err(|error| failure(&dir, error))?;
+        write_private(&dir.join("ocsp.pem"), &pem::encode(STAPLE_LABEL, response))
+    }
+
+    /// Forgets the stored OCSP response of `name`.
+    pub fn clear_staple(&self, name: &str) {
+        if let Ok(dir) = self.name_dir(name) {
+            let _ = fs::remove_file(dir.join("ocsp.pem"));
+        }
+    }
+
     /// The retry state of `name`, if a failure left one. An unreadable file is no state.
     pub fn load_retry(&self, name: &str) -> Option<Retry> {
         let path = self.name_dir(name).ok()?.join("retry");
@@ -482,6 +506,18 @@ mod tests {
     }
 
     #[test]
+    fn a_staple_is_stored_read_back_and_cleared() {
+        let scratch = Scratch::new("staple");
+        let store = scratch.store();
+        assert_eq!(store.load_staple("example.org"), None);
+        store.save_staple("example.org", &[0x30, 0x03, 0x0a, 0x01, 0x00]).unwrap();
+        assert_eq!(store.load_staple("example.org").unwrap(), [0x30, 0x03, 0x0a, 0x01, 0x00]);
+        assert_eq!(store.load_staple("other.example"), None);
+        store.clear_staple("example.org");
+        assert_eq!(store.load_staple("example.org"), None);
+    }
+
+    #[test]
     fn the_retry_state_survives_and_is_cleared() {
         let scratch = Scratch::new("retry");
         let store = scratch.store();
@@ -495,7 +531,7 @@ mod tests {
 
     #[test]
     fn wildcards_addresses_and_presented_records_have_files_of_their_own() {
-        let scratch = Scratch::new("names");
+        let scratch = Scratch::new("components");
         let store = scratch.store();
         assert_eq!(component("*.example.org").unwrap(), "_.example.org");
         assert_eq!(component("2001:db8::1").unwrap(), "2001_db8__1");
