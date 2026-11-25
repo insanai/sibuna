@@ -358,6 +358,7 @@ fn session_reply(
     let reply = SessionReply {
         user: principal.actor,
         node: shared.identity.node_id,
+        edge: shared.edge.is_some(),
         role: principal.role,
         must_change: principal.must_change,
         expires: principal.expires,
@@ -377,6 +378,8 @@ fn session_reply(
 struct SessionReply {
     user: u64,
     node: u32,
+    /// The node has an edge (SID 0031). Written only when true.
+    edge: bool,
     role: sibuna_console_protocol::Role,
     must_change: bool,
     expires: u64,
@@ -390,6 +393,9 @@ impl Encode for SessionReply {
         json.begin_object()?;
         counter_field(json, "user", self.user)?;
         field(json, "node", &self.node)?;
+        if self.edge {
+            field(json, "edge", &true)?;
+        }
         field(json, "role", &self.role)?;
         field(json, "must_change", &self.must_change)?;
         field(json, "expires", &self.expires)?;
