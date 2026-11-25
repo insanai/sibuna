@@ -42,7 +42,7 @@ def as_user(*command):
 
 def install_rust(system):
     """Returns the cargo to build with."""
-    pin = os.environ['RUST_TOOLCHAIN']
+    pin = '1.94.1' if system == 'openbsd' else os.environ['RUST_TOOLCHAIN']
     if system == 'openbsd':
         run('pkg_add', '-I', 'rust')
         compiler = subprocess.check_output(['/usr/local/bin/rustc', '--version'], text=True)
@@ -61,7 +61,7 @@ def install_rust(system):
     return Path.home() / '.cargo/bin/cargo'
 
 
-def build(cargo):
+def build(cargo, system):
     env = dict(os.environ, CARGO_TARGET_DIR=str(ROOT / 'target'))
     for variable in ('SIBUNA_POW_WASM', 'SIBUNA_CONSOLE_WASM'):
         if not Path(env.get(variable, '')).is_file():
@@ -70,7 +70,9 @@ def build(cargo):
     os.environ['PATH'] = f'{cargo.parent}{os.pathsep}{os.environ["PATH"]}'
     env['PATH'] = os.environ['PATH']
     run(cargo, '--version')
-    run(cargo, 'build', '--release', '--locked', '-p', 'sibuna', cwd=ROOT, env=env)
+    # The OpenBSD 7.9 package uses its system compiler with the shared release Wasm.
+    flags = ['--ignore-rust-version'] if system == 'openbsd' else []
+    run(cargo, 'build', '--release', '--locked', *flags, '-p', 'sibuna', cwd=ROOT, env=env)
     return ROOT / 'target/release/sibuna'
 
 
@@ -185,7 +187,7 @@ def main():
     if system not in SYSTEMS or os.getuid() != 0:
         raise SystemExit('qualify-bsd: run as root inside a disposable FreeBSD or OpenBSD guest')
     run('git', 'config', '--global', '--add', 'safe.directory', '*')
-    binary = build(install_rust(system))
+    binary = build(install_rust(system), system)
     run(sys.executable, ROOT / 'distribution/scripts/release_version.py', '--check',
         '--binary', binary)
     open_to_user(ROOT)
