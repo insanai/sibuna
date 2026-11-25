@@ -160,7 +160,8 @@ pub fn run(shared: &Shared, index: usize) {
     while !shared.is_stopping() {
         let started = Instant::now();
         let ended = attempt(shared, index, &mut connector);
-        if shared.is_stopping() {
+        // A removed peer is not connected again (SID 0031).
+        if shared.is_stopping() || !shared.peers.is_live(index) {
             return;
         }
         let rejection = ended.as_ref().err().and_then(WorkerError::rejection);
@@ -328,7 +329,12 @@ fn receive(
         events: 0,
     };
     let mut receiver = Box::new(Receiver::new());
+    let epoch = shared.peers.epoch();
     while !shared.is_stopping() {
+        // A removal ends the connection of the removed peer at its next turn.
+        if shared.peers.epoch() != epoch && !shared.peers.is_live(handle.index) {
+            return Err(WorkerError::Configuration);
+        }
         if let Some(text) = state.session.next()? {
             send(frames.inner_mut(), Opcode::Text, text.as_bytes())?;
         }

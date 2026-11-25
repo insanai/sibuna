@@ -32,8 +32,10 @@ pub struct Config {
     /// The entries of the learned sticky table (`global.sticky_entries`, SID 0025).
     pub(crate) sticky_entries: usize,
     pub(crate) mesh: Option<crate::MeshConfig>,
-    /// The `spill` section of learned source affinity (SID 0027).
+    /// The `spill` section: the disk tier of the sticky table (SID 0027).
     pub(crate) spill: Option<crate::SpillOptions>,
+    /// The `console` section of SID 0031.
+    pub(crate) console: Option<crate::ConsoleOptions>,
     pub(crate) listeners: BTreeMap<(Protocol, SocketAddr), Frontend>,
     pub(crate) pools: BTreeMap<String, Backend>,
 }
@@ -249,6 +251,11 @@ impl Config {
         self.mesh.as_ref()
     }
 
+    /// The operator console of this node, when the topology has one (SID 0031).
+    pub fn console(&self) -> Option<&crate::ConsoleOptions> {
+        self.console.as_ref()
+    }
+
     /// Parses canonical JSON and resolves each frontend to a protocol-compatible backend.
     /// Returns a diagnostic for malformed JSON, unknown options or invalid resource bounds.
     pub fn parse(bytes: &[u8]) -> Result<Self> {
@@ -276,7 +283,9 @@ impl Config {
             .transpose()?
             .unwrap_or_default();
         let adaptive = mesh.is_some();
+        let console = crate::ConsoleOptions::section(&mut root)?;
         let mut config = Self {
+            console,
             limit,
             udp_limit: limit,
             workers,
@@ -295,12 +304,7 @@ impl Config {
             pools: BTreeMap::new(),
             listeners: BTreeMap::new(),
         };
-        for (name, value) in named(&mut root, "backends")? {
-            config.pools.insert(name.into(), Backend::parse(name, value, adaptive)?);
-        }
-        for (name, value) in named(&mut root, "frontends")? {
-            config.add_frontend(name, value)?;
-        }
+        config.add_topology(&mut root, adaptive)?;
         field(root.finish())?;
         // Datagram sources are unvalidated. Beside stream listeners they share the table
         // only up to half, unless the operator sets the ceiling.
@@ -323,6 +327,17 @@ impl Config {
         config.check_servers()?;
         config.check_automatic_https()?;
         Ok(config)
+    }
+
+    /// Reads the `backends` and then the `frontends`, which name them.
+    fn add_topology(&mut self, root: &mut ObjectReader<'_, '_>, adaptive: bool) -> Result<()> {
+        for (name, value) in named(root, "backends")? {
+            self.pools.insert(name.into(), Backend::parse(name, value, adaptive)?);
+        }
+        for (name, value) in named(root, "frontends")? {
+            self.add_frontend(name, value)?;
+        }
+        Ok(())
     }
 
     /// Refuses a server whose address is one of our own listeners.

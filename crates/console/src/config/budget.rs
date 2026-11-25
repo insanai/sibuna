@@ -85,6 +85,18 @@ impl fmt::Display for BudgetError {
 impl std::error::Error for BudgetError {}
 
 impl Budget {
+    /// Returns these quotas grown for a fleet of `peers` management peers (SID 0031):
+    /// with more than 16, one inbound stream for each, and slots for the reserve, the
+    /// browsers and the peers together. Up to 16 peers nothing changes.
+    pub fn fit_fleet(self, peers: usize) -> Budget {
+        let peers = u16::try_from(peers.min(MAX_PEERS + 1)).unwrap_or(u16::MAX);
+        if peers <= self.peers {
+            return self;
+        }
+        let needed = self.http_reserved.saturating_add(self.subscribers).saturating_add(peers);
+        Budget { peers, slots: self.slots.max(needed), ..self }
+    }
+
     /// Returns the listener capacity these quotas describe.
     pub fn capacity(&self) -> Capacity {
         Capacity {
@@ -121,7 +133,10 @@ impl Budget {
         self.validate()?;
         let slots = u64::from(self.slots);
         let streams = u64::from(self.subscribers) + u64::from(self.peers);
-        let outbound = MAX_PEERS as u64;
+        // Up to 16 inbound peers the console connects out to at most eight, as before
+        // SID 0031. A larger fleet connects out to as many as it lets in.
+        let outbound =
+            if self.peers > 16 { u64::from(self.peers).min(MAX_PEERS as u64) } else { 8 };
         let usable = usize::try_from(self.stack_bytes).unwrap_or(usize::MAX);
         let per_thread = as_u64(stack::bytes(usable));
         let threads = slots + streams + outbound + SERVICE_THREADS;
@@ -196,5 +211,19 @@ mod tests {
         assert!(bytes > 200 * 1024 * 1024, "{bytes}");
         assert!(bytes < 2 * 1024 * 1024 * 1024, "{bytes}");
         assert_eq!(topic_bytes(), 14 * 1024 * 1024);
+    }
+
+    // SID 0031: a fleet of 64 members has a stream for every peer and keeps the reserve.
+    #[test]
+    fn a_fleet_grows_the_peer_quota_and_keeps_the_reserve() {
+        let base = Budget::default();
+        assert_eq!(base.fit_fleet(0), base);
+        assert_eq!(base.fit_fleet(16), base);
+        let fleet = base.fit_fleet(63);
+        assert_eq!((fleet.peers, fleet.slots, fleet.http_reserved), (63, 143, 16));
+        assert_eq!(fleet.validate(), Ok(()));
+        assert_eq!(fleet.capacity().max_browsers, 64);
+        assert!(fleet.reserved_bytes().unwrap() > base.reserved_bytes().unwrap());
+        assert_eq!(base.fit_fleet(1000).peers, 64, "the quota of the listener is the cap");
     }
 }

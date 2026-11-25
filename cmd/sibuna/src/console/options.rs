@@ -306,7 +306,7 @@ fn parse_peer(count: usize, value: &str) -> Result<PeerTarget, OptionError> {
     }
     let (node, origin) = value.split_once('=').ok_or(OptionError::InvalidPeer)?;
     let node = parse_decimal(node).ok_or(OptionError::InvalidPeer)?;
-    Ok(PeerTarget { node, origin: origin.to_owned() })
+    Ok(PeerTarget { node, origin: origin.to_owned(), allow_ips: Vec::new() })
 }
 
 /// A `u32` written as plain decimal digits.

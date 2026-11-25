@@ -62,6 +62,8 @@ pub struct Options {
     pub watchdog_interval: Duration,
     /// The stack of every listener thread.
     pub stack_size: usize,
+    /// The source addresses the listener serves; empty for every address (SID 0031).
+    pub screen: crate::Screen,
 }
 
 impl Default for Options {
@@ -73,6 +75,7 @@ impl Default for Options {
             respond_timeout: Duration::from_secs(30),
             watchdog_interval: Duration::from_millis(100),
             stack_size: stack::bytes(stack::USABLE),
+            screen: crate::Screen::default(),
         }
     }
 }
@@ -94,6 +97,8 @@ pub struct Counters {
     pub failed: u64,
     /// Failed calls to `accept`.
     pub accept_errors: u64,
+    /// Connections closed at accept because their source is outside the screen.
+    pub screened: u64,
 }
 
 /// Statistics only: every counter is updated and read with relaxed ordering.
@@ -106,6 +111,7 @@ struct Tally {
     expired: AtomicU64,
     failed: AtomicU64,
     accept_errors: AtomicU64,
+    screened: AtomicU64,
 }
 
 fn bump(counter: &AtomicU64) {
@@ -213,6 +219,7 @@ impl Server {
             expired: read(&tally.expired),
             failed: read(&tally.failed),
             accept_errors: read(&tally.accept_errors),
+            screened: read(&tally.screened),
         }
     }
 
@@ -296,6 +303,10 @@ fn accept(shared: &Arc<Shared>, listener: &TcpListener) {
             return;
         }
         match accepted {
+            // A screened source gets no slot, no thread and no answer: the socket closes.
+            Ok((_, peer)) if !shared.options.screen.admits(peer.ip()) => {
+                bump(&shared.tally.screened);
+            }
             Ok((stream, peer)) => admit(shared, stream, peer),
             Err(_) => {
                 bump(&shared.tally.accept_errors);

@@ -506,6 +506,14 @@ pub(in super::super) fn follows(source: &Source) -> bool {
     source.authority().get().is_some()
 }
 
+/// The revision of the database that this node serves, for the console of SID 0031.
+/// `None` on an edge that serves a file, and before the first revision is applied.
+#[cfg(all(unix, feature = "console"))]
+pub(in super::super) fn served(source: &Source) -> Option<u64> {
+    let authority = source.authority().get()?;
+    locked(&authority.state).serving().map(|serving| serving.revision)
+}
+
 /// The answer to `show authority`, or `None` on an edge that serves a file.
 pub(in super::super) fn describe(source: &Source) -> Option<String> {
     source.authority().get().map(|authority| authority.describe())

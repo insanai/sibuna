@@ -81,6 +81,17 @@ impl Admin {
     }
 }
 
+/// Runs one line as the socket runs it: the same parser, the same checks, the same
+/// worker. The console of SID 0031 has no other way to change the edge.
+#[cfg(all(unix, feature = "console"))]
+pub(super) fn run_line(
+    line: &str,
+    source: &Source,
+    jobs: &Sender<Job>,
+) -> Result<String, RuntimeError> {
+    unix::run(line, source, jobs)
+}
+
 #[cfg(unix)]
 mod unix {
     use std::fs;
@@ -172,12 +183,7 @@ mod unix {
                 if bucket.take(Instant::now()) {
                     return run(&line, source, jobs);
                 }
-                Err(control::failure(
-                    "ADM009",
-                    "TOO MANY COMMANDS",
-                    "The socket accepts a burst of 20 commands and 10 per second after it.",
-                    "Wait a moment and send the command again.",
-                ))
+                Err(control::too_many_commands())
             });
             let _ = stream.set_write_timeout(Some(CLIENT_TIMEOUT));
             let _ = stream.write_all(control::encode(&answer).as_bytes());
@@ -227,7 +233,11 @@ mod unix {
     }
 
     /// Parses the line, loads the file for `reload`, and asks the worker.
-    fn run(line: &str, source: &Source, jobs: &Sender<Job>) -> Result<String, RuntimeError> {
+    pub(super) fn run(
+        line: &str,
+        source: &Source,
+        jobs: &Sender<Job>,
+    ) -> Result<String, RuntimeError> {
         let command = control::parse(line)?;
         if command == Command::Help {
             return Ok(control::USAGE.to_owned());

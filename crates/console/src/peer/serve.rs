@@ -98,5 +98,10 @@ fn page(shared: &Shared, wire: &Wire, rows: u8) -> (Status, String) {
             }
             Err(_) => (Status::Unavailable, String::new()),
         },
+        // A node without an edge, or whose worker is busy, has no summary.
+        super::Kind::Edge => match shared.edge.as_deref().and_then(|edge| edge.view()) {
+            Some(view) => (Status::Ok, to_json(&view.node)),
+            None => (Status::Unavailable, String::new()),
+        },
     }
 }

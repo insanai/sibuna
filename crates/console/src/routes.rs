@@ -95,6 +95,9 @@ pub enum Handler {
     CountryApply,
     PolicyImport,
     About,
+    EdgeView,
+    EdgeFleet,
+    EdgeCommand,
 }
 
 /// One route.
@@ -170,7 +173,7 @@ use Scope::{
     EventsRead, GeoipRead, GeoipWrite, PolicyRead, PolicyWrite, StatsRead, UsersRead, UsersWrite,
 };
 
-const ROUTE_TABLE: [Route; 73] = [
+const ROUTE_TABLE: [Route; 76] = [
     Route::new("/console/peer", GET, Access::Public, H::Peer),
     full("/console/api/nodes/local", GET, H::NodeStatus),
     scoped(full("/console/api/nodes", GET, H::NodesMembers), StatsRead),
@@ -255,6 +258,10 @@ const ROUTE_TABLE: [Route; 73] = [
     Route::new("/console/api/totp", GET, Access::Account, H::Totp),
     Route::new("/console/api/totp/enroll", POST, Access::Account, H::Totp),
     Route::new("/console/api/totp/confirm", POST, Access::Account, H::Totp),
+    // SID 0031: the edge. A command needs the action of the node commands.
+    scoped(full("/console/api/edge", GET, H::EdgeView), StatsRead),
+    scoped(full("/console/api/edge/fleet", GET, H::EdgeFleet), StatsRead),
+    mutate("/console/api/edge/command", ControlNode, H::EdgeCommand),
 ];
 
 /// A page preview read: an administrator's `GET`.
@@ -275,7 +282,7 @@ mod tests {
     #[test]
     fn every_route_is_unique_and_found() {
         let routes: Vec<&Route> = ROUTES.iter().collect();
-        assert_eq!(routes.len(), 73);
+        assert_eq!(routes.len(), 76);
         for (index, route) in routes.iter().enumerate() {
             assert_eq!(find(route.path.as_bytes(), route.method), Some(*route));
             let twin = routes.iter().skip(index + 1);
@@ -306,5 +313,18 @@ mod tests {
         let geoip = find(b"/console/api/geoip", Method::Post).unwrap();
         assert_eq!(geoip.token_scope, Some(GeoipWrite));
         assert_eq!(find(b"/console/api/session", Method::Get).map(|r| r.kiosk), Some(true));
+    }
+
+    // SID 0031: a command of the edge is a mutation behind the role of the node commands,
+    // and no token reaches it.
+    #[test]
+    fn an_edge_command_needs_the_role_of_a_node_command() {
+        let command = find(b"/console/api/edge/command", Method::Post).unwrap();
+        let node = find(b"/console/api/nodes/command", Method::Post).unwrap();
+        assert_eq!((command.action, command.access), (node.action, node.access));
+        assert!(command.mutation && command.token_scope.is_none() && !command.kiosk);
+        assert!(find(b"/console/api/edge/command", Method::Get).is_none());
+        let view = find(b"/console/api/edge", Method::Get).unwrap();
+        assert_eq!((view.action, view.mutation), (Action::Read, false));
     }
 }

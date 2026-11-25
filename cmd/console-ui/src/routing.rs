@@ -45,6 +45,7 @@ pub fn take(state: &mut State) -> Option<&'static str> {
         return None;
     }
     if (name == "tokens" && !state.allows(Action::ManageUsers))
+        || (name == "edge" && !state.edge)
         || (name == "settings" && !state.allows(Action::ManageSettings))
     {
         return Some("dashboard");

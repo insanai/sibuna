@@ -296,3 +296,23 @@ fn invalid_capacity_is_refused_at_start() {
     let address: SocketAddr = "127.0.0.1:0".parse().unwrap();
     assert!(Server::start(address, handler, Options { capacity, ..Options::default() }).is_err());
 }
+
+// SID 0031: a source outside the screen is closed at accept and takes no slot.
+#[test]
+fn a_screened_source_is_closed_before_it_takes_a_slot() {
+    let screen = sibuna_serve::Screen::load_networks(&["10.99.0.0/24"]).unwrap();
+    let server = start(Options { screen, ..Options::default() });
+    let reply = exchange(&server, b"GET / HTTP/1.1\r\nHost: test\r\n\r\n");
+    assert!(reply.is_empty(), "no answer, not even a refusal: {}", text(&reply));
+    wait_for(|| server.counters().screened == 1);
+    let counters = server.counters();
+    assert_eq!((counters.accepted, counters.refused), (0, 0));
+    assert_eq!(server.admission().count(Class::Http), 0);
+    server.stop();
+    let open = sibuna_serve::Screen::load_networks(&["127.0.0.0/8"]).unwrap();
+    let server = start(Options { screen: open, ..Options::default() });
+    let reply = exchange(&server, b"GET / HTTP/1.1\r\nHost: test\r\n\r\n");
+    assert!(text(&reply).starts_with("HTTP/1.1 200"), "{}", text(&reply));
+    assert_eq!(server.counters().screened, 0);
+    server.stop();
+}

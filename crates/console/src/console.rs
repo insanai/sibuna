@@ -52,6 +52,8 @@ pub struct Inputs {
     pub geo: Arc<GeoSlot>,
     /// The daemon's local effects and readings.
     pub node: Arc<dyn Node>,
+    /// The edge of the node (SID 0031); `None` for a daemon without one.
+    pub edge: Option<Arc<dyn crate::host::EdgeHost>>,
     /// This node's id (`--cluster-node`, 0 when none).
     pub node_id: u32,
     /// This process's boot id; must not be all zeros.
@@ -87,6 +89,7 @@ impl Inputs {
             metrics: Arc::default(),
             geo: Arc::new(GeoSlot::new()),
             node,
+            edge: None,
             node_id: 0,
             boot,
             version: String::new(),
@@ -185,7 +188,8 @@ impl Console {
     /// [`StartError::Service`] when a service cannot be built or the GeoIP generation not
     /// restored, and [`StartError::Spawn`] when a thread cannot start. Everything started
     /// before the failure is stopped again.
-    pub fn start(config: Config, inputs: Inputs) -> Result<Console, StartError> {
+    pub fn start(mut config: Config, inputs: Inputs) -> Result<Console, StartError> {
+        config.budget = config.budget.fit_fleet(config.peers.targets.len());
         config.validate(inputs.node_id).map_err(StartError::Config)?;
         if inputs.boot == [0; 16] {
             return Err(StartError::InvalidBoot);
@@ -256,6 +260,25 @@ impl Console {
         self.reserved_bytes
     }
 
+    /// Removes the management peer `node` while the console runs (SID 0031): its
+    /// streams close, its queries fail and its next upgrade is refused. Returns false
+    /// when `node` is no configured peer, or was removed before.
+    pub fn remove_peer(&self, node: u32) -> bool {
+        self.shared.peers.remove(node)
+    }
+
+    /// Returns the node ids of the management peers that were not removed, in the order
+    /// of the configuration.
+    pub fn peer_nodes(&self) -> Vec<u32> {
+        let targets = self.shared.peers.targets().iter();
+        targets.map(|target| target.node).filter(|&n| self.shared.peers.contains(n)).collect()
+    }
+
+    /// Returns the listener's counters so far.
+    pub fn counters(&self) -> Option<sibuna_serve::Counters> {
+        self.server.as_ref().map(Server::counters)
+    }
+
     /// Returns a snapshot of the listener's admitted connections by class.
     pub fn admission(&self) -> Option<Admission> {
         self.server.as_ref().map(Server::admission)
@@ -290,9 +313,17 @@ impl Drop for Console {
 /// holds the shared state.
 fn listen(config: &Config, cell: Cell) -> Result<Server, StartError> {
     let usable = usize::try_from(config.budget.stack_bytes).unwrap_or(stack::USABLE);
+    let screen = match (config.screen_at_accept, config.behind_proxy) {
+        (false, _) => sibuna_serve::Screen::default(),
+        (true, true) => sibuna_serve::Screen::load_networks(&config.trusted_proxies)
+            .map_err(|_| StartError::Config(ConfigError::InvalidProxy))?,
+        (true, false) => sibuna_serve::Screen::load_networks(&config.allow_operators)
+            .map_err(|_| StartError::Config(ConfigError::InvalidOperators))?,
+    };
     let options = Options {
         capacity: config.budget.capacity(),
         stack_size: stack::bytes(usable),
+        screen,
         ..Options::default()
     };
     let handler = move |context: &mut Context<'_>| -> Result<(), ServeError> {

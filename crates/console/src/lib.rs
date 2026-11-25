@@ -246,6 +246,6 @@ pub use clock::{Clock, ManualClock, SystemClock};
 pub use config::{Budget, Config, ConfigError};
 pub use console::{Console, Inputs, StartError};
 pub use geo::{GeoSlot, SlotError};
-pub use host::{Node, RuleHitSample};
+pub use host::{EdgeHost, Node, RuleHitSample};
 pub use keys::{ConsoleKey, KeyError, Keys, load_key};
 pub use storage::{committed_hook, snapshot_hook};
