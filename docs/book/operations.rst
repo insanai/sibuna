@@ -1804,6 +1804,123 @@ We change a setting in a drop-in, not in the packaged file: ``systemctl edit sib
    sudo systemctl enable --now sibuna-edge
    sudo -u sibuna sibuna ctl /run/sibuna/edge.sock show servers
 
+Hooks: a decision of our own on the path
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A hook is code of ours that judges traffic at the edge: an authorization service, a tenant check, a shipper of samples. We name plugins at the root of the topology, and a frontend lists them for each stage (SID 0030).
+
+.. code-block:: json
+
+   {
+     "plugins": {
+       "tenant": {"kind": "native", "hook": "require_header", "settings": {"name": "x-tenant"}},
+       "score": {"kind": "wasm", "module": "/etc/sibuna/plugins/score.wasm"},
+       "authz": {"kind": "agent", "socket": "/run/authz.sock", "deadline": "5ms"},
+       "shipper": {"kind": "agent", "socket": "/run/metrics.sock", "on_failure": "admit"}
+     },
+     "frontends": {
+       "web": {"binds": ["0.0.0.0:8080"],
+               "hooks": {"connection": ["score"], "request": ["tenant", "authz"],
+                         "telemetry": ["shipper"]}}
+     },
+     "backends": {"app": {"servers": [{"name": "s1", "addr": "10.0.0.1:80"}]}}
+   }
+
+There are three stages. The ``connection`` stage runs once for a new TCP connection or UDP mapping, and admits or denies it. The ``request`` stage runs once for an HTTP request that the bans, the limiters and the firewall admitted, before a server is chosen. It admits, denies with 403, or asks for the proof-of-work challenge, and an admitting hook may add request fields for the server. The ``telemetry`` stage runs when the answer of a request ended, and changes nothing. The hooks of a stage run in the order of the list, and the first that refuses ends the chain. A TCP or UDP frontend has the connection stage only. A frontend with ``tls.http3`` has no connection stage yet, and the file is refused when it attaches one.
+
+There are three kinds of plugin.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 12 44 44
+
+   * - Kind
+     - What it is
+     - Its bounds
+   * - ``native``
+     - A hook compiled into the daemon. This build has ``require_header``: it denies a request that lacks the field ``name``, or whose field differs from ``value`` when we set one.
+     - None. It is our own code.
+   * - ``wasm``
+     - A WebAssembly module in the file ``module``, run by an interpreter inside the daemon. It has no file, no socket and no clock but the one we give it.
+     - ``fuel_limit`` (100,000 operations for one call, 1,000 to 100,000,000), ``memory_pages`` (4 pages of 64 KiB, 1 to 256), ``host_calls`` (16, at most 1,024). The module is at most 4 MiB.
+   * - ``agent``
+     - A process of ours that listens on the Unix socket ``socket``. Each thread of the daemon keeps one connection to it.
+     - ``deadline`` (``5ms``, 1 ms to 1 s), ``queue`` (64 calls of the node that may wait at one time, 1 to 4,096), ``breaker`` (``{"failures": 5, "open": "1s"}``).
+
+*What a failure means.* A call fails when a module spends its fuel or traps, when an agent is away or late, or when a request head does not fit the input buffer of a module or one frame of an agent. Every plugin has ``on_failure``, and it is ``"deny"`` unless we write otherwise. A failing hook then denies: this is what we want of an authorization hook, and it means that a broken agent refuses the traffic of its frontend. With ``"on_failure": "admit"`` the hook is advisory. We choose it with care: a client who can make an advisory hook fail, for example with a very long head, passes it. A telemetry hook never refuses anything. Its failure loses one sample.
+
+*The breaker.* After ``failures`` failed calls in a row a thread stops asking its agent for the time ``open``. Calls in that time fail at once, without a system call. Then one call goes out as a probe. Its success closes the breaker, and its failure opens it for another interval. Each thread has its own breaker, so a dead agent costs each thread ``failures`` deadlines and then one deadline per interval. An agent call holds its thread for the round trip. We therefore keep ``deadline`` short and the agent on the same host.
+
+*What a hook cannot do.* It cannot read or change a body, change the path, the method or an existing field, choose a server, or change the response. It cannot add a field of framing, or a field that Sibuna writes as its own statement, such as ``X-Forwarded-For`` or ``X-Sibuna-Status``: such a field is dropped and counted. One call adds at most 8 fields and 1,024 bytes. A hook sees request heads with their cookies and authorization fields, so a module and an agent are parties to that data. The mode of the socket file decides who may be the agent.
+
+``show hooks`` prints one line per plugin, and the same numbers are series in the metrics.
+
+.. code-block:: text
+
+   $ sibuna ctl /run/sibuna/edge.sock show hooks
+   # name tier on_failure calls admitted denied challenged timeout overload trap unavailable dropped refused_fields open_breakers
+   tenant native deny 9120 9101 19 0 0 0 0 0 0 0 0
+   authz agent deny 9101 9080 12 0 3 0 0 6 0 0 0
+   shipper agent admit 9120 9120 0 0 0 0 0 0 41 0 0
+
+.. list-table::
+   :header-rows: 1
+   :widths: 50 50
+
+   * - Series
+     - Meaning
+   * - ``sibuna_edge_hook_calls_total{plugin,tier,result}``
+     - Calls by result: ``admit``, ``deny``, ``challenge``, ``timeout``, ``overload``, ``trap``, ``unavailable``.
+   * - ``sibuna_edge_hook_samples_dropped_total{plugin}``
+     - Telemetry samples that were lost.
+   * - ``sibuna_edge_hook_fields_refused_total{plugin}``
+     - Request fields that a hook tried to add and that were refused.
+   * - ``sibuna_edge_hook_breakers_open{plugin}``
+     - Threads whose breaker for the agent is open now.
+   * - ``sibuna_edge_refused_total{reason="hook"}``
+     - Connections and UDP mappings that a connection hook denied.
+
+A reload loads every module again and checks it before anything changes. A plugin that does not load refuses the reload, and the serving hooks stay. ``sibuna check -f FILE`` runs the same checks. Replacing the file of a module takes effect at the next reload. An agent need not run when the daemon starts or reloads.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 14 30 56
+
+   * - Code
+     - Title
+     - What to do
+   * - ``HOOK001``
+     - unknown plugin
+     - A frontend lists a name that ``plugins`` does not define.
+   * - ``HOOK002``
+     - invalid plugin settings
+     - A number is outside its range, or a name is defined twice.
+   * - ``HOOK003``
+     - module not readable
+     - Check the path in ``module`` and the rights of the daemon's user.
+   * - ``HOOK004``
+     - module not loaded
+     - The file is not a module we run, or its memory starts above ``memory_pages``. Build for ``wasm32-unknown-unknown`` without threads or SIMD.
+   * - ``HOOK005``
+     - forbidden import
+     - A module may import ``sibuna.add_header`` and ``sibuna.now_ms`` only. There is no WASI.
+   * - ``HOOK006``
+     - ABI mismatch
+     - An export is missing or has another type, or ``sibuna_abi`` does not return 1.
+   * - ``HOOK007``
+     - unknown native hook
+     - This build has no hook of that name. The message lists the ones it has.
+   * - ``HOOK008``
+     - native hook refused its settings
+     - Correct ``settings``.
+   * - ``HOOK009``
+     - agents not supported
+     - The platform has no Unix sockets. Use a module.
+
+*Writing a module.* A module exports its memory and six functions, and receives each request as one encoded record in a buffer of its own. The crate ``cmd/sibuna-hook-wasm`` is a complete example in Rust without ``std``, and SID 0030 specifies the record and the functions. We build it with ``cargo build -p sibuna-hook-wasm --target wasm32-unknown-unknown --profile wasm``.
+
+*Writing an agent.* An agent accepts connections on its socket and reads frames: a length of four bytes, a version, a kind, and an identifier of eight bytes. It answers a ``decide`` frame with a ``verdict`` frame of the same identifier, whose payload is one byte, 0 to admit, 1 to deny, 2 to challenge, and then the field lines to add. A ``sample`` frame has no answer. SID 0030 specifies the frame.
+
 Several nodes
 ~~~~~~~~~~~~~
 
@@ -1942,7 +2059,7 @@ Coming from HAProxy
 Limits of this version
 ~~~~~~~~~~~~~~~~~~~~~~
 
-On Linux the HTTP firewall serves connections on event-driven workers, one per processor, up to ``http.max_connections``. A connection that waits holds a small record and no buffer. On other platforms, and with ``event_loop`` ``false``, each HTTP/1.1 connection and each HTTP/2 or HTTP/3 exchange has a thread of its own, up to 8192 at a time. A WebSocket to a pool with ``http_version`` 2 or 3 answers 501. HTTP/3 clients cannot open WebSockets, and browsers fall back to HTTP/1.1 or HTTP/2 for them. Server addresses are numeric. The admin socket changes servers only: frontends, routes, certificates and policy change by reload. Run-time changes do not survive a restart. Request headers are limited to 16 KiB on HTTP/2 and HTTP/3. Response compression and caching are not provided. Header edits set fixed values: there are no patterns or variables. With ``event_loop`` ``false`` a connection has the same traffic rules as on the workers: the timeouts of the pool, failover, passive health, sticky sessions, the redirect, the header edits and ``max_body``. Two details differ. A client that goes away while its server is silent is noticed when the server answers or its bound ends. A chunked body is counted by ``max_body`` without its chunk framing. Our own answers carry HSTS but neither the header edits nor the sticky cookie, and the answer to a WebSocket upgrade is not edited. SID 0019 lists the remaining gaps. SID 0015 lists the parts of the design that remain proposals: the shared-memory spill cache, database-backed topology, replicated bans, peer forwarding, binary handoff, plugins and the fleet console.
+On Linux the HTTP firewall serves connections on event-driven workers, one per processor, up to ``http.max_connections``. A connection that waits holds a small record and no buffer. On other platforms, and with ``event_loop`` ``false``, each HTTP/1.1 connection and each HTTP/2 or HTTP/3 exchange has a thread of its own, up to 8192 at a time. A WebSocket to a pool with ``http_version`` 2 or 3 answers 501. HTTP/3 clients cannot open WebSockets, and browsers fall back to HTTP/1.1 or HTTP/2 for them. Server addresses are numeric. The admin socket changes servers only: frontends, routes, certificates and policy change by reload. Run-time changes do not survive a restart. Request headers are limited to 16 KiB on HTTP/2 and HTTP/3. Response compression and caching are not provided. Header edits set fixed values: there are no patterns or variables. With ``event_loop`` ``false`` a connection has the same traffic rules as on the workers: the timeouts of the pool, failover, passive health, sticky sessions, the redirect, the header edits and ``max_body``. Two details differ. A client that goes away while its server is silent is noticed when the server answers or its bound ends. A chunked body is counted by ``max_body`` without its chunk framing. Our own answers carry HSTS but neither the header edits nor the sticky cookie, and the answer to a WebSocket upgrade is not edited. SID 0019 lists the remaining gaps. SID 0015 lists the parts of the design that remain proposals: the shared-memory spill cache, database-backed topology, replicated bans, peer forwarding, binary handoff and the fleet console.
 
 
 Console Preview

@@ -55,6 +55,7 @@ Edge load balancer
    sibuna lb --tls auto --domain example.org --acme-on-demand-ask http://127.0.0.1:9000/ok --server 10.0.0.1:80   # more names on demand
    sibuna ctl /run/sibuna/edge.sock show certs                        # certificates of tls.auto and on demand, and their OCSP staples
    sibuna ctl /run/sibuna/edge.sock show ca > sibuna-root.crt         # the root to install in clients
+   sibuna ctl /run/sibuna/edge.sock show hooks                        # plugins: calls, verdicts, failures, open breakers (SID 0030)
    sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain   # or ready
    sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 weight 5
    sibuna ctl /run/sibuna/edge.sock del ban 203.0.113.9                       # on every node of a mesh
@@ -302,6 +303,8 @@ Diagnostics
      - cookie copied to another client
    * - ``INVALID COMMAND LINE``
      - unknown option, bad value, or a removed Zaxonlite option
+
+A plugin that does not load is refused with ``HOOK001`` to ``HOOK009``; the operations chapter lists them. To alert on hooks: ``sibuna_edge_hook_calls_total`` with ``result`` ``timeout``, ``trap`` or ``unavailable``, and ``sibuna_edge_hook_breakers_open``.
 
 Metrics to alert on: ``denied``, ``rate_limited``, ``overloaded``, ``upstream_errors``, ``incidents_dropped``, ``incident_write_failures``, ``bans_refused``, ``forwarded_invalid`` (all ``sibuna_*_total``).
 
