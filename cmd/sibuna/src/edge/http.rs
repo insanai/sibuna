@@ -160,6 +160,7 @@ impl Dispatcher {
                 let (Ok(peer), Ok(vip)) = (stream.peer_addr(), stream.local_addr()) else {
                     return;
                 };
+                let vip = sibuna_lb::listener_address(bind, vip);
                 let from = ingress_of(&self.server, client.unwrap_or(peer), vip, true);
                 let bound = from.connection_bound(&self.server);
                 let Some(place) = crate::server::admit_secure(&self.server, from.peer.ip(), bound)
@@ -183,8 +184,8 @@ impl Dispatcher {
                 return;
             }
         }
-        let _ = bind;
         let (Ok(peer), Ok(vip)) = (stream.peer_addr(), stream.local_addr()) else { return };
+        let vip = sibuna_lb::listener_address(bind, vip);
         let ingress = ingress_of(&self.server, client.unwrap_or(peer), vip, false);
         serve(&self.server, self.workers.as_deref(), stream, ingress, Some(permit));
     }

@@ -375,6 +375,8 @@ impl Ingress {
     ) {
         let Some(listener) = self.listeners.get(&bind).cloned() else { return };
         let (Ok(peer), Ok(vip)) = (stream.peer_addr(), stream.local_addr()) else { return };
+        // A connection that a peer forwarded arrived on another port (SID 0026).
+        let vip = sibuna_lb::listener_address(bind, vip);
         let peer = client.unwrap_or(peer);
         if stream.set_nonblocking(true).is_err() {
             return;
