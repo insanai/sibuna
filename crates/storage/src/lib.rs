@@ -181,7 +181,7 @@ pub use incidents::{
     BatchIncident, INCIDENT_BATCH, INCIDENT_QUEUE, IncidentHit, IncidentReceipt, MAX_SEARCH_QUERY,
     MAX_SEARCH_RESULTS,
 };
-pub use listen::POLICY_CHANNEL;
+pub use listen::{POLICY_CHANNEL, subscribe};
 pub use policy::{
     ChallengeAlgorithm, InspectionMode, InspectionRow, PageTemplate, PolicyAction, PolicyRow,
     PolicySnapshot, ReputationRow, RuleLimits,
