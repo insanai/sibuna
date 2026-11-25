@@ -324,6 +324,16 @@ impl Slot {
         self.stages.store(stages, Ordering::Release);
     }
 
+    /// Publishes a plan that this slot published before, as [`Slot::load`] returned it.
+    /// The daemon puts the serving plan back with it when a reload is refused.
+    pub fn publish_shared(&self, plan: Arc<Plan>) {
+        let mut current = self.current.write().unwrap_or_else(PoisonError::into_inner);
+        let stages = plan.stages;
+        *current = plan;
+        self.generation.fetch_add(1, Ordering::Release);
+        self.stages.store(stages, Ordering::Release);
+    }
+
     /// True when some frontend attaches a hook at `stage`. One atomic load.
     #[inline]
     pub fn has(&self, stage: Stage) -> bool {
