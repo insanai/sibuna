@@ -122,11 +122,11 @@ fn millis(r: &ObjectReader<'_, '_>, key: &str, text: &str) -> Result<u64> {
 
 /// Reads the `hooks` object of the frontend `name` into `settings`. Each stage lists
 /// plugins of the topology in the order they run. A TCP or UDP frontend has the
-/// connection stage only.
+/// connection stage only, and a frontend that serves HTTP/3 (`quic`) does not have it.
 pub(crate) fn attach(
     r: &mut ObjectReader<'_, '_>,
     name: &str,
-    proto: Protocol,
+    (proto, quic): (Protocol, bool),
     settings: &mut Settings,
 ) -> Result<()> {
     let Some(mut hooks) = field(r.take_object("hooks"))? else { return Ok(()) };
@@ -137,6 +137,14 @@ pub(crate) fn attach(
         let path = hooks.field_path(stage.name());
         if stage != Stage::Connection && proto != Protocol::Http {
             return Err(invalid(format!("{path}: only an HTTP frontend has this stage")));
+        }
+        // A QUIC connection does not pass the worker that asks the connection hooks.
+        // We refuse the combination, so that no connection goes unjudged in silence.
+        if stage == Stage::Connection && quic && !names.is_empty() {
+            return Err(invalid(format!(
+                "{path}: a frontend with tls.http3 has no connection stage yet; \
+                 attach the hooks at the request stage"
+            )));
         }
         if names.len() > MAX_STAGE_HOOKS {
             return Err(invalid(format!("{path}: at most {MAX_STAGE_HOOKS} hooks per stage")));
@@ -243,6 +251,14 @@ mod tests {
         assert!(error(name, "{}", "http").contains("plugin name"));
         let deadline = r#"{"x":{"kind":"agent","socket":"/s","deadline":"soon"}}"#;
         assert!(error(deadline, "{}", "http").contains("deadline"));
+    }
+
+    #[test]
+    fn a_frontend_with_http3_has_no_connection_stage() {
+        let hooks = r#"{"connection":["geo"]},"tls":{"crt":["site.pem"],"http3":true}"#;
+        assert!(error(THREE, hooks, "http").contains("tls.http3"));
+        let hooks = r#"{"request":["role"]},"tls":{"crt":["site.pem"],"http3":true}"#;
+        assert!(Config::parse(topology(THREE, hooks, "http").as_bytes()).is_ok());
     }
 
     #[test]

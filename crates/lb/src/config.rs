@@ -365,7 +365,8 @@ impl Config {
         let http_rules: std::sync::Arc<[_]> = http_rules.into();
         let info = crate::FrontendInfo::parse(&mut r, name, proto)?;
         let info = std::sync::Arc::new(info);
-        crate::hooks::attach(&mut r, name, proto, &mut self.plugins)?;
+        let quic = tls.as_ref().is_some_and(|tls| tls.http3);
+        crate::hooks::attach(&mut r, name, (proto, quic), &mut self.plugins)?;
         let binds = field(r.take_array("binds"))?.ok_or_else(|| invalid(r.missing("binds")))?;
         if binds.is_empty() || self.listeners.len() + binds.len() > 128 {
             return Err(invalid(format!("{path}: expected 1 to 128 binds in total")));
