@@ -110,11 +110,11 @@ We store one checked document for each revision. We do not store one row for eac
 .. code-block:: text
 
    edge_head(id = 1, revision)
-   edge_revisions(revision, parent, origin, restored, document, digest,
-                  source, source_name, source_digest, author, note, applied_at)
+   edge_revisions(revision, origin, restored, document, digest,
+                  source, source_name, source_digest, author, note, committed_at)
    edge_nodes(node, applied, digest, refused, detail, seen_at)
 
-``edge_head`` has one row, the number of the head. ``edge_revisions`` has one row for each revision: the canonical JSON text of the published sections, its SHA-256 digest, the source as the operator gave it, with its file name and digest, the revision that it replaced, how it came about (``apply`` or ``rollback``, with the revision that a rollback restored), who committed it, a note and the time. ``edge_nodes`` has one row for each node: the revision that it serves, the revision that it refused with the reason, and when it last reported.
+``edge_head`` has one row, the number of the head. ``edge_revisions`` has one row for each revision: the canonical JSON text of the published sections, its SHA-256 digest, the source as the operator gave it, with its file name and digest, how it came about (``apply`` or ``rollback``, with the revision that a rollback restored), who committed it, a note and the time. ``edge_nodes`` has one row for each node: the revision that it serves, the revision that it refused with the reason, and when it last reported.
 
 The canonical text has the keys of every object in order and no white space. Two sources that evaluate to the same document have the same digest. The tables are the component ``authority`` of ``sibuna_schema`` (SID 0011) with migrations of their own, so they can live in the database of the firewall or in another.
 
@@ -162,10 +162,12 @@ The commands talk to the database. They need no running daemon. ``-c FILE`` name
 
 ``dump`` prints the evaluated document of the head or of a revision. Applying a dump commits nothing, because the digest is the same. ``dump --source`` prints the source as it was given. Only the source reproduces the text of a program. ``history`` lists the revisions, newest first. ``rollback`` commits a new revision that holds the document and the source of an earlier one. It checks the document first, because a newer binary may refuse an old document. It is conditioned on the head as ``apply`` is. ``status`` prints the head and the report of every node.
 
+``apply`` and ``rollback`` create and migrate the tables, so they need the role that owns them. ``diff``, ``dump``, ``history`` and ``status`` only read, and the role of a node is enough for them. When the head is damaged, ``apply`` and ``rollback`` say so, print the whole document as added and commit over it, so that the operator can repair the head.
+
 How a node follows
 ~~~~~~~~~~~~~~~~~~
 
-A thread of its own, ``edge-authority``, owns the store. It looks at the head when PostgreSQL notifies, when ``poll`` has passed, when the operator runs ``reload`` and when the worker has settled a revision. A notification that was lost costs one poll.
+A thread of its own, ``edge-authority``, owns the store. It looks at the head when PostgreSQL notifies, when ``poll`` has passed, when the operator runs ``reload`` and when the worker has settled a revision. A notification that was lost costs one poll. A database that did not answer is asked again after two seconds at most, whatever the poll is.
 
 .. code-block:: text
 
@@ -177,7 +179,7 @@ A thread of its own, ``edge-authority``, owns the store. It looks at the head wh
    worker serves it -> applied = revision, log DBA010, write the cache, report
    worker refuses   -> keep the revision, log DBA011, remember the refusal
 
-The node remembers the head that it refused and does not check it again at every poll. ``reload`` and SIGHUP check it again, so that a repair on the host, such as a certificate that was missing, takes effect. A reload in persistent mode reads the file again and composes it with the head. When the head is refused it composes the file with the revision that the node serves, so a change to the file still applies.
+The node remembers the head that it refused and does not check it again at every poll. ``reload`` and SIGHUP check it again, so that a repair on the host, such as a certificate that was missing, takes effect. A reload in persistent mode reads the file again and composes it with the head. When the head is refused it composes the file with the revision that the node serves, so a change to the file still applies. A new revision is composed with the file as the worker last took it, and not with the file on the disk. The file changes the node at a reload only, so a file that is half edited does not stop the node from following.
 
 A node starts from the head. When it cannot read the database, or refuses the head, it starts from the cache and logs ``DBA014``. Without a cache it does not start. A database with no revision does not start a node either.
 
@@ -194,7 +196,7 @@ What the node shows
    fra-edge-02  7       current                        2s
    fra-edge-03  6       refused 7: frontends.web: ...  1s
 
-When the database cannot be read the command prints the line of this node from memory and says that the database is unavailable. On a node that also has a mesh the table of SID 0023 follows. ``reload cluster`` keeps its meaning: it sends the file of the node, which now holds the sections of the file only.
+When the database cannot be read the command prints the line of this node from memory and says that the database is unavailable. In persistent mode ``show cluster`` prints this table and not the table of SID 0023, because the files of the nodes differ by design. For the same reason ``reload cluster`` answers ``DBA009`` on such a node, and such a node refuses a file that a peer sends: its file holds its own name, its own binds and the path of its own secret.
 
 Codes
 ~~~~~
@@ -230,6 +232,9 @@ Codes
    * - DBA008
      - REVISION DAMAGED
      - A stored revision does not have the digest of its row, or a column out of its range.
+   * - DBA009
+     - FILE IS LOCAL
+     - ``reload cluster`` on a node that follows a database.
    * - DBA010
      - log
      - A revision was applied.
@@ -317,36 +322,51 @@ Acceptance criteria and implementation status
      - Status
    * - 1
      - ``apply`` commits a checked source as a numbered revision and prints the difference.
-     - Pending.
+     - Met. ``apply_shows_the_difference_and_a_stale_expectation_is_a_conflict`` in ``cmd/sibuna/tests/edge_authority.rs`` runs ``diff`` and ``apply`` of the binary: the difference names ``backends.app.servers[b]``, the same source again commits nothing, and a source with an unknown section or a dangling backend is refused with ``DBA001``.
    * - 2
      - A commit on a stale expected revision fails and changes nothing.
-     - Pending.
+     - Met. The same test applies with ``--expect 0`` at head 1 and gets ``DBA002`` with the head unchanged. ``of_eight_sqlite_writers_on_one_head_one_wins`` and ``postgresql_keeps_the_invariants_and_one_of_eight_writers_wins`` in ``crates/authority/tests/store.rs`` run eight writers on one expected head: one commits and seven get the conflict.
    * - 3
      - Two nodes follow a revision and report it.
-     - Pending.
+     - Met. ``two_nodes_follow_a_revision_and_show_cluster_names_what_each_applied`` (SQLite, poll 200 ms) and ``nodes_follow_a_notification_with_a_role_that_cannot_commit`` (PostgreSQL, poll 60 s). ``show cluster`` on each node and ``authority status`` name both nodes as current. Measured on a debug build, from the start of ``apply`` to the log line ``DBA010`` on both nodes: 176 ms to 180 ms with SQLite over three runs, 133 ms to 155 ms with PostgreSQL over two runs, where only the notification can be that fast.
    * - 4
      - A node that refuses a revision keeps its routes and says why.
-     - Pending.
+     - Met. ``a_revision_that_a_node_cannot_serve_is_refused_and_the_node_keeps_its_snapshot`` publishes a revision that names a policy file which the node lacks. The node logs ``DBA011``, keeps its servers, shows ``refused 2`` with the reason in ``show cluster``, ``show authority`` and ``authority status``, restarts from its cache with ``DBA014`` and applies the next good revision. ``an_outage_changes_nothing_and_a_damaged_revision_is_refused`` writes a revision past the command with a digest that does not fit: both nodes refuse it.
    * - 5
      - A node keeps serving when the database is down and follows when it returns.
-     - Pending.
+     - Met for PostgreSQL. ``an_outage_changes_nothing_and_a_damaged_revision_is_refused`` stops the server at once: both nodes log ``DBA012`` and keep their servers, ``show cluster`` says that the database is unavailable, ``apply`` fails with ``DBA003``. After the server starts again the nodes log ``DBA013`` and apply the next revision 121 ms to 134 ms after ``apply`` began. For SQLite ``a_node_keeps_serving_and_restarts_from_its_cache_without_the_database`` covers the restart without the database and the return. A SQLite file that vanishes under a running node is not tested, see the gaps.
    * - 6
      - History lists the revisions and a rollback restores an earlier one.
-     - Pending.
+     - Met. ``history_lists_every_revision_and_rollback_appends_an_earlier_one``: four revisions with origin, author, source and note, ``rollback 1`` commits revision 4 with the document of revision 1, revision 3 still dumps, a stale ``--expect`` gives ``DBA002``. The two-node test rolls back under running nodes and both follow.
    * - 7
      - A dump applies to the same revision, and the source is returned as given.
-     - Pending.
+     - Met. ``a_dump_applies_to_the_same_revision_and_the_source_comes_back_as_given``: applying the dump commits nothing, a second database that takes the dump holds the same digest and dumps the same bytes, and ``dump --source`` returns the JSON and the JLV source byte for byte.
    * - 8
      - Both stores pass the same tests.
-     - Pending.
+     - Met for the store. ``crates/authority/tests/store.rs`` runs the same invariants against the model in memory, SQLite and PostgreSQL 17. The binary tests of the commands run on SQLite, and the tests of following, outage and damage run on PostgreSQL too. The PostgreSQL tests need ``--features postgres`` and a PostgreSQL on the machine, and skip with a line otherwise.
    * - 9
      - ``reload cluster`` and ``show cluster`` of SID 0023 keep working.
-     - Pending.
+     - Met. ``cmd/sibuna/tests/edge_cluster_reload.rs`` passes unchanged on an edge without ``authority``. In persistent mode ``reload cluster`` answers ``DBA009`` (tested) and ``show cluster`` prints the revisions.
 
 Known gaps
 ----------
 
-Pending the implementation.
+#. The history is never pruned. A row of ``edge_nodes`` stays after its node is gone, until the operator deletes it.
+#. Two nodes that state the same ``node`` overwrite the report of each other. Nothing detects it.
+#. ``global``, ``mesh`` and ``observability`` belong to the file as a whole. No option of ``global`` can be published for all nodes.
+#. The command cannot check the files that a topology names. Only the nodes can, and they refuse one by one. There is no staged rollout, and ``apply`` does not wait for the nodes: ``status`` shows them afterwards.
+#. A change at run time, such as a weight, is not a revision. A new revision is a reload, and a reload replaces such changes as SID 0018 says.
+#. SQLite has no notification, so a node on SQLite learns of a change by its poll. We did not test a SQLite file that vanishes under a running node: the node holds the file open and keeps reading it.
+#. A database role that lacks a right gets ``DBA003 DATABASE UNAVAILABLE`` with the message of the database, and not a code of its own.
+#. ``show cluster`` asks the thread that owns the store and waits at most four seconds on the admin thread when the database is slow.
+#. The author of a revision is what the command states. The database role is not recorded.
+#. The time of a commit is the clock of the machine that ran the command.
+#. A database that was restored to an earlier head is followed down to that head. A unit test covers a known number with another digest. No binary test restores a database.
+#. Changing ``sqlite``, ``postgres_url_file``, ``node``, ``poll`` or ``cache`` needs a restart, as adding or removing ``authority`` does.
+#. A node with a mesh and a database is not tested through the binary. The refusal of a file that a peer sends to such a node has no test.
+#. TLS to PostgreSQL (feature ``postgres-tls``) is not tested with the authority. The tests use one PostgreSQL 17 server on loopback with SCRAM-SHA-256. Replication and failover of the database are outside this record.
+#. The console of SID 0015 does not edit the topology. The commands are the only writers.
+#. Only Linux is tested. The other platforms build.
 
 Open questions
 --------------
@@ -357,6 +377,7 @@ Open questions
 Review history
 --------------
 
+- 2026-11-25. Review of the code. It found seven faults and corrected them. The follower composed a new revision with the file on the disk, so a half edited file made the node refuse a good revision and fall behind until a reload: it composes with the file that the worker last took. A node with a poll of one minute asked a database that was down only once a minute: it asks again after two seconds. ``apply`` and ``rollback`` read the head for the difference and failed on a damaged head, so the operator could not repair it: they say so and commit over it. Every command migrated the tables, so ``status`` failed with the role of a node: the reading commands only read. ``reload cluster`` sent the file of a node, with its name and its binds, to its peers: ``DBA009``, and a node in persistent mode refuses such a file. ``show cluster`` waited four seconds for a database that the node already knew to be down: it answers from memory. A table with an empty last cell ended its line with a space.
 - 2026-11-25. Initial draft, before the implementation. The review of the draft found nine faults and corrected them. The draft let a node migrate the schema, which would give every node the right to change tables: only the commands migrate now. It counted a revision as applied when it passed the check of the follower, although the worker can still refuse it: the worker settles it now. It dropped the sections of a source that it did not know, so a misspelled ``frontends`` would have published an empty topology: an unknown section is refused. It never checked a refused head again, even after a repair on the host: a reload does. It had no way to restart during an outage of the database: the cache. It conditioned a commit on the head at the time of the commit, which protects nothing: the head that was read. It rolled back by moving the head, which made the numbers ambiguous: a rollback appends. It let a refused revision pass through the ordinary reload, which would have replaced run-time changes with the same routes: the follower offers a revision only when it checked. It ignored a name in ``binds`` that no frontend has, which hides a misspelling: ``DBA015``.
 
 References
