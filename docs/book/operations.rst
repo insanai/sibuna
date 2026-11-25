@@ -374,7 +374,7 @@ Global limits
      - The share of the table that UDP mappings may take. The default is half of ``max_flows`` beside TCP or HTTP frontends, and all of it on a UDP-only node.
    * - ``workers``
      - ``"auto"``
-     - Relay threads for established TCP streams, 1 to 64. ``"auto"`` is one per CPU, up to eight.
+     - Relay threads for established TCP streams, 1 to 64. ``"auto"`` is one per CPU, up to eight. Changing the count requires a restart.
    * - ``admin_socket``
      - none
      - The path of the admin socket for ``sibuna ctl``, at most 86 bytes. Without the key no socket is opened. Changing it takes a restart.
@@ -1316,14 +1316,14 @@ The daemon says what it found when it starts, and ``show info`` has the counters
 
 .. code-block:: text
 
-   EDGE015: spill cache /var/lib/sibuna/hints.spill: reused, 1048064 slots in 67084288 bytes on disk, 4425712 bytes of memory beside the table
+   EDGE015: spill cache /var/lib/sibuna/hints.spill: reused, 1048320 slots in 67100672 bytes on disk, 2362544 bytes of memory beside the table
 
    $ sibuna ctl /run/sibuna/edge.sock show info
    spill: /var/lib/sibuna/hints.spill
    spill_state: reused
-   spill_slots: 1048064
-   spill_file_bytes: 67084288
-   spill_memory_bytes: 4425712
+   spill_slots: 1048320
+   spill_file_bytes: 67100672
+   spill_memory_bytes: 2362544
    spill_table_slots: 65536
    spill_asked: 1203
    spill_promoted: 1100

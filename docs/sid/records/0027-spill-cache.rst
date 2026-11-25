@@ -27,7 +27,7 @@ A pool with ``sticky: "table"`` balances the first flow of a client and remember
 
 SID 0015 answers with two tiers: a table in memory and a larger one on disk. SID 0025 left the place for it: the pool and the mesh reach the table through the trait ``AffinityStore``, and a store on disk can stand behind it.
 
-We specify the file format, the admission rule, the validation of a slot, the behaviour after a crash, and the store that joins the two tiers. We do not replicate entries between nodes: SID 0025 does that, on the table in memory. We do not run the 50-million-key qualification of SID 0015.
+We specify the file format, the admission rule, the validation of a slot, the behaviour after a crash, and the store that joins the two tiers. We do not replicate entries between nodes: SID 0025 does that, on the table in memory. The measurements below distinguish the disk admission workload from the client-visible result of both tiers.
 
 An earlier state of this branch built a table of its own for ``sticky: "source"``, because the sticky table did not exist yet. It is removed. "Review history" keeps what its reviews found.
 
@@ -77,7 +77,7 @@ We open the file read-write and take an exclusive advisory lock without waiting.
 #. The header fails its checksum, has another version, describes another geometry than the configured size, or the file has another length than its header states: we discard the file and create a new one. The note of the daemon says which.
 #. Otherwise we reuse the file. We do not read the slots now. Each slot is checked when it is read.
 
-Creation never happens in place. We write a complete new file beside the path, at the path with ``.tmp`` after it, with every block allocated and the header last, flush it, and rename it over the path. What lies at that name before is removed and never written through, so a link there is not followed. When the creation fails, the file under construction is removed. So the path holds no file, a foreign file or a complete file, and never a half-made one.
+We create a private sibling with a fresh name and exclusive creation. We allocate the blocks, write the header last, flush the file and rename it over the destination while holding both locks. On an ordinary error we remove our temporary file. A process killed during construction can leave that file behind. We preserve pre-existing siblings.
 
 A second process that finds the lock taken runs without the disk tier and says so. This is the case of a new process that starts while the old one drains.
 
@@ -155,7 +155,7 @@ Crash safety
 
 The file is written through the mapping and never forced to disk on the request path. The kernel writes dirty pages when it chooses. We flush once when the daemon stops.
 
-A crash of the process loses nothing that was written: the pages belong to the kernel. A loss of power can leave each page old or new, and a page that was being written may be mixed. We list what the file can then hold and why each is safe.
+If only the process exits, the kernel retains completed writes to shared pages. Queued work can be lost, and a slot being written can be incomplete. A loss of power can leave each page old or new, and a page that was being written may be mixed. We list what the file can then hold and why each is safe.
 
 .. list-table::
    :header-rows: 1
@@ -190,7 +190,7 @@ Configuration
 
 The section stands at the top of the file, beside ``global``. Both members are required. ``size`` is from 64 KiB to 64 GiB. A change of the section needs a restart. The table in memory keeps its own setting, ``global.sticky_entries``, and the life of a choice is the ``ttl`` of its pool (SID 0025).
 
-The cost in memory beside the table is the sketch, two to four bytes for each slot, which is 3% to 6% of the file, the queue of 4,096 requests and 32 KiB of marks. The pages of the file are page cache. The kernel may drop them when memory is short, but they count as memory of the process, and "Known gaps" says what that means under a memory limit. The daemon reports the parts at start.
+The reported table capacity includes rounding up to a power of two. The cost in memory beside the table is the sketch, two to four bytes for each slot, which is 3% to 6% of the file, the queue of 4,096 requests and 32 KiB of marks. The pages of the file are page cache. The kernel may drop them when memory is short, but they count as memory of the process, and "Known gaps" says what that means under a memory limit. The daemon reports the parts at start.
 
 The section has an effect only on pools with ``sticky: "table"``. With the section the table in memory is made at start, also when no pool uses it.
 
@@ -254,7 +254,7 @@ The first program is ``cargo run --release -p sibuna-spill --example spill_measu
    * - A working set of 1,048,512 keys, each read or offered four times
      - 2.7 to 3.6 million operations in a second. 99.6% of the set is held. The rest found its bucket full of its own kind.
    * - A flood of 16,776,192 new keys, with three uses of the working set between two of them
-     - 67.1 million operations at 1.5 to 3.4 million in a second. 1,043,849 to 1,044,093 keys of the working set are held at the end, which is all that were held before but 10 to 15.
+     - 67.1 million operations at 1.5 to 3.4 million in a second. 1,043,849 to 1,044,093 keys of the working set are held at the end, a net loss of 10 to 15. These older runs counted occupancy without comparing individual keys.
    * - Close, map again, read the working set
      - Every hint that was held is found. 3.5 to 3.7 million lookups in a second, with the pages in the page cache.
    * - Four threads offer through the queue without a pause
@@ -283,9 +283,48 @@ The second program is the ignored test ``measure_two_tiers`` of ``sibuna-lb``, r
 
 We also ran the first program in a control group with a memory limit of 96 MiB and no swap, ``systemd-run --user --scope -p MemoryMax=96M -p MemorySwapMax=0``. The kernel killed it for lack of memory in three runs. In two of them the creation of the file alone took 12 and 130 seconds. A fourth run did not finish creating the file in 110 seconds and we stopped it. So on this machine the kernel did not take the pages of the file back fast enough to keep the process inside a limit below the size of the file. The file system is ZFS, which has a cache of its own. We had no other file system to compare.
 
-We repeated this on a second host, an unprivileged LXC container on ZFS with 16 processors. Without a limit the flood ran at 3.3 million operations in a second. With a limit of 320 MiB the program ran at the same rate, the control group counted no event at its limit, and its peak was 281,595,904 bytes: the file of 268,427,264 bytes and 13 MiB more. A file of 64 MiB under a limit of 96 MiB ran at full rate too. With the file of 256 MiB under a limit of 96 MiB the kernel did not kill the program. It reached the limit 410,479 times, and the first phase, which takes 3 seconds without a limit, had not ended after 17 minutes when we stopped it. So a limit below the size of the file either ends the daemon or makes the storage thread useless. The workers do not touch the mapping, so they keep serving, by the balanced choice.
+We repeated this on a second host, an unprivileged LXC container on ZFS with 16 processors. Without a limit the flood ran at 3.3 million operations in a second. With a limit of 320 MiB the program ran at the same rate, the control group counted no event at its limit, and its peak was 281,595,904 bytes: the file of 268,427,264 bytes and 13 MiB more. A file of 64 MiB under a limit of 96 MiB ran at full rate too. With the file of 256 MiB under a limit of 96 MiB the kernel did not kill the program. It reached the limit 410,479 times, and the first phase, which takes 3 seconds without a limit, had not ended after 17 minutes when we stopped it. Under these limits we observed a kill on one host and prolonged storage delay on the other. While the process survives, workers can continue with the balanced choice when the disk queue fills.
 
 We also ran the daemon itself in that container, on two hosts as a mesh of two nodes, each with a file of 16 MiB and eight workers. After a restart of both nodes the first flow of 300 clients found another server for 191 of them, and the second flow found the remembered server for all 300. The counters said 300 lookups on disk, 300 hits and 191 choices preferred over the tentative one.
+
+The fifty-million-key experiment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+On 2026-11-25 we ran release builds on two x86-64 Linux 7.0 hosts with 16 CPUs, 12 GiB of RAM and ZFS storage. We used a fresh 512 MiB arena for each run. Each workload introduced 50,000,000 distinct candidates and accessed the working set three times per candidate. The times below exclude compilation.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 35 35
+
+   * - Measurement
+     - Mapped cache, host 19
+     - Edge affinity store, host 20
+   * - Flood / whole experiment
+     - 83.15 s / 106.05 s
+     - 349.05 s / 352.34 s
+   * - Original choices present after the flood
+     - 2,080,855 of 2,088,051 seeded keys (99.655%)
+     - 244,157 of 260,178 seeded clients (93.842%)
+   * - Process peak RSS
+     - 544,376 KiB
+     - 583,596 KiB
+   * - Minor / major page faults, whole process
+     - 1,934,254 / 131,132
+     - 2,499,062 / 131,270
+
+The direct cache workload calls the mapping synchronously. When a hot key misses during the flood, we offer its original value again. We measure which members of the seeded cohort are present at the end. All 2,088,026 hot keys present at close were found on reopen, including keys absent at the seed measurement. The final, separate four-producer queue test accepted 76,504 offers and shed 8,311,848.
+
+The edge workload calls the production affinity store from one caller while a storage thread serves its queue. The table has 1,048,576 slots (40 MiB). The sketch, queue, marks and scratch space bring the cache structures to about 56.3 MiB within the 64 MiB RAM budget. The 536,862,720-byte mapping also contributes to RSS. We offered 262,144 clients the original server. A miss during the flood assigns a different server. The harness calls the store directly and omits the pool's periodic renewal of live entries. We count a seeded client only when its first lookup after the flood returns the original server. A subsequent disk promotion cannot repair that first decision. The flood queued 136,980,333 storage operations and shed 1,683,064. The sampled p99 for a group of four affinity decisions was 14,668 ns across 12,216 samples. These calls exclude network and HTTP processing. Both retention measurements fell below the proposed 99.9%.
+
+We also measured two storage failure modes on host 19 with four million distinct candidates and twelve million hot accesses per mode. We held the storage thread inside its first lookup callback throughout one flood. It accepted 4,097 operations including that lookup, shed 11,385,334 and completed the flood in 2.49 s. The caller's four-decision p99 was 1,002 ns. We then opened the same file while its owner held the lock. The memory-only store queued nothing and finished in 2.39 s with a p99 of 942 ns. Each p99 used 978 samples. A physical I/O error on a live mapping remains a separate failure mode.
+
+We can repeat these measurements on a local volume with at least 512 MiB of free space. We give each invocation a fresh file. For process RSS and faults we measure the built executable directly.
+
+.. code-block:: sh
+
+   cargo run --release --locked -p sibuna-spill --example spill_measure -- 512 /var/tmp 0 50000000
+   SIBUNA_SPILL_DIR=/var/tmp cargo test --release --locked -p sibuna-lb --lib measure_fifty_million_candidates -- --ignored --nocapture
+   SIBUNA_SPILL_DIR=/var/tmp cargo test --release --locked -p sibuna-lb --lib measure_storage_unavailability -- --ignored --nocapture
 
 Acceptance criteria and implementation status
 ---------------------------------------------
@@ -317,7 +356,7 @@ Acceptance criteria and implementation status
      - Met for what we tried: ``arbitrary_bytes_never_panic_and_are_almost_never_live`` and ``a_cache_of_noise_yields_nothing_and_does_not_panic`` fill slots and a whole file with noise. There is no fuzzer run.
    * - 7
      - A file that is not ours is never overwritten, and two processes never map one file.
-     - Met. ``a_file_that_is_not_a_cache_is_refused_and_left_alone``, ``a_second_opener_finds_the_cache_in_use``, ``what_lies_at_the_name_of_the_new_file_is_removed_and_not_written_through``, and through the binary ``a_file_that_is_not_a_cache_stops_the_daemon_with_a_diagnostic``. ``a_lock_on_a_file_that_lost_its_name_does_not_open_the_cache`` checks the comparison of names. No test runs two processes through the race itself.
+     - Met. ``a_file_that_is_not_a_cache_is_refused_and_left_alone``, ``a_second_opener_finds_the_cache_in_use``, ``creating_the_cache_preserves_an_existing_sibling_and_its_target``, and through the binary ``a_file_that_is_not_a_cache_stops_the_daemon_with_a_diagnostic``. ``a_lock_on_a_file_that_lost_its_name_does_not_open_the_cache`` checks the comparison of names. No test runs two processes through the race itself.
    * - 8
      - A worker never waits for the disk.
      - Met. ``a_full_queue_sheds_work_and_never_blocks``. The table in memory is that of SID 0025, and the marks are single atomic words.
@@ -363,7 +402,7 @@ Known gaps
 #. An entry that a node hears from a peer is treated like a local one: as a guess when memory does not hold the key, and as a change when it does. So a peer can replace a hint on disk, as SID 0025 lets it replace the entry in memory.
 #. The first flow of a client after a restart, or after its entry left memory, goes without the hint. In the measurement 3.0% of the clients were also without it at the second lookup, because their bucket on disk was full when they came.
 #. A hint enters a full bucket only by a renewal or a move. A new client whose bucket is full has no hint on disk until it is still in memory after a quarter of its ``ttl``.
-#. One storage thread serves all workers. It handles about one to three million operations in a second. Beyond that the queue sheds, which costs hints and no latency.
+#. One storage thread serves all workers. It handles about one to three million operations in a second. Beyond that the queue sheds, which costs hints. We measure the latency of the caller separately.
 #. A healthy slot whose expiry lies more than a day and a minute ahead is treated as corrupt, cleared and counted in ``spill_disk_corrupt``. This happens to recent hints after the clock stepped back by more than a minute.
 #. A file system that compresses or copies on write does not reserve the blocks that we write at creation. When it fills up later, a write through the mapping raises a signal that ends the daemon. We do not detect such a file system and print no warning.
 #. The cache has not been run under Docker or Kubernetes. It ran in an unprivileged LXC container, with and without a memory limit of a control group.
@@ -372,12 +411,11 @@ Known gaps
 #. The daemon opens the file, and replaces a damaged one, before it binds its listeners. A start that then fails has already replaced the file.
 #. A second process on the same file runs with the table in memory only until its next start. So during the replacement of the binary the new process writes nothing to the file.
 #. The send to the queue is ``try_send`` of the standard library. It never waits for the disk. We did not verify that it takes no lock inside when the storage thread sleeps, so "no lock on the request path" is not proven for this one call.
-#. The sketch of a file of 64 GiB takes 4 GiB of memory, and aging walks the 64 MiB of one shard on the storage thread. Stopping the daemon waits for the flush of the file.
+#. The sketch of a file of 64 GiB takes 2 GiB of memory, and aging walks the 32 MiB of one shard on the storage thread. Stopping the daemon waits for the flush of the file.
 #. The checksum is not keyed. A file written by someone who knows the format is trusted as hints.
-#. Creation removes what lies at ``path.tmp`` without asking.
 #. The model proves the admission rule for exact frequencies and one bucket, and the validation of a slot. It does not model the sketch collisions, the guess, the two tiers or concurrency.
 #. There is no test of a loss of power. The table of crash safety is an argument over the states a page can be left in, and the tests write those states by hand.
-#. The 50-million-key qualification of SID 0015 is not run. The largest file we measured has 4.2 million slots.
+#. A measured retention fraction depends on the working set, the traffic mix, the admission rule and the storage device. The capacity measurements above do not establish a retention guarantee across workloads.
 #. A ``spill`` section without a pool that is sticky by a table costs the file and the memory and does nothing. ``sibuna check`` does not warn.
 
 Open questions

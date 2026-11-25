@@ -404,7 +404,7 @@ Three differences matter most when we choose.
 .. admonition:: Current boundary of the load balancer
    :class: warning
 
-   The edge is new. HAProxy and Envoy have served production traffic for years; Sibuna's edge has run in tests and in benchmarks on up to three hosts (Part X). Its known gaps are listed in each SID: among them, TCP and UDP frontends do not consult the ban table, the admin socket cannot change frontends or routes, the spill cache was not qualified at 50 million keys, and an agent call at the request stage holds its thread.
+   The edge is new. HAProxy and Envoy have served production traffic for years; Sibuna's edge has run in tests and in benchmarks on up to three hosts (Part X). Its known gaps are listed in each SID: among them, TCP and UDP frontends do not consult the ban table, the admin socket cannot change frontends or routes, the spill cache missed the retention target at 50 million distinct keys, and an agent call at the request stage holds its thread.
 
 .. admonition:: Exercise 2.1
 

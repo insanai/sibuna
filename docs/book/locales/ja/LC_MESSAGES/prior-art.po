@@ -1594,10 +1594,10 @@ msgid ""
 "years; Sibuna's edge has run in tests and in benchmarks on up to three "
 "hosts (Part X). Its known gaps are listed in each SID: among them, TCP "
 "and UDP frontends do not consult the ban table, the admin socket cannot "
-"change frontends or routes, the spill cache was not qualified at 50 "
-"million keys, and an agent call at the request stage holds its thread."
+"change frontends or routes, the spill cache missed the retention target at 50 million distinct keys"
+", and an agent call at the request stage holds its thread."
 msgstr ""
-"エッジは新しいものです。HAProxyとEnvoyは長年本番トラフィックを処理してきました。Sibunaのエッジは、テストと最大3台のホストでのベンチマークで動いただけです（第X部）。既知の欠落は各SIDに挙げています。その中には、TCPとUDPのフロントエンドが禁止テーブルを参照しないこと、管理ソケットがフロントエンドやルートを変えられないこと、spillキャッシュが5,000万キーで検証されていないこと、リクエストの段階でのエージェントの呼び出しがそのスレッドを拘束することがあります。"
+"エッジは新しいものです。HAProxyとEnvoyは長年本番トラフィックを処理してきました。Sibunaのエッジは、テストと最大3台のホストでのベンチマークで動いただけです（第X部）。既知の欠落は各SIDに挙げています。その中には、TCPとUDPのフロントエンドが禁止テーブルを参照しないこと、管理ソケットがフロントエンドやルートを変えられないこと、spillキャッシュが異なる5,000万個のキーで保持率の目標に届かなかったこと、リクエストの段階でのエージェントの呼び出しがそのスレッドを拘束することがあります。"
 
 #: ../../prior-art.rst:409
 msgid "Exercise 2.1"
