@@ -1168,6 +1168,42 @@ fn listed_serials(home: &Path) -> Option<Vec<u64>> {
     Some(list.entries.iter().map(|entry| entry.serial).collect())
 }
 
+/// OpenSSL verifies the list of the storage in `home` with the intermediate of the
+/// stored chain of `localhost`, when it is installed.
+fn openssl_verifies_the_list(home: &Path) {
+    let local = home.join("acme/local");
+    let chain = fs::read_to_string(local.join("certs/localhost/cert.pem")).unwrap();
+    let blocks = sibuna_acme::pem::decode("CERTIFICATE", &chain).unwrap();
+    let intermediate = home.join("intermediate.pem");
+    fs::write(&intermediate, sibuna_acme::pem::encode("CERTIFICATE", &blocks[1])).unwrap();
+    let verified = Command::new("openssl")
+        .args(["crl", "-verify", "-noout", "-CAfile"])
+        .arg(&intermediate)
+        .arg("-in")
+        .arg(local.join("crl.pem"))
+        .output();
+    if let Ok(output) = verified {
+        let text = String::from_utf8_lossy(&output.stderr).to_ascii_lowercase();
+        assert!(output.status.success() && text.contains("verify ok"), "{text}");
+    }
+}
+
+/// `revoke cert` with a word that names nothing is refused with a code and a hint.
+fn nothing_is_revoked_by(daemon: &Daemon, words: &[&str]) {
+    for word in words {
+        let output = Command::new(BIN)
+            .arg("ctl")
+            .arg(&daemon.socket)
+            .args(["revoke", "cert", word])
+            .output()
+            .unwrap();
+        let text = String::from_utf8_lossy(&output.stderr).into_owned();
+        assert!(!output.status.success(), "{word}: {text}");
+        assert!(text.contains("NOT REVOKED") && text.contains("ADM013"), "{word}: {text}");
+        assert!(text.contains("Hint:"), "{word}: {text}");
+    }
+}
+
 #[test]
 fn a_revoked_local_certificate_is_listed_and_replaced() {
     let authority = Authority::start();
@@ -1214,35 +1250,8 @@ fn a_revoked_local_certificate_is_listed_and_replaced() {
     expected.sort_unstable();
     assert_eq!(listed, expected);
     assert!(!listed.contains(&second));
-    // OpenSSL verifies the list with the intermediate of the served chain, when it is
-    // installed.
-    let chain = fs::read_to_string(local.join("certs/localhost/cert.pem")).unwrap();
-    let blocks = sibuna_acme::pem::decode("CERTIFICATE", &chain).unwrap();
-    let intermediate = home.join("intermediate.pem");
-    fs::write(&intermediate, sibuna_acme::pem::encode("CERTIFICATE", &blocks[1])).unwrap();
-    let verified = Command::new("openssl")
-        .args(["crl", "-verify", "-noout", "-CAfile"])
-        .arg(&intermediate)
-        .arg("-in")
-        .arg(local.join("crl.pem"))
-        .output();
-    if let Ok(output) = verified {
-        let text = String::from_utf8_lossy(&output.stderr).to_ascii_lowercase();
-        assert!(output.status.success() && text.contains("verify ok"), "{text}");
-    }
-    // What names nothing is refused with a code and a hint, and changes nothing.
-    for word in ["nothing.example", "0", "12345678901234567"] {
-        let output = Command::new(BIN)
-            .arg("ctl")
-            .arg(&daemon.socket)
-            .args(["revoke", "cert", word])
-            .output()
-            .unwrap();
-        let text = String::from_utf8_lossy(&output.stderr).into_owned();
-        assert!(!output.status.success(), "{word}: {text}");
-        assert!(text.contains("NOT REVOKED") && text.contains("ADM013"), "{word}: {text}");
-        assert!(text.contains("Hint:"), "{word}: {text}");
-    }
+    openssl_verifies_the_list(&home);
+    nothing_is_revoked_by(&daemon, &["nothing.example", "0", "12345678901234567"]);
     assert_eq!(fs::read_dir(local.join("revoked")).unwrap().count(), 2);
     let log = daemon.log();
     assert!(log.contains("admin: revoke cert localhost"), "{log}");
