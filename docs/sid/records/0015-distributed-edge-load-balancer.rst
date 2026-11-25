@@ -5,7 +5,7 @@
 :sid-type: Architectural Specification
 :sid-authors: ["Vikrant Rathore"]
 :sid-created: 2026-11-24
-:sid-updated: 2026-11-24
+:sid-updated: 2026-11-25
 :sid-discussion: No external discussion URL assigned
 :sid-summary: Specifies TCP and UDP forwarding, TLS, HTTP/2 and HTTP/3 termination, HTTP/1.1, HTTP/2 and HTTP/3 origin pools, per-route firewall selection and distributed routing. Records implementation and qualification evidence.
 :sid-labels: ["architecture","load-balancer","network","ddos","mathematics"]
@@ -16,9 +16,9 @@ Sibuna Edge: TCP, UDP and HTTP Load Balancing
 Abstract
 --------
 
-We route TCP streams, UDP datagrams and HTTP requests to named pools. An HTTP frontend can accept plaintext HTTP/1.1 or terminate TLS for HTTP/1.1 and HTTP/2, and QUIC for HTTP/3. We apply the gate or shield to the routes that ask for it and select an origin for each request. An origin pool speaks HTTP/1.1, HTTP/2 or HTTP/3, in cleartext or over TLS. We can drain a server while established TCP streams and in-flight HTTP exchanges finish.
+We route TCP streams, UDP datagrams and HTTP requests to named pools. An HTTP frontend can accept plaintext HTTP/1.1 or terminate TLS for HTTP/1.1 and HTTP/2, and QUIC for HTTP/3. We apply the gate or shield to the routes that ask for it and select an origin for each request. An origin pool can use HTTP/1.1 or HTTP/2, in cleartext or over TLS. HTTP/3 uses QUIC with TLS. The client and origin protocols are selected independently. We can drain a server while established TCP streams and in-flight HTTP exchanges finish.
 
-The decision for discussion is whether to adopt worker-owned flows and an immutable routing configuration as the common basis for standalone, regional and multi-region deployments. We use that boundary for JSON and JLV/2 routing today. The proposed mmap cache, peer forwarding and plugin tiers build on it. The Lean artifact covers selected properties of the design. Capacity, latency and continuity during upgrades require implementation evidence.
+The decision for discussion is whether to adopt worker-owned flows and an immutable routing configuration as the common basis for standalone, regional and multi-region deployments. We use that boundary for JSON and JLV/2 routing today. The mmap spill cache (SID 0027), peer forwarding (SID 0026) and plugin tiers (SID 0030) build on it. The Lean artifact covers selected properties of the design. Capacity, latency and continuity during upgrades require implementation evidence.
 
 Motivation and scope
 --------------------
@@ -319,7 +319,7 @@ A TCP or HTTP pool can probe its servers by TCP connect or by an HTTP ``GET``. A
 File and database authority
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In file mode, the file is authoritative. A successful reload replaces temporary administrative weights. In persistent mode, the file owns host-local binds, worker placement, admin endpoints and disk paths. SQLite or PostgreSQL owns the published topology. A proposed apply command evaluates the source, shows the routing diff and commits rows, source digest and revision in one transaction conditioned on the expected revision. A concurrent edit returns a conflict. A dump exports evaluated data. Only the recorded source can reproduce the original program text.
+In file mode, the file is authoritative. A successful reload replaces temporary administrative weights. In persistent mode, the file owns host-local binds, worker placement, admin endpoints and disk paths. SQLite or PostgreSQL owns the published topology. SID 0028 implements publication of one checked topology document per revision, with an expected revision to detect conflicting writes. A concurrent edit returns a conflict. A dump exports evaluated data. Only the recorded source can reproduce the original program text.
 
 Nodes read a complete committed revision and report their applied revision. A notification prompts a reread. A periodic revision check also recovers missed notifications. If validation fails or the database becomes unavailable, a running node retains its last valid snapshot.
 
@@ -330,7 +330,7 @@ For an in-process reload we prepare the entire candidate, including its routing 
 
 For a binary upgrade the old process accepts until the replacement has validated its configuration, acquired listeners and acknowledged readiness. On failure before cutover the old process continues service. On Unix we propose authenticated local descriptor passing with SCM_RIGHTS. Windows needs its own socket duplication and service-control path. The old process owns accepted TCP sockets until close or the drain deadline. At the deadline we count forced disconnects.
 
-A UDP listener handle contains no user-space affinity mappings. Preserving a live UDP flow across binary replacement requires a single reader for each datagram and a handoff of its owner, upstream socket and return path, or compatible stateless backend routing. Until we demonstrate one of these paths, the documented upgrade for stateful UDP is to drain or expire its mappings before cutover.
+A UDP listener handle contains no user-space affinity mappings. Preserving a live UDP flow across binary replacement requires a single reader for each datagram and a handoff of its owner, upstream socket and return path, or compatible stateless backend routing. SID 0029 implements listener and live UDP mapping handoff on Linux. On other platforms we drain or expire stateful UDP mappings before cutover.
 
 On Linux a simpler cutover is implemented. With ``global.reuse_port`` every listener sets ``SO_REUSEPORT``, the replacement binds the same addresses while the old process serves, and the old process drains on SIGTERM. No descriptor is passed and no supervisor is needed. The cost is one that descriptor passing would avoid: a connection in the accept queue of the old listener at the instant it closes is reset. In our test with a new connection for each request no request failed in 15 cutovers. A UDP mapping and a QUIC connection do not survive, as described above. The operations chapter gives the commands.
 
@@ -699,6 +699,8 @@ Review history
 - 2026-11-24. Initial proposal for cooperative socket I/O, bounded state, JLV/2 configuration, adaptive cluster routing, plugin hooks and console changes.
 - 2026-11-24. Implementation review added PEM bundles, HTTP/1.1 over TLS, TLS, HTTP/2 and HTTP/3 origins, HTTP probes, per-route firewall selection, the UDP share of the flow table, relay threads on epoll and a comparison with HAProxy.
 - 2026-11-24. Pre-promotion review corrected flow memory accounting, narrowed upgrade and concurrency claims, checked the Lean file with version 4.19.0 and identified the implementation evidence required for deployment.
+
+- 2026-11-25. On two Linux x86-64 hosts we tested the RC1 binary with certificate verification. Both frontends served HTTP/2 and HTTP/3 through an HTTP/1.1 origin. We changed the origin on one node and issued ``reload cluster``. Both frontends then reached the new origin over both client protocols and reported matching file digests.
 
 References
 ----------

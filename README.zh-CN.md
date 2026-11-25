@@ -56,7 +56,7 @@ sibuna --config-file edge.jlv
 - **HTTP：** 使用 HAProxy 风格的 PEM 证书包终止 TLS；支持 HTTP/1.1、HTTP/2、HTTP/3 和 WebSocket；按主机名和路径路由到 HTTP/1.1、HTTP/2 或 HTTP/3 服务器。在 Linux 上，由事件驱动的 worker 处理连接，每个处理器一个 worker。
 - **证书：** 通过 ACME 自动获取并续期，支持备用证书颁发机构和外部账户绑定；通过 DNS 获取通配符证书，可使用钩子程序、RFC 2136 更新或 Cloudflare API；OCSP 装订；在守卫之后按需获取证书；为 `localhost`、内部名称和 IP 地址提供本地证书颁发机构，它有自己的吊销列表和 ACME 服务器。
 - **服务器：** 健康检查、慢启动、排空、权重、会话保持，以及每台服务器的流数量限制。
-- **运行中变更：** 重新加载不会让任何请求失败。管理套接字可以排空、调整权重、添加和移除服务器（`sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain`）。在 Linux 上，新的可执行文件从旧的可执行文件接管监听套接字和 UDP 映射；QUIC 连接会终止。
+- **运行中变更：** 成功重新加载后，已建立的 TCP 连接仍然有效。管理套接字可以排空、调整权重、添加和移除服务器（`sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain`）。在 Linux 上，新的可执行文件从旧的可执行文件接管监听套接字和 UDP 映射；QUIC 连接会终止。
 - **集群：** 网格中的节点共享会话保持表和服务器的流数量限制，并把客户端转发给拥有它的节点。PostgreSQL 数据库可以把同一份配置发布到每个节点，也可以回滚。一个映射文件在重启后保留会话保持的提示信息。
 - **钩子：** 在连接阶段和请求阶段运行：可以编译进程序，可以作为带预算的 WebAssembly，也可以作为 Unix 套接字上的代理程序。
 - **观测：** 指标、访问日志，以及展示服务器、流和拒绝情况的控制台视图。
