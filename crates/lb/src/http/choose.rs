@@ -1,15 +1,12 @@
 //! Choosing the server of one request and carrying its reservation (SID 0019).
 
-use std::net::{Ipv4Addr, SocketAddr};
-use std::sync::{Arc, PoisonError};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use std::collections::BTreeMap;
-use std::net::IpAddr;
-
-use super::{Frontend, HttpRoutes, Table, bare_host, front_of};
+use super::{HttpRoutes, Infos, Snapshot, bare_host, front_of};
 use crate::pool::{Pool, Ticket, Tried, Wish};
-use crate::sticky::{self, Key};
+use crate::sticky;
 use crate::{PoolPolicy, Regime, RoutePolicy, Sticky};
 
 /// One request, as far as routing reads it. Fill it with struct-update syntax:
@@ -55,36 +52,10 @@ impl HttpRoutes {
     /// Chooses an eligible server for one request and reserves a place on it. Returns
     /// `None` when the routing table changed since the firewall decision, when no
     /// frontend listens on `query.vip`, and when no server of the pool is eligible.
+    ///
+    /// The choice reads the snapshot of the calling thread and takes no lock.
     pub fn choose(&self, query: &Query<'_>) -> Option<HttpTarget> {
-        let mut table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
-        let regime = table.regime.unwrap_or(Regime::Standalone);
-        let now = Instant::now();
-        let View { fronts, pools, key, infos } = View::of(&mut table, query.policy_revision, now)?;
-        let front = front_of(fronts, query.vip)?;
-        let host = bare_host(query.host);
-        let rule = front.rules.iter().find(|r| r.matches(host, query.path));
-        let pool = rule.map_or(&front.pool, |r| &r.pool).clone();
-        let route = rule.map_or(&front.policy, |r| &r.policy).clone();
-        let servers = pools.get_mut(pool.as_ref())?;
-        let policy = Arc::clone(&servers.policy);
-        let presented =
-            cookie_name(&policy).and_then(|name| sticky::presented(query.cookies, name));
-        let holder = presented.and_then(|token| servers.holder(key, &pool, token));
-        let wish = Wish { sticky: holder, client: query.client, ..Wish::default() };
-        let ticket = servers.reserve_with(now, query.peer, query.vip, regime, &wish)?;
-        let info = info_of(infos, &pool, &ticket);
-        let again = Box::new(Again {
-            pool,
-            vip: query.vip,
-            peer: query.peer,
-            client: query.client,
-            revision: query.policy_revision,
-            secure: query.secure,
-            tried: Tried::default(),
-            info,
-        });
-        let cookie = cookie_line(servers, key, &again, &ticket, presented);
-        Some(HttpTarget { ticket, policy, again, cookie, route })
+        self.0.read(|table| choose_in(table, query))
     }
 
     /// Reserves a place on another server of the pool of `failed`, for the same request
@@ -95,61 +66,67 @@ impl HttpRoutes {
     /// request has not tried is eligible. A request therefore tries no server twice and
     /// at most `retries + 1` servers.
     pub fn retry(&self, failed: &HttpTarget) -> Option<HttpTarget> {
-        let again = &failed.again;
-        if again.tried.len() >= usize::from(failed.policy.retries) {
+        if failed.again.tried.len() >= usize::from(failed.policy.retries) {
             return None;
         }
-        let mut table = self.0.lock().unwrap_or_else(PoisonError::into_inner);
-        let regime = table.regime.unwrap_or(Regime::Standalone);
-        let now = Instant::now();
-        // The request stays with the revision it was routed under, while that serves.
-        let View { pools, key, infos, .. } = View::of(&mut table, again.revision, now)?;
-        let servers = pools.get_mut(again.pool.as_ref())?;
-        let tried = again.tried.with(&failed.ticket);
-        let wish = Wish { tried: Some(&tried), client: again.client, ..Wish::default() };
-        let ticket = servers.reserve_with(now, again.peer, again.vip, regime, &wish)?;
-        let info = info_of(infos, &again.pool, &ticket);
-        // The request is counted under the server that ends it. The one it leaves
-        // counts a failure (SID 0020).
-        if let Some(left) = &again.info {
-            left.stats.record_failover();
-        }
-        let policy = Arc::clone(&servers.policy);
-        let again = Box::new(Again { pool: Arc::clone(&again.pool), tried, info, ..**again });
-        // The client moves with its request: the cookie names the new server.
-        let cookie = cookie_line(servers, key, &again, &ticket, None);
-        let route = Arc::clone(&failed.route);
-        Some(HttpTarget { ticket, policy, again, cookie, route })
+        self.0.read(|table| retry_in(table, failed))
     }
 }
 
-/// The names and counters of the servers of each pool, by address (SID 0020).
-type Infos = BTreeMap<String, Vec<(SocketAddr, crate::ServerInfo)>>;
-
-/// The part of the routing table that serves the requests of one revision.
-struct View<'t> {
-    fronts: &'t BTreeMap<SocketAddr, Frontend>,
-    pools: &'t mut BTreeMap<String, Pool>,
-    key: &'t Key,
-    infos: &'t Infos,
+/// [`HttpRoutes::choose`] on one snapshot of the table.
+fn choose_in(table: &Snapshot, query: &Query<'_>) -> Option<HttpTarget> {
+    let regime = table.regime.unwrap_or(Regime::Standalone);
+    let now = Instant::now();
+    let routes = table.routes_of(query.policy_revision, now)?;
+    let front = front_of(&routes.fronts, query.vip)?;
+    let host = bare_host(query.host);
+    let rule = front.rules.iter().find(|r| r.matches(host, query.path));
+    let pool = rule.map_or(&front.pool, |r| &r.pool).clone();
+    let route = rule.map_or(&front.policy, |r| &r.policy).clone();
+    let servers = routes.pools.get(pool.as_ref())?;
+    let policy = Arc::clone(&servers.policy);
+    let presented = cookie_name(&policy).and_then(|name| sticky::presented(query.cookies, name));
+    let holder = presented.and_then(|token| servers.holder(token));
+    let wish = Wish { sticky: holder, client: query.client, ..Wish::default() };
+    let ticket = servers.reserve_with(now, query.peer, query.vip, regime, &wish)?;
+    let info = info_of(&routes.servers, &pool, &ticket);
+    let again = Box::new(Again {
+        pool,
+        vip: query.vip,
+        peer: query.peer,
+        client: query.client,
+        revision: query.policy_revision,
+        secure: query.secure,
+        tried: Tried::default(),
+        info,
+    });
+    let cookie = cookie_line(servers, &again, &ticket, presented);
+    Some(HttpTarget { ticket, policy, again, cookie, route })
 }
 
-impl<'t> View<'t> {
-    /// The routes and pools of `revision`: the current ones, or those that a reload
-    /// retired a moment ago (SID 0018). `None` for an older revision.
-    fn of(table: &'t mut Table, revision: u64, now: Instant) -> Option<Self> {
-        let current = table.revision;
-        let Table { fronts, pools, previous, sticky: key, servers: infos, .. } = table;
-        if revision == current {
-            return Some(Self { fronts, pools, key, infos });
-        }
-        let retired = previous.as_mut()?;
-        if retired.revision != revision || now >= retired.until {
-            return None;
-        }
-        let infos = &retired.servers;
-        Some(Self { fronts: &retired.fronts, pools: &mut retired.pools, key, infos })
+/// [`HttpRoutes::retry`] on one snapshot of the table.
+fn retry_in(table: &Snapshot, failed: &HttpTarget) -> Option<HttpTarget> {
+    let again = &failed.again;
+    let regime = table.regime.unwrap_or(Regime::Standalone);
+    let now = Instant::now();
+    // The request stays with the revision it was routed under, while that serves.
+    let routes = table.routes_of(again.revision, now)?;
+    let servers = routes.pools.get(again.pool.as_ref())?;
+    let tried = again.tried.with(&failed.ticket);
+    let wish = Wish { tried: Some(&tried), client: again.client, ..Wish::default() };
+    let ticket = servers.reserve_with(now, again.peer, again.vip, regime, &wish)?;
+    let info = info_of(&routes.servers, &again.pool, &ticket);
+    // The request is counted under the server that ends it. The one it leaves
+    // counts a failure (SID 0020).
+    if let Some(left) = &again.info {
+        left.stats.record_failover();
     }
+    let policy = Arc::clone(&servers.policy);
+    let again = Box::new(Again { pool: Arc::clone(&again.pool), tried, info, ..**again });
+    // The client moves with its request: the cookie names the new server.
+    let cookie = cookie_line(servers, &again, &ticket, None);
+    let route = Arc::clone(&failed.route);
+    Some(HttpTarget { ticket, policy, again, cookie, route })
 }
 
 /// The names and counters of the server that `ticket` reserved in `pool`.
@@ -171,14 +148,13 @@ fn cookie_name(policy: &PoolPolicy) -> Option<&str> {
 /// server already.
 fn cookie_line(
     servers: &Pool,
-    key: &Key,
     again: &Again,
     ticket: &Ticket,
     presented: Option<&[u8]>,
 ) -> Box<[u8]> {
     let mut line = Vec::new();
-    let token = cookie_name(&servers.policy)
-        .and_then(|name| Some((name, servers.token_of(key, &again.pool, ticket)?)));
+    let token =
+        cookie_name(&servers.policy).and_then(|name| Some((name, servers.token_of(ticket)?)));
     if let Some((name, token)) = token
         && presented != Some(&token[..])
     {

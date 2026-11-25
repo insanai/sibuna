@@ -1,10 +1,14 @@
-//! Single-owner admission. A ticket holds the reservation across configuration revisions.
+//! Admission. A ticket holds the reservation across configuration revisions.
+//!
+//! A pool is read by many threads at once: a reservation takes `&self`. What a
+//! reservation changes is atomic and lives in the [`Load`] of a server, which a reload
+//! keeps, or in a counter that the copies of a pool share (SID 0019).
 
 use std::collections::HashMap;
 use std::hash::{BuildHasher, RandomState};
 use std::net::SocketAddr;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex, PoisonError, Weak};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::{Arc, OnceLock, Weak};
 use std::time::{Duration, Instant};
 
 use crate::config::{Backend, Protocol, Scheduler, Server};
@@ -12,22 +16,46 @@ use crate::config::{Backend, Protocol, Scheduler, Server};
 mod extra;
 pub(crate) use extra::{Tried, Wish};
 
+/// The milliseconds from the first use of this clock to `at`. An atomic holds a moment
+/// in this form, where it cannot hold an `Instant`.
+fn millis(at: Instant) -> u64 {
+    static EPOCH: OnceLock<Instant> = OnceLock::new();
+    let epoch = *EPOCH.get_or_init(Instant::now);
+    at.saturating_duration_since(epoch).as_millis() as u64
+}
+
+/// The bits of a latency sample that hold the peak, in microseconds. A peak is at most
+/// one minute, which is below 2^26 microseconds.
+const PEAK_BITS: u32 = 26;
+
 #[derive(Default)]
 struct Load {
     active: AtomicUsize,
-    latency: Mutex<Option<(Instant, u64)>>,
-    retry_after: Mutex<Option<Instant>>,
+    /// The last latency sample: its moment in milliseconds plus one above [`PEAK_BITS`],
+    /// and the peak below. Zero before the first sample.
+    latency: AtomicU64,
+    /// Until when a failed connect keeps the server out, in milliseconds. Zero when
+    /// no connect failed.
+    retry_after: AtomicU64,
     /// The state that SID 0019 keeps for a server.
     extra: extra::State,
 }
 
 impl Load {
     fn estimate(&self, now: Instant) -> u64 {
-        let sample = *self.latency.lock().unwrap_or_else(PoisonError::into_inner);
-        let Some((last, peak)) = sample else { return 1000 };
+        let sample = self.latency.load(Ordering::Relaxed);
+        if sample == 0 {
+            return 1000;
+        }
+        let (last, peak) = ((sample >> PEAK_BITS) - 1, sample & ((1 << PEAK_BITS) - 1));
         // Let an unused origin recover from an old spike. The resting estimate is 1 ms.
-        let age = now.saturating_duration_since(last).as_secs().min(32);
+        let age = (millis(now).saturating_sub(last) / 1000).min(32);
         1000u64.saturating_add_signed(((peak as i64) - 1000) >> age)
+    }
+
+    /// Whether a failed connect still keeps the server out at `now`, in milliseconds.
+    fn is_marked(&self, now: u64) -> bool {
+        self.retry_after.load(Ordering::Relaxed) > now
     }
 }
 
@@ -40,12 +68,13 @@ impl Ticket {
     pub fn observe(&self, start: Instant, now: Instant) {
         let sample = now.saturating_duration_since(start).as_micros().clamp(1, 60_000_000) as u64;
         let peak = sample.max((7 * self.load.estimate(now) + sample) / 8);
-        *self.load.latency.lock().unwrap_or_else(PoisonError::into_inner) = Some((now, peak));
+        let packed = ((millis(now) + 1) << PEAK_BITS) | peak.min((1 << PEAK_BITS) - 1);
+        self.load.latency.store(packed, Ordering::Relaxed);
     }
 
     pub fn failed(&self, now: Instant) {
-        *self.load.retry_after.lock().unwrap_or_else(PoisonError::into_inner) =
-            Some(now + Duration::from_secs(2));
+        let until = millis(now + Duration::from_secs(2));
+        self.load.retry_after.store(until, Ordering::Relaxed);
     }
 }
 
@@ -64,10 +93,13 @@ impl Loads {
     }
 }
 
+#[derive(Clone)]
 struct Target {
     server: Server,
     load: Arc<Load>,
-    admitted: u64,
+    /// The requests this server was given since the pool was loaded. The copies of a
+    /// pool share the count.
+    admitted: Arc<AtomicU64>,
     /// An operator took the server out of rotation for new flows (SID 0018).
     drained: bool,
     /// A command added the server; the file does not have it.
@@ -76,6 +108,8 @@ struct Target {
     file_weight: Option<u32>,
     /// The part of the rendezvous ranking that depends on the name alone (SID 0019).
     rank_seed: u64,
+    /// The sticky token of the server, in a pool that is sticky by cookie.
+    token: Option<crate::sticky::Token>,
 }
 
 impl Target {
@@ -87,11 +121,12 @@ impl Target {
         Self {
             server,
             load,
-            admitted: 0,
+            admitted: Arc::default(),
             drained: false,
             added: false,
             file_weight: None,
             rank_seed,
+            token: None,
         }
     }
 
@@ -107,7 +142,7 @@ impl Target {
             let scale = u128::from(weight);
             (
                 target.load.active.load(Ordering::Relaxed) as u128 * scale,
-                u128::from(target.admitted) * scale,
+                u128::from(target.admitted.load(Ordering::Relaxed)) * scale,
             )
         };
         (self.server.backup, score(self, other.weight(ramping)))
@@ -115,9 +150,16 @@ impl Target {
     }
 }
 
+/// How often a reservation chooses again when another thread took the last place of
+/// the server it chose.
+const CROWDED: usize = 8;
+
+#[derive(Clone)]
 pub(crate) struct Pool {
     targets: Vec<Target>,
-    scheduler: Scheduler,
+    scheduler: Arc<Scheduler>,
+    /// The ranking table of source stickiness, when the pool has it (SID 0019).
+    ranks: Option<Arc<[extra::Slot]>>,
     /// The traffic options of SID 0019.
     pub policy: Arc<crate::PoolPolicy>,
     pub proxy_v2: Option<crate::proxy::Spec>,
@@ -136,9 +178,10 @@ impl Pool {
         let protocol = backend.protocol;
         let targets =
             backend.servers.into_iter().map(|s| Target::new(s, protocol, loads)).collect();
-        Self {
+        let mut pool = Self {
             targets,
-            scheduler: backend.scheduler,
+            scheduler: Arc::new(backend.scheduler),
+            ranks: None,
             policy: backend.policy,
             proxy_v2: backend.proxy_v2,
             choices: RandomState::new(),
@@ -146,11 +189,13 @@ impl Pool {
             health: backend.health,
             adapted: backend.origin.is_some(),
             removed: Vec::new(),
-        }
+        };
+        pool.rank();
+        pool
     }
 
     pub fn reserve(
-        &mut self,
+        &self,
         now: Instant,
         peer: SocketAddr,
         vip: SocketAddr,
@@ -160,26 +205,50 @@ impl Pool {
     }
 
     /// Reserves a place on a server that `wish` allows (SID 0019).
+    ///
+    /// Many threads reserve at once. A thread counts itself on the server it chose and
+    /// then looks at the count: when another thread took the last place meanwhile, it
+    /// gives the place back and chooses again. So a server never serves more than its
+    /// limit.
     pub fn reserve_with(
-        &mut self,
+        &self,
         now: Instant,
         peer: SocketAddr,
         vip: SocketAddr,
         regime: crate::Regime,
         wish: &Wish<'_>,
     ) -> Option<Ticket> {
+        for _ in 0..CROWDED {
+            let target = &self.targets[self.pick(now, peer, vip, regime, wish)?];
+            if target.load.active.fetch_add(1, Ordering::Relaxed) >= target.server.limit {
+                target.load.active.fetch_sub(1, Ordering::Relaxed);
+                continue;
+            }
+            target.admitted.fetch_add(1, Ordering::Relaxed);
+            // An HTTP exchange enters the pool's protocol adapter when it has one.
+            let addr = target.server.via.unwrap_or(target.server.addr);
+            return Some(Ticket { addr, load: Arc::clone(&target.load) });
+        }
+        None
+    }
+
+    /// The index of the server that the scheduler and `wish` choose now.
+    fn pick(
+        &self,
+        now: Instant,
+        peer: SocketAddr,
+        vip: SocketAddr,
+        regime: crate::Regime,
+        wish: &Wish<'_>,
+    ) -> Option<usize> {
         let ramping = self.ramp(now);
+        let clock = millis(now);
         let available = |target: &Target| {
             target.server.addr != vip
                 && !target.drained
                 && target.server.healthy.as_ref().is_none_or(|h| h.load(Ordering::Relaxed))
                 && target.load.active.load(Ordering::Relaxed) < target.server.limit
-                && target
-                    .load
-                    .retry_after
-                    .lock()
-                    .unwrap_or_else(PoisonError::into_inner)
-                    .is_none_or(|deadline| deadline <= now)
+                && !target.load.is_marked(clock)
                 && wish.allows(target)
         };
         // Passive health keeps a server out only while another can serve (SID 0019).
@@ -188,7 +257,7 @@ impl Pool {
         let prefer_local = regime == crate::Regime::WideArea
             && self.targets.iter().any(|t| !t.server.remote && available(t));
         let eligible = |t: &Target| available(t) && !(prefer_local && t.server.remote);
-        let (table, peak) = match &self.scheduler {
+        let (table, peak) = match &*self.scheduler {
             Scheduler::Maglev { table, peak_fallback } => (Some(table), *peak_fallback),
             Scheduler::Adaptive(table) => {
                 ((regime != crate::Regime::Standalone).then_some(table), true)
@@ -210,8 +279,8 @@ impl Pool {
         // A sticky server serves its client whenever it is eligible (SID 0019).
         let sticky = wish.sticky.filter(|&index| self.targets.get(index).is_some_and(eligible));
         let sticky = sticky.or_else(|| self.home(wish.client.unwrap_or(peer.ip()), eligible));
-        let index = sticky.or(primary).or_else(|| {
-            if matches!(self.scheduler, Scheduler::RoundRobin) {
+        sticky.or(primary).or_else(|| {
+            if matches!(*self.scheduler, Scheduler::RoundRobin) {
                 return self.in_turn(ramping, eligible);
             }
             if peak {
@@ -225,13 +294,7 @@ impl Pool {
                     |best, next| if next.1.preferred_to(best.1, ramping) { next } else { best },
                 )
                 .map(|(i, _)| i)
-        })?;
-        let target = &mut self.targets[index];
-        target.load.active.fetch_add(1, Ordering::Relaxed);
-        target.admitted = target.admitted.saturating_add(1);
-        // An HTTP exchange enters the pool's protocol adapter when it has one.
-        let addr = target.server.via.unwrap_or(target.server.addr);
-        Some(Ticket { addr, load: Arc::clone(&target.load) })
+        })
     }
 
     fn choose_two(
@@ -285,7 +348,7 @@ impl Pool {
 
     /// Why the membership and the weights of this pool change only by reload, if they do.
     pub fn fixed(&self) -> Option<&'static str> {
-        match self.scheduler {
+        match *self.scheduler {
             Scheduler::Maglev { .. } | Scheduler::Adaptive(_) => {
                 Some("places clients by a table that every node builds from the file")
             }
@@ -363,6 +426,7 @@ impl Pool {
         target.server.weight = weight;
         // Setting the file's weight again leaves nothing changed.
         target.file_weight = (weight != file && !target.added).then_some(file);
+        self.rank();
         true
     }
 
@@ -386,6 +450,7 @@ impl Pool {
         let mut target = Target::new(server, self.protocol, loads);
         target.added = true;
         self.targets.push(target);
+        self.rank();
     }
 
     /// Removes a server and returns its address. Its tickets stay valid.
@@ -395,6 +460,7 @@ impl Pool {
         if !target.added {
             self.removed.push(target.server.name);
         }
+        self.rank();
         Some(target.server.addr)
     }
 }

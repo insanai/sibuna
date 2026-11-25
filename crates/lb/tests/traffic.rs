@@ -433,3 +433,123 @@ fn round_robin_skips_a_server_that_is_out_and_keeps_backups_for_last() {
     let second = routes.retry(&first).unwrap();
     assert_eq!(routes.retry(&second).unwrap().address().port(), 9402);
 }
+
+#[test]
+fn threads_that_choose_at_once_never_pass_the_limit_of_a_server() {
+    let vip = free::tcp();
+    let source = format!(
+        r#"{{"frontends":{{"web":{{"proto":"http","binds":["{vip}"],"default_backend":"app"}}}},
+        "backends":{{"app":{{"mode":"http","servers":[
+        {{"name":"a","addr":"127.0.0.1:9400","max_flows":3}},
+        {{"name":"b","addr":"127.0.0.1:9401","max_flows":2}}]}}}}}}"#
+    );
+    let edge = Edge::bind(Config::parse(source.as_bytes()).unwrap()).unwrap();
+    let routes = edge.http_routes();
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    // The reservations that the threads hold on `a` and on `b` at one moment.
+    let (held, over) = ([AtomicUsize::new(0), AtomicUsize::new(0)], AtomicUsize::new(0));
+    std::thread::scope(|scope| {
+        for _ in 0..8 {
+            scope.spawn(|| {
+                for _ in 0..20_000 {
+                    let Some(target) = routes.choose(&query(vip)) else { continue };
+                    let server = usize::from(target.address().port() - 9400);
+                    if held[server].fetch_add(1, Ordering::SeqCst) >= [3, 2][server] {
+                        over.fetch_add(1, Ordering::SeqCst);
+                    }
+                    std::thread::yield_now();
+                    held[server].fetch_sub(1, Ordering::SeqCst);
+                    drop(target);
+                }
+            });
+        }
+    });
+    // No reservation was handed out above a limit, and every place came back.
+    assert_eq!(over.load(Ordering::SeqCst), 0);
+    let flows = |name: &str| edge.servers().iter().find(|s| s.name == name).unwrap().flows;
+    assert_eq!((flows("a"), flows("b")), (0, 0));
+    let kept: Vec<_> = (0..8).filter_map(|_| routes.choose(&query(vip))).collect();
+    assert_eq!(kept.len(), 5);
+    assert_eq!((flows("a"), flows("b")), (3, 2));
+}
+
+#[test]
+fn a_change_reaches_a_thread_that_has_read_the_table_before() {
+    let (mut edge, vip) = edge(2, "");
+    let routes = edge.http_routes();
+    let (ask, asked) = std::sync::mpsc::channel::<()>();
+    let (answer, answered) = std::sync::mpsc::channel();
+    std::thread::scope(|scope| {
+        // The other thread keeps its own snapshot of the table between its requests.
+        let (routes, answer) = (&routes, &answer);
+        scope.spawn(move || {
+            while asked.recv().is_ok() {
+                let ports: BTreeSet<u16> =
+                    (0..8).map(|_| routes.choose(&query(vip)).unwrap().address().port()).collect();
+                answer.send(ports).unwrap();
+            }
+        });
+        let other = || {
+            ask.send(()).unwrap();
+            answered.recv().unwrap()
+        };
+        assert_eq!(other(), BTreeSet::from([9400, 9401]));
+        edge.set_server_state("app", "s0", sibuna_lb::ServerState::Drain).unwrap();
+        assert_eq!(other(), BTreeSet::from([9401]));
+        assert_eq!(ports(routes, vip, 8), BTreeSet::from([9401]));
+        edge.set_server_state("app", "s0", sibuna_lb::ServerState::Ready).unwrap();
+        // The server that was away has admitted fewer requests, so it is served first.
+        assert!(other().contains(&9400));
+        edge.set_server_weight("app", "s1", 3).unwrap();
+        edge.remove_server("app", "s0").unwrap();
+        assert_eq!(other(), BTreeSet::from([9401]));
+        drop(ask);
+    });
+}
+
+/// The port that source stickiness gives each of 4096 client addresses.
+fn homes(routes: &HttpRoutes, vip: SocketAddr) -> Vec<u16> {
+    let from = |client: u16| Query {
+        peer: SocketAddr::from(([203, 0, (client >> 8) as u8, client as u8], 40_000)),
+        ..query(vip)
+    };
+    (0..4096).map(|client| routes.choose(&from(client)).unwrap().address().port()).collect()
+}
+
+#[test]
+fn the_ranking_table_shares_clients_by_weight_and_moves_only_those_of_a_server_that_left() {
+    let servers = [(1, false), (1, false), (2, false), (4, false), (1, false), (1, false)];
+    let (mut edge, vip) = weighted(r#""sticky":"source","#, &servers);
+    let routes = edge.http_routes();
+    let before = homes(&routes, vip);
+    assert_eq!(before, homes(&routes, vip));
+    let share = |port: u16| before.iter().filter(|&&home| home == port).count();
+    // Ten parts of weight: a part is 410 clients, give or take the grain of the table.
+    assert!((300..520).contains(&share(9400)), "{}", share(9400));
+    assert!((650..1000).contains(&share(9402)), "{}", share(9402));
+    assert!((1400..1900).contains(&share(9403)), "{}", share(9403));
+    // Five of the six servers leave, more than a slot of the table keeps. Every client
+    // then has the one that remains, and returns home when the others return.
+    for name in ["s0", "s1", "s2", "s3"] {
+        edge.set_server_state("app", name, sibuna_lb::ServerState::Drain).unwrap();
+    }
+    let after = homes(&routes, vip);
+    for (home, refuge) in before.iter().zip(&after) {
+        let stays = [9404, 9405].contains(home);
+        assert_eq!(home == refuge, stays, "{home} {refuge}");
+        assert!([9404, 9405].contains(refuge));
+    }
+    edge.set_server_state("app", "s5", sibuna_lb::ServerState::Drain).unwrap();
+    assert!(homes(&routes, vip).iter().all(|&port| port == 9404));
+    for name in ["s0", "s1", "s2", "s3", "s5"] {
+        edge.set_server_state("app", name, sibuna_lb::ServerState::Ready).unwrap();
+    }
+    assert_eq!(before, homes(&routes, vip));
+    // A new weight rebuilds the table: the server gains clients and loses none.
+    edge.set_server_weight("app", "s0", 8).unwrap();
+    let heavier = homes(&routes, vip);
+    for (home, now) in before.iter().zip(&heavier) {
+        assert!(home == now || *now == 9400, "{home} {now}");
+    }
+    assert!(heavier.iter().filter(|&&port| port == 9400).count() > 2 * share(9400));
+}
