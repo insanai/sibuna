@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-11-25 09:13+0000\n"
 "PO-Revision-Date: 2026-10-16 05:16+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -55,7 +55,11 @@ msgid "How does Sibuna compare?"
 msgstr "Sibuna की तुलना कैसी है?"
 
 #: ../../learning.rst:15
-msgid "Part II: lineage and the feature table; Part VIII: measurements."
+#, fuzzy
+#| msgid "Part II: lineage and the feature table; Part VIII: measurements."
+msgid ""
+"Part II: lineage and the feature tables; Part X: measurements beside "
+"Anubis and HAProxy."
 msgstr "भाग II: परंपरा और सुविधाओं की तालिका; भाग VIII: मापन।"
 
 #: ../../learning.rst:16
@@ -83,74 +87,121 @@ msgid "Part VII: worker messages, memory, and calibration."
 msgstr "भाग VII: वर्कर संदेश, मेमोरी और कैलिब्रेशन।"
 
 #: ../../learning.rst:22
+msgid "How does one node balance load?"
+msgstr ""
+
+#: ../../learning.rst:23
+msgid ""
+"Part VIII: flows, workers, choosing a server, admission at the socket, "
+"hooks."
+msgstr ""
+
+#: ../../learning.rst:24
+msgid "How do several nodes act as one?"
+msgstr ""
+
+#: ../../learning.rst:25
+msgid "Part IX: the mesh, shared affinity, fleet caps, forwarding, handoff."
+msgstr ""
+
+#: ../../learning.rst:26
 msgid "How do we know it works?"
 msgstr "हम कैसे जानें कि यह काम करता है?"
 
-#: ../../learning.rst:23
-msgid "Part VIII: three harnesses and what each excludes."
+#: ../../learning.rst:27
+#, fuzzy
+#| msgid "Part VIII: three harnesses and what each excludes."
+msgid "Part X: three harnesses and what each excludes."
 msgstr "भाग VIII: तीन हार्नेस और हर एक किन बातों को बाहर रखता है।"
 
-#: ../../learning.rst:24
+#: ../../learning.rst:28
 msgid "How do we run it?"
 msgstr "हम इसे कैसे चलाएँ?"
 
-#: ../../learning.rst:25
-msgid "Part IX: flags, topologies, policy, storage, clustering, packaging."
+#: ../../learning.rst:29
+#, fuzzy
+#| msgid ""
+#| "Part IX: flags, topologies, policy, storage, clustering, packaging."
+msgid ""
+"Part XI: flags, the edge topology, certificates, policy, storage, "
+"clustering, packaging."
 msgstr "भाग IX: फ़्लैग, टोपोलॉजी, नीति, स्टोरेज, क्लस्टरिंग, पैकेजिंग।"
 
-#: ../../learning.rst:26
+#: ../../learning.rst:30
 msgid "What was that error?"
 msgstr "वह त्रुटि क्या थी?"
 
-#: ../../learning.rst:27
-msgid "Part X: endpoints, statuses, errors, schema; Part XI: the card."
+#: ../../learning.rst:31
+#, fuzzy
+#| msgid "Part X: endpoints, statuses, errors, schema; Part XI: the card."
+msgid "Part XII: endpoints, statuses, errors, schema; Part XIII: the card."
 msgstr "भाग X: एंडपॉइंट, स्टेटस, त्रुटियाँ, स्कीमा; भाग XI: कार्ड।"
 
-#: ../../learning.rst:29
+#: ../../learning.rst:33
 msgid "Three Reading Paths"
 msgstr "पढ़ने के तीन रास्ते"
 
-#: ../../learning.rst:32
+#: ../../learning.rst:36
+#, fuzzy
+#| msgid ""
+#| "*Learning the design.* Parts I to IV in order, then the worked trace "
+#| "in Part VI, then Part VII. Do the exercises; compare with the "
+#| "solutions at the back only afterwards. Return to Part V when a trace "
+#| "reaches a shared table or a borrowed slice."
 msgid ""
 "*Learning the design.* Parts I to IV in order, then the worked trace in "
-"Part VI, then Part VII. Do the exercises; compare with the solutions at "
-"the back only afterwards. Return to Part V when a trace reaches a shared "
-"table or a borrowed slice."
+"Part VI, then Part VII. For the load balancer, Part VIII and then Part "
+"IX; they need only Part I and the ownership ideas of Part V. Do the "
+"exercises; compare with the solutions at the back only afterwards. Return "
+"to Part V when a trace reaches a shared table or a borrowed slice."
 msgstr ""
 "*डिज़ाइन सीखना।* भाग I से IV क्रम से, फिर भाग VI में हल किया गया ट्रेस, "
 "फिर भाग VII। अभ्यास हल करें; पुस्तक के अंत में दिए समाधानों से तुलना उसके "
 "बाद ही करें। जब कोई ट्रेस किसी साझा टेबल या उधार ली गई स्लाइस तक पहुँचे, "
 "तो भाग V पर लौटें।"
 
-#: ../../learning.rst:33
+#: ../../learning.rst:37
+#, fuzzy
+#| msgid ""
+#| "*Operating a deployment.* Part IX, then Part XI, with Part X open for "
+#| "lookups. Read the \"Feature Comparison\" in Part II before choosing a "
+#| "surface, and the \"Whole-Product Comparison\" in Part VIII before "
+#| "choosing worker and connection limits."
 msgid ""
-"*Operating a deployment.* Part IX, then Part XI, with Part X open for "
-"lookups. Read the \"Feature Comparison\" in Part II before choosing a "
-"surface, and the \"Whole-Product Comparison\" in Part VIII before "
-"choosing worker and connection limits."
+"*Operating a deployment.* Part XI, then Part XIII, with Part XII open for "
+"lookups. Read Parts VIII and IX for the reasons behind the settings. Read "
+"the \"Feature Comparison\" in Part II before choosing a surface, and the "
+"\"Whole-Product Comparison\" in Part X before choosing worker and "
+"connection limits."
 msgstr ""
 "*डिप्लॉयमेंट चलाना।* भाग IX, फिर भाग XI, और जानकारी खोजने के लिए भाग X "
 "खुला रखें। सतह चुनने से पहले भाग II में \"सुविधाओं की तुलना\" पढ़ें, और "
 "वर्कर तथा कनेक्शन सीमाएँ चुनने से पहले भाग VIII में \"पूरे उत्पादों की "
 "तुलना\" पढ़ें।"
 
-#: ../../learning.rst:34
+#: ../../learning.rst:38
+#, fuzzy
+#| msgid ""
+#| "*Changing the code.* Parts V and VI, the source anchors in every "
+#| "chapter, and the SID records they cite. Part VIII explains which "
+#| "harness will catch a regression in what we touched; Part II lists the "
+#| "constraints a change must keep."
 msgid ""
 "*Changing the code.* Parts V and VI, the source anchors in every chapter, "
-"and the SID records they cite. Part VIII explains which harness will "
-"catch a regression in what we touched; Part II lists the constraints a "
-"change must keep."
+"and the SID records they cite. Part X explains which harness will catch a "
+"regression in what we touched; Part II lists the constraints a change "
+"must keep."
 msgstr ""
 "*कोड बदलना।* भाग V और VI, हर अध्याय के स्रोत-संदर्भ, और वे SID रिकॉर्ड "
 "जिनका वे हवाला देते हैं। भाग VIII बताता है कि जो कुछ हमने बदला है उसमें "
 "रिग्रेशन कौन-सा हार्नेस पकड़ेगा; भाग II उन शर्तों की सूची देता है जिन्हें "
 "किसी बदलाव को बनाए रखना चाहिए।"
 
-#: ../../learning.rst:36
+#: ../../learning.rst:40
 msgid "Conventions"
 msgstr "परिपाटियाँ"
 
-#: ../../learning.rst:39
+#: ../../learning.rst:43
 msgid ""
 "A *worked example* shows the intermediate states, not just the answer. An "
 "*exercise* asks us to change one assumption. Hints suggest a first step; "
@@ -169,17 +220,30 @@ msgstr ""
 "का नाम देते हैं; \"अपरिवर्तनीय नियम समझाएँ\" शीर्षक वाले बॉक्स हमसे विचार "
 "को वापस समझाने को कहते हैं।"
 
-#: ../../learning.rst:41
+#: ../../learning.rst:45
+#, fuzzy
+#| msgid ""
+#| "In equations, :math:`b` is Hashcash difficulty in bits, :math:`n` is "
+#| "sequential-work depth, :math:`t` is the number of openings, :math:`p` "
+#| "is success probability per trial, :math:`K` is the number of trials, "
+#| ":math:`T` is a rate limiter's emission interval, :math:`\\tau` its "
+#| "burst tolerance, and :math:`Q` is a queue capacity. A symbol is local "
+#| "to its section unless stated otherwise. Nanoseconds and requests per "
+#| "second in Part VIII are measurements from a named run. Numbers in "
+#| "worked examples are chosen inputs, not benchmark claims. Statistical "
+#| "models state their assumptions before drawing conclusions."
 msgid ""
 "In equations, :math:`b` is Hashcash difficulty in bits, :math:`n` is "
 "sequential-work depth, :math:`t` is the number of openings, :math:`p` is "
 "success probability per trial, :math:`K` is the number of trials, "
 ":math:`T` is a rate limiter's emission interval, :math:`\\tau` its burst "
-"tolerance, and :math:`Q` is a queue capacity. A symbol is local to its "
-"section unless stated otherwise. Nanoseconds and requests per second in "
-"Part VIII are measurements from a named run. Numbers in worked examples "
-"are chosen inputs, not benchmark claims. Statistical models state their "
-"assumptions before drawing conclusions."
+"tolerance, and :math:`Q` is a queue capacity. In Parts VIII and IX, "
+":math:`n` is the number of servers or nodes and :math:`c` the bound of a "
+"bounded load. A symbol is local to its section unless stated otherwise. "
+"Nanoseconds and requests per second in Part X are measurements from a "
+"named run. Numbers in worked examples are chosen inputs, not benchmark "
+"claims. Statistical models state their assumptions before drawing "
+"conclusions."
 msgstr ""
 "समीकरणों में :math:`b` बिट में Hashcash की कठिनाई है, :math:`n` अनुक्रमिक "
 "कार्य की गहराई है, :math:`t` ओपनिंग की संख्या है, :math:`p` प्रति प्रयास "

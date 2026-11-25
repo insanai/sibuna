@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-11-25 09:13+0000\n"
 "PO-Revision-Date: 2026-10-16 05:24+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,9 +36,14 @@ msgstr "第 I 部分：成本与概率"
 
 #: ../../solutions.rst:9
 msgid ""
-"**1.1.** One million trials divided among 100 requests is 10,000 trials per request. Sharing a session does not change that arithmetic if the aggregate request count stays 100. The actual system must decide whether a second process can satisfy the fingerprint and routing bindings; those conditions are outside the amortization equation."
+"**1.1.** One million trials divided among 100 requests is 10,000 trials "
+"per request. Sharing a session does not change that arithmetic if the "
+"aggregate request count stays 100. The actual system must decide whether "
+"a second process can satisfy the fingerprint and routing bindings; those "
+"conditions are outside the amortization equation."
 msgstr ""
-"**1.1.** 一百万次尝试分摊到 100 个请求，每个请求 10,000 次尝试。只要总请求数仍是 100，共享会话就不会改变这个算式。实际系统必须判断第二个进程能否满足指纹和路由绑定；这些条件不在分摊等式之内。"
+"**1.1.** 一百万次尝试分摊到 100 个请求，每个请求 10,000 次尝试。只要总请求数仍是 "
+"100，共享会话就不会改变这个算式。实际系统必须判断第二个进程能否满足指纹和路由绑定；这些条件不在分摊等式之内。"
 
 #: ../../solutions.rst:11
 msgid ""
@@ -87,10 +92,23 @@ msgstr ""
 "``--cluster-node``）的 Sibuna Shield；起决定作用的是“运行形式”“检查”和“多节点”这几行。"
 
 #: ../../solutions.rst:20
+msgid ""
+"**2.3.** A removal must move the clients of the removed server, about 250 "
+"of the 1,000. Under rendezvous hashing exactly those move, each to the "
+"remaining server with the highest score for it, and no other client "
+"moves. A rebuilt Maglev table moves those 250 and a small share of the "
+"others, because the order in which servers claim slots changes; Part VIII "
+"measured 0.08% to 0.28% extra slots. Peer forwarding chose rendezvous "
+"hashing because it moves no client of a node that did not change, and "
+"because each node computes the owner from the list of nodes alone, with "
+"no table to rebuild and publish."
+msgstr ""
+
+#: ../../solutions.rst:22
 msgid "Part III: Cryptography"
 msgstr "第 III 部分：密码学"
 
-#: ../../solutions.rst:23
+#: ../../solutions.rst:25
 msgid ""
 "**3.0.** The tail estimate is :math:`e^{-4.6} \\approx 0.010`. Dividing "
 "the nonce space changes the rate at which trials are completed, not the "
@@ -100,7 +118,7 @@ msgstr ""
 "**3.0.** 尾部估计为 :math:`e^{-4.6} \\approx 0.010`。划分 nonce "
 "空间改变的是完成尝试的速率，而不是每次独立尝试的成功概率。重复的尝试或协调工作，可能使真实的并行实现效率更低。"
 
-#: ../../solutions.rst:25
+#: ../../solutions.rst:27
 msgid ""
 "**3.1.** If each commitment succeeds with probability :math:`q`, all "
 ":math:`g` fail with probability :math:`(1-q)^g`. At least one succeeds "
@@ -112,7 +130,7 @@ msgstr ""
 ":math:`(1-q)^g`，至少一个成功的概率为 "
 ":math:`1-(1-q)^g`。这个公式没有计入构造承诺的成本、查询预算、尝试之间的依赖，以及找到具有特定接受概率的承诺所需的工作。"
 
-#: ../../solutions.rst:27
+#: ../../solutions.rst:29
 msgid ""
 "**3.2.** At depth 17 and 16 openings, the proof has :math:`32(1 + 16 "
 "\\times 18) = 9248` bytes. At 32 openings it has :math:`32(1 + 32 \\times "
@@ -122,7 +140,7 @@ msgstr ""
 "**3.2.** 在深度 17、16 次揭示时，证明有 :math:`32(1 + 16 \\times 18) = 9248` 字节。32 "
 "次揭示时有 :math:`32(1 + 32 \\times 18) = 18464` 字节。揭示部分的字节数翻倍；32 字节的根仍然只发送一次。"
 
-#: ../../solutions.rst:29
+#: ../../solutions.rst:31
 msgid ""
 "**3.3.** Without the work level a session earned on a cheap route would "
 "admit a request to an expensive one that demanded more work; without "
@@ -138,11 +156,11 @@ msgstr ""
 "``rule_hash``，上游就无法得知是哪条规则准入了该客户端；没有 ``fingerprint``，复制到另一台机器上的 Cookie "
 "也会被接受。标签必须覆盖全部五个字段，因为任何留在标签之外的字段都可以被随意修改，而验证者无从察觉。"
 
-#: ../../solutions.rst:31
+#: ../../solutions.rst:33
 msgid "Part IV: Protocol"
 msgstr "第 IV 部分：协议"
 
-#: ../../solutions.rst:34
+#: ../../solutions.rst:36
 msgid ""
 "**4.1.** Both browsers share the address and User-Agent, so they share "
 "the fingerprint, the rate-limit cell, and the ban slot. They do not share "
@@ -157,11 +175,11 @@ msgstr ""
 "之后的攻击者需要从另一台机器上读取它：此时指纹会匹配，这就是为什么在共享地址上，``HttpOnly`` 和 ``SameSite`` "
 "比绑定更重要。"
 
-#: ../../solutions.rst:36
+#: ../../solutions.rst:38
 msgid "Part V: State and Ordering"
 msgstr "第 V 部分：状态与顺序"
 
-#: ../../solutions.rst:39
+#: ../../solutions.rst:41
 msgid ""
 "**5.1.** The head and the first part of the body (up to what fits after "
 "the head in 64 KB) are in the connection buffer and are sent with "
@@ -176,17 +194,24 @@ msgstr ""
 "为单位从客户端读取器读取它们，并把每一块写给源站。头部必须先发送，因为源站在请求体之前需要 "
 "``Content-Length``，而且审计头也是头部的一部分。"
 
-#: ../../solutions.rst:41
-msgid ""
-"**5.2.** The emission interval is 100 ms and burst tolerance is 9,900 ms. An idle client may send 100 requests immediately, then one per 100 ms. Through the inclusive endpoint at 3,000 ms, the bound is 130. A fixed 10-second counter would allow 100 in the first window and 100 more the instant the window rolls over; a sliding log would allow exactly 100 in any 10 seconds but must store 100 timestamps per client."
-msgstr ""
-"**5.2.** 发射间隔为 100 ms，突发容限为 9,900 ms。一个空闲的客户端可以立即发送 100 个请求，然后每 100 ms 发送一个。算上 3,000 ms 这个端点，上界为 130。固定的 10 秒计数器会在第一个窗口中允许 100 个请求，并在窗口滚动的那一刻再允许 100 个；滑动日志在任意 10 秒内恰好允许 100 个，但必须为每个客户端保存 100 个时间戳。"
-
 #: ../../solutions.rst:43
+msgid ""
+"**5.2.** The emission interval is 100 ms and burst tolerance is 9,900 ms. "
+"An idle client may send 100 requests immediately, then one per 100 ms. "
+"Through the inclusive endpoint at 3,000 ms, the bound is 130. A fixed "
+"10-second counter would allow 100 in the first window and 100 more the "
+"instant the window rolls over; a sliding log would allow exactly 100 in "
+"any 10 seconds but must store 100 timestamps per client."
+msgstr ""
+"**5.2.** 发射间隔为 100 ms，突发容限为 9,900 ms。一个空闲的客户端可以立即发送 100 个请求，然后每 100 ms "
+"发送一个。算上 3,000 ms 这个端点，上界为 130。固定的 10 秒计数器会在第一个窗口中允许 100 个请求，并在窗口滚动的那一刻再允许 "
+"100 个；滑动日志在任意 10 秒内恰好允许 100 个，但必须为每个客户端保存 100 个时间戳。"
+
+#: ../../solutions.rst:45
 msgid "Part VI: Algorithms"
 msgstr "第 VI 部分：算法"
 
-#: ../../solutions.rst:46
+#: ../../solutions.rst:48
 msgid ""
 "**6.1.** An apostrophe in a name and an ordinary parameter named "
 "``order`` do not establish an SQL expression. A substring detector could "
@@ -197,7 +222,7 @@ msgstr ""
 "**6.1.** 名字中的撇号，以及一个名为 ``order`` 的普通参数，都不能构成 SQL "
 "表达式。子串检测器可能把其中任何一个误认为语法。结构检测器会寻找额外的证据，包括运算符和字面量之间的关系。它仍然是有界的检查，而不是针对每种应用语言的解析器。"
 
-#: ../../solutions.rst:48
+#: ../../solutions.rst:50
 msgid ""
 "**6.2.** LDAP filters are built from parentheses, ``|``, ``&``, ``!``, "
 "and ``=``. The detector needs a byte class for ``(`` and ``)`` (new) and "
@@ -210,23 +235,204 @@ msgstr ""
 "的字节类（新增），并可以复用现有的 ``=`` 类以及用于 ``|`` 和 ``&`` 的 shell 分隔符类。它应当在 ``)(`` 或 "
 "``(|(`` 这样的 *序列* 上触发，而不是在单个括号上触发，原因与 SQL 检测器要求引号或恒真式相同。"
 
-#: ../../solutions.rst:50
+#: ../../solutions.rst:52
 msgid "Part VII: Browser Engine"
 msgstr "第 VII 部分：浏览器引擎"
 
-#: ../../solutions.rst:53
-msgid ""
-"**7.1.** At the default 16 work bits (depth 13 with 16 openings), the supposed 20 ms in WebAssembly become :math:`50 \\times 20 = 1000` ms, one second, in JavaScript on the laptop, and four seconds on the slower phone. The figures are suppositions; we measure our own clients' devices before we set a policy. A sensible policy: let the page forward the ``fallback`` message, log it server-side as a metric, and lower the difficulty for a rule that matches clients known to block WebAssembly rather than for everyone."
-msgstr ""
-"**7.1.** 在默认的 16 个工作比特下（深度 13，16 次揭示），假设在 WebAssembly 中需要 20 ms，那么在笔记本电脑上用 JavaScript 就需要 :math:`50 \\times 20 = 1000` ms，即一秒，在较慢的手机上则需要四秒。这些数字只是假设；在制定策略之前，我们要测量自己客户的设备。一条合理的策略是：让页面转发 ``fallback`` 消息，在服务器端将其记录为一个指标，并只为匹配已知会阻止 WebAssembly 的客户端的规则降低难度，而不是对所有人降低。"
-
 #: ../../solutions.rst:55
-msgid "Part VIII: Evaluation"
+msgid ""
+"**7.1.** At the default 16 work bits (depth 13 with 16 openings), the "
+"supposed 20 ms in WebAssembly become :math:`50 \\times 20 = 1000` ms, one "
+"second, in JavaScript on the laptop, and four seconds on the slower "
+"phone. The figures are suppositions; we measure our own clients' devices "
+"before we set a policy. A sensible policy: let the page forward the "
+"``fallback`` message, log it server-side as a metric, and lower the "
+"difficulty for a rule that matches clients known to block WebAssembly "
+"rather than for everyone."
+msgstr ""
+"**7.1.** 在默认的 16 个工作比特下（深度 13，16 次揭示），假设在 WebAssembly 中需要 20 "
+"ms，那么在笔记本电脑上用 JavaScript 就需要 :math:`50 \\times 20 = 1000` "
+"ms，即一秒，在较慢的手机上则需要四秒。这些数字只是假设；在制定策略之前，我们要测量自己客户的设备。一条合理的策略是：让页面转发 "
+"``fallback`` 消息，在服务器端将其记录为一个指标，并只为匹配已知会阻止 WebAssembly "
+"的客户端的规则降低难度，而不是对所有人降低。"
+
+#: ../../solutions.rst:57
+msgid "Part VIII: The Edge Load Balancer"
+msgstr ""
+
+#: ../../solutions.rst:60
+msgid ""
+"**8.1.** Under modulo hashing, a step from 10 to 9 servers keeps a flow "
+"only when :math:`h \\bmod 10` and :math:`h \\bmod 9` name the same "
+"survivor. By the Chinese remainder theorem each of the 90 pairs has "
+"probability :math:`1/90`, and each of the 9 survivors owns one matching "
+"pair, so :math:`9/90 = 10\\%` stay and 90% move. Under rendezvous hashing "
+"only the departed server's clients move: 10%. In the run reported in the "
+"chapter, Sibuna's Maglev table moved the departed server's 10.0% of the "
+"slots and 0.18% to 0.28% more. When a fifth server joins four, modulo "
+"hashing keeps the flows whose pair :math:`(h \\bmod 4, h \\bmod 5)` names "
+"one of the four old servers at both positions, :math:`4/20 = 20\\%`, and "
+"moves 80%. Rendezvous hashing moves only the clients for which the "
+"newcomer is nearer than their old server: 20% of them, all to the "
+"newcomer."
+msgstr ""
+
+#: ../../solutions.rst:62
+msgid ""
+"**8.2.** :math:`W = 4` and :math:`L + 1 = 20`. The bound of ``a`` is "
+":math:`\\lceil 1.25 \\times 20 \\times 2/4 \\rceil = \\lceil 12.5 \\rceil "
+"= 13`; that of ``b`` and ``c`` is :math:`\\lceil 6.25 \\rceil = 7`. ``b`` "
+"holds 7, which is not below 7, so the primary refuses. Least connections "
+"compares flows per unit of weight: ``a`` has :math:`9/2 = 4.5`, ``b`` has "
+"7 and ``c`` has 3, so the flow goes to ``c``, which then holds 4, within "
+"its bound of 7. Some server is always below its bound: if every server "
+":math:`i` held at least :math:`1.25 \\times 20\\, w_i / 4` flows, the "
+"three would hold at least :math:`1.25 \\times 20 = 25` flows, but they "
+"hold 19."
+msgstr ""
+
+#: ../../solutions.rst:64
+msgid ""
+"**8.3.** With the tenant field, ``tenant`` admits. If ``score`` denies or "
+"challenges, the chain ends there; suppose it admits, by its verdict or, "
+"when it fails, by its written ``on_failure: \"admit\"``. ``authz`` fails "
+"with ``unavailable``, and its default ``on_failure`` is ``deny``, so the "
+"chain ends in a denial: 403 with the reason ``hook:authz``. Without the "
+"field, ``tenant`` denies, the chain ends there with ``hook:tenant``, and "
+"the agent is never asked. An open breaker refuses without a system call, "
+"so a request costs the worker nothing for the agent; each worker sends "
+"one probe per ``open`` interval, which costs at most one ``deadline``. "
+"With ``authz`` written ``on_failure: \"admit\"`` the request with the "
+"field is admitted, and the failed agent adds no fields. The hook is then "
+"advisory: anyone who can make it fail passes it."
+msgstr ""
+
+#: ../../solutions.rst:66
+msgid ""
+"**8.4.** The mapping received 1,200 bytes, so before validation it sends "
+"at most 3,600 bytes to the client: three of the eight replies. The edge "
+"learns the source connection ID of the first long-header reply whose "
+"version is not zero and whose ID has at least 8 bytes and differs from "
+"the IDs of the Initial. The client's next datagram that carries this ID "
+"as its destination validates the mapping. The reply that carried the ID "
+"went only to the claimed address, so a sender that spoofs that address "
+"never sees it and must guess at least 64 bits, one datagram per guess. A "
+"Version Negotiation packet has version zero and repeats the IDs that the "
+"client sent; a spoofing sender knows those IDs, and if the edge learned "
+"from that packet, the sender could validate itself and lift the bound "
+"that prevents reflection."
+msgstr ""
+
+#: ../../solutions.rst:68
+msgid "Part IX: A Cluster of Edges"
+msgstr ""
+
+#: ../../solutions.rst:71
+msgid ""
+"**9.1.** C sends the lift :math:`\\max(1300, 900 + 60) = 1300`: the end "
+"of the ban it knows, and at least 60 seconds ahead. Every node that hears "
+"it admits the client and forgets A's ban. D's ban until 1,200 ends before "
+"the lift, so every node ignores it: the cut-off node cannot bring the ban "
+"back. B's new ban until 1,250 also ends before the lift. B's own firewall "
+"bans the client, but its peers ignore the datagram, so the ban holds on B "
+"only. This is the first known gap of SID 0022: a ban issued after a lift "
+"holds everywhere only when it ends after the lifted ban would have. A ban "
+"of the same length as A's, issued at second 1,000, would have ended after "
+"1,300 and held on every node."
+msgstr ""
+
+#: ../../solutions.rst:73
+msgid ""
+"**9.2.** The two entries have the same end, so the server decides: "
+"``0x91...`` is the larger hash, and B's entry wins on every node, A "
+"included, whatever the order in which the datagrams arrive. No flow "
+"moves. The flow that A placed holds a reservation on its server and never "
+"reads the table again. Only the next new flow of the client, on any node, "
+"goes to the server ``0x91...``, and only while that server is eligible. "
+"Without the server in the order, A and B would each keep their own entry "
+"forever, because neither end is later."
+msgstr ""
+
+#: ../../solutions.rst:75
+msgid ""
+"**9.3.** :math:`\\lfloor 10/4 \\rfloor = 2` with remainder 2, so A and B "
+"have base 3 and C and D base 2. D has :math:`f = 0` and :math:`r = "
+"\\max(1, \\lceil 2/4 \\rceil) = 1`, so it wants 1, with the flag. A has "
+"share 3, :math:`f = 3`, surplus 2, and gives :math:`\\min(1, \\max(2, "
+"\\lceil 3/2 \\rceil)) = 1`; B gives 1 likewise; C has :math:`f = 2`, "
+"surplus 1, and gives 1. Every peer serves the want it heard, so D "
+"receives 3 and holds a share of 5, beside 2, 2 and 1: the sum is 10. When "
+"A stops for good, its share of 2 is stranded: D still counts the 1 that A "
+"gave, and the cluster can hold at most 8 flows on the server. Nothing "
+"returns the 2 by itself. The operator removes A from ``mesh.nodes`` in "
+"every file and restarts the nodes. The new roster makes a new ledger, "
+"under a new key, with bases 4, 3 and 3; it starts unsynchronised, so new "
+"flows on the server are refused until the nodes have exchanged one "
+"status, about a second."
+msgstr ""
+
+#: ../../solutions.rst:77
+msgid ""
+"**9.4.** (a) Each client moves with probability :math:`1/5`, so about 200 "
+"of 1,000 move, all of them to the new node. (b) Only B's clients, about "
+"250, move. Each goes to the node with its second largest score among A, C "
+"and D, so each of the three receives about 83. (c) A client stays when "
+":math:`h \\bmod 4 = h \\bmod 5`. Both residues are fixed by :math:`h "
+"\\bmod 20`, and they agree only for :math:`h \\bmod 20 \\in \\{0, 1, 2, "
+"3\\}`, four residues of twenty. So about 800 clients move, against 200 "
+"under rendezvous hashing."
+msgstr ""
+
+#: ../../solutions.rst:79
+msgid ""
+"**9.5.** With eight counters for each slot, :math:`m = 8S`. At the middle "
+"of the window :math:`N = 2S` and :math:`\\lambda \\le 4 \\cdot 2S / 8S = "
+"1`. Then :math:`P(X \\ge 4) = 1 - e^{-1}(1 + 1 + \\tfrac{1}{2} + "
+"\\tfrac{1}{6}) \\approx 1 - 0.3679 \\times 2.667 \\approx 0.019`, and for "
+"all four counters :math:`0.019^4 \\approx 1.3 \\times 10^{-7}`. At the "
+"end of the window :math:`N = 4S` and :math:`\\lambda \\le 2`, which gives "
+"the :math:`4.2 \\times 10^{-4}` of the worked example. Doubling the "
+"counters halves :math:`\\lambda` and lowers the probability by more than "
+"three orders of magnitude, which is why the code asks for eight counters "
+"for each slot."
+msgstr ""
+
+#: ../../solutions.rst:81
+msgid ""
+"**9.6.** Both commands read head 7 and commit with the expected revision "
+"7. The transaction that first takes the row lock of ``edge_head`` sets "
+"the head to 8 and inserts revision 8. The other waits for the lock, then "
+"finds the head at 8; its ``UPDATE`` changes no row, and the command fails "
+"with ``DBA002 REVISION CONFLICT`` and commits nothing. The database holds "
+"revision 8 with the first change only. The second operator runs ``diff`` "
+"again: because a revision is a whole document, the difference now shows "
+"that the second source would also undo the first change. The operator "
+"merges both changes into the source and applies against revision 8. A "
+"commit conditioned on the head at the time of the commit would have "
+"succeeded on 8 and silently removed the first operator's change: a lost "
+"update that nobody saw."
+msgstr ""
+
+#: ../../solutions.rst:83
+#, fuzzy
+#| msgid "Part VIII: Evaluation"
+msgid "Part X: Evaluation"
 msgstr "第 VIII 部分：评估"
 
-#: ../../solutions.rst:58
+#: ../../solutions.rst:86
+#, fuzzy
+#| msgid ""
+#| "**8.2.** For Gate's ``admitted`` row, :math:`11.84 \\times 211{,}345 / "
+#| "10^6 \\approx 2.50` cores busy out of four, so the daemon was not CPU "
+#| "bound and the load generator set the limit. The 11.84 us of CPU per "
+#| "request is far above the sub-microsecond classification cost because a "
+#| "product row also contains the kernel's socket read and write, the "
+#| "parser, the session tag check, the metrics increments, the response "
+#| "formatting, the writer flush, and the scheduler's hand-off between the "
+#| "load generator and the connection thread. The primitive suite times "
+#| "none of those."
 msgid ""
-"**8.2.** For Gate's ``admitted`` row, :math:`11.84 \\times 211{,}345 / "
+"**10.2.** For Gate's ``admitted`` row, :math:`11.84 \\times 211{,}345 / "
 "10^6 \\approx 2.50` cores busy out of four, so the daemon was not CPU "
 "bound and the load generator set the limit. The 11.84 us of CPU per "
 "request is far above the sub-microsecond classification cost because a "
@@ -240,13 +446,23 @@ msgstr ""
 "CPU "
 "时间远高于亚微秒级的分类成本，因为产品测量的一行还包含内核的套接字读写、解析器、会话标签检查、指标递增、响应格式化、写入器刷新，以及调度器在负载生成器和连接线程之间的交接。原语测试套件对这些都不计时。"
 
-#: ../../solutions.rst:60
-msgid "Part IX: Operations"
+#: ../../solutions.rst:88
+#, fuzzy
+#| msgid "Part IX: Operations"
+msgid "Part XI: Operations"
 msgstr "第 IX 部分：运维"
 
-#: ../../solutions.rst:63
+#: ../../solutions.rst:91
+#, fuzzy
+#| msgid ""
+#| "**9.1.** If the data commits before a separate receipt update, a crash "
+#| "between them leaves the old receipt and a retry can apply the effect "
+#| "again. If the receipt commits first, a crash before the data write can "
+#| "cause the retry to skip data that never existed. One atomic "
+#| "transaction removes both gaps. Losing the transaction's "
+#| "acknowledgement still requires the retained retry."
 msgid ""
-"**9.1.** If the data commits before a separate receipt update, a crash "
+"**11.1.** If the data commits before a separate receipt update, a crash "
 "between them leaves the old receipt and a retry can apply the effect "
 "again. If the receipt commits first, a crash before the data write can "
 "cause the retry to skip data that never existed. One atomic transaction "
@@ -256,9 +472,21 @@ msgstr ""
 "**9.1.** "
 "如果数据在单独的回执更新之前提交，两者之间的崩溃会留下旧的回执，重试可能再次施加该效果。如果回执先提交，在写入数据之前崩溃，可能导致重试跳过从未存在过的数据。一个原子事务可以消除这两个缺口。丢失事务的确认时，仍然需要保留的重试。"
 
-#: ../../solutions.rst:65
+#: ../../solutions.rst:93
+#, fuzzy
+#| msgid ""
+#| "**9.2.** ``ip_rules: {\"10.20.0.0/16\": \"ALLOW\"}`` (or an "
+#| "``ip_reputation`` row with score 100) admits staging; a rule "
+#| "``{\"name\": \"admin\", \"path\": \"/admin/*\", \"action\": "
+#| "\"CHALLENGE\", \"challenge\": {\"difficulty\": 20, \"algorithm\": "
+#| "\"posw\"}}`` demands the work; a rule matching ``headers: "
+#| "{\"X-Partner-Key\": \".*\"}`` with ``ALLOW`` and ``\"limits\": "
+#| "{\"rate\": 30, \"window_seconds\": 10}`` admits the partner at 30 "
+#| "requests per 10 seconds. The rule's quota is checked for every request "
+#| "it matches, after the per-client daemon limit (``--rate-limit``, "
+#| "``--rate-window``), which must therefore be at least as generous."
 msgid ""
-"**9.2.** ``ip_rules: {\"10.20.0.0/16\": \"ALLOW\"}`` (or an "
+"**11.2.** ``ip_rules: {\"10.20.0.0/16\": \"ALLOW\"}`` (or an "
 "``ip_reputation`` row with score 100) admits staging; a rule ``{\"name\": "
 "\"admin\", \"path\": \"/admin/*\", \"action\": \"CHALLENGE\", "
 "\"challenge\": {\"difficulty\": 20, \"algorithm\": \"posw\"}}`` demands "
@@ -277,13 +505,24 @@ msgstr ""
 "30, \"window_seconds\": 10}`` 的规则以每 10 秒 30 "
 "个请求的速率准入合作伙伴。规则的配额在它匹配的每个请求上检查，检查发生在守护进程的按客户端限制（``--rate-limit``、``--rate-window``）之后，因此后者必须至少同样宽松。"
 
-#: ../../solutions.rst:67
-msgid "Part X: Reference"
+#: ../../solutions.rst:95
+#, fuzzy
+#| msgid "Part X: Reference"
+msgid "Part XII: Reference"
 msgstr "第 X 部分：参考"
 
-#: ../../solutions.rst:70
+#: ../../solutions.rst:98
+#, fuzzy
+#| msgid ""
+#| "**10.1.** The challenge record carries the keyed fingerprint of the "
+#| "address that fetched it; the solution arrives from a new address, so "
+#| "``verify_and_mint`` returns ``FingerprintMismatch`` before looking at "
+#| "the proof. The smallest recovery is in the interstitial: on a ``400`` "
+#| "whose title is ``CLIENT FINGERPRINT MISMATCH``, fetch a fresh "
+#| "challenge and solve again instead of showing the error, since the work "
+#| "already done cannot be transferred."
 msgid ""
-"**10.1.** The challenge record carries the keyed fingerprint of the "
+"**12.1.** The challenge record carries the keyed fingerprint of the "
 "address that fetched it; the solution arrives from a new address, so "
 "``verify_and_mint`` returns ``FingerprintMismatch`` before looking at the "
 "proof. The smallest recovery is in the interstitial: on a ``400`` whose "
@@ -295,11 +534,11 @@ msgstr ""
 "``FingerprintMismatch``。最小的恢复方式在验证中间页中：收到标题为 ``CLIENT FINGERPRINT "
 "MISMATCH`` 的 ``400`` 时，获取一个新的挑战并重新求解，而不是显示错误，因为已经完成的工作无法转移。"
 
-#: ../../solutions.rst:72
+#: ../../solutions.rst:100
 msgid "Continue the Investigation"
 msgstr "继续探究"
 
-#: ../../solutions.rst:75
+#: ../../solutions.rst:103
 msgid ""
 "Change one invariant at a time in a disposable test. Remove the snapshot "
 "recheck, omit the incident receipt, or round the rate interval downward. "

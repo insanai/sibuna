@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-11-25 09:13+0000\n"
 "PO-Revision-Date: 2026-10-16 05:25+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,16 +18,18 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: ../../reference.rst:1
-msgid "Part X: Desk Reference and Diagnostics"
+#, fuzzy
+#| msgid "Part X: Desk Reference and Diagnostics"
+msgid "Part XII: Desk Reference and Diagnostics"
 msgstr "भाग X: डेस्क संदर्भ और निदान"
 
 #: ../../reference.rst:4
 msgid ""
 "Endpoints, metrics, error catalog, policy schema, and storage tables in "
-"one place."
+"one place, for the firewall daemon and for the edge load balancer (Part "
+"VIII, Part IX). The tables of the edge were read from the code, not from "
+"the SID records."
 msgstr ""
-"एंडपॉइंट, मेट्रिक, त्रुटि सूची, नीति स्कीमा और स्टोरेज टेबल, सब एक स्थान "
-"पर।"
 
 #: ../../reference.rst:6
 msgid "Endpoints"
@@ -46,15 +48,15 @@ msgstr ""
 msgid "Reserved routes"
 msgstr "आरक्षित रूट"
 
-#: ../../reference.rst:17
+#: ../../reference.rst:17 ../../reference.rst:58 ../../reference.rst:160
 msgid "Endpoint"
 msgstr "एंडपॉइंट"
 
-#: ../../reference.rst:18
+#: ../../reference.rst:18 ../../reference.rst:59 ../../reference.rst:161
 msgid "Method"
 msgstr "मेथड"
 
-#: ../../reference.rst:19
+#: ../../reference.rst:19 ../../reference.rst:60 ../../reference.rst:162
 msgid "Function"
 msgstr "कार्य"
 
@@ -64,7 +66,9 @@ msgstr "``/__sibuna/challenge``"
 
 #: ../../reference.rst:21 ../../reference.rst:24 ../../reference.rst:30
 #: ../../reference.rst:33 ../../reference.rst:36 ../../reference.rst:39
-#: ../../reference.rst:42
+#: ../../reference.rst:42 ../../reference.rst:62 ../../reference.rst:65
+#: ../../reference.rst:68 ../../reference.rst:71 ../../reference.rst:80
+#: ../../reference.rst:164 ../../reference.rst:167 ../../reference.rst:173
 msgid "GET"
 msgstr "GET"
 
@@ -93,7 +97,7 @@ msgstr ""
 msgid "``/__sibuna/verify``"
 msgstr "``/__sibuna/verify``"
 
-#: ../../reference.rst:27
+#: ../../reference.rst:27 ../../reference.rst:77 ../../reference.rst:170
 msgid "POST"
 msgstr "POST"
 
@@ -188,6 +192,19 @@ msgstr ""
 "के साथ ``401`` मिलता है।"
 
 #: ../../reference.rst:47
+#, fuzzy
+#| msgid ""
+#| "The separate opt-in management listener serves ``/console/``. "
+#| "Initialize its administrator locally with ``sibuna init-admin``, then "
+#| "replace the temporary password on first sign-in. "
+#| "``/console/api/stats`` and ``/console/ws`` require an authenticated "
+#| "session (a kiosk session included). The WebSocket multiplexes "
+#| "statistics, events, nodes, policy, challenges and audit with bounded "
+#| "snapshots, deltas and gap recovery. Management peers connect to "
+#| "``/console/peer``, and every API route lives under ``/console/api/``. "
+#| "Origin error counters are not observed in forward-auth mode. Part IX "
+#| "documents the console's workflows, HTTPS deployment and current SID "
+#| "0007 limits."
 msgid ""
 "The separate opt-in management listener serves ``/console/``. Initialize "
 "its administrator locally with ``sibuna init-admin``, then replace the "
@@ -197,7 +214,7 @@ msgid ""
 "challenges and audit with bounded snapshots, deltas and gap recovery. "
 "Management peers connect to ``/console/peer``, and every API route lives "
 "under ``/console/api/``. Origin error counters are not observed in "
-"forward-auth mode. Part IX documents the console's workflows, HTTPS "
+"forward-auth mode. Part XI documents the console's workflows, HTTPS "
 "deployment and current SID 0007 limits."
 msgstr ""
 "अलग, वैकल्पिक प्रबंधन listener ``/console/`` देता है। इसके एडमिनिस्ट्रेटर "
@@ -211,10 +228,380 @@ msgstr ""
 "डिप्लॉयमेंट और SID 0007 की वर्तमान सीमाओं का दस्तावेज़ देता है।"
 
 #: ../../reference.rst:49
+msgid "Routes of the edge"
+msgstr ""
+
+#: ../../reference.rst:52
+msgid ""
+"An edge started with ``--config-file`` or ``sibuna lb`` serves the routes "
+"of the firewall on the HTTP frontends whose surface is ``gate`` or "
+"``shield``. It adds the routes below. ``cmd/sibuna/src/routes.rs``, "
+"``cmd/sibuna/src/edge/probe.rs``, ``cmd/sibuna/src/acme.rs`` and "
+"``crates/acme/src/server.rs`` hold them."
+msgstr ""
+
+#: ../../reference.rst:54
+msgid "HTTP routes of the edge"
+msgstr ""
+
+#: ../../reference.rst:61
+msgid "``/__sibuna/ready`` on an HTTP frontend"
+msgstr ""
+
+#: ../../reference.rst:63
+msgid ""
+"``200`` with ``{\"status\":\"ready\"}``; ``503`` with "
+"``{\"status\":\"draining\"}`` from the start of a shutdown (SID 0020)"
+msgstr ""
+
+#: ../../reference.rst:64
+msgid "``/__sibuna/health``, ``/__sibuna/metrics`` on an HTTP frontend"
+msgstr ""
+
+#: ../../reference.rst:66
+msgid ""
+"As in the firewall. The metrics text adds the series of the edge (below)"
+msgstr ""
+
+#: ../../reference.rst:67
+msgid "``/health``, ``/ready``, ``/metrics`` on ``observability.listen``"
+msgstr ""
+
+#: ../../reference.rst:69
+msgid ""
+"The same three answers on a separate listener, which also accepts the "
+"``/__sibuna/`` spelling. It applies no address list: its address is its "
+"access control"
+msgstr ""
+
+#: ../../reference.rst:70
+msgid "``/.well-known/acme-challenge/TOKEN``"
+msgstr ""
+
+#: ../../reference.rst:72
+msgid ""
+"The HTTP-01 answer of automatic HTTPS, before the firewall and before a "
+"redirect (SID 0021)"
+msgstr ""
+
+#: ../../reference.rst:73
+msgid "``URL/directory``, ``URL/new-nonce``"
+msgstr ""
+
+#: ../../reference.rst:74
+msgid "GET (``HEAD`` for the nonce)"
+msgstr ""
+
+#: ../../reference.rst:75
+msgid ""
+"The ACME server of the local authority, where ``URL`` is "
+"``global.acme.internal.server.url``; off by default"
+msgstr ""
+
+#: ../../reference.rst:76
+msgid ""
+"``URL/new-account``, ``account``, ``new-order``, ``order``, ``authz``, "
+"``chall``, ``finalize``, ``cert``"
+msgstr ""
+
+#: ../../reference.rst:78
+msgid ""
+"Signed ACME requests of at most 32 KiB; HTTP-01 is the only challenge"
+msgstr ""
+
+#: ../../reference.rst:79
+msgid "``URL/crl``"
+msgstr ""
+
+#: ../../reference.rst:81
+msgid "The revocation list of the present intermediate, in DER"
+msgstr ""
+
+#: ../../reference.rst:83
+msgid ""
+"The three routes of ``/__sibuna/`` answer a client inside "
+"``observability.internal_allow`` (the loopback networks by default) whose "
+"request carries no ``X-Forwarded-For``, ``X-Real-IP`` or ``Forwarded`` "
+"field. Every other client receives the ``404`` of an unknown route. "
+"``/__sibuna/ready`` exists on the edge only."
+msgstr ""
+
+#: ../../reference.rst:85
+msgid "The admin socket"
+msgstr ""
+
+#: ../../reference.rst:88
+msgid ""
+"``global.admin_socket`` (or ``sibuna lb --admin``) opens a Unix socket of "
+"mode 0600. ``sibuna ctl SOCKET COMMAND`` sends one line of at most 512 "
+"printable ASCII bytes and prints the answer. The socket accepts a burst "
+"of 20 commands and 10 per second after it. The console of the edge runs a "
+"listed subset of the same lines through the same parser. "
+"``cmd/sibuna/src/edge/control.rs`` holds the grammar."
+msgstr ""
+
+#: ../../reference.rst:90
+msgid "Commands of the admin socket"
+msgstr ""
+
+#: ../../reference.rst:94 ../../reference.rst:892 ../../reference.rst:916
+msgid "Command"
+msgstr "कमांड"
+
+#: ../../reference.rst:95
+msgid "Answer or effect"
+msgstr ""
+
+#: ../../reference.rst:96
+msgid "Console"
+msgstr ""
+
+#: ../../reference.rst:97
+msgid "``show servers``"
+msgstr ""
+
+#: ../../reference.rst:98
+msgid ""
+"One line per server: pool, name, address, state, weight, flows, health, "
+"ejection, ramp, change"
+msgstr ""
+
+#: ../../reference.rst:99 ../../reference.rst:108 ../../reference.rst:117
+#: ../../reference.rst:126 ../../reference.rst:129 ../../reference.rst:132
+#: ../../reference.rst:135 ../../reference.rst:141
+msgid "yes"
+msgstr ""
+
+#: ../../reference.rst:100
+msgid "``show info``"
+msgstr ""
+
+#: ../../reference.rst:101
+msgid ""
+"``key: value`` lines: version, process, source, reloads, watcher, flows, "
+"drops, run-time changes, and the counters of the spill cache (SID 0027)"
+msgstr ""
+
+#: ../../reference.rst:102 ../../reference.rst:105 ../../reference.rst:111
+#: ../../reference.rst:114 ../../reference.rst:120 ../../reference.rst:123
+#: ../../reference.rst:138 ../../reference.rst:144 ../../reference.rst:147
+msgid "no"
+msgstr ""
+
+#: ../../reference.rst:103
+msgid "``show stats``"
+msgstr ""
+
+#: ../../reference.rst:104
+msgid ""
+"The series of the edge in the Prometheus text format, as the metrics "
+"route prints them"
+msgstr ""
+
+#: ../../reference.rst:106
+msgid "``show certs``, ``show ca``"
+msgstr ""
+
+#: ../../reference.rst:107
+msgid ""
+"The names of automatic HTTPS with their state and staple; the root of the "
+"local authority as PEM (SID 0021)"
+msgstr ""
+
+#: ../../reference.rst:109
+msgid "``revoke cert NAME|SERIAL``"
+msgstr ""
+
+#: ../../reference.rst:110
+msgid ""
+"Revokes a certificate of the local authority and writes the revocation "
+"list"
+msgstr ""
+
+#: ../../reference.rst:112
+msgid "``show hooks``"
+msgstr ""
+
+#: ../../reference.rst:113
+msgid ""
+"The plugins with their calls, verdicts, failures and open breakers (SID "
+"0030)"
+msgstr ""
+
+#: ../../reference.rst:115
+msgid "``show cluster``"
+msgstr ""
+
+#: ../../reference.rst:116
+msgid ""
+"Each node of the mesh with the digest of its file, or with the revision "
+"it serves in persistent mode (SID 0023, SID 0028)"
+msgstr ""
+
+#: ../../reference.rst:118
+msgid "``show affinity``"
+msgstr ""
+
+#: ../../reference.rst:119
+msgid "The sticky table and the shares of fleet-wide limits (SID 0025)"
+msgstr ""
+
+#: ../../reference.rst:121
+msgid "``show authority``"
+msgstr ""
+
+#: ../../reference.rst:122
+msgid "The revision of the database that this node serves (SID 0028)"
+msgstr ""
+
+#: ../../reference.rst:124
+msgid "``set server POOL/NAME state ready|drain [local]``"
+msgstr ""
+
+#: ../../reference.rst:125
+msgid ""
+"Admits a server, or stops new flows to it; ``maint`` is another word for "
+"``drain``"
+msgstr ""
+
+#: ../../reference.rst:127
+msgid "``set server POOL/NAME weight N [local]``"
+msgstr ""
+
+#: ../../reference.rst:128
+msgid "Sets the weight, 1 to 65,535"
+msgstr ""
+
+#: ../../reference.rst:130
+msgid ""
+"``add server POOL/NAME IP:PORT [weight N] [local]``, ``del server "
+"POOL/NAME [local]``"
+msgstr ""
+
+#: ../../reference.rst:131
+msgid "Adds or removes a server of a pool"
+msgstr ""
+
+#: ../../reference.rst:133
+msgid "``del ban ADDRESS [local]``"
+msgstr ""
+
+#: ../../reference.rst:134
+msgid "Lifts the ban of one client (SID 0022)"
+msgstr ""
+
+#: ../../reference.rst:136
+#, fuzzy
+#| msgid "``overloaded``"
+msgid "``reload``"
+msgstr "``overloaded``"
+
+#: ../../reference.rst:137
+msgid "Loads the file as SIGHUP does and prints the result"
+msgstr ""
+
+#: ../../reference.rst:139
+#, fuzzy
+#| msgid "``overloaded``"
+msgid "``reload cluster``"
+msgstr "``overloaded``"
+
+#: ../../reference.rst:140
+msgid "Reloads this node, then sends the file to every peer (SID 0023)"
+msgstr ""
+
+#: ../../reference.rst:142
+msgid "``reopen log``"
+msgstr ""
+
+#: ../../reference.rst:143
+msgid "Opens the access log file again"
+msgstr ""
+
+#: ../../reference.rst:145
+msgid "``help``"
+msgstr ""
+
+#: ../../reference.rst:146
+msgid "Lists the commands"
+msgstr ""
+
+#: ../../reference.rst:149
+msgid ""
+"With a mesh, a change to a server and a lifted ban reach every node "
+"unless the last word is ``local`` (SID 0022). A failure prints a "
+"diagnostic with a code of the families ``ADM`` or ``DBA`` below, and "
+"nothing has changed."
+msgstr ""
+
+#: ../../reference.rst:151
+msgid "The console of the edge"
+msgstr ""
+
+#: ../../reference.rst:154
+msgid ""
+"With a ``console`` section the edge serves the console of SID 0031 on a "
+"listener of its own. Besides the routes of the firewall console, three "
+"routes concern the edge (``crates/console/src/routes.rs``, "
+"``crates/console/src/api/edge.rs``)."
+msgstr ""
+
+#: ../../reference.rst:156
+msgid "Console routes of the edge"
+msgstr ""
+
+#: ../../reference.rst:163
+msgid "``/console/api/edge``"
+msgstr ""
+
+#: ../../reference.rst:165
+msgid ""
+"The node, its refusals by reason, its frontends and its pools, at most "
+"256 servers. Needs a session, or a token with the scope ``stats_read``"
+msgstr ""
+
+#: ../../reference.rst:166
+msgid "``/console/api/edge/fleet``"
+msgstr ""
+
+#: ../../reference.rst:168
+msgid ""
+"One row for each member of the fleet, asked all at once, waiting at most "
+"five seconds"
+msgstr ""
+
+#: ../../reference.rst:169
+msgid "``/console/api/edge/command``"
+msgstr ""
+
+#: ../../reference.rst:171
+msgid ""
+"``{\"line\": \"...\"}``: one listed line of the admin socket. Needs the "
+"role operator or administrator, the ``Origin`` field, the CSRF token and "
+"the mutation allowance; a change is audited before and after it runs"
+msgstr ""
+
+#: ../../reference.rst:172
+msgid "``/console/peer``"
+msgstr ""
+
+#: ../../reference.rst:174
+msgid ""
+"The stream of a peer console, from the ``allow_ips`` of its entry, with "
+"the peer key"
+msgstr ""
+
+#: ../../reference.rst:176
+msgid ""
+"A console without an edge answers ``404`` with ``CONSOLE404`` on the "
+"three ``edge`` routes."
+msgstr ""
+
+#: ../../reference.rst:178
 msgid "Metrics"
 msgstr "मेट्रिक"
 
-#: ../../reference.rst:52
+#: ../../reference.rst:181
 msgid ""
 "Counters exposed as ``sibuna_<name>_total`` in Prometheus text format, in "
 "this order:"
@@ -222,77 +609,77 @@ msgstr ""
 "Prometheus टेक्स्ट प्रारूप में ``sibuna_<name>_total`` के रूप में दिखाए "
 "जाने वाले काउंटर, इस क्रम में:"
 
-#: ../../reference.rst:54
+#: ../../reference.rst:183
 msgid "Counters"
 msgstr "काउंटर"
 
-#: ../../reference.rst:58
+#: ../../reference.rst:187
 msgid "Counter"
 msgstr "काउंटर"
 
-#: ../../reference.rst:59
+#: ../../reference.rst:188
 msgid "Incremented when"
 msgstr "कब बढ़ता है"
 
-#: ../../reference.rst:60
+#: ../../reference.rst:189
 msgid "``incidents_persisted``, ``incident_batches``"
 msgstr "``incidents_persisted``, ``incident_batches``"
 
-#: ../../reference.rst:61
+#: ../../reference.rst:190
 msgid "Records and transactions whose commit the storage thread confirmed"
 msgstr "वे रिकॉर्ड और ट्रांज़ैक्शन जिनके कमिट की पुष्टि स्टोरेज थ्रेड ने की"
 
-#: ../../reference.rst:62
+#: ../../reference.rst:191
 msgid "``incidents_dropped``, ``incident_write_failures``"
 msgstr "``incidents_dropped``, ``incident_write_failures``"
 
-#: ../../reference.rst:63
+#: ../../reference.rst:192
 msgid ""
 "Queue pushes rejected because the ring was full, and failed commit "
 "attempts"
 msgstr ""
 "रिंग भरी होने के कारण अस्वीकार किए गए कतार push, और कमिट के विफल प्रयास"
 
-#: ../../reference.rst:64
+#: ../../reference.rst:193
 msgid "``requests``"
 msgstr "``requests``"
 
-#: ../../reference.rst:65
+#: ../../reference.rst:194
 msgid "A parsed request reached dispatch (reserved routes included)"
 msgstr "पार्स किया गया अनुरोध डिस्पैच तक पहुँचा (आरक्षित रूट सहित)"
 
-#: ../../reference.rst:66
+#: ../../reference.rst:195
 msgid "``allowed``, ``denied``, ``challenged``"
 msgstr "``allowed``, ``denied``, ``challenged``"
 
-#: ../../reference.rst:67
+#: ../../reference.rst:196
 msgid ""
 "A policy decision was made (admitted, refused, challenge issued or "
 "reissued)"
 msgstr ""
 "नीति निर्णय लिया गया (स्वीकृत, अस्वीकृत, चैलेंज जारी या दोबारा जारी)"
 
-#: ../../reference.rst:68
+#: ../../reference.rst:197
 msgid "``challenges_issued``"
 msgstr "``challenges_issued``"
 
-#: ../../reference.rst:69
+#: ../../reference.rst:198
 msgid "``/__sibuna/challenge.json`` minted a challenge record"
 msgstr "``/__sibuna/challenge.json`` ने एक चैलेंज रिकॉर्ड जारी किया"
 
-#: ../../reference.rst:70
+#: ../../reference.rst:199
 msgid "``solutions_accepted``, ``solutions_rejected``"
 msgstr "``solutions_accepted``, ``solutions_rejected``"
 
-#: ../../reference.rst:71
+#: ../../reference.rst:200
 msgid "``/__sibuna/verify`` accepted or rejected a proof"
 msgstr "``/__sibuna/verify`` ने किसी प्रमाण को स्वीकार या अस्वीकार किया"
 
-#: ../../reference.rst:72
+#: ../../reference.rst:201
 msgid "``rate_limited``"
 msgstr "``rate_limited``"
 
-#: ../../reference.rst:73
+#: ../../reference.rst:202
 msgid ""
 "GCRA refused a request (``429``): the request limit, the challenge budget "
 "or a rule's quota"
@@ -300,37 +687,37 @@ msgstr ""
 "GCRA ने किसी अनुरोध को अस्वीकार किया (``429``): अनुरोध सीमा, चैलेंज बजट "
 "या किसी नियम का कोटा"
 
-#: ../../reference.rst:74
+#: ../../reference.rst:203
 msgid "``banned``"
 msgstr "``banned``"
 
-#: ../../reference.rst:75
+#: ../../reference.rst:204
 msgid "A banned address was refused, or the honeypot banned one"
 msgstr ""
 "किसी प्रतिबंधित पते को अस्वीकार किया गया, या हनीपॉट ने किसी पर प्रतिबंध "
 "लगाया"
 
-#: ../../reference.rst:76
+#: ../../reference.rst:205
 msgid "``bans_issued``"
 msgstr "``bans_issued``"
 
-#: ../../reference.rst:77
+#: ../../reference.rst:206
 msgid "A ban was recorded (honeypot or a rule quota's ban)"
 msgstr "एक प्रतिबंध दर्ज किया गया (हनीपॉट या किसी नियम कोटा का प्रतिबंध)"
 
-#: ../../reference.rst:78
+#: ../../reference.rst:207
 msgid "``proxied``, ``upstream_errors``"
 msgstr "``proxied``, ``upstream_errors``"
 
-#: ../../reference.rst:79
+#: ../../reference.rst:208
 msgid "A request was relayed to the origin, or the origin failed (``502``)"
 msgstr "एक अनुरोध ऑरिजिन तक रिले किया गया, या ऑरिजिन विफल हुआ (``502``)"
 
-#: ../../reference.rst:80
+#: ../../reference.rst:209
 msgid "``parse_errors``"
 msgstr "``parse_errors``"
 
-#: ../../reference.rst:81
+#: ../../reference.rst:210
 msgid ""
 "A malformed head, a repeated ``Host``, a target without a normal form "
 "(``400``), or an unsupported transfer coding (``501``) was refused"
@@ -338,11 +725,11 @@ msgstr ""
 "विकृत हेड, दोहराया गया ``Host``, सामान्य रूप न रखने वाला लक्ष्य "
 "(``400``), या असमर्थित transfer coding (``501``) अस्वीकार किया गया"
 
-#: ../../reference.rst:82
+#: ../../reference.rst:211
 msgid "``overloaded``"
 msgstr "``overloaded``"
 
-#: ../../reference.rst:83
+#: ../../reference.rst:212
 msgid ""
 "A connection beyond ``--max-connections`` or ``--max-connections-per-ip`` "
 "was answered ``503``"
@@ -350,11 +737,11 @@ msgstr ""
 "``--max-connections`` या ``--max-connections-per-ip`` से आगे के कनेक्शन "
 "को ``503`` उत्तर मिला"
 
-#: ../../reference.rst:84
+#: ../../reference.rst:213
 msgid "``bans_refused``"
 msgstr "``bans_refused``"
 
-#: ../../reference.rst:85
+#: ../../reference.rst:214
 msgid ""
 "A ban was not recorded because every slot its key may take held a ban in "
 "effect"
@@ -362,11 +749,11 @@ msgstr ""
 "प्रतिबंध दर्ज नहीं हुआ, क्योंकि उसकी कुंजी जो भी स्लॉट ले सकती थी उन सभी "
 "में एक प्रभावी प्रतिबंध था"
 
-#: ../../reference.rst:86
+#: ../../reference.rst:215
 msgid "``forwarded_invalid``"
 msgstr "``forwarded_invalid``"
 
-#: ../../reference.rst:87
+#: ../../reference.rst:216
 msgid ""
 "A trusted forwarded client address did not parse; the request was judged "
 "by the socket peer"
@@ -374,31 +761,31 @@ msgstr ""
 "विश्वसनीय फ़ॉरवर्ड किया गया क्लाइंट पता पार्स नहीं हुआ; अनुरोध का निर्णय "
 "सॉकेट पीयर से हुआ"
 
-#: ../../reference.rst:88
+#: ../../reference.rst:217
 msgid "``honeypot_refused``"
 msgstr "``honeypot_refused``"
 
-#: ../../reference.rst:89
+#: ../../reference.rst:218
 msgid ""
 "A honeypot hit banned nobody because a page, not a person, requested it"
 msgstr ""
 "हनीपॉट हिट से किसी पर प्रतिबंध नहीं लगा, क्योंकि उसे किसी व्यक्ति ने "
 "नहीं, एक पेज ने माँगा था"
 
-#: ../../reference.rst:90
+#: ../../reference.rst:219
 msgid "``rate_evictions``"
 msgstr "``rate_evictions``"
 
-#: ../../reference.rst:91
+#: ../../reference.rst:220
 msgid "A limiter arrival evicted another active client's cell"
 msgstr ""
 "लिमिटर में किसी आगमन ने किसी दूसरे सक्रिय क्लाइंट की सेल को हटा दिया"
 
-#: ../../reference.rst:92
+#: ../../reference.rst:221
 msgid "``ja4_present``"
 msgstr "``ja4_present``"
 
-#: ../../reference.rst:93
+#: ../../reference.rst:222
 msgid ""
 "With ``--ja4-header`` and trusted forwarding, the request carried exactly "
 "one header of that name with a JA4 fingerprint"
@@ -406,11 +793,11 @@ msgstr ""
 "``--ja4-header`` और विश्वसनीय फ़ॉरवर्डिंग के साथ, अनुरोध में उस नाम का "
 "ठीक एक हेडर JA4 फ़िंगरप्रिंट के साथ था"
 
-#: ../../reference.rst:94
+#: ../../reference.rst:223
 msgid "``ja4_invalid``"
 msgstr "``ja4_invalid``"
 
-#: ../../reference.rst:95
+#: ../../reference.rst:224
 msgid ""
 "With ``--ja4-header`` and trusted forwarding, the header was malformed or "
 "repeated; the request was judged without a fingerprint"
@@ -418,7 +805,462 @@ msgstr ""
 "``--ja4-header`` और विश्वसनीय फ़ॉरवर्डिंग के साथ, हेडर विकृत या दोहराया "
 "गया था; अनुरोध का मूल्यांकन बिना फ़िंगरप्रिंट के हुआ"
 
-#: ../../reference.rst:97
+#: ../../reference.rst:225
+msgid "``tunnels_opened``"
+msgstr ""
+
+#: ../../reference.rst:226
+msgid ""
+"An upgraded connection became a tunnel on an event-driven worker (SID "
+"0016)"
+msgstr ""
+
+#: ../../reference.rst:227
+#, fuzzy
+#| msgid "``incidents_persisted``, ``incident_batches``"
+msgid "``origin_reused``, ``origin_connects``"
+msgstr "``incidents_persisted``, ``incident_batches``"
+
+#: ../../reference.rst:228
+msgid ""
+"An exchange of a worker reused an idle server socket, or opened a server "
+"connection"
+msgstr ""
+
+#: ../../reference.rst:229
+msgid "``origin_retries``"
+msgstr ""
+
+#: ../../reference.rst:230
+msgid "A request was sent again because an idle server socket had closed"
+msgstr ""
+
+#: ../../reference.rst:231
+msgid "``deadline_closes``, ``worker_faults``"
+msgstr ""
+
+#: ../../reference.rst:232
+msgid ""
+"A worker closed a connection because a deadline passed, or after a fault "
+"in its own code"
+msgstr ""
+
+#: ../../reference.rst:233
+msgid "``tls_kept``, ``tls_passed``"
+msgstr ""
+
+#: ../../reference.rst:234
+msgid ""
+"A worker ended a TLS connection itself, or gave it to the protocol "
+"runtime after its ClientHello (SID 0024)"
+msgstr ""
+
+#: ../../reference.rst:236
+msgid ""
+"The last eight counters are written by the event-driven workers of the "
+"edge (SID 0016, SID 0024). ``crates/core/src/metrics.rs`` holds the list."
+msgstr ""
+
+#: ../../reference.rst:238 ../../reference.rst:243
+msgid "Series of the edge"
+msgstr ""
+
+#: ../../reference.rst:241
+msgid ""
+"The metrics text of an edge has the counters above and then these series. "
+"``show stats`` on the admin socket prints the same text. A series of a "
+"family that is not configured is absent: forwarding, the mesh, the "
+"plugins and automatic HTTPS each add theirs only when they are on. The "
+"code that writes them is ``crates/lb/src/stats.rs``, "
+"``crates/lb/src/forward/counters.rs``, ``cmd/sibuna/src/access.rs``, "
+"``cmd/sibuna/src/plugins.rs`` and ``cmd/sibuna/src/acme.rs``."
+msgstr ""
+
+#: ../../reference.rst:247
+#, fuzzy
+#| msgid "Metrics"
+msgid "Series"
+msgstr "मेट्रिक"
+
+#: ../../reference.rst:248
+msgid "Type"
+msgstr ""
+
+#: ../../reference.rst:249
+msgid "Labels"
+msgstr ""
+
+#: ../../reference.rst:250 ../../reference.rst:502 ../../reference.rst:550
+#: ../../reference.rst:584 ../../reference.rst:631 ../../reference.rst:689
+#: ../../reference.rst:745 ../../reference.rst:792 ../../reference.rst:814
+msgid "Meaning"
+msgstr "अर्थ"
+
+#: ../../reference.rst:251
+#, fuzzy
+#| msgid "``/__sibuna/verify``"
+msgid "``sibuna_edge_ready``"
+msgstr "``/__sibuna/verify``"
+
+#: ../../reference.rst:252 ../../reference.rst:256 ../../reference.rst:300
+#: ../../reference.rst:312 ../../reference.rst:316 ../../reference.rst:344
+#: ../../reference.rst:356 ../../reference.rst:360 ../../reference.rst:368
+#, fuzzy
+#| msgid "Cause"
+msgid "gauge"
+msgstr "कारण"
+
+#: ../../reference.rst:254
+msgid "1 while readiness answers 200, 0 from the start of a shutdown"
+msgstr ""
+
+#: ../../reference.rst:255
+msgid "``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``"
+msgstr ""
+
+#: ../../reference.rst:258
+msgid "The flows in the flow table, and ``global.max_flows``"
+msgstr ""
+
+#: ../../reference.rst:259
+msgid "``sibuna_edge_drops_total``"
+msgstr ""
+
+#: ../../reference.rst:260 ../../reference.rst:264 ../../reference.rst:268
+#: ../../reference.rst:272 ../../reference.rst:276 ../../reference.rst:280
+#: ../../reference.rst:288 ../../reference.rst:292 ../../reference.rst:296
+#: ../../reference.rst:308 ../../reference.rst:320 ../../reference.rst:324
+#: ../../reference.rst:328 ../../reference.rst:332 ../../reference.rst:336
+#: ../../reference.rst:340 ../../reference.rst:348 ../../reference.rst:352
+#: ../../reference.rst:364
+#, fuzzy
+#| msgid "Counter"
+msgid "counter"
+msgstr "काउंटर"
+
+#: ../../reference.rst:262
+msgid "Datagrams that the edge worker discarded and admissions it refused"
+msgstr ""
+
+#: ../../reference.rst:263
+msgid "``sibuna_edge_proxy_protocol_accepted_total``, ``_rejected_total``"
+msgstr ""
+
+#: ../../reference.rst:266
+msgid "Connections whose PROXY header was accepted or refused"
+msgstr ""
+
+#: ../../reference.rst:267
+msgid "``sibuna_edge_flow_log_dropped_total``"
+msgstr ""
+
+#: ../../reference.rst:270
+msgid "Lines of TCP and UDP flows that did not fit the queue of the log"
+msgstr ""
+
+#: ../../reference.rst:271
+#, fuzzy
+#| msgid "``bans_refused``"
+msgid "``sibuna_edge_refused_total``"
+msgstr "``bans_refused``"
+
+#: ../../reference.rst:273 ../../reference.rst:333 ../../reference.rst:337
+#, fuzzy
+#| msgid "``ja4_present``"
+msgid "``reason``"
+msgstr "``ja4_present``"
+
+#: ../../reference.rst:274
+msgid ""
+"Refused connections, requests and datagrams. The reasons are "
+"``rate_limit``, ``flow_limit``, ``draining``, ``connection_limit``, "
+"``client_limit``, ``task_limit``, ``exchange_limit``, ``bad_request``, "
+"``no_server``, ``udp_rate_limit``, ``udp_flow_limit``, "
+"``udp_reply_limit``, ``client_closed``, ``hook``, ``inspect_denied`` and "
+"``udp_not_quic``"
+msgstr ""
+
+#: ../../reference.rst:275
+msgid "``sibuna_edge_frontend_requests_total``"
+msgstr ""
+
+#: ../../reference.rst:277
+msgid "``frontend``, ``code``"
+msgstr ""
+
+#: ../../reference.rst:278
+msgid ""
+"HTTP requests by status class: ``1xx`` to ``5xx``, or ``none`` for an "
+"exchange that ended without a status"
+msgstr ""
+
+#: ../../reference.rst:279
+msgid ""
+"``sibuna_edge_frontend_bytes_in_total``, ``_bytes_out_total``, "
+"``_flows_total``"
+msgstr ""
+
+#: ../../reference.rst:281 ../../reference.rst:285
+#, fuzzy
+#| msgid "``banned``"
+msgid "``frontend``"
+msgstr "``banned``"
+
+#: ../../reference.rst:282
+msgid "Bytes from and to the clients, and flows of a frontend"
+msgstr ""
+
+#: ../../reference.rst:283
+msgid "``sibuna_edge_frontend_request_seconds``"
+msgstr ""
+
+#: ../../reference.rst:284 ../../reference.rst:304
+msgid "histogram"
+msgstr ""
+
+#: ../../reference.rst:286
+msgid ""
+"The duration of a request; buckets from 0.001 to 30 seconds (14 bounds)"
+msgstr ""
+
+#: ../../reference.rst:287
+msgid "``sibuna_edge_server_requests_total``"
+msgstr ""
+
+#: ../../reference.rst:289
+#, fuzzy
+#| msgid "``allowed``, ``denied``, ``challenged``"
+msgid "``backend``, ``server``, ``code``"
+msgstr "``allowed``, ``denied``, ``challenged``"
+
+#: ../../reference.rst:290
+msgid "Requests a server answered, by status class"
+msgstr ""
+
+#: ../../reference.rst:291
+msgid ""
+"``sibuna_edge_server_failures_total``, ``_failovers_total``, "
+"``_ejections_total``"
+msgstr ""
+
+#: ../../reference.rst:293 ../../reference.rst:297 ../../reference.rst:301
+#: ../../reference.rst:305
+msgid "``backend``, ``server``"
+msgstr ""
+
+#: ../../reference.rst:294
+msgid ""
+"What a server did wrong, requests that left it for another server, and "
+"ejections by passive health (SID 0019)"
+msgstr ""
+
+#: ../../reference.rst:295
+msgid "``sibuna_edge_server_client_closed_total``"
+msgstr ""
+
+#: ../../reference.rst:298
+msgid ""
+"Clients that left before the server answered (logged as 499); not a "
+"failure of the server"
+msgstr ""
+
+#: ../../reference.rst:299
+msgid "``sibuna_edge_server_up``, ``sibuna_edge_server_active_requests``"
+msgstr ""
+
+#: ../../reference.rst:302
+msgid "1 while the server is in service, and its requests in flight"
+msgstr ""
+
+#: ../../reference.rst:303
+msgid "``sibuna_edge_server_response_seconds``"
+msgstr ""
+
+#: ../../reference.rst:306
+msgid "The wait for the first byte of the server, with the buckets above"
+msgstr ""
+
+#: ../../reference.rst:307
+msgid ""
+"``sibuna_edge_access_log_written_total``, ``_dropped_total``, "
+"``_errors_total``"
+msgstr ""
+
+#: ../../reference.rst:310
+#, fuzzy
+#| msgid ""
+#| "Queue pushes rejected because the ring was full, and failed commit "
+#| "attempts"
+msgid ""
+"Lines of the access log written, dropped because the queue was full, and "
+"failed writes"
+msgstr ""
+"रिंग भरी होने के कारण अस्वीकार किए गए कतार push, और कमिट के विफल प्रयास"
+
+#: ../../reference.rst:311
+msgid "``sibuna_edge_access_log_queue_length``"
+msgstr ""
+
+#: ../../reference.rst:314
+msgid "Entries waiting for the writer"
+msgstr ""
+
+#: ../../reference.rst:315
+msgid "``sibuna_edge_forward_active``, ``_peers_eligible``, ``_flows_out``"
+msgstr ""
+
+#: ../../reference.rst:318
+msgid ""
+"Peer forwarding (SID 0026): 1 while this node forwards, the peers that "
+"can take a flow, and the flows forwarded now"
+msgstr ""
+
+#: ../../reference.rst:319
+msgid "``sibuna_edge_forward_streams_out_total``, ``_streams_in_total``"
+msgstr ""
+
+#: ../../reference.rst:322
+msgid "Connections handed to an owner, and taken from peers"
+msgstr ""
+
+#: ../../reference.rst:323
+msgid ""
+"``sibuna_edge_forward_datagrams_out_total``, ``_datagrams_in_total``, "
+"``_datagrams_returned_total``"
+msgstr ""
+
+#: ../../reference.rst:326
+msgid ""
+"Datagrams sent to an owner, taken from peers, and replies passed back to "
+"a client"
+msgstr ""
+
+#: ../../reference.rst:327
+msgid "``sibuna_edge_forward_denied_total``"
+msgstr ""
+
+#: ../../reference.rst:330
+msgid "Connections closed because the owner's rate limit denied the client"
+msgstr ""
+
+#: ../../reference.rst:331
+msgid "``sibuna_edge_forward_local_total``"
+msgstr ""
+
+#: ../../reference.rst:334
+msgid ""
+"Flows of another owner served here: ``declined``, ``connect_failed``, "
+"``timeout``, ``peer_limit``"
+msgstr ""
+
+#: ../../reference.rst:335
+msgid "``sibuna_edge_forward_rejected_total``"
+msgstr ""
+
+#: ../../reference.rst:338
+msgid ""
+"What the forwarding port refused: ``stranger``, ``bad_tag``, ``stale``, "
+"``malformed``, ``unknown``"
+msgstr ""
+
+#: ../../reference.rst:339
+msgid ""
+"``sibuna_edge_mesh_bans_sent_total``, ``_received_total``, "
+"``_applied_total``, ``_dropped_total``"
+msgstr ""
+
+#: ../../reference.rst:342
+msgid ""
+"Replicated bans (SID 0022): written into datagrams once for each peer and "
+"send, read from authentic datagrams, that added or extended a ban, and "
+"lost to a bound"
+msgstr ""
+
+#: ../../reference.rst:343
+msgid "``sibuna_edge_mesh_bans_known``"
+msgstr ""
+
+#: ../../reference.rst:346
+msgid "The bans this node remembers now"
+msgstr ""
+
+#: ../../reference.rst:347
+msgid "``sibuna_edge_hook_calls_total``"
+msgstr ""
+
+#: ../../reference.rst:349
+msgid "``plugin``, ``tier``, ``result``"
+msgstr ""
+
+#: ../../reference.rst:350
+msgid ""
+"Calls of a plugin (SID 0030). ``tier`` is ``native``, ``wasm`` or "
+"``agent``; ``result`` is ``admit``, ``deny``, ``challenge``, ``timeout``, "
+"``overload``, ``trap`` or ``unavailable``"
+msgstr ""
+
+#: ../../reference.rst:351
+msgid ""
+"``sibuna_edge_hook_samples_dropped_total``, "
+"``sibuna_edge_hook_fields_refused_total``"
+msgstr ""
+
+#: ../../reference.rst:353 ../../reference.rst:357
+msgid "``plugin``"
+msgstr ""
+
+#: ../../reference.rst:354
+msgid ""
+"Telemetry samples dropped, and request fields that the plugin tried to "
+"add and that were refused"
+msgstr ""
+
+#: ../../reference.rst:355
+msgid "``sibuna_edge_hook_breakers_open``"
+msgstr ""
+
+#: ../../reference.rst:358
+msgid "Open breakers of an agent plugin"
+msgstr ""
+
+#: ../../reference.rst:359
+msgid "``sibuna_edge_acme_certificates_managed``, ``_served``"
+msgstr ""
+
+#: ../../reference.rst:362
+msgid ""
+"Names of automatic HTTPS, and those with a certificate in service (SID "
+"0021)"
+msgstr ""
+
+#: ../../reference.rst:363
+msgid "``sibuna_edge_acme_failures_total``"
+msgstr ""
+
+#: ../../reference.rst:366
+msgid "Failed attempts to obtain or renew a certificate"
+msgstr ""
+
+#: ../../reference.rst:367
+msgid "``sibuna_edge_acme_nearest_expiry_seconds``"
+msgstr ""
+
+#: ../../reference.rst:370
+msgid ""
+"Seconds until the first served certificate expires; absent while none is "
+"served"
+msgstr ""
+
+#: ../../reference.rst:372
+msgid ""
+"Some state of the edge has no series. The sticky table and the shares of "
+"fleet-wide limits are shown by ``show affinity`` only (SID 0025), the "
+"spill cache by ``show info`` (SID 0027), and the revision of the database "
+"by ``show authority`` (SID 0028). No series counts the commands, the "
+"lifted bans or the parked flows of the plugins."
+msgstr ""
+
+#: ../../reference.rst:374
 msgid ""
 "A retry can increment ``incident_write_failures`` without losing records, "
 "because the pending batch is retained. Monitor increments over an "
@@ -428,27 +1270,30 @@ msgstr ""
 "क्योंकि लंबित बैच रखा जाता है। किसी अंतराल में हुई बढ़ोतरी की निगरानी "
 "करें; केवल कुल योग कतार की गहराई नहीं बताते।"
 
-#: ../../reference.rst:99
+#: ../../reference.rst:376
 msgid "Status Codes"
 msgstr "स्टेटस कोड"
 
-#: ../../reference.rst:102
+#: ../../reference.rst:379
 msgid "Status codes of the data plane"
 msgstr "डेटा plane के स्टेटस कोड"
 
-#: ../../reference.rst:106 ../../reference.rst:196
+#: ../../reference.rst:383 ../../reference.rst:420 ../../reference.rst:500
+#: ../../reference.rst:548 ../../reference.rst:582 ../../reference.rst:629
+#: ../../reference.rst:687 ../../reference.rst:743 ../../reference.rst:790
+#: ../../reference.rst:812
 msgid "Code"
 msgstr "कोड"
 
-#: ../../reference.rst:107
+#: ../../reference.rst:384 ../../reference.rst:421
 msgid "When"
 msgstr "कब"
 
-#: ../../reference.rst:108
+#: ../../reference.rst:385
 msgid "200"
 msgstr "200"
 
-#: ../../reference.rst:109
+#: ../../reference.rst:386
 msgid ""
 "Admitted (forward-auth), interstitial (HTML navigation needing a "
 "challenge), internal routes"
@@ -456,11 +1301,11 @@ msgstr ""
 "स्वीकृत (forward-auth), इंटरस्टिशियल (चैलेंज की ज़रूरत वाला HTML "
 "नेविगेशन), आंतरिक रूट"
 
-#: ../../reference.rst:110
+#: ../../reference.rst:387
 msgid "302"
 msgstr "302"
 
-#: ../../reference.rst:111
+#: ../../reference.rst:388
 msgid ""
 "Not used by the current protocol; verification answers ``200`` and the "
 "page reloads"
@@ -468,11 +1313,11 @@ msgstr ""
 "वर्तमान प्रोटोकॉल में उपयोग नहीं होता; सत्यापन ``200`` उत्तर देता है और "
 "पेज दोबारा लोड होता है"
 
-#: ../../reference.rst:112 ../../reference.rst:200
+#: ../../reference.rst:389 ../../reference.rst:504
 msgid "400"
 msgstr "400"
 
-#: ../../reference.rst:113
+#: ../../reference.rst:390
 msgid ""
 "Malformed request, a repeated ``Host`` field, a target without a normal "
 "form, invalid forwarded metadata, a malformed body, or a rejected "
@@ -482,11 +1327,11 @@ msgstr ""
 "लक्ष्य, अमान्य फ़ॉरवर्ड किया गया मेटाडेटा, विकृत बॉडी, या Elm-शैली के "
 "निदान के साथ अस्वीकृत समाधान"
 
-#: ../../reference.rst:114
+#: ../../reference.rst:391
 msgid "401"
 msgstr "401"
 
-#: ../../reference.rst:115
+#: ../../reference.rst:392
 msgid ""
 "Challenge required for a client that does not accept HTML, or in "
 "forward-auth mode"
@@ -494,19 +1339,19 @@ msgstr ""
 "HTML स्वीकार न करने वाले क्लाइंट के लिए, या forward-auth मोड में, चैलेंज "
 "आवश्यक"
 
-#: ../../reference.rst:116
+#: ../../reference.rst:393 ../../reference.rst:424
 msgid "403"
 msgstr "403"
 
-#: ../../reference.rst:117
+#: ../../reference.rst:394
 msgid "Policy or WAF denial, banned address, honeypot"
 msgstr "नीति या WAF द्वारा अस्वीकृति, प्रतिबंधित पता, हनीपॉट"
 
-#: ../../reference.rst:118
+#: ../../reference.rst:395 ../../reference.rst:426 ../../reference.rst:528
 msgid "404"
 msgstr "404"
 
-#: ../../reference.rst:119
+#: ../../reference.rst:396
 msgid ""
 "An unknown path under ``/__sibuna/``, or a honeypot hit that is not a "
 "top-level request"
@@ -514,72 +1359,73 @@ msgstr ""
 "``/__sibuna/`` के अंतर्गत अज्ञात पाथ, या ऐसा हनीपॉट हिट जो शीर्ष-स्तर का "
 "अनुरोध नहीं है"
 
-#: ../../reference.rst:120
+#: ../../reference.rst:397 ../../reference.rst:428
 msgid "413"
 msgstr "413"
 
-#: ../../reference.rst:121
+#: ../../reference.rst:398
 msgid "Solution body larger than the 64 KB connection buffer"
 msgstr "समाधान की बॉडी 64 KB कनेक्शन बफ़र से बड़ी"
 
-#: ../../reference.rst:122
+#: ../../reference.rst:399
 msgid "414"
 msgstr "414"
 
-#: ../../reference.rst:123
+#: ../../reference.rst:400
 msgid "A reported challenge URL over 8 KiB"
 msgstr "रिपोर्ट किया गया चैलेंज URL 8 KiB से बड़ा"
 
-#: ../../reference.rst:124
+#: ../../reference.rst:401
 msgid "417"
 msgstr "417"
 
-#: ../../reference.rst:125
+#: ../../reference.rst:402
 msgid "Unsupported request expectation; ``100-continue`` is handled locally"
 msgstr ""
 "असमर्थित अनुरोध अपेक्षा (expectation); ``100-continue`` स्थानीय रूप से "
 "संभाला जाता है"
 
-#: ../../reference.rst:126 ../../reference.rst:215
+#: ../../reference.rst:403 ../../reference.rst:519 ../../reference.rst:525
 msgid "429"
 msgstr "429"
 
-#: ../../reference.rst:127
+#: ../../reference.rst:404
 msgid "GCRA limit exceeded; ``Retry-After`` in seconds"
 msgstr "GCRA सीमा पार; ``Retry-After`` सेकंड में"
 
-#: ../../reference.rst:128
+#: ../../reference.rst:405
 msgid "431"
 msgstr "431"
 
-#: ../../reference.rst:129
+#: ../../reference.rst:406
 msgid "Request head over 16 KB"
 msgstr "अनुरोध हेड 16 KB से बड़ा"
 
-#: ../../reference.rst:130
+#: ../../reference.rst:407 ../../reference.rst:432
 msgid "501"
 msgstr "501"
 
-#: ../../reference.rst:131
+#: ../../reference.rst:408
 msgid "``Transfer-Encoding`` with a coding other than chunked"
 msgstr "chunked के अलावा किसी अन्य coding वाला ``Transfer-Encoding``"
 
-#: ../../reference.rst:132
+#: ../../reference.rst:409 ../../reference.rst:434
 msgid "502"
 msgstr "502"
 
-#: ../../reference.rst:133
+#: ../../reference.rst:410
 msgid ""
 "Origin unreachable, or its response head was malformed or larger than 16 "
 "KB"
 msgstr ""
 "ऑरिजिन तक पहुँच नहीं, या उसका रिस्पॉन्स हेड विकृत था या 16 KB से बड़ा था"
 
-#: ../../reference.rst:134 ../../reference.rst:206 ../../reference.rst:209
+#: ../../reference.rst:411 ../../reference.rst:436 ../../reference.rst:510
+#: ../../reference.rst:513
 msgid "503"
 msgstr "503"
 
-#: ../../reference.rst:135
+#: ../../reference.rst:412
 msgid ""
 "Connection limit (``--max-connections`` or ``--max-connections-per-ip``) "
 "reached, or the node is draining; the socket is closed after the reply"
@@ -587,11 +1433,88 @@ msgstr ""
 "कनेक्शन सीमा (``--max-connections`` या ``--max-connections-per-ip``) "
 "पूरी, या नोड ड्रेन हो रहा है; उत्तर के बाद सॉकेट बंद कर दिया जाता है"
 
-#: ../../reference.rst:137
+#: ../../reference.rst:414
+msgid ""
+"An HTTP frontend of the edge answers with the codes above where its "
+"firewall decides, and adds these of its own (SID 0019, SID 0020, SID "
+"0030)."
+msgstr ""
+
+#: ../../reference.rst:416
+#, fuzzy
+#| msgid "Status codes of the data plane"
+msgid "Status codes that the edge adds"
+msgstr "डेटा plane के स्टेटस कोड"
+
+#: ../../reference.rst:422
+msgid "301, 308"
+msgstr ""
+
+#: ../../reference.rst:423
+msgid ""
+"``redirect_https`` on a cleartext frontend or route, or the automatic "
+"redirect of a managed name (308)"
+msgstr ""
+
+#: ../../reference.rst:425
+msgid ""
+"A request hook denied the request, or a WebSocket upgrade carried an "
+"``Origin`` that the route does not list"
+msgstr ""
+
+#: ../../reference.rst:427
+msgid ""
+"``/__sibuna/ready``, ``health`` or ``metrics`` asked from outside "
+"``internal_allow`` or through a proxy"
+msgstr ""
+
+#: ../../reference.rst:429
+msgid "A request body above ``max_body``"
+msgstr ""
+
+#: ../../reference.rst:430
+#, fuzzy
+#| msgid "429"
+msgid "499"
+msgstr "429"
+
+#: ../../reference.rst:431
+msgid ""
+"Written to the access log only: the client closed or reset before any "
+"response; no client receives it"
+msgstr ""
+
+#: ../../reference.rst:433
+msgid "A WebSocket upgrade to a pool with ``http_version`` 2 or 3"
+msgstr ""
+
+#: ../../reference.rst:435
+msgid ""
+"No server could be reached, or a request that is not safe to repeat lost "
+"its server connection after it was sent"
+msgstr ""
+
+#: ../../reference.rst:437
+msgid ""
+"Readiness during a shutdown, an HTTP/2 or HTTP/3 request above the "
+"request bound, or a console stream over its quota"
+msgstr ""
+
+#: ../../reference.rst:438
+#, fuzzy
+#| msgid "404"
+msgid "504"
+msgstr "404"
+
+#: ../../reference.rst:439
+msgid "A server stayed silent longer than ``response_timeout``"
+msgstr ""
+
+#: ../../reference.rst:441
 msgid "Error Catalog"
 msgstr "त्रुटि सूची"
 
-#: ../../reference.rst:140
+#: ../../reference.rst:444
 msgid ""
 "``INVALID COMMAND LINE`` stops startup for any option the daemon does not "
 "recognise, any value outside its documented range, and an invalid, "
@@ -632,11 +1555,11 @@ msgstr ""
 "नाम देता है, और ``CONSOLE001`` किसी नियम को तोड़ने वाले कंसोल "
 "कॉन्फ़िगरेशन का (स्टोरेज के बिना ``StorageRequired``)।"
 
-#: ../../reference.rst:142
+#: ../../reference.rst:446
 msgid "Implementation: ``ErrorKind::explain``"
 msgstr "इम्प्लीमेंटेशन: ``ErrorKind::explain``"
 
-#: ../../reference.rst:144
+#: ../../reference.rst:448
 msgid ""
 "Maps every domain error to a boundary line, an explanation, and a "
 "``Hint:``. In ``crates/core/src/errors.rs`` (crate ``sibuna-core``)."
@@ -644,168 +1567,168 @@ msgstr ""
 "हर डोमेन त्रुटि को एक सीमा पंक्ति, एक व्याख्या और एक ``Hint:`` से जोड़ता "
 "है। ``crates/core/src/errors.rs`` में (क्रेट ``sibuna-core``)।"
 
-#: ../../reference.rst:146
+#: ../../reference.rst:450
 msgid "Challenge and session errors"
 msgstr "चैलेंज और सत्र की त्रुटियाँ"
 
-#: ../../reference.rst:150
+#: ../../reference.rst:454
 msgid "Error"
 msgstr "त्रुटि"
 
-#: ../../reference.rst:151
+#: ../../reference.rst:455
 msgid "Cause"
 msgstr "कारण"
 
-#: ../../reference.rst:152
+#: ../../reference.rst:456
 msgid "Hint"
 msgstr "संकेत"
 
-#: ../../reference.rst:153
+#: ../../reference.rst:457
 msgid "``MalformedChallenge``"
 msgstr "``MalformedChallenge``"
 
-#: ../../reference.rst:154
+#: ../../reference.rst:458
 msgid "The identifier is not a well-formed challenge record"
 msgstr "पहचानकर्ता एक सही रूप वाला चैलेंज रिकॉर्ड नहीं है"
 
-#: ../../reference.rst:155
+#: ../../reference.rst:459
 msgid "Fetch a fresh challenge and submit it unchanged"
 msgstr "नया चैलेंज लाएँ और उसे बिना बदले सबमिट करें"
 
-#: ../../reference.rst:156
+#: ../../reference.rst:460
 msgid "``InvalidChallengeTag``"
 msgstr "``InvalidChallengeTag``"
 
-#: ../../reference.rst:157
+#: ../../reference.rst:461
 msgid "The tag does not authenticate; not issued by this cluster or edited"
 msgstr ""
 "टैग प्रमाणित नहीं होता; इस क्लस्टर ने जारी नहीं किया या संपादित किया गया"
 
-#: ../../reference.rst:158
+#: ../../reference.rst:462
 msgid "Challenges cannot be forged; request a new one"
 msgstr "चैलेंज जाली नहीं बनाए जा सकते; नया माँगें"
 
-#: ../../reference.rst:159
+#: ../../reference.rst:463
 msgid "``ChallengeExpired``"
 msgstr "``ChallengeExpired``"
 
-#: ../../reference.rst:160
+#: ../../reference.rst:464
 msgid "Older than the challenge TTL, or minted in the future"
 msgstr "चैलेंज TTL से पुराना, या भविष्य में जारी किया गया"
 
-#: ../../reference.rst:161
+#: ../../reference.rst:465
 msgid "Request a new challenge"
 msgstr "नया चैलेंज माँगें"
 
-#: ../../reference.rst:162
+#: ../../reference.rst:466
 msgid "``FingerprintMismatch``"
 msgstr "``FingerprintMismatch``"
 
-#: ../../reference.rst:163
+#: ../../reference.rst:467
 msgid "Submitted from a different address or User-Agent"
 msgstr "किसी दूसरे पते या User-Agent से सबमिट किया गया"
 
-#: ../../reference.rst:164
+#: ../../reference.rst:468
 msgid "Submit from the client that fetched it"
 msgstr "उसी क्लाइंट से सबमिट करें जिसने उसे मँगाया था"
 
-#: ../../reference.rst:165
+#: ../../reference.rst:469
 msgid "``DifficultyNotMet``"
 msgstr "``DifficultyNotMet``"
 
-#: ../../reference.rst:166
+#: ../../reference.rst:470
 msgid "Hashcash nonce lacks the required zero bits"
 msgstr "Hashcash नॉनस में आवश्यक शून्य बिट नहीं हैं"
 
-#: ../../reference.rst:167
+#: ../../reference.rst:471
 msgid "Keep searching nonces"
 msgstr "नॉनस खोजते रहें"
 
-#: ../../reference.rst:168
+#: ../../reference.rst:472
 msgid "``InvalidProof``"
 msgstr "``InvalidProof``"
 
-#: ../../reference.rst:169
+#: ../../reference.rst:473
 msgid "The sequential-work proof does not open the committed labels"
 msgstr "अनुक्रमिक कार्य का प्रमाण कमिट किए गए लेबल नहीं खोलता"
 
-#: ../../reference.rst:170
+#: ../../reference.rst:474
 msgid "Run the prover to completion for the issued depth and openings"
 msgstr "जारी की गई गहराई और ओपनिंग के लिए प्रूवर को पूरा चलाएँ"
 
-#: ../../reference.rst:171
+#: ../../reference.rst:475
 msgid "``WrongSolutionType``"
 msgstr "``WrongSolutionType``"
 
-#: ../../reference.rst:172
+#: ../../reference.rst:476
 msgid "A nonce for a PoSW challenge or a proof for Hashcash"
 msgstr "PoSW चैलेंज के लिए नॉनस या Hashcash के लिए प्रमाण"
 
-#: ../../reference.rst:173
+#: ../../reference.rst:477
 msgid "Match the solution field to the algorithm"
 msgstr "समाधान के फ़ील्ड को एल्गोरिदम से मिलाएँ"
 
-#: ../../reference.rst:174
+#: ../../reference.rst:478
 msgid "``DoubleSpendAttempt``"
 msgstr "``DoubleSpendAttempt``"
 
-#: ../../reference.rst:175
+#: ../../reference.rst:479
 msgid "The challenge was already spent"
 msgstr "चैलेंज पहले ही खर्च हो चुका था"
 
-#: ../../reference.rst:176
+#: ../../reference.rst:480
 msgid "Challenges are single use"
 msgstr "चैलेंज एक बार ही उपयोग होते हैं"
 
-#: ../../reference.rst:177
+#: ../../reference.rst:481
 msgid "``StoreFull``"
 msgstr "``StoreFull``"
 
-#: ../../reference.rst:178
+#: ../../reference.rst:482
 msgid "The spent set is full"
 msgstr "spent set भरा हुआ है"
 
-#: ../../reference.rst:179
+#: ../../reference.rst:483
 msgid "Lower the challenge TTL or raise ``--spent-tags``"
 msgstr "चैलेंज TTL घटाएँ या ``--spent-tags`` बढ़ाएँ"
 
-#: ../../reference.rst:180
+#: ../../reference.rst:484
 msgid "``InvalidTokenSignature``"
 msgstr "``InvalidTokenSignature``"
 
-#: ../../reference.rst:181
+#: ../../reference.rst:485
 msgid "Cookie tag or signature fails"
 msgstr "कुकी का टैग या हस्ताक्षर विफल"
 
-#: ../../reference.rst:182
+#: ../../reference.rst:486
 msgid "Re-authenticate through the interstitial"
 msgstr "इंटरस्टिशियल के ज़रिए दोबारा प्रमाणित हों"
 
-#: ../../reference.rst:183
+#: ../../reference.rst:487
 msgid "``TokenExpired``"
 msgstr "``TokenExpired``"
 
-#: ../../reference.rst:184
+#: ../../reference.rst:488
 msgid "Cookie past its expiry"
 msgstr "कुकी अपनी समाप्ति से आगे"
 
-#: ../../reference.rst:185
+#: ../../reference.rst:489
 msgid "Re-authenticate"
 msgstr "दोबारा प्रमाणित हों"
 
-#: ../../reference.rst:186
+#: ../../reference.rst:490
 msgid "``TokenBoundAddressMismatch``"
 msgstr "``TokenBoundAddressMismatch``"
 
-#: ../../reference.rst:187
+#: ../../reference.rst:491
 msgid "Cookie presented from a different client identity"
 msgstr "कुकी किसी दूसरी क्लाइंट पहचान से प्रस्तुत की गई"
 
-#: ../../reference.rst:188
+#: ../../reference.rst:492
 msgid "Cookies cannot be shared"
 msgstr "कुकी साझा नहीं की जा सकतीं"
 
-#: ../../reference.rst:190
+#: ../../reference.rst:494
 msgid ""
 "The console's API answers a failure with "
 "``{\"error\":\"<CODE>\",\"hint\":\"<sentence>\"}``; the hint is the text "
@@ -815,44 +1738,40 @@ msgstr ""
 "``{\"error\":\"<CODE>\",\"hint\":\"<sentence>\"}`` से देता है; hint वह "
 "टेक्स्ट है जो इंटरफ़ेस दिखाता है (``crates/console/src/http/reply.rs``)।"
 
-#: ../../reference.rst:192
+#: ../../reference.rst:496
 msgid "Console failure codes that concern operators"
 msgstr "ऑपरेटर से संबंधित कंसोल विफलता कोड"
 
-#: ../../reference.rst:197
+#: ../../reference.rst:501
 msgid "Status"
 msgstr "स्टेटस"
 
-#: ../../reference.rst:198
-msgid "Meaning"
-msgstr "अर्थ"
-
-#: ../../reference.rst:199
+#: ../../reference.rst:503
 msgid "``CONSOLE002``"
 msgstr "``CONSOLE002``"
 
-#: ../../reference.rst:201
+#: ../../reference.rst:505
 msgid "The request is malformed, too large or not allowed in its form"
 msgstr "अनुरोध विकृत है, बहुत बड़ा है, या अपने रूप में अनुमत नहीं है"
 
-#: ../../reference.rst:202
+#: ../../reference.rst:506
 msgid "``CONSOLE003``"
 msgstr "``CONSOLE003``"
 
-#: ../../reference.rst:203
+#: ../../reference.rst:507
 msgid "503 / 429"
 msgstr "503 / 429"
 
-#: ../../reference.rst:204
+#: ../../reference.rst:508
 msgid ""
 "The storage job queue is full (32 jobs), or the password verifier is busy"
 msgstr "स्टोरेज जॉब कतार भरी है (32 जॉब), या पासवर्ड सत्यापनकर्ता व्यस्त है"
 
-#: ../../reference.rst:205
+#: ../../reference.rst:509
 msgid "``CONSOLEQUORUM``"
 msgstr "``CONSOLEQUORUM``"
 
-#: ../../reference.rst:207
+#: ../../reference.rst:511
 msgid ""
 "The database did not answer within the request's wait of 10 seconds; the "
 "outcome is unknown, and the data plane continues from the last applied "
@@ -861,11 +1780,11 @@ msgstr ""
 "डेटाबेस ने अनुरोध की 10 सेकंड की प्रतीक्षा के भीतर उत्तर नहीं दिया; "
 "परिणाम अज्ञात है, और डेटा plane अंतिम लागू नीति से चलता रहता है"
 
-#: ../../reference.rst:208
+#: ../../reference.rst:512
 msgid "``CONSOLE004``"
 msgstr "``CONSOLE004``"
 
-#: ../../reference.rst:210
+#: ../../reference.rst:514
 msgid ""
 "The service cannot answer: not available in this build, stopping, or an "
 "internal failure"
@@ -873,15 +1792,15 @@ msgstr ""
 "सेवा उत्तर नहीं दे सकती: इस बिल्ड में उपलब्ध नहीं, रुक रही है, या आंतरिक "
 "विफलता"
 
-#: ../../reference.rst:211
+#: ../../reference.rst:515
 msgid "``CONSOLENODE``"
 msgstr "``CONSOLENODE``"
 
-#: ../../reference.rst:212
+#: ../../reference.rst:516
 msgid "400 / 409 / 503"
 msgstr "400 / 409 / 503"
 
-#: ../../reference.rst:213
+#: ../../reference.rst:517
 msgid ""
 "A node command was refused: it names another node (400), a stale boot or "
 "control revision (409), or it arrived while another command ran or a "
@@ -893,19 +1812,1160 @@ msgstr ""
 "या किसी पूर्णता को दर्ज नहीं किया जा सका (503); रीट्राई से पहले operation "
 "receipt की जाँच करें"
 
-#: ../../reference.rst:214
+#: ../../reference.rst:518
 msgid "``CONSOLEMUTATION``"
 msgstr "``CONSOLEMUTATION``"
 
-#: ../../reference.rst:216
+#: ../../reference.rst:520
 msgid "More than sixty management mutations in a minute from one session"
 msgstr "एक सत्र से एक मिनट में साठ से अधिक प्रबंधन परिवर्तन (mutation)"
 
-#: ../../reference.rst:218
+#: ../../reference.rst:521
+#, fuzzy
+#| msgid "``CONSOLENODE``"
+msgid "``CONSOLEEDGE``"
+msgstr "``CONSOLENODE``"
+
+#: ../../reference.rst:522
+#, fuzzy
+#| msgid "400 / 409 / 503"
+msgid "400 / 503"
+msgstr "400 / 409 / 503"
+
+#: ../../reference.rst:523
+msgid ""
+"A line on the page *Edge* is malformed or not on the list of the console "
+"(400), or the edge worker did not answer or the audit row could not be "
+"written (503)"
+msgstr ""
+
+#: ../../reference.rst:524
+#, fuzzy
+#| msgid "``CONSOLEQUORUM``"
+msgid "``CONSOLEQUERY``"
+msgstr "``CONSOLEQUORUM``"
+
+#: ../../reference.rst:526
+msgid "A read of the page *Edge* past the query allowance of the session"
+msgstr ""
+
+#: ../../reference.rst:527
+#, fuzzy
+#| msgid "``CONSOLE004``"
+msgid "``CONSOLE404``"
+msgstr "``CONSOLE004``"
+
+#: ../../reference.rst:529
+msgid "An ``edge`` route on a console that runs without an edge"
+msgstr ""
+
+#: ../../reference.rst:531
+#, fuzzy
+#| msgid "Status codes of the data plane"
+msgid "Operator codes of the edge"
+msgstr "डेटा plane के स्टेटस कोड"
+
+#: ../../reference.rst:534
+msgid ""
+"The edge renders a failure as a diagnostic with a title rule that carries "
+"the code, the explanation and a ``Hint:``. The tables list every code "
+"that the code tables hold, with its title as the daemon prints it. A code "
+"marked *log* is not a failure: it is the code of a line on standard error "
+"that reports an event."
+msgstr ""
+
+#: ../../reference.rst:536
+msgid ""
+"-- REVISION CONFLICT (DBA002) "
+"---------------------------------------------\n"
+"\n"
+"The commit expected revision 7, and the database is at revision 8.\n"
+"\n"
+"Hint: Somebody committed in between. Run `sibuna authority diff` again, "
+"look at the difference to the new head, and apply with its number after "
+"`--expect`."
+msgstr ""
+
+#: ../../reference.rst:544
+msgid ""
+"``EDGE``: start, reload and notes of the edge "
+"(``cmd/sibuna/src/edge/failure.rs``, ``cmd/sibuna/src/edge.rs``)"
+msgstr ""
+
+#: ../../reference.rst:549 ../../reference.rst:583 ../../reference.rst:630
+#: ../../reference.rst:688 ../../reference.rst:744 ../../reference.rst:791
+#: ../../reference.rst:813
+msgid "Title"
+msgstr ""
+
+#: ../../reference.rst:551
+msgid "``EDGE001``"
+msgstr ""
+
+#: ../../reference.rst:552
+msgid ""
+"``CONFIGURATION FILE NOT FOUND``, ``ADDRESS IN USE``, ``ADDRESS NOT "
+"AVAILABLE``, ``PERMISSION DENIED``, ``SPILL CACHE NOT USABLE``, "
+"``CERTIFICATE NOT LOADED``, ``INVALID CONFIGURATION``, ``FILE NOT "
+"READABLE``, ``EDGE NOT STARTED``"
+msgstr ""
+
+#: ../../reference.rst:553
+msgid ""
+"The edge did not start, or ``sibuna check`` refused the file. Automatic "
+"HTTPS adds ``NAME NOT PUBLIC``, ``NAME OUTSIDE CONSTRAINTS``, ``UPDATE "
+"NOT SIGNED``, ``WILDCARD NEEDS DNS`` and ``ON DEMAND NEEDS A GUARD``, and "
+"a failure of the database authority carries the title of its ``DBA`` code "
+"under ``EDGE001``"
+msgstr ""
+
+#: ../../reference.rst:554
+#, fuzzy
+#| msgid "``CONSOLE002``"
+msgid "``EDGE002``"
+msgstr "``CONSOLE002``"
+
+#: ../../reference.rst:555 ../../reference.rst:558 ../../reference.rst:561
+#: ../../reference.rst:564 ../../reference.rst:567 ../../reference.rst:570
+#: ../../reference.rst:573 ../../reference.rst:633 ../../reference.rst:672
+#: ../../reference.rst:718 ../../reference.rst:721 ../../reference.rst:724
+#: ../../reference.rst:727 ../../reference.rst:730 ../../reference.rst:733
+#: ../../reference.rst:736 ../../reference.rst:771 ../../reference.rst:774
+#: ../../reference.rst:777 ../../reference.rst:780 ../../reference.rst:783
+msgid "*log*"
+msgstr ""
+
+#: ../../reference.rst:556
+msgid ""
+"A reload was rejected; the serving routes stay, and the line says why"
+msgstr ""
+
+#: ../../reference.rst:557
+msgid "``EDGE010``"
+msgstr ""
+
+#: ../../reference.rst:559
+msgid ""
+"A command changed state: from the admin socket, from the mesh, or from "
+"the console; also a failed write of the access log"
+msgstr ""
+
+#: ../../reference.rst:560
+msgid "``EDGE011``"
+msgstr ""
+
+#: ../../reference.rst:562
+msgid "A configuration file was received from a peer (SID 0023)"
+msgstr ""
+
+#: ../../reference.rst:563
+msgid "``EDGE012``"
+msgstr ""
+
+#: ../../reference.rst:565
+msgid ""
+"The mesh address cannot serve ``show cluster``; the node serves without "
+"that answer"
+msgstr ""
+
+#: ../../reference.rst:566
+msgid "``EDGE013``"
+msgstr ""
+
+#: ../../reference.rst:568
+msgid ""
+"The kernel refused a listener option such as ``defer_accept``; the "
+"frontend serves without it (SID 0032)"
+msgstr ""
+
+#: ../../reference.rst:569
+msgid "``EDGE014``"
+msgstr ""
+
+#: ../../reference.rst:571
+msgid ""
+"A console peer is new or changed and is used after a restart (SID 0031)"
+msgstr ""
+
+#: ../../reference.rst:572
+msgid "``EDGE015``"
+msgstr ""
+
+#: ../../reference.rst:574
+msgid ""
+"The spill cache at start: created, reused, discarded, or in use by "
+"another process, with its size (SID 0027)"
+msgstr ""
+
+#: ../../reference.rst:576
+msgid "The code holds no ``EDGE003`` to ``EDGE009``."
+msgstr ""
+
+#: ../../reference.rst:578
+msgid ""
+"``ADM``: the admin socket and the console commands "
+"(``cmd/sibuna/src/edge/control.rs``, ``crates/lb/src/runtime.rs``)"
+msgstr ""
+
+#: ../../reference.rst:585
+msgid "``ADM001``"
+msgstr ""
+
+#: ../../reference.rst:586
+msgid "``MALFORMED COMMAND``"
+msgstr ""
+
+#: ../../reference.rst:587
+msgid ""
+"The line holds a byte outside printable ASCII, is longer than 512 bytes, "
+"or did not arrive within two seconds"
+msgstr ""
+
+#: ../../reference.rst:588
+msgid "``ADM002``"
+msgstr ""
+
+#: ../../reference.rst:589
+msgid "``UNKNOWN COMMAND``"
+msgstr ""
+
+#: ../../reference.rst:590
+msgid "The words are not a command"
+msgstr ""
+
+#: ../../reference.rst:591
+msgid "``ADM003``"
+msgstr ""
+
+#: ../../reference.rst:592
+msgid "``UNKNOWN POOL``"
+msgstr ""
+
+#: ../../reference.rst:593
+msgid "No pool has this name"
+msgstr ""
+
+#: ../../reference.rst:594
+msgid "``ADM004``"
+msgstr ""
+
+#: ../../reference.rst:595
+msgid "``UNKNOWN SERVER``"
+msgstr ""
+
+#: ../../reference.rst:596
+msgid "The pool has no server of this name; the hint names a near one"
+msgstr ""
+
+#: ../../reference.rst:597
+msgid "``ADM005``"
+msgstr ""
+
+#: ../../reference.rst:598
+msgid "``INVALID VALUE``"
+msgstr ""
+
+#: ../../reference.rst:599
+msgid ""
+"A weight, an address, a state, a server name or a client address is not "
+"valid"
+msgstr ""
+
+#: ../../reference.rst:600
+msgid "``ADM006``"
+msgstr ""
+
+#: ../../reference.rst:601
+msgid "``DUPLICATE SERVER``"
+msgstr ""
+
+#: ../../reference.rst:602
+msgid "The pool already has a server with this name or this address"
+msgstr ""
+
+#: ../../reference.rst:603
+msgid "``ADM007``"
+msgstr ""
+
+#: ../../reference.rst:604
+msgid "``CHANGE REFUSED``"
+msgstr ""
+
+#: ../../reference.rst:605
+msgid ""
+"The pool changes only by reload (a Maglev table or protocol adapters), is "
+"full, or would lose its last server"
+msgstr ""
+
+#: ../../reference.rst:606
+msgid "``ADM008``"
+msgstr ""
+
+#: ../../reference.rst:607
+msgid "``RELOAD REJECTED``"
+msgstr ""
+
+#: ../../reference.rst:608
+msgid ""
+"The file does not check, or the daemon was started by ``sibuna lb`` and "
+"has no file"
+msgstr ""
+
+#: ../../reference.rst:609
+msgid "``ADM009``"
+msgstr ""
+
+#: ../../reference.rst:610
+msgid "``TOO MANY COMMANDS``"
+msgstr ""
+
+#: ../../reference.rst:611
+msgid ""
+"More than a burst of 20 commands, or more than 10 per second after it"
+msgstr ""
+
+#: ../../reference.rst:612
+msgid "``ADM010``"
+msgstr ""
+
+#: ../../reference.rst:613
+#, fuzzy
+#| msgid "``CONSOLEQUORUM``"
+msgid "``NO ANSWER``"
+msgstr "``CONSOLEQUORUM``"
+
+#: ../../reference.rst:614
+msgid "The edge worker did not answer within five seconds"
+msgstr ""
+
+#: ../../reference.rst:615
+msgid "``ADM011``"
+msgstr ""
+
+#: ../../reference.rst:616
+msgid "``NO CLUSTER``"
+msgstr ""
+
+#: ../../reference.rst:617
+msgid ""
+"``reload cluster`` or ``show cluster`` on an edge without a mesh or "
+"without a file"
+msgstr ""
+
+#: ../../reference.rst:618
+msgid "``ADM012``"
+msgstr ""
+
+#: ../../reference.rst:619
+msgid "``CLUSTER RELOAD INCOMPLETE``"
+msgstr ""
+
+#: ../../reference.rst:620
+msgid "This node reloaded, and some peers did not take the file"
+msgstr ""
+
+#: ../../reference.rst:621
+msgid "``ADM013``"
+msgstr ""
+
+#: ../../reference.rst:622
+#, fuzzy
+#| msgid "``CONSOLENODE``"
+msgid "``NOT REVOKED``"
+msgstr "``CONSOLENODE``"
+
+#: ../../reference.rst:623
+msgid ""
+"``revoke cert`` named nothing that the local authority issued, or the "
+"build has no TLS"
+msgstr ""
+
+#: ../../reference.rst:625
+msgid ""
+"``ACME``: automatic HTTPS (``crates/acme/src/error.rs``, "
+"``cmd/sibuna/src/acme.rs``)"
+msgstr ""
+
+#: ../../reference.rst:632
+#, fuzzy
+#| msgid "``CONSOLE002``"
+msgid "``ACME000``"
+msgstr "``CONSOLE002``"
+
+#: ../../reference.rst:634
+msgid ""
+"An event of a certificate: obtained, renewed, loaded, stapled, held or "
+"released on demand, or validated and issued by the ACME server"
+msgstr ""
+
+#: ../../reference.rst:635
+#, fuzzy
+#| msgid "``CONSOLE002``"
+msgid "``ACME001``"
+msgstr "``CONSOLE002``"
+
+#: ../../reference.rst:636
+msgid "``STORAGE NOT WRITABLE``"
+msgstr ""
+
+#: ../../reference.rst:637
+msgid "The directory of ``global.acme.storage`` cannot be read or written"
+msgstr ""
+
+#: ../../reference.rst:638
+#, fuzzy
+#| msgid "``CONSOLE002``"
+msgid "``ACME002``"
+msgstr "``CONSOLE002``"
+
+#: ../../reference.rst:639
+msgid "``AUTHORITY UNREACHABLE``"
+msgstr ""
+
+#: ../../reference.rst:640
+msgid ""
+"The ACME authority could not be reached, or no trust root could be loaded"
+msgstr ""
+
+#: ../../reference.rst:641
+#, fuzzy
+#| msgid "``CONSOLE003``"
+msgid "``ACME003``"
+msgstr "``CONSOLE003``"
+
+#: ../../reference.rst:642
+msgid "``AUTHORITY REFUSED``"
+msgstr ""
+
+#: ../../reference.rst:643
+msgid "The authority answered with a problem; the daemon tries again later"
+msgstr ""
+
+#: ../../reference.rst:644
+#, fuzzy
+#| msgid "``CONSOLE004``"
+msgid "``ACME004``"
+msgstr "``CONSOLE004``"
+
+#: ../../reference.rst:645
+msgid "``RATE LIMITED``"
+msgstr ""
+
+#: ../../reference.rst:646
+msgid "The authority limits our requests; the daemon waits as it was told"
+msgstr ""
+
+#: ../../reference.rst:647
+#, fuzzy
+#| msgid "``CONSOLE002``"
+msgid "``ACME005``"
+msgstr "``CONSOLE002``"
+
+#: ../../reference.rst:648
+msgid "``VALIDATION FAILED``"
+msgstr ""
+
+#: ../../reference.rst:649
+msgid ""
+"The authority could not validate the name over HTTP-01, TLS-ALPN-01 or "
+"DNS-01"
+msgstr ""
+
+#: ../../reference.rst:650
+#, fuzzy
+#| msgid "``CONSOLE002``"
+msgid "``ACME006``"
+msgstr "``CONSOLE002``"
+
+#: ../../reference.rst:651
+msgid "``UNEXPECTED ANSWER``"
+msgstr ""
+
+#: ../../reference.rst:652
+msgid "An answer broke the protocol or a bound"
+msgstr ""
+
+#: ../../reference.rst:653
+#, fuzzy
+#| msgid "``CONSOLE002``"
+msgid "``ACME008``"
+msgstr "``CONSOLE002``"
+
+#: ../../reference.rst:654
+msgid "``CERTIFICATE REJECTED``"
+msgstr ""
+
+#: ../../reference.rst:655
+msgid "The issued certificate cannot be served"
+msgstr ""
+
+#: ../../reference.rst:656
+#, fuzzy
+#| msgid "``CONSOLE002``"
+msgid "``ACME009``"
+msgstr "``CONSOLE002``"
+
+#: ../../reference.rst:657
+msgid "``DNS PROVIDER FAILED``"
+msgstr ""
+
+#: ../../reference.rst:658
+msgid ""
+"The DNS provider (hook, RFC 2136 or Cloudflare) could not write or remove "
+"the record, or its key or roots could not be read"
+msgstr ""
+
+#: ../../reference.rst:659
+#, fuzzy
+#| msgid "``CONSOLE002``"
+msgid "``ACME010``"
+msgstr "``CONSOLE002``"
+
+#: ../../reference.rst:660
+msgid "``RECORD NOT VISIBLE``"
+msgstr ""
+
+#: ../../reference.rst:661
+msgid "The authoritative servers did not show the TXT record in time"
+msgstr ""
+
+#: ../../reference.rst:662
+msgid "``ACME011``"
+msgstr ""
+
+#: ../../reference.rst:663
+msgid "``LOCAL AUTHORITY FAILED``"
+msgstr ""
+
+#: ../../reference.rst:664
+msgid ""
+"The local authority could not be created, read or used, or its root has "
+"other name constraints than the file lists"
+msgstr ""
+
+#: ../../reference.rst:665
+#, fuzzy
+#| msgid "``CONSOLE002``"
+msgid "``ACME012``"
+msgstr "``CONSOLE002``"
+
+#: ../../reference.rst:666
+msgid "``ACCOUNT NOT BOUND``"
+msgstr ""
+
+#: ../../reference.rst:667
+msgid "The authority wants an external account binding, or refused ours"
+msgstr ""
+
+#: ../../reference.rst:668
+#, fuzzy
+#| msgid "``CONSOLE003``"
+msgid "``ACME013``"
+msgstr "``CONSOLE003``"
+
+#: ../../reference.rst:669
+msgid "``NO OCSP RESPONSE``"
+msgstr ""
+
+#: ../../reference.rst:670
+msgid ""
+"The OCSP responder did not answer, or its answer cannot be stapled; the "
+"certificate is served without a staple"
+msgstr ""
+
+#: ../../reference.rst:671
+#, fuzzy
+#| msgid "``CONSOLE004``"
+msgid "``ACME014``"
+msgstr "``CONSOLE004``"
+
+#: ../../reference.rst:673
+msgid ""
+"The certificate thread stopped on a defect and starts again; the served "
+"certificates stay"
+msgstr ""
+
+#: ../../reference.rst:674
+msgid "``ACME015``"
+msgstr ""
+
+#: ../../reference.rst:675
+msgid "``KEY TOOL FAILED``"
+msgstr ""
+
+#: ../../reference.rst:676
+msgid ""
+"The program ``openssl`` that makes RSA keys could not be run, or wrote no "
+"key"
+msgstr ""
+
+#: ../../reference.rst:677
+msgid "``ACME016``"
+msgstr ""
+
+#: ../../reference.rst:678
+msgid "``REVOCATION LIST FAILED``"
+msgstr ""
+
+#: ../../reference.rst:679
+msgid ""
+"The revoked certificates or the revocation list of the local authority "
+"could not be read or written, or the list is full"
+msgstr ""
+
+#: ../../reference.rst:681
+msgid "The code holds no ``ACME007``."
+msgstr ""
+
+#: ../../reference.rst:683
+msgid ""
+"``DBA``: the database authority (``crates/authority/src/error.rs``, "
+"``cmd/sibuna/src/edge/authority/``)"
+msgstr ""
+
+#: ../../reference.rst:690
+msgid "``DBA001``"
+msgstr ""
+
+#: ../../reference.rst:691
+msgid "``SOURCE REJECTED``"
+msgstr ""
+
+#: ../../reference.rst:692
+msgid "A source or a stored document does not evaluate or does not check"
+msgstr ""
+
+#: ../../reference.rst:693
+msgid "``DBA002``"
+msgstr ""
+
+#: ../../reference.rst:694
+msgid "``REVISION CONFLICT``"
+msgstr ""
+
+#: ../../reference.rst:695
+msgid "The head is not the revision that the commit expected"
+msgstr ""
+
+#: ../../reference.rst:696
+msgid "``DBA003``"
+msgstr ""
+
+#: ../../reference.rst:697
+msgid "``DATABASE UNAVAILABLE``"
+msgstr ""
+
+#: ../../reference.rst:698
+msgid ""
+"The database cannot be reached, or it refused the statement (also for a "
+"role that lacks a right)"
+msgstr ""
+
+#: ../../reference.rst:699
+msgid "``DBA004``"
+msgstr ""
+
+#: ../../reference.rst:700
+msgid "``NO REVISION``"
+msgstr ""
+
+#: ../../reference.rst:701
+msgid "Nothing is published yet, or no revision has this number"
+msgstr ""
+
+#: ../../reference.rst:702
+msgid "``DBA005``"
+msgstr ""
+
+#: ../../reference.rst:703
+msgid "``INVALID AUTHORITY``"
+msgstr ""
+
+#: ../../reference.rst:704
+msgid ""
+"The ``authority`` section or its file is wrong, or the build has no "
+"storage"
+msgstr ""
+
+#: ../../reference.rst:705
+msgid "``DBA006``"
+msgstr ""
+
+#: ../../reference.rst:706
+msgid "``NO AUTHORITY``"
+msgstr ""
+
+#: ../../reference.rst:707
+msgid "``show authority`` on an edge that serves its file"
+msgstr ""
+
+#: ../../reference.rst:708
+msgid "``DBA007``"
+msgstr ""
+
+#: ../../reference.rst:709
+msgid "``MISSING COMMAND``"
+msgstr ""
+
+#: ../../reference.rst:710
+msgid "``sibuna authority`` without a known command, or with a bad option"
+msgstr ""
+
+#: ../../reference.rst:711
+msgid "``DBA008``"
+msgstr ""
+
+#: ../../reference.rst:712
+msgid "``REVISION DAMAGED``"
+msgstr ""
+
+#: ../../reference.rst:713
+msgid "A stored revision is not what its row says"
+msgstr ""
+
+#: ../../reference.rst:714
+msgid "``DBA009``"
+msgstr ""
+
+#: ../../reference.rst:715
+msgid "``FILE IS LOCAL``"
+msgstr ""
+
+#: ../../reference.rst:716
+msgid "``reload cluster`` on a node that follows a database"
+msgstr ""
+
+#: ../../reference.rst:717
+msgid "``DBA010``"
+msgstr ""
+
+#: ../../reference.rst:719
+msgid "A revision was applied"
+msgstr ""
+
+#: ../../reference.rst:720
+msgid "``DBA011``"
+msgstr ""
+
+#: ../../reference.rst:722
+msgid "A revision was refused; the node keeps the one it serves"
+msgstr ""
+
+#: ../../reference.rst:723
+msgid "``DBA012``"
+msgstr ""
+
+#: ../../reference.rst:725
+msgid ""
+"The database cannot be reached; the node keeps its revision and asks "
+"again every two seconds"
+msgstr ""
+
+#: ../../reference.rst:726
+msgid "``DBA013``"
+msgstr ""
+
+#: ../../reference.rst:728
+msgid "The database answers again"
+msgstr ""
+
+#: ../../reference.rst:729
+msgid "``DBA014``"
+msgstr ""
+
+#: ../../reference.rst:731
+msgid "The node started from its cache"
+msgstr ""
+
+#: ../../reference.rst:732
+msgid "``DBA015``"
+msgstr ""
+
+#: ../../reference.rst:734
+msgid ""
+"``authority.binds`` names a frontend that the revision does not publish"
+msgstr ""
+
+#: ../../reference.rst:735
+msgid "``DBA016``"
+msgstr ""
+
+#: ../../reference.rst:737
+msgid ""
+"The cache is ignored or cannot be written, or the report to the database "
+"failed"
+msgstr ""
+
+#: ../../reference.rst:739
+msgid ""
+"``UPG``: replacing the binary (``crates/upgrade/src/error.rs``, "
+"``cmd/sibuna/src/edge/upgrade.rs``)"
+msgstr ""
+
+#: ../../reference.rst:746
+msgid "``UPG001``"
+msgstr ""
+
+#: ../../reference.rst:747
+msgid "``UPGRADE PEER REFUSED``"
+msgstr ""
+
+#: ../../reference.rst:748
+msgid "The replacement runs as another user than the running daemon"
+msgstr ""
+
+#: ../../reference.rst:749
+msgid "``UPG002``"
+msgstr ""
+
+#: ../../reference.rst:750
+msgid "``UPGRADE VERSION NOT SHARED``"
+msgstr ""
+
+#: ../../reference.rst:751
+msgid "The two binaries share no version of the handoff protocol"
+msgstr ""
+
+#: ../../reference.rst:752
+msgid "``UPG003``"
+msgstr ""
+
+#: ../../reference.rst:753
+msgid "``UPGRADE PROTOCOL ERROR``"
+msgstr ""
+
+#: ../../reference.rst:754
+msgid ""
+"A malformed, oversized or unexpected frame, or a descriptor that is not "
+"what the frame says"
+msgstr ""
+
+#: ../../reference.rst:755
+msgid "``UPG004``"
+msgstr ""
+
+#: ../../reference.rst:756
+msgid "``UPGRADE TIMED OUT``"
+msgstr ""
+
+#: ../../reference.rst:757
+msgid "The running daemon did not answer in time; it keeps serving"
+msgstr ""
+
+#: ../../reference.rst:758
+msgid "``UPG005``"
+msgstr ""
+
+#: ../../reference.rst:759
+msgid "``UPGRADE CONNECTION CLOSED``"
+msgstr ""
+
+#: ../../reference.rst:760
+msgid "The running daemon ended the handoff; its log says why"
+msgstr ""
+
+#: ../../reference.rst:761
+msgid "``UPG006``"
+msgstr ""
+
+#: ../../reference.rst:762
+msgid "``UPGRADE NOT POSSIBLE NOW``"
+msgstr ""
+
+#: ../../reference.rst:763
+msgid ""
+"Another replacement is in progress, or the running daemon is stopping"
+msgstr ""
+
+#: ../../reference.rst:764
+msgid "``UPG007``"
+msgstr ""
+
+#: ../../reference.rst:765
+msgid "``UPGRADE SOCKET NOT SUPPORTED``"
+msgstr ""
+
+#: ../../reference.rst:766
+msgid "The platform cannot pass descriptors (Linux only)"
+msgstr ""
+
+#: ../../reference.rst:767
+msgid "``UPG008``"
+msgstr ""
+
+#: ../../reference.rst:768
+msgid "``UPGRADE SOCKET OF ANOTHER DAEMON``"
+msgstr ""
+
+#: ../../reference.rst:769
+msgid ""
+"The daemon at ``global.upgrade_socket`` listens on none of the addresses "
+"of this file"
+msgstr ""
+
+#: ../../reference.rst:770
+msgid "``UPG010``"
+msgstr ""
+
+#: ../../reference.rst:772
+msgid ""
+"The old process handed its listeners and UDP mappings to the replacement"
+msgstr ""
+
+#: ../../reference.rst:773
+msgid "``UPG011``"
+msgstr ""
+
+#: ../../reference.rst:775
+msgid "The replacement failed before the cutover; the old process serves on"
+msgstr ""
+
+#: ../../reference.rst:776
+msgid "``UPG012``"
+msgstr ""
+
+#: ../../reference.rst:778
+msgid "The old process refused an upgrade peer"
+msgstr ""
+
+#: ../../reference.rst:779
+msgid "``UPG013``"
+msgstr ""
+
+#: ../../reference.rst:781
+msgid "The replacement cannot be ended; UDP stays unread until it is gone"
+msgstr ""
+
+#: ../../reference.rst:782
+msgid "``UPG020``"
+msgstr ""
+
+#: ../../reference.rst:784
+msgid "The replacement took the listeners and UDP mappings"
+msgstr ""
+
+#: ../../reference.rst:786
+msgid "``SPILL``: the spill cache (``crates/spill/src/error.rs``)"
+msgstr ""
+
+#: ../../reference.rst:793
+#, fuzzy
+#| msgid "``CONSOLE002``"
+msgid "``SPILL001``"
+msgstr "``CONSOLE002``"
+
+#: ../../reference.rst:794
+msgid "``SPILL CACHE SIZE OUT OF RANGE``"
+msgstr ""
+
+#: ../../reference.rst:795
+msgid "The size lies outside 64 KiB to 64 GiB"
+msgstr ""
+
+#: ../../reference.rst:796
+#, fuzzy
+#| msgid "``CONSOLE002``"
+msgid "``SPILL002``"
+msgstr "``CONSOLE002``"
+
+#: ../../reference.rst:797
+msgid "``NOT A SPILL CACHE``"
+msgstr ""
+
+#: ../../reference.rst:798
+msgid "The file at the path exists and is not a cache; it is left alone"
+msgstr ""
+
+#: ../../reference.rst:799
+#, fuzzy
+#| msgid "``CONSOLE003``"
+msgid "``SPILL003``"
+msgstr "``CONSOLE003``"
+
+#: ../../reference.rst:800
+msgid "``SPILL CACHE IN USE``"
+msgstr ""
+
+#: ../../reference.rst:801
+msgid ""
+"Another process holds the lock of the file; the daemon then runs with the "
+"sticky table in memory only"
+msgstr ""
+
+#: ../../reference.rst:802
+#, fuzzy
+#| msgid "``CONSOLE004``"
+msgid "``SPILL004``"
+msgstr "``CONSOLE004``"
+
+#: ../../reference.rst:803
+msgid "``SPILL CACHE UNAVAILABLE``"
+msgstr ""
+
+#: ../../reference.rst:804
+msgid "The system refused an operation on the file"
+msgstr ""
+
+#: ../../reference.rst:806
+msgid ""
+"A ``SPILL`` failure other than ``SPILL003`` stops the start under "
+"``EDGE001`` with the title ``SPILL CACHE NOT USABLE``, and the message "
+"carries the ``SPILL`` code."
+msgstr ""
+
+#: ../../reference.rst:808
+msgid "``HOOK``: plugins (``crates/plugin/src/spec.rs``)"
+msgstr ""
+
+#: ../../reference.rst:815
+#, fuzzy
+#| msgid "``CONSOLE002``"
+msgid "``HOOK001``"
+msgstr "``CONSOLE002``"
+
+#: ../../reference.rst:816
+msgid "``UNKNOWN PLUGIN``"
+msgstr ""
+
+#: ../../reference.rst:817
+msgid "A frontend lists a plugin that ``plugins`` does not define"
+msgstr ""
+
+#: ../../reference.rst:818
+#, fuzzy
+#| msgid "``CONSOLE002``"
+msgid "``HOOK002``"
+msgstr "``CONSOLE002``"
+
+#: ../../reference.rst:819
+msgid "``INVALID PLUGIN SETTINGS``"
+msgstr ""
+
+#: ../../reference.rst:820
+msgid "A key of a plugin is missing, unknown or out of range"
+msgstr ""
+
+#: ../../reference.rst:821
+#, fuzzy
+#| msgid "``CONSOLE003``"
+msgid "``HOOK003``"
+msgstr "``CONSOLE003``"
+
+#: ../../reference.rst:822
+msgid "``MODULE NOT READABLE``"
+msgstr ""
+
+#: ../../reference.rst:823
+msgid "The Wasm module cannot be read"
+msgstr ""
+
+#: ../../reference.rst:824
+#, fuzzy
+#| msgid "``CONSOLE004``"
+msgid "``HOOK004``"
+msgstr "``CONSOLE004``"
+
+#: ../../reference.rst:825
+#, fuzzy
+#| msgid "``CONSOLENODE``"
+msgid "``MODULE NOT LOADED``"
+msgstr "``CONSOLENODE``"
+
+#: ../../reference.rst:826
+msgid ""
+"The module does not validate, or its memory does not fit ``memory_pages``"
+msgstr ""
+
+#: ../../reference.rst:827
+#, fuzzy
+#| msgid "``CONSOLE002``"
+msgid "``HOOK005``"
+msgstr "``CONSOLE002``"
+
+#: ../../reference.rst:828
+msgid "``FORBIDDEN IMPORT``"
+msgstr ""
+
+#: ../../reference.rst:829
+msgid ""
+"The module imports something other than ``sibuna.add_header`` and "
+"``sibuna.now_ms``"
+msgstr ""
+
+#: ../../reference.rst:830
+#, fuzzy
+#| msgid "``CONSOLE002``"
+msgid "``HOOK006``"
+msgstr "``CONSOLE002``"
+
+#: ../../reference.rst:831
+msgid "``ABI MISMATCH``"
+msgstr ""
+
+#: ../../reference.rst:832
+msgid ""
+"The module lacks an export of the interface, or ``sibuna_abi`` does not "
+"return 1"
+msgstr ""
+
+#: ../../reference.rst:833
+#, fuzzy
+#| msgid "``CONSOLE002``"
+msgid "``HOOK007``"
+msgstr "``CONSOLE002``"
+
+#: ../../reference.rst:834
+msgid "``UNKNOWN NATIVE HOOK``"
+msgstr ""
+
+#: ../../reference.rst:835
+msgid "The build has no native hook of this name"
+msgstr ""
+
+#: ../../reference.rst:836
+#, fuzzy
+#| msgid "``CONSOLE002``"
+msgid "``HOOK008``"
+msgstr "``CONSOLE002``"
+
+#: ../../reference.rst:837
+msgid "``NATIVE HOOK REFUSED ITS SETTINGS``"
+msgstr ""
+
+#: ../../reference.rst:838
+msgid "A native hook refused the ``settings`` of the plugin"
+msgstr ""
+
+#: ../../reference.rst:839
+#, fuzzy
+#| msgid "``CONSOLE002``"
+msgid "``HOOK009``"
+msgstr "``CONSOLE002``"
+
+#: ../../reference.rst:840
+msgid "``AGENTS NOT SUPPORTED``"
+msgstr ""
+
+#: ../../reference.rst:841
+msgid "An agent needs a Unix socket, which this platform lacks"
+msgstr ""
+
+#: ../../reference.rst:843
+msgid ""
+"A set of plugins that does not load at a reload leaves the serving set in "
+"place. Two more families concern the build and the console rather than "
+"the operator of the edge: ``HTML001`` to ``HTML008`` stop the build of a "
+"page template, and ``GEOIP001`` refuses a GeoIP snapshot in a build "
+"without the console. The console's query routes answer with families of "
+"their own (``TRAFFIC``, ``COMPARISON``, ``RANKHISTORY``, ``RULEHITS``, "
+"``TIMELINE``, ``MINUTES``), whose hints the interface shows."
+msgstr ""
+
+#: ../../reference.rst:845
 msgid "Policy Schema"
 msgstr "नीति स्कीमा"
 
-#: ../../reference.rst:221
+#: ../../reference.rst:848
 msgid ""
 "{\n"
 "  \"default_action\": \"ALLOW\" | \"DENY\" | \"CHALLENGE\",\n"
@@ -975,7 +3035,22 @@ msgstr ""
 "  ]\n"
 "}"
 
-#: ../../reference.rst:245
+#: ../../reference.rst:872
+#, fuzzy
+#| msgid ""
+#| "``challenge_at`` and ``deny_at`` lie in -1000 to 1000 with ``deny_at`` "
+#| "at or above ``challenge_at``, and ``bits_step`` in 1 to 1000. A "
+#| "``challenge`` block belongs only to ``CHALLENGE`` rules, with 1 to 64 "
+#| "work bits. ``limits`` gives a rule its own quota: ``rate`` 1 to "
+#| "1,000,000 and ``window_seconds`` 1 to 86,400 are required, "
+#| "``ban_seconds`` (at most 86,400) is optional, and ``WEIGH`` rules "
+#| "cannot carry limits. ``ja4`` is a whole JA4 fingerprint, which must be "
+#| "equal, or a prefix followed by ``*``, which the fingerprint must start "
+#| "with; ``*`` alone matches any fingerprint, and a request without one "
+#| "matches no ``ja4`` rule. A pattern that no fingerprint could match is "
+#| "refused with ``InvalidJa4`` (Part IX, JA4 Fingerprints From the "
+#| "Ingress). The reputation trie of ``ip_rules`` holds at most 8,192 "
+#| "nodes. Each rule may use one spelling of each criterion."
 msgid ""
 "``challenge_at`` and ``deny_at`` lie in -1000 to 1000 with ``deny_at`` at "
 "or above ``challenge_at``, and ``bits_step`` in 1 to 1000. A "
@@ -986,7 +3061,7 @@ msgid ""
 "a whole JA4 fingerprint, which must be equal, or a prefix followed by "
 "``*``, which the fingerprint must start with; ``*`` alone matches any "
 "fingerprint, and a request without one matches no ``ja4`` rule. A pattern "
-"that no fingerprint could match is refused with ``InvalidJa4`` (Part IX, "
+"that no fingerprint could match is refused with ``InvalidJa4`` (Part XI, "
 "JA4 Fingerprints From the Ingress). The reputation trie of ``ip_rules`` "
 "holds at most 8,192 nodes. Each rule may use one spelling of each "
 "criterion."
@@ -1006,7 +3081,7 @@ msgstr ""
 "फ़िंगरप्रिंट)। ``ip_rules`` का प्रतिष्ठा trie अधिकतम 8,192 नोड रखता है। "
 "हर नियम हर मानदंड की एक ही वर्तनी का उपयोग कर सकता है।"
 
-#: ../../reference.rst:247
+#: ../../reference.rst:874
 msgid ""
 "Pattern grammar: ``.*`` or ``*`` match anything; ``^...$`` anchors an "
 "exact path; a trailing ``*``, ``/*``, or ``.*`` is a prefix; a pattern "
@@ -1026,11 +3101,11 @@ msgstr ""
 "``%2F``, ``%5C`` या ``\\`` रखने वाला पैटर्न किसी से मेल नहीं खाता, और पाथ "
 "मिलान केस-संवेदी है (SID 0003)।"
 
-#: ../../reference.rst:249
+#: ../../reference.rst:876
 msgid "Storage Tables"
 msgstr "स्टोरेज टेबल"
 
-#: ../../reference.rst:252
+#: ../../reference.rst:879
 msgid ""
 "``policy_revision``, ``policies`` (with the nullable ``ja4_pattern`` "
 "criterion of at most 37 bytes), ``policy_inspection``, ``ip_reputation``, "
@@ -1054,46 +3129,149 @@ msgstr ""
 "समन्वय के पूरे क्लस्टर में अद्वितीय हैं; नोड id 1 से 8,388,607 तक होते "
 "हैं।"
 
-#: ../../reference.rst:254
+#: ../../reference.rst:881
+msgid ""
+"The database authority of the edge (SID 0028) adds three tables as the "
+"component ``authority`` of ``sibuna_schema``, in the database of the "
+"firewall or in another: ``edge_head`` (one row with the number of the "
+"head), ``edge_revisions`` (one row per revision: ``origin`` ``apply`` or "
+"``rollback``, ``restored``, the checked ``document`` of at most 256 KiB "
+"with its 64-digit ``digest``, the ``source`` with its name and digest, "
+"``author``, ``note`` and ``committed_at``) and ``edge_nodes`` (one row "
+"per node: ``applied``, ``digest``, ``refused``, ``detail`` and "
+"``seen_at``). On PostgreSQL an update of ``edge_head`` notifies the "
+"channel ``sibuna_edge``. The history is never pruned. "
+"``crates/authority/src/sql.rs`` holds the schema."
+msgstr ""
+
+#: ../../reference.rst:883
+msgid "Commands of the Binary"
+msgstr ""
+
+#: ../../reference.rst:886
+msgid ""
+"One binary holds the firewall daemon, the edge and their tools. Part XI "
+"describes each command; this table says where."
+msgstr ""
+
+#: ../../reference.rst:888
+msgid "Commands of ``sibuna``"
+msgstr ""
+
+#: ../../reference.rst:893
+msgid "Purpose, and where Part XI describes it"
+msgstr ""
+
+#: ../../reference.rst:894
+#, fuzzy
+#| msgid "``/__sibuna/metrics``"
+msgid "``sibuna [options]``"
+msgstr "``/__sibuna/metrics``"
+
+#: ../../reference.rst:895
+msgid "The firewall daemon (*Command-Line Reference*)"
+msgstr ""
+
+#: ../../reference.rst:896
+msgid "``sibuna --config-file FILE``"
+msgstr ""
+
+#: ../../reference.rst:897
+msgid ""
+"The edge from a JSON or JLV topology; it takes no other option (*Edge "
+"Load Balancing*)"
+msgstr ""
+
+#: ../../reference.rst:898
+msgid "``sibuna check -f FILE``"
+msgstr ""
+
+#: ../../reference.rst:899
+msgid ""
+"Checks a topology offline, with its certificates and CA files, and exits"
+msgstr ""
+
+#: ../../reference.rst:900
+msgid "``sibuna lb --bind IP:PORT --server IP:PORT ...``"
+msgstr ""
+
+#: ../../reference.rst:901
+msgid ""
+"The edge from a few options, without a file; ``--print-config`` writes "
+"the file (*Starting with one command*)"
+msgstr ""
+
+#: ../../reference.rst:902
+msgid "``sibuna ctl SOCKET COMMAND``"
+msgstr ""
+
+#: ../../reference.rst:903
+msgid ""
+"One command of the admin socket (*Changing servers at run time*, and the "
+"table above)"
+msgstr ""
+
+#: ../../reference.rst:904
+msgid ""
+"``sibuna authority apply|diff|dump|history|rollback|status -c FILE ...``"
+msgstr ""
+
+#: ../../reference.rst:905
+msgid ""
+"Publishes and inspects the topology in a database (*A database for the "
+"topology*)"
+msgstr ""
+
+#: ../../reference.rst:906
+msgid "``sibuna init-admin``, ``sibuna console ...``"
+msgstr ""
+
+#: ../../reference.rst:907
+msgid ""
+"The accounts, tokens, policies and GeoIP data of the console (*Console "
+"Preview*)"
+msgstr ""
+
+#: ../../reference.rst:909
 msgid "Build Targets"
 msgstr "बिल्ड टारगेट"
 
-#: ../../reference.rst:257
+#: ../../reference.rst:912
 msgid "Build and repository commands"
 msgstr "बिल्ड और रिपॉज़िटरी कमांड"
 
-#: ../../reference.rst:261
-msgid "Command"
-msgstr "कमांड"
-
-#: ../../reference.rst:262
+#: ../../reference.rst:917
 msgid "Result"
 msgstr "परिणाम"
 
-#: ../../reference.rst:263
+#: ../../reference.rst:918
 msgid "``cargo build --release -p sibuna``"
 msgstr "``cargo build --release -p sibuna``"
 
-#: ../../reference.rst:264
-msgid "Daemon with SQLite storage and the console (the default features)"
+#: ../../reference.rst:919
+#, fuzzy
+#| msgid "Daemon with SQLite storage and the console (the default features)"
+msgid ""
+"Daemon with SQLite storage, the console, JLV and automatic HTTPS (the "
+"default features ``sqlite``, ``console``, ``jlv`` and ``https``)"
 msgstr "SQLite स्टोरेज और कंसोल वाला डेमन (डिफ़ॉल्ट features)"
 
-#: ../../reference.rst:265
+#: ../../reference.rst:920
 msgid "``cargo build --release -p sibuna --no-default-features``"
 msgstr "``cargo build --release -p sibuna --no-default-features``"
 
-#: ../../reference.rst:266
+#: ../../reference.rst:921
 msgid ""
 "In-memory daemon without storage or console and without any external crate"
 msgstr ""
 "मेमोरी में चलने वाला डेमन, स्टोरेज या कंसोल के बिना और किसी बाहरी क्रेट "
 "के बिना"
 
-#: ../../reference.rst:267
+#: ../../reference.rst:922
 msgid "``cargo build --release -p sibuna --features postgres-tls``"
 msgstr "``cargo build --release -p sibuna --features postgres-tls``"
 
-#: ../../reference.rst:268
+#: ../../reference.rst:923
 msgid ""
 "Daemon that also connects to a shared PostgreSQL database, with verified "
 "TLS (the ``postgres`` feature alone connects without TLS)"
@@ -1101,11 +3279,11 @@ msgstr ""
 "डेमन जो एक साझा PostgreSQL डेटाबेस से भी जुड़ता है, सत्यापित TLS के साथ "
 "(केवल ``postgres`` feature TLS के बिना जुड़ता है)"
 
-#: ../../reference.rst:269
+#: ../../reference.rst:924
 msgid "``cargo test``"
 msgstr "``cargo test``"
 
-#: ../../reference.rst:270
+#: ../../reference.rst:925
 msgid ""
 "Unit tests, integration tests against a live daemon, storage and console "
 "tests (PostgreSQL ones when ``SIBUNA_TEST_DATABASE_URL`` is set)"
@@ -1113,19 +3291,19 @@ msgstr ""
 "यूनिट परीक्षण, चलते हुए डेमन पर integration परीक्षण, स्टोरेज और कंसोल "
 "परीक्षण (``SIBUNA_TEST_DATABASE_URL`` सेट होने पर PostgreSQL वाले भी)"
 
-#: ../../reference.rst:271
+#: ../../reference.rst:926
 msgid "``cargo clippy --all-targets``, ``cargo fmt --check``"
 msgstr "``cargo clippy --all-targets``, ``cargo fmt --check``"
 
-#: ../../reference.rst:272
+#: ../../reference.rst:927
 msgid "Lints and formatting (``max_width = 99``)"
 msgstr "लिंट और फ़ॉर्मेटिंग (``max_width = 99``)"
 
-#: ../../reference.rst:273
+#: ../../reference.rst:928
 msgid "``cargo xtask check``"
 msgstr "``cargo xtask check``"
 
-#: ../../reference.rst:274
+#: ../../reference.rst:929
 msgid ""
 "The 70-line function, 1,408-line file and 99/108-column line limits; no "
 "tabs"
@@ -1133,19 +3311,19 @@ msgstr ""
 "70-पंक्ति फ़ंक्शन, 1,408-पंक्ति फ़ाइल और 99/108-कॉलम पंक्ति की सीमाएँ; "
 "कोई टैब नहीं"
 
-#: ../../reference.rst:275
+#: ../../reference.rst:930
 msgid "``cargo xtask browser``"
 msgstr "``cargo xtask browser``"
 
-#: ../../reference.rst:276
+#: ../../reference.rst:931
 msgid "Checks in headless Chromium (``sibuna-browser``)"
 msgstr "headless Chromium में जाँचें (``sibuna-browser``)"
 
-#: ../../reference.rst:277
+#: ../../reference.rst:932
 msgid "``cargo xtask bench <primitives|product|latency>``"
 msgstr "``cargo xtask bench <primitives|product|latency>``"
 
-#: ../../reference.rst:278
+#: ../../reference.rst:933
 msgid ""
 "Release-mode benchmarks; results in "
 "``benchmarks/results/<command>-latest.json``"
@@ -1153,7 +3331,7 @@ msgstr ""
 "रिलीज़ मोड के बेंचमार्क; परिणाम "
 "``benchmarks/results/<command>-latest.json`` में"
 
-#: ../../reference.rst:279
+#: ../../reference.rst:934
 msgid ""
 "``cargo build -p sibuna-pow-wasm --target wasm32-unknown-unknown "
 "--profile wasm``"
@@ -1161,30 +3339,30 @@ msgstr ""
 "``cargo build -p sibuna-pow-wasm --target wasm32-unknown-unknown "
 "--profile wasm``"
 
-#: ../../reference.rst:280
+#: ../../reference.rst:935
 msgid ""
 "The browser module only (``-p sibuna-console-ui`` for the console "
 "interface)"
 msgstr ""
 "केवल ब्राउज़र मॉड्यूल (कंसोल इंटरफ़ेस के लिए ``-p sibuna-console-ui``)"
 
-#: ../../reference.rst:281
+#: ../../reference.rst:936
 msgid "``cargo run -p sibuna-geoip --bin geoip-snapshot -- ...``"
 msgstr "``cargo run -p sibuna-geoip --bin geoip-snapshot -- ...``"
 
-#: ../../reference.rst:282
+#: ../../reference.rst:937
 msgid "Validate country data and write an embeddable GeoIP snapshot"
 msgstr "देश डेटा का सत्यापन करें और एम्बेड करने योग्य GeoIP स्नैपशॉट लिखें"
 
-#: ../../reference.rst:283
+#: ../../reference.rst:938
 msgid "``guidedog build`` / ``guidedog dsc``"
 msgstr "``guidedog build`` / ``guidedog dsc``"
 
-#: ../../reference.rst:284
+#: ../../reference.rst:939
 msgid "This book / the SID records"
 msgstr "यह पुस्तक / SID रिकॉर्ड"
 
-#: ../../reference.rst:286
+#: ../../reference.rst:941
 msgid ""
 "The daemon's build script (``cmd/sibuna/build.rs``) builds both "
 "WebAssembly modules with the ``wasm`` profile into the workspace's target "
@@ -1203,11 +3381,13 @@ msgstr ""
 "GeoIP स्नैपशॉट का नाम देता है; इसे बिल्ड के समय डिकोड किया जाता है, और "
 "कंसोल के बिना बिल्ड इसे अस्वीकार करता है (``GEOIP001``)।"
 
-#: ../../reference.rst:288
-msgid "Exercise 10.1"
+#: ../../reference.rst:943
+#, fuzzy
+#| msgid "Exercise 10.1"
+msgid "Exercise 12.1"
 msgstr "अभ्यास 10.1"
 
-#: ../../reference.rst:290
+#: ../../reference.rst:945
 msgid ""
 "A client receives ``400`` with the title ``CLIENT FINGERPRINT MISMATCH`` "
 "after switching from Wi-Fi to cellular mid-solve. Explain the cause from "
@@ -1219,11 +3399,11 @@ msgstr ""
 "प्रारूपों से कारण समझाएँ, और इंटरस्टिशियल में वह सबसे छोटा बदलाव "
 "प्रस्तावित करें जो इससे सहज रूप से उबर जाए।"
 
-#: ../../reference.rst:292
+#: ../../reference.rst:947
 msgid "Explain the invariant"
 msgstr "अपरिवर्तनीय नियम समझाएँ"
 
-#: ../../reference.rst:294
+#: ../../reference.rst:949
 msgid ""
 "Without looking, list the endpoints a reverse proxy in front of Sibuna "
 "must route to the daemon rather than to the origin, and say why each is "
@@ -1232,3 +3412,10 @@ msgstr ""
 "बिना देखे उन एंडपॉइंट की सूची बनाएँ जिन्हें Sibuna के सामने का रिवर्स "
 "प्रॉक्सी ऑरिजिन के बजाय डेमन तक रूट करे, और बताएँ कि हर एक क्यों आवश्यक "
 "है।"
+
+#~ msgid ""
+#~ "Endpoints, metrics, error catalog, policy schema, and storage tables "
+#~ "in one place."
+#~ msgstr ""
+#~ "एंडपॉइंट, मेट्रिक, त्रुटि सूची, नीति स्कीमा और स्टोरेज टेबल, सब एक "
+#~ "स्थान पर।"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-11-25 09:13+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -52,7 +52,11 @@ msgid "How does Sibuna compare?"
 msgstr "Sibunaは他とどう違うか"
 
 #: ../../learning.rst:15
-msgid "Part II: lineage and the feature table; Part VIII: measurements."
+#, fuzzy
+#| msgid "Part II: lineage and the feature table; Part VIII: measurements."
+msgid ""
+"Part II: lineage and the feature tables; Part X: measurements beside "
+"Anubis and HAProxy."
 msgstr "第II部：系譜と機能表。第VIII部：測定。"
 
 #: ../../learning.rst:16
@@ -80,93 +84,151 @@ msgid "Part VII: worker messages, memory, and calibration."
 msgstr "第VII部：ワーカーのメッセージ、メモリ、較正。"
 
 #: ../../learning.rst:22
+msgid "How does one node balance load?"
+msgstr ""
+
+#: ../../learning.rst:23
+msgid ""
+"Part VIII: flows, workers, choosing a server, admission at the socket, "
+"hooks."
+msgstr ""
+
+#: ../../learning.rst:24
+msgid "How do several nodes act as one?"
+msgstr ""
+
+#: ../../learning.rst:25
+msgid "Part IX: the mesh, shared affinity, fleet caps, forwarding, handoff."
+msgstr ""
+
+#: ../../learning.rst:26
 msgid "How do we know it works?"
 msgstr "動作をどう確かめるか"
 
-#: ../../learning.rst:23
-msgid "Part VIII: three harnesses and what each excludes."
+#: ../../learning.rst:27
+#, fuzzy
+#| msgid "Part VIII: three harnesses and what each excludes."
+msgid "Part X: three harnesses and what each excludes."
 msgstr "第VIII部：三つのハーネスと、それぞれが対象外とするもの。"
 
-#: ../../learning.rst:24
+#: ../../learning.rst:28
 msgid "How do we run it?"
 msgstr "どう運用するか"
 
-#: ../../learning.rst:25
-msgid "Part IX: flags, topologies, policy, storage, clustering, packaging."
+#: ../../learning.rst:29
+#, fuzzy
+#| msgid ""
+#| "Part IX: flags, topologies, policy, storage, clustering, packaging."
+msgid ""
+"Part XI: flags, the edge topology, certificates, policy, storage, "
+"clustering, packaging."
 msgstr "第IX部：フラグ、構成、ポリシー、ストレージ、クラスター、パッケージ。"
 
-#: ../../learning.rst:26
+#: ../../learning.rst:30
 msgid "What was that error?"
 msgstr "このエラーは何か"
 
-#: ../../learning.rst:27
-msgid "Part X: endpoints, statuses, errors, schema; Part XI: the card."
+#: ../../learning.rst:31
+#, fuzzy
+#| msgid "Part X: endpoints, statuses, errors, schema; Part XI: the card."
+msgid "Part XII: endpoints, statuses, errors, schema; Part XIII: the card."
 msgstr "第X部：エンドポイント、ステータス、エラー、スキーマ。第XI部：早見表。"
 
-#: ../../learning.rst:29
+#: ../../learning.rst:33
 msgid "Three Reading Paths"
 msgstr "三つの読み方"
 
-#: ../../learning.rst:32
+#: ../../learning.rst:36
+#, fuzzy
+#| msgid ""
+#| "*Learning the design.* Parts I to IV in order, then the worked trace "
+#| "in Part VI, then Part VII. Do the exercises; compare with the "
+#| "solutions at the back only afterwards. Return to Part V when a trace "
+#| "reaches a shared table or a borrowed slice."
 msgid ""
 "*Learning the design.* Parts I to IV in order, then the worked trace in "
-"Part VI, then Part VII. Do the exercises; compare with the solutions at "
-"the back only afterwards. Return to Part V when a trace reaches a shared "
-"table or a borrowed slice."
+"Part VI, then Part VII. For the load balancer, Part VIII and then Part "
+"IX; they need only Part I and the ownership ideas of Part V. Do the "
+"exercises; compare with the solutions at the back only afterwards. Return "
+"to Part V when a trace reaches a shared table or a borrowed slice."
 msgstr ""
 "*設計を学ぶ。*\\ "
 "第I部から第IV部を順に読み、次に第VI部の実行トレースの例、そして第VII部に進みます。演習を解いてください。巻末の解答と比べるのはその後にします。トレースが共有テーブルや借用したスライスに達したら、第V部に戻ります。"
 
-#: ../../learning.rst:33
+#: ../../learning.rst:37
+#, fuzzy
+#| msgid ""
+#| "*Operating a deployment.* Part IX, then Part XI, with Part X open for "
+#| "lookups. Read the \"Feature Comparison\" in Part II before choosing a "
+#| "surface, and the \"Whole-Product Comparison\" in Part VIII before "
+#| "choosing worker and connection limits."
 msgid ""
-"*Operating a deployment.* Part IX, then Part XI, with Part X open for "
-"lookups. Read the \"Feature Comparison\" in Part II before choosing a "
-"surface, and the \"Whole-Product Comparison\" in Part VIII before choosing "
-"worker and connection limits."
+"*Operating a deployment.* Part XI, then Part XIII, with Part XII open for "
+"lookups. Read Parts VIII and IX for the reasons behind the settings. Read "
+"the \"Feature Comparison\" in Part II before choosing a surface, and the "
+"\"Whole-Product Comparison\" in Part X before choosing worker and "
+"connection limits."
 msgstr ""
-"*デプロイを運用する。*\\ 第IX部、次に第XI部を読み、参照用に第X部を開いておきます。運用構成を選ぶ前に第II部の「機能比較」を、"
-"ワーカー数と接続数の上限を選ぶ前に第VIII部の「製品全体の比較」を読んでください。"
+"*デプロイを運用する。*\\ "
+"第IX部、次に第XI部を読み、参照用に第X部を開いておきます。運用構成を選ぶ前に第II部の「機能比較」を、ワーカー数と接続数の上限を選ぶ前に第VIII部の「製品全体の比較」を読んでください。"
 
-#: ../../learning.rst:34
+#: ../../learning.rst:38
+#, fuzzy
+#| msgid ""
+#| "*Changing the code.* Parts V and VI, the source anchors in every "
+#| "chapter, and the SID records they cite. Part VIII explains which "
+#| "harness will catch a regression in what we touched; Part II lists the "
+#| "constraints a change must keep."
 msgid ""
 "*Changing the code.* Parts V and VI, the source anchors in every chapter, "
-"and the SID records they cite. Part VIII explains which harness will catch "
-"a regression in what we touched; Part II lists the constraints a change "
+"and the SID records they cite. Part X explains which harness will catch a "
+"regression in what we touched; Part II lists the constraints a change "
 "must keep."
 msgstr ""
-"*コードを変更する。*\\ 第V部と第VI部、各章のソース参照、そこで引用しているSIDの記録を読みます。第VIII部では、"
-"変更した部分のリグレッションをどのハーネスが捉えるかを説明します。第II部には、変更後も守るべき制約をまとめています。"
+"*コードを変更する。*\\ "
+"第V部と第VI部、各章のソース参照、そこで引用しているSIDの記録を読みます。第VIII部では、変更した部分のリグレッションをどのハーネスが捉えるかを説明します。第II部には、変更後も守るべき制約をまとめています。"
 
-#: ../../learning.rst:36
+#: ../../learning.rst:40
 msgid "Conventions"
 msgstr "本書の約束事"
 
-#: ../../learning.rst:39
+#: ../../learning.rst:43
 msgid ""
 "A *worked example* shows the intermediate states, not just the answer. An "
 "*exercise* asks us to change one assumption. Hints suggest a first step; "
 "selected solutions at the end of the book make the reasoning checkable. "
-"Diagrams distinguish the request path from background work. A source anchor "
-"names the implementation to inspect when prose and code appear to disagree. "
-"Boxes headed \"Implementation\" name a function and its file; boxes headed "
-"\"Explain the invariant\" ask us to teach the idea back."
+"Diagrams distinguish the request path from background work. A source "
+"anchor names the implementation to inspect when prose and code appear to "
+"disagree. Boxes headed \"Implementation\" name a function and its file; "
+"boxes headed \"Explain the invariant\" ask us to teach the idea back."
 msgstr ""
-"*例題*\\ は答えだけでなく途中の状態も示します。\\ *演習*\\ は仮定を一つ変えるよう求めます。ヒントは最初の一歩を示し、"
-"巻末に抜粋した解答例で推論を確かめられます。図はリクエストの経路とバックグラウンドの処理を区別します。ソース参照は、"
-"本文とコードが食い違って見えるときに調べるべき実装を示します。「実装」という見出しの囲みは関数とそのファイルを示します。"
-"「不変条件を説明してください」という見出しの囲みでは、その考え方を自分の言葉で説明し直します。"
+"*例題*\\ は答えだけでなく途中の状態も示します。\\ *演習*\\ "
+"は仮定を一つ変えるよう求めます。ヒントは最初の一歩を示し、巻末に抜粋した解答例で推論を確かめられます。図はリクエストの経路とバックグラウンドの処理を区別します。ソース参照は、本文とコードが食い違って見えるときに調べるべき実装を示します。「実装」という見出しの囲みは関数とそのファイルを示します。「不変条件を説明してください」という見出しの囲みでは、その考え方を自分の言葉で説明し直します。"
 
-#: ../../learning.rst:41
+#: ../../learning.rst:45
+#, fuzzy
+#| msgid ""
+#| "In equations, :math:`b` is Hashcash difficulty in bits, :math:`n` is "
+#| "sequential-work depth, :math:`t` is the number of openings, :math:`p` "
+#| "is success probability per trial, :math:`K` is the number of trials, "
+#| ":math:`T` is a rate limiter's emission interval, :math:`\\tau` its "
+#| "burst tolerance, and :math:`Q` is a queue capacity. A symbol is local "
+#| "to its section unless stated otherwise. Nanoseconds and requests per "
+#| "second in Part VIII are measurements from a named run. Numbers in "
+#| "worked examples are chosen inputs, not benchmark claims. Statistical "
+#| "models state their assumptions before drawing conclusions."
 msgid ""
 "In equations, :math:`b` is Hashcash difficulty in bits, :math:`n` is "
 "sequential-work depth, :math:`t` is the number of openings, :math:`p` is "
 "success probability per trial, :math:`K` is the number of trials, "
 ":math:`T` is a rate limiter's emission interval, :math:`\\tau` its burst "
-"tolerance, and :math:`Q` is a queue capacity. A symbol is local to its "
-"section unless stated otherwise. Nanoseconds and requests per second in "
-"Part VIII are measurements from a named run. Numbers in worked examples "
-"are chosen inputs, not benchmark claims. Statistical models state their "
-"assumptions before drawing conclusions."
+"tolerance, and :math:`Q` is a queue capacity. In Parts VIII and IX, "
+":math:`n` is the number of servers or nodes and :math:`c` the bound of a "
+"bounded load. A symbol is local to its section unless stated otherwise. "
+"Nanoseconds and requests per second in Part X are measurements from a "
+"named run. Numbers in worked examples are chosen inputs, not benchmark "
+"claims. Statistical models state their assumptions before drawing "
+"conclusions."
 msgstr ""
 "式では、\\ :math:`b`\\ はビット単位のHashcashの難易度、\\ :math:`n`\\ は逐次作業の深さ、\\ "
 ":math:`t`\\ は開示の数、\\ :math:`p`\\ は試行ごとの成功確率、\\ :math:`K`\\ は試行回数、\\ "

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-11-25 09:13+0000\n"
 "PO-Revision-Date: 2026-10-16 05:18+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -57,7 +57,11 @@ msgid "How does Sibuna compare?"
 msgstr "Wie schneidet Sibuna im Vergleich ab?"
 
 #: ../../learning.rst:15
-msgid "Part II: lineage and the feature table; Part VIII: measurements."
+#, fuzzy
+#| msgid "Part II: lineage and the feature table; Part VIII: measurements."
+msgid ""
+"Part II: lineage and the feature tables; Part X: measurements beside "
+"Anubis and HAProxy."
 msgstr "Teil II: Herkunft und die Funktionstabelle; Teil VIII: Messungen."
 
 #: ../../learning.rst:16
@@ -87,41 +91,75 @@ msgid "Part VII: worker messages, memory, and calibration."
 msgstr "Teil VII: Worker-Nachrichten, Speicher und Kalibrierung."
 
 #: ../../learning.rst:22
+msgid "How does one node balance load?"
+msgstr ""
+
+#: ../../learning.rst:23
+msgid ""
+"Part VIII: flows, workers, choosing a server, admission at the socket, "
+"hooks."
+msgstr ""
+
+#: ../../learning.rst:24
+msgid "How do several nodes act as one?"
+msgstr ""
+
+#: ../../learning.rst:25
+msgid "Part IX: the mesh, shared affinity, fleet caps, forwarding, handoff."
+msgstr ""
+
+#: ../../learning.rst:26
 msgid "How do we know it works?"
 msgstr "Woher wissen wir, dass es funktioniert?"
 
-#: ../../learning.rst:23
-msgid "Part VIII: three harnesses and what each excludes."
+#: ../../learning.rst:27
+#, fuzzy
+#| msgid "Part VIII: three harnesses and what each excludes."
+msgid "Part X: three harnesses and what each excludes."
 msgstr "Teil VIII: drei Messprogramme und was jedes ausschließt."
 
-#: ../../learning.rst:24
+#: ../../learning.rst:28
 msgid "How do we run it?"
 msgstr "Wie betreiben wir es?"
 
-#: ../../learning.rst:25
-msgid "Part IX: flags, topologies, policy, storage, clustering, packaging."
+#: ../../learning.rst:29
+#, fuzzy
+#| msgid ""
+#| "Part IX: flags, topologies, policy, storage, clustering, packaging."
+msgid ""
+"Part XI: flags, the edge topology, certificates, policy, storage, "
+"clustering, packaging."
 msgstr ""
 "Teil IX: Optionen, Topologien, Richtlinien, Speicherung, Clusterbildung, "
 "Paketierung."
 
-#: ../../learning.rst:26
+#: ../../learning.rst:30
 msgid "What was that error?"
 msgstr "Was war das für ein Fehler?"
 
-#: ../../learning.rst:27
-msgid "Part X: endpoints, statuses, errors, schema; Part XI: the card."
+#: ../../learning.rst:31
+#, fuzzy
+#| msgid "Part X: endpoints, statuses, errors, schema; Part XI: the card."
+msgid "Part XII: endpoints, statuses, errors, schema; Part XIII: the card."
 msgstr "Teil X: Endpunkte, Status, Fehler, Schema; Teil XI: die Karte."
 
-#: ../../learning.rst:29
+#: ../../learning.rst:33
 msgid "Three Reading Paths"
 msgstr "Drei Lesewege"
 
-#: ../../learning.rst:32
+#: ../../learning.rst:36
+#, fuzzy
+#| msgid ""
+#| "*Learning the design.* Parts I to IV in order, then the worked trace "
+#| "in Part VI, then Part VII. Do the exercises; compare with the "
+#| "solutions at the back only afterwards. Return to Part V when a trace "
+#| "reaches a shared table or a borrowed slice."
 msgid ""
 "*Learning the design.* Parts I to IV in order, then the worked trace in "
-"Part VI, then Part VII. Do the exercises; compare with the solutions at "
-"the back only afterwards. Return to Part V when a trace reaches a shared "
-"table or a borrowed slice."
+"Part VI, then Part VII. For the load balancer, Part VIII and then Part "
+"IX; they need only Part I and the ownership ideas of Part V. Do the "
+"exercises; compare with the solutions at the back only afterwards. Return "
+"to Part V when a trace reaches a shared table or a borrowed slice."
 msgstr ""
 "*Den Entwurf lernen.* Die Teile I bis IV der Reihe nach, dann die "
 "durchgerechnete Ablaufverfolgung in Teil VI, dann Teil VII. Wir "
@@ -129,35 +167,48 @@ msgstr ""
 "Ende des Buchs. Zu Teil V kehren wir zurück, wenn eine Ablaufverfolgung "
 "eine gemeinsame Tabelle oder einen geliehenen Slice erreicht."
 
-#: ../../learning.rst:33
+#: ../../learning.rst:37
+#, fuzzy
+#| msgid ""
+#| "*Operating a deployment.* Part IX, then Part XI, with Part X open for "
+#| "lookups. Read the \"Feature Comparison\" in Part II before choosing a "
+#| "surface, and the \"Whole-Product Comparison\" in Part VIII before "
+#| "choosing worker and connection limits."
 msgid ""
-"*Operating a deployment.* Part IX, then Part XI, with Part X open for "
-"lookups. Read the \"Feature Comparison\" in Part II before choosing a "
-"surface, and the \"Whole-Product Comparison\" in Part VIII before "
-"choosing worker and connection limits."
+"*Operating a deployment.* Part XI, then Part XIII, with Part XII open for "
+"lookups. Read Parts VIII and IX for the reasons behind the settings. Read "
+"the \"Feature Comparison\" in Part II before choosing a surface, and the "
+"\"Whole-Product Comparison\" in Part X before choosing worker and "
+"connection limits."
 msgstr ""
 "*Einen Einsatz betreiben.* Teil IX, dann Teil XI, mit Teil X zum "
 "Nachschlagen. Vor der Wahl einer Betriebsform lesen wir den "
 "„Funktionsvergleich“ in Teil II, und vor der Wahl der Worker- und "
 "Verbindungsgrenzen den „Vergleich der Gesamtprodukte“ in Teil VIII."
 
-#: ../../learning.rst:34
+#: ../../learning.rst:38
+#, fuzzy
+#| msgid ""
+#| "*Changing the code.* Parts V and VI, the source anchors in every "
+#| "chapter, and the SID records they cite. Part VIII explains which "
+#| "harness will catch a regression in what we touched; Part II lists the "
+#| "constraints a change must keep."
 msgid ""
 "*Changing the code.* Parts V and VI, the source anchors in every chapter, "
-"and the SID records they cite. Part VIII explains which harness will "
-"catch a regression in what we touched; Part II lists the constraints a "
-"change must keep."
+"and the SID records they cite. Part X explains which harness will catch a "
+"regression in what we touched; Part II lists the constraints a change "
+"must keep."
 msgstr ""
 "*Den Code ändern.* Die Teile V und VI, die Quellverweise in jedem Kapitel "
 "und die SID-Dokumente, die sie zitieren. Teil VIII erklärt, welches "
 "Messprogramm eine Regression in dem erkennt, was wir geändert haben; Teil "
 "II nennt die Randbedingungen, die eine Änderung einhalten muss."
 
-#: ../../learning.rst:36
+#: ../../learning.rst:40
 msgid "Conventions"
 msgstr "Konventionen"
 
-#: ../../learning.rst:39
+#: ../../learning.rst:43
 msgid ""
 "A *worked example* shows the intermediate states, not just the answer. An "
 "*exercise* asks us to change one assumption. Hints suggest a first step; "
@@ -170,24 +221,37 @@ msgstr ""
 "Ein *durchgerechnetes Beispiel* zeigt die Zwischenzustände, nicht nur die "
 "Antwort. Eine *Übung* fordert uns auf, eine Annahme zu ändern. Hinweise "
 "schlagen einen ersten Schritt vor; ausgewählte Lösungen am Ende des Buchs "
-"machen die Begründung überprüfbar. Diagramme unterscheiden den Anfragepfad "
-"von Hintergrundarbeit. Ein Quellverweis nennt die Implementierung, die wir "
-"untersuchen, wenn Text und Code einander zu widersprechen scheinen. Kästen "
-"mit der Überschrift „Implementierung“ nennen eine Funktion und ihre Datei; "
-"Kästen mit der Überschrift „Die Invariante erklären“ fordern uns auf, die "
-"Idee selbst zu erklären."
+"machen die Begründung überprüfbar. Diagramme unterscheiden den "
+"Anfragepfad von Hintergrundarbeit. Ein Quellverweis nennt die "
+"Implementierung, die wir untersuchen, wenn Text und Code einander zu "
+"widersprechen scheinen. Kästen mit der Überschrift „Implementierung“ "
+"nennen eine Funktion und ihre Datei; Kästen mit der Überschrift „Die "
+"Invariante erklären“ fordern uns auf, die Idee selbst zu erklären."
 
-#: ../../learning.rst:41
+#: ../../learning.rst:45
+#, fuzzy
+#| msgid ""
+#| "In equations, :math:`b` is Hashcash difficulty in bits, :math:`n` is "
+#| "sequential-work depth, :math:`t` is the number of openings, :math:`p` "
+#| "is success probability per trial, :math:`K` is the number of trials, "
+#| ":math:`T` is a rate limiter's emission interval, :math:`\\tau` its "
+#| "burst tolerance, and :math:`Q` is a queue capacity. A symbol is local "
+#| "to its section unless stated otherwise. Nanoseconds and requests per "
+#| "second in Part VIII are measurements from a named run. Numbers in "
+#| "worked examples are chosen inputs, not benchmark claims. Statistical "
+#| "models state their assumptions before drawing conclusions."
 msgid ""
 "In equations, :math:`b` is Hashcash difficulty in bits, :math:`n` is "
 "sequential-work depth, :math:`t` is the number of openings, :math:`p` is "
 "success probability per trial, :math:`K` is the number of trials, "
 ":math:`T` is a rate limiter's emission interval, :math:`\\tau` its burst "
-"tolerance, and :math:`Q` is a queue capacity. A symbol is local to its "
-"section unless stated otherwise. Nanoseconds and requests per second in "
-"Part VIII are measurements from a named run. Numbers in worked examples "
-"are chosen inputs, not benchmark claims. Statistical models state their "
-"assumptions before drawing conclusions."
+"tolerance, and :math:`Q` is a queue capacity. In Parts VIII and IX, "
+":math:`n` is the number of servers or nodes and :math:`c` the bound of a "
+"bounded load. A symbol is local to its section unless stated otherwise. "
+"Nanoseconds and requests per second in Part X are measurements from a "
+"named run. Numbers in worked examples are chosen inputs, not benchmark "
+"claims. Statistical models state their assumptions before drawing "
+"conclusions."
 msgstr ""
 "In Gleichungen ist :math:`b` die Hashcash-Schwierigkeit in Bits, "
 ":math:`n` die Tiefe der sequenziellen Arbeit, :math:`t` die Zahl der "

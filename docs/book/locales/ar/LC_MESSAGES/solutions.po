@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 10:45+0000\n"
+"POT-Creation-Date: 2026-11-25 09:13+0000\n"
 "PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -103,10 +103,23 @@ msgstr ""
 "والصفوف \"طريقة التشغيل\" و\"الفحص\" و\"العقد المتعددة\" هي التي تحسم ذلك."
 
 #: ../../solutions.rst:20
+msgid ""
+"**2.3.** A removal must move the clients of the removed server, about 250 "
+"of the 1,000. Under rendezvous hashing exactly those move, each to the "
+"remaining server with the highest score for it, and no other client "
+"moves. A rebuilt Maglev table moves those 250 and a small share of the "
+"others, because the order in which servers claim slots changes; Part VIII "
+"measured 0.08% to 0.28% extra slots. Peer forwarding chose rendezvous "
+"hashing because it moves no client of a node that did not change, and "
+"because each node computes the owner from the list of nodes alone, with "
+"no table to rebuild and publish."
+msgstr ""
+
+#: ../../solutions.rst:22
 msgid "Part III: Cryptography"
 msgstr "الجزء الثالث: التشفير"
 
-#: ../../solutions.rst:23
+#: ../../solutions.rst:25
 msgid ""
 "**3.0.** The tail estimate is :math:`e^{-4.6} \\approx 0.010`. Dividing "
 "the nonce space changes the rate at which trials are completed, not the "
@@ -118,7 +131,7 @@ msgstr ""
 "مستقلة. وقد تجعل المحاولات المكررة أو عمل التنسيق التنفيذ المتوازي "
 "الحقيقي أقل كفاءة."
 
-#: ../../solutions.rst:25
+#: ../../solutions.rst:27
 msgid ""
 "**3.1.** If each commitment succeeds with probability :math:`q`, all "
 ":math:`g` fail with probability :math:`(1-q)^g`. At least one succeeds "
@@ -132,7 +145,7 @@ msgstr ""
 "الاستعلام، ولا الاعتماديات بين المحاولات، ولا العمل اللازم لإيجاد التزام "
 "باحتمال قبول معين."
 
-#: ../../solutions.rst:27
+#: ../../solutions.rst:29
 msgid ""
 "**3.2.** At depth 17 and 16 openings, the proof has :math:`32(1 + 16 "
 "\\times 18) = 9248` bytes. At 32 openings it has :math:`32(1 + 32 \\times "
@@ -144,7 +157,7 @@ msgstr ""
 "18) = 18464` بايت. تتضاعف بايتات عمليات الفتح؛ أما الجذر ذو 32 بايت "
 "فيُرسل مرة واحدة كما كان."
 
-#: ../../solutions.rst:29
+#: ../../solutions.rst:31
 msgid ""
 "**3.3.** Without the work level a session earned on a cheap route would "
 "admit a request to an expensive one that demanded more work; without "
@@ -163,11 +176,11 @@ msgstr ""
 "الوسم الحقول الخمسة كلها، لأن أي حقل يبقى خارجه يمكن تعديله بحرية دون أن "
 "يلاحظ المتحقق."
 
-#: ../../solutions.rst:31
+#: ../../solutions.rst:33
 msgid "Part IV: Protocol"
 msgstr "الجزء الرابع: البروتوكول"
 
-#: ../../solutions.rst:34
+#: ../../solutions.rst:36
 msgid ""
 "**4.1.** Both browsers share the address and User-Agent, so they share "
 "the fingerprint, the rate-limit cell, and the ban slot. They do not share "
@@ -184,11 +197,11 @@ msgstr ""
 "بالمتصفح الآخر، عليه أن يقرأه من الجهاز الآخر: عندئذ ستتطابق البصمة، "
 "ولهذا يهم ``HttpOnly`` و\\ ``SameSite`` أكثر من الربط عند العنوان المشترك."
 
-#: ../../solutions.rst:36
+#: ../../solutions.rst:38
 msgid "Part V: State and Ordering"
 msgstr "الجزء الخامس: الحالة والترتيب"
 
-#: ../../solutions.rst:39
+#: ../../solutions.rst:41
 msgid ""
 "**5.1.** The head and the first part of the body (up to what fits after "
 "the head in 64 KB) are in the connection buffer and are sent with "
@@ -205,7 +218,7 @@ msgstr ""
 "الأصلي. ويجب أن يُرسل الرأس أولًا لأن الخادم الأصلي يحتاج إلى "
 "``Content-Length`` قبل الجسم، ولأن ترويسات التدقيق جزء من الرأس."
 
-#: ../../solutions.rst:41
+#: ../../solutions.rst:43
 msgid ""
 "**5.2.** The emission interval is 100 ms and burst tolerance is 9,900 ms. "
 "An idle client may send 100 requests immediately, then one per 100 ms. "
@@ -221,11 +234,11 @@ msgstr ""
 "المنزلق سيسمح بـ 100 طلب بالضبط في أي 10 ثوانٍ، لكن عليه تخزين 100 طابع "
 "زمني لكل عميل."
 
-#: ../../solutions.rst:43
+#: ../../solutions.rst:45
 msgid "Part VI: Algorithms"
 msgstr "الجزء السادس: الخوارزميات"
 
-#: ../../solutions.rst:46
+#: ../../solutions.rst:48
 msgid ""
 "**6.1.** An apostrophe in a name and an ordinary parameter named "
 "``order`` do not establish an SQL expression. A substring detector could "
@@ -238,7 +251,7 @@ msgstr ""
 "الكاشف البنيوي فيبحث عن أدلة إضافية، منها العوامل والعلاقات بين القيم "
 "الحرفية. ويبقى فحصًا محدودًا، لا محللًا لكل لغة تطبيقات."
 
-#: ../../solutions.rst:48
+#: ../../solutions.rst:50
 msgid ""
 "**6.2.** LDAP filters are built from parentheses, ``|``, ``&``, ``!``, "
 "and ``=``. The detector needs a byte class for ``(`` and ``)`` (new) and "
@@ -254,11 +267,11 @@ msgstr ""
 "عند قوس واحد، للسبب نفسه الذي يجعل كاشف SQL يشترط علامة اقتباس أو تحصيل "
 "حاصل."
 
-#: ../../solutions.rst:50
+#: ../../solutions.rst:52
 msgid "Part VII: Browser Engine"
 msgstr "الجزء السابع: محرك المتصفح"
 
-#: ../../solutions.rst:53
+#: ../../solutions.rst:55
 msgid ""
 "**7.1.** At the default 16 work bits (depth 13 with 16 openings), the "
 "supposed 20 ms in WebAssembly become :math:`50 \\times 20 = 1000` ms, one "
@@ -277,13 +290,183 @@ msgstr ""
 "مقياسًا، ونخفض الصعوبة لقاعدة تطابق العملاء المعروفين بحجب WebAssembly، "
 "لا للجميع."
 
-#: ../../solutions.rst:55
-msgid "Part VIII: Evaluation"
+#: ../../solutions.rst:57
+msgid "Part VIII: The Edge Load Balancer"
+msgstr ""
+
+#: ../../solutions.rst:60
+msgid ""
+"**8.1.** Under modulo hashing, a step from 10 to 9 servers keeps a flow "
+"only when :math:`h \\bmod 10` and :math:`h \\bmod 9` name the same "
+"survivor. By the Chinese remainder theorem each of the 90 pairs has "
+"probability :math:`1/90`, and each of the 9 survivors owns one matching "
+"pair, so :math:`9/90 = 10\\%` stay and 90% move. Under rendezvous hashing "
+"only the departed server's clients move: 10%. In the run reported in the "
+"chapter, Sibuna's Maglev table moved the departed server's 10.0% of the "
+"slots and 0.18% to 0.28% more. When a fifth server joins four, modulo "
+"hashing keeps the flows whose pair :math:`(h \\bmod 4, h \\bmod 5)` names "
+"one of the four old servers at both positions, :math:`4/20 = 20\\%`, and "
+"moves 80%. Rendezvous hashing moves only the clients for which the "
+"newcomer is nearer than their old server: 20% of them, all to the "
+"newcomer."
+msgstr ""
+
+#: ../../solutions.rst:62
+msgid ""
+"**8.2.** :math:`W = 4` and :math:`L + 1 = 20`. The bound of ``a`` is "
+":math:`\\lceil 1.25 \\times 20 \\times 2/4 \\rceil = \\lceil 12.5 \\rceil "
+"= 13`; that of ``b`` and ``c`` is :math:`\\lceil 6.25 \\rceil = 7`. ``b`` "
+"holds 7, which is not below 7, so the primary refuses. Least connections "
+"compares flows per unit of weight: ``a`` has :math:`9/2 = 4.5`, ``b`` has "
+"7 and ``c`` has 3, so the flow goes to ``c``, which then holds 4, within "
+"its bound of 7. Some server is always below its bound: if every server "
+":math:`i` held at least :math:`1.25 \\times 20\\, w_i / 4` flows, the "
+"three would hold at least :math:`1.25 \\times 20 = 25` flows, but they "
+"hold 19."
+msgstr ""
+
+#: ../../solutions.rst:64
+msgid ""
+"**8.3.** With the tenant field, ``tenant`` admits. If ``score`` denies or "
+"challenges, the chain ends there; suppose it admits, by its verdict or, "
+"when it fails, by its written ``on_failure: \"admit\"``. ``authz`` fails "
+"with ``unavailable``, and its default ``on_failure`` is ``deny``, so the "
+"chain ends in a denial: 403 with the reason ``hook:authz``. Without the "
+"field, ``tenant`` denies, the chain ends there with ``hook:tenant``, and "
+"the agent is never asked. An open breaker refuses without a system call, "
+"so a request costs the worker nothing for the agent; each worker sends "
+"one probe per ``open`` interval, which costs at most one ``deadline``. "
+"With ``authz`` written ``on_failure: \"admit\"`` the request with the "
+"field is admitted, and the failed agent adds no fields. The hook is then "
+"advisory: anyone who can make it fail passes it."
+msgstr ""
+
+#: ../../solutions.rst:66
+msgid ""
+"**8.4.** The mapping received 1,200 bytes, so before validation it sends "
+"at most 3,600 bytes to the client: three of the eight replies. The edge "
+"learns the source connection ID of the first long-header reply whose "
+"version is not zero and whose ID has at least 8 bytes and differs from "
+"the IDs of the Initial. The client's next datagram that carries this ID "
+"as its destination validates the mapping. The reply that carried the ID "
+"went only to the claimed address, so a sender that spoofs that address "
+"never sees it and must guess at least 64 bits, one datagram per guess. A "
+"Version Negotiation packet has version zero and repeats the IDs that the "
+"client sent; a spoofing sender knows those IDs, and if the edge learned "
+"from that packet, the sender could validate itself and lift the bound "
+"that prevents reflection."
+msgstr ""
+
+#: ../../solutions.rst:68
+msgid "Part IX: A Cluster of Edges"
+msgstr ""
+
+#: ../../solutions.rst:71
+msgid ""
+"**9.1.** C sends the lift :math:`\\max(1300, 900 + 60) = 1300`: the end "
+"of the ban it knows, and at least 60 seconds ahead. Every node that hears "
+"it admits the client and forgets A's ban. D's ban until 1,200 ends before "
+"the lift, so every node ignores it: the cut-off node cannot bring the ban "
+"back. B's new ban until 1,250 also ends before the lift. B's own firewall "
+"bans the client, but its peers ignore the datagram, so the ban holds on B "
+"only. This is the first known gap of SID 0022: a ban issued after a lift "
+"holds everywhere only when it ends after the lifted ban would have. A ban "
+"of the same length as A's, issued at second 1,000, would have ended after "
+"1,300 and held on every node."
+msgstr ""
+
+#: ../../solutions.rst:73
+msgid ""
+"**9.2.** The two entries have the same end, so the server decides: "
+"``0x91...`` is the larger hash, and B's entry wins on every node, A "
+"included, whatever the order in which the datagrams arrive. No flow "
+"moves. The flow that A placed holds a reservation on its server and never "
+"reads the table again. Only the next new flow of the client, on any node, "
+"goes to the server ``0x91...``, and only while that server is eligible. "
+"Without the server in the order, A and B would each keep their own entry "
+"forever, because neither end is later."
+msgstr ""
+
+#: ../../solutions.rst:75
+msgid ""
+"**9.3.** :math:`\\lfloor 10/4 \\rfloor = 2` with remainder 2, so A and B "
+"have base 3 and C and D base 2. D has :math:`f = 0` and :math:`r = "
+"\\max(1, \\lceil 2/4 \\rceil) = 1`, so it wants 1, with the flag. A has "
+"share 3, :math:`f = 3`, surplus 2, and gives :math:`\\min(1, \\max(2, "
+"\\lceil 3/2 \\rceil)) = 1`; B gives 1 likewise; C has :math:`f = 2`, "
+"surplus 1, and gives 1. Every peer serves the want it heard, so D "
+"receives 3 and holds a share of 5, beside 2, 2 and 1: the sum is 10. When "
+"A stops for good, its share of 2 is stranded: D still counts the 1 that A "
+"gave, and the cluster can hold at most 8 flows on the server. Nothing "
+"returns the 2 by itself. The operator removes A from ``mesh.nodes`` in "
+"every file and restarts the nodes. The new roster makes a new ledger, "
+"under a new key, with bases 4, 3 and 3; it starts unsynchronised, so new "
+"flows on the server are refused until the nodes have exchanged one "
+"status, about a second."
+msgstr ""
+
+#: ../../solutions.rst:77
+msgid ""
+"**9.4.** (a) Each client moves with probability :math:`1/5`, so about 200 "
+"of 1,000 move, all of them to the new node. (b) Only B's clients, about "
+"250, move. Each goes to the node with its second largest score among A, C "
+"and D, so each of the three receives about 83. (c) A client stays when "
+":math:`h \\bmod 4 = h \\bmod 5`. Both residues are fixed by :math:`h "
+"\\bmod 20`, and they agree only for :math:`h \\bmod 20 \\in \\{0, 1, 2, "
+"3\\}`, four residues of twenty. So about 800 clients move, against 200 "
+"under rendezvous hashing."
+msgstr ""
+
+#: ../../solutions.rst:79
+msgid ""
+"**9.5.** With eight counters for each slot, :math:`m = 8S`. At the middle "
+"of the window :math:`N = 2S` and :math:`\\lambda \\le 4 \\cdot 2S / 8S = "
+"1`. Then :math:`P(X \\ge 4) = 1 - e^{-1}(1 + 1 + \\tfrac{1}{2} + "
+"\\tfrac{1}{6}) \\approx 1 - 0.3679 \\times 2.667 \\approx 0.019`, and for "
+"all four counters :math:`0.019^4 \\approx 1.3 \\times 10^{-7}`. At the "
+"end of the window :math:`N = 4S` and :math:`\\lambda \\le 2`, which gives "
+"the :math:`4.2 \\times 10^{-4}` of the worked example. Doubling the "
+"counters halves :math:`\\lambda` and lowers the probability by more than "
+"three orders of magnitude, which is why the code asks for eight counters "
+"for each slot."
+msgstr ""
+
+#: ../../solutions.rst:81
+msgid ""
+"**9.6.** Both commands read head 7 and commit with the expected revision "
+"7. The transaction that first takes the row lock of ``edge_head`` sets "
+"the head to 8 and inserts revision 8. The other waits for the lock, then "
+"finds the head at 8; its ``UPDATE`` changes no row, and the command fails "
+"with ``DBA002 REVISION CONFLICT`` and commits nothing. The database holds "
+"revision 8 with the first change only. The second operator runs ``diff`` "
+"again: because a revision is a whole document, the difference now shows "
+"that the second source would also undo the first change. The operator "
+"merges both changes into the source and applies against revision 8. A "
+"commit conditioned on the head at the time of the commit would have "
+"succeeded on 8 and silently removed the first operator's change: a lost "
+"update that nobody saw."
+msgstr ""
+
+#: ../../solutions.rst:83
+#, fuzzy
+#| msgid "Part VIII: Evaluation"
+msgid "Part X: Evaluation"
 msgstr "الجزء الثامن: التقييم"
 
-#: ../../solutions.rst:58
+#: ../../solutions.rst:86
+#, fuzzy
+#| msgid ""
+#| "**8.2.** For Gate's ``admitted`` row, :math:`11.84 \\times 211{,}345 / "
+#| "10^6 \\approx 2.50` cores busy out of four, so the daemon was not CPU "
+#| "bound and the load generator set the limit. The 11.84 us of CPU per "
+#| "request is far above the sub-microsecond classification cost because a "
+#| "product row also contains the kernel's socket read and write, the "
+#| "parser, the session tag check, the metrics increments, the response "
+#| "formatting, the writer flush, and the scheduler's hand-off between the "
+#| "load generator and the connection thread. The primitive suite times "
+#| "none of those."
 msgid ""
-"**8.2.** For Gate's ``admitted`` row, :math:`11.84 \\times 211{,}345 / "
+"**10.2.** For Gate's ``admitted`` row, :math:`11.84 \\times 211{,}345 / "
 "10^6 \\approx 2.50` cores busy out of four, so the daemon was not CPU "
 "bound and the load generator set the limit. The 11.84 us of CPU per "
 "request is far above the sub-microsecond classification cost because a "
@@ -301,13 +484,23 @@ msgstr ""
 "وتفريغ الكاتب، وتسليم المجدول بين مولد الحمل وخيط الاتصال. ولا تقيس "
 "مجموعة اختبارات الأدوات الأولية أيًّا من ذلك."
 
-#: ../../solutions.rst:60
-msgid "Part IX: Operations"
+#: ../../solutions.rst:88
+#, fuzzy
+#| msgid "Part IX: Operations"
+msgid "Part XI: Operations"
 msgstr "الجزء التاسع: التشغيل"
 
-#: ../../solutions.rst:63
+#: ../../solutions.rst:91
+#, fuzzy
+#| msgid ""
+#| "**9.1.** If the data commits before a separate receipt update, a crash "
+#| "between them leaves the old receipt and a retry can apply the effect "
+#| "again. If the receipt commits first, a crash before the data write can "
+#| "cause the retry to skip data that never existed. One atomic "
+#| "transaction removes both gaps. Losing the transaction's "
+#| "acknowledgement still requires the retained retry."
 msgid ""
-"**9.1.** If the data commits before a separate receipt update, a crash "
+"**11.1.** If the data commits before a separate receipt update, a crash "
 "between them leaves the old receipt and a retry can apply the effect "
 "again. If the receipt commits first, a crash before the data write can "
 "cause the retry to skip data that never existed. One atomic transaction "
@@ -320,9 +513,21 @@ msgstr ""
 "بيانات لم توجد قط. والمعاملة الذرية الواحدة تزيل الفجوتين كلتيهما. أما "
 "فقدان إقرار المعاملة فلا يزال يتطلب إعادة المحاولة المحتفظ بها."
 
-#: ../../solutions.rst:65
+#: ../../solutions.rst:93
+#, fuzzy
+#| msgid ""
+#| "**9.2.** ``ip_rules: {\"10.20.0.0/16\": \"ALLOW\"}`` (or an "
+#| "``ip_reputation`` row with score 100) admits staging; a rule "
+#| "``{\"name\": \"admin\", \"path\": \"/admin/*\", \"action\": "
+#| "\"CHALLENGE\", \"challenge\": {\"difficulty\": 20, \"algorithm\": "
+#| "\"posw\"}}`` demands the work; a rule matching ``headers: "
+#| "{\"X-Partner-Key\": \".*\"}`` with ``ALLOW`` and ``\"limits\": "
+#| "{\"rate\": 30, \"window_seconds\": 10}`` admits the partner at 30 "
+#| "requests per 10 seconds. The rule's quota is checked for every request "
+#| "it matches, after the per-client daemon limit (``--rate-limit``, "
+#| "``--rate-window``), which must therefore be at least as generous."
 msgid ""
-"**9.2.** ``ip_rules: {\"10.20.0.0/16\": \"ALLOW\"}`` (or an "
+"**11.2.** ``ip_rules: {\"10.20.0.0/16\": \"ALLOW\"}`` (or an "
 "``ip_reputation`` row with score 100) admits staging; a rule ``{\"name\": "
 "\"admin\", \"path\": \"/admin/*\", \"action\": \"CHALLENGE\", "
 "\"challenge\": {\"difficulty\": 20, \"algorithm\": \"posw\"}}`` demands "
@@ -343,13 +548,24 @@ msgstr ""
 "بعد حد البرنامج الخدمي لكل عميل (``--rate-limit`` و\\ ``--rate-window``)، "
 "الذي يجب لذلك أن يكون سخيًّا بالقدر نفسه على الأقل."
 
-#: ../../solutions.rst:67
-msgid "Part X: Reference"
+#: ../../solutions.rst:95
+#, fuzzy
+#| msgid "Part X: Reference"
+msgid "Part XII: Reference"
 msgstr "الجزء العاشر: المرجع"
 
-#: ../../solutions.rst:70
+#: ../../solutions.rst:98
+#, fuzzy
+#| msgid ""
+#| "**10.1.** The challenge record carries the keyed fingerprint of the "
+#| "address that fetched it; the solution arrives from a new address, so "
+#| "``verify_and_mint`` returns ``FingerprintMismatch`` before looking at "
+#| "the proof. The smallest recovery is in the interstitial: on a ``400`` "
+#| "whose title is ``CLIENT FINGERPRINT MISMATCH``, fetch a fresh "
+#| "challenge and solve again instead of showing the error, since the work "
+#| "already done cannot be transferred."
 msgid ""
-"**10.1.** The challenge record carries the keyed fingerprint of the "
+"**12.1.** The challenge record carries the keyed fingerprint of the "
 "address that fetched it; the solution arrives from a new address, so "
 "``verify_and_mint`` returns ``FingerprintMismatch`` before looking at the "
 "proof. The smallest recovery is in the interstitial: on a ``400`` whose "
@@ -363,11 +579,11 @@ msgstr ""
 "``400`` عنوانها ``CLIENT FINGERPRINT MISMATCH``، تجلب الصفحة تحديًا "
 "جديدًا وتحله مرة أخرى بدل عرض الخطأ، لأن العمل المنجز لا يمكن نقله."
 
-#: ../../solutions.rst:72
+#: ../../solutions.rst:100
 msgid "Continue the Investigation"
 msgstr "واصل البحث"
 
-#: ../../solutions.rst:75
+#: ../../solutions.rst:103
 msgid ""
 "Change one invariant at a time in a disposable test. Remove the snapshot "
 "recheck, omit the incident receipt, or round the rate interval downward. "

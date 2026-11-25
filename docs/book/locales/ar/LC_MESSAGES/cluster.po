@@ -1,0 +1,2005 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Vikrant Rathore and Sibuna contributors
+# This file is distributed under the same license as the The Sibuna Book package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ar\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : "
+"n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#: ../../cluster.rst:1
+msgid "Part IX: A Cluster of Edges"
+msgstr ""
+
+#: ../../cluster.rst:4
+msgid ""
+"Part VIII built one node. One node is one point of failure, and its "
+"ceiling is one machine. We therefore put several nodes behind one name, "
+"by DNS or by an ECMP router, and the router chooses a node for every flow "
+"by a rule of its own. This chapter asks what the nodes must then share, "
+"what they can compute instead, and what must stay on one node. Each "
+"answer rests on a small piece of mathematics: a maximum, a total order, a "
+"sum of shares, a ranking by hash, a frequency estimate and a "
+"compare-and-set. The configuration of each feature is in Part XI; here we "
+"study the reasons."
+msgstr ""
+
+#: ../../cluster.rst:6
+msgid "Objectives"
+msgstr ""
+
+#: ../../cluster.rst:8
+msgid ""
+"By the end of this chapter, we should be able to say which state of a "
+"node a cluster replicates and why the merge of each is a maximum; prove "
+"that a fleet-wide cap holds under loss, repetition and restarts, and "
+"compute the shares of three nodes by hand; derive the fraction of clients "
+"that rendezvous hashing moves when a node joins; bound the error of a "
+"count-min sketch; explain why a commit to the database names the revision "
+"it replaces; trace the handover of listening sockets to a new binary; and "
+"list what the cluster does not do."
+msgstr ""
+
+#: ../../cluster.rst:10
+msgid "What a Cluster Must Share"
+msgstr ""
+
+#: ../../cluster.rst:13
+msgid ""
+"A client does not know that there are several nodes. Two of its "
+"connections may reach two nodes: the router hashed them apart, a node "
+"joined or left, or DNS gave two addresses. Each node holds state about "
+"the client. It knows whether the client is banned, how many requests it "
+"sent in the current window, which server it was placed on, its UDP "
+"mapping, and how many flows each server holds. We sort this state by how "
+"it changes."
+msgstr ""
+
+#: ../../cluster.rst:15
+msgid "The state of a node and what the cluster does with it."
+msgstr ""
+
+#: ../../cluster.rst:19
+msgid "State"
+msgstr ""
+
+#: ../../cluster.rst:20
+msgid "How it changes"
+msgstr ""
+
+#: ../../cluster.rst:21
+msgid "What the cluster does"
+msgstr ""
+
+#: ../../cluster.rst:22
+msgid "SID"
+msgstr ""
+
+#: ../../cluster.rst:23
+msgid "A ban"
+msgstr ""
+
+#: ../../cluster.rst:24
+msgid "Its end only moves later"
+msgstr ""
+
+#: ../../cluster.rst:25
+msgid "Replicated; the merge keeps the later end"
+msgstr ""
+
+#: ../../cluster.rst:26 ../../cluster.rst:30
+msgid "0022"
+msgstr ""
+
+#: ../../cluster.rst:27
+msgid "A run-time command (drain, weight, add, remove)"
+msgstr ""
+
+#: ../../cluster.rst:28
+msgid "Each command replaces the last"
+msgstr ""
+
+#: ../../cluster.rst:29
+msgid "Replicated; the merge keeps the later stamp"
+msgstr ""
+
+#: ../../cluster.rst:31
+msgid "The topology"
+msgstr ""
+
+#: ../../cluster.rst:32
+msgid "Rarely, by an operator"
+msgstr ""
+
+#: ../../cluster.rst:33
+msgid "Sent whole and checked by every node, or read from a database"
+msgstr ""
+
+#: ../../cluster.rst:34
+msgid "0023, 0028"
+msgstr ""
+
+#: ../../cluster.rst:35
+msgid "A sticky cookie, a rank by source address"
+msgstr ""
+
+#: ../../cluster.rst:36
+msgid "Computed from the shared secret and the file"
+msgstr ""
+
+#: ../../cluster.rst:37
+msgid "Nothing to replicate"
+msgstr ""
+
+#: ../../cluster.rst:38
+msgid "0019, 0025"
+msgstr ""
+
+#: ../../cluster.rst:39
+msgid "A learned sticky choice"
+msgstr ""
+
+#: ../../cluster.rst:40
+msgid "At the first flow and at each refresh"
+msgstr ""
+
+#: ../../cluster.rst:41
+msgid "Replicated; the merge follows a total order"
+msgstr ""
+
+#: ../../cluster.rst:42 ../../cluster.rst:46
+msgid "0025"
+msgstr ""
+
+#: ../../cluster.rst:43
+msgid "The flows on a capped server"
+msgstr ""
+
+#: ../../cluster.rst:44 ../../cluster.rst:52
+msgid "With every flow"
+msgstr ""
+
+#: ../../cluster.rst:45
+msgid "Divided into shares that sum to at most the limit"
+msgstr ""
+
+#: ../../cluster.rst:47
+msgid "Rate counters"
+msgstr ""
+
+#: ../../cluster.rst:48
+msgid "With every request"
+msgstr ""
+
+#: ../../cluster.rst:49
+msgid "Stay on the node; forwarding makes one node count each client"
+msgstr ""
+
+#: ../../cluster.rst:50
+msgid "0022, 0026"
+msgstr ""
+
+#: ../../cluster.rst:51
+msgid "A UDP mapping, a TCP socket"
+msgstr ""
+
+#: ../../cluster.rst:53
+msgid "Cannot be replicated; forwarding keeps the client on one node"
+msgstr ""
+
+#: ../../cluster.rst:54
+msgid "0026"
+msgstr ""
+
+#: ../../cluster.rst:56
+msgid ""
+"Three rules come out of the table. What can be computed from shared "
+"inputs is computed, because a computation cannot be lost in the network. "
+"What changes rarely, and only in one direction, is replicated as a state "
+"whose merge is a maximum. What changes with every request stays on its "
+"node, and we move the client to the state instead of the state to the "
+"client."
+msgstr ""
+
+#: ../../cluster.rst:58
+msgid "The Mesh"
+msgstr ""
+
+#: ../../cluster.rst:61
+msgid "A fixed roster and authenticated datagrams"
+msgstr ""
+
+#: ../../cluster.rst:64
+msgid ""
+"The nodes of a cluster form a mesh (SID 0015). The roster is fixed for "
+"the life of a process and holds at most 64 nodes. Every node knows every "
+"other by its address. The nodes speak by UDP datagrams on one port. A "
+"datagram begins with ``S``, ``E``, a version and a kind. It carries the "
+"boot nonce of the sender and a sequence number, and it ends with a "
+"16-byte tag: the keyed BLAKE3 hash of every byte before it, under the "
+"group key of the key file. A node reads a datagram only from an address "
+"of the roster and only with a valid tag. The kind lies inside the hashed "
+"bytes, so a datagram of one kind cannot be turned into another. A "
+"datagram holds at most 1,200 bytes, so it fits one packet on every path."
+msgstr ""
+
+#: ../../cluster.rst:67
+msgid ""
+"Clients reach a DNS or ECMP router, which sends flows to nodes A, B and "
+"C. The three nodes are joined pairwise by dashed mesh edges. All three "
+"send flows to the servers of the pools. A PostgreSQL database of "
+"revisions is joined to each node by a dotted edge."
+msgstr ""
+
+#: ../../cluster.rst:67
+msgid ""
+"digraph cluster_topology {\n"
+"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.6, ranksep=0.45, "
+"pad=0.12];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=10, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, height=0.4, margin=\"0.12,0.05\"];\n"
+"  edge [fontname=\"Helvetica\", fontsize=8.5, fontcolor=\"#475569\", "
+"color=\"#64748b\", arrowsize=0.65, penwidth=1.1];\n"
+"  clients [label=\"Clients\", fillcolor=\"#ffffff\", color=\"#172033\"];\n"
+"  router [label=\"DNS or ECMP router\", fillcolor=\"#ffffff\", "
+"color=\"#172033\"];\n"
+"  a [label=\"Node A\"];\n"
+"  b [label=\"Node B\"];\n"
+"  c [label=\"Node C\"];\n"
+"  servers [label=\"Servers of the pools\", color=\"#15803d\", "
+"fillcolor=\"#f0fdf4\"];\n"
+"  db [label=\"PostgreSQL\\nrevisions (SID 0028)\", shape=cylinder, "
+"color=\"#7c3aed\", fillcolor=\"#f5f3ff\"];\n"
+"  { rank=same; a; b; c; }\n"
+"  clients -> router;\n"
+"  router -> a;\n"
+"  router -> b;\n"
+"  router -> c;\n"
+"  a -> b [dir=both, style=dashed, color=\"#d97706\", "
+"fontcolor=\"#b45309\", label=\"mesh\"];\n"
+"  b -> c [dir=both, style=dashed, color=\"#d97706\", "
+"fontcolor=\"#b45309\", label=\"mesh\"];\n"
+"  a -> c [dir=both, style=dashed, color=\"#d97706\", "
+"fontcolor=\"#b45309\", label=\"mesh\"];\n"
+"  a -> servers;\n"
+"  b -> servers;\n"
+"  c -> servers;\n"
+"  a -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
+"  b -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
+"  c -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
+"}"
+msgstr ""
+
+#: ../../cluster.rst:67
+msgid ""
+"A cluster of three nodes. The router spreads the clients; the dashed "
+"edges are the mesh; the dotted edges are the database of SID 0028, which "
+"a cluster may use instead of sending files."
+msgstr ""
+
+#: ../../cluster.rst:97
+msgid ""
+"Every pair of nodes exchanges the same things. The next figure shows one "
+"pair."
+msgstr ""
+
+#: ../../cluster.rst:100
+msgid ""
+"Node A and node B joined by three edges. The first, UDP on the mesh port "
+"7946, carries probes, bans (kind 3), commands (kind 4), lifts (kind 5), "
+"sticky entries (kind 6) and the status of shares (kind 7). The second, "
+"TCP on the mesh port, carries the configuration file and its digest. The "
+"third, TCP and UDP on the mesh port plus one, carries forwarded flows."
+msgstr ""
+
+#: ../../cluster.rst:100
+msgid ""
+"digraph mesh_pair {\n"
+"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.4, ranksep=2.2, "
+"pad=0.12];\n"
+"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+"fontsize=10, fontcolor=\"#172033\", color=\"#1e40af\", "
+"fillcolor=\"#eff6ff\", penwidth=1.1, height=0.5, margin=\"0.14,0.06\"];\n"
+"  edge [fontname=\"Helvetica\", fontsize=8.5, fontcolor=\"#475569\", "
+"color=\"#64748b\", arrowsize=0.65, penwidth=1.1, dir=both];\n"
+"  a [label=\"Node A\"];\n"
+"  b [label=\"Node B\"];\n"
+"  a -> b [color=\"#d97706\", fontcolor=\"#b45309\", label=\"UDP, mesh "
+"port 7946 (SID 0015, 0022, 0025)\\nprobes; bans (3); commands (4); lifts "
+"(5);\\nsticky entries (6); status of shares (7)\"];\n"
+"  a -> b [label=\"TCP, mesh port 7946 (SID 0023)\\nthe configuration "
+"file; the digest of the file\"];\n"
+"  a -> b [color=\"#15803d\", fontcolor=\"#166534\", label=\"TCP and UDP, "
+"mesh port + 1 (SID 0026)\\nforwarded connections and datagrams\"];\n"
+"}"
+msgstr ""
+
+#: ../../cluster.rst:100
+msgid ""
+"What flows between two nodes, by port. The kind of each datagram is in "
+"parentheses."
+msgstr ""
+
+#: ../../cluster.rst:114
+msgid ""
+"Every node sends to every other directly. A node never forwards a "
+"datagram it received. With a full roster every node hears every writer, "
+"and forwarding on receipt is what makes gossip loop. Epidemic forwarding "
+"earns its cost in large groups whose members change; a roster of at most "
+"64 fixed nodes has no use for it."
+msgstr ""
+
+#: ../../cluster.rst:116
+msgid "Bans merged by a maximum"
+msgstr ""
+
+#: ../../cluster.rst:119
+msgid ""
+"A ban is a pair: a client key and the Unix second at which the ban ends. "
+"The state of a node is a map from keys to ends. Two states merge by "
+"taking, for each key, the later end. Let :math:`\\sqcup` be this merge. "
+"For each key it is the maximum of two numbers, so it has the three laws "
+"of the maximum."
+msgstr ""
+
+#: ../../cluster.rst:121
+msgid ""
+"a \\sqcup b = b \\sqcup a, \\qquad (a \\sqcup b) \\sqcup c = a \\sqcup (b "
+"\\sqcup c), \\qquad a \\sqcup a = a."
+msgstr ""
+
+#: ../../cluster.rst:125
+msgid ""
+"These three laws are the whole proof of convergence. The first says that "
+"the order of arrival does not matter. The second says that a node may "
+"merge datagrams one at a time. The third says that a repeated datagram "
+"changes nothing, so the mesh needs no replay window and no "
+"acknowledgement. Two nodes that have heard the same bans, in any order "
+"and with any repetition, hold the same map. A state with such a merge is "
+"a join semilattice, the state-based replicated data type of Shapiro and "
+"his colleagues (2011)."
+msgstr ""
+
+#: ../../cluster.rst:127
+msgid ""
+"A datagram carries the end, not the remaining time. A remaining time "
+"would not depend on the clocks of the nodes, but a replayed datagram "
+"would start the ban again. With the end, a replay states what the "
+"receiver already holds. The price is a dependence on clocks: a ban lasts "
+"longer or shorter on a peer by the difference of the two clocks. The "
+"receiver cuts an end to 30 days ahead of its own clock and ignores an end "
+"that has passed."
+msgstr ""
+
+#: ../../cluster.rst:129
+msgid ""
+"A node sends each ban it issues three times: at once, one second later, "
+"and four seconds after that. Three sends survive the loss of two packets. "
+"They do not survive a partition, so a node also walks its whole map to a "
+"peer that returns: a peer whose probes carry a new boot nonce, or that "
+"answers after three silent periods. A walk sends at most eight datagrams "
+"in a period of 500 ms. Every structure is bounded: the map holds 65,536 "
+"bans, and the queue from the firewall to the mesh thread holds 1,024. A "
+"request never waits for the mesh: a full queue drops the ban from "
+"replication, counts it, and the ban still holds on the node that issued "
+"it."
+msgstr ""
+
+#: ../../cluster.rst:131
+msgid "Implementation: ``Log::merge``"
+msgstr ""
+
+#: ../../cluster.rst:133
+msgid ""
+"Merges one ban into the map of the mesh thread and returns its end when "
+"the merge added or extended it. In ``crates/lb/src/mesh/bans.rs`` (crate "
+"``sibuna-lb``). ``keep_larger`` holds the maximum."
+msgstr ""
+
+#: ../../cluster.rst:135
+msgid ""
+"pub fn merge(&mut self, key: &[u8], until: u64, now: u64) -> "
+"Result<Option<u64>, ()> {\n"
+"    if until <= now || key.is_empty() || key.len() > MAX_KEY {\n"
+"        return Ok(None);\n"
+"    }\n"
+"    if self.ends.len() >= self.capacity {\n"
+"        self.expire(now);\n"
+"    }\n"
+"    self.keep_larger(key, until.min(now.saturating_add(HORIZON)))\n"
+"}"
+msgstr ""
+
+#: ../../cluster.rst:147
+msgid ""
+"A lift cannot be a smaller end: the next datagram of a peer would bring "
+"the ban back. So a lift is an entry of a third map, from the client key "
+"to the end up to which its bans are lifted, and that map also merges by "
+"the maximum. A ban is in effect when it ends after the lift of its "
+"client. The node of the operator sets the lift to the end of the ban it "
+"knows, and to at least 60 seconds ahead, which covers a ban that it has "
+"not heard yet. A peer that was cut off cannot bring the ban back, because "
+"the lift covers its end."
+msgstr ""
+
+#: ../../cluster.rst:149
+msgid ""
+"Run-time commands travel the same way. Their map goes from a key, such as "
+"``s`` and ``POOL/NAME`` for the state of a server, to a number that "
+"begins with the Unix millisecond of the command. The larger number wins, "
+"so the later command wins on every node whatever the order of arrival. A "
+"node refuses a number more than 60 seconds ahead of its own clock; "
+"without that bound one node with a wrong clock could overrule every later "
+"command. One rule of Part VIII stays: a pool that places clients by a "
+"Maglev table takes no weights and no members at run time, because every "
+"node must build the same table at the same moment. Its servers change "
+"through the file."
+msgstr ""
+
+#: ../../cluster.rst:151
+msgid "Why a rate counter stays local"
+msgstr ""
+
+#: ../../cluster.rst:154
+msgid ""
+"A rate limiter counts the requests of a client in a window. Let each of "
+":math:`n` nodes admit :math:`r` requests of a client in a window. A "
+"client whose connections spread over all nodes then gets up to "
+":math:`nr`. Making the counter global looks like the obvious repair, and "
+"it is not. A message for every request puts the mesh on the request path: "
+"the request either waits for its peers, or it is decided before the count "
+"of the others arrives, and the mesh then carries the request rate of the "
+"whole cluster. A merge by the maximum does not help either. The count of "
+"a window must fall when the window moves on, and a state whose merge is a "
+"maximum can only grow. SID 0022 therefore leaves the limiters on their "
+"nodes and says so: each node bounds what it serves."
+msgstr ""
+
+#: ../../cluster.rst:156
+msgid ""
+"A limit for the cluster comes from the other direction. Peer forwarding "
+"(SID 0026, below) gives every client one owner, and the key of the owner "
+"is the key of the rate limiter. The owner then counts every flow of its "
+"clients, so a limit that one node counts is a limit for the cluster. It "
+"holds only while forwarding runs, and for up to 1.5 s after a change of "
+"liveness two nodes may each count a part of one client."
+msgstr ""
+
+#: ../../cluster.rst:158
+msgid "One file for the cluster"
+msgstr ""
+
+#: ../../cluster.rst:161
+msgid ""
+"SID 0023 makes the configuration file the same on every node, byte for "
+"byte. Its ``mesh`` section lists every node under ``nodes``. A node finds "
+"itself as the first address of the list that belongs to its host, and the "
+"test is whether it can bind the address; an address in use counts as "
+"local, because the running daemon holds it. The other addresses are the "
+"peers."
+msgstr ""
+
+#: ../../cluster.rst:163
+msgid ""
+"``reload cluster`` checks the file of the node it is given on, reloads "
+"that node, and then sends the file to every peer at once over TCP, on the "
+"port of the mesh. The message is ``SEC1``, a stamp, a length, the file "
+"and a 32-byte tag. The key of the tag is derived from the mesh key with "
+"the context ``sibuna/edge-mesh/config/v1``, so a mesh datagram cannot "
+"stand for a file, nor a file for a datagram. A peer takes the file only "
+"when it states ``accept_config``, and stops at the first of these checks "
+"that fails: the source is a node of the roster; the tag is right; the "
+"stamp is later than the last one it took and within 60 seconds of its "
+"clock; the file, written beside its own as ``NAME.incoming.EXT`` with "
+"mode 0600, passes the check of a reload; and the file names the same mesh "
+"with this node in it. Only then is the file renamed over the old one and "
+"loaded. A failed transfer changes nothing on the peer. ``show cluster`` "
+"asks every peer for the digest of its file and shows which nodes differ. "
+"On three hosts the command returned, with all three holding the same "
+"file, in 30 ms (Part X)."
+msgstr ""
+
+#: ../../cluster.rst:165
+msgid ""
+"The file has no history and no rollback, a node that was down keeps its "
+"old file, and files that the topology names by path are not sent. SID "
+"0028, later in this chapter, answers the first two."
+msgstr ""
+
+#: ../../cluster.rst:167
+msgid "Exercise 9.1"
+msgstr ""
+
+#: ../../cluster.rst:169
+msgid ""
+"Node A bans a client until second 1,300. At second 900 an operator lifts "
+"the ban on node C, which knows that end. Node D was cut off and now sends "
+"a ban of the same client until 1,200. At second 1,000 node B bans the "
+"client again, until 1,250. What lift does C send, and which of the three "
+"bans holds on which node?"
+msgstr ""
+
+#: ../../cluster.rst:171
+msgid ""
+"Hint: Compute the lift as the operator's node does, then compare each end "
+"with it. Then read the first known gap of SID 0022."
+msgstr ""
+
+#: ../../cluster.rst:173 ../../cluster.rst:227 ../../cluster.rst:333
+#: ../../cluster.rst:442 ../../cluster.rst:519 ../../cluster.rst:549
+#: ../../cluster.rst:590
+msgid "Explain the invariant"
+msgstr ""
+
+#: ../../cluster.rst:175
+msgid ""
+"Explain why a ban datagram that arrives twice, late, or before an older "
+"one cannot change what a node bans. Then explain why the same argument "
+"would fail if a lift were sent as a smaller end, and what the map of "
+"lifts does instead."
+msgstr ""
+
+#: ../../cluster.rst:177
+msgid "Shared Affinity"
+msgstr ""
+
+#: ../../cluster.rst:180
+msgid "Three kinds of stickiness"
+msgstr ""
+
+#: ../../cluster.rst:183
+msgid ""
+"A pool keeps a client on its server in one of three ways (SID 0019, SID "
+"0025). With ``sticky: \"cookie\"`` the client presents a token, a keyed "
+"hash of the pool and the server; every node derives the key from "
+"``http.secret_file``, so no table is needed. With ``sticky: \"source\"`` "
+"every node ranks the servers by a hash of the client address; nodes with "
+"the same file rank alike. Both are computed, so no datagram can be lost. "
+"The third kind, ``sticky: \"table\"``, balances the first flow of a "
+"client and remembers the choice. It serves two cases that a computation "
+"cannot: the first choice follows the load, and the key may be a cookie "
+"that the application sets, such as a session identifier, from which the "
+"edge cannot compute a server. Only the third kind needs replication."
+msgstr ""
+
+#: ../../cluster.rst:185
+msgid "The entry and its order"
+msgstr ""
+
+#: ../../cluster.rst:188
+msgid ""
+"An entry maps a key of 16 bytes to a server and an end. The key is a "
+"keyed hash of the client address, or of the value of the cookie, under a "
+"key derived from the name of the pool. The server is a hash of its name, "
+"the same on every node. The end is the Unix millisecond at which the "
+"entry expires. Two entries of one key merge by keeping the larger pair of "
+"end and server, compared in that order:"
+msgstr ""
+
+#: ../../cluster.rst:190
+msgid ""
+"(e_1, s_1) \\sqcup (e_2, s_2) = \\max_{\\mathrm{lex}}\\big((e_1, s_1), "
+"(e_2, s_2)\\big)."
+msgstr ""
+
+#: ../../cluster.rst:194
+msgid ""
+"The lexicographic order on pairs of numbers is total: of two different "
+"pairs, one is larger. The maximum over a total order is commutative, "
+"associative and idempotent, so the entries converge for the reason the "
+"bans do. The server breaks the ties. Without it, two nodes that learned "
+"two servers for one client in the same millisecond, with the same "
+"``ttl``, would each keep their own entry forever."
+msgstr ""
+
+#: ../../cluster.rst:196
+msgid ""
+"The end is also the version of the entry. A node *learns* when a flow is "
+"placed on a server that the table did not name; the new end is the later "
+"of now plus ``ttl`` and one millisecond after the old end. So a new "
+"choice is larger than the entry it replaces, on every node. A node "
+"*refreshes* when a flow uses the entry and less than three quarters of "
+"``ttl`` remain; the new end is now plus ``ttl``. One number serves as "
+"version and as expiry, and the bound on its distance from the clock "
+"bounds the harm of a wrong clock: a received end more than 24 hours and "
+"60 seconds ahead is ignored."
+msgstr ""
+
+#: ../../cluster.rst:198
+msgid "Implementation: ``Affinity::wins_over``"
+msgstr ""
+
+#: ../../cluster.rst:200
+msgid ""
+"Decides the merge of two entries of one key. In "
+"``crates/lb/src/affinity.rs`` (crate ``sibuna-lb``). "
+"``AffinityTable::keep`` in the same file stores an entry only when it "
+"wins over the one held."
+msgstr ""
+
+#: ../../cluster.rst:202
+msgid ""
+"/// Whether `self` wins over `other` in a merge: the later end, then the "
+"larger\n"
+"/// server. The order is total, so every node keeps the same entry.\n"
+"pub fn wins_over(&self, other: &Self) -> bool {\n"
+"    (self.ends, self.server) > (other.ends, other.server)\n"
+"}"
+msgstr ""
+
+#: ../../cluster.rst:210
+msgid ""
+"The table is an array of slots in buckets of four. A slot is five atomic "
+"words: a sequence number, two words of key, the server and the end. A "
+"writer makes the sequence odd with a compare-and-swap, stores the entry "
+"and makes it even again; a reader takes an entry only when it read the "
+"same even sequence before and after. No thread waits for another. The "
+"table has ``global.sticky_entries`` slots, 65,536 by default, of 40 bytes "
+"each, and a full bucket gives up the entry that ends first. A bucket of "
+"four gives up entries before the table is full: at three quarters full it "
+"had given up one client in nine, so a table wants twice as many slots as "
+"clients. A lookup took 172 ns in an optimised build, on a table of 65,536 "
+"slots with 49,152 clients."
+msgstr ""
+
+#: ../../cluster.rst:212
+msgid ""
+"The table only advises the choice of a server for a new flow. An "
+"established flow holds a reservation on its server and never reads the "
+"table again. A lost, evicted or changed entry therefore costs a client "
+"its server for the next new flow and nothing else, and a named server "
+"serves only while it is eligible: in the pool, healthy, not drained, with "
+"room."
+msgstr ""
+
+#: ../../cluster.rst:214
+msgid "Replication, partition and the window of a race"
+msgstr ""
+
+#: ../../cluster.rst:217
+msgid ""
+"A worker hands the key of each entry it wrote to the mesh thread through "
+"a bounded queue of 4,096 keys, without waiting. The mesh thread sends the "
+"entry three times, as it sends a ban, in datagrams of kind 6 that hold 36 "
+"entries each. A peer that returns is sent the whole table by a cursor, at "
+"most 32 datagrams in a period of 500 ms; a table of 65,536 entries takes "
+"about 29 seconds. A node that is cut off serves from its own table: the "
+"table gives up agreement during a partition and keeps availability. When "
+"the partition ends, both sides walk their tables to each other, and for "
+"each key every node keeps the larger entry, the choice made or used last. "
+"One side's choice changes for the next new flow of that client. Flows "
+"under way stay."
+msgstr ""
+
+#: ../../cluster.rst:219
+msgid ""
+"Replication is asynchronous, so there is a window. A choice reaches a "
+"peer after the hand-over to the mesh thread, one send and one network "
+"delay. A second flow of the same client that reaches the peer inside the "
+"window finds no entry, is balanced, and the peer learns a choice of its "
+"own. Both entries travel; the larger wins everywhere; later new flows of "
+"the client meet one server. SID 0025 measured the window on two hosts, "
+"with a table keyed by a cookie. With no pause between the first flow on "
+"one node and the next on the other, 25 of 40 clients met two servers; "
+"with 20 ms, 13 of 40; with 50 ms, none. All agreed two seconds later, and "
+"300 of 300 clients reached the same server through either node. A choice "
+"therefore reached the peer in under 50 ms. The window cannot be closed "
+"without making the first flow wait for the peers, which the design "
+"refuses."
+msgstr ""
+
+#: ../../cluster.rst:221
+msgid "Exercise 9.2"
+msgstr ""
+
+#: ../../cluster.rst:223
+msgid ""
+"Nodes A and B learn a server for the same new client in the same "
+"millisecond, with the same ``ttl``. A chose the server whose hash is "
+"``0x3a...`` and B the server whose hash is ``0x91...``. Each placed one "
+"flow. Which entry does every node hold after the datagrams cross? Which "
+"flows move?"
+msgstr ""
+
+#: ../../cluster.rst:225
+msgid ""
+"Hint: Compare the pairs of end and server. Then recall what an "
+"established flow reads."
+msgstr ""
+
+#: ../../cluster.rst:229
+msgid ""
+"Explain why the merge of sticky entries needs a total order and not just "
+"the later end. Then explain why no loss of a datagram, and no eviction "
+"from a full bucket, can move a flow that is already established."
+msgstr ""
+
+#: ../../cluster.rst:231
+msgid "A Cap for the Whole Fleet"
+msgstr ""
+
+#: ../../cluster.rst:234
+msgid "The invariant"
+msgstr ""
+
+#: ../../cluster.rst:237
+msgid ""
+"A server with ``max_flows: 100`` behind :math:`n` nodes receives up to "
+":math:`100n` flows when each node enforces the limit alone. With "
+"``max_flows_scope: \"fleet\"`` the limit :math:`L` bounds the flows of "
+"all nodes together (SID 0025). Let :math:`s_i` be the share of node "
+":math:`i` and :math:`u_i` its flows on the server. The protocol keeps two "
+"inequalities:"
+msgstr ""
+
+#: ../../cluster.rst:239
+msgid ""
+"u_i \\le s_i \\ \\text{for every node}, \\qquad \\sum_i s_i \\le L, "
+"\\qquad \\text{so} \\qquad \\sum_i u_i \\le L."
+msgstr ""
+
+#: ../../cluster.rst:243
+msgid ""
+"The first is local: a node admits a flow only while its flows are fewer "
+"than its share. The second must hold for every loss, repetition, delay "
+"and reordering of datagrams, for every partition, and for every set of "
+"nodes that stop or restart."
+msgstr ""
+
+#: ../../cluster.rst:245
+msgid "Counters that only grow"
+msgstr ""
+
+#: ../../cluster.rst:248
+msgid ""
+"The first design moved shares with messages: \"take 5\". Such a message "
+"must arrive exactly once. Lost, it loses five places for good; repeated, "
+"it doubles them and breaks the limit. So the protocol sends numbers that "
+"only grow, and the receiver merges them by the maximum, as it merges "
+"bans. A number heard any number of times has the effect of hearing it "
+"once. This is the escrow method of O'Neil (1986) and the bounded counter "
+"of Balegas and his colleagues (2015), built on the merge of SID 0022."
+msgstr ""
+
+#: ../../cluster.rst:250
+msgid ""
+"The nodes of the roster are ordered by address, and node :math:`i` of "
+":math:`n` has the base share"
+msgstr ""
+
+#: ../../cluster.rst:252
+msgid ""
+"b_i = \\lfloor L/n \\rfloor + [\\, i < L \\bmod n \\,], \\qquad \\sum_i "
+"b_i = L."
+msgstr ""
+
+#: ../../cluster.rst:256
+msgid ""
+"Every node computes the bases from the file. For each peer :math:`j`, "
+"node :math:`i` keeps two numbers that only grow: :math:`g_{ij}`, all it "
+"ever gave to :math:`j`, and :math:`h_{ij}`, the largest :math:`g_{ji}` it "
+"heard from :math:`j`. Its share is"
+msgstr ""
+
+#: ../../cluster.rst:258
+msgid "s_i = b_i - \\sum_j g_{ij} + \\sum_j h_{ij}."
+msgstr ""
+
+#: ../../cluster.rst:262
+msgid ""
+"A receiver holds only numbers that the giver sent, and the giver lowered "
+"its share before it sent them, so :math:`h_{ji} \\le g_{ij}` at every "
+"moment. Summing over the nodes and renaming the indices of the last sum,"
+msgstr ""
+
+#: ../../cluster.rst:264
+msgid ""
+"\\sum_i s_i = L - \\sum_{i,j} g_{ij} + \\sum_{i,j} h_{ji} = L - "
+"\\sum_{i,j} \\big(g_{ij} - h_{ji}\\big) \\le L."
+msgstr ""
+
+#: ../../cluster.rst:268
+msgid ""
+"A lost datagram leaves :math:`h_{ji} < g_{ij}` for a while. The "
+"difference is counted on neither node: it is stranded for one period of "
+"500 ms, never doubled."
+msgstr ""
+
+#: ../../cluster.rst:270
+msgid "Moving shares to the demand"
+msgstr ""
+
+#: ../../cluster.rst:273
+msgid ""
+"Each node computes, for each capped server, its free share :math:`f = s - "
+"u` and a headroom :math:`r = \\max(1, \\lceil u/4 \\rceil)`. It *wants* "
+":math:`r - f` when that is positive, and at least one, with a flag, when "
+"it refused a flow for lack of share since its last status. Its *surplus* "
+"is :math:`f - r`. Once in each period a node serves the wants it heard. "
+"It gives a peer the smaller of the want and its surplus; to a peer that "
+"refuses flows it gives the smaller of the want and the larger of its "
+"surplus and :math:`\\lceil f/2 \\rceil`. A node returns borrowed share by "
+"itself: when :math:`f > 2\\lceil u/4 \\rceil` and it holds a net gift of "
+"a peer, it gives back the excess up to that gift, so the shares of an "
+"idle cluster return to the bases."
+msgstr ""
+
+#: ../../cluster.rst:275
+msgid ""
+"Three rules bound a gift. It comes from the free share, so the giver's "
+"flows stay within its share. A node lends only its base: with "
+":math:`o_{ij} = g_{ij} - h_{ij}`, the positive :math:`o_{ij}` of one node "
+"never sum to more than :math:`b_i`, and a gift may go back to the peer it "
+"came from but not on to a third. And a node gives only to a peer it heard "
+"in the last three periods and is synchronised with. The second rule does "
+"not limit where shares can go: every node may lend its whole base to one "
+"peer, which then holds the whole limit. It limits the route, and the "
+"restart below needs it."
+msgstr ""
+
+#: ../../cluster.rst:277
+msgid "Implementation: ``Cell::enter`` and ``Cell::lower``"
+msgstr ""
+
+#: ../../cluster.rst:279
+msgid ""
+"The admission of a flow on a worker, and the lowering of the share by the "
+"mesh thread before a gift. In ``crates/lb/src/quota.rs`` (crate "
+"``sibuna-lb``). ``Demand::of`` and ``Ledger::share`` in the same file "
+"compute the want and the share; ``move_shares`` in "
+"``crates/lb/src/mesh/shares.rs`` serves the wants once in each period."
+msgstr ""
+
+#: ../../cluster.rst:281
+msgid ""
+"pub fn enter(&self) -> bool {\n"
+"    if self.used.fetch_add(1, Ordering::SeqCst) < "
+"self.share.load(Ordering::SeqCst) {\n"
+"        return true;\n"
+"    }\n"
+"    self.used.fetch_sub(1, Ordering::SeqCst);\n"
+"    self.starved.store(true, Ordering::Relaxed);\n"
+"    false\n"
+"}"
+msgstr ""
+
+#: ../../cluster.rst:292
+msgid ""
+"The worker adds itself to the count first and reads the share second. "
+"``lower`` stores the lowered share first and reads the count second; when "
+"the count exceeds the lowered share, flows entered meanwhile, and it "
+"raises the share by the difference and gives less. All four operations "
+"are sequentially consistent, so they fall in one total order. Either the "
+"worker's addition comes before the mesh thread's read, which then sees "
+"it, or it comes after the store of the lowered share, and the worker "
+"reads the lowered share. No flow enters on a share that was given away, "
+"and no lock is taken."
+msgstr ""
+
+#: ../../cluster.rst:294
+msgid "Restarts and epochs"
+msgstr ""
+
+#: ../../cluster.rst:297
+msgid ""
+"A node that restarts has no flows and has lost its ledger. Its peers "
+"still hold theirs, and they may serve flows on shares it gave them. It "
+"must not start again from its base. Each node therefore has an *epoch*, "
+"the Unix millisecond of its start. A status datagram carries the epoch of "
+"its sender and the epoch of the receiver that the sender last heard, its "
+"*echo*. A receiver ignores a datagram whose sender epoch is below the "
+"largest it knows for that peer."
+msgstr ""
+
+#: ../../cluster.rst:299
+msgid ""
+"A node that starts is unsynchronised with every peer. By the rule that it "
+"lends only its base, it gave at most its base to all peers together, so "
+"it counts none of its base and only what synchronised peers gave it in "
+"net:"
+msgstr ""
+
+#: ../../cluster.rst:301
+msgid ""
+"s_i = \\sum_{j\\ \\text{synced}} \\max\\big(0,\\ h_{ij} - g_{ij}\\big)."
+msgstr ""
+
+#: ../../cluster.rst:305
+msgid ""
+"It becomes synchronised with peer :math:`j` when a datagram of :math:`j` "
+"echoes its new epoch. It then takes over the ledger that :math:`j` kept: "
+"its :math:`g_{ij}` becomes the :math:`h_{ji}` of the datagram, and its "
+":math:`h_{ij}` the :math:`g_{ji}`. The echo proves that :math:`j` had "
+"heard the new epoch before it sent, so the two ledgers agree from then on."
+msgstr ""
+
+#: ../../cluster.rst:307
+msgid ""
+"No timer returns the share of a silent node. Silence does not tell a "
+"stopped node from one that is cut off and still serves the flows it "
+"admitted. Returning its share would exceed the limit unless that node "
+"closed those flows, and Sibuna does not close established flows for a "
+"quota. A lease on shares fails for the same reason: a flow outlives a "
+"lease. The price is capacity that nobody can use for a while. A lost gift "
+"strands the gift for one period. A node that stops strands its last share "
+"until it restarts and hears each peer once, or, if it never returns, "
+"until the operator removes it from ``mesh.nodes`` and restarts the nodes. "
+"A node that restarts while a peer is silent serves only on what the other "
+"peers lend it. A cluster that starts with one node missing serves no flow "
+"on a capped server until that node answers."
+msgstr ""
+
+#: ../../cluster.rst:309
+msgid "Worked example: three nodes and a limit of 30"
+msgstr ""
+
+#: ../../cluster.rst:311
+msgid ""
+"Nodes A, B and C share a server with :math:`L = 30`. The bases are "
+":math:`\\lfloor 30/3 \\rfloor = 10` each. A holds 10 flows and refused "
+"one. B holds 2 and C holds none."
+msgstr ""
+
+#: ../../cluster.rst:313
+msgid ""
+"*Period 1.* A has :math:`f = 0` and :math:`r = \\lceil 10/4 \\rceil = 3`, "
+"so it wants 3, with the flag. B has :math:`f = 8`, :math:`r = 1`, surplus "
+"7. A is pressed, so B may give :math:`\\min(3, \\max(7, \\lceil 8/2 "
+"\\rceil)) = 3`; its base allows it, since it has lent nothing. B lowers "
+"its share to 7 and sets :math:`g_{BA} = 3`. C has :math:`f = 10`, surplus "
+"9, and gives 3 likewise: share 7, :math:`g_{CA} = 3`. Until the status "
+"datagrams arrive the shares are 10, 7 and 7, which sum to 24: six places "
+"are stranded and none is doubled. When A hears them, :math:`h_{AB} = "
+"h_{AC} = 3` and :math:`s_A = 10 + 3 + 3 = 16`. The sum is 30."
+msgstr ""
+
+#: ../../cluster.rst:315
+msgid ""
+"*Period 2.* A fills its 16 places and refuses again: :math:`r = \\lceil "
+"16/4 \\rceil = 4`, want 4. B has share 7, :math:`f = 5`, surplus 4, and "
+"gives 4; it may lend :math:`10 - 3 = 7`. C has :math:`f = 7`, surplus 6, "
+"and gives 4. Now :math:`g_{BA} = g_{CA} = 7`, and the shares are "
+":math:`s_A = 10 + 7 + 7 = 24`, :math:`s_B = s_C = 3`. The sum is 30."
+msgstr ""
+
+#: ../../cluster.rst:317
+msgid ""
+"*C stops.* A keeps :math:`h_{AC} = 7` and its share of 24. C's share of 3 "
+"is stranded: the cluster can hold at most 27 flows on the server until C "
+"returns, and no timer changes that."
+msgstr ""
+
+#: ../../cluster.rst:319
+msgid ""
+"*C restarts* with a new epoch. It is unsynchronised with both peers and "
+"counts :math:`s_C = 0`. A's next status echoes the new epoch and carries "
+":math:`g_{AC} = 0` and :math:`h_{AC} = 7`. C takes them over as "
+":math:`h_{CA} = 0` and :math:`g_{CA} = 7`. B's status gives zeros. "
+"Synchronised with both, C counts :math:`s_C = 10 - 7 = 3`, and the sum is "
+"30 again."
+msgstr ""
+
+#: ../../cluster.rst:321
+msgid ""
+"Two counterfactuals show why the design is as it is. Had B sent the "
+"message \"take 3\" and the network repeated it, A would have counted 33 "
+"in period 1. Had C restarted from its base, it would have counted 10 "
+"beside A's 24 and B's 3: 37 places for a limit of 30."
+msgstr ""
+
+#: ../../cluster.rst:323
+msgid ""
+"The same rules predict the measured steps. On two hosts with :math:`L = "
+"20`, both bases are 10. A node with 10 flows that refuses wants "
+":math:`\\lceil 10/4 \\rceil = 3` and receives 3, then, with 13 flows, "
+"wants :math:`\\lceil 13/4 \\rceil = 4` and receives 4. SID 0025 measured "
+"10, then 13 after 1.5 seconds, then 17 after 3 seconds, with the two "
+"shares always adding up to 20, and of 80 held requests 20 served and 60 "
+"refused. Each step took about three periods there, longer than one; the "
+"SID records the steps and not the cause."
+msgstr ""
+
+#: ../../cluster.rst:325
+msgid ""
+"The model ``docs/sid/assets/shared-affinity.lean`` is checked by Lean 4 "
+"without libraries. For the cap it proves that when every node holds at "
+"most what its peer gave, the shares sum to at most the limit "
+"(``shares_within_limit``); that a gift and a hearing keep that condition "
+"(``give_keeps_sound``, ``hear_keeps_sound``), so the cap holds after "
+"every sequence of gifts and hearings in any order and with any repetition "
+"(``cap_holds_on_every_trace``); that a gift from the free share keeps the "
+"flows within the share (``gift_from_free_share``); and, under the rule "
+"that a node lends only its base, that the share a restarted node counts "
+"is at most its true share (``restarted_share_is_safe``) and that "
+"forgetting a pair that both nodes lost leaves no share negative "
+"(``forgotten_pair_is_safe``). For the sticky table it proves the three "
+"laws of the merge, ``replay_is_harmless`` and ``learn_wins``. It does not "
+"model the epochs, the order of the two atomic operations, or time. Random "
+"traces of two to five nodes with loss, repetition, reordering and "
+"restarts test the first "
+"(``the_cap_holds_under_loss_repetition_reordering_and_restarts`` in "
+"``quota.rs``), and "
+"``no_flow_enters_on_a_share_that_is_given_away_while_workers_race`` tests "
+"the second."
+msgstr ""
+
+#: ../../cluster.rst:327
+msgid "Exercise 9.3"
+msgstr ""
+
+#: ../../cluster.rst:329
+msgid ""
+"Four nodes share a server with :math:`L = 10`. Compute the bases. Node D, "
+"the last, holds 2 flows and refuses one; the others hold none. What does "
+"D want, and what does each peer give in the next period? Then node A, "
+"which gave, stops for good. How many flows can the cluster hold on the "
+"server, and what must the operator do to recover the rest?"
+msgstr ""
+
+#: ../../cluster.rst:331
+msgid ""
+"Hint: The remainder of :math:`10/4` goes to the first nodes. Every peer "
+"serves the want it heard, independently."
+msgstr ""
+
+#: ../../cluster.rst:335
+msgid ""
+"Prove :math:`\\sum_i s_i \\le L` from :math:`h_{ji} \\le g_{ij}`. Then "
+"explain why a restarted node may not count its base, and why a timer that "
+"returned the share of a silent node would break the cap."
+msgstr ""
+
+#: ../../cluster.rst:337
+msgid "One Owner for Each Client"
+msgstr ""
+
+#: ../../cluster.rst:340
+msgid ""
+"When a node joins or leaves, or when the router rehashes, a client lands "
+"on another node. That node has none of the client's state: its UDP "
+"mapping, its connection count, its rate budget, its sticky choice. SID "
+"0026 gives every client one owner among the live nodes. A node that "
+"receives a new flow of a client it does not own hands the flow to the "
+"owner over the mesh network, and the owner serves it under the true "
+"client address."
+msgstr ""
+
+#: ../../cluster.rst:342
+msgid "Rendezvous hashing"
+msgstr ""
+
+#: ../../cluster.rst:345
+msgid ""
+"The key of a client is its IPv4 address, or the first 64 bits of its IPv6 "
+"address; these are the keys of the rate limiters. Each node :math:`n` of "
+"the roster has a seed :math:`\\sigma_n`, the first eight bytes of the "
+"keyed BLAKE3 hash of its mesh address under a key derived from the mesh "
+"key. The score of node :math:`n` for client :math:`k` is "
+":math:`\\mathrm{wyhash}(\\sigma_n, k)`, and the owner is the eligible "
+"node with the largest score; equal scores go to the node earlier in the "
+"roster. This is rendezvous hashing (Thaler and Ravishankar, 1998). It "
+"needs no table and no publication; its work is one hash for each live "
+"node, at most 64. The seeds depend on the mesh key, so a client cannot "
+"compute which addresses share an owner."
+msgstr ""
+
+#: ../../cluster.rst:347
+msgid ""
+"Why does a join move so little? Model the scores of one client as "
+"independent and uniform; with 64-bit scores, ties are negligible. When a "
+"node joins and the cluster has :math:`n` nodes, the client changes owner "
+"exactly when the new node has the largest of :math:`n` scores. By "
+"symmetry each of the :math:`n` nodes is the largest with the same "
+"probability, so"
+msgstr ""
+
+#: ../../cluster.rst:349
+msgid "P(\\text{the client moves}) = \\frac{1}{n}."
+msgstr ""
+
+#: ../../cluster.rst:353
+msgid ""
+"When the new node is not the largest, the largest of the old scores is "
+"still the largest, and the owner stays. So the clients that move all move "
+"to the new node. No scheme can do better: to give the new node its fair "
+"share of :math:`1/n` of the clients, at least :math:`1/n` must move. When "
+"a node leaves, only its own clients move, each to the node with its "
+"second largest score, which spreads them evenly over the others. The "
+"Maglev table that SID 0015 sketched for origins would also move a small "
+"share of the clients of nodes that did not change, and it must be rebuilt "
+"and published at every change of liveness."
+msgstr ""
+
+#: ../../cluster.rst:355
+msgid "Worked example: a fourth node joins"
+msgstr ""
+
+#: ../../cluster.rst:357
+msgid ""
+"Four clients p, q, r and s, and three nodes A, B and C. We use made-up "
+"scores from 0 to 99 in place of wyhash outputs."
+msgstr ""
+
+#: ../../cluster.rst:363
+msgid "Client"
+msgstr ""
+
+#: ../../cluster.rst:364 ../../cluster.rst:374
+msgid "A"
+msgstr ""
+
+#: ../../cluster.rst:365 ../../cluster.rst:381 ../../cluster.rst:383
+#: ../../cluster.rst:395 ../../cluster.rst:397
+msgid "B"
+msgstr ""
+
+#: ../../cluster.rst:366 ../../cluster.rst:388 ../../cluster.rst:390
+msgid "C"
+msgstr ""
+
+#: ../../cluster.rst:367
+msgid "Owner of three"
+msgstr ""
+
+#: ../../cluster.rst:368 ../../cluster.rst:376
+msgid "D"
+msgstr ""
+
+#: ../../cluster.rst:369
+msgid "Owner of four"
+msgstr ""
+
+#: ../../cluster.rst:370
+msgid "p"
+msgstr ""
+
+#: ../../cluster.rst:371
+msgid "71"
+msgstr ""
+
+#: ../../cluster.rst:372
+msgid "15"
+msgstr ""
+
+#: ../../cluster.rst:373
+msgid "42"
+msgstr ""
+
+#: ../../cluster.rst:375
+msgid "88"
+msgstr ""
+
+#: ../../cluster.rst:377
+msgid "q"
+msgstr ""
+
+#: ../../cluster.rst:378
+msgid "23"
+msgstr ""
+
+#: ../../cluster.rst:379
+msgid "90"
+msgstr ""
+
+#: ../../cluster.rst:380
+msgid "57"
+msgstr ""
+
+#: ../../cluster.rst:382
+msgid "12"
+msgstr ""
+
+#: ../../cluster.rst:384
+msgid "r"
+msgstr ""
+
+#: ../../cluster.rst:385
+msgid "64"
+msgstr ""
+
+#: ../../cluster.rst:386
+msgid "38"
+msgstr ""
+
+#: ../../cluster.rst:387
+msgid "81"
+msgstr ""
+
+#: ../../cluster.rst:389
+msgid "30"
+msgstr ""
+
+#: ../../cluster.rst:391
+msgid "s"
+msgstr ""
+
+#: ../../cluster.rst:392
+msgid "9"
+msgstr ""
+
+#: ../../cluster.rst:393
+msgid "47"
+msgstr ""
+
+#: ../../cluster.rst:394
+msgid "33"
+msgstr ""
+
+#: ../../cluster.rst:396
+msgid "41"
+msgstr ""
+
+#: ../../cluster.rst:399
+msgid ""
+"Node D joins. Only p, whose score at D exceeds its three old scores, "
+"moves, and it moves to D. q, r and s keep their owners, because each old "
+"maximum is still the maximum. One client of four moved, which is the "
+"expected :math:`1/4`. Had C left instead, only r would move, to A, its "
+"second largest score."
+msgstr ""
+
+#: ../../cluster.rst:401
+msgid ""
+"Compare the obvious rule, the owner :math:`h \\bmod n` for a hash "
+":math:`h`. Going from three nodes to four, a client stays only when "
+":math:`h \\bmod 3 = h \\bmod 4`. Both residues are fixed by :math:`h "
+"\\bmod 12`, and they agree for :math:`h \\bmod 12 \\in \\{0, 1, 2\\}` "
+"only: three residues of twelve. So three quarters of the clients move, "
+"most of them between old nodes."
+msgstr ""
+
+#: ../../cluster.rst:403
+msgid "Implementation: ``Peering::owner_among``"
+msgstr ""
+
+#: ../../cluster.rst:405
+msgid ""
+"The scan that names the owner of a client among this node and the "
+"eligible peers, given as a bit set. In ``crates/lb/src/forward.rs`` "
+"(crate ``sibuna-lb``). It returns ``None`` when this node owns the client."
+msgstr ""
+
+#: ../../cluster.rst:407
+msgid ""
+"let key = client_key(client);\n"
+"let mut best = (wyhash::hash(self.seed, &key), self.rank);\n"
+"let mut owner = None;\n"
+"let mut left = eligible;\n"
+"while left != 0 {\n"
+"    let index = left.trailing_zeros() as usize;\n"
+"    left &= left - 1;\n"
+"    let Some(peer) = self.peers.get(index) else { break };\n"
+"    let score = wyhash::hash(peer.seed, &key);\n"
+"    // Equal scores go to the node that is earlier in the roster.\n"
+"    if score > best.0 || (score == best.0 && peer.rank < best.1) {\n"
+"        best = (score, peer.rank);\n"
+"        owner = Some(index);\n"
+"    }\n"
+"}"
+msgstr ""
+
+#: ../../cluster.rst:425
+msgid "One hop, and what it does not repair"
+msgstr ""
+
+#: ../../cluster.rst:428
+msgid ""
+"A peer is eligible when it can take a flow now. The mesh probes do not "
+"show that, because another thread answers them on another port, so the "
+"edge worker probes the forwarding port itself every 500 ms. A peer is "
+"alive when it answered within 1.5 s and does not drain. A peer that "
+"refused a flow or failed a connect is held back for one second."
+msgstr ""
+
+#: ../../cluster.rst:430
+msgid ""
+"For a TCP or HTTP connection the receiving node first applies its own "
+"checks: drain, its connection rate, a free flow slot. It then computes "
+"the owner. If the owner is another eligible peer, it connects to the "
+"owner's forwarding port, from its mesh address, and writes a header of 76 "
+"bytes: the epoch of the owner, the frontend, the client and the "
+"destination, and a tag over the two socket addresses of this connection "
+"and the header. The owner answers 17 bytes: take, decline, or deny. On "
+"take, the receiving node relays bytes both ways and never looks at them; "
+"TLS, parsing, the firewall and the choice of a server happen on the "
+"owner. On decline, a failed connect or a timeout of ``connect_timeout`` "
+"(250 ms by default), it serves the connection itself. On deny, the "
+"owner's rate limit refused the client, and the connection is closed: "
+"otherwise every other node would serve a client above its limit. UDP "
+"datagrams travel between a header and a tag on one socket, and replies "
+"return through the node that the client reached, so the client sees the "
+"answer come from the address it sent to."
+msgstr ""
+
+#: ../../cluster.rst:432
+msgid ""
+"Two rules make this safe. A flow that arrived from a peer is served where "
+"it lands and is never forwarded again, whatever that node believes about "
+"the owner, so no flow takes more than one extra hop and none can loop. "
+"And no flow is lost to forwarding: when the owner is down, declines, or "
+"is at ``max_flows_per_peer``, the receiving node serves. The model "
+"``docs/sid/assets/peer-forwarding.lean`` proves ``one_hop`` and "
+"``forwarded_is_served`` for every belief of every node, ``owner_unique`` "
+"for two nodes with the same view, and ``owner_after_join``: a node that "
+"joins becomes the owner or changes nothing. On loopback a forwarded "
+"connection cost 79 to 91 us more to its first line, and an exchange on an "
+"established connection 19 to 21 us more."
+msgstr ""
+
+#: ../../cluster.rst:434
+msgid ""
+"Forwarding keeps the *node* of a client, not a TCP connection. When the "
+"router moves the packets of an established TCP connection to another "
+"node, that node holds no socket for it and answers with a reset; the "
+"client's next connection reaches its owner. Repairing the connection "
+"would need its state on every node or a packet-level forward, and neither "
+"is built. HTTP/3 is served by the node that receives its packets, a "
+"frontend with ``proxy_protocol`` is not forwarded, and forwarding runs "
+"only in the regional regime of the mesh, which a node leaves when the "
+"95th percentile of the measured round trip to its peers exceeds 3 ms and "
+"enters again from the wide-area regime only when it falls below 1.5 ms."
+msgstr ""
+
+#: ../../cluster.rst:436
+msgid "Exercise 9.4"
+msgstr ""
+
+#: ../../cluster.rst:438
+msgid ""
+"A cluster of four nodes owns 1,000 clients evenly. (a) A fifth node "
+"joins: how many clients move in expectation, and where to? (b) Instead, "
+"node B leaves: which clients move, and where? (c) How many would move "
+"from four to five nodes under :math:`h \\bmod n`?"
+msgstr ""
+
+#: ../../cluster.rst:440
+msgid ""
+"Hint: For (c), count the residues of :math:`h \\bmod 20` at which "
+":math:`h \\bmod 4 = h \\bmod 5`."
+msgstr ""
+
+#: ../../cluster.rst:444
+msgid ""
+"Explain why a join under rendezvous hashing moves only the clients that "
+"the new node now owns, why a forwarded flow is never forwarded again, and "
+"why neither rule can save an established TCP connection whose packets the "
+"router sends to another node."
+msgstr ""
+
+#: ../../cluster.rst:446
+msgid "A Disk Under the Sticky Table"
+msgstr ""
+
+#: ../../cluster.rst:449
+msgid ""
+"The sticky table forgets twice: when more clients come than it has slots, "
+"and when the daemon restarts. SID 0027 puts a second tier under it, a "
+"file of fixed size that the crate ``sibuna-spill`` maps into memory. "
+"Every choice that the table stores is offered to the file, and a lookup "
+"that finds nothing in memory asks the file. A hint from the file is a "
+"wish: the pool uses it only for a new flow and only when the named server "
+"may serve now. No ban, no counter and no live flow depends on the file."
+msgstr ""
+
+#: ../../cluster.rst:451
+msgid "The file and its slots"
+msgstr ""
+
+#: ../../cluster.rst:454
+msgid ""
+"The file starts with two pages of 4,096 bytes, the header and one write "
+"counter for each of 64 shards, and continues with :math:`64 \\times B "
+"\\times 4` slots of 64 bytes. A slot holds a checksum of 8 bytes, an "
+"expiry of 8, a stamp of 4, the two lengths, two bytes of zero, a key of "
+"24 bytes and a value of 16. The checksum is a wyhash over the other 56 "
+"bytes, seeded with the random salt of the file and the number of the "
+"slot, so a slot copied to another place or into another file fails its "
+"check. A reader takes an entry only from a live slot: its lengths are in "
+"range, its padding is zero, its checksum matches, and its expiry lies "
+"after now and at most the longest lifetime after now. A slot that fails "
+"is free space and is counted. One storage thread owns the mapping, copies "
+"one slot in or out for each access, and serves the workers through a "
+"bounded queue: a worker never touches the file, never waits for it, and a "
+"full queue drops the work and counts it."
+msgstr ""
+
+#: ../../cluster.rst:456
+msgid "Admission by frequency"
+msgstr ""
+
+#: ../../cluster.rst:459
+msgid ""
+"A bucket of four slots is often full. A new key then competes with a "
+"victim, the live slot whose key was seen least often, and wins only when "
+"its estimated frequency exceeds the victim's. This is TinyLFU (Einziger, "
+"Friedman and Manes, 2017). A key offered once cannot displace an entry "
+"seen once or more, so a flood of new clients does not wash out the "
+"clients in use. The frequency comes from a count-min sketch for each "
+"shard: a table of :math:`m` four-bit counters, eight for each slot of the "
+"shard rounded down to a power of two. A key touches four of them, chosen "
+"by double hashing. Its estimate is the smallest of the four. A count "
+"raises only the counters that equal that smallest value; this "
+"*conservative update* keeps every counter at or below what a plain sketch "
+"would hold, and no counter ever below the true count. After four counts "
+"for each slot of the shard, every counter is halved, so a key must keep "
+"returning to keep its estimate."
+msgstr ""
+
+#: ../../cluster.rst:461
+msgid ""
+"The classical bound of Cormode and Muthukrishnan explains why the "
+"estimate is good. Let :math:`N` keys be counted. Fix a key :math:`x` and "
+"one of its counters. Every count of another key raises at most four "
+"counters, each at a position that ideal hashing makes uniform over "
+":math:`m`, so it raises this counter with probability at most "
+":math:`4/m`. The expected excess of the counter is therefore"
+msgstr ""
+
+#: ../../cluster.rst:463
+msgid "\\lambda \\le \\frac{4N}{m}."
+msgstr ""
+
+#: ../../cluster.rst:467
+msgid ""
+"By Markov's inequality the excess reaches :math:`t` with probability at "
+"most :math:`\\lambda/t`. The estimate is the smallest of four counters, "
+"so it is too high by :math:`t` only when all four are; treating the four "
+"as independent, which ideal hashing makes nearly true, that probability "
+"is at most :math:`(\\lambda/t)^4`. The excess is a sum of many rare hits, "
+"so it is close to a Poisson variable with mean :math:`\\lambda`, which "
+"gives a sharper estimate than Markov's bound."
+msgstr ""
+
+#: ../../cluster.rst:469
+msgid "Worked example: the error of the sketch"
+msgstr ""
+
+#: ../../cluster.rst:471
+msgid ""
+"A file of ``64m`` holds 1,048,064 slots (Part XI), so a shard holds "
+":math:`S = 16{,}376`. Eight counters for each slot would be 131,008. The "
+"largest power of two below that is :math:`m = 2^{16} = 65{,}536`, four "
+"counters for each slot: 32 KiB for the shard and 2 MiB for the file, two "
+"bytes for each slot. The sketch halves after :math:`4S = 65{,}504` counts."
+msgstr ""
+
+#: ../../cluster.rst:473
+msgid ""
+"We take the first window after a start, when the sketch begins at zero, "
+"and look at its middle, :math:`N = 2S = 32{,}752` counts. Then "
+":math:`\\lambda \\le 4 \\times 32{,}752 / 65{,}536 \\approx 2`. A key "
+"seen once can displace a victim seen four times only if its estimate is "
+"at least 5, an excess of :math:`t = 4` on all four counters. Markov's "
+"bound gives at most :math:`(2/4)^4 = 1/16`. The Poisson estimate is "
+"sharper:"
+msgstr ""
+
+#: ../../cluster.rst:475
+msgid ""
+"P(X \\ge 4) = 1 - e^{-2}\\Big(1 + 2 + 2 + \\tfrac{4}{3}\\Big) = 1 - "
+"0.1353 \\times 6.333 \\approx 0.143, \\qquad 0.143^4 \\approx 4.2 \\times "
+"10^{-4}."
+msgstr ""
+
+#: ../../cluster.rst:479
+msgid ""
+"So about four keys seen once in ten thousand look like keys seen five "
+"times, at the middle of the first window. Later windows begin from halved "
+"counters, so the plain bound for them is up to twice as large, and the "
+"rounding of :math:`m` down to a power of two can halve the counters of a "
+"shard. The conservative update only lowers these numbers. The bound is a "
+"model, and the measurement is the evidence: under a flood of 16,776,192 "
+"new keys, a file of 256 MiB kept all but 10 to 15 of the about 1,044,000 "
+"keys of a working set that it held before the flood."
+msgstr ""
+
+#: ../../cluster.rst:481
+msgid "Implementation: ``Sketch::touch``"
+msgstr ""
+
+#: ../../cluster.rst:483
+msgid ""
+"Counts one key with the conservative update and ages the sketch when its "
+"sample is full. In ``crates/spill/src/sketch.rs`` (crate "
+"``sibuna-spill``). ``Sketch::estimate`` returns the smallest of the four "
+"counters."
+msgstr ""
+
+#: ../../cluster.rst:485
+msgid ""
+"pub fn touch(&mut self, hash: u64) {\n"
+"    let least = u64::from(self.estimate(hash));\n"
+"    for row in 0..ROWS {\n"
+"        let (word, shift) = self.counter(hash, row);\n"
+"        if let Some(word) = self.words.get_mut(word)\n"
+"            && least < CEILING\n"
+"            && (*word >> shift) & CEILING == least\n"
+"        {\n"
+"            *word += 1 << shift;\n"
+"        }\n"
+"    }\n"
+"    self.counted += 1;\n"
+"    if self.counted >= self.sample {\n"
+"        self.age();\n"
+"    }\n"
+"}"
+msgstr ""
+
+#: ../../cluster.rst:504
+msgid ""
+"The two tiers meet in ``SpillStore`` (``crates/lb/src/hints.rs``), which "
+"implements the trait ``AffinityStore`` of SID 0025 with the table in "
+"front. A lookup that misses memory asks the disk and does not wait: the "
+"flow goes on with the balanced choice, a *guess*, and the answer of the "
+"disk replaces the guess with an end one millisecond later, so it wins "
+"here and on every node the mesh tells. A guess takes only a free slot on "
+"disk and does not count in the sketch, so no number of guesses displaces "
+"a hint. With 2,000,000 clients, thirty times a table of 65,536 slots, "
+"97.0 percent had their choice at their second lookup. After a restart of "
+"both nodes of a two-host mesh, the first flow of 300 clients found "
+"another server for 191 of them, and the second flow found the remembered "
+"server for all 300."
+msgstr ""
+
+#: ../../cluster.rst:506
+msgid "Crash safety, memory and the file system"
+msgstr ""
+
+#: ../../cluster.rst:509
+msgid ""
+"A new file is never created in place. The function ``create`` in "
+"``crates/spill/src/open.rs`` removes whatever lies at the path with "
+"``.tmp`` after it, without writing through it, builds a complete file "
+"there with every block written and the header last, and renames it over "
+"the path. A rename replaces one name with another in one step, so the "
+"path names no file, a foreign file or a complete file, and never a "
+"half-made one. A file without the magic is never overwritten: the daemon "
+"refuses to start and names it. Writes go through the mapping and are "
+"flushed when the daemon stops. A crash of the process loses nothing "
+"written, because the pages belong to the kernel. A loss of power may "
+"leave each page old, new or mixed; a mixed slot fails its checksum and "
+"costs its hint, and an old slot is a valid older hint, which the pool "
+"checks before use."
+msgstr ""
+
+#: ../../cluster.rst:511
+msgid ""
+"Two properties of the host matter. The pages of the file count as memory "
+"of the process. Under a memory limit below the size of the file, a 256 "
+"MiB file under 96 MiB was killed by the kernel in three runs on one host, "
+"and on another host reached the limit 410,479 times and did not finish "
+"its first phase in 17 minutes. The workers keep serving by the balanced "
+"choice, but the disk tier is useless or the daemon dies, so a limit must "
+"lie above the file plus the daemon. And every block is written at "
+"creation so that a full disk is found at start, but a file system that "
+"compresses or copies on write breaks that promise: on ZFS with "
+"compression a new file of 16,769,024 bytes took 141 KiB. When such a file "
+"system fills later, a write through the mapping raises a signal that ends "
+"the daemon. Part XI gives the settings for systemd, Docker and Kubernetes."
+msgstr ""
+
+#: ../../cluster.rst:513
+msgid "Exercise 9.5"
+msgstr ""
+
+#: ../../cluster.rst:515
+msgid ""
+"A shard whose slot count lies just under a power of two keeps the full "
+"eight counters for each slot. Compute :math:`\\lambda` at the middle and "
+"at the end of the first window, and the Poisson estimate that a key seen "
+"once reaches an estimate of 5 at each point."
+msgstr ""
+
+#: ../../cluster.rst:517
+msgid ""
+"Hint: Only the ratio :math:`N/m` matters. At :math:`\\lambda = 1`, "
+":math:`e^{-1} \\approx 0.3679`."
+msgstr ""
+
+#: ../../cluster.rst:521
+msgid ""
+"Explain why a torn, copied or foreign slot can cost a hint and never "
+"choose a server that may not serve, why the path never names a half-made "
+"file, and why the sketch may overestimate a frequency but never "
+"underestimate it."
+msgstr ""
+
+#: ../../cluster.rst:523
+msgid "A Database as the Authority"
+msgstr ""
+
+#: ../../cluster.rst:526
+msgid ""
+"SID 0023 sends one file to the peers. Two operators who send two files at "
+"the same time each win on some nodes, a node that was down keeps its old "
+"file, and there is no history. SID 0028 lets a database hold the "
+"published topology. The file of each node keeps what belongs to its host, "
+"``global``, ``mesh`` and ``observability``, and a section ``authority`` "
+"that names the database; the database holds ``frontends``, ``backends`` "
+"and ``http``. Each revision is one canonical JSON document with its "
+"SHA-256 digest, so a node reads a revision whole with one statement and "
+"refuses one whose digest does not match."
+msgstr ""
+
+#: ../../cluster.rst:528
+msgid ""
+"The revisions are numbered 1, 2, 3 without a gap, and a committed "
+"revision never changes. ``sibuna authority apply`` evaluates a source, "
+"checks it, prints the difference to the head and commits on one "
+"condition: the head is still the revision it read. The commit is one "
+"transaction of two statements."
+msgstr ""
+
+#: ../../cluster.rst:530
+msgid ""
+"UPDATE edge_head SET revision = :expected + 1 WHERE id = 1 AND revision = "
+":expected\n"
+"INSERT INTO edge_revisions (revision, ...) VALUES (:expected + 1, ...)"
+msgstr ""
+
+#: ../../cluster.rst:535
+msgid ""
+"When the first statement changes no row, the head moved, and the command "
+"fails with ``DBA002 REVISION CONFLICT`` and commits nothing. This is a "
+"compare-and-set on one row. Of two writers that read the same head, "
+"PostgreSQL makes the second wait for the row lock, after which it finds "
+"the new head and changes nothing. A condition on \"the head, whatever it "
+"is\" would protect nothing: the command conditions on the head against "
+"which it printed the difference, so what the operator saw is what the "
+"commit replaces. A rollback commits a new revision with an earlier "
+"document, because moving the head back would make \"applied 5\" ambiguous "
+"between before and after 7."
+msgstr ""
+
+#: ../../cluster.rst:537
+msgid "Implementation: ``Store::commit``"
+msgstr ""
+
+#: ../../cluster.rst:539
+msgid ""
+"The trait ``Store`` has seven operations: ``head``, ``revision``, "
+"``commit``, ``history``, ``report``, ``nodes`` and ``wait``. ``commit`` "
+"stores a draft as revision ``expected + 1`` when the head is ``expected`` "
+"and fails with a conflict otherwise. In ``crates/authority/src/store.rs`` "
+"(crate ``sibuna-authority``). ``SqlStore`` in "
+"``crates/authority/src/sql.rs`` implements it for SQLite and PostgreSQL, "
+"and ``MemoryStore`` for the tests. ``commit_settled`` in ``store.rs`` "
+"settles a commit whose connection failed by asking whether the head is "
+"the new revision with the new digest."
+msgstr ""
+
+#: ../../cluster.rst:541
+msgid ""
+"Every node follows on a thread of its own, ``edge-authority``. It looks "
+"at the head when PostgreSQL sends ``NOTIFY``, when its poll passes, at "
+"``reload``, and when the worker has settled a revision. A new head is "
+"read, composed with the node's file, checked, and left for the worker; "
+"the node reports a revision as applied only after its worker serves it. A "
+"node that cannot read the database keeps what it serves and asks again "
+"after two seconds at most. A node that refuses a revision keeps the last "
+"one that checked and reports why. With ``cache`` a node can restart while "
+"the database is down. The nodes connect with a role that can read the "
+"revisions and write only their own report, so a node that is taken over "
+"cannot change the topology. The model "
+"``docs/sid/assets/database-authority.lean`` proves that a commit on a "
+"stale head changes nothing (``commit_conflict``), that of two writers on "
+"one head the second fails (``second_commit_conflicts``), that a node only "
+"ever serves a document that passed its check (``step_serves_valid``), and "
+"that one look at a valid head brings a node to it, so a lost notification "
+"costs one poll (``poll_converges``). On a debug build two nodes applied a "
+"revision 128 to 155 ms after ``apply`` began with PostgreSQL."
+msgstr ""
+
+#: ../../cluster.rst:543
+msgid "Exercise 9.6"
+msgstr ""
+
+#: ../../cluster.rst:545
+msgid ""
+"Two operators run ``diff`` against head 7 and then ``apply`` at the same "
+"moment, one adding a server and one removing a frontend. What does each "
+"see, what does the database hold afterwards, and what should the second "
+"operator do? Why would an ``apply`` conditioned on the head at the time "
+"of the commit be wrong?"
+msgstr ""
+
+#: ../../cluster.rst:547
+msgid "Hint: Follow the ``UPDATE`` of each transaction under the row lock."
+msgstr ""
+
+#: ../../cluster.rst:551
+msgid ""
+"Explain why the revisions have no gap and never change, why the last word "
+"on whether a node serves a revision belongs to the node and not to the "
+"command, and why a rollback appends instead of moving the head."
+msgstr ""
+
+#: ../../cluster.rst:553
+msgid "Replacing the Binary"
+msgstr ""
+
+#: ../../cluster.rst:556
+msgid ""
+"A new binary must take over without losing a connection that waits in a "
+"listener and without moving a UDP client to another server. "
+"``global.reuse_port`` lets a new process bind the same addresses, but the "
+"old listener keeps its own accept queue until it closes, and the old "
+"process refuses what it accepts while it drains. Under one load SID 0029 "
+"counted 9,943 to 22,516 failed connections in a run with ``reuse_port``."
+msgstr ""
+
+#: ../../cluster.rst:558
+msgid ""
+"SID 0029 passes the sockets instead. The old process listens on a Unix "
+"socket, ``global.upgrade_socket``. The replacement checks its file, "
+"connects, and receives the listening sockets as descriptors in "
+"``SCM_RIGHTS`` control messages of ``sendmsg``. Both ends check the "
+"credentials of the peer with ``SO_PEERCRED`` and refuse another user."
+msgstr ""
+
+#: ../../cluster.rst:560
+msgid ""
+"replacement                               old process\n"
+"checks its file\n"
+"connect, HELLO  ------------------------> checks the peer, chooses the "
+"version\n"
+"                <------------------------ LISTENERS with descriptors\n"
+"builds the edge on them, reads nothing    accepts TCP, reads UDP as "
+"before\n"
+"READY  ---------------------------------> stops reading UDP\n"
+"                <------------------------ FLOWS (mappings and server "
+"sockets), COMMIT\n"
+"adopts the mappings, accepts TCP          still accepts TCP\n"
+"DONE  ----------------------------------> stops accepting, drains, exits "
+"0\n"
+"reads UDP, binds its admin socket"
+msgstr ""
+
+#: ../../cluster.rst:573
+msgid ""
+"Two invariants govern the cutover. At every instant some live process "
+"accepts on each TCP listener: two acceptors on one socket lose nothing, "
+"since each connection goes to one of them. And at most one process reads "
+"a UDP socket: two readers would give the datagrams of one client to two "
+"tables, so between READY and DONE nobody reads, and the kernel holds the "
+"datagrams in the socket. The old process measures that interval; with "
+"6,000 mappings it was 59 to 87 ms on a quiet machine. A failure before "
+"DONE returns the service to the old process with every listener and "
+"mapping it had. The old process resumes reading only when the connection "
+"to the replacement is closed, because a deadline proves nothing: a "
+"stopped replacement could wake and read beside it. So after 10 s without "
+"DONE the old process ends the replacement and waits for the close."
+msgstr ""
+
+#: ../../cluster.rst:575
+msgid "Implementation: ``Giving::end_peer``"
+msgstr ""
+
+#: ../../cluster.rst:577
+msgid ""
+"Ends a silent replacement and waits for its connection to close, which "
+"proves that it reads no socket. In ``crates/upgrade/src/give.rs`` (crate "
+"``sibuna-upgrade``). ``Giving::give_listeners`` in the same file sends "
+"the listeners, and the foreign call ``sendmsg`` with ``SCM_RIGHTS`` is in "
+"``crates/upgrade/src/sys.rs``, the only unsafe code of the record. On the "
+"edge side, ``Edge::freeze_datagrams`` in ``crates/lb/src/handoff.rs`` "
+"stops the UDP reads."
+msgstr ""
+
+#: ../../cluster.rst:579
+msgid ""
+"pub fn end_peer(&mut self, patience: Duration) -> bool {\n"
+"    // The signal can fail when the process is gone already. The closed "
+"connection\n"
+"    // is the proof either way.\n"
+"    let _ = sys::end_process(self.peer.pid);\n"
+"    self.channel.wait_closed(patience)\n"
+"}"
+msgstr ""
+
+#: ../../cluster.rst:588
+msgid ""
+"What is handed over: the TCP and UDP listeners, and every UDP mapping of "
+"a ``udp`` frontend with its connected server socket, so the server sees "
+"the same source port. In the tests no connection of 17,382 to 33,524 in a "
+"run failed, in 27 runs, and a UDP client kept its server through two "
+"upgrades. What is lost: a QUIC connection of HTTP/3, whose state lives in "
+"the runtime of the old process; accepted TCP streams stay with the old "
+"process until they end or until ``shutdown_timeout``. Rate counters, "
+"health states, latency estimates, sticky tables and run-time commands "
+"start anew. The handoff is built and tested on Linux only. Two limits "
+"concern a cluster directly. The mesh socket and the forwarding port are "
+"not passed, so a node of a mesh cannot be replaced this way; the "
+"replacement should fail before READY and leave the old process serving, "
+"and that path is not tested. And an adopted UDP mapping is not counted "
+"against a fleet-wide cap, so a server may hold that many flows beyond its "
+"limit until those mappings end. The model "
+"``docs/sid/assets/upgrade-handoff.lean`` proves ``single_reader``, "
+"``always_an_acceptor`` and ``failure_returns_service`` for the state "
+"machine; it is not derived from the code."
+msgstr ""
+
+#: ../../cluster.rst:592
+msgid ""
+"Explain why the TCP listeners may have two acceptors for an instant while "
+"the UDP sockets must have none, and why the old process trusts a closed "
+"connection and not a clock before it reads again."
+msgstr ""
+
+#: ../../cluster.rst:594
+msgid "The Fleet in the Console"
+msgstr ""
+
+#: ../../cluster.rst:597
+msgid ""
+"SID 0031 starts the console of SID 0007 beside the edge. Its ``console`` "
+"section lists every member under ``nodes``, at most 64, so the section is "
+"the same on all nodes and ``reload cluster`` can carry it. One page shows "
+"the frontends, the backends and the fleet: ``GET "
+"/console/api/edge/fleet`` asks every peer at once over the authenticated "
+"stream of SID 0007, waits at most five seconds, and returns one row for "
+"each member with the state of its link and the summary of its node. The "
+"page runs the commands of the admin socket through the same parser and "
+"worker, so it adds no power; a command needs the action ``control_node`` "
+"and passes the session, ``Origin`` and CSRF checks, and the console keeps "
+"the admin socket's limit of 20 commands in a burst and 10 a second. A "
+"member removed from the file loses its stream within two seconds. The "
+"criterion that the console costs the data plane less than one percent is "
+"not established: under load the data plane lost 8 to 11 percent whether "
+"the load fell on its own console or on that of another process, so the "
+"measurement saw the cost of shared processors and not of the coupling."
+msgstr ""
+
+#: ../../cluster.rst:599
+msgid "What Three Hosts Measured"
+msgstr ""
+
+#: ../../cluster.rst:602
+msgid ""
+"Part X records the cluster on three hosts with 16, 16 and 32 CPUs, in "
+"containers on one network, each host running a node, an origin and a load "
+"generator that loaded the node of the next host. After SID 0024, the "
+"three nodes together carried 89,124 to 97,173 HTTP and 90,399 to 92,652 "
+"HTTPS requests a second, 0.87 to 1.15 of what HAProxy carried in the same "
+"setup, with 42 to 49 CPU seconds against HAProxy's 66 to 102, and no "
+"request failed with either proxy. The network set the ceiling, and the "
+"lines differ from run to run by more than the two proxies differ. On the "
+"same hosts a ban reached the two other nodes in 20 to 64 ms, a lift in 13 "
+"to 48 ms, and ``reload cluster`` returned with all three nodes holding "
+"the same file in 30 ms, each time including the request that observed the "
+"effect, sent every 5 ms. These are single runs on shared hosts; Part X "
+"gives the tables and the method."
+msgstr ""
+
+#: ../../cluster.rst:604
+msgid "Limits"
+msgstr ""
+
+#: ../../cluster.rst:607
+msgid ""
+"We list the known gaps of each record. They are taken from the records "
+"and are not repaired at the time of writing."
+msgstr ""
+
+#: ../../cluster.rst:609
+msgid ""
+"**SID 0022, bans and commands.** A ban issued after a lift holds on every "
+"node only when it ends after the lifted ban would have; a shorter ban "
+"holds on its own node only. Bans that the policy file configures are not "
+"sent. The nodes must agree on ``ipv6_prefix`` and keep their clocks "
+"close, and neither is checked; a node more than 60 seconds behind has its "
+"commands overruled, and one more than 60 seconds ahead has them refused. "
+"A ban whose three sends are lost to a peer cut off for less than three "
+"probe periods waits for the next walk. The map of commands never forgets "
+"a key, and after 8,192 keys new commands stay local until a restart. Two "
+"operators who add one server name with two addresses at once can leave "
+"the nodes disagreeing until the next command. Pools that place clients by "
+"a Maglev table take no weights or members at run time. Commands and lifts "
+"have no metrics. The process tests run on one host; the three-host timing "
+"of Part X is the only measurement across hosts. Replication runs in edge "
+"mode only."
+msgstr ""
+
+#: ../../cluster.rst:611
+msgid ""
+"**SID 0023, one file.** Files that the topology names by path, and files "
+"that a JLV file imports, are not sent. A node that was down keeps its old "
+"file until the command runs again. The stamp of the last file lives in "
+"memory, so after a restart a node accepts a message of the last 60 "
+"seconds again. A node is known by the source address of the connection. "
+"The transfer is authenticated and not encrypted."
+msgstr ""
+
+#: ../../cluster.rst:613
+msgid ""
+"**SID 0025, affinity and caps.** The share of a stopped node does not "
+"return after any bound; a cluster that starts with one node missing "
+"serves no flow on a capped server; a node that restarts while a peer is "
+"silent serves only on loans. The ledger is in memory only. The roster is "
+"fixed for the life of a process. The table has no metrics series; ``show "
+"affinity`` is the only view. A table keyed by a cookie reads the "
+"``Cookie`` field only, so the first request of a session is balanced and "
+"not remembered. A status can be replayed within one epoch. The process "
+"tests run on loopback without loss, and no test cuts the network between "
+"running processes. A client that uses two nodes within the replication "
+"window, under 50 ms on two hosts, can meet two servers."
+msgstr ""
+
+#: ../../cluster.rst:615
+msgid ""
+"**SID 0026, forwarding.** An established TCP connection breaks when the "
+"router moves its packets to another node. HTTP/3 and frontends with "
+"``proxy_protocol`` are not forwarded. Forwarding stops outside the "
+"regional regime. Under ``global.reuse_port`` an old and a new process "
+"share the forwarding port and may find each other dead for a while. "
+"Builds other than Linux do not bind the forwarding connection to the mesh "
+"address and are not tested. All tests and measurements ran on loopback, "
+"and the deny status, the bound ``max_flows_per_peer``, the refusal of a "
+"draining owner and the ten-second end of silent relays have no process "
+"test. A forwarded datagram can be replayed within an epoch."
+msgstr ""
+
+#: ../../cluster.rst:617
+msgid ""
+"**SID 0027, the spill cache.** A memory limit below the size of the file "
+"kills the daemon or stalls the disk tier. A truncation of the file or a "
+"read error of the disk raises a signal that ends the daemon, and so does "
+"a full compressing or copy-on-write file system, which we do not detect. "
+"The cache has not run under Docker or Kubernetes. The store that joins "
+"the tiers was reviewed by its author only, and its marks are not tested "
+"with several workers at once. The first flow of a client after a restart "
+"goes without its hint. One storage thread serves one to three million "
+"operations a second and sheds beyond that. The checksum is not keyed. "
+"There is no test of a loss of power, and the 50-million-key qualification "
+"of SID 0015 is not run. A ``spill`` section without a pool that uses the "
+"table costs the file and does nothing, without a warning."
+msgstr ""
+
+#: ../../cluster.rst:619
+msgid ""
+"**SID 0028, the database.** The history is never pruned. Two nodes with "
+"the same name overwrite each other's report. ``global``, ``mesh`` and "
+"``observability`` cannot be published. There is no staged rollout, and "
+"``apply`` does not wait for the nodes. A run-time change is not a "
+"revision, and the next revision replaces it. SQLite has no notification. "
+"A node with both a mesh and a database, and TLS to PostgreSQL, are not "
+"tested through the binary. Only Linux is tested."
+msgstr ""
+
+#: ../../cluster.rst:621
+msgid ""
+"**SID 0029, the upgrade.** Adopted UDP mappings are outside the count of "
+"a fleet-wide cap. A mapping that a peer forwarded is answered directly "
+"after the handoff. The mesh socket, the listener for cluster "
+"configuration and the forwarding port are not passed, so a node of a mesh "
+"cannot be replaced this way. QUIC connections end with the old process. A "
+"connection that sends its first request more than 200 ms after the "
+"cutover may be closed by the drain. A crash of the replacement after DONE "
+"is an outage until the supervisor restarts it. There is no ``sd_notify``. "
+"Several paths, a real second user, more than 6,000 mappings, and "
+"``reuse_port`` beside the new key, are untested. The signal to a silent "
+"replacement uses a process id, which the kernel can reuse."
+msgstr ""
+
+#: ../../cluster.rst:623
+msgid ""
+"**SID 0031, the console.** The overhead criterion is not established. A "
+"member that joins is used after a restart only. The console does not "
+"terminate TLS and needs a proxy in front for its peers. The node commands "
+"of the firewall page do nothing on an edge. No test runs a fleet of 64. "
+"The fleet view holds a request thread for up to five seconds when a "
+"member is silent, and shows at most 256 servers. The console threads are "
+"not pinned to processors of their own."
+msgstr ""
