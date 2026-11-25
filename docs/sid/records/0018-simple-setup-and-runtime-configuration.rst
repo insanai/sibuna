@@ -277,6 +277,8 @@ The watcher is off by default. A signal or ``sibuna ctl SOCKET reload`` after ``
 A reload fails no request
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Changing the TCP relay count or listener port sharing requires a restart. An allocated sticky table also requires a restart to change its capacity. We reject these edits before publishing a revision.
+
 SID 0015 binds each HTTP request to a policy generation. The firewall decides the request under the engine of generation :math:`n`, and the route table then selects a server only if its revision is also :math:`n`. A reload publishes the routes of revision :math:`n+1` and then the engine of generation :math:`n+1`. A request whose decision began before the reload and whose selection came after it met a table of another revision and was answered 503. A test of 49,522 requests during 30 reloads counted 32 such answers.
 
 The route table now keeps the routes and pools of the revision that a reload replaced, for ten seconds. A request of generation :math:`n` that arrives at a table of revision :math:`n+1` is routed by the kept revision :math:`n`. The invariant of SID 0015 holds in a stronger form: a request is routed by the revision it was decided under, where before it was refused. A request two revisions behind is still refused. The kept pools share the load records of the serving pools, so the flow counts of a server stay whole. The protocol adapters of the replaced revision close after the engine is published, not before.

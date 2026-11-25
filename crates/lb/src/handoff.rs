@@ -238,10 +238,7 @@ impl Edge {
     /// replacement holds the same sockets, and a connection that arrives waits for it.
     pub fn release_listeners(&mut self) -> usize {
         for listener in &mut self.listeners {
-            self.poll.remove(match &listener.socket {
-                Socket::Tcp(socket) => handle(socket),
-                Socket::Udp(socket) => handle(socket),
-            });
+            self.poll.remove(listener.socket.handle());
             listener.paused_until = None;
         }
         self.handoff.frozen = None;
@@ -374,10 +371,7 @@ impl Edge {
                 self.handoff.held.push(id);
                 continue;
             }
-            let fd = match socket {
-                Socket::Tcp(socket) => handle(socket),
-                Socket::Udp(socket) => handle(socket),
-            };
+            let fd = socket.handle();
             if let Err(error) = self.poll.set(fd, READ, Ready::Listener(id)) {
                 self.handoff.held.push(id);
                 result = Err(error);

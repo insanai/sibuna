@@ -812,12 +812,13 @@ impl Server {
             return Err(invalid(format!("{}: expected named unicast server", r.path())));
         }
         let weight = number(&mut r, "weight", 1, Self::MAX_WEIGHT as usize)? as u32;
-        let limit = number(&mut r, "max_flows", MAX_FLOWS, MAX_FLOWS)?;
+        let limit = number(&mut r, "max_flows", 0, MAX_FLOWS)?;
         let fleet = flow_scope(&mut r)?.unwrap_or(fleet);
-        // The largest limit is the limit of a server that states none.
-        if fleet && limit == MAX_FLOWS {
+        // Only an absent limit yields zero. An explicit maximum is a valid quota.
+        if fleet && limit == 0 {
             return Err(unbounded_fleet(r.path()));
         }
+        let limit = if limit == 0 { MAX_FLOWS } else { limit };
         let remote = field(r.take_bool("remote"))?.unwrap_or(false);
         let backup = field(r.take_bool("backup"))?.unwrap_or(false);
         field(r.finish())?;

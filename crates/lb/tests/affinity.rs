@@ -257,6 +257,43 @@ fn a_malformed_table_or_scope_is_refused_with_a_hint() {
 }
 
 #[test]
+fn reload_refuses_changes_to_resources_that_are_already_in_use() {
+    let vip = free::tcp();
+    let source = source(vip, 1, r#""sticky":"table","#, "");
+    let config = |global: &str| {
+        Config::parse(source.replacen('{', &format!(r#"{{"global":{{{global}}},"#), 1).as_bytes())
+            .unwrap()
+    };
+    let mut edge = Edge::bind(config(r#""workers":1,"sticky_entries":1025"#)).unwrap();
+    edge.reload(config(r#""workers":1,"sticky_entries":2048"#)).unwrap();
+    for (extra, setting) in [
+        (r#""workers":2,"sticky_entries":2048"#, "global.workers"),
+        (r#""workers":1,"sticky_entries":4096"#, "global.sticky_entries"),
+    ] {
+        let error = edge.reload_with(config(extra), || panic!("rejected revision published"));
+        assert!(error.unwrap_err().to_string().contains(setting));
+    }
+    #[cfg(target_os = "linux")]
+    assert!(
+        edge.reload(config(r#""workers":1,"reuse_port":true,"sticky_entries":2048"#))
+            .unwrap_err()
+            .to_string()
+            .contains("global.reuse_port")
+    );
+    assert!(edge.http_routes().choose(&query(vip, 7)).is_some());
+}
+
+#[test]
+fn a_fleet_quota_accepts_the_explicit_maximum() {
+    let source =
+        source(free::tcp(), 1, r#""max_flows_scope":"fleet","#, r#","max_flows":1000000"#);
+    assert!(Config::parse(source.as_bytes()).is_ok());
+    for invalid in ["1000001", "0"] {
+        assert!(Config::parse(source.replace("1000000", invalid).as_bytes()).is_err());
+    }
+}
+
+#[test]
 fn a_fleet_cap_on_a_node_without_a_mesh_is_the_cap_of_the_node() {
     let vip = free::tcp();
     let server = r#","max_flows":2"#;

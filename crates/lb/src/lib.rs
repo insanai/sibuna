@@ -88,6 +88,15 @@ enum Socket {
     Udp(UdpSocket),
 }
 
+impl Socket {
+    fn handle(&self) -> sibuna_reactor::Handle {
+        match self {
+            Self::Tcp(socket) => handle(socket),
+            Self::Udp(socket) => handle(socket),
+        }
+    }
+}
+
 /// The longest wait for the PROXY header of a connection (SID 0020).
 const PROXY_PATIENCE: Duration = Duration::from_secs(5);
 /// The most connections that wait for their PROXY header at once.
@@ -195,6 +204,8 @@ pub struct Edge {
     mesh: Option<MeshConfig>,
     regime: Regime,
     binds: Vec<Bind>,
+    reuse_port: bool,
+    sticky_entries: usize,
     listeners: Vec<Listener>,
     pools: BTreeMap<String, Pool>,
     loads: Loads,
@@ -420,18 +431,14 @@ impl Edge {
         handoff.wake = Some(wake.clone());
         for (bind, route) in config.listeners {
             let (socket, held) = inherited.take_or(bind, config.reuse_port)?;
-            let fd = match &socket {
-                Socket::Tcp(listener) => {
-                    let none = listen::ListenOptions::default();
-                    route.listen.apply(&none, listener, &route.info.name, &mut listen_faults);
-                    handle(listener)
-                }
-                Socket::Udp(socket) => handle(socket),
-            };
+            if let Socket::Tcp(listener) = &socket {
+                let none = listen::ListenOptions::default();
+                route.listen.apply(&none, listener, &route.info.name, &mut listen_faults);
+            }
             if held {
                 handoff.held.push(listeners.len());
             } else {
-                poll.set(fd, READ, Ready::Listener(listeners.len()))?;
+                poll.set(socket.handle(), READ, Ready::Listener(listeners.len()))?;
             }
             binds.push(bind);
             listeners.push(Listener { socket, route, paused_until: None });
@@ -450,6 +457,8 @@ impl Edge {
             mesh: config.mesh,
             regime: Regime::Standalone,
             binds,
+            reuse_port: config.reuse_port,
+            sticky_entries: config.sticky_entries,
             listeners,
             pools,
             loads,
@@ -504,6 +513,20 @@ impl Edge {
         if !self.binds.iter().eq(config.listeners.keys()) {
             return Err(invalid("changing frontend binds requires a drained restart"));
         }
+        if self.reuse_port != config.reuse_port {
+            return Err(invalid("changing global.reuse_port requires a restart"));
+        }
+        if self.relays.count() != config.workers {
+            return Err(invalid("changing global.workers requires a restart"));
+        }
+        if self.sticky_entries != config.sticky_entries
+            && let Some(store) = self.cluster.store_in_use()
+            && store.slot_count() != config.sticky_entries.next_power_of_two()
+        {
+            return Err(invalid(
+                "resizing the active global.sticky_entries table requires a restart",
+            ));
+        }
         if self.spill.options != config.spill {
             return Err(invalid("changing the spill section requires a restart"));
         }
@@ -513,6 +536,7 @@ impl Edge {
         let drained = self.drained_servers();
         self.budget.configure(&config);
         self.udp_limit = config.udp_limit;
+        self.sticky_entries = config.sticky_entries;
         self.cluster.set_slots(config.sticky_entries);
         self.http.publish(&mut config);
         self.pools = config
@@ -620,10 +644,7 @@ impl Edge {
         }
         for (id, listener) in self.listeners.iter_mut().enumerate() {
             if listener.paused_until.is_some_and(|deadline| now >= deadline) {
-                let fd = match &listener.socket {
-                    Socket::Tcp(socket) => handle(socket),
-                    Socket::Udp(socket) => handle(socket),
-                };
+                let fd = listener.socket.handle();
                 if poll.set(fd, READ, Ready::Listener(id)).is_ok() {
                     listener.paused_until = None;
                 }
@@ -636,10 +657,7 @@ impl Edge {
     fn pause(&mut self, id: usize) {
         let listener = &mut self.listeners[id];
         listener.paused_until = Some(Instant::now() + Duration::from_millis(50));
-        self.poll.remove(match &listener.socket {
-            Socket::Tcp(socket) => handle(socket),
-            Socket::Udp(socket) => handle(socket),
-        });
+        self.poll.remove(listener.socket.handle());
     }
 
     fn receive(&mut self, id: usize) {

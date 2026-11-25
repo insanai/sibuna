@@ -261,6 +261,11 @@ pub(crate) struct Relays {
 }
 
 impl Relays {
+    /// The number of relay threads started at bind.
+    pub fn count(&self) -> usize {
+        self.workers.len()
+    }
+
     /// Starts `count` relay threads.
     pub fn start(count: usize) -> io::Result<Self> {
         let mut workers = Vec::with_capacity(count);
