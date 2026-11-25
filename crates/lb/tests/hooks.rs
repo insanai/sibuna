@@ -17,7 +17,7 @@ use sibuna_plugin::{Failure, Hook, Native, Plan, Slot, Verdict, View};
 const WAIT: Duration = Duration::from_secs(3);
 
 /// One switch per test, so that tests in parallel do not share a hook's state.
-static SWITCHES: [AtomicBool; 4] = [const { AtomicBool::new(false) }; 4];
+static SWITCHES: [AtomicBool; 5] = [const { AtomicBool::new(false) }; 5];
 
 /// Denies while its switch is on, and always denies the server name `blocked.test`.
 struct Switched(usize);
@@ -181,6 +181,31 @@ fn an_inspected_connection_is_judged_once_by_its_server_name() {
     assert_eq!(failed.read(&mut [0]).unwrap_or(0), 0);
     assert!(accept(&origin, Duration::from_millis(200)).is_none());
     assert_eq!(worker.counted(), (3, 1));
+}
+
+/// An inspection that ends by a fallback of SID 0032 has no ClientHello. The hooks
+/// judge it all the same, with an empty server name.
+#[test]
+fn an_inspection_that_takes_its_fallback_is_judged_without_a_server_name() {
+    let origin = TcpListener::bind("127.0.0.1:0").unwrap();
+    let vip = free::tcp();
+    let inspect = r#""tcp_inspect":"tls_client_hello",
+        "inspect_fallback":{"invalid":{"action":"use_backend"}},"#;
+    let worker = Worker::start(topology("tcp", vip, origin.local_addr().unwrap(), 4, inspect));
+    let plain = b"GET / HTTP/1.1\r\n\r\n";
+    let mut admitted = client(vip);
+    admitted.write_all(plain).unwrap();
+    let mut seen = vec![0; plain.len()];
+    accept(&origin, WAIT).unwrap().read_exact(&mut seen).unwrap();
+    assert_eq!(seen, plain);
+    assert_eq!(worker.counted(), (1, 0));
+
+    SWITCHES[4].store(true, Ordering::Release);
+    let mut denied = client(vip);
+    denied.write_all(plain).unwrap();
+    assert_eq!(denied.read(&mut [0]).unwrap_or(0), 0);
+    assert!(accept(&origin, Duration::from_millis(200)).is_none());
+    assert_eq!(worker.counted(), (2, 1));
 }
 
 #[test]
