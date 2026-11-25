@@ -53,6 +53,8 @@ The setting
 
 A daemon with this key listens on the path. A daemon that starts with this key first connects to the path. When a daemon answers there, the new process replaces it. When nobody answers, the new process starts as usual and binds its listeners. So the command of an upgrade is the command of a start, with the new binary.
 
+The replacement takes a lent listener when its file has a listener of the same kind and address, and binds the others itself. A lent listener that its file does not have is closed. When the file has none of the lent listeners, the daemon at the path is another service, and the replacement gives up with ``UPG008`` before it says READY. A reload may not change the key.
+
 The key needs Linux. On another system the file is refused, with a message that names ``global.reuse_port`` and a restart as the ways that system has.
 
 The socket file is created in a private directory with mode 0600 and renamed to the path, as the admin socket of SID 0018 is. A socket file that nobody answers is replaced.
@@ -87,7 +89,9 @@ The replacement connects to the old process. The old process gives; the replacem
    the admin socket
    "listeners ready"
 
-The replacement has "validated its configuration, acquired listeners and acknowledged readiness", in the words of SID 0015, when it sends READY. Until then the old process has changed nothing. Between READY and DONE the old process accepts TCP and does not read UDP. That interval is the only one in which UDP datagrams wait.
+The replacement has "validated its configuration, acquired listeners and acknowledged readiness", in the words of SID 0015, when it sends READY. Until then the old process has changed nothing. Between READY and DONE the old process accepts TCP and does not read UDP. That interval is the only one in which UDP datagrams wait. The old process measures it and writes it in its log line.
+
+After DONE the old process removes the listeners from its poller. It does not accept and refuse, as a process does that drains on SIGTERM, because the listeners now belong to the replacement too. It serves on for 200 ms before it drains: a drain closes an HTTP connection that has sent no request yet, and the connections accepted in the last instant are in that state.
 
 The frames
 ~~~~~~~~~~
@@ -121,7 +125,7 @@ The descriptors of a frame travel with its header in one ``sendmsg`` call, as on
      - Empty.
    * - FLOWS
      - old
-     - At most 64 mappings, with one descriptor for each: the connected server socket.
+     - At most 64 mappings, with one descriptor for each: the connected server socket. The old process copies the descriptors of 4,096 mappings at a time, sends them and closes the copies, so the copies never fill its descriptor table.
    * - COMMIT
      - old
      - The number of mappings sent, 4 bytes.
@@ -160,7 +164,7 @@ Bounds
      - The old process refuses the handoff.
    * - Mappings
      - 1,048,576
-     - The oldest mappings beyond the bound are not sent and end.
+     - The mappings beyond the bound are not sent and end. Which ones is not specified.
    * - Payload of a frame
      - 65,536 bytes
      - Protocol error.
@@ -193,6 +197,9 @@ Failure cases
    * - No common version.
      - Sends REFUSE, logs ``UPG011``, serves on.
      - Exits with ``UPG002``.
+   * - The daemon at the path serves none of the addresses of the replacement.
+     - Sees the connection close before READY, logs ``UPG011``, serves on.
+     - Exits with ``UPG008``.
    * - The file of the replacement does not check.
      - Sees nothing: the replacement never connects.
      - Exits with ``EDGE001`` as today.
@@ -209,8 +216,8 @@ Failure cases
      - Sends SIGKILL to the replacement, waits for the connection to close, reads again, logs ``UPG011``.
      - Killed.
    * - The old process is told to stop during a handoff.
-     - Stops as told.
-     - Finds the connection closed and exits with ``UPG005``. It does not serve with the descriptors it holds.
+     - Drains as told and still answers the replacement while it drains. When the replacement acknowledges, the old process stops accepting on the listeners.
+     - Takes over when it acknowledges in time. When the old process ends first, it finds the connection closed, exits with ``UPG005`` and does not serve with the descriptors it holds.
    * - The replacement dies after DONE.
      - Is draining and exits. It does not come back.
      - Gone. The supervisor restarts it, and it binds as a first start does.
@@ -234,8 +241,10 @@ What survives
      - Survives with its server and its server socket, when the new file has the same listener, the pool of that listener still has a server at that address, and the new process has room under ``max_flows`` and ``max_udp_flows``. Otherwise it ends, and its client is given a server by its next datagram.
    * - A datagram that arrives during the cutover
      - Waits in the socket and is read by whoever reads next. It is lost only when the receive buffer of the socket overflows.
+   * - A connection that the old process accepted and that has sent nothing 200 ms after the cutover
+     - Is closed by the drain of the old process, as on any shutdown.
    * - A QUIC connection of an HTTP/3 frontend
-     - Does not survive. Its state lives in the QUIC runtime of the old process. The UDP socket of HTTP/3 is not passed. The replacement binds its own, which needs ``global.reuse_port`` as today.
+     - Does not survive. Its state lives in the QUIC runtime of the old process. The UDP socket of HTTP/3 is not passed. The replacement binds its own beside the old one, so with ``upgrade_socket`` that socket shares its address as it does with ``global.reuse_port``. Until the old process exits the kernel gives it a share of the QUIC packets.
    * - Rate limit counters, latency estimates, health states, sticky tables, run-time commands
      - Start anew in the replacement, as after a restart.
    * - The mesh socket and the separate listener of ``observability.listen``
@@ -250,9 +259,12 @@ A replacement that fails exits with status 1 and a diagnostic. The old process l
 
 .. code-block:: text
 
-   UPG010: handed 3 listeners and 1204 UDP mappings to pid 4711
-   UPG011: the replacement pid 4711 failed before the cutover: connection closed. Serving on.
+   UPG010: handed 3 listeners and 1204 UDP mappings to pid 4711, 0 mappings dropped, UDP unread for 14 ms
+   UPG011: the replacement pid 4711 failed before the cutover: reading the upgrade socket: the peer closed the connection. Serving on.
    UPG012: refused an upgrade peer: user 1001 is not user 990
+   UPG013: the replacement pid 4711 cannot be ended. UDP stays unread until it is gone. End it by hand.
+
+The replacement logs ``UPG020: took 3 listeners and 1204 UDP mappings from pid 4242, 0 mappings dropped`` before ``listeners ready``.
 
 Under systemd the two processes are two instances of one template unit, for example ``sibuna-edge@a`` and ``sibuna-edge@b``, with ``Restart=on-failure``. Starting the idle instance replaces the active one, which exits with status 0 and becomes inactive. ``Restart=always`` must not be used: the old instance would start again and take the listeners back. The directory of the sockets must outlive an instance, so it is not the ``RuntimeDirectory`` of the unit. The operations chapter of the book gives the unit.
 
@@ -265,7 +277,8 @@ Structure
         ^             (sendmsg, recvmsg, SO_PEERCRED, SO_TYPE, kill). No other crate.
         |
    crates/lb          Edge::bind_inherited, and in handoff.rs: lend_listeners,
-        ^             freeze_datagrams, resume_datagrams, adopt_flows, arm, release
+        ^             freeze_datagrams, lend_flows, resume_datagrams, adopt_flows,
+        |             arm_streams, arm_datagrams, release_listeners, waker
         |
    cmd/sibuna         edge/upgrade.rs: the gate thread of the old process and the
                       start of the replacement
@@ -302,10 +315,12 @@ The replacement needs descriptors for every mapping it adopts, beside those the 
 
 During the cutover UDP datagrams wait in the kernel. We measure the interval in the acceptance table. A burst larger than the receive buffer in that interval is dropped by the kernel, as it is when the worker is busy.
 
+The old process ends a silent replacement by the process id that the kernel recorded for the connection. Were that process gone and its id given to another process while a third process held the connection open, the signal would reach the wrong process. Our replacement never passes its connection on, and the peer is of our own user. A process descriptor (``SO_PEERPIDFD``, Linux 6.5) would close the hole and is not used.
+
 Backwards compatibility
 -----------------------
 
-A file without ``global.upgrade_socket`` behaves as before. ``global.reuse_port`` keeps its meaning and can be combined with the new key: the listeners of the edge are then passed, and the UDP socket of HTTP/3 is shared as today. SID 0015 proposed descriptor passing "on Unix". We build Linux, because the credentials and the control messages differ on each system and we can test Linux only.
+A file without ``global.upgrade_socket`` behaves as before. ``global.reuse_port`` keeps its meaning and can be combined with the new key: the listeners of the edge are then passed, and the UDP socket of HTTP/3 is shared as today. We did not test the two keys together. SID 0015 proposed descriptor passing "on Unix". We build Linux, because the credentials and the control messages differ on each system and we can test Linux only.
 
 Acceptance criteria and implementation status
 ---------------------------------------------
@@ -319,27 +334,41 @@ Acceptance criteria and implementation status
      - Status
    * - 1
      - New TCP connections and requests during an upgrade lose none, also while the old process drains a long stream.
-     - Pending.
+     - Met in the test. ``no_connection_is_lost_while_the_listeners_are_handed_over`` in ``cmd/sibuna/tests/edge_upgrade.rs``: 17,382 to 33,524 connections in a run, 0 failed, in 27 runs of the final code. ``the_reuse_port_path_is_measured_beside_the_handoff`` gives the same load to ``global.reuse_port``: 12,960 to 25,044 served and 9,943 to 22,516 failed in a run. Method below.
    * - 2
      - A UDP client keeps its server across the upgrade, and the server sees the same source address.
-     - Pending.
+     - Met. ``udp_clients_keep_their_server_across_two_upgrades``: 41 mappings through two upgrades, a client that sends every 2 ms lost 0 and moved 0 of 97 to 390 datagrams, UDP unread for 0 to 1 ms. ``six_thousand_mappings_move_in_two_pieces``: 6,000 mappings, 0 dropped, 0 moved, UDP unread for 59 to 87 ms on a quiet machine and up to 252 ms beside other builds. In one process: ``a_mapping_keeps_its_server_and_its_source_in_the_replacement`` in ``crates/lb/tests/handoff.rs``.
    * - 3
      - A replacement that fails its check or its start leaves the old process serving, TCP and UDP.
-     - Pending.
+     - Met. ``a_replacement_that_fails_leaves_the_old_process_serving``: a file that does not check, a start that fails after the listeners were taken, and a replacement that stops between READY and DONE, which is ended with SIGKILL after 10 s. HTTP and TCP answer during the stalled cutover, and the datagram that waited is answered by the same server. ``the_daemon_of_another_service_is_not_replaced`` covers a mistaken path.
    * - 4
      - A peer of another user is refused by both ends.
-     - Pending.
+     - Met in the crate, partly through the binary. ``the_giver_refuses_a_peer_of_another_user_and_tells_it`` and ``the_taker_refuses_a_socket_served_by_another_user`` in ``crates/upgrade/src/tests.rs`` give each end a user id that is not its own. Through the binary, ``a_wrong_peer_is_refused_by_both_ends`` checks mode 0600, a stranger, a foreign version, a foreign socket at the path and a refusal. No test runs a second user: the tests may not change this machine.
    * - 5
      - A malformed, oversized or truncated frame ends the handoff.
-     - Pending.
+     - Met. The tests of ``wire.rs`` and ``channel.rs`` in ``crates/upgrade``: every cut of a frame, a header that lies about its descriptors, an oversized payload. ``a_descriptor_that_is_not_the_announced_listener_ends_the_handoff`` and ``a_commit_that_counts_wrongly_ends_the_handoff`` in ``tests.rs``.
    * - 6
      - The cutover state machine has an acceptor for every TCP listener and at most one reader for every UDP socket.
-     - Pending.
+     - Proved for the model. ``docs/sid/assets/upgrade-handoff.lean``, Lean 4 core: ``single_reader``, ``always_an_acceptor``, ``old_stops_only_after_done``, ``new_reads_after_done``, ``old_reads_before_ready``, ``failure_returns_service``, ``retry_is_possible``. The model is not derived from the code.
+
+**Method.** All tests start the real binary, a debug build, on loopback, with two HTTP servers, two TCP echo servers and two UDP servers behind it. The load of criterion 1 is four client threads. Each opens a connection, sends one HTTP request and reads the answer, then opens a connection to the TCP frontend, sends four bytes and reads them back, without a pause. One more TCP stream stays open for 1.5 s after the replacement started, so the old process drains for about 1.7 s. A connection counts as failed when it is refused, reset, or closed without the answer. The numbers are from runs on a machine that built other code at the same time. They compare two paths under one load. They are not a throughput.
+
+Under ``global.reuse_port`` the failures are the connections that the kernel gave to the listener of the draining process, which refuses what it accepts. They last as long as the drain. The handoff has no such listener.
+
+The interval "UDP unread" is measured by the old process, from READY to DONE, and printed in ``UPG010``.
 
 Known gaps
 ----------
 
-To be written with the evidence.
+- **Linux only.** SID 0015 proposed Unix. The FFI is built for Linux on x86-64, x86, aarch64, arm and riscv64, and tested on x86-64 only. Elsewhere the key is refused.
+- **Mesh, cluster and observability listeners are not passed.** The mesh socket, the listener for cluster configuration and the separate listener of ``observability.listen`` are bound by the replacement itself. A node that has one of them cannot be replaced this way: the replacement should fail before READY with an address in use and leave the old process serving. We did not test that.
+- **HTTP/3.** QUIC connections end with the old process. During its drain the old process still receives a share of the QUIC packets on its own socket. ``a_frontend_with_http3_is_replaced_and_its_tcp_listener_is_passed`` shows that such a frontend is replaced and that TCP loses nothing. It makes no HTTP/3 request.
+- **A connection accepted in the last instant.** A drain closes an HTTP connection that has sent no request. Before we added the 200 ms of service after the cutover, one connection of about 300,000 was reset this way, in one run of 14. After it, none in 27 runs. A client that sends its request more than 200 ms after it connected, at that instant, is still closed. The principled repair is in the HTTP workers: let a connection that has served nothing read its first request while the process drains.
+- **A crash after DONE is an outage.** When the replacement fails after it acknowledged, also in binding its admin socket, the old process does not come back. The supervisor restarts the replacement.
+- **No ``sd_notify``.** systemd needs two instances of a template unit. One unit cannot hold both processes.
+- **State that is not carried.** Run-time commands, rate counters, latency estimates, health states and sticky tables start anew. Flows that a peer forwards (SID 0026) were not considered.
+- **Untested paths.** The line ``UPG013`` and a replacement that cannot be ended. A stop of the old process during a handoff. A handoff with more than 6,000 mappings, and the bound of 1,048,576. ``global.reuse_port`` together with the new key. A descriptor limit that is too low for the replacement. A real second user.
+- **Process id.** See "Security and operational considerations".
 
 Open questions
 --------------
@@ -351,6 +380,8 @@ Review history
 --------------
 
 - 2026-11-25. Initial draft, written before the code. The review of the draft found six faults and changed the design. (1) The first draft let the old process resume after a deadline. A slow replacement could then read beside it, so the old process now resumes only on a closed connection and ends a silent replacement first. (2) The first draft sent the mappings with the listeners. Mappings made while the replacement started would have been lost, so the mappings are sent after READY, when the old process has stopped reading. (3) The first draft bound the upgrade socket and the admin socket of the replacement before the cutover. A replacement that failed would have removed the paths of the old process, so both are bound after DONE. (4) The first draft stopped the TCP accept of the old process with the UDP read. That left an instant without an acceptor, so the old process now accepts until DONE and the replacement accepts before it sends DONE. (5) The old process refused connections while it drained, as it does on SIGTERM. After a handoff it must not accept at all, so it removes the listeners from its poller. (6) The replacement trusted the descriptors. It now checks type, address and listening state.
+
+- 2026-11-25. Review of the code as a hostile reader, after the first tests passed. Nine findings, all repaired except where noted. (1) The gate thread waited up to 25 ms for each answer of the worker, so UDP stayed unread for about 50 ms plus 25 ms for every 4,096 mappings. The thread now wakes the worker. (2) A replacement whose file named the socket of another service would have taken that service down. It now gives up with ``UPG008``. (3) A drain closes HTTP connections that have sent nothing, and one connection in about 300,000 was lost to it. The old process now serves 200 ms more. This narrows the fault and does not remove it; see "Known gaps". (4) A process told to stop during a handoff stopped answering the gate thread and refused connections on listeners that the replacement had taken. It now answers while it drains. This repair has no test. (5) HTTP/3 needed ``global.reuse_port`` beside the new key, or the replacement failed with an address in use. The key now implies the shared address for that socket. (6) The first test with 6,000 clients failed two to four clients in a run. The cause was in the test: a loopback port that a wake-up socket of an ended process had used was given to a client, which then read a stray byte. The clients now accept datagrams from the listener only. (7) The bound on mappings said "the oldest". The code does not order them, and the text now says so. (8) The scene of the tests removed its directory when a start was retried. (9) The signal to a silent replacement uses a process id. The limit is recorded under security, not repaired. The review of the FFI found the layouts of ``msghdr`` and ``cmsghdr`` correct for the processors named, with glibc and musl, and no descriptor that leaks on a truncated control message.
 
 References
 ----------
