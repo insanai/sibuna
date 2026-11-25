@@ -1,0 +1,18 @@
+[package]
+name = "sibuna-plugin"
+description = "Sibuna hooks: native, metered WebAssembly and out-of-process agents (SID 0030)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+
+# The conformance test runs the compiled proof-of-work solver and checks it natively.
+[dev-dependencies]
+sibuna-pow = { workspace = true }
+
+[lints]
+workspace = true

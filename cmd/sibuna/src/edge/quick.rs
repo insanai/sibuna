@@ -247,7 +247,12 @@ pub(super) fn run(args: &[String], secret: Option<&str>) -> ExitCode {
         eprintln!("{}", summary(&start));
         super::serve(
             Source::quick_start(),
-            super::Revision { config, http, published: None },
+            super::Revision {
+                config,
+                http,
+                plugins: sibuna_plugin::Plan::default(),
+                published: None,
+            },
             secret,
         )
     });

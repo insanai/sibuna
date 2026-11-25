@@ -159,6 +159,7 @@ mod incidents;
 mod pages;
 #[cfg(feature = "storage")]
 pub mod persistent;
+mod plugins;
 mod random;
 pub mod recipe;
 mod routes;

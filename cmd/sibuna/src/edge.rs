@@ -69,6 +69,8 @@ pub(crate) fn command(args: &[String], secret: Option<&str>) -> Option<ExitCode>
 struct Revision {
     config: Config,
     http: Option<http::Prepared>,
+    /// The plugins of the topology, loaded and checked (SID 0030).
+    plugins: sibuna_plugin::Plan,
     /// The revision of the database that the topology came from (SID 0028). The worker
     /// settles it. `None` for a topology that a file holds whole.
     published: Option<authority::Stamp>,
@@ -95,7 +97,10 @@ fn load_into(path: &str, slot: &authority::Slot) -> io::Result<Revision> {
 fn revision(document: &[u8]) -> io::Result<Revision> {
     let config = Config::parse(document)?;
     let http = http::Prepared::load(&config)?;
-    Ok(Revision { config, http, published: None })
+    // A plugin that does not load refuses the revision, with its `HOOK` diagnostic.
+    let plugins = sibuna_plugin::Plan::load(config.plugins(), &crate::plugins::NATIVES)
+        .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+    Ok(Revision { config, http, plugins, published: None })
 }
 
 /// Reads the file at `path` within the limit of an edge file and returns its JSON
@@ -174,6 +179,8 @@ struct Serving {
     observed: observed::Observed,
     /// The drain commands shared with the peers of the mesh (SID 0022).
     drains: Drains,
+    /// Where the hooks of the serving revision are published (SID 0030).
+    plugins: Arc<sibuna_plugin::Slot>,
     /// The operator console of SID 0031, when the file has a `console` section.
     console: console::Link,
     /// The upgrade socket, on which a replacing process takes the listeners (SID 0029).
@@ -206,7 +213,7 @@ impl Serving {
     }
 
     /// Puts a checked revision in the place of the serving one.
-    fn replace(&mut self, revision: Revision) -> io::Result<String> {
+    fn replace(&mut self, mut revision: Revision) -> io::Result<String> {
         if revision.config.admin_socket() != self.admin_socket.as_deref() {
             return Err(io::Error::other("changing global.admin_socket requires a restart"));
         }
@@ -221,7 +228,16 @@ impl Serving {
         let drain_delay = revision.config.drain_delay();
         let before = self.edge.change_count();
         let observed = &mut self.observed;
-        reload(&mut self.edge, self.http.as_mut(), &mut self.adapters, observed, revision)?;
+        // The hooks change first, so that no frontend of the new routes serves a
+        // moment without its hooks. A refused reload puts the old hooks back.
+        let serving = self.plugins.load();
+        self.plugins.publish(std::mem::take(&mut revision.plugins));
+        let reloaded =
+            reload(&mut self.edge, self.http.as_mut(), &mut self.adapters, observed, revision);
+        if let Err(error) = reloaded {
+            self.plugins.publish_shared(serving);
+            return Err(error);
+        }
         self.reloads += 1;
         self.console.apply(&removed_peers, console.as_ref());
         self.shutdown_timeout = shutdown_timeout;
@@ -239,6 +255,11 @@ impl Serving {
             ));
         }
         Ok(line)
+    }
+
+    /// The answer to `show hooks`: the plugins and their counters (SID 0030).
+    fn hooks(&self) -> String {
+        crate::plugins::render_status(&self.plugins.load().status())
     }
 
     /// Turns the file watcher on or off, or changes its interval.
@@ -300,6 +321,7 @@ impl Serving {
             Command::ShowStats => Ok(self.stats()),
             Command::ShowCerts => Ok(self.certs()),
             Command::ShowCa => Ok(self.ca()),
+            Command::ShowHooks => Ok(self.hooks()),
             Command::RevokeCert { target } => self.revoke(&target),
             // The admin thread answers these. They never reach the worker.
             Command::Help | Command::ShowCluster | Command::ShowAuthority => {
@@ -510,30 +532,30 @@ fn start_console(
 
 fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result<()> {
     let shutdown = Shutdown::new();
-    let source = Arc::new(source);
-    let pending = Pending::default();
+    let (source, pending) = (Arc::new(source), Pending::default());
     let rotate = prepare(&shutdown, &source, &pending, &revision.config)?;
-    let Revision { mut config, http, published } = revision;
+    let Revision { mut config, http, plugins, published } = revision;
     let observe_options = config.observe().clone();
     let mut adapters = Adapters::default();
     adapt(&mut adapters, &mut config)?;
     let mesh = config.mesh().map(|spec| start_mesh(spec, &source, &pending)).transpose()?;
     let admin_socket = config.admin_socket().map(str::to_owned);
     let takeover = config.reuse_port();
-    let console_options = config.console().cloned();
-    let watch = config.watch();
+    let (console_options, watch) = (config.console().cloned(), config.watch());
     let (shutdown_timeout, drain_delay) = (config.shutdown_timeout(), config.drain_delay());
     let upgrade_socket = config.upgrade_socket().map(str::to_owned);
     let mut current = sibuna_lb::Regime::Standalone;
     // With `global.upgrade_socket` a running daemon lends its listeners (SID 0029).
     let mut replacement = upgrade::Replacement::begin(&config)?;
     let mut edge = Edge::bind_inherited(config, replacement.inherited())?;
+    // The hooks are published before any thread serves (SID 0030).
+    let plugins = crate::plugins::begin(&mut edge, plugins);
     // The mesh replicates the sticky table and moves the shares (SID 0025).
     mesh.iter().for_each(|mesh| mesh.share_state(edge.cluster_state()));
     forward::begin(&mut edge, takeover)?;
-    let http = http.map(|p| http::Http::start(p, &edge, secret)).transpose()?;
+    let http = http.map(|p| http::Http::start(p, &edge, secret, &plugins)).transpose()?;
     let drains = join(http.as_ref(), &adapters, mesh.as_ref());
-    let observed = observed::Observed::start(http.as_ref(), &observe_options, &edge)?;
+    let observed = observed::Observed::start(http.as_ref(), &observe_options, &edge, &plugins)?;
     let (jobs, inbox) = mpsc::channel();
     let console = start_console(console_options.as_ref(), &edge, &observed, &source, &jobs)?;
     let mut serving = Serving {
@@ -550,6 +572,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
         reloads: 0,
         observed,
         drains,
+        plugins,
         console,
         upgrade: upgrade::Old::none(),
     };

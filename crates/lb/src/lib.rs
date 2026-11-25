@@ -18,6 +18,7 @@ pub use budget::{FlowBudget, FlowPermit};
 mod config;
 mod health;
 mod hints;
+mod hooks;
 pub use hints::{SpillOptions, SpillStatus};
 mod http;
 pub use http::{
@@ -54,6 +55,7 @@ pub use observe::{AccessLogOptions, Forwarded, FrontendInfo, LogOutput, ObserveO
 pub use route::{FieldEdit, Redirect, RoutePolicy};
 pub use traffic::{Passive, PoolPolicy, Sticky};
 mod flowlog;
+mod gate;
 pub use flowlog::FlowEnd;
 mod forward;
 pub use forward::ForwardConfig;
@@ -216,6 +218,8 @@ pub struct Edge {
     buffer: Box<[u8]>,
     draining: bool,
     drops: u64,
+    /// The connection hooks of SID 0030, when the daemon publishes any.
+    gate: Option<gate::Gate>,
     /// Kernel options that a listener asked for and did not get (SID 0032).
     listen_faults: Vec<ListenFault>,
     /// Peer forwarding, once [`Edge::begin_forwarding`] opened its port (SID 0026).
@@ -286,6 +290,13 @@ fn open_listener(protocol: Protocol, address: SocketAddr, shared: bool) -> io::R
 }
 
 impl Edge {
+    /// Makes the worker ask the connection hooks published in `slot` before it starts
+    /// a TCP or HTTP connection or a UDP mapping (SID 0030). The worker owns its own
+    /// instances of the hooks, and follows every plan that `slot` publishes later.
+    pub fn set_hooks(&mut self, slot: std::sync::Arc<sibuna_plugin::Slot>) {
+        self.gate = Some(gate::Gate::new(slot));
+    }
+
     /// Shares admission with QUIC listeners.
     pub fn flow_budget(&self) -> FlowBudget {
         self.budget.clone()
@@ -402,8 +413,7 @@ impl Edge {
         stats.adopt(&mut config);
         let http = publish_routes(&mut config, &cluster);
         let budget = FlowBudget::new(&config);
-        let mut binds = Vec::new();
-        let mut listeners = Vec::new();
+        let (mut binds, mut listeners) = (Vec::new(), Vec::new());
         let mut listen_faults = Vec::new();
         let (mut poll, waker, wake) = watched_poller()?;
         handoff.wake = Some(wake.clone());
@@ -460,6 +470,7 @@ impl Edge {
             buffer: vec![0; 65536].into_boxed_slice(),
             draining: false,
             drops: 0,
+            gate: None,
             listen_faults,
             peering: None,
             handoff,
@@ -776,6 +787,24 @@ impl Edge {
         permit: FlowPermit,
         named: Option<SocketAddr>,
     ) -> bool {
+        // An inspected connection is judged once its ClientHello is known.
+        let route = &self.listeners[listener].route;
+        let (proto, bind) = self.binds[listener];
+        let bind = reached.unwrap_or(bind);
+        if proto == Protocol::Http || route.inspect.is_none() {
+            let flow = gate::Flow {
+                protocol: sibuna_plugin::Protocol::Tcp,
+                secure: route.tls.is_some(),
+                client: peer,
+                local: bind,
+                frontend: &route.info.name,
+                server_name: b"",
+                ja4: b"",
+            };
+            if !gate::admits(&mut self.gate, &flow) {
+                return self.refuse(listener, peer, Refusal::Hook);
+            }
+        }
         self.listeners[listener].route.info.stats.flow();
         if self.binds[listener].0 == Protocol::Http {
             let bind = self.binds[listener].1;
@@ -824,6 +853,39 @@ impl Edge {
         };
         opening.prefix = prefix;
         self.connect(id, opening)
+    }
+
+    /// Asks the connection hooks about an inspected connection, with the server name
+    /// and the JA4 fingerprint of its ClientHello when it sent a whole one.
+    pub(crate) fn hello_admitted(
+        &mut self,
+        opening: &Opening,
+        hello: Option<&hello::Hello<'_>>,
+    ) -> bool {
+        if self.gate.is_none() {
+            return true;
+        }
+        // A reload may have removed the listener meanwhile: then nothing is attached.
+        let Some(at) = self
+            .binds
+            .iter()
+            .position(|bind| bind.0 == Protocol::Tcp && gate::covers(bind.1, opening.vip))
+        else {
+            return true;
+        };
+        let ja4 = hello.and_then(|hello| {
+            hello.ja4.get_or_init(|| ja4::fingerprint(hello)).as_ref().map(|text| &text[..])
+        });
+        let flow = gate::Flow {
+            protocol: sibuna_plugin::Protocol::Tcp,
+            secure: true,
+            client: opening.peer,
+            local: opening.vip,
+            frontend: &self.listeners[at].route.info.name,
+            server_name: hello.and_then(|hello| hello.sni).map_or(b"", str::as_bytes),
+            ja4: ja4.unwrap_or(b""),
+        };
+        gate::admits(&mut self.gate, &flow)
     }
 
     fn connect(&mut self, id: u64, mut opening: Opening) -> bool {
@@ -939,6 +1001,19 @@ impl Edge {
             self.stats.refuse(Refusal::UdpFlowLimit);
             return false;
         };
+        let flow = gate::Flow {
+            protocol: sibuna_plugin::Protocol::Udp,
+            secure: false,
+            client: key.1,
+            local: self.binds[key.0].1,
+            frontend: &self.listeners[key.0].route.info.name,
+            server_name: b"",
+            ja4: b"",
+        };
+        if !gate::admits(&mut self.gate, &flow) {
+            self.stats.refuse(Refusal::Hook);
+            return false;
+        }
         let Some(ticket) = self.reserve(key.0, key.1) else {
             self.stats.refuse(Refusal::NoServer);
             return false;

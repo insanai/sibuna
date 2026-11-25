@@ -1,0 +1,18 @@
+[package]
+name = "sibuna-hook-wasm"
+description = "An example Sibuna hook compiled to WebAssembly (SID 0030)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+build = "build.rs"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+
+[lints]
+workspace = true

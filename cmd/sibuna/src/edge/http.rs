@@ -218,7 +218,14 @@ pub(super) fn start_observe(
 }
 
 impl Http {
-    pub fn start(prepared: Prepared, edge: &Edge, secret: Option<&str>) -> io::Result<Self> {
+    /// Starts the HTTP server of the edge. Its request path and its telemetry read the
+    /// hooks that `hooks` publishes (SID 0030), from the first request on.
+    pub fn start(
+        prepared: Prepared,
+        edge: &Edge,
+        secret: Option<&str>,
+        hooks: &Arc<sibuna_plugin::Slot>,
+    ) -> io::Result<Self> {
         let mut config = firewall_config(&prepared.options);
         let seed = if let Some(seed) = prepared.seed {
             config.secret_seed = Some(*seed.as_bytes());
@@ -239,6 +246,8 @@ impl Http {
         server.edge_routes = Some(edge.http_routes());
         server.unlimited = prepared.options.rate_limit.is_none();
         let observe = start_observe(&prepared.observe, edge)?;
+        let _ = observe.hooks.set(Arc::clone(hooks));
+        let _ = server.plugins.set(Arc::clone(hooks));
         server.observe = Some(observe.clone());
         server.balances_only = !prepared.options.firewall;
         #[cfg(feature = "https")]

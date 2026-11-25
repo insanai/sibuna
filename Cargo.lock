@@ -1366,6 +1366,7 @@ dependencies = [
  "sibuna-json",
  "sibuna-lb",
  "sibuna-net",
+ "sibuna-plugin",
  "sibuna-policy",
  "sibuna-pow",
  "sibuna-reactor",
@@ -1513,6 +1514,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "sibuna-hook-wasm"
+version = "1.0.0-beta.3"
+
+[[package]]
 name = "sibuna-html"
 version = "1.0.0-beta.3"
 
@@ -1577,6 +1582,7 @@ dependencies = [
  "sibuna-crypto",
  "sibuna-encoding",
  "sibuna-json",
+ "sibuna-plugin",
  "sibuna-policy",
  "sibuna-reactor",
  "sibuna-spill",
@@ -1594,6 +1600,13 @@ dependencies = [
 [[package]]
 name = "sibuna-patterns"
 version = "1.0.0-beta.3"
+
+[[package]]
+name = "sibuna-plugin"
+version = "1.0.0-beta.3"
+dependencies = [
+ "sibuna-pow",
+]
 
 [[package]]
 name = "sibuna-policy"

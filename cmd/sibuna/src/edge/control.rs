@@ -20,6 +20,7 @@ show info
 show stats
 show certs
 show ca
+show hooks
 revoke cert NAME|SERIAL
 show cluster
 show affinity
@@ -44,6 +45,8 @@ pub(super) enum Command {
     ShowCerts,
     /// The root certificate of the local authority (SID 0021).
     ShowCa,
+    /// The plugins and their counters (SID 0030).
+    ShowHooks,
     /// Revokes a certificate of the local authority, by its name or its serial number
     /// (SID 0021).
     RevokeCert {
@@ -100,6 +103,7 @@ impl Command {
                 | Self::ShowStats
                 | Self::ShowCerts
                 | Self::ShowCa
+                | Self::ShowHooks
                 | Self::ShowCluster
                 | Self::ShowAffinity
                 | Self::Help
@@ -203,6 +207,7 @@ pub(super) fn parse(line: &str) -> Result<Command, RuntimeError> {
         ["show", "stats"] => Ok(Command::ShowStats),
         ["show", "certs"] => Ok(Command::ShowCerts),
         ["show", "ca"] => Ok(Command::ShowCa),
+        ["show", "hooks"] => Ok(Command::ShowHooks),
         ["revoke", "cert", target] => Ok(Command::RevokeCert { target: (*target).to_owned() }),
         ["show", "cluster"] => Ok(Command::ShowCluster),
         ["show", "affinity"] => Ok(Command::ShowAffinity),
@@ -433,6 +438,7 @@ mod tests {
         assert_eq!(parse("show stats"), Ok(Command::ShowStats));
         assert_eq!(parse("show certs"), Ok(Command::ShowCerts));
         assert_eq!(parse("show ca"), Ok(Command::ShowCa));
+        assert_eq!(parse("show hooks"), Ok(Command::ShowHooks));
         let revoke = Command::RevokeCert { target: "db.internal".to_owned() };
         assert_eq!(parse("revoke cert db.internal"), Ok(revoke));
         assert_eq!(parse("revoke cert").unwrap_err().code, "ADM002");

@@ -35,6 +35,7 @@ Discussion reading order
    records/0027-spill-cache
    records/0028-database-authority
    records/0029-upgrade-handoff
+   records/0030-plugin-tiers
    records/0031-edge-operator-console
    records/0032-staged-admission
 

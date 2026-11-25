@@ -45,6 +45,8 @@ pub(crate) struct Observe {
     pub draining: AtomicBool,
     /// What the replication of bans over the mesh did (SID 0022), once it runs.
     pub mesh_bans: OnceLock<Arc<sibuna_lb::BanCounters>>,
+    /// The hooks of the edge (SID 0030), once the edge serves.
+    pub hooks: OnceLock<Arc<sibuna_plugin::Slot>>,
 }
 
 impl Observe {
@@ -56,7 +58,15 @@ impl Observe {
             stats,
             draining: AtomicBool::new(false),
             mesh_bans: OnceLock::new(),
+            hooks: OnceLock::new(),
         }
+    }
+
+    /// The published hooks, while some frontend attaches a telemetry hook. One atomic
+    /// load beside the read of the cell.
+    fn telemetry_hooks(&self) -> Option<&sibuna_plugin::Slot> {
+        let slot = self.hooks.get()?;
+        slot.has(sibuna_plugin::Stage::Telemetry).then_some(&**slot)
     }
 
     /// The access log, while the topology asks for one.
@@ -162,6 +172,9 @@ impl Observe {
             Some(server) => server.stats.record(entry.status, entry.first_byte),
             None => {}
         }
+        if let Some(slot) = self.telemetry_hooks() {
+            crate::plugins::observe(slot, &entry);
+        }
         if let Some(log) = self.log() {
             log.offer(entry);
         }
@@ -183,6 +196,9 @@ impl Observe {
         ];
         for (name, kind, value) in series {
             let _ = writeln!(out, "# TYPE {name} {kind}\n{name} {value}");
+        }
+        if let Some(slot) = self.hooks.get() {
+            crate::plugins::write_prometheus(&slot.load().status(), out);
         }
         if let Some(bans) = self.mesh_bans.get() {
             let series = [
@@ -215,6 +231,8 @@ pub(crate) struct Entry {
     /// The place of the request in the active gauge of `server`.
     active: Option<ActiveRequest>,
     pub protocol: &'static str,
+    /// The listener the request arrived on, when the path knows it.
+    pub vip: Option<std::net::SocketAddr>,
     /// The client reached a TLS frontend.
     pub secure: bool,
     /// The TLS version and the cipher suite of the client. Each is empty when unknown.
@@ -256,6 +274,7 @@ impl Entry {
             server: None,
             active: None,
             protocol,
+            vip: None,
             secure: false,
             tls: ("", ""),
             failed: false,
@@ -423,6 +442,7 @@ pub(crate) fn capture<W>(ctx: &mut Ctx<'_, W>) {
         server: trace.server.take(),
         active: trace.active.take(),
         protocol: protocol_of(trace),
+        vip: ctx.ingress.map(|ingress| ingress.vip),
         secure: ctx.ingress.is_some_and(|ingress| ingress.secure),
         tls: ctx.ingress.map_or(("", ""), |ingress| ingress.tls),
         failed: std::mem::take(&mut trace.failed),
@@ -436,7 +456,8 @@ pub(crate) fn capture<W>(ctx: &mut Ctx<'_, W>) {
         first_byte: None,
         elapsed: Duration::ZERO,
     };
-    if observe.log().is_some() {
+    // The log and the telemetry hooks read the texts. Nobody else pays for the copy.
+    if observe.log().is_some() || observe.telemetry_hooks().is_some() {
         let host = request.header(b"host").unwrap_or_default();
         entry.set_text(ctx.client_ip, host, request.method_text, request.path);
     }
@@ -544,6 +565,7 @@ pub(crate) fn settle_written(
                 _ => None,
             };
             let mut entry = Entry::unparsed(peer, front, protocol_of(trace));
+            entry.vip = ingress.map(|ingress| ingress.vip);
             entry.secure = ingress.is_some_and(|ingress| ingress.secure);
             entry.tls = ingress.map_or(("", ""), |ingress| ingress.tls);
             Some(entry)

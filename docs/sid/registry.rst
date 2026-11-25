@@ -99,6 +99,9 @@ Discussion registry
    * - 0029
      - :doc:`records/0029-upgrade-handoff`
      - discussion
+   * - 0030
+     - :doc:`records/0030-plugin-tiers`
+     - discussion
    * - 0031
      - :doc:`records/0031-edge-operator-console`
      - discussion

@@ -60,6 +60,7 @@ sibuna-core = { workspace = true }
 sibuna-policy = { workspace = true }
 sibuna-challenge = { workspace = true }
 sibuna-lb = { workspace = true }
+sibuna-plugin = { workspace = true }
 sibuna-jlv = { workspace = true, optional = true }
 sibuna-net = { workspace = true }
 sibuna-reactor = { workspace = true }

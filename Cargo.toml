@@ -58,6 +58,8 @@ sibuna-serve = { path = "crates/serve", version = "1.0.0-beta.3" }
 sibuna-tls = { path = "crates/tls", version = "1.0.0-beta.3" }
 sibuna-console-storage = { path = "crates/console-storage", version = "1.0.0-beta.3", default-features = false }
 sibuna-console = { path = "crates/console", version = "1.0.0-beta.3", default-features = false }
+# SID 0030. The hook tiers. The WebAssembly interpreter is written in-house: no crate.
+sibuna-plugin = { path = "crates/plugin", version = "1.0.0-beta.3" }
 sibuna-authority = { path = "crates/authority", version = "1.0.0-beta.3", default-features = false }
 
 # The LGPL JLV kernel runs only while loading an edge configuration (SID 0015).

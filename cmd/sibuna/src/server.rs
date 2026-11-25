@@ -89,6 +89,8 @@ pub struct Server {
     pub(crate) ban_feed: std::sync::OnceLock<sibuna_lb::BanFeed>,
     /// Where a ban that the operator lifts goes, when the edge has a mesh (SID 0022).
     pub(crate) lift_feed: std::sync::OnceLock<sibuna_lb::LiftFeed>,
+    /// The hooks of the edge (SID 0030), once the edge serves.
+    pub(crate) plugins: std::sync::OnceLock<Arc<sibuna_plugin::Slot>>,
     /// The default per-client request limiter is off (edge mode only).
     pub(crate) unlimited: bool,
     /// The firewall is off for the whole edge (`http.surface: "off"`).
@@ -151,6 +153,7 @@ impl Server {
             automatic: None,
             ban_feed: std::sync::OnceLock::new(),
             lift_feed: std::sync::OnceLock::new(),
+            plugins: std::sync::OnceLock::new(),
             unlimited: false,
             balances_only: false,
             max_connections: AtomicU32::new(config.max_connections),

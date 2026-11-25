@@ -38,6 +38,8 @@ pub struct Config {
     pub(crate) console: Option<crate::ConsoleOptions>,
     pub(crate) listeners: BTreeMap<(Protocol, SocketAddr), Frontend>,
     pub(crate) pools: BTreeMap<String, Backend>,
+    /// The plugins and where each frontend attaches them (SID 0030).
+    pub(crate) plugins: sibuna_plugin::Settings,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialOrd, PartialEq)]
@@ -240,6 +242,11 @@ impl Config {
         self.drain_delay
     }
 
+    /// The plugins of the topology and the hooks of each frontend (SID 0030).
+    pub fn plugins(&self) -> &sibuna_plugin::Settings {
+        &self.plugins
+    }
+
     /// Where learned source affinity is kept (`spill`), when the operator enabled it
     /// (SID 0027).
     pub fn spill(&self) -> Option<&crate::SpillOptions> {
@@ -303,6 +310,7 @@ impl Config {
             sticky_entries,
             pools: BTreeMap::new(),
             listeners: BTreeMap::new(),
+            plugins: sibuna_plugin::Settings::default(),
         };
         config.add_topology(&mut root, adaptive)?;
         field(root.finish())?;
@@ -331,6 +339,7 @@ impl Config {
 
     /// Reads the `backends` and then the `frontends`, which name them.
     fn add_topology(&mut self, root: &mut ObjectReader<'_, '_>, adaptive: bool) -> Result<()> {
+        self.plugins.plugins = crate::hooks::plugins(root)?;
         for (name, value) in named(root, "backends")? {
             self.pools.insert(name.into(), Backend::parse(name, value, adaptive)?);
         }
@@ -401,6 +410,8 @@ impl Config {
         let http_rules: std::sync::Arc<[_]> = http_rules.into();
         let info = crate::FrontendInfo::parse(&mut r, name, proto)?;
         let info = std::sync::Arc::new(info);
+        let http3 = tls.as_ref().is_some_and(|tls| tls.http3);
+        crate::hooks::attach(&mut r, name, (proto, http3), &mut self.plugins)?;
         let binds = field(r.take_array("binds"))?.ok_or_else(|| invalid(r.missing("binds")))?;
         if binds.is_empty() || self.listeners.len() + binds.len() > 128 {
             return Err(invalid(format!("{path}: expected 1 to 128 binds in total")));

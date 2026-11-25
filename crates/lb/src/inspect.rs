@@ -264,6 +264,13 @@ impl Edge {
             line.bytes_in = wire.len() as u64;
         }
         let hello = if end == End::Whole { flow.input.hello() } else { None };
+        // The connection hooks judge every ended inspection (SID 0030). One that takes
+        // a fallback has no ClientHello: its view has no server name and no JA4.
+        if !self.hello_admitted(&flow.opening, hello.as_ref()) {
+            self.stats.refuse(Refusal::Hook);
+            flowlog::mark(&mut flow.opening.line, Refusal::Hook.end());
+            return false;
+        }
         let metadata = match (end, &hello) {
             (End::Whole, Some(hello)) => classify(hello),
             (End::Whole | End::Invalid, _) => Metadata::Invalid,
