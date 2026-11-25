@@ -17,6 +17,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use assemble::{constant_hook, hook, i32c, spinning_hook, temp_file, temp_path, trapping_hook};
+use sibuna_encoding::base64;
 use sibuna_plugin::{Frame, FrameKind, read_frame, write_frame};
 use traffic::{Edge, Message, Origin, Topology, both, get, get_with, read_message, request};
 
@@ -124,6 +125,60 @@ fn the_example_wasm_hook_admits_with_a_field_denies_and_challenges() {
         assert_eq!(shown(&edge, "challenged"), 1);
         // The origin saw the two admitted requests only.
         assert_eq!(origin.requests.load(Ordering::SeqCst), 2);
+    });
+}
+
+/// The text of the member `key` of the JSON object `body`.
+fn member(body: &[u8], key: &str) -> String {
+    let value = sibuna::extract_json_string(body, key.as_bytes());
+    String::from_utf8(value.unwrap_or_else(|| panic!("{key} in {body:?}")).to_vec()).unwrap()
+}
+
+/// Pays for the challenge that `challenged` announces and returns the session cookie
+/// as a field line.
+fn pay(edge: &Edge, challenged: &Message) -> String {
+    let issued = get(edge, &member(&challenged.body, "challenge"));
+    assert_eq!(issued.status(), 200, "{}", issued.text());
+    assert_eq!(member(&issued.body, "algorithm"), "posw");
+    let id = member(&issued.body, "id");
+    let params = sibuna_pow::posw::Params {
+        depth: member(&issued.body, "difficulty").parse().unwrap(),
+        challenges: member(&issued.body, "challenges").parse().unwrap(),
+    };
+    let mut workspace = Box::new(sibuna_pow::posw::Workspace::new());
+    let proof = sibuna_pow::posw::solve(id.as_bytes(), params, &mut workspace).unwrap();
+    let proof = base64::encode(base64::URL_SAFE_NO_PAD, proof);
+    let body = format!("{{\"challenge_id\":\"{id}\",\"proof\":\"{proof}\"}}");
+    let verified = traffic::post(edge, "/__sibuna/verify", body.as_bytes());
+    assert_eq!(verified.status(), 200, "{}", verified.text());
+    let cookie = verified.field("set-cookie").expect("a session cookie");
+    format!("Cookie: {}\r\n", cookie.split(';').next().unwrap())
+}
+
+#[test]
+fn a_paid_challenge_of_a_hook_is_cleared_and_the_hook_behind_it_still_judges() {
+    both(|event_loop| {
+        let origin = Origin::start("a");
+        let module = temp_file("hook.wasm", EXAMPLE);
+        let plugins = format!(
+            r#""plugins":{{"p":{{"kind":"wasm","module":"{module}"}},
+            "token":{{"kind":"native","hook":"require_header","settings":{{"name":"x-token"}}}}}},"#
+        );
+        let edge = Topology::new(&[origin.address])
+            .root(&plugins)
+            .frontend(r#""hooks":{"request":["p","token"]},"#)
+            .start(event_loop);
+        let challenged = get_with(&edge, "/guarded", "X-Token: 1\r\n");
+        assert_eq!(challenged.status(), 401);
+        let cookie = pay(&edge, &challenged);
+        // The session clears the challenge of the first hook. The second still denies
+        // a request without its field.
+        assert_eq!(get_with(&edge, "/guarded", &cookie).status(), 403);
+        let both_fields = format!("{cookie}X-Token: 1\r\n");
+        assert_eq!(get_with(&edge, "/guarded", &both_fields).status(), 200);
+        // Without the session the challenge stands.
+        assert_eq!(get_with(&edge, "/guarded", "X-Token: 1\r\n").status(), 401);
+        assert_eq!(origin.requests.load(Ordering::SeqCst), 1);
     });
 }
 
