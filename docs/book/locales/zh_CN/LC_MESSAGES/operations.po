@@ -9406,21 +9406,9 @@ msgstr ""
 msgid "Console Preview"
 msgstr "控制台预览"
 
-#: ../../operations.rst:2667
-msgid ""
-"The console is compiled into the daemon by the default ``console`` "
-"feature, but starts only with ``--console``. It needs storage: "
-"``--console`` without ``--data-dir`` or ``--database-url`` is refused "
-"with ``CONSOLE001`` (``StorageRequired``). Use ``cargo build --release -p "
-"sibuna --no-default-features --features sqlite`` to compile it out; a "
-"build with ``--no-default-features`` alone has neither storage nor "
-"console. Bootstrap locally while the daemon is stopped:"
-msgstr ""
-"默认的 ``console`` 特性会把控制台编译进守护进程，但只有使用 ``--console`` 时才会启动。它需要存储：没有 "
-"``--data-dir`` 或 ``--database-url`` 的 ``--console`` 会以 ``CONSOLE001``\\ "
-"（``StorageRequired``）被拒绝。使用 ``cargo build --release -p sibuna "
-"--no-default-features --features sqlite`` 可以把它排除在编译之外；只用 "
-"``--no-default-features`` 的构建既没有存储也没有控制台。在守护进程停止时于本地完成初始化："
+#: ../../operations.rst:2735
+msgid "The console is compiled into the daemon by the default ``console`` feature, and starts with ``--console`` in daemon mode or the ``console`` section of an edge topology. It needs storage: ``--console`` without ``--data-dir`` or ``--database-url`` is refused with ``CONSOLE001`` (``StorageRequired``). Use ``cargo build --release -p sibuna --no-default-features --features sqlite`` to compile it out; a build with ``--no-default-features`` alone has neither storage nor console. Bootstrap locally while the daemon is stopped:"
+msgstr "默认的 ``console`` 特性将控制台编译进守护进程。守护进程模式通过 ``--console`` 启动控制台，边缘模式通过拓扑的 ``console`` 节启动它。它需要存储：没有 ``--data-dir`` 或 ``--database-url`` 的 ``--console`` 会以 ``CONSOLE001``\\ （``StorageRequired``）被拒绝。使用 ``cargo build --release -p sibuna --no-default-features --features sqlite`` 可以把它排除在编译之外；只用 ``--no-default-features`` 的构建既没有存储也没有控制台。在守护进程停止时于本地完成初始化："
 
 #: ../../operations.rst:2669
 msgid ""
@@ -9606,24 +9594,9 @@ msgstr ""
 msgid "A Tour of the Console"
 msgstr "控制台导览"
 
-#: ../../operations.rst:2718
-msgid ""
-"The screenshots below come from a release build on one loopback node with "
-"SQLite storage and a policy of four ``ALLOW`` rules over a default "
-"challenge, after about four minutes of synthetic traffic: addresses from "
-"documentation ranges, SQL injection and cross-site scripting probes, "
-"three honeypot hits and seven challenges solved in headless Chromium. "
-"Every number is therefore illustrative. We took them with ``cargo xtask "
-"browser console --viewport-only``, which walks the console in Chromium at "
-"1440 by 960 pixels and judges every page. Each page answers one question "
-"stated in its title and carries the product, the serving node, the page "
-"and the way back in the same place."
-msgstr ""
-"下面的截图来自一个 release 构建，运行在一个带 SQLite 存储的回环节点上，策略是在默认挑战之上加四条 ``ALLOW`` "
-"规则，截图前运行了大约四分钟的合成流量：来自文档地址段的地址、SQL 注入和跨站脚本探测、三次蜜罐命中，以及在无头 Chromium "
-"中解出的七个挑战。因此，每个数字都只是示意。我们用 ``cargo xtask browser console --viewport-only`` "
-"截取它们，该命令在 1440 x 960 像素的 Chromium "
-"中遍历控制台，并检查每个页面。每个页面回答其标题中提出的一个问题，并在同样的位置显示产品、服务节点、当前页面和返回路径。"
+#: ../../operations.rst:2786
+msgid "We captured the firewall console in Chromium at 1440 by 960 pixels on a loopback node with SQLite and synthetic traffic. The numbered markers identify the controls described below each image. Counts belong to this run. The Edge page appears when the node runs a load balancer."
+msgstr "我们在使用 SQLite 和模拟流量的回环节点上，通过 Chromium 以 1440 × 960 像素截取了防火墙控制台。图中编号对应图下说明。计数来自本次运行。节点运行负载均衡器时会出现 Edge 页面。"
 
 #: ../../operations.rst:2720
 msgid ""
@@ -9651,53 +9624,21 @@ msgstr ""
 "最近 24 小时的 Traffic 概览页面：请求、已准入、已挑战、被策略拒绝、已封禁、被限速、其他，以及源站 4xx 和 5xx "
 "等指标卡片，每张卡片都附有与昨天的对比和一条迷你走势图。"
 
-#: ../../operations.rst:2728
-msgid ""
-"Statistics, Traffic, over the last 24 hours. The note under the period "
-"control states the coverage: only four of 1,440 expected minute records "
-"exist, so every \"Yesterday\" reads \"Not available\". Tiles show "
-"retained closed-minute counts with a live 60-second sparkline; decision "
-"colours (admitted green, challenged amber, denied red) are the same in "
-"every panel. Origin 4xx and 5xx read \"Not recorded\" for a retained "
-"period, because the minute records do not keep the proxy mode that gives "
-"an origin count its meaning; the live boot totals show them. Below the "
-"visible tiles are two level tiles, active ban entries and healthy nodes, "
-"the timeline, and sampled panels that rank request paths and referring "
-"hosts and count client operating systems, browsers and response status."
-msgstr ""
-"统计，流量，最近 24 小时。时间段控件下方的说明给出覆盖情况：预期的 1,440 条分钟记录中只存在四条，因此每个 “Yesterday” "
-"都显示 “Not available”。指标卡片显示保留的已结束分钟计数，并附有实时的 60 "
-"秒迷你走势图；决定的颜色（准入为绿色，挑战为琥珀色，拒绝为红色）在每个面板中都相同。对于保留的时间段，源站 4xx 和 5xx 显示 “Not "
-"recorded”，因为分钟记录没有保存赋予源站计数意义的代理模式；实时的本次启动总数会显示它们。可见指标卡片下方还有两张显示当前水平的指标卡片（活跃封禁条目和健康节点）、时间线，以及若干抽样面板，它们对请求路径和来源主机排名，并统计客户端操作系统、浏览器和响应状态码。"
+#: ../../operations.rst:2800
+msgid "The coverage note counts the recorded minutes in the selected period. A comparison needs sufficient history for both periods. The sparklines cover the last 60 seconds. Origin status counts are available in live boot totals. Below the tiles we can inspect active bans, healthy nodes, the timeline and sampled request paths, referring hosts, clients and response statuses."
+msgstr "覆盖情况说明列出所选时段中有记录的分钟数。比较两个时段需要两者都有足够的历史记录。迷你图覆盖最近 60 秒。源服务器状态码计数可在启动以来的实时总数中查看。指标下方还有生效的封禁、健康节点、时间线、抽样的请求路径、来源主机、客户端及响应状态。"
 
-#: ../../operations.rst:2730
-msgid ""
-"The Security overview page: tiles for inspection, reputation, rate "
-"limiting, challenges, bans and honeypot, live trend panels, and a live "
-"event feed listing WAF findings."
-msgstr "Security 概览页面：检查、信誉、速率限制、挑战、封禁和蜜罐的指标卡片，实时趋势面板，以及列出 WAF 检出结果的实时事件流。"
+#: ../../operations.rst:2802
+msgid "The Security overview with inspection and reputation tiles beside the live event feed."
+msgstr "安全概览中，检查和信誉指标显示在实时事件流旁边。"
 
-#: ../../operations.rst:2733
-msgid ""
-"Statistics, Security. One tile per module over the selected period, live "
-"outcome trends, and the live event feed with its newest findings (here "
-"``waf:sqli`` and ``waf:xss``). Values that are not recorded say so "
-"instead of showing zero: the Reputation tile reads \"Not recorded\". "
-"Further down the page are findings over sixty equal buckets, attack "
-"categories and attacked paths."
-msgstr ""
-"统计，安全。所选时间段内每个模块一个指标卡片，实时结果趋势，以及带有最新检出结果的实时事件流（这里是 ``waf:sqli`` 和 "
-"``waf:xss``）。未记录的值会如实说明，而不是显示为零：信誉指标卡片显示 “Not "
-"recorded”。页面再往下是按六十个等宽时间桶统计的检出结果、攻击类别和被攻击的路径。"
+#: ../../operations.rst:2807
+msgid "The module tiles summarize the selected period. The trends and the event feed are live. Missing measurements are labelled as such. Further down the page we can inspect findings over time, attack categories and affected paths."
+msgstr "模块指标汇总所选时段。趋势和事件流实时更新，缺失的测量值有明确标记。向下可以查看检查结果的时间分布、攻击类别和受影响的路径。"
 
-#: ../../operations.rst:2735
-msgid ""
-"The Events page with a filter form (module, category, country, client "
-"address, path, node, time range) above a list of recorded incidents "
-"tagged waf:xss and waf:sqli."
-msgstr ""
-"Events 页面：筛选表单（模块、类别、国家、客户端地址、路径、节点、时间范围）下方是已记录事件的列表，事件带有 waf:xss 和 "
-"waf:sqli 标签。"
+#: ../../operations.rst:2809
+msgid "Incident filters above a recorded inspection finding on the Events page."
+msgstr "事件页面的筛选器，下方是一条已记录的检查结果。"
 
 #: ../../operations.rst:2738
 msgid ""
@@ -9721,34 +9662,17 @@ msgstr ""
 "命令；只保留列出的头字段的值，``--console-capture-header <name>`` "
 "可以向该列表中添加。否则头部显示为未记录。拒绝和放行动作会打开 IP 组表单，并预先填好地址。"
 
-#: ../../operations.rst:2740
-msgid ""
-"The Challenges page with a 24-hour retained window: seven challenges "
-"issued, submitted and accepted, none rejected, and a table of rejection "
-"causes, all zero."
-msgstr "Challenges 页面，保留窗口为 24 小时：签发、提交和接受的挑战各为七个，没有被拒绝的挑战；下方的拒绝原因表各项均为零。"
+#: ../../operations.rst:2816
+msgid "The Challenges page with a retained window and tables for challenge outcomes and rejection causes."
+msgstr "挑战页面的历史时间窗口、挑战结果表和拒绝原因表。"
 
-#: ../../operations.rst:2743
-msgid ""
-"Challenges. A retained window (one hour, one day or seven days) sums "
-"durable per-minute records and states how many minutes were recorded and "
-"complete; here seven challenges were issued, submitted and accepted, and "
-"the rejection causes are all zero. Further down are live totals since "
-"this boot, the configured and most recently issued parameters, the "
-"accepted solve-time histogram partitioned by algorithm and parameter bin, "
-"adaptive-difficulty transitions and per-address records with deny and "
-"allow shortcuts, retained seven days."
-msgstr ""
-"挑战。一个保留的时间窗口（一小时、一天或七天）汇总持久化的每分钟记录，并说明有多少分钟被记录且完整；这里签发、提交并接受了七个挑战，各项拒绝原因都为零。页面再往下是本次启动以来的实时总数、配置的参数和最近签发的参数、按算法和参数分组的已接受求解时间直方图、自适应难度的变化，以及带有拒绝和放行快捷操作的按地址记录，保留七天。"
+#: ../../operations.rst:2821
+msgid "The retained window sums minute records and reports their coverage. Below it we can inspect totals since startup, puzzle parameters, solve times by algorithm, changes in difficulty and per-address records retained for seven days."
+msgstr "历史窗口汇总每分钟的记录并报告覆盖情况。下方可以查看启动以来的总数、谜题参数、各算法的解题时间、难度变化和保留七天的逐地址记录。"
 
-#: ../../operations.rst:2745
-msgid ""
-"The Policies page: the applied configuration (Shield, revision 3, four "
-"rules, PoSW at difficulty 16, node-local limits) and the first rule, "
-"public-static, with 339 recorded hits today."
-msgstr ""
-"Policies 页面：已应用的配置（Shield、修订版本 3、四条规则、难度 16 的 PoSW、节点本地限制），以及第一条规则 "
-"public-static，今天已记录 339 次命中。"
+#: ../../operations.rst:2823
+msgid "The Policies page with the applied Shield configuration and the timetable rule."
+msgstr "策略页面中的生效盾牌配置和时刻表规则。"
 
 #: ../../operations.rst:2748
 msgid ""
@@ -9763,16 +9687,9 @@ msgstr ""
 "策略。已应用的引擎列出它的形态、修订版本、默认算法和难度，以及它的节点本地限制，然后按评估顺序列出规则、它们今天的命中次数以及这些计数的覆盖情况。页面再往下是检查模式矩阵、请求测试器和 "
 "IP 组。*Managed rules* 打开编辑器；保存修改时会先显示被修改字段的审阅，确认后会验证整个候选并创建一个新的修订版本。"
 
-#: ../../operations.rst:2750
-msgid ""
-"The Nodes page: node 1 accepting connections, with open connections, "
-"active local ban entries, policy revisions 3 of 3, uptime, resident "
-"memory, CPU and boot identifier, sparklines of memory and CPU, and Drain "
-"node, Resume admission and Clear local bans buttons."
-msgstr ""
-"Nodes 页面：节点 1 正在接受连接，显示打开的连接数、生效的本地封禁条目、策略修订版本 3/3、运行时间、常驻内存、CPU "
-"和启动标识符，以及内存和 CPU 的迷你走势图，并有 Drain node、Resume admission 和 Clear local bans "
-"按钮。"
+#: ../../operations.rst:2830
+msgid "The Nodes page showing the serving node, resource use, admission controls and cluster membership."
+msgstr "节点页面显示服务节点、资源使用、准入控制和集群成员。"
 
 #: ../../operations.rst:2753
 msgid ""
@@ -9813,15 +9730,9 @@ msgid ""
 msgstr ""
 "设置，此时还没有通知目标，页面上是新建通知目标的表单。页面再往下是拒绝激增阈值、按时间窗口逐一明确确认的保留期设置、响应页面模板和“关于”。"
 
-#: ../../operations.rst:2765
-msgid ""
-"The Audit history page with a filter form and recorded activity rows: "
-"session.create, session.logout, kiosk.exchange and kiosk.grant, each with "
-"time, actor and role, subject and an Open button."
-msgstr ""
-"Audit history 页面：筛选表单和已记录的活动行，包括 "
-"session.create、session.logout、kiosk.exchange 和 "
-"kiosk.grant，每行都有时间、操作者及其角色、操作对象和 Open 按钮。"
+#: ../../operations.rst:2851
+msgid "The Audit history page with activity filters and recorded actions."
+msgstr "审计历史页面中的活动筛选器和操作记录。"
 
 #: ../../operations.rst:2768
 msgid ""
@@ -9838,14 +9749,9 @@ msgstr ""
 "*Revert this "
 "change*，它在确认后把该修订之前记录的文档恢复为一个新的、经过审计的修订版本；如果规则集已经发生了后续变化，则会被拒绝。"
 
-#: ../../operations.rst:2770
-msgid ""
-"A wall display titled Node 1 Traffic, with Live, an expiry of 719 "
-"minutes, Pause, Theme and Exit kiosk controls, and the eleven traffic "
-"tiles without navigation."
-msgstr ""
-"标题为 Node 1 Traffic 的大屏显示，带有 Live、719 分钟后过期、Pause、Theme 和 Exit kiosk "
-"控件，以及不带导航的十一张流量指标卡片。"
+#: ../../operations.rst:2858
+msgid "A read-only wall display for node 1 with a session expiry time and traffic tiles."
+msgstr "节点 1 的只读墙面显示屏，显示会话到期时间和流量指标。"
 
 #: ../../operations.rst:2773
 msgid ""
@@ -12203,3 +12109,63 @@ msgstr "用存储线程和引擎槽来向运维人员解释：为什么向 ``pol
 #: ../../operations.rst:1762
 msgid ":doc:`jlavi`"
 msgstr ":doc:`使用 Jlavi 配置 Sibuna <jlavi>`"
+
+#: ../../operations.rst:2791
+msgid "We sign in to an operator account at (1). A wall display exchanges its one-time code at (2)."
+msgstr "我们在 (1) 登录操作员账户。墙面显示屏在 (2) 兑换一次性代码。"
+
+#: ../../operations.rst:2798
+msgid "We choose the reporting period at (1) and read the number of admitted requests at (2)."
+msgstr "我们在 (1) 选择统计周期，在 (2) 查看获准请求数。"
+
+#: ../../operations.rst:2805
+msgid "We read the inspection summary at (1) and look for recent findings in the live feed at (2)."
+msgstr "我们在 (1) 查看检查摘要，在 (2) 的实时事件流中查看最近的发现。"
+
+#: ../../operations.rst:2812
+msgid "We narrow the incident list using (1). We open a matching incident at (2) to examine its evidence."
+msgstr "我们在 (1) 筛选事件，在 (2) 打开匹配的事件并检查证据。"
+
+#: ../../operations.rst:2819
+msgid "We compare issued, submitted and accepted challenges at (1). The table at (2) gives the reasons for rejected submissions."
+msgstr "我们在 (1) 比较已发出、已提交和已接受的挑战数。(2) 的表格列出提交被拒绝的原因。"
+
+#: ../../operations.rst:2826
+msgid "We check which configuration is active at (1). The first rule in evaluation order appears at (2)."
+msgstr "我们在 (1) 确认生效的配置，在 (2) 查看求值顺序中的第一条规则。"
+
+#: ../../operations.rst:2833
+msgid "We check admission on the serving node at (1), then compare it with the announced members at (2)."
+msgstr "我们在 (1) 检查服务节点是否接受连接，再与 (2) 中通告的成员比较。"
+
+#: ../../operations.rst:2840
+msgid "We identify the active provider at (1) and select the provider for a new import at (2)."
+msgstr "我们在 (1) 确认数据提供方，在 (2) 为下一次导入选择提供方。"
+
+#: ../../operations.rst:2847
+msgid "We review configured notification destinations at (1). We define a new destination at (2)."
+msgstr "我们在 (1) 查看已配置的通知目的地，在 (2) 定义新目的地。"
+
+#: ../../operations.rst:2854
+msgid "We filter by actor at (1) and open a recorded action from the list at (2)."
+msgstr "我们在 (1) 按操作者筛选，再从 (2) 的记录列表打开相应操作。"
+
+#: ../../operations.rst:2861
+msgid "We check which node the display follows at (1). The request total at (2) belongs to that scope."
+msgstr "我们在 (1) 查看显示屏跟踪的节点。(2) 的请求总数属于该范围。"
+
+#: ../../operations.rst:2516
+msgid "We check whether the node admits new flows at (1). If clients are refused, we read the counters by cause at (2)."
+msgstr "我们在 (1) 检查节点是否接受新流。若客户端被拒绝，可以在 (2) 按原因查看计数。"
+
+#: ../../operations.rst:2525
+msgid "We read the traffic reaching the web frontend at (1). At (2) we compare the timetable replicas by weight, requests, failures and time to first byte."
+msgstr "我们在 (1) 查看到达 Web 前端的流量。在 (2) 比较时刻表各副本的权重、请求数、失败数和首字节耗时。"
+
+#: ../../operations.rst:2513
+msgid "The Edge page showing a serving node, its flow limit and a table of refusal causes."
+msgstr "Edge 页面显示服务节点、流数上限和拒绝原因表。"
+
+#: ../../operations.rst:2522
+msgid "The web frontend and timetable pool above the server controls on the Edge page."
+msgstr "Edge 页面的服务器控件上方显示 Web 前端和时刻表池。"

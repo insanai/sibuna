@@ -2510,9 +2510,19 @@ We sign in, replace the temporary password, and open the page *Edge*. The page s
 
 **The node.** Its state is one of three words. *Serving* means that the node admits new flows. *Draining* means that the node was told to stop: it refuses new flows and finishes the open ones. *Full* means that the flow table holds ``global.max_flows`` flows: the node refuses new flows for lack of capacity. The table below the state gives the active flows and the limit, the drops, the servers that are drained or down, the reloads, the routing regime of the mesh and two revisions. The first revision is the digest of the file, the one that ``show cluster`` prints. The second is the revision of the database that the node serves in persistent mode (SID 0028). A node that serves a file has none, and the page says "Not reported".
 
+.. figure:: /assets/images/console-edge.png
+   :alt: The Edge page showing a serving node, its flow limit and a table of refusal causes.
+
+   We check whether the node admits new flows at (1). If clients are refused, we read the counters by cause at (2).
+
 **The refusals by cause.** One row for each reason of the metrics: ``flow_limit``, ``draining``, ``rate_limit``, ``connection_limit``, ``task_limit`` and the others. A node that refuses for lack of capacity counts under ``flow_limit``, and a node that drains counts under ``draining``.
 
 **The frontends and the pools.** A frontend shows its requests, flows, bytes and the latency of a request: the mean and the 95th percentile. A pool shows the columns of ``show servers`` for each server, then its requests, failures, requests in flight and the wait for the first byte. A view carries at most 256 servers, and the page says how many it left out.
+
+.. figure:: /assets/images/console-edge-pools.png
+   :alt: The web frontend and timetable pool above the server controls on the Edge page.
+
+   We read the traffic reaching the web frontend at (1). At (2) we compare the timetable replicas by weight, requests, failures and time to first byte.
 
 **The fleet.** One row for each member: the state of the link, the state of the node, its flows, its servers and its two revisions. A member whose file differs from the file of this node is marked ``differs``. A member that does not answer in five seconds has the row ``No answer``.
 
@@ -2722,7 +2732,7 @@ On Linux the HTTP firewall serves connections on event-driven workers, one per p
 Console Preview
 ---------------
 
-The console is compiled into the daemon by the default ``console`` feature, but starts only with ``--console``. It needs storage: ``--console`` without ``--data-dir`` or ``--database-url`` is refused with ``CONSOLE001`` (``StorageRequired``). Use ``cargo build --release -p sibuna --no-default-features --features sqlite`` to compile it out; a build with ``--no-default-features`` alone has neither storage nor console. Bootstrap locally while the daemon is stopped:
+The console is compiled into the daemon by the default ``console`` feature, and starts with ``--console`` in daemon mode or the ``console`` section of an edge topology. It needs storage: ``--console`` without ``--data-dir`` or ``--database-url`` is refused with ``CONSOLE001`` (``StorageRequired``). Use ``cargo build --release -p sibuna --no-default-features --features sqlite`` to compile it out; a build with ``--no-default-features`` alone has neither storage nor console. Bootstrap locally while the daemon is stopped:
 
 .. code-block:: sh
 
@@ -2773,62 +2783,84 @@ A console option without ``--console``, a repeated option or a malformed value s
 A Tour of the Console
 ~~~~~~~~~~~~~~~~~~~~~
 
-The screenshots below come from a release build on one loopback node with SQLite storage and a policy of four ``ALLOW`` rules over a default challenge, after about four minutes of synthetic traffic: addresses from documentation ranges, SQL injection and cross-site scripting probes, three honeypot hits and seven challenges solved in headless Chromium. Every number is therefore illustrative. We took them with ``cargo xtask browser console --viewport-only``, which walks the console in Chromium at 1440 by 960 pixels and judges every page. Each page answers one question stated in its title and carries the product, the serving node, the page and the way back in the same place.
+We captured the firewall console in Chromium at 1440 by 960 pixels on a loopback node with SQLite and synthetic traffic. The numbered markers identify the controls described below each image. Counts belong to this run. The Edge page appears when the node runs a load balancer.
 
 .. figure:: /assets/images/console-sign-in.png
    :alt: The console sign-in page: user name, password and authenticator code fields with a Sign in button, and below them a Kiosk code field with an Open wall display button.
 
-   Sign-in. The public shell loads no globe geometry, GeoIP data or telemetry; the second form exchanges a wall-display code for a read-only statistics session.
+   We sign in to an operator account at (1). A wall display exchanges its one-time code at (2).
+
+Sign-in. The public shell loads no globe geometry, GeoIP data or telemetry; the second form exchanges a wall-display code for a read-only statistics session.
 
 .. figure:: /assets/images/console-traffic.png
    :alt: The Traffic overview page for the last 24 hours: tiles for requests, admitted, challenged, policy denied, banned, rate limited, other, and origin 4xx and 5xx, each with a yesterday comparison and a small sparkline.
 
-   Statistics, Traffic, over the last 24 hours. The note under the period control states the coverage: only four of 1,440 expected minute records exist, so every "Yesterday" reads "Not available". Tiles show retained closed-minute counts with a live 60-second sparkline; decision colours (admitted green, challenged amber, denied red) are the same in every panel. Origin 4xx and 5xx read "Not recorded" for a retained period, because the minute records do not keep the proxy mode that gives an origin count its meaning; the live boot totals show them. Below the visible tiles are two level tiles, active ban entries and healthy nodes, the timeline, and sampled panels that rank request paths and referring hosts and count client operating systems, browsers and response status.
+   We choose the reporting period at (1) and read the number of admitted requests at (2).
+
+The coverage note counts the recorded minutes in the selected period. A comparison needs sufficient history for both periods. The sparklines cover the last 60 seconds. Origin status counts are available in live boot totals. Below the tiles we can inspect active bans, healthy nodes, the timeline and sampled request paths, referring hosts, clients and response statuses.
 
 .. figure:: /assets/images/console-security.png
-   :alt: The Security overview page: tiles for inspection, reputation, rate limiting, challenges, bans and honeypot, live trend panels, and a live event feed listing WAF findings.
+   :alt: The Security overview with inspection and reputation tiles beside the live event feed.
 
-   Statistics, Security. One tile per module over the selected period, live outcome trends, and the live event feed with its newest findings (here ``waf:sqli`` and ``waf:xss``). Values that are not recorded say so instead of showing zero: the Reputation tile reads "Not recorded". Further down the page are findings over sixty equal buckets, attack categories and attacked paths.
+   We read the inspection summary at (1) and look for recent findings in the live feed at (2).
+
+The module tiles summarize the selected period. The trends and the event feed are live. Missing measurements are labelled as such. Further down the page we can inspect findings over time, attack categories and affected paths.
 
 .. figure:: /assets/images/console-events.png
-   :alt: The Events page with a filter form (module, category, country, client address, path, node, time range) above a list of recorded incidents tagged waf:xss and waf:sqli.
+   :alt: Incident filters above a recorded inspection finding on the Events page.
 
-   Events. The filter form above the recorded incidents, newest first. Each incident opens inline with its evidence: the selected local response, byte lengths, campaign candidate, and explicit "not recorded" entries for the matched rule, score terms and JA4 fingerprint. With ``--console-capture-heads`` the redacted request head (and, for audited admissions through the reverse proxy, the origin response head) opens on request, rendered as UTF-8 or Latin-1, with the response condition stated (captured, local, forward-auth unobserved, origin unavailable) and a copy-as-cURL command; only listed header values are kept, and ``--console-capture-header <name>`` adds to that list. Otherwise heads read as not recorded. Deny and allow actions open the IP groups form with the address drafted.
+   We narrow the incident list using (1). We open a matching incident at (2) to examine its evidence.
+
+Events. The filter form above the recorded incidents, newest first. Each incident opens inline with its evidence: the selected local response, byte lengths, campaign candidate, and explicit "not recorded" entries for the matched rule, score terms and JA4 fingerprint. With ``--console-capture-heads`` the redacted request head (and, for audited admissions through the reverse proxy, the origin response head) opens on request, rendered as UTF-8 or Latin-1, with the response condition stated (captured, local, forward-auth unobserved, origin unavailable) and a copy-as-cURL command; only listed header values are kept, and ``--console-capture-header <name>`` adds to that list. Otherwise heads read as not recorded. Deny and allow actions open the IP groups form with the address drafted.
 
 .. figure:: /assets/images/console-challenges.png
-   :alt: The Challenges page with a 24-hour retained window: seven challenges issued, submitted and accepted, none rejected, and a table of rejection causes, all zero.
+   :alt: The Challenges page with a retained window and tables for challenge outcomes and rejection causes.
 
-   Challenges. A retained window (one hour, one day or seven days) sums durable per-minute records and states how many minutes were recorded and complete; here seven challenges were issued, submitted and accepted, and the rejection causes are all zero. Further down are live totals since this boot, the configured and most recently issued parameters, the accepted solve-time histogram partitioned by algorithm and parameter bin, adaptive-difficulty transitions and per-address records with deny and allow shortcuts, retained seven days.
+   We compare issued, submitted and accepted challenges at (1). The table at (2) gives the reasons for rejected submissions.
+
+The retained window sums minute records and reports their coverage. Below it we can inspect totals since startup, puzzle parameters, solve times by algorithm, changes in difficulty and per-address records retained for seven days.
 
 .. figure:: /assets/images/console-policies.png
-   :alt: The Policies page: the applied configuration (Shield, revision 3, four rules, PoSW at difficulty 16, node-local limits) and the first rule, public-static, with 339 recorded hits today.
+   :alt: The Policies page with the applied Shield configuration and the timetable rule.
 
-   Policies. The applied engine names its surface, revisions, default algorithm and difficulty and its node-local limits, then lists rules in evaluation order with their hits today and the coverage of those counts. Further down are the inspection mode matrix, the request tester and IP groups. *Managed rules* opens the editor; saving an edit first shows a review of the changed fields, and confirming validates the whole candidate and creates a new revision.
+   We check which configuration is active at (1). The first rule in evaluation order appears at (2).
+
+Policies. The applied engine names its surface, revisions, default algorithm and difficulty and its node-local limits, then lists rules in evaluation order with their hits today and the coverage of those counts. Further down are the inspection mode matrix, the request tester and IP groups. *Managed rules* opens the editor; saving an edit first shows a review of the changed fields, and confirming validates the whole candidate and creates a new revision.
 
 .. figure:: /assets/images/console-nodes.png
-   :alt: The Nodes page: node 1 accepting connections, with open connections, active local ban entries, policy revisions 3 of 3, uptime, resident memory, CPU and boot identifier, sparklines of memory and CPU, and Drain node, Resume admission and Clear local bans buttons.
+   :alt: The Nodes page showing the serving node, resource use, admission controls and cluster membership.
 
-   Nodes. The serving node's status and commands, with resident memory and CPU of the last second and their sixty-second sparklines; below them every announced member with its applied policy revision against the committed revision, its management address and its probe result (SID 0007, SID 0013).
+   We check admission on the serving node at (1), then compare it with the announced members at (2).
+
+Nodes. The serving node's status and commands, with resident memory and CPU of the last second and their sixty-second sparklines; below them every announced member with its applied policy revision against the committed revision, its management address and its probe result (SID 0007, SID 0013).
 
 .. figure:: /assets/images/console-geoip.png
    :alt: The GeoIP page with the provider ip-location-db user-country, no generation loaded yet, and the import form.
 
-   GeoIP. Provider, licence, active generation digest, load time and the import form; here no generation has been loaded yet. A failed import never replaces the active generation.
+   We identify the active provider at (1) and select the provider for a new import at (2).
+
+GeoIP. Provider, licence, active generation digest, load time and the import form; here no generation has been loaded yet. A failed import never replaces the active generation.
 
 .. figure:: /assets/images/console-settings.png
    :alt: The Settings page with an empty list of notification destinations and the form for a new webhook or syslog destination.
 
-   Settings, with no notification destination yet and the form for a new one. Further down the page are denial-spike thresholds, retention with an explicit acknowledgement per window, response-page templates and About.
+   We review configured notification destinations at (1). We define a new destination at (2).
+
+Settings, with no notification destination yet and the form for a new one. Further down the page are denial-spike thresholds, retention with an explicit acknowledgement per window, response-page templates and About.
 
 .. figure:: /assets/images/console-audit.png
-   :alt: The Audit history page with a filter form and recorded activity rows: session.create, session.logout, kiosk.exchange and kiosk.grant, each with time, actor and role, subject and an Open button.
+   :alt: The Audit history page with activity filters and recorded actions.
 
-   Audit. Append-only history with actor and role, action, subject and a detail view with redacted before and after summaries; refused sign-ins are recorded too. Every management mutation and authentication row records the client address that presented the credential; rows the system writes on its own show it as not recorded. A policy record offers *Revert this change*, which restores the document recorded before that revision as a new, audited revision after a confirmation, and is refused if the rule set has moved on.
+   We filter by actor at (1) and open a recorded action from the list at (2).
+
+Audit. Append-only history with actor and role, action, subject and a detail view with redacted before and after summaries; refused sign-ins are recorded too. Every management mutation and authentication row records the client address that presented the credential; rows the system writes on its own show it as not recorded. A policy record offers *Revert this change*, which restores the document recorded before that revision as a new, audited revision after a confirmation, and is refused if the rule set has moved on.
 
 .. figure:: /assets/images/console-wall-display.png
-   :alt: A wall display titled Node 1 Traffic, with Live, an expiry of 719 minutes, Pause, Theme and Exit kiosk controls, and the eleven traffic tiles without navigation.
+   :alt: A read-only wall display for node 1 with a session expiry time and traffic tiles.
 
-   A wall display. A kiosk session shows the Traffic and Security views only, without navigation, and states when it expires.
+   We check which node the display follows at (1). The request total at (2) belongs to that scope.
+
+A wall display. A kiosk session shows the Traffic and Security views only, without navigation, and states when it expires.
 
 The optional ``--console-location <latitude,longitude>`` declares this node's position, for example ``1.3521,103.8198`` for a deployment in Singapore. The globe initially centers there; Center Sibuna returns to that point after rotation. Country activity follows animated great-circle arcs toward the node, with rear-hemisphere and flat-map dateline clipping. Country positions are representative centroids, and arrows represent the observed sixty-second window rather than individual connections. An unset server position stays explicitly unknown. The configured marker remains visible through telemetry outages; stale traffic does not animate.
 

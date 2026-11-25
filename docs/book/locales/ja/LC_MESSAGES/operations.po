@@ -8993,23 +8993,9 @@ msgstr ""
 msgid "Console Preview"
 msgstr "コンソールのプレビュー"
 
-#: ../../operations.rst:2667
-msgid ""
-"The console is compiled into the daemon by the default ``console`` "
-"feature, but starts only with ``--console``. It needs storage: "
-"``--console`` without ``--data-dir`` or ``--database-url`` is refused "
-"with ``CONSOLE001`` (``StorageRequired``). Use ``cargo build --release -p "
-"sibuna --no-default-features --features sqlite`` to compile it out; a "
-"build with ``--no-default-features`` alone has neither storage nor "
-"console. Bootstrap locally while the daemon is stopped:"
-msgstr ""
-"コンソールは既定の\\ ``console``\\ フィーチャーでデーモンに組み込まれますが、起動するのは\\ ``--console``\\ "
-"を指定したときだけです。コンソールにはストレージが必要です。\\ ``--data-dir``\\ も\\ "
-"``--database-url``\\ もない\\ ``--console``\\ は\\ ``CONSOLE001``\\ （\\ "
-"``StorageRequired``\\ ）で拒否されます。コンソールを除いてコンパイルするには\\ ``cargo build "
-"--release -p sibuna --no-default-features --features sqlite``\\ を使います。\\ "
-"``--no-default-features``\\ "
-"だけのビルドには、ストレージもコンソールもありません。デーモンを停止した状態で、ローカルで初期設定します。"
+#: ../../operations.rst:2735
+msgid "The console is compiled into the daemon by the default ``console`` feature, and starts with ``--console`` in daemon mode or the ``console`` section of an edge topology. It needs storage: ``--console`` without ``--data-dir`` or ``--database-url`` is refused with ``CONSOLE001`` (``StorageRequired``). Use ``cargo build --release -p sibuna --no-default-features --features sqlite`` to compile it out; a build with ``--no-default-features`` alone has neither storage nor console. Bootstrap locally while the daemon is stopped:"
+msgstr "既定の ``console`` 機能でコンソールがデーモンに組み込まれます。デーモンモードでは ``--console`` で、エッジモードではトポロジーの ``console`` セクションで起動します。コンソールにはストレージが必要です。\\ ``--data-dir``\\ も\\ ``--database-url``\\ もない\\ ``--console``\\ は\\ ``CONSOLE001``\\ （\\ ``StorageRequired``\\ ）で拒否されます。コンソールを除いてコンパイルするには\\ ``cargo build --release -p sibuna --no-default-features --features sqlite``\\ を使います。\\ ``--no-default-features``\\ だけのビルドには、ストレージもコンソールもありません。デーモンを停止した状態で、ローカルで初期設定します。"
 
 #: ../../operations.rst:2669
 msgid ""
@@ -9199,24 +9185,9 @@ msgstr ""
 msgid "A Tour of the Console"
 msgstr "コンソールの各画面"
 
-#: ../../operations.rst:2718
-msgid ""
-"The screenshots below come from a release build on one loopback node with "
-"SQLite storage and a policy of four ``ALLOW`` rules over a default "
-"challenge, after about four minutes of synthetic traffic: addresses from "
-"documentation ranges, SQL injection and cross-site scripting probes, "
-"three honeypot hits and seven challenges solved in headless Chromium. "
-"Every number is therefore illustrative. We took them with ``cargo xtask "
-"browser console --viewport-only``, which walks the console in Chromium at "
-"1440 by 960 pixels and judges every page. Each page answers one question "
-"stated in its title and carries the product, the serving node, the page "
-"and the way back in the same place."
-msgstr ""
-"以下のスクリーンショットは、SQLiteストレージを持つループバック上の一つのノードで動くリリースビルドから撮ったものです。ポリシーは既定のチャレンジの上に四つの\\ "
-"``ALLOW``\\ "
-"ルールを置いたもので、約4分間の合成トラフィックの後に撮りました。トラフィックは、文書用のアドレス範囲からのアドレス、SQLインジェクションとクロスサイトスクリプティングの試行、三回のハニーポットへのアクセス、ヘッドレスChromiumで解いた七つのチャレンジです。したがって、どの数値も説明のためのものです。撮影には\\ "
-"``cargo xtask browser console --viewport-only``\\ "
-"を使いました。これはChromiumで1440×960ピクセルの画面でコンソールを巡回し、すべてのページを判定します。各ページはタイトルに書いた一つの問いに答え、製品、配信ノード、ページ、戻る手段を同じ場所に置いています。"
+#: ../../operations.rst:2786
+msgid "We captured the firewall console in Chromium at 1440 by 960 pixels on a loopback node with SQLite and synthetic traffic. The numbered markers identify the controls described below each image. Counts belong to this run. The Edge page appears when the node runs a load balancer."
+msgstr "SQLite と模擬トラフィックを使い、ループバック上のノードでファイアウォールのコンソールを Chromium の 1440 × 960 ピクセルで撮影しました。画像中の番号は下の説明に対応します。件数はこの実行時の値です。ノードでロードバランサーを動かすと Edge ページが表示されます。"
 
 #: ../../operations.rst:2720
 msgid ""
@@ -9244,53 +9215,21 @@ msgid ""
 msgstr ""
 "過去24時間のTraffic概要ページ。リクエスト、許可、チャレンジ、ポリシーによる拒否、禁止、レート制限、その他、オリジンの4xxと5xxのタイルがあり、それぞれに前日との比較と小さなスパークラインが付いています。"
 
-#: ../../operations.rst:2728
-msgid ""
-"Statistics, Traffic, over the last 24 hours. The note under the period "
-"control states the coverage: only four of 1,440 expected minute records "
-"exist, so every \"Yesterday\" reads \"Not available\". Tiles show "
-"retained closed-minute counts with a live 60-second sparkline; decision "
-"colours (admitted green, challenged amber, denied red) are the same in "
-"every panel. Origin 4xx and 5xx read \"Not recorded\" for a retained "
-"period, because the minute records do not keep the proxy mode that gives "
-"an origin count its meaning; the live boot totals show them. Below the "
-"visible tiles are two level tiles, active ban entries and healthy nodes, "
-"the timeline, and sampled panels that rank request paths and referring "
-"hosts and count client operating systems, browsers and response status."
-msgstr ""
-"統計（Statistics）のTraffic、直近24時間。期間の選択の下の注記が観測範囲を示します。期待される1,440個の分単位のレコードのうち四つしかないので、\"Yesterday\"はすべて\"Not "
-"available\"と表示されます。タイルは、保持している確定済みの分のカウントを、ライブの60秒のスパークラインとともに示します。判断の色（許可は緑、チャレンジは琥珀色、拒否は赤）はどのパネルでも同じです。保持している期間のオリジンの4xxと5xxは\"Not "
-"recorded\"と表示されます。分単位のレコードは、オリジンのカウントに意味を与えるプロキシのモードを保持していないからです。ライブの起動以降の合計にはそれらが表示されます。見えているタイルの下には、二つの水準のタイル（有効な禁止の項目と正常なノード）、タイムライン、そしてリクエストのパスと参照元のホストを順位付けし、クライアントのOS、ブラウザー、応答のステータスを数えるサンプリングしたパネルがあります。"
+#: ../../operations.rst:2800
+msgid "The coverage note counts the recorded minutes in the selected period. A comparison needs sufficient history for both periods. The sparklines cover the last 60 seconds. Origin status counts are available in live boot totals. Below the tiles we can inspect active bans, healthy nodes, the timeline and sampled request paths, referring hosts, clients and response statuses."
+msgstr "集計範囲の注記に、選択期間のうち記録のある分数が示されます。比較するには両期間に十分な履歴が必要です。小さなグラフは直近 60 秒を表します。オリジンの応答ステータス別件数は起動後のライブ累計で確認できます。タイルの下には有効な禁止、正常なノード、時系列、要求パスや参照元、クライアント、応答ステータスの標本があります。"
 
-#: ../../operations.rst:2730
-msgid ""
-"The Security overview page: tiles for inspection, reputation, rate "
-"limiting, challenges, bans and honeypot, live trend panels, and a live "
-"event feed listing WAF findings."
-msgstr ""
-"Security概要ページ。検査、レピュテーション、レート制限、チャレンジ、禁止、ハニーポットのタイル、ライブの傾向パネル、WAFの検出結果を列挙するライブのイベントフィードがあります。"
+#: ../../operations.rst:2802
+msgid "The Security overview with inspection and reputation tiles beside the live event feed."
+msgstr "ライブイベントフィードの横に検査とレピュテーションのタイルがあるセキュリティ概要。"
 
-#: ../../operations.rst:2733
-msgid ""
-"Statistics, Security. One tile per module over the selected period, live "
-"outcome trends, and the live event feed with its newest findings (here "
-"``waf:sqli`` and ``waf:xss``). Values that are not recorded say so "
-"instead of showing zero: the Reputation tile reads \"Not recorded\". "
-"Further down the page are findings over sixty equal buckets, attack "
-"categories and attacked paths."
-msgstr ""
-"統計（Statistics）のSecurity。選択した期間についてのモジュールごとのタイル、ライブの結果の傾向、最新の検出（ここでは\\ "
-"``waf:sqli``\\ と\\ ``waf:xss``\\ "
-"）を示すライブのイベントフィードです。記録されていない値は、ゼロを表示する代わりにそのことを示します。Reputationのタイルは\"Not "
-"recorded\"と表示されています。ページのさらに下には、60個の等しい区間ごとの検出、攻撃のカテゴリー、攻撃されたパスがあります。"
+#: ../../operations.rst:2807
+msgid "The module tiles summarize the selected period. The trends and the event feed are live. Missing measurements are labelled as such. Further down the page we can inspect findings over time, attack categories and affected paths."
+msgstr "モジュールごとのタイルは選択期間の概要です。傾向とイベントフィードはライブ表示です。欠測値には印が付きます。下に進むと検出結果の推移、攻撃の分類、影響を受けたパスを調べられます。"
 
-#: ../../operations.rst:2735
-msgid ""
-"The Events page with a filter form (module, category, country, client "
-"address, path, node, time range) above a list of recorded incidents "
-"tagged waf:xss and waf:sqli."
-msgstr ""
-"Eventsページ。フィルターのフォーム（モジュール、カテゴリー、国、クライアントのアドレス、パス、ノード、期間）の下に、waf:xssとwaf:sqliのタグが付いた記録済みインシデントの一覧があります。"
+#: ../../operations.rst:2809
+msgid "Incident filters above a recorded inspection finding on the Events page."
+msgstr "イベントページでインシデントのフィルターの下に表示された検査記録。"
 
 #: ../../operations.rst:2738
 msgid ""
@@ -9313,34 +9252,17 @@ msgstr ""
 "``--console-capture-header <name>``\\ "
 "でその一覧に加えます。それ以外の場合、ヘッダー部は記録なしと表示されます。拒否と許可の操作は、アドレスを入力済みにしたIPグループのフォームを開きます。"
 
-#: ../../operations.rst:2740
-msgid ""
-"The Challenges page with a 24-hour retained window: seven challenges "
-"issued, submitted and accepted, none rejected, and a table of rejection "
-"causes, all zero."
-msgstr ""
-"Challengesページ。24時間の保持期間で、発行、提出、受理されたチャレンジがそれぞれ7件、拒否は0件で、拒否の原因の表はすべて0です。"
+#: ../../operations.rst:2816
+msgid "The Challenges page with a retained window and tables for challenge outcomes and rejection causes."
+msgstr "チャレンジページの集計期間、結果の表、拒否理由の表。"
 
-#: ../../operations.rst:2743
-msgid ""
-"Challenges. A retained window (one hour, one day or seven days) sums "
-"durable per-minute records and states how many minutes were recorded and "
-"complete; here seven challenges were issued, submitted and accepted, and "
-"the rejection causes are all zero. Further down are live totals since "
-"this boot, the configured and most recently issued parameters, the "
-"accepted solve-time histogram partitioned by algorithm and parameter bin, "
-"adaptive-difficulty transitions and per-address records with deny and "
-"allow shortcuts, retained seven days."
-msgstr ""
-"チャレンジ（Challenges）。保持している窓（1時間、1日、7日）は永続的な分単位のレコードを合計し、何分が記録され完全かを示します。ここでは七つのチャレンジが発行、提出、受理され、拒否の原因はすべてゼロです。さらに下には、今回の起動以降のライブの合計、設定したパラメーターと最近発行したパラメーター、アルゴリズムとパラメーターの区分で分けた受理された解答時間のヒストグラム、適応的な難易度の遷移、拒否と許可のショートカット付きのアドレスごとのレコード（7日間保持）があります。"
+#: ../../operations.rst:2821
+msgid "The retained window sums minute records and reports their coverage. Below it we can inspect totals since startup, puzzle parameters, solve times by algorithm, changes in difficulty and per-address records retained for seven days."
+msgstr "履歴の集計では分単位の記録を合算し、その網羅率を示します。その下で起動後の累計、パズルのパラメーター、アルゴリズム別の解答時間、難易度の変化、7 日間保存されるアドレス別記録を確認できます。"
 
-#: ../../operations.rst:2745
-msgid ""
-"The Policies page: the applied configuration (Shield, revision 3, four "
-"rules, PoSW at difficulty 16, node-local limits) and the first rule, "
-"public-static, with 339 recorded hits today."
-msgstr ""
-"Policiesページ。適用中の設定（Shield、リビジョン3、ルール四つ、難易度16のPoSW、ノードローカルの制限）と、最初のルールpublic-staticが表示され、今日のヒット数は339件と記録されています。"
+#: ../../operations.rst:2823
+msgid "The Policies page with the applied Shield configuration and the timetable rule."
+msgstr "ポリシーページに表示された適用中のシールド設定と時刻表ルール。"
 
 #: ../../operations.rst:2748
 msgid ""
@@ -9356,15 +9278,9 @@ msgstr ""
 "*Managed rules*\\ "
 "でエディターが開きます。編集を保存すると、まず変更したフィールドのレビューを示し、確定すると候補全体を検証して新しいリビジョンを作ります。"
 
-#: ../../operations.rst:2750
-msgid ""
-"The Nodes page: node 1 accepting connections, with open connections, "
-"active local ban entries, policy revisions 3 of 3, uptime, resident "
-"memory, CPU and boot identifier, sparklines of memory and CPU, and Drain "
-"node, Resume admission and Clear local bans buttons."
-msgstr ""
-"Nodesページ。接続を受け付けているノード1について、開いている接続、有効なローカルの禁止エントリー、ポリシーのリビジョン3/3、稼働時間、常駐メモリ、CPU、ブート識別子、メモリとCPUのスパークラインが表示され、Drain "
-"node、Resume admission、Clear local bansのボタンがあります。"
+#: ../../operations.rst:2830
+msgid "The Nodes page showing the serving node, resource use, admission controls and cluster membership."
+msgstr "ノードページに表示された稼働ノード、資源使用量、接続制御、クラスターメンバー。"
 
 #: ../../operations.rst:2753
 msgid ""
@@ -9406,14 +9322,9 @@ msgid ""
 msgstr ""
 "設定（Settings）。通知先はまだなく、新しい通知先のフォームがあります。ページのさらに下には、拒否の急増のしきい値、窓ごとに明示的な確認を伴う保持期間、応答ページのテンプレート、Aboutがあります。"
 
-#: ../../operations.rst:2765
-msgid ""
-"The Audit history page with a filter form and recorded activity rows: "
-"session.create, session.logout, kiosk.exchange and kiosk.grant, each with "
-"time, actor and role, subject and an Open button."
-msgstr ""
-"Audit "
-"historyページ。フィルターのフォームと、記録された操作の行（session.create、session.logout、kiosk.exchange、kiosk.grant）があり、各行に時刻、操作者とロール、対象、Openボタンがあります。"
+#: ../../operations.rst:2851
+msgid "The Audit history page with activity filters and recorded actions."
+msgstr "操作履歴のフィルターと記録された操作を示す監査ページ。"
 
 #: ../../operations.rst:2768
 msgid ""
@@ -9430,14 +9341,9 @@ msgstr ""
 "*Revert this change*\\ "
 "があり、確認の後で、そのリビジョンの前に記録された文書を、監査付きの新しいリビジョンとして復元します。ルールセットがその後も変わっている場合は拒否されます。"
 
-#: ../../operations.rst:2770
-msgid ""
-"A wall display titled Node 1 Traffic, with Live, an expiry of 719 "
-"minutes, Pause, Theme and Exit kiosk controls, and the eleven traffic "
-"tiles without navigation."
-msgstr ""
-"Node 1 Trafficという題のウォールディスプレイ。Live、残り719分の有効期限、Pause、Theme、Exit "
-"kioskの操作部と、ナビゲーションのない11個のトラフィックのタイルがあります。"
+#: ../../operations.rst:2858
+msgid "A read-only wall display for node 1 with a session expiry time and traffic tiles."
+msgstr "セッション有効期限と通信量タイルを表示するノード 1 の読み取り専用ディスプレイ。"
 
 #: ../../operations.rst:2773
 msgid ""
@@ -11813,3 +11719,63 @@ msgstr ""
 #: ../../operations.rst:1762
 msgid ":doc:`jlavi`"
 msgstr ":doc:`JlaviでSibunaを設定する <jlavi>`"
+
+#: ../../operations.rst:2791
+msgid "We sign in to an operator account at (1). A wall display exchanges its one-time code at (2)."
+msgstr "(1) で運用アカウントにログインします。壁面ディスプレイでは (2) で使い切りコードを引き換えます。"
+
+#: ../../operations.rst:2798
+msgid "We choose the reporting period at (1) and read the number of admitted requests at (2)."
+msgstr "(1) で集計期間を選び、(2) で許可された要求数を読み取ります。"
+
+#: ../../operations.rst:2805
+msgid "We read the inspection summary at (1) and look for recent findings in the live feed at (2)."
+msgstr "(1) で検査の概要を確認し、(2) のライブフィードで最近の検出結果を調べます。"
+
+#: ../../operations.rst:2812
+msgid "We narrow the incident list using (1). We open a matching incident at (2) to examine its evidence."
+msgstr "(1) でインシデントを絞り込みます。(2) で該当するインシデントを開き、記録された根拠を確認します。"
+
+#: ../../operations.rst:2819
+msgid "We compare issued, submitted and accepted challenges at (1). The table at (2) gives the reasons for rejected submissions."
+msgstr "(1) でチャレンジの発行、提出、受理の件数を比較します。(2) の表で提出が拒否された理由を確認できます。"
+
+#: ../../operations.rst:2826
+msgid "We check which configuration is active at (1). The first rule in evaluation order appears at (2)."
+msgstr "(1) で適用中の設定を確認します。(2) に評価順の最初のルールが表示されます。"
+
+#: ../../operations.rst:2833
+msgid "We check admission on the serving node at (1), then compare it with the announced members at (2)."
+msgstr "(1) で稼働ノードが接続を受け付けるか確認し、(2) の登録メンバーと比較します。"
+
+#: ../../operations.rst:2840
+msgid "We identify the active provider at (1) and select the provider for a new import at (2)."
+msgstr "(1) でプロバイダーを確認し、(2) で次のインポートに使うプロバイダーを選びます。"
+
+#: ../../operations.rst:2847
+msgid "We review configured notification destinations at (1). We define a new destination at (2)."
+msgstr "(1) で設定済みの通知先を確認します。(2) で新しい通知先を設定します。"
+
+#: ../../operations.rst:2854
+msgid "We filter by actor at (1) and open a recorded action from the list at (2)."
+msgstr "(1) で実行者を指定し、(2) の一覧から記録済みの操作を開きます。"
+
+#: ../../operations.rst:2861
+msgid "We check which node the display follows at (1). The request total at (2) belongs to that scope."
+msgstr "(1) で表示対象のノードを確認します。(2) の要求総数はその対象の値です。"
+
+#: ../../operations.rst:2516
+msgid "We check whether the node admits new flows at (1). If clients are refused, we read the counters by cause at (2)."
+msgstr "(1) でノードが新しいフローを受け付けるか確認します。クライアントが拒否される場合は (2) の原因別件数を調べます。"
+
+#: ../../operations.rst:2525
+msgid "We read the traffic reaching the web frontend at (1). At (2) we compare the timetable replicas by weight, requests, failures and time to first byte."
+msgstr "(1) でウェブフロントエンドに届いた通信量を確認します。(2) で時刻表の各レプリカの重み、要求数、失敗数、最初のバイトまでの時間を比較します。"
+
+#: ../../operations.rst:2513
+msgid "The Edge page showing a serving node, its flow limit and a table of refusal causes."
+msgstr "稼働ノード、フロー上限、拒否原因の表を表示した Edge ページ。"
+
+#: ../../operations.rst:2522
+msgid "The web frontend and timetable pool above the server controls on the Edge page."
+msgstr "Edge ページのサーバー操作欄の上に表示されたウェブフロントエンドと時刻表プール。"

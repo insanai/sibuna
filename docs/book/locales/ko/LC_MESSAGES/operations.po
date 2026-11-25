@@ -9132,22 +9132,9 @@ msgstr ""
 msgid "Console Preview"
 msgstr "콘솔 미리보기"
 
-#: ../../operations.rst:2667
-msgid ""
-"The console is compiled into the daemon by the default ``console`` "
-"feature, but starts only with ``--console``. It needs storage: "
-"``--console`` without ``--data-dir`` or ``--database-url`` is refused "
-"with ``CONSOLE001`` (``StorageRequired``). Use ``cargo build --release -p "
-"sibuna --no-default-features --features sqlite`` to compile it out; a "
-"build with ``--no-default-features`` alone has neither storage nor "
-"console. Bootstrap locally while the daemon is stopped:"
-msgstr ""
-"콘솔은 기본 ``console`` 기능으로 데몬에 컴파일되지만 ``--console``\\ 을 지정할 때만 시작합니다. 콘솔에는 "
-"저장소가 필요합니다. ``--data-dir``\\ 이나 ``--database-url`` 없이 ``--console``\\ 을 "
-"지정하면 ``CONSOLE001`` (``StorageRequired``)로 거부됩니다. 콘솔을 빼고 컴파일하려면 ``cargo "
-"build --release -p sibuna --no-default-features --features sqlite``\\ 를 "
-"사용하세요. ``--no-default-features``\\ 만 지정한 빌드에는 저장소도 콘솔도 없습니다. 데몬을 중지한 상태에서 "
-"로컬로 초기 설정을 합니다:"
+#: ../../operations.rst:2735
+msgid "The console is compiled into the daemon by the default ``console`` feature, and starts with ``--console`` in daemon mode or the ``console`` section of an edge topology. It needs storage: ``--console`` without ``--data-dir`` or ``--database-url`` is refused with ``CONSOLE001`` (``StorageRequired``). Use ``cargo build --release -p sibuna --no-default-features --features sqlite`` to compile it out; a build with ``--no-default-features`` alone has neither storage nor console. Bootstrap locally while the daemon is stopped:"
+msgstr "기본 ``console`` 기능으로 콘솔이 데몬에 포함됩니다. 데몬 모드에서는 ``--console`` 로, 에지 모드에서는 토폴로지의 ``console`` 섹션으로 콘솔을 시작합니다. 콘솔에는 저장소가 필요합니다. ``--data-dir``\\ 이나 ``--database-url`` 없이 ``--console``\\ 을 지정하면 ``CONSOLE001`` (``StorageRequired``)로 거부됩니다. 콘솔을 빼고 컴파일하려면 ``cargo build --release -p sibuna --no-default-features --features sqlite``\\ 를 사용하세요. ``--no-default-features``\\ 만 지정한 빌드에는 저장소도 콘솔도 없습니다. 데몬을 중지한 상태에서 로컬로 초기 설정을 합니다:"
 
 #: ../../operations.rst:2669
 msgid ""
@@ -9338,25 +9325,9 @@ msgstr ""
 msgid "A Tour of the Console"
 msgstr "콘솔 둘러보기"
 
-#: ../../operations.rst:2718
-msgid ""
-"The screenshots below come from a release build on one loopback node with "
-"SQLite storage and a policy of four ``ALLOW`` rules over a default "
-"challenge, after about four minutes of synthetic traffic: addresses from "
-"documentation ranges, SQL injection and cross-site scripting probes, "
-"three honeypot hits and seven challenges solved in headless Chromium. "
-"Every number is therefore illustrative. We took them with ``cargo xtask "
-"browser console --viewport-only``, which walks the console in Chromium at "
-"1440 by 960 pixels and judges every page. Each page answers one question "
-"stated in its title and carries the product, the serving node, the page "
-"and the way back in the same place."
-msgstr ""
-"아래 화면은 SQLite 저장소를 쓰는 루프백 노드 하나에서 릴리스 빌드로 캡처했습니다. 정책은 기본 챌린지 위에 ``ALLOW`` "
-"규칙 네 개를 두었고, 약 4분 동안 합성 트래픽을 보냈습니다. 트래픽은 문서용 대역의 주소, SQL 인젝션과 크로스 사이트 "
-"스크립팅 탐색, 허니팟 적중 세 번, 헤드리스 Chromium에서 해결한 챌린지 일곱 개로 이루어졌습니다. 따라서 모든 수치는 "
-"예시일 뿐입니다. 화면은 ``cargo xtask browser console --viewport-only``\\ 로 캡처했습니다. "
-"이 명령은 Chromium에서 1440 x 960 픽셀로 콘솔을 순회하며 모든 페이지를 검사합니다. 각 페이지는 제목에 적힌 질문 "
-"하나에 답하며, 제품, 서비스 노드, 페이지, 돌아가기 링크를 같은 자리에 표시합니다."
+#: ../../operations.rst:2786
+msgid "We captured the firewall console in Chromium at 1440 by 960 pixels on a loopback node with SQLite and synthetic traffic. The numbered markers identify the controls described below each image. Counts belong to this run. The Edge page appears when the node runs a load balancer."
+msgstr "SQLite와 합성 트래픽을 사용하는 루프백 노드에서 Chromium으로 방화벽 콘솔을 1440 × 960 픽셀로 캡처했습니다. 그림의 번호는 아래 설명과 연결됩니다. 수치는 이 실행에서 측정한 값입니다. 노드가 로드 밸런서를 실행하면 Edge 페이지가 나타납니다."
 
 #: ../../operations.rst:2720
 msgid ""
@@ -9386,59 +9357,21 @@ msgstr ""
 "최근 24시간의 트래픽 개요 페이지: 요청, 허용, 챌린지, 정책 거부, 차단, 속도 제한, 기타, 원본 서버 4xx와 5xx "
 "타일이 있으며, 타일마다 어제와의 비교와 작은 스파크라인이 붙어 있습니다."
 
-#: ../../operations.rst:2728
-msgid ""
-"Statistics, Traffic, over the last 24 hours. The note under the period "
-"control states the coverage: only four of 1,440 expected minute records "
-"exist, so every \"Yesterday\" reads \"Not available\". Tiles show "
-"retained closed-minute counts with a live 60-second sparkline; decision "
-"colours (admitted green, challenged amber, denied red) are the same in "
-"every panel. Origin 4xx and 5xx read \"Not recorded\" for a retained "
-"period, because the minute records do not keep the proxy mode that gives "
-"an origin count its meaning; the live boot totals show them. Below the "
-"visible tiles are two level tiles, active ban entries and healthy nodes, "
-"the timeline, and sampled panels that rank request paths and referring "
-"hosts and count client operating systems, browsers and response status."
-msgstr ""
-"통계, 트래픽, 최근 24시간. 기간 선택 아래의 안내문은 범위를 알려 줍니다. 예상되는 분 단위 기록 1,440개 가운데 4개만 "
-"있으므로 모든 \"어제\" 값은 \"사용할 수 없음\"으로 표시됩니다. 타일은 보존된, 이미 마감된 분의 집계를 실시간 60초 "
-"스파크라인과 함께 보여 줍니다. 결정 색상(허용은 녹색, 챌린지는 황색, 거부는 적색)은 모든 패널에서 같습니다. 보존된 기간의 "
-"원본 서버 4xx와 5xx는 \"기록되지 않음\"으로 표시됩니다. 분 단위 기록은 원본 서버 수에 의미를 부여하는 프록시 모드를 "
-"보관하지 않기 때문입니다. 이번 부팅 이후의 실시간 합계에는 이 값이 표시됩니다. 보이는 타일 아래에는 활성 차단 항목과 정상 "
-"노드를 보여 주는 수준 타일 두 개, 타임라인, 그리고 요청 경로와 참조 호스트의 순위를 매기고 클라이언트 운영 체제, 브라우저, "
-"응답 상태를 세는 표본 패널이 있습니다."
+#: ../../operations.rst:2800
+msgid "The coverage note counts the recorded minutes in the selected period. A comparison needs sufficient history for both periods. The sparklines cover the last 60 seconds. Origin status counts are available in live boot totals. Below the tiles we can inspect active bans, healthy nodes, the timeline and sampled request paths, referring hosts, clients and response statuses."
+msgstr "집계 범위 안내는 선택한 기간 중 몇 분이 기록되었는지 보여 줍니다. 비교하려면 두 기간 모두 충분한 기록이 있어야 합니다. 작은 추세 그래프는 최근 60초를 보여 줍니다. 원본 서버 상태 코드별 건수는 부팅 이후 실시간 합계에 있습니다. 타일 아래에서 활성 차단, 정상 노드, 시간 순서도와 요청 경로, 참조 호스트, 클라이언트, 응답 상태 표본을 볼 수 있습니다."
 
-#: ../../operations.rst:2730
-msgid ""
-"The Security overview page: tiles for inspection, reputation, rate "
-"limiting, challenges, bans and honeypot, live trend panels, and a live "
-"event feed listing WAF findings."
-msgstr ""
-"보안 개요 페이지: 검사, 평판, 속도 제한, 챌린지, 차단, 허니팟 타일, 실시간 추세 패널, WAF 탐지 결과를 나열하는 실시간 "
-"이벤트 피드가 있습니다."
+#: ../../operations.rst:2802
+msgid "The Security overview with inspection and reputation tiles beside the live event feed."
+msgstr "실시간 이벤트 피드 옆에 검사 및 평판 타일이 있는 보안 개요."
 
-#: ../../operations.rst:2733
-msgid ""
-"Statistics, Security. One tile per module over the selected period, live "
-"outcome trends, and the live event feed with its newest findings (here "
-"``waf:sqli`` and ``waf:xss``). Values that are not recorded say so "
-"instead of showing zero: the Reputation tile reads \"Not recorded\". "
-"Further down the page are findings over sixty equal buckets, attack "
-"categories and attacked paths."
-msgstr ""
-"통계, 보안. 선택한 기간의 모듈별 타일 하나씩, 실시간 결과 추세, 최신 탐지 결과(여기서는 ``waf:sqli``\\ 와 "
-"``waf:xss``)를 보여 주는 실시간 이벤트 피드가 있습니다. 기록되지 않은 값은 0을 보여 주는 대신 그렇다고 밝힙니다. "
-"평판 타일은 \"기록되지 않음\"으로 표시됩니다. 페이지 아래쪽에는 같은 크기의 구간 60개에 걸친 탐지 결과, 공격 범주, "
-"공격받은 경로가 있습니다."
+#: ../../operations.rst:2807
+msgid "The module tiles summarize the selected period. The trends and the event feed are live. Missing measurements are labelled as such. Further down the page we can inspect findings over time, attack categories and affected paths."
+msgstr "모듈 타일은 선택된 기간을 요약합니다. 추세와 이벤트 피드는 실시간으로 표시됩니다. 누락된 측정값은 따로 표시합니다. 아래에서 시간별 탐지 결과, 공격 범주, 영향을 받은 경로를 확인할 수 있습니다."
 
-#: ../../operations.rst:2735
-msgid ""
-"The Events page with a filter form (module, category, country, client "
-"address, path, node, time range) above a list of recorded incidents "
-"tagged waf:xss and waf:sqli."
-msgstr ""
-"이벤트 페이지: 필터 양식(모듈, 범주, 국가, 클라이언트 주소, 경로, 노드, 시간 범위) 아래에 waf:xss와 waf:sqli "
-"태그가 붙은 기록된 인시던트 목록이 있습니다."
+#: ../../operations.rst:2809
+msgid "Incident filters above a recorded inspection finding on the Events page."
+msgstr "이벤트 페이지에서 인시던트 필터 아래에 표시된 검사 기록."
 
 #: ../../operations.rst:2738
 msgid ""
@@ -9464,38 +9397,17 @@ msgstr ""
 "<name>``\\ 으로 그 목록에 추가합니다. 그렇지 않으면 헤드는 기록되지 않음으로 표시됩니다. 거부와 허용 동작은 해당 주소가 "
 "미리 채워진 IP 그룹 양식을 엽니다."
 
-#: ../../operations.rst:2740
-msgid ""
-"The Challenges page with a 24-hour retained window: seven challenges "
-"issued, submitted and accepted, none rejected, and a table of rejection "
-"causes, all zero."
-msgstr ""
-"24시간 보존 구간의 챌린지 페이지: 챌린지 일곱 개가 발급, 제출, 수락되었고 거부는 없으며, 거부 원인 표의 값은 모두 0입니다."
+#: ../../operations.rst:2816
+msgid "The Challenges page with a retained window and tables for challenge outcomes and rejection causes."
+msgstr "챌린지 페이지에 표시된 보존 기간과 챌린지 결과 및 거부 원인 표."
 
-#: ../../operations.rst:2743
-msgid ""
-"Challenges. A retained window (one hour, one day or seven days) sums "
-"durable per-minute records and states how many minutes were recorded and "
-"complete; here seven challenges were issued, submitted and accepted, and "
-"the rejection causes are all zero. Further down are live totals since "
-"this boot, the configured and most recently issued parameters, the "
-"accepted solve-time histogram partitioned by algorithm and parameter bin, "
-"adaptive-difficulty transitions and per-address records with deny and "
-"allow shortcuts, retained seven days."
-msgstr ""
-"챌린지. 보존 기간(1시간, 1일, 7일)은 영속적인 분 단위 기록을 합산하고, 기록되고 완결된 분이 몇 개인지 밝힙니다. 여기서는 "
-"챌린지 일곱 개가 발급, 제출, 수락되었고 거부 원인은 모두 0입니다. 페이지 아래쪽에는 이번 부팅 이후의 실시간 합계, 설정된 "
-"매개변수와 가장 최근에 발급된 매개변수, 알고리즘과 매개변수 구간별로 나눈 수락된 풀이 시간 히스토그램, 적응형 난이도 전환, "
-"거부와 허용 바로 가기가 있는 주소별 기록이 있으며, 7일 동안 보존됩니다."
+#: ../../operations.rst:2821
+msgid "The retained window sums minute records and reports their coverage. Below it we can inspect totals since startup, puzzle parameters, solve times by algorithm, changes in difficulty and per-address records retained for seven days."
+msgstr "보존 구간은 분 단위 기록을 합산하고 기록 범위를 표시합니다. 그 아래에서 시작 이후 합계, 퍼즐 매개변수, 알고리즘별 풀이 시간, 난이도 변화와 7일간 보존된 주소별 기록을 확인할 수 있습니다."
 
-#: ../../operations.rst:2745
-msgid ""
-"The Policies page: the applied configuration (Shield, revision 3, four "
-"rules, PoSW at difficulty 16, node-local limits) and the first rule, "
-"public-static, with 339 recorded hits today."
-msgstr ""
-"정책 페이지: 적용된 설정(Shield, 리비전 3, 규칙 네 개, 난이도 16의 PoSW, 노드 로컬 제한)과 오늘 적중 "
-"339회가 기록된 첫 번째 규칙 public-static이 보입니다."
+#: ../../operations.rst:2823
+msgid "The Policies page with the applied Shield configuration and the timetable rule."
+msgstr "정책 페이지의 적용 중인 실드 설정과 시간표 규칙."
 
 #: ../../operations.rst:2748
 msgid ""
@@ -9512,15 +9424,9 @@ msgstr ""
 "누르면 편집기가 열립니다. 수정 내용을 저장하면 먼저 바뀐 필드의 검토 화면이 나오고, 확인하면 후보 전체를 검증한 뒤 새 리비전을 "
 "만듭니다."
 
-#: ../../operations.rst:2750
-msgid ""
-"The Nodes page: node 1 accepting connections, with open connections, "
-"active local ban entries, policy revisions 3 of 3, uptime, resident "
-"memory, CPU and boot identifier, sparklines of memory and CPU, and Drain "
-"node, Resume admission and Clear local bans buttons."
-msgstr ""
-"노드 페이지: 연결을 받고 있는 노드 1의 열린 연결 수, 활성 로컬 차단 항목, 정책 리비전 3/3, 가동 시간, 상주 메모리, "
-"CPU, 부팅 식별자, 메모리와 CPU 스파크라인, 그리고 노드 드레인, 요청 허용 재개, 로컬 차단 해제 버튼이 있습니다."
+#: ../../operations.rst:2830
+msgid "The Nodes page showing the serving node, resource use, admission controls and cluster membership."
+msgstr "서비스 노드, 자원 사용량, 연결 수락 제어, 클러스터 멤버를 표시한 노드 페이지."
 
 #: ../../operations.rst:2753
 msgid ""
@@ -9566,14 +9472,9 @@ msgstr ""
 "설정. 아직 알림 대상이 없고 새 대상을 추가하는 양식이 보입니다. 페이지 아래쪽에는 거부 급증 임계값, 기간별로 명시적 확인을 "
 "받는 보존 설정, 응답 페이지 템플릿, 정보 항목이 있습니다."
 
-#: ../../operations.rst:2765
-msgid ""
-"The Audit history page with a filter form and recorded activity rows: "
-"session.create, session.logout, kiosk.exchange and kiosk.grant, each with "
-"time, actor and role, subject and an Open button."
-msgstr ""
-"감사 기록 페이지: 필터 양식과 기록된 활동 행(session.create, session.logout, "
-"kiosk.exchange, kiosk.grant)이 있으며, 행마다 시각, 수행자와 역할, 대상, 열기 버튼이 있습니다."
+#: ../../operations.rst:2851
+msgid "The Audit history page with activity filters and recorded actions."
+msgstr "활동 필터와 기록된 작업을 표시한 감사 기록 페이지."
 
 #: ../../operations.rst:2768
 msgid ""
@@ -9591,14 +9492,9 @@ msgstr ""
 "행에는 주소가 기록되지 않음으로 표시됩니다. 정책 기록에는 *이 변경 되돌리기*\\ 가 있습니다. 확인을 거쳐 해당 리비전 이전에 "
 "기록된 문서를 감사되는 새 리비전으로 복원하며, 그 사이 규칙 집합이 바뀌었으면 거부됩니다."
 
-#: ../../operations.rst:2770
-msgid ""
-"A wall display titled Node 1 Traffic, with Live, an expiry of 719 "
-"minutes, Pause, Theme and Exit kiosk controls, and the eleven traffic "
-"tiles without navigation."
-msgstr ""
-"Node 1 Traffic이라는 제목의 벽면 디스플레이: 실시간 표시, 남은 유효 시간 719분, 일시 정지, 테마, 키오스크 종료 "
-"컨트롤과 탐색 메뉴 없는 트래픽 타일 열한 개가 있습니다."
+#: ../../operations.rst:2858
+msgid "A read-only wall display for node 1 with a session expiry time and traffic tiles."
+msgstr "세션 만료 시간과 트래픽 타일이 보이는 노드 1의 읽기 전용 벽면 디스플레이."
 
 #: ../../operations.rst:2773
 msgid ""
@@ -12067,3 +11963,63 @@ msgstr ""
 #: ../../operations.rst:1762
 msgid ":doc:`jlavi`"
 msgstr ":doc:`Jlavi로 Sibuna 구성하기 <jlavi>`"
+
+#: ../../operations.rst:2791
+msgid "We sign in to an operator account at (1). A wall display exchanges its one-time code at (2)."
+msgstr "(1)에서 운영자 계정으로 로그인합니다. 벽면 디스플레이는 (2)에서 일회용 코드를 교환합니다."
+
+#: ../../operations.rst:2798
+msgid "We choose the reporting period at (1) and read the number of admitted requests at (2)."
+msgstr "(1)에서 집계 기간을 선택하고 (2)에서 허용된 요청 수를 읽습니다."
+
+#: ../../operations.rst:2805
+msgid "We read the inspection summary at (1) and look for recent findings in the live feed at (2)."
+msgstr "(1)에서 검사 요약을 확인하고 (2)의 실시간 피드에서 최근 탐지 결과를 찾습니다."
+
+#: ../../operations.rst:2812
+msgid "We narrow the incident list using (1). We open a matching incident at (2) to examine its evidence."
+msgstr "(1)에서 인시던트 목록의 범위를 좁힙니다. (2)에서 일치하는 인시던트를 열어 증거를 확인합니다."
+
+#: ../../operations.rst:2819
+msgid "We compare issued, submitted and accepted challenges at (1). The table at (2) gives the reasons for rejected submissions."
+msgstr "(1)에서 발급, 제출, 수락된 챌린지 수를 비교합니다. (2)의 표에는 제출이 거부된 이유가 나옵니다."
+
+#: ../../operations.rst:2826
+msgid "We check which configuration is active at (1). The first rule in evaluation order appears at (2)."
+msgstr "(1)에서 적용 중인 설정을 확인합니다. (2)에 평가 순서상 첫 번째 규칙이 나옵니다."
+
+#: ../../operations.rst:2833
+msgid "We check admission on the serving node at (1), then compare it with the announced members at (2)."
+msgstr "(1)에서 서비스 노드의 연결 수락 상태를 확인하고 (2)에서 알려진 멤버와 비교합니다."
+
+#: ../../operations.rst:2840
+msgid "We identify the active provider at (1) and select the provider for a new import at (2)."
+msgstr "(1)에서 공급자를 확인하고 (2)에서 새로 가져올 데이터의 공급자를 선택합니다."
+
+#: ../../operations.rst:2847
+msgid "We review configured notification destinations at (1). We define a new destination at (2)."
+msgstr "(1)에서 설정된 알림 대상을 확인합니다. (2)에서 새 대상을 정의합니다."
+
+#: ../../operations.rst:2854
+msgid "We filter by actor at (1) and open a recorded action from the list at (2)."
+msgstr "(1)에서 실행자별로 필터링하고 (2)의 목록에서 기록된 작업을 엽니다."
+
+#: ../../operations.rst:2861
+msgid "We check which node the display follows at (1). The request total at (2) belongs to that scope."
+msgstr "(1)에서 디스플레이가 표시하는 노드를 확인합니다. (2)의 요청 총계는 그 범위의 값입니다."
+
+#: ../../operations.rst:2516
+msgid "We check whether the node admits new flows at (1). If clients are refused, we read the counters by cause at (2)."
+msgstr "(1)에서 노드가 새 흐름을 허용하는지 확인합니다. 클라이언트가 거부되면 (2)에서 원인별 건수를 읽습니다."
+
+#: ../../operations.rst:2525
+msgid "We read the traffic reaching the web frontend at (1). At (2) we compare the timetable replicas by weight, requests, failures and time to first byte."
+msgstr "(1)에서 웹 프런트엔드에 도달한 트래픽을 확인합니다. (2)에서 시간표 복제본의 가중치, 요청 수, 실패 수, 첫 바이트까지의 시간을 비교합니다."
+
+#: ../../operations.rst:2513
+msgid "The Edge page showing a serving node, its flow limit and a table of refusal causes."
+msgstr "서비스 노드, 흐름 제한, 거부 원인 표가 보이는 Edge 페이지."
+
+#: ../../operations.rst:2522
+msgid "The web frontend and timetable pool above the server controls on the Edge page."
+msgstr "Edge 페이지에서 서버 제어 항목 위에 표시된 웹 프런트엔드와 시간표 풀."

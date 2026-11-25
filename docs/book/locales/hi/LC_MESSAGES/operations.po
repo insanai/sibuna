@@ -9817,24 +9817,9 @@ msgstr ""
 msgid "Console Preview"
 msgstr "कंसोल प्रीव्यू"
 
-#: ../../operations.rst:2667
-msgid ""
-"The console is compiled into the daemon by the default ``console`` "
-"feature, but starts only with ``--console``. It needs storage: "
-"``--console`` without ``--data-dir`` or ``--database-url`` is refused "
-"with ``CONSOLE001`` (``StorageRequired``). Use ``cargo build --release -p "
-"sibuna --no-default-features --features sqlite`` to compile it out; a "
-"build with ``--no-default-features`` alone has neither storage nor "
-"console. Bootstrap locally while the daemon is stopped:"
-msgstr ""
-"कंसोल डिफ़ॉल्ट ``console`` feature द्वारा डेमन में कंपाइल होता है, लेकिन "
-"केवल ``--console`` के साथ शुरू होता है। इसे स्टोरेज चाहिए: ``--data-dir`` "
-"या ``--database-url`` के बिना ``--console`` को ``CONSOLE001`` "
-"(``StorageRequired``) के साथ अस्वीकार किया जाता है। इसे बाहर रखकर कंपाइल "
-"करने के लिए ``cargo build --release -p sibuna --no-default-features "
-"--features sqlite`` का उपयोग करें; केवल ``--no-default-features`` वाले "
-"बिल्ड में न स्टोरेज होता है न कंसोल। डेमन बंद रहते समय स्थानीय रूप से "
-"बूटस्ट्रैप करें:"
+#: ../../operations.rst:2735
+msgid "The console is compiled into the daemon by the default ``console`` feature, and starts with ``--console`` in daemon mode or the ``console`` section of an edge topology. It needs storage: ``--console`` without ``--data-dir`` or ``--database-url`` is refused with ``CONSOLE001`` (``StorageRequired``). Use ``cargo build --release -p sibuna --no-default-features --features sqlite`` to compile it out; a build with ``--no-default-features`` alone has neither storage nor console. Bootstrap locally while the daemon is stopped:"
+msgstr "डिफ़ॉल्ट ``console`` फ़ीचर कंसोल को डेमन में संकलित करता है। डेमन मोड में हम इसे ``--console`` से और एज टोपोलॉजी में ``console`` अनुभाग से शुरू करते हैं। इसे स्टोरेज चाहिए: ``--data-dir`` या ``--database-url`` के बिना ``--console`` को ``CONSOLE001`` (``StorageRequired``) के साथ अस्वीकार किया जाता है। इसे बाहर रखकर कंपाइल करने के लिए ``cargo build --release -p sibuna --no-default-features --features sqlite`` का उपयोग करें; केवल ``--no-default-features`` वाले बिल्ड में न स्टोरेज होता है न कंसोल। डेमन बंद रहते समय स्थानीय रूप से बूटस्ट्रैप करें:"
 
 #: ../../operations.rst:2669
 msgid ""
@@ -10042,29 +10027,9 @@ msgstr ""
 msgid "A Tour of the Console"
 msgstr "कंसोल की एक सैर"
 
-#: ../../operations.rst:2718
-msgid ""
-"The screenshots below come from a release build on one loopback node with "
-"SQLite storage and a policy of four ``ALLOW`` rules over a default "
-"challenge, after about four minutes of synthetic traffic: addresses from "
-"documentation ranges, SQL injection and cross-site scripting probes, "
-"three honeypot hits and seven challenges solved in headless Chromium. "
-"Every number is therefore illustrative. We took them with ``cargo xtask "
-"browser console --viewport-only``, which walks the console in Chromium at "
-"1440 by 960 pixels and judges every page. Each page answers one question "
-"stated in its title and carries the product, the serving node, the page "
-"and the way back in the same place."
-msgstr ""
-"नीचे के स्क्रीनशॉट SQLite स्टोरेज वाले एक loopback नोड पर एक रिलीज़ बिल्ड "
-"से हैं, जिसकी नीति में डिफ़ॉल्ट चैलेंज के ऊपर चार ``ALLOW`` नियम हैं, "
-"लगभग चार मिनट के कृत्रिम ट्रैफ़िक के बाद: दस्तावेज़ीकरण श्रेणियों के पते, "
-"SQL injection और cross-site scripting वाले प्रोब, तीन हनीपॉट हिट और "
-"headless Chromium में हल किए गए सात चैलेंज। इसलिए हर संख्या केवल उदाहरण "
-"के लिए है। हमने इन्हें ``cargo xtask browser console --viewport-only`` से "
-"लिया, जो Chromium में 1440 x 960 पिक्सेल पर कंसोल में घूमता है और हर पेज "
-"को परखता है। हर पेज अपने शीर्षक में बताए गए एक प्रश्न का उत्तर देता है, "
-"और उत्पाद, सर्व करने वाला नोड, पेज और वापसी का रास्ता एक ही स्थान पर रखता "
-"है।"
+#: ../../operations.rst:2786
+msgid "We captured the firewall console in Chromium at 1440 by 960 pixels on a loopback node with SQLite and synthetic traffic. The numbered markers identify the controls described below each image. Counts belong to this run. The Edge page appears when the node runs a load balancer."
+msgstr "हमने SQLite और कृत्रिम ट्रैफ़िक वाले लूपबैक नोड पर Chromium में 1440 × 960 पिक्सेल पर फ़ायरवॉल कंसोल के चित्र लिए। हर चित्र में अंक नीचे बताए गए नियंत्रणों को पहचानते हैं। गिनतियाँ इसी रन की हैं। नोड पर लोड बैलेंसर चलने पर Edge पृष्ठ दिखता है।"
 
 #: ../../operations.rst:2720
 msgid ""
@@ -10096,68 +10061,21 @@ msgstr ""
 "policy denied, banned, rate limited, other, और ऑरिजिन 4xx तथा 5xx की "
 "टाइलें, हर एक में कल से तुलना और एक छोटी sparkline।"
 
-#: ../../operations.rst:2728
-msgid ""
-"Statistics, Traffic, over the last 24 hours. The note under the period "
-"control states the coverage: only four of 1,440 expected minute records "
-"exist, so every \"Yesterday\" reads \"Not available\". Tiles show "
-"retained closed-minute counts with a live 60-second sparkline; decision "
-"colours (admitted green, challenged amber, denied red) are the same in "
-"every panel. Origin 4xx and 5xx read \"Not recorded\" for a retained "
-"period, because the minute records do not keep the proxy mode that gives "
-"an origin count its meaning; the live boot totals show them. Below the "
-"visible tiles are two level tiles, active ban entries and healthy nodes, "
-"the timeline, and sampled panels that rank request paths and referring "
-"hosts and count client operating systems, browsers and response status."
-msgstr ""
-"आँकड़े, ट्रैफ़िक, पिछले 24 घंटों के। अवधि नियंत्रण के नीचे की टिप्पणी "
-"कवरेज बताती है: अपेक्षित 1,440 मिनट-रिकॉर्ड में से केवल चार मौजूद हैं, "
-"इसलिए हर \"Yesterday\" में \"Not available\" लिखा है। टाइलें रखे गए बंद "
-"मिनटों की गिनती एक लाइव 60-सेकंड sparkline के साथ दिखाती हैं; निर्णय के "
-"रंग (स्वीकृत हरा, चैलेंज किया गया एम्बर, अस्वीकृत लाल) हर पैनल में एक "
-"जैसे हैं। रखी गई अवधि के लिए ऑरिजिन 4xx और 5xx में \"Not recorded\" लिखा "
-"है, क्योंकि मिनट-रिकॉर्ड वह प्रॉक्सी मोड नहीं रखते जो ऑरिजिन गिनती को "
-"उसका अर्थ देता है; लाइव boot योग इन्हें दिखाते हैं। दिखने वाली टाइलों के "
-"नीचे दो स्तर-टाइलें हैं, सक्रिय प्रतिबंध प्रविष्टियाँ और स्वस्थ नोड, फिर "
-"समयरेखा, और सैंपल किए गए पैनल जो अनुरोध पाथ और referring होस्ट को क्रम "
-"देते हैं और क्लाइंट ऑपरेटिंग सिस्टम, ब्राउज़र और रिस्पॉन्स स्टेटस गिनते "
-"हैं।"
+#: ../../operations.rst:2800
+msgid "The coverage note counts the recorded minutes in the selected period. A comparison needs sufficient history for both periods. The sparklines cover the last 60 seconds. Origin status counts are available in live boot totals. Below the tiles we can inspect active bans, healthy nodes, the timeline and sampled request paths, referring hosts, clients and response statuses."
+msgstr "कवरेज का विवरण चुनी अवधि में दर्ज मिनट गिनता है। तुलना के लिए दोनों अवधियों का पर्याप्त इतिहास चाहिए। छोटी रेखाएँ पिछले 60 सेकंड दिखाती हैं। मूल सर्वर की प्रतिक्रिया स्थिति के आँकड़े बूट के बाद के लाइव योग में मिलते हैं। टाइलों के नीचे सक्रिय प्रतिबंध, स्वस्थ नोड, समयरेखा और अनुरोध पथ, संदर्भ देने वाले होस्ट, क्लाइंट व प्रतिक्रिया स्थितियों के नमूने देख सकते हैं।"
 
-#: ../../operations.rst:2730
-msgid ""
-"The Security overview page: tiles for inspection, reputation, rate "
-"limiting, challenges, bans and honeypot, live trend panels, and a live "
-"event feed listing WAF findings."
-msgstr ""
-"Security overview पेज: inspection, reputation, rate limiting, challenges, "
-"bans और honeypot की टाइलें, लाइव रुझान पैनल, और WAF निष्कर्षों की सूची "
-"वाली लाइव इवेंट फ़ीड।"
+#: ../../operations.rst:2802
+msgid "The Security overview with inspection and reputation tiles beside the live event feed."
+msgstr "सुरक्षा अवलोकन में लाइव घटना फ़ीड के पास निरीक्षण और प्रतिष्ठा की टाइलें।"
 
-#: ../../operations.rst:2733
-msgid ""
-"Statistics, Security. One tile per module over the selected period, live "
-"outcome trends, and the live event feed with its newest findings (here "
-"``waf:sqli`` and ``waf:xss``). Values that are not recorded say so "
-"instead of showing zero: the Reputation tile reads \"Not recorded\". "
-"Further down the page are findings over sixty equal buckets, attack "
-"categories and attacked paths."
-msgstr ""
-"आँकड़े, सुरक्षा। चुनी गई अवधि पर प्रति मॉड्यूल एक टाइल, लाइव "
-"परिणाम-रुझान, और सबसे नए निष्कर्षों के साथ लाइव इवेंट फ़ीड (यहाँ "
-"``waf:sqli`` और ``waf:xss``)। जो मान दर्ज नहीं होते, वे शून्य दिखाने के "
-"बजाय यही बताते हैं: Reputation टाइल में \"Not recorded\" लिखा है। पेज में "
-"और नीचे साठ बराबर बकेट पर निष्कर्ष, आक्रमण श्रेणियाँ और आक्रमण वाले पाथ "
-"हैं।"
+#: ../../operations.rst:2807
+msgid "The module tiles summarize the selected period. The trends and the event feed are live. Missing measurements are labelled as such. Further down the page we can inspect findings over time, attack categories and affected paths."
+msgstr "मॉड्यूल की टाइलें चुनी अवधि का सार देती हैं। रुझान और घटना फ़ीड लाइव हैं। अनुपलब्ध माप अलग चिह्नित होते हैं। नीचे हम समय के साथ निष्कर्ष, हमले की श्रेणियाँ और प्रभावित पथ देख सकते हैं।"
 
-#: ../../operations.rst:2735
-msgid ""
-"The Events page with a filter form (module, category, country, client "
-"address, path, node, time range) above a list of recorded incidents "
-"tagged waf:xss and waf:sqli."
-msgstr ""
-"Events पेज: दर्ज घटनाओं की सूची के ऊपर एक फ़िल्टर फ़ॉर्म (module, "
-"category, country, client address, path, node, time range); घटनाओं पर "
-"waf:xss और waf:sqli टैग हैं।"
+#: ../../operations.rst:2809
+msgid "Incident filters above a recorded inspection finding on the Events page."
+msgstr "घटना पृष्ठ पर फ़िल्टर और उनके नीचे निरीक्षण का एक दर्ज निष्कर्ष।"
 
 #: ../../operations.rst:2738
 msgid ""
@@ -10187,44 +10105,17 @@ msgstr ""
 "है। अन्यथा हेड \"not recorded\" के रूप में दिखते हैं। Deny और allow एक्शन "
 "IP समूह फ़ॉर्म को पते के साथ पहले से भरकर खोलते हैं।"
 
-#: ../../operations.rst:2740
-msgid ""
-"The Challenges page with a 24-hour retained window: seven challenges "
-"issued, submitted and accepted, none rejected, and a table of rejection "
-"causes, all zero."
-msgstr ""
-"24 घंटे की रखी गई विंडो वाला Challenges पेज: सात चैलेंज जारी, सबमिट और "
-"स्वीकृत, कोई अस्वीकृत नहीं, और अस्वीकृति के कारणों की तालिका, जिसमें सब "
-"शून्य हैं।"
+#: ../../operations.rst:2816
+msgid "The Challenges page with a retained window and tables for challenge outcomes and rejection causes."
+msgstr "चुनौती पृष्ठ पर ऐतिहासिक अवधि, परिणामों की तालिका और अस्वीकृति के कारण।"
 
-#: ../../operations.rst:2743
-msgid ""
-"Challenges. A retained window (one hour, one day or seven days) sums "
-"durable per-minute records and states how many minutes were recorded and "
-"complete; here seven challenges were issued, submitted and accepted, and "
-"the rejection causes are all zero. Further down are live totals since "
-"this boot, the configured and most recently issued parameters, the "
-"accepted solve-time histogram partitioned by algorithm and parameter bin, "
-"adaptive-difficulty transitions and per-address records with deny and "
-"allow shortcuts, retained seven days."
-msgstr ""
-"चैलेंज। रखी गई विंडो (एक घंटा, एक दिन या सात दिन) स्थायी प्रति-मिनट "
-"रिकॉर्ड का योग करती है और बताती है कि कितने मिनट दर्ज और पूर्ण थे; यहाँ "
-"सात चैलेंज जारी, सबमिट और स्वीकार हुए, और अस्वीकृति के सभी कारण शून्य "
-"हैं। और नीचे इस boot के बाद के लाइव योग, कॉन्फ़िगर किए गए और सबसे हाल में "
-"जारी पैरामीटर, एल्गोरिदम और पैरामीटर-बिन के अनुसार बँटा स्वीकृत हल-समय का "
-"हिस्टोग्राम, अनुकूली कठिनाई के बदलाव, और deny तथा allow शॉर्टकट वाले "
-"प्रति-पता रिकॉर्ड हैं, जो सात दिन रखे जाते हैं।"
+#: ../../operations.rst:2821
+msgid "The retained window sums minute records and reports their coverage. Below it we can inspect totals since startup, puzzle parameters, solve times by algorithm, changes in difficulty and per-address records retained for seven days."
+msgstr "ऐतिहासिक अवधि मिनट के रिकॉर्ड का योग और उनका कवरेज दिखाती है। नीचे हम शुरुआत से कुल आँकड़े, पहेली के पैरामीटर, एल्गोरिदम के हिसाब से हल का समय, कठिनाई में बदलाव और सात दिन तक सहेजे गए प्रति-पता रिकॉर्ड देख सकते हैं।"
 
-#: ../../operations.rst:2745
-msgid ""
-"The Policies page: the applied configuration (Shield, revision 3, four "
-"rules, PoSW at difficulty 16, node-local limits) and the first rule, "
-"public-static, with 339 recorded hits today."
-msgstr ""
-"Policies पेज: लागू कॉन्फ़िगरेशन (Shield, revision 3, चार नियम, कठिनाई 16 "
-"पर PoSW, नोड-स्थानीय सीमाएँ) और पहला नियम, public-static, आज के 339 दर्ज "
-"हिट के साथ।"
+#: ../../operations.rst:2823
+msgid "The Policies page with the applied Shield configuration and the timetable rule."
+msgstr "नीति पृष्ठ पर लागू शील्ड कॉन्फ़िगरेशन और समय-सारणी का नियम।"
 
 #: ../../operations.rst:2748
 msgid ""
@@ -10244,17 +10135,9 @@ msgstr ""
 "दिखती है, और पुष्टि करने पर पूरे उम्मीदवार का सत्यापन होता है और एक नया "
 "revision बनता है।"
 
-#: ../../operations.rst:2750
-msgid ""
-"The Nodes page: node 1 accepting connections, with open connections, "
-"active local ban entries, policy revisions 3 of 3, uptime, resident "
-"memory, CPU and boot identifier, sparklines of memory and CPU, and Drain "
-"node, Resume admission and Clear local bans buttons."
-msgstr ""
-"Nodes पेज: नोड 1 कनेक्शन स्वीकार कर रहा है; खुले कनेक्शन, सक्रिय स्थानीय "
-"प्रतिबंध प्रविष्टियाँ, नीति revision 3 में से 3, uptime, resident मेमोरी, "
-"CPU और boot पहचानकर्ता, मेमोरी और CPU की sparkline, और Drain node, Resume "
-"admission तथा Clear local bans बटन।"
+#: ../../operations.rst:2830
+msgid "The Nodes page showing the serving node, resource use, admission controls and cluster membership."
+msgstr "नोड पृष्ठ पर सेवारत नोड, संसाधन उपयोग, प्रवेश नियंत्रण और क्लस्टर के सदस्य।"
 
 #: ../../operations.rst:2753
 msgid ""
@@ -10306,15 +10189,9 @@ msgstr ""
 "स्वीकृति के साथ प्रतिधारण (retention), रिस्पॉन्स-पेज टेम्पलेट और About "
 "हैं।"
 
-#: ../../operations.rst:2765
-msgid ""
-"The Audit history page with a filter form and recorded activity rows: "
-"session.create, session.logout, kiosk.exchange and kiosk.grant, each with "
-"time, actor and role, subject and an Open button."
-msgstr ""
-"Audit history पेज: एक फ़िल्टर फ़ॉर्म और दर्ज गतिविधि की पंक्तियाँ: "
-"session.create, session.logout, kiosk.exchange और kiosk.grant, हर एक के "
-"साथ समय, कर्ता और भूमिका, विषय और एक Open बटन।"
+#: ../../operations.rst:2851
+msgid "The Audit history page with activity filters and recorded actions."
+msgstr "ऑडिट इतिहास पृष्ठ पर गतिविधि के फ़िल्टर और दर्ज कार्रवाइयाँ।"
 
 #: ../../operations.rst:2768
 msgid ""
@@ -10336,15 +10213,9 @@ msgstr ""
 "दस्तावेज़ को एक नए, ऑडिट किए गए revision के रूप में बहाल करता है, और यदि "
 "नियम समुच्चय आगे बढ़ चुका हो तो अस्वीकार हो जाता है।"
 
-#: ../../operations.rst:2770
-msgid ""
-"A wall display titled Node 1 Traffic, with Live, an expiry of 719 "
-"minutes, Pause, Theme and Exit kiosk controls, and the eleven traffic "
-"tiles without navigation."
-msgstr ""
-"Node 1 Traffic शीर्षक वाला एक wall display, जिसमें Live, 719 मिनट की "
-"समाप्ति, Pause, Theme और Exit kiosk नियंत्रण हैं, और बिना नेविगेशन के "
-"ग्यारह ट्रैफ़िक टाइलें।"
+#: ../../operations.rst:2858
+msgid "A read-only wall display for node 1 with a session expiry time and traffic tiles."
+msgstr "नोड 1 का केवल-पठन दीवार डिस्प्ले जिसमें सत्र की समाप्ति और ट्रैफ़िक के आँकड़े हैं।"
 
 #: ../../operations.rst:2773
 msgid ""
@@ -13097,3 +12968,63 @@ msgstr ""
 #: ../../operations.rst:1762
 msgid ":doc:`jlavi`"
 msgstr ":doc:`Jlavi से Sibuna का कॉन्फ़िगरेशन <jlavi>`"
+
+#: ../../operations.rst:2791
+msgid "We sign in to an operator account at (1). A wall display exchanges its one-time code at (2)."
+msgstr "हम (1) पर ऑपरेटर खाते में प्रवेश करते हैं। दीवार पर लगे डिस्प्ले के लिए एक बार उपयोग होने वाला कोड (2) पर देते हैं।"
+
+#: ../../operations.rst:2798
+msgid "We choose the reporting period at (1) and read the number of admitted requests at (2)."
+msgstr "हम (1) पर रिपोर्ट की अवधि चुनते हैं और (2) पर स्वीकृत अनुरोधों की संख्या पढ़ते हैं।"
+
+#: ../../operations.rst:2805
+msgid "We read the inspection summary at (1) and look for recent findings in the live feed at (2)."
+msgstr "हम (1) पर निरीक्षण का सार देखते हैं और (2) की लाइव फ़ीड में हाल के निष्कर्ष ढूँढते हैं।"
+
+#: ../../operations.rst:2812
+msgid "We narrow the incident list using (1). We open a matching incident at (2) to examine its evidence."
+msgstr "हम (1) से घटनाओं की सूची छाँटते हैं। (2) पर मेल खाने वाली घटना खोलकर उसके साक्ष्य देखते हैं।"
+
+#: ../../operations.rst:2819
+msgid "We compare issued, submitted and accepted challenges at (1). The table at (2) gives the reasons for rejected submissions."
+msgstr "हम (1) पर जारी, जमा और स्वीकार की गई चुनौतियों की तुलना करते हैं। (2) की तालिका अस्वीकृति के कारण बताती है।"
+
+#: ../../operations.rst:2826
+msgid "We check which configuration is active at (1). The first rule in evaluation order appears at (2)."
+msgstr "हम (1) पर देखते हैं कि कौन सा कॉन्फ़िगरेशन लागू है। मूल्यांकन क्रम का पहला नियम (2) पर है।"
+
+#: ../../operations.rst:2833
+msgid "We check admission on the serving node at (1), then compare it with the announced members at (2)."
+msgstr "हम (1) पर सेवारत नोड की प्रवेश स्थिति देखते हैं और (2) पर घोषित सदस्यों से उसकी तुलना करते हैं।"
+
+#: ../../operations.rst:2840
+msgid "We identify the active provider at (1) and select the provider for a new import at (2)."
+msgstr "हम (1) पर प्रदाता पहचानते हैं और (2) पर नए आयात का प्रदाता चुनते हैं।"
+
+#: ../../operations.rst:2847
+msgid "We review configured notification destinations at (1). We define a new destination at (2)."
+msgstr "हम (1) पर सूचना के लिए तय गंतव्य देखते हैं। (2) पर नया गंतव्य बनाते हैं।"
+
+#: ../../operations.rst:2854
+msgid "We filter by actor at (1) and open a recorded action from the list at (2)."
+msgstr "हम (1) पर कर्ता के अनुसार छाँटते हैं और (2) की सूची से दर्ज कार्रवाई खोलते हैं।"
+
+#: ../../operations.rst:2861
+msgid "We check which node the display follows at (1). The request total at (2) belongs to that scope."
+msgstr "हम (1) पर देखते हैं कि डिस्प्ले किस नोड को दिखा रहा है। (2) पर अनुरोधों का योग उसी दायरे का है।"
+
+#: ../../operations.rst:2516
+msgid "We check whether the node admits new flows at (1). If clients are refused, we read the counters by cause at (2)."
+msgstr "हम (1) पर जाँचते हैं कि नोड नए फ़्लो स्वीकार करता है या नहीं। क्लाइंट को मना किए जाने पर (2) पर कारण के अनुसार गिनती पढ़ते हैं।"
+
+#: ../../operations.rst:2525
+msgid "We read the traffic reaching the web frontend at (1). At (2) we compare the timetable replicas by weight, requests, failures and time to first byte."
+msgstr "हम (1) पर वेब फ़्रंटएंड तक पहुँचा ट्रैफ़िक देखते हैं। (2) पर समय-सारणी के प्रतिरूपों का भार, अनुरोध, विफलताएँ और पहले बाइट तक का समय मिलाते हैं।"
+
+#: ../../operations.rst:2513
+msgid "The Edge page showing a serving node, its flow limit and a table of refusal causes."
+msgstr "Edge पृष्ठ पर सेवारत नोड, उसकी फ़्लो सीमा और अस्वीकृति के कारणों की तालिका।"
+
+#: ../../operations.rst:2522
+msgid "The web frontend and timetable pool above the server controls on the Edge page."
+msgstr "Edge पृष्ठ पर सर्वर नियंत्रणों के ऊपर वेब फ़्रंटएंड और समय-सारणी पूल।"

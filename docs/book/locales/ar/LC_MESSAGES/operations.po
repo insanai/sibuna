@@ -9602,23 +9602,9 @@ msgstr ""
 msgid "Console Preview"
 msgstr "لمحة عن وحدة التحكم"
 
-#: ../../operations.rst:2667
-msgid ""
-"The console is compiled into the daemon by the default ``console`` "
-"feature, but starts only with ``--console``. It needs storage: "
-"``--console`` without ``--data-dir`` or ``--database-url`` is refused "
-"with ``CONSOLE001`` (``StorageRequired``). Use ``cargo build --release -p "
-"sibuna --no-default-features --features sqlite`` to compile it out; a "
-"build with ``--no-default-features`` alone has neither storage nor "
-"console. Bootstrap locally while the daemon is stopped:"
-msgstr ""
-"تُضمَّن وحدة التحكم في البرنامج الخدمي عبر الميزة الافتراضية ``console``، "
-"لكنها لا تبدأ إلا مع ``--console``. وهي تحتاج إلى التخزين: يُرفض "
-"``--console`` من دون ``--data-dir`` أو ``--database-url`` بالخطأ "
-"``CONSOLE001`` (``StorageRequired``). استخدم ``cargo build --release -p "
-"sibuna --no-default-features --features sqlite`` لإخراجها من البناء؛ أما "
-"البناء بـ ``--no-default-features`` وحده فليس فيه تخزين ولا وحدة تحكم. "
-"هيّئها محليًا والبرنامج الخدمي متوقف:"
+#: ../../operations.rst:2735
+msgid "The console is compiled into the daemon by the default ``console`` feature, and starts with ``--console`` in daemon mode or the ``console`` section of an edge topology. It needs storage: ``--console`` without ``--data-dir`` or ``--database-url`` is refused with ``CONSOLE001`` (``StorageRequired``). Use ``cargo build --release -p sibuna --no-default-features --features sqlite`` to compile it out; a build with ``--no-default-features`` alone has neither storage nor console. Bootstrap locally while the daemon is stopped:"
+msgstr "تضمّن الميزة الافتراضية ``console`` وحدة التحكم في البرنامج الخدمي. ونشغّلها بالخيار ``--console`` في وضع الخدمة أو بالقسم ``console`` في طوبولوجيا الحافة. وهي تحتاج إلى التخزين: يُرفض ``--console`` من دون ``--data-dir`` أو ``--database-url`` بالخطأ ``CONSOLE001`` (``StorageRequired``). استخدم ``cargo build --release -p sibuna --no-default-features --features sqlite`` لإخراجها من البناء؛ أما البناء بـ ``--no-default-features`` وحده فليس فيه تخزين ولا وحدة تحكم. هيّئها محليًا والبرنامج الخدمي متوقف:"
 
 #: ../../operations.rst:2669
 msgid ""
@@ -9825,28 +9811,9 @@ msgstr ""
 msgid "A Tour of the Console"
 msgstr "جولة في وحدة التحكم"
 
-#: ../../operations.rst:2718
-msgid ""
-"The screenshots below come from a release build on one loopback node with "
-"SQLite storage and a policy of four ``ALLOW`` rules over a default "
-"challenge, after about four minutes of synthetic traffic: addresses from "
-"documentation ranges, SQL injection and cross-site scripting probes, "
-"three honeypot hits and seven challenges solved in headless Chromium. "
-"Every number is therefore illustrative. We took them with ``cargo xtask "
-"browser console --viewport-only``, which walks the console in Chromium at "
-"1440 by 960 pixels and judges every page. Each page answers one question "
-"stated in its title and carries the product, the serving node, the page "
-"and the way back in the same place."
-msgstr ""
-"تأتي لقطات الشاشة أدناه من بناء إصدار على عقدة واحدة تستمع على عنوان "
-"الحلقة المحلية مع تخزين SQLite وسياسة من أربع قواعد ``ALLOW`` فوق إجراء "
-"افتراضي هو التحدي، بعد نحو أربع دقائق من حركة مصطنعة: عناوين من نطاقات "
-"التوثيق، ومحاولات استكشافية لحقن SQL وللبرمجة النصية عبر المواقع، وثلاث "
-"إصابات للمصيدة، وسبعة تحديات حُلّت في Chromium بلا واجهة. لذلك فكل رقم "
-"هنا توضيحي. التقطناها بالأمر ``cargo xtask browser console "
-"--viewport-only``، الذي يتجول في وحدة التحكم داخل Chromium بأبعاد 1440 في "
-"960 بكسل ويُقيّم كل صفحة. تجيب كل صفحة عن سؤال واحد يذكره عنوانها، وتضع "
-"المنتج والعقدة الخادمة والصفحة وطريق العودة في الموضع نفسه."
+#: ../../operations.rst:2786
+msgid "We captured the firewall console in Chromium at 1440 by 960 pixels on a loopback node with SQLite and synthetic traffic. The numbered markers identify the controls described below each image. Counts belong to this run. The Edge page appears when the node runs a load balancer."
+msgstr "التقطنا صور وحدة تحكم الجدار الناري في Chromium بأبعاد 1440 في 960 بكسلا على عقدة محلية تستخدم SQLite وحركة بيانات اصطناعية. تشير الأرقام إلى عناصر التحكم المشروحة أسفل كل صورة. وتخص القراءات هذا التشغيل. تظهر صفحة Edge عندما تشغّل العقدة موازن حمل."
 
 #: ../../operations.rst:2720
 msgid ""
@@ -9879,65 +9846,21 @@ msgstr ""
 "والمرفوضة بالسياسة، والمحظورة، والمقيدة بحد المعدل، والأخرى، واستجابات "
 "4xx و5xx من الخادم الأصلي، ولكل بطاقة مقارنة بالأمس ومنحنى صغير."
 
-#: ../../operations.rst:2728
-msgid ""
-"Statistics, Traffic, over the last 24 hours. The note under the period "
-"control states the coverage: only four of 1,440 expected minute records "
-"exist, so every \"Yesterday\" reads \"Not available\". Tiles show "
-"retained closed-minute counts with a live 60-second sparkline; decision "
-"colours (admitted green, challenged amber, denied red) are the same in "
-"every panel. Origin 4xx and 5xx read \"Not recorded\" for a retained "
-"period, because the minute records do not keep the proxy mode that gives "
-"an origin count its meaning; the live boot totals show them. Below the "
-"visible tiles are two level tiles, active ban entries and healthy nodes, "
-"the timeline, and sampled panels that rank request paths and referring "
-"hosts and count client operating systems, browsers and response status."
-msgstr ""
-"Statistics، وTraffic، خلال آخر 24 ساعة. تذكر الملاحظة تحت ضابط الفترة "
-"التغطية: لا يوجد إلا أربعة من 1,440 سجل دقيقة متوقعًا، لذلك تظهر كل قيمة "
-"\"Yesterday\" بالعبارة \"Not available\". تعرض البطاقات أعداد الدقائق "
-"المغلقة المحتفظ بها مع منحنى صغير حي من 60 ثانية؛ وألوان القرار (المقبول "
-"أخضر، والخاضع للتحدي كهرماني، والمرفوض أحمر) واحدة في كل لوحة. وتظهر "
-"قيمتا 4xx و5xx للخادم الأصلي بالعبارة \"Not recorded\" لأي فترة محتفظ "
-"بها، لأن سجلات الدقائق لا تحفظ وضع الوكيل الذي يمنح عدد الخادم الأصلي "
-"معناه؛ وتعرضهما المجاميع الحية منذ الإقلاع. تحت البطاقات الظاهرة بطاقتا "
-"مستوى، هما مدخلات الحظر النشطة والعقد السليمة، ثم الخط الزمني، ولوحات "
-"عينات ترتب مسارات الطلبات والمضيفين المحيلين، وتعد أنظمة تشغيل العملاء "
-"ومتصفحاتهم وحالات الاستجابة."
+#: ../../operations.rst:2800
+msgid "The coverage note counts the recorded minutes in the selected period. A comparison needs sufficient history for both periods. The sparklines cover the last 60 seconds. Origin status counts are available in live boot totals. Below the tiles we can inspect active bans, healthy nodes, the timeline and sampled request paths, referring hosts, clients and response statuses."
+msgstr "يبيّن وصف التغطية عدد الدقائق المسجلة في الفترة المحددة. وتحتاج المقارنة إلى سجل كاف لكلتا الفترتين. تغطي الرسوم الصغيرة آخر 60 ثانية. ونجد أعداد حالات الاستجابة من خادم الأصل في المجاميع الحية منذ بدء التشغيل. أسفل البطاقات نطالع حالات الحظر السارية والعقد السليمة والخط الزمني وعينات من مسارات الطلبات والمضيفين المحيلين والعملاء وحالات الاستجابة."
 
-#: ../../operations.rst:2730
-msgid ""
-"The Security overview page: tiles for inspection, reputation, rate "
-"limiting, challenges, bans and honeypot, live trend panels, and a live "
-"event feed listing WAF findings."
-msgstr ""
-"صفحة Security: بطاقات للفحص، والسمعة، وحد المعدل، والتحديات، والحظر، "
-"والمصيدة، ولوحات اتجاهات حية، وموجز أحداث حي يسرد نتائج WAF."
+#: ../../operations.rst:2802
+msgid "The Security overview with inspection and reputation tiles beside the live event feed."
+msgstr "نظرة عامة على الأمان تعرض بطاقات الفحص والسمعة بجوار موجز الأحداث المباشر."
 
-#: ../../operations.rst:2733
-msgid ""
-"Statistics, Security. One tile per module over the selected period, live "
-"outcome trends, and the live event feed with its newest findings (here "
-"``waf:sqli`` and ``waf:xss``). Values that are not recorded say so "
-"instead of showing zero: the Reputation tile reads \"Not recorded\". "
-"Further down the page are findings over sixty equal buckets, attack "
-"categories and attacked paths."
-msgstr ""
-"Statistics، وSecurity. بطاقة لكل وحدة خلال الفترة المختارة، واتجاهات حية "
-"للنتائج، وموجز الأحداث الحي بأحدث نتائجه (هنا ``waf:sqli`` و\\ "
-"``waf:xss``). والقيم غير المسجلة تصرّح بذلك بدل أن تعرض صفرًا: تظهر بطاقة "
-"Reputation بالعبارة \"Not recorded\". وفي أسفل الصفحة النتائج على ستين "
-"دلوًا متساويًا، وفئات الهجمات، والمسارات المهاجَمة."
+#: ../../operations.rst:2807
+msgid "The module tiles summarize the selected period. The trends and the event feed are live. Missing measurements are labelled as such. Further down the page we can inspect findings over time, attack categories and affected paths."
+msgstr "تلخص بطاقات الوحدات الفترة المختارة. أما الاتجاهات وموجز الأحداث فيعرضان بيانات حية. ويشير العرض إلى القياسات المفقودة. وفي الأسفل يمكننا فحص النتائج عبر الزمن وفئات الهجمات والمسارات المتأثرة."
 
-#: ../../operations.rst:2735
-msgid ""
-"The Events page with a filter form (module, category, country, client "
-"address, path, node, time range) above a list of recorded incidents "
-"tagged waf:xss and waf:sqli."
-msgstr ""
-"صفحة Events مع نموذج تصفية (الوحدة، والفئة، والبلد، وعنوان العميل، "
-"والمسار، والعقدة، والمدى الزمني) فوق قائمة بالحوادث المسجلة الموسومة "
-"بالوسمين waf:xss وwaf:sqli."
+#: ../../operations.rst:2809
+msgid "Incident filters above a recorded inspection finding on the Events page."
+msgstr "مرشحات الحوادث فوق نتيجة فحص مسجلة في صفحة الأحداث."
 
 #: ../../operations.rst:2738
 msgid ""
@@ -9966,43 +9889,17 @@ msgstr ""
 "غير مسجلة. يفتح إجراءا الرفض والسماح نموذج مجموعات IP وقد أُدرج العنوان "
 "في مسودة."
 
-#: ../../operations.rst:2740
-msgid ""
-"The Challenges page with a 24-hour retained window: seven challenges "
-"issued, submitted and accepted, none rejected, and a table of rejection "
-"causes, all zero."
-msgstr ""
-"صفحة Challenges بنافذة محتفظ بها مدتها 24 ساعة: سبعة تحديات صدرت وقُدمت "
-"حلولها وقُبلت، ولم يُرفض أي منها، وجدول بأسباب الرفض قيمها كلها صفر."
+#: ../../operations.rst:2816
+msgid "The Challenges page with a retained window and tables for challenge outcomes and rejection causes."
+msgstr "صفحة التحديات وفيها فترة محفوظة وجدولان للنتائج وأسباب الرفض."
 
-#: ../../operations.rst:2743
-msgid ""
-"Challenges. A retained window (one hour, one day or seven days) sums "
-"durable per-minute records and states how many minutes were recorded and "
-"complete; here seven challenges were issued, submitted and accepted, and "
-"the rejection causes are all zero. Further down are live totals since "
-"this boot, the configured and most recently issued parameters, the "
-"accepted solve-time histogram partitioned by algorithm and parameter bin, "
-"adaptive-difficulty transitions and per-address records with deny and "
-"allow shortcuts, retained seven days."
-msgstr ""
-"Challenges. تجمع نافذة محتفظ بها (ساعة، أو يوم، أو سبعة أيام) سجلات "
-"الدقائق الدائمة، وتذكر عدد الدقائق المسجلة والمكتملة؛ هنا صدرت سبعة "
-"تحديات وقُدمت وقُبلت، وكل أسباب الرفض صفر. وفي الأسفل المجاميع الحية منذ "
-"هذا الإقلاع، والمعاملات المعدة والمعاملات الصادرة مؤخرًا، والمدرج "
-"التكراري لأزمنة الحل المقبولة مقسمًا حسب الخوارزمية وفئة المعاملات، "
-"وانتقالات الصعوبة التكيفية، وسجلات لكل عنوان مع اختصارات للرفض والسماح، "
-"محتفظًا بها سبعة أيام."
+#: ../../operations.rst:2821
+msgid "The retained window sums minute records and reports their coverage. Below it we can inspect totals since startup, puzzle parameters, solve times by algorithm, changes in difficulty and per-address records retained for seven days."
+msgstr "تجمع النافذة المحفوظة سجلات الدقائق وتبيّن مدى تغطيتها. ونطالع أسفلها المجاميع منذ بدء التشغيل ومعاملات الألغاز وأزمنة الحل بحسب الخوارزمية وتغيرات الصعوبة وسجلات كل عنوان المحفوظة سبعة أيام."
 
-#: ../../operations.rst:2745
-msgid ""
-"The Policies page: the applied configuration (Shield, revision 3, four "
-"rules, PoSW at difficulty 16, node-local limits) and the first rule, "
-"public-static, with 339 recorded hits today."
-msgstr ""
-"صفحة Policies: الإعداد المطبق (Shield، والمراجعة 3، وأربع قواعد، وPoSW "
-"بصعوبة 16، وحدود محلية للعقدة) والقاعدة الأولى public-static، مع 339 "
-"إصابة مسجلة اليوم."
+#: ../../operations.rst:2823
+msgid "The Policies page with the applied Shield configuration and the timetable rule."
+msgstr "صفحة السياسات وفيها إعداد الدرع المطبق وقاعدة جدول المواعيد."
 
 #: ../../operations.rst:2748
 msgid ""
@@ -10020,17 +9917,9 @@ msgstr ""
 "ومجموعات IP. يفتح *Managed rules* المحرر؛ وحفظ تعديل يعرض أولًا مراجعة "
 "للحقول المتغيرة، والتأكيد يتحقق من المرشح كله وينشئ مراجعة جديدة."
 
-#: ../../operations.rst:2750
-msgid ""
-"The Nodes page: node 1 accepting connections, with open connections, "
-"active local ban entries, policy revisions 3 of 3, uptime, resident "
-"memory, CPU and boot identifier, sparklines of memory and CPU, and Drain "
-"node, Resume admission and Clear local bans buttons."
-msgstr ""
-"صفحة Nodes: العقدة 1 تقبل الاتصالات، مع الاتصالات المفتوحة، ومدخلات الحظر "
-"المحلي النشطة، ومراجعات السياسة 3 من 3، ومدة التشغيل، والذاكرة المقيمة، "
-"وCPU، ومعرف الإقلاع، ومنحنيات صغيرة للذاكرة وCPU، والأزرار Drain node "
-"وResume admission وClear local bans."
+#: ../../operations.rst:2830
+msgid "The Nodes page showing the serving node, resource use, admission controls and cluster membership."
+msgstr "صفحة العقد وتعرض العقدة العاملة واستهلاك الموارد وضوابط القبول وعضوية العنقود."
 
 #: ../../operations.rst:2753
 msgid ""
@@ -10081,15 +9970,9 @@ msgstr ""
 "عتبات ارتفاع الرفض، والاحتفاظ مع إقرار صريح لكل نافذة، وقوالب صفحات "
 "الاستجابة، وAbout."
 
-#: ../../operations.rst:2765
-msgid ""
-"The Audit history page with a filter form and recorded activity rows: "
-"session.create, session.logout, kiosk.exchange and kiosk.grant, each with "
-"time, actor and role, subject and an Open button."
-msgstr ""
-"صفحة Audit history مع نموذج تصفية وصفوف للنشاط المسجل: session.create "
-"وsession.logout وkiosk.exchange وkiosk.grant، ولكل صف الوقت، والفاعل "
-"ودوره، والموضوع، وزر Open."
+#: ../../operations.rst:2851
+msgid "The Audit history page with activity filters and recorded actions."
+msgstr "صفحة سجل التدقيق وفيها مرشحات النشاط والإجراءات المسجلة."
 
 #: ../../operations.rst:2768
 msgid ""
@@ -10110,15 +9993,9 @@ msgstr ""
 "يستعيد الوثيقة المسجلة قبل تلك المراجعة بوصفها مراجعة جديدة مدققة بعد "
 "تأكيد، ويُرفض إذا تقدمت مجموعة القواعد بعدها."
 
-#: ../../operations.rst:2770
-msgid ""
-"A wall display titled Node 1 Traffic, with Live, an expiry of 719 "
-"minutes, Pause, Theme and Exit kiosk controls, and the eleven traffic "
-"tiles without navigation."
-msgstr ""
-"شاشة جدارية بعنوان Node 1 Traffic، مع أدوات التحكم Live، ومدة متبقية قبل "
-"الانتهاء قدرها 719 دقيقة، وPause، وTheme، وExit kiosk، والبطاقات الإحدى "
-"عشرة للحركة بلا تنقل."
+#: ../../operations.rst:2858
+msgid "A read-only wall display for node 1 with a session expiry time and traffic tiles."
+msgstr "شاشة جدارية للقراءة فقط للعقدة 1 تعرض انتهاء الجلسة وبطاقات حركة البيانات."
 
 #: ../../operations.rst:2773
 msgid ""
@@ -12782,3 +12659,63 @@ msgstr ""
 #: ../../operations.rst:1762
 msgid ":doc:`jlavi`"
 msgstr ":doc:`إعداد Sibuna بلغة Jlavi <jlavi>`"
+
+#: ../../operations.rst:2791
+msgid "We sign in to an operator account at (1). A wall display exchanges its one-time code at (2)."
+msgstr "نسجل الدخول إلى حساب المشغّل عند (1). وتستبدل شاشة العرض الجداري رمزها الأحادي الاستخدام عند (2)."
+
+#: ../../operations.rst:2798
+msgid "We choose the reporting period at (1) and read the number of admitted requests at (2)."
+msgstr "نختار فترة التقرير عند (1) ونقرأ عدد الطلبات المقبولة عند (2)."
+
+#: ../../operations.rst:2805
+msgid "We read the inspection summary at (1) and look for recent findings in the live feed at (2)."
+msgstr "نقرأ ملخص الفحص عند (1) ونبحث عن النتائج الحديثة في موجز الأحداث المباشر عند (2)."
+
+#: ../../operations.rst:2812
+msgid "We narrow the incident list using (1). We open a matching incident at (2) to examine its evidence."
+msgstr "نحصر قائمة الحوادث باستخدام (1). ونفتح حادثة مطابقة عند (2) لفحص أدلتها."
+
+#: ../../operations.rst:2819
+msgid "We compare issued, submitted and accepted challenges at (1). The table at (2) gives the reasons for rejected submissions."
+msgstr "نقارن التحديات الصادرة والحلول المقدمة والمقبولة عند (1). ويبيّن الجدول عند (2) أسباب رفض الحلول."
+
+#: ../../operations.rst:2826
+msgid "We check which configuration is active at (1). The first rule in evaluation order appears at (2)."
+msgstr "نتحقق من الإعداد المطبق عند (1). وتظهر القاعدة الأولى في ترتيب التقييم عند (2)."
+
+#: ../../operations.rst:2833
+msgid "We check admission on the serving node at (1), then compare it with the announced members at (2)."
+msgstr "نتحقق من حالة القبول في العقدة التي تقدم الخدمة عند (1)، ثم نقارنها بالأعضاء المعلنين عند (2)."
+
+#: ../../operations.rst:2840
+msgid "We identify the active provider at (1) and select the provider for a new import at (2)."
+msgstr "نتعرف على المزوّد عند (1) ونختار مزوّد عملية الاستيراد الجديدة عند (2)."
+
+#: ../../operations.rst:2847
+msgid "We review configured notification destinations at (1). We define a new destination at (2)."
+msgstr "نراجع وجهات الإشعارات المضبوطة عند (1). ونعرّف وجهة جديدة عند (2)."
+
+#: ../../operations.rst:2854
+msgid "We filter by actor at (1) and open a recorded action from the list at (2)."
+msgstr "نرشح بحسب منفذ الإجراء عند (1)، ونفتح إجراء مسجلا من القائمة عند (2)."
+
+#: ../../operations.rst:2861
+msgid "We check which node the display follows at (1). The request total at (2) belongs to that scope."
+msgstr "نتحقق من العقدة التي تتابعها الشاشة عند (1). ومجموع الطلبات عند (2) يخص هذا النطاق."
+
+#: ../../operations.rst:2516
+msgid "We check whether the node admits new flows at (1). If clients are refused, we read the counters by cause at (2)."
+msgstr "نتحقق عند (1) من قبول العقدة لتدفقات جديدة. وعند رفض عملاء نقرأ العدادات بحسب السبب عند (2)."
+
+#: ../../operations.rst:2525
+msgid "We read the traffic reaching the web frontend at (1). At (2) we compare the timetable replicas by weight, requests, failures and time to first byte."
+msgstr "نقرأ حركة البيانات التي تصل إلى واجهة الويب عند (1). ونقارن عند (2) نسخ جدول المواعيد بحسب الوزن والطلبات والإخفاقات والزمن حتى البايت الأول."
+
+#: ../../operations.rst:2513
+msgid "The Edge page showing a serving node, its flow limit and a table of refusal causes."
+msgstr "صفحة Edge وتعرض عقدة عاملة وحد التدفقات وجدول أسباب الرفض."
+
+#: ../../operations.rst:2522
+msgid "The web frontend and timetable pool above the server controls on the Edge page."
+msgstr "واجهة الويب ومجموعة جدول المواعيد فوق أدوات التحكم بالخوادم في صفحة Edge."

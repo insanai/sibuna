@@ -10137,24 +10137,9 @@ msgstr ""
 msgid "Console Preview"
 msgstr "Vorschau der Konsole"
 
-#: ../../operations.rst:2667
-msgid ""
-"The console is compiled into the daemon by the default ``console`` "
-"feature, but starts only with ``--console``. It needs storage: "
-"``--console`` without ``--data-dir`` or ``--database-url`` is refused "
-"with ``CONSOLE001`` (``StorageRequired``). Use ``cargo build --release -p "
-"sibuna --no-default-features --features sqlite`` to compile it out; a "
-"build with ``--no-default-features`` alone has neither storage nor "
-"console. Bootstrap locally while the daemon is stopped:"
-msgstr ""
-"Die Konsole wird über das Standard-Feature ``console`` in den Daemon "
-"einkompiliert, startet aber nur mit ``--console``. Sie braucht eine "
-"Speicherung: ``--console`` ohne ``--data-dir`` oder ``--database-url`` "
-"wird mit ``CONSOLE001`` (``StorageRequired``) abgewiesen. Mit ``cargo "
-"build --release -p sibuna --no-default-features --features sqlite`` lässt "
-"sie sich herauskompilieren; ein Build mit ``--no-default-features`` "
-"allein hat weder Speicherung noch Konsole. Die lokale Ersteinrichtung "
-"erfolgt bei angehaltenem Daemon:"
+#: ../../operations.rst:2735
+msgid "The console is compiled into the daemon by the default ``console`` feature, and starts with ``--console`` in daemon mode or the ``console`` section of an edge topology. It needs storage: ``--console`` without ``--data-dir`` or ``--database-url`` is refused with ``CONSOLE001`` (``StorageRequired``). Use ``cargo build --release -p sibuna --no-default-features --features sqlite`` to compile it out; a build with ``--no-default-features`` alone has neither storage nor console. Bootstrap locally while the daemon is stopped:"
+msgstr "Das standardmäßig aktivierte Feature ``console`` baut die Konsole in den Daemon ein. Im Daemonmodus startet sie mit ``--console``, im Edge-Modus mit dem Abschnitt ``console`` der Topologie. Sie braucht eine Speicherung: ``--console`` ohne ``--data-dir`` oder ``--database-url`` wird mit ``CONSOLE001`` (``StorageRequired``) abgewiesen. Mit ``cargo build --release -p sibuna --no-default-features --features sqlite`` lässt sie sich herauskompilieren; ein Build mit ``--no-default-features`` allein hat weder Speicherung noch Konsole. Die lokale Ersteinrichtung erfolgt bei angehaltenem Daemon:"
 
 #: ../../operations.rst:2669
 msgid ""
@@ -10368,30 +10353,9 @@ msgstr ""
 msgid "A Tour of the Console"
 msgstr "Ein Rundgang durch die Konsole"
 
-#: ../../operations.rst:2718
-msgid ""
-"The screenshots below come from a release build on one loopback node with "
-"SQLite storage and a policy of four ``ALLOW`` rules over a default "
-"challenge, after about four minutes of synthetic traffic: addresses from "
-"documentation ranges, SQL injection and cross-site scripting probes, "
-"three honeypot hits and seven challenges solved in headless Chromium. "
-"Every number is therefore illustrative. We took them with ``cargo xtask "
-"browser console --viewport-only``, which walks the console in Chromium at "
-"1440 by 960 pixels and judges every page. Each page answers one question "
-"stated in its title and carries the product, the serving node, the page "
-"and the way back in the same place."
-msgstr ""
-"Die folgenden Bildschirmfotos stammen von einem Release-Build auf einem "
-"Loopback-Knoten mit SQLite-Speicher und einer Richtlinie aus vier "
-"``ALLOW``-Regeln über einer Standard-Challenge, nach etwa vier Minuten "
-"synthetischen Datenverkehrs: Adressen aus Dokumentationsbereichen, "
-"Sondierungen auf SQL-Injection und Cross-Site-Scripting, drei "
-"Honeypot-Treffer und sieben in Headless Chromium gelöste Challenges. Jede "
-"Zahl ist daher nur ein Beispiel. Wir haben sie mit ``cargo xtask browser "
-"console --viewport-only`` aufgenommen; der Befehl durchläuft die Konsole "
-"in Chromium mit 1440 mal 960 Pixeln und bewertet jede Seite. Jede Seite "
-"beantwortet eine Frage, die in ihrem Titel steht, und zeigt an derselben "
-"Stelle das Produkt, den bedienenden Knoten, die Seite und den Weg zurück."
+#: ../../operations.rst:2786
+msgid "We captured the firewall console in Chromium at 1440 by 960 pixels on a loopback node with SQLite and synthetic traffic. The numbered markers identify the controls described below each image. Counts belong to this run. The Edge page appears when the node runs a load balancer."
+msgstr "Wir haben die Firewall-Konsole in Chromium bei 1440 mal 960 Pixeln auf einem Loopback-Knoten mit SQLite und synthetischem Verkehr aufgenommen. Die Zahlen markieren die unter dem Bild erklärten Bedienelemente. Die Zählerstände stammen aus diesem Lauf. Die Edge-Seite erscheint, wenn der Knoten einen Lastverteiler betreibt."
 
 #: ../../operations.rst:2720
 msgid ""
@@ -10426,70 +10390,21 @@ msgstr ""
 "Ursprungsservers, jeweils mit einem Vergleich zum Vortag und einer "
 "kleinen Sparkline."
 
-#: ../../operations.rst:2728
-msgid ""
-"Statistics, Traffic, over the last 24 hours. The note under the period "
-"control states the coverage: only four of 1,440 expected minute records "
-"exist, so every \"Yesterday\" reads \"Not available\". Tiles show "
-"retained closed-minute counts with a live 60-second sparkline; decision "
-"colours (admitted green, challenged amber, denied red) are the same in "
-"every panel. Origin 4xx and 5xx read \"Not recorded\" for a retained "
-"period, because the minute records do not keep the proxy mode that gives "
-"an origin count its meaning; the live boot totals show them. Below the "
-"visible tiles are two level tiles, active ban entries and healthy nodes, "
-"the timeline, and sampled panels that rank request paths and referring "
-"hosts and count client operating systems, browsers and response status."
-msgstr ""
-"Statistics, Traffic, über die letzten 24 Stunden. Der Hinweis unter der "
-"Zeitraumauswahl nennt die Abdeckung: Nur vier von 1.440 erwarteten "
-"Minutendatensätzen existieren, daher zeigt jedes „Yesterday“ den Wert "
-"„Not available“. Kacheln zeigen aufbewahrte Zählungen abgeschlossener "
-"Minuten mit einer Live-Sparkline über 60 Sekunden; die "
-"Entscheidungsfarben (zugelassen grün, mit Challenge belegt "
-"bernsteinfarben, abgelehnt rot) sind in jedem Feld gleich. Die Kacheln "
-"Origin 4xx und Origin 5xx zeigen für einen aufbewahrten Zeitraum „Not "
-"recorded“, weil die Minutendatensätze den Proxy-Modus nicht festhalten, "
-"der einer Ursprungszählung ihre Bedeutung gibt; die Live-Summen seit dem "
-"Start zeigen sie. Unter den sichtbaren Kacheln liegen zwei "
-"Zustandskacheln, aktive Sperreinträge und gesunde Knoten, die Zeitleiste "
-"sowie Stichprobenfelder, die Anfragepfade und verweisende Hosts ordnen "
-"und Betriebssysteme, Browser und Antwortstatus der Clients zählen."
+#: ../../operations.rst:2800
+msgid "The coverage note counts the recorded minutes in the selected period. A comparison needs sufficient history for both periods. The sparklines cover the last 60 seconds. Origin status counts are available in live boot totals. Below the tiles we can inspect active bans, healthy nodes, the timeline and sampled request paths, referring hosts, clients and response statuses."
+msgstr "Der Hinweis zur Abdeckung zählt die aufgezeichneten Minuten im gewählten Zeitraum. Ein Vergleich braucht für beide Zeiträume ausreichend Daten. Die kleinen Kurven zeigen die letzten 60 Sekunden. Die Live-Summen seit dem Start enthalten die Statuszähler der Ursprungsserver. Unter den Kacheln finden wir aktive Sperren, gesunde Knoten, den Zeitverlauf und Stichproben zu Anfragepfaden, verweisenden Hosts, Clients und Antwortstatus."
 
-#: ../../operations.rst:2730
-msgid ""
-"The Security overview page: tiles for inspection, reputation, rate "
-"limiting, challenges, bans and honeypot, live trend panels, and a live "
-"event feed listing WAF findings."
-msgstr ""
-"Die Übersichtsseite Security: Kacheln für Prüfung, Reputation, "
-"Ratenbegrenzung, Challenges, Sperren und Honeypot, Live-Trenddiagramme "
-"und ein Live-Ereignisfeed mit WAF-Befunden."
+#: ../../operations.rst:2802
+msgid "The Security overview with inspection and reputation tiles beside the live event feed."
+msgstr "Die Sicherheitsübersicht mit Kacheln für Inspektion und Reputation neben dem Live-Ereignisstrom."
 
-#: ../../operations.rst:2733
-msgid ""
-"Statistics, Security. One tile per module over the selected period, live "
-"outcome trends, and the live event feed with its newest findings (here "
-"``waf:sqli`` and ``waf:xss``). Values that are not recorded say so "
-"instead of showing zero: the Reputation tile reads \"Not recorded\". "
-"Further down the page are findings over sixty equal buckets, attack "
-"categories and attacked paths."
-msgstr ""
-"Statistics, Security. Eine Kachel pro Modul über den gewählten Zeitraum, "
-"Live-Trends der Ergebnisse und der Live-Ereignisstrom mit seinen neuesten "
-"Befunden (hier ``waf:sqli`` und ``waf:xss``). Nicht erfasste Werte sagen "
-"das, statt null zu zeigen: Die Kachel Reputation zeigt „Not recorded“. "
-"Weiter unten auf der Seite stehen Befunde über sechzig gleiche "
-"Intervalle, Angriffskategorien und angegriffene Pfade."
+#: ../../operations.rst:2807
+msgid "The module tiles summarize the selected period. The trends and the event feed are live. Missing measurements are labelled as such. Further down the page we can inspect findings over time, attack categories and affected paths."
+msgstr "Die Modulkacheln fassen den gewählten Zeitraum zusammen. Trends und Ereignisstrom sind live. Fehlende Messungen sind gekennzeichnet. Weiter unten können wir Befunde im Zeitverlauf, Angriffskategorien und betroffene Pfade untersuchen."
 
-#: ../../operations.rst:2735
-msgid ""
-"The Events page with a filter form (module, category, country, client "
-"address, path, node, time range) above a list of recorded incidents "
-"tagged waf:xss and waf:sqli."
-msgstr ""
-"Die Seite Events mit einem Filterformular (Modul, Kategorie, Land, "
-"Clientadresse, Pfad, Knoten, Zeitraum) über einer Liste aufgezeichneter "
-"Vorfälle mit den Markierungen waf:xss und waf:sqli."
+#: ../../operations.rst:2809
+msgid "Incident filters above a recorded inspection finding on the Events page."
+msgstr "Vorfallfilter über einem aufgezeichneten Inspektionsbefund auf der Ereignisseite."
 
 #: ../../operations.rst:2738
 msgid ""
@@ -10521,46 +10436,17 @@ msgstr ""
 "gelten Köpfe als nicht erfasst. Die Aktionen Deny und Allow öffnen das "
 "Formular für IP-Gruppen mit der Adresse als Entwurf."
 
-#: ../../operations.rst:2740
-msgid ""
-"The Challenges page with a 24-hour retained window: seven challenges "
-"issued, submitted and accepted, none rejected, and a table of rejection "
-"causes, all zero."
-msgstr ""
-"Die Seite Challenges mit einem Aufbewahrungsfenster von 24 Stunden: "
-"sieben Challenges ausgestellt, eingereicht und akzeptiert, keine "
-"abgelehnt, und eine Tabelle der Ablehnungsgründe, alle bei null."
+#: ../../operations.rst:2816
+msgid "The Challenges page with a retained window and tables for challenge outcomes and rejection causes."
+msgstr "Die Challenge-Seite mit einem gespeicherten Zeitfenster und Tabellen für Ergebnisse und Ablehnungsgründe."
 
-#: ../../operations.rst:2743
-msgid ""
-"Challenges. A retained window (one hour, one day or seven days) sums "
-"durable per-minute records and states how many minutes were recorded and "
-"complete; here seven challenges were issued, submitted and accepted, and "
-"the rejection causes are all zero. Further down are live totals since "
-"this boot, the configured and most recently issued parameters, the "
-"accepted solve-time histogram partitioned by algorithm and parameter bin, "
-"adaptive-difficulty transitions and per-address records with deny and "
-"allow shortcuts, retained seven days."
-msgstr ""
-"Challenges. Ein aufbewahrtes Fenster (eine Stunde, ein Tag oder sieben "
-"Tage) summiert dauerhafte Datensätze pro Minute und gibt an, wie viele "
-"Minuten erfasst und vollständig waren; hier wurden sieben Challenges "
-"ausgegeben, eingereicht und akzeptiert, und alle Ablehnungsgründe stehen "
-"auf null. Weiter unten stehen die Live-Summen seit diesem Start, die "
-"konfigurierten und zuletzt ausgegebenen Parameter, das Histogramm der "
-"Lösungszeiten akzeptierter Challenges, aufgeteilt nach Algorithmus und "
-"Parameterklasse, Übergänge der adaptiven Schwierigkeit und Datensätze pro "
-"Adresse mit Abkürzungen zum Ablehnen und Erlauben, sieben Tage aufbewahrt."
+#: ../../operations.rst:2821
+msgid "The retained window sums minute records and reports their coverage. Below it we can inspect totals since startup, puzzle parameters, solve times by algorithm, changes in difficulty and per-address records retained for seven days."
+msgstr "Das gespeicherte Zeitfenster summiert Minutenwerte und nennt ihre Abdeckung. Darunter finden wir Summen seit dem Start, Puzzleparameter, Lösungszeiten nach Algorithmus, Änderungen der Schwierigkeit und sieben Tage lang gespeicherte Einträge je Adresse."
 
-#: ../../operations.rst:2745
-msgid ""
-"The Policies page: the applied configuration (Shield, revision 3, four "
-"rules, PoSW at difficulty 16, node-local limits) and the first rule, "
-"public-static, with 339 recorded hits today."
-msgstr ""
-"Die Seite Policies: die angewendete Konfiguration (Shield, Revision 3, "
-"vier Regeln, PoSW mit Schwierigkeit 16, knotenlokale Limits) und die "
-"erste Regel, public-static, mit heute 339 aufgezeichneten Treffern."
+#: ../../operations.rst:2823
+msgid "The Policies page with the applied Shield configuration and the timetable rule."
+msgstr "Die Richtlinienseite mit der angewendeten Shield-Konfiguration und der Fahrplanregel."
 
 #: ../../operations.rst:2748
 msgid ""
@@ -10581,18 +10467,9 @@ msgstr ""
 "Durchsicht der geänderten Felder, und die Bestätigung validiert den "
 "ganzen Kandidaten und erzeugt eine neue Revision."
 
-#: ../../operations.rst:2750
-msgid ""
-"The Nodes page: node 1 accepting connections, with open connections, "
-"active local ban entries, policy revisions 3 of 3, uptime, resident "
-"memory, CPU and boot identifier, sparklines of memory and CPU, and Drain "
-"node, Resume admission and Clear local bans buttons."
-msgstr ""
-"Die Seite Nodes: Knoten 1 nimmt Verbindungen an; dazu offene "
-"Verbindungen, aktive lokale Sperreinträge, Richtlinienrevisionen 3 von 3, "
-"Betriebszeit, residenter Speicher, CPU und Boot-Kennung, Sparklines für "
-"Speicher und CPU sowie die Schaltflächen Drain node, Resume admission und "
-"Clear local bans."
+#: ../../operations.rst:2830
+msgid "The Nodes page showing the serving node, resource use, admission controls and cluster membership."
+msgstr "Die Knotenseite mit bedienendem Knoten, Ressourcenverbrauch, Zulassungssteuerung und Cluster-Mitgliedern."
 
 #: ../../operations.rst:2753
 msgid ""
@@ -10645,16 +10522,9 @@ msgstr ""
 "die Aufbewahrung mit einer ausdrücklichen Bestätigung pro Fenster, "
 "Vorlagen für Antwortseiten und About."
 
-#: ../../operations.rst:2765
-msgid ""
-"The Audit history page with a filter form and recorded activity rows: "
-"session.create, session.logout, kiosk.exchange and kiosk.grant, each with "
-"time, actor and role, subject and an Open button."
-msgstr ""
-"Die Seite Audit history mit einem Filterformular und aufgezeichneten "
-"Aktivitätszeilen: session.create, session.logout, kiosk.exchange und "
-"kiosk.grant, jeweils mit Zeit, Akteur und Rolle, Gegenstand und einer "
-"Schaltfläche Open."
+#: ../../operations.rst:2851
+msgid "The Audit history page with activity filters and recorded actions."
+msgstr "Das Auditprotokoll mit Filtern und aufgezeichneten Aktionen."
 
 #: ../../operations.rst:2768
 msgid ""
@@ -10678,15 +10548,9 @@ msgstr ""
 "auditierte Revision wieder her und wird abgewiesen, wenn sich der "
 "Regelsatz inzwischen weiterentwickelt hat."
 
-#: ../../operations.rst:2770
-msgid ""
-"A wall display titled Node 1 Traffic, with Live, an expiry of 719 "
-"minutes, Pause, Theme and Exit kiosk controls, and the eleven traffic "
-"tiles without navigation."
-msgstr ""
-"Eine Wandanzeige mit dem Titel Node 1 Traffic, den Bedienelementen Live, "
-"einer Ablaufzeit von 719 Minuten, Pause, Theme und Exit kiosk sowie den "
-"elf Kacheln zum Datenverkehr, ohne Navigation."
+#: ../../operations.rst:2858
+msgid "A read-only wall display for node 1 with a session expiry time and traffic tiles."
+msgstr "Eine schreibgeschützte Anzeigetafel für Knoten 1 mit Sitzungsablauf und Verkehrskacheln."
 
 #: ../../operations.rst:2773
 msgid ""
@@ -13570,3 +13434,63 @@ msgstr ""
 #: ../../operations.rst:1762
 msgid ":doc:`jlavi`"
 msgstr ":doc:`Sibuna mit Jlavi konfigurieren <jlavi>`"
+
+#: ../../operations.rst:2791
+msgid "We sign in to an operator account at (1). A wall display exchanges its one-time code at (2)."
+msgstr "Bei (1) melden wir uns mit einem Bedienerkonto an. Eine Anzeigetafel löst ihren Einmalcode bei (2) ein."
+
+#: ../../operations.rst:2798
+msgid "We choose the reporting period at (1) and read the number of admitted requests at (2)."
+msgstr "Bei (1) wählen wir den Berichtszeitraum. Bei (2) lesen wir die Zahl der zugelassenen Anfragen ab."
+
+#: ../../operations.rst:2805
+msgid "We read the inspection summary at (1) and look for recent findings in the live feed at (2)."
+msgstr "Bei (1) sehen wir die Zusammenfassung der Inspektion. Bei (2) finden wir aktuelle Befunde im Live-Feed."
+
+#: ../../operations.rst:2812
+msgid "We narrow the incident list using (1). We open a matching incident at (2) to examine its evidence."
+msgstr "Mit (1) grenzen wir die Vorfälle ein. Bei (2) öffnen wir einen passenden Vorfall und prüfen seine Belege."
+
+#: ../../operations.rst:2819
+msgid "We compare issued, submitted and accepted challenges at (1). The table at (2) gives the reasons for rejected submissions."
+msgstr "Bei (1) vergleichen wir ausgegebene, eingereichte und akzeptierte Challenges. Die Tabelle bei (2) nennt die Gründe für abgelehnte Lösungen."
+
+#: ../../operations.rst:2826
+msgid "We check which configuration is active at (1). The first rule in evaluation order appears at (2)."
+msgstr "Bei (1) prüfen wir, welche Konfiguration aktiv ist. Bei (2) steht die erste Regel in der Auswertungsreihenfolge."
+
+#: ../../operations.rst:2833
+msgid "We check admission on the serving node at (1), then compare it with the announced members at (2)."
+msgstr "Bei (1) prüfen wir, ob der bedienende Knoten Verbindungen annimmt. Bei (2) vergleichen wir ihn mit den gemeldeten Mitgliedern."
+
+#: ../../operations.rst:2840
+msgid "We identify the active provider at (1) and select the provider for a new import at (2)."
+msgstr "Bei (1) sehen wir den Anbieter. Bei (2) wählen wir den Anbieter für einen neuen Import."
+
+#: ../../operations.rst:2847
+msgid "We review configured notification destinations at (1). We define a new destination at (2)."
+msgstr "Bei (1) prüfen wir die eingerichteten Benachrichtigungsziele. Bei (2) definieren wir ein neues Ziel."
+
+#: ../../operations.rst:2854
+msgid "We filter by actor at (1) and open a recorded action from the list at (2)."
+msgstr "Bei (1) filtern wir nach Akteur. Bei (2) öffnen wir eine aufgezeichnete Aktion aus der Liste."
+
+#: ../../operations.rst:2861
+msgid "We check which node the display follows at (1). The request total at (2) belongs to that scope."
+msgstr "Bei (1) prüfen wir, welchen Knoten die Tafel anzeigt. Die Anfragezahl bei (2) gilt für diese Auswahl."
+
+#: ../../operations.rst:2516
+msgid "We check whether the node admits new flows at (1). If clients are refused, we read the counters by cause at (2)."
+msgstr "Bei (1) prüfen wir, ob der Knoten neue Flows annimmt. Werden Clients abgewiesen, lesen wir bei (2) die Zähler je Ursache ab."
+
+#: ../../operations.rst:2525
+msgid "We read the traffic reaching the web frontend at (1). At (2) we compare the timetable replicas by weight, requests, failures and time to first byte."
+msgstr "Bei (1) sehen wir den Verkehr am Web-Frontend. Bei (2) vergleichen wir Gewicht, Anfragen, Fehler und Zeit bis zum ersten Byte der Fahrplanreplikate."
+
+#: ../../operations.rst:2513
+msgid "The Edge page showing a serving node, its flow limit and a table of refusal causes."
+msgstr "Die Edge-Seite mit bedienendem Knoten, Flow-Limit und einer Tabelle der Ablehnungsgründe."
+
+#: ../../operations.rst:2522
+msgid "The web frontend and timetable pool above the server controls on the Edge page."
+msgstr "Das Web-Frontend und der Fahrplan-Pool über den Server-Steuerelementen der Edge-Seite."
