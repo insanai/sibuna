@@ -40,7 +40,7 @@ const VIEW_AGE: Duration = Duration::from_millis(250);
 /// How long a reader waits for the table of the worker.
 const TABLE_WAIT: Duration = Duration::from_secs(1);
 /// The most servers in one view, over all pools. The rest is counted, not sent.
-const VIEW_SERVERS: usize = 1024;
+const VIEW_SERVERS: usize = MAX_SERVERS;
 
 /// What the worker last published.
 #[derive(Default)]
