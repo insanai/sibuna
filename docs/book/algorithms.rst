@@ -61,7 +61,7 @@ A state is stored as its row offset in one flat table, so a step is one add and 
      root:s -> cl:s [dir=back, label="fail", style=dashed, color="#d97706", fontcolor="#b45309", fontname="Helvetica", fontsize=8.5];
    }
 
-The automaton's state budget is a run-time option. The policy engine reserves at most one root plus the sum of all signature lengths, a safe upper bound on trie states. This avoids historically oversized fixed tables while retaining a dense transition for every byte class. Each pattern carries a small category tag (0 to 63, so a set of tags is one 64-bit word). Case folding uses a 256-entry byte-class table built with the automaton: both cases of a letter share a class, and bytes that occur in no pattern share one class, so a table row is as wide as the number of distinct pattern bytes plus one rather than 256. Exact engine sizes and the comparison with sequential substring search are recorded in Part VIII. The latter uses the same patterns and any-match semantics.
+The automaton's state budget is a run-time option. The policy engine reserves at most one root plus the sum of all signature lengths, a safe upper bound on trie states. This avoids historically oversized fixed tables while retaining a dense transition for every byte class. Each pattern carries a small category tag (0 to 63, so a set of tags is one 64-bit word). Case folding uses a 256-entry byte-class table built with the automaton: both cases of a letter share a class, and bytes that occur in no pattern share one class, so a table row is as wide as the number of distinct pattern bytes plus one rather than 256. Exact engine sizes and the comparison with sequential substring search are recorded in Part X. The latter uses the same patterns and any-match semantics.
 
 Regular Expressions, SIMD Engines, and the Choice
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -72,7 +72,7 @@ Three families were weighed for the signature stage:
 - *SIMD literal engines* (Hyperscan, Vectorscan) prefilter blocks of 16 to 32 bytes with shuffle-based nibble masks (the "Teddy" algorithm) and verify candidates with automata. They excel on long inputs with large literal sets. The cost is a multi-megabyte C++ dependency, a compile-time pattern database, no WebAssembly target, and, for inputs of a hundred bytes, no advantage: the whole field scans in less time than one cache miss.
 - *Dense Aho-Corasick plus small structural tokenizers*, the libinjection lineage, gives exact linear-time behaviour in a fixed table and needs nothing outside the binary.
 
-Sibuna's fields are short, so the third family wins on both memory and speed; Part VIII records about 1.56 ns per byte on an 8 KiB body (the semantic scan takes 12,784.3 ns, ``8kb_body_semantic_scan`` in ``benchmarks/results/primitives-latest.md``). That is the one workload where a SIMD prefilter would pay, and SID 0006 keeps it as an open item.
+Sibuna's fields are short, so the third family wins on both memory and speed; Part X records about 1.56 ns per byte on an 8 KiB body (the semantic scan takes 12,784.3 ns, ``8kb_body_semantic_scan`` in ``benchmarks/results/primitives-latest.md``). That is the one workload where a SIMD prefilter would pay, and SID 0006 keeps it as an open item.
 
 The Radix Trie for IPv4 and IPv6
 --------------------------------

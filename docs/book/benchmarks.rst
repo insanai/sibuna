@@ -1,5 +1,5 @@
-Part VIII: Empirical Evaluation
-===============================
+Part X: Empirical Evaluation
+============================
 
 We present Sibuna's measurements, recorded by committed harnesses: primitive latencies, whole products under an external load generator with CPU and memory accounting, latency at equal offered load from an open-loop generator, and a comparison with Anubis, a widely deployed proof-of-work gate. A console run with eight live dashboards completes the record. Every number in this part comes from a committed result file, which each table names with its generation time, or from a design record. A functional pass and a performance measurement answer different questions, and a measurement on one host is not a ranking on another.
 
@@ -1045,11 +1045,11 @@ Not Measured
 
 A row in this table is not a claim about the product's performance. SafeLine's own numbers concern detection quality, not throughput, and Cloudflare publishes plan quotas rather than per-request costs. Anyone with a Docker host can run SafeLine behind the same ``wrk`` workloads.
 
-.. admonition:: Exercise 8.1
+.. admonition:: Exercise 10.1
 
    Run ``cargo xtask bench primitives`` on another machine and compare the Hashcash verification and token verification rows with the reference host. Which of the two depends most on hardware hash instructions, and why?
 
-.. admonition:: Exercise 8.2
+.. admonition:: Exercise 10.2
 
    In the forward-auth table, compute the cores busy of a row: its CPU microseconds per request times its requests per second, divided by one million. Was the daemon CPU bound? Then compare its CPU microseconds per request with the classification cost from the first table. Why is the per-request CPU cost so much higher, and which components account for the difference?
 

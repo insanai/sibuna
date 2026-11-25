@@ -190,7 +190,7 @@ Verification Order and Single Use
 
 The order is deliberate. Tag, age, and binding are constant-time checks that reject garbage before any hashing. A wrong proof must not consume the challenge, so the spent set is written only after ``check_solution`` succeeds. Two threads that both verify the same valid solution race on ``mark_spent``; the shard lock serialises them, exactly one wins, and the other receives ``VerifyError::DoubleSpendAttempt``. The clause ``issued_at > now + 60`` (``CLOCK_SKEW_SECONDS`` is 60) rejects records minted by a node whose clock runs ahead by more than a minute, which would otherwise extend a challenge's life.
 
-Errors surface to the client as ``400`` with an Elm-style diagnostic (Part X): each ``VerifyError`` converts into ``sibuna_core::errors::ErrorKind``, whose explanation is the response body. The end-to-end tests assert on ``DOUBLE SPEND``, ``FINGERPRINT MISMATCH``, ``WRONG SOLUTION TYPE``, and ``MALFORMED CHALLENGE`` in the response body.
+Errors surface to the client as ``400`` with an Elm-style diagnostic (Part XII): each ``VerifyError`` converts into ``sibuna_core::errors::ErrorKind``, whose explanation is the response body. The end-to-end tests assert on ``DOUBLE SPEND``, ``FINGERPRINT MISMATCH``, ``WRONG SOLUTION TYPE``, and ``MALFORMED CHALLENGE`` in the response body.
 
 The Session Cookie
 ------------------

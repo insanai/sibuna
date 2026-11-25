@@ -13,7 +13,7 @@ The Connection Loop
 One Thread per Connection, Bounded
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Accept workers (``--workers``, one per CPU by default, at most 64) share the listening socket. Each accepted connection is handed to a thread of its own with a one-megabyte stack, and the accept loop goes straight back to ``accept``. A thread that finishes its connection parks and takes the next one, because creating and ending a thread for every connection stalled the other threads (Part VIII, SID 0002). The alternative, serving a connection to completion on the accept thread, was the first design: it measured well on a single client and badly on sixty-four, because sixty of them waited for a worker to finish its 256-request quota, and the tail latency grew with every waiting client. With a thread per connection, the p99 at 64 connections stays under one millisecond in every whole-product workload, from 305 us to 857 us (``benchmarks/results/product-latest.md``; Part VIII).
+Accept workers (``--workers``, one per CPU by default, at most 64) share the listening socket. Each accepted connection is handed to a thread of its own with a one-megabyte stack, and the accept loop goes straight back to ``accept``. A thread that finishes its connection parks and takes the next one, because creating and ending a thread for every connection stalled the other threads (Part X, SID 0002). The alternative, serving a connection to completion on the accept thread, was the first design: it measured well on a single client and badly on sixty-four, because sixty of them waited for a worker to finish its 256-request quota, and the tail latency grew with every waiting client. With a thread per connection, the p99 at 64 connections stays under one millisecond in every whole-product workload, from 305 us to 857 us (``benchmarks/results/product-latest.md``; Part X).
 
 The number of connection threads is bounded by ``--max-connections`` (1,024 by default, at most 8,192). Past the bound the accept loop answers ``503 Service Unavailable`` on the new socket and closes it without spawning anything, and counts the event in ``sibuna_overloaded_total``.
 
@@ -358,7 +358,7 @@ SIGINT and SIGTERM reach that sequence through ordinary Rust. Before it spawns a
 What We Measured
 ~~~~~~~~~~~~~~~~
 
-The table shows Shield in reverse-proxy mode on one Ryzen 9 5950X: the daemon pinned to four CPUs, ``wrk`` with two threads and 64 connections on eight other CPUs, five-second runs, the median of three. The rows are copied from ``benchmarks/results/product-latest.md``; Part VIII holds the full record.
+The table shows Shield in reverse-proxy mode on one Ryzen 9 5950X: the daemon pinned to four CPUs, ``wrk`` with two threads and 64 connections on eight other CPUs, five-second runs, the median of three. The rows are copied from ``benchmarks/results/product-latest.md``; Part X holds the full record.
 
 .. list-table:: Shield in reverse-proxy mode, from ``benchmarks/results/product-latest.md``
    :header-rows: 1
