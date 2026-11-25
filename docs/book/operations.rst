@@ -1337,7 +1337,18 @@ The daemon says what it found when it starts, and ``show info`` has the counters
 
 ``spill_asked`` counts the lookups that found nothing in memory and asked the file. ``spill_promoted`` counts the choices that the file gave back to memory, and ``spill_preferred`` those of them that replaced a choice made while the file was asked. ``spill_disk_rejected`` counts choices that a full part of the file did not admit: when it grows fast, the file is too small. ``spill_disk_corrupt`` counts slots that failed their check and were cleared. ``spill_disk_shed`` counts work that was dropped because the storage thread was behind: the edge never waits for the disk.
 
-Keep the file on a local disk, in a directory that only the daemon writes. The whole size is written at the first start, so a full disk is found then. The pages of the file that the daemon has used count as its resident memory, up to the whole file. The kernel can take them back, but a memory limit of systemd or of a container counts them: set such a limit above the size of the file plus the memory of the daemon. A second daemon that finds the file in use, as during the replacement of the binary, runs with the table in memory alone and says so. In a cluster each node has a file of its own. The nodes share the table in memory when ``mesh.replicate_sticky`` is set, and what a node hears from a peer is offered to its file too.
+Keep the file on a local disk, in a directory that only the daemon writes. A second daemon that finds the file in use, as during the replacement of the binary, runs with the table in memory alone and says so. In a cluster each node has a file of its own. The nodes share the table in memory when ``mesh.replicate_sticky`` is set, and what a node hears from a peer is offered to its file too.
+
+**Memory.** The pages of the file that the daemon has used count as its resident memory, up to the whole file. Without a memory limit the kernel takes them back when other programs need the memory. A memory limit of systemd or of a container counts them. We set such a limit above the size of the file plus the memory of the daemon. With a file of 256 MiB our measuring program reached 13 MiB above the size of the file. Under a limit of 96 MiB the same program was killed by the kernel on one host and ran more than fifty times slower on another. Both hosts use ZFS.
+
+**Disk.** The daemon writes the whole size at the first start, so on most file systems a full disk is found then. A file system that compresses or copies on write, such as ZFS or Btrfs, does not keep that promise: on ZFS with compression a new file of 16 MiB took 141 KiB. When such a file system fills up later, a write to the file ends the daemon with a signal. There we give the file a dataset or a volume of its own with reserved space.
+
+**In a container.** The spill cache needs no privilege, no capability and no kernel setting: it maps, locks and renames an ordinary file. We ran it in an unprivileged LXC container, with and without a memory limit. We have not yet run it under Docker or Kubernetes. Four settings need care.
+
+- *A path that can be written.* The image and the Helm chart run with a read-only root file system, so ``spill.path`` must lie on a mounted volume, and the user of the daemon, UID 65532 in the image, must be able to write the directory. Otherwise the daemon refuses to start with ``SPILL004``.
+- *A volume that outlives the container.* The file also works in the writable layer of a container and in an ``emptyDir``, but there it is lost with the container or the Pod, and a new file is empty. We use a named volume or a PersistentVolumeClaim. We never put the file on a ``tmpfs`` or on an ``emptyDir`` with ``medium: Memory``: the whole file then counts as memory and no restart of the host keeps it. The size of the file counts against the size of the volume, and in an ``emptyDir`` against the limit of ephemeral storage.
+- *The memory limit.* This is ``--memory`` of Docker and ``resources.limits.memory`` of Kubernetes. We set it above the size of the file plus the memory of the daemon, as the paragraph on memory says. In Kubernetes we set the request to the same value, because the used pages count as working memory of the Pod.
+- *One file for each replica.* The file is locked. A second replica with the same volume and the same path runs with the table in memory alone. We give each replica a volume of its own, as the volume claim template of a StatefulSet does. A network file system such as NFS is not a local disk, and we have not tested one.
 
 Redirects, headers and body limits
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1931,6 +1942,7 @@ The URL file holds ``postgres://ROLE:PASSWORD@HOST/DATABASE``. Only the user of 
    GRANT INSERT, UPDATE ON edge_nodes TO edge_node;
 
 In this mode the file of a node stays on its host. ``reload`` reads it again, and ``reload cluster`` answers ``DBA009``. Adding or removing ``authority``, or changing anything in it but ``binds``, needs a restart. A change at run time, such as a weight, is not a revision: the next revision replaces it as a reload does. The history is not pruned.
+
 A sticky table and a limit for the whole cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1949,9 +1961,9 @@ Two more things can hold on every node of a mesh (SID 0025). Both are off until 
        },
    }
 
-With ``sticky: "table"`` the pool balances the first flow of a client and remembers the server. The client is its source address, or with ``on: "cookie"`` the value of a cookie that the application sets. The node tells its peers each choice, and a peer that restarts receives the whole table, so the client reaches the same server through every node. ``ttl`` is how long a choice is kept after its last use, 30 minutes by default. ``global.sticky_entries`` is the size of the table, 65,536 by default. We set it to twice the clients we expect, and restart to change it. A node that is cut off serves from its own table. When it returns, the choice that was made or used last wins for new flows. A flow under way never moves.
+With ``sticky: "table"`` the pool balances the first flow of a client and remembers the server. The client is its source address, or with ``on: "cookie"`` the value of a cookie that the application sets. The node tells its peers each choice, and a peer that restarts receives the whole table, so the client reaches the same server through every node. Between two hosts a choice reached the peer in less than 50 milliseconds. A client that uses two nodes for its first flows within that time can meet two servers. ``ttl`` is how long a choice is kept after its last use, 30 minutes by default. ``global.sticky_entries`` is the size of the table, 65,536 by default. We set it to twice the clients we expect, and restart to change it. A node that is cut off serves from its own table. When it returns, the choice that was made or used last wins for new flows. A flow under way never moves.
 
-With ``max_flows_scope: "fleet"`` the ``max_flows`` of a server bounds the flows of all nodes together. Each node starts with an equal share, and the shares move to the nodes that have the flows within about a second. The limit holds whatever the network does. The price is capacity that nobody can use for a while:
+With ``max_flows_scope: "fleet"`` the ``max_flows`` of a server bounds the flows of all nodes together. Each node starts with an equal share, and the unused shares move step by step to the nodes that have the flows. Between two hosts a busy node went from 10 of 20 to 13 after 1.5 seconds and to 17 after 3 seconds. The limit holds whatever the network does. The price is capacity that nobody can use for a while:
 
 - A node that stops keeps its share from the others until it starts again. To give the share up for good we remove the node from the mesh of every file and restart the nodes.
 - A node that is cut off keeps its last share, and so does the other side.
@@ -1967,6 +1979,7 @@ Every node must name the server with the same address and the same ``max_flows``
    http 10.0.1.1:80    300    100    180    171  2/2
 
 ``share`` is what this node may hold now and ``used`` what it holds. ``synced`` counts the peers whose account of the server this node knows. While it is below the number of peers, the node serves only on what the other peers lend it. A value that stays low names a peer that is down or whose file differs. ``mesh.replicate_sticky: false`` keeps the table on its node. ``mesh.replicate_shares: false`` fixes every node at its equal share.
+
 One node for each client
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
