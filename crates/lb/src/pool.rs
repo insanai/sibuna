@@ -232,7 +232,7 @@ impl Pool {
                 continue;
             }
             target.admitted.fetch_add(1, Ordering::Relaxed);
-            self.learn(recalled.as_ref(), target);
+            self.learn(recalled.as_ref(), wish, target);
             // An HTTP exchange enters the pool's protocol adapter when it has one.
             let addr = target.server.via.unwrap_or(target.server.addr);
             return Some(Ticket { addr, load: Arc::clone(&target.load) });

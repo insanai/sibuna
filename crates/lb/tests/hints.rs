@@ -264,3 +264,32 @@ fn the_spill_section_changes_only_with_a_restart_and_is_off_without_it() {
     let moved = (0..CLIENTS).filter(|&client| serve_at(&routes, vip, client, 2) == 9502).count();
     assert!(moved > 270, "{moved}");
 }
+
+#[test]
+fn a_retry_serves_one_request_elsewhere_and_does_not_move_the_client() {
+    let scratch = Scratch::new();
+    let vip = free::tcp();
+    let edge = Edge::bind(topology(vip, &[1, 1, 1], &spill(&scratch.file()))).unwrap();
+    let routes = edge.http_routes();
+    let homes = settle(&routes, vip);
+    for client in 0..CLIENTS {
+        let peer = SocketAddr::from(([198, 18, (client >> 8) as u8, client as u8], 40_000));
+        let query = Query {
+            vip,
+            peer,
+            host: b"app.example",
+            path: b"/",
+            policy_revision: 1,
+            ..Query::default()
+        };
+        // The request fails on its server and is sent again to another.
+        let first = routes.choose(&query).unwrap();
+        let home = homes[usize::from(client)];
+        assert_eq!(first.address().port(), home);
+        let second = routes.retry(&first).unwrap();
+        assert_ne!(second.address().port(), home);
+        drop((first, second));
+        // The next request of the client is with its own server again.
+        assert_eq!(serve(&routes, vip, client), home, "{client}");
+    }
+}

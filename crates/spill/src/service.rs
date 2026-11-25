@@ -48,6 +48,7 @@ enum Request {
         key: Bytes<MAX_KEY>,
         value: Bytes<MAX_VALUE>,
         expires: u64,
+        overwrite: bool,
     },
     Ask {
         key: Bytes<MAX_KEY>,
@@ -160,8 +161,11 @@ fn serve(
         let more = std::iter::from_fn(|| receiver.try_recv().ok()).take(BATCH - 1);
         for request in std::iter::once(first).chain(more) {
             match request {
-                Request::Offer { key, value, expires } => {
+                Request::Offer { key, value, expires, overwrite: true } => {
                     cache.put(key.get(), value.get(), expires, now);
+                }
+                Request::Offer { key, value, expires, overwrite: false } => {
+                    cache.put_new(key.get(), value.get(), expires, now);
                 }
                 Request::Ask { key } => {
                     if let Some(hint) = cache.get(key.get(), now) {
@@ -202,12 +206,18 @@ impl Handle {
     /// Returns at once. `false` means the hint was dropped: the queue was full, or the
     /// key or the value is too long.
     pub fn offer(&self, key: &[u8], value: &[u8], expires: u64) -> bool {
-        let request = Bytes::new(key).zip(Bytes::new(value)).map(|(key, value)| Request::Offer {
-            key,
-            value,
-            expires,
-        });
-        self.send(request)
+        self.send(Self::offer_request(key, value, expires, true))
+    }
+
+    /// Offers a hint that must not replace a live hint of the same key: a guess. See
+    /// [`Cache::put_new`]. Returns at once, as [`Handle::offer`] does.
+    pub fn offer_new(&self, key: &[u8], value: &[u8], expires: u64) -> bool {
+        self.send(Self::offer_request(key, value, expires, false))
+    }
+
+    fn offer_request(key: &[u8], value: &[u8], expires: u64, overwrite: bool) -> Option<Request> {
+        let (key, value) = Bytes::new(key).zip(Bytes::new(value))?;
+        Some(Request::Offer { key, value, expires, overwrite })
     }
 
     /// Asks for the hint of `key`. Returns at once. The answer, if there is a live hint,
@@ -302,6 +312,15 @@ mod tests {
         assert!(service.ask(b"client-2"));
         let answer = heard.recv_timeout(Duration::from_secs(10)).unwrap();
         assert_eq!(answer, (b"client-1".to_vec(), b"srv-a".to_vec()));
+        // A guess does not replace what is known, and it fills what is not.
+        assert!(service.handle().offer_new(b"client-1", b"srv-b", later));
+        assert!(service.handle().offer_new(b"client-4", b"srv-b", later));
+        assert!(service.ask(b"client-1"));
+        assert!(service.ask(b"client-4"));
+        let answer = heard.recv_timeout(Duration::from_secs(10)).unwrap();
+        assert_eq!(answer, (b"client-1".to_vec(), b"srv-a".to_vec()));
+        let answer = heard.recv_timeout(Duration::from_secs(10)).unwrap();
+        assert_eq!(answer, (b"client-4".to_vec(), b"srv-b".to_vec()));
         assert!(service.remove(b"client-1"));
         assert!(service.ask(b"client-1"));
         // Too long for a slot: dropped here, never queued.

@@ -18,6 +18,8 @@ pub enum Put {
     Stored,
     /// The key was there and its slot was overwritten.
     Updated,
+    /// The key was there and [`Cache::put_new`] left its hint as it was.
+    Kept,
     /// The bucket was full and the hint took the slot of a less frequent entry.
     Replaced,
     /// The bucket was full of entries that are at least as frequent. Nothing changed.
@@ -58,6 +60,8 @@ pub struct Counters {
     pub stored: u64,
     /// Hints written over the entry of the same key.
     pub updated: u64,
+    /// Offers of [`Cache::put_new`] that found the key and left its hint.
+    pub kept: u64,
     /// Hints written over a less frequent entry.
     pub replaced: u64,
     /// Hints that a full bucket did not admit.
@@ -293,6 +297,17 @@ impl Cache {
     /// It borrows `key` and `value` for the call and never fails: [`Put`] says what
     /// happened.
     pub fn put(&mut self, key: &[u8], value: &[u8], expires: u64, now: u64) -> Put {
+        self.store(key, value, expires, now, true)
+    }
+
+    /// Offers a hint as [`Cache::put`] does, but leaves a live hint of the same key as
+    /// it is. This is for a guess that must not replace what is known.
+    pub fn put_new(&mut self, key: &[u8], value: &[u8], expires: u64, now: u64) -> Put {
+        self.store(key, value, expires, now, false)
+    }
+
+    /// [`Cache::put`] when `overwrite` holds and [`Cache::put_new`] otherwise.
+    fn store(&mut self, key: &[u8], value: &[u8], expires: u64, now: u64, overwrite: bool) -> Put {
         if !self.accepts(key, value, expires, now) {
             self.counters.refused += 1;
             return Put::Refused;
@@ -304,6 +319,10 @@ impl Cache {
         }
         let survey = self.survey(shard, bucket, key, now);
         let (way, outcome) = if let Some(way) = survey.matched {
+            if !overwrite {
+                self.counters.kept += 1;
+                return Put::Kept;
+            }
             self.counters.updated += 1;
             (way, Put::Updated)
         } else if let Some(way) = survey.free {

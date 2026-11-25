@@ -53,11 +53,15 @@ impl Pool {
         Some(recalled)
     }
 
-    /// Remembers that `target` now serves the client of `recalled`. A backup is not
-    /// remembered: it serves only while no other server can.
-    pub(super) fn learn(&self, recalled: Option<&Recalled>, target: &Target) {
+    /// Remembers that `target` now serves the client of `recalled`.
+    ///
+    /// A backup is not remembered: it serves only while no other server can. Neither is
+    /// the server of a retry: one failed request must not move a client for good. When
+    /// its server stays out, health takes it out of the choice, and the next first
+    /// attempt is remembered.
+    pub(super) fn learn(&self, recalled: Option<&Recalled>, wish: &Wish<'_>, target: &Target) {
         let (Some(link), Some(recalled)) = (&self.hints, recalled) else { return };
-        if target.server.backup {
+        if target.server.backup || wish.tried.is_some() {
             return;
         }
         let tag = hints::tag(target.rank_seed);

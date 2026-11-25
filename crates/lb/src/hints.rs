@@ -33,6 +33,10 @@ const ENTRY_LEN: u64 = 16;
 /// The seed of the hash that names a pool. It is fixed, so that a hint means the same
 /// after a restart.
 const POOL_SEED: u64 = 0x7369_6275_6e61_3237;
+/// How much later than its life a hint on disk may claim to expire, in seconds. A worker
+/// stamps a hint with its own clock, and the storage thread reads the clock once for a
+/// batch, so the two can differ by the time a batch takes.
+const CLOCK_SLACK: u64 = 60;
 /// The bit of a tag that marks a choice made without a hint.
 const TENTATIVE: u32 = 1 << 31;
 
@@ -324,7 +328,8 @@ impl Hints {
         let ttl = options.ttl.as_secs().min(u64::from(u32::MAX)) as u32;
         let table = Arc::new(Table::new(options.memory, ttl));
         let counters = Arc::new(Counters::default());
-        let disk = sibuna_spill::Options { size: options.size, max_ttl: u64::from(ttl) };
+        let max_ttl = u64::from(ttl) + CLOCK_SLACK;
+        let disk = sibuna_spill::Options { size: options.size, max_ttl };
         let opened = sibuna_spill::load_cache(&options.path, &disk, sibuna_spill::unix_seconds());
         let mut status = SpillStatus {
             path: options.path.clone(),
@@ -388,32 +393,40 @@ impl Hints {
         Recall::Miss
     }
 
-    /// Offers a definite hint to the disk. A full queue drops it.
+    /// Offers a hint to the disk. A definite hint replaces what the disk holds. A
+    /// tentative one is kept only when the disk holds no hint for the client. A full
+    /// queue drops the offer.
     fn offer(&self, key: u64, found: Found) {
-        if let Some(service) = &self.service {
-            service.offer(&key.to_le_bytes(), &found.tag.to_le_bytes(), u64::from(found.expires));
+        let Some(service) = &self.service else { return };
+        let (key, tag, expires) =
+            (key.to_le_bytes(), found.tag.to_le_bytes(), u64::from(found.expires));
+        if found.tentative {
+            service.offer_new(&key, &tag, expires);
+        } else {
+            service.offer(&key, &tag, expires);
         }
     }
 
     /// Remembers that the server of `tag` now serves the client of `key`. `missed` says
     /// that the choice was made after a [`Recall::Miss`].
     ///
-    /// A choice after a miss is tentative: it is kept in memory and not written to the
-    /// disk, which may hold the older hint, and it never replaces what the disk
-    /// answered meanwhile. A choice after a hit is definite. A new or changed definite
-    /// hint goes to the disk at once, and a hint in the second half of its life is
+    /// A choice after a miss is tentative. The disk may hold the older hint, so the
+    /// choice is offered to the disk as a guess, which the disk keeps only when it has
+    /// no hint for the client, and in memory it never replaces what the disk answered
+    /// meanwhile. A choice after a hit is definite. A new or changed definite hint
+    /// replaces the hint on disk at once, and a hint in the second half of its life is
     /// renewed.
     pub fn learn(&self, key: u64, tag: u32, missed: bool, now: u32) {
         let fresh = Found { tag, tentative: missed, expires: now.saturating_add(self.ttl) };
         let Some((entry, held)) = self.table.find(key, now) else {
+            // A definite hint that leaves memory goes to the disk once more: the disk
+            // may have rejected it before, and it has been used since.
             if let Some((old_key, old)) = self.table.insert(key, fresh, now)
                 && !old.tentative
             {
                 self.offer(old_key, old);
             }
-            if !missed {
-                self.offer(key, fresh);
-            }
+            self.offer(key, fresh);
             return;
         };
         // After a miss, what is there came from the disk or from another worker.

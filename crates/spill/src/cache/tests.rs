@@ -64,6 +64,12 @@ fn a_hint_is_stored_read_updated_and_removed() {
     assert_eq!((hint.value(), hint.expires), (&b"server-a"[..], LATER));
     assert_eq!(cache.put(b"client", b"server-b", LATER + 1, NOW), Put::Updated);
     assert_eq!(value_of(&mut cache, b"client"), Some(b"server-b".to_vec()));
+    // A guess leaves what is known and fills what is not.
+    assert_eq!(cache.put_new(b"client", b"server-c", LATER + 2, NOW), Put::Kept);
+    assert_eq!(value_of(&mut cache, b"client"), Some(b"server-b".to_vec()));
+    assert_eq!(cache.put_new(b"guess", b"server-c", LATER, NOW), Put::Stored);
+    assert_eq!(value_of(&mut cache, b"guess"), Some(b"server-c".to_vec()));
+    assert!(cache.remove(b"guess", NOW));
     // The longest key and value, and the empty value.
     assert_eq!(cache.put(&[1; MAX_KEY], &[2; MAX_VALUE], LATER, NOW), Put::Stored);
     assert_eq!(value_of(&mut cache, &[1; MAX_KEY]), Some(vec![2; MAX_VALUE]));
@@ -73,8 +79,8 @@ fn a_hint_is_stored_read_updated_and_removed() {
     assert!(!cache.remove(b"client", NOW));
     assert_eq!(cache.get(b"client", NOW), None);
     let counters = cache.counters();
-    assert_eq!((counters.stored, counters.updated, counters.removed), (3, 1, 1));
-    assert_eq!((counters.lookups, counters.hits), (6, 4));
+    assert_eq!((counters.stored, counters.updated, counters.removed), (4, 1, 2));
+    assert_eq!((counters.kept, counters.lookups, counters.hits), (1, 8, 6));
 }
 
 #[test]
