@@ -12,9 +12,9 @@ concurrency:
   group: docs-${{ github.ref }}
   cancel-in-progress: true
 env:
-  GUIDEDOG_VERSION: 1.0.0-beta.7
+  GUIDEDOG_VERSION: 1.0.0-beta.15
   # SHA-256 of guidedog-linux-amd64.tar.gz, from the release's SHA256SUMS.
-  GUIDEDOG_SHA256: a5ac102adada94e9919c3b0a0c18a162f6a470d023f0da0cf1db8c560c52a5dd
+  GUIDEDOG_SHA256: c8d2eb5e7a5b7ad9c3aee7678036296fe28f0c82c4ee52dcde98ce9ceb143c1b
 jobs:
   build:
     runs-on: ubuntu-24.04
