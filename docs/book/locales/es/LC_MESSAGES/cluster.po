@@ -2496,21 +2496,8 @@ msgid "Replacing the Binary"
 msgstr "La sustitución del binario"
 
 #: ../../cluster.rst:556
-msgid ""
-"A new binary must take over without losing a connection that waits in a "
-"listener and without moving a UDP client to another server. "
-"``global.reuse_port`` lets a new process bind the same addresses, but the "
-"old listener keeps its own accept queue until it closes, and the old "
-"process refuses what it accepts while it drains. Under one load SID 0029 "
-"counted 9,943 to 22,516 failed connections in a run with ``reuse_port``."
-msgstr ""
-"Un binario nuevo debe tomar el relevo sin perder una conexión que espera "
-"en una dirección de escucha y sin mover un cliente UDP a otro servidor. "
-"``global.reuse_port`` permite que un proceso nuevo enlace las mismas "
-"direcciones, pero la dirección de escucha antigua conserva su propia cola "
-"de aceptación hasta que se cierra, y el proceso antiguo rechaza lo que "
-"acepta mientras se drena. Bajo una misma carga, el SID 0029 contó de "
-"9.943 a 22.516 conexiones fallidas en una ejecución con ``reuse_port``."
+msgid "With ``global.reuse_port`` each process has its own TCP accept queue. The old process closes its TCP listeners when the drain begins. Established streams can finish while the replacement accepts new connections. A connection still queued on the old listener can reset. The replacement starts with an empty UDP mapping table."
+msgstr "Con ``global.reuse_port``, cada proceso tiene su propia cola de aceptación TCP. El proceso antiguo cierra sus sockets de escucha TCP al comenzar el drenaje. Las conexiones establecidas pueden terminar mientras el nuevo proceso acepta otras. Una conexión que siga en la cola antigua puede sufrir un reinicio. El nuevo proceso comienza con una tabla de asignaciones UDP vacía."
 
 #: ../../cluster.rst:558
 msgid ""

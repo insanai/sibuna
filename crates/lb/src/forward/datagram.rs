@@ -241,7 +241,7 @@ impl Edge {
         else {
             return peering.counters.rejected(Rejected::Unknown);
         };
-        let Socket::Udp(socket) = &self.listeners[listener].socket else { return };
+        let Some(Socket::Udp(socket)) = &self.listeners[listener].socket else { return };
         let start = super::wire::HEADER;
         if socket.send_to(&self.buffer[start..start + payload], client).is_ok() {
             entry.last = Instant::now();

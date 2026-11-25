@@ -553,7 +553,7 @@ Every node follows on a thread of its own, ``edge-authority``. It looks at the h
 Replacing the Binary
 --------------------
 
-A new binary must take over without losing a connection that waits in a listener and without moving a UDP client to another server. ``global.reuse_port`` lets a new process bind the same addresses, but the old listener keeps its own accept queue until it closes, and the old process refuses what it accepts while it drains. Under one load SID 0029 counted 9,943 to 22,516 failed connections in a run with ``reuse_port``.
+With ``global.reuse_port`` each process has its own TCP accept queue. The old process closes its TCP listeners when the drain begins. Established streams can finish while the replacement accepts new connections. A connection still queued on the old listener can reset. The replacement starts with an empty UDP mapping table.
 
 SID 0029 passes the sockets instead. The old process listens on a Unix socket, ``global.upgrade_socket``. The replacement checks its file, connects, and receives the listening sockets as descriptors in ``SCM_RIGHTS`` control messages of ``sendmsg``. Both ends check the credentials of the peer with ``SO_PEERCRED`` and refuse another user.
 

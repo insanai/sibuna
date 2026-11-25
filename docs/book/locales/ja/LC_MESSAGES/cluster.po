@@ -2125,18 +2125,8 @@ msgid "Replacing the Binary"
 msgstr "バイナリの置き換え"
 
 #: ../../cluster.rst:556
-msgid ""
-"A new binary must take over without losing a connection that waits in a "
-"listener and without moving a UDP client to another server. "
-"``global.reuse_port`` lets a new process bind the same addresses, but the "
-"old listener keeps its own accept queue until it closes, and the old "
-"process refuses what it accepts while it drains. Under one load SID 0029 "
-"counted 9,943 to 22,516 failed connections in a run with ``reuse_port``."
-msgstr ""
-"新しいバイナリは、リスナーで待っている接続を失わず、UDPクライアントを別のサーバーに移さずに引き継がなければなりません。\\ "
-"``global.reuse_port``\\ "
-"を使えば新しいプロセスが同じアドレスをバインドできますが、古いリスナーは閉じるまで自分のacceptキューを保ち、古いプロセスはドレインの間、受け付けたものを拒否します。ある負荷の下で、SID "
-"0029は\\ ``reuse_port``\\ を使った一回の実行で9,943から22,516件の失敗した接続を数えました。"
+msgid "With ``global.reuse_port`` each process has its own TCP accept queue. The old process closes its TCP listeners when the drain begins. Established streams can finish while the replacement accepts new connections. A connection still queued on the old listener can reset. The replacement starts with an empty UDP mapping table."
+msgstr "``global.reuse_port`` を使うと、各プロセスは個別の TCP 接続待ちキューを持ちます。旧プロセスはドレイン開始時に TCP リスナーを閉じます。新プロセスが新しい接続を受け付ける間も、確立済みのストリームは処理を完了できます。旧キューに残った接続はリセットされることがあります。新プロセスの UDP マッピング表は起動時には空です。"
 
 #: ../../cluster.rst:558
 msgid ""

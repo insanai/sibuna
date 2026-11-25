@@ -106,7 +106,8 @@ const SWEEP: Duration = Duration::from_millis(100);
 
 struct Listener {
     paused_until: Option<Instant>,
-    socket: Socket,
+    // TCP sockets with independent reuse-port queues are retired before flows drain.
+    socket: Option<Socket>,
     route: Frontend,
 }
 
@@ -205,6 +206,7 @@ pub struct Edge {
     regime: Regime,
     binds: Vec<Bind>,
     reuse_port: bool,
+    retire_tcp_on_drain: bool,
     sticky_entries: usize,
     listeners: Vec<Listener>,
     pools: BTreeMap<String, Pool>,
@@ -441,7 +443,7 @@ impl Edge {
                 poll.set(socket.handle(), READ, Ready::Listener(listeners.len()))?;
             }
             binds.push(bind);
-            listeners.push(Listener { socket, route, paused_until: None });
+            listeners.push(Listener { socket: Some(socket), route, paused_until: None });
         }
         let (pools, loads) = build_pools(config.pools, &cluster);
         let (flow_log, flow_ends) = flowlog::FlowLog::new(stats.clone());
@@ -458,6 +460,7 @@ impl Edge {
             regime: Regime::Standalone,
             binds,
             reuse_port: config.reuse_port,
+            retire_tcp_on_drain: config.reuse_port && config.upgrade_socket.is_none(),
             sticky_entries: config.sticky_entries,
             listeners,
             pools,
@@ -547,7 +550,7 @@ impl Edge {
         self.loads.prune();
         self.keep_drained(drained);
         for (listener, route) in self.listeners.iter_mut().zip(config.listeners.into_values()) {
-            if let Socket::Tcp(socket) = &listener.socket {
+            if let Some(Socket::Tcp(socket)) = &listener.socket {
                 let (old, name) = (&listener.route.listen, &route.info.name);
                 route.listen.apply(old, socket, name, &mut self.listen_faults);
             }
@@ -565,6 +568,17 @@ impl Edge {
 
     /// Stops admitting new flows. Existing mappings and streams may finish.
     pub fn drain(&mut self) {
+        // Once a reuse-port listener closes, Linux assigns new connections to the
+        // remaining listeners. Keep the route (accepted flows hold its index), the UDP
+        // sockets (mappings still need them), and any sockets available for handoff.
+        if self.retire_tcp_on_drain {
+            for listener in &mut self.listeners {
+                if let Some(socket) = listener.socket.take_if(|s| matches!(s, Socket::Tcp(_))) {
+                    self.poll.remove(socket.handle());
+                    listener.paused_until = None;
+                }
+            }
+        }
         self.draining = true;
         self.budget.drain();
     }
@@ -643,8 +657,10 @@ impl Edge {
                 .retain(|key| udp.get(key).is_some_and(|flow| flow.first_request.is_some()));
         }
         for (id, listener) in self.listeners.iter_mut().enumerate() {
-            if listener.paused_until.is_some_and(|deadline| now >= deadline) {
-                let fd = listener.socket.handle();
+            if listener.paused_until.is_some_and(|deadline| now >= deadline)
+                && let Some(socket) = &listener.socket
+            {
+                let fd = socket.handle();
                 if poll.set(fd, READ, Ready::Listener(id)).is_ok() {
                     listener.paused_until = None;
                 }
@@ -657,17 +673,20 @@ impl Edge {
     fn pause(&mut self, id: usize) {
         let listener = &mut self.listeners[id];
         listener.paused_until = Some(Instant::now() + Duration::from_millis(50));
-        self.poll.remove(listener.socket.handle());
+        if let Some(socket) = &listener.socket {
+            self.poll.remove(socket.handle());
+        }
     }
 
     fn receive(&mut self, id: usize) {
         // Limit a busy listener to one batch so other sockets also make progress.
         for _ in 0..64 {
             let result = match &self.listeners[id].socket {
-                Socket::Tcp(socket) => {
+                None => return,
+                Some(Socket::Tcp(socket)) => {
                     socket.accept().map(|(client, peer)| self.accept(id, client, peer))
                 }
-                Socket::Udp(socket) => socket
+                Some(Socket::Udp(socket)) => socket
                     .recv_from(&mut self.buffer)
                     .map(|(size, peer)| self.forward((id, peer), size, None)),
             };
@@ -1197,7 +1216,7 @@ impl Edge {
 
     fn reply(&mut self, key: Client) {
         let Some(flow) = self.udp.get_mut(&key) else { return };
-        let Socket::Udp(listener) = &self.listeners[key.0].socket else { return };
+        let Some(Socket::Udp(listener)) = &self.listeners[key.0].socket else { return };
         let overhead = if key.1.is_ipv4() { 28 } else { 48 };
         match flow.origin.recv(&mut self.buffer) {
             Ok(n)

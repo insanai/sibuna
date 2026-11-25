@@ -34,7 +34,11 @@ fn replace_under_load(mode: Mode) -> (usize, usize, Duration) {
     }
     // The old process drains for as long as the stream is open. The load goes on.
     let draining = Instant::now();
-    std::thread::sleep(Duration::from_millis(1500));
+    std::thread::sleep(Duration::from_millis(300));
+    let (before, failures) = (load.served(), load.failed());
+    std::thread::sleep(Duration::from_millis(1200));
+    assert!(load.served() > before, "new connections stalled during the drain");
+    assert_eq!(load.failed(), failures, "new connections failed while an old stream drained");
     assert!(old.is_running(), "the old process left its stream");
     assert!(upgrade::exchange(&mut long, b"during"), "the long stream broke");
     drop(long);
@@ -62,11 +66,9 @@ fn no_connection_is_lost_while_the_listeners_are_handed_over() {
 }
 
 #[test]
-fn the_reuse_port_path_is_measured_beside_the_handoff() {
-    // The same load on the path of `global.reuse_port`. The old process has an accept
-    // queue of its own there, and refuses or resets what arrives in it while it
-    // drains. The number is printed for the record; SID 0029 quotes it. We assert
-    // only that the path still replaces the process.
+fn independent_listeners_retire_while_an_established_stream_drains() {
+    // A connection already queued at cutover may reset. The held stream must not
+    // keep either of the old TCP listeners receiving new connections.
     let (served, failed, drained) = replace_under_load(Mode::ReusePort);
     eprintln!("reuse_port: {served} served, {failed} failed, old process drained {drained:?}");
     assert!(served > 100, "served {served}");

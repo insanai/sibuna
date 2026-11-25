@@ -6860,35 +6860,16 @@ msgstr ""
 "は要りません。新しいプロセスがすでに受け付けているので、前にあるものが何かに気付く必要はないからです。遅延があると、古いプロセスはその間、新しい接続のうち自分の分を受け付け続け、それから止まります。遅延はもう一つの場合、つまり前のロードバランサーのプールからノードが離れる場合のために設定します。"
 
 #: ../../operations.rst:2067
-msgid ""
-"A connection that reaches the old process in the instant it closes its "
-"listener is reset, and the client connects again. In our test with a "
-"client that opens a new connection for every request, no request failed "
-"in 15 takeovers. An HTTP/3 connection does not survive the takeover: the "
-"kernel may hand its packets to the other process, which does not know the "
-"connection, and the client then connects again. Connections over TCP are "
-"not affected. Without ``reuse_port`` a second process on the same address "
-"is refused with ADDRESS IN USE, which protects against starting the "
-"service twice by mistake."
-msgstr ""
-"古いプロセスがリスナーを閉じるその瞬間に届いた接続はリセットされ、クライアントは接続し直します。リクエストごとに新しい接続を開くクライアントでの私たちのテストでは、15回の引き継ぎで失敗したリクエストはありませんでした。HTTP/3の接続は引き継ぎを越えて残りません。カーネルがそのパケットを、その接続を知らないもう一方のプロセスに渡すことがあり、その場合クライアントは接続し直します。TCP上の接続には影響しません。\\ "
-"``reuse_port``\\ がなければ、同じアドレスでの二つ目のプロセスはADDRESS IN "
-"USEで拒否され、誤ってサービスを二重に起動することを防ぎます。"
+msgid "An HTTP/3 client may need to reconnect if the kernel sends its packets to a process that lacks its QUIC connection state. Without ``reuse_port``, the second process cannot bind the same address."
+msgstr "カーネルが QUIC の接続状態を持たないプロセスにパケットを渡すと、HTTP/3 クライアントは再接続が必要になることがあります。``reuse_port`` を使わなければ、二つ目のプロセスは同じアドレスにバインドできません。"
 
 #: ../../operations.rst:2069
 msgid "Replacing the binary without losing a connection"
 msgstr "接続を失わずにバイナリを置き換える"
 
 #: ../../operations.rst:2072
-msgid ""
-"With ``global.reuse_port`` the old process has listeners of its own until "
-"it exits. While it drains, the kernel still gives it a share of the new "
-"connections, and it refuses them. In our test, with one long stream that "
-"held the old process in its drain for 1.7 s, 10,000 to 22,000 connections "
-"failed in that time. UDP clients were given a server again."
-msgstr ""
-"``global.reuse_port``\\ "
-"では、古いプロセスは終了するまで独自のリスナーを持ちます。ドレインしている間も、カーネルは新しい接続の一部をそれに渡し、古いプロセスはそれらを拒否します。私たちのテストでは、一つの長いストリームが古いプロセスを1.7秒間ドレインに留めた間に、10,000から22,000の接続が失敗しました。UDPのクライアントには改めてサーバーが割り当てられました。"
+msgid "With ``global.reuse_port`` each process has its own TCP accept queue. The old process closes its TCP listeners when the drain begins. Established streams can finish while the replacement accepts new connections. A connection still queued on the old listener can reset. The replacement starts with an empty UDP mapping table."
+msgstr "``global.reuse_port`` を使うと、各プロセスは個別の TCP 接続待ちキューを持ちます。旧プロセスはドレイン開始時に TCP リスナーを閉じます。新プロセスが新しい接続を受け付ける間も、確立済みのストリームは処理を完了できます。旧キューに残った接続はリセットされることがあります。新プロセスの UDP マッピング表は起動時には空です。"
 
 #: ../../operations.rst:2074
 msgid ""

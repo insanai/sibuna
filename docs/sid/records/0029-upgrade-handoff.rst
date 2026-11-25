@@ -23,7 +23,7 @@ This record builds two proposals of SID 0015, section "Reload, drain and rollbac
 Motivation and scope
 --------------------
 
-Today a binary is replaced with ``global.reuse_port``. The replacement binds the same addresses, and the old process drains on SIGTERM. Two things are lost. A listener of the old process has an accept queue of its own, and the kernel keeps giving it a share of the new connections until it closes. The old process refuses what it accepts while it drains, and the connections still in its queue are reset when it exits. We measured this: with one long stream holding the old process in its drain, the old process refused or reset new connections for the whole drain. A UDP mapping is user-space state, and the replacement has none of it, so every UDP client is given a server again.
+At the time of the proposal a binary was replaced with ``global.reuse_port``. The replacement binds the same addresses, and the old process drains on SIGTERM. Two things are lost. A listener of the old process has an accept queue of its own, and the kernel keeps giving it a share of the new connections until it closes. The old process refuses what it accepts while it drains, and the connections still in its queue are reset when it exits. We measured this: with one long stream holding the old process in its drain, the old process refused or reset new connections for the whole drain. A UDP mapping is user-space state, and the replacement has none of it, so every UDP client is given a server again.
 
 Passing the descriptor removes the first loss, because the listener is never closed: both processes hold the same socket, with one accept queue. Passing the mappings removes the second.
 
@@ -334,7 +334,7 @@ Acceptance criteria and implementation status
      - Status
    * - 1
      - New TCP connections and requests during an upgrade lose none, also while the old process drains a long stream.
-     - Met in the test. ``no_connection_is_lost_while_the_listeners_are_handed_over`` in ``cmd/sibuna/tests/edge_upgrade.rs``: 17,382 to 33,524 connections in a run, 0 failed, in 27 runs of the final code. ``the_reuse_port_path_is_measured_beside_the_handoff`` gives the same load to ``global.reuse_port``: 12,960 to 25,044 served and 9,943 to 22,516 failed in a run. Method below.
+     - Met in the test. ``no_connection_is_lost_while_the_listeners_are_handed_over`` in ``cmd/sibuna/tests/edge_upgrade.rs``: 17,382 to 33,524 connections in a run, 0 failed, in 27 runs of the original implementation. ``the_reuse_port_path_is_measured_beside_the_handoff`` gave the same load to ``global.reuse_port``: 12,960 to 25,044 served and 9,943 to 22,516 failed in a run. Method below.
    * - 2
      - A UDP client keeps its server across the upgrade, and the server sees the same source address.
      - Met. ``udp_clients_keep_their_server_across_two_upgrades``: 41 mappings through two upgrades, a client that sends every 2 ms lost 0 and moved 0 of 97 to 390 datagrams, UDP unread for 0 to 1 ms. ``six_thousand_mappings_move_in_two_pieces``: 6,000 mappings, 0 dropped, 0 moved, UDP unread for 59 to 87 ms on a quiet machine and up to 252 ms beside other builds. In one process: ``a_mapping_keeps_its_server_and_its_source_in_the_replacement`` in ``crates/lb/tests/handoff.rs``.
@@ -353,7 +353,7 @@ Acceptance criteria and implementation status
 
 **Method.** All tests start the real binary, a debug build, on loopback, with two HTTP servers, two TCP echo servers and two UDP servers behind it. The load of criterion 1 is four client threads. Each opens a connection, sends one HTTP request and reads the answer, then opens a connection to the TCP frontend, sends four bytes and reads them back, without a pause. One more TCP stream stays open for 1.5 s after the replacement started, so the old process drains for about 1.7 s. A connection counts as failed when it is refused, reset, or closed without the answer. The numbers are from runs on a machine that built other code at the same time. They compare two paths under one load. They are not a throughput.
 
-Under ``global.reuse_port`` the failures are the connections that the kernel gave to the listener of the draining process, which refuses what it accepts. They last as long as the drain. The handoff has no such listener.
+These measurements describe the original implementation. In RC2 the old process closes its independent TCP listeners as soon as draining begins. A connection queued at close can still reset. The regression test ``independent_listeners_retire_while_an_established_stream_drains`` keeps a TCP stream open and checks that the replacement continues serving new connections during the drain. In one Linux loopback run it served 28,338 exchanges with zero failures. In a separate test with one HTTP client, each of 30 takeovers lost one request at cutover. We ran ten takeovers each with two, four and 32 CPUs available.
 
 The interval "UDP unread" is measured by the old process, from READY to DONE, and printed in ``UPG010``.
 

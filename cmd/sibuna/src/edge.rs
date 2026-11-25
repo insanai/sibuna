@@ -680,8 +680,7 @@ impl Serving {
         }
         let deadline = Instant::now() + shutdown_timeout;
         while edge.active() > 0 && Instant::now() < deadline {
-            // See `serve_for`: a draining process refuses what it accepts, and after
-            // a handoff the listeners are no longer its own.
+            // Keep servicing a pending descriptor handoff while established flows drain.
             upgrade.step(&mut edge);
             step(&mut edge, http.as_ref())?;
             observed.pass_flows(&mut edge);

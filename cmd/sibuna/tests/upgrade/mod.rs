@@ -34,7 +34,7 @@ pub struct Daemon {
 impl Daemon {
     /// Starts the binary on `config` and waits until it serves. `Err` holds what it
     /// printed when it ended instead.
-    fn start(config: &Path) -> Result<Self, String> {
+    pub(super) fn start(config: &Path) -> Result<Self, String> {
         let mut child = Command::new(BIN)
             .arg("--config-file")
             .arg(config)
@@ -494,6 +494,11 @@ impl Load {
 
     pub fn served(&self) -> usize {
         self.served.load(Ordering::Relaxed)
+    }
+
+    /// Counts failed exchanges since the clients started.
+    pub fn failed(&self) -> usize {
+        self.failed.load(Ordering::Relaxed)
     }
 
     /// Stops the clients and returns the connections served and failed.

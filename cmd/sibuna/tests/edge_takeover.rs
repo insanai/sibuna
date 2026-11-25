@@ -2,17 +2,17 @@
 #![cfg(target_os = "linux")]
 #![allow(clippy::unwrap_used)]
 
-#[path = "support/edge_ready.rs"]
-mod edge_ready;
+mod upgrade;
+
+use upgrade::{Daemon, try_request};
 
 use std::fs;
-use std::io::{BufRead, BufReader, Read, Write};
+use std::io::{BufRead, BufReader, Write};
 use std::net::{Ipv4Addr, SocketAddr, TcpListener, TcpStream, UdpSocket};
-use std::path::PathBuf;
-use std::process::{Child, Command, Stdio};
+use std::process::Command;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 const BIN: &str = env!("CARGO_BIN_EXE_sibuna");
 
@@ -51,26 +51,6 @@ fn origin() -> SocketAddr {
     address
 }
 
-/// Starts one edge process and waits until it serves.
-fn start(path: &PathBuf) -> Child {
-    let mut child =
-        Command::new(BIN).arg("--config-file").arg(path).stderr(Stdio::piped()).spawn().unwrap();
-    edge_ready::wait(&mut BufReader::new(child.stderr.take().unwrap())).unwrap();
-    child
-}
-
-/// One request on a connection of its own. True when the answer is complete.
-fn request(vip: SocketAddr) -> bool {
-    let Ok(mut socket) = TcpStream::connect(vip) else { return false };
-    let _ = socket.set_read_timeout(Some(Duration::from_secs(5)));
-    if socket.write_all(b"GET / HTTP/1.1\r\nHost: a\r\nConnection: close\r\n\r\n").is_err() {
-        return false;
-    }
-    let mut answer = Vec::new();
-    let _ = socket.read_to_end(&mut answer);
-    answer.starts_with(b"HTTP/1.1 200") && answer.ends_with(b"ok")
-}
-
 #[test]
 fn a_new_process_takes_over_the_address_while_requests_keep_arriving() {
     let vip = vip();
@@ -86,8 +66,8 @@ fn a_new_process_takes_over_the_address_while_requests_keep_arriving() {
         socket.display()
     );
     fs::write(&path, source).unwrap();
-    let mut old = start(&path);
-    assert!(request(vip));
+    let old = Daemon::start(&path).unwrap();
+    try_request(vip).unwrap();
 
     let (stop, served, failed) = (
         Arc::new(AtomicBool::new(false)),
@@ -97,41 +77,45 @@ fn a_new_process_takes_over_the_address_while_requests_keep_arriving() {
     let client = {
         let (stop, served, failed) = (stop.clone(), served.clone(), failed.clone());
         std::thread::spawn(move || {
+            let mut failures = Vec::new();
             while !stop.load(Ordering::Relaxed) {
-                let counter = if request(vip) { &served } else { &failed };
-                counter.fetch_add(1, Ordering::Relaxed);
+                match try_request(vip) {
+                    Ok(()) => {
+                        served.fetch_add(1, Ordering::Relaxed);
+                    }
+                    Err(reason) => {
+                        if failed.fetch_add(1, Ordering::Relaxed) < 5 {
+                            failures.push(reason);
+                        }
+                    }
+                }
             }
+            failures
         })
     };
     // The new process binds the same address, and takes the admin socket, while the old
     // one serves.
-    let mut new = start(&path);
+    let new = Daemon::start(&path).unwrap();
     std::thread::sleep(Duration::from_millis(300));
-    let status = Command::new("kill").arg("-TERM").arg(old.id().to_string()).status().unwrap();
-    assert!(status.success());
-    let deadline = Instant::now() + Duration::from_secs(8);
-    while old.try_wait().unwrap().is_none() {
-        assert!(Instant::now() < deadline, "the old process did not stop");
-        std::thread::sleep(Duration::from_millis(20));
-    }
+    old.signal("-TERM");
+    assert!(old.wait(Duration::from_secs(8)).success());
     let during = failed.load(Ordering::Relaxed);
     // The old process is gone. Every request from here on must succeed.
     std::thread::sleep(Duration::from_millis(300));
     stop.store(true, Ordering::Relaxed);
-    client.join().unwrap();
+    let failures = client.join().unwrap();
     let total = failed.load(Ordering::Relaxed);
     let count = served.load(Ordering::Relaxed);
     assert!(count > 100, "served {count}");
-    assert_eq!(total, during, "requests failed after the old process had stopped");
+    assert_eq!(total, during, "requests failed after the old process had stopped: {failures:?}");
     // A connection that lands on the old listener in the instant it closes is reset.
     // More than a few failures would mean that the address was closed for a while.
-    assert!(during <= 2, "{during} of {count} requests failed during the takeover");
+    assert!(during <= 2, "{during} failed, {count} served during the test: {failures:?}");
     // The admin socket answers, and it is the new process that answers.
     assert!(socket.exists(), "the old process removed the socket of the new one");
     let info = Command::new(BIN).arg("ctl").arg(&socket).args(["show", "info"]).output().unwrap();
     assert!(info.status.success(), "{}", String::from_utf8_lossy(&info.stderr));
-    let _ = new.kill();
-    let _ = new.wait();
+    drop(new);
     let _ = fs::remove_file(&path);
     let _ = fs::remove_file(&socket);
 }
@@ -155,20 +139,14 @@ fn a_frontend_with_http3_is_taken_over_too() {
         "backends":{{"app":{{"mode":"http","servers":[{{"name":"a","addr":"{origin}"}}]}}}}}}"#
     );
     fs::write(&path, source).unwrap();
-    let mut old = start(&path);
+    let old = Daemon::start(&path).unwrap();
     // The UDP socket of HTTP/3 shares its address as the TCP listener does, so the new
     // process starts.
-    let mut new = start(&path);
-    let status = Command::new("kill").arg("-TERM").arg(old.id().to_string()).status().unwrap();
-    assert!(status.success());
-    let deadline = Instant::now() + Duration::from_secs(8);
-    while old.try_wait().unwrap().is_none() {
-        assert!(Instant::now() < deadline, "the old process did not stop");
-        std::thread::sleep(Duration::from_millis(20));
-    }
+    let new = Daemon::start(&path).unwrap();
+    old.signal("-TERM");
+    assert!(old.wait(Duration::from_secs(8)).success());
     assert!(TcpStream::connect(vip).is_ok());
-    let _ = new.kill();
-    let _ = new.wait();
+    drop(new);
     let _ = fs::remove_file(&path);
 }
 
@@ -184,13 +162,12 @@ fn without_reuse_port_a_second_process_is_refused() {
         "backends":{{"app":{{"mode":"http","servers":[{{"name":"a","addr":"{origin}"}}]}}}}}}"#
     );
     fs::write(&path, source).unwrap();
-    let mut first = start(&path);
+    let first = Daemon::start(&path).unwrap();
     let second = Command::new(BIN).arg("--config-file").arg(&path).output().unwrap();
     assert!(!second.status.success());
     let message = String::from_utf8_lossy(&second.stderr);
     assert!(message.contains("ADDRESS IN USE"), "{message}");
-    let _ = first.kill();
-    let _ = first.wait();
+    drop(first);
     let _ = fs::remove_file(&path);
 }
 

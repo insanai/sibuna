@@ -139,8 +139,9 @@ impl Edge {
                 Protocol::Udp => Kind::Udp,
             };
             let socket = match &listener.socket {
-                Socket::Tcp(socket) => OwnedFd::from(socket.try_clone()?),
-                Socket::Udp(socket) => OwnedFd::from(socket.try_clone()?),
+                None => continue,
+                Some(Socket::Tcp(socket)) => OwnedFd::from(socket.try_clone()?),
+                Some(Socket::Udp(socket)) => OwnedFd::from(socket.try_clone()?),
             };
             lent.push((Listener { kind, address: bind.1 }, socket));
         }
@@ -155,7 +156,7 @@ impl Edge {
     /// [`Edge::release_listeners`] completes it.
     pub fn freeze_datagrams(&mut self) -> usize {
         for listener in &mut self.listeners {
-            if let Socket::Udp(socket) = &listener.socket {
+            if let Some(Socket::Udp(socket)) = &listener.socket {
                 self.poll.remove(handle(socket));
                 // A paused listener would be watched again by the next sweep.
                 listener.paused_until = None;
@@ -211,7 +212,7 @@ impl Edge {
             return;
         }
         for (id, listener) in self.listeners.iter_mut().enumerate() {
-            if let Socket::Udp(socket) = &listener.socket {
+            if let Some(Socket::Udp(socket)) = &listener.socket {
                 // A listener that cannot be watched now is tried again by `sweep`.
                 if self.poll.set(handle(socket), READ, Ready::Listener(id)).is_err() {
                     listener.paused_until = Some(Instant::now());
@@ -238,7 +239,9 @@ impl Edge {
     /// replacement holds the same sockets, and a connection that arrives waits for it.
     pub fn release_listeners(&mut self) -> usize {
         for listener in &mut self.listeners {
-            self.poll.remove(listener.socket.handle());
+            if let Some(socket) = &listener.socket {
+                self.poll.remove(socket.handle());
+            }
             listener.paused_until = None;
         }
         self.handoff.frozen = None;
@@ -366,7 +369,7 @@ impl Edge {
         let held = std::mem::take(&mut self.handoff.held);
         let mut result = Ok(());
         for id in held {
-            let socket = &self.listeners[id].socket;
+            let Some(socket) = &self.listeners[id].socket else { continue };
             if !wanted(socket) || result.is_err() {
                 self.handoff.held.push(id);
                 continue;

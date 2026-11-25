@@ -2116,14 +2116,14 @@ The new process binds the same addresses while the old one serves, and the kerne
 
 A takeover needs no ``global.drain_delay``: nothing in front has to notice, because the new process already accepts. With a delay the old process keeps accepting its share of new connections for that time, and only then stops. We set a delay for the other case, a node that leaves the pool of a balancer in front.
 
-A connection that reaches the old process in the instant it closes its listener is reset, and the client connects again. In our test with a client that opens a new connection for every request, no request failed in 15 takeovers. An HTTP/3 connection does not survive the takeover: the kernel may hand its packets to the other process, which does not know the connection, and the client then connects again. Connections over TCP are not affected. Without ``reuse_port`` a second process on the same address is refused with ADDRESS IN USE, which protects against starting the service twice by mistake.
+An HTTP/3 client may need to reconnect if the kernel sends its packets to a process that lacks its QUIC connection state. Without ``reuse_port``, the second process cannot bind the same address.
 
 .. _edge-replacing-the-binary-without-losing-a-connection:
 
 Replacing the binary without losing a connection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-With ``global.reuse_port`` the old process has listeners of its own until it exits. While it drains, the kernel still gives it a share of the new connections, and it refuses them. In our test, with one long stream that held the old process in its drain for 1.7 s, 10,000 to 22,000 connections failed in that time. UDP clients were given a server again.
+With ``global.reuse_port`` each process has its own TCP accept queue. The old process closes its TCP listeners when the drain begins. Established streams can finish while the replacement accepts new connections. A connection still queued on the old listener can reset. The replacement starts with an empty UDP mapping table.
 
 With ``global.upgrade_socket`` the old process gives its listening sockets to the new one. There is one accept queue, and it is never closed. The old process also gives its UDP mappings, so a UDP client keeps its server, and the server sees the same source address. The key needs Linux.
 

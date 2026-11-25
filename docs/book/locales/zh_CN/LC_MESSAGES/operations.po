@@ -7186,37 +7186,16 @@ msgstr ""
 "``global.drain_delay``：前面的任何东西都不需要察觉，因为新进程已经在接受连接。设置了延迟时，旧进程会在这段时间内继续接受它那一份新连接，之后才停止。我们为另一种情况设置延迟：节点离开前面负载均衡器的服务器池。"
 
 #: ../../operations.rst:2067
-msgid ""
-"A connection that reaches the old process in the instant it closes its "
-"listener is reset, and the client connects again. In our test with a "
-"client that opens a new connection for every request, no request failed "
-"in 15 takeovers. An HTTP/3 connection does not survive the takeover: the "
-"kernel may hand its packets to the other process, which does not know the "
-"connection, and the client then connects again. Connections over TCP are "
-"not affected. Without ``reuse_port`` a second process on the same address "
-"is refused with ADDRESS IN USE, which protects against starting the "
-"service twice by mistake."
-msgstr ""
-"恰好在旧进程关闭监听器的那一刻到达旧进程的连接会被重置，客户端会重新连接。在我们的测试中，客户端为每个请求打开一个新连接，15 "
-"次接管中没有一个请求失败。HTTP/3 连接无法在接管中幸存：内核可能把它的数据包交给另一个进程，而该进程不认识这个连接，于是客户端重新连接。基于 "
-"TCP 的连接不受影响。没有 ``reuse_port`` 时，同一地址上的第二个进程会因 ADDRESS IN USE "
-"被拒绝，这可以防止误把服务启动两次。"
+msgid "An HTTP/3 client may need to reconnect if the kernel sends its packets to a process that lacks its QUIC connection state. Without ``reuse_port``, the second process cannot bind the same address."
+msgstr "如果内核将数据包交给没有相应 QUIC 连接状态的进程，HTTP/3 客户端可能需要重新连接。未启用 ``reuse_port`` 时，第二个进程无法绑定同一地址。"
 
 #: ../../operations.rst:2069
 msgid "Replacing the binary without losing a connection"
 msgstr "不丢失连接地替换二进制文件"
 
 #: ../../operations.rst:2072
-msgid ""
-"With ``global.reuse_port`` the old process has listeners of its own until "
-"it exits. While it drains, the kernel still gives it a share of the new "
-"connections, and it refuses them. In our test, with one long stream that "
-"held the old process in its drain for 1.7 s, 10,000 to 22,000 connections "
-"failed in that time. UDP clients were given a server again."
-msgstr ""
-"使用 ``global.reuse_port`` "
-"时，旧进程在退出之前一直拥有自己的监听器。在它排空期间，内核仍然把一部分新连接交给它，而它会拒绝这些连接。在我们的测试中，一个长时间的流让旧进程的排空持续了 "
-"1.7 s，这段时间内有 10,000 到 22,000 个连接失败。UDP 客户端被重新分配了服务器。"
+msgid "With ``global.reuse_port`` each process has its own TCP accept queue. The old process closes its TCP listeners when the drain begins. Established streams can finish while the replacement accepts new connections. A connection still queued on the old listener can reset. The replacement starts with an empty UDP mapping table."
+msgstr "使用 ``global.reuse_port`` 时，每个进程都有自己的 TCP 连接接受队列。旧进程在开始排空时关闭 TCP 监听套接字。新进程接受新连接时，已建立的流仍可完成传输。仍在旧队列中的连接可能被重置。新进程从空的 UDP 映射表开始。"
 
 #: ../../operations.rst:2074
 msgid ""
