@@ -79,7 +79,7 @@ struct Revision {
 /// Loads the file at `path` for a check: a whole topology, or the file of a node in
 /// persistent mode, which is composed with the head of its database.
 fn load(path: &str) -> io::Result<Revision> {
-    load_into(path, &authority::Slot::default())
+    load_into(path, &Default::default())
 }
 
 /// Loads the file at `path` for the source that owns `slot`. The first load fixes

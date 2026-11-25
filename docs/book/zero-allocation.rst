@@ -73,7 +73,7 @@ We retain the console WebAssembly module's existing ``WipeOnFree`` global alloca
 It erases freed blocks, including the old block after a reallocation.
 Choosing ``System`` directly for a collection would bypass that erasure.
 The proof-of-work WebAssembly module has no heap allocator, and Argon2 already uses a caller-owned, reused workspace.
-We therefore keep the existing allocators and Rust 1.94 compatibility until a measured workload justifies a change.
+We therefore keep the existing allocators until a measured workload justifies a change.
 A candidate must improve latency or resident memory while preserving erasure, bounded input handling and the allocation-free request path.
 
 One Buffer per Connection

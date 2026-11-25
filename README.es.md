@@ -152,7 +152,7 @@ con ACL de Windows.
 
 ### Compilar desde las fuentes
 
-Compilamos y probamos con **Rust 1.100**, la versión que requiere el compilador JLV predeterminado. Podemos compilar el daemon solo JSON con Rust 1.94 y `--no-default-features`, y seleccionar `sqlite,console` según haga falta.
+Compilamos y probamos con **Rust 1.100**, la versión que requiere el compilador JLV predeterminado. Podemos compilar el daemon solo JSON con Rust 1.100 y `--no-default-features`, y seleccionar `sqlite,console` según haga falta.
 El solucionador de navegador y la interfaz de la consola son Rust compilado a WebAssembly; la
 compilación no necesita Node ni npm.
 

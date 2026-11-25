@@ -155,7 +155,7 @@ Windows-ACLs.
 
 ### Aus dem Quellcode bauen
 
-Wir bauen und testen mit **Rust 1.100**, das der standardmäßige JLV-Compiler voraussetzt. Den reinen JSON-Daemon können wir mit Rust 1.94 und `--no-default-features` bauen und bei Bedarf `sqlite,console` auswählen.
+Wir bauen und testen mit **Rust 1.100**, das der standardmäßige JLV-Compiler voraussetzt. Den reinen JSON-Daemon können wir mit Rust 1.100 und `--no-default-features` bauen und bei Bedarf `sqlite,console` auswählen.
 Browser-Löser und Konsolenoberfläche sind in Rust geschrieben und zu WebAssembly kompiliert; der
 Build braucht weder Node noch npm.
 

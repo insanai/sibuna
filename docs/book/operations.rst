@@ -3297,7 +3297,7 @@ The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. It requ
 Building from source
 ~~~~~~~~~~~~~~~~~~~~
 
-We build and test with Rust 1.100. The default build includes the JLV compiler and requires Rust 1.100. We can build the JSON-only daemon with Rust 1.94 using ``cargo build -p sibuna --no-default-features``. We add ``--features sqlite,console`` to include SQLite and the console.
+We build and test with Rust 1.100. The default build includes the JLV compiler and requires Rust 1.100. We can build the JSON-only daemon with Rust 1.100 using ``cargo build -p sibuna --no-default-features``. We add ``--features sqlite,console`` to include SQLite and the console.
 
 We install the release toolchain with ``rustup toolchain install 1.100.0 --profile minimal --target wasm32-unknown-unknown`` and select it with ``cargo +1.100.0`` in the commands below.
 

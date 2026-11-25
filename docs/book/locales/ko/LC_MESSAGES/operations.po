@@ -11927,11 +11927,11 @@ msgstr "소스에서 빌드하기"
 msgid ""
 "We build and test with Rust 1.100. The default build includes the JLV "
 "compiler and requires Rust 1.100. We can build the JSON-only daemon with "
-"Rust 1.94 using ``cargo build -p sibuna --no-default-features``. We add "
+"Rust 1.100 using ``cargo build -p sibuna --no-default-features``. We add "
 "``--features sqlite,console`` to include SQLite and the console."
 msgstr ""
 "Rust 1.100으로 빌드하고 테스트합니다. 기본 빌드에는 JLV 컴파일러가 포함되며 Rust 1.100이 필요합니다. JSON만 "
-"받는 데몬은 ``cargo build -p sibuna --no-default-features``\\ 로 Rust 1.94에서 "
+"받는 데몬은 ``cargo build -p sibuna --no-default-features``\\ 로 Rust 1.100에서 "
 "빌드할 수 있습니다. SQLite와 콘솔을 포함하려면 ``--features sqlite,console``\\ 을 더합니다."
 
 #: ../../operations.rst:3302

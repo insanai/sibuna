@@ -114,7 +114,7 @@ WindowsではZIPを展開し、PowerShellで`.\sibuna.exe --help`を実行しま
 
 ### ソースからビルドする
 
-ビルドとテストには**Rust 1.100**を使っています。標準のJLVコンパイラーがこのバージョンを必要とするためです。JSONのみのデーモンは、Rust 1.94で`--no-default-features`を指定してビルドでき、必要に応じて`sqlite,console`を選べます。ブラウザーのソルバーとコンソールのインターフェースは、WebAssemblyにコンパイルしたRustです。ビルドにNodeやnpmは必要ありません。
+ビルドとテストには**Rust 1.100**を使っています。標準のJLVコンパイラーがこのバージョンを必要とするためです。JSONのみのデーモンは、Rust 1.100で`--no-default-features`を指定してビルドでき、必要に応じて`sqlite,console`を選べます。ブラウザーのソルバーとコンソールのインターフェースは、WebAssemblyにコンパイルしたRustです。ビルドにNodeやnpmは必要ありません。
 
 ```sh
 git clone https://github.com/insanai/sibuna.git

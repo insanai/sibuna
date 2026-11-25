@@ -114,7 +114,7 @@ Windows에서는 ZIP을 풀고 PowerShell에서 `.\sibuna.exe --help`를 실행�
 
 ### 소스에서 빌드하기
 
-**Rust 1.100**로 빌드하고 테스트합니다. 기본 JLV 컴파일러에 이 버전이 필요합니다. JSON 전용 데몬은 Rust 1.94에서 `--no-default-features`로 빌드하고, 필요에 따라 `sqlite,console`을 선택할 수 있습니다. 브라우저 솔버와 콘솔 인터페이스는 WebAssembly로 컴파일한 Rust 코드입니다. 빌드에는 Node나 npm이 필요하지 않습니다.
+**Rust 1.100**로 빌드하고 테스트합니다. 기본 JLV 컴파일러에 이 버전이 필요합니다. JSON 전용 데몬은 Rust 1.100에서 `--no-default-features`로 빌드하고, 필요에 따라 `sqlite,console`을 선택할 수 있습니다. 브라우저 솔버와 콘솔 인터페이스는 WebAssembly로 컴파일한 Rust 코드입니다. 빌드에는 Node나 npm이 필요하지 않습니다.
 
 ```sh
 git clone https://github.com/insanai/sibuna.git

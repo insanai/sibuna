@@ -7,13 +7,13 @@ default-members = ["crates/*", "cmd/sibuna", "tools/*"]
 [workspace.package]
 version = "1.0.0-beta.3"
 edition = "2024"
-rust-version = "1.94"
+rust-version = "1.100"
 license = "LGPL-3.0-or-later"
 repository = "https://github.com/insanai/sibuna"
 homepage = "https://insanai.github.io/sibuna/"
 authors = ["Vikrant Rathore"]
 
-# Every dependency is declared once here. The data plane has no external crates.
+# Workspace crates share these dependency declarations.
 [workspace.dependencies]
 sibuna-ingress = { path = "crates/ingress", version = "1.0.0-beta.3" }
 # SID 0015. Hyper handles HTTP framing and flow control, Quinn and h3 terminate QUIC.

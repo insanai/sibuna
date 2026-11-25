@@ -114,7 +114,7 @@ tar -xzf sibuna-linux-amd64.tar.gz
 
 ### 从源码构建
 
-我们使用 **Rust 1.100** 进行构建和测试，默认的 JLV 编译器需要这个版本。仅支持 JSON 的守护进程可以用 Rust 1.94 配合 `--no-default-features` 构建，并按需选择 `sqlite,console`。浏览器求解器和控制台界面由 Rust 编译为 WebAssembly；构建不需要 Node 或 npm。
+我们使用 **Rust 1.100** 进行构建和测试，默认的 JLV 编译器需要这个版本。仅支持 JSON 的守护进程可以用 Rust 1.100 配合 `--no-default-features` 构建，并按需选择 `sqlite,console`。浏览器求解器和控制台界面由 Rust 编译为 WebAssembly；构建不需要 Node 或 npm。
 
 ```sh
 git clone https://github.com/insanai/sibuna.git

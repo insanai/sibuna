@@ -58,11 +58,13 @@ mod absent {
     }
 
     /// Never made in this build.
-    pub(in super::super) struct Stamp(std::convert::Infallible);
+    pub(in super::super) struct Stamp(!);
 
     impl Stamp {
         /// Nothing to settle.
-        pub fn settle(self, _refusal: Option<&io::Error>) {}
+        pub fn settle(self, _refusal: Option<&io::Error>) {
+            self.0
+        }
     }
 
     /// A file with `authority` is read as a topology here, and its reader refuses the
