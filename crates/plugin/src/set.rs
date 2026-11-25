@@ -10,7 +10,7 @@ use std::sync::{Arc, PoisonError, RwLock};
 
 #[cfg(unix)]
 use crate::agent::{AgentClient, AgentShared};
-use crate::native::{Hook, Native};
+use crate::native::{Constructor, Hook, Native};
 use crate::spec::{Error, Kind, MAX_PLUGINS, MAX_STAGE_HOOKS, Settings, Spec};
 use crate::verdict::{Failure, OnFailure, Stage, Verdict, outcome};
 use crate::view::{Edits, View, encode};
@@ -62,7 +62,7 @@ pub struct PluginStatus {
 /// The tier of a loaded plugin, with what its instances share.
 enum Tier {
     Native {
-        build: fn(&[(String, String)]) -> Result<Box<dyn Hook>, String>,
+        build: Constructor,
         settings: Vec<(String, String)>,
     },
     Wasm(Arc<Compiled>),

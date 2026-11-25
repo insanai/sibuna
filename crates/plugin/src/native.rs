@@ -40,13 +40,17 @@ pub trait Hook: Send {
     }
 }
 
+/// Builds a native hook from its settings, pairs of key and value, or says why the
+/// settings are wrong.
+pub type Constructor = fn(&[(String, String)]) -> Result<Box<dyn Hook>, String>;
+
 /// One entry of the daemon's table of native hooks, fixed at build time.
 #[derive(Clone, Copy)]
 pub struct Native {
     /// The name that `hook` in the configuration selects.
     pub name: &'static str,
     /// Builds the hook from its settings, or says why the settings are wrong.
-    pub build: fn(&[(String, String)]) -> Result<Box<dyn Hook>, String>,
+    pub build: Constructor,
 }
 
 impl std::fmt::Debug for Native {

@@ -1586,6 +1586,9 @@ version = "1.0.0-beta.3"
 [[package]]
 name = "sibuna-plugin"
 version = "1.0.0-beta.3"
+dependencies = [
+ "sibuna-pow",
+]
 
 [[package]]
 name = "sibuna-policy"

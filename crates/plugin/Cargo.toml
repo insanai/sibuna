@@ -10,5 +10,9 @@ authors.workspace = true
 
 [dependencies]
 
+# The conformance test runs the compiled proof-of-work solver and checks it natively.
+[dev-dependencies]
+sibuna-pow = { workspace = true }
+
 [lints]
 workspace = true

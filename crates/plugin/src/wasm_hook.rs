@@ -290,10 +290,4 @@ impl WasmHook {
         self.dirty = verdict.is_err();
         verdict
     }
-
-    /// The pages the instance holds, for the tests of the page budget.
-    #[cfg(test)]
-    pub fn pages(&self) -> u32 {
-        self.instance.pages()
-    }
 }

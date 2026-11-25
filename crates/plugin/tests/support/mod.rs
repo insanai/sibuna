@@ -1,6 +1,6 @@
 //! A small assembler for the tests: builds the binary of a module from its parts, so
 //! that hostile and malformed modules are written here and need no toolchain.
-#![allow(dead_code)]
+#![allow(dead_code, clippy::too_many_lines)]
 
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -89,13 +89,25 @@ pub struct Builder {
 
 impl Builder {
     /// Adds a function and returns its index, counting imports.
-    pub fn func(&mut self, params: &[u8], result: Option<u8>, locals: &[u8], code: Vec<u8>) -> u32 {
+    pub fn func(
+        &mut self,
+        params: &[u8],
+        result: Option<u8>,
+        locals: &[u8],
+        code: Vec<u8>,
+    ) -> u32 {
         self.funcs.push(Func { params: params.to_vec(), result, locals: locals.to_vec(), code });
         (self.imports.len() + self.funcs.len() - 1) as u32
     }
 
     /// Adds a function and exports it as `export`.
-    pub fn export(&mut self, export: &'static str, params: &[u8], result: Option<u8>, code: Vec<u8>) -> u32 {
+    pub fn export(
+        &mut self,
+        export: &'static str,
+        params: &[u8],
+        result: Option<u8>,
+        code: Vec<u8>,
+    ) -> u32 {
         let index = self.func(params, result, &[], code);
         self.exports.push((export, index));
         index
@@ -150,13 +162,18 @@ impl Builder {
         let globals: Vec<Vec<u8>> = self
             .globals
             .iter()
-            .map(|(ty, mutable, init)| [vec![*ty, u8::from(*mutable)], init.clone(), vec![0x0b]].concat())
+            .map(|(ty, mutable, init)| {
+                [vec![*ty, u8::from(*mutable)], init.clone(), vec![0x0b]].concat()
+            })
             .collect();
         if !globals.is_empty() {
             out.extend(section(6, vector(&globals)));
         }
-        let mut exports: Vec<Vec<u8>> =
-            self.exports.iter().map(|(text, index)| [name(text), vec![0], u(u64::from(*index))].concat()).collect();
+        let mut exports: Vec<Vec<u8>> = self
+            .exports
+            .iter()
+            .map(|(text, index)| [name(text), vec![0], u(u64::from(*index))].concat())
+            .collect();
         if self.memory.is_some() {
             exports.push([name("memory"), vec![2, 0]].concat());
         }
@@ -183,7 +200,8 @@ impl Builder {
             .data
             .iter()
             .map(|(offset, bytes)| {
-                [vec![0], i32c(*offset as i32), vec![0x0b], u(bytes.len() as u64), bytes.clone()].concat()
+                [vec![0], i32c(*offset as i32), vec![0x0b], u(bytes.len() as u64), bytes.clone()]
+                    .concat()
             })
             .collect();
         if !data.is_empty() {

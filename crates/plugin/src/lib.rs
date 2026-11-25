@@ -39,9 +39,11 @@ pub use agent::{
     FRAME_HEADER, Frame, FrameKind, MAX_FRAME, PROTOCOL_VERSION, read_frame, write_frame,
 };
 pub use breaker::{Breaker, BreakerLimits};
-pub use native::{Hook, Native};
+pub use native::{Constructor, Hook, Native};
 pub use set::{Decision, Local, Plan, PluginStatus, Slot};
-pub use spec::{AgentSpec, Attach, Error, Kind, Settings, Spec, WasmSpec};
+pub use spec::{
+    AgentSpec, Attach, Error, Kind, MAX_PLUGINS, MAX_STAGE_HOOKS, Settings, Spec, WasmSpec,
+};
 pub use verdict::{Failure, OnFailure, Stage, Verdict, chain, outcome};
 pub use view::{
     Edits, Field, MAX_ADDED_BYTES, MAX_ADDED_FIELDS, Protocol, View, WIRE_FIXED, WIRE_VERSION,

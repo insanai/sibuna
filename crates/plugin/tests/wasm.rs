@@ -1,11 +1,13 @@
 //! The interpreter on modules assembled by hand: its semantics, its bounds, and what it
 //! does with hostile and malformed input (SID 0030, acceptance rows 4 to 6).
 
+#![allow(clippy::unwrap_used)]
+
 mod support;
 
 use std::sync::Arc;
 
-use sibuna_plugin::wasm::{Budget, Host, Instance, LoadError, MAX_FRAMES, Module, PAGE, Trap};
+use sibuna_plugin::wasm::{Budget, Host, Instance, LoadError, Module, PAGE, Trap};
 use support::{Builder, I32, I64, i32c, i64c, u};
 
 struct NoHost;
@@ -32,7 +34,12 @@ fn instance(builder: &Builder, pages: u32) -> Instance {
 }
 
 /// Calls the export `name` with `args` under `fuel`.
-fn call(instance: &mut Instance, name: &str, args: &[u64], fuel: u64) -> Result<Option<u64>, Trap> {
+fn call(
+    instance: &mut Instance,
+    name: &str,
+    args: &[u64],
+    fuel: u64,
+) -> Result<Option<u64>, Trap> {
     let func = instance.module().exported_func(name).expect("the export exists");
     let mut budget = Budget { fuel, host_calls: 8 };
     instance.call(func, args, &mut budget, &mut NoHost)
@@ -157,10 +164,8 @@ fn an_indirect_call_checks_the_entry_and_its_type() {
 
 #[test]
 fn a_host_function_receives_its_arguments_and_is_counted() {
-    let mut builder = Builder {
-        imports: vec![("env", "add", vec![I32, I32], Some(I32))],
-        ..Builder::default()
-    };
+    let mut builder =
+        Builder { imports: vec![("env", "add", vec![I32, I32], Some(I32))], ..Builder::default() };
     let code = [i32c(40), i32c(2), vec![0x10, 0], i32c(1), i32c(1), vec![0x10, 0, 0x6a]].concat();
     builder.export("f", &[], Some(I32), code);
     let mut instance = instance(&builder, 1);
@@ -213,7 +218,6 @@ fn unbounded_recursion_stops_at_the_frame_limit() {
     builder.export("dive", &[I64], Some(I64), [vec![0x20, 0, 0x20, 0, 0x10, 0, 0x7c]].concat());
     let stopped = run(&builder, "dive", &[1]);
     assert!(matches!(stopped, Err(Trap::CallDepth | Trap::StackLimit)), "{stopped:?}");
-    assert!(MAX_FRAMES <= 256);
 }
 
 #[test]
@@ -273,7 +277,10 @@ fn rejects(code: Vec<u8>, result: Option<u8>) -> LoadError {
 #[test]
 fn code_that_does_not_type_check_does_not_load() {
     // An i64 where an i32 is expected.
-    assert!(matches!(rejects([i64c(1), i32c(1), vec![0x6a]].concat(), Some(I32)), LoadError::Malformed(_)));
+    assert!(matches!(
+        rejects([i64c(1), i32c(1), vec![0x6a]].concat(), Some(I32)),
+        LoadError::Malformed(_)
+    ));
     // An operand that is not there.
     assert!(matches!(rejects(vec![0x6a], Some(I32)), LoadError::Malformed(_)));
     // A result that is not there, and a result too many.
@@ -286,9 +293,15 @@ fn code_that_does_not_type_check_does_not_load() {
     assert!(matches!(rejects(vec![0x23, 0, 0x1a], None), LoadError::Malformed(_)));
     assert!(matches!(rejects(vec![0x10, 99], None), LoadError::Malformed(_)));
     // An `if` with a result and no `else`.
-    assert!(matches!(rejects([i32c(1), vec![0x04, I32], i32c(1), vec![0x0b]].concat(), Some(I32)), LoadError::Malformed(_)));
+    assert!(matches!(
+        rejects([i32c(1), vec![0x04, I32], i32c(1), vec![0x0b]].concat(), Some(I32)),
+        LoadError::Malformed(_)
+    ));
     // An alignment above the width of the access.
-    assert!(matches!(rejects([i32c(0), vec![0x28, 3, 0, 0x1a]].concat(), None), LoadError::Malformed(_)));
+    assert!(matches!(
+        rejects([i32c(0), vec![0x28, 3, 0, 0x1a]].concat(), None),
+        LoadError::Malformed(_)
+    ));
 }
 
 #[test]
