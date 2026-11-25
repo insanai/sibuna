@@ -434,3 +434,23 @@ fn the_forward_object_has_defaults_and_names_what_is_wrong() {
     let error = parse("{}", "127.0.0.2:65535").expect_err("no port left").to_string();
     assert!(error.contains("65535"), "{error}");
 }
+
+#[test]
+fn a_refused_flow_holds_a_peer_back_for_new_flows_and_keeps_its_udp_clients() {
+    let mut mesh = Mesh::start(2, "");
+    mesh.settle();
+    let peering = mesh.edges[0].peering.as_mut().expect("on");
+    assert!(peering.is_alive(0) && peering.eligible == 1);
+    let now = Instant::now();
+    peering.hold_back(0, now);
+    assert_eq!(peering.eligible, 0, "the peer still gets new flows");
+    assert!(peering.is_alive(0), "the clients of the peer would move");
+    // The sweep keeps it so until the second is over.
+    peering.refresh(now + Duration::from_millis(500));
+    assert!(peering.eligible == 0 && peering.is_alive(0));
+    peering.refresh(now + super::HELD_BACK);
+    assert_eq!(peering.eligible, 1);
+    // Silence ends both.
+    peering.refresh(now + super::ALIVE + super::HELD_BACK);
+    assert!(peering.eligible == 0 && !peering.is_alive(0));
+}

@@ -117,12 +117,12 @@ pub(crate) fn send_back(
 impl Edge {
     /// Decides what happens to the datagram of `size` bytes in the worker's buffer,
     /// from a client without a local mapping. An established entry keeps its peer
-    /// while that peer can take flows.
+    /// while that peer answers and does not drain.
     pub(crate) fn forward_datagram(&mut self, key: Client, size: usize, now: Instant) -> Outcome {
         let forwards = self.forwards();
         let Some(peering) = self.peering.as_mut() else { return Outcome::Local };
         let mut known = peering.entries.get(&key).map(|entry| entry.owner);
-        if known.is_some_and(|owner| !peering.is_eligible(owner)) {
+        if known.is_some_and(|owner| !peering.is_alive(owner)) {
             // The peer of an established client went away. The owner is chosen again.
             peering.forget(&key);
             known = None;

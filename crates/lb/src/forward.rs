@@ -213,6 +213,9 @@ pub(crate) struct Peering {
     peers: Vec<Peer>,
     /// The peers that can take a flow now, one bit for each place in `peers`.
     eligible: u64,
+    /// The peers that answer and do not drain, held back or not. A UDP client that is
+    /// forwarded to such a peer stays with it.
+    alive: u64,
     listener: TcpListener,
     socket: UdpSocket,
     pinged: Option<Instant>,
@@ -275,8 +278,10 @@ impl Peering {
         owner
     }
 
-    fn is_eligible(&self, peer: usize) -> bool {
-        self.eligible & (1 << peer) != 0
+    /// Whether `peer` answers and does not drain. One refused flow does not end this,
+    /// so it does not move the UDP clients that the peer already serves.
+    fn is_alive(&self, peer: usize) -> bool {
+        self.alive & (1 << peer) != 0
     }
 
     /// Whether one more flow may be forwarded to `peer`.
@@ -316,12 +321,15 @@ impl Peering {
     /// Recomputes which peers can take a flow, and closes the connections relayed to a
     /// peer that stayed silent.
     fn refresh(&mut self, now: Instant) {
-        let mut eligible = 0;
+        let (mut eligible, mut alive) = (0, 0);
         for (index, peer) in self.peers.iter_mut().enumerate() {
             let silence = peer.heard.map(|heard| now.saturating_duration_since(heard));
             let held = peer.held_until.is_some_and(|until| now < until);
-            if silence.is_some_and(|silence| silence < ALIVE) && !peer.draining && !held {
-                eligible |= 1 << index;
+            if silence.is_some_and(|silence| silence < ALIVE) && !peer.draining {
+                alive |= 1 << index;
+                if !held {
+                    eligible |= 1 << index;
+                }
             }
             if silence.is_some_and(|silence| silence >= LOST) && !peer.lost {
                 peer.lost = true;
@@ -329,6 +337,7 @@ impl Peering {
             }
         }
         self.eligible = eligible;
+        self.alive = alive;
     }
 
     /// Asks every peer whether its forwarding port answers, once in [`PING`].
@@ -449,6 +458,7 @@ impl Edge {
             own,
             peers,
             eligible: 0,
+            alive: 0,
             listener,
             socket,
             pinged: None,
