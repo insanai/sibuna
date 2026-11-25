@@ -698,7 +698,7 @@ Known gaps
 #. The log is reopened within about one second of SIGHUP or of ``reopen log``, not at once. Lines written in between go to the old file.
 #. The descriptor need does not count the sockets of the protocol adapters towards TLS, HTTP/2 and HTTP/3 servers (SID 0017), which have no configured bound.
 #. The packaging scripts were changed to install the logrotate file. The packages were not built in this work.
-#. A request on an edge takes one more lock of the routing table, to find its frontend.
+#. *Closed.* A request finds its frontend through the snapshot that ``Shared::read`` caches for each thread, and takes no lock while the table is unchanged.
 #. A second SIGTERM does not cut ``global.drain_delay`` short.
 #. ``tests/e2e.rs`` has a test, ``proxied_responses_keep_the_client_connection_open_for_the_next_request``, that fails about once in eight runs. It fails as often on ``main`` before this branch. It is not fixed here.
 

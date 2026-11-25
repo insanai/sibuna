@@ -154,7 +154,7 @@ Known gaps
 #. The receiver knows a node by the source address of the connection. A sender whose route leaves from another address than its mesh address is refused.
 #. The test of three processes runs on one host. The nodes there share one listener with ``reuse_port`` and find themselves through ``self_file``.
 #. The transfer is not encrypted.
-#. The database authority, the console and the plugin tiers of SID 0015 are not built.
+#. *Closed.* The database authority (SID 0028), the console of the edge (SID 0031) and the plugin tiers (SID 0030) are built.
 
 Open questions
 --------------

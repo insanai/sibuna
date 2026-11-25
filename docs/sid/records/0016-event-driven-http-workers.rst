@@ -316,7 +316,7 @@ Known gaps
 ~~~~~~~~~~
 
 #. HTTP/2 reached 53% to 58% of HAProxy, because each stream crossed a socket pair between the protocol runtime and a worker. SID 0017 removes that hop for HTTP/2 and HTTP/3 requests.
-#. The route table is behind one mutex, which every request takes once to select a server. Throughput scaled from 68,000 requests per second on one processor to 227,000 on eight, so the lock is not the bound yet. It will be on larger machines.
+#. *Closed by SID 0019.* The route table was behind one mutex, which every request took once to select a server. A request now reads a snapshot cached by its thread, ``Shared::read`` in ``crates/lb/src/http.rs``, and takes the mutex only when the table changed since its last request.
 #. A pool with ``http_version`` 2 or 3 cannot receive a WebSocket.
 #. A request that is not safe to repeat and meets a stale pooled socket answers 502. The worker watches idle sockets, so this needs a server that closes in the instant of reuse.
 #. The telemetry hooks of the console do not run on the workers. Edge mode has no console, so nothing is lost today.

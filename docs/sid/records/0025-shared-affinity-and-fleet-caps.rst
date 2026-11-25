@@ -357,7 +357,7 @@ Known gaps
 #. The ledger is in memory only. A ledger on disk would remove the gap above and is not built.
 #. The roster is fixed for the life of a process. A change of ``mesh`` needs a restart of every node, and for that time nodes with two rosters keep separate ledgers.
 #. The table has no series in the metrics of SID 0020. ``show affinity`` is the only view.
-#. The table is not written to disk and no spill cache sits under it. The interface for one exists, ``AffinityStore`` with ``ClusterState::use_store`` and ``Edge::bind_with``, and one test uses it. The daemon has no option that selects another store.
+#. *Closed by SID 0027.* The table had no store on disk. The ``spill`` section now puts a mapped file under it, through ``AffinityStore`` and ``SpillStore``.
 #. ``sticky: table`` on a cookie reads the ``Cookie`` field of the request only. It does not learn from the ``Set-Cookie`` of a response, so the first request of a session, which has no cookie yet, is balanced and not remembered.
 #. A status datagram has no guard against a replay within one epoch. The section on security states what such a replay can do.
 #. The process test runs on loopback without loss. Loss, repetition and reordering are tested in memory, not between processes. No test cuts the network between running processes: a killed node stands in for a partition.

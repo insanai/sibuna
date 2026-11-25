@@ -25,7 +25,7 @@ Motivation and scope
 
 SID 0015 lists replicated state among its proposals and asks which mesh state needs anti-entropy and expiry. We answer for the one state whose absence an attacker can use today. A ban is issued by the honeypot, by a rule quota, or by an administrator. It lives in the ban table of one process. With three nodes an attacker has three times the attempts before every node has banned it by itself, and a ban by an administrator holds on one node only.
 
-We do not replicate the rate limiters. Their counters change with every request, and each node already bounds what it serves. We do not replicate sticky tables or the counters of rate limits. An earlier draft also left out the lifting of bans and run-time server changes. Sticky cookies need no replication: every node derives the cookie from ``http.secret_file``, which the nodes of a cluster share.
+We do not replicate the rate limiters. Their counters change with every request, and each node already bounds what it serves. We do not replicate the counters of rate limits. Sticky tables were left out here and are replicated by SID 0025. An earlier draft also left out the lifting of bans and run-time server changes; both are now replicated. Sticky cookies need no replication: every node derives the cookie from ``http.secret_file``, which the nodes of a cluster share.
 
 Specification
 -------------
@@ -153,7 +153,7 @@ Rationale and alternatives
 
 *Direct sends, not gossip.* The roster is fixed and has at most 63 peers. Every node can reach every other. Epidemic forwarding earns its cost in large, changing groups.
 
-*No lifting.* An operator who lifts a ban on one node would expect it lifted on all. A lift is not monotone: it must win against a ban in flight, which needs a version for each key. We leave it out and say so. An administrator lifts on each node, or waits for the end.
+*No lifting (rejected in review).* An earlier draft left the lifting of bans out: a lift is not monotone, so it must win against a ban in flight, which needs a version for each key. An operator who lifts a ban on one node expects it lifted on all, so the section "Lifting a ban" replaces this choice.
 
 *UDP on the probe socket.* The mesh socket exists, is authenticated and is bound to the roster. A TCP stream to each peer would add connection state and a reconnect policy for a payload of a few bytes.
 
@@ -241,7 +241,7 @@ Known gaps
 #. The nodes must agree on ``ipv6_prefix`` and keep their clocks close. Neither is checked.
 #. A ban issued while a peer is cut off for less than three probe periods, with all three sends lost, reaches that peer only with its next walk, which a restart or a longer silence starts.
 #. A walk copies the map once for the returning peer, up to 65,536 entries.
-#. The test of three processes runs on one host over loopback. It has not run on separate hosts.
+#. The test of three processes runs on one host over loopback. On three separate hosts we timed bans, lifts and ``reload cluster`` by hand (Part X of the book); no automated test runs there.
 #. Replication runs in edge mode only. The daemon mode of the firewall has no mesh.
 #. The map of commands never forgets a key. A cluster that gives commands for more than 8,192 keys over its life, counting removed servers, keeps later commands local until its nodes restart.
 #. Two operators who add one server name with two addresses on two nodes at the same moment can leave the nodes with different addresses for it. The next command for that name settles it.
