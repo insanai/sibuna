@@ -232,6 +232,9 @@ mod unix {
         if command == Command::Help {
             return Ok(control::USAGE.to_owned());
         }
+        if command == Command::ShowCluster {
+            return show_cluster(source);
+        }
         // The file is compiled and checked here, off the worker, as for SIGHUP.
         let revision = match command {
             Command::Reload | Command::ReloadCluster if source.path().is_none() => {
@@ -264,6 +267,39 @@ mod unix {
         jobs.send(job).map_err(|_| no_answer())?;
         let own = answer.recv_timeout(WORKER_TIMEOUT).map_err(|_| no_answer())??;
         if cluster { push(source, own) } else { Ok(own) }
+    }
+
+    /// The answer to `show cluster`: this node and each peer with the digest of its
+    /// file, and whether the peer holds the file of this node.
+    fn show_cluster(source: &Source) -> Result<String, RuntimeError> {
+        use super::super::cluster;
+        let (Some(peers), Some(path)) = (source.cluster(), source.path()) else {
+            return Err(control::failure(
+                "ADM011",
+                "NO CLUSTER",
+                "This edge has no mesh, or no file, and so nothing to compare.",
+                "Name the nodes under `mesh` in the file of every node.",
+            ));
+        };
+        let own = fs::read(path).map(|file| cluster::digest(&file));
+        let own = own.map_err(super::super::reload_rejected)?;
+        let mut rows = vec![["node".to_owned(), "file".to_owned(), "state".to_owned()]];
+        rows.push([peers.listen().to_string(), own.clone(), "this node".to_owned()]);
+        for (peer, answer) in peers.ask() {
+            let (file, state) = match answer {
+                Ok(file) if file == own => (file, "same".to_owned()),
+                Ok(file) => (file, "differs".to_owned()),
+                Err(reason) => ("-".to_owned(), format!("no answer: {reason}")),
+            };
+            rows.push([peer.to_string(), file, state]);
+        }
+        let width = |column: usize| rows.iter().map(|row| row[column].len()).max().unwrap_or(0);
+        let (node, file) = (width(0), width(1));
+        let mut out = String::new();
+        for row in &rows {
+            out.push_str(&format!("{:<node$} {:<file$} {}\n", row[0], row[1], row[2]));
+        }
+        Ok(out)
     }
 
     /// Sends the file that this node just reloaded to every peer, and adds one line

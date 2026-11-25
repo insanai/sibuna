@@ -1380,6 +1380,16 @@ With this section, and with frontends that bind the same addresses on every node
 
 The node checks its file and reloads. It then sends the file to its peers. Each peer checks the file itself, writes it in the place of its own and reloads. A file that does not check reaches no peer. When a peer does not take the file, the command fails and names each peer with its answer; we correct the peer and run the command again.
 
+``show cluster`` tells whether the nodes hold the same file.
+
+.. code-block:: console
+
+   $ sibuna ctl /run/sibuna/edge.sock show cluster
+   node             file             state
+   10.0.0.1:7946    3fa9c1d2e4b50c77 this node
+   10.0.0.2:7946    3fa9c1d2e4b50c77 same
+   10.0.0.3:7946    91ab07c3d2e4f601 differs
+
 A node takes a file only when it states ``accept_config: true``, and only from a holder of the mesh key. A holder of that key can therefore change the topology of every such node, so the key file must be readable by the daemon alone. The daemon must be able to write the directory of its file. The file travels signed but not encrypted. Certificates, keys and other files that the topology names by path are not sent: we place them on every node before the reload. A node that was down keeps its old file; we run the command again when it is back.
 
 The sticky cookie of a pool needs no sharing, but it needs the same ``http.secret_file`` on every node. Without that file each node draws its own secret and does not recognise the cookie of another.

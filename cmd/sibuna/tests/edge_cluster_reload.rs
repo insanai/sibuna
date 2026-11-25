@@ -169,11 +169,19 @@ fn reload_cluster_puts_one_file_on_every_node() {
     for index in 1..3 {
         assert_eq!(fs::read_to_string(cluster.file(index)).unwrap(), next);
     }
+    // `show cluster` says that every node holds the file of this one.
+    let table = String::from_utf8(cluster.ctl(0, &["show", "cluster"]).stdout).unwrap();
+    assert_eq!(table.matches(" same").count(), 2, "{table}");
+    assert_eq!(table.matches(" this node").count(), 1, "{table}");
     // A file that does not check stops at the first node. No peer is asked.
     fs::write(cluster.file(0), "{").unwrap();
     assert!(!cluster.ctl(0, &["reload", "cluster"]).status.success());
     assert!(cluster.all_serve(&["a", "b"]));
     assert_eq!(fs::read_to_string(cluster.file(1)).unwrap(), next);
+    // The broken file of the first node now differs from the file of its peers.
+    let table = String::from_utf8(cluster.ctl(1, &["show", "cluster"]).stdout).unwrap();
+    assert_eq!(table.matches(" differs").count(), 1, "{table}");
+    assert_eq!(table.matches(" same").count(), 1, "{table}");
 }
 
 #[test]
@@ -194,4 +202,8 @@ fn a_node_with_another_key_refuses_the_file_and_the_command_says_so() {
     assert_eq!(cluster.servers(0), ["a", "b"]);
     assert_eq!(cluster.servers(1), ["a", "b"]);
     assert_eq!(cluster.servers(2), ["a"]);
+    // A node with another key gets no digest, and gives none.
+    let table = String::from_utf8(cluster.ctl(0, &["show", "cluster"]).stdout).unwrap();
+    assert_eq!(table.matches(" same").count(), 1, "{table}");
+    assert_eq!(table.matches("no answer").count(), 1, "{table}");
 }

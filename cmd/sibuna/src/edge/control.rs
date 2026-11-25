@@ -20,6 +20,7 @@ show info
 show stats
 show certs
 show ca
+show cluster
 set server POOL/NAME state ready|drain [local]
 set server POOL/NAME weight N [local]
 add server POOL/NAME IP:PORT [weight N] [local]
@@ -39,6 +40,8 @@ pub(super) enum Command {
     ShowCerts,
     /// The root certificate of the local authority (SID 0021).
     ShowCa,
+    /// The digest of the file of every node of the mesh (SID 0023).
+    ShowCluster,
     Help,
     Reload,
     /// Reloads this node and sends its file to the peers of the mesh (SID 0023).
@@ -82,6 +85,7 @@ impl Command {
                 | Self::ShowStats
                 | Self::ShowCerts
                 | Self::ShowCa
+                | Self::ShowCluster
                 | Self::Help
         )
     }
@@ -170,6 +174,7 @@ pub(super) fn parse(line: &str) -> Result<Command, RuntimeError> {
         ["show", "stats"] => Ok(Command::ShowStats),
         ["show", "certs"] => Ok(Command::ShowCerts),
         ["show", "ca"] => Ok(Command::ShowCa),
+        ["show", "cluster"] => Ok(Command::ShowCluster),
         ["help"] => Ok(Command::Help),
         ["reload"] => Ok(Command::Reload),
         ["reload", "cluster"] => Ok(Command::ReloadCluster),
