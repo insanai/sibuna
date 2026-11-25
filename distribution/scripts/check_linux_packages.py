@@ -32,6 +32,7 @@ getent passwd sibuna
 test -f /usr/lib/systemd/system/sibuna.service
 test -f /usr/lib/systemd/system/sibuna-edge.service
 test -f /usr/lib/sysusers.d/sibuna.conf
+test -f /etc/logrotate.d/sibuna-edge
 test -f /usr/share/doc/sibuna/SECURITY.md
 test -f /usr/share/doc/sibuna/LICENSES/LGPL-3.0.txt
 test -f /usr/share/doc/sibuna/LICENSES/THIRD-PARTY-RUST.txt

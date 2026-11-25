@@ -107,6 +107,9 @@ pub struct Request<'a> {
     pub body: &'a [u8],
     /// The body follows in the chunked transfer coding, the only coding accepted (SID 0009).
     pub chunked: bool,
+    /// The length of the head as it was received, with the blank line that ends it. Zero
+    /// for a request that was not parsed.
+    pub head_len: usize,
 }
 
 impl Default for Request<'_> {
@@ -122,6 +125,7 @@ impl Default for Request<'_> {
             header_count: 0,
             body: b"",
             chunked: false,
+            head_len: 0,
         }
     }
 }
@@ -349,6 +353,7 @@ pub fn parse_request(data: &[u8]) -> Result<Request<'_>, ParseError> {
         header_count: 0,
         body: data.get(data.len()..).unwrap_or_default(),
         chunked: false,
+        head_len: 0,
     };
     let mut framing = Framing::default();
     let mut next = line.next;
@@ -367,6 +372,7 @@ pub fn parse_request(data: &[u8]) -> Result<Request<'_>, ParseError> {
         next = field.length.map(|length| at + length);
     }
     framing.finish(&mut request)?;
+    request.head_len = data.len() - request.body.len();
     if !line.form.is_accepted(request.method) {
         return Err(ParseError::UnsupportedTargetForm);
     }

@@ -92,6 +92,8 @@ struct Extra<'a> {
     listen: bool,
     /// The file name of the log. Empty is `access.log`, and `-` is no log.
     log: &'a str,
+    /// Members of the `access_log` object, each with a leading comma.
+    log_members: &'a str,
 }
 
 /// The text of the topology file.
@@ -105,7 +107,9 @@ fn source(
 ) -> String {
     let (http, observe, front, root) = (extra.http, extra.observe, extra.front, extra.root);
     let name = if extra.log.is_empty() { "access.log" } else { extra.log };
-    let mut members = format!(r#""access_log":{{"output":"{}"}}"#, directory.join(name).display());
+    let output = directory.join(name);
+    let mut members =
+        format!(r#""access_log":{{"output":"{}"{}}}"#, output.display(), extra.log_members);
     if extra.log == "-" {
         // The members of a test begin with a comma, so one member stays in front.
         members = r#""internal_allow":["127.0.0.0/8","::1/128"]"#.to_owned();
@@ -256,6 +260,8 @@ fn each_request_is_one_line_with_its_server_status_and_times() {
             ("frontend", "web"),
             ("protocol", "http/1.1"),
             ("scheme", "http"),
+            ("tls_version", "-"),
+            ("tls_cipher", "-"),
             ("method", "GET"),
             ("host", "www.example.com"),
             ("path", "/index.html"),
@@ -483,11 +489,14 @@ fn a_descriptor_limit_below_the_need_is_reported_with_a_hint() {
     }
     let daemon = Daemon { child, _stderr: stderr, directory, vip: free(), admin: free() };
     assert!(text.contains("-- DESCRIPTOR LIMIT TOO LOW -"), "{text}");
-    assert!(
-        text.contains("can use 18944 file descriptors, but the process may open 300."),
-        "{text}"
-    );
-    assert!(text.contains("Hint: Raise the limit (`LimitNOFILE=18944`"), "{text}");
+    assert!(text.contains(" file descriptors, but the process may open 300."), "{text}");
+    // The need counts the idle server connections of the workers: at most 1,024 for
+    // the 1,024 connections of the default, a little less when the worker count does
+    // not divide them.
+    let need: u64 =
+        text.split("can use ").nth(1).unwrap().split(' ').next().unwrap().parse().unwrap();
+    assert!((18_944 + 960..=18_944 + 1024).contains(&need), "{text}");
+    assert!(text.contains(&format!("Hint: Raise the limit (`LimitNOFILE={need}`")), "{text}");
     drop(daemon);
 }
 
@@ -522,10 +531,29 @@ fn the_admin_socket_prints_the_series_of_the_edge() {
         "sibuna_edge_ready 1\n",
         "sibuna_edge_frontend_requests_total{frontend=\"web\",code=\"2xx\"} 1\n",
         "sibuna_edge_server_requests_total{backend=\"app\",server=\"a\",code=\"2xx\"} 1\n",
+        "sibuna_edge_server_client_closed_total{backend=\"app\",server=\"a\"} 0\n",
+        "sibuna_edge_server_active_requests{backend=\"app\",server=\"a\"} 0\n",
         "sibuna_edge_access_log_written_total 1\n",
+        "sibuna_edge_access_log_dropped_total 0\n",
+        "sibuna_edge_access_log_queue_length 8192\n",
+        "sibuna_edge_flow_log_dropped_total 0\n",
+        "sibuna_edge_refused_total{reason=\"client_closed\"} 0\n",
+        "sibuna_edge_refused_total{reason=\"udp_rate_limit\"} 0\n",
+        "sibuna_edge_refused_total{reason=\"no_server\"} 0\n",
+        "sibuna_edge_proxy_protocol_accepted_total 0\n",
+        "sibuna_edge_flows_active ",
     ] {
         assert!(text.contains(series), "{series} is missing:\n{text}");
     }
+    // A rotation by command: the file is renamed, and `reopen log` opens the path
+    // again without a reload of the topology.
+    fs::rename(daemon.log_path(), daemon.directory.join("access.log.1")).unwrap();
+    let reopened = Command::new(BIN).arg("ctl").arg(&socket).args(["reopen", "log"]).output();
+    assert!(reopened.unwrap().status.success());
+    std::thread::sleep(Duration::from_millis(500));
+    assert_eq!(status(&get(daemon.vip, "/rotated", "")), 200);
+    assert_eq!(field(&daemon.lines(1)[0], "path"), "/rotated");
+    assert_eq!(daemon.lines_of("access.log.1", 1).len(), 1);
 }
 
 /// Asks the separate listener until its readiness answer has `wanted`.
@@ -593,7 +621,7 @@ fn a_reload_moves_the_log_and_changes_who_reads_the_internal_routes() {
 }
 
 #[test]
-fn a_log_added_by_a_reload_starts_and_a_new_listener_needs_a_restart() {
+fn a_reload_starts_a_log_changes_its_queue_and_moves_the_listener() {
     let server = origin(Duration::ZERO);
     let daemon = start(server, true, &Extra { log: "-", ..Extra::default() });
     assert_eq!(status(&get(daemon.vip, "/unlogged", "")), 200);
@@ -601,13 +629,34 @@ fn a_log_added_by_a_reload_starts_and_a_new_listener_needs_a_restart() {
     assert_eq!(status(&get(daemon.vip, "/logged", "")), 200);
     let line = &daemon.lines(1)[0];
     assert_eq!(field(line, "path"), "/logged", "{line}");
-    // The separate listener is bound when the process starts. The reload is refused
-    // as a whole, so the log stays where it is.
-    daemon.reload(server, &Extra { listen: true, log: "other.log", ..Extra::default() });
+    let metrics = get(daemon.vip, "/__sibuna/metrics", "");
+    assert!(metrics.contains("sibuna_edge_access_log_queue_length 8192\n"), "{metrics}");
+    // A listener and another queue length, without a restart.
+    let short = r#","queue":64"#;
+    daemon.reload(server, &Extra { listen: true, log_members: short, ..Extra::default() });
+    let metrics = get(daemon.admin, "/metrics", "");
+    assert!(metrics.contains("sibuna_edge_access_log_queue_length 64\n"), "{metrics}");
+    assert_eq!(status(&get(daemon.vip, "/resized", "")), 200);
+    assert_eq!(field(&daemon.lines(3)[2], "path"), "/resized");
+    // An address that is taken refuses the reload as a whole: the old listener
+    // serves on and the log stays where it is.
+    let holder = TcpListener::bind("127.0.0.1:0").unwrap();
+    let taken = format!(r#","listen":"{}""#, holder.local_addr().unwrap());
+    daemon.reload(server, &Extra { observe: &taken, log: "other.log", ..Extra::default() });
+    assert_eq!(status(&get(daemon.admin, "/ready", "")), 200);
     assert_eq!(status(&get(daemon.vip, "/kept", "")), 200);
-    assert_eq!(field(&daemon.lines(2)[1], "path"), "/kept");
-    assert!(TcpStream::connect(daemon.admin).is_err());
+    assert_eq!(field(&daemon.lines(4)[3], "path"), "/kept");
     assert!(!daemon.directory.join("other.log").exists());
+    // A free address: the new listener answers and the old one is closed.
+    let moved = free();
+    let listen = format!(r#","listen":"{moved}""#);
+    daemon.reload(server, &Extra { observe: &listen, ..Extra::default() });
+    assert_eq!(status(&get(moved, "/ready", "")), 200);
+    assert!(TcpStream::connect(daemon.admin).is_err());
+    // No listener at all.
+    daemon.reload(server, &Extra::default());
+    assert!(TcpStream::connect(moved).is_err());
+    assert_eq!(status(&get(daemon.vip, "/__sibuna/health", "")), 200);
 }
 
 #[test]
@@ -671,6 +720,54 @@ fn a_502_of_the_server_itself_is_a_response_and_not_a_failure() {
         let metrics = get(daemon.vip, "/__sibuna/metrics", "");
         let failures = "sibuna_edge_server_failures_total{backend=\"app\",server=\"a\"} 0\n";
         assert!(metrics.contains(failures), "({event_loop}) {metrics}");
+    });
+}
+
+#[test]
+fn the_byte_counts_of_http11_are_the_bytes_of_the_message() {
+    // A chunked response: its framing is part of what the client receives.
+    let chunked = b"HTTP/1.1 200 OK\r\ntransfer-encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n";
+    both(|event_loop| {
+        let daemon = start(answering(chunked), event_loop, &Extra::default());
+        // A padded field counts as it was sent, and the body by its length.
+        let request = "POST /upload HTTP/1.1\r\nHost: www.example.com\r\nX-Pad:    wide   \r\n\
+                       Content-Length: 7\r\nConnection: close\r\n\r\npayload";
+        let answer = exchange(daemon.vip, request.as_bytes());
+        assert_eq!(status(&answer), 200, "{answer}");
+        assert!(answer.ends_with("5\r\nhello\r\n0\r\n\r\n"), "{answer}");
+        let line = &daemon.lines(1)[0];
+        assert_eq!(field(line, "bytes_in"), request.len().to_string(), "{line} ({event_loop})");
+        assert_eq!(field(line, "bytes_out"), answer.len().to_string(), "{line} ({event_loop})");
+        // A chunked request body counts its data bytes, without the chunk framing.
+        let head = "POST /chunked HTTP/1.1\r\nHost: www.example.com\r\n\
+                    Transfer-Encoding: chunked\r\nConnection: close\r\n\r\n";
+        let request = format!("{head}7\r\npayload\r\n0\r\n\r\n");
+        assert_eq!(status(&exchange(daemon.vip, request.as_bytes())), 200);
+        let line = &daemon.lines(2)[1];
+        assert_eq!(field(line, "bytes_in"), (head.len() + 7).to_string(), "{line}");
+    });
+}
+
+#[test]
+fn a_client_that_closes_while_the_server_is_silent_is_no_failure_of_the_server() {
+    both(|event_loop| {
+        let daemon = start(origin(Duration::from_millis(900)), event_loop, &Extra::default());
+        let mut client = TcpStream::connect(daemon.vip).unwrap();
+        client.write_all(b"GET /left HTTP/1.1\r\nHost: www.example.com\r\n\r\n").unwrap();
+        std::thread::sleep(Duration::from_millis(200));
+        drop(client);
+        let line = &daemon.lines(1)[0];
+        // An orderly close of the sending side is no abort: the answer is still written,
+        // and the line says 200. A connection that breaks is logged with 499.
+        let status = field(line, "status");
+        assert!(["499", "200"].contains(&status), "{line} ({event_loop})");
+        let metrics = get(daemon.vip, "/__sibuna/metrics", "");
+        let failures = "sibuna_edge_server_failures_total{backend=\"app\",server=\"a\"} 0\n";
+        assert!(metrics.contains(failures), "({event_loop})\n{metrics}");
+        if status == "499" {
+            let left = "sibuna_edge_server_client_closed_total{backend=\"app\",server=\"a\"} 1\n";
+            assert!(metrics.contains(left), "({event_loop})\n{metrics}");
+        }
     });
 }
 
