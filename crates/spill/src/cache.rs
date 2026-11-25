@@ -300,8 +300,9 @@ impl Cache {
         self.store(key, value, expires, now, true)
     }
 
-    /// Offers a hint as [`Cache::put`] does, but leaves a live hint of the same key as
-    /// it is. This is for a guess that must not replace what is known.
+    /// Offers a guess: a hint that must not replace what is known. It leaves a live
+    /// hint of the same key as it is, it takes a free slot only, and it does not count
+    /// in the sketch. So a flood of guesses displaces nothing.
     pub fn put_new(&mut self, key: &[u8], value: &[u8], expires: u64, now: u64) -> Put {
         self.store(key, value, expires, now, false)
     }
@@ -314,7 +315,7 @@ impl Cache {
         }
         let hash = self.hash(key);
         let (shard, bucket) = self.geometry.place(hash);
-        if let Some(sketch) = self.sketches.get_mut(shard) {
+        if overwrite && let Some(sketch) = self.sketches.get_mut(shard) {
             sketch.touch(count_hash(hash));
         }
         let survey = self.survey(shard, bucket, key, now);
@@ -331,7 +332,7 @@ impl Cache {
             (way, Put::Stored)
         } else {
             match survey.victim {
-                Some(victim) if self.estimate(shard, key) > victim.estimate => {
+                Some(victim) if overwrite && self.estimate(shard, key) > victim.estimate => {
                     self.counters.replaced += 1;
                     (victim.way, Put::Replaced)
                 }

@@ -120,8 +120,10 @@ pub struct Service {
 
 /// Moves `cache` to a new storage thread behind a bounded queue.
 ///
-/// `found` runs on the storage thread for every question that finds a live hint, with
-/// the key and the hint. A question that finds nothing has no answer.
+/// `found` runs on the storage thread for every question that was served, with the key
+/// and the live hint, or `None` when the cache holds none. So the one who asked can
+/// tell "nothing there" from "not answered yet". A question that was shed has no
+/// answer.
 ///
 /// # Errors
 ///
@@ -129,7 +131,7 @@ pub struct Service {
 pub fn start_service(
     cache: Cache,
     options: ServiceOptions,
-    found: impl FnMut(&[u8], &Hint) + Send + 'static,
+    found: impl FnMut(&[u8], Option<&Hint>) + Send + 'static,
 ) -> io::Result<Service> {
     let queue = options.queue.clamp(QUEUE_BOUNDS.0, QUEUE_BOUNDS.1);
     let (sender, receiver) = sync_channel(queue);
@@ -153,7 +155,7 @@ fn serve(
     mut cache: Cache,
     receiver: &Receiver<Request>,
     shared: &Shared,
-    mut found: impl FnMut(&[u8], &Hint),
+    mut found: impl FnMut(&[u8], Option<&Hint>),
 ) {
     let mut stopped = false;
     while !stopped && let Ok(first) = receiver.recv() {
@@ -168,9 +170,7 @@ fn serve(
                     cache.put_new(key.get(), value.get(), expires, now);
                 }
                 Request::Ask { key } => {
-                    if let Some(hint) = cache.get(key.get(), now) {
-                        found(key.get(), &hint);
-                    }
+                    found(key.get(), cache.get(key.get(), now).as_ref());
                 }
                 Request::Remove { key } => {
                     cache.remove(key.get(), now);
@@ -303,7 +303,8 @@ mod tests {
     fn an_offer_is_stored_and_a_question_is_answered_on_the_storage_thread() {
         let (answers, heard) = mpsc::channel();
         let service = start_service(cache(), ServiceOptions::default(), move |key, hint| {
-            let _ = answers.send((key.to_vec(), hint.value().to_vec()));
+            let value = hint.map_or_else(|| b"nothing".to_vec(), |hint| hint.value().to_vec());
+            let _ = answers.send((key.to_vec(), value));
         })
         .unwrap();
         let later = unix_seconds() + 600;
@@ -312,6 +313,9 @@ mod tests {
         assert!(service.ask(b"client-2"));
         let answer = heard.recv_timeout(Duration::from_secs(10)).unwrap();
         assert_eq!(answer, (b"client-1".to_vec(), b"srv-a".to_vec()));
+        // The cache holds nothing for the second key, and says so.
+        let answer = heard.recv_timeout(Duration::from_secs(10)).unwrap();
+        assert_eq!(answer, (b"client-2".to_vec(), b"nothing".to_vec()));
         // A guess does not replace what is known, and it fills what is not.
         assert!(service.handle().offer_new(b"client-1", b"srv-b", later));
         assert!(service.handle().offer_new(b"client-4", b"srv-b", later));
@@ -331,7 +335,8 @@ mod tests {
         assert!(budget.memory_bytes() > budget.queue_bytes);
         let handle = service.handle();
         drop(service);
-        // The thread has ended: no second answer came for the removed or the unknown key.
+        // The thread has ended. The removed key was answered with nothing.
+        assert_eq!(heard.try_recv().unwrap(), (b"client-1".to_vec(), b"nothing".to_vec()));
         assert!(heard.try_recv().is_err());
         // A handle that outlives the service drops its work and counts it.
         assert!(!handle.offer(b"client-3", b"srv-a", later));

@@ -351,3 +351,24 @@ fn a_working_set_in_use_is_kept_under_a_flood_of_new_keys() {
     // Without admission, ten new keys for every slot would leave almost none.
     assert!(kept > 19_000, "{kept} of 20000");
 }
+
+#[test]
+fn a_guess_takes_a_free_slot_only_however_often_it_was_seen() {
+    let mut cache = cache();
+    let mates = bucket_mates(&cache, 0, 5);
+    for mate in &mates[..4] {
+        assert_eq!(cache.put(mate, b"first", LATER, NOW), Put::Stored);
+    }
+    // Ten lookups raise the estimate of the fifth key far above the others.
+    for _ in 0..10 {
+        assert_eq!(cache.get(&mates[4], NOW), None);
+    }
+    let (shard, _) = place(&cache, &mates[0]);
+    assert!(cache.estimate(shard, &mates[4]) > cache.estimate(shard, &mates[0]));
+    assert_eq!(cache.put_new(&mates[4], b"guess", LATER, NOW), Put::Rejected);
+    for mate in &mates[..4] {
+        assert_eq!(value_of(&mut cache, mate), Some(b"first".to_vec()));
+    }
+    // An offer of what is known does compete.
+    assert_eq!(cache.put(&mates[4], b"known", LATER, NOW), Put::Replaced);
+}
