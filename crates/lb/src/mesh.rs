@@ -55,19 +55,38 @@ pub struct MeshConfig {
     pub replicate_bans: bool,
     /// Run-time commands travel to the peers (`mesh.replicate_commands`, SID 0022).
     pub replicate_commands: bool,
+    /// This node takes the file that a peer sends with `reload cluster`
+    /// (`mesh.accept_config`, SID 0023).
+    pub accept_config: bool,
 }
 
 impl MeshConfig {
+    /// The address of this node on the mesh.
+    pub fn listen(&self) -> SocketAddr {
+        self.listen
+    }
+
+    /// The addresses of the other nodes, in ascending order.
+    pub fn peers(&self) -> &[SocketAddr] {
+        &self.peers
+    }
+
     pub(crate) fn parse(mut r: ObjectReader<'_, '_>) -> io::Result<Self> {
-        let listen = address(&required(&mut r, "listen")?, &r.field_path("listen"))?;
         let key_file = required(&mut r, "key_file")?;
-        let entries = field(r.take_array("peers"))?.ok_or_else(|| invalid(r.missing("peers")))?;
-        if !(1..=63).contains(&entries.len()) || !unicast(listen) || key_file.is_empty() {
+        let (listen, others) = match field(r.take_array("nodes"))? {
+            Some(nodes) => own_node(&mut r, &addresses(nodes, "mesh.nodes")?)?,
+            None => {
+                let listen = address(&required(&mut r, "listen")?, &r.field_path("listen"))?;
+                let entries = field(r.take_array("peers"))?;
+                let entries = entries.ok_or_else(|| invalid(r.missing("peers")))?;
+                (listen, addresses(entries, "mesh.peers")?)
+            }
+        };
+        if !(1..=63).contains(&others.len()) || !unicast(listen) || key_file.is_empty() {
             return Err(invalid("mesh requires a unicast bind, a key file and 1 to 63 peers"));
         }
         let mut peers = Vec::new();
-        for item in entries {
-            let peer = address(item.as_str().unwrap_or(""), "mesh.peers")?;
+        for peer in others {
             if !unicast(peer)
                 || peer.is_ipv4() != listen.is_ipv4()
                 || peer == listen
@@ -80,8 +99,49 @@ impl MeshConfig {
         peers.sort();
         let replicate_bans = field(r.take_bool("replicate_bans"))?.unwrap_or(true);
         let replicate_commands = field(r.take_bool("replicate_commands"))?.unwrap_or(true);
+        let accept_config = field(r.take_bool("accept_config"))?.unwrap_or(false);
         field(r.finish())?;
-        Ok(Self { listen, peers, key_file, replicate_bans, replicate_commands })
+        Ok(Self { listen, peers, key_file, replicate_bans, replicate_commands, accept_config })
+    }
+}
+
+fn addresses(entries: &[sibuna_json::Value<'_>], path: &str) -> io::Result<Vec<SocketAddr>> {
+    entries.iter().map(|item| address(item.as_str().unwrap_or(""), path)).collect()
+}
+
+/// Splits `mesh.nodes`, the list that every node shares, into this node and the others.
+///
+/// This node is the address that `mesh.self_file` holds, when the key is given.
+/// Otherwise it is the first address of the list that belongs to this host: an address
+/// of another host cannot be bound.
+fn own_node(
+    r: &mut ObjectReader<'_, '_>,
+    nodes: &[SocketAddr],
+) -> io::Result<(SocketAddr, Vec<SocketAddr>)> {
+    let own = match field(r.take_str("self_file"))? {
+        Some(path) => {
+            let text = std::fs::read_to_string(path)
+                .map_err(|error| invalid(format!("mesh.self_file {path}: {error}")))?;
+            let own = address(text.trim(), "mesh.self_file")?;
+            nodes.contains(&own).then_some(own)
+        }
+        None => nodes.iter().copied().find(|node| is_local(*node)),
+    };
+    let Some(own) = own else {
+        return Err(invalid(
+            "mesh.nodes names no address of this host. Hint: list the mesh address of \
+             every node, this one included, or name this node in the file of mesh.self_file",
+        ));
+    };
+    Ok((own, nodes.iter().copied().filter(|node| *node != own).collect()))
+}
+
+/// Whether `node` is an address of this host. An address in use is: the running daemon
+/// holds it while it checks a new file.
+fn is_local(node: SocketAddr) -> bool {
+    match UdpSocket::bind(node) {
+        Ok(_) => true,
+        Err(error) => error.kind() != io::ErrorKind::AddrNotAvailable,
     }
 }
 
@@ -786,6 +846,7 @@ mod tests {
             key_file: String::new(),
             replicate_bans: true,
             replicate_commands: true,
+            accept_config: false,
         };
         let secret = [7; 32];
         let mesh = Mesh::start(&spec, &secret, [9; 16]).expect("start");
@@ -830,6 +891,7 @@ mod tests {
             key_file: String::new(),
             replicate_bans: true,
             replicate_commands: true,
+            accept_config: false,
         };
         let mesh = Mesh::start(&spec, &[7; 32], [boot; 16]).expect("start");
         let heard = Heard::default();
