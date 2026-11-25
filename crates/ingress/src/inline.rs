@@ -172,7 +172,8 @@ pub struct Refused<'a> {
     pub protocol: &'static str,
     /// The client's certificate and the outcome of its TLS handshake.
     pub secured: crate::Secured,
-    /// The status of the answer.
+    /// The status of the answer. 499 stands for a request that its client gave up
+    /// while it was read. Such a client receives nothing.
     pub status: u16,
     /// The request method.
     pub method: &'a str,
@@ -287,11 +288,14 @@ pub(crate) async fn exchange(
     } else {
         timeout(DEADLINE, buffer(&mut body, budget)).await
     };
+    // A body that does not arrive in time is a bad request. A body that fails was cut
+    // off by its client, who reset the stream or closed the connection: that is
+    // reported as 499, which no client receives.
+    let status = if buffered.is_err() { 400 } else { 499 };
     let Ok(Ok((prefix, ended))) = buffered else {
         let host = parts.headers.get(header::HOST).and_then(|host| host.to_str().ok());
         let (method, path) = (parts.method.as_str(), parts.uri.path());
         let host = host.unwrap_or_default();
-        let status = 400;
         inline.refused(&Refused { peer, vip, protocol, secured, status, method, host, path });
         return error(StatusCode::BAD_REQUEST);
     };
