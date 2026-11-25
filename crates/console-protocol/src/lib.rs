@@ -123,6 +123,7 @@ pub mod challenges;
 pub mod client_family;
 pub mod codec;
 pub mod dashboard;
+pub mod edge;
 mod error;
 pub mod events;
 pub mod geo;
