@@ -4,8 +4,11 @@
 //! TXT record of DNS-01, and signs with a key of its own.
 //!
 //! It does not verify the signature of a request. The client's requests are checked by
-//! the unit tests of `sibuna-acme` and by the run against Pebble (SID 0021).
+//! the unit tests of `sibuna-acme` and by the run against Pebble (SID 0021). It does
+//! verify the MAC of an external account binding when the test sets one, and it answers
+//! the renewal information of RFC 9773 with the windows that the test queues.
 
+use std::collections::VecDeque;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::sync::atomic::{AtomicBool, AtomicU16, AtomicU64, AtomicUsize, Ordering};
@@ -51,6 +54,19 @@ pub struct Authority {
     pub order_count: AtomicUsize,
     /// The challenge type of every validation that succeeded.
     pub validated: Mutex<Vec<String>>,
+    /// The key identifier and the MAC key of the binding that a new account must carry.
+    pub binding: Mutex<Option<(String, Vec<u8>)>>,
+    /// The signed requests received so far.
+    pub signed_count: AtomicUsize,
+    /// Offer renewal information in the directory.
+    pub renewal_info: AtomicBool,
+    /// The windows of the next answers about a renewal: start and end in seconds from
+    /// now. The last one stays for every later answer. Without one: a day from now.
+    pub windows: Mutex<VecDeque<(i64, i64)>>,
+    /// The certificate identifier of every question about a renewal.
+    pub asked_renewal: Mutex<Vec<String>>,
+    /// The `replaces` member of every order placed, empty without one.
+    pub replaces: Mutex<Vec<String>>,
     /// The first signed request is answered with `badNonce`, once.
     bad_nonce_pending: AtomicBool,
     nonce: AtomicU64,
@@ -123,6 +139,12 @@ impl Authority {
             refuse: AtomicBool::new(false),
             order_count: AtomicUsize::new(0),
             validated: Mutex::default(),
+            binding: Mutex::default(),
+            signed_count: AtomicUsize::new(0),
+            renewal_info: AtomicBool::new(false),
+            windows: Mutex::default(),
+            asked_renewal: Mutex::default(),
+            replaces: Mutex::default(),
             bad_nonce_pending: AtomicBool::new(true),
             nonce: AtomicU64::new(1),
             thumbprint: Mutex::default(),
@@ -189,11 +211,21 @@ impl Authority {
                     let nonce = url("newNonce", "nonce");
                     let account = url("newAccount", "account");
                     let order = url("newOrder", "order");
-                    Answer::json(200, format!("{{{nonce},{account},{order}}}"))
+                    let required = self.binding.lock().unwrap().is_some();
+                    let meta = format!(r#""meta":{{"externalAccountRequired":{required}}}"#);
+                    let renewal = match self.renewal_info.load(Ordering::Relaxed) {
+                        true => format!(",{}", url("renewalInfo", "ari")),
+                        false => String::new(),
+                    };
+                    Answer::json(200, format!("{{{nonce},{account},{order},{meta}{renewal}}}"))
                 }
-                _ => Answer::json(200, String::new()),
+                _ => match path.strip_prefix("/ari/") {
+                    Some(id) => self.renewal(id),
+                    None => Answer::json(200, String::new()),
+                },
             };
         }
+        self.signed_count.fetch_add(1, Ordering::Relaxed);
         if self.bad_nonce_pending.swap(false, Ordering::Relaxed) {
             return Answer::problem(400, "badNonce", "the test rejects the first nonce");
         }
@@ -213,8 +245,46 @@ impl Authority {
         }
     }
 
+    /// Answers a question about the renewal of the certificate `id` with the next
+    /// window of the test.
+    fn renewal(&self, id: &str) -> Answer {
+        self.asked_renewal.lock().unwrap().push(id.to_owned());
+        let mut windows = self.windows.lock().unwrap();
+        let (start, end) = match windows.len() {
+            0 => (86_400, 90_000),
+            1 => windows[0],
+            _ => windows.pop_front().unwrap(),
+        };
+        let at = |offset: i64| sibuna_acme::format_rfc3339(now().saturating_add_signed(offset));
+        let window = format!(r#"{{"start":"{}","end":"{}"}}"#, at(start), at(end));
+        Answer::json(200, format!(r#"{{"suggestedWindow":{window}}}"#))
+    }
+
+    /// Whether a registration carries the binding that the test wants: the header names
+    /// the algorithm, the key identifier and this URL, and the MAC verifies. The unit
+    /// tests of `sibuna-acme` verify the same MAC with another library.
+    fn is_bound(&self, body: &str) -> bool {
+        let Some((kid, key)) = self.binding.lock().unwrap().clone() else { return true };
+        let payload = String::from_utf8(decoded(body, "payload")).unwrap_or_default();
+        let Some(at) = payload.find("\"externalAccountBinding\"") else { return false };
+        let binding = &payload[at..];
+        let (protected, bound) = (member(binding, "protected"), member(binding, "payload"));
+        let (Some(protected), Some(bound)) = (protected, bound) else { return false };
+        let header = String::from_utf8(decoded(binding, "protected")).unwrap_or_default();
+        let url = format!("{}/account", self.base);
+        let header_ok = member(&header, "alg").as_deref() == Some("HS256")
+            && member(&header, "kid") == Some(kid)
+            && member(&header, "url") == Some(url);
+        let signed = format!("{protected}.{bound}");
+        let mac = sibuna_crypto::hmac::hmac_sha256(&key, signed.as_bytes());
+        header_ok && decoded(binding, "signature") == mac
+    }
+
     /// Registers the account and remembers the thumbprint of its key.
     fn account(&self, body: &str) -> Answer {
+        if !self.is_bound(body) {
+            return Answer::problem(401, "unauthorized", "the binding does not verify");
+        }
         let protected = String::from_utf8(decoded(body, "protected")).unwrap_or_default();
         let (x, y) = (member(&protected, "x"), member(&protected, "y"));
         let (Some(x), Some(y)) = (x, y) else {
@@ -234,6 +304,7 @@ impl Authority {
         let Some(name) = member(payload, "value") else {
             return Answer::problem(400, "malformed", "the order names no host");
         };
+        self.replaces.lock().unwrap().push(member(payload, "replaces").unwrap_or_default());
         let mut orders = self.orders.lock().unwrap();
         let id = orders.len();
         let token = format!("token_{id}-{}", self.nonce.load(Ordering::Relaxed));
@@ -389,6 +460,7 @@ impl Authority {
             not_before: now(),
             not_after: now() + self.lifetime.load(Ordering::Relaxed),
             serial: 100 + id as u64,
+            authority_key_id: Some(x509::key_id(&self.key.subject_public_key_info())),
             ..x509::Template::default()
         };
         let leaf = x509::write(&template, &request.public_key, &self.key).unwrap();
