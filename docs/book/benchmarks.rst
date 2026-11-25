@@ -1058,3 +1058,173 @@ A row in this table is not a claim about the product's performance. SafeLine's o
 .. admonition:: Explain the invariant
 
    Every figure in this part is a median over repetitions, with its spread beside it. Explain the difference between a median-of-batches figure and a per-request p99.9, why the primitive table reports the former and the latency table the latter, and why only the latter could reveal the thread-turnover stall described above.
+
+The Build of 2026-11-25 and a Cluster of Three Hosts
+----------------------------------------------------
+
+.. admonition:: Objectives
+
+   By the end of this chapter, we should be able to say what the build with traffic policy, observability and the cluster commands costs against HAProxy on one host, what three nodes carry together, and how fast a ban and a file cross the cluster.
+
+We repeated the comparison with HAProxy 3.0.11 on the same host with the build of commit ``2efd741``. The method is that of the previous chapter: loopback, two origins on four CPUs, the proxy on eight, the load on four, ``http.surface: "off"``, eight seconds for each line, one run. ``http.max_connections`` was 65,536, because the node bounds the requests it runs at once by that number and 2,048 HTTP/2 connections with ten streams each exceed the smaller bound of the earlier run.
+
+.. list-table:: One host, requests per second and the CPU seconds of the proxy during the eight seconds.
+   :header-rows: 1
+   :widths: 16 12 16 16 14 13 13
+
+   * - Workload
+     - Connections
+     - HAProxy
+     - Sibuna
+     - Sibuna / HAProxy
+     - HAProxy CPU s
+     - Sibuna CPU s
+   * - tcp
+     - 16
+     - 170,191
+     - 183,082
+     - 1.08
+     - 52
+     - 44
+   * - tcp
+     - 256
+     - 232,439
+     - 238,578
+     - 1.03
+     - 53
+     - 46
+   * - tcp
+     - 2,048
+     - 178,740
+     - 187,957
+     - 1.05
+     - 47
+     - 42
+   * - http
+     - 16
+     - 138,108
+     - 158,058
+     - 1.14
+     - 59
+     - 46
+   * - http
+     - 256
+     - 242,281
+     - 223,457
+     - 0.92
+     - 63
+     - 53
+   * - http
+     - 2,048
+     - 174,374
+     - 168,190
+     - 0.96
+     - 62
+     - 44
+   * - https
+     - 16
+     - 107,538
+     - 85,703
+     - 0.80
+     - 58
+     - 48
+   * - https
+     - 256
+     - 168,360
+     - 146,329
+     - 0.87
+     - 63
+     - 53
+   * - https
+     - 2,048
+     - 130,548
+     - 121,450
+     - 0.93
+     - 61
+     - 56
+   * - h2, 10 streams
+     - 16
+     - 204,190
+     - 120,026
+     - 0.59
+     - 63
+     - 61
+   * - h2, 10 streams
+     - 256
+     - 165,114
+     - 103,592
+     - 0.63
+     - 63
+     - 61
+   * - h2, 10 streams
+     - 2,048
+     - 123,725
+     - 85,587
+     - 0.69
+     - 62
+     - 60
+
+Sibuna carries TCP and plain HTTP at the rate of HAProxy with less CPU. It carries HTTPS at 80 to 93 percent and HTTP/2 at 59 to 69 percent. The HTTP/2 path runs in a protocol runtime beside the workers, and that is where the difference lies. No request failed in any line. The 99th percentile of Sibuna was lower than that of HAProxy at 2,048 HTTPS connections (68 ms against 95 ms) and higher at 2,048 HTTP/2 connections (1.02 s against 0.53 s).
+
+The load run found a fault that no test had found. On the worker path a connection serves 4,096 requests, and the node closed it while the server still owed the answer to the last one, so one request in 4,096 on a long keep-alive connection got no answer. The load tool showed it as read errors. The build above has the correction, and a test now sends 4,096 requests on one connection on both paths.
+
+For the cluster we ran one node on each of three hosts, 16, 16 and 32 CPUs, in containers on one network. Each host also ran an origin and a load generator, and each generator loaded the node of the next host, all three at once for ten seconds. Every node sent to the origins of all three hosts. HAProxy ran the same way, with least connections. Sibuna used the default pool of a mesh. The network sets the ceiling here: a generator alone reaches an origin of another host at 58,000 to 105,000 requests per second with 64 connections, and a round trip between two of the hosts takes about a millisecond.
+
+.. list-table:: Three hosts, three nodes loaded at once: requests per second of all nodes together, and the CPU seconds of the three proxies together during the ten seconds.
+   :header-rows: 1
+   :widths: 16 16 16 16 14 11 11
+
+   * - Workload
+     - Connections per node
+     - HAProxy
+     - Sibuna
+     - Sibuna / HAProxy
+     - HAProxy CPU s
+     - Sibuna CPU s
+   * - http
+     - 64
+     - 104,391
+     - 90,764
+     - 0.87
+     - 97
+     - 43
+   * - http
+     - 512
+     - 110,354
+     - 98,462
+     - 0.89
+     - 77
+     - 46
+   * - https
+     - 64
+     - 96,657
+     - 87,985
+     - 0.91
+     - 88
+     - 71
+   * - https
+     - 512
+     - 106,803
+     - 81,722
+     - 0.77
+     - 103
+     - 69
+
+Across hosts Sibuna carries 77 to 91 percent of what HAProxy carries, with 44 to 81 percent of its CPU time. No request failed with either proxy. These are single runs on shared hosts, and the lines differ by several percent from run to run.
+
+We also timed what the cluster shares, on the same three hosts with ``surface: "shield"``.
+
+.. list-table:: Three hosts: the time from a command on one node to its effect on the others, three rounds.
+   :header-rows: 1
+   :widths: 50 50
+
+   * - Event
+     - Time
+   * - A client banned on one node is refused by the two others
+     - 20 to 64 ms
+   * - ``del ban`` on one node: all three admit the client again
+     - 13 to 48 ms
+   * - ``reload cluster``: the command returns and all three hold the same file
+     - 30 ms
+
+The times include the request that observes the effect, sent every 5 ms. ``show cluster`` showed the same digest on all three nodes before and after the reload.
