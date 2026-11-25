@@ -1,6 +1,7 @@
 //! The configuration of automatic HTTPS (SID 0021): the `auto` names of a TLS frontend
 //! and the `global.acme` object. Nothing here opens a socket or a file.
 
+mod authority;
 mod demand;
 mod dns;
 
@@ -10,6 +11,7 @@ use std::net::IpAddr;
 
 use sibuna_json::ObjectReader;
 
+pub use self::authority::{Authority, Eab};
 pub use self::demand::OnDemand;
 pub use self::dns::{DnsConfig, DnsProvider};
 use crate::config::{Config, Protocol, field, invalid};
@@ -69,6 +71,12 @@ pub struct AcmeOptions {
     pub internal_lifetime: u64,
     /// The guards of issuance on demand. A frontend with `tls.on_demand` needs them.
     pub on_demand: Option<OnDemand>,
+    /// The external account binding of the first authority.
+    pub eab: Option<Eab>,
+    /// The authorities that are asked when the first one fails, in this order.
+    pub fallback: Vec<Authority>,
+    /// Ask the authority when to renew a certificate (RFC 9773).
+    pub ari: bool,
 }
 
 impl Default for AcmeOptions {
@@ -83,15 +91,30 @@ impl Default for AcmeOptions {
             dns: None,
             internal_lifetime: INTERNAL_LIFETIME,
             on_demand: None,
+            eab: None,
+            fallback: Vec::new(),
+            ari: true,
         }
     }
 }
 
 impl AcmeOptions {
-    /// Whether the authority is one of the public directories that we know by name. A
-    /// public authority is never asked for an internal name.
+    /// Every authority in the order in which an attempt asks them: the first one, then
+    /// those of `fallback`.
+    pub fn authorities(&self) -> Vec<Authority> {
+        let first = Authority {
+            directory: self.directory.clone(),
+            email: self.email.clone(),
+            ca_file: self.ca_file.clone(),
+            eab: self.eab.clone(),
+        };
+        std::iter::once(first).chain(self.fallback.iter().cloned()).collect()
+    }
+
+    /// Whether a listed authority is one of the public directories that we know by
+    /// name. A public authority is never asked for an internal name.
     pub fn is_public(&self) -> bool {
-        self.directory == LETSENCRYPT || self.directory == LETSENCRYPT_STAGING
+        self.authorities().iter().any(Authority::is_public)
     }
 
     /// The managed name that a handshake on a frontend with `issuer` and the TLS port
@@ -112,22 +135,9 @@ impl AcmeOptions {
 
     pub(crate) fn parse(mut r: ObjectReader<'_, '_>) -> io::Result<Self> {
         let defaults = Self::default();
-        let directory = match field(r.take_str("directory"))? {
-            None | Some("letsencrypt") => defaults.directory,
-            Some("letsencrypt-staging") => LETSENCRYPT_STAGING.to_owned(),
-            Some(url) if is_directory_url(url) => url.to_owned(),
-            Some(_) => {
-                return Err(invalid(
-                    "global.acme.directory: expected \"letsencrypt\", \"letsencrypt-staging\" \
-                     or an https URL (http is accepted for a loopback address only)",
-                ));
-            }
-        };
-        let email = match field(r.take_str("email"))? {
-            None => None,
-            Some(email) if is_email(email) => Some(email.to_owned()),
-            Some(_) => return Err(invalid("global.acme.email: expected an e-mail address")),
-        };
+        let Authority { directory, email, ca_file, eab } = Authority::take(&mut r)?;
+        let fallback = authority::fallback(&mut r, &directory)?;
+        let ari = field(r.take_bool("ari"))?.unwrap_or(defaults.ari);
         let storage = match field(r.take_str("storage"))? {
             None => defaults.storage,
             Some("") => return Err(invalid("global.acme.storage must be a directory")),
@@ -145,7 +155,6 @@ impl AcmeOptions {
                 ));
             }
         };
-        let ca_file = field(r.take_str("ca_file"))?.map(str::to_owned);
         let redirect = field(r.take_bool("redirect"))?.unwrap_or(defaults.redirect);
         let dns = field(r.take_object("dns"))?.map(DnsConfig::parse).transpose()?;
         let internal_lifetime = internal_lifetime(&mut r)?;
@@ -161,6 +170,9 @@ impl AcmeOptions {
             dns,
             internal_lifetime,
             on_demand,
+            eab,
+            fallback,
+            ari,
         })
     }
 }
