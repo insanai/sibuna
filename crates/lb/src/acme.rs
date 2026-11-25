@@ -5,6 +5,7 @@ mod authority;
 mod demand;
 mod dns;
 mod internal;
+mod server;
 
 use std::collections::BTreeMap;
 use std::io;
@@ -16,6 +17,7 @@ pub use self::authority::{Authority, Eab};
 pub use self::demand::OnDemand;
 pub use self::dns::{DnsConfig, DnsProvider};
 pub use self::internal::{INTERNAL_LIFETIME, Internal};
+pub use self::server::InternalServer;
 use crate::config::{Config, Protocol, field, invalid};
 
 /// The production directory of Let's Encrypt, the default authority.
@@ -624,6 +626,7 @@ mod tests {
         let expected = Internal {
             lifetime: 600,
             constraints: vec!["10.0.0.0/8".into(), "corp.internal".into(), "localhost".into()],
+            server: None,
         };
         assert_eq!(options, Some(expected));
         for outside in ["db.internal", "192.168.1.1", "*.internal"] {
