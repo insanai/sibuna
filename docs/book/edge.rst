@@ -1,0 +1,514 @@
+Part VIII: The Edge Load Balancer
+=================================
+
+The earlier Parts built a gate and a shield in front of one origin. This Part follows a connection through a node that serves many origins: it accepts TCP, UDP and HTTP, admits or refuses the connection at the socket, chooses a server, and keeps the flow on that server until it ends. We study the design and its reasons. Part XI holds the configuration, and we refer to it instead of repeating it. SID 0015 is the parent record, and each section names the record that holds its design.
+
+.. admonition:: Objectives
+
+   By the end of this chapter, we should be able to explain why a flow belongs to one thread and why a reload fails no request, describe how a waiting connection costs a record and no buffer, work the arithmetic of weighted round robin, least connections, Maglev, bounded loads and rendezvous hashing by hand, derive how many clients move when a server leaves, draw the life of a server as a state machine, list the admission stages at the socket, state the outcome rule of a hook, and name the gaps that remain.
+
+The Model
+---------
+
+A node is described by four kinds of object. A *frontend* is a set of bound addresses and a protocol: ``tcp``, ``udp`` or ``http``. A *route* belongs to an HTTP frontend and matches a host, a path, or both. A *pool* (a ``backend`` in the file) is a set of servers with a scheduler, health checks and a traffic policy. A *server* has a name, an address, a weight, a flow limit ``max_flows``, and may be a backup. A TCP or UDP frontend names one default pool, and a TCP frontend that inspects the ClientHello may have rules that select others. An HTTP frontend evaluates its routes in order; the first match selects a pool, and the default pool takes the rest.
+
+The unit of work is a *flow*. A TCP stream is a flow from accept to close. A UDP mapping, the association between one client address and one server socket, is a flow from its first datagram to its idle expiry. An HTTP exchange, one request and its response, is a flow too. A TCP or UDP flow selects its server once, for its whole life. An HTTP frontend selects a server for each request, so the requests of one keep-alive connection, or the streams of one HTTP/2 connection, may reach different servers.
+
+Flows Belong to One Thread
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Each flow is owned by exactly one thread at a time. The edge worker accepts the connections of every frontend, owns the UDP mappings and the ClientHello inspections, and hands an established TCP stream to a relay thread. An HTTP connection is handed to the HTTP worker that serves the fewest connections and stays there until it closes (SID 0016). A handoff is a move through a queue followed by a wake-up. After the move, the old owner holds nothing of the flow. So no lock protects the state of a flow, and a fault in one connection closes that connection only.
+
+The alternative is one table of flows that every thread reads and writes. It needs a lock for each access, or a lock-free structure in which every read of a payload is itself free of races. SID 0015 states the trap of the second choice: a sequence counter that detects a torn read cannot repair it in Rust, because the unsynchronized copy is already a data race. Ownership removes the question. What threads must share is small and is shared on purpose: the flow budget, the per-server counts of active flows, the health flags, and the published routing table.
+
+The price of ownership is that a flow cannot move to a less busy thread. The assignment by fewest connections keeps the connection counts of the workers within one of each other (``assign_keeps_balance`` in the Lean model of SID 0016). It balances counts, not work: a busy connection and an idle one count the same.
+
+An Immutable Routing Snapshot
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The routing table changes rarely and is read by every request. Sibuna therefore separates the two. A writer, which is a reload, an admin command or a change of the cluster regime, changes a master table under a mutex, builds a new immutable snapshot from it, and raises a generation counter. A reader compares one number with the generation its thread last saw. When they are equal it uses the snapshot its thread already holds, without a lock and without a write to shared memory. When they differ it takes the mutex once and fetches the new snapshot (SID 0019).
+
+.. admonition:: Implementation: ``Shared::read``
+
+   Runs a visitor on the current routing snapshot. The usual call compares the generation with a ``thread_local`` cache of at most eight entries and takes no lock. In ``crates/lb/src/http.rs`` (crate ``sibuna-lb``).
+
+.. code-block:: rust
+
+   fn read<R>(&self, visit: impl Fn(&Snapshot) -> R) -> R {
+       let generation = self.generation.load(Ordering::Acquire);
+       let cached = CACHE.try_with(|cache| {
+           let cache = cache.try_borrow().ok()?;
+           let fresh = |entry: &&Cached| entry.id == self.id && entry.generation == generation;
+           cache.iter().find(fresh).map(|entry| visit(&entry.snapshot))
+       });
+       if let Ok(Some(result)) = cached {
+           return result;
+       }
+       let (snapshot, generation) = self.fetch();
+       // ... remember the snapshot for this thread, then:
+       visit(&snapshot)
+   }
+
+The firewall decides a request under policy generation :math:`n`, and the route table selects its server a moment later. A reload may fall between the two. A first version answered such a request 503, and a test counted 32 such answers in 49,522 requests during 30 reloads. The snapshot now also holds the revision that the last reload retired, for ten seconds, and a request decided under revision :math:`n` is routed by revision :math:`n` (SID 0018). The same test then passed with about 50,000 requests in each of three runs. A request two revisions behind is still refused.
+
+A flow keeps its server across a reload for a simpler reason: its reservation does not live in the snapshot. A reservation is a ``Ticket`` that holds the server's address and a shared reference to the server's load record. The load records are kept in a map keyed by protocol and address, which a reload consults, so a server that the new file still names keeps its counts. When the flow ends, the ticket's ``Drop`` returns its place to that record, whichever revision now serves.
+
+.. admonition:: Implementation: ``Pool::reserve_with``
+
+   Picks a server, counts itself on it with one atomic addition, and then checks the count. When another thread took the last place meanwhile, it gives the place back and picks again, at most eight times. So a server never serves more than its ``max_flows``. In ``crates/lb/src/pool.rs``.
+
+.. admonition:: Explain the invariant
+
+   Two threads reserve on a server with ``max_flows`` 10 that holds 9 flows. Show that at most one of them keeps the place, whatever the interleaving of the two ``fetch_add`` calls. Then explain why a reload that removes this server from the file does not end its 9 flows, and when their places are returned.
+
+Workers That Wait Without Threads
+---------------------------------
+
+The firewall of the earlier Parts serves each connection on a thread. Beside HAProxy 3.0, that design reached 59% of HAProxy's plaintext HTTP throughput at 256 connections. It made 2.9 context switches per request, and each connection held about 145 KiB of resident memory (SID 0015). SID 0016 replaced the threads of the edge with event-driven workers.
+
+The Path of a Connection
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. graphviz::
+   :caption: The path of a connection through a node. Each box is owned by one thread or one group of threads; the dashed edges are the shared, read-mostly state.
+   :alt: A client reaches the kernel listener, then the edge worker, which applies the connection rate, the flow budget and the connection hooks. A TCP flow passes the ClientHello inspection, reserves a server and is relayed by a relay thread. A UDP flow passes the QUIC screen and becomes a mapping. An HTTP connection goes to an HTTP worker; a TLS client that offers h2 goes to the protocol runtime. Both run bans and limits, traffic policy, the gate or shield, request hooks, and the choice of a server from the routing snapshot, then exchange with the server.
+
+   digraph edge_path {
+     graph [rankdir=TB, bgcolor="transparent", fontname="Helvetica", fontsize=9, nodesep=0.3, ranksep=0.32];
+     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fillcolor="#eff6ff", color="#1e40af", penwidth=1.0, margin="0.1,0.05"];
+     edge [color="#64748b", fontname="Helvetica", fontsize=7.5, fontcolor="#475569", arrowsize=0.6];
+     client [label="Client", fillcolor="#ffffff", color="#172033"];
+     kernel [label="Kernel listener\ndefer_accept, backlog"];
+     edgew [label="Edge worker\nconnection rate, flow budget,\nconnection hooks", fillcolor="#f0fdf4", color="#15803d"];
+     inspect [label="TCP: ClientHello inspection\nfive classes, fallback"];
+     udp [label="UDP: QUIC screen,\nmapping, reply bound"];
+     relay [label="Relay thread\nbyte pipe"];
+     worker [label="HTTP worker\nTLS for HTTP/1.1", fillcolor="#f0fdf4", color="#15803d"];
+     runtime [label="Protocol runtime\nHTTP/2, HTTP/3", fillcolor="#f5f3ff", color="#6d28d9"];
+     decide [label="Bans, limiter, traffic policy,\ngate or shield, request hooks", fillcolor="#fffbeb", color="#b45309"];
+     choose [label="Choose a server\nfrom the snapshot"];
+     shared [label="Shared: routing snapshot,\nserver loads, health flags", fillcolor="#f8fafc", color="#64748b"];
+     server [label="Server", fillcolor="#ffffff", color="#172033"];
+     client -> kernel;
+     kernel -> edgew;
+     edgew -> inspect [label="tcp"];
+     edgew -> udp [label="udp"];
+     edgew -> worker [label="http, fewest"];
+     worker -> runtime [label="offers h2"];
+     inspect -> relay [label="reserve, connect"];
+     udp -> server;
+     relay -> server;
+     worker -> decide;
+     runtime -> decide [label="Decide"];
+     decide -> choose;
+     choose -> server [label="exchange"];
+     choose -> shared [style=dashed];
+     inspect -> shared [style=dashed];
+   }
+
+A QUIC client of an HTTP/3 frontend does not pass the edge worker: the protocol runtime accepts it, applies the per-client bound through an admission function, and asks the connection hooks when the ClientHello is read (SID 0017, SID 0030).
+
+Readiness and the Cost of Waiting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The edge starts one HTTP worker for each processor the process may use, up to 64. A worker is one thread with one poller (``epoll`` on Linux). Every socket it owns is non-blocking, and the only wait of the thread is the one call to ``epoll_wait`` in its loop. A worker is told which sockets are *ready*: readable or writable now. It then does the work that those bytes allow and returns to the loop. No thread ever waits for a slow client.
+
+A connection is a record in the worker and a socket in the kernel. While it is idle it holds no buffer. When its socket becomes readable the worker reads into a block of its own and lends the connection a 64 KiB buffer from its pool only while the connection holds unprocessed request bytes. This is why waiting is cheap. In the acceptance tests of SID 0016, 20,000 idle keep-alive connections added 8 MiB of resident memory, and 10,000 open WebSockets held 27 MiB. SID 0015 puts an idle HTTP connection at about 0.4 KiB in the process, against about 145 KiB on the thread path. Kernel socket memory, about 3.4 KiB before any buffer, is then the larger cost.
+
+The firewall decision did not become asynchronous. It needs no I/O, so it stays the synchronous function of the earlier Parts. The worker calls it when a complete head, and the start of the body, are in memory. On admission the decision returns a *plan*: the server reservation, the encoded head, and the framing of the upload. Three sans-I/O machines then carry the exchange: a request encoder, an upload relay and a response relay. Each consumes bytes and produces bytes and never touches a socket. Each is tested against the blocking relay it replaced: for 150,000 mutated responses, fed whole, in random pieces and one byte at a time, the bytes and the results are equal.
+
+Every resource has a bound, and every state has a deadline:
+
+- The worker reads from a socket only while the buffer toward the other side is below 64 KiB. A slow reader thereby stops the reads of its peer.
+- One readiness event reads each socket of a connection at most once, at most 64 KiB, and causes at most eight rounds of work. A bulk transfer cannot starve the small requests of the same worker.
+- A timer wheel with one-second slots holds one deadline per connection: the idle timeout, a slow head, a slow body, a connect of five seconds, server silence, a write that makes no progress.
+- A connection serves at most 4,096 requests. A worker keeps at most 64 idle server sockets per address and 1,024 in all.
+
+With these workers, plaintext HTTP at 256 connections reached 229,139 requests per second against HAProxy's 243,864, which is 94%, with a 99th percentile of 2.60 ms (SID 0016).
+
+.. admonition:: Implementation: ``Workers::submit``
+
+   Gives an accepted connection to the worker that serves the fewest connections, raises that worker's count and wakes its poller. The connection then stays on that worker. In ``cmd/sibuna/src/edge/workers.rs`` (crate ``sibuna``).
+
+One Hop Fewer for HTTP/2 and HTTP/3
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+HTTP/2 and HTTP/3 are terminated by a protocol runtime that uses maintained libraries (rustls, hyper, quinn with h3). At first the runtime wrote each request as HTTP/1.1 into a socket pair, and a worker read it, parsed it again, decided it and forwarded it. SID 0017 measured an HTTP/2 request at 76 us of CPU time: 46 us in the runtime before a worker saw the request, and 30 us more in the worker to read the same request from a socket and decide it.
+
+The repair is to call the decision as a function on the thread that decoded the stream. The ingress crate defines plain data, ``Offer`` (the head as HTTP/1.1 text and the start of the body) and ``Verdict`` (an answer, or a ``Forward`` with the server reservation and the head to send), and one trait, ``Decide``, which the binary implements with the dispatch of the workers. An admitted request goes to its server on a connection that the runtime pools itself. The request no longer crosses a socket pair and a second thread. HTTP/2 throughput rose by 20% to 37% on the same processors, and resident memory at 2,048 connections fell from 771 MiB to 592 MiB. Writing an HTTP/2 implementation of our own would remove more overhead; SID 0017 declines it, because the defences against rapid resets, CONTINUATION floods and HPACK expansion would then become our own work.
+
+TLS on the Workers
+~~~~~~~~~~~~~~~~~~
+
+HTTPS kept one crossing: the runtime ended TLS and copied the clear bytes to a worker through a socket pair. SID 0024 lets the worker end the TLS of an HTTP/1.1 connection itself. The worker reads the ClientHello without answering. If the client offers ``h2`` or ``acme-tls/1``, or names a host whose certificate must first be obtained on demand, the worker gives the socket and the bytes it read to the runtime. Otherwise it keeps the connection and drives the TLS library without I/O of its own. The worker decides from the offer, not from the outcome, because a session that has answered cannot move to another thread. The work for a client that has not finished its handshake is bounded by 16 KiB of first message and 15 seconds. On the benchmark host, HTTPS at 256 connections rose from 149,168 to 174,901 requests per second, where HAProxy writing the same headers carries 153,080.
+
+.. admonition:: Explain the invariant
+
+   "A worker never waits for a peer." Explain how this sentence, together with the 64 KiB high-water mark, guarantees that a client which stops reading its responses cannot make a worker hold an unbounded amount of memory. Then name the one kind of call that still holds a worker for a round trip (see the section on hooks).
+
+Choosing a Server
+-----------------
+
+A new flow first filters the servers of its pool. A server is *eligible* when it is not the frontend's own address, not drained, healthy by its last probe, below ``max_flows``, within its share of a fleet-wide limit, not marked by a connect that failed in the last two seconds, and not already tried by this request. A server ejected by passive health is excluded only while some other server is eligible. In the wide-area regime of a mesh, local servers are preferred when one is eligible. Backups are chosen only when no primary server is eligible.
+
+Among the eligible servers the choice is made in a fixed order: a server named by a sticky cookie or by the learned table, then the server that source stickiness ranks first, then the Maglev primary when it is within its load bound, and otherwise the pool's scheduler: round robin, power of two choices, or weighted least connections. Every scheduler works with integer weights in units of 1/256, so that slow start can lower a weight in fine steps.
+
+Weighted Round Robin
+~~~~~~~~~~~~~~~~~~~~
+
+Round robin is the smooth weighted round robin of nginx (SID 0019). Each eligible server holds a credit. At each choice every server gains its weight in credit, the server with the most credit is chosen, and it pays the sum :math:`W` of the weights. Over :math:`W` choices the credits return to where they started, and server :math:`i` was chosen exactly :math:`w_i` times.
+
+.. admonition:: Worked example: three servers of weights 5, 1 and 1
+
+   :math:`W = 7`. All credits start at 0. The table shows the credits after the gain, the choice, and the chosen server's credit after it pays 7. Ties go to the first server.
+
+   ====  ==========  ======  ===========
+   Step  a, b, c     Chosen  a, b, c
+   ====  ==========  ======  ===========
+   1     5, 1, 1     a       -2, 1, 1
+   2     3, 2, 2     a       -4, 2, 2
+   3     1, 3, 3     b       1, -4, 3
+   4     6, -3, 4    a       -1, -3, 4
+   5     4, -2, 5    c       4, -2, -2
+   6     9, -1, -1   a       2, -1, -1
+   7     7, 0, 0     a       0, 0, 0
+   ====  ==========  ======  ===========
+
+   The sequence is ``a a b a c a a``: five turns for ``a``, one each for ``b`` and ``c``, and the light servers are spread between the heavy server's turns instead of bunched at the end. The credits after step 7 are those of the start, so the pattern repeats.
+
+Least Connections and Two Choices
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Weighted least connections, the default of a standalone pool, chooses the server with the fewest active flows per unit of weight. The comparison avoids division: server :math:`i` is preferred to server :math:`j` when :math:`a_i w_j < a_j w_i`, where :math:`a` counts active flows. Ties are broken by the requests admitted since the pool was loaded, again per unit of weight, and a backup always ranks after a primary.
+
+The power of two choices with a peak-weighted moving latency (``p2c_pewma``) hashes the flow to two distinct eligible servers and takes the cheaper one, where the cost of server :math:`i` is :math:`(a_i + 1)\,\ell_i / w_i`. The latency estimate :math:`\ell_i` reacts to a slow sample at once and forgets it slowly: a new sample :math:`s` sets :math:`\ell \leftarrow \max(s, (7\ell + s)/8)`, and an idle server's estimate moves halfway back to its resting value of 1 ms for each second without a sample.
+
+Consistent Hashing: the Problem
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Several nodes of a cluster should send the same flow to the same server without talking to each other, and a change of the server set should move as few flows as possible. The obvious method, server :math:`h \bmod N` for a flow hash :math:`h`, fails the second requirement badly.
+
+.. admonition:: Worked example: one of five servers leaves
+
+   Under modulo hashing, a flow with hash :math:`h` goes to position :math:`h \bmod 5`, and after the departure to position :math:`h \bmod 4` of the list of the four survivors. By the Chinese remainder theorem the pair :math:`(h \bmod 5, h \bmod 4)` takes each of the :math:`5 \times 4 = 20` values with probability :math:`1/20` for a uniform hash. A flow stays on its server only when both positions name the same survivor, and each of the 4 survivors is named by exactly one such pair. So :math:`4/20 = 20\%` of the flows stay and **80% move**, although only the 20% that the departed server held had to. In general a step from :math:`N` to :math:`N - 1` servers keeps :math:`(N-1)/(N(N-1)) = 1/N` of the flows.
+
+   A consistent method moves only the departed server's flows: :math:`1/5 = 20\%`. Rendezvous hashing, below, achieves exactly that. Sibuna's Maglev table achieves it up to a small excess. We rebuilt the table for five servers named ``s1`` to ``s5`` of equal weight, with a copy of the build loop of ``maglev.rs`` and the same hash, and removed each server in turn (our own run, not a benchmark). The departed server held 19.999% to 20.001% of the 65,537 slots, and between 51 and 121 other slots, 0.08% to 0.19% of the table, changed owner as well. Adding a sixth server gave it 16.665% of the slots and moved 64 slots, 0.10%, between the old servers. With ten servers the departed one held 9.999% to 10.000% of the slots, and 120 to 181 other slots, 0.18% to 0.28%, changed owner.
+
+Maglev as Sibuna Builds It
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Maglev (Eisenbud et al., 2016) fills a lookup table of :math:`M` slots. Each server derives two numbers from its name, an offset and a stride, which define its preference order :math:`p_k = (\mathrm{offset} + k \cdot \mathrm{stride}) \bmod M`. The servers then take turns, and in its turn a server claims the first slot of its order that is still empty. Sibuna takes :math:`M = 65537`, a prime, so every stride from 1 to :math:`M - 1` visits every slot. It weights the turns with the same smooth round robin as above, so a server of weight :math:`w_i` claims :math:`w_i/W` of the slots, within one slot. A flow is looked up by hashing the frontend address and the client address with its port: one hash and one load.
+
+.. admonition:: Implementation: ``Table::build`` and ``Table::primary``
+
+   ``build`` fills the 65,537 slots from servers in stable name order, skipping backups, with smooth weighted turns. ``primary`` hashes the frontend and the client endpoint, IPv4 mapped into IPv6, to a slot. In ``crates/lb/src/maglev.rs``.
+
+.. code-block:: rust
+
+   for _ in 0..SIZE {
+       let mut best = 0;
+       for i in 0..permutations.len() {
+           permutations[i].4 += i64::from(permutations[i].3);
+           if permutations[i].4 > permutations[best].4 {
+               best = i;
+           }
+       }
+       let (index, next, stride, _, credit) = &mut permutations[best];
+       *credit -= i64::from(weight);
+       while slots[*next] != EMPTY {
+           *next = (*next + *stride) % SIZE;
+       }
+       slots[*next] = *index;
+       *next = (*next + *stride) % SIZE;
+   }
+
+Every node builds the same table from the same file, so every node sends a flow with the same addresses to the same server. This is why the membership and the weights of a Maglev pool change only by reload. An admin command that changed the weight on one node would make that node disagree with its peers, and the admin socket refuses it (SID 0018). A drain is allowed, because each node already excludes servers by its own health checks.
+
+Bounded Loads
+~~~~~~~~~~~~~
+
+A hash spreads flows evenly only on average. A popular client range can still crowd one server. Consistent hashing with bounded loads (Mirrokni, Thorup and Zadimoghaddam, 2018) caps each server at a constant factor :math:`c \ge 1` times its fair share. Sibuna applies the cap to the Maglev primary. Let :math:`L` be the active flows of the pool and :math:`a_p` those of the primary :math:`p`. The new flow goes to the primary when it is eligible and
+
+.. math::
+
+   a_p < \left\lceil \frac{c\,(L + 1)\, w_p}{W} \right\rceil,
+
+with :math:`c` given in percent as ``load_factor_pct`` (125 by default, at least 100). Otherwise the flow goes to the pool's fallback: weighted least connections, or the power of two choices when ``fallback`` is ``pewma``.
+
+.. admonition:: Worked example: the bound with c = 1.25
+
+   Four servers of equal weight hold :math:`L = 99` flows, and a hundredth arrives. The bound is :math:`\lceil 1.25 \times 100 / 4 \rceil = \lceil 31.25 \rceil = 32`. A primary with 31 flows takes the new one and reaches 32. A primary with 32 flows refuses it, and least connections places it on a server with the fewest flows, at most :math:`\lfloor 99/4 \rfloor = 24`. With weights 3 and 1 and :math:`L + 1 = 40`, the bounds are :math:`\lceil 1.25 \times 40 \times 3/4 \rceil = \lceil 37.5 \rceil = 38` and :math:`\lceil 1.25 \times 40 / 4 \rceil = \lceil 12.5 \rceil = 13`.
+
+   The overflow always finds a server below its bound. Suppose every server :math:`i` held at least :math:`c(L+1)w_i/W` flows. Summing over the servers gives :math:`L \ge c(L+1) > L`, a contradiction. With :math:`c = 1.25` and four equal servers, at most three can sit at the bound at once.
+
+With the least-connections fallback, and all servers eligible, one admission keeps every server within its cap: the hash path admits only below the bound, and the fallback chooses a server whose flows per unit of weight are at most the average :math:`L/W`, so that one more flow still fits under :math:`\lceil c(L+1)w_i/W \rceil`. This is ``admitBounded_respects_cap`` of the Lean model of SID 0015, for one sequential admission. Two threads that admit at the same moment may both read the old counts. With the ``pewma`` fallback the hash path still respects the bound, but the fallback chooses by latency, and the cap is then not a guarantee. The overflow also departs from the paper in one respect: it does not walk to the next server of a consistent order, so two nodes may place an overflowing flow on different servers.
+
+Rendezvous Hashing for Source Stickiness
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A pool with ``sticky: "source"`` sends each client address to the same server. It uses weighted rendezvous hashing (SID 0019). For client :math:`x` and server :math:`i` the hash gives a number :math:`u_i \in (0, 1]`, and the *distance* is
+
+.. math::
+
+   d_i = \frac{-\log_2 u_i}{w_i}.
+
+The client goes to the nearest eligible server. The choice follows the weights exactly. Since :math:`-\ln u_i` is exponentially distributed with mean 1 for uniform :math:`u_i`, :math:`d_i` is exponential with rate proportional to :math:`w_i`. The minimum of independent exponentials with rates :math:`w_i` is attained at server :math:`i` with probability :math:`w_i / \sum_j w_j`. The base of the logarithm changes all distances by one factor and no ranking.
+
+The disruption is exactly the minimum. When server :math:`k` leaves, a client whose nearest server was not :math:`k` keeps it, because removing one candidate cannot change the minimum of the others. Only the clients of :math:`k` move, each to its own second choice, and they return when :math:`k` returns. Sibuna computes the logarithm in fixed point with 16 fractional bits and compares :math:`d_i < d_j` as :math:`c_i w_j < c_j w_i` without division.
+
+Ranking every server for every request costs one hash and one logarithm per server. So the pool precomputes a table of 1,021 slots. A client address is hashed to a slot, and the slot stores its four nearest servers. The first eligible one serves; when none of the four is eligible, the whole pool is ranked for that slot. The measured choice no longer grows with the pool: 148 to 188 ns at 128 servers, against 3,443 ns before the table and the lock-free snapshot (SID 0019). The price is granularity: two addresses in one slot share their server, and a server of weight 1 in a pool of weight 1,000 serves one slot, not a thousandth of the clients.
+
+.. admonition:: Implementation: ``Pool::home`` and ``sticky::distance``
+
+   ``home`` hashes the client to a slot and returns the first eligible server of the slot's four, falling back to ranking the pool. ``distance`` computes the fixed-point cost :math:`64 - \log_2(\mathrm{draw})` with its weight. In ``crates/lb/src/pool/extra.rs`` and ``crates/lb/src/sticky.rs``.
+
+.. admonition:: Explain the invariant
+
+   Rendezvous hashing moves exactly the departed server's clients; the Maglev table moves them and about 0.1% more. Explain where the excess comes from in the fill loop above, and why Sibuna accepts it for flows hashed by address and port but uses rendezvous hashing for clients that must find the same server tomorrow.
+
+Health, Slow Start, Draining and Failover
+-----------------------------------------
+
+A server can be out of rotation for five reasons, and each has its own way back. Active probes and passive health judge the server; a failed connect judges one attempt; a drain is the operator's word; slow start governs the return.
+
+.. graphviz::
+   :caption: The life of a server in a pool. Only "In service" and "Ramping" take new flows; slow start applies when it is configured.
+   :alt: In service leads to Down after fall failed probes, to Ejected after consecutive request failures, to Marked after a failed connect, and to Drained by an operator. Down returns after rise passed probes, Ejected after the ejection time, Marked after two seconds, Drained when readmitted. Each return leads to Ramping, which leads to In service after the ramp.
+
+   digraph server_states {
+     graph [rankdir=LR, bgcolor="transparent", fontname="Helvetica", fontsize=9, nodesep=0.3, ranksep=0.55];
+     node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=8.5, fillcolor="#eff6ff", color="#1e40af", penwidth=1.0, margin="0.1,0.05"];
+     edge [color="#64748b", fontname="Helvetica", fontsize=7.5, fontcolor="#475569", arrowsize=0.6];
+     service [label="In service", fillcolor="#f0fdf4", color="#15803d"];
+     down [label="Down\n(active probe)"];
+     ejected [label="Ejected\n(passive health)"];
+     marked [label="Marked\n(connect failed)"];
+     drained [label="Drained\n(operator)", fillcolor="#fffbeb", color="#b45309"];
+     ramp [label="Ramping\n(slow start)", fillcolor="#f0fdf4", color="#15803d"];
+     service -> down [label="fall failures"];
+     down -> ramp [label="rise passes"];
+     service -> ejected [label="failures in a row"];
+     ejected -> ramp [label="ejection ends"];
+     service -> marked [label="connect fails"];
+     marked -> ramp [label="2 s"];
+     service -> drained [label="set state drain"];
+     drained -> ramp [label="set state ready"];
+     ramp -> service [label="ramp ends"];
+   }
+
+*Active probes* connect, or send ``GET``, at an interval. A server starts in service, leaves after ``fall`` failures in a row and returns after ``rise`` passes. A probe thread continues from the published status after a reload, so one result cannot flip it. *Passive health* counts consecutive failures of live requests: a response timeout, and with ``http_5xx`` a status of 500, 502, 503 or 504. At the threshold the server is ejected for the ejection time. An ejected server is skipped only while another can serve; a pool of one slow server must not answer 503 because three requests were slow. This is the panic rule of Envoy with a threshold of one server. A *failed connect* keeps the server out for two seconds and is not subject to the panic rule. A *drain* takes the server out for new flows while its established flows finish. A drain survives a reload as long as the file still names the server at the same address (SID 0018).
+
+*Slow start* gives a returning server a ramp :math:`R`. A server of configured weight :math:`W` that entered service :math:`t` ago has the effective weight, in units of 1/256,
+
+.. math::
+
+   w(t) = \max\left(1, \left\lfloor \frac{256\, W\, t}{R} \right\rfloor\right) \text{ for } t < R, \qquad w(t) = 256\, W \text{ otherwise.}
+
+The weight is never zero, never above the configured weight, and never decreases while the server stays in service. Servers first seen together, as at the start of the process, do not ramp. With ``slow_start: "30s"``, a server of weight 4 that returned 7.5 seconds ago has :math:`w = \lfloor 256 \times 4 \times 7.5/30 \rfloor = 256`, a quarter of its weight. Beside a peer of weight 4 at full weight (1,024 units), round robin gives it :math:`256/1280 = 20\%` of the turns instead of 50%.
+
+Failover
+~~~~~~~~
+
+A request moves to another server only when sending it twice does no harm. A failed connect may always move: the server received nothing. After a byte was sent, one function decides for every path: the workers, the thread path, and the runtime's HTTP/1.1, HTTP/2 and HTTP/3 clients all ask it, so they cannot drift apart (SID 0019).
+
+.. admonition:: Implementation: ``recover``
+
+   Decides what follows the loss of a server after the connection was made: reconnect to the same server, move to another, or fail. In ``crates/net/src/route.rs`` (crate ``sibuna-net``).
+
+.. code-block:: rust
+
+   pub fn recover(lost: Lost) -> Recovery {
+       if !(lost.unanswered && lost.kept && (lost.idempotent || lost.refused)) {
+           Recovery::Fail
+       } else if lost.pooled && !lost.retried {
+           Recovery::Reconnect
+       } else {
+           Recovery::Move
+       }
+   }
+
+A request is sent again only while no response byte arrived, only when the node still holds all of it (a body of at most 64 KiB that ended inside the request buffer), and only when its method is ``GET``, ``HEAD``, ``OPTIONS``, ``PUT`` or ``DELETE`` or the server said it did not act on it. A pooled connection that the server closed says nothing about the server, so it is first replaced once by a fresh connection to the same server. ``HttpRoutes::retry`` then reserves another server of the same pool, in the revision that routed the request, excluding every server the request tried. A request therefore tries no server twice and at most ``retries + 1`` servers.
+
+.. admonition:: Explain the invariant
+
+   A ``POST`` with a 2 KiB body loses its server after the request was written and before any response byte. Trace ``recover`` and explain why the client receives 502 rather than a silent second attempt. Then change one fact, that the server answered HTTP/2 ``REFUSED_STREAM``, and trace it again.
+
+Admission at the Socket
+-----------------------
+
+An application filter can shed work only after the traffic reaches the host. The cheapest refusal is therefore the earliest one, and SID 0015 orders the stages so that each costs less than the next. SID 0032 completed them for TCP and UDP frontends.
+
+#. *Kernel listener admission.* ``defer_accept`` sets ``TCP_DEFER_ACCEPT`` on Linux: the kernel gives the node a connection only when its first bytes arrive, so a silent client costs no descriptor, no flow slot and no wake-up. ``backlog`` sets the length of the accept queue. Both need no privilege; when the platform refuses one, the node notes ``EDGE013`` and serves without it.
+#. *Connection rate.* ``rate_limit.conn_per_10s`` per source IPv4 address or IPv6 /64, and ``udp_defense.threshold_pps`` for datagrams.
+#. *The flow budget.* One slot per client connection or UDP mapping, node-wide, up to ``global.max_flows`` (8,192 by default, at most 1,000,000). UDP mappings take at most ``global.max_udp_flows`` of it, because their sources are not validated. HTTP adds ``http.max_connections`` and ``http.max_connections_per_ip``.
+#. *Bounded inspection*, of a TLS ClientHello on TCP, and of the QUIC header on UDP.
+#. *The connection hooks*, then the pool: a server's ``max_flows`` and, in a cluster, its share of a fleet-wide limit (Part IX).
+#. *The HTTP firewall*, for HTTP frontends only.
+
+.. admonition:: Implementation: ``FlowBudget::reserve``
+
+   Takes one slot of the node-wide flow budget and returns a ``FlowPermit``, or nothing when the budget is full. The permit's ``Drop`` returns the slot on cancellation, close or expiry, so no path can leak one. A drain sets the limit to zero. In ``crates/lb/src/budget.rs``.
+
+ClientHello Inspection and Fallback Classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A TCP frontend with ``tcp_inspect: "tls_client_hello"`` reads the start of each connection before it selects a pool, within ``inspect_bytes`` (1,024 to 32,768) and ``inspect_delay`` (2 seconds by default). Rules may match the server name, the offered ALPN protocols, or the JA4 fingerprint. Then the node passes the connection through to its server, TLS untouched, and replays the bytes it read exactly once, before any later byte of the client. A connect that fails receives none of them.
+
+The inspection ends in one of five classes, and every class has exactly one outcome, deny or one named pool (SID 0032). *Visible* is a whole ClientHello with a server name and without the Encrypted ClientHello extension; it always goes to the rules. *Absent* has no server name, *encrypted* carries the extension, *incomplete* reached a bound before the message was whole, and *invalid* is not a ClientHello at all. ``inspect_fallback`` names the action of each of the four. ``rules`` is refused in the file for ``incomplete`` and ``invalid``, since there is nothing to evaluate. The defaults reproduce the behaviour before the classes existed: ``rules`` for absent and encrypted, ``deny`` for the other two.
+
+.. admonition:: Implementation: ``Plan::decide``
+
+   Maps a class and the parsed ClientHello, if any, to a pool or to a refusal. The match is total, so no class is left without an outcome. In ``crates/lb/src/inspect.rs``.
+
+Two cautions belong beside the feature. A JA4 fingerprint describes a handshake; any client can send the handshake of another, so it separates populations and is no credential. And current browsers grease the Encrypted ClientHello extension on every connection, with the true name in the outer field; the edge cannot tell greasing from a real ECH, so ``encrypted: deny`` refuses most browsers.
+
+QUIC Address Validation
+~~~~~~~~~~~~~~~~~~~~~~~
+
+A UDP frontend bounds the replies of each mapping to three times the bytes the client sent. Without the bound, a spoofed source would turn the node into an amplifier. The bound also throttles a real QUIC download, where small acknowledgements bring large packets. With ``udp_inspect: "quic"`` the frontend opens a mapping only for a datagram that looks like a QUIC Initial: a long header, connection IDs that fit, and at least 1,200 bytes, as RFC 9000 obliges a client to pad. It then reads the replies of the origin. From the first long-header reply with a version other than zero and a source connection ID of at least 8 bytes, it remembers that ID, unless the ID equals one the client sent. When a later datagram of the client carries that ID as its destination, the address is validated, and the reply bound ends.
+
+The argument is that of RFC 9000, section 8.1. The ID was chosen by the origin and sent only to the claimed address. A sender that spoofs the address never receives it and must guess at least 64 bits, one datagram per guess. The two exclusions close the obvious holes: a Version Negotiation packet (version zero) repeats the client's own IDs, and an origin that echoes its input would otherwise validate everybody. On loopback, in a debug build, an 8 MiB download through the edge took 83 to 86 ms with validation; without it, 17,060 bytes arrived in 3 seconds. These figures show the size of the effect and are no benchmark.
+
+.. admonition:: Implementation: ``Validation::see_reply`` and ``Validation::see_request``
+
+   ``see_reply`` learns the origin's connection ID from a reply, refusing version zero, short IDs and echoes. ``see_request`` marks the mapping validated when the client repeats that ID in a long or a short header. In ``crates/lb/src/quic_edge.rs``.
+
+The edge does not send QUIC Retry itself. SID 0032 specifies the contract that edge and origin would have to share, a token format and key, an address binding, and the connection IDs in the transport parameters, and records why it is not built: the QUIC library of the workspace keeps its token format private and binds the token to the datagram's source, which behind the edge is the edge.
+
+.. admonition:: Explain the invariant
+
+   "Validation never happens on a value that an off-path sender can know." For each of the three conditions on the learned connection ID (version not zero, at least 8 bytes, not equal to an ID of the opening datagram) describe the attack it prevents.
+
+Traffic Policy, the Gate and the Shield
+---------------------------------------
+
+An HTTP request passes the cheap checks before the expensive ones, and a hook only after both. The ban table and the request limiter come first. The traffic policy of SID 0019 follows: the redirect to HTTPS and the body limit (413) are decided before the firewall policy, so a cleartext request is never challenged. Then the firewall of the earlier Parts runs, as ``http.surface`` selects: ``off`` makes the node a plain load balancer, ``gate`` adds the policy and the proof-of-work challenge of Parts III and IV, and ``shield`` adds the semantic inspection of Part VI. A frontend or a route may set ``firewall: false`` for clients that cannot solve a challenge, such as Git and CI runners; such a request keeps protocol validation, connection limits, bans and the request limiter. The request hooks judge what the firewall admitted, and only then is a server chosen. The rest of SID 0019 shapes the exchange: connect and response timeouts, retries, passive health, sticky sessions, header edits and HSTS. A TCP or UDP frontend never invokes the firewall.
+
+Hooks
+-----
+
+An operator sometimes needs a decision of his own on the path: a tenant check, an authorization service, a score. SID 0030 fixes where such a hook attaches, what it sees, and what happens when it fails. A hook attaches at one of three *stages*: ``connection`` (once per TCP connection or UDP mapping, after the rate and the budget, or once per QUIC connection when its ClientHello is read), ``request`` (once per request that the bans, limiters and policy admitted, before a server is chosen), and ``telemetry`` (once per request, after its answer). It may admit, deny, ask for a challenge, and add at most 8 request fields. It may not read a body, change the method, path or host, choose a server, or add a field of framing or one that Sibuna writes as its own statement.
+
+A hook runs in one of three *tiers*. A *native* hook is Rust compiled into the daemon: trusted, unbudgeted, 42 ns per call with the chain and counters. A *Wasm* hook runs on an interpreter written in-house for this purpose (not the browser engine of Part VII), with no JIT and no ``unsafe``. An *agent* is another process behind a Unix socket, a deadline and a circuit breaker.
+
+The Outcome Rule
+~~~~~~~~~~~~~~~~
+
+An invocation ends with a verdict or with one of four failures: ``timeout``, ``overload``, ``trap`` or ``unavailable``. Each plugin has ``on_failure``, which is ``deny`` unless the operator writes ``admit``. For stage :math:`s`, written choice :math:`f` and result :math:`r`,
+
+.. math::
+
+   \mathit{outcome}(s, f, r) = \begin{cases} \mathrm{admit} & s = \mathrm{telemetry} \\ v & r = \mathrm{verdict}(v) \\ \mathrm{deny} & r = \mathrm{failed},\ f = \mathrm{deny} \\ \mathrm{admit} & r = \mathrm{failed},\ f = \mathrm{admit}. \end{cases}
+
+A chain admits only when every hook in it has the outcome admit; the first other verdict ends it. Hence a chain with a failing authorization hook never admits, whatever the others answer, and no failure admits traffic except by a choice written in the file.
+
+.. admonition:: Implementation: ``outcome`` and ``chain``
+
+   The rule above and its fold over a chain, as two small functions modelled in ``docs/sid/assets/plugin-tiers.lean``. In ``crates/plugin/src/verdict.rs`` (crate ``sibuna-plugin``).
+
+.. code-block:: rust
+
+   pub fn outcome(stage: Stage, on_failure: OnFailure, result: Result<Verdict, Failure>) -> Verdict {
+       match (stage, result, on_failure) {
+           (Stage::Telemetry, _, _) => Verdict::Admit,
+           (_, Ok(verdict), _) => verdict,
+           (_, Err(_), OnFailure::Deny) => Verdict::Deny,
+           (_, Err(_), OnFailure::Admit) => Verdict::Admit,
+       }
+   }
+
+Fuel, Breakers and Parked Connections
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A Wasm module is untrusted input, so every bound is set before it runs: at most 4 MiB of module, ``memory_pages`` pages of 64 KiB, 256 call frames, 16,384 stack values, ``host_calls`` calls to the two host functions, and ``fuel_limit`` units of fuel per invocation (100,000 by default). Each operation costs one unit, and ``memory.copy``, ``memory.fill`` and ``memory.grow`` cost one more for each 16 or 64 bytes, so no operation does unmetered work. The interpreter's loop takes one unit before each operation, ``budget.fuel.checked_sub(1).ok_or(Trap::Fuel)?`` in ``Instance::run`` of ``crates/plugin/src/wasm/exec.rs``. Fuel is a count, not a clock: the same module on the same input stops at the same operation on every machine. The example hook spends 635 operations, 2.2 to 2.4 us per call in process. wasmi 1.1.0 runs the same call in 0.77 us; SID 0030 accepts the difference of 1.4 us for an interpreter of 2,324 lines with no ``unsafe`` and no new crate, against about 96,000 lines and eight crates.
+
+An agent call waits at most ``deadline`` (5 ms by default). Each thread keeps a breaker for each agent: ``failures`` failures in a row open it, an open breaker refuses at once with ``unavailable`` and no system call, and after ``open`` one probe goes out, which closes or reopens it. An ``overload`` is not the agent's fault and does not count.
+
+.. admonition:: Worked example: what a dead agent costs
+
+   Eight workers call an agent with ``deadline`` 5 ms and the default breaker, five failures and ``1s`` open. In the worst case each worker pays five full deadlines before its breaker opens: :math:`8 \times 5 \times 5 = 200` ms of thread time in all, 25 ms per worker. Afterwards each worker sends one probe per second, at most 5 ms each, which is at most 0.5% of a worker. Meanwhile every request of the guarded frontend takes the agent's ``on_failure`` outcome: with the default, it is denied.
+
+At the request stage an agent call holds the thread that serves the request, and on a worker the other connections of that worker wait for it. At the connection stage that would stall the edge worker, which accepts for every frontend, so a connection whose chain names an agent is *parked*. The worker keeps its socket and its flow permit and does not read it; judge threads with their own hook instances run the chain and wake the worker with the verdict. When the judges' queue is full, the chain runs on the caller with every agent failing as ``overload``, and the failure rule decides. Parking costs about 11 us, two thread handoffs: 22.8 us against 12 us for the same call on the calling thread.
+
+.. list-table:: Measured cost of one hook (SID 0030, one busy machine, optimized builds, loopback)
+   :header-rows: 1
+   :widths: 40 30 30
+
+   * - Case
+     - In process
+     - End to end per request
+   * - No hook
+     - 1.1 ns (one load)
+     - 41.8 to 42.2 us
+   * - Native ``require_header``
+     - 42 ns
+     - within the noise of about 2 us
+   * - Wasm, the example module
+     - 2.2 to 2.4 us
+     - +5.2 to +6.1 us
+   * - Agent on a Unix socket
+     - 12 to 18 us
+     - +18.4 to +21.5 us
+
+.. admonition:: Explain the invariant
+
+   "A failure of an authorization hook denies." An attacker can make a Wasm hook fail with ``overload`` by sending a head larger than its input buffer. Explain why the view is never cut to fit, what happens with ``on_failure`` left at its default, and what the operator gives up by writing ``on_failure: "admit"``.
+
+Automatic HTTPS
+---------------
+
+A frontend that names its hosts, ``tls: { auto: ["example.org"] }``, obtains its certificates itself (SID 0021). The node registers an ACME account, answers HTTP-01, TLS-ALPN-01 or DNS-01, stores the certificate, serves it without a reload, renews it at two thirds of its lifetime, and redirects plain HTTP for the managed names. A failure of the authority is logged with a hint and retried, and the listener keeps serving what it has. Internal names, such as ``localhost``, ``.internal`` or a single label, and IP addresses never go to a public authority: the file is refused, or the name goes to a *local authority* that the node creates, a root of 10 years, an intermediate of 7 days, and leaves of 12 hours. The node never installs that root in a trust store; ``show ca`` prints it for the operator to install. Issuance *on demand*, at the first handshake for an unknown name, is refused in a file that has no guard: without ``ask`` or ``allow``, anybody who can point a name at the node could spend the authority's limits. With a guard, the handshake applies only checks that read memory, and a thread asks the ``ask`` URL and takes a token from a bucket of ``rate`` orders per hour before it orders.
+
+Observation
+-----------
+
+The node counts what it does so that an operator can tell a refusal for lack of capacity from a refusal by policy (SID 0020). Each HTTP request writes one access log line, from a bounded queue on one thread, and each TCP or UDP flow writes one line at its end. Per frontend and per server there are request counters, latency histograms, the health state and the active requests. Every connection or datagram refused before the firewall is counted in ``sibuna_edge_refused_total`` with a reason: ``rate_limit``, ``flow_limit``, ``draining``, ``connection_limit``, ``client_limit``, ``exchange_limit``, ``no_server``, ``udp_rate_limit``, ``udp_flow_limit``, ``udp_reply_limit``, ``udp_not_quic``, ``inspect_denied`` and the others. The reason is what makes the count useful: a rising ``no_server`` asks for servers, a rising ``rate_limit`` for a look at the clients. A readiness route turns to 503 while the node drains.
+
+The Measured Result
+-------------------
+
+Part X compares the edge with HAProxy 3.0.11 on one host and on three. After SID 0024, with both proxies writing the same headers, Sibuna carries TCP, plain HTTP and HTTPS at or above HAProxy's rate with less CPU; on three hosts the ratios were 1.04 for TCP, 1.02 for HTTP and 1.10 for HTTPS. HTTP/2 is where HAProxy is faster: Sibuna carries 0.67 to 0.74 of its rate on one host and 0.69 on three. The benchmarks chapter explains why. The whole HTTP/2 exchange runs in the protocol runtime, a general asynchronous runtime with a general HTTP/2 library; that line is bound by CPU, at 74 us per request against 52 us for HAProxy's multiplexer written for this one purpose. Only a cheaper HTTP/2 path would change it, and SID 0017 records why we have not written one.
+
+Exercises
+---------
+
+.. admonition:: Exercise 8.1
+
+   A pool has ten servers of equal weight, and one leaves. What fraction of flows moves under modulo hashing, under rendezvous hashing, and, from the run reported above for ten servers, about how many under Sibuna's Maglev table? Then answer the same for a server that joins a pool of four.
+
+   Hint: Use the Chinese remainder theorem for modulo hashing, and the minimum of the other distances for rendezvous hashing.
+
+.. admonition:: Exercise 8.2
+
+   A bounded-Maglev pool has servers ``a``, ``b`` and ``c`` with weights 2, 1 and 1, ``load_factor_pct`` 125, and 19 active flows. Compute the bound of each server for the twentieth flow. The hash names ``b``, which holds 7 flows. Where does the flow go with the least-connections fallback if ``a`` holds 9 and ``c`` holds 3? Show that some server is always below its bound.
+
+   Hint: The bound is :math:`\lceil c (L+1) w_p / W \rceil`, and the contradiction argument of the worked example applies with weights.
+
+.. admonition:: Exercise 8.3
+
+   An HTTP frontend has the request chain ``[tenant, score, authz]``: a native ``require_header`` hook, a Wasm hook with ``on_failure: "admit"``, and an agent with the default ``on_failure``. The agent process has died and every breaker is open. What is the verdict for a request that carries the tenant field? For one that lacks it? What does each request cost the worker for the agent? What changes if ``authz`` is written with ``on_failure: "admit"``?
+
+   Hint: Apply the outcome rule to each hook, then the chain rule. An open breaker costs no system call.
+
+.. admonition:: Exercise 8.4
+
+   A QUIC client sends one Initial of 1,200 bytes through a frontend with ``udp_inspect: "quic"``, and the origin answers with eight datagrams of 1,200 bytes. How many reach the client before validation? Which datagram of the client validates the mapping, and why can a sender that spoofs the client's address not produce it? Why would learning from a Version Negotiation packet break the argument?
+
+   Hint: The bound is three times the bytes received. Compare what the origin chose with what the client chose.
+
+Limits
+------
+
+The known gaps of these records, and one consequence of the design, stated where an operator meets them:
+
+- *Ownership balances counts, not work.* A connection stays on the worker it was given; the assignment equalizes connection counts only.
+- *A reload that changes binds, the mesh roster or the spill section needs a restart.* Two reloads within the decision time of one request still refuse that request, and a drain commanded in the ten seconds after a reload does not reach the retired revision (SID 0018). Run-time changes do not survive a restart, and a Maglev pool takes only ``drain`` at run time.
+- *HTTP/2 runs on the runtime, not on the workers.* It carries 0.67 to 0.74 of HAProxy's rate on one host. HTTP/1.1 over TLS from a client that offered ``h2``, and WebSockets over HTTP/2, still cross a socket pair (SID 0017, SID 0024). A pool with ``http_version`` 2 or 3 cannot receive a WebSocket (SID 0016). The runtime uses at most eight threads, whatever ``http.workers`` says, and its idle pool is one lock. gRPC from a cleartext HTTP/2 client is not accepted.
+- *The choice of a server still writes shared memory:* reference counts and the chosen server's counters, about a microsecond per call under eight threads. Two requests that choose at the same moment may take the same least loaded server; limits still hold (SID 0019).
+- *Bounded loads with the pewma fallback are not a guarantee,* and the overflow is not placed consistently across nodes. The slot table of source stickiness has a granularity of 1,021 slots.
+- *Failover cannot move everything.* A body longer than 64 KiB is streamed and cannot be sent again. A non-idempotent request to an HTTP/3 server never moves after the send, because the client library does not report a refusal we can read (SID 0019).
+- *Admission at the socket is incomplete for TCP and UDP.* TCP and UDP frontends do not consult the ban table. Per-prefix byte budgets for UDP are not built. Edge-generated QUIC Retry is specified and not built. The edge checks the length of an origin's connection IDs, not their entropy. QUIC connection migration through the edge does not work, and a greased and a real Encrypted ClientHello are one class. Kernel admission is built for Linux only, and the effect of ``backlog`` on a full queue is not measured (SID 0032).
+- *An agent call at the request stage holds its thread.* A QUIC connection's verdict does not stop its handshake. Parked flows cost two thread handoffs, keep one UDP datagram, and are counted by no metric. Each thread holds its own Wasm instance, and a reload rebuilds every instance. The interpreter is two to three times slower than wasmi and has had no external review. The hook measurements were taken on a busy machine (SID 0030).
+- *Observation has holes.* Chunk framing is not counted in ``bytes_in``; ``tls_cipher`` is ``-`` for HTTP/3; a long-lived TCP connection writes its line only at its end (SID 0020).
+- *Automatic HTTPS* has no bound per client for issuance on demand beyond its guards and its bucket; the local authority's ACME server has no limit per address and keeps its orders in memory on one node; the Cloudflare DNS provider was never run against Cloudflare (SID 0021).
+- *Scale is not yet qualified.* The flow table is configurable to one million entries; the ten-million-flow experiment and cooperative platform batching remain proposed, and the full qualification list of SID 0015 is open.
