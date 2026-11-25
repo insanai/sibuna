@@ -29,5 +29,6 @@ Discussion reading order
    records/0021-automatic-https
    records/0022-replicated-bans
    records/0023-cluster-configuration
+   records/0024-tls-on-the-workers
 
 .. sid-generated-end
