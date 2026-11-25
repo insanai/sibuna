@@ -78,5 +78,8 @@ Discussion registry
    * - 0022
      - :doc:`records/0022-replicated-bans`
      - discussion
+   * - 0023
+     - :doc:`records/0023-cluster-configuration`
+     - discussion
 
 .. sid-generated-end
