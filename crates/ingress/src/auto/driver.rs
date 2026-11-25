@@ -324,8 +324,10 @@ impl Driver {
             let before = known.as_ref().and_then(|entry| entry.served.as_ref());
             let before = before.map(|served| served.not_after);
             let mut entry = known.unwrap_or_else(|| self.adopt(&source, name));
-            if let Source::Acme(ready) = &mut source {
-                self.consult(ready, name, &mut entry);
+            match &mut source {
+                Source::Acme(ready) => self.consult(ready, name, &mut entry),
+                // Nobody is asked about a certificate of the local authority.
+                Source::Local(_) => entry.ari_next = u64::MAX,
             }
             if entry.error.is_none() && self.is_stale(name, &entry) {
                 entry.next_attempt = entry.next_attempt.min(now());
@@ -643,6 +645,37 @@ mod tests {
         let other = KeyPair::generate().unwrap();
         assert_eq!(code(sound("example.org", &chain, &other, NOW)), "ACME008");
         assert_eq!(code(sound("example.org", "no pem", &key, NOW)), "ACME008");
+    }
+
+    #[test]
+    fn the_answer_of_the_authority_moves_the_renewal_within_bounds() {
+        let fields = |serial: u8| x509::Certificate {
+            not_before: NOW,
+            not_after: NOW + 1000,
+            issuer: "Test".to_owned(),
+            names: Vec::new(),
+            serial: vec![serial],
+            authority_key_id: vec![1],
+        };
+        let mut entry = Entry::default();
+        assert_eq!((entry.renew_at(), entry.ari_next), (0, u64::MAX));
+        entry.serve(fields(1), 2, Some(NOW + 5));
+        // Without an answer: two thirds. The authority is asked at once.
+        assert_eq!(entry.renew_at(), schedule::renew_at(NOW, NOW + 1000));
+        assert_eq!((entry.issued_by, entry.ari_next), (2, 0));
+        entry.next_attempt = NOW + 600;
+        assert_eq!((entry.wake_at(true), entry.wake_at(false)), (0, NOW + 600));
+        // An answer in the past waits for the floor of a certificate we obtained, and
+        // an answer after the expiry is capped at four fifths.
+        entry.ari_pick = Some(NOW - 50);
+        assert_eq!(entry.renew_at(), NOW + 105);
+        entry.ari_pick = Some(NOW + 5000);
+        assert_eq!(entry.renew_at(), NOW + 800);
+        // A loaded certificate has no floor, and a new certificate forgets the answer.
+        entry.serve(fields(2), 0, None);
+        assert_eq!(entry.ari_pick, None);
+        entry.ari_pick = Some(NOW - 50);
+        assert_eq!(entry.renew_at(), NOW - 50);
     }
 
     #[test]
