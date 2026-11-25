@@ -7,6 +7,7 @@
 //!   root.crt            the root certificate alone, the file to install in clients,
 //!                       mode 0644; the directory itself has mode 0755
 //!   intermediate.pem    the intermediate and its key, mode 0600, 7 days
+//!   intermediate.previous.pem, revoked/, crl.der, crl.pem    see [`revocation`]
 //!
 //!   root --signs--> intermediate --signs--> leaf (12 hours by default)
 //! ```
@@ -14,6 +15,8 @@
 //! Several nodes may share the directory. The root is linked into place only when no
 //! root is there, so all nodes end with one root. The intermediate is replaced by one
 //! rename. A leaf carries the intermediate that signed it.
+
+mod revocation;
 
 use std::fs;
 use std::io::{self, Write};
@@ -23,6 +26,11 @@ use crate::store::{create_private_dir, create_private_file, read_bounded, tempor
 use crate::store::{set_mode, write_private};
 use crate::{Error, Issued, KeyPair, constraints, pem, random_serial, schedule, x509};
 
+pub use revocation::{CRL_LIFETIME, LONGEST_LEAF, MAX_REVOKED, Revoked, parse_serial, serial_of};
+
+/// The file of the intermediate before the present one. It signs the revocation list
+/// of its leaves until it expires.
+const PREVIOUS: &str = "intermediate.previous.pem";
 /// The common name of the root.
 pub const ROOT_NAME: &str = "Sibuna Local Authority - Root";
 /// The common name of the intermediate, the issuer of every leaf.
@@ -227,6 +235,7 @@ impl LocalAuthority {
         if let Some(found) = usable {
             return Ok(found);
         }
+        self.keep_previous(root, text.as_deref(), now);
         let key = KeyPair::generate()?;
         let template = x509::Template {
             issuer: ROOT_NAME,
@@ -246,6 +255,17 @@ impl LocalAuthority {
         let signer = Signer { key, certificate, fields };
         write_private(&path, &signer.to_pem()).map_err(|error| failure(&path, error.message))?;
         Ok(signer)
+    }
+
+    /// Keeps the intermediate that is about to be replaced, when the present root signed
+    /// it and it has not expired: its leaves may still live, and a revocation list for
+    /// them needs its key. A failure to write it costs that list and nothing else.
+    fn keep_previous(&self, root: &Signer, text: Option<&str>, now: u64) {
+        let Some(text) = text else { return };
+        let Some(old) = Signer::parse(text) else { return };
+        if old.fields.authority_key_id == root.key_id() && old.fields.not_after > now {
+            let _ = write_private(&self.directory.join(PREVIOUS), text);
+        }
     }
 
     /// Issues a certificate for a TLS server. `names` are its DNS names and IP

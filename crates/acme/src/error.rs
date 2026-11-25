@@ -181,6 +181,21 @@ impl Error {
 }
 
 impl Error {
+    /// `ACME016`: the revoked certificates or the revocation list of the local
+    /// authority could not be read or written, or the list of them is full.
+    pub fn revocation(message: impl Into<String>) -> Self {
+        Self::new(
+            "ACME016",
+            "REVOCATION LIST FAILED",
+            message.into(),
+            "Check the directory `local` under `global.acme.storage`: the daemon's user \
+             must be able to write `revoked`, `crl.der` and `crl.pem` there. An entry in \
+             `revoked` leaves by itself when its certificate has expired.",
+        )
+    }
+}
+
+impl Error {
     /// `ACME015`: the program that makes RSA keys could not be run, or wrote no key.
     pub fn key_tool(message: impl Into<String>) -> Self {
         Self::new(
@@ -232,6 +247,9 @@ mod tests {
         assert!(all.iter().all(|error| !error.hint.is_empty() && !error.title.is_empty()));
         assert_eq!(all[3].retry_after, Some(7));
         assert_eq!(all[0].to_string(), "STORAGE NOT WRITABLE (ACME001): a");
+        let list = Error::revocation("a");
+        assert_eq!((list.code, list.title), ("ACME016", "REVOCATION LIST FAILED"));
+        assert!(list.hint.contains("revoked"));
         let tool = Error::key_tool("a");
         assert_eq!((tool.code, tool.title), ("ACME015", "KEY TOOL FAILED"));
         assert!(tool.hint.contains("openssl") && tool.hint.contains("p384"));

@@ -34,6 +34,7 @@ mod verify;
 
 pub mod ari;
 pub mod constraints;
+pub mod crl;
 pub mod csr;
 pub mod dns;
 pub mod jws;

@@ -23,7 +23,7 @@ const SUBJECT_KEY_ID: &[u8] = &[0x55, 0x1d, 0x0e];
 /// `keyUsage`, 2.5.29.15.
 const KEY_USAGE: &[u8] = &[0x55, 0x1d, 0x0f];
 /// `authorityKeyIdentifier`, 2.5.29.35.
-const AUTHORITY_KEY_ID: &[u8] = &[0x55, 0x1d, 0x23];
+pub(crate) const AUTHORITY_KEY_ID: &[u8] = &[0x55, 0x1d, 0x23];
 /// `extKeyUsage`, 2.5.29.37.
 const EXT_KEY_USAGE: &[u8] = &[0x55, 0x1d, 0x25];
 /// `id-kp-serverAuth`, 1.3.6.1.5.5.7.3.1.
@@ -195,7 +195,7 @@ pub(crate) fn extension_value<'a>(extensions: &'a [u8], oid: &[u8]) -> Option<&'
 }
 
 /// The key identifier in the authority key identifier of a DER `Extensions` sequence.
-fn authority_key_id(extensions: &[u8]) -> Vec<u8> {
+pub(crate) fn authority_key_id(extensions: &[u8]) -> Vec<u8> {
     for (_, extension) in der::children(extensions) {
         let mut fields = der::children(extension);
         if fields.next() != Some((der::OID, AUTHORITY_KEY_ID)) {
@@ -211,7 +211,7 @@ fn authority_key_id(extensions: &[u8]) -> Vec<u8> {
 }
 
 /// The common name in a DER `Name`, or else the organization, or `-`.
-fn issuer_name(name: &[u8]) -> String {
+pub(crate) fn issuer_name(name: &[u8]) -> String {
     attribute(name, COMMON_NAME)
         .or_else(|| attribute(name, ORGANIZATION))
         .map_or_else(|| "-".to_owned(), |text| printable(&String::from_utf8_lossy(text), 64))
@@ -319,7 +319,7 @@ pub struct Template<'a> {
     pub name_constraints: Option<&'a [u8]>,
 }
 
-fn common_name(text: &str) -> Vec<u8> {
+pub(crate) fn common_name(text: &str) -> Vec<u8> {
     let pair = der::sequence(&[
         &der::element(der::OID, COMMON_NAME),
         &der::element(der::UTF8_STRING, text.as_bytes()),
@@ -337,7 +337,7 @@ pub fn key_id(subject_public_key_info: &[u8]) -> [u8; 20] {
 }
 
 /// One extension: its type, the critical flag, and the DER of its value.
-fn extension(oid: &[u8], critical: bool, value: &[u8]) -> Vec<u8> {
+pub(crate) fn extension(oid: &[u8], critical: bool, value: &[u8]) -> Vec<u8> {
     let flag: &[u8] = if critical { TRUE } else { &[] };
     der::sequence(&[&der::element(der::OID, oid), flag, &der::element(der::OCTET_STRING, value)])
 }
