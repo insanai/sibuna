@@ -216,6 +216,28 @@ fn http_node(name: &str) -> Node {
 }
 
 #[test]
+fn firewall_node_controls_on_an_edge_return_a_rejected_receipt() {
+    use support::console::field;
+    let node = http_node("node-control");
+    let admin = node.admin();
+    let status = || node.console.get("/console/api/nodes/local", Some(&admin));
+    let initial = status();
+    for kind in ["drain", "resume", "clear_local_bans"] {
+        let current = status();
+        let command = format!(
+            r#"{{"id":"{}","boot":"{}","node":{},"expected_revision":"{}","kind":"{kind}"}}"#,
+            field(&current, "operation_id"),
+            field(&current, "boot"),
+            field(&current, "node"),
+            field(&current, "control_revision")
+        );
+        let reply = node.console.post("/console/api/nodes/command", &command, &admin);
+        assert_eq!(field(&reply, "state"), "rejected", "{}", reply.text());
+    }
+    assert_eq!(field(&status(), "control_revision"), field(&initial, "control_revision"));
+}
+
+#[test]
 fn the_view_agrees_with_show_servers_and_the_metrics() {
     let node = http_node("view");
     let session = node.admin();

@@ -198,7 +198,7 @@ Known gaps
 #. Criterion 8 is not established. See its row.
 #. A member that joins, or whose entry changes, is used after a restart. Only removal is live.
 #. The console does not terminate TLS. Peers need a TLS proxy in front of every console, the screen at accept sees the proxy, and the address of a peer is the first entry of ``X-Forwarded-For`` that this proxy sets.
-#. The console of an edge shows the pages of the firewall console with empty data. The node commands of its *Nodes* page (drain, resume, clear bans) are accepted and do nothing on an edge: the edge has no drain flag of that kind. Servers are drained on the page *Edge*.
+#. The console of an edge shows the pages of the firewall console with empty data. The *Nodes* page directs us to the *Edge* page for server controls. On an edge the node command API records drain, resume and clear-local-bans requests as rejected and preserves the control revision.
 #. ``authority_revision`` is the revision of the database that the node serves (SID 0028), read from the follower after the merge with that record. No test runs the console on a node that follows a database: the tests check that it is ``null`` on a node that serves a file.
 #. No test runs a fleet of 64. The tests use two and three members, and the quotas of 63 peers are checked by arithmetic.
 #. The end of the outbound connection to a removed peer, the answer ``ADM009`` of the bucket of the console, and the state ``full`` of a real node have no test. The interface is tested natively, with its harness, and was not opened in a browser. It has no golden fixture.

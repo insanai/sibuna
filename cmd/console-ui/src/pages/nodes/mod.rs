@@ -105,7 +105,7 @@ impl Nodes {
 
     /// Sends the pending command.
     fn submit(&mut self, cx: &mut Context<'_>) -> Result<(), UiError> {
-        if !cx.state.allows(Action::ControlNode) {
+        if cx.state.edge || !cx.state.allows(Action::ControlNode) {
             return Ok(());
         }
         let Some(pending) = self.pending.clone() else { return Ok(()) };
@@ -133,7 +133,8 @@ impl Nodes {
 
     /// Previews command `kind` against the fresh status.
     fn select(&mut self, cx: &mut Context<'_>, kind: &str) -> Result<(), UiError> {
-        if !cx.state.allows(Action::ControlNode)
+        if cx.state.edge
+            || !cx.state.allows(Action::ControlNode)
             || !self.is_fresh(cx.state.browser_time)
             || self.pending.is_some()
         {

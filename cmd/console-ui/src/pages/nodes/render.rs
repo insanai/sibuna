@@ -102,7 +102,9 @@ fn status(model: &Nodes, state: &State, node: &Status, out: &mut Html<'_>) -> fm
         members::gauge_sparkline(state, false, "CPU", out)?;
         out.write_str("</figure></div>")?;
     }
-    if state.allows(Action::ControlNode) {
+    if state.edge {
+        out.write_str("<p>Use the Edge page to drain or resume a backend server.</p>")?;
+    } else if state.allows(Action::ControlNode) {
         let disabled = !fresh
             || model.busy != Busy::Idle
             || model.pending.is_some()

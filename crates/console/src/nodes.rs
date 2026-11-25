@@ -255,7 +255,9 @@ impl Commands {
             applied_revision: None,
             cleared_entries: None,
         };
-        if authorized {
+        // The edge has separate server controls. Its firewall node adapter has no
+        // effect for these commands, so the receipt must record a rejection.
+        if authorized && shared.edge.is_none() {
             match command.kind {
                 Kind::Drain => shared.node.set_draining(true),
                 Kind::Resume => shared.node.set_draining(false),
