@@ -85,6 +85,15 @@ fn automatic_https(lower: &str) -> Option<(&'static str, &'static str)> {
              directory `local` of the storage, and install the new root in the clients.",
         ));
     }
+    if lower.contains("without a tsig key is not signed") {
+        return Some((
+            "update not signed",
+            "Without a key the server and everybody on the way to it can be imitated, and \
+             the zone accepts updates from any host that it does not refuse by address. \
+             Create a key with `tsig-keygen NAME`, give it to the zone, and set `key_name` \
+             and `key_file`. On a trusted link set `unsigned: true` instead.",
+        ));
+    }
     if lower.contains("is a wildcard, which needs the dns challenge") {
         return Some((
             "wildcard needs dns",
@@ -170,6 +179,9 @@ mod tests {
                        global.acme.internal.constraints; the root of the local authority \
                        may not sign for it";
         assert_eq!(title(None, InvalidData, outside), "name outside constraints");
+        let unsigned = "global.acme.dns.rfc2136: an update to 192.0.2.53:53 without a TSIG \
+                        key is not signed; set key_name and key_file, or unsigned: true";
+        assert_eq!(title(None, InvalidData, unsigned), "update not signed");
         let failure = classify(None, &io::Error::new(InvalidData, internal));
         assert!(failure.hint.contains("issuer: \"internal\""));
         let missing = "/nonexistent/sibuna/edge.jlv";

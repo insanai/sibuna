@@ -640,6 +640,21 @@ mod tests {
                 .contains("one provider")
         );
         assert!(wrong(r#""dns":{"rfc2136":{}}"#).contains("needs the \"IP:PORT\""));
+        // An update without a key is accepted for this host, and elsewhere when the
+        // file says so.
+        let unsigned = wrong(r#""dns":{"rfc2136":{"server":"192.0.2.53:53"}}"#);
+        assert!(unsigned.contains("without a TSIG key is not signed"), "{unsigned}");
+        assert!(unsigned.contains("global.acme.dns.rfc2136"), "{unsigned}");
+        for accepted in [
+            r#""dns":{"rfc2136":{"server":"127.0.0.1:53"}}"#,
+            r#""dns":{"rfc2136":{"server":"[::1]:53"}}"#,
+            r#""dns":{"rfc2136":{"server":"192.0.2.53:53","unsigned":true}}"#,
+        ] {
+            assert_eq!(wrong(accepted), "", "{accepted}");
+        }
+        let both = r#""dns":{"rfc2136":{"server":"192.0.2.53:53","key_name":"k.",
+            "key_file":"/k","unsigned":true}}"#;
+        assert!(wrong(both).contains("unsigned contradicts"));
         assert!(wrong(r#""dns":{"rfc2136":{"server":"ns.example.org"}}"#).contains("IP:PORT"));
         assert!(
             wrong(r#""dns":{"rfc2136":{"server":"1.2.3.4:53","key_name":"k"}}"#)

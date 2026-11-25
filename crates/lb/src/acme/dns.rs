@@ -27,7 +27,8 @@ pub enum DnsProvider {
         /// Another base URL of the API, for tests: `http` on a loopback address.
         api: Option<String>,
     },
-    /// A dynamic update (RFC 2136) to the server of the zone.
+    /// A dynamic update (RFC 2136) to the server of the zone. A server that is not on
+    /// a loopback address needs a key, or `unsigned: true` in the file.
     Rfc2136 {
         /// The server that takes the update.
         server: SocketAddr,
@@ -90,6 +91,20 @@ fn rfc2136(mut r: ObjectReader<'_, '_>) -> io::Result<DnsProvider> {
         }
         _ => return Err(invalid(format!("{}: key_name and key_file go together", r.path()))),
     };
+    // Without a key the answer is trusted by its address and its identifier alone, and
+    // anybody on the path may write the zone. That is fine on this host and a decision
+    // elsewhere.
+    let unsigned = field(r.take_bool("unsigned"))?.unwrap_or(false);
+    if key.is_some() && unsigned {
+        return Err(invalid(format!("{}: unsigned contradicts key_name and key_file", r.path())));
+    }
+    if key.is_none() && !unsigned && !server.ip().is_loopback() {
+        return Err(invalid(format!(
+            "{}: an update to {server} without a TSIG key is not signed; set key_name and \
+             key_file, or unsigned: true",
+            r.path()
+        )));
+    }
     let zone = zone(&mut r)?;
     field(r.finish())?;
     Ok(DnsProvider::Rfc2136 { server, key, zone })
