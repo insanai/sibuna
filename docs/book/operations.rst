@@ -206,6 +206,8 @@ We need no file to balance load. One command serves HTTP on port 8080 and spread
      - The directory of keys and certificates. The default is ``/var/lib/sibuna/acme``.
    * - ``--acme-dns-hook PROGRAM``
      - The program that answers the DNS-01 challenge, which a wildcard ``--domain`` needs (section *Automatic HTTPS*).
+   * - ``--acme-issuer acme|internal``
+     - Who issues for each ``--domain``. Without it the name decides: the local authority for an internal name, the ACME authority for a public one.
    * - ``--acme-on-demand-ask URL``
      - Also obtain a certificate at the first handshake for a name that ``GET URL?domain=NAME`` allows with a status from 200 to 299.
    * - ``--health PATH|tcp``
@@ -526,7 +528,10 @@ Every option has a default. We change one in ``global.acme``.
      - The provider of the DNS-01 challenge, described under *Wildcards and DNS-01*.
    * - ``internal``
      - ``{ lifetime: 43200 }``
-     - The lifetime of a certificate of the local authority in seconds, from 10 to 172800.
+     - ``lifetime`` is the lifetime of a certificate of the local authority in seconds, from 10 to 172800. ``constraints`` lists what its root may sign for, described under *Internal names and the local authority*.
+   * - ``key``
+     - ``"p256"``
+     - The key of each new certificate, from either source: ECDSA on P-256, or ``"p384"`` for P-384. A stored certificate keeps its key until its renewal. RSA keys are not offered.
    * - ``on_demand``
      - none
      - The guards of issuance at the first handshake, described under *On demand*.
@@ -592,8 +597,8 @@ A restart loads the stored certificates and orders nothing while they are fresh.
 
 There are three providers. We name exactly one.
 
-- ``hook`` is the path of a program of ours. Sibuna runs it without a shell as ``PROGRAM present RECORD VALUE`` and later as ``PROGRAM cleanup RECORD VALUE``. RECORD is the name of the TXT record with a final dot, and VALUE is its text. The same values are in the variables ``SIBUNA_ACME_ACTION``, ``SIBUNA_ACME_RECORD``, ``SIBUNA_ACME_VALUE`` and ``SIBUNA_ACME_NAME``. ``SIBUNA_ACME_CHALLENGE`` holds the name that the authority asks, which differs from RECORD when the challenge is delegated. The program has the environment of the daemon, where we put its credentials. Exit status 0 means done. The program has 60 seconds. On a failure the diagnostic shows the end of what it wrote. A script written for the ``exec`` provider of lego works unchanged, and any DNS service with a command line tool or an HTTP interface is three lines of script away.
-- ``rfc2136`` sends a dynamic update to the server of the zone, which BIND, Knot, PowerDNS and many hosted services accept. The update is signed with a TSIG key (HMAC-SHA256) when we name one. The secret is in a file, in base64 on one line, never in the topology.
+- ``hook`` is the path of a program of ours. Sibuna runs it without a shell as ``PROGRAM present RECORD VALUE`` and later as ``PROGRAM cleanup RECORD VALUE``. RECORD is the name of the TXT record with a final dot, and VALUE is its text. The same values are in the variables ``SIBUNA_ACME_ACTION``, ``SIBUNA_ACME_RECORD``, ``SIBUNA_ACME_VALUE`` and ``SIBUNA_ACME_NAME``. ``SIBUNA_ACME_CHALLENGE`` holds the name that the authority asks, which differs from RECORD when the challenge is delegated. The program has the environment of the daemon, where we put its credentials. Exit status 0 means done. The program has 60 seconds. It runs in a process group of its own, and after the 60 seconds Sibuna kills the whole group: the program and what it started. On a failure the diagnostic shows the end of what it wrote. A script written for the ``exec`` provider of lego works unchanged, and any DNS service with a command line tool or an HTTP interface is three lines of script away.
+- ``rfc2136`` sends a dynamic update to the server of the zone, which BIND, Knot, PowerDNS and many hosted services accept. The update is signed with a TSIG key (HMAC-SHA256) when we name one. The secret is in a file, in base64 on one line, never in the topology. Without a key the update is not signed: anybody on the way to the server can then imitate it, and the zone trusts every host that it does not refuse by address. Sibuna therefore accepts an update without a key for a server on a loopback address only. For another server it refuses the file with the diagnostic ``UPDATE NOT SIGNED``, until we name a key or write ``unsigned: true`` beside ``server`` because we trust the link.
 
 .. code-block:: text
 
@@ -671,6 +676,16 @@ Before Sibuna tells the authority to look, it asks every authoritative name serv
 
 At the first internal name Sibuna creates a root certificate, valid for ten years, and an intermediate that it replaces every few days. Both live in the directory ``local`` of the storage, with keys of mode 0600. Each name gets a certificate of 12 hours, renewed every 8 hours by the same thread, with no restart. Several nodes that share the storage use one root. One frontend may mix public and internal names. ``tls: { auto: ["www.example.org"], issuer: "internal" }`` sends a public name to the local authority, for a staging host or a private network. ``issuer: "acme"`` with an internal name is refused when the file is checked, with a hint. With a ``directory`` of our own, internal names go to that authority, and addresses still to the local one.
 
+We may limit what the root can sign for.
+
+.. code-block:: text
+
+   global: { acme: { internal: { constraints: ["corp.internal", "localhost", "10.0.0.0/8"] } } },
+
+``constraints`` lists DNS suffixes and address ranges, at most 32. A suffix permits its own name and every name below it. Sibuna writes the list into the root as a critical name constraint when it creates the root. A client that trusts the root then refuses any certificate under it for another name, whoever signed it. So a stolen root key cannot be used against ``bank.example``. A list with suffixes only permits no address, and a list with ranges only permits no host name. Without the key the root may sign for every name, which ``issuer: "internal"`` on a public name needs. ``sibuna check`` refuses a local name outside the list with the diagnostic ``NAME OUTSIDE CONSTRAINTS``. The list belongs to the root: Sibuna never rewrites a root. When the file lists other constraints than the root has, the local authority fails with ``ACME011`` and a hint. A longer list needs a new root. We remove ``root.pem``, ``root.crt`` and ``intermediate.pem`` in the directory ``local``, and we install the new root in the clients.
+
+There is no revocation list. A certificate of the local authority lives 12 hours, and clients of a private authority do not fetch lists unless each is told to. To stop serving a name we remove it from the file. A stolen key of one certificate is useful until that certificate expires, and ``lifetime`` shortens this. When the storage loses its root, Sibuna makes a new root at the next start, does not serve the stored certificates of the old root, and issues new ones at once. The local authority issues for this daemon and for the nodes that share its storage. It is not an ACME server for other machines.
+
 A client that connects to an IP address sends no server name. Such a handshake receives the certificate of the first address under ``auto``, and that certificate lists every address under ``auto``.
 
 A client trusts these certificates once it trusts the root. Sibuna never changes a trust store. It shows us the root, and we install it where we want it.
@@ -690,7 +705,7 @@ A client trusts these certificates once it trusts the root. Sibuna never changes
    # Windows, in an administrator shell
    certutil -addstore -f Root sibuna-root.crt
 
-The lines of ``show ca`` that start with ``#`` name the file and its expiry. The rest is the PEM text, which every tool above reads. Firefox and Java keep trust stores of their own. Whoever can read ``local/root.pem`` in the storage can sign for any name towards the clients that trust this root, so we install the root only on machines we control, and we protect the storage like a private key.
+The lines of ``show ca`` that start with ``#`` name the file and its expiry. The rest is the PEM text, which every tool above reads. Firefox and Java keep trust stores of their own. The file ``local/root.crt`` in the storage holds the same certificate. It has mode 0644 and its directory mode 0755, so another user can read it when the storage directory lets them pass. Sibuna creates the storage directory with mode 0700 and never changes it afterwards, so by default only ``show ca`` reaches the root. Whoever can read ``local/root.pem`` in the storage can sign towards the clients that trust this root, for any name that ``constraints`` permits, so we install the root only on machines we control, and we protect the storage like a private key.
 
 **On demand.** Sometimes we cannot list the names: customers point their own domains at us, or each tenant gets a subdomain. A frontend with ``on_demand: true`` obtains the certificate at the first handshake that names a host. We must say which hosts may get one, and the line ``global`` does that.
 
@@ -868,6 +883,9 @@ When the responder says ``revoked``, Sibuna logs it and renews the certificate a
    * - ``ACME013``
      - no OCSP response
      - Outbound HTTP to the responder that the message names. The certificate is served without a staple meanwhile.
+   * - ``ACME014``
+     - the certificate thread stopped on a defect
+     - Nothing at once: the served certificates stay, and the thread starts again by itself after 5 seconds, then 10, up to 5 minutes. The line is a defect of Sibuna. We report it.
 
 A reload may add and remove ``auto`` names, and turn ``on_demand`` of a frontend on and off. A new name is ordered at once, and a removed name is no longer renewed or served. Changing ``global.acme``, which includes the guards of ``on_demand``, or adding the first ``auto`` name to a daemon that has none, needs a restart. A certificate from ``crt`` and ``auto`` names may share a listener. For a name that both cover, the automatic certificate serves once it exists.
 
@@ -891,6 +909,12 @@ A reload may add and remove ``auto`` names, and turn ``on_demand`` of a frontend
      - The same for ``auto`` names, with ``ocsp: false`` to turn it off. A revoked certificate is renewed.
    * - The root is installed into the trust store at the first start.
      - Never. ``show ca`` prints the root, and we install it.
+   * - The local root may sign for any name.
+     - The same by default. ``internal.constraints`` limits the root to our suffixes and ranges.
+   * - ``acme_server`` makes the local authority an ACME server for other machines.
+     - Not offered. Nodes that share the storage share the root.
+   * - ``key_type`` offers ECDSA and RSA keys.
+     - ``key: "p256"`` or ``"p384"``. No RSA keys.
    * - ``on_demand`` in a site, ``on_demand_tls { ask URL }`` in the global options.
      - ``tls: { on_demand: true }`` and ``global.acme.on_demand``. The ``ask`` contract is the same: ``?domain=NAME``, and a 2xx status allows. A file without ``ask`` and without ``allow`` is refused, where Caddy warns.
    * - An on-demand certificate is renewed during a handshake.
