@@ -488,7 +488,14 @@ impl Edge {
     /// requires a restart. A rejected revision leaves the serving revision intact.
     /// Run-time weights, additions and removals give way to the file. A drain stays
     /// while the file still has a server of that pool, name and address (SID 0018).
-    pub fn reload(&mut self, mut config: Config) -> io::Result<()> {
+    pub fn reload(&mut self, config: Config) -> io::Result<()> {
+        self.reload_with(config, || {})
+    }
+
+    /// Publishes a checked configuration. Calls `commit` after the last fallible
+    /// preparation and before any new route can dispatch, so associated admission
+    /// hooks change only for a revision this worker accepts.
+    pub fn reload_with(&mut self, mut config: Config, commit: impl FnOnce()) -> io::Result<()> {
         if self.mesh != config.mesh {
             return Err(invalid(
                 "changing the mesh roster or key file requires a drained restart",
@@ -501,6 +508,7 @@ impl Edge {
             return Err(invalid("changing the spill section requires a restart"));
         }
         self.checks.configure(&mut config)?;
+        commit();
         self.stats.adopt(&mut config);
         let drained = self.drained_servers();
         self.budget.configure(&config);

@@ -221,7 +221,7 @@ impl Serving {
     }
 
     /// Puts a checked revision in the place of the serving one.
-    fn replace(&mut self, mut revision: Revision) -> io::Result<String> {
+    fn replace(&mut self, revision: Revision) -> io::Result<String> {
         if revision.config.admin_socket() != self.admin_socket.as_deref() {
             return Err(io::Error::other("changing global.admin_socket requires a restart"));
         }
@@ -235,17 +235,14 @@ impl Serving {
         let shutdown_timeout = revision.config.shutdown_timeout();
         let drain_delay = revision.config.drain_delay();
         let before = self.edge.change_count();
-        let observed = &mut self.observed;
-        // The hooks change first, so that no frontend of the new routes serves a
-        // moment without its hooks. A refused reload puts the old hooks back.
-        let serving = self.plugins.load();
-        self.plugins.publish(std::mem::take(&mut revision.plugins));
-        let reloaded =
-            reload(&mut self.edge, self.http.as_mut(), &mut self.adapters, observed, revision);
-        if let Err(error) = reloaded {
-            self.plugins.publish_shared(serving);
-            return Err(error);
-        }
+        reload(
+            &mut self.edge,
+            self.http.as_mut(),
+            &mut self.adapters,
+            &mut self.observed,
+            &self.plugins,
+            revision,
+        )?;
         self.reloads += 1;
         self.console.apply(&removed_peers, console.as_ref());
         self.shutdown_timeout = shutdown_timeout;
@@ -720,13 +717,14 @@ fn reload(
     http: Option<&mut http::Http>,
     adapters: &mut Adapters,
     observed: &mut observed::Observed,
+    plugins: &sibuna_plugin::Slot,
     mut revision: Revision,
 ) -> io::Result<()> {
     let observe = revision.config.observe().clone();
     match (http, revision.http) {
         (None, None) => {
             let plan = observed.plan(&observe)?;
-            edge.reload(revision.config)?;
+            edge.reload_with(revision.config, || plugins.publish(revision.plugins))?;
             observed.apply(observe, plan, edge);
             Ok(())
         }
@@ -735,7 +733,7 @@ fn reload(
             // reload, and the old ones serve on (SID 0020).
             let plan = observed.plan(&observe)?;
             adapt(adapters, &mut revision.config)?;
-            edge.reload(revision.config)?;
+            edge.reload_with(revision.config, || plugins.publish(revision.plugins))?;
             // The engine follows the routes at once. A request decided under the old
             // engine in between is routed by the old revision (SID 0018). The adapters
             // of that revision close last.

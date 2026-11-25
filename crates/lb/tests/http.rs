@@ -33,7 +33,12 @@ fn routes_bind_each_request_to_its_policy_generation_and_release_capacity() {
     assert_eq!(select(b"api.example", b"/public", 1).unwrap().address().port(), 9200);
     drop(first);
     let live = select(b"api.example", b"/api/foo", 1).unwrap();
-    edge.reload(topology(vip, 9300)).unwrap();
+    let mut published = 0;
+    let refused = topology(free::tcp(), 9300);
+    assert!(edge.reload_with(refused, || published += 1).is_err());
+    assert_eq!(published, 0);
+    edge.reload_with(topology(vip, 9300), || published += 1).unwrap();
+    assert_eq!(published, 1);
     assert!(select(b"api.example", b"/api/foo", 1).is_none());
     assert_eq!(select(b"api.example", b"/api/foo", 2).unwrap().address().port(), 9300);
     assert_eq!(live.address().port(), 9100);
