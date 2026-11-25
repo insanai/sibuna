@@ -5,8 +5,8 @@
 //! ```text
 //!   request on any HTTP frontend
 //!     |
-//!     +-- for the ACME server of the local authority ----------> its reply (`serve`)
 //!     +-- GET /.well-known/acme-challenge/TOKEN, answer known --> 200, the answer
+//!     +-- for the ACME server of the local authority ----------> its reply (`serve`)
 //!     +-- plain HTTP, Host is a managed name ------------------> 308, https://HOST/...
 //!     |     (unless the route states `redirect_https` itself: SID 0019 then decides)
 //!     +-- anything else ---------------------------------------> the firewall
@@ -45,12 +45,6 @@ pub(crate) fn intercept<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<Option<boo
     let (Some(automatic), Some(ingress)) = (&ctx.server.automatic, ctx.ingress) else {
         return Ok(None);
     };
-    if let Some((server, config)) = automatic.acme_server() {
-        let answered = serve::intercept(ctx, server, config, ingress.secure)?;
-        if answered.is_some() {
-            return Ok(answered);
-        }
-    }
     let host = ctx.request.header(b"host").unwrap_or_default();
     let token = ctx.request.path.strip_prefix(CHALLENGE_PREFIX);
     if let Some(answer) = token.and_then(|token| automatic.challenge_answer(token, host)) {
@@ -59,6 +53,14 @@ pub(crate) fn intercept<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<Option<boo
         let body = answer.as_bytes();
         response::write_response(ctx.writer, Status::Ok, b"text/plain", body, extra)?;
         return Ok(Some(ctx.keep_alive));
+    }
+    // The answer to a challenge of our own order came first: a server whose URL has
+    // no path must not hide it.
+    if let Some((server, config)) = automatic.acme_server() {
+        let answered = serve::intercept(ctx, server, config, ingress.secure)?;
+        if answered.is_some() {
+            return Ok(answered);
+        }
     }
     if ingress.secure {
         return Ok(None);
