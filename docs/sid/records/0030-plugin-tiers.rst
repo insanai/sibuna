@@ -643,6 +643,8 @@ Known gaps
 #. *Plugins exist in the edge only.* The firewall daemon that runs without an edge topology has none.
 #. *A connection that a peer forwarded (SID 0026) is judged on the node that serves it,* with the address that the client reached. No test drives a hook over a forwarded connection or a forwarded UDP client. An inspected connection whose reached address matches no listener of the serving node is not judged.
 #. *An inspection that takes a fallback (SID 0032)* is judged without a server name and without a JA4, because the client sent no whole ClientHello. A hook that decides by the server name must deny an empty one.
+#. *Every QUIC connection of an HTTP/3 frontend takes one more step before it serves,* also without hooks: one await and one small allocation. Its cost is not measured.
+#. *The parked path is not measured through the binary,* only in process, and no metric counts parked flows.
 #. *Not built:* a hook on a response, a hook that sees a body, a hook per datagram, a TCP transport for agents.
 
 Open questions
