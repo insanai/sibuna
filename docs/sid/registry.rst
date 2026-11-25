@@ -84,5 +84,8 @@ Discussion registry
    * - 0024
      - :doc:`records/0024-tls-on-the-workers`
      - discussion
+   * - 0031
+     - :doc:`records/0031-edge-operator-console`
+     - discussion
 
 .. sid-generated-end
