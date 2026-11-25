@@ -199,7 +199,7 @@ impl Driver {
             any_challenge,
             binding: chosen.binding.clone(),
             replaces: self.replaced(entry, index),
-            curve: self.curve(),
+            key: self.key_type(),
         };
         let Ready { first, others, runtime, dns, sender } = ready;
         // The DNS record of a name is remembered with the first authority.

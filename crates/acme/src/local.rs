@@ -7,6 +7,7 @@
 //!   root.crt            the root certificate alone, the file to install in clients,
 //!                       mode 0644; the directory itself has mode 0755
 //!   intermediate.pem    the intermediate and its key, mode 0600, 7 days
+//!   intermediate.previous.pem, revoked/, crl.der, crl.pem    see [`revocation`]
 //!
 //!   root --signs--> intermediate --signs--> leaf (12 hours by default)
 //! ```
@@ -14,6 +15,8 @@
 //! Several nodes may share the directory. The root is linked into place only when no
 //! root is there, so all nodes end with one root. The intermediate is replaced by one
 //! rename. A leaf carries the intermediate that signed it.
+
+mod revocation;
 
 use std::fs;
 use std::io::{self, Write};
@@ -23,6 +26,11 @@ use crate::store::{create_private_dir, create_private_file, read_bounded, tempor
 use crate::store::{set_mode, write_private};
 use crate::{Error, Issued, KeyPair, constraints, pem, random_serial, schedule, x509};
 
+pub use revocation::{CRL_LIFETIME, LONGEST_LEAF, MAX_REVOKED, Revoked, parse_serial, serial_of};
+
+/// The file of the intermediate before the present one. It signs the revocation list
+/// of its leaves until it expires.
+const PREVIOUS: &str = "intermediate.previous.pem";
 /// The common name of the root.
 pub const ROOT_NAME: &str = "Sibuna Local Authority - Root";
 /// The common name of the intermediate, the issuer of every leaf.
@@ -227,6 +235,7 @@ impl LocalAuthority {
         if let Some(found) = usable {
             return Ok(found);
         }
+        self.keep_previous(root, text.as_deref(), now);
         let key = KeyPair::generate()?;
         let template = x509::Template {
             issuer: ROOT_NAME,
@@ -248,6 +257,17 @@ impl LocalAuthority {
         Ok(signer)
     }
 
+    /// Keeps the intermediate that is about to be replaced, when the present root signed
+    /// it and it has not expired: its leaves may still live, and a revocation list for
+    /// them needs its key. A failure to write it costs that list and nothing else.
+    fn keep_previous(&self, root: &Signer, text: Option<&str>, now: u64) {
+        let Some(text) = text else { return };
+        let Some(old) = Signer::parse(text) else { return };
+        if old.fields.authority_key_id == root.key_id() && old.fields.not_after > now {
+            let _ = write_private(&self.directory.join(PREVIOUS), text);
+        }
+    }
+
     /// Issues a certificate for a TLS server. `names` are its DNS names and IP
     /// addresses. The first is also its common name; an address is written there as
     /// `address 10.0.0.1`, because a verifier takes a common name that looks like a
@@ -259,18 +279,38 @@ impl LocalAuthority {
     /// early instead, so that two thirds of the validity lie ahead. Fails with
     /// `ACME011`, or for no name.
     pub fn issue(&self, names: &[&str], lifetime: u64, now: u64) -> Result<Issued, Error> {
-        self.issue_on(crate::Curve::P256, names, lifetime, now)
+        self.issue_as(crate::KeyType::P256, names, lifetime, now)
     }
 
-    /// As [`LocalAuthority::issue`], with the key of the certificate on `curve`. The
-    /// intermediate signs with its own key, which is on P-256.
-    pub fn issue_on(
+    /// As [`LocalAuthority::issue`], with a key of the kind `kind` for the certificate.
+    /// The intermediate signs with its own key, which is on P-256. An RSA key is made
+    /// by the `openssl` program; without it the call fails with `ACME015`.
+    pub fn issue_as(
         &self,
-        curve: crate::Curve,
+        kind: crate::KeyType,
         names: &[&str],
         lifetime: u64,
         now: u64,
     ) -> Result<Issued, Error> {
+        if names.is_empty() {
+            return Err(Error::local("A certificate needs a name."));
+        }
+        let key = KeyPair::generate_as(kind)?;
+        let chain_pem = self.issue_for(&key.subject_public_key_info(), names, lifetime, now)?;
+        Ok(Issued { chain_pem, key })
+    }
+
+    /// Signs a certificate for a public key that the caller holds no private key of:
+    /// the key of a certificate request. `public_key` is a DER `SubjectPublicKeyInfo`
+    /// that the caller has checked, for example with [`crate::csr::read`]. Returns the
+    /// chain as PEM, the leaf first. Fails as [`LocalAuthority::issue`] does.
+    pub fn issue_for(
+        &self,
+        public_key: &[u8],
+        names: &[&str],
+        lifetime: u64,
+        now: u64,
+    ) -> Result<String, Error> {
         let Some(first) = names.first() else {
             return Err(Error::local("A certificate needs a name."));
         };
@@ -281,7 +321,6 @@ impl LocalAuthority {
         let root = self.root(now)?;
         let wanted = now.saturating_add(lifetime);
         let intermediate = self.intermediate(&root, now, wanted.min(root.fields.not_after))?;
-        let key = KeyPair::generate_on(curve)?;
         let template = x509::Template {
             issuer: INTERMEDIATE_NAME,
             subject: &subject,
@@ -293,10 +332,9 @@ impl LocalAuthority {
             authority_key_id: Some(intermediate.key_id()),
             ..x509::Template::default()
         };
-        let leaf = x509::write(&template, &key.subject_public_key_info(), &intermediate.key)?;
-        let chain_pem = pem::encode("CERTIFICATE", &leaf)
-            + &pem::encode("CERTIFICATE", &intermediate.certificate);
-        Ok(Issued { chain_pem, key })
+        let leaf = x509::write(&template, public_key, &intermediate.key)?;
+        Ok(pem::encode("CERTIFICATE", &leaf)
+            + &pem::encode("CERTIFICATE", &intermediate.certificate))
     }
 }
 
@@ -484,8 +522,8 @@ mod tests {
         let now =
             std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
         let authority = LocalAuthority::open(&scratch.0, now, &[]).unwrap();
-        let issued = authority.issue_on(crate::Curve::P384, &["localhost"], 3600, now).unwrap();
-        assert_eq!(issued.key.curve(), crate::Curve::P384);
+        let issued = authority.issue_as(crate::KeyType::P384, &["localhost"], 3600, now).unwrap();
+        assert_eq!(issued.key.key_type(), crate::KeyType::P384);
         let blocks = pem::decode("CERTIFICATE", &issued.chain_pem).unwrap();
         let public = issued.key.subject_public_key_info();
         assert!(blocks[0].windows(public.len()).any(|window| window == public));
@@ -506,6 +544,45 @@ mod tests {
         shown.args(["x509", "-noout", "-text", "-in"]).arg(&leaf);
         let text = String::from_utf8_lossy(&shown.output().unwrap().stdout).into_owned();
         assert!(text.contains("secp384r1") && text.contains("ecdsa-with-SHA256"), "{text}");
+    }
+
+    /// `openssl verify` accepts a chain whose leaf has an RSA key, signed by the P-256
+    /// intermediate. Skipped without `openssl`.
+    #[test]
+    fn openssl_verifies_a_leaf_with_an_rsa_key() {
+        if crate::keygen::probe().is_err() {
+            return;
+        }
+        let _spawn = crate::SPAWN.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        let scratch = Scratch::new();
+        let now =
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+        let authority = LocalAuthority::open(&scratch.0, now, &[]).unwrap();
+        let kind = crate::KeyType::Rsa2048;
+        let issued = authority.issue_as(kind, &["localhost"], 3600, now).unwrap();
+        assert_eq!(issued.key.key_type(), kind);
+        let blocks = pem::decode("CERTIFICATE", &issued.chain_pem).unwrap();
+        let public = issued.key.subject_public_key_info();
+        assert!(blocks[0].windows(public.len()).any(|window| window == public));
+        let file = |name: &str, der: &[u8]| {
+            let path = scratch.0.join(name);
+            fs::write(&path, pem::encode("CERTIFICATE", der)).unwrap();
+            path
+        };
+        let (leaf, intermediate) = (file("leaf.pem", &blocks[0]), file("int.pem", &blocks[1]));
+        let mut command = Command::new("openssl");
+        command.args(["verify", "-x509_strict", "-purpose", "sslserver"]);
+        command.arg("-CAfile").arg(authority.root_path());
+        command.arg("-untrusted").arg(&intermediate);
+        command.args(["-verify_hostname", "localhost"]).arg(&leaf);
+        let output = command.output().unwrap();
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        let mut shown = Command::new("openssl");
+        shown.args(["x509", "-noout", "-text", "-in"]).arg(&leaf);
+        let text = String::from_utf8_lossy(&shown.output().unwrap().stdout).into_owned();
+        // The leaf has the RSA key. The intermediate, on P-256, signed it.
+        assert!(text.contains("Public-Key: (2048 bit)"), "{text}");
+        assert!(text.contains("rsaEncryption") && text.contains("ecdsa-with-SHA256"), "{text}");
     }
 
     /// `openssl verify` accepts a leaf inside the constraints of the root and refuses a

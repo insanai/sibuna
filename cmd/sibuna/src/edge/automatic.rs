@@ -45,6 +45,19 @@ pub(super) fn start(
     Ok(Some(automatic))
 }
 
+/// Checks that the programs which the `global.acme` options need can be run: an RSA
+/// `key` needs `openssl` (SID 0021). The file is refused on the day it is checked, and
+/// not on the day a certificate is due. The text of the failure carries its code.
+pub(super) fn check_tools(config: Option<&AutomaticHttps>) -> io::Result<()> {
+    if !config.is_some_and(|config| config.options.key.is_rsa()) {
+        return Ok(());
+    }
+    sibuna_acme::keygen::probe().map_err(|error| {
+        let message = error.message.trim_end_matches('.');
+        io::Error::other(format!("global.acme.key: {message} ({})", error.code))
+    })
+}
+
 fn manage(automatic: &Automatic, identities: &BTreeMap<SocketAddr, Identity>) {
     for identity in identities.values() {
         identity.manage(automatic);

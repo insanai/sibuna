@@ -239,6 +239,7 @@ impl Serving {
             Command::ShowStats => Ok(self.stats()),
             Command::ShowCerts => Ok(self.certs()),
             Command::ShowCa => Ok(self.ca()),
+            Command::RevokeCert { target } => self.revoke(&target),
             // The admin thread answers these two. They never reach the worker.
             Command::Help | Command::ShowCluster => Ok(control::USAGE.to_owned()),
             Command::ReopenLog => {
@@ -345,6 +346,25 @@ impl Serving {
         }
         #[cfg(not(feature = "https"))]
         "# no local authority: this build has no TLS\n".to_owned()
+    }
+
+    /// The answer to `revoke cert`: the serial number and the name of the certificate
+    /// of the local authority that is now revoked (SID 0021). Fails with `ADM013` when
+    /// the word names nothing to revoke, and with the code of the failure when the
+    /// entry or the list could not be written.
+    fn revoke(&self, target: &str) -> Result<String, RuntimeError> {
+        #[cfg(feature = "https")]
+        {
+            let automatic = self.http.as_ref().and_then(http::Http::automatic);
+            crate::acme::revoke(automatic.map(Arc::as_ref), target)
+        }
+        #[cfg(not(feature = "https"))]
+        Err(control::failure(
+            "ADM013",
+            "NOT REVOKED",
+            format!("`{target}` was not revoked: this build has no TLS."),
+            "A build with the feature `https` has the local authority.",
+        ))
     }
 
     /// The answer to `show info`: one `key: value` per line.

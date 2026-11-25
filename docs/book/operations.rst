@@ -528,10 +528,10 @@ Every option has a default. We change one in ``global.acme``.
      - The provider of the DNS-01 challenge, described under *Wildcards and DNS-01*.
    * - ``internal``
      - ``{ lifetime: 43200 }``
-     - ``lifetime`` is the lifetime of a certificate of the local authority in seconds, from 10 to 172800. ``constraints`` lists what its root may sign for, described under *Internal names and the local authority*.
+     - ``lifetime`` is the lifetime of a certificate of the local authority in seconds, from 10 to 172800. ``constraints`` lists what its root may sign for, described under *Internal names and the local authority*. ``server`` makes the authority an ACME server for other machines, described there too.
    * - ``key``
      - ``"p256"``
-     - The key of each new certificate, from either source: ECDSA on P-256, or ``"p384"`` for P-384. A stored certificate keeps its key until its renewal. RSA keys are not offered.
+     - The key of each new certificate, from either source: ECDSA on P-256, ``"p384"`` for P-384, or ``"rsa2048"``, ``"rsa3072"`` and ``"rsa4096"`` for an RSA key. A stored certificate keeps its key until its renewal. An RSA key is made by the ``openssl`` program, which must be in the ``PATH`` of the daemon.
    * - ``on_demand``
      - none
      - The guards of issuance at the first handshake, described under *On demand*.
@@ -684,7 +684,76 @@ We may limit what the root can sign for.
 
 ``constraints`` lists DNS suffixes and address ranges, at most 32. A suffix permits its own name and every name below it. Sibuna writes the list into the root as a critical name constraint when it creates the root. A client that trusts the root then refuses any certificate under it for another name, whoever signed it. So a stolen root key cannot be used against ``bank.example``. A list with suffixes only permits no address, and a list with ranges only permits no host name. Without the key the root may sign for every name, which ``issuer: "internal"`` on a public name needs. ``sibuna check`` refuses a local name outside the list with the diagnostic ``NAME OUTSIDE CONSTRAINTS``. The list belongs to the root: Sibuna never rewrites a root. When the file lists other constraints than the root has, the local authority fails with ``ACME011`` and a hint. A longer list needs a new root. We remove ``root.pem``, ``root.crt`` and ``intermediate.pem`` in the directory ``local``, and we install the new root in the clients.
 
-There is no revocation list. A certificate of the local authority lives 12 hours, and clients of a private authority do not fetch lists unless each is told to. To stop serving a name we remove it from the file. A stolen key of one certificate is useful until that certificate expires, and ``lifetime`` shortens this. When the storage loses its root, Sibuna makes a new root at the next start, does not serve the stored certificates of the old root, and issues new ones at once. The local authority issues for this daemon and for the nodes that share its storage. It is not an ACME server for other machines.
+A certificate of the local authority lives 12 hours, so a stolen key is useful until that certificate expires, and ``lifetime`` shortens this. To stop serving a name we remove it from the file. When a key is lost before its certificate expires, we revoke the certificate.
+
+.. code-block:: text
+
+   $ sibuna ctl /run/sibuna/edge.sock revoke cert db.internal
+   revoked serial 5f0c1a7be2d94410 name db.internal
+   # The revocation lists are written. A served certificate with this serial number is replaced now.
+
+``revoke cert`` takes a name that the local authority issues for on this node, or a serial number in hexadecimal digits, as ``openssl x509 -noout -serial`` prints it. The name gets a new certificate with a new key at once, with no restart. The serial form also revokes a certificate that this node no longer holds. A word that names nothing fails with ``ADM013``.
+
+The local authority keeps a revocation list in the directory ``local`` of the storage: ``crl.pem``, and ``crl.der`` for a tool that reads DER. Sibuna writes the list at the first internal name, also when nothing is revoked, and writes it again after every revocation and at least every 12 hours. A list is valid for 24 hours. A client does not find the list by itself. We give the file to each verifier that shall honour a revocation, and we give it again within a day, for example with a timer that copies it.
+
+.. code-block:: text
+
+   openssl verify -crl_check -CAfile root.crt -untrusted intermediate.pem -CRLfile crl.pem leaf.pem
+   ssl_crl /etc/nginx/sibuna-crl.pem;              # nginx, for client certificates of this authority
+   SSLCARevocationFile /etc/apache2/sibuna-crl.pem
+
+A verifier that is not given the list accepts a revoked certificate until it expires. ``crl.pem`` may hold two lists: the intermediate is replaced every few days, and the one before it signs a list of its own while its certificates live. When the list cannot be written, the log has ``ACME016`` with the path. When the storage loses its root, Sibuna makes a new root at the next start, does not serve the stored certificates of the old root, and issues new ones at once. The local authority issues for this daemon and for the nodes that share its storage. For other machines it can be an ACME server, which is off unless we turn it on.
+
+**An ACME server for the internal network.** With ``internal.server`` another machine obtains a certificate of the local authority with an ACME client: certbot, lego, acme.sh, or a second Sibuna whose ``directory`` is our URL.
+
+.. code-block:: text
+
+   "global": { "acme": { "internal": {
+       "constraints": ["corp.internal", "10.0.0.0/8"],
+       "server": { "url": "https://ca.corp.internal/acme",
+                   "allow": ["corp.internal", "10.0.0.0/8"] } } } },
+   "frontends": { "ca": { "proto": "http", "binds": ["10.0.0.5:443"],
+       "tls": { "auto": ["ca.corp.internal"] }, "default_backend": "app" } }
+
+``url`` is what we give to the clients, and its directory is ``URL/directory``. The server has no port of its own. It answers on the TLS frontends, for requests whose host and path are those of ``url``, so one frontend must serve that host. In the example the local authority issues the certificate of ``ca.corp.internal`` itself. An ``http`` URL is accepted for ``localhost`` and loopback addresses only. ``allow`` lists the DNS suffixes that a client may order under and the address ranges that a validation may connect into. It needs one of each. ``http_port`` is the port of the validation, 80 unless we state it. A change of ``server`` needs a restart.
+
+A client must trust the root before it can speak to the server, because the server is behind a certificate of the same authority. We install the root on the client as shown below, or we name it to the client.
+
+.. code-block:: sh
+
+   sibuna ctl /run/sibuna/edge.sock show ca > sibuna-root.crt
+   certbot certonly --standalone -d db.corp.internal \
+       --server https://ca.corp.internal/acme/directory
+   REQUESTS_CA_BUNDLE=sibuna-root.crt certbot ...      # when the root is not installed
+
+The server proves a name with HTTP-01 and nothing else. It resolves the name, connects to the first address inside a range of ``allow`` on ``http_port``, and asks for ``/.well-known/acme-challenge/TOKEN``. It follows no redirect and contacts no address outside ``allow``. So it issues host names only: no wildcard and no IP address. A certificate lives for ``internal.lifetime``, 12 hours unless we change it and two days at most. A client that renews a month before the end, as certbot does, must be told to renew every few hours, for example with a timer that runs ``certbot renew --force-renewal``.
+
+.. list-table:: What the server does not have
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Missing
+     - What we do instead
+   * - A list of clients, external account binding.
+     - Everybody who reaches the URL and can answer on port 80 of an address in ``allow`` for a name under ``allow`` obtains a certificate. We keep the URL inside the network, we keep ``allow`` narrow, and we set ``internal.constraints``.
+   * - A limit per client address.
+     - The server holds 1,024 orders, 16 for one account key, and 4,096 nonces. A client that fills them makes others wait up to an hour. The answer is written before the firewall, so its limits do not apply.
+   * - Revocation by the client.
+     - ``revoke cert SERIAL`` on the admin socket. The serial is on the certificate of the client: the daemon logs the names of what it issues and keeps no list.
+   * - Orders that survive a restart, or that several nodes share.
+     - Orders live in memory for at most one hour. After a restart a client orders again. Behind several nodes, a client must reach one node for one order.
+   * - Wildcards, IP addresses, DNS-01, TLS-ALPN-01, key rollover, renewal information.
+     - Nothing. A wildcard for an internal name comes from ``tls.auto`` on this daemon.
+
+``URL/crl`` serves the revocation list of the present intermediate in DER, for a verifier that fetches lists over HTTPS. The log has one line for each validation and each certificate.
+
+.. code-block:: text
+
+   ACME000: ACME server: db.corp.internal validated for a client
+   ACME000: ACME server: certificate issued to a client for db.corp.internal
+   ACME000: ACME server: db.corp.internal not validated for a client: The answer has the status 404, not 200.
+
+This server was tested with the ACME client of Sibuna. Other clients were not run against it yet.
 
 A client that connects to an IP address sends no server name. Such a handshake receives the certificate of the first address under ``auto``, and that certificate lists every address under ``auto``.
 
@@ -886,6 +955,12 @@ When the responder says ``revoked``, Sibuna logs it and renews the certificate a
    * - ``ACME014``
      - the certificate thread stopped on a defect
      - Nothing at once: the served certificates stay, and the thread starts again by itself after 5 seconds, then 10, up to 5 minutes. The line is a defect of Sibuna. We report it.
+   * - ``ACME016``
+     - the revocation list failed
+     - The directory ``local`` of the storage: the daemon's user must be able to write ``revoked``, ``crl.der`` and ``crl.pem``. The directory ``revoked`` takes 1,024 certificates that have not expired.
+   * - ``ACME015``
+     - the key tool failed
+     - The program ``openssl`` in the ``PATH`` of the daemon, which makes RSA keys. ``sibuna check`` and the start stop with this code when the program cannot be run. We install OpenSSL, or we set ``key`` to ``"p256"`` or ``"p384"``.
 
 A reload may add and remove ``auto`` names, and turn ``on_demand`` of a frontend on and off. A new name is ordered at once, and a removed name is no longer renewed or served. Changing ``global.acme``, which includes the guards of ``on_demand``, or adding the first ``auto`` name to a daemon that has none, needs a restart. A certificate from ``crt`` and ``auto`` names may share a listener. For a name that both cover, the automatic certificate serves once it exists.
 
@@ -912,9 +987,9 @@ A reload may add and remove ``auto`` names, and turn ``on_demand`` of a frontend
    * - The local root may sign for any name.
      - The same by default. ``internal.constraints`` limits the root to our suffixes and ranges.
    * - ``acme_server`` makes the local authority an ACME server for other machines.
-     - Not offered. Nodes that share the storage share the root.
+     - ``global.acme.internal.server``, off by default. HTTP-01 only, into the address ranges of ``allow``, on the TLS frontends and with no port of its own.
    * - ``key_type`` offers ECDSA and RSA keys.
-     - ``key: "p256"`` or ``"p384"``. No RSA keys.
+     - ``key``: ``"p256"``, ``"p384"``, ``"rsa2048"``, ``"rsa3072"`` or ``"rsa4096"``. An RSA key needs the ``openssl`` program.
    * - ``on_demand`` in a site, ``on_demand_tls { ask URL }`` in the global options.
      - ``tls: { on_demand: true }`` and ``global.acme.on_demand``. The ``ask`` contract is the same: ``?domain=NAME``, and a 2xx status allows. A file without ``ask`` and without ``allow`` is refused, where Caddy warns.
    * - An on-demand certificate is renewed during a handshake.
@@ -925,8 +1000,6 @@ A reload may add and remove ``auto`` names, and turn ``on_demand`` of a frontend
      - ``eab: { kid, key_file }``. The key lives in a file, not in the configuration.
    * - Renewal follows the renewal information of the authority.
      - The same, with ``ari: false`` to turn it off, and never later than four fifths of the lifetime.
-   * - ``acme_server``.
-     - Not available.
 
 HTTP routing by name and path
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1796,6 +1869,8 @@ A deployment takes one server out of rotation, replaces it, and returns it. For 
      - One line per name of automatic HTTPS: how it is obtained, the issuer, the expiry, the next renewal, the state and the last failure (section *Automatic HTTPS*).
    * - ``show ca``
      - The root certificate of the local authority as PEM, with its file and its expiry in comment lines. We install it in the clients of internal names.
+   * - ``revoke cert NAME|SERIAL``
+     - Revokes a certificate of the local authority, writes the revocation list and replaces the certificate (section *Automatic HTTPS*).
    * - ``show info``
      - The version, the process, the file, the number of reloads, the watcher, the flows, the drops, the number of run-time changes, and the servers of the file that a command removed.
    * - ``set server POOL/NAME state ready|drain``
@@ -1811,7 +1886,7 @@ A deployment takes one server out of rotation, replaces it, and returns it. For 
    * - ``help``
      - Lists the commands.
 
-A command applies to new flows only. An established TCP stream, a UDP mapping and a running HTTP exchange keep their server, as they do across a reload. ``sibuna ctl`` exits with status 0 on success. On failure it exits with status 1 and prints a diagnostic with a code from ``ADM001`` to ``ADM010`` and a hint, and nothing has changed.
+A command applies to new flows only. An established TCP stream, a UDP mapping and a running HTTP exchange keep their server, as they do across a reload. ``sibuna ctl`` exits with status 0 on success. On failure it exits with status 1 and prints a diagnostic with a code from ``ADM001`` to ``ADM013`` and a hint, and nothing has changed.
 
 The file stays the authority. Run-time changes live in memory, as an overlay on the last accepted revision, and the daemon never writes the file. The table says what happens to each change.
 

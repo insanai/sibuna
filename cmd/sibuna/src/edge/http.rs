@@ -42,6 +42,10 @@ pub(super) struct Prepared {
 impl Prepared {
     pub fn load(topology: &sibuna_lb::Config) -> io::Result<Option<Self>> {
         let Some(options) = topology.http().cloned() else { return Ok(None) };
+        #[cfg(feature = "https")]
+        let automatic = topology.automatic_https();
+        #[cfg(feature = "https")]
+        super::automatic::check_tools(automatic.as_ref())?;
         let seed = options.secret_file.as_deref().map(crate::cli::read_seed).transpose()?;
         let config = firewall_config(&options);
         let bytes = match options.policy_file.as_deref() {
@@ -82,7 +86,7 @@ impl Prepared {
             #[cfg(feature = "https")]
             identities,
             #[cfg(feature = "https")]
-            automatic: topology.automatic_https(),
+            automatic,
         }))
     }
 }

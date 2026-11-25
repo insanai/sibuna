@@ -1064,3 +1064,203 @@ fn a_certificate_key_on_p384_is_ordered_issued_stored_and_served() {
     assert!(log.contains(&format!("certificate for {name} loaded from storage")), "{log}");
     assert_eq!(authority.order_count.load(Ordering::Relaxed), 1);
 }
+
+#[test]
+fn a_certificate_key_of_rsa_is_ordered_issued_stored_and_served() {
+    /// The object identifier `rsaEncryption`, as the key of a certificate names it.
+    const RSA: [u8; 11] = [0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01];
+    if sibuna_acme::keygen::probe().is_err() {
+        eprintln!("openssl is not installed; no RSA key is made");
+        return;
+    }
+    let authority = Authority::start();
+    let home = home("rsa");
+    let name = "rsa.example.test";
+    let setup = Setup {
+        authority: &authority,
+        origin: origin(),
+        home: &home,
+        names: &[name, "127.0.0.1"],
+        plain: Some(""),
+        acme: r#","key":"rsa2048""#,
+        tls: "",
+        directory: true,
+    };
+    let with_rsa = |daemon: &Daemon, host: &str| {
+        // A rustls client completes the handshake, so the daemon signed with the key.
+        let leaf = peer_certificate(daemon.tls, host, None).unwrap();
+        leaf.windows(RSA.len()).any(|window| window == RSA)
+    };
+    let ready = |daemon: &Daemon| {
+        wait_for("the certificates", 60, || {
+            let ready = |name: &str| daemon.row(name)[5] == "ready";
+            (ready(name) && ready("127.0.0.1")).then_some(())
+        });
+    };
+    let daemon = start(&setup);
+    ready(&daemon);
+    // One certificate from the authority of the test, one from the local authority.
+    assert_eq!(daemon.row(name)[1], "http-01");
+    assert_eq!(daemon.row("127.0.0.1")[1], "local");
+    assert!(with_rsa(&daemon, name) && with_rsa(&daemon, "127.0.0.1"));
+    let (root, _) = local_root(&daemon);
+    let answer = get_trusting(daemon.tls, "127.0.0.1", &root);
+    assert!(answer.is_ok_and(|answer| answer.ends_with("ok")));
+    assert_eq!(authority.order_count.load(Ordering::Relaxed), 1);
+    let key = home.join("acme/local/certs/127.0.0.1/key.pem");
+    let key = sibuna_acme::KeyPair::from_pem(&fs::read_to_string(key).unwrap()).unwrap();
+    assert_eq!(key.key_type(), sibuna_acme::KeyType::Rsa2048);
+    drop(daemon);
+
+    // The stored keys load after a restart, and nothing is ordered again.
+    let daemon = start(&setup);
+    ready(&daemon);
+    assert!(with_rsa(&daemon, name) && with_rsa(&daemon, "127.0.0.1"));
+    assert_eq!(authority.order_count.load(Ordering::Relaxed), 1);
+}
+
+/// With an RSA key and no `openssl` in the `PATH`, the check and the start both fail
+/// at once, with the code and the hint of the key tool.
+#[test]
+fn an_rsa_key_without_openssl_fails_the_check_and_the_start() {
+    let home = home("no-openssl");
+    let file = home.join("edge.json");
+    let storage = home.join("acme");
+    let text = format!(
+        r#"{{"global":{{"acme":{{"key":"rsa2048","storage":"{}"}}}},
+           "frontends":{{"web":{{"binds":["127.0.0.1:8443"],"tls":{{"auto":["localhost"]}}}}}},
+           "backends":{{"app":{{"servers":["127.0.0.1:8080"]}}}}}}"#,
+        storage.display()
+    );
+    fs::write(&file, text).unwrap();
+    let empty = home.join("empty-path");
+    fs::create_dir_all(&empty).unwrap();
+    for arguments in [vec!["check", "-f"], vec!["--config-file"]] {
+        let output =
+            Command::new(BIN).args(&arguments).arg(&file).env("PATH", &empty).output().unwrap();
+        let text = String::from_utf8_lossy(&output.stderr).into_owned();
+        assert!(!output.status.success(), "{arguments:?}: {text}");
+        assert!(text.contains("KEY TOOL FAILED (ACME015)"), "{arguments:?}: {text}");
+        assert!(text.contains("could not be started"), "{arguments:?}: {text}");
+        assert!(text.contains("Hint: ") && text.contains("\"p256\""), "{arguments:?}: {text}");
+    }
+    // Nothing was created: the failure came before the storage was touched.
+    assert!(!storage.exists());
+    // With an ECDSA key the same file needs no program.
+    let text = fs::read_to_string(&file).unwrap().replace("rsa2048", "p384");
+    fs::write(&file, text).unwrap();
+    let output =
+        Command::new(BIN).arg("check").arg("-f").arg(&file).env("PATH", &empty).output().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+}
+
+/// The serial number of the certificate that the daemon serves for `host`.
+fn served_serial(daemon: &Daemon, host: &str) -> u64 {
+    let leaf = peer_certificate(daemon.tls, host, None).unwrap();
+    sibuna_acme::local::serial_of(&sibuna_acme::x509::read(&leaf).unwrap()).unwrap()
+}
+
+/// The serial numbers of the first revocation list in `crl.pem` of the storage.
+fn listed_serials(home: &Path) -> Option<Vec<u64>> {
+    let text = fs::read_to_string(home.join("acme/local/crl.pem")).ok()?;
+    let blocks = sibuna_acme::pem::decode(sibuna_acme::crl::LABEL, &text)?;
+    let list = sibuna_acme::crl::read(blocks.first()?, None)?;
+    Some(list.entries.iter().map(|entry| entry.serial).collect())
+}
+
+/// OpenSSL verifies the list of the storage in `home` with the intermediate of the
+/// stored chain of `localhost`, when it is installed.
+fn openssl_verifies_the_list(home: &Path) {
+    let local = home.join("acme/local");
+    let chain = fs::read_to_string(local.join("certs/localhost/cert.pem")).unwrap();
+    let blocks = sibuna_acme::pem::decode("CERTIFICATE", &chain).unwrap();
+    let intermediate = home.join("intermediate.pem");
+    fs::write(&intermediate, sibuna_acme::pem::encode("CERTIFICATE", &blocks[1])).unwrap();
+    let verified = Command::new("openssl")
+        .args(["crl", "-verify", "-noout", "-CAfile"])
+        .arg(&intermediate)
+        .arg("-in")
+        .arg(local.join("crl.pem"))
+        .output();
+    if let Ok(output) = verified {
+        let text = String::from_utf8_lossy(&output.stderr).to_ascii_lowercase();
+        assert!(output.status.success() && text.contains("verify ok"), "{text}");
+    }
+}
+
+/// `revoke cert` with a word that names nothing is refused with a code and a hint.
+fn nothing_is_revoked_by(daemon: &Daemon, words: &[&str]) {
+    for word in words {
+        let output = Command::new(BIN)
+            .arg("ctl")
+            .arg(&daemon.socket)
+            .args(["revoke", "cert", word])
+            .output()
+            .unwrap();
+        let text = String::from_utf8_lossy(&output.stderr).into_owned();
+        assert!(!output.status.success(), "{word}: {text}");
+        assert!(text.contains("NOT REVOKED") && text.contains("ADM013"), "{word}: {text}");
+        assert!(text.contains("Hint:"), "{word}: {text}");
+    }
+}
+
+#[test]
+fn a_revoked_local_certificate_is_listed_and_replaced() {
+    let authority = Authority::start();
+    let home = home("revoke");
+    let setup = Setup {
+        authority: &authority,
+        origin: origin(),
+        home: &home,
+        names: &["localhost", "127.0.0.1"],
+        plain: Some(""),
+        acme: "",
+        tls: "",
+        directory: false,
+    };
+    let daemon = start(&setup);
+    wait_for("the certificates", 30, || {
+        let ready = |name: &str| daemon.row(name)[5] == "ready";
+        (ready("localhost") && ready("127.0.0.1")).then_some(())
+    });
+    // The list is published before anything is revoked, and it is empty.
+    let empty = wait_for("the revocation list", 30, || listed_serials(&home));
+    assert_eq!(empty, Vec::<u64>::new());
+    let first = served_serial(&daemon, "localhost");
+    let answer = daemon.ctl("revoke cert localhost");
+    assert!(answer.contains(&format!("revoked serial {first:016x} name localhost")), "{answer}");
+    let local = home.join("acme/local");
+    assert!(local.join("revoked").join(format!("{first:016x}")).exists());
+    assert_eq!(listed_serials(&home), Some(vec![first]));
+    // The name gets a new certificate with no restart, and the old one is not served.
+    let second = wait_for("a new certificate", 30, || {
+        Some(served_serial(&daemon, "localhost")).filter(|serial| *serial != first)
+    });
+    // By its serial number, as `openssl x509 -serial` prints it: the certificate of the
+    // address, which the daemon serves without a server name.
+    let address = served_serial(&daemon, "127.0.0.1");
+    let answer = daemon.ctl(&format!("revoke cert {address:X}"));
+    assert!(answer.contains(&format!("revoked serial {address:016x} name -")), "{answer}");
+    wait_for("a new certificate of the address", 30, || {
+        (served_serial(&daemon, "127.0.0.1") != address).then_some(())
+    });
+    let mut listed = listed_serials(&home).unwrap();
+    listed.sort_unstable();
+    let mut expected = vec![first, address];
+    expected.sort_unstable();
+    assert_eq!(listed, expected);
+    assert!(!listed.contains(&second));
+    openssl_verifies_the_list(&home);
+    nothing_is_revoked_by(&daemon, &["nothing.example", "0", "12345678901234567"]);
+    assert_eq!(fs::read_dir(local.join("revoked")).unwrap().count(), 2);
+    let log = daemon.log();
+    assert!(log.contains("admin: revoke cert localhost"), "{log}");
+    drop(daemon);
+
+    // After a restart the certificates that replaced the revoked ones are loaded, and
+    // the revoked ones stay revoked.
+    let daemon = start(&setup);
+    wait_for("the certificates", 30, || (daemon.row("localhost")[5] == "ready").then_some(()));
+    assert_eq!(served_serial(&daemon, "localhost"), second);
+    assert_eq!(listed_serials(&home).map(|listed| listed.len()), Some(2));
+}
