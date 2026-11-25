@@ -53,6 +53,8 @@ pub(crate) struct Frontend {
     pub timeout: Duration,
     /// How a TCP frontend inspects the ClientHello, when it does (SID 0032).
     pub inspect: Option<std::sync::Arc<crate::inspect::Plan>>,
+    /// The kernel admission of the listeners of the frontend (SID 0032).
+    pub listen: crate::listen::ListenOptions,
     /// The name, the counters and the trusted proxies of the frontend (SID 0020).
     pub info: std::sync::Arc<crate::FrontendInfo>,
 }
@@ -343,6 +345,7 @@ impl Config {
             Some(s) => duration(s).ok_or_else(|| invalid(format!("{path}: invalid timeout")))?,
         };
         let inspect = crate::inspect::Plan::parse(&mut r, proto, &self.pools, &pool)?;
+        let listen = crate::listen::ListenOptions::parse(&mut r, proto)?;
         let (tls, firewall, websocket, http_rules, policy) =
             http_frontend(&mut r, proto, &self.pools)?;
         let http_rules: std::sync::Arc<[_]> = http_rules.into();
@@ -366,6 +369,7 @@ impl Config {
                 pool: pool.as_str().into(),
                 timeout,
                 inspect: inspect.clone(),
+                listen,
                 rate,
                 info: info.clone(),
             };

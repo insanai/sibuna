@@ -22,6 +22,8 @@ pub use websocket::{TunnelPermit, TunnelRefusal, WebSocketRule};
 mod hello;
 mod inspect;
 mod ja4;
+mod listen;
+pub use listen::ListenFault;
 mod maglev;
 mod mesh;
 pub use mesh::{
@@ -187,6 +189,8 @@ pub struct Edge {
     buffer: Box<[u8]>,
     draining: bool,
     drops: u64,
+    /// Kernel options that a listener asked for and did not get (SID 0032).
+    listen_faults: Vec<ListenFault>,
 }
 
 /// Opens the socket of one listener. With `shared` it may share its address with
@@ -258,6 +262,13 @@ impl Edge {
         self.relays.stop();
     }
 
+    /// Takes the kernel options that listeners asked for and did not get, since the
+    /// last call (SID 0032). The listeners serve without them. A caller reports each
+    /// once: a start and a reload can add some.
+    pub fn listen_faults(&mut self) -> impl Iterator<Item = ListenFault> + '_ {
+        self.listen_faults.drain(..)
+    }
+
     /// Takes accepted HTTP sockets for plaintext dispatch or TLS negotiation.
     pub fn accepted(&mut self) -> impl Iterator<Item = Accepted> {
         self.http_pending.drain(..)
@@ -281,11 +292,16 @@ impl Edge {
         let budget = FlowBudget::new(&config);
         let mut binds = Vec::new();
         let mut listeners = Vec::new();
+        let mut listen_faults = Vec::new();
         let mut poll = Poller::new()?;
         let (waker, wake) = Waker::new()?;
         poll.set(handle(waker.socket()), READ, Ready::Wake)?;
         for (bind, route) in config.listeners {
             let socket = open_listener(bind.0, bind.1, config.reuse_port)?;
+            if let Socket::Tcp(listener) = &socket {
+                let none = listen::ListenOptions::default();
+                route.listen.apply(&none, listener, &route.info.name, &mut listen_faults);
+            }
             let fd = match &socket {
                 Socket::Tcp(socket) => handle(socket),
                 Socket::Udp(socket) => handle(socket),
@@ -332,6 +348,7 @@ impl Edge {
             buffer: vec![0; 65536].into_boxed_slice(),
             draining: false,
             drops: 0,
+            listen_faults,
         })
     }
 
@@ -368,6 +385,10 @@ impl Edge {
         self.loads.prune();
         self.keep_drained(drained);
         for (listener, route) in self.listeners.iter_mut().zip(config.listeners.into_values()) {
+            if let Socket::Tcp(socket) = &listener.socket {
+                let (old, name) = (&listener.route.listen, &route.info.name);
+                route.listen.apply(old, socket, name, &mut self.listen_faults);
+            }
             listener.route = route;
         }
         // A partially inspected handshake has no upstream yet. Drop it at a policy
