@@ -64,6 +64,10 @@ pub struct Offer<'a> {
     pub peer: SocketAddr,
     /// The fingerprint of the certificate the client proved to hold, if any.
     pub client_cert: Option<crate::Fingerprint>,
+    /// The TLS version of the client's handshake, `1.2` or `1.3`. Empty when unknown.
+    pub tls_version: &'static str,
+    /// The IANA name of the cipher suite. Empty when unknown, as on HTTP/3.
+    pub tls_cipher: &'static str,
     /// The listener the client reached.
     pub vip: SocketAddr,
     /// The protocol the client speaks: `h2` or `h3`.
@@ -148,6 +152,8 @@ pub struct Refused<'a> {
     pub vip: SocketAddr,
     /// The protocol the client speaks: `h2` or `h3`.
     pub protocol: &'static str,
+    /// The client's certificate and the outcome of its TLS handshake.
+    pub secured: crate::Secured,
     /// The status of the answer.
     pub status: u16,
     /// The request method.
@@ -248,7 +254,7 @@ pub(crate) async fn exchange(
     inline: &Arc<Inline>,
     req: Request<Body>,
     trailers: bool,
-    (peer, client_cert): (SocketAddr, Option<crate::Fingerprint>),
+    (peer, secured): (SocketAddr, crate::Secured),
     vip: SocketAddr,
     protocol: &'static str,
 ) -> Response<Body> {
@@ -267,7 +273,8 @@ pub(crate) async fn exchange(
         let host = parts.headers.get(header::HOST).and_then(|host| host.to_str().ok());
         let (method, path) = (parts.method.as_str(), parts.uri.path());
         let host = host.unwrap_or_default();
-        inline.refused(&Refused { peer, vip, protocol, status: 400, method, host, path });
+        let status = 400;
+        inline.refused(&Refused { peer, vip, protocol, secured, status, method, host, path });
         return error(StatusCode::BAD_REQUEST);
     };
     let seen = prefix.len().min(budget);
@@ -281,7 +288,9 @@ pub(crate) async fn exchange(
         body_complete: ended && seen == prefix.len(),
         declared,
         peer,
-        client_cert,
+        client_cert: secured.cert,
+        tls_version: secured.version,
+        tls_cipher: secured.cipher,
         vip,
         protocol,
     };

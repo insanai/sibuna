@@ -39,8 +39,8 @@ pub(crate) struct Lane {
     inline: Option<Arc<crate::inline::Inline>>,
     peer: SocketAddr,
     vip: SocketAddr,
-    /// The client's verified certificate.
-    cert: Option<crate::Fingerprint>,
+    /// The client's verified certificate and the outcome of its TLS handshake.
+    secured: crate::Secured,
     idle: Mutex<Vec<(SendRequest<Body>, Instant)>>,
     in_flight: AtomicUsize,
     quiet_since: Mutex<Instant>,
@@ -52,14 +52,14 @@ impl Lane {
         inline: Option<Arc<crate::inline::Inline>>,
         peer: SocketAddr,
         vip: SocketAddr,
-        cert: Option<crate::Fingerprint>,
+        secured: crate::Secured,
     ) -> Arc<Self> {
         Arc::new(Self {
             handoff,
             inline,
             peer,
             vip,
-            cert,
+            secured,
             idle: Mutex::new(Vec::new()),
             in_flight: AtomicUsize::new(0),
             quiet_since: Mutex::new(Instant::now()),
@@ -67,9 +67,10 @@ impl Lane {
     }
 
     /// How long the connection has had no exchange in flight. Zero while one is running.
-    /// The client of this connection: its address and its verified certificate.
-    pub(crate) fn client(&self) -> (SocketAddr, Option<crate::Fingerprint>) {
-        (self.peer, self.cert)
+    /// The client of this connection: its address, and its verified certificate with
+    /// the outcome of its TLS handshake.
+    pub(crate) fn client(&self) -> (SocketAddr, crate::Secured) {
+        (self.peer, self.secured)
     }
 
     /// Reports a request that is answered with `status` before any decision (SID 0020):
@@ -85,6 +86,7 @@ impl Lane {
             peer: self.peer,
             vip: self.vip,
             protocol: protocol_name(version),
+            secured: self.secured,
             status: status.as_u16(),
             method: method.as_str(),
             host: uri.host().unwrap_or_default(),
@@ -123,11 +125,11 @@ impl Lane {
 
     /// Opens a firewall connection of its own for a tunnel.
     pub(crate) async fn pipe(&self) -> Result<crate::handoff::Pipe, Error> {
-        Ok(self.handoff.open(self.peer, self.vip, self.cert).await?)
+        Ok(self.handoff.open(self.peer, self.vip, self.secured).await?)
     }
 
     async fn open(&self) -> Result<SendRequest<Body>, Error> {
-        let stream = self.handoff.open(self.peer, self.vip, self.cert).await?;
+        let stream = self.handoff.open(self.peer, self.vip, self.secured).await?;
         let (sender, conn) = hyper::client::conn::http1::handshake(TokioIo::new(stream)).await?;
         tokio::spawn(async move {
             let _ = conn.await;

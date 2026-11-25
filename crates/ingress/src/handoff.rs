@@ -61,7 +61,7 @@ impl Handoff {
         &self,
         peer: SocketAddr,
         vip: SocketAddr,
-        cert: Option<crate::Fingerprint>,
+        secured: crate::Secured,
     ) -> io::Result<Pipe> {
         use std::os::fd::OwnedFd;
         use std::os::unix::net::UnixStream;
@@ -72,7 +72,7 @@ impl Handoff {
         // The firewall reads, writes, shuts down and sets timeouts, which every stream
         // socket supports. It takes the client address from `peer`, never from the socket.
         let far = std::net::TcpStream::from(OwnedFd::from(far));
-        (self.handler)(far, peer, vip, cert);
+        (self.handler)(far, peer, vip, secured);
         Ok(near)
     }
 
@@ -82,10 +82,10 @@ impl Handoff {
         &self,
         peer: SocketAddr,
         vip: SocketAddr,
-        cert: Option<crate::Fingerprint>,
+        secured: crate::Secured,
     ) -> io::Result<Pipe> {
         let (near, far) = self.loopback.pair().await?;
-        (self.handler)(far, peer, vip, cert);
+        (self.handler)(far, peer, vip, secured);
         Ok(near)
     }
 }
