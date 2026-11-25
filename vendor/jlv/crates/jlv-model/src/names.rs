@@ -51,7 +51,7 @@ pub fn api_address(address: &str) -> Option<String> {
         "http" => "80",
         _ => return None,
     };
-    let rest = rest.trim_suffix('/');
+    let rest = rest.strip_suffix('/').unwrap_or(rest);
     let (host, port) = match rest.split_once(':') {
         Some((host, port)) => (host, Some(port)),
         None => (rest, None),

@@ -58,22 +58,23 @@ pub(super) fn classify(file: Option<&str>, error: &io::Error) -> Failure {
             "The message says what to do. To start with the sticky table in memory \
              alone, remove the `spill` section.",
         ),
-        _ if let Some(found) = automatic_https(&lower) => found,
-        _ if names_a_certificate(&lower) => (
-            "certificate not loaded",
-            "Each `crt` entry is one PEM file with the certificate chain, leaf first, then \
+        _ => automatic_https(&lower).unwrap_or_else(|| match error.kind() {
+            _ if names_a_certificate(&lower) => (
+                "certificate not loaded",
+                "Each `crt` entry is one PEM file with the certificate chain, leaf first, then \
              its key: `cat fullchain.pem privkey.pem > site.pem`. The daemon's user must be \
              able to read it.",
-        ),
-        io::ErrorKind::InvalidData => (
-            "invalid configuration",
-            "Correct the key that the message names and run `sibuna check -f FILE`.",
-        ),
-        io::ErrorKind::NotFound | io::ErrorKind::PermissionDenied => (
-            "file not readable",
-            "Check that the file exists and that the daemon's user can read it.",
-        ),
-        _ => ("edge not started", "Check the edge configuration and the listener addresses."),
+            ),
+            io::ErrorKind::InvalidData => (
+                "invalid configuration",
+                "Correct the key that the message names and run `sibuna check -f FILE`.",
+            ),
+            io::ErrorKind::NotFound | io::ErrorKind::PermissionDenied => (
+                "file not readable",
+                "Check that the file exists and that the daemon's user can read it.",
+            ),
+            _ => ("edge not started", "Check the edge configuration and the listener addresses."),
+        }),
     };
     let subject = file.map_or(String::new(), |path| format!("{path}: "));
     if let Some(reason) = text.strip_suffix(" (ACME015)") {

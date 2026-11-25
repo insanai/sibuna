@@ -10,5 +10,6 @@ and LICENSES/GPL-3.0.txt. This software comes without warranty.
 
 Source: https://github.com/insanai/jlavideploy
 Revision: 46ea61f7344c0309abc0dfa850b9ae24f15874c9
-The src trees are copied verbatim. The workspace manifest selects the kernel
+On 2026-11-25 the OpenBSD qualification build replaced three trim_suffix calls
+with the equivalent strip_suffix fallback for Rust 1.94.1. The workspace manifest selects the kernel
 and its pinned dependencies for the Sibuna distribution.
