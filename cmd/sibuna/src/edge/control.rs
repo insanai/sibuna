@@ -24,6 +24,7 @@ set server POOL/NAME state ready|drain [local]
 set server POOL/NAME weight N [local]
 add server POOL/NAME IP:PORT [weight N] [local]
 del server POOL/NAME [local]
+del ban ADDRESS [local]
 reload
 help
 ";
@@ -59,6 +60,10 @@ pub(super) enum Command {
     Del {
         pool: String,
         name: String,
+    },
+    /// Lifts the ban of the client at this address (SID 0022).
+    DelBan {
+        client: std::net::IpAddr,
     },
     /// A change to a server that stays on this node. Without the word `local` a mesh
     /// carries the change to the peers (SID 0022).
@@ -181,6 +186,13 @@ pub(super) fn parse(line: &str) -> Result<Command, RuntimeError> {
             let (pool, name) = target(server)?;
             Ok(Command::Add { pool, name, addr: address(addr)?, weight: weight(word)? })
         }
+        ["del", "ban", client] => match client.parse() {
+            Ok(client) => Ok(Command::DelBan { client }),
+            Err(_) => Err(RuntimeError::invalid(
+                format!("`{client}` is not an address."),
+                "Name the client by its IPv4 or IPv6 address, as the access log shows it.",
+            )),
+        },
         ["del", "server", server] => {
             let (pool, name) = target(server)?;
             Ok(Command::Del { pool, name })
@@ -397,6 +409,10 @@ mod tests {
         let del = Command::Del { pool, name };
         assert_eq!(parse("del server app/blue"), Ok(del.clone()));
         assert_eq!(parse("del server app/blue local"), Ok(Command::Local(Box::new(del))));
+        let lift = Command::DelBan { client: "2001:db8::7".parse().unwrap() };
+        assert_eq!(parse("del ban 2001:db8::7"), Ok(lift.clone()));
+        assert_eq!(parse("del ban 2001:db8::7 local"), Ok(Command::Local(Box::new(lift))));
+        assert!(parse("del ban example.org").is_err());
         assert!(parse("show servers local").is_err());
         assert!(parse("reload local").is_err());
     }

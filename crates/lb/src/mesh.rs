@@ -103,7 +103,7 @@ struct Peer {
     count: usize,
     cursor: usize,
     /// What is still to send to this peer since it returned, for each replicated map.
-    walks: [Vec<bans::Ban>; 2],
+    walks: [Vec<bans::Ban>; 3],
     /// The peer returned and is owed a walk of the bans in effect.
     returned: bool,
 }
@@ -221,6 +221,21 @@ impl BanFeed {
     }
 }
 
+/// Lifts the ban of a client that the operator of a peer lifted.
+pub type LiftSink = Box<dyn Fn(&[u8]) + Send + Sync>;
+
+/// Hands the bans that this node's operator lifts to the mesh thread.
+#[derive(Clone)]
+pub struct LiftFeed(BanFeed);
+
+impl LiftFeed {
+    /// Tells the peers that the operator lifted the ban of `client`. A ban that a node
+    /// issues afterwards holds again. Never blocks.
+    pub fn publish(&self, client: &[u8]) {
+        self.0.publish(client, 0);
+    }
+}
+
 /// Hands the run-time commands of this node's operator to the mesh thread.
 #[derive(Clone)]
 pub struct CommandFeed(BanFeed);
@@ -241,15 +256,18 @@ enum Holds {
     Bans,
     /// Servers and the number of the operator's last command of each kind.
     Commands,
+    /// Clients whose ban an operator lifted, and the end up to which bans are lifted.
+    Lifts,
 }
 
 impl Holds {
-    const ALL: [Self; 2] = [Self::Bans, Self::Commands];
+    const ALL: [Self; 3] = [Self::Bans, Self::Commands, Self::Lifts];
 
     fn kind(self) -> u8 {
         match self {
             Self::Bans => bans::KIND,
             Self::Commands => bans::KIND_COMMAND,
+            Self::Lifts => bans::KIND_LIFT,
         }
     }
 }
@@ -265,6 +283,8 @@ struct Replica {
     scratch: Vec<bans::Ban>,
     /// What was learned before the daemon gave its sink has been applied to it.
     caught_up: bool,
+    /// The lifts that the last datagram brought, until the bans are settled with them.
+    news: Vec<bans::Ban>,
 }
 
 impl Replica {
@@ -280,6 +300,7 @@ impl Replica {
             swept: Instant::now(),
             scratch: Vec::new(),
             caught_up: false,
+            news: Vec::new(),
         };
         (replica, BanFeed { queue, counters }, sink)
     }
@@ -288,7 +309,7 @@ impl Replica {
     /// the map now holds when the merge changed it.
     fn merge(&mut self, key: &[u8], value: u64) -> Result<Option<u64>, ()> {
         match self.holds {
-            Holds::Bans => self.log.merge(key, value, unix_now()),
+            Holds::Bans | Holds::Lifts => self.log.merge(key, value, unix_now()),
             Holds::Commands => match commands::admit(key, value, unix_ms()) {
                 Some(value) => self.log.keep_larger(key, value),
                 None => Err(()),
@@ -299,7 +320,7 @@ impl Replica {
     /// What a returning peer is sent: every ban in effect, or every drain command.
     fn everything(&self) -> Vec<bans::Ban> {
         match self.holds {
-            Holds::Bans => self.log.walk(unix_now()),
+            Holds::Bans | Holds::Lifts => self.log.walk(unix_now()),
             Holds::Commands => {
                 // A datagram takes its entries from the end: the members go first.
                 let mut all = self.log.all();
@@ -315,7 +336,10 @@ impl Replica {
         if !self.caught_up
             && let Some(sink) = self.sink.get()
         {
-            for (key, value) in self.everything().into_iter().rev() {
+            // The bans heard so far respect the lifts heard so far, and the firewall
+            // has no other ban of a peer. A lift therefore has nothing to replay.
+            let replay = if self.holds == Holds::Lifts { Vec::new() } else { self.everything() };
+            for (key, value) in replay.into_iter().rev() {
                 sink(&key, value);
             }
             self.caught_up = true;
@@ -342,6 +366,9 @@ impl Replica {
                     {
                         sink(&key, value);
                     }
+                    if self.holds == Holds::Lifts {
+                        self.news.push((key, value));
+                    }
                     BanCounters::add(&self.counters.applied, 1);
                 }
                 Ok(None) => {}
@@ -360,6 +387,9 @@ const INBOX: usize = 1024;
 const WALK_TURN: usize = 8;
 /// How often ended bans are forgotten.
 const SWEEP: Duration = Duration::from_secs(10);
+/// A lift also covers a ban that its node does not know and that ends within this many
+/// seconds.
+const LIFT_REACH: u64 = 60;
 /// The run-time commands a node remembers.
 const COMMANDS: usize = 8192;
 
@@ -416,6 +446,7 @@ impl Monitor {
 
     /// Takes what the daemon issued and sends what is due to every peer.
     fn replicate(&mut self, at: Instant) {
+        self.lift_issued(at);
         for index in 0..self.replicas.len() {
             let replica = &mut self.replicas[index];
             replica.take_issued(at);
@@ -434,7 +465,7 @@ impl Monitor {
     fn walk(&mut self, at: Instant) {
         for index in 0..self.replicas.len() {
             let replica = &mut self.replicas[index];
-            if replica.holds == Holds::Bans && at.duration_since(replica.swept) >= SWEEP {
+            if replica.holds != Holds::Commands && at.duration_since(replica.swept) >= SWEEP {
                 replica.log.expire(unix_now());
                 replica.swept = at;
             }
@@ -455,18 +486,79 @@ impl Monitor {
         }
     }
 
+    /// The place of the map that holds `holds`, when it is on.
+    fn replica(&self, holds: Holds) -> Option<usize> {
+        self.replicas.iter().position(|replica| replica.holds == holds)
+    }
+
+    /// Takes the lifts of this node's operator. A lift covers the ban that this node
+    /// knows, and any ban that ends within [`LIFT_REACH`] seconds.
+    fn lift_issued(&mut self, at: Instant) {
+        let (Some(lifts), Some(banned)) = (self.replica(Holds::Lifts), self.replica(Holds::Bans))
+        else {
+            return;
+        };
+        let inbox = &self.replicas[lifts].inbox;
+        let keys: Vec<Box<[u8]>> = inbox.try_iter().take(INBOX_TURN).map(|(key, _)| key).collect();
+        for key in keys {
+            let now = unix_now();
+            let known = self.replicas[banned].log.end(&key).unwrap_or(0);
+            self.replicas[banned].log.remove(&key);
+            let lifted = &mut self.replicas[lifts];
+            match lifted.log.merge(&key, known.max(now + LIFT_REACH), now) {
+                Ok(Some(_)) => lifted.log.owe(&key, at),
+                Ok(None) => {}
+                Err(()) => BanCounters::add(&lifted.counters.dropped, 1),
+            }
+        }
+    }
+
+    /// Settles the bans with the lifts that a datagram brought. The firewall has
+    /// lifted each client already. A ban that ends after the lift is a newer ban: it
+    /// stays, and the firewall is given it again.
+    fn settle(&mut self) {
+        let (Some(lifts), Some(banned)) = (self.replica(Holds::Lifts), self.replica(Holds::Bans))
+        else {
+            return;
+        };
+        let news = std::mem::take(&mut self.replicas[lifts].news);
+        let bans = &mut self.replicas[banned];
+        for (key, lifted) in &news {
+            match bans.log.end(key) {
+                Some(end) if end <= *lifted => bans.log.remove(key),
+                Some(end) => {
+                    if let (true, Some(sink)) = (bans.caught_up, bans.sink.get()) {
+                        sink(key, end);
+                    }
+                }
+                None => {}
+            }
+        }
+        let mut news = news;
+        news.clear();
+        self.replicas[lifts].news = news;
+    }
+
     /// Reads a datagram of a replicated map from a peer.
     fn learn(&mut self, wire: &[u8]) {
         let kind = wire.get(3).copied();
-        let Some(replica) = self.replicas.iter_mut().find(|r| Some(r.holds.kind()) == kind) else {
+        let Some(index) = self.replicas.iter().position(|r| Some(r.holds.kind()) == kind) else {
             return;
         };
-        let mut heard = std::mem::take(&mut replica.scratch);
+        let mut heard = std::mem::take(&mut self.replicas[index].scratch);
         if bans::decode(&self.key, wire, &mut heard) {
-            heard = replica.learn(heard);
+            if let (Holds::Bans, Some(lifts)) =
+                (self.replicas[index].holds, self.replica(Holds::Lifts))
+            {
+                // A ban that an operator lifted does not come back with a late datagram.
+                let lifted = &self.replicas[lifts].log;
+                heard.retain(|(key, end)| lifted.end(key).is_none_or(|lift| *end > lift));
+            }
+            heard = self.replicas[index].learn(heard);
+            self.settle();
         }
         heard.clear();
-        replica.scratch = heard;
+        self.replicas[index].scratch = heard;
     }
 }
 
@@ -546,6 +638,7 @@ pub struct Mesh {
     thread: Option<JoinHandle<()>>,
     bans: Option<(BanFeed, Arc<OnceLock<Sink>>)>,
     drains: Option<(BanFeed, Arc<OnceLock<Sink>>)>,
+    lifts: Option<(BanFeed, Arc<OnceLock<Sink>>)>,
 }
 
 impl Mesh {
@@ -565,6 +658,7 @@ impl Mesh {
         };
         let bans = share(spec.replicate_bans, Holds::Bans, bans::CAPACITY);
         let drains = share(spec.replicate_commands, Holds::Commands, COMMANDS);
+        let lifts = share(spec.replicate_bans, Holds::Lifts, bans::CAPACITY);
         let mut monitor = Monitor {
             socket,
             key,
@@ -591,7 +685,7 @@ impl Mesh {
                 monitor.receive();
             }
         })?;
-        Ok(Self { state, stop, thread: Some(thread), bans, drains })
+        Ok(Self { state, stop, thread: Some(thread), bans, drains, lifts })
     }
 
     /// The hand-over of bans to the peers, and where bans from the peers are applied.
@@ -600,6 +694,14 @@ impl Mesh {
         let (feed, slot) = self.bans.as_ref()?;
         let _ = slot.set(sink);
         Some(feed.clone())
+    }
+
+    /// The hand-over of lifted bans to the peers, and where the lifts of the peers are
+    /// applied. `None` when `mesh.replicate_bans` is off. The first sink stays.
+    pub fn share_lifts(&self, sink: LiftSink) -> Option<LiftFeed> {
+        let (feed, slot) = self.lifts.as_ref()?;
+        let _ = slot.set(Box::new(move |client, _| sink(client)));
+        Some(LiftFeed(feed.clone()))
     }
 
     /// The hand-over of the operator's run-time commands to the peers, and where the
@@ -849,6 +951,39 @@ mod tests {
         assert_eq!(seen.len(), 3, "{seen:?}");
         assert_eq!(seen[0], added);
         assert!(seen.contains(&ready) && seen.contains(&weight));
+    }
+
+    #[test]
+    fn a_lifted_ban_is_lifted_on_the_peers_and_does_not_come_back() {
+        let roster = roster();
+        let (first, feed, _) = node(&roster, 0, 1);
+        let (second, _, heard) = node(&roster, 1, 2);
+        let lifted = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let record = Arc::clone(&lifted);
+        let sink = move |client: &[u8]| record.lock().expect("lock").push(client.to_vec());
+        second.share_lifts(Box::new(sink)).expect("replication is on");
+        let lift = first.share_lifts(Box::new(|_| {})).expect("replication is on");
+        let until = unix_now() + 600;
+        feed.publish(b"192.0.2.7", until);
+        assert_eq!(wait_for(&heard, 1), [(b"192.0.2.7".to_vec(), until)]);
+        lift.publish(b"192.0.2.7");
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while lifted.lock().expect("lock").is_empty() {
+            assert!(Instant::now() < deadline, "the lift did not arrive");
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        assert_eq!(*lifted.lock().expect("lock"), [b"192.0.2.7".to_vec()]);
+        // A node that restarts is told nothing of the lifted ban.
+        let (third, _, late) = node(&roster, 2, 3);
+        std::thread::sleep(Duration::from_secs(2));
+        assert!(late.lock().expect("lock").is_empty());
+        // The same ban again, as a late datagram would bring it, changes nothing.
+        // A ban that ends later is a new ban and holds.
+        feed.publish(b"192.0.2.7", until);
+        feed.publish(b"192.0.2.7", until + 60);
+        let seen = wait_for(&heard, 2);
+        assert_eq!(seen[1..], [(b"192.0.2.7".to_vec(), until + 60)]);
+        drop(third);
     }
 
     #[test]

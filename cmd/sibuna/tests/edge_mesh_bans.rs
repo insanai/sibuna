@@ -331,3 +331,45 @@ fn a_weight_and_an_added_or_removed_server_hold_on_every_node() {
     assert!(cluster.all_show("b", |row| row.is_none()));
     drop(third);
 }
+
+/// Waits until the node at `vip` no longer refuses the client.
+fn admitted_within(vip: SocketAddr, limit: Duration) -> bool {
+    let deadline = Instant::now() + limit;
+    while Instant::now() < deadline {
+        if status(vip, "/") != 403 {
+            return true;
+        }
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    false
+}
+
+#[test]
+fn a_ban_lifted_on_one_node_is_lifted_on_all_and_a_new_ban_holds_again() {
+    let (cluster, mut nodes) = cluster(3);
+    assert_eq!(status(nodes[0].vip, "/__sibuna/honeypot"), 403);
+    for node in &nodes[1..] {
+        assert!(banned_within(node.vip, Duration::from_secs(3)).is_some());
+    }
+    // The operator of the second node lifts the ban. Every node admits the client.
+    cluster.ctl(1, &["del", "ban", "127.0.0.1"]);
+    for node in &nodes {
+        assert!(admitted_within(node.vip, Duration::from_secs(3)), "a node kept the ban");
+    }
+    // A node that restarts is not told the lifted ban by a peer that had it.
+    drop(nodes.pop());
+    let third = cluster.start(2).unwrap();
+    std::thread::sleep(Duration::from_secs(2));
+    assert_ne!(status(third.vip, "/"), 403);
+    // The client offends again, on another node. The new ban holds everywhere.
+    std::thread::sleep(Duration::from_secs(1));
+    assert_eq!(status(nodes[1].vip, "/__sibuna/honeypot"), 403);
+    assert!(banned_within(nodes[0].vip, Duration::from_secs(3)).is_some());
+    assert!(banned_within(third.vip, Duration::from_secs(3)).is_some());
+    // A local lift stays on its node.
+    cluster.ctl(0, &["del", "ban", "127.0.0.1", "local"]);
+    assert!(admitted_within(nodes[0].vip, Duration::from_secs(3)));
+    std::thread::sleep(Duration::from_millis(1500));
+    assert_eq!(status(nodes[1].vip, "/"), 403);
+    drop(third);
+}

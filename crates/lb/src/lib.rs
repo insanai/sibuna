@@ -23,8 +23,8 @@ mod ja4;
 mod maglev;
 mod mesh;
 pub use mesh::{
-    BanCounters, BanFeed, BanSink, Change, Command as MeshCommand, CommandFeed, CommandSink, Mesh,
-    MeshConfig, Regime,
+    BanCounters, BanFeed, BanSink, Change, Command as MeshCommand, CommandFeed, CommandSink,
+    LiftFeed, LiftSink, Mesh, MeshConfig, Regime,
 };
 mod observe;
 mod pool;

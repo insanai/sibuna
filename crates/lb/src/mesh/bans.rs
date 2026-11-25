@@ -27,6 +27,8 @@ pub(super) const HEADER: usize = 28;
 const TAG: usize = 16;
 /// The kind byte of a ban datagram.
 pub(super) const KIND: u8 = 3;
+/// The kind byte of a datagram of lifted bans.
+pub(super) const KIND_LIFT: u8 = 5;
 /// The kind byte of a datagram of run-time commands.
 pub(super) const KIND_COMMAND: u8 = 4;
 /// When a ban is sent again after its first send.
@@ -138,6 +140,16 @@ impl Log {
                 out.push((key, until));
             }
         }
+    }
+
+    /// The number the map holds for `key`.
+    pub fn end(&self, key: &[u8]) -> Option<u64> {
+        self.ends.get(key).copied()
+    }
+
+    /// Forgets `key`. Sends still owed for it are skipped.
+    pub fn remove(&mut self, key: &[u8]) {
+        self.ends.remove(key);
     }
 
     /// Forgets the bans that have ended.

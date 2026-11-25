@@ -241,7 +241,8 @@ impl Serving {
             Command::State { .. }
             | Command::Weight { .. }
             | Command::Add { .. }
-            | Command::Del { .. } => self.change(&command, true),
+            | Command::Del { .. }
+            | Command::DelBan { .. } => self.change(&command, true),
             Command::Reload => {
                 let revision = revision
                     .ok_or_else(|| reload_rejected(io::Error::other("the file was not loaded")))?;
@@ -255,6 +256,16 @@ impl Serving {
     /// Applies a change to a server and, when `share` is set and the edge has a mesh,
     /// hands it to the peers.
     fn change(&mut self, command: &Command, share: bool) -> Result<String, RuntimeError> {
+        if let Command::DelBan { client } = command {
+            let Some(http) = &self.http else {
+                return Err(RuntimeError::invalid(
+                    "This edge has no HTTP frontend, and so no bans.".to_owned(),
+                    "Bans belong to the firewall of an HTTP frontend.",
+                ));
+            };
+            http.lift_ban(*client, share);
+            return Ok(String::new());
+        }
         let Some(change) = control::mesh_command(command, &self.edge.servers()) else {
             // Only the removal of a server that is not there has no change to share.
             // The edge names the fault.
