@@ -265,7 +265,7 @@ mod tests {
         let chain = CertificateDer::pem_file_iter(data("localhost.pem")).unwrap();
         let chain = chain.map(Result::unwrap).collect();
         let key = PrivateKeyDer::from_pem_file(data("localhost.key")).unwrap();
-        let provider = Arc::new(rustls::crypto::ring::default_provider());
+        let provider = Arc::new(sibuna_tls::provider());
         let builder = ServerConfig::builder_with_provider(provider);
         let builder = builder.with_safe_default_protocol_versions().unwrap();
         let mut config = builder.with_no_client_auth().with_single_cert(chain, key).unwrap();
@@ -276,7 +276,7 @@ mod tests {
     fn client(offers: &[&[u8]]) -> ClientConnection {
         let mut trust = RootCertStore::empty();
         trust.add(CertificateDer::from_pem_file(data("ca.pem")).unwrap()).unwrap();
-        let provider = Arc::new(rustls::crypto::ring::default_provider());
+        let provider = Arc::new(sibuna_tls::provider());
         let builder = ClientConfig::builder_with_provider(provider);
         let builder = builder.with_safe_default_protocol_versions().unwrap();
         let mut config = builder.with_root_certificates(trust).with_no_client_auth();

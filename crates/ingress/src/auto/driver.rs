@@ -57,7 +57,7 @@ pub(super) fn certified(
     let unusable = |error: rustls::Error| Error::rejected(format!("The certificate: {error}."));
     let chain: Vec<_> = chain.into_iter().map(CertificateDer::from).collect();
     let der = PrivateKeyDer::Pkcs8(PrivatePkcs8KeyDer::from(key.pkcs8().to_vec()));
-    let provider = rustls::crypto::ring::default_provider();
+    let provider = sibuna_tls::provider();
     if checked {
         return CertifiedKey::from_der(chain, der, &provider).map(Arc::new).map_err(unusable);
     }

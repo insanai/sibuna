@@ -421,7 +421,7 @@ fn client_tls(tls: &OriginTls, alpn: &[u8]) -> Result<rustls::ClientConfig, Erro
         };
         (*sibuna_tls::Connector::load(&trust)?.client_config()).clone()
     } else {
-        let provider = Arc::new(rustls::crypto::ring::default_provider());
+        let provider = Arc::new(sibuna_tls::provider());
         rustls::ClientConfig::builder_with_provider(provider.clone())
             .with_safe_default_protocol_versions()?
             .dangerous()
