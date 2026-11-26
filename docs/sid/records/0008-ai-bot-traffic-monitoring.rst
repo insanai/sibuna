@@ -535,7 +535,7 @@ To track the most frequently targeted URI paths without unbounded memory allocat
 
 Sibuna couples the in-memory streaming sketches to persistent storage using an append-only **Micro-RRD (Round Robin Database)** rollup model:
 
-.. graphviz:: ../diagrams/0008-pipeline.dot
+.. typst-diagram:: ../diagrams/0008-pipeline.typ
    :caption: End-to-End High-Efficiency Streaming Analytics and Decoupled Rollup Pipeline
    :alt: HTTP ingress workers send 100 percent of requests to striped atomics and a 1/64 sample to an MPSC ring buffer; a 1 Hz collector thread folds both and writes once per minute to Zaxonlite storage.
 

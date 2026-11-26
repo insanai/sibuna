@@ -49,14 +49,14 @@ Workers and connection ownership
 
 The edge starts one HTTP worker for each processor the process may use, up to 64. The edge worker of SID 0015 accepts connections, applies the frontend's connection rate limit and the flow budget, and assigns each connection to the HTTP worker with the fewest connections. The protocol runtime assigns its handoffs the same way, and passes the client address and the listener with each one. The assignment crosses threads once, through a queue and a wake-up.
 
-.. graphviz:: ../diagrams/workers.dot
+.. typst-diagram:: ../diagrams/workers.typ
    :caption: Ownership. One thread accepts, the HTTP workers own connections and server sockets, and nothing is shared on the request path except the admission tables.
    :alt: The edge worker accepts connections and assigns them to HTTP workers. The TLS runtime hands exchanges to the same workers. Each worker holds a connection table, a server pool, a buffer pool and a timer wheel, and reaches the servers.
 
 The life of a connection
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. graphviz:: ../diagrams/states.dot
+.. typst-diagram:: ../diagrams/states.typ
    :caption: States of a connection. Each arrow is taken inside the worker without blocking.
    :alt: Idle leads to Head when bytes arrive. Head leads to Body or Decide. Decide leads to Respond for a local answer or to Connect and Exchange for an admitted request. Exchange leads to Idle on keep-alive, to Tunnel after a 101 response, or to Closed.
 

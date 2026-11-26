@@ -260,7 +260,7 @@ Worker ownership permits ordinary reads and writes within a shard. If we introdu
 
 A storage worker owns the fixed-size file mapping. Packet workers may enqueue bounded lookup or demotion requests. They proceed on a cache miss and shed cache writes when the queue fills. The storage service validates the format version, length, key, expiry and checksum before reusing an entry. We discard incompatible or corrupt cache files and rebuild from authoritative state. Disk faults, slow writes and storage exhaustion must be tested independently of the slot bound.
 
-.. graphviz:: ../diagrams/spill.dot
+.. typst-diagram:: ../diagrams/spill.typ
    :caption: A worker can finish a cache miss even when the disk service stalls.
    :alt: A worker uses its RAM shard directly. A bounded queue separates optional cache writes from the storage service.
 
@@ -271,7 +271,7 @@ A new flow first filters out unhealthy, draining and administratively disabled s
 
 A hard node-local backend limit requires an atomic reservation or disjoint worker quotas whose sum fits the limit. We release a reservation on connect failure, timeout or close. Independent nodes can observe different health and load. A fleet-wide hard cap would require a quota allocation protocol.
 
-.. graphviz:: ../diagrams/atdp-regimes.dot
+.. typst-diagram:: ../diagrams/atdp-regimes.typ
    :caption: Routing regime as a function of active peers and sampled p95 RTT.
    :alt: With peers present, the regional and wide-area regimes retain their previous state between the thresholds.
 

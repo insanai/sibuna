@@ -240,7 +240,7 @@ The reload rule has two parts because the changes are of two kinds. A weight, an
 
 The log line of a reload states both numbers: ``Sibuna edge routes reloaded: 1 drain kept, 2 run-time changes replaced by the file``.
 
-.. graphviz:: ../diagrams/authority.dot
+.. typst-diagram:: ../diagrams/authority.typ
    :caption: Authority. The file decides the topology at every reload. Commands lay changes over it, and only drains pass a reload.
    :alt: The JLV or JSON file is compiled and checked into a revision. A reload makes the revision the serving topology. The admin socket applies commands to the serving topology as an overlay. At a reload the weights, additions and removals of the overlay are dropped and its drains are carried over.
 
